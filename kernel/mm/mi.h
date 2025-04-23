@@ -23,13 +23,13 @@ Revision History:
 #ifndef _MI_
 #define _MI_
 
-#pragma warning(disable:4214)   // bit field types other than int
-#pragma warning(disable:4201)   // nameless struct/union
-#pragma warning(disable:4324)   // alignment sensitive to declspec
-#pragma warning(disable:4127)   // condition expression is constant
-#pragma warning(disable:4115)   // named type definition in parentheses
-#pragma warning(disable:4232)   // dllimport not static
-#pragma warning(disable:4206)   // translation unit empty
+#pragma warning(disable : 4214) // bit field types other than int
+#pragma warning(disable : 4201) // nameless struct/union
+#pragma warning(disable : 4324) // alignment sensitive to declspec
+#pragma warning(disable : 4127) // condition expression is constant
+#pragma warning(disable : 4115) // named type definition in parentheses
+#pragma warning(disable : 4232) // dllimport not static
+#pragma warning(disable : 4206) // translation unit empty
 
 #include "ntos.h"
 #include "ntimage.h"
@@ -56,36 +56,36 @@ Revision History:
 #error "mm: a target architecture must be defined."
 #endif
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 #define ASSERT32(exp)
-#define ASSERT64(exp)   ASSERT(exp)
+#define ASSERT64(exp) ASSERT(exp)
 #else
-#define ASSERT32(exp)   ASSERT(exp)
+#define ASSERT32(exp) ASSERT(exp)
 #define ASSERT64(exp)
 #endif
 
 //
 // Special pool constants
 //
-#define MI_SPECIAL_POOL_PAGABLE         0x8000
-#define MI_SPECIAL_POOL_VERIFIER        0x4000
-#define MI_SPECIAL_POOL_IN_SESSION      0x2000
-#define MI_SPECIAL_POOL_PTE_PAGABLE     0x0002
-#define MI_SPECIAL_POOL_PTE_NONPAGABLE  0x0004
+#define MI_SPECIAL_POOL_PAGABLE 0x8000
+#define MI_SPECIAL_POOL_VERIFIER 0x4000
+#define MI_SPECIAL_POOL_IN_SESSION 0x2000
+#define MI_SPECIAL_POOL_PTE_PAGABLE 0x0002
+#define MI_SPECIAL_POOL_PTE_NONPAGABLE 0x0004
 
 
-#define _2gb  0x80000000                // 2 gigabytes
-#define _4gb 0x100000000                // 4 gigabytes
+#define _2gb 0x80000000  // 2 gigabytes
+#define _4gb 0x100000000 // 4 gigabytes
 
 #define MM_FLUSH_COUNTER_MASK (0xFFFFF)
 
 #define MM_FREE_WSLE_SHIFT 4
 
-#define WSLE_NULL_INDEX ((((WSLE_NUMBER)-1) >> MM_FREE_WSLE_SHIFT))
+#define WSLE_NULL_INDEX ((((WSLE_NUMBER) - 1) >> MM_FREE_WSLE_SHIFT))
 
 #define MM_FREE_POOL_SIGNATURE (0x50554F4C)
 
-#define MM_MINIMUM_PAGED_POOL_NTAS ((SIZE_T)(48*1024*1024))
+#define MM_MINIMUM_PAGED_POOL_NTAS ((SIZE_T)(48 * 1024 * 1024))
 
 #define MM_ALLOCATION_FILLS_VAD ((PMMPTE)(ULONG_PTR)~3)
 
@@ -93,7 +93,7 @@ Revision History:
 
 #define MM_FLUID_WORKING_SET 8
 
-#define MM_FLUID_PHYSICAL_PAGES 32  //see MmResidentPages below.
+#define MM_FLUID_PHYSICAL_PAGES 32 //see MmResidentPages below.
 
 #define MM_USABLE_PAGES_FREE 32
 
@@ -105,12 +105,12 @@ Revision History:
 #define MM_NO_WS_EXPANSION ((PLIST_ENTRY)0)
 #define MM_WS_EXPANSION_IN_PROGRESS ((PLIST_ENTRY)35)
 #define MM_WS_SWAPPED_OUT ((PLIST_ENTRY)37)
-#define MM_IO_IN_PROGRESS ((PLIST_ENTRY)97)  // MUST HAVE THE HIGHEST VALUE
+#define MM_IO_IN_PROGRESS ((PLIST_ENTRY)97) // MUST HAVE THE HIGHEST VALUE
 
-#define MM4K_SHIFT    12  //MUST BE LESS THAN OR EQUAL TO PAGE_SHIFT
-#define MM4K_MASK  0xfff
+#define MM4K_SHIFT 12 //MUST BE LESS THAN OR EQUAL TO PAGE_SHIFT
+#define MM4K_MASK 0xfff
 
-#define MMSECTOR_SHIFT 9  //MUST BE LESS THAN OR EQUAL TO PAGE_SHIFT
+#define MMSECTOR_SHIFT 9 //MUST BE LESS THAN OR EQUAL TO PAGE_SHIFT
 
 #define MMSECTOR_MASK 0x1ff
 
@@ -128,36 +128,36 @@ Revision History:
 // Number of PTEs to flush singularly before flushing the entire TB.
 //
 
-#define MM_MAXIMUM_FLUSH_COUNT (FLUSH_MULTIPLE_MAXIMUM-1)
+#define MM_MAXIMUM_FLUSH_COUNT (FLUSH_MULTIPLE_MAXIMUM - 1)
 
 //
 // Page protections
 //
 
-#define MM_ZERO_ACCESS         0  // this value is not used.
-#define MM_READONLY            1
-#define MM_EXECUTE             2
-#define MM_EXECUTE_READ        3
-#define MM_READWRITE           4  // bit 2 is set if this is writable.
-#define MM_WRITECOPY           5
-#define MM_EXECUTE_READWRITE   6
-#define MM_EXECUTE_WRITECOPY   7
+#define MM_ZERO_ACCESS 0 // this value is not used.
+#define MM_READONLY 1
+#define MM_EXECUTE 2
+#define MM_EXECUTE_READ 3
+#define MM_READWRITE 4 // bit 2 is set if this is writable.
+#define MM_WRITECOPY 5
+#define MM_EXECUTE_READWRITE 6
+#define MM_EXECUTE_WRITECOPY 7
 
-#define MM_NOCACHE            0x8
-#define MM_GUARD_PAGE         0x10
-#define MM_DECOMMIT           0x10   //NO_ACCESS, Guard page
-#define MM_NOACCESS           0x18   //NO_ACCESS, Guard_page, nocache.
-#define MM_UNKNOWN_PROTECTION 0x100  //bigger than 5 bits!
-#define MM_LARGE_PAGES        0x111
+#define MM_NOCACHE 0x8
+#define MM_GUARD_PAGE 0x10
+#define MM_DECOMMIT 0x10            //NO_ACCESS, Guard page
+#define MM_NOACCESS 0x18            //NO_ACCESS, Guard_page, nocache.
+#define MM_UNKNOWN_PROTECTION 0x100 //bigger than 5 bits!
+#define MM_LARGE_PAGES 0x111
 
-#define MM_INVALID_PROTECTION ((ULONG)-1)  //bigger than 5 bits!
+#define MM_INVALID_PROTECTION ((ULONG) - 1) //bigger than 5 bits!
 
-#define MM_KSTACK_OUTSWAPPED  0x1F   // Denotes outswapped kernel stack pages.
+#define MM_KSTACK_OUTSWAPPED 0x1F // Denotes outswapped kernel stack pages.
 
-#define MM_PROTECTION_WRITE_MASK     4
-#define MM_PROTECTION_COPY_MASK      1
+#define MM_PROTECTION_WRITE_MASK 4
+#define MM_PROTECTION_COPY_MASK 1
 #define MM_PROTECTION_OPERATION_MASK 7 // mask off guard page and nocache.
-#define MM_PROTECTION_EXECUTE_MASK   2
+#define MM_PROTECTION_EXECUTE_MASK 2
 
 #define MM_SECURE_DELETE_CHECK 0x55
 
@@ -165,50 +165,50 @@ Revision History:
 // Debug flags
 //
 
-#define MM_DBG_WRITEFAULT       0x1
-#define MM_DBG_PTE_UPDATE       0x2
-#define MM_DBG_DUMP_WSL         0x4
-#define MM_DBG_PAGEFAULT        0x8
-#define MM_DBG_WS_EXPANSION     0x10
-#define MM_DBG_MOD_WRITE        0x20
-#define MM_DBG_CHECK_PTE        0x40
-#define MM_DBG_VAD_CONFLICT     0x80
-#define MM_DBG_SECTIONS         0x100
-#define MM_DBG_SYS_PTES         0x400
-#define MM_DBG_CLEAN_PROCESS    0x800
-#define MM_DBG_COLLIDED_PAGE    0x1000
-#define MM_DBG_DUMP_BOOT_PTES   0x2000
-#define MM_DBG_FORK             0x4000
-#define MM_DBG_DIR_BASE         0x8000
-#define MM_DBG_FLUSH_SECTION    0x10000
+#define MM_DBG_WRITEFAULT 0x1
+#define MM_DBG_PTE_UPDATE 0x2
+#define MM_DBG_DUMP_WSL 0x4
+#define MM_DBG_PAGEFAULT 0x8
+#define MM_DBG_WS_EXPANSION 0x10
+#define MM_DBG_MOD_WRITE 0x20
+#define MM_DBG_CHECK_PTE 0x40
+#define MM_DBG_VAD_CONFLICT 0x80
+#define MM_DBG_SECTIONS 0x100
+#define MM_DBG_SYS_PTES 0x400
+#define MM_DBG_CLEAN_PROCESS 0x800
+#define MM_DBG_COLLIDED_PAGE 0x1000
+#define MM_DBG_DUMP_BOOT_PTES 0x2000
+#define MM_DBG_FORK 0x4000
+#define MM_DBG_DIR_BASE 0x8000
+#define MM_DBG_FLUSH_SECTION 0x10000
 #define MM_DBG_PRINTS_MODWRITES 0x20000
-#define MM_DBG_PAGE_IN_LIST     0x40000
-#define MM_DBG_CHECK_PFN_LOCK   0x80000
-#define MM_DBG_PRIVATE_PAGES    0x100000
-#define MM_DBG_WALK_VAD_TREE    0x200000
-#define MM_DBG_SWAP_PROCESS     0x400000
-#define MM_DBG_LOCK_CODE        0x800000
-#define MM_DBG_STOP_ON_ACCVIO   0x1000000
-#define MM_DBG_PAGE_REF_COUNT   0x2000000
-#define MM_DBG_SHOW_FAULTS      0x40000000
-#define MM_DBG_SESSIONS         0x80000000
+#define MM_DBG_PAGE_IN_LIST 0x40000
+#define MM_DBG_CHECK_PFN_LOCK 0x80000
+#define MM_DBG_PRIVATE_PAGES 0x100000
+#define MM_DBG_WALK_VAD_TREE 0x200000
+#define MM_DBG_SWAP_PROCESS 0x400000
+#define MM_DBG_LOCK_CODE 0x800000
+#define MM_DBG_STOP_ON_ACCVIO 0x1000000
+#define MM_DBG_PAGE_REF_COUNT 0x2000000
+#define MM_DBG_SHOW_FAULTS 0x40000000
+#define MM_DBG_SESSIONS 0x80000000
 
 //
 // If the PTE.protection & MM_COPY_ON_WRITE_MASK == MM_COPY_ON_WRITE_MASK
 // then the PTE is copy on write.
 //
 
-#define MM_COPY_ON_WRITE_MASK  5
+#define MM_COPY_ON_WRITE_MASK 5
 
 extern ULONG MmProtectToValue[32];
 
 extern
 #if (defined(_WIN64) || defined(_X86PAE_))
-ULONGLONG
+    ULONGLONG
 #else
-ULONG
+    ULONG
 #endif
-MmProtectToPteMask[32];
+        MmProtectToPteMask[32];
 extern ULONG MmMakeProtectNotWriteCopy[32];
 extern ACCESS_MASK MmMakeSectionAccess[8];
 extern ACCESS_MASK MmMakeFileAccess[8];
@@ -258,21 +258,20 @@ extern ULONG MiIoRetryMask;
 extern ULONG MiFaultRetryMask;
 extern ULONG MiUserFaultRetryMask;
 
-#define MmIsRetryIoStatus(S) (((S) == STATUS_INSUFFICIENT_RESOURCES) || \
-                              ((S) == STATUS_WORKING_SET_QUOTA) ||      \
-                              ((S) == STATUS_NO_MEMORY))
+#define MmIsRetryIoStatus(S) \
+    (((S) == STATUS_INSUFFICIENT_RESOURCES) || ((S) == STATUS_WORKING_SET_QUOTA) || ((S) == STATUS_NO_MEMORY))
 
-#if defined (_MI_MORE_THAN_4GB_)
+#if defined(_MI_MORE_THAN_4GB_)
 
 extern PFN_NUMBER MiNoLowMemory;
 
-#if defined (_WIN64)
-#define MI_MAGIC_4GB_RECLAIM     0xffffedf0
+#if defined(_WIN64)
+#define MI_MAGIC_4GB_RECLAIM 0xffffedf0
 #else
-#define MI_MAGIC_4GB_RECLAIM     0xffedf0
+#define MI_MAGIC_4GB_RECLAIM 0xffedf0
 #endif
 
-#define MI_LOWMEM_MAGIC_BIT     (0x80000000)
+#define MI_LOWMEM_MAGIC_BIT (0x80000000)
 
 extern PRTL_BITMAP MiLowMemoryBitMap;
 #endif
@@ -282,7 +281,7 @@ extern PRTL_BITMAP MiLowMemoryBitMap;
 //
 
 #define MI_COMPUTE_PAGES_SPANNED(Va, Size) \
-    ((((ULONG_PTR)(Va) & (PAGE_SIZE -1)) + (Size) + (PAGE_SIZE - 1)) >> PAGE_SHIFT)
+    ((((ULONG_PTR)(Va) & (PAGE_SIZE - 1)) + (Size) + (PAGE_SIZE - 1)) >> PAGE_SHIFT)
 
 //++
 //
@@ -304,14 +303,13 @@ extern PRTL_BITMAP MiLowMemoryBitMap;
 //
 //--
 
-#define MI_CONVERT_FROM_PTE_PROTECTION(PROTECTION_MASK)      \
-                                     (MmProtectToValue[PROTECTION_MASK])
+#define MI_CONVERT_FROM_PTE_PROTECTION(PROTECTION_MASK) (MmProtectToValue[PROTECTION_MASK])
 
 #define MI_MASK_TO_PTE(PROTECTION_MASK) MmProtectToPteMask[PROTECTION_MASK]
 
 
-#define MI_IS_PTE_PROTECTION_COPY_WRITE(PROTECTION_MASK)  \
-   (((PROTECTION_MASK) & MM_COPY_ON_WRITE_MASK) == MM_COPY_ON_WRITE_MASK)
+#define MI_IS_PTE_PROTECTION_COPY_WRITE(PROTECTION_MASK) \
+    (((PROTECTION_MASK) & MM_COPY_ON_WRITE_MASK) == MM_COPY_ON_WRITE_MASK)
 
 //++
 //
@@ -336,7 +334,7 @@ extern PRTL_BITMAP MiLowMemoryBitMap;
 //
 //--
 
-#define MI_ROUND_TO_64K(LENGTH)  (((LENGTH) + X64K - 1) & ~((ULONG_PTR)X64K - 1))
+#define MI_ROUND_TO_64K(LENGTH) (((LENGTH) + X64K - 1) & ~((ULONG_PTR)X64K - 1))
 
 extern ULONG MiLastVadBit;
 
@@ -366,8 +364,7 @@ extern ULONG MiLastVadBit;
 //
 //--
 
-#define MI_ROUND_TO_SIZE(LENGTH,ALIGNMENT)     \
-                    (((LENGTH) + ((ALIGNMENT) - 1)) & ~((ALIGNMENT) - 1))
+#define MI_ROUND_TO_SIZE(LENGTH, ALIGNMENT) (((LENGTH) + ((ALIGNMENT) - 1)) & ~((ALIGNMENT) - 1))
 
 //++
 //
@@ -421,7 +418,7 @@ extern ULONG MiLastVadBit;
 //
 //--
 
-#define MI_ALIGN_TO_SIZE(VA,ALIGNMENT) ((PVOID)((ULONG_PTR)(VA) & ~((ULONG_PTR) ALIGNMENT - 1)))
+#define MI_ALIGN_TO_SIZE(VA, ALIGNMENT) ((PVOID)((ULONG_PTR)(VA) & ~((ULONG_PTR)ALIGNMENT - 1)))
 
 //++
 //
@@ -449,9 +446,9 @@ extern ULONG MiLastVadBit;
 //
 //--
 
-#define MI_STARTING_OFFSET(SUBSECT,PTE) \
-           (((LONGLONG)((ULONG_PTR)((PTE) - ((SUBSECT)->SubsectionBase))) << PAGE_SHIFT) + \
-             ((LONGLONG)((SUBSECT)->StartingSector) << MMSECTOR_SHIFT));
+#define MI_STARTING_OFFSET(SUBSECT, PTE)                                            \
+    (((LONGLONG)((ULONG_PTR)((PTE) - ((SUBSECT)->SubsectionBase))) << PAGE_SHIFT) + \
+     ((LONGLONG)((SUBSECT)->StartingSector) << MMSECTOR_SHIFT));
 
 
 // NTSTATUS
@@ -484,13 +481,9 @@ extern ULONG MiLastVadBit;
 //    Returns the starting address of a suitable range.
 //
 
-#define MiFindEmptyAddressRangeDown(Root,SizeOfRange,HighestAddressToEndAt,Alignment,Base) \
-               (MiFindEmptyAddressRangeDownTree(                             \
-                    (SizeOfRange),                                           \
-                    (HighestAddressToEndAt),                                 \
-                    (Alignment),                                             \
-                    (PMMADDRESS_NODE)(Root),                                 \
-                    (Base)))
+#define MiFindEmptyAddressRangeDown(Root, SizeOfRange, HighestAddressToEndAt, Alignment, Base)                     \
+    (MiFindEmptyAddressRangeDownTree((SizeOfRange), (HighestAddressToEndAt), (Alignment), (PMMADDRESS_NODE)(Root), \
+                                     (Base)))
 
 // PMMVAD
 // MiGetPreviousVad (
@@ -540,7 +533,6 @@ extern ULONG MiLastVadBit;
 #define MiGetNextVad(VAD) ((PMMVAD)MiGetNextNode((PMMADDRESS_NODE)(VAD)))
 
 
-
 // PMMVAD
 // MiGetFirstVad (
 //     Process
@@ -560,16 +552,11 @@ extern ULONG MiLastVadBit;
 //     Returns a pointer to the virtual address descriptor containing the
 //     first address range, NULL if none.
 
-#define MiGetFirstVad(Process) \
-    ((PMMVAD)MiGetFirstNode((PMMADDRESS_NODE)(Process->VadRoot)))
+#define MiGetFirstVad(Process) ((PMMVAD)MiGetFirstNode((PMMADDRESS_NODE)(Process->VadRoot)))
 
 
 LOGICAL
-MiCheckForConflictingVadExistence (
-    IN PEPROCESS Process,
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress
-    );
+MiCheckForConflictingVadExistence(IN PEPROCESS Process, IN PVOID StartingAddress, IN PVOID EndingAddress);
 
 // PMMVAD
 // MiCheckForConflictingVad (
@@ -596,11 +583,9 @@ MiCheckForConflictingVadExistence (
 //     if one is found, otherwise a NULL value is returned.
 //
 
-#define MiCheckForConflictingVad(CurrentProcess,StartingAddress,EndingAddress) \
-    ((PMMVAD)MiCheckForConflictingNode(                                   \
-                    MI_VA_TO_VPN(StartingAddress),                        \
-                    MI_VA_TO_VPN(EndingAddress),                          \
-                    (PMMADDRESS_NODE)(CurrentProcess->VadRoot)))
+#define MiCheckForConflictingVad(CurrentProcess, StartingAddress, EndingAddress)                   \
+    ((PMMVAD)MiCheckForConflictingNode(MI_VA_TO_VPN(StartingAddress), MI_VA_TO_VPN(EndingAddress), \
+                                       (PMMADDRESS_NODE)(CurrentProcess->VadRoot)))
 
 // PMMCLONE_DESCRIPTOR
 // MiGetNextClone (
@@ -623,9 +608,7 @@ MiCheckForConflictingVadExistence (
 //
 //
 
-#define MiGetNextClone(CLONE) \
- ((PMMCLONE_DESCRIPTOR)MiGetNextNode((PMMADDRESS_NODE)(CLONE)))
-
+#define MiGetNextClone(CLONE) ((PMMCLONE_DESCRIPTOR)MiGetNextNode((PMMADDRESS_NODE)(CLONE)))
 
 
 // PMMCLONE_DESCRIPTOR
@@ -649,9 +632,7 @@ MiCheckForConflictingVadExistence (
 //     next address range, NULL if none.
 
 
-#define MiGetPreviousClone(CLONE)  \
-             ((PMMCLONE_DESCRIPTOR)MiGetPreviousNode((PMMADDRESS_NODE)(CLONE)))
-
+#define MiGetPreviousClone(CLONE) ((PMMCLONE_DESCRIPTOR)MiGetPreviousNode((PMMADDRESS_NODE)(CLONE)))
 
 
 // PMMCLONE_DESCRIPTOR
@@ -678,7 +659,6 @@ MiCheckForConflictingVadExistence (
     ((PMMCLONE_DESCRIPTOR)MiGetFirstNode((PMMADDRESS_NODE)(_CurrentProcess->CloneRoot)))
 
 
-
 // VOID
 // MiInsertClone (
 //     IN PMMCLONE_DESCRIPTOR Clone
@@ -699,13 +679,11 @@ MiCheckForConflictingVadExistence (
 //     None.
 //
 
-#define MiInsertClone(_CurrentProcess, CLONE) \
-    {                                           \
-        ASSERT ((CLONE)->NumberOfPtes != 0);     \
-        MiInsertNode(((PMMADDRESS_NODE)(CLONE)),(PMMADDRESS_NODE *)&(_CurrentProcess->CloneRoot)); \
+#define MiInsertClone(_CurrentProcess, CLONE)                                                       \
+    {                                                                                               \
+        ASSERT((CLONE)->NumberOfPtes != 0);                                                         \
+        MiInsertNode(((PMMADDRESS_NODE)(CLONE)), (PMMADDRESS_NODE *)&(_CurrentProcess->CloneRoot)); \
     }
-
-
 
 
 // VOID
@@ -728,8 +706,7 @@ MiCheckForConflictingVadExistence (
 //
 
 #define MiRemoveClone(_CurrentProcess, CLONE) \
-    MiRemoveNode((PMMADDRESS_NODE)(CLONE),(PMMADDRESS_NODE *)&(_CurrentProcess->CloneRoot));
-
+    MiRemoveNode((PMMADDRESS_NODE)(CLONE), (PMMADDRESS_NODE *)&(_CurrentProcess->CloneRoot));
 
 
 // PMMCLONE_DESCRIPTOR
@@ -755,20 +732,19 @@ MiCheckForConflictingVadExistence (
 //     the supplied virtual address or NULL if none was located.
 //
 
-#define MiLocateCloneAddress(_CurrentProcess, VA)                           \
-    (_CurrentProcess->CloneRoot ?                                           \
-        ((PMMCLONE_DESCRIPTOR)MiLocateAddressInTree(((ULONG_PTR)VA),        \
-                   (PMMADDRESS_NODE *)&(_CurrentProcess->CloneRoot))) :     \
-        NULL)
+#define MiLocateCloneAddress(_CurrentProcess, VA)                                                         \
+    (_CurrentProcess->CloneRoot ? ((PMMCLONE_DESCRIPTOR)MiLocateAddressInTree(                            \
+                                      ((ULONG_PTR)VA), (PMMADDRESS_NODE *)&(_CurrentProcess->CloneRoot))) \
+                                : NULL)
 
 
 #define MI_VA_TO_PAGE(va) ((ULONG_PTR)(va) >> PAGE_SHIFT)
 
-#define MI_VA_TO_VPN(va)  ((ULONG_PTR)(va) >> PAGE_SHIFT)
+#define MI_VA_TO_VPN(va) ((ULONG_PTR)(va) >> PAGE_SHIFT)
 
-#define MI_VPN_TO_VA(vpn)  (PVOID)((vpn) << PAGE_SHIFT)
+#define MI_VPN_TO_VA(vpn) (PVOID)((vpn) << PAGE_SHIFT)
 
-#define MI_VPN_TO_VA_ENDING(vpn)  (PVOID)(((vpn) << PAGE_SHIFT) | (PAGE_SIZE - 1))
+#define MI_VPN_TO_VA_ENDING(vpn) (PVOID)(((vpn) << PAGE_SHIFT) | (PAGE_SIZE - 1))
 
 #define MiGetByteOffset(va) ((ULONG_PTR)(va) & (PAGE_SIZE - 1))
 
@@ -778,18 +754,15 @@ MiCheckForConflictingVadExistence (
 // Make a write-copy PTE, only writable.
 //
 
-#define MI_MAKE_PROTECT_NOT_WRITE_COPY(PROTECT) \
-            (MmMakeProtectNotWriteCopy[PROTECT])
+#define MI_MAKE_PROTECT_NOT_WRITE_COPY(PROTECT) (MmMakeProtectNotWriteCopy[PROTECT])
 
 //
 // Define macros to lock and unlock the PFN database.
 //
 
-#define MiLockPfnDatabase(OldIrql) \
-    OldIrql = KeAcquireQueuedSpinLock(LockQueuePfnLock)
+#define MiLockPfnDatabase(OldIrql) OldIrql = KeAcquireQueuedSpinLock(LockQueuePfnLock)
 
-#define MiUnlockPfnDatabase(OldIrql) \
-    KeReleaseQueuedSpinLock(LockQueuePfnLock, OldIrql)
+#define MiUnlockPfnDatabase(OldIrql) KeReleaseQueuedSpinLock(LockQueuePfnLock, OldIrql)
 
 #define MiLockPfnDatabaseAtDpcLevel() \
     KeAcquireQueuedSpinLockAtDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueuePfnLock])
@@ -797,17 +770,13 @@ MiCheckForConflictingVadExistence (
 #define MiUnlockPfnDatabaseFromDpcLevel() \
     KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueuePfnLock])
 
-#define MiTryToLockPfnDatabase(OldIrql) \
-    KeTryToAcquireQueuedSpinLock(LockQueuePfnLock, &OldIrql)
+#define MiTryToLockPfnDatabase(OldIrql) KeTryToAcquireQueuedSpinLock(LockQueuePfnLock, &OldIrql)
 
-#define MiReleasePfnLock() \
-    KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueuePfnLock])
+#define MiReleasePfnLock() KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueuePfnLock])
 
-#define MiLockSystemSpace(OldIrql) \
-    OldIrql = KeAcquireQueuedSpinLock(LockQueueSystemSpaceLock)
+#define MiLockSystemSpace(OldIrql) OldIrql = KeAcquireQueuedSpinLock(LockQueueSystemSpaceLock)
 
-#define MiUnlockSystemSpace(OldIrql) \
-    KeReleaseQueuedSpinLock(LockQueueSystemSpaceLock, OldIrql)
+#define MiUnlockSystemSpace(OldIrql) KeReleaseQueuedSpinLock(LockQueueSystemSpaceLock, OldIrql)
 
 #define MiLockSystemSpaceAtDpcLevel() \
     KeAcquireQueuedSpinLockAtDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueSystemSpaceLock])
@@ -817,12 +786,13 @@ MiCheckForConflictingVadExistence (
 
 // #define _MI_INSTRUMENT_PFN 1
 
-#if defined (_MI_INSTRUMENT_PFN)
+#if defined(_MI_INSTRUMENT_PFN)
 
-#define MI_MAX_PFN_CALLERS  500
+#define MI_MAX_PFN_CALLERS 500
 
-typedef struct _MMPFNTIMINGS {
-    LARGE_INTEGER HoldTime;     // Low bit is set if another processor waited
+typedef struct _MMPFNTIMINGS
+{
+    LARGE_INTEGER HoldTime; // Low bit is set if another processor waited
     ULONG_PTR AcquiredAddress;
     ULONG_PTR ReleasedAddress;
 } MMPFNTIMINGS, *PMMPFNTIMINGS;
@@ -834,9 +804,7 @@ extern LARGE_INTEGER MiPfnAcquired;
 extern LARGE_INTEGER MiPfnThreshold;
 
 ULONG_PTR
-MiGetExecutionAddress(
-    VOID
-    );
+MiGetExecutionAddress(VOID);
 
 #if defined(_X86_)
 #define MI_GET_EXECUTION_ADDRESS(varname) varname = MiGetExecutionAddress();
@@ -844,138 +812,153 @@ MiGetExecutionAddress(
 #define MI_GET_EXECUTION_ADDRESS(varname) varname = 0;
 #endif
 
-#define LOCK_PFN_TIMESTAMP()                                \
-        {                                                   \
-            MiPfnAcquired = KeQueryPerformanceCounter (NULL);\
-            MI_GET_EXECUTION_ADDRESS(MiPfnAcquiredAddress); \
-        }
+#define LOCK_PFN_TIMESTAMP()                             \
+    {                                                    \
+        MiPfnAcquired = KeQueryPerformanceCounter(NULL); \
+        MI_GET_EXECUTION_ADDRESS(MiPfnAcquiredAddress);  \
+    }
 
-#define UNLOCK_PFN_TIMESTAMP()                              \
-        {                                                   \
-            ULONG i;                                        \
-            ULONG_PTR ExecutionAddress;                     \
-            LARGE_INTEGER PfnReleased;                      \
-            LARGE_INTEGER PfnHoldTime;                      \
-            PfnReleased = KeQueryPerformanceCounter (NULL); \
-            MI_GET_EXECUTION_ADDRESS(ExecutionAddress);     \
-            PfnHoldTime.QuadPart = (PfnReleased.QuadPart - MiPfnAcquired.QuadPart) & ~0x1; \
-            i = MI_MAX_PFN_CALLERS - 1;                     \
-            do {                                            \
-                if (PfnHoldTime.QuadPart < MiPfnSorted[i].HoldTime.QuadPart) { \
-                    break;                                  \
-                }                                           \
-                i -= 1;                                     \
-            } while (i != (ULONG)-1);                       \
-            if (i != MI_MAX_PFN_CALLERS - 1) {              \
-                i += 1;                                     \
-                if (i != MI_MAX_PFN_CALLERS - 1) {          \
-                    RtlMoveMemory (&MiPfnSorted[i+1], &MiPfnSorted[i], (MI_MAX_PFN_CALLERS-(i+1)) * sizeof(MMPFNTIMINGS));                  \
-                }                                           \
-                MiPfnSorted[i].HoldTime = PfnHoldTime;      \
-                if (KeTestForWaitersQueuedSpinLock(LockQueuePfnLock) == TRUE) {\
-                    MiPfnSorted[i].HoldTime.LowPart |= 0x1;  \
-                } \
-                MiPfnSorted[i].AcquiredAddress = MiPfnAcquiredAddress;  \
-                MiPfnSorted[i].ReleasedAddress = ExecutionAddress;  \
-            }                                               \
-            if ((MiPfnTimings & 0x2) && (PfnHoldTime.QuadPart >= MiPfnThreshold.QuadPart)) { \
-                DbgBreakPoint ();                           \
-            }                                               \
-            if (MiPfnTimings & 0x1) {                       \
-                MiPfnTimings &= ~0x1;                       \
-                RtlZeroMemory (&MiPfnSorted[0], MI_MAX_PFN_CALLERS * sizeof(MMPFNTIMINGS));                                                 \
-            }                                               \
-        }
+#define UNLOCK_PFN_TIMESTAMP()                                                         \
+    {                                                                                  \
+        ULONG i;                                                                       \
+        ULONG_PTR ExecutionAddress;                                                    \
+        LARGE_INTEGER PfnReleased;                                                     \
+        LARGE_INTEGER PfnHoldTime;                                                     \
+        PfnReleased = KeQueryPerformanceCounter(NULL);                                 \
+        MI_GET_EXECUTION_ADDRESS(ExecutionAddress);                                    \
+        PfnHoldTime.QuadPart = (PfnReleased.QuadPart - MiPfnAcquired.QuadPart) & ~0x1; \
+        i = MI_MAX_PFN_CALLERS - 1;                                                    \
+        do                                                                             \
+        {                                                                              \
+            if (PfnHoldTime.QuadPart < MiPfnSorted[i].HoldTime.QuadPart)               \
+            {                                                                          \
+                break;                                                                 \
+            }                                                                          \
+            i -= 1;                                                                    \
+        } while (i != (ULONG) - 1);                                                    \
+        if (i != MI_MAX_PFN_CALLERS - 1)                                               \
+        {                                                                              \
+            i += 1;                                                                    \
+            if (i != MI_MAX_PFN_CALLERS - 1)                                           \
+            {                                                                          \
+                RtlMoveMemory(&MiPfnSorted[i + 1], &MiPfnSorted[i],                    \
+                              (MI_MAX_PFN_CALLERS - (i + 1)) * sizeof(MMPFNTIMINGS));  \
+            }                                                                          \
+            MiPfnSorted[i].HoldTime = PfnHoldTime;                                     \
+            if (KeTestForWaitersQueuedSpinLock(LockQueuePfnLock) == TRUE)              \
+            {                                                                          \
+                MiPfnSorted[i].HoldTime.LowPart |= 0x1;                                \
+            }                                                                          \
+            MiPfnSorted[i].AcquiredAddress = MiPfnAcquiredAddress;                     \
+            MiPfnSorted[i].ReleasedAddress = ExecutionAddress;                         \
+        }                                                                              \
+        if ((MiPfnTimings & 0x2) && (PfnHoldTime.QuadPart >= MiPfnThreshold.QuadPart)) \
+        {                                                                              \
+            DbgBreakPoint();                                                           \
+        }                                                                              \
+        if (MiPfnTimings & 0x1)                                                        \
+        {                                                                              \
+            MiPfnTimings &= ~0x1;                                                      \
+            RtlZeroMemory(&MiPfnSorted[0], MI_MAX_PFN_CALLERS * sizeof(MMPFNTIMINGS)); \
+        }                                                                              \
+    }
 #else
 #define LOCK_PFN_TIMESTAMP()
 #define UNLOCK_PFN_TIMESTAMP()
 #endif
 
-#define LOCK_PFN(OLDIRQL) ASSERT (KeGetCurrentIrql() <= APC_LEVEL); \
-                          MiLockPfnDatabase(OLDIRQL);               \
-                          LOCK_PFN_TIMESTAMP();
-
-#define LOCK_PFN_WITH_TRY(OLDIRQL)                                   \
-    ASSERT (KeGetCurrentIrql() <= APC_LEVEL);                        \
-    do {                                                             \
-    } while (MiTryToLockPfnDatabase(OLDIRQL) == FALSE);              \
+#define LOCK_PFN(OLDIRQL)                    \
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL); \
+    MiLockPfnDatabase(OLDIRQL);              \
     LOCK_PFN_TIMESTAMP();
 
-#define UNLOCK_PFN(OLDIRQL)                                        \
-    UNLOCK_PFN_TIMESTAMP();                                        \
-    MiUnlockPfnDatabase(OLDIRQL);                                  \
+#define LOCK_PFN_WITH_TRY(OLDIRQL)                      \
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);            \
+    do                                                  \
+    {                                                   \
+    } while (MiTryToLockPfnDatabase(OLDIRQL) == FALSE); \
+    LOCK_PFN_TIMESTAMP();
+
+#define UNLOCK_PFN(OLDIRQL)       \
+    UNLOCK_PFN_TIMESTAMP();       \
+    MiUnlockPfnDatabase(OLDIRQL); \
     ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
-#define LOCK_PFN2(OLDIRQL) ASSERT (KeGetCurrentIrql() <= DISPATCH_LEVEL); \
-                          MiLockPfnDatabase(OLDIRQL);               \
-                          LOCK_PFN_TIMESTAMP();
+#define LOCK_PFN2(OLDIRQL)                        \
+    ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL); \
+    MiLockPfnDatabase(OLDIRQL);                   \
+    LOCK_PFN_TIMESTAMP();
 
-#define UNLOCK_PFN2(OLDIRQL)                                       \
-    UNLOCK_PFN_TIMESTAMP();                                        \
-    MiUnlockPfnDatabase(OLDIRQL);                                  \
+#define UNLOCK_PFN2(OLDIRQL)      \
+    UNLOCK_PFN_TIMESTAMP();       \
+    MiUnlockPfnDatabase(OLDIRQL); \
     ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
 
-#define LOCK_PFN_AT_DPC() ASSERT (KeGetCurrentIrql() == DISPATCH_LEVEL); \
-                          MiLockPfnDatabaseAtDpcLevel();                 \
-                          LOCK_PFN_TIMESTAMP();
+#define LOCK_PFN_AT_DPC()                         \
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL); \
+    MiLockPfnDatabaseAtDpcLevel();                \
+    LOCK_PFN_TIMESTAMP();
 
-#define UNLOCK_PFN_FROM_DPC()                                        \
-    UNLOCK_PFN_TIMESTAMP();                                        \
-    MiUnlockPfnDatabaseFromDpcLevel();                             \
+#define UNLOCK_PFN_FROM_DPC()          \
+    UNLOCK_PFN_TIMESTAMP();            \
+    MiUnlockPfnDatabaseFromDpcLevel(); \
     ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
 
-#define UNLOCK_PFN_AND_THEN_WAIT(OLDIRQL)                          \
-                {                                                  \
-                    KIRQL XXX;                                     \
-                    ASSERT (KeGetCurrentIrql() == DISPATCH_LEVEL); \
-                    ASSERT (OLDIRQL <= APC_LEVEL);                 \
-                    KiLockDispatcherDatabase (&XXX);               \
-                    UNLOCK_PFN_TIMESTAMP();                        \
-                    MiReleasePfnLock();                            \
-                    (KeGetCurrentThread())->WaitIrql = OLDIRQL;    \
-                    (KeGetCurrentThread())->WaitNext = TRUE;       \
-                }
+#define UNLOCK_PFN_AND_THEN_WAIT(OLDIRQL)             \
+    {                                                 \
+        KIRQL XXX;                                    \
+        ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL); \
+        ASSERT(OLDIRQL <= APC_LEVEL);                 \
+        KiLockDispatcherDatabase(&XXX);               \
+        UNLOCK_PFN_TIMESTAMP();                       \
+        MiReleasePfnLock();                           \
+        (KeGetCurrentThread())->WaitIrql = OLDIRQL;   \
+        (KeGetCurrentThread())->WaitNext = TRUE;      \
+    }
 
 extern KMUTANT MmSystemLoadLock;
 
 #if DBG
-#define SYSLOAD_LOCK_OWNED_BY_ME()      ((PETHREAD)MmSystemLoadLock.OwnerThread == PsGetCurrentThread())
+#define SYSLOAD_LOCK_OWNED_BY_ME() ((PETHREAD)MmSystemLoadLock.OwnerThread == PsGetCurrentThread())
 #else
 #define SYSLOAD_LOCK_OWNED_BY_ME()
 #endif
 
 #if DBG
 
-#if defined (_MI_COMPRESSION)
+#if defined(_MI_COMPRESSION)
 
 extern KIRQL MiCompressionIrql;
 
-#define MM_PFN_LOCK_ASSERT() \
-    if (MmDebug & 0x80000) { \
-        KIRQL _OldIrql; \
-        _OldIrql = KeGetCurrentIrql(); \
-        ASSERT ((_OldIrql == DISPATCH_LEVEL) || \
-                ((MiCompressionIrql != 0) && (_OldIrql == MiCompressionIrql))); \
+#define MM_PFN_LOCK_ASSERT()                                                                                   \
+    if (MmDebug & 0x80000)                                                                                     \
+    {                                                                                                          \
+        KIRQL _OldIrql;                                                                                        \
+        _OldIrql = KeGetCurrentIrql();                                                                         \
+        ASSERT((_OldIrql == DISPATCH_LEVEL) || ((MiCompressionIrql != 0) && (_OldIrql == MiCompressionIrql))); \
     }
 
 #else
 
-#define MM_PFN_LOCK_ASSERT() \
-    if (MmDebug & 0x80000) { \
-        KIRQL _OldIrql; \
-        _OldIrql = KeGetCurrentIrql(); \
-        ASSERT (_OldIrql == DISPATCH_LEVEL); \
+#define MM_PFN_LOCK_ASSERT()                \
+    if (MmDebug & 0x80000)                  \
+    {                                       \
+        KIRQL _OldIrql;                     \
+        _OldIrql = KeGetCurrentIrql();      \
+        ASSERT(_OldIrql == DISPATCH_LEVEL); \
     }
 
 #endif
 
 extern PETHREAD MiExpansionLockOwner;
 
-#define MM_SET_EXPANSION_OWNER()  ASSERT (MiExpansionLockOwner == NULL); \
-                                  MiExpansionLockOwner = PsGetCurrentThread();
+#define MM_SET_EXPANSION_OWNER()          \
+    ASSERT(MiExpansionLockOwner == NULL); \
+    MiExpansionLockOwner = PsGetCurrentThread();
 
-#define MM_CLEAR_EXPANSION_OWNER()  ASSERT (MiExpansionLockOwner == PsGetCurrentThread()); \
-                                    MiExpansionLockOwner = NULL;
+#define MM_CLEAR_EXPANSION_OWNER()                        \
+    ASSERT(MiExpansionLockOwner == PsGetCurrentThread()); \
+    MiExpansionLockOwner = NULL;
 
 #else
 #define MM_PFN_LOCK_ASSERT()
@@ -984,187 +967,195 @@ extern PETHREAD MiExpansionLockOwner;
 #endif //DBG
 
 
-#define LOCK_EXPANSION(OLDIRQL)     ASSERT (KeGetCurrentIrql() <= APC_LEVEL); \
-                                ExAcquireSpinLock (&MmExpansionLock, &OLDIRQL);\
-                                MM_SET_EXPANSION_OWNER ();
+#define LOCK_EXPANSION(OLDIRQL)                    \
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);       \
+    ExAcquireSpinLock(&MmExpansionLock, &OLDIRQL); \
+    MM_SET_EXPANSION_OWNER();
 
-#define UNLOCK_EXPANSION(OLDIRQL)    MM_CLEAR_EXPANSION_OWNER (); \
-                                ExReleaseSpinLock (&MmExpansionLock, OLDIRQL); \
-                                ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+#define UNLOCK_EXPANSION(OLDIRQL)                 \
+    MM_CLEAR_EXPANSION_OWNER();                   \
+    ExReleaseSpinLock(&MmExpansionLock, OLDIRQL); \
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
-#define UNLOCK_EXPANSION_AND_THEN_WAIT(OLDIRQL)                    \
-                {                                                  \
-                    KIRQL XXX;                                     \
-                    ASSERT (KeGetCurrentIrql() == 2);              \
-                    ASSERT (OLDIRQL <= APC_LEVEL);                 \
-                    KiLockDispatcherDatabase (&XXX);               \
-                    MM_CLEAR_EXPANSION_OWNER ();                   \
-                    KiReleaseSpinLock (&MmExpansionLock);          \
-                    (KeGetCurrentThread())->WaitIrql = OLDIRQL;    \
-                    (KeGetCurrentThread())->WaitNext = TRUE;       \
-                }
+#define UNLOCK_EXPANSION_AND_THEN_WAIT(OLDIRQL)     \
+    {                                               \
+        KIRQL XXX;                                  \
+        ASSERT(KeGetCurrentIrql() == 2);            \
+        ASSERT(OLDIRQL <= APC_LEVEL);               \
+        KiLockDispatcherDatabase(&XXX);             \
+        MM_CLEAR_EXPANSION_OWNER();                 \
+        KiReleaseSpinLock(&MmExpansionLock);        \
+        (KeGetCurrentThread())->WaitIrql = OLDIRQL; \
+        (KeGetCurrentThread())->WaitNext = TRUE;    \
+    }
 
 extern PETHREAD MmSystemLockOwner;
 
-#define LOCK_SYSTEM_WS(OLDIRQL,_Thread)                         \
-            ASSERT (KeGetCurrentIrql() <= APC_LEVEL);           \
-            KeRaiseIrql(APC_LEVEL,&OLDIRQL);                    \
-            ExAcquireResourceExclusiveLite(&MmSystemWsLock,TRUE);   \
-            ASSERT (MmSystemLockOwner == NULL);                 \
-            MmSystemLockOwner = _Thread;
+#define LOCK_SYSTEM_WS(OLDIRQL, _Thread)                   \
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);               \
+    KeRaiseIrql(APC_LEVEL, &OLDIRQL);                      \
+    ExAcquireResourceExclusiveLite(&MmSystemWsLock, TRUE); \
+    ASSERT(MmSystemLockOwner == NULL);                     \
+    MmSystemLockOwner = _Thread;
 
-#define LOCK_SYSTEM_WS_UNSAFE(_Thread)                              \
-            ASSERT (KeGetCurrentIrql() == APC_LEVEL);               \
-            ExAcquireResourceExclusiveLite(&MmSystemWsLock,TRUE);   \
-            ASSERT (MmSystemLockOwner == NULL);                 \
-            MmSystemLockOwner = _Thread;
+#define LOCK_SYSTEM_WS_UNSAFE(_Thread)                     \
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);               \
+    ExAcquireResourceExclusiveLite(&MmSystemWsLock, TRUE); \
+    ASSERT(MmSystemLockOwner == NULL);                     \
+    MmSystemLockOwner = _Thread;
 
-#define UNLOCK_SYSTEM_WS(OLDIRQL)                               \
-            ASSERT (MmSystemLockOwner == PsGetCurrentThread()); \
-            MmSystemLockOwner = NULL;                           \
-            ExReleaseResourceLite (&MmSystemWsLock);            \
-            KeLowerIrql (OLDIRQL);                              \
-            ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+#define UNLOCK_SYSTEM_WS(OLDIRQL)                      \
+    ASSERT(MmSystemLockOwner == PsGetCurrentThread()); \
+    MmSystemLockOwner = NULL;                          \
+    ExReleaseResourceLite(&MmSystemWsLock);            \
+    KeLowerIrql(OLDIRQL);                              \
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
-#define UNLOCK_SYSTEM_WS_NO_IRQL()                              \
-            ASSERT (MmSystemLockOwner == PsGetCurrentThread()); \
-            MmSystemLockOwner = NULL;                           \
-            ExReleaseResourceLite (&MmSystemWsLock);
+#define UNLOCK_SYSTEM_WS_NO_IRQL()                     \
+    ASSERT(MmSystemLockOwner == PsGetCurrentThread()); \
+    MmSystemLockOwner = NULL;                          \
+    ExReleaseResourceLite(&MmSystemWsLock);
 
-#define MM_SYSTEM_WS_LOCK_ASSERT()                              \
-        ASSERT (PsGetCurrentThread() == MmSystemLockOwner);
+#define MM_SYSTEM_WS_LOCK_ASSERT() ASSERT(PsGetCurrentThread() == MmSystemLockOwner);
 
-#define LOCK_HYPERSPACE(_Process, OLDIRQL)                      \
-    ASSERT (_Process == PsGetCurrentProcess ());                \
-    ExAcquireSpinLock (&_Process->HyperSpaceLock, OLDIRQL);
+#define LOCK_HYPERSPACE(_Process, OLDIRQL)     \
+    ASSERT(_Process == PsGetCurrentProcess()); \
+    ExAcquireSpinLock(&_Process->HyperSpaceLock, OLDIRQL);
 
-#define UNLOCK_HYPERSPACE(_Process, VA, OLDIRQL)                \
-    ASSERT (_Process == PsGetCurrentProcess ());                \
-    MiGetPteAddress(VA)->u.Long = 0;                            \
-    ExReleaseSpinLock (&_Process->HyperSpaceLock, OLDIRQL);
+#define UNLOCK_HYPERSPACE(_Process, VA, OLDIRQL) \
+    ASSERT(_Process == PsGetCurrentProcess());   \
+    MiGetPteAddress(VA)->u.Long = 0;             \
+    ExReleaseSpinLock(&_Process->HyperSpaceLock, OLDIRQL);
 
-#define LOCK_HYPERSPACE_AT_DPC(_Process)                        \
-    ASSERT (KeGetCurrentIrql() == DISPATCH_LEVEL);              \
-    ASSERT (_Process == PsGetCurrentProcess ());                \
-    ExAcquireSpinLockAtDpcLevel (&_Process->HyperSpaceLock);
+#define LOCK_HYPERSPACE_AT_DPC(_Process)          \
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL); \
+    ASSERT(_Process == PsGetCurrentProcess());    \
+    ExAcquireSpinLockAtDpcLevel(&_Process->HyperSpaceLock);
 
-#define UNLOCK_HYPERSPACE_FROM_DPC(_Process, VA)                \
-    ASSERT (KeGetCurrentIrql() == DISPATCH_LEVEL);              \
-    ASSERT (_Process == PsGetCurrentProcess ());                \
-    MiGetPteAddress(VA)->u.Long = 0;                            \
-    ExReleaseSpinLockFromDpcLevel (&_Process->HyperSpaceLock);
+#define UNLOCK_HYPERSPACE_FROM_DPC(_Process, VA)  \
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL); \
+    ASSERT(_Process == PsGetCurrentProcess());    \
+    MiGetPteAddress(VA)->u.Long = 0;              \
+    ExReleaseSpinLockFromDpcLevel(&_Process->HyperSpaceLock);
 
 #define MiUnmapPageInHyperSpace(_Process, VA, OLDIRQL) UNLOCK_HYPERSPACE(_Process, VA, OLDIRQL)
 
 #define MiUnmapPageInHyperSpaceFromDpc(_Process, VA) UNLOCK_HYPERSPACE_FROM_DPC(_Process, VA)
 
-#if defined (_AXP64_)
+#if defined(_AXP64_)
 #define MI_WS_OWNER(PROCESS) ((PROCESS)->WorkingSetLock.Owner == KeGetCurrentThread())
 #define MI_NOT_WS_OWNER(PROCESS) (!MI_WS_OWNER(PROCESS))
 #else
-#define MI_WS_OWNER(PROCESS)        1
-#define MI_NOT_WS_OWNER(PROCESS)    1
+#define MI_WS_OWNER(PROCESS) 1
+#define MI_NOT_WS_OWNER(PROCESS) 1
 #endif
 
-#define MI_MUTEX_ACQUIRED_UNSAFE    0x88
+#define MI_MUTEX_ACQUIRED_UNSAFE 0x88
 
 #define MI_IS_WS_UNSAFE(PROCESS) ((PROCESS)->WorkingSetAcquiredUnsafe == MI_MUTEX_ACQUIRED_UNSAFE)
 
-#define LOCK_WS(PROCESS)                                            \
-            ASSERT (MI_NOT_WS_OWNER(PROCESS));                      \
-            ExAcquireFastMutex( &((PROCESS)->WorkingSetLock));      \
-            ASSERT (!MI_IS_WS_UNSAFE(PROCESS));
+#define LOCK_WS(PROCESS)                              \
+    ASSERT(MI_NOT_WS_OWNER(PROCESS));                 \
+    ExAcquireFastMutex(&((PROCESS)->WorkingSetLock)); \
+    ASSERT(!MI_IS_WS_UNSAFE(PROCESS));
 
-#define LOCK_WS_UNSAFE(PROCESS)                                     \
-            ASSERT (MI_NOT_WS_OWNER(PROCESS));                      \
-            ASSERT (KeGetCurrentIrql() == APC_LEVEL);               \
-            ExAcquireFastMutexUnsafe( &((PROCESS)->WorkingSetLock));\
-            (PROCESS)->WorkingSetAcquiredUnsafe = MI_MUTEX_ACQUIRED_UNSAFE;
+#define LOCK_WS_UNSAFE(PROCESS)                             \
+    ASSERT(MI_NOT_WS_OWNER(PROCESS));                       \
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);                \
+    ExAcquireFastMutexUnsafe(&((PROCESS)->WorkingSetLock)); \
+    (PROCESS)->WorkingSetAcquiredUnsafe = MI_MUTEX_ACQUIRED_UNSAFE;
 
-#define MI_MUST_BE_UNSAFE(PROCESS)                                  \
-            ASSERT (KeGetCurrentIrql() == APC_LEVEL);               \
-            ASSERT (MI_WS_OWNER(PROCESS));                          \
-            ASSERT (MI_IS_WS_UNSAFE(PROCESS));
+#define MI_MUST_BE_UNSAFE(PROCESS)           \
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL); \
+    ASSERT(MI_WS_OWNER(PROCESS));            \
+    ASSERT(MI_IS_WS_UNSAFE(PROCESS));
 
-#define MI_MUST_BE_SAFE(PROCESS)                                    \
-            ASSERT (MI_WS_OWNER(PROCESS));                          \
-            ASSERT (!MI_IS_WS_UNSAFE(PROCESS));
+#define MI_MUST_BE_SAFE(PROCESS)  \
+    ASSERT(MI_WS_OWNER(PROCESS)); \
+    ASSERT(!MI_IS_WS_UNSAFE(PROCESS));
 #if 0
 
-#define MI_MUST_BE_UNSAFE(PROCESS)                                  \
-            if (KeGetCurrentIrql() != APC_LEVEL) {                  \
-                KeBugCheckEx(MEMORY_MANAGEMENT, 0x32, (ULONG_PTR)PROCESS, KeGetCurrentIrql(), 0); \
-            }                                                       \
-            if (!MI_WS_OWNER(PROCESS)) {                            \
-                KeBugCheckEx(MEMORY_MANAGEMENT, 0x33, (ULONG_PTR)PROCESS, 0, 0); \
-            }                                                       \
-            if (!MI_IS_WS_UNSAFE(PROCESS)) {                        \
-                KeBugCheckEx(MEMORY_MANAGEMENT, 0x34, (ULONG_PTR)PROCESS, 0, 0); \
-            }
+#define MI_MUST_BE_UNSAFE(PROCESS)                                                        \
+    if (KeGetCurrentIrql() != APC_LEVEL)                                                  \
+    {                                                                                     \
+        KeBugCheckEx(MEMORY_MANAGEMENT, 0x32, (ULONG_PTR)PROCESS, KeGetCurrentIrql(), 0); \
+    }                                                                                     \
+    if (!MI_WS_OWNER(PROCESS))                                                            \
+    {                                                                                     \
+        KeBugCheckEx(MEMORY_MANAGEMENT, 0x33, (ULONG_PTR)PROCESS, 0, 0);                  \
+    }                                                                                     \
+    if (!MI_IS_WS_UNSAFE(PROCESS))                                                        \
+    {                                                                                     \
+        KeBugCheckEx(MEMORY_MANAGEMENT, 0x34, (ULONG_PTR)PROCESS, 0, 0);                  \
+    }
 
-#define MI_MUST_BE_SAFE(PROCESS)                                    \
-            if (!MI_WS_OWNER(PROCESS)) {                            \
-                KeBugCheckEx(MEMORY_MANAGEMENT, 0x42, (ULONG_PTR)PROCESS, 0, 0); \
-            }                                                       \
-            if (MI_IS_WS_UNSAFE(PROCESS)) {                         \
-                KeBugCheckEx(MEMORY_MANAGEMENT, 0x43, (ULONG_PTR)PROCESS, 0, 0); \
-            }
+#define MI_MUST_BE_SAFE(PROCESS)                                         \
+    if (!MI_WS_OWNER(PROCESS))                                           \
+    {                                                                    \
+        KeBugCheckEx(MEMORY_MANAGEMENT, 0x42, (ULONG_PTR)PROCESS, 0, 0); \
+    }                                                                    \
+    if (MI_IS_WS_UNSAFE(PROCESS))                                        \
+    {                                                                    \
+        KeBugCheckEx(MEMORY_MANAGEMENT, 0x43, (ULONG_PTR)PROCESS, 0, 0); \
+    }
 #endif
 
 
-#define UNLOCK_WS(PROCESS)                                          \
-            MI_MUST_BE_SAFE(PROCESS);                               \
-            ExReleaseFastMutex(&((PROCESS)->WorkingSetLock));
+#define UNLOCK_WS(PROCESS)    \
+    MI_MUST_BE_SAFE(PROCESS); \
+    ExReleaseFastMutex(&((PROCESS)->WorkingSetLock));
 
-#define UNLOCK_WS_UNSAFE(PROCESS)                                   \
-            MI_MUST_BE_UNSAFE(PROCESS);                             \
-            (PROCESS)->WorkingSetAcquiredUnsafe = 0;                \
-            ExReleaseFastMutexUnsafe(&((PROCESS)->WorkingSetLock)); \
-            ASSERT (KeGetCurrentIrql() == APC_LEVEL);
+#define UNLOCK_WS_UNSAFE(PROCESS)                           \
+    MI_MUST_BE_UNSAFE(PROCESS);                             \
+    (PROCESS)->WorkingSetAcquiredUnsafe = 0;                \
+    ExReleaseFastMutexUnsafe(&((PROCESS)->WorkingSetLock)); \
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);
 
-#define LOCK_ADDRESS_SPACE(PROCESS)                                  \
-            ExAcquireFastMutex( &((PROCESS)->AddressCreationLock))
+#define LOCK_ADDRESS_SPACE(PROCESS) ExAcquireFastMutex(&((PROCESS)->AddressCreationLock))
 
-#define LOCK_WS_AND_ADDRESS_SPACE(PROCESS)                          \
-        LOCK_ADDRESS_SPACE(PROCESS);                                \
-        LOCK_WS_UNSAFE(PROCESS);
+#define LOCK_WS_AND_ADDRESS_SPACE(PROCESS) \
+    LOCK_ADDRESS_SPACE(PROCESS);           \
+    LOCK_WS_UNSAFE(PROCESS);
 
-#define UNLOCK_WS_AND_ADDRESS_SPACE(PROCESS)                        \
-        UNLOCK_WS_UNSAFE(PROCESS);                                  \
-        UNLOCK_ADDRESS_SPACE(PROCESS);
+#define UNLOCK_WS_AND_ADDRESS_SPACE(PROCESS) \
+    UNLOCK_WS_UNSAFE(PROCESS);               \
+    UNLOCK_ADDRESS_SPACE(PROCESS);
 
-#define UNLOCK_ADDRESS_SPACE(PROCESS)                            \
-            ExReleaseFastMutex( &((PROCESS)->AddressCreationLock))
+#define UNLOCK_ADDRESS_SPACE(PROCESS) ExReleaseFastMutex(&((PROCESS)->AddressCreationLock))
 
 //
 // The working set lock may have been acquired safely or unsafely.
 // Release and reacquire it regardless.
 //
 
-#define UNLOCK_WS_REGARDLESS(PROCESS, WSHELDSAFE)                   \
-            ASSERT (MI_WS_OWNER (PROCESS));                         \
-            if (MI_IS_WS_UNSAFE (PROCESS)) {                        \
-                UNLOCK_WS_UNSAFE (PROCESS);                         \
-                WSHELDSAFE = FALSE;                                 \
-            }                                                       \
-            else {                                                  \
-                UNLOCK_WS (PROCESS);                                \
-                WSHELDSAFE = TRUE;                                  \
-            }
+#define UNLOCK_WS_REGARDLESS(PROCESS, WSHELDSAFE) \
+    ASSERT(MI_WS_OWNER(PROCESS));                 \
+    if (MI_IS_WS_UNSAFE(PROCESS))                 \
+    {                                             \
+        UNLOCK_WS_UNSAFE(PROCESS);                \
+        WSHELDSAFE = FALSE;                       \
+    }                                             \
+    else                                          \
+    {                                             \
+        UNLOCK_WS(PROCESS);                       \
+        WSHELDSAFE = TRUE;                        \
+    }
 
-#define LOCK_WS_REGARDLESS(PROCESS, WSHELDSAFE)                     \
-            if (WSHELDSAFE == TRUE) {                               \
-                LOCK_WS (PROCESS);                                  \
-            }                                                       \
-            else {                                                  \
-                LOCK_WS_UNSAFE (PROCESS);                           \
-            }
+#define LOCK_WS_REGARDLESS(PROCESS, WSHELDSAFE) \
+    if (WSHELDSAFE == TRUE)                     \
+    {                                           \
+        LOCK_WS(PROCESS);                       \
+    }                                           \
+    else                                        \
+    {                                           \
+        LOCK_WS_UNSAFE(PROCESS);                \
+    }
 
-#define ZERO_LARGE(LargeInteger)                \
-        (LargeInteger).LowPart = 0;             \
-        (LargeInteger).HighPart = 0;
+#define ZERO_LARGE(LargeInteger) \
+    (LargeInteger).LowPart = 0;  \
+    (LargeInteger).HighPart = 0;
 
-#define NO_BITS_FOUND   ((ULONG)-1)
+#define NO_BITS_FOUND ((ULONG) - 1)
 
 //++
 //
@@ -1191,8 +1182,7 @@ extern PETHREAD MmSystemLockOwner;
 //
 //--
 
-#define MI_CHECK_BIT(ARRAY,BIT)  \
-        (((ULONG)ARRAY[(BIT) / (sizeof(ULONG)*8)] >> ((BIT) & 0x1F)) & 1)
+#define MI_CHECK_BIT(ARRAY, BIT) (((ULONG)ARRAY[(BIT) / (sizeof(ULONG) * 8)] >> ((BIT) & 0x1F)) & 1)
 
 
 //++
@@ -1220,8 +1210,7 @@ extern PETHREAD MmSystemLockOwner;
 //
 //--
 
-#define MI_SET_BIT(ARRAY,BIT)  \
-        ARRAY[(BIT) / (sizeof(ULONG)*8)] |= (1 << ((BIT) & 0x1F))
+#define MI_SET_BIT(ARRAY, BIT) ARRAY[(BIT) / (sizeof(ULONG) * 8)] |= (1 << ((BIT) & 0x1F))
 
 
 //++
@@ -1249,8 +1238,7 @@ extern PETHREAD MmSystemLockOwner;
 //
 //--
 
-#define MI_CLEAR_BIT(ARRAY,BIT)  \
-        ARRAY[(BIT) / (sizeof(ULONG)*8)] &= ~(1 << ((BIT) & 0x1F))
+#define MI_CLEAR_BIT(ARRAY, BIT) ARRAY[(BIT) / (sizeof(ULONG) * 8)] &= ~(1 << ((BIT) & 0x1F))
 
 //
 // These control the mirroring capabilities.
@@ -1258,28 +1246,25 @@ extern PETHREAD MmSystemLockOwner;
 
 extern ULONG MmMirroring;
 
-#define MM_MIRRORING_ENABLED    0x1 // Enable mirroring capabilities.
-#define MM_MIRRORING_VERIFYING  0x2 // The HAL wants to verify the copy.
+#define MM_MIRRORING_ENABLED 0x1   // Enable mirroring capabilities.
+#define MM_MIRRORING_VERIFYING 0x2 // The HAL wants to verify the copy.
 
 extern PRTL_BITMAP MiMirrorBitMap;
 extern PRTL_BITMAP MiMirrorBitMap2;
 extern LOGICAL MiMirroringActive;
 
-#if defined (_WIN64)
-#define MI_MAGIC_AWE_PTEFRAME   0xffffedcb
+#if defined(_WIN64)
+#define MI_MAGIC_AWE_PTEFRAME 0xffffedcb
 #else
-#define MI_MAGIC_AWE_PTEFRAME   0xffedcb
+#define MI_MAGIC_AWE_PTEFRAME 0xffedcb
 #endif
 
-#define MI_PFN_IS_AWE(Pfn1)                                     \
-        ((Pfn1->u2.ShareCount <= 3) &&                          \
-         (Pfn1->u3.e1.PageLocation == ActiveAndValid) &&        \
-         (Pfn1->u4.VerifierAllocation == 0) &&               \
-         (Pfn1->u3.e1.LargeSessionAllocation == 0) &&           \
-         (Pfn1->u3.e1.StartOfAllocation == 1) &&                \
-         (Pfn1->u3.e1.EndOfAllocation == 1) &&                  \
-         (Pfn1->u4.PteFrame == MI_MAGIC_AWE_PTEFRAME))
-
+#define MI_PFN_IS_AWE(Pfn1)                                                             \
+    ((Pfn1->u2.ShareCount <= 3) && (Pfn1->u3.e1.PageLocation == ActiveAndValid) &&      \
+     (Pfn1->u4.VerifierAllocation == 0) && (Pfn1->u3.e1.LargeSessionAllocation == 0) && \
+     (Pfn1->u3.e1.StartOfAllocation == 1) && (Pfn1->u3.e1.EndOfAllocation == 1) &&      \
+     (Pfn1->u4.PteFrame == MI_MAGIC_AWE_PTEFRAME))
+
 
 //
 // PFN database element.
@@ -1295,19 +1280,20 @@ extern LOGICAL MiMirroringActive;
 
 #define LargeSessionAllocation PrototypePte
 
-typedef struct _MMPFNENTRY {
+typedef struct _MMPFNENTRY
+{
     ULONG Modified : 1;
     ULONG ReadInProgress : 1;
     ULONG WriteInProgress : 1;
-    ULONG PrototypePte: 1;
+    ULONG PrototypePte : 1;
     ULONG PageColor : 3;
     ULONG ParityError : 1;
     ULONG PageLocation : 3;
     ULONG RemovalRequested : 1;
     ULONG CacheAttribute : 2;
     ULONG Rom : 1;
-    ULONG LockCharged : 1;      // maintained for DBG only
-    ULONG DontUse : 16;         // overlays USHORT for reference count field.
+    ULONG LockCharged : 1; // maintained for DBG only
+    ULONG DontUse : 16;    // overlays USHORT for reference count field.
 } MMPFNENTRY;
 
 //
@@ -1316,7 +1302,8 @@ typedef struct _MMPFNENTRY {
 // be reflected throughout the code.
 //
 
-typedef enum _MI_PFN_CACHE_ATTRIBUTE {
+typedef enum _MI_PFN_CACHE_ATTRIBUTE
+{
     MiNonCached,
     MiCached,
     MiWriteCombined,
@@ -1357,14 +1344,12 @@ extern MI_PFN_CACHE_ATTRIBUTE MiPlatformCacheAttributes[2 * MmMaximumCacheType];
 //--
 FORCEINLINE
 MI_PFN_CACHE_ATTRIBUTE
-MI_TRANSLATE_CACHETYPE(
-    IN MEMORY_CACHING_TYPE InputCacheType,
-    IN ULONG IoSpace
-    )
+MI_TRANSLATE_CACHETYPE(IN MEMORY_CACHING_TYPE InputCacheType, IN ULONG IoSpace)
 {
-    ASSERT (InputCacheType <= MmWriteCombined);
+    ASSERT(InputCacheType <= MmWriteCombined);
 
-    if (IoSpace != 0) {
+    if (IoSpace != 0)
+    {
         IoSpace = MmMaximumCacheType;
     }
     return MiPlatformCacheAttributes[IoSpace + InputCacheType];
@@ -1399,28 +1384,27 @@ MI_TRANSLATE_CACHETYPE(
 //
 //--
 FORCEINLINE
-VOID
-MI_SET_CACHETYPE_TRANSLATION(
-    IN MEMORY_CACHING_TYPE    InputCacheType,
-    IN ULONG                  IoSpace,
-    IN MI_PFN_CACHE_ATTRIBUTE NewAttribute
-    )
+VOID MI_SET_CACHETYPE_TRANSLATION(IN MEMORY_CACHING_TYPE InputCacheType, IN ULONG IoSpace,
+                                  IN MI_PFN_CACHE_ATTRIBUTE NewAttribute)
 {
-    ASSERT (InputCacheType <= MmWriteCombined);
+    ASSERT(InputCacheType <= MmWriteCombined);
 
-    if (IoSpace != 0) {
+    if (IoSpace != 0)
+    {
         IoSpace = MmMaximumCacheType;
     }
 
     MiPlatformCacheAttributes[IoSpace + InputCacheType] = NewAttribute;
 }
 
-#if defined (_X86PAE_)
+#if defined(_X86PAE_)
 #pragma pack(1)
 #endif
 
-typedef struct _MMPFN {
-    union {
+typedef struct _MMPFN
+{
+    union
+    {
         PFN_NUMBER Flink;
         WSLE_NUMBER WsIndex;
         PKEVENT Event;
@@ -1428,53 +1412,59 @@ typedef struct _MMPFN {
         SINGLE_LIST_ENTRY NextStackPfn;
     } u1;
     PMMPTE PteAddress;
-    union {
+    union
+    {
         PFN_NUMBER Blink;
         ULONG_PTR ShareCount;
     } u2;
-    union {
+    union
+    {
         MMPFNENTRY e1;
-        struct {
+        struct
+        {
             USHORT ShortFlags;
             USHORT ReferenceCount;
         } e2;
     } u3;
-#if defined (_WIN64)
+#if defined(_WIN64)
     ULONG UsedPageTableEntries;
 #endif
     MMPTE OriginalPte;
-    union {
+    union
+    {
         ULONG_PTR EntireFrame;
-        struct {
-#if defined (_WIN64)
-            ULONG_PTR PteFrame: 58;
+        struct
+        {
+#if defined(_WIN64)
+            ULONG_PTR PteFrame : 58;
 #else
-            ULONG_PTR PteFrame: 26;
+            ULONG_PTR PteFrame : 26;
 #endif
             ULONG_PTR InPageError : 1;
             ULONG_PTR VerifierAllocation : 1;
             ULONG_PTR AweAllocation : 1;
-            ULONG_PTR LockCharged : 1;      // maintained for DBG only
-            ULONG_PTR KernelStack : 1;      // only for valid (not trans) pages
+            ULONG_PTR LockCharged : 1; // maintained for DBG only
+            ULONG_PTR KernelStack : 1; // only for valid (not trans) pages
             ULONG_PTR Reserved : 1;
         };
     } u4;
 
 } MMPFN, *PMMPFN;
 
-#if defined (_X86PAE_)
+#if defined(_X86PAE_)
 #pragma pack()
 #endif
 
 // #define _MI_DEBUG_DIRTY 1         // Uncomment this for dirty bit logging
 
-#if defined (_MI_DEBUG_DIRTY)
+#if defined(_MI_DEBUG_DIRTY)
 
 extern ULONG MiTrackDirtys;
 
 #define MI_DIRTY_BACKTRACE_LENGTH 17
 
-typedef struct _MI_DIRTY_TRACES {
+typedef struct _MI_DIRTY_TRACES
+{
 
     PETHREAD Thread;
     PEPROCESS Process;
@@ -1484,7 +1474,7 @@ typedef struct _MI_DIRTY_TRACES {
     ULONG_PTR ShareCount;
     USHORT ShortFlags;
     USHORT ReferenceCount;
-    PVOID StackTrace [MI_DIRTY_BACKTRACE_LENGTH];
+    PVOID StackTrace[MI_DIRTY_BACKTRACE_LENGTH];
 
 } MI_DIRTY_TRACES, *PMI_DIRTY_TRACES;
 
@@ -1492,20 +1482,15 @@ extern LONG MiDirtyIndex;
 
 extern PMI_DIRTY_TRACES MiDirtyTraces;
 
-VOID
-FORCEINLINE
-MiSnapDirty (
-    IN PMMPFN Pfn,
-    IN ULONG NewValue,
-    IN ULONG CallerId
-    )
+VOID FORCEINLINE MiSnapDirty(IN PMMPFN Pfn, IN ULONG NewValue, IN ULONG CallerId)
 {
     PEPROCESS Process;
     PMI_DIRTY_TRACES Information;
     ULONG Index;
     ULONG Hash;
 
-    if (MiDirtyTraces == NULL) {
+    if (MiDirtyTraces == NULL)
+    {
         return;
     }
 
@@ -1513,10 +1498,10 @@ MiSnapDirty (
     Index &= (MiTrackDirtys - 1);
     Information = &MiDirtyTraces[Index];
 
-    Process = PsGetCurrentProcess ();
+    Process = PsGetCurrentProcess();
 
-    Information->Thread = PsGetCurrentThread ();
-    Information->Process = Process; 
+    Information->Thread = PsGetCurrentThread();
+    Information->Process = Process;
     Information->Pfn = Pfn;
     Information->PointerPte = Pfn->PteAddress;
     Information->CallerId = CallerId;
@@ -1524,13 +1509,14 @@ MiSnapDirty (
     Information->ShortFlags = Pfn->u3.e2.ShortFlags;
     Information->ReferenceCount = Pfn->u3.e2.ReferenceCount;
 
-    if (NewValue != 0) {
-        Information->Process = (PEPROCESS) ((ULONG_PTR)Process | 0x1);
+    if (NewValue != 0)
+    {
+        Information->Process = (PEPROCESS)((ULONG_PTR)Process | 0x1);
     }
 
-    RtlZeroMemory (&Information->StackTrace[0], MI_DIRTY_BACKTRACE_LENGTH * sizeof(PVOID)); 
+    RtlZeroMemory(&Information->StackTrace[0], MI_DIRTY_BACKTRACE_LENGTH * sizeof(PVOID));
 
-    RtlCaptureStackBackTrace (0, MI_DIRTY_BACKTRACE_LENGTH, Information->StackTrace, &Hash);
+    RtlCaptureStackBackTrace(0, MI_DIRTY_BACKTRACE_LENGTH, Information->StackTrace, &Hash);
 }
 
 #define MI_SNAP_DIRTY(_Pfn, _NewValue, _Callerid) MiSnapDirty(_Pfn, _NewValue, _Callerid)
@@ -1540,9 +1526,9 @@ MiSnapDirty (
 #endif
 
 #if 0
-#define MI_STAMP_MODIFIED(Pfn,id)   (Pfn)->u4.Reserved = (id);
+#define MI_STAMP_MODIFIED(Pfn, id) (Pfn)->u4.Reserved = (id);
 #else
-#define MI_STAMP_MODIFIED(Pfn,id)
+#define MI_STAMP_MODIFIED(Pfn, id)
 #endif
 
 //++
@@ -1573,12 +1559,13 @@ MiSnapDirty (
 //
 //--
 //
-#define MI_SET_MODIFIED(_Pfn, _NewValue, _CallerId)             \
-            MI_SNAP_DIRTY (_Pfn, _NewValue, _CallerId);         \
-            if ((_NewValue) != 0) {                             \
-                MI_STAMP_MODIFIED (_Pfn, _CallerId);            \
-            }                                                   \
-            (_Pfn)->u3.e1.Modified = (_NewValue);
+#define MI_SET_MODIFIED(_Pfn, _NewValue, _CallerId) \
+    MI_SNAP_DIRTY(_Pfn, _NewValue, _CallerId);      \
+    if ((_NewValue) != 0)                           \
+    {                                               \
+        MI_STAMP_MODIFIED(_Pfn, _CallerId);         \
+    }                                               \
+    (_Pfn)->u3.e1.Modified = (_NewValue);
 
 //
 // ccNUMA is supported in multiprocessor PAE and WIN64 systems only.
@@ -1587,61 +1574,52 @@ MiSnapDirty (
 #if (defined(_WIN64) || defined(_X86PAE_)) && !defined(NT_UP)
 #define MI_MULTINODE
 
-VOID
-MiDetermineNode (
-    IN PFN_NUMBER Page,
-    IN PMMPFN Pfn
-    );
+VOID MiDetermineNode(IN PFN_NUMBER Page, IN PMMPFN Pfn);
 
 #else
 
-#define MiDetermineNode(x,y)    ((y)->u3.e1.PageColor = 0)
+#define MiDetermineNode(x, y) ((y)->u3.e1.PageColor = 0)
 
 #endif
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 
 //
 // Note there are some places where these portable macros are not currently
 // used because we are not in the correct address space required.
 //
 
-#define MI_CAPTURE_USED_PAGETABLE_ENTRIES(PFN) \
-        ASSERT ((PFN)->UsedPageTableEntries <= PTE_PER_PAGE); \
-        (PFN)->OriginalPte.u.Soft.UsedPageTableEntries = (PFN)->UsedPageTableEntries;
+#define MI_CAPTURE_USED_PAGETABLE_ENTRIES(PFN)           \
+    ASSERT((PFN)->UsedPageTableEntries <= PTE_PER_PAGE); \
+    (PFN)->OriginalPte.u.Soft.UsedPageTableEntries = (PFN)->UsedPageTableEntries;
 
-#define MI_RETRIEVE_USED_PAGETABLE_ENTRIES_FROM_PTE(RBL, PTE) \
-        ASSERT ((PTE)->u.Soft.UsedPageTableEntries <= PTE_PER_PAGE); \
-        (RBL)->UsedPageTableEntries = (ULONG)(((PMMPTE)(PTE))->u.Soft.UsedPageTableEntries);
+#define MI_RETRIEVE_USED_PAGETABLE_ENTRIES_FROM_PTE(RBL, PTE)   \
+    ASSERT((PTE)->u.Soft.UsedPageTableEntries <= PTE_PER_PAGE); \
+    (RBL)->UsedPageTableEntries = (ULONG)(((PMMPTE)(PTE))->u.Soft.UsedPageTableEntries);
 
-#define MI_ZERO_USED_PAGETABLE_ENTRIES_IN_INPAGE_SUPPORT(INPAGE_SUPPORT) \
-            (INPAGE_SUPPORT)->UsedPageTableEntries = 0;
+#define MI_ZERO_USED_PAGETABLE_ENTRIES_IN_INPAGE_SUPPORT(INPAGE_SUPPORT) (INPAGE_SUPPORT)->UsedPageTableEntries = 0;
 
 #define MI_ZERO_USED_PAGETABLE_ENTRIES_IN_PFN(PFN) (PFN)->UsedPageTableEntries = 0;
 
 #define MI_INSERT_USED_PAGETABLE_ENTRIES_IN_PFN(PFN, INPAGE_SUPPORT) \
-        ASSERT ((INPAGE_SUPPORT)->UsedPageTableEntries <= PTE_PER_PAGE); \
-        (PFN)->UsedPageTableEntries = (INPAGE_SUPPORT)->UsedPageTableEntries;
+    ASSERT((INPAGE_SUPPORT)->UsedPageTableEntries <= PTE_PER_PAGE);  \
+    (PFN)->UsedPageTableEntries = (INPAGE_SUPPORT)->UsedPageTableEntries;
 
-#define MI_ZERO_USED_PAGETABLE_ENTRIES(PFN) \
-        (PFN)->UsedPageTableEntries = 0;
+#define MI_ZERO_USED_PAGETABLE_ENTRIES(PFN) (PFN)->UsedPageTableEntries = 0;
 
-#define MI_CHECK_USED_PTES_HANDLE(VA) \
-        ASSERT (MiGetPdeAddress(VA)->u.Hard.Valid == 1);
+#define MI_CHECK_USED_PTES_HANDLE(VA) ASSERT(MiGetPdeAddress(VA)->u.Hard.Valid == 1);
 
-#define MI_GET_USED_PTES_HANDLE(VA) \
-        ((PVOID)MI_PFN_ELEMENT((PFN_NUMBER)MiGetPdeAddress(VA)->u.Hard.PageFrameNumber))
+#define MI_GET_USED_PTES_HANDLE(VA) ((PVOID)MI_PFN_ELEMENT((PFN_NUMBER)MiGetPdeAddress(VA)->u.Hard.PageFrameNumber))
 
-#define MI_GET_USED_PTES_FROM_HANDLE(PFN) \
-        ((ULONG)(((PMMPFN)(PFN))->UsedPageTableEntries))
+#define MI_GET_USED_PTES_FROM_HANDLE(PFN) ((ULONG)(((PMMPFN)(PFN))->UsedPageTableEntries))
 
-#define MI_INCREMENT_USED_PTES_BY_HANDLE(PFN) \
-        (((PMMPFN)(PFN))->UsedPageTableEntries += 1); \
-        ASSERT (((PMMPFN)(PFN))->UsedPageTableEntries <= PTE_PER_PAGE)
+#define MI_INCREMENT_USED_PTES_BY_HANDLE(PFN)     \
+    (((PMMPFN)(PFN))->UsedPageTableEntries += 1); \
+    ASSERT(((PMMPFN)(PFN))->UsedPageTableEntries <= PTE_PER_PAGE)
 
-#define MI_DECREMENT_USED_PTES_BY_HANDLE(PFN) \
-        (((PMMPFN)(PFN))->UsedPageTableEntries -= 1); \
-        ASSERT (((PMMPFN)(PFN))->UsedPageTableEntries < PTE_PER_PAGE)
+#define MI_DECREMENT_USED_PTES_BY_HANDLE(PFN)     \
+    (((PMMPFN)(PFN))->UsedPageTableEntries -= 1); \
+    ASSERT(((PMMPFN)(PFN))->UsedPageTableEntries < PTE_PER_PAGE)
 
 #else
 
@@ -1654,17 +1632,17 @@ MiDetermineNode (
 
 #define MI_CHECK_USED_PTES_HANDLE(VA)
 
-#define MI_GET_USED_PTES_HANDLE(VA) ((PVOID)&MmWorkingSetList->UsedPageTableEntries[MiGetPdeIndex(VA)])
+#define MI_GET_USED_PTES_HANDLE(VA) ((PVOID) & MmWorkingSetList->UsedPageTableEntries[MiGetPdeIndex(VA)])
 
 #define MI_GET_USED_PTES_FROM_HANDLE(PDSHORT) ((ULONG)(*(PUSHORT)(PDSHORT)))
 
 #define MI_INCREMENT_USED_PTES_BY_HANDLE(PDSHORT) \
-    ((*(PUSHORT)(PDSHORT)) += 1); \
-    ASSERT (((*(PUSHORT)(PDSHORT)) <= PTE_PER_PAGE))
+    ((*(PUSHORT)(PDSHORT)) += 1);                 \
+    ASSERT(((*(PUSHORT)(PDSHORT)) <= PTE_PER_PAGE))
 
 #define MI_DECREMENT_USED_PTES_BY_HANDLE(PDSHORT) \
-    ((*(PUSHORT)(PDSHORT)) -= 1); \
-    ASSERT (((*(PUSHORT)(PDSHORT)) < PTE_PER_PAGE))
+    ((*(PUSHORT)(PDSHORT)) -= 1);                 \
+    ASSERT(((*(PUSHORT)(PDSHORT)) < PTE_PER_PAGE))
 
 #endif
 
@@ -1679,17 +1657,17 @@ extern PFN_NUMBER MmSystemLockPagesCount;
 #define MI_LOCK_ID_COUNTER_MAX 64
 ULONG MiLockIds[MI_LOCK_ID_COUNTER_MAX];
 
-#define MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId)      \
-         ASSERT (Pfn->u3.e1.LockCharged == 0);          \
-         ASSERT (CallerId < MI_LOCK_ID_COUNTER_MAX);    \
-         MiLockIds[CallerId] += 1;                      \
-         Pfn->u3.e1.LockCharged = 1;
+#define MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId) \
+    ASSERT(Pfn->u3.e1.LockCharged == 0);           \
+    ASSERT(CallerId < MI_LOCK_ID_COUNTER_MAX);     \
+    MiLockIds[CallerId] += 1;                      \
+    Pfn->u3.e1.LockCharged = 1;
 
-#define MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId)    \
-         ASSERT (Pfn->u3.e1.LockCharged == 1);          \
-         ASSERT (CallerId < MI_LOCK_ID_COUNTER_MAX);    \
-         MiLockIds[CallerId] += 1;                      \
-         Pfn->u3.e1.LockCharged = 0;
+#define MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId) \
+    ASSERT(Pfn->u3.e1.LockCharged == 1);             \
+    ASSERT(CallerId < MI_LOCK_ID_COUNTER_MAX);       \
+    MiLockIds[CallerId] += 1;                        \
+    Pfn->u3.e1.LockCharged = 0;
 
 #else
 #define MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId)
@@ -1718,34 +1696,39 @@ ULONG MiLockIds[MI_LOCK_ID_COUNTER_MAX];
 //
 //--
 //
-#define MI_ADD_LOCKED_PAGE_CHARGE(Pfn, CallerId)                \
-    ASSERT (Pfn->u3.e2.ReferenceCount != 0);                    \
-    if (Pfn->u3.e2.ReferenceCount == 1) {                       \
-        if (Pfn->u2.ShareCount != 0) {                          \
-            ASSERT (Pfn->u3.e1.PageLocation == ActiveAndValid); \
-            MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);         \
-            MmSystemLockPagesCount += 1;                        \
-        }                                                       \
-        else {                                                  \
-            ASSERT (Pfn->u3.e1.LockCharged == 1);               \
-        }                                                       \
+#define MI_ADD_LOCKED_PAGE_CHARGE(Pfn, CallerId)               \
+    ASSERT(Pfn->u3.e2.ReferenceCount != 0);                    \
+    if (Pfn->u3.e2.ReferenceCount == 1)                        \
+    {                                                          \
+        if (Pfn->u2.ShareCount != 0)                           \
+        {                                                      \
+            ASSERT(Pfn->u3.e1.PageLocation == ActiveAndValid); \
+            MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);        \
+            MmSystemLockPagesCount += 1;                       \
+        }                                                      \
+        else                                                   \
+        {                                                      \
+            ASSERT(Pfn->u3.e1.LockCharged == 1);               \
+        }                                                      \
     }
 
 #define MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE(Pfn, CallerId) \
-    ASSERT (Pfn->u3.e1.PageLocation != ActiveAndValid);    \
-    ASSERT (Pfn->u2.ShareCount == 0);                      \
-    if (Pfn->u3.e2.ReferenceCount == 0) {                  \
-        MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);        \
-        MmSystemLockPagesCount += 1;                       \
+    ASSERT(Pfn->u3.e1.PageLocation != ActiveAndValid);             \
+    ASSERT(Pfn->u2.ShareCount == 0);                               \
+    if (Pfn->u3.e2.ReferenceCount == 0)                            \
+    {                                                              \
+        MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);                \
+        MmSystemLockPagesCount += 1;                               \
     }
 
 #define MI_ADD_LOCKED_PAGE_CHARGE_FOR_TRANSITION_PAGE(Pfn, CallerId) \
-    ASSERT (Pfn->u3.e1.PageLocation == ActiveAndValid);    \
-    ASSERT (Pfn->u2.ShareCount == 0);                      \
-    ASSERT (Pfn->u3.e2.ReferenceCount != 0);               \
-    if (Pfn->u3.e2.ReferenceCount == 1) {                  \
-        MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);        \
-        MmSystemLockPagesCount += 1;                       \
+    ASSERT(Pfn->u3.e1.PageLocation == ActiveAndValid);               \
+    ASSERT(Pfn->u2.ShareCount == 0);                                 \
+    ASSERT(Pfn->u3.e2.ReferenceCount != 0);                          \
+    if (Pfn->u3.e2.ReferenceCount == 1)                              \
+    {                                                                \
+        MI_MARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);                  \
+        MmSystemLockPagesCount += 1;                                 \
     }
 
 //++
@@ -1778,47 +1761,52 @@ ULONG MiLockIds[MI_LOCK_ID_COUNTER_MAX];
 //
 //--
 //
-#define MI_REMOVE_LOCKED_PAGE_CHARGE(Pfn, CallerId)                         \
-        ASSERT (Pfn->u3.e2.ReferenceCount != 0);                            \
-        if (Pfn->u3.e2.ReferenceCount == 2) {                               \
-            if (Pfn->u2.ShareCount >= 1) {                                  \
-                ASSERT (Pfn->u3.e1.PageLocation == ActiveAndValid);         \
-                MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);               \
-                MmSystemLockPagesCount -= 1;                                \
-            }                                                               \
-            else {                                                          \
-                /*                                                          \
+#define MI_REMOVE_LOCKED_PAGE_CHARGE(Pfn, CallerId)                        \
+    ASSERT(Pfn->u3.e2.ReferenceCount != 0);                                \
+    if (Pfn->u3.e2.ReferenceCount == 2)                                    \
+    {                                                                      \
+        if (Pfn->u2.ShareCount >= 1)                                       \
+        {                                                                  \
+            ASSERT(Pfn->u3.e1.PageLocation == ActiveAndValid);             \
+            MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);                  \
+            MmSystemLockPagesCount -= 1;                                   \
+        }                                                                  \
+        else                                                               \
+        {                                                                  \
+            /*                                                          \
                  * There are multiple referencers to this page and the      \
                  * page is no longer valid in any process address space.    \
                  * The systemwide lock count can only be decremented        \
                  * by the last dereference.                                 \
-                 */                                                         \
-                NOTHING;                                                    \
-            }                                                               \
-        }                                                                   \
-        else if (Pfn->u3.e2.ReferenceCount != 1) {                          \
-            /*                                                              \
+                 */ \
+            NOTHING;                                                       \
+        }                                                                  \
+    }                                                                      \
+    else if (Pfn->u3.e2.ReferenceCount != 1)                               \
+    {                                                                      \
+        /*                                                              \
              * There are still multiple referencers to this page (it may    \
              * or may not be resident in any process address space).        \
              * Since the systemwide lock count can only be decremented      \
              * by the last dereference (and this is not it), no action      \
              * is taken here.                                               \
-             */                                                             \
-            ASSERT (Pfn->u3.e2.ReferenceCount > 2);                         \
-            NOTHING;                                                        \
-        }                                                                   \
-        else {                                                              \
-            /*                                                              \
+             */ \
+        ASSERT(Pfn->u3.e2.ReferenceCount > 2);                             \
+        NOTHING;                                                           \
+    }                                                                      \
+    else                                                                   \
+    {                                                                      \
+        /*                                                              \
              * This page has already been deleted from all process address  \
              * spaces.  It is sitting in limbo (not on any list) awaiting   \
              * this last dereference.                                       \
-             */                                                             \
-            ASSERT (Pfn->u3.e2.ReferenceCount == 1);                        \
-            ASSERT (Pfn->u3.e1.PageLocation != ActiveAndValid);             \
-            ASSERT (Pfn->u2.ShareCount == 0);                               \
-            MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);                   \
-            MmSystemLockPagesCount -= 1;                                    \
-        }
+             */ \
+        ASSERT(Pfn->u3.e2.ReferenceCount == 1);                            \
+        ASSERT(Pfn->u3.e1.PageLocation != ActiveAndValid);                 \
+        ASSERT(Pfn->u2.ShareCount == 0);                                   \
+        MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);                      \
+        MmSystemLockPagesCount -= 1;                                       \
+    }
 
 //++
 //
@@ -1852,51 +1840,56 @@ ULONG MiLockIds[MI_LOCK_ID_COUNTER_MAX];
 //
 //--
 //
-#define MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn, CallerId)              \
-        ASSERT (Pfn->u3.e2.ReferenceCount != 0);                            \
-        if (Pfn->u3.e2.ReferenceCount == 2) {                               \
-            if (Pfn->u2.ShareCount >= 1) {                                  \
-                ASSERT (Pfn->u3.e1.PageLocation == ActiveAndValid);         \
-                MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);               \
-                MmSystemLockPagesCount -= 1;                                \
-            }                                                               \
-            else {                                                          \
-                /*                                                          \
+#define MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn, CallerId)             \
+    ASSERT(Pfn->u3.e2.ReferenceCount != 0);                                \
+    if (Pfn->u3.e2.ReferenceCount == 2)                                    \
+    {                                                                      \
+        if (Pfn->u2.ShareCount >= 1)                                       \
+        {                                                                  \
+            ASSERT(Pfn->u3.e1.PageLocation == ActiveAndValid);             \
+            MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);                  \
+            MmSystemLockPagesCount -= 1;                                   \
+        }                                                                  \
+        else                                                               \
+        {                                                                  \
+            /*                                                          \
                  * There are multiple referencers to this page and the      \
                  * page is no longer valid in any process address space.    \
                  * The systemwide lock count can only be decremented        \
                  * by the last dereference.                                 \
-                 */                                                         \
-                NOTHING;                                                    \
-            }                                                               \
-            Pfn->u3.e2.ReferenceCount -= 1;                                 \
-        }                                                                   \
-        else if (Pfn->u3.e2.ReferenceCount != 1) {                          \
-            /*                                                              \
+                 */ \
+            NOTHING;                                                       \
+        }                                                                  \
+        Pfn->u3.e2.ReferenceCount -= 1;                                    \
+    }                                                                      \
+    else if (Pfn->u3.e2.ReferenceCount != 1)                               \
+    {                                                                      \
+        /*                                                              \
              * There are still multiple referencers to this page (it may    \
              * or may not be resident in any process address space).        \
              * Since the systemwide lock count can only be decremented      \
              * by the last dereference (and this is not it), no action      \
              * is taken here.                                               \
-             */                                                             \
-            ASSERT (Pfn->u3.e2.ReferenceCount > 2);                         \
-            Pfn->u3.e2.ReferenceCount -= 1;                                 \
-        }                                                                   \
-        else {                                                              \
-            /*                                                              \
+             */ \
+        ASSERT(Pfn->u3.e2.ReferenceCount > 2);                             \
+        Pfn->u3.e2.ReferenceCount -= 1;                                    \
+    }                                                                      \
+    else                                                                   \
+    {                                                                      \
+        /*                                                              \
              * This page has already been deleted from all process address  \
              * spaces.  It is sitting in limbo (not on any list) awaiting   \
              * this last dereference.                                       \
-             */                                                             \
-            PFN_NUMBER _PageFrameIndex;                                     \
-            ASSERT (Pfn->u3.e2.ReferenceCount == 1);                        \
-            ASSERT (Pfn->u3.e1.PageLocation != ActiveAndValid);             \
-            ASSERT (Pfn->u2.ShareCount == 0);                               \
-            MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);                   \
-            MmSystemLockPagesCount -= 1;                                    \
-            _PageFrameIndex = Pfn - MmPfnDatabase;                          \
-            MiDecrementReferenceCount (_PageFrameIndex);                    \
-        }
+             */ \
+        PFN_NUMBER _PageFrameIndex;                                        \
+        ASSERT(Pfn->u3.e2.ReferenceCount == 1);                            \
+        ASSERT(Pfn->u3.e1.PageLocation != ActiveAndValid);                 \
+        ASSERT(Pfn->u2.ShareCount == 0);                                   \
+        MI_UNMARK_PFN_AS_LOCK_CHARGED(Pfn, CallerId);                      \
+        MmSystemLockPagesCount -= 1;                                       \
+        _PageFrameIndex = Pfn - MmPfnDatabase;                             \
+        MiDecrementReferenceCount(_PageFrameIndex);                        \
+    }
 
 //++
 //
@@ -1923,16 +1916,17 @@ ULONG MiLockIds[MI_LOCK_ID_COUNTER_MAX];
 //
 //--
 //
-#define MI_ZERO_WSINDEX(Pfn) \
-    Pfn->u1.Event = NULL;
+#define MI_ZERO_WSINDEX(Pfn) Pfn->u1.Event = NULL;
 
-typedef enum _MMSHARE_TYPE {
+typedef enum _MMSHARE_TYPE
+{
     Normal,
     ShareCountOnly,
     AndValid
 } MMSHARE_TYPE;
 
-typedef struct _MMWSLE_HASH {
+typedef struct _MMWSLE_HASH
+{
     PVOID Key;
     WSLE_NUMBER Index;
 } MMWSLE_HASH, *PMMWSLE_HASH;
@@ -1962,14 +1956,14 @@ typedef struct _MMWSLE_HASH {
 //--
 //
 #define MI_WSLE_HASH(Address, Wsl) \
-    ((WSLE_NUMBER)(((ULONG_PTR)PAGE_ALIGN(Address) >> (PAGE_SHIFT - 2)) % \
-        ((Wsl)->HashTableSize - 1)))
+    ((WSLE_NUMBER)(((ULONG_PTR)PAGE_ALIGN(Address) >> (PAGE_SHIFT - 2)) % ((Wsl)->HashTableSize - 1)))
 
 //
 // Working Set List Entry.
 //
 
-typedef struct _MMWSLENTRY {
+typedef struct _MMWSLENTRY
+{
     ULONG_PTR Valid : 1;
     ULONG_PTR LockedInWs : 1;
     ULONG_PTR LockedInMemory : 1;
@@ -1983,8 +1977,10 @@ typedef struct _MMWSLENTRY {
     ULONG_PTR VirtualPageNumber : MM_VIRTUAL_PAGE_SIZE;
 } MMWSLENTRY;
 
-typedef struct _MMWSLE {
-    union {
+typedef struct _MMWSLE
+{
+    union
+    {
         PVOID VirtualAddress;
         ULONG_PTR Long;
         MMWSLENTRY e1;
@@ -1999,12 +1995,13 @@ typedef MMWSLE *PMMWSLE;
 // Working Set List.  Must be quadword sized.
 //
 
-typedef struct _MMWSL {
+typedef struct _MMWSL
+{
     SIZE_T Quota;
     WSLE_NUMBER FirstFree;
     WSLE_NUMBER FirstDynamic;
     WSLE_NUMBER LastEntry;
-    WSLE_NUMBER NextSlot;               // The next slot to trim
+    WSLE_NUMBER NextSlot; // The next slot to trim
     PMMWSLE Wsle;
     WSLE_NUMBER LastInitializedWsle;
     WSLE_NUMBER NonDirectCount;
@@ -2023,13 +2020,14 @@ typedef struct _MMWSL {
     PULONG CommittedPageDirectories;
 
     ULONG NumberOfCommittedPageDirectoryParents;
-    ULONG CommittedPageDirectoryParents[(MM_USER_PAGE_DIRECTORY_PARENT_PAGES + sizeof(ULONG)*8-1)/(sizeof(ULONG)*8)];
+    ULONG CommittedPageDirectoryParents[(MM_USER_PAGE_DIRECTORY_PARENT_PAGES + sizeof(ULONG) * 8 - 1) /
+                                        (sizeof(ULONG) * 8)];
 
 #elif (_MI_PAGING_LEVELS >= 3)
     PULONG CommittedPageTables;
 
     ULONG NumberOfCommittedPageDirectories;
-    ULONG CommittedPageDirectories[(MM_USER_PAGE_DIRECTORY_PAGES + sizeof(ULONG)*8-1)/(sizeof(ULONG)*8)];
+    ULONG CommittedPageDirectories[(MM_USER_PAGE_DIRECTORY_PAGES + sizeof(ULONG) * 8 - 1) / (sizeof(ULONG) * 8)];
 
 #else
 
@@ -2040,7 +2038,7 @@ typedef struct _MMWSL {
 
     USHORT UsedPageTableEntries[MM_USER_PAGE_TABLE_PAGES];
 
-    ULONG CommittedPageTables[MM_USER_PAGE_TABLE_PAGES/(sizeof(ULONG)*8)];
+    ULONG CommittedPageTables[MM_USER_PAGE_TABLE_PAGES / (sizeof(ULONG) * 8)];
 #endif
 
 } MMWSL, *PMMWSL;
@@ -2164,7 +2162,8 @@ extern PKEVENT MiLowMemoryEvent;
 //
 //--
 
-typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
+typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST
+{
     WSLE_NUMBER Stride;
 } MI_NEXT_ESTIMATION_SLOT_CONST;
 
@@ -2173,19 +2172,22 @@ typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
     (NextEstimationSlotConst).Stride = 1 << MiEstimationShift;
 
 #define MI_NEXT_VALID_ESTIMATION_SLOT(Previous, StartEntry, Minimum, Maximum, NextEstimationSlotConst, Wsle) \
-    ASSERT(((Previous) >= Minimum) && ((Previous) <= Maximum)); \
-    ASSERT(((StartEntry) >= Minimum) && ((StartEntry) <= Maximum)); \
-    do { \
-        (Previous) += (NextEstimationSlotConst).Stride; \
-        if ((Previous) > Maximum) { \
-            (Previous) = Minimum + ((Previous + 1) & (NextEstimationSlotConst.Stride - 1)); \
-            StartEntry += 1; \
-            (Previous) = StartEntry; \
-        } \
-        if ((Previous) > Maximum || (Previous) < Minimum) { \
-            StartEntry = Minimum; \
-            (Previous) = StartEntry; \
-        } \
+    ASSERT(((Previous) >= Minimum) && ((Previous) <= Maximum));                                              \
+    ASSERT(((StartEntry) >= Minimum) && ((StartEntry) <= Maximum));                                          \
+    do                                                                                                       \
+    {                                                                                                        \
+        (Previous) += (NextEstimationSlotConst).Stride;                                                      \
+        if ((Previous) > Maximum)                                                                            \
+        {                                                                                                    \
+            (Previous) = Minimum + ((Previous + 1) & (NextEstimationSlotConst.Stride - 1));                  \
+            StartEntry += 1;                                                                                 \
+            (Previous) = StartEntry;                                                                         \
+        }                                                                                                    \
+        if ((Previous) > Maximum || (Previous) < Minimum)                                                    \
+        {                                                                                                    \
+            StartEntry = Minimum;                                                                            \
+            (Previous) = StartEntry;                                                                         \
+        }                                                                                                    \
     } while (Wsle[Previous].u1.e1.Valid == 0);
 
 //++
@@ -2224,12 +2226,14 @@ typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
 //--
 
 #define MI_NEXT_VALID_AGING_SLOT(Previous, Minimum, Maximum, Wsle) \
-    ASSERT(((Previous) >= Minimum) && ((Previous) <= Maximum)); \
-    do { \
-        (Previous) += 1; \
-        if ((Previous) > Maximum) { \
-            Previous = Minimum; \
-        } \
+    ASSERT(((Previous) >= Minimum) && ((Previous) <= Maximum));    \
+    do                                                             \
+    {                                                              \
+        (Previous) += 1;                                           \
+        if ((Previous) > Maximum)                                  \
+        {                                                          \
+            Previous = Minimum;                                    \
+        }                                                          \
     } while ((Wsle[Previous].u1.e1.Valid == 0));
 
 //++
@@ -2260,9 +2264,7 @@ typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
 //--
 
 #define MI_CALCULATE_USAGE_ESTIMATE(SampledAgeCounts, CounterShift) \
-                (((SampledAgeCounts)[1] + \
-                    (SampledAgeCounts)[2] + (SampledAgeCounts)[3]) \
-                    << (CounterShift))
+    (((SampledAgeCounts)[1] + (SampledAgeCounts)[2] + (SampledAgeCounts)[3]) << (CounterShift))
 
 //++
 //
@@ -2287,8 +2289,7 @@ typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
 //      None.
 //
 //--
-#define MI_RESET_WSLE_AGE(PointerPte, Wsle) \
-    (Wsle)->u1.e1.Age = 0;
+#define MI_RESET_WSLE_AGE(PointerPte, Wsle) (Wsle)->u1.e1.Age = 0;
 
 //++
 //
@@ -2312,8 +2313,7 @@ typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
 //      Age group of the working set entry
 //
 //--
-#define MI_GET_WSLE_AGE(PointerPte, Wsle) \
-    ((ULONG)((Wsle)->u1.e1.Age))
+#define MI_GET_WSLE_AGE(PointerPte, Wsle) ((ULONG)((Wsle)->u1.e1.Age))
 
 //++
 //
@@ -2340,8 +2340,9 @@ typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
 //--
 
 #define MI_INC_WSLE_AGE(PointerPte, Wsle) \
-    if ((Wsle)->u1.e1.Age < 3) { \
-        (Wsle)->u1.e1.Age += 1; \
+    if ((Wsle)->u1.e1.Age < 3)            \
+    {                                     \
+        (Wsle)->u1.e1.Age += 1;           \
     }
 
 //++
@@ -2371,8 +2372,7 @@ typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
 //
 //--
 
-#define MI_UPDATE_USE_ESTIMATE(PointerPte, Wsle, SampledAgeCounts) \
-    (SampledAgeCounts)[(Wsle)->u1.e1.Age] += 1;
+#define MI_UPDATE_USE_ESTIMATE(PointerPte, Wsle, SampledAgeCounts) (SampledAgeCounts)[(Wsle)->u1.e1.Age] += 1;
 
 //++
 //
@@ -2398,32 +2398,32 @@ typedef struct _MI_NEXT_ESTIMATION_SLOT_CONST {
 //--
 
 #define MI_WS_GROWING_TOO_FAST(VmSupport) \
-    ((VmSupport)->GrowthSinceLastEstimate > \
-        (((MI_CLAIM_INCR * (MmAvailablePages*MmAvailablePages)) / (64*64)) + 1))
+    ((VmSupport)->GrowthSinceLastEstimate > (((MI_CLAIM_INCR * (MmAvailablePages * MmAvailablePages)) / (64 * 64)) + 1))
 
-#define SECTION_BASE_ADDRESS(_NtSection) \
-    (*((PVOID *)&(_NtSection)->PointerToRelocations))
+#define SECTION_BASE_ADDRESS(_NtSection) (*((PVOID *)&(_NtSection)->PointerToRelocations))
 
-#define SECTION_LOCK_COUNT_POINTER(_NtSection) \
-    ((PLONG)&(_NtSection)->NumberOfRelocations)
+#define SECTION_LOCK_COUNT_POINTER(_NtSection) ((PLONG) & (_NtSection)->NumberOfRelocations)
 
 //
 // Memory Management Object structures.
 //
 
-typedef enum _SECTION_CHECK_TYPE {
+typedef enum _SECTION_CHECK_TYPE
+{
     CheckDataSection,
     CheckImageSection,
     CheckUserDataSection,
     CheckBothSection
 } SECTION_CHECK_TYPE;
 
-typedef struct _MMEXTEND_INFO {
+typedef struct _MMEXTEND_INFO
+{
     UINT64 CommittedSize;
     ULONG ReferenceCount;
 } MMEXTEND_INFO, *PMMEXTEND_INFO;
 
-typedef struct _SEGMENT {
+typedef struct _SEGMENT
+{
     struct _CONTROL_AREA *ControlArea;
     ULONG TotalNumberOfPtes;
     ULONG NonExtendedPtes;
@@ -2435,7 +2435,7 @@ typedef struct _SEGMENT {
     SIZE_T NumberOfCommittedPages;
     PMMEXTEND_INFO ExtendInfo;
 
-    PVOID SystemImageBase;   // could replace with single bit in ldrmodlist
+    PVOID SystemImageBase; // could replace with single bit in ldrmodlist
     PVOID BasedAddress;
 
     //
@@ -2444,14 +2444,16 @@ typedef struct _SEGMENT {
     // both the SEGMENT and MAPPED_FILE_SEGMENT declarations.
     //
 
-    union {
-        SIZE_T ImageCommitment;     // for image-backed sections only
-        PEPROCESS CreatingProcess;  // for pagefile-backed sections only
+    union
+    {
+        SIZE_T ImageCommitment;    // for image-backed sections only
+        PEPROCESS CreatingProcess; // for pagefile-backed sections only
     } u1;
 
-    union {
-        PSECTION_IMAGE_INFORMATION ImageInformation;    // for images only
-        PVOID FirstMappedVa;        // for pagefile-backed sections only
+    union
+    {
+        PSECTION_IMAGE_INFORMATION ImageInformation; // for images only
+        PVOID FirstMappedVa;                         // for pagefile-backed sections only
     } u2;
 
     PMMPTE PrototypePte;
@@ -2459,7 +2461,8 @@ typedef struct _SEGMENT {
 
 } SEGMENT, *PSEGMENT;
 
-typedef struct _MAPPED_FILE_SEGMENT {
+typedef struct _MAPPED_FILE_SEGMENT
+{
     struct _CONTROL_AREA *ControlArea;
     ULONG TotalNumberOfPtes;
     ULONG NonExtendedPtes;
@@ -2471,19 +2474,21 @@ typedef struct _MAPPED_FILE_SEGMENT {
     SIZE_T NumberOfCommittedPages;
     PMMEXTEND_INFO ExtendInfo;
 
-    PVOID SystemImageBase;      // could replace with single bit in ldrmodlist
+    PVOID SystemImageBase; // could replace with single bit in ldrmodlist
     PVOID BasedAddress;
     struct _MSUBSECTION *LastSubsectionHint;
 
 } MAPPED_FILE_SEGMENT, *PMAPPED_FILE_SEGMENT;
 
-typedef struct _EVENT_COUNTER {
+typedef struct _EVENT_COUNTER
+{
     SINGLE_LIST_ENTRY ListEntry;
     ULONG RefCount;
     KEVENT Event;
 } EVENT_COUNTER, *PEVENT_COUNTER;
 
-typedef struct _MMSECTION_FLAGS {
+typedef struct _MMSECTION_FLAGS
+{
     unsigned BeingDeleted : 1;
     unsigned BeingCreated : 1;
     unsigned BeingPurged : 1;
@@ -2499,7 +2504,7 @@ typedef struct _MMSECTION_FLAGS {
     unsigned PhysicalMemory : 1;
     unsigned CopyOnWrite : 1;
 
-    unsigned Reserve : 1;  // not a spare bit!
+    unsigned Reserve : 1; // not a spare bit!
     unsigned Commit : 1;
     unsigned FloppyMedia : 1;
     unsigned WasPurged : 1;
@@ -2524,7 +2529,8 @@ typedef struct _MMSECTION_FLAGS {
     unsigned filler : 2;
 } MMSECTION_FLAGS;
 
-typedef struct _CONTROL_AREA {      // must be quadword sized.
+typedef struct _CONTROL_AREA
+{ // must be quadword sized.
     PSEGMENT Segment;
     LIST_ENTRY DereferenceList;
     ULONG NumberOfSectionReferences;
@@ -2533,7 +2539,8 @@ typedef struct _CONTROL_AREA {      // must be quadword sized.
     USHORT NumberOfSubsections;
     USHORT FlushInProgressCount;
     ULONG NumberOfUserReferences;
-    union {
+    union
+    {
         ULONG LongFlags;
         MMSECTION_FLAGS Flags;
     } u;
@@ -2543,7 +2550,8 @@ typedef struct _CONTROL_AREA {      // must be quadword sized.
     USHORT NumberOfSystemCacheViews;
 } CONTROL_AREA, *PCONTROL_AREA;
 
-typedef struct _LARGE_CONTROL_AREA {      // must be quadword sized.
+typedef struct _LARGE_CONTROL_AREA
+{ // must be quadword sized.
     PSEGMENT Segment;
     LIST_ENTRY DereferenceList;
     ULONG NumberOfSectionReferences;
@@ -2552,7 +2560,8 @@ typedef struct _LARGE_CONTROL_AREA {      // must be quadword sized.
     USHORT NumberOfSubsections;
     USHORT FlushInProgressCount;
     ULONG NumberOfUserReferences;
-    union {
+    union
+    {
         ULONG LongFlags;
         MMSECTION_FLAGS Flags;
     } u;
@@ -2560,30 +2569,33 @@ typedef struct _LARGE_CONTROL_AREA {      // must be quadword sized.
     PEVENT_COUNTER WaitingForDeletion;
     USHORT ModifiedWriteCount;
     USHORT NumberOfSystemCacheViews;
-    PFN_NUMBER StartingFrame;       // only used if Flags.Rom == 1.
+    PFN_NUMBER StartingFrame; // only used if Flags.Rom == 1.
     LIST_ENTRY UserGlobalList;
     ULONG SessionId;
 } LARGE_CONTROL_AREA, *PLARGE_CONTROL_AREA;
 
-typedef struct _MMSUBSECTION_FLAGS {
+typedef struct _MMSUBSECTION_FLAGS
+{
     unsigned ReadOnly : 1;
     unsigned ReadWrite : 1;
     unsigned SubsectionStatic : 1;
-    unsigned GlobalMemory: 1;
+    unsigned GlobalMemory : 1;
     unsigned Protection : 5;
     unsigned LargePages : 1;
-    unsigned StartingSector4132 : 10;   // 2 ** (42+12) == 4MB*4GB == 16K TB
+    unsigned StartingSector4132 : 10; // 2 ** (42+12) == 4MB*4GB == 16K TB
     unsigned SectorEndOffset : 12;
 } MMSUBSECTION_FLAGS;
 
-typedef struct _SUBSECTION { // Must start on quadword boundary and be quad sized
+typedef struct _SUBSECTION
+{ // Must start on quadword boundary and be quad sized
     PCONTROL_AREA ControlArea;
-    union {
+    union
+    {
         ULONG LongFlags;
         MMSUBSECTION_FLAGS SubsectionFlags;
     } u;
     ULONG StartingSector;
-    ULONG NumberOfFullSectors;  // (4GB-1) * 4K == 16TB-4K limit per subsection
+    ULONG NumberOfFullSectors; // (4GB-1) * 4K == 16TB-4K limit per subsection
     PMMPTE SubsectionBase;
     ULONG UnusedPtes;
     ULONG PtesInSubsection;
@@ -2597,9 +2609,10 @@ extern const ULONG MMSECT;
 // (unlike MMSUBSECTION_FLAGS access which is not lock protected at all).
 //
 
-typedef struct _MMSUBSECTION_FLAGS2 {
+typedef struct _MMSUBSECTION_FLAGS2
+{
     unsigned SubsectionAccessed : 1;
-    unsigned SubsectionConverted : 1;       // only needed for debug
+    unsigned SubsectionConverted : 1; // only needed for debug
     unsigned Reserved : 30;
 } MMSUBSECTION_FLAGS2;
 
@@ -2608,69 +2621,48 @@ typedef struct _MMSUBSECTION_FLAGS2 {
 // or pagefile-backed shared memory.
 //
 
-typedef struct _MSUBSECTION { // Must start on quadword boundary and be quad sized
+typedef struct _MSUBSECTION
+{ // Must start on quadword boundary and be quad sized
     PCONTROL_AREA ControlArea;
-    union {
+    union
+    {
         ULONG LongFlags;
         MMSUBSECTION_FLAGS SubsectionFlags;
     } u;
     ULONG StartingSector;
-    ULONG NumberOfFullSectors;  // (4GB-1) * 4K == 16TB-4K limit per subsection
+    ULONG NumberOfFullSectors; // (4GB-1) * 4K == 16TB-4K limit per subsection
     PMMPTE SubsectionBase;
     ULONG UnusedPtes;
     ULONG PtesInSubsection;
     struct _SUBSECTION *NextSubsection;
     LIST_ENTRY DereferenceList;
     ULONG_PTR NumberOfMappedViews;
-    union {
+    union
+    {
         ULONG LongFlags2;
         MMSUBSECTION_FLAGS2 SubsectionFlags2;
     } u2;
 } MSUBSECTION, *PMSUBSECTION;
 
-#define MI_MAXIMUM_SECTION_SIZE ((UINT64)16*1024*1024*1024*1024*1024 - (1<<MM4K_SHIFT))
+#define MI_MAXIMUM_SECTION_SIZE ((UINT64)16 * 1024 * 1024 * 1024 * 1024 * 1024 - (1 << MM4K_SHIFT))
 
-VOID
-MiDecrementSubsections (
-    IN PSUBSECTION FirstSubsection,
-    IN PSUBSECTION LastSubsection OPTIONAL
-    );
+VOID MiDecrementSubsections(IN PSUBSECTION FirstSubsection, IN PSUBSECTION LastSubsection OPTIONAL);
 
 NTSTATUS
-MiAddViewsForSectionWithPfn (
-    IN PMSUBSECTION StartMappedSubsection,
-    IN ULONG LastPteOffset OPTIONAL
-    );
+MiAddViewsForSectionWithPfn(IN PMSUBSECTION StartMappedSubsection, IN ULONG LastPteOffset OPTIONAL);
 
 NTSTATUS
-MiAddViewsForSection (
-    IN PMSUBSECTION MappedSubsection,
-    IN ULONG LastPteOffset OPTIONAL,
-    IN KIRQL OldIrql,
-    OUT PULONG Waited
-    );
+MiAddViewsForSection(IN PMSUBSECTION MappedSubsection, IN ULONG LastPteOffset OPTIONAL, IN KIRQL OldIrql,
+                     OUT PULONG Waited);
 
 LOGICAL
-MiReferenceSubsection (
-    IN PMSUBSECTION MappedSubsection
-    );
+MiReferenceSubsection(IN PMSUBSECTION MappedSubsection);
 
-VOID
-MiRemoveViewsFromSection (
-    IN PMSUBSECTION StartMappedSubsection,
-    IN ULONG LastPteOffset OPTIONAL
-    );
+VOID MiRemoveViewsFromSection(IN PMSUBSECTION StartMappedSubsection, IN ULONG LastPteOffset OPTIONAL);
 
-VOID
-MiRemoveViewsFromSectionWithPfn (
-    IN PMSUBSECTION StartMappedSubsection,
-    IN ULONG LastPteOffset OPTIONAL
-    );
+VOID MiRemoveViewsFromSectionWithPfn(IN PMSUBSECTION StartMappedSubsection, IN ULONG LastPteOffset OPTIONAL);
 
-VOID
-MiSubsectionConsistent(
-    IN PSUBSECTION Subsection
-    );
+VOID MiSubsectionConsistent(IN PSUBSECTION Subsection);
 
 #if DBG
 #define MI_CHECK_SUBSECTION(_subsection) MiSubsectionConsistent((PSUBSECTION)(_subsection))
@@ -2703,10 +2695,9 @@ MiSubsectionConsistent(
 //
 //--
 
-#define Mi4KStartForSubsection(address, subsection)  \
-   subsection->StartingSector = ((PLARGE_INTEGER)address)->LowPart; \
-   subsection->u.SubsectionFlags.StartingSector4132 = \
-        (((PLARGE_INTEGER)(address))->HighPart & 0x3ff);
+#define Mi4KStartForSubsection(address, subsection)                  \
+    subsection->StartingSector = ((PLARGE_INTEGER)address)->LowPart; \
+    subsection->u.SubsectionFlags.StartingSector4132 = (((PLARGE_INTEGER)(address))->HighPart & 0x3ff);
 
 //++
 //ULONG
@@ -2732,11 +2723,12 @@ MiSubsectionConsistent(
 //
 //--
 
-#define Mi4KStartFromSubsection(address, subsection)  \
-   ((PLARGE_INTEGER)address)->LowPart = subsection->StartingSector; \
-   ((PLARGE_INTEGER)address)->HighPart = subsection->u.SubsectionFlags.StartingSector4132;
+#define Mi4KStartFromSubsection(address, subsection)                 \
+    ((PLARGE_INTEGER)address)->LowPart = subsection->StartingSector; \
+    ((PLARGE_INTEGER)address)->HighPart = subsection->u.SubsectionFlags.StartingSector4132;
 
-typedef struct _MMDEREFERENCE_SEGMENT_HEADER {
+typedef struct _MMDEREFERENCE_SEGMENT_HEADER
+{
     KSPIN_LOCK Lock;
     KSEMAPHORE Semaphore;
     LIST_ENTRY ListHead;
@@ -2751,7 +2743,8 @@ typedef struct _MMDEREFERENCE_SEGMENT_HEADER {
 // it is null.
 //
 
-typedef struct _MMPAGE_FILE_EXPANSION {
+typedef struct _MMPAGE_FILE_EXPANSION
+{
     PSEGMENT Segment;
     LIST_ENTRY DereferenceList;
     SIZE_T RequestedExpansionSize;
@@ -2761,28 +2754,30 @@ typedef struct _MMPAGE_FILE_EXPANSION {
     ULONG PageFileNumber;
 } MMPAGE_FILE_EXPANSION, *PMMPAGE_FILE_EXPANSION;
 
-#define MI_EXTEND_ANY_PAGEFILE      ((ULONG)-1)
-#define MI_CONTRACT_PAGEFILES       ((SIZE_T)-1)
+#define MI_EXTEND_ANY_PAGEFILE ((ULONG) - 1)
+#define MI_CONTRACT_PAGEFILES ((SIZE_T) - 1)
 
-typedef struct _MMWORKING_SET_EXPANSION_HEAD {
+typedef struct _MMWORKING_SET_EXPANSION_HEAD
+{
     LIST_ENTRY ListHead;
 } MMWORKING_SET_EXPANSION_HEAD;
 
-#define SUBSECTION_READ_ONLY      1L
-#define SUBSECTION_READ_WRITE     2L
-#define SUBSECTION_COPY_ON_WRITE  4L
-#define SUBSECTION_SHARE_ALLOW    8L
+#define SUBSECTION_READ_ONLY 1L
+#define SUBSECTION_READ_WRITE 2L
+#define SUBSECTION_COPY_ON_WRITE 4L
+#define SUBSECTION_SHARE_ALLOW 8L
 
 //
 // The MMINPAGE_FLAGS relies on the fact that a pool allocation is always
 // QUADWORD aligned so the low 3 bits are always available.
 //
 
-typedef struct _MMINPAGE_FLAGS {
+typedef struct _MMINPAGE_FLAGS
+{
     ULONG_PTR Completed : 1;
     ULONG_PTR Available1 : 1;
     ULONG_PTR Available2 : 1;
-#if defined (_WIN64)
+#if defined(_WIN64)
     ULONG_PTR PrefetchMdlHighBits : 61;
 #else
     ULONG_PTR PrefetchMdlHighBits : 29;
@@ -2791,35 +2786,38 @@ typedef struct _MMINPAGE_FLAGS {
 
 #define MI_EXTRACT_PREFETCH_MDL(_Support) ((PMDL)((ULONG_PTR)(_Support->u1.PrefetchMdl) & ~(sizeof(QUAD) - 1)))
 
-typedef struct _MMINPAGE_SUPPORT {
+typedef struct _MMINPAGE_SUPPORT
+{
     KEVENT Event;
     IO_STATUS_BLOCK IoStatus;
     LARGE_INTEGER ReadOffset;
     LONG WaitCount;
-#if defined (_WIN64)
+#if defined(_WIN64)
     ULONG UsedPageTableEntries;
 #endif
     PETHREAD Thread;
     PFILE_OBJECT FilePointer;
     PMMPTE BasePte;
     PMMPFN Pfn;
-    union {
+    union
+    {
         MMINPAGE_FLAGS e1;
         ULONG_PTR LongFlags;
-        PMDL PrefetchMdl;       // Only used under _PREFETCH_
+        PMDL PrefetchMdl; // Only used under _PREFETCH_
     } u1;
     MDL Mdl;
     PFN_NUMBER Page[MM_MAXIMUM_READ_CLUSTER_SIZE + 1];
     SINGLE_LIST_ENTRY ListEntry;
 } MMINPAGE_SUPPORT, *PMMINPAGE_SUPPORT;
 
-#define MI_PF_DUMMY_PAGE_PTE ((PMMPTE)0x23452345)   // Only used by _PREFETCH_
+#define MI_PF_DUMMY_PAGE_PTE ((PMMPTE)0x23452345) // Only used by _PREFETCH_
 
 //
 // Address Node.
 //
 
-typedef struct _MMADDRESS_NODE {
+typedef struct _MMADDRESS_NODE
+{
     ULONG_PTR StartingVpn;
     ULONG_PTR EndingVpn;
     struct _MMADDRESS_NODE *Parent;
@@ -2827,11 +2825,13 @@ typedef struct _MMADDRESS_NODE {
     struct _MMADDRESS_NODE *RightChild;
 } MMADDRESS_NODE, *PMMADDRESS_NODE;
 
-typedef struct _SECTION {
+typedef struct _SECTION
+{
     MMADDRESS_NODE Address;
     PSEGMENT Segment;
     LARGE_INTEGER SizeOfSection;
-    union {
+    union
+    {
         ULONG LongFlags;
         MMSECTION_FLAGS Flags;
     } u;
@@ -2844,7 +2844,8 @@ typedef struct _SECTION {
 // non-NULL.
 //
 
-typedef struct _MMBANKED_SECTION {
+typedef struct _MMBANKED_SECTION
+{
     PFN_NUMBER BasePhysicalPage;
     PMMPTE BasedPte;
     ULONG BankSize;
@@ -2863,7 +2864,7 @@ typedef struct _MMBANKED_SECTION {
 //  The first part of a virtual address descriptor is a MMADDRESS_NODE!!!
 //
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 
 #define COMMIT_SIZE 51
 
@@ -2879,12 +2880,13 @@ typedef struct _MMBANKED_SECTION {
 #endif
 #endif
 
-#define MM_MAX_COMMIT (((ULONG_PTR) 1 << COMMIT_SIZE) - 1)
+#define MM_MAX_COMMIT (((ULONG_PTR)1 << COMMIT_SIZE) - 1)
 
 #define MM_VIEW_UNMAP 0
 #define MM_VIEW_SHARE 1
 
-typedef struct _MMVAD_FLAGS {
+typedef struct _MMVAD_FLAGS
+{
     ULONG_PTR CommitCharge : COMMIT_SIZE; //limits system to 4k pages or bigger!
     ULONG_PTR PhysicalMapping : 1;
     ULONG_PTR ImageMap : 1;
@@ -2893,29 +2895,33 @@ typedef struct _MMVAD_FLAGS {
     ULONG_PTR WriteWatch : 1;
     ULONG_PTR Protection : 5;
     ULONG_PTR LargePages : 1;
-    ULONG_PTR MemCommit: 1;
-    ULONG_PTR PrivateMemory : 1;    //used to tell VAD from VAD_SHORT
+    ULONG_PTR MemCommit : 1;
+    ULONG_PTR PrivateMemory : 1; //used to tell VAD from VAD_SHORT
 } MMVAD_FLAGS;
 
-typedef struct _MMVAD_FLAGS2 {
-    unsigned FileOffset : 24;       // number of 64k units into file
-    unsigned SecNoChange : 1;       // set if SEC_NOCHANGE specified
-    unsigned OneSecured : 1;        // set if u3 field is a range
-    unsigned MultipleSecured : 1;   // set if u3 field is a list head
-    unsigned ReadOnly : 1;          // protected as ReadOnly
-    unsigned LongVad : 1;           // set if VAD is a long VAD
+typedef struct _MMVAD_FLAGS2
+{
+    unsigned FileOffset : 24;     // number of 64k units into file
+    unsigned SecNoChange : 1;     // set if SEC_NOCHANGE specified
+    unsigned OneSecured : 1;      // set if u3 field is a range
+    unsigned MultipleSecured : 1; // set if u3 field is a list head
+    unsigned ReadOnly : 1;        // protected as ReadOnly
+    unsigned LongVad : 1;         // set if VAD is a long VAD
     unsigned ExtendableFile : 1;
-    unsigned Inherit : 1;           //1 = ViewShare, 0 = ViewUnmap
+    unsigned Inherit : 1; //1 = ViewShare, 0 = ViewUnmap
     unsigned CopyOnWrite : 1;
 } MMVAD_FLAGS2;
 
-typedef struct _MMADDRESS_LIST {
+typedef struct _MMADDRESS_LIST
+{
     ULONG_PTR StartVpn;
     ULONG_PTR EndVpn;
 } MMADDRESS_LIST, *PMMADDRESS_LIST;
 
-typedef struct _MMSECURE_ENTRY {
-    union {
+typedef struct _MMSECURE_ENTRY
+{
+    union
+    {
         ULONG_PTR LongFlags2;
         MMVAD_FLAGS2 VadFlags2;
     } u2;
@@ -2924,58 +2930,68 @@ typedef struct _MMSECURE_ENTRY {
     LIST_ENTRY List;
 } MMSECURE_ENTRY, *PMMSECURE_ENTRY;
 
-typedef struct _ALIAS_VAD_INFO {
+typedef struct _ALIAS_VAD_INFO
+{
     KAPC Apc;
     ULONG NumberOfEntries;
     ULONG MaximumEntries;
 } ALIAS_VAD_INFO, *PALIAS_VAD_INFO;
 
-typedef struct _ALIAS_VAD_INFO2 {
+typedef struct _ALIAS_VAD_INFO2
+{
     ULONG BaseAddress;
     HANDLE SecureHandle;
 } ALIAS_VAD_INFO2, *PALIAS_VAD_INFO2;
 
-typedef struct _MMVAD {
+typedef struct _MMVAD
+{
     ULONG_PTR StartingVpn;
     ULONG_PTR EndingVpn;
     struct _MMVAD *Parent;
     struct _MMVAD *LeftChild;
     struct _MMVAD *RightChild;
-    union {
+    union
+    {
         ULONG_PTR LongFlags;
         MMVAD_FLAGS VadFlags;
     } u;
     PCONTROL_AREA ControlArea;
     PMMPTE FirstPrototypePte;
     PMMPTE LastContiguousPte;
-    union {
+    union
+    {
         ULONG LongFlags2;
         MMVAD_FLAGS2 VadFlags2;
     } u2;
 } MMVAD, *PMMVAD;
 
-typedef struct _MMVAD_LONG {
+typedef struct _MMVAD_LONG
+{
     ULONG_PTR StartingVpn;
     ULONG_PTR EndingVpn;
     struct _MMVAD *Parent;
     struct _MMVAD *LeftChild;
     struct _MMVAD *RightChild;
-    union {
+    union
+    {
         ULONG_PTR LongFlags;
         MMVAD_FLAGS VadFlags;
     } u;
     PCONTROL_AREA ControlArea;
     PMMPTE FirstPrototypePte;
     PMMPTE LastContiguousPte;
-    union {
+    union
+    {
         ULONG LongFlags2;
         MMVAD_FLAGS2 VadFlags2;
     } u2;
-    union {
+    union
+    {
         LIST_ENTRY List;
         MMADDRESS_LIST Secured;
     } u3;
-    union {
+    union
+    {
         PMMBANKED_SECTION Banked;
         PMMEXTEND_INFO ExtendedInfo;
     } u4;
@@ -2984,13 +3000,15 @@ typedef struct _MMVAD_LONG {
 #endif
 } MMVAD_LONG, *PMMVAD_LONG;
 
-typedef struct _MMVAD_SHORT {
+typedef struct _MMVAD_SHORT
+{
     ULONG_PTR StartingVpn;
     ULONG_PTR EndingVpn;
     struct _MMVAD *Parent;
     struct _MMVAD *LeftChild;
     struct _MMVAD *RightChild;
-    union {
+    union
+    {
         ULONG_PTR LongFlags;
         MMVAD_FLAGS VadFlags;
     } u;
@@ -2998,17 +3016,19 @@ typedef struct _MMVAD_SHORT {
 
 #define MI_GET_PROTECTION_FROM_VAD(_Vad) ((ULONG)(_Vad)->u.VadFlags.Protection)
 
-#define MI_PHYSICAL_VIEW_AWE    0x1     // AWE region
-#define MI_PHYSICAL_VIEW_PHYS   0x2     // Device\PhysicalMemory region
+#define MI_PHYSICAL_VIEW_AWE 0x1  // AWE region
+#define MI_PHYSICAL_VIEW_PHYS 0x2 // Device\PhysicalMemory region
 
-typedef struct _MI_PHYSICAL_VIEW {
+typedef struct _MI_PHYSICAL_VIEW
+{
     LIST_ENTRY ListEntry;
     PMMVAD Vad;
     PCHAR StartVa;
     PCHAR EndVa;
-    union {
-        ULONG_PTR LongFlags;    // physical or AWE Vad identification
-        PRTL_BITMAP BitMap;     // only if Vad->u.VadFlags.WriteWatch == 1
+    union
+    {
+        ULONG_PTR LongFlags; // physical or AWE Vad identification
+        PRTL_BITMAP BitMap;  // only if Vad->u.VadFlags.WriteWatch == 1
     } u;
 } MI_PHYSICAL_VIEW, *PMI_PHYSICAL_VIEW;
 
@@ -3021,17 +3041,14 @@ typedef struct _MI_PHYSICAL_VIEW {
 
 extern ULONG_PTR MiActiveWriteWatch;
 
-VOID
-MiCaptureWriteWatchDirtyBit (
-    IN PEPROCESS Process,
-    IN PVOID VirtualAddress
-    );
+VOID MiCaptureWriteWatchDirtyBit(IN PEPROCESS Process, IN PVOID VirtualAddress);
 
 //
 // Stuff for support of AWE (Address Windowing Extensions).
 //
 
-typedef struct _AWEINFO {
+typedef struct _AWEINFO
+{
     PRTL_BITMAP VadPhysicalPagesBitMap;
     ULONG_PTR VadPhysicalPages;
 
@@ -3048,34 +3065,29 @@ typedef struct _AWEINFO {
     LIST_ENTRY AweVadList;
 } AWEINFO, *PAWEINFO;
 
-VOID
-MiAweViewInserter (
-    IN PEPROCESS Process,
-    IN PMI_PHYSICAL_VIEW PhysicalView
-    );
+VOID MiAweViewInserter(IN PEPROCESS Process, IN PMI_PHYSICAL_VIEW PhysicalView);
 
-VOID
-MiAweViewRemover (
-    IN PEPROCESS Process,
-    IN PMMVAD Vad
-    );
+VOID MiAweViewRemover(IN PEPROCESS Process, IN PMMVAD Vad);
 
 //
 // Stuff for support of POSIX Fork.
 //
 
-typedef struct _MMCLONE_BLOCK {
+typedef struct _MMCLONE_BLOCK
+{
     MMPTE ProtoPte;
     LONG CloneRefCount;
 } MMCLONE_BLOCK, *PMMCLONE_BLOCK;
 
-typedef struct _MMCLONE_HEADER {
+typedef struct _MMCLONE_HEADER
+{
     ULONG NumberOfPtes;
     LONG NumberOfProcessReferences;
     PMMCLONE_BLOCK ClonePtes;
 } MMCLONE_HEADER, *PMMCLONE_HEADER;
 
-typedef struct _MMCLONE_DESCRIPTOR {
+typedef struct _MMCLONE_DESCRIPTOR
+{
     ULONG_PTR StartingVpn;
     ULONG_PTR EndingVpn;
     struct _MMCLONE_DESCRIPTOR *Parent;
@@ -3100,42 +3112,49 @@ typedef struct _MMCLONE_DESCRIPTOR {
 //          );
 //
 
-#define MiCreateBitMap(BMH,S,P) {                          \
-    ULONG _S;                                              \
-    ASSERT ((ULONG64)(S) < _4gb);                          \
-    _S = sizeof(RTL_BITMAP) + (ULONG)((((S) + 31) / 32) * 4);         \
-    *(BMH) = (PRTL_BITMAP)ExAllocatePoolWithTag( (P), _S, '  mM');       \
-    if (*(BMH)) { \
-        RtlInitializeBitMap( *(BMH), (PULONG)((*(BMH))+1), (ULONG)(S)); \
-    }                                                          \
-}
+#define MiCreateBitMap(BMH, S, P)                                            \
+    {                                                                        \
+        ULONG _S;                                                            \
+        ASSERT((ULONG64)(S) < _4gb);                                         \
+        _S = sizeof(RTL_BITMAP) + (ULONG)((((S) + 31) / 32) * 4);            \
+        *(BMH) = (PRTL_BITMAP)ExAllocatePoolWithTag((P), _S, '  mM');        \
+        if (*(BMH))                                                          \
+        {                                                                    \
+            RtlInitializeBitMap(*(BMH), (PULONG)((*(BMH)) + 1), (ULONG)(S)); \
+        }                                                                    \
+    }
 
-#define MiRemoveBitMap(BMH)     {                          \
-    ExFreePool(*(BMH));                                    \
-    *(BMH) = NULL;                                         \
-}
+#define MiRemoveBitMap(BMH) \
+    {                       \
+        ExFreePool(*(BMH)); \
+        *(BMH) = NULL;      \
+    }
 
-#define MI_INITIALIZE_ZERO_MDL(MDL) { \
-    MDL->Next = (PMDL) NULL; \
-    MDL->MdlFlags = 0; \
-    MDL->StartVa = NULL; \
-    MDL->ByteOffset = 0; \
-    MDL->ByteCount = 0; \
+#define MI_INITIALIZE_ZERO_MDL(MDL) \
+    {                               \
+        MDL->Next = (PMDL)NULL;     \
+        MDL->MdlFlags = 0;          \
+        MDL->StartVa = NULL;        \
+        MDL->ByteOffset = 0;        \
+        MDL->ByteCount = 0;         \
     }
 
 //
 // Page File structures.
 //
 
-typedef struct _MMMOD_WRITER_LISTHEAD {
+typedef struct _MMMOD_WRITER_LISTHEAD
+{
     LIST_ENTRY ListHead;
     KEVENT Event;
 } MMMOD_WRITER_LISTHEAD, *PMMMOD_WRITER_LISTHEAD;
 
-typedef struct _MMMOD_WRITER_MDL_ENTRY {
+typedef struct _MMMOD_WRITER_MDL_ENTRY
+{
     LIST_ENTRY Links;
     LARGE_INTEGER WriteOffset;
-    union {
+    union
+    {
         IO_STATUS_BLOCK IoStatus;
         LARGE_INTEGER LastByte;
     } u;
@@ -3154,7 +3173,8 @@ typedef struct _MMMOD_WRITER_MDL_ENTRY {
 
 #define MM_PAGING_FILE_MDLS 2
 
-typedef struct _MMPAGING_FILE {
+typedef struct _MMPAGING_FILE
+{
     PFN_NUMBER Size;
     PFN_NUMBER MaximumSize;
     PFN_NUMBER MinimumSize;
@@ -3178,21 +3198,24 @@ typedef struct _MMPAGING_FILE {
 // System PTE structures.
 //
 
-typedef enum _MMSYSTEM_PTE_POOL_TYPE {
+typedef enum _MMSYSTEM_PTE_POOL_TYPE
+{
     SystemPteSpace,
     NonPagedPoolExpansion,
     MaximumPtePoolTypes
 } MMSYSTEM_PTE_POOL_TYPE;
 
-typedef struct _MMFREE_POOL_ENTRY {
-    LIST_ENTRY List;        // maintained free&chk, 1st entry only
-    PFN_NUMBER Size;        // maintained free&chk, 1st entry only
-    ULONG Signature;        // maintained chk only, all entries
+typedef struct _MMFREE_POOL_ENTRY
+{
+    LIST_ENTRY List;                  // maintained free&chk, 1st entry only
+    PFN_NUMBER Size;                  // maintained free&chk, 1st entry only
+    ULONG Signature;                  // maintained chk only, all entries
     struct _MMFREE_POOL_ENTRY *Owner; // maintained free&chk, all entries
 } MMFREE_POOL_ENTRY, *PMMFREE_POOL_ENTRY;
 
 
-typedef struct _MMLOCK_CONFLICT {
+typedef struct _MMLOCK_CONFLICT
+{
     LIST_ENTRY List;
     PETHREAD Thread;
 } MMLOCK_CONFLICT, *PMMLOCK_CONFLICT;
@@ -3201,7 +3224,8 @@ typedef struct _MMLOCK_CONFLICT {
 // System view structures
 //
 
-typedef struct _MMVIEW {
+typedef struct _MMVIEW
+{
     ULONG_PTR Entry;
     PCONTROL_AREA ControlArea;
 } MMVIEW, *PMMVIEW;
@@ -3212,7 +3236,8 @@ typedef struct _MMVIEW {
 // to access this structure.
 //
 
-typedef struct _MMSESSION {
+typedef struct _MMSESSION
+{
 
     //
     // Never refer to the SystemSpaceViewLock directly - always use the pointer
@@ -3237,25 +3262,25 @@ typedef struct _MMSESSION {
 
 } MMSESSION, *PMMSESSION;
 
-extern MMSESSION   MmSession;
+extern MMSESSION MmSession;
 
-#define LOCK_SYSTEM_VIEW_SPACE(_Session) \
-            ExAcquireFastMutex (_Session->SystemSpaceViewLockPointer)
+#define LOCK_SYSTEM_VIEW_SPACE(_Session) ExAcquireFastMutex(_Session->SystemSpaceViewLockPointer)
 
-#define UNLOCK_SYSTEM_VIEW_SPACE(_Session) \
-            ExReleaseFastMutex (_Session->SystemSpaceViewLockPointer)
+#define UNLOCK_SYSTEM_VIEW_SPACE(_Session) ExReleaseFastMutex(_Session->SystemSpaceViewLockPointer)
 
 //
 // List for flushing TBs singularly.
 //
 
-typedef struct _MMPTE_FLUSH_LIST {
+typedef struct _MMPTE_FLUSH_LIST
+{
     ULONG Count;
     PMMPTE FlushPte[MM_MAXIMUM_FLUSH_COUNT];
     PVOID FlushVa[MM_MAXIMUM_FLUSH_COUNT];
 } MMPTE_FLUSH_LIST, *PMMPTE_FLUSH_LIST;
 
-typedef struct _LOCK_TRACKER {
+typedef struct _LOCK_TRACKER
+{
     LIST_ENTRY ListEntry;
     PMDL Mdl;
     PVOID StartVa;
@@ -3270,11 +3295,12 @@ typedef struct _LOCK_TRACKER {
     PEPROCESS Process;
 } LOCK_TRACKER, *PLOCK_TRACKER;
 
-extern LOGICAL  MmTrackLockedPages;
-extern BOOLEAN  MiTrackingAborted;
+extern LOGICAL MmTrackLockedPages;
+extern BOOLEAN MiTrackingAborted;
 extern KSPIN_LOCK MiTrackLockedPagesLock;
 
-typedef struct _LOCK_HEADER {
+typedef struct _LOCK_HEADER
+{
     LIST_ENTRY ListHead;
     PFN_NUMBER Count;
 } LOCK_HEADER, *PLOCK_HEADER;
@@ -3286,50 +3312,26 @@ extern LOGICAL MmSnapUnloads;
 extern ULONG MmLastUnloadedDriver;
 extern PUNLOADED_DRIVERS MmUnloadedDrivers;
 
-
-VOID
-MiInitMachineDependent (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
 
-VOID
-MiReportPhysicalMemory (
-    VOID
-    );
+VOID MiInitMachineDependent(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
+
+VOID MiReportPhysicalMemory(VOID);
 
 extern PFN_NUMBER MiNumberOfCompressionPages;
 
 NTSTATUS
-MiArmCompressionInterrupt (
-    VOID
-    );
+MiArmCompressionInterrupt(VOID);
 
-VOID
-MiBuildPagedPool (
-    VOID
-    );
+VOID MiBuildPagedPool(VOID);
 
-VOID
-MiInitializeNonPagedPool (
-    VOID
-    );
+VOID MiInitializeNonPagedPool(VOID);
 
 LOGICAL
-MiInitializeSystemSpaceMap (
-    PVOID Session OPTIONAL
-    );
+MiInitializeSystemSpaceMap(PVOID Session OPTIONAL);
 
-VOID
-MiFindInitializationCode (
-    OUT PVOID *StartVa,
-    OUT PVOID *EndVa
-    );
+VOID MiFindInitializationCode(OUT PVOID *StartVa, OUT PVOID *EndVa);
 
-VOID
-MiFreeInitializationCode (
-    IN PVOID StartVa,
-    IN PVOID EndVa
-    );
+VOID MiFreeInitializationCode(IN PVOID StartVa, IN PVOID EndVa);
 
 extern ULONG MiNonCachedCollisions;
 
@@ -3341,21 +3343,11 @@ extern ULONG MiNonCachedCollisions;
 extern PFN_NUMBER MiNoLowMemory;
 
 PVOID
-MiAllocateLowMemory (
-    IN SIZE_T NumberOfBytes,
-    IN PFN_NUMBER LowestAcceptablePfn,
-    IN PFN_NUMBER HighestAcceptablePfn,
-    IN PFN_NUMBER BoundaryPfn,
-    IN PVOID CallingAddress,
-    IN MEMORY_CACHING_TYPE CacheType,
-    IN ULONG Tag
-    );
+MiAllocateLowMemory(IN SIZE_T NumberOfBytes, IN PFN_NUMBER LowestAcceptablePfn, IN PFN_NUMBER HighestAcceptablePfn,
+                    IN PFN_NUMBER BoundaryPfn, IN PVOID CallingAddress, IN MEMORY_CACHING_TYPE CacheType, IN ULONG Tag);
 
 LOGICAL
-MiFreeLowMemory (
-    IN PVOID BaseAddress,
-    IN ULONG Tag
-    );
+MiFreeLowMemory(IN PVOID BaseAddress, IN ULONG Tag);
 
 //
 // Move drivers out of the low 16mb that ntldr placed them at - this makes more
@@ -3364,19 +3356,15 @@ MiFreeLowMemory (
 
 extern LOGICAL MmMakeLowMemory;
 
-VOID
-MiRemoveLowPages (
-    IN ULONG RemovePhase
-    );
+VOID MiRemoveLowPages(IN ULONG RemovePhase);
 
 ULONG
-MiSectionInitialization (
-    VOID
-    );
+MiSectionInitialization(VOID);
 
 #define MI_MAX_DEREFERENCE_CHUNK (64 * 1024 / PAGE_SIZE)
 
-typedef struct _MI_PFN_DEREFERENCE_CHUNK {
+typedef struct _MI_PFN_DEREFERENCE_CHUNK
+{
     SINGLE_LIST_ENTRY ListEntry;
     CSHORT Flags;
     USHORT NumberOfPages;
@@ -3386,24 +3374,15 @@ typedef struct _MI_PFN_DEREFERENCE_CHUNK {
 extern SLIST_HEADER MmPfnDereferenceSListHead;
 extern PSINGLE_LIST_ENTRY MmPfnDeferredList;
 
-#define MI_DEFER_PFN_HELD               0x1
-#define MI_DEFER_DRAIN_LOCAL_ONLY       0x2
+#define MI_DEFER_PFN_HELD 0x1
+#define MI_DEFER_DRAIN_LOCAL_ONLY 0x2
 
-VOID
-MiDeferredUnlockPages (
-     ULONG Flags
-     );
+VOID MiDeferredUnlockPages(ULONG Flags);
 
 LOGICAL
-MiFreeAllExpansionNonPagedPool (
-    IN LOGICAL PoolLockHeld
-    );
+MiFreeAllExpansionNonPagedPool(IN LOGICAL PoolLockHeld);
 
-VOID
-FASTCALL
-MiDecrementReferenceCount (
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID FASTCALL MiDecrementReferenceCount(IN PFN_NUMBER PageFrameIndex);
 
 //++
 //VOID
@@ -3434,23 +3413,21 @@ MiDecrementReferenceCount (
 //
 //--
 
-#define MiDecrementReferenceCountInline(PFN, FRAME)                     \
-            MM_PFN_LOCK_ASSERT();                                       \
-            ASSERT (MI_PFN_ELEMENT(FRAME) == (PFN));                    \
-            ASSERT ((FRAME) <= MmHighestPhysicalPage);                  \
-            ASSERT ((PFN)->u3.e2.ReferenceCount != 0);                  \
-            if ((PFN)->u3.e2.ReferenceCount != 1) {                     \
-                (PFN)->u3.e2.ReferenceCount -= 1;                       \
-            }                                                           \
-            else {                                                      \
-                MiDecrementReferenceCount (FRAME);                      \
-            }
+#define MiDecrementReferenceCountInline(PFN, FRAME) \
+    MM_PFN_LOCK_ASSERT();                           \
+    ASSERT(MI_PFN_ELEMENT(FRAME) == (PFN));         \
+    ASSERT((FRAME) <= MmHighestPhysicalPage);       \
+    ASSERT((PFN)->u3.e2.ReferenceCount != 0);       \
+    if ((PFN)->u3.e2.ReferenceCount != 1)           \
+    {                                               \
+        (PFN)->u3.e2.ReferenceCount -= 1;           \
+    }                                               \
+    else                                            \
+    {                                               \
+        MiDecrementReferenceCount(FRAME);           \
+    }
 
-VOID
-FASTCALL
-MiDecrementShareCount (
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID FASTCALL MiDecrementShareCount(IN PFN_NUMBER PageFrameIndex);
 
 #define MiDecrementShareCountOnly(P) MiDecrementShareCount(P)
 
@@ -3485,68 +3462,45 @@ MiDecrementShareCount (
 //
 //--
 
-#define MiDecrementShareCountInline(PFN, FRAME)                         \
-            MM_PFN_LOCK_ASSERT();                                       \
-            ASSERT (((FRAME) <= MmHighestPhysicalPage) && ((FRAME) > 0));   \
-            ASSERT (MI_PFN_ELEMENT(FRAME) == (PFN));                    \
-            ASSERT ((PFN)->u2.ShareCount != 0);                         \
-            if ((PFN)->u3.e1.PageLocation != ActiveAndValid && (PFN)->u3.e1.PageLocation != StandbyPageList) {                                            \
-                KeBugCheckEx (PFN_LIST_CORRUPT, 0x99, FRAME, (PFN)->u3.e1.PageLocation, 0);                                                             \
-            }                                                           \
-            if ((PFN)->u2.ShareCount != 1) {                            \
-                (PFN)->u2.ShareCount -= 1;                              \
-                PERFINFO_DECREFCNT((PFN), PERF_SOFT_TRIM, PERFINFO_LOG_TYPE_DECSHARCNT); \
-                ASSERT ((PFN)->u2.ShareCount < 0xF000000);              \
-            }                                                           \
-            else {                                                      \
-                MiDecrementShareCount (FRAME);                          \
-            }
+#define MiDecrementShareCountInline(PFN, FRAME)                                                      \
+    MM_PFN_LOCK_ASSERT();                                                                            \
+    ASSERT(((FRAME) <= MmHighestPhysicalPage) && ((FRAME) > 0));                                     \
+    ASSERT(MI_PFN_ELEMENT(FRAME) == (PFN));                                                          \
+    ASSERT((PFN)->u2.ShareCount != 0);                                                               \
+    if ((PFN)->u3.e1.PageLocation != ActiveAndValid && (PFN)->u3.e1.PageLocation != StandbyPageList) \
+    {                                                                                                \
+        KeBugCheckEx(PFN_LIST_CORRUPT, 0x99, FRAME, (PFN)->u3.e1.PageLocation, 0);                   \
+    }                                                                                                \
+    if ((PFN)->u2.ShareCount != 1)                                                                   \
+    {                                                                                                \
+        (PFN)->u2.ShareCount -= 1;                                                                   \
+        PERFINFO_DECREFCNT((PFN), PERF_SOFT_TRIM, PERFINFO_LOG_TYPE_DECSHARCNT);                     \
+        ASSERT((PFN)->u2.ShareCount < 0xF000000);                                                    \
+    }                                                                                                \
+    else                                                                                             \
+    {                                                                                                \
+        MiDecrementShareCount(FRAME);                                                                \
+    }
 
 //
 // Routines which operate on the Page Frame Database Lists
 //
 
-VOID
-FASTCALL
-MiInsertPageInList (
-    IN PMMPFNLIST ListHead,
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID FASTCALL MiInsertPageInList(IN PMMPFNLIST ListHead, IN PFN_NUMBER PageFrameIndex);
 
-VOID
-FASTCALL
-MiInsertPageInFreeList (
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID FASTCALL MiInsertPageInFreeList(IN PFN_NUMBER PageFrameIndex);
 
-VOID
-FASTCALL
-MiInsertStandbyListAtFront (
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID FASTCALL MiInsertStandbyListAtFront(IN PFN_NUMBER PageFrameIndex);
 
-PFN_NUMBER  //PageFrameIndex
-FASTCALL
-MiRemovePageFromList (
-    IN PMMPFNLIST ListHead
-    );
+PFN_NUMBER //PageFrameIndex
+    FASTCALL
+    MiRemovePageFromList(IN PMMPFNLIST ListHead);
 
-VOID
-FASTCALL
-MiUnlinkPageFromList (
-    IN PMMPFN Pfn
-    );
+VOID FASTCALL MiUnlinkPageFromList(IN PMMPFN Pfn);
 
-VOID
-MiUnlinkFreeOrZeroedPage (
-    IN PFN_NUMBER Page
-    );
+VOID MiUnlinkFreeOrZeroedPage(IN PFN_NUMBER Page);
 
-VOID
-FASTCALL
-MiInsertFrontModifiedNoWrite (
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID FASTCALL MiInsertFrontModifiedNoWrite(IN PFN_NUMBER PageFrameIndex);
 
 #define MM_MEDIUM_LIMIT 32
 
@@ -3554,178 +3508,89 @@ MiInsertFrontModifiedNoWrite (
 
 ULONG
 FASTCALL
-MiEnsureAvailablePageOrWait (
-    IN PEPROCESS Process,
-    IN PVOID VirtualAddress
-    );
+MiEnsureAvailablePageOrWait(IN PEPROCESS Process, IN PVOID VirtualAddress);
 
 PFN_NUMBER
-MiAllocatePfn (
-    IN PMMPTE PointerPte,
-    IN ULONG Protection
-    );
+MiAllocatePfn(IN PMMPTE PointerPte, IN ULONG Protection);
 
 PFN_NUMBER
 FASTCALL
-MiRemoveAnyPage (
-    IN ULONG PageColor
-    );
+MiRemoveAnyPage(IN ULONG PageColor);
 
 PFN_NUMBER
 FASTCALL
-MiRemoveZeroPage (
-    IN ULONG PageColor
-    );
+MiRemoveZeroPage(IN ULONG PageColor);
 
-VOID
-MiPurgeTransitionList (
-    VOID
-    );
+VOID MiPurgeTransitionList(VOID);
 
 PVOID
-MiFindContiguousMemory (
-    IN PFN_NUMBER LowestPfn,
-    IN PFN_NUMBER HighestPfn,
-    IN PFN_NUMBER BoundaryPfn,
-    IN PFN_NUMBER SizeInPages,
-    IN MEMORY_CACHING_TYPE CacheType,
-    IN PVOID CallingAddress
-    );
+MiFindContiguousMemory(IN PFN_NUMBER LowestPfn, IN PFN_NUMBER HighestPfn, IN PFN_NUMBER BoundaryPfn,
+                       IN PFN_NUMBER SizeInPages, IN MEMORY_CACHING_TYPE CacheType, IN PVOID CallingAddress);
 
 PVOID
-MiCheckForContiguousMemory (
-    IN PVOID BaseAddress,
-    IN PFN_NUMBER BaseAddressPages,
-    IN PFN_NUMBER SizeInPages,
-    IN PFN_NUMBER LowestPfn,
-    IN PFN_NUMBER HighestPfn,
-    IN PFN_NUMBER BoundaryPfn,
-    IN MI_PFN_CACHE_ATTRIBUTE CacheAttribute
-    );
+MiCheckForContiguousMemory(IN PVOID BaseAddress, IN PFN_NUMBER BaseAddressPages, IN PFN_NUMBER SizeInPages,
+                           IN PFN_NUMBER LowestPfn, IN PFN_NUMBER HighestPfn, IN PFN_NUMBER BoundaryPfn,
+                           IN MI_PFN_CACHE_ATTRIBUTE CacheAttribute);
 
 //
 // Routines which operate on the page frame database entry.
 //
 
-VOID
-MiInitializePfn (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPte,
-    IN ULONG ModifiedState
-    );
+VOID MiInitializePfn(IN PFN_NUMBER PageFrameIndex, IN PMMPTE PointerPte, IN ULONG ModifiedState);
 
-VOID
-MiInitializePfnForOtherProcess (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPte,
-    IN PFN_NUMBER ContainingPageFrame
-    );
+VOID MiInitializePfnForOtherProcess(IN PFN_NUMBER PageFrameIndex, IN PMMPTE PointerPte,
+                                    IN PFN_NUMBER ContainingPageFrame);
 
-VOID
-MiInitializeCopyOnWritePfn (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPte,
-    IN WSLE_NUMBER WorkingSetIndex,
-    IN PVOID SessionSpace
-    );
+VOID MiInitializeCopyOnWritePfn(IN PFN_NUMBER PageFrameIndex, IN PMMPTE PointerPte, IN WSLE_NUMBER WorkingSetIndex,
+                                IN PVOID SessionSpace);
 
-VOID
-MiInitializeTransitionPfn (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPte
-    );
+VOID MiInitializeTransitionPfn(IN PFN_NUMBER PageFrameIndex, IN PMMPTE PointerPte);
 
 extern SLIST_HEADER MmInPageSupportSListHead;
 
-VOID
-MiFreeInPageSupportBlock (
-    IN PMMINPAGE_SUPPORT Support
-    );
+VOID MiFreeInPageSupportBlock(IN PMMINPAGE_SUPPORT Support);
 
 PMMINPAGE_SUPPORT
-MiGetInPageSupportBlock (
-    IN LOGICAL PfnHeld,
-    IN PEPROCESS Process
-    );
+MiGetInPageSupportBlock(IN LOGICAL PfnHeld, IN PEPROCESS Process);
 
 //
 // Routines which require a physical page to be mapped into hyperspace
 // within the current process.
 //
 
-VOID
-FASTCALL
-MiZeroPhysicalPage (
-    IN PFN_NUMBER PageFrameIndex,
-    IN ULONG Color
-    );
+VOID FASTCALL MiZeroPhysicalPage(IN PFN_NUMBER PageFrameIndex, IN ULONG Color);
 
-VOID
-FASTCALL
-MiRestoreTransitionPte (
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID FASTCALL MiRestoreTransitionPte(IN PFN_NUMBER PageFrameIndex);
 
 PSUBSECTION
-MiGetSubsectionAndProtoFromPte (
-    IN PMMPTE PointerPte,
-    IN PMMPTE *ProtoPte
-    );
+MiGetSubsectionAndProtoFromPte(IN PMMPTE PointerPte, IN PMMPTE *ProtoPte);
 
 PVOID
-MiMapPageInHyperSpace (
-    IN PEPROCESS Process,
-    IN PFN_NUMBER PageFrameIndex,
-    OUT PKIRQL OldIrql
-    );
+MiMapPageInHyperSpace(IN PEPROCESS Process, IN PFN_NUMBER PageFrameIndex, OUT PKIRQL OldIrql);
 
 PVOID
-MiMapPageInHyperSpaceAtDpc (
-    IN PEPROCESS Process,
-    IN PFN_NUMBER PageFrameIndex
-    );
+MiMapPageInHyperSpaceAtDpc(IN PEPROCESS Process, IN PFN_NUMBER PageFrameIndex);
 
-#define MiUnmapPageInZeroSpace(VA) \
-    MiGetPteAddress(VA)->u.Long = 0;
+#define MiUnmapPageInZeroSpace(VA) MiGetPteAddress(VA)->u.Long = 0;
 
 PVOID
-MiMapImageHeaderInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex
-    );
+MiMapImageHeaderInHyperSpace(IN PFN_NUMBER PageFrameIndex);
 
-VOID
-MiUnmapImageHeaderInHyperSpace (
-    VOID
-    );
+VOID MiUnmapImageHeaderInHyperSpace(VOID);
 
-VOID
-MiUpdateImageHeaderPage (
-    IN PMMPTE PointerPte,
-    IN PFN_NUMBER PageFrameNumber,
-    IN PCONTROL_AREA ControlArea
-    );
+VOID MiUpdateImageHeaderPage(IN PMMPTE PointerPte, IN PFN_NUMBER PageFrameNumber, IN PCONTROL_AREA ControlArea);
 
 PFN_NUMBER
-MiGetPageForHeader (
-    VOID
-    );
+MiGetPageForHeader(VOID);
 
-VOID
-MiRemoveImageHeaderPage (
-    IN PFN_NUMBER PageFrameNumber
-    );
+VOID MiRemoveImageHeaderPage(IN PFN_NUMBER PageFrameNumber);
 
 PVOID
-MiMapPageToZeroInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex
-    );
+MiMapPageToZeroInHyperSpace(IN PFN_NUMBER PageFrameIndex);
 
 
 NTSTATUS
-MiGetWritablePagesInSection(
-    IN PSECTION Section,
-    OUT PULONG WritablePages
-    );
+MiGetWritablePagesInSection(IN PSECTION Section, OUT PULONG WritablePages);
 
 
 //
@@ -3733,82 +3598,38 @@ MiGetWritablePagesInSection(
 //
 
 PMMPTE
-MiReserveSystemPtes (
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPteType
-    );
+MiReserveSystemPtes(IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPteType);
 
 PMMPTE
-MiReserveAlignedSystemPtes (
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType,
-    IN ULONG Alignment
-    );
+MiReserveAlignedSystemPtes(IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType, IN ULONG Alignment);
 
-VOID
-MiReleaseSystemPtes (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPteType
-    );
+VOID MiReleaseSystemPtes(IN PMMPTE StartingPte, IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPteType);
 
-VOID
-MiReleaseSplitSystemPtes (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    );
+VOID MiReleaseSplitSystemPtes(IN PMMPTE StartingPte, IN ULONG NumberOfPtes,
+                              IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType);
 
-VOID
-MiIncrementSystemPtes (
-    IN ULONG  NumberOfPtes
-    );
+VOID MiIncrementSystemPtes(IN ULONG NumberOfPtes);
 
 LOGICAL
-MiGetSystemPteAvailability (
-    IN ULONG NumberOfPtes,
-    IN MM_PAGE_PRIORITY Priority
-    );
+MiGetSystemPteAvailability(IN ULONG NumberOfPtes, IN MM_PAGE_PRIORITY Priority);
 
-VOID
-MiIssueNoPtesBugcheck (
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPteType
-    );
+VOID MiIssueNoPtesBugcheck(IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPteType);
 
-VOID
-MiInitializeSystemPtes (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPteType
-    );
+VOID MiInitializeSystemPtes(IN PMMPTE StartingPte, IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPteType);
 
 NTSTATUS
-MiAddMappedPtes (
-    IN PMMPTE FirstPte,
-    IN ULONG NumberOfPtes,
-    IN PCONTROL_AREA ControlArea
-    );
+MiAddMappedPtes(IN PMMPTE FirstPte, IN ULONG NumberOfPtes, IN PCONTROL_AREA ControlArea);
 
-VOID
-MiInitializeIoTrackers (
-    VOID
-    );
+VOID MiInitializeIoTrackers(VOID);
 
 PVOID
-MiMapSinglePage (
-     IN PVOID VirtualAddress OPTIONAL,
-     IN PFN_NUMBER PageFrameIndex,
-     IN MEMORY_CACHING_TYPE CacheType,
-     IN MM_PAGE_PRIORITY Priority
-     );
+MiMapSinglePage(IN PVOID VirtualAddress OPTIONAL, IN PFN_NUMBER PageFrameIndex, IN MEMORY_CACHING_TYPE CacheType,
+                IN MM_PAGE_PRIORITY Priority);
 
-VOID
-MiUnmapSinglePage (
-     IN PVOID BaseAddress
-     );
+VOID MiUnmapSinglePage(IN PVOID BaseAddress);
 
-typedef struct _MM_PTE_MAPPING {
+typedef struct _MM_PTE_MAPPING
+{
     LIST_ENTRY ListEntry;
     PVOID SystemVa;
     PVOID SystemEndVa;
@@ -3820,10 +3641,7 @@ extern LIST_ENTRY MmProtectedPteList;
 extern KSPIN_LOCK MmProtectedPteLock;
 
 LOGICAL
-MiCheckSystemPteProtection (
-    IN ULONG_PTR StoreInstruction,
-    IN PVOID VirtualAddress
-    );
+MiCheckSystemPteProtection(IN ULONG_PTR StoreInstruction, IN PVOID VirtualAddress);
 
 //
 // Access Fault routines.
@@ -3832,145 +3650,66 @@ MiCheckSystemPteProtection (
 #define STATUS_ISSUE_PAGING_IO (0xC0033333)
 
 NTSTATUS
-MiDispatchFault (
-    IN ULONG_PTR FaultStatus,
-    IN PVOID VirtualAdress,
-    IN PMMPTE PointerPte,
-    IN PMMPTE PointerProtoPte,
-    IN PEPROCESS Process,
-    OUT PLOGICAL ApcNeeded
-    );
+MiDispatchFault(IN ULONG_PTR FaultStatus, IN PVOID VirtualAdress, IN PMMPTE PointerPte, IN PMMPTE PointerProtoPte,
+                IN PEPROCESS Process, OUT PLOGICAL ApcNeeded);
 
 NTSTATUS
-MiResolveDemandZeroFault (
-    IN PVOID VirtualAddress,
-    IN PMMPTE PointerPte,
-    IN PEPROCESS Process,
-    IN ULONG PrototypePte
-    );
+MiResolveDemandZeroFault(IN PVOID VirtualAddress, IN PMMPTE PointerPte, IN PEPROCESS Process, IN ULONG PrototypePte);
 
 NTSTATUS
-MiResolveTransitionFault (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte,
-    IN PEPROCESS Process,
-    IN ULONG PfnLockHeld,
-    OUT PLOGICAL ApcNeeded,
-    OUT PMMINPAGE_SUPPORT *InPageBlock
-    );
+MiResolveTransitionFault(IN PVOID FaultingAddress, IN PMMPTE PointerPte, IN PEPROCESS Process, IN ULONG PfnLockHeld,
+                         OUT PLOGICAL ApcNeeded, OUT PMMINPAGE_SUPPORT *InPageBlock);
 
 NTSTATUS
-MiResolvePageFileFault (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte,
-    IN PMMINPAGE_SUPPORT *ReadBlock,
-    IN PEPROCESS Process
-    );
+MiResolvePageFileFault(IN PVOID FaultingAddress, IN PMMPTE PointerPte, IN PMMINPAGE_SUPPORT *ReadBlock,
+                       IN PEPROCESS Process);
 
 NTSTATUS
-MiResolveProtoPteFault (
-    IN ULONG_PTR StoreInstruction,
-    IN PVOID VirtualAddress,
-    IN PMMPTE PointerPte,
-    IN PMMPTE PointerProtoPte,
-    IN PMMINPAGE_SUPPORT *ReadBlock,
-    IN PEPROCESS Process,
-    OUT PLOGICAL ApcNeeded
-    );
+MiResolveProtoPteFault(IN ULONG_PTR StoreInstruction, IN PVOID VirtualAddress, IN PMMPTE PointerPte,
+                       IN PMMPTE PointerProtoPte, IN PMMINPAGE_SUPPORT *ReadBlock, IN PEPROCESS Process,
+                       OUT PLOGICAL ApcNeeded);
 
 
 NTSTATUS
-MiResolveMappedFileFault (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte,
-    IN PMMINPAGE_SUPPORT *ReadBlock,
-    IN PEPROCESS Process
-    );
+MiResolveMappedFileFault(IN PVOID FaultingAddress, IN PMMPTE PointerPte, IN PMMINPAGE_SUPPORT *ReadBlock,
+                         IN PEPROCESS Process);
 
-VOID
-MiAddValidPageToWorkingSet (
-    IN PVOID VirtualAddress,
-    IN PMMPTE PointerPte,
-    IN PMMPFN Pfn1,
-    IN ULONG WsleMask
-    );
+VOID MiAddValidPageToWorkingSet(IN PVOID VirtualAddress, IN PMMPTE PointerPte, IN PMMPFN Pfn1, IN ULONG WsleMask);
 
 NTSTATUS
-MiWaitForInPageComplete (
-    IN PMMPFN Pfn,
-    IN PMMPTE PointerPte,
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPteContents,
-    IN PMMINPAGE_SUPPORT InPageSupport,
-    IN PEPROCESS CurrentProcess
-    );
+MiWaitForInPageComplete(IN PMMPFN Pfn, IN PMMPTE PointerPte, IN PVOID FaultingAddress, IN PMMPTE PointerPteContents,
+                        IN PMMINPAGE_SUPPORT InPageSupport, IN PEPROCESS CurrentProcess);
 
 LOGICAL
 FASTCALL
-MiCopyOnWrite (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte
-    );
+MiCopyOnWrite(IN PVOID FaultingAddress, IN PMMPTE PointerPte);
 
-VOID
-MiSetDirtyBit (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte,
-    IN ULONG PfnHeld
-    );
+VOID MiSetDirtyBit(IN PVOID FaultingAddress, IN PMMPTE PointerPte, IN ULONG PfnHeld);
 
-VOID
-MiSetModifyBit (
-    IN PMMPFN Pfn
-    );
+VOID MiSetModifyBit(IN PMMPFN Pfn);
 
 PMMPTE
-MiFindActualFaultingPte (
-    IN PVOID FaultingAddress
-    );
+MiFindActualFaultingPte(IN PVOID FaultingAddress);
 
-VOID
-MiInitializeReadInProgressSinglePfn (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMMPTE BasePte,
-    IN PKEVENT Event,
-    IN WSLE_NUMBER WorkingSetIndex
-    );
+VOID MiInitializeReadInProgressSinglePfn(IN PFN_NUMBER PageFrameIndex, IN PMMPTE BasePte, IN PKEVENT Event,
+                                         IN WSLE_NUMBER WorkingSetIndex);
 
-VOID
-MiInitializeReadInProgressPfn (
-    IN PMDL Mdl,
-    IN PMMPTE BasePte,
-    IN PKEVENT Event,
-    IN WSLE_NUMBER WorkingSetIndex
-    );
+VOID MiInitializeReadInProgressPfn(IN PMDL Mdl, IN PMMPTE BasePte, IN PKEVENT Event, IN WSLE_NUMBER WorkingSetIndex);
 
 NTSTATUS
-MiAccessCheck (
-    IN PMMPTE PointerPte,
-    IN ULONG_PTR WriteOperation,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN ULONG Protection,
-    IN BOOLEAN CallerHoldsPfnLock
-    );
+MiAccessCheck(IN PMMPTE PointerPte, IN ULONG_PTR WriteOperation, IN KPROCESSOR_MODE PreviousMode, IN ULONG Protection,
+              IN BOOLEAN CallerHoldsPfnLock);
 
 NTSTATUS
 FASTCALL
-MiCheckForUserStackOverflow (
-    IN PVOID FaultingAddress
-    );
+MiCheckForUserStackOverflow(IN PVOID FaultingAddress);
 
 PMMPTE
-MiCheckVirtualAddress (
-    IN PVOID VirtualAddress,
-    OUT PULONG ProtectCode
-    );
+MiCheckVirtualAddress(IN PVOID VirtualAddress, OUT PULONG ProtectCode);
 
 NTSTATUS
 FASTCALL
-MiCheckPdeForPagedPool (
-    IN PVOID VirtualAddress
-    );
+MiCheckPdeForPagedPool(IN PVOID VirtualAddress);
 
 //
 // Routines which operate on an address tree.
@@ -3978,106 +3717,56 @@ MiCheckPdeForPagedPool (
 
 PMMADDRESS_NODE
 FASTCALL
-MiGetNextNode (
-    IN PMMADDRESS_NODE Node
-    );
+MiGetNextNode(IN PMMADDRESS_NODE Node);
 
 PMMADDRESS_NODE
 FASTCALL
-MiGetPreviousNode (
-    IN PMMADDRESS_NODE Node
-    );
+MiGetPreviousNode(IN PMMADDRESS_NODE Node);
 
 
 PMMADDRESS_NODE
 FASTCALL
-MiGetFirstNode (
-    IN PMMADDRESS_NODE Root
-    );
+MiGetFirstNode(IN PMMADDRESS_NODE Root);
 
 PMMADDRESS_NODE
-MiGetLastNode (
-    IN PMMADDRESS_NODE Root
-    );
+MiGetLastNode(IN PMMADDRESS_NODE Root);
 
-VOID
-FASTCALL
-MiInsertNode (
-    IN PMMADDRESS_NODE Node,
-    IN OUT PMMADDRESS_NODE *Root
-    );
+VOID FASTCALL MiInsertNode(IN PMMADDRESS_NODE Node, IN OUT PMMADDRESS_NODE *Root);
 
-VOID
-FASTCALL
-MiRemoveNode (
-    IN PMMADDRESS_NODE Node,
-    IN OUT PMMADDRESS_NODE *Root
-    );
+VOID FASTCALL MiRemoveNode(IN PMMADDRESS_NODE Node, IN OUT PMMADDRESS_NODE *Root);
 
 PMMADDRESS_NODE
 FASTCALL
-MiLocateAddressInTree (
-    IN ULONG_PTR Vpn,
-    IN PMMADDRESS_NODE *Root
-    );
+MiLocateAddressInTree(IN ULONG_PTR Vpn, IN PMMADDRESS_NODE *Root);
 
 PMMADDRESS_NODE
-MiCheckForConflictingNode (
-    IN ULONG_PTR StartVpn,
-    IN ULONG_PTR EndVpn,
-    IN PMMADDRESS_NODE Root
-    );
+MiCheckForConflictingNode(IN ULONG_PTR StartVpn, IN ULONG_PTR EndVpn, IN PMMADDRESS_NODE Root);
 
 NTSTATUS
-MiFindEmptyAddressRangeInTree (
-    IN SIZE_T SizeOfRange,
-    IN ULONG_PTR Alignment,
-    IN PMMADDRESS_NODE Root,
-    OUT PMMADDRESS_NODE *PreviousVad,
-    OUT PVOID *Base
-    );
+MiFindEmptyAddressRangeInTree(IN SIZE_T SizeOfRange, IN ULONG_PTR Alignment, IN PMMADDRESS_NODE Root,
+                              OUT PMMADDRESS_NODE *PreviousVad, OUT PVOID *Base);
 
 NTSTATUS
-MiFindEmptyAddressRangeDownTree (
-    IN SIZE_T SizeOfRange,
-    IN PVOID HighestAddressToEndAt,
-    IN ULONG_PTR Alignment,
-    IN PMMADDRESS_NODE Root,
-    OUT PVOID *Base
-    );
+MiFindEmptyAddressRangeDownTree(IN SIZE_T SizeOfRange, IN PVOID HighestAddressToEndAt, IN ULONG_PTR Alignment,
+                                IN PMMADDRESS_NODE Root, OUT PVOID *Base);
 
-VOID
-NodeTreeWalk (
-    PMMADDRESS_NODE Start
-    );
+VOID NodeTreeWalk(PMMADDRESS_NODE Start);
 
 //
 // Routines which operate on the tree of virtual address descriptors.
 //
 
 NTSTATUS
-MiInsertVad (
-    IN PMMVAD Vad
-    );
+MiInsertVad(IN PMMVAD Vad);
 
-VOID
-MiRemoveVad (
-    IN PMMVAD Vad
-    );
+VOID MiRemoveVad(IN PMMVAD Vad);
 
 PMMVAD
 FASTCALL
-MiLocateAddress (
-    IN PVOID Vad
-    );
+MiLocateAddress(IN PVOID Vad);
 
 NTSTATUS
-MiFindEmptyAddressRange (
-    IN SIZE_T SizeOfRange,
-    IN ULONG_PTR Alignment,
-    IN ULONG QuickCheck,
-    IN PVOID *Base
-    );
+MiFindEmptyAddressRange(IN SIZE_T SizeOfRange, IN ULONG_PTR Alignment, IN ULONG QuickCheck, IN PVOID *Base);
 
 //
 // Routines which operate on the clone tree structure.
@@ -4085,308 +3774,136 @@ MiFindEmptyAddressRange (
 
 
 NTSTATUS
-MiCloneProcessAddressSpace (
-    IN PEPROCESS ProcessToClone,
-    IN PEPROCESS ProcessToInitialize,
-    IN PFN_NUMBER PdePhysicalPage,
-    IN PFN_NUMBER HyperPhysicalPage
-    );
+MiCloneProcessAddressSpace(IN PEPROCESS ProcessToClone, IN PEPROCESS ProcessToInitialize, IN PFN_NUMBER PdePhysicalPage,
+                           IN PFN_NUMBER HyperPhysicalPage);
 
 
 ULONG
-MiDecrementCloneBlockReference (
-    IN PMMCLONE_DESCRIPTOR CloneDescriptor,
-    IN PMMCLONE_BLOCK CloneBlock,
-    IN PEPROCESS CurrentProcess
-    );
+MiDecrementCloneBlockReference(IN PMMCLONE_DESCRIPTOR CloneDescriptor, IN PMMCLONE_BLOCK CloneBlock,
+                               IN PEPROCESS CurrentProcess);
 
 LOGICAL
-MiWaitForForkToComplete (
-    IN PEPROCESS CurrentProcess,
-    IN LOGICAL PfnHeld
-    );
+MiWaitForForkToComplete(IN PEPROCESS CurrentProcess, IN LOGICAL PfnHeld);
 
 //
 // Routines which operate on the working set list.
 //
 
 WSLE_NUMBER
-MiLocateAndReserveWsle (
-    IN PMMSUPPORT WsInfo
-    );
+MiLocateAndReserveWsle(IN PMMSUPPORT WsInfo);
 
-VOID
-MiReleaseWsle (
-    IN WSLE_NUMBER WorkingSetIndex,
-    IN PMMSUPPORT WsInfo
-    );
+VOID MiReleaseWsle(IN WSLE_NUMBER WorkingSetIndex, IN PMMSUPPORT WsInfo);
 
-VOID
-MiUpdateWsle (
-    IN PWSLE_NUMBER DesiredIndex,
-    IN PVOID VirtualAddress,
-    IN PMMWSL WorkingSetList,
-    IN PMMPFN Pfn
-    );
+VOID MiUpdateWsle(IN PWSLE_NUMBER DesiredIndex, IN PVOID VirtualAddress, IN PMMWSL WorkingSetList, IN PMMPFN Pfn);
 
-VOID
-MiInitializeWorkingSetList (
-    IN PEPROCESS CurrentProcess
-    );
+VOID MiInitializeWorkingSetList(IN PEPROCESS CurrentProcess);
 
-VOID
-MiGrowWsleHash (
-    IN PMMSUPPORT WsInfo
-    );
+VOID MiGrowWsleHash(IN PMMSUPPORT WsInfo);
 
 WSLE_NUMBER
-MiTrimWorkingSet (
-    IN WSLE_NUMBER Reduction,
-    IN PMMSUPPORT WsInfo,
-    IN ULONG TrimAge
-    );
+MiTrimWorkingSet(IN WSLE_NUMBER Reduction, IN PMMSUPPORT WsInfo, IN ULONG TrimAge);
 
 LOGICAL
-MmTrimProcessMemory (
-    IN LOGICAL PurgeTransition
-    );
+MmTrimProcessMemory(IN LOGICAL PurgeTransition);
 
 LOGICAL
-MmTrimSessionMemory (
-    IN LOGICAL PurgeTransition
-    );
+MmTrimSessionMemory(IN LOGICAL PurgeTransition);
 
-VOID
-MiRemoveWorkingSetPages (
-    IN PMMWSL WorkingSetList,
-    IN PMMSUPPORT WsInfo
-    );
+VOID MiRemoveWorkingSetPages(IN PMMWSL WorkingSetList, IN PMMSUPPORT WsInfo);
 
-VOID
-MiAgeAndEstimateAvailableInWorkingSet (
-    IN PMMSUPPORT VmSupport,
-    IN LOGICAL DoAging,
-    IN PWSLE_NUMBER WslesScanned,
-    IN OUT PPFN_NUMBER TotalClaim,
-    IN OUT PPFN_NUMBER TotalEstimatedAvailable
-    );
+VOID MiAgeAndEstimateAvailableInWorkingSet(IN PMMSUPPORT VmSupport, IN LOGICAL DoAging, IN PWSLE_NUMBER WslesScanned,
+                                           IN OUT PPFN_NUMBER TotalClaim, IN OUT PPFN_NUMBER TotalEstimatedAvailable);
 
-VOID
-FASTCALL
-MiInsertWsleHash (
-    IN WSLE_NUMBER Entry,
-    IN PMMWSL WorkingSetList
-    );
+VOID FASTCALL MiInsertWsleHash(IN WSLE_NUMBER Entry, IN PMMWSL WorkingSetList);
 
-VOID
-FASTCALL
-MiRemoveWsle (
-    IN WSLE_NUMBER Entry,
-    IN PMMWSL WorkingSetList
-    );
+VOID FASTCALL MiRemoveWsle(IN WSLE_NUMBER Entry, IN PMMWSL WorkingSetList);
 
 WSLE_NUMBER
 FASTCALL
-MiLocateWsle (
-    IN PVOID VirtualAddress,
-    IN PMMWSL WorkingSetList,
-    IN WSLE_NUMBER WsPfnIndex
-    );
+MiLocateWsle(IN PVOID VirtualAddress, IN PMMWSL WorkingSetList, IN WSLE_NUMBER WsPfnIndex);
 
 ULONG
-MiFreeWsle (
-    IN WSLE_NUMBER WorkingSetIndex,
-    IN PMMSUPPORT WsInfo,
-    IN PMMPTE PointerPte
-    );
+MiFreeWsle(IN WSLE_NUMBER WorkingSetIndex, IN PMMSUPPORT WsInfo, IN PMMPTE PointerPte);
 
-VOID
-MiSwapWslEntries (
-    IN WSLE_NUMBER SwapEntry,
-    IN WSLE_NUMBER Entry,
-    IN PMMSUPPORT WsInfo
-    );
+VOID MiSwapWslEntries(IN WSLE_NUMBER SwapEntry, IN WSLE_NUMBER Entry, IN PMMSUPPORT WsInfo);
 
-VOID
-MiRemoveWsleFromFreeList (
-    IN WSLE_NUMBER Entry,
-    IN PMMWSLE Wsle,
-    IN PMMWSL WorkingSetList
-    );
+VOID MiRemoveWsleFromFreeList(IN WSLE_NUMBER Entry, IN PMMWSLE Wsle, IN PMMWSL WorkingSetList);
 
 ULONG
-MiRemovePageFromWorkingSet (
-    IN PMMPTE PointerPte,
-    IN PMMPFN Pfn1,
-    IN PMMSUPPORT WsInfo
-    );
+MiRemovePageFromWorkingSet(IN PMMPTE PointerPte, IN PMMPFN Pfn1, IN PMMSUPPORT WsInfo);
 
 PFN_NUMBER
-MiDeleteSystemPagableVm (
-    IN PMMPTE PointerPte,
-    IN PFN_NUMBER NumberOfPtes,
-    IN MMPTE NewPteValue,
-    IN LOGICAL SessionAllocation,
-    OUT PPFN_NUMBER ResidentPages OPTIONAL
-    );
+MiDeleteSystemPagableVm(IN PMMPTE PointerPte, IN PFN_NUMBER NumberOfPtes, IN MMPTE NewPteValue,
+                        IN LOGICAL SessionAllocation, OUT PPFN_NUMBER ResidentPages OPTIONAL);
 
-VOID
-MiLockCode (
-    IN PMMPTE FirstPte,
-    IN PMMPTE LastPte,
-    IN ULONG LockType
-    );
+VOID MiLockCode(IN PMMPTE FirstPte, IN PMMPTE LastPte, IN ULONG LockType);
 
 PKLDR_DATA_TABLE_ENTRY
-MiLookupDataTableEntry (
-    IN PVOID AddressWithinSection,
-    IN ULONG ResourceHeld
-    );
+MiLookupDataTableEntry(IN PVOID AddressWithinSection, IN ULONG ResourceHeld);
 
 //
 // Routines which perform working set management.
 //
 
-VOID
-MiObtainFreePages (
-    VOID
-    );
+VOID MiObtainFreePages(VOID);
 
-VOID
-MiModifiedPageWriter (
-    IN PVOID StartContext
-    );
+VOID MiModifiedPageWriter(IN PVOID StartContext);
 
-VOID
-MiMappedPageWriter (
-    IN PVOID StartContext
-    );
+VOID MiMappedPageWriter(IN PVOID StartContext);
 
 LOGICAL
-MiIssuePageExtendRequest (
-    IN PMMPAGE_FILE_EXPANSION PageExtend
-    );
+MiIssuePageExtendRequest(IN PMMPAGE_FILE_EXPANSION PageExtend);
 
-VOID
-MiIssuePageExtendRequestNoWait (
-    IN PFN_NUMBER SizeInPages
-    );
+VOID MiIssuePageExtendRequestNoWait(IN PFN_NUMBER SizeInPages);
 
 SIZE_T
-MiExtendPagingFiles (
-    IN PMMPAGE_FILE_EXPANSION PageExpand
-    );
+MiExtendPagingFiles(IN PMMPAGE_FILE_EXPANSION PageExpand);
 
-VOID
-MiContractPagingFiles (
-    VOID
-    );
+VOID MiContractPagingFiles(VOID);
 
-VOID
-MiAttemptPageFileReduction (
-    VOID
-    );
+VOID MiAttemptPageFileReduction(VOID);
 
 LOGICAL
-MiCancelWriteOfMappedPfn (
-    IN PFN_NUMBER PageToStop
-    );
+MiCancelWriteOfMappedPfn(IN PFN_NUMBER PageToStop);
 
 //
 // Routines to delete address space.
 //
 
-VOID
-MiDeletePteRange (
-    IN PEPROCESS Process,
-    IN PMMPTE PointerPte,
-    IN PMMPTE LastPte,
-    IN LOGICAL AddressSpaceDeletion
-    );
+VOID MiDeletePteRange(IN PEPROCESS Process, IN PMMPTE PointerPte, IN PMMPTE LastPte, IN LOGICAL AddressSpaceDeletion);
 
-VOID
-MiDeleteVirtualAddresses (
-    IN PUCHAR StartingAddress,
-    IN PUCHAR EndingAddress,
-    IN ULONG AddressSpaceDeletion,
-    IN PMMVAD Vad
-    );
+VOID MiDeleteVirtualAddresses(IN PUCHAR StartingAddress, IN PUCHAR EndingAddress, IN ULONG AddressSpaceDeletion,
+                              IN PMMVAD Vad);
 
 ULONG
-MiDeletePte (
-    IN PMMPTE PointerPte,
-    IN PVOID VirtualAddress,
-    IN ULONG AddressSpaceDeletion,
-    IN PEPROCESS CurrentProcess,
-    IN PMMPTE PrototypePte,
-    IN PMMPTE_FLUSH_LIST PteFlushList OPTIONAL
-    );
+MiDeletePte(IN PMMPTE PointerPte, IN PVOID VirtualAddress, IN ULONG AddressSpaceDeletion, IN PEPROCESS CurrentProcess,
+            IN PMMPTE PrototypePte, IN PMMPTE_FLUSH_LIST PteFlushList OPTIONAL);
 
-VOID
-MiDeletePageTablesForPhysicalRange (
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress
-    );
+VOID MiDeletePageTablesForPhysicalRange(IN PVOID StartingAddress, IN PVOID EndingAddress);
 
-VOID
-MiFlushPteList (
-    IN PMMPTE_FLUSH_LIST PteFlushList,
-    IN ULONG AllProcessors,
-    IN MMPTE FillPte
-    );
+VOID MiFlushPteList(IN PMMPTE_FLUSH_LIST PteFlushList, IN ULONG AllProcessors, IN MMPTE FillPte);
 
 ULONG
 FASTCALL
-MiReleasePageFileSpace (
-    IN MMPTE PteContents
-    );
+MiReleasePageFileSpace(IN MMPTE PteContents);
 
-VOID
-FASTCALL
-MiReleaseConfirmedPageFileSpace (
-    IN MMPTE PteContents
-    );
+VOID FASTCALL MiReleaseConfirmedPageFileSpace(IN MMPTE PteContents);
 
-VOID
-FASTCALL
-MiUpdateModifiedWriterMdls (
-    IN ULONG PageFileNumber
-    );
+VOID FASTCALL MiUpdateModifiedWriterMdls(IN ULONG PageFileNumber);
 
 PVOID
-MiAllocateAweInfo (
-    VOID
-    );
+MiAllocateAweInfo(VOID);
 
-VOID
-MiRemoveUserPhysicalPagesVad (
-    IN PMMVAD_SHORT FoundVad
-    );
+VOID MiRemoveUserPhysicalPagesVad(IN PMMVAD_SHORT FoundVad);
 
-VOID
-MiCleanPhysicalProcessPages (
-    IN PEPROCESS Process
-    );
+VOID MiCleanPhysicalProcessPages(IN PEPROCESS Process);
 
-VOID
-MiPhysicalViewRemover (
-    IN PEPROCESS Process,
-    IN PMMVAD Vad
-    );
+VOID MiPhysicalViewRemover(IN PEPROCESS Process, IN PMMVAD Vad);
 
-VOID
-MiPhysicalViewAdjuster (
-    IN PEPROCESS Process,
-    IN PMMVAD OldVad,
-    IN PMMVAD NewVad
-    );
+VOID MiPhysicalViewAdjuster(IN PEPROCESS Process, IN PMMVAD OldVad, IN PMMVAD NewVad);
 
 LOGICAL
-MiIsPhysicalMemoryAddress (
-    IN PFN_NUMBER PageFrameIndex,
-    IN OUT PULONG Hint,
-    IN LOGICAL PfnLockNeeded
-    );
+MiIsPhysicalMemoryAddress(IN PFN_NUMBER PageFrameIndex, IN OUT PULONG Hint, IN LOGICAL PfnLockNeeded);
 
 //
 // MM_SYSTEM_PAGE_COLOR - MmSystemPageColor
@@ -4398,11 +3915,11 @@ MiIsPhysicalMemoryAddress (
 
 #if defined(NT_UP)
 
-#define MI_SYSTEM_PAGE_COLOR    MmSystemPageColor
+#define MI_SYSTEM_PAGE_COLOR MmSystemPageColor
 
 #else
 
-#define MI_SYSTEM_PAGE_COLOR    (KeGetCurrentPrcb()->PageColor)
+#define MI_SYSTEM_PAGE_COLOR (KeGetCurrentPrcb()->PageColor)
 
 #endif
 
@@ -4410,48 +3927,37 @@ MiIsPhysicalMemoryAddress (
 
 extern PKNODE KeNodeBlock[];
 
-#define MI_NODE_FROM_COLOR(c)                                               \
-        (KeNodeBlock[(c) >> MmSecondaryColorNodeShift])
+#define MI_NODE_FROM_COLOR(c) (KeNodeBlock[(c) >> MmSecondaryColorNodeShift])
 
-#define MI_GET_COLOR_FROM_LIST_ENTRY(index,pfn)                             \
-    ((ULONG)(((pfn)->u3.e1.PageColor << MmSecondaryColorNodeShift) |        \
-         MI_GET_SECONDARY_COLOR((index),(pfn))))
+#define MI_GET_COLOR_FROM_LIST_ENTRY(index, pfn) \
+    ((ULONG)(((pfn)->u3.e1.PageColor << MmSecondaryColorNodeShift) | MI_GET_SECONDARY_COLOR((index), (pfn))))
 
-#define MI_ADJUST_COLOR_FOR_NODE(c,n)   ((c) | (n)->Color)
-#define MI_CURRENT_NODE_COLOR           (KeGetCurrentNode()->MmShiftedColor)
+#define MI_ADJUST_COLOR_FOR_NODE(c, n) ((c) | (n)->Color)
+#define MI_CURRENT_NODE_COLOR (KeGetCurrentNode()->MmShiftedColor)
 
-#define MiRemoveZeroPageIfAny(c)                                            \
-        (KeGetCurrentNode()->FreeCount[ZeroedPageList] ? MiRemoveZeroPage(c) : 0)
+#define MiRemoveZeroPageIfAny(c) (KeGetCurrentNode()->FreeCount[ZeroedPageList] ? MiRemoveZeroPage(c) : 0)
 
-#define MI_GET_PAGE_COLOR_NODE(n)                                           \
-        (((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask) |                \
-         KeNodeBlock[n]->MmShiftedColor)
+#define MI_GET_PAGE_COLOR_NODE(n) (((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask) | KeNodeBlock[n]->MmShiftedColor)
 
 #else
 
 #define MI_NODE_FROM_COLOR(c)
 
-#define MI_GET_COLOR_FROM_LIST_ENTRY(index,pfn)                             \
-         ((ULONG)MI_GET_SECONDARY_COLOR((index),(pfn)))
+#define MI_GET_COLOR_FROM_LIST_ENTRY(index, pfn) ((ULONG)MI_GET_SECONDARY_COLOR((index), (pfn)))
 
-#define MI_ADJUST_COLOR_FOR_NODE(c,n)   (c)
-#define MI_CURRENT_NODE_COLOR           0
+#define MI_ADJUST_COLOR_FOR_NODE(c, n) (c)
+#define MI_CURRENT_NODE_COLOR 0
 
-#define MiRemoveZeroPageIfAny(COLOR)   \
-    (MmFreePagesByColor[ZeroedPageList][COLOR].Flink != MM_EMPTY_LIST) ? \
-                       MiRemoveZeroPage(COLOR) : 0
+#define MiRemoveZeroPageIfAny(COLOR) \
+    (MmFreePagesByColor[ZeroedPageList][COLOR].Flink != MM_EMPTY_LIST) ? MiRemoveZeroPage(COLOR) : 0
 
-#define MI_GET_PAGE_COLOR_NODE(n)                                           \
-        ((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask)
+#define MI_GET_PAGE_COLOR_NODE(n) ((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask)
 
 #endif
 
 FORCEINLINE
 PFN_NUMBER
-MiRemoveZeroPageMayReleaseLocks (
-    IN ULONG Color,
-    IN KIRQL OldIrql
-    )
+MiRemoveZeroPageMayReleaseLocks(IN ULONG Color, IN KIRQL OldIrql)
 
 /*++
 
@@ -4471,13 +3977,14 @@ Environment:
 {
     PFN_NUMBER PageFrameIndex;
 
-    PageFrameIndex = MiRemoveZeroPageIfAny (Color);
+    PageFrameIndex = MiRemoveZeroPageIfAny(Color);
 
-    if (PageFrameIndex == 0) {
-        PageFrameIndex = MiRemoveAnyPage (Color);
-        UNLOCK_PFN (OldIrql);
-        MiZeroPhysicalPage (PageFrameIndex, Color);
-        LOCK_PFN (OldIrql);
+    if (PageFrameIndex == 0)
+    {
+        PageFrameIndex = MiRemoveAnyPage(Color);
+        UNLOCK_PFN(OldIrql);
+        MiZeroPhysicalPage(PageFrameIndex, Color);
+        LOCK_PFN(OldIrql);
     }
 
     return PageFrameIndex;
@@ -4511,7 +4018,7 @@ Environment:
 //
 //--
 
-#define MiGetPxeAddress(va)   ((PMMPTE)0)
+#define MiGetPxeAddress(va) ((PMMPTE)0)
 
 //++
 //LOGICAL
@@ -4562,7 +4069,7 @@ Environment:
 //
 //--
 
-#define MiGetPpeAddress(va)  ((PMMPTE)0)
+#define MiGetPpeAddress(va) ((PMMPTE)0)
 
 //++
 //LOGICAL
@@ -4590,144 +4097,82 @@ Environment:
 #endif
 
 ULONG
-MiDoesPdeExistAndMakeValid (
-    IN PMMPTE PointerPde,
-    IN PEPROCESS TargetProcess,
-    IN LOGICAL PfnLockHeld,
-    OUT PULONG Waited
-    );
+MiDoesPdeExistAndMakeValid(IN PMMPTE PointerPde, IN PEPROCESS TargetProcess, IN LOGICAL PfnLockHeld, OUT PULONG Waited);
 
 #if (_MI_PAGING_LEVELS >= 3)
 #define MiDoesPpeExistAndMakeValid(PPE, PROCESS, PFNLOCKHELD, WAITED) \
-            MiDoesPdeExistAndMakeValid(PPE, PROCESS, PFNLOCKHELD, WAITED)
+    MiDoesPdeExistAndMakeValid(PPE, PROCESS, PFNLOCKHELD, WAITED)
 #else
 #define MiDoesPpeExistAndMakeValid(PPE, PROCESS, PFNLOCKHELD, WAITED) 1
 #endif
 
 #if (_MI_PAGING_LEVELS >= 4)
 #define MiDoesPxeExistAndMakeValid(PXE, PROCESS, PFNLOCKHELD, WAITED) \
-            MiDoesPdeExistAndMakeValid(PXE, PROCESS, PFNLOCKHELD, WAITED)
+    MiDoesPdeExistAndMakeValid(PXE, PROCESS, PFNLOCKHELD, WAITED)
 #else
 #define MiDoesPxeExistAndMakeValid(PXE, PROCESS, PFNLOCKHELD, WAITED) 1
 #endif
 
-VOID
-MiMakePdeExistAndMakeValid (
-    IN PMMPTE PointerPde,
-    IN PEPROCESS TargetProcess,
-    IN LOGICAL PfnLockHeld
-    );
+VOID MiMakePdeExistAndMakeValid(IN PMMPTE PointerPde, IN PEPROCESS TargetProcess, IN LOGICAL PfnLockHeld);
 
 #if (_MI_PAGING_LEVELS >= 4)
-VOID
-MiMakePxeExistAndMakeValid (
-    IN PMMPTE PointerPpe,
-    IN PEPROCESS TargetProcess,
-    IN LOGICAL PfnLockHeld
-    );
+VOID MiMakePxeExistAndMakeValid(IN PMMPTE PointerPpe, IN PEPROCESS TargetProcess, IN LOGICAL PfnLockHeld);
 #else
 #define MiMakePxeExistAndMakeValid(PDE, PROCESS, PFNLOCKHELD)
 #endif
 
 #if (_MI_PAGING_LEVELS >= 3)
-VOID
-MiMakePpeExistAndMakeValid (
-    IN PMMPTE PointerPpe,
-    IN PEPROCESS TargetProcess,
-    IN LOGICAL PfnLockHeld
-    );
+VOID MiMakePpeExistAndMakeValid(IN PMMPTE PointerPpe, IN PEPROCESS TargetProcess, IN LOGICAL PfnLockHeld);
 #else
 #define MiMakePpeExistAndMakeValid(PDE, PROCESS, PFNLOCKHELD)
 #endif
 
 ULONG
 FASTCALL
-MiMakeSystemAddressValid (
-    IN PVOID VirtualAddress,
-    IN PEPROCESS CurrentProcess
-    );
+MiMakeSystemAddressValid(IN PVOID VirtualAddress, IN PEPROCESS CurrentProcess);
 
 ULONG
 FASTCALL
-MiMakeSystemAddressValidPfnWs (
-    IN PVOID VirtualAddress,
-    IN PEPROCESS CurrentProcess OPTIONAL
-    );
+MiMakeSystemAddressValidPfnWs(IN PVOID VirtualAddress, IN PEPROCESS CurrentProcess OPTIONAL);
 
 ULONG
 FASTCALL
-MiMakeSystemAddressValidPfnSystemWs (
-    IN PVOID VirtualAddress
-    );
+MiMakeSystemAddressValidPfnSystemWs(IN PVOID VirtualAddress);
 
 ULONG
 FASTCALL
-MiMakeSystemAddressValidPfn (
-    IN PVOID VirtualAddress
-    );
+MiMakeSystemAddressValidPfn(IN PVOID VirtualAddress);
 
 ULONG
 FASTCALL
-MiLockPagedAddress (
-    IN PVOID VirtualAddress,
-    IN ULONG PfnLockHeld
-    );
+MiLockPagedAddress(IN PVOID VirtualAddress, IN ULONG PfnLockHeld);
 
-VOID
-FASTCALL
-MiUnlockPagedAddress (
-    IN PVOID VirtualAddress,
-    IN ULONG PfnLockHeld
-    );
+VOID FASTCALL MiUnlockPagedAddress(IN PVOID VirtualAddress, IN ULONG PfnLockHeld);
 
 ULONG
 FASTCALL
-MiIsPteDecommittedPage (
-    IN PMMPTE PointerPte
-    );
+MiIsPteDecommittedPage(IN PMMPTE PointerPte);
 
 ULONG
 FASTCALL
-MiIsProtectionCompatible (
-    IN ULONG OldProtect,
-    IN ULONG NewProtect
-    );
+MiIsProtectionCompatible(IN ULONG OldProtect, IN ULONG NewProtect);
 
 ULONG
 FASTCALL
-MiIsPteProtectionCompatible (
-    IN ULONG OldPteProtection,
-    IN ULONG NewProtect
-    );
+MiIsPteProtectionCompatible(IN ULONG OldPteProtection, IN ULONG NewProtect);
 
 ULONG
 FASTCALL
-MiMakeProtectionMask (
-    IN ULONG Protect
-    );
+MiMakeProtectionMask(IN ULONG Protect);
 
 ULONG
-MiIsEntireRangeCommitted (
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress,
-    IN PMMVAD Vad,
-    IN PEPROCESS Process
-    );
+MiIsEntireRangeCommitted(IN PVOID StartingAddress, IN PVOID EndingAddress, IN PMMVAD Vad, IN PEPROCESS Process);
 
 ULONG
-MiIsEntireRangeDecommitted (
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress,
-    IN PMMVAD Vad,
-    IN PEPROCESS Process
-    );
+MiIsEntireRangeDecommitted(IN PVOID StartingAddress, IN PVOID EndingAddress, IN PMMVAD Vad, IN PEPROCESS Process);
 
 LOGICAL
-MiCheckProtoPtePageState (
-    IN PMMPTE PrototypePte,
-    IN LOGICAL PfnLockHeld,
-    OUT PLOGICAL DroppedPfnLock
-    );
+MiCheckProtoPtePageState(IN PMMPTE PrototypePte, IN LOGICAL PfnLockHeld, OUT PLOGICAL DroppedPfnLock);
 
 //++
 //PMMPTE
@@ -4756,42 +4201,25 @@ MiCheckProtoPtePageState (
 //--
 
 
-#define MiGetProtoPteAddress(VAD,VPN)                                        \
-    ((((((VPN) - (VAD)->StartingVpn) << PTE_SHIFT) +                         \
-      (ULONG_PTR)(VAD)->FirstPrototypePte) <= (ULONG_PTR)(VAD)->LastContiguousPte) ? \
-    ((PMMPTE)(((((VPN) - (VAD)->StartingVpn) << PTE_SHIFT) +                 \
-        (ULONG_PTR)(VAD)->FirstPrototypePte))) :                                  \
-        MiGetProtoPteAddressExtended ((VAD),(VPN)))
+#define MiGetProtoPteAddress(VAD, VPN)                                                                     \
+    ((((((VPN) - (VAD)->StartingVpn) << PTE_SHIFT) + (ULONG_PTR)(VAD)->FirstPrototypePte) <=               \
+      (ULONG_PTR)(VAD)->LastContiguousPte)                                                                 \
+         ? ((PMMPTE)(((((VPN) - (VAD)->StartingVpn) << PTE_SHIFT) + (ULONG_PTR)(VAD)->FirstPrototypePte))) \
+         : MiGetProtoPteAddressExtended((VAD), (VPN)))
 
 PMMPTE
 FASTCALL
-MiGetProtoPteAddressExtended (
-    IN PMMVAD Vad,
-    IN ULONG_PTR Vpn
-    );
+MiGetProtoPteAddressExtended(IN PMMVAD Vad, IN ULONG_PTR Vpn);
 
 PSUBSECTION
 FASTCALL
-MiLocateSubsection (
-    IN PMMVAD Vad,
-    IN ULONG_PTR Vpn
-    );
+MiLocateSubsection(IN PMMVAD Vad, IN ULONG_PTR Vpn);
 
-VOID
-MiInitializeSystemCache (
-    IN ULONG MinimumWorkingSet,
-    IN ULONG MaximumWorkingSet
-    );
+VOID MiInitializeSystemCache(IN ULONG MinimumWorkingSet, IN ULONG MaximumWorkingSet);
 
-VOID
-MiAdjustWorkingSetManagerParameters(
-    IN LOGICAL WorkStation
-    );
+VOID MiAdjustWorkingSetManagerParameters(IN LOGICAL WorkStation);
 
-VOID
-MiNotifyMemoryEvents (
-    VOID
-    );
+VOID MiNotifyMemoryEvents(VOID);
 
 extern PFN_NUMBER MmLowMemoryThreshold;
 extern PFN_NUMBER MmHighMemoryThreshold;
@@ -4800,364 +4228,171 @@ extern PFN_NUMBER MmHighMemoryThreshold;
 // Section support
 //
 
-VOID
-FASTCALL
-MiInsertBasedSection (
-    IN PSECTION Section
-    );
+VOID FASTCALL MiInsertBasedSection(IN PSECTION Section);
 
 NTSTATUS
-MiMapViewOfPhysicalSection (
-    IN PCONTROL_AREA ControlArea,
-    IN PEPROCESS Process,
-    IN PVOID *CapturedBase,
-    IN PLARGE_INTEGER SectionOffset,
-    IN PSIZE_T CapturedViewSize,
-    IN ULONG ProtectionMask,
-    IN ULONG_PTR ZeroBits,
-    IN ULONG AllocationType,
-    IN LOGICAL WriteCombined
-    );
+MiMapViewOfPhysicalSection(IN PCONTROL_AREA ControlArea, IN PEPROCESS Process, IN PVOID *CapturedBase,
+                           IN PLARGE_INTEGER SectionOffset, IN PSIZE_T CapturedViewSize, IN ULONG ProtectionMask,
+                           IN ULONG_PTR ZeroBits, IN ULONG AllocationType, IN LOGICAL WriteCombined);
 
 NTSTATUS
-MiMapViewOfDataSection (
-    IN PCONTROL_AREA ControlArea,
-    IN PEPROCESS Process,
-    IN PVOID *CapturedBase,
-    IN PLARGE_INTEGER SectionOffset,
-    IN PSIZE_T CapturedViewSize,
-    IN PSECTION Section,
-    IN SECTION_INHERIT InheritDisposition,
-    IN ULONG ProtectionMask,
-    IN SIZE_T CommitSize,
-    IN ULONG_PTR ZeroBits,
-    IN ULONG AllocationType
-    );
+MiMapViewOfDataSection(IN PCONTROL_AREA ControlArea, IN PEPROCESS Process, IN PVOID *CapturedBase,
+                       IN PLARGE_INTEGER SectionOffset, IN PSIZE_T CapturedViewSize, IN PSECTION Section,
+                       IN SECTION_INHERIT InheritDisposition, IN ULONG ProtectionMask, IN SIZE_T CommitSize,
+                       IN ULONG_PTR ZeroBits, IN ULONG AllocationType);
 
 NTSTATUS
-MiUnmapViewOfSection (
-    IN PEPROCESS Process,
-    IN PVOID BaseAddress,
-    IN LOGICAL AddressSpaceMutexHeld
-    );
+MiUnmapViewOfSection(IN PEPROCESS Process, IN PVOID BaseAddress, IN LOGICAL AddressSpaceMutexHeld);
 
-VOID
-MiRemoveImageSectionObject(
-    IN PFILE_OBJECT File,
-    IN PCONTROL_AREA ControlArea
-    );
+VOID MiRemoveImageSectionObject(IN PFILE_OBJECT File, IN PCONTROL_AREA ControlArea);
 
-VOID
-MiAddSystemPtes(
-    IN PMMPTE StartingPte,
-    IN ULONG  NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    );
+VOID MiAddSystemPtes(IN PMMPTE StartingPte, IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType);
 
-VOID
-MiRemoveMappedView (
-    IN PEPROCESS CurrentProcess,
-    IN PMMVAD Vad
-    );
+VOID MiRemoveMappedView(IN PEPROCESS CurrentProcess, IN PMMVAD Vad);
 
-VOID
-MiSegmentDelete (
-    PSEGMENT Segment
-    );
+VOID MiSegmentDelete(PSEGMENT Segment);
 
-VOID
-MiSectionDelete (
-    IN PVOID Object
-    );
+VOID MiSectionDelete(IN PVOID Object);
 
-VOID
-MiDereferenceSegmentThread (
-    IN PVOID StartContext
-    );
+VOID MiDereferenceSegmentThread(IN PVOID StartContext);
 
 NTSTATUS
-MiCreateImageFileMap (
-    IN PFILE_OBJECT File,
-    OUT PSEGMENT *Segment
-    );
+MiCreateImageFileMap(IN PFILE_OBJECT File, OUT PSEGMENT *Segment);
 
 NTSTATUS
-MiCreateDataFileMap (
-    IN PFILE_OBJECT File,
-    OUT PSEGMENT *Segment,
-    IN PUINT64 MaximumSize,
-    IN ULONG SectionPageProtection,
-    IN ULONG AllocationAttributes,
-    IN ULONG IgnoreFileSizing
-    );
+MiCreateDataFileMap(IN PFILE_OBJECT File, OUT PSEGMENT *Segment, IN PUINT64 MaximumSize, IN ULONG SectionPageProtection,
+                    IN ULONG AllocationAttributes, IN ULONG IgnoreFileSizing);
 
 NTSTATUS
-MiCreatePagingFileMap (
-    OUT PSEGMENT *Segment,
-    IN PUINT64 MaximumSize,
-    IN ULONG ProtectionMask,
-    IN ULONG AllocationAttributes
-    );
+MiCreatePagingFileMap(OUT PSEGMENT *Segment, IN PUINT64 MaximumSize, IN ULONG ProtectionMask,
+                      IN ULONG AllocationAttributes);
 
-VOID
-MiPurgeSubsectionInternal (
-    IN PSUBSECTION Subsection,
-    IN ULONG PteOffset
-    );
+VOID MiPurgeSubsectionInternal(IN PSUBSECTION Subsection, IN ULONG PteOffset);
 
-VOID
-MiPurgeImageSection (
-    IN PCONTROL_AREA ControlArea,
-    IN PEPROCESS Process
-    );
+VOID MiPurgeImageSection(IN PCONTROL_AREA ControlArea, IN PEPROCESS Process);
 
-VOID
-MiCleanSection (
-    IN PCONTROL_AREA ControlArea,
-    IN LOGICAL DirtyDataPagesOk
-    );
+VOID MiCleanSection(IN PCONTROL_AREA ControlArea, IN LOGICAL DirtyDataPagesOk);
 
-VOID
-MiDereferenceControlArea (
-    IN PCONTROL_AREA ControlArea
-    );
+VOID MiDereferenceControlArea(IN PCONTROL_AREA ControlArea);
 
-VOID
-MiCheckControlArea (
-    IN PCONTROL_AREA ControlArea,
-    IN PEPROCESS CurrentProcess,
-    IN KIRQL PreviousIrql
-    );
+VOID MiCheckControlArea(IN PCONTROL_AREA ControlArea, IN PEPROCESS CurrentProcess, IN KIRQL PreviousIrql);
 
 LOGICAL
-MiCheckPurgeAndUpMapCount (
-    IN PCONTROL_AREA ControlArea
-    );
+MiCheckPurgeAndUpMapCount(IN PCONTROL_AREA ControlArea);
 
-VOID
-MiCheckForControlAreaDeletion (
-    IN PCONTROL_AREA ControlArea
-    );
+VOID MiCheckForControlAreaDeletion(IN PCONTROL_AREA ControlArea);
 
 LOGICAL
-MiCheckControlAreaStatus (
-    IN SECTION_CHECK_TYPE SectionCheckType,
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointers,
-    IN ULONG DelayClose,
-    OUT PCONTROL_AREA *ControlArea,
-    OUT PKIRQL OldIrql
-    );
+MiCheckControlAreaStatus(IN SECTION_CHECK_TYPE SectionCheckType, IN PSECTION_OBJECT_POINTERS SectionObjectPointers,
+                         IN ULONG DelayClose, OUT PCONTROL_AREA *ControlArea, OUT PKIRQL OldIrql);
 
 extern SLIST_HEADER MmEventCountSListHead;
 
 PEVENT_COUNTER
-MiGetEventCounter (
-    VOID
-    );
+MiGetEventCounter(VOID);
 
-VOID
-MiFreeEventCounter (
-    IN PEVENT_COUNTER Support
-    );
+VOID MiFreeEventCounter(IN PEVENT_COUNTER Support);
 
 ULONG
-MiCanFileBeTruncatedInternal (
-    IN PSECTION_OBJECT_POINTERS SectionPointer,
-    IN PLARGE_INTEGER NewFileSize OPTIONAL,
-    IN LOGICAL BlockNewViews,
-    OUT PKIRQL PreviousIrql
-    );
+MiCanFileBeTruncatedInternal(IN PSECTION_OBJECT_POINTERS SectionPointer, IN PLARGE_INTEGER NewFileSize OPTIONAL,
+                             IN LOGICAL BlockNewViews, OUT PKIRQL PreviousIrql);
 
 #define STATUS_MAPPED_WRITER_COLLISION (0xC0033333)
 
 NTSTATUS
-MiFlushSectionInternal (
-    IN PMMPTE StartingPte,
-    IN PMMPTE FinalPte,
-    IN PSUBSECTION FirstSubsection,
-    IN PSUBSECTION LastSubsection,
-    IN ULONG Synchronize,
-    IN LOGICAL WriteInProgressOk,
-    OUT PIO_STATUS_BLOCK IoStatus
-    );
+MiFlushSectionInternal(IN PMMPTE StartingPte, IN PMMPTE FinalPte, IN PSUBSECTION FirstSubsection,
+                       IN PSUBSECTION LastSubsection, IN ULONG Synchronize, IN LOGICAL WriteInProgressOk,
+                       OUT PIO_STATUS_BLOCK IoStatus);
 
 //
 // protection stuff...
 //
 
 NTSTATUS
-MiProtectVirtualMemory (
-    IN PEPROCESS Process,
-    IN PVOID *CapturedBase,
-    IN PSIZE_T CapturedRegionSize,
-    IN ULONG Protect,
-    IN PULONG LastProtect
-    );
+MiProtectVirtualMemory(IN PEPROCESS Process, IN PVOID *CapturedBase, IN PSIZE_T CapturedRegionSize, IN ULONG Protect,
+                       IN PULONG LastProtect);
 
 ULONG
-MiGetPageProtection (
-    IN PMMPTE PointerPte,
-    IN PEPROCESS Process,
-    IN LOGICAL PteCapturedToLocalStack
-    );
+MiGetPageProtection(IN PMMPTE PointerPte, IN PEPROCESS Process, IN LOGICAL PteCapturedToLocalStack);
 
 NTSTATUS
-MiSetProtectionOnSection (
-    IN PEPROCESS Process,
-    IN PMMVAD Vad,
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress,
-    IN ULONG NewProtect,
-    OUT PULONG CapturedOldProtect,
-    IN ULONG DontCharge,
-    OUT PULONG Locked
-    );
+MiSetProtectionOnSection(IN PEPROCESS Process, IN PMMVAD Vad, IN PVOID StartingAddress, IN PVOID EndingAddress,
+                         IN ULONG NewProtect, OUT PULONG CapturedOldProtect, IN ULONG DontCharge, OUT PULONG Locked);
 
 NTSTATUS
-MiCheckSecuredVad (
-    IN PMMVAD Vad,
-    IN PVOID Base,
-    IN ULONG_PTR Size,
-    IN ULONG ProtectionMask
-    );
+MiCheckSecuredVad(IN PMMVAD Vad, IN PVOID Base, IN ULONG_PTR Size, IN ULONG ProtectionMask);
 
 HANDLE
-MiSecureVirtualMemory (
-    IN PVOID Address,
-    IN SIZE_T Size,
-    IN ULONG ProbeMode,
-    IN LOGICAL AddressSpaceMutexHeld
-    );
+MiSecureVirtualMemory(IN PVOID Address, IN SIZE_T Size, IN ULONG ProbeMode, IN LOGICAL AddressSpaceMutexHeld);
 
-VOID
-MiUnsecureVirtualMemory (
-    IN HANDLE SecureHandle,
-    IN LOGICAL AddressSpaceMutexHeld
-    );
+VOID MiUnsecureVirtualMemory(IN HANDLE SecureHandle, IN LOGICAL AddressSpaceMutexHeld);
 
 ULONG
-MiChangeNoAccessForkPte (
-    IN PMMPTE PointerPte,
-    IN ULONG ProtectionMask
-    );
+MiChangeNoAccessForkPte(IN PMMPTE PointerPte, IN ULONG ProtectionMask);
 
-VOID
-MiSetImageProtect (
-    IN PSEGMENT Segment,
-    IN ULONG Protection
-    );
+VOID MiSetImageProtect(IN PSEGMENT Segment, IN ULONG Protection);
 
 //
 // Routines for charging quota and commitment.
 //
 
-VOID
-MiTrimSegmentCache (
-    VOID
-    );
+VOID MiTrimSegmentCache(VOID);
 
-VOID
-MiInitializeCommitment (
-    VOID
-    );
+VOID MiInitializeCommitment(VOID);
 
 LOGICAL
 FASTCALL
-MiChargeCommitment (
-    IN SIZE_T QuotaCharge,
-    IN PEPROCESS Process OPTIONAL
-    );
+MiChargeCommitment(IN SIZE_T QuotaCharge, IN PEPROCESS Process OPTIONAL);
 
 LOGICAL
 FASTCALL
-MiChargeCommitmentCantExpand (
-    IN SIZE_T QuotaCharge,
-    IN ULONG MustSucceed
-    );
+MiChargeCommitmentCantExpand(IN SIZE_T QuotaCharge, IN ULONG MustSucceed);
 
 LOGICAL
 FASTCALL
-MiChargeTemporaryCommitmentForReduction (
-    IN SIZE_T QuotaCharge
-    );
+MiChargeTemporaryCommitmentForReduction(IN SIZE_T QuotaCharge);
 
-#if defined (_MI_DEBUG_COMMIT_LEAKS)
+#if defined(_MI_DEBUG_COMMIT_LEAKS)
 
-VOID
-FASTCALL
-MiReturnCommitment (
-    IN SIZE_T QuotaCharge
-    );
+VOID FASTCALL MiReturnCommitment(IN SIZE_T QuotaCharge);
 
 #else
 
-#define MiReturnCommitment(_QuotaCharge)                                \
-            ASSERT ((SSIZE_T)(_QuotaCharge) >= 0);                      \
-            ASSERT (MmTotalCommittedPages >= (_QuotaCharge));           \
-            InterlockedExchangeAddSizeT (&MmTotalCommittedPages, 0-((SIZE_T)(_QuotaCharge))); \
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_NORMAL, (_QuotaCharge));
+#define MiReturnCommitment(_QuotaCharge)                                               \
+    ASSERT((SSIZE_T)(_QuotaCharge) >= 0);                                              \
+    ASSERT(MmTotalCommittedPages >= (_QuotaCharge));                                   \
+    InterlockedExchangeAddSizeT(&MmTotalCommittedPages, 0 - ((SIZE_T)(_QuotaCharge))); \
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_NORMAL, (_QuotaCharge));
 
 #endif
 
-VOID
-MiCauseOverCommitPopup (
-    VOID
-    );
+VOID MiCauseOverCommitPopup(VOID);
 
 extern SIZE_T MmPeakCommitment;
 
 extern SIZE_T MmTotalCommitLimitMaximum;
 
 SIZE_T
-MiCalculatePageCommitment (
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress,
-    IN PMMVAD Vad,
-    IN PEPROCESS Process
-    );
+MiCalculatePageCommitment(IN PVOID StartingAddress, IN PVOID EndingAddress, IN PMMVAD Vad, IN PEPROCESS Process);
 
-VOID
-MiReturnPageTablePageCommitment (
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress,
-    IN PEPROCESS CurrentProcess,
-    IN PMMVAD PreviousVad,
-    IN PMMVAD NextVad
-    );
+VOID MiReturnPageTablePageCommitment(IN PVOID StartingAddress, IN PVOID EndingAddress, IN PEPROCESS CurrentProcess,
+                                     IN PMMVAD PreviousVad, IN PMMVAD NextVad);
 
-VOID
-MiFlushAllPages (
-    VOID
-    );
+VOID MiFlushAllPages(VOID);
 
-VOID
-MiModifiedPageWriterTimerDispatch (
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID MiModifiedPageWriterTimerDispatch(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                                       IN PVOID SystemArgument2);
 
 LONGLONG
-MiStartingOffset(
-    IN PSUBSECTION Subsection,
-    IN PMMPTE PteAddress
-    );
+MiStartingOffset(IN PSUBSECTION Subsection, IN PMMPTE PteAddress);
 
 LARGE_INTEGER
-MiEndingOffset(
-    IN PSUBSECTION Subsection
-    );
+MiEndingOffset(IN PSUBSECTION Subsection);
 
-VOID
-MiReloadBootLoadedDrivers (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+VOID MiReloadBootLoadedDrivers(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 LOGICAL
-MiInitializeLoadedModuleList (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+MiInitializeLoadedModuleList(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 extern ULONG MmSpecialPoolTag;
 extern PVOID MmSpecialPoolStart;
@@ -5166,58 +4401,38 @@ extern PVOID MmSessionSpecialPoolStart;
 extern PVOID MmSessionSpecialPoolEnd;
 
 LOGICAL
-MiInitializeSpecialPool (
-    IN POOL_TYPE PoolType
-    );
+MiInitializeSpecialPool(IN POOL_TYPE PoolType);
 
 LOGICAL
-MiIsSpecialPoolAddressNonPaged (
-    IN PVOID VirtualAddress
-    );
+MiIsSpecialPoolAddressNonPaged(IN PVOID VirtualAddress);
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 LOGICAL
-MiInitializeSessionSpecialPool (
-    VOID
-    );
+MiInitializeSessionSpecialPool(VOID);
 
-VOID
-MiDeleteSessionSpecialPool (
-    VOID
-    );
+VOID MiDeleteSessionSpecialPool(VOID);
 #endif
 
-#if defined (_X86_)
+#if defined(_X86_)
 LOGICAL
-MiRecoverSpecialPtes (
-    IN ULONG NumberOfPtes
-    );
+MiRecoverSpecialPtes(IN ULONG NumberOfPtes);
 #endif
 
-VOID
-MiEnableRandomSpecialPool (
-    IN LOGICAL Enable
-    );
+VOID MiEnableRandomSpecialPool(IN LOGICAL Enable);
 
 LOGICAL
-MiTriageSystem (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+MiTriageSystem(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 LOGICAL
-MiTriageAddDrivers (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+MiTriageAddDrivers(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 LOGICAL
-MiTriageVerifyDriver (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    );
+MiTriageVerifyDriver(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry);
 
 extern ULONG MmTriageActionTaken;
 
-#if defined (_WIN64)
-#define MM_SPECIAL_POOL_PTES ((1024 * 1024) / sizeof (MMPTE))
+#if defined(_WIN64)
+#define MM_SPECIAL_POOL_PTES ((1024 * 1024) / sizeof(MMPTE))
 #else
 #define MM_SPECIAL_POOL_PTES (24 * PTE_PER_PAGE)
 #endif
@@ -5235,25 +4450,29 @@ extern ULONG MmEnforceWriteProtection;
 extern LOGICAL MmTrackLockedPages;
 extern ULONG MmTrackPtes;
 
-#define VI_POOL_FREELIST_END  ((ULONG_PTR)-1)
+#define VI_POOL_FREELIST_END ((ULONG_PTR) - 1)
 
-typedef struct _VI_POOL_ENTRY_INUSE {
+typedef struct _VI_POOL_ENTRY_INUSE
+{
     PVOID VirtualAddress;
     PVOID CallingAddress;
     SIZE_T NumberOfBytes;
     ULONG_PTR Tag;
 } VI_POOL_ENTRY_INUSE, *PVI_POOL_ENTRY_INUSE;
 
-typedef struct _VI_POOL_ENTRY {
-    union {
+typedef struct _VI_POOL_ENTRY
+{
+    union
+    {
         VI_POOL_ENTRY_INUSE InUse;
         ULONG_PTR FreeListNext;
     };
 } VI_POOL_ENTRY, *PVI_POOL_ENTRY;
 
-#define MI_VERIFIER_ENTRY_SIGNATURE            0x98761940
+#define MI_VERIFIER_ENTRY_SIGNATURE 0x98761940
 
-typedef struct _MI_VERIFIER_DRIVER_ENTRY {
+typedef struct _MI_VERIFIER_DRIVER_ENTRY
+{
     LIST_ENTRY Links;
     ULONG Loads;
     ULONG Unloads;
@@ -5262,8 +4481,8 @@ typedef struct _MI_VERIFIER_DRIVER_ENTRY {
     PVOID StartAddress;
     PVOID EndAddress;
 
-#define VI_VERIFYING_DIRECTLY   0x1
-#define VI_VERIFYING_INVERSELY  0x2
+#define VI_VERIFYING_DIRECTLY 0x1
+#define VI_VERIFYING_INVERSELY 0x2
 #define VI_DISABLE_VERIFICATION 0x4
 
     ULONG Flags;
@@ -5288,12 +4507,14 @@ typedef struct _MI_VERIFIER_DRIVER_ENTRY {
 
 } MI_VERIFIER_DRIVER_ENTRY, *PMI_VERIFIER_DRIVER_ENTRY;
 
-typedef struct _MI_VERIFIER_POOL_HEADER {
+typedef struct _MI_VERIFIER_POOL_HEADER
+{
     ULONG_PTR ListIndex;
     PMI_VERIFIER_DRIVER_ENTRY Verifier;
 } MI_VERIFIER_POOL_HEADER, *PMI_VERIFIER_POOL_HEADER;
 
-typedef struct _MM_DRIVER_VERIFIER_DATA {
+typedef struct _MM_DRIVER_VERIFIER_DATA
+{
     ULONG Level;
     ULONG RaiseIrqls;
     ULONG AcquireSpinLocks;
@@ -5331,45 +4552,26 @@ typedef struct _MM_DRIVER_VERIFIER_DATA {
 } MM_DRIVER_VERIFIER_DATA, *PMM_DRIVER_VERIFIER_DATA;
 
 LOGICAL
-MiInitializeDriverVerifierList (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+MiInitializeDriverVerifierList(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 LOGICAL
-MiInitializeVerifyingComponents (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+MiInitializeVerifyingComponents(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 LOGICAL
-MiApplyDriverVerifier (
-    IN PKLDR_DATA_TABLE_ENTRY,
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier
-    );
+MiApplyDriverVerifier(IN PKLDR_DATA_TABLE_ENTRY, IN PMI_VERIFIER_DRIVER_ENTRY Verifier);
 
-VOID
-MiReApplyVerifierToLoadedModules(
-    IN PLIST_ENTRY ModuleListHead
-    );
+VOID MiReApplyVerifierToLoadedModules(IN PLIST_ENTRY ModuleListHead);
 
-VOID
-MiVerifyingDriverUnloading (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    );
+VOID MiVerifyingDriverUnloading(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry);
 
-VOID
-MiVerifierCheckThunks (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    );
+VOID MiVerifierCheckThunks(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry);
 
 extern ULONG MiActiveVerifierThunks;
 extern LIST_ENTRY MiSuspectDriverList;
 
 extern ULONG MiVerifierThunksAdded;
 
-VOID
-MiEnableKernelVerifier (
-    VOID
-    );
+VOID MiEnableKernelVerifier(VOID);
 
 extern LOGICAL KernelVerifier;
 
@@ -5379,7 +4581,8 @@ extern MM_DRIVER_VERIFIER_DATA MmVerifierData;
 
 #define MI_STACK_BYTES 1024
 
-typedef struct _MI_FREED_SPECIAL_POOL {
+typedef struct _MI_FREED_SPECIAL_POOL
+{
     POOL_HEADER OverlaidPoolHeader;
     MI_VERIFIER_POOL_HEADER OverlaidVerifierPoolHeader;
 
@@ -5396,107 +4599,111 @@ typedef struct _MI_FREED_SPECIAL_POOL {
     UCHAR StackData[MI_STACK_BYTES];
 } MI_FREED_SPECIAL_POOL, *PMI_FREED_SPECIAL_POOL;
 
-#define MM_DBG_COMMIT_NONPAGED_POOL_EXPANSION           0
-#define MM_DBG_COMMIT_PAGED_POOL_PAGETABLE              1
-#define MM_DBG_COMMIT_PAGED_POOL_PAGES                  2
-#define MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES          3
-#define MM_DBG_COMMIT_ALLOCVM1                          4
-#define MM_DBG_COMMIT_ALLOCVM_SEGMENT                   5
-#define MM_DBG_COMMIT_IMAGE                             6
-#define MM_DBG_COMMIT_PAGEFILE_BACKED_SHMEM             7
-#define MM_DBG_COMMIT_INDEPENDENT_PAGES                 8
-#define MM_DBG_COMMIT_CONTIGUOUS_PAGES                  9
-#define MM_DBG_COMMIT_MDL_PAGES                         0xA
-#define MM_DBG_COMMIT_NONCACHED_PAGES                   0xB
-#define MM_DBG_COMMIT_MAPVIEW_DATA                      0xC
-#define MM_DBG_COMMIT_FILL_SYSTEM_DIRECTORY             0xD
-#define MM_DBG_COMMIT_EXTRA_SYSTEM_PTES                 0xE
-#define MM_DBG_COMMIT_DRIVER_PAGING_AT_INIT             0xF
-#define MM_DBG_COMMIT_PAGEFILE_FULL                     0x10
-#define MM_DBG_COMMIT_PROCESS_CREATE                    0x11
-#define MM_DBG_COMMIT_KERNEL_STACK_CREATE               0x12
-#define MM_DBG_COMMIT_SET_PROTECTION                    0x13
-#define MM_DBG_COMMIT_SESSION_CREATE                    0x14
-#define MM_DBG_COMMIT_SESSION_IMAGE_PAGES               0x15
-#define MM_DBG_COMMIT_SESSION_PAGETABLE_PAGES           0x16
-#define MM_DBG_COMMIT_SESSION_SHARED_IMAGE              0x17
-#define MM_DBG_COMMIT_DRIVER_PAGES                      0x18
-#define MM_DBG_COMMIT_INSERT_VAD                        0x19
-#define MM_DBG_COMMIT_SESSION_WS_INIT                   0x1A
-#define MM_DBG_COMMIT_SESSION_ADDITIONAL_WS_PAGES       0x1B
-#define MM_DBG_COMMIT_SESSION_ADDITIONAL_WS_HASHPAGES   0x1C
-#define MM_DBG_COMMIT_SPECIAL_POOL_PAGES                0x1D
-#define MM_DBG_COMMIT_SPECIAL_POOL_MAPPING_PAGES        0x1E
-#define MM_DBG_COMMIT_SMALL                             0x1F
-#define MM_DBG_COMMIT_EXTRA_WS_PAGES                    0x20
-#define MM_DBG_COMMIT_EXTRA_INITIAL_SESSION_WS_PAGES    0x21
-#define MM_DBG_COMMIT_ALLOCVM_PROCESS                   0x22
-#define MM_DBG_COMMIT_INSERT_VAD_PT                     0x23
-#define MM_DBG_COMMIT_ALLOCVM_PROCESS2                  0x24
-#define MM_DBG_COMMIT_CHARGE_NORMAL                     0x25
-#define MM_DBG_COMMIT_CHARGE_CAUSE_POPUP                0x26
-#define MM_DBG_COMMIT_CHARGE_CANT_EXPAND                0x27
+#define MM_DBG_COMMIT_NONPAGED_POOL_EXPANSION 0
+#define MM_DBG_COMMIT_PAGED_POOL_PAGETABLE 1
+#define MM_DBG_COMMIT_PAGED_POOL_PAGES 2
+#define MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES 3
+#define MM_DBG_COMMIT_ALLOCVM1 4
+#define MM_DBG_COMMIT_ALLOCVM_SEGMENT 5
+#define MM_DBG_COMMIT_IMAGE 6
+#define MM_DBG_COMMIT_PAGEFILE_BACKED_SHMEM 7
+#define MM_DBG_COMMIT_INDEPENDENT_PAGES 8
+#define MM_DBG_COMMIT_CONTIGUOUS_PAGES 9
+#define MM_DBG_COMMIT_MDL_PAGES 0xA
+#define MM_DBG_COMMIT_NONCACHED_PAGES 0xB
+#define MM_DBG_COMMIT_MAPVIEW_DATA 0xC
+#define MM_DBG_COMMIT_FILL_SYSTEM_DIRECTORY 0xD
+#define MM_DBG_COMMIT_EXTRA_SYSTEM_PTES 0xE
+#define MM_DBG_COMMIT_DRIVER_PAGING_AT_INIT 0xF
+#define MM_DBG_COMMIT_PAGEFILE_FULL 0x10
+#define MM_DBG_COMMIT_PROCESS_CREATE 0x11
+#define MM_DBG_COMMIT_KERNEL_STACK_CREATE 0x12
+#define MM_DBG_COMMIT_SET_PROTECTION 0x13
+#define MM_DBG_COMMIT_SESSION_CREATE 0x14
+#define MM_DBG_COMMIT_SESSION_IMAGE_PAGES 0x15
+#define MM_DBG_COMMIT_SESSION_PAGETABLE_PAGES 0x16
+#define MM_DBG_COMMIT_SESSION_SHARED_IMAGE 0x17
+#define MM_DBG_COMMIT_DRIVER_PAGES 0x18
+#define MM_DBG_COMMIT_INSERT_VAD 0x19
+#define MM_DBG_COMMIT_SESSION_WS_INIT 0x1A
+#define MM_DBG_COMMIT_SESSION_ADDITIONAL_WS_PAGES 0x1B
+#define MM_DBG_COMMIT_SESSION_ADDITIONAL_WS_HASHPAGES 0x1C
+#define MM_DBG_COMMIT_SPECIAL_POOL_PAGES 0x1D
+#define MM_DBG_COMMIT_SPECIAL_POOL_MAPPING_PAGES 0x1E
+#define MM_DBG_COMMIT_SMALL 0x1F
+#define MM_DBG_COMMIT_EXTRA_WS_PAGES 0x20
+#define MM_DBG_COMMIT_EXTRA_INITIAL_SESSION_WS_PAGES 0x21
+#define MM_DBG_COMMIT_ALLOCVM_PROCESS 0x22
+#define MM_DBG_COMMIT_INSERT_VAD_PT 0x23
+#define MM_DBG_COMMIT_ALLOCVM_PROCESS2 0x24
+#define MM_DBG_COMMIT_CHARGE_NORMAL 0x25
+#define MM_DBG_COMMIT_CHARGE_CAUSE_POPUP 0x26
+#define MM_DBG_COMMIT_CHARGE_CANT_EXPAND 0x27
 
-#define MM_DBG_COMMIT_RETURN_NONPAGED_POOL_EXPANSION    0x40
-#define MM_DBG_COMMIT_RETURN_PAGED_POOL_PAGES           0x41
-#define MM_DBG_COMMIT_RETURN_SESSION_DATAPAGE           0x42
-#define MM_DBG_COMMIT_RETURN_ALLOCVM_SEGMENT            0x43
-#define MM_DBG_COMMIT_RETURN_ALLOCVM2                   0x44
+#define MM_DBG_COMMIT_RETURN_NONPAGED_POOL_EXPANSION 0x40
+#define MM_DBG_COMMIT_RETURN_PAGED_POOL_PAGES 0x41
+#define MM_DBG_COMMIT_RETURN_SESSION_DATAPAGE 0x42
+#define MM_DBG_COMMIT_RETURN_ALLOCVM_SEGMENT 0x43
+#define MM_DBG_COMMIT_RETURN_ALLOCVM2 0x44
 
-#define MM_DBG_COMMIT_RETURN_IMAGE_NO_LARGE_CA          0x46
-#define MM_DBG_COMMIT_RETURN_PTE_RANGE                  0x47
-#define MM_DBG_COMMIT_RETURN_NTFREEVM1                  0x48
-#define MM_DBG_COMMIT_RETURN_NTFREEVM2                  0x49
-#define MM_DBG_COMMIT_RETURN_INDEPENDENT_PAGES          0x4A
-#define MM_DBG_COMMIT_RETURN_AWE_EXCESS                 0x4B
-#define MM_DBG_COMMIT_RETURN_MDL_PAGES                  0x4C
-#define MM_DBG_COMMIT_RETURN_NONCACHED_PAGES            0x4D
-#define MM_DBG_COMMIT_RETURN_SESSION_CREATE_FAILURE     0x4E
-#define MM_DBG_COMMIT_RETURN_PAGETABLES                 0x4F
-#define MM_DBG_COMMIT_RETURN_PROTECTION                 0x50
-#define MM_DBG_COMMIT_RETURN_SEGMENT_DELETE1            0x51
-#define MM_DBG_COMMIT_RETURN_SEGMENT_DELETE2            0x52
-#define MM_DBG_COMMIT_RETURN_PAGEFILE_FULL              0x53
-#define MM_DBG_COMMIT_RETURN_SESSION_DEREFERENCE        0x54
-#define MM_DBG_COMMIT_RETURN_VAD                        0x55
-#define MM_DBG_COMMIT_RETURN_PROCESS_CREATE_FAILURE1    0x56
-#define MM_DBG_COMMIT_RETURN_PROCESS_DELETE             0x57
-#define MM_DBG_COMMIT_RETURN_PROCESS_CLEAN_PAGETABLES   0x58
-#define MM_DBG_COMMIT_RETURN_KERNEL_STACK_DELETE        0x59
+#define MM_DBG_COMMIT_RETURN_IMAGE_NO_LARGE_CA 0x46
+#define MM_DBG_COMMIT_RETURN_PTE_RANGE 0x47
+#define MM_DBG_COMMIT_RETURN_NTFREEVM1 0x48
+#define MM_DBG_COMMIT_RETURN_NTFREEVM2 0x49
+#define MM_DBG_COMMIT_RETURN_INDEPENDENT_PAGES 0x4A
+#define MM_DBG_COMMIT_RETURN_AWE_EXCESS 0x4B
+#define MM_DBG_COMMIT_RETURN_MDL_PAGES 0x4C
+#define MM_DBG_COMMIT_RETURN_NONCACHED_PAGES 0x4D
+#define MM_DBG_COMMIT_RETURN_SESSION_CREATE_FAILURE 0x4E
+#define MM_DBG_COMMIT_RETURN_PAGETABLES 0x4F
+#define MM_DBG_COMMIT_RETURN_PROTECTION 0x50
+#define MM_DBG_COMMIT_RETURN_SEGMENT_DELETE1 0x51
+#define MM_DBG_COMMIT_RETURN_SEGMENT_DELETE2 0x52
+#define MM_DBG_COMMIT_RETURN_PAGEFILE_FULL 0x53
+#define MM_DBG_COMMIT_RETURN_SESSION_DEREFERENCE 0x54
+#define MM_DBG_COMMIT_RETURN_VAD 0x55
+#define MM_DBG_COMMIT_RETURN_PROCESS_CREATE_FAILURE1 0x56
+#define MM_DBG_COMMIT_RETURN_PROCESS_DELETE 0x57
+#define MM_DBG_COMMIT_RETURN_PROCESS_CLEAN_PAGETABLES 0x58
+#define MM_DBG_COMMIT_RETURN_KERNEL_STACK_DELETE 0x59
 #define MM_DBG_COMMIT_RETURN_SESSION_DRIVER_LOAD_FAILURE1 0x5A
-#define MM_DBG_COMMIT_RETURN_DRIVER_INIT_CODE           0x5B
-#define MM_DBG_COMMIT_RETURN_DRIVER_UNLOAD              0x5C
-#define MM_DBG_COMMIT_RETURN_DRIVER_UNLOAD1             0x5D
-#define MM_DBG_COMMIT_RETURN_NORMAL                     0x5E
-#define MM_DBG_COMMIT_RETURN_PF_FULL_EXTEND             0x5F
-#define MM_DBG_COMMIT_RETURN_EXTENDED                   0x60
-#define MM_DBG_COMMIT_RETURN_SEGMENT_DELETE3            0x61
+#define MM_DBG_COMMIT_RETURN_DRIVER_INIT_CODE 0x5B
+#define MM_DBG_COMMIT_RETURN_DRIVER_UNLOAD 0x5C
+#define MM_DBG_COMMIT_RETURN_DRIVER_UNLOAD1 0x5D
+#define MM_DBG_COMMIT_RETURN_NORMAL 0x5E
+#define MM_DBG_COMMIT_RETURN_PF_FULL_EXTEND 0x5F
+#define MM_DBG_COMMIT_RETURN_EXTENDED 0x60
+#define MM_DBG_COMMIT_RETURN_SEGMENT_DELETE3 0x61
 
 #if 0
 
 #define MM_COMMIT_COUNTER_MAX 0x80
 
-#define MM_TRACK_COMMIT(_index, bump) \
-    if (_index >= MM_COMMIT_COUNTER_MAX) { \
+#define MM_TRACK_COMMIT(_index, bump)                                                  \
+    if (_index >= MM_COMMIT_COUNTER_MAX)                                               \
+    {                                                                                  \
         DbgPrint("Mm: Invalid commit counter %d %d\n", _index, MM_COMMIT_COUNTER_MAX); \
-        DbgBreakPoint(); \
-    } \
-    else { \
-        InterlockedExchangeAddSizeT (&MmTrackCommit[_index], bump); \
+        DbgBreakPoint();                                                               \
+    }                                                                                  \
+    else                                                                               \
+    {                                                                                  \
+        InterlockedExchangeAddSizeT(&MmTrackCommit[_index], bump);                     \
     }
 
-#define MM_TRACK_COMMIT_REDUCTION(_index, bump) \
-    if (_index >= MM_COMMIT_COUNTER_MAX) { \
+#define MM_TRACK_COMMIT_REDUCTION(_index, bump)                                        \
+    if (_index >= MM_COMMIT_COUNTER_MAX)                                               \
+    {                                                                                  \
         DbgPrint("Mm: Invalid commit counter %d %d\n", _index, MM_COMMIT_COUNTER_MAX); \
-        DbgBreakPoint(); \
-    } \
-    else { \
-        InterlockedExchangeAddSizeT (&MmTrackCommit[_index], 0 - (bump)); \
+        DbgBreakPoint();                                                               \
+    }                                                                                  \
+    else                                                                               \
+    {                                                                                  \
+        InterlockedExchangeAddSizeT(&MmTrackCommit[_index], 0 - (bump));               \
     }
 
 extern SIZE_T MmTrackCommit[MM_COMMIT_COUNTER_MAX];
 
-#define MI_INCREMENT_TOTAL_PROCESS_COMMIT(_charge) InterlockedExchangeAddSizeT (&MmTotalProcessCommit, (_charge));
+#define MI_INCREMENT_TOTAL_PROCESS_COMMIT(_charge) InterlockedExchangeAddSizeT(&MmTotalProcessCommit, (_charge));
 
 #else
 
@@ -5511,9 +4718,9 @@ extern SIZE_T MmTrackCommit[MM_COMMIT_COUNTER_MAX];
 
 extern SIZE_T MmResTrack[MM_BUMP_COUNTER_MAX];
 
-#define MM_BUMP_COUNTER(_index, bump) \
-    ASSERT (_index < MM_BUMP_COUNTER_MAX); \
-    InterlockedExchangeAddSizeT (&MmResTrack[_index], (SIZE_T)(bump));
+#define MM_BUMP_COUNTER(_index, bump)     \
+    ASSERT(_index < MM_BUMP_COUNTER_MAX); \
+    InterlockedExchangeAddSizeT(&MmResTrack[_index], (SIZE_T)(bump));
 
 extern ULONG MiSpecialPagesNonPaged;
 extern ULONG MiSpecialPagesNonPagedMaximum;
@@ -5542,10 +4749,7 @@ extern ULONG MiSpecialPagesNonPagedMaximum;
 //    N.B.  This is a signed quantity and can be negative.
 //
 //--
-#define MI_NONPAGABLE_MEMORY_AVAILABLE()                                    \
-        ((SPFN_NUMBER)                                                      \
-            (MmResidentAvailablePages -                                     \
-             MmSystemLockPagesCount))
+#define MI_NONPAGABLE_MEMORY_AVAILABLE() ((SPFN_NUMBER)(MmResidentAvailablePages - MmSystemLockPagesCount))
 
 extern ULONG MmLargePageMinimum;
 
@@ -5553,36 +4757,21 @@ extern ULONG MmLargePageMinimum;
 // hack stuff for testing.
 //
 
-VOID
-MiDumpValidAddresses (
-    VOID
-    );
+VOID MiDumpValidAddresses(VOID);
 
-VOID
-MiDumpPfn ( VOID );
+VOID MiDumpPfn(VOID);
 
-VOID
-MiDumpWsl ( VOID );
+VOID MiDumpWsl(VOID);
 
 
-VOID
-MiFormatPte (
-    IN PMMPTE PointerPte
-    );
+VOID MiFormatPte(IN PMMPTE PointerPte);
 
-VOID
-MiCheckPfn ( VOID );
+VOID MiCheckPfn(VOID);
 
-VOID
-MiCheckPte ( VOID );
+VOID MiCheckPte(VOID);
 
-VOID
-MiFormatPfn (
-    IN PMMPFN PointerPfn
-    );
+VOID MiFormatPfn(IN PMMPFN PointerPfn);
 
-
-
 
 extern const MMPTE ZeroPte;
 
@@ -5651,11 +4840,11 @@ extern PFN_NUMBER MmHighestPhysicalPage;
 
 extern PFN_NUMBER MmHighestPossiblePhysicalPage;
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 
 #define MI_DTC_MAX_PAGES ((PFN_NUMBER)(((ULONG64)128 * 1024 * 1024 * 1024) >> PAGE_SHIFT))
 
-#define MI_DTC_BOOTED_3GB_MAX_PAGES     MI_DTC_MAX_PAGES
+#define MI_DTC_BOOTED_3GB_MAX_PAGES MI_DTC_MAX_PAGES
 
 #define MI_ADS_MAX_PAGES ((PFN_NUMBER)(((ULONG64)64 * 1024 * 1024 * 1024) >> PAGE_SHIFT))
 
@@ -5903,7 +5092,7 @@ extern SIZE_T MmHeapDeCommitTotalFreeThreshold;
 
 extern SIZE_T MmHeapDeCommitFreeBlockThreshold;
 
-#define MI_MAX_FREE_LIST_HEADS  4
+#define MI_MAX_FREE_LIST_HEADS 4
 
 extern LIST_ENTRY MmNonPagedPoolFreeListHead[MI_MAX_FREE_LIST_HEADS];
 
@@ -5929,11 +5118,12 @@ extern PVOID MmPagedPoolEnd;
 // Pool bit maps and other related structures.
 //
 
-typedef struct _MM_PAGED_POOL_INFO {
+typedef struct _MM_PAGED_POOL_INFO
+{
 
     PRTL_BITMAP PagedPoolAllocationMap;
     PRTL_BITMAP EndOfPagedPoolBitmap;
-    PRTL_BITMAP PagedPoolLargeSessionAllocationMap;     // HYDRA only
+    PRTL_BITMAP PagedPoolLargeSessionAllocationMap; // HYDRA only
     PMMPTE FirstPteForPagedPool;
     PMMPTE LastPteForPagedPool;
     PMMPTE NextPdeForPagedPoolExpansion;
@@ -6116,7 +5306,7 @@ extern ULONG MmProcessColorSeed;
 //
 
 #define MM_SYSTEM_CODE_LOCKED_DOWN 0x1
-#define MM_PAGED_POOL_LOCKED_DOWN  0x2
+#define MM_PAGED_POOL_LOCKED_DOWN 0x2
 
 extern ULONG MmDisablePagingExecutive;
 
@@ -6153,19 +5343,23 @@ extern SIZE_T MiUnusedSubsectionPagedPool;
 
 extern SIZE_T MiUnusedSubsectionPagedPoolPeak;
 
-#define MI_UNUSED_SUBSECTIONS_COUNT_INSERT(_MappedSubsection) \
-        MmUnusedSubsectionCount += 1; \
-        if (MmUnusedSubsectionCount > MmUnusedSubsectionCountPeak) { \
-            MmUnusedSubsectionCountPeak = MmUnusedSubsectionCount; \
-        } \
-        MiUnusedSubsectionPagedPool += EX_REAL_POOL_USAGE((_MappedSubsection->PtesInSubsection + _MappedSubsection->UnusedPtes) * sizeof (MMPTE)); \
-        if (MiUnusedSubsectionPagedPool > MiUnusedSubsectionPagedPoolPeak) { \
-            MiUnusedSubsectionPagedPoolPeak = MiUnusedSubsectionPagedPool; \
-        } \
+#define MI_UNUSED_SUBSECTIONS_COUNT_INSERT(_MappedSubsection)                                                      \
+    MmUnusedSubsectionCount += 1;                                                                                  \
+    if (MmUnusedSubsectionCount > MmUnusedSubsectionCountPeak)                                                     \
+    {                                                                                                              \
+        MmUnusedSubsectionCountPeak = MmUnusedSubsectionCount;                                                     \
+    }                                                                                                              \
+    MiUnusedSubsectionPagedPool +=                                                                                 \
+        EX_REAL_POOL_USAGE((_MappedSubsection->PtesInSubsection + _MappedSubsection->UnusedPtes) * sizeof(MMPTE)); \
+    if (MiUnusedSubsectionPagedPool > MiUnusedSubsectionPagedPoolPeak)                                             \
+    {                                                                                                              \
+        MiUnusedSubsectionPagedPoolPeak = MiUnusedSubsectionPagedPool;                                             \
+    }
 
 #define MI_UNUSED_SUBSECTIONS_COUNT_REMOVE(_MappedSubsection) \
-        MmUnusedSubsectionCount -= 1; \
-        MiUnusedSubsectionPagedPool -= EX_REAL_POOL_USAGE((_MappedSubsection->PtesInSubsection + _MappedSubsection->UnusedPtes) * sizeof (MMPTE));
+    MmUnusedSubsectionCount -= 1;                             \
+    MiUnusedSubsectionPagedPool -=                            \
+        EX_REAL_POOL_USAGE((_MappedSubsection->PtesInSubsection + _MappedSubsection->UnusedPtes) * sizeof(MMPTE));
 
 #define MI_FILESYSTEM_NONPAGED_POOL_CHARGE 150
 
@@ -6191,14 +5385,13 @@ extern SIZE_T MiUnusedSubsectionPagedPoolPeak;
 //    TRUE if unused segment trimming should be initiated, FALSE if not.
 //
 //--
-#define MI_UNUSED_SEGMENTS_SURPLUS()                                    \
-        (((ULONG)((MmPagedPoolInfo.AllocatedPagedPool * 100) / (MmSizeOfPagedPoolInBytes >> PAGE_SHIFT)) > MmConsumedPoolPercentage) || \
-        ((ULONG)((MmAllocatedNonPagedPool * 100) / (MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT)) > MmConsumedPoolPercentage))
+#define MI_UNUSED_SEGMENTS_SURPLUS()                                                                   \
+    (((ULONG)((MmPagedPoolInfo.AllocatedPagedPool * 100) / (MmSizeOfPagedPoolInBytes >> PAGE_SHIFT)) > \
+      MmConsumedPoolPercentage) ||                                                                     \
+     ((ULONG)((MmAllocatedNonPagedPool * 100) / (MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT)) >        \
+      MmConsumedPoolPercentage))
 
-VOID
-MiConvertStaticSubsections (
-    IN PCONTROL_AREA ControlArea
-    );
+VOID MiConvertStaticSubsections(IN PCONTROL_AREA ControlArea);
 
 //++
 //VOID
@@ -6220,17 +5413,17 @@ MiConvertStaticSubsections (
 //    None.
 //
 //--
-#define MI_INSERT_UNUSED_SEGMENT(_ControlArea)                               \
-        {                                                                    \
-           MM_PFN_LOCK_ASSERT();                                             \
-           if ((_ControlArea->u.Flags.Image == 0) &&                         \
-               (_ControlArea->FilePointer != NULL) &&                        \
-               (_ControlArea->u.Flags.PhysicalMemory == 0)) {                \
-               MiConvertStaticSubsections(_ControlArea);                     \
-           }                                                                 \
-           InsertTailList (&MmUnusedSegmentList, &_ControlArea->DereferenceList); \
-           MmUnusedSegmentCount += 1; \
-        }
+#define MI_INSERT_UNUSED_SEGMENT(_ControlArea)                                           \
+    {                                                                                    \
+        MM_PFN_LOCK_ASSERT();                                                            \
+        if ((_ControlArea->u.Flags.Image == 0) && (_ControlArea->FilePointer != NULL) && \
+            (_ControlArea->u.Flags.PhysicalMemory == 0))                                 \
+        {                                                                                \
+            MiConvertStaticSubsections(_ControlArea);                                    \
+        }                                                                                \
+        InsertTailList(&MmUnusedSegmentList, &_ControlArea->DereferenceList);            \
+        MmUnusedSegmentCount += 1;                                                       \
+    }
 
 //++
 //VOID
@@ -6252,11 +5445,11 @@ MiConvertStaticSubsections (
 //    None.
 //
 //--
-#define MI_UNUSED_SEGMENTS_REMOVE_CHARGE(_ControlArea)                       \
-        {                                                                    \
-           MM_PFN_LOCK_ASSERT();                                             \
-           MmUnusedSegmentCount -= 1; \
-        }
+#define MI_UNUSED_SEGMENTS_REMOVE_CHARGE(_ControlArea) \
+    {                                                  \
+        MM_PFN_LOCK_ASSERT();                          \
+        MmUnusedSegmentCount -= 1;                     \
+    }
 
 //
 // List heads
@@ -6302,11 +5495,12 @@ extern SIZE_T MmSharedCommit;
 
 // #define _MI_DEBUG_DATA 1         // Uncomment this for data logging
 
-#if defined (_MI_DEBUG_DATA)
+#if defined(_MI_DEBUG_DATA)
 
 #define MI_DATA_BACKTRACE_LENGTH 8
 
-typedef struct _MI_DATA_TRACES {
+typedef struct _MI_DATA_TRACES
+{
 
     PETHREAD Thread;
     PMMPFN Pfn;
@@ -6314,7 +5508,7 @@ typedef struct _MI_DATA_TRACES {
     MMPFN PfnData;
     ULONG CallerId;
     ULONG DataInThePage[2];
-    PVOID StackTrace [MI_DATA_BACKTRACE_LENGTH];
+    PVOID StackTrace[MI_DATA_BACKTRACE_LENGTH];
 
 } MI_DATA_TRACES, *PMI_DATA_TRACES;
 
@@ -6324,13 +5518,7 @@ extern ULONG MiTrackData;
 
 extern PMI_DATA_TRACES MiDataTraces;
 
-VOID
-FORCEINLINE
-MiSnapData (
-    IN PMMPFN Pfn,
-    IN PMMPTE PointerPte,
-    IN ULONG CallerId
-    )
+VOID FORCEINLINE MiSnapData(IN PMMPFN Pfn, IN PMMPTE PointerPte, IN ULONG CallerId)
 {
     KIRQL OldIrql;
     PVOID Va;
@@ -6339,7 +5527,8 @@ MiSnapData (
     ULONG Hash;
     PEPROCESS CurrentProcess;
 
-    if (MiDataTraces == NULL) {
+    if (MiDataTraces == NULL)
+    {
         return;
     }
 
@@ -6347,24 +5536,22 @@ MiSnapData (
     Index &= (MiTrackData - 1);
     Information = &MiDataTraces[Index];
 
-    Information->Thread = PsGetCurrentThread ();
+    Information->Thread = PsGetCurrentThread();
     Information->Pfn = Pfn;
     Information->PointerPte = PointerPte;
     Information->PfnData = *Pfn;
     Information->CallerId = CallerId;
 
-    CurrentProcess = PsGetCurrentProcess ();
-    Va = MiMapPageInHyperSpace (CurrentProcess, Pfn - MmPfnDatabase, &OldIrql);
+    CurrentProcess = PsGetCurrentProcess();
+    Va = MiMapPageInHyperSpace(CurrentProcess, Pfn - MmPfnDatabase, &OldIrql);
 
-    RtlCopyMemory (&Information->DataInThePage[0],
-                   Va,
-                   sizeof (Information->DataInThePage));
+    RtlCopyMemory(&Information->DataInThePage[0], Va, sizeof(Information->DataInThePage));
 
-    MiUnmapPageInHyperSpace (CurrentProcess, Va, OldIrql);
+    MiUnmapPageInHyperSpace(CurrentProcess, Va, OldIrql);
 
-    RtlZeroMemory (&Information->StackTrace[0], MI_DATA_BACKTRACE_LENGTH * sizeof(PVOID));                                                 \
+    RtlZeroMemory(&Information->StackTrace[0], MI_DATA_BACKTRACE_LENGTH * sizeof(PVOID));
 
-    RtlCaptureStackBackTrace (0, MI_DATA_BACKTRACE_LENGTH, Information->StackTrace, &Hash);
+    RtlCaptureStackBackTrace(0, MI_DATA_BACKTRACE_LENGTH, Information->StackTrace, &Hash);
 }
 
 #define MI_SNAP_DATA(_Pfn, _Pte, _CallerId) MiSnapData(_Pfn, _Pte, _CallerId)
@@ -6432,14 +5619,9 @@ extern PPAGE_FAULT_NOTIFY_ROUTINE MmPageFaultNotifyRoutine;
 
 extern SIZE_T MmSystemViewSize;
 
-VOID
-FASTCALL
-MiIdentifyPfn (
-    IN PMMPFN Pfn1,
-    OUT PMMPFN_IDENTITY PfnIdentity
-    );
+VOID FASTCALL MiIdentifyPfn(IN PMMPFN Pfn1, OUT PMMPFN_IDENTITY PfnIdentity);
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 #define InterlockedExchangeAddSizeT(a, b) InterlockedExchangeAdd64((PLONGLONG)a, b)
 #else
 #define InterlockedExchangeAddSizeT(a, b) InterlockedExchangeAdd((PLONG)(a), b)
@@ -6451,13 +5633,13 @@ MiIdentifyPfn (
 // (Any value could be used here that is not a valid system pointer or NULL).
 //
 
-#define HYDRA_PROCESS   ((PEPROCESS)1)
+#define HYDRA_PROCESS ((PEPROCESS)1)
 
-#define PREFETCH_PROCESS   ((PEPROCESS)2)
+#define PREFETCH_PROCESS ((PEPROCESS)2)
 
 #define MI_SESSION_SPACE_STRUCT_SIZE MM_ALLOCATION_GRANULARITY
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 
 /*++
 
@@ -6498,13 +5680,13 @@ MiIdentifyPfn (
 
 --*/
 
-#define MI_SESSION_SPACE_WS_SIZE  ((ULONG_PTR)(16*1024*1024) - MI_SESSION_SPACE_STRUCT_SIZE)
+#define MI_SESSION_SPACE_WS_SIZE ((ULONG_PTR)(16 * 1024 * 1024) - MI_SESSION_SPACE_STRUCT_SIZE)
 
-#define MI_SESSION_DEFAULT_IMAGE_SIZE     ((ULONG_PTR)(16*1024*1024))
+#define MI_SESSION_DEFAULT_IMAGE_SIZE ((ULONG_PTR)(16 * 1024 * 1024))
 
-#define MI_SESSION_DEFAULT_VIEW_SIZE      ((ULONG_PTR)(104*1024*1024))
+#define MI_SESSION_DEFAULT_VIEW_SIZE ((ULONG_PTR)(104 * 1024 * 1024))
 
-#define MI_SESSION_DEFAULT_POOL_SIZE      ((ULONG_PTR)(64*1024*1024))
+#define MI_SESSION_DEFAULT_POOL_SIZE ((ULONG_PTR)(64 * 1024 * 1024))
 
 #define MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE (MM_VA_MAPPED_BY_PPE)
 
@@ -6546,27 +5728,22 @@ MiIdentifyPfn (
 
 --*/
 
-#define MI_SESSION_SPACE_WS_SIZE  (4*1024*1024 - MI_SESSION_SPACE_STRUCT_SIZE)
+#define MI_SESSION_SPACE_WS_SIZE (4 * 1024 * 1024 - MI_SESSION_SPACE_STRUCT_SIZE)
 
-#define MI_SESSION_DEFAULT_IMAGE_SIZE      (8*1024*1024)
+#define MI_SESSION_DEFAULT_IMAGE_SIZE (8 * 1024 * 1024)
 
-#define MI_SESSION_DEFAULT_VIEW_SIZE      (20*1024*1024)
+#define MI_SESSION_DEFAULT_VIEW_SIZE (20 * 1024 * 1024)
 
-#define MI_SESSION_DEFAULT_POOL_SIZE      (16*1024*1024)
+#define MI_SESSION_DEFAULT_POOL_SIZE (16 * 1024 * 1024)
 
-#define MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE \
-            (MM_SYSTEM_CACHE_END_EXTRA - MM_KSEG2_BASE)
+#define MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE (MM_SYSTEM_CACHE_END_EXTRA - MM_KSEG2_BASE)
 
 #endif
 
 
-
-#define MI_SESSION_SPACE_DEFAULT_TOTAL_SIZE \
-            (MI_SESSION_DEFAULT_IMAGE_SIZE + \
-             MI_SESSION_SPACE_STRUCT_SIZE + \
-             MI_SESSION_SPACE_WS_SIZE + \
-             MI_SESSION_DEFAULT_VIEW_SIZE + \
-             MI_SESSION_DEFAULT_POOL_SIZE)
+#define MI_SESSION_SPACE_DEFAULT_TOTAL_SIZE                                                    \
+    (MI_SESSION_DEFAULT_IMAGE_SIZE + MI_SESSION_SPACE_STRUCT_SIZE + MI_SESSION_SPACE_WS_SIZE + \
+     MI_SESSION_DEFAULT_VIEW_SIZE + MI_SESSION_DEFAULT_POOL_SIZE)
 
 extern ULONG_PTR MmSessionBase;
 extern PMMPTE MiSessionBasePte;
@@ -6596,104 +5773,106 @@ extern ULONG MiSessionSpacePageTables;
 // The number of page table pages required to map all of session space.
 //
 
-#define MI_SESSION_SPACE_MAXIMUM_PAGE_TABLES \
-            (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE / MM_VA_MAPPED_BY_PDE)
+#define MI_SESSION_SPACE_MAXIMUM_PAGE_TABLES (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE / MM_VA_MAPPED_BY_PDE)
 
-extern SIZE_T MmSessionSize;        // size of the entire session space.
+extern SIZE_T MmSessionSize; // size of the entire session space.
 
 //
 // Macros to determine if a given address lies in the specified session range.
 //
 
 #define MI_IS_SESSION_IMAGE_ADDRESS(VirtualAddress) \
-        ((PVOID)(VirtualAddress) >= (PVOID)MiSessionImageStart && (PVOID)(VirtualAddress) < (PVOID)(MiSessionImageEnd))
+    ((PVOID)(VirtualAddress) >= (PVOID)MiSessionImageStart && (PVOID)(VirtualAddress) < (PVOID)(MiSessionImageEnd))
 
 #define MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) \
-        ((PVOID)(VirtualAddress) >= (PVOID)MiSessionPoolStart && (PVOID)(VirtualAddress) < (PVOID)MiSessionPoolEnd)
+    ((PVOID)(VirtualAddress) >= (PVOID)MiSessionPoolStart && (PVOID)(VirtualAddress) < (PVOID)MiSessionPoolEnd)
 
 #define MI_IS_SESSION_ADDRESS(_VirtualAddress) \
-        ((PVOID)(_VirtualAddress) >= (PVOID)MmSessionBase && (PVOID)(_VirtualAddress) < (PVOID)(MiSessionSpaceEnd))
+    ((PVOID)(_VirtualAddress) >= (PVOID)MmSessionBase && (PVOID)(_VirtualAddress) < (PVOID)(MiSessionSpaceEnd))
 
-#define MI_IS_SESSION_PTE(_Pte) \
-        ((PMMPTE)(_Pte) >= MiSessionBasePte && (PMMPTE)(_Pte) < MiSessionLastPte)
+#define MI_IS_SESSION_PTE(_Pte) ((PMMPTE)(_Pte) >= MiSessionBasePte && (PMMPTE)(_Pte) < MiSessionLastPte)
 
 #define MI_IS_SESSION_IMAGE_PTE(_Pte) \
-        ((PMMPTE)(_Pte) >= MiSessionImagePteStart && (PMMPTE)(_Pte) < MiSessionImagePteEnd)
+    ((PMMPTE)(_Pte) >= MiSessionImagePteStart && (PMMPTE)(_Pte) < MiSessionImagePteEnd)
 
-#define SESSION_GLOBAL(_Session)    (_Session->GlobalVirtualAddress)
+#define SESSION_GLOBAL(_Session) (_Session->GlobalVirtualAddress)
 
-#define MM_DBG_SESSION_INITIAL_PAGETABLE_ALLOC          0
-#define MM_DBG_SESSION_INITIAL_PAGETABLE_FREE_RACE      1
-#define MM_DBG_SESSION_INITIAL_PAGE_ALLOC               2
-#define MM_DBG_SESSION_INITIAL_PAGE_FREE_FAIL1          3
-#define MM_DBG_SESSION_INITIAL_PAGETABLE_FREE_FAIL1     4
-#define MM_DBG_SESSION_WS_PAGE_FREE                     5
-#define MM_DBG_SESSION_PAGETABLE_ALLOC                  6
-#define MM_DBG_SESSION_SYSMAPPED_PAGES_ALLOC            7
-#define MM_DBG_SESSION_WS_PAGETABLE_ALLOC               8
-#define MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC        9
-#define MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_FREE_FAIL1   10
-#define MM_DBG_SESSION_WS_PAGE_ALLOC                    11
-#define MM_DBG_SESSION_WS_PAGE_ALLOC_GROWTH             12
-#define MM_DBG_SESSION_INITIAL_PAGE_FREE                13
-#define MM_DBG_SESSION_PAGETABLE_FREE                   14
-#define MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC1       15
-#define MM_DBG_SESSION_DRIVER_PAGES_LOCKED              16
-#define MM_DBG_SESSION_DRIVER_PAGES_UNLOCKED            17
-#define MM_DBG_SESSION_WS_HASHPAGE_ALLOC                18
-#define MM_DBG_SESSION_SYSMAPPED_PAGES_COMMITTED        19
+#define MM_DBG_SESSION_INITIAL_PAGETABLE_ALLOC 0
+#define MM_DBG_SESSION_INITIAL_PAGETABLE_FREE_RACE 1
+#define MM_DBG_SESSION_INITIAL_PAGE_ALLOC 2
+#define MM_DBG_SESSION_INITIAL_PAGE_FREE_FAIL1 3
+#define MM_DBG_SESSION_INITIAL_PAGETABLE_FREE_FAIL1 4
+#define MM_DBG_SESSION_WS_PAGE_FREE 5
+#define MM_DBG_SESSION_PAGETABLE_ALLOC 6
+#define MM_DBG_SESSION_SYSMAPPED_PAGES_ALLOC 7
+#define MM_DBG_SESSION_WS_PAGETABLE_ALLOC 8
+#define MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC 9
+#define MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_FREE_FAIL1 10
+#define MM_DBG_SESSION_WS_PAGE_ALLOC 11
+#define MM_DBG_SESSION_WS_PAGE_ALLOC_GROWTH 12
+#define MM_DBG_SESSION_INITIAL_PAGE_FREE 13
+#define MM_DBG_SESSION_PAGETABLE_FREE 14
+#define MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC1 15
+#define MM_DBG_SESSION_DRIVER_PAGES_LOCKED 16
+#define MM_DBG_SESSION_DRIVER_PAGES_UNLOCKED 17
+#define MM_DBG_SESSION_WS_HASHPAGE_ALLOC 18
+#define MM_DBG_SESSION_SYSMAPPED_PAGES_COMMITTED 19
 
-#define MM_DBG_SESSION_COMMIT_PAGEDPOOL_PAGES           30
-#define MM_DBG_SESSION_COMMIT_DELETE_VM_RETURN          31
-#define MM_DBG_SESSION_COMMIT_POOL_FREED                32
-#define MM_DBG_SESSION_COMMIT_IMAGE_UNLOAD              33
-#define MM_DBG_SESSION_COMMIT_IMAGELOAD_FAILED1         34
-#define MM_DBG_SESSION_COMMIT_IMAGELOAD_FAILED2         35
-#define MM_DBG_SESSION_COMMIT_IMAGELOAD_NOACCESS        36
+#define MM_DBG_SESSION_COMMIT_PAGEDPOOL_PAGES 30
+#define MM_DBG_SESSION_COMMIT_DELETE_VM_RETURN 31
+#define MM_DBG_SESSION_COMMIT_POOL_FREED 32
+#define MM_DBG_SESSION_COMMIT_IMAGE_UNLOAD 33
+#define MM_DBG_SESSION_COMMIT_IMAGELOAD_FAILED1 34
+#define MM_DBG_SESSION_COMMIT_IMAGELOAD_FAILED2 35
+#define MM_DBG_SESSION_COMMIT_IMAGELOAD_NOACCESS 36
 
-#define MM_DBG_SESSION_NP_LOCK_CODE1                    38
-#define MM_DBG_SESSION_NP_LOCK_CODE2                    39
-#define MM_DBG_SESSION_NP_SESSION_CREATE                40
-#define MM_DBG_SESSION_NP_PAGETABLE_ALLOC               41
-#define MM_DBG_SESSION_NP_POOL_CREATE                   42
-#define MM_DBG_SESSION_NP_COMMIT_IMAGE                  43
-#define MM_DBG_SESSION_NP_COMMIT_IMAGE_PT               44
-#define MM_DBG_SESSION_NP_INIT_WS                       45
-#define MM_DBG_SESSION_NP_WS_GROW                       46
-#define MM_DBG_SESSION_NP_HASH_GROW                     47
+#define MM_DBG_SESSION_NP_LOCK_CODE1 38
+#define MM_DBG_SESSION_NP_LOCK_CODE2 39
+#define MM_DBG_SESSION_NP_SESSION_CREATE 40
+#define MM_DBG_SESSION_NP_PAGETABLE_ALLOC 41
+#define MM_DBG_SESSION_NP_POOL_CREATE 42
+#define MM_DBG_SESSION_NP_COMMIT_IMAGE 43
+#define MM_DBG_SESSION_NP_COMMIT_IMAGE_PT 44
+#define MM_DBG_SESSION_NP_INIT_WS 45
+#define MM_DBG_SESSION_NP_WS_GROW 46
+#define MM_DBG_SESSION_NP_HASH_GROW 47
 
-#define MM_DBG_SESSION_NP_PAGE_DRIVER                   48
-#define MM_DBG_SESSION_NP_POOL_CREATE_FAILED            49
-#define MM_DBG_SESSION_NP_WS_PAGE_FREE                  50
-#define MM_DBG_SESSION_NP_SESSION_DESTROY               51
-#define MM_DBG_SESSION_NP_SESSION_PTDESTROY             52
-#define MM_DBG_SESSION_NP_DELVA                         53
+#define MM_DBG_SESSION_NP_PAGE_DRIVER 48
+#define MM_DBG_SESSION_NP_POOL_CREATE_FAILED 49
+#define MM_DBG_SESSION_NP_WS_PAGE_FREE 50
+#define MM_DBG_SESSION_NP_SESSION_DESTROY 51
+#define MM_DBG_SESSION_NP_SESSION_PTDESTROY 52
+#define MM_DBG_SESSION_NP_DELVA 53
 
 #if DBG
 #define MM_SESS_COUNTER_MAX 54
 
-#define MM_BUMP_SESS_COUNTER(_index, bump) \
-    if (_index >= MM_SESS_COUNTER_MAX) { \
+#define MM_BUMP_SESS_COUNTER(_index, bump)                                         \
+    if (_index >= MM_SESS_COUNTER_MAX)                                             \
+    {                                                                              \
         DbgPrint("Mm: Invalid bump counter %d %d\n", _index, MM_SESS_COUNTER_MAX); \
-        DbgBreakPoint(); \
-    } \
+        DbgBreakPoint();                                                           \
+    }                                                                              \
     MmSessionSpace->Debug[_index] += (bump);
 
-typedef struct _MM_SESSION_MEMORY_COUNTERS {
+typedef struct _MM_SESSION_MEMORY_COUNTERS
+{
     SIZE_T NonPagablePages;
     SIZE_T CommittedPages;
 } MM_SESSION_MEMORY_COUNTERS, *PMM_SESSION_MEMORY_COUNTERS;
 
-#define MM_SESS_MEMORY_COUNTER_MAX  8
+#define MM_SESS_MEMORY_COUNTER_MAX 8
 
-#define MM_SNAP_SESS_MEMORY_COUNTERS(_index) \
-    if (_index >= MM_SESS_MEMORY_COUNTER_MAX) { \
+#define MM_SNAP_SESS_MEMORY_COUNTERS(_index)                                                     \
+    if (_index >= MM_SESS_MEMORY_COUNTER_MAX)                                                    \
+    {                                                                                            \
         DbgPrint("Mm: Invalid session mem counter %d %d\n", _index, MM_SESS_MEMORY_COUNTER_MAX); \
-        DbgBreakPoint(); \
-    } \
-    else { \
-        MmSessionSpace->Debug2[_index].NonPagablePages = MmSessionSpace->NonPagablePages; \
-        MmSessionSpace->Debug2[_index].CommittedPages = MmSessionSpace->CommittedPages; \
+        DbgBreakPoint();                                                                         \
+    }                                                                                            \
+    else                                                                                         \
+    {                                                                                            \
+        MmSessionSpace->Debug2[_index].NonPagablePages = MmSessionSpace->NonPagablePages;        \
+        MmSessionSpace->Debug2[_index].CommittedPages = MmSessionSpace->CommittedPages;          \
     }
 
 #else
@@ -6702,24 +5881,25 @@ typedef struct _MM_SESSION_MEMORY_COUNTERS {
 #endif
 
 
-#define MM_SESSION_FAILURE_NO_IDS                   0
-#define MM_SESSION_FAILURE_NO_COMMIT                1
-#define MM_SESSION_FAILURE_NO_RESIDENT              2
-#define MM_SESSION_FAILURE_RACE_DETECTED            3
-#define MM_SESSION_FAILURE_NO_SYSPTES               4
-#define MM_SESSION_FAILURE_NO_PAGED_POOL            5
-#define MM_SESSION_FAILURE_NO_NONPAGED_POOL         6
-#define MM_SESSION_FAILURE_NO_IMAGE_VA_SPACE        7
-#define MM_SESSION_FAILURE_NO_SESSION_PAGED_POOL    8
-#define MM_SESSION_FAILURE_NO_AVAILABLE             9
+#define MM_SESSION_FAILURE_NO_IDS 0
+#define MM_SESSION_FAILURE_NO_COMMIT 1
+#define MM_SESSION_FAILURE_NO_RESIDENT 2
+#define MM_SESSION_FAILURE_RACE_DETECTED 3
+#define MM_SESSION_FAILURE_NO_SYSPTES 4
+#define MM_SESSION_FAILURE_NO_PAGED_POOL 5
+#define MM_SESSION_FAILURE_NO_NONPAGED_POOL 6
+#define MM_SESSION_FAILURE_NO_IMAGE_VA_SPACE 7
+#define MM_SESSION_FAILURE_NO_SESSION_PAGED_POOL 8
+#define MM_SESSION_FAILURE_NO_AVAILABLE 9
 
-#define MM_SESSION_FAILURE_CAUSES                   10
+#define MM_SESSION_FAILURE_CAUSES 10
 
 ULONG MmSessionFailureCauses[MM_SESSION_FAILURE_CAUSES];
 
 #define MM_BUMP_SESSION_FAILURES(_index) MmSessionFailureCauses[_index] += 1;
 
-typedef struct _MM_SESSION_SPACE_FLAGS {
+typedef struct _MM_SESSION_SPACE_FLAGS
+{
     ULONG Initialized : 1;
     ULONG Filler0 : 1;
     ULONG WorkingSetInserted : 1;
@@ -6742,10 +5922,12 @@ typedef struct _MM_SESSION_SPACE_FLAGS {
 // This is needed for things like mutexes and WSL chains.
 //
 
-typedef struct _MM_SESSION_SPACE {
+typedef struct _MM_SESSION_SPACE
+{
 
     ULONG ReferenceCount;
-    union {
+    union
+    {
         ULONG LongFlags;
         MM_SESSION_SPACE_FLAGS Flags;
     } u;
@@ -6889,10 +6071,10 @@ typedef struct _MM_SESSION_SPACE {
     // Working set information.
     //
 
-    MMSUPPORT  Vm;
-    PMMWSLE    Wsle;
+    MMSUPPORT Vm;
+    PMMWSLE Wsle;
 
-    ERESOURCE  WsLock;         // owned by WorkingSetLockOwner
+    ERESOURCE WsLock; // owned by WorkingSetLockOwner
 
     //
     // This chain is in global system addresses (not session VAs) and can
@@ -6938,7 +6120,7 @@ typedef struct _MM_SESSION_SPACE {
 
     LCID LocaleId;
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 
     //
     // NT64 has enough virtual address space to support per-session special
@@ -6973,7 +6155,7 @@ extern ULONG MiSessionCount;
 // This could be improved to just flush the non-global TB entries.
 //
 
-#define MI_FLUSH_SESSION_TB() KeFlushEntireTb (TRUE, TRUE);
+#define MI_FLUSH_SESSION_TB() KeFlushEntireTb(TRUE, TRUE);
 
 //
 // The default number of pages for the session working set minimum & maximum.
@@ -6984,87 +6166,53 @@ extern ULONG MiSessionCount;
 #define MI_SESSION_SPACE_WORKING_SET_MAXIMUM 384
 
 NTSTATUS
-MiSessionCommitPageTables (
-    PVOID StartVa,
-    PVOID EndVa
-    );
+MiSessionCommitPageTables(PVOID StartVa, PVOID EndVa);
 
 NTSTATUS
-MiInitializeAndChargePfn (
-    OUT PPFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPde,
-    IN PFN_NUMBER ContainingPageFrame,
-    IN LOGICAL SessionAllocation
-    );
+MiInitializeAndChargePfn(OUT PPFN_NUMBER PageFrameIndex, IN PMMPTE PointerPde, IN PFN_NUMBER ContainingPageFrame,
+                         IN LOGICAL SessionAllocation);
 
-VOID
-MiSessionPageTableRelease (
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID MiSessionPageTableRelease(IN PFN_NUMBER PageFrameIndex);
 
 NTSTATUS
-MiInitializeSessionPool (
-    VOID
-    );
+MiInitializeSessionPool(VOID);
 
-VOID
-MiCheckSessionPoolAllocations (
-    VOID
-    );
+VOID MiCheckSessionPoolAllocations(VOID);
 
-VOID
-MiFreeSessionPoolBitMaps (
-    VOID
-    );
+VOID MiFreeSessionPoolBitMaps(VOID);
 
-VOID
-MiDetachSession (
-    VOID
-    );
+VOID MiDetachSession(VOID);
 
-VOID
-MiAttachSession (
-    IN PMM_SESSION_SPACE SessionGlobal
-    );
+VOID MiAttachSession(IN PMM_SESSION_SPACE SessionGlobal);
 
 PVOID
-MiAttachToSecureProcessInSession (
-    IN PRKAPC_STATE ApcState
-    );
+MiAttachToSecureProcessInSession(IN PRKAPC_STATE ApcState);
 
-VOID
-MiDetachFromSecureProcessInSession (
-    IN PVOID OpaqueSession,
-    IN PRKAPC_STATE ApcState
-    );
+VOID MiDetachFromSecureProcessInSession(IN PVOID OpaqueSession, IN PRKAPC_STATE ApcState);
 
-VOID
-MiReleaseProcessReferenceToSessionDataPage (
-    PMM_SESSION_SPACE SessionGlobal
-    );
+VOID MiReleaseProcessReferenceToSessionDataPage(PMM_SESSION_SPACE SessionGlobal);
 
-#define MM_SET_SESSION_RESOURCE_OWNER(_Thread)                          \
-        ASSERT (MmSessionSpace->WorkingSetLockOwner == NULL);           \
-        MmSessionSpace->WorkingSetLockOwner = _Thread;
+#define MM_SET_SESSION_RESOURCE_OWNER(_Thread)           \
+    ASSERT(MmSessionSpace->WorkingSetLockOwner == NULL); \
+    MmSessionSpace->WorkingSetLockOwner = _Thread;
 
-#define MM_CLEAR_SESSION_RESOURCE_OWNER()                               \
-        ASSERT (MmSessionSpace->WorkingSetLockOwner == PsGetCurrentThread()); \
-        MmSessionSpace->WorkingSetLockOwner = NULL;
+#define MM_CLEAR_SESSION_RESOURCE_OWNER()                                \
+    ASSERT(MmSessionSpace->WorkingSetLockOwner == PsGetCurrentThread()); \
+    MmSessionSpace->WorkingSetLockOwner = NULL;
 
-#define MM_SESSION_SPACE_WS_LOCK_ASSERT()                               \
-        ASSERT (MmSessionSpace->WorkingSetLockOwner == PsGetCurrentThread())
+#define MM_SESSION_SPACE_WS_LOCK_ASSERT() ASSERT(MmSessionSpace->WorkingSetLockOwner == PsGetCurrentThread())
 
-#define LOCK_SESSION_SPACE_WS(OLDIRQL,_Thread)                          \
-            ASSERT (KeGetCurrentIrql() <= APC_LEVEL);                   \
-            KeRaiseIrql(APC_LEVEL,&OLDIRQL);                            \
-            ExAcquireResourceExclusiveLite(&MmSessionSpace->WsLock, TRUE);  \
-            MM_SET_SESSION_RESOURCE_OWNER (_Thread);
+#define LOCK_SESSION_SPACE_WS(OLDIRQL, _Thread)                    \
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);                       \
+    KeRaiseIrql(APC_LEVEL, &OLDIRQL);                              \
+    ExAcquireResourceExclusiveLite(&MmSessionSpace->WsLock, TRUE); \
+    MM_SET_SESSION_RESOURCE_OWNER(_Thread);
 
-#define UNLOCK_SESSION_SPACE_WS(OLDIRQL)                                 \
-                            MM_CLEAR_SESSION_RESOURCE_OWNER ();          \
-                            ExReleaseResourceLite (&MmSessionSpace->WsLock); \
-                            KeLowerIrql (OLDIRQL);                       \
-                            ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+#define UNLOCK_SESSION_SPACE_WS(OLDIRQL)            \
+    MM_CLEAR_SESSION_RESOURCE_OWNER();              \
+    ExReleaseResourceLite(&MmSessionSpace->WsLock); \
+    KeLowerIrql(OLDIRQL);                           \
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
 extern PMMPTE MiHighestUserPte;
 extern PMMPTE MiHighestUserPde;
@@ -7074,10 +6222,7 @@ extern PMMPTE MiHighestUserPxe;
 #endif
 
 NTSTATUS
-MiEmptyWorkingSet (
-    IN PMMSUPPORT WsInfo,
-    IN LOGICAL WaitOk
-    );
+MiEmptyWorkingSet(IN PMMSUPPORT WsInfo, IN LOGICAL WaitOk);
 
 //++
 //ULONG
@@ -7100,7 +6245,7 @@ MiEmptyWorkingSet (
 //
 //--
 
-#define MiGetPdeSessionIndex(va)  ((ULONG)(((ULONG_PTR)(va) - (ULONG_PTR)MmSessionBase) >> PDI_SHIFT))
+#define MiGetPdeSessionIndex(va) ((ULONG)(((ULONG_PTR)(va) - (ULONG_PTR)MmSessionBase) >> PDI_SHIFT))
 
 //
 // Session space contains the image loader and tracker, virtual
@@ -7129,7 +6274,8 @@ MiEmptyWorkingSet (
 // this session.
 //
 
-typedef struct _IMAGE_ENTRY_IN_SESSION {
+typedef struct _IMAGE_ENTRY_IN_SESSION
+{
     LIST_ENTRY Link;
     PVOID Address;
     PVOID LastAddress;
@@ -7142,165 +6288,88 @@ extern LIST_ENTRY MiSessionWsList;
 
 NTSTATUS
 FASTCALL
-MiCheckPdeForSessionSpace(
-    IN PVOID VirtualAddress
-    );
+MiCheckPdeForSessionSpace(IN PVOID VirtualAddress);
 
 NTSTATUS
-MiShareSessionImage (
-    IN PSECTION Section,
-    IN OUT PSIZE_T ViewSize
-    );
+MiShareSessionImage(IN PSECTION Section, IN OUT PSIZE_T ViewSize);
 
-VOID
-MiSessionWideInitializeAddresses (
-    VOID
-    );
+VOID MiSessionWideInitializeAddresses(VOID);
 
 NTSTATUS
-MiSessionWideReserveImageAddress (
-    IN PUNICODE_STRING pImageName,
-    IN PSECTION Section,
-    IN ULONG_PTR Alignment,
-    OUT PVOID *ppAddr,
-    OUT PLOGICAL pAlreadyLoaded
-    );
+MiSessionWideReserveImageAddress(IN PUNICODE_STRING pImageName, IN PSECTION Section, IN ULONG_PTR Alignment,
+                                 OUT PVOID *ppAddr, OUT PLOGICAL pAlreadyLoaded);
 
-VOID
-MiInitializeSessionIds (
-    VOID
-    );
+VOID MiInitializeSessionIds(VOID);
 
-VOID
-MiInitializeSessionWsSupport(
-    VOID
-    );
+VOID MiInitializeSessionWsSupport(VOID);
 
-VOID
-MiSessionAddProcess (
-    IN PEPROCESS NewProcess
-    );
+VOID MiSessionAddProcess(IN PEPROCESS NewProcess);
 
-VOID
-MiSessionRemoveProcess (
-    VOID
-    );
+VOID MiSessionRemoveProcess(VOID);
 
 NTSTATUS
-MiRemovePsLoadedModule(
-    PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    );
+MiRemovePsLoadedModule(PKLDR_DATA_TABLE_ENTRY DataTableEntry);
 
 NTSTATUS
-MiRemoveImageSessionWide(
-    IN PVOID BaseAddr
-    );
+MiRemoveImageSessionWide(IN PVOID BaseAddr);
 
 NTSTATUS
-MiDeleteSessionVirtualAddresses(
-    IN PVOID VirtualAddress,
-    IN SIZE_T NumberOfBytes
-    );
+MiDeleteSessionVirtualAddresses(IN PVOID VirtualAddress, IN SIZE_T NumberOfBytes);
 
 NTSTATUS
-MiUnloadSessionImageByForce (
-    IN SIZE_T NumberOfPtes,
-    IN PVOID ImageBase
-    );
+MiUnloadSessionImageByForce(IN SIZE_T NumberOfPtes, IN PVOID ImageBase);
 
 NTSTATUS
-MiSessionWideGetImageSize(
-    IN PVOID BaseAddress,
-    OUT PSIZE_T NumberOfBytes OPTIONAL,
-    OUT PSIZE_T CommitPages OPTIONAL
-    );
+MiSessionWideGetImageSize(IN PVOID BaseAddress, OUT PSIZE_T NumberOfBytes OPTIONAL, OUT PSIZE_T CommitPages OPTIONAL);
 
 PIMAGE_ENTRY_IN_SESSION
-MiSessionLookupImage (
-    IN PVOID BaseAddress
-    );
+MiSessionLookupImage(IN PVOID BaseAddress);
 
 NTSTATUS
-MiSessionCommitImagePages(
-    PVOID BaseAddr,
-    SIZE_T Size
-    );
+MiSessionCommitImagePages(PVOID BaseAddr, SIZE_T Size);
 
-VOID
-MiSessionUnloadAllImages (
-    VOID
-    );
+VOID MiSessionUnloadAllImages(VOID);
 
-VOID
-MiFreeSessionSpaceMap (
-    VOID
-    );
+VOID MiFreeSessionSpaceMap(VOID);
 
 NTSTATUS
-MiSessionInitializeWorkingSetList (
-    VOID
-    );
+MiSessionInitializeWorkingSetList(VOID);
 
-VOID
-MiSessionUnlinkWorkingSet (
-    VOID
-    );
+VOID MiSessionUnlinkWorkingSet(VOID);
 
 NTSTATUS
-MiSessionCopyOnWrite (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte
-    );
+MiSessionCopyOnWrite(IN PVOID FaultingAddress, IN PMMPTE PointerPte);
 
-VOID
-MiSessionOutSwapProcess (
-    IN PEPROCESS Process
-    );
+VOID MiSessionOutSwapProcess(IN PEPROCESS Process);
 
-VOID
-MiSessionInSwapProcess (
-    IN PEPROCESS Process
-    );
+VOID MiSessionInSwapProcess(IN PEPROCESS Process);
 
-#if !defined (_X86PAE_)
+#if !defined(_X86PAE_)
 
 #define MI_GET_DIRECTORY_FRAME_FROM_PROCESS(_Process) \
-        MI_GET_PAGE_FRAME_FROM_PTE((PMMPTE)(&((_Process)->Pcb.DirectoryTableBase[0])))
+    MI_GET_PAGE_FRAME_FROM_PTE((PMMPTE)(&((_Process)->Pcb.DirectoryTableBase[0])))
 
 #define MI_GET_HYPER_PAGE_TABLE_FRAME_FROM_PROCESS(_Process) \
-        MI_GET_PAGE_FRAME_FROM_PTE((PMMPTE)(&((_Process)->Pcb.DirectoryTableBase[1])))
+    MI_GET_PAGE_FRAME_FROM_PTE((PMMPTE)(&((_Process)->Pcb.DirectoryTableBase[1])))
 
 #else
 
 #define MI_GET_DIRECTORY_FRAME_FROM_PROCESS(_Process) \
-        (MI_GET_PAGE_FRAME_FROM_PTE(((PMMPTE)((_Process)->PaeTop)) + PD_PER_SYSTEM - 1))
+    (MI_GET_PAGE_FRAME_FROM_PTE(((PMMPTE)((_Process)->PaeTop)) + PD_PER_SYSTEM - 1))
 
-#define MI_GET_HYPER_PAGE_TABLE_FRAME_FROM_PROCESS(_Process) \
-        ((PFN_NUMBER)((_Process)->Pcb.DirectoryTableBase[1]))
+#define MI_GET_HYPER_PAGE_TABLE_FRAME_FROM_PROCESS(_Process) ((PFN_NUMBER)((_Process)->Pcb.DirectoryTableBase[1]))
 
 #endif
 
 #if defined(_MIALT4K_)
 NTSTATUS
-MiSetCopyPagesFor4kPage (
-    IN PEPROCESS Process,
-    IN PMMVAD Vad,
-    IN OUT PVOID StartingAddress,
-    IN OUT PVOID EndingAddress,
-    IN ULONG ProtectionMask,
-    OUT PMMVAD *CallerNewVad
-    );
+MiSetCopyPagesFor4kPage(IN PEPROCESS Process, IN PMMVAD Vad, IN OUT PVOID StartingAddress, IN OUT PVOID EndingAddress,
+                        IN ULONG ProtectionMask, OUT PMMVAD *CallerNewVad);
 
-VOID
-MiRemoveAliasedVads (
-    IN PEPROCESS Process,
-    IN PMMVAD Vad
-    );
+VOID MiRemoveAliasedVads(IN PEPROCESS Process, IN PMMVAD Vad);
 
 PVOID
-MiDuplicateAliasVadList (
-    IN PMMVAD Vad
-    );
+MiDuplicateAliasVadList(IN PMMVAD Vad);
 #endif
 
 //
@@ -7319,19 +6388,20 @@ MiDuplicateAliasVadList (
 // other cases (ie: where at least 2 imports exist).
 //
 
-typedef struct _LOAD_IMPORTS {
-    SIZE_T                  Count;
-    PKLDR_DATA_TABLE_ENTRY   Entry[1];
+typedef struct _LOAD_IMPORTS
+{
+    SIZE_T Count;
+    PKLDR_DATA_TABLE_ENTRY Entry[1];
 } LOAD_IMPORTS, *PLOAD_IMPORTS;
 
-#define LOADED_AT_BOOT  ((PLOAD_IMPORTS)0)
-#define NO_IMPORTS_USED ((PLOAD_IMPORTS)-2)
+#define LOADED_AT_BOOT ((PLOAD_IMPORTS)0)
+#define NO_IMPORTS_USED ((PLOAD_IMPORTS) - 2)
 
-#define SINGLE_ENTRY(ImportVoid)    ((ULONG)((ULONG_PTR)(ImportVoid) & 0x1))
+#define SINGLE_ENTRY(ImportVoid) ((ULONG)((ULONG_PTR)(ImportVoid) & 0x1))
 
-#define SINGLE_ENTRY_TO_POINTER(ImportVoid)    ((PKLDR_DATA_TABLE_ENTRY)((ULONG_PTR)(ImportVoid) & ~0x1))
+#define SINGLE_ENTRY_TO_POINTER(ImportVoid) ((PKLDR_DATA_TABLE_ENTRY)((ULONG_PTR)(ImportVoid) & ~0x1))
 
-#define POINTER_TO_SINGLE_ENTRY(Pointer)    ((PKLDR_DATA_TABLE_ENTRY)((ULONG_PTR)(Pointer) | 0x1))
+#define POINTER_TO_SINGLE_ENTRY(Pointer) ((PKLDR_DATA_TABLE_ENTRY)((ULONG_PTR)(Pointer) | 0x1))
 
 //
 // This tracks allocated group virtual addresses.  The term SESSIONWIDE is used
@@ -7351,7 +6421,8 @@ typedef struct _LOAD_IMPORTS {
 // Access to this structure is guarded by the MmSystemLoadLock.
 //
 
-typedef struct _SESSIONWIDE_DRIVER_ADDRESS {
+typedef struct _SESSIONWIDE_DRIVER_ADDRESS
+{
     LIST_ENTRY Link;
     ULONG ReferenceCount;
     PVOID Address;
@@ -7364,15 +6435,9 @@ typedef struct _SESSIONWIDE_DRIVER_ADDRESS {
 
 #if _MI_DEBUG_RONLY
 
-VOID
-MiAssertNotSessionData (
-    IN PMMPTE PointerPte
-    );
+VOID MiAssertNotSessionData(IN PMMPTE PointerPte);
 
-VOID
-MiLogSessionDataStart (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    );
+VOID MiLogSessionDataStart(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry);
 
 #define MI_ASSERT_NOT_SESSION_DATA(PTE) MiAssertNotSessionData(PTE)
 #define MI_LOG_SESSION_DATA_START(DataTableEntry) MiLogSessionDataStart(DataTableEntry)
@@ -7385,7 +6450,8 @@ MiLogSessionDataStart (
 // This tracks driver-specified individual verifier thunks.
 //
 
-typedef struct _DRIVER_SPECIFIED_VERIFIER_THUNKS {
+typedef struct _DRIVER_SPECIFIED_VERIFIER_THUNKS
+{
     LIST_ENTRY ListEntry;
     PKLDR_DATA_TABLE_ENTRY DataTableEntry;
     ULONG NumberOfThunks;
@@ -7393,19 +6459,20 @@ typedef struct _DRIVER_SPECIFIED_VERIFIER_THUNKS {
 
 // #define _MI_DEBUG_SUB 1         // Uncomment this for subsection logging
 
-#if defined (_MI_DEBUG_SUB)
+#if defined(_MI_DEBUG_SUB)
 
 extern ULONG MiTrackSubs;
 
 #define MI_SUB_BACKTRACE_LENGTH 8
 
-typedef struct _MI_SUB_TRACES {
+typedef struct _MI_SUB_TRACES
+{
 
     PETHREAD Thread;
     PMSUBSECTION Subsection;
     PCONTROL_AREA ControlArea;
     ULONG_PTR CallerId;
-    PVOID StackTrace [MI_SUB_BACKTRACE_LENGTH];
+    PVOID StackTrace[MI_SUB_BACKTRACE_LENGTH];
 
     MSUBSECTION SubsectionContents;
     CONTROL_AREA ControlAreaContents;
@@ -7416,19 +6483,15 @@ extern LONG MiSubsectionIndex;
 
 extern PMI_SUB_TRACES MiSubsectionTraces;
 
-VOID
-FORCEINLINE
-MiSnapSubsection (
-    IN PMSUBSECTION Subsection,
-    IN ULONG CallerId
-    )
+VOID FORCEINLINE MiSnapSubsection(IN PMSUBSECTION Subsection, IN ULONG CallerId)
 {
     PMI_SUB_TRACES Information;
     PCONTROL_AREA ControlArea;
     ULONG Index;
     ULONG Hash;
 
-    if (MiSubsectionTraces == NULL) {
+    if (MiSubsectionTraces == NULL)
+    {
         return;
     }
 
@@ -7450,7 +6513,7 @@ MiSnapSubsection (
     *(PCONTROL_AREA)&Information->ControlAreaContents = *ControlArea;
     Information->Thread = PsGetCurrentThread();
     Information->CallerId = CallerId;
-    RtlCaptureStackBackTrace (0, MI_SUB_BACKTRACE_LENGTH, Information->StackTrace, &Hash);
+    RtlCaptureStackBackTrace(0, MI_SUB_BACKTRACE_LENGTH, Information->StackTrace, &Hash);
 }
 
 #define MI_SNAP_SUB(_Sub, callerid) MiSnapSubsection(_Sub, callerid)
@@ -7461,17 +6524,13 @@ MiSnapSubsection (
 
 #ifdef _MI_MESSAGE_SERVER
 LOGICAL
-MiQueueMessage (
-    IN PVOID Message
-    );
+MiQueueMessage(IN PVOID Message);
 
 PVOID
-MiRemoveMessage (
-    VOID
-    );
+MiRemoveMessage(VOID);
 
-#define MI_INSTRUMENT_QUEUE(Message)    MiQueueMessage (Message)
-#define MI_INSTRUMENTR_QUEUE()          MiRemoveMessage ()
+#define MI_INSTRUMENT_QUEUE(Message) MiQueueMessage(Message)
+#define MI_INSTRUMENTR_QUEUE() MiRemoveMessage()
 
 #else
 
@@ -7480,4 +6539,4 @@ MiRemoveMessage (
 
 #endif
 
-#endif  // MI
+#endif // MI

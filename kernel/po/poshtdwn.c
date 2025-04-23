@@ -22,13 +22,8 @@ Revision History:
 
 #if DBG
 BOOLEAN
-PopDumpFileObject(
-    IN PVOID Object,
-    IN PUNICODE_STRING ObjectName,
-    IN ULONG HandleCount,
-    IN ULONG PointerCount,
-    IN PVOID Parameter
-    );
+PopDumpFileObject(IN PVOID Object, IN PUNICODE_STRING ObjectName, IN ULONG HandleCount, IN ULONG PointerCount,
+                  IN PVOID Parameter);
 #endif
 
 #ifdef ALLOC_PRAGMA
@@ -53,21 +48,18 @@ BOOLEAN PopShutdownListAvailable = FALSE;
 SINGLE_LIST_ENTRY PopShutdownThreadList;
 LIST_ENTRY PopShutdownQueue;
 
-typedef struct _PoShutdownThreadListEntry {
+typedef struct _PoShutdownThreadListEntry
+{
     SINGLE_LIST_ENTRY ShutdownThreadList;
     PETHREAD Thread;
 } POSHUTDOWNLISTENTRY, *PPOSHUTDOWNLISTENTRY;
 
 NTSTATUS
-PopInitShutdownList(
-    VOID
-    )
+PopInitShutdownList(VOID)
 {
     PAGED_CODE();
 
-    KeInitializeEvent(&PopShutdownEvent,
-                      NotificationEvent,
-                      FALSE);
+    KeInitializeEvent(&PopShutdownEvent, NotificationEvent, FALSE);
     PopShutdownThreadList.Next = NULL;
     InitializeListHead(&PopShutdownQueue);
     ExInitializeFastMutex(&PopShutdownListMutex);
@@ -78,19 +70,16 @@ PopInitShutdownList(
 }
 
 NTSTATUS
-PoRequestShutdownWait(
-    IN PETHREAD Thread
-    )
+PoRequestShutdownWait(IN PETHREAD Thread)
 {
     PPOSHUTDOWNLISTENTRY Entry;
 
     PAGED_CODE();
 
-    Entry = (PPOSHUTDOWNLISTENTRY)
-        ExAllocatePoolWithTag(PagedPool|POOL_COLD_ALLOCATION,
-                              sizeof(POSHUTDOWNLISTENTRY),
-                              'LSoP');
-    if (! Entry) {
+    Entry = (PPOSHUTDOWNLISTENTRY)ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION, sizeof(POSHUTDOWNLISTENTRY),
+                                                        'LSoP');
+    if (!Entry)
+    {
         return STATUS_NO_MEMORY;
     }
 
@@ -98,16 +87,16 @@ PoRequestShutdownWait(
     ObReferenceObject(Thread);
 
     ExAcquireFastMutex(&PopShutdownListMutex);
-    
-    if (! PopShutdownListAvailable) {
+
+    if (!PopShutdownListAvailable)
+    {
         ObDereferenceObject(Thread);
         ExFreePool(Entry);
         ExReleaseFastMutex(&PopShutdownListMutex);
         return STATUS_UNSUCCESSFUL;
     }
 
-    PushEntryList(&PopShutdownThreadList,
-                  &Entry->ShutdownThreadList);
+    PushEntryList(&PopShutdownThreadList, &Entry->ShutdownThreadList);
 
     ExReleaseFastMutex(&PopShutdownListMutex);
 
@@ -115,24 +104,25 @@ PoRequestShutdownWait(
 }
 
 NTSTATUS
-PoRequestShutdownEvent(
-    OUT PVOID *Event
-    )
+PoRequestShutdownEvent(OUT PVOID *Event)
 {
-    NTSTATUS             Status;
+    NTSTATUS Status;
 
     PAGED_CODE();
 
-    if (Event != NULL) {
+    if (Event != NULL)
+    {
         *Event = NULL;
     }
 
     Status = PoRequestShutdownWait(PsGetCurrentThread());
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    if (Event != NULL) {
+    if (Event != NULL)
+    {
         *Event = &PopShutdownEvent;
     }
 
@@ -141,9 +131,7 @@ PoRequestShutdownEvent(
 
 NTKERNELAPI
 NTSTATUS
-PoQueueShutdownWorkItem(
-    IN PWORK_QUEUE_ITEM WorkItem
-    )
+PoQueueShutdownWorkItem(IN PWORK_QUEUE_ITEM WorkItem)
 {
     NTSTATUS Status;
 
@@ -151,11 +139,13 @@ PoQueueShutdownWorkItem(
 
     ExAcquireFastMutex(&PopShutdownListMutex);
 
-    if (PopShutdownListAvailable) {
-        InsertTailList(&PopShutdownQueue,
-                       &WorkItem->List);
+    if (PopShutdownListAvailable)
+    {
+        InsertTailList(&PopShutdownQueue, &WorkItem->List);
         Status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         Status = STATUS_SYSTEM_SHUTDOWN;
     }
 
@@ -169,38 +159,28 @@ PoQueueShutdownWorkItem(
 extern POBJECT_TYPE IoFileObjectType;
 
 BOOLEAN
-PopDumpFileObject(
-    IN PVOID Object,
-    IN PUNICODE_STRING ObjectName,
-    IN ULONG HandleCount,
-    IN ULONG PointerCount,
-    IN PVOID Parameter
-    )
+PopDumpFileObject(IN PVOID Object, IN PUNICODE_STRING ObjectName, IN ULONG HandleCount, IN ULONG PointerCount,
+                  IN PVOID Parameter)
 {
     PFILE_OBJECT File;
-    PULONG       NumberOfFilesFound;
+    PULONG NumberOfFilesFound;
 
     UNREFERENCED_PARAMETER(ObjectName);
     ASSERT(Object);
     ASSERT(Parameter);
 
-    File = (PFILE_OBJECT) Object;
-    NumberOfFilesFound = (PULONG) Parameter;
+    File = (PFILE_OBJECT)Object;
+    NumberOfFilesFound = (PULONG)Parameter;
 
     ++*NumberOfFilesFound;
-    DbgPrint("\t0x%0p : HC %d, PC %d, Name %.*ls\n",
-             Object, HandleCount, PointerCount,
-             File->FileName.Length,
+    DbgPrint("\t0x%0p : HC %d, PC %d, Name %.*ls\n", Object, HandleCount, PointerCount, File->FileName.Length,
              File->FileName.Buffer);
 
     return TRUE;
 }
 #endif // DBG
 
-VOID
-PopGracefulShutdown (
-    IN PVOID WorkItemParameter
-    )
+VOID PopGracefulShutdown(IN PVOID WorkItemParameter)
 /*++
 
 Routine Description:
@@ -214,10 +194,10 @@ Return Value:
 
 --*/
 {
-    PVOID         Context;
+    PVOID Context;
     LARGE_INTEGER Timeout;
-    HANDLE        ShutdownReqThreadHandle;
-    NTSTATUS      Status;
+    HANDLE ShutdownReqThreadHandle;
+    NTSTATUS Status;
 
     UNREFERENCED_PARAMETER(WorkItemParameter);
 
@@ -227,16 +207,18 @@ Return Value:
 
     PERFINFO_SHUTDOWN_LOG_LAST_MEMORY_SNAPSHOT();
 
-    if (!PopAction.ShutdownBugCode) {
+    if (!PopAction.ShutdownBugCode)
+    {
         HalEndOfBoot();
     }
 
-    if (PoCleanShutdownEnabled()) {
+    if (PoCleanShutdownEnabled())
+    {
         //
         // Terminate all processes.  This will close all the handles and delete
         // all the address spaces.  Note the system process is kept alive.
         //
-        PsShutdownSystem ();
+        PsShutdownSystem();
         //
         // Notify every system thread that we're shutting things
         // down...
@@ -245,10 +227,10 @@ Return Value:
         KeSetEvent(&PopShutdownEvent, 0, FALSE);
 
         //
-        // ... and give all threads which requested notification a 
+        // ... and give all threads which requested notification a
         // chance to clean up and exit.
         //
-            
+
         ExAcquireFastMutex(&PopShutdownListMutex);
 
         PopShutdownListAvailable = FALSE;
@@ -259,77 +241,75 @@ Return Value:
             PLIST_ENTRY Next;
             PWORK_QUEUE_ITEM WorkItem;
 
-            while (PopShutdownQueue.Flink != &PopShutdownQueue) {
+            while (PopShutdownQueue.Flink != &PopShutdownQueue)
+            {
                 Next = RemoveHeadList(&PopShutdownQueue);
-                WorkItem = CONTAINING_RECORD(Next,
-                                             WORK_QUEUE_ITEM,
-                                             List);
+                WorkItem = CONTAINING_RECORD(Next, WORK_QUEUE_ITEM, List);
                 WorkItem->WorkerRoutine(WorkItem->Parameter);
             }
         }
 
         {
-            PSINGLE_LIST_ENTRY   Next;
+            PSINGLE_LIST_ENTRY Next;
             PPOSHUTDOWNLISTENTRY ShutdownEntry;
 
-            while (TRUE) {
+            while (TRUE)
+            {
                 Next = PopEntryList(&PopShutdownThreadList);
-                if (! Next) {
+                if (!Next)
+                {
                     break;
                 }
 
-                ShutdownEntry = CONTAINING_RECORD(Next,
-                                                  POSHUTDOWNLISTENTRY,
-                                                  ShutdownThreadList);
-                KeWaitForSingleObject(ShutdownEntry->Thread,
-                                      Executive,
-                                      KernelMode,
-                                      FALSE,
-                                      NULL);
+                ShutdownEntry = CONTAINING_RECORD(Next, POSHUTDOWNLISTENTRY, ShutdownThreadList);
+                KeWaitForSingleObject(ShutdownEntry->Thread, Executive, KernelMode, FALSE, NULL);
                 ObDereferenceObject(ShutdownEntry->Thread);
                 ExFreePool(ShutdownEntry);
             }
         }
     }
-    
+
     //
     // Terminate Plug-N-Play.
     //
 
-    PpShutdownSystem (TRUE, 0, &Context);
+    PpShutdownSystem(TRUE, 0, &Context);
 
-    ExShutdownSystem (0);
+    ExShutdownSystem(0);
 
     //
     // Send shutdown IRPs to all drivers that asked for it.
     //
 
-    IoShutdownSystem (0);
+    IoShutdownSystem(0);
 
-    if (PoCleanShutdownEnabled()) {
+    if (PoCleanShutdownEnabled())
+    {
         //
         // Wait for all the user mode processes to exit.
         //
-        PsWaitForAllProcesses ();
+        PsWaitForAllProcesses();
     }
 
     //
     // Scrub the object directories
     //
-    if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_OB) {
-        ObShutdownSystem (0);
+    if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_OB)
+    {
+        ObShutdownSystem(0);
     }
 
     //
     // Close the registry and the associated handles/file objects.
     //
-    CmShutdownSystem ();
+    CmShutdownSystem();
 
     //
     // Check for open handles
     //
-    if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_OB) {
-        ObShutdownSystem (1);
+    if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_OB)
+    {
+        ObShutdownSystem(1);
     }
 
     //
@@ -340,7 +320,7 @@ Return Value:
     // pagefile handle has not yet been closed.
     //
 
-    MmShutdownSystem (0);
+    MmShutdownSystem(0);
 
     //
     // Inform drivers of the system shutdown state.
@@ -357,13 +337,12 @@ Return Value:
     MmShutdownSystem(1);
 
 #if DBG
-    if (PoCleanShutdownEnabled()) {
+    if (PoCleanShutdownEnabled())
+    {
         ULONG NumberOfFilesFoundAtShutdown = 0;
         // As of this time, no files should be open.
         DbgPrint("Looking for open files...\n");
-        ObEnumerateObjectsByType(IoFileObjectType,
-                                 &PopDumpFileObject,
-                                 &NumberOfFilesFoundAtShutdown);
+        ObEnumerateObjectsByType(IoFileObjectType, &PopDumpFileObject, &NumberOfFilesFoundAtShutdown);
         DbgPrint("Found %d open files.\n", NumberOfFilesFoundAtShutdown);
         ASSERT(NumberOfFilesFoundAtShutdown == 0);
     }
@@ -396,29 +375,29 @@ Return Value:
     // Maybe if there's a debugger attached, we could shut down
     // sooner...
 
-    if (PopAction.ShutdownBugCode) {
-        KeBugCheckEx (PopAction.ShutdownBugCode->Code,
-                      PopAction.ShutdownBugCode->Parameter1,
-                      PopAction.ShutdownBugCode->Parameter2,
-                      PopAction.ShutdownBugCode->Parameter3,
-                      PopAction.ShutdownBugCode->Parameter4);
+    if (PopAction.ShutdownBugCode)
+    {
+        KeBugCheckEx(PopAction.ShutdownBugCode->Code, PopAction.ShutdownBugCode->Parameter1,
+                     PopAction.ShutdownBugCode->Parameter2, PopAction.ShutdownBugCode->Parameter3,
+                     PopAction.ShutdownBugCode->Parameter4);
     }
 
     PERFINFO_SHUTDOWN_DUMP_PERF_BUFFER();
 
-    PpShutdownSystem (TRUE, 1, &Context);
+    PpShutdownSystem(TRUE, 1, &Context);
 
-    ExShutdownSystem (2);
+    ExShutdownSystem(2);
 
-    if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_OB) {
-        ObShutdownSystem (2);
+    if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_OB)
+    {
+        ObShutdownSystem(2);
     }
 
     //
     // Any allocated pool left at this point is a leak.
     //
 
-    MmShutdownSystem (2);
+    MmShutdownSystem(2);
 
     //
     // Implement shutdown style action -

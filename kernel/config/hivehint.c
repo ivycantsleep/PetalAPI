@@ -21,58 +21,33 @@ Revision History:
 #include "cmp.h"
 
 NTSTATUS
-HvpAdjustBitmap(
-    IN PHHIVE           Hive,
-    IN ULONG            HiveLength,
-    IN OUT PRTL_BITMAP  Bitmap
-    );
+HvpAdjustBitmap(IN PHHIVE Hive, IN ULONG HiveLength, IN OUT PRTL_BITMAP Bitmap);
 
 HCELL_INDEX
-HvpFindFreeCellInBin(
-    PHHIVE          Hive,
-    ULONG           Index,
-    ULONG           NewSize,
-    HSTORAGE_TYPE   Type,
-    PHBIN           Bin
-    );
+HvpFindFreeCellInBin(PHHIVE Hive, ULONG Index, ULONG NewSize, HSTORAGE_TYPE Type, PHBIN Bin);
 
 HCELL_INDEX
-HvpFindFreeCellInThisViewWindow(
-    PHHIVE          Hive,
-    ULONG           Index,
-    ULONG           NewSize,
-    HSTORAGE_TYPE   Type,
-    HCELL_INDEX     Vicinity 
-    );
+HvpFindFreeCellInThisViewWindow(PHHIVE Hive, ULONG Index, ULONG NewSize, HSTORAGE_TYPE Type, HCELL_INDEX Vicinity);
 
 HCELL_INDEX
-HvpScanForFreeCellInViewWindow(
-    PHHIVE          Hive,
-    ULONG           Index,
-    ULONG           NewSize,
-    HSTORAGE_TYPE   Type,
-    HCELL_INDEX     FileOffsetStart
-    );
+HvpScanForFreeCellInViewWindow(PHHIVE Hive, ULONG Index, ULONG NewSize, HSTORAGE_TYPE Type,
+                               HCELL_INDEX FileOffsetStart);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,HvpAdjustHiveFreeDisplay)
-#pragma alloc_text(PAGE,HvpFreeHiveFreeDisplay)
-#pragma alloc_text(PAGE,HvpAdjustBitmap)
-#pragma alloc_text(PAGE,HvpAddFreeCellHint)
-#pragma alloc_text(PAGE,HvpRemoveFreeCellHint)
-#pragma alloc_text(PAGE,HvpFindFreeCellInBin)
-#pragma alloc_text(PAGE,HvpFindFreeCellInThisViewWindow)
-#pragma alloc_text(PAGE,HvpScanForFreeCellInViewWindow)
-#pragma alloc_text(PAGE,HvpCheckViewBoundary)
-#pragma alloc_text(PAGE,HvpFindFreeCell)
+#pragma alloc_text(PAGE, HvpAdjustHiveFreeDisplay)
+#pragma alloc_text(PAGE, HvpFreeHiveFreeDisplay)
+#pragma alloc_text(PAGE, HvpAdjustBitmap)
+#pragma alloc_text(PAGE, HvpAddFreeCellHint)
+#pragma alloc_text(PAGE, HvpRemoveFreeCellHint)
+#pragma alloc_text(PAGE, HvpFindFreeCellInBin)
+#pragma alloc_text(PAGE, HvpFindFreeCellInThisViewWindow)
+#pragma alloc_text(PAGE, HvpScanForFreeCellInViewWindow)
+#pragma alloc_text(PAGE, HvpCheckViewBoundary)
+#pragma alloc_text(PAGE, HvpFindFreeCell)
 #endif
 
 NTSTATUS
-HvpAdjustHiveFreeDisplay(
-    IN PHHIVE           Hive,
-    IN ULONG            HiveLength,
-    IN HSTORAGE_TYPE    Type
-    )
+HvpAdjustHiveFreeDisplay(IN PHHIVE Hive, IN ULONG HiveLength, IN HSTORAGE_TYPE Type)
 /*++
 
 Routine Description:
@@ -95,28 +70,27 @@ Return Value:
 
 --*/
 {
-    ULONG       i;
-    NTSTATUS    Status;
+    ULONG i;
+    NTSTATUS Status;
 
     PAGED_CODE();
 
-    for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++) {
-        Status = HvpAdjustBitmap(Hive,HiveLength,&(Hive->Storage[Type].FreeDisplay[i]) );
-        if( !NT_SUCCESS(Status) ){
+    for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++)
+    {
+        Status = HvpAdjustBitmap(Hive, HiveLength, &(Hive->Storage[Type].FreeDisplay[i]));
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
-    
+
     return STATUS_SUCCESS;
 }
 
-#define ROUND_UP_NOZERO(a, b)   (a)?ROUND_UP(a,b):(b)
-#define ROUND_INCREMENTS        0x100
+#define ROUND_UP_NOZERO(a, b) (a) ? ROUND_UP(a, b) : (b)
+#define ROUND_INCREMENTS 0x100
 
-VOID
-HvpFreeHiveFreeDisplay(
-    IN PHHIVE           Hive
-    )
+VOID HvpFreeHiveFreeDisplay(IN PHHIVE Hive)
 /*++
 
 Routine Description:
@@ -133,36 +107,35 @@ Return Value:
 
 --*/
 {
-    ULONG       i,j;
-    NTSTATUS    Status;
-    ULONG       BufferSize;
+    ULONG i, j;
+    NTSTATUS Status;
+    ULONG BufferSize;
 
     PAGED_CODE();
 
-    for( i=Stable;i<=Volatile;i++) {
+    for (i = Stable; i <= Volatile; i++)
+    {
         //
         // we may loose some quota here; due to rounding
-        // we can prevent that by keeping the real size of 
+        // we can prevent that by keeping the real size of
         // the bitmaps as a member of the hive struct
         //
-        BufferSize = ROUND_UP_NOZERO(Hive->Storage[i].FreeDisplay[0].SizeOfBitMap / 8,ROUND_INCREMENTS);             
+        BufferSize = ROUND_UP_NOZERO(Hive->Storage[i].FreeDisplay[0].SizeOfBitMap / 8, ROUND_INCREMENTS);
 
-        for (j = 0; j < HHIVE_FREE_DISPLAY_SIZE; j++) {
-            if( Hive->Storage[i].FreeDisplay[j].Buffer != NULL ) {
+        for (j = 0; j < HHIVE_FREE_DISPLAY_SIZE; j++)
+        {
+            if (Hive->Storage[i].FreeDisplay[j].Buffer != NULL)
+            {
                 (Hive->Free)(Hive->Storage[i].FreeDisplay[j].Buffer, BufferSize);
             }
         }
     }
-    
+
     return;
 }
 
 NTSTATUS
-HvpAdjustBitmap(
-    IN PHHIVE           Hive,
-    IN ULONG            HiveLength,
-    IN OUT PRTL_BITMAP  Bitmap
-    )
+HvpAdjustBitmap(IN PHHIVE Hive, IN ULONG HiveLength, IN OUT PRTL_BITMAP Bitmap)
 /*++
 
 Routine Description:
@@ -185,28 +158,32 @@ Return Value:
 
 --*/
 {
-    ULONG       VectorSize;
-    ULONG       NewBufferSize;
-    ULONG       OldBufferSize;
-    PULONG      Vector;
-    PULONG      OldVector;
-    ULONG       OldVectorSize;
+    ULONG VectorSize;
+    ULONG NewBufferSize;
+    ULONG OldBufferSize;
+    PULONG Vector;
+    PULONG OldVector;
+    ULONG OldVectorSize;
 
     PAGED_CODE();
 
-    VectorSize = HiveLength / HBLOCK_SIZE;  // Vector size == bits
+    VectorSize = HiveLength / HBLOCK_SIZE; // Vector size == bits
 
-    NewBufferSize = ROUND_UP_NOZERO( (VectorSize + 7) / 8,ROUND_INCREMENTS);             // BufferSize == Bytes
+    NewBufferSize = ROUND_UP_NOZERO((VectorSize + 7) / 8, ROUND_INCREMENTS); // BufferSize == Bytes
 
-    if( Bitmap->SizeOfBitMap == 0 ) {
+    if (Bitmap->SizeOfBitMap == 0)
+    {
         OldBufferSize = 0;
-    } else {
-        OldBufferSize = ROUND_UP_NOZERO( (Bitmap->SizeOfBitMap + 7) / 8, ROUND_INCREMENTS);
     }
-    
-    if( NewBufferSize <= OldBufferSize ) {
+    else
+    {
+        OldBufferSize = ROUND_UP_NOZERO((Bitmap->SizeOfBitMap + 7) / 8, ROUND_INCREMENTS);
+    }
+
+    if (NewBufferSize <= OldBufferSize)
+    {
         //
-        // We don't shrink the vector; next time we grow, we'll perform 
+        // We don't shrink the vector; next time we grow, we'll perform
         // the adjustments
         //
 
@@ -221,9 +198,10 @@ Return Value:
         //
         // set the new size
         //
-        RtlInitializeBitMap(Bitmap,Bitmap->Buffer,VectorSize);
-        if( OldVectorSize < VectorSize ) {
-            RtlClearBits (Bitmap,OldVectorSize,VectorSize - OldVectorSize);
+        RtlInitializeBitMap(Bitmap, Bitmap->Buffer, VectorSize);
+        if (OldVectorSize < VectorSize)
+        {
+            RtlClearBits(Bitmap, OldVectorSize, VectorSize - OldVectorSize);
         }
         return STATUS_SUCCESS;
     }
@@ -231,21 +209,23 @@ Return Value:
     //
     // else, the bitmap has enlarged. Allocate a new buffer and copy the bits already set.
     //
-    Vector = (PULONG)((Hive->Allocate)(NewBufferSize, TRUE,CM_FIND_LEAK_TAG39));
-    if (Vector == NULL) {
+    Vector = (PULONG)((Hive->Allocate)(NewBufferSize, TRUE, CM_FIND_LEAK_TAG39));
+    if (Vector == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    
+
     OldVector = Bitmap->Buffer;
     //CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"HvpAdjustBitmap: Old %lu :: %lu (%lx) New %lu :: %lu (%lx)\n",OldBufferSize,Bitmap->SizeOfBitMap,OldVector,NewBufferSize,VectorSize,Vector));
-    RtlZeroMemory(Vector,NewBufferSize);
+    RtlZeroMemory(Vector, NewBufferSize);
     RtlInitializeBitMap(Bitmap, Vector, VectorSize);
 
-    if( OldVector != NULL ) {
+    if (OldVector != NULL)
+    {
         //
         // copy the already set bits
         //
-        RtlCopyMemory (Vector,OldVector,OldBufferSize);
+        RtlCopyMemory(Vector, OldVector, OldBufferSize);
 
         //
         // Free the old vector
@@ -256,13 +236,7 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-VOID
-HvpAddFreeCellHint(
-    PHHIVE          Hive,
-    HCELL_INDEX     Cell,
-    ULONG           Index,
-    HSTORAGE_TYPE   Type
-    )
+VOID HvpAddFreeCellHint(PHHIVE Hive, HCELL_INDEX Cell, ULONG Index, HSTORAGE_TYPE Type)
 /*++
 
 Routine Description:
@@ -285,33 +259,27 @@ Return Value:
 
 --*/
 {
-    ULONG           BinIndex;
-    PHMAP_ENTRY     Me;
-    PHBIN           Bin;
+    ULONG BinIndex;
+    PHMAP_ENTRY Me;
+    PHBIN Bin;
 
     PAGED_CODE();
 
     Me = HvpGetCellMap(Hive, Cell);
-    VALIDATE_CELL_MAP(__LINE__,Me,Hive,Cell);
+    VALIDATE_CELL_MAP(__LINE__, Me, Hive, Cell);
 
     Bin = (PHBIN)HBIN_BASE(Me->BinAddress);
     //
     // compute the bin index and for the begining of the bin
     //
     BinIndex = Bin->FileOffset / HBLOCK_SIZE;
-    
-    RtlSetBits (&(Hive->Storage[Type].FreeDisplay[Index]), BinIndex, Bin->Size / HBLOCK_SIZE);
+
+    RtlSetBits(&(Hive->Storage[Type].FreeDisplay[Index]), BinIndex, Bin->Size / HBLOCK_SIZE);
 
     Hive->Storage[Type].FreeSummary |= (1 << Index);
 }
 
-VOID
-HvpRemoveFreeCellHint(
-    PHHIVE          Hive,
-    HCELL_INDEX     Cell,
-    ULONG           Index,
-    HSTORAGE_TYPE   Type
-    )
+VOID HvpRemoveFreeCellHint(PHHIVE Hive, HCELL_INDEX Cell, ULONG Index, HSTORAGE_TYPE Type)
 /*++
 
 Routine Description:
@@ -334,30 +302,31 @@ Return Value:
 
 --*/
 {
-    ULONG           BinIndex;
-    ULONG           TempIndex;
-    PHMAP_ENTRY     Me;
-    PHBIN           Bin;
-    ULONG           CellOffset;
-    ULONG           Size;
-    PHCELL          p;
-    BOOLEAN         CellFound = FALSE;
+    ULONG BinIndex;
+    ULONG TempIndex;
+    PHMAP_ENTRY Me;
+    PHBIN Bin;
+    ULONG CellOffset;
+    ULONG Size;
+    PHCELL p;
+    BOOLEAN CellFound = FALSE;
 
     PAGED_CODE();
 
     Me = HvpGetCellMap(Hive, Cell);
-    VALIDATE_CELL_MAP(__LINE__,Me,Hive,Cell);
+    VALIDATE_CELL_MAP(__LINE__, Me, Hive, Cell);
 
     Bin = (PHBIN)HBIN_BASE(Me->BinAddress);
 
     CellOffset = Bin->FileOffset + sizeof(HBIN);
 
-    
+
 #ifdef CM_MAP_NO_READ
     //
     // we ned to be protected against exception raised by the FS while faulting in data
     //
-    try {
+    try
+    {
 #endif //CM_MAP_NO_READ
 
         //
@@ -366,17 +335,20 @@ Return Value:
 
         p = (PHCELL)((PUCHAR)Bin + sizeof(HBIN));
 
-        while (p < (PHCELL)((PUCHAR)Bin + Bin->Size)) {
+        while (p < (PHCELL)((PUCHAR)Bin + Bin->Size))
+        {
 
             //
             // if free cell, check it out, add it to free list for hive
             //
-            if (p->Size >= 0) {
+            if (p->Size >= 0)
+            {
 
                 Size = (ULONG)p->Size;
 
                 HvpComputeIndex(TempIndex, Size);
-                if ((Index == TempIndex) && (CellOffset != (Cell&(~HCELL_TYPE_MASK)) )) {
+                if ((Index == TempIndex) && (CellOffset != (Cell & (~HCELL_TYPE_MASK))))
+                {
                     //
                     // there is at least one free cell of this size (this one)
                     // different than the one being delisted
@@ -384,46 +356,54 @@ Return Value:
                     CellFound = TRUE;
                     break;
                 }
-
-            } else {
+            }
+            else
+            {
                 //
                 // used cell
                 //
                 Size = (ULONG)(p->Size * -1);
-
             }
 
-            ASSERT( ((LONG)Size) >= 0);
+            ASSERT(((LONG)Size) >= 0);
             p = (PHCELL)((PUCHAR)p + Size);
             CellOffset += Size;
         }
 
 #ifdef CM_MAP_NO_READ
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvpRemoveFreeCellHint: exception thrown ehile faulting in data, code:%08lx\n", GetExceptionCode()));
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                     "HvpRemoveFreeCellHint: exception thrown ehile faulting in data, code:%08lx\n",
+                     GetExceptionCode()));
         //
         // better not use cells inthis range rather than leaving false hints
         //
         CellFound = FALSE;
     }
 #endif //CM_MAP_NO_READ
-    
-    if( CellFound == FALSE ) {
+
+    if (CellFound == FALSE)
+    {
         //
         // no cell with this index was found
         // compute the bin index and for the begining of the bin
         //
         BinIndex = Bin->FileOffset / HBLOCK_SIZE;
-    
-        RtlClearBits (&(Hive->Storage[Type].FreeDisplay[Index]), BinIndex, Bin->Size / HBLOCK_SIZE);
+
+        RtlClearBits(&(Hive->Storage[Type].FreeDisplay[Index]), BinIndex, Bin->Size / HBLOCK_SIZE);
     }
 
-    if( RtlNumberOfSetBits(&(Hive->Storage[Type].FreeDisplay[Index]) ) != 0 ) {
+    if (RtlNumberOfSetBits(&(Hive->Storage[Type].FreeDisplay[Index])) != 0)
+    {
         //
         // there are still some other free cells of this size
         //
         Hive->Storage[Type].FreeSummary |= (1 << Index);
-    } else {
+    }
+    else
+    {
         //
         // entire bitmap is 0 (i.e. no other free cells of this size)
         //
@@ -432,13 +412,7 @@ Return Value:
 }
 
 HCELL_INDEX
-HvpFindFreeCellInBin(
-    PHHIVE          Hive,
-    ULONG           Index,
-    ULONG           NewSize,
-    HSTORAGE_TYPE   Type,
-    PHBIN           Bin 
-    )
+HvpFindFreeCellInBin(PHHIVE Hive, ULONG Index, ULONG NewSize, HSTORAGE_TYPE Type, PHBIN Bin)
 /*++
 
 Routine Description:
@@ -464,20 +438,21 @@ Return Value:
 --*/
 {
 
-    ULONG           BinIndex;
-    ULONG           CellOffset;
-    PHCELL          p;
-    ULONG           BinOffset;
-    ULONG           Size;
-    HCELL_INDEX     cellindex;
-    ULONG           FoundCellIndex;
+    ULONG BinIndex;
+    ULONG CellOffset;
+    PHCELL p;
+    ULONG BinOffset;
+    ULONG Size;
+    HCELL_INDEX cellindex;
+    ULONG FoundCellIndex;
 
     PAGED_CODE();
 
     BinOffset = Bin->FileOffset;
-    BinIndex = BinOffset/HBLOCK_SIZE;
+    BinIndex = BinOffset / HBLOCK_SIZE;
 
-    if( RtlCheckBit(&(Hive->Storage[Type].FreeDisplay[Index]), BinIndex) == 0 ) {
+    if (RtlCheckBit(&(Hive->Storage[Type].FreeDisplay[Index]), BinIndex) == 0)
+    {
         //
         // no hint for this bin
         //
@@ -485,12 +460,13 @@ Return Value:
     }
 
     CellOffset = sizeof(HBIN);
-    
+
 #ifdef CM_MAP_NO_READ
     //
     // we ned to be protected against exception raised by the FS while faulting in data
     //
-    try {
+    try
+    {
 #endif //CM_MAP_NO_READ
 
         //
@@ -498,12 +474,14 @@ Return Value:
         //
         p = (PHCELL)((PUCHAR)Bin + sizeof(HBIN));
 
-        while (p < (PHCELL)((PUCHAR)Bin + Bin->Size)) {
+        while (p < (PHCELL)((PUCHAR)Bin + Bin->Size))
+        {
 
             //
             // if free cell, check it out, add it to free list for hive
             //
-            if (p->Size >= 0) {
+            if (p->Size >= 0)
+            {
 
                 Size = (ULONG)p->Size;
 
@@ -511,19 +489,22 @@ Return Value:
                 // cell is free, and is not obviously corrupt, add to free list
                 //
                 CellOffset = (ULONG)((PUCHAR)p - (PUCHAR)Bin);
-                cellindex = BinOffset + CellOffset + (Type*HCELL_TYPE_MASK);
+                cellindex = BinOffset + CellOffset + (Type * HCELL_TYPE_MASK);
 
-                if (NewSize <= (ULONG)Size) {
+                if (NewSize <= (ULONG)Size)
+                {
                     //
                     // Found a big enough cell.
                     //
                     HvpComputeIndex(FoundCellIndex, Size);
-                    if( Index == FoundCellIndex ) {
+                    if (Index == FoundCellIndex)
+                    {
                         //
                         // and enlisted at the same index (we want to avoid fragmentation if possible!)
                         //
 
-                        if (! HvMarkCellDirty(Hive, cellindex)) {
+                        if (!HvMarkCellDirty(Hive, cellindex))
+                        {
                             return HCELL_NIL;
                         }
 
@@ -534,21 +515,25 @@ Return Value:
                         return cellindex;
                     }
                 }
-
-            } else {
+            }
+            else
+            {
                 //
                 // used cell
                 //
                 Size = (ULONG)(p->Size * -1);
-
             }
 
-            ASSERT( ((LONG)Size) >= 0);
+            ASSERT(((LONG)Size) >= 0);
             p = (PHCELL)((PUCHAR)p + Size);
         }
 #ifdef CM_MAP_NO_READ
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvpFindFreeCellInBin: exception thrown ehile faulting in data, code:%08lx\n", GetExceptionCode()));
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                     "HvpFindFreeCellInBin: exception thrown ehile faulting in data, code:%08lx\n",
+                     GetExceptionCode()));
         return HCELL_NIL;
     }
 #endif //CM_MAP_NO_READ
@@ -556,18 +541,13 @@ Return Value:
     //
     // no free cell matching this size on this bin ; We did all this work for nothing!
     //
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"[HvpFindFreeCellInBin] (Offset,Size) = (%lx,%lx) ==> No Match\n",BinOffset,Bin->Size));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL, "[HvpFindFreeCellInBin] (Offset,Size) = (%lx,%lx) ==> No Match\n",
+                 BinOffset, Bin->Size));
     return HCELL_NIL;
 }
 
 HCELL_INDEX
-HvpScanForFreeCellInViewWindow(
-    PHHIVE          Hive,
-    ULONG           Index,
-    ULONG           NewSize,
-    HSTORAGE_TYPE   Type,
-    HCELL_INDEX     FileOffsetStart
-    )
+HvpScanForFreeCellInViewWindow(PHHIVE Hive, ULONG Index, ULONG NewSize, HSTORAGE_TYPE Type, HCELL_INDEX FileOffsetStart)
 /*++
 
 Routine Description:
@@ -600,51 +580,61 @@ Note:
     convert it to a logical one prior to accessing the map
 --*/
 {
-    ULONG           FileOffsetEnd;
-    HCELL_INDEX     Cell;
-    PHMAP_ENTRY     Me;
-    PHBIN           Bin;
-    PFREE_HBIN      FreeBin;
-    ULONG           BinFileOffset;
-    ULONG           BinSize;
+    ULONG FileOffsetEnd;
+    HCELL_INDEX Cell;
+    PHMAP_ENTRY Me;
+    PHBIN Bin;
+    PFREE_HBIN FreeBin;
+    ULONG BinFileOffset;
+    ULONG BinSize;
 
     PAGED_CODE();
 
     FileOffsetEnd = FileOffsetStart + CM_VIEW_SIZE;
     FileOffsetEnd -= HBLOCK_SIZE;
-    if( FileOffsetStart != 0 ) {
+    if (FileOffsetStart != 0)
+    {
         FileOffsetStart -= HBLOCK_SIZE;
     }
-    if( FileOffsetEnd > Hive->Storage[Type].Length ) {
+    if (FileOffsetEnd > Hive->Storage[Type].Length)
+    {
         FileOffsetEnd = Hive->Storage[Type].Length;
     }
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"\t[HvpScanForFreeCellInViewWindow] (Start,End) = (%lx,%lx) Size = %lx\n",FileOffsetStart,FileOffsetEnd,Hive->Storage[Type].Length));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL,
+                 "\t[HvpScanForFreeCellInViewWindow] (Start,End) = (%lx,%lx) Size = %lx\n", FileOffsetStart,
+                 FileOffsetEnd, Hive->Storage[Type].Length));
 
     //
     // sanity ASSERT
     //
-    ASSERT( FileOffsetStart < FileOffsetEnd );
+    ASSERT(FileOffsetStart < FileOffsetEnd);
 
 
     //
     // the caller already checked for this; remember, hints are for real!
     //
-    ASSERT( !RtlAreBitsClear( &(Hive->Storage[Type].FreeDisplay[Index]),FileOffsetStart/HBLOCK_SIZE,(FileOffsetEnd - FileOffsetStart) / HBLOCK_SIZE) );
-    
-    while( FileOffsetStart < FileOffsetEnd ) {
-        Cell = FileOffsetStart + (Type*HCELL_TYPE_MASK);
+    ASSERT(!RtlAreBitsClear(&(Hive->Storage[Type].FreeDisplay[Index]), FileOffsetStart / HBLOCK_SIZE,
+                            (FileOffsetEnd - FileOffsetStart) / HBLOCK_SIZE));
+
+    while (FileOffsetStart < FileOffsetEnd)
+    {
+        Cell = FileOffsetStart + (Type * HCELL_TYPE_MASK);
         Me = HvpGetCellMap(Hive, Cell);
-        VALIDATE_CELL_MAP(__LINE__,Me,Hive,Cell);
+        VALIDATE_CELL_MAP(__LINE__, Me, Hive, Cell);
 
         //
         // skip discarded bins
         //
-        if(Me->BinAddress & HMAP_DISCARDABLE) {
+        if (Me->BinAddress & HMAP_DISCARDABLE)
+        {
             FreeBin = (PFREE_HBIN)Me->BlockAddress;
-            if( FreeBin->FileOffset == FileOffsetStart ) {
+            if (FreeBin->FileOffset == FileOffsetStart)
+            {
                 FileOffsetStart += FreeBin->Size;
-            } else {
+            }
+            else
+            {
                 //
                 // the bin does not start in this window;
                 // skip to the next bin in this window
@@ -654,20 +644,22 @@ Note:
             continue;
         }
 
-        if((Me->BinAddress & (HMAP_INVIEW|HMAP_INPAGEDPOOL)) == 0) {
+        if ((Me->BinAddress & (HMAP_INVIEW | HMAP_INPAGEDPOOL)) == 0)
+        {
             //
             // bin is not mapped, map it now!!!
-            // do not touch the view as we may iterate through 
+            // do not touch the view as we may iterate through
             // the hole hive; this will keep the view for this window
             // mapped, as we hold the registry lock exclusive
             //
-            if( !NT_SUCCESS(CmpMapThisBin((PCMHIVE)Hive,Cell,FALSE)) ) {
+            if (!NT_SUCCESS(CmpMapThisBin((PCMHIVE)Hive, Cell, FALSE)))
+            {
                 //
                 // cannot map bin due to insufficient resources
                 //
                 return HCELL_NIL;
             }
-            ASSERT( Me->BinAddress & HMAP_INVIEW );
+            ASSERT(Me->BinAddress & HMAP_INVIEW);
         }
 
         Bin = (PHBIN)HBIN_BASE(Me->BinAddress);
@@ -676,26 +668,35 @@ Note:
         //
         // we need to protect against in-page-errors thrown by mm while faulting in data
         //
-        try {
+        try
+        {
 #endif //CM_MAP_NO_READ
-        BinFileOffset = Bin->FileOffset;
-        BinSize = Bin->Size;
+            BinFileOffset = Bin->FileOffset;
+            BinSize = Bin->Size;
 #ifdef CM_MAP_NO_READ
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvpScanForFreeCellInViewWindow: exception thrown while faulting in data, code:%08lx\n", GetExceptionCode()));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                         "HvpScanForFreeCellInViewWindow: exception thrown while faulting in data, code:%08lx\n",
+                         GetExceptionCode()));
             return HCELL_NIL;
         }
 #endif //CM_MAP_NO_READ
-        if( BinFileOffset == FileOffsetStart ) {
+        if (BinFileOffset == FileOffsetStart)
+        {
 
-            Cell = HvpFindFreeCellInBin(Hive,Index,NewSize,Type,Bin);
-            if( Cell != HCELL_NIL ) {
+            Cell = HvpFindFreeCellInBin(Hive, Index, NewSize, Type, Bin);
+            if (Cell != HCELL_NIL)
+            {
                 //found it!
                 return Cell;
             }
-                
+
             FileOffsetStart += BinSize;
-        } else {
+        }
+        else
+        {
             //
             // bin does not start in this CM_VIEW_SIZE window; skip to the next bin in this window
             //
@@ -706,18 +707,14 @@ Note:
     //
     // no free cell matching this size on the CM_VIEW_SIZE window ; We did all this work for nothing!
     //
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"[HvpScanForFreeCellInViewWindow] (Start,End) = (%lx,%lx) ==> No Match\n",FileOffsetStart,FileOffsetEnd));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL,
+                 "[HvpScanForFreeCellInViewWindow] (Start,End) = (%lx,%lx) ==> No Match\n", FileOffsetStart,
+                 FileOffsetEnd));
     return HCELL_NIL;
 }
 
 HCELL_INDEX
-HvpFindFreeCellInThisViewWindow(
-    PHHIVE          Hive,
-    ULONG           Index,
-    ULONG           NewSize,
-    HSTORAGE_TYPE   Type,
-    HCELL_INDEX     Vicinity
-    )
+HvpFindFreeCellInThisViewWindow(PHHIVE Hive, ULONG Index, ULONG NewSize, HSTORAGE_TYPE Type, HCELL_INDEX Vicinity)
 /*++
 
 Routine Description:
@@ -752,36 +749,39 @@ Note:
 
 --*/
 {
-    HCELL_INDEX     Cell;
-    ULONG           FileOffsetStart;
-    ULONG           FileOffsetEnd;
-    ULONG           VicinityViewOffset;
-    ULONG           Summary;
-    ULONG           Offset;
-    ULONG           RunLength;
+    HCELL_INDEX Cell;
+    ULONG FileOffsetStart;
+    ULONG FileOffsetEnd;
+    ULONG VicinityViewOffset;
+    ULONG Summary;
+    ULONG Offset;
+    ULONG RunLength;
 
     PAGED_CODE();
 
-    ASSERT( Vicinity != HCELL_NIL );
+    ASSERT(Vicinity != HCELL_NIL);
 
-    VicinityViewOffset = ((Vicinity&(~HCELL_TYPE_MASK)) + HBLOCK_SIZE) & (~(CM_VIEW_SIZE - 1));
+    VicinityViewOffset = ((Vicinity & (~HCELL_TYPE_MASK)) + HBLOCK_SIZE) & (~(CM_VIEW_SIZE - 1));
     FileOffsetStart = VicinityViewOffset & (~(CM_VIEW_SIZE - 1));
 
     FileOffsetEnd = FileOffsetStart + CM_VIEW_SIZE;
-    if( FileOffsetEnd > (Hive->Storage[Type].Length + HBLOCK_SIZE) ) {
+    if (FileOffsetEnd > (Hive->Storage[Type].Length + HBLOCK_SIZE))
+    {
         FileOffsetEnd = Hive->Storage[Type].Length + HBLOCK_SIZE;
     }
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"[HvpFindFreeCellInThisViewWindow] Vicinity = %lx (Start,End) = (%lx,%lx) Size = %lx\n",Vicinity,FileOffsetStart,FileOffsetEnd,Hive->Storage[Type].Length));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL,
+                 "[HvpFindFreeCellInThisViewWindow] Vicinity = %lx (Start,End) = (%lx,%lx) Size = %lx\n", Vicinity,
+                 FileOffsetStart, FileOffsetEnd, Hive->Storage[Type].Length));
 
     //
     // sanity assert
     //
-    ASSERT( FileOffsetStart < FileOffsetEnd );
-    
+    ASSERT(FileOffsetStart < FileOffsetEnd);
+
     //
     // at this point the offset is physical (file-oriented, i.e. it is
-    // translated with HBLOCK_SIZE; HvpScanForFreeCellInViewWindow will do the 
+    // translated with HBLOCK_SIZE; HvpScanForFreeCellInViewWindow will do the
     // reverse computation to adjust the offset)
     //
 
@@ -799,9 +799,10 @@ Note:
     //
     ASSERT(HHIVE_FREE_DISPLAY_SIZE == 24);
 
-    Offset = FileOffsetStart?(FileOffsetStart-HBLOCK_SIZE):0;
+    Offset = FileOffsetStart ? (FileOffsetStart - HBLOCK_SIZE) : 0;
     RunLength = FileOffsetEnd - FileOffsetStart;
-    if( FileOffsetStart == 0 ) {
+    if (FileOffsetStart == 0)
+    {
         //
         // first run is one block shorter !
         //
@@ -810,12 +811,18 @@ Note:
     Offset /= HBLOCK_SIZE;
     RunLength /= HBLOCK_SIZE;
 
-    while (Summary != 0) {
-        if (Summary & 0xff) {
+    while (Summary != 0)
+    {
+        if (Summary & 0xff)
+        {
             Index = CmpFindFirstSetRight[Summary & 0xff];
-        } else if (Summary & 0xff00) {
+        }
+        else if (Summary & 0xff00)
+        {
             Index = CmpFindFirstSetRight[(Summary & 0xff00) >> 8] + 8;
-        } else  {
+        }
+        else
+        {
             ASSERT(Summary & 0xff0000);
             Index = CmpFindFirstSetRight[(Summary & 0xff0000) >> 16] + 16;
         }
@@ -823,13 +830,15 @@ Note:
         //
         // we go down this path only if we have any hints
         //
-        if( !RtlAreBitsClear( &(Hive->Storage[Type].FreeDisplay[Index]),Offset,RunLength) ) {
+        if (!RtlAreBitsClear(&(Hive->Storage[Type].FreeDisplay[Index]), Offset, RunLength))
+        {
 
             //
             // we have a reason to scan this view
             //
-            Cell = HvpScanForFreeCellInViewWindow(Hive,Index,NewSize,Type,VicinityViewOffset);
-            if( Cell != HCELL_NIL ) {
+            Cell = HvpScanForFreeCellInViewWindow(Hive, Index, NewSize, Type, VicinityViewOffset);
+            if (Cell != HCELL_NIL)
+            {
                 // found it
                 return Cell;
             }
@@ -837,8 +846,9 @@ Note:
             //
             // if we got here, the hints are invalid
             //
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"[HvpFindFreeCellInThisViewWindow] (Start,End) = (%lx,%lx) Offset = %lx RunLength = %lx\n",FileOffsetStart,FileOffsetEnd,Offset,RunLength));
-
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL,
+                         "[HvpFindFreeCellInThisViewWindow] (Start,End) = (%lx,%lx) Offset = %lx RunLength = %lx\n",
+                         FileOffsetStart, FileOffsetEnd, Offset, RunLength));
         }
         //
         // No suitable cell was found of this size.
@@ -848,18 +858,12 @@ Note:
         ASSERT(Summary & (1 << Index));
         Summary = Summary & ~(1 << Index);
     }
-    
+
     return HCELL_NIL;
 }
 
 HCELL_INDEX
-HvpFindFreeCell(
-    PHHIVE          Hive,
-    ULONG           Index,
-    ULONG           NewSize,
-    HSTORAGE_TYPE   Type,
-    HCELL_INDEX     Vicinity 
-    )
+HvpFindFreeCell(PHHIVE Hive, ULONG Index, ULONG NewSize, HSTORAGE_TYPE Type, HCELL_INDEX Vicinity)
 /*++
 
 Routine Description:
@@ -895,11 +899,11 @@ Optimization:
     DRAGOS: This is not finished: need to determine whether we need it or not
 --*/
 {
-    HCELL_INDEX         Cell = HCELL_NIL;
-    ULONG               FileOffset = 0;
-    PCMHIVE             CmHive;
+    HCELL_INDEX Cell = HCELL_NIL;
+    ULONG FileOffset = 0;
+    PCMHIVE CmHive;
 
-/*  
+    /*  
     PCMHIVE             CmHive;
     PCM_VIEW_OF_FILE    CmView;
     USHORT              NrViews;
@@ -910,17 +914,19 @@ Optimization:
     CmHive = (PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive);
 #if DBG
     {
-        UNICODE_STRING  HiveName;
+        UNICODE_STRING HiveName;
         RtlInitUnicodeString(&HiveName, (PCWSTR)Hive->BaseBlock->FileName);
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"[HvpFindFreeCell] CellSize = %lu Vicinity = %lx :: Hive (%p) (%.*S)  ...",NewSize,Vicinity,Hive,HiveName.Length / sizeof(WCHAR),HiveName.Buffer));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL,
+                     "[HvpFindFreeCell] CellSize = %lu Vicinity = %lx :: Hive (%p) (%.*S)  ...", NewSize, Vicinity,
+                     Hive, HiveName.Length / sizeof(WCHAR), HiveName.Buffer));
     }
 #endif
 
     //
     // Vicinity should have the same storage as the new cell !
     //
-    ASSERT( (Vicinity == HCELL_NIL) || (HvGetCellType(Vicinity) == (ULONG)Type) );
-    
+    ASSERT((Vicinity == HCELL_NIL) || (HvGetCellType(Vicinity) == (ULONG)Type));
+
     //
     // we have the lock exclusive or nobody is operating inside this hive
     //
@@ -928,23 +934,24 @@ Optimization:
     ASSERT_CM_EXCLUSIVE_HIVE_ACCESS(Hive);
 
 
-
-    if( (Vicinity != HCELL_NIL) &&  (CmHive->GrowOnlyMode == FALSE) ) {
+    if ((Vicinity != HCELL_NIL) && (CmHive->GrowOnlyMode == FALSE))
+    {
         //
         // try first in this window
         //
-        Cell = HvpFindFreeCellInThisViewWindow(Hive,Index,NewSize,Type,Vicinity);
+        Cell = HvpFindFreeCellInThisViewWindow(Hive, Index, NewSize, Type, Vicinity);
     }
 
-    if( Cell != HCELL_NIL ) {
+    if (Cell != HCELL_NIL)
+    {
         //
         // found it!!!
         //
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"found cell %lx \n",Cell));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL, "found cell %lx \n", Cell));
         return Cell;
-    } 
+    }
 
-/*
+    /*
     //
     // Optimization:
     //      Step 1 : Search first in the pinned views
@@ -1020,55 +1027,57 @@ Optimization:
     FileOffset = 0;
 */
     //
-    // bad luck!; we did not found it in this window. 
+    // bad luck!; we did not found it in this window.
     // We have to search the entire hive
     //
 
-    while( FileOffset < Hive->Storage[Type].Length ) {
+    while (FileOffset < Hive->Storage[Type].Length)
+    {
         //
         // don't search again in the vicinity window
         // we already did it once
         //
-		if( ( ((CmHive->GrowOnlyMode == FALSE) || (Type == Volatile)) && 
-			  ((Vicinity == HCELL_NIL) || (HvpCheckViewBoundary(FileOffset,Vicinity&(~HCELL_TYPE_MASK)) == FALSE)) )  || 
-            ( (CmHive->GrowOnlyMode == TRUE) && (FileOffset >= CmHive->GrowOffset) )
-          ) {
+        if ((((CmHive->GrowOnlyMode == FALSE) || (Type == Volatile)) &&
+             ((Vicinity == HCELL_NIL) || (HvpCheckViewBoundary(FileOffset, Vicinity & (~HCELL_TYPE_MASK)) == FALSE))) ||
+            ((CmHive->GrowOnlyMode == TRUE) && (FileOffset >= CmHive->GrowOffset)))
+        {
             //
             // search in this window
             //
-            Cell = FileOffset + (Type*HCELL_TYPE_MASK);
-            Cell = HvpFindFreeCellInThisViewWindow(Hive,Index,NewSize,Type,Cell);
-            if( Cell != HCELL_NIL ) {
+            Cell = FileOffset + (Type * HCELL_TYPE_MASK);
+            Cell = HvpFindFreeCellInThisViewWindow(Hive, Index, NewSize, Type, Cell);
+            if (Cell != HCELL_NIL)
+            {
                 //
                 // found it!
                 //
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"found cell %lx \n",Cell));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL, "found cell %lx \n", Cell));
                 return Cell;
             }
         }
-        
+
         //
         // advance to the new window
         //
-        if( FileOffset == 0) {
+        if (FileOffset == 0)
+        {
             // account for the base block
             FileOffset += (CM_VIEW_SIZE - HBLOCK_SIZE);
-        } else {
+        }
+        else
+        {
             FileOffset += CM_VIEW_SIZE;
         }
     }
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_FREECELL,"No cell found.\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_FREECELL, "No cell found.\n"));
 
     return HCELL_NIL;
 }
 
 
 BOOLEAN
-HvpCheckViewBoundary(
-                     IN ULONG Start,
-                     IN ULONG End
-    )
+HvpCheckViewBoundary(IN ULONG Start, IN ULONG End)
 /*++
 
 Routine Description:
@@ -1097,17 +1106,17 @@ Return Value:
     //
     Start += HBLOCK_SIZE;
     End += HBLOCK_SIZE;
-    
+
     //
     // truncate to the CM_VIEW_SIZE segment
     //
     Start &= (~(CM_VIEW_SIZE - 1));
     End &= (~(CM_VIEW_SIZE - 1));
 
-    if( Start != End ){
+    if (Start != End)
+    {
         return FALSE;
-    } 
-    
+    }
+
     return TRUE;
 }
-

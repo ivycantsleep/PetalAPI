@@ -29,8 +29,8 @@ Revision History:
 #include "pnpmgrp.h"
 #pragma hdrstop
 
-#define SYSTEM_HIVE_LOW     80
-#define SYSTEM_HIVE_HIGH    90
+#define SYSTEM_HIVE_LOW 80
+#define SYSTEM_HIVE_HIGH 90
 
 #include <inbv.h>
 #include <hdlsblk.h>
@@ -41,7 +41,7 @@ Revision History:
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'nipP')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'nipP')
 #endif
 
 //
@@ -49,7 +49,8 @@ Revision History:
 // load order dependencies can be tracked.
 //
 
-typedef struct _TREE_ENTRY {
+typedef struct _TREE_ENTRY
+{
     struct _TREE_ENTRY *Left;
     struct _TREE_ENTRY *Right;
     struct _TREE_ENTRY *Sibling;
@@ -58,116 +59,72 @@ typedef struct _TREE_ENTRY {
     UNICODE_STRING GroupName;
 } TREE_ENTRY, *PTREE_ENTRY;
 
-typedef struct _DRIVER_INFORMATION {
-    LIST_ENTRY              Link;
-    PDRIVER_OBJECT          DriverObject;
+typedef struct _DRIVER_INFORMATION
+{
+    LIST_ENTRY Link;
+    PDRIVER_OBJECT DriverObject;
     PBOOT_DRIVER_LIST_ENTRY DataTableEntry;
-    HANDLE                  ServiceHandle;
-    USHORT                  TagPosition;
-    BOOLEAN                 Failed;
-    BOOLEAN                 Processed;
-    NTSTATUS                Status;
+    HANDLE ServiceHandle;
+    USHORT TagPosition;
+    BOOLEAN Failed;
+    BOOLEAN Processed;
+    NTSTATUS Status;
 } DRIVER_INFORMATION, *PDRIVER_INFORMATION;
 
 PTREE_ENTRY IopGroupListHead;
 
-#define ALLOW_WORLD_READ_OF_ENUM        1
+#define ALLOW_WORLD_READ_OF_ENUM 1
 
 PTREE_ENTRY
-PipCreateEntry(
-    IN PUNICODE_STRING GroupName
-    );
+PipCreateEntry(IN PUNICODE_STRING GroupName);
 
-VOID
-PipFreeGroupTree(
-    IN PTREE_ENTRY TreeEntry
-    );
+VOID PipFreeGroupTree(IN PTREE_ENTRY TreeEntry);
 
 USHORT
-PipGetDriverTagPriority(
-    IN HANDLE Servicehandle
-    );
+PipGetDriverTagPriority(IN HANDLE Servicehandle);
 
 NTSTATUS
-PipPnPDriverEntry(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    );
+PipPnPDriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
 NTSTATUS
-PipAddDevicesToBootDriver(
-   IN PDRIVER_OBJECT DriverObject
-   );
+PipAddDevicesToBootDriver(IN PDRIVER_OBJECT DriverObject);
 
 BOOLEAN
-PipAddDevicesToBootDriverWorker(
-    IN HANDLE DeviceInstanceHandle,
-    IN PUNICODE_STRING DeviceInstancePath,
-    IN OUT PVOID Context
-    );
+PipAddDevicesToBootDriverWorker(IN HANDLE DeviceInstanceHandle, IN PUNICODE_STRING DeviceInstancePath,
+                                IN OUT PVOID Context);
 
 BOOLEAN
-PipCheckDependencies(
-    IN HANDLE KeyHandle
-    );
+PipCheckDependencies(IN HANDLE KeyHandle);
 
 INTERFACE_TYPE
-PipDetermineDefaultInterfaceType(
-    VOID
-    );
+PipDetermineDefaultInterfaceType(VOID);
 
-VOID
-PipInsertDriverList(
-    IN PLIST_ENTRY ListHead,
-    IN PDRIVER_INFORMATION DriverInfo
-    );
+VOID PipInsertDriverList(IN PLIST_ENTRY ListHead, IN PDRIVER_INFORMATION DriverInfo);
 
 PTREE_ENTRY
-PipLookupGroupName(
-    IN PUNICODE_STRING GroupName,
-    IN BOOLEAN Insert
-    );
+PipLookupGroupName(IN PUNICODE_STRING GroupName, IN BOOLEAN Insert);
 
-VOID
-PipNotifySetupDevices(
-    PDEVICE_NODE DeviceNode
-    );
+VOID PipNotifySetupDevices(PDEVICE_NODE DeviceNode);
 
 BOOLEAN
-PipWaitForBootDevicesDeleted(
-    IN VOID
-    );
+PipWaitForBootDevicesDeleted(IN VOID);
 
 BOOLEAN
-PipWaitForBootDevicesStarted(
-    IN VOID
-    );
+PipWaitForBootDevicesStarted(IN VOID);
 
 BOOLEAN
-PiInitPhase0(
-    VOID
-    );
+PiInitPhase0(VOID);
 
 NTSTATUS
-RawInitialize(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    );
+RawInitialize(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
 NTSTATUS
-PiInitCacheGroupInformation(
-    VOID
-    );
+PiInitCacheGroupInformation(VOID);
 
-VOID
-PiInitReleaseCachedGroupInformation(
-    VOID
-    );
+VOID PiInitReleaseCachedGroupInformation(VOID);
 
 NTSTATUS
-IopStartRamdisk(
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+IopStartRamdisk(PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 //
 // Group order table
@@ -179,8 +136,8 @@ PLIST_ENTRY IopGroupTable;
 //
 // Group order cache list.
 //
-UNICODE_STRING *PiInitGroupOrderTable      = NULL;
-USHORT          PiInitGroupOrderTableCount = 0;
+UNICODE_STRING *PiInitGroupOrderTable = NULL;
+USHORT PiInitGroupOrderTableCount = 0;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, IopInitializeBootDrivers)
@@ -211,12 +168,9 @@ USHORT          PiInitGroupOrderTableCount = 0;
 #pragma alloc_text(INIT, IopStartRamdisk)
 
 #endif
-
+
 NTSTATUS
-IopInitializePlugPlayServices(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN ULONG Phase
-    )
+IopInitializePlugPlayServices(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN ULONG Phase)
 
 /*++
 
@@ -243,7 +197,8 @@ Returns:
     ULONG disposition;
     INTERFACE_TYPE interface;
 
-    if (Phase == 0) {
+    if (Phase == 0)
+    {
 
         PnPInitialized = FALSE;
 
@@ -253,12 +208,8 @@ Returns:
         //
         PpSystemHiveLimits.Low = SYSTEM_HIVE_LOW;
         PpSystemHiveLimits.High = SYSTEM_HIVE_HIGH;
-        CmRegisterSystemHiveLimitCallback(
-            SYSTEM_HIVE_LOW,
-            SYSTEM_HIVE_HIGH,
-            (PVOID)&PpSystemHiveLimits,
-            (PCM_HYSTERESIS_CALLBACK)PpSystemHiveLimitCallback
-            );
+        CmRegisterSystemHiveLimitCallback(SYSTEM_HIVE_LOW, SYSTEM_HIVE_HIGH, (PVOID)&PpSystemHiveLimits,
+                                          (PCM_HYSTERESIS_CALLBACK)PpSystemHiveLimitCallback);
         PpSystemHiveTooLarge = FALSE;
 
         //
@@ -274,7 +225,8 @@ Returns:
         // used)
         //
         status = PiInitCacheGroupInformation();
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             return FALSE;
         }
@@ -283,13 +235,14 @@ Returns:
         // Initialize the registry access semaphore.
         //
 
-        KeInitializeSemaphore( &PpRegistrySemaphore, 1, 1 );
+        KeInitializeSemaphore(&PpRegistrySemaphore, 1, 1);
 
         //
         // Initialize the Legacy Bus information table.
         //
 
-        for (interface = Internal; interface < MaximumInterfaceType; interface++) {
+        for (interface = Internal; interface < MaximumInterfaceType; interface++)
+        {
 
             InitializeListHead(&IopLegacyBusInformationTable[interface]);
         }
@@ -298,7 +251,7 @@ Returns:
         // Initialize the resource map
         //
 
-        IopInitializeResourceMap (LoaderBlock);
+        IopInitializeResourceMap(LoaderBlock);
 
         //
         // Allocate two one-page scratch buffers to be used by our
@@ -306,11 +259,13 @@ Returns:
         //
 
         IopPnpScratchBuffer1 = ExAllocatePool(PagedPool, PNP_LARGE_SCRATCH_BUFFER_SIZE);
-        if (!IopPnpScratchBuffer1) {
+        if (!IopPnpScratchBuffer1)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
         IopPnpScratchBuffer2 = ExAllocatePool(PagedPool, PNP_LARGE_SCRATCH_BUFFER_SIZE);
-        if (!IopPnpScratchBuffer2) {
+        if (!IopPnpScratchBuffer2)
+        {
             ExFreePool(IopPnpScratchBuffer1);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
@@ -332,36 +287,39 @@ Returns:
         //
 
         status = IopPortInitialize();
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
 
         status = IopMemInitialize();
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
 
         status = IopDmaInitialize();
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
 
         status = IopIrqInitialize();
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
 
         status = IopBusNumberInitialize();
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
 
-        status = IopOpenRegistryKeyEx( &hCurrentControlSet,
-                                       NULL,
-                                       &CmRegistryMachineSystemCurrentControlSet,
-                                       KEY_ALL_ACCESS
-                                       );
-        if (!NT_SUCCESS(status)) {
+        status =
+            IopOpenRegistryKeyEx(&hCurrentControlSet, NULL, &CmRegistryMachineSystemCurrentControlSet, KEY_ALL_ACCESS);
+        if (!NT_SUCCESS(status))
+        {
             hCurrentControlSet = NULL;
             goto init_Exit0;
         }
@@ -370,58 +328,49 @@ Returns:
         //
 
         PiWstrToUnicodeString(&unicodeName, REGSTR_PATH_CONTROL_PNP);
-        status = IopCreateRegistryKeyEx( &handle,
-                                         hCurrentControlSet,
-                                         &unicodeName,
-                                         KEY_ALL_ACCESS,
-                                         REG_OPTION_NON_VOLATILE,
-                                         NULL
-                                         );
-        if (NT_SUCCESS(status)) {
+        status = IopCreateRegistryKeyEx(&handle, hCurrentControlSet, &unicodeName, KEY_ALL_ACCESS,
+                                        REG_OPTION_NON_VOLATILE, NULL);
+        if (NT_SUCCESS(status))
+        {
             //
             // HACK: Since it was too late to make the change in XP, we target
-            // this behaviour at machines with MATROX G100. The inf sets this 
+            // this behaviour at machines with MATROX G100. The inf sets this
             // flag in the registry.
             //
-            status = IopGetRegistryValue(handle,
-                                         REGSTR_VAL_WIN2000STARTORDER,
-                                         &detectionInfo
-                                         );
-            if (NT_SUCCESS(status)) {
+            status = IopGetRegistryValue(handle, REGSTR_VAL_WIN2000STARTORDER, &detectionInfo);
+            if (NT_SUCCESS(status))
+            {
 
-                if (detectionInfo->Type == REG_DWORD && detectionInfo->DataLength == sizeof(ULONG)) {
+                if (detectionInfo->Type == REG_DWORD && detectionInfo->DataLength == sizeof(ULONG))
+                {
 
-                    PpCallerInitializesRequestTable = (BOOLEAN) *(KEY_VALUE_DATA(detectionInfo));
+                    PpCallerInitializesRequestTable = (BOOLEAN) * (KEY_VALUE_DATA(detectionInfo));
                 }
                 ExFreePool(detectionInfo);
             }
             NtClose(handle);
         }
-        
+
         //
         // Next open/create System\CurrentControlSet\Enum\Root key.
         //
 
         PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_ENUM);
-        status = IopCreateRegistryKeyEx( &handle,
-                                         hCurrentControlSet,
-                                         &unicodeName,
-                                         KEY_ALL_ACCESS,
-                                         REG_OPTION_NON_VOLATILE,
-                                         &disposition
-                                         );
-        if (!NT_SUCCESS(status)) {
+        status = IopCreateRegistryKeyEx(&handle, hCurrentControlSet, &unicodeName, KEY_ALL_ACCESS,
+                                        REG_OPTION_NON_VOLATILE, &disposition);
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
 
-        if (disposition == REG_CREATED_NEW_KEY) {
-            SECURITY_DESCRIPTOR     newSD;
-            PACL                    newDacl;
-            ULONG                   sizeDacl;
+        if (disposition == REG_CREATED_NEW_KEY)
+        {
+            SECURITY_DESCRIPTOR newSD;
+            PACL newDacl;
+            ULONG sizeDacl;
 
-            status = RtlCreateSecurityDescriptor( &newSD,
-                                                  SECURITY_DESCRIPTOR_REVISION );
-            ASSERT( NT_SUCCESS( status ) );
+            status = RtlCreateSecurityDescriptor(&newSD, SECURITY_DESCRIPTOR_REVISION);
+            ASSERT(NT_SUCCESS(status));
 
             //
             // calculate the size of the new DACL
@@ -438,83 +387,69 @@ Returns:
             //
             newDacl = ExAllocatePool(PagedPool, sizeDacl);
 
-            if (newDacl != NULL) {
+            if (newDacl != NULL)
+            {
 
                 status = RtlCreateAcl(newDacl, sizeDacl, ACL_REVISION);
 
-                ASSERT( NT_SUCCESS( status ) );
+                ASSERT(NT_SUCCESS(status));
 
                 //
                 // Add just the local system full control ace to this new DACL
                 //
-                status = RtlAddAccessAllowedAceEx( newDacl,
-                                                   ACL_REVISION,
-                                                   CONTAINER_INHERIT_ACE,
-                                                   KEY_ALL_ACCESS,
-                                                   SeLocalSystemSid
-                                                   );
-                ASSERT( NT_SUCCESS( status ) );
+                status = RtlAddAccessAllowedAceEx(newDacl, ACL_REVISION, CONTAINER_INHERIT_ACE, KEY_ALL_ACCESS,
+                                                  SeLocalSystemSid);
+                ASSERT(NT_SUCCESS(status));
 
 #if ALLOW_WORLD_READ_OF_ENUM
                 //
                 // Add just the local system full control ace to this new DACL
                 //
-                status = RtlAddAccessAllowedAceEx( newDacl,
-                                                   ACL_REVISION,
-                                                   CONTAINER_INHERIT_ACE,
-                                                   KEY_READ,
-                                                   SeWorldSid
-                                                   );
-                ASSERT( NT_SUCCESS( status ) );
+                status = RtlAddAccessAllowedAceEx(newDacl, ACL_REVISION, CONTAINER_INHERIT_ACE, KEY_READ, SeWorldSid);
+                ASSERT(NT_SUCCESS(status));
 
 #endif
                 //
                 // Set the new DACL in the absolute security descriptor
                 //
-                status = RtlSetDaclSecurityDescriptor( (PSECURITY_DESCRIPTOR) &newSD,
-                                                       TRUE,
-                                                       newDacl,
-                                                       FALSE
-                                                       );
+                status = RtlSetDaclSecurityDescriptor((PSECURITY_DESCRIPTOR)&newSD, TRUE, newDacl, FALSE);
 
-                ASSERT( NT_SUCCESS( status ) );
+                ASSERT(NT_SUCCESS(status));
 
                 //
                 // validate the new security descriptor
                 //
                 status = RtlValidSecurityDescriptor(&newSD);
 
-                ASSERT( NT_SUCCESS( status ) );
+                ASSERT(NT_SUCCESS(status));
 
-                status = ZwSetSecurityObject( handle,
-                                              DACL_SECURITY_INFORMATION,
-                                              &newSD
-                                              );
-                if (!NT_SUCCESS(status)) {
+                status = ZwSetSecurityObject(handle, DACL_SECURITY_INFORMATION, &newSD);
+                if (!NT_SUCCESS(status))
+                {
 
-                    IopDbgPrint((   IOP_ERROR_LEVEL,
-                                    "IopInitializePlugPlayServices: ZwSetSecurityObject on Enum key failed, status = %8.8X\n", status));
+                    IopDbgPrint(
+                        (IOP_ERROR_LEVEL,
+                         "IopInitializePlugPlayServices: ZwSetSecurityObject on Enum key failed, status = %8.8X\n",
+                         status));
                 }
 
                 ExFreePool(newDacl);
-            } else {
+            }
+            else
+            {
 
-                IopDbgPrint((   IOP_ERROR_LEVEL,
-                                "IopInitializePlugPlayServices: ExAllocatePool failed allocating DACL for Enum key\n"));
+                IopDbgPrint((IOP_ERROR_LEVEL,
+                             "IopInitializePlugPlayServices: ExAllocatePool failed allocating DACL for Enum key\n"));
             }
         }
 
         parentHandle = handle;
         PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_ROOTENUM);
-        status = IopCreateRegistryKeyEx( &handle,
-                                         parentHandle,
-                                         &unicodeName,
-                                         KEY_ALL_ACCESS,
-                                         REG_OPTION_NON_VOLATILE,
-                                         NULL
-                                         );
+        status =
+            IopCreateRegistryKeyEx(&handle, parentHandle, &unicodeName, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE, NULL);
         NtClose(parentHandle);
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
         NtClose(handle);
@@ -523,22 +458,15 @@ Returns:
         // Create the registry entry for the root of the hardware tree (HTREE\ROOT\0).
         //
 
-        status = IopOpenRegistryKeyEx( &handle,
-                                       NULL,
-                                       &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                       KEY_ALL_ACCESS
-                                       );
-        if (NT_SUCCESS(status)) {
+        status = IopOpenRegistryKeyEx(&handle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_ALL_ACCESS);
+        if (NT_SUCCESS(status))
+        {
             PiWstrToUnicodeString(&unicodeName, REGSTR_VAL_ROOT_DEVNODE);
-            status = IopCreateRegistryKeyEx( &hTreeHandle,
-                                             handle,
-                                             &unicodeName,
-                                             KEY_ALL_ACCESS,
-                                             REG_OPTION_NON_VOLATILE,
-                                             NULL
-                                             );
+            status = IopCreateRegistryKeyEx(&hTreeHandle, handle, &unicodeName, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE,
+                                            NULL);
             NtClose(handle);
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 NtClose(hTreeHandle);
             }
         }
@@ -554,8 +482,8 @@ Returns:
         ExInitializeResourceLite(&IopDeviceTreeLock);
         ExInitializeResourceLite(&IopSurpriseRemoveListLock);
         PiInitializeEngineLock();
-        KeInitializeEvent(&PiEventQueueEmpty, NotificationEvent, TRUE );
-        KeInitializeEvent(&PiEnumerationLock, NotificationEvent, TRUE );
+        KeInitializeEvent(&PiEventQueueEmpty, NotificationEvent, TRUE);
+        KeInitializeEvent(&PiEnumerationLock, NotificationEvent, TRUE);
         KeInitializeSpinLock(&IopPnPSpinLock);
 
         //
@@ -567,64 +495,61 @@ Returns:
         // Initialize warm docking variables.
         //
         IopWarmEjectPdo = NULL;
-        KeInitializeEvent(&IopWarmEjectLock, SynchronizationEvent, TRUE );
+        KeInitializeEvent(&IopWarmEjectLock, SynchronizationEvent, TRUE);
 
         //
         // Create a PnP manager's driver object to own all the detected PDOs.
         //
 
         PiWstrToUnicodeString(&unicodeName, PNPMGR_STR_PNP_DRIVER);
-        status = IoCreateDriver (&unicodeName, PipPnPDriverEntry);
-        if (NT_SUCCESS(status)) {
+        status = IoCreateDriver(&unicodeName, PipPnPDriverEntry);
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Create empty device node tree, i.e., only contains only root device node
             //     (No need to initialize Parent, Child and Sibling links.)
 
-            status = IoCreateDevice( IoPnpDriverObject,
-                                     sizeof(IOPNP_DEVICE_EXTENSION),
-                                     NULL,
-                                     FILE_DEVICE_CONTROLLER,
-                                     0,
-                                     FALSE,
-                                     &deviceObject );
+            status = IoCreateDevice(IoPnpDriverObject, sizeof(IOPNP_DEVICE_EXTENSION), NULL, FILE_DEVICE_CONTROLLER, 0,
+                                    FALSE, &deviceObject);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 deviceObject->Flags |= DO_BUS_ENUMERATED_DEVICE;
-                status = PipAllocateDeviceNode(
-                    deviceObject,
-                    &IopRootDeviceNode);
+                status = PipAllocateDeviceNode(deviceObject, &IopRootDeviceNode);
 
-                if (!IopRootDeviceNode) {
+                if (!IopRootDeviceNode)
+                {
 
                     IoDeleteDevice(deviceObject);
                     IoDeleteDriver(IoPnpDriverObject);
-                } else {
+                }
+                else
+                {
 
-                    IopRootDeviceNode->Flags |= DNF_MADEUP |
-                                                DNF_ENUMERATED |
-                                                DNF_IDS_QUERIED |
-                                                DNF_NO_RESOURCE_REQUIRED;
+                    IopRootDeviceNode->Flags |=
+                        DNF_MADEUP | DNF_ENUMERATED | DNF_IDS_QUERIED | DNF_NO_RESOURCE_REQUIRED;
 
-                    IopRootDeviceNode->InstancePath.Buffer = ExAllocatePool( PagedPool,
-                                                                             sizeof(REGSTR_VAL_ROOT_DEVNODE));
+                    IopRootDeviceNode->InstancePath.Buffer = ExAllocatePool(PagedPool, sizeof(REGSTR_VAL_ROOT_DEVNODE));
 
-                    if (IopRootDeviceNode->InstancePath.Buffer != NULL) {
+                    if (IopRootDeviceNode->InstancePath.Buffer != NULL)
+                    {
                         IopRootDeviceNode->InstancePath.MaximumLength = sizeof(REGSTR_VAL_ROOT_DEVNODE);
                         IopRootDeviceNode->InstancePath.Length = sizeof(REGSTR_VAL_ROOT_DEVNODE) - sizeof(WCHAR);
 
-                        RtlCopyMemory( IopRootDeviceNode->InstancePath.Buffer,
-                                       REGSTR_VAL_ROOT_DEVNODE,
-                                       sizeof(REGSTR_VAL_ROOT_DEVNODE));
-                    } else {
+                        RtlCopyMemory(IopRootDeviceNode->InstancePath.Buffer, REGSTR_VAL_ROOT_DEVNODE,
+                                      sizeof(REGSTR_VAL_ROOT_DEVNODE));
+                    }
+                    else
+                    {
                         ASSERT(IopRootDeviceNode->InstancePath.Buffer);
                         status = STATUS_INSUFFICIENT_RESOURCES;
                         goto init_Exit0;
                     }
-                    status = IopMapDeviceObjectToDeviceInstance(
-                        IopRootDeviceNode->PhysicalDeviceObject,
-                        &IopRootDeviceNode->InstancePath);
-                    if (!NT_SUCCESS(status)) {
+                    status = IopMapDeviceObjectToDeviceInstance(IopRootDeviceNode->PhysicalDeviceObject,
+                                                                &IopRootDeviceNode->InstancePath);
+                    if (!NT_SUCCESS(status))
+                    {
                         goto init_Exit0;
                     }
                     PipSetDevNodeState(IopRootDeviceNode, DeviceNodeStarted, NULL);
@@ -632,7 +557,8 @@ Returns:
             }
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
 
@@ -641,7 +567,8 @@ Returns:
         //
 
         status = PpInitializeNotification();
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit0;
         }
 
@@ -652,7 +579,8 @@ Returns:
         //
 
         status = PpBusTypeGuidInitialize();
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             goto init_Exit0;
         }
@@ -661,29 +589,27 @@ Returns:
         // Enumerate the ROOT bus synchronously.
         //
 
-        PipRequestDeviceAction( IopRootDeviceNode->PhysicalDeviceObject,
-                                ReenumerateRootDevices,
-                                FALSE,
-                                0,
-                                NULL,
-                                NULL);
+        PipRequestDeviceAction(IopRootDeviceNode->PhysicalDeviceObject, ReenumerateRootDevices, FALSE, 0, NULL, NULL);
 
-init_Exit0:
+    init_Exit0:
 
         //
         // If we managed to open the Current Control Set close it
         //
 
-        if (hCurrentControlSet) {
+        if (hCurrentControlSet)
+        {
             NtClose(hCurrentControlSet);
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             ExFreePool(IopPnpScratchBuffer1);
             ExFreePool(IopPnpScratchBuffer2);
         }
-
-    } else if (Phase == 1) {
+    }
+    else if (Phase == 1)
+    {
 
         BOOLEAN legacySerialPortMappingOnly = FALSE;
 
@@ -691,12 +617,10 @@ init_Exit0:
         // Next open/create System\CurrentControlSet\Enum\Root key.
         //
 
-        status = IopOpenRegistryKeyEx( &hCurrentControlSet,
-                                       NULL,
-                                       &CmRegistryMachineSystemCurrentControlSet,
-                                       KEY_ALL_ACCESS
-                                       );
-        if (!NT_SUCCESS(status)) {
+        status =
+            IopOpenRegistryKeyEx(&hCurrentControlSet, NULL, &CmRegistryMachineSystemCurrentControlSet, KEY_ALL_ACCESS);
+        if (!NT_SUCCESS(status))
+        {
             hCurrentControlSet = NULL;
             goto init_Exit1;
         }
@@ -706,14 +630,10 @@ init_Exit0:
         //
 
         PiWstrToUnicodeString(&unicodeName, REGSTR_PATH_CONTROL_PNP);
-        status = IopCreateRegistryKeyEx( &handle,
-                                         hCurrentControlSet,
-                                         &unicodeName,
-                                         KEY_ALL_ACCESS,
-                                         REG_OPTION_NON_VOLATILE,
-                                         NULL
-                                         );
-        if (!NT_SUCCESS(status)) {
+        status = IopCreateRegistryKeyEx(&handle, hCurrentControlSet, &unicodeName, KEY_ALL_ACCESS,
+                                        REG_OPTION_NON_VOLATILE, NULL);
+        if (!NT_SUCCESS(status))
+        {
             goto init_Exit1;
         }
 
@@ -723,19 +643,17 @@ init_Exit0:
         // COM ports, which we always map).
         //
 
-        status = IopGetRegistryValue(handle,
-                                     REGSTR_VALUE_DISABLE_FIRMWARE_MAPPER,
-                                     &detectionInfo
-                                     );
+        status = IopGetRegistryValue(handle, REGSTR_VALUE_DISABLE_FIRMWARE_MAPPER, &detectionInfo);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
-            if (detectionInfo->Type == REG_DWORD && detectionInfo->DataLength == sizeof(ULONG)) {
-                legacySerialPortMappingOnly = (BOOLEAN) *(KEY_VALUE_DATA(detectionInfo));
+            if (detectionInfo->Type == REG_DWORD && detectionInfo->DataLength == sizeof(ULONG))
+            {
+                legacySerialPortMappingOnly = (BOOLEAN) * (KEY_VALUE_DATA(detectionInfo));
             }
 
             ExFreePool(detectionInfo);
-
         }
         NtClose(handle);
 
@@ -752,7 +670,8 @@ init_Exit0:
         MapperConstructRootEnumTree(legacySerialPortMappingOnly);
 
 #if i386
-        if (!legacySerialPortMappingOnly) {
+        if (!legacySerialPortMappingOnly)
+        {
 
             //
             // Now do the PnP BIOS enumerated devnodes.
@@ -765,7 +684,8 @@ init_Exit0:
             // If the previous call succeeds, we have a PNPBios, turn any newly
             // created ntdetect COM ports into phantoms
             //
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 MapperPhantomizeDetectedComPorts();
             }
         }
@@ -783,20 +703,16 @@ init_Exit0:
         // Enumerate the ROOT bus synchronously.
         //
 
-        PipRequestDeviceAction( IopRootDeviceNode->PhysicalDeviceObject,
-                                ReenumerateRootDevices,
-                                FALSE,
-                                0,
-                                NULL,
-                                NULL);
+        PipRequestDeviceAction(IopRootDeviceNode->PhysicalDeviceObject, ReenumerateRootDevices, FALSE, 0, NULL, NULL);
 
-init_Exit1:
+    init_Exit1:
 
         //
         // If we managed to open the Current Control Set close it
         //
 
-        if(hCurrentControlSet) {
+        if (hCurrentControlSet)
+        {
             NtClose(hCurrentControlSet);
         }
 
@@ -807,18 +723,17 @@ init_Exit1:
         ExFreePool(IopPnpScratchBuffer1);
         ExFreePool(IopPnpScratchBuffer2);
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         status = STATUS_INVALID_PARAMETER_1;
     }
 
     return status;
 }
-
+
 NTSTATUS
-PipPnPDriverEntry(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    )
+PipPnPDriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 /*++
 
@@ -840,7 +755,7 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER( RegistryPath );
+    UNREFERENCED_PARAMETER(RegistryPath);
 
     //
     // File the pointer to our driver object away
@@ -853,18 +768,15 @@ Return Value:
     //
 
     DriverObject->DriverExtension->AddDevice = (PDRIVER_ADD_DEVICE)IopPnPAddDevice;
-    DriverObject->MajorFunction[ IRP_MJ_PNP ] = IopPnPDispatch;
-    DriverObject->MajorFunction[ IRP_MJ_POWER ] = IopPowerDispatch;
-    DriverObject->MajorFunction[ IRP_MJ_SYSTEM_CONTROL ] = IopSystemControlDispatch;
+    DriverObject->MajorFunction[IRP_MJ_PNP] = IopPnPDispatch;
+    DriverObject->MajorFunction[IRP_MJ_POWER] = IopPowerDispatch;
+    DriverObject->MajorFunction[IRP_MJ_SYSTEM_CONTROL] = IopSystemControlDispatch;
 
     return STATUS_SUCCESS;
-
 }
-
+
 INTERFACE_TYPE
-PipDetermineDefaultInterfaceType (
-    VOID
-    )
+PipDetermineDefaultInterfaceType(VOID)
 
 /*++
 
@@ -893,14 +805,10 @@ Return Value:
 
     pBusInfo = IopPnpScratchBuffer1;
     length = PNP_LARGE_SCRATCH_BUFFER_SIZE;
-    status = HalQuerySystemInformation (
-                HalInstalledBusInformation,
-                length,
-                pBusInfo,
-                &length
-                );
+    status = HalQuerySystemInformation(HalInstalledBusInformation, length, pBusInfo, &length);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return interfaceType;
     }
@@ -911,22 +819,24 @@ Return Value:
     //
 
     p = pBusInfo;
-    for (i = 0; i < length / sizeof(HAL_BUS_INFORMATION); i++, pBusInfo++) {
-        if (pBusInfo->BusType == Isa || pBusInfo->BusType == Eisa) {
+    for (i = 0; i < length / sizeof(HAL_BUS_INFORMATION); i++, pBusInfo++)
+    {
+        if (pBusInfo->BusType == Isa || pBusInfo->BusType == Eisa)
+        {
             interfaceType = Isa;
             break;
-        } else if (pBusInfo->BusType == MicroChannel) {
+        }
+        else if (pBusInfo->BusType == MicroChannel)
+        {
             interfaceType = MicroChannel;
         }
     }
 
     return interfaceType;
 }
-
+
 BOOLEAN
-PipCheckDependencies(
-    IN HANDLE KeyHandle
-    )
+PipCheckDependencies(IN HANDLE KeyHandle)
 
 /*++
 
@@ -964,37 +874,39 @@ Return Value:
     // and allow it to load.
     //
 
-    if (!NT_SUCCESS( IopGetRegistryValue( KeyHandle, L"DependOnGroup", &keyValueInformation ))) {
+    if (!NT_SUCCESS(IopGetRegistryValue(KeyHandle, L"DependOnGroup", &keyValueInformation)))
+    {
         return TRUE;
     }
 
     length = keyValueInformation->DataLength;
 
-    source = (PWSTR) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset);
+    source = (PWSTR)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
     load = TRUE;
 
-    while (length) {
-        RtlInitUnicodeString( &groupName, source );
+    while (length)
+    {
+        RtlInitUnicodeString(&groupName, source);
         groupName.Length = groupName.MaximumLength;
-        treeEntry = PipLookupGroupName( &groupName, FALSE );
-        if (treeEntry) {
-            if (!treeEntry->DriversLoaded) {
+        treeEntry = PipLookupGroupName(&groupName, FALSE);
+        if (treeEntry)
+        {
+            if (!treeEntry->DriversLoaded)
+            {
                 load = FALSE;
                 break;
             }
         }
         length -= groupName.MaximumLength;
-        source = (PWSTR) ((PUCHAR) source + groupName.MaximumLength);
+        source = (PWSTR)((PUCHAR)source + groupName.MaximumLength);
     }
 
-    ExFreePool( keyValueInformation );
+    ExFreePool(keyValueInformation);
     return load;
 }
-
+
 PTREE_ENTRY
-PipCreateEntry(
-    IN PUNICODE_STRING GroupName
-    )
+PipCreateEntry(IN PUNICODE_STRING GroupName)
 
 /*++
 
@@ -1022,33 +934,28 @@ Return Value:
     // name tree.
     //
 
-    treeEntry = ExAllocatePool( PagedPool,
-                                sizeof( TREE_ENTRY ) + GroupName->Length );
+    treeEntry = ExAllocatePool(PagedPool, sizeof(TREE_ENTRY) + GroupName->Length);
 
     //
     // We return NULL here and what this really implies that
     // we won't be able to determine if drivers for this group
     // was loaded.
     //
-    if (!treeEntry) {
+    if (!treeEntry)
+    {
         return NULL;
     }
 
-    RtlZeroMemory( treeEntry, sizeof( TREE_ENTRY ) );
+    RtlZeroMemory(treeEntry, sizeof(TREE_ENTRY));
     treeEntry->GroupName.Length = GroupName->Length;
     treeEntry->GroupName.MaximumLength = GroupName->Length;
-    treeEntry->GroupName.Buffer = (PWCHAR) (treeEntry + 1);
-    RtlCopyMemory( treeEntry->GroupName.Buffer,
-                   GroupName->Buffer,
-                   GroupName->Length );
+    treeEntry->GroupName.Buffer = (PWCHAR)(treeEntry + 1);
+    RtlCopyMemory(treeEntry->GroupName.Buffer, GroupName->Buffer, GroupName->Length);
 
     return treeEntry;
 }
-
-VOID
-PipFreeGroupTree(
-    PTREE_ENTRY TreeEntry
-    )
+
+VOID PipFreeGroupTree(PTREE_ENTRY TreeEntry)
 
 /*++
 
@@ -1074,16 +981,19 @@ Return Value:
     // each node along the way.
     //
 
-    if (TreeEntry->Left) {
-        PipFreeGroupTree( TreeEntry->Left );
+    if (TreeEntry->Left)
+    {
+        PipFreeGroupTree(TreeEntry->Left);
     }
 
-    if (TreeEntry->Sibling) {
-        PipFreeGroupTree( TreeEntry->Sibling );
+    if (TreeEntry->Sibling)
+    {
+        PipFreeGroupTree(TreeEntry->Sibling);
     }
 
-    if (TreeEntry->Right) {
-        PipFreeGroupTree( TreeEntry->Right );
+    if (TreeEntry->Right)
+    {
+        PipFreeGroupTree(TreeEntry->Right);
     }
 
     //
@@ -1091,14 +1001,11 @@ Return Value:
     // now free this node as well.
     //
 
-    ExFreePool( TreeEntry );
+    ExFreePool(TreeEntry);
 }
-
+
 BOOLEAN
-IopInitializeBootDrivers(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    OUT PDRIVER_OBJECT *PreviousDriver
-    )
+IopInitializeBootDrivers(IN PLOADER_PARAMETER_BLOCK LoaderBlock, OUT PDRIVER_OBJECT *PreviousDriver)
 
 /*++
 
@@ -1142,23 +1049,19 @@ Return Value:
     BOOLEAN bootReinitDriversFound;
     ULONG remotebootcount = 0;
 
-    UNREFERENCED_PARAMETER( PreviousDriver );
+    UNREFERENCED_PARAMETER(PreviousDriver);
 
     //
     // Initialize the built-in RAW file system driver.
     //
 
-    PiWstrToUnicodeString( &rawFsName, L"\\FileSystem\\RAW" );
-    PiWstrToUnicodeString( &completeName, L"" );
-    IopInitializeBuiltinDriver(&rawFsName,
-                               &completeName,
-                               RawInitialize,
-                               NULL,
-                               FALSE,
-                               &driverObject);
-    if (!driverObject) {
+    PiWstrToUnicodeString(&rawFsName, L"\\FileSystem\\RAW");
+    PiWstrToUnicodeString(&completeName, L"");
+    IopInitializeBuiltinDriver(&rawFsName, &completeName, RawInitialize, NULL, FALSE, &driverObject);
+    if (!driverObject)
+    {
 #if DBG
-        DbgPrint( "IOINIT: Failed to initialize RAW filsystem \n" );
+        DbgPrint("IOINIT: Failed to initialize RAW filsystem \n");
 
 #endif
 
@@ -1171,17 +1074,20 @@ Return Value:
     //
 
     IopGroupIndex = PpInitGetGroupOrderIndex(NULL);
-    if (IopGroupIndex == NO_MORE_GROUP) {
+    if (IopGroupIndex == NO_MORE_GROUP)
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_FIND_GROUPS_FAILED, NULL);
         return FALSE;
     }
 
-    IopGroupTable = (PLIST_ENTRY) ExAllocatePool(PagedPool, IopGroupIndex * sizeof (LIST_ENTRY));
-    if (IopGroupTable == NULL) {
+    IopGroupTable = (PLIST_ENTRY)ExAllocatePool(PagedPool, IopGroupIndex * sizeof(LIST_ENTRY));
+    if (IopGroupTable == NULL)
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_OUT_OF_MEMORY, NULL);
         return FALSE;
     }
-    for (i = 0; i < IopGroupIndex; i++) {
+    for (i = 0; i < IopGroupIndex; i++)
+    {
         InitializeListHead(&IopGroupTable[i]);
     }
 
@@ -1192,10 +1098,12 @@ Return Value:
     //
 
     nextEntry = LoaderBlock->LoadOrderListHead.Flink;
-    while (nextEntry != &LoaderBlock->LoadOrderListHead) {
+    while (nextEntry != &LoaderBlock->LoadOrderListHead)
+    {
         dllEntry = CONTAINING_RECORD(nextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
-        if (dllEntry->Flags & LDRP_DRIVER_DEPENDENT_DLL) {
-            (VOID)MmCallDllInitialize(dllEntry, &LoaderBlock->LoadOrderListHead);
+        if (dllEntry->Flags & LDRP_DRIVER_DEPENDENT_DLL)
+        {
+            (VOID) MmCallDllInitialize(dllEntry, &LoaderBlock->LoadOrderListHead);
         }
         nextEntry = nextEntry->Flink;
     }
@@ -1206,14 +1114,13 @@ Return Value:
     //
 
     nextEntry = LoaderBlock->BootDriverListHead.Flink;
-    while (nextEntry != &LoaderBlock->BootDriverListHead) {
-        bootDriver = CONTAINING_RECORD( nextEntry,
-                                        BOOT_DRIVER_LIST_ENTRY,
-                                        Link );
+    while (nextEntry != &LoaderBlock->BootDriverListHead)
+    {
+        bootDriver = CONTAINING_RECORD(nextEntry, BOOT_DRIVER_LIST_ENTRY, Link);
         driverEntry = bootDriver->LdrEntry;
-        driverInfo = (PDRIVER_INFORMATION) ExAllocatePool(
-                        PagedPool, sizeof(DRIVER_INFORMATION));
-        if (driverInfo) {
+        driverInfo = (PDRIVER_INFORMATION)ExAllocatePool(PagedPool, sizeof(DRIVER_INFORMATION));
+        if (driverInfo)
+        {
             RtlZeroMemory(driverInfo, sizeof(DRIVER_INFORMATION));
             InitializeListHead(&driverInfo->Link);
             driverInfo->DataTableEntry = bootDriver;
@@ -1223,17 +1130,17 @@ Return Value:
             // filesystem or a driver.
             //
 
-            status = IopOpenRegistryKeyEx( &keyHandle,
-                                           (HANDLE)NULL,
-                                           &bootDriver->RegistryPath,
-                                           KEY_READ
-                                           );
-            if (!NT_SUCCESS( status )) {
+            status = IopOpenRegistryKeyEx(&keyHandle, (HANDLE)NULL, &bootDriver->RegistryPath, KEY_READ);
+            if (!NT_SUCCESS(status))
+            {
                 ExFreePool(driverInfo);
-            } else {
+            }
+            else
+            {
                 driverInfo->ServiceHandle = keyHandle;
                 j = PpInitGetGroupOrderIndex(keyHandle);
-                if (j == SETUP_RESERVED_GROUP) {
+                if (j == SETUP_RESERVED_GROUP)
+                {
 
                     textModeSetup = TRUE;
 
@@ -1241,21 +1148,18 @@ Return Value:
                     // Special handling for setupdd.sys
                     //
 
-                    status = IopGetDriverNameFromKeyNode( keyHandle,
-                                                          &completeName );
-                    if (NT_SUCCESS(status)) {
+                    status = IopGetDriverNameFromKeyNode(keyHandle, &completeName);
+                    if (NT_SUCCESS(status))
+                    {
 
-                        driverInfo->Status = IopInitializeBuiltinDriver(
-                                           &completeName,
-                                           &bootDriver->RegistryPath,
-                                           (PDRIVER_INITIALIZE) driverEntry->EntryPoint,
-                                           driverEntry,
-                                           FALSE,
-                                           &driverObject);
+                        driverInfo->Status = IopInitializeBuiltinDriver(&completeName, &bootDriver->RegistryPath,
+                                                                        (PDRIVER_INITIALIZE)driverEntry->EntryPoint,
+                                                                        driverEntry, FALSE, &driverObject);
                         ExFreePool(completeName.Buffer);
                         NtClose(keyHandle);
                         ExFreePool(driverInfo);
-                        if (driverObject) {
+                        if (driverObject)
+                        {
 
                             //
                             // Once we successfully initialized the setupdd.sys, we are ready
@@ -1263,13 +1167,16 @@ Return Value:
                             //
 
                             PipNotifySetupDevices(IopRootDeviceNode);
-                        } else {
+                        }
+                        else
+                        {
                             ExFreePool(IopGroupTable);
                             return FALSE;
                         }
                     }
-
-                } else {
+                }
+                else
+                {
                     driverInfo->TagPosition = PipGetDriverTagPriority(keyHandle);
                     PipInsertDriverList(&IopGroupTable[j], driverInfo);
                 }
@@ -1283,9 +1190,11 @@ Return Value:
     // priority) is processed first.
     //
 
-    for (i = 0; i < IopGroupIndex; i++) {
+    for (i = 0; i < IopGroupIndex; i++)
+    {
         nextEntry = IopGroupTable[i].Flink;
-        while (nextEntry != &IopGroupTable[i]) {
+        while (nextEntry != &IopGroupTable[i])
+        {
 
             driverInfo = CONTAINING_RECORD(nextEntry, DRIVER_INFORMATION, Link);
             keyHandle = driverInfo->ServiceHandle;
@@ -1300,38 +1209,44 @@ Return Value:
             // overrides the default ("\Driver" or "\FileSystem").
             //
 
-            status = IopGetDriverNameFromKeyNode( keyHandle,
-                                                  &completeName );
-            if (!NT_SUCCESS( status )) {
+            status = IopGetDriverNameFromKeyNode(keyHandle, &completeName);
+            if (!NT_SUCCESS(status))
+            {
 
 #if DBG
-                DbgPrint( "IOINIT: Could not get driver name for %wZ\n",
-                          &bootDriver->RegistryPath );
+                DbgPrint("IOINIT: Could not get driver name for %wZ\n", &bootDriver->RegistryPath);
 #endif // DBG
 
                 driverInfo->Failed = TRUE;
-            } else {
+            }
+            else
+            {
 
-                status = IopGetRegistryValue( keyHandle,
-                                              REGSTR_VALUE_GROUP,
-                                              &keyValueInformation );
-                if (NT_SUCCESS( status )) {
+                status = IopGetRegistryValue(keyHandle, REGSTR_VALUE_GROUP, &keyValueInformation);
+                if (NT_SUCCESS(status))
+                {
 
-                    if (keyValueInformation->DataLength) {
-                        groupName.Length = (USHORT) keyValueInformation->DataLength;
+                    if (keyValueInformation->DataLength)
+                    {
+                        groupName.Length = (USHORT)keyValueInformation->DataLength;
                         groupName.MaximumLength = groupName.Length;
-                        groupName.Buffer = (PWSTR) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset);
-                        treeEntry = PipLookupGroupName( &groupName, TRUE );
-                    } else {
-                        treeEntry = (PTREE_ENTRY) NULL;
+                        groupName.Buffer = (PWSTR)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
+                        treeEntry = PipLookupGroupName(&groupName, TRUE);
                     }
-                    ExFreePool( keyValueInformation );
-                } else {
-                    treeEntry = (PTREE_ENTRY) NULL;
+                    else
+                    {
+                        treeEntry = (PTREE_ENTRY)NULL;
+                    }
+                    ExFreePool(keyValueInformation);
+                }
+                else
+                {
+                    treeEntry = (PTREE_ENTRY)NULL;
                 }
 
                 driverObject = NULL;
-                if (PipCheckDependencies( keyHandle )) {
+                if (PipCheckDependencies(keyHandle))
+                {
                     //
                     // The driver may already be initialized by IopInitializeBootFilterDriver
                     // if it is boot filter driver.
@@ -1339,20 +1254,18 @@ Return Value:
                     //
 
                     driverObject = driverInfo->DriverObject;
-                    if (driverObject == NULL && !driverInfo->Failed) {
+                    if (driverObject == NULL && !driverInfo->Failed)
+                    {
 
-                        driverInfo->Status = IopInitializeBuiltinDriver(
-                                           &completeName,
-                                           &bootDriver->RegistryPath,
-                                           (PDRIVER_INITIALIZE) driverEntry->EntryPoint,
-                                           driverEntry,
-                                           FALSE,
-                                           &driverObject);
+                        driverInfo->Status = IopInitializeBuiltinDriver(&completeName, &bootDriver->RegistryPath,
+                                                                        (PDRIVER_INITIALIZE)driverEntry->EntryPoint,
+                                                                        driverEntry, FALSE, &driverObject);
                         //
                         // Pnp might unload the driver before we get a chance to look at this. So take an extra
                         // reference.
                         //
-                        if (driverObject) {
+                        if (driverObject)
+                        {
                             ObReferenceObject(driverObject);
 
                             //
@@ -1361,11 +1274,15 @@ Return Value:
                             // unload this driver.
                             //
 
-                            if (!IopIsLegacyDriver(driverObject)) {
-                                if (driverObject->DeviceObject == NULL     &&
+                            if (!IopIsLegacyDriver(driverObject))
+                            {
+                                if (driverObject->DeviceObject == NULL &&
                                     driverObject->DriverExtension->ServiceKeyName.Buffer &&
-                                    !IopIsAnyDeviceInstanceEnabled(&driverObject->DriverExtension->ServiceKeyName, NULL, FALSE)) {
-                                    if (textModeSetup && !(driverObject->Flags & DRVO_REINIT_REGISTERED)) {
+                                    !IopIsAnyDeviceInstanceEnabled(&driverObject->DriverExtension->ServiceKeyName, NULL,
+                                                                   FALSE))
+                                {
+                                    if (textModeSetup && !(driverObject->Flags & DRVO_REINIT_REGISTERED))
+                                    {
 
                                         //
                                         // Clean up but leave driver object.  Because it may be needed later.
@@ -1375,7 +1292,9 @@ Return Value:
 
                                         IopDriverLoadingFailed(NULL, &driverObject->DriverExtension->ServiceKeyName);
                                     }
-                                } else {
+                                }
+                                else
+                                {
 
                                     //
                                     // Start the devices controlled by the driver and enumerate them
@@ -1388,18 +1307,22 @@ Return Value:
                         }
                     }
                 }
-                if (driverObject) {
-                    if (treeEntry) {
+                if (driverObject)
+                {
+                    if (treeEntry)
+                    {
                         treeEntry->DriversLoaded++;
                     }
                     driverInfo->DriverObject = driverObject;
-
-                } else {
+                }
+                else
+                {
                     driverInfo->Failed = TRUE;
                 }
-                ExFreePool( completeName.Buffer );
+                ExFreePool(completeName.Buffer);
             }
-            if (!driverInfo->Failed) {
+            if (!driverInfo->Failed)
+            {
 
                 PipAddDevicesToBootDriver(driverObject);
 
@@ -1408,13 +1331,7 @@ Return Value:
                 // resources or starting.
                 //
 
-                PipRequestDeviceAction( NULL,
-                                        ReenumerateBootDevices,
-                                        FALSE,
-                                        0,
-                                        NULL,
-                                        NULL);
-
+                PipRequestDeviceAction(NULL, ReenumerateBootDevices, FALSE, 0, NULL, NULL);
             }
 
             //
@@ -1425,7 +1342,8 @@ Return Value:
             // inaccessible boot device.)
             //
 
-            if (!PipWaitForBootDevicesDeleted()) {
+            if (!PipWaitForBootDevicesDeleted())
+            {
                 HeadlessKernelAddLogEntry(HEADLESS_LOG_WAIT_BOOT_DEVICES_DELETE_FAILED, NULL);
                 return FALSE;
             }
@@ -1438,8 +1356,10 @@ Return Value:
         // and reserve boot resources
         //
 
-        if (i == BUS_DRIVER_GROUP) {
-            if (textModeSetup == FALSE) {
+        if (i == BUS_DRIVER_GROUP)
+        {
+            if (textModeSetup == FALSE)
+            {
                 //
                 // ISSUE - 2000/08/23 - SantoshJ - There are problems with Async ops, disable for now.
                 //
@@ -1455,7 +1375,6 @@ Return Value:
             ASSERT(IopInitHalResources == NULL);
             ASSERT(IopInitReservedResourceList == NULL);
             IopBootConfigsReserved = TRUE;
-
         }
     }
 
@@ -1464,7 +1383,8 @@ Return Value:
     // in sending IOCTLs.
     //
 
-    if (IoRemoteBootClient) {
+    if (IoRemoteBootClient)
+    {
         //
         // try a hack since TCPIP may not be initialized.  (There is no
         // guarantee that if a device is initialized that the protocols are
@@ -1473,28 +1393,26 @@ Return Value:
         //
         remotebootcount = 0;
         status = IopStartTcpIpForRemoteBoot(LoaderBlock);
-        while ( status == STATUS_DEVICE_DOES_NOT_EXIST && remotebootcount < 20) {
+        while (status == STATUS_DEVICE_DOES_NOT_EXIST && remotebootcount < 20)
+        {
 
             LARGE_INTEGER Delay;
 
             //
             // sleep for a second and try again.
             //
-            Delay.LowPart  = 0xff676980 ;
-            Delay.HighPart = 0xffffffff ;
+            Delay.LowPart = 0xff676980;
+            Delay.HighPart = 0xffffffff;
 
-            NtDelayExecution( FALSE, &Delay );
+            NtDelayExecution(FALSE, &Delay);
 
             remotebootcount += 1;
             status = IopStartTcpIpForRemoteBoot(LoaderBlock);
         }
 
-        if (!NT_SUCCESS(status)) {
-            KeBugCheckEx( NETWORK_BOOT_INITIALIZATION_FAILED,
-                          3,
-                          status,
-                          0,
-                          0 );
+        if (!NT_SUCCESS(status))
+        {
+            KeBugCheckEx(NETWORK_BOOT_INITIALIZATION_FAILED, 3, status, 0, 0);
         }
     }
 
@@ -1511,7 +1429,8 @@ Return Value:
     // started before continue.
     //
 
-    if (!PipWaitForBootDevicesStarted()) {
+    if (!PipWaitForBootDevicesStarted())
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_WAIT_BOOT_DEVICES_START_FAILED, NULL);
         return FALSE;
     }
@@ -1524,7 +1443,8 @@ Return Value:
     // devices that were created in response to the reinitialization callback.
     //
 
-    if (bootReinitDriversFound && !PipWaitForBootDevicesStarted()) {
+    if (bootReinitDriversFound && !PipWaitForBootDevicesStarted())
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_WAIT_BOOT_DEVICES_REINIT_FAILED, NULL);
         return FALSE;
     }
@@ -1534,20 +1454,22 @@ Return Value:
     // have intialized.
     //
 
-    IopCreateArcNames( LoaderBlock );
+    IopCreateArcNames(LoaderBlock);
 
     //
     // If we're booting from a RAM disk, initialize it now.
     //
 
-    if ( _memicmp( LoaderBlock->ArcBootDeviceName, "ramdisk(0)", 10 ) == 0 ) {
+    if (_memicmp(LoaderBlock->ArcBootDeviceName, "ramdisk(0)", 10) == 0)
+    {
 
         status = IopStartRamdisk(LoaderBlock);
 
         // IopStartRamdisk will bugcheck on any failure.
-        ASSERT( NT_SUCCESS(status) );
+        ASSERT(NT_SUCCESS(status));
 
-        if (!PipWaitForBootDevicesStarted()) {
+        if (!PipWaitForBootDevicesStarted())
+        {
             HeadlessKernelAddLogEntry(HEADLESS_LOG_WAIT_BOOT_DEVICES_START_FAILED, NULL);
             return FALSE;
         }
@@ -1562,7 +1484,8 @@ Return Value:
     // cannot mount the device for some other reason.
     //
 
-    if (!IopMarkBootPartition( LoaderBlock )) {
+    if (!IopMarkBootPartition(LoaderBlock))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_MARK_BOOT_PARTITION_FAILED, NULL);
         return FALSE;
     }
@@ -1579,18 +1502,18 @@ Return Value:
     // actually needed.
     //
 
-    for (i = 0; i < IopGroupIndex; i++) {
-        while (IsListEmpty(&IopGroupTable[i]) == FALSE) {
+    for (i = 0; i < IopGroupIndex; i++)
+    {
+        while (IsListEmpty(&IopGroupTable[i]) == FALSE)
+        {
 
             nextEntry = RemoveHeadList(&IopGroupTable[i]);
             driverInfo = CONTAINING_RECORD(nextEntry, DRIVER_INFORMATION, Link);
             driverObject = driverInfo->DriverObject;
 
-            if (textModeSetup                    &&
-                (driverInfo->Failed == FALSE)    &&
-                !IopIsLegacyDriver(driverObject) &&
-                (driverObject->DeviceObject == NULL) &&
-                !(driverObject->Flags & DRVO_REINIT_REGISTERED)) {
+            if (textModeSetup && (driverInfo->Failed == FALSE) && !IopIsLegacyDriver(driverObject) &&
+                (driverObject->DeviceObject == NULL) && !(driverObject->Flags & DRVO_REINIT_REGISTERED))
+            {
 
                 //
                 // If failed is not set and it's not a legacy driver and it has no device object
@@ -1599,20 +1522,24 @@ Return Value:
 
                 driverInfo->Failed = TRUE;
 
-                if (!(driverObject->Flags & DRVO_UNLOAD_INVOKED)) {
+                if (!(driverObject->Flags & DRVO_UNLOAD_INVOKED))
+                {
                     driverObject->Flags |= DRVO_UNLOAD_INVOKED;
-                    if (driverObject->DriverUnload) {
+                    if (driverObject->DriverUnload)
+                    {
                         driverObject->DriverUnload(driverObject);
                     }
-                    ObMakeTemporaryObject( driverObject );  // Reference taken while inserting into the object table.
-                    ObDereferenceObject(driverObject);      // Reference taken when getting driver object pointer.
+                    ObMakeTemporaryObject(driverObject); // Reference taken while inserting into the object table.
+                    ObDereferenceObject(driverObject);   // Reference taken when getting driver object pointer.
                 }
             }
-            if (driverObject) {
-                ObDereferenceObject(driverObject);          // Reference taken specifically for text mode setup.
+            if (driverObject)
+            {
+                ObDereferenceObject(driverObject); // Reference taken specifically for text mode setup.
             }
 
-            if (driverInfo->Failed) {
+            if (driverInfo->Failed)
+            {
                 driverInfo->DataTableEntry->LdrEntry->Flags |= LDRP_FAILED_BUILTIN_LOAD;
             }
             NtClose(driverInfo->ServiceHandle);
@@ -1630,11 +1557,9 @@ Return Value:
 
     return TRUE;
 }
-
+
 NTSTATUS
-PipAddDevicesToBootDriver(
-   IN PDRIVER_OBJECT DriverObject
-   )
+PipAddDevicesToBootDriver(IN PDRIVER_OBJECT DriverObject)
 
 /*++
 
@@ -1667,25 +1592,15 @@ Return Value:
     // important we need the registry lock in other down level routines.
     //
 
-    status = PipApplyFunctionToServiceInstances(
-                                NULL,
-                                &DriverObject->DriverExtension->ServiceKeyName,
-                                KEY_ALL_ACCESS,
-                                TRUE,
-                                PipAddDevicesToBootDriverWorker,
-                                DriverObject,
-                                NULL
-                                );
+    status = PipApplyFunctionToServiceInstances(NULL, &DriverObject->DriverExtension->ServiceKeyName, KEY_ALL_ACCESS,
+                                                TRUE, PipAddDevicesToBootDriverWorker, DriverObject, NULL);
 
     return status;
 }
-
+
 BOOLEAN
-PipAddDevicesToBootDriverWorker(
-    IN HANDLE DeviceInstanceHandle,
-    IN PUNICODE_STRING DeviceInstancePath,
-    IN OUT PVOID Context
-    )
+PipAddDevicesToBootDriverWorker(IN HANDLE DeviceInstanceHandle, IN PUNICODE_STRING DeviceInstancePath,
+                                IN OUT PVOID Context)
 
 /*++
 
@@ -1719,33 +1634,32 @@ Return Value:
 --*/
 
 {
-//  PDRIVER_OBJECT driverObject = (PDRIVER_OBJECT)Context;
+    //  PDRIVER_OBJECT driverObject = (PDRIVER_OBJECT)Context;
     PDEVICE_OBJECT physicalDevice;
     PDEVICE_NODE deviceNode;
 
     ADD_CONTEXT addContext;
 
-    UNREFERENCED_PARAMETER( Context );
+    UNREFERENCED_PARAMETER(Context);
 
     //
     // Reference the physical device object associated with the device instance.
     //
 
     physicalDevice = IopDeviceObjectFromDeviceInstance(DeviceInstancePath);
-    if (!physicalDevice) {
+    if (!physicalDevice)
+    {
         return TRUE;
     }
 
-    PipRequestDeviceAction( physicalDevice, AddBootDevices, FALSE, 0, NULL, NULL );
+    PipRequestDeviceAction(physicalDevice, AddBootDevices, FALSE, 0, NULL, NULL);
 
     ObDereferenceObject(physicalDevice);
     return TRUE;
 }
-
+
 BOOLEAN
-IopInitializeSystemDrivers(
-    VOID
-    )
+IopInitializeSystemDrivers(VOID)
 
 /*++
 
@@ -1769,7 +1683,7 @@ Return Value:
 --*/
 
 {
-    BOOLEAN  newDevice, moreProcessing;
+    BOOLEAN newDevice, moreProcessing;
     NTSTATUS status, driverEntryStatus;
     PHANDLE driverList;
     PHANDLE savedList;
@@ -1782,24 +1696,17 @@ Return Value:
     START_CONTEXT startContext;
     KEVENT completionEvent;
 
-//    PpReleaseBootDDB();
+    //    PpReleaseBootDDB();
 
-    KeInitializeEvent( &completionEvent, NotificationEvent, FALSE );
+    KeInitializeEvent(&completionEvent, NotificationEvent, FALSE);
 
-    status = PipRequestDeviceAction( IopRootDeviceNode->PhysicalDeviceObject,
-                                     StartSystemDevices,
-                                     FALSE,
-                                     0,
-                                     &completionEvent,
-                                     NULL);
+    status = PipRequestDeviceAction(IopRootDeviceNode->PhysicalDeviceObject, StartSystemDevices, FALSE, 0,
+                                    &completionEvent, NULL);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        status = KeWaitForSingleObject( &completionEvent,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        NULL);
+        status = KeWaitForSingleObject(&completionEvent, Executive, KernelMode, FALSE, NULL);
     }
 
     //
@@ -1815,27 +1722,30 @@ Return Value:
 
     driverList = CmGetSystemDriverList();
 
-    if (driverList != NULL) {
+    if (driverList != NULL)
+    {
 
         //
         // Walk the entire list, loading each of the drivers if not already loaded,
         // until there are no more drivers in the list.
         //
 
-        for (savedList = driverList; *driverList; driverList++) {
+        for (savedList = driverList; *driverList; driverList++)
+        {
 
             //
             // Now check if the driver has been loaded already.
             // get the name of the driver object first ...
             //
 
-            status = IopGetDriverNameFromKeyNode( *driverList,
-                                                  &driverName );
-            if (NT_SUCCESS( status )) {
+            status = IopGetDriverNameFromKeyNode(*driverList, &driverName);
+            if (NT_SUCCESS(status))
+            {
 
                 driverObject = IopReferenceDriverObjectByName(&driverName);
                 RtlFreeUnicodeString(&driverName);
-                if (driverObject) {
+                if (driverObject)
+                {
 
                     //
                     // Driver was loaded already.  Dereference the driver object
@@ -1854,26 +1764,26 @@ Return Value:
             //
 
             PiWstrToUnicodeString(&enumName, REGSTR_KEY_ENUM);
-            status = IopOpenRegistryKeyEx( &enumHandle,
-                                           *driverList,
-                                           &enumName,
-                                           KEY_READ
-                                           );
+            status = IopOpenRegistryKeyEx(&enumHandle, *driverList, &enumName, KEY_READ);
 
-            if (NT_SUCCESS( status )) {
+            if (NT_SUCCESS(status))
+            {
 
                 ULONG startFailed = 0;
 
                 status = IopGetRegistryValue(enumHandle, L"INITSTARTFAILED", &keyValueInformation);
 
-                if (NT_SUCCESS( status )) {
-                    if (keyValueInformation->DataLength) {
+                if (NT_SUCCESS(status))
+                {
+                    if (keyValueInformation->DataLength)
+                    {
                         startFailed = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
                     }
-                    ExFreePool( keyValueInformation );
+                    ExFreePool(keyValueInformation);
                 }
                 ZwClose(enumHandle);
-                if (startFailed != 0) {
+                if (startFailed != 0)
+                {
                     ZwClose(*driverList);
                     continue;
                 }
@@ -1883,30 +1793,39 @@ Return Value:
             // The driver is not loaded yet.  Load it ...
             //
 
-            status = IopGetRegistryValue( *driverList,
-                                          REGSTR_VALUE_GROUP,
-                                          &keyValueInformation );
-            if (NT_SUCCESS( status )) {
-                if (keyValueInformation->DataLength) {
-                    groupName.Length = (USHORT) keyValueInformation->DataLength;
+            status = IopGetRegistryValue(*driverList, REGSTR_VALUE_GROUP, &keyValueInformation);
+            if (NT_SUCCESS(status))
+            {
+                if (keyValueInformation->DataLength)
+                {
+                    groupName.Length = (USHORT)keyValueInformation->DataLength;
                     groupName.MaximumLength = groupName.Length;
-                    groupName.Buffer = (PWSTR) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset);
-                    treeEntry = PipLookupGroupName( &groupName, TRUE );
-                } else {
-                    treeEntry = (PTREE_ENTRY) NULL;
+                    groupName.Buffer = (PWSTR)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
+                    treeEntry = PipLookupGroupName(&groupName, TRUE);
                 }
-                ExFreePool( keyValueInformation );
-            } else {
-                treeEntry = (PTREE_ENTRY) NULL;
+                else
+                {
+                    treeEntry = (PTREE_ENTRY)NULL;
+                }
+                ExFreePool(keyValueInformation);
+            }
+            else
+            {
+                treeEntry = (PTREE_ENTRY)NULL;
             }
 
-            if (PipCheckDependencies( *driverList )) {
-                if (NT_SUCCESS( IopLoadDriver( *driverList, TRUE, FALSE, &driverEntryStatus ) )) {
-                    if (treeEntry) {
+            if (PipCheckDependencies(*driverList))
+            {
+                if (NT_SUCCESS(IopLoadDriver(*driverList, TRUE, FALSE, &driverEntryStatus)))
+                {
+                    if (treeEntry)
+                    {
                         treeEntry->DriversLoaded++;
                     }
                 }
-            } else {
+            }
+            else
+            {
                 ZwClose(*driverList);
             }
 
@@ -1916,7 +1835,6 @@ Return Value:
             //
 
             InbvIndicateProgress();
-
         }
 
         //
@@ -1924,15 +1842,10 @@ Return Value:
         // an indicator the load operation worked.
         //
 
-        ExFreePool( (PVOID) savedList );
+        ExFreePool((PVOID)savedList);
     }
 
-    PipRequestDeviceAction( IopRootDeviceNode->PhysicalDeviceObject,
-                            StartSystemDevices,
-                            FALSE,
-                            0,
-                            NULL,
-                            NULL);
+    PipRequestDeviceAction(IopRootDeviceNode->PhysicalDeviceObject, StartSystemDevices, FALSE, 0, NULL, NULL);
 
     //
     // Mark pnp has completed the driver loading for both system and
@@ -1954,18 +1867,16 @@ Return Value:
     //
     // Free the memory allocated to contain the group dependency list.
     //
-    if (IopGroupListHead) {
-        PipFreeGroupTree( IopGroupListHead );
+    if (IopGroupListHead)
+    {
+        PipFreeGroupTree(IopGroupListHead);
     }
 
     return TRUE;
 }
-
+
 PTREE_ENTRY
-PipLookupGroupName(
-    IN PUNICODE_STRING GroupName,
-    IN BOOLEAN Insert
-    )
+PipLookupGroupName(IN PUNICODE_STRING GroupName, IN BOOLEAN Insert)
 
 /*++
 
@@ -1999,11 +1910,15 @@ Return Value:
     // into the tree.
     //
 
-    if (!IopGroupListHead) {
-        if (!Insert) {
-            return (PTREE_ENTRY) NULL;
-        } else {
-            IopGroupListHead = PipCreateEntry( GroupName );
+    if (!IopGroupListHead)
+    {
+        if (!Insert)
+        {
+            return (PTREE_ENTRY)NULL;
+        }
+        else
+        {
+            IopGroupListHead = PipCreateEntry(GroupName);
             return IopGroupListHead;
         }
     }
@@ -2014,57 +1929,80 @@ Return Value:
 
     treeEntry = IopGroupListHead;
 
-    for (;;) {
-        if (GroupName->Length < treeEntry->GroupName.Length) {
-            if (treeEntry->Left) {
+    for (;;)
+    {
+        if (GroupName->Length < treeEntry->GroupName.Length)
+        {
+            if (treeEntry->Left)
+            {
                 treeEntry = treeEntry->Left;
-            } else {
-                if (!Insert) {
-                    return (PTREE_ENTRY) NULL;
-                } else {
-                    treeEntry->Left = PipCreateEntry( GroupName );
+            }
+            else
+            {
+                if (!Insert)
+                {
+                    return (PTREE_ENTRY)NULL;
+                }
+                else
+                {
+                    treeEntry->Left = PipCreateEntry(GroupName);
                     return treeEntry->Left;
                 }
-
             }
-        } else if (GroupName->Length > treeEntry->GroupName.Length) {
-            if (treeEntry->Right) {
+        }
+        else if (GroupName->Length > treeEntry->GroupName.Length)
+        {
+            if (treeEntry->Right)
+            {
                 treeEntry = treeEntry->Right;
-            } else {
-                if (!Insert) {
-                    return (PTREE_ENTRY) NULL;
-                } else {
-                    treeEntry->Right = PipCreateEntry( GroupName );
+            }
+            else
+            {
+                if (!Insert)
+                {
+                    return (PTREE_ENTRY)NULL;
+                }
+                else
+                {
+                    treeEntry->Right = PipCreateEntry(GroupName);
                     return treeEntry->Right;
                 }
             }
-        } else {
-            if (!RtlEqualUnicodeString( GroupName, &treeEntry->GroupName, TRUE )) {
+        }
+        else
+        {
+            if (!RtlEqualUnicodeString(GroupName, &treeEntry->GroupName, TRUE))
+            {
                 previousEntry = treeEntry;
-                while (treeEntry->Sibling) {
+                while (treeEntry->Sibling)
+                {
                     treeEntry = treeEntry->Sibling;
-                    if (RtlEqualUnicodeString( GroupName, &treeEntry->GroupName, TRUE )) {
+                    if (RtlEqualUnicodeString(GroupName, &treeEntry->GroupName, TRUE))
+                    {
                         return treeEntry;
                     }
                     previousEntry = previousEntry->Sibling;
                 }
-                if (!Insert) {
-                    return (PTREE_ENTRY) NULL;
-                } else {
-                    previousEntry->Sibling = PipCreateEntry( GroupName );
+                if (!Insert)
+                {
+                    return (PTREE_ENTRY)NULL;
+                }
+                else
+                {
+                    previousEntry->Sibling = PipCreateEntry(GroupName);
                     return previousEntry->Sibling;
                 }
-            } else {
+            }
+            else
+            {
                 return treeEntry;
             }
         }
     }
 }
-
+
 USHORT
-PipGetDriverTagPriority (
-    IN HANDLE ServiceHandle
-    )
+PipGetDriverTagPriority(IN HANDLE ServiceHandle)
 
 /*++
 
@@ -2089,7 +2027,7 @@ Return Value:
     PKEY_VALUE_FULL_INFORMATION keyValueInformation1;
     UNICODE_STRING groupName;
     HANDLE handle;
-    USHORT index = (USHORT) -1;
+    USHORT index = (USHORT)-1;
     PULONG groupOrder;
     ULONG count, tag;
 
@@ -2098,13 +2036,10 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&groupName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\GroupOrderList");
-    status = IopOpenRegistryKeyEx( &handle,
-                                   NULL,
-                                   &groupName,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&handle, NULL, &groupName, KEY_READ);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return index;
     }
 
@@ -2112,23 +2047,22 @@ Return Value:
     // Read service key's Group value
     //
 
-    status = IopGetRegistryValue (ServiceHandle,
-                                  REGSTR_VALUE_GROUP,
-                                  &keyValueInformation);
-    if (NT_SUCCESS(status)) {
+    status = IopGetRegistryValue(ServiceHandle, REGSTR_VALUE_GROUP, &keyValueInformation);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Try to read what caller wants.
         //
 
-        if ((keyValueInformation->Type == REG_SZ) &&
-            (keyValueInformation->DataLength != 0)) {
-            IopRegistryDataToUnicodeString(&groupName,
-                                           (PWSTR)KEY_VALUE_DATA(keyValueInformation),
-                                           keyValueInformation->DataLength
-                                           );
+        if ((keyValueInformation->Type == REG_SZ) && (keyValueInformation->DataLength != 0))
+        {
+            IopRegistryDataToUnicodeString(&groupName, (PWSTR)KEY_VALUE_DATA(keyValueInformation),
+                                           keyValueInformation->DataLength);
         }
-    } else {
+    }
+    else
+    {
 
         //
         // If we failed to read the Group value, or no Group value...
@@ -2142,26 +2076,28 @@ Return Value:
     // Read service key's Tag value
     //
 
-    status = IopGetRegistryValue (ServiceHandle,
-                                  L"Tag",
-                                  &keyValueInformation1);
-    if (NT_SUCCESS(status)) {
+    status = IopGetRegistryValue(ServiceHandle, L"Tag", &keyValueInformation1);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Try to read what caller wants.
         //
 
-        if ((keyValueInformation1->Type == REG_DWORD) &&
-            (keyValueInformation1->DataLength != 0)) {
+        if ((keyValueInformation1->Type == REG_DWORD) && (keyValueInformation1->DataLength != 0))
+        {
             tag = *(PULONG)KEY_VALUE_DATA(keyValueInformation1);
-        } else {
+        }
+        else
+        {
             status = STATUS_UNSUCCESSFUL;
         }
 
         ExFreePool(keyValueInformation1);
     }
 
-    if (!NT_SUCCESS(status))  {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // If we failed to read the Group value, or no Group value...
@@ -2176,33 +2112,38 @@ Return Value:
     // Read group order list value for the driver's Group
     //
 
-    status = IopGetRegistryValue (handle,
-                                  groupName.Buffer,
-                                  &keyValueInformation1);
+    status = IopGetRegistryValue(handle, groupName.Buffer, &keyValueInformation1);
     ExFreePool(keyValueInformation);
     NtClose(handle);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Try to read what caller wants.
         //
 
-        if ((keyValueInformation1->Type == REG_BINARY) &&
-            (keyValueInformation1->DataLength != 0)) {
+        if ((keyValueInformation1->Type == REG_BINARY) && (keyValueInformation1->DataLength != 0))
+        {
             groupOrder = (PULONG)KEY_VALUE_DATA(keyValueInformation1);
             count = *groupOrder;
             ASSERT((count + 1) * sizeof(ULONG) <= keyValueInformation1->DataLength);
             groupOrder++;
-            for (index = 1; index <= count; index++) {
-                if (tag == *groupOrder) {
+            for (index = 1; index <= count; index++)
+            {
+                if (tag == *groupOrder)
+                {
                     break;
-                } else {
+                }
+                else
+                {
                     groupOrder++;
                 }
             }
         }
         ExFreePool(keyValueInformation1);
-    } else {
+    }
+    else
+    {
 
         //
         // If we failed to read the Group value, or no Group value...
@@ -2212,12 +2153,8 @@ Return Value:
     }
     return index;
 }
-
-VOID
-PipInsertDriverList (
-    IN PLIST_ENTRY ListHead,
-    IN PDRIVER_INFORMATION DriverInfo
-    )
+
+VOID PipInsertDriverList(IN PLIST_ENTRY ListHead, IN PDRIVER_INFORMATION DriverInfo)
 
 /*++
 
@@ -2241,7 +2178,8 @@ Return Value:
     PDRIVER_INFORMATION info;
 
     nextEntry = ListHead->Flink;
-    while (nextEntry != ListHead) {
+    while (nextEntry != ListHead)
+    {
         info = CONTAINING_RECORD(nextEntry, DRIVER_INFORMATION, Link);
 
         //
@@ -2250,7 +2188,8 @@ Return Value:
         // (Lower TagPosition value means higher Priority)
         //
 
-        if (info->TagPosition > DriverInfo->TagPosition) {
+        if (info->TagPosition > DriverInfo->TagPosition)
+        {
             break;
         }
         nextEntry = nextEntry->Flink;
@@ -2263,11 +2202,8 @@ Return Value:
     nextEntry = nextEntry->Blink;
     InsertHeadList(nextEntry, &DriverInfo->Link);
 }
-
-VOID
-PipNotifySetupDevices (
-    PDEVICE_NODE DeviceNode
-    )
+
+VOID PipNotifySetupDevices(PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -2295,9 +2231,11 @@ Return Value:
     UNICODE_STRING unicodeString;
     NTSTATUS status;
 
-    while (deviceNode) {
+    while (deviceNode)
+    {
         PipNotifySetupDevices(deviceNode);
-        if (deviceNode->ServiceName.Length == 0) {
+        if (deviceNode->ServiceName.Length == 0)
+        {
 
             //
             // We only notify setupdd the device nodes which do not have service setup yet.
@@ -2307,7 +2245,8 @@ Return Value:
 
             deviceObject = deviceNode->PhysicalDeviceObject;
             status = IopDeviceObjectToDeviceInstance(deviceObject, &handle, KEY_ALL_ACCESS);
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 //
                 // Notify setup about the device.
@@ -2319,15 +2258,15 @@ Return Value:
                 // Finally register the device
                 //
 
-                status = PpDeviceRegistration(
-                             &deviceNode->InstancePath,
-                             TRUE,
-                             &unicodeString       // registered ServiceName
-                             );
+                status = PpDeviceRegistration(&deviceNode->InstancePath, TRUE,
+                                              &unicodeString // registered ServiceName
+                );
 
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     deviceNode->ServiceName = unicodeString;
-                    if (PipIsDevNodeProblem(deviceNode, CM_PROB_NOT_CONFIGURED)) {
+                    if (PipIsDevNodeProblem(deviceNode, CM_PROB_NOT_CONFIGURED))
+                    {
                         PipClearDevNodeProblem(deviceNode);
                     }
                 }
@@ -2337,11 +2276,9 @@ Return Value:
         deviceNode = deviceNode->Sibling;
     }
 }
-
+
 BOOLEAN
-PipWaitForBootDevicesStarted (
-    IN VOID
-    )
+PipWaitForBootDevicesStarted(IN VOID)
 
 /*++
 
@@ -2369,22 +2306,20 @@ Return Value:
     // before progressing to mark boot partitions.
     //
 
-    status = KeWaitForSingleObject( &PiEnumerationLock,
-                                    Executive,
-                                    KernelMode,
-                                    FALSE,
-                                    NULL );
-    if (!NT_SUCCESS(status)) {
+    status = KeWaitForSingleObject(&PiEnumerationLock, Executive, KernelMode, FALSE, NULL);
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
 
-    if (PnpAsyncOk) {
+    if (PnpAsyncOk)
+    {
 
-#if 0 // BUGBUG
-        //
-        // Perform top-down check to make sure all the devices with Async start and Async Query
-        // Device Relations are done.
-        //
+#if 0 // BUGBUG                                                                               \
+      //                                                                                      \
+      // Perform top-down check to make sure all the devices with Async start and Async Query \
+      // Device Relations are done.                                                           \
+      //
 
         deviceNode = IopRootDeviceNode;
         for (; ;) {
@@ -2448,11 +2383,9 @@ Return Value:
     }
     return TRUE;
 }
-
+
 BOOLEAN
-PipWaitForBootDevicesDeleted (
-    IN VOID
-    )
+PipWaitForBootDevicesDeleted(IN VOID)
 
 /*++
 
@@ -2478,20 +2411,12 @@ Return Value:
     // before moving on to process next boot driver.
     //
 
-    status = KeWaitForSingleObject( &PiEventQueueEmpty,
-                                    Executive,
-                                    KernelMode,
-                                    FALSE,
-                                    NULL );
+    status = KeWaitForSingleObject(&PiEventQueueEmpty, Executive, KernelMode, FALSE, NULL);
     return (BOOLEAN)NT_SUCCESS(status);
 }
-
+
 NTSTATUS
-PipLoadBootFilterDriver (
-    IN PUNICODE_STRING DriverName,
-    IN ULONG GroupIndex,
-    OUT PDRIVER_OBJECT *LoadedFilter
-    )
+PipLoadBootFilterDriver(IN PUNICODE_STRING DriverName, IN ULONG GroupIndex, OUT PDRIVER_OBJECT *LoadedFilter)
 
 /*++
 
@@ -2523,7 +2448,8 @@ Return Value:
 
     retStatus = STATUS_UNSUCCESSFUL;
     *LoadedFilter = NULL;
-    if (IopGroupTable == NULL || GroupIndex >= IopGroupIndex) {
+    if (IopGroupTable == NULL || GroupIndex >= IopGroupIndex)
+    {
 
         //
         // If we have not reached the boot driver initialization phase or
@@ -2540,30 +2466,26 @@ Return Value:
     //
 
     nextEntry = IopGroupTable[GroupIndex].Flink;
-    while (nextEntry != &IopGroupTable[GroupIndex]) {
+    while (nextEntry != &IopGroupTable[GroupIndex])
+    {
 
         driverInfo = CONTAINING_RECORD(nextEntry, DRIVER_INFORMATION, Link);
         keyHandle = driverInfo->ServiceHandle;
-        status = IopGetDriverNameFromKeyNode(
-            keyHandle,
-            &completeName);
-        if (NT_SUCCESS(status)) {
+        status = IopGetDriverNameFromKeyNode(keyHandle, &completeName);
+        if (NT_SUCCESS(status))
+        {
 
-            if (RtlEqualUnicodeString(DriverName,
-                                      &completeName,
-                                      TRUE)) {    // case-insensitive
-                if (driverInfo->Processed == FALSE) {
+            if (RtlEqualUnicodeString(DriverName, &completeName, TRUE))
+            { // case-insensitive
+                if (driverInfo->Processed == FALSE)
+                {
 
                     bootDriver = driverInfo->DataTableEntry;
                     driverEntry = bootDriver->LdrEntry;
 
-                    driverInfo->Status = IopInitializeBuiltinDriver(
-                                       &completeName,
-                                       &bootDriver->RegistryPath,
-                                       (PDRIVER_INITIALIZE) driverEntry->EntryPoint,
-                                       driverEntry,
-                                       TRUE,
-                                       &driverObject);
+                    driverInfo->Status = IopInitializeBuiltinDriver(&completeName, &bootDriver->RegistryPath,
+                                                                    (PDRIVER_INITIALIZE)driverEntry->EntryPoint,
+                                                                    driverEntry, TRUE, &driverObject);
                     retStatus = driverInfo->Status;
                     driverInfo->DriverObject = driverObject;
                     driverInfo->Processed = TRUE;
@@ -2571,15 +2493,20 @@ Return Value:
                     // Pnp might unload the driver before we get a chance to
                     // look at this. So take an extra reference.
                     //
-                    if (driverObject) {
+                    if (driverObject)
+                    {
 
                         ObReferenceObject(driverObject);
                         *LoadedFilter = driverObject;
-                    } else {
+                    }
+                    else
+                    {
 
                         driverInfo->Failed = TRUE;
                     }
-                } else {
+                }
+                else
+                {
 
                     retStatus = driverInfo->Status;
                 }
@@ -2595,19 +2522,18 @@ Return Value:
     return retStatus;
 }
 
-VOID
-IopMarkHalDeviceNode(
-    )
+VOID IopMarkHalDeviceNode()
 {
     PDEVICE_NODE deviceNode;
 
     deviceNode = IopRootDeviceNode->Child;
 
-    while (deviceNode) {
+    while (deviceNode)
+    {
 
-        if ((deviceNode->State == DeviceNodeStarted ||
-             deviceNode->State == DeviceNodeStartPostWork ) &&
-            !(deviceNode->Flags & DNF_LEGACY_DRIVER)) {
+        if ((deviceNode->State == DeviceNodeStarted || deviceNode->State == DeviceNodeStartPostWork) &&
+            !(deviceNode->Flags & DNF_LEGACY_DRIVER))
+        {
 
             IopInitHalDeviceNode = deviceNode;
             deviceNode->Flags |= DNF_HAL_NODE;
@@ -2617,24 +2543,21 @@ IopMarkHalDeviceNode(
         deviceNode = deviceNode->Sibling;
     }
 }
-
+
 NTSTATUS
-IopPnpDriverStarted(
-    IN PDRIVER_OBJECT DriverObject,
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING ServiceName
-    )
+IopPnpDriverStarted(IN PDRIVER_OBJECT DriverObject, IN HANDLE KeyHandle, IN PUNICODE_STRING ServiceName)
 {
-    NTSTATUS    status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
 
     if (DriverObject->DeviceObject == NULL && ServiceName->Buffer &&
-        !IopIsAnyDeviceInstanceEnabled(ServiceName, NULL, FALSE) &&
-        !(DriverObject->Flags & DRVO_REINIT_REGISTERED)) {
+        !IopIsAnyDeviceInstanceEnabled(ServiceName, NULL, FALSE) && !(DriverObject->Flags & DRVO_REINIT_REGISTERED))
+    {
 
         IopDriverLoadingFailed(KeyHandle, NULL);
         status = STATUS_PLUGPLAY_NO_DEVICE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Start the devices controlled by the driver and enumerate them
@@ -2652,11 +2575,9 @@ IopPnpDriverStarted(
 
     return status;
 }
-
+
 NTSTATUS
-PiInitCacheGroupInformation(
-    VOID
-    )
+PiInitCacheGroupInformation(VOID)
 /*++
 
 Routine Description:
@@ -2683,19 +2604,12 @@ Return Value:
     //
     // Open System\CurrentControlSet\Control\ServiceOrderList
     //
-    PiWstrToUnicodeString(
-        &group,
-        L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ServiceGroupOrder"
-        );
+    PiWstrToUnicodeString(&group, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ServiceGroupOrder");
 
-    status = IopOpenRegistryKeyEx(
-        &handle,
-        NULL,
-        &group,
-        KEY_READ
-        );
+    status = IopOpenRegistryKeyEx(&handle, NULL, &group, KEY_READ);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
@@ -2703,40 +2617,37 @@ Return Value:
     //
     // Read and build a unicode string array containing all the group names.
     //
-    status = IopGetRegistryValue(
-        handle,
-        L"List",
-        &keyValueInformation
-        );
+    status = IopGetRegistryValue(handle, L"List", &keyValueInformation);
 
     ZwClose(handle);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if ((keyValueInformation->Type == REG_MULTI_SZ) &&
-            (keyValueInformation->DataLength != 0)) {
+        if ((keyValueInformation->Type == REG_MULTI_SZ) && (keyValueInformation->DataLength != 0))
+        {
 
             status = PipRegMultiSzToUnicodeStrings(keyValueInformation, &groupTable, &count);
-        } else {
+        }
+        else
+        {
             status = STATUS_UNSUCCESSFUL;
         }
         ExFreePool(keyValueInformation);
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
 
     PiInitGroupOrderTable = groupTable;
-    PiInitGroupOrderTableCount = (USHORT) count;
+    PiInitGroupOrderTableCount = (USHORT)count;
     return STATUS_SUCCESS;
 }
-
-VOID
-PiInitReleaseCachedGroupInformation(
-    VOID
-    )
+
+VOID PiInitReleaseCachedGroupInformation(VOID)
 /*++
 
 Routine Description:
@@ -2756,22 +2667,18 @@ Return Value:
 {
     ASSERT(PnPInitialized);
 
-    if (PiInitGroupOrderTable) {
+    if (PiInitGroupOrderTable)
+    {
 
-        PipFreeUnicodeStringList(
-            PiInitGroupOrderTable,
-            PiInitGroupOrderTableCount
-            );
+        PipFreeUnicodeStringList(PiInitGroupOrderTable, PiInitGroupOrderTableCount);
 
         PiInitGroupOrderTable = NULL;
         PiInitGroupOrderTableCount = 0;
     }
 }
-
+
 USHORT
-PpInitGetGroupOrderIndex(
-    IN HANDLE ServiceHandle
-    )
+PpInitGetGroupOrderIndex(IN HANDLE ServiceHandle)
 /*++
 
 Routine Description:
@@ -2799,12 +2706,14 @@ Return Value:
 
     ASSERT(!PnPInitialized);
 
-    if (PiInitGroupOrderTable == NULL) {
+    if (PiInitGroupOrderTable == NULL)
+    {
 
         return NO_MORE_GROUP;
     }
 
-    if (ServiceHandle == NULL) {
+    if (ServiceHandle == NULL)
+    {
 
         return PiInitGroupOrderTableCount + 1;
     }
@@ -2812,13 +2721,10 @@ Return Value:
     //
     // Read service key's Group value
     //
-    status = IopGetRegistryValue(
-        ServiceHandle,
-        REGSTR_VALUE_GROUP,
-        &keyValueInformation
-        );
+    status = IopGetRegistryValue(ServiceHandle, REGSTR_VALUE_GROUP, &keyValueInformation);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // If we failed to read the Group value, or no Group value...
@@ -2829,23 +2735,21 @@ Return Value:
     //
     // Verify type information
     //
-    if ((keyValueInformation->Type != REG_SZ) ||
-        (keyValueInformation->DataLength == 0)) {
+    if ((keyValueInformation->Type != REG_SZ) || (keyValueInformation->DataLength == 0))
+    {
 
         ASSERT(0);
         ExFreePool(keyValueInformation);
         return PiInitGroupOrderTableCount;
     }
 
-    IopRegistryDataToUnicodeString(
-        &group,
-        (PWSTR)KEY_VALUE_DATA(keyValueInformation),
-        keyValueInformation->DataLength
-        );
+    IopRegistryDataToUnicodeString(&group, (PWSTR)KEY_VALUE_DATA(keyValueInformation), keyValueInformation->DataLength);
 
-    for (index = 0; index < PiInitGroupOrderTableCount; index++) {
+    for (index = 0; index < PiInitGroupOrderTableCount; index++)
+    {
 
-        if (RtlEqualUnicodeString(&group, &PiInitGroupOrderTable[index], TRUE)) {
+        if (RtlEqualUnicodeString(&group, &PiInitGroupOrderTable[index], TRUE))
+        {
 
             break;
         }
@@ -2855,11 +2759,9 @@ Return Value:
 
     return index;
 }
-
+
 BOOLEAN
-PpInitSystem (
-    VOID
-    )
+PpInitSystem(VOID)
 
 /*++
 
@@ -2883,25 +2785,24 @@ Return Value:
 
 {
 
-    switch ( InitializationPhase ) {
+    switch (InitializationPhase)
+    {
 
-    case 0 :
+    case 0:
         return PiInitPhase0();
 
-    case 1 :
+    case 1:
 #if defined(_X86_)
-        PnPBiosInitializePnPBios() ;
+        PnPBiosInitializePnPBios();
 #endif
         return TRUE;
     default:
         KeBugCheckEx(UNEXPECTED_INITIALIZATION_CALL, 2, InitializationPhase, 0, 0);
     }
 }
-
+
 BOOLEAN
-PiInitPhase0(
-    VOID
-    )
+PiInitPhase0(VOID)
 
 /*++
 
@@ -2927,7 +2828,7 @@ Return Value:
     //
     // Initialize the device-specific, Plug and Play registry resource.
     //
-    ExInitializeResourceLite( &PpRegistryDeviceResource );
+    ExInitializeResourceLite(&PpRegistryDeviceResource);
 
     PpInitializeDeviceReferenceTable();
 
@@ -2935,13 +2836,11 @@ Return Value:
 }
 
 NTSTATUS
-IopStartRamdisk(
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IopStartRamdisk(PLOADER_PARAMETER_BLOCK LoaderBlock)
 {
     ULONG code;
     NTSTATUS status;
-    WCHAR buffer[ RAMDISK_MAX_DEVICE_NAME ];
+    WCHAR buffer[RAMDISK_MAX_DEVICE_NAME];
     UNICODE_STRING guidString;
     PLIST_ENTRY listEntry;
     PMEMORY_ALLOCATION_DESCRIPTOR memoryDescriptor = NULL;
@@ -2954,29 +2853,29 @@ IopStartRamdisk(
     HANDLE handle = NULL;
     PCHAR options;
 
-    RtlInitUnicodeString( &string, RAMDISK_DEVICENAME );
+    RtlInitUnicodeString(&string, RAMDISK_DEVICENAME);
 
     //
     // Find the descriptor for the memory block into which the loader read the
     // disk image.
     //
 
-    for ( listEntry = LoaderBlock->MemoryDescriptorListHead.Flink;
-          listEntry != &LoaderBlock->MemoryDescriptorListHead;
-          listEntry = listEntry->Flink ) {
+    for (listEntry = LoaderBlock->MemoryDescriptorListHead.Flink; listEntry != &LoaderBlock->MemoryDescriptorListHead;
+         listEntry = listEntry->Flink)
+    {
 
-        memoryDescriptor = CONTAINING_RECORD(listEntry,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        memoryDescriptor = CONTAINING_RECORD(listEntry, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
-        if (memoryDescriptor->MemoryType == LoaderXIPRom) {
+        if (memoryDescriptor->MemoryType == LoaderXIPRom)
+        {
             break;
         }
     }
 
-    if ( listEntry == &LoaderBlock->MemoryDescriptorListHead ) {
+    if (listEntry == &LoaderBlock->MemoryDescriptorListHead)
+    {
 
-        KdPrint(( "IopStartRamdisk: Couldn't find LoaderXIPRom descriptor\n" ));
+        KdPrint(("IopStartRamdisk: Couldn't find LoaderXIPRom descriptor\n"));
 
         code = 1;
         status = STATUS_INVALID_PARAMETER;
@@ -2987,12 +2886,12 @@ IopStartRamdisk(
     // Build the IOCTL parameter block.
     //
 
-    RtlZeroMemory( &create, sizeof(create) );
+    RtlZeroMemory(&create, sizeof(create));
 
     create.Version = sizeof(RAMDISK_CREATE_INPUT);
     create.DiskType = RAMDISK_TYPE_BOOT_DISK;
     create.BasePage = memoryDescriptor->BasePage;
-    create.DriveLetter = L'C';           // ISSUE: Does this need to be configurable?
+    create.DriveLetter = L'C'; // ISSUE: Does this need to be configurable?
     create.Options.Fixed = (BOOLEAN)TRUE;
     create.Options.Readonly = (BOOLEAN)FALSE;
     create.Options.NoDriveLetter = (BOOLEAN)FALSE;
@@ -3011,34 +2910,39 @@ IopStartRamdisk(
 
     create.DiskOffset = 0;
     create.DiskLength = memoryDescriptor->PageCount * PAGE_SIZE;
-    
+
     options = LoaderBlock->LoadOptions;
-    if ( options != NULL ) {
+    if (options != NULL)
+    {
 
         PCHAR option;
 
-        _strupr( options );
+        _strupr(options);
 
-        option = strstr( options, "RDIMAGEOFFSET" );
-        if ( option != NULL ) {
+        option = strstr(options, "RDIMAGEOFFSET");
+        if (option != NULL)
+        {
 
-            option = strstr( option, "=" );
-            if ( option != NULL ) {
+            option = strstr(option, "=");
+            if (option != NULL)
+            {
 
-                create.DiskOffset = atol( option + 1 );
+                create.DiskOffset = atol(option + 1);
             }
         }
 
         create.DiskLength -= create.DiskOffset;
 
-        option = strstr( options, "RDIMAGELENGTH" );
-        if ( option != NULL ) {
+        option = strstr(options, "RDIMAGELENGTH");
+        if (option != NULL)
+        {
 
-            option = strstr( option, "=" );
-            if ( option != NULL ) {
+            option = strstr(option, "=");
+            if (option != NULL)
+            {
 
-                ULONGLONG length = _atoi64( option + 1 );
-                ASSERT( length <= create.DiskLength );
+                ULONGLONG length = _atoi64(option + 1);
+                ASSERT(length <= create.DiskLength);
 
                 create.DiskLength = length;
             }
@@ -3049,49 +2953,37 @@ IopStartRamdisk(
     // Send an IOCTL to ramdisk.sys telling it to create the RAM disk.
     //
 
-    InitializeObjectAttributes( &obja, &string, OBJ_CASE_INSENSITIVE, NULL, NULL );
+    InitializeObjectAttributes(&obja, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenFile(
-                &handle,
-                GENERIC_READ | GENERIC_WRITE,
-                &obja,
-                &iosb,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_SYNCHRONOUS_IO_NONALERT
-                );
+    status = NtOpenFile(&handle, GENERIC_READ | GENERIC_WRITE, &obja, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        FILE_SYNCHRONOUS_IO_NONALERT);
 
-    if ( NT_SUCCESS(status) ) {
+    if (NT_SUCCESS(status))
+    {
         status = iosb.Status;
     }
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
 
-        KdPrint(( "IopStartRamdisk: Error opening %wZ. Error: %x\n", &string, status ));
+        KdPrint(("IopStartRamdisk: Error opening %wZ. Error: %x\n", &string, status));
 
         code = 2;
         goto failed;
     }
 
-    status = NtDeviceIoControlFile(
-                handle,
-                NULL,
-                NULL,
-                NULL,
-                &iosb,
-                FSCTL_CREATE_RAM_DISK,
-                &create,
-                sizeof(create),
-                NULL,
-                0
-                );
+    status =
+        NtDeviceIoControlFile(handle, NULL, NULL, NULL, &iosb, FSCTL_CREATE_RAM_DISK, &create, sizeof(create), NULL, 0);
 
-    NtClose( handle );
+    NtClose(handle);
 
-    if ( NT_SUCCESS(status) ) {
+    if (NT_SUCCESS(status))
+    {
         status = iosb.Status;
     }
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
 
-        KdPrint(( "IopStartRamdisk: Error creating RAM disk: %x\n", status ));
+        KdPrint(("IopStartRamdisk: Error creating RAM disk: %x\n", status));
 
         code = 3;
         goto failed;
@@ -3101,29 +2993,31 @@ IopStartRamdisk(
     // Create an ARC name pointing ramdisk(0) to the RAM disk.
     //
 
-    status = RtlStringFromGUID( &create.DiskGuid, &guidString);
+    status = RtlStringFromGUID(&create.DiskGuid, &guidString);
 
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
 
-        KdPrint(( "IopStartRamdisk: Error creating disk GUID string: %x\n", status ));
+        KdPrint(("IopStartRamdisk: Error creating disk GUID string: %x\n", status));
 
         code = 4;
         goto failed;
     }
 
-    _snwprintf( buffer, RAMDISK_MAX_DEVICE_NAME, L"\\Device\\Ramdisk%wZ", &guidString);
+    _snwprintf(buffer, RAMDISK_MAX_DEVICE_NAME, L"\\Device\\Ramdisk%wZ", &guidString);
 
-    RtlInitUnicodeString( &ustring, L"\\ArcName\\ramdisk(0)" );
-    RtlInitUnicodeString( &ustring2, buffer );
+    RtlInitUnicodeString(&ustring, L"\\ArcName\\ramdisk(0)");
+    RtlInitUnicodeString(&ustring2, buffer);
 
-    status = IoCreateSymbolicLink( &ustring, &ustring2 );
+    status = IoCreateSymbolicLink(&ustring, &ustring2);
 
-    RtlFreeUnicodeString( &guidString );
+    RtlFreeUnicodeString(&guidString);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        KdPrint(( "IopStartRamdisk: Failed to create arcname symbolic link (%wZ --> %wZ). %x\n",
-                    &ustring, &ustring2, status ));
+        KdPrint(("IopStartRamdisk: Failed to create arcname symbolic link (%wZ --> %wZ). %x\n", &ustring, &ustring2,
+                 status));
 
         code = 5;
         goto failed;
@@ -3133,12 +3027,6 @@ IopStartRamdisk(
 
 failed:
 
-    KeBugCheckEx( INACCESSIBLE_BOOT_DEVICE,
-                  (ULONG_PTR)&string,
-                  status,
-                  code,
-                  0
-                  );
+    KeBugCheckEx(INACCESSIBLE_BOOT_DEVICE, (ULONG_PTR)&string, status, code, 0);
 
 } // IopStartRamdisk
-

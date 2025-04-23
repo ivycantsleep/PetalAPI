@@ -21,9 +21,6 @@ Revision History:
 #ifndef _HAL_VERIFIER_
 #define _HAL_VERIFIER_
 
-VOID
-VfHalVerifierInitialize(
-    VOID
-    );
+VOID VfHalVerifierInitialize(VOID);
 
 #endif

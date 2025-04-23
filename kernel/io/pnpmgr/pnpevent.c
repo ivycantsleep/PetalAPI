@@ -70,11 +70,11 @@ Revision History:
 //
 // Pool Tags
 //
-#define PNP_DEVICE_EVENT_LIST_TAG  'LEpP'
+#define PNP_DEVICE_EVENT_LIST_TAG 'LEpP'
 #define PNP_DEVICE_EVENT_ENTRY_TAG 'EEpP'
-#define PNP_USER_BLOCK_TAG         'BUpP'
-#define PNP_DEVICE_WORK_ITEM_TAG   'IWpP'
-#define PNP_POOL_EVENT_BUFFER      'BEpP'
+#define PNP_USER_BLOCK_TAG 'BUpP'
+#define PNP_DEVICE_WORK_ITEM_TAG 'IWpP'
+#define PNP_POOL_EVENT_BUFFER 'BEpP'
 
 //
 // PNP_USER_BLOCK
@@ -83,21 +83,22 @@ Revision History:
 //  NtGetPlugPlayEvent. There's only one caller block.
 //
 
-typedef struct _PNP_USER_BLOCK {
-    NTSTATUS                Status;
-    ULONG                   Result;
-    PPNP_VETO_TYPE          VetoType;
-    PUNICODE_STRING         VetoName;
-    ERESOURCE               Lock;
-    KEVENT                  Registered;
-    KEVENT                  NotifyUserEvent;
-    KEVENT                  UserResultEvent;
-    PPLUGPLAY_EVENT_BLOCK   EventBuffer;
-    ULONG                   EventBufferSize;
-    PVOID                   PoolBuffer;
-    ULONG                   PoolUsed;
-    ULONG                   PoolSize;
-    BOOLEAN                 Deferred;
+typedef struct _PNP_USER_BLOCK
+{
+    NTSTATUS Status;
+    ULONG Result;
+    PPNP_VETO_TYPE VetoType;
+    PUNICODE_STRING VetoName;
+    ERESOURCE Lock;
+    KEVENT Registered;
+    KEVENT NotifyUserEvent;
+    KEVENT UserResultEvent;
+    PPLUGPLAY_EVENT_BLOCK EventBuffer;
+    ULONG EventBufferSize;
+    PVOID PoolBuffer;
+    ULONG PoolUsed;
+    ULONG PoolSize;
+    BOOLEAN Deferred;
 
 } PNP_USER_BLOCK, *PPNP_USER_BLOCK;
 
@@ -106,124 +107,63 @@ typedef struct _PNP_USER_BLOCK {
 //
 
 NTSTATUS
-PiInsertEventInQueue(
-    IN PPNP_DEVICE_EVENT_ENTRY DeviceEvent
-    );
+PiInsertEventInQueue(IN PPNP_DEVICE_EVENT_ENTRY DeviceEvent);
 
-VOID
-PiWalkDeviceList(
-    IN PVOID Context
-    );
+VOID PiWalkDeviceList(IN PVOID Context);
 
 NTSTATUS
-PiNotifyUserMode(
-    PPNP_DEVICE_EVENT_ENTRY DeviceEvent
-    );
+PiNotifyUserMode(PPNP_DEVICE_EVENT_ENTRY DeviceEvent);
 
 NTSTATUS
-PiNotifyUserModeDeviceRemoval(
-    IN  PPNP_DEVICE_EVENT_ENTRY TemplateDeviceEvent,
-    IN  CONST GUID              *EventGuid,
-    OUT PPNP_VETO_TYPE          VetoType                OPTIONAL,
-    OUT PUNICODE_STRING         VetoName                OPTIONAL
-    );
+PiNotifyUserModeDeviceRemoval(IN PPNP_DEVICE_EVENT_ENTRY TemplateDeviceEvent, IN CONST GUID *EventGuid,
+                              OUT PPNP_VETO_TYPE VetoType OPTIONAL, OUT PUNICODE_STRING VetoName OPTIONAL);
 
 NTSTATUS
-PiNotifyUserModeRemoveVetoed(
-    IN PPNP_DEVICE_EVENT_ENTRY  VetoedDeviceEvent,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PNP_VETO_TYPE            VetoType,
-    IN PUNICODE_STRING          VetoName        OPTIONAL
-    );
+PiNotifyUserModeRemoveVetoed(IN PPNP_DEVICE_EVENT_ENTRY VetoedDeviceEvent, IN PDEVICE_OBJECT DeviceObject,
+                             IN PNP_VETO_TYPE VetoType, IN PUNICODE_STRING VetoName OPTIONAL);
 
 NTSTATUS
-PiNotifyUserModeRemoveVetoedByList(
-    IN PPNP_DEVICE_EVENT_ENTRY  VetoedDeviceEvent,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PNP_VETO_TYPE            VetoType,
-    IN PWSTR                    MultiSzVetoList
-    );
+PiNotifyUserModeRemoveVetoedByList(IN PPNP_DEVICE_EVENT_ENTRY VetoedDeviceEvent, IN PDEVICE_OBJECT DeviceObject,
+                                   IN PNP_VETO_TYPE VetoType, IN PWSTR MultiSzVetoList);
 
 NTSTATUS
-PiNotifyUserModeKernelInitiatedEject(
-    IN  PDEVICE_OBJECT          DeviceObject,
-    OUT PNP_VETO_TYPE          *VetoType,
-    OUT PUNICODE_STRING         VetoName
-    );
+PiNotifyUserModeKernelInitiatedEject(IN PDEVICE_OBJECT DeviceObject, OUT PNP_VETO_TYPE *VetoType,
+                                     OUT PUNICODE_STRING VetoName);
 
 NTSTATUS
-PiProcessQueryRemoveAndEject(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent
-    );
+PiProcessQueryRemoveAndEject(IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent);
 
 NTSTATUS
-PiProcessTargetDeviceEvent(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent
-    );
+PiProcessTargetDeviceEvent(IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent);
 
 NTSTATUS
-PiProcessCustomDeviceEvent(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent
-    );
+PiProcessCustomDeviceEvent(IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent);
 
 NTSTATUS
-PiResizeTargetDeviceBlock(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent,
-    IN PLUGPLAY_DEVICE_DELETE_TYPE DeleteType,
-    IN PRELATION_LIST RelationsList,
-    IN BOOLEAN ExcludeIndirectRelations
-    );
+PiResizeTargetDeviceBlock(IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent, IN PLUGPLAY_DEVICE_DELETE_TYPE DeleteType,
+                          IN PRELATION_LIST RelationsList, IN BOOLEAN ExcludeIndirectRelations);
 
-VOID
-PiBuildUnsafeRemovalDeviceBlock(
-    IN  PPNP_DEVICE_EVENT_ENTRY     OriginalDeviceEvent,
-    IN  PRELATION_LIST              RelationsList,
-    OUT PPNP_DEVICE_EVENT_ENTRY    *AllocatedDeviceEvent
-    );
+VOID PiBuildUnsafeRemovalDeviceBlock(IN PPNP_DEVICE_EVENT_ENTRY OriginalDeviceEvent, IN PRELATION_LIST RelationsList,
+                                     OUT PPNP_DEVICE_EVENT_ENTRY *AllocatedDeviceEvent);
 
-VOID
-PiFinalizeVetoedRemove(
-    IN PPNP_DEVICE_EVENT_ENTRY  VetoedDeviceEvent,
-    IN PNP_VETO_TYPE            VetoType,
-    IN PUNICODE_STRING          VetoName        OPTIONAL
-    );
+VOID PiFinalizeVetoedRemove(IN PPNP_DEVICE_EVENT_ENTRY VetoedDeviceEvent, IN PNP_VETO_TYPE VetoType,
+                            IN PUNICODE_STRING VetoName OPTIONAL);
 
 #if DBG
-VOID
-LookupGuid(
-    IN CONST GUID *Guid,
-    IN OUT PCHAR String,
-    IN ULONG StringLength
-    );
+VOID LookupGuid(IN CONST GUID *Guid, IN OUT PCHAR String, IN ULONG StringLength);
 
-VOID
-DumpMultiSz(
-    IN PWCHAR MultiSz
-    );
+VOID DumpMultiSz(IN PWCHAR MultiSz);
 
-VOID
-DumpPnpEvent(
-    IN PPLUGPLAY_EVENT_BLOCK EventBlock
-    );
+VOID DumpPnpEvent(IN PPLUGPLAY_EVENT_BLOCK EventBlock);
 
-VOID
-PiDumpPdoHandlesToDebugger(
-    IN  PDEVICE_OBJECT  *DeviceObjectArray,
-    IN  ULONG           ArrayCount,
-    IN  BOOLEAN         KnownHandleFailure
-    );
+VOID PiDumpPdoHandlesToDebugger(IN PDEVICE_OBJECT *DeviceObjectArray, IN ULONG ArrayCount,
+                                IN BOOLEAN KnownHandleFailure);
 
 BOOLEAN
-PiDumpPdoHandlesToDebuggerCallBack(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PEPROCESS       Process,
-    IN  PFILE_OBJECT    FileObject,
-    IN  HANDLE          HandleId,
-    IN  PVOID           Context
-    );
+PiDumpPdoHandlesToDebuggerCallBack(IN PDEVICE_OBJECT DeviceObject, IN PEPROCESS Process, IN PFILE_OBJECT FileObject,
+                                   IN HANDLE HandleId, IN PVOID Context);
 
-#define DUMP_PDO_HANDLES(array, count, knownfailure) \
-    PiDumpPdoHandlesToDebugger(array, count, knownfailure)
+#define DUMP_PDO_HANDLES(array, count, knownfailure) PiDumpPdoHandlesToDebugger(array, count, knownfailure)
 
 #else // DBG
 
@@ -280,29 +220,25 @@ PiDumpPdoHandlesToDebuggerCallBack(
 //
 
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg("PAGEDATA")
+#pragma data_seg("PAGEDATA")
 #endif
-PPNP_DEVICE_EVENT_LIST  PpDeviceEventList = NULL;
-PPNP_USER_BLOCK         PpUserBlock = NULL;
-BOOLEAN                 UserModeRunning = FALSE;
-BOOLEAN                 PiNotificationInProgress = FALSE;
+PPNP_DEVICE_EVENT_LIST PpDeviceEventList = NULL;
+PPNP_USER_BLOCK PpUserBlock = NULL;
+BOOLEAN UserModeRunning = FALSE;
+BOOLEAN PiNotificationInProgress = FALSE;
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg()
+#pragma data_seg()
 #endif
-FAST_MUTEX              PiNotificationInProgressLock;
+FAST_MUTEX PiNotificationInProgressLock;
 
 #if DBG
-BOOLEAN                 PiDumpVetoedHandles = FALSE;
+BOOLEAN PiDumpVetoedHandles = FALSE;
 #endif
 
-
+
 NTSTATUS
-NtGetPlugPlayEvent(
-    IN  HANDLE EventHandle,
-    IN  PVOID Context                       OPTIONAL,
-    OUT PPLUGPLAY_EVENT_BLOCK EventBlock,
-    IN  ULONG EventBufferSize
-    )
+NtGetPlugPlayEvent(IN HANDLE EventHandle, IN PVOID Context OPTIONAL, OUT PPLUGPLAY_EVENT_BLOCK EventBlock,
+                   IN ULONG EventBufferSize)
 
 /*++
 
@@ -337,10 +273,10 @@ Return Value:
 --*/
 
 {
-    NTSTATUS  status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
 
-    UNREFERENCED_PARAMETER( Context );
-    UNREFERENCED_PARAMETER( EventHandle );
+    UNREFERENCED_PARAMETER(Context);
+    UNREFERENCED_PARAMETER(EventHandle);
 
     PAGED_CODE();
 
@@ -348,9 +284,9 @@ Return Value:
     // This routine only supports user-mode callers.
     //
 
-    if (KeGetPreviousMode() != UserMode) {
-        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
-                   "NtGetPlugPlayEvent: Only allows user-mode callers\n"));
+    if (KeGetPreviousMode() != UserMode)
+    {
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "NtGetPlugPlayEvent: Only allows user-mode callers\n"));
 
         return STATUS_ACCESS_DENIED;
     }
@@ -359,33 +295,31 @@ Return Value:
     // Does the caller have "trusted computer base" privilge?
     //
 
-    if (!SeSinglePrivilegeCheck(SeTcbPrivilege, UserMode)) {
-        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
-                   "NtGetPlugPlayEvent: SecurityCheck failed\n"));
+    if (!SeSinglePrivilegeCheck(SeTcbPrivilege, UserMode))
+    {
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "NtGetPlugPlayEvent: SecurityCheck failed\n"));
 
         return STATUS_PRIVILEGE_NOT_HELD;
     }
 
     UserModeRunning = TRUE;
 
-    try {
+    try
+    {
         //
         // Probe user buffer parameters.
         //
 
-        ProbeForWrite(EventBlock,
-                      EventBufferSize,
-                      sizeof(ULONG)
-                      );
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        ProbeForWrite(EventBlock, EventBufferSize, sizeof(ULONG));
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         status = GetExceptionCode();
-        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
-                   "NtGetPlugPlayEvent: Exception 0x%08X\n",
-                   status));
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "NtGetPlugPlayEvent: Exception 0x%08X\n", status));
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -396,7 +330,8 @@ Return Value:
     // Wait for the NotifyUserEvent (signalled when there's a device event
     // ready to be delivered to user-mode.
     //
-    if (!PpUserBlock->Deferred) {
+    if (!PpUserBlock->Deferred)
+    {
         //
         // Make it a UserMode wait so the terminate APC will unblock us,
         // and we can leave, which cleans up the thread
@@ -411,11 +346,7 @@ Return Value:
         //
         // Wait for kernel to fill in data for us to copy.
         //
-        status = KeWaitForSingleObject(&PpUserBlock->NotifyUserEvent,
-                                       Executive,
-                                       UserMode,
-                                       FALSE,
-                                       NULL);
+        status = KeWaitForSingleObject(&PpUserBlock->NotifyUserEvent, Executive, UserMode, FALSE, NULL);
     }
     //
     // On deferral, we know we've returned STATUS_BUFFER_TOO_SMALL
@@ -423,7 +354,8 @@ Return Value:
     // check that the new event buffer is big enough.
     // copy the data out, (w/o waiting for a kernel event)
     //
-    if (NT_SUCCESS(status) && (status != STATUS_USER_APC) ) {
+    if (NT_SUCCESS(status) && (status != STATUS_USER_APC))
+    {
 
         //
         // Validate user buffer size.
@@ -434,48 +366,44 @@ Return Value:
         //
         // Because the user block might just still be too small!
         //
-        if (PpUserBlock->EventBufferSize < PpUserBlock->PoolUsed) {
+        if (PpUserBlock->EventBufferSize < PpUserBlock->PoolUsed)
+        {
 
-            PpUserBlock->Deferred=TRUE;
+            PpUserBlock->Deferred = TRUE;
 
-            IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
-                       "NtGetPlugPlayEvent: User-mode buffer too small for event\n"));
+            IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "NtGetPlugPlayEvent: User-mode buffer too small for event\n"));
 
             status = STATUS_BUFFER_TOO_SMALL;
-        } else {
+        }
+        else
+        {
 
             status = PpUserBlock->Status;
             PpUserBlock->Deferred = FALSE;
 
-            if (PpUserBlock->PoolBuffer != NULL && NT_SUCCESS (status)) {
+            if (PpUserBlock->PoolBuffer != NULL && NT_SUCCESS(status))
+            {
 
-                RtlCopyMemory(PpUserBlock->EventBuffer,
-                              PpUserBlock->PoolBuffer,
-                              PpUserBlock->PoolUsed);
-
-
-            } else {
-                IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
-                           "NtGetPlugPlayEvent: Invalid event buffer\n"));
+                RtlCopyMemory(PpUserBlock->EventBuffer, PpUserBlock->PoolBuffer, PpUserBlock->PoolUsed);
+            }
+            else
+            {
+                IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "NtGetPlugPlayEvent: Invalid event buffer\n"));
 
                 status = STATUS_UNSUCCESSFUL;
             }
         }
-
-
     }
 
     KeClearEvent(&PpUserBlock->Registered);
 
 #if DBG
     {
-        CHAR    guidString[256];
+        CHAR guidString[256];
 
         LookupGuid(&PpUserBlock->EventBuffer->EventGuid, guidString, sizeof(guidString));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "NtGetPlugPlayEvent: Returning event - EventGuid = %s\n",
-                   guidString));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "NtGetPlugPlayEvent: Returning event - EventGuid = %s\n", guidString));
     }
 #endif
 
@@ -484,11 +412,8 @@ Return Value:
 } // NtGetPlugPlayEvent
 
 
-
 NTSTATUS
-PpInitializeNotification(
-    VOID
-    )
+PpInitializeNotification(VOID)
 
 /*++
 
@@ -518,10 +443,9 @@ Return Value:
     // Allocate and initialize the master device event list.
     //
 
-    PpDeviceEventList = ExAllocatePoolWithTag(NonPagedPool,
-                                              sizeof(PNP_DEVICE_EVENT_LIST),
-                                              PNP_DEVICE_EVENT_LIST_TAG);
-    if (PpDeviceEventList == NULL) {
+    PpDeviceEventList = ExAllocatePoolWithTag(NonPagedPool, sizeof(PNP_DEVICE_EVENT_LIST), PNP_DEVICE_EVENT_LIST_TAG);
+    if (PpDeviceEventList == NULL)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto Clean0;
     }
@@ -537,22 +461,19 @@ Return Value:
     // mode we pass the events to.
     //
 
-    PpUserBlock = ExAllocatePoolWithTag(NonPagedPool,
-                                        sizeof(PNP_USER_BLOCK),
-                                        PNP_USER_BLOCK_TAG);
-    if (PpUserBlock == NULL) {
+    PpUserBlock = ExAllocatePoolWithTag(NonPagedPool, sizeof(PNP_USER_BLOCK), PNP_USER_BLOCK_TAG);
+    if (PpUserBlock == NULL)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto Clean0;
     }
 
     RtlZeroMemory(PpUserBlock, sizeof(PNP_USER_BLOCK));
 
-    PpUserBlock->PoolSize = sizeof (PLUGPLAY_EVENT_BLOCK)+
-                            sizeof (PNP_DEVICE_EVENT_ENTRY);
-    PpUserBlock->PoolBuffer = ExAllocatePoolWithTag(NonPagedPool,
-                                                    PpUserBlock->PoolSize,
-                                                    PNP_USER_BLOCK_TAG);
-    if (PpUserBlock->PoolBuffer == NULL ) {
+    PpUserBlock->PoolSize = sizeof(PLUGPLAY_EVENT_BLOCK) + sizeof(PNP_DEVICE_EVENT_ENTRY);
+    PpUserBlock->PoolBuffer = ExAllocatePoolWithTag(NonPagedPool, PpUserBlock->PoolSize, PNP_USER_BLOCK_TAG);
+    if (PpUserBlock->PoolBuffer == NULL)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         PpUserBlock->PoolSize = 0;
         goto Clean0;
@@ -578,9 +499,7 @@ Clean0:
 
 
 NTSTATUS
-PiInsertEventInQueue(
-    IN PPNP_DEVICE_EVENT_ENTRY DeviceEvent
-    )
+PiInsertEventInQueue(IN PPNP_DEVICE_EVENT_ENTRY DeviceEvent)
 {
     PWORK_QUEUE_ITEM workItem;
     NTSTATUS status;
@@ -591,8 +510,7 @@ PiInsertEventInQueue(
     status = STATUS_SUCCESS;
 
 #if DBG
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiInsertEventInQueue: Event queued\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiInsertEventInQueue: Event queued\n"));
     DumpPnpEvent(&DeviceEvent->Data);
 #endif
 
@@ -603,25 +521,28 @@ PiInsertEventInQueue(
     ExAcquireFastMutex(&PpDeviceEventList->Lock);
     ExAcquireFastMutex(&PiNotificationInProgressLock);
 
-    if (!PiNotificationInProgress) {
+    if (!PiNotificationInProgress)
+    {
 
-        workItem = ExAllocatePoolWithTag(NonPagedPool,
-                                         sizeof(WORK_QUEUE_ITEM),
-                                         PNP_DEVICE_WORK_ITEM_TAG);
-        if (workItem) {
+        workItem = ExAllocatePoolWithTag(NonPagedPool, sizeof(WORK_QUEUE_ITEM), PNP_DEVICE_WORK_ITEM_TAG);
+        if (workItem)
+        {
 
             PiNotificationInProgress = TRUE;
             KeClearEvent(&PiEventQueueEmpty);
-        } else {
+        }
+        else
+        {
 
             IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
-                       "PiInsertEventInQueue: Could not allocate memory to kick off a worker thread\n"));
+                         "PiInsertEventInQueue: Could not allocate memory to kick off a worker thread\n"));
             status = STATUS_INSUFFICIENT_RESOURCES;
         }
-    } else {
+    }
+    else
+    {
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "PiInsertEventInQueue: Worker thread already running\n"));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiInsertEventInQueue: Worker thread already running\n"));
     }
     //
     // Insert the event iff successfull so far.
@@ -633,25 +554,21 @@ PiInsertEventInQueue(
     //
     // Queue the work item if any.
     //
-    if (workItem) {
+    if (workItem)
+    {
 
         ExInitializeWorkItem(workItem, PiWalkDeviceList, workItem);
         ExQueueWorkItem(workItem, DelayedWorkQueue);
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "PiInsertEventInQueue: Kicked off worker thread\n"));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiInsertEventInQueue: Kicked off worker thread\n"));
     }
 
     return status;
 }
 
-
+
 NTSTATUS
-PpSetDeviceClassChange(
-    IN CONST GUID *EventGuid,
-    IN CONST GUID *ClassGuid,
-    IN PUNICODE_STRING SymbolicLinkName
-    )
+PpSetDeviceClassChange(IN CONST GUID *EventGuid, IN CONST GUID *ClassGuid, IN PUNICODE_STRING SymbolicLinkName)
 
 /*++
 
@@ -684,29 +601,29 @@ Return Value:
 
     PAGED_CODE();
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
 
         return STATUS_TOO_LATE;
     }
 
 #if DBG
     {
-        CHAR    eventGuidString[80];
-        CHAR    classGuidString[80];
+        CHAR eventGuidString[80];
+        CHAR classGuidString[80];
 
         LookupGuid(EventGuid, eventGuidString, sizeof(eventGuidString));
         LookupGuid(ClassGuid, classGuidString, sizeof(classGuidString));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "PpSetDeviceClassChange: Entered\n    EventGuid = %s\n    ClassGuid = %s\n    SymbolicLinkName = %wZ\n",
-                   eventGuidString,
-                   classGuidString,
-                   SymbolicLinkName));
-
+        IopDbgPrint(
+            (IOP_IOEVENT_INFO_LEVEL,
+             "PpSetDeviceClassChange: Entered\n    EventGuid = %s\n    ClassGuid = %s\n    SymbolicLinkName = %wZ\n",
+             eventGuidString, classGuidString, SymbolicLinkName));
     }
 #endif
 
-    try {
+    try
+    {
 
         ASSERT(EventGuid != NULL);
         ASSERT(ClassGuid != NULL);
@@ -722,10 +639,9 @@ Return Value:
         dataSize = sizeof(PLUGPLAY_EVENT_BLOCK) + SymbolicLinkName->Length;
         totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
-        deviceEvent = ExAllocatePoolWithTag( PagedPool,
-                                             totalSize,
-                                             PNP_DEVICE_EVENT_ENTRY_TAG);
-        if (deviceEvent == NULL) {
+        deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
+        if (deviceEvent == NULL)
+        {
             status = STATUS_NO_MEMORY;
             goto Clean0;
         }
@@ -739,35 +655,28 @@ Return Value:
         deviceEvent->Data.TotalSize = dataSize;
 
         RtlCopyMemory(&deviceEvent->Data.u.DeviceClass.ClassGuid, ClassGuid, sizeof(GUID));
-        RtlCopyMemory(&deviceEvent->Data.u.DeviceClass.SymbolicLinkName,
-                      SymbolicLinkName->Buffer,
+        RtlCopyMemory(&deviceEvent->Data.u.DeviceClass.SymbolicLinkName, SymbolicLinkName->Buffer,
                       SymbolicLinkName->Length);
-        deviceEvent->Data.u.DeviceClass.SymbolicLinkName[SymbolicLinkName->Length/sizeof(WCHAR)] = 0x0;
+        deviceEvent->Data.u.DeviceClass.SymbolicLinkName[SymbolicLinkName->Length / sizeof(WCHAR)] = 0x0;
 
         status = PiInsertEventInQueue(deviceEvent);
 
-Clean0:
-            ;
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
-                   "PpSetDeviceClassChange: Exception 0x%08X\n", GetExceptionCode()));
+    Clean0:;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "PpSetDeviceClassChange: Exception 0x%08X\n", GetExceptionCode()));
     }
 
     return status;
 
 } // PpSetDeviceClassChange
 
-
+
 NTSTATUS
-PpSetCustomTargetEvent(
-    IN  PDEVICE_OBJECT DeviceObject,
-    IN  PKEVENT SyncEvent                           OPTIONAL,
-    OUT PULONG Result                               OPTIONAL,
-    IN  PDEVICE_CHANGE_COMPLETE_CALLBACK Callback   OPTIONAL,
-    IN  PVOID Context                               OPTIONAL,
-    IN  PTARGET_DEVICE_CUSTOM_NOTIFICATION NotificationStructure
-    )
+PpSetCustomTargetEvent(IN PDEVICE_OBJECT DeviceObject, IN PKEVENT SyncEvent OPTIONAL, OUT PULONG Result OPTIONAL,
+                       IN PDEVICE_CHANGE_COMPLETE_CALLBACK Callback OPTIONAL, IN PVOID Context OPTIONAL,
+                       IN PTARGET_DEVICE_CUSTOM_NOTIFICATION NotificationStructure)
 
 /*++
 
@@ -809,23 +718,20 @@ Return Value:
     ASSERT(DeviceObject != NULL);
 
     IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PpSetCustomTargetEvent: DeviceObject = 0x%p, SyncEvent = 0x%p, Result = 0x%p\n",
-               DeviceObject,
-               SyncEvent,
-               Result));
+                 "PpSetCustomTargetEvent: DeviceObject = 0x%p, SyncEvent = 0x%p, Result = 0x%p\n", DeviceObject,
+                 SyncEvent, Result));
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "    Callback = 0x%p, Context = 0x%p, NotificationStructure = 0x%p\n",
-               Callback,
-               Context,
-               NotificationStructure));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    Callback = 0x%p, Context = 0x%p, NotificationStructure = 0x%p\n",
+                 Callback, Context, NotificationStructure));
 
-    if (SyncEvent) {
+    if (SyncEvent)
+    {
         ASSERT(Result);
         *Result = STATUS_PENDING;
     }
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
 
         return STATUS_TOO_LATE;
     }
@@ -860,7 +766,8 @@ Return Value:
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
     deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
-    if (deviceEvent == NULL) {
+    if (deviceEvent == NULL)
+    {
         ObDereferenceObject(DeviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -876,10 +783,10 @@ Return Value:
     deviceEvent->Data.TotalSize = dataSize;
     deviceEvent->Data.DeviceObject = (PVOID)DeviceObject;
 
-    if (deviceNode->InstancePath.Length != 0) {
+    if (deviceNode->InstancePath.Length != 0)
+    {
 
-        RtlCopyMemory((PVOID)deviceEvent->Data.u.CustomNotification.DeviceIds,
-                      (PVOID)deviceNode->InstancePath.Buffer,
+        RtlCopyMemory((PVOID)deviceEvent->Data.u.CustomNotification.DeviceIds, (PVOID)deviceNode->InstancePath.Buffer,
                       deviceNode->InstancePath.Length);
 
         //
@@ -894,10 +801,9 @@ Return Value:
     //
 
     deviceEvent->Data.u.CustomNotification.NotificationStructure =
-         (PVOID)((PUCHAR)deviceEvent + totalSize - NotificationStructure->Size);
+        (PVOID)((PUCHAR)deviceEvent + totalSize - NotificationStructure->Size);
 
-    RtlCopyMemory(deviceEvent->Data.u.CustomNotification.NotificationStructure,
-                  NotificationStructure,
+    RtlCopyMemory(deviceEvent->Data.u.CustomNotification.NotificationStructure, NotificationStructure,
                   NotificationStructure->Size);
 
     status = PiInsertEventInQueue(deviceEvent);
@@ -905,19 +811,11 @@ Return Value:
     return status;
 
 } // PpSetCustomTargetEvent
-
+
 NTSTATUS
-PpSetTargetDeviceRemove(
-    IN  PDEVICE_OBJECT DeviceObject,
-    IN  BOOLEAN KernelInitiated,
-    IN  BOOLEAN NoRestart,
-    IN  BOOLEAN DoEject,
-    IN  ULONG Problem,
-    IN  PKEVENT SyncEvent           OPTIONAL,
-    OUT PULONG Result               OPTIONAL,
-    OUT PPNP_VETO_TYPE VetoType     OPTIONAL,
-    OUT PUNICODE_STRING VetoName    OPTIONAL
-    )
+PpSetTargetDeviceRemove(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN KernelInitiated, IN BOOLEAN NoRestart,
+                        IN BOOLEAN DoEject, IN ULONG Problem, IN PKEVENT SyncEvent OPTIONAL, OUT PULONG Result OPTIONAL,
+                        OUT PPNP_VETO_TYPE VetoType OPTIONAL, OUT PUNICODE_STRING VetoName OPTIONAL)
 
 /*++
 
@@ -967,26 +865,21 @@ Return Value:
 
     ASSERT(DeviceObject != NULL);
 
-    if (SyncEvent) {
+    if (SyncEvent)
+    {
         ASSERT(Result);
         *Result = STATUS_PENDING;
     }
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PpSetTargetDeviceRemove: Entered\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PpSetTargetDeviceRemove: Entered\n"));
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "    DeviceObject = 0x%p, NoRestart = %d, Problem = %d\n",
-               DeviceObject,
-               NoRestart,
-               Problem));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    DeviceObject = 0x%p, NoRestart = %d, Problem = %d\n", DeviceObject,
+                 NoRestart, Problem));
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "    SyncEvent = 0x%p, Result = 0x%p\n",
-               SyncEvent,
-               Result));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    SyncEvent = 0x%p, Result = 0x%p\n", SyncEvent, Result));
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
 
         return STATUS_TOO_LATE;
     }
@@ -1016,7 +909,8 @@ Return Value:
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
     deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
-    if (deviceEvent == NULL) {
+    if (deviceEvent == NULL)
+    {
         ObDereferenceObject(DeviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -1030,25 +924,27 @@ Return Value:
     deviceEvent->Data.EventCategory = TargetDeviceChangeEvent;
     deviceEvent->Data.Result = Result;
 
-    if (NoRestart) {
+    if (NoRestart)
+    {
         deviceEvent->Data.Flags |= TDF_NO_RESTART;
     }
 
-    if (KernelInitiated) {
+    if (KernelInitiated)
+    {
         deviceEvent->Data.Flags |= TDF_KERNEL_INITIATED;
     }
 
     deviceEvent->Data.TotalSize = dataSize;
     deviceEvent->Data.DeviceObject = (PVOID)DeviceObject;
 
-    if (deviceNode->InstancePath.Length != 0) {
+    if (deviceNode->InstancePath.Length != 0)
+    {
 
-        RtlCopyMemory((PVOID)deviceEvent->Data.u.TargetDevice.DeviceIds,
-                    (PVOID)deviceNode->InstancePath.Buffer,
-                    deviceNode->InstancePath.Length);
+        RtlCopyMemory((PVOID)deviceEvent->Data.u.TargetDevice.DeviceIds, (PVOID)deviceNode->InstancePath.Buffer,
+                      deviceNode->InstancePath.Length);
     }
 
-    i = deviceNode->InstancePath.Length/sizeof(WCHAR);
+    i = deviceNode->InstancePath.Length / sizeof(WCHAR);
     deviceEvent->Data.u.TargetDevice.DeviceIds[i] = L'\0';
 
     status = PiInsertEventInQueue(deviceEvent);
@@ -1057,13 +953,9 @@ Return Value:
 
 } // PpSetTargetDeviceRemove
 
-
+
 NTSTATUS
-PpSetDeviceRemovalSafe(
-    IN  PDEVICE_OBJECT DeviceObject,
-    IN  PKEVENT SyncEvent           OPTIONAL,
-    OUT PULONG Result               OPTIONAL
-    )
+PpSetDeviceRemovalSafe(IN PDEVICE_OBJECT DeviceObject, IN PKEVENT SyncEvent OPTIONAL, OUT PULONG Result OPTIONAL)
 
 /*++
 
@@ -1100,21 +992,19 @@ Return Value:
 
     ASSERT(DeviceObject != NULL);
 
-    if (SyncEvent) {
+    if (SyncEvent)
+    {
         ASSERT(Result);
         *Result = STATUS_PENDING;
     }
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PpSetDeviceRemovalSafe: Entered\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PpSetDeviceRemovalSafe: Entered\n"));
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "    DeviceObject = 0x%p, SyncEvent = 0x%p, Result = 0x%p\n",
-               DeviceObject,
-               SyncEvent,
-               Result));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    DeviceObject = 0x%p, SyncEvent = 0x%p, Result = 0x%p\n", DeviceObject,
+                 SyncEvent, Result));
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
 
         return STATUS_TOO_LATE;
     }
@@ -1144,7 +1034,8 @@ Return Value:
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
     deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
-    if (deviceEvent == NULL) {
+    if (deviceEvent == NULL)
+    {
         ObDereferenceObject(DeviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -1162,14 +1053,14 @@ Return Value:
     deviceEvent->Data.TotalSize = dataSize;
     deviceEvent->Data.DeviceObject = (PVOID)DeviceObject;
 
-    if (deviceNode->InstancePath.Length != 0) {
+    if (deviceNode->InstancePath.Length != 0)
+    {
 
-        RtlCopyMemory((PVOID)deviceEvent->Data.u.TargetDevice.DeviceIds,
-                    (PVOID)deviceNode->InstancePath.Buffer,
-                    deviceNode->InstancePath.Length);
+        RtlCopyMemory((PVOID)deviceEvent->Data.u.TargetDevice.DeviceIds, (PVOID)deviceNode->InstancePath.Buffer,
+                      deviceNode->InstancePath.Length);
     }
 
-    i = deviceNode->InstancePath.Length/sizeof(WCHAR);
+    i = deviceNode->InstancePath.Length / sizeof(WCHAR);
     deviceEvent->Data.u.TargetDevice.DeviceIds[i] = L'\0';
 
     status = PiInsertEventInQueue(deviceEvent);
@@ -1178,17 +1069,13 @@ Return Value:
 
 } // PpSetDeviceRemovalSafe
 
-
+
 NTSTATUS
-PpSetHwProfileChangeEvent(
-    IN   GUID CONST *EventTypeGuid,
-    IN   PKEVENT CompletionEvent    OPTIONAL,
-    OUT  PNTSTATUS CompletionStatus OPTIONAL,
-    OUT  PPNP_VETO_TYPE VetoType    OPTIONAL,
-    OUT  PUNICODE_STRING VetoName   OPTIONAL
-    )
+PpSetHwProfileChangeEvent(IN GUID CONST *EventTypeGuid, IN PKEVENT CompletionEvent OPTIONAL,
+                          OUT PNTSTATUS CompletionStatus OPTIONAL, OUT PPNP_VETO_TYPE VetoType OPTIONAL,
+                          OUT PUNICODE_STRING VetoName OPTIONAL)
 {
-    ULONG dataSize,totalSize;
+    ULONG dataSize, totalSize;
     PPNP_DEVICE_EVENT_ENTRY deviceEvent;
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -1196,32 +1083,30 @@ PpSetHwProfileChangeEvent(
 
 #if DBG
     {
-        CHAR    eventGuidString[80];
+        CHAR eventGuidString[80];
 
         LookupGuid(EventTypeGuid, eventGuidString, sizeof(eventGuidString));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "PpSetHwProfileChangeEvent: Entered\n    EventGuid = %s\n\n",
-                   eventGuidString));
+        IopDbgPrint(
+            (IOP_IOEVENT_INFO_LEVEL, "PpSetHwProfileChangeEvent: Entered\n    EventGuid = %s\n\n", eventGuidString));
     }
 #endif
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
 
         return STATUS_TOO_LATE;
     }
 
-    dataSize =  sizeof(PLUGPLAY_EVENT_BLOCK);
+    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK);
 
-    totalSize = dataSize + FIELD_OFFSET (PNP_DEVICE_EVENT_ENTRY,Data);
+    totalSize = dataSize + FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data);
 
 
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
 
-    deviceEvent = ExAllocatePoolWithTag (PagedPool,
-                                          totalSize,
-                                          PNP_DEVICE_EVENT_ENTRY_TAG);
-
-    if (NULL == deviceEvent) {
+    if (NULL == deviceEvent)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1229,7 +1114,7 @@ PpSetHwProfileChangeEvent(
     //
     // Setup the PLUGPLAY_EVENT_BLOCK
     //
-    RtlZeroMemory ((PVOID)deviceEvent,totalSize);
+    RtlZeroMemory((PVOID)deviceEvent, totalSize);
     deviceEvent->CallerEvent = CompletionEvent;
     deviceEvent->VetoType = VetoType;
     deviceEvent->VetoName = VetoName;
@@ -1245,11 +1130,9 @@ PpSetHwProfileChangeEvent(
 
 } // PpSetHwProfileChangeEvent
 
-
+
 NTSTATUS
-PpSetBlockedDriverEvent(
-    IN   GUID CONST *BlockedDriverGuid
-    )
+PpSetBlockedDriverEvent(IN GUID CONST *BlockedDriverGuid)
 
 /*++
 
@@ -1275,7 +1158,8 @@ Return Value:
 
     PAGED_CODE();
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
         return STATUS_TOO_LATE;
     }
 
@@ -1285,23 +1169,20 @@ Return Value:
     dataSize = sizeof(PLUGPLAY_EVENT_BLOCK);
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
-    deviceEvent = ExAllocatePoolWithTag(PagedPool,
-                                        totalSize,
-                                        PNP_DEVICE_EVENT_ENTRY_TAG);
-    if (deviceEvent == NULL) {
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
+    if (deviceEvent == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     //
     // Setup the PLUGPLAY_EVENT_BLOCK
     //
-    RtlZeroMemory ((PVOID)deviceEvent, totalSize);
+    RtlZeroMemory((PVOID)deviceEvent, totalSize);
     deviceEvent->Data.EventGuid = GUID_DRIVER_BLOCKED;
     deviceEvent->Data.EventCategory = BlockedDriverEvent;
     deviceEvent->Data.TotalSize = dataSize;
-    RtlCopyMemory(&deviceEvent->Data.u.BlockedDriverNotification.BlockedDriverGuid,
-                  BlockedDriverGuid,
-                  sizeof(GUID));
+    RtlCopyMemory(&deviceEvent->Data.u.BlockedDriverNotification.BlockedDriverGuid, BlockedDriverGuid, sizeof(GUID));
 
     //
     // Insert the event into the queue.
@@ -1313,16 +1194,10 @@ Return Value:
 } // PpSetBlockedDriverEvent
 
 
-
 NTSTATUS
-PpSetPowerEvent(
-    IN   ULONG EventCode,
-    IN   ULONG EventData,
-    IN   PKEVENT CompletionEvent    OPTIONAL,
-    OUT  PNTSTATUS CompletionStatus OPTIONAL,
-    OUT  PPNP_VETO_TYPE VetoType    OPTIONAL,
-    OUT  PUNICODE_STRING VetoName   OPTIONAL
-    )
+PpSetPowerEvent(IN ULONG EventCode, IN ULONG EventData, IN PKEVENT CompletionEvent OPTIONAL,
+                OUT PNTSTATUS CompletionStatus OPTIONAL, OUT PPNP_VETO_TYPE VetoType OPTIONAL,
+                OUT PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 Routine Description:
@@ -1379,31 +1254,29 @@ Return Value:
 --*/
 
 {
-    ULONG dataSize,totalSize;
+    ULONG dataSize, totalSize;
     PPNP_DEVICE_EVENT_ENTRY deviceEvent;
     NTSTATUS status = STATUS_SUCCESS;
 
 
-
     PAGED_CODE();
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PpSetPowerEvent: Entered\n\n") );
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PpSetPowerEvent: Entered\n\n"));
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
 
         return STATUS_TOO_LATE;
     }
 
-    dataSize =  sizeof(PLUGPLAY_EVENT_BLOCK);
+    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK);
 
-    totalSize = dataSize + FIELD_OFFSET (PNP_DEVICE_EVENT_ENTRY,Data);
+    totalSize = dataSize + FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data);
 
-    deviceEvent = ExAllocatePoolWithTag(PagedPool,
-                                        totalSize,
-                                        PNP_DEVICE_EVENT_ENTRY_TAG);
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
 
-    if (NULL == deviceEvent) {
+    if (NULL == deviceEvent)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1411,7 +1284,7 @@ Return Value:
     //
     //Setup the PLUGPLAY_EVENT_BLOCK
     //
-    RtlZeroMemory ((PVOID)deviceEvent,totalSize);
+    RtlZeroMemory((PVOID)deviceEvent, totalSize);
     deviceEvent->CallerEvent = CompletionEvent;
     deviceEvent->VetoType = VetoType;
     deviceEvent->VetoName = VetoName;
@@ -1427,16 +1300,11 @@ Return Value:
 
     return status;
 } // PpSetPowerEvent
-
+
 NTSTATUS
-PpSetPowerVetoEvent(
-    IN  POWER_ACTION    VetoedPowerOperation,
-    IN  PKEVENT         CompletionEvent         OPTIONAL,
-    OUT PNTSTATUS       CompletionStatus        OPTIONAL,
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PNP_VETO_TYPE   VetoType,
-    IN  PUNICODE_STRING VetoName                OPTIONAL
-    )
+PpSetPowerVetoEvent(IN POWER_ACTION VetoedPowerOperation, IN PKEVENT CompletionEvent OPTIONAL,
+                    OUT PNTSTATUS CompletionStatus OPTIONAL, IN PDEVICE_OBJECT DeviceObject, IN PNP_VETO_TYPE VetoType,
+                    IN PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 --*/
@@ -1447,7 +1315,8 @@ PpSetPowerVetoEvent(
     PWCHAR vetoData;
     NTSTATUS status;
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
 
         return STATUS_TOO_LATE;
     }
@@ -1464,7 +1333,8 @@ PpSetPowerVetoEvent(
     //
 
     deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
 
         ObDereferenceObject(DeviceObject);
         return STATUS_INVALID_PARAMETER_2;
@@ -1476,18 +1346,15 @@ PpSetPowerVetoEvent(
     // the DeviceIdVetoNameBuffer, this is double null terminated).
     //
 
-    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK) +
-               deviceNode->InstancePath.Length +
-               (VetoName ? VetoName->Length : 0) +
-               sizeof(WCHAR)*2;
+    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK) + deviceNode->InstancePath.Length + (VetoName ? VetoName->Length : 0) +
+               sizeof(WCHAR) * 2;
 
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
-    deviceEvent = ExAllocatePoolWithTag(PagedPool,
-                                        totalSize,
-                                        PNP_DEVICE_EVENT_ENTRY_TAG);
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
 
-    if (deviceEvent == NULL) {
+    if (deviceEvent == NULL)
+    {
 
         ObDereferenceObject(DeviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -1506,36 +1373,37 @@ PpSetPowerVetoEvent(
     // DeviceId for the device being removed, and the next Id's all corrospond
     // to the vetoers.
     //
-    RtlCopyMemory(
-        deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer,
-        deviceNode->InstancePath.Buffer,
-        deviceNode->InstancePath.Length
-        );
+    RtlCopyMemory(deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer, deviceNode->InstancePath.Buffer,
+                  deviceNode->InstancePath.Length);
 
     i = deviceNode->InstancePath.Length;
-    deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i/sizeof(WCHAR)] = UNICODE_NULL;
+    deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i / sizeof(WCHAR)] = UNICODE_NULL;
 
-    if (VetoName) {
+    if (VetoName)
+    {
 
-        vetoData = (&deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i/sizeof(WCHAR)])+1;
+        vetoData = (&deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i / sizeof(WCHAR)]) + 1;
 
         RtlCopyMemory(vetoData, VetoName->Buffer, VetoName->Length);
-        vetoData[VetoName->Length/sizeof(WCHAR)] = UNICODE_NULL;
+        vetoData[VetoName->Length / sizeof(WCHAR)] = UNICODE_NULL;
     }
 
     //
     // No need to NULL terminate the entry after the last one as we prezero'd
     // the buffer. Now set the appropriate GUID so the UI looks right.
     //
-    if (VetoedPowerOperation == PowerActionWarmEject) {
+    if (VetoedPowerOperation == PowerActionWarmEject)
+    {
 
         deviceEvent->Data.EventGuid = GUID_DEVICE_WARM_EJECT_VETOED;
-
-    } else if (VetoedPowerOperation == PowerActionHibernate) {
+    }
+    else if (VetoedPowerOperation == PowerActionHibernate)
+    {
 
         deviceEvent->Data.EventGuid = GUID_DEVICE_HIBERNATE_VETOED;
-
-    } else {
+    }
+    else
+    {
 
         deviceEvent->Data.EventGuid = GUID_DEVICE_STANDBY_VETOED;
     }
@@ -1546,12 +1414,8 @@ PpSetPowerVetoEvent(
 
     return status;
 }
-
-VOID
-PpSetPlugPlayEvent(
-    IN CONST GUID *EventGuid,
-    IN PDEVICE_OBJECT DeviceObject
-    )
+
+VOID PpSetPlugPlayEvent(IN CONST GUID *EventGuid, IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -1573,7 +1437,7 @@ Return Value:
 --*/
 
 {
-    ULONG       dataSize, totalSize;
+    ULONG dataSize, totalSize;
     PPNP_DEVICE_EVENT_ENTRY deviceEvent;
     PDEVICE_NODE deviceNode;
 
@@ -1584,21 +1448,18 @@ Return Value:
 
 #if DBG
     {
-        CHAR    eventGuidString[80];
+        CHAR eventGuidString[80];
 
         LookupGuid(EventGuid, eventGuidString, sizeof(eventGuidString));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "PpSetPlugPlayEvent: Entered\n    EventGuid = %s\n",
-                   eventGuidString));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PpSetPlugPlayEvent: Entered\n    EventGuid = %s\n", eventGuidString));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    DeviceObject = 0x%p\n",
-                   DeviceObject));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    DeviceObject = 0x%p\n", DeviceObject));
     }
 #endif
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
 
         return;
     }
@@ -1616,7 +1477,8 @@ Return Value:
     //
 
     deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
         ObDereferenceObject(DeviceObject);
         return;
     }
@@ -1632,10 +1494,9 @@ Return Value:
     dataSize = sizeof(PLUGPLAY_EVENT_BLOCK) + deviceNode->InstancePath.Length + sizeof(WCHAR);
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
-    deviceEvent = ExAllocatePoolWithTag(PagedPool,
-                                        totalSize,
-                                        PNP_DEVICE_EVENT_ENTRY_TAG);
-    if (deviceEvent == NULL) {
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
+    if (deviceEvent == NULL)
+    {
         ObDereferenceObject(DeviceObject);
         return;
     }
@@ -1645,28 +1506,29 @@ Return Value:
     deviceEvent->Data.TotalSize = dataSize;
     deviceEvent->Data.DeviceObject = (PVOID)DeviceObject;
 
-    if (PiCompareGuid(EventGuid, &GUID_DEVICE_ENUMERATED)) {
+    if (PiCompareGuid(EventGuid, &GUID_DEVICE_ENUMERATED))
+    {
         //
         // GUID_DEVICE_ENUMERATED events are device installation requests for
         // user-mode, and are sent using the DeviceInstallEvent event type.
         //
         deviceEvent->Data.EventCategory = DeviceInstallEvent;
-        RtlCopyMemory(&deviceEvent->Data.u.InstallDevice.DeviceId,
-                      deviceNode->InstancePath.Buffer,
+        RtlCopyMemory(&deviceEvent->Data.u.InstallDevice.DeviceId, deviceNode->InstancePath.Buffer,
                       deviceNode->InstancePath.Length);
-        deviceEvent->Data.u.InstallDevice.DeviceId[deviceNode->InstancePath.Length/sizeof(WCHAR)] = 0x0;
-    } else {
+        deviceEvent->Data.u.InstallDevice.DeviceId[deviceNode->InstancePath.Length / sizeof(WCHAR)] = 0x0;
+    }
+    else
+    {
         //
         // All other target events are sent using the TargetDeviceChangeEvent
         // event type, and are distinguished by the EventGuid.  Note that
         // DeviceIds is a multi-sz list.
         //
         deviceEvent->Data.EventCategory = TargetDeviceChangeEvent;
-        RtlCopyMemory(&deviceEvent->Data.u.TargetDevice.DeviceIds,
-                      deviceNode->InstancePath.Buffer,
+        RtlCopyMemory(&deviceEvent->Data.u.TargetDevice.DeviceIds, deviceNode->InstancePath.Buffer,
                       deviceNode->InstancePath.Length);
-        deviceEvent->Data.u.TargetDevice.DeviceIds[deviceNode->InstancePath.Length/sizeof(WCHAR)] = 0x0;
-        deviceEvent->Data.u.TargetDevice.DeviceIds[deviceNode->InstancePath.Length/sizeof(WCHAR)+1] = 0x0;
+        deviceEvent->Data.u.TargetDevice.DeviceIds[deviceNode->InstancePath.Length / sizeof(WCHAR)] = 0x0;
+        deviceEvent->Data.u.TargetDevice.DeviceIds[deviceNode->InstancePath.Length / sizeof(WCHAR) + 1] = 0x0;
     }
 
     PiInsertEventInQueue(deviceEvent);
@@ -1676,14 +1538,12 @@ Return Value:
 } // PpSetPlugPlayEvent
 
 NTSTATUS
-PpSynchronizeDeviceEventQueue(
-    VOID
-    )
+PpSynchronizeDeviceEventQueue(VOID)
 {
-    NTSTATUS                status;
+    NTSTATUS status;
     PPNP_DEVICE_EVENT_ENTRY deviceEvent;
-    KEVENT                  event;
-    ULONG                   result;
+    KEVENT event;
+    ULONG result;
 
     PAGED_CODE();
 
@@ -1692,10 +1552,9 @@ PpSynchronizeDeviceEventQueue(
     // is TRUE.
     //
 
-    deviceEvent = ExAllocatePoolWithTag( PagedPool,
-                                         sizeof(PNP_DEVICE_EVENT_ENTRY),
-                                         PNP_DEVICE_EVENT_ENTRY_TAG);
-    if (deviceEvent == NULL) {
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, sizeof(PNP_DEVICE_EVENT_ENTRY), PNP_DEVICE_EVENT_ENTRY_TAG);
+    if (deviceEvent == NULL)
+    {
         return STATUS_NO_MEMORY;
     }
 
@@ -1711,22 +1570,18 @@ PpSynchronizeDeviceEventQueue(
 
     status = PiInsertEventInQueue(deviceEvent);
 
-    if (NT_SUCCESS(status)) {
-        status = KeWaitForSingleObject( &event,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,       // not alertable
-                                        0);          // infinite
+    if (NT_SUCCESS(status))
+    {
+        status = KeWaitForSingleObject(&event, Executive, KernelMode,
+                                       FALSE, // not alertable
+                                       0);    // infinite
     }
 
     return status;
 }
 
-
-VOID
-PiWalkDeviceList(
-    IN PVOID Context
-    )
+
+VOID PiWalkDeviceList(IN PVOID Context)
 
 /*++
 
@@ -1756,27 +1611,25 @@ Return Value:
 --*/
 
 {
-    NTSTATUS  status;
-    PPNP_DEVICE_EVENT_ENTRY  deviceEvent;
+    NTSTATUS status;
+    PPNP_DEVICE_EVENT_ENTRY deviceEvent;
     PLIST_ENTRY current;
     UNICODE_STRING tempString;
 
     PAGED_CODE();
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiWalkDeviceList: Worker thread entered\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiWalkDeviceList: Worker thread entered\n"));
 
     //
     // Empty the device event list, remove entries from the head of the list
     // (deliver oldest entries first).
     //
 
-    status = KeWaitForSingleObject(&PpDeviceEventList->EventQueueMutex,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,       // not alertable
-                                   0);          // infinite
-    if (!NT_SUCCESS(status)) {
+    status = KeWaitForSingleObject(&PpDeviceEventList->EventQueueMutex, Executive, KernelMode,
+                                   FALSE, // not alertable
+                                   0);    // infinite
+    if (!NT_SUCCESS(status))
+    {
         ExAcquireFastMutex(&PiNotificationInProgressLock);
         KeSetEvent(&PiEventQueueEmpty, 0, FALSE);
         PiNotificationInProgress = FALSE;
@@ -1784,9 +1637,11 @@ Return Value:
         return;
     }
 
-    for ( ; ; ) {
+    for (;;)
+    {
         ExAcquireFastMutex(&PpDeviceEventList->Lock);
-        if (!IsListEmpty(&PpDeviceEventList->List)) {
+        if (!IsListEmpty(&PpDeviceEventList->List))
+        {
             current = RemoveHeadList(&PpDeviceEventList->List);
             ExReleaseFastMutex(&PpDeviceEventList->Lock);
 
@@ -1796,132 +1651,139 @@ Return Value:
 
 #if DBG
             {
-                CHAR    guidString[256];
+                CHAR guidString[256];
 
                 LookupGuid(&deviceEvent->Data.EventGuid, guidString, sizeof(guidString));
 
-                IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                           "PiWalkDeviceList: Processing queued event - EventGuid = %s\n",
-                           guidString));
+                IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiWalkDeviceList: Processing queued event - EventGuid = %s\n",
+                             guidString));
             }
 #endif
 
-            switch (deviceEvent->Data.EventCategory) {
+            switch (deviceEvent->Data.EventCategory)
+            {
 
-                case DeviceClassChangeEvent: {
+            case DeviceClassChangeEvent:
+            {
 
-                    //
-                    // Notify kernel-mode (synchronous).
-                    //
+                //
+                // Notify kernel-mode (synchronous).
+                //
 
-                    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                               "PiWalkDeviceList: DeviceClassChangeEvent - notifying kernel-mode\n"));
+                IopDbgPrint(
+                    (IOP_IOEVENT_INFO_LEVEL, "PiWalkDeviceList: DeviceClassChangeEvent - notifying kernel-mode\n"));
 
-                    RtlInitUnicodeString(&tempString, deviceEvent->Data.u.DeviceClass.SymbolicLinkName);
-                    IopNotifyDeviceClassChange(&deviceEvent->Data.EventGuid,
-                                               &deviceEvent->Data.u.DeviceClass.ClassGuid,
-                                               &tempString);
+                RtlInitUnicodeString(&tempString, deviceEvent->Data.u.DeviceClass.SymbolicLinkName);
+                IopNotifyDeviceClassChange(&deviceEvent->Data.EventGuid, &deviceEvent->Data.u.DeviceClass.ClassGuid,
+                                           &tempString);
 
-                    //
-                    // Notify user-mode (synchronous).
-                    //
+                //
+                // Notify user-mode (synchronous).
+                //
 
-                    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                               "PiWalkDeviceList: DeviceClassChangeEvent - user kernel-mode\n"));
+                IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiWalkDeviceList: DeviceClassChangeEvent - user kernel-mode\n"));
 
-                    PiNotifyUserMode(deviceEvent);
+                PiNotifyUserMode(deviceEvent);
 
-                    status = STATUS_SUCCESS;
-                    break;
-                }
-
-
-                case CustomDeviceEvent: {
-
-                    status = PiProcessCustomDeviceEvent(&deviceEvent);
-                    break;
-                }
-
-                case TargetDeviceChangeEvent: {
-
-                    status = PiProcessTargetDeviceEvent(&deviceEvent);
-                    break;
-                }
-
-                case DeviceInstallEvent: {
-
-                    //
-                    // Notify user-mode (synchronous).
-                    //
-
-                    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                               "PiWalkDeviceList: DeviceInstallEvent - notifying user-mode\n"));
-
-                    PiNotifyUserMode(deviceEvent);
-
-                    status = STATUS_SUCCESS;
-                    break;
-                }
-
-                case HardwareProfileChangeEvent: {
-
-                    //
-                    // Notify user-mode (synchronous).
-                    //
-                    status = PiNotifyUserMode(deviceEvent);
-
-                    if (NT_SUCCESS(status)) {
-
-                        //
-                        // Notify K-Mode
-                        //
-                        IopNotifyHwProfileChange(&deviceEvent->Data.EventGuid,
-                                                 deviceEvent->VetoType,
-                                                 deviceEvent->VetoName);
-                    }
-                    break;
-                }
-                case PowerEvent: {
-
-                    //
-                    // Notify user-mode (synchronous).
-                    //
-                    status = PiNotifyUserMode(deviceEvent);
-                    break;
-                }
-
-                case VetoEvent: {
-
-                    //
-                    // Forward onto user-mode.
-                    //
-                    status = PiNotifyUserMode(deviceEvent);
-                    break;
-                }
-
-                case BlockedDriverEvent: {
-
-                    //
-                    // Forward onto user-mode.
-                    //
-                    status = PiNotifyUserMode(deviceEvent);
-                    break;
-                }
-
-                default: {
-
-                    //
-                    // These should never be queued to kernel mode. They are
-                    // notifications for user mode, and should only be seen
-                    // through the PiNotifyUserModeXxx functions.
-                    //
-                    ASSERT(0);
-                    status = STATUS_UNSUCCESSFUL;
-                    break;
-                }
+                status = STATUS_SUCCESS;
+                break;
             }
 
-            if (status != STATUS_PENDING) {
+
+            case CustomDeviceEvent:
+            {
+
+                status = PiProcessCustomDeviceEvent(&deviceEvent);
+                break;
+            }
+
+            case TargetDeviceChangeEvent:
+            {
+
+                status = PiProcessTargetDeviceEvent(&deviceEvent);
+                break;
+            }
+
+            case DeviceInstallEvent:
+            {
+
+                //
+                // Notify user-mode (synchronous).
+                //
+
+                IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiWalkDeviceList: DeviceInstallEvent - notifying user-mode\n"));
+
+                PiNotifyUserMode(deviceEvent);
+
+                status = STATUS_SUCCESS;
+                break;
+            }
+
+            case HardwareProfileChangeEvent:
+            {
+
+                //
+                // Notify user-mode (synchronous).
+                //
+                status = PiNotifyUserMode(deviceEvent);
+
+                if (NT_SUCCESS(status))
+                {
+
+                    //
+                    // Notify K-Mode
+                    //
+                    IopNotifyHwProfileChange(&deviceEvent->Data.EventGuid, deviceEvent->VetoType,
+                                             deviceEvent->VetoName);
+                }
+                break;
+            }
+            case PowerEvent:
+            {
+
+                //
+                // Notify user-mode (synchronous).
+                //
+                status = PiNotifyUserMode(deviceEvent);
+                break;
+            }
+
+            case VetoEvent:
+            {
+
+                //
+                // Forward onto user-mode.
+                //
+                status = PiNotifyUserMode(deviceEvent);
+                break;
+            }
+
+            case BlockedDriverEvent:
+            {
+
+                //
+                // Forward onto user-mode.
+                //
+                status = PiNotifyUserMode(deviceEvent);
+                break;
+            }
+
+            default:
+            {
+
+                //
+                // These should never be queued to kernel mode. They are
+                // notifications for user mode, and should only be seen
+                // through the PiNotifyUserModeXxx functions.
+                //
+                ASSERT(0);
+                status = STATUS_UNSUCCESSFUL;
+                break;
+            }
+            }
+
+            if (status != STATUS_PENDING)
+            {
 
                 PpCompleteDeviceEvent(deviceEvent, status);
             }
@@ -1930,8 +1792,9 @@ Return Value:
             // Commit pending registrations after processing each event.
             //
             IopProcessDeferredRegistrations();
-
-        } else {
+        }
+        else
+        {
             ExAcquireFastMutex(&PiNotificationInProgressLock);
             KeSetEvent(&PiEventQueueEmpty, 0, FALSE);
             PiNotificationInProgress = FALSE;
@@ -1946,19 +1809,16 @@ Return Value:
             break;
         }
     }
-    if (Context != NULL) {
+    if (Context != NULL)
+    {
         ExFreePool(Context);
     }
     KeReleaseMutex(&PpDeviceEventList->EventQueueMutex, FALSE);
     return;
 } // PiWalkDeviceList
 
-
-VOID
-PpCompleteDeviceEvent(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY  DeviceEvent,
-    IN     NTSTATUS                 FinalStatus
-    )
+
+VOID PpCompleteDeviceEvent(IN OUT PPNP_DEVICE_EVENT_ENTRY DeviceEvent, IN NTSTATUS FinalStatus)
 
 /*++
 
@@ -1986,22 +1846,22 @@ Return Value:
 #if DBG
     LookupGuid(&DeviceEvent->Data.EventGuid, guidString, sizeof(guidString));
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PpCompleteDeviceEvent: Completing queued event - EventGuid = %s with %08lx\n",
-               guidString,
-               FinalStatus));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PpCompleteDeviceEvent: Completing queued event - EventGuid = %s with %08lx\n",
+                 guidString, FinalStatus));
 #endif
 
     //
     // If synchronous, signal the user-supplied event.
     //
 
-    if (DeviceEvent->CallerEvent) {
+    if (DeviceEvent->CallerEvent)
+    {
         *DeviceEvent->Data.Result = FinalStatus;
         KeSetEvent(DeviceEvent->CallerEvent, 0, FALSE);
     }
 
-    if (DeviceEvent->Callback) {
+    if (DeviceEvent->Callback)
+    {
         DeviceEvent->Callback(DeviceEvent->Context);
     }
 
@@ -2009,7 +1869,8 @@ Return Value:
     // Release the reference we took for this device object during
     // the PpSetCustomTargetEvent call.
     //
-    if (DeviceEvent->Data.DeviceObject != NULL) {
+    if (DeviceEvent->Data.DeviceObject != NULL)
+    {
         ObDereferenceObject(DeviceEvent->Data.DeviceObject);
     }
 
@@ -2021,11 +1882,9 @@ Return Value:
     return;
 } // PpCompleteDeviceEvent
 
-
+
 NTSTATUS
-PiNotifyUserMode(
-    PPNP_DEVICE_EVENT_ENTRY DeviceEvent
-    )
+PiNotifyUserMode(PPNP_DEVICE_EVENT_ENTRY DeviceEvent)
 
 /*++
 
@@ -2048,15 +1907,15 @@ Return Value:
 
     PAGED_CODE();
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiNotifyUserMode: Entered\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiNotifyUserMode: Entered\n"));
 
     //
     // First make sure user-mode is up and running before attempting to deliver
     // an event. If not running yet, skip user-mode for this event.
     //
 
-    if (UserModeRunning) {
+    if (UserModeRunning)
+    {
 
 
         //
@@ -2066,13 +1925,9 @@ Return Value:
         // call).
         //
 
-        status1 = KeWaitForSingleObject(&PpUserBlock->Registered,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        NULL);
+        status1 = KeWaitForSingleObject(&PpUserBlock->Registered, Executive, KernelMode, FALSE, NULL);
 
-        ASSERT (PpUserBlock->Deferred == FALSE);
+        ASSERT(PpUserBlock->Deferred == FALSE);
 
 
         //
@@ -2080,15 +1935,16 @@ Return Value:
         //
         PpUserBlock->Status = STATUS_SUCCESS;
 
-        if (NT_SUCCESS(status1)) {
+        if (NT_SUCCESS(status1))
+        {
 
-            IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                       "PiNotifyUserMode: User-mode ready\n"));
+            IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiNotifyUserMode: User-mode ready\n"));
 
             //
             // Make sure we can handle it in the pool buffer and copy it out
             //
-            if (PpUserBlock->PoolSize <  DeviceEvent->Data.TotalSize) {
+            if (PpUserBlock->PoolSize < DeviceEvent->Data.TotalSize)
+            {
                 //
                 //Allocate a new block (well, conceptually grow the block)
                 // only when it's not big enough, so that we know we've always got
@@ -2098,46 +1954,40 @@ Return Value:
                 PVOID pHold;
 
 
-                pHold = ExAllocatePoolWithTag(NonPagedPool,
-                                              DeviceEvent->Data.TotalSize,
-                                              PNP_POOL_EVENT_BUFFER);
+                pHold = ExAllocatePoolWithTag(NonPagedPool, DeviceEvent->Data.TotalSize, PNP_POOL_EVENT_BUFFER);
 
-                if (!pHold) {
-                    IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
-                               "PiNotifyUserMode: Out of NonPagedPool!!\n"));
+                if (!pHold)
+                {
+                    IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "PiNotifyUserMode: Out of NonPagedPool!!\n"));
 
                     PpUserBlock->Status = STATUS_INSUFFICIENT_RESOURCES;
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
                 PpUserBlock->PoolSize = DeviceEvent->Data.TotalSize;
 
-                ExFreePool (PpUserBlock->PoolBuffer );
+                ExFreePool(PpUserBlock->PoolBuffer);
                 PpUserBlock->PoolBuffer = pHold;
-
             }
 
             PpUserBlock->PoolUsed = DeviceEvent->Data.TotalSize;
-            RtlCopyMemory(PpUserBlock->PoolBuffer,
-                          &DeviceEvent->Data,
-                          PpUserBlock->PoolUsed);
-
+            RtlCopyMemory(PpUserBlock->PoolBuffer, &DeviceEvent->Data, PpUserBlock->PoolUsed);
         }
 
         //
         // Veto information is only propogated where needed, ie
         // QUERY_REMOVE's, Profile change requests and PowerEvents.
         //
-        if (PiCompareGuid(&DeviceEvent->Data.EventGuid,
-                          &GUID_TARGET_DEVICE_QUERY_REMOVE) ||
-            PiCompareGuid(&DeviceEvent->Data.EventGuid,
-                          &GUID_HWPROFILE_QUERY_CHANGE) ||
-            PiCompareGuid(&DeviceEvent->Data.EventGuid,
-                          &GUID_DEVICE_KERNEL_INITIATED_EJECT) ||
-            (DeviceEvent->Data.EventCategory == PowerEvent)) {
+        if (PiCompareGuid(&DeviceEvent->Data.EventGuid, &GUID_TARGET_DEVICE_QUERY_REMOVE) ||
+            PiCompareGuid(&DeviceEvent->Data.EventGuid, &GUID_HWPROFILE_QUERY_CHANGE) ||
+            PiCompareGuid(&DeviceEvent->Data.EventGuid, &GUID_DEVICE_KERNEL_INITIATED_EJECT) ||
+            (DeviceEvent->Data.EventCategory == PowerEvent))
+        {
 
             PpUserBlock->VetoType = DeviceEvent->VetoType;
             PpUserBlock->VetoName = DeviceEvent->VetoName;
-        } else {
+        }
+        else
+        {
             PpUserBlock->VetoType = NULL;
             PpUserBlock->VetoName = NULL;
         }
@@ -2153,18 +2003,16 @@ Return Value:
         // Wait until we get an answer back from user-mode.
         //
 
-        status1 = KeWaitForSingleObject(&PpUserBlock->UserResultEvent,
-                                        Executive,
-                                        KernelMode,
-                                        TRUE,
-                                        NULL);
+        status1 = KeWaitForSingleObject(&PpUserBlock->UserResultEvent, Executive, KernelMode, TRUE, NULL);
 
         //
         // Check the result from this user-mode notification.
         //
 
-        if (status1 == STATUS_ALERTED || status1 == STATUS_SUCCESS) {
-            if (!PpUserBlock->Result) {
+        if (status1 == STATUS_ALERTED || status1 == STATUS_SUCCESS)
+        {
+            if (!PpUserBlock->Result)
+            {
 
                 //
                 // For query-remove case, any errors are treated as a
@@ -2187,24 +2035,15 @@ Return Value:
     }
 
     IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiNotifyUserMode: User-mode returned, status = 0x%08X, status1 = 0x%08X, Result = 0x%08X\n",
-               status,
-               status1,
-               PpUserBlock->Result));
+                 "PiNotifyUserMode: User-mode returned, status = 0x%08X, status1 = 0x%08X, Result = 0x%08X\n", status,
+                 status1, PpUserBlock->Result));
 
     return status;
 
 } // PiNotifyUserMode
 
 
-
-VOID
-PiUserResponse(
-    IN ULONG            Response,
-    IN PNP_VETO_TYPE    VetoType,
-    IN LPWSTR           VetoName,
-    IN ULONG            VetoNameLength
-    )
+VOID PiUserResponse(IN ULONG Response, IN PNP_VETO_TYPE VetoType, IN LPWSTR VetoName, IN ULONG VetoNameLength)
 
 /*++
 
@@ -2231,11 +2070,13 @@ Return Value:
 
     PpUserBlock->Result = Response;
 
-    if (PpUserBlock->VetoType != NULL) {
+    if (PpUserBlock->VetoType != NULL)
+    {
         *PpUserBlock->VetoType = VetoType;
     }
 
-    if (PpUserBlock->VetoName != NULL)  {
+    if (PpUserBlock->VetoName != NULL)
+    {
         ASSERT(VetoNameLength == (USHORT)VetoNameLength);
 
         vetoString.MaximumLength = (USHORT)VetoNameLength;
@@ -2248,14 +2089,10 @@ Return Value:
 
 } // PiUserResponse
 
-
+
 NTSTATUS
-PiNotifyUserModeDeviceRemoval(
-    IN  PPNP_DEVICE_EVENT_ENTRY TemplateDeviceEvent,
-    IN  CONST GUID              *EventGuid,
-    OUT PPNP_VETO_TYPE          VetoType                OPTIONAL,
-    OUT PUNICODE_STRING         VetoName                OPTIONAL
-    )
+PiNotifyUserModeDeviceRemoval(IN PPNP_DEVICE_EVENT_ENTRY TemplateDeviceEvent, IN CONST GUID *EventGuid,
+                              OUT PPNP_VETO_TYPE VetoType OPTIONAL, OUT PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 Routine Description:
@@ -2302,9 +2139,7 @@ Return Value:
 #if DBG
     LookupGuid(EventGuid, guidString, sizeof(guidString));
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiNotifyUserModeDeviceRemoval: %s - notifying user-mode\n",
-               guidString));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiNotifyUserModeDeviceRemoval: %s - notifying user-mode\n", guidString));
 #endif
 
     //
@@ -2341,13 +2176,10 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-PiNotifyUserModeKernelInitiatedEject(
-    IN  PDEVICE_OBJECT          DeviceObject,
-    OUT PNP_VETO_TYPE          *VetoType,
-    OUT PUNICODE_STRING         VetoName
-    )
+PiNotifyUserModeKernelInitiatedEject(IN PDEVICE_OBJECT DeviceObject, OUT PNP_VETO_TYPE *VetoType,
+                                     OUT PUNICODE_STRING VetoName)
 
 /*++
 
@@ -2401,7 +2233,8 @@ Return Value:
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
     deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
-    if (deviceEvent == NULL) {
+    if (deviceEvent == NULL)
+    {
         ObDereferenceObject(DeviceObject);
         return STATUS_NO_MEMORY;
     }
@@ -2419,14 +2252,14 @@ Return Value:
     deviceEvent->Data.TotalSize = dataSize;
     deviceEvent->Data.DeviceObject = (PVOID)DeviceObject;
 
-    if (deviceNode->InstancePath.Length != 0) {
+    if (deviceNode->InstancePath.Length != 0)
+    {
 
-        RtlCopyMemory((PVOID)deviceEvent->Data.u.TargetDevice.DeviceIds,
-                    (PVOID)deviceNode->InstancePath.Buffer,
-                    deviceNode->InstancePath.Length);
+        RtlCopyMemory((PVOID)deviceEvent->Data.u.TargetDevice.DeviceIds, (PVOID)deviceNode->InstancePath.Buffer,
+                      deviceNode->InstancePath.Length);
     }
 
-    i = deviceNode->InstancePath.Length/sizeof(WCHAR);
+    i = deviceNode->InstancePath.Length / sizeof(WCHAR);
 
     deviceEvent->Data.u.TargetDevice.DeviceIds[i] = L'\0';
 
@@ -2439,14 +2272,10 @@ Return Value:
     return status;
 
 } // PiNotifyUserModeKernelInitiatedEject
-
+
 NTSTATUS
-PiNotifyUserModeRemoveVetoed(
-    IN PPNP_DEVICE_EVENT_ENTRY  VetoedDeviceEvent,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PNP_VETO_TYPE            VetoType,
-    IN PUNICODE_STRING          VetoName        OPTIONAL
-    )
+PiNotifyUserModeRemoveVetoed(IN PPNP_DEVICE_EVENT_ENTRY VetoedDeviceEvent, IN PDEVICE_OBJECT DeviceObject,
+                             IN PNP_VETO_TYPE VetoType, IN PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 --*/
@@ -2468,7 +2297,8 @@ PiNotifyUserModeRemoveVetoed(
     // attached to the devnode in the InstancePath field).
     //
     deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
         ObDereferenceObject(DeviceObject);
         return STATUS_INVALID_PARAMETER_1;
     }
@@ -2478,18 +2308,15 @@ PiNotifyUserModeRemoveVetoed(
     // we record in the TotalSize field later (because of the first index into
     // the DeviceIdVetoNameBuffer, this is double null terminated).
     //
-    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK) +
-               deviceNode->InstancePath.Length +
-               (VetoName ? VetoName->Length : 0) +
-               sizeof(WCHAR)*2;
+    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK) + deviceNode->InstancePath.Length + (VetoName ? VetoName->Length : 0) +
+               sizeof(WCHAR) * 2;
 
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
-    deviceEvent = ExAllocatePoolWithTag(PagedPool,
-                                        totalSize,
-                                        PNP_DEVICE_EVENT_ENTRY_TAG);
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
 
-    if (deviceEvent == NULL) {
+    if (deviceEvent == NULL)
+    {
 
         ObDereferenceObject(DeviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -2505,32 +2332,32 @@ PiNotifyUserModeRemoveVetoed(
     // DeviceId for the device being removed, and the next Id's all corrospond
     // to the vetoers.
     //
-    RtlCopyMemory(
-        deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer,
-        deviceNode->InstancePath.Buffer,
-        deviceNode->InstancePath.Length
-        );
+    RtlCopyMemory(deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer, deviceNode->InstancePath.Buffer,
+                  deviceNode->InstancePath.Length);
 
     i = deviceNode->InstancePath.Length;
-    deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i/sizeof(WCHAR)] = UNICODE_NULL;
+    deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i / sizeof(WCHAR)] = UNICODE_NULL;
 
-    if (VetoName) {
+    if (VetoName)
+    {
 
-        vetoData = (&deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i/sizeof(WCHAR)])+1;
+        vetoData = (&deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i / sizeof(WCHAR)]) + 1;
 
         RtlCopyMemory(vetoData, VetoName->Buffer, VetoName->Length);
-        vetoData[VetoName->Length/sizeof(WCHAR)] = UNICODE_NULL;
+        vetoData[VetoName->Length / sizeof(WCHAR)] = UNICODE_NULL;
     }
 
     //
     // No need to NULL terminate the entry after the last one as we prezero'd
     // the buffer. Now set the appropriate GUID so the UI looks right.
     //
-    if (PiCompareGuid(&VetoedDeviceEvent->Data.EventGuid, &GUID_DEVICE_EJECT)) {
+    if (PiCompareGuid(&VetoedDeviceEvent->Data.EventGuid, &GUID_DEVICE_EJECT))
+    {
 
         deviceEvent->Data.EventGuid = GUID_DEVICE_EJECT_VETOED;
-
-    } else {
+    }
+    else
+    {
 
         ASSERT(PiCompareGuid(&VetoedDeviceEvent->Data.EventGuid, &GUID_DEVICE_QUERY_AND_REMOVE));
         deviceEvent->Data.EventGuid = GUID_DEVICE_REMOVAL_VETOED;
@@ -2545,14 +2372,10 @@ PiNotifyUserModeRemoveVetoed(
     ObDereferenceObject(DeviceObject);
     return status;
 }
-
+
 NTSTATUS
-PiNotifyUserModeRemoveVetoedByList(
-    IN PPNP_DEVICE_EVENT_ENTRY  VetoedDeviceEvent,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PNP_VETO_TYPE            VetoType,
-    IN PWSTR                    MultiSzVetoList
-    )
+PiNotifyUserModeRemoveVetoedByList(IN PPNP_DEVICE_EVENT_ENTRY VetoedDeviceEvent, IN PDEVICE_OBJECT DeviceObject,
+                                   IN PNP_VETO_TYPE VetoType, IN PWSTR MultiSzVetoList)
 /*++
 
 --*/
@@ -2575,7 +2398,8 @@ PiNotifyUserModeRemoveVetoedByList(
     //
 
     deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
         ObDereferenceObject(DeviceObject);
         return STATUS_INVALID_PARAMETER_1;
     }
@@ -2586,25 +2410,22 @@ PiNotifyUserModeRemoveVetoedByList(
     // the DeviceIdVetoNameBuffer, this is double null terminated).
     //
 
-    for(vetoData = MultiSzVetoList; *vetoData; vetoData += vetoListLength) {
+    for (vetoData = MultiSzVetoList; *vetoData; vetoData += vetoListLength)
+    {
 
         vetoListLength = (ULONG)(wcslen(vetoData) + 1);
     }
 
-    vetoListLength = ((ULONG)(vetoData - MultiSzVetoList))*sizeof(WCHAR);
+    vetoListLength = ((ULONG)(vetoData - MultiSzVetoList)) * sizeof(WCHAR);
 
-    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK) +
-               deviceNode->InstancePath.Length +
-               vetoListLength +
-               sizeof(WCHAR);
+    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK) + deviceNode->InstancePath.Length + vetoListLength + sizeof(WCHAR);
 
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
-    deviceEvent = ExAllocatePoolWithTag(PagedPool,
-                                        totalSize,
-                                        PNP_DEVICE_EVENT_ENTRY_TAG);
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
 
-    if (deviceEvent == NULL) {
+    if (deviceEvent == NULL)
+    {
 
         ObDereferenceObject(DeviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -2620,29 +2441,28 @@ PiNotifyUserModeRemoveVetoedByList(
     // DeviceId for the device being removed, and the next Id's all corrospond
     // to the vetoers.
     //
-    RtlCopyMemory(
-        deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer,
-        deviceNode->InstancePath.Buffer,
-        deviceNode->InstancePath.Length
-        );
+    RtlCopyMemory(deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer, deviceNode->InstancePath.Buffer,
+                  deviceNode->InstancePath.Length);
 
     i = deviceNode->InstancePath.Length;
-    deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i/sizeof(WCHAR)] = UNICODE_NULL;
+    deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i / sizeof(WCHAR)] = UNICODE_NULL;
 
-    vetoData = (&deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i/sizeof(WCHAR)])+1;
+    vetoData = (&deviceEvent->Data.u.VetoNotification.DeviceIdVetoNameBuffer[i / sizeof(WCHAR)]) + 1;
 
     RtlCopyMemory(vetoData, MultiSzVetoList, vetoListLength);
-    vetoData[vetoListLength/sizeof(WCHAR)] = UNICODE_NULL;
+    vetoData[vetoListLength / sizeof(WCHAR)] = UNICODE_NULL;
 
     //
     // No need to NULL terminate the entry after the last one as we prezero'd
     // the buffer. Now set the appropriate GUID so the UI looks right.
     //
-    if (PiCompareGuid(&VetoedDeviceEvent->Data.EventGuid, &GUID_DEVICE_EJECT)) {
+    if (PiCompareGuid(&VetoedDeviceEvent->Data.EventGuid, &GUID_DEVICE_EJECT))
+    {
 
         deviceEvent->Data.EventGuid = GUID_DEVICE_EJECT_VETOED;
-
-    } else {
+    }
+    else
+    {
 
         ASSERT(PiCompareGuid(&VetoedDeviceEvent->Data.EventGuid, &GUID_DEVICE_QUERY_AND_REMOVE));
         deviceEvent->Data.EventGuid = GUID_DEVICE_REMOVAL_VETOED;
@@ -2657,11 +2477,9 @@ PiNotifyUserModeRemoveVetoedByList(
     ObDereferenceObject(DeviceObject);
     return status;
 }
-
+
 NTSTATUS
-PpNotifyUserModeRemovalSafe(
-    IN  PDEVICE_OBJECT DeviceObject
-    )
+PpNotifyUserModeRemovalSafe(IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -2717,7 +2535,8 @@ Return Value:
     totalSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + dataSize;
 
     deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
-    if (deviceEvent == NULL) {
+    if (deviceEvent == NULL)
+    {
         ObDereferenceObject(DeviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -2735,14 +2554,14 @@ Return Value:
     deviceEvent->Data.TotalSize = dataSize;
     deviceEvent->Data.DeviceObject = (PVOID)DeviceObject;
 
-    if (deviceNode->InstancePath.Length != 0) {
+    if (deviceNode->InstancePath.Length != 0)
+    {
 
-        RtlCopyMemory((PVOID)deviceEvent->Data.u.TargetDevice.DeviceIds,
-                    (PVOID)deviceNode->InstancePath.Buffer,
-                    deviceNode->InstancePath.Length);
+        RtlCopyMemory((PVOID)deviceEvent->Data.u.TargetDevice.DeviceIds, (PVOID)deviceNode->InstancePath.Buffer,
+                      deviceNode->InstancePath.Length);
     }
 
-    i = deviceNode->InstancePath.Length/sizeof(WCHAR);
+    i = deviceNode->InstancePath.Length / sizeof(WCHAR);
 
     deviceEvent->Data.u.TargetDevice.DeviceIds[i] = L'\0';
 
@@ -2756,11 +2575,9 @@ Return Value:
 
 } // PpNotifyUserModeRemovalSafe
 
-
+
 NTSTATUS
-PiProcessQueryRemoveAndEject(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent
-    )
+PiProcessQueryRemoveAndEject(IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent)
 
 /*++
 
@@ -2822,32 +2639,32 @@ Return Value:
 --*/
 
 {
-    PPNP_DEVICE_EVENT_ENTRY         deviceEvent, tempDeviceEvent;
-    PPNP_DEVICE_EVENT_ENTRY         surpriseRemovalEvent;
-    PLUGPLAY_DEVICE_DELETE_TYPE     deleteType;
-    PPENDING_RELATIONS_LIST_ENTRY   pendingRelations;
-    PNP_VETO_TYPE                   vetoType;
-    PDEVICE_OBJECT                  deviceObject, relatedDeviceObject;
-    PDEVICE_OBJECT                 *pdoList;
-    PDEVICE_NODE                    deviceNode, relatedDeviceNode;
-    PRELATION_LIST                  relationsList;
-    ULONG                           relationCount;
-    NTSTATUS                        status;
-    ULONG                           marker;
-    BOOLEAN                         directDescendant;
-    PDEVICE_OBJECT                  vetoingDevice = NULL;
-    PDRIVER_OBJECT                  vetoingDriver = NULL;
-    LONG                            index;
-    BOOLEAN                         possibleProfileChangeInProgress = FALSE;
-    BOOLEAN                         subsumingProfileChange = FALSE;
-    BOOLEAN                         hotEjectSupported;
-    BOOLEAN                         warmEjectSupported;
-    BOOLEAN                         excludeIndirectRelations;
-    UNICODE_STRING                  singleVetoListItem;
-    PWSTR                           vetoList;
-    UNICODE_STRING                  internalVetoString;
-    PWSTR                           internalVetoBuffer;
-    PDOCK_INTERFACE                 dockInterface = NULL;
+    PPNP_DEVICE_EVENT_ENTRY deviceEvent, tempDeviceEvent;
+    PPNP_DEVICE_EVENT_ENTRY surpriseRemovalEvent;
+    PLUGPLAY_DEVICE_DELETE_TYPE deleteType;
+    PPENDING_RELATIONS_LIST_ENTRY pendingRelations;
+    PNP_VETO_TYPE vetoType;
+    PDEVICE_OBJECT deviceObject, relatedDeviceObject;
+    PDEVICE_OBJECT *pdoList;
+    PDEVICE_NODE deviceNode, relatedDeviceNode;
+    PRELATION_LIST relationsList;
+    ULONG relationCount;
+    NTSTATUS status;
+    ULONG marker;
+    BOOLEAN directDescendant;
+    PDEVICE_OBJECT vetoingDevice = NULL;
+    PDRIVER_OBJECT vetoingDriver = NULL;
+    LONG index;
+    BOOLEAN possibleProfileChangeInProgress = FALSE;
+    BOOLEAN subsumingProfileChange = FALSE;
+    BOOLEAN hotEjectSupported;
+    BOOLEAN warmEjectSupported;
+    BOOLEAN excludeIndirectRelations;
+    UNICODE_STRING singleVetoListItem;
+    PWSTR vetoList;
+    UNICODE_STRING internalVetoString;
+    PWSTR internalVetoBuffer;
+    PDOCK_INTERFACE dockInterface = NULL;
 
     PAGED_CODE();
 
@@ -2858,65 +2675,74 @@ Return Value:
 
     PpDevNodeLockTree(PPL_TREEOP_ALLOW_READS);
 
-    if (PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_DEVICE_EJECT)) {
+    if (PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_DEVICE_EJECT))
+    {
 
         deleteType = EjectDevice;
+    }
+    else if (deviceEvent->Data.Flags & TDF_KERNEL_INITIATED)
+    {
 
-    } else if (deviceEvent->Data.Flags & TDF_KERNEL_INITIATED) {
-
-        if (!(deviceNode->Flags & DNF_ENUMERATED)) {
+        if (!(deviceNode->Flags & DNF_ENUMERATED))
+        {
 
             ASSERT(deviceNode->State == DeviceNodeAwaitingQueuedDeletion);
 
-            if ((deviceNode->PreviousState == DeviceNodeStarted) ||
-                (deviceNode->PreviousState == DeviceNodeStopped) ||
-                (deviceNode->PreviousState == DeviceNodeRestartCompletion)) {
+            if ((deviceNode->PreviousState == DeviceNodeStarted) || (deviceNode->PreviousState == DeviceNodeStopped) ||
+                (deviceNode->PreviousState == DeviceNodeRestartCompletion))
+            {
 
                 deleteType = SurpriseRemoveDevice;
-
-            } else {
+            }
+            else
+            {
                 deleteType = RemoveDevice;
             }
-        } else {
+        }
+        else
+        {
 
             ASSERT(deviceNode->State == DeviceNodeAwaitingQueuedRemoval);
 
-            if ((deviceNode->PreviousState == DeviceNodeStarted) ||
-                (deviceNode->PreviousState == DeviceNodeStopped) ||
-                (deviceNode->PreviousState == DeviceNodeRestartCompletion)) {
+            if ((deviceNode->PreviousState == DeviceNodeStarted) || (deviceNode->PreviousState == DeviceNodeStopped) ||
+                (deviceNode->PreviousState == DeviceNodeRestartCompletion))
+            {
 
                 deleteType = RemoveFailedDevice;
-            } else {
+            }
+            else
+            {
                 deleteType = RemoveUnstartedFailedDevice;
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         deleteType = QueryRemoveDevice;
     }
 
-    if (deleteType == QueryRemoveDevice || deleteType == EjectDevice) {
+    if (deleteType == QueryRemoveDevice || deleteType == EjectDevice)
+    {
 
-        if (deviceNode->Flags & DNF_LEGACY_DRIVER) {
+        if (deviceNode->Flags & DNF_LEGACY_DRIVER)
+        {
 
-            PiFinalizeVetoedRemove(
-                deviceEvent,
-                PNP_VetoLegacyDevice,
-                &deviceNode->InstancePath
-                );
+            PiFinalizeVetoedRemove(deviceEvent, PNP_VetoLegacyDevice, &deviceNode->InstancePath);
 
             PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
             return STATUS_PLUGPLAY_QUERY_VETOED;
         }
     }
 
-    if (deleteType == QueryRemoveDevice && deviceEvent->Argument == CM_PROB_DISABLED) {
+    if (deleteType == QueryRemoveDevice && deviceEvent->Argument == CM_PROB_DISABLED)
+    {
 
         //
         // if we're trying to remove the device to disable the device
         //
-        if (deviceNode->DisableableDepends > 0) {
+        if (deviceNode->DisableableDepends > 0)
+        {
 
             //
             // we should have caught this before (in usermode PnP)
@@ -2924,11 +2750,7 @@ Return Value:
             // There is still a potential gap, if the device hasn't got around
             // to marking itself as non-disableable yet
             //
-            PiFinalizeVetoedRemove(
-                deviceEvent,
-                PNP_VetoNonDisableable,
-                &deviceNode->InstancePath
-                );
+            PiFinalizeVetoedRemove(deviceEvent, PNP_VetoNonDisableable, &deviceNode->InstancePath);
 
             PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
             return STATUS_PLUGPLAY_QUERY_VETOED;
@@ -2938,20 +2760,13 @@ Return Value:
     //
     // Allocate room for a possible veto buffer.
     //
-    internalVetoBuffer = (PWSTR) PiAllocateCriticalMemory(
-        deleteType,
-        PagedPool,
-        MAX_VETO_NAME_LENGTH * sizeof(WCHAR),
-        0
-        );
+    internalVetoBuffer =
+        (PWSTR)PiAllocateCriticalMemory(deleteType, PagedPool, MAX_VETO_NAME_LENGTH * sizeof(WCHAR), 0);
 
-    if (internalVetoBuffer == NULL) {
+    if (internalVetoBuffer == NULL)
+    {
 
-        PiFinalizeVetoedRemove(
-            deviceEvent,
-            PNP_VetoTypeUnknown,
-            NULL
-            );
+        PiFinalizeVetoedRemove(deviceEvent, PNP_VetoTypeUnknown, NULL);
 
         PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
         return STATUS_PLUGPLAY_QUERY_VETOED;
@@ -2965,9 +2780,11 @@ Return Value:
     internalVetoString.Length = 0;
     internalVetoString.Buffer = internalVetoBuffer;
 
-    if (deleteType == EjectDevice) {
+    if (deleteType == EjectDevice)
+    {
 
-        if (deviceNode->Flags & DNF_LOCKED_FOR_EJECT) {
+        if (deviceNode->Flags & DNF_LOCKED_FOR_EJECT)
+        {
 
             //
             // Either this node or one of its ancestors is already being ejected.
@@ -2977,24 +2794,18 @@ Return Value:
             return STATUS_SUCCESS;
         }
 
-        if (deviceEvent->Data.Flags & TDF_KERNEL_INITIATED) {
+        if (deviceEvent->Data.Flags & TDF_KERNEL_INITIATED)
+        {
 
             //
             // Check permissions.
             //
-            status = PiNotifyUserModeKernelInitiatedEject(
-                deviceObject,
-                &vetoType,
-                &internalVetoString
-                );
+            status = PiNotifyUserModeKernelInitiatedEject(deviceObject, &vetoType, &internalVetoString);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
-                PiFinalizeVetoedRemove(
-                    deviceEvent,
-                    vetoType,
-                    &internalVetoString
-                    );
+                PiFinalizeVetoedRemove(deviceEvent, vetoType, &internalVetoString);
 
                 ExFreePool(internalVetoBuffer);
                 PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
@@ -3003,7 +2814,8 @@ Return Value:
         }
 
         if ((deviceNode->DockInfo.DockStatus == DOCK_DEPARTING) ||
-            (deviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED)) {
+            (deviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED))
+        {
 
             //
             // We already have an eject queued against this device. Don't allow
@@ -3018,16 +2830,13 @@ Return Value:
         //
         // What types of ejection can we do? (warm/hot)
         //
-        if (!IopDeviceNodeFlagsToCapabilities(deviceNode)->Removable) {
+        if (!IopDeviceNodeFlagsToCapabilities(deviceNode)->Removable)
+        {
 
             //
             // This device is neither ejectable, nor even removable.
             //
-            PiFinalizeVetoedRemove(
-                deviceEvent,
-                PNP_VetoIllegalDeviceRequest,
-                &deviceNode->InstancePath
-                );
+            PiFinalizeVetoedRemove(deviceEvent, PNP_VetoIllegalDeviceRequest, &deviceNode->InstancePath);
 
             ExFreePool(internalVetoBuffer);
             PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
@@ -3035,14 +2844,15 @@ Return Value:
         }
     }
 
-    if ((deleteType == QueryRemoveDevice) && (!PipAreDriversLoaded(deviceNode))) {
+    if ((deleteType == QueryRemoveDevice) && (!PipAreDriversLoaded(deviceNode)))
+    {
 
         //
         // The device doesn't have an FDO.
         //
         status = STATUS_SUCCESS;
-        if ((deviceNode->State == DeviceNodeInitialized) ||
-            (deviceNode->State == DeviceNodeRemoved)) {
+        if ((deviceNode->State == DeviceNodeInitialized) || (deviceNode->State == DeviceNodeRemoved))
+        {
 
             //
             // The rules are:
@@ -3058,25 +2868,30 @@ Return Value:
             //
             // In all cases we try to clear the problem.
             //
-            if (PipDoesDevNodeHaveProblem(deviceNode)) {
+            if (PipDoesDevNodeHaveProblem(deviceNode))
+            {
 
-                if (!PipIsProblemReadonly(deviceNode->Problem)) {
+                if (!PipIsProblemReadonly(deviceNode->Problem))
+                {
 
                     PipClearDevNodeProblem(deviceNode);
                 }
             }
 
-            if (!PipDoesDevNodeHaveProblem(deviceNode)) {
+            if (!PipDoesDevNodeHaveProblem(deviceNode))
+            {
 
-                if (!(deviceEvent->Data.Flags & TDF_NO_RESTART))  {
+                if (!(deviceEvent->Data.Flags & TDF_NO_RESTART))
+                {
 
                     //
                     // This is a reset attempt. Mark the devnode so that it
                     // comes online next enumeration.
                     //
                     IopRestartDeviceNode(deviceNode);
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // We're changing or setting problem codes. Note that the
@@ -3085,8 +2900,9 @@ Return Value:
                     //
                     PipSetDevNodeProblem(deviceNode, deviceEvent->Argument);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // The problem is fixed, so the devnode state is immutable
@@ -3096,7 +2912,8 @@ Return Value:
                 // user either wants to prepare the device for ejection (done),
                 // or wants to disable it (as good as done.)
                 //
-                if (!(deviceEvent->Data.Flags & TDF_NO_RESTART))  {
+                if (!(deviceEvent->Data.Flags & TDF_NO_RESTART))
+                {
 
                     status = STATUS_INVALID_PARAMETER;
                 }
@@ -3108,18 +2925,11 @@ Return Value:
         return status;
     }
 
-    status = IopBuildRemovalRelationList( deviceObject,
-                                          deleteType,
-                                          &vetoType,
-                                          &internalVetoString,
-                                          &relationsList);
-    if (!NT_SUCCESS(status)) {
+    status = IopBuildRemovalRelationList(deviceObject, deleteType, &vetoType, &internalVetoString, &relationsList);
+    if (!NT_SUCCESS(status))
+    {
 
-        PiFinalizeVetoedRemove(
-            deviceEvent,
-            vetoType,
-            &internalVetoString
-            );
+        PiFinalizeVetoedRemove(deviceEvent, vetoType, &internalVetoString);
 
         ExFreePool(internalVetoBuffer);
         PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
@@ -3132,31 +2942,24 @@ Return Value:
     // Resize the event buffer and add these device instance strings to the
     // list to notify.
     //
-    relationCount = IopGetRelationsCount( relationsList );
-    ASSERT(!IopGetRelationsTaggedCount( relationsList ));
+    relationCount = IopGetRelationsCount(relationsList);
+    ASSERT(!IopGetRelationsTaggedCount(relationsList));
 
     //
     // PdoList will become a list of devices that must be queried. This is
     // a subset of all the devices that might disappear, all of which appear
     // in the relations list.
     //
-    pdoList = (PDEVICE_OBJECT *) PiAllocateCriticalMemory(
-        deleteType,
-        NonPagedPool,
-        relationCount * sizeof(PDEVICE_OBJECT),
-        0
-        );
+    pdoList =
+        (PDEVICE_OBJECT *)PiAllocateCriticalMemory(deleteType, NonPagedPool, relationCount * sizeof(PDEVICE_OBJECT), 0);
 
-    if (pdoList != NULL) {
+    if (pdoList != NULL)
+    {
 
         relationCount = 0;
         marker = 0;
-        while (IopEnumerateRelations( relationsList,
-                                      &marker,
-                                      &relatedDeviceObject,
-                                      &directDescendant,
-                                      NULL,
-                                      TRUE)) {
+        while (IopEnumerateRelations(relationsList, &marker, &relatedDeviceObject, &directDescendant, NULL, TRUE))
+        {
 
             //
             // Here is a list of what operations retrieve what relations,
@@ -3196,7 +2999,8 @@ Return Value:
             // disappeared, they will get their notification, albeit a bit
             // later than some of the other devices in the tree.
             //
-            if (directDescendant || deleteType == EjectDevice || deleteType == QueryRemoveDevice) {
+            if (directDescendant || deleteType == EjectDevice || deleteType == QueryRemoveDevice)
+            {
 
                 relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
@@ -3210,14 +3014,16 @@ Return Value:
                 // either as the dock isn't *physically* going away.
                 //
                 ASSERT(relatedDeviceNode->DockInfo.DockStatus != DOCK_ARRIVING);
-                if (deleteType != RemoveDevice &&
-                    deleteType != QueryRemoveDevice) {
+                if (deleteType != RemoveDevice && deleteType != QueryRemoveDevice)
+                {
 
-                    if (relatedDeviceNode->DockInfo.DockStatus == DOCK_QUIESCENT) {
+                    if (relatedDeviceNode->DockInfo.DockStatus == DOCK_QUIESCENT)
+                    {
 
                         possibleProfileChangeInProgress = TRUE;
-
-                    } else if (relatedDeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE) {
+                    }
+                    else if (relatedDeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE)
+                    {
 
                         subsumingProfileChange = TRUE;
                     }
@@ -3225,85 +3031,70 @@ Return Value:
 
                 relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-                if (deleteType == QueryRemoveDevice || deleteType == EjectDevice) {
+                if (deleteType == QueryRemoveDevice || deleteType == EjectDevice)
+                {
 
-                    if (relatedDeviceNode->Flags & DNF_LEGACY_DRIVER) {
+                    if (relatedDeviceNode->Flags & DNF_LEGACY_DRIVER)
+                    {
 
-                        PiFinalizeVetoedRemove(
-                            deviceEvent,
-                            PNP_VetoLegacyDevice,
-                            &relatedDeviceNode->InstancePath
-                            );
+                        PiFinalizeVetoedRemove(deviceEvent, PNP_VetoLegacyDevice, &relatedDeviceNode->InstancePath);
 
                         status = STATUS_UNSUCCESSFUL;
                         break;
                     }
 
-                    if (relatedDeviceNode->State == DeviceNodeRemovePendingCloses) {
+                    if (relatedDeviceNode->State == DeviceNodeRemovePendingCloses)
+                    {
 
-                        PiFinalizeVetoedRemove(
-                            deviceEvent,
-                            PNP_VetoOutstandingOpen,
-                            &relatedDeviceNode->InstancePath
-                            );
+                        PiFinalizeVetoedRemove(deviceEvent, PNP_VetoOutstandingOpen, &relatedDeviceNode->InstancePath);
 
                         status = STATUS_UNSUCCESSFUL;
                         break;
                     }
-
                 }
 
-                pdoList[ relationCount++ ] = relatedDeviceObject;
+                pdoList[relationCount++] = relatedDeviceObject;
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        excludeIndirectRelations =
-            (deleteType == SurpriseRemoveDevice ||
-             deleteType == RemoveFailedDevice ||
-             deleteType == RemoveUnstartedFailedDevice ||
-             deleteType == RemoveDevice);
+        excludeIndirectRelations = (deleteType == SurpriseRemoveDevice || deleteType == RemoveFailedDevice ||
+                                    deleteType == RemoveUnstartedFailedDevice || deleteType == RemoveDevice);
 
-        status = PiResizeTargetDeviceBlock( DeviceEvent,
-                                            deleteType,
-                                            relationsList,
-                                            excludeIndirectRelations );
+        status = PiResizeTargetDeviceBlock(DeviceEvent, deleteType, relationsList, excludeIndirectRelations);
 
         deviceEvent = *DeviceEvent;
 
 
-        if (deleteType == SurpriseRemoveDevice) {
+        if (deleteType == SurpriseRemoveDevice)
+        {
 
-            PiBuildUnsafeRemovalDeviceBlock(
-                deviceEvent,
-                relationsList,
-                &surpriseRemovalEvent
-                );
+            PiBuildUnsafeRemovalDeviceBlock(deviceEvent, relationsList, &surpriseRemovalEvent);
         }
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         IopFreeRelationList(relationsList);
 
-        if (pdoList) {
+        if (pdoList)
+        {
 
             ExFreePool(pdoList);
         }
 
         ExFreePool(internalVetoBuffer);
 
-        PiFinalizeVetoedRemove(
-            deviceEvent,
-            PNP_VetoTypeUnknown,
-            NULL
-            );
+        PiFinalizeVetoedRemove(deviceEvent, PNP_VetoTypeUnknown, NULL);
 
         PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
         return status;
@@ -3313,7 +3104,8 @@ Return Value:
     // We may need to take the hardware profile change semaphore, and also
     // broadcast a hardware profile change request...
     //
-    if (possibleProfileChangeInProgress) {
+    if (possibleProfileChangeInProgress)
+    {
 
         PpProfileBeginHardwareProfileTransition(subsumingProfileChange);
 
@@ -3321,18 +3113,17 @@ Return Value:
         // Walk the list of docks who are going to disappear and mark them as
         // in profile transition.
         //
-        for (index = relationCount - 1; index >= 0; index--) {
+        for (index = relationCount - 1; index >= 0; index--)
+        {
 
-            relatedDeviceObject = pdoList[ index ];
+            relatedDeviceObject = pdoList[index];
             relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
             ASSERT(relatedDeviceNode->DockInfo.DockStatus != DOCK_ARRIVING);
-            if (relatedDeviceNode->DockInfo.DockStatus == DOCK_QUIESCENT) {
+            if (relatedDeviceNode->DockInfo.DockStatus == DOCK_QUIESCENT)
+            {
 
-                PpProfileIncludeInHardwareProfileTransition(
-                    relatedDeviceNode,
-                    DOCK_DEPARTING
-                    );
+                PpProfileIncludeInHardwareProfileTransition(relatedDeviceNode, DOCK_DEPARTING);
             }
         }
 
@@ -3378,18 +3169,18 @@ Return Value:
         // RemoveFailedDevice is a PathTrap - the only parent of a dock is
         // the ACPI root devnode right now. We shouldn't get into that case.
         //
-        ASSERT(deleteType != QueryRemoveDevice &&
-               deleteType != RemoveFailedDevice);
+        ASSERT(deleteType != QueryRemoveDevice && deleteType != RemoveFailedDevice);
 
-        if (deleteType == EjectDevice) {
+        if (deleteType == EjectDevice)
+        {
 
             //
             // Are there any legacy drivers in the system?
             //
             status = IoGetLegacyVetoList(&vetoList, &vetoType);
 
-            if (NT_SUCCESS(status) &&
-                (vetoType != PNP_VetoTypeUnknown)) {
+            if (NT_SUCCESS(status) && (vetoType != PNP_VetoTypeUnknown))
+            {
 
                 //
                 // Release any docks in profile transition
@@ -3402,25 +3193,23 @@ Return Value:
                 // Failure occured, notify user mode as appropriate, or fill in
                 // the veto buffer.
                 //
-                if (deviceEvent->VetoType != NULL) {
+                if (deviceEvent->VetoType != NULL)
+                {
 
                     *deviceEvent->VetoType = vetoType;
                 }
 
-                if (deviceEvent->VetoName == NULL) {
+                if (deviceEvent->VetoName == NULL)
+                {
 
                     //
                     // If there is not a VetoName passed in then call user mode
                     // to display the eject veto notification to the user.
                     //
-                    PiNotifyUserModeRemoveVetoedByList(
-                        deviceEvent,
-                        deviceObject,
-                        vetoType,
-                        vetoList
-                        );
-
-                } else {
+                    PiNotifyUserModeRemoveVetoedByList(deviceEvent, deviceObject, vetoType, vetoList);
+                }
+                else
+                {
 
                     //
                     //     The veto data in the PNP_DEVICE_EVENT_ENTRY block is
@@ -3444,14 +3233,11 @@ Return Value:
             // Broadcast the query for a profile change against our current
             // list of docks in transition...
             //
-            status = PpProfileQueryHardwareProfileChange(
-                subsumingProfileChange,
-                PROFILE_IN_PNPEVENT,
-                &vetoType,
-                &internalVetoString
-                );
+            status = PpProfileQueryHardwareProfileChange(subsumingProfileChange, PROFILE_IN_PNPEVENT, &vetoType,
+                                                         &internalVetoString);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 //
                 // Release any docks in profile transition
@@ -3460,11 +3246,7 @@ Return Value:
 
                 IopFreeRelationList(relationsList);
 
-                PiFinalizeVetoedRemove(
-                    deviceEvent,
-                    vetoType,
-                    &internalVetoString
-                    );
+                PiFinalizeVetoedRemove(deviceEvent, vetoType, &internalVetoString);
 
                 ExFreePool(pdoList);
                 ExFreePool(internalVetoBuffer);
@@ -3475,100 +3257,97 @@ Return Value:
         }
     }
 
-    if (deleteType == QueryRemoveDevice || deleteType == EjectDevice) {
+    if (deleteType == QueryRemoveDevice || deleteType == EjectDevice)
+    {
 
         //
         // Send query notification to user-mode.
         //
 
-        status = PiNotifyUserModeDeviceRemoval(
-            deviceEvent,
-            &GUID_TARGET_DEVICE_QUERY_REMOVE,
-            &vetoType,
-            &internalVetoString
-            );
+        status = PiNotifyUserModeDeviceRemoval(deviceEvent, &GUID_TARGET_DEVICE_QUERY_REMOVE, &vetoType,
+                                               &internalVetoString);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
-            IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                       "PiProcessQueryRemoveAndEject: QUERY_REMOVE - notifying kernel-mode\n"));
+            IopDbgPrint(
+                (IOP_IOEVENT_INFO_LEVEL, "PiProcessQueryRemoveAndEject: QUERY_REMOVE - notifying kernel-mode\n"));
 
             //
             // Send query notification to kernel-mode drivers.
             //
 
-            for (index = 0; index < (LONG)relationCount; index++) {
+            for (index = 0; index < (LONG)relationCount; index++)
+            {
 
-                relatedDeviceObject = pdoList[ index ];
+                relatedDeviceObject = pdoList[index];
 
-                status = IopNotifyTargetDeviceChange( &GUID_TARGET_DEVICE_QUERY_REMOVE,
-                                                      relatedDeviceObject,
-                                                      NULL,
-                                                      &vetoingDriver);
+                status = IopNotifyTargetDeviceChange(&GUID_TARGET_DEVICE_QUERY_REMOVE, relatedDeviceObject, NULL,
+                                                     &vetoingDriver);
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
 
                     vetoType = PNP_VetoDriver;
 
-                    if (vetoingDriver != NULL) {
+                    if (vetoingDriver != NULL)
+                    {
 
                         RtlCopyUnicodeString(&internalVetoString, &vetoingDriver->DriverName);
-
-                    } else {
+                    }
+                    else
+                    {
 
                         RtlInitUnicodeString(&internalVetoString, NULL);
                     }
 
-                    for (index--; index >= 0; index--) {
-                        relatedDeviceObject = pdoList[ index ];
+                    for (index--; index >= 0; index--)
+                    {
+                        relatedDeviceObject = pdoList[index];
 
-                        IopNotifyTargetDeviceChange( &GUID_TARGET_DEVICE_REMOVE_CANCELLED,
-                                                     relatedDeviceObject,
-                                                     NULL,
-                                                     NULL);
-
+                        IopNotifyTargetDeviceChange(&GUID_TARGET_DEVICE_REMOVE_CANCELLED, relatedDeviceObject, NULL,
+                                                    NULL);
                     }
                     break;
                 }
             }
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 //
                 // If we haven't already performed the action yet (a query remove
                 // to the target device, in this case), then do it now.
                 //
 
-                IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                           "PiProcessQueryRemoveAndEject: QueryRemove DevNodes\n"));
+                IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessQueryRemoveAndEject: QueryRemove DevNodes\n"));
 
-                status = IopDeleteLockedDeviceNodes(deviceObject,
-                                                    relationsList,
-                                                    QueryRemoveDevice,
-                                                    TRUE,
-                                                    0,
-                                                    &vetoType,
+                status = IopDeleteLockedDeviceNodes(deviceObject, relationsList, QueryRemoveDevice, TRUE, 0, &vetoType,
                                                     &internalVetoString);
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     //
                     // Everyone has been notified and had a chance to close their handles.
                     // Since no one has vetoed it yet, let's see if there are any open
                     // references.
                     //
 
-                    if (IopNotifyPnpWhenChainDereferenced( pdoList, relationCount, TRUE, &vetoingDevice )) {
+                    if (IopNotifyPnpWhenChainDereferenced(pdoList, relationCount, TRUE, &vetoingDevice))
+                    {
 
                         DUMP_PDO_HANDLES(pdoList, relationCount, FALSE);
 
                         vetoType = PNP_VetoOutstandingOpen;
-                        if (vetoingDevice != NULL) {
+                        if (vetoingDevice != NULL)
+                        {
 
                             relatedDeviceNode = (PDEVICE_NODE)vetoingDevice->DeviceObjectExtension->DeviceNode;
 
                             ASSERT(relatedDeviceNode != NULL);
 
                             RtlCopyUnicodeString(&internalVetoString, &relatedDeviceNode->InstancePath);
-
-                        } else {
+                        }
+                        else
+                        {
 
                             RtlInitUnicodeString(&internalVetoString, NULL);
                         }
@@ -3577,81 +3356,66 @@ Return Value:
                         // Send cancel remove to the target devices.
                         //
 
-                        IopDeleteLockedDeviceNodes(deviceObject,
-                                                   relationsList,
-                                                   CancelRemoveDevice,
-                                                   TRUE,
-                                                   0,
-                                                   NULL,
+                        IopDeleteLockedDeviceNodes(deviceObject, relationsList, CancelRemoveDevice, TRUE, 0, NULL,
                                                    NULL);
 
                         status = STATUS_UNSUCCESSFUL;
                     }
-
-                } else {
+                }
+                else
+                {
 
                     DUMP_PDO_HANDLES(pdoList, relationCount, FALSE);
                 }
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
 
                     //
                     // Send cancel notification to kernel-mode drivers.
                     //
 
-                    for (index = relationCount - 1; index >= 0; index--) {
+                    for (index = relationCount - 1; index >= 0; index--)
+                    {
 
-                        relatedDeviceObject = pdoList[ index ];
+                        relatedDeviceObject = pdoList[index];
 
-                        IopNotifyTargetDeviceChange( &GUID_TARGET_DEVICE_REMOVE_CANCELLED,
-                                                     relatedDeviceObject,
-                                                     NULL,
-                                                     NULL);
+                        IopNotifyTargetDeviceChange(&GUID_TARGET_DEVICE_REMOVE_CANCELLED, relatedDeviceObject, NULL,
+                                                    NULL);
                     }
                 }
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
-                IopDbgPrint((IOP_IOEVENT_WARNING_LEVEL,
-                           "PiProcessQueryRemoveAndEject: Vetoed by \"%wZ\" (type 0x%x)\n",
-                           &internalVetoString,
-                           vetoType));
+                IopDbgPrint((IOP_IOEVENT_WARNING_LEVEL, "PiProcessQueryRemoveAndEject: Vetoed by \"%wZ\" (type 0x%x)\n",
+                             &internalVetoString, vetoType));
 
-                PiFinalizeVetoedRemove(
-                    deviceEvent,
-                    vetoType,
-                    &internalVetoString
-                    );
+                PiFinalizeVetoedRemove(deviceEvent, vetoType, &internalVetoString);
 
                 //
                 // A driver vetoed the query remove, go back and send
                 // cancels to user-mode (cancels already sent to drivers
                 // that received the query).
                 //
-                PiNotifyUserModeDeviceRemoval(
-                    deviceEvent,
-                    &GUID_TARGET_DEVICE_REMOVE_CANCELLED,
-                    NULL,
-                    NULL
-                    );
+                PiNotifyUserModeDeviceRemoval(deviceEvent, &GUID_TARGET_DEVICE_REMOVE_CANCELLED, NULL, NULL);
             }
+        }
+        else
+        {
 
-        } else {
-
-            PiFinalizeVetoedRemove(
-                deviceEvent,
-                vetoType,
-                &internalVetoString
-                );
+            PiFinalizeVetoedRemove(deviceEvent, vetoType, &internalVetoString);
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // Broadcast a cancel HW profile change event if appropriate.
             //
-            if (possibleProfileChangeInProgress) {
+            if (possibleProfileChangeInProgress)
+            {
 
                 //
                 // Release any docks in profile transition. We also broadcast
@@ -3672,23 +3436,17 @@ Return Value:
             PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
             return STATUS_PLUGPLAY_QUERY_VETOED;
         }
-
-    } else if (deleteType == SurpriseRemoveDevice || deleteType == RemoveFailedDevice) {
+    }
+    else if (deleteType == SurpriseRemoveDevice || deleteType == RemoveFailedDevice)
+    {
 
         //
         // Send IRP_MN_SURPRISE_REMOVAL, IopDeleteLockDeviceNodes ignores
         // indirect descendants for SurpriseRemoveDevice.
         //
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "PiProcessQueryRemoveAndEject: QueryRemove DevNodes\n"));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessQueryRemoveAndEject: QueryRemove DevNodes\n"));
 
-        IopDeleteLockedDeviceNodes( deviceObject,
-                                    relationsList,
-                                    SurpriseRemoveDevice,
-                                    FALSE,
-                                    0,
-                                    NULL,
-                                    NULL);
+        IopDeleteLockedDeviceNodes(deviceObject, relationsList, SurpriseRemoveDevice, FALSE, 0, NULL, NULL);
     }
 
     //
@@ -3696,60 +3454,44 @@ Return Value:
     // sees this as a remove pending if it's user initiated, we don't give
     // them the "remove" until it's actually gone.
     //
-    if (deleteType != SurpriseRemoveDevice) {
+    if (deleteType != SurpriseRemoveDevice)
+    {
 
         //
         // ISSUE - 2000/08/20 - ADRIAO: Busted message path
         //     We send GUID_DEVICE_REMOVE_PENDING to devices that are already
         // dead in the case of RemoveFailedDevice.
         //
-        PiNotifyUserModeDeviceRemoval(
-            deviceEvent,
-            &GUID_DEVICE_REMOVE_PENDING,
-            NULL,
-            NULL
-            );
+        PiNotifyUserModeDeviceRemoval(deviceEvent, &GUID_DEVICE_REMOVE_PENDING, NULL, NULL);
+    }
+    else
+    {
 
-    } else {
+        if (surpriseRemovalEvent)
+        {
 
-        if (surpriseRemovalEvent) {
-
-            PiNotifyUserModeDeviceRemoval(
-                surpriseRemovalEvent,
-                &GUID_DEVICE_SURPRISE_REMOVAL,
-                NULL,
-                NULL
-                );
+            PiNotifyUserModeDeviceRemoval(surpriseRemovalEvent, &GUID_DEVICE_SURPRISE_REMOVAL, NULL, NULL);
 
             ExFreePool(surpriseRemovalEvent);
         }
 
-        PiNotifyUserModeDeviceRemoval(
-            deviceEvent,
-            &GUID_TARGET_DEVICE_REMOVE_COMPLETE,
-            NULL,
-            NULL
-            );
+        PiNotifyUserModeDeviceRemoval(deviceEvent, &GUID_TARGET_DEVICE_REMOVE_COMPLETE, NULL, NULL);
     }
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiProcessQueryRemoveAndEject: REMOVE_COMPLETE - notifying kernel-mode\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessQueryRemoveAndEject: REMOVE_COMPLETE - notifying kernel-mode\n"));
 
-    for (index = 0; index < (LONG)relationCount; index++) {
+    for (index = 0; index < (LONG)relationCount; index++)
+    {
 
-        relatedDeviceObject = pdoList[ index ];
+        relatedDeviceObject = pdoList[index];
 
-        status = IopNotifyTargetDeviceChange( &GUID_TARGET_DEVICE_REMOVE_COMPLETE,
-                                              relatedDeviceObject,
-                                              NULL,
-                                              NULL);
+        status = IopNotifyTargetDeviceChange(&GUID_TARGET_DEVICE_REMOVE_COMPLETE, relatedDeviceObject, NULL, NULL);
 
         ASSERT(NT_SUCCESS(status));
     }
 
-    if (deleteType == RemoveDevice ||
-        deleteType == RemoveFailedDevice ||
-        deleteType == SurpriseRemoveDevice) {
+    if (deleteType == RemoveDevice || deleteType == RemoveFailedDevice || deleteType == SurpriseRemoveDevice)
+    {
 
         //
         // For these operations indirect relations are speculative.
@@ -3758,13 +3500,13 @@ Return Value:
         // remove them from the relations list.
         //
 
-        IopInvalidateRelationsInList( relationsList, deleteType, TRUE, FALSE );
+        IopInvalidateRelationsInList(relationsList, deleteType, TRUE, FALSE);
 
-        IopRemoveIndirectRelationsFromList( relationsList );
+        IopRemoveIndirectRelationsFromList(relationsList);
     }
 
-    if (deleteType == RemoveFailedDevice ||
-        deleteType == SurpriseRemoveDevice) {
+    if (deleteType == RemoveFailedDevice || deleteType == SurpriseRemoveDevice)
+    {
 
         //
         // We've sent the surprise remove IRP to the original device and all its
@@ -3793,23 +3535,21 @@ Return Value:
         // resources.
         //
 
-        IopUnlinkDeviceRemovalRelations( deviceObject,
-                                         relationsList,
-                                         deleteType == SurpriseRemoveDevice ?
-                                             UnlinkAllDeviceNodesPendingClose :
-                                             UnlinkOnlyChildDeviceNodesPendingClose);
+        IopUnlinkDeviceRemovalRelations(deviceObject, relationsList,
+                                        deleteType == SurpriseRemoveDevice ? UnlinkAllDeviceNodesPendingClose
+                                                                           : UnlinkOnlyChildDeviceNodesPendingClose);
 
         //
         // Add the relation list to a list of pending surprise removals.
         //
-        IopQueuePendingSurpriseRemoval( deviceObject, relationsList, deviceEvent->Argument );
+        IopQueuePendingSurpriseRemoval(deviceObject, relationsList, deviceEvent->Argument);
 
         //
         // Release the engine lock *before* IopNotifyPnpWhenChainDereferenced,
         // as it may call back into us...
         //
         PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
-        IopNotifyPnpWhenChainDereferenced( pdoList, relationCount, FALSE, NULL );
+        IopNotifyPnpWhenChainDereferenced(pdoList, relationCount, FALSE, NULL);
 
         ExFreePool(pdoList);
         ExFreePool(internalVetoBuffer);
@@ -3817,14 +3557,13 @@ Return Value:
         return STATUS_SUCCESS;
     }
 
-    if (deviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE) {
+    if (deviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE)
+    {
 
-        status = IopQueryDockRemovalInterface(
-            deviceObject,
-            &dockInterface
-            );
+        status = IopQueryDockRemovalInterface(deviceObject, &dockInterface);
 
-        if (dockInterface) {
+        if (dockInterface)
+        {
 
             //
             // Make sure updates don't occur on removes during an ejection.
@@ -3832,10 +3571,7 @@ Return Value:
             // IRPs go through (as only then do we know our power
             // constraints)
             //
-            dockInterface->ProfileDepartureSetMode(
-                dockInterface->Context,
-                PDS_UPDATE_ON_INTERFACE
-                );
+            dockInterface->ProfileDepartureSetMode(dockInterface->Context, PDS_UPDATE_ON_INTERFACE);
         }
     }
 
@@ -3843,26 +3579,21 @@ Return Value:
     // Send the remove to the devnode tree.
     //
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiProcessQueryRemoveAndEject: RemoveDevice DevNodes\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessQueryRemoveAndEject: RemoveDevice DevNodes\n"));
 
-    status = IopDeleteLockedDeviceNodes(deviceObject,
-                                        relationsList,
-                                        RemoveDevice,
+    status = IopDeleteLockedDeviceNodes(deviceObject, relationsList, RemoveDevice,
                                         (BOOLEAN)(deleteType == QueryRemoveDevice || deleteType == EjectDevice),
-                                        deviceEvent->Argument,
-                                        NULL,
-                                        NULL);
+                                        deviceEvent->Argument, NULL, NULL);
 
-    hotEjectSupported =
-        (BOOLEAN) IopDeviceNodeFlagsToCapabilities(deviceNode)->EjectSupported;
+    hotEjectSupported = (BOOLEAN)IopDeviceNodeFlagsToCapabilities(deviceNode)->EjectSupported;
 
-    warmEjectSupported =
-        (BOOLEAN) IopDeviceNodeFlagsToCapabilities(deviceNode)->WarmEjectSupported;
+    warmEjectSupported = (BOOLEAN)IopDeviceNodeFlagsToCapabilities(deviceNode)->WarmEjectSupported;
 
-    if (deleteType != EjectDevice) {
+    if (deleteType != EjectDevice)
+    {
 
-        if (!(deviceEvent->Data.Flags & TDF_NO_RESTART)) {
+        if (!(deviceEvent->Data.Flags & TDF_NO_RESTART))
+        {
 
             //
             // Set a flag to let kernel-mode know we'll be wanting to
@@ -3870,18 +3601,14 @@ Return Value:
             //
 
             marker = 0;
-            while (IopEnumerateRelations( relationsList,
-                                          &marker,
-                                          &relatedDeviceObject,
-                                          NULL,
-                                          NULL,
-                                          TRUE)) {
+            while (IopEnumerateRelations(relationsList, &marker, &relatedDeviceObject, NULL, NULL, TRUE))
+            {
 
                 relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-                if (relatedDeviceNode &&
-                    relatedDeviceNode->State == DeviceNodeRemoved &&
-                    PipIsDevNodeProblem(relatedDeviceNode, CM_PROB_WILL_BE_REMOVED)) {
+                if (relatedDeviceNode && relatedDeviceNode->State == DeviceNodeRemoved &&
+                    PipIsDevNodeProblem(relatedDeviceNode, CM_PROB_WILL_BE_REMOVED))
+                {
 
                     PipClearDevNodeProblem(relatedDeviceNode);
 
@@ -3893,13 +3620,12 @@ Return Value:
         //
         // Unlock the device relations list.
         //
-        IopUnlinkDeviceRemovalRelations( deviceObject,
-                                         relationsList,
-                                         UnlinkRemovedDeviceNodes );
+        IopUnlinkDeviceRemovalRelations(deviceObject, relationsList, UnlinkRemovedDeviceNodes);
 
         IopFreeRelationList(relationsList);
-
-    } else if (hotEjectSupported || warmEjectSupported) {
+    }
+    else if (hotEjectSupported || warmEjectSupported)
+    {
 
         //
         // From this point on we cannot return any sort of failure without
@@ -3913,41 +3639,35 @@ Return Value:
         //
 
         marker = 0;
-        while (IopEnumerateRelations( relationsList,
-                                      &marker,
-                                      &relatedDeviceObject,
-                                      NULL,
-                                      NULL,
-                                      TRUE)) {
+        while (IopEnumerateRelations(relationsList, &marker, &relatedDeviceObject, NULL, NULL, TRUE))
+        {
 
             relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-            if (relatedDeviceNode)  {
+            if (relatedDeviceNode)
+            {
 
                 relatedDeviceNode->Flags |= DNF_LOCKED_FOR_EJECT;
             }
         }
 
-        IopUnlinkDeviceRemovalRelations( deviceObject,
-                                         relationsList,
-                                         UnlinkRemovedDeviceNodes );
+        IopUnlinkDeviceRemovalRelations(deviceObject, relationsList, UnlinkRemovedDeviceNodes);
 
         //
         // Send the eject
         //
-        pendingRelations = ExAllocatePool( NonPagedPool, sizeof(PENDING_RELATIONS_LIST_ENTRY) );
+        pendingRelations = ExAllocatePool(NonPagedPool, sizeof(PENDING_RELATIONS_LIST_ENTRY));
 
-        if (pendingRelations == NULL) {
+        if (pendingRelations == NULL)
+        {
 
             //
             // It's cleanup time. Free up everything that matters
             //
-            if (dockInterface) {
+            if (dockInterface)
+            {
 
-                dockInterface->ProfileDepartureSetMode(
-                    dockInterface->Context,
-                    PDS_UPDATE_DEFAULT
-                    );
+                dockInterface->ProfileDepartureSetMode(dockInterface->Context, PDS_UPDATE_DEFAULT);
 
                 dockInterface->InterfaceDereference(dockInterface->Context);
             }
@@ -3955,7 +3675,8 @@ Return Value:
             ExFreePool(pdoList);
             ExFreePool(internalVetoBuffer);
 
-            if (possibleProfileChangeInProgress) {
+            if (possibleProfileChangeInProgress)
+            {
 
                 //
                 // Release any docks in profile transition. We also broadcast
@@ -3978,11 +3699,7 @@ Return Value:
             //
             // Let the user know we were unable to process the request.
             //
-            PiFinalizeVetoedRemove(
-                deviceEvent,
-                PNP_VetoTypeUnknown,
-                NULL
-                );
+            PiFinalizeVetoedRemove(deviceEvent, PNP_VetoTypeUnknown, NULL);
 
             PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
             return STATUS_PLUGPLAY_QUERY_VETOED;
@@ -3996,42 +3713,31 @@ Return Value:
         pendingRelations->DeviceObject = deviceObject;
         pendingRelations->RelationsList = relationsList;
         pendingRelations->ProfileChangingEject = possibleProfileChangeInProgress;
-        pendingRelations->DisplaySafeRemovalDialog =
-            (BOOLEAN)(deviceEvent->VetoName == NULL);
+        pendingRelations->DisplaySafeRemovalDialog = (BOOLEAN)(deviceEvent->VetoName == NULL);
         pendingRelations->DockInterface = dockInterface;
 
         //
         // Now that we've removed all the devices that won't be present
         // in the new hardware profile state (eg batteries, etc),
         //
-        status = PoGetLightestSystemStateForEject(
-            possibleProfileChangeInProgress,
-            hotEjectSupported,
-            warmEjectSupported,
-            &pendingRelations->LightestSleepState
-            );
+        status = PoGetLightestSystemStateForEject(possibleProfileChangeInProgress, hotEjectSupported,
+                                                  warmEjectSupported, &pendingRelations->LightestSleepState);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
-            if (status == STATUS_INSUFFICIENT_POWER) {
+            if (status == STATUS_INSUFFICIENT_POWER)
+            {
 
-                PiFinalizeVetoedRemove(
-                    deviceEvent,
-                    PNP_VetoInsufficientPower,
-                    NULL
-                    );
+                PiFinalizeVetoedRemove(deviceEvent, PNP_VetoInsufficientPower, NULL);
+            }
+            else
+            {
 
-            } else {
+                IopDbgPrint(
+                    (IOP_IOEVENT_WARNING_LEVEL, "PiProcessQueryRemoveAndEject: Vetoed by power system (%x)\n", status));
 
-                IopDbgPrint((IOP_IOEVENT_WARNING_LEVEL,
-                           "PiProcessQueryRemoveAndEject: Vetoed by power system (%x)\n",
-                           status));
-
-                PiFinalizeVetoedRemove(
-                    deviceEvent,
-                    PNP_VetoTypeUnknown,
-                    NULL
-                    );
+                PiFinalizeVetoedRemove(deviceEvent, PNP_VetoTypeUnknown, NULL);
             }
 
             //
@@ -4043,8 +3749,8 @@ Return Value:
             //
             // Release any profile transitions.
             //
-            InitializeListHead( &pendingRelations->Link );
-            IopProcessCompletedEject((PVOID) pendingRelations);
+            InitializeListHead(&pendingRelations->Link);
+            IopProcessCompletedEject((PVOID)pendingRelations);
 
             ExFreePool(pdoList);
             ExFreePool(internalVetoBuffer);
@@ -4060,14 +3766,15 @@ Return Value:
         // safe removal dialog and completion of the event. Returning
         // STATUS_PENDING does let other events get processed though.
         //
-        IopEjectDevice( deviceObject, pendingRelations );
+        IopEjectDevice(deviceObject, pendingRelations);
 
         ExFreePool(pdoList);
         ExFreePool(internalVetoBuffer);
 
         return STATUS_PENDING;
-
-    } else {
+    }
+    else
+    {
 
         //
         // All docks must be hot or warm ejectable.
@@ -4077,9 +3784,7 @@ Return Value:
         //
         // Unlock the device relations list.
         //
-        IopUnlinkDeviceRemovalRelations( deviceObject,
-                                         relationsList,
-                                         UnlinkRemovedDeviceNodes );
+        IopUnlinkDeviceRemovalRelations(deviceObject, relationsList, UnlinkRemovedDeviceNodes);
 
         IopFreeRelationList(relationsList);
 
@@ -4091,33 +3796,28 @@ Return Value:
         // safe removal notification while UmPnPMgr is alert and waiting in
         // user mode, and the user gets the dialog now.
         //
-        if (deviceEvent->VetoName == NULL) {
+        if (deviceEvent->VetoName == NULL)
+        {
 
             PpNotifyUserModeRemovalSafe(deviceObject);
         }
     }
 
-    if (deleteType == RemoveDevice) {
+    if (deleteType == RemoveDevice)
+    {
 
         //
         // Notify user-mode one last time that everything is actually done.
         //
-        PiNotifyUserModeDeviceRemoval(
-            deviceEvent,
-            &GUID_TARGET_DEVICE_REMOVE_COMPLETE,
-            NULL,
-            NULL
-            );
+        PiNotifyUserModeDeviceRemoval(deviceEvent, &GUID_TARGET_DEVICE_REMOVE_COMPLETE, NULL, NULL);
     }
 
     ExFreePool(pdoList);
 
-    if (dockInterface) {
+    if (dockInterface)
+    {
 
-        dockInterface->ProfileDepartureSetMode(
-            dockInterface->Context,
-            PDS_UPDATE_DEFAULT
-            );
+        dockInterface->ProfileDepartureSetMode(dockInterface->Context, PDS_UPDATE_DEFAULT);
 
         dockInterface->InterfaceDereference(dockInterface->Context);
     }
@@ -4129,9 +3829,7 @@ Return Value:
 
 
 NTSTATUS
-PiProcessTargetDeviceEvent(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent
-    )
+PiProcessTargetDeviceEvent(IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent)
 
 /*++
 
@@ -4160,44 +3858,40 @@ Return Value:
 
     deviceEvent = *DeviceEvent;
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiProcessTargetDeviceEvent: Entered\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessTargetDeviceEvent: Entered\n"));
 
     //-----------------------------------------------------------------
     // QUERY and REMOVE
     //-----------------------------------------------------------------
 
-    if (PiCompareGuid(&deviceEvent->Data.EventGuid,
-                      &GUID_DEVICE_QUERY_AND_REMOVE)) {
+    if (PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_DEVICE_QUERY_AND_REMOVE))
+    {
 
         status = PiProcessQueryRemoveAndEject(DeviceEvent);
-
     }
 
     //-----------------------------------------------------------------
     // EJECT
     //-----------------------------------------------------------------
 
-    else if (PiCompareGuid(&deviceEvent->Data.EventGuid,
-                           &GUID_DEVICE_EJECT)) {
+    else if (PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_DEVICE_EJECT))
+    {
 
         status = PiProcessQueryRemoveAndEject(DeviceEvent);
-
     }
 
     //-----------------------------------------------------------------
     // ARRIVAL
     //-----------------------------------------------------------------
 
-    else if (PiCompareGuid(&deviceEvent->Data.EventGuid,
-                           &GUID_DEVICE_ARRIVAL)) {
+    else if (PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_DEVICE_ARRIVAL))
+    {
 
         //
         // Notify user-mode (not drivers) that an arrival just happened.
         //
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "PiProcessTargetDeviceEvent: ARRIVAL - notifying user-mode\n"));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessTargetDeviceEvent: ARRIVAL - notifying user-mode\n"));
 
         PiNotifyUserMode(deviceEvent);
     }
@@ -4206,26 +3900,25 @@ Return Value:
     // NO-OP REQUEST (to flush device event queue)
     //-----------------------------------------------------------------
 
-    else if (PiCompareGuid(&deviceEvent->Data.EventGuid,
-                           &GUID_DEVICE_NOOP)) {
+    else if (PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_DEVICE_NOOP))
+    {
 
         status = STATUS_SUCCESS;
-
     }
 
     //-----------------------------------------------------------------
     // SAFE REMOVAL NOTIFICATION
     //-----------------------------------------------------------------
 
-    else if (PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_DEVICE_SAFE_REMOVAL)) {
+    else if (PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_DEVICE_SAFE_REMOVAL))
+    {
 
         //
         // Notify user-mode (and nobody else) that it is now safe to remove
         // someone.
         //
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "PiProcessTargetDeviceEvent: SAFE_REMOVAL - notifying user-mode\n"));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessTargetDeviceEvent: SAFE_REMOVAL - notifying user-mode\n"));
 
         PiNotifyUserMode(deviceEvent);
     }
@@ -4234,11 +3927,9 @@ Return Value:
 
 } // PiProcessTargetDeviceEvent
 
-
+
 NTSTATUS
-PiProcessCustomDeviceEvent(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent
-    )
+PiProcessCustomDeviceEvent(IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent)
 
 /*++
 
@@ -4261,28 +3952,26 @@ Return Value:
 
 {
     PPNP_DEVICE_EVENT_ENTRY deviceEvent;
-    PTARGET_DEVICE_CUSTOM_NOTIFICATION  customNotification;
+    PTARGET_DEVICE_CUSTOM_NOTIFICATION customNotification;
     PDEVICE_OBJECT deviceObject;
 
     PAGED_CODE();
 
     deviceEvent = *DeviceEvent;
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiProcessCustomDeviceEvent: Entered\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessCustomDeviceEvent: Entered\n"));
 
-    ASSERT(PiCompareGuid(&deviceEvent->Data.EventGuid,
-                         &GUID_PNP_CUSTOM_NOTIFICATION));
+    ASSERT(PiCompareGuid(&deviceEvent->Data.EventGuid, &GUID_PNP_CUSTOM_NOTIFICATION));
 
     deviceObject = (PDEVICE_OBJECT)deviceEvent->Data.DeviceObject;
-    customNotification = (PTARGET_DEVICE_CUSTOM_NOTIFICATION)deviceEvent->Data.u.CustomNotification.NotificationStructure;
+    customNotification =
+        (PTARGET_DEVICE_CUSTOM_NOTIFICATION)deviceEvent->Data.u.CustomNotification.NotificationStructure;
 
     //
     // Notify user-mode that something just happened.
     //
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiProcessCustomDeviceEvent: CUSTOM_NOTIFICATION - notifying user-mode\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessCustomDeviceEvent: CUSTOM_NOTIFICATION - notifying user-mode\n"));
 
     PiNotifyUserMode(deviceEvent);
 
@@ -4290,13 +3979,9 @@ Return Value:
     // Notify K-mode
     //
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PiProcessCustomDeviceEvent: CUSTOM_NOTIFICATION - notifying kernel-mode\n"));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PiProcessCustomDeviceEvent: CUSTOM_NOTIFICATION - notifying kernel-mode\n"));
 
-    IopNotifyTargetDeviceChange( &customNotification->Event,
-                                 deviceObject,
-                                 customNotification,
-                                 NULL);
+    IopNotifyTargetDeviceChange(&customNotification->Event, deviceObject, customNotification, NULL);
 
     return STATUS_SUCCESS;
 
@@ -4304,12 +3989,8 @@ Return Value:
 
 
 NTSTATUS
-PiResizeTargetDeviceBlock(
-    IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent,
-    IN PLUGPLAY_DEVICE_DELETE_TYPE DeleteType,
-    IN PRELATION_LIST RelationsList,
-    IN BOOLEAN ExcludeIndirectRelations
-    )
+PiResizeTargetDeviceBlock(IN OUT PPNP_DEVICE_EVENT_ENTRY *DeviceEvent, IN PLUGPLAY_DEVICE_DELETE_TYPE DeleteType,
+                          IN PRELATION_LIST RelationsList, IN BOOLEAN ExcludeIndirectRelations)
 /*++
 
 Routine Description:
@@ -4343,8 +4024,9 @@ Return Value:
 
     PAGED_CODE();
 
-    if (RelationsList == NULL) {
-        return STATUS_SUCCESS;  // nothing to do
+    if (RelationsList == NULL)
+    {
+        return STATUS_SUCCESS; // nothing to do
     }
 
     targetDevice = (*DeviceEvent)->Data.u.TargetDevice.DeviceIds;
@@ -4353,26 +4035,24 @@ Return Value:
     // Calculate the size of the PNP_DEVICE_EVENT_ENTRY block
     //
 
-    currentSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) +
-                  (*DeviceEvent)->Data.TotalSize;
+    currentSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + (*DeviceEvent)->Data.TotalSize;
 
     newSize = currentSize;
-    newSize -= (ULONG)((wcslen(targetDevice)+1) * sizeof(WCHAR));
+    newSize -= (ULONG)((wcslen(targetDevice) + 1) * sizeof(WCHAR));
 
     marker = 0;
-    while (IopEnumerateRelations( RelationsList,
-                                  &marker,
-                                  &relatedDeviceObject,
-                                  &directDescendant,
-                                  NULL,
-                                  FALSE)) {
+    while (IopEnumerateRelations(RelationsList, &marker, &relatedDeviceObject, &directDescendant, NULL, FALSE))
+    {
 
-        if (!ExcludeIndirectRelations || directDescendant) {
+        if (!ExcludeIndirectRelations || directDescendant)
+        {
 
             relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-            if (relatedDeviceNode != NULL) {
-                if (relatedDeviceNode->InstancePath.Length != 0) {
+            if (relatedDeviceNode != NULL)
+            {
+                if (relatedDeviceNode->InstancePath.Length != 0)
+                {
                     newSize += relatedDeviceNode->InstancePath.Length + sizeof(WCHAR);
                 }
             }
@@ -4381,23 +4061,22 @@ Return Value:
 
     ASSERT(newSize >= currentSize);
 
-    if (newSize == currentSize) {
+    if (newSize == currentSize)
+    {
 
         return STATUS_SUCCESS;
-
-    } else if (newSize < currentSize) {
+    }
+    else if (newSize < currentSize)
+    {
 
         newSize = currentSize;
     }
 
-    newDeviceEvent = (PPNP_DEVICE_EVENT_ENTRY) PiAllocateCriticalMemory(
-        DeleteType,
-        PagedPool,
-        newSize,
-        PNP_DEVICE_EVENT_ENTRY_TAG
-        );
+    newDeviceEvent =
+        (PPNP_DEVICE_EVENT_ENTRY)PiAllocateCriticalMemory(DeleteType, PagedPool, newSize, PNP_DEVICE_EVENT_ENTRY_TAG);
 
-    if (newDeviceEvent == NULL) {
+    if (newDeviceEvent == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -4424,23 +4103,20 @@ Return Value:
 
     marker = 0;
     p = newDeviceEvent->Data.u.TargetDevice.DeviceIds + wcslen(targetDevice) + 1;
-    while (IopEnumerateRelations( RelationsList,
-                                  &marker,
-                                  &relatedDeviceObject,
-                                  &directDescendant,
-                                  NULL,
-                                  FALSE)) {
+    while (IopEnumerateRelations(RelationsList, &marker, &relatedDeviceObject, &directDescendant, NULL, FALSE))
+    {
 
         if ((relatedDeviceObject != newDeviceEvent->Data.DeviceObject) &&
-            (!ExcludeIndirectRelations || directDescendant)) {
+            (!ExcludeIndirectRelations || directDescendant))
+        {
 
             relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-            if (relatedDeviceNode != NULL) {
-                if (relatedDeviceNode->InstancePath.Length != 0) {
-                    RtlCopyMemory(p,
-                                  relatedDeviceNode->InstancePath.Buffer,
-                                  relatedDeviceNode->InstancePath.Length);
+            if (relatedDeviceNode != NULL)
+            {
+                if (relatedDeviceNode->InstancePath.Length != 0)
+                {
+                    RtlCopyMemory(p, relatedDeviceNode->InstancePath.Buffer, relatedDeviceNode->InstancePath.Length);
                     p += relatedDeviceNode->InstancePath.Length / sizeof(WCHAR) + 1;
                 }
             }
@@ -4457,12 +4133,8 @@ Return Value:
 } // PiResizeTargetDeviceBlock
 
 
-VOID
-PiBuildUnsafeRemovalDeviceBlock(
-    IN  PPNP_DEVICE_EVENT_ENTRY     OriginalDeviceEvent,
-    IN  PRELATION_LIST              RelationsList,
-    OUT PPNP_DEVICE_EVENT_ENTRY    *AllocatedDeviceEvent
-    )
+VOID PiBuildUnsafeRemovalDeviceBlock(IN PPNP_DEVICE_EVENT_ENTRY OriginalDeviceEvent, IN PRELATION_LIST RelationsList,
+                                     OUT PPNP_DEVICE_EVENT_ENTRY *AllocatedDeviceEvent)
 /*++
 
 Routine Description:
@@ -4500,9 +4172,10 @@ Return Value:
     //
     *AllocatedDeviceEvent = NULL;
 
-    if (RelationsList == NULL) {
+    if (RelationsList == NULL)
+    {
 
-        return;  // nothing to do
+        return; // nothing to do
     }
 
     targetDevice = OriginalDeviceEvent->Data.u.TargetDevice.DeviceIds;
@@ -4513,32 +4186,31 @@ Return Value:
     dataSize = 0;
 
     marker = 0;
-    while (IopEnumerateRelations( RelationsList,
-                                  &marker,
-                                  &relatedDeviceObject,
-                                  &directDescendant,
-                                  NULL,
-                                  FALSE)) {
+    while (IopEnumerateRelations(RelationsList, &marker, &relatedDeviceObject, &directDescendant, NULL, FALSE))
+    {
 
-        if (!directDescendant) {
+        if (!directDescendant)
+        {
 
             continue;
         }
 
         relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-        if ((relatedDeviceNode == NULL) ||
-            PipIsBeingRemovedSafely(relatedDeviceNode)) {
+        if ((relatedDeviceNode == NULL) || PipIsBeingRemovedSafely(relatedDeviceNode))
+        {
 
             continue;
         }
 
-        if (relatedDeviceNode->InstancePath.Length != 0) {
+        if (relatedDeviceNode->InstancePath.Length != 0)
+        {
             dataSize += relatedDeviceNode->InstancePath.Length + sizeof(WCHAR);
         }
     }
 
-    if (dataSize == 0) {
+    if (dataSize == 0)
+    {
 
         //
         // No entries, bail.
@@ -4551,21 +4223,17 @@ Return Value:
     //
     dataSize += sizeof(WCHAR);
 
-    headerSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) +
-                 FIELD_OFFSET(PLUGPLAY_EVENT_BLOCK, u);
+    headerSize = FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data) + FIELD_OFFSET(PLUGPLAY_EVENT_BLOCK, u);
 
     eventSize = dataSize + headerSize;
 
     //
     // If we can't get memory, there simply won't be a message sent.
     //
-    newDeviceEvent = ExAllocatePoolWithTag(
-        PagedPool,
-        eventSize,
-        PNP_DEVICE_EVENT_ENTRY_TAG
-        );
+    newDeviceEvent = ExAllocatePoolWithTag(PagedPool, eventSize, PNP_DEVICE_EVENT_ENTRY_TAG);
 
-    if (newDeviceEvent == NULL) {
+    if (newDeviceEvent == NULL)
+    {
 
         return;
     }
@@ -4588,31 +4256,27 @@ Return Value:
 
     marker = 0;
     p = newDeviceEvent->Data.u.TargetDevice.DeviceIds;
-    while (IopEnumerateRelations( RelationsList,
-                                  &marker,
-                                  &relatedDeviceObject,
-                                  &directDescendant,
-                                  NULL,
-                                  FALSE)) {
+    while (IopEnumerateRelations(RelationsList, &marker, &relatedDeviceObject, &directDescendant, NULL, FALSE))
+    {
 
-        if (!directDescendant) {
+        if (!directDescendant)
+        {
 
             continue;
         }
 
         relatedDeviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-        if ((relatedDeviceNode == NULL) ||
-            PipIsBeingRemovedSafely(relatedDeviceNode)) {
+        if ((relatedDeviceNode == NULL) || PipIsBeingRemovedSafely(relatedDeviceNode))
+        {
 
             continue;
         }
 
-        if (relatedDeviceNode->InstancePath.Length != 0) {
+        if (relatedDeviceNode->InstancePath.Length != 0)
+        {
 
-            RtlCopyMemory(p,
-                          relatedDeviceNode->InstancePath.Buffer,
-                          relatedDeviceNode->InstancePath.Length);
+            RtlCopyMemory(p, relatedDeviceNode->InstancePath.Buffer, relatedDeviceNode->InstancePath.Length);
             p += relatedDeviceNode->InstancePath.Length / sizeof(WCHAR) + 1;
         }
     }
@@ -4626,12 +4290,8 @@ Return Value:
 } // PiBuildUnsafeRemovalDeviceBlock
 
 
-VOID
-PiFinalizeVetoedRemove(
-    IN PPNP_DEVICE_EVENT_ENTRY  VetoedDeviceEvent,
-    IN PNP_VETO_TYPE            VetoType,
-    IN PUNICODE_STRING          VetoName        OPTIONAL
-    )
+VOID PiFinalizeVetoedRemove(IN PPNP_DEVICE_EVENT_ENTRY VetoedDeviceEvent, IN PNP_VETO_TYPE VetoType,
+                            IN PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 Routine Description:
@@ -4661,92 +4321,88 @@ Return Value:
     const char *failureReason;
 #endif
 
-    deviceObject = (PDEVICE_OBJECT) VetoedDeviceEvent->Data.DeviceObject;
+    deviceObject = (PDEVICE_OBJECT)VetoedDeviceEvent->Data.DeviceObject;
 
 #if DBG
-    devNodeName = &((PDEVICE_NODE) deviceObject->DeviceObjectExtension->DeviceNode)->InstancePath;
+    devNodeName = &((PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode)->InstancePath;
 
-    switch(VetoType) {
+    switch (VetoType)
+    {
 
-        case PNP_VetoTypeUnknown:
-            failureReason = "for unspecified reason";
-            break;
+    case PNP_VetoTypeUnknown:
+        failureReason = "for unspecified reason";
+        break;
 
-        case PNP_VetoLegacyDevice:
-            failureReason = "due to legacy device";
-            break;
+    case PNP_VetoLegacyDevice:
+        failureReason = "due to legacy device";
+        break;
 
-        case PNP_VetoPendingClose:
+    case PNP_VetoPendingClose:
 
-            //
-            // ADRIAO N.B. 07/10/2000 - I believe this case is vestigal...
-            //
-            ASSERT(0);
-            failureReason = "due to pending close";
-            break;
+        //
+        // ADRIAO N.B. 07/10/2000 - I believe this case is vestigal...
+        //
+        ASSERT(0);
+        failureReason = "due to pending close";
+        break;
 
-        case PNP_VetoWindowsApp:
-            failureReason = "due to windows application";
-            break;
+    case PNP_VetoWindowsApp:
+        failureReason = "due to windows application";
+        break;
 
-        case PNP_VetoWindowsService:
-            failureReason = "due to service";
-            break;
+    case PNP_VetoWindowsService:
+        failureReason = "due to service";
+        break;
 
-        case PNP_VetoOutstandingOpen:
-            failureReason = "due to outstanding handles on device";
-            break;
+    case PNP_VetoOutstandingOpen:
+        failureReason = "due to outstanding handles on device";
+        break;
 
-        case PNP_VetoDevice:
-            failureReason = "by device";
-            break;
+    case PNP_VetoDevice:
+        failureReason = "by device";
+        break;
 
-        case PNP_VetoDriver:
-            failureReason = "by driver";
-            break;
+    case PNP_VetoDriver:
+        failureReason = "by driver";
+        break;
 
-        case PNP_VetoIllegalDeviceRequest:
-            failureReason = "as the request was invalid for the device";
-            break;
+    case PNP_VetoIllegalDeviceRequest:
+        failureReason = "as the request was invalid for the device";
+        break;
 
-        case PNP_VetoInsufficientPower:
-            failureReason = "because there would be insufficient system power to continue";
-            break;
+    case PNP_VetoInsufficientPower:
+        failureReason = "because there would be insufficient system power to continue";
+        break;
 
-        case PNP_VetoNonDisableable:
-            failureReason = "due to non-disableable device";
-            break;
+    case PNP_VetoNonDisableable:
+        failureReason = "due to non-disableable device";
+        break;
 
-        case PNP_VetoLegacyDriver:
-            failureReason = "due to legacy driver";
-            break;
+    case PNP_VetoLegacyDriver:
+        failureReason = "due to legacy driver";
+        break;
 
-        case PNP_VetoInsufficientRights:
-            failureReason = "insufficient permissions";
-            break;
+    case PNP_VetoInsufficientRights:
+        failureReason = "insufficient permissions";
+        break;
 
-        default:
-            ASSERT(0);
-            failureReason = "due to uncoded reason";
-            break;
+    default:
+        ASSERT(0);
+        failureReason = "due to uncoded reason";
+        break;
     }
 
-    if (VetoName != NULL) {
+    if (VetoName != NULL)
+    {
 
-        IopDbgPrint((IOP_IOEVENT_WARNING_LEVEL,
-            "PiFinalizeVetoedRemove: Removal of %wZ vetoed %s %wZ.\n",
-            devNodeName,
-            failureReason,
-            VetoName
-            ));
+        IopDbgPrint((IOP_IOEVENT_WARNING_LEVEL, "PiFinalizeVetoedRemove: Removal of %wZ vetoed %s %wZ.\n", devNodeName,
+                     failureReason, VetoName));
+    }
+    else
+    {
 
-    } else {
-
-        IopDbgPrint((IOP_IOEVENT_WARNING_LEVEL,
-            "PiFinalizeVetoedRemove: Removal of %wZ vetoed %s.\n",
-            devNodeName,
-            failureReason
-            ));
+        IopDbgPrint((IOP_IOEVENT_WARNING_LEVEL, "PiFinalizeVetoedRemove: Removal of %wZ vetoed %s.\n", devNodeName,
+                     failureReason));
     }
 
 #endif
@@ -4754,7 +4410,8 @@ Return Value:
     //
     // Update the vetoType field if the caller is interested.
     //
-    if (VetoedDeviceEvent->VetoType != NULL) {
+    if (VetoedDeviceEvent->VetoType != NULL)
+    {
 
         *VetoedDeviceEvent->VetoType = VetoType;
     }
@@ -4763,34 +4420,29 @@ Return Value:
     // The VetoName field tells us whether UI should be displayed (if NULL,
     // kernel mode UI is implicitely requested.)
     //
-    if (VetoedDeviceEvent->VetoName != NULL) {
+    if (VetoedDeviceEvent->VetoName != NULL)
+    {
 
-        if (VetoName != NULL) {
+        if (VetoName != NULL)
+        {
 
             RtlCopyUnicodeString(VetoedDeviceEvent->VetoName, VetoName);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // If there is not a VetoName passed in then call user mode to display the
         // eject veto notification to the user
         //
-        PiNotifyUserModeRemoveVetoed(
-            VetoedDeviceEvent,
-            deviceObject,
-            VetoType,
-            VetoName
-            );
+        PiNotifyUserModeRemoveVetoed(VetoedDeviceEvent, deviceObject, VetoType, VetoName);
     }
 }
 
 
 BOOLEAN
-PiCompareGuid(
-    CONST GUID *Guid1,
-    CONST GUID *Guid2
-    )
+PiCompareGuid(CONST GUID *Guid1, CONST GUID *Guid2)
 /*++
 
 Routine Description:
@@ -4811,7 +4463,8 @@ Return Value:
 {
     PAGED_CODE();
 
-    if (RtlCompareMemory((PVOID)Guid1, (PVOID)Guid2, sizeof(GUID)) == sizeof(GUID)) {
+    if (RtlCompareMemory((PVOID)Guid1, (PVOID)Guid2, sizeof(GUID)) == sizeof(GUID))
+    {
         return TRUE;
     }
     return FALSE;
@@ -4820,12 +4473,7 @@ Return Value:
 
 
 PVOID
-PiAllocateCriticalMemory(
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     DeleteType,
-    IN  POOL_TYPE                       PoolType,
-    IN  SIZE_T                          Size,
-    IN  ULONG                           Tag
-    )
+PiAllocateCriticalMemory(IN PLUGPLAY_DEVICE_DELETE_TYPE DeleteType, IN POOL_TYPE PoolType, IN SIZE_T Size, IN ULONG Tag)
 /*++
 
 Routine Description:
@@ -4862,13 +4510,13 @@ Return Value:
     //
     ASSERT(KeGetCurrentIrql() != DISPATCH_LEVEL);
 
-    while(1) {
+    while (1)
+    {
 
         memory = ExAllocatePoolWithTag(PoolType, Size, Tag);
 
-        if (memory ||
-            (DeleteType == QueryRemoveDevice) ||
-            (DeleteType == EjectDevice)) {
+        if (memory || (DeleteType == QueryRemoveDevice) || (DeleteType == EjectDevice))
+        {
 
             //
             // Either we got memory or the op was failable. Get out of here.
@@ -4880,7 +4528,7 @@ Return Value:
         // We're stuck until more memory comes along. Let some other
         // threads run before we get another shot...
         //
-        timeOut.QuadPart = Int32x32To64( 1, -10000 );
+        timeOut.QuadPart = Int32x32To64(1, -10000);
         KeDelayExecutionThread(KernelMode, FALSE, &timeOut);
     }
 
@@ -4889,191 +4537,146 @@ Return Value:
 
 
 #if DBG
-struct  {
-    CONST GUID *Guid;
-    PCHAR   Name;
-}   EventGuidTable[] =  {
-    { &GUID_HWPROFILE_QUERY_CHANGE,         "GUID_HWPROFILE_QUERY_CHANGE" },
-    { &GUID_HWPROFILE_CHANGE_CANCELLED,     "GUID_HWPROFILE_CHANGE_CANCELLED" },
-    { &GUID_HWPROFILE_CHANGE_COMPLETE,      "GUID_HWPROFILE_CHANGE_COMPLETE" },
-    { &GUID_DEVICE_INTERFACE_ARRIVAL,       "GUID_DEVICE_INTERFACE_ARRIVAL" },
-    { &GUID_DEVICE_INTERFACE_REMOVAL,       "GUID_DEVICE_INTERFACE_REMOVAL" },
-    { &GUID_TARGET_DEVICE_QUERY_REMOVE,     "GUID_TARGET_DEVICE_QUERY_REMOVE" },
-    { &GUID_TARGET_DEVICE_REMOVE_CANCELLED, "GUID_TARGET_DEVICE_REMOVE_CANCELLED" },
-    { &GUID_TARGET_DEVICE_REMOVE_COMPLETE,  "GUID_TARGET_DEVICE_REMOVE_COMPLETE" },
-    { &GUID_PNP_CUSTOM_NOTIFICATION,        "GUID_PNP_CUSTOM_NOTIFICATION" },
-    { &GUID_DEVICE_ARRIVAL,                 "GUID_DEVICE_ARRIVAL" },
-    { &GUID_DEVICE_ENUMERATED,              "GUID_DEVICE_ENUMERATED" },
-    { &GUID_DEVICE_ENUMERATE_REQUEST,       "GUID_DEVICE_ENUMERATE_REQUEST" },
-    { &GUID_DEVICE_START_REQUEST,           "GUID_DEVICE_START_REQUEST" },
-    { &GUID_DEVICE_REMOVE_PENDING,          "GUID_DEVICE_REMOVE_PENDING" },
-    { &GUID_DEVICE_QUERY_AND_REMOVE,        "GUID_DEVICE_QUERY_AND_REMOVE" },
-    { &GUID_DEVICE_EJECT,                   "GUID_DEVICE_EJECT" },
-    { &GUID_DEVICE_NOOP,                    "GUID_DEVICE_NOOP" },
-    { &GUID_DEVICE_SURPRISE_REMOVAL,        "GUID_DEVICE_SURPRISE_REMOVAL" },
-    { &GUID_DEVICE_SAFE_REMOVAL,            "GUID_DEVICE_SAFE_REMOVAL" },
-    { &GUID_DEVICE_EJECT_VETOED,            "GUID_DEVICE_EJECT_VETOED" },
-    { &GUID_DEVICE_REMOVAL_VETOED,          "GUID_DEVICE_REMOVAL_VETOED" },
-};
-#define EVENT_GUID_TABLE_SIZE   (sizeof(EventGuidTable) / sizeof(EventGuidTable[0]))
-
-VOID
-LookupGuid(
-    IN CONST GUID *Guid,
-    IN OUT PCHAR String,
-    IN ULONG StringLength
-    )
+struct
 {
-    int    i;
+    CONST GUID *Guid;
+    PCHAR Name;
+} EventGuidTable[] = {
+    { &GUID_HWPROFILE_QUERY_CHANGE, "GUID_HWPROFILE_QUERY_CHANGE" },
+    { &GUID_HWPROFILE_CHANGE_CANCELLED, "GUID_HWPROFILE_CHANGE_CANCELLED" },
+    { &GUID_HWPROFILE_CHANGE_COMPLETE, "GUID_HWPROFILE_CHANGE_COMPLETE" },
+    { &GUID_DEVICE_INTERFACE_ARRIVAL, "GUID_DEVICE_INTERFACE_ARRIVAL" },
+    { &GUID_DEVICE_INTERFACE_REMOVAL, "GUID_DEVICE_INTERFACE_REMOVAL" },
+    { &GUID_TARGET_DEVICE_QUERY_REMOVE, "GUID_TARGET_DEVICE_QUERY_REMOVE" },
+    { &GUID_TARGET_DEVICE_REMOVE_CANCELLED, "GUID_TARGET_DEVICE_REMOVE_CANCELLED" },
+    { &GUID_TARGET_DEVICE_REMOVE_COMPLETE, "GUID_TARGET_DEVICE_REMOVE_COMPLETE" },
+    { &GUID_PNP_CUSTOM_NOTIFICATION, "GUID_PNP_CUSTOM_NOTIFICATION" },
+    { &GUID_DEVICE_ARRIVAL, "GUID_DEVICE_ARRIVAL" },
+    { &GUID_DEVICE_ENUMERATED, "GUID_DEVICE_ENUMERATED" },
+    { &GUID_DEVICE_ENUMERATE_REQUEST, "GUID_DEVICE_ENUMERATE_REQUEST" },
+    { &GUID_DEVICE_START_REQUEST, "GUID_DEVICE_START_REQUEST" },
+    { &GUID_DEVICE_REMOVE_PENDING, "GUID_DEVICE_REMOVE_PENDING" },
+    { &GUID_DEVICE_QUERY_AND_REMOVE, "GUID_DEVICE_QUERY_AND_REMOVE" },
+    { &GUID_DEVICE_EJECT, "GUID_DEVICE_EJECT" },
+    { &GUID_DEVICE_NOOP, "GUID_DEVICE_NOOP" },
+    { &GUID_DEVICE_SURPRISE_REMOVAL, "GUID_DEVICE_SURPRISE_REMOVAL" },
+    { &GUID_DEVICE_SAFE_REMOVAL, "GUID_DEVICE_SAFE_REMOVAL" },
+    { &GUID_DEVICE_EJECT_VETOED, "GUID_DEVICE_EJECT_VETOED" },
+    { &GUID_DEVICE_REMOVAL_VETOED, "GUID_DEVICE_REMOVAL_VETOED" },
+};
+#define EVENT_GUID_TABLE_SIZE (sizeof(EventGuidTable) / sizeof(EventGuidTable[0]))
+
+VOID LookupGuid(IN CONST GUID *Guid, IN OUT PCHAR String, IN ULONG StringLength)
+{
+    int i;
 
     PAGED_CODE();
 
-    for (i = 0; i < EVENT_GUID_TABLE_SIZE; i++) {
-        if (PiCompareGuid(Guid, EventGuidTable[i].Guid)) {
+    for (i = 0; i < EVENT_GUID_TABLE_SIZE; i++)
+    {
+        if (PiCompareGuid(Guid, EventGuidTable[i].Guid))
+        {
             strncpy(String, EventGuidTable[i].Name, StringLength - 1);
             String[StringLength - 1] = '\0';
             return;
         }
     }
 
-    _snprintf( String, StringLength, "%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X",
-               Guid->Data1,
-               Guid->Data2,
-               Guid->Data3,
-               Guid->Data4[0],
-               Guid->Data4[1],
-               Guid->Data4[2],
-               Guid->Data4[3],
-               Guid->Data4[4],
-               Guid->Data4[5],
-               Guid->Data4[6],
-               Guid->Data4[7] );
+    _snprintf(String, StringLength, "%08X-%04X-%04X-%02X%02X%02X%02X%02X%02X%02X%02X", Guid->Data1, Guid->Data2,
+              Guid->Data3, Guid->Data4[0], Guid->Data4[1], Guid->Data4[2], Guid->Data4[3], Guid->Data4[4],
+              Guid->Data4[5], Guid->Data4[6], Guid->Data4[7]);
 }
 
-VOID
-DumpMultiSz(
-    IN PWCHAR MultiSz
-    )
+VOID DumpMultiSz(IN PWCHAR MultiSz)
 {
-    PWCHAR  p = MultiSz;
-    ULONG   length;
+    PWCHAR p = MultiSz;
+    ULONG length;
 
     PAGED_CODE();
 
-    while (*p) {
+    while (*p)
+    {
         length = (ULONG)wcslen(p);
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "        %S\n", p));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "        %S\n", p));
 
         p += length + 1;
     }
 }
 
-VOID
-DumpPnpEvent(
-    IN PPLUGPLAY_EVENT_BLOCK EventBlock
-    )
+VOID DumpPnpEvent(IN PPLUGPLAY_EVENT_BLOCK EventBlock)
 {
-    CHAR    guidString[256];
+    CHAR guidString[256];
 
     PAGED_CODE();
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "PlugPlay Event Block @ 0x%p\n", EventBlock));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "PlugPlay Event Block @ 0x%p\n", EventBlock));
 
     LookupGuid(&EventBlock->EventGuid, guidString, sizeof(guidString));
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "    EventGuid = %s\n", guidString));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    EventGuid = %s\n", guidString));
 
-    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-               "    DeviceObject = 0x%p\n", EventBlock->DeviceObject));
+    IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    DeviceObject = 0x%p\n", EventBlock->DeviceObject));
 
-    switch (EventBlock->EventCategory) {
+    switch (EventBlock->EventCategory)
+    {
     case HardwareProfileChangeEvent:
         IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    HardwareProfileChangeEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
-                   EventBlock->Result,
-                   EventBlock->Flags,
-                   EventBlock->TotalSize));
+                     "    HardwareProfileChangeEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
+                     EventBlock->Result, EventBlock->Flags, EventBlock->TotalSize));
 
         break;
 
     case TargetDeviceChangeEvent:
         IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    TargetDeviceChangeEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
-                   EventBlock->Result,
-                   EventBlock->Flags,
-                   EventBlock->TotalSize));
+                     "    TargetDeviceChangeEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n", EventBlock->Result,
+                     EventBlock->Flags, EventBlock->TotalSize));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    DeviceIds:\n"));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    DeviceIds:\n"));
 
-        DumpMultiSz( EventBlock->u.TargetDevice.DeviceIds );
+        DumpMultiSz(EventBlock->u.TargetDevice.DeviceIds);
         break;
 
     case DeviceClassChangeEvent:
         IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    DeviceClassChangeEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
-                   EventBlock->Result,
-                   EventBlock->Flags,
-                   EventBlock->TotalSize));
+                     "    DeviceClassChangeEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n", EventBlock->Result,
+                     EventBlock->Flags, EventBlock->TotalSize));
 
         LookupGuid(&EventBlock->u.DeviceClass.ClassGuid, guidString, sizeof(guidString));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    ClassGuid = %s\n",
-                   guidString));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    ClassGuid = %s\n", guidString));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    SymbolicLinkName = %S\n",
-                   EventBlock->u.DeviceClass.SymbolicLinkName));
+        IopDbgPrint(
+            (IOP_IOEVENT_INFO_LEVEL, "    SymbolicLinkName = %S\n", EventBlock->u.DeviceClass.SymbolicLinkName));
         break;
 
     case CustomDeviceEvent:
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    CustomDeviceEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
-                   EventBlock->Result,
-                   EventBlock->Flags,
-                   EventBlock->TotalSize));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    CustomDeviceEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
+                     EventBlock->Result, EventBlock->Flags, EventBlock->TotalSize));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    NotificationStructure = 0x%p\n    DeviceIds:\n",
-                   EventBlock->u.CustomNotification.NotificationStructure));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    NotificationStructure = 0x%p\n    DeviceIds:\n",
+                     EventBlock->u.CustomNotification.NotificationStructure));
 
-        DumpMultiSz( EventBlock->u.CustomNotification.DeviceIds );
+        DumpMultiSz(EventBlock->u.CustomNotification.DeviceIds);
         break;
 
     case DeviceInstallEvent:
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    DeviceInstallEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
-                   EventBlock->Result,
-                   EventBlock->Flags,
-                   EventBlock->TotalSize));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    DeviceInstallEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
+                     EventBlock->Result, EventBlock->Flags, EventBlock->TotalSize));
 
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    DeviceId = %S\n", EventBlock->u.InstallDevice.DeviceId));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    DeviceId = %S\n", EventBlock->u.InstallDevice.DeviceId));
 
         break;
 
     case DeviceArrivalEvent:
-        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL,
-                   "    DeviceArrivalEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
-                   EventBlock->Result,
-                   EventBlock->Flags,
-                   EventBlock->TotalSize));
+        IopDbgPrint((IOP_IOEVENT_INFO_LEVEL, "    DeviceArrivalEvent, Result = 0x%p, Flags = 0x%08X, TotalSize = %d\n",
+                     EventBlock->Result, EventBlock->Flags, EventBlock->TotalSize));
         break;
     }
-
 }
 
 
-VOID
-PiDumpPdoHandlesToDebugger(
-    IN  PDEVICE_OBJECT  *DeviceObjectArray,
-    IN  ULONG           ArrayCount,
-    IN  BOOLEAN         KnownHandleFailure
-    )
+VOID PiDumpPdoHandlesToDebugger(IN PDEVICE_OBJECT *DeviceObjectArray, IN ULONG ArrayCount,
+                                IN BOOLEAN KnownHandleFailure)
 /*++
 
 Routine Description:
@@ -5102,38 +4705,33 @@ Return Value:
     // If we have enabled the dumping flag, or the user ran oh.exe, spit all
     // handles on a veto to the debugger.
     //
-    if (!(PiDumpVetoedHandles || (NtGlobalFlag & FLG_MAINTAIN_OBJECT_TYPELIST))) {
+    if (!(PiDumpVetoedHandles || (NtGlobalFlag & FLG_MAINTAIN_OBJECT_TYPELIST)))
+    {
 
         return;
     }
 
     DbgPrint("Beginning handle dump:\n");
 
-    if (!KnownHandleFailure) {
+    if (!KnownHandleFailure)
+    {
 
         DbgPrint("  (Failed Query-Remove - *Might* by due to leaked handles)\n");
     }
 
-    for(i=handleCount=0; i<ArrayCount; i++) {
+    for (i = handleCount = 0; i < ArrayCount; i++)
+    {
 
-        PpHandleEnumerateHandlesAgainstPdoStack(
-            DeviceObjectArray[i],
-            PiDumpPdoHandlesToDebuggerCallBack,
-            (PVOID) &handleCount
-            );
+        PpHandleEnumerateHandlesAgainstPdoStack(DeviceObjectArray[i], PiDumpPdoHandlesToDebuggerCallBack,
+                                                (PVOID)&handleCount);
     }
     DbgPrint("Dump complete - %d total handles found.\n", handleCount);
 }
 
 
 BOOLEAN
-PiDumpPdoHandlesToDebuggerCallBack(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PEPROCESS       Process,
-    IN  PFILE_OBJECT    FileObject,
-    IN  HANDLE          HandleId,
-    IN  PVOID           Context
-    )
+PiDumpPdoHandlesToDebuggerCallBack(IN PDEVICE_OBJECT DeviceObject, IN PEPROCESS Process, IN PFILE_OBJECT FileObject,
+                                   IN HANDLE HandleId, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -5164,15 +4762,10 @@ Return Value:
     //
     // Display the handle.
     //
-    DbgPrint(
-        "  DeviceObject:%p ProcessID:%dT FileObject:%p Handle:%dT\n",
-        DeviceObject,
-        Process->UniqueProcessId,
-        FileObject,
-        HandleId
-        );
+    DbgPrint("  DeviceObject:%p ProcessID:%dT FileObject:%p Handle:%dT\n", DeviceObject, Process->UniqueProcessId,
+             FileObject, HandleId);
 
-    handleCount = (PULONG) Context;
+    handleCount = (PULONG)Context;
 
     (*handleCount)++;
 
@@ -5180,4 +4773,3 @@ Return Value:
 }
 
 #endif // DBG
-

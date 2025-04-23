@@ -36,28 +36,14 @@ Revision History:
 // Define prototypes for forward referenced functions.
 //
 
-VOID
-KiCopyDescriptorMemory (
-   IN PKDESCRIPTOR Source,
-   IN PKDESCRIPTOR Destination,
-   IN PVOID Base
-   );
+VOID KiCopyDescriptorMemory(IN PKDESCRIPTOR Source, IN PKDESCRIPTOR Destination, IN PVOID Base);
 
-VOID
-KiSetDescriptorBase (
-   IN USHORT Selector,
-   IN PKGDTENTRY64 GdtBase,
-   IN PVOID Base
-   );
+VOID KiSetDescriptorBase(IN USHORT Selector, IN PKGDTENTRY64 GdtBase, IN PVOID Base);
 
 #if defined(KE_MULTINODE)
 
 NTSTATUS
-KiNotNumaQueryProcessorNode (
-    IN ULONG ProcessorNumber,
-    OUT PUSHORT Identifier,
-    OUT PUCHAR Node
-    );
+KiNotNumaQueryProcessorNode(IN ULONG ProcessorNumber, OUT PUSHORT Identifier, OUT PUCHAR Node);
 
 #pragma alloc_text(INIT, KiNotNumaQueryProcessorNode)
 
@@ -87,10 +73,7 @@ KNODE KiNodeInit[MAXIMUM_CCNUMA_NODES];
 
 #endif
 
-VOID
-KeStartAllProcessors (
-    VOID
-    )
+VOID KeStartAllProcessors(VOID)
 
 /*++
 
@@ -142,10 +125,13 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-    if (KeNumberNodes > 1) {
+    if (KeNumberNodes > 1)
+    {
         Status = KiQueryProcessorNode(0, &ProcessorId, &NodeNumber);
-        if (NT_SUCCESS(Status)) {
-            if (NodeNumber != 0) {
+        if (NT_SUCCESS(Status))
+        {
+            if (NodeNumber != 0)
+            {
                 KeNodeBlock[0]->ProcessorMask &= ~1;
                 KeNodeBlock[NodeNumber]->ProcessorMask |= 1;
                 KeGetCurrentPrcb()->ParentNode = KeNodeBlock[NodeNumber];
@@ -177,11 +163,8 @@ Return Value:
     // A DPC and Idle stack are also allocated, but they are done separately.
     //
 
-    AllocationSize = ROUNDUP16(sizeof(KPCR)) +
-                     ROUNDUP16(sizeof(KTSS64)) +
-                     ROUNDUP16(sizeof(ETHREAD)) +
-                     ROUNDUP16(DOUBLE_FAULT_STACK_SIZE) +
-                     ROUNDUP16(KERNEL_MCA_EXCEPTION_STACK_SIZE);
+    AllocationSize = ROUNDUP16(sizeof(KPCR)) + ROUNDUP16(sizeof(KTSS64)) + ROUNDUP16(sizeof(ETHREAD)) +
+                     ROUNDUP16(DOUBLE_FAULT_STACK_SIZE) + ROUNDUP16(KERNEL_MCA_EXCEPTION_STACK_SIZE);
 
 #if defined(KE_MULTINODE)
 
@@ -195,8 +178,7 @@ Return Value:
     //
 
     GdtOffset = AllocationSize;
-    AllocationSize +=
-            CurrentPcr->Prcb.ProcessorState.SpecialRegisters.Gdtr.Limit + 1;
+    AllocationSize += CurrentPcr->Prcb.ProcessorState.SpecialRegisters.Gdtr.Limit + 1;
 
     //
     // Save the offset of the IDT in the allocation structure and add in
@@ -204,8 +186,7 @@ Return Value:
     //
 
     IdtOffset = AllocationSize;
-    AllocationSize +=
-            CurrentPcr->Prcb.ProcessorState.SpecialRegisters.Idtr.Limit + 1;
+    AllocationSize += CurrentPcr->Prcb.ProcessorState.SpecialRegisters.Idtr.Limit + 1;
 
     //
     // If the registered number of processors is greater than the maximum
@@ -213,7 +194,8 @@ Return Value:
     // of supported processors.
     //
 
-    if (KeRegisteredProcessors > MAXIMUM_PROCESSORS) {
+    if (KeRegisteredProcessors > MAXIMUM_PROCESSORS)
+    {
         KeRegisteredProcessors = MAXIMUM_PROCESSORS;
     }
 
@@ -246,13 +228,15 @@ Return Value:
     //
 
     Number = 0;
-    while ((ULONG)KeNumberProcessors < KeRegisteredProcessors) {
+    while ((ULONG)KeNumberProcessors < KeRegisteredProcessors)
+    {
         Number++;
 
 #if defined(KE_MULTINODE)
 
         Status = KiQueryProcessorNode(Number, &ProcessorId, &NodeNumber);
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // No such processor, advance to next.
@@ -271,7 +255,8 @@ Return Value:
         //
 
         DataBlock = MmAllocateIndependentPages(AllocationSize, NodeNumber);
-        if (DataBlock == NULL) {
+        if (DataBlock == NULL)
+        {
             break;
         }
 
@@ -287,8 +272,7 @@ Return Value:
         //
 
         KiCopyDescriptorMemory(&CurrentPcr->Prcb.ProcessorState.SpecialRegisters.Gdtr,
-                               &ProcessorState.SpecialRegisters.Gdtr,
-                               Base + GdtOffset);
+                               &ProcessorState.SpecialRegisters.Gdtr, Base + GdtOffset);
 
         GdtBase = (PKGDTENTRY64)ProcessorState.SpecialRegisters.Gdtr.Base;
 
@@ -297,8 +281,7 @@ Return Value:
         //
 
         KiCopyDescriptorMemory(&CurrentPcr->Prcb.ProcessorState.SpecialRegisters.Gdtr,
-                               &ProcessorState.SpecialRegisters.Idtr,
-                               Base + IdtOffset);
+                               &ProcessorState.SpecialRegisters.Idtr, Base + IdtOffset);
 
         //
         // Set the PCR base address for the next processor and set the
@@ -348,7 +331,7 @@ Return Value:
         ProcessorState.SpecialRegisters.Cr0 = ReadCR0();
         ProcessorState.SpecialRegisters.Cr3 = ReadCR3();
         ProcessorState.ContextFrame.EFlags = 0; // ******fixfix what should this be??
-        ProcessorState.SpecialRegisters.Tr  = KGDT64_SYS_TSS;
+        ProcessorState.SpecialRegisters.Tr = KGDT64_SYS_TSS;
         GdtBase[KGDT64_SYS_TSS / 16].Bytes.Flags1 = 0x89;
         ProcessorState.SpecialRegisters.Cr4 = CR4_PAE;
 
@@ -358,7 +341,8 @@ Return Value:
 
         KernelStack = MmCreateKernelStack(FALSE, NodeNumber);
         DpcStack = MmCreateKernelStack(FALSE, NodeNumber);
-        if ((DpcStack == NULL) || (KernelStack == NULL)) {
+        if ((DpcStack == NULL) || (KernelStack == NULL))
+        {
             MmFreeIndependentPages(DataBlock, AllocationSize);
             break;
         }
@@ -377,7 +361,8 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-        if (KeNodeBlock[NodeNumber] == &KiNodeInit[NodeNumber]) {
+        if (KeNodeBlock[NodeNumber] == &KiNodeInit[NodeNumber])
+        {
             Node = (PKNODE)Base;
             *Node = KiNodeInit[NodeNumber];
             KeNodeBlock[NodeNumber] = Node;
@@ -405,7 +390,8 @@ Return Value:
         // started, then deallocate memory and stop starting processors.
         //
 
-        if (HalStartNextProcessor(KeLoaderBlock, &ProcessorState) == 0) {
+        if (HalStartNextProcessor(KeLoaderBlock, &ProcessorState) == 0)
+        {
             MmFreeIndependentPages(DataBlock, AllocationSize);
             MmDeleteKernelStack(KernelStack, FALSE);
             MmDeleteKernelStack(DpcStack, FALSE);
@@ -422,7 +408,8 @@ Return Value:
         // Wait for processor to initialize.
         //
 
-        while (*((volatile ULONG64 *)&KeLoaderBlock->Prcb) != 0) {
+        while (*((volatile ULONG64 *)&KeLoaderBlock->Prcb) != 0)
+        {
             KeYieldProcessor();
         }
 
@@ -454,12 +441,7 @@ Return Value:
     return;
 }
 
-VOID
-KiSetDescriptorBase (
-   IN USHORT Selector,
-   IN PKGDTENTRY64 GdtBase,
-   IN PVOID Base
-   )
+VOID KiSetDescriptorBase(IN USHORT Selector, IN PKGDTENTRY64 GdtBase, IN PVOID Base)
 
 /*++
 
@@ -492,12 +474,7 @@ Return Value:
     return;
 }
 
-VOID
-KiCopyDescriptorMemory (
-   IN PKDESCRIPTOR Source,
-   IN PKDESCRIPTOR Destination,
-   IN PVOID Base
-   )
+VOID KiCopyDescriptorMemory(IN PKDESCRIPTOR Source, IN PKDESCRIPTOR Destination, IN PVOID Base)
 
 /*++
 
@@ -530,10 +507,7 @@ Return Value:
     return;
 }
 
-VOID
-KiAllProcessorsStarted(
-    VOID
-    )
+VOID KiAllProcessorsStarted(VOID)
 
 /*++
 
@@ -562,8 +536,10 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-    for (i = 0; i < KeNumberNodes; i += 1) {
-        if (KeNodeBlock[i] == &KiNodeInit[i]) {
+    for (i = 0; i < KeNumberNodes; i += 1)
+    {
+        if (KeNodeBlock[i] == &KiNodeInit[i])
+        {
 
             //
             // No processor started on this node so no new node structure has
@@ -572,23 +548,24 @@ Return Value:
             // node structure for the node.
             //
 
-            KeNodeBlock[i] = ExAllocatePoolWithTag(NonPagedPool,
-                                                   sizeof(KNODE),
-                                                   '  eK');
+            KeNodeBlock[i] = ExAllocatePoolWithTag(NonPagedPool, sizeof(KNODE), '  eK');
 
-            if (KeNodeBlock[i]) {
+            if (KeNodeBlock[i])
+            {
                 *KeNodeBlock[i] = KiNodeInit[i];
             }
         }
     }
 
-    for (i = KeNumberNodes; i < MAXIMUM_CCNUMA_NODES; i += 1) {
+    for (i = KeNumberNodes; i < MAXIMUM_CCNUMA_NODES; i += 1)
+    {
         KeNodeBlock[i] = NULL;
     }
 
 #endif
 
-    if (KeNumberNodes == 1) {
+    if (KeNumberNodes == 1)
+    {
 
         //
         // For Non NUMA machines, Node 0 gets all processors.
@@ -601,11 +578,7 @@ Return Value:
 }
 
 NTSTATUS
-KiNotNumaQueryProcessorNode(
-    IN ULONG ProcessorNumber,
-    OUT PUSHORT Identifier,
-    OUT PUCHAR Node
-    )
+KiNotNumaQueryProcessorNode(IN ULONG ProcessorNumber, OUT PUSHORT Identifier, OUT PUCHAR Node)
 
 /*++
 

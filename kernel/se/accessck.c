@@ -47,111 +47,65 @@ BOOLEAN SepShowAccessFail;
 #endif // DBG
 
 
+VOID SepUpdateParentTypeList(IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength, IN ULONG StartIndex);
 
-VOID
-SepUpdateParentTypeList (
-    IN PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN ULONG StartIndex
-    );
-
-typedef enum {
+typedef enum
+{
     UpdateRemaining,
     UpdateCurrentGranted,
     UpdateCurrentDenied
 } ACCESS_MASK_FIELD_TO_UPDATE;
 
-VOID
-SepAddAccessTypeList (
-    IN PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN ULONG StartIndex,
-    IN ACCESS_MASK AccessMask,
-    IN ACCESS_MASK_FIELD_TO_UPDATE FieldToUpdate
-    );
+VOID SepAddAccessTypeList(IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength, IN ULONG StartIndex,
+                          IN ACCESS_MASK AccessMask, IN ACCESS_MASK_FIELD_TO_UPDATE FieldToUpdate);
 
 NTSTATUS
-SeAccessCheckByType (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN HANDLE ClientToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    OUT PPRIVILEGE_SET PrivilegeSet,
-    IN OUT PULONG PrivilegeSetLength,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus,
-    IN BOOLEAN ReturnResultList
-    );
+SeAccessCheckByType(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid, IN HANDLE ClientToken,
+                    IN ACCESS_MASK DesiredAccess, IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
+                    IN ULONG ObjectTypeListLength, IN PGENERIC_MAPPING GenericMapping, OUT PPRIVILEGE_SET PrivilegeSet,
+                    IN OUT PULONG PrivilegeSetLength, OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus,
+                    IN BOOLEAN ReturnResultList);
 
-VOID
-SepMaximumAccessCheck(
-    IN PTOKEN EToken,
-    IN PTOKEN PrimaryToken,
-    IN PACL Dacl,
-    IN PSID PrincipalSelfSid,
-    IN ULONG LocalTypeListLength,
-    IN PIOBJECT_TYPE_LIST LocalTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN BOOLEAN Restricted
-    );
+VOID SepMaximumAccessCheck(IN PTOKEN EToken, IN PTOKEN PrimaryToken, IN PACL Dacl, IN PSID PrincipalSelfSid,
+                           IN ULONG LocalTypeListLength, IN PIOBJECT_TYPE_LIST LocalTypeList,
+                           IN ULONG ObjectTypeListLength, IN BOOLEAN Restricted);
 
-VOID
-SepNormalAccessCheck(
-    IN ACCESS_MASK Remaining,
-    IN PTOKEN EToken,
-    IN PTOKEN PrimaryToken,
-    IN PACL Dacl,
-    IN PSID PrincipalSelfSid,
-    IN ULONG LocalTypeListLength,
-    IN PIOBJECT_TYPE_LIST LocalTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN BOOLEAN Restricted
-    );
+VOID SepNormalAccessCheck(IN ACCESS_MASK Remaining, IN PTOKEN EToken, IN PTOKEN PrimaryToken, IN PACL Dacl,
+                          IN PSID PrincipalSelfSid, IN ULONG LocalTypeListLength, IN PIOBJECT_TYPE_LIST LocalTypeList,
+                          IN ULONG ObjectTypeListLength, IN BOOLEAN Restricted);
 
 BOOLEAN
-SepSidInTokenEx (
-    IN PACCESS_TOKEN AToken,
-    IN PSID PrincipalSelfSid,
-    IN PSID Sid,
-    IN BOOLEAN DenyAce,
-    IN BOOLEAN Restricted
-    );
+SepSidInTokenEx(IN PACCESS_TOKEN AToken, IN PSID PrincipalSelfSid, IN PSID Sid, IN BOOLEAN DenyAce,
+                IN BOOLEAN Restricted);
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SeCaptureObjectTypeList)
-#pragma alloc_text(PAGE,SeFreeCapturedObjectTypeList)
-#pragma alloc_text(PAGE,SepUpdateParentTypeList)
-#pragma alloc_text(PAGE,SepObjectInTypeList)
-#pragma alloc_text(PAGE,SepAddAccessTypeList)
-#pragma alloc_text(PAGE,SepSidInToken)
-#pragma alloc_text(PAGE,SepSidInTokenEx)
-#pragma alloc_text(PAGE,SepAccessCheck)
-#pragma alloc_text(PAGE,NtAccessCheck)
-#pragma alloc_text(PAGE,NtAccessCheckByType)
-#pragma alloc_text(PAGE,NtAccessCheckByTypeResultList)
-#pragma alloc_text(PAGE,SeAccessCheckByType)
-#pragma alloc_text(PAGE,SeFreePrivileges)
-#pragma alloc_text(PAGE,SeAccessCheck)
-#pragma alloc_text(PAGE,SePrivilegePolicyCheck)
-#pragma alloc_text(PAGE,SepTokenIsOwner)
-#pragma alloc_text(PAGE,SeFastTraverseCheck)
-#pragma alloc_text(PAGE,SepMaximumAccessCheck)
-#pragma alloc_text(PAGE,SepNormalAccessCheck)
-#pragma alloc_text(PAGE,SeMaximumAuditMask)
+#pragma alloc_text(PAGE, SeCaptureObjectTypeList)
+#pragma alloc_text(PAGE, SeFreeCapturedObjectTypeList)
+#pragma alloc_text(PAGE, SepUpdateParentTypeList)
+#pragma alloc_text(PAGE, SepObjectInTypeList)
+#pragma alloc_text(PAGE, SepAddAccessTypeList)
+#pragma alloc_text(PAGE, SepSidInToken)
+#pragma alloc_text(PAGE, SepSidInTokenEx)
+#pragma alloc_text(PAGE, SepAccessCheck)
+#pragma alloc_text(PAGE, NtAccessCheck)
+#pragma alloc_text(PAGE, NtAccessCheckByType)
+#pragma alloc_text(PAGE, NtAccessCheckByTypeResultList)
+#pragma alloc_text(PAGE, SeAccessCheckByType)
+#pragma alloc_text(PAGE, SeFreePrivileges)
+#pragma alloc_text(PAGE, SeAccessCheck)
+#pragma alloc_text(PAGE, SePrivilegePolicyCheck)
+#pragma alloc_text(PAGE, SepTokenIsOwner)
+#pragma alloc_text(PAGE, SeFastTraverseCheck)
+#pragma alloc_text(PAGE, SepMaximumAccessCheck)
+#pragma alloc_text(PAGE, SepNormalAccessCheck)
+#pragma alloc_text(PAGE, SeMaximumAuditMask)
 #endif
 
-
+
 NTSTATUS
-SeCaptureObjectTypeList (
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN KPROCESSOR_MODE RequestorMode,
-    OUT PIOBJECT_TYPE_LIST *CapturedObjectTypeList
-)
+SeCaptureObjectTypeList(IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+                        IN KPROCESSOR_MODE RequestorMode, OUT PIOBJECT_TYPE_LIST *CapturedObjectTypeList)
 /*++
 
 Routine Description:
@@ -191,7 +145,7 @@ Return Value:
     ULONG i;
     PIOBJECT_TYPE_LIST LocalTypeList = NULL;
 
-    ULONG Levels[ACCESS_MAX_LEVEL+1];
+    ULONG Levels[ACCESS_MAX_LEVEL + 1];
 
     PAGED_CODE();
 
@@ -201,61 +155,67 @@ Return Value:
 
     *CapturedObjectTypeList = NULL;
 
-    if (RequestorMode != UserMode) {
+    if (RequestorMode != UserMode)
+    {
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    try {
+    try
+    {
 
-        if ( ObjectTypeListLength == 0 ) {
+        if (ObjectTypeListLength == 0)
+        {
 
             // Drop through
-
-        } else if ( !ARGUMENT_PRESENT(ObjectTypeList) ) {
+        }
+        else if (!ARGUMENT_PRESENT(ObjectTypeList))
+        {
 
             Status = STATUS_INVALID_PARAMETER;
+        }
+        else
+        {
 
-        } else {
-
-            if ( !IsValidElementCount( ObjectTypeListLength, IOBJECT_TYPE_LIST ) )
+            if (!IsValidElementCount(ObjectTypeListLength, IOBJECT_TYPE_LIST))
             {
-                Status = STATUS_INVALID_PARAMETER ;
+                Status = STATUS_INVALID_PARAMETER;
 
                 //
                 // No more to do, get out of the try statement:
                 //
 
-                leave ;
+                leave;
             }
 
-            ProbeForRead( ObjectTypeList,
-                          sizeof(OBJECT_TYPE_LIST) * ObjectTypeListLength,
-                          sizeof(ULONG)
-                          );
+            ProbeForRead(ObjectTypeList, sizeof(OBJECT_TYPE_LIST) * ObjectTypeListLength, sizeof(ULONG));
 
             //
             // Allocate a buffer to copy into.
             //
 
-            LocalTypeList = ExAllocatePoolWithTag( PagedPool, sizeof(IOBJECT_TYPE_LIST) * ObjectTypeListLength, 'tOeS' );
+            LocalTypeList = ExAllocatePoolWithTag(PagedPool, sizeof(IOBJECT_TYPE_LIST) * ObjectTypeListLength, 'tOeS');
 
-            if ( LocalTypeList == NULL ) {
+            if (LocalTypeList == NULL)
+            {
                 Status = STATUS_INSUFFICIENT_RESOURCES;
 
-            //
-            // Copy the callers structure to the local structure.
-            //
-
-            } else {
-                GUID * CapturedObjectType;
-                for ( i=0; i<ObjectTypeListLength; i++ ) {
+                //
+                // Copy the callers structure to the local structure.
+                //
+            }
+            else
+            {
+                GUID *CapturedObjectType;
+                for (i = 0; i < ObjectTypeListLength; i++)
+                {
                     USHORT CurrentLevel;
 
                     //
                     // Limit ourselves
                     //
                     CurrentLevel = ObjectTypeList[i].Level;
-                    if ( CurrentLevel > ACCESS_MAX_LEVEL ) {
+                    if (CurrentLevel > ACCESS_MAX_LEVEL)
+                    {
                         Status = STATUS_INVALID_PARAMETER;
                         break;
                     }
@@ -266,11 +226,7 @@ Return Value:
                     LocalTypeList[i].Level = CurrentLevel;
                     LocalTypeList[i].Flags = 0;
                     CapturedObjectType = ObjectTypeList[i].ObjectType;
-                    ProbeForReadSmallStructure(
-                        CapturedObjectType,
-                        sizeof(GUID),
-                        sizeof(ULONG)
-                        );
+                    ProbeForReadSmallStructure(CapturedObjectType, sizeof(GUID), sizeof(ULONG));
                     LocalTypeList[i].ObjectType = *CapturedObjectType;
                     LocalTypeList[i].Remaining = 0;
                     LocalTypeList[i].CurrentGranted = 0;
@@ -281,13 +237,16 @@ Return Value:
                     //  level number of the previous entry.
                     //
 
-                    if ( i == 0 ) {
-                        if ( CurrentLevel != 0 ) {
+                    if (i == 0)
+                    {
+                        if (CurrentLevel != 0)
+                        {
                             Status = STATUS_INVALID_PARAMETER;
                             break;
                         }
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // The previous entry is either:
@@ -295,7 +254,8 @@ Return Value:
                         //  my sibling, or
                         //  the child (or grandchild, etc.) of my sibling.
                         //
-                        if ( CurrentLevel > LocalTypeList[i-1].Level + 1 ) {
+                        if (CurrentLevel > LocalTypeList[i - 1].Level + 1)
+                        {
                             Status = STATUS_INVALID_PARAMETER;
                             break;
                         }
@@ -303,11 +263,11 @@ Return Value:
                         //
                         // Don't support two roots.
                         //
-                        if ( CurrentLevel == 0 ) {
+                        if (CurrentLevel == 0)
+                        {
                             Status = STATUS_INVALID_PARAMETER;
                             break;
                         }
-
                     }
 
                     //
@@ -316,10 +276,13 @@ Return Value:
                     //  has a level one less than mine.
                     //
 
-                    if ( CurrentLevel == 0 ) {
+                    if (CurrentLevel == 0)
+                    {
                         LocalTypeList[i].ParentIndex = -1;
-                    } else {
-                        LocalTypeList[i].ParentIndex = Levels[CurrentLevel-1];
+                    }
+                    else
+                    {
+                        LocalTypeList[i].ParentIndex = Levels[CurrentLevel - 1];
                     }
 
                     //
@@ -327,22 +290,22 @@ Return Value:
                     //
 
                     Levels[CurrentLevel] = i;
-
                 }
-
             }
 
         } // end_if
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
 
         //
         // If we captured any proxy data, we need to free it now.
         //
 
-        if ( LocalTypeList != NULL ) {
-            ExFreePool( LocalTypeList );
+        if (LocalTypeList != NULL)
+        {
+            ExFreePool(LocalTypeList);
             LocalTypeList = NULL;
         }
 
@@ -353,11 +316,8 @@ Return Value:
     return Status;
 }
 
-
-VOID
-SeFreeCapturedObjectTypeList(
-    IN PVOID ObjectTypeList
-    )
+
+VOID SeFreeCapturedObjectTypeList(IN PVOID ObjectTypeList)
 
 /*++
 
@@ -379,23 +339,18 @@ Return Value:
 {
     PAGED_CODE();
 
-    if ( ObjectTypeList != NULL ) {
-        ExFreePool( ObjectTypeList );
+    if (ObjectTypeList != NULL)
+    {
+        ExFreePool(ObjectTypeList);
     }
 
     return;
 }
 
 
-
-
 BOOLEAN
-SepObjectInTypeList (
-    IN GUID *ObjectType,
-    IN PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN ULONG ObjectTypeListLength,
-    OUT PULONG ReturnedIndex
-)
+SepObjectInTypeList(IN GUID *ObjectType, IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength,
+                    OUT PULONG ReturnedIndex)
 /*++
 
 Routine Description:
@@ -427,12 +382,14 @@ Return Value:
 
     PAGED_CODE();
 
-    ASSERT( sizeof(GUID) == sizeof(ULONG) * 4 );
-    for ( Index=0; Index<ObjectTypeListLength; Index++ ) {
+    ASSERT(sizeof(GUID) == sizeof(ULONG) * 4);
+    for (Index = 0; Index < ObjectTypeListLength; Index++)
+    {
 
         LocalObjectType = &ObjectTypeList[Index].ObjectType;
 
-        if  ( RtlpIsEqualGuid( ObjectType, LocalObjectType ) ) {
+        if (RtlpIsEqualGuid(ObjectType, LocalObjectType))
+        {
             *ReturnedIndex = Index;
             return TRUE;
         }
@@ -441,13 +398,8 @@ Return Value:
     return FALSE;
 }
 
-
-VOID
-SepUpdateParentTypeList (
-    IN PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN ULONG StartIndex
-)
+
+VOID SepUpdateParentTypeList(IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength, IN ULONG StartIndex)
 /*++
 
 Routine Description:
@@ -497,7 +449,8 @@ Return Value:
     //  we're all done.
     //
 
-    if ( ObjectTypeList[StartIndex].ParentIndex == -1 ) {
+    if (ObjectTypeList[StartIndex].ParentIndex == -1)
+    {
         return;
     }
 
@@ -513,7 +466,8 @@ Return Value:
     // Loop through all the children.
     //
 
-    for ( Index=ParentIndex+1; Index<ObjectTypeListLength; Index++ ) {
+    for (Index = ParentIndex + 1; Index < ObjectTypeListLength; Index++)
+    {
 
         //
         // By definition, the children of an object are all those entries
@@ -523,7 +477,8 @@ Return Value:
         // (an uncle).
         //
 
-        if ( ObjectTypeList[Index].Level <= ObjectTypeList[ParentIndex].Level ) {
+        if (ObjectTypeList[Index].Level <= ObjectTypeList[ParentIndex].Level)
+        {
             break;
         }
 
@@ -531,7 +486,8 @@ Return Value:
         // Only handle direct children of the parent.
         //
 
-        if ( ObjectTypeList[Index].Level != Level ) {
+        if (ObjectTypeList[Index].Level != Level)
+        {
             continue;
         }
 
@@ -542,7 +498,6 @@ Return Value:
         NewRemaining |= ObjectTypeList[Index].Remaining;
         NewCurrentGranted &= ObjectTypeList[Index].CurrentGranted;
         NewCurrentDenied |= ObjectTypeList[Index].CurrentDenied;
-
     }
 
     //
@@ -550,9 +505,10 @@ Return Value:
     //  we're done.
     //
 
-    if ( NewRemaining == ObjectTypeList[ParentIndex].Remaining &&
-         NewCurrentGranted == ObjectTypeList[ParentIndex].CurrentGranted &&
-        NewCurrentDenied == ObjectTypeList[ParentIndex].CurrentDenied ) {
+    if (NewRemaining == ObjectTypeList[ParentIndex].Remaining &&
+        NewCurrentGranted == ObjectTypeList[ParentIndex].CurrentGranted &&
+        NewCurrentDenied == ObjectTypeList[ParentIndex].CurrentDenied)
+    {
         return;
     }
 
@@ -569,20 +525,12 @@ Return Value:
     // Go update the grand parents.
     //
 
-    SepUpdateParentTypeList( ObjectTypeList,
-                             ObjectTypeListLength,
-                             ParentIndex );
+    SepUpdateParentTypeList(ObjectTypeList, ObjectTypeListLength, ParentIndex);
 }
 
-
-VOID
-SepAddAccessTypeList (
-    IN PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN ULONG StartIndex,
-    IN ACCESS_MASK AccessMask,
-    IN ACCESS_MASK_FIELD_TO_UPDATE FieldToUpdate
-)
+
+VOID SepAddAccessTypeList(IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength, IN ULONG StartIndex,
+                          IN ACCESS_MASK AccessMask, IN ACCESS_MASK_FIELD_TO_UPDATE FieldToUpdate)
 /*++
 
 Routine Description:
@@ -632,13 +580,15 @@ Return Value:
     //  early out.
     //
 
-    switch (FieldToUpdate ) {
+    switch (FieldToUpdate)
+    {
     case UpdateRemaining:
 
         OldRemaining = ObjectTypeList[StartIndex].Remaining;
         ObjectTypeList[StartIndex].Remaining = OldRemaining & ~AccessMask;
 
-        if ( OldRemaining == ObjectTypeList[StartIndex].Remaining ) {
+        if (OldRemaining == ObjectTypeList[StartIndex].Remaining)
+        {
             return;
         }
         break;
@@ -646,10 +596,10 @@ Return Value:
     case UpdateCurrentGranted:
 
         OldCurrentGranted = ObjectTypeList[StartIndex].CurrentGranted;
-        ObjectTypeList[StartIndex].CurrentGranted |=
-            AccessMask & ~ObjectTypeList[StartIndex].CurrentDenied;
+        ObjectTypeList[StartIndex].CurrentGranted |= AccessMask & ~ObjectTypeList[StartIndex].CurrentDenied;
 
-        if ( OldCurrentGranted == ObjectTypeList[StartIndex].CurrentGranted ) {
+        if (OldCurrentGranted == ObjectTypeList[StartIndex].CurrentGranted)
+        {
             //
             // We can't simply return here.
             // We have to visit our children.  Consider the case where there
@@ -665,10 +615,10 @@ Return Value:
     case UpdateCurrentDenied:
 
         OldCurrentDenied = ObjectTypeList[StartIndex].CurrentDenied;
-        ObjectTypeList[StartIndex].CurrentDenied |=
-            AccessMask & ~ObjectTypeList[StartIndex].CurrentGranted;
+        ObjectTypeList[StartIndex].CurrentDenied |= AccessMask & ~ObjectTypeList[StartIndex].CurrentGranted;
 
-        if ( OldCurrentDenied == ObjectTypeList[StartIndex].CurrentDenied ) {
+        if (OldCurrentDenied == ObjectTypeList[StartIndex].CurrentDenied)
+        {
             return;
         }
         break;
@@ -682,17 +632,17 @@ Return Value:
     // Go update parent of the target.
     //
 
-    if ( !AvoidParent ) {
-        SepUpdateParentTypeList( ObjectTypeList,
-                                 ObjectTypeListLength,
-                                 StartIndex );
+    if (!AvoidParent)
+    {
+        SepUpdateParentTypeList(ObjectTypeList, ObjectTypeListLength, StartIndex);
     }
 
     //
     // Loop handling all children of the target.
     //
 
-    for ( Index=StartIndex+1; Index<ObjectTypeListLength; Index++ ) {
+    for (Index = StartIndex + 1; Index < ObjectTypeListLength; Index++)
+    {
 
         //
         // By definition, the children of an object are all those entries
@@ -702,7 +652,8 @@ Return Value:
         // (an uncle).
         //
 
-        if ( ObjectTypeList[Index].Level <= ObjectTypeList[StartIndex].Level ) {
+        if (ObjectTypeList[Index].Level <= ObjectTypeList[StartIndex].Level)
+        {
             break;
         }
 
@@ -710,7 +661,8 @@ Return Value:
         // Grant access to the children
         //
 
-        switch (FieldToUpdate) {
+        switch (FieldToUpdate)
+        {
         case UpdateRemaining:
 
             ObjectTypeList[Index].Remaining &= ~AccessMask;
@@ -718,14 +670,12 @@ Return Value:
 
         case UpdateCurrentGranted:
 
-            ObjectTypeList[Index].CurrentGranted |=
-                AccessMask & ~ObjectTypeList[Index].CurrentDenied;
+            ObjectTypeList[Index].CurrentGranted |= AccessMask & ~ObjectTypeList[Index].CurrentDenied;
             break;
 
         case UpdateCurrentDenied:
 
-            ObjectTypeList[Index].CurrentDenied |=
-                AccessMask & ~ObjectTypeList[Index].CurrentGranted;
+            ObjectTypeList[Index].CurrentDenied |= AccessMask & ~ObjectTypeList[Index].CurrentGranted;
             break;
 
         default:
@@ -735,12 +685,7 @@ Return Value:
 }
 
 BOOLEAN
-SepSidInToken (
-    IN PACCESS_TOKEN AToken,
-    IN PSID PrincipalSelfSid,
-    IN PSID Sid,
-    IN BOOLEAN DenyAce
-    )
+SepSidInToken(IN PACCESS_TOKEN AToken, IN PSID PrincipalSelfSid, IN PSID Sid, IN BOOLEAN DenyAce)
 
 /*++
 
@@ -795,8 +740,8 @@ Return Value:
     //  replace it with the passed in PrincipalSelfSid.
     //
 
-    if ( PrincipalSelfSid != NULL &&
-         RtlEqualSid( SePrincipalSelfSid, Sid ) ) {
+    if (PrincipalSelfSid != NULL && RtlEqualSid(SePrincipalSelfSid, Sid))
+    {
         Sid = PrincipalSelfSid;
     }
 
@@ -820,7 +765,8 @@ Return Value:
     // specified SID.
     //
 
-    for (i = 0 ; i < UserAndGroupCount ; i += 1) {
+    for (i = 0; i < UserAndGroupCount; i += 1)
+    {
         MatchSid = (PISID)TokenSid->Sid;
 
         //
@@ -829,8 +775,10 @@ Return Value:
         //
 
         if ((((PISID)Sid)->Revision == MatchSid->Revision) &&
-            (SidLength == (8 + (4 * (ULONG)MatchSid->SubAuthorityCount)))) {
-            if (RtlEqualMemory(Sid, MatchSid, SidLength)) {
+            (SidLength == (8 + (4 * (ULONG)MatchSid->SubAuthorityCount))))
+        {
+            if (RtlEqualMemory(Sid, MatchSid, SidLength))
+            {
 
                 //
                 // If this is the first one in the list, then it is the User,
@@ -842,10 +790,12 @@ Return Value:
                 //
 
                 if ((i == 0) || (TokenSid->Attributes & SE_GROUP_ENABLED) ||
-                    (DenyAce && (TokenSid->Attributes & SE_GROUP_USE_FOR_DENY_ONLY))) {
+                    (DenyAce && (TokenSid->Attributes & SE_GROUP_USE_FOR_DENY_ONLY)))
+                {
                     return TRUE;
-
-                } else {
+                }
+                else
+                {
                     return FALSE;
                 }
             }
@@ -858,13 +808,8 @@ Return Value:
 }
 
 BOOLEAN
-SepSidInTokenEx (
-    IN PACCESS_TOKEN AToken,
-    IN PSID PrincipalSelfSid,
-    IN PSID Sid,
-    IN BOOLEAN DenyAce,
-    IN BOOLEAN Restricted
-    )
+SepSidInTokenEx(IN PACCESS_TOKEN AToken, IN PSID PrincipalSelfSid, IN PSID Sid, IN BOOLEAN DenyAce,
+                IN BOOLEAN Restricted)
 
 /*++
 
@@ -923,8 +868,8 @@ Return Value:
     //  replace it with the passed in PrincipalSelfSid.
     //
 
-    if ( PrincipalSelfSid != NULL &&
-         RtlEqualSid( SePrincipalSelfSid, Sid ) ) {
+    if (PrincipalSelfSid != NULL && RtlEqualSid(SePrincipalSelfSid, Sid))
+    {
         Sid = PrincipalSelfSid;
     }
 
@@ -940,10 +885,13 @@ Return Value:
     //
 
     Token = (PTOKEN)AToken;
-    if (Restricted) {
+    if (Restricted)
+    {
         TokenSid = Token->RestrictedSids;
         UserAndGroupCount = Token->RestrictedSidCount;
-    } else {
+    }
+    else
+    {
         TokenSid = Token->UserAndGroups;
         UserAndGroupCount = Token->UserAndGroupCount;
     }
@@ -953,7 +901,8 @@ Return Value:
     // specified SID.
     //
 
-    for (i = 0; i < UserAndGroupCount ; i += 1) {
+    for (i = 0; i < UserAndGroupCount; i += 1)
+    {
         MatchSid = (PISID)TokenSid->Sid;
 
         //
@@ -962,8 +911,10 @@ Return Value:
         //
 
         if ((((PISID)Sid)->Revision == MatchSid->Revision) &&
-            (SidLength == (8 + (4 * (ULONG)MatchSid->SubAuthorityCount)))) {
-            if (RtlEqualMemory(Sid, MatchSid, SidLength)) {
+            (SidLength == (8 + (4 * (ULONG)MatchSid->SubAuthorityCount))))
+        {
+            if (RtlEqualMemory(Sid, MatchSid, SidLength))
+            {
 
                 //
                 // If this is the first one in the list and not deny-only it
@@ -977,13 +928,14 @@ Return Value:
 
                 if ((!Restricted && (i == 0) && ((TokenSid->Attributes & SE_GROUP_USE_FOR_DENY_ONLY) == 0)) ||
                     (TokenSid->Attributes & SE_GROUP_ENABLED) ||
-                    (DenyAce && (TokenSid->Attributes & SE_GROUP_USE_FOR_DENY_ONLY))) {
+                    (DenyAce && (TokenSid->Attributes & SE_GROUP_USE_FOR_DENY_ONLY)))
+                {
                     return TRUE;
-
-                } else {
+                }
+                else
+                {
                     return FALSE;
                 }
-
             }
         }
 
@@ -993,17 +945,9 @@ Return Value:
     return FALSE;
 }
 
-VOID
-SepMaximumAccessCheck(
-    IN PTOKEN EToken,
-    IN PTOKEN PrimaryToken,
-    IN PACL Dacl,
-    IN PSID PrincipalSelfSid,
-    IN ULONG LocalTypeListLength,
-    IN PIOBJECT_TYPE_LIST LocalTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN BOOLEAN Restricted
-    )
+VOID SepMaximumAccessCheck(IN PTOKEN EToken, IN PTOKEN PrimaryToken, IN PACL Dacl, IN PSID PrincipalSelfSid,
+                           IN ULONG LocalTypeListLength, IN PIOBJECT_TYPE_LIST LocalTypeList,
+                           IN ULONG ObjectTypeListLength, IN BOOLEAN Restricted)
 /*++
 
 Routine Description:
@@ -1037,7 +981,7 @@ Return Value:
 --*/
 
 {
-    ULONG i,j;
+    ULONG i, j;
     PVOID Ace;
     ULONG AceCount;
     ULONG Index;
@@ -1048,8 +992,10 @@ Return Value:
     // restricted check
     //
 
-    if ( Restricted ) {
-        for ( j=0; j<LocalTypeListLength; j++ ) {
+    if (Restricted)
+    {
+        for (j = 0; j < LocalTypeListLength; j++)
+        {
             LocalTypeList[j].Remaining = LocalTypeList[j].CurrentGranted;
             LocalTypeList[j].CurrentGranted = 0;
         }
@@ -1073,16 +1019,17 @@ Return Value:
     //              if SID match, then add all that is not granted to deny mask
     //
 
-    for ( i = 0, Ace = FirstAce( Dacl ) ;
-          i < AceCount  ;
-          i++, Ace = NextAce( Ace )
-        ) {
+    for (i = 0, Ace = FirstAce(Dacl); i < AceCount; i++, Ace = NextAce(Ace))
+    {
 
-        if ( !(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE)) {
+        if (!(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE))
+        {
 
-            if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE) ) {
+            if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE))
+            {
 
-                if (SepSidInTokenEx( EToken, PrincipalSelfSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart, FALSE, Restricted )) {
+                if (SepSidInTokenEx(EToken, PrincipalSelfSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart, FALSE, Restricted))
+                {
 
                     //
                     // Only grant access types from this mask that have
@@ -1090,214 +1037,231 @@ Return Value:
                     //
 
                     // Optimize 'normal' case
-                    if ( LocalTypeListLength == 1 ) {
+                    if (LocalTypeListLength == 1)
+                    {
                         LocalTypeList->CurrentGranted |=
-                           (((PACCESS_ALLOWED_ACE)Ace)->Mask & ~LocalTypeList->CurrentDenied);
-                    } else {
-                       //
-                       // The zeroeth object type represents the object itself.
-                       //
-                       SepAddAccessTypeList(
-                            LocalTypeList,          // List to modify
-                            LocalTypeListLength,    // Length of list
-                            0,                      // Element to update
-                            ((PACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
-                            UpdateCurrentGranted );
+                            (((PACCESS_ALLOWED_ACE)Ace)->Mask & ~LocalTypeList->CurrentDenied);
                     }
-                 }
-
-
-             //
-             // Handle an object specific Access Allowed ACE
-             //
-             } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_OBJECT_ACE_TYPE) ) {
-                 GUID *ObjectTypeInAce;
-
-                 //
-                 // If no object type is in the ACE,
-                 //  treat this as an ACCESS_ALLOWED_ACE.
-                 //
-
-                 ObjectTypeInAce = RtlObjectAceObjectType(Ace);
-
-                 if ( ObjectTypeInAce == NULL ) {
-
-                     if ( SepSidInTokenEx( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE, Restricted ) ) {
-
-                         // Optimize 'normal' case
-                         if ( LocalTypeListLength == 1 ) {
-                             LocalTypeList->CurrentGranted |=
-                                (((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask & ~LocalTypeList->CurrentDenied);
-                         } else {
-                             SepAddAccessTypeList(
-                                 LocalTypeList,          // List to modify
-                                 LocalTypeListLength,    // Length of list
-                                 0,                      // Element to update
-                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
-                                 UpdateCurrentGranted );
-                         }
-                     }
-
-                 //
-                 // If no object type list was passed,
-                 //  don't grant access to anyone.
-                 //
-
-                 } else if ( ObjectTypeListLength == 0 ) {
-
-                     // Drop through
-
-
-                //
-                // If an object type is in the ACE,
-                //   Find it in the LocalTypeList before using the ACE.
-                //
-                } else {
-
-                     if ( SepSidInTokenEx( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE, Restricted ) ) {
-
-                         if ( SepObjectInTypeList( ObjectTypeInAce,
-                                                   LocalTypeList,
-                                                   LocalTypeListLength,
-                                                   &Index ) ) {
-                             SepAddAccessTypeList(
-                                  LocalTypeList,          // List to modify
-                                  LocalTypeListLength,   // Length of list
-                                  Index,                  // Element already updated
-                                  ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
-                                  UpdateCurrentGranted );
-                         }
-                     }
-                }
-
-             } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE) ) {
-
-                 //
-                 //  If we're impersonating, EToken is set to the Client, and if we're not,
-                 //  EToken is set to the Primary.  According to the DSA architecture, if
-                 //  we're asked to evaluate a compound ACE and we're not impersonating,
-                 //  pretend we are impersonating ourselves.  So we can just use the EToken
-                 //  for the client token, since it's already set to the right thing.
-                 //
-
-
-                 if ( SepSidInTokenEx(EToken, PrincipalSelfSid, RtlCompoundAceClientSid( Ace ), FALSE, Restricted) &&
-                      SepSidInTokenEx(PrimaryToken, NULL, RtlCompoundAceServerSid( Ace ), FALSE, FALSE)
-                    ) {
-
-                     //
-                     // Only grant access types from this mask that have
-                     // not already been denied
-                     //
-
-                     // Optimize 'normal' case
-                     if ( LocalTypeListLength == 1 ) {
-                         LocalTypeList->CurrentGranted |=
-                            (((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask & ~LocalTypeList->CurrentDenied);
-                     } else {
+                    else
+                    {
                         //
                         // The zeroeth object type represents the object itself.
                         //
-                        SepAddAccessTypeList(
-                             LocalTypeList,          // List to modify
-                             LocalTypeListLength,    // Length of list
-                             0,                      // Element to update
-                             ((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
-                             UpdateCurrentGranted );
-                     }
-
-                 }
-
-
-             } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE) ) {
-
-                 if ( SepSidInTokenEx( EToken, PrincipalSelfSid, &((PACCESS_DENIED_ACE)Ace)->SidStart, TRUE, Restricted )) {
-
-                      //
-                      // Only deny access types from this mask that have
-                      // not already been granted
-                      //
-
-                     // Optimize 'normal' case
-                     if ( LocalTypeListLength == 1 ) {
-                         LocalTypeList->CurrentDenied |=
-                             (((PACCESS_DENIED_ACE)Ace)->Mask & ~LocalTypeList->CurrentGranted);
-                     } else {
-                         //
-                         // The zeroeth object type represents the object itself.
-                         //
-                         SepAddAccessTypeList(
-                             LocalTypeList,          // List to modify
-                             LocalTypeListLength,    // Length of list
-                             0,                      // Element to update
-                             ((PACCESS_DENIED_ACE)Ace)->Mask, // Access denied
-                             UpdateCurrentDenied );
+                        SepAddAccessTypeList(LocalTypeList,                    // List to modify
+                                             LocalTypeListLength,              // Length of list
+                                             0,                                // Element to update
+                                             ((PACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
+                                             UpdateCurrentGranted);
                     }
-                 }
+                }
 
 
-             //
-             // Handle an object specific Access Denied ACE
-             //
-             } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_OBJECT_ACE_TYPE) ) {
+                //
+                // Handle an object specific Access Allowed ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_OBJECT_ACE_TYPE))
+            {
+                GUID *ObjectTypeInAce;
 
-                 if ( SepSidInTokenEx( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), TRUE, Restricted ) ) {
-                     GUID *ObjectTypeInAce;
+                //
+                // If no object type is in the ACE,
+                //  treat this as an ACCESS_ALLOWED_ACE.
+                //
 
-                     //
-                     // If there is no object type in the ACE,
-                     //  or if the caller didn't specify an object type list,
-                     //  apply this deny ACE to the entire object.
-                     //
+                ObjectTypeInAce = RtlObjectAceObjectType(Ace);
 
-                     ObjectTypeInAce = RtlObjectAceObjectType(Ace);
+                if (ObjectTypeInAce == NULL)
+                {
 
-                     if ( ObjectTypeInAce == NULL ) {
+                    if (SepSidInTokenEx(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE, Restricted))
+                    {
 
-                         if ( LocalTypeListLength == 1 ) {
-                             LocalTypeList->CurrentDenied |=
-                                 (((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask & ~LocalTypeList->CurrentGranted);
-                         } else {
+                        // Optimize 'normal' case
+                        if (LocalTypeListLength == 1)
+                        {
+                            LocalTypeList->CurrentGranted |=
+                                (((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask & ~LocalTypeList->CurrentDenied);
+                        }
+                        else
+                        {
+                            SepAddAccessTypeList(LocalTypeList,                           // List to modify
+                                                 LocalTypeListLength,                     // Length of list
+                                                 0,                                       // Element to update
+                                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
+                                                 UpdateCurrentGranted);
+                        }
+                    }
 
-                             //
-                             // The zeroeth object type represents the object itself.
-                             //
+                    //
+                    // If no object type list was passed,
+                    //  don't grant access to anyone.
+                    //
+                }
+                else if (ObjectTypeListLength == 0)
+                {
 
-                             SepAddAccessTypeList(
-                                 LocalTypeList,          // List to modify
-                                 LocalTypeListLength,    // Length of list
-                                 0,
-                                 ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask, // Access denied
-                                 UpdateCurrentDenied );
-                         }
-                     //
-                     // If no object type list was passed,
-                     //  don't grant access to anyone.
-                     //
-
-                     } else if ( ObjectTypeListLength == 0 ) {
-
-                         LocalTypeList->CurrentDenied |=
-                             (((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask & ~LocalTypeList->CurrentGranted);
+                    // Drop through
 
 
-                     //
-                     // If an object type is in the ACE,
-                     //   Find it in the LocalTypeList before using the ACE.
-                     //
+                    //
+                    // If an object type is in the ACE,
+                    //   Find it in the LocalTypeList before using the ACE.
+                    //
+                }
+                else
+                {
 
-                     } else if ( SepObjectInTypeList( ObjectTypeInAce,
-                                                          LocalTypeList,
-                                                          LocalTypeListLength,
-                                                          &Index ) ) {
+                    if (SepSidInTokenEx(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE, Restricted))
+                    {
 
-                            SepAddAccessTypeList(
-                                LocalTypeList,          // List to modify
-                                LocalTypeListLength,    // Length of list
-                                Index,                  // Element to update
-                                ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask, // Access denied
-                                UpdateCurrentDenied );
+                        if (SepObjectInTypeList(ObjectTypeInAce, LocalTypeList, LocalTypeListLength, &Index))
+                        {
+                            SepAddAccessTypeList(LocalTypeList,                           // List to modify
+                                                 LocalTypeListLength,                     // Length of list
+                                                 Index,                                   // Element already updated
+                                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
+                                                 UpdateCurrentGranted);
+                        }
+                    }
+                }
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE))
+            {
 
+                //
+                //  If we're impersonating, EToken is set to the Client, and if we're not,
+                //  EToken is set to the Primary.  According to the DSA architecture, if
+                //  we're asked to evaluate a compound ACE and we're not impersonating,
+                //  pretend we are impersonating ourselves.  So we can just use the EToken
+                //  for the client token, since it's already set to the right thing.
+                //
+
+
+                if (SepSidInTokenEx(EToken, PrincipalSelfSid, RtlCompoundAceClientSid(Ace), FALSE, Restricted) &&
+                    SepSidInTokenEx(PrimaryToken, NULL, RtlCompoundAceServerSid(Ace), FALSE, FALSE))
+                {
+
+                    //
+                    // Only grant access types from this mask that have
+                    // not already been denied
+                    //
+
+                    // Optimize 'normal' case
+                    if (LocalTypeListLength == 1)
+                    {
+                        LocalTypeList->CurrentGranted |=
+                            (((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask & ~LocalTypeList->CurrentDenied);
+                    }
+                    else
+                    {
+                        //
+                        // The zeroeth object type represents the object itself.
+                        //
+                        SepAddAccessTypeList(LocalTypeList,                             // List to modify
+                                             LocalTypeListLength,                       // Length of list
+                                             0,                                         // Element to update
+                                             ((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
+                                             UpdateCurrentGranted);
+                    }
+                }
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE))
+            {
+
+                if (SepSidInTokenEx(EToken, PrincipalSelfSid, &((PACCESS_DENIED_ACE)Ace)->SidStart, TRUE, Restricted))
+                {
+
+                    //
+                    // Only deny access types from this mask that have
+                    // not already been granted
+                    //
+
+                    // Optimize 'normal' case
+                    if (LocalTypeListLength == 1)
+                    {
+                        LocalTypeList->CurrentDenied |=
+                            (((PACCESS_DENIED_ACE)Ace)->Mask & ~LocalTypeList->CurrentGranted);
+                    }
+                    else
+                    {
+                        //
+                        // The zeroeth object type represents the object itself.
+                        //
+                        SepAddAccessTypeList(LocalTypeList,                   // List to modify
+                                             LocalTypeListLength,             // Length of list
+                                             0,                               // Element to update
+                                             ((PACCESS_DENIED_ACE)Ace)->Mask, // Access denied
+                                             UpdateCurrentDenied);
+                    }
+                }
+
+
+                //
+                // Handle an object specific Access Denied ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_OBJECT_ACE_TYPE))
+            {
+
+                if (SepSidInTokenEx(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), TRUE, Restricted))
+                {
+                    GUID *ObjectTypeInAce;
+
+                    //
+                    // If there is no object type in the ACE,
+                    //  or if the caller didn't specify an object type list,
+                    //  apply this deny ACE to the entire object.
+                    //
+
+                    ObjectTypeInAce = RtlObjectAceObjectType(Ace);
+
+                    if (ObjectTypeInAce == NULL)
+                    {
+
+                        if (LocalTypeListLength == 1)
+                        {
+                            LocalTypeList->CurrentDenied |=
+                                (((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask & ~LocalTypeList->CurrentGranted);
+                        }
+                        else
+                        {
+
+                            //
+                            // The zeroeth object type represents the object itself.
+                            //
+
+                            SepAddAccessTypeList(LocalTypeList,       // List to modify
+                                                 LocalTypeListLength, // Length of list
+                                                 0,
+                                                 ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask, // Access denied
+                                                 UpdateCurrentDenied);
+                        }
+                        //
+                        // If no object type list was passed,
+                        //  don't grant access to anyone.
+                        //
+                    }
+                    else if (ObjectTypeListLength == 0)
+                    {
+
+                        LocalTypeList->CurrentDenied |=
+                            (((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask & ~LocalTypeList->CurrentGranted);
+
+
+                        //
+                        // If an object type is in the ACE,
+                        //   Find it in the LocalTypeList before using the ACE.
+                        //
+                    }
+                    else if (SepObjectInTypeList(ObjectTypeInAce, LocalTypeList, LocalTypeListLength, &Index))
+                    {
+
+                        SepAddAccessTypeList(LocalTypeList,                          // List to modify
+                                             LocalTypeListLength,                    // Length of list
+                                             Index,                                  // Element to update
+                                             ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask, // Access denied
+                                             UpdateCurrentDenied);
                     }
                 }
             }
@@ -1305,18 +1269,9 @@ Return Value:
     }
 }
 
-VOID
-SepNormalAccessCheck(
-    IN ACCESS_MASK Remaining,
-    IN PTOKEN EToken,
-    IN PTOKEN PrimaryToken,
-    IN PACL Dacl,
-    IN PSID PrincipalSelfSid,
-    IN ULONG LocalTypeListLength,
-    IN PIOBJECT_TYPE_LIST LocalTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN BOOLEAN Restricted
-    )
+VOID SepNormalAccessCheck(IN ACCESS_MASK Remaining, IN PTOKEN EToken, IN PTOKEN PrimaryToken, IN PACL Dacl,
+                          IN PSID PrincipalSelfSid, IN ULONG LocalTypeListLength, IN PIOBJECT_TYPE_LIST LocalTypeList,
+                          IN ULONG ObjectTypeListLength, IN BOOLEAN Restricted)
 /*++
 
 Routine Description:
@@ -1352,7 +1307,7 @@ Return Value:
 
 --*/
 {
-    ULONG i,j;
+    ULONG i, j;
     PVOID Ace;
     ULONG AceCount;
     ULONG Index;
@@ -1363,7 +1318,8 @@ Return Value:
     // The remaining bits are "remaining" at all levels
     //
 
-    for ( j=0; j<LocalTypeListLength; j++ ) {
+    for (j = 0; j < LocalTypeListLength; j++)
+    {
         LocalTypeList[j].Remaining = Remaining;
     }
 
@@ -1371,42 +1327,47 @@ Return Value:
     // Process the DACL handling individual access bits.
     //
 
-    for ( i = 0, Ace = FirstAce( Dacl ) ;
-          ( i < AceCount ) && ( LocalTypeList->Remaining != 0 )  ;
-          i++, Ace = NextAce( Ace ) ) {
+    for (i = 0, Ace = FirstAce(Dacl); (i < AceCount) && (LocalTypeList->Remaining != 0); i++, Ace = NextAce(Ace))
+    {
 
-        if ( !(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE)) {
+        if (!(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE))
+        {
 
             //
             // Handle an Access Allowed ACE
             //
 
-            if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE) ) {
+            if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE))
+            {
 
-               if ( SepSidInTokenEx( EToken, PrincipalSelfSid, &((PACCESS_ALLOWED_ACE   )Ace)->SidStart, FALSE, Restricted ) ) {
+                if (SepSidInTokenEx(EToken, PrincipalSelfSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart, FALSE, Restricted))
+                {
 
-                   // Optimize 'normal' case
-                   if ( LocalTypeListLength == 1 ) {
-                       LocalTypeList->Remaining &= ~((PACCESS_ALLOWED_ACE)Ace)->Mask;
-                   } else {
-                       //
-                       // The zeroeth object type represents the object itself.
-                       //
-                       SepAddAccessTypeList(
-                            LocalTypeList,          // List to modify
-                            LocalTypeListLength,    // Length of list
-                            0,                      // Element to update
-                            ((PACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
-                            UpdateRemaining );
-                   }
+                    // Optimize 'normal' case
+                    if (LocalTypeListLength == 1)
+                    {
+                        LocalTypeList->Remaining &= ~((PACCESS_ALLOWED_ACE)Ace)->Mask;
+                    }
+                    else
+                    {
+                        //
+                        // The zeroeth object type represents the object itself.
+                        //
+                        SepAddAccessTypeList(LocalTypeList,                    // List to modify
+                                             LocalTypeListLength,              // Length of list
+                                             0,                                // Element to update
+                                             ((PACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
+                                             UpdateRemaining);
+                    }
+                }
 
-               }
 
-
-            //
-            // Handle an object specific Access Allowed ACE
-            //
-            } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_OBJECT_ACE_TYPE) ) {
+                //
+                // Handle an object specific Access Allowed ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_OBJECT_ACE_TYPE))
+            {
                 GUID *ObjectTypeInAce;
 
                 //
@@ -1416,110 +1377,124 @@ Return Value:
 
                 ObjectTypeInAce = RtlObjectAceObjectType(Ace);
 
-                if ( ObjectTypeInAce == NULL ) {
+                if (ObjectTypeInAce == NULL)
+                {
 
-                    if ( SepSidInTokenEx( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE, Restricted ) ) {
+                    if (SepSidInTokenEx(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE, Restricted))
+                    {
 
-                       // Optimize 'normal' case
-                       if ( LocalTypeListLength == 1 ) {
-                           LocalTypeList->Remaining &= ~((PACCESS_ALLOWED_ACE)Ace)->Mask;
-                       } else {
-                           SepAddAccessTypeList(
-                                LocalTypeList,          // List to modify
-                                LocalTypeListLength,    // Length of list
-                                0,                      // Element to update
-                                ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
-                                UpdateRemaining );
-                       }
+                        // Optimize 'normal' case
+                        if (LocalTypeListLength == 1)
+                        {
+                            LocalTypeList->Remaining &= ~((PACCESS_ALLOWED_ACE)Ace)->Mask;
+                        }
+                        else
+                        {
+                            SepAddAccessTypeList(LocalTypeList,                           // List to modify
+                                                 LocalTypeListLength,                     // Length of list
+                                                 0,                                       // Element to update
+                                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
+                                                 UpdateRemaining);
+                        }
                     }
 
-                //
-                // If no object type list was passed,
-                //  don't grant access to anyone.
-                //
-
-                } else if ( ObjectTypeListLength == 0 ) {
+                    //
+                    // If no object type list was passed,
+                    //  don't grant access to anyone.
+                    //
+                }
+                else if (ObjectTypeListLength == 0)
+                {
 
                     // Drop through
 
 
-               //
-               // If an object type is in the ACE,
-               //   Find it in the LocalTypeList before using the ACE.
-               //
-               } else {
+                    //
+                    // If an object type is in the ACE,
+                    //   Find it in the LocalTypeList before using the ACE.
+                    //
+                }
+                else
+                {
 
-                    if ( SepSidInTokenEx( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE, Restricted ) ) {
+                    if (SepSidInTokenEx(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE, Restricted))
+                    {
 
-                        if ( SepObjectInTypeList( ObjectTypeInAce,
-                                                  LocalTypeList,
-                                                  LocalTypeListLength,
-                                                  &Index ) ) {
-                            SepAddAccessTypeList(
-                                 LocalTypeList,          // List to modify
-                                 LocalTypeListLength,   // Length of list
-                                 Index,                  // Element already updated
-                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
-                                 UpdateRemaining );
+                        if (SepObjectInTypeList(ObjectTypeInAce, LocalTypeList, LocalTypeListLength, &Index))
+                        {
+                            SepAddAccessTypeList(LocalTypeList,                           // List to modify
+                                                 LocalTypeListLength,                     // Length of list
+                                                 Index,                                   // Element already updated
+                                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
+                                                 UpdateRemaining);
                         }
                     }
-               }
+                }
 
 
-            //
-            // Handle a compound Access Allowed ACE
-            //
-
-            } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE) ) {
+                //
+                // Handle a compound Access Allowed ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE))
+            {
 
                 //
                 // See comment in MAXIMUM_ALLOWED case as to why we can use EToken here
                 // for the client.
                 //
 
-                if ( SepSidInTokenEx(EToken, PrincipalSelfSid, RtlCompoundAceClientSid( Ace ), FALSE, Restricted) &&
-                     SepSidInTokenEx(PrimaryToken, NULL, RtlCompoundAceServerSid( Ace ), FALSE, Restricted) ) {
+                if (SepSidInTokenEx(EToken, PrincipalSelfSid, RtlCompoundAceClientSid(Ace), FALSE, Restricted) &&
+                    SepSidInTokenEx(PrimaryToken, NULL, RtlCompoundAceServerSid(Ace), FALSE, Restricted))
+                {
 
                     // Optimize 'normal' case
-                    if ( LocalTypeListLength == 1 ) {
+                    if (LocalTypeListLength == 1)
+                    {
                         LocalTypeList->Remaining &= ~((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask;
-                    } else {
-                        SepAddAccessTypeList(
-                             LocalTypeList,          // List to modify
-                             LocalTypeListLength,    // Length of list
-                             0,                      // Element to update
-                             ((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
-                             UpdateRemaining );
+                    }
+                    else
+                    {
+                        SepAddAccessTypeList(LocalTypeList,                             // List to modify
+                                             LocalTypeListLength,                       // Length of list
+                                             0,                                         // Element to update
+                                             ((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
+                                             UpdateRemaining);
                     }
                 }
 
 
+                //
+                // Handle an Access Denied ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE))
+            {
 
-            //
-            // Handle an Access Denied ACE
-            //
-
-            } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE) ) {
-
-                if ( SepSidInTokenEx( EToken, PrincipalSelfSid, &((PACCESS_DENIED_ACE)Ace)->SidStart, TRUE, Restricted ) ) {
+                if (SepSidInTokenEx(EToken, PrincipalSelfSid, &((PACCESS_DENIED_ACE)Ace)->SidStart, TRUE, Restricted))
+                {
 
                     //
                     // The zeroeth element represents the object itself.
                     //  Just check that element.
                     //
-                    if (LocalTypeList->Remaining & ((PACCESS_DENIED_ACE)Ace)->Mask) {
+                    if (LocalTypeList->Remaining & ((PACCESS_DENIED_ACE)Ace)->Mask)
+                    {
 
                         break;
                     }
                 }
 
 
-            //
-            // Handle an object specific Access Denied ACE
-            //
-            } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_OBJECT_ACE_TYPE) ) {
+                //
+                // Handle an object specific Access Denied ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_OBJECT_ACE_TYPE))
+            {
 
-                if ( SepSidInTokenEx( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), TRUE, Restricted ) ) {
+                if (SepSidInTokenEx(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), TRUE, Restricted))
+                {
                     GUID *ObjectTypeInAce;
 
                     //
@@ -1529,47 +1504,39 @@ Return Value:
                     //
 
                     ObjectTypeInAce = RtlObjectAceObjectType(Ace);
-                    if ( ObjectTypeInAce == NULL ||
-                         ObjectTypeListLength == 0 ) {
+                    if (ObjectTypeInAce == NULL || ObjectTypeListLength == 0)
+                    {
 
                         //
                         // The zeroeth element represents the object itself.
                         //  Just check that element.
                         //
-                        if (LocalTypeList->Remaining & ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask) {
+                        if (LocalTypeList->Remaining & ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask)
+                        {
                             break;
                         }
 
-                    //
-                    // Otherwise apply the deny ACE to the object specified
-                    //  in the ACE.
-                    //
-
-                    } else if ( SepObjectInTypeList( ObjectTypeInAce,
-                                                  LocalTypeList,
-                                                  LocalTypeListLength,
-                                                  &Index ) ) {
-
-                        if (LocalTypeList[Index].Remaining & ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask) {
-                            break;
-                        }
-
+                        //
+                        // Otherwise apply the deny ACE to the object specified
+                        //  in the ACE.
+                        //
                     }
-               }
-            }
+                    else if (SepObjectInTypeList(ObjectTypeInAce, LocalTypeList, LocalTypeListLength, &Index))
+                    {
 
+                        if (LocalTypeList[Index].Remaining & ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-
-VOID
-SeMaximumAuditMask(
-    IN PACL Sacl,
-    IN ACCESS_MASK GrantedAccess,
-    IN PACCESS_TOKEN Token,
-    OUT PACCESS_MASK pAuditMask
-    )
+
+VOID SeMaximumAuditMask(IN PACL Sacl, IN ACCESS_MASK GrantedAccess, IN PACCESS_TOKEN Token, OUT PACCESS_MASK pAuditMask)
 /*++
 
 Routine Description:
@@ -1603,10 +1570,10 @@ Return Value:
 
 --*/
 {
-    USHORT AceCount        = 0;
-    PACE_HEADER Ace        = NULL;
+    USHORT AceCount = 0;
+    PACE_HEADER Ace = NULL;
     ACCESS_MASK AccessMask = (ACCESS_MASK)0;
-    UCHAR AceFlags         = 0;
+    UCHAR AceFlags = 0;
 
     USHORT i;
 
@@ -1621,7 +1588,8 @@ Return Value:
     // If not, nothing to do.
     //
 
-    if (0 == (AceCount = Sacl->AceCount)) {
+    if (0 == (AceCount = Sacl->AceCount))
+    {
         return;
     }
 
@@ -1631,20 +1599,23 @@ Return Value:
     // in which case it doesn't pay to look any further
     //
 
-    for ( i = 0, Ace = FirstAce( Sacl ) ;
-          (i < AceCount) ;
-          i++, Ace = NextAce( Ace ) ) {
+    for (i = 0, Ace = FirstAce(Sacl); (i < AceCount); i++, Ace = NextAce(Ace))
+    {
 
-        if ( !(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE)) {
+        if (!(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE))
+        {
 
-            if ( (((PACE_HEADER)Ace)->AceType == SYSTEM_AUDIT_ACE_TYPE) ) {
+            if ((((PACE_HEADER)Ace)->AceType == SYSTEM_AUDIT_ACE_TYPE))
+            {
 
                 AccessMask = ((PSYSTEM_AUDIT_ACE)Ace)->Mask;
-                AceFlags   = ((PACE_HEADER)Ace)->AceFlags;
+                AceFlags = ((PACE_HEADER)Ace)->AceFlags;
 
-                if ((AccessMask & GrantedAccess) && (AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG)) {
+                if ((AccessMask & GrantedAccess) && (AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG))
+                {
 
-                    if ( SepSidInToken( (PACCESS_TOKEN)Token, NULL, &((PSYSTEM_AUDIT_ACE)Ace)->SidStart, FALSE ) ) {
+                    if (SepSidInToken((PACCESS_TOKEN)Token, NULL, &((PSYSTEM_AUDIT_ACE)Ace)->SidStart, FALSE))
+                    {
 
                         *pAuditMask |= (AccessMask & GrantedAccess);
                     }
@@ -1655,26 +1626,14 @@ Return Value:
 }
 
 
-
 BOOLEAN
-SepAccessCheck (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN PTOKEN PrimaryToken,
-    IN PTOKEN ClientToken OPTIONAL,
-    IN ACCESS_MASK DesiredAccess,
-    IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN ACCESS_MASK PreviouslyGrantedAccess,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PPRIVILEGE_SET *Privileges OPTIONAL,
-    OUT PNTSTATUS AccessStatus,
-    IN BOOLEAN ReturnResultList,
-    OUT PBOOLEAN ReturnSomeAccessGranted,
-    OUT PBOOLEAN ReturnSomeAccessDenied
-    )
+SepAccessCheck(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid, IN PTOKEN PrimaryToken,
+               IN PTOKEN ClientToken OPTIONAL, IN ACCESS_MASK DesiredAccess,
+               IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+               IN PGENERIC_MAPPING GenericMapping, IN ACCESS_MASK PreviouslyGrantedAccess,
+               IN KPROCESSOR_MODE PreviousMode, OUT PACCESS_MASK GrantedAccess, OUT PPRIVILEGE_SET *Privileges OPTIONAL,
+               OUT PNTSTATUS AccessStatus, IN BOOLEAN ReturnResultList, OUT PBOOLEAN ReturnSomeAccessGranted,
+               OUT PBOOLEAN ReturnSomeAccessDenied)
 
 /*++
 
@@ -1793,27 +1752,25 @@ Return Value:
 
 #if DBG
 
-    SepDumpSecurityDescriptor(
-        SecurityDescriptor,
-        "Input to SeAccessCheck\n"
-        );
+    SepDumpSecurityDescriptor(SecurityDescriptor, "Input to SeAccessCheck\n");
 
-    if (ARGUMENT_PRESENT( ClientToken )) {
-        SepDumpTokenInfo( ClientToken );
+    if (ARGUMENT_PRESENT(ClientToken))
+    {
+        SepDumpTokenInfo(ClientToken);
     }
 
-    SepDumpTokenInfo( PrimaryToken );
+    SepDumpTokenInfo(PrimaryToken);
 
 #endif
 
 
-    EToken = ARGUMENT_PRESENT( ClientToken ) ? ClientToken : PrimaryToken;
+    EToken = ARGUMENT_PRESENT(ClientToken) ? ClientToken : PrimaryToken;
 
     //
     // Assert that there are no generic accesses in the DesiredAccess
     //
 
-    SeAssertMappedCanonicalAccess( DesiredAccess );
+    SeAssertMappedCanonicalAccess(DesiredAccess);
 
     Remaining = DesiredAccess;
 
@@ -1824,7 +1781,8 @@ Return Value:
     // the privilege.
     //
 
-    if ( Remaining & ACCESS_SYSTEM_SECURITY ) {
+    if (Remaining & ACCESS_SYSTEM_SECURITY)
+    {
 
         //
         // Bugcheck if we weren't given a pointer to return privileges
@@ -1832,15 +1790,12 @@ Return Value:
         // in that case.
         //
 
-        ASSERT( ARGUMENT_PRESENT( Privileges ));
+        ASSERT(ARGUMENT_PRESENT(Privileges));
 
-        Success = SepSinglePrivilegeCheck (
-                    SeSecurityPrivilege,
-                    EToken,
-                    PreviousMode
-                    );
+        Success = SepSinglePrivilegeCheck(SeSecurityPrivilege, EToken, PreviousMode);
 
-        if (!Success) {
+        if (!Success)
+        {
             PreviouslyGrantedAccess = 0;
             Status = STATUS_PRIVILEGE_NOT_HELD;
             goto ReturnOneStatus;
@@ -1857,11 +1812,11 @@ Return Value:
         PrivilegeCount++;
         SystemSecurity = TRUE;
 
-        if ( Remaining == 0 ) {
+        if (Remaining == 0)
+        {
             Status = STATUS_SUCCESS;
             goto ReturnOneStatus;
         }
-
     }
 
 
@@ -1869,7 +1824,7 @@ Return Value:
     // Get pointer to client SID's
     //
 
-    Dacl = RtlpDaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)SecurityDescriptor );
+    Dacl = RtlpDaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)SecurityDescriptor);
 
     //
     //  If the SE_DACL_PRESENT bit is not set, the object has no
@@ -1880,9 +1835,8 @@ Return Value:
     //  Also grant all access if the Dacl is NULL.
     //
 
-    if ( !RtlpAreControlBitsSet(
-             (PISECURITY_DESCRIPTOR)SecurityDescriptor,
-             SE_DACL_PRESENT) || (Dacl == NULL)) {
+    if (!RtlpAreControlBitsSet((PISECURITY_DESCRIPTOR)SecurityDescriptor, SE_DACL_PRESENT) || (Dacl == NULL))
+    {
 
 
         //
@@ -1890,7 +1844,8 @@ Return Value:
         // ACEs.
         //
 #ifdef SECURE_NULL_DACLS
-        if (SeTokenIsRestricted( EToken )) {
+        if (SeTokenIsRestricted(EToken))
+        {
             //
             // We know that Remaining != 0 here, because we
             // know it was non-zero coming into this routine,
@@ -1898,7 +1853,7 @@ Return Value:
             // cleared a bit.
             //
 
-            ASSERT( Remaining != 0 );
+            ASSERT(Remaining != 0);
 
             //
             // There are ungranted accesses.  Since there is
@@ -1909,18 +1864,21 @@ Return Value:
             // what has been granted.
             //
 
-            if ( (Remaining == MAXIMUM_ALLOWED) && (PreviouslyGrantedAccess != (ACCESS_MASK)0) ) {
+            if ((Remaining == MAXIMUM_ALLOWED) && (PreviouslyGrantedAccess != (ACCESS_MASK)0))
+            {
                 Status = STATUS_SUCCESS;
                 goto ReturnOneStatus;
-
-            } else {
+            }
+            else
+            {
                 PreviouslyGrantedAccess = 0;
                 Status = STATUS_ACCESS_DENIED;
                 goto ReturnOneStatus;
             }
         }
 #endif //SECURE_NULL_DACLS
-        if (DesiredAccess & MAXIMUM_ALLOWED) {
+        if (DesiredAccess & MAXIMUM_ALLOWED)
+        {
 
             //
             // Give him:
@@ -1929,10 +1887,10 @@ Return Value:
             //
 
             PreviouslyGrantedAccess =
-                GenericMapping->GenericAll |
-                (DesiredAccess | PreviouslyGrantedAccess) & ~MAXIMUM_ALLOWED;
-
-        } else {
+                GenericMapping->GenericAll | (DesiredAccess | PreviouslyGrantedAccess) & ~MAXIMUM_ALLOWED;
+        }
+        else
+        {
 
             PreviouslyGrantedAccess |= DesiredAccess;
         }
@@ -1947,15 +1905,13 @@ Return Value:
     // privilege check if so.
     //
 
-    if ( (Remaining & WRITE_OWNER) && ARGUMENT_PRESENT( Privileges ) ) {
+    if ((Remaining & WRITE_OWNER) && ARGUMENT_PRESENT(Privileges))
+    {
 
-        Success = SepSinglePrivilegeCheck (
-                    SeTakeOwnershipPrivilege,
-                    EToken,
-                    PreviousMode
-                    );
+        Success = SepSinglePrivilegeCheck(SeTakeOwnershipPrivilege, EToken, PreviousMode);
 
-        if (Success) {
+        if (Success)
+        {
 
             //
             // Success, remove WRITE_OWNER from remaining, add it
@@ -1968,7 +1924,8 @@ Return Value:
             PrivilegeCount++;
             WriteOwner = TRUE;
 
-            if ( Remaining == 0 ) {
+            if (Remaining == 0)
+            {
                 Status = STATUS_SUCCESS;
                 goto ReturnOneStatus;
             }
@@ -1981,7 +1938,8 @@ Return Value:
     // deny all access immediately.
     //
 
-    if ((AceCount = Dacl->AceCount) == 0) {
+    if ((AceCount = Dacl->AceCount) == 0)
+    {
 
         //
         // We know that Remaining != 0 here, because we
@@ -1990,7 +1948,7 @@ Return Value:
         // cleared a bit.
         //
 
-        ASSERT( Remaining != 0 );
+        ASSERT(Remaining != 0);
 
         //
         // There are ungranted accesses.  Since there is
@@ -2001,11 +1959,13 @@ Return Value:
         // what has been granted.
         //
 
-        if ( (Remaining == MAXIMUM_ALLOWED) && (PreviouslyGrantedAccess != (ACCESS_MASK)0) ) {
+        if ((Remaining == MAXIMUM_ALLOWED) && (PreviouslyGrantedAccess != (ACCESS_MASK)0))
+        {
             Status = STATUS_SUCCESS;
             goto ReturnOneStatus;
-
-        } else {
+        }
+        else
+        {
             PreviouslyGrantedAccess = 0;
             Status = STATUS_ACCESS_DENIED;
             goto ReturnOneStatus;
@@ -2016,12 +1976,15 @@ Return Value:
     // Fake out a top level ObjectType list if none is passed by the caller.
     //
 
-    if ( ObjectTypeListLength == 0 ) {
+    if (ObjectTypeListLength == 0)
+    {
         LocalTypeList = &FixedTypeList;
         LocalTypeListLength = 1;
-        RtlZeroMemory( &FixedTypeList, sizeof(FixedTypeList) );
+        RtlZeroMemory(&FixedTypeList, sizeof(FixedTypeList));
         FixedTypeList.ParentIndex = -1;
-    } else {
+    }
+    else
+    {
         LocalTypeList = ObjectTypeList;
         LocalTypeListLength = ObjectTypeListLength;
     }
@@ -2032,39 +1995,24 @@ Return Value:
     //  that traverses all the ACEs.
     //
 
-    if ( (DesiredAccess & MAXIMUM_ALLOWED) != 0 ||
-         ReturnResultList ) {
+    if ((DesiredAccess & MAXIMUM_ALLOWED) != 0 || ReturnResultList)
+    {
 
         //
         // Do the normal maximum-allowed access check
         //
 
-        SepMaximumAccessCheck(
-            EToken,
-            PrimaryToken,
-            Dacl,
-            PrincipalSelfSid,
-            LocalTypeListLength,
-            LocalTypeList,
-            ObjectTypeListLength,
-            FALSE
-            );
+        SepMaximumAccessCheck(EToken, PrimaryToken, Dacl, PrincipalSelfSid, LocalTypeListLength, LocalTypeList,
+                              ObjectTypeListLength, FALSE);
 
         //
         // If this is a restricted token, do the additional access check
         //
 
-        if (SeTokenIsRestricted( EToken ) ) {
-            SepMaximumAccessCheck(
-                EToken,
-                PrimaryToken,
-                Dacl,
-                PrincipalSelfSid,
-                LocalTypeListLength,
-                LocalTypeList,
-                ObjectTypeListLength,
-                TRUE
-                );
+        if (SeTokenIsRestricted(EToken))
+        {
+            SepMaximumAccessCheck(EToken, PrimaryToken, Dacl, PrincipalSelfSid, LocalTypeListLength, LocalTypeList,
+                                  ObjectTypeListLength, TRUE);
         }
 
 
@@ -2074,7 +2022,8 @@ Return Value:
         //  break it down for him.
         //
 
-        if ( ReturnResultList ) {
+        if (ReturnResultList)
+        {
             ACCESS_MASK GrantedAccessMask;
             ACCESS_MASK RequiredAccessMask;
             BOOLEAN SomeAccessGranted = FALSE;
@@ -2088,23 +2037,23 @@ Return Value:
             //      tell him what he asked about.
             //
 
-            if (DesiredAccess & MAXIMUM_ALLOWED) {
-                GrantedAccessMask = (ACCESS_MASK) ~MAXIMUM_ALLOWED;
+            if (DesiredAccess & MAXIMUM_ALLOWED)
+            {
+                GrantedAccessMask = (ACCESS_MASK)~MAXIMUM_ALLOWED;
                 RequiredAccessMask = (DesiredAccess | PreviouslyGrantedAccess) & ~MAXIMUM_ALLOWED;
-            } else {
+            }
+            else
+            {
                 GrantedAccessMask = DesiredAccess | PreviouslyGrantedAccess;
                 RequiredAccessMask = DesiredAccess | PreviouslyGrantedAccess;
             }
 
 
-
-
             //
             // Loop computing the access granted to each object and sub-object.
             //
-            for ( ResultListIndex=0;
-                  ResultListIndex<LocalTypeListLength;
-                  ResultListIndex++ ) {
+            for (ResultListIndex = 0; ResultListIndex < LocalTypeListLength; ResultListIndex++)
+            {
 
                 //
                 // Return the subset of the access granted that the caller
@@ -2112,18 +2061,19 @@ Return Value:
                 //
 
                 GrantedAccess[ResultListIndex] =
-                    (LocalTypeList[ResultListIndex].CurrentGranted |
-                     PreviouslyGrantedAccess ) &
-                    GrantedAccessMask;
+                    (LocalTypeList[ResultListIndex].CurrentGranted | PreviouslyGrantedAccess) & GrantedAccessMask;
 
                 //
                 // If absolutely no access was granted,
                 //  indicate so.
                 //
-                if ( GrantedAccess[ResultListIndex] == 0 ) {
+                if (GrantedAccess[ResultListIndex] == 0)
+                {
                     AccessStatus[ResultListIndex] = STATUS_ACCESS_DENIED;
                     SomeAccessDenied = TRUE;
-                } else {
+                }
+                else
+                {
 
                     //
                     // If some requested access is still missing,
@@ -2134,57 +2084,58 @@ Return Value:
                     // really has no access to the object.
                     //
 
-                    if  ( ((~GrantedAccess[ResultListIndex]) & RequiredAccessMask ) != 0 ) {
+                    if (((~GrantedAccess[ResultListIndex]) & RequiredAccessMask) != 0)
+                    {
                         AccessStatus[ResultListIndex] = STATUS_ACCESS_DENIED;
                         SomeAccessDenied = TRUE;
-                    } else {
+                    }
+                    else
+                    {
                         AccessStatus[ResultListIndex] = STATUS_SUCCESS;
                         SomeAccessGranted = TRUE;
                     }
                 }
             }
 
-            if ( SomeAccessGranted && PrivilegeCount != 0 ) {
+            if (SomeAccessGranted && PrivilegeCount != 0)
+            {
 
-                SepAssemblePrivileges(
-                    PrivilegeCount,
-                    SystemSecurity,
-                    WriteOwner,
-                    Privileges
-                    );
+                SepAssemblePrivileges(PrivilegeCount, SystemSecurity, WriteOwner, Privileges);
 
-                if ( ( Privileges != NULL ) && ( *Privileges == NULL ) ) {
+                if ((Privileges != NULL) && (*Privileges == NULL))
+                {
 
                     RetVal = FALSE;
                     SomeAccessGranted = FALSE;
                     SomeAccessDenied = TRUE;
 
-                    for ( ResultListIndex=0;
-                          ResultListIndex<LocalTypeListLength;
-                          ResultListIndex++ ) {
+                    for (ResultListIndex = 0; ResultListIndex < LocalTypeListLength; ResultListIndex++)
+                    {
 
                         AccessStatus[ResultListIndex] = STATUS_NO_MEMORY;
                         GrantedAccess[ResultListIndex] = 0;
                     }
-
                 }
             }
 
-            if ( ARGUMENT_PRESENT(ReturnSomeAccessGranted)) {
+            if (ARGUMENT_PRESENT(ReturnSomeAccessGranted))
+            {
                 *ReturnSomeAccessGranted = SomeAccessGranted;
             }
-            if ( ARGUMENT_PRESENT(ReturnSomeAccessDenied)) {
+            if (ARGUMENT_PRESENT(ReturnSomeAccessDenied))
+            {
                 *ReturnSomeAccessDenied = SomeAccessDenied;
             }
 
             return RetVal;
 
-        //
-        // If the caller is only interested in the access to the object itself,
-        //  just summarize.
-        //
-
-        } else {
+            //
+            // If the caller is only interested in the access to the object itself,
+            //  just summarize.
+            //
+        }
+        else
+        {
 
             //
             // Turn off the MAXIMUM_ALLOWED bit and whatever we found that
@@ -2195,20 +2146,18 @@ Return Value:
 
             Remaining &= ~(MAXIMUM_ALLOWED | LocalTypeList->CurrentGranted);
 
-            if (Remaining != 0) {
+            if (Remaining != 0)
+            {
 
                 Status = STATUS_ACCESS_DENIED;
                 PreviouslyGrantedAccess = 0;
                 goto ReturnOneStatus;
-
             }
-
 
 
             PreviouslyGrantedAccess |= LocalTypeList->CurrentGranted;
             Status = STATUS_SUCCESS;
             goto ReturnOneStatus;
-
         }
 
     } // if MAXIMUM_ALLOWED...
@@ -2218,7 +2167,8 @@ Return Value:
     //
     // The remaining bits are "remaining" at all levels
 
-    for ( j=0; j<LocalTypeListLength; j++ ) {
+    for (j = 0; j < LocalTypeListLength; j++)
+    {
         LocalTypeList[j].Remaining = Remaining;
     }
 
@@ -2226,42 +2176,47 @@ Return Value:
     // Process the DACL handling individual access bits.
     //
 
-    for ( i = 0, Ace = FirstAce( Dacl ) ;
-          ( i < AceCount ) && ( LocalTypeList->Remaining != 0 )  ;
-          i++, Ace = NextAce( Ace ) ) {
+    for (i = 0, Ace = FirstAce(Dacl); (i < AceCount) && (LocalTypeList->Remaining != 0); i++, Ace = NextAce(Ace))
+    {
 
-        if ( !(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE)) {
+        if (!(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE))
+        {
 
             //
             // Handle an Access Allowed ACE
             //
 
-            if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE) ) {
+            if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE))
+            {
 
-               if ( SepSidInToken( EToken, PrincipalSelfSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart, FALSE ) ) {
+                if (SepSidInToken(EToken, PrincipalSelfSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart, FALSE))
+                {
 
-                   // Optimize 'normal' case
-                   if ( LocalTypeListLength == 1 ) {
-                       LocalTypeList->Remaining &= ~((PACCESS_ALLOWED_ACE)Ace)->Mask;
-                   } else {
-                       //
-                       // The zeroeth object type represents the object itself.
-                       //
-                       SepAddAccessTypeList(
-                            LocalTypeList,          // List to modify
-                            LocalTypeListLength,    // Length of list
-                            0,                      // Element to update
-                            ((PACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
-                            UpdateRemaining );
-                   }
+                    // Optimize 'normal' case
+                    if (LocalTypeListLength == 1)
+                    {
+                        LocalTypeList->Remaining &= ~((PACCESS_ALLOWED_ACE)Ace)->Mask;
+                    }
+                    else
+                    {
+                        //
+                        // The zeroeth object type represents the object itself.
+                        //
+                        SepAddAccessTypeList(LocalTypeList,                    // List to modify
+                                             LocalTypeListLength,              // Length of list
+                                             0,                                // Element to update
+                                             ((PACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
+                                             UpdateRemaining);
+                    }
+                }
 
-               }
 
-
-            //
-            // Handle an object specific Access Allowed ACE
-            //
-            } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_OBJECT_ACE_TYPE) ) {
+                //
+                // Handle an object specific Access Allowed ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_OBJECT_ACE_TYPE))
+            {
                 GUID *ObjectTypeInAce;
 
                 //
@@ -2271,109 +2226,124 @@ Return Value:
 
                 ObjectTypeInAce = RtlObjectAceObjectType(Ace);
 
-                if ( ObjectTypeInAce == NULL ) {
+                if (ObjectTypeInAce == NULL)
+                {
 
-                    if ( SepSidInToken( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE ) ) {
+                    if (SepSidInToken(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE))
+                    {
 
-                       // Optimize 'normal' case
-                       if ( LocalTypeListLength == 1 ) {
-                           LocalTypeList->Remaining &= ~((PACCESS_ALLOWED_ACE)Ace)->Mask;
-                       } else {
-                           SepAddAccessTypeList(
-                                LocalTypeList,          // List to modify
-                                LocalTypeListLength,    // Length of list
-                                0,                      // Element to update
-                                ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
-                                UpdateRemaining );
-                       }
+                        // Optimize 'normal' case
+                        if (LocalTypeListLength == 1)
+                        {
+                            LocalTypeList->Remaining &= ~((PACCESS_ALLOWED_ACE)Ace)->Mask;
+                        }
+                        else
+                        {
+                            SepAddAccessTypeList(LocalTypeList,                           // List to modify
+                                                 LocalTypeListLength,                     // Length of list
+                                                 0,                                       // Element to update
+                                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
+                                                 UpdateRemaining);
+                        }
                     }
 
-                //
-                // If no object type list was passed,
-                //  don't grant access to anyone.
-                //
-
-                } else if ( ObjectTypeListLength == 0 ) {
+                    //
+                    // If no object type list was passed,
+                    //  don't grant access to anyone.
+                    //
+                }
+                else if (ObjectTypeListLength == 0)
+                {
 
                     // Drop through
 
 
-               //
-               // If an object type is in the ACE,
-               //   Find it in the LocalTypeList before using the ACE.
-               //
-               } else {
+                    //
+                    // If an object type is in the ACE,
+                    //   Find it in the LocalTypeList before using the ACE.
+                    //
+                }
+                else
+                {
 
-                    if ( SepSidInToken( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE ) ) {
+                    if (SepSidInToken(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), FALSE))
+                    {
 
-                        if ( SepObjectInTypeList( ObjectTypeInAce,
-                                                  LocalTypeList,
-                                                  LocalTypeListLength,
-                                                  &Index ) ) {
-                            SepAddAccessTypeList(
-                                 LocalTypeList,          // List to modify
-                                 LocalTypeListLength,   // Length of list
-                                 Index,                  // Element already updated
-                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
-                                 UpdateRemaining );
+                        if (SepObjectInTypeList(ObjectTypeInAce, LocalTypeList, LocalTypeListLength, &Index))
+                        {
+                            SepAddAccessTypeList(LocalTypeList,                           // List to modify
+                                                 LocalTypeListLength,                     // Length of list
+                                                 Index,                                   // Element already updated
+                                                 ((PACCESS_ALLOWED_OBJECT_ACE)Ace)->Mask, // Access Granted
+                                                 UpdateRemaining);
                         }
                     }
-               }
+                }
 
 
-            //
-            // Handle a compound Access Allowed ACE
-            //
-            } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE) ) {
+                //
+                // Handle a compound Access Allowed ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE))
+            {
 
                 //
                 // See comment in MAXIMUM_ALLOWED case as to why we can use EToken here
                 // for the client.
                 //
 
-                if ( SepSidInToken(EToken, PrincipalSelfSid, RtlCompoundAceClientSid( Ace ), FALSE) &&
-                     SepSidInToken(PrimaryToken, NULL, RtlCompoundAceServerSid( Ace ), FALSE) ) {
+                if (SepSidInToken(EToken, PrincipalSelfSid, RtlCompoundAceClientSid(Ace), FALSE) &&
+                    SepSidInToken(PrimaryToken, NULL, RtlCompoundAceServerSid(Ace), FALSE))
+                {
 
                     // Optimize 'normal' case
-                    if ( LocalTypeListLength == 1 ) {
+                    if (LocalTypeListLength == 1)
+                    {
                         LocalTypeList->Remaining &= ~((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask;
-                    } else {
-                        SepAddAccessTypeList(
-                             LocalTypeList,          // List to modify
-                             LocalTypeListLength,    // Length of list
-                             0,                      // Element to update
-                             ((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
-                             UpdateRemaining );
+                    }
+                    else
+                    {
+                        SepAddAccessTypeList(LocalTypeList,                             // List to modify
+                                             LocalTypeListLength,                       // Length of list
+                                             0,                                         // Element to update
+                                             ((PCOMPOUND_ACCESS_ALLOWED_ACE)Ace)->Mask, // Access Granted
+                                             UpdateRemaining);
                     }
                 }
 
 
+                //
+                // Handle an Access Denied ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE))
+            {
 
-            //
-            // Handle an Access Denied ACE
-            //
-
-            } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE) ) {
-
-                if ( SepSidInToken( EToken, PrincipalSelfSid, &((PACCESS_DENIED_ACE)Ace)->SidStart, TRUE ) ) {
+                if (SepSidInToken(EToken, PrincipalSelfSid, &((PACCESS_DENIED_ACE)Ace)->SidStart, TRUE))
+                {
 
                     //
                     // The zeroeth element represents the object itself.
                     //  Just check that element.
                     //
-                    if (LocalTypeList->Remaining & ((PACCESS_DENIED_ACE)Ace)->Mask) {
+                    if (LocalTypeList->Remaining & ((PACCESS_DENIED_ACE)Ace)->Mask)
+                    {
 
                         break;
                     }
                 }
 
 
-            //
-            // Handle an object specific Access Denied ACE
-            //
-            } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_OBJECT_ACE_TYPE) ) {
+                //
+                // Handle an object specific Access Denied ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_OBJECT_ACE_TYPE))
+            {
 
-                if ( SepSidInToken( EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), TRUE ) ) {
+                if (SepSidInToken(EToken, PrincipalSelfSid, RtlObjectAceSid(Ace), TRUE))
+                {
                     GUID *ObjectTypeInAce;
 
                     //
@@ -2383,35 +2353,33 @@ Return Value:
                     //
 
                     ObjectTypeInAce = RtlObjectAceObjectType(Ace);
-                    if ( ObjectTypeInAce == NULL ||
-                         ObjectTypeListLength == 0 ) {
+                    if (ObjectTypeInAce == NULL || ObjectTypeListLength == 0)
+                    {
 
                         //
                         // The zeroeth element represents the object itself.
                         //  Just check that element.
                         //
-                        if (LocalTypeList->Remaining & ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask) {
+                        if (LocalTypeList->Remaining & ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask)
+                        {
                             break;
                         }
 
-                    //
-                    // Otherwise apply the deny ACE to the object specified
-                    //  in the ACE.
-                    //
-
-                    } else if ( SepObjectInTypeList( ObjectTypeInAce,
-                                                  LocalTypeList,
-                                                  LocalTypeListLength,
-                                                  &Index ) ) {
-
-                        if (LocalTypeList[Index].Remaining & ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask) {
-                            break;
-                        }
-
+                        //
+                        // Otherwise apply the deny ACE to the object specified
+                        //  in the ACE.
+                        //
                     }
-               }
-            }
+                    else if (SepObjectInTypeList(ObjectTypeInAce, LocalTypeList, LocalTypeListLength, &Index))
+                    {
 
+                        if (LocalTypeList[Index].Remaining & ((PACCESS_DENIED_OBJECT_ACE)Ace)->Mask)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -2421,19 +2389,11 @@ Return Value:
     // Do the normal access check first
     //
 
-    SepNormalAccessCheck(
-        Remaining,
-        EToken,
-        PrimaryToken,
-        Dacl,
-        PrincipalSelfSid,
-        LocalTypeListLength,
-        LocalTypeList,
-        ObjectTypeListLength,
-        FALSE
-        );
+    SepNormalAccessCheck(Remaining, EToken, PrimaryToken, Dacl, PrincipalSelfSid, LocalTypeListLength, LocalTypeList,
+                         ObjectTypeListLength, FALSE);
 
-    if (LocalTypeList->Remaining != 0) {
+    if (LocalTypeList->Remaining != 0)
+    {
         Status = STATUS_ACCESS_DENIED;
         PreviouslyGrantedAccess = 0;
         goto ReturnOneStatus;
@@ -2443,22 +2403,15 @@ Return Value:
     // If this is a restricted token, do the additional access check
     //
 
-    if (SeTokenIsRestricted( EToken ) ) {
-        SepNormalAccessCheck(
-            Remaining,
-            EToken,
-            PrimaryToken,
-            Dacl,
-            PrincipalSelfSid,
-            LocalTypeListLength,
-            LocalTypeList,
-            ObjectTypeListLength,
-            TRUE
-            );
+    if (SeTokenIsRestricted(EToken))
+    {
+        SepNormalAccessCheck(Remaining, EToken, PrimaryToken, Dacl, PrincipalSelfSid, LocalTypeListLength,
+                             LocalTypeList, ObjectTypeListLength, TRUE);
     }
 
 
-    if (LocalTypeList->Remaining != 0) {
+    if (LocalTypeList->Remaining != 0)
+    {
         Status = STATUS_ACCESS_DENIED;
         PreviouslyGrantedAccess = 0;
         goto ReturnOneStatus;
@@ -2471,21 +2424,20 @@ Return Value:
     // Return a single status code to the caller.
     //
 
-    ReturnOneStatus:
-    if ( Status == STATUS_SUCCESS && PreviouslyGrantedAccess == 0 ) {
+ReturnOneStatus:
+    if (Status == STATUS_SUCCESS && PreviouslyGrantedAccess == 0)
+    {
         Status = STATUS_ACCESS_DENIED;
     }
 
-    if ( NT_SUCCESS(Status) ) {
-        if ( PrivilegeCount > 0 ) {
-            SepAssemblePrivileges(
-                PrivilegeCount,
-                SystemSecurity,
-                WriteOwner,
-                Privileges
-                );
+    if (NT_SUCCESS(Status))
+    {
+        if (PrivilegeCount > 0)
+        {
+            SepAssemblePrivileges(PrivilegeCount, SystemSecurity, WriteOwner, Privileges);
 
-            if ( ( Privileges != NULL ) && ( *Privileges == NULL ) ) {
+            if ((Privileges != NULL) && (*Privileges == NULL))
+            {
                 RetVal = FALSE;
                 Status = STATUS_NO_MEMORY;
                 PreviouslyGrantedAccess = 0;
@@ -2496,49 +2448,50 @@ Return Value:
     // If the caller asked for a list of status',
     //  duplicate the status all over.
     //
-    if ( ReturnResultList ) {
-        for ( ResultListIndex=0; ResultListIndex<ObjectTypeListLength; ResultListIndex++ ) {
+    if (ReturnResultList)
+    {
+        for (ResultListIndex = 0; ResultListIndex < ObjectTypeListLength; ResultListIndex++)
+        {
             AccessStatus[ResultListIndex] = Status;
             GrantedAccess[ResultListIndex] = PreviouslyGrantedAccess;
         }
-    } else {
+    }
+    else
+    {
         *AccessStatus = Status;
         *GrantedAccess = PreviouslyGrantedAccess;
     }
 
-    if ( NT_SUCCESS(Status) ) {
-        if ( ARGUMENT_PRESENT(ReturnSomeAccessGranted)) {
+    if (NT_SUCCESS(Status))
+    {
+        if (ARGUMENT_PRESENT(ReturnSomeAccessGranted))
+        {
             *ReturnSomeAccessGranted = TRUE;
         }
-        if ( ARGUMENT_PRESENT(ReturnSomeAccessDenied)) {
+        if (ARGUMENT_PRESENT(ReturnSomeAccessDenied))
+        {
             *ReturnSomeAccessDenied = FALSE;
         }
-    } else {
-        if ( ARGUMENT_PRESENT(ReturnSomeAccessGranted)) {
+    }
+    else
+    {
+        if (ARGUMENT_PRESENT(ReturnSomeAccessGranted))
+        {
             *ReturnSomeAccessGranted = FALSE;
         }
-        if ( ARGUMENT_PRESENT(ReturnSomeAccessDenied)) {
+        if (ARGUMENT_PRESENT(ReturnSomeAccessDenied))
+        {
             *ReturnSomeAccessDenied = TRUE;
         }
     }
     return RetVal;
-
 }
 
 
-
-
 NTSTATUS
-NtAccessCheck (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN HANDLE ClientToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN PGENERIC_MAPPING GenericMapping,
-    OUT PPRIVILEGE_SET PrivilegeSet,
-    IN OUT PULONG PrivilegeSetLength,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus
-    )
+NtAccessCheck(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN HANDLE ClientToken, IN ACCESS_MASK DesiredAccess,
+              IN PGENERIC_MAPPING GenericMapping, OUT PPRIVILEGE_SET PrivilegeSet, IN OUT PULONG PrivilegeSetLength,
+              OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus)
 
 
 /*++
@@ -2594,42 +2547,21 @@ Return Value:
 
     PAGED_CODE();
 
-    return SeAccessCheckByType (
-                 SecurityDescriptor,
-                 NULL,      // No Principal Self sid
-                 ClientToken,
-                 DesiredAccess,
-                 NULL,      // No ObjectType List
-                 0,         // No ObjectType List
-                 GenericMapping,
-                 PrivilegeSet,
-                 PrivilegeSetLength,
-                 GrantedAccess,
-                 AccessStatus,
-                 FALSE );  // Return a single GrantedAccess and AccessStatus
-
-
+    return SeAccessCheckByType(SecurityDescriptor,
+                               NULL, // No Principal Self sid
+                               ClientToken, DesiredAccess,
+                               NULL, // No ObjectType List
+                               0,    // No ObjectType List
+                               GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess, AccessStatus,
+                               FALSE); // Return a single GrantedAccess and AccessStatus
 }
 
 
-
-
-
-
 NTSTATUS
-NtAccessCheckByType (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN HANDLE ClientToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    OUT PPRIVILEGE_SET PrivilegeSet,
-    IN OUT PULONG PrivilegeSetLength,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus
-    )
+NtAccessCheckByType(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid, IN HANDLE ClientToken,
+                    IN ACCESS_MASK DesiredAccess, IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
+                    IN ULONG ObjectTypeListLength, IN PGENERIC_MAPPING GenericMapping, OUT PPRIVILEGE_SET PrivilegeSet,
+                    IN OUT PULONG PrivilegeSetLength, OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus)
 
 
 /*++
@@ -2698,39 +2630,20 @@ Return Value:
 
     PAGED_CODE();
 
-    return SeAccessCheckByType (
-                 SecurityDescriptor,
-                 PrincipalSelfSid,
-                 ClientToken,
-                 DesiredAccess,
-                 ObjectTypeList,
-                 ObjectTypeListLength,
-                 GenericMapping,
-                 PrivilegeSet,
-                 PrivilegeSetLength,
-                 GrantedAccess,
-                 AccessStatus,
-                 FALSE );  // Return a single GrantedAccess and AccessStatus
+    return SeAccessCheckByType(SecurityDescriptor, PrincipalSelfSid, ClientToken, DesiredAccess, ObjectTypeList,
+                               ObjectTypeListLength, GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess,
+                               AccessStatus,
+                               FALSE); // Return a single GrantedAccess and AccessStatus
 }
 
 
-
-
-
 NTSTATUS
-NtAccessCheckByTypeResultList (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN HANDLE ClientToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    OUT PPRIVILEGE_SET PrivilegeSet,
-    IN OUT PULONG PrivilegeSetLength,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus
-    )
+NtAccessCheckByTypeResultList(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid,
+                              IN HANDLE ClientToken, IN ACCESS_MASK DesiredAccess,
+                              IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+                              IN PGENERIC_MAPPING GenericMapping, OUT PPRIVILEGE_SET PrivilegeSet,
+                              IN OUT PULONG PrivilegeSetLength, OUT PACCESS_MASK GrantedAccess,
+                              OUT PNTSTATUS AccessStatus)
 
 
 /*++
@@ -2799,41 +2712,19 @@ Return Value:
 
     PAGED_CODE();
 
-    return SeAccessCheckByType (
-                 SecurityDescriptor,
-                 PrincipalSelfSid,
-                 ClientToken,
-                 DesiredAccess,
-                 ObjectTypeList,
-                 ObjectTypeListLength,
-                 GenericMapping,
-                 PrivilegeSet,
-                 PrivilegeSetLength,
-                 GrantedAccess,
-                 AccessStatus,
-                 TRUE );  // Return an array of GrantedAccess and AccessStatus
+    return SeAccessCheckByType(SecurityDescriptor, PrincipalSelfSid, ClientToken, DesiredAccess, ObjectTypeList,
+                               ObjectTypeListLength, GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess,
+                               AccessStatus,
+                               TRUE); // Return an array of GrantedAccess and AccessStatus
 }
 
 
-
-
-
-
 NTSTATUS
-SeAccessCheckByType (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN HANDLE ClientToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    OUT PPRIVILEGE_SET PrivilegeSet,
-    IN OUT PULONG PrivilegeSetLength,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus,
-    IN BOOLEAN ReturnResultList
-    )
+SeAccessCheckByType(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid, IN HANDLE ClientToken,
+                    IN ACCESS_MASK DesiredAccess, IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
+                    IN ULONG ObjectTypeListLength, IN PGENERIC_MAPPING GenericMapping, OUT PPRIVILEGE_SET PrivilegeSet,
+                    IN OUT PULONG PrivilegeSetLength, OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus,
+                    IN BOOLEAN ReturnResultList)
 
 
 /*++
@@ -2923,74 +2814,63 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode == KernelMode) {
-        ASSERT( !ReturnResultList );
+    if (PreviousMode == KernelMode)
+    {
+        ASSERT(!ReturnResultList);
         *AccessStatus = STATUS_SUCCESS;
         *GrantedAccess = DesiredAccess;
-        return(STATUS_SUCCESS);
+        return (STATUS_SUCCESS);
     }
 
-    try {
+    try
+    {
 
-        if ( ReturnResultList ) {
+        if (ReturnResultList)
+        {
 
-            if ( ObjectTypeListLength == 0 ) {
-                Status = STATUS_INVALID_PARAMETER;
-                leave ;
-            }
-
-            if ( !IsValidElementCount( ObjectTypeListLength, OBJECT_TYPE_LIST ) )
+            if (ObjectTypeListLength == 0)
             {
-                Status = STATUS_INVALID_PARAMETER ;
-
-                leave ;
+                Status = STATUS_INVALID_PARAMETER;
+                leave;
             }
 
-            ProbeForWrite(
-                AccessStatus,
-                sizeof(NTSTATUS) * ObjectTypeListLength,
-                sizeof(ULONG)
-                );
+            if (!IsValidElementCount(ObjectTypeListLength, OBJECT_TYPE_LIST))
+            {
+                Status = STATUS_INVALID_PARAMETER;
 
-            ProbeForWrite(
-                GrantedAccess,
-                sizeof(ACCESS_MASK) * ObjectTypeListLength,
-                sizeof(ULONG)
-                );
+                leave;
+            }
 
-        } else {
+            ProbeForWrite(AccessStatus, sizeof(NTSTATUS) * ObjectTypeListLength, sizeof(ULONG));
+
+            ProbeForWrite(GrantedAccess, sizeof(ACCESS_MASK) * ObjectTypeListLength, sizeof(ULONG));
+        }
+        else
+        {
             ProbeForWriteUlong((PULONG)AccessStatus);
             ProbeForWriteUlong((PULONG)GrantedAccess);
         }
 
-        LocalPrivilegeSetLength = ProbeAndReadUlong( PrivilegeSetLength );
-        ProbeForWriteUlong(
-            PrivilegeSetLength
-            );
+        LocalPrivilegeSetLength = ProbeAndReadUlong(PrivilegeSetLength);
+        ProbeForWriteUlong(PrivilegeSetLength);
 
-        ProbeForWrite(
-            PrivilegeSet,
-            LocalPrivilegeSetLength,
-            sizeof(ULONG)
-            );
+        ProbeForWrite(PrivilegeSet, LocalPrivilegeSetLength, sizeof(ULONG));
 
-        ProbeForReadSmallStructure(
-            GenericMapping,
-            sizeof(GENERIC_MAPPING),
-            sizeof(ULONG)
-            );
+        ProbeForReadSmallStructure(GenericMapping, sizeof(GENERIC_MAPPING), sizeof(ULONG));
 
         LocalGenericMapping = *GenericMapping;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
-    if (!NT_SUCCESS( Status ) ) {
-        return( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
-    if (DesiredAccess &
-        ( GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL )) {
+    if (DesiredAccess & (GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL))
+    {
 
 
         Status = STATUS_GENERIC_NOT_MAPPED;
@@ -3001,16 +2881,16 @@ Return Value:
     // Obtain a pointer to the passed token
     //
 
-    Status = ObReferenceObjectByHandle(
-                 ClientToken,                  // Handle
-                 (ACCESS_MASK)TOKEN_QUERY,     // DesiredAccess
-                 SeTokenObjectType,           // ObjectType
-                 PreviousMode,                 // AccessMode
-                 (PVOID *)&Token,              // Object
-                 0                             // GrantedAccess
-                 );
+    Status = ObReferenceObjectByHandle(ClientToken,              // Handle
+                                       (ACCESS_MASK)TOKEN_QUERY, // DesiredAccess
+                                       SeTokenObjectType,        // ObjectType
+                                       PreviousMode,             // AccessMode
+                                       (PVOID *)&Token,          // Object
+                                       0                         // GrantedAccess
+    );
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         Token = NULL;
         goto Cleanup;
     }
@@ -3020,12 +2900,14 @@ Return Value:
     // level of Identification or above.
     //
 
-    if (Token->TokenType != TokenImpersonation) {
+    if (Token->TokenType != TokenImpersonation)
+    {
         Status = STATUS_NO_IMPERSONATION_TOKEN;
         goto Cleanup;
     }
 
-    if ( Token->ImpersonationLevel < SecurityIdentification ) {
+    if (Token->ImpersonationLevel < SecurityIdentification)
+    {
         Status = STATUS_BAD_IMPERSONATION_LEVEL;
         goto Cleanup;
     }
@@ -3034,12 +2916,10 @@ Return Value:
     // Capture any Object type list
     //
 
-    Status = SeCaptureObjectTypeList( ObjectTypeList,
-                                      ObjectTypeListLength,
-                                      PreviousMode,
-                                      &LocalObjectTypeList );
+    Status = SeCaptureObjectTypeList(ObjectTypeList, ObjectTypeListLength, PreviousMode, &LocalObjectTypeList);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto Cleanup;
     }
 
@@ -3050,33 +2930,33 @@ Return Value:
     // we don't have a privilege we need.
     //
 
-    Status = SePrivilegePolicyCheck(
-                 &DesiredAccess,
-                 &PreviouslyGrantedAccess,
-                 NULL,
-                 (PACCESS_TOKEN)Token,
-                 &Privileges,
-                 PreviousMode
-                 );
+    Status = SePrivilegePolicyCheck(&DesiredAccess, &PreviouslyGrantedAccess, NULL, (PACCESS_TOKEN)Token, &Privileges,
+                                    PreviousMode);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        try {
+        try
+        {
 
-            if ( ReturnResultList ) {
-                for ( ResultListIndex=0; ResultListIndex<ObjectTypeListLength; ResultListIndex++ ) {
+            if (ReturnResultList)
+            {
+                for (ResultListIndex = 0; ResultListIndex < ObjectTypeListLength; ResultListIndex++)
+                {
                     AccessStatus[ResultListIndex] = Status;
                     GrantedAccess[ResultListIndex] = 0;
                 }
-
-            } else {
+            }
+            else
+            {
                 *AccessStatus = Status;
                 *GrantedAccess = 0;
             }
 
             Status = STATUS_SUCCESS;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
@@ -3089,58 +2969,64 @@ Return Value:
     // whatever we have to put into it.
     //
 
-    if (Privileges != NULL) {
+    if (Privileges != NULL)
+    {
 
-        if ( ((ULONG)SepPrivilegeSetSize( Privileges )) > LocalPrivilegeSetLength ) {
+        if (((ULONG)SepPrivilegeSetSize(Privileges)) > LocalPrivilegeSetLength)
+        {
 
-            try {
+            try
+            {
 
-                *PrivilegeSetLength = SepPrivilegeSetSize( Privileges );
+                *PrivilegeSetLength = SepPrivilegeSetSize(Privileges);
                 Status = STATUS_BUFFER_TOO_SMALL;
-
-            } except ( EXCEPTION_EXECUTE_HANDLER ) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 Status = GetExceptionCode();
             }
 
-            SeFreePrivileges( Privileges );
+            SeFreePrivileges(Privileges);
 
             goto Cleanup;
+        }
+        else
+        {
 
-        } else {
+            try
+            {
 
-            try {
+                RtlCopyMemory(PrivilegeSet, Privileges, SepPrivilegeSetSize(Privileges));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
-                RtlCopyMemory(
-                    PrivilegeSet,
-                    Privileges,
-                    SepPrivilegeSetSize( Privileges )
-                    );
-
-            } except ( EXCEPTION_EXECUTE_HANDLER ) {
-
-                SeFreePrivileges( Privileges );
+                SeFreePrivileges(Privileges);
                 Status = GetExceptionCode();
                 goto Cleanup;
             }
-
         }
-        SeFreePrivileges( Privileges );
-
-    } else {
+        SeFreePrivileges(Privileges);
+    }
+    else
+    {
 
         //
         // No privileges were used, construct an empty privilege set
         //
 
-        if ( LocalPrivilegeSetLength < sizeof(PRIVILEGE_SET) ) {
+        if (LocalPrivilegeSetLength < sizeof(PRIVILEGE_SET))
+        {
 
-            try {
+            try
+            {
 
                 *PrivilegeSetLength = sizeof(PRIVILEGE_SET);
                 Status = STATUS_BUFFER_TOO_SMALL;
-
-            } except ( EXCEPTION_EXECUTE_HANDLER ) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 Status = GetExceptionCode();
             }
@@ -3148,34 +3034,30 @@ Return Value:
             goto Cleanup;
         }
 
-        try {
+        try
+        {
 
             PrivilegeSet->PrivilegeCount = 0;
             PrivilegeSet->Control = 0;
-
-        } except ( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
             goto Cleanup;
-
         }
-
     }
 
     //
     // Capture the PrincipalSelfSid.
     //
 
-    if ( PrincipalSelfSid != NULL ) {
-        Status = SeCaptureSid(
-                     PrincipalSelfSid,
-                     PreviousMode,
-                     NULL, 0,
-                     PagedPool,
-                     TRUE,
-                     &CapturedPrincipalSelfSid );
+    if (PrincipalSelfSid != NULL)
+    {
+        Status = SeCaptureSid(PrincipalSelfSid, PreviousMode, NULL, 0, PagedPool, TRUE, &CapturedPrincipalSelfSid);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             CapturedPrincipalSelfSid = NULL;
             goto Cleanup;
         }
@@ -3189,15 +3071,11 @@ Return Value:
     // so we don't have to
     //
 
-    Status = SeCaptureSecurityDescriptor (
-                SecurityDescriptor,
-                PreviousMode,
-                PagedPool,
-                FALSE,
-                &CapturedSecurityDescriptor
-                );
+    Status =
+        SeCaptureSecurityDescriptor(SecurityDescriptor, PreviousMode, PagedPool, FALSE, &CapturedSecurityDescriptor);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto Cleanup;
     }
 
@@ -3208,7 +3086,8 @@ Return Value:
     // Return invalid security descriptor.
     //
 
-    if ( CapturedSecurityDescriptor == NULL ) {
+    if (CapturedSecurityDescriptor == NULL)
+    {
         Status = STATUS_INVALID_SECURITY_DESCR;
         goto Cleanup;
     }
@@ -3217,27 +3096,20 @@ Return Value:
     // A valid security descriptor must have an owner and a group
     //
 
-    if ( RtlpOwnerAddrSecurityDescriptor(
-                (PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor
-                ) == NULL ||
-         RtlpGroupAddrSecurityDescriptor(
-                (PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor
-                ) == NULL ) {
+    if (RtlpOwnerAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor) == NULL ||
+        RtlpGroupAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor) == NULL)
+    {
 
-        SeReleaseSecurityDescriptor (
-            CapturedSecurityDescriptor,
-            PreviousMode,
-            FALSE
-            );
+        SeReleaseSecurityDescriptor(CapturedSecurityDescriptor, PreviousMode, FALSE);
 
         Status = STATUS_INVALID_SECURITY_DESCR;
         goto Cleanup;
     }
 
 
-    SeCaptureSubjectContext( &SubjectContext );
+    SeCaptureSubjectContext(&SubjectContext);
 
-    SepAcquireTokenReadLock( Token );
+    SepAcquireTokenReadLock(Token);
 
     //
     // If the user in the token is the owner of the object, we
@@ -3248,59 +3120,62 @@ Return Value:
     //
 
 
-    if ( DesiredAccess & (WRITE_DAC | READ_CONTROL | MAXIMUM_ALLOWED) ) {
+    if (DesiredAccess & (WRITE_DAC | READ_CONTROL | MAXIMUM_ALLOWED))
+    {
 
-        if (SepTokenIsOwner( Token, CapturedSecurityDescriptor, TRUE )) {
+        if (SepTokenIsOwner(Token, CapturedSecurityDescriptor, TRUE))
+        {
 
-            if ( DesiredAccess & MAXIMUM_ALLOWED ) {
+            if (DesiredAccess & MAXIMUM_ALLOWED)
+            {
 
                 PreviouslyGrantedAccess |= (WRITE_DAC | READ_CONTROL);
-
-            } else {
+            }
+            else
+            {
 
                 PreviouslyGrantedAccess |= (DesiredAccess & (WRITE_DAC | READ_CONTROL));
             }
 
             DesiredAccess &= ~(WRITE_DAC | READ_CONTROL);
         }
-
     }
 
-    if (DesiredAccess == 0) {
+    if (DesiredAccess == 0)
+    {
 
-        try {
+        try
+        {
 
 
-            if ( ReturnResultList ) {
-                for ( ResultListIndex=0; ResultListIndex<ObjectTypeListLength; ResultListIndex++ ) {
+            if (ReturnResultList)
+            {
+                for (ResultListIndex = 0; ResultListIndex < ObjectTypeListLength; ResultListIndex++)
+                {
                     AccessStatus[ResultListIndex] = STATUS_SUCCESS;
                     GrantedAccess[ResultListIndex] = PreviouslyGrantedAccess;
                 }
-
-            } else {
+            }
+            else
+            {
                 *AccessStatus = STATUS_SUCCESS;
                 *GrantedAccess = PreviouslyGrantedAccess;
             }
             Status = STATUS_SUCCESS;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
-
         }
 
-        SepReleaseTokenReadLock( Token );
+        SepReleaseTokenReadLock(Token);
 
-        SeReleaseSubjectContext( &SubjectContext );
+        SeReleaseSubjectContext(&SubjectContext);
 
-        SeReleaseSecurityDescriptor (
-            CapturedSecurityDescriptor,
-            PreviousMode,
-            FALSE
-            );
+        SeReleaseSecurityDescriptor(CapturedSecurityDescriptor, PreviousMode, FALSE);
 
         goto Cleanup;
-
     }
 
 
@@ -3308,29 +3183,29 @@ Return Value:
     // Finally, handle the case where we actually have to check the DACL.
     //
 
-    if ( ReturnResultList ) {
+    if (ReturnResultList)
+    {
         LocalGrantedAccessPointer =
-            ExAllocatePoolWithTag( PagedPool, (sizeof(ACCESS_MASK)+sizeof(NTSTATUS)) * ObjectTypeListLength, 'aGeS' );
+            ExAllocatePoolWithTag(PagedPool, (sizeof(ACCESS_MASK) + sizeof(NTSTATUS)) * ObjectTypeListLength, 'aGeS');
 
-        if (LocalGrantedAccessPointer == NULL) {
+        if (LocalGrantedAccessPointer == NULL)
+        {
 
-            SepReleaseTokenReadLock( Token );
+            SepReleaseTokenReadLock(Token);
 
-            SeReleaseSubjectContext( &SubjectContext );
+            SeReleaseSubjectContext(&SubjectContext);
 
-            SeReleaseSecurityDescriptor (
-                CapturedSecurityDescriptor,
-                PreviousMode,
-                FALSE
-                );
+            SeReleaseSecurityDescriptor(CapturedSecurityDescriptor, PreviousMode, FALSE);
 
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto Cleanup;
         }
         LocalAccessStatusPointer = (PNTSTATUS)(LocalGrantedAccessPointer + ObjectTypeListLength);
-    } else {
+    }
+    else
+    {
         LocalGrantedAccessPointer = &LocalGrantedAccess;
-        LocalAccessStatusPointer =  &LocalAccessStatus;
+        LocalAccessStatusPointer = &LocalAccessStatus;
     }
 
     //
@@ -3338,56 +3213,46 @@ Return Value:
     // the return value of the call.
     //
 
-    (VOID) SepAccessCheck (
-               CapturedSecurityDescriptor,
-               CapturedPrincipalSelfSid,
-               SubjectContext.PrimaryToken,
-               Token,
-               DesiredAccess,
-               LocalObjectTypeList,
-               ObjectTypeListLength,
-               &LocalGenericMapping,
-               PreviouslyGrantedAccess,
-               PreviousMode,
-               LocalGrantedAccessPointer,
-               NULL,
-               LocalAccessStatusPointer,
-               ReturnResultList,
-               NULL,
-               NULL );
+    (VOID) SepAccessCheck(CapturedSecurityDescriptor, CapturedPrincipalSelfSid, SubjectContext.PrimaryToken, Token,
+                          DesiredAccess, LocalObjectTypeList, ObjectTypeListLength, &LocalGenericMapping,
+                          PreviouslyGrantedAccess, PreviousMode, LocalGrantedAccessPointer, NULL,
+                          LocalAccessStatusPointer, ReturnResultList, NULL, NULL);
 
-    SepReleaseTokenReadLock( Token );
+    SepReleaseTokenReadLock(Token);
 
-    SeReleaseSubjectContext( &SubjectContext );
+    SeReleaseSubjectContext(&SubjectContext);
 
-    SeReleaseSecurityDescriptor (
-        CapturedSecurityDescriptor,
-        PreviousMode,
-        FALSE
-        );
+    SeReleaseSecurityDescriptor(CapturedSecurityDescriptor, PreviousMode, FALSE);
 
-    try {
+    try
+    {
 
-        if ( ReturnResultList ) {
-            for ( ResultListIndex=0; ResultListIndex<ObjectTypeListLength; ResultListIndex++ ) {
+        if (ReturnResultList)
+        {
+            for (ResultListIndex = 0; ResultListIndex < ObjectTypeListLength; ResultListIndex++)
+            {
                 AccessStatus[ResultListIndex] = LocalAccessStatusPointer[ResultListIndex];
                 GrantedAccess[ResultListIndex] = LocalGrantedAccessPointer[ResultListIndex];
             }
-
-        } else {
+        }
+        else
+        {
             *AccessStatus = *LocalAccessStatusPointer;
             *GrantedAccess = *LocalGrantedAccessPointer;
         }
 
         Status = STATUS_SUCCESS;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
-    if ( ReturnResultList ) {
-        if ( LocalGrantedAccessPointer != NULL ) {
-            ExFreePool( LocalGrantedAccessPointer );
+    if (ReturnResultList)
+    {
+        if (LocalGrantedAccessPointer != NULL)
+        {
+            ExFreePool(LocalGrantedAccessPointer);
         }
     }
 
@@ -3397,27 +3262,26 @@ Return Value:
     //
 Cleanup:
 
-    if ( Token != NULL ) {
-        ObDereferenceObject( Token );
+    if (Token != NULL)
+    {
+        ObDereferenceObject(Token);
     }
 
-    if ( LocalObjectTypeList != NULL ) {
-        SeFreeCapturedObjectTypeList( LocalObjectTypeList );
+    if (LocalObjectTypeList != NULL)
+    {
+        SeFreeCapturedObjectTypeList(LocalObjectTypeList);
     }
 
-    if (CapturedPrincipalSelfSid != NULL) {
-        SeReleaseSid( CapturedPrincipalSelfSid, PreviousMode, TRUE);
+    if (CapturedPrincipalSelfSid != NULL)
+    {
+        SeReleaseSid(CapturedPrincipalSelfSid, PreviousMode, TRUE);
     }
 
     return Status;
 }
 
 
-
-VOID
-SeFreePrivileges(
-    IN PPRIVILEGE_SET Privileges
-    )
+VOID SeFreePrivileges(IN PPRIVILEGE_SET Privileges)
 
 /*++
 
@@ -3438,24 +3302,15 @@ Return Value:
 {
     PAGED_CODE();
 
-    ExFreePool( Privileges );
+    ExFreePool(Privileges);
 }
 
 
-
 BOOLEAN
-SeAccessCheck (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
-    IN BOOLEAN SubjectContextLocked,
-    IN ACCESS_MASK DesiredAccess,
-    IN ACCESS_MASK PreviouslyGrantedAccess,
-    OUT PPRIVILEGE_SET *Privileges OPTIONAL,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus
-    )
+SeAccessCheck(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
+              IN BOOLEAN SubjectContextLocked, IN ACCESS_MASK DesiredAccess, IN ACCESS_MASK PreviouslyGrantedAccess,
+              OUT PPRIVILEGE_SET *Privileges OPTIONAL, IN PGENERIC_MAPPING GenericMapping,
+              IN KPROCESSOR_MODE AccessMode, OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus)
 
 /*++
 
@@ -3522,9 +3377,11 @@ Return Value:
 
     PAGED_CODE();
 
-    if (AccessMode == KernelMode) {
+    if (AccessMode == KernelMode)
+    {
 
-        if (DesiredAccess & MAXIMUM_ALLOWED) {
+        if (DesiredAccess & MAXIMUM_ALLOWED)
+        {
 
             //
             // Give him:
@@ -3535,13 +3392,14 @@ Return Value:
             *GrantedAccess = GenericMapping->GenericAll;
             *GrantedAccess |= (DesiredAccess & ~MAXIMUM_ALLOWED);
             *GrantedAccess |= PreviouslyGrantedAccess;
-
-        } else {
+        }
+        else
+        {
 
             *GrantedAccess = DesiredAccess | PreviouslyGrantedAccess;
         }
         *AccessStatus = STATUS_SUCCESS;
-        return(TRUE);
+        return (TRUE);
     }
 
     //
@@ -3549,11 +3407,11 @@ Return Value:
     // to), return access denied.
     //
 
-    if ( SecurityDescriptor == NULL) {
+    if (SecurityDescriptor == NULL)
+    {
 
-       *AccessStatus = STATUS_ACCESS_DENIED;
-       return( FALSE );
-
+        *AccessStatus = STATUS_ACCESS_DENIED;
+        return (FALSE);
     }
 
     //
@@ -3561,28 +3419,29 @@ Return Value:
     // of SecurityImpersonation or above.
     //
 
-    if ( (SubjectSecurityContext->ClientToken != NULL) &&
-         (SubjectSecurityContext->ImpersonationLevel < SecurityImpersonation)
-       ) {
-           *AccessStatus = STATUS_BAD_IMPERSONATION_LEVEL;
-           return( FALSE );
+    if ((SubjectSecurityContext->ClientToken != NULL) &&
+        (SubjectSecurityContext->ImpersonationLevel < SecurityImpersonation))
+    {
+        *AccessStatus = STATUS_BAD_IMPERSONATION_LEVEL;
+        return (FALSE);
     }
 
-    if ( DesiredAccess == 0 ) {
+    if (DesiredAccess == 0)
+    {
 
-        if ( PreviouslyGrantedAccess == 0 ) {
+        if (PreviouslyGrantedAccess == 0)
+        {
             *AccessStatus = STATUS_ACCESS_DENIED;
-            return( FALSE );
+            return (FALSE);
         }
 
         *GrantedAccess = PreviouslyGrantedAccess;
         *AccessStatus = STATUS_SUCCESS;
         *Privileges = NULL;
-        return( TRUE );
-
+        return (TRUE);
     }
 
-    SeAssertMappedCanonicalAccess( DesiredAccess );
+    SeAssertMappedCanonicalAccess(DesiredAccess);
 
 
     //
@@ -3591,8 +3450,9 @@ Return Value:
     // to lock it.
     //
 
-    if ( !SubjectContextLocked ) {
-        SeLockSubjectContext( SubjectSecurityContext );
+    if (!SubjectContextLocked)
+    {
+        SeLockSubjectContext(SubjectSecurityContext);
     }
 
     //
@@ -3603,19 +3463,19 @@ Return Value:
     // access checking (ref section 4, DSA ACL Arch)
     //
 
-    if ( DesiredAccess & (WRITE_DAC | READ_CONTROL | MAXIMUM_ALLOWED) ) {
+    if (DesiredAccess & (WRITE_DAC | READ_CONTROL | MAXIMUM_ALLOWED))
+    {
 
-        if ( SepTokenIsOwner(
-                 EffectiveToken( SubjectSecurityContext ),
-                 SecurityDescriptor,
-                 TRUE
-                 ) ) {
+        if (SepTokenIsOwner(EffectiveToken(SubjectSecurityContext), SecurityDescriptor, TRUE))
+        {
 
-            if ( DesiredAccess & MAXIMUM_ALLOWED ) {
+            if (DesiredAccess & MAXIMUM_ALLOWED)
+            {
 
                 PreviouslyGrantedAccess |= (WRITE_DAC | READ_CONTROL);
-
-            } else {
+            }
+            else
+            {
 
                 PreviouslyGrantedAccess |= (DesiredAccess & (WRITE_DAC | READ_CONTROL));
             }
@@ -3624,50 +3484,41 @@ Return Value:
         }
     }
 
-    if (DesiredAccess == 0) {
+    if (DesiredAccess == 0)
+    {
 
-        if ( !SubjectContextLocked ) {
-            SeUnlockSubjectContext( SubjectSecurityContext );
+        if (!SubjectContextLocked)
+        {
+            SeUnlockSubjectContext(SubjectSecurityContext);
         }
 
         *GrantedAccess = PreviouslyGrantedAccess;
         *AccessStatus = STATUS_SUCCESS;
-        return( TRUE );
+        return (TRUE);
+    }
+    else
+    {
 
-    } else {
-
-        BOOLEAN b = SepAccessCheck(
-                        SecurityDescriptor,
-                        NULL,   // No PrincipalSelfSid
-                        SubjectSecurityContext->PrimaryToken,
-                        SubjectSecurityContext->ClientToken,
-                        DesiredAccess,
-                        NULL,   // No object type list
-                        0,      // No object type list
-                        GenericMapping,
-                        PreviouslyGrantedAccess,
-                        AccessMode,
-                        GrantedAccess,
-                        Privileges,
-                        AccessStatus,
-                        FALSE,   // Don't return a list
-                        &Success,
-                        NULL
-                        );
+        BOOLEAN b =
+            SepAccessCheck(SecurityDescriptor,
+                           NULL, // No PrincipalSelfSid
+                           SubjectSecurityContext->PrimaryToken, SubjectSecurityContext->ClientToken, DesiredAccess,
+                           NULL, // No object type list
+                           0,    // No object type list
+                           GenericMapping, PreviouslyGrantedAccess, AccessMode, GrantedAccess, Privileges, AccessStatus,
+                           FALSE, // Don't return a list
+                           &Success, NULL);
 #if DBG
-          if (!Success && SepShowAccessFail) {
-              DbgPrint("SE: Access check failed, DesiredAccess = 0x%x\n",
-                DesiredAccess);
-              SepDumpSD = TRUE;
-              SepDumpSecurityDescriptor(
-                  SecurityDescriptor,
-                  "Input to SeAccessCheck\n"
-                  );
-              SepDumpSD = FALSE;
-              SepDumpToken = TRUE;
-              SepDumpTokenInfo( EffectiveToken( SubjectSecurityContext ) );
-              SepDumpToken = FALSE;
-          }
+        if (!Success && SepShowAccessFail)
+        {
+            DbgPrint("SE: Access check failed, DesiredAccess = 0x%x\n", DesiredAccess);
+            SepDumpSD = TRUE;
+            SepDumpSecurityDescriptor(SecurityDescriptor, "Input to SeAccessCheck\n");
+            SepDumpSD = FALSE;
+            SepDumpToken = TRUE;
+            SepDumpTokenInfo(EffectiveToken(SubjectSecurityContext));
+            SepDumpToken = FALSE;
+        }
 #endif
 
         //
@@ -3675,33 +3526,29 @@ Return Value:
         // leave.
         //
 
-        if ( !SubjectContextLocked ) {
-            SeUnlockSubjectContext( SubjectSecurityContext );
+        if (!SubjectContextLocked)
+        {
+            SeUnlockSubjectContext(SubjectSecurityContext);
         }
 
         //
         // We return failure if any of the following is TRUE
         //   1. The user was really not granted access.
-        //   2. The resource manager asked for the list of privileges used to 
-        //      determine granted access and we failed to allocate memory 
+        //   2. The resource manager asked for the list of privileges used to
+        //      determine granted access and we failed to allocate memory
         //      required to return these.
-        //     
+        //
 
-        return( b && Success );
+        return (b && Success);
     }
 }
 
 
-
 NTSTATUS
-SePrivilegePolicyCheck(
-    IN OUT PACCESS_MASK RemainingDesiredAccess,
-    IN OUT PACCESS_MASK PreviouslyGrantedAccess,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext OPTIONAL,
-    IN PACCESS_TOKEN ExplicitToken OPTIONAL,
-    OUT PPRIVILEGE_SET *PrivilegeSet,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+SePrivilegePolicyCheck(IN OUT PACCESS_MASK RemainingDesiredAccess, IN OUT PACCESS_MASK PreviouslyGrantedAccess,
+                       IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext OPTIONAL,
+                       IN PACCESS_TOKEN ExplicitToken OPTIONAL, OUT PPRIVILEGE_SET *PrivilegeSet,
+                       IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -3757,27 +3604,27 @@ Return Value:
 
     PAGED_CODE();
 
-    if (ARGUMENT_PRESENT( SubjectSecurityContext )) {
+    if (ARGUMENT_PRESENT(SubjectSecurityContext))
+    {
 
-        Token = (PTOKEN)EffectiveToken( SubjectSecurityContext );
-
-    } else {
+        Token = (PTOKEN)EffectiveToken(SubjectSecurityContext);
+    }
+    else
+    {
 
         Token = (PTOKEN)ExplicitToken;
     }
 
 
-    if (*RemainingDesiredAccess & ACCESS_SYSTEM_SECURITY) {
+    if (*RemainingDesiredAccess & ACCESS_SYSTEM_SECURITY)
+    {
 
-        Success = SepSinglePrivilegeCheck (
-                    SeSecurityPrivilege,
-                    Token,
-                    PreviousMode
-                    );
+        Success = SepSinglePrivilegeCheck(SeSecurityPrivilege, Token, PreviousMode);
 
-        if (!Success) {
+        if (!Success)
+        {
 
-            return( STATUS_PRIVILEGE_NOT_HELD );
+            return (STATUS_PRIVILEGE_NOT_HELD);
         }
 
         PrivilegeCount++;
@@ -3787,62 +3634,56 @@ Return Value:
         *PreviouslyGrantedAccess |= ACCESS_SYSTEM_SECURITY;
     }
 
-    if (*RemainingDesiredAccess & WRITE_OWNER) {
+    if (*RemainingDesiredAccess & WRITE_OWNER)
+    {
 
-        Success = SepSinglePrivilegeCheck (
-                    SeTakeOwnershipPrivilege,
-                    Token,
-                    PreviousMode
-                    );
+        Success = SepSinglePrivilegeCheck(SeTakeOwnershipPrivilege, Token, PreviousMode);
 
-        if (Success) {
+        if (Success)
+        {
 
             PrivilegeCount++;
             WriteOwner = TRUE;
 
             *RemainingDesiredAccess &= ~WRITE_OWNER;
             *PreviouslyGrantedAccess |= WRITE_OWNER;
-
         }
     }
 
-    if (PrivilegeCount > 0) {
-        SizeRequired = sizeof(PRIVILEGE_SET) +
-                        (PrivilegeCount - ANYSIZE_ARRAY) *
-                        (ULONG)sizeof(LUID_AND_ATTRIBUTES);
+    if (PrivilegeCount > 0)
+    {
+        SizeRequired = sizeof(PRIVILEGE_SET) + (PrivilegeCount - ANYSIZE_ARRAY) * (ULONG)sizeof(LUID_AND_ATTRIBUTES);
 
-        *PrivilegeSet = ExAllocatePoolWithTag( PagedPool, SizeRequired, 'rPeS' );
+        *PrivilegeSet = ExAllocatePoolWithTag(PagedPool, SizeRequired, 'rPeS');
 
-        if ( *PrivilegeSet == NULL ) {
-            return( STATUS_INSUFFICIENT_RESOURCES );
+        if (*PrivilegeSet == NULL)
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
         (*PrivilegeSet)->PrivilegeCount = PrivilegeCount;
         (*PrivilegeSet)->Control = 0;
 
-        if (WriteOwner) {
+        if (WriteOwner)
+        {
             (*PrivilegeSet)->Privilege[PrivilegeNumber].Luid = SeTakeOwnershipPrivilege;
             (*PrivilegeSet)->Privilege[PrivilegeNumber].Attributes = SE_PRIVILEGE_USED_FOR_ACCESS;
             PrivilegeNumber++;
         }
 
-        if (SystemSecurity) {
+        if (SystemSecurity)
+        {
             (*PrivilegeSet)->Privilege[PrivilegeNumber].Luid = SeSecurityPrivilege;
             (*PrivilegeSet)->Privilege[PrivilegeNumber].Attributes = SE_PRIVILEGE_USED_FOR_ACCESS;
         }
     }
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
 
-
 BOOLEAN
-SepTokenIsOwner(
-    IN PACCESS_TOKEN EffectiveToken,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN BOOLEAN TokenLocked
-    )
+SepTokenIsOwner(IN PACCESS_TOKEN EffectiveToken, IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN BOOLEAN TokenLocked)
 
 /*++
 
@@ -3885,40 +3726,36 @@ Return Value:
     Token = (PTOKEN)EffectiveToken;
 
 
-    Owner = RtlpOwnerAddrSecurityDescriptor( ISecurityDescriptor );
-    ASSERT( Owner != NULL );
+    Owner = RtlpOwnerAddrSecurityDescriptor(ISecurityDescriptor);
+    ASSERT(Owner != NULL);
 
-    if (!TokenLocked) {
-        SepAcquireTokenReadLock( Token );
+    if (!TokenLocked)
+    {
+        SepAcquireTokenReadLock(Token);
     }
 
-    rc = SepSidInToken( Token, NULL, Owner, FALSE );
+    rc = SepSidInToken(Token, NULL, Owner, FALSE);
 
     //
     // For restricted tokens, check the restricted sids too.
     //
 
-    if (rc && (Token->TokenFlags & TOKEN_IS_RESTRICTED) != 0) {
-        rc = SepSidInTokenEx( Token, NULL, Owner, FALSE, TRUE );
-
+    if (rc && (Token->TokenFlags & TOKEN_IS_RESTRICTED) != 0)
+    {
+        rc = SepSidInTokenEx(Token, NULL, Owner, FALSE, TRUE);
     }
 
-    if (!TokenLocked) {
-        SepReleaseTokenReadLock( Token );
+    if (!TokenLocked)
+    {
+        SepReleaseTokenReadLock(Token);
     }
 
-    return( rc );
+    return (rc);
 }
 
 
-
-
 BOOLEAN
-SeFastTraverseCheck(
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    ACCESS_MASK TraverseAccess,
-    KPROCESSOR_MODE AccessMode
-    )
+SeFastTraverseCheck(PSECURITY_DESCRIPTOR SecurityDescriptor, ACCESS_MASK TraverseAccess, KPROCESSOR_MODE AccessMode)
 /*++
 
 Routine Description:
@@ -3957,12 +3794,14 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( AccessMode == KernelMode ) {
-        return( TRUE );
+    if (AccessMode == KernelMode)
+    {
+        return (TRUE);
     }
 
-    if (SecurityDescriptor == NULL) {
-        return( FALSE );
+    if (SecurityDescriptor == NULL)
+    {
+        return (FALSE);
     }
 
     //
@@ -3970,7 +3809,7 @@ Return Value:
     // No DACL, no security, all is granted.
     //
 
-    Dacl = RtlpDaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)SecurityDescriptor );
+    Dacl = RtlpDaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)SecurityDescriptor);
 
     //
     //  If the SE_DACL_PRESENT bit is not set, the object has no
@@ -3979,12 +3818,10 @@ Return Value:
     //  Also grant all access if the Dacl is NULL.
     //
 
-    if ( !RtlpAreControlBitsSet(
-            (PISECURITY_DESCRIPTOR)SecurityDescriptor, SE_DACL_PRESENT
-            )
-         || (Dacl == NULL)) {
+    if (!RtlpAreControlBitsSet((PISECURITY_DESCRIPTOR)SecurityDescriptor, SE_DACL_PRESENT) || (Dacl == NULL))
+    {
 
-        return(TRUE);
+        return (TRUE);
     }
 
     //
@@ -3992,9 +3829,10 @@ Return Value:
     // deny all access immediately
     //
 
-    if ((AceCount = Dacl->AceCount) == 0) {
+    if ((AceCount = Dacl->AceCount) == 0)
+    {
 
-        return( FALSE );
+        return (FALSE);
     }
 
     //
@@ -4002,32 +3840,38 @@ Return Value:
     // if WORLD has been granted TraverseAccess
     //
 
-    for ( i = 0, Ace = FirstAce( Dacl ) ;
-          i < AceCount  ;
-          i++, Ace = NextAce( Ace )
-        ) {
+    for (i = 0, Ace = FirstAce(Dacl); i < AceCount; i++, Ace = NextAce(Ace))
+    {
 
-        if ( !(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE)) {
+        if (!(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE))
+        {
 
-            if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE) ) {
+            if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE))
+            {
 
-                if ( (TraverseAccess & ((PACCESS_ALLOWED_ACE)Ace)->Mask) ) {
+                if ((TraverseAccess & ((PACCESS_ALLOWED_ACE)Ace)->Mask))
+                {
 
-                    if ( RtlEqualSid( SeWorldSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart ) ) {
+                    if (RtlEqualSid(SeWorldSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart))
+                    {
 
-                        return( TRUE );
+                        return (TRUE);
                     }
                 }
+            }
+            else
+            {
 
-            } else {
+                if ((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE))
+                {
 
-                if ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE) ) {
+                    if ((TraverseAccess & ((PACCESS_DENIED_ACE)Ace)->Mask))
+                    {
 
-                    if ( (TraverseAccess & ((PACCESS_DENIED_ACE)Ace)->Mask) ) {
+                        if (RtlEqualSid(SeWorldSid, &((PACCESS_DENIED_ACE)Ace)->SidStart))
+                        {
 
-                        if ( RtlEqualSid( SeWorldSid, &((PACCESS_DENIED_ACE)Ace)->SidStart ) ) {
-
-                            return( FALSE );
+                            return (FALSE);
                         }
                     }
                 }
@@ -4035,7 +3879,7 @@ Return Value:
         }
     }
 
-    return( FALSE );
+    return (FALSE);
 }
 
 #ifdef SE_NTFS_WORLD_CACHE
@@ -4056,13 +3900,8 @@ Note: Do not delete SeGetWorldRights. It might be used by NTFS in future.
 --*/
 
 
-
-VOID
-SeGetWorldRights (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PGENERIC_MAPPING GenericMapping,
-    OUT PACCESS_MASK GrantedAccess
-    )
+VOID SeGetWorldRights(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PGENERIC_MAPPING GenericMapping,
+                      OUT PACCESS_MASK GrantedAccess)
 /*++
 
 Routine Descriptions:
@@ -4103,7 +3942,7 @@ Return Value:
     // Get a pointer to the ACL.
     //
 
-    Dacl = RtlpDaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)SecurityDescriptor );
+    Dacl = RtlpDaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)SecurityDescriptor);
 
     //
     //  If the SE_DACL_PRESENT bit is not set, the object has no
@@ -4114,9 +3953,8 @@ Return Value:
     //  Also grant all access if the Dacl is NULL.
     //
 
-    if ( (Dacl == NULL) ||
-         !RtlpAreControlBitsSet( (PISECURITY_DESCRIPTOR)SecurityDescriptor,
-                                 SE_DACL_PRESENT) ) {
+    if ((Dacl == NULL) || !RtlpAreControlBitsSet((PISECURITY_DESCRIPTOR)SecurityDescriptor, SE_DACL_PRESENT))
+    {
 
 #ifndef SECURE_NULL_DACLS
 
@@ -4127,82 +3965,85 @@ Return Value:
         *GrantedAccess = GenericMapping->GenericAll;
 
 #endif //!SECURE_NULL_DACLS
-
-    } else {
+    }
+    else
+    {
 
         AceCount = Dacl->AceCount;
     }
 
-    for ( Index = 0, Ace = FirstAce( Dacl ), AlreadyDenied = 0 ;
-          Index < AceCount ;
-          Index += 1, Ace = NextAce( Ace )
-        ) {
+    for (Index = 0, Ace = FirstAce(Dacl), AlreadyDenied = 0; Index < AceCount; Index += 1, Ace = NextAce(Ace))
+    {
 
-        if ( !(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE)) {
+        if (!(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE))
+        {
 
-            if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE) ) {
+            if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_ACE_TYPE))
+            {
 
-                if ( RtlEqualSid( SeWorldSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart ) ) {
+                if (RtlEqualSid(SeWorldSid, &((PACCESS_ALLOWED_ACE)Ace)->SidStart))
+                {
 
                     //
                     // Only grant access types from this mask that have
                     // not already been denied
                     //
 
-                    *GrantedAccess |=
-                        (((PACCESS_ALLOWED_ACE)Ace)->Mask & ~AlreadyDenied);
+                    *GrantedAccess |= (((PACCESS_ALLOWED_ACE)Ace)->Mask & ~AlreadyDenied);
                 }
 
-             //
-             // Handle an object specific Access Allowed ACE
-             //
-             } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_OBJECT_ACE_TYPE) ) {
+                //
+                // Handle an object specific Access Allowed ACE
+                //
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_OBJECT_ACE_TYPE))
+            {
 
-                 //
-                 // If no object type is in the ACE,
-                 //  treat this as an ACCESS_ALLOWED_ACE.
-                 //
+                //
+                // If no object type is in the ACE,
+                //  treat this as an ACCESS_ALLOWED_ACE.
+                //
 
-                 if ( RtlObjectAceObjectType( Ace ) == NULL ) {
+                if (RtlObjectAceObjectType(Ace) == NULL)
+                {
 
-                     if ( RtlEqualSid( SeWorldSid, RtlObjectAceSid(Ace) ) ) {
+                    if (RtlEqualSid(SeWorldSid, RtlObjectAceSid(Ace)))
+                    {
 
-                         *GrantedAccess |=
-                             (((PACCESS_ALLOWED_ACE)Ace)->Mask & ~AlreadyDenied);
-                     }
+                        *GrantedAccess |= (((PACCESS_ALLOWED_ACE)Ace)->Mask & ~AlreadyDenied);
+                    }
+                }
+            }
+            else if ((((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE))
+            {
 
-                 }
+                if (RtlEqualSid(SeWorldSid, RtlCompoundAceClientSid(Ace)) &&
+                    RtlEqualSid(SeWorldSid, RtlCompoundAceServerSid(Ace)))
+                {
 
-             } else if ( (((PACE_HEADER)Ace)->AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE) ) {
+                    //
+                    // Only grant access types from this mask that have
+                    // not already been denied
+                    //
 
-                 if ( RtlEqualSid( SeWorldSid, RtlCompoundAceClientSid(Ace) ) &&
-                      RtlEqualSid( SeWorldSid, RtlCompoundAceServerSid(Ace) ) ) {
+                    *GrantedAccess |= (((PACCESS_ALLOWED_ACE)Ace)->Mask & ~AlreadyDenied);
+                }
+            }
+            else if (((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE)) ||
+                     ((((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_OBJECT_ACE_TYPE)))
+            {
 
-                     //
-                     // Only grant access types from this mask that have
-                     // not already been denied
-                     //
+                //
+                // We include all of the deny access ACE(s), regardless of to
+                // what SID they apply.
+                //
 
-                     *GrantedAccess |=
-                         (((PACCESS_ALLOWED_ACE)Ace)->Mask & ~AlreadyDenied);
-                 }
+                //
+                // Only deny access types from this mask that have
+                // not already been granted
+                //
 
-
-             } else if ( ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_ACE_TYPE) ) ||
-                         ( (((PACE_HEADER)Ace)->AceType == ACCESS_DENIED_OBJECT_ACE_TYPE) ) ) {
-
-                 //
-                 // We include all of the deny access ACE(s), regardless of to
-                 // what SID they apply.
-                 //
-
-                 //
-                 // Only deny access types from this mask that have
-                 // not already been granted
-                 //
-
-                 AlreadyDenied |= (((PACCESS_DENIED_ACE)Ace)->Mask & ~*GrantedAccess);
-
+                AlreadyDenied |= (((PACCESS_DENIED_ACE)Ace)->Mask & ~*GrantedAccess);
             }
         }
     }

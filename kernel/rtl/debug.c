@@ -32,12 +32,9 @@
 #include <ntdbg.h>
 
 #if !defined(BLDR_KERNEL_RUNTIME) || (defined(BLDR_KERNEL_RUNTIME) && defined(ENABLE_LOADER_DEBUG))
-
+
 ULONG
-DbgPrint(
-    IN PCHAR Format,
-    ...
-    )
+DbgPrint(IN PCHAR Format, ...)
 
 //++
 //
@@ -69,14 +66,9 @@ DbgPrint(
     va_start(arglist, Format);
     return vDbgPrintExWithPrefix("", -1, 0, Format, arglist);
 }
-
+
 ULONG
-DbgPrintEx(
-    IN ULONG ComponentId,
-    IN ULONG Level,
-    PCHAR Format,
-    ...
-    )
+DbgPrintEx(IN ULONG ComponentId, IN ULONG Level, PCHAR Format, ...)
 
 //++
 //
@@ -110,14 +102,9 @@ DbgPrintEx(
     va_start(arglist, Format);
     return vDbgPrintExWithPrefix("", ComponentId, Level, Format, arglist);
 }
-
+
 ULONG
-vDbgPrintEx(
-    IN ULONG ComponentId,
-    IN ULONG Level,
-    IN PCHAR Format,
-    va_list arglist
-    )
+vDbgPrintEx(IN ULONG ComponentId, IN ULONG Level, IN PCHAR Format, va_list arglist)
 
 //++
 //
@@ -148,15 +135,9 @@ vDbgPrintEx(
 
     return vDbgPrintExWithPrefix("", ComponentId, Level, Format, arglist);
 }
-
+
 ULONG
-vDbgPrintExWithPrefix(
-    IN PCH Prefix,
-    IN ULONG ComponentId,
-    IN ULONG Level,
-    IN PCHAR Format,
-    va_list arglist
-    )
+vDbgPrintExWithPrefix(IN PCH Prefix, IN ULONG ComponentId, IN ULONG Level, IN PCHAR Format, va_list arglist)
 
 //++
 //
@@ -200,8 +181,8 @@ vDbgPrintExWithPrefix(
 
 #if !defined(BLDR_KERNEL_RUNTIME)
 
-    if ((ComponentId != -1) &&
-        (NtQueryDebugFilterState(ComponentId, Level) == FALSE)) {
+    if ((ComponentId != -1) && (NtQueryDebugFilterState(ComponentId, Level) == FALSE))
+    {
         return STATUS_SUCCESS;
     }
 
@@ -209,7 +190,8 @@ vDbgPrintExWithPrefix(
 
 #if !defined(BLDR_KERNEL_RUNTIME) && !defined(NTOS_KERNEL_RUNTIME)
 
-    if (NtCurrentTeb()->InDbgPrint) {
+    if (NtCurrentTeb()->InDbgPrint)
+    {
         return STATUS_SUCCESS;
     }
     NtCurrentTeb()->InDbgPrint = TRUE;
@@ -220,11 +202,14 @@ vDbgPrintExWithPrefix(
     //
 
 #if !defined(BLDR_KERNEL_RUNTIME)
-    try {
+    try
+    {
         cb = strlen(Prefix);
         strcpy(Buffer, Prefix);
-        cb = _vsnprintf(Buffer + cb , sizeof(Buffer) - cb, Format, arglist) + cb;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        cb = _vsnprintf(Buffer + cb, sizeof(Buffer) - cb, Format, arglist) + cb;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 #else
@@ -233,19 +218,21 @@ vDbgPrintExWithPrefix(
     cb = _vsnprintf(Buffer + cb, sizeof(Buffer) - cb, Format, arglist) + cb;
 #endif
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 #if !defined(BLDR_KERNEL_RUNTIME) && !defined(NTOS_KERNEL_RUNTIME)
         NtCurrentTeb()->InDbgPrint = FALSE;
 #endif
         return Status;
     }
 
-    if (cb == -1) {             // detect buffer overflow
+    if (cb == -1)
+    { // detect buffer overflow
         cb = sizeof(Buffer);
         Buffer[sizeof(Buffer) - 1] = '\n';
     }
     Output.Buffer = Buffer;
-    Output.Length = (USHORT) cb;
+    Output.Length = (USHORT)cb;
 
     //
     // If APP is being debugged, raise an exception and the debugger
@@ -261,34 +248,39 @@ vDbgPrintExWithPrefix(
     // to serialize access to the loaded module database.  What a crock
     //
     if (NtCurrentPeb()->FastPebLockRoutine != NULL)
-#endif  //!i386
-    if (NtCurrentPeb()->BeingDebugged) {
-        EXCEPTION_RECORD ExceptionRecord;
+#endif //!i386
+        if (NtCurrentPeb()->BeingDebugged)
+        {
+            EXCEPTION_RECORD ExceptionRecord;
 
-        //
-        // Construct an exception record.
-        //
+            //
+            // Construct an exception record.
+            //
 
-        ExceptionRecord.ExceptionCode = DBG_PRINTEXCEPTION_C;
-        ExceptionRecord.ExceptionRecord = (PEXCEPTION_RECORD)NULL;
-        ExceptionRecord.NumberParameters = 2;
-        ExceptionRecord.ExceptionFlags = 0;
-        ExceptionRecord.ExceptionInformation[ 0 ] = Output.Length + 1;
-        ExceptionRecord.ExceptionInformation[ 1 ] = (ULONG_PTR)(Output.Buffer);
+            ExceptionRecord.ExceptionCode = DBG_PRINTEXCEPTION_C;
+            ExceptionRecord.ExceptionRecord = (PEXCEPTION_RECORD)NULL;
+            ExceptionRecord.NumberParameters = 2;
+            ExceptionRecord.ExceptionFlags = 0;
+            ExceptionRecord.ExceptionInformation[0] = Output.Length + 1;
+            ExceptionRecord.ExceptionInformation[1] = (ULONG_PTR)(Output.Buffer);
 
-        try {
-            RtlRaiseException( &ExceptionRecord );
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-        }
+            try
+            {
+                RtlRaiseException(&ExceptionRecord);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+            }
 
 #if !defined(BLDR_KERNEL_RUNTIME) && !defined(NTOS_KERNEL_RUNTIME)
-        NtCurrentTeb()->InDbgPrint = FALSE;
+            NtCurrentTeb()->InDbgPrint = FALSE;
 #endif
-        return STATUS_SUCCESS;
+            return STATUS_SUCCESS;
         }
 #endif
     Status = DebugPrint(&Output, ComponentId, Level);
-    if (Status == STATUS_BREAKPOINT) {
+    if (Status == STATUS_BREAKPOINT)
+    {
         DbgBreakPointWithStatus(DBG_STATUS_CONTROL_C);
         Status = STATUS_SUCCESS;
     }
@@ -297,12 +289,9 @@ vDbgPrintExWithPrefix(
 #endif
     return Status;
 }
-
+
 ULONG
-DbgPrintReturnControlC(
-    PCHAR Format,
-    ...
-    )
+DbgPrintReturnControlC(PCHAR Format, ...)
 
 //++
 //
@@ -343,12 +332,13 @@ DbgPrintReturnControlC(
     va_start(arglist, Format);
 
     cb = _vsnprintf(Buffer, sizeof(Buffer), Format, arglist);
-    if (cb == -1) {             // detect buffer overflow
+    if (cb == -1)
+    { // detect buffer overflow
         cb = sizeof(Buffer);
         Buffer[sizeof(Buffer) - 1] = '\n';
     }
     Output.Buffer = Buffer;
-    Output.Length = (USHORT) cb;
+    Output.Length = (USHORT)cb;
 
     //
     // If APP is being debugged, raise an exception and the debugger
@@ -365,46 +355,45 @@ DbgPrintReturnControlC(
     //
     if (Peb->FastPebLockRoutine != NULL)
 
-    //
-    // For IA64 and probably AMD64, can't raise exceptions until ntdll is in
-    // Peb->Ldr, so that RtlPcToFileHeader can find ntdll in Peb->Ldr. The
-    // dbgprints / exceptions are necessarily from ntdll at this point.
-    // The first two things in Peb->Ldr are the .exe and ntdll.dll, so
-    // check that there are two things in the list.
-    //
-    if ((Peb->Ldr != NULL) &&
-       (Peb->Ldr->InLoadOrderModuleList.Flink != &Peb->Ldr->InLoadOrderModuleList) &&
-       (Peb->Ldr->InLoadOrderModuleList.Blink != Peb->Ldr->InLoadOrderModuleList.Flink))
-#endif  //!i386
-    if (Peb->BeingDebugged) {
-        EXCEPTION_RECORD ExceptionRecord;
-
         //
-        // Construct an exception record.
+        // For IA64 and probably AMD64, can't raise exceptions until ntdll is in
+        // Peb->Ldr, so that RtlPcToFileHeader can find ntdll in Peb->Ldr. The
+        // dbgprints / exceptions are necessarily from ntdll at this point.
+        // The first two things in Peb->Ldr are the .exe and ntdll.dll, so
+        // check that there are two things in the list.
         //
+        if ((Peb->Ldr != NULL) && (Peb->Ldr->InLoadOrderModuleList.Flink != &Peb->Ldr->InLoadOrderModuleList) &&
+            (Peb->Ldr->InLoadOrderModuleList.Blink != Peb->Ldr->InLoadOrderModuleList.Flink))
+#endif //!i386
+            if (Peb->BeingDebugged)
+            {
+                EXCEPTION_RECORD ExceptionRecord;
 
-        ExceptionRecord.ExceptionCode = DBG_PRINTEXCEPTION_C;
-        ExceptionRecord.ExceptionRecord = (PEXCEPTION_RECORD)NULL;
-        ExceptionRecord.NumberParameters = 2;
-        ExceptionRecord.ExceptionFlags = 0;
-        ExceptionRecord.ExceptionInformation[ 0 ] = Output.Length + 1;
-        ExceptionRecord.ExceptionInformation[ 1 ] = (ULONG_PTR)(Output.Buffer);
-        try {
-            RtlRaiseException( &ExceptionRecord );
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-        }
-        return STATUS_SUCCESS;
-        }
+                //
+                // Construct an exception record.
+                //
+
+                ExceptionRecord.ExceptionCode = DBG_PRINTEXCEPTION_C;
+                ExceptionRecord.ExceptionRecord = (PEXCEPTION_RECORD)NULL;
+                ExceptionRecord.NumberParameters = 2;
+                ExceptionRecord.ExceptionFlags = 0;
+                ExceptionRecord.ExceptionInformation[0] = Output.Length + 1;
+                ExceptionRecord.ExceptionInformation[1] = (ULONG_PTR)(Output.Buffer);
+                try
+                {
+                    RtlRaiseException(&ExceptionRecord);
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
+                }
+                return STATUS_SUCCESS;
+            }
 #endif
     return DebugPrint(&Output, 0, 0);
 }
-
+
 ULONG
-DbgPrompt(
-    IN PCHAR Prompt,
-    OUT PCHAR Response,
-    IN ULONG MaximumResponseLength
-    )
+DbgPrompt(IN PCHAR Prompt, OUT PCHAR Response, IN ULONG MaximumResponseLength)
 
 //++
 //
@@ -445,20 +434,15 @@ DbgPrompt(
 
     Input.MaximumLength = (USHORT)MaximumResponseLength;
     Input.Buffer = Response;
-    Output.Length = (USHORT)strlen( Prompt );
+    Output.Length = (USHORT)strlen(Prompt);
     Output.Buffer = Prompt;
-    return DebugPrompt( &Output, &Input );
+    return DebugPrompt(&Output, &Input);
 }
 
 #if defined(NTOS_KERNEL_RUNTIME) || defined(BLDR_KERNEL_RUNTIME)
 
-
-VOID
-DbgLoadImageSymbols(
-    IN PSTRING FileName,
-    IN PVOID ImageBase,
-    IN ULONG_PTR ProcessId
-    )
+
+VOID DbgLoadImageSymbols(IN PSTRING FileName, IN PVOID ImageBase, IN ULONG_PTR ProcessId)
 
 //++
 //
@@ -479,12 +463,14 @@ DbgLoadImageSymbols(
 
     SymbolInfo.BaseOfDll = ImageBase;
     SymbolInfo.ProcessId = ProcessId;
-    NtHeaders = RtlImageNtHeader( ImageBase );
-    if (NtHeaders != NULL) {
+    NtHeaders = RtlImageNtHeader(ImageBase);
+    if (NtHeaders != NULL)
+    {
         SymbolInfo.CheckSum = (ULONG)NtHeaders->OptionalHeader.CheckSum;
         SymbolInfo.SizeOfImage = (ULONG)NtHeaders->OptionalHeader.SizeOfImage;
-
-    } else {
+    }
+    else
+    {
 
 #if defined(BLDR_KERNEL_RUNTIME)
 
@@ -504,7 +490,7 @@ DbgLoadImageSymbols(
 
 #endif
 
-        SymbolInfo.CheckSum    = 0;
+        SymbolInfo.CheckSum = 0;
     }
 
     DebugService2(FileName, &SymbolInfo, BREAKPOINT_LOAD_SYMBOLS);
@@ -512,13 +498,8 @@ DbgLoadImageSymbols(
     return;
 }
 
-
-VOID
-DbgUnLoadImageSymbols (
-    IN PSTRING FileName,
-    IN PVOID ImageBase,
-    IN ULONG_PTR ProcessId
-    )
+
+VOID DbgUnLoadImageSymbols(IN PSTRING FileName, IN PVOID ImageBase, IN ULONG_PTR ProcessId)
 
 //++
 //
@@ -537,7 +518,7 @@ DbgUnLoadImageSymbols (
 
     SymbolInfo.BaseOfDll = ImageBase;
     SymbolInfo.ProcessId = ProcessId;
-    SymbolInfo.CheckSum    = 0;
+    SymbolInfo.CheckSum = 0;
     SymbolInfo.SizeOfImage = 0;
 
     DebugService2(FileName, &SymbolInfo, BREAKPOINT_UNLOAD_SYMBOLS);
@@ -545,12 +526,8 @@ DbgUnLoadImageSymbols (
     return;
 }
 
-
-VOID
-DbgCommandString(
-    IN PCH Name,
-    IN PCH Command
-    )
+
+VOID DbgCommandString(IN PCH Name, IN PCH Command)
 
 //++
 //
@@ -582,10 +559,7 @@ DbgCommandString(
 
 #if !defined(BLDR_KERNEL_RUNTIME)
 NTSTATUS
-DbgQueryDebugFilterState(
-    IN ULONG ComponentId,
-    IN ULONG Level
-    )
+DbgQueryDebugFilterState(IN ULONG ComponentId, IN ULONG Level)
 
 //++
 //
@@ -620,11 +594,7 @@ DbgQueryDebugFilterState(
 }
 
 NTSTATUS
-DbgSetDebugFilterState(
-    IN ULONG ComponentId,
-    IN ULONG Level,
-    IN BOOLEAN State
-    )
+DbgSetDebugFilterState(IN ULONG ComponentId, IN ULONG Level, IN BOOLEAN State)
 
 //++
 //

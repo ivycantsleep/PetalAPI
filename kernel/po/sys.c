@@ -26,25 +26,11 @@ Revision History:
 
 #if defined(i386)
 
-VOID
-KeRestoreProcessorSpecificFeatures(
-    VOID
-    );
+VOID KeRestoreProcessorSpecificFeatures(VOID);
 
-VOID
-KePrepareToLoseProcessorSpecificState(
-    VOID
-    );
+VOID KePrepareToLoseProcessorSpecificState(VOID);
 
-__inline
-LONGLONG
-POP_GET_TICK_COUNT(
-    VOID
-    )
-{
-    _asm _emit 0x0f
-    _asm _emit 0x31
-}
+__inline LONGLONG POP_GET_TICK_COUNT(VOID){ _asm _emit 0x0f _asm _emit 0x31 }
 #endif
 
 //
@@ -52,84 +38,64 @@ POP_GET_TICK_COUNT(
 // invoking a power state handler
 //
 
-typedef struct {
-    PPOWER_STATE_HANDLER        Handler;
+typedef struct
+{
+    PPOWER_STATE_HANDLER Handler;
     PENTER_STATE_SYSTEM_HANDLER SystemHandler;
-    PVOID                       SystemContext;
-    PPOP_HIBER_CONTEXT          HiberContext;
+    PVOID SystemContext;
+    PPOP_HIBER_CONTEXT HiberContext;
     PPOWER_STATE_NOTIFY_HANDLER NotifyHandler;
-    POWER_STATE_HANDLER_TYPE    NotifyState;
-    BOOLEAN                     NotifyType;
-    ULONG                       NumberProcessors;
-    volatile ULONG              TargetCount;
-    volatile ULONG              State;
-    LONG                        HandlerBarrier;
+    POWER_STATE_HANDLER_TYPE NotifyState;
+    BOOLEAN NotifyType;
+    ULONG NumberProcessors;
+    volatile ULONG TargetCount;
+    volatile ULONG State;
+    LONG HandlerBarrier;
 } POP_SYS_CONTEXT, *PPOP_SYS_CONTEXT;
 
-typedef struct {
-    ULONG                       LastState;
-    BOOLEAN                     InterruptEnable;
-    KIRQL                       Irql;
-    BOOLEAN                     FloatSaved;
-    KFLOATING_SAVE              FloatSave;
-    NTSTATUS                    Status;
+typedef struct
+{
+    ULONG LastState;
+    BOOLEAN InterruptEnable;
+    KIRQL Irql;
+    BOOLEAN FloatSaved;
+    KFLOATING_SAVE FloatSave;
+    NTSTATUS Status;
 } POP_LOCAL_CONTEXT, *PPOP_LOCAL_CONTEXT;
 
 
-#define POP_SH_UNINITIALIZED                0
-#define POP_SH_COLLECTING_PROCESSORS        1
-#define POP_SH_SAVE_CONTEXT                 2
-#define POP_SH_GET_STACKS                   3
-#define POP_SH_DISABLE_INTERRUPTS           4
-#define POP_SH_INVOKE_HANDLER               5
-#define POP_SH_INVOKE_NOTIFY_HANDLER        6
-#define POP_SH_RESTORE_INTERRUPTS           7
-#define POP_SH_RESTORE_CONTEXT              8
-#define POP_SH_COMPLETE                     9
+#define POP_SH_UNINITIALIZED 0
+#define POP_SH_COLLECTING_PROCESSORS 1
+#define POP_SH_SAVE_CONTEXT 2
+#define POP_SH_GET_STACKS 3
+#define POP_SH_DISABLE_INTERRUPTS 4
+#define POP_SH_INVOKE_HANDLER 5
+#define POP_SH_INVOKE_NOTIFY_HANDLER 6
+#define POP_SH_RESTORE_INTERRUPTS 7
+#define POP_SH_RESTORE_CONTEXT 8
+#define POP_SH_COMPLETE 9
 
-extern ULONG    MmAvailablePages;
-BOOLEAN         PopFailedHibernationAttempt = FALSE;  // we tried to hibernate and failed.
-WCHAR           PopHibernationErrorSubtstitionString[128];
+extern ULONG MmAvailablePages;
+BOOLEAN PopFailedHibernationAttempt = FALSE; // we tried to hibernate and failed.
+WCHAR PopHibernationErrorSubtstitionString[128];
 
 //
 // Internal prototypes
 //
 
 NTSTATUS
-PopInvokeSystemStateHandler (
-    IN POWER_STATE_HANDLER_TYPE Type,
-    IN PVOID Memory
-    );
+PopInvokeSystemStateHandler(IN POWER_STATE_HANDLER_TYPE Type, IN PVOID Memory);
 
-VOID
-PopIssueNextState (
-    IN PPOP_SYS_CONTEXT     Context,
-    IN PPOP_LOCAL_CONTEXT   LocalContext,
-    IN ULONG                NextState
-    );
+VOID PopIssueNextState(IN PPOP_SYS_CONTEXT Context, IN PPOP_LOCAL_CONTEXT LocalContext, IN ULONG NextState);
 
-VOID
-PopHandleNextState (
-    IN PPOP_SYS_CONTEXT     Context,
-    IN PPOP_LOCAL_CONTEXT   LocalContext
-    );
+VOID PopHandleNextState(IN PPOP_SYS_CONTEXT Context, IN PPOP_LOCAL_CONTEXT LocalContext);
 
-VOID
-PopInvokeStateHandlerTargetProcessor (
-    IN PKDPC    Dpc,
-    IN PVOID    DeferredContext,
-    IN PVOID    SystemArgument1,
-    IN PVOID    SystemArgument2
-    );
+VOID PopInvokeStateHandlerTargetProcessor(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                                          IN PVOID SystemArgument2);
 
 NTSTATUS
-PopShutdownHandler (
-    IN PVOID                        Context,
-    IN PENTER_STATE_SYSTEM_HANDLER  SystemHandler   OPTIONAL,
-    IN PVOID                        SystemContext,
-    IN LONG                         NumberProcessors,
-    IN volatile PLONG               Number
-    );
+PopShutdownHandler(IN PVOID Context, IN PENTER_STATE_SYSTEM_HANDLER SystemHandler OPTIONAL, IN PVOID SystemContext,
+                   IN LONG NumberProcessors, IN volatile PLONG Number);
 
 
 #ifdef ALLOC_PRAGMA
@@ -143,10 +109,7 @@ PopShutdownHandler (
 #endif
 
 
-VOID
-PopShutdownSystem (
-    IN POWER_ACTION SystemAction
-    )
+VOID PopShutdownSystem(IN POWER_ACTION SystemAction)
 /*++
 
 Routine Description:
@@ -168,7 +131,7 @@ Return Value:
     // Tell the debugger we are shutting down
     //
 
-    KD_SYMBOLS_INFO SymbolInfo = {0};
+    KD_SYMBOLS_INFO SymbolInfo = { 0 };
     SymbolInfo.BaseOfDll = (PVOID)KD_REBOOT;
     DebugService2(NULL, &SymbolInfo, BREAKPOINT_UNLOAD_SYMBOLS);
 
@@ -176,73 +139,69 @@ Return Value:
     // Perform the final shutdown operation
     //
 
-    switch (SystemAction) {
-        case PowerActionShutdownReset:
+    switch (SystemAction)
+    {
+    case PowerActionShutdownReset:
 
-            //
-            // Reset the system
-            //
+        //
+        // Reset the system
+        //
 
-            PopInvokeSystemStateHandler (PowerStateShutdownReset, NULL);
+        PopInvokeSystemStateHandler(PowerStateShutdownReset, NULL);
 
-            //
-            // Didn't do it, go for legacy function
-            //
+        //
+        // Didn't do it, go for legacy function
+        //
 
-            HalReturnToFirmware (HalRebootRoutine);
-            break;
+        HalReturnToFirmware(HalRebootRoutine);
+        break;
 
-        case PowerActionShutdownOff:
-        case PowerActionShutdown:
+    case PowerActionShutdownOff:
+    case PowerActionShutdown:
 
 
-            //
-            // Power down the system
-            //
+        //
+        // Power down the system
+        //
 
-            PopInvokeSystemStateHandler (PowerStateShutdownOff, NULL);
+        PopInvokeSystemStateHandler(PowerStateShutdownOff, NULL);
 
-            //
-            // Didn't do it, go for legacy function
-            //
+        //
+        // Didn't do it, go for legacy function
+        //
 
-            HalReturnToFirmware (HalPowerDownRoutine);
+        HalReturnToFirmware(HalPowerDownRoutine);
 
-            //
-            // Due to simulations we can try to power down on systems
-            // which don't support it
-            //
+        //
+        // Due to simulations we can try to power down on systems
+        // which don't support it
+        //
 
-            PoPrint (PO_ERROR, ("PopShutdownSystem: HalPowerDownRoutine returned\n"));
-            HalReturnToFirmware (HalRebootRoutine);
-            break;
+        PoPrint(PO_ERROR, ("PopShutdownSystem: HalPowerDownRoutine returned\n"));
+        HalReturnToFirmware(HalRebootRoutine);
+        break;
 
-        default:
-            //
-            // Got some unexpected input...
-            //
-            HalReturnToFirmware (HalRebootRoutine);
+    default:
+        //
+        // Got some unexpected input...
+        //
+        HalReturnToFirmware(HalRebootRoutine);
     }
 
-    KeBugCheckEx (INTERNAL_POWER_ERROR, 5, 0, 0, 0);
+    KeBugCheckEx(INTERNAL_POWER_ERROR, 5, 0, 0, 0);
 }
 
 
 #if _MSC_FULL_VER >= 13008827
 #pragma warning(push)
-#pragma warning(disable:4715)           // Not all control paths return (due to infinite loop at end)
+#pragma warning(disable : 4715) // Not all control paths return (due to infinite loop at end)
 #endif
 
 NTSTATUS
-PopShutdownHandler (
-    IN PVOID                        Context,
-    IN PENTER_STATE_SYSTEM_HANDLER  SystemHandler   OPTIONAL,
-    IN PVOID                        SystemContext,
-    IN LONG                         NumberProcessors,
-    IN volatile PLONG               Number
-    )
+PopShutdownHandler(IN PVOID Context, IN PENTER_STATE_SYSTEM_HANDLER SystemHandler OPTIONAL, IN PVOID SystemContext,
+                   IN LONG NumberProcessors, IN volatile PLONG Number)
 {
-    PKPRCB      Prcb;
+    PKPRCB Prcb;
 
     KeDisableInterrupts();
     Prcb = KeGetCurrentPrcb();
@@ -251,30 +210,35 @@ PopShutdownHandler (
     // On processor 0 put up the shutdown screen
     //
 
-    if (Prcb->Number == 0) {
+    if (Prcb->Number == 0)
+    {
 
-        if (InbvIsBootDriverInstalled()) {
+        if (InbvIsBootDriverInstalled())
+        {
 
             PUCHAR Bitmap1, Bitmap2;
 
-            if (!InbvCheckDisplayOwnership()) {
+            if (!InbvCheckDisplayOwnership())
+            {
                 InbvAcquireDisplayOwnership();
             }
 
             InbvResetDisplay();
-            InbvSolidColorFill(0,0,639,479,0);
-            InbvEnableDisplayString(TRUE);     // enable display string
-            InbvSetScrollRegion(0,0,639,475);  // set to use entire screen
+            InbvSolidColorFill(0, 0, 639, 479, 0);
+            InbvEnableDisplayString(TRUE);       // enable display string
+            InbvSetScrollRegion(0, 0, 639, 475); // set to use entire screen
 
             Bitmap1 = InbvGetResourceAddress(3);
             Bitmap2 = InbvGetResourceAddress(5);
 
-            if (Bitmap1 && Bitmap2) {
+            if (Bitmap1 && Bitmap2)
+            {
                 InbvBitBlt(Bitmap1, 215, 282);
-				InbvBitBlt(Bitmap2, 217, 111);
+                InbvBitBlt(Bitmap2, 217, 111);
             }
-
-        } else {
+        }
+        else
+        {
 
             ULONG i;
 
@@ -282,12 +246,13 @@ PopShutdownHandler (
             // Skip to middle of the display
             //
 
-            for (i=0; i<25; i++) {
-                InbvDisplayString ("\n");
+            for (i = 0; i < 25; i++)
+            {
+                InbvDisplayString("\n");
             }
 
-            InbvDisplayString ("                       ");  // 23 spaces
-            InbvDisplayString ("The system may be powered off now.\n");
+            InbvDisplayString("                       "); // 23 spaces
+            InbvDisplayString("The system may be powered off now.\n");
         }
     }
 
@@ -295,8 +260,9 @@ PopShutdownHandler (
     // Halt
     //
 
-    for (; ;) {
-        HalHaltSystem ();
+    for (;;)
+    {
+        HalHaltSystem();
     }
 
     return STATUS_SUCCESS;
@@ -308,10 +274,7 @@ PopShutdownHandler (
 
 
 NTSTATUS
-PopSleepSystem (
-    IN SYSTEM_POWER_STATE   SystemState,
-    IN PVOID Memory
-    )
+PopSleepSystem(IN SYSTEM_POWER_STATE SystemState, IN PVOID Memory)
 /*++
 
 Routine Description:
@@ -330,33 +293,43 @@ Return Value:
 
 --*/
 {
-    POWER_STATE_HANDLER_TYPE    Type;
-    NTSTATUS                    Status = STATUS_SUCCESS;
+    POWER_STATE_HANDLER_TYPE Type;
+    NTSTATUS Status = STATUS_SUCCESS;
 
 
-    switch (SystemState) {
-        case PowerSystemSleeping1:  Type = PowerStateSleeping1;     break;
-        case PowerSystemSleeping2:  Type = PowerStateSleeping2;     break;
-        case PowerSystemSleeping3:  Type = PowerStateSleeping3;     break;
-        case PowerSystemHibernate:  Type = PowerStateSleeping4;     break;
+    switch (SystemState)
+    {
+    case PowerSystemSleeping1:
+        Type = PowerStateSleeping1;
+        break;
+    case PowerSystemSleeping2:
+        Type = PowerStateSleeping2;
+        break;
+    case PowerSystemSleeping3:
+        Type = PowerStateSleeping3;
+        break;
+    case PowerSystemHibernate:
+        Type = PowerStateSleeping4;
+        break;
 
-        default:
-            Type = PowerStateMaximum;
-            PopInternalError (POP_SYS);
+    default:
+        Type = PowerStateMaximum;
+        PopInternalError(POP_SYS);
     }
 
-    Status =  PopInvokeSystemStateHandler (Type, Memory);
+    Status = PopInvokeSystemStateHandler(Type, Memory);
 
-    if( !NT_SUCCESS(Status) && (SystemState == PowerSystemHibernate) ) {
+    if (!NT_SUCCESS(Status) && (SystemState == PowerSystemHibernate))
+    {
 
         //
         // Tell someone.
-        // We'll send in a friendly error code instead of the 
+        // We'll send in a friendly error code instead of the
         // cryptic one we got back from PopInvokeSystemStateHandler()
         //
 
-        IoRaiseInformationalHardError( Status, NULL, NULL );
-        
+        IoRaiseInformationalHardError(Status, NULL, NULL);
+
         // Remember that we failed so we don't try again.
         PopFailedHibernationAttempt = TRUE;
     }
@@ -366,10 +339,7 @@ Return Value:
 
 
 NTSTATUS
-PopInvokeSystemStateHandler (
-    IN POWER_STATE_HANDLER_TYPE Type,
-    IN PPOP_HIBER_CONTEXT HiberContext
-    )
+PopInvokeSystemStateHandler(IN POWER_STATE_HANDLER_TYPE Type, IN PPOP_HIBER_CONTEXT HiberContext)
 /*++
 
 Routine Description:
@@ -386,74 +356,78 @@ Return Value:
 
 --*/
 {
-    KDPC                Dpc;
-    KIRQL               OldIrql;
-    KAFFINITY           Targets;
-    ULONG               Processor;
-    ULONG               TargetCount;
-    POP_SYS_CONTEXT     Context;
-    POP_LOCAL_CONTEXT   LocalContext;
+    KDPC Dpc;
+    KIRQL OldIrql;
+    KAFFINITY Targets;
+    ULONG Processor;
+    ULONG TargetCount;
+    POP_SYS_CONTEXT Context;
+    POP_LOCAL_CONTEXT LocalContext;
     POWER_STATE_HANDLER ShutdownHandler;
-    KAFFINITY           ActiveProcessors;
-    ULONG               result;
+    KAFFINITY ActiveProcessors;
+    ULONG result;
 
     //
     // No spinlocks can be held when this call is made
     //
 
-    ASSERT (KeGetCurrentIrql() < DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
     //
     // Get system state handler
     //
 
-    RtlZeroMemory (&Context, sizeof(Context));
-    RtlZeroMemory (&ShutdownHandler, sizeof(ShutdownHandler));
+    RtlZeroMemory(&Context, sizeof(Context));
+    RtlZeroMemory(&ShutdownHandler, sizeof(ShutdownHandler));
     Context.Handler = &ShutdownHandler;
 
     Context.NotifyHandler = &PopPowerStateNotifyHandler;
     Context.NotifyState = Type;
-    
-    if (Type != PowerStateMaximum) {
+
+    if (Type != PowerStateMaximum)
+    {
         Context.Handler = &PopPowerStateHandlers[Type];
-   
-        if (!Context.Handler->Handler) {
+
+        if (!Context.Handler->Handler)
+        {
             return STATUS_DEVICE_DOES_NOT_EXIST;
         }
     }
 
-    Context.NumberProcessors = (ULONG) KeNumberProcessors;
+    Context.NumberProcessors = (ULONG)KeNumberProcessors;
     Context.HandlerBarrier = KeNumberProcessors;
     Context.State = POP_SH_COLLECTING_PROCESSORS;
     Context.HiberContext = HiberContext;
-    if (HiberContext) {
+    if (HiberContext)
+    {
         Context.SystemContext = HiberContext;
         Context.SystemHandler = PopSaveHiberContext;
     }
 
-    RtlZeroMemory (&LocalContext, sizeof(LocalContext));
+    RtlZeroMemory(&LocalContext, sizeof(LocalContext));
 
     //
     // Before we freeze the machine, attempt to collect up as much memory
     // as we can from MM to avoid saving it into the hibernation file.
     //
 
-    if (HiberContext && HiberContext->ReserveFreeMemory) {
-        for (; ;) {
+    if (HiberContext && HiberContext->ReserveFreeMemory)
+    {
+        for (;;)
+        {
 
-            if (MmAvailablePages < POP_FREE_THRESHOLD) {
+            if (MmAvailablePages < POP_FREE_THRESHOLD)
+            {
                 break;
             }
 
             //
             // Collect the pages
             //
-            result = PopGatherMemoryForHibernate (HiberContext,
-                                                  POP_FREE_ALLOCATE_SIZE,
-                                                  &HiberContext->Spares,
-                                                  FALSE);
+            result = PopGatherMemoryForHibernate(HiberContext, POP_FREE_ALLOCATE_SIZE, &HiberContext->Spares, FALSE);
 
-            if (!result) {
+            if (!result)
+            {
                 break;
             }
         }
@@ -464,10 +438,10 @@ Return Value:
     // avoid getting any DPCs
     //
 
-    KeSetSystemAffinityThread (1);
-    KeRaiseIrql (DISPATCH_LEVEL, &OldIrql);
-    KeInitializeDpc (&Dpc, PopInvokeStateHandlerTargetProcessor, &Context);
-    KeSetImportanceDpc (&Dpc, HighImportance);
+    KeSetSystemAffinityThread(1);
+    KeRaiseIrql(DISPATCH_LEVEL, &OldIrql);
+    KeInitializeDpc(&Dpc, PopInvokeStateHandlerTargetProcessor, &Context);
+    KeSetImportanceDpc(&Dpc, HighImportance);
 
     //
     // Collect and halt the other processors
@@ -475,9 +449,10 @@ Return Value:
 
     Targets = KeActiveProcessors & (~1);
 
-    while (Targets) {
+    while (Targets)
+    {
         KeFindFirstSetLeftAffinity(Targets, &Processor);
-        ClearMember (Processor, Targets);
+        ClearMember(Processor, Targets);
 
         //
         // Prepare to wait
@@ -489,20 +464,21 @@ Return Value:
         // Issue DPC to target processor
         //
 
-        KeSetTargetProcessorDpc (&Dpc, (CCHAR) Processor);
-        KeInsertQueueDpc (&Dpc, NULL, NULL);
+        KeSetTargetProcessorDpc(&Dpc, (CCHAR)Processor);
+        KeInsertQueueDpc(&Dpc, NULL, NULL);
 
         //
         // Wait for DPC to be processed
         //
-        while (TargetCount == Context.TargetCount) ;
+        while (TargetCount == Context.TargetCount)
+            ;
     }
 
     //
     // All processors halted and spinning at dispatch level
     //
 
-    PopIssueNextState (&Context, &LocalContext, POP_SH_SAVE_CONTEXT);
+    PopIssueNextState(&Context, &LocalContext, POP_SH_SAVE_CONTEXT);
 
 #if defined(i386)
 
@@ -519,27 +495,28 @@ Return Value:
     // Enter system state
     //
 
-    if (HiberContext) {
+    if (HiberContext)
+    {
 
         //
         // Get each processors stacks in the memory map for
         // special handling during hibernate
         //
 
-        PopIssueNextState (&Context, &LocalContext, POP_SH_GET_STACKS);
+        PopIssueNextState(&Context, &LocalContext, POP_SH_GET_STACKS);
 
         //
         // Build the rest of the map, and structures needed
         // to write the file
         //
 
-        LocalContext.Status = PopBuildMemoryImageHeader (HiberContext, Type);
+        LocalContext.Status = PopBuildMemoryImageHeader(HiberContext, Type);
 
         //
         // Disable interrupts on all processors
         //
 
-        PopIssueNextState (&Context, &LocalContext, POP_SH_DISABLE_INTERRUPTS);
+        PopIssueNextState(&Context, &LocalContext, POP_SH_DISABLE_INTERRUPTS);
 
         //
         // With interrupts disabled on all the processors, the debugger
@@ -553,41 +530,42 @@ Return Value:
         ActiveProcessors = KeActiveProcessors;
         KeActiveProcessors = 1;
 
-        if (NT_SUCCESS(LocalContext.Status)) {
+        if (NT_SUCCESS(LocalContext.Status))
+        {
 
             //
             // Notify the Notify Handler of pending sleep
             //
-            
-            Context.NotifyType = TRUE; // notify before
-            PopIssueNextState (&Context, &LocalContext, POP_SH_INVOKE_NOTIFY_HANDLER);
 
-            
+            Context.NotifyType = TRUE; // notify before
+            PopIssueNextState(&Context, &LocalContext, POP_SH_INVOKE_NOTIFY_HANDLER);
+
+
             //
             // Invoke the Power State handler
             //
 
-            PopIssueNextState (&Context, &LocalContext, POP_SH_INVOKE_HANDLER);
+            PopIssueNextState(&Context, &LocalContext, POP_SH_INVOKE_HANDLER);
 
 
             //
             // If the sleep was successful, clear the fully awake flag
             //
 
-            if (NT_SUCCESS(LocalContext.Status)) {
+            if (NT_SUCCESS(LocalContext.Status))
+            {
                 InterlockedExchange(&PopFullWake, PO_GDI_ON_PENDING);
                 PoPowerSequence = PoPowerSequence + 1;
                 PopSIdle.Time = 1;
             }
 
-            
+
             //
             // Notify the Notify Handler of resume
-            // 
+            //
 
             Context.NotifyType = FALSE; // notify after
-            PopIssueNextState (&Context, &LocalContext, POP_SH_INVOKE_NOTIFY_HANDLER);
-
+            PopIssueNextState(&Context, &LocalContext, POP_SH_INVOKE_NOTIFY_HANDLER);
         }
 
         //
@@ -595,19 +573,21 @@ Return Value:
         // memory verification, etc..
         //
 
-        PopHiberComplete (LocalContext.Status, HiberContext);
+        PopHiberComplete(LocalContext.Status, HiberContext);
 
         //
         // If there's a request for a reset here, do it
         //
 
-        if (HiberContext->Reset) {
+        if (HiberContext->Reset)
+        {
             Context.Handler = &PopPowerStateHandlers[PowerStateShutdownReset];
             Context.HiberContext = NULL;
-            if (Context.Handler->Handler) {
-                PopIssueNextState (&Context, &LocalContext, POP_SH_INVOKE_HANDLER);
+            if (Context.Handler->Handler)
+            {
+                PopIssueNextState(&Context, &LocalContext, POP_SH_INVOKE_HANDLER);
             }
-            HalReturnToFirmware (HalRebootRoutine);
+            HalReturnToFirmware(HalRebootRoutine);
         }
 
         //
@@ -636,7 +616,7 @@ Return Value:
         // Restore interrupts on all processors
         //
 
-        PopIssueNextState (&Context, &LocalContext, POP_SH_RESTORE_INTERRUPTS);
+        PopIssueNextState(&Context, &LocalContext, POP_SH_RESTORE_INTERRUPTS);
 
 
         //
@@ -645,60 +625,66 @@ Return Value:
         //
 
         InbvSetDisplayOwnership(FALSE);
-
-    } else {
+    }
+    else
+    {
 
         //
         // Notify the Notify Handler of pending sleep
-        // 
+        //
 
         Context.NotifyType = TRUE; // notify before
-        PopIssueNextState (&Context, &LocalContext, POP_SH_INVOKE_NOTIFY_HANDLER);
-        
+        PopIssueNextState(&Context, &LocalContext, POP_SH_INVOKE_NOTIFY_HANDLER);
+
 
         //
         // Invoke the sleep handle
         //
-        if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+        if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+        {
             PERFINFO_PO_PRESLEEP LogEntry;
 #if defined(i386)
-            if (PopAction.SystemState == PowerSystemSleeping3) {
+            if (PopAction.SystemState == PowerSystemSleeping3)
+            {
                 LogEntry.PerformanceFrequency.QuadPart = (ULONGLONG)KeGetCurrentPrcb()->MHz * 1000000;
                 LogEntry.PerformanceCounter.QuadPart = 0;
-            } else {
+            }
+            else
+            {
                 LogEntry.PerformanceCounter = KeQueryPerformanceCounter(&LogEntry.PerformanceFrequency);
             }
 #else
             LogEntry.PerformanceCounter = KeQueryPerformanceCounter(&LogEntry.PerformanceFrequency);
 #endif
 
-            PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_PRESLEEP,
-                             &LogEntry,
-                             sizeof(LogEntry));
+            PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_PRESLEEP, &LogEntry, sizeof(LogEntry));
         }
-        PopIssueNextState (&Context, &LocalContext, POP_SH_INVOKE_HANDLER);
-        if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+        PopIssueNextState(&Context, &LocalContext, POP_SH_INVOKE_HANDLER);
+        if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+        {
             PERFINFO_PO_POSTSLEEP LogEntry;
 #if defined(i386)
-            if (PopAction.SystemState == PowerSystemSleeping3) {
+            if (PopAction.SystemState == PowerSystemSleeping3)
+            {
                 LogEntry.PerformanceCounter.QuadPart = POP_GET_TICK_COUNT();
-            } else {
+            }
+            else
+            {
                 LogEntry.PerformanceCounter = KeQueryPerformanceCounter(NULL);
             }
-#else    
+#else
             LogEntry.PerformanceCounter = KeQueryPerformanceCounter(NULL);
 #endif
 
-            PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_POSTSLEEP,
-                             &LogEntry,
-                             sizeof(LogEntry));
+            PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_POSTSLEEP, &LogEntry, sizeof(LogEntry));
         }
 
         //
         // If the sleep was successful, clear the fully awake flag
         //
 
-        if (NT_SUCCESS(LocalContext.Status)) {
+        if (NT_SUCCESS(LocalContext.Status))
+        {
 
             //
             // If somebody has set display required, then turn the
@@ -706,9 +692,12 @@ Return Value:
             // is some user activity signalled.
             //
 
-            if (PopAttributes[POP_DISPLAY_ATTRIBUTE].Count > 0) {
+            if (PopAttributes[POP_DISPLAY_ATTRIBUTE].Count > 0)
+            {
                 InterlockedExchange(&PopFullWake, PO_GDI_ON_PENDING);
-            } else {
+            }
+            else
+            {
                 InterlockedExchange(&PopFullWake, 0);
             }
             PoPowerSequence = PoPowerSequence + 1;
@@ -718,25 +707,25 @@ Return Value:
 
         //
         // Notify the Notify Handler of resume
-        // 
+        //
 
         Context.NotifyType = FALSE; // notify after
-        PopIssueNextState (&Context, &LocalContext, POP_SH_INVOKE_NOTIFY_HANDLER);
-        
+        PopIssueNextState(&Context, &LocalContext, POP_SH_INVOKE_NOTIFY_HANDLER);
     }
 
     //
     // Restore other saved state on each processor
     //
 
-    PopIssueNextState (&Context, &LocalContext, POP_SH_RESTORE_CONTEXT);
+    PopIssueNextState(&Context, &LocalContext, POP_SH_RESTORE_CONTEXT);
 
 #if defined(i386)
     //
     // On x86, reload any processor specific data structures (MSRs).
     //
 
-    if (NT_SUCCESS(LocalContext.Status)) {
+    if (NT_SUCCESS(LocalContext.Status))
+    {
         KeRestoreProcessorSpecificFeatures();
     }
 #endif
@@ -745,7 +734,7 @@ Return Value:
     // Let the other processor return
     //
 
-    PopIssueNextState (&Context, &LocalContext, POP_SH_COMPLETE);
+    PopIssueNextState(&Context, &LocalContext, POP_SH_COMPLETE);
 
     //
     // Now that all processors have returned,
@@ -755,8 +744,9 @@ Return Value:
     // DPC timeouts.
     //
 
-    if (HiberContext) {
-        PopFreeHiberContext (FALSE);
+    if (HiberContext)
+    {
+        PopFreeHiberContext(FALSE);
     }
 
     //
@@ -764,9 +754,11 @@ Return Value:
     // times the sleep state has worked
     //
 
-    if (NT_SUCCESS(LocalContext.Status)) {
+    if (NT_SUCCESS(LocalContext.Status))
+    {
         LocalContext.Status = STATUS_SUCCESS;
-        if (Context.Handler->Spare[0] != 0xff) {
+        if (Context.Handler->Spare[0] != 0xff)
+        {
             Context.Handler->Spare[0] += 1;
         }
     }
@@ -775,16 +767,11 @@ Return Value:
     // Done
     //
 
-    KeLowerIrql (OldIrql);
+    KeLowerIrql(OldIrql);
     return LocalContext.Status;
 }
 
-VOID
-PopIssueNextState (
-    IN PPOP_SYS_CONTEXT     Context,
-    IN PPOP_LOCAL_CONTEXT   LocalContext,
-    IN ULONG                NextState
-    )
+VOID PopIssueNextState(IN PPOP_SYS_CONTEXT Context, IN PPOP_LOCAL_CONTEXT LocalContext, IN ULONG NextState)
 /*++
 
 Routine Description:
@@ -806,41 +793,38 @@ Return Value:
 
 --*/
 {
-    ULONG       LastState;
+    ULONG LastState;
 
     //
     // Reset count for this operation
     //
 
-    InterlockedExchange ((PVOID) &Context->TargetCount, 0);
+    InterlockedExchange((PVOID)&Context->TargetCount, 0);
 
     //
     // Issue new state
     //
 
-    InterlockedExchange ((PVOID) &Context->State, NextState);
+    InterlockedExchange((PVOID)&Context->State, NextState);
 
     //
     // Handle it ourselves
     //
 
     LocalContext->LastState = POP_SH_UNINITIALIZED;
-    PopHandleNextState (Context, LocalContext);
+    PopHandleNextState(Context, LocalContext);
 
     //
     // Wait for all processor to complete
     //
 
-    while (Context->TargetCount != Context->NumberProcessors) {
-        KeYieldProcessor ();
+    while (Context->TargetCount != Context->NumberProcessors)
+    {
+        KeYieldProcessor();
     }
 }
 
-VOID
-PopHandleNextState (
-    IN PPOP_SYS_CONTEXT     Context,
-    IN PPOP_LOCAL_CONTEXT   LocalContext
-    )
+VOID PopHandleNextState(IN PPOP_SYS_CONTEXT Context, IN PPOP_LOCAL_CONTEXT LocalContext)
 /*++
 
 Routine Description:
@@ -860,9 +844,9 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                Status;
-    PPROCESSOR_POWER_STATE  PState;
-    PKPRCB                  Prcb;
+    NTSTATUS Status;
+    PPROCESSOR_POWER_STATE PState;
+    PKPRCB Prcb;
 
     Prcb = KeGetCurrentPrcb();
     PState = &Prcb->PowerState;
@@ -871,8 +855,9 @@ Return Value:
     // Wait for new state
     //
 
-    while (Context->State == LocalContext->LastState) {
-        KeYieldProcessor ();
+    while (Context->State == LocalContext->LastState)
+    {
+        KeYieldProcessor();
     }
 
     //
@@ -880,78 +865,67 @@ Return Value:
     //
 
     LocalContext->LastState = Context->State;
-    switch (LocalContext->LastState) {
-        case POP_SH_SAVE_CONTEXT:
-            Status = KeSaveFloatingPointState(&LocalContext->FloatSave);
-            LocalContext->FloatSaved = NT_SUCCESS(Status);
-            break;
+    switch (LocalContext->LastState)
+    {
+    case POP_SH_SAVE_CONTEXT:
+        Status = KeSaveFloatingPointState(&LocalContext->FloatSave);
+        LocalContext->FloatSaved = NT_SUCCESS(Status);
+        break;
 
-        case POP_SH_GET_STACKS:
-            PopCloneStack (Context->HiberContext);
-            break;
+    case POP_SH_GET_STACKS:
+        PopCloneStack(Context->HiberContext);
+        break;
 
-        case POP_SH_DISABLE_INTERRUPTS:
-            LocalContext->Irql = KeGetCurrentIrql();
-            LocalContext->InterruptEnable = KeDisableInterrupts();
-            break;
+    case POP_SH_DISABLE_INTERRUPTS:
+        LocalContext->Irql = KeGetCurrentIrql();
+        LocalContext->InterruptEnable = KeDisableInterrupts();
+        break;
 
-        case POP_SH_INVOKE_HANDLER:
-            Status = Context->Handler->Handler (
-                            Context->Handler->Context,
-                            Context->SystemHandler,
-                            Context->SystemContext,
-                            Context->NumberProcessors,
-                            &Context->HandlerBarrier
-                            );
+    case POP_SH_INVOKE_HANDLER:
+        Status = Context->Handler->Handler(Context->Handler->Context, Context->SystemHandler, Context->SystemContext,
+                                           Context->NumberProcessors, &Context->HandlerBarrier);
 
-            LocalContext->Status = Status;
-            break;
+        LocalContext->Status = Status;
+        break;
 
-        case POP_SH_INVOKE_NOTIFY_HANDLER:
+    case POP_SH_INVOKE_NOTIFY_HANDLER:
 
-            if (Context->NotifyHandler->Handler) {
-            
-              Status = Context->NotifyHandler->Handler(
-                              Context->NotifyState,
-                              Context->NotifyHandler->Context,
-                              Context->NotifyType
-                              );
+        if (Context->NotifyHandler->Handler)
+        {
 
-            }
-            break;
+            Status = Context->NotifyHandler->Handler(Context->NotifyState, Context->NotifyHandler->Context,
+                                                     Context->NotifyType);
+        }
+        break;
 
-        case POP_SH_RESTORE_INTERRUPTS:
-            KeEnableInterrupts(LocalContext->InterruptEnable);
-            KeLowerIrql(LocalContext->Irql);
-            break;
+    case POP_SH_RESTORE_INTERRUPTS:
+        KeEnableInterrupts(LocalContext->InterruptEnable);
+        KeLowerIrql(LocalContext->Irql);
+        break;
 
-        case POP_SH_RESTORE_CONTEXT:
-            if (LocalContext->FloatSaved) {
-                KeRestoreFloatingPointState(&LocalContext->FloatSave);
-            }
+    case POP_SH_RESTORE_CONTEXT:
+        if (LocalContext->FloatSaved)
+        {
+            KeRestoreFloatingPointState(&LocalContext->FloatSave);
+        }
 
-            if (PState->Flags & PSTATE_SUPPORTS_THROTTLE) {
-                PState->PerfSetThrottle(PState->CurrentThrottle);
-            }
-            break;
+        if (PState->Flags & PSTATE_SUPPORTS_THROTTLE)
+        {
+            PState->PerfSetThrottle(PState->CurrentThrottle);
+        }
+        break;
     }
 
     //
     // Signal that we are in the new state
     //
 
-    InterlockedIncrement ((PULONG) &Context->TargetCount);
+    InterlockedIncrement((PULONG)&Context->TargetCount);
 }
 
 
-
-VOID
-PopInvokeStateHandlerTargetProcessor (
-    IN PKDPC    Dpc,
-    IN PVOID    DeferredContext,
-    IN PVOID    SystemArgument1,
-    IN PVOID    SystemArgument2
-    )
+VOID PopInvokeStateHandlerTargetProcessor(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                                          IN PVOID SystemArgument2)
 /*++
 
 Routine Description:
@@ -973,22 +947,23 @@ Return Value:
 
 --*/
 {
-    POP_LOCAL_CONTEXT   LocalContext;
-    PPOP_SYS_CONTEXT    Context;
-    KIRQL               OldIrql;
+    POP_LOCAL_CONTEXT LocalContext;
+    PPOP_SYS_CONTEXT Context;
+    KIRQL OldIrql;
 
 
-    Context = (PPOP_SYS_CONTEXT) DeferredContext;
-    RtlZeroMemory (&LocalContext, sizeof(LocalContext));
+    Context = (PPOP_SYS_CONTEXT)DeferredContext;
+    RtlZeroMemory(&LocalContext, sizeof(LocalContext));
     LocalContext.LastState = POP_SH_UNINITIALIZED;
 
     //
     // Handle new states
     //
 
-    do {
+    do
+    {
 
-        PopHandleNextState (Context, &LocalContext);
+        PopHandleNextState(Context, &LocalContext);
 
     } while (LocalContext.LastState != POP_SH_COMPLETE);
 }

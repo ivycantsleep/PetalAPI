@@ -20,8 +20,8 @@
 * 10-Nov-1993 MikeKe    Created
 \***************************************************************************/
 
-HBRUSH                      ghbrWhite = NULL;
-HBRUSH                      ghbrBlack = NULL;
+HBRUSH ghbrWhite = NULL;
+HBRUSH ghbrBlack = NULL;
 
 /***************************************************************************\
 * GetSysColorBrush
@@ -31,8 +31,7 @@ HBRUSH                      ghbrBlack = NULL;
 \***************************************************************************/
 
 FUNCLOG1(LOG_GENERAL, HBRUSH, WINAPI, GetSysColorBrush, int, nIndex)
-HBRUSH WINAPI GetSysColorBrush(
-    int nIndex)
+HBRUSH WINAPI GetSysColorBrush(int nIndex)
 {
     if ((nIndex < 0) || (nIndex >= COLOR_MAX))
         return NULL;
@@ -60,12 +59,10 @@ HBRUSH WINAPI GetSysColorBrush(
 \***************************************************************************/
 
 LPCOLORREF gpOriginalRGBs = NULL;
-UINT       gcOriginalRGBs = 0;
+UINT gcOriginalRGBs = 0;
 
-WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
-    CONST COLORREF *lpRGBs,
-    CONST HBRUSH   *lpBrushes,
-    UINT_PTR       cBrushes)      // Count of brushes or handle
+WINUSERAPI HANDLE WINAPI SetSysColorsTemp(CONST COLORREF *lpRGBs, CONST HBRUSH *lpBrushes,
+                                          UINT_PTR cBrushes) // Count of brushes or handle
 {
     UINT cbRGBSize;
     UINT i;
@@ -74,7 +71,8 @@ WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
     /*
      * See if we are resetting the colors back to a saved state
      */
-    if (lpRGBs == NULL) {
+    if (lpRGBs == NULL)
+    {
 
         /*
          * When restoring cBrushes is really a handle to the old global
@@ -84,7 +82,8 @@ WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
         UserAssert(lpBrushes == NULL);
         UserAssert(cBrushes == (ULONG_PTR)gpOriginalRGBs);
 
-        if (gpOriginalRGBs == NULL) {
+        if (gpOriginalRGBs == NULL)
+        {
             RIPMSG0(RIP_ERROR, "SetSysColorsTemp: Can not restore if not saved");
             return NULL;
         }
@@ -92,7 +91,7 @@ WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
         /*
          * reset the global Colors
          */
-        UserAssert((sizeof(abElements)/sizeof(abElements[0])) >= gcOriginalRGBs);
+        UserAssert((sizeof(abElements) / sizeof(abElements[0])) >= gcOriginalRGBs);
         for (i = 0; i < gcOriginalRGBs; i++)
             abElements[i] = i;
 
@@ -110,7 +109,8 @@ WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
      * Make sure we aren't trying to set too many colors
      * If we allow more then COLOR_MAX change the abElements array
      */
-    if (cBrushes > COLOR_MAX) {
+    if (cBrushes > COLOR_MAX)
+    {
         RIPMSG1(RIP_ERROR, "SetSysColorsTemp: trying to set too many colors %lX", cBrushes);
         return NULL;
     }
@@ -118,7 +118,8 @@ WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
     /*
      * If we have already a saved state then don't let them save it again
      */
-    if (gpOriginalRGBs != NULL) {
+    if (gpOriginalRGBs != NULL)
+    {
         RIPMSG0(RIP_ERROR, "SetSysColorsTemp: temp colors already set");
         return NULL;
     }
@@ -133,7 +134,8 @@ WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
     UserAssert(sizeof(COLORREF) == sizeof(int));
     gpOriginalRGBs = UserLocalAlloc(HEAP_ZERO_MEMORY, cbRGBSize);
 
-    if (gpOriginalRGBs == NULL) {
+    if (gpOriginalRGBs == NULL)
+    {
         RIPMSG0(RIP_WARNING, "SetSysColorsTemp: unable to alloc temp colors buffer");
         return NULL;
     }
@@ -143,7 +145,7 @@ WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
     /*
      * Now set the new colors.
      */
-    UserAssert( (sizeof(abElements)/sizeof(abElements[0])) >= cBrushes);
+    UserAssert((sizeof(abElements) / sizeof(abElements[0])) >= cBrushes);
 
     for (i = 0; i < cBrushes; i++)
         abElements[i] = i;
@@ -164,18 +166,18 @@ WINUSERAPI HANDLE WINAPI SetSysColorsTemp(
 * 13-Jan-1992   GregoryW    Neutralized.
 \***************************************************************************/
 
-LPWSTR TextAlloc(
-    LPCWSTR lpszSrc)
+LPWSTR TextAlloc(LPCWSTR lpszSrc)
 {
     LPWSTR pszT;
-    DWORD  cbString;
+    DWORD cbString;
 
     if (lpszSrc == NULL)
         return NULL;
 
     cbString = (wcslen(lpszSrc) + 1) * sizeof(WCHAR);
 
-    if (pszT = (LPWSTR)UserLocalAlloc(HEAP_ZERO_MEMORY, cbString)) {
+    if (pszT = (LPWSTR)UserLocalAlloc(HEAP_ZERO_MEMORY, cbString))
+    {
 
         RtlCopyMemory(pszT, lpszSrc, cbString);
     }
@@ -193,11 +195,9 @@ LPWSTR TextAlloc(
 * 10-Apr-1995   JimA    Created.
 \***************************************************************************/
 
-VOID CheckCurrentDesktop(
-    PVOID p)
+VOID CheckCurrentDesktop(PVOID p)
 {
-    UserAssert(p >= GetClientInfo()->pDeskInfo->pvDesktopBase &&
-               p < GetClientInfo()->pDeskInfo->pvDesktopLimit);
+    UserAssert(p >= GetClientInfo()->pDeskInfo->pvDesktopBase && p < GetClientInfo()->pDeskInfo->pvDesktopLimit);
 }
 #endif
 
@@ -209,10 +209,7 @@ VOID CheckCurrentDesktop(
 \***************************************************************************/
 
 FUNCLOGVOID2(LOG_GENERAL, WINAPI, SetLastErrorEx, DWORD, dwErrCode, DWORD, dwType)
-VOID WINAPI SetLastErrorEx(
-    DWORD dwErrCode,
-    DWORD dwType
-    )
+VOID WINAPI SetLastErrorEx(DWORD dwErrCode, DWORD dwType)
 {
     UNREFERENCED_PARAMETER(dwType);
 
@@ -234,8 +231,7 @@ static CONST PROC FunctionsToSkip[] = {
 
 
 FUNCLOG1(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, InitializeWin32EntryTable, PBOOLEAN, pbEntryTable)
-UINT InitializeWin32EntryTable(
-    PBOOLEAN pbEntryTable)
+UINT InitializeWin32EntryTable(PBOOLEAN pbEntryTable)
 {
 #if DBG
     // We'll only define this on free systems for now. Checked systems
@@ -246,12 +242,13 @@ UINT InitializeWin32EntryTable(
     UINT i;
     PBYTE pb;
 
-    if (pbEntryTable) {
-        for (i = 0; i < ARRAY_SIZE(FunctionsToSkip); i++) {
+    if (pbEntryTable)
+    {
+        for (i = 0; i < ARRAY_SIZE(FunctionsToSkip); i++)
+        {
             pb = (PBYTE)FunctionsToSkip[i];
-            pbEntryTable[*((WORD *)(pb+1)) - 0x1000] = TRUE;
+            pbEntryTable[*((WORD *)(pb + 1)) - 0x1000] = TRUE;
         }
-
     }
 
     return gDispatchTableValues;
@@ -265,11 +262,12 @@ UINT InitializeWin32EntryTable(
 *
 * 05/30/07  GerardoB    Created
 \***************************************************************************/
-BOOL GetLastInputInfo (PLASTINPUTINFO plii)
+BOOL GetLastInputInfo(PLASTINPUTINFO plii)
 {
     VALIDATIONFNNAME(GetLastInputInfo);
 
-    if (plii->cbSize != sizeof(LASTINPUTINFO)) {
+    if (plii->cbSize != sizeof(LASTINPUTINFO))
+    {
         VALIDATIONFAIL(plii->cbSize);
     }
 
@@ -278,4 +276,3 @@ BOOL GetLastInputInfo (PLASTINPUTINFO plii)
     return TRUE;
     VALIDATIONERROR(FALSE);
 }
-

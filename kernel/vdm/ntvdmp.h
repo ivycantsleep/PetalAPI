@@ -21,6 +21,4 @@ Revision History:
 
 
 NTSTATUS
-VdmQueryDirectoryFile(
-    PVDMQUERYDIRINFO VdmQueryDir
-    );
+VdmQueryDirectoryFile(PVDMQUERYDIRINFO VdmQueryDir);

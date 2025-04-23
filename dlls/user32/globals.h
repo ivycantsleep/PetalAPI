@@ -31,12 +31,12 @@ extern CHAR achSlashStar[];
 extern PSERVERINFO gpsi;
 extern SHAREDINFO gSharedInfo;
 
-extern HMODULE hmodUser;            // USER.DLL's hmodule
+extern HMODULE hmodUser; // USER.DLL's hmodule
 extern ULONG_PTR gHighestUserAddress;
 
-extern BOOL gfServerProcess;        // USER is linked on the CSR server side.
-extern BOOL gfSystemInitialized;    // System has been initialized
-extern ACCESS_MASK gamWinSta;       // ACCESS_MASK for the current WindowStation
+extern BOOL gfServerProcess;     // USER is linked on the CSR server side.
+extern BOOL gfSystemInitialized; // System has been initialized
+extern ACCESS_MASK gamWinSta;    // ACCESS_MASK for the current WindowStation
 
 extern PVOID pUserHeap;
 
@@ -67,15 +67,15 @@ extern BOOL gfDMREnable;
 extern HANDLE gEventSource;
 #endif
 
-extern HDC    ghdcBits2;
-extern HDC    ghdcGray;
-extern HFONT  ghFontSys;
+extern HDC ghdcBits2;
+extern HDC ghdcGray;
+extern HFONT ghFontSys;
 extern HBRUSH ghbrWindowText;
-extern int    gcxGray;
-extern int    gcyGray;
+extern int gcxGray;
+extern int gcyGray;
 
 extern LPWSTR pwcHighContrastScheme;
-extern LPSTR  pcHighContrastScheme;
+extern LPSTR pcHighContrastScheme;
 
 
 /*
@@ -84,12 +84,12 @@ extern LPSTR  pcHighContrastScheme;
  * code into 16-bit space);  that's also why we can't just party with
  * handles like LMHtoP does... -JeffPar
  */
-#ifndef RC_INVOKED       // RC can't handle #pragmas
-#undef  LHND
-#define LHND                (LMEM_MOVEABLE | LMEM_ZEROINIT)
+#ifndef RC_INVOKED // RC can't handle #pragmas
+#undef LHND
+#define LHND (LMEM_MOVEABLE | LMEM_ZEROINIT)
 
-#undef  LMHtoP
-#define LMHtoP(handle)      // Don't use this macro
+#undef LMHtoP
+#define LMHtoP(handle) // Don't use this macro
 #endif
 
 /*
@@ -102,45 +102,39 @@ extern LPSTR  pcHighContrastScheme;
  * (SAS 6-18-92) added hack for all macros
  */
 
-#define LOCALALLOC(dwFlags, dwBytes, hInstance)         \
-                            (*pfnLocalAlloc)(dwFlags, dwBytes, hInstance)
-#define LOCALREALLOC(hMem, dwBytes, dwFlags, hInstance, ppv) \
-                            (*pfnLocalReAlloc)(hMem, dwBytes, dwFlags, hInstance, ppv)
-#define LOCALLOCK(hMem, hInstance)                      \
-                            (*pfnLocalLock)(hMem, hInstance)
-#define LOCALUNLOCK(hMem, hInstance)                    \
-                            (*pfnLocalUnlock)(hMem, hInstance)
-#define LOCALSIZE(hMem, hInstance)                      \
-                            (*pfnLocalSize)(hMem, hInstance)
-#define LOCALFREE(hMem, hInstance)                      \
-                            (*pfnLocalFree)(hMem, hInstance)
+#define LOCALALLOC(dwFlags, dwBytes, hInstance) (*pfnLocalAlloc)(dwFlags, dwBytes, hInstance)
+#define LOCALREALLOC(hMem, dwBytes, dwFlags, hInstance, ppv) (*pfnLocalReAlloc)(hMem, dwBytes, dwFlags, hInstance, ppv)
+#define LOCALLOCK(hMem, hInstance) (*pfnLocalLock)(hMem, hInstance)
+#define LOCALUNLOCK(hMem, hInstance) (*pfnLocalUnlock)(hMem, hInstance)
+#define LOCALSIZE(hMem, hInstance) (*pfnLocalSize)(hMem, hInstance)
+#define LOCALFREE(hMem, hInstance) (*pfnLocalFree)(hMem, hInstance)
 
-extern PFNFINDA             pfnFindResourceExA;
-extern PFNFINDW             pfnFindResourceExW;
-extern PFNLOAD              pfnLoadResource;
-extern PFNLOCK              pfnLockResource;
-extern PFNUNLOCK            pfnUnlockResource;
-extern PFNFREE              pfnFreeResource;
-extern PFNSIZEOF            pfnSizeofResource;
-extern PFNLALLOC            pfnLocalAlloc;
-extern PFNLREALLOC          pfnLocalReAlloc;
-extern PFNLLOCK             pfnLocalLock;
-extern PFNLUNLOCK           pfnLocalUnlock;
-extern PFNLSIZE             pfnLocalSize;
-extern PFNLFREE             pfnLocalFree;
-extern PFNGETEXPWINVER      pfnGetExpWinVer;
-extern PFN16GALLOC          pfn16GlobalAlloc;
-extern PFN16GFREE           pfn16GlobalFree;
-extern PFNGETMODFNAME       pfnGetModFileName;
-extern PFNEMPTYCB           pfnWowEmptyClipBoard;
-extern PFNWOWWNDPROCEX      pfnWowWndProcEx;
-extern PFNWOWDLGPROCEX      pfnWowDlgProcEx;
-extern PFNWOWEDITNEXTWORD   pfnWowEditNextWord;
-extern PFNWOWCBSTOREHANDLE  pfnWowCBStoreHandle;
-extern PFNGETPROCMODULE16   pfnWowGetProcModule;
+extern PFNFINDA pfnFindResourceExA;
+extern PFNFINDW pfnFindResourceExW;
+extern PFNLOAD pfnLoadResource;
+extern PFNLOCK pfnLockResource;
+extern PFNUNLOCK pfnUnlockResource;
+extern PFNFREE pfnFreeResource;
+extern PFNSIZEOF pfnSizeofResource;
+extern PFNLALLOC pfnLocalAlloc;
+extern PFNLREALLOC pfnLocalReAlloc;
+extern PFNLLOCK pfnLocalLock;
+extern PFNLUNLOCK pfnLocalUnlock;
+extern PFNLSIZE pfnLocalSize;
+extern PFNLFREE pfnLocalFree;
+extern PFNGETEXPWINVER pfnGetExpWinVer;
+extern PFN16GALLOC pfn16GlobalAlloc;
+extern PFN16GFREE pfn16GlobalFree;
+extern PFNGETMODFNAME pfnGetModFileName;
+extern PFNEMPTYCB pfnWowEmptyClipBoard;
+extern PFNWOWWNDPROCEX pfnWowWndProcEx;
+extern PFNWOWDLGPROCEX pfnWowDlgProcEx;
+extern PFNWOWEDITNEXTWORD pfnWowEditNextWord;
+extern PFNWOWCBSTOREHANDLE pfnWowCBStoreHandle;
+extern PFNGETPROCMODULE16 pfnWowGetProcModule;
 extern PFNWOWTELLWOWTHEHDLG pfnWOWTellWOWThehDlg;
 extern PFNWOWMSGBOXINDIRECTCALLBACK pfnWowMsgBoxIndirectCallback;
-extern PFNWOWILSTRCMP       pfnWowIlstrcmp;
+extern PFNWOWILSTRCMP pfnWowIlstrcmp;
 extern PFNWOWTASK16SCHEDNOTIFY pfnWowTask16SchedNotify;
 
 extern UNICODE_STRING strRootDirectory;
@@ -148,27 +142,27 @@ extern UNICODE_STRING strRootDirectory;
 /*
  * UserApiHook
  */
-extern BYTE                 grgbDwpLiteHookMsg[(WM_USER + 7) / 8];
-extern BYTE                 grgbWndLiteHookMsg[(WM_USER + 7) / 8];
-extern BYTE                 grgbDlgLiteHookMsg[(WM_USER + 7) / 8];
-extern HMODULE              ghmodUserApiHook;   // the module containing the UserApiHook hooks
-extern USERAPIHOOK          guah;               // Dynamic function pointers
-extern BOOL                 gfUserApiHook;      // Set TRUE if should use the UAH
-extern LONG                 gcCallUserApiHook;  // reference count of ongoing calls to UserApiHook hooks
-extern LONG                 gcLoadUserApiHook;  // reference count of UserApiHook module loads
-extern RTL_CRITICAL_SECTION gcsUserApiHook;     // CS for UAH DLL load / unload
-extern INITUSERAPIHOOK      gpfnInitUserApi;    // UserApiHook callback
+extern BYTE grgbDwpLiteHookMsg[(WM_USER + 7) / 8];
+extern BYTE grgbWndLiteHookMsg[(WM_USER + 7) / 8];
+extern BYTE grgbDlgLiteHookMsg[(WM_USER + 7) / 8];
+extern HMODULE ghmodUserApiHook;            // the module containing the UserApiHook hooks
+extern USERAPIHOOK guah;                    // Dynamic function pointers
+extern BOOL gfUserApiHook;                  // Set TRUE if should use the UAH
+extern LONG gcCallUserApiHook;              // reference count of ongoing calls to UserApiHook hooks
+extern LONG gcLoadUserApiHook;              // reference count of UserApiHook module loads
+extern RTL_CRITICAL_SECTION gcsUserApiHook; // CS for UAH DLL load / unload
+extern INITUSERAPIHOOK gpfnInitUserApi;     // UserApiHook callback
 
 #ifdef MESSAGE_PUMP_HOOK
 
 /*
  * MessagePumpHook
  */
-extern BOOL                 gfMessagePumpHook;  // Set TRUE if should use the MPH
-extern LONG                 gcLoadMPH;          // reference count of MPH Init
-extern MESSAGEPUMPHOOK      gmph;               // Dynamic function pointers
-extern RTL_CRITICAL_SECTION gcsMPH;             // CS for MPH DLL load / unload
-extern INITMESSAGEPUMPHOOK  gpfnInitMPH;        // MessagePumpHook callback
+extern BOOL gfMessagePumpHook;          // Set TRUE if should use the MPH
+extern LONG gcLoadMPH;                  // reference count of MPH Init
+extern MESSAGEPUMPHOOK gmph;            // Dynamic function pointers
+extern RTL_CRITICAL_SECTION gcsMPH;     // CS for MPH DLL load / unload
+extern INITMESSAGEPUMPHOOK gpfnInitMPH; // MessagePumpHook callback
 
 #endif
 

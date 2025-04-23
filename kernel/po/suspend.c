@@ -29,4 +29,3 @@ Revision History:
 //
 // NtSetSystemPowerState is in ntapi.c
 //
-

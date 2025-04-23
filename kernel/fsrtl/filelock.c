@@ -91,7 +91,7 @@ Revision History:
 //  Local debug trace level
 //
 
-#define Dbg                 (0x20000000)
+#define Dbg (0x20000000)
 
 //
 //  YA definition of INLINE
@@ -101,12 +101,12 @@ Revision History:
 #define INLINE __inline
 #endif
 
-#define TAG_EXCLUSIVE_LOCK  'xeLF'
-#define TAG_FILE_LOCK       'lfLF'
-#define TAG_LOCK_INFO       'ilLF'
-#define TAG_LOCKTREE_NODE   'nlLF'
-#define TAG_SHARED_LOCK     'hsLF'
-#define TAG_WAITING_LOCK    'lwLF'
+#define TAG_EXCLUSIVE_LOCK 'xeLF'
+#define TAG_FILE_LOCK 'lfLF'
+#define TAG_LOCK_INFO 'ilLF'
+#define TAG_LOCKTREE_NODE 'nlLF'
+#define TAG_SHARED_LOCK 'hsLF'
+#define TAG_WAITING_LOCK 'lwLF'
 
 //
 //  Globals
@@ -146,7 +146,7 @@ NPAGED_LOOKASIDE_LIST FsRtlLockInfoLookasideList;
 
 PAGED_LOOKASIDE_LIST FsRtlFileLockLookasideList;
 
-
+
 //
 //  Local structures
 //
@@ -202,7 +202,8 @@ PAGED_LOOKASIDE_LIST FsRtlFileLockLookasideList;
 
 --*/
 
-typedef struct _LOCKTREE_NODE {
+typedef struct _LOCKTREE_NODE
+{
 
     //
     //  List of locks under this node
@@ -256,13 +257,14 @@ typedef struct _LOCKTREE_NODE {
 //  of current locks is ordered according to the starting byte of the lock.
 //
 
-typedef struct _SH_LOCK {
+typedef struct _SH_LOCK
+{
 
     //
     //  The link structures for the list of shared locks.
     //
 
-    SINGLE_LIST_ENTRY   Link;
+    SINGLE_LIST_ENTRY Link;
 
     //
     //  The actual locked range
@@ -277,13 +279,14 @@ typedef struct _SH_LOCK {
 //  threaded into the exclusive lock tree.
 //
 
-typedef struct _EX_LOCK {
+typedef struct _EX_LOCK
+{
 
     //
     //  The link structures for the list of current locks.
     //
 
-    RTL_SPLAY_LINKS     Links;
+    RTL_SPLAY_LINKS Links;
 
     //
     //  The actual locked range
@@ -299,13 +302,14 @@ typedef struct _EX_LOCK {
 //  WaitingLockQueue list.
 //
 
-typedef struct _WAITING_LOCK {
+typedef struct _WAITING_LOCK
+{
 
     //
     //  The link structures for the list of waiting locks
     //
 
-    SINGLE_LIST_ENTRY   Link;
+    SINGLE_LIST_ENTRY Link;
 
     //
     //  The optional procedure to call to complete a request.  We require this
@@ -330,18 +334,19 @@ typedef struct _WAITING_LOCK {
 
 } WAITING_LOCK, *PWAITING_LOCK;
 
-
+
 //
 //  Each lock or waiting onto some lock queue.
 //
 
-typedef struct _LOCK_QUEUE {
+typedef struct _LOCK_QUEUE
+{
 
     //
     // Sync to guard queue access.
     //
 
-    KSPIN_LOCK  QueueSpinLock;
+    KSPIN_LOCK QueueSpinLock;
 
     //
     //  The items contain locktrees of the current granted
@@ -355,13 +360,14 @@ typedef struct _LOCK_QUEUE {
 
 } LOCK_QUEUE, *PLOCK_QUEUE;
 
-
+
 //
 //  Any file_lock which has had a lock applied gets a non-paged pool
 //  structure which tracks the current locks applied to the file
 //
 
-typedef struct _LOCK_INFO {
+typedef struct _LOCK_INFO
+{
 
     //
     //  LowestLockOffset retains the offset of the lowest existing
@@ -392,7 +398,7 @@ typedef struct _LOCK_INFO {
     // The locked ranges
     //
 
-    LOCK_QUEUE  LockQueue;
+    LOCK_QUEUE LockQueue;
 
 } LOCK_INFO, *PLOCK_INFO;
 
@@ -406,103 +412,78 @@ typedef struct _LOCK_INFO {
 
 INLINE
 PSH_LOCK
-FsRtlAllocateSharedLock (
-    VOID
-    )
+FsRtlAllocateSharedLock(VOID)
 {
-    return (PSH_LOCK) ExAllocateFromNPagedLookasideList( &FsRtlSharedLockLookasideList );
+    return (PSH_LOCK)ExAllocateFromNPagedLookasideList(&FsRtlSharedLockLookasideList);
 }
 
 INLINE
 PEX_LOCK
-FsRtlAllocateExclusiveLock (
-    VOID
-    )
+FsRtlAllocateExclusiveLock(VOID)
 {
-    return (PEX_LOCK) ExAllocateFromNPagedLookasideList( &FsRtlExclusiveLockLookasideList );
+    return (PEX_LOCK)ExAllocateFromNPagedLookasideList(&FsRtlExclusiveLockLookasideList);
 }
 
 INLINE
 PWAITING_LOCK
-FsRtlAllocateWaitingLock (
-    VOID
-    )
+FsRtlAllocateWaitingLock(VOID)
 {
-    return (PWAITING_LOCK) ExAllocateFromNPagedLookasideList( &FsRtlWaitingLockLookasideList );
+    return (PWAITING_LOCK)ExAllocateFromNPagedLookasideList(&FsRtlWaitingLockLookasideList);
 }
 
 INLINE
 PLOCKTREE_NODE
-FsRtlAllocateLockTreeNode (
-    VOID
-    )
+FsRtlAllocateLockTreeNode(VOID)
 {
-    return (PLOCKTREE_NODE) ExAllocateFromNPagedLookasideList( &FsRtlLockTreeNodeLookasideList );
+    return (PLOCKTREE_NODE)ExAllocateFromNPagedLookasideList(&FsRtlLockTreeNodeLookasideList);
 }
 
 INLINE
 PLOCK_INFO
-FsRtlAllocateLockInfo (
-    VOID
-    )
+FsRtlAllocateLockInfo(VOID)
 {
-    return (PLOCK_INFO) ExAllocateFromNPagedLookasideList( &FsRtlLockInfoLookasideList );
+    return (PLOCK_INFO)ExAllocateFromNPagedLookasideList(&FsRtlLockInfoLookasideList);
 }
 
 
 INLINE
-VOID
-FsRtlFreeSharedLock (
-    IN PSH_LOCK C
-    )
+VOID FsRtlFreeSharedLock(IN PSH_LOCK C)
 {
-    ExFreeToNPagedLookasideList( &FsRtlSharedLockLookasideList, (PVOID)C );
+    ExFreeToNPagedLookasideList(&FsRtlSharedLockLookasideList, (PVOID)C);
 }
 
 INLINE
-VOID
-FsRtlFreeExclusiveLock (
-    IN PEX_LOCK C
-    )
+VOID FsRtlFreeExclusiveLock(IN PEX_LOCK C)
 {
-    ExFreeToNPagedLookasideList( &FsRtlExclusiveLockLookasideList, (PVOID)C );
+    ExFreeToNPagedLookasideList(&FsRtlExclusiveLockLookasideList, (PVOID)C);
 }
 
 INLINE
-VOID
-FsRtlFreeWaitingLock (
-    IN PWAITING_LOCK C
-    )
+VOID FsRtlFreeWaitingLock(IN PWAITING_LOCK C)
 {
-    ExFreeToNPagedLookasideList( &FsRtlWaitingLockLookasideList, (PVOID)C );
+    ExFreeToNPagedLookasideList(&FsRtlWaitingLockLookasideList, (PVOID)C);
 }
 
 INLINE
-VOID
-FsRtlFreeLockTreeNode (
-    IN PLOCKTREE_NODE C
-    )
+VOID FsRtlFreeLockTreeNode(IN PLOCKTREE_NODE C)
 {
-    ExFreeToNPagedLookasideList( &FsRtlLockTreeNodeLookasideList, (PVOID)C );
+    ExFreeToNPagedLookasideList(&FsRtlLockTreeNodeLookasideList, (PVOID)C);
 }
 
 INLINE
-VOID
-FsRtlFreeLockInfo (
-    IN PLOCK_INFO C
-    )
+VOID FsRtlFreeLockInfo(IN PLOCK_INFO C)
 {
-    ExFreeToNPagedLookasideList( &FsRtlLockInfoLookasideList, (PVOID)C );
+    ExFreeToNPagedLookasideList(&FsRtlLockInfoLookasideList, (PVOID)C);
 }
 
-#define FsRtlAcquireLockQueue(a,b)          ExAcquireSpinLock(&(a)->QueueSpinLock, b)
-#define FsRtlReleaseLockQueue(a,b)          ExReleaseSpinLock(&(a)->QueueSpinLock, b)
-#define FsRtlAcquireLockQueueAtDpc(a)       ExAcquireSpinLockAtDpcLevel(&(a)->QueueSpinLock)
-#define FsRtlReleaseLockQueueFromDpc(a)     ExReleaseSpinLockFromDpcLevel(&(a)->QueueSpinLock)
+#define FsRtlAcquireLockQueue(a, b) ExAcquireSpinLock(&(a)->QueueSpinLock, b)
+#define FsRtlReleaseLockQueue(a, b) ExReleaseSpinLock(&(a)->QueueSpinLock, b)
+#define FsRtlAcquireLockQueueAtDpc(a) ExAcquireSpinLockAtDpcLevel(&(a)->QueueSpinLock)
+#define FsRtlReleaseLockQueueFromDpc(a) ExReleaseSpinLockFromDpcLevel(&(a)->QueueSpinLock)
 
-#define FsRtlAcquireCancelCollide(a)        ExAcquireSpinLock(&FsRtlFileLockCancelCollideLock, a)
-#define FsRtlReleaseCancelCollide(a)        ExReleaseSpinLock(&FsRtlFileLockCancelCollideLock, a)
-#define FsRtlAcquireCancelCollideAtDpc(a)   ExAcquireSpinLockAtDpcLevel(&FsRtlFileLockCancelCollideLock)
+#define FsRtlAcquireCancelCollide(a) ExAcquireSpinLock(&FsRtlFileLockCancelCollideLock, a)
+#define FsRtlReleaseCancelCollide(a) ExReleaseSpinLock(&FsRtlFileLockCancelCollideLock, a)
+#define FsRtlAcquireCancelCollideAtDpc(a) ExAcquireSpinLockAtDpcLevel(&FsRtlFileLockCancelCollideLock)
 #define FsRtlReleaseCancelCollideFromDpc(a) ExReleaseSpinLockFromDpcLevel(&FsRtlFileLockCancelCollideLock)
 
 //
@@ -512,24 +493,11 @@ FsRtlFreeLockInfo (
 //  routine.
 //
 
-#define FsRtlCompleteLockIrp( A, B, C, D, E, F )                \
-        FsRtlCompleteLockIrpReal( (A)->CompleteLockIrpRoutine,  \
-                                  B,                            \
-                                  C,                            \
-                                  D,                            \
-                                  E,                            \
-                                  F )
+#define FsRtlCompleteLockIrp(A, B, C, D, E, F) FsRtlCompleteLockIrpReal((A)->CompleteLockIrpRoutine, B, C, D, E, F)
 
 INLINE
-VOID
-FsRtlCompleteLockIrpReal (
-    IN PCOMPLETE_LOCK_IRP_ROUTINE CompleteLockIrpRoutine,
-    IN PVOID Context,
-    IN PIRP Irp,
-    IN NTSTATUS Status,
-    IN PNTSTATUS NewStatus,
-    IN PFILE_OBJECT FileObject
-    )
+VOID FsRtlCompleteLockIrpReal(IN PCOMPLETE_LOCK_IRP_ROUTINE CompleteLockIrpRoutine, IN PVOID Context, IN PIRP Irp,
+                              IN NTSTATUS Status, IN PNTSTATUS NewStatus, IN PFILE_OBJECT FileObject)
 {
     //
     //  This fools the compiler into generating the Status only once
@@ -538,19 +506,22 @@ FsRtlCompleteLockIrpReal (
 
     NTSTATUS LocalStatus = Status;
 
-    if (CompleteLockIrpRoutine != NULL) {
+    if (CompleteLockIrpRoutine != NULL)
+    {
 
-        if (FileObject != NULL) {
+        if (FileObject != NULL)
+        {
 
             FileObject->LastLock = NULL;
         }
 
         Irp->IoStatus.Status = LocalStatus;
-        *NewStatus = CompleteLockIrpRoutine( Context, Irp );
+        *NewStatus = CompleteLockIrpRoutine(Context, Irp);
+    }
+    else
+    {
 
-    } else {
-
-        FsRtlCompleteRequest( Irp, LocalStatus );
+        FsRtlCompleteRequest(Irp, LocalStatus);
         *NewStatus = LocalStatus;
     }
 }
@@ -559,163 +530,75 @@ FsRtlCompleteLockIrpReal (
 //  The following routines are private to this module
 //
 
-VOID
-FsRtlSplitLocks (
-    IN PLOCKTREE_NODE ParentNode,
-    IN PSINGLE_LIST_ENTRY *pStartLink,
-    IN PLARGE_INTEGER LastShadowedByte,
-    IN PLARGE_INTEGER GlueOffset
-    );
+VOID FsRtlSplitLocks(IN PLOCKTREE_NODE ParentNode, IN PSINGLE_LIST_ENTRY *pStartLink,
+                     IN PLARGE_INTEGER LastShadowedByte, IN PLARGE_INTEGER GlueOffset);
 
 PRTL_SPLAY_LINKS
-FsRtlFindFirstOverlappingSharedNode (
-    IN PRTL_SPLAY_LINKS        Tree,
-    IN PLARGE_INTEGER          StartingByte,
-    IN PLARGE_INTEGER          EndingByte,
-    IN OUT PRTL_SPLAY_LINKS    *LastEdgeNode,
-    IN OUT PBOOLEAN            GreaterThan
-    );
+FsRtlFindFirstOverlappingSharedNode(IN PRTL_SPLAY_LINKS Tree, IN PLARGE_INTEGER StartingByte,
+                                    IN PLARGE_INTEGER EndingByte, IN OUT PRTL_SPLAY_LINKS *LastEdgeNode,
+                                    IN OUT PBOOLEAN GreaterThan);
 
 PRTL_SPLAY_LINKS
-FsRtlFindFirstOverlappingExclusiveNode (
-    IN PRTL_SPLAY_LINKS        Tree,
-    IN PLARGE_INTEGER          StartingByte,
-    IN PLARGE_INTEGER          EndingByte,
-    IN OUT PRTL_SPLAY_LINKS    *LastEdgeNode,
-    IN OUT PBOOLEAN            GreaterThan
-    );
+FsRtlFindFirstOverlappingExclusiveNode(IN PRTL_SPLAY_LINKS Tree, IN PLARGE_INTEGER StartingByte,
+                                       IN PLARGE_INTEGER EndingByte, IN OUT PRTL_SPLAY_LINKS *LastEdgeNode,
+                                       IN OUT PBOOLEAN GreaterThan);
 
 PSH_LOCK
-FsRtlFindFirstOverlapInNode (
-    IN PLOCKTREE_NODE Node,
-    IN PLARGE_INTEGER StartingByte,
-    IN PLARGE_INTEGER EndingByte
-    );
+FsRtlFindFirstOverlapInNode(IN PLOCKTREE_NODE Node, IN PLARGE_INTEGER StartingByte, IN PLARGE_INTEGER EndingByte);
 
 BOOLEAN
-FsRtlPrivateInsertLock (
-    IN PLOCK_INFO LockInfo,
-    IN PFILE_OBJECT FileObject,
-    IN PFILE_LOCK_INFO FileLockInfo
-    );
+FsRtlPrivateInsertLock(IN PLOCK_INFO LockInfo, IN PFILE_OBJECT FileObject, IN PFILE_LOCK_INFO FileLockInfo);
 
 BOOLEAN
-FsRtlPrivateInsertSharedLock (
-    IN PLOCK_QUEUE LockQueue,
-    IN PSH_LOCK NewLock
-    );
+FsRtlPrivateInsertSharedLock(IN PLOCK_QUEUE LockQueue, IN PSH_LOCK NewLock);
 
-VOID
-FsRtlPrivateInsertExclusiveLock (
-    IN PLOCK_QUEUE LockQueue,
-    IN PEX_LOCK NewLock
-    );
+VOID FsRtlPrivateInsertExclusiveLock(IN PLOCK_QUEUE LockQueue, IN PEX_LOCK NewLock);
 
-VOID
-FsRtlPrivateCheckWaitingLocks (
-    IN PLOCK_INFO   LockInfo,
-    IN PLOCK_QUEUE  LockQueue,
-    IN KIRQL        OldIrql
-    );
+VOID FsRtlPrivateCheckWaitingLocks(IN PLOCK_INFO LockInfo, IN PLOCK_QUEUE LockQueue, IN KIRQL OldIrql);
 
-VOID
-FsRtlPrivateCancelFileLockIrp (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+VOID FsRtlPrivateCancelFileLockIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 BOOLEAN
-FsRtlPrivateCheckForExclusiveLockAccess (
-    IN PLOCK_QUEUE LockInfo,
-    IN PFILE_LOCK_INFO FileLockInfo
-    );
+FsRtlPrivateCheckForExclusiveLockAccess(IN PLOCK_QUEUE LockInfo, IN PFILE_LOCK_INFO FileLockInfo);
 
 BOOLEAN
-FsRtlPrivateCheckForSharedLockAccess (
-    IN PLOCK_QUEUE LockInfo,
-    IN PFILE_LOCK_INFO FileLockInfo
-    );
+FsRtlPrivateCheckForSharedLockAccess(IN PLOCK_QUEUE LockInfo, IN PFILE_LOCK_INFO FileLockInfo);
 
 NTSTATUS
-FsRtlPrivateFastUnlockAll (
-    IN PFILE_LOCK FileLock,
-    IN PFILE_OBJECT FileObject,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN BOOLEAN MatchKey,
-    IN PVOID Context OPTIONAL
-    );
+FsRtlPrivateFastUnlockAll(IN PFILE_LOCK FileLock, IN PFILE_OBJECT FileObject, IN PEPROCESS ProcessId, IN ULONG Key,
+                          IN BOOLEAN MatchKey, IN PVOID Context OPTIONAL);
 
 BOOLEAN
-FsRtlPrivateInitializeFileLock (
-    IN PFILE_LOCK   FileLock,
-    IN BOOLEAN ViaFastCall
-    );
+FsRtlPrivateInitializeFileLock(IN PFILE_LOCK FileLock, IN BOOLEAN ViaFastCall);
 
-VOID
-FsRtlPrivateRemoveLock (
-    IN PLOCK_INFO LockInfo,
-    IN PFILE_LOCK_INFO,
-    IN BOOLEAN CheckForWaiters
-    );
+VOID FsRtlPrivateRemoveLock(IN PLOCK_INFO LockInfo, IN PFILE_LOCK_INFO, IN BOOLEAN CheckForWaiters);
 
 BOOLEAN
-FsRtlCheckNoSharedConflict (
-   IN PLOCK_QUEUE LockQueue,
-   IN PLARGE_INTEGER Starting,
-   IN PLARGE_INTEGER Ending
-   );
+FsRtlCheckNoSharedConflict(IN PLOCK_QUEUE LockQueue, IN PLARGE_INTEGER Starting, IN PLARGE_INTEGER Ending);
 
 BOOLEAN
-FsRtlCheckNoExclusiveConflict (
-    IN PLOCK_QUEUE LockQueue,
-    IN PLARGE_INTEGER Starting,
-    IN PLARGE_INTEGER Ending,
-    IN ULONG Key,
-    IN PFILE_OBJECT FileObject,
-    IN PVOID ProcessId
-    );
+FsRtlCheckNoExclusiveConflict(IN PLOCK_QUEUE LockQueue, IN PLARGE_INTEGER Starting, IN PLARGE_INTEGER Ending,
+                              IN ULONG Key, IN PFILE_OBJECT FileObject, IN PVOID ProcessId);
 
-VOID
-FsRtlPrivateResetLowestLockOffset (
-    PLOCK_INFO LockInfo
-    );
+VOID FsRtlPrivateResetLowestLockOffset(PLOCK_INFO LockInfo);
 
 NTSTATUS
-FsRtlFastUnlockSingleShared (
-    IN PLOCK_INFO LockInfo,
-    IN PFILE_OBJECT FileObject,
-    IN LARGE_INTEGER UNALIGNED *FileOffset,
-    IN PLARGE_INTEGER Length,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN PVOID Context OPTIONAL,
-    IN BOOLEAN IgnoreUnlockRoutine,
-    IN BOOLEAN CheckForWaiters
-    );
+FsRtlFastUnlockSingleShared(IN PLOCK_INFO LockInfo, IN PFILE_OBJECT FileObject, IN LARGE_INTEGER UNALIGNED *FileOffset,
+                            IN PLARGE_INTEGER Length, IN PEPROCESS ProcessId, IN ULONG Key, IN PVOID Context OPTIONAL,
+                            IN BOOLEAN IgnoreUnlockRoutine, IN BOOLEAN CheckForWaiters);
 
 NTSTATUS
-FsRtlFastUnlockSingleExclusive (
-    IN PLOCK_INFO LockInfo,
-    IN PFILE_OBJECT FileObject,
-    IN LARGE_INTEGER UNALIGNED *FileOffset,
-    IN PLARGE_INTEGER Length,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN PVOID Context OPTIONAL,
-    IN BOOLEAN IgnoreUnlockRoutine,
-    IN BOOLEAN CheckForWaiters
-    );
+FsRtlFastUnlockSingleExclusive(IN PLOCK_INFO LockInfo, IN PFILE_OBJECT FileObject,
+                               IN LARGE_INTEGER UNALIGNED *FileOffset, IN PLARGE_INTEGER Length, IN PEPROCESS ProcessId,
+                               IN ULONG Key, IN PVOID Context OPTIONAL, IN BOOLEAN IgnoreUnlockRoutine,
+                               IN BOOLEAN CheckForWaiters);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, FsRtlInitializeFileLocks)
 #endif
 
-
-VOID
-FsRtlInitializeFileLocks (
-    VOID
-    )
+
+VOID FsRtlInitializeFileLocks(VOID)
 /*++
 
 Routine Description:
@@ -736,53 +619,20 @@ Return Value:
     //  Build the lookaside lists for our internal structures.
     //
 
-    ExInitializeNPagedLookasideList( &FsRtlSharedLockLookasideList,
-                                     NULL,
-                                     NULL,
-                                     0,
-                                     sizeof(SH_LOCK),
-                                     TAG_SHARED_LOCK,
-                                     16 );
+    ExInitializeNPagedLookasideList(&FsRtlSharedLockLookasideList, NULL, NULL, 0, sizeof(SH_LOCK), TAG_SHARED_LOCK, 16);
 
-    ExInitializeNPagedLookasideList( &FsRtlExclusiveLockLookasideList,
-                                     NULL,
-                                     NULL,
-                                     0,
-                                     sizeof(EX_LOCK),
-                                     TAG_EXCLUSIVE_LOCK,
-                                     16 );
+    ExInitializeNPagedLookasideList(&FsRtlExclusiveLockLookasideList, NULL, NULL, 0, sizeof(EX_LOCK),
+                                    TAG_EXCLUSIVE_LOCK, 16);
 
-    ExInitializeNPagedLookasideList( &FsRtlWaitingLockLookasideList,
-                                     NULL,
-                                     NULL,
-                                     0,
-                                     sizeof(WAITING_LOCK),
-                                     TAG_WAITING_LOCK,
-                                     16 );
+    ExInitializeNPagedLookasideList(&FsRtlWaitingLockLookasideList, NULL, NULL, 0, sizeof(WAITING_LOCK),
+                                    TAG_WAITING_LOCK, 16);
 
-    ExInitializeNPagedLookasideList( &FsRtlLockTreeNodeLookasideList,
-                                     NULL,
-                                     NULL,
-                                     0,
-                                     sizeof(LOCKTREE_NODE),
-                                     TAG_LOCKTREE_NODE,
-                                     16 );
+    ExInitializeNPagedLookasideList(&FsRtlLockTreeNodeLookasideList, NULL, NULL, 0, sizeof(LOCKTREE_NODE),
+                                    TAG_LOCKTREE_NODE, 16);
 
-    ExInitializeNPagedLookasideList( &FsRtlLockInfoLookasideList,
-                                     NULL,
-                                     NULL,
-                                     0,
-                                     sizeof(LOCK_INFO),
-                                     TAG_LOCK_INFO,
-                                     8 );
+    ExInitializeNPagedLookasideList(&FsRtlLockInfoLookasideList, NULL, NULL, 0, sizeof(LOCK_INFO), TAG_LOCK_INFO, 8);
 
-    ExInitializePagedLookasideList( &FsRtlFileLockLookasideList,
-                                    NULL,
-                                    NULL,
-                                    0,
-                                    sizeof(FILE_LOCK),
-                                    TAG_FILE_LOCK,
-                                    8 );
+    ExInitializePagedLookasideList(&FsRtlFileLockLookasideList, NULL, NULL, 0, sizeof(FILE_LOCK), TAG_FILE_LOCK, 8);
 
     //
     //  Initialize the LockInfo creation mutex
@@ -794,17 +644,13 @@ Return Value:
     //  Initialize the cancel collision lock
     //
 
-    KeInitializeSpinLock( &FsRtlFileLockCancelCollideLock );
+    KeInitializeSpinLock(&FsRtlFileLockCancelCollideLock);
     FsRtlFileLockCancelCollideList.Next = NULL;
 }
 
-
-VOID
-FsRtlInitializeFileLock (
-    IN PFILE_LOCK FileLock,
-    IN PCOMPLETE_LOCK_IRP_ROUTINE CompleteLockIrpRoutine OPTIONAL,
-    IN PUNLOCK_ROUTINE UnlockRoutine OPTIONAL
-    )
+
+VOID FsRtlInitializeFileLock(IN PFILE_LOCK FileLock, IN PCOMPLETE_LOCK_IRP_ROUTINE CompleteLockIrpRoutine OPTIONAL,
+                             IN PUNLOCK_ROUTINE UnlockRoutine OPTIONAL)
 
 /*++
 
@@ -852,17 +698,14 @@ Return Value:
     //  and return to our caller
     //
 
-    DebugTrace(-1, Dbg, "FsRtlInitializeFileLock -> VOID\n", 0 );
+    DebugTrace(-1, Dbg, "FsRtlInitializeFileLock -> VOID\n", 0);
 
     return;
 }
 
-
+
 BOOLEAN
-FsRtlPrivateInitializeFileLock (
-    IN PFILE_LOCK   FileLock,
-    IN BOOLEAN ViaFastCall
-    )
+FsRtlPrivateInitializeFileLock(IN PFILE_LOCK FileLock, IN BOOLEAN ViaFastCall)
 /*++
 
 Routine Description:
@@ -885,20 +728,22 @@ Return Value:
 
 --*/
 {
-    PLOCK_INFO  LockInfo;
-    BOOLEAN     Results = FALSE;
+    PLOCK_INFO LockInfo;
+    BOOLEAN Results = FALSE;
 
-    ExAcquireFastMutex( &FsRtlCreateLockInfo );
+    ExAcquireFastMutex(&FsRtlCreateLockInfo);
 
-    try {
+    try
+    {
 
-        if (FileLock->LockInformation != NULL) {
+        if (FileLock->LockInformation != NULL)
+        {
 
             //
             // Structure is already allocated, just return
             //
 
-            try_return( Results = TRUE );
+            try_return(Results = TRUE);
         }
 
         //
@@ -908,15 +753,18 @@ Return Value:
 
         LockInfo = FsRtlAllocateLockInfo();
 
-        if (LockInfo == NULL) {
+        if (LockInfo == NULL)
+        {
 
-            if (ViaFastCall) {
+            if (ViaFastCall)
+            {
 
-                try_return( Results = FALSE );
+                try_return(Results = FALSE);
+            }
+            else
+            {
 
-            } else {
-
-                ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
         }
 
@@ -927,7 +775,7 @@ Return Value:
 
         LockInfo->LowestLockOffset = 0xffffffff;
 
-        KeInitializeSpinLock( &LockInfo->LockQueue.QueueSpinLock );
+        KeInitializeSpinLock(&LockInfo->LockQueue.QueueSpinLock);
         LockInfo->LockQueue.SharedLockTree = NULL;
         LockInfo->LockQueue.ExclusiveLockTree = NULL;
         LockInfo->LockQueue.WaitingLocks.Next = NULL;
@@ -952,23 +800,23 @@ Return Value:
         // Link LockInfo into FileLock
         //
 
-        FileLock->LockInformation = (PVOID) LockInfo;
+        FileLock->LockInformation = (PVOID)LockInfo;
         Results = TRUE;
 
-    try_exit: NOTHING;
-    } finally {
+    try_exit:
+        NOTHING;
+    }
+    finally
+    {
 
-        ExReleaseFastMutex( &FsRtlCreateLockInfo );
+        ExReleaseFastMutex(&FsRtlCreateLockInfo);
     }
 
     return Results;
 }
 
-
-VOID
-FsRtlUninitializeFileLock (
-    IN PFILE_LOCK FileLock
-    )
+
+VOID FsRtlUninitializeFileLock(IN PFILE_LOCK FileLock)
 
 /*++
 
@@ -992,35 +840,37 @@ Return Value:
 --*/
 
 {
-    PLOCK_INFO          LockInfo;
-    PSH_LOCK            ShLock;
-    PEX_LOCK            ExLock;
-    PSINGLE_LIST_ENTRY  Link;
-    PWAITING_LOCK       WaitingLock;
-    PLOCKTREE_NODE      LockTreeNode;
-    PIRP                Irp;
-    NTSTATUS            NewStatus;
-    KIRQL               OldIrql;
-    PKPRCB              Prcb;
+    PLOCK_INFO LockInfo;
+    PSH_LOCK ShLock;
+    PEX_LOCK ExLock;
+    PSINGLE_LIST_ENTRY Link;
+    PWAITING_LOCK WaitingLock;
+    PLOCKTREE_NODE LockTreeNode;
+    PIRP Irp;
+    NTSTATUS NewStatus;
+    KIRQL OldIrql;
+    PKPRCB Prcb;
 
     DebugTrace(+1, Dbg, "FsRtlUninitializeFileLock, FileLock = %08lx\n", FileLock);
 
-    if ((LockInfo = (PLOCK_INFO) FileLock->LockInformation) == NULL) {
-        return ;
+    if ((LockInfo = (PLOCK_INFO)FileLock->LockInformation) == NULL)
+    {
+        return;
     }
 
     //
     //  Lock vs. cancels and lock the queue.
     //
 
-    FsRtlAcquireCancelCollide( &OldIrql );
-    FsRtlAcquireLockQueueAtDpc( &LockInfo->LockQueue );
+    FsRtlAcquireCancelCollide(&OldIrql);
+    FsRtlAcquireLockQueueAtDpc(&LockInfo->LockQueue);
 
     //
     //  Free lock trees
     //
 
-    while (LockInfo->LockQueue.SharedLockTree != NULL) {
+    while (LockInfo->LockQueue.SharedLockTree != NULL)
+    {
 
         LockTreeNode = CONTAINING_RECORD(LockInfo->LockQueue.SharedLockTree, LOCKTREE_NODE, Links);
 
@@ -1028,9 +878,10 @@ Return Value:
         //  Remove all locks associated with the root node
         //
 
-        while (LockTreeNode->Locks.Next != NULL) {
-            Link = PopEntryList (&LockTreeNode->Locks);
-            ShLock = CONTAINING_RECORD( Link, SH_LOCK, Link );
+        while (LockTreeNode->Locks.Next != NULL)
+        {
+            Link = PopEntryList(&LockTreeNode->Locks);
+            ShLock = CONTAINING_RECORD(Link, SH_LOCK, Link);
 
             FsRtlFreeSharedLock(ShLock);
         }
@@ -1044,7 +895,8 @@ Return Value:
         FsRtlFreeLockTreeNode(LockTreeNode);
     }
 
-    while (LockInfo->LockQueue.ExclusiveLockTree != NULL) {
+    while (LockInfo->LockQueue.ExclusiveLockTree != NULL)
+    {
 
         ExLock = CONTAINING_RECORD(LockInfo->LockQueue.ExclusiveLockTree, EX_LOCK, Links);
 
@@ -1060,10 +912,11 @@ Return Value:
     //  while cleanup/close occurs in the owning filesystem, triggering teardown.
     //
 
-    while (LockInfo->LockQueue.WaitingLocks.Next != NULL) {
+    while (LockInfo->LockQueue.WaitingLocks.Next != NULL)
+    {
 
-        Link = PopEntryList( &LockInfo->LockQueue.WaitingLocks );
-        WaitingLock = CONTAINING_RECORD( Link, WAITING_LOCK, Link );
+        Link = PopEntryList(&LockInfo->LockQueue.WaitingLocks);
+        WaitingLock = CONTAINING_RECORD(Link, WAITING_LOCK, Link);
 
         Irp = WaitingLock->Irp;
 
@@ -1074,64 +927,60 @@ Return Value:
         //  we completing the irp.
         //
 
-        FsRtlReleaseLockQueueFromDpc( &LockInfo->LockQueue );
+        FsRtlReleaseLockQueueFromDpc(&LockInfo->LockQueue);
 
-        IoAcquireCancelSpinLock( &Irp->CancelIrql );
-        IoSetCancelRoutine( Irp, NULL );
-        
+        IoAcquireCancelSpinLock(&Irp->CancelIrql);
+        IoSetCancelRoutine(Irp, NULL);
+
         //
         //  If it got cancelled, the cancel routine is now waiting on the other
         //  side of the cancel collide for us to push it onto the collide list.
         //  It'll get the IRP there as opposed to the shortly-to-be-axed lock
         //  structure.
         //
-        
-        if (Irp->Cancel) {
-            
-            IoReleaseCancelSpinLock( Irp->CancelIrql );
-            PushEntryList( &FsRtlFileLockCancelCollideList,
-                           &WaitingLock->Link );
+
+        if (Irp->Cancel)
+        {
+
+            IoReleaseCancelSpinLock(Irp->CancelIrql);
+            PushEntryList(&FsRtlFileLockCancelCollideList, &WaitingLock->Link);
             Irp = NULL;
-        
-        } else {
-            
-            IoReleaseCancelSpinLock( Irp->CancelIrql );
+        }
+        else
+        {
+
+            IoReleaseCancelSpinLock(Irp->CancelIrql);
         }
 
         //
         //  If we got the ownership of the IRP, release the collide and complete
         //  it, otherwise spin back around for more.
         //
-        
-        if (Irp) {
-            
-            FsRtlReleaseCancelCollide( OldIrql );
+
+        if (Irp)
+        {
+
+            FsRtlReleaseCancelCollide(OldIrql);
 
             Irp->IoStatus.Information = 0;
 
-            FsRtlCompleteLockIrp(
-                 LockInfo,
-                 WaitingLock->Context,
-                 Irp,
-                 STATUS_RANGE_NOT_LOCKED,
-                 &NewStatus,
-                 NULL );
+            FsRtlCompleteLockIrp(LockInfo, WaitingLock->Context, Irp, STATUS_RANGE_NOT_LOCKED, &NewStatus, NULL);
 
-            FsRtlFreeWaitingLock( WaitingLock );
-            
-            FsRtlAcquireCancelCollide( &OldIrql );
+            FsRtlFreeWaitingLock(WaitingLock);
+
+            FsRtlAcquireCancelCollide(&OldIrql);
         }
-        
-        FsRtlAcquireLockQueueAtDpc( &LockInfo->LockQueue );
+
+        FsRtlAcquireLockQueueAtDpc(&LockInfo->LockQueue);
     }
 
     //
     // Release locks and free pool used to track the lock info on this file.
     //
 
-    FsRtlReleaseLockQueueFromDpc( &LockInfo->LockQueue );
-    FsRtlReleaseCancelCollide( OldIrql );
-    FsRtlFreeLockInfo( LockInfo );
+    FsRtlReleaseLockQueueFromDpc(&LockInfo->LockQueue);
+    FsRtlReleaseCancelCollide(OldIrql);
+    FsRtlFreeLockInfo(LockInfo);
 
     //
     // Unlink LockInfo from FileLock
@@ -1143,49 +992,40 @@ Return Value:
     //  And return to our caller
     //
 
-    DebugTrace(-1, Dbg, "FsRtlUninitializeFileLock -> VOID\n", 0 );
+    DebugTrace(-1, Dbg, "FsRtlUninitializeFileLock -> VOID\n", 0);
     return;
 }
 
-
-PFILE_LOCK
-FsRtlAllocateFileLock (
-    IN PCOMPLETE_LOCK_IRP_ROUTINE CompleteLockIrpRoutine OPTIONAL,
-    IN PUNLOCK_ROUTINE UnlockRoutine OPTIONAL
 
-    )
+PFILE_LOCK
+FsRtlAllocateFileLock(IN PCOMPLETE_LOCK_IRP_ROUTINE CompleteLockIrpRoutine OPTIONAL,
+                      IN PUNLOCK_ROUTINE UnlockRoutine OPTIONAL
+
+)
 {
     PFILE_LOCK FileLock;
 
-    FileLock = ExAllocateFromPagedLookasideList( &FsRtlFileLockLookasideList );
+    FileLock = ExAllocateFromPagedLookasideList(&FsRtlFileLockLookasideList);
 
-    if (FileLock != NULL) {
+    if (FileLock != NULL)
+    {
 
-        FsRtlInitializeFileLock( FileLock,
-                                 CompleteLockIrpRoutine,
-                                 UnlockRoutine );
+        FsRtlInitializeFileLock(FileLock, CompleteLockIrpRoutine, UnlockRoutine);
     }
 
     return FileLock;
 }
 
-VOID
-FsRtlFreeFileLock (
-    IN PFILE_LOCK FileLock
-    )
+VOID FsRtlFreeFileLock(IN PFILE_LOCK FileLock)
 {
-    FsRtlUninitializeFileLock( FileLock );
+    FsRtlUninitializeFileLock(FileLock);
 
-    ExFreeToPagedLookasideList( &FsRtlFileLockLookasideList, FileLock );
+    ExFreeToPagedLookasideList(&FsRtlFileLockLookasideList, FileLock);
 }
 
-
+
 NTSTATUS
-FsRtlProcessFileLock (
-    IN PFILE_LOCK FileLock,
-    IN PIRP Irp,
-    IN PVOID Context OPTIONAL
-    )
+FsRtlProcessFileLock(IN PFILE_LOCK FileLock, IN PIRP Irp, IN PVOID Context OPTIONAL)
 
 /*++
 
@@ -1217,8 +1057,8 @@ Return Value:
     PIO_STACK_LOCATION IrpSp;
 
     IO_STATUS_BLOCK Iosb;
-    NTSTATUS        Status;
-    LARGE_INTEGER   ByteOffset;
+    NTSTATUS Status;
+    LARGE_INTEGER ByteOffset;
 
     DebugTrace(+1, Dbg, "FsRtlProcessFileLock, FileLock = %08lx\n", FileLock);
 
@@ -1229,32 +1069,25 @@ Return Value:
     //  the major function code is for a lock operation
     //
 
-    IrpSp = IoGetCurrentIrpStackLocation( Irp );
+    IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
-    ASSERT( IrpSp->MajorFunction == IRP_MJ_LOCK_CONTROL );
+    ASSERT(IrpSp->MajorFunction == IRP_MJ_LOCK_CONTROL);
 
     //
     //  Now process the different minor lock operations
     //
 
-    switch (IrpSp->MinorFunction) {
+    switch (IrpSp->MinorFunction)
+    {
 
     case IRP_MN_LOCK:
 
         ByteOffset = IrpSp->Parameters.LockControl.ByteOffset;
 
-        (VOID) FsRtlPrivateLock( FileLock,
-                                 IrpSp->FileObject,
-                                 &ByteOffset,
-                                 IrpSp->Parameters.LockControl.Length,
-                                 IoGetRequestorProcess(Irp),
-                                 IrpSp->Parameters.LockControl.Key,
-                                 BooleanFlagOn(IrpSp->Flags, SL_FAIL_IMMEDIATELY),
-                                 BooleanFlagOn(IrpSp->Flags, SL_EXCLUSIVE_LOCK),
-                                 &Iosb,
-                                 Irp,
-                                 Context,
-                                 FALSE );
+        (VOID) FsRtlPrivateLock(FileLock, IrpSp->FileObject, &ByteOffset, IrpSp->Parameters.LockControl.Length,
+                                IoGetRequestorProcess(Irp), IrpSp->Parameters.LockControl.Key,
+                                BooleanFlagOn(IrpSp->Flags, SL_FAIL_IMMEDIATELY),
+                                BooleanFlagOn(IrpSp->Flags, SL_EXCLUSIVE_LOCK), &Iosb, Irp, Context, FALSE);
 
         break;
 
@@ -1262,37 +1095,26 @@ Return Value:
 
         ByteOffset = IrpSp->Parameters.LockControl.ByteOffset;
 
-        Iosb.Status = FsRtlFastUnlockSingle( FileLock,
-                                             IrpSp->FileObject,
-                                             &ByteOffset,
-                                             IrpSp->Parameters.LockControl.Length,
-                                             IoGetRequestorProcess(Irp),
-                                             IrpSp->Parameters.LockControl.Key,
-                                             Context,
-                                             FALSE );
+        Iosb.Status =
+            FsRtlFastUnlockSingle(FileLock, IrpSp->FileObject, &ByteOffset, IrpSp->Parameters.LockControl.Length,
+                                  IoGetRequestorProcess(Irp), IrpSp->Parameters.LockControl.Key, Context, FALSE);
 
-        FsRtlCompleteLockIrp( FileLock, Context, Irp, Iosb.Status, &Status, NULL );
+        FsRtlCompleteLockIrp(FileLock, Context, Irp, Iosb.Status, &Status, NULL);
         break;
 
     case IRP_MN_UNLOCK_ALL:
 
-        Iosb.Status = FsRtlFastUnlockAll( FileLock,
-                                          IrpSp->FileObject,
-                                          IoGetRequestorProcess(Irp),
-                                          Context );
+        Iosb.Status = FsRtlFastUnlockAll(FileLock, IrpSp->FileObject, IoGetRequestorProcess(Irp), Context);
 
-        FsRtlCompleteLockIrp( FileLock, Context, Irp, Iosb.Status, &Status, NULL );
+        FsRtlCompleteLockIrp(FileLock, Context, Irp, Iosb.Status, &Status, NULL);
         break;
 
     case IRP_MN_UNLOCK_ALL_BY_KEY:
 
-        Iosb.Status = FsRtlFastUnlockAllByKey( FileLock,
-                                               IrpSp->FileObject,
-                                               IoGetRequestorProcess(Irp),
-                                               IrpSp->Parameters.LockControl.Key,
-                                               Context );
+        Iosb.Status = FsRtlFastUnlockAllByKey(FileLock, IrpSp->FileObject, IoGetRequestorProcess(Irp),
+                                              IrpSp->Parameters.LockControl.Key, Context);
 
-        FsRtlCompleteLockIrp( FileLock, Context, Irp, Iosb.Status, &Status, NULL );
+        FsRtlCompleteLockIrp(FileLock, Context, Irp, Iosb.Status, &Status, NULL);
         break;
 
     default:
@@ -1306,7 +1128,7 @@ Return Value:
         DebugTrace(0, 1, "Invalid LockFile Minor Function Code %08lx\n", IrpSp->MinorFunction);
 
 
-        FsRtlCompleteRequest( Irp, STATUS_INVALID_DEVICE_REQUEST );
+        FsRtlCompleteRequest(Irp, STATUS_INVALID_DEVICE_REQUEST);
 
         Iosb.Status = STATUS_INVALID_DEVICE_REQUEST;
         break;
@@ -1321,12 +1143,9 @@ Return Value:
     return Iosb.Status;
 }
 
-
+
 BOOLEAN
-FsRtlCheckLockForReadAccess (
-    IN PFILE_LOCK FileLock,
-    IN PIRP Irp
-    )
+FsRtlCheckLockForReadAccess(IN PFILE_LOCK FileLock, IN PIRP Irp)
 
 /*++
 
@@ -1355,17 +1174,18 @@ Return Value:
 
     PIO_STACK_LOCATION IrpSp;
 
-    PLOCK_INFO     LockInfo;
-    LARGE_INTEGER  StartingByte;
-    LARGE_INTEGER  Length;
-    ULONG          Key;
-    PFILE_OBJECT   FileObject;
-    PVOID          ProcessId;
-    LARGE_INTEGER  BeyondLastByte;
+    PLOCK_INFO LockInfo;
+    LARGE_INTEGER StartingByte;
+    LARGE_INTEGER Length;
+    ULONG Key;
+    PFILE_OBJECT FileObject;
+    PVOID ProcessId;
+    LARGE_INTEGER BeyondLastByte;
 
     DebugTrace(+1, Dbg, "FsRtlCheckLockForReadAccess, FileLock = %08lx\n", FileLock);
 
-    if ((LockInfo = (PLOCK_INFO) FileLock->LockInformation) == NULL) {
+    if ((LockInfo = (PLOCK_INFO)FileLock->LockInformation) == NULL)
+    {
         DebugTrace(-1, Dbg, "FsRtlCheckLockForReadAccess (No current lock info) -> TRUE\n", 0);
         return TRUE;
     }
@@ -1374,7 +1194,8 @@ Return Value:
     //  Do a really fast test to see if there are any exclusive locks to start with
     //
 
-    if (LockInfo->LockQueue.ExclusiveLockTree == NULL) {
+    if (LockInfo->LockQueue.ExclusiveLockTree == NULL)
+    {
         DebugTrace(-1, Dbg, "FsRtlCheckLockForReadAccess (No current locks) -> TRUE\n", 0);
         return TRUE;
     }
@@ -1383,13 +1204,14 @@ Return Value:
     //  Get the read offset and compare it to the lowest existing lock.
     //
 
-    IrpSp = IoGetCurrentIrpStackLocation( Irp );
+    IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
-    StartingByte  = IrpSp->Parameters.Read.ByteOffset;
-    (ULONGLONG)Length.QuadPart = (ULONGLONG)IrpSp->Parameters.Read.Length;
+    StartingByte = IrpSp->Parameters.Read.ByteOffset;
+    (ULONGLONG) Length.QuadPart = (ULONGLONG)IrpSp->Parameters.Read.Length;
 
-    (ULONGLONG)BeyondLastByte.QuadPart = (ULONGLONG)StartingByte.QuadPart + Length.LowPart;
-    if ( (ULONGLONG)BeyondLastByte.QuadPart <= (ULONGLONG)LockInfo->LowestLockOffset ) {
+    (ULONGLONG) BeyondLastByte.QuadPart = (ULONGLONG)StartingByte.QuadPart + Length.LowPart;
+    if ((ULONGLONG)BeyondLastByte.QuadPart <= (ULONGLONG)LockInfo->LowestLockOffset)
+    {
         DebugTrace(-1, Dbg, "FsRtlCheckLockForReadAccess (Below lowest lock) -> TRUE\n", 0);
         return TRUE;
     }
@@ -1398,20 +1220,15 @@ Return Value:
     //  Get remaining parameters.
     //
 
-    Key           = IrpSp->Parameters.Read.Key;
-    FileObject    = IrpSp->FileObject;
-    ProcessId     = IoGetRequestorProcess( Irp );
+    Key = IrpSp->Parameters.Read.Key;
+    FileObject = IrpSp->FileObject;
+    ProcessId = IoGetRequestorProcess(Irp);
 
     //
     //  Call our private work routine to do the real check
     //
 
-    Result = FsRtlFastCheckLockForRead( FileLock,
-                                        &StartingByte,
-                                        &Length,
-                                        Key,
-                                        FileObject,
-                                        ProcessId );
+    Result = FsRtlFastCheckLockForRead(FileLock, &StartingByte, &Length, Key, FileObject, ProcessId);
 
     //
     //  And return to our caller
@@ -1422,12 +1239,9 @@ Return Value:
     return Result;
 }
 
-
+
 BOOLEAN
-FsRtlCheckLockForWriteAccess (
-    IN PFILE_LOCK FileLock,
-    IN PIRP Irp
-    )
+FsRtlCheckLockForWriteAccess(IN PFILE_LOCK FileLock, IN PIRP Irp)
 
 /*++
 
@@ -1456,17 +1270,18 @@ Return Value:
 
     PIO_STACK_LOCATION IrpSp;
 
-    PLOCK_INFO      LockInfo;
-    LARGE_INTEGER   StartingByte;
-    LARGE_INTEGER   Length;
-    ULONG           Key;
-    PFILE_OBJECT    FileObject;
-    PVOID           ProcessId;
-    LARGE_INTEGER   BeyondLastByte;
+    PLOCK_INFO LockInfo;
+    LARGE_INTEGER StartingByte;
+    LARGE_INTEGER Length;
+    ULONG Key;
+    PFILE_OBJECT FileObject;
+    PVOID ProcessId;
+    LARGE_INTEGER BeyondLastByte;
 
     DebugTrace(+1, Dbg, "FsRtlCheckLockForWriteAccess, FileLock = %08lx\n", FileLock);
 
-    if ((LockInfo = (PLOCK_INFO) FileLock->LockInformation) == NULL) {
+    if ((LockInfo = (PLOCK_INFO)FileLock->LockInformation) == NULL)
+    {
         DebugTrace(-1, Dbg, "FsRtlCheckLockForWriteAccess (No current lock info) -> TRUE\n", 0);
         return TRUE;
     }
@@ -1475,7 +1290,8 @@ Return Value:
     //  Do a really fast test to see if there are any locks to start with
     //
 
-    if (LockInfo->LockQueue.ExclusiveLockTree == NULL && LockInfo->LockQueue.SharedLockTree == NULL) {
+    if (LockInfo->LockQueue.ExclusiveLockTree == NULL && LockInfo->LockQueue.SharedLockTree == NULL)
+    {
         DebugTrace(-1, Dbg, "FsRtlCheckLockForWriteAccess (No current locks) -> TRUE\n", 0);
         return TRUE;
     }
@@ -1484,13 +1300,14 @@ Return Value:
     //  Get the write offset and compare it to the lowest existing lock.
     //
 
-    IrpSp = IoGetCurrentIrpStackLocation( Irp );
+    IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
-    StartingByte  = IrpSp->Parameters.Write.ByteOffset;
-    (ULONGLONG)Length.QuadPart = (ULONGLONG)IrpSp->Parameters.Write.Length;
+    StartingByte = IrpSp->Parameters.Write.ByteOffset;
+    (ULONGLONG) Length.QuadPart = (ULONGLONG)IrpSp->Parameters.Write.Length;
 
-    (ULONGLONG)BeyondLastByte.QuadPart = (ULONGLONG)StartingByte.QuadPart + Length.LowPart;
-    if ( (ULONGLONG)BeyondLastByte.QuadPart <= (ULONGLONG)LockInfo->LowestLockOffset ) {
+    (ULONGLONG) BeyondLastByte.QuadPart = (ULONGLONG)StartingByte.QuadPart + Length.LowPart;
+    if ((ULONGLONG)BeyondLastByte.QuadPart <= (ULONGLONG)LockInfo->LowestLockOffset)
+    {
         DebugTrace(-1, Dbg, "FsRtlCheckLockForWriteAccess (Below lowest lock) -> TRUE\n", 0);
         return TRUE;
     }
@@ -1499,20 +1316,15 @@ Return Value:
     //  Get remaining parameters.
     //
 
-    Key           = IrpSp->Parameters.Write.Key;
-    FileObject    = IrpSp->FileObject;
-    ProcessId     = IoGetRequestorProcess( Irp );
+    Key = IrpSp->Parameters.Write.Key;
+    FileObject = IrpSp->FileObject;
+    ProcessId = IoGetRequestorProcess(Irp);
 
     //
     //  Call our private work routine to do the real work
     //
 
-    Result = FsRtlFastCheckLockForWrite( FileLock,
-                                         &StartingByte,
-                                         &Length,
-                                         Key,
-                                         FileObject,
-                                         ProcessId );
+    Result = FsRtlFastCheckLockForWrite(FileLock, &StartingByte, &Length, Key, FileObject, ProcessId);
 
     //
     //  And return to our caller
@@ -1523,15 +1335,11 @@ Return Value:
     return Result;
 }
 
-
+
 PRTL_SPLAY_LINKS
-FsRtlFindFirstOverlappingSharedNode (
-    IN PRTL_SPLAY_LINKS         Tree,
-    IN PLARGE_INTEGER           StartingByte,
-    IN PLARGE_INTEGER           EndingByte,
-    IN OUT PRTL_SPLAY_LINKS     *LastEdgeNode,
-    IN OUT PBOOLEAN             GreaterThan
-    )
+FsRtlFindFirstOverlappingSharedNode(IN PRTL_SPLAY_LINKS Tree, IN PLARGE_INTEGER StartingByte,
+                                    IN PLARGE_INTEGER EndingByte, IN OUT PRTL_SPLAY_LINKS *LastEdgeNode,
+                                    IN OUT PBOOLEAN GreaterThan)
 /*++
 
 Routine Description:
@@ -1563,26 +1371,29 @@ Return Value:
 
 --*/
 {
-    PLOCKTREE_NODE        Node, LastOverlapNode;
-    PRTL_SPLAY_LINKS      SplayLinks;
-    PSH_LOCK              Lock;
+    PLOCKTREE_NODE Node, LastOverlapNode;
+    PRTL_SPLAY_LINKS SplayLinks;
+    PSH_LOCK Lock;
 
-    if (LastEdgeNode) *LastEdgeNode = NULL;
-    if (GreaterThan) *GreaterThan = FALSE;
+    if (LastEdgeNode)
+        *LastEdgeNode = NULL;
+    if (GreaterThan)
+        *GreaterThan = FALSE;
 
     LastOverlapNode = NULL;
     SplayLinks = Tree;
 
-    while (SplayLinks) {
+    while (SplayLinks)
+    {
 
-        Node = CONTAINING_RECORD( SplayLinks, LOCKTREE_NODE, Links );
+        Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
 
         //
         //  Pull up the first lock on the chain at this node to check
         //  the starting byte offset of locks at this node
         //
 
-        Lock = CONTAINING_RECORD( Node->Locks.Next, SH_LOCK, Link );
+        Lock = CONTAINING_RECORD(Node->Locks.Next, SH_LOCK, Link);
 
         //
         //  We may have to go right in the tree if this lock covers a range before the start of this
@@ -1592,10 +1403,12 @@ Return Value:
         //
 
         if (Node->Extent < (ULONGLONG)StartingByte->QuadPart ||
-            (Lock->LockInfo.StartingByte.QuadPart == 0 && Lock->LockInfo.Length.QuadPart == 0)) {
+            (Lock->LockInfo.StartingByte.QuadPart == 0 && Lock->LockInfo.Length.QuadPart == 0))
+        {
 
             if ((ULONGLONG)Lock->LockInfo.EndingByte.QuadPart == (ULONGLONG)EndingByte->QuadPart &&
-                (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart == (ULONGLONG)StartingByte->QuadPart) {
+                (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart == (ULONGLONG)StartingByte->QuadPart)
+            {
 
                 //
                 //  The extent of the node is less than the starting position of the
@@ -1618,14 +1431,17 @@ Return Value:
             //  byterange, so go right in the tree.
             //
 
-            if (LastEdgeNode) *LastEdgeNode = SplayLinks;
-            if (GreaterThan) *GreaterThan = FALSE;
+            if (LastEdgeNode)
+                *LastEdgeNode = SplayLinks;
+            if (GreaterThan)
+                *GreaterThan = FALSE;
 
             SplayLinks = RtlRightChild(SplayLinks);
             continue;
         }
 
-        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart <= (ULONGLONG)EndingByte->QuadPart) {
+        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart <= (ULONGLONG)EndingByte->QuadPart)
+        {
 
             //
             //  We have an overlap, but we need to see if the byterange starts
@@ -1634,7 +1450,8 @@ Return Value:
             //  nodes covering the byterange.
             //
 
-            if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart <= (ULONGLONG)StartingByte->QuadPart) {
+            if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart <= (ULONGLONG)StartingByte->QuadPart)
+            {
 
                 //
                 //  This node begins at a byte offset prior to the byterange we
@@ -1659,13 +1476,16 @@ Return Value:
         //  so go left in the tree.
         //
 
-        if (LastEdgeNode) *LastEdgeNode = SplayLinks;
-        if (GreaterThan) *GreaterThan = TRUE;
+        if (LastEdgeNode)
+            *LastEdgeNode = SplayLinks;
+        if (GreaterThan)
+            *GreaterThan = TRUE;
 
         SplayLinks = RtlLeftChild(SplayLinks);
     }
 
-    if (SplayLinks == NULL) {
+    if (SplayLinks == NULL)
+    {
 
         //
         //  We hit the edge of the tree. If the LastOverlapNode is set, it means that
@@ -1677,7 +1497,8 @@ Return Value:
         Node = LastOverlapNode;
     }
 
-    if (Node == NULL) {
+    if (Node == NULL)
+    {
 
         //
         // No overlapping node existed
@@ -1693,15 +1514,11 @@ Return Value:
     return &Node->Links;
 }
 
-
+
 PRTL_SPLAY_LINKS
-FsRtlFindFirstOverlappingExclusiveNode (
-    IN PRTL_SPLAY_LINKS        Tree,
-    IN PLARGE_INTEGER          StartingByte,
-    IN PLARGE_INTEGER          EndingByte,
-    IN OUT PRTL_SPLAY_LINKS    *LastEdgeNode,
-    IN OUT PBOOLEAN            GreaterThan
-    )
+FsRtlFindFirstOverlappingExclusiveNode(IN PRTL_SPLAY_LINKS Tree, IN PLARGE_INTEGER StartingByte,
+                                       IN PLARGE_INTEGER EndingByte, IN OUT PRTL_SPLAY_LINKS *LastEdgeNode,
+                                       IN OUT PBOOLEAN GreaterThan)
 /*++
 
 Routine Description:
@@ -1733,18 +1550,21 @@ Return Value:
 
 --*/
 {
-    PRTL_SPLAY_LINKS    SplayLinks;
-    PEX_LOCK            Lock, LastOverlapNode;
+    PRTL_SPLAY_LINKS SplayLinks;
+    PEX_LOCK Lock, LastOverlapNode;
 
-    if (LastEdgeNode) *LastEdgeNode = NULL;
-    if (GreaterThan) *GreaterThan = FALSE;
+    if (LastEdgeNode)
+        *LastEdgeNode = NULL;
+    if (GreaterThan)
+        *GreaterThan = FALSE;
 
     LastOverlapNode = NULL;
     SplayLinks = Tree;
 
-    while (SplayLinks) {
+    while (SplayLinks)
+    {
 
-        Lock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+        Lock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
         //
         //  We may have to go right in the tree if this lock covers a range before the start of this
@@ -1754,10 +1574,12 @@ Return Value:
         //
 
         if ((ULONGLONG)Lock->LockInfo.EndingByte.QuadPart < (ULONGLONG)StartingByte->QuadPart ||
-            (Lock->LockInfo.StartingByte.QuadPart == 0 && Lock->LockInfo.Length.QuadPart == 0)) {
+            (Lock->LockInfo.StartingByte.QuadPart == 0 && Lock->LockInfo.Length.QuadPart == 0))
+        {
 
             if ((ULONGLONG)Lock->LockInfo.EndingByte.QuadPart == (ULONGLONG)EndingByte->QuadPart &&
-                (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart == (ULONGLONG)StartingByte->QuadPart) {
+                (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart == (ULONGLONG)StartingByte->QuadPart)
+            {
 
                 //
                 //  The extent of the lock is less than the starting position of the
@@ -1776,8 +1598,10 @@ Return Value:
 
                 LastOverlapNode = Lock;
 
-                if (LastEdgeNode) *LastEdgeNode = SplayLinks;
-                if (GreaterThan) *GreaterThan = FALSE;
+                if (LastEdgeNode)
+                    *LastEdgeNode = SplayLinks;
+                if (GreaterThan)
+                    *GreaterThan = FALSE;
 
                 SplayLinks = RtlLeftChild(SplayLinks);
                 continue;
@@ -1788,14 +1612,17 @@ Return Value:
             //  right in the tree.
             //
 
-            if (LastEdgeNode) *LastEdgeNode = SplayLinks;
-            if (GreaterThan) *GreaterThan = FALSE;
+            if (LastEdgeNode)
+                *LastEdgeNode = SplayLinks;
+            if (GreaterThan)
+                *GreaterThan = FALSE;
 
             SplayLinks = RtlRightChild(SplayLinks);
             continue;
         }
 
-        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart <= (ULONGLONG)EndingByte->QuadPart) {
+        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart <= (ULONGLONG)EndingByte->QuadPart)
+        {
 
             //
             //  We have an overlap, but we need to see if the byterange starts
@@ -1804,7 +1631,8 @@ Return Value:
             //  nodes covering the byterange.
             //
 
-            if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart <= (ULONGLONG)StartingByte->QuadPart) {
+            if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart <= (ULONGLONG)StartingByte->QuadPart)
+            {
 
                 //
                 //  This node begins at a byte offset prior to the byterange we
@@ -1828,13 +1656,16 @@ Return Value:
         //  or we have the candidate overlap case above, so go left in the tree.
         //
 
-        if (LastEdgeNode) *LastEdgeNode = SplayLinks;
-        if (GreaterThan) *GreaterThan = TRUE;
+        if (LastEdgeNode)
+            *LastEdgeNode = SplayLinks;
+        if (GreaterThan)
+            *GreaterThan = TRUE;
 
         SplayLinks = RtlLeftChild(SplayLinks);
     }
 
-    if (SplayLinks == NULL) {
+    if (SplayLinks == NULL)
+    {
 
         //
         //  We hit the edge of the tree. If the LastOverlapNode is set, it means that
@@ -1846,7 +1677,8 @@ Return Value:
         Lock = LastOverlapNode;
     }
 
-    if (Lock == NULL) {
+    if (Lock == NULL)
+    {
 
         //
         // No overlapping lock existed
@@ -1862,13 +1694,9 @@ Return Value:
     return &Lock->Links;
 }
 
-
+
 PSH_LOCK
-FsRtlFindFirstOverlapInNode (
-    IN PLOCKTREE_NODE Node,
-    IN PLARGE_INTEGER StartingByte,
-    IN PLARGE_INTEGER EndingByte
-    )
+FsRtlFindFirstOverlapInNode(IN PLOCKTREE_NODE Node, IN PLARGE_INTEGER StartingByte, IN PLARGE_INTEGER EndingByte)
 
 /*++
 
@@ -1896,11 +1724,10 @@ Return Value:
     PSH_LOCK Lock;
     PSINGLE_LIST_ENTRY Link;
 
-    for (Link = Node->Locks.Next;
-         Link;
-         Link = Link->Next) {
+    for (Link = Node->Locks.Next; Link; Link = Link->Next)
+    {
 
-        Lock = CONTAINING_RECORD( Link, SH_LOCK, Link );
+        Lock = CONTAINING_RECORD(Link, SH_LOCK, Link);
 
         //
         //  Logic is the same as above checkers.  If the ending byte of the lock is less than the
@@ -1909,7 +1736,8 @@ Return Value:
         //
 
         if ((ULONGLONG)Lock->LockInfo.EndingByte.QuadPart < (ULONGLONG)StartingByte->QuadPart ||
-            (Lock->LockInfo.StartingByte.QuadPart == 0 && Lock->LockInfo.Length.QuadPart == 0)) {
+            (Lock->LockInfo.StartingByte.QuadPart == 0 && Lock->LockInfo.Length.QuadPart == 0))
+        {
 
             //
             //  ... except if the lock and range are equivalent, in which case we have discovered
@@ -1917,7 +1745,8 @@ Return Value:
             //
 
             if ((ULONGLONG)Lock->LockInfo.EndingByte.QuadPart == (ULONGLONG)EndingByte->QuadPart &&
-                (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart == (ULONGLONG)StartingByte->QuadPart) {
+                (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart == (ULONGLONG)StartingByte->QuadPart)
+            {
 
                 return Lock;
             }
@@ -1935,7 +1764,8 @@ Return Value:
         //  occur).
         //
 
-        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)EndingByte->QuadPart) {
+        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)EndingByte->QuadPart)
+        {
 
             return NULL;
         }
@@ -1952,17 +1782,14 @@ Return Value:
     //  going on, something is terribly wrong.
     //
 
-    ASSERT( FALSE );
+    ASSERT(FALSE);
 
     return NULL;
 }
 
-
+
 PFILE_LOCK_INFO
-FsRtlGetNextFileLock (
-    IN PFILE_LOCK FileLock,
-    IN BOOLEAN Restart
-    )
+FsRtlGetNextFileLock(IN PFILE_LOCK FileLock, IN BOOLEAN Restart)
 
 /*++
 
@@ -2005,20 +1832,21 @@ Return Value:
 --*/
 
 {
-    FILE_LOCK_INFO      FileLockInfo;
-    PVOID               ContinuationPointer;
-    PLOCK_INFO          LockInfo;
-    PLOCKTREE_NODE      Node;
-    PSINGLE_LIST_ENTRY  Link;
-    PRTL_SPLAY_LINKS    SplayLinks, LastSplayLinks;
-    PSH_LOCK            ShLock;
-    PEX_LOCK            ExLock;
-    BOOLEAN             FoundReturnable, GreaterThan;
-    KIRQL               OldIrql;
+    FILE_LOCK_INFO FileLockInfo;
+    PVOID ContinuationPointer;
+    PLOCK_INFO LockInfo;
+    PLOCKTREE_NODE Node;
+    PSINGLE_LIST_ENTRY Link;
+    PRTL_SPLAY_LINKS SplayLinks, LastSplayLinks;
+    PSH_LOCK ShLock;
+    PEX_LOCK ExLock;
+    BOOLEAN FoundReturnable, GreaterThan;
+    KIRQL OldIrql;
 
     DebugTrace(+1, Dbg, "FsRtlGetNextFileLock, FileLock = %08lx\n", FileLock);
 
-    if ((LockInfo = (PLOCK_INFO) FileLock->LockInformation) == NULL) {
+    if ((LockInfo = (PLOCK_INFO)FileLock->LockInformation) == NULL)
+    {
         //
         //  No lock information on this FileLock
         //
@@ -2035,9 +1863,10 @@ Return Value:
     FileLockInfo = FileLock->LastReturnedLockInfo;
     ContinuationPointer = FileLock->LastReturnedLock;
 
-    FsRtlAcquireLockQueue (&LockInfo->LockQueue, &OldIrql);
+    FsRtlAcquireLockQueue(&LockInfo->LockQueue, &OldIrql);
 
-    if (!Restart) {
+    if (!Restart)
+    {
         //
         //  Given the last returned lock, find its current successor in the tree.
         //  Previous implementations would reset the enumeration if the last returned
@@ -2052,7 +1881,8 @@ Return Value:
         //  exclusive lock tree, then the shared lock tree. Find the one we're enumerating.
         //
 
-        if (FileLockInfo.ExclusiveLock) {
+        if (FileLockInfo.ExclusiveLock)
+        {
 
             //
             //  Continue enumeration in the exclusive lock tree
@@ -2060,19 +1890,19 @@ Return Value:
 
             ExLock = NULL;
 
-            SplayLinks = FsRtlFindFirstOverlappingExclusiveNode( LockInfo->LockQueue.ExclusiveLockTree,
-                                                                 &FileLockInfo.StartingByte,
-                                                                 &FileLockInfo.EndingByte,
-                                                                 &LastSplayLinks,
-                                                                 &GreaterThan );
+            SplayLinks = FsRtlFindFirstOverlappingExclusiveNode(LockInfo->LockQueue.ExclusiveLockTree,
+                                                                &FileLockInfo.StartingByte, &FileLockInfo.EndingByte,
+                                                                &LastSplayLinks, &GreaterThan);
 
-            if (SplayLinks == NULL) {
+            if (SplayLinks == NULL)
+            {
 
                 //
                 //  No overlapping nodes were found, try to find successor
                 //
 
-                if (GreaterThan) {
+                if (GreaterThan)
+                {
 
                     //
                     //  Last node looked at was greater than the lock so it is
@@ -2080,37 +1910,41 @@ Return Value:
                     //
 
                     SplayLinks = LastSplayLinks;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Last node looked at was less than the lock so grab its successor
                     //
 
-                    if (LastSplayLinks) {
+                    if (LastSplayLinks)
+                    {
 
                         SplayLinks = RtlRealSuccessor(LastSplayLinks);
                     }
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Found an overlapping lock, see if it is the last returned
                 //
 
-                for (;
-                    SplayLinks;
-                    SplayLinks = RtlRealSuccessor(SplayLinks)) {
+                for (; SplayLinks; SplayLinks = RtlRealSuccessor(SplayLinks))
+                {
 
-                    ExLock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+                    ExLock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
                     if (ContinuationPointer == ExLock &&
-                        (ULONGLONG)FileLockInfo.StartingByte.QuadPart == (ULONGLONG)ExLock->LockInfo.StartingByte.QuadPart &&
+                        (ULONGLONG)FileLockInfo.StartingByte.QuadPart ==
+                            (ULONGLONG)ExLock->LockInfo.StartingByte.QuadPart &&
                         (ULONGLONG)FileLockInfo.Length.QuadPart == (ULONGLONG)ExLock->LockInfo.Length.QuadPart &&
                         FileLockInfo.Key == ExLock->LockInfo.Key &&
                         FileLockInfo.FileObject == ExLock->LockInfo.FileObject &&
-                        FileLockInfo.ProcessId == ExLock->LockInfo.ProcessId) {
+                        FileLockInfo.ProcessId == ExLock->LockInfo.ProcessId)
+                    {
 
                         //
                         //  Found last returned, dig up its successor
@@ -2135,7 +1969,8 @@ Return Value:
                     //  we returned, resume the enumeration at the beginning of the run.
                     //
 
-                    if (ExLock->LockInfo.Length.QuadPart != 0 || FileLockInfo.Length.QuadPart != 0) {
+                    if (ExLock->LockInfo.Length.QuadPart != 0 || FileLockInfo.Length.QuadPart != 0)
+                    {
 
                         break;
                     }
@@ -2150,7 +1985,8 @@ Return Value:
             //  Were we able to find a lock to return?
             //
 
-            if (SplayLinks == NULL) {
+            if (SplayLinks == NULL)
+            {
 
                 //
                 //  There aren't any more exclusive locks, fall over to the shared tree
@@ -2158,9 +1994,11 @@ Return Value:
 
                 SplayLinks = LockInfo->LockQueue.SharedLockTree;
 
-                if (SplayLinks) {
+                if (SplayLinks)
+                {
 
-                    while (RtlLeftChild(SplayLinks)) {
+                    while (RtlLeftChild(SplayLinks))
+                    {
 
                         SplayLinks = RtlLeftChild(SplayLinks);
                     }
@@ -2172,21 +2010,23 @@ Return Value:
                     ContinuationPointer = ShLock;
                     FoundReturnable = TRUE;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  This is the lock to return
                 //
 
-                ExLock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+                ExLock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
                 FileLockInfo = ExLock->LockInfo;
                 ContinuationPointer = ExLock;
                 FoundReturnable = TRUE;
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Continue enumeration in the shared lock tree
@@ -2194,55 +2034,60 @@ Return Value:
 
             Node = NULL;
 
-            SplayLinks = FsRtlFindFirstOverlappingSharedNode( LockInfo->LockQueue.SharedLockTree,
-                                                              &FileLockInfo.StartingByte,
-                                                              &FileLockInfo.EndingByte,
-                                                              &LastSplayLinks,
-                                                              &GreaterThan );
+            SplayLinks =
+                FsRtlFindFirstOverlappingSharedNode(LockInfo->LockQueue.SharedLockTree, &FileLockInfo.StartingByte,
+                                                    &FileLockInfo.EndingByte, &LastSplayLinks, &GreaterThan);
 
-            if (SplayLinks == NULL) {
+            if (SplayLinks == NULL)
+            {
 
                 //
                 //  No overlapping nodes were found
                 //
 
-                if (GreaterThan) {
+                if (GreaterThan)
+                {
 
                     //
                     //  Last node looked at was greater than the lock so it is
                     //  the place to pick up the enumeration
                     //
 
-                    if (LastSplayLinks) {
+                    if (LastSplayLinks)
+                    {
 
                         SplayLinks = LastSplayLinks;
-                        Node = CONTAINING_RECORD( LastSplayLinks, LOCKTREE_NODE, Links );
+                        Node = CONTAINING_RECORD(LastSplayLinks, LOCKTREE_NODE, Links);
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Last node looked at was less than the lock so grab its successor
                     //
 
-                    if (LastSplayLinks) {
+                    if (LastSplayLinks)
+                    {
 
                         SplayLinks = RtlRealSuccessor(LastSplayLinks);
 
-                        if (SplayLinks) {
+                        if (SplayLinks)
+                        {
 
-                            Node = CONTAINING_RECORD( SplayLinks, LOCKTREE_NODE, Links );
+                            Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
                         }
                     }
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Grab the node we found
                 //
 
-                Node = CONTAINING_RECORD( SplayLinks, LOCKTREE_NODE, Links );
+                Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
             }
 
             //
@@ -2250,32 +2095,34 @@ Return Value:
             //  if this isn't synchronized.
             //
 
-            if (Node != NULL) {
+            if (Node != NULL)
+            {
 
                 //
                 //    Walk down the locks at this node looking for the last returned lock
                 //
 
-                for (Link = Node->Locks.Next;
-                     Link;
-                     Link = Link->Next) {
+                for (Link = Node->Locks.Next; Link; Link = Link->Next)
+                {
 
                     //
                     //  Get a pointer to the current lock record
                     //
 
-                    ShLock = CONTAINING_RECORD( Link, SH_LOCK, Link );
+                    ShLock = CONTAINING_RECORD(Link, SH_LOCK, Link);
 
                     //
                     // See if it's a match
                     //
 
                     if (ContinuationPointer == ShLock &&
-                        (ULONGLONG)FileLockInfo.StartingByte.QuadPart == (ULONGLONG)ShLock->LockInfo.StartingByte.QuadPart &&
+                        (ULONGLONG)FileLockInfo.StartingByte.QuadPart ==
+                            (ULONGLONG)ShLock->LockInfo.StartingByte.QuadPart &&
                         (ULONGLONG)FileLockInfo.Length.QuadPart == (ULONGLONG)ShLock->LockInfo.Length.QuadPart &&
                         FileLockInfo.Key == ShLock->LockInfo.Key &&
                         FileLockInfo.FileObject == ShLock->LockInfo.FileObject &&
-                        FileLockInfo.ProcessId == ShLock->LockInfo.ProcessId) {
+                        FileLockInfo.ProcessId == ShLock->LockInfo.ProcessId)
+                    {
 
                         Link = Link->Next;
                         break;
@@ -2285,13 +2132,16 @@ Return Value:
                     // See if we passed by its slot
                     //
 
-                    if ((ULONGLONG)FileLockInfo.StartingByte.QuadPart < (ULONGLONG)ShLock->LockInfo.StartingByte.QuadPart) {
+                    if ((ULONGLONG)FileLockInfo.StartingByte.QuadPart <
+                        (ULONGLONG)ShLock->LockInfo.StartingByte.QuadPart)
+                    {
 
                         break;
                     }
                 }
 
-                if (Link == NULL) {
+                if (Link == NULL)
+                {
 
                     //
                     //  This node doesn't contain the successor, so move
@@ -2302,65 +2152,72 @@ Return Value:
 
                     SplayLinks = RtlRealSuccessor(SplayLinks);
 
-                    if (SplayLinks) {
+                    if (SplayLinks)
+                    {
 
-                        Node = CONTAINING_RECORD( SplayLinks, LOCKTREE_NODE, Links );
+                        Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
 
                         Link = Node->Locks.Next;
                     }
                 }
 
-                if (Link) {
+                if (Link)
+                {
 
                     //
                     //  Found a Lock to return, copy it to the stack
                     //
 
-                    ShLock = CONTAINING_RECORD( Link, SH_LOCK, Link );
+                    ShLock = CONTAINING_RECORD(Link, SH_LOCK, Link);
 
                     FileLockInfo = ShLock->LockInfo;
                     ContinuationPointer = ShLock;
                     FoundReturnable = TRUE;
                 }
-
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Restarting the enumeration. Find leftmost node in the exclusive tree and hand back
         //  the first lock, falling over to the shared if no exlcusive locks are applied
         //
 
-        if (LockInfo->LockQueue.ExclusiveLockTree) {
+        if (LockInfo->LockQueue.ExclusiveLockTree)
+        {
 
             SplayLinks = LockInfo->LockQueue.ExclusiveLockTree;
 
-            while (RtlLeftChild(SplayLinks) != NULL) {
+            while (RtlLeftChild(SplayLinks) != NULL)
+            {
 
                 SplayLinks = RtlLeftChild(SplayLinks);
             }
 
-            ExLock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+            ExLock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
             FileLockInfo = ExLock->LockInfo;
             ContinuationPointer = ExLock;
             FoundReturnable = TRUE;
+        }
+        else
+        {
 
-        } else {
-
-            if (LockInfo->LockQueue.SharedLockTree) {
+            if (LockInfo->LockQueue.SharedLockTree)
+            {
 
                 SplayLinks = LockInfo->LockQueue.SharedLockTree;
 
-                while (RtlLeftChild(SplayLinks) != NULL) {
+                while (RtlLeftChild(SplayLinks) != NULL)
+                {
 
                     SplayLinks = RtlLeftChild(SplayLinks);
                 }
 
-                Node = CONTAINING_RECORD( SplayLinks, LOCKTREE_NODE, Links );
-                ShLock = CONTAINING_RECORD( Node->Locks.Next, SH_LOCK, Link );
+                Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
+                ShLock = CONTAINING_RECORD(Node->Locks.Next, SH_LOCK, Link);
 
                 FileLockInfo = ShLock->LockInfo;
                 ContinuationPointer = ShLock;
@@ -2373,9 +2230,10 @@ Return Value:
     //  Release all the lock queues
     //
 
-    FsRtlReleaseLockQueue (&LockInfo->LockQueue, OldIrql);
+    FsRtlReleaseLockQueue(&LockInfo->LockQueue, OldIrql);
 
-    if (!FoundReturnable) {
+    if (!FoundReturnable)
+    {
 
         //
         //  No returnable lock was found, end of list
@@ -2398,13 +2256,9 @@ Return Value:
     return &FileLock->LastReturnedLockInfo;
 }
 
-
+
 BOOLEAN
-FsRtlCheckNoSharedConflict (
-   IN PLOCK_QUEUE LockQueue,
-   IN PLARGE_INTEGER Starting,
-   IN PLARGE_INTEGER Ending
-   )
+FsRtlCheckNoSharedConflict(IN PLOCK_QUEUE LockQueue, IN PLARGE_INTEGER Starting, IN PLARGE_INTEGER Ending)
 /*++
 
 Routine Description:
@@ -2437,13 +2291,10 @@ Return Value:
     PRTL_SPLAY_LINKS SplayLinks, BeginLinks;
     PLOCKTREE_NODE Node;
 
-    SplayLinks = FsRtlFindFirstOverlappingSharedNode( LockQueue->SharedLockTree,
-                                                      Starting,
-                                                      Ending,
-                                                      &BeginLinks,
-                                                      NULL);
+    SplayLinks = FsRtlFindFirstOverlappingSharedNode(LockQueue->SharedLockTree, Starting, Ending, &BeginLinks, NULL);
 
-    if (BeginLinks) {
+    if (BeginLinks)
+    {
 
         LockQueue->SharedLockTree = RtlSplay(BeginLinks);
     }
@@ -2452,13 +2303,15 @@ Return Value:
     //  If this node is holey, we'll have to walk the whole thing.
     //
 
-    if (SplayLinks) {
+    if (SplayLinks)
+    {
 
-        Node = CONTAINING_RECORD( SplayLinks, LOCKTREE_NODE, Links );
+        Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
 
-        if (Node->HoleyNode) {
+        if (Node->HoleyNode)
+        {
 
-            return (BOOLEAN)(FsRtlFindFirstOverlapInNode( Node, Starting, Ending ) == NULL);
+            return (BOOLEAN)(FsRtlFindFirstOverlapInNode(Node, Starting, Ending) == NULL);
         }
 
         //
@@ -2475,16 +2328,10 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-FsRtlCheckNoExclusiveConflict (
-    IN PLOCK_QUEUE LockQueue,
-    IN PLARGE_INTEGER Starting,
-    IN PLARGE_INTEGER Ending,
-    IN ULONG Key,
-    IN PFILE_OBJECT FileObject,
-    IN PVOID ProcessId
-    )
+FsRtlCheckNoExclusiveConflict(IN PLOCK_QUEUE LockQueue, IN PLARGE_INTEGER Starting, IN PLARGE_INTEGER Ending,
+                              IN ULONG Key, IN PFILE_OBJECT FileObject, IN PVOID ProcessId)
 /*++
 
 Routine Description:
@@ -2522,15 +2369,12 @@ Return Value:
     //  Find the node to begin the search at and go
     //
 
-    for (SplayLinks = FsRtlFindFirstOverlappingExclusiveNode( LockQueue->ExclusiveLockTree,
-                                                              Starting,
-                                                              Ending,
-                                                              &BeginLinks,
-                                                              NULL);
-         SplayLinks;
-         SplayLinks = RtlRealSuccessor(SplayLinks)) {
+    for (SplayLinks =
+             FsRtlFindFirstOverlappingExclusiveNode(LockQueue->ExclusiveLockTree, Starting, Ending, &BeginLinks, NULL);
+         SplayLinks; SplayLinks = RtlRealSuccessor(SplayLinks))
+    {
 
-        Lock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+        Lock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
         //
         //  If the current lock is greater than the end of the range we're
@@ -2539,7 +2383,8 @@ Return Value:
         //  if (Ending < Lock->StartingByte) ...
         //
 
-        if ((ULONGLONG)Ending->QuadPart < (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart) {
+        if ((ULONGLONG)Ending->QuadPart < (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart)
+        {
 
             DebugTrace(0, Dbg, "FsRtlCheckForExclusiveConflict, Ending < Lock->StartingByte\n", 0);
 
@@ -2556,7 +2401,8 @@ Return Value:
         //  if (Starting <= Lock->StartingByte + Lock->Length - 1) ...
         //
 
-        if ((ULONGLONG)Starting->QuadPart <= (ULONGLONG)Lock->LockInfo.EndingByte.QuadPart) {
+        if ((ULONGLONG)Starting->QuadPart <= (ULONGLONG)Lock->LockInfo.EndingByte.QuadPart)
+        {
 
             //
             //  This request overlaps the lock. We cannot grant the request
@@ -2564,9 +2410,9 @@ Return Value:
             //  we'll continue looping looking at locks
             //
 
-            if ((Lock->LockInfo.FileObject != FileObject) ||
-                (Lock->LockInfo.ProcessId != ProcessId) ||
-                (Lock->LockInfo.Key != Key)) {
+            if ((Lock->LockInfo.FileObject != FileObject) || (Lock->LockInfo.ProcessId != ProcessId) ||
+                (Lock->LockInfo.Key != Key))
+            {
 
                 DebugTrace(0, Dbg, "FsRtlCheckForExclusiveConflict, Range locked already\n", 0);
 
@@ -2576,7 +2422,8 @@ Return Value:
         }
     }
 
-    if (BeginLinks) {
+    if (BeginLinks)
+    {
 
         LockQueue->ExclusiveLockTree = RtlSplay(BeginLinks);
     }
@@ -2588,16 +2435,10 @@ Return Value:
     return Status;
 }
 
-
+
 BOOLEAN
-FsRtlFastCheckLockForRead (
-    IN PFILE_LOCK FileLock,
-    IN PLARGE_INTEGER StartingByte,
-    IN PLARGE_INTEGER Length,
-    IN ULONG Key,
-    IN PFILE_OBJECT FileObject,
-    IN PVOID ProcessId
-    )
+FsRtlFastCheckLockForRead(IN PFILE_LOCK FileLock, IN PLARGE_INTEGER StartingByte, IN PLARGE_INTEGER Length,
+                          IN ULONG Key, IN PFILE_OBJECT FileObject, IN PVOID ProcessId)
 
 /*++
 
@@ -2631,13 +2472,14 @@ Return Value:
     LARGE_INTEGER Starting;
     LARGE_INTEGER Ending;
 
-    PLOCK_INFO            LockInfo;
-    PLOCK_QUEUE           LockQueue;
-    KIRQL                 OldIrql;
-    PFILE_LOCK_INFO       LastLock;
-    BOOLEAN               Status;
+    PLOCK_INFO LockInfo;
+    PLOCK_QUEUE LockQueue;
+    KIRQL OldIrql;
+    PFILE_LOCK_INFO LastLock;
+    BOOLEAN Status;
 
-    if ((LockInfo = (PLOCK_INFO) FileLock->LockInformation) == NULL) {
+    if ((LockInfo = (PLOCK_INFO)FileLock->LockInformation) == NULL)
+    {
 
         //
         // No lock information on this FileLock
@@ -2651,7 +2493,8 @@ Return Value:
     // If there isn't an exclusive lock then we can immediately grant access
     //
 
-    if (LockInfo->LockQueue.ExclusiveLockTree == NULL) {
+    if (LockInfo->LockQueue.ExclusiveLockTree == NULL)
+    {
         DebugTrace(0, Dbg, "FsRtlFastCheckLockForRead, No exlocks present\n", 0);
         return TRUE;
     }
@@ -2660,7 +2503,8 @@ Return Value:
     // If length is zero then automatically give grant access
     //
 
-    if ((ULONGLONG)Length->QuadPart == 0) {
+    if ((ULONGLONG)Length->QuadPart == 0)
+    {
 
         DebugTrace(0, Dbg, "FsRtlFastCheckLockForRead, Length == 0\n", 0);
         return TRUE;
@@ -2671,7 +2515,7 @@ Return Value:
     //
 
     Starting = *StartingByte;
-    (ULONGLONG)Ending.QuadPart = (ULONGLONG)Starting.QuadPart + (ULONGLONG)Length->QuadPart - 1;
+    (ULONGLONG) Ending.QuadPart = (ULONGLONG)Starting.QuadPart + (ULONGLONG)Length->QuadPart - 1;
 
     //
     // Now check lock queue
@@ -2690,7 +2534,8 @@ Return Value:
     //  If the range ends below the lowest existing lock, this read is OK.
     //
 
-    if ( ((ULONGLONG)Ending.QuadPart < (ULONGLONG)LockInfo->LowestLockOffset) ) {
+    if (((ULONGLONG)Ending.QuadPart < (ULONGLONG)LockInfo->LowestLockOffset))
+    {
         DebugTrace(0, Dbg, "FsRtlFastCheckLockForRead (below lowest lock)\n", 0);
 
         FsRtlReleaseLockQueue(LockQueue, OldIrql);
@@ -2702,11 +2547,10 @@ Return Value:
     //
 
     LastLock = (PFILE_LOCK_INFO)FileObject->LastLock;
-    if ((LastLock != NULL) &&
-        ((ULONGLONG)Starting.QuadPart >= (ULONGLONG)LastLock->StartingByte.QuadPart) &&
-        ((ULONGLONG)Ending.QuadPart <= (ULONGLONG)LastLock->EndingByte.QuadPart) &&
-        (LastLock->Key == Key) &&
-        (LastLock->ProcessId == ProcessId)) {
+    if ((LastLock != NULL) && ((ULONGLONG)Starting.QuadPart >= (ULONGLONG)LastLock->StartingByte.QuadPart) &&
+        ((ULONGLONG)Ending.QuadPart <= (ULONGLONG)LastLock->EndingByte.QuadPart) && (LastLock->Key == Key) &&
+        (LastLock->ProcessId == ProcessId))
+    {
 
         FsRtlReleaseLockQueue(LockQueue, OldIrql);
         return TRUE;
@@ -2724,16 +2568,10 @@ Return Value:
     return Status;
 }
 
-
+
 BOOLEAN
-FsRtlFastCheckLockForWrite (
-    IN PFILE_LOCK FileLock,
-    IN PLARGE_INTEGER StartingByte,
-    IN PLARGE_INTEGER Length,
-    IN ULONG Key,
-    IN PVOID FileObject,
-    IN PVOID ProcessId
-    )
+FsRtlFastCheckLockForWrite(IN PFILE_LOCK FileLock, IN PLARGE_INTEGER StartingByte, IN PLARGE_INTEGER Length,
+                           IN ULONG Key, IN PVOID FileObject, IN PVOID ProcessId)
 
 /*++
 
@@ -2767,13 +2605,14 @@ Return Value:
     LARGE_INTEGER Starting;
     LARGE_INTEGER Ending;
 
-    PLOCK_INFO              LockInfo;
-    PLOCK_QUEUE             LockQueue;
-    KIRQL                   OldIrql;
-    PFILE_LOCK_INFO         LastLock;
-    BOOLEAN                 Status;
+    PLOCK_INFO LockInfo;
+    PLOCK_QUEUE LockQueue;
+    KIRQL OldIrql;
+    PFILE_LOCK_INFO LastLock;
+    BOOLEAN Status;
 
-    if ((LockInfo = (PLOCK_INFO) FileLock->LockInformation) == NULL) {
+    if ((LockInfo = (PLOCK_INFO)FileLock->LockInformation) == NULL)
+    {
 
         //
         // No lock information on this FileLock
@@ -2787,7 +2626,8 @@ Return Value:
     //  If there isn't a lock then we can immediately grant access
     //
 
-    if (LockInfo->LockQueue.SharedLockTree == NULL && LockInfo->LockQueue.ExclusiveLockTree == NULL) {
+    if (LockInfo->LockQueue.SharedLockTree == NULL && LockInfo->LockQueue.ExclusiveLockTree == NULL)
+    {
 
         DebugTrace(0, Dbg, "FsRtlFastCheckLockForWrite, No locks present\n", 0);
         return TRUE;
@@ -2797,7 +2637,8 @@ Return Value:
     //  If length is zero then automatically grant access
     //
 
-    if ((ULONGLONG)Length->QuadPart == 0) {
+    if ((ULONGLONG)Length->QuadPart == 0)
+    {
 
         DebugTrace(0, Dbg, "FsRtlFastCheckLockForWrite, Length == 0\n", 0);
         return TRUE;
@@ -2808,7 +2649,7 @@ Return Value:
     //
 
     Starting = *StartingByte;
-    (ULONGLONG)Ending.QuadPart = (ULONGLONG)Starting.QuadPart + (ULONGLONG)Length->QuadPart - 1;
+    (ULONGLONG) Ending.QuadPart = (ULONGLONG)Starting.QuadPart + (ULONGLONG)Length->QuadPart - 1;
 
     //
     //  Now check lock queue
@@ -2827,7 +2668,8 @@ Return Value:
     //  If the range ends below the lowest existing lock, this write is OK.
     //
 
-    if ( ((ULONGLONG)Ending.QuadPart < (ULONGLONG)LockInfo->LowestLockOffset) ) {
+    if (((ULONGLONG)Ending.QuadPart < (ULONGLONG)LockInfo->LowestLockOffset))
+    {
 
         DebugTrace(0, Dbg, "FsRtlFastCheckLockForWrite (below lowest lock)\n", 0);
 
@@ -2840,12 +2682,10 @@ Return Value:
     //
 
     LastLock = (PFILE_LOCK_INFO)((PFILE_OBJECT)FileObject)->LastLock;
-    if ((LastLock != NULL) &&
-        ((ULONGLONG)Starting.QuadPart >= (ULONGLONG)LastLock->StartingByte.QuadPart) &&
-        ((ULONGLONG)Ending.QuadPart <= (ULONGLONG)LastLock->EndingByte.QuadPart) &&
-        (LastLock->Key == Key) &&
-        (LastLock->ProcessId == ProcessId) &&
-        LastLock->ExclusiveLock) {
+    if ((LastLock != NULL) && ((ULONGLONG)Starting.QuadPart >= (ULONGLONG)LastLock->StartingByte.QuadPart) &&
+        ((ULONGLONG)Ending.QuadPart <= (ULONGLONG)LastLock->EndingByte.QuadPart) && (LastLock->Key == Key) &&
+        (LastLock->ProcessId == ProcessId) && LastLock->ExclusiveLock)
+    {
 
         FsRtlReleaseLockQueue(LockQueue, OldIrql);
         return TRUE;
@@ -2857,7 +2697,8 @@ Return Value:
 
     Status = FsRtlCheckNoSharedConflict(LockQueue, &Starting, &Ending);
 
-    if (Status == TRUE) {
+    if (Status == TRUE)
+    {
 
         //
         //  No overlap in the shared locks, so check the exclusive locks for overlap.
@@ -2871,14 +2712,9 @@ Return Value:
     return Status;
 }
 
-
-VOID
-FsRtlSplitLocks (
-    IN PLOCKTREE_NODE ParentNode,
-    IN PSINGLE_LIST_ENTRY *pStartLink,
-    IN PLARGE_INTEGER LastShadowedByte,
-    IN PLARGE_INTEGER GlueOffset
-    )
+
+VOID FsRtlSplitLocks(IN PLOCKTREE_NODE ParentNode, IN PSINGLE_LIST_ENTRY *pStartLink,
+                     IN PLARGE_INTEGER LastShadowedByte, IN PLARGE_INTEGER GlueOffset)
 
 /*++
 
@@ -2911,13 +2747,13 @@ Return Value:
 --*/
 
 {
-    PSH_LOCK                Lock;
-    PLOCKTREE_NODE          NewNode;
-    PSINGLE_LIST_ENTRY      Link, *pLink, *NextpLink;
-    LARGE_INTEGER           MaxOffset, StartOffset, HaltOffset;
+    PSH_LOCK Lock;
+    PLOCKTREE_NODE NewNode;
+    PSINGLE_LIST_ENTRY Link, *pLink, *NextpLink;
+    LARGE_INTEGER MaxOffset, StartOffset, HaltOffset;
 
-    BOOLEAN                 ExtentValid;
-    BOOLEAN                 FailedHoleySplit = FALSE;
+    BOOLEAN ExtentValid;
+    BOOLEAN FailedHoleySplit = FALSE;
 
     //
     //  There are two cases: the node is holey or not.  If the node is holey, at some
@@ -2925,7 +2761,8 @@ Return Value:
     //  good intentions we need to go over the entire node.
     //
 
-    if (ParentNode->HoleyNode) {
+    if (ParentNode->HoleyNode)
+    {
 
         //
         //  Just move the starting link back to the front.  The maximum offset and
@@ -2937,15 +2774,16 @@ Return Value:
         ParentNode->HoleyNode = FALSE;
 
         HaltOffset.QuadPart = ParentNode->Extent;
-
-    } else {
+    }
+    else
+    {
 
         HaltOffset = *LastShadowedByte;
         MaxOffset = *GlueOffset;
         StartOffset.QuadPart = 0;
 
-        if (!ParentNode->Locks.Next ||
-            (ULONGLONG)HaltOffset.QuadPart <= (ULONGLONG)MaxOffset.QuadPart) {
+        if (!ParentNode->Locks.Next || (ULONGLONG)HaltOffset.QuadPart <= (ULONGLONG)MaxOffset.QuadPart)
+        {
 
             //
             //  The parent node is not there, doesn't have links associated, or the
@@ -2969,15 +2807,15 @@ Return Value:
 
     ExtentValid = (ParentNode->Extent > (ULONGLONG)HaltOffset.QuadPart);
 
-    for (pLink = pStartLink;
-         (Link = *pLink) != NULL;
-         pLink = NextpLink) {
+    for (pLink = pStartLink; (Link = *pLink) != NULL; pLink = NextpLink)
+    {
 
         NextpLink = &Link->Next;
 
-        Lock = CONTAINING_RECORD( Link, SH_LOCK, Link );
+        Lock = CONTAINING_RECORD(Link, SH_LOCK, Link);
 
-        if (ParentNode->Locks.Next == *pLink) {
+        if (ParentNode->Locks.Next == *pLink)
+        {
 
             //
             //  We're at the first lock in the node, and we know that we're going to leave
@@ -3004,7 +2842,8 @@ Return Value:
             //  be the only lock at this node.
             //
 
-            if (!ExtentValid) {
+            if (!ExtentValid)
+            {
 
                 ParentNode->Extent = (ULONGLONG)MaxOffset.QuadPart;
             }
@@ -3020,8 +2859,8 @@ Return Value:
         //
 
         if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)MaxOffset.QuadPart &&
-            !(Lock->LockInfo.Length.QuadPart == 0 &&
-              Lock->LockInfo.StartingByte.QuadPart == StartOffset.QuadPart)) {
+            !(Lock->LockInfo.Length.QuadPart == 0 && Lock->LockInfo.StartingByte.QuadPart == StartOffset.QuadPart))
+        {
 
             //
             //  Break the node up here
@@ -3029,7 +2868,8 @@ Return Value:
 
             NewNode = FsRtlAllocateLockTreeNode();
 
-            if (NewNode == NULL) {
+            if (NewNode == NULL)
+            {
 
                 //
                 //  If we are out of resources, this node is now holey - we know that the locks at
@@ -3044,14 +2884,16 @@ Return Value:
                 //  is not holey.  See below.
                 //
 
-                if (ParentNode->HoleyNode) {
+                if (ParentNode->HoleyNode)
+                {
 
                     FailedHoleySplit = TRUE;
                 }
 
                 ParentNode->HoleyNode = TRUE;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Initialize the node.
@@ -3067,11 +2909,13 @@ Return Value:
                 //  no nodes between this node and its successor.
                 //
 
-                if (RtlRightChild(&ParentNode->Links) == NULL) {
+                if (RtlRightChild(&ParentNode->Links) == NULL)
+                {
 
                     RtlInsertAsRightChild(&ParentNode->Links, &NewNode->Links);
-
-                } else {
+                }
+                else
+                {
 
                     ASSERT(RtlLeftChild(RtlRealSuccessor(&ParentNode->Links)) == NULL);
                     RtlInsertAsLeftChild(RtlRealSuccessor(&ParentNode->Links), &NewNode->Links);
@@ -3085,7 +2929,7 @@ Return Value:
                 *pLink = NULL;
 
                 NewNode->Tail.Next = ParentNode->Tail.Next;
-                ParentNode->Tail.Next = CONTAINING_RECORD( pLink, SINGLE_LIST_ENTRY, Next );
+                ParentNode->Tail.Next = CONTAINING_RECORD(pLink, SINGLE_LIST_ENTRY, Next);
 
                 //
                 //  This will cause us to fall into the first-lock clause above on the next pass
@@ -3108,11 +2952,13 @@ Return Value:
                 //  The parent node can no longer be holey if we have not failed a split in this node.
                 //
 
-                if (!FailedHoleySplit) {
+                if (!FailedHoleySplit)
+                {
 
                     ParentNode->HoleyNode = FALSE;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  So reset the failure flag for the new node.
@@ -3131,8 +2977,8 @@ Return Value:
             }
         }
 
-        if (ExtentValid &&
-            (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)HaltOffset.QuadPart) {
+        if (ExtentValid && (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)HaltOffset.QuadPart)
+        {
 
             //
             //  Our extents are good and this lock is past the shadow, so we can stop
@@ -3141,7 +2987,8 @@ Return Value:
             return;
         }
 
-        if ((ULONGLONG)MaxOffset.QuadPart < (ULONGLONG)Lock->LockInfo.EndingByte.QuadPart) {
+        if ((ULONGLONG)MaxOffset.QuadPart < (ULONGLONG)Lock->LockInfo.EndingByte.QuadPart)
+        {
 
             //
             //  Update maximum offset
@@ -3149,7 +2996,8 @@ Return Value:
 
             MaxOffset.QuadPart = Lock->LockInfo.EndingByte.QuadPart;
 
-            if (!ExtentValid) {
+            if (!ExtentValid)
+            {
 
                 //
                 //  Extents are not good so we must update the extent
@@ -3170,13 +3018,8 @@ Return Value:
     return;
 }
 
-
-VOID
-FsRtlPrivateRemoveLock (
-    IN PLOCK_INFO LockInfo,
-    IN PFILE_LOCK_INFO FileLockInfo,
-    IN BOOLEAN CheckForWaiters
-    )
+
+VOID FsRtlPrivateRemoveLock(IN PLOCK_INFO LockInfo, IN PFILE_LOCK_INFO FileLockInfo, IN BOOLEAN CheckForWaiters)
 
 /*++
 
@@ -3205,62 +3048,47 @@ Return Value:
 {
     NTSTATUS Status;
 
-    if (FileLockInfo->ExclusiveLock) {
+    if (FileLockInfo->ExclusiveLock)
+    {
 
         //
         //  We must find it in the exclusive lock tree
         //
 
-        Status = FsRtlFastUnlockSingleExclusive( LockInfo,
+        Status = FsRtlFastUnlockSingleExclusive(LockInfo,
 
-                                                 FileLockInfo->FileObject,
-                                                 &FileLockInfo->StartingByte,
-                                                 &FileLockInfo->Length,
-                                                 FileLockInfo->ProcessId,
-                                                 FileLockInfo->Key,
+                                                FileLockInfo->FileObject, &FileLockInfo->StartingByte,
+                                                &FileLockInfo->Length, FileLockInfo->ProcessId, FileLockInfo->Key,
 
-                                                 NULL,
-                                                 TRUE,
-                                                 CheckForWaiters );
+                                                NULL, TRUE, CheckForWaiters);
 
-        ASSERT( Status == STATUS_SUCCESS);
-
-    } else {
+        ASSERT(Status == STATUS_SUCCESS);
+    }
+    else
+    {
 
         //
         //  We must find it in the shared lock tree
         //
 
-        Status = FsRtlFastUnlockSingleShared( LockInfo,
+        Status = FsRtlFastUnlockSingleShared(LockInfo,
 
-                                              FileLockInfo->FileObject,
-                                              &FileLockInfo->StartingByte,
-                                              &FileLockInfo->Length,
-                                              FileLockInfo->ProcessId,
-                                              FileLockInfo->Key,
+                                             FileLockInfo->FileObject, &FileLockInfo->StartingByte,
+                                             &FileLockInfo->Length, FileLockInfo->ProcessId, FileLockInfo->Key,
 
-                                              NULL,
-                                              TRUE,
-                                              CheckForWaiters );
+                                             NULL, TRUE, CheckForWaiters);
 
-        ASSERT( Status == STATUS_SUCCESS);
+        ASSERT(Status == STATUS_SUCCESS);
     }
 
     return;
 }
 
-
+
 NTSTATUS
-FsRtlFastUnlockSingle (
-    IN PFILE_LOCK FileLock,
-    IN PFILE_OBJECT FileObject,
-    IN LARGE_INTEGER UNALIGNED *FileOffset,
-    IN PLARGE_INTEGER Length,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN PVOID Context OPTIONAL,
-    IN BOOLEAN AlreadySynchronized
-    )
+FsRtlFastUnlockSingle(IN PFILE_LOCK FileLock, IN PFILE_OBJECT FileObject, IN LARGE_INTEGER UNALIGNED *FileOffset,
+                      IN PLARGE_INTEGER Length, IN PEPROCESS ProcessId, IN ULONG Key, IN PVOID Context OPTIONAL,
+                      IN BOOLEAN AlreadySynchronized)
 
 /*++
 
@@ -3304,7 +3132,8 @@ Return Value:
     //  XXX SoloLock code.
     //
 
-    if (FileLock->LockInformation == NULL) {
+    if (FileLock->LockInformation == NULL)
+    {
 
         //
         //  Fast exit - no locks are applied
@@ -3313,17 +3142,11 @@ Return Value:
         return STATUS_RANGE_NOT_LOCKED;
     }
 
-    Status = FsRtlFastUnlockSingleExclusive( FileLock->LockInformation,
-                                             FileObject,
-                                             FileOffset,
-                                             Length,
-                                             ProcessId,
-                                             Key,
-                                             Context,
-                                             FALSE,
-                                             TRUE );
+    Status = FsRtlFastUnlockSingleExclusive(FileLock->LockInformation, FileObject, FileOffset, Length, ProcessId, Key,
+                                            Context, FALSE, TRUE);
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
         //
         //  Found and unlocked in the exclusive tree, so we're done
@@ -3332,32 +3155,17 @@ Return Value:
         return Status;
     }
 
-    Status = FsRtlFastUnlockSingleShared( FileLock->LockInformation,
-                                          FileObject,
-                                          FileOffset,
-                                          Length,
-                                          ProcessId,
-                                          Key,
-                                          Context,
-                                          FALSE,
-                                          TRUE );
+    Status = FsRtlFastUnlockSingleShared(FileLock->LockInformation, FileObject, FileOffset, Length, ProcessId, Key,
+                                         Context, FALSE, TRUE);
 
     return Status;
 }
 
-
+
 NTSTATUS
-FsRtlFastUnlockSingleShared (
-    IN PLOCK_INFO LockInfo,
-    IN PFILE_OBJECT FileObject,
-    IN LARGE_INTEGER UNALIGNED *FileOffset,
-    IN PLARGE_INTEGER Length,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN PVOID Context OPTIONAL,
-    IN BOOLEAN IgnoreUnlockRoutine,
-    IN BOOLEAN CheckForWaiters
-    )
+FsRtlFastUnlockSingleShared(IN PLOCK_INFO LockInfo, IN PFILE_OBJECT FileObject, IN LARGE_INTEGER UNALIGNED *FileOffset,
+                            IN PLARGE_INTEGER Length, IN PEPROCESS ProcessId, IN ULONG Key, IN PVOID Context OPTIONAL,
+                            IN BOOLEAN IgnoreUnlockRoutine, IN BOOLEAN CheckForWaiters)
 
 /*++
 
@@ -3397,14 +3205,14 @@ Return Value:
 --*/
 
 {
-    PSINGLE_LIST_ENTRY      *pLink, Link;
-    KIRQL                   OldIrql;
+    PSINGLE_LIST_ENTRY *pLink, Link;
+    KIRQL OldIrql;
 
-    PLOCK_QUEUE             LockQueue;
-    PRTL_SPLAY_LINKS        SplayLinks;
-    LARGE_INTEGER           EndingOffset, MaxOffset;
-    PLOCKTREE_NODE          Node;
-    LARGE_INTEGER           AlignedFileOffset;
+    PLOCK_QUEUE LockQueue;
+    PRTL_SPLAY_LINKS SplayLinks;
+    LARGE_INTEGER EndingOffset, MaxOffset;
+    PLOCKTREE_NODE Node;
+    LARGE_INTEGER AlignedFileOffset;
 
     //
     //  General case - search the outstanding lock queue for this lock
@@ -3420,9 +3228,10 @@ Return Value:
     //  Check for the no locks currently held
     //
 
-    if (LockQueue->SharedLockTree == NULL) {
+    if (LockQueue->SharedLockTree == NULL)
+    {
 
-        FsRtlReleaseLockQueue( LockQueue, OldIrql );
+        FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
         return STATUS_RANGE_NOT_LOCKED;
     }
@@ -3435,13 +3244,11 @@ Return Value:
 
     EndingOffset.QuadPart = (ULONGLONG)AlignedFileOffset.QuadPart + (ULONGLONG)Length->QuadPart - 1;
 
-    SplayLinks = FsRtlFindFirstOverlappingSharedNode( LockQueue->SharedLockTree,
-                                                      &AlignedFileOffset,
-                                                      &EndingOffset,
-                                                      NULL,
-                                                      NULL );
+    SplayLinks =
+        FsRtlFindFirstOverlappingSharedNode(LockQueue->SharedLockTree, &AlignedFileOffset, &EndingOffset, NULL, NULL);
 
-    if (SplayLinks == NULL) {
+    if (SplayLinks == NULL)
+    {
 
         //
         //  No node in the tree overlaps this range, so we're done
@@ -3452,24 +3259,23 @@ Return Value:
         return STATUS_RANGE_NOT_LOCKED;
     }
 
-    Node = CONTAINING_RECORD( SplayLinks, LOCKTREE_NODE, Links );
+    Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
     MaxOffset.QuadPart = 0;
 
-    for (pLink = &Node->Locks.Next;
-         (Link = *pLink) != NULL;
-         pLink = &Link->Next) {
+    for (pLink = &Node->Locks.Next; (Link = *pLink) != NULL; pLink = &Link->Next)
+    {
 
         PSH_LOCK Lock;
 
-        Lock = CONTAINING_RECORD( Link, SH_LOCK, Link );
+        Lock = CONTAINING_RECORD(Link, SH_LOCK, Link);
 
-        DebugTrace(0, Dbg, "Sh Top of Loop, Lock = %08lx\n", Lock );
+        DebugTrace(0, Dbg, "Sh Top of Loop, Lock = %08lx\n", Lock);
 
-        if ((Lock->LockInfo.FileObject == FileObject) &&
-            (Lock->LockInfo.ProcessId == ProcessId) &&
+        if ((Lock->LockInfo.FileObject == FileObject) && (Lock->LockInfo.ProcessId == ProcessId) &&
             (Lock->LockInfo.Key == Key) &&
             ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart == (ULONGLONG)AlignedFileOffset.QuadPart) &&
-            ((ULONGLONG)Lock->LockInfo.Length.QuadPart == (ULONGLONG)Length->QuadPart)) {
+            ((ULONGLONG)Lock->LockInfo.Length.QuadPart == (ULONGLONG)Length->QuadPart))
+        {
 
             DebugTrace(0, Dbg, "Sh Found one to unlock\n", 0);
 
@@ -3479,12 +3285,14 @@ Return Value:
             //  optional unlock routine, then delete the lock.
             //
 
-            if (FileObject->LastLock == &Lock->LockInfo) {
+            if (FileObject->LastLock == &Lock->LockInfo)
+            {
 
                 FileObject->LastLock = NULL;
             }
 
-            if (*pLink == Node->Tail.Next) {
+            if (*pLink == Node->Tail.Next)
+            {
 
                 //
                 //  Deleting the tail node of the list. Safe even if deleting the
@@ -3492,7 +3300,7 @@ Return Value:
                 //  in the node which means we'll delete the node ...
                 //
 
-                Node->Tail.Next = CONTAINING_RECORD( pLink, SINGLE_LIST_ENTRY, Next );
+                Node->Tail.Next = CONTAINING_RECORD(pLink, SINGLE_LIST_ENTRY, Next);
             }
 
             //
@@ -3501,13 +3309,15 @@ Return Value:
 
             *pLink = Link->Next;
 
-            if (pLink == &Node->Locks.Next) {
+            if (pLink == &Node->Locks.Next)
+            {
 
                 //
                 //  Deleted first lock in node
                 //
 
-                if (Node->Locks.Next == NULL) {
+                if (Node->Locks.Next == NULL)
+                {
 
                     //
                     // Just deleted last lock on this node, so free it
@@ -3521,7 +3331,8 @@ Return Value:
                 }
 
                 if (LockInfo->LowestLockOffset != 0xffffffff &&
-                    LockInfo->LowestLockOffset == Lock->LockInfo.StartingByte.LowPart) {
+                    LockInfo->LowestLockOffset == Lock->LockInfo.StartingByte.LowPart)
+                {
 
                     //
                     //  This was the lowest lock in the trees, reset the lowest lock offset
@@ -3537,39 +3348,42 @@ Return Value:
             //  inspect the chain.
             //
 
-            if (Node) {
+            if (Node)
+            {
 
                 FsRtlSplitLocks(Node, pLink, &Lock->LockInfo.EndingByte, &MaxOffset);
             }
 
-            if (!IgnoreUnlockRoutine && LockInfo->UnlockRoutine != NULL) {
+            if (!IgnoreUnlockRoutine && LockInfo->UnlockRoutine != NULL)
+            {
 
-                FsRtlReleaseLockQueue( LockQueue, OldIrql );
+                FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
-                LockInfo->UnlockRoutine( Context, &Lock->LockInfo );
+                LockInfo->UnlockRoutine(Context, &Lock->LockInfo);
 
-                FsRtlAcquireLockQueue( LockQueue, &OldIrql );
-
+                FsRtlAcquireLockQueue(LockQueue, &OldIrql);
             }
 
-            FsRtlFreeSharedLock( Lock );
+            FsRtlFreeSharedLock(Lock);
 
             //
             //  See if there are additional waiting locks that we can
             //  now release.
             //
 
-            if (CheckForWaiters && LockQueue->WaitingLocks.Next) {
+            if (CheckForWaiters && LockQueue->WaitingLocks.Next)
+            {
 
-                FsRtlPrivateCheckWaitingLocks( LockInfo, LockQueue, OldIrql );
+                FsRtlPrivateCheckWaitingLocks(LockInfo, LockQueue, OldIrql);
             }
 
-            FsRtlReleaseLockQueue( LockQueue, OldIrql );
+            FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
             return STATUS_SUCCESS;
         }
 
-        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)AlignedFileOffset.QuadPart) {
+        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)AlignedFileOffset.QuadPart)
+        {
 
             //
             //  The current lock begins at a byte offset greater than the range we are seeking
@@ -3579,7 +3393,8 @@ Return Value:
             break;
         }
 
-        if ((ULONGLONG)MaxOffset.QuadPart < (ULONGLONG)Lock->LockInfo.EndingByte.QuadPart) {
+        if ((ULONGLONG)MaxOffset.QuadPart < (ULONGLONG)Lock->LockInfo.EndingByte.QuadPart)
+        {
 
             //
             // Maintain the maximum offset affected by locks up to this point.
@@ -3597,19 +3412,12 @@ Return Value:
     return STATUS_RANGE_NOT_LOCKED;
 }
 
-
+
 NTSTATUS
-FsRtlFastUnlockSingleExclusive (
-    IN PLOCK_INFO LockInfo,
-    IN PFILE_OBJECT FileObject,
-    IN LARGE_INTEGER UNALIGNED *FileOffset,
-    IN PLARGE_INTEGER Length,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN PVOID Context OPTIONAL,
-    IN BOOLEAN IgnoreUnlockRoutine,
-    IN BOOLEAN CheckForWaiters
-    )
+FsRtlFastUnlockSingleExclusive(IN PLOCK_INFO LockInfo, IN PFILE_OBJECT FileObject,
+                               IN LARGE_INTEGER UNALIGNED *FileOffset, IN PLARGE_INTEGER Length, IN PEPROCESS ProcessId,
+                               IN ULONG Key, IN PVOID Context OPTIONAL, IN BOOLEAN IgnoreUnlockRoutine,
+                               IN BOOLEAN CheckForWaiters)
 
 /*++
 
@@ -3649,12 +3457,12 @@ Return Value:
 --*/
 
 {
-    KIRQL                   OldIrql;
-    PLOCK_QUEUE             LockQueue;
-    PRTL_SPLAY_LINKS        SplayLinks;
-    LARGE_INTEGER           EndingOffset;
-    PEX_LOCK                Lock;
-    LARGE_INTEGER           AlignedFileOffset;
+    KIRQL OldIrql;
+    PLOCK_QUEUE LockQueue;
+    PRTL_SPLAY_LINKS SplayLinks;
+    LARGE_INTEGER EndingOffset;
+    PEX_LOCK Lock;
+    LARGE_INTEGER AlignedFileOffset;
 
     //
     //  General case - search the outstanding lock queue for this lock
@@ -3670,9 +3478,10 @@ Return Value:
     //  Check for the no locks currently held
     //
 
-    if (LockQueue->ExclusiveLockTree == NULL) {
+    if (LockQueue->ExclusiveLockTree == NULL)
+    {
 
-        FsRtlReleaseLockQueue( LockQueue, OldIrql );
+        FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
         return STATUS_RANGE_NOT_LOCKED;
     }
@@ -3686,21 +3495,18 @@ Return Value:
 
     EndingOffset.QuadPart = (ULONGLONG)AlignedFileOffset.QuadPart + (ULONGLONG)Length->QuadPart - 1;
 
-    for (SplayLinks = FsRtlFindFirstOverlappingExclusiveNode( LockQueue->ExclusiveLockTree,
-                                                              &AlignedFileOffset,
-                                                              &EndingOffset,
-                                                              NULL,
-                                                              NULL );
-         SplayLinks;
-         SplayLinks = RtlRealSuccessor(SplayLinks)) {
+    for (SplayLinks = FsRtlFindFirstOverlappingExclusiveNode(LockQueue->ExclusiveLockTree, &AlignedFileOffset,
+                                                             &EndingOffset, NULL, NULL);
+         SplayLinks; SplayLinks = RtlRealSuccessor(SplayLinks))
+    {
 
-        Lock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+        Lock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
-        if ((Lock->LockInfo.FileObject == FileObject) &&
-            (Lock->LockInfo.ProcessId == ProcessId) &&
+        if ((Lock->LockInfo.FileObject == FileObject) && (Lock->LockInfo.ProcessId == ProcessId) &&
             (Lock->LockInfo.Key == Key) &&
             ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart == (ULONGLONG)AlignedFileOffset.QuadPart) &&
-            ((ULONGLONG)Lock->LockInfo.Length.QuadPart == (ULONGLONG)Length->QuadPart)) {
+            ((ULONGLONG)Lock->LockInfo.Length.QuadPart == (ULONGLONG)Length->QuadPart))
+        {
 
             DebugTrace(0, Dbg, "Ex Found one to unlock\n", 0);
 
@@ -3710,7 +3516,8 @@ Return Value:
             //  optional unlock routine, then delete the lock.
             //
 
-            if (FileObject->LastLock == &Lock->LockInfo) {
+            if (FileObject->LastLock == &Lock->LockInfo)
+            {
 
                 FileObject->LastLock = NULL;
             }
@@ -3722,7 +3529,8 @@ Return Value:
             LockQueue->ExclusiveLockTree = RtlDelete(&Lock->Links);
 
             if (LockInfo->LowestLockOffset != 0xffffffff &&
-                LockInfo->LowestLockOffset == Lock->LockInfo.StartingByte.LowPart) {
+                LockInfo->LowestLockOffset == Lock->LockInfo.StartingByte.LowPart)
+            {
 
                 //
                 //  This was the lowest lock in the tree, so reset the lowest lock
@@ -3732,34 +3540,36 @@ Return Value:
                 FsRtlPrivateResetLowestLockOffset(LockInfo);
             }
 
-            if (!IgnoreUnlockRoutine && LockInfo->UnlockRoutine != NULL) {
+            if (!IgnoreUnlockRoutine && LockInfo->UnlockRoutine != NULL)
+            {
 
-                FsRtlReleaseLockQueue( LockQueue, OldIrql );
+                FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
-                LockInfo->UnlockRoutine( Context, &Lock->LockInfo );
+                LockInfo->UnlockRoutine(Context, &Lock->LockInfo);
 
-                FsRtlAcquireLockQueue( LockQueue, &OldIrql );
-
+                FsRtlAcquireLockQueue(LockQueue, &OldIrql);
             }
 
-            FsRtlFreeExclusiveLock( Lock );
+            FsRtlFreeExclusiveLock(Lock);
 
             //
             //  See if there are additional waiting locks that we can
             //  now release.
             //
 
-            if (CheckForWaiters && LockQueue->WaitingLocks.Next) {
+            if (CheckForWaiters && LockQueue->WaitingLocks.Next)
+            {
 
-                FsRtlPrivateCheckWaitingLocks( LockInfo, LockQueue, OldIrql );
+                FsRtlPrivateCheckWaitingLocks(LockInfo, LockQueue, OldIrql);
             }
 
-            FsRtlReleaseLockQueue( LockQueue, OldIrql );
+            FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
             return STATUS_SUCCESS;
         }
 
-        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)AlignedFileOffset.QuadPart) {
+        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)AlignedFileOffset.QuadPart)
+        {
 
             //
             //  The current lock begins at a byte offset greater than the range we are seeking
@@ -3778,14 +3588,10 @@ Return Value:
     return STATUS_RANGE_NOT_LOCKED;
 }
 
-
+
 NTSTATUS
-FsRtlFastUnlockAll (
-    IN PFILE_LOCK FileLock,
-    IN PFILE_OBJECT FileObject,
-    IN PEPROCESS ProcessId,
-    IN PVOID Context OPTIONAL
-    )
+FsRtlFastUnlockAll(IN PFILE_LOCK FileLock, IN PFILE_OBJECT FileObject, IN PEPROCESS ProcessId,
+                   IN PVOID Context OPTIONAL)
 
 /*++
 
@@ -3814,23 +3620,14 @@ Return Value:
 --*/
 
 {
-    return FsRtlPrivateFastUnlockAll(
-                FileLock,
-                FileObject,
-                ProcessId,
-                0, FALSE,           // No Key
-                Context );
+    return FsRtlPrivateFastUnlockAll(FileLock, FileObject, ProcessId, 0, FALSE, // No Key
+                                     Context);
 }
 
-
+
 NTSTATUS
-FsRtlFastUnlockAllByKey (
-    IN PFILE_LOCK FileLock,
-    IN PFILE_OBJECT FileObject,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN PVOID Context OPTIONAL
-    )
+FsRtlFastUnlockAllByKey(IN PFILE_LOCK FileLock, IN PFILE_OBJECT FileObject, IN PEPROCESS ProcessId, IN ULONG Key,
+                        IN PVOID Context OPTIONAL)
 
 /*++
 
@@ -3862,35 +3659,19 @@ Return Value:
 --*/
 
 {
-    return FsRtlPrivateFastUnlockAll(
-                FileLock,
-                FileObject,
-                ProcessId,
-                Key, TRUE,
-                Context );
-
+    return FsRtlPrivateFastUnlockAll(FileLock, FileObject, ProcessId, Key, TRUE, Context);
 }
 
-
+
 //
 //  Local Support Routine
 //
 
 BOOLEAN
-FsRtlPrivateLock (
-    IN PFILE_LOCK FileLock,
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PLARGE_INTEGER Length,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN BOOLEAN FailImmediately,
-    IN BOOLEAN ExclusiveLock,
-    OUT PIO_STATUS_BLOCK Iosb,
-    IN PIRP Irp OPTIONAL,
-    IN PVOID Context,
-    IN BOOLEAN AlreadySynchronized
-    )
+FsRtlPrivateLock(IN PFILE_LOCK FileLock, IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset,
+                 IN PLARGE_INTEGER Length, IN PEPROCESS ProcessId, IN ULONG Key, IN BOOLEAN FailImmediately,
+                 IN BOOLEAN ExclusiveLock, OUT PIO_STATUS_BLOCK Iosb, IN PIRP Irp OPTIONAL, IN PVOID Context,
+                 IN BOOLEAN AlreadySynchronized)
 
 /*++
 
@@ -3941,9 +3722,9 @@ Return Value:
     BOOLEAN ViaFastCall;
     BOOLEAN ReleaseQueue = FALSE;
 
-    PLOCK_INFO  LockInfo;
+    PLOCK_INFO LockInfo;
     PLOCK_QUEUE LockQueue;
-    KIRQL       OldIrql;
+    KIRQL OldIrql;
     FILE_LOCK_INFO FileLockInfo;
 
     DebugTrace(+1, Dbg, "FsRtlPrivateLock, FileLock = %08lx\n", FileLock);
@@ -3952,9 +3733,10 @@ Return Value:
     //  If the irp is null then this is being called via the fast call method.
     //
 
-    ViaFastCall = (BOOLEAN) !ARGUMENT_PRESENT( Irp );
+    ViaFastCall = (BOOLEAN)!ARGUMENT_PRESENT(Irp);
 
-    if ((LockInfo = (PLOCK_INFO) FileLock->LockInformation) == NULL) {
+    if ((LockInfo = (PLOCK_INFO)FileLock->LockInformation) == NULL)
+    {
         DebugTrace(+2, Dbg, "FsRtlPrivateLock, New LockInfo required\n", 0);
 
         //
@@ -3962,7 +3744,8 @@ Return Value:
         //
         //
 
-        if (!FsRtlPrivateInitializeFileLock (FileLock, ViaFastCall)) {
+        if (!FsRtlPrivateInitializeFileLock(FileLock, ViaFastCall))
+        {
 
             return FALSE;
         }
@@ -3978,7 +3761,7 @@ Return Value:
         // Pickup allocated lockinfo structure
         //
 
-        LockInfo = (PLOCK_INFO) FileLock->LockInformation;
+        LockInfo = (PLOCK_INFO)FileLock->LockInformation;
     }
 
     //
@@ -3988,8 +3771,8 @@ Return Value:
 
     FileLockInfo.StartingByte = *FileOffset;
     FileLockInfo.Length = *Length;
-    (ULONGLONG)FileLockInfo.EndingByte.QuadPart =
-            (ULONGLONG)FileLockInfo.StartingByte.QuadPart + (ULONGLONG)FileLockInfo.Length.QuadPart - 1;
+    (ULONGLONG) FileLockInfo.EndingByte.QuadPart =
+        (ULONGLONG)FileLockInfo.StartingByte.QuadPart + (ULONGLONG)FileLockInfo.Length.QuadPart - 1;
 
     FileLockInfo.Key = Key;
     FileLockInfo.FileObject = FileObject;
@@ -4005,28 +3788,27 @@ Return Value:
     FsRtlAcquireLockQueue(LockQueue, &OldIrql);
     ReleaseQueue = TRUE;
 
-    try {
+    try
+    {
 
         //
         //  Case on whether we're trying to take out an exclusive lock or
         //  a shared lock.  And in both cases try to get appropriate access.
         //
 
-        if (ExclusiveLock) {
+        if (ExclusiveLock)
+        {
 
             DebugTrace(0, Dbg, "Check for write access\n", 0);
 
-            AccessGranted = FsRtlPrivateCheckForExclusiveLockAccess(
-                                LockQueue,
-                                &FileLockInfo );
-
-        } else {
+            AccessGranted = FsRtlPrivateCheckForExclusiveLockAccess(LockQueue, &FileLockInfo);
+        }
+        else
+        {
 
             DebugTrace(0, Dbg, "Check for read access\n", 0);
 
-            AccessGranted = FsRtlPrivateCheckForSharedLockAccess(
-                                LockQueue,
-                                &FileLockInfo );
+            AccessGranted = FsRtlPrivateCheckForSharedLockAccess(LockQueue, &FileLockInfo);
         }
 
         //
@@ -4034,7 +3816,8 @@ Return Value:
         //  for the range we want
         //
 
-        if (!AccessGranted) {
+        if (!AccessGranted)
+        {
 
             DebugTrace(0, Dbg, "We do not have access\n", 0);
 
@@ -4045,7 +3828,8 @@ Return Value:
             //  to the waiting lock queue
             //
 
-            if (FailImmediately) {
+            if (FailImmediately)
+            {
 
                 //
                 //  Set our status and return, the finally clause will
@@ -4055,9 +3839,10 @@ Return Value:
                 DebugTrace(0, Dbg, "And we fail immediately\n", 0);
 
                 Iosb->Status = STATUS_LOCK_NOT_GRANTED;
-                try_return( Results = TRUE );
-
-            } else if (ARGUMENT_PRESENT(Irp)) {
+                try_return(Results = TRUE);
+            }
+            else if (ARGUMENT_PRESENT(Irp))
+            {
 
                 PWAITING_LOCK WaitingLock;
 
@@ -4075,22 +3860,24 @@ Return Value:
                 //  Simply raise out if we can't allocate.
                 //
 
-                if (WaitingLock == NULL) {
+                if (WaitingLock == NULL)
+                {
 
-                    ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                    ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
                 }
 
                 WaitingLock->Irp = Irp;
                 WaitingLock->Context = Context;
                 WaitingLock->CompleteLockIrpRoutine = LockInfo->CompleteLockIrpRoutine;
-                IoMarkIrpPending( Irp );
+                IoMarkIrpPending(Irp);
 
                 //
                 // Add WaitingLock WaitingLockQueue
                 //
 
                 WaitingLock->Link.Next = NULL;
-                if (LockQueue->WaitingLocks.Next == NULL) {
+                if (LockQueue->WaitingLocks.Next == NULL)
+                {
 
                     //
                     // Create new list
@@ -4098,8 +3885,9 @@ Return Value:
 
                     LockQueue->WaitingLocks.Next = &WaitingLock->Link;
                     LockQueue->WaitingLocksTail.Next = &WaitingLock->Link;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Add waiter to tail of list
@@ -4116,9 +3904,10 @@ Return Value:
                 //
 
                 Irp->IoStatus.Information = (ULONG_PTR)LockInfo;
-                IoSetCancelRoutine( Irp, FsRtlPrivateCancelFileLockIrp );
+                IoSetCancelRoutine(Irp, FsRtlPrivateCancelFileLockIrp);
 
-                if (Irp->Cancel) {
+                if (Irp->Cancel)
+                {
 
                     //
                     // Pull the cancel routine off of the IRP - if it is not
@@ -4131,7 +3920,8 @@ Return Value:
                     // this is how we synchronize with the cancel.
                     //
 
-                    if (IoSetCancelRoutine( Irp, NULL )) {
+                    if (IoSetCancelRoutine(Irp, NULL))
+                    {
 
                         //
                         // Irp's cancel routine was not called, do it ourselves.
@@ -4143,23 +3933,25 @@ Return Value:
                         //
 
                         Irp->CancelIrql = OldIrql;
-                        FsRtlPrivateCancelFileLockIrp( NULL, Irp );
+                        FsRtlPrivateCancelFileLockIrp(NULL, Irp);
                         ReleaseQueue = FALSE;
                     }
                 }
 
                 Iosb->Status = STATUS_PENDING;
-                try_return( Results = TRUE );
+                try_return(Results = TRUE);
+            }
+            else
+            {
 
-            } else {
-
-                try_return( Results = FALSE );
+                try_return(Results = FALSE);
             }
         }
 
         DebugTrace(0, Dbg, "We have access\n", 0);
 
-        if (!FsRtlPrivateInsertLock( LockInfo, FileObject, &FileLockInfo )) {
+        if (!FsRtlPrivateInsertLock(LockInfo, FileObject, &FileLockInfo))
+        {
 
             //
             //  Resource exhaustion will cause us to fail here.  Via the fast call, indicate
@@ -4167,16 +3959,19 @@ Return Value:
             //  are already there, simply raise out.
             //
 
-            if (ViaFastCall) {
+            if (ViaFastCall)
+            {
 
-                try_return( Results = FALSE );
-
-            } else {
-
-                ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                try_return(Results = FALSE);
             }
+            else
+            {
 
-        } else {
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
+            }
+        }
+        else
+        {
 
             Iosb->Status = STATUS_SUCCESS;
         }
@@ -4187,11 +3982,15 @@ Return Value:
 
         Results = TRUE;
 
-    try_exit: NOTHING;
-    } finally {
+    try_exit:
+        NOTHING;
+    }
+    finally
+    {
 
-        if (ReleaseQueue) {
-            
+        if (ReleaseQueue)
+        {
+
             FsRtlReleaseLockQueue(LockQueue, OldIrql);
         }
 
@@ -4199,7 +3998,8 @@ Return Value:
         //  Complete the request provided we were given one and it is not a pending status
         //
 
-        if (!AbnormalTermination() && ARGUMENT_PRESENT(Irp) && (Iosb->Status != STATUS_PENDING)) {
+        if (!AbnormalTermination() && ARGUMENT_PRESENT(Irp) && (Iosb->Status != STATUS_PENDING))
+        {
 
             NTSTATUS NewStatus;
 
@@ -4211,7 +4011,7 @@ Return Value:
             //  and lose.
             //
 
-            ObReferenceObject( FileObject );
+            ObReferenceObject(FileObject);
 
             //
             //  Complete the request, if the don't get back success then
@@ -4219,31 +4019,23 @@ Return Value:
             //  inserted.
             //
 
-            FsRtlCompleteLockIrp(
-                LockInfo,
-                Context,
-                Irp,
-                Iosb->Status,
-                &NewStatus,
-                FileObject );
+            FsRtlCompleteLockIrp(LockInfo, Context, Irp, Iosb->Status, &NewStatus, FileObject);
 
-            if (!NT_SUCCESS(NewStatus) && NT_SUCCESS(Iosb->Status) ) {
+            if (!NT_SUCCESS(NewStatus) && NT_SUCCESS(Iosb->Status))
+            {
 
                 //
                 // Irp failed, remove the lock which was added
                 //
 
-                FsRtlPrivateRemoveLock (
-                    LockInfo,
-                    &FileLockInfo,
-                    TRUE );
+                FsRtlPrivateRemoveLock(LockInfo, &FileLockInfo, TRUE);
             }
 
             //
             //  Lift our private reference to the fileobject. This may induce deletion.
             //
 
-            ObDereferenceObject( FileObject );
+            ObDereferenceObject(FileObject);
 
             Iosb->Status = NewStatus;
         }
@@ -4258,17 +4050,13 @@ Return Value:
     return Results;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
 BOOLEAN
-FsRtlPrivateInsertLock (
-    IN PLOCK_INFO LockInfo,
-    IN PFILE_OBJECT FileObject,
-    IN PFILE_LOCK_INFO FileLockInfo
-    )
+FsRtlPrivateInsertLock(IN PLOCK_INFO LockInfo, IN PFILE_OBJECT FileObject, IN PFILE_LOCK_INFO FileLockInfo)
 
 /*++
 
@@ -4297,37 +4085,42 @@ Return Value:
     //  Now add the lock to the appropriate tree.
     //
 
-    if (FileLockInfo->ExclusiveLock) {
+    if (FileLockInfo->ExclusiveLock)
+    {
 
         PEX_LOCK ExLock;
 
         ExLock = FsRtlAllocateExclusiveLock();
 
-        if (ExLock == NULL) {
+        if (ExLock == NULL)
+        {
 
             return FALSE;
         }
 
         ExLock->LockInfo = *FileLockInfo;
 
-        FsRtlPrivateInsertExclusiveLock( &LockInfo->LockQueue, ExLock );
+        FsRtlPrivateInsertExclusiveLock(&LockInfo->LockQueue, ExLock);
 
         FileObject->LastLock = &ExLock->LockInfo;
-
-    } else {
+    }
+    else
+    {
 
         PSH_LOCK ShLock;
 
         ShLock = FsRtlAllocateSharedLock();
 
-        if (ShLock == NULL) {
+        if (ShLock == NULL)
+        {
 
             return FALSE;
         }
 
         ShLock->LockInfo = *FileLockInfo;
 
-        if (!FsRtlPrivateInsertSharedLock( &LockInfo->LockQueue, ShLock )) {
+        if (!FsRtlPrivateInsertSharedLock(&LockInfo->LockQueue, ShLock))
+        {
 
             return FALSE;
         }
@@ -4339,25 +4132,23 @@ Return Value:
     //  Fix up the lowest lock offset if need be
     //
 
-    if ((ULONGLONG)FileLockInfo->StartingByte.QuadPart < (ULONGLONG)LockInfo->LowestLockOffset) {
+    if ((ULONGLONG)FileLockInfo->StartingByte.QuadPart < (ULONGLONG)LockInfo->LowestLockOffset)
+    {
 
-        ASSERT( FileLockInfo->StartingByte.HighPart == 0 );
+        ASSERT(FileLockInfo->StartingByte.HighPart == 0);
         LockInfo->LowestLockOffset = FileLockInfo->StartingByte.LowPart;
     }
 
     return TRUE;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
 BOOLEAN
-FsRtlPrivateInsertSharedLock (
-    IN PLOCK_QUEUE LockQueue,
-    IN PSH_LOCK NewLock
-    )
+FsRtlPrivateInsertSharedLock(IN PLOCK_QUEUE LockQueue, IN PSH_LOCK NewLock)
 
 /*++
 
@@ -4385,13 +4176,12 @@ Return Value:
     PSH_LOCK NextLock;
     BOOLEAN GreaterThan;
 
-    OverlappedSplayLinks = FsRtlFindFirstOverlappingSharedNode( LockQueue->SharedLockTree,
-                                                                &NewLock->LockInfo.StartingByte,
-                                                                &NewLock->LockInfo.EndingByte,
-                                                                &ParentSplayLinks,
-                                                                &GreaterThan );
+    OverlappedSplayLinks =
+        FsRtlFindFirstOverlappingSharedNode(LockQueue->SharedLockTree, &NewLock->LockInfo.StartingByte,
+                                            &NewLock->LockInfo.EndingByte, &ParentSplayLinks, &GreaterThan);
 
-    if (OverlappedSplayLinks == NULL) {
+    if (OverlappedSplayLinks == NULL)
+    {
 
         //
         //  Simple insert case, build a new node
@@ -4403,7 +4193,8 @@ Return Value:
         //  If no resources are avaliable, simply fail now.
         //
 
-        if (NextNode == NULL) {
+        if (NextNode == NULL)
+        {
 
             return FALSE;
         }
@@ -4415,18 +4206,21 @@ Return Value:
         NextNode->Extent = (ULONGLONG)NewLock->LockInfo.EndingByte.QuadPart;
         NewLock->Link.Next = NULL;
 
-        if (ParentSplayLinks) {
+        if (ParentSplayLinks)
+        {
 
             //
             //  We have a real parent node in the tree
             //
 
-            if (GreaterThan) {
+            if (GreaterThan)
+            {
 
                 ASSERT(RtlLeftChild(ParentSplayLinks) == NULL);
                 RtlInsertAsLeftChild(ParentSplayLinks, &NextNode->Links);
-
-            } else {
+            }
+            else
+            {
 
                 ASSERT(RtlRightChild(ParentSplayLinks) == NULL);
                 RtlInsertAsRightChild(ParentSplayLinks, &NextNode->Links);
@@ -4437,8 +4231,9 @@ Return Value:
             //
 
             LockQueue->SharedLockTree = RtlSplay(&NextNode->Links);
-
-        } else {
+        }
+        else
+        {
 
             //
             //  First node in the tree
@@ -4455,19 +4250,18 @@ Return Value:
     //  If it is, we must complete the split before adding the new lock.
     //
 
-    Node = CONTAINING_RECORD( OverlappedSplayLinks, LOCKTREE_NODE, Links );
+    Node = CONTAINING_RECORD(OverlappedSplayLinks, LOCKTREE_NODE, Links);
 
     //
     //  Search down the overlapped node finding the position for the new lock
     //
 
-    for (pLink = &Node->Locks;
-         (Link = pLink->Next) != NULL;
-         pLink = Link) {
+    for (pLink = &Node->Locks; (Link = pLink->Next) != NULL; pLink = Link)
+    {
 
         PSH_LOCK Lock;
 
-        Lock = CONTAINING_RECORD( Link, SH_LOCK, Link );
+        Lock = CONTAINING_RECORD(Link, SH_LOCK, Link);
 
         //
         //  We sort locks on this list first by starting byte, then by whether the length is zero or not.
@@ -4480,7 +4274,8 @@ Return Value:
         if (((ULONGLONG)NewLock->LockInfo.StartingByte.QuadPart < (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart) ||
 
             ((ULONGLONG)NewLock->LockInfo.StartingByte.QuadPart == (ULONGLONG)Lock->LockInfo.StartingByte.QuadPart &&
-             (NewLock->LockInfo.Length.QuadPart == 0 || Lock->LockInfo.Length.QuadPart != 0))) {
+             (NewLock->LockInfo.Length.QuadPart == 0 || Lock->LockInfo.Length.QuadPart != 0)))
+        {
 
             break;
         }
@@ -4494,7 +4289,8 @@ Return Value:
 
     DebugTrace(0, Dbg, "InsertSharedLock, Insert Before = %08lx\n", Link);
 
-    if (pLink->Next == NULL) {
+    if (pLink->Next == NULL)
+    {
 
         //
         //    Adding onto the tail of the list
@@ -4512,7 +4308,8 @@ Return Value:
 
     LockQueue->SharedLockTree = RtlSplay(OverlappedSplayLinks);
 
-    if ((ULONGLONG)NewLock->LockInfo.EndingByte.QuadPart > Node->Extent) {
+    if ((ULONGLONG)NewLock->LockInfo.EndingByte.QuadPart > Node->Extent)
+    {
 
         //
         //  The new lock extends the range of this node, so fix up the extent
@@ -4529,14 +4326,15 @@ Return Value:
 
         ParentSplayLinks = OverlappedSplayLinks;
 
-        for (OverlappedSplayLinks = RtlRealSuccessor(ParentSplayLinks);
-             OverlappedSplayLinks;
-             OverlappedSplayLinks = RtlRealSuccessor(ParentSplayLinks)) {
+        for (OverlappedSplayLinks = RtlRealSuccessor(ParentSplayLinks); OverlappedSplayLinks;
+             OverlappedSplayLinks = RtlRealSuccessor(ParentSplayLinks))
+        {
 
-            NextNode = CONTAINING_RECORD( OverlappedSplayLinks, LOCKTREE_NODE, Links );
-            NextLock = CONTAINING_RECORD( NextNode->Locks.Next, SH_LOCK, Link );
+            NextNode = CONTAINING_RECORD(OverlappedSplayLinks, LOCKTREE_NODE, Links);
+            NextLock = CONTAINING_RECORD(NextNode->Locks.Next, SH_LOCK, Link);
 
-            if ((ULONGLONG)NextLock->LockInfo.StartingByte.QuadPart > Node->Extent) {
+            if ((ULONGLONG)NextLock->LockInfo.StartingByte.QuadPart > Node->Extent)
+            {
 
                 //
                 //  This node is not overlapped, so stop
@@ -4553,9 +4351,10 @@ Return Value:
             //  node will still be there, and overlaps.
             //
 
-            if (!Node->HoleyNode && NextNode->HoleyNode) {
+            if (!Node->HoleyNode && NextNode->HoleyNode)
+            {
 
-                FsRtlSplitLocks( NextNode, NULL, NULL, NULL );
+                FsRtlSplitLocks(NextNode, NULL, NULL, NULL);
             }
 
             //
@@ -4565,7 +4364,8 @@ Return Value:
             Node->Tail.Next->Next = NextNode->Locks.Next;
             Node->Tail.Next = NextNode->Tail.Next;
 
-            if (NextNode->Extent > Node->Extent) {
+            if (NextNode->Extent > Node->Extent)
+            {
 
                 //
                 //  If the node we just swallowed was (still!) holey, we perhaps made this
@@ -4576,7 +4376,8 @@ Return Value:
                 //  to the current node, we just covered whatever holes it contained.
                 //
 
-                if (NextNode->HoleyNode) {
+                if (NextNode->HoleyNode)
+                {
 
                     Node->HoleyNode = TRUE;
                 }
@@ -4588,8 +4389,8 @@ Return Value:
             //  Free the now empty node.
             //
 
-            RtlDeleteNoSplay( OverlappedSplayLinks, &LockQueue->SharedLockTree );
-            FsRtlFreeLockTreeNode( NextNode );
+            RtlDeleteNoSplay(OverlappedSplayLinks, &LockQueue->SharedLockTree);
+            FsRtlFreeLockTreeNode(NextNode);
         }
     }
 
@@ -4598,9 +4399,10 @@ Return Value:
     //  this thing apart.
     //
 
-    if (Node->HoleyNode) {
+    if (Node->HoleyNode)
+    {
 
-        FsRtlSplitLocks( Node, NULL, NULL, NULL );
+        FsRtlSplitLocks(Node, NULL, NULL, NULL);
     }
 
     //
@@ -4610,16 +4412,12 @@ Return Value:
     return TRUE;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-FsRtlPrivateInsertExclusiveLock (
-    IN PLOCK_QUEUE LockQueue,
-    IN PEX_LOCK NewLock
-    )
+VOID FsRtlPrivateInsertExclusiveLock(IN PLOCK_QUEUE LockQueue, IN PEX_LOCK NewLock)
 
 /*++
 
@@ -4644,11 +4442,9 @@ Return Value:
     PRTL_SPLAY_LINKS OverlappedSplayLinks, ParentSplayLinks;
     BOOLEAN GreaterThan;
 
-    OverlappedSplayLinks = FsRtlFindFirstOverlappingExclusiveNode( LockQueue->ExclusiveLockTree,
-                                                                   &NewLock->LockInfo.StartingByte,
-                                                                   &NewLock->LockInfo.EndingByte,
-                                                                   &ParentSplayLinks,
-                                                                   &GreaterThan );
+    OverlappedSplayLinks =
+        FsRtlFindFirstOverlappingExclusiveNode(LockQueue->ExclusiveLockTree, &NewLock->LockInfo.StartingByte,
+                                               &NewLock->LockInfo.EndingByte, &ParentSplayLinks, &GreaterThan);
 
     //
     //  This is the exclusive tree. Nothing can overlap (caller is supposed to insure this) unless
@@ -4663,7 +4459,8 @@ Return Value:
 
     RtlInitializeSplayLinks(&NewLock->Links);
 
-    if (OverlappedSplayLinks) {
+    if (OverlappedSplayLinks)
+    {
 
         //
         //  With zero length locks we have OverlappedSplayLinks at the starting point
@@ -4671,47 +4468,54 @@ Return Value:
         //  node is inserted.
         //
 
-        if (RtlRightChild(OverlappedSplayLinks)) {
+        if (RtlRightChild(OverlappedSplayLinks))
+        {
 
             //
             //  Right slot taken. We can use the left slot or go to the sucessor's left slot
             //
 
-            if (RtlLeftChild(OverlappedSplayLinks)) {
+            if (RtlLeftChild(OverlappedSplayLinks))
+            {
 
                 ASSERT(RtlLeftChild(RtlRealSuccessor(OverlappedSplayLinks)) == NULL);
                 RtlInsertAsLeftChild(RtlRealSuccessor(OverlappedSplayLinks), &NewLock->Links);
-
-            } else {
+            }
+            else
+            {
 
                 RtlInsertAsLeftChild(OverlappedSplayLinks, &NewLock->Links);
             }
-
-
-        } else {
+        }
+        else
+        {
 
             RtlInsertAsRightChild(OverlappedSplayLinks, &NewLock->Links);
         }
-
-    } else if (ParentSplayLinks) {
+    }
+    else if (ParentSplayLinks)
+    {
 
         //
         //  We have a real parent node in the tree, and must be at a leaf since
         //  there was no overlap
         //
 
-        if (GreaterThan) {
+        if (GreaterThan)
+        {
 
             ASSERT(RtlLeftChild(ParentSplayLinks) == NULL);
             RtlInsertAsLeftChild(ParentSplayLinks, &NewLock->Links);
-
-        } else {
+        }
+        else
+        {
 
             ASSERT(RtlRightChild(ParentSplayLinks) == NULL);
             RtlInsertAsRightChild(ParentSplayLinks, &NewLock->Links);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  First node in the tree
@@ -4727,17 +4531,12 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-FsRtlPrivateCheckWaitingLocks (
-    IN PLOCK_INFO   LockInfo,
-    IN PLOCK_QUEUE  LockQueue,
-    IN KIRQL        OldIrql
-    )
+VOID FsRtlPrivateCheckWaitingLocks(IN PLOCK_INFO LockInfo, IN PLOCK_QUEUE LockQueue, IN KIRQL OldIrql)
 
 /*++
 
@@ -4766,7 +4565,8 @@ Return Value:
     BOOLEAN Result;
 
     pLink = &LockQueue->WaitingLocks.Next;
-    while ((Link = *pLink) != NULL) {
+    while ((Link = *pLink) != NULL)
+    {
 
         PWAITING_LOCK WaitingLock;
 
@@ -4781,7 +4581,7 @@ Return Value:
         //  Get a pointer to the waiting lock record
         //
 
-        WaitingLock = CONTAINING_RECORD( Link, WAITING_LOCK, Link );
+        WaitingLock = CONTAINING_RECORD(Link, WAITING_LOCK, Link);
 
         DebugTrace(0, Dbg, "FsRtlCheckWaitingLocks, Loop top, WaitingLock = %08lx\n", WaitingLock);
 
@@ -4790,16 +4590,16 @@ Return Value:
         //
 
         Irp = WaitingLock->Irp;
-        IrpSp = IoGetCurrentIrpStackLocation( Irp );
+        IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
-        FileLockInfo.StartingByte  = IrpSp->Parameters.LockControl.ByteOffset;
-        FileLockInfo.Length        = *IrpSp->Parameters.LockControl.Length;
-        (ULONGLONG)FileLockInfo.EndingByte.QuadPart =
+        FileLockInfo.StartingByte = IrpSp->Parameters.LockControl.ByteOffset;
+        FileLockInfo.Length = *IrpSp->Parameters.LockControl.Length;
+        (ULONGLONG) FileLockInfo.EndingByte.QuadPart =
             (ULONGLONG)FileLockInfo.StartingByte.QuadPart + (ULONGLONG)FileLockInfo.Length.QuadPart - 1;
 
-        FileLockInfo.FileObject    = IrpSp->FileObject;
-        FileLockInfo.ProcessId     = IoGetRequestorProcess( Irp );
-        FileLockInfo.Key           = IrpSp->Parameters.LockControl.Key;
+        FileLockInfo.FileObject = IrpSp->FileObject;
+        FileLockInfo.ProcessId = IoGetRequestorProcess(Irp);
+        FileLockInfo.Key = IrpSp->Parameters.LockControl.Key;
         FileLockInfo.ExclusiveLock = BooleanFlagOn(IrpSp->Flags, SL_EXCLUSIVE_LOCK);
 
         //
@@ -4810,21 +4610,19 @@ Return Value:
         //  access through an exclusive lock.
         //
 
-        if (FileLockInfo.ExclusiveLock) {
+        if (FileLockInfo.ExclusiveLock)
+        {
 
             DebugTrace(0, Dbg, "FsRtlCheckWaitingLocks do we have write access?\n", 0);
 
-            AccessGranted = FsRtlPrivateCheckForExclusiveLockAccess(
-                                LockQueue,
-                                &FileLockInfo );
-        } else {
+            AccessGranted = FsRtlPrivateCheckForExclusiveLockAccess(LockQueue, &FileLockInfo);
+        }
+        else
+        {
 
             DebugTrace(0, Dbg, "FsRtlCheckWaitingLocks do we have read access?\n", 0);
 
-            AccessGranted = FsRtlPrivateCheckForSharedLockAccess(
-                                LockQueue,
-                                &FileLockInfo );
-
+            AccessGranted = FsRtlPrivateCheckForSharedLockAccess(LockQueue, &FileLockInfo);
         }
 
         //
@@ -4837,7 +4635,8 @@ Return Value:
         //  list.
         //
 
-        if (AccessGranted) {
+        if (AccessGranted)
+        {
 
             DebugTrace(0, Dbg, "FsRtlCheckWaitingLocks now has access\n", 0);
 
@@ -4845,24 +4644,26 @@ Return Value:
             //  Clear the cancel routine
             //
 
-            IoAcquireCancelSpinLock( &Irp->CancelIrql );
-            IoSetCancelRoutine( Irp, NULL );
+            IoAcquireCancelSpinLock(&Irp->CancelIrql);
+            IoSetCancelRoutine(Irp, NULL);
 
             //
             //  If the IRP got itself cancelled, it is cancelled and we won't grant it.
             //  The canceller is waiting for the queue spinlock right now.
             //
-            
-            if (Irp->Cancel) {
-                
+
+            if (Irp->Cancel)
+            {
+
                 AccessGranted = FALSE;
             }
-            
-            IoReleaseCancelSpinLock( Irp->CancelIrql );
 
-            if (AccessGranted) {
-                
-                Result = FsRtlPrivateInsertLock( LockInfo, IrpSp->FileObject, &FileLockInfo );
+            IoReleaseCancelSpinLock(Irp->CancelIrql);
+
+            if (AccessGranted)
+            {
+
+                Result = FsRtlPrivateInsertLock(LockInfo, IrpSp->FileObject, &FileLockInfo);
 
                 //
                 //  Now we need to remove this granted waiter and complete
@@ -4870,22 +4671,23 @@ Return Value:
                 //
 
                 *pLink = Link->Next;
-                if (Link == LockQueue->WaitingLocksTail.Next) {
-                    LockQueue->WaitingLocksTail.Next = (PSINGLE_LIST_ENTRY) pLink;
+                if (Link == LockQueue->WaitingLocksTail.Next)
+                {
+                    LockQueue->WaitingLocksTail.Next = (PSINGLE_LIST_ENTRY)pLink;
                 }
 
                 //
                 // Release LockQueue and complete this waiter
                 //
 
-                FsRtlReleaseLockQueue( LockQueue, OldIrql );
+                FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
                 //
                 //  Reference the fileobject over the completion attempt so we can have a
                 //  chance to cleanup safely if we fail
                 //
 
-                ObReferenceObject( FileLockInfo.FileObject );
+                ObReferenceObject(FileLockInfo.FileObject);
 
                 //
                 //  Now we can complete the IRP, if we don't get back success
@@ -4893,36 +4695,31 @@ Return Value:
                 //  inserted.
                 //
 
-                FsRtlCompleteLockIrp( LockInfo,
-                                      WaitingLock->Context,
-                                      Irp,
-                                      (Result? STATUS_SUCCESS : STATUS_INSUFFICIENT_RESOURCES),
-                                      &NewStatus,
-                                      FileLockInfo.FileObject );
+                FsRtlCompleteLockIrp(LockInfo, WaitingLock->Context, Irp,
+                                     (Result ? STATUS_SUCCESS : STATUS_INSUFFICIENT_RESOURCES), &NewStatus,
+                                     FileLockInfo.FileObject);
 
-                if (Result && !NT_SUCCESS(NewStatus)) {
+                if (Result && !NT_SUCCESS(NewStatus))
+                {
 
                     //
                     // Irp was not sucessfull, remove lock if it was added.
                     //
 
-                    FsRtlPrivateRemoveLock (
-                        LockInfo,
-                        &FileLockInfo,
-                        FALSE );
+                    FsRtlPrivateRemoveLock(LockInfo, &FileLockInfo, FALSE);
                 }
 
                 //
                 //  Drop our private reference to the fileobject
                 //
 
-                ObDereferenceObject( FileLockInfo.FileObject );
+                ObDereferenceObject(FileLockInfo.FileObject);
 
                 //
                 // Re-acquire queue lock
                 //
 
-                FsRtlAcquireLockQueue( LockQueue, &OldIrql );
+                FsRtlAcquireLockQueue(LockQueue, &OldIrql);
 
                 //
                 // Start scan over from begining
@@ -4935,13 +4732,13 @@ Return Value:
                 //  Free up pool
                 //
 
-                FsRtlFreeWaitingLock( WaitingLock );
+                FsRtlFreeWaitingLock(WaitingLock);
 
                 continue;
             }
         }
 
-        DebugTrace( 0, Dbg, "FsRtlCheckWaitingLocks still no access\n", 0);
+        DebugTrace(0, Dbg, "FsRtlCheckWaitingLocks still no access\n", 0);
 
         //
         // Move to next lock
@@ -4957,12 +4754,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-FsRtlPrivateCheckForExclusiveLockAccess (
-    IN PLOCK_QUEUE LockQueue,
-    IN PFILE_LOCK_INFO FileLockInfo
-    )
+FsRtlPrivateCheckForExclusiveLockAccess(IN PLOCK_QUEUE LockQueue, IN PFILE_LOCK_INFO FileLockInfo)
 /*++
 
 Routine Description:
@@ -4993,10 +4787,9 @@ Return Value:
     PEX_LOCK ExLock;
 
     if (LockQueue->SharedLockTree &&
-        (SplayLinks = FsRtlFindFirstOverlappingSharedNode( LockQueue->SharedLockTree,
-                                                           &FileLockInfo->StartingByte,
-                                                           &FileLockInfo->EndingByte,
-                                                           &LastSplayLinks, NULL))) {
+        (SplayLinks = FsRtlFindFirstOverlappingSharedNode(LockQueue->SharedLockTree, &FileLockInfo->StartingByte,
+                                                          &FileLockInfo->EndingByte, &LastSplayLinks, NULL)))
+    {
 
         Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
 
@@ -5004,13 +4797,13 @@ Return Value:
         //  If this node is holey, we'll have to walk the whole thing.
         //
 
-        if (Node->HoleyNode) {
+        if (Node->HoleyNode)
+        {
 
-            ShLock = FsRtlFindFirstOverlapInNode( Node,
-                                                  &FileLockInfo->StartingByte,
-                                                  &FileLockInfo->EndingByte );
-
-        } else {
+            ShLock = FsRtlFindFirstOverlapInNode(Node, &FileLockInfo->StartingByte, &FileLockInfo->EndingByte);
+        }
+        else
+        {
 
             ShLock = CONTAINING_RECORD(Node->Locks.Next, SH_LOCK, Link);
         }
@@ -5019,8 +4812,8 @@ Return Value:
         //  Look for overlap that we care about.  Perhaps no overlap existed in the holey case.
         //
 
-        if (ShLock &&
-            (FileLockInfo->Length.QuadPart || ShLock->LockInfo.Length.QuadPart)) {
+        if (ShLock && (FileLockInfo->Length.QuadPart || ShLock->LockInfo.Length.QuadPart))
+        {
 
             //
             //  If we are checking a nonzero extent and overlapped, it is fatal. If we
@@ -5031,21 +4824,22 @@ Return Value:
         }
     }
 
-    if (LastSplayLinks) {
+    if (LastSplayLinks)
+    {
 
         LockQueue->SharedLockTree = RtlSplay(LastSplayLinks);
         LastSplayLinks = NULL;
     }
 
     if (LockQueue->ExclusiveLockTree &&
-        (SplayLinks = FsRtlFindFirstOverlappingExclusiveNode( LockQueue->ExclusiveLockTree,
-                                                              &FileLockInfo->StartingByte,
-                                                              &FileLockInfo->EndingByte,
-                                                              &LastSplayLinks, NULL))) {
+        (SplayLinks = FsRtlFindFirstOverlappingExclusiveNode(LockQueue->ExclusiveLockTree, &FileLockInfo->StartingByte,
+                                                             &FileLockInfo->EndingByte, &LastSplayLinks, NULL)))
+    {
 
         ExLock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
-        if (FileLockInfo->Length.QuadPart || ExLock->LockInfo.Length.QuadPart) {
+        if (FileLockInfo->Length.QuadPart || ExLock->LockInfo.Length.QuadPart)
+        {
 
             //
             //  If we are checking a nonzero extent and overlapped, it is fatal. If we
@@ -5056,7 +4850,8 @@ Return Value:
         }
     }
 
-    if (LastSplayLinks) {
+    if (LastSplayLinks)
+    {
 
         LockQueue->ExclusiveLockTree = RtlSplay(LastSplayLinks);
     }
@@ -5069,12 +4864,9 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-FsRtlPrivateCheckForSharedLockAccess (
-    IN PLOCK_QUEUE LockQueue,
-    IN PFILE_LOCK_INFO FileLockInfo
-    )
+FsRtlPrivateCheckForSharedLockAccess(IN PLOCK_QUEUE LockQueue, IN PFILE_LOCK_INFO FileLockInfo)
 /*++
 
 Routine Description:
@@ -5108,7 +4900,8 @@ Return Value:
     // If there are no exclusive locks, this is quick ...
     //
 
-    if (LockQueue->ExclusiveLockTree == NULL) {
+    if (LockQueue->ExclusiveLockTree == NULL)
+    {
 
         return TRUE;
     }
@@ -5118,16 +4911,15 @@ Return Value:
     //  tree for conflict.
     //
 
-    for (SplayLinks = FsRtlFindFirstOverlappingExclusiveNode( LockQueue->ExclusiveLockTree,
-                                                              &FileLockInfo->StartingByte,
-                                                              &FileLockInfo->EndingByte,
-                                                              &LastSplayLinks, NULL);
-         SplayLinks;
-         SplayLinks = RtlRealSuccessor(SplayLinks)) {
+    for (SplayLinks = FsRtlFindFirstOverlappingExclusiveNode(LockQueue->ExclusiveLockTree, &FileLockInfo->StartingByte,
+                                                             &FileLockInfo->EndingByte, &LastSplayLinks, NULL);
+         SplayLinks; SplayLinks = RtlRealSuccessor(SplayLinks))
+    {
 
-        Lock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+        Lock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
-        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)FileLockInfo->EndingByte.QuadPart) {
+        if ((ULONGLONG)Lock->LockInfo.StartingByte.QuadPart > (ULONGLONG)FileLockInfo->EndingByte.QuadPart)
+        {
 
             //
             //  This node is covering a range greater than the range we care about,
@@ -5143,8 +4935,8 @@ Return Value:
         //
 
         if ((Lock->LockInfo.FileObject != FileLockInfo->FileObject) ||
-             (Lock->LockInfo.ProcessId != FileLockInfo->ProcessId) ||
-             (Lock->LockInfo.Key != FileLockInfo->Key)) {
+            (Lock->LockInfo.ProcessId != FileLockInfo->ProcessId) || (Lock->LockInfo.Key != FileLockInfo->Key))
+        {
 
             //
             //  We have a mismatch between caller and owner. It is ok not to conflict
@@ -5152,7 +4944,8 @@ Return Value:
             //  locks cannot conflict).
             //
 
-            if (FileLockInfo->Length.QuadPart || Lock->LockInfo.Length.QuadPart) {
+            if (FileLockInfo->Length.QuadPart || Lock->LockInfo.Length.QuadPart)
+            {
 
                 Status = FALSE;
                 break;
@@ -5160,7 +4953,8 @@ Return Value:
         }
     }
 
-    if (LastSplayLinks) {
+    if (LastSplayLinks)
+    {
 
         LockQueue->ExclusiveLockTree = RtlSplay(LastSplayLinks);
     }
@@ -5173,11 +4967,8 @@ Return Value:
     return Status;
 }
 
-
-VOID
-FsRtlPrivateResetLowestLockOffset (
-    PLOCK_INFO LockInfo
-    )
+
+VOID FsRtlPrivateResetLowestLockOffset(PLOCK_INFO LockInfo)
 
 /*++
 
@@ -5209,36 +5000,40 @@ Return Value:
     //
 
     if (LockInfo->LowestLockOffset != 0xffffffff &&
-        (LockInfo->LockQueue.SharedLockTree != NULL ||
-         LockInfo->LockQueue.ExclusiveLockTree != NULL)) {
+        (LockInfo->LockQueue.SharedLockTree != NULL || LockInfo->LockQueue.ExclusiveLockTree != NULL))
+    {
 
         //
         //  Grab the lowest nodes in the trees
         //
 
-        if (LockInfo->LockQueue.SharedLockTree) {
+        if (LockInfo->LockQueue.SharedLockTree)
+        {
 
             SplayLinks = LockInfo->LockQueue.SharedLockTree;
 
-            while (RtlLeftChild(SplayLinks) != NULL) {
+            while (RtlLeftChild(SplayLinks) != NULL)
+            {
 
                 SplayLinks = RtlLeftChild(SplayLinks);
             }
 
-            Node = CONTAINING_RECORD( SplayLinks, LOCKTREE_NODE, Links );
-            ShLock = CONTAINING_RECORD( Node->Locks.Next, SH_LOCK, Link );
+            Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
+            ShLock = CONTAINING_RECORD(Node->Locks.Next, SH_LOCK, Link);
         }
 
-        if (LockInfo->LockQueue.ExclusiveLockTree) {
+        if (LockInfo->LockQueue.ExclusiveLockTree)
+        {
 
             SplayLinks = LockInfo->LockQueue.ExclusiveLockTree;
 
-            while (RtlLeftChild(SplayLinks) != NULL) {
+            while (RtlLeftChild(SplayLinks) != NULL)
+            {
 
                 SplayLinks = RtlLeftChild(SplayLinks);
             }
 
-            ExLock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+            ExLock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
         }
 
         //
@@ -5247,27 +5042,31 @@ Return Value:
         //  we have shared locks ...
         //
 
-        if (ExLock &&
-            (!ShLock ||
-             (ULONGLONG)ExLock->LockInfo.StartingByte.QuadPart < (ULONGLONG)ShLock->LockInfo.StartingByte.QuadPart)) {
+        if (ExLock && (!ShLock || (ULONGLONG)ExLock->LockInfo.StartingByte.QuadPart <
+                                      (ULONGLONG)ShLock->LockInfo.StartingByte.QuadPart))
+        {
 
             LowestLockInfo = &ExLock->LockInfo;
-
-        } else {
+        }
+        else
+        {
 
             LowestLockInfo = &ShLock->LockInfo;
         }
 
-        if (LowestLockInfo->StartingByte.HighPart == 0) {
+        if (LowestLockInfo->StartingByte.HighPart == 0)
+        {
 
             LockInfo->LowestLockOffset = LowestLockInfo->StartingByte.LowPart;
-
-        } else {
+        }
+        else
+        {
 
             LockInfo->LowestLockOffset = 0xffffffff;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  If there are no locks, set the lock offset high
@@ -5277,16 +5076,10 @@ Return Value:
     }
 }
 
-
+
 NTSTATUS
-FsRtlPrivateFastUnlockAll (
-    IN PFILE_LOCK FileLock,
-    IN PFILE_OBJECT FileObject,
-    IN PEPROCESS ProcessId,
-    IN ULONG Key,
-    IN BOOLEAN MatchKey,
-    IN PVOID Context OPTIONAL
-    )
+FsRtlPrivateFastUnlockAll(IN PFILE_LOCK FileLock, IN PFILE_OBJECT FileObject, IN PEPROCESS ProcessId, IN ULONG Key,
+                          IN BOOLEAN MatchKey, IN PVOID Context OPTIONAL)
 
 /*++
 
@@ -5321,22 +5114,23 @@ Return Value:
 --*/
 
 {
-    PLOCK_INFO              LockInfo;
-    PLOCK_QUEUE             LockQueue;
-    PSINGLE_LIST_ENTRY      *pLink, *SavepLink, Link;
-    NTSTATUS                NewStatus;
-    KIRQL                   OldIrql;
-    LARGE_INTEGER           GlueOffset, EndingDeletedByte;
-    BOOLEAN                 UnlockRoutine;
-    PSH_LOCK                ShLock;
-    PEX_LOCK                ExLock;
-    PRTL_SPLAY_LINKS        SplayLinks, SuccessorLinks;
-    PLOCKTREE_NODE          Node;
+    PLOCK_INFO LockInfo;
+    PLOCK_QUEUE LockQueue;
+    PSINGLE_LIST_ENTRY *pLink, *SavepLink, Link;
+    NTSTATUS NewStatus;
+    KIRQL OldIrql;
+    LARGE_INTEGER GlueOffset, EndingDeletedByte;
+    BOOLEAN UnlockRoutine;
+    PSH_LOCK ShLock;
+    PEX_LOCK ExLock;
+    PRTL_SPLAY_LINKS SplayLinks, SuccessorLinks;
+    PLOCKTREE_NODE Node;
 
 
     DebugTrace(+1, Dbg, "FsRtlPrivateFastUnlockAll, FileLock = %08lx\n", FileLock);
 
-    if ((LockInfo = FileLock->LockInformation) == NULL) {
+    if ((LockInfo = FileLock->LockInformation) == NULL)
+    {
 
         //
         // No lock information on this FileLock
@@ -5355,16 +5149,17 @@ Return Value:
     //  with the queue while we're using it
     //
 
-    FsRtlAcquireLockQueue( LockQueue, &OldIrql );
+    FsRtlAcquireLockQueue(LockQueue, &OldIrql);
 
-    if (LockQueue->SharedLockTree == NULL && LockQueue->ExclusiveLockTree == NULL) {
+    if (LockQueue->SharedLockTree == NULL && LockQueue->ExclusiveLockTree == NULL)
+    {
 
         //
         // No locks on this FileLock
         //
 
         DebugTrace(+1, Dbg, "FsRtlPrivateFastUnlockAll, No LockTrees\n", FileLock);
-        FsRtlReleaseLockQueue( LockQueue, OldIrql );
+        FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
         return STATUS_RANGE_NOT_LOCKED;
     }
@@ -5373,7 +5168,8 @@ Return Value:
     //  Remove all matching locks in the shared lock tree
     //
 
-    if (LockQueue->SharedLockTree != NULL) {
+    if (LockQueue->SharedLockTree != NULL)
+    {
 
         //
         //  Grab the lowest node in the tree
@@ -5381,7 +5177,8 @@ Return Value:
 
         SplayLinks = LockQueue->SharedLockTree;
 
-        while (RtlLeftChild(SplayLinks) != NULL) {
+        while (RtlLeftChild(SplayLinks) != NULL)
+        {
 
             SplayLinks = RtlLeftChild(SplayLinks);
         }
@@ -5392,11 +5189,10 @@ Return Value:
 
         UnlockRoutine = FALSE;
 
-        for (;
-             SplayLinks;
-             SplayLinks = SuccessorLinks) {
+        for (; SplayLinks; SplayLinks = SuccessorLinks)
+        {
 
-            Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links );
+            Node = CONTAINING_RECORD(SplayLinks, LOCKTREE_NODE, Links);
 
             //
             //  Save the next node because we may split this node apart in the process
@@ -5419,15 +5215,16 @@ Return Value:
             GlueOffset.QuadPart = 0;
 
             pLink = &Node->Locks.Next;
-            while ((Link = *pLink) != NULL) {
+            while ((Link = *pLink) != NULL)
+            {
 
-                ShLock = CONTAINING_RECORD( Link, SH_LOCK, Link );
+                ShLock = CONTAINING_RECORD(Link, SH_LOCK, Link);
 
-                DebugTrace(0, Dbg, "Top of ShLock Loop, Lock = %08lx\n", ShLock );
+                DebugTrace(0, Dbg, "Top of ShLock Loop, Lock = %08lx\n", ShLock);
 
-                if ((ShLock->LockInfo.FileObject == FileObject) &&
-                    (ShLock->LockInfo.ProcessId == ProcessId) &&
-                    (!MatchKey || ShLock->LockInfo.Key == Key)) {
+                if ((ShLock->LockInfo.FileObject == FileObject) && (ShLock->LockInfo.ProcessId == ProcessId) &&
+                    (!MatchKey || ShLock->LockInfo.Key == Key))
+                {
 
                     DebugTrace(0, Dbg, "Found one to unlock\n", 0);
 
@@ -5438,7 +5235,8 @@ Return Value:
                     //  optional unlock routine, then delete the lock.
                     //
 
-                    if (SavepLink == NULL) {
+                    if (SavepLink == NULL)
+                    {
 
                         //
                         //  Need to remember where the first lock was deleted
@@ -5447,7 +5245,8 @@ Return Value:
                         SavepLink = pLink;
                     }
 
-                    if ((ULONGLONG)ShLock->LockInfo.EndingByte.QuadPart > (ULONGLONG)EndingDeletedByte.QuadPart) {
+                    if ((ULONGLONG)ShLock->LockInfo.EndingByte.QuadPart > (ULONGLONG)EndingDeletedByte.QuadPart)
+                    {
 
                         //
                         //  Need to remember where the last offset affected by deleted locks is
@@ -5456,7 +5255,8 @@ Return Value:
                         EndingDeletedByte.QuadPart = ShLock->LockInfo.EndingByte.QuadPart;
                     }
 
-                    if (*pLink == Node->Tail.Next) {
+                    if (*pLink == Node->Tail.Next)
+                    {
 
                         //
                         //  Deleting the tail node of the list. Safe even if deleting the
@@ -5464,12 +5264,13 @@ Return Value:
                         //  in the node which means we'll delete the node ...
                         //
 
-                        Node->Tail.Next = CONTAINING_RECORD( pLink, SINGLE_LIST_ENTRY, Next );
+                        Node->Tail.Next = CONTAINING_RECORD(pLink, SINGLE_LIST_ENTRY, Next);
                     }
 
                     *pLink = Link->Next;
 
-                    if (LockInfo->UnlockRoutine != NULL) {
+                    if (LockInfo->UnlockRoutine != NULL)
+                    {
 
                         //
                         //  Signal a lock that needs to have a special unlock routine
@@ -5484,9 +5285,10 @@ Return Value:
                         break;
                     }
 
-                    FsRtlFreeSharedLock( ShLock );
-
-                } else {
+                    FsRtlFreeSharedLock(ShLock);
+                }
+                else
+                {
 
                     //
                     // Move to next lock
@@ -5495,7 +5297,9 @@ Return Value:
                     pLink = &Link->Next;
                 }
 
-                if (SavepLink == NULL && (ULONGLONG)ShLock->LockInfo.EndingByte.QuadPart > (ULONGLONG)GlueOffset.QuadPart) {
+                if (SavepLink == NULL &&
+                    (ULONGLONG)ShLock->LockInfo.EndingByte.QuadPart > (ULONGLONG)GlueOffset.QuadPart)
+                {
 
                     //
                     //  Save the max offset until we have deleted our first node
@@ -5505,23 +5309,26 @@ Return Value:
                 }
             }
 
-            if (SavepLink) {
+            if (SavepLink)
+            {
 
                 //
                 //  Locks were actually deleted here, so we have to check the state of the node
                 //
 
-                if (Node->Locks.Next == NULL) {
+                if (Node->Locks.Next == NULL)
+                {
 
                     //
                     //  We have just deleted everything at this node
                     //
 
-                    LockQueue->SharedLockTree = RtlDelete( SplayLinks );
+                    LockQueue->SharedLockTree = RtlDelete(SplayLinks);
 
-                    FsRtlFreeLockTreeNode( Node );
-
-                } else {
+                    FsRtlFreeLockTreeNode(Node);
+                }
+                else
+                {
 
                     //
                     //  Now that we have deleted all matching locks in this node, we do the
@@ -5534,20 +5341,21 @@ Return Value:
                 }
             }
 
-            if (UnlockRoutine) {
+            if (UnlockRoutine)
+            {
 
                 //
                 //  We dropped out of the node scan because we had a lock that needs extra
                 //  processing during unlock. Do it.
                 //
 
-                FsRtlReleaseLockQueue( LockQueue, OldIrql );
+                FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
-                LockInfo->UnlockRoutine( Context, &ShLock->LockInfo );
+                LockInfo->UnlockRoutine(Context, &ShLock->LockInfo);
 
-                FsRtlAcquireLockQueue( LockQueue, &OldIrql );
+                FsRtlAcquireLockQueue(LockQueue, &OldIrql);
 
-                FsRtlFreeSharedLock( ShLock );
+                FsRtlFreeSharedLock(ShLock);
 
                 UnlockRoutine = FALSE;
 
@@ -5556,9 +5364,11 @@ Return Value:
                 //  we were in the unlock routine. Careful, because the tree may be empty.
                 //
 
-                if (SuccessorLinks = LockQueue->SharedLockTree) {
+                if (SuccessorLinks = LockQueue->SharedLockTree)
+                {
 
-                    while (RtlLeftChild(SuccessorLinks) != NULL) {
+                    while (RtlLeftChild(SuccessorLinks) != NULL)
+                    {
 
                         SuccessorLinks = RtlLeftChild(SuccessorLinks);
                     }
@@ -5571,11 +5381,13 @@ Return Value:
     //  Remove all matching locks in the exclusive lock tree
     //
 
-    if (LockQueue->ExclusiveLockTree != NULL) {
+    if (LockQueue->ExclusiveLockTree != NULL)
+    {
 
         SplayLinks = LockQueue->ExclusiveLockTree;
 
-        while (RtlLeftChild(SplayLinks) != NULL) {
+        while (RtlLeftChild(SplayLinks) != NULL)
+        {
 
             SplayLinks = RtlLeftChild(SplayLinks);
         }
@@ -5586,49 +5398,52 @@ Return Value:
 
         UnlockRoutine = FALSE;
 
-        for (; SplayLinks;
-               SplayLinks = SuccessorLinks ) {
+        for (; SplayLinks; SplayLinks = SuccessorLinks)
+        {
 
-            SuccessorLinks = RtlRealSuccessor( SplayLinks );
+            SuccessorLinks = RtlRealSuccessor(SplayLinks);
 
-            ExLock = CONTAINING_RECORD( SplayLinks, EX_LOCK, Links );
+            ExLock = CONTAINING_RECORD(SplayLinks, EX_LOCK, Links);
 
-            DebugTrace(0, Dbg, "Top of ExLock Loop, Lock = %08lx\n", ExLock );
+            DebugTrace(0, Dbg, "Top of ExLock Loop, Lock = %08lx\n", ExLock);
 
-            if ((ExLock->LockInfo.FileObject == FileObject) &&
-                (ExLock->LockInfo.ProcessId == ProcessId) &&
-                (!MatchKey || ExLock->LockInfo.Key == Key)) {
+            if ((ExLock->LockInfo.FileObject == FileObject) && (ExLock->LockInfo.ProcessId == ProcessId) &&
+                (!MatchKey || ExLock->LockInfo.Key == Key))
+            {
 
-                LockQueue->ExclusiveLockTree = RtlDelete( &ExLock->Links );
+                LockQueue->ExclusiveLockTree = RtlDelete(&ExLock->Links);
 
-                if (LockInfo->UnlockRoutine != NULL) {
+                if (LockInfo->UnlockRoutine != NULL)
+                {
 
                     //
                     //  We're dropping out of the node scan because we have a lock
                     //  that needs extra processing during unlock. Do it.
                     //
 
-                    FsRtlReleaseLockQueue( LockQueue, OldIrql );
+                    FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
-                    LockInfo->UnlockRoutine( Context, &ExLock->LockInfo );
+                    LockInfo->UnlockRoutine(Context, &ExLock->LockInfo);
 
-                    FsRtlAcquireLockQueue( LockQueue, &OldIrql );
+                    FsRtlAcquireLockQueue(LockQueue, &OldIrql);
 
                     //
                     //  We have to restart the scan, because the list may have changed while
                     //  we were in the unlock routine. Careful, because the tree may be empty.
                     //
 
-                    if (SuccessorLinks = LockQueue->ExclusiveLockTree) {
+                    if (SuccessorLinks = LockQueue->ExclusiveLockTree)
+                    {
 
-                        while (RtlLeftChild( SuccessorLinks ) != NULL) {
+                        while (RtlLeftChild(SuccessorLinks) != NULL)
+                        {
 
-                            SuccessorLinks = RtlLeftChild( SuccessorLinks );
+                            SuccessorLinks = RtlLeftChild(SuccessorLinks);
                         }
                     }
                 }
 
-                FsRtlFreeExclusiveLock( ExLock );
+                FsRtlFreeExclusiveLock(ExLock);
             }
         }
     }
@@ -5639,13 +5454,14 @@ Return Value:
     //
 
     pLink = &LockQueue->WaitingLocks.Next;
-    while ((Link = *pLink) != NULL) {
+    while ((Link = *pLink) != NULL)
+    {
 
         PWAITING_LOCK WaitingLock;
         PIRP WaitingIrp;
         PIO_STACK_LOCATION WaitingIrpSp;
 
-        WaitingLock = CONTAINING_RECORD( Link, WAITING_LOCK, Link );
+        WaitingLock = CONTAINING_RECORD(Link, WAITING_LOCK, Link);
 
         DebugTrace(0, Dbg, "Top of Waiting Loop, WaitingLock = %08lx\n", WaitingLock);
 
@@ -5654,11 +5470,11 @@ Return Value:
         //
 
         WaitingIrp = WaitingLock->Irp;
-        WaitingIrpSp = IoGetCurrentIrpStackLocation( WaitingIrp );
+        WaitingIrpSp = IoGetCurrentIrpStackLocation(WaitingIrp);
 
-        if ((FileObject == WaitingIrpSp->FileObject) &&
-            (ProcessId == IoGetRequestorProcess( WaitingIrp )) &&
-            (!MatchKey || Key == WaitingIrpSp->Parameters.LockControl.Key)) {
+        if ((FileObject == WaitingIrpSp->FileObject) && (ProcessId == IoGetRequestorProcess(WaitingIrp)) &&
+            (!MatchKey || Key == WaitingIrpSp->Parameters.LockControl.Key))
+        {
 
             DebugTrace(0, Dbg, "Found a waiting lock to abort\n", 0);
 
@@ -5666,21 +5482,23 @@ Return Value:
             //  We now void the cancel routine in the irp
             //
 
-            IoAcquireCancelSpinLock( &WaitingIrp->CancelIrql );
-            IoSetCancelRoutine( WaitingIrp, NULL );
+            IoAcquireCancelSpinLock(&WaitingIrp->CancelIrql);
+            IoSetCancelRoutine(WaitingIrp, NULL);
 
             //
             //  If this IRP got itself cancelled, it is cancelled.
             //
-            
-            if (WaitingIrp->Cancel) {
-                
+
+            if (WaitingIrp->Cancel)
+            {
+
                 WaitingIrp = NULL;
             }
 
-            IoReleaseCancelSpinLock( WaitingIrp->CancelIrql );
+            IoReleaseCancelSpinLock(WaitingIrp->CancelIrql);
 
-            if (WaitingIrp) {
+            if (WaitingIrp)
+            {
 
                 WaitingIrp->IoStatus.Information = 0;
 
@@ -5693,8 +5511,9 @@ Return Value:
                 //
 
                 *pLink = Link->Next;
-                if (Link == LockQueue->WaitingLocksTail.Next) {
-                    LockQueue->WaitingLocksTail.Next = (PSINGLE_LIST_ENTRY) pLink;
+                if (Link == LockQueue->WaitingLocksTail.Next)
+                {
+                    LockQueue->WaitingLocksTail.Next = (PSINGLE_LIST_ENTRY)pLink;
                 }
 
                 FsRtlReleaseLockQueue(LockQueue, OldIrql);
@@ -5703,18 +5522,14 @@ Return Value:
                 //  And complete this lock request Irp
                 //
 
-                FsRtlCompleteLockIrp( LockInfo,
-                                      WaitingLock->Context,
-                                      WaitingIrp,
-                                      STATUS_RANGE_NOT_LOCKED,
-                                      &NewStatus,
-                                      NULL );
+                FsRtlCompleteLockIrp(LockInfo, WaitingLock->Context, WaitingIrp, STATUS_RANGE_NOT_LOCKED, &NewStatus,
+                                     NULL);
 
                 //
                 // Reaqcuire lock queue spinlock and start over
                 //
 
-                FsRtlAcquireLockQueue( LockQueue, &OldIrql );
+                FsRtlAcquireLockQueue(LockQueue, &OldIrql);
 
                 //
                 // Start over
@@ -5726,9 +5541,8 @@ Return Value:
                 // Put memory onto free list
                 //
 
-                FsRtlFreeWaitingLock( WaitingLock );
+                FsRtlFreeWaitingLock(WaitingLock);
                 continue;
-
             }
         }
 
@@ -5744,15 +5558,15 @@ Return Value:
     //  now try and release any waiting locks.
     //
 
-    FsRtlPrivateCheckWaitingLocks( LockInfo, LockQueue, OldIrql );
+    FsRtlPrivateCheckWaitingLocks(LockInfo, LockQueue, OldIrql);
 
     //
     //  We deleted a (possible) bunch of locks, go repair the lowest lock offset
     //
 
-    FsRtlPrivateResetLowestLockOffset( LockInfo );
+    FsRtlPrivateResetLowestLockOffset(LockInfo);
 
-    FsRtlReleaseLockQueue( LockQueue, OldIrql );
+    FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
     //
     //  and return to our caller
@@ -5762,12 +5576,8 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
-VOID
-FsRtlPrivateCancelFileLockIrp (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    )
+
+VOID FsRtlPrivateCancelFileLockIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 /*++
 
@@ -5792,21 +5602,21 @@ Return Value:
 
 {
     PSINGLE_LIST_ENTRY *pLink, Link;
-    PLOCK_INFO  LockInfo;
+    PLOCK_INFO LockInfo;
     PLOCK_QUEUE LockQueue;
-    KIRQL       OldIrql;
-    NTSTATUS    NewStatus;
-    BOOLEAN     CollideCheck = FALSE;
+    KIRQL OldIrql;
+    NTSTATUS NewStatus;
+    BOOLEAN CollideCheck = FALSE;
 
 
-    UNREFERENCED_PARAMETER( DeviceObject );
+    UNREFERENCED_PARAMETER(DeviceObject);
 
     //
     //  The information field is used to store a pointer to the file lock
     //  containing the irp
     //
 
-    LockInfo = (PLOCK_INFO) (Irp->IoStatus.Information);
+    LockInfo = (PLOCK_INFO)(Irp->IoStatus.Information);
 
     //
     //  Iterate through the lock queue.
@@ -5821,20 +5631,22 @@ Return Value:
     //  and the cancel Irql is in the Irp.
     //
 
-    if (DeviceObject) {
-        
-        IoReleaseCancelSpinLock( Irp->CancelIrql );
-        FsRtlAcquireCancelCollide( &OldIrql );
+    if (DeviceObject)
+    {
+
+        IoReleaseCancelSpinLock(Irp->CancelIrql);
+        FsRtlAcquireCancelCollide(&OldIrql);
 
         //
         //  Indicate we will check the collide list first, as the lockqueue itself
         //  may be deallocated in a race with lock teardown.
         //
-        
+
         CollideCheck = TRUE;
         pLink = &FsRtlFileLockCancelCollideList.Next;
-    
-    } else {
+    }
+    else
+    {
 
         OldIrql = Irp->CancelIrql;
 
@@ -5845,13 +5657,15 @@ Return Value:
         pLink = &LockQueue->WaitingLocks.Next;
     }
 
-    while (TRUE) {
-        
+    while (TRUE)
+    {
+
         //
         //  Iterate through the waiting locks looking for the canceled one.
         //
 
-        while ((Link = *pLink) != NULL) {
+        while ((Link = *pLink) != NULL)
+        {
 
             PWAITING_LOCK WaitingLock;
 
@@ -5859,11 +5673,12 @@ Return Value:
             //  Get a pointer to the waiting lock record
             //
 
-            WaitingLock = CONTAINING_RECORD( Link, WAITING_LOCK, Link );
+            WaitingLock = CONTAINING_RECORD(Link, WAITING_LOCK, Link);
 
             DebugTrace(0, Dbg, "FsRtlPrivateCancelFileLockIrp, Loop top, WaitingLock = %08lx\n", WaitingLock);
 
-            if( WaitingLock->Irp != Irp ) {
+            if (WaitingLock->Irp != Irp)
+            {
 
                 pLink = &Link->Next;
                 continue;
@@ -5874,9 +5689,10 @@ Return Value:
             //
 
             *pLink = Link->Next;
-            if (!CollideCheck && Link == LockQueue->WaitingLocksTail.Next) {
+            if (!CollideCheck && Link == LockQueue->WaitingLocksTail.Next)
+            {
 
-                LockQueue->WaitingLocksTail.Next = (PSINGLE_LIST_ENTRY) pLink;
+                LockQueue->WaitingLocksTail.Next = (PSINGLE_LIST_ENTRY)pLink;
             }
 
             Irp->IoStatus.Information = 0;
@@ -5885,13 +5701,15 @@ Return Value:
             //  Release the right lock and complete this waiter
             //
 
-            if (CollideCheck) {
-                
-                FsRtlReleaseCancelCollide( OldIrql );
-            
-            } else {
-                
-                FsRtlReleaseLockQueue( LockQueue, OldIrql );
+            if (CollideCheck)
+            {
+
+                FsRtlReleaseCancelCollide(OldIrql);
+            }
+            else
+            {
+
+                FsRtlReleaseLockQueue(LockQueue, OldIrql);
             }
 
             //
@@ -5900,18 +5718,13 @@ Return Value:
             //  cancel case.
             //
 
-            FsRtlCompleteLockIrp( WaitingLock,
-                                  WaitingLock->Context,
-                                  Irp,
-                                  STATUS_CANCELLED,
-                                  &NewStatus,
-                                  NULL );
+            FsRtlCompleteLockIrp(WaitingLock, WaitingLock->Context, Irp, STATUS_CANCELLED, &NewStatus, NULL);
 
             //
             //  Free up pool
             //
 
-            FsRtlFreeWaitingLock( WaitingLock );
+            FsRtlFreeWaitingLock(WaitingLock);
 
             //
             // Our job is done!
@@ -5923,12 +5736,13 @@ Return Value:
         //
         //  Flip over to the lock queue if we didn't find it on the collided list.
         //
-        
-        if (CollideCheck) {
+
+        if (CollideCheck)
+        {
 
             CollideCheck = FALSE;
-            FsRtlAcquireLockQueueAtDpc( LockQueue );
-            FsRtlReleaseCancelCollideFromDpc( OldIrql );
+            FsRtlAcquireLockQueueAtDpc(LockQueue);
+            FsRtlReleaseCancelCollideFromDpc(OldIrql);
             pLink = &LockQueue->WaitingLocks.Next;
 
             continue;
@@ -5943,10 +5757,9 @@ Return Value:
     //  we wanted to cancel it.
     //
 
-    ASSERT( FALSE );
+    ASSERT(FALSE);
 
     FsRtlReleaseLockQueue(LockQueue, OldIrql);
 
     return;
 }
-

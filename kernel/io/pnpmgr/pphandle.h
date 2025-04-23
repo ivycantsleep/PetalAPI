@@ -25,20 +25,11 @@ Revision History:
 //
 #if DBG
 
-typedef BOOLEAN (*PHANDLE_ENUMERATION_CALLBACK)(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PEPROCESS       Process,
-    IN  PFILE_OBJECT    FileObject,
-    IN  HANDLE          HandleId,
-    IN  PVOID           Context
-    );
+typedef BOOLEAN (*PHANDLE_ENUMERATION_CALLBACK)(IN PDEVICE_OBJECT DeviceObject, IN PEPROCESS Process,
+                                                IN PFILE_OBJECT FileObject, IN HANDLE HandleId, IN PVOID Context);
 
 BOOLEAN
-PpHandleEnumerateHandlesAgainstPdoStack(
-    IN  PDEVICE_OBJECT                  PhysicalDeviceObject,
-    IN  PHANDLE_ENUMERATION_CALLBACK    HandleEnumCallBack,
-    IN  PVOID                           Context
-    );
+PpHandleEnumerateHandlesAgainstPdoStack(IN PDEVICE_OBJECT PhysicalDeviceObject,
+                                        IN PHANDLE_ENUMERATION_CALLBACK HandleEnumCallBack, IN PVOID Context);
 
 #endif // DBG
-

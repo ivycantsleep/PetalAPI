@@ -31,54 +31,28 @@ Revision History:
 
 #ifdef NT_UP
 
-VOID
-KeStartAllProcessors (
-    VOID
-    )
+VOID KeStartAllProcessors(VOID)
 {
-        // UP Build - this function is a nop
+    // UP Build - this function is a nop
 }
 
 #else
 
-static VOID
-KiCloneDescriptor (
-   IN PKDESCRIPTOR  pSrcDescriptorInfo,
-   IN PKDESCRIPTOR  pDestDescriptorInfo,
-   IN PVOID         Base
-   );
+static VOID KiCloneDescriptor(IN PKDESCRIPTOR pSrcDescriptorInfo, IN PKDESCRIPTOR pDestDescriptorInfo, IN PVOID Base);
 
-static VOID
-KiCloneSelector (
-   IN ULONG    SrcSelector,
-   IN PKGDTENTRY    pNGDT,
-   IN PKDESCRIPTOR  pDestDescriptor,
-   IN PVOID         Base
-   );
+static VOID KiCloneSelector(IN ULONG SrcSelector, IN PKGDTENTRY pNGDT, IN PKDESCRIPTOR pDestDescriptor, IN PVOID Base);
 
-VOID
-KiAdjustSimultaneousMultiThreadingCharacteristics(
-    VOID
-    );
+VOID KiAdjustSimultaneousMultiThreadingCharacteristics(VOID);
 
-VOID
-KiProcessorStart(
-    VOID
-    );
+VOID KiProcessorStart(VOID);
 
 BOOLEAN
-KiStartWaitAcknowledge(
-    VOID
-    );
+KiStartWaitAcknowledge(VOID);
 
 #if defined(KE_MULTINODE)
 
 NTSTATUS
-KiNotNumaQueryProcessorNode(
-    IN ULONG ProcessorNumber,
-    OUT PUSHORT Identifier,
-    OUT PUCHAR Node
-    );
+KiNotNumaQueryProcessorNode(IN ULONG ProcessorNumber, OUT PUSHORT Identifier, OUT PUCHAR Node);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, KiNotNumaQueryProcessorNode)
@@ -87,15 +61,16 @@ KiNotNumaQueryProcessorNode(
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,KeStartAllProcessors)
-#pragma alloc_text(INIT,KiCloneDescriptor)
-#pragma alloc_text(INIT,KiCloneSelector)
-#pragma alloc_text(INIT,KiAllProcessorsStarted)
-#pragma alloc_text(INIT,KiAdjustSimultaneousMultiThreadingCharacteristics)
-#pragma alloc_text(INIT,KiStartWaitAcknowledge)
+#pragma alloc_text(INIT, KeStartAllProcessors)
+#pragma alloc_text(INIT, KiCloneDescriptor)
+#pragma alloc_text(INIT, KiCloneSelector)
+#pragma alloc_text(INIT, KiAllProcessorsStarted)
+#pragma alloc_text(INIT, KiAdjustSimultaneousMultiThreadingCharacteristics)
+#pragma alloc_text(INIT, KiStartWaitAcknowledge)
 #endif
 
-enum {
+enum
+{
     KcStartContinue,
     KcStartWait,
     KcStartGetId,
@@ -138,15 +113,12 @@ KNODE KiNodeInit[MAXIMUM_CCNUMA_NODES];
 
 #endif
 
-#define REJECT_PROCESSOR_LIMIT  64
+#define REJECT_PROCESSOR_LIMIT 64
 
-#define ROUNDUP16(x)        (((x)+15) & ~15)
+#define ROUNDUP16(x) (((x) + 15) & ~15)
 
-
-VOID
-KeStartAllProcessors (
-    VOID
-    )
+
+VOID KeStartAllProcessors(VOID)
 /*++
 
 Routine Description:
@@ -162,34 +134,34 @@ Return Value:
 
 --*/
 {
-    KPROCESSOR_STATE    ProcessorState;
-    KDESCRIPTOR         Descriptor;
-    KDESCRIPTOR         TSSDesc, DFTSSDesc, NMITSSDesc, PCRDesc;
-    PKGDTENTRY          pGDT;
-    PVOID               pStack;
-    PVOID               pDpcStack;
-    ULONG               DFStack;
-    PUCHAR              pThreadObject;
-    PULONG              pTopOfStack;
-    ULONG               NewProcessorNumber;
-    BOOLEAN             NewProcessor;
-    PKPROCESS           Process;
-    PKTHREAD            Thread;
-    PKTSS               pTSS;
-    PLIST_ENTRY         NextEntry;
-    LONG                NumberProcessors;
-    SIZE_T              ProcessorDataSize;
-    UCHAR               NodeNumber = 0;
-    USHORT              ProcessorId;
-    PVOID               PerProcessorAllocation;
-    PUCHAR              Base;
-    ULONG               IdtOffset;
-    ULONG               GdtOffset;
-    NTSTATUS            Status;
-    PKNODE              Node;
-    BOOLEAN             NewLicense;
-    UCHAR               RejectedProcessorCount = 0;
-    PKPRCB              NewPrcb;
+    KPROCESSOR_STATE ProcessorState;
+    KDESCRIPTOR Descriptor;
+    KDESCRIPTOR TSSDesc, DFTSSDesc, NMITSSDesc, PCRDesc;
+    PKGDTENTRY pGDT;
+    PVOID pStack;
+    PVOID pDpcStack;
+    ULONG DFStack;
+    PUCHAR pThreadObject;
+    PULONG pTopOfStack;
+    ULONG NewProcessorNumber;
+    BOOLEAN NewProcessor;
+    PKPROCESS Process;
+    PKTHREAD Thread;
+    PKTSS pTSS;
+    PLIST_ENTRY NextEntry;
+    LONG NumberProcessors;
+    SIZE_T ProcessorDataSize;
+    UCHAR NodeNumber = 0;
+    USHORT ProcessorId;
+    PVOID PerProcessorAllocation;
+    PUCHAR Base;
+    ULONG IdtOffset;
+    ULONG GdtOffset;
+    NTSTATUS Status;
+    PKNODE Node;
+    BOOLEAN NewLicense;
+    UCHAR RejectedProcessorCount = 0;
+    PKPRCB NewPrcb;
 
 #if defined(KE_MULTINODE)
 
@@ -199,18 +171,19 @@ Return Value:
     //
 
 
-    if (KeNumberNodes > 1) {
-        Status = KiQueryProcessorNode(0,
-                                      &ProcessorId,
-                                      &NodeNumber);
+    if (KeNumberNodes > 1)
+    {
+        Status = KiQueryProcessorNode(0, &ProcessorId, &NodeNumber);
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
             //
             // This should never fail.
             //
 
-            if (NodeNumber != 0) {
+            if (NodeNumber != 0)
+            {
                 KeNodeBlock[0]->ProcessorMask &= ~1;
                 KeNodeBlock[NodeNumber]->ProcessorMask |= 1;
                 KeGetCurrentPrcb()->ParentNode = KeNodeBlock[NodeNumber];
@@ -239,11 +212,8 @@ Return Value:
     // seperately.
     //
 
-    ProcessorDataSize = ROUNDUP16(sizeof(KPCR))                 +
-                        ROUNDUP16(sizeof(KTSS))                 +
-                        ROUNDUP16(sizeof(ETHREAD))              +
-                        ROUNDUP16(FIELD_OFFSET(KTSS, IoMaps))   +
-                        ROUNDUP16(FIELD_OFFSET(KTSS, IoMaps))   +
+    ProcessorDataSize = ROUNDUP16(sizeof(KPCR)) + ROUNDUP16(sizeof(KTSS)) + ROUNDUP16(sizeof(ETHREAD)) +
+                        ROUNDUP16(FIELD_OFFSET(KTSS, IoMaps)) + ROUNDUP16(FIELD_OFFSET(KTSS, IoMaps)) +
                         ROUNDUP16(DOUBLE_FAULT_STACK_SIZE);
 
 #if defined(KE_MULTINODE)
@@ -278,7 +248,8 @@ Return Value:
     // of supported processors.
     //
 
-    if (KeRegisteredProcessors > MAXIMUM_PROCESSORS) {
+    if (KeRegisteredProcessors > MAXIMUM_PROCESSORS)
+    {
         KeRegisteredProcessors = MAXIMUM_PROCESSORS;
     }
 
@@ -294,11 +265,11 @@ Return Value:
     // HAL says there aren't any more.
     //
 
-    for (NewProcessorNumber = 1;
-         NewProcessorNumber < MAXIMUM_PROCESSORS;
-         NewProcessorNumber++) {
+    for (NewProcessorNumber = 1; NewProcessorNumber < MAXIMUM_PROCESSORS; NewProcessorNumber++)
+    {
 
-        if ((KeFeatureBits & KF_SMT) == 0) {
+        if ((KeFeatureBits & KF_SMT) == 0)
+        {
 
             //
             // If all the processors in the system support Simultaneous
@@ -306,17 +277,18 @@ Return Value:
             // in a set to run under the same license as the first logical
             // processor in a set.
             //
-            // Otherwise, do not attempt to start more processors than 
+            // Otherwise, do not attempt to start more processors than
             // there are licenses for.   (This is because as of Whistler
             // Beta2 we are having problems with systems that send SMIs
             // to processors that are not in "wait for SIPI" state.   The
-            // code to scan for additional logical processors causes 
+            // code to scan for additional logical processors causes
             // processors not licensed to be in a halted state).
             //
             // PeterJ 03/02/01.
             //
 
-            if (NewProcessorNumber >= KeRegisteredProcessors) {
+            if (NewProcessorNumber >= KeRegisteredProcessors)
+            {
                 break;
             }
         }
@@ -324,10 +296,9 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-        Status = KiQueryProcessorNode(NewProcessorNumber,
-                                      &ProcessorId,
-                                      &NodeNumber);
-        if (!NT_SUCCESS(Status)) {
+        Status = KiQueryProcessorNode(NewProcessorNumber, &ProcessorId, &NodeNumber);
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // No such processor, advance to next.
@@ -345,10 +316,10 @@ Return Value:
         // the allocation fails, stop starting processors.
         //
 
-        PerProcessorAllocation =
-            MmAllocateIndependentPages (ProcessorDataSize, NodeNumber);
+        PerProcessorAllocation = MmAllocateIndependentPages(ProcessorDataSize, NodeNumber);
 
-        if (PerProcessorAllocation == NULL) {
+        if (PerProcessorAllocation == NULL)
+        {
             break;
         }
 
@@ -358,7 +329,7 @@ Return Value:
         //  Build up a processor state for new processor
         //
 
-        RtlZeroMemory ((PVOID) &ProcessorState, sizeof ProcessorState);
+        RtlZeroMemory((PVOID)&ProcessorState, sizeof ProcessorState);
 
         //
         //  Give the new processor its own GDT
@@ -368,11 +339,9 @@ Return Value:
             sgdt    Descriptor.Limit
         }
 
-        KiCloneDescriptor (&Descriptor,
-                           &ProcessorState.SpecialRegisters.Gdtr,
-                           Base + GdtOffset);
+        KiCloneDescriptor(&Descriptor, &ProcessorState.SpecialRegisters.Gdtr, Base + GdtOffset);
 
-        pGDT = (PKGDTENTRY) ProcessorState.SpecialRegisters.Gdtr.Base;
+        pGDT = (PKGDTENTRY)ProcessorState.SpecialRegisters.Gdtr.Base;
 
 
         //
@@ -382,20 +351,18 @@ Return Value:
         _asm {
             sidt    Descriptor.Limit
         }
-        KiCloneDescriptor (&Descriptor,
-                           &ProcessorState.SpecialRegisters.Idtr,
-                           Base + IdtOffset);
+        KiCloneDescriptor(&Descriptor, &ProcessorState.SpecialRegisters.Idtr, Base + IdtOffset);
 
 
         //
         //  Give new processor its own TSS and PCR
         //
 
-        KiCloneSelector (KGDT_R0_PCR, pGDT, &PCRDesc, Base);
-        RtlZeroMemory (Base, ROUNDUP16(sizeof(KPCR)));
+        KiCloneSelector(KGDT_R0_PCR, pGDT, &PCRDesc, Base);
+        RtlZeroMemory(Base, ROUNDUP16(sizeof(KPCR)));
         Base += ROUNDUP16(sizeof(KPCR));
 
-        KiCloneSelector (KGDT_TSS, pGDT, &TSSDesc, Base);
+        KiCloneSelector(KGDT_TSS, pGDT, &TSSDesc, Base);
         Base += ROUNDUP16(sizeof(KTSS));
 
         //
@@ -410,21 +377,21 @@ Return Value:
         // NMI TSS and double-fault TSS & stack.
         //
 
-        KiCloneSelector (KGDT_DF_TSS, pGDT, &DFTSSDesc, Base);
+        KiCloneSelector(KGDT_DF_TSS, pGDT, &DFTSSDesc, Base);
         Base += ROUNDUP16(FIELD_OFFSET(KTSS, IoMaps));
 
-        KiCloneSelector (KGDT_NMI_TSS, pGDT, &NMITSSDesc, Base);
+        KiCloneSelector(KGDT_NMI_TSS, pGDT, &NMITSSDesc, Base);
         Base += ROUNDUP16(FIELD_OFFSET(KTSS, IoMaps));
 
         Base += DOUBLE_FAULT_STACK_SIZE;
 
         pTSS = (PKTSS)DFTSSDesc.Base;
         pTSS->Esp0 = (ULONG)Base;
-        pTSS->Esp  = (ULONG)Base;
+        pTSS->Esp = (ULONG)Base;
 
         pTSS = (PKTSS)NMITSSDesc.Base;
         pTSS->Esp0 = (ULONG)Base;
-        pTSS->Esp  = (ULONG)Base;
+        pTSS->Esp = (ULONG)Base;
 
         //
         //  Set other SpecialRegisters in processor state
@@ -443,8 +410,8 @@ Return Value:
             and     ProcessorState.ContextFrame.EFlags, NOT EFLAGS_INTERRUPT_MASK
         }
 
-        ProcessorState.SpecialRegisters.Tr  = KGDT_TSS;
-        pGDT[KGDT_TSS>>3].HighWord.Bytes.Flags1 = 0x89;
+        ProcessorState.SpecialRegisters.Tr = KGDT_TSS;
+        pGDT[KGDT_TSS >> 3].HighWord.Bytes.Flags1 = 0x89;
 
 #if defined(_X86PAE_)
         ProcessorState.SpecialRegisters.Cr4 = CR4_PAE;
@@ -455,18 +422,18 @@ Return Value:
         // the new processor.
         //
 
-        pStack = MmCreateKernelStack (FALSE, NodeNumber);
-        pDpcStack = MmCreateKernelStack (FALSE, NodeNumber);
+        pStack = MmCreateKernelStack(FALSE, NodeNumber);
+        pDpcStack = MmCreateKernelStack(FALSE, NodeNumber);
 
         //
         //  Setup context
         //  Push variables onto new stack
         //
 
-        pTopOfStack = (PULONG) pStack;
-        pTopOfStack[-1] = (ULONG) KeLoaderBlock;
-        ProcessorState.ContextFrame.Esp = (ULONG) (pTopOfStack-2);
-        ProcessorState.ContextFrame.Eip = (ULONG) KiSystemStartup;
+        pTopOfStack = (PULONG)pStack;
+        pTopOfStack[-1] = (ULONG)KeLoaderBlock;
+        ProcessorState.ContextFrame.Esp = (ULONG)(pTopOfStack - 2);
+        ProcessorState.ContextFrame.Eip = (ULONG)KiSystemStartup;
 
         ProcessorState.ContextFrame.SegCs = KGDT_R0_CODE;
         ProcessorState.ContextFrame.SegDs = KGDT_R3_DATA;
@@ -479,15 +446,10 @@ Return Value:
         //  Initialize new processor's PCR & Prcb
         //
 
-        KiInitializePcr (
-            (ULONG)       NewProcessorNumber,
-            (PKPCR)       PCRDesc.Base,
-            (PKIDTENTRY)  ProcessorState.SpecialRegisters.Idtr.Base,
-            (PKGDTENTRY)  ProcessorState.SpecialRegisters.Gdtr.Base,
-            (PKTSS)       TSSDesc.Base,
-            (PKTHREAD)    pThreadObject,
-            (PVOID)       pDpcStack
-        );
+        KiInitializePcr((ULONG)NewProcessorNumber, (PKPCR)PCRDesc.Base,
+                        (PKIDTENTRY)ProcessorState.SpecialRegisters.Idtr.Base,
+                        (PKGDTENTRY)ProcessorState.SpecialRegisters.Gdtr.Base, (PKTSS)TSSDesc.Base,
+                        (PKTHREAD)pThreadObject, (PVOID)pDpcStack);
 
         NewPrcb = ((PKPCR)(PCRDesc.Base))->Prcb;
 
@@ -506,7 +468,8 @@ Return Value:
         // space allocated for KNODE as the KNODE.
         //
 
-        if (KeNodeBlock[NodeNumber] == &KiNodeInit[NodeNumber]) {
+        if (KeNodeBlock[NodeNumber] == &KiNodeInit[NodeNumber])
+        {
             Node = (PKNODE)Base;
             *Node = KiNodeInit[NodeNumber];
             KeNodeBlock[NodeNumber] = Node;
@@ -527,11 +490,11 @@ Return Value:
         //  Adjust LoaderBlock so it has the next processors state
         //
 
-        KeLoaderBlock->KernelStack = (ULONG) pTopOfStack;
-        KeLoaderBlock->Thread = (ULONG) pThreadObject;
-        KeLoaderBlock->Prcb = (ULONG) NewPrcb;
+        KeLoaderBlock->KernelStack = (ULONG)pTopOfStack;
+        KeLoaderBlock->Thread = (ULONG)pThreadObject;
+        KeLoaderBlock->Prcb = (ULONG)NewPrcb;
 
-RetryStartProcessor:
+    RetryStartProcessor:
 
         //
         // Get CPUID(1) info from the starting processor.
@@ -544,10 +507,11 @@ RetryStartProcessor:
         //  Contact hal to start new processor
         //
 
-        NewProcessor = HalStartNextProcessor (KeLoaderBlock, &ProcessorState);
+        NewProcessor = HalStartNextProcessor(KeLoaderBlock, &ProcessorState);
 
 
-        if (!NewProcessor) {
+        if (!NewProcessor)
+        {
 
             //
             //  There wasn't another processor, so free resources and
@@ -555,9 +519,9 @@ RetryStartProcessor:
             //
 
             KiProcessorBlock[NewProcessorNumber] = NULL;
-            MmFreeIndependentPages ( PerProcessorAllocation, ProcessorDataSize);
-            MmDeleteKernelStack ( pStack, FALSE);
-            MmDeleteKernelStack ( pDpcStack, FALSE);
+            MmFreeIndependentPages(PerProcessorAllocation, ProcessorDataSize);
+            MmDeleteKernelStack(pStack, FALSE);
+            MmDeleteKernelStack(pDpcStack, FALSE);
             break;
         }
 
@@ -566,14 +530,16 @@ RetryStartProcessor:
         //
 
         NewLicense = TRUE;
-        if (KiStartWaitAcknowledge() == TRUE) {
+        if (KiStartWaitAcknowledge() == TRUE)
+        {
 
-            if (KiProcessorStartData[3] & 0x10000000) {
+            if (KiProcessorStartData[3] & 0x10000000)
+            {
 
                 //
                 // This processor might support SMT, in which case, if this
                 // is not the first logical processor in an SMT set, it should
-                // not be charged a license.   If it is the first in a set, 
+                // not be charged a license.   If it is the first in a set,
                 // and the total number of sets exceeds the number of licensed
                 // processors, this processor should not be allowed to start.
                 //
@@ -600,10 +566,13 @@ RetryStartProcessor:
                 // set.
                 //
 
-                for (i = 0; i < NewProcessorNumber; i++) {
+                for (i = 0; i < NewProcessorNumber; i++)
+                {
                     SmtCheckPrcb = KiProcessorBlock[i];
-                    if (SmtCheckPrcb) {
-                        if ((SmtCheckPrcb->InitialApicId & ApicMask) == ApicId) {
+                    if (SmtCheckPrcb)
+                    {
+                        if ((SmtCheckPrcb->InitialApicId & ApicMask) == ApicId)
+                        {
                             NewLicense = FALSE;
                             NewPrcb->MultiThreadSetMaster = SmtCheckPrcb;
                             break;
@@ -613,18 +582,19 @@ RetryStartProcessor:
             }
         }
 
-        if ((NewLicense == FALSE)  &&
-            ((KeNumprocSpecified == 0) ||
-             (KeRegisteredProcessors < KeNumprocSpecified))) {
+        if ((NewLicense == FALSE) && ((KeNumprocSpecified == 0) || (KeRegisteredProcessors < KeNumprocSpecified)))
+        {
 
             //
             // This processor is a logical processor in the same SMT
-            // set as another logical processor.   Don't charge a 
+            // set as another logical processor.   Don't charge a
             // license for it.
             //
 
             KeRegisteredProcessors++;
-        } else {
+        }
+        else
+        {
 
             //
             // The new processor is the first or only logical processor
@@ -632,11 +602,13 @@ RetryStartProcessor:
             // processors exceeds the license, don't start this processor.
             //
 
-            if ((ULONG)KeNumberProcessors >= KeRegisteredProcessors) {
+            if ((ULONG)KeNumberProcessors >= KeRegisteredProcessors)
+            {
                 KiProcessorStartControl = KcStartDoNotStart;
                 KiStartWaitAcknowledge();
 
-                if (++RejectedProcessorCount > REJECT_PROCESSOR_LIMIT) {
+                if (++RejectedProcessorCount > REJECT_PROCESSOR_LIMIT)
+                {
 
                     //
                     // The HAL must not be advancing to the next
@@ -645,7 +617,7 @@ RetryStartProcessor:
                     // Note:  This test is due to the introduction
                     // of this feature of asking the HAL for a new
                     // processor (using the same processor number
-                    // as the just rejected processor).   If the 
+                    // as the just rejected processor).   If the
                     // HAL does not support advancing under this
                     // condition we would loop here forever.
                     //
@@ -675,7 +647,8 @@ RetryStartProcessor:
         //  Wait for processor to initialize in kernel, then loop for another
         //
 
-        while (*((volatile ULONG *) &KeLoaderBlock->Prcb) != 0) {
+        while (*((volatile ULONG *)&KeLoaderBlock->Prcb) != 0)
+        {
             KeYieldProcessor();
         }
     }
@@ -691,7 +664,7 @@ RetryStartProcessor:
     // applying a null adjustment to the interrupt time
     //
 
-    KiAdjustInterruptTime (0);
+    KiAdjustInterruptTime(0);
 
     //
     // Allow all processors that were started to enter the idle loop and
@@ -702,14 +675,7 @@ RetryStartProcessor:
 }
 
 
-
-static VOID
-KiCloneSelector (
-   IN ULONG    SrcSelector,
-   IN PKGDTENTRY    pNGDT,
-   IN PKDESCRIPTOR  pDestDescriptor,
-   IN PVOID         Base
-   )
+static VOID KiCloneSelector(IN ULONG SrcSelector, IN PKGDTENTRY pNGDT, IN PKDESCRIPTOR pDestDescriptor, IN PVOID Base)
 
 /*++
 
@@ -733,42 +699,35 @@ Return Value:
 
 {
     KDESCRIPTOR Descriptor;
-    PKGDTENTRY  pGDT;
-    ULONG       CurrentBase;
-    ULONG       NewBase;
+    PKGDTENTRY pGDT;
+    ULONG CurrentBase;
+    ULONG NewBase;
 
     _asm {
         sgdt    fword ptr [Descriptor.Limit]    ; Get GDT's addr
     }
 
-    pGDT   = (PKGDTENTRY) Descriptor.Base;
-    pGDT  += SrcSelector >> 3;
+    pGDT = (PKGDTENTRY)Descriptor.Base;
+    pGDT += SrcSelector >> 3;
     pNGDT += SrcSelector >> 3;
 
-    CurrentBase = pGDT->BaseLow | (pGDT->HighWord.Bits.BaseMid << 16) |
-                 (pGDT->HighWord.Bits.BaseHi << 24);
+    CurrentBase = pGDT->BaseLow | (pGDT->HighWord.Bits.BaseMid << 16) | (pGDT->HighWord.Bits.BaseHi << 24);
 
-    Descriptor.Base  = CurrentBase;
+    Descriptor.Base = CurrentBase;
     Descriptor.Limit = pGDT->LimitLow;
     if (pGDT->HighWord.Bits.Granularity & GRAN_PAGE)
-        Descriptor.Limit = (Descriptor.Limit << PAGE_SHIFT) -1;
+        Descriptor.Limit = (Descriptor.Limit << PAGE_SHIFT) - 1;
 
-    KiCloneDescriptor (&Descriptor, pDestDescriptor, Base);
+    KiCloneDescriptor(&Descriptor, pDestDescriptor, Base);
     NewBase = pDestDescriptor->Base;
 
-    pNGDT->BaseLow = (USHORT) NewBase & 0xffff;
-    pNGDT->HighWord.Bits.BaseMid = (UCHAR) (NewBase >> 16) & 0xff;
-    pNGDT->HighWord.Bits.BaseHi  = (UCHAR) (NewBase >> 24) & 0xff;
+    pNGDT->BaseLow = (USHORT)NewBase & 0xffff;
+    pNGDT->HighWord.Bits.BaseMid = (UCHAR)(NewBase >> 16) & 0xff;
+    pNGDT->HighWord.Bits.BaseHi = (UCHAR)(NewBase >> 24) & 0xff;
 }
 
 
-
-static VOID
-KiCloneDescriptor (
-   IN PKDESCRIPTOR  pSrcDescriptor,
-   IN PKDESCRIPTOR  pDestDescriptor,
-   IN PVOID         Base
-   )
+static VOID KiCloneDescriptor(IN PKDESCRIPTOR pSrcDescriptor, IN PKDESCRIPTOR pDestDescriptor, IN PVOID Base)
 
 /*++
 
@@ -789,20 +748,17 @@ Return Value:
 
 --*/
 {
-    ULONG   Size;
+    ULONG Size;
 
     Size = pSrcDescriptor->Limit + 1;
-    pDestDescriptor->Limit = (USHORT) Size -1;
-    pDestDescriptor->Base  = (ULONG)  Base;
+    pDestDescriptor->Limit = (USHORT)Size - 1;
+    pDestDescriptor->Base = (ULONG)Base;
 
     RtlCopyMemory(Base, (PVOID)pSrcDescriptor->Base, Size);
 }
 
 
-VOID
-KiAdjustSimultaneousMultiThreadingCharacteristics(
-    VOID
-    )
+VOID KiAdjustSimultaneousMultiThreadingCharacteristics(VOID)
 
 /*++
 
@@ -833,7 +789,8 @@ Return Value:
     ULONG ApicId;
     ULONG NextIndependent;
 
-    if ((KeFeatureBits & KF_SMT) == 0) {
+    if ((KeFeatureBits & KF_SMT) == 0)
+    {
 
         //
         // Nobody doing SMT, nothing to do.
@@ -842,9 +799,8 @@ Return Value:
         return;
     }
 
-    for (ProcessorNumber = 0;
-         ProcessorNumber < (ULONG)KeNumberProcessors;
-         ProcessorNumber++) {
+    for (ProcessorNumber = 0; ProcessorNumber < (ULONG)KeNumberProcessors; ProcessorNumber++)
+    {
 
         Prcb = KiProcessorBlock[ProcessorNumber];
 
@@ -853,7 +809,8 @@ Return Value:
         // support Simultaneous Multi Threading.
         //
 
-        if ((Prcb == NULL) || ((Prcb->FeatureBits & KF_SMT) == 0)) {
+        if ((Prcb == NULL) || ((Prcb->FeatureBits & KF_SMT) == 0))
+        {
             continue;
         }
 
@@ -872,7 +829,8 @@ Return Value:
         ApicId = Prcb->InitialApicId;
         ApicMask = Prcb->LogicalProcessorsPerPhysicalProcessor;
 
-        if (ApicMask == 0) {
+        if (ApicMask == 0)
+        {
 
             //
             // Sanity fails:  This processor isn't right.
@@ -899,9 +857,8 @@ Return Value:
         // the same set.
         //
 
-        for (BuddyNumber = ProcessorNumber + 1;
-             BuddyNumber < (ULONG)KeNumberProcessors;
-             BuddyNumber++) {
+        for (BuddyNumber = ProcessorNumber + 1; BuddyNumber < (ULONG)KeNumberProcessors; BuddyNumber++)
+        {
 
             BuddyPrcb = KiProcessorBlock[BuddyNumber];
 
@@ -909,8 +866,8 @@ Return Value:
             // Skip not present, not SMT.
             //
 
-            if ((BuddyPrcb == NULL) ||
-                ((BuddyPrcb->FeatureBits & KF_SMT) == 0)) {
+            if ((BuddyPrcb == NULL) || ((BuddyPrcb->FeatureBits & KF_SMT) == 0))
+            {
                 continue;
             }
 
@@ -919,7 +876,8 @@ Return Value:
             // we're looking for?
             //
 
-            if ((BuddyPrcb->InitialApicId & ApicMask) != ApicId) {
+            if ((BuddyPrcb->InitialApicId & ApicMask) != ApicId)
+            {
 
                 //
                 // No, if this is the first occurance on another
@@ -928,7 +886,8 @@ Return Value:
                 // independent processor.
                 //
 
-                if (!NextIndependent) {
+                if (!NextIndependent)
+                {
                     NextIndependent = BuddyNumber;
                 }
                 continue;
@@ -938,8 +897,7 @@ Return Value:
             // Match.
             //
 
-            ASSERT(Prcb->LogicalProcessorsPerPhysicalProcessor ==
-                   BuddyPrcb->LogicalProcessorsPerPhysicalProcessor);
+            ASSERT(Prcb->LogicalProcessorsPerPhysicalProcessor == BuddyPrcb->LogicalProcessorsPerPhysicalProcessor);
 
             ProcessorSet |= 1 << BuddyPrcb->Number;
             BuddyPrcb->MultiThreadProcessorSet |= ProcessorSet;
@@ -950,10 +908,7 @@ Return Value:
 }
 
 
-VOID
-KiAllProcessorsStarted(
-    VOID
-    )
+VOID KiAllProcessorsStarted(VOID)
 
 /*++
 
@@ -989,8 +944,10 @@ Return Value:
     // used during initialization.
     //
 
-    for (i = 0; i < KeNumberNodes; i++) {
-        if (KeNodeBlock[i] == &KiNodeInit[i]) {
+    for (i = 0; i < KeNumberNodes; i++)
+    {
+        if (KeNodeBlock[i] == &KiNodeInit[i])
+        {
 
             //
             // No processor started on this node so no new node
@@ -1000,22 +957,23 @@ Return Value:
             // structure for the node.
             //
 
-            KeNodeBlock[i] = ExAllocatePoolWithTag(NonPagedPool,
-                                                   sizeof(KNODE),
-                                                   '  eK');
-            if (KeNodeBlock[i]) {
+            KeNodeBlock[i] = ExAllocatePoolWithTag(NonPagedPool, sizeof(KNODE), '  eK');
+            if (KeNodeBlock[i])
+            {
                 *KeNodeBlock[i] = KiNodeInit[i];
             }
         }
     }
 
-    for (i = KeNumberNodes; i < MAXIMUM_CCNUMA_NODES; i++) {
+    for (i = KeNumberNodes; i < MAXIMUM_CCNUMA_NODES; i++)
+    {
         KeNodeBlock[i] = NULL;
     }
 
 #endif
 
-    if (KeNumberNodes == 1) {
+    if (KeNumberNodes == 1)
+    {
 
         //
         // For Non NUMA machines, Node 0 gets all processors.
@@ -1024,16 +982,12 @@ Return Value:
         KeNodeBlock[0]->ProcessorMask = KeActiveProcessors;
     }
 }
-
+
 
 #if defined(KE_MULTINODE)
 
 NTSTATUS
-KiNotNumaQueryProcessorNode(
-    IN ULONG ProcessorNumber,
-    OUT PUSHORT Identifier,
-    OUT PUCHAR Node
-    )
+KiNotNumaQueryProcessorNode(IN ULONG ProcessorNumber, OUT PUSHORT Identifier, OUT PUCHAR Node)
 
 /*++
 
@@ -1064,11 +1018,8 @@ Return Value:
 }
 
 #endif
-
-VOID
-KiProcessorStart(
-    VOID
-    )
+
+VOID KiProcessorStart(VOID)
 
 /*++
 
@@ -1091,8 +1042,10 @@ Return Value:
 --*/
 
 {
-    while (TRUE) {
-        switch (KiProcessorStartControl) {
+    while (TRUE)
+    {
+        switch (KiProcessorStartControl)
+        {
 
         case KcStartContinue:
             return;
@@ -1102,10 +1055,7 @@ Return Value:
             break;
 
         case KcStartGetId:
-            CPUID(KiProcessorStartData[0],
-                  &KiProcessorStartData[0],
-                  &KiProcessorStartData[1],
-                  &KiProcessorStartData[2],
+            CPUID(KiProcessorStartData[0], &KiProcessorStartData[0], &KiProcessorStartData[1], &KiProcessorStartData[2],
                   &KiProcessorStartData[3]);
             KiProcessorStartControl = KcStartWait;
             break;
@@ -1117,14 +1067,16 @@ Return Value:
             // should NOT be started.
             //
             // Acknowledge the command so the boot processor will
-            // continue, disable interrupts (should already be 
+            // continue, disable interrupts (should already be
             // the case here) and HALT the processor.
             //
 
             KiProcessorStartControl = KcStartWait;
             _disable();
-            while(1) {
-                _asm { hlt };
+            while (1)
+            {
+                _asm { hlt }
+                ;
             }
 
         default:
@@ -1138,14 +1090,14 @@ Return Value:
         }
     }
 }
-
+
 BOOLEAN
-KiStartWaitAcknowledge(
-    VOID
-    )
+KiStartWaitAcknowledge(VOID)
 {
-    while (KiProcessorStartControl != KcStartWait) {
-        if (KiProcessorStartControl == KcStartCommandError) {
+    while (KiProcessorStartControl != KcStartWait)
+    {
+        if (KiProcessorStartControl == KcStartCommandError)
+        {
             return FALSE;
         }
         KeYieldProcessor();
@@ -1153,5 +1105,4 @@ KiStartWaitAcknowledge(
     return TRUE;
 }
 
-#endif      // !NT_UP
-
+#endif // !NT_UP

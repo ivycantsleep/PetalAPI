@@ -28,34 +28,25 @@ Revision History:
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'ddpP')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'ddpP')
 #endif
 
-typedef struct _DEVICE_LIST_CONTEXT {
+typedef struct _DEVICE_LIST_CONTEXT
+{
     ULONG DeviceCount;
     BOOLEAN Reallocation;
     PDEVICE_OBJECT DeviceList[1];
 } DEVICE_LIST_CONTEXT, *PDEVICE_LIST_CONTEXT;
 
 NTSTATUS
-IopAssignResourcesToDevices (
-    IN ULONG DeviceCount,
-    IN PIOP_RESOURCE_REQUEST RequestTable,
-    IN BOOLEAN DoBootConfigs,
-    OUT PBOOLEAN RebalancePerformed
-    );
+IopAssignResourcesToDevices(IN ULONG DeviceCount, IN PIOP_RESOURCE_REQUEST RequestTable, IN BOOLEAN DoBootConfigs,
+                            OUT PBOOLEAN RebalancePerformed);
 
 NTSTATUS
-IopGetDriverDeviceList(
-   IN PDRIVER_OBJECT DriverObject,
-   OUT PDEVICE_LIST_CONTEXT *DeviceList
-   );
+IopGetDriverDeviceList(IN PDRIVER_OBJECT DriverObject, OUT PDEVICE_LIST_CONTEXT *DeviceList);
 
 NTSTATUS
-IopProcessAssignResourcesWorker(
-   IN PDEVICE_NODE  DeviceNode,
-   IN PVOID         Context
-   );
+IopProcessAssignResourcesWorker(IN PDEVICE_NODE DeviceNode, IN PVOID Context);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, IopAssignResourcesToDevices)
@@ -65,19 +56,14 @@ IopProcessAssignResourcesWorker(
 #endif // ALLOC_PRAGMA
 
 
-
 //
 // The following routines should be removed once the real
 // Resource Assign code is done.
 //
-
+
 NTSTATUS
-IopAssignResourcesToDevices(
-    IN ULONG DeviceCount,
-    IN OUT PIOP_RESOURCE_REQUEST RequestTable,
-    IN BOOLEAN DoBootConfigs,
-    OUT PBOOLEAN RebalancePerformed
-    )
+IopAssignResourcesToDevices(IN ULONG DeviceCount, IN OUT PIOP_RESOURCE_REQUEST RequestTable, IN BOOLEAN DoBootConfigs,
+                            OUT PBOOLEAN RebalancePerformed)
 /*++
 
 Routine Description:
@@ -119,12 +105,14 @@ Return Value:
 
     ASSERT(DeviceCount != 0);
 
-    for (i = 0; i < DeviceCount; i++) {
+    for (i = 0; i < DeviceCount; i++)
+    {
 
         //
         // Initialize table entry.
         //
-        if (PpCallerInitializesRequestTable == TRUE) {
+        if (PpCallerInitializesRequestTable == TRUE)
+        {
 
             RequestTable[i].Position = i;
         }
@@ -132,29 +120,27 @@ Return Value:
         RequestTable[i].Status = 0;
         RequestTable[i].Flags = 0;
         RequestTable[i].AllocationType = ArbiterRequestPnpEnumerated;
-        if (((PDEVICE_NODE)(RequestTable[i].PhysicalDevice->DeviceObjectExtension->DeviceNode))->Flags & DNF_MADEUP) {
+        if (((PDEVICE_NODE)(RequestTable[i].PhysicalDevice->DeviceObjectExtension->DeviceNode))->Flags & DNF_MADEUP)
+        {
 
-            ULONG           reportedDevice = 0;
-            HANDLE          hInstance;
+            ULONG reportedDevice = 0;
+            HANDLE hInstance;
 
             status = IopDeviceObjectToDeviceInstance(RequestTable[i].PhysicalDevice, &hInstance, KEY_READ);
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
-                ULONG           resultSize = 0;
-                UCHAR           buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
-                UNICODE_STRING  unicodeString;
+                ULONG resultSize = 0;
+                UCHAR buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
+                UNICODE_STRING unicodeString;
 
                 PiWstrToUnicodeString(&unicodeString, REGSTR_VALUE_DEVICE_REPORTED);
-                status = ZwQueryValueKey(   hInstance,
-                                            &unicodeString,
-                                            KeyValuePartialInformation,
-                                            (PVOID)buffer,
-                                            sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG),
-                                            &resultSize);
-                if (NT_SUCCESS(status)) {
+                status = ZwQueryValueKey(hInstance, &unicodeString, KeyValuePartialInformation, (PVOID)buffer,
+                                         sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG), &resultSize);
+                if (NT_SUCCESS(status))
+                {
 
                     reportedDevice = *(PULONG)(((PKEY_VALUE_PARTIAL_INFORMATION)buffer)->Data);
-
                 }
 
                 ZwClose(hInstance);
@@ -164,12 +150,11 @@ Return Value:
             // Change the AllocationType for reported devices.
             //
 
-            if (reportedDevice) {
+            if (reportedDevice)
+            {
 
                 RequestTable[i].AllocationType = ArbiterRequestLegacyReported;
-
             }
-
         }
         RequestTable[i].ResourceRequirements = NULL;
     }
@@ -178,20 +163,12 @@ Return Value:
     // Allocate memory to build a IOP_ASSIGN table to call IopAllocateResources()
     //
 
-    status = IopAllocateResources(  &DeviceCount,
-                                    &RequestTable,
-                                    FALSE,
-                                    DoBootConfigs,
-                                    RebalancePerformed);
+    status = IopAllocateResources(&DeviceCount, &RequestTable, FALSE, DoBootConfigs, RebalancePerformed);
     return status;
 }
-
+
 BOOLEAN
-IopProcessAssignResources(
-   IN   PDEVICE_NODE    DeviceNode,
-   IN   BOOLEAN         Reallocation,
-   OUT  BOOLEAN        *RebalancePerformed
-   )
+IopProcessAssignResources(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Reallocation, OUT BOOLEAN *RebalancePerformed)
 /*++
 
 Routine Description:
@@ -231,20 +208,19 @@ Return Value:
 
     resourcesAssigned = FALSE;
     tryAgain = TRUE;
-    maxAttempts = (IopBootConfigsReserved)? 1 : 2;
-    for (attempt = 0; !resourcesAssigned && tryAgain && attempt < maxAttempts; attempt++) {
+    maxAttempts = (IopBootConfigsReserved) ? 1 : 2;
+    for (attempt = 0; !resourcesAssigned && tryAgain && attempt < maxAttempts; attempt++)
+    {
 
         tryAgain = FALSE;
 
         //
         // Allocate and init memory for resource context
         //
-        context = (PDEVICE_LIST_CONTEXT) ExAllocatePool(
-                                        PagedPool,
-                                        sizeof(DEVICE_LIST_CONTEXT) +
-                                        sizeof(PDEVICE_OBJECT) * IopNumberDeviceNodes
-                                        );
-        if (!context) {
+        context = (PDEVICE_LIST_CONTEXT)ExAllocatePool(PagedPool, sizeof(DEVICE_LIST_CONTEXT) +
+                                                                      sizeof(PDEVICE_OBJECT) * IopNumberDeviceNodes);
+        if (!context)
+        {
 
             return FALSE;
         }
@@ -256,7 +232,8 @@ Return Value:
         //
         IopProcessAssignResourcesWorker(DeviceNode, context);
         count = context->DeviceCount;
-        if (count == 0) {
+        if (count == 0)
+        {
 
             ExFreePool(context);
             return FALSE;
@@ -266,13 +243,12 @@ Return Value:
         // Need to assign resources to devices.  Build the resource request table and call
         // resource assignment routine.
         //
-        requestTable = (PIOP_RESOURCE_REQUEST) ExAllocatePool(
-                                        PagedPool,
-                                        sizeof(IOP_RESOURCE_REQUEST) * count
-                                        );
-        if (requestTable) {
+        requestTable = (PIOP_RESOURCE_REQUEST)ExAllocatePool(PagedPool, sizeof(IOP_RESOURCE_REQUEST) * count);
+        if (requestTable)
+        {
 
-            for (i = 0; i < count; i++) {
+            for (i = 0; i < count; i++)
+            {
 
                 requestTable[i].Priority = 0;
                 requestTable[i].PhysicalDevice = context->DeviceList[i];
@@ -281,37 +257,40 @@ Return Value:
             //
             // Assign resources
             //
-            IopAssignResourcesToDevices(
-                count,
-                requestTable,
-                (attempt == 0) ? IopBootConfigsReserved : TRUE,
-                RebalancePerformed
-                );
+            IopAssignResourcesToDevices(count, requestTable, (attempt == 0) ? IopBootConfigsReserved : TRUE,
+                                        RebalancePerformed);
 
             //
             // Check the results
             //
-            for (i = 0; i < count; i++) {
+            for (i = 0; i < count; i++)
+            {
 
-                deviceNode = (PDEVICE_NODE)
-                              requestTable[i].PhysicalDevice->DeviceObjectExtension->DeviceNode;
+                deviceNode = (PDEVICE_NODE)requestTable[i].PhysicalDevice->DeviceObjectExtension->DeviceNode;
 
-                if (NT_SUCCESS(requestTable[i].Status)) {
+                if (NT_SUCCESS(requestTable[i].Status))
+                {
 
-                    if (requestTable[i].ResourceAssignment) {
+                    if (requestTable[i].ResourceAssignment)
+                    {
 
                         deviceNode->ResourceList = requestTable[i].ResourceAssignment;
                         deviceNode->ResourceListTranslated = requestTable[i].TranslatedResourceAssignment;
-                    } else {
+                    }
+                    else
+                    {
 
                         deviceNode->Flags |= DNF_NO_RESOURCE_REQUIRED;
                     }
                     PipSetDevNodeState(deviceNode, DeviceNodeResourcesAssigned, NULL);
                     resourcesAssigned = TRUE;
-                } else {
+                }
+                else
+                {
 
-                    switch (requestTable[i].Status) {
-                    
+                    switch (requestTable[i].Status)
+                    {
+
                     case STATUS_RETRY:
 
                         tryAgain = TRUE;
@@ -356,12 +335,9 @@ Return Value:
 
     return resourcesAssigned;
 }
-
+
 NTSTATUS
-IopProcessAssignResourcesWorker(
-   IN PDEVICE_NODE  DeviceNode,
-   IN PVOID         Context
-   )
+IopProcessAssignResourcesWorker(IN PDEVICE_NODE DeviceNode, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -382,7 +358,7 @@ Return Value:
 
 --*/
 {
-    PDEVICE_LIST_CONTEXT resourceContext = (PDEVICE_LIST_CONTEXT) Context;
+    PDEVICE_LIST_CONTEXT resourceContext = (PDEVICE_LIST_CONTEXT)Context;
 
     PAGED_CODE();
 
@@ -390,29 +366,31 @@ Return Value:
     // If the device node/object has not been add, skip it.
     //
 
-    if (resourceContext->Reallocation &&
-        (PipIsDevNodeProblem(DeviceNode, CM_PROB_NORMAL_CONFLICT) ||
-         PipIsDevNodeProblem(DeviceNode, CM_PROB_TRANSLATION_FAILED) ||
-         PipIsDevNodeProblem(DeviceNode, CM_PROB_IRQ_TRANSLATION_FAILED))) {
+    if (resourceContext->Reallocation && (PipIsDevNodeProblem(DeviceNode, CM_PROB_NORMAL_CONFLICT) ||
+                                          PipIsDevNodeProblem(DeviceNode, CM_PROB_TRANSLATION_FAILED) ||
+                                          PipIsDevNodeProblem(DeviceNode, CM_PROB_IRQ_TRANSLATION_FAILED)))
+    {
 
         PipClearDevNodeProblem(DeviceNode);
     }
 
-    if (!PipDoesDevNodeHaveProblem(DeviceNode)) {
+    if (!PipDoesDevNodeHaveProblem(DeviceNode))
+    {
 
         //
         // If the device object has not been started and has no resources yet.
         // Append it to our list.
         //
 
-        if (DeviceNode->State == DeviceNodeDriversAdded) {
+        if (DeviceNode->State == DeviceNodeDriversAdded)
+        {
 
-               resourceContext->DeviceList[resourceContext->DeviceCount] =
-                                  DeviceNode->PhysicalDeviceObject;
+            resourceContext->DeviceList[resourceContext->DeviceCount] = DeviceNode->PhysicalDeviceObject;
 
-               resourceContext->DeviceCount++;
-
-        } else {
+            resourceContext->DeviceCount++;
+        }
+        else
+        {
 
             //
             // Acquire enumeration mutex to make sure its children won't change by
@@ -430,13 +408,9 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopWriteAllocatedResourcesToRegistry (
-    PDEVICE_NODE DeviceNode,
-    PCM_RESOURCE_LIST CmResourceList,
-    ULONG Length
-    )
+IopWriteAllocatedResourcesToRegistry(PDEVICE_NODE DeviceNode, PCM_RESOURCE_LIST CmResourceList, ULONG Length)
 
 /*++
 
@@ -466,38 +440,28 @@ Return Value:
 
     PiLockPnpRegistry(FALSE);
 
-    status = IopDeviceObjectToDeviceInstance(
-                                    deviceObject,
-                                    &handlex,
-                                    KEY_ALL_ACCESS);
-    if (NT_SUCCESS(status)) {
+    status = IopDeviceObjectToDeviceInstance(deviceObject, &handlex, KEY_ALL_ACCESS);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Open the LogConfig key of the device instance.
         //
 
         PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_CONTROL);
-        status = IopCreateRegistryKeyEx( &handle,
-                                         handlex,
-                                         &unicodeName,
-                                         KEY_ALL_ACCESS,
-                                         REG_OPTION_VOLATILE,
-                                         NULL
-                                         );
+        status = IopCreateRegistryKeyEx(&handle, handlex, &unicodeName, KEY_ALL_ACCESS, REG_OPTION_VOLATILE, NULL);
         ZwClose(handlex);
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             PiWstrToUnicodeString(&unicodeName, REGSTR_VALUE_ALLOC_CONFIG);
-            if (CmResourceList) {
-                status = ZwSetValueKey(
-                              handle,
-                              &unicodeName,
-                              TITLE_INDEX_VALUE,
-                              REG_RESOURCE_LIST,
-                              CmResourceList,
-                              Length
-                              );
-            } else {
+            if (CmResourceList)
+            {
+                status =
+                    ZwSetValueKey(handle, &unicodeName, TITLE_INDEX_VALUE, REG_RESOURCE_LIST, CmResourceList, Length);
+            }
+            else
+            {
                 status = ZwDeleteValueKey(handle, &unicodeName);
             }
             ZwClose(handle);

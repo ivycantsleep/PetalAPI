@@ -22,7 +22,7 @@ Revision History:
 
 #include <stdio.h>
 
-
+
 //
 //  To decompress/compress a block of data the user needs to
 //  provide a work space as an extra parameter to all the exported
@@ -34,14 +34,15 @@ Revision History:
 //  Variables for reading and writing bits
 //
 
-typedef struct _MRCF_BIT_IO {
+typedef struct _MRCF_BIT_IO
+{
 
-    USHORT  abitsBB;        //  16-bit buffer being read
-    LONG    cbitsBB;        //  Number of bits left in abitsBB
+    USHORT abitsBB; //  16-bit buffer being read
+    LONG cbitsBB;   //  Number of bits left in abitsBB
 
-    PUCHAR  pbBB;           //  Pointer to byte stream being read
-    ULONG   cbBB;           //  Number of bytes left in pbBB
-    ULONG   cbBBInitial;    //  Initial size of pbBB
+    PUCHAR pbBB;       //  Pointer to byte stream being read
+    ULONG cbBB;        //  Number of bytes left in pbBB
+    ULONG cbBBInitial; //  Initial size of pbBB
 
 } MRCF_BIT_IO;
 typedef MRCF_BIT_IO *PMRCF_BIT_IO;
@@ -50,7 +51,7 @@ typedef MRCF_BIT_IO *PMRCF_BIT_IO;
 //  Maximum back-pointer value, also used to indicate end of compressed stream!
 //
 
-#define wBACKPOINTERMAX                  (4415)
+#define wBACKPOINTERMAX (4415)
 
 //
 //  MDSIGNATURE - Signature at start of each compressed block
@@ -73,7 +74,8 @@ typedef MRCF_BIT_IO *PMRCF_BIT_IO;
 //            byte ordering!
 //
 
-typedef struct _MDSIGNATURE {
+typedef struct _MDSIGNATURE
+{
 
     //
     //  Must be MD_STAMP
@@ -90,52 +92,34 @@ typedef struct _MDSIGNATURE {
 } MDSIGNATURE;
 typedef MDSIGNATURE *PMDSIGNATURE;
 
-#define MD_STAMP        0x5344  // Signature stamp at start of compressed blk
-#define MASK_VALID_mds  0x0300  // All other bits must be zero
+#define MD_STAMP 0x5344       // Signature stamp at start of compressed blk
+#define MASK_VALID_mds 0x0300 // All other bits must be zero
 
-
+
 //
 //  Local procedure declarations and macros
 //
 
-#define minimum(a,b) (a < b ? a : b)
+#define minimum(a, b) (a < b ? a : b)
 
 //
 //  Local procedure prototypes
 //
 
-VOID
-MrcfSetBitBuffer (
-    PUCHAR pb,
-    ULONG cb,
-    PMRCF_BIT_IO BitIo
-    );
+VOID MrcfSetBitBuffer(PUCHAR pb, ULONG cb, PMRCF_BIT_IO BitIo);
 
-VOID
-MrcfFillBitBuffer (
-    PMRCF_BIT_IO BitIo
-    );
+VOID MrcfFillBitBuffer(PMRCF_BIT_IO BitIo);
 
 USHORT
-MrcfReadBit (
-    PMRCF_BIT_IO BitIo
-    );
+MrcfReadBit(PMRCF_BIT_IO BitIo);
 
 USHORT
-MrcfReadNBits (
-    LONG cbits,
-    PMRCF_BIT_IO BitIo
-    );
+MrcfReadNBits(LONG cbits, PMRCF_BIT_IO BitIo);
 
-
+
 NTSTATUS
-RtlDecompressBufferMrcf (
-    OUT PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    OUT PULONG FinalUncompressedSize
-    )
+RtlDecompressBufferMrcf(OUT PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize, IN PUCHAR CompressedBuffer,
+                        IN ULONG CompressedBufferSize, OUT PULONG FinalUncompressedSize)
 
 /*++
 
@@ -171,21 +155,22 @@ Return Value:
 {
     MRCF_BIT_IO WorkSpace;
 
-    ULONG  cbMatch; //  Length of match string
-    ULONG  i;       //  Index in UncompressedBuffer to receive decoded data
-    ULONG  iMatch;  //  Index in UncompressedBuffer of matched string
-    ULONG  k;       //  Number of bits in length string
-    ULONG  off;     //  Offset from i in UncompressedBuffer of match string
-    USHORT x;       //  Current bit being examined
-    ULONG  y;
+    ULONG cbMatch; //  Length of match string
+    ULONG i;       //  Index in UncompressedBuffer to receive decoded data
+    ULONG iMatch;  //  Index in UncompressedBuffer of matched string
+    ULONG k;       //  Number of bits in length string
+    ULONG off;     //  Offset from i in UncompressedBuffer of match string
+    USHORT x;      //  Current bit being examined
+    ULONG y;
 
     //
     //  verify that compressed data starts with proper signature
     //
 
-    if (CompressedBufferSize < sizeof(MDSIGNATURE) ||                            // Must have signature
-        ((PMDSIGNATURE)CompressedBuffer)->sigStamp != MD_STAMP ||            // Stamp must be OK
-        ((PMDSIGNATURE)CompressedBuffer)->sigType & (~MASK_VALID_mds)) {     // Type must be OK
+    if (CompressedBufferSize < sizeof(MDSIGNATURE) ||             // Must have signature
+        ((PMDSIGNATURE)CompressedBuffer)->sigStamp != MD_STAMP || // Stamp must be OK
+        ((PMDSIGNATURE)CompressedBuffer)->sigType & (~MASK_VALID_mds))
+    { // Type must be OK
 
         *FinalUncompressedSize = 0;
         return STATUS_BAD_COMPRESSION_BUFFER;
@@ -208,26 +193,29 @@ Return Value:
     //  Set statics to save parm passing
     //
 
-    MrcfSetBitBuffer(CompressedBuffer,CompressedBufferSize,&WorkSpace);
+    MrcfSetBitBuffer(CompressedBuffer, CompressedBufferSize, &WorkSpace);
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        y = MrcfReadNBits(2,&WorkSpace);
+        y = MrcfReadNBits(2, &WorkSpace);
 
         //
         //  Check if next 7 bits are a byte
         //  1 if 128..255 (0x80..0xff), 2 if 0..127 (0x00..0x7f)
         //
 
-        if (y == 1 || y == 2) {
+        if (y == 1 || y == 2)
+        {
 
-            ASSERTMSG("Don't exceed expected length ", i<UncompressedBufferSize);
+            ASSERTMSG("Don't exceed expected length ", i < UncompressedBufferSize);
 
-            UncompressedBuffer[i] = (UCHAR)((y == 1 ? 0x80 : 0) | MrcfReadNBits(7,&WorkSpace));
+            UncompressedBuffer[i] = (UCHAR)((y == 1 ? 0x80 : 0) | MrcfReadNBits(7, &WorkSpace));
 
             i++;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Have match sequence
@@ -237,29 +225,33 @@ Return Value:
             // Get the offset
             //
 
-            if (y == 0) {
+            if (y == 0)
+            {
 
                 //
                 //  next 6 bits are offset
                 //
 
-                off = MrcfReadNBits(6,&WorkSpace);
+                off = MrcfReadNBits(6, &WorkSpace);
 
                 ASSERTMSG("offset 0 is invalid ", off != 0);
-
-            } else {
+            }
+            else
+            {
 
                 x = MrcfReadBit(&WorkSpace);
 
-                if (x == 0) {
+                if (x == 0)
+                {
 
                     //
                     //  next 8 bits are offset-64 (0x40)
                     //
 
                     off = MrcfReadNBits(8, &WorkSpace) + 64;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  next 12 bits are offset-320 (0x140)
@@ -267,13 +259,15 @@ Return Value:
 
                     off = MrcfReadNBits(12, &WorkSpace) + 320;
 
-                    if (off == wBACKPOINTERMAX) {
+                    if (off == wBACKPOINTERMAX)
+                    {
 
                         //
                         //  EOS marker
                         //
 
-                        if (i >= UncompressedBufferSize) {
+                        if (i >= UncompressedBufferSize)
+                        {
 
                             //
                             // Done with entire buffer
@@ -281,8 +275,9 @@ Return Value:
 
                             *FinalUncompressedSize = i;
                             return STATUS_SUCCESS;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             //
                             //  More to do
@@ -295,26 +290,31 @@ Return Value:
                 }
             }
 
-            ASSERTMSG("Don't exceed expected length ", i<UncompressedBufferSize);
+            ASSERTMSG("Don't exceed expected length ", i < UncompressedBufferSize);
             ASSERTMSG("Cannot match before start of uncoded buffer! ", off <= i);
 
             //
             //  Get the length  - logarithmically encoded
             //
 
-            for (k=0; (x=MrcfReadBit(&WorkSpace)) == 0; k++) { NOTHING; }
+            for (k = 0; (x = MrcfReadBit(&WorkSpace)) == 0; k++)
+            {
+                NOTHING;
+            }
 
             ASSERT(k <= 8);
 
-            if (k == 0) {
+            if (k == 0)
+            {
 
                 //
                 //  All matches at least 2 chars long
                 //
 
                 cbMatch = 2;
-
-            } else {
+            }
+            else
+            {
 
                 cbMatch = (1 << k) + 1 + MrcfReadNBits(k, &WorkSpace);
             }
@@ -327,7 +327,8 @@ Return Value:
 
             iMatch = i - off;
 
-            while ( (cbMatch > 0) && (i<UncompressedBufferSize) ) {
+            while ((cbMatch > 0) && (i < UncompressedBufferSize))
+            {
 
                 UncompressedBuffer[i++] = UncompressedBuffer[iMatch++];
                 cbMatch--;
@@ -338,17 +339,12 @@ Return Value:
     }
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-MrcfSetBitBuffer (
-    PUCHAR pb,
-    ULONG cb,
-    PMRCF_BIT_IO BitIo
-    )
+VOID MrcfSetBitBuffer(PUCHAR pb, ULONG cb, PMRCF_BIT_IO BitIo)
 
 /*++
 
@@ -371,22 +367,20 @@ Return Value:
 --*/
 
 {
-    BitIo->pbBB        = pb;
-    BitIo->cbBB        = cb;
+    BitIo->pbBB = pb;
+    BitIo->cbBB = cb;
     BitIo->cbBBInitial = cb;
-    BitIo->cbitsBB     = 0;
-    BitIo->abitsBB     = 0;
+    BitIo->cbitsBB = 0;
+    BitIo->abitsBB = 0;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
 USHORT
-MrcfReadBit (
-    PMRCF_BIT_IO BitIo
-    )
+MrcfReadBit(PMRCF_BIT_IO BitIo)
 
 /*++
 
@@ -411,7 +405,8 @@ Return Value:
     //  Check if no bits available
     //
 
-    if ((BitIo->cbitsBB) == 0) {
+    if ((BitIo->cbitsBB) == 0)
+    {
 
         MrcfFillBitBuffer(BitIo);
     }
@@ -428,16 +423,13 @@ Return Value:
     return bit;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
 USHORT
-MrcfReadNBits (
-    LONG cbits,
-    PMRCF_BIT_IO BitIo
-    )
+MrcfReadNBits(LONG cbits, PMRCF_BIT_IO BitIo)
 
 /*++
 
@@ -458,10 +450,10 @@ Return Value:
 --*/
 
 {
-    ULONG abits;        // Bits to return
-    LONG cbitsPart;    // Partial count of bits
-    ULONG cshift;       // Shift count
-    ULONG mask;         // Mask
+    ULONG abits;    // Bits to return
+    LONG cbitsPart; // Partial count of bits
+    ULONG cshift;   // Shift count
+    ULONG mask;     // Mask
 
     //
     //  Largest number of bits we should read at one time is 12 bits for
@@ -480,13 +472,15 @@ Return Value:
     cshift = 0;
     abits = 0;
 
-    while (cbits > 0) {
+    while (cbits > 0)
+    {
 
         //
         //  If not bits available get some bits
         //
 
-        if ((BitIo->cbitsBB) == 0) {
+        if ((BitIo->cbitsBB) == 0)
+        {
 
             MrcfFillBitBuffer(BitIo);
         }
@@ -532,15 +526,12 @@ Return Value:
     return (USHORT)abits;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-MrcfFillBitBuffer (
-    PMRCF_BIT_IO BitIo
-    )
+VOID MrcfFillBitBuffer(PMRCF_BIT_IO BitIo)
 
 /*++
 
@@ -561,7 +552,8 @@ Return Value:
 {
     ASSERT((BitIo->cbitsBB) == 0);
 
-    switch (BitIo->cbBB) {
+    switch (BitIo->cbBB)
+    {
 
     case 0:
 
@@ -594,5 +586,4 @@ Return Value:
         break;
     }
 }
-
 

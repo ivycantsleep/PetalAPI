@@ -28,13 +28,14 @@ Revision History:
 #define _ACPI_MSI_H_
 
 //
-//  APIC Version Register 
+//  APIC Version Register
 //
-struct _ApicVersion {
-    UCHAR Version;              // either 0.x or 1.x
-    UCHAR Reserved1:7;
-    UCHAR MSICapable:1;         // is this APIC an MSI receiver?
-    UCHAR MaxRedirEntries;      // Number of INTIs on unit
+struct _ApicVersion
+{
+    UCHAR Version; // either 0.x or 1.x
+    UCHAR Reserved1 : 7;
+    UCHAR MSICapable : 1;  // is this APIC an MSI receiver?
+    UCHAR MaxRedirEntries; // Number of INTIs on unit
     UCHAR Reserved2;
 };
 
@@ -53,25 +54,25 @@ typedef struct _ApicVersion APIC_VERSION, *PAPIC_VERSION;
 
 typedef struct _IOAPIC_MSI_INFO
 {
-   BOOLEAN MSICapable;           // Is this IO APIC an MSI receiver?
-   ULONG VectorBase;             // The Global System Interrupt Vector base for this APIC
-   ULONG MaxVectors;             // The number of vectors supported by this APIC
-   ULONG BaseAddress;            // The IO APIC Unit base address
+    BOOLEAN MSICapable; // Is this IO APIC an MSI receiver?
+    ULONG VectorBase;   // The Global System Interrupt Vector base for this APIC
+    ULONG MaxVectors;   // The number of vectors supported by this APIC
+    ULONG BaseAddress;  // The IO APIC Unit base address
 
 } IOAPIC_MSI_INFO, *PIOAPIC_MSI_INFO;
 
 //
-// MSI information structure 
-// (basically the APIC information needed for MSI vector allocation 
+// MSI information structure
+// (basically the APIC information needed for MSI vector allocation
 //   & routing)
 //
 
 typedef struct _MSI_INFORMATION
 {
-   BOOLEAN PRTMappingsScanned;               // Have we determined the _PRT mapped vectors?
-   PRTL_BITMAP PRTMappedVectors;             // A BitMap of the vectors mapped by the _PRT
-   USHORT NumIOApics;                        // The number of IO APICs in this system
-   IOAPIC_MSI_INFO ApicInfo[ANYSIZE_ARRAY];  // Information about each IO APIC in the system
+    BOOLEAN PRTMappingsScanned;              // Have we determined the _PRT mapped vectors?
+    PRTL_BITMAP PRTMappedVectors;            // A BitMap of the vectors mapped by the _PRT
+    USHORT NumIOApics;                       // The number of IO APICs in this system
+    IOAPIC_MSI_INFO ApicInfo[ANYSIZE_ARRAY]; // Information about each IO APIC in the system
 } MSI_INFORMATION, *PMSI_INFORMATION;
 
 //
@@ -87,9 +88,7 @@ extern PMSI_INFORMATION MsiInformation;
 //
 
 
-typedef
-VOID
-(*PACPI_ARB_PROCESS_PRT)(IN PSNOBJ);
+typedef VOID (*PACPI_ARB_PROCESS_PRT)(IN PSNOBJ);
 
 
 // Prototypes from msi.c (used by arbiter)
@@ -98,9 +97,7 @@ VOID AcpiMSIInitializeInfo(VOID);
 BOOLEAN AcpiMSIFindAvailableVector(OUT PULONG Vector);
 BOOLEAN AcpiMSICreateRoutingToken(IN ULONG Vector, IN OUT PROUTING_TOKEN Token);
 
-VOID AcpiArbFindAndProcessEachPRT(IN PDEVICE_OBJECT Root, 
-                                  IN PACPI_ARB_PROCESS_PRT ProcessCallback
-                                  );
+VOID AcpiArbFindAndProcessEachPRT(IN PDEVICE_OBJECT Root, IN PACPI_ARB_PROCESS_PRT ProcessCallback);
 VOID AcpiMSIExtractMappedVectorsFromPRT(IN PNSOBJ prtObj);
 
 

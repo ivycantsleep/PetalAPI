@@ -52,53 +52,31 @@ Revision History:
 //
 
 ULONG
-MiGetExceptionInfo (
-    IN PEXCEPTION_POINTERS ExceptionPointers,
-    IN PLOGICAL ExceptionAddressConfirmed,
-    IN PULONG_PTR BadVa
-    );
+MiGetExceptionInfo(IN PEXCEPTION_POINTERS ExceptionPointers, IN PLOGICAL ExceptionAddressConfirmed,
+                   IN PULONG_PTR BadVa);
 
 NTSTATUS
-MiDoMappedCopy (
-     IN PEPROCESS FromProcess,
-     IN CONST VOID *FromAddress,
-     IN PEPROCESS ToProcess,
-     OUT PVOID ToAddress,
-     IN SIZE_T BufferSize,
-     IN KPROCESSOR_MODE PreviousMode,
-     OUT PSIZE_T NumberOfBytesRead
-     );
+MiDoMappedCopy(IN PEPROCESS FromProcess, IN CONST VOID *FromAddress, IN PEPROCESS ToProcess, OUT PVOID ToAddress,
+               IN SIZE_T BufferSize, IN KPROCESSOR_MODE PreviousMode, OUT PSIZE_T NumberOfBytesRead);
 
 NTSTATUS
-MiDoPoolCopy (
-     IN PEPROCESS FromProcess,
-     IN CONST VOID *FromAddress,
-     IN PEPROCESS ToProcess,
-     OUT PVOID ToAddress,
-     IN SIZE_T BufferSize,
-     IN KPROCESSOR_MODE PreviousMode,
-     OUT PSIZE_T NumberOfBytesRead
-     );
+MiDoPoolCopy(IN PEPROCESS FromProcess, IN CONST VOID *FromAddress, IN PEPROCESS ToProcess, OUT PVOID ToAddress,
+             IN SIZE_T BufferSize, IN KPROCESSOR_MODE PreviousMode, OUT PSIZE_T NumberOfBytesRead);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,MiGetExceptionInfo)
-#pragma alloc_text(PAGE,NtReadVirtualMemory)
-#pragma alloc_text(PAGE,NtWriteVirtualMemory)
-#pragma alloc_text(PAGE,MiDoMappedCopy)
-#pragma alloc_text(PAGE,MiDoPoolCopy)
-#pragma alloc_text(PAGE,MmCopyVirtualMemory)
+#pragma alloc_text(PAGE, MiGetExceptionInfo)
+#pragma alloc_text(PAGE, NtReadVirtualMemory)
+#pragma alloc_text(PAGE, NtWriteVirtualMemory)
+#pragma alloc_text(PAGE, MiDoMappedCopy)
+#pragma alloc_text(PAGE, MiDoPoolCopy)
+#pragma alloc_text(PAGE, MmCopyVirtualMemory)
 #endif
 
 #define COPY_STACK_SIZE 64
 
 NTSTATUS
-NtReadVirtualMemory (
-     IN HANDLE ProcessHandle,
-     IN PVOID BaseAddress,
-     OUT PVOID Buffer,
-     IN SIZE_T BufferSize,
-     OUT PSIZE_T NumberOfBytesRead OPTIONAL
-     )
+NtReadVirtualMemory(IN HANDLE ProcessHandle, IN PVOID BaseAddress, OUT PVOID Buffer, IN SIZE_T BufferSize,
+                    OUT PSIZE_T NumberOfBytesRead OPTIONAL)
 
 /*++
 
@@ -142,23 +120,27 @@ Return Value:
     // Get the previous mode and probe output argument if necessary.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        if (((PCHAR)BaseAddress + BufferSize < (PCHAR)BaseAddress) ||
-            ((PCHAR)Buffer + BufferSize < (PCHAR)Buffer) ||
+        if (((PCHAR)BaseAddress + BufferSize < (PCHAR)BaseAddress) || ((PCHAR)Buffer + BufferSize < (PCHAR)Buffer) ||
             ((PVOID)((PCHAR)BaseAddress + BufferSize) > MM_HIGHEST_USER_ADDRESS) ||
-            ((PVOID)((PCHAR)Buffer + BufferSize) > MM_HIGHEST_USER_ADDRESS)) {
+            ((PVOID)((PCHAR)Buffer + BufferSize) > MM_HIGHEST_USER_ADDRESS))
+        {
 
             return STATUS_ACCESS_VIOLATION;
         }
 
-        if (ARGUMENT_PRESENT(NumberOfBytesRead)) {
-            try {
-                ProbeForWriteUlong_ptr (NumberOfBytesRead);
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+        if (ARGUMENT_PRESENT(NumberOfBytesRead))
+        {
+            try
+            {
+                ProbeForWriteUlong_ptr(NumberOfBytesRead);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
         }
@@ -172,18 +154,15 @@ Return Value:
 
     BytesCopied = 0;
     Status = STATUS_SUCCESS;
-    if (BufferSize != 0) {
+    if (BufferSize != 0)
+    {
 
         //
         // Reference the target process.
         //
 
-        Status = ObReferenceObjectByHandle(ProcessHandle,
-                                           PROCESS_VM_READ,
-                                           PsProcessType,
-                                           PreviousMode,
-                                           (PVOID *)&Process,
-                                           NULL);
+        Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_READ, PsProcessType, PreviousMode,
+                                           (PVOID *)&Process, NULL);
 
         //
         // If the process was successfully referenced, then attempt to
@@ -191,15 +170,11 @@ Return Value:
         // through nonpaged pool.
         //
 
-        if (Status == STATUS_SUCCESS) {
+        if (Status == STATUS_SUCCESS)
+        {
 
-            Status = MmCopyVirtualMemory (Process,
-                                          BaseAddress,
-                                          PsGetCurrentProcessByThread(CurrentThread),
-                                          Buffer,
-                                          BufferSize,
-                                          PreviousMode,
-                                          &BytesCopied);
+            Status = MmCopyVirtualMemory(Process, BaseAddress, PsGetCurrentProcessByThread(CurrentThread), Buffer,
+                                         BufferSize, PreviousMode, &BytesCopied);
 
             //
             // Dereference the target process.
@@ -213,11 +188,14 @@ Return Value:
     // If requested, return the number of bytes read.
     //
 
-    if (ARGUMENT_PRESENT(NumberOfBytesRead)) {
-        try {
+    if (ARGUMENT_PRESENT(NumberOfBytesRead))
+    {
+        try
+        {
             *NumberOfBytesRead = BytesCopied;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             NOTHING;
         }
     }
@@ -225,13 +203,8 @@ Return Value:
     return Status;
 }
 NTSTATUS
-NtWriteVirtualMemory(
-     IN HANDLE ProcessHandle,
-     OUT PVOID BaseAddress,
-     IN CONST VOID *Buffer,
-     IN SIZE_T BufferSize,
-     OUT PSIZE_T NumberOfBytesWritten OPTIONAL
-     )
+NtWriteVirtualMemory(IN HANDLE ProcessHandle, OUT PVOID BaseAddress, IN CONST VOID *Buffer, IN SIZE_T BufferSize,
+                     OUT PSIZE_T NumberOfBytesWritten OPTIONAL)
 
 /*++
 
@@ -276,23 +249,27 @@ Return Value:
     // Get the previous mode and probe output argument if necessary.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        if (((PCHAR)BaseAddress + BufferSize < (PCHAR)BaseAddress) ||
-            ((PCHAR)Buffer + BufferSize < (PCHAR)Buffer) ||
+        if (((PCHAR)BaseAddress + BufferSize < (PCHAR)BaseAddress) || ((PCHAR)Buffer + BufferSize < (PCHAR)Buffer) ||
             ((PVOID)((PCHAR)BaseAddress + BufferSize) > MM_HIGHEST_USER_ADDRESS) ||
-            ((PVOID)((PCHAR)Buffer + BufferSize) > MM_HIGHEST_USER_ADDRESS)) {
+            ((PVOID)((PCHAR)Buffer + BufferSize) > MM_HIGHEST_USER_ADDRESS))
+        {
 
             return STATUS_ACCESS_VIOLATION;
         }
 
-        if (ARGUMENT_PRESENT(NumberOfBytesWritten)) {
-            try {
+        if (ARGUMENT_PRESENT(NumberOfBytesWritten))
+        {
+            try
+            {
                 ProbeForWriteUlong_ptr(NumberOfBytesWritten);
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
         }
@@ -305,18 +282,15 @@ Return Value:
 
     BytesCopied = 0;
     Status = STATUS_SUCCESS;
-    if (BufferSize != 0) {
+    if (BufferSize != 0)
+    {
 
         //
         // Reference the target process.
         //
 
-        Status = ObReferenceObjectByHandle(ProcessHandle,
-                                           PROCESS_VM_WRITE,
-                                           PsProcessType,
-                                           PreviousMode,
-                                           (PVOID *)&Process,
-                                           NULL);
+        Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_WRITE, PsProcessType, PreviousMode,
+                                           (PVOID *)&Process, NULL);
 
         //
         // If the process was successfully referenced, then attempt to
@@ -324,15 +298,11 @@ Return Value:
         // through nonpaged pool.
         //
 
-        if (Status == STATUS_SUCCESS) {
+        if (Status == STATUS_SUCCESS)
+        {
 
-            Status = MmCopyVirtualMemory (PsGetCurrentProcessByThread(CurrentThread),
-                                          Buffer,
-                                          Process,
-                                          BaseAddress,
-                                          BufferSize,
-                                          PreviousMode,
-                                          &BytesCopied);
+            Status = MmCopyVirtualMemory(PsGetCurrentProcessByThread(CurrentThread), Buffer, Process, BaseAddress,
+                                         BufferSize, PreviousMode, &BytesCopied);
 
             //
             // Dereference the target process.
@@ -346,40 +316,38 @@ Return Value:
     // If requested, return the number of bytes read.
     //
 
-    if (ARGUMENT_PRESENT(NumberOfBytesWritten)) {
-        try {
+    if (ARGUMENT_PRESENT(NumberOfBytesWritten))
+    {
+        try
+        {
             *NumberOfBytesWritten = BytesCopied;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             NOTHING;
         }
     }
 
     return Status;
 }
-
+
 
 NTSTATUS
-MmCopyVirtualMemory(
-    IN PEPROCESS FromProcess,
-    IN CONST VOID *FromAddress,
-    IN PEPROCESS ToProcess,
-    OUT PVOID ToAddress,
-    IN SIZE_T BufferSize,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT PSIZE_T NumberOfBytesCopied
-    )
+MmCopyVirtualMemory(IN PEPROCESS FromProcess, IN CONST VOID *FromAddress, IN PEPROCESS ToProcess, OUT PVOID ToAddress,
+                    IN SIZE_T BufferSize, IN KPROCESSOR_MODE PreviousMode, OUT PSIZE_T NumberOfBytesCopied)
 {
     NTSTATUS Status;
     PEPROCESS ProcessToLock;
 
-    if (BufferSize == 0) {
-        ASSERT (FALSE);         // No one should call with a zero size.
+    if (BufferSize == 0)
+    {
+        ASSERT(FALSE); // No one should call with a zero size.
         return STATUS_SUCCESS;
     }
 
     ProcessToLock = FromProcess;
-    if (FromProcess == PsGetCurrentProcess()) {
+    if (FromProcess == PsGetCurrentProcess())
+    {
         ProcessToLock = ToProcess;
     }
 
@@ -387,7 +355,8 @@ MmCopyVirtualMemory(
     // Make sure the process still has an address space.
     //
 
-    if (ExAcquireRundownProtection (&ProcessToLock->RundownProtect) == FALSE) {
+    if (ExAcquireRundownProtection(&ProcessToLock->RundownProtect) == FALSE)
+    {
         return STATUS_PROCESS_IS_TERMINATING;
     }
 
@@ -396,13 +365,9 @@ MmCopyVirtualMemory(
     // then attempt to write the memory via direct mapping.
     //
 
-    if (BufferSize > POOL_MOVE_THRESHOLD) {
-        Status = MiDoMappedCopy(FromProcess,
-                                FromAddress,
-                                ToProcess,
-                                ToAddress,
-                                BufferSize,
-                                PreviousMode,
+    if (BufferSize > POOL_MOVE_THRESHOLD)
+    {
+        Status = MiDoMappedCopy(FromProcess, FromAddress, ToProcess, ToAddress, BufferSize, PreviousMode,
                                 NumberOfBytesCopied);
 
         //
@@ -411,7 +376,8 @@ MmCopyVirtualMemory(
         // memory through nonpaged pool.
         //
 
-        if (Status != STATUS_WORKING_SET_QUOTA) {
+        if (Status != STATUS_WORKING_SET_QUOTA)
+        {
             goto CompleteService;
         }
 
@@ -425,13 +391,8 @@ MmCopyVirtualMemory(
     // pool.
     //
 
-    Status = MiDoPoolCopy(FromProcess,
-                          FromAddress,
-                          ToProcess,
-                          ToAddress,
-                          BufferSize,
-                          PreviousMode,
-                          NumberOfBytesCopied);
+    Status =
+        MiDoPoolCopy(FromProcess, FromAddress, ToProcess, ToAddress, BufferSize, PreviousMode, NumberOfBytesCopied);
 
     //
     // Dereference the target process.
@@ -443,18 +404,15 @@ CompleteService:
     // Indicate that the vm operation is complete.
     //
 
-    ExReleaseRundownProtection (&ProcessToLock->RundownProtect);
+    ExReleaseRundownProtection(&ProcessToLock->RundownProtect);
 
     return Status;
 }
 
 
 ULONG
-MiGetExceptionInfo (
-    IN PEXCEPTION_POINTERS ExceptionPointers,
-    IN OUT PLOGICAL ExceptionAddressConfirmed,
-    IN OUT PULONG_PTR BadVa
-    )
+MiGetExceptionInfo(IN PEXCEPTION_POINTERS ExceptionPointers, IN OUT PLOGICAL ExceptionAddressConfirmed,
+                   IN OUT PULONG_PTR BadVa)
 
 /*++
 
@@ -495,7 +453,8 @@ Return Value:
 
     if ((ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION) ||
         (ExceptionRecord->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION) ||
-        (ExceptionRecord->ExceptionCode == STATUS_IN_PAGE_ERROR)) {
+        (ExceptionRecord->ExceptionCode == STATUS_IN_PAGE_ERROR))
+    {
 
         //
         // The virtual address which caused the exception is the 2nd
@@ -507,7 +466,8 @@ Return Value:
         // This means the number of bytes copied is zero.
         //
 
-        if (ExceptionRecord->NumberParameters > 1) {
+        if (ExceptionRecord->NumberParameters > 1)
+        {
             *ExceptionAddressConfirmed = TRUE;
             *BadVa = ExceptionRecord->ExceptionInformation[1];
         }
@@ -515,17 +475,10 @@ Return Value:
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
-
+
 NTSTATUS
-MiDoMappedCopy (
-    IN PEPROCESS FromProcess,
-    IN CONST VOID *FromAddress,
-    IN PEPROCESS ToProcess,
-    OUT PVOID ToAddress,
-    IN SIZE_T BufferSize,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT PSIZE_T NumberOfBytesRead
-    )
+MiDoMappedCopy(IN PEPROCESS FromProcess, IN CONST VOID *FromAddress, IN PEPROCESS ToProcess, OUT PVOID ToAddress,
+               IN SIZE_T BufferSize, IN KPROCESSOR_MODE PreviousMode, OUT PSIZE_T NumberOfBytesRead)
 
 /*++
 
@@ -572,7 +525,7 @@ Return Value:
     PSIZE_T MappedAddress;
     SIZE_T MaximumMoved;
     PMDL Mdl;
-    PFN_NUMBER MdlHack[(sizeof(MDL)/sizeof(PFN_NUMBER)) + (MAX_LOCK_SIZE >> PAGE_SHIFT) + 1];
+    PFN_NUMBER MdlHack[(sizeof(MDL) / sizeof(PFN_NUMBER)) + (MAX_LOCK_SIZE >> PAGE_SHIFT) + 1];
     PVOID OutVa;
     LOGICAL MappingFailed;
     LOGICAL ExceptionAddressConfirmed;
@@ -585,7 +538,8 @@ Return Value:
     OutVa = ToAddress;
 
     MaximumMoved = MAX_LOCK_SIZE;
-    if (BufferSize <= MAX_LOCK_SIZE) {
+    if (BufferSize <= MAX_LOCK_SIZE)
+    {
         MaximumMoved = BufferSize;
     }
 
@@ -621,9 +575,11 @@ Return Value:
 
 #endif
 
-    while (LeftToMove > 0) {
+    while (LeftToMove > 0)
+    {
 
-        if (LeftToMove < AmountToMove) {
+        if (LeftToMove < AmountToMove)
+        {
 
             //
             // Set to move the remaining bytes.
@@ -632,28 +588,30 @@ Return Value:
             AmountToMove = LeftToMove;
         }
 
-        KeStackAttachProcess (&FromProcess->Pcb, &ApcState);
+        KeStackAttachProcess(&FromProcess->Pcb, &ApcState);
 
         MappedAddress = NULL;
         LockedMdlPages = FALSE;
         Moving = FALSE;
-        ASSERT (Probing == FALSE);
+        ASSERT(Probing == FALSE);
 
         //
         // We may be touching a user's memory which could be invalid,
         // declare an exception handler.
         //
 
-        try {
+        try
+        {
 
             //
             // Probe to make sure that the specified buffer is accessible in
             // the target process.
             //
 
-            if ((InVa == FromAddress) && (PreviousMode != KernelMode)){
+            if ((InVa == FromAddress) && (PreviousMode != KernelMode))
+            {
                 Probing = TRUE;
-                ProbeForRead (FromAddress, BufferSize, sizeof(CHAR));
+                ProbeForRead(FromAddress, BufferSize, sizeof(CHAR));
                 Probing = FALSE;
             }
 
@@ -661,20 +619,16 @@ Return Value:
             // Initialize MDL for request.
             //
 
-            MmInitializeMdl (Mdl, (PVOID)InVa, AmountToMove);
+            MmInitializeMdl(Mdl, (PVOID)InVa, AmountToMove);
 
-            MmProbeAndLockPages (Mdl, PreviousMode, IoReadAccess);
+            MmProbeAndLockPages(Mdl, PreviousMode, IoReadAccess);
 
             LockedMdlPages = TRUE;
 
-            MappedAddress = MmMapLockedPagesSpecifyCache (Mdl,
-                                                          KernelMode,
-                                                          MmCached,
-                                                          NULL,
-                                                          FALSE,
-                                                          HighPagePriority);
+            MappedAddress = MmMapLockedPagesSpecifyCache(Mdl, KernelMode, MmCached, NULL, FALSE, HighPagePriority);
 
-            if (MappedAddress == NULL) {
+            if (MappedAddress == NULL)
+            {
                 MappingFailed = TRUE;
                 ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
@@ -683,24 +637,24 @@ Return Value:
             // Deattach from the FromProcess and attach to the ToProcess.
             //
 
-            KeUnstackDetachProcess (&ApcState);
-            KeStackAttachProcess (&ToProcess->Pcb, &ApcState);
+            KeUnstackDetachProcess(&ApcState);
+            KeStackAttachProcess(&ToProcess->Pcb, &ApcState);
 
             //
             // Now operating in the context of the ToProcess.
             //
-            if ((InVa == FromAddress) && (PreviousMode != KernelMode)){
+            if ((InVa == FromAddress) && (PreviousMode != KernelMode))
+            {
                 Probing = TRUE;
-                ProbeForWrite (ToAddress, BufferSize, sizeof(CHAR));
+                ProbeForWrite(ToAddress, BufferSize, sizeof(CHAR));
                 Probing = FALSE;
             }
 
             Moving = TRUE;
-            RtlCopyMemory (OutVa, MappedAddress, AmountToMove);
-
-        } except (MiGetExceptionInfo (GetExceptionInformation(),
-                                      &ExceptionAddressConfirmed,
-                                      &BadVa)) {
+            RtlCopyMemory(OutVa, MappedAddress, AmountToMove);
+        }
+        except(MiGetExceptionInfo(GetExceptionInformation(), &ExceptionAddressConfirmed, &BadVa))
+        {
 
 
             //
@@ -708,22 +662,25 @@ Return Value:
             // return the exception code as the status value.
             //
 
-            KeUnstackDetachProcess (&ApcState);
+            KeUnstackDetachProcess(&ApcState);
 
-            if (MappedAddress != NULL) {
-                MmUnmapLockedPages (MappedAddress, Mdl);
+            if (MappedAddress != NULL)
+            {
+                MmUnmapLockedPages(MappedAddress, Mdl);
             }
-            if (LockedMdlPages == TRUE) {
-                MmUnlockPages (Mdl);
+            if (LockedMdlPages == TRUE)
+            {
+                MmUnlockPages(Mdl);
             }
 
-            if (GetExceptionCode() == STATUS_WORKING_SET_QUOTA) {
+            if (GetExceptionCode() == STATUS_WORKING_SET_QUOTA)
+            {
                 return STATUS_WORKING_SET_QUOTA;
             }
 
-            if ((Probing == TRUE) || (MappingFailed == TRUE)) {
+            if ((Probing == TRUE) || (MappingFailed == TRUE))
+            {
                 return GetExceptionCode();
-
             }
 
             //
@@ -734,8 +691,10 @@ Return Value:
 
             *NumberOfBytesRead = BufferSize - LeftToMove;
 
-            if (Moving == TRUE) {
-                if (ExceptionAddressConfirmed == TRUE) {
+            if (Moving == TRUE)
+            {
+                if (ExceptionAddressConfirmed == TRUE)
+                {
                     *NumberOfBytesRead = (SIZE_T)((ULONG_PTR)BadVa - (ULONG_PTR)FromAddress);
                 }
             }
@@ -743,10 +702,10 @@ Return Value:
             return STATUS_PARTIAL_COPY;
         }
 
-        KeUnstackDetachProcess (&ApcState);
+        KeUnstackDetachProcess(&ApcState);
 
-        MmUnmapLockedPages (MappedAddress, Mdl);
-        MmUnlockPages (Mdl);
+        MmUnmapLockedPages(MappedAddress, Mdl);
+        MmUnlockPages(Mdl);
 
         LeftToMove -= AmountToMove;
         InVa = (PVOID)((ULONG_PTR)InVa + AmountToMove);
@@ -760,17 +719,10 @@ Return Value:
     *NumberOfBytesRead = BufferSize;
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-MiDoPoolCopy (
-     IN PEPROCESS FromProcess,
-     IN CONST VOID *FromAddress,
-     IN PEPROCESS ToProcess,
-     OUT PVOID ToAddress,
-     IN SIZE_T BufferSize,
-     IN KPROCESSOR_MODE PreviousMode,
-     OUT PSIZE_T NumberOfBytesRead
-     )
+MiDoPoolCopy(IN PEPROCESS FromProcess, IN CONST VOID *FromAddress, IN PEPROCESS ToProcess, OUT PVOID ToAddress,
+             IN SIZE_T BufferSize, IN KPROCESSOR_MODE PreviousMode, OUT PSIZE_T NumberOfBytesRead)
 
 /*++
 
@@ -821,7 +773,7 @@ Return Value:
 
     PAGED_CODE();
 
-    ASSERT (BufferSize != 0);
+    ASSERT(BufferSize != 0);
 
     //
     // Get the address of the current process object and initialize copy
@@ -838,23 +790,30 @@ Return Value:
     //
 
     MaximumMoved = MAX_MOVE_SIZE;
-    if (BufferSize <= MAX_MOVE_SIZE) {
+    if (BufferSize <= MAX_MOVE_SIZE)
+    {
         MaximumMoved = BufferSize;
     }
 
     FreePool = FALSE;
-    if (BufferSize <= sizeof(StackArray)) {
+    if (BufferSize <= sizeof(StackArray))
+    {
         PoolArea = (PVOID)&StackArray[0];
-    } else {
-        do {
-            PoolArea = ExAllocatePoolWithTag (NonPagedPool, MaximumMoved, 'wRmM');
-            if (PoolArea != NULL) {
+    }
+    else
+    {
+        do
+        {
+            PoolArea = ExAllocatePoolWithTag(NonPagedPool, MaximumMoved, 'wRmM');
+            if (PoolArea != NULL)
+            {
                 FreePool = TRUE;
                 break;
             }
 
             MaximumMoved = MaximumMoved >> 1;
-            if (MaximumMoved <= sizeof(StackArray)) {
+            if (MaximumMoved <= sizeof(StackArray))
+            {
                 PoolArea = (PVOID)&StackArray[0];
                 break;
             }
@@ -890,9 +849,11 @@ Return Value:
 
 #endif
 
-    while (LeftToMove > 0) {
+    while (LeftToMove > 0)
+    {
 
-        if (LeftToMove < AmountToMove) {
+        if (LeftToMove < AmountToMove)
+        {
 
             //
             // Set to move the remaining bytes.
@@ -901,66 +862,69 @@ Return Value:
             AmountToMove = LeftToMove;
         }
 
-        KeStackAttachProcess (&FromProcess->Pcb, &ApcState);
+        KeStackAttachProcess(&FromProcess->Pcb, &ApcState);
 
         Moving = FALSE;
-        ASSERT (Probing == FALSE);
+        ASSERT(Probing == FALSE);
 
         //
         // We may be touching a user's memory which could be invalid,
         // declare an exception handler.
         //
 
-        try {
+        try
+        {
 
             //
             // Probe to make sure that the specified buffer is accessible in
             // the target process.
             //
 
-            if ((InVa == FromAddress) && (PreviousMode != KernelMode)){
+            if ((InVa == FromAddress) && (PreviousMode != KernelMode))
+            {
                 Probing = TRUE;
-                ProbeForRead (FromAddress, BufferSize, sizeof(CHAR));
+                ProbeForRead(FromAddress, BufferSize, sizeof(CHAR));
                 Probing = FALSE;
             }
 
-            RtlCopyMemory (PoolArea, InVa, AmountToMove);
+            RtlCopyMemory(PoolArea, InVa, AmountToMove);
 
-            KeUnstackDetachProcess (&ApcState);
+            KeUnstackDetachProcess(&ApcState);
 
-            KeStackAttachProcess (&ToProcess->Pcb, &ApcState);
+            KeStackAttachProcess(&ToProcess->Pcb, &ApcState);
 
             //
             // Now operating in the context of the ToProcess.
             //
 
-            if ((InVa == FromAddress) && (PreviousMode != KernelMode)){
+            if ((InVa == FromAddress) && (PreviousMode != KernelMode))
+            {
                 Probing = TRUE;
-                ProbeForWrite (ToAddress, BufferSize, sizeof(CHAR));
+                ProbeForWrite(ToAddress, BufferSize, sizeof(CHAR));
                 Probing = FALSE;
             }
 
             Moving = TRUE;
 
-            RtlCopyMemory (OutVa, PoolArea, AmountToMove);
-
-        } except (MiGetExceptionInfo (GetExceptionInformation(),
-                                      &ExceptionAddressConfirmed,
-                                      &BadVa)) {
+            RtlCopyMemory(OutVa, PoolArea, AmountToMove);
+        }
+        except(MiGetExceptionInfo(GetExceptionInformation(), &ExceptionAddressConfirmed, &BadVa))
+        {
 
             //
             // If an exception occurs during the move operation or probe,
             // return the exception code as the status value.
             //
 
-            KeUnstackDetachProcess (&ApcState);
+            KeUnstackDetachProcess(&ApcState);
 
-            if (FreePool) {
-                ExFreePool (PoolArea);
+            if (FreePool)
+            {
+                ExFreePool(PoolArea);
             }
-            if (Probing == TRUE) {
+            if (Probing == TRUE)
+            {
                 return GetExceptionCode();
-
             }
 
             //
@@ -971,30 +935,32 @@ Return Value:
 
             *NumberOfBytesRead = BufferSize - LeftToMove;
 
-            if (Moving == TRUE) {
+            if (Moving == TRUE)
+            {
 
                 //
                 // The failure occurred writing the data.
                 //
 
-                if (ExceptionAddressConfirmed == TRUE) {
+                if (ExceptionAddressConfirmed == TRUE)
+                {
                     *NumberOfBytesRead = (SIZE_T)((ULONG_PTR)(BadVa - (ULONG_PTR)FromAddress));
                 }
-
             }
 
             return STATUS_PARTIAL_COPY;
         }
 
-        KeUnstackDetachProcess (&ApcState);
+        KeUnstackDetachProcess(&ApcState);
 
         LeftToMove -= AmountToMove;
         InVa = (PVOID)((ULONG_PTR)InVa + AmountToMove);
         OutVa = (PVOID)((ULONG_PTR)OutVa + AmountToMove);
     }
 
-    if (FreePool) {
-        ExFreePool (PoolArea);
+    if (FreePool)
+    {
+        ExFreePool(PoolArea);
     }
 
     //

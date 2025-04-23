@@ -51,18 +51,15 @@ Revision History:
 //
 // This is a block held on the local stack of the rundown thread.
 //
-typedef struct _EX_RUNDOWN_WAIT_BLOCK {
+typedef struct _EX_RUNDOWN_WAIT_BLOCK
+{
     ULONG Count;
     KEVENT WakeEvent;
 } EX_RUNDOWN_WAIT_BLOCK, *PEX_RUNDOWN_WAIT_BLOCK;
 
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfInitializeRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     )
+VOID FASTCALL ExfInitializeRundownProtection(IN PEX_RUNDOWN_REF RunRef)
 /*++
 
 Routine Description:
@@ -83,11 +80,7 @@ Return Value:
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExReInitializeRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     )
+VOID FASTCALL ExReInitializeRundownProtection(IN PEX_RUNDOWN_REF RunRef)
 /*++
 
 Routine Description:
@@ -104,18 +97,14 @@ Return Value:
 
 --*/
 {
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ((RunRef->Count&EX_RUNDOWN_ACTIVE) != 0);
-    InterlockedExchangePointer (&RunRef->Ptr, NULL);
+    ASSERT((RunRef->Count & EX_RUNDOWN_ACTIVE) != 0);
+    InterlockedExchangePointer(&RunRef->Ptr, NULL);
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExRundownCompleted (
-     IN PEX_RUNDOWN_REF RunRef
-     )
+VOID FASTCALL ExRundownCompleted(IN PEX_RUNDOWN_REF RunRef)
 /*++
 Routine Description:
 
@@ -130,18 +119,16 @@ Return Value:
     None
 --*/
 {
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ((RunRef->Count&EX_RUNDOWN_ACTIVE) != 0);
-    InterlockedExchangePointer (&RunRef->Ptr, (PVOID) EX_RUNDOWN_ACTIVE);
+    ASSERT((RunRef->Count & EX_RUNDOWN_ACTIVE) != 0);
+    InterlockedExchangePointer(&RunRef->Ptr, (PVOID)EX_RUNDOWN_ACTIVE);
 }
 
 NTKERNELAPI
 BOOLEAN
 FASTCALL
-ExAcquireRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     )
+ExAcquireRundownProtection(IN PEX_RUNDOWN_REF RunRef)
 /*++
 
 Routine Description:
@@ -160,14 +147,16 @@ Return Value:
 {
     ULONG_PTR Value, NewValue;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     Value = RunRef->Count;
-    do {
+    do
+    {
         //
         // If rundown has started return with an error
         //
-        if (Value & EX_RUNDOWN_ACTIVE) {
+        if (Value & EX_RUNDOWN_ACTIVE)
+        {
             return FALSE;
         }
 
@@ -176,10 +165,9 @@ Return Value:
         //
         NewValue = Value + EX_RUNDOWN_COUNT_INC;
 
-        NewValue = (ULONG_PTR) InterlockedCompareExchangePointer (&RunRef->Ptr,
-                                                                  (PVOID) NewValue,
-                                                                  (PVOID) Value);
-        if (NewValue == Value) {
+        NewValue = (ULONG_PTR)InterlockedCompareExchangePointer(&RunRef->Ptr, (PVOID)NewValue, (PVOID)Value);
+        if (NewValue == Value)
+        {
             return TRUE;
         }
         //
@@ -193,10 +181,7 @@ Return Value:
 NTKERNELAPI
 BOOLEAN
 FASTCALL
-ExAcquireRundownProtectionEx (
-     IN PEX_RUNDOWN_REF RunRef,
-     IN ULONG Count
-     )
+ExAcquireRundownProtectionEx(IN PEX_RUNDOWN_REF RunRef, IN ULONG Count)
 /*++
 
 Routine Description:
@@ -216,14 +201,16 @@ Return Value:
 {
     ULONG_PTR Value, NewValue;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     Value = RunRef->Count;
-    do {
+    do
+    {
         //
         // If rundown has started return with an error
         //
-        if (Value & EX_RUNDOWN_ACTIVE) {
+        if (Value & EX_RUNDOWN_ACTIVE)
+        {
             return FALSE;
         }
 
@@ -232,10 +219,9 @@ Return Value:
         //
         NewValue = Value + EX_RUNDOWN_COUNT_INC * Count;
 
-        NewValue = (ULONG_PTR) InterlockedCompareExchangePointer (&RunRef->Ptr,
-                                                                  (PVOID) NewValue,
-                                                                  (PVOID) Value);
-        if (NewValue == Value) {
+        NewValue = (ULONG_PTR)InterlockedCompareExchangePointer(&RunRef->Ptr, (PVOID)NewValue, (PVOID)Value);
+        if (NewValue == Value)
+        {
             return TRUE;
         }
         //
@@ -248,11 +234,7 @@ Return Value:
 
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExReleaseRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     )
+VOID FASTCALL ExReleaseRundownProtection(IN PEX_RUNDOWN_REF RunRef)
 /*++
 
 Routine Description:
@@ -271,15 +253,17 @@ Return Value:
 {
     ULONG_PTR Value, NewValue;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     Value = RunRef->Count;
-    do {
+    do
+    {
         //
         // If the block is already marked for rundown then decrement the wait block count and wake the
         // rundown thread if we are the last
         //
-        if (Value & EX_RUNDOWN_ACTIVE) {
+        if (Value & EX_RUNDOWN_ACTIVE)
+        {
             PEX_RUNDOWN_WAIT_BLOCK WaitBlock;
 
             //
@@ -287,18 +271,21 @@ Return Value:
             // the pointer and decrement the active count. If we are the last thread then we have the right to
             // wake up the waiter. After doing this we can't touch the data structures again.
             //
-            WaitBlock = (PEX_RUNDOWN_WAIT_BLOCK) (Value & (~EX_RUNDOWN_ACTIVE));
+            WaitBlock = (PEX_RUNDOWN_WAIT_BLOCK)(Value & (~EX_RUNDOWN_ACTIVE));
 
-            ASSERT (WaitBlock->Count > 0);
+            ASSERT(WaitBlock->Count > 0);
 
-            if (InterlockedDecrement ((PLONG)&WaitBlock->Count) == 0) {
+            if (InterlockedDecrement((PLONG)&WaitBlock->Count) == 0)
+            {
                 //
                 // We are the last thread out. Wake up the waiter.
                 //
-                KeSetEvent (&WaitBlock->WakeEvent, 0, FALSE);
+                KeSetEvent(&WaitBlock->WakeEvent, 0, FALSE);
             }
             return;
-        } else {
+        }
+        else
+        {
             //
             // Rundown isn't active. Just try and decrement the count. Some other protector thread way come and/or
             // go as we do this or rundown might be initiated. We detect this because the exchange will fail and
@@ -306,10 +293,9 @@ Return Value:
             //
             NewValue = Value - EX_RUNDOWN_COUNT_INC;
 
-            NewValue = (ULONG_PTR) InterlockedCompareExchangePointer (&RunRef->Ptr,
-                                                                      (PVOID) NewValue,
-                                                                      (PVOID) Value);
-            if (NewValue == Value) {
+            NewValue = (ULONG_PTR)InterlockedCompareExchangePointer(&RunRef->Ptr, (PVOID)NewValue, (PVOID)Value);
+            if (NewValue == Value)
+            {
                 return;
             }
             Value = NewValue;
@@ -319,12 +305,7 @@ Return Value:
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExReleaseRundownProtectionEx (
-     IN PEX_RUNDOWN_REF RunRef,
-     IN ULONG Count
-     )
+VOID FASTCALL ExReleaseRundownProtectionEx(IN PEX_RUNDOWN_REF RunRef, IN ULONG Count)
 /*++
 
 Routine Description:
@@ -344,15 +325,17 @@ Return Value:
 {
     ULONG_PTR Value, NewValue;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     Value = RunRef->Count;
-    do {
+    do
+    {
         //
         // If the block is already marked for rundown then decrement the wait block count and wake the
         // rundown thread if we are the last
         //
-        if (Value & EX_RUNDOWN_ACTIVE) {
+        if (Value & EX_RUNDOWN_ACTIVE)
+        {
             PEX_RUNDOWN_WAIT_BLOCK WaitBlock;
 
             //
@@ -360,32 +343,34 @@ Return Value:
             // the pointer and decrement the active count. If we are the last thread then we have the right to
             // wake up the waiter. After doing this we can't touch the data structures again.
             //
-            WaitBlock = (PEX_RUNDOWN_WAIT_BLOCK) (Value & (~EX_RUNDOWN_ACTIVE));
+            WaitBlock = (PEX_RUNDOWN_WAIT_BLOCK)(Value & (~EX_RUNDOWN_ACTIVE));
 
-            ASSERT (WaitBlock->Count >= Count);
+            ASSERT(WaitBlock->Count >= Count);
 
-            if (InterlockedExchangeAdd ((PLONG)&WaitBlock->Count, -(LONG)Count) == (LONG) Count) {
+            if (InterlockedExchangeAdd((PLONG)&WaitBlock->Count, -(LONG)Count) == (LONG)Count)
+            {
                 //
                 // We are the last thread out. Wake up the waiter.
                 //
-                KeSetEvent (&WaitBlock->WakeEvent, 0, FALSE);
+                KeSetEvent(&WaitBlock->WakeEvent, 0, FALSE);
             }
             return;
-        } else {
+        }
+        else
+        {
             //
             // Rundown isn't active. Just try and decrement the count. Some other protector thread way come and/or
             // go as we do this or rundown might be initiated. We detect this because the exchange will fail and
             // we have to retry
             //
 
-            ASSERT (Value >= EX_RUNDOWN_COUNT_INC * Count);
+            ASSERT(Value >= EX_RUNDOWN_COUNT_INC * Count);
 
             NewValue = Value - EX_RUNDOWN_COUNT_INC * Count;
 
-            NewValue = (ULONG_PTR) InterlockedCompareExchangePointer (&RunRef->Ptr,
-                                                                      (PVOID) NewValue,
-                                                                      (PVOID) Value);
-            if (NewValue == Value) {
+            NewValue = (ULONG_PTR)InterlockedCompareExchangePointer(&RunRef->Ptr, (PVOID)NewValue, (PVOID)Value);
+            if (NewValue == Value)
+            {
                 return;
             }
             Value = NewValue;
@@ -395,11 +380,7 @@ Return Value:
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExWaitForRundownProtectionRelease (
-     IN PEX_RUNDOWN_REF RunRef
-     )
+VOID FASTCALL ExWaitForRundownProtectionRelease(IN PEX_RUNDOWN_REF RunRef)
 /*++
 
 Routine Description:
@@ -421,7 +402,7 @@ Return Value:
     ULONG_PTR Value, NewValue;
     ULONG WaitCount;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     //
     // Fast path. this should be the normal case. If Value is zero then there are no current accessors and we have
@@ -430,10 +411,9 @@ Return Value:
     // multiple times (like handle table rundown) to have subsequent rundowns become noops.
     //
 
-    Value = (ULONG_PTR) InterlockedCompareExchangePointer (&RunRef->Ptr,
-                                                           (PVOID) EX_RUNDOWN_ACTIVE,
-                                                           (PVOID) 0);
-    if (Value == 0 || Value == EX_RUNDOWN_ACTIVE) {
+    Value = (ULONG_PTR)InterlockedCompareExchangePointer(&RunRef->Ptr, (PVOID)EX_RUNDOWN_ACTIVE, (PVOID)0);
+    if (Value == 0 || Value == EX_RUNDOWN_ACTIVE)
+    {
         return;
     }
 
@@ -441,19 +421,21 @@ Return Value:
     // Slow path
     //
     Event = NULL;
-    do {
+    do
+    {
 
         //
         // Extract total number of waiters. Its biased by 2 so we can hanve the rundown active bit.
         //
-        WaitCount = (ULONG) (Value >> EX_RUNDOWN_COUNT_SHIFT);
+        WaitCount = (ULONG)(Value >> EX_RUNDOWN_COUNT_SHIFT);
 
         //
         // If there are some accessors present then initialize and event (once only).
         //
-        if (WaitCount > 0 && Event == NULL) {
+        if (WaitCount > 0 && Event == NULL)
+        {
             Event = &WaitBlock.WakeEvent;
-            KeInitializeEvent (Event, SynchronizationEvent, FALSE);
+            KeInitializeEvent(Event, SynchronizationEvent, FALSE);
         }
         //
         // Store the wait count in the wait block. Waiting threads will start to decrement this as they exit
@@ -463,26 +445,21 @@ Return Value:
         //
         WaitBlock.Count = WaitCount;
 
-        NewValue = ((ULONG_PTR) &WaitBlock) | EX_RUNDOWN_ACTIVE;
+        NewValue = ((ULONG_PTR)&WaitBlock) | EX_RUNDOWN_ACTIVE;
 
-        NewValue = (ULONG_PTR) InterlockedCompareExchangePointer (&RunRef->Ptr,
-                                                                  (PVOID) NewValue,
-                                                                  (PVOID) Value);
-        if (NewValue == Value) {
-            if (WaitCount > 0) {
-                KeWaitForSingleObject (Event,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
+        NewValue = (ULONG_PTR)InterlockedCompareExchangePointer(&RunRef->Ptr, (PVOID)NewValue, (PVOID)Value);
+        if (NewValue == Value)
+        {
+            if (WaitCount > 0)
+            {
+                KeWaitForSingleObject(Event, Executive, KernelMode, FALSE, NULL);
 
-                ASSERT (WaitBlock.Count == 0);
-
+                ASSERT(WaitBlock.Count == 0);
             }
             return;
         }
         Value = NewValue;
 
-        ASSERT ((Value&EX_RUNDOWN_ACTIVE) == 0);
+        ASSERT((Value & EX_RUNDOWN_ACTIVE) == 0);
     } while (TRUE);
 }

@@ -56,12 +56,10 @@ extern SIZE_T MmMaximumNonPagedPoolInBytes;
 // Trace Control APIs
 //
 
-
+
 NTKERNELAPI
 NTSTATUS
-WmiStartTrace(
-    IN OUT PWMI_LOGGER_INFORMATION LoggerInfo
-    )
+WmiStartTrace(IN OUT PWMI_LOGGER_INFORMATION LoggerInfo)
 /*++
 
 Routine Description:
@@ -106,21 +104,21 @@ Return Value:
     //
     DelayOpen = LoggerInfo->LogFileMode & EVENT_TRACE_DELAY_OPEN_FILE_MODE;
 
-    if (!DelayOpen) {
-        if (LoggerInfo->LogFileName.Buffer != NULL) { // && !delay_create
-            status = WmipCreateNtFileName(
-                        LoggerInfo->LogFileName.Buffer,
-                        &LogFileName);
+    if (!DelayOpen)
+    {
+        if (LoggerInfo->LogFileName.Buffer != NULL)
+        { // && !delay_create
+            status = WmipCreateNtFileName(LoggerInfo->LogFileName.Buffer, &LogFileName);
             if (!NT_SUCCESS(status))
                 return status;
-            status = WmipCreateDirectoryFile(LogFileName, 
-                                            FALSE, 
-                                            &FileHandle,
-                                            LoggerInfo->LogFileMode & EVENT_TRACE_FILE_MODE_APPEND);
-            if (LogFileName != NULL) {
+            status = WmipCreateDirectoryFile(LogFileName, FALSE, &FileHandle,
+                                             LoggerInfo->LogFileMode & EVENT_TRACE_FILE_MODE_APPEND);
+            if (LogFileName != NULL)
+            {
                 ExFreePool(LogFileName);
             }
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 return status;
             }
             ZwClose(FileHandle);
@@ -128,18 +126,17 @@ Return Value:
     }
 
     status = WmipStartLogger(LoggerInfo);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         status = WmiFlushTrace(LoggerInfo);
     }
     return status;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-WmiQueryTrace(
-    IN OUT PWMI_LOGGER_INFORMATION LoggerInfo
-    )
+WmiQueryTrace(IN OUT PWMI_LOGGER_INFORMATION LoggerInfo)
 /*++
 
 Routine Description:
@@ -166,12 +163,10 @@ Return Value:
     return WmipQueryLogger(LoggerInfo, NULL);
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-WmiStopTrace(
-    IN PWMI_LOGGER_INFORMATION LoggerInfo
-    )
+WmiStopTrace(IN PWMI_LOGGER_INFORMATION LoggerInfo)
 /*++
 
 Routine Description:
@@ -195,12 +190,12 @@ Return Value:
 
 {
     PWMI_LOGGER_CONTEXT LoggerContext = NULL;
-    NTSTATUS        Status;
-    LARGE_INTEGER   TimeOut = {(ULONG)(-200 * 1000 * 1000 * 10), -1};
-    ACCESS_MASK     DesiredAccess = TRACELOG_GUID_ENABLE;
-    ULONG           LoggerId;
+    NTSTATUS Status;
+    LARGE_INTEGER TimeOut = { (ULONG)(-200 * 1000 * 1000 * 10), -1 };
+    ACCESS_MASK DesiredAccess = TRACELOG_GUID_ENABLE;
+    ULONG LoggerId;
 #if DBG
-    LONG            RefCount;
+    LONG RefCount;
 #endif
 
     PAGED_CODE();
@@ -208,8 +203,7 @@ Return Value:
     if (LoggerInfo == NULL)
         return STATUS_INVALID_PARAMETER;
 
-    TraceDebug((1, "WmiStopTrace: %d\n",
-                    LoggerInfo->Wnode.HistoricalContext));
+    TraceDebug((1, "WmiStopTrace: %d\n", LoggerInfo->Wnode.HistoricalContext));
 #if DBG
     Status = WmipVerifyLoggerInfo(LoggerInfo, &LoggerContext, "WmiStopTrace");
 #else
@@ -220,51 +214,43 @@ Return Value:
         return Status;
 
     LoggerId = LoggerContext->LoggerId;
-    TraceDebug((1, "WmiStopTrace: Stopping %X %d slot %X\n",
-                    LoggerContext, LoggerId, WmipLoggerContext[LoggerId]));
+    TraceDebug((1, "WmiStopTrace: Stopping %X %d slot %X\n", LoggerContext, LoggerId, WmipLoggerContext[LoggerId]));
 
     if (LoggerContext->KernelTraceOn)
         DesiredAccess |= TRACELOG_ACCESS_KERNEL_LOGGER;
 
-    Status = WmipCheckGuidAccess(
-                (LPGUID) &EventTraceGuid,
-                DesiredAccess
-                );
-    if (!NT_SUCCESS(Status)) {
+    Status = WmipCheckGuidAccess((LPGUID)&EventTraceGuid, DesiredAccess);
+    if (!NT_SUCCESS(Status))
+    {
 #ifndef WMI_MUTEX_FREE
         InterlockedDecrement(&LoggerContext->MutexCount);
-        TraceDebug((1, "WmiStopTrace: Release mutex1 %d %d\n",
-            LoggerId, LoggerContext->MutexCount));
+        TraceDebug((1, "WmiStopTrace: Release mutex1 %d %d\n", LoggerId, LoggerContext->MutexCount));
         WmipReleaseMutex(&LoggerContext->LoggerMutex);
 #endif
 
 #if DBG
         RefCount =
 #endif
-        WmipDereferenceLogger(LoggerId);
-        TraceDebug((1, "WmiStopTrace: Status1=%X %d %d->%d\n",
-                        Status, LoggerId, RefCount+1, RefCount));
+            WmipDereferenceLogger(LoggerId);
+        TraceDebug((1, "WmiStopTrace: Status1=%X %d %d->%d\n", Status, LoggerId, RefCount + 1, RefCount));
         return Status;
     }
 
-    if (!IsEqualGUID(&LoggerContext->InstanceGuid, &EventTraceGuid)) {
-        Status = WmipCheckGuidAccess(
-                    (LPGUID) &LoggerContext->InstanceGuid,
-                    DesiredAccess
-                    );
-        if (!NT_SUCCESS(Status)) {
+    if (!IsEqualGUID(&LoggerContext->InstanceGuid, &EventTraceGuid))
+    {
+        Status = WmipCheckGuidAccess((LPGUID)&LoggerContext->InstanceGuid, DesiredAccess);
+        if (!NT_SUCCESS(Status))
+        {
 #ifndef WMI_MUTEX_FREE
             InterlockedDecrement(&LoggerContext->MutexCount);
-            TraceDebug((1, "WmiStopTrace: Release mutex2 %d %d\n",
-                LoggerId, LoggerContext->MutexCount));
+            TraceDebug((1, "WmiStopTrace: Release mutex2 %d %d\n", LoggerId, LoggerContext->MutexCount));
             WmipReleaseMutex(&LoggerContext->LoggerMutex);
 #endif
 #if DBG
             RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
-            TraceDebug((1, "WmiStopTrace: Status2=%X %d %d->%d\n",
-                            Status, LoggerId, RefCount+1, RefCount));
+                WmipDereferenceLogger(LoggerId);
+            TraceDebug((1, "WmiStopTrace: Status2=%X %d %d->%d\n", Status, LoggerId, RefCount + 1, RefCount));
             return Status;
         }
     }
@@ -275,16 +261,16 @@ Return Value:
 
     KeResetEvent(&LoggerContext->FlushEvent);
 
-    Status = WmipStopLoggerInstance (LoggerContext);
+    Status = WmipStopLoggerInstance(LoggerContext);
 
 #ifndef WMI_MUTEX_FREE
     InterlockedDecrement(&LoggerContext->MutexCount);
-    TraceDebug((1, "WmiStopTrace: Release mutex3 %d %d\n",
-        LoggerId, LoggerContext->MutexCount));
+    TraceDebug((1, "WmiStopTrace: Release mutex3 %d %d\n", LoggerId, LoggerContext->MutexCount));
     WmipReleaseMutex(&LoggerContext->LoggerMutex); // Let others in
 #endif
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         LIST_ENTRY TraceGuidMap;
 
         InitializeListHead(&TraceGuidMap);
@@ -292,12 +278,14 @@ Return Value:
             WmipKernelLogger = KERNEL_LOGGER;
         else if (LoggerId == WmipEventLogger)
             WmipEventLogger = 0XFFFFFFFF;
-        else 
-            Status = WmipDisableTraceProviders(LoggerId, &TraceGuidMap );
+        else
+            Status = WmipDisableTraceProviders(LoggerId, &TraceGuidMap);
 
-        if (LoggerInfo != NULL) {
+        if (LoggerInfo != NULL)
+        {
             ULONG GuidMapBuffers = 0;
-            if (NT_SUCCESS(LoggerContext->LoggerStatus)) {
+            if (NT_SUCCESS(LoggerContext->LoggerStatus))
+            {
                 LONG Buffers;
 
                 Status = STATUS_TIMEOUT;
@@ -305,25 +293,20 @@ Return Value:
 
                 //
                 // If all buffers are accounted for and the logfile handle
-                // is NULL, then there is no reason to wait. 
+                // is NULL, then there is no reason to wait.
                 //
 
-                if ( (Buffers == LoggerContext->NumberOfBuffers) && 
-                     (LoggerContext->LogFileHandle == NULL) ) {
+                if ((Buffers == LoggerContext->NumberOfBuffers) && (LoggerContext->LogFileHandle == NULL))
+                {
                     Status = STATUS_SUCCESS;
                 }
                 //
                 // We need to wait for the logger thread to flush
                 //
-                while (Status == STATUS_TIMEOUT) {
-                    Status = KeWaitForSingleObject(
-                                &LoggerContext->FlushEvent,
-                                Executive,
-                                KernelMode,
-                                FALSE,
-                                &TimeOut
-                                );
-/*                    if (LoggerContext->NumberOfBuffers
+                while (Status == STATUS_TIMEOUT)
+                {
+                    Status = KeWaitForSingleObject(&LoggerContext->FlushEvent, Executive, KernelMode, FALSE, &TimeOut);
+                    /*                    if (LoggerContext->NumberOfBuffers
                             == LoggerContext->BuffersAvailable)
                         break;
                     else if (LoggerContext->BuffersAvailable == Buffers) {
@@ -334,17 +317,15 @@ Return Value:
 //                        break;
                     } 
 */
-                    TraceDebug((1, "WmiStopTrace: Wait status=%X\n",Status));
+                    TraceDebug((1, "WmiStopTrace: Wait status=%X\n", Status));
                 }
             }
 
             //
-            // For application loggers, dump the guidmap at the end. 
+            // For application loggers, dump the guidmap at the end.
             //
 
-            if ( (LoggerId != WmipKernelLogger) && 
-                 (LoggerId != WmipEventLogger) && 
-                 (! IsListEmpty(&TraceGuidMap) ) ) 
+            if ((LoggerId != WmipKernelLogger) && (LoggerId != WmipEventLogger) && (!IsListEmpty(&TraceGuidMap)))
             {
                 GuidMapBuffers = WmipDumpGuidMaps(LoggerContext, &TraceGuidMap);
             }
@@ -353,10 +334,7 @@ Return Value:
             // Required for Query to work
             // But since CollectionOn is FALSE, it should be safe
             //
-            Status = WmipQueryLogger(
-                        LoggerInfo,
-                        LoggerContext
-                        );
+            Status = WmipQueryLogger(LoggerInfo, LoggerContext);
 
             LoggerInfo->Checksum64 = GuidMapBuffers;
         }
@@ -365,18 +343,15 @@ Return Value:
 #if DBG
     RefCount =
 #endif
-    WmipDereferenceLogger(LoggerId);
-    TraceDebug((1, "WmiStopTrace: Stopped status=%X %d %d->%d\n",
-                       Status, LoggerId, RefCount+1, RefCount));
+        WmipDereferenceLogger(LoggerId);
+    TraceDebug((1, "WmiStopTrace: Stopped status=%X %d %d->%d\n", Status, LoggerId, RefCount + 1, RefCount));
     return Status;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-WmiUpdateTrace(
-    IN OUT PWMI_LOGGER_INFORMATION LoggerInfo
-    )
+WmiUpdateTrace(IN OUT PWMI_LOGGER_INFORMATION LoggerInfo)
 /*++
 
 Routine Description:
@@ -399,25 +374,25 @@ Return Value:
     NTSTATUS Status;
     ULONG Max_Buffers;
     PWMI_LOGGER_CONTEXT LoggerContext = NULL;
-    LARGE_INTEGER   OneSecond = {(ULONG)(-1 * 1000 * 1000 * 10), -1};
-    ACCESS_MASK     DesiredAccess = TRACELOG_GUID_ENABLE;
-    LARGE_INTEGER   TimeOut = {(ULONG)(-20 * 1000 * 1000 * 10), -1};
-    ULONG           EnableFlags, TmpFlags;
-    KPROCESSOR_MODE     RequestorMode;
-    ULONG           LoggerMode, LoggerId, NewMode;
-    UNICODE_STRING  NewLogFileName;
-    UNICODE_STRING  OldFilePattern;
+    LARGE_INTEGER OneSecond = { (ULONG)(-1 * 1000 * 1000 * 10), -1 };
+    ACCESS_MASK DesiredAccess = TRACELOG_GUID_ENABLE;
+    LARGE_INTEGER TimeOut = { (ULONG)(-20 * 1000 * 1000 * 10), -1 };
+    ULONG EnableFlags, TmpFlags;
+    KPROCESSOR_MODE RequestorMode;
+    ULONG LoggerMode, LoggerId, NewMode;
+    UNICODE_STRING NewLogFileName;
+    UNICODE_STRING OldFilePattern;
     PTRACE_ENABLE_FLAG_EXTENSION FlagExt;
-    PERFINFO_GROUPMASK *PerfGroupMasks=NULL;
+    PERFINFO_GROUPMASK *PerfGroupMasks = NULL;
     ULONG GroupMaskSize;
     SECURITY_QUALITY_OF_SERVICE ServiceQos;
 #if DBG
-    LONG            RefCount;
+    LONG RefCount;
 #endif
 
     PAGED_CODE();
 
-    
+
     //
     // see if Logger is running properly first. Error checking will be done
     // in WmiQueryTrace
@@ -428,8 +403,7 @@ Return Value:
 
     EnableFlags = LoggerInfo->EnableFlags;
 
-    TraceDebug((1, "WmiUpdateTrace: %d\n",
-                    LoggerInfo->Wnode.HistoricalContext));
+    TraceDebug((1, "WmiUpdateTrace: %d\n", LoggerInfo->Wnode.HistoricalContext));
 #if DBG
     Status = WmipVerifyLoggerInfo(LoggerInfo, &LoggerContext, "WmiUpdateTrace");
 #else
@@ -438,13 +412,13 @@ Return Value:
     if (!NT_SUCCESS(Status) || (LoggerContext == NULL))
         return Status;
 
-    OldFilePattern.Buffer = NULL; 
+    OldFilePattern.Buffer = NULL;
 
     LoggerId = LoggerContext->LoggerId;
 
     // at this point, LoggerContext must be non-NULL
 
-    LoggerMode = LoggerContext->LoggerMode;   // local copy
+    LoggerMode = LoggerContext->LoggerMode; // local copy
     NewMode = LoggerInfo->LogFileMode;
 
     //
@@ -452,32 +426,27 @@ Return Value:
     // in UpdateTrace()
     //
 
-    if ( ((NewMode & EVENT_TRACE_FILE_MODE_SEQUENTIAL) &&
-          (NewMode & EVENT_TRACE_FILE_MODE_CIRCULAR))        ||
+    if (((NewMode & EVENT_TRACE_FILE_MODE_SEQUENTIAL) && (NewMode & EVENT_TRACE_FILE_MODE_CIRCULAR)) ||
 
-         ((NewMode & EVENT_TRACE_USE_GLOBAL_SEQUENCE) &&
-          (NewMode & EVENT_TRACE_USE_LOCAL_SEQUENCE))        || 
+        ((NewMode & EVENT_TRACE_USE_GLOBAL_SEQUENCE) && (NewMode & EVENT_TRACE_USE_LOCAL_SEQUENCE)) ||
 
-         (!(LoggerMode & EVENT_TRACE_FILE_MODE_CIRCULAR) &&
-          (NewMode & EVENT_TRACE_FILE_MODE_CIRCULAR))        ||
+        (!(LoggerMode & EVENT_TRACE_FILE_MODE_CIRCULAR) && (NewMode & EVENT_TRACE_FILE_MODE_CIRCULAR)) ||
 
-    // Cannot support append to circular
-         ((NewMode & EVENT_TRACE_FILE_MODE_CIRCULAR) &&
-          (NewMode & EVENT_TRACE_FILE_MODE_APPEND))
+        // Cannot support append to circular
+        ((NewMode & EVENT_TRACE_FILE_MODE_CIRCULAR) && (NewMode & EVENT_TRACE_FILE_MODE_APPEND))
 
-       ) {
+    )
+    {
 #ifndef WMI_MUTEX_FREE
         InterlockedDecrement(&LoggerContext->MutexCount);
-        TraceDebug((1, "WmiUpdateTrace: Release mutex1 %d %d\n",
-            LoggerContext->LoggerId, LoggerContext->MutexCount));
+        TraceDebug((1, "WmiUpdateTrace: Release mutex1 %d %d\n", LoggerContext->LoggerId, LoggerContext->MutexCount));
         WmipReleaseMutex(&LoggerContext->LoggerMutex);
 #endif
 #if DBG
         RefCount =
 #endif
-        WmipDereferenceLogger(LoggerId);
-        TraceDebug((1, "WmiUpdateTrace: Status2=%X %d %d->%d\n",
-                        Status, LoggerId, RefCount+1, RefCount));
+            WmipDereferenceLogger(LoggerId);
+        TraceDebug((1, "WmiUpdateTrace: Status2=%X %d %d->%d\n", Status, LoggerId, RefCount + 1, RefCount));
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -485,19 +454,24 @@ Return Value:
     // support turn on or off real time dynamically
     //
 
-    if (NewMode & EVENT_TRACE_REAL_TIME_MODE) {
-        LoggerMode   |= EVENT_TRACE_REAL_TIME_MODE;
+    if (NewMode & EVENT_TRACE_REAL_TIME_MODE)
+    {
+        LoggerMode |= EVENT_TRACE_REAL_TIME_MODE;
         DesiredAccess |= TRACELOG_CREATE_REALTIME;
-    } else {
+    }
+    else
+    {
         if (LoggerMode & EVENT_TRACE_REAL_TIME_MODE)
-            DesiredAccess |= TRACELOG_CREATE_REALTIME;  // turn off real time
+            DesiredAccess |= TRACELOG_CREATE_REALTIME; // turn off real time
         LoggerMode &= ~EVENT_TRACE_REAL_TIME_MODE;
     }
 
-    if (NewMode & EVENT_TRACE_BUFFERING_MODE) {
+    if (NewMode & EVENT_TRACE_BUFFERING_MODE)
+    {
         LoggerMode |= EVENT_TRACE_BUFFERING_MODE;
     }
-    else {
+    else
+    {
         LoggerMode &= ~EVENT_TRACE_BUFFERING_MODE;
     }
     if (LoggerContext->KernelTraceOn)
@@ -506,94 +480,85 @@ Return Value:
     if (LoggerInfo->LogFileHandle != NULL)
         DesiredAccess |= TRACELOG_CREATE_ONDISK;
 
-    Status = WmipCheckGuidAccess(
-                (LPGUID) &EventTraceGuid,
-                DesiredAccess
-                );
-    if (!NT_SUCCESS(Status)) {
+    Status = WmipCheckGuidAccess((LPGUID)&EventTraceGuid, DesiredAccess);
+    if (!NT_SUCCESS(Status))
+    {
 #ifndef WMI_MUTEX_FREE
         InterlockedDecrement(&LoggerContext->MutexCount);
-        TraceDebug((1, "WmiUpdateTrace: Release mutex1 %d %d\n",
-            LoggerContext->LoggerId, LoggerContext->MutexCount));
+        TraceDebug((1, "WmiUpdateTrace: Release mutex1 %d %d\n", LoggerContext->LoggerId, LoggerContext->MutexCount));
         WmipReleaseMutex(&LoggerContext->LoggerMutex);
 #endif
 #if DBG
         RefCount =
 #endif
-        WmipDereferenceLogger(LoggerId);
-        TraceDebug((1, "WmiUpdateTrace: Status2=%X %d %d->%d\n",
-                        Status, LoggerId, RefCount+1, RefCount));
+            WmipDereferenceLogger(LoggerId);
+        TraceDebug((1, "WmiUpdateTrace: Status2=%X %d %d->%d\n", Status, LoggerId, RefCount + 1, RefCount));
         return Status;
     }
 
 
-    if (!IsEqualGUID(&LoggerContext->InstanceGuid, &EventTraceGuid)) {
-        Status = WmipCheckGuidAccess(
-                    (LPGUID) &LoggerContext->InstanceGuid,
-                    DesiredAccess
-                    );
-        if (!NT_SUCCESS(Status)) {
+    if (!IsEqualGUID(&LoggerContext->InstanceGuid, &EventTraceGuid))
+    {
+        Status = WmipCheckGuidAccess((LPGUID)&LoggerContext->InstanceGuid, DesiredAccess);
+        if (!NT_SUCCESS(Status))
+        {
 #ifndef WMI_MUTEX_FREE
             InterlockedDecrement(&LoggerContext->MutexCount);
-            TraceDebug((1, "WmiUpdateTrace: Release mutex2 %d %d\n",
-                LoggerId, LoggerContext->MutexCount));
+            TraceDebug((1, "WmiUpdateTrace: Release mutex2 %d %d\n", LoggerId, LoggerContext->MutexCount));
             WmipReleaseMutex(&LoggerContext->LoggerMutex);
 #endif
 #if DBG
             RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
-            TraceDebug((1, "WmiUpdateTrace: Status3=%X %d %d->%d\n",
-                            Status, LoggerId,
-                            RefCount+1, RefCount));
+                WmipDereferenceLogger(LoggerId);
+            TraceDebug((1, "WmiUpdateTrace: Status3=%X %d %d->%d\n", Status, LoggerId, RefCount + 1, RefCount));
             return Status;
         }
     }
 
     RtlZeroMemory(&NewLogFileName, sizeof(UNICODE_STRING));
     RequestorMode = KeGetPreviousMode();
-    if (LoggerInfo->LogFileHandle != NULL) {
-        PFILE_OBJECT    fileObject;
+    if (LoggerInfo->LogFileHandle != NULL)
+    {
+        PFILE_OBJECT fileObject;
         OBJECT_HANDLE_INFORMATION handleInformation;
         ACCESS_MASK grantedAccess;
         BOOLEAN bDelayOpenFlag = FALSE;
 
-        bDelayOpenFlag =  (LoggerContext->LogFileHandle == NULL &&
-                          (LoggerContext->LoggerMode & EVENT_TRACE_DELAY_OPEN_FILE_MODE));
+        bDelayOpenFlag =
+            (LoggerContext->LogFileHandle == NULL && (LoggerContext->LoggerMode & EVENT_TRACE_DELAY_OPEN_FILE_MODE));
 
-        if (LoggerInfo->LogFileName.Buffer == NULL) {
+        if (LoggerInfo->LogFileName.Buffer == NULL)
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto ReleaseAndExit;
         }
         // Save the new LogFileName
         //
-        try {
-            if (RequestorMode != KernelMode) {
-                ProbeForRead(
-                    LoggerInfo->LogFileName.Buffer,
-                    LoggerInfo->LogFileName.Length,
-                    sizeof (UCHAR) );
+        try
+        {
+            if (RequestorMode != KernelMode)
+            {
+                ProbeForRead(LoggerInfo->LogFileName.Buffer, LoggerInfo->LogFileName.Length, sizeof(UCHAR));
             }
-            RtlCreateUnicodeString(
-                &NewLogFileName,
-                LoggerInfo->LogFileName.Buffer);
+            RtlCreateUnicodeString(&NewLogFileName, LoggerInfo->LogFileName.Buffer);
         }
-        except (EXCEPTION_EXECUTE_HANDLER) {
-            if (NewLogFileName.Buffer != NULL) {
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            if (NewLogFileName.Buffer != NULL)
+            {
                 RtlFreeUnicodeString(&NewLogFileName);
             }
 #ifndef WMI_MUTEX_FREE
             InterlockedDecrement(&LoggerContext->MutexCount);
-            TraceDebug((1, "WmiUpdateTrace: Release mutex3 %d %d\n",
-                LoggerId, LoggerContext->MutexCount));
+            TraceDebug((1, "WmiUpdateTrace: Release mutex3 %d %d\n", LoggerId, LoggerContext->MutexCount));
             WmipReleaseMutex(&LoggerContext->LoggerMutex);
 #endif
 #if DBG
             RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
-            TraceDebug((1, "WmiUpdateTrace: Status5=EXCEPTION %d %d->%d\n",
-                            LoggerId, RefCount+1, RefCount));
+                WmipDereferenceLogger(LoggerId);
+            TraceDebug((1, "WmiUpdateTrace: Status5=EXCEPTION %d %d->%d\n", LoggerId, RefCount + 1, RefCount));
             return GetExceptionCode();
         }
 
@@ -602,21 +567,19 @@ Return Value:
         // by UpdateTrace() in user-mode.
         //
         fileObject = NULL;
-        Status = ObReferenceObjectByHandle(
-                    LoggerInfo->LogFileHandle,
-                    0L,
-                    IoFileObjectType,
-                    RequestorMode,
-                    (PVOID *) &fileObject,
-                    &handleInformation);
-        if (!NT_SUCCESS(Status)) {
+        Status = ObReferenceObjectByHandle(LoggerInfo->LogFileHandle, 0L, IoFileObjectType, RequestorMode,
+                                           (PVOID *)&fileObject, &handleInformation);
+        if (!NT_SUCCESS(Status))
+        {
             goto ReleaseAndExit;
         }
 
-        if (RequestorMode != KernelMode) {
+        if (RequestorMode != KernelMode)
+        {
             grantedAccess = handleInformation.GrantedAccess;
-            if (!SeComputeGrantedAccesses(grantedAccess, FILE_WRITE_DATA)) {
-                ObDereferenceObject( fileObject );
+            if (!SeComputeGrantedAccesses(grantedAccess, FILE_WRITE_DATA))
+            {
+                ObDereferenceObject(fileObject);
                 Status = STATUS_ACCESS_DENIED;
                 goto ReleaseAndExit;
             }
@@ -628,59 +591,60 @@ Return Value:
         // if we cannot access the file as SYSTEM.  This
         // usually occurs if the file is on a remote machine.
         //
-        ServiceQos.Length  = sizeof(SECURITY_QUALITY_OF_SERVICE);
+        ServiceQos.Length = sizeof(SECURITY_QUALITY_OF_SERVICE);
         ServiceQos.ImpersonationLevel = SecurityImpersonation;
         ServiceQos.ContextTrackingMode = SECURITY_DYNAMIC_TRACKING;
         ServiceQos.EffectiveOnly = TRUE;
-        Status = SeCreateClientSecurity(
-                    CONTAINING_RECORD(KeGetCurrentThread(), ETHREAD, Tcb),
-                    &ServiceQos,
-                    FALSE,
-                    & LoggerContext->ClientSecurityContext);
-        if (!NT_SUCCESS(Status)) {
+        Status = SeCreateClientSecurity(CONTAINING_RECORD(KeGetCurrentThread(), ETHREAD, Tcb), &ServiceQos, FALSE,
+                                        &LoggerContext->ClientSecurityContext);
+        if (!NT_SUCCESS(Status))
+        {
             goto ReleaseAndExit;
         }
 
-        if (LoggerInfo->Checksum != NULL) {
-            if (LoggerContext->LoggerHeader == NULL) {
+        if (LoggerInfo->Checksum != NULL)
+        {
+            if (LoggerContext->LoggerHeader == NULL)
+            {
                 LoggerContext->LoggerHeader =
-                    ExAllocatePoolWithTag(
-                        PagedPool,
-                        sizeof(WNODE_HEADER) + sizeof(TRACE_LOGFILE_HEADER),
-                        TRACEPOOLTAG);
+                    ExAllocatePoolWithTag(PagedPool, sizeof(WNODE_HEADER) + sizeof(TRACE_LOGFILE_HEADER), TRACEPOOLTAG);
             }
-            if (LoggerContext->LoggerHeader != NULL) {
-                RtlCopyMemory(
-                    LoggerContext->LoggerHeader,
-                    LoggerInfo->Checksum,
-                    sizeof(WNODE_HEADER) + sizeof(TRACE_LOGFILE_HEADER));
+            if (LoggerContext->LoggerHeader != NULL)
+            {
+                RtlCopyMemory(LoggerContext->LoggerHeader, LoggerInfo->Checksum,
+                              sizeof(WNODE_HEADER) + sizeof(TRACE_LOGFILE_HEADER));
             }
         }
 
         // We try to update the file name using LoggerContext->NewLogFileName.
-        // This is freed by WmipCreateLogFile() in the logger thread. 
-        // This have to be NULL. 
-        if (NewLogFileName.Buffer != NULL) {
-            if (NewMode & EVENT_TRACE_FILE_MODE_NEWFILE) {
-                if (LoggerContext->LogFilePattern.Buffer != NULL) {
+        // This is freed by WmipCreateLogFile() in the logger thread.
+        // This have to be NULL.
+        if (NewLogFileName.Buffer != NULL)
+        {
+            if (NewMode & EVENT_TRACE_FILE_MODE_NEWFILE)
+            {
+                if (LoggerContext->LogFilePattern.Buffer != NULL)
+                {
                     OldFilePattern = LoggerContext->LogFilePattern;
                 }
                 LoggerContext->LogFilePattern = NewLogFileName;
                 LoggerContext->LoggerMode |= EVENT_TRACE_FILE_MODE_NEWFILE;
                 LoggerMode |= EVENT_TRACE_FILE_MODE_NEWFILE;
             }
-            else {
+            else
+            {
                 ASSERT(LoggerContext->NewLogFileName.Buffer == NULL);
                 LoggerContext->NewLogFileName = NewLogFileName;
             }
         }
-        else {
+        else
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto ReleaseAndExit;
         }
 
         //
-        // Reset the event inside the mutex before waiting on it. 
+        // Reset the event inside the mutex before waiting on it.
         //
         KeResetEvent(&LoggerContext->FlushEvent);
 
@@ -692,109 +656,114 @@ Return Value:
 
         // Wake up the logger thread (system) to change the file
         Status = WmipNotifyLogger(LoggerContext);
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto ReleaseAndExit;
         }
 
         // use the same event initialized by start logger
         //
-        KeWaitForSingleObject(
-            &LoggerContext->FlushEvent,
-            Executive,
-            KernelMode,
-            FALSE,
-            &TimeOut
-            );
+        KeWaitForSingleObject(&LoggerContext->FlushEvent, Executive, KernelMode, FALSE, &TimeOut);
 
         KeResetEvent(&LoggerContext->FlushEvent);
         Status = LoggerContext->LoggerStatus;
 
-        if (!NT_SUCCESS(Status) || !LoggerContext->CollectionOn) {
+        if (!NT_SUCCESS(Status) || !LoggerContext->CollectionOn)
+        {
             goto ReleaseAndExit;
         }
 
-        if (bDelayOpenFlag && (LoggerContext->LoggerId == WmipKernelLogger)) {
+        if (bDelayOpenFlag && (LoggerContext->LoggerId == WmipKernelLogger))
+        {
             LONG PerfLogInTransition;
             //
             // This is a update call from advapi32.dll after RunDown.
             // Call PerfInfoStartLog.
             //
 
-            if (EnableFlags & EVENT_TRACE_FLAG_EXTENSION) {
-                FlagExt = (PTRACE_ENABLE_FLAG_EXTENSION) &EnableFlags;
-                if ((FlagExt->Length == 0) || (FlagExt->Offset == 0)) {
+            if (EnableFlags & EVENT_TRACE_FLAG_EXTENSION)
+            {
+                FlagExt = (PTRACE_ENABLE_FLAG_EXTENSION)&EnableFlags;
+                if ((FlagExt->Length == 0) || (FlagExt->Offset == 0))
+                {
                     Status = STATUS_INVALID_PARAMETER;
                     goto ReleaseAndExit;
                 }
-                if ((FlagExt->Length * sizeof(ULONG)) >
-                    (LoggerInfo->Wnode.BufferSize - FlagExt->Offset)) {
+                if ((FlagExt->Length * sizeof(ULONG)) > (LoggerInfo->Wnode.BufferSize - FlagExt->Offset))
+                {
                     Status = STATUS_INVALID_PARAMETER;
                     goto ReleaseAndExit;
                 }
                 GroupMaskSize = FlagExt->Length * sizeof(ULONG);
-                if (GroupMaskSize < sizeof(PERFINFO_GROUPMASK)) {
+                if (GroupMaskSize < sizeof(PERFINFO_GROUPMASK))
+                {
                     GroupMaskSize = sizeof(PERFINFO_GROUPMASK);
                 }
-            } else {
+            }
+            else
+            {
                 GroupMaskSize = sizeof(PERFINFO_GROUPMASK);
             }
 
-            LoggerContext->EnableFlagArray = (PULONG) WmipExtendBase(LoggerContext, GroupMaskSize);
+            LoggerContext->EnableFlagArray = (PULONG)WmipExtendBase(LoggerContext, GroupMaskSize);
 
-            if (LoggerContext->EnableFlagArray) {
+            if (LoggerContext->EnableFlagArray)
+            {
                 PCHAR FlagArray;
 
                 RtlZeroMemory(LoggerContext->EnableFlagArray, GroupMaskSize);
-                if (EnableFlags & EVENT_TRACE_FLAG_EXTENSION) {
-                    FlagArray = (PCHAR) (FlagExt->Offset + (PCHAR) LoggerInfo);
-            
+                if (EnableFlags & EVENT_TRACE_FLAG_EXTENSION)
+                {
+                    FlagArray = (PCHAR)(FlagExt->Offset + (PCHAR)LoggerInfo);
+
                     //
                     // Copy only the bytes actually supplied
                     //
                     RtlCopyMemory(LoggerContext->EnableFlagArray, FlagArray, FlagExt->Length * sizeof(ULONG));
-            
+
                     EnableFlags = LoggerContext->EnableFlagArray[0];
-            
-                } else {
+                }
+                else
+                {
                     LoggerContext->EnableFlagArray[0] = EnableFlags;
                 }
 
-                PerfLogInTransition =
-                    InterlockedCompareExchange(&LoggerContext->PerfLogInTransition,
-                                PERF_LOG_START_TRANSITION,
-                                PERF_LOG_NO_TRANSITION);
-                if (PerfLogInTransition != PERF_LOG_NO_TRANSITION) {
+                PerfLogInTransition = InterlockedCompareExchange(&LoggerContext->PerfLogInTransition,
+                                                                 PERF_LOG_START_TRANSITION, PERF_LOG_NO_TRANSITION);
+                if (PerfLogInTransition != PERF_LOG_NO_TRANSITION)
+                {
                     Status = STATUS_ALREADY_DISCONNECTED;
                     goto ReleaseAndExit;
                 }
-                PerfGroupMasks = (PERFINFO_GROUPMASK *) &LoggerContext->EnableFlagArray[0];
+                PerfGroupMasks = (PERFINFO_GROUPMASK *)&LoggerContext->EnableFlagArray[0];
                 Status = PerfInfoStartLog(PerfGroupMasks, PERFINFO_START_LOG_POST_BOOT);
-                PerfLogInTransition =
-                    InterlockedExchange(&LoggerContext->PerfLogInTransition,
-                                PERF_LOG_NO_TRANSITION);
+                PerfLogInTransition = InterlockedExchange(&LoggerContext->PerfLogInTransition, PERF_LOG_NO_TRANSITION);
                 ASSERT(PerfLogInTransition == PERF_LOG_START_TRANSITION);
 
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
                     goto ReleaseAndExit;
                 }
-
-            } else {
+            }
+            else
+            {
                 Status = STATUS_NO_MEMORY;
                 goto ReleaseAndExit;
             }
-
         }
     }
 
-    if (LoggerContext->KernelTraceOn &&
-        LoggerId == WmipKernelLogger &&
-        IsEqualGUID(&LoggerInfo->Wnode.Guid, &SystemTraceControlGuid)) {
+    if (LoggerContext->KernelTraceOn && LoggerId == WmipKernelLogger &&
+        IsEqualGUID(&LoggerInfo->Wnode.Guid, &SystemTraceControlGuid))
+    {
         TmpFlags = (~LoggerContext->EnableFlags & EnableFlags);
-        if (TmpFlags != 0) {
+        if (TmpFlags != 0)
+        {
             WmipEnableKernelTrace(TmpFlags);
         }
         TmpFlags = (LoggerContext->EnableFlags & ~EnableFlags);
-        if (TmpFlags != 0) {
+        if (TmpFlags != 0)
+        {
             WmipDisableKernelTrace(TmpFlags);
         }
         LoggerContext->EnableFlags = EnableFlags;
@@ -804,88 +773,91 @@ Return Value:
     // Cap Maximum Buffers to Max_Buffers
     //
 
-    if ( LoggerInfo->MaximumBuffers > 0 ) {
-        Max_Buffers = (LoggerContext->BufferSize > 0) ? 
-                           (ULONG) (MmMaximumNonPagedPoolInBytes
-                            / TRACE_MAXIMUM_NP_POOL_USAGE
-                            / LoggerContext->BufferSize)
-                        : 0;
+    if (LoggerInfo->MaximumBuffers > 0)
+    {
+        Max_Buffers =
+            (LoggerContext->BufferSize > 0)
+                ? (ULONG)(MmMaximumNonPagedPoolInBytes / TRACE_MAXIMUM_NP_POOL_USAGE / LoggerContext->BufferSize)
+                : 0;
 
-        if (LoggerInfo->MaximumBuffers > Max_Buffers ) {
+        if (LoggerInfo->MaximumBuffers > Max_Buffers)
+        {
             LoggerInfo->MaximumBuffers = Max_Buffers;
         }
-        if (LoggerInfo->MaximumBuffers > LoggerContext->MaximumBuffers) {
+        if (LoggerInfo->MaximumBuffers > LoggerContext->MaximumBuffers)
+        {
             LoggerContext->MaximumBuffers = LoggerInfo->MaximumBuffers;
         }
-
     }
 
 #ifdef NTPERF
-    if (PERFINFO_IS_LOGGING_TO_PERFMEM()) {
+    if (PERFINFO_IS_LOGGING_TO_PERFMEM())
+    {
         //
         // Logging to Perfmem.  The Maximum should be the perfmem size.
         //
-        LoggerContext->MaximumBuffers = PerfQueryBufferSizeBytes()/LoggerContext->BufferSize;
+        LoggerContext->MaximumBuffers = PerfQueryBufferSizeBytes() / LoggerContext->BufferSize;
     }
 #endif //NTPERF
 
     // Allow changing of FlushTimer
-    if (LoggerInfo->FlushTimer > 0) {
+    if (LoggerInfo->FlushTimer > 0)
+    {
 #ifdef WMI_NON_BLOCKING
         LoggerContext->FlushTimer = LoggerInfo->FlushTimer;
 #else
-        LoggerContext->FlushTimer.QuadPart =
-            LoggerInfo->FlushTimer * OneSecond.QuadPart;
+        LoggerContext->FlushTimer.QuadPart = LoggerInfo->FlushTimer * OneSecond.QuadPart;
 #endif //WMI_NON_BLOCKING
     }
 
-    if (OldFilePattern.Buffer != NULL) {
+    if (OldFilePattern.Buffer != NULL)
+    {
         RtlFreeUnicodeString(&OldFilePattern);
     }
 
-    if (NewMode & EVENT_TRACE_KD_FILTER_MODE) {
+    if (NewMode & EVENT_TRACE_KD_FILTER_MODE)
+    {
         LoggerMode |= EVENT_TRACE_KD_FILTER_MODE;
         LoggerContext->BufferCallback = &KdReportTraceData;
     }
-    else {
+    else
+    {
         LoggerMode &= ~EVENT_TRACE_KD_FILTER_MODE;
-        if (LoggerContext->BufferCallback == &KdReportTraceData) {
+        if (LoggerContext->BufferCallback == &KdReportTraceData)
+        {
             LoggerContext->BufferCallback = NULL;
         }
     }
-    if (LoggerContext->LoggerMode & EVENT_TRACE_DELAY_OPEN_FILE_MODE) {
+    if (LoggerContext->LoggerMode & EVENT_TRACE_DELAY_OPEN_FILE_MODE)
+    {
         LoggerContext->LoggerMode = LoggerMode;
     }
-    else {
-        LoggerContext->LoggerMode = 
-            (LoggerMode & ~EVENT_TRACE_DELAY_OPEN_FILE_MODE);
+    else
+    {
+        LoggerContext->LoggerMode = (LoggerMode & ~EVENT_TRACE_DELAY_OPEN_FILE_MODE);
     }
     Status = WmipQueryLogger(LoggerInfo, LoggerContext);
 
 ReleaseAndExit:
 #ifndef WMI_MUTEX_FREE
     InterlockedDecrement(&LoggerContext->MutexCount);
-    TraceDebug((1, "WmiUpdateTrace: Release mutex5 %d %d\n",
-        LoggerId, LoggerContext->MutexCount));
+    TraceDebug((1, "WmiUpdateTrace: Release mutex5 %d %d\n", LoggerId, LoggerContext->MutexCount));
     WmipReleaseMutex(&LoggerContext->LoggerMutex);
 #endif
 
 #if DBG
     RefCount =
 #endif
-    WmipDereferenceLogger(LoggerId);
-    TraceDebug((1, "WmiUpdateTrace: %d %d->%d\n",
-                    LoggerId, RefCount+1, RefCount));
+        WmipDereferenceLogger(LoggerId);
+    TraceDebug((1, "WmiUpdateTrace: %d %d->%d\n", LoggerId, RefCount + 1, RefCount));
 
     return Status;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-WmiFlushTrace(
-    IN OUT PWMI_LOGGER_INFORMATION LoggerInfo
-    )
+WmiFlushTrace(IN OUT PWMI_LOGGER_INFORMATION LoggerInfo)
 /*++
 
 Routine Description:
@@ -907,9 +879,9 @@ Return Value:
 {
     NTSTATUS Status;
     PWMI_LOGGER_CONTEXT LoggerContext = NULL;
-    ULONG           LoggerId;
+    ULONG LoggerId;
 #if DBG
-    LONG            RefCount;
+    LONG RefCount;
 #endif
 
     PAGED_CODE();
@@ -921,8 +893,7 @@ Return Value:
     if (LoggerInfo == NULL)
         return STATUS_INVALID_PARAMETER;
 
-    TraceDebug((1, "WmiFlushTrace: %d\n",
-                    LoggerInfo->Wnode.HistoricalContext));
+    TraceDebug((1, "WmiFlushTrace: %d\n", LoggerInfo->Wnode.HistoricalContext));
 #if DBG
     Status = WmipVerifyLoggerInfo(LoggerInfo, &LoggerContext, "WmiFlushTrace");
 #else
@@ -933,21 +904,20 @@ Return Value:
 
     LoggerId = LoggerContext->LoggerId;
     Status = WmipFlushLogger(LoggerContext, TRUE);
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         Status = WmipQueryLogger(LoggerInfo, LoggerContext);
     }
 #ifndef WMI_MUTEX_FREE
     InterlockedDecrement(&LoggerContext->MutexCount);
-    TraceDebug((1, "WmiFlushTrace: Release mutex %d %d\n",
-        LoggerContext->LoggerId, LoggerContext->MutexCount));
+    TraceDebug((1, "WmiFlushTrace: Release mutex %d %d\n", LoggerContext->LoggerId, LoggerContext->MutexCount));
     WmipReleaseMutex(&LoggerContext->LoggerMutex);
 #endif
 #if DBG
     RefCount =
 #endif
-    WmipDereferenceLogger(LoggerId);
-    TraceDebug((1, "WmiFlushTrace: %d %d->%d\n",
-                    LoggerId, RefCount+1, RefCount));
+        WmipDereferenceLogger(LoggerId);
+    TraceDebug((1, "WmiFlushTrace: %d %d->%d\n", LoggerId, RefCount + 1, RefCount));
 
     return Status;
 }
@@ -958,10 +928,7 @@ Return Value:
 NTKERNELAPI
 NTSTATUS
 FASTCALL
-WmiGetClockType(
-    IN TRACEHANDLE LoggerHandle,
-    OUT WMI_CLOCK_TYPE  *ClockType
-    )
+WmiGetClockType(IN TRACEHANDLE LoggerHandle, OUT WMI_CLOCK_TYPE *ClockType)
 /*++
 
 Routine Description:
@@ -980,60 +947,57 @@ Return Value:
 --*/
 
 {
-    ULONG   LoggerId;
+    ULONG LoggerId;
 #if DBG
-    LONG    RefCount;
+    LONG RefCount;
 #endif
     PWMI_LOGGER_CONTEXT LoggerContext;
 
     LoggerId = WmiGetLoggerId(LoggerHandle);
     if (LoggerId < 1 || LoggerId >= MAXLOGGERS)
-       return STATUS_INVALID_HANDLE;
+        return STATUS_INVALID_HANDLE;
 #if DBG
- RefCount =
+    RefCount =
 #endif
-    WmipReferenceLogger(LoggerId);
-    TraceDebug((4, "WmiGetClockType: %d %d->%d\n",
-                 LoggerId, RefCount-1, RefCount));
+        WmipReferenceLogger(LoggerId);
+    TraceDebug((4, "WmiGetClockType: %d %d->%d\n", LoggerId, RefCount - 1, RefCount));
 
-    LoggerContext = WmipGetLoggerContext( LoggerId );
-    if (!WmipIsValidLogger(LoggerContext)) {
+    LoggerContext = WmipGetLoggerContext(LoggerId);
+    if (!WmipIsValidLogger(LoggerContext))
+    {
 #if DBG
         RefCount =
 #endif
-        WmipDereferenceLogger(LoggerId);
-        TraceDebug((4, "WmiGetClockType: Status=%X %d %d->%d\n",
-                        STATUS_WMI_INSTANCE_NOT_FOUND,
-                        LoggerId, RefCount+1, RefCount));
+            WmipDereferenceLogger(LoggerId);
+        TraceDebug((4, "WmiGetClockType: Status=%X %d %d->%d\n", STATUS_WMI_INSTANCE_NOT_FOUND, LoggerId, RefCount + 1,
+                    RefCount));
         return STATUS_WMI_INSTANCE_NOT_FOUND;
     }
 
-    *ClockType = WMICT_SYSTEMTIME;    // Default Clock Type
+    *ClockType = WMICT_SYSTEMTIME; // Default Clock Type
 
-    if (LoggerContext->UsePerfClock & EVENT_TRACE_CLOCK_PERFCOUNTER) {
+    if (LoggerContext->UsePerfClock & EVENT_TRACE_CLOCK_PERFCOUNTER)
+    {
         *ClockType = WMICT_PERFCOUNTER;
     }
-    else if (LoggerContext->UsePerfClock & EVENT_TRACE_CLOCK_CPUCYCLE) {
+    else if (LoggerContext->UsePerfClock & EVENT_TRACE_CLOCK_CPUCYCLE)
+    {
         *ClockType = WMICT_CPUCYCLE;
     }
 
 #if DBG
     RefCount =
 #endif
-    WmipDereferenceLogger(LoggerId);
+        WmipDereferenceLogger(LoggerId);
 
     return STATUS_SUCCESS;
-
 }
 
-
+
 NTKERNELAPI
 LONG64
 FASTCALL
-WmiGetClock(
-    IN WMI_CLOCK_TYPE ClockType,
-    IN PVOID Context
-    )
+WmiGetClock(IN WMI_CLOCK_TYPE ClockType, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1056,62 +1020,62 @@ Return Value:
 {
     LARGE_INTEGER Clock;
 
-    switch (ClockType) {
-        case WMICT_DEFAULT :
-            Clock.QuadPart = (*WmiGetCpuClock)();
-            break;
-        case WMICT_SYSTEMTIME:
-            Clock.QuadPart = WmipGetSystemTime();
-            break;
-        case WMICT_PERFCOUNTER:
-            Clock.QuadPart = WmipGetPerfCounter();
-            break;
-        case WMICT_PROCESS :  // defaults to Process times for now
+    switch (ClockType)
+    {
+    case WMICT_DEFAULT:
+        Clock.QuadPart = (*WmiGetCpuClock)();
+        break;
+    case WMICT_SYSTEMTIME:
+        Clock.QuadPart = WmipGetSystemTime();
+        break;
+    case WMICT_PERFCOUNTER:
+        Clock.QuadPart = WmipGetPerfCounter();
+        break;
+    case WMICT_PROCESS: // defaults to Process times for now
+    {
+        PEPROCESS Process = (PEPROCESS)Context;
+        if (Process == NULL)
+            Process = PsGetCurrentProcess();
+        else
         {
-            PEPROCESS Process = (PEPROCESS) Context;
-            if (Process == NULL)
-                Process = PsGetCurrentProcess();
-            else {
-                ObReferenceObject(Process);
-            }
-            Clock.HighPart = Process->Pcb.KernelTime;
-            Clock.LowPart  = Process->Pcb.UserTime;
-            if (Context) {
-                ObDereferenceObject(Process);
-            }
-            break;
+            ObReferenceObject(Process);
         }
-        case WMICT_THREAD  :  // defaults to Thread times for now
+        Clock.HighPart = Process->Pcb.KernelTime;
+        Clock.LowPart = Process->Pcb.UserTime;
+        if (Context)
         {
-            PETHREAD Thread = (PETHREAD) Context;
-            if (Thread == NULL)
-                Thread = PsGetCurrentThread();
-            else {
-                ObReferenceObject(Thread);
-            }
-            Clock.HighPart = Thread->Tcb.KernelTime;
-            Clock.LowPart  = Thread->Tcb.UserTime;
-            if (Context) {
-                ObDereferenceObject(Thread);
-            }
-            break;
+            ObDereferenceObject(Process);
         }
-        default :
-            KeQuerySystemTime(&Clock);
+        break;
     }
-    return ((LONG64) Clock.QuadPart);
+    case WMICT_THREAD: // defaults to Thread times for now
+    {
+        PETHREAD Thread = (PETHREAD)Context;
+        if (Thread == NULL)
+            Thread = PsGetCurrentThread();
+        else
+        {
+            ObReferenceObject(Thread);
+        }
+        Clock.HighPart = Thread->Tcb.KernelTime;
+        Clock.LowPart = Thread->Tcb.UserTime;
+        if (Context)
+        {
+            ObDereferenceObject(Thread);
+        }
+        break;
+    }
+    default:
+        KeQuerySystemTime(&Clock);
+    }
+    return ((LONG64)Clock.QuadPart);
 }
 
-
+
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
-NtTraceEvent(
-    IN HANDLE TraceHandle,
-    IN ULONG  Flags,
-    IN ULONG  FieldSize,
-    IN PVOID  Fields
-    )
+NtTraceEvent(IN HANDLE TraceHandle, IN ULONG Flags, IN ULONG FieldSize, IN PVOID Fields)
 /*++
 Routine Description:
 
@@ -1132,20 +1096,25 @@ Return Value:
 --*/
 {
     NTSTATUS Status;
-    if (Flags & ETW_NT_FLAGS_TRACE_HEADER) {
-retry:
+    if (Flags & ETW_NT_FLAGS_TRACE_HEADER)
+    {
+    retry:
         Status = WmiTraceEvent((PWNODE_HEADER)Fields, KeGetPreviousMode());
-        if (Status == STATUS_NO_MEMORY) {
+        if (Status == STATUS_NO_MEMORY)
+        {
             //
             // This logging is from user mode, try to allocate more buffer.
             //
-            PWNODE_HEADER Wnode = (PWNODE_HEADER) Fields;
+            PWNODE_HEADER Wnode = (PWNODE_HEADER)Fields;
             ULONG LoggerId = WmiGetLoggerId(Wnode->HistoricalContext);
             PWMI_LOGGER_CONTEXT LoggerContext;
 
-            if (LoggerId < 1 || LoggerId >= MAXLOGGERS) {
+            if (LoggerId < 1 || LoggerId >= MAXLOGGERS)
+            {
                 Status = STATUS_INVALID_HANDLE;
-            } else {
+            }
+            else
+            {
                 WmipReferenceLogger(LoggerId);
 
                 LoggerContext = WmipGetLoggerContext(LoggerId);
@@ -1155,14 +1124,16 @@ retry:
                 // free buffers.  This makes sure that logger thread
                 // can free all allocated buffers.
                 //
-                if (WmipIsValidLogger(LoggerContext) && 
-                                LoggerContext->CollectionOn) 
+                if (WmipIsValidLogger(LoggerContext) && LoggerContext->CollectionOn)
                 {
-                    if (WmipAllocateFreeBuffers (LoggerContext, 1) == 1) {
+                    if (WmipAllocateFreeBuffers(LoggerContext, 1) == 1)
+                    {
                         WmipDereferenceLogger(LoggerId);
                         InterlockedDecrement((PLONG)&LoggerContext->EventsLost);
                         goto retry;
-                    } else {
+                    }
+                    else
+                    {
                         Status = STATUS_NO_MEMORY;
                     }
                 }
@@ -1170,43 +1141,39 @@ retry:
             }
         }
     }
-    else if (Flags & ETW_NT_FLAGS_TRACE_MESSAGE) {
-        if (FieldSize < sizeof(MESSAGE_TRACE_USER)) {
+    else if (Flags & ETW_NT_FLAGS_TRACE_MESSAGE)
+    {
+        if (FieldSize < sizeof(MESSAGE_TRACE_USER))
+        {
             return (STATUS_UNSUCCESSFUL);
         }
-        try {
-            ProbeForRead(
-                    Fields,
-                    FieldSize,
-                    sizeof (UCHAR)
-                    );
-            return (WmiTraceMessage((TRACEHANDLE)TraceHandle,
-                                    ((PMESSAGE_TRACE_USER)Fields)->MessageFlags,
+        try
+        {
+            ProbeForRead(Fields, FieldSize, sizeof(UCHAR));
+            return (WmiTraceMessage((TRACEHANDLE)TraceHandle, ((PMESSAGE_TRACE_USER)Fields)->MessageFlags,
                                     &((PMESSAGE_TRACE_USER)Fields)->MessageGuid,
                                     ((PMESSAGE_TRACE_USER)Fields)->MessageHeader.Packet.MessageNumber,
-                                    &((PMESSAGE_TRACE_USER)Fields)->Data,
-                                    ((PMESSAGE_TRACE_USER)Fields)->DataSize,
-                                    NULL,0));
-
-        } except  (EXCEPTION_EXECUTE_HANDLER) {
+                                    &((PMESSAGE_TRACE_USER)Fields)->Data, ((PMESSAGE_TRACE_USER)Fields)->DataSize, NULL,
+                                    0));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             TraceDebug((1, "NtTraceEvent: (ETW_NT_FLAGS_TRACE_MESSAGE) Status=EXCEPTION\n"));
             return GetExceptionCode();
         }
     }
-    else {
+    else
+    {
         Status = STATUS_INVALID_PARAMETER;
     }
     return Status;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
 FASTCALL
-WmiTraceEvent(
-    IN PWNODE_HEADER Wnode,
-    IN KPROCESSOR_MODE RequestorMode
-    )
+WmiTraceEvent(IN PWNODE_HEADER Wnode, IN KPROCESSOR_MODE RequestorMode)
 /*++
 
 Routine Description:
@@ -1229,7 +1196,7 @@ Return Value:
 
 --*/
 {
-    PEVENT_TRACE_HEADER TraceRecord = (PEVENT_TRACE_HEADER) Wnode;
+    PEVENT_TRACE_HEADER TraceRecord = (PEVENT_TRACE_HEADER)Wnode;
     ULONG WnodeSize, Size, LoggerId, Flags, HeaderSize;
     PWMI_BUFFER_HEADER BufferResource = NULL;
     NTSTATUS Status;
@@ -1246,48 +1213,48 @@ Return Value:
     if (TraceRecord == NULL)
         return STATUS_SEVERITY_WARNING;
 
-    try {
+    try
+    {
 
-        HeaderSize = sizeof(WNODE_HEADER);  // same size as EVENT_TRACE_HEADER
-        if (RequestorMode != KernelMode) {
-            ProbeForRead(
-                TraceRecord,
-                sizeof (EVENT_TRACE_HEADER),
-                sizeof (UCHAR)
-                );
+        HeaderSize = sizeof(WNODE_HEADER); // same size as EVENT_TRACE_HEADER
+        if (RequestorMode != KernelMode)
+        {
+            ProbeForRead(TraceRecord, sizeof(EVENT_TRACE_HEADER), sizeof(UCHAR));
 
-            Marker = Wnode->BufferSize;     // check the first DWORD flags
+            Marker = Wnode->BufferSize; // check the first DWORD flags
             Size = Marker;
 
-            if (Marker & TRACE_HEADER_FLAG) {
-                if ( ((Marker & TRACE_HEADER_ENUM_MASK) >> 16)
-                        == TRACE_HEADER_TYPE_INSTANCE )
+            if (Marker & TRACE_HEADER_FLAG)
+            {
+                if (((Marker & TRACE_HEADER_ENUM_MASK) >> 16) == TRACE_HEADER_TYPE_INSTANCE)
                     HeaderSize = sizeof(EVENT_INSTANCE_HEADER);
                 Size = TraceRecord->Size;
             }
         }
-        else {
-            Size = Wnode->BufferSize;     // take the first DWORD flags
+        else
+        {
+            Size = Wnode->BufferSize; // take the first DWORD flags
             Marker = Size;
-            if (Marker & TRACE_HEADER_FLAG) {
-                if ( ((Marker & TRACE_HEADER_ENUM_MASK) >> 16)
-                        == TRACE_HEADER_TYPE_INSTANCE )
+            if (Marker & TRACE_HEADER_FLAG)
+            {
+                if (((Marker & TRACE_HEADER_ENUM_MASK) >> 16) == TRACE_HEADER_TYPE_INSTANCE)
                     HeaderSize = sizeof(EVENT_INSTANCE_HEADER);
                 Size = TraceRecord->Size;
             }
         }
-        WnodeSize = Size;           // WnodeSize is for the contiguous block
-                                    // Size is for what we want in buffer
+        WnodeSize = Size; // WnodeSize is for the contiguous block
+                          // Size is for what we want in buffer
 
         Flags = Wnode->Flags;
-        if (!(Flags & WNODE_FLAG_LOG_WNODE) &&
-            !(Flags & WNODE_FLAG_TRACED_GUID)) {
+        if (!(Flags & WNODE_FLAG_LOG_WNODE) && !(Flags & WNODE_FLAG_TRACED_GUID))
+        {
             Status = STATUS_UNSUCCESSFUL;
             goto ErrorReturn;
         }
 
         LoggerId = WmiGetLoggerId(Wnode->HistoricalContext);
-        if (LoggerId < 1 || LoggerId >= MAXLOGGERS) {
+        if (LoggerId < 1 || LoggerId >= MAXLOGGERS)
+        {
             Status = STATUS_INVALID_HANDLE;
             goto ErrorReturn;
         }
@@ -1296,31 +1263,31 @@ Return Value:
 #if DBG
         RefCount = LoggerLocked;
 #endif
-        TraceDebug((4, "WmiTraceEvent: %d %d->%d\n",
-                        LoggerId, RefCount-1, RefCount));
+        TraceDebug((4, "WmiTraceEvent: %d %d->%d\n", LoggerId, RefCount - 1, RefCount));
         LoggerContext = WmipGetLoggerContext(LoggerId);
-        if (!WmipIsValidLogger(LoggerContext)) {
+        if (!WmipIsValidLogger(LoggerContext))
+        {
 #if DBG
             RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
-            TraceDebug((4, "WmiTraceEvent: Status1=%X %d %d->%d\n",
-                            STATUS_INVALID_HANDLE, LoggerId,
-                            RefCount+1, RefCount));
+                WmipDereferenceLogger(LoggerId);
+            TraceDebug(
+                (4, "WmiTraceEvent: Status1=%X %d %d->%d\n", STATUS_INVALID_HANDLE, LoggerId, RefCount + 1, RefCount));
             Status = STATUS_INVALID_HANDLE;
             goto ErrorReturn;
         }
 
-        if ((RequestorMode == KernelMode) &&
-            (LoggerContext->LoggerMode & EVENT_TRACE_USE_PAGED_MEMORY)) {
+        if ((RequestorMode == KernelMode) && (LoggerContext->LoggerMode & EVENT_TRACE_USE_PAGED_MEMORY))
+        {
             return STATUS_UNSUCCESSFUL;
         }
 
-        if (Flags & WNODE_FLAG_USE_MOF_PTR) {
-        //
-        // Need to compute the total size required, since the MOF fields
-        // in Wnode merely contains pointers
-        //
+        if (Flags & WNODE_FLAG_USE_MOF_PTR)
+        {
+            //
+            // Need to compute the total size required, since the MOF fields
+            // in Wnode merely contains pointers
+            //
             long i;
             PCHAR Offset = ((PCHAR)Wnode) + HeaderSize;
             ULONG MofSize, MaxSize;
@@ -1328,163 +1295,174 @@ Return Value:
             MaxSize = LoggerContext->BufferSize - sizeof(WMI_BUFFER_HEADER);
             MofSize = WnodeSize - HeaderSize;
             // allow only the maximum
-            if (MofSize > (sizeof(MOF_FIELD) * MAX_MOF_FIELDS)) {
+            if (MofSize > (sizeof(MOF_FIELD) * MAX_MOF_FIELDS))
+            {
                 WmipDereferenceLogger(LoggerId);
                 return STATUS_ARRAY_BOUNDS_EXCEEDED;
             }
-            if (MofSize > 0) {               // Make sure we can read the rest
-                if (RequestorMode != KernelMode) {
-                    ProbeForRead( Offset, MofSize, sizeof (UCHAR) );
+            if (MofSize > 0)
+            { // Make sure we can read the rest
+                if (RequestorMode != KernelMode)
+                {
+                    ProbeForRead(Offset, MofSize, sizeof(UCHAR));
                 }
                 RtlCopyMemory(MofFields, Offset, MofSize);
             }
             Size = HeaderSize;
 
             MofCount = MofSize / sizeof(MOF_FIELD);
-            for (i=0; i<MofCount; i++) {
+            for (i = 0; i < MofCount; i++)
+            {
                 MofSize = MofFields[i].Length;
-                if (MofSize >= (MaxSize - Size)) {  // check for overflow first
+                if (MofSize >= (MaxSize - Size))
+                { // check for overflow first
 #if DBG
                     RefCount =
 #endif
-                    WmipDereferenceLogger(LoggerId);
-                    TraceDebug((4, "WmiTraceEvent: Status2=%X %d %d->%d\n",
-                                    STATUS_BUFFER_OVERFLOW, LoggerId,
-                                    RefCount+1, RefCount));
+                        WmipDereferenceLogger(LoggerId);
+                    TraceDebug((4, "WmiTraceEvent: Status2=%X %d %d->%d\n", STATUS_BUFFER_OVERFLOW, LoggerId,
+                                RefCount + 1, RefCount));
                     Status = STATUS_BUFFER_OVERFLOW;
                     goto ErrorReturn;
                 }
 
                 Size += MofSize;
-//                if ( (Size > MaxSize) || (Size < MofSize) )
-//                    return STATUS_BUFFER_OVERFLOW;
+                //                if ( (Size > MaxSize) || (Size < MofSize) )
+                //                    return STATUS_BUFFER_OVERFLOW;
             }
         }
 
-        if ( (Size > LoggerContext->BufferSize - sizeof(WMI_BUFFER_HEADER)) || 
-             ( (Flags & WNODE_FLAG_TRACED_GUID) && (Size > 0xFFFF)) ) {
+        if ((Size > LoggerContext->BufferSize - sizeof(WMI_BUFFER_HEADER)) ||
+            ((Flags & WNODE_FLAG_TRACED_GUID) && (Size > 0xFFFF)))
+        {
             LoggerContext->EventsLost++;
 #ifndef WMI_NON_BLOCKING
-            LoggerContext->ProcessorBuffers[KeGetCurrentProcessorNumber()]
-                            ->EventsLost++;
+            LoggerContext->ProcessorBuffers[KeGetCurrentProcessorNumber()]->EventsLost++;
 #endif //WMI_NON_BLOCKING
 #if DBG
             RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
-            TraceDebug((4, "WmiTraceEvent: Status3=%X %d %d->%d\n",
-                            STATUS_BUFFER_OVERFLOW, LoggerId,
-                            RefCount+1, RefCount));
+                WmipDereferenceLogger(LoggerId);
+            TraceDebug(
+                (4, "WmiTraceEvent: Status3=%X %d %d->%d\n", STATUS_BUFFER_OVERFLOW, LoggerId, RefCount + 1, RefCount));
             Status = STATUS_BUFFER_OVERFLOW;
             goto ErrorReturn;
         }
 
         if ((LoggerContext->LoggerMode & EVENT_TRACE_FILE_MODE_CIRCULAR) &&
-            (LoggerContext->RequestFlag & REQUEST_FLAG_CIRCULAR_PERSIST)) {
-            if (! (Flags & WNODE_FLAG_PERSIST_EVENT) ) {
-                ULONG RequestFlag = LoggerContext->RequestFlag
-                                  & (~ (  REQUEST_FLAG_CIRCULAR_PERSIST
-                                        | REQUEST_FLAG_CIRCULAR_TRANSITION));
+            (LoggerContext->RequestFlag & REQUEST_FLAG_CIRCULAR_PERSIST))
+        {
+            if (!(Flags & WNODE_FLAG_PERSIST_EVENT))
+            {
+                ULONG RequestFlag =
+                    LoggerContext->RequestFlag & (~(REQUEST_FLAG_CIRCULAR_PERSIST | REQUEST_FLAG_CIRCULAR_TRANSITION));
 
-                if (InterlockedCompareExchange(
-                              (PLONG) &LoggerContext->RequestFlag,
-                              RequestFlag | REQUEST_FLAG_CIRCULAR_TRANSITION,
-                              RequestFlag | REQUEST_FLAG_CIRCULAR_PERSIST)) {
+                if (InterlockedCompareExchange((PLONG)&LoggerContext->RequestFlag,
+                                               RequestFlag | REQUEST_FLAG_CIRCULAR_TRANSITION,
+                                               RequestFlag | REQUEST_FLAG_CIRCULAR_PERSIST))
+                {
 
                     // All persistence events are fired in circular
                     // logfile, flush out all active buffers and flushlist
                     // buffers. Also mark the end of persistence event
                     // collection in circular logger.
                     //
-                    // It is the provider's resposibility to ensure that 
+                    // It is the provider's resposibility to ensure that
                     // no persist event fires after this point. If it did,
                     // that event may be  overwritten during wrap around.
                     //
-                    if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+                    if (KeGetCurrentIrql() < DISPATCH_LEVEL)
+                    {
                         Status = WmipFlushLogger(LoggerContext, TRUE);
                     }
                 }
             }
         }
 
-// So, now reserve some space in logger buffer and set that to TraceRecord
+        // So, now reserve some space in logger buffer and set that to TraceRecord
 
-        TraceRecord = (PEVENT_TRACE_HEADER)
-            WmipReserveTraceBuffer(
-                LoggerContext,
-                Size,
-                &BufferResource
-                );
+        TraceRecord = (PEVENT_TRACE_HEADER)WmipReserveTraceBuffer(LoggerContext, Size, &BufferResource);
 
-        if (TraceRecord == NULL) {
+        if (TraceRecord == NULL)
+        {
 #if DBG
-        RefCount =
+            RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
-            TraceDebug((4, "WmiTraceEvent: Status4=%X %d %d->%d\n",
-                            STATUS_NO_MEMORY, LoggerId,
-                            RefCount+1, RefCount));
+                WmipDereferenceLogger(LoggerId);
+            TraceDebug(
+                (4, "WmiTraceEvent: Status4=%X %d %d->%d\n", STATUS_NO_MEMORY, LoggerId, RefCount + 1, RefCount));
             Status = STATUS_NO_MEMORY;
             goto ErrorReturn;
         }
 
-        if (Flags & WNODE_FLAG_USE_MOF_PTR) {
-        //
-        // Now we need to probe and copy all the MOF data fields
-        //
+        if (Flags & WNODE_FLAG_USE_MOF_PTR)
+        {
+            //
+            // Now we need to probe and copy all the MOF data fields
+            //
             PVOID MofPtr;
             ULONG MofLen;
             long i;
-            PCHAR TraceOffset = (PCHAR) TraceRecord + HeaderSize;
+            PCHAR TraceOffset = (PCHAR)TraceRecord + HeaderSize;
 
-            if (RequestorMode != KernelMode) {
+            if (RequestorMode != KernelMode)
+            {
                 ProbeForRead(Wnode, HeaderSize, sizeof(UCHAR));
             }
             RtlCopyMemory(TraceRecord, Wnode, HeaderSize);
-            TraceRecord->Size = (USHORT)Size;           // reset to Total Size
-            for (i=0; i<MofCount; i++) {
-                MofPtr = (PVOID) MofFields[i].DataPtr;
+            TraceRecord->Size = (USHORT)Size; // reset to Total Size
+            for (i = 0; i < MofCount; i++)
+            {
+                MofPtr = (PVOID)MofFields[i].DataPtr;
                 MofLen = MofFields[i].Length;
 
                 if (MofPtr == NULL || MofLen == 0)
                     continue;
 
-                if (RequestorMode != KernelMode) {
+                if (RequestorMode != KernelMode)
+                {
                     ProbeForRead(MofPtr, MofLen, sizeof(UCHAR));
                 }
                 RtlCopyMemory(TraceOffset, MofPtr, MofLen);
                 TraceOffset += MofLen;
             }
         }
-        else {
-            if (RequestorMode != KernelMode) {
+        else
+        {
+            if (RequestorMode != KernelMode)
+            {
                 ProbeForRead(Wnode, Size, sizeof(UCHAR));
             }
             RtlCopyMemory(TraceRecord, Wnode, Size);
         }
-        if (Flags & WNODE_FLAG_USE_GUID_PTR) {
-            PVOID GuidPtr = (PVOID) ((PEVENT_TRACE_HEADER)Wnode)->GuidPtr;
+        if (Flags & WNODE_FLAG_USE_GUID_PTR)
+        {
+            PVOID GuidPtr = (PVOID)((PEVENT_TRACE_HEADER)Wnode)->GuidPtr;
 
-            if (RequestorMode != KernelMode) {
+            if (RequestorMode != KernelMode)
+            {
                 ProbeForReadSmallStructure(GuidPtr, sizeof(GUID), sizeof(UCHAR));
             }
             RtlCopyMemory(&TraceRecord->Guid, GuidPtr, sizeof(GUID));
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        if (BufferResource != NULL) {
-            WmipReleaseTraceBuffer ( BufferResource, LoggerContext );
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (BufferResource != NULL)
+        {
+            WmipReleaseTraceBuffer(BufferResource, LoggerContext);
         }
-        else {
-            if (LoggerLocked) {
+        else
+        {
+            if (LoggerLocked)
+            {
 #if DBG
                 RefCount =
 #endif
-                WmipDereferenceLogger(LoggerId);
+                    WmipDereferenceLogger(LoggerId);
             }
         }
-        TraceDebug((4, "WmiTraceEvent: Status5=EXCEPTION %d %d->%d\n",
-                        LoggerId, RefCount+1, RefCount));
+        TraceDebug((4, "WmiTraceEvent: Status5=EXCEPTION %d %d->%d\n", LoggerId, RefCount + 1, RefCount));
         return GetExceptionCode();
     }
 
@@ -1492,37 +1470,38 @@ Return Value:
     // By now, we have reserved space in the trace buffer
     //
 
-    if (Marker & TRACE_HEADER_FLAG) {
-        if (! (WNODE_FLAG_USE_TIMESTAMP & TraceRecord->Flags) ) {
+    if (Marker & TRACE_HEADER_FLAG)
+    {
+        if (!(WNODE_FLAG_USE_TIMESTAMP & TraceRecord->Flags))
+        {
             TraceRecord->TimeStamp.QuadPart = (*LoggerContext->GetCpuClock)();
         }
         Thread = PsGetCurrentThread();
-        if (Thread != NULL) {
+        if (Thread != NULL)
+        {
             TraceRecord->KernelTime = Thread->Tcb.KernelTime;
-            TraceRecord->UserTime   = Thread->Tcb.UserTime;
-            TraceRecord->ThreadId   = HandleToUlong(Thread->Cid.UniqueThread);
-            TraceRecord->ProcessId  = HandleToUlong(Thread->Cid.UniqueProcess);
+            TraceRecord->UserTime = Thread->Tcb.UserTime;
+            TraceRecord->ThreadId = HandleToUlong(Thread->Cid.UniqueThread);
+            TraceRecord->ProcessId = HandleToUlong(Thread->Cid.UniqueProcess);
         }
     }
 
-    WmipReleaseTraceBuffer( BufferResource, LoggerContext );
-    TraceDebug((4, "WmiTraceEvent: %d %d->%d\n",
-                    LoggerId, RefCount+1, RefCount));
+    WmipReleaseTraceBuffer(BufferResource, LoggerContext);
+    TraceDebug((4, "WmiTraceEvent: %d %d->%d\n", LoggerId, RefCount + 1, RefCount));
 
     return STATUS_SUCCESS;
 
-  ErrorReturn:
+ErrorReturn:
     return Status;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-WmiTraceKernelEvent(
-    IN ULONG GroupType,         // Group/type code for kernel event
-    IN PVOID EventInfo,         // Event data as defined in MOF
-    IN ULONG EventInfoLen,      // Length of the event data
-    IN PETHREAD Thread )        // use NULL for current caller thread
+WmiTraceKernelEvent(IN ULONG GroupType,    // Group/type code for kernel event
+                    IN PVOID EventInfo,    // Event data as defined in MOF
+                    IN ULONG EventInfoLen, // Length of the event data
+                    IN PETHREAD Thread)    // use NULL for current caller thread
 /*++
 
 Routine Description:
@@ -1557,89 +1536,83 @@ Return Value:
     PWMI_BUFFER_HEADER BufferResource = NULL;
     PWMI_LOGGER_CONTEXT LoggerContext = WmipLoggerContext[WmipKernelLogger];
 #if DBG
-    LONG    RefCount;
+    LONG RefCount;
 #endif
 
 #if DBG
     RefCount =
 #endif
-    WmipReferenceLogger(WmipKernelLogger);
-    TraceDebug((4, "WmiTraceKernelEvent: 0 %d->%d\n", RefCount-1, RefCount));
-// Make sure that kernel logger is enabled first
-    if (!WmipIsValidLogger(LoggerContext)) {
+        WmipReferenceLogger(WmipKernelLogger);
+    TraceDebug((4, "WmiTraceKernelEvent: 0 %d->%d\n", RefCount - 1, RefCount));
+    // Make sure that kernel logger is enabled first
+    if (!WmipIsValidLogger(LoggerContext))
+    {
         WmipDereferenceLogger(WmipKernelLogger);
         return STATUS_ALREADY_DISCONNECTED;
     }
 
-// Compute total size of event trace record
+    // Compute total size of event trace record
     Size = sizeof(SYSTEM_TRACE_HEADER) + EventInfoLen;
 
-    if (Size > LoggerContext->BufferSize - sizeof(WMI_BUFFER_HEADER)) {
+    if (Size > LoggerContext->BufferSize - sizeof(WMI_BUFFER_HEADER))
+    {
         LoggerContext->EventsLost++;
 #ifndef WMI_NON_BLOCKING
-        LoggerContext->ProcessorBuffers[KeGetCurrentProcessorNumber()]
-                            ->EventsLost++;
+        LoggerContext->ProcessorBuffers[KeGetCurrentProcessorNumber()]->EventsLost++;
 #endif //WMI_NON_BLOCKING
 #if DBG
         RefCount =
 #endif
-        WmipDereferenceLogger(WmipKernelLogger);
-        TraceDebug((4, "WmiTraceKernelEvent: Status1=%X 0 %d->%d\n",
-                        STATUS_BUFFER_OVERFLOW, RefCount+1, RefCount));
+            WmipDereferenceLogger(WmipKernelLogger);
+        TraceDebug((4, "WmiTraceKernelEvent: Status1=%X 0 %d->%d\n", STATUS_BUFFER_OVERFLOW, RefCount + 1, RefCount));
         return STATUS_BUFFER_OVERFLOW;
     }
 
-// NOTE: we do not check for size here for reduce overhead, and because
-//       we trust ourselves to use WmiTraceLongEvent for large event traces
+    // NOTE: we do not check for size here for reduce overhead, and because
+    //       we trust ourselves to use WmiTraceLongEvent for large event traces
 
-    Header = (PSYSTEM_TRACE_HEADER)
-            WmipReserveTraceBuffer(
-                LoggerContext,
-                Size,
-                &BufferResource
-                );
+    Header = (PSYSTEM_TRACE_HEADER)WmipReserveTraceBuffer(LoggerContext, Size, &BufferResource);
 
-    if (Header == NULL) {
+    if (Header == NULL)
+    {
 #if DBG
         RefCount =
 #endif
-        WmipDereferenceLogger(WmipKernelLogger);
-        TraceDebug((4, "WmiTraceKernelEvent: Status1=%X 0 %d->%d\n",
-                        STATUS_NO_MEMORY, RefCount+1, RefCount));
+            WmipDereferenceLogger(WmipKernelLogger);
+        TraceDebug((4, "WmiTraceKernelEvent: Status1=%X 0 %d->%d\n", STATUS_NO_MEMORY, RefCount + 1, RefCount));
         return STATUS_NO_MEMORY;
     }
 
     // Get the current system time as time stamp for trace record
     PerfTimeStamp(Header->SystemTime);
 
-    if (Thread == NULL) {
+    if (Thread == NULL)
+    {
         Thread = PsGetCurrentThread();
     }
 
-//
-// Now copy the necessary information into the buffer
-//
+    //
+    // Now copy the necessary information into the buffer
+    //
 
-    Header->Marker       = SYSTEM_TRACE_MARKER;
-    Header->ThreadId     = HandleToUlong(Thread->Cid.UniqueThread);
-    Header->ProcessId    = HandleToUlong(Thread->Cid.UniqueProcess);
-    Header->KernelTime   = Thread->Tcb.KernelTime;
-    Header->UserTime     = Thread->Tcb.UserTime;
+    Header->Marker = SYSTEM_TRACE_MARKER;
+    Header->ThreadId = HandleToUlong(Thread->Cid.UniqueThread);
+    Header->ProcessId = HandleToUlong(Thread->Cid.UniqueProcess);
+    Header->KernelTime = Thread->Tcb.KernelTime;
+    Header->UserTime = Thread->Tcb.UserTime;
 
-    Header->Header       = (GroupType << 16) + Size;
+    Header->Header = (GroupType << 16) + Size;
 
-    if (EventInfoLen > 0) {
-        RtlCopyMemory (
-            (UCHAR*) Header + sizeof(SYSTEM_TRACE_HEADER),
-            EventInfo, EventInfoLen);
+    if (EventInfoLen > 0)
+    {
+        RtlCopyMemory((UCHAR *)Header + sizeof(SYSTEM_TRACE_HEADER), EventInfo, EventInfoLen);
     }
 
 #if DBG
     RefCount = WmipRefCount[LoggerContext->LoggerId] - 1;
 #endif
-    WmipReleaseTraceBuffer( BufferResource, LoggerContext );
-    TraceDebug((4, "WmiTraceKernelEvent: 0 %d->%d\n",
-                    RefCount+1, RefCount));
+    WmipReleaseTraceBuffer(BufferResource, LoggerContext);
+    TraceDebug((4, "WmiTraceKernelEvent: 0 %d->%d\n", RefCount + 1, RefCount));
 
     return STATUS_SUCCESS;
 }
@@ -1787,13 +1760,11 @@ Return Value:
 }
 #endif
 
-
+
 NTKERNELAPI
 NTSTATUS
 FASTCALL
-WmiTraceFastEvent(
-    IN PWNODE_HEADER Wnode
-    )
+WmiTraceFastEvent(IN PWNODE_HEADER Wnode)
 /*++
 
 Routine Description:
@@ -1815,48 +1786,51 @@ Return Value:
 {
     ULONG Size;
     PTIMED_TRACE_HEADER Buffer;
-    PTIMED_TRACE_HEADER Header = (PTIMED_TRACE_HEADER) Wnode;
+    PTIMED_TRACE_HEADER Header = (PTIMED_TRACE_HEADER)Wnode;
     PWMI_BUFFER_HEADER BufferResource;
-    ULONG LoggerId = (ULONG) Header->LoggerId; // get the lower ULONG!!
+    ULONG LoggerId = (ULONG)Header->LoggerId; // get the lower ULONG!!
     PULONG Marker;
     PWMI_LOGGER_CONTEXT LoggerContext;
 #if DBG
     LONG RefCount;
 #endif
 
-    Marker = (PULONG) Wnode;
+    Marker = (PULONG)Wnode;
     if ((LoggerId == WmipKernelLogger) || (LoggerId >= MAXLOGGERS))
         return STATUS_INVALID_HANDLE;
 
-    if ((*Marker & 0xF0000000) == TRACE_HEADER_ULONG32_TIME) {
+    if ((*Marker & 0xF0000000) == TRACE_HEADER_ULONG32_TIME)
+    {
         Size = Header->Size;
         if (Size == 0)
             return STATUS_INVALID_BUFFER_SIZE;
 #if DBG
         RefCount =
 #endif
-        WmipReferenceLogger(LoggerId);
+            WmipReferenceLogger(LoggerId);
         LoggerContext = WmipGetLoggerContext(LoggerId);
-        if (!WmipIsValidLogger(LoggerContext)) {
+        if (!WmipIsValidLogger(LoggerContext))
+        {
 #if DBG
-        RefCount =
+            RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
+                WmipDereferenceLogger(LoggerId);
             return STATUS_INVALID_HANDLE;
         }
         Buffer = WmipReserveTraceBuffer(LoggerContext, Size, &BufferResource);
-        if (Buffer == NULL) {
+        if (Buffer == NULL)
+        {
 #if DBG
-        RefCount =
+            RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
+                WmipDereferenceLogger(LoggerId);
             return STATUS_NO_MEMORY;
         }
-        (* (PULONG) Buffer) = *Marker;
+        (*(PULONG)Buffer) = *Marker;
         Buffer->EventId = Header->EventId;
         Buffer->TimeStamp.QuadPart = (*LoggerContext->GetCpuClock)();
 
-        RtlCopyMemory(Buffer+1, Header+1, Size-(sizeof(TIMED_TRACE_HEADER)));
+        RtlCopyMemory(Buffer + 1, Header + 1, Size - (sizeof(TIMED_TRACE_HEADER)));
         WmipReleaseTraceBuffer(BufferResource, LoggerContext);
         return STATUS_SUCCESS;
     }
@@ -1866,13 +1840,7 @@ Return Value:
 
 NTKERNELAPI
 NTSTATUS
-WmiTraceMessage(
-    IN TRACEHANDLE  LoggerHandle,
-    IN ULONG        MessageFlags,
-    IN LPGUID       MessageGuid,
-    IN USHORT       MessageNumber,
-    ...
-)
+WmiTraceMessage(IN TRACEHANDLE LoggerHandle, IN ULONG MessageFlags, IN LPGUID MessageGuid, IN USHORT MessageNumber, ...)
 /*++
 Routine Description:
 This routine is used by WMI data providers to trace Messages.
@@ -1904,26 +1872,17 @@ NOTE:
         try/excepts have to be carefully managed
 --*/
 {
-    va_list MessageArgList ;
+    va_list MessageArgList;
 
-    va_start(MessageArgList,MessageNumber);
+    va_start(MessageArgList, MessageNumber);
 
-    return (WmiTraceMessageVa(LoggerHandle,
-                              MessageFlags,
-                              MessageGuid,
-                              MessageNumber,
-                              MessageArgList));
+    return (WmiTraceMessageVa(LoggerHandle, MessageFlags, MessageGuid, MessageNumber, MessageArgList));
 }
 
 
 NTSTATUS
-WmiTraceMessageVa(
-    IN TRACEHANDLE  LoggerHandle,
-    IN ULONG        MessageFlags,
-    IN LPGUID       MessageGuid,
-    IN USHORT       MessageNumber,
-    va_list         MessageArgList
-)
+WmiTraceMessageVa(IN TRACEHANDLE LoggerHandle, IN ULONG MessageFlags, IN LPGUID MessageGuid, IN USHORT MessageNumber,
+                  va_list MessageArgList)
 /*++ WmiTraceMessageVa
          The VA version of WmiTraceMessage
 NOTE:
@@ -1933,14 +1892,14 @@ NOTE:
 {
     SSIZE_T dataBytes;
     PMESSAGE_TRACE_HEADER Header;
-    PUCHAR pMessageData ;
-    PWMI_BUFFER_HEADER BufferResource = NULL ;
-    USHORT  size ;
-    ULONG  LoggerId = (ULONG)-1 ; // initialise so we don't unlock it if not set
-    ULONG SequenceNumber ;
+    PUCHAR pMessageData;
+    PWMI_BUFFER_HEADER BufferResource = NULL;
+    USHORT size;
+    ULONG LoggerId = (ULONG)-1; // initialise so we don't unlock it if not set
+    ULONG SequenceNumber;
     PWMI_LOGGER_CONTEXT LoggerContext;
 #if DBG
-    LONG    RefCount;
+    LONG RefCount;
 #endif
 
     // Set the LoggerId up here, and lock it.
@@ -1948,16 +1907,16 @@ NOTE:
     // be caught by the try/except in that routine
     LoggerId = WmiGetLoggerId(LoggerHandle);
     if (LoggerId < 1 || LoggerId >= MAXLOGGERS)
-       return STATUS_INVALID_HANDLE;
+        return STATUS_INVALID_HANDLE;
 
 #if DBG
- RefCount =
+    RefCount =
 #endif
-    WmipReferenceLogger(LoggerId);
-    TraceDebug((4, "WmiTraceMessage: %d %d->%d\n",
-                 LoggerId, RefCount-1, RefCount));
-    
-    try {
+        WmipReferenceLogger(LoggerId);
+    TraceDebug((4, "WmiTraceMessage: %d %d->%d\n", LoggerId, RefCount - 1, RefCount));
+
+    try
+    {
         //
         // Determine the number bytes to follow header
         //
@@ -1965,23 +1924,25 @@ NOTE:
         { // Allocation Block
             va_list ap;
             PCHAR source;
-            ap = MessageArgList ;
-            while ((source = va_arg (ap, PVOID)) != NULL) {
+            ap = MessageArgList;
+            while ((source = va_arg(ap, PVOID)) != NULL)
+            {
                 SSIZE_T elemBytes;
-                if ((elemBytes = va_arg (ap, SSIZE_T)) > 0) {
-                   dataBytes += elemBytes;
-                }      
+                if ((elemBytes = va_arg(ap, SSIZE_T)) > 0)
+                {
+                    dataBytes += elemBytes;
+                }
             }
-         } // end of allocation block
+        } // end of allocation block
 
         // Figure the size of the message including the header
-         size  = (MessageFlags&TRACE_MESSAGE_SEQUENCE ? sizeof(ULONG):0) +
-         		 (MessageFlags&TRACE_MESSAGE_GUID ? sizeof(GUID):0) +
-                 (MessageFlags&TRACE_MESSAGE_COMPONENTID ? sizeof(ULONG):0) +
-        		 (MessageFlags&(TRACE_MESSAGE_TIMESTAMP | TRACE_MESSAGE_PERFORMANCE_TIMESTAMP) ? sizeof(LARGE_INTEGER):0) +
-         		 (MessageFlags&TRACE_MESSAGE_SYSTEMINFO ? 2 * sizeof(ULONG):0) +
-                 sizeof (MESSAGE_TRACE_HEADER) +
-                 (USHORT)dataBytes ;
+        size = (MessageFlags & TRACE_MESSAGE_SEQUENCE ? sizeof(ULONG) : 0) +
+               (MessageFlags & TRACE_MESSAGE_GUID ? sizeof(GUID) : 0) +
+               (MessageFlags & TRACE_MESSAGE_COMPONENTID ? sizeof(ULONG) : 0) +
+               (MessageFlags & (TRACE_MESSAGE_TIMESTAMP | TRACE_MESSAGE_PERFORMANCE_TIMESTAMP) ? sizeof(LARGE_INTEGER)
+                                                                                               : 0) +
+               (MessageFlags & TRACE_MESSAGE_SYSTEMINFO ? 2 * sizeof(ULONG) : 0) + sizeof(MESSAGE_TRACE_HEADER) +
+               (USHORT)dataBytes;
 
         //
         // Allocate Space in the Trace Buffer
@@ -1990,65 +1951,62 @@ NOTE:
         //       we trust ourselves to use WmiTraceLongEvent for large event traces (???)
 
         LoggerContext = WmipGetLoggerContext(LoggerId);
-        if (!WmipIsValidLogger(LoggerContext)) {
+        if (!WmipIsValidLogger(LoggerContext))
+        {
 #if DBG
-     RefCount =
+            RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
-            TraceDebug((4, "WmiTraceMessage: Status1=%X %d %d->%d\n",
-                        STATUS_INVALID_HANDLE, LoggerId,
-                        RefCount+1, RefCount));
+                WmipDereferenceLogger(LoggerId);
+            TraceDebug((4, "WmiTraceMessage: Status1=%X %d %d->%d\n", STATUS_INVALID_HANDLE, LoggerId, RefCount + 1,
+                        RefCount));
             return STATUS_INVALID_HANDLE;
         }
 
         if ((LoggerContext->RequestFlag & REQUEST_FLAG_CIRCULAR_PERSIST) &&
-            (LoggerContext->LoggerMode & EVENT_TRACE_FILE_MODE_CIRCULAR)) {
+            (LoggerContext->LoggerMode & EVENT_TRACE_FILE_MODE_CIRCULAR))
+        {
             // Unset REQUEST_FLAG_CIRCULAR_PERSIST flag
-            // Since persistent events will never be mixed with TraceMessage(), 
+            // Since persistent events will never be mixed with TraceMessage(),
             // we'll just unset it once and for all without flushing.
-            LoggerContext->RequestFlag &= (~( REQUEST_FLAG_CIRCULAR_PERSIST
-                                            | REQUEST_FLAG_CIRCULAR_TRANSITION));
+            LoggerContext->RequestFlag &= (~(REQUEST_FLAG_CIRCULAR_PERSIST | REQUEST_FLAG_CIRCULAR_TRANSITION));
         }
 
-        if ((KeGetPreviousMode() == KernelMode) &&
-            (LoggerContext->LoggerMode & EVENT_TRACE_USE_PAGED_MEMORY)) {
+        if ((KeGetPreviousMode() == KernelMode) && (LoggerContext->LoggerMode & EVENT_TRACE_USE_PAGED_MEMORY))
+        {
             return STATUS_UNSUCCESSFUL;
         }
 
-        if ((Header = (PMESSAGE_TRACE_HEADER)WmipReserveTraceBuffer(LoggerContext,size,&BufferResource)) == NULL) {
+        if ((Header = (PMESSAGE_TRACE_HEADER)WmipReserveTraceBuffer(LoggerContext, size, &BufferResource)) == NULL)
+        {
 #if DBG
             RefCount =
 #endif
-            WmipDereferenceLogger(LoggerId);
-            TraceDebug((4, "WmiTraceMessage: %d %d->%d\n",
-                            LoggerId, RefCount+1, RefCount));
+                WmipDereferenceLogger(LoggerId);
+            TraceDebug((4, "WmiTraceMessage: %d %d->%d\n", LoggerId, RefCount + 1, RefCount));
 
             return STATUS_NO_MEMORY;
         }
         //
         // Sequence Number is returned in the Marker field of the buffer
         //
-        SequenceNumber = Header->Marker ;
+        SequenceNumber = Header->Marker;
 
         //
         // Now copy the necessary information into the buffer
         //
 
-        Header->Marker = TRACE_MESSAGE | TRACE_HEADER_FLAG ;
+        Header->Marker = TRACE_MESSAGE | TRACE_HEADER_FLAG;
         //
         // Fill in Header.
         //
-        Header->Size = size ;
-        Header->Packet.OptionFlags = ((USHORT)MessageFlags &
-                                      (TRACE_MESSAGE_SEQUENCE |
-                                      TRACE_MESSAGE_GUID |
-                                      TRACE_MESSAGE_COMPONENTID |
-                                      TRACE_MESSAGE_TIMESTAMP |
-                                      TRACE_MESSAGE_PERFORMANCE_TIMESTAMP |
-                                      TRACE_MESSAGE_SYSTEMINFO)) &
-                                      TRACE_MESSAGE_FLAG_MASK ;
+        Header->Size = size;
+        Header->Packet.OptionFlags =
+            ((USHORT)MessageFlags &
+             (TRACE_MESSAGE_SEQUENCE | TRACE_MESSAGE_GUID | TRACE_MESSAGE_COMPONENTID | TRACE_MESSAGE_TIMESTAMP |
+              TRACE_MESSAGE_PERFORMANCE_TIMESTAMP | TRACE_MESSAGE_SYSTEMINFO)) &
+            TRACE_MESSAGE_FLAG_MASK;
         // Message Number
-        Header->Packet.MessageNumber =  MessageNumber ;
+        Header->Packet.MessageNumber = MessageNumber;
 
         //
         // Now add in the header options we counted.
@@ -2061,44 +2019,53 @@ NOTE:
         // be added at the end!
         //
         // [First Entry] Sequence Number
-        if (MessageFlags&TRACE_MESSAGE_SEQUENCE) {
+        if (MessageFlags & TRACE_MESSAGE_SEQUENCE)
+        {
             *((PULONG)pMessageData) = SequenceNumber;
-        	pMessageData += sizeof(ULONG) ;
+            pMessageData += sizeof(ULONG);
         }
 
         // [Second Entry] GUID ? or CompnentID ?
-        if (MessageFlags&TRACE_MESSAGE_COMPONENTID) {
-            *((PULONG)pMessageData) = *((PULONG) MessageGuid);
-            pMessageData += sizeof(ULONG) ;
-        } else if (MessageFlags&TRACE_MESSAGE_GUID) { // Can't have both
-            *((LPGUID)pMessageData) = *MessageGuid;
-        	pMessageData += sizeof(GUID) ;
+        if (MessageFlags & TRACE_MESSAGE_COMPONENTID)
+        {
+            *((PULONG)pMessageData) = *((PULONG)MessageGuid);
+            pMessageData += sizeof(ULONG);
         }
-        
+        else if (MessageFlags & TRACE_MESSAGE_GUID)
+        { // Can't have both
+            *((LPGUID)pMessageData) = *MessageGuid;
+            pMessageData += sizeof(GUID);
+        }
+
         // [Third Entry] Timestamp?
-        if (MessageFlags&TRACE_MESSAGE_TIMESTAMP) {
-            if (MessageFlags&TRACE_MESSAGE_PERFORMANCE_TIMESTAMP) {
+        if (MessageFlags & TRACE_MESSAGE_TIMESTAMP)
+        {
+            if (MessageFlags & TRACE_MESSAGE_PERFORMANCE_TIMESTAMP)
+            {
                 *((PLARGE_INTEGER)pMessageData) = KeQueryPerformanceCounter(NULL);
-            } else {
-            	KeQuerySystemTime((PLARGE_INTEGER)pMessageData);
-        	}
-        	pMessageData += sizeof(LARGE_INTEGER);
+            }
+            else
+            {
+                KeQuerySystemTime((PLARGE_INTEGER)pMessageData);
+            }
+            pMessageData += sizeof(LARGE_INTEGER);
         }
 
 
         // [Fourth Entry] System Information?
         // Note that some of this may NOT be valid depending on the current processing level
         // however we assume that the post-processing may still find it useful
-        if (MessageFlags&TRACE_MESSAGE_SYSTEMINFO) {
-            PCLIENT_ID Cid;        // avoid additional function calls
+        if (MessageFlags & TRACE_MESSAGE_SYSTEMINFO)
+        {
+            PCLIENT_ID Cid; // avoid additional function calls
 
             Cid = &(PsGetCurrentThread()->Cid);
             // Executive Handles may be truncated
             *((PULONG)pMessageData) = HandleToUlong(Cid->UniqueThread);
-            pMessageData += sizeof(ULONG) ;  
+            pMessageData += sizeof(ULONG);
 
-            *((PULONG)pMessageData) = HandleToUlong(Cid->UniqueProcess);   
-            pMessageData += sizeof(ULONG) ;
+            *((PULONG)pMessageData) = HandleToUlong(Cid->UniqueProcess);
+            pMessageData += sizeof(ULONG);
         }
         //
         // Add New Header Entries immediately before this comment!
@@ -2110,42 +2077,47 @@ NOTE:
         { // Allocation Block
             va_list ap;
             PUCHAR source;
-            ap = MessageArgList ;
-            while ((source = va_arg (ap, PVOID)) != NULL) {
-                SSIZE_T elemBytes, copiedBytes = 0 ;
-                if ((elemBytes = va_arg (ap, SSIZE_T)) > 0 ) {
-                    if (dataBytes < copiedBytes + elemBytes) {  // defend against bytes having changed
+            ap = MessageArgList;
+            while ((source = va_arg(ap, PVOID)) != NULL)
+            {
+                SSIZE_T elemBytes, copiedBytes = 0;
+                if ((elemBytes = va_arg(ap, SSIZE_T)) > 0)
+                {
+                    if (dataBytes < copiedBytes + elemBytes)
+                    { // defend against bytes having changed
                         TraceDebug((1, "WmiTraceMessage: Invalid message - argument length changed"));
-                        break;                                  // So we don't overrun
+                        break; // So we don't overrun
                     }
-                    RtlCopyMemory (pMessageData, source, elemBytes);
-                    copiedBytes += elemBytes ;
+                    RtlCopyMemory(pMessageData, source, elemBytes);
+                    copiedBytes += elemBytes;
                     pMessageData += elemBytes;
                 }
             }
         } // Allocation Block
-
-    } except  (EXCEPTION_EXECUTE_HANDLER) {
-        if (BufferResource != NULL) {
-               WmipReleaseTraceBuffer ( BufferResource, LoggerContext );   // also unlocks the logger
-        } else {
-#if DBG
-     RefCount =
-#endif
-             WmipDereferenceLogger(LoggerId);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (BufferResource != NULL)
+        {
+            WmipReleaseTraceBuffer(BufferResource, LoggerContext); // also unlocks the logger
         }
-        TraceDebug((4, "WmiTraceMessage: Status6=EXCEPTION %d %d->%d\n",
-                    LoggerId, RefCount+1, RefCount));
+        else
+        {
+#if DBG
+            RefCount =
+#endif
+                WmipDereferenceLogger(LoggerId);
+        }
+        TraceDebug((4, "WmiTraceMessage: Status6=EXCEPTION %d %d->%d\n", LoggerId, RefCount + 1, RefCount));
         return GetExceptionCode();
     }
 
     //
     // Buffer Complete, Release
     //
-    WmipReleaseTraceBuffer( BufferResource, LoggerContext );  // Also unlocks the logger
-        
-    TraceDebug((4, "WmiTraceMessage: %d %d->%d\n",
-                        LoggerId, RefCount+1, RefCount));
+    WmipReleaseTraceBuffer(BufferResource, LoggerContext); // Also unlocks the logger
+
+    TraceDebug((4, "WmiTraceMessage: %d %d->%d\n", LoggerId, RefCount + 1, RefCount));
 
     //
     // Return Success
@@ -2156,10 +2128,7 @@ NOTE:
 NTKERNELAPI
 NTSTATUS
 FASTCALL
-WmiTraceUserMessage(
-    IN PMESSAGE_TRACE_USER pMessage,
-    IN ULONG    MessageSize
-    )
+WmiTraceUserMessage(IN PMESSAGE_TRACE_USER pMessage, IN ULONG MessageSize)
 /*++
 
 Routine Description:
@@ -2179,37 +2148,29 @@ Return Value:
 --*/
 {
 
-    if (MessageSize < sizeof(MESSAGE_TRACE_USER)) {
+    if (MessageSize < sizeof(MESSAGE_TRACE_USER))
+    {
         return (STATUS_UNSUCCESSFUL);
     }
-    try {
-        ProbeForRead(
-                pMessage,
-                MessageSize,
-                sizeof (UCHAR)
-                );
-        return (WmiTraceMessage(pMessage->LoggerHandle,
-                                pMessage->MessageFlags,
-                                &pMessage->MessageGuid,
-                                pMessage->MessageHeader.Packet.MessageNumber,
-                                &pMessage->Data,pMessage->DataSize,
-                                NULL,0));
+    try
+    {
+        ProbeForRead(pMessage, MessageSize, sizeof(UCHAR));
+        return (WmiTraceMessage(pMessage->LoggerHandle, pMessage->MessageFlags, &pMessage->MessageGuid,
+                                pMessage->MessageHeader.Packet.MessageNumber, &pMessage->Data, pMessage->DataSize, NULL,
+                                0));
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except  (EXCEPTION_EXECUTE_HANDLER) {
-         
-         TraceDebug((1, "WmiTraceUserMessage: Status=EXCEPTION\n"));
-         return GetExceptionCode();
-
+        TraceDebug((1, "WmiTraceUserMessage: Status=EXCEPTION\n"));
+        return GetExceptionCode();
     }
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-WmiSetMark(
-    IN PWMI_SET_MARK_INFORMATION MarkInfo,
-    IN ULONG InBufferLen
-    )
+WmiSetMark(IN PWMI_SET_MARK_INFORMATION MarkInfo, IN ULONG InBufferLen)
 /*++
 
 Routine Description:
@@ -2235,9 +2196,12 @@ Return Value:
     ULONG CopyBytes;
     USHORT HookId;
 
-    if (PERFINFO_IS_ANY_GROUP_ON()) {
-        if (MarkInfo->Flag & WMI_SET_MARK_WITH_FLUSH) {
-            if (PERFINFO_IS_GROUP_ON(PERF_FOOTPRINT)) {
+    if (PERFINFO_IS_ANY_GROUP_ON())
+    {
+        if (MarkInfo->Flag & WMI_SET_MARK_WITH_FLUSH)
+        {
+            if (PERFINFO_IS_GROUP_ON(PERF_FOOTPRINT))
+            {
                 MmEmptyAllWorkingSets();
                 Status = MmPerfSnapShotValidPhysicalMemory();
             }
@@ -2249,8 +2213,9 @@ Return Value:
 
         Status = PerfInfoReserveBytes(&Hook, HookId, TotalBytes);
 
-        if (NT_SUCCESS(Status)){ 
-            PWCHAR Mark = PERFINFO_HOOK_HANDLE_TO_DATA(Hook, PWCHAR); 
+        if (NT_SUCCESS(Status))
+        {
+            PWCHAR Mark = PERFINFO_HOOK_HANDLE_TO_DATA(Hook, PWCHAR);
 
             RtlCopyMemory(Mark, &MarkInfo->Mark[0], CopyBytes);
 
@@ -2258,7 +2223,9 @@ Return Value:
 
             PERF_FINISH_HOOK(Hook);
         }
-    } else {
+    }
+    else
+    {
         Status = STATUS_WMI_SET_FAILURE;
     }
 
@@ -2267,46 +2234,43 @@ Return Value:
 
 NTKERNELAPI
 NTSTATUS
-WmiSetTraceBufferCallback(
-    IN TRACEHANDLE  TraceHandle,
-    IN WMI_TRACE_BUFFER_CALLBACK Callback,
-    IN PVOID Context
-    )
+WmiSetTraceBufferCallback(IN TRACEHANDLE TraceHandle, IN WMI_TRACE_BUFFER_CALLBACK Callback, IN PVOID Context)
 {
-    ULONG   LoggerId;
+    ULONG LoggerId;
 #if DBG
-    LONG    RefCount;
+    LONG RefCount;
 #endif
     PWMI_LOGGER_CONTEXT LoggerContext;
 
     PAGED_CODE();
 
-    if (TraceHandle == (TRACEHANDLE) 0) {
+    if (TraceHandle == (TRACEHANDLE)0)
+    {
         WmipGlobalBufferCallback = Callback;
         return STATUS_SUCCESS;
     }
     LoggerId = WmiGetLoggerId(TraceHandle);
-    if (LoggerId == KERNEL_LOGGER_ID) {
+    if (LoggerId == KERNEL_LOGGER_ID)
+    {
         LoggerId = WmipKernelLogger;
     }
     else if (LoggerId < 1 || LoggerId >= MAXLOGGERS)
-       return STATUS_INVALID_HANDLE;
+        return STATUS_INVALID_HANDLE;
 #if DBG
- RefCount =
+    RefCount =
 #endif
-    WmipReferenceLogger(LoggerId);
-    TraceDebug((4, "WmiSetTraceBufferCallback: %d %d->%d\n",
-                 LoggerId, RefCount-1, RefCount));
+        WmipReferenceLogger(LoggerId);
+    TraceDebug((4, "WmiSetTraceBufferCallback: %d %d->%d\n", LoggerId, RefCount - 1, RefCount));
 
-    LoggerContext = WmipGetLoggerContext( LoggerId );
-    if (!WmipIsValidLogger(LoggerContext)) {
+    LoggerContext = WmipGetLoggerContext(LoggerId);
+    if (!WmipIsValidLogger(LoggerContext))
+    {
 #if DBG
         RefCount =
 #endif
-        WmipDereferenceLogger(LoggerId);
-        TraceDebug((4, "WmiSetTraceBufferCallback: Status=%X %d %d->%d\n",
-                        STATUS_WMI_INSTANCE_NOT_FOUND,
-                        LoggerId, RefCount+1, RefCount));
+            WmipDereferenceLogger(LoggerId);
+        TraceDebug((4, "WmiSetTraceBufferCallback: Status=%X %d %d->%d\n", STATUS_WMI_INSTANCE_NOT_FOUND, LoggerId,
+                    RefCount + 1, RefCount));
         return STATUS_WMI_INSTANCE_NOT_FOUND;
     }
 
@@ -2318,13 +2282,8 @@ WmiSetTraceBufferCallback(
 
 NTKERNELAPI
 NTSTATUS
-WmiQueryTraceInformation(
-    IN TRACE_INFORMATION_CLASS TraceInformationClass,
-    OUT PVOID TraceInformation,
-    IN ULONG TraceInformationLength,
-    OUT PULONG RequiredLength OPTIONAL,
-    IN PVOID Buffer OPTIONAL
-    )
+WmiQueryTraceInformation(IN TRACE_INFORMATION_CLASS TraceInformationClass, OUT PVOID TraceInformation,
+                         IN ULONG TraceInformationLength, OUT PULONG RequiredLength OPTIONAL, IN PVOID Buffer OPTIONAL)
 {
     ULONG LoggerId;
     ULONG EnableFlags;
@@ -2333,176 +2292,216 @@ WmiQueryTraceInformation(
     TRACEHANDLE TraceHandle;
     TRACEHANDLE AllHandles[MAXLOGGERS];
     NTSTATUS Status = STATUS_SUCCESS;
-    PWNODE_HEADER Wnode = (PWNODE_HEADER) Buffer; // For most classes, but not all
+    PWNODE_HEADER Wnode = (PWNODE_HEADER)Buffer; // For most classes, but not all
 
     PAGED_CODE();
 
-    try {
-        if (ARGUMENT_PRESENT(RequiredLength)) {
+    try
+    {
+        if (ARGUMENT_PRESENT(RequiredLength))
+        {
             *RequiredLength = 0;
         }
 
-        switch (TraceInformationClass) {
+        switch (TraceInformationClass)
+        {
 
         case TraceIdClass:
 
-            if (TraceInformationLength != sizeof( ULONG )) {
+            if (TraceInformationLength != sizeof(ULONG))
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
-            if (Wnode == NULL) {
+            if (Wnode == NULL)
+            {
                 return STATUS_INVALID_PARAMETER_MIX;
             }
             TraceHandle = Wnode->HistoricalContext;
-            if ((TraceHandle == 0) || (TraceHandle == (ULONG) -1)) {
+            if ((TraceHandle == 0) || (TraceHandle == (ULONG)-1))
+            {
                 return STATUS_INVALID_HANDLE;
             }
 
             LoggerId = WmiGetLoggerId(TraceHandle);
 
-            if (LoggerId > MAXLOGGERS) {
+            if (LoggerId > MAXLOGGERS)
+            {
                 return STATUS_INVALID_HANDLE;
             }
 
-            if (TraceInformation) {
+            if (TraceInformation)
+            {
                 *((PULONG)TraceInformation) = LoggerId;
             }
-            if (ARGUMENT_PRESENT( RequiredLength )) {
-                *RequiredLength = sizeof( ULONG );
+            if (ARGUMENT_PRESENT(RequiredLength))
+            {
+                *RequiredLength = sizeof(ULONG);
             }
             break;
 
         case TraceHandleClass:
-            if (TraceInformationLength != sizeof(TRACEHANDLE)) {
+            if (TraceInformationLength != sizeof(TRACEHANDLE))
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
-            if (Buffer == NULL) {
+            if (Buffer == NULL)
+            {
                 return STATUS_INVALID_PARAMETER_MIX;
             }
-            LoggerId = *((PULONG) Buffer);
+            LoggerId = *((PULONG)Buffer);
             TraceHandle = 0;
             TraceHandle = WmiSetLoggerId(LoggerId, &TraceHandle);
 
-            if (TraceInformation) {
+            if (TraceInformation)
+            {
                 *((PTRACEHANDLE)TraceInformation) = TraceHandle;
             }
-            if (ARGUMENT_PRESENT( RequiredLength )) {
-                *RequiredLength = sizeof( TRACEHANDLE );
+            if (ARGUMENT_PRESENT(RequiredLength))
+            {
+                *RequiredLength = sizeof(TRACEHANDLE);
             }
             break;
 
         case TraceEnableFlagsClass:
-            if (TraceInformationLength < sizeof(ULONG)) {
+            if (TraceInformationLength < sizeof(ULONG))
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
-            if (Wnode == NULL) {
+            if (Wnode == NULL)
+            {
                 return STATUS_INVALID_PARAMETER_MIX;
             }
             TraceHandle = Wnode->HistoricalContext;
-            if ((TraceHandle == 0) || (TraceHandle == (ULONG) -1)) {
+            if ((TraceHandle == 0) || (TraceHandle == (ULONG)-1))
+            {
                 return STATUS_INVALID_HANDLE;
             }
 
             EnableFlags = WmiGetLoggerEnableFlags(TraceHandle);
 
-            if (TraceInformation) {
+            if (TraceInformation)
+            {
                 *((PULONG)TraceInformation) = EnableFlags;
             }
-            if (ARGUMENT_PRESENT( RequiredLength )) {
-                *RequiredLength = sizeof( ULONG );
+            if (ARGUMENT_PRESENT(RequiredLength))
+            {
+                *RequiredLength = sizeof(ULONG);
             }
             break;
 
         case TraceEnableLevelClass:
-            if (TraceInformationLength < sizeof(ULONG)) {
+            if (TraceInformationLength < sizeof(ULONG))
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
-            if (Wnode == NULL) {
+            if (Wnode == NULL)
+            {
                 return STATUS_INVALID_PARAMETER_MIX;
             }
             TraceHandle = Wnode->HistoricalContext;
-            if ((TraceHandle == 0) || (TraceHandle == (ULONG) -1)) {
+            if ((TraceHandle == 0) || (TraceHandle == (ULONG)-1))
+            {
                 return STATUS_INVALID_HANDLE;
             }
 
             EnableLevel = WmiGetLoggerEnableLevel(TraceHandle);
 
             *((PULONG)TraceInformation) = EnableLevel;
-            if (ARGUMENT_PRESENT( RequiredLength )) {
-                *RequiredLength = sizeof( ULONG );
+            if (ARGUMENT_PRESENT(RequiredLength))
+            {
+                *RequiredLength = sizeof(ULONG);
             }
             break;
 
         case GlobalLoggerHandleClass:
-            if (TraceInformationLength != sizeof(TRACEHANDLE)) {
+            if (TraceInformationLength != sizeof(TRACEHANDLE))
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
             WmipReferenceLogger(WMI_GLOBAL_LOGGER_ID);
-            if (WmipLoggerContext[WMI_GLOBAL_LOGGER_ID] == NULL) {
+            if (WmipLoggerContext[WMI_GLOBAL_LOGGER_ID] == NULL)
+            {
                 TraceHandle = 0;
                 Status = STATUS_NOT_FOUND;
             }
-            else {
+            else
+            {
                 TraceHandle = WmipLoggerContext[WMI_GLOBAL_LOGGER_ID]->LoggerId;
             }
 
             WmipDereferenceLogger(WMI_GLOBAL_LOGGER_ID);
-            if (TraceInformation) {
+            if (TraceInformation)
+            {
                 *((PTRACEHANDLE)TraceInformation) = TraceHandle;
             }
 
-            if (ARGUMENT_PRESENT( RequiredLength )) {
-                *RequiredLength = sizeof( TRACEHANDLE );
+            if (ARGUMENT_PRESENT(RequiredLength))
+            {
+                *RequiredLength = sizeof(TRACEHANDLE);
             }
             break;
 
         case EventLoggerHandleClass:
-            if (TraceInformationLength != sizeof(TRACEHANDLE)) {
+            if (TraceInformationLength != sizeof(TRACEHANDLE))
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
             LoggerId = WmipEventLogger;
-            if (WmipEventLogger == (ULONG) -1) {
+            if (WmipEventLogger == (ULONG)-1)
+            {
                 TraceHandle = 0;
                 Status = STATUS_NOT_FOUND;
             }
-            else {
+            else
+            {
                 TraceHandle = LoggerId;
             }
-            if (TraceInformation) {
+            if (TraceInformation)
+            {
                 *((PTRACEHANDLE)TraceInformation) = TraceHandle;
             }
-            if (ARGUMENT_PRESENT( RequiredLength )) {
-                *RequiredLength = sizeof( TRACEHANDLE );
+            if (ARGUMENT_PRESENT(RequiredLength))
+            {
+                *RequiredLength = sizeof(TRACEHANDLE);
             }
             break;
 
         case AllLoggerHandlesClass:
             // Returns all logger handles, except for kernel logger
-            if (TraceInformationLength < sizeof(TRACEHANDLE)) {
+            if (TraceInformationLength < sizeof(TRACEHANDLE))
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
 
             LoggersLength = 0;
-            for (LoggerId=1; LoggerId<MAXLOGGERS; LoggerId++) {
+            for (LoggerId = 1; LoggerId < MAXLOGGERS; LoggerId++)
+            {
                 WmipReferenceLogger(LoggerId);
-                if (!WmipIsValidLogger(WmipLoggerContext[LoggerId])) {
+                if (!WmipIsValidLogger(WmipLoggerContext[LoggerId]))
+                {
                     AllHandles[LoggersLength] = 0;
                 }
-                else {
+                else
+                {
                     AllHandles[LoggersLength++] = LoggerId;
                 }
                 WmipDereferenceLogger(LoggerId);
             }
             LoggersLength *= sizeof(TRACEHANDLE);
-            if (TraceInformation && (LoggersLength > 0)) {
-                if (TraceInformationLength >= LoggersLength) {
+            if (TraceInformation && (LoggersLength > 0))
+            {
+                if (TraceInformationLength >= LoggersLength)
+                {
                     RtlCopyMemory(TraceInformation, AllHandles, LoggersLength);
                 }
-                else {
+                else
+                {
                     RtlCopyMemory(TraceInformation, AllHandles, TraceInformationLength);
                     Status = STATUS_MORE_ENTRIES;
                 }
             }
-            if (ARGUMENT_PRESENT( RequiredLength )) {
+            if (ARGUMENT_PRESENT(RequiredLength))
+            {
                 *RequiredLength = LoggersLength;
             }
             break;
@@ -2514,15 +2513,18 @@ WmiQueryTraceInformation(
                 PUNICODE_STRING uString = Buffer;
 
 
-                if (TraceInformationLength != sizeof(TraceHandle) ) {
+                if (TraceInformationLength != sizeof(TraceHandle))
+                {
                     return STATUS_INFO_LENGTH_MISMATCH;
                 }
-	            if (uString == NULL) {
-		            return STATUS_INVALID_PARAMETER;
-	            }
-	            if (uString->Buffer == NULL || uString->Length == 0) {
-		            return STATUS_INVALID_PARAMETER;
-	            }
+                if (uString == NULL)
+                {
+                    return STATUS_INVALID_PARAMETER;
+                }
+                if (uString->Buffer == NULL || uString->Length == 0)
+                {
+                    return STATUS_INVALID_PARAMETER;
+                }
 
                 RtlZeroMemory(&LoggerInfo, sizeof(LoggerInfo));
                 LoggerInfo.Wnode.BufferSize = sizeof(LoggerInfo);
@@ -2531,26 +2533,31 @@ WmiQueryTraceInformation(
                 RtlInitUnicodeString(&LoggerInfo.LoggerName, uString->Buffer);
 
                 Status = WmiQueryTrace(&LoggerInfo);
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
                     return STATUS_NOT_FOUND;
                 }
 
                 TraceHandle = (TRACEHANDLE)LoggerInfo.Wnode.HistoricalContext;
 
-                if (TraceInformation) {
+                if (TraceInformation)
+                {
                     *((PTRACEHANDLE)TraceInformation) = TraceHandle;
                 }
-                if (ARGUMENT_PRESENT( RequiredLength )) {
-                    *RequiredLength = sizeof( TRACEHANDLE );
+                if (ARGUMENT_PRESENT(RequiredLength))
+                {
+                    *RequiredLength = sizeof(TRACEHANDLE);
                 }
             }
             break;
 
 
-        default :
+        default:
             return STATUS_INVALID_INFO_CLASS;
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
     }

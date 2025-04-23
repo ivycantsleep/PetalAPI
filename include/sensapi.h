@@ -33,50 +33,39 @@ Revision History:
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 
-#define NETWORK_ALIVE_LAN   0x00000001
-#define NETWORK_ALIVE_WAN   0x00000002
-#define NETWORK_ALIVE_AOL   0x00000004
+#define NETWORK_ALIVE_LAN 0x00000001
+#define NETWORK_ALIVE_WAN 0x00000002
+#define NETWORK_ALIVE_AOL 0x00000004
 
 
-typedef struct tagQOCINFO
-{
-    DWORD dwSize;
-    DWORD dwFlags;
-    DWORD dwInSpeed;
-    DWORD dwOutSpeed;
-} QOCINFO, *LPQOCINFO;
-
+    typedef struct tagQOCINFO
+    {
+        DWORD dwSize;
+        DWORD dwFlags;
+        DWORD dwInSpeed;
+        DWORD dwOutSpeed;
+    } QOCINFO, *LPQOCINFO;
 
 
 #ifdef UNICODE
-#define  IsDestinationReachable  IsDestinationReachableW
+#define IsDestinationReachable IsDestinationReachableW
 #else
-#define  IsDestinationReachable  IsDestinationReachableA
+#define IsDestinationReachable IsDestinationReachableA
 #endif // UNICODE
 
 
 #if !defined(__midl)
 
-BOOL APIENTRY
-IsDestinationReachableA(
-    LPCSTR lpszDestination,
-    LPQOCINFO lpQOCInfo
-    );
+    BOOL APIENTRY IsDestinationReachableA(LPCSTR lpszDestination, LPQOCINFO lpQOCInfo);
 
-BOOL APIENTRY
-IsDestinationReachableW(
-    LPCWSTR lpszDestination,
-    LPQOCINFO lpQOCInfo
-    );
+    BOOL APIENTRY IsDestinationReachableW(LPCWSTR lpszDestination, LPQOCINFO lpQOCInfo);
 
-BOOL APIENTRY
-IsNetworkAlive(
-    LPDWORD lpdwFlags
-    );
+    BOOL APIENTRY IsNetworkAlive(LPDWORD lpdwFlags);
 
 #endif // !defined(__midl)
 

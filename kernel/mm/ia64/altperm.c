@@ -29,67 +29,31 @@ Revision History:
 #if defined(_MIALT4K_)
 
 ULONG
-MiFindProtectionForNativePte ( 
-    PVOID VirtualAddress
-    );
+MiFindProtectionForNativePte(PVOID VirtualAddress);
 
-VOID
-MiFillZeroFor4kPage (
-    IN PVOID BaseAddress,
-    IN PEPROCESS Process
-    );
+VOID MiFillZeroFor4kPage(IN PVOID BaseAddress, IN PEPROCESS Process);
 
-VOID
-MiResetAccessBitForNativePtes (
-    IN PVOID StartVirtual,
-    IN PVOID EndVirtual,
-    IN PEPROCESS Process
-    );
+VOID MiResetAccessBitForNativePtes(IN PVOID StartVirtual, IN PVOID EndVirtual, IN PEPROCESS Process);
 
 LOGICAL
-MiIsSplitPage (
-    IN PVOID Virtual
-    );
+MiIsSplitPage(IN PVOID Virtual);
 
-VOID
-MiCopyOnWriteFor4kPage (
-    PVOID VirtualAddress
-    );
+VOID MiCopyOnWriteFor4kPage(PVOID VirtualAddress);
 
-VOID
-MiCheckDemandZeroCopyOnWriteFor4kPage (
-    PVOID VirtualAddress,
-    PEPROCESS Process
-    );
+VOID MiCheckDemandZeroCopyOnWriteFor4kPage(PVOID VirtualAddress, PEPROCESS Process);
 
-VOID
-MiCheckVirtualAddressFor4kPage (
-    PVOID VirtualAddress,
-    PEPROCESS Process
-    );
+VOID MiCheckVirtualAddressFor4kPage(PVOID VirtualAddress, PEPROCESS Process);
 
 LOGICAL
-MiIsNativeGuardPage (
-    IN PVOID VirtualAddress
-    );
+MiIsNativeGuardPage(IN PVOID VirtualAddress);
 
-VOID
-MiSetNativePteProtection (
-    IN PVOID VirtualAddress,
-    IN ULONGLONG NewPteProtection,
-    IN LOGICAL PageIsSplit,
-    IN PEPROCESS CurrentProcess
-    );
+VOID MiSetNativePteProtection(IN PVOID VirtualAddress, IN ULONGLONG NewPteProtection, IN LOGICAL PageIsSplit,
+                              IN PEPROCESS CurrentProcess);
 
 extern PMMPTE MmPteHit;
 
 NTSTATUS
-MmX86Fault (
-    IN ULONG_PTR FaultStatus,
-    IN PVOID VirtualAddress, 
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PVOID TrapInformation
-    )
+MmX86Fault(IN ULONG_PTR FaultStatus, IN PVOID VirtualAddress, IN KPROCESSOR_MODE PreviousMode, IN PVOID TrapInformation)
 
 /*++
 
@@ -153,15 +117,13 @@ Environment:
     PMMPFN Pfn1;
     PVOID OriginalVirtualAddress;
 
-    ASSERT (VirtualAddress < (PVOID)MM_MAX_WOW64_ADDRESS);
+    ASSERT(VirtualAddress < (PVOID)MM_MAX_WOW64_ADDRESS);
 
-    PreviousIrql = KeGetCurrentIrql ();
-    
-    if (PreviousIrql > APC_LEVEL) {
-        return MmAccessFault (FaultStatus,
-                              VirtualAddress,
-                              PreviousMode,
-                              TrapInformation);
+    PreviousIrql = KeGetCurrentIrql();
+
+    if (PreviousIrql > APC_LEVEL)
+    {
+        return MmAccessFault(FaultStatus, VirtualAddress, PreviousMode, TrapInformation);
     }
 
     NewPteProtection = 0;
@@ -172,17 +134,18 @@ Environment:
     PointerAltPteForNativePage = NULL;
     OriginalVirtualAddress = VirtualAddress;
 
-    CurrentProcess = PsGetCurrentProcess ();
+    CurrentProcess = PsGetCurrentProcess();
 
     Wow64Process = CurrentProcess->Wow64Process;
 
-    PointerPte = MiGetPteAddress (VirtualAddress);
-    PointerAltPte = MiGetAltPteAddress (VirtualAddress);
+    PointerPte = MiGetPteAddress(VirtualAddress);
+    PointerAltPte = MiGetAltPteAddress(VirtualAddress);
 
 #if DBG
-    if (PointerPte == MmPteHit) {
-        DbgPrint ("MM: PTE hit at %p\n", MmPteHit);
-        DbgBreakPoint ();
+    if (PointerPte == MmPteHit)
+    {
+        DbgPrint("MM: PTE hit at %p\n", MmPteHit);
+        DbgBreakPoint();
     }
 #endif
 
@@ -190,7 +153,7 @@ Environment:
     // Acquire the alternate table mutex, also blocking APCs.
     //
 
-    LOCK_ALTERNATE_TABLE (Wow64Process);
+    LOCK_ALTERNATE_TABLE(Wow64Process);
 
     //
     // If a fork operation is in progress and the faulting thread
@@ -198,18 +161,20 @@ Environment:
     // the fork is completed.
     //
 
-    if (CurrentProcess->ForkInProgress != NULL) {
+    if (CurrentProcess->ForkInProgress != NULL)
+    {
 
-        UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-        KeLowerIrql (PreviousIrql);
+        UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+        KeLowerIrql(PreviousIrql);
 
-        LOCK_WS (CurrentProcess);
+        LOCK_WS(CurrentProcess);
 
-        if (MiWaitForForkToComplete (CurrentProcess, FALSE) == FALSE) {
-            ASSERT (FALSE);
+        if (MiWaitForForkToComplete(CurrentProcess, FALSE) == FALSE)
+        {
+            ASSERT(FALSE);
         }
 
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
 
         return STATUS_SUCCESS;
     }
@@ -218,10 +183,10 @@ Environment:
     // Check to see if the protection is registered in the alternate entry.
     //
 
-    if (MI_CHECK_BIT (Wow64Process->AltPermBitmap, 
-                      MI_VA_TO_VPN(VirtualAddress)) == 0) { 
+    if (MI_CHECK_BIT(Wow64Process->AltPermBitmap, MI_VA_TO_VPN(VirtualAddress)) == 0)
+    {
 
-        MiCheckVirtualAddressFor4kPage (VirtualAddress, CurrentProcess);
+        MiCheckVirtualAddressFor4kPage(VirtualAddress, CurrentProcess);
     }
 
     //
@@ -234,96 +199,104 @@ Environment:
     // Check to see if the alternate entry is no access.
     //
 
-    if (AltPteContents.u.Alt.NoAccess != 0) {
+    if (AltPteContents.u.Alt.NoAccess != 0)
+    {
 
         //
         // This 4KB page is no access.
         //
 
         status = STATUS_ACCESS_VIOLATION;
-        
+
 #if DBG
-        if (MmDebug & MM_DBG_STOP_ON_ACCVIO) {
-            DbgPrint ("MM:access violation - %p\n",OriginalVirtualAddress);
-            MiFormatPte (PointerPte);
-            DbgBreakPoint ();
-        } 
+        if (MmDebug & MM_DBG_STOP_ON_ACCVIO)
+        {
+            DbgPrint("MM:access violation - %p\n", OriginalVirtualAddress);
+            MiFormatPte(PointerPte);
+            DbgBreakPoint();
+        }
 #endif
         goto return_status;
     }
-    
+
     //
     // Check to see if the alternate entry is empty or if anyone has made any
     // commitments for the shared pages.
     //
 
-    if ((AltPteContents.u.Long == 0) || 
-        ((AltPteContents.u.Alt.Commit == 0) && (AltPteContents.u.Alt.Private == 0))) {
+    if ((AltPteContents.u.Long == 0) || ((AltPteContents.u.Alt.Commit == 0) && (AltPteContents.u.Alt.Private == 0)))
+    {
         //
         // If empty, get the protection information and fill the entry.
         //
 
-        LOCK_WS (CurrentProcess);
-        
-        ProtoPte = MiCheckVirtualAddress (VirtualAddress, &OriginalProtection);
+        LOCK_WS(CurrentProcess);
 
-        if (ProtoPte != NULL) {
+        ProtoPte = MiCheckVirtualAddress(VirtualAddress, &OriginalProtection);
 
-            if (OriginalProtection == MM_UNKNOWN_PROTECTION) {
+        if (ProtoPte != NULL)
+        {
 
-                if (!MI_IS_PHYSICAL_ADDRESS(ProtoPte)) {
-                    PointerPde = MiGetPteAddress (ProtoPte);
-                    LOCK_PFN (OldIrql);
-                    if (PointerPde->u.Hard.Valid == 0) {
-                        MiMakeSystemAddressValidPfn (ProtoPte);
+            if (OriginalProtection == MM_UNKNOWN_PROTECTION)
+            {
+
+                if (!MI_IS_PHYSICAL_ADDRESS(ProtoPte))
+                {
+                    PointerPde = MiGetPteAddress(ProtoPte);
+                    LOCK_PFN(OldIrql);
+                    if (PointerPde->u.Hard.Valid == 0)
+                    {
+                        MiMakeSystemAddressValidPfn(ProtoPte);
                     }
-                    Pfn1 = MI_PFN_ELEMENT (PointerPde->u.Hard.PageFrameNumber);
+                    Pfn1 = MI_PFN_ELEMENT(PointerPde->u.Hard.PageFrameNumber);
                     MI_ADD_LOCKED_PAGE_CHARGE(Pfn1, 28);
                     Pfn1->u3.e2.ReferenceCount += 1;
-                    ASSERT (Pfn1->u3.e2.ReferenceCount > 1);
-                    UNLOCK_PFN (OldIrql);
+                    ASSERT(Pfn1->u3.e2.ReferenceCount > 1);
+                    UNLOCK_PFN(OldIrql);
                 }
-                else {
+                else
+                {
                     Pfn1 = NULL;
                 }
 
-                OriginalProtection = 
-                    MiMakeProtectionMask (MiGetPageProtection (ProtoPte,
-                                                               CurrentProcess,
-                                                               FALSE));
+                OriginalProtection = MiMakeProtectionMask(MiGetPageProtection(ProtoPte, CurrentProcess, FALSE));
 
                 //
                 // Unlock the page containing the prototype PTEs.
                 //
 
-                if (Pfn1 != NULL) {
-                    ASSERT (!MI_IS_PHYSICAL_ADDRESS(ProtoPte));
-                    LOCK_PFN (OldIrql);
-                    ASSERT (Pfn1->u3.e2.ReferenceCount > 1);
+                if (Pfn1 != NULL)
+                {
+                    ASSERT(!MI_IS_PHYSICAL_ADDRESS(ProtoPte));
+                    LOCK_PFN(OldIrql);
+                    ASSERT(Pfn1->u3.e2.ReferenceCount > 1);
                     MI_REMOVE_LOCKED_PAGE_CHARGE(Pfn1, 29);
                     Pfn1->u3.e2.ReferenceCount -= 1;
-                    UNLOCK_PFN (OldIrql);
+                    UNLOCK_PFN(OldIrql);
                 }
             }
-        
-            UNLOCK_WS (CurrentProcess);
-        
-            if (OriginalProtection == MM_INVALID_PROTECTION) {
+
+            UNLOCK_WS(CurrentProcess);
+
+            if (OriginalProtection == MM_INVALID_PROTECTION)
+            {
                 status = STATUS_ACCESS_VIOLATION;
 #if DBG
-                if (MmDebug & MM_DBG_STOP_ON_ACCVIO) {
-                    DbgPrint ("MM:access violation - %p\n",OriginalVirtualAddress);
-                    MiFormatPte (PointerPte);
-                    DbgBreakPoint ();
-                } 
+                if (MmDebug & MM_DBG_STOP_ON_ACCVIO)
+                {
+                    DbgPrint("MM:access violation - %p\n", OriginalVirtualAddress);
+                    MiFormatPte(PointerPte);
+                    DbgBreakPoint();
+                }
 #endif
                 goto return_status;
             }
 
-            if (OriginalProtection != MM_NOACCESS) {
+            if (OriginalProtection != MM_NOACCESS)
+            {
 
-                ProtectionMaskOriginal = MiMakeProtectionAteMask (OriginalProtection);
-            
+                ProtectionMaskOriginal = MiMakeProtectionAteMask(OriginalProtection);
+
                 SharedPageFault = TRUE;
                 ProtectionMaskOriginal |= MM_ATE_COMMIT;
 
@@ -336,25 +309,28 @@ Environment:
 
                 PointerAltPte->u.Long = AltPteContents.u.Long;
             }
-        } 
-        else {
-            UNLOCK_WS (CurrentProcess);
         }
-    } 
+        else
+        {
+            UNLOCK_WS(CurrentProcess);
+        }
+    }
 
-    if (AltPteContents.u.Alt.Commit == 0) {
-        
+    if (AltPteContents.u.Alt.Commit == 0)
+    {
+
         //
         // If the page is not committed, return an STATUS_ACCESS_VIOLATION.
         //
 
         status = STATUS_ACCESS_VIOLATION;
 #if DBG
-        if (MmDebug & MM_DBG_STOP_ON_ACCVIO) {
-            DbgPrint ("MM:access violation - %p\n",OriginalVirtualAddress);
-            MiFormatPte (PointerPte);
-            DbgBreakPoint ();
-        } 
+        if (MmDebug & MM_DBG_STOP_ON_ACCVIO)
+        {
+            DbgPrint("MM:access violation - %p\n", OriginalVirtualAddress);
+            MiFormatPte(PointerPte);
+            DbgBreakPoint();
+        }
 #endif
         goto return_status;
     }
@@ -363,47 +339,43 @@ Environment:
     // Check whether the faulting page is split into 4k pages.
     //
 
-    PageIsSplit = MiIsSplitPage (VirtualAddress);
+    PageIsSplit = MiIsSplitPage(VirtualAddress);
 
     //
     // Get the real protection for the native PTE.
     //
 
-    NewPteProtection = MiFindProtectionForNativePte (VirtualAddress);
+    NewPteProtection = MiFindProtectionForNativePte(VirtualAddress);
 
     //
-    // Set the Protection for the native PTE 
+    // Set the Protection for the native PTE
     //
 
-    MiSetNativePteProtection (VirtualAddress,
-                              NewPteProtection,
-                              PageIsSplit,
-                              CurrentProcess);
+    MiSetNativePteProtection(VirtualAddress, NewPteProtection, PageIsSplit, CurrentProcess);
 
-    
+
     //
-    // Check the indirect PTE reference case. If so, set the protection for  
+    // Check the indirect PTE reference case. If so, set the protection for
     // the indirect PTE too.
     //
 
-    if (AltPteContents.u.Alt.PteIndirect != 0) {
+    if (AltPteContents.u.Alt.PteIndirect != 0)
+    {
 
         PointerPte = (PMMPTE)(AltPteContents.u.Alt.PteOffset + PTE_UBASE);
 
-        VirtualAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+        VirtualAddress = MiGetVirtualAddressMappedByPte(PointerPte);
 
         NewPteProtection = AltPteContents.u.Long & ALT_PROTECTION_MASK;
 
-        if (AltPteContents.u.Alt.CopyOnWrite != 0) {
+        if (AltPteContents.u.Alt.CopyOnWrite != 0)
+        {
             NewPteProtection |= MM_PTE_COPY_ON_WRITE_MASK;
         }
 
-        MiSetNativePteProtection (VirtualAddress,
-                                  NewPteProtection,
-                                  FALSE,
-                                  CurrentProcess);
+        MiSetNativePteProtection(VirtualAddress, NewPteProtection, FALSE, CurrentProcess);
     }
-        
+
     //
     // Since we release the AltTable lock before calling MmAccessFault,
     // there is a chance that two threads may execute concurrently inside
@@ -421,19 +393,20 @@ Environment:
     // inpage in progress in the alternate PTE.
     //
 
-    if (MI_ALT_PTE_IN_PAGE_IN_PROGRESS (PointerAltPte) != 0) {
+    if (MI_ALT_PTE_IN_PAGE_IN_PROGRESS(PointerAltPte) != 0)
+    {
 
         //
         // Release the Alt PTE lock
         //
 
-        UNLOCK_ALTERNATE_TABLE (Wow64Process);
+        UNLOCK_ALTERNATE_TABLE(Wow64Process);
 
         //
         // Flush the TB as MiSetNativePteProtection may have edited the PTE.
         //
 
-        KiFlushSingleTb (TRUE, OriginalVirtualAddress);
+        KiFlushSingleTb(TRUE, OriginalVirtualAddress);
 
         //
         // Delay execution so that if this is a high priority thread,
@@ -441,24 +414,25 @@ Environment:
         // as it may be running at a lower priority.
         //
 
-        KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
 
         return STATUS_SUCCESS;
     }
 
     //
-    // The faulting 4kb page must be a valid page, but we need to resolve it 
+    // The faulting 4kb page must be a valid page, but we need to resolve it
     // on a case by case basis.
     //
 
-    ASSERT (AltPteContents.u.Long != 0);
-    ASSERT (AltPteContents.u.Alt.Commit != 0);
-        
-    if (AltPteContents.u.Alt.Accessed == 0) {
+    ASSERT(AltPteContents.u.Long != 0);
+    ASSERT(AltPteContents.u.Alt.Commit != 0);
+
+    if (AltPteContents.u.Alt.Accessed == 0)
+    {
 
         //
         // When PointerAte->u.Hard.Accessed is zero, there are 4 possibilities:
-        // 
+        //
         //  1. Lowest Protection
         //  2. 4kb Demand Zero
         //  3. GUARD page fault
@@ -466,20 +440,23 @@ Environment:
         //     the native page has accessible permissions.
         //
 
-        if (AltPteContents.u.Alt.FillZero != 0) {
+        if (AltPteContents.u.Alt.FillZero != 0)
+        {
 
             //
             // Schedule it later.
             //
 
             FillZero = TRUE;
-        } 
+        }
 
-        if ((AltPteContents.u.Alt.Protection & MM_GUARD_PAGE) != 0) {
+        if ((AltPteContents.u.Alt.Protection & MM_GUARD_PAGE) != 0)
+        {
             goto CheckGuardPage;
         }
 
-        if (FillZero == FALSE) {
+        if (FillZero == FALSE)
+        {
 
             //
             // This 4kb page has permission set to no access.
@@ -487,57 +464,60 @@ Environment:
 
             status = STATUS_ACCESS_VIOLATION;
 #if DBG
-            if (MmDebug & MM_DBG_STOP_ON_ACCVIO) {
-                DbgPrint ("MM:access violation - %p\n",OriginalVirtualAddress);
-                MiFormatPte (PointerPte);
-                DbgBreakPoint ();
-            } 
+            if (MmDebug & MM_DBG_STOP_ON_ACCVIO)
+            {
+                DbgPrint("MM:access violation - %p\n", OriginalVirtualAddress);
+                MiFormatPte(PointerPte);
+                DbgBreakPoint();
+            }
 #endif
 
             goto return_status;
         }
     }
 
-    if (MI_FAULT_STATUS_INDICATES_EXECUTION(FaultStatus)) {
-        
+    if (MI_FAULT_STATUS_INDICATES_EXECUTION(FaultStatus))
+    {
+
         //
-        // Execute permission is already given to IA32 by setting it in 
+        // Execute permission is already given to IA32 by setting it in
         // MI_MAKE_VALID_PTE().
         //
-
     }
-    else if (MI_FAULT_STATUS_INDICATES_WRITE(FaultStatus)) {
-        
+    else if (MI_FAULT_STATUS_INDICATES_WRITE(FaultStatus))
+    {
+
         //
         // Check to see if this is a copy-on-write page.
         //
 
-        if (AltPteContents.u.Alt.CopyOnWrite != 0) {
+        if (AltPteContents.u.Alt.CopyOnWrite != 0)
+        {
 
             //
             // Let MmAccessFault() perform the copy-on-write.
             //
 
-            status = MmAccessFault (FaultStatus,
-                                    VirtualAddress,
-                                    PreviousMode,
-                                    TrapInformation);
+            status = MmAccessFault(FaultStatus, VirtualAddress, PreviousMode, TrapInformation);
 
-            if (NT_SUCCESS(status)) {
-                MiCopyOnWriteFor4kPage (OriginalVirtualAddress);
+            if (NT_SUCCESS(status))
+            {
+                MiCopyOnWriteFor4kPage(OriginalVirtualAddress);
             }
 
             goto return_status;
         }
-            
-        if (AltPteContents.u.Hard.Write == 0) {
+
+        if (AltPteContents.u.Hard.Write == 0)
+        {
             status = STATUS_ACCESS_VIOLATION;
 #if DBG
-            if (MmDebug & MM_DBG_STOP_ON_ACCVIO) {
-                DbgPrint ("MM:access violation - %p\n",OriginalVirtualAddress);
-                MiFormatPte (PointerPte);
-                DbgBreakPoint ();
-            } 
+            if (MmDebug & MM_DBG_STOP_ON_ACCVIO)
+            {
+                DbgPrint("MM:access violation - %p\n", OriginalVirtualAddress);
+                MiFormatPte(PointerPte);
+                DbgBreakPoint();
+            }
 #endif
             goto return_status;
         }
@@ -550,14 +530,15 @@ CheckGuardPage:
     // Subsequent faults on this native page will be restarted.
     // This should happen only if the PTE isn't valid.
     //
-    
-    PointerAltPteForNativePage = MiGetAltPteAddress (PAGE_ALIGN (VirtualAddress));
-    
-    for (i = 0; i < SPLITS_PER_PAGE; i += 1) {
+
+    PointerAltPteForNativePage = MiGetAltPteAddress(PAGE_ALIGN(VirtualAddress));
+
+    for (i = 0; i < SPLITS_PER_PAGE; i += 1)
+    {
         PointerAltPteForNativePage->u.Alt.InPageInProgress = TRUE;
         PointerAltPteForNativePage += 1;
     }
-    
+
     //
     // Let MmAccessFault() perform an inpage, dirty-bit setting, etc.
     //
@@ -569,79 +550,79 @@ CheckGuardPage:
 
     Wow64Process->AlternateTableAcquiredUnsafe = MI_MUTEX_ACQUIRED_UNSAFE;
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-    
-    status = MmAccessFault (FaultStatus,
-                            VirtualAddress,
-                            PreviousMode,
-                            TrapInformation);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    status = MmAccessFault(FaultStatus, VirtualAddress, PreviousMode, TrapInformation);
 
-    for (i = 0; i < SPLITS_PER_PAGE; i += 1) {
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+
+    for (i = 0; i < SPLITS_PER_PAGE; i += 1)
+    {
         PointerAltPteForNativePage -= 1;
         PointerAltPteForNativePage->u.Alt.InPageInProgress = FALSE;
     }
 
     AltPteContents = *PointerAltPte;
 
-    if ((AltPteContents.u.Alt.Protection & MM_GUARD_PAGE) != 0) {
-                    
+    if ((AltPteContents.u.Alt.Protection & MM_GUARD_PAGE) != 0)
+    {
+
         AltPteContents = *PointerAltPte;
         AltPteContents.u.Alt.Protection &= ~MM_GUARD_PAGE;
         AltPteContents.u.Alt.Accessed = 1;
-        
+
         PointerAltPte->u.Long = AltPteContents.u.Long;
 
-        if ((status != STATUS_PAGE_FAULT_GUARD_PAGE) &&
-            (status != STATUS_STACK_OVERFLOW)) {
-        
-            UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-            KeLowerIrql (PreviousIrql);
+        if ((status != STATUS_PAGE_FAULT_GUARD_PAGE) && (status != STATUS_STACK_OVERFLOW))
+        {
 
-            status = MiCheckForUserStackOverflow (VirtualAddress);
+            UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+            KeLowerIrql(PreviousIrql);
 
-            KeRaiseIrql (APC_LEVEL, &PreviousIrql);
-            LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+            status = MiCheckForUserStackOverflow(VirtualAddress);
+
+            KeRaiseIrql(APC_LEVEL, &PreviousIrql);
+            LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
         }
     }
-    else if (status == STATUS_GUARD_PAGE_VIOLATION) {
+    else if (status == STATUS_GUARD_PAGE_VIOLATION)
+    {
 
         //
         // Native PTE has the guard bit set, but the AltPte
         // doesn't have it.
         //
 
-        NativeGuardPage = MiIsNativeGuardPage (VirtualAddress);
+        NativeGuardPage = MiIsNativeGuardPage(VirtualAddress);
 
-        if (NativeGuardPage == TRUE) {
+        if (NativeGuardPage == TRUE)
+        {
             status = STATUS_SUCCESS;
         }
-
     }
-    else if ((SharedPageFault == TRUE) && (status == STATUS_ACCESS_VIOLATION)) {
-        
+    else if ((SharedPageFault == TRUE) && (status == STATUS_ACCESS_VIOLATION))
+    {
+
         PointerAltPte->u.Alt.Commit = 0;
     }
 
 return_status:
 
-    KiFlushSingleTb (TRUE, OriginalVirtualAddress);
+    KiFlushSingleTb(TRUE, OriginalVirtualAddress);
 
-    if (FillZero == TRUE) {
-        MiFillZeroFor4kPage (VirtualAddress, CurrentProcess);
+    if (FillZero == TRUE)
+    {
+        MiFillZeroFor4kPage(VirtualAddress, CurrentProcess);
     }
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-    KeLowerIrql (PreviousIrql);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+    KeLowerIrql(PreviousIrql);
 
     return status;
 }
 
 ULONG
-MiFindProtectionForNativePte (
-    IN PVOID VirtualAddress
-    )
+MiFindProtectionForNativePte(IN PVOID VirtualAddress)
 
 /*++
 
@@ -670,13 +651,15 @@ Environment:
 
     ProtectionCode = 0;
 
-    PointerAltPte = MiGetAltPteAddress (PAGE_ALIGN(VirtualAddress));
-    
-    for (i = 0; i < SPLITS_PER_PAGE; i += 1) {
+    PointerAltPte = MiGetAltPteAddress(PAGE_ALIGN(VirtualAddress));
+
+    for (i = 0; i < SPLITS_PER_PAGE; i += 1)
+    {
 
         AltPteContents.u.Long = PointerAltPte->u.Long;
 
-        if (AltPteContents.u.Alt.PteIndirect == 0) {
+        if (AltPteContents.u.Alt.PteIndirect == 0)
+        {
             ProtectionCode |= (PointerAltPte->u.Long & ALT_PROTECTION_MASK);
         }
 
@@ -686,57 +669,48 @@ Environment:
     return ProtectionCode;
 }
 
-
+
 //
 // Define and initialize the protection conversion table for the
 // Alternate Permision Table Entries.
 //
 
-ULONGLONG MmProtectToAteMask[32] = {
-                       MM_PTE_NOACCESS | MM_ATE_NOACCESS,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READWRITE | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK | MM_ATE_COPY_ON_WRITE,
-                       MM_PTE_EXECUTE_READWRITE | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK | MM_ATE_COPY_ON_WRITE,
-                       MM_PTE_NOACCESS | MM_ATE_NOACCESS,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READWRITE | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK | MM_ATE_COPY_ON_WRITE,
-                       MM_PTE_EXECUTE_READWRITE | MM_PTE_ACCESS_MASK,
-                       MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK | MM_ATE_COPY_ON_WRITE,
-                       MM_PTE_NOACCESS | MM_ATE_NOACCESS,
-                       MM_PTE_EXECUTE_READ,
-                       MM_PTE_EXECUTE_READ,
-                       MM_PTE_EXECUTE_READ,
-                       MM_PTE_EXECUTE_READWRITE,
-                       MM_PTE_EXECUTE_READ | MM_ATE_COPY_ON_WRITE,
-                       MM_PTE_EXECUTE_READWRITE,
-                       MM_PTE_EXECUTE_READ | MM_ATE_COPY_ON_WRITE,
-                       MM_PTE_NOACCESS | MM_ATE_NOACCESS,
-                       MM_PTE_EXECUTE_READ,
-                       MM_PTE_EXECUTE_READ,
-                       MM_PTE_EXECUTE_READ,
-                       MM_PTE_EXECUTE_READWRITE,
-                       MM_PTE_EXECUTE_READ | MM_ATE_COPY_ON_WRITE,
-                       MM_PTE_EXECUTE_READWRITE,
-                       MM_PTE_EXECUTE_READ | MM_ATE_COPY_ON_WRITE
-                    };
+ULONGLONG MmProtectToAteMask[32] = { MM_PTE_NOACCESS | MM_ATE_NOACCESS,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READWRITE | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK | MM_ATE_COPY_ON_WRITE,
+                                     MM_PTE_EXECUTE_READWRITE | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK | MM_ATE_COPY_ON_WRITE,
+                                     MM_PTE_NOACCESS | MM_ATE_NOACCESS,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READWRITE | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK | MM_ATE_COPY_ON_WRITE,
+                                     MM_PTE_EXECUTE_READWRITE | MM_PTE_ACCESS_MASK,
+                                     MM_PTE_EXECUTE_READ | MM_PTE_ACCESS_MASK | MM_ATE_COPY_ON_WRITE,
+                                     MM_PTE_NOACCESS | MM_ATE_NOACCESS,
+                                     MM_PTE_EXECUTE_READ,
+                                     MM_PTE_EXECUTE_READ,
+                                     MM_PTE_EXECUTE_READ,
+                                     MM_PTE_EXECUTE_READWRITE,
+                                     MM_PTE_EXECUTE_READ | MM_ATE_COPY_ON_WRITE,
+                                     MM_PTE_EXECUTE_READWRITE,
+                                     MM_PTE_EXECUTE_READ | MM_ATE_COPY_ON_WRITE,
+                                     MM_PTE_NOACCESS | MM_ATE_NOACCESS,
+                                     MM_PTE_EXECUTE_READ,
+                                     MM_PTE_EXECUTE_READ,
+                                     MM_PTE_EXECUTE_READ,
+                                     MM_PTE_EXECUTE_READWRITE,
+                                     MM_PTE_EXECUTE_READ | MM_ATE_COPY_ON_WRITE,
+                                     MM_PTE_EXECUTE_READWRITE,
+                                     MM_PTE_EXECUTE_READ | MM_ATE_COPY_ON_WRITE };
 
 #define MiMakeProtectionAteMask(NewProtect) MmProtectToAteMask[NewProtect]
 
-VOID
-MiProtectFor4kPage (
-    IN PVOID Base,
-    IN SIZE_T Size,
-    IN ULONG NewProtect,
-    IN ULONG Flags,
-    IN PEPROCESS Process
-    )
+VOID MiProtectFor4kPage(IN PVOID Base, IN SIZE_T Size, IN ULONG NewProtect, IN ULONG Flags, IN PEPROCESS Process)
 
 /*++
 
@@ -796,8 +770,8 @@ Environment:
     // If the addresses are not WOW64 then nothing needs to be done here.
     //
 
-    if ((Starting4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS) ||
-        (Ending4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS)) {
+    if ((Starting4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS) || (Ending4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS))
+    {
 
         return;
     }
@@ -806,65 +780,69 @@ Environment:
     // Set up the protection to be used for this range of addresses.
     //
 
-    ProtectionMask = MiMakeProtectionAteMask (NewProtect);
+    ProtectionMask = MiMakeProtectionAteMask(NewProtect);
 
-    if ((NewProtect & MM_COPY_ON_WRITE_MASK) == MM_COPY_ON_WRITE_MASK) {
+    if ((NewProtect & MM_COPY_ON_WRITE_MASK) == MM_COPY_ON_WRITE_MASK)
+    {
         NewProtectNotCopy = NewProtect & ~MM_PROTECTION_COPY_MASK;
-        ProtectionMaskNotCopy = MiMakeProtectionAteMask (NewProtectNotCopy);
+        ProtectionMaskNotCopy = MiMakeProtectionAteMask(NewProtectNotCopy);
     }
-    else {
+    else
+    {
         NewProtectNotCopy = NewProtect;
         ProtectionMaskNotCopy = ProtectionMask;
-    }    
+    }
 
-    if (Flags & ALT_COMMIT) {
+    if (Flags & ALT_COMMIT)
+    {
         ProtectionMask |= MM_ATE_COMMIT;
-        ProtectionMaskNotCopy |= MM_ATE_COMMIT; 
+        ProtectionMaskNotCopy |= MM_ATE_COMMIT;
     }
 
     //
     // Get the entry in the table for each of these addresses.
     //
 
-    StartAltPte = MiGetAltPteAddress (Starting4KAddress);
-    EndAltPte = MiGetAltPteAddress (Ending4KAddress);
+    StartAltPte = MiGetAltPteAddress(Starting4KAddress);
+    EndAltPte = MiGetAltPteAddress(Ending4KAddress);
 
-    NumberOfPtes = (ULONG) ADDRESS_AND_SIZE_TO_SPAN_PAGES (Starting4KAddress,
-                                           (ULONG_PTR)Ending4KAddress -
-                                           (ULONG_PTR)Starting4KAddress);
-    ASSERT (NumberOfPtes != 0);
+    NumberOfPtes = (ULONG)ADDRESS_AND_SIZE_TO_SPAN_PAGES(Starting4KAddress,
+                                                         (ULONG_PTR)Ending4KAddress - (ULONG_PTR)Starting4KAddress);
+    ASSERT(NumberOfPtes != 0);
 
     //
     // Ensure the proper native TB entries get flushed.
     //
 
-    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT) {
-    
-        VirtualAddress = PAGE_ALIGN (Starting4KAddress);
+    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT)
+    {
 
-        for (i = 0; i < NumberOfPtes; i += 1) {
+        VirtualAddress = PAGE_ALIGN(Starting4KAddress);
+
+        for (i = 0; i < NumberOfPtes; i += 1)
+        {
             Virtual[i] = (PVOID)VirtualAddress;
             VirtualAddress = (PVOID)((ULONG_PTR)VirtualAddress + PAGE_SIZE);
         }
     }
 
-    StartAltPte0 = MiGetAltPteAddress (PAGE_ALIGN (Starting4KAddress));
-    EndAltPte0 = MiGetAltPteAddress ((ULONG_PTR)PAGE_ALIGN(Ending4KAddress)+PAGE_SIZE-1);
+    StartAltPte0 = MiGetAltPteAddress(PAGE_ALIGN(Starting4KAddress));
+    EndAltPte0 = MiGetAltPteAddress((ULONG_PTR)PAGE_ALIGN(Ending4KAddress) + PAGE_SIZE - 1);
 
     Wow64Process = Process->Wow64Process;
 
-    Starting4KVpn = (ULONG) MI_VA_TO_VPN (Starting4KAddress);
+    Starting4KVpn = (ULONG)MI_VA_TO_VPN(Starting4KAddress);
 
     //
     // Acquire the mutex guarding the alternate page table.
     //
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    if (!(Flags & ALT_ALLOCATE) && 
-        (MI_CHECK_BIT(Wow64Process->AltPermBitmap, Starting4KVpn) == 0)) {
+    if (!(Flags & ALT_ALLOCATE) && (MI_CHECK_BIT(Wow64Process->AltPermBitmap, Starting4KVpn) == 0))
+    {
 
-        UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+        UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
         return;
     }
 
@@ -872,21 +850,24 @@ Environment:
     // Change all of the protections.
     //
 
-    while (StartAltPte <= EndAltPte) {
+    while (StartAltPte <= EndAltPte)
+    {
 
         AltPteContents.u.Long = StartAltPte->u.Long;
 
         TempAltPte.u.Long = ProtectionMask;
         TempAltPte.u.Alt.Protection = NewProtect;
 
-        if (!(Flags & ALT_ALLOCATE)) {
-            
-            if (AltPteContents.u.Alt.Private != 0) {
+        if (!(Flags & ALT_ALLOCATE))
+        {
+
+            if (AltPteContents.u.Alt.Private != 0)
+            {
 
                 //
                 // If it is already private, don't make it writecopy.
                 //
-                
+
                 TempAltPte.u.Long = ProtectionMaskNotCopy;
                 TempAltPte.u.Alt.Protection = NewProtectNotCopy;
 
@@ -895,9 +876,10 @@ Environment:
                 //
 
                 TempAltPte.u.Alt.Private = 1;
-            } 
+            }
 
-            if (AltPteContents.u.Alt.FillZero != 0) {
+            if (AltPteContents.u.Alt.FillZero != 0)
+            {
 
                 TempAltPte.u.Alt.Accessed = 0;
                 TempAltPte.u.Alt.FillZero = 1;
@@ -912,7 +894,8 @@ Environment:
             TempAltPte.u.Alt.PteOffset = AltPteContents.u.Alt.PteOffset;
         }
 
-        if (Flags & ALT_CHANGE) {
+        if (Flags & ALT_CHANGE)
+        {
 
             //
             // If it is a change request, make commit sticky.
@@ -930,15 +913,18 @@ Environment:
         StartAltPte += 1;
     }
 
-    if (Flags & ALT_ALLOCATE) {
+    if (Flags & ALT_ALLOCATE)
+    {
 
         //
         // Fill the empty Alt PTE as NoAccess ATE at the end.
         //
 
-        while (EndAltPte <= EndAltPte0) {
+        while (EndAltPte <= EndAltPte0)
+        {
 
-            if (EndAltPte->u.Long == 0) {
+            if (EndAltPte->u.Long == 0)
+            {
 
                 TempAltPte.u.Long = EndAltPte->u.Long;
                 TempAltPte.u.Alt.NoAccess = 1;
@@ -962,37 +948,26 @@ Environment:
         BitMap.SizeOfBitMap = MM_MAX_WOW64_ADDRESS >> PTI_SHIFT;
         BitMap.Buffer = Wow64Process->AltPermBitmap;
 
-        RtlSetBits (&BitMap, Starting4KVpn, NumberOfPtes);
+        RtlSetBits(&BitMap, Starting4KVpn, NumberOfPtes);
     }
 
-    MiResetAccessBitForNativePtes (Starting4KAddress, Ending4KAddress, Process);
+    MiResetAccessBitForNativePtes(Starting4KAddress, Ending4KAddress, Process);
 
-    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT) {
+    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT)
+    {
 
-        KeFlushMultipleTb (NumberOfPtes,
-                           &Virtual[0],
-                           TRUE,
-                           TRUE,
-                           NULL,
-                           ZeroPte.u.Flush);                          
+        KeFlushMultipleTb(NumberOfPtes, &Virtual[0], TRUE, TRUE, NULL, ZeroPte.u.Flush);
     }
-    else {
-        KeFlushEntireTb (TRUE, TRUE);
+    else
+    {
+        KeFlushEntireTb(TRUE, TRUE);
     }
-    
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 }
-
-VOID
-MiProtectMapFileFor4kPage (
-    IN PVOID Base,
-    IN SIZE_T Size,
-    IN ULONG NewProtect,
-    IN SIZE_T CommitSize,
-    IN PMMPTE PointerPte,
-    IN PMMPTE LastPte,
-    IN PEPROCESS Process
-    )
+
+VOID MiProtectMapFileFor4kPage(IN PVOID Base, IN SIZE_T Size, IN ULONG NewProtect, IN SIZE_T CommitSize,
+                               IN PMMPTE PointerPte, IN PMMPTE LastPte, IN PEPROCESS Process)
 
 /*++
 
@@ -1049,8 +1024,8 @@ Environment:
     // If the addresses are not WOW64 then nothing needs to be done here.
     //
 
-    if ((Starting4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS) ||
-        (Ending4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS)) {
+    if ((Starting4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS) || (Ending4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS))
+    {
 
         return;
     }
@@ -1059,19 +1034,19 @@ Environment:
     // Set up the protection to be used for this range of addresses.
     //
 
-    ProtectionMask = MiMakeProtectionAteMask (NewProtect);
+    ProtectionMask = MiMakeProtectionAteMask(NewProtect);
 
     //
     // Get the entry in the table for each of these addresses.
     //
 
-    StartAltPte = MiGetAltPteAddress (Starting4KAddress);
-    EndAltPte = MiGetAltPteAddress (Ending4KAddress);
-    EndAltPte0 = MiGetAltPteAddress((ULONG_PTR)PAGE_ALIGN(Ending4KAddress)+PAGE_SIZE-1);
+    StartAltPte = MiGetAltPteAddress(Starting4KAddress);
+    EndAltPte = MiGetAltPteAddress(Ending4KAddress);
+    EndAltPte0 = MiGetAltPteAddress((ULONG_PTR)PAGE_ALIGN(Ending4KAddress) + PAGE_SIZE - 1);
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    ExAcquireFastMutexUnsafe (&MmSectionCommitMutex);
+    ExAcquireFastMutexUnsafe(&MmSectionCommitMutex);
 
     //
     // And then change all of the protections.
@@ -1082,15 +1057,19 @@ Environment:
     TempAltPte.u.Long = ProtectionMask;
     TempAltPte.u.Alt.Protection = NewProtect;
 
-    while (StartAltPte <= EndAltPte) {
+    while (StartAltPte <= EndAltPte)
+    {
 
-        if (PointerPte < LastCommitPte) {
+        if (PointerPte < LastCommitPte)
+        {
             TempAltPte.u.Alt.Commit = 1;
         }
-        else if ((PointerPte <= LastPte) && (PointerPte->u.Long != 0)) {
+        else if ((PointerPte <= LastPte) && (PointerPte->u.Long != 0))
+        {
             TempAltPte.u.Alt.Commit = 1;
         }
-        else {
+        else
+        {
             TempAltPte.u.Alt.Commit = 0;
         }
 
@@ -1102,20 +1081,23 @@ Environment:
 
         StartAltPte += 1;
 
-        if (((ULONG_PTR)StartAltPte & ((SPLITS_PER_PAGE * sizeof(MMPTE))-1)) == 0) {
+        if (((ULONG_PTR)StartAltPte & ((SPLITS_PER_PAGE * sizeof(MMPTE)) - 1)) == 0)
+        {
             PointerPte += 1;
         }
     }
 
-    ExReleaseFastMutexUnsafe (&MmSectionCommitMutex);
+    ExReleaseFastMutexUnsafe(&MmSectionCommitMutex);
 
     //
     // Fill the empty Alt PTE as NoAccess ATE at the end.
     //
 
-    while (EndAltPte <= EndAltPte0) {
+    while (EndAltPte <= EndAltPte0)
+    {
 
-        if (EndAltPte->u.Long == 0) {
+        if (EndAltPte->u.Long == 0)
+        {
 
             TempAltPte.u.Long = EndAltPte->u.Long;
             TempAltPte.u.Alt.NoAccess = 1;
@@ -1129,7 +1111,7 @@ Environment:
 
         EndAltPte += 1;
     }
-    
+
     //
     // Initialize the bitmap inline for speed.
     //
@@ -1137,20 +1119,12 @@ Environment:
     BitMap.SizeOfBitMap = MM_MAX_WOW64_ADDRESS >> PTI_SHIFT;
     BitMap.Buffer = Wow64Process->AltPermBitmap;
 
-    RtlSetBits (&BitMap,
-                (ULONG) MI_VA_TO_VPN (Base),
-                (ULONG) (MI_VA_TO_VPN (Ending4KAddress) - MI_VA_TO_VPN (Base) + 1));
+    RtlSetBits(&BitMap, (ULONG)MI_VA_TO_VPN(Base), (ULONG)(MI_VA_TO_VPN(Ending4KAddress) - MI_VA_TO_VPN(Base) + 1));
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 }
-
-VOID
-MiProtectImageFileFor4kPage (
-    IN PVOID Base,
-    IN SIZE_T Size,
-    IN PMMPTE PointerPte,
-    IN PEPROCESS Process
-    )
+
+VOID MiProtectImageFileFor4kPage(IN PVOID Base, IN SIZE_T Size, IN PMMPTE PointerPte, IN PEPROCESS Process)
 
 /*++
 
@@ -1182,8 +1156,8 @@ Environment:
     // If the addresses are not WOW64 then nothing needs to be done here.
     //
 
-    if ((Starting4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS) ||
-        (Ending4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS)) {
+    if ((Starting4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS) || (Ending4KAddress >= (PVOID)MM_MAX_WOW64_ADDRESS))
+    {
 
         return;
     }
@@ -1192,52 +1166,53 @@ Environment:
     // Get the entry in the table for each of these addresses.
     //
 
-    StartAltPte = MiGetAltPteAddress (Starting4KAddress);
-    EndAltPte = MiGetAltPteAddress (Ending4KAddress);
-    EndAltPte0 = MiGetAltPteAddress((ULONG_PTR)PAGE_ALIGN(Ending4KAddress)+PAGE_SIZE-1);
+    StartAltPte = MiGetAltPteAddress(Starting4KAddress);
+    EndAltPte = MiGetAltPteAddress(Ending4KAddress);
+    EndAltPte0 = MiGetAltPteAddress((ULONG_PTR)PAGE_ALIGN(Ending4KAddress) + PAGE_SIZE - 1);
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
     //
     // And then change all of the protections.
     //
 
-    while (StartAltPte <= EndAltPte) {
+    while (StartAltPte <= EndAltPte)
+    {
 
         //
         // Get the original protection information from the prototype PTEs.
         //
 
-        LOCK_WS_UNSAFE (Process);
+        LOCK_WS_UNSAFE(Process);
 
-        LOCK_PFN (OldIrql);
-        MiMakeSystemAddressValidPfnWs (PointerPte, Process);
+        LOCK_PFN(OldIrql);
+        MiMakeSystemAddressValidPfnWs(PointerPte, Process);
         TempPte = *PointerPte;
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
-        NewProtect = 
-            MiMakeProtectionMask(MiGetPageProtection(&TempPte, Process, TRUE));
+        NewProtect = MiMakeProtectionMask(MiGetPageProtection(&TempPte, Process, TRUE));
 
-        ASSERT (NewProtect != MM_INVALID_PROTECTION);
+        ASSERT(NewProtect != MM_INVALID_PROTECTION);
 
-        UNLOCK_WS_UNSAFE (Process);
+        UNLOCK_WS_UNSAFE(Process);
 
         //
         // If demand-zero and copy-on-write, remove copy-on-write.
         //
 
-        if ((!IS_PTE_NOT_DEMAND_ZERO(TempPte)) && 
-            (TempPte.u.Soft.Protection & MM_COPY_ON_WRITE_MASK)) {
+        if ((!IS_PTE_NOT_DEMAND_ZERO(TempPte)) && (TempPte.u.Soft.Protection & MM_COPY_ON_WRITE_MASK))
+        {
             NewProtect = NewProtect & ~MM_PROTECTION_COPY_MASK;
         }
 
-        ProtectionMask = MiMakeProtectionAteMask (NewProtect);
+        ProtectionMask = MiMakeProtectionAteMask(NewProtect);
         ProtectionMask |= MM_ATE_COMMIT;
 
         TempAltPte.u.Long = ProtectionMask;
         TempAltPte.u.Alt.Protection = NewProtect;
 
-        if ((NewProtect & MM_PROTECTION_COPY_MASK) == 0) {
+        if ((NewProtect & MM_PROTECTION_COPY_MASK) == 0)
+        {
 
             //
             // If the copy-on-write is removed, make it private.
@@ -1250,9 +1225,7 @@ Environment:
         // Atomic PTE update.
         //
 
-        MiFillMemoryPte (StartAltPte,
-                         SPLITS_PER_PAGE * sizeof(MMPTE),
-                         TempAltPte.u.Long);
+        MiFillMemoryPte(StartAltPte, SPLITS_PER_PAGE * sizeof(MMPTE), TempAltPte.u.Long);
 
         StartAltPte += SPLITS_PER_PAGE;
 
@@ -1263,9 +1236,11 @@ Environment:
     // Fill the empty Alt PTE as NoAccess ATE at the end.
     //
 
-    while (EndAltPte <= EndAltPte0) {
+    while (EndAltPte <= EndAltPte0)
+    {
 
-        if (EndAltPte->u.Long == 0) {
+        if (EndAltPte->u.Long == 0)
+        {
 
             TempAltPte.u.Long = EndAltPte->u.Long;
             TempAltPte.u.Alt.NoAccess = 1;
@@ -1279,7 +1254,7 @@ Environment:
 
         EndAltPte += 1;
     }
-    
+
     //
     // Initialize the bitmap inline for speed.
     //
@@ -1287,19 +1262,12 @@ Environment:
     BitMap.SizeOfBitMap = MM_MAX_WOW64_ADDRESS >> PTI_SHIFT;
     BitMap.Buffer = Wow64Process->AltPermBitmap;
 
-    RtlSetBits (&BitMap,
-                (ULONG) MI_VA_TO_VPN (Base),
-                (ULONG) (MI_VA_TO_VPN (Ending4KAddress) - MI_VA_TO_VPN (Base) + 1));
+    RtlSetBits(&BitMap, (ULONG)MI_VA_TO_VPN(Base), (ULONG)(MI_VA_TO_VPN(Ending4KAddress) - MI_VA_TO_VPN(Base) + 1));
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 }
-
-VOID
-MiReleaseFor4kPage (
-    IN PVOID StartVirtual,
-    IN PVOID EndVirtual,
-    IN PEPROCESS Process
-    )
+
+VOID MiReleaseFor4kPage(IN PVOID StartVirtual, IN PVOID EndVirtual, IN PEPROCESS Process)
 
 /*++
 
@@ -1333,7 +1301,7 @@ Environment:
     PMMPTE StartAltPte;
     PMMPTE EndAltPte;
     MMPTE TempAltPte;
-    ULONG_PTR VirtualAddress; 
+    ULONG_PTR VirtualAddress;
     PVOID OriginalStartVa, OriginalEndVa;
     ULONG i;
     PWOW64_PROCESS Wow64Process;
@@ -1349,8 +1317,8 @@ Environment:
     OriginalEndVa = EndVirtual;
     Wow64Process = Process->Wow64Process;
 
-    StartAltPte = MiGetAltPteAddress (StartVirtual);
-    EndAltPte = MiGetAltPteAddress (EndVirtual);
+    StartAltPte = MiGetAltPteAddress(StartVirtual);
+    EndAltPte = MiGetAltPteAddress(EndVirtual);
     NumberOfAltPtes = EndAltPte - StartAltPte + 1;
 
     TempAltPte.u.Long = 0;
@@ -1361,18 +1329,18 @@ Environment:
 
     VirtualAddress = (ULONG_PTR)StartVirtual;
 
-    NumberOfPtes = (ULONG) ADDRESS_AND_SIZE_TO_SPAN_PAGES (StartVirtual,
-                                           (ULONG_PTR)EndVirtual -
-                                           (ULONG_PTR)StartVirtual);
-    ASSERT (NumberOfPtes != 0);
+    NumberOfPtes = (ULONG)ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartVirtual, (ULONG_PTR)EndVirtual - (ULONG_PTR)StartVirtual);
+    ASSERT(NumberOfPtes != 0);
 
     //
     // Ensure the proper native TB entries get flushed.
     //
 
-    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT) {
-    
-        for (i = 0; i < NumberOfPtes; i += 1) {
+    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT)
+    {
+
+        for (i = 0; i < NumberOfPtes; i += 1)
+        {
             Virtual[i] = (PVOID)VirtualAddress;
             VirtualAddress += PAGE_SIZE;
         }
@@ -1380,15 +1348,14 @@ Environment:
         VirtualAddress = (ULONG_PTR)StartVirtual;
     }
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    MiFillMemoryPte (StartAltPte,
-                     NumberOfAltPtes * sizeof(MMPTE),
-                     TempAltPte.u.Long);
+    MiFillMemoryPte(StartAltPte, NumberOfAltPtes * sizeof(MMPTE), TempAltPte.u.Long);
 
     StartAltPte += NumberOfAltPtes;
 
-    while (VirtualAddress <= (ULONG_PTR)EndVirtual) {
+    while (VirtualAddress <= (ULONG_PTR)EndVirtual)
+    {
 
         StartAltPte = MiGetAltPteAddress(VirtualAddress);
         TempAltPte = *StartAltPte;
@@ -1400,10 +1367,13 @@ Environment:
         // have begun on a native page boundary and this scan always does.
         //
 
-        while (TempAltPte.u.Long == StartAltPte->u.Long) {
+        while (TempAltPte.u.Long == StartAltPte->u.Long)
+        {
             i += 1;
-            if (i == SPLITS_PER_PAGE) {
-                while (i != 0) {
+            if (i == SPLITS_PER_PAGE)
+            {
+                while (i != 0)
+                {
                     StartAltPte->u.Long = 0;
                     StartAltPte -= 1;
                     i -= 1;
@@ -1412,37 +1382,42 @@ Environment:
             }
             StartAltPte += 1;
         }
-        
+
         VirtualAddress += PAGE_SIZE;
     }
 
-    MiResetAccessBitForNativePtes (StartVirtual, EndVirtual, Process);
+    MiResetAccessBitForNativePtes(StartVirtual, EndVirtual, Process);
 
     //
     // Mark the native released pages as non-split so they re-synced
     // at MmX86Fault() time.  NOTE: StartVirtual should be aligned on
     // the native page size before executing this code.
     //
-    
-    if (BYTE_OFFSET (OriginalStartVa) != 0) {
-        
-        if (MiArePreceding4kPagesAllocated (OriginalStartVa) != FALSE) {
 
-            StartVirtual = PAGE_ALIGN ((ULONG_PTR)StartVirtual + PAGE_SIZE);
+    if (BYTE_OFFSET(OriginalStartVa) != 0)
+    {
+
+        if (MiArePreceding4kPagesAllocated(OriginalStartVa) != FALSE)
+        {
+
+            StartVirtual = PAGE_ALIGN((ULONG_PTR)StartVirtual + PAGE_SIZE);
         }
     }
 
-    EndVirtual = (PVOID) ((ULONG_PTR)EndVirtual | (PAGE_SIZE - 1));
+    EndVirtual = (PVOID)((ULONG_PTR)EndVirtual | (PAGE_SIZE - 1));
 
-    if (BYTE_OFFSET (OriginalEndVa) != (PAGE_SIZE - 1)) {
-        
-        if (MiAreFollowing4kPagesAllocated (OriginalEndVa) != FALSE) {
+    if (BYTE_OFFSET(OriginalEndVa) != (PAGE_SIZE - 1))
+    {
 
-            EndVirtual = (PVOID) ((ULONG_PTR)EndVirtual - PAGE_SIZE);
+        if (MiAreFollowing4kPagesAllocated(OriginalEndVa) != FALSE)
+        {
+
+            EndVirtual = (PVOID)((ULONG_PTR)EndVirtual - PAGE_SIZE);
         }
     }
 
-    if (StartVirtual < EndVirtual) {
+    if (StartVirtual < EndVirtual)
+    {
 
         //
         // Initialize the bitmap inline for speed.
@@ -1451,33 +1426,24 @@ Environment:
         BitMap.SizeOfBitMap = MM_MAX_WOW64_ADDRESS >> PTI_SHIFT;
         BitMap.Buffer = Wow64Process->AltPermBitmap;
 
-        RtlClearBits (&BitMap,
-                      (ULONG) MI_VA_TO_VPN (StartVirtual),
-                      (ULONG) (MI_VA_TO_VPN (EndVirtual) - MI_VA_TO_VPN (StartVirtual) + 1));
+        RtlClearBits(&BitMap, (ULONG)MI_VA_TO_VPN(StartVirtual),
+                     (ULONG)(MI_VA_TO_VPN(EndVirtual) - MI_VA_TO_VPN(StartVirtual) + 1));
     }
 
-    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT) {
+    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT)
+    {
 
-        KeFlushMultipleTb (FlushCount,
-                           &Virtual[0],
-                           TRUE,
-                           TRUE,
-                           NULL,
-                           ZeroPte.u.Flush);                          
+        KeFlushMultipleTb(FlushCount, &Virtual[0], TRUE, TRUE, NULL, ZeroPte.u.Flush);
     }
-    else {
-        KeFlushEntireTb (TRUE, TRUE);
+    else
+    {
+        KeFlushEntireTb(TRUE, TRUE);
     }
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 }
-
-VOID
-MiDecommitFor4kPage (
-    IN PVOID StartVirtual,
-    IN PVOID EndVirtual,
-    IN PEPROCESS Process
-    )
+
+VOID MiDecommitFor4kPage(IN PVOID StartVirtual, IN PVOID EndVirtual, IN PEPROCESS Process)
 
 /*++
 
@@ -1521,31 +1487,32 @@ Environment:
 
     ASSERT(StartVirtual <= EndVirtual);
 
-    StartAltPte = MiGetAltPteAddress (StartVirtual);
-    EndAltPte = MiGetAltPteAddress (EndVirtual);
+    StartAltPte = MiGetAltPteAddress(StartVirtual);
+    EndAltPte = MiGetAltPteAddress(EndVirtual);
 
-    NumberOfPtes = (ULONG) ADDRESS_AND_SIZE_TO_SPAN_PAGES (StartVirtual,
-                                           (ULONG_PTR)EndVirtual -
-                                           (ULONG_PTR)StartVirtual);
-    ASSERT (NumberOfPtes != 0);
+    NumberOfPtes = (ULONG)ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartVirtual, (ULONG_PTR)EndVirtual - (ULONG_PTR)StartVirtual);
+    ASSERT(NumberOfPtes != 0);
 
     //
     // Ensure the proper native TB entries get flushed.
     //
 
-    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT) {
-    
+    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT)
+    {
+
         VirtualAddress = (ULONG_PTR)StartVirtual;
 
-        for (i = 0; i < NumberOfPtes; i += 1) {
+        for (i = 0; i < NumberOfPtes; i += 1)
+        {
             Virtual[i] = (PVOID)VirtualAddress;
             VirtualAddress += PAGE_SIZE;
         }
     }
-    
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
 
-    while (StartAltPte <= EndAltPte) {
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+
+    while (StartAltPte <= EndAltPte)
+    {
 
         TempAltPte.u.Long = StartAltPte->u.Long;
         TempAltPte.u.Alt.Commit = 0;
@@ -1565,31 +1532,23 @@ Environment:
     // Flush the TB.
     //
 
-    MiResetAccessBitForNativePtes (StartVirtual, EndVirtual, Process);
+    MiResetAccessBitForNativePtes(StartVirtual, EndVirtual, Process);
 
-    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT) {
+    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT)
+    {
 
-        KeFlushMultipleTb (NumberOfPtes,
-                           &Virtual[0],
-                           TRUE,
-                           TRUE,
-                           NULL,
-                           ZeroPte.u.Flush);                          
+        KeFlushMultipleTb(NumberOfPtes, &Virtual[0], TRUE, TRUE, NULL, ZeroPte.u.Flush);
     }
-    else {
-        KeFlushEntireTb (TRUE, TRUE);
+    else
+    {
+        KeFlushEntireTb(TRUE, TRUE);
     }
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 }
 
-
-VOID
-MiDeleteFor4kPage (
-    IN PVOID StartVirtual,
-    IN PVOID EndVirtual,
-    IN PEPROCESS Process
-    )
+
+VOID MiDeleteFor4kPage(IN PVOID StartVirtual, IN PVOID EndVirtual, IN PEPROCESS Process)
 
 /*++
 
@@ -1634,37 +1593,35 @@ Environment:
 
     ASSERT(StartVirtual <= EndVirtual);
 
-    StartAltPte = MiGetAltPteAddress (StartVirtual);
-    EndAltPte = MiGetAltPteAddress (EndVirtual);
+    StartAltPte = MiGetAltPteAddress(StartVirtual);
+    EndAltPte = MiGetAltPteAddress(EndVirtual);
 
     NumberOfAltPtes = EndAltPte - StartAltPte + 1;
 
     VirtualAddress = (ULONG_PTR)StartVirtual;
 
-    NumberOfPtes = (ULONG) ADDRESS_AND_SIZE_TO_SPAN_PAGES (StartVirtual,
-                                           (ULONG_PTR)EndVirtual -
-                                           (ULONG_PTR)StartVirtual);
-    ASSERT (NumberOfPtes != 0);
+    NumberOfPtes = (ULONG)ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartVirtual, (ULONG_PTR)EndVirtual - (ULONG_PTR)StartVirtual);
+    ASSERT(NumberOfPtes != 0);
 
     //
     // Ensure the proper native TB entries get flushed.
     //
 
-    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT) {
-    
+    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT)
+    {
+
         VirtualAddress = (ULONG_PTR)StartVirtual;
 
-        for (i = 0; i < NumberOfPtes; i += 1) {
+        for (i = 0; i < NumberOfPtes; i += 1)
+        {
             Virtual[i] = (PVOID)VirtualAddress;
             VirtualAddress += PAGE_SIZE;
         }
     }
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    MiFillMemoryPte (StartAltPte,
-                     NumberOfAltPtes * sizeof(MMPTE),
-                     ZeroPte.u.Long);
+    MiFillMemoryPte(StartAltPte, NumberOfAltPtes * sizeof(MMPTE), ZeroPte.u.Long);
 
     //
     // StartVirtual and EndVirtual are already aligned to the native
@@ -1676,32 +1633,26 @@ Environment:
     BitMap.SizeOfBitMap = MM_MAX_WOW64_ADDRESS >> PTI_SHIFT;
     BitMap.Buffer = Wow64Process->AltPermBitmap;
 
-    RtlClearBits (&BitMap,
-                  (ULONG) MI_VA_TO_VPN (StartVirtual),
-                  (ULONG) (MI_VA_TO_VPN (EndVirtual) - MI_VA_TO_VPN (StartVirtual) + 1));
+    RtlClearBits(&BitMap, (ULONG)MI_VA_TO_VPN(StartVirtual),
+                 (ULONG)(MI_VA_TO_VPN(EndVirtual) - MI_VA_TO_VPN(StartVirtual) + 1));
 
-    MiResetAccessBitForNativePtes (StartVirtual, EndVirtual, Process);
+    MiResetAccessBitForNativePtes(StartVirtual, EndVirtual, Process);
 
-    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT) {
+    if (NumberOfPtes < MM_MAXIMUM_FLUSH_COUNT)
+    {
 
-        KeFlushMultipleTb (NumberOfPtes,
-                           &Virtual[0],
-                           TRUE,
-                           TRUE,
-                           NULL,
-                           ZeroPte.u.Flush);                          
+        KeFlushMultipleTb(NumberOfPtes, &Virtual[0], TRUE, TRUE, NULL, ZeroPte.u.Flush);
     }
-    else {
-        KeFlushEntireTb (TRUE, TRUE);
+    else
+    {
+        KeFlushEntireTb(TRUE, TRUE);
     }
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 }
-
+
 LOGICAL
-MiIsSplitPage (
-    IN PVOID Virtual
-    )
+MiIsSplitPage(IN PVOID Virtual)
 {
     PMMPTE AltPte;
     MMPTE PteContents;
@@ -1711,14 +1662,13 @@ MiIsSplitPage (
     AltPte = MiGetAltPteAddress(Virtual);
     PteContents = *AltPte;
 
-    for (i = 0; i < SPLITS_PER_PAGE; i += 1) {
+    for (i = 0; i < SPLITS_PER_PAGE; i += 1)
+    {
 
-        if ((AltPte->u.Long != 0) && 
-            ((AltPte->u.Alt.Commit == 0) || 
-             (AltPte->u.Alt.Accessed == 0) ||
-             (AltPte->u.Alt.CopyOnWrite != 0) || 
-             (AltPte->u.Alt.PteIndirect != 0) ||
-             (AltPte->u.Alt.FillZero != 0))) {
+        if ((AltPte->u.Long != 0) &&
+            ((AltPte->u.Alt.Commit == 0) || (AltPte->u.Alt.Accessed == 0) || (AltPte->u.Alt.CopyOnWrite != 0) ||
+             (AltPte->u.Alt.PteIndirect != 0) || (AltPte->u.Alt.FillZero != 0)))
+        {
 
             //
             // If it is a NoAccess, FillZero or Guard page, CopyOnWrite,
@@ -1728,7 +1678,8 @@ MiIsSplitPage (
             return TRUE;
         }
 
-        if (PteContents.u.Long != AltPte->u.Long) {
+        if (PteContents.u.Long != AltPte->u.Long)
+        {
 
             //
             // If the next 4kb page is different from the 1st 4k page
@@ -1743,11 +1694,9 @@ MiIsSplitPage (
 
     return FALSE;
 }
-
+
 LOGICAL
-MiArePreceding4kPagesAllocated (
-    IN PVOID VirtualAddress
-    )
+MiArePreceding4kPagesAllocated(IN PVOID VirtualAddress)
 /*++
 
 Routine Description:
@@ -1773,10 +1722,10 @@ Environment:
     PMMPTE AltPte;
     PMMPTE AltPteEnd;
 
-    ASSERT (BYTE_OFFSET (VirtualAddress) != 0);
+    ASSERT(BYTE_OFFSET(VirtualAddress) != 0);
 
-    AltPte = MiGetAltPteAddress (PAGE_ALIGN(VirtualAddress));
-    AltPteEnd = MiGetAltPteAddress (VirtualAddress);
+    AltPte = MiGetAltPteAddress(PAGE_ALIGN(VirtualAddress));
+    AltPteEnd = MiGetAltPteAddress(VirtualAddress);
 
     //
     // No need to hold the AltPte mutex as the address space mutex
@@ -1784,11 +1733,12 @@ Environment:
     // inside the table.
     //
 
-    while (AltPte != AltPteEnd) {
+    while (AltPte != AltPteEnd)
+    {
 
-        if ((AltPte->u.Long == 0) || 
-            ((AltPte->u.Alt.NoAccess == 1) && (AltPte->u.Alt.Protection != MM_NOACCESS))) {
-    
+        if ((AltPte->u.Long == 0) || ((AltPte->u.Alt.NoAccess == 1) && (AltPte->u.Alt.Protection != MM_NOACCESS)))
+        {
+
             //
             // The page's alternate PTE hasn't been allocated yet to the process
             // or it's marked no access.
@@ -1796,7 +1746,8 @@ Environment:
 
             NOTHING;
         }
-        else {
+        else
+        {
             return TRUE;
         }
 
@@ -1806,11 +1757,9 @@ Environment:
     return FALSE;
 }
 
-
+
 LOGICAL
-MiAreFollowing4kPagesAllocated (
-    IN PVOID VirtualAddress
-    )
+MiAreFollowing4kPagesAllocated(IN PVOID VirtualAddress)
 /*++
 
 Routine Description:
@@ -1836,13 +1785,13 @@ Environment:
     PMMPTE AltPte;
     PMMPTE AltPteEnd;
 
-    ASSERT (BYTE_OFFSET (VirtualAddress) != 0);
+    ASSERT(BYTE_OFFSET(VirtualAddress) != 0);
 
-    AltPteEnd = MiGetAltPteAddress (PAGE_ALIGN ((ULONG_PTR)VirtualAddress + PAGE_SIZE));
+    AltPteEnd = MiGetAltPteAddress(PAGE_ALIGN((ULONG_PTR)VirtualAddress + PAGE_SIZE));
 
-    AltPte = MiGetAltPteAddress (VirtualAddress) + 1;
+    AltPte = MiGetAltPteAddress(VirtualAddress) + 1;
 
-    ASSERT (AltPte < AltPteEnd);
+    ASSERT(AltPte < AltPteEnd);
 
     //
     // No need to hold the AltPte mutex as the address space mutex
@@ -1850,11 +1799,12 @@ Environment:
     // inside the table.
     //
 
-    while (AltPte != AltPteEnd) {
+    while (AltPte != AltPteEnd)
+    {
 
-        if ((AltPte->u.Long == 0) || 
-            ((AltPte->u.Alt.NoAccess == 1) && (AltPte->u.Alt.Protection != MM_NOACCESS))) {
-    
+        if ((AltPte->u.Long == 0) || ((AltPte->u.Alt.NoAccess == 1) && (AltPte->u.Alt.Protection != MM_NOACCESS)))
+        {
+
             //
             // The page's alternate PTE hasn't been allocated yet to the process
             // or it's marked no access.
@@ -1862,7 +1812,8 @@ Environment:
 
             NOTHING;
         }
-        else {
+        else
+        {
             return TRUE;
         }
 
@@ -1872,12 +1823,7 @@ Environment:
     return FALSE;
 }
 
-VOID
-MiResetAccessBitForNativePtes (
-    IN PVOID StartVirtual,
-    IN PVOID EndVirtual,
-    IN PEPROCESS Process
-    )
+VOID MiResetAccessBitForNativePtes(IN PVOID StartVirtual, IN PVOID EndVirtual, IN PEPROCESS Process)
 
 /*++
 
@@ -1918,23 +1864,23 @@ Environment:
 
     StartVirtual = PAGE_ALIGN(StartVirtual);
 
-    PointerPte = MiGetPteAddress (StartVirtual);
+    PointerPte = MiGetPteAddress(StartVirtual);
 
     FirstTime = TRUE;
 
-    LOCK_WS_UNSAFE (Process);
+    LOCK_WS_UNSAFE(Process);
 
-    while (StartVirtual <= EndVirtual) {
+    while (StartVirtual <= EndVirtual)
+    {
 
-        if ((FirstTime == TRUE) || MiIsPteOnPdeBoundary (PointerPte)) {
+        if ((FirstTime == TRUE) || MiIsPteOnPdeBoundary(PointerPte))
+        {
 
-            PointerPde = MiGetPteAddress (PointerPte);
-            PointerPpe = MiGetPdeAddress (PointerPte);
+            PointerPde = MiGetPteAddress(PointerPte);
+            PointerPpe = MiGetPdeAddress(PointerPte);
 
-            if (MiDoesPpeExistAndMakeValid (PointerPpe, 
-                                            Process, 
-                                            FALSE,
-                                            &Waited) == FALSE) {
+            if (MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited) == FALSE)
+            {
 
                 //
                 // This page directory parent entry is empty,
@@ -1942,16 +1888,14 @@ Environment:
                 //
 
                 PointerPpe += 1;
-                PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-                StartVirtual = MiGetVirtualAddressMappedByPte (PointerPte);
+                PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+                StartVirtual = MiGetVirtualAddressMappedByPte(PointerPte);
                 continue;
             }
 
-            if (MiDoesPdeExistAndMakeValid (PointerPde, 
-                                            Process,
-                                            FALSE,
-                                            &Waited) == FALSE) {
+            if (MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited) == FALSE)
+            {
 
 
                 //
@@ -1964,34 +1908,26 @@ Environment:
                 StartVirtual = MiGetVirtualAddressMappedByPte(PointerPte);
                 continue;
             }
-                    
-            FirstTime = FALSE;
 
+            FirstTime = FALSE;
         }
-            
+
         if ((MI_CHECK_BIT(Wow64Process->AltPermBitmap, MI_VA_TO_VPN(StartVirtual))) &&
-            ((PointerPte->u.Hard.Valid != 0) && (PointerPte->u.Hard.Accessed != 0))) {
+            ((PointerPte->u.Hard.Valid != 0) && (PointerPte->u.Hard.Accessed != 0)))
+        {
 
             PointerPte->u.Hard.Accessed = 0;
-
         }
 
         PointerPte += 1;
-        StartVirtual = (PVOID)((ULONG_PTR)StartVirtual + PAGE_SIZE); 
+        StartVirtual = (PVOID)((ULONG_PTR)StartVirtual + PAGE_SIZE);
     }
 
-    UNLOCK_WS_UNSAFE (Process);
+    UNLOCK_WS_UNSAFE(Process);
 }
 
-VOID
-MiQueryRegionFor4kPage (
-    IN PVOID BaseAddress,
-    IN PVOID EndAddress,
-    IN OUT PSIZE_T RegionSize,
-    IN OUT PULONG RegionState,
-    IN OUT PULONG RegionProtect,
-    IN PEPROCESS Process
-    )
+VOID MiQueryRegionFor4kPage(IN PVOID BaseAddress, IN PVOID EndAddress, IN OUT PSIZE_T RegionSize,
+                            IN OUT PULONG RegionState, IN OUT PULONG RegionProtect, IN PEPROCESS Process)
 
 /*++
 
@@ -2030,68 +1966,75 @@ Environment:
 --*/
 
 {
-   PMMPTE AltPte;
-   MMPTE AltContents;
-   PVOID Va;
-   PWOW64_PROCESS Wow64Process;
+    PMMPTE AltPte;
+    MMPTE AltContents;
+    PVOID Va;
+    PWOW64_PROCESS Wow64Process;
 
-   //
-   // If above the Wow64 max address, just return.
-   //
+    //
+    // If above the Wow64 max address, just return.
+    //
 
-   if (((UINT_PTR) BaseAddress >= MM_MAX_WOW64_ADDRESS) ||
-       ((UINT_PTR) EndAddress >= MM_MAX_WOW64_ADDRESS)) {
+    if (((UINT_PTR)BaseAddress >= MM_MAX_WOW64_ADDRESS) || ((UINT_PTR)EndAddress >= MM_MAX_WOW64_ADDRESS))
+    {
 
         return;
-   }
+    }
 
-   AltPte = MiGetAltPteAddress (BaseAddress);
+    AltPte = MiGetAltPteAddress(BaseAddress);
 
-   Wow64Process = Process->Wow64Process;
+    Wow64Process = Process->Wow64Process;
 
-   LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-   if (MI_CHECK_BIT (Wow64Process->AltPermBitmap, 
-                     MI_VA_TO_VPN(BaseAddress)) == 0) {
+    if (MI_CHECK_BIT(Wow64Process->AltPermBitmap, MI_VA_TO_VPN(BaseAddress)) == 0)
+    {
 
-       UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-       return;
-   }
+        UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+        return;
+    }
 
-   AltContents.u.Long = AltPte->u.Long;
+    AltContents.u.Long = AltPte->u.Long;
 
-   if (AltContents.u.Long == 0) {
-       UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-       return;
-   }
+    if (AltContents.u.Long == 0)
+    {
+        UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+        return;
+    }
 
-   *RegionProtect = MI_CONVERT_FROM_PTE_PROTECTION(AltContents.u.Alt.Protection);
+    *RegionProtect = MI_CONVERT_FROM_PTE_PROTECTION(AltContents.u.Alt.Protection);
 
-   if (AltContents.u.Alt.Commit != 0) {
+    if (AltContents.u.Alt.Commit != 0)
+    {
 
-       *RegionState = MEM_COMMIT;
-   }
-   else {
+        *RegionState = MEM_COMMIT;
+    }
+    else
+    {
 
-       if ((AltPte->u.Long == 0) || 
-           ((AltPte->u.Alt.NoAccess == 1) && (AltPte->u.Alt.Protection != MM_NOACCESS))) {
-           *RegionState   = MEM_FREE;
-           *RegionProtect = PAGE_NOACCESS;
-       } else {
-           *RegionState = MEM_RESERVE;
-           *RegionProtect = 0;
-       }
-   }
+        if ((AltPte->u.Long == 0) || ((AltPte->u.Alt.NoAccess == 1) && (AltPte->u.Alt.Protection != MM_NOACCESS)))
+        {
+            *RegionState = MEM_FREE;
+            *RegionProtect = PAGE_NOACCESS;
+        }
+        else
+        {
+            *RegionState = MEM_RESERVE;
+            *RegionProtect = 0;
+        }
+    }
 
-   Va = BaseAddress;
+    Va = BaseAddress;
 
-   while ((ULONG_PTR)Va < (ULONG_PTR)EndAddress) {
+    while ((ULONG_PTR)Va < (ULONG_PTR)EndAddress)
+    {
 
-       Va = (PVOID)((ULONG_PTR)Va + PAGE_4K);
-       AltPte += 1;
+        Va = (PVOID)((ULONG_PTR)Va + PAGE_4K);
+        AltPte += 1;
 
-       if ((AltPte->u.Alt.Protection != AltContents.u.Alt.Protection) ||
-           (AltPte->u.Alt.Commit != AltContents.u.Alt.Commit)) {
+        if ((AltPte->u.Alt.Protection != AltContents.u.Alt.Protection) ||
+            (AltPte->u.Alt.Commit != AltContents.u.Alt.Commit))
+        {
 
             //
             // The state for this address does not match, calculate
@@ -2099,20 +2042,16 @@ Environment:
             //
 
             break;
-       }
-       
-   }
+        }
+    }
 
-   UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-   *RegionSize = (SIZE_T)((ULONG_PTR)Va - (ULONG_PTR)BaseAddress);
+    *RegionSize = (SIZE_T)((ULONG_PTR)Va - (ULONG_PTR)BaseAddress);
 }
 
 ULONG
-MiQueryProtectionFor4kPage (
-    IN PVOID BaseAddress,
-    IN PEPROCESS Process
-    )
+MiQueryProtectionFor4kPage(IN PVOID BaseAddress, IN PEPROCESS Process)
 
 /*++
 
@@ -2143,34 +2082,32 @@ Environment:
 
     Wow64Process = Process->Wow64Process;
 
-    PointerAltPte = MiGetAltPteAddress (BaseAddress);
+    PointerAltPte = MiGetAltPteAddress(BaseAddress);
 
     Protection = 0;
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-    
-    if (MI_CHECK_BIT(Wow64Process->AltPermBitmap, 
-                     MI_VA_TO_VPN(BaseAddress)) != 0) {
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+
+    if (MI_CHECK_BIT(Wow64Process->AltPermBitmap, MI_VA_TO_VPN(BaseAddress)) != 0)
+    {
 
         Protection = (ULONG)PointerAltPte->u.Alt.Protection;
     }
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-    
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+
     return Protection;
 }
 
 //
-// Note 1 is added to the charge to account for the page table page. 
+// Note 1 is added to the charge to account for the page table page.
 //
 
-#define MI_ALTERNATE_PAGE_TABLE_CHARGE ((((MM_MAX_WOW64_ADDRESS >> PAGE_4K_SHIFT) * sizeof (MMPTE)) >> PAGE_SHIFT) + 1)
+#define MI_ALTERNATE_PAGE_TABLE_CHARGE ((((MM_MAX_WOW64_ADDRESS >> PAGE_4K_SHIFT) * sizeof(MMPTE)) >> PAGE_SHIFT) + 1)
 
-
+
 NTSTATUS
-MiInitializeAlternateTable (
-    IN PEPROCESS Process
-    )
+MiInitializeAlternateTable(IN PEPROCESS Process)
 
 /*++
 
@@ -2192,7 +2129,7 @@ Environment:
 --*/
 
 {
-    PULONG AltTablePointer; 
+    PULONG AltTablePointer;
     PWOW64_PROCESS Wow64Process;
 
     //
@@ -2200,35 +2137,31 @@ Environment:
     // need to be dynamically created later at fault time.
     //
 
-    if (MiChargeCommitment (MI_ALTERNATE_PAGE_TABLE_CHARGE, NULL) == FALSE) {
+    if (MiChargeCommitment(MI_ALTERNATE_PAGE_TABLE_CHARGE, NULL) == FALSE)
+    {
         return STATUS_COMMITMENT_LIMIT;
     }
 
-    AltTablePointer = (PULONG)ExAllocatePoolWithTag (NonPagedPool,
-                                                    (MM_MAX_WOW64_ADDRESS >> PTI_SHIFT)/8,
-                                                    'AlmM');
+    AltTablePointer = (PULONG)ExAllocatePoolWithTag(NonPagedPool, (MM_MAX_WOW64_ADDRESS >> PTI_SHIFT) / 8, 'AlmM');
 
-    if (AltTablePointer == NULL) {
-        MiReturnCommitment (MI_ALTERNATE_PAGE_TABLE_CHARGE);
+    if (AltTablePointer == NULL)
+    {
+        MiReturnCommitment(MI_ALTERNATE_PAGE_TABLE_CHARGE);
         return STATUS_NO_MEMORY;
     }
 
-    RtlZeroMemory (AltTablePointer, (MM_MAX_WOW64_ADDRESS >> PTI_SHIFT)/8);
+    RtlZeroMemory(AltTablePointer, (MM_MAX_WOW64_ADDRESS >> PTI_SHIFT) / 8);
 
     Wow64Process = Process->Wow64Process;
 
     Wow64Process->AltPermBitmap = AltTablePointer;
 
-    ExInitializeFastMutex (&Wow64Process->AlternateTableLock);
+    ExInitializeFastMutex(&Wow64Process->AlternateTableLock);
 
     return STATUS_SUCCESS;
 }
 
-VOID
-MiDuplicateAlternateTable (
-    IN PEPROCESS CurrentProcess,
-    IN PEPROCESS ProcessToInitialize
-    )
+VOID MiDuplicateAlternateTable(IN PEPROCESS CurrentProcess, IN PEPROCESS ProcessToInitialize)
 
 /*++
 
@@ -2273,44 +2206,43 @@ Environment:
     // address space and ForkInProgress resources are held on entry.
     //
 
-    RtlCopyMemory (ProcessToInitialize->Wow64Process->AltPermBitmap,
-                   CurrentProcess->Wow64Process->AltPermBitmap,
-                   (MM_MAX_WOW64_ADDRESS >> PTI_SHIFT)/8);
+    RtlCopyMemory(ProcessToInitialize->Wow64Process->AltPermBitmap, CurrentProcess->Wow64Process->AltPermBitmap,
+                  (MM_MAX_WOW64_ADDRESS >> PTI_SHIFT) / 8);
 
     //
     // Since the PPE for the Alternate Table is shared with hyperspace,
-    // we can assume it is always present without performing 
+    // we can assume it is always present without performing
     // MiDoesPpeExistAndMakeValid().
     //
 
-    PointerPde = MiGetPdeAddress (ALT4KB_PERMISSION_TABLE_START);
-    PointerPte = MiGetPteAddress (ALT4KB_PERMISSION_TABLE_START);
+    PointerPde = MiGetPdeAddress(ALT4KB_PERMISSION_TABLE_START);
+    PointerPte = MiGetPteAddress(ALT4KB_PERMISSION_TABLE_START);
 
     Va = (ULONG_PTR)ALT4KB_PERMISSION_TABLE_START;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    while (Va < (ULONG_PTR) ALT4KB_PERMISSION_TABLE_END) {
+    while (Va < (ULONG_PTR)ALT4KB_PERMISSION_TABLE_END)
+    {
 
-        while (MiDoesPdeExistAndMakeValid (PointerPde,
-                                           CurrentProcess,
-                                           TRUE,
-                                           &Waited) == FALSE) {
+        while (MiDoesPdeExistAndMakeValid(PointerPde, CurrentProcess, TRUE, &Waited) == FALSE)
+        {
 
             //
             // This page directory entry is empty, go to the next one.
             //
 
             PointerPde += 1;
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-            Va = (ULONG_PTR)MiGetVirtualAddressMappedByPte (PointerPte);
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+            Va = (ULONG_PTR)MiGetVirtualAddressMappedByPte(PointerPte);
 
-            if (Va > (ULONG_PTR) ALT4KB_PERMISSION_TABLE_END) {
-                UNLOCK_PFN (OldIrql);
+            if (Va > (ULONG_PTR)ALT4KB_PERMISSION_TABLE_END)
+            {
+                UNLOCK_PFN(OldIrql);
                 return;
             }
         }
-    
+
         //
         // Duplicate any addresses that exist in the parent, bringing them
         // in from disk or materializing them as necessary.  Note the
@@ -2319,54 +2251,56 @@ Environment:
         // overall fork is too far along to tolerate a failure).
         //
 
-        for (i = 0; i < PTE_PER_PAGE; i += 1) {
+        for (i = 0; i < PTE_PER_PAGE; i += 1)
+        {
 
-            if (PointerPte->u.Long != 0) {
+            if (PointerPte->u.Long != 0)
+            {
 
-                if (MiDoesPdeExistAndMakeValid (PointerPte,
-                                                CurrentProcess,
-                                                TRUE,
-                                                &Waited) == TRUE) {
+                if (MiDoesPdeExistAndMakeValid(PointerPte, CurrentProcess, TRUE, &Waited) == TRUE)
+                {
 
-                    UNLOCK_PFN (OldIrql);
+                    UNLOCK_PFN(OldIrql);
 
-                    ASSERT (PointerPte->u.Hard.Valid == 1);
+                    ASSERT(PointerPte->u.Hard.Valid == 1);
 
-                    Source = KSEG_ADDRESS (PointerPte->u.Hard.PageFrameNumber);
+                    Source = KSEG_ADDRESS(PointerPte->u.Hard.PageFrameNumber);
 
-                    KeStackAttachProcess (&ProcessToInitialize->Pcb, &ApcState);
+                    KeStackAttachProcess(&ProcessToInitialize->Pcb, &ApcState);
 
-                    RtlCopyMemory ((PVOID)Va, Source, PAGE_SIZE);
+                    RtlCopyMemory((PVOID)Va, Source, PAGE_SIZE);
 
                     //
                     // Eliminate any bits that should NOT be copied.
                     //
 
-                    PointerAltPte = (PMMPTE) Va;
+                    PointerAltPte = (PMMPTE)Va;
 
-                    for (j = 0; j < PTE_PER_PAGE; j += 1) {
-                        if (PointerAltPte->u.Alt.InPageInProgress == 1) {
+                    for (j = 0; j < PTE_PER_PAGE; j += 1)
+                    {
+                        if (PointerAltPte->u.Alt.InPageInProgress == 1)
+                        {
                             PointerAltPte->u.Alt.InPageInProgress = 0;
                         }
                         PointerAltPte += 1;
                     }
 
-                    KeUnstackDetachProcess (&ApcState);
+                    KeUnstackDetachProcess(&ApcState);
 
-                    LOCK_PFN (OldIrql);
+                    LOCK_PFN(OldIrql);
                 }
             }
-            
+
             Va += PAGE_SIZE;
             PointerPte += 1;
         }
 
         PointerPde += 1;
-        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-        Va = (ULONG_PTR)MiGetVirtualAddressMappedByPte (PointerPte);
+        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+        Va = (ULONG_PTR)MiGetVirtualAddressMappedByPte(PointerPte);
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     //
     // Initialize the child's 32-bit PEB to be the same as the parent's.
@@ -2377,11 +2311,8 @@ Environment:
     return;
 }
 
-
-VOID
-MiDeleteAlternateTable (
-    IN PEPROCESS Process
-    )
+
+VOID MiDeleteAlternateTable(IN PEPROCESS Process)
 
 /*++
 
@@ -2417,7 +2348,8 @@ Environment:
 
     Wow64Process = Process->Wow64Process;
 
-    if (Wow64Process->AltPermBitmap == NULL) {
+    if (Wow64Process->AltPermBitmap == NULL)
+    {
 
         //
         // This is only NULL (and Wow64Process non-NULL) if a memory allocation
@@ -2426,66 +2358,65 @@ Environment:
 
         return;
     }
-    
+
     //
     // Since the PPE for the Alternate Table is shared with hyperspace,
-    // we can assume it is always present without performing 
+    // we can assume it is always present without performing
     // MiDoesPpeExistAndMakeValid().
     //
 
-    PointerPde = MiGetPdeAddress (ALT4KB_PERMISSION_TABLE_START);
-    PointerPte = MiGetPteAddress (ALT4KB_PERMISSION_TABLE_START);
+    PointerPde = MiGetPdeAddress(ALT4KB_PERMISSION_TABLE_START);
+    PointerPte = MiGetPteAddress(ALT4KB_PERMISSION_TABLE_START);
 
     Va = (ULONG_PTR)ALT4KB_PERMISSION_TABLE_START;
 
     PteFlushList.Count = 0;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    while (Va < (ULONG_PTR) ALT4KB_PERMISSION_TABLE_END) {
+    while (Va < (ULONG_PTR)ALT4KB_PERMISSION_TABLE_END)
+    {
 
-        while (MiDoesPdeExistAndMakeValid (PointerPde,
-                                           Process,
-                                           TRUE,
-                                           &Waited) == FALSE) {
+        while (MiDoesPdeExistAndMakeValid(PointerPde, Process, TRUE, &Waited) == FALSE)
+        {
 
             //
             // This page directory entry is empty, go to the next one.
             //
 
             PointerPde += 1;
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-            Va = (ULONG_PTR)MiGetVirtualAddressMappedByPte (PointerPte);
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+            Va = (ULONG_PTR)MiGetVirtualAddressMappedByPte(PointerPte);
 
-            if (Va > (ULONG_PTR) ALT4KB_PERMISSION_TABLE_END) {
+            if (Va > (ULONG_PTR)ALT4KB_PERMISSION_TABLE_END)
+            {
                 goto delete_end;
             }
         }
-    
+
         //
         // Delete the PTE entries mapping the Alternate Table.
         //
 
         TempVa = Va;
-        for (i = 0; i < PTE_PER_PAGE; i += 1) {
+        for (i = 0; i < PTE_PER_PAGE; i += 1)
+        {
 
-            if (PointerPte->u.Long != 0) {
+            if (PointerPte->u.Long != 0)
+            {
 
-                if (IS_PTE_NOT_DEMAND_ZERO (*PointerPte)) {
+                if (IS_PTE_NOT_DEMAND_ZERO(*PointerPte))
+                {
 
-                    MiDeletePte (PointerPte,
-                                 (PVOID)TempVa,
-                                 TRUE,
-                                 Process,
-                                 NULL,
-                                 &PteFlushList);
-                } else {
+                    MiDeletePte(PointerPte, (PVOID)TempVa, TRUE, Process, NULL, &PteFlushList);
+                }
+                else
+                {
 
                     *PointerPte = ZeroPte;
                 }
-                                    
             }
-            
+
             TempVa += PAGE_4K;
             PointerPte += 1;
         }
@@ -2496,40 +2427,31 @@ Environment:
 
         TempVa = (ULONG_PTR)MiGetVirtualAddressMappedByPte(PointerPde);
 
-        MiDeletePte (PointerPde,
-                     (PVOID)TempVa,
-                     TRUE,
-                     Process,
-                     NULL,
-                     &PteFlushList);
-        
-        MiFlushPteList (&PteFlushList, FALSE, ZeroPte);
+        MiDeletePte(PointerPde, (PVOID)TempVa, TRUE, Process, NULL, &PteFlushList);
+
+        MiFlushPteList(&PteFlushList, FALSE, ZeroPte);
 
         PointerPde += 1;
-        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-        Va = (ULONG_PTR)MiGetVirtualAddressMappedByPte (PointerPte);
+        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+        Va = (ULONG_PTR)MiGetVirtualAddressMappedByPte(PointerPte);
     }
 
 delete_end:
 
-    MiFlushPteList (&PteFlushList, FALSE, ZeroPte);
+    MiFlushPteList(&PteFlushList, FALSE, ZeroPte);
 
-    UNLOCK_PFN (OldIrql);
-    
-    ExFreePool (Wow64Process->AltPermBitmap);
+    UNLOCK_PFN(OldIrql);
+
+    ExFreePool(Wow64Process->AltPermBitmap);
 
     Wow64Process->AltPermBitmap = NULL;
 
-    MiReturnCommitment (MI_ALTERNATE_PAGE_TABLE_CHARGE);
+    MiReturnCommitment(MI_ALTERNATE_PAGE_TABLE_CHARGE);
 
     return;
 }
 
-VOID
-MiFillZeroFor4kPage (
-    IN PVOID VirtualAddress,
-    IN PEPROCESS Process
-    )
+VOID MiFillZeroFor4kPage(IN PVOID VirtualAddress, IN PEPROCESS Process)
 
 /*++
 
@@ -2566,15 +2488,17 @@ Environment:
 
     Wow64Process = Process->Wow64Process;
 
-    PointerAltPte = MiGetAltPteAddress (VirtualAddress);
+    PointerAltPte = MiGetAltPteAddress(VirtualAddress);
 
     PointerPte = MiGetPteAddress(VirtualAddress);
     PointerPde = MiGetPdeAddress(VirtualAddress);
     PointerPpe = MiGetPpeAddress(VirtualAddress);
 
-    do {
+    do
+    {
 
-        if (PointerAltPte->u.Alt.FillZero == 0) {
+        if (PointerAltPte->u.Alt.FillZero == 0)
+        {
 
             //
             // Another thread has already completed the zero operation.
@@ -2587,24 +2511,21 @@ Environment:
         // Make the PPE and PDE valid as well as the
         // page table for the original PTE.  This guarantees
         // TB forward progress for the TB indirect fault.
-        // 
+        //
 
-        LOCK_WS_UNSAFE (Process);
+        LOCK_WS_UNSAFE(Process);
 
-        if (MiDoesPpeExistAndMakeValid (PointerPpe,
-                                        Process,
-                                        FALSE,
-                                        &Waited) == FALSE) {
+        if (MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited) == FALSE)
+        {
             PteContents.u.Long = 0;
         }
-        else if (MiDoesPdeExistAndMakeValid (PointerPde,
-                                             Process,
-                                             FALSE,
-                                             &Waited) == FALSE) {
+        else if (MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited) == FALSE)
+        {
 
             PteContents.u.Long = 0;
         }
-        else {
+        else
+        {
 
             //
             // Now it is safe to read PointerPte.
@@ -2619,34 +2540,35 @@ Environment:
         // to being reacquired.
         //
 
-        if (MmIsAddressValid (PointerAltPte) == TRUE) {
+        if (MmIsAddressValid(PointerAltPte) == TRUE)
+        {
             break;
         }
 
-        UNLOCK_WS_UNSAFE (Process);
+        UNLOCK_WS_UNSAFE(Process);
 
     } while (TRUE);
 
     TempAltContents.u.Long = PointerAltPte->u.Long;
 
-    if (PteContents.u.Hard.Valid != 0) { 
+    if (PteContents.u.Hard.Valid != 0)
+    {
 
         BaseAddress = KSEG_ADDRESS(PteContents.u.Hard.PageFrameNumber);
 
-        BaseAddress = 
-            (PVOID)((ULONG_PTR)BaseAddress + 
-                    ((ULONG_PTR)PAGE_4K_ALIGN(VirtualAddress) & (PAGE_SIZE-1)));
+        BaseAddress = (PVOID)((ULONG_PTR)BaseAddress + ((ULONG_PTR)PAGE_4K_ALIGN(VirtualAddress) & (PAGE_SIZE - 1)));
 
         RtlZeroMemory(BaseAddress, PAGE_4K);
 
-        UNLOCK_WS_UNSAFE (Process);
+        UNLOCK_WS_UNSAFE(Process);
 
         TempAltContents.u.Alt.FillZero = 0;
         TempAltContents.u.Alt.Accessed = 1;
     }
-    else {
+    else
+    {
 
-        UNLOCK_WS_UNSAFE (Process);
+        UNLOCK_WS_UNSAFE(Process);
 
         TempAltContents.u.Alt.Accessed = 0;
     }
@@ -2654,47 +2576,40 @@ Environment:
     PointerAltPte->u.Long = TempAltContents.u.Long;
 }
 
-VOID
-MiRemoveAliasedVadsApc (
-    IN PKAPC Apc,
-    OUT PKNORMAL_ROUTINE *NormalRoutine,
-    IN OUT PVOID NormalContext,
-    IN OUT PVOID *SystemArgument1,
-    IN OUT PVOID *SystemArgument2
-    )
+VOID MiRemoveAliasedVadsApc(IN PKAPC Apc, OUT PKNORMAL_ROUTINE *NormalRoutine, IN OUT PVOID NormalContext,
+                            IN OUT PVOID *SystemArgument1, IN OUT PVOID *SystemArgument2)
 {
     ULONG i;
     PALIAS_VAD_INFO2 AliasBase;
     PEPROCESS Process;
     PALIAS_VAD_INFO AliasInformation;
 
-    UNREFERENCED_PARAMETER (Apc);
-    UNREFERENCED_PARAMETER (NormalContext);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(Apc);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
-    Process = PsGetCurrentProcess ();
+    Process = PsGetCurrentProcess();
 
-    AliasInformation = (PALIAS_VAD_INFO) *SystemArgument1;
+    AliasInformation = (PALIAS_VAD_INFO)*SystemArgument1;
     AliasBase = (PALIAS_VAD_INFO2)(AliasInformation + 1);
 
-    LOCK_ADDRESS_SPACE (Process);
+    LOCK_ADDRESS_SPACE(Process);
 
-    for (i = 0; i < AliasInformation->NumberOfEntries; i += 1) {
+    for (i = 0; i < AliasInformation->NumberOfEntries; i += 1)
+    {
 
-        ASSERT (AliasBase->BaseAddress < _2gb);
+        ASSERT(AliasBase->BaseAddress < _2gb);
 
-        MiUnsecureVirtualMemory (AliasBase->SecureHandle, TRUE);
+        MiUnsecureVirtualMemory(AliasBase->SecureHandle, TRUE);
 
-        MiUnmapViewOfSection (Process,
-                              (PVOID) (ULONG_PTR)AliasBase->BaseAddress,
-                              TRUE);
+        MiUnmapViewOfSection(Process, (PVOID)(ULONG_PTR)AliasBase->BaseAddress, TRUE);
 
         AliasBase += 1;
     }
 
-    UNLOCK_ADDRESS_SPACE (Process);
+    UNLOCK_ADDRESS_SPACE(Process);
 
-    ExFreePool (AliasInformation);
+    ExFreePool(AliasInformation);
 
     //
     // Clear the normal routine so this routine doesn't get called again
@@ -2704,11 +2619,7 @@ MiRemoveAliasedVadsApc (
     *NormalRoutine = NULL;
 }
 
-VOID
-MiRemoveAliasedVads (
-    IN PEPROCESS Process,
-    IN PMMVAD Vad
-    )
+VOID MiRemoveAliasedVads(IN PEPROCESS Process, IN PMMVAD Vad)
 /*++
 
 Routine Description:
@@ -2735,13 +2646,14 @@ Environment:
 {
     PALIAS_VAD_INFO AliasInformation;
 
-    ASSERT (Process->Wow64Process != NULL);
+    ASSERT(Process->Wow64Process != NULL);
 
     AliasInformation = ((PMMVAD_LONG)Vad)->AliasInformation;
 
-    ASSERT (AliasInformation != NULL);
+    ASSERT(AliasInformation != NULL);
 
-    if ((Process->Flags & PS_PROCESS_FLAGS_VM_DELETED) == 0) {
+    if ((Process->Flags & PS_PROCESS_FLAGS_VM_DELETED) == 0)
+    {
 
         //
         // This process is still alive so queue an APC to delete each aliased
@@ -2751,32 +2663,26 @@ Environment:
         // is not generally prepared for all this to change at this point.
         //
 
-        KeInitializeApc (&AliasInformation->Apc,
-                         &PsGetCurrentThread()->Tcb,
-                         OriginalApcEnvironment,
-                         (PKKERNEL_ROUTINE) MiRemoveAliasedVadsApc,
-                         NULL,
-                         (PKNORMAL_ROUTINE) MiRemoveAliasedVadsApc,
-                         KernelMode,
-                         (PVOID) AliasInformation);
+        KeInitializeApc(&AliasInformation->Apc, &PsGetCurrentThread()->Tcb, OriginalApcEnvironment,
+                        (PKKERNEL_ROUTINE)MiRemoveAliasedVadsApc, NULL, (PKNORMAL_ROUTINE)MiRemoveAliasedVadsApc,
+                        KernelMode, (PVOID)AliasInformation);
 
-        KeInsertQueueApc (&AliasInformation->Apc, AliasInformation, NULL, 0);
+        KeInsertQueueApc(&AliasInformation->Apc, AliasInformation, NULL, 0);
     }
-    else {
+    else
+    {
 
         //
         // This process is exiting so all the VADs are being rundown anyway.
         // Just free the pool and let normal rundown handle the aliases.
         //
 
-        ExFreePool (AliasInformation);
+        ExFreePool(AliasInformation);
     }
 }
 
 PVOID
-MiDuplicateAliasVadList (
-    IN PMMVAD Vad
-    )
+MiDuplicateAliasVadList(IN PMMVAD Vad)
 {
     SIZE_T AliasInfoSize;
     PALIAS_VAD_INFO AliasInfo;
@@ -2784,16 +2690,15 @@ MiDuplicateAliasVadList (
 
     AliasInfo = ((PMMVAD_LONG)Vad)->AliasInformation;
 
-    ASSERT (AliasInfo != NULL);
+    ASSERT(AliasInfo != NULL);
 
-    AliasInfoSize = sizeof (ALIAS_VAD_INFO) + AliasInfo->MaximumEntries * sizeof (ALIAS_VAD_INFO2);
+    AliasInfoSize = sizeof(ALIAS_VAD_INFO) + AliasInfo->MaximumEntries * sizeof(ALIAS_VAD_INFO2);
 
-    NewAliasInfo = ExAllocatePoolWithTag (NonPagedPool,
-                                          AliasInfoSize,
-                                          'AdaV');
+    NewAliasInfo = ExAllocatePoolWithTag(NonPagedPool, AliasInfoSize, 'AdaV');
 
-    if (NewAliasInfo != NULL) {
-        RtlCopyMemory (NewAliasInfo, AliasInfo, AliasInfoSize);
+    if (NewAliasInfo != NULL)
+    {
+        RtlCopyMemory(NewAliasInfo, AliasInfo, AliasInfoSize);
     }
 
     return NewAliasInfo;
@@ -2802,14 +2707,8 @@ MiDuplicateAliasVadList (
 #define ALIAS_VAD_INCREMENT 4
 
 NTSTATUS
-MiSetCopyPagesFor4kPage (
-    IN PEPROCESS Process,
-    IN PMMVAD Vad,
-    IN OUT PVOID StartingAddress,
-    IN OUT PVOID EndingAddress,
-    IN ULONG NewProtection,
-    OUT PMMVAD *CallerNewVad
-    )
+MiSetCopyPagesFor4kPage(IN PEPROCESS Process, IN PMMVAD Vad, IN OUT PVOID StartingAddress, IN OUT PVOID EndingAddress,
+                        IN ULONG NewProtection, OUT PMMVAD *CallerNewVad)
 /*++
 
 Routine Description:
@@ -2874,47 +2773,37 @@ Environment:
 
     AliasReferenced = FALSE;
     StartingAddress = PAGE_ALIGN(StartingAddress);
-    EndingAddress =  (PVOID)((ULONG_PTR)PAGE_ALIGN(EndingAddress) + PAGE_SIZE - 1);
-    
-    SectionOffset.QuadPart = (ULONG_PTR)MI_64K_ALIGN((ULONG_PTR)StartingAddress - 
-                                                     (ULONG_PTR)(Vad->StartingVpn << PAGE_SHIFT));
+    EndingAddress = (PVOID)((ULONG_PTR)PAGE_ALIGN(EndingAddress) + PAGE_SIZE - 1);
+
+    SectionOffset.QuadPart =
+        (ULONG_PTR)MI_64K_ALIGN((ULONG_PTR)StartingAddress - (ULONG_PTR)(Vad->StartingVpn << PAGE_SHIFT));
 
     CapturedBase = NULL;
 
-    Va = MI_VPN_TO_VA (Vad->StartingVpn);
-    VaEnd = MI_VPN_TO_VA_ENDING (Vad->EndingVpn);
+    Va = MI_VPN_TO_VA(Vad->StartingVpn);
+    VaEnd = MI_VPN_TO_VA_ENDING(Vad->EndingVpn);
 
     CapturedViewSize = (ULONG_PTR)VaEnd - (ULONG_PTR)Va + 1L;
 
     ControlArea = Vad->ControlArea;
 
-    RtlZeroMemory ((PVOID)&Section, sizeof(Section));
+    RtlZeroMemory((PVOID)&Section, sizeof(Section));
 
-    status = MiMapViewOfDataSection (ControlArea,
-                                     Process,
-                                     &CapturedBase,
-                                     &SectionOffset,
-                                     &CapturedViewSize,
-                                     &Section,
-                                     ViewShare,
-                                     (ULONG)Vad->u.VadFlags.Protection,
-                                     0,
-                                     0,
-                                     0);
-        
-    if (!NT_SUCCESS (status)) {
+    status = MiMapViewOfDataSection(ControlArea, Process, &CapturedBase, &SectionOffset, &CapturedViewSize, &Section,
+                                    ViewShare, (ULONG)Vad->u.VadFlags.Protection, 0, 0, 0);
+
+    if (!NT_SUCCESS(status))
+    {
         return status;
-    }    
+    }
 
-    Handle = MiSecureVirtualMemory (CapturedBase,
-                                    CapturedViewSize,
-                                    PAGE_READONLY,
-                                    TRUE);
+    Handle = MiSecureVirtualMemory(CapturedBase, CapturedViewSize, PAGE_READONLY, TRUE);
 
-    if (Handle == NULL) {
-        MiUnmapViewOfSection (Process, CapturedBase, FALSE);
+    if (Handle == NULL)
+    {
+        MiUnmapViewOfSection(Process, CapturedBase, FALSE);
         return STATUS_INSUFFICIENT_RESOURCES;
-    }    
+    }
 
     //
     // If the original VAD is a short or regular VAD, it needs to be
@@ -2924,48 +2813,48 @@ Environment:
     // must also be tested.
     //
 
-    if (((Vad->u.VadFlags.PrivateMemory) && (Vad->u.VadFlags.NoChange == 0)) 
-        ||
-        (Vad->u2.VadFlags2.LongVad == 0)) {
+    if (((Vad->u.VadFlags.PrivateMemory) && (Vad->u.VadFlags.NoChange == 0)) || (Vad->u2.VadFlags2.LongVad == 0))
+    {
 
-        if (Vad->u.VadFlags.PrivateMemory == 0) {
-            ASSERT (Vad->u2.VadFlags2.OneSecured == 0);
-            ASSERT (Vad->u2.VadFlags2.MultipleSecured == 0);
+        if (Vad->u.VadFlags.PrivateMemory == 0)
+        {
+            ASSERT(Vad->u2.VadFlags2.OneSecured == 0);
+            ASSERT(Vad->u2.VadFlags2.MultipleSecured == 0);
         }
 
-        AliasInfoSize = sizeof (ALIAS_VAD_INFO) + ALIAS_VAD_INCREMENT * sizeof (ALIAS_VAD_INFO2);
+        AliasInfoSize = sizeof(ALIAS_VAD_INFO) + ALIAS_VAD_INCREMENT * sizeof(ALIAS_VAD_INFO2);
 
-        AliasInfo = ExAllocatePoolWithTag (NonPagedPool,
-                                           AliasInfoSize,
-                                           'AdaV');
+        AliasInfo = ExAllocatePoolWithTag(NonPagedPool, AliasInfoSize, 'AdaV');
 
-        if (AliasInfo == NULL) {
-            MiUnsecureVirtualMemory (Handle, TRUE);
-            MiUnmapViewOfSection (Process, CapturedBase, TRUE);
+        if (AliasInfo == NULL)
+        {
+            MiUnsecureVirtualMemory(Handle, TRUE);
+            MiUnmapViewOfSection(Process, CapturedBase, TRUE);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         AliasInfo->NumberOfEntries = 0;
         AliasInfo->MaximumEntries = ALIAS_VAD_INCREMENT;
 
-        NewVad = ExAllocatePoolWithTag (NonPagedPool,
-                                        sizeof(MMVAD_LONG),
-                                        'ldaV');
+        NewVad = ExAllocatePoolWithTag(NonPagedPool, sizeof(MMVAD_LONG), 'ldaV');
 
-        if (NewVad == NULL) {
-            ExFreePool (AliasInfo);
-            MiUnsecureVirtualMemory (Handle, TRUE);
-            MiUnmapViewOfSection (Process, CapturedBase, TRUE);
+        if (NewVad == NULL)
+        {
+            ExFreePool(AliasInfo);
+            MiUnsecureVirtualMemory(Handle, TRUE);
+            MiUnmapViewOfSection(Process, CapturedBase, TRUE);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        RtlZeroMemory (NewVad, sizeof(MMVAD_LONG));
+        RtlZeroMemory(NewVad, sizeof(MMVAD_LONG));
 
-        if (Vad->u.VadFlags.PrivateMemory) {
-            RtlCopyMemory (NewVad, Vad, sizeof(MMVAD_SHORT));
+        if (Vad->u.VadFlags.PrivateMemory)
+        {
+            RtlCopyMemory(NewVad, Vad, sizeof(MMVAD_SHORT));
         }
-        else {
-            RtlCopyMemory (NewVad, Vad, sizeof(MMVAD));
+        else
+        {
+            RtlCopyMemory(NewVad, Vad, sizeof(MMVAD));
         }
 
         NewVad->u2.VadFlags2.LongVad = 1;
@@ -2975,76 +2864,91 @@ Environment:
         // Replace the current VAD with this expanded VAD.
         //
 
-        LOCK_WS_UNSAFE (Process);
+        LOCK_WS_UNSAFE(Process);
 
-        if (Vad->Parent) {
-            if (Vad->Parent->RightChild == Vad) {
-                Vad->Parent->RightChild = (PMMVAD) NewVad;
+        if (Vad->Parent)
+        {
+            if (Vad->Parent->RightChild == Vad)
+            {
+                Vad->Parent->RightChild = (PMMVAD)NewVad;
             }
-            else {
-                ASSERT (Vad->Parent->LeftChild == Vad);
-                Vad->Parent->LeftChild = (PMMVAD) NewVad;
+            else
+            {
+                ASSERT(Vad->Parent->LeftChild == Vad);
+                Vad->Parent->LeftChild = (PMMVAD)NewVad;
             }
         }
-        else {
+        else
+        {
             Process->VadRoot = NewVad;
         }
-        if (Vad->LeftChild) {
-            Vad->LeftChild->Parent = (PMMVAD) NewVad;
+        if (Vad->LeftChild)
+        {
+            Vad->LeftChild->Parent = (PMMVAD)NewVad;
         }
-        if (Vad->RightChild) {
-            Vad->RightChild->Parent = (PMMVAD) NewVad;
+        if (Vad->RightChild)
+        {
+            Vad->RightChild->Parent = (PMMVAD)NewVad;
         }
-        if (Process->VadHint == Vad) {
-            Process->VadHint = (PMMVAD) NewVad;
+        if (Process->VadHint == Vad)
+        {
+            Process->VadHint = (PMMVAD)NewVad;
         }
-        if (Process->VadFreeHint == Vad) {
-            Process->VadFreeHint = (PMMVAD) NewVad;
-        }
-
-        if ((Vad->u.VadFlags.PhysicalMapping == 1) ||
-            (Vad->u.VadFlags.WriteWatch == 1)) {
-
-            MiPhysicalViewAdjuster (Process, Vad, (PMMVAD) NewVad);
+        if (Process->VadFreeHint == Vad)
+        {
+            Process->VadFreeHint = (PMMVAD)NewVad;
         }
 
-        UNLOCK_WS_UNSAFE (Process);
+        if ((Vad->u.VadFlags.PhysicalMapping == 1) || (Vad->u.VadFlags.WriteWatch == 1))
+        {
 
-        ExFreePool (Vad);
+            MiPhysicalViewAdjuster(Process, Vad, (PMMVAD)NewVad);
+        }
 
-        Vad = (PMMVAD) NewVad;
+        UNLOCK_WS_UNSAFE(Process);
+
+        ExFreePool(Vad);
+
+        Vad = (PMMVAD)NewVad;
     }
-    else {
-        AliasInfo = (PALIAS_VAD_INFO) ((PMMVAD_LONG)Vad)->AliasInformation;
+    else
+    {
+        AliasInfo = (PALIAS_VAD_INFO)((PMMVAD_LONG)Vad)->AliasInformation;
 
-        if (AliasInfo == NULL) {
-            AliasInfoSize = sizeof (ALIAS_VAD_INFO) + ALIAS_VAD_INCREMENT * sizeof (ALIAS_VAD_INFO2);
+        if (AliasInfo == NULL)
+        {
+            AliasInfoSize = sizeof(ALIAS_VAD_INFO) + ALIAS_VAD_INCREMENT * sizeof(ALIAS_VAD_INFO2);
         }
-        else if (AliasInfo->NumberOfEntries >= AliasInfo->MaximumEntries) {
+        else if (AliasInfo->NumberOfEntries >= AliasInfo->MaximumEntries)
+        {
 
-            AliasInfoSize = sizeof (ALIAS_VAD_INFO) + (AliasInfo->MaximumEntries + ALIAS_VAD_INCREMENT) * sizeof (ALIAS_VAD_INFO2);
+            AliasInfoSize =
+                sizeof(ALIAS_VAD_INFO) + (AliasInfo->MaximumEntries + ALIAS_VAD_INCREMENT) * sizeof(ALIAS_VAD_INFO2);
         }
-        else {
+        else
+        {
             AliasInfoSize = 0;
         }
 
-        if (AliasInfoSize != 0) {
-            NewAliasInfo = ExAllocatePoolWithTag (NonPagedPool,
-                                                  AliasInfoSize,
-                                                  'AdaV');
+        if (AliasInfoSize != 0)
+        {
+            NewAliasInfo = ExAllocatePoolWithTag(NonPagedPool, AliasInfoSize, 'AdaV');
 
-            if (NewAliasInfo == NULL) {
-                MiUnsecureVirtualMemory (Handle, TRUE);
-                MiUnmapViewOfSection (Process, CapturedBase, TRUE);
+            if (NewAliasInfo == NULL)
+            {
+                MiUnsecureVirtualMemory(Handle, TRUE);
+                MiUnmapViewOfSection(Process, CapturedBase, TRUE);
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
 
-            if (AliasInfo != NULL) {
-                RtlCopyMemory (NewAliasInfo, AliasInfo, AliasInfoSize - ALIAS_VAD_INCREMENT * sizeof (ALIAS_VAD_INFO2));
+            if (AliasInfo != NULL)
+            {
+                RtlCopyMemory(NewAliasInfo, AliasInfo, AliasInfoSize - ALIAS_VAD_INCREMENT * sizeof(ALIAS_VAD_INFO2));
                 NewAliasInfo->MaximumEntries += ALIAS_VAD_INCREMENT;
-                ExFreePool (AliasInfo);
+                ExFreePool(AliasInfo);
             }
-            else {
+            else
+            {
                 NewAliasInfo->NumberOfEntries = 0;
                 NewAliasInfo->MaximumEntries = ALIAS_VAD_INCREMENT;
             }
@@ -3059,19 +2963,20 @@ Environment:
     VaEnd = EndingAddress;
     Alias = (PVOID)((ULONG_PTR)CapturedBase + ((ULONG_PTR)StartingAddress & (X64K - 1)));
 
-    ProtectionMask = MiMakeProtectionAteMask (NewProtection);
+    ProtectionMask = MiMakeProtectionAteMask(NewProtection);
 
     NewProtectNotCopy = NewProtection & ~MM_PROTECTION_COPY_MASK;
-    ProtectionMaskNotCopy = MiMakeProtectionAteMask (NewProtectNotCopy);
+    ProtectionMaskNotCopy = MiMakeProtectionAteMask(NewProtectNotCopy);
 
     Wow64Process = Process->Wow64Process;
-    AltPte = MiGetAltPteAddress (Va);
+    AltPte = MiGetAltPteAddress(Va);
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-        
-    while (Va <= VaEnd) {
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-        PointerPte = MiGetPteAddress (Alias);
+    while (Va <= VaEnd)
+    {
+
+        PointerPte = MiGetPteAddress(Alias);
 
         AltPteContents.u.Long = AltPte->u.Long;
 
@@ -3081,27 +2986,28 @@ Environment:
         // the alias VAD which points at the original section.
         //
 
-        if ((AltPteContents.u.Alt.CopyOnWrite == 0) &&
-            (AltPteContents.u.Alt.PteIndirect == 0)) {
+        if ((AltPteContents.u.Alt.CopyOnWrite == 0) && (AltPteContents.u.Alt.PteIndirect == 0))
+        {
 
             AltPteContents.u.Alt.PteOffset = (ULONG_PTR)PointerPte - PTE_UBASE;
             AltPteContents.u.Alt.PteIndirect = 1;
-            
+
             AltPte->u.Long = AltPteContents.u.Long;
 
             AliasReferenced = TRUE;
         }
-        
+
         Va = (PVOID)((ULONG_PTR)Va + PAGE_4K);
         Alias = (PVOID)((ULONG_PTR)Alias + PAGE_4K);
         AltPte += 1;
     }
-        
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
 
-    ASSERT (AliasInfo->NumberOfEntries < AliasInfo->MaximumEntries);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    if (AliasReferenced == TRUE) {
+    ASSERT(AliasInfo->NumberOfEntries < AliasInfo->MaximumEntries);
+
+    if (AliasReferenced == TRUE)
+    {
 
         //
         // The alias view of the shared section was referenced so chain it so
@@ -3116,32 +3022,28 @@ Environment:
 
         AliasBase = (PALIAS_VAD_INFO2)(AliasInfo + 1);
         AliasBase += AliasInfo->NumberOfEntries;
-        ASSERT (CapturedBase < (PVOID)(ULONG_PTR)_2gb);
+        ASSERT(CapturedBase < (PVOID)(ULONG_PTR)_2gb);
         AliasBase->BaseAddress = (ULONG)(ULONG_PTR)CapturedBase;
         AliasBase->SecureHandle = Handle;
         AliasInfo->NumberOfEntries += 1;
     }
-    else {
+    else
+    {
 
         //
         // The alias view of the shared section wasn't referenced, delete it.
         //
 
-        MiUnsecureVirtualMemory (Handle, TRUE);
-        MiUnmapViewOfSection (Process, CapturedBase, TRUE);
-    }    
+        MiUnsecureVirtualMemory(Handle, TRUE);
+        MiUnmapViewOfSection(Process, CapturedBase, TRUE);
+    }
 
-    PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES);
+    PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES);
 
     return STATUS_SUCCESS;
-}    
+}
 
-VOID
-MiLockFor4kPage (
-    IN PVOID CapturedBase,
-    IN SIZE_T CapturedRegionSize,
-    IN PEPROCESS Process
-    )
+VOID MiLockFor4kPage(IN PVOID CapturedBase, IN SIZE_T CapturedRegionSize, IN PEPROCESS Process)
 
 /*++
 
@@ -3179,22 +3081,19 @@ Environment:
     StartAltPte = MiGetAltPteAddress(CapturedBase);
     EndAltPte = MiGetAltPteAddress(EndingAddress);
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-    
-    while (StartAltPte <= EndAltPte) {
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
+
+    while (StartAltPte <= EndAltPte)
+    {
         StartAltPte->u.Alt.Lock = 1;
         StartAltPte += 1;
     }
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 }
 
 NTSTATUS
-MiUnlockFor4kPage (
-    IN PVOID CapturedBase,
-    IN SIZE_T CapturedRegionSize,
-    IN PEPROCESS Process
-    )
+MiUnlockFor4kPage(IN PVOID CapturedBase, IN SIZE_T CapturedRegionSize, IN PEPROCESS Process)
 
 /*++
 
@@ -3230,7 +3129,7 @@ Environment:
     PVOID EndingAddress;
     NTSTATUS Status;
 
-    UNLOCK_WS_UNSAFE (Process);
+    UNLOCK_WS_UNSAFE(Process);
 
     Status = STATUS_SUCCESS;
 
@@ -3238,43 +3137,42 @@ Environment:
 
     EndingAddress = (PVOID)((ULONG_PTR)CapturedBase + CapturedRegionSize - 1);
 
-    StartAltPte = MiGetAltPteAddress (CapturedBase);
-    EndAltPte = MiGetAltPteAddress (EndingAddress);
+    StartAltPte = MiGetAltPteAddress(CapturedBase);
+    EndAltPte = MiGetAltPteAddress(EndingAddress);
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
-    
-    while (StartAltPte <= EndAltPte) {
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-        if (StartAltPte->u.Alt.Lock == 0) {
+    while (StartAltPte <= EndAltPte)
+    {
+
+        if (StartAltPte->u.Alt.Lock == 0)
+        {
             Status = STATUS_NOT_LOCKED;
             goto StatusReturn;
-
         }
 
         StartAltPte += 1;
     }
 
-    StartAltPte = MiGetAltPteAddress (CapturedBase);
+    StartAltPte = MiGetAltPteAddress(CapturedBase);
 
-    while (StartAltPte <= EndAltPte) {
+    while (StartAltPte <= EndAltPte)
+    {
         StartAltPte->u.Alt.Lock = 0;
         StartAltPte += 1;
     }
 
 StatusReturn:
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    LOCK_WS_UNSAFE (Process);
+    LOCK_WS_UNSAFE(Process);
 
     return Status;
 }
 
 LOGICAL
-MiShouldBeUnlockedFor4kPage (
-    IN PVOID VirtualAddress,
-    IN PEPROCESS Process
-    )
+MiShouldBeUnlockedFor4kPage(IN PVOID VirtualAddress, IN PEPROCESS Process)
 
 /*++
 
@@ -3308,7 +3206,7 @@ Environment:
     PVOID EndingAddress;
     LOGICAL PageUnlocked;
 
-    UNLOCK_WS_UNSAFE (Process);
+    UNLOCK_WS_UNSAFE(Process);
 
     PageUnlocked = TRUE;
     Wow64Process = Process->Wow64Process;
@@ -3316,31 +3214,30 @@ Environment:
     VirtualAligned = PAGE_ALIGN(VirtualAddress);
     EndingAddress = (PVOID)((ULONG_PTR)VirtualAligned + PAGE_SIZE - 1);
 
-    StartAltPte = MiGetAltPteAddress (VirtualAligned);
-    EndAltPte = MiGetAltPteAddress (EndingAddress);
+    StartAltPte = MiGetAltPteAddress(VirtualAligned);
+    EndAltPte = MiGetAltPteAddress(EndingAddress);
 
-    LOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    LOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    while (StartAltPte <= EndAltPte) {
+    while (StartAltPte <= EndAltPte)
+    {
 
-        if (StartAltPte->u.Alt.Lock != 0) {
+        if (StartAltPte->u.Alt.Lock != 0)
+        {
             PageUnlocked = FALSE;
         }
 
         StartAltPte += 1;
     }
 
-    UNLOCK_ALTERNATE_TABLE_UNSAFE (Wow64Process);
+    UNLOCK_ALTERNATE_TABLE_UNSAFE(Wow64Process);
 
-    LOCK_WS_UNSAFE (Process);
+    LOCK_WS_UNSAFE(Process);
 
     return PageUnlocked;
 }
-
-VOID
-MiCopyOnWriteFor4kPage (
-    IN PVOID VirtualAddress
-    )
+
+VOID MiCopyOnWriteFor4kPage(IN PVOID VirtualAddress)
 
 /*++
 
@@ -3367,22 +3264,22 @@ Environment:
     PMMPTE PointerAltPte;
     MMPTE TempAltPte;
     ULONG i;
-    
-    PointerAltPte = MiGetAltPteAddress (PAGE_ALIGN(VirtualAddress));
-    
-    for (i = 0; i < SPLITS_PER_PAGE; i += 1) {
-     
+
+    PointerAltPte = MiGetAltPteAddress(PAGE_ALIGN(VirtualAddress));
+
+    for (i = 0; i < SPLITS_PER_PAGE; i += 1)
+    {
+
         TempAltPte.u.Long = PointerAltPte->u.Long;
 
-        if ((TempAltPte.u.Alt.Commit != 0) && 
-            (TempAltPte.u.Alt.CopyOnWrite != 0)) {
+        if ((TempAltPte.u.Alt.Commit != 0) && (TempAltPte.u.Alt.CopyOnWrite != 0))
+        {
 
             TempAltPte.u.Alt.CopyOnWrite = 0;
             TempAltPte.u.Alt.Private = 1;
             TempAltPte.u.Hard.Write = 1;
 
-            TempAltPte.u.Alt.Protection = 
-                    MI_MAKE_PROTECT_NOT_WRITE_COPY(PointerAltPte->u.Alt.Protection);
+            TempAltPte.u.Alt.Protection = MI_MAKE_PROTECT_NOT_WRITE_COPY(PointerAltPte->u.Alt.Protection);
 
             PointerAltPte->u.Long = TempAltPte.u.Long;
         }
@@ -3394,13 +3291,9 @@ Environment:
         PointerAltPte += 1;
     }
 }
-
+
 ULONG
-MiMakeProtectForNativePage (
-    IN PVOID VirtualAddress,
-    IN ULONG NewProtect,
-    IN PEPROCESS Process
-    )
+MiMakeProtectForNativePage(IN PVOID VirtualAddress, IN ULONG NewProtect, IN PEPROCESS Process)
 
 /*++
 
@@ -3431,25 +3324,29 @@ Environment:
 
     Wow64Process = Process->Wow64Process;
 
-    if (MI_CHECK_BIT(Wow64Process->AltPermBitmap, 
-                     MI_VA_TO_VPN(VirtualAddress)) != 0) {
+    if (MI_CHECK_BIT(Wow64Process->AltPermBitmap, MI_VA_TO_VPN(VirtualAddress)) != 0)
+    {
 
-        if (NewProtect & PAGE_NOACCESS) {
+        if (NewProtect & PAGE_NOACCESS)
+        {
             NewProtect &= ~PAGE_NOACCESS;
             NewProtect |= PAGE_EXECUTE_READWRITE;
         }
 
-        if (NewProtect & PAGE_READONLY) {
+        if (NewProtect & PAGE_READONLY)
+        {
             NewProtect &= ~PAGE_READONLY;
             NewProtect |= PAGE_EXECUTE_READWRITE;
         }
 
-        if (NewProtect & PAGE_EXECUTE) {
+        if (NewProtect & PAGE_EXECUTE)
+        {
             NewProtect &= ~PAGE_EXECUTE;
             NewProtect |= PAGE_EXECUTE_READWRITE;
         }
 
-        if (NewProtect & PAGE_EXECUTE_READ) {
+        if (NewProtect & PAGE_EXECUTE_READ)
+        {
             NewProtect &= ~PAGE_EXECUTE_READ;
             NewProtect |= PAGE_EXECUTE_READWRITE;
         }
@@ -3458,7 +3355,8 @@ Environment:
         // Remove PAGE_GUARD as it is emulated by the Alternate Table.
         //
 
-        if (NewProtect & PAGE_GUARD) {
+        if (NewProtect & PAGE_GUARD)
+        {
             NewProtect &= ~PAGE_GUARD;
         }
     }
@@ -3466,11 +3364,7 @@ Environment:
     return NewProtect;
 }
 
-VOID
-MiCheckVirtualAddressFor4kPage (
-    IN PVOID VirtualAddress,
-    IN PEPROCESS Process
-    )
+VOID MiCheckVirtualAddressFor4kPage(IN PVOID VirtualAddress, IN PEPROCESS Process)
 
 /*++
 
@@ -3509,61 +3403,67 @@ Environment:
 
     Wow64Process = Process->Wow64Process;
 
-    LOCK_WS_UNSAFE (Process);
+    LOCK_WS_UNSAFE(Process);
 
-    ProtoPte = MiCheckVirtualAddress (VirtualAddress, &OriginalProtection);
+    ProtoPte = MiCheckVirtualAddress(VirtualAddress, &OriginalProtection);
 
-    if (OriginalProtection == MM_UNKNOWN_PROTECTION) {
+    if (OriginalProtection == MM_UNKNOWN_PROTECTION)
+    {
 
-        if (!MI_IS_PHYSICAL_ADDRESS(ProtoPte)) {
-            PointerPde = MiGetPteAddress (ProtoPte);
-            LOCK_PFN (OldIrql);
-            if (PointerPde->u.Hard.Valid == 0) {
-                MiMakeSystemAddressValidPfn (ProtoPte);
+        if (!MI_IS_PHYSICAL_ADDRESS(ProtoPte))
+        {
+            PointerPde = MiGetPteAddress(ProtoPte);
+            LOCK_PFN(OldIrql);
+            if (PointerPde->u.Hard.Valid == 0)
+            {
+                MiMakeSystemAddressValidPfn(ProtoPte);
             }
-            Pfn1 = MI_PFN_ELEMENT (PointerPde->u.Hard.PageFrameNumber);
+            Pfn1 = MI_PFN_ELEMENT(PointerPde->u.Hard.PageFrameNumber);
             MI_ADD_LOCKED_PAGE_CHARGE(Pfn1, 32);
             Pfn1->u3.e2.ReferenceCount += 1;
-            ASSERT (Pfn1->u3.e2.ReferenceCount > 1);
-            UNLOCK_PFN (OldIrql);
+            ASSERT(Pfn1->u3.e2.ReferenceCount > 1);
+            UNLOCK_PFN(OldIrql);
         }
-        else {
+        else
+        {
             Pfn1 = NULL;
         }
 
-        OriginalProtection = 
-            MiMakeProtectionMask(MiGetPageProtection(ProtoPte, Process, FALSE));
+        OriginalProtection = MiMakeProtectionMask(MiGetPageProtection(ProtoPte, Process, FALSE));
 
         //
         // Unlock the page containing the prototype PTEs.
         //
 
-        if (Pfn1 != NULL) {
-            ASSERT (!MI_IS_PHYSICAL_ADDRESS(ProtoPte));
-            LOCK_PFN (OldIrql);
-            ASSERT (Pfn1->u3.e2.ReferenceCount > 1);
+        if (Pfn1 != NULL)
+        {
+            ASSERT(!MI_IS_PHYSICAL_ADDRESS(ProtoPte));
+            LOCK_PFN(OldIrql);
+            ASSERT(Pfn1->u3.e2.ReferenceCount > 1);
             MI_REMOVE_LOCKED_PAGE_CHARGE(Pfn1, 33);
             Pfn1->u3.e2.ReferenceCount -= 1;
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
         }
 
-        if (OriginalProtection == MM_INVALID_PROTECTION) {
-            UNLOCK_WS_UNSAFE (Process);
+        if (OriginalProtection == MM_INVALID_PROTECTION)
+        {
+            UNLOCK_WS_UNSAFE(Process);
             return;
         }
     }
-        
-    UNLOCK_WS_UNSAFE (Process);
 
-    ProtectionMaskOriginal = MiMakeProtectionAteMask (OriginalProtection);
+    UNLOCK_WS_UNSAFE(Process);
+
+    ProtectionMaskOriginal = MiMakeProtectionAteMask(OriginalProtection);
     ProtectionMaskOriginal |= MM_ATE_COMMIT;
 
-    PointerAltPte = MiGetAltPteAddress (PAGE_ALIGN(VirtualAddress));
+    PointerAltPte = MiGetAltPteAddress(PAGE_ALIGN(VirtualAddress));
 
     AltPteContents.u.Long = ProtectionMaskOriginal;
     AltPteContents.u.Alt.Protection = OriginalProtection;
-        
-    for (i = 0; i < SPLITS_PER_PAGE; i += 1) {
+
+    for (i = 0; i < SPLITS_PER_PAGE; i += 1)
+    {
 
         //
         // Update the alternate PTEs.
@@ -3577,15 +3477,13 @@ Environment:
     // Update the bitmap.
     //
 
-    StartVpn = MI_VA_TO_VPN (VirtualAddress);
+    StartVpn = MI_VA_TO_VPN(VirtualAddress);
 
-    MI_SET_BIT (Wow64Process->AltPermBitmap, StartVpn);
+    MI_SET_BIT(Wow64Process->AltPermBitmap, StartVpn);
 }
-
+
 LOGICAL
-MiIsNativeGuardPage (
-    IN PVOID VirtualAddress
-    )
+MiIsNativeGuardPage(IN PVOID VirtualAddress)
 
 /*++
 
@@ -3611,27 +3509,24 @@ Environment:
     ULONG i;
     PMMPTE PointerAltPte;
 
-    PointerAltPte = MiGetAltPteAddress (PAGE_ALIGN(VirtualAddress));
-    
-    for (i = 0; i < SPLITS_PER_PAGE; i += 1) {
+    PointerAltPte = MiGetAltPteAddress(PAGE_ALIGN(VirtualAddress));
 
-        if ((PointerAltPte->u.Alt.Protection & MM_GUARD_PAGE) != 0) {
+    for (i = 0; i < SPLITS_PER_PAGE; i += 1)
+    {
+
+        if ((PointerAltPte->u.Alt.Protection & MM_GUARD_PAGE) != 0)
+        {
             return TRUE;
         }
 
         PointerAltPte += 1;
     }
-    
+
     return FALSE;
 }
 
-VOID
-MiSetNativePteProtection (
-    PVOID VirtualAddress,
-    ULONGLONG NewPteProtection,
-    LOGICAL PageIsSplit,
-    PEPROCESS CurrentProcess
-    )
+VOID MiSetNativePteProtection(PVOID VirtualAddress, ULONGLONG NewPteProtection, LOGICAL PageIsSplit,
+                              PEPROCESS CurrentProcess)
 {
     MMPTE PteContents;
     MMPTE TempPte;
@@ -3640,35 +3535,31 @@ MiSetNativePteProtection (
     PMMPTE PointerPpe;
     ULONG Waited;
 
-    PointerPte = MiGetPteAddress (VirtualAddress);
-    PointerPde = MiGetPdeAddress (VirtualAddress);
-    PointerPpe = MiGetPpeAddress (VirtualAddress);
+    PointerPte = MiGetPteAddress(VirtualAddress);
+    PointerPde = MiGetPdeAddress(VirtualAddress);
+    PointerPpe = MiGetPpeAddress(VirtualAddress);
 
     //
     // Block APCs and acquire the working set lock.
     //
 
-    LOCK_WS (CurrentProcess);
+    LOCK_WS(CurrentProcess);
 
     //
     // Make the PPE and PDE exist and valid.
     //
 
-    if (MiDoesPpeExistAndMakeValid (PointerPpe,
-                                    CurrentProcess,
-                                    FALSE,
-                                    &Waited) == FALSE) {
+    if (MiDoesPpeExistAndMakeValid(PointerPpe, CurrentProcess, FALSE, &Waited) == FALSE)
+    {
 
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         return;
     }
 
-    if (MiDoesPdeExistAndMakeValid (PointerPde,
-                                    CurrentProcess,
-                                    FALSE,
-                                    &Waited) == FALSE) {
+    if (MiDoesPdeExistAndMakeValid(PointerPde, CurrentProcess, FALSE, &Waited) == FALSE)
+    {
 
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         return;
     }
 
@@ -3683,7 +3574,8 @@ MiSetNativePteProtection (
     // and if the access bit of the PTE should be set.
     //
 
-    if (PteContents.u.Hard.Valid != 0) { 
+    if (PteContents.u.Hard.Valid != 0)
+    {
 
         TempPte = PteContents;
 
@@ -3693,19 +3585,21 @@ MiSetNativePteProtection (
 
         TempPte.u.Long |= NewPteProtection;
 
-        if (PteContents.u.Hard.Accessed == 0) {
+        if (PteContents.u.Hard.Accessed == 0)
+        {
 
             TempPte.u.Hard.Accessed = 1;
 
-            if (PageIsSplit == TRUE) {
+            if (PageIsSplit == TRUE)
+            {
                 TempPte.u.Hard.Cache = MM_PTE_CACHE_RESERVED;
-            } 
+            }
         }
 
-        MI_WRITE_VALID_PTE_NEW_PROTECTION(PointerPte, TempPte); 
+        MI_WRITE_VALID_PTE_NEW_PROTECTION(PointerPte, TempPte);
     }
 
-    UNLOCK_WS (CurrentProcess);
+    UNLOCK_WS(CurrentProcess);
 }
 
 #endif

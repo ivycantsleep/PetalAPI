@@ -27,58 +27,38 @@ Revision History:
 //
 extern ULONG ObpLUIDDeviceMapsEnabled;
 
-
-NTSTATUS
-ObSetDirectoryDeviceMap (
-    OUT PDEVICE_MAP *ppDeviceMap OPTIONAL,
-    IN HANDLE DirectoryHandle
-    );
 
 NTSTATUS
-ObSetDeviceMap (
-    IN PEPROCESS TargetProcess OPTIONAL,
-    IN HANDLE DirectoryHandle
-    );
+ObSetDirectoryDeviceMap(OUT PDEVICE_MAP *ppDeviceMap OPTIONAL, IN HANDLE DirectoryHandle);
 
 NTSTATUS
-ObQueryDeviceMapInformation (
-    IN PEPROCESS TargetProcess OPTIONAL,
-    OUT PPROCESS_DEVICEMAP_INFORMATION DeviceMapInformation,
-    IN ULONG Flags
-    );
-    
-VOID
-ObInheritDeviceMap (
-    IN PEPROCESS NewProcess,
-    IN PEPROCESS ParentProcess OPTIONAL
-    );
+ObSetDeviceMap(IN PEPROCESS TargetProcess OPTIONAL, IN HANDLE DirectoryHandle);
 
-VOID
-ObDereferenceDeviceMap (
-    IN PEPROCESS Process
-    );
+NTSTATUS
+ObQueryDeviceMapInformation(IN PEPROCESS TargetProcess OPTIONAL,
+                            OUT PPROCESS_DEVICEMAP_INFORMATION DeviceMapInformation, IN ULONG Flags);
+
+VOID ObInheritDeviceMap(IN PEPROCESS NewProcess, IN PEPROCESS ParentProcess OPTIONAL);
+
+VOID ObDereferenceDeviceMap(IN PEPROCESS Process);
 
 ULONG
-ObIsLUIDDeviceMapsEnabled (
-    );
+ObIsLUIDDeviceMapsEnabled();
 
 #ifdef OBP_PAGEDPOOL_NAMESPACE
 #if defined(ALLOC_PRAGMA)
-#pragma alloc_text(PAGE,ObSetDirectoryDeviceMap)
-#pragma alloc_text(PAGE,ObSetDeviceMap)
-#pragma alloc_text(PAGE,ObQueryDeviceMapInformation)
-#pragma alloc_text(PAGE,ObInheritDeviceMap)
-#pragma alloc_text(PAGE,ObDereferenceDeviceMap)
-#pragma alloc_text(PAGE,ObIsLUIDDeviceMapsEnabled)
+#pragma alloc_text(PAGE, ObSetDirectoryDeviceMap)
+#pragma alloc_text(PAGE, ObSetDeviceMap)
+#pragma alloc_text(PAGE, ObQueryDeviceMapInformation)
+#pragma alloc_text(PAGE, ObInheritDeviceMap)
+#pragma alloc_text(PAGE, ObDereferenceDeviceMap)
+#pragma alloc_text(PAGE, ObIsLUIDDeviceMapsEnabled)
 #endif
 #endif // OBP_PAGEDPOOL_NAMESPACE
 
-
+
 NTSTATUS
-ObSetDirectoryDeviceMap (
-    OUT PDEVICE_MAP *ppDeviceMap OPTIONAL,
-    IN HANDLE DirectoryHandle
-    )
+ObSetDirectoryDeviceMap(OUT PDEVICE_MAP *ppDeviceMap OPTIONAL, IN HANDLE DirectoryHandle)
 
 /*++
 
@@ -137,31 +117,28 @@ Return Value:
     //  associated with a device map structure.  If so, fail this call.
     //
 
-    Status = ObReferenceObjectByHandle( DirectoryHandle,
-                                        DIRECTORY_TRAVERSE,
-                                        ObpDirectoryObjectType,
-                                        KernelMode,
-                                        &DosDevicesDirectory,
-                                        NULL );
+    Status = ObReferenceObjectByHandle(DirectoryHandle, DIRECTORY_TRAVERSE, ObpDirectoryObjectType, KernelMode,
+                                       &DosDevicesDirectory, NULL);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        return( Status );
+        return (Status);
     }
 
     FreeDeviceMap = NULL;
 
-    DeviceMap = ExAllocatePoolWithTag( OB_NAMESPACE_POOL_TYPE, sizeof( *DeviceMap ), 'mDbO' );
+    DeviceMap = ExAllocatePoolWithTag(OB_NAMESPACE_POOL_TYPE, sizeof(*DeviceMap), 'mDbO');
 
-    if (DeviceMap == NULL) {
+    if (DeviceMap == NULL)
+    {
 
-        ObDereferenceObject( DosDevicesDirectory );
+        ObDereferenceObject(DosDevicesDirectory);
         Status = STATUS_INSUFFICIENT_RESOURCES;
-        return( Status );
-
+        return (Status);
     }
 
-    RtlZeroMemory( DeviceMap, sizeof( *DeviceMap ) );
+    RtlZeroMemory(DeviceMap, sizeof(*DeviceMap));
 
     DeviceMap->ReferenceCount = 1;
     DeviceMap->DosDevicesDirectory = DosDevicesDirectory;
@@ -169,18 +146,22 @@ Return Value:
     //
     //  Capture the device map
     //
-    
+
     ObpLockDeviceMap();
 
-    if (DosDevicesDirectory->DeviceMap != NULL) {
+    if (DosDevicesDirectory->DeviceMap != NULL)
+    {
         FreeDeviceMap = DeviceMap;
         DeviceMap = DosDevicesDirectory->DeviceMap;
         DeviceMap->ReferenceCount++;
-    } else {
+    }
+    else
+    {
         DosDevicesDirectory->DeviceMap = DeviceMap;
     }
 
-    if (DosDevicesDirectory != ObSystemDeviceMap->DosDevicesDirectory) {
+    if (DosDevicesDirectory != ObSystemDeviceMap->DosDevicesDirectory)
+    {
         DeviceMap->GlobalDosDevicesDirectory = ObSystemDeviceMap->DosDevicesDirectory;
     }
 
@@ -189,7 +170,8 @@ Return Value:
     //
     // pass back a pointer to the device map
     //
-    if (ppDeviceMap != NULL) {
+    if (ppDeviceMap != NULL)
+    {
         *ppDeviceMap = DeviceMap;
     }
 
@@ -197,20 +179,21 @@ Return Value:
     // Make the object permanent until the devmap is removed. This keeps the name in the tree
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( DosDevicesDirectory );
-    NameInfo = ObpReferenceNameInfo( ObjectHeader );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(DosDevicesDirectory);
+    NameInfo = ObpReferenceNameInfo(ObjectHeader);
 
     //
     // Other bits are set in this flags field by the handle database code. Synchronize with that.
     //
-    
-    ObpLockObject( ObjectHeader );
 
-    if (NameInfo != NULL && NameInfo->Directory != NULL) {
+    ObpLockObject(ObjectHeader);
+
+    if (NameInfo != NULL && NameInfo->Directory != NULL)
+    {
         ObjectHeader->Flags |= OB_FLAG_PERMANENT_OBJECT;
     }
 
-    ObpUnlockObject( ObjectHeader );
+    ObpUnlockObject(ObjectHeader);
 
     ObpDereferenceNameInfo(NameInfo);
 
@@ -218,19 +201,17 @@ Return Value:
     // If the directory already had a devmap and so was already referenced.
     // Drop ours and free the unused block.
     //
-    if (FreeDeviceMap != NULL) {
-        ObDereferenceObject (DosDevicesDirectory);
-        ExFreePool (FreeDeviceMap);
+    if (FreeDeviceMap != NULL)
+    {
+        ObDereferenceObject(DosDevicesDirectory);
+        ExFreePool(FreeDeviceMap);
     }
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-ObSetDeviceMap (
-    IN PEPROCESS TargetProcess OPTIONAL,
-    IN HANDLE DirectoryHandle
-    )
+ObSetDeviceMap(IN PEPROCESS TargetProcess OPTIONAL, IN HANDLE DirectoryHandle)
 
 /*++
 
@@ -292,31 +273,28 @@ Return Value:
     //  associated with a device map structure.  If so, fail this call.
     //
 
-    Status = ObReferenceObjectByHandle( DirectoryHandle,
-                                        DIRECTORY_TRAVERSE,
-                                        ObpDirectoryObjectType,
-                                        KeGetPreviousMode(),
-                                        &DosDevicesDirectory,
-                                        NULL );
+    Status = ObReferenceObjectByHandle(DirectoryHandle, DIRECTORY_TRAVERSE, ObpDirectoryObjectType, KeGetPreviousMode(),
+                                       &DosDevicesDirectory, NULL);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        return( Status );
+        return (Status);
     }
 
     FreeDeviceMap = NULL;
 
-    DeviceMap = ExAllocatePoolWithTag( OB_NAMESPACE_POOL_TYPE, sizeof( *DeviceMap ), 'mDbO' );
+    DeviceMap = ExAllocatePoolWithTag(OB_NAMESPACE_POOL_TYPE, sizeof(*DeviceMap), 'mDbO');
 
-    if (DeviceMap == NULL) {
+    if (DeviceMap == NULL)
+    {
 
-        ObDereferenceObject( DosDevicesDirectory );
+        ObDereferenceObject(DosDevicesDirectory);
         Status = STATUS_INSUFFICIENT_RESOURCES;
-        return( Status );
-
+        return (Status);
     }
 
-    RtlZeroMemory( DeviceMap, sizeof( *DeviceMap ) );
+    RtlZeroMemory(DeviceMap, sizeof(*DeviceMap));
 
     DeviceMap->ReferenceCount = 1;
     DeviceMap->DosDevicesDirectory = DosDevicesDirectory;
@@ -327,24 +305,28 @@ Return Value:
 
     ObpLockDeviceMap();
 
-    if (DosDevicesDirectory->DeviceMap != NULL) {
+    if (DosDevicesDirectory->DeviceMap != NULL)
+    {
         FreeDeviceMap = DeviceMap;
         DeviceMap = DosDevicesDirectory->DeviceMap;
         DeviceMap->ReferenceCount++;
-    } else {
+    }
+    else
+    {
         DosDevicesDirectory->DeviceMap = DeviceMap;
     }
 
 
-    if (Target == NULL) {
+    if (Target == NULL)
+    {
 
         Target = PsGetCurrentProcess();
 
         ObSystemDeviceMap = DeviceMap;
-
     }
 
-    if (DosDevicesDirectory != ObSystemDeviceMap->DosDevicesDirectory) {
+    if (DosDevicesDirectory != ObSystemDeviceMap->DosDevicesDirectory)
+    {
         DeviceMap->GlobalDosDevicesDirectory = ObSystemDeviceMap->DosDevicesDirectory;
         PreserveName = TRUE;
     }
@@ -355,51 +337,52 @@ Return Value:
 
     ObpUnlockDeviceMap();
 
-    if (PreserveName == TRUE) {
+    if (PreserveName == TRUE)
+    {
         //
         // Make the object permanent until the devmap is removed. This keeps the name in the tree
         //
-        ObjectHeader = OBJECT_TO_OBJECT_HEADER( DosDevicesDirectory );
-        NameInfo = ObpReferenceNameInfo( ObjectHeader );
+        ObjectHeader = OBJECT_TO_OBJECT_HEADER(DosDevicesDirectory);
+        NameInfo = ObpReferenceNameInfo(ObjectHeader);
 
 
         //
         // Other bits are set in this flags field by the handle database code. Synchronise with that.
         //
-        ObpLockObject( ObjectHeader );
+        ObpLockObject(ObjectHeader);
 
-        if (NameInfo != NULL && NameInfo->Directory != NULL) {
+        if (NameInfo != NULL && NameInfo->Directory != NULL)
+        {
             ObjectHeader->Flags |= OB_FLAG_PERMANENT_OBJECT;
         }
 
-        ObpUnlockObject( ObjectHeader );
+        ObpUnlockObject(ObjectHeader);
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
     }
     //
     // If the directory already had a devmap and so was already referenced.
     // Drop ours and free the unused bock.
     //
-    if (FreeDeviceMap != NULL) {
-        ObDereferenceObject (DosDevicesDirectory);
-        ExFreePool (FreeDeviceMap);
+    if (FreeDeviceMap != NULL)
+    {
+        ObDereferenceObject(DosDevicesDirectory);
+        ExFreePool(FreeDeviceMap);
     }
     //
     // If the target already had a device map then deref it now
     //
-    if (DerefDeviceMap != NULL) {
-        ObfDereferenceDeviceMap (DerefDeviceMap);
+    if (DerefDeviceMap != NULL)
+    {
+        ObfDereferenceDeviceMap(DerefDeviceMap);
     }
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-ObQueryDeviceMapInformation (
-    IN PEPROCESS TargetProcess OPTIONAL,
-    OUT PPROCESS_DEVICEMAP_INFORMATION DeviceMapInformation,
-    IN ULONG Flags
-    )
+ObQueryDeviceMapInformation(IN PEPROCESS TargetProcess OPTIONAL,
+                            OUT PPROCESS_DEVICEMAP_INFORMATION DeviceMapInformation, IN ULONG Flags)
 
 /*++
 
@@ -444,7 +427,8 @@ Return Value:
     BOOLEAN SearchShadow;
     BOOLEAN UsedLUIDDeviceMap = FALSE;
 
-    if (Flags & ~(PROCESS_LUID_DOSDEVICES_ONLY)) {
+    if (Flags & ~(PROCESS_LUID_DOSDEVICES_ONLY))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -456,9 +440,10 @@ Return Value:
     // no process was specified
     //
 
-    if (ObpLUIDDeviceMapsEnabled != 0) {
-        if (ARGUMENT_PRESENT( TargetProcess ) &&
-           (PsGetCurrentProcess() != TargetProcess)) {
+    if (ObpLUIDDeviceMapsEnabled != 0)
+    {
+        if (ARGUMENT_PRESENT(TargetProcess) && (PsGetCurrentProcess() != TargetProcess))
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
@@ -475,22 +460,27 @@ Return Value:
     //
 
     ObpLockDeviceMap();
-    
-    if (DeviceMap == NULL) {
+
+    if (DeviceMap == NULL)
+    {
         //
         //  Check if the caller gave us a target process and if not then use
         //  the globally defined one
         //
 
-        if (ARGUMENT_PRESENT( TargetProcess )) {
+        if (ARGUMENT_PRESENT(TargetProcess))
+        {
 
             DeviceMap = TargetProcess->DeviceMap;
-
-        } else {
+        }
+        else
+        {
 
             DeviceMap = ObSystemDeviceMap;
         }
-    } else {
+    }
+    else
+    {
         UsedLUIDDeviceMap = TRUE;
     }
 
@@ -500,13 +490,15 @@ Return Value:
     //  array) into the output buffer
     //
 
-    if (DeviceMap == NULL) {
+    if (DeviceMap == NULL)
+    {
 
         ObpUnlockDeviceMap();
 
         Status = STATUS_END_OF_FILE;
-
-    } else {
+    }
+    else
+    {
         ULONG i;
         PDEVICE_MAP ShadowDeviceMap;
 
@@ -514,26 +506,25 @@ Return Value:
 
 
         ShadowDeviceMap = DeviceMap;
-        if (DeviceMap->GlobalDosDevicesDirectory != NULL &&
-            DeviceMap->GlobalDosDevicesDirectory->DeviceMap != NULL) {
+        if (DeviceMap->GlobalDosDevicesDirectory != NULL && DeviceMap->GlobalDosDevicesDirectory->DeviceMap != NULL)
+        {
             ShadowDeviceMap = DeviceMap->GlobalDosDevicesDirectory->DeviceMap;
         }
 
         LocalMapInformation.Query.DriveMap = DeviceMap->DriveMap;
 
         for (i = 0, Mask = 1;
-             i < sizeof (LocalMapInformation.Query.DriveType) /
-                 sizeof (LocalMapInformation.Query.DriveType[0]);
-             i++, Mask <<= 1) {
+             i < sizeof(LocalMapInformation.Query.DriveType) / sizeof(LocalMapInformation.Query.DriveType[0]);
+             i++, Mask <<= 1)
+        {
             LocalMapInformation.Query.DriveType[i] = DeviceMap->DriveType[i];
-            if ( (Mask & DeviceMap->DriveMap) == 0 &&
-                 SearchShadow &&
-                 ( ( ObpLUIDDeviceMapsEnabled != 0   // check if LUID Device
-                                                     // maps are enabled
-                   ) ||
-                   ( ShadowDeviceMap->DriveType[i] != DOSDEVICE_DRIVE_REMOTE &&
-                     ShadowDeviceMap->DriveType[i] != DOSDEVICE_DRIVE_CALCULATE
-                   ) ) ) {
+            if ((Mask & DeviceMap->DriveMap) == 0 && SearchShadow &&
+                ((ObpLUIDDeviceMapsEnabled != 0 // check if LUID Device
+                                                // maps are enabled
+                  ) ||
+                 (ShadowDeviceMap->DriveType[i] != DOSDEVICE_DRIVE_REMOTE &&
+                  ShadowDeviceMap->DriveType[i] != DOSDEVICE_DRIVE_CALCULATE)))
+            {
                 LocalMapInformation.Query.DriveType[i] = ShadowDeviceMap->DriveType[i];
                 LocalMapInformation.Query.DriveMap |= ShadowDeviceMap->DriveMap & Mask;
             }
@@ -545,7 +536,8 @@ Return Value:
         // If the LUID device map was used,
         // then dereference the LUID device map
         //
-        if (UsedLUIDDeviceMap == TRUE) {
+        if (UsedLUIDDeviceMap == TRUE)
+        {
             ObfDereferenceDeviceMap(DeviceMap);
         }
 
@@ -556,28 +548,24 @@ Return Value:
         //  for write.
         //
 
-        try {
+        try
+        {
 
-            RtlCopyMemory( &DeviceMapInformation->Query,
-                           &LocalMapInformation.Query,
-                           sizeof( DeviceMapInformation->Query ));
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+            RtlCopyMemory(&DeviceMapInformation->Query, &LocalMapInformation.Query,
+                          sizeof(DeviceMapInformation->Query));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
-
     }
 
     return Status;
 }
 
-
-VOID
-ObInheritDeviceMap (
-    IN PEPROCESS NewProcess,
-    IN PEPROCESS ParentProcess OPTIONAL
-    )
+
+VOID ObInheritDeviceMap(IN PEPROCESS NewProcess, IN PEPROCESS ParentProcess OPTIONAL)
 
 /*++
 
@@ -613,11 +601,13 @@ Return Value:
 
     ObpLockDeviceMap();
 
-    if (ParentProcess) {
+    if (ParentProcess)
+    {
 
         DeviceMap = ParentProcess->DeviceMap;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Note: WindowStation guys may want a callout here to get the
@@ -625,28 +615,24 @@ Return Value:
         //
 
         DeviceMap = ObSystemDeviceMap;
-
     }
 
-    if (DeviceMap != NULL) {
+    if (DeviceMap != NULL)
+    {
         //
         //  With the device map bumps its reference count and add it to the
         //  new process
         //
         DeviceMap->ReferenceCount++;
         NewProcess->DeviceMap = DeviceMap;
-
     }
     ObpUnlockDeviceMap();
 
     return;
 }
 
-
-VOID
-ObDereferenceDeviceMap (
-    IN PEPROCESS Process
-    )
+
+VOID ObDereferenceDeviceMap(IN PEPROCESS Process)
 
 /*++
 
@@ -683,7 +669,8 @@ Return Value:
 
     ObpUnlockDeviceMap();
 
-    if (DeviceMap != NULL) {
+    if (DeviceMap != NULL)
+    {
 
         //
         //  To dereference the device map we need to null out the
@@ -694,7 +681,6 @@ Return Value:
 
 
         ObfDereferenceDeviceMap(DeviceMap);
-
     }
 
     //
@@ -704,10 +690,9 @@ Return Value:
     return;
 }
 
-
+
 ULONG
-ObIsLUIDDeviceMapsEnabled (
-    )
+ObIsLUIDDeviceMapsEnabled()
 
 /*++
 
@@ -727,6 +712,5 @@ Return Value:
 --*/
 
 {
-    return( ObpLUIDDeviceMapsEnabled );
+    return (ObpLUIDDeviceMapsEnabled);
 }
-

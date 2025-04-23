@@ -42,21 +42,21 @@
  *
  */
 
-typedef struct sockaddr_ipx {
+typedef struct sockaddr_ipx
+{
     short sa_family;
-    char  sa_netnum[4];
-    char  sa_nodenum[6];
+    char sa_netnum[4];
+    char sa_nodenum[6];
     unsigned short sa_socket;
-} SOCKADDR_IPX, *PSOCKADDR_IPX,FAR *LPSOCKADDR_IPX;
+} SOCKADDR_IPX, *PSOCKADDR_IPX, FAR *LPSOCKADDR_IPX;
 
 /*
  *   Protocol families used in the "protocol" parameter of the socket() API.
  *
  */
 
-#define NSPROTO_IPX      1000
-#define NSPROTO_SPX      1256
-#define NSPROTO_SPXII    1257
+#define NSPROTO_IPX 1000
+#define NSPROTO_SPX 1256
+#define NSPROTO_SPXII 1257
 
 #endif
-

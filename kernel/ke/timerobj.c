@@ -34,15 +34,12 @@ Revision History:
 // really a ktimer and not something else, like deallocated pool.
 //
 
-#define ASSERT_TIMER(E) {                                     \
-    ASSERT(((E)->Header.Type == TimerNotificationObject) ||   \
-           ((E)->Header.Type == TimerSynchronizationObject)); \
-}
-
-VOID
-KeInitializeTimer (
-    IN PKTIMER Timer
-    )
+#define ASSERT_TIMER(E)                                                                                            \
+    {                                                                                                              \
+        ASSERT(((E)->Header.Type == TimerNotificationObject) || ((E)->Header.Type == TimerSynchronizationObject)); \
+    }
+
+VOID KeInitializeTimer(IN PKTIMER Timer)
 
 /*++
 
@@ -70,12 +67,8 @@ Return Value:
     KeInitializeTimerEx(Timer, NotificationTimer);
     return;
 }
-
-VOID
-KeInitializeTimerEx (
-    IN PKTIMER Timer,
-    IN TIMER_TYPE Type
-    )
+
+VOID KeInitializeTimerEx(IN PKTIMER Timer, IN TIMER_TYPE Type)
 
 /*++
 
@@ -119,11 +112,8 @@ Return Value:
     Timer->Period = 0;
     return;
 }
-
-VOID
-KeClearTimer (
-    IN PKTIMER Timer
-    )
+
+VOID KeClearTimer(IN PKTIMER Timer)
 
 /*++
 
@@ -152,11 +142,9 @@ Return Value:
     Timer->Header.SignalState = 0;
     return;
 }
-
+
 BOOLEAN
-KeCancelTimer (
-    IN PKTIMER Timer
-    )
+KeCancelTimer(IN PKTIMER Timer)
 
 /*++
 
@@ -194,7 +182,8 @@ Return Value:
 
     KiLockDispatcherDatabase(&OldIrql);
     Inserted = Timer->Header.Inserted;
-    if (Inserted != FALSE) {
+    if (Inserted != FALSE)
+    {
         KiRemoveTreeTimer(Timer);
     }
 
@@ -206,11 +195,9 @@ Return Value:
     KiUnlockDispatcherDatabase(OldIrql);
     return Inserted;
 }
-
+
 BOOLEAN
-KeReadStateTimer (
-    IN PKTIMER Timer
-    )
+KeReadStateTimer(IN PKTIMER Timer)
 
 /*++
 
@@ -238,13 +225,9 @@ Return Value:
 
     return (BOOLEAN)Timer->Header.SignalState;
 }
-
+
 BOOLEAN
-KeSetTimer (
-    IN PKTIMER Timer,
-    IN LARGE_INTEGER DueTime,
-    IN PKDPC Dpc OPTIONAL
-    )
+KeSetTimer(IN PKTIMER Timer, IN LARGE_INTEGER DueTime, IN PKDPC Dpc OPTIONAL)
 
 /*++
 
@@ -280,14 +263,9 @@ Return Value:
 
     return KeSetTimerEx(Timer, DueTime, 0, Dpc);
 }
-
+
 BOOLEAN
-KeSetTimerEx (
-    IN PKTIMER Timer,
-    IN LARGE_INTEGER DueTime,
-    IN LONG Period OPTIONAL,
-    IN PKDPC Dpc OPTIONAL
-    )
+KeSetTimerEx(IN PKTIMER Timer, IN LARGE_INTEGER DueTime, IN LONG Period OPTIONAL, IN PKDPC Dpc OPTIONAL)
 
 /*++
 
@@ -339,7 +317,8 @@ Return Value:
     //
 
     Inserted = Timer->Header.Inserted;
-    if (Inserted != FALSE) {
+    if (Inserted != FALSE)
+    {
         KiRemoveTreeTimer(Timer);
     }
 
@@ -357,8 +336,10 @@ Return Value:
     Timer->Header.SignalState = FALSE;
     Timer->Dpc = Dpc;
     Timer->Period = Period;
-    if (KiInsertTreeTimer((PRKTIMER)Timer, DueTime) == FALSE) {
-        if (IsListEmpty(&Timer->Header.WaitListHead) == FALSE) {
+    if (KiInsertTreeTimer((PRKTIMER)Timer, DueTime) == FALSE)
+    {
+        if (IsListEmpty(&Timer->Header.WaitListHead) == FALSE)
+        {
             KiWaitTest(Timer, TIMER_EXPIRE_INCREMENT);
         }
 
@@ -366,11 +347,10 @@ Return Value:
         // If a DPC is specfied, then call the DPC routine.
         //
 
-        if (Dpc != NULL) {
+        if (Dpc != NULL)
+        {
             KiQuerySystemTime(&SystemTime);
-            KeInsertQueueDpc(Timer->Dpc,
-                             ULongToPtr(SystemTime.LowPart),
-                             ULongToPtr(SystemTime.HighPart));
+            KeInsertQueueDpc(Timer->Dpc, ULongToPtr(SystemTime.LowPart), ULongToPtr(SystemTime.HighPart));
         }
 
         //
@@ -383,9 +363,11 @@ Return Value:
         //      the insertion is retried.
         //
 
-        if (Period != 0) {
-            Interval.QuadPart = Int32x32To64(Timer->Period, - 10 * 1000);
-            do {
+        if (Period != 0)
+        {
+            Interval.QuadPart = Int32x32To64(Timer->Period, -10 * 1000);
+            do
+            {
             } while (KiInsertTreeTimer(Timer, Interval) == FALSE);
         }
     }
@@ -404,11 +386,9 @@ Return Value:
 
     return Inserted;
 }
-
+
 ULONGLONG
-KeQueryTimerDueTime (
-    IN PKTIMER Timer
-    )
+KeQueryTimerDueTime(IN PKTIMER Timer)
 
 /*++
 
@@ -449,7 +429,8 @@ Return Value:
     //
 
     DueTime = 0;
-    if (Timer->Header.Inserted) {
+    if (Timer->Header.Inserted)
+    {
         DueTime = Timer->DueTime.QuadPart;
     }
 
@@ -461,12 +442,8 @@ Return Value:
     KiUnlockDispatcherDatabase(OldIrql);
     return DueTime;
 }
-
-VOID
-KeCheckForTimer(
-    IN PVOID BlockStart,
-    IN SIZE_T BlockSize
-    )
+
+VOID KeCheckForTimer(IN PVOID BlockStart, IN SIZE_T BlockSize)
 /*++
 
 Routine Description:
@@ -515,10 +492,12 @@ Return Value:
     //
 
     Index = 0;
-    do {
+    do
+    {
         ListHead = &KiTimerTableListHead[Index];
         NextEntry = ListHead->Flink;
-        while (NextEntry != ListHead) {
+        while (NextEntry != ListHead)
+        {
             Timer = CONTAINING_RECORD(NextEntry, KTIMER, TimerListEntry);
             Address = (PUCHAR)Timer;
             NextEntry = NextEntry->Flink;
@@ -532,29 +511,22 @@ Return Value:
             // stop.
             //
 
-            if ((Address > (Start - sizeof(KTIMER))) &&
-                (Address < End)) {
-                KeBugCheckEx(TIMER_OR_DPC_INVALID,
-                             0x0,
-                             (ULONG_PTR)Address,
-                             (ULONG_PTR)Start,
-                             (ULONG_PTR)End);
+            if ((Address > (Start - sizeof(KTIMER))) && (Address < End))
+            {
+                KeBugCheckEx(TIMER_OR_DPC_INVALID, 0x0, (ULONG_PTR)Address, (ULONG_PTR)Start, (ULONG_PTR)End);
             }
 
-            if (Timer->Dpc) {
+            if (Timer->Dpc)
+            {
 
                 //
                 // Check the timer's DPC object isn't in the range.
                 //
 
                 Address = (PUCHAR)Timer->Dpc;
-                if ((Address > (Start - sizeof(KDPC))) &&
-                    (Address < End)) {
-                    KeBugCheckEx(TIMER_OR_DPC_INVALID,
-                                 0x1,
-                                 (ULONG_PTR)Address,
-                                 (ULONG_PTR)Start,
-                                 (ULONG_PTR)End);
+                if ((Address > (Start - sizeof(KDPC))) && (Address < End))
+                {
+                    KeBugCheckEx(TIMER_OR_DPC_INVALID, 0x1, (ULONG_PTR)Address, (ULONG_PTR)Start, (ULONG_PTR)End);
                 }
 
                 //
@@ -562,18 +534,15 @@ Return Value:
                 //
 
                 Address = (PUCHAR)Timer->Dpc->DeferredRoutine;
-                if (Address >= Start && Address < End) {
-                    KeBugCheckEx(TIMER_OR_DPC_INVALID,
-                                 0x2,
-                                 (ULONG_PTR)Address,
-                                 (ULONG_PTR)Start,
-                                 (ULONG_PTR)End);
+                if (Address >= Start && Address < End)
+                {
+                    KeBugCheckEx(TIMER_OR_DPC_INVALID, 0x2, (ULONG_PTR)Address, (ULONG_PTR)Start, (ULONG_PTR)End);
                 }
             }
         }
 
         Index += 1;
-    } while(Index < TIMER_TABLE_SIZE);
+    } while (Index < TIMER_TABLE_SIZE);
 
 
     //

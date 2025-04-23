@@ -25,7 +25,8 @@ Revision History:
 
 --*/
 
-typedef enum {
+typedef enum
+{
 
     VFMP_INSTANT = 0,
     VFMP_INSTANT_NONPAGED
@@ -33,10 +34,4 @@ typedef enum {
 } MEMORY_PERSISTANCE;
 
 BOOLEAN
-VfUtilIsMemoryRangeReadable(
-    IN PVOID                Location,
-    IN size_t               Length,
-    IN MEMORY_PERSISTANCE   Persistance
-    );
-
-
+VfUtilIsMemoryRangeReadable(IN PVOID Location, IN size_t Length, IN MEMORY_PERSISTANCE Persistance);

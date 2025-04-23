@@ -26,26 +26,23 @@ Revision History:
 #include <string.h>
 
 NTSTATUS
-main(
-    IN int argc,
-    IN char *argv[],
-    IN char *envp[],
-    IN ULONG DebugParameter OPTIONAL
-    )
+main(IN int argc, IN char *argv[], IN char *envp[], IN ULONG DebugParameter OPTIONAL)
 {
     PCH InitialCommandLine = NULL;
-    CHAR Buffer[ 256 ];
+    CHAR Buffer[256];
 
-    if (argc-- > 1) {
+    if (argc-- > 1)
+    {
         InitialCommandLine = Buffer;
         *Buffer = '\0';
-        while (argc--) {
-            strcat( Buffer, *++argv );
-            strcat( Buffer, " " );
-            }
+        while (argc--)
+        {
+            strcat(Buffer, *++argv);
+            strcat(Buffer, " ");
         }
+    }
 
-    RtlCommandLineInterpreter( "UCLI> ", envp, InitialCommandLine );
+    RtlCommandLineInterpreter("UCLI> ", envp, InitialCommandLine);
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }

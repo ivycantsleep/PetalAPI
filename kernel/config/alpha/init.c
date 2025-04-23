@@ -32,11 +32,9 @@ Revision History:
 #include "cmp.h"
 
 #define TITLE_INDEX_VALUE 0
-
+
 NTSTATUS
-CmpInitializeMachineDependentConfiguration(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+CmpInitializeMachineDependentConfiguration(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -64,33 +62,21 @@ Returns:
     OBJECT_ATTRIBUTES ObjectAttributes;
     HANDLE ParentHandle;
 
-    InitializeObjectAttributes(&ObjectAttributes,
-				               &CmRegistryMachineHardwareDescriptionSystemName,
-				               OBJ_CASE_INSENSITIVE,
-				               NULL,
-				               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineHardwareDescriptionSystemName, OBJ_CASE_INSENSITIVE,
+                               NULL, NULL);
 
-    Status = NtOpenKey(&ParentHandle,
-		               KEY_READ,
-		               &ObjectAttributes);
+    Status = NtOpenKey(&ParentHandle, KEY_READ, &ObjectAttributes);
 
-    if (NT_SUCCESS(Status)) {
-        RtlInitUnicodeString(&ValueName,
-    			             L"SystemBiosVersion");
+    if (NT_SUCCESS(Status))
+    {
+        RtlInitUnicodeString(&ValueName, L"SystemBiosVersion");
 
-        RtlInitAnsiString(&AnsiString,
-    		              &LoaderBlock->u.Alpha.FirmwareVersion[0]);
+        RtlInitAnsiString(&AnsiString, &LoaderBlock->u.Alpha.FirmwareVersion[0]);
 
-        RtlAnsiStringToUnicodeString(&ValueData,
-    				                 &AnsiString,
-    				                 TRUE);
+        RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-        Status = NtSetValueKey(ParentHandle,
-    			               &ValueName,
-    			               TITLE_INDEX_VALUE,
-    			               REG_SZ,
-    			               ValueData.Buffer,
-    			               ValueData.Length + sizeof(UNICODE_NULL));
+        Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                               ValueData.Length + sizeof(UNICODE_NULL));
 
         RtlFreeUnicodeString(&ValueData);
 
@@ -99,23 +85,16 @@ Returns:
         // then store it in the registry.
         //
 
-        if (LoaderBlock->u.Alpha.FirmwareBuildTimeStamp[0] != 0 ) {
-            RtlInitUnicodeString(&ValueName,
-                                 L"SystemBiosDate");
+        if (LoaderBlock->u.Alpha.FirmwareBuildTimeStamp[0] != 0)
+        {
+            RtlInitUnicodeString(&ValueName, L"SystemBiosDate");
 
-            RtlInitAnsiString(&AnsiString,
-                              &LoaderBlock->u.Alpha.FirmwareBuildTimeStamp[0]);
+            RtlInitAnsiString(&AnsiString, &LoaderBlock->u.Alpha.FirmwareBuildTimeStamp[0]);
 
-            RtlAnsiStringToUnicodeString(&ValueData,
-        				                 &AnsiString,
-        				                 TRUE);
+            RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-            Status = NtSetValueKey(ParentHandle,
-        			               &ValueName,
-        			               TITLE_INDEX_VALUE,
-        			               REG_SZ,
-        			               ValueData.Buffer,
-        			               ValueData.Length + sizeof(UNICODE_NULL));
+            Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                                   ValueData.Length + sizeof(UNICODE_NULL));
 
             RtlFreeUnicodeString(&ValueData);
         }

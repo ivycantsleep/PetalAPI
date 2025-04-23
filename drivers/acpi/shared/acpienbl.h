@@ -23,24 +23,13 @@ Environment:
 #ifndef _ACPIENBL_H_
 #define _ACPIENBL_H_
 
-    VOID
-    ACPIEnableEnterACPIMode(
-        VOID
-        );
+VOID ACPIEnableEnterACPIMode(VOID);
 
-    VOID
-    ACPIEnableInitializeACPI(
-        IN  BOOLEAN ReEnable
-        );
+VOID ACPIEnableInitializeACPI(IN BOOLEAN ReEnable);
 
-    VOID
-    ACPIEnablePMInterruptOnly(
-        VOID
-        );
+VOID ACPIEnablePMInterruptOnly(VOID);
 
-    ULONG
-    ACPIEnableQueryFixedEnables(
-        VOID
-        );
+ULONG
+ACPIEnableQueryFixedEnables(VOID);
 
 #endif

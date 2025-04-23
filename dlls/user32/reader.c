@@ -16,8 +16,7 @@
 
 __inline FReader2Dim(PREADERINFO prdr)
 {
-    return ((prdr->dwFlags & (RDRMODE_HORZ | RDRMODE_VERT)) ==
-            (RDRMODE_HORZ | RDRMODE_VERT));
+    return ((prdr->dwFlags & (RDRMODE_HORZ | RDRMODE_VERT)) == (RDRMODE_HORZ | RDRMODE_VERT));
 }
 __inline FReaderVert(PREADERINFO prdr)
 {
@@ -39,7 +38,8 @@ __inline FReaderDiag(PREADERINFO prdr)
 
 void ReaderSetCursor(PREADERINFO prdr, UINT uCursor)
 {
-    if (prdr->uCursor != uCursor) {
+    if (prdr->uCursor != uCursor)
+    {
         NtUserSetCursor(LoadCursor(NULL, MAKEINTRESOURCE(uCursor)));
         prdr->uCursor = uCursor;
     }
@@ -59,68 +59,105 @@ void ReaderMouseMove(PWND pwnd, PREADERINFO prdr, LPARAM lParam)
     int dx = 0, dy = 0;
     LPRECT prc = KPRECT_TO_PRECT(&pwnd->rcWindow);
     UINT uCursor;
-    POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+    POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
     _ClientToScreen(pwnd, &pt);
 
-    if (FReaderVert(prdr)) {
-        if (pt.y < prc->top) {
+    if (FReaderVert(prdr))
+    {
+        if (pt.y < prc->top)
+        {
             dy = pt.y - prc->top;
-        } else if (pt.y > prc->bottom) {
+        }
+        else if (pt.y > prc->bottom)
+        {
             dy = pt.y - prc->bottom;
         }
     }
 
-    if (FReaderHorz(prdr)) {
-        if (pt.x < prc->left) {
+    if (FReaderHorz(prdr))
+    {
+        if (pt.x < prc->left)
+        {
             dx = pt.x - prc->left;
-        } else if (pt.x > prc->right) {
+        }
+        else if (pt.x > prc->right)
+        {
             dx = pt.x - prc->right;
         }
     }
 
-    if (FReader2Dim(prdr)) {
-        if (dx == 0 && dy == 0) {
+    if (FReader2Dim(prdr))
+    {
+        if (dx == 0 && dy == 0)
+        {
             ReaderSetCursor(prdr, OCR_RDR2DIM);
             goto Exit;
         }
-        if (!FReaderDiag(prdr)) {
-            if (prdr->dy != 0) {
-                if (abs(dx) > abs(prdr->dy)) {
-                    dy = 0;
-                } else {
-                    dx = 0;
-                }
-            } else if (prdr->dx != 0) {
-                if (abs(dy) > abs(prdr->dx)) {
-                    dx = 0;
-                } else {
+        if (!FReaderDiag(prdr))
+        {
+            if (prdr->dy != 0)
+            {
+                if (abs(dx) > abs(prdr->dy))
+                {
                     dy = 0;
                 }
-            } else if (dy != 0) {
+                else
+                {
+                    dx = 0;
+                }
+            }
+            else if (prdr->dx != 0)
+            {
+                if (abs(dy) > abs(prdr->dx))
+                {
+                    dx = 0;
+                }
+                else
+                {
+                    dy = 0;
+                }
+            }
+            else if (dy != 0)
+            {
                 dx = 0;
             }
         }
-    } else if (FReaderVert(prdr) && dy == 0) {
+    }
+    else if (FReaderVert(prdr) && dy == 0)
+    {
         ReaderSetCursor(prdr, OCR_RDRVERT);
         goto Exit;
-    } else if (FReaderHorz(prdr) && dx == 0) {
+    }
+    else if (FReaderHorz(prdr) && dx == 0)
+    {
         ReaderSetCursor(prdr, OCR_RDRHORZ);
         goto Exit;
     }
 
-    if (dx == 0) {
+    if (dx == 0)
+    {
         uCursor = (dy > 0) ? OCR_RDRSOUTH : OCR_RDRNORTH;
-    } else if (dx > 0) {
-        if (dy == 0) {
+    }
+    else if (dx > 0)
+    {
+        if (dy == 0)
+        {
             uCursor = OCR_RDREAST;
-        } else {
+        }
+        else
+        {
             uCursor = (dy > 0) ? OCR_RDRSOUTHEAST : OCR_RDRNORTHEAST;
         }
-    } else if (dx < 0) {
-        if (dy == 0) {
+    }
+    else if (dx < 0)
+    {
+        if (dy == 0)
+        {
             uCursor = OCR_RDRWEST;
-        } else {
+        }
+        else
+        {
             uCursor = (dy > 0) ? OCR_RDRSOUTHWEST : OCR_RDRNORTHWEST;
         }
     }
@@ -143,8 +180,8 @@ void ReaderFeedback(PWND pwnd, PREADERINFO prdr)
     if (prdr->dx == 0 && prdr->dy == 0)
         return;
 
-    if (prdr->pfnReaderModeProc(prdr->lParam, RDRCODE_SCROLL,
-            prdr->dx, prdr->dy) == 0) {
+    if (prdr->pfnReaderModeProc(prdr->lParam, RDRCODE_SCROLL, prdr->dx, prdr->dy) == 0)
+    {
         NtUserDestroyWindow(PtoH(pwnd));
     }
 }
@@ -175,7 +212,8 @@ LRESULT CALLBACK ReaderWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     prdr = ((PREADERWND)pwnd)->prdr;
 
-    switch (msg) {
+    switch (msg)
+    {
     case WM_TIMER:
         ReaderFeedback(pwnd, prdr);
         return 0;
@@ -200,7 +238,8 @@ LRESULT CALLBACK ReaderWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         pt.x = GET_X_LPARAM(lParam);
         pt.y = GET_Y_LPARAM(lParam);
         GetClientRect(hwnd, &rc);
-        if (!PtInRect(&rc, pt)) {
+        if (!PtInRect(&rc, pt))
+        {
             ReleaseCapture();
         }
         return 0;
@@ -214,7 +253,8 @@ LRESULT CALLBACK ReaderWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
         prdr->pfnReaderModeProc(prdr->lParam, RDRCODE_END, 0, 0);
 
-        if (prdr->hbm != NULL) {
+        if (prdr->hbm != NULL)
+        {
             DeleteObject(prdr->hbm);
         }
         UserLocalFree(prdr);
@@ -229,17 +269,25 @@ LRESULT CALLBACK ReaderWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         RtlCopyMemory(prdr, prdrm, sizeof(READERMODE));
         SetWindowLongPtr(hwnd, 0, (LONG_PTR)prdr);
 
-        if (prdr->pfnReaderModeProc == NULL) {
+        if (prdr->pfnReaderModeProc == NULL)
+        {
             return -1;
         }
 
-        if (FReader2Dim(prdr)) {
+        if (FReader2Dim(prdr))
+        {
             nBitmap = OBM_RDR2DIM;
-        } else if (FReaderVert(prdr)) {
+        }
+        else if (FReaderVert(prdr))
+        {
             nBitmap = OBM_RDRVERT;
-        } else if (FReaderHorz(prdr)) {
+        }
+        else if (FReaderHorz(prdr))
+        {
             nBitmap = OBM_RDRHORZ;
-        } else {
+        }
+        else
+        {
             return -1;
         }
 
@@ -247,12 +295,13 @@ LRESULT CALLBACK ReaderWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         SetWindowLong(hwnd, GWL_STYLE, WS_POPUP | WS_CLIPSIBLINGS);
 
         prdr->hbm = LoadBitmap(hmodUser, MAKEINTRESOURCE(nBitmap));
-        if (prdr->hbm == NULL ||
-                GetObject(prdr->hbm, sizeof(BITMAP), &bmp) == 0) {
+        if (prdr->hbm == NULL || GetObject(prdr->hbm, sizeof(BITMAP), &bmp) == 0)
+        {
             return -1;
         }
 
-        if (prdr->pfnReaderModeProc(prdr->lParam, RDRCODE_START, 0, 0) == 0) {
+        if (prdr->pfnReaderModeProc(prdr->lParam, RDRCODE_START, 0, 0) == 0)
+        {
             return -1;
         }
 
@@ -263,15 +312,15 @@ LRESULT CALLBACK ReaderWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         cy = bmp.bmHeight + 1;
 
         GetCursorPos(&pt);
-        pt.x -= cx/2;
-        pt.y -= cy/2;
+        pt.x -= cx / 2;
+        pt.y -= cy / 2;
 
-        if ((hrgn = CreateEllipticRgn(0, 0, cx, cy)) != NULL) {
+        if ((hrgn = CreateEllipticRgn(0, 0, cx, cy)) != NULL)
+        {
             SetWindowRgn(hwnd, hrgn, FALSE);
         }
 
-        NtUserSetWindowPos(hwnd, HWND_TOPMOST, pt.x, pt.y, cx, cy,
-                SWP_SHOWWINDOW | SWP_NOACTIVATE);
+        NtUserSetWindowPos(hwnd, HWND_TOPMOST, pt.x, pt.y, cx, cy, SWP_SHOWWINDOW | SWP_NOACTIVATE);
 
         NtUserSetCapture(hwnd);
         NtUserSetFocus(hwnd);
@@ -317,25 +366,32 @@ LONG ReaderProcInternal(LPARAM lParam, int nCode, int dx, int dy)
     if (nCode != RDRCODE_SCROLL)
         return TRUE;
 
-    if (dy != 0) {
+    if (dy != 0)
+    {
         uCode = SB_LINEUP;
         uMsg = WM_VSCROLL;
         n = dy;
-    } else {
+    }
+    else
+    {
         uCode = SB_LINELEFT;
         uMsg = WM_HSCROLL;
         n = dx;
     }
 
     nAbs = abs(n);
-    if (nAbs >= 120) {
+    if (nAbs >= 120)
+    {
         uCode += 2;
         dwDelay = 0;
-    } else {
+    }
+    else
+    {
         dwDelay = 1000 - (nAbs / 2) * 15;
     }
 
-    if (n > 0) {
+    if (n > 0)
+    {
         uCode += 1;
     }
 
@@ -359,7 +415,8 @@ BOOL EnterReaderMode(PREADERMODE prdrm)
     if (GetCapture() != NULL)
         return FALSE;
 
-    if (gatomReaderMode == 0) {
+    if (gatomReaderMode == 0)
+    {
         wce.cbSize = sizeof(wce);
         wce.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
         wce.lpfnWndProc = ReaderWndProc;
@@ -373,14 +430,14 @@ BOOL EnterReaderMode(PREADERMODE prdrm)
         wce.lpszClassName = READERCLASS;
         wce.hIconSm = NULL;
 
-        if ((gatomReaderMode = RegisterClassExWOWW(&wce, NULL, FNID_DDE_BIT, 0)) == 0) {
+        if ((gatomReaderMode = RegisterClassExWOWW(&wce, NULL, FNID_DDE_BIT, 0)) == 0)
+        {
             RIPMSG0(RIP_WARNING, "EnterReaderMode: failed to register ReaderMode");
             return 0;
         }
     }
 
-    return (_CreateWindowEx(0, READERCLASS, NULL, 0, 0, 0, 0, 0,
-            NULL, NULL, hmodUser, (PVOID)prdrm, 0) != NULL);
+    return (_CreateWindowEx(0, READERCLASS, NULL, 0, 0, 0, 0, 0, NULL, NULL, hmodUser, (PVOID)prdrm, 0) != NULL);
 }
 
 /***************************************************************************\
@@ -422,10 +479,12 @@ BOOL EnterReaderModeHelper(HWND hwnd)
     rdrm.lParam = (LPARAM)hwnd;
     rdrm.dwFlags = 0;
 
-    if (FScrollEnabled(pwnd, TRUE)) {
+    if (FScrollEnabled(pwnd, TRUE))
+    {
         rdrm.dwFlags |= RDRMODE_VERT;
     }
-    if (FScrollEnabled(pwnd, FALSE)) {
+    if (FScrollEnabled(pwnd, FALSE))
+    {
         rdrm.dwFlags |= RDRMODE_HORZ;
     }
 

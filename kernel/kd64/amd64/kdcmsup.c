@@ -25,18 +25,14 @@ Revision History:
 #include "kdp.h"
 
 LARGE_INTEGER
-KdpQueryPerformanceCounter (
-    IN PKTRAP_FRAME TrapFrame
-    );
+KdpQueryPerformanceCounter(IN PKTRAP_FRAME TrapFrame);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGEKD, KdpQueryPerformanceCounter)
 #endif
 
 LARGE_INTEGER
-KdpQueryPerformanceCounter (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KdpQueryPerformanceCounter(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -55,13 +51,15 @@ KdpQueryPerformanceCounter (
 
 {
 
-    if (!(TrapFrame->EFlags & EFLAGS_IF_MASK)) {
+    if (!(TrapFrame->EFlags & EFLAGS_IF_MASK))
+    {
         LARGE_INTEGER LargeIntegerZero;
 
         LargeIntegerZero.QuadPart = 0;
         return LargeIntegerZero;
-
-    } else {
+    }
+    else
+    {
         return KeQueryPerformanceCounter(0);
     }
 }

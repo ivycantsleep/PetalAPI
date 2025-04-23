@@ -13,7 +13,7 @@
 
 
 #define IEP_UNICODE 0x1 // Convert Atom to unicode string (vs ANSI)
-#define IEP_ENUMEX 0x2 // Pass lParam back to callback function (vs no lParam)
+#define IEP_ENUMEX 0x2  // Pass lParam back to callback function (vs no lParam)
 
 HWND *phwndCache = NULL;
 
@@ -34,12 +34,7 @@ HWND *phwndCache = NULL;
 * 04-27-91 ScottLu Created.
 \***************************************************************************/
 
-DWORD BuildHwndList(
-    HDESK hdesk,
-    HWND hwndNext,
-    BOOL fEnumChildren,
-    DWORD idThread,
-    HWND **pphwndFirst)
+DWORD BuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumChildren, DWORD idThread, HWND **pphwndFirst)
 {
     UINT cHwnd;
     HWND *phwndFirst;
@@ -51,21 +46,22 @@ DWORD BuildHwndList(
      */
     cHwnd = 64;
     phwndFirst = (HWND *)InterlockedExchangePointer(&(PVOID)phwndCache, 0);
-    if (phwndFirst == NULL) {
+    if (phwndFirst == NULL)
+    {
         phwndFirst = UserLocalAlloc(0, cHwnd * sizeof(HWND));
         if (phwndFirst == NULL)
             return 0;
     }
 
-    Status = NtUserBuildHwndList(hdesk, hwndNext, fEnumChildren,
-            idThread, cHwnd, phwndFirst, &cHwnd);
+    Status = NtUserBuildHwndList(hdesk, hwndNext, fEnumChildren, idThread, cHwnd, phwndFirst, &cHwnd);
 
     /*
      * If the buffer wasn't big enough, reallocate
      * the buffer and try again.
      */
     cTries = 0;
-    while (Status == STATUS_BUFFER_TOO_SMALL) {
+    while (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         UserLocalFree(phwndFirst);
 
         /*
@@ -79,11 +75,11 @@ DWORD BuildHwndList(
         if (phwndFirst == NULL)
             return 0;
 
-        Status = NtUserBuildHwndList(hdesk, hwndNext, fEnumChildren,
-                idThread, cHwnd, phwndFirst, &cHwnd);
+        Status = NtUserBuildHwndList(hdesk, hwndNext, fEnumChildren, idThread, cHwnd, phwndFirst, &cHwnd);
     }
 
-    if (!NT_SUCCESS(Status) || cHwnd <= 1) {
+    if (!NT_SUCCESS(Status) || cHwnd <= 1)
+    {
         UserLocalFree(phwndFirst);
         return 0;
     }
@@ -92,13 +88,7 @@ DWORD BuildHwndList(
     return cHwnd - 1;
 }
 
-BOOL InternalEnumWindows(
-    HDESK hdesk,
-    HWND hwnd,
-    WNDENUMPROC lpfn,
-    LPARAM lParam,
-    DWORD idThread,
-    BOOL fEnumChildren)
+BOOL InternalEnumWindows(HDESK hdesk, HWND hwnd, WNDENUMPROC lpfn, LPARAM lParam, DWORD idThread, BOOL fEnumChildren)
 {
     UINT i;
     UINT cHwnd;
@@ -110,15 +100,16 @@ BOOL InternalEnumWindows(
      * Get the hwnd list.  It is returned in a block of memory
      * allocated with LocalAlloc.
      */
-    if ((cHwnd = BuildHwndList(hdesk, hwnd, fEnumChildren, idThread,
-            &phwndFirst)) == -1) {
+    if ((cHwnd = BuildHwndList(hdesk, hwnd, fEnumChildren, idThread, &phwndFirst)) == -1)
+    {
         return FALSE;
     }
 
     /*
      * In Win 3.1 it was not an error if there were no windows in the thread
      */
-    if (cHwnd == 0) {
+    if (cHwnd == 0)
+    {
         if (idThread == 0)
             return FALSE;
         else
@@ -132,14 +123,16 @@ BOOL InternalEnumWindows(
      * reached.
      */
     phwndT = phwndFirst;
-    for (i = 0; i < cHwnd; i++) {
+    for (i = 0; i < cHwnd; i++)
+    {
 
         /*
          * call ValidateHwnd instead of RevalidateHwnd so that
          * restricted processes don't see handles they are not
          * suppose to see.
          */
-        if (ValidateHwnd(*phwndT)) {
+        if (ValidateHwnd(*phwndT))
+        {
             if (!(fSuccess = (*lpfn)(*phwndT, lParam)))
                 break;
         }
@@ -151,7 +144,8 @@ BOOL InternalEnumWindows(
      * FALSE otherwise.
      */
     phwndT = (HWND *)InterlockedExchangePointer(&(PVOID)phwndCache, phwndFirst);
-    if (phwndT != NULL) {
+    if (phwndT != NULL)
+    {
         UserLocalFree(phwndT);
     }
     return fSuccess;
@@ -170,9 +164,7 @@ BOOL InternalEnumWindows(
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, EnumWindows, WNDENUMPROC, lpfn, LPARAM, lParam)
-BOOL WINAPI EnumWindows(
-    WNDENUMPROC lpfn,
-    LPARAM lParam)
+BOOL WINAPI EnumWindows(WNDENUMPROC lpfn, LPARAM lParam)
 {
     return InternalEnumWindows(NULL, NULL, lpfn, lParam, 0L, FALSE);
 }
@@ -189,10 +181,7 @@ BOOL WINAPI EnumWindows(
 
 
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, EnumChildWindows, HWND, hwnd, WNDENUMPROC, lpfn, LPARAM, lParam)
-BOOL WINAPI EnumChildWindows(
-    HWND hwnd,
-    WNDENUMPROC lpfn,
-    LPARAM lParam)
+BOOL WINAPI EnumChildWindows(HWND hwnd, WNDENUMPROC lpfn, LPARAM lParam)
 {
     return InternalEnumWindows(NULL, hwnd, lpfn, lParam, 0L, TRUE);
 }
@@ -209,10 +198,7 @@ BOOL WINAPI EnumChildWindows(
 
 
 FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumThreadWindows, DWORD, idThread, WNDENUMPROC, lpfn, LPARAM, lParam)
-BOOL EnumThreadWindows(
-    DWORD idThread,
-    WNDENUMPROC lpfn,
-    LPARAM lParam)
+BOOL EnumThreadWindows(DWORD idThread, WNDENUMPROC lpfn, LPARAM lParam)
 {
     return InternalEnumWindows(NULL, NULL, lpfn, lParam, idThread, FALSE);
 }
@@ -229,15 +215,10 @@ BOOL EnumThreadWindows(
 
 
 FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDesktopWindows, HDESK, hdesk, WNDENUMPROC, lpfn, LPARAM, lParam)
-BOOL EnumDesktopWindows(
-    HDESK hdesk,
-    WNDENUMPROC lpfn,
-    LPARAM lParam)
+BOOL EnumDesktopWindows(HDESK hdesk, WNDENUMPROC lpfn, LPARAM lParam)
 {
     return InternalEnumWindows(hdesk, NULL, lpfn, lParam, 0, FALSE);
 }
-
-
 
 
 /***************************************************************************\
@@ -254,13 +235,9 @@ BOOL EnumDesktopWindows(
 \***************************************************************************/
 
 #define MAX_ATOM_SIZE 512
-#define ISSTRINGATOM(atom)     ((WORD)(atom) >= 0xc000)
+#define ISSTRINGATOM(atom) ((WORD)(atom) >= 0xc000)
 
-INT InternalEnumProps(
-    HWND hwnd,
-    PROPENUMPROC lpfn,
-    LPARAM lParam,
-    UINT flags)
+INT InternalEnumProps(HWND hwnd, PROPENUMPROC lpfn, LPARAM lParam, UINT flags)
 {
     DWORD ii;
     DWORD cPropSets;
@@ -287,7 +264,8 @@ INT InternalEnumProps(
      * the buffer and try again.
      */
     cTries = 0;
-    while (Status == STATUS_BUFFER_TOO_SMALL) {
+    while (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         UserLocalFree(pPropSet);
 
         /*
@@ -304,14 +282,17 @@ INT InternalEnumProps(
         Status = NtUserBuildPropList(hwnd, cPropSets, pPropSet, &cPropSets);
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         UserLocalFree(pPropSet);
         return -1;
     }
 
-    for (ii=0; ii<cPropSets; ii++) {
+    for (ii = 0; ii < cPropSets; ii++)
+    {
 
-        if (ISSTRINGATOM(pPropSet[ii].atom)) {
+        if (ISSTRINGATOM(pPropSet[ii].atom))
+        {
 
             pKey = (PVOID)awch;
             if (flags & IEP_UNICODE)
@@ -326,15 +307,18 @@ INT InternalEnumProps(
              */
             if (cchName == 0)
                 continue;
-
-        } else {
+        }
+        else
+        {
             pKey = (PVOID)pPropSet[ii].atom;
         }
 
-        if (flags & IEP_ENUMEX) {
-            iRetVal = (*(PROPENUMPROCEX)lpfn)(hwnd, pKey,
-                    pPropSet[ii].hData, lParam);
-        } else {
+        if (flags & IEP_ENUMEX)
+        {
+            iRetVal = (*(PROPENUMPROCEX)lpfn)(hwnd, pKey, pPropSet[ii].hData, lParam);
+        }
+        else
+        {
             iRetVal = (*lpfn)(hwnd, pKey, pPropSet[ii].hData);
         }
 
@@ -361,19 +345,14 @@ INT InternalEnumProps(
 
 
 FUNCLOG2(LOG_GENERAL, INT, WINAPI, EnumPropsA, HWND, hwnd, PROPENUMPROCA, lpfn)
-INT WINAPI EnumPropsA(
-    HWND hwnd,
-    PROPENUMPROCA lpfn)
+INT WINAPI EnumPropsA(HWND hwnd, PROPENUMPROCA lpfn)
 {
     return InternalEnumProps(hwnd, (PROPENUMPROC)lpfn, 0, 0);
 }
 
 
-
 FUNCLOG2(LOG_GENERAL, INT, WINAPI, EnumPropsW, HWND, hwnd, PROPENUMPROCW, lpfn)
-INT WINAPI EnumPropsW(
-    HWND hwnd,
-    PROPENUMPROCW lpfn)
+INT WINAPI EnumPropsW(HWND hwnd, PROPENUMPROCW lpfn)
 {
     return InternalEnumProps(hwnd, (PROPENUMPROC)lpfn, 0, IEP_UNICODE);
 }
@@ -391,31 +370,20 @@ INT WINAPI EnumPropsW(
 
 
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, EnumPropsExA, HWND, hwnd, PROPENUMPROCEXA, lpfn, LPARAM, lParam)
-BOOL WINAPI EnumPropsExA(
-    HWND hwnd,
-    PROPENUMPROCEXA lpfn,
-    LPARAM lParam)
+BOOL WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA lpfn, LPARAM lParam)
 {
     return InternalEnumProps(hwnd, (PROPENUMPROC)lpfn, lParam, IEP_ENUMEX);
 }
 
 
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, EnumPropsExW, HWND, hwnd, PROPENUMPROCEXW, lpfn, LPARAM, lParam)
-BOOL WINAPI EnumPropsExW(
-    HWND hwnd,
-    PROPENUMPROCEXW lpfn,
-    LPARAM lParam)
+BOOL WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW lpfn, LPARAM lParam)
 {
-    return InternalEnumProps(hwnd, (PROPENUMPROC)lpfn, lParam, IEP_UNICODE|IEP_ENUMEX);
+    return InternalEnumProps(hwnd, (PROPENUMPROC)lpfn, lParam, IEP_UNICODE | IEP_ENUMEX);
 }
 
 
-
-BOOL InternalEnumObjects(
-    HWINSTA hwinsta,
-    NAMEENUMPROCW lpfn,
-    LPARAM lParam,
-    BOOL fAnsi)
+BOOL InternalEnumObjects(HWINSTA hwinsta, NAMEENUMPROCW lpfn, LPARAM lParam, BOOL fAnsi)
 {
     PNAMELIST pNameList;
     DWORD i;
@@ -442,7 +410,8 @@ BOOL InternalEnumObjects(
      * the buffer and try again.
      */
     cTries = 0;
-    while (Status == STATUS_BUFFER_TOO_SMALL) {
+    while (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         UserLocalFree(pNameList);
 
         /*
@@ -459,7 +428,8 @@ BOOL InternalEnumObjects(
         Status = NtUserBuildNameList(hwinsta, cbData, pNameList, &cbData);
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         UserLocalFree(pNameList);
         return FALSE;
     }
@@ -467,26 +437,32 @@ BOOL InternalEnumObjects(
     pwch = pNameList->awchNames;
     pch = achTmp;
 
-    for (i = 0; i < pNameList->cNames; i++) {
-        if (fAnsi) {
-            if (WCSToMB(pwch, -1, &pch, sizeof(achTmp), FALSE) ==
-                    sizeof(achTmp)) {
+    for (i = 0; i < pNameList->cNames; i++)
+    {
+        if (fAnsi)
+        {
+            if (WCSToMB(pwch, -1, &pch, sizeof(achTmp), FALSE) == sizeof(achTmp))
+            {
 
                 /*
                  * The buffer may have overflowed, so force it to be
                  * allocated.
                  */
-                if (WCSToMB(pwch, -1, &pch, -1, TRUE) == 0) {
+                if (WCSToMB(pwch, -1, &pch, -1, TRUE) == 0)
+                {
                     iRetVal = FALSE;
                     break;
                 }
             }
             iRetVal = (*(NAMEENUMPROCA)lpfn)(pch, lParam);
-            if (pch != achTmp) {
+            if (pch != achTmp)
+            {
                 UserLocalFree(pch);
                 pch = achTmp;
             }
-        } else {
+        }
+        else
+        {
             iRetVal = (*(NAMEENUMPROCW)lpfn)(pwch, lParam);
         }
         if (!iRetVal)
@@ -502,39 +478,28 @@ BOOL InternalEnumObjects(
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, EnumWindowStationsA, WINSTAENUMPROCA, lpEnumFunc, LPARAM, lParam)
-BOOL WINAPI EnumWindowStationsA(
-    WINSTAENUMPROCA lpEnumFunc,
-    LPARAM lParam)
+BOOL WINAPI EnumWindowStationsA(WINSTAENUMPROCA lpEnumFunc, LPARAM lParam)
 {
     return InternalEnumObjects(NULL, (NAMEENUMPROCW)lpEnumFunc, lParam, TRUE);
 }
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, EnumWindowStationsW, WINSTAENUMPROCW, lpEnumFunc, LPARAM, lParam)
-BOOL WINAPI EnumWindowStationsW(
-    WINSTAENUMPROCW lpEnumFunc,
-    LPARAM lParam)
+BOOL WINAPI EnumWindowStationsW(WINSTAENUMPROCW lpEnumFunc, LPARAM lParam)
 {
     return InternalEnumObjects(NULL, (NAMEENUMPROCW)lpEnumFunc, lParam, FALSE);
 }
 
 
-
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, EnumDesktopsA, HWINSTA, hwinsta, DESKTOPENUMPROCA, lpEnumFunc, LPARAM, lParam)
-BOOL WINAPI EnumDesktopsA(
-    HWINSTA hwinsta,
-    DESKTOPENUMPROCA lpEnumFunc,
-    LPARAM lParam)
+BOOL WINAPI EnumDesktopsA(HWINSTA hwinsta, DESKTOPENUMPROCA lpEnumFunc, LPARAM lParam)
 {
     return InternalEnumObjects(hwinsta, (NAMEENUMPROCW)lpEnumFunc, lParam, TRUE);
 }
 
 
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, EnumDesktopsW, HWINSTA, hwinsta, DESKTOPENUMPROCW, lpEnumFunc, LPARAM, lParam)
-BOOL WINAPI EnumDesktopsW(
-    HWINSTA hwinsta,
-    DESKTOPENUMPROCW lpEnumFunc,
-    LPARAM lParam)
+BOOL WINAPI EnumDesktopsW(HWINSTA hwinsta, DESKTOPENUMPROCW lpEnumFunc, LPARAM lParam)
 {
     return InternalEnumObjects(hwinsta, (NAMEENUMPROCW)lpEnumFunc, lParam, FALSE);
 }

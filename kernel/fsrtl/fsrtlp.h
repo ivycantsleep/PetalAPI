@@ -26,18 +26,14 @@ Revision History:
 #include <NtDdFt.h>
 #include <zwapi.h>
 
-#define FsRtlAllocatePool(PoolType, NumberOfBytes )                \
-    ExAllocatePoolWithTag((POOL_TYPE)((PoolType) | POOL_RAISE_IF_ALLOCATION_FAILURE), \
-                          NumberOfBytes,                                      \
-                          'trSF')
+#define FsRtlAllocatePool(PoolType, NumberOfBytes) \
+    ExAllocatePoolWithTag((POOL_TYPE)((PoolType) | POOL_RAISE_IF_ALLOCATION_FAILURE), NumberOfBytes, 'trSF')
 
 
-#define FsRtlAllocatePoolWithQuota(PoolType, NumberOfBytes )           \
-    ExAllocatePoolWithQuotaTag((POOL_TYPE)((PoolType) | POOL_RAISE_IF_ALLOCATION_FAILURE), \
-                               NumberOfBytes,                                 \
-                               'trSF')
+#define FsRtlAllocatePoolWithQuota(PoolType, NumberOfBytes) \
+    ExAllocatePoolWithQuotaTag((POOL_TYPE)((PoolType) | POOL_RAISE_IF_ALLOCATION_FAILURE), NumberOfBytes, 'trSF')
 
-#define FsRtlpAllocatePool(a,b)  FsRtlAllocatePoolWithTag((a),(b),MODULE_POOL_TAG)
+#define FsRtlpAllocatePool(a, b) FsRtlAllocatePoolWithTag((a), (b), MODULE_POOL_TAG)
 
 //
 //  The global FsRtl debug level variable, its values are:
@@ -94,124 +90,124 @@ Revision History:
 extern LONG FsRtlDebugTraceLevel;
 extern LONG FsRtlDebugTraceIndent;
 
-#define DebugTrace(INDENT,LEVEL,X,Y) {                        \
-    LONG _i;                                                  \
-    if (((LEVEL) == 0) || (FsRtlDebugTraceLevel & (LEVEL))) { \
-        _i = (ULONG)PsGetCurrentThread();                     \
-        DbgPrint("%08lx:",_i);                                 \
-        if ((INDENT) < 0) {                                   \
-            FsRtlDebugTraceIndent += (INDENT);                \
-        }                                                     \
-        if (FsRtlDebugTraceIndent < 0) {                      \
-            FsRtlDebugTraceIndent = 0;                        \
-        }                                                     \
-        for (_i=0; _i<FsRtlDebugTraceIndent; _i+=1) {         \
-            DbgPrint(" ");                                     \
-        }                                                     \
-        DbgPrint(X,Y);                                         \
-        if ((INDENT) > 0) {                                   \
-            FsRtlDebugTraceIndent += (INDENT);                \
-        }                                                     \
-    }                                                         \
-}
+#define DebugTrace(INDENT, LEVEL, X, Y)                         \
+    {                                                           \
+        LONG _i;                                                \
+        if (((LEVEL) == 0) || (FsRtlDebugTraceLevel & (LEVEL))) \
+        {                                                       \
+            _i = (ULONG)PsGetCurrentThread();                   \
+            DbgPrint("%08lx:", _i);                             \
+            if ((INDENT) < 0)                                   \
+            {                                                   \
+                FsRtlDebugTraceIndent += (INDENT);              \
+            }                                                   \
+            if (FsRtlDebugTraceIndent < 0)                      \
+            {                                                   \
+                FsRtlDebugTraceIndent = 0;                      \
+            }                                                   \
+            for (_i = 0; _i < FsRtlDebugTraceIndent; _i += 1)   \
+            {                                                   \
+                DbgPrint(" ");                                  \
+            }                                                   \
+            DbgPrint(X, Y);                                     \
+            if ((INDENT) > 0)                                   \
+            {                                                   \
+                FsRtlDebugTraceIndent += (INDENT);              \
+            }                                                   \
+        }                                                       \
+    }
 
-#define DebugDump(STR,LEVEL,PTR) {                            \
-    ULONG _i;                                                 \
-    VOID FsRtlDump();                                         \
-    if (((LEVEL) == 0) || (FsRtlDebugTraceLevel & (LEVEL))) { \
-        _i = (ULONG)PsGetCurrentThread();                     \
-        DbgPrint("%08lx:",_i);                                 \
-        DbgPrint(STR);                                         \
-        if (PTR != NULL) {FsRtlDump(PTR);}                    \
-        DbgBreakPoint();                                      \
-    }                                                         \
-}
+#define DebugDump(STR, LEVEL, PTR)                              \
+    {                                                           \
+        ULONG _i;                                               \
+        VOID FsRtlDump();                                       \
+        if (((LEVEL) == 0) || (FsRtlDebugTraceLevel & (LEVEL))) \
+        {                                                       \
+            _i = (ULONG)PsGetCurrentThread();                   \
+            DbgPrint("%08lx:", _i);                             \
+            DbgPrint(STR);                                      \
+            if (PTR != NULL)                                    \
+            {                                                   \
+                FsRtlDump(PTR);                                 \
+            }                                                   \
+            DbgBreakPoint();                                    \
+        }                                                       \
+    }
 
 #else
 
-#define DebugTrace(INDENT,LEVEL,X,Y)     {NOTHING;}
+#define DebugTrace(INDENT, LEVEL, X, Y) \
+    {                                   \
+        NOTHING;                        \
+    }
 
-#define DebugDump(STR,LEVEL,PTR)         {NOTHING;}
+#define DebugDump(STR, LEVEL, PTR) \
+    {                              \
+        NOTHING;                   \
+    }
 
 #endif // FSRTLDBG
 
-
+
 //
 //  Miscellaneous support routines
 //
 
-VOID
-FsRtlInitializeFileLocks (
-    VOID
-    );
+VOID FsRtlInitializeFileLocks(VOID);
 
-VOID
-FsRtlInitializeLargeMcbs (
-    VOID
-    );
+VOID FsRtlInitializeLargeMcbs(VOID);
 
-VOID
-FsRtlInitializeTunnels(
-    VOID
-    );
+VOID FsRtlInitializeTunnels(VOID);
 
 NTSTATUS
-FsRtlInitializeWorkerThread (
-    VOID
-    );
+FsRtlInitializeWorkerThread(VOID);
 
 //
 //  This macro returns TRUE if a flag in a set of flags is on and FALSE
 //  otherwise
 //
 
-#define FlagOn(Flags,SingleFlag)        ((Flags) & (SingleFlag))
+#define FlagOn(Flags, SingleFlag) ((Flags) & (SingleFlag))
 
-#define BooleanFlagOn(Flags,SingleFlag) ((BOOLEAN)(((Flags) & (SingleFlag)) != 0))
+#define BooleanFlagOn(Flags, SingleFlag) ((BOOLEAN)(((Flags) & (SingleFlag)) != 0))
 
-#define SetFlag(F,SF) { \
-    (F) |= (SF);        \
-}
+#define SetFlag(F, SF) \
+    {                  \
+        (F) |= (SF);   \
+    }
 
-#define ClearFlag(F,SF) { \
-    (F) &= ~(SF);         \
-}
+#define ClearFlag(F, SF) \
+    {                    \
+        (F) &= ~(SF);    \
+    }
 
 //
 //  This macro takes a pointer (or ulong) and returns its rounded up word
 //  value
 //
 
-#define WordAlign(Ptr) (                \
-    ((((ULONG_PTR)(Ptr)) + 1) & -2) \
-    )
+#define WordAlign(Ptr) (((((ULONG_PTR)(Ptr)) + 1) & -2))
 
 //
 //  This macro takes a pointer (or ulong) and returns its rounded up longword
 //  value
 //
 
-#define LongAlign(Ptr) (                \
-    ((((ULONG_PTR)(Ptr)) + 3) & -4) \
-    )
+#define LongAlign(Ptr) (((((ULONG_PTR)(Ptr)) + 3) & -4))
 
 //
 //  This macro takes a pointer (or ulong) and returns its rounded up quadword
 //  value
 //
 
-#define QuadAlign(Ptr) (                \
-    ((((ULONG_PTR)(Ptr)) + 7) & -8) \
-    )
+#define QuadAlign(Ptr) (((((ULONG_PTR)(Ptr)) + 7) & -8))
 
 //
 //  This macro takes a ulong and returns its value rounded up to a sector
 //  boundary
 //
 
-#define SectorAlign(Ptr) (                \
-    ((((ULONG_PTR)(Ptr)) + 511) & -512) \
-    )
+#define SectorAlign(Ptr) (((((ULONG_PTR)(Ptr)) + 511) & -512))
 
 //
 //  This macro takes a number of bytes and returns the number of sectors
@@ -219,64 +215,66 @@ FsRtlInitializeWorkerThread (
 //  by the size of a sector.
 //
 
-#define SectorsFromBytes(bytes) ( \
-    ((bytes) + 511) / 512         \
-    )
+#define SectorsFromBytes(bytes) (((bytes) + 511) / 512)
 
 //
 //  This macro takes a number of sectors and returns the number of bytes
 //  contained in that many sectors.
 //
 
-#define BytesFromSectors(sectors) ( \
-    (sectors) * 512                 \
-    )
+#define BytesFromSectors(sectors) ((sectors) * 512)
 
 //
 //  The following types and macros are used to help unpack the packed and
 //  misaligned fields found in the Bios parameter block
 //
 
-typedef union _UCHAR1 {
-    UCHAR  Uchar[1];
-    UCHAR  ForceAlignment;
+typedef union _UCHAR1
+{
+    UCHAR Uchar[1];
+    UCHAR ForceAlignment;
 } UCHAR1, *PUCHAR1;
 
-typedef union _UCHAR2 {
-    UCHAR  Uchar[2];
+typedef union _UCHAR2
+{
+    UCHAR Uchar[2];
     USHORT ForceAlignment;
 } UCHAR2, *PUCHAR2;
 
-typedef union _UCHAR4 {
-    UCHAR  Uchar[4];
-    ULONG  ForceAlignment;
+typedef union _UCHAR4
+{
+    UCHAR Uchar[4];
+    ULONG ForceAlignment;
 } UCHAR4, *PUCHAR4;
 
 //
 //  This macro copies an unaligned src byte to an aligned dst byte
 //
 
-#define CopyUchar1(Dst,Src) {                                \
-    *((UCHAR1 *)(Dst)) = *((UNALIGNED UCHAR1 *)(Src)); \
+#define CopyUchar1(Dst, Src)                               \
+    {                                                      \
+        *((UCHAR1 *)(Dst)) = *((UNALIGNED UCHAR1 *)(Src)); \
     }
 
 //
 //  This macro copies an unaligned src word to an aligned dst word
 //
 
-#define CopyUchar2(Dst,Src) {                                \
-    *((UCHAR2 *)(Dst)) = *((UNALIGNED UCHAR2 *)(Src)); \
+#define CopyUchar2(Dst, Src)                               \
+    {                                                      \
+        *((UCHAR2 *)(Dst)) = *((UNALIGNED UCHAR2 *)(Src)); \
     }
 
 //
 //  This macro copies an unaligned src longword to an aligned dsr longword
 //
 
-#define CopyUchar4(Dst,Src) {                                \
-    *((UCHAR4 *)(Dst)) = *((UNALIGNED UCHAR4 *)(Src)); \
+#define CopyUchar4(Dst, Src)                               \
+    {                                                      \
+        *((UCHAR4 *)(Dst)) = *((UNALIGNED UCHAR4 *)(Src)); \
     }
 
-
+
 //
 //  The following macros are used to establish the semantics needed
 //  to do a return from within a try-finally clause.  As a rule every
@@ -305,140 +303,113 @@ typedef union _UCHAR4 {
 //      #define try_return(S)  { S; goto try_exit; }
 //
 
-#define try_return(S) { S; goto try_exit; }
+#define try_return(S)  \
+    {                  \
+        S;             \
+        goto try_exit; \
+    }
 
-#define GET_FAST_IO_DISPATCH(DevObj) \
-    ((DevObj)->DriverObject->FastIoDispatch)
+#define GET_FAST_IO_DISPATCH(DevObj) ((DevObj)->DriverObject->FastIoDispatch)
 
-#define GET_FS_FILTER_CALLBACKS(DevObj) \
-    ((DevObj)->DriverObject->DriverExtension->FsFilterCallbacks)
-    
+#define GET_FS_FILTER_CALLBACKS(DevObj) ((DevObj)->DriverObject->DriverExtension->FsFilterCallbacks)
+
 //
 //  Macro for validating the FastIo dispatch routines before calling
 //  them in the FastIo pass through functions.
 //
 
-#define VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatchPtr, FieldName) \
-    (((FastIoDispatchPtr) != NULL) && \
-     (((FastIoDispatchPtr)->SizeOfFastIoDispatch) >= \
-      (FIELD_OFFSET(FAST_IO_DISPATCH, FieldName) + sizeof(VOID *))) && \
+#define VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatchPtr, FieldName)                                                  \
+    (((FastIoDispatchPtr) != NULL) &&                                                                                 \
+     (((FastIoDispatchPtr)->SizeOfFastIoDispatch) >= (FIELD_OFFSET(FAST_IO_DISPATCH, FieldName) + sizeof(VOID *))) && \
      ((FastIoDispatchPtr)->FieldName != NULL))
 
-#define VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbackPtr, FieldName) \
-    (((FsFilterCallbackPtr) != NULL) && \
-     (((FsFilterCallbackPtr)->SizeOfFsFilterCallbacks) >= \
+#define VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbackPtr, FieldName)  \
+    (((FsFilterCallbackPtr) != NULL) &&                                   \
+     (((FsFilterCallbackPtr)->SizeOfFsFilterCallbacks) >=                 \
       (FIELD_OFFSET(FS_FILTER_CALLBACKS, FieldName) + sizeof(VOID *))) && \
      ((FsFilterCallbackPtr)->FieldName != NULL))
 
-#define FSRTL_FILTER_MEMORY_TAG    'gmSF'
+#define FSRTL_FILTER_MEMORY_TAG 'gmSF'
 
-typedef struct _FS_FILTER_COMPLETION_NODE {
+typedef struct _FS_FILTER_COMPLETION_NODE
+{
 
     PDEVICE_OBJECT DeviceObject;
     PFILE_OBJECT FileObject;
     PVOID CompletionContext;
     PFS_FILTER_COMPLETION_CALLBACK CompletionCallback;
-    
+
 } FS_FILTER_COMPLETION_NODE, *PFS_FILTER_COMPLETION_NODE;
 
-#define FS_FILTER_DEFAULT_STACK_SIZE    15
+#define FS_FILTER_DEFAULT_STACK_SIZE 15
 
-typedef struct _FS_FILTER_COMPLETION_STACK {
+typedef struct _FS_FILTER_COMPLETION_STACK
+{
 
     USHORT StackLength;
     USHORT NextStackPosition;
     PFS_FILTER_COMPLETION_NODE Stack;
     FS_FILTER_COMPLETION_NODE DefaultStack[FS_FILTER_DEFAULT_STACK_SIZE];
-    
+
 } FS_FILTER_COMPLETION_STACK, *PFS_FILTER_COMPLETION_STACK;
 
-typedef struct _FS_FILTER_CTRL {
+typedef struct _FS_FILTER_CTRL
+{
 
     FS_FILTER_CALLBACK_DATA Data;
-    
+
     ULONG Flags;
     ULONG Reserved;
-    
+
     FS_FILTER_COMPLETION_STACK CompletionStack;
-    
+
 } FS_FILTER_CTRL, *PFS_FILTER_CTRL;
 
 //
 //  Flag values for FS_FILTER_CTRL
 //
 
-#define FS_FILTER_ALLOCATED_COMPLETION_STACK    0x00000001
-#define FS_FILTER_USED_RESERVE_POOL             0x00000002
-#define FS_FILTER_CHANGED_DEVICE_STACKS         0x00000004
+#define FS_FILTER_ALLOCATED_COMPLETION_STACK 0x00000001
+#define FS_FILTER_USED_RESERVE_POOL 0x00000002
+#define FS_FILTER_CHANGED_DEVICE_STACKS 0x00000004
 
 NTSTATUS
-FsFilterInit(
-    );
+FsFilterInit();
 
 NTSTATUS
-FsFilterAllocateCompletionStack (
-    IN PFS_FILTER_CTRL FsFilterCtrl,
-    IN BOOLEAN CanFail,
-    OUT PULONG AllocationSize
-    );
+FsFilterAllocateCompletionStack(IN PFS_FILTER_CTRL FsFilterCtrl, IN BOOLEAN CanFail, OUT PULONG AllocationSize);
 
-VOID
-FsFilterFreeCompletionStack (
-    IN PFS_FILTER_CTRL FsFilterCtrl
-    );
+VOID FsFilterFreeCompletionStack(IN PFS_FILTER_CTRL FsFilterCtrl);
 
 NTSTATUS
-FsFilterCtrlInit (
-    IN OUT PFS_FILTER_CTRL FsFilterCtrl,
-    IN UCHAR Operation,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PDEVICE_OBJECT BaseFsDeviceObject,
-    IN PFILE_OBJECT FileObject,
-    IN BOOLEAN CanFail
-    );
+FsFilterCtrlInit(IN OUT PFS_FILTER_CTRL FsFilterCtrl, IN UCHAR Operation, IN PDEVICE_OBJECT DeviceObject,
+                 IN PDEVICE_OBJECT BaseFsDeviceObject, IN PFILE_OBJECT FileObject, IN BOOLEAN CanFail);
 
-VOID
-FsFilterCtrlFree (
-    IN PFS_FILTER_CTRL FsFilterCtrl
-    );
+VOID FsFilterCtrlFree(IN PFS_FILTER_CTRL FsFilterCtrl);
 
-#define PUSH_COMPLETION_NODE( completionStack ) \
-    (((completionStack)->NextStackPosition < (completionStack)->StackLength ) ? \
-        &(completionStack)->Stack[(completionStack)->NextStackPosition++] : \
-        (ASSERT( FALSE ), NULL) )
+#define PUSH_COMPLETION_NODE(completionStack)                                \
+    (((completionStack)->NextStackPosition < (completionStack)->StackLength) \
+         ? &(completionStack)->Stack[(completionStack)->NextStackPosition++] \
+         : (ASSERT(FALSE), NULL))
 
-#define POP_COMPLETION_NODE( completionStack ) \
+#define POP_COMPLETION_NODE(completionStack) \
+    (ASSERT((completionStack)->NextStackPosition > 0), ((completionStack)->NextStackPosition--))
+
+#define GET_COMPLETION_NODE(completionStack)           \
     (ASSERT((completionStack)->NextStackPosition > 0), \
-     ((completionStack)->NextStackPosition--))
+     (&(completionStack)->Stack[(completionStack)->NextStackPosition - 1]))
 
-#define GET_COMPLETION_NODE( completionStack ) \
-    (ASSERT((completionStack)->NextStackPosition > 0),\
-     (&(completionStack)->Stack[(completionStack)->NextStackPosition-1]))
+#define FS_FILTER_HAVE_COMPLETIONS(fsFilterCtrl) ((fsFilterCtrl)->CompletionStack.NextStackPosition > 0)
 
-#define FS_FILTER_HAVE_COMPLETIONS( fsFilterCtrl ) \
-    ((fsFilterCtrl)->CompletionStack.NextStackPosition > 0)
-
-VOID
-FsFilterGetCallbacks (
-    IN UCHAR Operation,
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT PFS_FILTER_CALLBACK *PreOperationCallback,
-    OUT PFS_FILTER_COMPLETION_CALLBACK *PostOperationCallback
-    );
+VOID FsFilterGetCallbacks(IN UCHAR Operation, IN PDEVICE_OBJECT DeviceObject,
+                          OUT PFS_FILTER_CALLBACK *PreOperationCallback,
+                          OUT PFS_FILTER_COMPLETION_CALLBACK *PostOperationCallback);
 
 NTSTATUS
-FsFilterPerformCallbacks (
-    IN PFS_FILTER_CTRL FsFilterCtrl,
-    IN BOOLEAN AllowFilterToFail,
-    IN BOOLEAN AllowBaseFsToFail,
-    OUT BOOLEAN *BaseFsFailedOp
-    );
+FsFilterPerformCallbacks(IN PFS_FILTER_CTRL FsFilterCtrl, IN BOOLEAN AllowFilterToFail, IN BOOLEAN AllowBaseFsToFail,
+                         OUT BOOLEAN *BaseFsFailedOp);
 
-VOID
-FsFilterPerformCompletionCallbacks(
-    IN PFS_FILTER_CTRL FsFilterCtrl,
-    IN NTSTATUS OperationStatus
-    );
-    
+VOID FsFilterPerformCompletionCallbacks(IN PFS_FILTER_CTRL FsFilterCtrl, IN NTSTATUS OperationStatus);
+
 
 #endif // _FSRTLP_

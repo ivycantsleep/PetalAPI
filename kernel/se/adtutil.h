@@ -24,9 +24,4 @@ Revision History:
 --*/
 
 NTSTATUS
-SepRegQueryDwordValue(
-    IN  PCWSTR KeyName,
-    IN  PCWSTR ValueName,
-    OUT PULONG Value
-    );
-
+SepRegQueryDwordValue(IN PCWSTR KeyName, IN PCWSTR ValueName, OUT PULONG Value);

@@ -20,7 +20,7 @@ Revision History:
 
 #include "ntrtlp.h"
 
-
+
 //
 //  The following arrays hold procedures that we call to do the various
 //  compression functions.  Each new compression function will need to
@@ -29,59 +29,30 @@ Revision History:
 //
 
 NTSTATUS
-RtlCompressWorkSpaceSizeNS (
-    IN USHORT CompressionEngine,
-    OUT PULONG CompressBufferWorkSpaceSize,
-    OUT PULONG CompressFragmentWorkSpaceSize
-    );
+RtlCompressWorkSpaceSizeNS(IN USHORT CompressionEngine, OUT PULONG CompressBufferWorkSpaceSize,
+                           OUT PULONG CompressFragmentWorkSpaceSize);
 
 NTSTATUS
-RtlCompressBufferNS (
-    IN USHORT CompressionEngine,
-    IN PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    OUT PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG UncompressedChunkSize,
-    OUT PULONG FinalCompressedSize,
-    IN PVOID WorkSpace
-    );
+RtlCompressBufferNS(IN USHORT CompressionEngine, IN PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize,
+                    OUT PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize, IN ULONG UncompressedChunkSize,
+                    OUT PULONG FinalCompressedSize, IN PVOID WorkSpace);
 
 NTSTATUS
-RtlDecompressBufferNS (
-    OUT PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    OUT PULONG FinalUncompressedSize
-    );
+RtlDecompressBufferNS(OUT PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize, IN PUCHAR CompressedBuffer,
+                      IN ULONG CompressedBufferSize, OUT PULONG FinalUncompressedSize);
 
 NTSTATUS
-RtlDecompressFragmentNS (
-    OUT PUCHAR UncompressedFragment,
-    IN ULONG UncompressedFragmentSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG FragmentOffset,
-    OUT PULONG FinalUncompressedSize,
-    IN PVOID WorkSpace
-    );
+RtlDecompressFragmentNS(OUT PUCHAR UncompressedFragment, IN ULONG UncompressedFragmentSize, IN PUCHAR CompressedBuffer,
+                        IN ULONG CompressedBufferSize, IN ULONG FragmentOffset, OUT PULONG FinalUncompressedSize,
+                        IN PVOID WorkSpace);
 
 NTSTATUS
-RtlDescribeChunkNS (
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    OUT PULONG ChunkSize
-    );
+RtlDescribeChunkNS(IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1, OUT PUCHAR *ChunkBuffer,
+                   OUT PULONG ChunkSize);
 
 NTSTATUS
-RtlReserveChunkNS (
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    IN ULONG ChunkSize
-    );
+RtlReserveChunkNS(IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1, OUT PUCHAR *ChunkBuffer,
+                  IN ULONG ChunkSize);
 
 #if defined(ALLOC_DATA_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
 #pragma const_seg("PAGELKCONST")
@@ -206,13 +177,10 @@ const PRTL_RESERVE_CHUNK RtlReserveChunkProcs[8] = {
 #pragma alloc_text(PAGE, RtlReserveChunkNS)
 #endif
 
-
+
 NTSTATUS
-RtlGetCompressionWorkSpaceSize (
-    IN USHORT CompressionFormatAndEngine,
-    OUT PULONG CompressBufferWorkSpaceSize,
-    OUT PULONG CompressFragmentWorkSpaceSize
-    )
+RtlGetCompressionWorkSpaceSize(IN USHORT CompressionFormatAndEngine, OUT PULONG CompressBufferWorkSpaceSize,
+                               OUT PULONG CompressFragmentWorkSpaceSize)
 
 
 /*++
@@ -256,12 +224,14 @@ Return Value:
     //  make sure the format is sort of supported
     //
 
-    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT)) {
+    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (Format & 0x00f0) {
+    if (Format & 0x00f0)
+    {
 
         return STATUS_UNSUPPORTED_COMPRESSION;
     }
@@ -270,23 +240,14 @@ Return Value:
     //  Call the routine to return the workspace sizes.
     //
 
-    return RtlWorkSpaceProcs[ Format ]( Engine,
-                                        CompressBufferWorkSpaceSize,
-                                        CompressFragmentWorkSpaceSize );
+    return RtlWorkSpaceProcs[Format](Engine, CompressBufferWorkSpaceSize, CompressFragmentWorkSpaceSize);
 }
 
-
+
 NTSTATUS
-RtlCompressBuffer (
-    IN USHORT CompressionFormatAndEngine,
-    IN PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    OUT PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG UncompressedChunkSize,
-    OUT PULONG FinalCompressedSize,
-    IN PVOID WorkSpace
-    )
+RtlCompressBuffer(IN USHORT CompressionFormatAndEngine, IN PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize,
+                  OUT PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize, IN ULONG UncompressedChunkSize,
+                  OUT PULONG FinalCompressedSize, IN PVOID WorkSpace)
 
 /*++
 
@@ -353,12 +314,14 @@ Return Value:
     //  make sure the format is sort of supported
     //
 
-    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT)) {
+    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (Format & 0x00f0) {
+    if (Format & 0x00f0)
+    {
 
         return STATUS_UNSUPPORTED_COMPRESSION;
     }
@@ -367,26 +330,14 @@ Return Value:
     //  Call the compression routine for the individual format
     //
 
-    return RtlCompressBufferProcs[ Format ]( Engine,
-                                             UncompressedBuffer,
-                                             UncompressedBufferSize,
-                                             CompressedBuffer,
-                                             CompressedBufferSize,
-                                             UncompressedChunkSize,
-                                             FinalCompressedSize,
-                                             WorkSpace );
+    return RtlCompressBufferProcs[Format](Engine, UncompressedBuffer, UncompressedBufferSize, CompressedBuffer,
+                                          CompressedBufferSize, UncompressedChunkSize, FinalCompressedSize, WorkSpace);
 }
 
-
+
 NTSTATUS
-RtlDecompressBuffer (
-    IN USHORT CompressionFormat,
-    OUT PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    OUT PULONG FinalUncompressedSize
-    )
+RtlDecompressBuffer(IN USHORT CompressionFormat, OUT PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize,
+                    IN PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize, OUT PULONG FinalUncompressedSize)
 
 /*++
 
@@ -442,12 +393,14 @@ Return Value:
     //  make sure the format is sort of supported
     //
 
-    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT)) {
+    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (Format & 0x00f0) {
+    if (Format & 0x00f0)
+    {
 
         return STATUS_UNSUPPORTED_COMPRESSION;
     }
@@ -456,25 +409,15 @@ Return Value:
     //  Call the compression routine for the individual format
     //
 
-    return RtlDecompressBufferProcs[ Format ]( UncompressedBuffer,
-                                               UncompressedBufferSize,
-                                               CompressedBuffer,
-                                               CompressedBufferSize,
-                                               FinalUncompressedSize );
+    return RtlDecompressBufferProcs[Format](UncompressedBuffer, UncompressedBufferSize, CompressedBuffer,
+                                            CompressedBufferSize, FinalUncompressedSize);
 }
 
-
+
 NTSTATUS
-RtlDecompressFragment (
-    IN USHORT CompressionFormat,
-    OUT PUCHAR UncompressedFragment,
-    IN ULONG UncompressedFragmentSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG FragmentOffset,
-    OUT PULONG FinalUncompressedSize,
-    IN PVOID WorkSpace
-    )
+RtlDecompressFragment(IN USHORT CompressionFormat, OUT PUCHAR UncompressedFragment, IN ULONG UncompressedFragmentSize,
+                      IN PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize, IN ULONG FragmentOffset,
+                      OUT PULONG FinalUncompressedSize, IN PVOID WorkSpace)
 
 /*++
 
@@ -537,12 +480,14 @@ Return Value:
     //  make sure the format is sort of supported
     //
 
-    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT)) {
+    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (Format & 0x00f0) {
+    if (Format & 0x00f0)
+    {
 
         return STATUS_UNSUPPORTED_COMPRESSION;
     }
@@ -551,26 +496,16 @@ Return Value:
     //  Call the compression routine for the individual format
     //
 
-    return RtlDecompressFragmentProcs[ Format ]( UncompressedFragment,
-                                                 UncompressedFragmentSize,
-                                                 CompressedBuffer,
-                                                 CompressedBufferSize,
-                                                 FragmentOffset,
-                                                 FinalUncompressedSize,
-                                                 WorkSpace );
+    return RtlDecompressFragmentProcs[Format](UncompressedFragment, UncompressedFragmentSize, CompressedBuffer,
+                                              CompressedBufferSize, FragmentOffset, FinalUncompressedSize, WorkSpace);
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-RtlDescribeChunk (
-    IN USHORT CompressionFormat,
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    OUT PULONG ChunkSize
-    )
+RtlDescribeChunk(IN USHORT CompressionFormat, IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1,
+                 OUT PUCHAR *ChunkBuffer, OUT PULONG ChunkSize)
 
 /*++
 
@@ -624,12 +559,14 @@ Return Value:
     //  make sure the format is sort of supported
     //
 
-    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT)) {
+    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (Format & 0x00f0) {
+    if (Format & 0x00f0)
+    {
 
         return STATUS_UNSUPPORTED_COMPRESSION;
     }
@@ -638,23 +575,15 @@ Return Value:
     //  Call the compression routine for the individual format
     //
 
-    return RtlDescribeChunkProcs[ Format ]( CompressedBuffer,
-                                            EndOfCompressedBufferPlus1,
-                                            ChunkBuffer,
-                                            ChunkSize );
+    return RtlDescribeChunkProcs[Format](CompressedBuffer, EndOfCompressedBufferPlus1, ChunkBuffer, ChunkSize);
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-RtlReserveChunk (
-    IN USHORT CompressionFormat,
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    IN ULONG ChunkSize
-    )
+RtlReserveChunk(IN USHORT CompressionFormat, IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1,
+                OUT PUCHAR *ChunkBuffer, IN ULONG ChunkSize)
 
 /*++
 
@@ -712,12 +641,14 @@ Return Value:
     //  make sure the format is sort of supported
     //
 
-    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT)) {
+    if ((Format == COMPRESSION_FORMAT_NONE) || (Format == COMPRESSION_FORMAT_DEFAULT))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (Format & 0x00f0) {
+    if (Format & 0x00f0)
+    {
 
         return STATUS_UNSUPPORTED_COMPRESSION;
     }
@@ -726,23 +657,14 @@ Return Value:
     //  Call the compression routine for the individual format
     //
 
-    return RtlReserveChunkProcs[ Format ]( CompressedBuffer,
-                                           EndOfCompressedBufferPlus1,
-                                           ChunkBuffer,
-                                           ChunkSize );
+    return RtlReserveChunkProcs[Format](CompressedBuffer, EndOfCompressedBufferPlus1, ChunkBuffer, ChunkSize);
 }
 
-
+
 NTSTATUS
-RtlDecompressChunks (
-    OUT PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN PUCHAR CompressedTail,
-    IN ULONG CompressedTailSize,
-    IN PCOMPRESSED_DATA_INFO CompressedDataInfo
-    )
+RtlDecompressChunks(OUT PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize, IN PUCHAR CompressedBuffer,
+                    IN ULONG CompressedBufferSize, IN PUCHAR CompressedTail, IN ULONG CompressedTailSize,
+                    IN PCOMPRESSED_DATA_INFO CompressedDataInfo)
 
 /*++
 
@@ -807,14 +729,16 @@ Return Value:
     //  Loop to decompress chunks.
     //
 
-    do {
+    do
+    {
 
         //
         //  Calculate uncompressed size of next chunk to decompress.
         //
 
         SizeToDecompress = UncompressedBufferSize;
-        if (SizeToDecompress >= UncompressedChunkSize) {
+        if (SizeToDecompress >= UncompressedChunkSize)
+        {
             SizeToDecompress = UncompressedChunkSize;
         }
 
@@ -822,27 +746,30 @@ Return Value:
         //  If the next chunk is all zeros, then zero it.
         //
 
-        if ((ChunksToGo == 0) || (*CurrentCompressedChunkSize == 0)) {
+        if ((ChunksToGo == 0) || (*CurrentCompressedChunkSize == 0))
+        {
 
-            RtlZeroMemory( UncompressedBuffer, SizeToDecompress );
+            RtlZeroMemory(UncompressedBuffer, SizeToDecompress);
 
             //
             //  Test for out of chunks here and set to 1, so we can
-            //  unconditionally decrement below.  Also back up the 
+            //  unconditionally decrement below.  Also back up the
             //  CompressedChunkSize pointer because we dereference
             //  it as well.
             //
 
-            if (ChunksToGo == 0) {
+            if (ChunksToGo == 0)
+            {
                 ChunksToGo = 1;
                 CurrentCompressedChunkSize -= 1;
             }
 
-        //
-        //  If the next chunk is not compressed, just copy it.
-        //
-
-        } else if (*CurrentCompressedChunkSize == UncompressedChunkSize) {
+            //
+            //  If the next chunk is not compressed, just copy it.
+            //
+        }
+        else if (*CurrentCompressedChunkSize == UncompressedChunkSize)
+        {
 
             //
             //  Does this chunk extend beyond the end of the current
@@ -851,14 +778,16 @@ Return Value:
             //  tail to get the rest.
             //
 
-            if (SizeToDecompress >= CompressedBufferSize) {
+            if (SizeToDecompress >= CompressedBufferSize)
+            {
 
                 //
                 //  If we have already switched to the tail, then this must
                 //  be badly formatted compressed data.
                 //
 
-                if ((CompressedTailSize == 0) && (SizeToDecompress > CompressedBufferSize)) {
+                if ((CompressedTailSize == 0) && (SizeToDecompress > CompressedBufferSize))
+                {
                     return STATUS_BAD_COMPRESSION_BUFFER;
                 }
 
@@ -867,10 +796,9 @@ Return Value:
                 //  Then switch to make the tail the current buffer.
                 //
 
-                RtlCopyMemory( UncompressedBuffer, CompressedBuffer, CompressedBufferSize );
-                RtlCopyMemory( UncompressedBuffer + CompressedBufferSize,
-                               CompressedTail,
-                               SizeToDecompress - CompressedBufferSize );
+                RtlCopyMemory(UncompressedBuffer, CompressedBuffer, CompressedBufferSize);
+                RtlCopyMemory(UncompressedBuffer + CompressedBufferSize, CompressedTail,
+                              SizeToDecompress - CompressedBufferSize);
 
                 //
                 //  If we exhausted the first buffer, move into the tail, knowing
@@ -882,19 +810,21 @@ Return Value:
                 CompressedBufferSize = CompressedTailSize + CompressedBufferSize;
                 CompressedTailSize = 0;
 
-            //
-            //  Otherwise we can just copy the whole chunk.
-            //
-
-            } else {
-                RtlCopyMemory( UncompressedBuffer, CompressedBuffer, SizeToDecompress );
+                //
+                //  Otherwise we can just copy the whole chunk.
+                //
+            }
+            else
+            {
+                RtlCopyMemory(UncompressedBuffer, CompressedBuffer, SizeToDecompress);
             }
 
-        //
-        //  Otherwise it is a normal chunk to decompress.
-        //
-
-        } else {
+            //
+            //  Otherwise it is a normal chunk to decompress.
+            //
+        }
+        else
+        {
 
             //
             //  Does this chunk extend beyond the end of the current
@@ -907,14 +837,16 @@ Return Value:
             //  of the uncompressed buffer, and decompress it from there.
             //
 
-            if (*CurrentCompressedChunkSize > CompressedBufferSize) {
+            if (*CurrentCompressedChunkSize > CompressedBufferSize)
+            {
 
                 //
                 //  If we have already switched to the tail, then this must
                 //  be badly formatted compressed data.
                 //
 
-                if (CompressedTailSize == 0) {
+                if (CompressedTailSize == 0)
+                {
                     return STATUS_BAD_COMPRESSION_BUFFER;
                 }
 
@@ -923,17 +855,16 @@ Return Value:
                 //  chunk in the uncompressed buffer.  This move could overlap.
                 //
 
-                RtlMoveMemory( UncompressedBuffer + UncompressedBufferSize - UncompressedChunkSize,
-                               CompressedBuffer,
-                               CompressedBufferSize );
+                RtlMoveMemory(UncompressedBuffer + UncompressedBufferSize - UncompressedChunkSize, CompressedBuffer,
+                              CompressedBufferSize);
 
                 //
                 //  Move the rest of the chunk from the tail.
                 //
 
-                RtlCopyMemory( UncompressedBuffer + UncompressedBufferSize - UncompressedChunkSize + CompressedBufferSize,
-                               CompressedTail,
-                               *CurrentCompressedChunkSize - CompressedBufferSize );
+                RtlCopyMemory(UncompressedBuffer + UncompressedBufferSize - UncompressedChunkSize +
+                                  CompressedBufferSize,
+                              CompressedTail, *CurrentCompressedChunkSize - CompressedBufferSize);
 
                 //
                 //  We temporarily set CompressedBuffer to describe where we
@@ -948,15 +879,12 @@ Return Value:
             //  Attempt the decompress.
             //
 
-            Status =
-            RtlDecompressBuffer( CompressedDataInfo->CompressionFormatAndEngine,
-                                 UncompressedBuffer,
-                                 SizeToDecompress,
-                                 CompressedBuffer,
-                                 *CurrentCompressedChunkSize,
-                                 &FinalUncompressedSize );
+            Status = RtlDecompressBuffer(CompressedDataInfo->CompressionFormatAndEngine, UncompressedBuffer,
+                                         SizeToDecompress, CompressedBuffer, *CurrentCompressedChunkSize,
+                                         &FinalUncompressedSize);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 return Status;
             }
 
@@ -964,9 +892,9 @@ Return Value:
             //  If we did not get a full chunk, zero the rest.
             //
 
-            if (SizeToDecompress > FinalUncompressedSize) {
-                RtlZeroMemory( UncompressedBuffer + FinalUncompressedSize,
-                               SizeToDecompress - FinalUncompressedSize );
+            if (SizeToDecompress > FinalUncompressedSize)
+            {
+                RtlZeroMemory(UncompressedBuffer + FinalUncompressedSize, SizeToDecompress - FinalUncompressedSize);
             }
 
             //
@@ -975,7 +903,8 @@ Return Value:
             //  below.
             //
 
-            if (*CurrentCompressedChunkSize >= CompressedBufferSize) {
+            if (*CurrentCompressedChunkSize >= CompressedBufferSize)
+            {
                 CompressedBuffer = CompressedTail - CompressedBufferSize;
                 CompressedBufferSize = CompressedTailSize + CompressedBufferSize;
                 CompressedTailSize = 0;
@@ -998,17 +927,11 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-RtlCompressChunks(
-    IN PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    OUT PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN OUT PCOMPRESSED_DATA_INFO CompressedDataInfo,
-    IN ULONG CompressedDataInfoLength,
-    IN PVOID WorkSpace
-    )
+RtlCompressChunks(IN PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize, OUT PUCHAR CompressedBuffer,
+                  IN ULONG CompressedBufferSize, IN OUT PCOMPRESSED_DATA_INFO CompressedDataInfo,
+                  IN ULONG CompressedDataInfoLength, IN PVOID WorkSpace)
 
 /*++
 
@@ -1072,8 +995,7 @@ Return Value:
     //
 
     ASSERT(CompressedDataInfoLength >=
-           (sizeof(COMPRESSED_DATA_INFO) +
-            ((UncompressedBufferSize - 1) >> (CompressedDataInfo->ChunkShift - 2))));
+           (sizeof(COMPRESSED_DATA_INFO) + ((UncompressedBufferSize - 1) >> (CompressedDataInfo->ChunkShift - 2))));
 
     //
     //  For the worst case, the compressed buffer actually has to be
@@ -1099,14 +1021,16 @@ Return Value:
     //  Loop to decompress chunks.
     //
 
-    do {
+    do
+    {
 
         //
         //  Calculate uncompressed size of next chunk to decompress.
         //
 
         SizeToCompress = UncompressedBufferSize;
-        if (SizeToCompress >= UncompressedChunkSize) {
+        if (SizeToCompress >= UncompressedChunkSize)
+        {
             SizeToCompress = UncompressedChunkSize;
         }
 
@@ -1114,30 +1038,27 @@ Return Value:
         //  Now compress the next chunk.
         //
 
-        Status = RtlCompressBuffer( CompressedDataInfo->CompressionFormatAndEngine,
-                                    UncompressedBuffer,
-                                    SizeToCompress,
-                                    CompressedBuffer,
-                                    CompressedBufferSize,
-                                    UncompressedChunkSize,
-                                    &FinalCompressedSize,
-                                    WorkSpace );
+        Status = RtlCompressBuffer(CompressedDataInfo->CompressionFormatAndEngine, UncompressedBuffer, SizeToCompress,
+                                   CompressedBuffer, CompressedBufferSize, UncompressedChunkSize, &FinalCompressedSize,
+                                   WorkSpace);
 
         //
         //  If the Buffer was all zeros, then we will not send anything.
         //
 
-        if (Status == STATUS_BUFFER_ALL_ZEROS) {
+        if (Status == STATUS_BUFFER_ALL_ZEROS)
+        {
 
             FinalCompressedSize = 0;
 
-        //
-        //  Otherwise, if there was any kind of error (we only expect the
-        //  case where the data did not compress), then just copy the
-        //  data and return UncompressedChunkSize for this one.
-        //
-
-        } else if (!NT_SUCCESS(Status)) {
+            //
+            //  Otherwise, if there was any kind of error (we only expect the
+            //  case where the data did not compress), then just copy the
+            //  data and return UncompressedChunkSize for this one.
+            //
+        }
+        else if (!NT_SUCCESS(Status))
+        {
 
             //
             //  The most likely error is STATUS_BUFFER_TOO_SMALL.
@@ -1148,7 +1069,8 @@ Return Value:
             //  buffer too small (which is probably what we had anyway!).
             //
 
-            if (CompressedBufferSize < UncompressedChunkSize) {
+            if (CompressedBufferSize < UncompressedChunkSize)
+            {
                 Status = STATUS_BUFFER_TOO_SMALL;
                 break;
             }
@@ -1157,10 +1079,10 @@ Return Value:
             //  Copy the uncompressed chunk.
             //
 
-            RtlCopyMemory( CompressedBuffer, UncompressedBuffer, SizeToCompress );
-            if (UncompressedChunkSize > SizeToCompress) {
-                RtlZeroMemory( (PCHAR)CompressedBuffer + SizeToCompress,
-                               UncompressedChunkSize - SizeToCompress );
+            RtlCopyMemory(CompressedBuffer, UncompressedBuffer, SizeToCompress);
+            if (UncompressedChunkSize > SizeToCompress)
+            {
+                RtlZeroMemory((PCHAR)CompressedBuffer + SizeToCompress, UncompressedChunkSize - SizeToCompress);
             }
 
             FinalCompressedSize = UncompressedChunkSize;
@@ -1196,54 +1118,33 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-RtlCompressWorkSpaceSizeNS (
-    IN USHORT CompressionEngine,
-    OUT PULONG CompressBufferWorkSpaceSize,
-    OUT PULONG CompressFragmentWorkSpaceSize
-    )
+RtlCompressWorkSpaceSizeNS(IN USHORT CompressionEngine, OUT PULONG CompressBufferWorkSpaceSize,
+                           OUT PULONG CompressFragmentWorkSpaceSize)
 {
     return STATUS_UNSUPPORTED_COMPRESSION;
 }
 
 NTSTATUS
-RtlCompressBufferNS (
-    IN USHORT CompressionEngine,
-    IN PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    OUT PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG UncompressedChunkSize,
-    OUT PULONG FinalCompressedSize,
-    IN PVOID WorkSpace
-    )
+RtlCompressBufferNS(IN USHORT CompressionEngine, IN PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize,
+                    OUT PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize, IN ULONG UncompressedChunkSize,
+                    OUT PULONG FinalCompressedSize, IN PVOID WorkSpace)
 {
     return STATUS_UNSUPPORTED_COMPRESSION;
 }
 
 NTSTATUS
-RtlDecompressBufferNS (
-    OUT PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    OUT PULONG FinalUncompressedSize
-    )
+RtlDecompressBufferNS(OUT PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize, IN PUCHAR CompressedBuffer,
+                      IN ULONG CompressedBufferSize, OUT PULONG FinalUncompressedSize)
 {
     return STATUS_UNSUPPORTED_COMPRESSION;
 }
 
 NTSTATUS
-RtlDecompressFragmentNS (
-    OUT PUCHAR UncompressedFragment,
-    IN ULONG UncompressedFragmentSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG FragmentOffset,
-    OUT PULONG FinalUncompressedSize,
-    IN PVOID WorkSpace
-    )
+RtlDecompressFragmentNS(OUT PUCHAR UncompressedFragment, IN ULONG UncompressedFragmentSize, IN PUCHAR CompressedBuffer,
+                        IN ULONG CompressedBufferSize, IN ULONG FragmentOffset, OUT PULONG FinalUncompressedSize,
+                        IN PVOID WorkSpace)
 {
     return STATUS_UNSUPPORTED_COMPRESSION;
 }
@@ -1251,12 +1152,8 @@ RtlDecompressFragmentNS (
 NTSYSAPI
 NTSTATUS
 NTAPI
-RtlDescribeChunkNS (
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    OUT PULONG ChunkSize
-    )
+RtlDescribeChunkNS(IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1, OUT PUCHAR *ChunkBuffer,
+                   OUT PULONG ChunkSize)
 
 {
     return STATUS_UNSUPPORTED_COMPRESSION;
@@ -1265,14 +1162,9 @@ RtlDescribeChunkNS (
 NTSYSAPI
 NTSTATUS
 NTAPI
-RtlReserveChunkNS (
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    IN ULONG ChunkSize
-    )
+RtlReserveChunkNS(IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1, OUT PUCHAR *ChunkBuffer,
+                  IN ULONG ChunkSize)
 
 {
     return STATUS_UNSUPPORTED_COMPRESSION;
 }
-

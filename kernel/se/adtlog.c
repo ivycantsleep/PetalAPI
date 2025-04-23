@@ -33,20 +33,17 @@ Revision History:
 
 #ifdef ALLOC_PRAGMA
 
-#pragma alloc_text(PAGE,SepAdtLogAuditRecord)
-#pragma alloc_text(PAGE,SepAuditFailed)
-#pragma alloc_text(PAGE,SepAdtMarshallAuditRecord)
-#pragma alloc_text(PAGE,SepAdtSetAuditLogInformation)
-#pragma alloc_text(PAGE,SepAdtCopyToLsaSharedMemory)
-#pragma alloc_text(PAGE,SepQueueWorkItem)
-#pragma alloc_text(PAGE,SepDequeueWorkItem)
+#pragma alloc_text(PAGE, SepAdtLogAuditRecord)
+#pragma alloc_text(PAGE, SepAuditFailed)
+#pragma alloc_text(PAGE, SepAdtMarshallAuditRecord)
+#pragma alloc_text(PAGE, SepAdtSetAuditLogInformation)
+#pragma alloc_text(PAGE, SepAdtCopyToLsaSharedMemory)
+#pragma alloc_text(PAGE, SepQueueWorkItem)
+#pragma alloc_text(PAGE, SepDequeueWorkItem)
 
 #endif
 
-VOID
-SepAdtLogAuditRecord(
-    IN PSE_ADT_PARAMETER_ARRAY AuditParameters
-    )
+VOID SepAdtLogAuditRecord(IN PSE_ADT_PARAMETER_ARRAY AuditParameters)
 
 /*++
 
@@ -82,9 +79,10 @@ Return Value:
 
     PAGED_CODE();
 
-    AuditWorkItem = ExAllocatePoolWithTag( PagedPool, sizeof( SEP_LSA_WORK_ITEM ), 'iAeS' );
+    AuditWorkItem = ExAllocatePoolWithTag(PagedPool, sizeof(SEP_LSA_WORK_ITEM), 'iAeS');
 
-    if ( AuditWorkItem == NULL ) {
+    if (AuditWorkItem == NULL)
+    {
 
         SepAuditFailed();
         return;
@@ -101,13 +99,12 @@ Return Value:
     // Audit Information.
     //
 
-    Status = SepAdtMarshallAuditRecord(
-                 AuditParameters,
-                 (PSE_ADT_PARAMETER_ARRAY *) &AuditWorkItem->CommandParams.BaseAddress,
-                 &AuditWorkItem->CommandParamsMemoryType
-                 );
+    Status =
+        SepAdtMarshallAuditRecord(AuditParameters, (PSE_ADT_PARAMETER_ARRAY *)&AuditWorkItem->CommandParams.BaseAddress,
+                                  &AuditWorkItem->CommandParamsMemoryType);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Extract the length of the Audit Record.  Store it as the length
@@ -115,17 +112,18 @@ Return Value:
         //
 
         AuditWorkItem->CommandParamsLength =
-            ((PSE_ADT_PARAMETER_ARRAY) AuditWorkItem->CommandParams.BaseAddress)->Length;
+            ((PSE_ADT_PARAMETER_ARRAY)AuditWorkItem->CommandParams.BaseAddress)->Length;
 
         //
         // If we're going to crash on a discarded audit, ignore the queue bounds
         // check and force the item onto the queue.
         //
 
-        if (!SepQueueWorkItem( AuditWorkItem, (BOOLEAN)(SepCrashOnAuditFail ? TRUE : FALSE) )) {
+        if (!SepQueueWorkItem(AuditWorkItem, (BOOLEAN)(SepCrashOnAuditFail ? TRUE : FALSE)))
+        {
 
-            ExFreePool( AuditWorkItem->CommandParams.BaseAddress );
-            ExFreePool( AuditWorkItem );
+            ExFreePool(AuditWorkItem->CommandParams.BaseAddress);
+            ExFreePool(AuditWorkItem);
 
             //
             // We failed to put the record on the queue.  Take whatever action is
@@ -134,20 +132,17 @@ Return Value:
 
             SepAuditFailed();
         }
+    }
+    else
+    {
 
-    } else {
-
-        ExFreePool( AuditWorkItem );
+        ExFreePool(AuditWorkItem);
         SepAuditFailed();
     }
 }
 
 
-
-VOID
-SepAuditFailed(
-    VOID
-    )
+VOID SepAuditFailed(VOID)
 
 /*++
 
@@ -176,7 +171,8 @@ Return Value:
 
     ASSERT(sizeof(UCHAR) == sizeof(BOOLEAN));
 
-    if (!SepCrashOnAuditFail) {
+    if (!SepCrashOnAuditFail)
+    {
         return;
     }
 
@@ -184,22 +180,13 @@ Return Value:
     // Turn off flag in the registry that controls crashing on audit failure
     //
 
-    RtlInitUnicodeString( &KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa");
+    RtlInitUnicodeString(&KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa");
 
-    InitializeObjectAttributes( &Obja,
-                                &KeyName,
-                                OBJ_CASE_INSENSITIVE | 
-                                    OBJ_KERNEL_HANDLE,
-                                NULL,
-                                NULL
-                                );
-    do {
+    InitializeObjectAttributes(&Obja, &KeyName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+    do
+    {
 
-        Status = ZwOpenKey(
-                     &KeyHandle,
-                     KEY_SET_VALUE,
-                     &Obja
-                     );
+        Status = ZwOpenKey(&KeyHandle, KEY_SET_VALUE, &Obja);
 
     } while ((Status == STATUS_INSUFFICIENT_RESOURCES) || (Status == STATUS_NO_MEMORY));
 
@@ -207,39 +194,38 @@ Return Value:
     // If the LSA key isn't there, he's got big problems.  But don't crash.
     //
 
-    if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
         SepCrashOnAuditFail = FALSE;
         return;
     }
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
         goto bugcheck;
     }
 
-    RtlInitUnicodeString( &ValueName, CRASH_ON_AUDIT_FAIL_VALUE );
+    RtlInitUnicodeString(&ValueName, CRASH_ON_AUDIT_FAIL_VALUE);
 
     NewValue = LSAP_ALLOW_ADIMIN_LOGONS_ONLY;
 
-    do {
+    do
+    {
 
-        Status = ZwSetValueKey( KeyHandle,
-                                &ValueName,
-                                0,
-                                REG_NONE,
-                                &NewValue,
-                                sizeof(UCHAR)
-                                );
+        Status = ZwSetValueKey(KeyHandle, &ValueName, 0, REG_NONE, &NewValue, sizeof(UCHAR));
 
     } while ((Status == STATUS_INSUFFICIENT_RESOURCES) || (Status == STATUS_NO_MEMORY));
     ASSERT(NT_SUCCESS(Status));
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
         goto bugcheck;
     }
 
-    do {
+    do
+    {
 
-        Status = ZwFlushKey( KeyHandle );
+        Status = ZwFlushKey(KeyHandle);
 
     } while ((Status == STATUS_INSUFFICIENT_RESOURCES) || (Status == STATUS_NO_MEMORY));
     ASSERT(NT_SUCCESS(Status));
@@ -254,13 +240,10 @@ bugcheck:
 }
 
 
-
 NTSTATUS
-SepAdtMarshallAuditRecord(
-    IN PSE_ADT_PARAMETER_ARRAY AuditParameters,
-    OUT PSE_ADT_PARAMETER_ARRAY *MarshalledAuditParameters,
-    OUT PSEP_RM_LSA_MEMORY_TYPE RecordMemoryType
-    )
+SepAdtMarshallAuditRecord(IN PSE_ADT_PARAMETER_ARRAY AuditParameters,
+                          OUT PSE_ADT_PARAMETER_ARRAY *MarshalledAuditParameters,
+                          OUT PSEP_RM_LSA_MEMORY_TYPE RecordMemoryType)
 
 /*++
 
@@ -289,7 +272,7 @@ Return Value:
 
 {
     ULONG i;
-    ULONG TotalSize = sizeof( SE_ADT_PARAMETER_ARRAY );
+    ULONG TotalSize = sizeof(SE_ADT_PARAMETER_ARRAY);
     PUNICODE_STRING TargetString;
     PCHAR Base;
     ULONG BaseIncr;
@@ -308,9 +291,10 @@ Return Value:
     // worth the time it would take to avoid it.
     //
 
-    for (i=0; i<AuditParameters->ParameterCount; i++) {
+    for (i = 0; i < AuditParameters->ParameterCount; i++)
+    {
         Size = AuditParameters->Parameters[i].Length;
-        TotalSize += PtrAlignSize( Size );
+        TotalSize += PtrAlignSize(Size);
     }
 
     //
@@ -319,155 +303,150 @@ Return Value:
     // can do.
     //
 
-    *MarshalledAuditParameters = ExAllocatePoolWithTag( PagedPool, TotalSize, 'pAeS' );
+    *MarshalledAuditParameters = ExAllocatePoolWithTag(PagedPool, TotalSize, 'pAeS');
 
-    if (*MarshalledAuditParameters == NULL) {
+    if (*MarshalledAuditParameters == NULL)
+    {
 
         *RecordMemoryType = SepRmNoMemory;
-        return(STATUS_INSUFFICIENT_RESOURCES);
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
     *RecordMemoryType = SepRmPagedPoolMemory;
 
-    RtlCopyMemory (
-       *MarshalledAuditParameters,
-       AuditParameters,
-       sizeof( SE_ADT_PARAMETER_ARRAY )
-       );
+    RtlCopyMemory(*MarshalledAuditParameters, AuditParameters, sizeof(SE_ADT_PARAMETER_ARRAY));
 
-   (*MarshalledAuditParameters)->Length = TotalSize;
-   (*MarshalledAuditParameters)->Flags  = SE_ADT_PARAMETERS_SELF_RELATIVE;
+    (*MarshalledAuditParameters)->Length = TotalSize;
+    (*MarshalledAuditParameters)->Flags = SE_ADT_PARAMETERS_SELF_RELATIVE;
 
-    pInParam  = &AuditParameters->Parameters[0];
+    pInParam = &AuditParameters->Parameters[0];
     pOutParam = &((*MarshalledAuditParameters)->Parameters[0]);
-   
+
     //
     // Start walking down the list of parameters and marshall them
     // into the target buffer.
     //
 
-    Base = (PCHAR) ((PCHAR)(*MarshalledAuditParameters) + sizeof( SE_ADT_PARAMETER_ARRAY ));
+    Base = (PCHAR)((PCHAR)(*MarshalledAuditParameters) + sizeof(SE_ADT_PARAMETER_ARRAY));
 
-    for (i=0; i<AuditParameters->ParameterCount; i++, pInParam++, pOutParam++) {
+    for (i = 0; i < AuditParameters->ParameterCount; i++, pInParam++, pOutParam++)
+    {
 
 
-        switch (AuditParameters->Parameters[i].Type) {
-            case SeAdtParmTypeNone:
-            case SeAdtParmTypeUlong:
-            case SeAdtParmTypeLogonId:
-            case SeAdtParmTypeNoLogonId:
-            case SeAdtParmTypeTime:
-            case SeAdtParmTypeAccessMask:
-            case SeAdtParmTypePtr:
-                {
-                    //
-                    // Nothing to do for this
-                    //
+        switch (AuditParameters->Parameters[i].Type)
+        {
+        case SeAdtParmTypeNone:
+        case SeAdtParmTypeUlong:
+        case SeAdtParmTypeLogonId:
+        case SeAdtParmTypeNoLogonId:
+        case SeAdtParmTypeTime:
+        case SeAdtParmTypeAccessMask:
+        case SeAdtParmTypePtr:
+        {
+            //
+            // Nothing to do for this
+            //
 
-                    break;
+            break;
+        }
+        case SeAdtParmTypeString:
+        case SeAdtParmTypeFileSpec:
+        {
+            PUNICODE_STRING SourceString;
+            //
+            // We must copy the body of the unicode string
+            // and then copy the body of the string.  Pointers
+            // must be turned into offsets.
 
-                }
-            case SeAdtParmTypeString:
-            case SeAdtParmTypeFileSpec:
-                {
-                    PUNICODE_STRING SourceString;
-                    //
-                    // We must copy the body of the unicode string
-                    // and then copy the body of the string.  Pointers
-                    // must be turned into offsets.
+            TargetString = (PUNICODE_STRING)Base;
 
-                    TargetString = (PUNICODE_STRING)Base;
+            SourceString = pInParam->Address;
 
-                    SourceString = pInParam->Address;
-
-                    *TargetString = *SourceString;
-
-                    //
-                    // Reset the data pointer in the output parameters to
-                    // 'point' to the new string structure.
-                    //
-
-                    pOutParam->Address = Base - (ULONG_PTR)(*MarshalledAuditParameters);
-
-                    Base += sizeof( UNICODE_STRING );
-
-                    RtlCopyMemory( Base, SourceString->Buffer, SourceString->Length );
-
-                    //
-                    // Make the string buffer in the target string point to where we
-                    // just copied the data.
-                    //
-
-                    TargetString->Buffer = (PWSTR)(Base - (ULONG_PTR)(*MarshalledAuditParameters));
-
-                    BaseIncr = PtrAlignSize(SourceString->Length);
-
-                    Base += BaseIncr;
-
-                    ASSERT( (ULONG_PTR)Base <= (ULONG_PTR)(*MarshalledAuditParameters) + TotalSize );
-                    break;
-                }
+            *TargetString = *SourceString;
 
             //
-            // Handle types where we simply copy the buffer.
+            // Reset the data pointer in the output parameters to
+            // 'point' to the new string structure.
             //
-            case SeAdtParmTypePrivs:
-// #if DBG
-//                 {
-//                     PPRIVILEGE_SET Privileges =
-//                         (PPRIVILEGE_SET) pInParam->Address;
-//                     ULONG i;
 
-//                     for (i = 0; i < Privileges->PrivilegeCount; i++)
-//                     {
-//                         ASSERT( Privileges->Privilege[i].Luid.HighPart == 0);
-//                     }
-//                 }
-// #endif
+            pOutParam->Address = Base - (ULONG_PTR)(*MarshalledAuditParameters);
 
-            case SeAdtParmTypeSid:
-            case SeAdtParmTypeObjectTypes:
-                {
-                    //
-                    // Copy the data into the output buffer
-                    //
+            Base += sizeof(UNICODE_STRING);
 
-                    RtlCopyMemory( Base, pInParam->Address, pInParam->Length );
+            RtlCopyMemory(Base, SourceString->Buffer, SourceString->Length);
 
-                    //
-                    // Reset the 'address' of the data to be its offset in the
-                    // buffer.
-                    //
+            //
+            // Make the string buffer in the target string point to where we
+            // just copied the data.
+            //
 
-                    pOutParam->Address = Base - (ULONG_PTR)(*MarshalledAuditParameters);
+            TargetString->Buffer = (PWSTR)(Base - (ULONG_PTR)(*MarshalledAuditParameters));
 
-                    Base +=  PtrAlignSize( pInParam->Length );
+            BaseIncr = PtrAlignSize(SourceString->Length);
+
+            Base += BaseIncr;
+
+            ASSERT((ULONG_PTR)Base <= (ULONG_PTR)(*MarshalledAuditParameters) + TotalSize);
+            break;
+        }
+
+        //
+        // Handle types where we simply copy the buffer.
+        //
+        case SeAdtParmTypePrivs:
+            // #if DBG
+            //                 {
+            //                     PPRIVILEGE_SET Privileges =
+            //                         (PPRIVILEGE_SET) pInParam->Address;
+            //                     ULONG i;
+
+            //                     for (i = 0; i < Privileges->PrivilegeCount; i++)
+            //                     {
+            //                         ASSERT( Privileges->Privilege[i].Luid.HighPart == 0);
+            //                     }
+            //                 }
+            // #endif
+
+        case SeAdtParmTypeSid:
+        case SeAdtParmTypeObjectTypes:
+        {
+            //
+            // Copy the data into the output buffer
+            //
+
+            RtlCopyMemory(Base, pInParam->Address, pInParam->Length);
+
+            //
+            // Reset the 'address' of the data to be its offset in the
+            // buffer.
+            //
+
+            pOutParam->Address = Base - (ULONG_PTR)(*MarshalledAuditParameters);
+
+            Base += PtrAlignSize(pInParam->Length);
 
 
-                    ASSERT( (ULONG_PTR)Base <= (ULONG_PTR)(*MarshalledAuditParameters) + TotalSize );
-                    break;
-                }
+            ASSERT((ULONG_PTR)Base <= (ULONG_PTR)(*MarshalledAuditParameters) + TotalSize);
+            break;
+        }
 
-            default:
-                {
-                    //
-                    // We got passed junk, complain.
-                    //
+        default:
+        {
+            //
+            // We got passed junk, complain.
+            //
 
-                    ASSERT( FALSE );
-                    break;
-                }
+            ASSERT(FALSE);
+            break;
+        }
         }
     }
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-
-VOID
-SepAdtSetAuditLogInformation(
-    IN PPOLICY_AUDIT_LOG_INFO AuditLogInformation
-    )
+
+VOID SepAdtSetAuditLogInformation(IN PPOLICY_AUDIT_LOG_INFO AuditLogInformation)
 
 /*++
 
@@ -516,14 +495,9 @@ Return Value:
 }
 
 
-
 NTSTATUS
-SepAdtCopyToLsaSharedMemory(
-    IN HANDLE LsaProcessHandle,
-    IN PVOID Buffer,
-    IN ULONG BufferLength,
-    OUT PVOID *LsaBufferAddress
-    )
+SepAdtCopyToLsaSharedMemory(IN HANDLE LsaProcessHandle, IN PVOID Buffer, IN ULONG BufferLength,
+                            OUT PVOID *LsaBufferAddress)
 
 /*++
 
@@ -557,35 +531,25 @@ Return Value:
 
     PAGED_CODE();
 
-    Status = ZwAllocateVirtualMemory(
-                 LsaProcessHandle,
-                 &OutputLsaBufferAddress,
-                 0,
-                 &RegionSize,
-                 MEM_COMMIT,
-                 PAGE_READWRITE
-                 );
+    Status =
+        ZwAllocateVirtualMemory(LsaProcessHandle, &OutputLsaBufferAddress, 0, &RegionSize, MEM_COMMIT, PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         goto CopyToLsaSharedMemoryError;
     }
 
-    Status = ZwWriteVirtualMemory(
-                 LsaProcessHandle,
-                 OutputLsaBufferAddress,
-                 Buffer,
-                 BufferLength,
-                 NULL
-                 );
+    Status = ZwWriteVirtualMemory(LsaProcessHandle, OutputLsaBufferAddress, Buffer, BufferLength, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         goto CopyToLsaSharedMemoryError;
     }
 
     *LsaBufferAddress = OutputLsaBufferAddress;
-    return(Status);
+    return (Status);
 
 CopyToLsaSharedMemoryError:
 
@@ -593,31 +557,24 @@ CopyToLsaSharedMemoryError:
     // If we allocated memory, free it.
     //
 
-    if (OutputLsaBufferAddress != NULL) {
+    if (OutputLsaBufferAddress != NULL)
+    {
 
         RegionSize = 0;
 
-        SecondaryStatus = ZwFreeVirtualMemory(
-                              LsaProcessHandle,
-                              &OutputLsaBufferAddress,
-                              &RegionSize,
-                              MEM_RELEASE
-                              );
+        SecondaryStatus = ZwFreeVirtualMemory(LsaProcessHandle, &OutputLsaBufferAddress, &RegionSize, MEM_RELEASE);
 
         ASSERT(NT_SUCCESS(SecondaryStatus));
 
         OutputLsaBufferAddress = NULL;
     }
 
-    return(Status);
+    return (Status);
 }
 
-
+
 BOOLEAN
-SepQueueWorkItem(
-    IN PSEP_LSA_WORK_ITEM LsaWorkItem,
-    IN BOOLEAN ForceQueue
-    )
+SepQueueWorkItem(IN PSEP_LSA_WORK_ITEM LsaWorkItem, IN BOOLEAN ForceQueue)
 
 /*++
 
@@ -643,7 +600,7 @@ Return Value:
 
 {
     BOOLEAN rc = TRUE;
-    BOOLEAN StartExThread = FALSE ;
+    BOOLEAN StartExThread = FALSE;
 
     PAGED_CODE();
 
@@ -658,14 +615,17 @@ Return Value:
     //
     // See if LSA has died. If it has then just return with an error.
     //
-    if (SepAdtLsaDeadEvent != NULL) {
+    if (SepAdtLsaDeadEvent != NULL)
+    {
         rc = FALSE;
         goto Exit;
     }
 
-    if (SepAdtDiscardingAudits && !ForceQueue) {
+    if (SepAdtDiscardingAudits && !ForceQueue)
+    {
 
-        if (SepAdtCurrentListLength < SepAdtMinListLength) {
+        if (SepAdtCurrentListLength < SepAdtMinListLength)
+        {
 
             //
             // We need to generate an audit saying how many audits we've
@@ -696,8 +656,9 @@ Return Value:
             // Our 'audits discarded' audit is now on the queue,
             // continue logging the one we started with.
             //
-
-        } else {
+        }
+        else
+        {
 
             //
             // We are not yet below our low water mark.  Toss
@@ -710,20 +671,23 @@ Return Value:
         }
     }
 
-    if (SepAdtCurrentListLength < SepAdtMaxListLength || ForceQueue) {
+    if (SepAdtCurrentListLength < SepAdtMaxListLength || ForceQueue)
+    {
 
         InsertTailList(&SepLsaQueue, &LsaWorkItem->List);
 
-        if (++SepAdtCurrentListLength == 1) {
+        if (++SepAdtCurrentListLength == 1)
+        {
 
 #if 0
             DbgPrint("Queueing a work item\n");
 #endif
 
-            StartExThread = TRUE ;
+            StartExThread = TRUE;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // There is no room for this audit on the queue,
@@ -744,25 +708,19 @@ Exit:
 
     SepUnlockLsaQueue();
 
-    if ( StartExThread )
+    if (StartExThread)
     {
-        ExInitializeWorkItem( &SepExWorkItem.WorkItem,
-                              (PWORKER_THREAD_ROUTINE) SepRmCallLsa,
-                              &SepExWorkItem
-                              );
+        ExInitializeWorkItem(&SepExWorkItem.WorkItem, (PWORKER_THREAD_ROUTINE)SepRmCallLsa, &SepExWorkItem);
 
-        ExQueueWorkItem( &SepExWorkItem.WorkItem, DelayedWorkQueue );
+        ExQueueWorkItem(&SepExWorkItem.WorkItem, DelayedWorkQueue);
     }
 
-    return( rc );
+    return (rc);
 }
 
 
-
 PSEP_LSA_WORK_ITEM
-SepDequeueWorkItem(
-    VOID
-    )
+SepDequeueWorkItem(VOID)
 
 /*++
 
@@ -798,17 +756,19 @@ Return Value:
         DbgPrint("Removing item\n");
 #endif
 
-    if (IsListEmpty( &SepLsaQueue )) {
+    if (IsListEmpty(&SepLsaQueue))
+    {
         //
         // If LSA has died and the RM thread is waiting till we finish up. Notify it that we are all done
         //
-        if (SepAdtLsaDeadEvent != NULL) {
-            KeSetEvent (SepAdtLsaDeadEvent, 0, FALSE);
+        if (SepAdtLsaDeadEvent != NULL)
+        {
+            KeSetEvent(SepAdtLsaDeadEvent, 0, FALSE);
         }
         SepUnlockLsaQueue();
 
-        ExFreePool( OldWorkQueueItem );
-        return( NULL );
+        ExFreePool(OldWorkQueueItem);
+        return (NULL);
     }
 
     //
@@ -818,7 +778,7 @@ Return Value:
 
     SepUnlockLsaQueue();
 
-    ExFreePool( OldWorkQueueItem );
+    ExFreePool(OldWorkQueueItem);
 
-    return((PSEP_LSA_WORK_ITEM)(&SepLsaQueue)->Flink);
+    return ((PSEP_LSA_WORK_ITEM)(&SepLsaQueue)->Flink);
 }

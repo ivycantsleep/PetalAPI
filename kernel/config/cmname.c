@@ -21,20 +21,17 @@ Revision History:
 --*/
 #include "cmp.h"
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpNameSize)
-#pragma alloc_text(PAGE,CmpCopyName)
-#pragma alloc_text(PAGE,CmpCompressedNameSize)
-#pragma alloc_text(PAGE,CmpCopyCompressedName)
-#pragma alloc_text(PAGE,CmpCompareCompressedName)
-#pragma alloc_text(PAGE,CmpCompareUnicodeString)
+#pragma alloc_text(PAGE, CmpNameSize)
+#pragma alloc_text(PAGE, CmpCopyName)
+#pragma alloc_text(PAGE, CmpCompressedNameSize)
+#pragma alloc_text(PAGE, CmpCopyCompressedName)
+#pragma alloc_text(PAGE, CmpCompareCompressedName)
+#pragma alloc_text(PAGE, CmpCompareUnicodeString)
 #endif
 
-
+
 USHORT
-CmpNameSize(
-    IN PHHIVE Hive,
-    IN PUNICODE_STRING Name
-    )
+CmpNameSize(IN PHHIVE Hive, IN PUNICODE_STRING Name)
 
 /*++
 
@@ -59,24 +56,22 @@ Return Value:
 {
     ULONG i;
 
-    if (Hive->Version == 1) {
-        return(Name->Length);
+    if (Hive->Version == 1)
+    {
+        return (Name->Length);
     }
-    for (i=0;i<Name->Length/sizeof(WCHAR);i++) {
-        if ((USHORT)Name->Buffer[i] > (UCHAR)-1) {
-            return(Name->Length);
+    for (i = 0; i < Name->Length / sizeof(WCHAR); i++)
+    {
+        if ((USHORT)Name->Buffer[i] > (UCHAR)-1)
+        {
+            return (Name->Length);
         }
     }
-    return(Name->Length / sizeof(WCHAR));
-
+    return (Name->Length / sizeof(WCHAR));
 }
 
 USHORT
-CmpCopyName(
-    IN PHHIVE Hive,
-    IN PWCHAR Destination,
-    IN PUNICODE_STRING Source
-    )
+CmpCopyName(IN PHHIVE Hive, IN PWCHAR Destination, IN PUNICODE_STRING Source)
 
 /*++
 
@@ -102,27 +97,27 @@ Return Value:
 {
     ULONG i;
 
-    if (Hive->Version==1) {
-        RtlCopyMemory(Destination,Source->Buffer, Source->Length);
-        return(Source->Length);
+    if (Hive->Version == 1)
+    {
+        RtlCopyMemory(Destination, Source->Buffer, Source->Length);
+        return (Source->Length);
     }
 
-    for (i=0;i<Source->Length/sizeof(WCHAR);i++) {
-        if ((USHORT)Source->Buffer[i] > (UCHAR)-1) {
-            RtlCopyMemory(Destination,Source->Buffer, Source->Length);
-            return(Source->Length);
+    for (i = 0; i < Source->Length / sizeof(WCHAR); i++)
+    {
+        if ((USHORT)Source->Buffer[i] > (UCHAR)-1)
+        {
+            RtlCopyMemory(Destination, Source->Buffer, Source->Length);
+            return (Source->Length);
         }
         ((PUCHAR)Destination)[i] = (UCHAR)(Source->Buffer[i]);
     }
-    return(Source->Length / sizeof(WCHAR));
+    return (Source->Length / sizeof(WCHAR));
 }
 
-
+
 USHORT
-CmpCompressedNameSize(
-    IN PWCHAR Name,
-    IN ULONG Length
-    )
+CmpCompressedNameSize(IN PWCHAR Name, IN ULONG Length)
 
 /*++
 
@@ -144,17 +139,11 @@ Return Value:
 --*/
 
 {
-    return((USHORT)Length*sizeof(WCHAR));
+    return ((USHORT)Length * sizeof(WCHAR));
 }
 
-
-VOID
-CmpCopyCompressedName(
-    IN PWCHAR Destination,
-    IN ULONG DestinationLength,
-    IN PWCHAR Source,
-    IN ULONG SourceLength
-    )
+
+VOID CmpCopyCompressedName(IN PWCHAR Destination, IN ULONG DestinationLength, IN PWCHAR Source, IN ULONG SourceLength)
 
 /*++
 
@@ -182,22 +171,16 @@ Return Value:
     ULONG i;
     ULONG Chars;
 
-    Chars = (DestinationLength/sizeof(WCHAR) < SourceLength)
-             ? DestinationLength/sizeof(WCHAR)
-             : SourceLength;
+    Chars = (DestinationLength / sizeof(WCHAR) < SourceLength) ? DestinationLength / sizeof(WCHAR) : SourceLength;
 
-    for (i=0;i<Chars;i++) {
+    for (i = 0; i < Chars; i++)
+    {
         Destination[i] = (WCHAR)(((PUCHAR)Source)[i]);
     }
 }
 
-LONG
-CmpCompareCompressedName(
-    IN PUNICODE_STRING  SearchName,
-    IN PWCHAR           CompressedName,
-    IN ULONG            NameLength,
-    IN ULONG            CompareFlags
-    )
+LONG CmpCompareCompressedName(IN PUNICODE_STRING SearchName, IN PWCHAR CompressedName, IN ULONG NameLength,
+                              IN ULONG CompareFlags)
 
 /*++
 
@@ -234,33 +217,30 @@ Return Value:
 
     s1 = SearchName->Buffer;
     s2 = (UCHAR *)CompressedName;
-    n1 = (USHORT )(SearchName->Length / sizeof(WCHAR));
-    n2 = (USHORT )(NameLength);
-    while (n1 && n2) {
+    n1 = (USHORT)(SearchName->Length / sizeof(WCHAR));
+    n2 = (USHORT)(NameLength);
+    while (n1 && n2)
+    {
         c1 = *s1++;
         c2 = (WCHAR)(*s2++);
 
-        c1 = (CompareFlags&CMP_SOURCE_UP)?c1:RtlUpcaseUnicodeChar(c1);
-        c2 = (CompareFlags&CMP_DEST_UP)?c2:RtlUpcaseUnicodeChar(c2);
+        c1 = (CompareFlags & CMP_SOURCE_UP) ? c1 : RtlUpcaseUnicodeChar(c1);
+        c2 = (CompareFlags & CMP_DEST_UP) ? c2 : RtlUpcaseUnicodeChar(c2);
 
-        if ((cDiff = ((LONG)c1 - (LONG)c2)) != 0) {
-            return( cDiff );
+        if ((cDiff = ((LONG)c1 - (LONG)c2)) != 0)
+        {
+            return (cDiff);
         }
 
         n1--;
         n2--;
     }
 
-    return( n1 - n2 );
+    return (n1 - n2);
 }
 
 
-LONG
-CmpCompareUnicodeString(
-    IN PUNICODE_STRING  SourceName,
-    IN PUNICODE_STRING  DestName,
-    IN ULONG            CompareFlags
-    )
+LONG CmpCompareUnicodeString(IN PUNICODE_STRING SourceName, IN PUNICODE_STRING DestName, IN ULONG CompareFlags)
 
 /*++
 
@@ -296,23 +276,24 @@ Return Value:
 
     s1 = SourceName->Buffer;
     s2 = DestName->Buffer;
-    n1 = (USHORT )(SourceName->Length / sizeof(WCHAR));
-    n2 = (USHORT )(DestName->Length / sizeof(WCHAR));
-    while (n1 && n2) {
+    n1 = (USHORT)(SourceName->Length / sizeof(WCHAR));
+    n2 = (USHORT)(DestName->Length / sizeof(WCHAR));
+    while (n1 && n2)
+    {
         c1 = *s1++;
         c2 = *s2++;
 
-        c1 = (CompareFlags&CMP_SOURCE_UP)?c1:RtlUpcaseUnicodeChar(c1);
-        c2 = (CompareFlags&CMP_DEST_UP)?c2:RtlUpcaseUnicodeChar(c2);
+        c1 = (CompareFlags & CMP_SOURCE_UP) ? c1 : RtlUpcaseUnicodeChar(c1);
+        c2 = (CompareFlags & CMP_DEST_UP) ? c2 : RtlUpcaseUnicodeChar(c2);
 
-        if ((cDiff = ((LONG)c1 - (LONG)c2)) != 0) {
-            return( cDiff );
+        if ((cDiff = ((LONG)c1 - (LONG)c2)) != 0)
+        {
+            return (cDiff);
         }
 
         n1--;
         n2--;
     }
 
-    return( n1 - n2 );
+    return (n1 - n2);
 }
-

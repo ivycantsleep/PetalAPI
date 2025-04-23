@@ -24,11 +24,9 @@ Revision History:
 --*/
 
 #include "exp.h"
-
+
 NTSTATUS
-ExpGetSystemEmulationProcessorInformation (
-    OUT PSYSTEM_PROCESSOR_INFORMATION ProcessorInformation
-    )
+ExpGetSystemEmulationProcessorInformation(OUT PSYSTEM_PROCESSOR_INFORMATION ProcessorInformation)
 
 /*++
 
@@ -53,7 +51,8 @@ Return Value:
     //  Intel Pentium Family 6, Model 2, Stepping 12
     //
 
-    try {
+    try
+    {
 
         ProcessorInformation->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
         ProcessorInformation->ProcessorLevel = 5;
@@ -61,11 +60,11 @@ Return Value:
         ProcessorInformation->Reserved = 0;
         ProcessorInformation->ProcessorFeatureBits = KeFeatureBits;
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        
-        NtStatus = GetExceptionCode ();
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+
+        NtStatus = GetExceptionCode();
     }
 
     return NtStatus;
 }
-

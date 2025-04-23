@@ -24,12 +24,7 @@ Revision History:
 
 DWORD
 WINAPI
-GetFirmwareEnvironmentVariableA(
-    IN LPCSTR lpName,
-    IN LPCSTR lpGuid,
-    OUT PVOID  pBuffer,
-    IN DWORD nSize
-    )
+GetFirmwareEnvironmentVariableA(IN LPCSTR lpName, IN LPCSTR lpGuid, OUT PVOID pBuffer, IN DWORD nSize)
 
 /*++
 
@@ -71,48 +66,40 @@ Return Value:
 
 {
     NTSTATUS Status;
-    STRING Name,Guid;
-    UNICODE_STRING UnicodeName,UnicodeGuid;
+    STRING Name, Guid;
+    UNICODE_STRING UnicodeName, UnicodeGuid;
     DWORD RetVal;
-    
 
-    RtlInitString( &Name, lpName );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeName, &Name, TRUE );
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return ( 0 );
+
+    RtlInitString(&Name, lpName);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeName, &Name, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (0);
     }
 
-    RtlInitString( &Guid, lpGuid );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeGuid, &Guid, TRUE );
-    if (!NT_SUCCESS( Status )) {
+    RtlInitString(&Guid, lpGuid);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeGuid, &Guid, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
         RtlFreeUnicodeString(&UnicodeName);
-        BaseSetLastNTError( Status );
-        return ( 0 );
+        BaseSetLastNTError(Status);
+        return (0);
     }
 
-    RetVal = GetFirmwareEnvironmentVariableW( 
-                                    UnicodeName.Buffer,
-                                    UnicodeGuid.Buffer,
-                                    pBuffer,
-                                    nSize );
-        
+    RetVal = GetFirmwareEnvironmentVariableW(UnicodeName.Buffer, UnicodeGuid.Buffer, pBuffer, nSize);
+
     RtlFreeUnicodeString(&UnicodeName);
     RtlFreeUnicodeString(&UnicodeGuid);
 
-    return( RetVal );
-    
+    return (RetVal);
 }
 
 
 DWORD
 WINAPI
-GetFirmwareEnvironmentVariableW(
-    IN LPCWSTR lpName,
-    IN LPCWSTR lpGuid,
-    OUT PVOID  pBuffer,
-    IN DWORD nSize
-    )
+GetFirmwareEnvironmentVariableW(IN LPCWSTR lpName, IN LPCWSTR lpGuid, OUT PVOID pBuffer, IN DWORD nSize)
 /*++
 
 Routine Description:
@@ -151,12 +138,13 @@ Return Value:
     
 --*/
 {
-    UNICODE_STRING uStringName,GuidString;
-    GUID  Guid;
+    UNICODE_STRING uStringName, GuidString;
+    GUID Guid;
     NTSTATUS Status;
     DWORD scratchSize;
 
-    if (!lpName) {
+    if (!lpName)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
@@ -165,37 +153,27 @@ Return Value:
     RtlInitUnicodeString(&GuidString, lpGuid);
 
     Status = RtlGUIDFromString(&GuidString, &Guid);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return 0;
     }
-    
-    scratchSize = nSize;
-    Status = NtQuerySystemEnvironmentValueEx(
-                                &uStringName,
-                                &Guid,
-                                pBuffer,
-                                &scratchSize,
-                                NULL); //bugbug need to give caller the attributes?
 
-    if (!NT_SUCCESS(Status)) {
+    scratchSize = nSize;
+    Status = NtQuerySystemEnvironmentValueEx(&uStringName, &Guid, pBuffer, &scratchSize,
+                                             NULL); //bugbug need to give caller the attributes?
+
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return 0;
     }
 
     return scratchSize;
-
 }
 
 
-BOOL
-WINAPI
-SetFirmwareEnvironmentVariableA(
-    IN LPCSTR lpName,
-    IN LPCSTR lpGuid,
-    IN PVOID  pBuffer,
-    IN DWORD nSize
-    )
+BOOL WINAPI SetFirmwareEnvironmentVariableA(IN LPCSTR lpName, IN LPCSTR lpGuid, IN PVOID pBuffer, IN DWORD nSize)
 
 /*++
 
@@ -236,49 +214,38 @@ Return Value:
 --*/
 {
     NTSTATUS Status;
-    STRING Name,Guid;
-    UNICODE_STRING UnicodeName,UnicodeGuid;
+    STRING Name, Guid;
+    UNICODE_STRING UnicodeName, UnicodeGuid;
     BOOL RetVal;
-    
 
-    RtlInitString( &Name, lpName );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeName, &Name, TRUE );
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return(FALSE);
+
+    RtlInitString(&Name, lpName);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeName, &Name, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    RtlInitString( &Guid, lpGuid );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeGuid, &Guid, TRUE );
-    if (!NT_SUCCESS( Status )) {
+    RtlInitString(&Guid, lpGuid);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeGuid, &Guid, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
         RtlFreeUnicodeString(&UnicodeName);
-        BaseSetLastNTError( Status );
-        return(FALSE);
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    RetVal = SetFirmwareEnvironmentVariableW( 
-                                    UnicodeName.Buffer,
-                                    UnicodeGuid.Buffer,
-                                    pBuffer,
-                                    nSize );
-        
+    RetVal = SetFirmwareEnvironmentVariableW(UnicodeName.Buffer, UnicodeGuid.Buffer, pBuffer, nSize);
+
     RtlFreeUnicodeString(&UnicodeName);
     RtlFreeUnicodeString(&UnicodeGuid);
 
-    return( RetVal );
-    
+    return (RetVal);
 }
 
 
-
-BOOL
-WINAPI
-SetFirmwareEnvironmentVariableW(
-    IN LPCWSTR lpName,
-    IN LPCWSTR lpGuid,
-    IN PVOID  pBuffer,
-    IN DWORD nSize
-    )
+BOOL WINAPI SetFirmwareEnvironmentVariableW(IN LPCWSTR lpName, IN LPCWSTR lpGuid, IN PVOID pBuffer, IN DWORD nSize)
 /*++
 
 Routine Description:
@@ -317,38 +284,35 @@ Return Value:
     
 --*/
 {
-    UNICODE_STRING uStringName,GuidString;
-    GUID  Guid;
+    UNICODE_STRING uStringName, GuidString;
+    GUID Guid;
     NTSTATUS Status;
 
-    if (!lpName) {
+    if (!lpName)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return(FALSE);
+        return (FALSE);
     }
 
     RtlInitUnicodeString(&uStringName, lpName);
     RtlInitUnicodeString(&GuidString, lpGuid);
 
     Status = RtlGUIDFromString(&GuidString, &Guid);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
-        return(FALSE);
+        return (FALSE);
     }
-    
+
     Status = NtSetSystemEnvironmentValueEx(
-                                &uStringName,
-                                &Guid,
-                                pBuffer,
-                                nSize,
-                                VARIABLE_ATTRIBUTE_NON_VOLATILE); //bugbug need to give caller the ability to set attributes?
+        &uStringName, &Guid, pBuffer, nSize,
+        VARIABLE_ATTRIBUTE_NON_VOLATILE); //bugbug need to give caller the ability to set attributes?
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
-        return(FALSE);
+        return (FALSE);
     }
 
-    return( TRUE );
-
+    return (TRUE);
 }
-
-

@@ -25,15 +25,12 @@ Revision History:
 
 #include "iomgr.h"
 
-
+
 //
 // Define forward referenced function prototypes.
 //
 
-VOID
-IopFreeMiniPacket (
-    PIOP_MINI_COMPLETION_PACKET MiniPacket
-    );
+VOID IopFreeMiniPacket(PIOP_MINI_COMPLETION_PACKET MiniPacket);
 
 //
 // Define section types for appropriate functions.
@@ -49,14 +46,10 @@ IopFreeMiniPacket (
 #pragma alloc_text(PAGE, IopFreeMiniPacket)
 #pragma alloc_text(PAGE, IopDeleteIoCompletion)
 #endif
-
+
 NTSTATUS
-NtCreateIoCompletion (
-    IN PHANDLE IoCompletionHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN ULONG Count OPTIONAL
-    )
+NtCreateIoCompletion(IN PHANDLE IoCompletionHandle, IN ACCESS_MASK DesiredAccess,
+                     IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL, IN ULONG Count OPTIONAL)
 
 /*++
 
@@ -101,7 +94,8 @@ Return Value:
     // status value returned by the object insertion routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe output handle address if
@@ -109,7 +103,8 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForWriteHandle(IoCompletionHandle);
         }
 
@@ -117,15 +112,8 @@ Return Value:
         // Allocate I/O completion object.
         //
 
-        Status = ObCreateObject(PreviousMode,
-                                IoCompletionObjectType,
-                                ObjectAttributes,
-                                PreviousMode,
-                                NULL,
-                                sizeof(KQUEUE),
-                                0,
-                                0,
-                                (PVOID *)&IoCompletion);
+        Status = ObCreateObject(PreviousMode, IoCompletionObjectType, ObjectAttributes, PreviousMode, NULL,
+                                sizeof(KQUEUE), 0, 0, (PVOID *)&IoCompletion);
 
         //
         // If the I/O completion object was successfully allocated, then
@@ -133,14 +121,10 @@ Return Value:
         // table of the current process.
         //
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             KeInitializeQueue((PKQUEUE)IoCompletion, Count);
-            Status = ObInsertObject(IoCompletion,
-                                    NULL,
-                                    DesiredAccess,
-                                    0,
-                                    (PVOID *)NULL,
-                                    &Handle);
+            Status = ObInsertObject(IoCompletion, NULL, DesiredAccess, 0, (PVOID *)NULL, &Handle);
 
             //
             // If the I/O completion object was successfully inserted in
@@ -150,23 +134,27 @@ Return Value:
             // the handle value, an access violation will occur.
             //
 
-            if (NT_SUCCESS(Status)) {
-                try {
+            if (NT_SUCCESS(Status))
+            {
+                try
+                {
                     *IoCompletionHandle = Handle;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
             }
         }
 
-    //
-    // If an exception occurs during the probe of the output handle address,
-    // then always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the output handle address,
+        // then always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         Status = GetExceptionCode();
     }
 
@@ -176,13 +164,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtOpenIoCompletion (
-    OUT PHANDLE IoCompletionHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenIoCompletion(OUT PHANDLE IoCompletionHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes)
 
 /*++
 
@@ -221,7 +205,8 @@ Return Value:
     // return the status value returned by the object open routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe output handle address if
@@ -229,7 +214,8 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForWriteHandle(IoCompletionHandle);
         }
 
@@ -238,12 +224,7 @@ Return Value:
         // access.
         //
 
-        Status = ObOpenObjectByName(ObjectAttributes,
-                                    IoCompletionObjectType,
-                                    PreviousMode,
-                                    NULL,
-                                    DesiredAccess,
-                                    NULL,
+        Status = ObOpenObjectByName(ObjectAttributes, IoCompletionObjectType, PreviousMode, NULL, DesiredAccess, NULL,
                                     &Handle);
 
         //
@@ -253,22 +234,26 @@ Return Value:
         // access the handle value, an access violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
-            try {
+        if (NT_SUCCESS(Status))
+        {
+            try
+            {
                 *IoCompletionHandle = Handle;
-
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 NOTHING;
             }
         }
 
-    //
-    // If an exception occurs during the probe of the output handle address,
-    // then always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the output handle address,
+        // then always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         Status = GetExceptionCode();
     }
 
@@ -280,15 +265,11 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-NtQueryIoCompletion (
-    IN HANDLE IoCompletionHandle,
-    IN IO_COMPLETION_INFORMATION_CLASS IoCompletionInformationClass,
-    OUT PVOID IoCompletionInformation,
-    IN ULONG IoCompletionInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryIoCompletion(IN HANDLE IoCompletionHandle, IN IO_COMPLETION_INFORMATION_CLASS IoCompletionInformationClass,
+                    OUT PVOID IoCompletionInformation, IN ULONG IoCompletionInformationLength,
+                    OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -335,19 +316,21 @@ Return Value:
     // handle routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe output arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
-            ProbeForWriteSmallStructure(IoCompletionInformation,
-                                        sizeof(IO_COMPLETION_BASIC_INFORMATION),
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForWriteSmallStructure(IoCompletionInformation, sizeof(IO_COMPLETION_BASIC_INFORMATION),
                                         sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUlong(ReturnLength);
             }
         }
@@ -356,11 +339,13 @@ Return Value:
         // Check argument validity.
         //
 
-        if (IoCompletionInformationClass != IoCompletionBasicInformation) {
+        if (IoCompletionInformationClass != IoCompletionBasicInformation)
+        {
             return STATUS_INVALID_INFO_CLASS;
         }
 
-        if (IoCompletionInformationLength != sizeof(IO_COMPLETION_BASIC_INFORMATION)) {
+        if (IoCompletionInformationLength != sizeof(IO_COMPLETION_BASIC_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
@@ -368,12 +353,8 @@ Return Value:
         // Reference the I/O completion object by handle.
         //
 
-        Status = ObReferenceObjectByHandle(IoCompletionHandle,
-                                           IO_COMPLETION_QUERY_STATE,
-                                           IoCompletionObjectType,
-                                           PreviousMode,
-                                           &IoCompletion,
-                                           NULL);
+        Status = ObReferenceObjectByHandle(IoCompletionHandle, IO_COMPLETION_QUERY_STATE, IoCompletionObjectType,
+                                           PreviousMode, &IoCompletion, NULL);
 
         //
         // If the reference was successful, then read the current state of
@@ -385,27 +366,32 @@ Return Value:
         // violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             Depth = KeReadStateQueue((PKQUEUE)IoCompletion);
             ObDereferenceObject(IoCompletion);
-            try {
+            try
+            {
                 ((PIO_COMPLETION_BASIC_INFORMATION)IoCompletionInformation)->Depth = Depth;
-                if (ARGUMENT_PRESENT(ReturnLength)) {
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
                     *ReturnLength = sizeof(IO_COMPLETION_BASIC_INFORMATION);
                 }
-
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 NOTHING;
             }
         }
 
-    //
-    // If an exception occurs during the probe of the output arguments, then
-    // always handle the exception and return the exception code as the status
-    // value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the output arguments, then
+        // always handle the exception and return the exception code as the status
+        // value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         Status = GetExceptionCode();
     }
 
@@ -415,15 +401,10 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtSetIoCompletion (
-    IN HANDLE IoCompletionHandle,
-    IN PVOID KeyContext,
-    IN PVOID ApcContext,
-    IN NTSTATUS IoStatus,
-    IN ULONG_PTR IoStatusInformation
-    )
+NtSetIoCompletion(IN HANDLE IoCompletionHandle, IN PVOID KeyContext, IN PVOID ApcContext, IN NTSTATUS IoStatus,
+                  IN ULONG_PTR IoStatusInformation)
 /*++
 
 Routine Description:
@@ -462,35 +443,21 @@ Return Value:
 
     PAGED_CODE();
 
-    Status = ObReferenceObjectByHandle(IoCompletionHandle,
-                                       IO_COMPLETION_MODIFY_STATE,
-                                       IoCompletionObjectType,
-                                       KeGetPreviousMode(),
-                                       &IoCompletion,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(IoCompletionHandle, IO_COMPLETION_MODIFY_STATE, IoCompletionObjectType,
+                                       KeGetPreviousMode(), &IoCompletion, NULL);
 
-    if (NT_SUCCESS(Status)) {
-        Status = IoSetIoCompletion(IoCompletion,
-                                   KeyContext,
-                                   ApcContext,
-                                   IoStatus,
-                                   IoStatusInformation,
-                                   TRUE);
+    if (NT_SUCCESS(Status))
+    {
+        Status = IoSetIoCompletion(IoCompletion, KeyContext, ApcContext, IoStatus, IoStatusInformation, TRUE);
 
         ObDereferenceObject(IoCompletion);
-        }
+    }
     return Status;
-
 }
-
+
 NTSTATUS
-NtRemoveIoCompletion (
-    IN HANDLE IoCompletionHandle,
-    OUT PVOID *KeyContext,
-    OUT PVOID *ApcContext,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+NtRemoveIoCompletion(IN HANDLE IoCompletionHandle, OUT PVOID *KeyContext, OUT PVOID *ApcContext,
+                     OUT PIO_STATUS_BLOCK IoStatusBlock, IN PLARGE_INTEGER Timeout OPTIONAL)
 
 /*++
 
@@ -546,7 +513,8 @@ Return Value:
     // dependent on the outcome of the queue removal.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe the I/O context, status,
@@ -555,17 +523,21 @@ Return Value:
 
         CapturedTimeout = NULL;
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForWriteUlong_ptr((PULONG_PTR)ApcContext);
             ProbeForWriteUlong_ptr((PULONG_PTR)KeyContext);
             ProbeForWriteIoStatus(IoStatusBlock);
-            if (ARGUMENT_PRESENT(Timeout)) {
+            if (ARGUMENT_PRESENT(Timeout))
+            {
                 CapturedTimeout = &TimeoutValue;
                 TimeoutValue = ProbeAndReadLargeInteger(Timeout);
             }
-
-        } else{
-            if (ARGUMENT_PRESENT(Timeout)) {
+        }
+        else
+        {
+            if (ARGUMENT_PRESENT(Timeout))
+            {
                 CapturedTimeout = Timeout;
             }
         }
@@ -574,12 +546,8 @@ Return Value:
         // Reference the I/O completion object by handle.
         //
 
-        Status = ObReferenceObjectByHandle(IoCompletionHandle,
-                                           IO_COMPLETION_MODIFY_STATE,
-                                           IoCompletionObjectType,
-                                           PreviousMode,
-                                           &IoCompletion,
-                                           NULL);
+        Status = ObReferenceObjectByHandle(IoCompletionHandle, IO_COMPLETION_MODIFY_STATE, IoCompletionObjectType,
+                                           PreviousMode, &IoCompletion, NULL);
 
         //
         // If the reference was successful, then attempt to remove an entry
@@ -591,21 +559,21 @@ Return Value:
         // the completion information, an access violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
-            Entry = KeRemoveQueue((PKQUEUE)IoCompletion,
-                                  PreviousMode,
-                                  CapturedTimeout);
+        if (NT_SUCCESS(Status))
+        {
+            Entry = KeRemoveQueue((PKQUEUE)IoCompletion, PreviousMode, CapturedTimeout);
 
             //
             // N.B. The entry value returned can be the address of a list
             //      entry, STATUS_USER_APC, or STATUS_TIMEOUT.
             //
 
-            if (((LONG_PTR)Entry == STATUS_TIMEOUT) ||
-                ((LONG_PTR)Entry == STATUS_USER_APC)) {
+            if (((LONG_PTR)Entry == STATUS_TIMEOUT) || ((LONG_PTR)Entry == STATUS_USER_APC))
+            {
                 Status = (NTSTATUS)((LONG_PTR)Entry);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Set the completion status, capture the completion
@@ -614,19 +582,20 @@ Return Value:
                 //
 
                 Status = STATUS_SUCCESS;
-                try {
-                    MiniPacket = CONTAINING_RECORD(Entry,
-                                                   IOP_MINI_COMPLETION_PACKET,
-                                                   ListEntry);
+                try
+                {
+                    MiniPacket = CONTAINING_RECORD(Entry, IOP_MINI_COMPLETION_PACKET, ListEntry);
 
-                    if ( MiniPacket->PacketType == IopCompletionPacketIrp ) {
+                    if (MiniPacket->PacketType == IopCompletionPacketIrp)
+                    {
                         Irp = CONTAINING_RECORD(Entry, IRP, Tail.Overlay.ListEntry);
                         LocalApcContext = Irp->Overlay.AsynchronousParameters.UserApcContext;
                         LocalKeyContext = (PVOID)Irp->Tail.CompletionKey;
                         LocalIoStatusBlock = Irp->IoStatus;
                         IoFreeIrp(Irp);
-
-                    } else {
+                    }
+                    else
+                    {
 
                         LocalApcContext = MiniPacket->ApcContext;
                         LocalKeyContext = (PVOID)MiniPacket->KeyContext;
@@ -638,8 +607,9 @@ Return Value:
                     *ApcContext = LocalApcContext;
                     *KeyContext = LocalKeyContext;
                     *IoStatusBlock = LocalIoStatusBlock;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
             }
@@ -651,13 +621,14 @@ Return Value:
             ObDereferenceObject(IoCompletion);
         }
 
-    //
-    // If an exception occurs during the probe of the previous count, then
-    // always handle the exception and return the exception code as the status
-    // value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the previous count, then
+        // always handle the exception and return the exception code as the status
+        // value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         Status = GetExceptionCode();
     }
 
@@ -667,17 +638,11 @@ Return Value:
 
     return Status;
 }
-
+
 NTKERNELAPI
 NTSTATUS
-IoSetIoCompletion (
-    IN PVOID IoCompletion,
-    IN PVOID KeyContext,
-    IN PVOID ApcContext,
-    IN NTSTATUS IoStatus,
-    IN ULONG_PTR IoStatusInformation,
-    IN BOOLEAN Quota
-    )
+IoSetIoCompletion(IN PVOID IoCompletion, IN PVOID KeyContext, IN PVOID ApcContext, IN NTSTATUS IoStatus,
+                  IN ULONG_PTR IoStatusInformation, IN BOOLEAN Quota)
 /*++
 
 Routine Description:
@@ -735,7 +700,8 @@ Return Value:
     // allocate from the system lookaside list.
     //
 
-    if (MiniPacket == NULL) {
+    if (MiniPacket == NULL)
+    {
         Lookaside->AllocateMisses += 1;
         Lookaside = Prcb->PPLookasideList[LookasideCompletionList].L;
         Lookaside->TotalAllocates += 1;
@@ -747,7 +713,8 @@ Return Value:
     // from pool.
     //
 
-    if (MiniPacket == NULL) {
+    if (MiniPacket == NULL)
+    {
         Lookaside->AllocateMisses += 1;
 
         //
@@ -755,22 +722,21 @@ Return Value:
         // Otherwise, allocate pool without quota.
         //
 
-        if (Quota != FALSE) {
+        if (Quota != FALSE)
+        {
             PacketType = IopCompletionPacketQuota;
-            try {
-                MiniPacket = ExAllocatePoolWithQuotaTag(NonPagedPool,
-                                                        sizeof(*MiniPacket),
-                                                        ' pcI');
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            try
+            {
+                MiniPacket = ExAllocatePoolWithQuotaTag(NonPagedPool, sizeof(*MiniPacket), ' pcI');
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 NOTHING;
             }
-
-        } else {
-            MiniPacket = ExAllocatePoolWithTagPriority(NonPagedPool,
-                                               sizeof(*MiniPacket),
-                                               ' pcI',
-                                               LowPoolPriority);
+        }
+        else
+        {
+            MiniPacket = ExAllocatePoolWithTagPriority(NonPagedPool, sizeof(*MiniPacket), ' pcI', LowPoolPriority);
         }
     }
 
@@ -779,25 +745,24 @@ Return Value:
     // queue the packet to the specified I/O completion queue.
     //
 
-    if (MiniPacket != NULL) {
+    if (MiniPacket != NULL)
+    {
         MiniPacket->PacketType = PacketType;
         MiniPacket->KeyContext = KeyContext;
         MiniPacket->ApcContext = ApcContext;
         MiniPacket->IoStatus = IoStatus;
         MiniPacket->IoStatusInformation = IoStatusInformation;
         KeInsertQueue((PKQUEUE)IoCompletion, &MiniPacket->ListEntry);
-
-    } else {
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
 
     return Status;
 }
-
-VOID
-IopFreeMiniPacket (
-    PIOP_MINI_COMPLETION_PACKET MiniPacket
-    )
+
+VOID IopFreeMiniPacket(PIOP_MINI_COMPLETION_PACKET MiniPacket)
 
 /*++
 
@@ -830,39 +795,40 @@ Return Value:
     Prcb = KeGetCurrentPrcb();
     Lookaside = Prcb->PPLookasideList[LookasideCompletionList].P;
     Lookaside->TotalFrees += 1;
-    if (ExQueryDepthSList(&Lookaside->ListHead) >= Lookaside->Depth) {
+    if (ExQueryDepthSList(&Lookaside->ListHead) >= Lookaside->Depth)
+    {
         Lookaside->FreeMisses += 1;
         Lookaside = Prcb->PPLookasideList[LookasideCompletionList].L;
         Lookaside->TotalFrees += 1;
-        if (ExQueryDepthSList(&Lookaside->ListHead) >= Lookaside->Depth) {
+        if (ExQueryDepthSList(&Lookaside->ListHead) >= Lookaside->Depth)
+        {
             Lookaside->FreeMisses += 1;
             ExFreePool(MiniPacket);
-
-        } else {
-            if (MiniPacket->PacketType == IopCompletionPacketQuota) {
+        }
+        else
+        {
+            if (MiniPacket->PacketType == IopCompletionPacketQuota)
+            {
                 ExReturnPoolQuota(MiniPacket);
             }
 
-            InterlockedPushEntrySList(&Lookaside->ListHead,
-                                      (PSINGLE_LIST_ENTRY)MiniPacket);
+            InterlockedPushEntrySList(&Lookaside->ListHead, (PSINGLE_LIST_ENTRY)MiniPacket);
         }
-
-    } else {
-        if (MiniPacket->PacketType == IopCompletionPacketQuota) {
+    }
+    else
+    {
+        if (MiniPacket->PacketType == IopCompletionPacketQuota)
+        {
             ExReturnPoolQuota(MiniPacket);
         }
 
-        InterlockedPushEntrySList(&Lookaside->ListHead,
-                                  (PSINGLE_LIST_ENTRY)MiniPacket);
+        InterlockedPushEntrySList(&Lookaside->ListHead, (PSINGLE_LIST_ENTRY)MiniPacket);
     }
 
     return;
 }
-
-VOID
-IopDeleteIoCompletion (
-    IN PVOID    Object
-    )
+
+VOID IopDeleteIoCompletion(IN PVOID Object)
 
 /*++
 
@@ -895,19 +861,21 @@ Return Value:
     //
 
     FirstEntry = KeRundownQueue((PKQUEUE)Object);
-    if (FirstEntry != NULL) {
+    if (FirstEntry != NULL)
+    {
         NextEntry = FirstEntry;
-        do {
-            MiniPacket = CONTAINING_RECORD(NextEntry,
-                                           IOP_MINI_COMPLETION_PACKET,
-                                           ListEntry);
+        do
+        {
+            MiniPacket = CONTAINING_RECORD(NextEntry, IOP_MINI_COMPLETION_PACKET, ListEntry);
 
             NextEntry = NextEntry->Flink;
-            if (MiniPacket->PacketType == IopCompletionPacketIrp) {
+            if (MiniPacket->PacketType == IopCompletionPacketIrp)
+            {
                 Irp = CONTAINING_RECORD(MiniPacket, IRP, Tail.Overlay.ListEntry);
                 IoFreeIrp(Irp);
-
-            } else {
+            }
+            else
+            {
                 IopFreeMiniPacket(MiniPacket);
             }
 

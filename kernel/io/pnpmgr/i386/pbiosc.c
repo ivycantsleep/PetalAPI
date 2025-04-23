@@ -34,29 +34,35 @@ Revision History:
 //
 
 #define PI_SHUTDOWN_EXAMINE_BIOS_DEVICE 1
-#define PI_SHUTDOWN_LEGACY_RESOURCES    2
+#define PI_SHUTDOWN_LEGACY_RESOURCES 2
 
-typedef struct _PNP_BIOS_DEVICE_NODE_LIST {
+typedef struct _PNP_BIOS_DEVICE_NODE_LIST
+{
     struct _PNP_BIOS_DEVICE_NODE_LIST *Next;
     PNP_BIOS_DEVICE_NODE DeviceNode;
 } PNP_BIOS_DEVICE_NODE_LIST, *PPNP_BIOS_DEVICE_NODE_LIST;
 
-typedef struct _PNP_BIOS_ENUMERATION_CONTEXT {
+typedef struct _PNP_BIOS_ENUMERATION_CONTEXT
+{
     PUNICODE_STRING KeyName;
     ULONG Function;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             PVOID BiosInfo;
             ULONG BiosInfoLength;
             PPNP_BIOS_DEVICE_NODE_LIST *DeviceList;
         } ExamineBiosDevice;
-        struct {
+        struct
+        {
             PCM_RESOURCE_LIST LegacyResources;
         } LegacyResources;
     } u;
 } PNP_BIOS_ENUMERATION_CONTEXT, *PPNP_BIOS_ENUMERATION_CONTEXT;
 
-typedef struct _PNP_BIOS_SHUT_DOWN_CONTEXT {
+typedef struct _PNP_BIOS_SHUT_DOWN_CONTEXT
+{
     PPNP_BIOS_DEVICE_NODE_LIST DeviceList;
     PVOID Resources;
 } PNP_BIOS_SHUT_DOWN_CONTEXT, *PPNP_BIOS_SHUT_DOWN_CONTEXT;
@@ -85,35 +91,43 @@ typedef struct _PNP_BIOS_SHUT_DOWN_CONTEXT {
 #define SET_CONFIGURATION_NOW 1
 #define SET_CONFIGURATION_FOR_NEXT_BOOT 2
 
-typedef struct _PB_PARAMETERS {
+typedef struct _PB_PARAMETERS
+{
     USHORT Function;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             USHORT *NumberNodes;
             USHORT *NodeSize;
         } GetNumberDeviceNodes;
 
-        struct {
+        struct
+        {
             USHORT *Node;
             PPNP_BIOS_DEVICE_NODE NodeBuffer;
             USHORT Control;
         } GetDeviceNode;
 
-        struct {
+        struct
+        {
             USHORT Node;
             PPNP_BIOS_DEVICE_NODE NodeBuffer;
             USHORT Control;
         } SetDeviceNode;
 
-        struct {
+        struct
+        {
             USHORT *Message;
         } GetEvent;
 
-        struct {
+        struct
+        {
             USHORT Message;
         } SendMessage;
 
-        struct {
+        struct
+        {
             PVOID Resources;
         } SetAllocatedResources;
     } u;
@@ -126,7 +140,7 @@ typedef struct _PB_PARAMETERS {
 // should not be checked before that function is called.
 //
 
-NTSTATUS PbBiosInitialized ;
+NTSTATUS PbBiosInitialized;
 
 //
 // PbBiosCodeSelector contains the selector of the PNP
@@ -170,88 +184,43 @@ PNP_BIOS_SHUT_DOWN_CONTEXT PiShutdownContext;
 // External References
 //
 
-extern
-USHORT
-PbCallPnpBiosWorker (
-    IN ULONG EntryOffset,
-    IN ULONG EntrySelector,
-    IN PUSHORT Parameters,
-    IN USHORT Size
-    );
+extern USHORT PbCallPnpBiosWorker(IN ULONG EntryOffset, IN ULONG EntrySelector, IN PUSHORT Parameters, IN USHORT Size);
 
 //
 // Internal prototypes
 //
 
-VOID
-PnPBiosCollectLegacyDeviceResources (
-    IN PCM_RESOURCE_LIST  *ReturnedResources
-    );
+VOID PnPBiosCollectLegacyDeviceResources(IN PCM_RESOURCE_LIST *ReturnedResources);
 
-VOID
-PnPBiosReserveLegacyDeviceResources (
-    IN PUCHAR BiosResources
-    );
+VOID PnPBiosReserveLegacyDeviceResources(IN PUCHAR BiosResources);
 
 NTSTATUS
-PnPBiosExamineDeviceKeys (
-    IN PVOID BiosInfo,
-    IN ULONG BiosInfoLength,
-    IN OUT PPNP_BIOS_DEVICE_NODE_LIST *DeviceList
-    );
+PnPBiosExamineDeviceKeys(IN PVOID BiosInfo, IN ULONG BiosInfoLength, IN OUT PPNP_BIOS_DEVICE_NODE_LIST *DeviceList);
 
 BOOLEAN
-PnPBiosExamineBiosDeviceKey(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING KeyName,
-    IN OUT PPNP_BIOS_ENUMERATION_CONTEXT Context
-    );
+PnPBiosExamineBiosDeviceKey(IN HANDLE KeyHandle, IN PUNICODE_STRING KeyName,
+                            IN OUT PPNP_BIOS_ENUMERATION_CONTEXT Context);
 
 BOOLEAN
-PnPBiosExamineBiosDeviceInstanceKey(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING KeyName,
-    IN OUT PPNP_BIOS_ENUMERATION_CONTEXT Context
-    );
+PnPBiosExamineBiosDeviceInstanceKey(IN HANDLE KeyHandle, IN PUNICODE_STRING KeyName,
+                                    IN OUT PPNP_BIOS_ENUMERATION_CONTEXT Context);
 
 NTSTATUS
-PnPBiosExtractInfo(
-    IN ULONG BiosHandle,
-    IN PVOID BiosInfo,
-    IN ULONG BiosInfoLength,
-    OUT PVOID *Header,
-    OUT ULONG *HeaderLength,
-    OUT PVOID *Tail,
-    OUT ULONG *TailLength
-    );
+PnPBiosExtractInfo(IN ULONG BiosHandle, IN PVOID BiosInfo, IN ULONG BiosInfoLength, OUT PVOID *Header,
+                   OUT ULONG *HeaderLength, OUT PVOID *Tail, OUT ULONG *TailLength);
 
-VOID
-PnPBiosSetDeviceNodes (
-    IN PVOID Context
-    );
+VOID PnPBiosSetDeviceNodes(IN PVOID Context);
 
 NTSTATUS
-PbHardwareService (
-    IN PPB_PARAMETERS Parameters
-    );
+PbHardwareService(IN PPB_PARAMETERS Parameters);
 
-VOID
-PbAddress32ToAddress16 (
-    IN PVOID Address32,
-    IN PUSHORT Address16,
-    IN USHORT Selector
-    );
+VOID PbAddress32ToAddress16(IN PVOID Address32, IN PUSHORT Address16, IN USHORT Selector);
 
 #ifdef ALLOC_PRAGMA
 BOOLEAN
-PnPBiosGetBiosHandleFromDeviceKey(
-    IN HANDLE KeyHandle,
-    OUT PULONG BiosDeviceId
-    );
+PnPBiosGetBiosHandleFromDeviceKey(IN HANDLE KeyHandle, OUT PULONG BiosDeviceId);
 NTSTATUS
-PnPBiosSetDeviceNodeDynamically(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+PnPBiosSetDeviceNodeDynamically(IN PDEVICE_OBJECT DeviceObject);
 #pragma alloc_text(PAGE, PnPBiosGetBiosHandleFromDeviceKey)
 #pragma alloc_text(PAGE, PnPBiosCollectLegacyDeviceResources)
 #pragma alloc_text(PAGE, PnPBiosExamineDeviceKeys)
@@ -266,12 +235,8 @@ PnPBiosSetDeviceNodeDynamically(
 #pragma alloc_text(PAGELK, PbHardwareService)
 #pragma alloc_text(PAGELK, PnPBiosShutdownSystem)
 #endif
-
-VOID
-PnPBiosShutdownSystem (
-    IN ULONG Phase,
-    IN OUT PVOID *Context
-    )
+
+VOID PnPBiosShutdownSystem(IN ULONG Phase, IN OUT PVOID *Context)
 
 /*++
 
@@ -295,50 +260,54 @@ Return Value:
 
 --*/
 {
-    PVOID               biosInfo;
-    ULONG               length;
-    NTSTATUS            status;
-    PPNP_BIOS_DEVICE_NODE_LIST  pnpBiosDeviceNode;
-    PCM_RESOURCE_LIST   legacyResources;
-    PUCHAR              biosResources;
+    PVOID biosInfo;
+    ULONG length;
+    NTSTATUS status;
+    PPNP_BIOS_DEVICE_NODE_LIST pnpBiosDeviceNode;
+    PCM_RESOURCE_LIST legacyResources;
+    PUCHAR biosResources;
 
-    if (Phase == 0) {
+    if (Phase == 0)
+    {
 
         *Context = NULL;
 
         status = PnPBiosGetBiosInfo(&biosInfo, &length);
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            PnPBiosExamineDeviceKeys(
-                         biosInfo,
-                         length,
-                         (PPNP_BIOS_DEVICE_NODE_LIST *) &PiShutdownContext.DeviceList
-                         );
-            PnPBiosCollectLegacyDeviceResources (&legacyResources);
-            if (legacyResources) {
-                status = PpCmResourcesToBiosResources (legacyResources, NULL, &biosResources, &length);
-                if (NT_SUCCESS(status) && biosResources) {
+            PnPBiosExamineDeviceKeys(biosInfo, length, (PPNP_BIOS_DEVICE_NODE_LIST *)&PiShutdownContext.DeviceList);
+            PnPBiosCollectLegacyDeviceResources(&legacyResources);
+            if (legacyResources)
+            {
+                status = PpCmResourcesToBiosResources(legacyResources, NULL, &biosResources, &length);
+                if (NT_SUCCESS(status) && biosResources)
+                {
                     PiShutdownContext.Resources = (PCM_RESOURCE_LIST)ExAllocatePool(NonPagedPool, length);
-                    if (PiShutdownContext.Resources) {
+                    if (PiShutdownContext.Resources)
+                    {
                         RtlMoveMemory(PiShutdownContext.Resources, biosResources, length);
                         ExFreePool(biosResources);
                     }
                 }
                 ExFreePool(legacyResources);
             }
-            if (PiShutdownContext.DeviceList || PiShutdownContext.Resources) {
+            if (PiShutdownContext.DeviceList || PiShutdownContext.Resources)
+            {
                 *Context = &PiShutdownContext;
             }
             ExFreePool(biosInfo);
         }
 
         return;
-
-    } else if (*Context) {
+    }
+    else if (*Context)
+    {
         ASSERT(*Context == &PiShutdownContext);
         pnpBiosDeviceNode = PiShutdownContext.DeviceList;
         biosResources = PiShutdownContext.Resources;
-        if (pnpBiosDeviceNode || biosResources) {
+        if (pnpBiosDeviceNode || biosResources)
+        {
 
             //
             // Call pnp bios from boot processor
@@ -346,10 +315,12 @@ Return Value:
 
             KeSetSystemAffinityThread(1);
 
-            if (pnpBiosDeviceNode) {
+            if (pnpBiosDeviceNode)
+            {
                 PnPBiosSetDeviceNodes(pnpBiosDeviceNode);
             }
-            if (biosResources) {
+            if (biosResources)
+            {
                 PnPBiosReserveLegacyDeviceResources(biosResources);
             }
 
@@ -361,12 +332,9 @@ Return Value:
         }
     }
 }
-
+
 BOOLEAN
-PnPBiosGetBiosHandleFromDeviceKey(
-    IN HANDLE KeyHandle,
-    OUT PULONG BiosDeviceId
-    )
+PnPBiosGetBiosHandleFromDeviceKey(IN HANDLE KeyHandle, OUT PULONG BiosDeviceId)
 /*++
 
 Routine Description:
@@ -400,40 +368,34 @@ Return Value:
     // handle.
     //
     PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_CONTROL);
-    status = IopOpenRegistryKeyEx( &handle,
-                                   KeyHandle,
-                                   &unicodeName,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&handle, KeyHandle, &unicodeName, KEY_READ);
 
-    if (!NT_SUCCESS(status)) {
-        return FALSE ;
+    if (!NT_SUCCESS(status))
+    {
+        return FALSE;
     }
 
-    status = IopGetRegistryValue (handle,
-                                  L"PnpBiosDeviceHandle",
-                                  &keyValueInformation);
+    status = IopGetRegistryValue(handle, L"PnpBiosDeviceHandle", &keyValueInformation);
     ZwClose(handle);
 
-    if (NT_SUCCESS(status)) {
-        if ((keyValueInformation->Type == REG_DWORD) &&
-            (keyValueInformation->DataLength == sizeof(ULONG))) {
+    if (NT_SUCCESS(status))
+    {
+        if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength == sizeof(ULONG)))
+        {
 
             biosDeviceHandle = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
         }
         ExFreePool(keyValueInformation);
     }
-    if (biosDeviceHandle > 0xffff) {
+    if (biosDeviceHandle > 0xffff)
+    {
         return FALSE;
     }
-    *BiosDeviceId = biosDeviceHandle ;
-    return TRUE ;
+    *BiosDeviceId = biosDeviceHandle;
+    return TRUE;
 }
-
-VOID
-PnPBiosCollectLegacyDeviceResources (
-    IN PCM_RESOURCE_LIST *ReturnedResources
-    )
+
+VOID PnPBiosCollectLegacyDeviceResources(IN PCM_RESOURCE_LIST *ReturnedResources)
 
 /*++
 
@@ -462,7 +424,8 @@ Return Value:
     *ReturnedResources = NULL;
 
     buffer = ExAllocatePool(PagedPool, PNP_LARGE_SCRATCH_BUFFER_SIZE);
-    if (!buffer) {
+    if (!buffer)
+    {
         return;
     }
 
@@ -471,15 +434,11 @@ Return Value:
     // scan through the subkeys.
     //
 
-    status = IopCreateRegistryKeyEx( &baseHandle,
-                                     NULL,
-                                     &CmRegistryMachineSystemCurrentControlSetEnumRootName,
-                                     KEY_READ,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status = IopCreateRegistryKeyEx(&baseHandle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumRootName, KEY_READ,
+                                    REG_OPTION_NON_VOLATILE, NULL);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         workName.Buffer = (PWSTR)buffer;
         RtlFillMemory(buffer, PNP_LARGE_SCRATCH_BUFFER_SIZE, 0);
@@ -495,25 +454,16 @@ Return Value:
         context.KeyName = &workName;
         context.Function = PI_SHUTDOWN_LEGACY_RESOURCES;
         context.u.LegacyResources.LegacyResources = NULL;
-        status = PipApplyFunctionToSubKeys(baseHandle,
-                                           NULL,
-                                           KEY_READ,
-                                           FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS,
-                                           PnPBiosExamineBiosDeviceKey,
-                                           &context
-                                           );
+        status = PipApplyFunctionToSubKeys(baseHandle, NULL, KEY_READ, FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS,
+                                           PnPBiosExamineBiosDeviceKey, &context);
         ZwClose(baseHandle);
         *ReturnedResources = context.u.LegacyResources.LegacyResources;
     }
     ExFreePool(buffer);
 }
-
+
 NTSTATUS
-PnPBiosExamineDeviceKeys (
-    IN PVOID BiosInfo,
-    IN ULONG BiosInfoLength,
-    IN OUT PPNP_BIOS_DEVICE_NODE_LIST *DeviceList
-    )
+PnPBiosExamineDeviceKeys(IN PVOID BiosInfo, IN ULONG BiosInfoLength, IN OUT PPNP_BIOS_DEVICE_NODE_LIST *DeviceList)
 
 /*++
 
@@ -542,7 +492,8 @@ Return Value:
     PAGED_CODE();
 
     buffer = ExAllocatePool(PagedPool, PNP_LARGE_SCRATCH_BUFFER_SIZE);
-    if (!buffer) {
+    if (!buffer)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     //
@@ -550,15 +501,11 @@ Return Value:
     // scan through the subkeys.
     //
 
-    status = IopCreateRegistryKeyEx( &baseHandle,
-                                     NULL,
-                                     &CmRegistryMachineSystemCurrentControlSetEnumRootName,
-                                     KEY_READ,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status = IopCreateRegistryKeyEx(&baseHandle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumRootName, KEY_READ,
+                                    REG_OPTION_NON_VOLATILE, NULL);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         workName.Buffer = (PWSTR)buffer;
         RtlFillMemory(buffer, PNP_LARGE_SCRATCH_BUFFER_SIZE, 0);
         workName.MaximumLength = PNP_LARGE_SCRATCH_BUFFER_SIZE;
@@ -576,24 +523,16 @@ Return Value:
         context.u.ExamineBiosDevice.BiosInfoLength = BiosInfoLength;
         context.u.ExamineBiosDevice.DeviceList = DeviceList;
 
-        status = PipApplyFunctionToSubKeys(baseHandle,
-                                           NULL,
-                                           KEY_READ,
-                                           FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS,
-                                           PnPBiosExamineBiosDeviceKey,
-                                           &context
-                                           );
+        status = PipApplyFunctionToSubKeys(baseHandle, NULL, KEY_READ, FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS,
+                                           PnPBiosExamineBiosDeviceKey, &context);
         ZwClose(baseHandle);
     }
     return status;
 }
-
+
 BOOLEAN
-PnPBiosExamineBiosDeviceKey(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING KeyName,
-    IN OUT PPNP_BIOS_ENUMERATION_CONTEXT Context
-    )
+PnPBiosExamineBiosDeviceKey(IN HANDLE KeyHandle, IN PUNICODE_STRING KeyName,
+                            IN OUT PPNP_BIOS_ENUMERATION_CONTEXT Context)
 
 /*++
 
@@ -619,8 +558,8 @@ Returns:
 {
     PAGED_CODE();
 
-    if (Context->Function != PI_SHUTDOWN_EXAMINE_BIOS_DEVICE ||
-        KeyName->Buffer[0] == L'*') {
+    if (Context->Function != PI_SHUTDOWN_EXAMINE_BIOS_DEVICE || KeyName->Buffer[0] == L'*')
+    {
 
         USHORT length;
         PWSTR p;
@@ -629,10 +568,11 @@ Returns:
         length = unicodeName->Length;
 
         p = unicodeName->Buffer;
-        if ( unicodeName->Length / sizeof(WCHAR) != 0) {
+        if (unicodeName->Length / sizeof(WCHAR) != 0)
+        {
             p += unicodeName->Length / sizeof(WCHAR);
             *p = OBJ_NAME_PATH_SEPARATOR;
-            unicodeName->Length += sizeof (WCHAR);
+            unicodeName->Length += sizeof(WCHAR);
         }
 
         RtlAppendStringToString((PSTRING)unicodeName, (PSTRING)KeyName);
@@ -641,24 +581,16 @@ Returns:
         // Enumerate all subkeys under the current device key.
         //
 
-        PipApplyFunctionToSubKeys(KeyHandle,
-                                  NULL,
-                                  KEY_ALL_ACCESS,
-                                  FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS,
-                                  PnPBiosExamineBiosDeviceInstanceKey,
-                                  Context
-                                  );
+        PipApplyFunctionToSubKeys(KeyHandle, NULL, KEY_ALL_ACCESS, FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS,
+                                  PnPBiosExamineBiosDeviceInstanceKey, Context);
         unicodeName->Length = length;
     }
     return TRUE;
 }
-
+
 BOOLEAN
-PnPBiosExamineBiosDeviceInstanceKey(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING KeyName,
-    IN OUT PPNP_BIOS_ENUMERATION_CONTEXT Context
-    )
+PnPBiosExamineBiosDeviceInstanceKey(IN HANDLE KeyHandle, IN PUNICODE_STRING KeyName,
+                                    IN OUT PPNP_BIOS_ENUMERATION_CONTEXT Context)
 
 /*++
 
@@ -692,33 +624,34 @@ Returns:
     PPNP_BIOS_DEVICE_NODE_LIST deviceNode;
     PUCHAR p;
     PVOID header, tail;
-    ULONG headerLength, tailLength ;
+    ULONG headerLength, tailLength;
     PUCHAR biosResources;
-    BOOLEAN isEnabled ;
+    BOOLEAN isEnabled;
 
-    UNREFERENCED_PARAMETER( KeyName );
+    UNREFERENCED_PARAMETER(KeyName);
 
     PAGED_CODE();
 
-    if (Context->Function == PI_SHUTDOWN_LEGACY_RESOURCES) {
+    if (Context->Function == PI_SHUTDOWN_LEGACY_RESOURCES)
+    {
         ULONG tmp = 0;
 
         //
         // Skip any firmware identified device.
         //
 
-        status = IopGetRegistryValue (KeyHandle,
-                                      L"FirmwareIdentified",
-                                      &keyValueInformation);
-        if (NT_SUCCESS(status)) {
-            if ((keyValueInformation->Type == REG_DWORD) &&
-                (keyValueInformation->DataLength == sizeof(ULONG))) {
+        status = IopGetRegistryValue(KeyHandle, L"FirmwareIdentified", &keyValueInformation);
+        if (NT_SUCCESS(status))
+        {
+            if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength == sizeof(ULONG)))
+            {
 
                 tmp = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
             }
             ExFreePool(keyValueInformation);
         }
-        if (tmp != 0) {
+        if (tmp != 0)
+        {
             return TRUE;
         }
 
@@ -726,13 +659,13 @@ Returns:
         // Skip any IoReportDetectedDevice and virtual/madeup device.
         //
 
-        status = IopGetRegistryValue (KeyHandle,
-                                      L"Legacy",
-                                      &keyValueInformation);
-        if (NT_SUCCESS(status)) {
+        status = IopGetRegistryValue(KeyHandle, L"Legacy", &keyValueInformation);
+        if (NT_SUCCESS(status))
+        {
             ExFreePool(keyValueInformation);
         }
-        if (status != STATUS_OBJECT_NAME_NOT_FOUND) {
+        if (status != STATUS_OBJECT_NAME_NOT_FOUND)
+        {
             return TRUE;
         }
 
@@ -742,36 +675,34 @@ Returns:
         //
 
         PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_LOG_CONF);
-        status = IopOpenRegistryKeyEx( &handle,
-                                       KeyHandle,
-                                       &unicodeName,
-                                       KEY_READ
-                                       );
-        if (NT_SUCCESS(status)) {
-            status = PipReadDeviceConfiguration (
-                                    handle,
-                                    REGISTRY_BOOT_CONFIG,
-                                    &config,
-                                    &length);
+        status = IopOpenRegistryKeyEx(&handle, KeyHandle, &unicodeName, KEY_READ);
+        if (NT_SUCCESS(status))
+        {
+            status = PipReadDeviceConfiguration(handle, REGISTRY_BOOT_CONFIG, &config, &length);
             ZwClose(handle);
-            if (NT_SUCCESS(status) && config && length != 0) {
+            if (NT_SUCCESS(status) && config && length != 0)
+            {
                 PCM_RESOURCE_LIST list;
 
                 list = Context->u.LegacyResources.LegacyResources;
                 status = IopMergeCmResourceLists(list, config, &Context->u.LegacyResources.LegacyResources);
-                if (NT_SUCCESS(status) && list) {
+                if (NT_SUCCESS(status) && list)
+                {
                     ExFreePool(list);
                 }
                 ExFreePool(config);
             }
         }
-    } else if (Context->Function == PI_SHUTDOWN_EXAMINE_BIOS_DEVICE) {
+    }
+    else if (Context->Function == PI_SHUTDOWN_EXAMINE_BIOS_DEVICE)
+    {
         //
         // First check if this key was created by firmware mapper.  If yes, make sure
         // the device is still present.
         //
 
-        if (PipIsFirmwareMapperDevicePresent(KeyHandle) == FALSE) {
+        if (PipIsFirmwareMapperDevicePresent(KeyHandle) == FALSE)
+        {
             return TRUE;
         }
 
@@ -779,8 +710,9 @@ Returns:
         // Make sure this is a pnp bios device by checking its pnp bios
         // device handle.
         //
-        if (!PnPBiosGetBiosHandleFromDeviceKey(KeyHandle, &biosDeviceHandle)) {
-            return TRUE ;
+        if (!PnPBiosGetBiosHandleFromDeviceKey(KeyHandle, &biosDeviceHandle))
+        {
+            return TRUE;
         }
 
         //
@@ -791,17 +723,12 @@ Returns:
         // to "off". We will index into header to do this, as header and tail
         // point directly into the BIOS resource list!
         //
-        status = PnPBiosExtractInfo (
-                            biosDeviceHandle,
-                            Context->u.ExamineBiosDevice.BiosInfo,
-                            Context->u.ExamineBiosDevice.BiosInfoLength,
-                            &header,
-                            &headerLength,
-                            &tail,
-                            &tailLength
-                            );
+        status =
+            PnPBiosExtractInfo(biosDeviceHandle, Context->u.ExamineBiosDevice.BiosInfo,
+                               Context->u.ExamineBiosDevice.BiosInfoLength, &header, &headerLength, &tail, &tailLength);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             return TRUE;
         }
 
@@ -813,52 +740,43 @@ Returns:
         // should not show disable in current profile for PnPBIOS devices. A
         // work item yet to be done...
         //
-        isEnabled = IopIsDeviceInstanceEnabled(KeyHandle, Context->KeyName, FALSE) ;
+        isEnabled = IopIsDeviceInstanceEnabled(KeyHandle, Context->KeyName, FALSE);
 
-        if (!isEnabled) {
+        if (!isEnabled)
+        {
 
             //
             // This device is being disabled. Set up and attain a pointer to
             // the appropriately built BIOS resource list.
             //
-            biosResources = ((PUCHAR)header) + sizeof(PNP_BIOS_DEVICE_NODE) ;
-            PpBiosResourcesSetToDisabled (biosResources, &length);
-
-        } else {
+            biosResources = ((PUCHAR)header) + sizeof(PNP_BIOS_DEVICE_NODE);
+            PpBiosResourcesSetToDisabled(biosResources, &length);
+        }
+        else
+        {
 
             //
             // Check if the pnp bios device has any assigned ForcedConfig
             //
             PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_LOG_CONF);
-            status = IopOpenRegistryKeyEx( &handle,
-                                           KeyHandle,
-                                           &unicodeName,
-                                           KEY_READ
-                                           );
-            if (!NT_SUCCESS(status)) {
-                return TRUE ;
+            status = IopOpenRegistryKeyEx(&handle, KeyHandle, &unicodeName, KEY_READ);
+            if (!NT_SUCCESS(status))
+            {
+                return TRUE;
             }
 
-            status = PipReadDeviceConfiguration (
-                           handle,
-                           REGISTRY_FORCED_CONFIG,
-                           &config,
-                           &length
-                           );
+            status = PipReadDeviceConfiguration(handle, REGISTRY_FORCED_CONFIG, &config, &length);
 
             ZwClose(handle);
-            if ((!NT_SUCCESS(status)) || (!config) || (length == 0)) {
-                return TRUE ;
+            if ((!NT_SUCCESS(status)) || (!config) || (length == 0))
+            {
+                return TRUE;
             }
 
-            status = PpCmResourcesToBiosResources (
-                                config,
-                                tail,
-                                &biosResources,
-                                &length
-                                );
+            status = PpCmResourcesToBiosResources(config, tail, &biosResources, &length);
             ExFreePool(config);
-            if (!NT_SUCCESS(status) || !biosResources) {
+            if (!NT_SUCCESS(status) || !biosResources)
+            {
                 return TRUE;
             }
         }
@@ -869,35 +787,30 @@ Returns:
 
         totalLength = headerLength + length + tailLength;
         deviceNode = ExAllocatePool(NonPagedPool, totalLength + sizeof(PVOID));
-        if (deviceNode) {
-           deviceNode->Next = *(Context->u.ExamineBiosDevice.DeviceList);
-               *(Context->u.ExamineBiosDevice.DeviceList) = deviceNode;
-               p = (PUCHAR)&deviceNode->DeviceNode;
-               RtlCopyMemory(p, header, headerLength);
-               p += headerLength;
-               RtlCopyMemory(p, biosResources, length);
-               p += length;
-               RtlCopyMemory(p, tail, tailLength);
-               deviceNode->DeviceNode.Size = (USHORT)totalLength;
+        if (deviceNode)
+        {
+            deviceNode->Next = *(Context->u.ExamineBiosDevice.DeviceList);
+            *(Context->u.ExamineBiosDevice.DeviceList) = deviceNode;
+            p = (PUCHAR)&deviceNode->DeviceNode;
+            RtlCopyMemory(p, header, headerLength);
+            p += headerLength;
+            RtlCopyMemory(p, biosResources, length);
+            p += length;
+            RtlCopyMemory(p, tail, tailLength);
+            deviceNode->DeviceNode.Size = (USHORT)totalLength;
         }
 
-        if (isEnabled) {
+        if (isEnabled)
+        {
             ExFreePool(biosResources);
         }
     }
     return TRUE;
 }
-
+
 NTSTATUS
-PnPBiosExtractInfo(
-    IN ULONG BiosHandle,
-    IN PVOID BiosInfo,
-    IN ULONG BiosInfoLength,
-    OUT PVOID *Header,
-    OUT ULONG *HeaderLength,
-    OUT PVOID *Tail,
-    OUT ULONG *TailLength
-    )
+PnPBiosExtractInfo(IN ULONG BiosHandle, IN PVOID BiosInfo, IN ULONG BiosInfoLength, OUT PVOID *Header,
+                   OUT ULONG *HeaderLength, OUT PVOID *Tail, OUT ULONG *TailLength)
 
 /*++
 
@@ -934,13 +847,13 @@ Return Value:
 --*/
 {
     PCM_PNP_BIOS_INSTALLATION_CHECK biosInstallCheck;
-    PCM_PNP_BIOS_DEVICE_NODE        devNodeHeader;
-    NTSTATUS                        status = STATUS_UNSUCCESSFUL;
-    PUCHAR                          currentPtr;
-    int                             lengthRemaining;
-    int                             remainingNodeLength;
-    int                             numNodes;
-    PUCHAR                          configPtr;
+    PCM_PNP_BIOS_DEVICE_NODE devNodeHeader;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PUCHAR currentPtr;
+    int lengthRemaining;
+    int remainingNodeLength;
+    int numNodes;
+    PUCHAR configPtr;
 
     PAGED_CODE();
 
@@ -951,7 +864,8 @@ Return Value:
     // Check structure and check that the PnP signature is correct.
     //
 
-    if (BiosInfoLength < sizeof(CM_PNP_BIOS_INSTALLATION_CHECK)) {
+    if (BiosInfoLength < sizeof(CM_PNP_BIOS_INSTALLATION_CHECK))
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -961,10 +875,9 @@ Return Value:
 
 #if DBG
 
-    if (biosInstallCheck->Signature[0] != '$' ||
-        biosInstallCheck->Signature[1] != 'P' ||
-        biosInstallCheck->Signature[2] != 'n' ||
-        biosInstallCheck->Signature[3] != 'P') {
+    if (biosInstallCheck->Signature[0] != '$' || biosInstallCheck->Signature[1] != 'P' ||
+        biosInstallCheck->Signature[2] != 'n' || biosInstallCheck->Signature[3] != 'P')
+    {
 
         return STATUS_UNSUCCESSFUL;
     }
@@ -979,30 +892,32 @@ Return Value:
     currentPtr = (PUCHAR)BiosInfo + biosInstallCheck->Length;
     lengthRemaining = BiosInfoLength - biosInstallCheck->Length;
 
-    for (numNodes = 0; lengthRemaining > sizeof(CM_PNP_BIOS_DEVICE_NODE); numNodes++) {
+    for (numNodes = 0; lengthRemaining > sizeof(CM_PNP_BIOS_DEVICE_NODE); numNodes++)
+    {
 
         devNodeHeader = (PCM_PNP_BIOS_DEVICE_NODE)currentPtr;
 
-        if (devNodeHeader->Size > lengthRemaining) {
-            IopDbgPrint((IOP_PNPBIOS_WARNING_LEVEL,
-                        "Node # %d, invalid size (%d), length remaining (%d)\n",
-                        devNodeHeader->Node,
-                        devNodeHeader->Size,
-                        lengthRemaining));
+        if (devNodeHeader->Size > lengthRemaining)
+        {
+            IopDbgPrint((IOP_PNPBIOS_WARNING_LEVEL, "Node # %d, invalid size (%d), length remaining (%d)\n",
+                         devNodeHeader->Node, devNodeHeader->Size, lengthRemaining));
             return STATUS_UNSUCCESSFUL;
         }
 
-        if (devNodeHeader->Node == BiosHandle) {
+        if (devNodeHeader->Node == BiosHandle)
+        {
             *Header = devNodeHeader;
             *HeaderLength = sizeof(CM_PNP_BIOS_DEVICE_NODE);
 
             configPtr = currentPtr + sizeof(*devNodeHeader);
             remainingNodeLength = devNodeHeader->Size - sizeof(*devNodeHeader) - 1;
-            while (*configPtr != TAG_COMPLETE_END && remainingNodeLength) {
+            while (*configPtr != TAG_COMPLETE_END && remainingNodeLength)
+            {
                 configPtr++;
                 remainingNodeLength--;
             }
-            if (*configPtr == TAG_COMPLETE_END && remainingNodeLength) {
+            if (*configPtr == TAG_COMPLETE_END && remainingNodeLength)
+            {
                 configPtr += 2;
                 remainingNodeLength--;
             }
@@ -1016,11 +931,9 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-PnPBiosInitializePnPBios (
-    VOID
-    )
+PnPBiosInitializePnPBios(VOID)
 
 /*++
 
@@ -1050,15 +963,16 @@ Return Value:
     //
     // Initialize BIOS call spinlock
     //
-    KeInitializeSpinLock (&PbBiosSpinlock);
+    KeInitializeSpinLock(&PbBiosSpinlock);
 
     //
     // Grab the PnPBIOS settings stored in the registry by NTDetect
     //
     status = PnPBiosGetBiosInfo(&biosData, &biosDataLength);
-    if (!NT_SUCCESS(status)) {
-       PbBiosInitialized = status ;
-       return status ;
+    if (!NT_SUCCESS(status))
+    {
+        PbBiosInitialized = status;
+        return status;
     }
 
     //
@@ -1071,23 +985,19 @@ Return Value:
     //
     KiStack16GdtEntry = KiAbiosGetGdt() + KGDT_STACK16;
 
-    KiInitializeAbiosGdtEntry(
-                (PKGDTENTRY)KiStack16GdtEntry,
-                0L,
-                0xffff,
-                TYPE_DATA
-                );
+    KiInitializeAbiosGdtEntry((PKGDTENTRY)KiStack16GdtEntry, 0L, 0xffff, TYPE_DATA);
 
     //
     // Allocate 4 selectors for calling PnP Bios APIs.
     //
 
     i = 4;
-    status = KeI386AllocateGdtSelectors (selectors, (USHORT) i);
-    if (!NT_SUCCESS(status)) {
-        IopDbgPrint((IOP_PNPBIOS_WARNING_LEVEL,
-                    "PnpBios: Failed to allocate selectors to call PnP BIOS at shutdown.\n"));
-        goto PnpBiosInitExit ;
+    status = KeI386AllocateGdtSelectors(selectors, (USHORT)i);
+    if (!NT_SUCCESS(status))
+    {
+        IopDbgPrint(
+            (IOP_PNPBIOS_WARNING_LEVEL, "PnpBios: Failed to allocate selectors to call PnP BIOS at shutdown.\n"));
+        goto PnpBiosInitExit;
     }
 
     PbBiosCodeSelector = selectors[0];
@@ -1095,8 +1005,7 @@ Return Value:
     PbSelectors[0] = selectors[2];
     PbSelectors[1] = selectors[3];
 
-    PbBiosEntryPoint = (ULONG)
-        ((PPNP_BIOS_INSTALLATION_CHECK)biosData)->ProtectedModeEntryOffset;
+    PbBiosEntryPoint = (ULONG)((PPNP_BIOS_INSTALLATION_CHECK)biosData)->ProtectedModeEntryOffset;
 
     //
     // Initialize selectors to use PNP bios code
@@ -1106,58 +1015,56 @@ Return Value:
     // initialize 16 bit code selector
     //
 
-    gdtEntry.LimitLow                   = 0xFFFF;
-    gdtEntry.HighWord.Bytes.Flags1      = 0;
-    gdtEntry.HighWord.Bytes.Flags2      = 0;
-    gdtEntry.HighWord.Bits.Pres         = 1;
-    gdtEntry.HighWord.Bits.Dpl          = DPL_SYSTEM;
-    gdtEntry.HighWord.Bits.Granularity  = GRAN_BYTE;
-    gdtEntry.HighWord.Bits.Type         = 31;
-    gdtEntry.HighWord.Bits.Default_Big  = 0;
+    gdtEntry.LimitLow = 0xFFFF;
+    gdtEntry.HighWord.Bytes.Flags1 = 0;
+    gdtEntry.HighWord.Bytes.Flags2 = 0;
+    gdtEntry.HighWord.Bits.Pres = 1;
+    gdtEntry.HighWord.Bits.Dpl = DPL_SYSTEM;
+    gdtEntry.HighWord.Bits.Granularity = GRAN_BYTE;
+    gdtEntry.HighWord.Bits.Type = 31;
+    gdtEntry.HighWord.Bits.Default_Big = 0;
 
     physicalAddr.HighPart = 0;
-    physicalAddr.LowPart =
-        ((PPNP_BIOS_INSTALLATION_CHECK)biosData)->ProtectedModeCodeBaseAddress;
-    virtualAddr = MmMapIoSpace (physicalAddr, 0x10000, TRUE);
+    physicalAddr.LowPart = ((PPNP_BIOS_INSTALLATION_CHECK)biosData)->ProtectedModeCodeBaseAddress;
+    virtualAddr = MmMapIoSpace(physicalAddr, 0x10000, TRUE);
     codeBase = (ULONG)virtualAddr;
 
-    gdtEntry.BaseLow               = (USHORT) (codeBase & 0xffff);
-    gdtEntry.HighWord.Bits.BaseMid = (UCHAR)  (codeBase >> 16) & 0xff;
-    gdtEntry.HighWord.Bits.BaseHi  = (UCHAR)  (codeBase >> 24) & 0xff;
+    gdtEntry.BaseLow = (USHORT)(codeBase & 0xffff);
+    gdtEntry.HighWord.Bits.BaseMid = (UCHAR)(codeBase >> 16) & 0xff;
+    gdtEntry.HighWord.Bits.BaseHi = (UCHAR)(codeBase >> 24) & 0xff;
 
-    KeI386SetGdtSelector (PbBiosCodeSelector, &gdtEntry);
+    KeI386SetGdtSelector(PbBiosCodeSelector, &gdtEntry);
 
     //
     // initialize 16 bit data selector for Pnp BIOS
     //
 
-    gdtEntry.LimitLow                   = 0xFFFF;
-    gdtEntry.HighWord.Bytes.Flags1      = 0;
-    gdtEntry.HighWord.Bytes.Flags2      = 0;
-    gdtEntry.HighWord.Bits.Pres         = 1;
-    gdtEntry.HighWord.Bits.Dpl          = DPL_SYSTEM;
-    gdtEntry.HighWord.Bits.Granularity  = GRAN_BYTE;
-    gdtEntry.HighWord.Bits.Type         = 19;
-    gdtEntry.HighWord.Bits.Default_Big  = 1;
+    gdtEntry.LimitLow = 0xFFFF;
+    gdtEntry.HighWord.Bytes.Flags1 = 0;
+    gdtEntry.HighWord.Bytes.Flags2 = 0;
+    gdtEntry.HighWord.Bits.Pres = 1;
+    gdtEntry.HighWord.Bits.Dpl = DPL_SYSTEM;
+    gdtEntry.HighWord.Bits.Granularity = GRAN_BYTE;
+    gdtEntry.HighWord.Bits.Type = 19;
+    gdtEntry.HighWord.Bits.Default_Big = 1;
 
-    physicalAddr.LowPart =
-        ((PPNP_BIOS_INSTALLATION_CHECK)biosData)->ProtectedModeDataBaseAddress;
-    virtualAddr = MmMapIoSpace (physicalAddr, 0x10000, TRUE);
+    physicalAddr.LowPart = ((PPNP_BIOS_INSTALLATION_CHECK)biosData)->ProtectedModeDataBaseAddress;
+    virtualAddr = MmMapIoSpace(physicalAddr, 0x10000, TRUE);
     codeBase = (ULONG)virtualAddr;
 
-    gdtEntry.BaseLow               = (USHORT) (codeBase & 0xffff);
-    gdtEntry.HighWord.Bits.BaseMid = (UCHAR)  (codeBase >> 16) & 0xff;
-    gdtEntry.HighWord.Bits.BaseHi  = (UCHAR)  (codeBase >> 24) & 0xff;
+    gdtEntry.BaseLow = (USHORT)(codeBase & 0xffff);
+    gdtEntry.HighWord.Bits.BaseMid = (UCHAR)(codeBase >> 16) & 0xff;
+    gdtEntry.HighWord.Bits.BaseHi = (UCHAR)(codeBase >> 24) & 0xff;
 
-    KeI386SetGdtSelector (PbBiosDataSelector, &gdtEntry);
+    KeI386SetGdtSelector(PbBiosDataSelector, &gdtEntry);
 
     //
     // Initialize the other two general purpose data selector such that
     // on subsequent init we only need to init the base addr.
     //
 
-    KeI386SetGdtSelector (PbSelectors[0], &gdtEntry);
-    KeI386SetGdtSelector (PbSelectors[1], &gdtEntry);
+    KeI386SetGdtSelector(PbSelectors[0], &gdtEntry);
+    KeI386SetGdtSelector(PbSelectors[1], &gdtEntry);
 
     //
     // Locked in code for Pnp BIOS shutdown processing.
@@ -1175,14 +1082,11 @@ PnpBiosInitExit:
     // Restore old affinity for current thread.
     //
     KeRevertToUserAffinityThread();
-    PbBiosInitialized = status ;
+    PbBiosInitialized = status;
     return status;
 }
-
-VOID
-PnPBiosSetDeviceNodes (
-    IN PVOID Context
-    )
+
+VOID PnPBiosSetDeviceNodes(IN PVOID Context)
 
 /*++
 
@@ -1205,7 +1109,8 @@ Return Value:
     PPNP_BIOS_DEVICE_NODE_LIST deviceList = (PPNP_BIOS_DEVICE_NODE_LIST)Context;
     PPNP_BIOS_DEVICE_NODE deviceNode;
 
-    while (deviceList) {
+    while (deviceList)
+    {
         deviceNode = &deviceList->DeviceNode;
 
         //
@@ -1216,23 +1121,21 @@ Return Value:
         biosParameters.u.SetDeviceNode.Node = deviceNode->Node;
         biosParameters.u.SetDeviceNode.NodeBuffer = deviceNode;
         biosParameters.u.SetDeviceNode.Control = SET_CONFIGURATION_FOR_NEXT_BOOT;
-        PbHardwareService (&biosParameters);            // Ignore the return status
+        PbHardwareService(&biosParameters); // Ignore the return status
         deviceList = deviceList->Next;
     }
 }
-
+
 NTSTATUS
-PnPBiosSetDeviceNodeDynamically(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+PnPBiosSetDeviceNodeDynamically(IN PDEVICE_OBJECT DeviceObject)
 {
     PNP_BIOS_ENUMERATION_CONTEXT context;
     NTSTATUS status;
-    PDEVICE_NODE deviceNode ;
-    PVOID biosInfo = NULL ;
+    PDEVICE_NODE deviceNode;
+    PVOID biosInfo = NULL;
     ULONG length;
     HANDLE handle;
-    PPNP_BIOS_DEVICE_NODE_LIST deviceList = NULL ;
+    PPNP_BIOS_DEVICE_NODE_LIST deviceList = NULL;
     PB_PARAMETERS biosParameters;
     PPNP_BIOS_DEVICE_NODE biosDevNode;
 
@@ -1240,7 +1143,8 @@ PnPBiosSetDeviceNodeDynamically(
     // First. get a handle to the device
     //
     status = IopDeviceObjectToDeviceInstance(DeviceObject, &handle, KEY_READ);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -1249,26 +1153,30 @@ PnPBiosSetDeviceNodeDynamically(
     // the '*'. To do so, we need to see the device ID. Luckily, if the above
     // call succeeded, so should this...
     //
-    deviceNode = (PDEVICE_NODE) DeviceObject->DeviceObjectExtension->DeviceNode;
-    status = STATUS_NO_SUCH_DEVICE ;
-    if (!deviceNode) {
-        goto SetDynaExit ;
+    deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
+    status = STATUS_NO_SUCH_DEVICE;
+    if (!deviceNode)
+    {
+        goto SetDynaExit;
     }
 
-    if (deviceNode->InstancePath.Length == 0) {
-        goto SetDynaExit ;
+    if (deviceNode->InstancePath.Length == 0)
+    {
+        goto SetDynaExit;
     }
 
-    if (deviceNode->InstancePath.Buffer[0] != L'*') {
-        goto SetDynaExit ;
+    if (deviceNode->InstancePath.Buffer[0] != L'*')
+    {
+        goto SetDynaExit;
     }
 
     //
     // Now get the BIOS data
     //
     status = PnPBiosGetBiosInfo(&biosInfo, &length);
-    if (!NT_SUCCESS( status )) {
-        goto SetDynaExit ;
+    if (!NT_SUCCESS(status))
+    {
+        goto SetDynaExit;
     }
 
     //
@@ -1279,11 +1187,12 @@ PnPBiosSetDeviceNodeDynamically(
     context.u.ExamineBiosDevice.BiosInfo = biosInfo;
     context.u.ExamineBiosDevice.BiosInfoLength = length;
     context.u.ExamineBiosDevice.DeviceList = &deviceList;
-    PnPBiosExamineBiosDeviceInstanceKey(handle, &deviceNode->InstancePath, &context) ;
+    PnPBiosExamineBiosDeviceInstanceKey(handle, &deviceNode->InstancePath, &context);
 
-    if (!deviceList) {
-        status = STATUS_UNSUCCESSFUL ;
-        goto SetDynaExit ;
+    if (!deviceList)
+    {
+        status = STATUS_UNSUCCESSFUL;
+        goto SetDynaExit;
     }
 
     //
@@ -1293,9 +1202,10 @@ PnPBiosSetDeviceNodeDynamically(
 
     biosDevNode = &deviceList->DeviceNode;
 
-    if (PipIsDevNodeProblem(deviceNode, CM_PROB_DISABLED)) {
+    if (PipIsDevNodeProblem(deviceNode, CM_PROB_DISABLED))
+    {
 
-       PpBiosResourcesSetToDisabled (((PUCHAR)biosDevNode) + sizeof(PNP_BIOS_DEVICE_NODE), &length);
+        PpBiosResourcesSetToDisabled(((PUCHAR)biosDevNode) + sizeof(PNP_BIOS_DEVICE_NODE), &length);
     }
 
     //
@@ -1304,8 +1214,8 @@ PnPBiosSetDeviceNodeDynamically(
     biosParameters.Function = PNP_BIOS_SET_DEVICE_NODE;
     biosParameters.u.SetDeviceNode.Node = biosDevNode->Node;
     biosParameters.u.SetDeviceNode.NodeBuffer = biosDevNode;
-    biosParameters.u.SetDeviceNode.Control = SET_CONFIGURATION_NOW ;
-    status = PbHardwareService (&biosParameters);
+    biosParameters.u.SetDeviceNode.Control = SET_CONFIGURATION_NOW;
+    status = PbHardwareService(&biosParameters);
 
     //
     // Restore old affinity for current thread.
@@ -1313,18 +1223,16 @@ PnPBiosSetDeviceNodeDynamically(
     KeRevertToUserAffinityThread();
 
 SetDynaExit:
-    if (biosInfo) {
-        ExFreePool(biosInfo) ;
+    if (biosInfo)
+    {
+        ExFreePool(biosInfo);
     }
     ZwClose(handle);
-    return status ;
+    return status;
 }
 
-
-VOID
-PnPBiosReserveLegacyDeviceResources (
-    IN PUCHAR biosResources
-    )
+
+VOID PnPBiosReserveLegacyDeviceResources(IN PUCHAR biosResources)
 
 /*++
 
@@ -1350,14 +1258,11 @@ Return Value:
 
     biosParameters.Function = PNP_BIOS_SET_OLD_ISA_RESOURCES;
     biosParameters.u.SetAllocatedResources.Resources = biosResources;
-    PbHardwareService (&biosParameters);            // Ignore the return status
-
+    PbHardwareService(&biosParameters); // Ignore the return status
 }
-
+
 NTSTATUS
-PbHardwareService (
-    IN PPB_PARAMETERS Parameters
-    )
+PbHardwareService(IN PPB_PARAMETERS Parameters)
 
 /*++
 
@@ -1376,7 +1281,7 @@ Return Value:
 
 --*/
 {
-    NTSTATUS status ;
+    NTSTATUS status;
     USHORT stackParameters[PB_MAXIMUM_STACK_SIZE / 2];
     ULONG i = 0;
     USHORT retCode;
@@ -1385,9 +1290,10 @@ Return Value:
     //
     // Did we initialize correctly?
     //
-    status = PbBiosInitialized ;
-    if (!NT_SUCCESS(status)) {
-        return status ;
+    status = PbBiosInitialized;
+    if (!NT_SUCCESS(status))
+    {
+        return status;
     }
 
     //
@@ -1398,24 +1304,21 @@ Return Value:
     stackParameters[i] = Parameters->Function;
     i++;
 
-    switch (Parameters->Function) {
+    switch (Parameters->Function)
+    {
     case PNP_BIOS_SET_DEVICE_NODE:
-         stackParameters[i++] = Parameters->u.SetDeviceNode.Node;
-         PbAddress32ToAddress16(Parameters->u.SetDeviceNode.NodeBuffer,
-                                &stackParameters[i],
-                                PbSelectors[0]);
-         i += 2;
-         stackParameters[i++] = Parameters->u.SetDeviceNode.Control;
-         stackParameters[i++] = PbBiosDataSelector;
-         break;
+        stackParameters[i++] = Parameters->u.SetDeviceNode.Node;
+        PbAddress32ToAddress16(Parameters->u.SetDeviceNode.NodeBuffer, &stackParameters[i], PbSelectors[0]);
+        i += 2;
+        stackParameters[i++] = Parameters->u.SetDeviceNode.Control;
+        stackParameters[i++] = PbBiosDataSelector;
+        break;
 
     case PNP_BIOS_SET_OLD_ISA_RESOURCES:
-         PbAddress32ToAddress16(Parameters->u.SetAllocatedResources.Resources,
-                                &stackParameters[i],
-                                PbSelectors[0]);
-         i += 2;
-         stackParameters[i++] = PbBiosDataSelector;
-         break;
+        PbAddress32ToAddress16(Parameters->u.SetAllocatedResources.Resources, &stackParameters[i], PbSelectors[0]);
+        i += 2;
+        stackParameters[i++] = PbBiosDataSelector;
+        break;
     default:
         return STATUS_NOT_IMPLEMENTED;
     }
@@ -1426,15 +1329,11 @@ Return Value:
     // Copy the parameters to stack and invoke Pnp Bios.
     //
 
-    ExAcquireSpinLock (&PbBiosSpinlock, &oldIrql);
+    ExAcquireSpinLock(&PbBiosSpinlock, &oldIrql);
 
-    retCode = PbCallPnpBiosWorker (
-                  PbBiosEntryPoint,
-                  PbBiosCodeSelector,
-                  stackParameters,
-                  (USHORT)(i * sizeof(USHORT)));
+    retCode = PbCallPnpBiosWorker(PbBiosEntryPoint, PbBiosCodeSelector, stackParameters, (USHORT)(i * sizeof(USHORT)));
 
-    ExReleaseSpinLock (&PbBiosSpinlock, oldIrql);
+    ExReleaseSpinLock(&PbBiosSpinlock, oldIrql);
 
     MmUnlockPagableImageSection(ExPageLockHandle);
 
@@ -1442,21 +1341,18 @@ Return Value:
     // Map Bios returned code to nt status code.
     //
 
-    if (retCode == 0) {
+    if (retCode == 0)
+    {
         return STATUS_SUCCESS;
-    } else {
-        IopDbgPrint((IOP_PNPBIOS_WARNING_LEVEL,
-                    "PnpBios: Bios API call failed. Returned Code = %x\n", retCode));
+    }
+    else
+    {
+        IopDbgPrint((IOP_PNPBIOS_WARNING_LEVEL, "PnpBios: Bios API call failed. Returned Code = %x\n", retCode));
         return STATUS_UNSUCCESSFUL;
     }
 }
-
-VOID
-PbAddress32ToAddress16 (
-    IN PVOID Address32,
-    IN PUSHORT Address16,
-    IN USHORT Selector
-    )
+
+VOID PbAddress32ToAddress16(IN PVOID Address32, IN PUSHORT Address16, IN USHORT Selector)
 
 /*++
 
@@ -1479,26 +1375,26 @@ Return Value:
 
 --*/
 {
-    KGDTENTRY  gdtEntry;
-    ULONG      baseAddr;
+    KGDTENTRY gdtEntry;
+    ULONG baseAddr;
 
     //
     // Map virtual address to selector:0 address
     //
 
-    gdtEntry.LimitLow                   = 0xFFFF;
-    gdtEntry.HighWord.Bytes.Flags1      = 0;
-    gdtEntry.HighWord.Bytes.Flags2      = 0;
-    gdtEntry.HighWord.Bits.Pres         = 1;
-    gdtEntry.HighWord.Bits.Dpl          = DPL_SYSTEM;
-    gdtEntry.HighWord.Bits.Granularity  = GRAN_BYTE;
-    gdtEntry.HighWord.Bits.Type         = 19;
-    gdtEntry.HighWord.Bits.Default_Big  = 1;
+    gdtEntry.LimitLow = 0xFFFF;
+    gdtEntry.HighWord.Bytes.Flags1 = 0;
+    gdtEntry.HighWord.Bytes.Flags2 = 0;
+    gdtEntry.HighWord.Bits.Pres = 1;
+    gdtEntry.HighWord.Bits.Dpl = DPL_SYSTEM;
+    gdtEntry.HighWord.Bits.Granularity = GRAN_BYTE;
+    gdtEntry.HighWord.Bits.Type = 19;
+    gdtEntry.HighWord.Bits.Default_Big = 1;
     baseAddr = (ULONG)Address32;
-    gdtEntry.BaseLow               = (USHORT) (baseAddr & 0xffff);
-    gdtEntry.HighWord.Bits.BaseMid = (UCHAR)  (baseAddr >> 16) & 0xff;
-    gdtEntry.HighWord.Bits.BaseHi  = (UCHAR)  (baseAddr >> 24) & 0xff;
-    KeI386SetGdtSelector (Selector, &gdtEntry);
+    gdtEntry.BaseLow = (USHORT)(baseAddr & 0xffff);
+    gdtEntry.HighWord.Bits.BaseMid = (UCHAR)(baseAddr >> 16) & 0xff;
+    gdtEntry.HighWord.Bits.BaseHi = (UCHAR)(baseAddr >> 24) & 0xff;
+    KeI386SetGdtSelector(Selector, &gdtEntry);
     *Address16 = 0;
     *(Address16 + 1) = Selector;
 }

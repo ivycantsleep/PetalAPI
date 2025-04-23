@@ -25,7 +25,8 @@ Revision History:
 
 --*/
 
-typedef enum {
+typedef enum
+{
 
     VF_DEVOBJ_PDO = 0,
     VF_DEVOBJ_BUS_FILTER,
@@ -37,41 +38,16 @@ typedef enum {
 
 } VF_DEVOBJ_TYPE, *PVF_DEVOBJ_TYPE;
 
-VOID
-VerifierIoAttachDeviceToDeviceStack(
-    IN PDEVICE_OBJECT NewDevice,
-    IN PDEVICE_OBJECT ExistingDevice
-    );
+VOID VerifierIoAttachDeviceToDeviceStack(IN PDEVICE_OBJECT NewDevice, IN PDEVICE_OBJECT ExistingDevice);
 
-VOID
-VerifierIoDetachDevice(
-    IN PDEVICE_OBJECT LowerDevice
-    );
+VOID VerifierIoDetachDevice(IN PDEVICE_OBJECT LowerDevice);
 
-VOID
-VerifierIoDeleteDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID VerifierIoDeleteDevice(IN PDEVICE_OBJECT DeviceObject);
 
-VOID
-VfDevObjPreAddDevice(
-    IN  PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN  PDRIVER_OBJECT      DriverObject,
-    IN  PDRIVER_ADD_DEVICE  AddDeviceFunction,
-    IN  VF_DEVOBJ_TYPE      DevObjType
-    );
+VOID VfDevObjPreAddDevice(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDRIVER_OBJECT DriverObject,
+                          IN PDRIVER_ADD_DEVICE AddDeviceFunction, IN VF_DEVOBJ_TYPE DevObjType);
 
-VOID
-VfDevObjPostAddDevice(
-    IN  PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN  PDRIVER_OBJECT      DriverObject,
-    IN  PDRIVER_ADD_DEVICE  AddDeviceFunction,
-    IN  VF_DEVOBJ_TYPE      DevObjType,
-    IN  NTSTATUS            Result
-    );
+VOID VfDevObjPostAddDevice(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDRIVER_OBJECT DriverObject,
+                           IN PDRIVER_ADD_DEVICE AddDeviceFunction, IN VF_DEVOBJ_TYPE DevObjType, IN NTSTATUS Result);
 
-VOID
-VfDevObjAdjustFdoForVerifierFilters(
-    IN OUT  PDEVICE_OBJECT *FunctionalDeviceObject
-    );
-
+VOID VfDevObjAdjustFdoForVerifierFilters(IN OUT PDEVICE_OBJECT *FunctionalDeviceObject);

@@ -32,31 +32,18 @@ Revision History:
 #pragma alloc_text(PAGEVRFY, VfPrintDumpIrp)
 #endif // ALLOC_PRAGMA
 
-VOID
-VfPrintDumpIrpStack(
-    IN PIO_STACK_LOCATION IrpSp
-    )
+VOID VfPrintDumpIrpStack(IN PIO_STACK_LOCATION IrpSp)
 {
     VfMajorDumpIrpStack(IrpSp);
     DbgPrint("\n");
 
-    DbgPrint(
-        "[ DevObj=%p, FileObject=%p, Parameters=%p %p %p %p ]\n",
-        IrpSp->DeviceObject,
-        IrpSp->FileObject,
-        IrpSp->Parameters.Others.Argument1,
-        IrpSp->Parameters.Others.Argument2,
-        IrpSp->Parameters.Others.Argument3,
-        IrpSp->Parameters.Others.Argument4
-        );
-
+    DbgPrint("[ DevObj=%p, FileObject=%p, Parameters=%p %p %p %p ]\n", IrpSp->DeviceObject, IrpSp->FileObject,
+             IrpSp->Parameters.Others.Argument1, IrpSp->Parameters.Others.Argument2, IrpSp->Parameters.Others.Argument3,
+             IrpSp->Parameters.Others.Argument4);
 }
 
 
-VOID
-VfPrintDumpIrp(
-    IN PIRP IrpToFlag
-    )
+VOID VfPrintDumpIrp(IN PIRP IrpToFlag)
 {
     PIO_STACK_LOCATION irpSpCur;
     PIO_STACK_LOCATION irpSpNxt;
@@ -64,51 +51,56 @@ VfPrintDumpIrp(
     //
     // First see if we can touch the IRP header
     //
-    if(!VfUtilIsMemoryRangeReadable(IrpToFlag, sizeof(IRP), VFMP_INSTANT)) {
+    if (!VfUtilIsMemoryRangeReadable(IrpToFlag, sizeof(IRP), VFMP_INSTANT))
+    {
         return;
     }
 
     //
     // OK, get the next two stack locations...
     //
-    irpSpNxt = IoGetNextIrpStackLocation( IrpToFlag );
-    irpSpCur = IoGetCurrentIrpStackLocation( IrpToFlag );
+    irpSpNxt = IoGetNextIrpStackLocation(IrpToFlag);
+    irpSpCur = IoGetCurrentIrpStackLocation(IrpToFlag);
 
-    if (VfUtilIsMemoryRangeReadable(irpSpNxt, 2*sizeof(IO_STACK_LOCATION), VFMP_INSTANT)) {
+    if (VfUtilIsMemoryRangeReadable(irpSpNxt, 2 * sizeof(IO_STACK_LOCATION), VFMP_INSTANT))
+    {
 
         //
         // Both are present, print the best one!
         //
-        if (irpSpNxt->MinorFunction == irpSpCur->MinorFunction) {
+        if (irpSpNxt->MinorFunction == irpSpCur->MinorFunction)
+        {
 
             //
             // Looks forwarded
             //
             VfPrintDumpIrpStack(irpSpNxt);
-
-        } else if (irpSpNxt->MinorFunction == 0) {
+        }
+        else if (irpSpNxt->MinorFunction == 0)
+        {
 
             //
             // Next location is probably currently zero'd
             //
             VfPrintDumpIrpStack(irpSpCur);
-
-        } else {
+        }
+        else
+        {
 
             DbgPrint("Next:    >");
             VfPrintDumpIrpStack(irpSpNxt);
             DbgPrint("Current:  ");
             VfPrintDumpIrpStack(irpSpCur);
         }
-
-    } else if (VfUtilIsMemoryRangeReadable(irpSpCur, sizeof(IO_STACK_LOCATION), VFMP_INSTANT)) {
+    }
+    else if (VfUtilIsMemoryRangeReadable(irpSpCur, sizeof(IO_STACK_LOCATION), VFMP_INSTANT))
+    {
 
         VfPrintDumpIrpStack(irpSpCur);
-
-    } else if (VfUtilIsMemoryRangeReadable(irpSpNxt, sizeof(IO_STACK_LOCATION), VFMP_INSTANT)) {
+    }
+    else if (VfUtilIsMemoryRangeReadable(irpSpNxt, sizeof(IO_STACK_LOCATION), VFMP_INSTANT))
+    {
 
         VfPrintDumpIrpStack(irpSpNxt);
     }
 }
-
-

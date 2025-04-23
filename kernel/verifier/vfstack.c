@@ -27,11 +27,7 @@ Environment:
 #pragma alloc_text(PAGEVRFY, VfStackSeedStack)
 #endif
 
-VOID
-FASTCALL
-VfStackSeedStack(
-    IN  ULONG   Seed
-    )
+VOID FASTCALL VfStackSeedStack(IN ULONG Seed)
 /*++
 
   Description:
@@ -59,34 +55,36 @@ VfStackSeedStack(
     PULONG StartingAddress;
     PULONG StackPointer;
 
-    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_SEEDSTACK)) {
+    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_SEEDSTACK))
+    {
         return;
     }
 
-    Thread = KeGetCurrentThread ();
-    StartingAddress = (PULONG) Thread->StackLimit;
+    Thread = KeGetCurrentThread();
+    StartingAddress = (PULONG)Thread->StackLimit;
 
     //
     // We are going below the stack pointer.  Make sure no interrupt can occur.
     //
 
-    KeRaiseIrql (HIGH_LEVEL, &oldIrql);
+    KeRaiseIrql(HIGH_LEVEL, &oldIrql);
 
     _asm {
         mov StackPointer, esp
     }
 
-    // 
+    //
     // Check the stack bounds and don't fill if some caller is whacking the
     // stack pointer.
     //
 
-    if ((StackPointer <= StartingAddress) || (StackPointer >= (PULONG)Thread->StackBase)) {
-        KeLowerIrql (oldIrql);
+    if ((StackPointer <= StartingAddress) || (StackPointer >= (PULONG)Thread->StackBase))
+    {
+        KeLowerIrql(oldIrql);
         return;
     }
 
-    // 
+    //
     // We use the return value 0xFFFFFFFF, as it is an illegal return value. We
     // are trying to catch people who don't initialize NTSTATUS, and it's also
     // a good pointer trap too.
@@ -96,13 +94,14 @@ VfStackSeedStack(
     // calculations.
     //
 
-    while (StartingAddress < StackPointer) {
+    while (StartingAddress < StackPointer)
+    {
         *StartingAddress = Seed;
         StartingAddress += 1;
     }
 
-    KeLowerIrql (oldIrql);
+    KeLowerIrql(oldIrql);
 #else
-    UNREFERENCED_PARAMETER (Seed);
+    UNREFERENCED_PARAMETER(Seed);
 #endif
 }

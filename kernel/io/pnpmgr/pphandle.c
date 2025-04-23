@@ -35,11 +35,8 @@ Revision History:
 
 
 BOOLEAN
-PpHandleEnumerateHandlesAgainstPdoStack(
-    IN  PDEVICE_OBJECT                  PhysicalDeviceObject,
-    IN  PHANDLE_ENUMERATION_CALLBACK    HandleEnumCallBack,
-    IN  PVOID                           Context
-    )
+PpHandleEnumerateHandlesAgainstPdoStack(IN PDEVICE_OBJECT PhysicalDeviceObject,
+                                        IN PHANDLE_ENUMERATION_CALLBACK HandleEnumCallBack, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -79,18 +76,16 @@ Return Value:
     currentDevObj = PhysicalDeviceObject;
     ObReferenceObject(currentDevObj);
 
-    do {
+    do
+    {
 
         //
         // Dump any handles opened directly against the specified device object
         //
-        stopEnum = PiHandleEnumerateHandlesAgainstDeviceObject(
-            currentDevObj,
-            HandleEnumCallBack,
-            Context
-            );
+        stopEnum = PiHandleEnumerateHandlesAgainstDeviceObject(currentDevObj, HandleEnumCallBack, Context);
 
-        if (stopEnum) {
+        if (stopEnum)
+        {
 
             ObDereferenceObject(currentDevObj);
             break;
@@ -104,10 +99,12 @@ Return Value:
         vpb = currentDevObj->Vpb;
         vpbObj = NULL;
 
-        if (vpb) {
+        if (vpb)
+        {
 
             vpbObj = vpb->DeviceObject;
-            if (vpbObj) {
+            if (vpbObj)
+            {
 
                 ObReferenceObject(vpbObj);
             }
@@ -118,20 +115,18 @@ Return Value:
         //
         // If we have a vpb object, dump any handles queued against it.
         //
-        if (vpbObj) {
+        if (vpbObj)
+        {
 
             vpbBottomObj = IoGetDeviceAttachmentBaseRef(vpbObj);
 
-            stopEnum = PiHandleEnumerateHandlesAgainstDeviceObject(
-                vpbBottomObj,
-                HandleEnumCallBack,
-                Context
-                );
+            stopEnum = PiHandleEnumerateHandlesAgainstDeviceObject(vpbBottomObj, HandleEnumCallBack, Context);
 
             ObDereferenceObject(vpbBottomObj);
             ObDereferenceObject(vpbObj);
 
-            if (stopEnum) {
+            if (stopEnum)
+            {
 
                 ObDereferenceObject(currentDevObj);
                 break;
@@ -145,7 +140,8 @@ Return Value:
 
         nextDevObj = currentDevObj->AttachedDevice;
 
-        if (nextDevObj) {
+        if (nextDevObj)
+        {
 
             ObReferenceObject(nextDevObj);
         }
@@ -169,11 +165,8 @@ Return Value:
 
 
 BOOLEAN
-PiHandleEnumerateHandlesAgainstDeviceObject(
-    IN  PDEVICE_OBJECT                  DeviceObject,
-    IN  PHANDLE_ENUMERATION_CALLBACK    HandleEnumCallBack,
-    IN  PVOID                           Context
-    )
+PiHandleEnumerateHandlesAgainstDeviceObject(IN PDEVICE_OBJECT DeviceObject,
+                                            IN PHANDLE_ENUMERATION_CALLBACK HandleEnumCallBack, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -202,29 +195,25 @@ Return Value:
     BOOLEAN stopEnum;
 
     stopEnum = FALSE;
-    for(process = PsGetNextProcess(NULL);
-        process != NULL;
-        process = PsGetNextProcess(process)) {
+    for (process = PsGetNextProcess(NULL); process != NULL; process = PsGetNextProcess(process))
+    {
 
         objectTable = ObReferenceProcessHandleTable(process);
 
-        if (objectTable) {
+        if (objectTable)
+        {
 
             handleEnumContext.DeviceObject = DeviceObject;
             handleEnumContext.Process = process;
             handleEnumContext.CallBack = HandleEnumCallBack;
             handleEnumContext.Context = Context;
 
-            stopEnum = ExEnumHandleTable(
-                objectTable,
-                PiHandleProcessWalkWorker,
-                (PVOID) &handleEnumContext,
-                NULL
-                );
+            stopEnum = ExEnumHandleTable(objectTable, PiHandleProcessWalkWorker, (PVOID)&handleEnumContext, NULL);
 
             ObDereferenceProcessHandleTable(process);
 
-            if (stopEnum) {
+            if (stopEnum)
+            {
 
                 PsQuitNextProcess(process);
                 break;
@@ -237,11 +226,8 @@ Return Value:
 
 
 BOOLEAN
-PiHandleProcessWalkWorker(
-    IN  PHANDLE_TABLE_ENTRY     ObjectTableEntry,
-    IN  HANDLE                  HandleId,
-    IN  PHANDLE_ENUM_CONTEXT    EnumContext
-    )
+PiHandleProcessWalkWorker(IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE HandleId,
+                          IN PHANDLE_ENUM_CONTEXT EnumContext)
 /*++
 
 Routine Description:
@@ -270,7 +256,8 @@ Return Value:
 
     objectHeader = OBJECT_FROM_EX_TABLE_ENTRY(ObjectTableEntry);
 
-    if (objectHeader->Type != IoFileObjectType) {
+    if (objectHeader->Type != IoFileObjectType)
+    {
 
         //
         // Not a file object
@@ -278,11 +265,12 @@ Return Value:
         return FALSE;
     }
 
-    fileObject = (PFILE_OBJECT) &objectHeader->Body;
+    fileObject = (PFILE_OBJECT)&objectHeader->Body;
 
-    deviceObject = IoGetBaseFileSystemDeviceObject( fileObject );
+    deviceObject = IoGetBaseFileSystemDeviceObject(fileObject);
 
-    if (deviceObject != EnumContext->DeviceObject) {
+    if (deviceObject != EnumContext->DeviceObject)
+    {
 
         //
         // Not our device object
@@ -293,15 +281,9 @@ Return Value:
     //
     // Found one, invoke the callback!
     //
-    return EnumContext->CallBack(
-        EnumContext->DeviceObject,
-        EnumContext->Process,
-        fileObject,
-        HandleId,
-        EnumContext->Context
-        );
+    return EnumContext->CallBack(EnumContext->DeviceObject, EnumContext->Process, fileObject, HandleId,
+                                 EnumContext->Context);
 }
 
 
 #endif // DBG
-

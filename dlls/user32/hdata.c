@@ -23,45 +23,37 @@
 * 11-1-91 sanfords Created.
 \***************************************************************************/
 
-FUNCLOG7(LOG_GENERAL, HDDEDATA, DUMMYCALLINGTYPE, DdeCreateDataHandle, DWORD, idInst, LPBYTE, pSrc, DWORD, cb, DWORD, cbOff, HSZ, hszItem, UINT, wFmt, UINT, afCmd)
-HDDEDATA DdeCreateDataHandle(
-DWORD idInst,
-LPBYTE pSrc,
-DWORD cb,
-DWORD cbOff,
-HSZ hszItem,
-UINT wFmt,
-UINT afCmd)
+FUNCLOG7(LOG_GENERAL, HDDEDATA, DUMMYCALLINGTYPE, DdeCreateDataHandle, DWORD, idInst, LPBYTE, pSrc, DWORD, cb, DWORD,
+         cbOff, HSZ, hszItem, UINT, wFmt, UINT, afCmd)
+HDDEDATA DdeCreateDataHandle(DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD cbOff, HSZ hszItem, UINT wFmt, UINT afCmd)
 {
     PCL_INSTANCE_INFO pcii;
     HDDEDATA hRet = 0;
 
-    if (cb == -1) {
+    if (cb == -1)
+    {
         RIPMSG0(RIP_ERROR, "DdeCreateDataHandle called with cb == -1\n");
         return NULL;
     }
 
     EnterDDECrit;
 
-    pcii = ValidateInstance((HANDLE)LongToHandle( idInst ));
-    if (pcii == NULL) {
+    pcii = ValidateInstance((HANDLE)LongToHandle(idInst));
+    if (pcii == NULL)
+    {
         BestSetLastDDEMLError(DMLERR_INVALIDPARAMETER);
         goto Exit;
     }
-    if (afCmd & ~HDATA_APPOWNED) {
+    if (afCmd & ~HDATA_APPOWNED)
+    {
         SetLastDDEMLError(pcii, DMLERR_INVALIDPARAMETER);
         goto Exit;
     }
 
     if (cb + cbOff < sizeof(DWORD) && pSrc == NULL &&
-            (wFmt == CF_METAFILEPICT ||
-             wFmt == CF_DSPMETAFILEPICT ||
-             wFmt == CF_DIB ||
-             wFmt == CF_BITMAP ||
-             wFmt == CF_DSPBITMAP ||
-             wFmt == CF_PALETTE ||
-             wFmt == CF_ENHMETAFILE ||
-             wFmt == CF_DSPENHMETAFILE)) {
+        (wFmt == CF_METAFILEPICT || wFmt == CF_DSPMETAFILEPICT || wFmt == CF_DIB || wFmt == CF_BITMAP ||
+         wFmt == CF_DSPBITMAP || wFmt == CF_PALETTE || wFmt == CF_ENHMETAFILE || wFmt == CF_DSPENHMETAFILE))
+    {
         /*
          * We have the nasty possibility of blowing up in FreeDDEData if we
          * don't initialize the data for formats with indirect data to 0.
@@ -70,11 +62,11 @@ UINT afCmd)
          */
         cb += 4;
     }
-    hRet = InternalCreateDataHandle(pcii, pSrc, cb, cbOff,
-            hszItem ? afCmd : (afCmd | HDATA_EXECUTE),
-            (WORD)((afCmd & HDATA_APPOWNED) ? 0 : DDE_FRELEASE), (WORD)wFmt);
+    hRet = InternalCreateDataHandle(pcii, pSrc, cb, cbOff, hszItem ? afCmd : (afCmd | HDATA_EXECUTE),
+                                    (WORD)((afCmd & HDATA_APPOWNED) ? 0 : DDE_FRELEASE), (WORD)wFmt);
 
-    if (!hRet) {
+    if (!hRet)
+    {
         SetLastDDEMLError(pcii, DMLERR_MEMORY_ERROR);
     }
 Exit:
@@ -93,14 +85,10 @@ Exit:
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-HDDEDATA InternalCreateDataHandle(
-PCL_INSTANCE_INFO pcii,
-LPBYTE pSrc,
-DWORD cb, // cb of actual data to initialize with
-DWORD cbOff, // offset from start of data
-DWORD flags,
-WORD wStatus,
-WORD wFmt)
+HDDEDATA InternalCreateDataHandle(PCL_INSTANCE_INFO pcii, LPBYTE pSrc,
+                                  DWORD cb,    // cb of actual data to initialize with
+                                  DWORD cbOff, // offset from start of data
+                                  DWORD flags, WORD wStatus, WORD wFmt)
 {
     PDDEMLDATA pdd;
     HDDEDATA hRet;
@@ -110,25 +98,33 @@ WORD wFmt)
     CheckDDECritIn;
 
     pdd = (PDDEMLDATA)DDEMLAlloc(sizeof(DDEMLDATA));
-    if (pdd == NULL) {
+    if (pdd == NULL)
+    {
         return (0);
     }
-    if (cb == -1) {
+    if (cb == -1)
+    {
         pdd->hDDE = (HANDLE)pSrc;
-    } else {
-        if (flags & HDATA_EXECUTE) {
+    }
+    else
+    {
+        if (flags & HDATA_EXECUTE)
+        {
             cbOff2 = 0;
-        } else {
+        }
+        else
+        {
             cbOff2 = sizeof(WORD) + sizeof(WORD); // skip wStatus, wFmt
         }
-        pdd->hDDE = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT,
-                cb + cbOff + cbOff2);
-        if (pdd->hDDE == NULL) {
+        pdd->hDDE = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, cb + cbOff + cbOff2);
+        if (pdd->hDDE == NULL)
+        {
             DDEMLFree(pdd);
             return (0);
         }
 
-        if (!(flags & HDATA_EXECUTE)) {
+        if (!(flags & HDATA_EXECUTE))
+        {
             PDDE_DATA pdde;
 
             USERGLOBALLOCK(pdd->hDDE, pdde);
@@ -139,14 +135,15 @@ WORD wFmt)
         }
     }
     pdd->flags = (WORD)flags;
-    hRet = (HDDEDATA)CreateHandle((ULONG_PTR)pdd, HTYPE_DATA_HANDLE,
-            InstFromHandle(pcii->hInstClient));
-    if (!hRet) {
+    hRet = (HDDEDATA)CreateHandle((ULONG_PTR)pdd, HTYPE_DATA_HANDLE, InstFromHandle(pcii->hInstClient));
+    if (!hRet)
+    {
         WOWGLOBALFREE(pdd->hDDE);
         DDEMLFree(pdd);
         return (0);
     }
-    if (cb != -1 && pSrc != NULL) {
+    if (cb != -1 && pSrc != NULL)
+    {
         USERGLOBALLOCK(pdd->hDDE, p);
         UserAssert(p);
         RtlCopyMemory(p + cbOff + cbOff2, pSrc, cb);
@@ -167,11 +164,7 @@ WORD wFmt)
 \***************************************************************************/
 
 FUNCLOG4(LOG_GENERAL, HDDEDATA, DUMMYCALLINGTYPE, DdeAddData, HDDEDATA, hData, LPBYTE, pSrc, DWORD, cb, DWORD, cbOff)
-HDDEDATA DdeAddData(
-HDDEDATA hData,
-LPBYTE pSrc,
-DWORD cb,
-DWORD cbOff)
+HDDEDATA DdeAddData(HDDEDATA hData, LPBYTE pSrc, DWORD cb, DWORD cbOff)
 {
     LPSTR pMem;
     PDDEMLDATA pdd;
@@ -181,36 +174,44 @@ DWORD cbOff)
     EnterDDECrit;
 
     pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData, HTYPE_DATA_HANDLE, HINST_ANY);
-    if (pdd == NULL) {
+    if (pdd == NULL)
+    {
         goto Exit;
     }
     pcii = PciiFromHandle((HANDLE)hData);
-    if (pcii == NULL) {
+    if (pcii == NULL)
+    {
         BestSetLastDDEMLError(DMLERR_INVALIDPARAMETER);
         goto Exit;
     }
-    if (!(pdd->flags & HDATA_EXECUTE)) {
+    if (!(pdd->flags & HDATA_EXECUTE))
+    {
         cbOff += 4;
     }
-    if (cb + cbOff > UserGlobalSize(pdd->hDDE)) {
-        pdd->hDDE = UserGlobalReAlloc(pdd->hDDE, cb + cbOff,
-                GMEM_MOVEABLE | GMEM_ZEROINIT);
+    if (cb + cbOff > UserGlobalSize(pdd->hDDE))
+    {
+        pdd->hDDE = UserGlobalReAlloc(pdd->hDDE, cb + cbOff, GMEM_MOVEABLE | GMEM_ZEROINIT);
     }
 
     USERGLOBALLOCK(pdd->hDDE, pMem);
 
-    if (pMem == NULL) {
+    if (pMem == NULL)
+    {
         SetLastDDEMLError(pcii, DMLERR_MEMORY_ERROR);
         goto Exit;
     }
 
     hRet = hData;
 
-    if (pSrc != NULL) {
-        try {
+    if (pSrc != NULL)
+    {
+        try
+        {
             RtlCopyMemory(pMem + cbOff, pSrc, cb);
             pdd->flags |= HDATA_INITIALIZED;
-        } except(W32ExceptionHandler(FALSE, RIP_WARNING)) {
+        }
+        except(W32ExceptionHandler(FALSE, RIP_WARNING))
+        {
             SetLastDDEMLError(pcii, DMLERR_INVALIDPARAMETER);
             hRet = 0;
         }
@@ -224,8 +225,6 @@ Exit:
 }
 
 
-
-
 /***************************************************************************\
 * DdeGetData (DDEML API)
 *
@@ -237,11 +236,7 @@ Exit:
 \***************************************************************************/
 
 FUNCLOG4(LOG_GENERAL, DWORD, DUMMYCALLINGTYPE, DdeGetData, HDDEDATA, hData, LPBYTE, pDst, DWORD, cbMax, DWORD, cbOff)
-DWORD DdeGetData(
-HDDEDATA hData,
-LPBYTE pDst,
-DWORD cbMax,
-DWORD cbOff)
+DWORD DdeGetData(HDDEDATA hData, LPBYTE pDst, DWORD cbMax, DWORD cbOff)
 {
     DWORD cbCopied = 0;
     DWORD cbSize;
@@ -250,41 +245,51 @@ DWORD cbOff)
 
     EnterDDECrit;
 
-    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData,
-            HTYPE_DATA_HANDLE, HINST_ANY);
-    if (pdd == NULL) {
+    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData, HTYPE_DATA_HANDLE, HINST_ANY);
+    if (pdd == NULL)
+    {
         BestSetLastDDEMLError(DMLERR_INVALIDPARAMETER);
         goto Exit;
     }
     pcii = PciiFromHandle((HANDLE)hData);
-    if (pcii == NULL) {
+    if (pcii == NULL)
+    {
         BestSetLastDDEMLError(DMLERR_INVALIDPARAMETER);
         goto Exit;
     }
-    if (!(pdd->flags & HDATA_EXECUTE)) {
+    if (!(pdd->flags & HDATA_EXECUTE))
+    {
         cbOff += 4;
     }
     cbSize = (DWORD)UserGlobalSize(pdd->hDDE);
-    if (cbOff >= cbSize) {
+    if (cbOff >= cbSize)
+    {
         SetLastDDEMLError(pcii, DMLERR_INVALIDPARAMETER);
         goto Exit;
     }
-    if (pDst == NULL) {
+    if (pDst == NULL)
+    {
         cbCopied = cbSize - cbOff;
         goto Exit;
-    } else {
+    }
+    else
+    {
         LPSTR pMem;
 
         cbCopied = min(cbMax, cbSize - cbOff);
         USERGLOBALLOCK(pdd->hDDE, pMem);
         UserAssert(pMem);
-        try {
+        try
+        {
             RtlCopyMemory(pDst, pMem + cbOff, cbCopied);
-        } except(W32ExceptionHandler(FALSE, RIP_WARNING)) {
+        }
+        except(W32ExceptionHandler(FALSE, RIP_WARNING))
+        {
             SetLastDDEMLError(pcii, DMLERR_INVALIDPARAMETER);
             cbCopied = 0;
         }
-        if (pMem != NULL) {
+        if (pMem != NULL)
+        {
             USERGLOBALUNLOCK(pdd->hDDE);
         }
     }
@@ -293,9 +298,6 @@ Exit:
     LeaveDDECrit;
     return (cbCopied);
 }
-
-
-
 
 
 /***************************************************************************\
@@ -309,9 +311,7 @@ Exit:
 \***************************************************************************/
 
 FUNCLOG2(LOG_GENERAL, LPBYTE, DUMMYCALLINGTYPE, DdeAccessData, HDDEDATA, hData, LPDWORD, pcbDataSize)
-LPBYTE DdeAccessData(
-HDDEDATA hData,
-LPDWORD pcbDataSize)
+LPBYTE DdeAccessData(HDDEDATA hData, LPDWORD pcbDataSize)
 {
     PCL_INSTANCE_INFO pcii;
     PDDEMLDATA pdd;
@@ -320,14 +320,15 @@ LPDWORD pcbDataSize)
 
     EnterDDECrit;
 
-    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData,
-            HTYPE_DATA_HANDLE, HINST_ANY);
-    if (pdd == NULL) {
+    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData, HTYPE_DATA_HANDLE, HINST_ANY);
+    if (pdd == NULL)
+    {
         goto Exit;
     }
     pcii = PciiFromHandle((HANDLE)hData);
     cbOff = pdd->flags & HDATA_EXECUTE ? 0 : 4;
-    if (pcbDataSize != NULL) {
+    if (pcbDataSize != NULL)
+    {
         *pcbDataSize = (DWORD)UserGlobalSize(pdd->hDDE) - cbOff;
     }
     USERGLOBALLOCK(pdd->hDDE, pRet);
@@ -338,8 +339,6 @@ Exit:
     LeaveDDECrit;
     return (pRet);
 }
-
-
 
 
 /***************************************************************************\
@@ -353,17 +352,16 @@ Exit:
 \***************************************************************************/
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, DdeUnaccessData, HDDEDATA, hData)
-BOOL DdeUnaccessData(
-HDDEDATA hData)
+BOOL DdeUnaccessData(HDDEDATA hData)
 {
     PDDEMLDATA pdd;
     BOOL fSuccess = FALSE;
 
     EnterDDECrit;
 
-    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData,
-            HTYPE_DATA_HANDLE, HINST_ANY);
-    if (pdd == NULL) {
+    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData, HTYPE_DATA_HANDLE, HINST_ANY);
+    if (pdd == NULL)
+    {
         goto Exit;
     }
     USERGLOBALUNLOCK(pdd->hDDE);
@@ -373,7 +371,6 @@ Exit:
     LeaveDDECrit;
     return (fSuccess);
 }
-
 
 
 /***************************************************************************\
@@ -387,20 +384,20 @@ Exit:
 \***************************************************************************/
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, DdeFreeDataHandle, HDDEDATA, hData)
-BOOL DdeFreeDataHandle(
-HDDEDATA hData)
+BOOL DdeFreeDataHandle(HDDEDATA hData)
 {
     PDDEMLDATA pdd;
     BOOL fSuccess = FALSE;
 
     EnterDDECrit;
 
-    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData,
-            HTYPE_DATA_HANDLE, HINST_ANY);
-    if (pdd == NULL) {
+    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData, HTYPE_DATA_HANDLE, HINST_ANY);
+    if (pdd == NULL)
+    {
         goto Exit;
     }
-    if (pdd->flags & HDATA_NOAPPFREE) {
+    if (pdd->flags & HDATA_NOAPPFREE)
+    {
         fSuccess = TRUE;
         goto Exit;
     }
@@ -413,8 +410,6 @@ Exit:
 }
 
 
-
-
 /***************************************************************************\
 * InternalFreeDataHandle
 *
@@ -425,24 +420,26 @@ Exit:
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL InternalFreeDataHandle(
-HDDEDATA hData,
-BOOL fIgnorefRelease)
+BOOL InternalFreeDataHandle(HDDEDATA hData, BOOL fIgnorefRelease)
 {
     PDDEMLDATA pdd;
 
     CheckDDECritIn;
 
-    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData,
-            HTYPE_DATA_HANDLE, HINST_ANY);
-    if (pdd == NULL) {
+    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData, HTYPE_DATA_HANDLE, HINST_ANY);
+    if (pdd == NULL)
+    {
         return (FALSE);
     }
-    if (pdd->flags & HDATA_EXECUTE) {
-        if (!(pdd->flags & HDATA_APPOWNED) || fIgnorefRelease) {
+    if (pdd->flags & HDATA_EXECUTE)
+    {
+        if (!(pdd->flags & HDATA_APPOWNED) || fIgnorefRelease)
+        {
             WOWGLOBALFREE(pdd->hDDE);
         }
-    } else {
+    }
+    else
+    {
         FreeDDEData(pdd->hDDE, fIgnorefRelease, TRUE);
     }
     DDEMLFree(pdd);
@@ -460,8 +457,7 @@ BOOL fIgnorefRelease)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ApplyFreeDataHandle(
-HANDLE hData)
+BOOL ApplyFreeDataHandle(HANDLE hData)
 {
     BOOL fRet;
 
@@ -469,7 +465,7 @@ HANDLE hData)
     EnterDDECrit;
     fRet = InternalFreeDataHandle((HDDEDATA)hData, FALSE);
     LeaveDDECrit;
-    return(fRet);
+    return (fRet);
 }
 
 
@@ -500,37 +496,42 @@ HANDLE hData)
 /*
  * WARNING: This is exported for NetDDE use - DO NOT CHANGE THE PARAMETERS!
  */
-VOID FreeDDEData(
-HANDLE hDDE,
-BOOL fIgnorefRelease,
-BOOL fFreeTruelyGlobalObjects)
+VOID FreeDDEData(HANDLE hDDE, BOOL fIgnorefRelease, BOOL fFreeTruelyGlobalObjects)
 {
     PDDE_DATA pdde;
     LPMETAFILEPICT pmfPict;
     DWORD cb;
 
     USERGLOBALLOCK(hDDE, pdde);
-    if (pdde == NULL) {
-        return ;
+    if (pdde == NULL)
+    {
+        return;
     }
 
-    if ((pdde->wStatus & DDE_FRELEASE) || fIgnorefRelease) {
+    if ((pdde->wStatus & DDE_FRELEASE) || fIgnorefRelease)
+    {
         cb = (DWORD)GlobalSize(hDDE);
         /*
          * Because there is the possibility that the data never got
          * initialized we need to do this in a try-except so we
          * behave nicely.
          */
-        switch (pdde->wFmt) {
+        switch (pdde->wFmt)
+        {
         case CF_BITMAP:
         case CF_DSPBITMAP:
         case CF_PALETTE:
-            if (cb >= sizeof(HANDLE)) {
-                if (fFreeTruelyGlobalObjects) {
-                    if (pdde->Data != 0) {
+            if (cb >= sizeof(HANDLE))
+            {
+                if (fFreeTruelyGlobalObjects)
+                {
+                    if (pdde->Data != 0)
+                    {
                         DeleteObject((HANDLE)pdde->Data);
                     }
-                } else {
+                }
+                else
+                {
                     /*
                      * !fFreeTruelyGlobalObject implies we are only freeing
                      * the Gdi proxy.  (another process may still have this
@@ -547,8 +548,10 @@ BOOL fFreeTruelyGlobalObjects)
             break;
 
         case CF_DIB:
-            if (cb >= sizeof(HANDLE)) {
-                if (pdde->Data != 0) {
+            if (cb >= sizeof(HANDLE))
+            {
+                if (pdde->Data != 0)
+                {
                     WOWGLOBALFREE((HANDLE)pdde->Data);
                 }
             }
@@ -556,11 +559,15 @@ BOOL fFreeTruelyGlobalObjects)
 
         case CF_METAFILEPICT:
         case CF_DSPMETAFILEPICT:
-            if (cb >= sizeof(HANDLE)) {
-                if (pdde->Data != 0) {
+            if (cb >= sizeof(HANDLE))
+            {
+                if (pdde->Data != 0)
+                {
                     USERGLOBALLOCK(pdde->Data, pmfPict);
-                    if (pmfPict != NULL) {
-                        if (GlobalSize((HANDLE)pdde->Data) >= sizeof(METAFILEPICT)) {
+                    if (pmfPict != NULL)
+                    {
+                        if (GlobalSize((HANDLE)pdde->Data) >= sizeof(METAFILEPICT))
+                        {
                             DeleteMetaFile(pmfPict->hMF);
                         }
                         USERGLOBALUNLOCK((HANDLE)pdde->Data);
@@ -572,8 +579,10 @@ BOOL fFreeTruelyGlobalObjects)
 
         case CF_ENHMETAFILE:
         case CF_DSPENHMETAFILE:
-            if (cb >= sizeof(HANDLE)) {
-                if (pdde->Data != 0) {
+            if (cb >= sizeof(HANDLE))
+            {
+                if (pdde->Data != 0)
+                {
                     DeleteEnhMetaFile((HANDLE)pdde->Data);
                 }
             }
@@ -581,38 +590,43 @@ BOOL fFreeTruelyGlobalObjects)
         }
         USERGLOBALUNLOCK(hDDE);
         WOWGLOBALFREE(hDDE);
-    } else {
+    }
+    else
+    {
         USERGLOBALUNLOCK(hDDE);
     }
 }
 
 
-
-HBITMAP CopyBitmap(
-HBITMAP hbm)
+HBITMAP CopyBitmap(HBITMAP hbm)
 {
     BITMAP bm;
     HBITMAP hbm2 = NULL, hbmOld1, hbmOld2;
     HDC hdc, hdcMem1, hdcMem2;
 
-    if (!GetObject(hbm, sizeof(BITMAP), &bm)) {
-        return(0);
+    if (!GetObject(hbm, sizeof(BITMAP), &bm))
+    {
+        return (0);
     }
-    hdc = NtUserGetDC(NULL);  // screen DC
-    if (!hdc) {
-        return(0);
+    hdc = NtUserGetDC(NULL); // screen DC
+    if (!hdc)
+    {
+        return (0);
     }
     hdcMem1 = CreateCompatibleDC(hdc);
-    if (!hdcMem1) {
+    if (!hdcMem1)
+    {
         goto Cleanup3;
     }
     hdcMem2 = CreateCompatibleDC(hdc);
-    if (!hdcMem2) {
+    if (!hdcMem2)
+    {
         goto Cleanup2;
     }
     hbmOld1 = SelectObject(hdcMem1, hbm);
     hbm2 = CreateCompatibleBitmap(hdcMem1, bm.bmWidth, bm.bmHeight);
-    if (!hbm2) {
+    if (!hbm2)
+    {
         goto Cleanup1;
     }
     hbmOld2 = SelectObject(hdcMem2, hbm2);
@@ -625,41 +639,43 @@ Cleanup2:
     DeleteDC(hdcMem1);
 Cleanup3:
     NtUserReleaseDC(NULL, hdc);
-    return(hbm2);
+    return (hbm2);
 }
 
 
-HPALETTE CopyPalette(
-HPALETTE hpal)
+HPALETTE CopyPalette(HPALETTE hpal)
 {
     int cPalEntries;
     LOGPALETTE *plp;
 
-    if (!GetObject(hpal, sizeof(int), &cPalEntries)) {
-        return(0);
+    if (!GetObject(hpal, sizeof(int), &cPalEntries))
+    {
+        return (0);
     }
-    plp = (LOGPALETTE *)DDEMLAlloc(sizeof(LOGPALETTE) +
-            (cPalEntries - 1) * sizeof(PALETTEENTRY));
-    if (!plp) {
-        return(0);
+    plp = (LOGPALETTE *)DDEMLAlloc(sizeof(LOGPALETTE) + (cPalEntries - 1) * sizeof(PALETTEENTRY));
+    if (!plp)
+    {
+        return (0);
     }
-    if (!GetPaletteEntries(hpal, 0, cPalEntries, plp->palPalEntry)) {
+    if (!GetPaletteEntries(hpal, 0, cPalEntries, plp->palPalEntry))
+    {
         DDEMLFree(plp);
-        return(0);
+        return (0);
     }
     plp->palVersion = 0x300;
     plp->palNumEntries = (WORD)cPalEntries;
     hpal = CreatePalette(plp);
-    if (hpal != NULL) {
-        if (!SetPaletteEntries(hpal, 0, cPalEntries, plp->palPalEntry)) {
+    if (hpal != NULL)
+    {
+        if (!SetPaletteEntries(hpal, 0, cPalEntries, plp->palPalEntry))
+        {
             DeleteObject(hpal);
             hpal = NULL;
         }
     }
     DDEMLFree(plp);
-    return(hpal);
+    return (hpal);
 }
-
 
 
 /***************************************************************************\
@@ -671,22 +687,21 @@ HPALETTE hpal)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-HANDLE CopyDDEData(
-HANDLE hDDE,
-BOOL fIsExecute)
+HANDLE CopyDDEData(HANDLE hDDE, BOOL fIsExecute)
 {
     HANDLE hDDENew;
     PDDE_DATA pdde, pddeNew;
     LPMETAFILEPICT pmfPict;
     HANDLE hmfPict;
 
-    hDDENew = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE,
-            UserGlobalSize(hDDE));
-    if (!hDDENew) {
+    hDDENew = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, UserGlobalSize(hDDE));
+    if (!hDDENew)
+    {
         return (0);
     }
     USERGLOBALLOCK(hDDE, pdde);
-    if (pdde == NULL) {
+    if (pdde == NULL)
+    {
         UserGlobalFree(hDDENew);
         return (0);
     }
@@ -694,8 +709,10 @@ BOOL fIsExecute)
     UserAssert(pddeNew);
     RtlCopyMemory(pddeNew, pdde, UserGlobalSize(hDDE));
 
-    if (!fIsExecute) {
-        switch (pdde->wFmt) {
+    if (!fIsExecute)
+    {
+        switch (pdde->wFmt)
+        {
         case CF_BITMAP:
         case CF_DSPBITMAP:
             pddeNew->Data = (KERNEL_PVOID)CopyBitmap((HBITMAP)pdde->Data);
@@ -713,7 +730,8 @@ BOOL fIsExecute)
         case CF_DSPMETAFILEPICT:
             hmfPict = CopyDDEData((HANDLE)pdde->Data, TRUE);
             USERGLOBALLOCK(hmfPict, pmfPict);
-            if (pmfPict == NULL) {
+            if (pmfPict == NULL)
+            {
                 WOWGLOBALFREE(hmfPict);
                 USERGLOBALUNLOCK(hDDENew);
                 WOWGLOBALFREE(hDDENew);

@@ -25,11 +25,7 @@ Revision History:
 #include "ntrtlp.h"
 
 LARGE_INTEGER
-RtlLargeIntegerDivide (
-    IN LARGE_INTEGER Dividend,
-    IN LARGE_INTEGER Divisor,
-    OUT PLARGE_INTEGER Remainder OPTIONAL
-    )
+RtlLargeIntegerDivide(IN LARGE_INTEGER Dividend, IN LARGE_INTEGER Divisor, OUT PLARGE_INTEGER Remainder OPTIONAL)
 
 /*++
 
@@ -56,7 +52,7 @@ Return Value:
 {
 
     ULONG Index = 64;
-    LARGE_INTEGER Partial = {0, 0};
+    LARGE_INTEGER Partial = { 0, 0 };
     LARGE_INTEGER Quotient;
 
 #ifndef BLDR_KERNEL_RUNTIME
@@ -64,8 +60,9 @@ Return Value:
     // Check for divide by zero
     //
 
-    if (!(Divisor.LowPart | Divisor.HighPart)) {
-        RtlRaiseStatus (STATUS_INTEGER_DIVIDE_BY_ZERO);
+    if (!(Divisor.LowPart | Divisor.HighPart))
+    {
+        RtlRaiseStatus(STATUS_INTEGER_DIVIDE_BY_ZERO);
     }
 #endif
 
@@ -74,7 +71,8 @@ Return Value:
     //
 
     Quotient = Dividend;
-    do {
+    do
+    {
 
         //
         // Shift the next dividend bit into the parital remainder and shift
@@ -93,12 +91,13 @@ Return Value:
         //
 
         if (((ULONG)Partial.HighPart > (ULONG)Divisor.HighPart) ||
-            ((Partial.HighPart == Divisor.HighPart) &&
-            (Partial.LowPart >= Divisor.LowPart))) {
+            ((Partial.HighPart == Divisor.HighPart) && (Partial.LowPart >= Divisor.LowPart)))
+        {
 
             Quotient.LowPart |= 1;
             Partial.HighPart -= Divisor.HighPart;
-            if (Partial.LowPart < Divisor.LowPart) {
+            if (Partial.LowPart < Divisor.LowPart)
+            {
                 Partial.HighPart -= 1;
             }
 
@@ -112,7 +111,8 @@ Return Value:
     // If the remainder is requested, then return the 64-bit remainder.
     //
 
-    if (ARGUMENT_PRESENT(Remainder)) {
+    if (ARGUMENT_PRESENT(Remainder))
+    {
         *Remainder = Partial;
     }
 

@@ -23,33 +23,20 @@ Revision History:
 #include "mi.h"
 
 PSUBSECTION
-MiGetSystemCacheSubsection (
-    IN PVOID BaseAddress,
-    OUT PMMPTE *ProtoPte
-    );
+MiGetSystemCacheSubsection(IN PVOID BaseAddress, OUT PMMPTE *ProtoPte);
 
-VOID
-MiFlushDirtyBitsToPfn (
-    IN PMMPTE PointerPte,
-    IN PMMPTE LastPte,
-    IN PEPROCESS Process,
-    IN BOOLEAN SystemCache
-    );
+VOID MiFlushDirtyBitsToPfn(IN PMMPTE PointerPte, IN PMMPTE LastPte, IN PEPROCESS Process, IN BOOLEAN SystemCache);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtFlushVirtualMemory)
-#pragma alloc_text(PAGE,MmFlushVirtualMemory)
+#pragma alloc_text(PAGE, NtFlushVirtualMemory)
+#pragma alloc_text(PAGE, MmFlushVirtualMemory)
 #endif
 
 extern POBJECT_TYPE IoFileObjectType;
-
+
 NTSTATUS
-NtFlushVirtualMemory (
-    IN HANDLE ProcessHandle,
-    IN OUT PVOID *BaseAddress,
-    IN OUT PSIZE_T RegionSize,
-    OUT PIO_STATUS_BLOCK IoStatus
-    )
+NtFlushVirtualMemory(IN HANDLE ProcessHandle, IN OUT PVOID *BaseAddress, IN OUT PSIZE_T RegionSize,
+                     OUT PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -98,18 +85,20 @@ Return Value:
     PAGED_CODE();
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Establish an exception handler, probe the specified addresses
         // for write access and capture the initial values.
         //
 
-        try {
+        try
+        {
 
-            ProbeForWritePointer (BaseAddress);
-            ProbeForWriteUlong_ptr (RegionSize);
-            ProbeForWriteIoStatus (IoStatus);
+            ProbeForWritePointer(BaseAddress);
+            ProbeForWriteUlong_ptr(RegionSize);
+            ProbeForWriteIoStatus(IoStatus);
 
             //
             // Capture the base address.
@@ -122,8 +111,9 @@ Return Value:
             //
 
             CapturedRegionSize = *RegionSize;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -133,9 +123,9 @@ Return Value:
 
             return GetExceptionCode();
         }
-
     }
-    else {
+    else
+    {
 
         //
         // Capture the base address.
@@ -148,7 +138,6 @@ Return Value:
         //
 
         CapturedRegionSize = *RegionSize;
-
     }
 
     //
@@ -156,7 +145,8 @@ Return Value:
     // within the user part of the virtual address space.
     //
 
-    if (CapturedBase > MM_HIGHEST_USER_ADDRESS) {
+    if (CapturedBase > MM_HIGHEST_USER_ADDRESS)
+    {
 
         //
         // Invalid base address.
@@ -165,57 +155,48 @@ Return Value:
         return STATUS_INVALID_PARAMETER_2;
     }
 
-    if (((ULONG_PTR)MM_HIGHEST_USER_ADDRESS - (ULONG_PTR)CapturedBase) <
-                                                        CapturedRegionSize) {
+    if (((ULONG_PTR)MM_HIGHEST_USER_ADDRESS - (ULONG_PTR)CapturedBase) < CapturedRegionSize)
+    {
 
         //
         // Invalid region size;
         //
 
         return STATUS_INVALID_PARAMETER_2;
-
     }
 
-    Status = ObReferenceObjectByHandle ( ProcessHandle,
-                                         PROCESS_VM_OPERATION,
-                                         PsProcessType,
-                                         PreviousMode,
-                                         (PVOID *)&Process,
-                                         NULL );
-    if (!NT_SUCCESS(Status)) {
+    Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_OPERATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    Status = MmFlushVirtualMemory (Process,
-                                   &CapturedBase,
-                                   &CapturedRegionSize,
-                                   &TemporaryIoStatus);
+    Status = MmFlushVirtualMemory(Process, &CapturedBase, &CapturedRegionSize, &TemporaryIoStatus);
 
-    ObDereferenceObject (Process);
+    ObDereferenceObject(Process);
 
     //
     // Establish an exception handler and write the size and base
     // address.
     //
 
-    try {
+    try
+    {
 
         *RegionSize = CapturedRegionSize;
-        *BaseAddress = PAGE_ALIGN (CapturedBase);
+        *BaseAddress = PAGE_ALIGN(CapturedBase);
         *IoStatus = TemporaryIoStatus;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
     }
 
     return Status;
-
 }
 
-
-VOID
-MiFlushAcquire (
-    IN PCONTROL_AREA ControlArea
-    )
+
+VOID MiFlushAcquire(IN PCONTROL_AREA ControlArea)
 
 /*++
 
@@ -238,19 +219,16 @@ Return Value:
 {
     KIRQL OldIrql;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    ASSERT ((LONG)ControlArea->NumberOfMappedViews >= 1);
+    ASSERT((LONG)ControlArea->NumberOfMappedViews >= 1);
     ControlArea->NumberOfMappedViews += 1;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 }
 
-
-VOID
-MiFlushRelease (
-    IN PCONTROL_AREA ControlArea
-    )
+
+VOID MiFlushRelease(IN PCONTROL_AREA ControlArea)
 
 /*++
 
@@ -272,9 +250,9 @@ Return Value:
 {
     KIRQL OldIrql;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    ASSERT ((LONG)ControlArea->NumberOfMappedViews >= 1);
+    ASSERT((LONG)ControlArea->NumberOfMappedViews >= 1);
     ControlArea->NumberOfMappedViews -= 1;
 
     //
@@ -282,17 +260,13 @@ Return Value:
     // will release the PFN lock.
     //
 
-    MiCheckControlArea (ControlArea, NULL, OldIrql);
+    MiCheckControlArea(ControlArea, NULL, OldIrql);
 }
 
-
+
 NTSTATUS
-MmFlushVirtualMemory (
-    IN PEPROCESS Process,
-    IN OUT PVOID *BaseAddress,
-    IN OUT PSIZE_T RegionSize,
-    OUT PIO_STATUS_BLOCK IoStatus
-    )
+MmFlushVirtualMemory(IN PEPROCESS Process, IN OUT PVOID *BaseAddress, IN OUT PSIZE_T RegionSize,
+                     OUT PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -367,11 +341,11 @@ Return Value:
     // working set.
     //
 
-    EndingAddress = (PVOID)(((ULONG_PTR)*BaseAddress + *RegionSize - 1) |
-                                                            (PAGE_SIZE - 1));
-    *BaseAddress = PAGE_ALIGN (*BaseAddress);
+    EndingAddress = (PVOID)(((ULONG_PTR)*BaseAddress + *RegionSize - 1) | (PAGE_SIZE - 1));
+    *BaseAddress = PAGE_ALIGN(*BaseAddress);
 
-    if (MI_IS_SESSION_ADDRESS (*BaseAddress)) {
+    if (MI_IS_SESSION_ADDRESS(*BaseAddress))
+    {
 
         //
         // Nothing in session space needs flushing.
@@ -380,9 +354,10 @@ Return Value:
         return STATUS_NOT_MAPPED_VIEW;
     }
 
-    CurrentProcess = PsGetCurrentProcess ();
+    CurrentProcess = PsGetCurrentProcess();
 
-    if (!MI_IS_SYSTEM_CACHE_ADDRESS(*BaseAddress)) {
+    if (!MI_IS_SYSTEM_CACHE_ADDRESS(*BaseAddress))
+    {
 
         SystemCache = FALSE;
 
@@ -390,25 +365,28 @@ Return Value:
         // Attach to the specified process.
         //
 
-        if (CurrentProcess != Process) {
-            KeStackAttachProcess (&Process->Pcb, &ApcState);
+        if (CurrentProcess != Process)
+        {
+            KeStackAttachProcess(&Process->Pcb, &ApcState);
             Attached = TRUE;
         }
 
-        LOCK_ADDRESS_SPACE (Process);
+        LOCK_ADDRESS_SPACE(Process);
 
         //
         // Make sure the address space was not deleted, if so, return an error.
         //
 
-        if (Process->Flags & PS_PROCESS_FLAGS_VM_DELETED) {
+        if (Process->Flags & PS_PROCESS_FLAGS_VM_DELETED)
+        {
             Status = STATUS_PROCESS_IS_TERMINATING;
             goto ErrorReturn;
         }
 
-        Vad = MiLocateAddress (*BaseAddress);
+        Vad = MiLocateAddress(*BaseAddress);
 
-        if (Vad == NULL) {
+        if (Vad == NULL)
+        {
 
             //
             // No Virtual Address Descriptor located for Base Address.
@@ -418,16 +396,18 @@ Return Value:
             goto ErrorReturn;
         }
 
-        if (*RegionSize == 0) {
-            EndingAddress = MI_VPN_TO_VA_ENDING (Vad->EndingVpn);
+        if (*RegionSize == 0)
+        {
+            EndingAddress = MI_VPN_TO_VA_ENDING(Vad->EndingVpn);
             EntireRestOfVad = TRUE;
         }
-        else {
+        else
+        {
             EntireRestOfVad = FALSE;
         }
 
-        if ((Vad->u.VadFlags.PrivateMemory == 1) ||
-            (MI_VA_TO_VPN (EndingAddress) > Vad->EndingVpn)) {
+        if ((Vad->u.VadFlags.PrivateMemory == 1) || (MI_VA_TO_VPN(EndingAddress) > Vad->EndingVpn))
+        {
 
             //
             // This virtual address descriptor does not refer to a Segment
@@ -444,8 +424,8 @@ Return Value:
 
         ControlArea = Vad->ControlArea;
 
-        if ((ControlArea->FilePointer == NULL) ||
-             (Vad->u.VadFlags.ImageMap == 1)) {
+        if ((ControlArea->FilePointer == NULL) || (Vad->u.VadFlags.ImageMap == 1))
+        {
 
             //
             // This virtual address descriptor does not refer to a Segment
@@ -456,9 +436,10 @@ Return Value:
             goto ErrorReturn;
         }
 
-        LOCK_WS_UNSAFE (Process);
+        LOCK_WS_UNSAFE(Process);
     }
-    else {
+    else
+    {
 
         //
         // Initializing Vad, ControlArea and EntireRestOfVad is not needed for
@@ -472,52 +453,57 @@ Return Value:
 
         SystemCache = TRUE;
         Process = CurrentProcess;
-        LOCK_WS (Process);
+        LOCK_WS(Process);
     }
 
-    PointerPxe = MiGetPxeAddress (*BaseAddress);
-    PointerPpe = MiGetPpeAddress (*BaseAddress);
-    PointerPde = MiGetPdeAddress (*BaseAddress);
-    PointerPte = MiGetPteAddress (*BaseAddress);
-    LastPte = MiGetPteAddress (EndingAddress);
+    PointerPxe = MiGetPxeAddress(*BaseAddress);
+    PointerPpe = MiGetPpeAddress(*BaseAddress);
+    PointerPde = MiGetPdeAddress(*BaseAddress);
+    PointerPte = MiGetPteAddress(*BaseAddress);
+    LastPte = MiGetPteAddress(EndingAddress);
     *RegionSize = (PCHAR)EndingAddress - (PCHAR)*BaseAddress + 1;
 
 retry:
 
-    while (!MiDoesPxeExistAndMakeValid (PointerPxe, Process, FALSE, &Waited)) {
+    while (!MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited))
+    {
 
         //
         // This page directory parent entry is empty, go to the next one.
         //
 
         PointerPxe += 1;
-        PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-        PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-        Va = MiGetVirtualAddressMappedByPte (PointerPte);
+        PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+        PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+        Va = MiGetVirtualAddressMappedByPte(PointerPte);
 
-        if (PointerPte > LastPte) {
+        if (PointerPte > LastPte)
+        {
             break;
         }
     }
 
-    while (!MiDoesPpeExistAndMakeValid (PointerPpe, Process, FALSE, &Waited)) {
+    while (!MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited))
+    {
 
         //
         // This page directory parent entry is empty, go to the next one.
         //
 
         PointerPpe += 1;
-        PointerPxe = MiGetPteAddress (PointerPpe);
-        PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-        Va = MiGetVirtualAddressMappedByPte (PointerPte);
+        PointerPxe = MiGetPteAddress(PointerPpe);
+        PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+        Va = MiGetVirtualAddressMappedByPte(PointerPte);
 
-        if (PointerPte > LastPte) {
+        if (PointerPte > LastPte)
+        {
             break;
         }
 #if (_MI_PAGING_LEVELS >= 4)
-        if (MiIsPteOnPdeBoundary (PointerPpe)) {
+        if (MiIsPteOnPdeBoundary(PointerPpe))
+        {
             goto retry;
         }
 #endif
@@ -525,8 +511,10 @@ retry:
 
     Waited = 0;
 
-    if (PointerPte <= LastPte) {
-        while (!MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited)) {
+    if (PointerPte <= LastPte)
+    {
+        while (!MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited))
+        {
 
             //
             // No page table page exists for this address.
@@ -534,24 +522,27 @@ retry:
 
             PointerPde += 1;
 
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
-            if (PointerPte > LastPte) {
+            if (PointerPte > LastPte)
+            {
                 break;
             }
 
 #if (_MI_PAGING_LEVELS >= 3)
-            if (MiIsPteOnPdeBoundary (PointerPde)) {
+            if (MiIsPteOnPdeBoundary(PointerPde))
+            {
 
-                if (MiIsPteOnPpeBoundary (PointerPde)) {
-                    PointerPxe = MiGetPdeAddress (PointerPde);
+                if (MiIsPteOnPpeBoundary(PointerPde))
+                {
+                    PointerPxe = MiGetPdeAddress(PointerPde);
                 }
-                PointerPpe = MiGetPteAddress (PointerPde);
+                PointerPpe = MiGetPteAddress(PointerPde);
                 goto retry;
             }
 #endif
 
-            Va = MiGetVirtualAddressMappedByPte (PointerPte);
+            Va = MiGetVirtualAddressMappedByPte(PointerPte);
         }
 
         //
@@ -559,74 +550,75 @@ retry:
         // released and reacquired we must retry the operation.
         //
 
-        if ((PointerPte <= LastPte) && (Waited != 0)) {
+        if ((PointerPte <= LastPte) && (Waited != 0))
+        {
             goto retry;
         }
     }
 
-    MiFlushDirtyBitsToPfn (PointerPte, LastPte, Process, SystemCache);
+    MiFlushDirtyBitsToPfn(PointerPte, LastPte, Process, SystemCache);
 
-    if (SystemCache) {
+    if (SystemCache)
+    {
 
         //
         // No VADs exist for the system cache.
         //
 
-        UNLOCK_WS (Process);
+        UNLOCK_WS(Process);
 
-        Subsection = MiGetSystemCacheSubsection (*BaseAddress, &PointerPte);
+        Subsection = MiGetSystemCacheSubsection(*BaseAddress, &PointerPte);
 
-        LastSubsection = MiGetSystemCacheSubsection (EndingAddress, &FinalPte);
+        LastSubsection = MiGetSystemCacheSubsection(EndingAddress, &FinalPte);
 
         //
         // Flush the PTEs from the specified section.
         //
 
-        Status = MiFlushSectionInternal (PointerPte,
-                                         FinalPte,
-                                         Subsection,
-                                         LastSubsection,
-                                         FALSE,
-                                         TRUE,
-                                         IoStatus);
+        Status = MiFlushSectionInternal(PointerPte, FinalPte, Subsection, LastSubsection, FALSE, TRUE, IoStatus);
     }
-    else {
+    else
+    {
 
         //
         // Protect against the section being prematurely deleted.
         //
 
-        MiFlushAcquire (ControlArea);
+        MiFlushAcquire(ControlArea);
 
-        PointerPte = MiGetProtoPteAddress (Vad, MI_VA_TO_VPN (*BaseAddress));
-        Subsection = MiLocateSubsection (Vad, MI_VA_TO_VPN(*BaseAddress));
-        LastSubsection = MiLocateSubsection (Vad, MI_VA_TO_VPN(EndingAddress));
+        PointerPte = MiGetProtoPteAddress(Vad, MI_VA_TO_VPN(*BaseAddress));
+        Subsection = MiLocateSubsection(Vad, MI_VA_TO_VPN(*BaseAddress));
+        LastSubsection = MiLocateSubsection(Vad, MI_VA_TO_VPN(EndingAddress));
 
         //
-        // The last subsection is NULL if the section is not fully 
+        // The last subsection is NULL if the section is not fully
         // committed.  Only allow the flush if the caller said do the whole
         // thing, otherwise it's an error.
         //
 
-        if (LastSubsection == NULL) {
+        if (LastSubsection == NULL)
+        {
 
-            if (EntireRestOfVad == FALSE) {
+            if (EntireRestOfVad == FALSE)
+            {
 
                 //
                 // Caller can only specify the range that is committed or zero
                 // to indicate the entire range.
                 //
 
-                UNLOCK_WS_AND_ADDRESS_SPACE (Process);
-                if (Attached == TRUE) {
-                    KeUnstackDetachProcess (&ApcState);
+                UNLOCK_WS_AND_ADDRESS_SPACE(Process);
+                if (Attached == TRUE)
+                {
+                    KeUnstackDetachProcess(&ApcState);
                 }
-                MiFlushRelease (ControlArea);
+                MiFlushRelease(ControlArea);
                 return STATUS_NOT_MAPPED_VIEW;
             }
 
             LastSubsection = Subsection;
-            while (LastSubsection->NextSubsection) {
+            while (LastSubsection->NextSubsection)
+            {
                 LastSubsection = LastSubsection->NextSubsection;
             }
 
@@ -639,17 +631,19 @@ retry:
             // performance and pagability.
             //
 
-            KeMemoryBarrier ();
+            KeMemoryBarrier();
 
             FinalPte = LastSubsection->SubsectionBase + LastSubsection->PtesInSubsection - 1;
         }
-        else {
-            FinalPte = MiGetProtoPteAddress (Vad, MI_VA_TO_VPN (EndingAddress));
+        else
+        {
+            FinalPte = MiGetProtoPteAddress(Vad, MI_VA_TO_VPN(EndingAddress));
         }
 
-        UNLOCK_WS_AND_ADDRESS_SPACE (Process);
-        if (Attached == TRUE) {
-            KeUnstackDetachProcess (&ApcState);
+        UNLOCK_WS_AND_ADDRESS_SPACE(Process);
+        if (Attached == TRUE)
+        {
+            KeUnstackDetachProcess(&ApcState);
         }
 
         //
@@ -658,11 +652,13 @@ retry:
 
         ConsecutiveFileLockFailures = 0;
 
-        do {
+        do
+        {
 
-            Status = FsRtlAcquireFileForCcFlushEx (ControlArea->FilePointer);
+            Status = FsRtlAcquireFileForCcFlushEx(ControlArea->FilePointer);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 break;
             }
 
@@ -670,60 +666,50 @@ retry:
             // Flush the PTEs from the specified section.
             //
 
-            Status = MiFlushSectionInternal (PointerPte,
-                                             FinalPte,
-                                             Subsection,
-                                             LastSubsection,
-                                             TRUE,
-                                             TRUE,
-                                             IoStatus);
+            Status = MiFlushSectionInternal(PointerPte, FinalPte, Subsection, LastSubsection, TRUE, TRUE, IoStatus);
 
             //
             // Release the file we acquired.
             //
 
-            FsRtlReleaseFileForCcFlush (ControlArea->FilePointer);
+            FsRtlReleaseFileForCcFlush(ControlArea->FilePointer);
 
             //
             // Only try the request more than once if the filesystem told us
             // it had a deadlock.
             //
 
-            if (Status != STATUS_FILE_LOCK_CONFLICT) {
+            if (Status != STATUS_FILE_LOCK_CONFLICT)
+            {
                 break;
             }
 
             ConsecutiveFileLockFailures += 1;
-            KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
 
         } while (ConsecutiveFileLockFailures < 5);
 
-        MiFlushRelease (ControlArea);
+        MiFlushRelease(ControlArea);
     }
 
     return Status;
 
 ErrorReturn:
 
-    ASSERT (SystemCache == FALSE);
+    ASSERT(SystemCache == FALSE);
 
-    UNLOCK_ADDRESS_SPACE (Process);
+    UNLOCK_ADDRESS_SPACE(Process);
 
-    if (Attached == TRUE) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
     }
     return Status;
-
 }
-
+
 NTSTATUS
-MmFlushSection (
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointer,
-    IN PLARGE_INTEGER Offset,
-    IN SIZE_T RegionSize,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN ULONG AcquireFile
-    )
+MmFlushSection(IN PSECTION_OBJECT_POINTERS SectionObjectPointer, IN PLARGE_INTEGER Offset, IN SIZE_T RegionSize,
+               OUT PIO_STATUS_BLOCK IoStatus, IN ULONG AcquireFile)
 
 /*++
 
@@ -779,17 +765,15 @@ Return Value:
     IoStatus->Status = STATUS_SUCCESS;
     IoStatus->Information = RegionSize;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     ControlArea = ((PCONTROL_AREA)(SectionObjectPointer->DataSectionObject));
 
-    ASSERT ((ControlArea == NULL) || (ControlArea->u.Flags.Image == 0));
+    ASSERT((ControlArea == NULL) || (ControlArea->u.Flags.Image == 0));
 
-    if ((ControlArea == NULL) ||
-        (ControlArea->u.Flags.BeingDeleted) ||
-        (ControlArea->u.Flags.BeingCreated) ||
-        (ControlArea->u.Flags.Rom) ||
-        (ControlArea->NumberOfPfnReferences == 0)) {
+    if ((ControlArea == NULL) || (ControlArea->u.Flags.BeingDeleted) || (ControlArea->u.Flags.BeingCreated) ||
+        (ControlArea->u.Flags.Rom) || (ControlArea->NumberOfPfnReferences == 0))
+    {
 
         //
         // This file no longer has an associated segment or is in the
@@ -799,7 +783,7 @@ Return Value:
         // to be flushed.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return STATUS_SUCCESS;
     }
 
@@ -807,40 +791,45 @@ Return Value:
     // Locate the subsection.
     //
 
-    ASSERT (ControlArea->u.Flags.Image == 0);
-    ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 0);
-    ASSERT (ControlArea->u.Flags.PhysicalMemory == 0);
+    ASSERT(ControlArea->u.Flags.Image == 0);
+    ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 0);
+    ASSERT(ControlArea->u.Flags.PhysicalMemory == 0);
 
     Subsection = (PSUBSECTION)(ControlArea + 1);
 
-    if (!ARGUMENT_PRESENT (Offset)) {
+    if (!ARGUMENT_PRESENT(Offset))
+    {
 
         //
         // If the offset is not specified, flush the complete file ignoring
         // the region size.
         //
 
-        ASSERT (ControlArea->FilePointer != NULL);
+        ASSERT(ControlArea->FilePointer != NULL);
 
         PteOffset = 0;
 
         LastSubsection = Subsection;
 
-        Segment = (PMAPPED_FILE_SEGMENT) ControlArea->Segment;
+        Segment = (PMAPPED_FILE_SEGMENT)ControlArea->Segment;
 
-        if (MmIsAddressValid (Segment)) {
-            if (Segment->LastSubsectionHint != NULL) {
-                LastSubsection = (PSUBSECTION) Segment->LastSubsectionHint;
+        if (MmIsAddressValid(Segment))
+        {
+            if (Segment->LastSubsectionHint != NULL)
+            {
+                LastSubsection = (PSUBSECTION)Segment->LastSubsectionHint;
             }
         }
 
-        while (LastSubsection->NextSubsection != NULL) {
+        while (LastSubsection->NextSubsection != NULL)
+        {
             LastSubsection = LastSubsection->NextSubsection;
         }
 
         LastPteOffset = LastSubsection->PtesInSubsection - 1;
     }
-    else {
+    else
+    {
 
         PteOffset = (ULONG)(Offset->QuadPart >> PAGE_SHIFT);
 
@@ -848,21 +837,23 @@ Return Value:
         // Make sure the PTEs are not in the extended part of the segment.
         //
 
-        while (PteOffset >= Subsection->PtesInSubsection) {
+        while (PteOffset >= Subsection->PtesInSubsection)
+        {
             PteOffset -= Subsection->PtesInSubsection;
-            if (Subsection->NextSubsection == NULL) {
+            if (Subsection->NextSubsection == NULL)
+            {
 
                 //
                 // Past end of mapping, just return success.
                 //
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 return STATUS_SUCCESS;
             }
             Subsection = Subsection->NextSubsection;
         }
 
-        ASSERT (PteOffset < Subsection->PtesInSubsection);
+        ASSERT(PteOffset < Subsection->PtesInSubsection);
 
         //
         // Locate the address of the last prototype PTE to be flushed.
@@ -872,16 +863,18 @@ Return Value:
 
         LastSubsection = Subsection;
 
-        while (LastPteOffset >= LastSubsection->PtesInSubsection) {
+        while (LastPteOffset >= LastSubsection->PtesInSubsection)
+        {
             LastPteOffset -= LastSubsection->PtesInSubsection;
-            if (LastSubsection->NextSubsection == NULL) {
+            if (LastSubsection->NextSubsection == NULL)
+            {
                 LastPteOffset = LastSubsection->PtesInSubsection - 1;
                 break;
             }
             LastSubsection = LastSubsection->NextSubsection;
         }
 
-        ASSERT (LastPteOffset < LastSubsection->PtesInSubsection);
+        ASSERT(LastPteOffset < LastSubsection->PtesInSubsection);
     }
 
     //
@@ -894,15 +887,18 @@ Return Value:
     // nonresident.
     //
 
-    if (MiReferenceSubsection ((PMSUBSECTION)Subsection) == FALSE) {
-        do {
+    if (MiReferenceSubsection((PMSUBSECTION)Subsection) == FALSE)
+    {
+        do
+        {
             //
             // If this increment would put us past the end offset, then nothing
             // to flush, just return success.
             //
 
-            if (Subsection == LastSubsection) {
-                UNLOCK_PFN (OldIrql);
+            if (Subsection == LastSubsection)
+            {
+                UNLOCK_PFN(OldIrql);
                 return STATUS_SUCCESS;
             }
             Subsection = Subsection->NextSubsection;
@@ -912,16 +908,19 @@ Return Value:
             // to flush, just return success.
             //
 
-            if (Subsection == NULL) {
-                UNLOCK_PFN (OldIrql);
+            if (Subsection == NULL)
+            {
+                UNLOCK_PFN(OldIrql);
                 return STATUS_SUCCESS;
             }
 
-            if ((PMSUBSECTION)Subsection->SubsectionBase == NULL) {
+            if ((PMSUBSECTION)Subsection->SubsectionBase == NULL)
+            {
                 continue;
             }
 
-            if (MiReferenceSubsection ((PMSUBSECTION)Subsection) == FALSE) {
+            if (MiReferenceSubsection((PMSUBSECTION)Subsection) == FALSE)
+            {
                 continue;
             }
 
@@ -934,11 +933,12 @@ Return Value:
 
         } while (TRUE);
     }
-    else {
+    else
+    {
         PointerPte = &Subsection->SubsectionBase[PteOffset];
     }
 
-    ASSERT (Subsection->SubsectionBase != NULL);
+    ASSERT(Subsection->SubsectionBase != NULL);
 
     //
     // The first subsection is referenced, now reference count the last one.
@@ -946,23 +946,26 @@ Return Value:
     // simplifies cleanup later.
     //
 
-    if (MiReferenceSubsection ((PMSUBSECTION)LastSubsection) == FALSE) {
+    if (MiReferenceSubsection((PMSUBSECTION)LastSubsection) == FALSE)
+    {
 
-        ASSERT (Subsection != LastSubsection);
+        ASSERT(Subsection != LastSubsection);
 
         TempSubsection = Subsection->NextSubsection;
         LastSubsectionWithProtos = NULL;
 
-        while (TempSubsection != LastSubsection) {
+        while (TempSubsection != LastSubsection)
+        {
 
             //
             // If this increment put us past the end of section, then nothing
             // to flush, just return success.
             //
 
-            ASSERT (TempSubsection != NULL);
+            ASSERT(TempSubsection != NULL);
 
-            if ((PMSUBSECTION)TempSubsection->SubsectionBase != NULL) {
+            if ((PMSUBSECTION)TempSubsection->SubsectionBase != NULL)
+            {
                 LastSubsectionWithProtos = TempSubsection;
             }
 
@@ -973,20 +976,23 @@ Return Value:
         // End the flush at this subsection and reference it.
         //
 
-        if (LastSubsectionWithProtos == NULL) {
-            ASSERT (Subsection != NULL);
-            ASSERT (Subsection->SubsectionBase != NULL);
+        if (LastSubsectionWithProtos == NULL)
+        {
+            ASSERT(Subsection != NULL);
+            ASSERT(Subsection->SubsectionBase != NULL);
             TempSubsection = Subsection;
         }
-        else {
+        else
+        {
             TempSubsection = LastSubsectionWithProtos;
         }
 
-        if (MiReferenceSubsection ((PMSUBSECTION)TempSubsection) == FALSE) {
-            ASSERT (FALSE);
+        if (MiReferenceSubsection((PMSUBSECTION)TempSubsection) == FALSE)
+        {
+            ASSERT(FALSE);
         }
 
-        ASSERT (TempSubsection->SubsectionBase != NULL);
+        ASSERT(TempSubsection->SubsectionBase != NULL);
 
         LastSubsection = TempSubsection;
         LastPteOffset = LastSubsection->PtesInSubsection - 1;
@@ -1005,7 +1011,7 @@ Return Value:
 
     ControlArea->NumberOfMappedViews += 1;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     CurrentThread = PsGetCurrentThread();
 
@@ -1020,29 +1026,27 @@ Return Value:
     // Preacquire the file if we are going to synchronize the flush.
     //
 
-    if (AcquireFile == 0) {
+    if (AcquireFile == 0)
+    {
 
         //
         // Flush the PTEs from the specified section.
         //
 
-        status = MiFlushSectionInternal (PointerPte,
-                                         LastPte,
-                                         Subsection,
-                                         LastSubsection,
-                                         TRUE,
-                                         TRUE,
-                                         IoStatus);
+        status = MiFlushSectionInternal(PointerPte, LastPte, Subsection, LastSubsection, TRUE, TRUE, IoStatus);
     }
-    else {
+    else
+    {
 
         ConsecutiveFileLockFailures = 0;
 
-        do {
+        do
+        {
 
-            status = FsRtlAcquireFileForCcFlushEx (ControlArea->FilePointer);
+            status = FsRtlAcquireFileForCcFlushEx(ControlArea->FilePointer);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 break;
             }
 
@@ -1050,43 +1054,38 @@ Return Value:
             // Flush the PTEs from the specified section.
             //
 
-            status = MiFlushSectionInternal (PointerPte,
-                                             LastPte,
-                                             Subsection,
-                                             LastSubsection,
-                                             TRUE,
-                                             TRUE,
-                                             IoStatus);
+            status = MiFlushSectionInternal(PointerPte, LastPte, Subsection, LastSubsection, TRUE, TRUE, IoStatus);
 
             //
             // Release the file we acquired.
             //
 
-            FsRtlReleaseFileForCcFlush (ControlArea->FilePointer);
+            FsRtlReleaseFileForCcFlush(ControlArea->FilePointer);
 
             //
             // Only try the request more than once if the filesystem told us
             // it had a deadlock.
             //
 
-            if (status != STATUS_FILE_LOCK_CONFLICT) {
+            if (status != STATUS_FILE_LOCK_CONFLICT)
+            {
                 break;
             }
 
             ConsecutiveFileLockFailures += 1;
-            KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
 
         } while (ConsecutiveFileLockFailures < 5);
     }
 
     CurrentThread->ForwardClusterOnly = OldClusterState;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    MiDecrementSubsections (Subsection, Subsection);
-    MiDecrementSubsections (LastSubsection, LastSubsection);
+    MiDecrementSubsections(Subsection, Subsection);
+    MiDecrementSubsections(LastSubsection, LastSubsection);
 
-    ASSERT ((LONG)ControlArea->NumberOfMappedViews >= 1);
+    ASSERT((LONG)ControlArea->NumberOfMappedViews >= 1);
     ControlArea->NumberOfMappedViews -= 1;
 
     //
@@ -1094,17 +1093,14 @@ Return Value:
     // will release the PFN lock.
     //
 
-    MiCheckControlArea (ControlArea, NULL, OldIrql);
+    MiCheckControlArea(ControlArea, NULL, OldIrql);
 
     return status;
 }
 
-
+
 LONGLONG
-MiStartingOffset(
-    IN PSUBSECTION Subsection,
-    IN PMMPTE PteAddress
-    )
+MiStartingOffset(IN PSUBSECTION Subsection, IN PMMPTE PteAddress)
 
 /*++
 
@@ -1132,17 +1128,16 @@ Return Value:
     LONGLONG PteByteOffset;
     LARGE_INTEGER StartAddress;
 
-    if (Subsection->ControlArea->u.Flags.Image == 1) {
-            return MI_STARTING_OFFSET ( Subsection,
-                                        PteAddress);
+    if (Subsection->ControlArea->u.Flags.Image == 1)
+    {
+        return MI_STARTING_OFFSET(Subsection, PteAddress);
     }
 
-    ASSERT (Subsection->SubsectionBase != NULL);
+    ASSERT(Subsection->SubsectionBase != NULL);
 
-    PteByteOffset = (LONGLONG)((PteAddress - Subsection->SubsectionBase))
-                            << PAGE_SHIFT;
+    PteByteOffset = (LONGLONG)((PteAddress - Subsection->SubsectionBase)) << PAGE_SHIFT;
 
-    Mi4KStartFromSubsection (&StartAddress, Subsection);
+    Mi4KStartFromSubsection(&StartAddress, Subsection);
 
     StartAddress.QuadPart = StartAddress.QuadPart << MM4K_SHIFT;
 
@@ -1152,9 +1147,7 @@ Return Value:
 }
 
 LARGE_INTEGER
-MiEndingOffset(
-    IN PSUBSECTION Subsection
-    )
+MiEndingOffset(IN PSUBSECTION Subsection)
 
 /*++
 
@@ -1181,13 +1174,13 @@ Return Value:
 {
     LARGE_INTEGER FileByteOffset;
 
-    if (Subsection->ControlArea->u.Flags.Image == 1) {
-        FileByteOffset.QuadPart =
-            (Subsection->StartingSector + Subsection->NumberOfFullSectors) <<
-                MMSECTOR_SHIFT;
+    if (Subsection->ControlArea->u.Flags.Image == 1)
+    {
+        FileByteOffset.QuadPart = (Subsection->StartingSector + Subsection->NumberOfFullSectors) << MMSECTOR_SHIFT;
     }
-    else {
-        Mi4KStartFromSubsection (&FileByteOffset, Subsection);
+    else
+    {
+        Mi4KStartFromSubsection(&FileByteOffset, Subsection);
 
         FileByteOffset.QuadPart += Subsection->NumberOfFullSectors;
 
@@ -1199,17 +1192,11 @@ Return Value:
     return FileByteOffset;
 }
 
-
+
 NTSTATUS
-MiFlushSectionInternal (
-    IN PMMPTE StartingPte,
-    IN PMMPTE FinalPte,
-    IN PSUBSECTION FirstSubsection,
-    IN PSUBSECTION LastSubsection,
-    IN ULONG Synchronize,
-    IN LOGICAL WriteInProgressOk,
-    OUT PIO_STATUS_BLOCK IoStatus
-    )
+MiFlushSectionInternal(IN PMMPTE StartingPte, IN PMMPTE FinalPte, IN PSUBSECTION FirstSubsection,
+                       IN PSUBSECTION LastSubsection, IN ULONG Synchronize, IN LOGICAL WriteInProgressOk,
+                       OUT PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -1277,7 +1264,7 @@ Return Value:
     UINT64 TempOffset;
     LOGICAL WriteNow;
     LOGICAL Bail;
-    PFN_NUMBER MdlHack[(sizeof(MDL)/sizeof(PFN_NUMBER)) + (MM_MAXIMUM_DISK_IO_SIZE / PAGE_SIZE) + 1];
+    PFN_NUMBER MdlHack[(sizeof(MDL) / sizeof(PFN_NUMBER)) + (MM_MAXIMUM_DISK_IO_SIZE / PAGE_SIZE) + 1];
     ULONG ReflushCount;
     ULONG MaxClusterSize;
     PFILE_OBJECT FilePointer;
@@ -1290,11 +1277,13 @@ Return Value:
     // the dereference thread calls filesystems who may then issue a flush.
     //
 
-    if (WriteInProgressOk == FALSE) {
+    if (WriteInProgressOk == FALSE)
+    {
         CurrentThreadIsDereferenceThread = TRUE;
-        ASSERT (PsGetCurrentThread()->StartAddress == (PVOID)(ULONG_PTR)MiDereferenceSegmentThread);
+        ASSERT(PsGetCurrentThread()->StartAddress == (PVOID)(ULONG_PTR)MiDereferenceSegmentThread);
     }
-    else {
+    else
+    {
         CurrentThreadIsDereferenceThread = FALSE;
 
         //
@@ -1313,9 +1302,9 @@ Return Value:
     IoStatus->Information = 0;
     Mdl = (PMDL)&MdlHack[0];
 
-    KeInitializeEvent (&IoEvent, NotificationEvent, FALSE);
+    KeInitializeEvent(&IoEvent, NotificationEvent, FALSE);
 
-    FinalPte += 1;  // Point to 1 past the last one.
+    FinalPte += 1; // Point to 1 past the last one.
 
     FirstWritten = NULL;
     LastWritten = NULL;
@@ -1325,9 +1314,7 @@ Return Value:
     ControlArea = FirstSubsection->ControlArea;
     FilePointer = ControlArea->FilePointer;
 
-    ASSERT ((ControlArea->u.Flags.Image == 0) &&
-            (FilePointer != NULL) &&
-            (ControlArea->u.Flags.PhysicalMemory == 0));
+    ASSERT((ControlArea->u.Flags.Image == 0) && (FilePointer != NULL) && (ControlArea->u.Flags.PhysicalMemory == 0));
 
     //
     // Initializing these is not needed for correctness
@@ -1344,22 +1331,24 @@ Return Value:
 
     MaxClusterSize = MmModifiedWriteClusterSize;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    ASSERT (ControlArea->u.Flags.Image == 0);
+    ASSERT(ControlArea->u.Flags.Image == 0);
 
-    if (ControlArea->NumberOfPfnReferences == 0) {
+    if (ControlArea->NumberOfPfnReferences == 0)
+    {
 
         //
         // No transition or valid prototype PTEs present, hence
         // no need to flush anything.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return STATUS_SUCCESS;
     }
 
-    while ((Synchronize) && (ControlArea->FlushInProgressCount != 0)) {
+    while ((Synchronize) && (ControlArea->FlushInProgressCount != 0))
+    {
 
         //
         // Another thread is currently performing a flush operation on
@@ -1374,15 +1363,11 @@ Return Value:
         // window where this thread could miss a pulse.
         //
 
-        UNLOCK_PFN_AND_THEN_WAIT (APC_LEVEL);
+        UNLOCK_PFN_AND_THEN_WAIT(APC_LEVEL);
 
-        KeWaitForSingleObject (&MmCollidedFlushEvent,
-                               WrPageOut,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER)&MmOneSecond);
-        KeLowerIrql (OldIrql);
-        LOCK_PFN (OldIrql);
+        KeWaitForSingleObject(&MmCollidedFlushEvent, WrPageOut, KernelMode, FALSE, (PLARGE_INTEGER)&MmOneSecond);
+        KeLowerIrql(OldIrql);
+        LOCK_PFN(OldIrql);
     }
 
     ControlArea->FlushInProgressCount += 1;
@@ -1396,8 +1381,9 @@ Return Value:
     //
 
 #if !defined(MI_MULTINODE)
-    if (MmPfnDeferredList != NULL) {
-        MiDeferredUnlockPages (MI_DEFER_PFN_HELD);
+    if (MmPfnDeferredList != NULL)
+    {
+        MiDeferredUnlockPages(MI_DEFER_PFN_HELD);
     }
 #else
     //
@@ -1405,12 +1391,14 @@ Return Value:
     // we might as well go the long way and just call.
     //
 
-    MiDeferredUnlockPages (MI_DEFER_PFN_HELD);
+    MiDeferredUnlockPages(MI_DEFER_PFN_HELD);
 #endif
 
-    for (;;) {
+    for (;;)
+    {
 
-        if (LastSubsection != Subsection) {
+        if (LastSubsection != Subsection)
+        {
 
             //
             // Flush to the last PTE in this subsection.
@@ -1418,7 +1406,8 @@ Return Value:
 
             LastPte = &Subsection->SubsectionBase[Subsection->PtesInSubsection];
         }
-        else {
+        else
+        {
 
             //
             // Flush to the end of the range.
@@ -1427,7 +1416,8 @@ Return Value:
             LastPte = FinalPte;
         }
 
-        if (Subsection->SubsectionBase == NULL) {
+        if (Subsection->SubsectionBase == NULL)
+        {
 
             //
             // The prototype PTEs for this subsection have either never been
@@ -1437,12 +1427,14 @@ Return Value:
             // to be written, write them now as we are skipping over PTEs.
             //
 
-            if (LastWritten != NULL) {
-                ASSERT (MappedSubsection != NULL);
+            if (LastWritten != NULL)
+            {
+                ASSERT(MappedSubsection != NULL);
                 WriteNow = TRUE;
                 goto CheckForWrite;
             }
-            if (LastSubsection == Subsection) {
+            if (LastSubsection == Subsection)
+            {
                 break;
             }
             Subsection = Subsection->NextSubsection;
@@ -1456,23 +1448,25 @@ Return Value:
         // operating on it.
         //
 
-        MappedSubsection = (PMSUBSECTION) Subsection;
+        MappedSubsection = (PMSUBSECTION)Subsection;
         MappedSubsection->NumberOfMappedViews += 1;
 
-        if (MappedSubsection->DereferenceList.Flink != NULL) {
+        if (MappedSubsection->DereferenceList.Flink != NULL)
+        {
 
             //
             // Remove this from the list of unused subsections.
             //
 
-            RemoveEntryList (&MappedSubsection->DereferenceList);
+            RemoveEntryList(&MappedSubsection->DereferenceList);
 
-            MI_UNUSED_SUBSECTIONS_COUNT_REMOVE (MappedSubsection);
+            MI_UNUSED_SUBSECTIONS_COUNT_REMOVE(MappedSubsection);
 
             MappedSubsection->DereferenceList.Flink = NULL;
         }
 
-        if (CurrentThreadIsDereferenceThread == FALSE) {
+        if (CurrentThreadIsDereferenceThread == FALSE)
+        {
 
             //
             // Set the access bit so an already ongoing trim won't blindly
@@ -1491,19 +1485,23 @@ Return Value:
         // of 1, they cannot contain any transition or valid PTEs.
         //
 
-        if (!MiCheckProtoPtePageState(PointerPte, TRUE, &DroppedPfnLock)) {
+        if (!MiCheckProtoPtePageState(PointerPte, TRUE, &DroppedPfnLock))
+        {
             PointerPte = (PMMPTE)(((ULONG_PTR)PointerPte | (PAGE_SIZE - 1)) + 1);
         }
 
-        while (PointerPte < LastPte) {
+        while (PointerPte < LastPte)
+        {
 
-            if (MiIsPteOnPdeBoundary(PointerPte)) {
+            if (MiIsPteOnPdeBoundary(PointerPte))
+            {
 
                 //
                 // We are on a page boundary, make sure this PTE is resident.
                 //
 
-                if (!MiCheckProtoPtePageState(PointerPte, TRUE, &DroppedPfnLock)) {
+                if (!MiCheckProtoPtePageState(PointerPte, TRUE, &DroppedPfnLock))
+                {
                     PointerPte = (PMMPTE)((PCHAR)PointerPte + PAGE_SIZE);
 
                     //
@@ -1511,7 +1509,8 @@ Return Value:
                     // now as we are skipping over PTEs.
                     //
 
-                    if (LastWritten != NULL) {
+                    if (LastWritten != NULL)
+                    {
                         WriteNow = TRUE;
                         goto CheckForWrite;
                     }
@@ -1522,8 +1521,8 @@ Return Value:
             PteContents = *PointerPte;
 
             if ((PteContents.u.Hard.Valid == 1) ||
-                   ((PteContents.u.Soft.Prototype == 0) &&
-                     (PteContents.u.Soft.Transition == 1))) {
+                ((PteContents.u.Soft.Prototype == 0) && (PteContents.u.Soft.Transition == 1)))
+            {
 
                 //
                 // Prototype PTE in transition, there are 3 possible cases:
@@ -1536,16 +1535,18 @@ Return Value:
                 //     write the page to the file and free the physical page.
                 //
 
-                if (PteContents.u.Hard.Valid == 1) {
-                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (&PteContents);
+                if (PteContents.u.Hard.Valid == 1)
+                {
+                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(&PteContents);
                 }
-                else {
-                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
+                else
+                {
+                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
                 }
 
-                Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-                ASSERT (Pfn1->OriginalPte.u.Soft.Prototype == 1);
-                ASSERT (Pfn1->OriginalPte.u.Hard.Valid == 0);
+                Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+                ASSERT(Pfn1->OriginalPte.u.Soft.Prototype == 1);
+                ASSERT(Pfn1->OriginalPte.u.Hard.Valid == 0);
 
                 //
                 // Note that any transition page which is currently clean but
@@ -1557,18 +1558,19 @@ Return Value:
                 // requires that no pages be dirtied after a successful return.
                 //
 
-                if ((CurrentThreadIsDereferenceThread == TRUE) &&
-                    (Pfn1->u3.e2.ReferenceCount != 0)) {
+                if ((CurrentThreadIsDereferenceThread == TRUE) && (Pfn1->u3.e2.ReferenceCount != 0))
+                {
 
 #if DBG
                     if ((PteContents.u.Hard.Valid != 0) &&
                         (MappedSubsection->u2.SubsectionFlags2.SubsectionAccessed == 0) &&
-                        (ControlArea->u.Flags.Accessed == 0)) {
+                        (ControlArea->u.Flags.Accessed == 0))
+                    {
 
-                        if (!KdDebuggerNotPresent) {
-                            DbgPrint ("MM: flushing valid proto, %p %p\n",
-                                            Pfn1, PointerPte);
-                            DbgBreakPoint ();
+                        if (!KdDebuggerNotPresent)
+                        {
+                            DbgPrint("MM: flushing valid proto, %p %p\n", Pfn1, PointerPte);
+                            DbgBreakPoint();
                         }
                     }
 #endif
@@ -1576,7 +1578,8 @@ Return Value:
                     PointerPte = LastPte;
                     Bail = TRUE;
 
-                    if (LastWritten != NULL) {
+                    if (LastWritten != NULL)
+                    {
                         WriteNow = TRUE;
                     }
                     goto CheckForWrite;
@@ -1591,22 +1594,24 @@ Return Value:
                 // the caller.
                 //
 
-                if ((Pfn1->u3.e1.Modified == 1) ||
-                    (Pfn1->u3.e1.WriteInProgress)) {
+                if ((Pfn1->u3.e1.Modified == 1) || (Pfn1->u3.e1.WriteInProgress))
+                {
 
-                    if ((WriteInProgressOk == FALSE) &&
-                        (Pfn1->u3.e1.WriteInProgress)) {
+                    if ((WriteInProgressOk == FALSE) && (Pfn1->u3.e1.WriteInProgress))
+                    {
 
-                            PointerPte = LastPte;
-                            Bail = TRUE;
+                        PointerPte = LastPte;
+                        Bail = TRUE;
 
-                            if (LastWritten != NULL) {
-                                WriteNow = TRUE;
-                            }
-                            goto CheckForWrite;
+                        if (LastWritten != NULL)
+                        {
+                            WriteNow = TRUE;
+                        }
+                        goto CheckForWrite;
                     }
 
-                    if (LastWritten == NULL) {
+                    if (LastWritten == NULL)
+                    {
 
                         //
                         // This is the first page of a cluster, initialize
@@ -1620,36 +1625,35 @@ Return Value:
                         //  offset = base + ((thispte - basepte) << PAGE_SHIFT)
                         //
 
-                        StartingOffset = (UINT64) MiStartingOffset (
-                                                             Subsection,
-                                                             Pfn1->PteAddress);
+                        StartingOffset = (UINT64)MiStartingOffset(Subsection, Pfn1->PteAddress);
 
-                        MI_INITIALIZE_ZERO_MDL (Mdl);
+                        MI_INITIALIZE_ZERO_MDL(Mdl);
 
                         Mdl->MdlFlags |= MDL_PAGES_LOCKED;
-                        Mdl->StartVa =
-                                  (PVOID)ULongToPtr(Pfn1->u3.e1.PageColor << PAGE_SHIFT);
-                        Mdl->Size = (CSHORT)(sizeof(MDL) +
-                                   (sizeof(PFN_NUMBER) * MaxClusterSize));
+                        Mdl->StartVa = (PVOID)ULongToPtr(Pfn1->u3.e1.PageColor << PAGE_SHIFT);
+                        Mdl->Size = (CSHORT)(sizeof(MDL) + (sizeof(PFN_NUMBER) * MaxClusterSize));
                         FirstWritten = PointerPte;
                     }
 
                     LastWritten = PointerPte;
                     Mdl->ByteCount += PAGE_SIZE;
-                    if (Mdl->ByteCount == (PAGE_SIZE * MaxClusterSize)) {
+                    if (Mdl->ByteCount == (PAGE_SIZE * MaxClusterSize))
+                    {
                         WriteNow = TRUE;
                     }
 
-                    if (PteContents.u.Hard.Valid == 0) {
+                    if (PteContents.u.Hard.Valid == 0)
+                    {
 
                         //
                         // The page is in transition.
                         //
 
-                        MiUnlinkPageFromList (Pfn1);
+                        MiUnlinkPageFromList(Pfn1);
                         MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE(Pfn1, 18);
                     }
-                    else {
+                    else
+                    {
                         MI_ADD_LOCKED_PAGE_CHARGE(Pfn1, 20);
                     }
 
@@ -1657,7 +1661,7 @@ Return Value:
                     // Clear the modified bit for this page.
                     //
 
-                    MI_SET_MODIFIED (Pfn1, 0, 0x22);
+                    MI_SET_MODIFIED(Pfn1, 0, 0x22);
 
                     //
                     // Up the reference count for the physical page as there
@@ -1669,7 +1673,8 @@ Return Value:
                     *LastPage = PageFrameIndex;
                     LastPage += 1;
                 }
-                else {
+                else
+                {
 
                     //
                     // This page was not modified and therefore ends the
@@ -1677,12 +1682,14 @@ Return Value:
                     // if there is a cluster being built.
                     //
 
-                    if (LastWritten != NULL) {
+                    if (LastWritten != NULL)
+                    {
                         WriteNow = TRUE;
                     }
                 }
             }
-            else {
+            else
+            {
 
                 //
                 // This page was not modified and therefore ends the
@@ -1690,22 +1697,23 @@ Return Value:
                 // if there is a cluster being built.
                 //
 
-                if (LastWritten != NULL) {
+                if (LastWritten != NULL)
+                {
                     WriteNow = TRUE;
                 }
             }
 
             PointerPte += 1;
 
-CheckForWrite:
+        CheckForWrite:
 
             //
             // Write the current cluster if it is complete,
             // full, or the loop is now complete.
             //
 
-            if ((WriteNow) ||
-                ((PointerPte == LastPte) && (LastWritten != NULL))) {
+            if ((WriteNow) || ((PointerPte == LastPte) && (LastWritten != NULL)))
+            {
 
                 LARGE_INTEGER EndOfFile;
 
@@ -1713,7 +1721,7 @@ CheckForWrite:
                 // Issue the write request.
                 //
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
                 WriteNow = FALSE;
 
@@ -1723,59 +1731,58 @@ CheckForWrite:
                 //
 
                 EndOfFile = MiEndingOffset(Subsection);
-                TempOffset = (UINT64) EndOfFile.QuadPart;
+                TempOffset = (UINT64)EndOfFile.QuadPart;
 
-                if (StartingOffset + Mdl->ByteCount > TempOffset) {
+                if (StartingOffset + Mdl->ByteCount > TempOffset)
+                {
 
-                    ASSERT ((ULONG_PTR)(TempOffset - StartingOffset) >
-                             (Mdl->ByteCount - PAGE_SIZE));
+                    ASSERT((ULONG_PTR)(TempOffset - StartingOffset) > (Mdl->ByteCount - PAGE_SIZE));
 
-                    Mdl->ByteCount = (ULONG)(TempOffset- StartingOffset);
+                    Mdl->ByteCount = (ULONG)(TempOffset - StartingOffset);
                 }
 
                 ReflushCount = 0;
-                
-                while (TRUE) {
 
-                    KeClearEvent (&IoEvent);
+                while (TRUE)
+                {
 
-                    Status = IoSynchronousPageWrite (FilePointer,
-                                                     Mdl,
-                                                     (PLARGE_INTEGER)&StartingOffset,
-                                                     &IoEvent,
-                                                     IoStatus);
+                    KeClearEvent(&IoEvent);
 
-                    if (NT_SUCCESS(Status)) {
+                    Status =
+                        IoSynchronousPageWrite(FilePointer, Mdl, (PLARGE_INTEGER)&StartingOffset, &IoEvent, IoStatus);
+
+                    if (NT_SUCCESS(Status))
+                    {
 
                         //
                         // Success was returned, so wait for the i/o event.
                         //
 
-                        KeWaitForSingleObject (&IoEvent,
-                                               WrPageOut,
-                                               KernelMode,
-                                               FALSE,
-                                               NULL);
+                        KeWaitForSingleObject(&IoEvent, WrPageOut, KernelMode, FALSE, NULL);
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // Copy the error to the IoStatus, for error
                         // handling below.
                         //
-    
+
                         IoStatus->Status = Status;
                     }
 
-                    if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-                        MmUnmapLockedPages (Mdl->MappedSystemVa, Mdl);
+                    if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA)
+                    {
+                        MmUnmapLockedPages(Mdl->MappedSystemVa, Mdl);
                     }
 
-                    if (MmIsRetryIoStatus(IoStatus->Status)) {
-                        
+                    if (MmIsRetryIoStatus(IoStatus->Status))
+                    {
+
                         ReflushCount -= 1;
-                        if (ReflushCount & MiIoRetryMask) {
-                            KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
+                        if (ReflushCount & MiIoRetryMask)
+                        {
+                            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
                             continue;
                         }
                     }
@@ -1785,9 +1792,10 @@ CheckForWrite:
 
                 Page = (PPFN_NUMBER)(Mdl + 1);
 
-                LOCK_PFN (OldIrql);
+                LOCK_PFN(OldIrql);
 
-                if (MiIsPteOnPdeBoundary(PointerPte) == 0) {
+                if (MiIsPteOnPdeBoundary(PointerPte) == 0)
+                {
 
                     //
                     // The next PTE is not in a different page, make
@@ -1799,23 +1807,26 @@ CheckForWrite:
                     // of sharecount because it is a system page.
                     //
 
-                    MiMakeSystemAddressValidPfn (PointerPte);
+                    MiMakeSystemAddressValidPfn(PointerPte);
                 }
 
-                if (NT_SUCCESS(IoStatus->Status)) {
+                if (NT_SUCCESS(IoStatus->Status))
+                {
 
                     //
                     // The I/O completed successfully, unlock the pages.
                     //
 
-                    while (Page < LastPage) {
+                    while (Page < LastPage)
+                    {
 
-                        Pfn2 = MI_PFN_ELEMENT (*Page);
+                        Pfn2 = MI_PFN_ELEMENT(*Page);
                         MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn2, 19);
                         Page += 1;
                     }
                 }
-                else {
+                else
+                {
 
                     //
                     // Don't count on the file system to convey
@@ -1829,24 +1840,24 @@ CheckForWrite:
                     // and return an error status.
                     //
 
-                    while (Page < LastPage) {
+                    while (Page < LastPage)
+                    {
 
-                        Pfn2 = MI_PFN_ELEMENT (*Page);
+                        Pfn2 = MI_PFN_ELEMENT(*Page);
 
                         //
                         // Mark the page dirty again so it can be rewritten.
                         //
 
-                        MI_SET_MODIFIED (Pfn2, 1, 0x1);
+                        MI_SET_MODIFIED(Pfn2, 1, 0x1);
 
-                        MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF (Pfn2, 21);
+                        MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn2, 21);
 
                         Page += 1;
                     }
 
-                    if ((MmIsRetryIoStatus(IoStatus->Status)) &&
-                        (MaxClusterSize != 1) &&
-                        (Mdl->ByteCount > PAGE_SIZE)) {
+                    if ((MmIsRetryIoStatus(IoStatus->Status)) && (MaxClusterSize != 1) && (Mdl->ByteCount > PAGE_SIZE))
+                    {
 
                         //
                         // Retries of a cluster have failed, reissue
@@ -1855,31 +1866,30 @@ CheckForWrite:
                         // make forward progress this way.
                         //
 
-                        ASSERT (FirstWritten != NULL);
-                        ASSERT (LastWritten != NULL);
-                        ASSERT (FirstWritten != LastWritten);
+                        ASSERT(FirstWritten != NULL);
+                        ASSERT(LastWritten != NULL);
+                        ASSERT(FirstWritten != LastWritten);
 
                         PointerPte = FirstWritten;
-                        MiMakeSystemAddressValidPfn (PointerPte);
+                        MiMakeSystemAddressValidPfn(PointerPte);
                         MaxClusterSize = 1;
                     }
-                    else {
-    
+                    else
+                    {
+
                         //
                         // Calculate how much was written thus far
                         // and add that to the information field
                         // of the IOSB.
                         //
-    
-                        IoStatus->Information +=
-                            (((LastWritten - StartingPte) << PAGE_SHIFT) -
-                                                            Mdl->ByteCount);
+
+                        IoStatus->Information += (((LastWritten - StartingPte) << PAGE_SHIFT) - Mdl->ByteCount);
                         LastWritten = NULL;
-    
+
                         //
                         // Set this to force termination of the outermost loop.
                         //
-    
+
                         Subsection = LastSubsection;
                         break;
                     }
@@ -1897,25 +1907,25 @@ CheckForWrite:
 
         } //end while
 
-        ASSERT (MappedSubsection->DereferenceList.Flink == NULL);
-        ASSERT ((MappedSubsection->NumberOfMappedViews >= 1) ||
-                (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 1));
+        ASSERT(MappedSubsection->DereferenceList.Flink == NULL);
+        ASSERT((MappedSubsection->NumberOfMappedViews >= 1) ||
+               (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 1));
 
         MappedSubsection->NumberOfMappedViews -= 1;
 
-        if ((MappedSubsection->NumberOfMappedViews == 0) &&
-            (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 0)) {
+        if ((MappedSubsection->NumberOfMappedViews == 0) && (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 0))
+        {
 
             //
             // Insert this subsection into the unused subsection list.
             //
 
-            InsertTailList (&MmUnusedSubsectionList,
-                            &MappedSubsection->DereferenceList);
-            MI_UNUSED_SUBSECTIONS_COUNT_INSERT (MappedSubsection);
+            InsertTailList(&MmUnusedSubsectionList, &MappedSubsection->DereferenceList);
+            MI_UNUSED_SUBSECTIONS_COUNT_INSERT(MappedSubsection);
         }
 
-        if ((Bail == TRUE) || (Subsection == LastSubsection)) {
+        if ((Bail == TRUE) || (Subsection == LastSubsection))
+        {
 
             //
             // The last range has been flushed or we have collided with the
@@ -1929,19 +1939,20 @@ CheckForWrite:
         Subsection = Subsection->NextSubsection;
         PointerPte = Subsection->SubsectionBase;
 
-    }  //end for
+    } //end for
 
-    ASSERT (LastWritten == NULL);
+    ASSERT(LastWritten == NULL);
 
     ControlArea->FlushInProgressCount -= 1;
-    if ((ControlArea->u.Flags.CollidedFlush == 1) &&
-        (ControlArea->FlushInProgressCount == 0)) {
+    if ((ControlArea->u.Flags.CollidedFlush == 1) && (ControlArea->FlushInProgressCount == 0))
+    {
         ControlArea->u.Flags.CollidedFlush = 0;
-        KePulseEvent (&MmCollidedFlushEvent, 0, FALSE);
+        KePulseEvent(&MmCollidedFlushEvent, 0, FALSE);
     }
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    if (Bail == TRUE) {
+    if (Bail == TRUE)
+    {
 
         //
         // This routine collided with the mapped page writer and the caller
@@ -1953,14 +1964,10 @@ CheckForWrite:
 
     return IoStatus->Status;
 }
-
+
 BOOLEAN
-MmPurgeSection (
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointer,
-    IN PLARGE_INTEGER Offset,
-    IN SIZE_T RegionSize,
-    IN ULONG IgnoreCacheViews
-    )
+MmPurgeSection(IN PSECTION_OBJECT_POINTERS SectionObjectPointer, IN PLARGE_INTEGER Offset, IN SIZE_T RegionSize,
+               IN ULONG IgnoreCacheViews)
 
 /*++
 
@@ -2050,13 +2057,14 @@ Return Value:
     // the PFN lock will need to be released and APCs disabled.
     //
 
-    ASSERT (KeGetCurrentIrql() < DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
     //
     //  Capture caller's file size, since we may modify it.
     //
 
-    if (ARGUMENT_PRESENT(Offset)) {
+    if (ARGUMENT_PRESENT(Offset))
+    {
 
         LocalOffset = *Offset;
         Offset = &LocalOffset;
@@ -2067,7 +2075,8 @@ Return Value:
     //  us to.
     //
 
-    if (!MiCanFileBeTruncatedInternal(SectionObjectPointer, Offset, TRUE, &OldIrql)) {
+    if (!MiCanFileBeTruncatedInternal(SectionObjectPointer, Offset, TRUE, &OldIrql))
+    {
         return FALSE;
     }
 
@@ -2076,8 +2085,9 @@ Return Value:
     //
 
     ControlArea = (PCONTROL_AREA)(SectionObjectPointer->DataSectionObject);
-    if ((ControlArea == NULL) || (ControlArea->u.Flags.Rom)) {
-        UNLOCK_PFN (OldIrql);
+    if ((ControlArea == NULL) || (ControlArea->u.Flags.Rom))
+    {
+        UNLOCK_PFN(OldIrql);
         return TRUE;
     }
 
@@ -2087,10 +2097,10 @@ Return Value:
     //  the Cache Manager has a view mapped.
     //
 
-    if ((IgnoreCacheViews == FALSE) &&
-        (ControlArea->NumberOfSystemCacheViews != 0)) {
+    if ((IgnoreCacheViews == FALSE) && (ControlArea->NumberOfSystemCacheViews != 0))
+    {
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return FALSE;
     }
 
@@ -2121,7 +2131,7 @@ Return Value:
     // the same check, so just assert it below.
     //
 
-    ASSERT (ControlArea->u.Flags.BeingDeleted == 0);
+    ASSERT(ControlArea->u.Flags.BeingDeleted == 0);
 
 #endif
 
@@ -2130,11 +2140,12 @@ Return Value:
     // contains the PTEs.
     //
 
-    ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 0);
+    ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 0);
 
     Subsection = (PSUBSECTION)(ControlArea + 1);
 
-    if (!ARGUMENT_PRESENT (Offset)) {
+    if (!ARGUMENT_PRESENT(Offset))
+    {
 
         //
         // If the offset is not specified, flush the complete file ignoring
@@ -2143,9 +2154,9 @@ Return Value:
 
         PteOffset = 0;
         RegionSize = 0;
-
     }
-    else {
+    else
+    {
 
         PteOffset = (ULONG)(Offset->QuadPart >> PAGE_SHIFT);
 
@@ -2153,29 +2164,32 @@ Return Value:
         // Make sure the PTEs are not in the extended part of the segment.
         //
 
-        while (PteOffset >= Subsection->PtesInSubsection) {
+        while (PteOffset >= Subsection->PtesInSubsection)
+        {
             PteOffset -= Subsection->PtesInSubsection;
             Subsection = Subsection->NextSubsection;
-            if (Subsection == NULL) {
+            if (Subsection == NULL)
+            {
 
                 //
                 // The offset must be equal to the size of
                 // the section, don't purge anything just return.
                 //
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 return TRUE;
             }
         }
 
-        ASSERT (PteOffset < Subsection->PtesInSubsection);
+        ASSERT(PteOffset < Subsection->PtesInSubsection);
     }
 
     //
     // Locate the address of the last prototype PTE to be flushed.
     //
 
-    if (RegionSize == 0) {
+    if (RegionSize == 0)
+    {
 
         //
         // Flush to end of section.
@@ -2183,41 +2197,46 @@ Return Value:
 
         LastSubsection = Subsection;
 
-        Segment = (PMAPPED_FILE_SEGMENT) ControlArea->Segment;
+        Segment = (PMAPPED_FILE_SEGMENT)ControlArea->Segment;
 
-        if (MmIsAddressValid (Segment)) {
-            if (Segment->LastSubsectionHint != NULL) {
-                LastSubsection = (PSUBSECTION) Segment->LastSubsectionHint;
+        if (MmIsAddressValid(Segment))
+        {
+            if (Segment->LastSubsectionHint != NULL)
+            {
+                LastSubsection = (PSUBSECTION)Segment->LastSubsectionHint;
             }
         }
 
-        while (LastSubsection->NextSubsection != NULL) {
+        while (LastSubsection->NextSubsection != NULL)
+        {
             LastSubsection = LastSubsection->NextSubsection;
         }
 
         LastPteOffset = LastSubsection->PtesInSubsection - 1;
     }
-    else {
+    else
+    {
 
         //
         // Calculate the end of the region.
         //
 
-        LastPteOffset = PteOffset +
-            (ULONG) (((RegionSize + BYTE_OFFSET(Offset->LowPart)) - 1) >> PAGE_SHIFT);
+        LastPteOffset = PteOffset + (ULONG)(((RegionSize + BYTE_OFFSET(Offset->LowPart)) - 1) >> PAGE_SHIFT);
 
         LastSubsection = Subsection;
 
-        while (LastPteOffset >= LastSubsection->PtesInSubsection) {
+        while (LastPteOffset >= LastSubsection->PtesInSubsection)
+        {
             LastPteOffset -= LastSubsection->PtesInSubsection;
-            if (LastSubsection->NextSubsection == NULL) {
+            if (LastSubsection->NextSubsection == NULL)
+            {
                 LastPteOffset = LastSubsection->PtesInSubsection - 1;
                 break;
             }
             LastSubsection = LastSubsection->NextSubsection;
         }
 
-        ASSERT (LastPteOffset < LastSubsection->PtesInSubsection);
+        ASSERT(LastPteOffset < LastSubsection->PtesInSubsection);
     }
 
     //
@@ -2229,15 +2248,18 @@ Return Value:
     // the purge is smart enough to skip them if they're nonresident.
     //
 
-    if (MiReferenceSubsection ((PMSUBSECTION)Subsection) == FALSE) {
-        do {
+    if (MiReferenceSubsection((PMSUBSECTION)Subsection) == FALSE)
+    {
+        do
+        {
             //
             // If this increment would put us past the end offset, then nothing
             // to flush, just return success.
             //
 
-            if (Subsection == LastSubsection) {
-                UNLOCK_PFN (OldIrql);
+            if (Subsection == LastSubsection)
+            {
+                UNLOCK_PFN(OldIrql);
                 return TRUE;
             }
             Subsection = Subsection->NextSubsection;
@@ -2247,12 +2269,14 @@ Return Value:
             // to flush, just return success.
             //
 
-            if (Subsection == NULL) {
-                UNLOCK_PFN (OldIrql);
+            if (Subsection == NULL)
+            {
+                UNLOCK_PFN(OldIrql);
                 return TRUE;
             }
 
-            if (MiReferenceSubsection ((PMSUBSECTION)Subsection) == FALSE) {
+            if (MiReferenceSubsection((PMSUBSECTION)Subsection) == FALSE)
+            {
                 continue;
             }
 
@@ -2265,12 +2289,13 @@ Return Value:
 
         } while (TRUE);
     }
-    else {
+    else
+    {
         PointerPte = &Subsection->SubsectionBase[PteOffset];
     }
 
     FirstSubsection = Subsection;
-    ASSERT (Subsection->SubsectionBase != NULL);
+    ASSERT(Subsection->SubsectionBase != NULL);
 
     //
     // The first subsection is referenced, now reference count the last one.
@@ -2278,23 +2303,26 @@ Return Value:
     // simplifies cleanup later.
     //
 
-    if (MiReferenceSubsection ((PMSUBSECTION)LastSubsection) == FALSE) {
+    if (MiReferenceSubsection((PMSUBSECTION)LastSubsection) == FALSE)
+    {
 
-        ASSERT (Subsection != LastSubsection);
+        ASSERT(Subsection != LastSubsection);
 
         TempSubsection = Subsection->NextSubsection;
         LastSubsectionWithProtos = NULL;
 
-        while (TempSubsection != LastSubsection) {
+        while (TempSubsection != LastSubsection)
+        {
 
             //
             // If this increment put us past the end of section, then nothing
             // to flush, just return success.
             //
 
-            ASSERT (TempSubsection != NULL);
+            ASSERT(TempSubsection != NULL);
 
-            if ((PMSUBSECTION)TempSubsection->SubsectionBase != NULL) {
+            if ((PMSUBSECTION)TempSubsection->SubsectionBase != NULL)
+            {
                 LastSubsectionWithProtos = TempSubsection;
             }
 
@@ -2305,20 +2333,23 @@ Return Value:
         // End the flush at this subsection and reference it.
         //
 
-        if (LastSubsectionWithProtos == NULL) {
-            ASSERT (Subsection != NULL);
-            ASSERT (Subsection->SubsectionBase != NULL);
+        if (LastSubsectionWithProtos == NULL)
+        {
+            ASSERT(Subsection != NULL);
+            ASSERT(Subsection->SubsectionBase != NULL);
             TempSubsection = Subsection;
         }
-        else {
+        else
+        {
             TempSubsection = LastSubsectionWithProtos;
         }
 
-        if (MiReferenceSubsection ((PMSUBSECTION)TempSubsection) == FALSE) {
-            ASSERT (FALSE);
+        if (MiReferenceSubsection((PMSUBSECTION)TempSubsection) == FALSE)
+        {
+            ASSERT(FALSE);
         }
 
-        ASSERT (TempSubsection->SubsectionBase != NULL);
+        ASSERT(TempSubsection->SubsectionBase != NULL);
 
         LastSubsection = TempSubsection;
         LastPteOffset = LastSubsection->PtesInSubsection - 1;
@@ -2351,14 +2382,17 @@ Return Value:
     LockHeld = TRUE;
     ReturnValue = TRUE;
 
-    for (;;) {
+    for (;;)
+    {
 
-        if (!LockHeld) {
+        if (!LockHeld)
+        {
             LockHeld = TRUE;
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
         }
 
-        if (LastSubsection != Subsection) {
+        if (LastSubsection != Subsection)
+        {
 
             //
             // Flush to the last PTE in this subsection.
@@ -2366,7 +2400,8 @@ Return Value:
 
             LastPte = &Subsection->SubsectionBase[Subsection->PtesInSubsection];
         }
-        else {
+        else
+        {
 
             //
             // Flush to the end of the range.
@@ -2375,7 +2410,8 @@ Return Value:
             LastPte = FinalPte;
         }
 
-        if (Subsection->SubsectionBase == NULL) {
+        if (Subsection->SubsectionBase == NULL)
+        {
 
             //
             // The prototype PTEs for this subsection have either never been
@@ -2384,8 +2420,8 @@ Return Value:
             // pages to purge in this range.
             //
 
-            ASSERT (LockHeld);
-            UNLOCK_PFN (OldIrql);
+            ASSERT(LockHeld);
+            UNLOCK_PFN(OldIrql);
             LockHeld = FALSE;
             goto nextrange;
         }
@@ -2396,18 +2432,19 @@ Return Value:
         // operating on it.
         //
 
-        MappedSubsection = (PMSUBSECTION) Subsection;
+        MappedSubsection = (PMSUBSECTION)Subsection;
         MappedSubsection->NumberOfMappedViews += 1;
 
-        if (MappedSubsection->DereferenceList.Flink != NULL) {
+        if (MappedSubsection->DereferenceList.Flink != NULL)
+        {
 
             //
             // Remove this from the list of unused subsections.
             //
 
-            RemoveEntryList (&MappedSubsection->DereferenceList);
+            RemoveEntryList(&MappedSubsection->DereferenceList);
 
-            MI_UNUSED_SUBSECTIONS_COUNT_REMOVE (MappedSubsection);
+            MI_UNUSED_SUBSECTIONS_COUNT_REMOVE(MappedSubsection);
 
             MappedSubsection->DereferenceList.Flink = NULL;
         }
@@ -2429,11 +2466,13 @@ Return Value:
         // state!  Skip over the PTEs.
         //
 
-        if (!MiCheckProtoPtePageState(PointerPte, LockHeld, &DroppedPfnLock)) {
+        if (!MiCheckProtoPtePageState(PointerPte, LockHeld, &DroppedPfnLock))
+        {
             PointerPte = (PMMPTE)(((ULONG_PTR)PointerPte | (PAGE_SIZE - 1)) + 1);
         }
 
-        while (PointerPte < LastPte) {
+        while (PointerPte < LastPte)
+        {
 
             //
             // If the page table page containing the PTEs is not
@@ -2441,8 +2480,10 @@ Return Value:
             // state!  Skip over the PTEs.
             //
 
-            if (MiIsPteOnPdeBoundary(PointerPte)) {
-                if (!MiCheckProtoPtePageState(PointerPte, LockHeld, &DroppedPfnLock)) {
+            if (MiIsPteOnPdeBoundary(PointerPte))
+            {
+                if (!MiCheckProtoPtePageState(PointerPte, LockHeld, &DroppedPfnLock))
+                {
                     PointerPte = (PMMPTE)((PCHAR)PointerPte + PAGE_SIZE);
                     continue;
                 }
@@ -2450,7 +2491,8 @@ Return Value:
 
             PteContents = *PointerPte;
 
-            if (PteContents.u.Hard.Valid == 1) {
+            if (PteContents.u.Hard.Valid == 1)
+            {
 
                 //
                 // A valid PTE was found, it must be mapped in the
@@ -2462,49 +2504,48 @@ Return Value:
                 break;
             }
 
-            if ((PteContents.u.Soft.Prototype == 0) &&
-                     (PteContents.u.Soft.Transition == 1)) {
+            if ((PteContents.u.Soft.Prototype == 0) && (PteContents.u.Soft.Transition == 1))
+            {
 
-                if (!LockHeld) {
+                if (!LockHeld)
+                {
                     LockHeld = TRUE;
-                    LOCK_PFN (OldIrql);
-                    MiMakeSystemAddressValidPfn (PointerPte);
+                    LOCK_PFN(OldIrql);
+                    MiMakeSystemAddressValidPfn(PointerPte);
                     continue;
                 }
 
                 PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
-                Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+                Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-                if ((Pfn1->OriginalPte.u.Soft.Prototype != 1) ||
-                    (Pfn1->OriginalPte.u.Hard.Valid != 0) ||
-                    (Pfn1->PteAddress != PointerPte)) {
+                if ((Pfn1->OriginalPte.u.Soft.Prototype != 1) || (Pfn1->OriginalPte.u.Hard.Valid != 0) ||
+                    (Pfn1->PteAddress != PointerPte))
+                {
 
                     //
                     // The pool containing the prototype PTEs has been
                     // corrupted.  Pool corruption like this is fatal.
                     //
 
-                    KeBugCheckEx (POOL_CORRUPTION_IN_FILE_AREA,
-                                  0x2,
-                                  (ULONG_PTR)PointerPte,
-                                  (ULONG_PTR)Pfn1->PteAddress,
-                                  (ULONG_PTR)PteContents.u.Long);
+                    KeBugCheckEx(POOL_CORRUPTION_IN_FILE_AREA, 0x2, (ULONG_PTR)PointerPte, (ULONG_PTR)Pfn1->PteAddress,
+                                 (ULONG_PTR)PteContents.u.Long);
                 }
 
 #if DBG
-                if ((Pfn1->u3.e2.ReferenceCount != 0) &&
-                    (Pfn1->u3.e1.WriteInProgress == 0)) {
+                if ((Pfn1->u3.e2.ReferenceCount != 0) && (Pfn1->u3.e1.WriteInProgress == 0))
+                {
 
                     //
                     // There must be an I/O in progress on this page.
                     //
 
-                    if (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents) != LastLocked) {
-                        UNLOCK_PFN (OldIrql);
+                    if (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents) != LastLocked)
+                    {
+                        UNLOCK_PFN(OldIrql);
 
-                        LastLocked = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
-                        LOCK_PFN (OldIrql);
-                        MiMakeSystemAddressValidPfn (PointerPte);
+                        LastLocked = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
+                        LOCK_PFN(OldIrql);
+                        MiMakeSystemAddressValidPfn(PointerPte);
                         continue;
                     }
                 }
@@ -2519,7 +2560,8 @@ Return Value:
                 // writer thread runs.
                 //
 
-                if (Pfn1->u3.e1.WriteInProgress == 1) {
+                if (Pfn1->u3.e1.WriteInProgress == 1)
+                {
 
                     //
                     // A 3 or more thread deadlock can occur where:
@@ -2544,7 +2586,8 @@ Return Value:
                     // filesystem overhead to do this is substantial.
                     //
 
-                    if (MiCancelWriteOfMappedPfn (PageFrameIndex) == TRUE) {
+                    if (MiCancelWriteOfMappedPfn(PageFrameIndex) == TRUE)
+                    {
 
                         //
                         // Stopping any failed writes (even deliberately
@@ -2554,12 +2597,12 @@ Return Value:
                         // the top now as the world may have changed.
                         //
 
-                        MiMakeSystemAddressValidPfn (PointerPte);
+                        MiMakeSystemAddressValidPfn(PointerPte);
                         continue;
                     }
 
-                    ASSERT (ControlArea->ModifiedWriteCount != 0);
-                    ASSERT (Pfn1->u3.e2.ReferenceCount != 0);
+                    ASSERT(ControlArea->ModifiedWriteCount != 0);
+                    ASSERT(Pfn1->u3.e2.ReferenceCount != 0);
 
                     ControlArea->u.Flags.SetMappedFileIoComplete = 1;
 
@@ -2570,20 +2613,17 @@ Return Value:
                     // a pulse.
                     //
 
-                    UNLOCK_PFN_AND_THEN_WAIT (APC_LEVEL);
+                    UNLOCK_PFN_AND_THEN_WAIT(APC_LEVEL);
 
-                    KeWaitForSingleObject (&MmMappedFileIoComplete,
-                                           WrPageOut,
-                                           KernelMode,
-                                           FALSE,
-                                           NULL);
-                    KeLowerIrql (OldIrql);
-                    LOCK_PFN (OldIrql);
-                    MiMakeSystemAddressValidPfn (PointerPte);
+                    KeWaitForSingleObject(&MmMappedFileIoComplete, WrPageOut, KernelMode, FALSE, NULL);
+                    KeLowerIrql(OldIrql);
+                    LOCK_PFN(OldIrql);
+                    MiMakeSystemAddressValidPfn(PointerPte);
                     continue;
                 }
 
-                if (Pfn1->u3.e1.ReadInProgress == 1) {
+                if (Pfn1->u3.e1.ReadInProgress == 1)
+                {
 
                     //
                     // The page currently is being read in from the
@@ -2595,24 +2635,23 @@ Return Value:
                     break;
                 }
 
-                ASSERT (!((Pfn1->OriginalPte.u.Soft.Prototype == 0) &&
-                    (Pfn1->OriginalPte.u.Soft.Transition == 1)));
+                ASSERT(!((Pfn1->OriginalPte.u.Soft.Prototype == 0) && (Pfn1->OriginalPte.u.Soft.Transition == 1)));
 
-                MI_WRITE_INVALID_PTE (PointerPte, Pfn1->OriginalPte);
+                MI_WRITE_INVALID_PTE(PointerPte, Pfn1->OriginalPte);
 
-                ASSERT (Pfn1->OriginalPte.u.Hard.Valid == 0);
+                ASSERT(Pfn1->OriginalPte.u.Hard.Valid == 0);
 
                 ControlArea->NumberOfPfnReferences -= 1;
-                ASSERT ((LONG)ControlArea->NumberOfPfnReferences >= 0);
+                ASSERT((LONG)ControlArea->NumberOfPfnReferences >= 0);
 
-                MiUnlinkPageFromList (Pfn1);
+                MiUnlinkPageFromList(Pfn1);
 
-                MI_SET_PFN_DELETED (Pfn1);
+                MI_SET_PFN_DELETED(Pfn1);
 
                 PageTableFrameIndex = Pfn1->u4.PteFrame;
-                Pfn2 = MI_PFN_ELEMENT (PageTableFrameIndex);
+                Pfn2 = MI_PFN_ELEMENT(PageTableFrameIndex);
 
-                MiDecrementShareCountInline (Pfn2, PageTableFrameIndex);
+                MiDecrementShareCountInline(Pfn2, PageTableFrameIndex);
 
                 //
                 // If the reference count for the page is zero, insert
@@ -2621,56 +2660,59 @@ Return Value:
                 // the page will go to the free list.
                 //
 
-                if (Pfn1->u3.e2.ReferenceCount == 0) {
-                    MiReleasePageFileSpace (Pfn1->OriginalPte);
-                    MiInsertPageInFreeList (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents));
+                if (Pfn1->u3.e2.ReferenceCount == 0)
+                {
+                    MiReleasePageFileSpace(Pfn1->OriginalPte);
+                    MiInsertPageInFreeList(MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents));
                 }
             }
             PointerPte += 1;
 
-            if ((MiIsPteOnPdeBoundary(PointerPte)) && (LockHeld)) {
+            if ((MiIsPteOnPdeBoundary(PointerPte)) && (LockHeld))
+            {
 
                 //
                 // Unlock PFN so large requests will not block other
                 // threads on MP systems.
                 //
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 LockHeld = FALSE;
             }
         }
 
-        if (!LockHeld) {
+        if (!LockHeld)
+        {
             LockHeld = TRUE;
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
         }
 
-        ASSERT (MappedSubsection->DereferenceList.Flink == NULL);
-        ASSERT ((MappedSubsection->NumberOfMappedViews >= 1) ||
-                (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 1));
+        ASSERT(MappedSubsection->DereferenceList.Flink == NULL);
+        ASSERT((MappedSubsection->NumberOfMappedViews >= 1) ||
+               (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 1));
 
         MappedSubsection->NumberOfMappedViews -= 1;
 
-        if ((MappedSubsection->NumberOfMappedViews == 0) &&
-            (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 0)) {
+        if ((MappedSubsection->NumberOfMappedViews == 0) && (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 0))
+        {
 
             //
             // Insert this subsection into the unused subsection list.
             //
 
-            InsertTailList (&MmUnusedSubsectionList,
-                            &MappedSubsection->DereferenceList);
-            MI_UNUSED_SUBSECTIONS_COUNT_INSERT (MappedSubsection);
+            InsertTailList(&MmUnusedSubsectionList, &MappedSubsection->DereferenceList);
+            MI_UNUSED_SUBSECTIONS_COUNT_INSERT(MappedSubsection);
         }
 
-        ASSERT (LockHeld);
+        ASSERT(LockHeld);
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         LockHeld = FALSE;
 
-nextrange:
+    nextrange:
 
-        if ((LastSubsection != Subsection) && (ReturnValue)) {
+        if ((LastSubsection != Subsection) && (ReturnValue))
+        {
 
             //
             // Get the next subsection in the list.
@@ -2678,9 +2720,9 @@ nextrange:
 
             Subsection = Subsection->NextSubsection;
             PointerPte = Subsection->SubsectionBase;
-
         }
-        else {
+        else
+        {
 
             //
             // The last range has been flushed, exit the top FOR loop
@@ -2691,14 +2733,15 @@ nextrange:
         }
     }
 
-    if (!LockHeld) {
-        LOCK_PFN (OldIrql);
+    if (!LockHeld)
+    {
+        LOCK_PFN(OldIrql);
     }
 
-    MiDecrementSubsections (FirstSubsection, FirstSubsection);
-    MiDecrementSubsections (LastSubsection, LastSubsection);
+    MiDecrementSubsections(FirstSubsection, FirstSubsection);
+    MiDecrementSubsections(LastSubsection, LastSubsection);
 
-    ASSERT ((LONG)ControlArea->NumberOfMappedViews >= 1);
+    ASSERT((LONG)ControlArea->NumberOfMappedViews >= 1);
     ControlArea->NumberOfMappedViews -= 1;
 
     ControlArea->u.Flags.BeingPurged = 0;
@@ -2708,15 +2751,12 @@ nextrange:
     // will release the PFN lock.
     //
 
-    MiCheckControlArea (ControlArea, NULL, OldIrql);
+    MiCheckControlArea(ControlArea, NULL, OldIrql);
     return ReturnValue;
 }
-
+
 BOOLEAN
-MmFlushImageSection (
-    IN PSECTION_OBJECT_POINTERS SectionPointer,
-    IN MMFLUSH_TYPE FlushType
-    )
+MmFlushImageSection(IN PSECTION_OBJECT_POINTERS SectionPointer, IN MMFLUSH_TYPE FlushType)
 
 /*++
 
@@ -2753,23 +2793,25 @@ Return Value:
     KIRQL OldIrql;
     LOGICAL state;
 
-    if (FlushType == MmFlushForDelete) {
+    if (FlushType == MmFlushForDelete)
+    {
 
         //
         // Do a quick check to see if there are any mapped views for
         // the data section.  If so, just return FALSE.
         //
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
         ControlArea = (PCONTROL_AREA)(SectionPointer->DataSectionObject);
-        if (ControlArea != NULL) {
-            if ((ControlArea->NumberOfUserReferences != 0) ||
-                (ControlArea->u.Flags.BeingCreated)) {
-                UNLOCK_PFN (OldIrql);
+        if (ControlArea != NULL)
+        {
+            if ((ControlArea->NumberOfUserReferences != 0) || (ControlArea->u.Flags.BeingCreated))
+            {
+                UNLOCK_PFN(OldIrql);
                 return FALSE;
             }
         }
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
     }
 
     //
@@ -2777,14 +2819,11 @@ Return Value:
     // or the control area is being deleted, this operation cannot continue.
     //
 
-    state = MiCheckControlAreaStatus (CheckImageSection,
-                                      SectionPointer,
-                                      FALSE,
-                                      &ControlArea,
-                                      &OldIrql);
+    state = MiCheckControlAreaStatus(CheckImageSection, SectionPointer, FALSE, &ControlArea, &OldIrql);
 
-    if (ControlArea == NULL) {
-        return (BOOLEAN) state;
+    if (ControlArea == NULL)
+    {
+        return (BOOLEAN)state;
     }
 
     //
@@ -2798,7 +2837,8 @@ Return Value:
     // Note this can only happen for Hydra.
     //
 
-    do {
+    do
+    {
 
         //
         // Set the being deleted flag and up the number of mapped views
@@ -2811,14 +2851,16 @@ Return Value:
         ControlArea->NumberOfMappedViews = 1;
         LargeControlArea = NULL;
 
-        if (ControlArea->u.Flags.GlobalOnlyPerSession == 0) {
+        if (ControlArea->u.Flags.GlobalOnlyPerSession == 0)
+        {
             NOTHING;
         }
-        else if (IsListEmpty(&((PLARGE_CONTROL_AREA)ControlArea)->UserGlobalList)) {
-            ASSERT (ControlArea ==
-                    (PCONTROL_AREA)SectionPointer->ImageSectionObject);
+        else if (IsListEmpty(&((PLARGE_CONTROL_AREA)ControlArea)->UserGlobalList))
+        {
+            ASSERT(ControlArea == (PCONTROL_AREA)SectionPointer->ImageSectionObject);
         }
-        else {
+        else
+        {
 
             //
             // Check if there's only one image section in this control area, so
@@ -2834,15 +2876,13 @@ Return Value:
             // flush any other remaining control areas.
             //
 
-            ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 1);
+            ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 1);
 
             Next = ((PLARGE_CONTROL_AREA)ControlArea)->UserGlobalList.Flink;
 
-            LargeControlArea = CONTAINING_RECORD (Next,
-                                                  LARGE_CONTROL_AREA,
-                                                  UserGlobalList);
-        
-            ASSERT (LargeControlArea->u.Flags.GlobalOnlyPerSession == 1);
+            LargeControlArea = CONTAINING_RECORD(Next, LARGE_CONTROL_AREA, UserGlobalList);
+
+            ASSERT(LargeControlArea->u.Flags.GlobalOnlyPerSession == 1);
 
             LargeControlArea->NumberOfSectionReferences += 1;
         }
@@ -2853,52 +2893,42 @@ Return Value:
         // memory.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
-        MiCleanSection (ControlArea, TRUE);
+        MiCleanSection(ControlArea, TRUE);
 
         //
         // Get the next Hydra control area.
         //
 
-        if (LargeControlArea != NULL) {
-            state = MiCheckControlAreaStatus (CheckImageSection,
-                                              SectionPointer,
-                                              FALSE,
-                                              &ControlArea,
-                                              &OldIrql);
-            if (!ControlArea) {
-                LOCK_PFN (OldIrql);
+        if (LargeControlArea != NULL)
+        {
+            state = MiCheckControlAreaStatus(CheckImageSection, SectionPointer, FALSE, &ControlArea, &OldIrql);
+            if (!ControlArea)
+            {
+                LOCK_PFN(OldIrql);
                 LargeControlArea->NumberOfSectionReferences -= 1;
-                MiCheckControlArea ((PCONTROL_AREA)LargeControlArea,
-                                    NULL,
-                                    OldIrql);
+                MiCheckControlArea((PCONTROL_AREA)LargeControlArea, NULL, OldIrql);
             }
-            else {
+            else
+            {
                 LargeControlArea->NumberOfSectionReferences -= 1;
-                MiCheckControlArea ((PCONTROL_AREA)LargeControlArea,
-                                    NULL,
-                                    OldIrql);
-                LOCK_PFN (OldIrql);
+                MiCheckControlArea((PCONTROL_AREA)LargeControlArea, NULL, OldIrql);
+                LOCK_PFN(OldIrql);
             }
         }
-        else {
+        else
+        {
             state = TRUE;
             break;
         }
 
     } while (ControlArea);
 
-    return (BOOLEAN) state;
+    return (BOOLEAN)state;
 }
 
-VOID
-MiFlushDirtyBitsToPfn (
-    IN PMMPTE PointerPte,
-    IN PMMPTE LastPte,
-    IN PEPROCESS Process,
-    IN BOOLEAN SystemCache
-    )
+VOID MiFlushDirtyBitsToPfn(IN PMMPTE PointerPte, IN PMMPTE LastPte, IN PEPROCESS Process, IN BOOLEAN SystemCache)
 
 {
     KIRQL OldIrql;
@@ -2910,25 +2940,26 @@ MiFlushDirtyBitsToPfn (
     PMMPTE PointerPxe;
     ULONG Waited;
 
-    Va = MiGetVirtualAddressMappedByPte (PointerPte);
-    LOCK_PFN (OldIrql);
+    Va = MiGetVirtualAddressMappedByPte(PointerPte);
+    LOCK_PFN(OldIrql);
 
-    while (PointerPte <= LastPte) {
+    while (PointerPte <= LastPte)
+    {
 
         PteContents = *PointerPte;
 
-        if ((PteContents.u.Hard.Valid == 1) &&
-            (MI_IS_PTE_DIRTY (PteContents))) {
+        if ((PteContents.u.Hard.Valid == 1) && (MI_IS_PTE_DIRTY(PteContents)))
+        {
 
             //
             // Flush the modify bit to the PFN database.
             //
 
-            Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
+            Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
 
-            MI_SET_MODIFIED (Pfn1, 1, 0x2);
+            MI_SET_MODIFIED(Pfn1, 1, 0x2);
 
-            MI_SET_PTE_CLEAN (PteContents);
+            MI_SET_PTE_CLEAN(PteContents);
 
             //
             // No need to capture the PTE contents as we are going to
@@ -2936,60 +2967,53 @@ MiFlushDirtyBitsToPfn (
             // before the write is done.
             //
 
-            (VOID)KeFlushSingleTb (Va,
-                                   FALSE,
-                                   SystemCache,
-                                   (PHARDWARE_PTE)PointerPte,
-                                   PteContents.u.Flush);
+            (VOID) KeFlushSingleTb(Va, FALSE, SystemCache, (PHARDWARE_PTE)PointerPte, PteContents.u.Flush);
         }
 
         Va = (PVOID)((PCHAR)Va + PAGE_SIZE);
         PointerPte += 1;
 
-        if (MiIsPteOnPdeBoundary (PointerPte)) {
+        if (MiIsPteOnPdeBoundary(PointerPte))
+        {
 
-            PointerPde = MiGetPteAddress (PointerPte);
+            PointerPde = MiGetPteAddress(PointerPte);
 
-            while (PointerPte <= LastPte) {
+            while (PointerPte <= LastPte)
+            {
 
-                PointerPxe = MiGetPdeAddress (PointerPde);
-                PointerPpe = MiGetPteAddress (PointerPde);
+                PointerPxe = MiGetPdeAddress(PointerPde);
+                PointerPpe = MiGetPteAddress(PointerPde);
 
-                if (!MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                 Process,
-                                                 TRUE,
-                                                 &Waited)) {
+                if (!MiDoesPxeExistAndMakeValid(PointerPxe, Process, TRUE, &Waited))
+                {
 
                     //
                     // No page directory parent page exists for this address.
                     //
 
                     PointerPxe += 1;
-                    PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-                    PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+                    PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+                    PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
                 }
-                else if (!MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                 Process,
-                                                 TRUE,
-                                                 &Waited)) {
+                else if (!MiDoesPpeExistAndMakeValid(PointerPpe, Process, TRUE, &Waited))
+                {
 
                     //
                     // No page directory page exists for this address.
                     //
 
                     PointerPpe += 1;
-                    PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+                    PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
                 }
-                else {
+                else
+                {
 
                     Waited = 0;
 
-                    if (!MiDoesPdeExistAndMakeValid (PointerPde,
-                                                     Process,
-                                                     TRUE,
-                                                     &Waited)) {
+                    if (!MiDoesPdeExistAndMakeValid(PointerPde, Process, TRUE, &Waited))
+                    {
 
                         //
                         // No page table page exists for this address.
@@ -2997,16 +3021,18 @@ MiFlushDirtyBitsToPfn (
 
                         PointerPde += 1;
 
-                        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+                        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // If the PFN lock (and accordingly the WS mutex) was
                         // released and reacquired we must retry the operation.
                         //
 
-                        if (Waited != 0) {
+                        if (Waited != 0)
+                        {
                             continue;
                         }
 
@@ -3021,41 +3047,34 @@ MiFlushDirtyBitsToPfn (
                 }
             }
 
-            Va = MiGetVirtualAddressMappedByPte (PointerPte);
+            Va = MiGetVirtualAddressMappedByPte(PointerPte);
         }
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return;
 }
 
 PSUBSECTION
-MiGetSystemCacheSubsection (
-    IN PVOID BaseAddress,
-    OUT PMMPTE *ProtoPte
-    )
+MiGetSystemCacheSubsection(IN PVOID BaseAddress, OUT PMMPTE *ProtoPte)
 
 {
     KIRQL OldIrql;
     PMMPTE PointerPte;
     PSUBSECTION Subsection;
 
-    PointerPte = MiGetPteAddress (BaseAddress);
+    PointerPte = MiGetPteAddress(BaseAddress);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    Subsection = MiGetSubsectionAndProtoFromPte (PointerPte, ProtoPte);
-    UNLOCK_PFN (OldIrql);
+    Subsection = MiGetSubsectionAndProtoFromPte(PointerPte, ProtoPte);
+    UNLOCK_PFN(OldIrql);
     return Subsection;
 }
 
-
+
 LOGICAL
-MiCheckProtoPtePageState (
-    IN PMMPTE PrototypePte,
-    IN LOGICAL PfnLockHeld,
-    OUT PLOGICAL DroppedPfnLock
-    )
+MiCheckProtoPtePageState(IN PMMPTE PrototypePte, IN LOGICAL PfnLockHeld, OUT PLOGICAL DroppedPfnLock)
 
 /*++
 
@@ -3098,46 +3117,52 @@ Return Value:
     // is no lazy loading of PPEs, the validity check alone is sufficient.
     //
 
-    PointerPte = MiGetPdeAddress (PrototypePte);
+    PointerPte = MiGetPdeAddress(PrototypePte);
     PteContents = *PointerPte;
 
-    if (PteContents.u.Hard.Valid == 0) {
+    if (PteContents.u.Hard.Valid == 0)
+    {
         return FALSE;
     }
 
 #endif
 
-    PointerPte = MiGetPteAddress (PrototypePte);
+    PointerPte = MiGetPteAddress(PrototypePte);
 
 #if (_MI_PAGING_LEVELS < 3)
 
-    if (PointerPte->u.Hard.Valid == 0) {
-        MiCheckPdeForPagedPool (PrototypePte);
+    if (PointerPte->u.Hard.Valid == 0)
+    {
+        MiCheckPdeForPagedPool(PrototypePte);
     }
 
 #endif
 
     PteContents = *PointerPte;
 
-    if (PteContents.u.Hard.Valid == 1) {
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (&PteContents);
-        Pfn = MI_PFN_ELEMENT (PageFrameIndex);
-        if (Pfn->u2.ShareCount != 1) {
+    if (PteContents.u.Hard.Valid == 1)
+    {
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(&PteContents);
+        Pfn = MI_PFN_ELEMENT(PageFrameIndex);
+        if (Pfn->u2.ShareCount != 1)
+        {
             return TRUE;
         }
     }
-    else if ((PteContents.u.Soft.Prototype == 0) &&
-               (PteContents.u.Soft.Transition == 1)) {
+    else if ((PteContents.u.Soft.Prototype == 0) && (PteContents.u.Soft.Transition == 1))
+    {
 
         //
         // Transition, if on standby or modified, return FALSE.
         //
 
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
-        Pfn = MI_PFN_ELEMENT (PageFrameIndex);
-        if (Pfn->u3.e1.PageLocation >= ActiveAndValid) {
-            if (PfnLockHeld) {
-                MiMakeSystemAddressValidPfn (PrototypePte);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
+        Pfn = MI_PFN_ELEMENT(PageFrameIndex);
+        if (Pfn->u3.e1.PageLocation >= ActiveAndValid)
+        {
+            if (PfnLockHeld)
+            {
+                MiMakeSystemAddressValidPfn(PrototypePte);
                 *DroppedPfnLock = TRUE;
             }
             return TRUE;

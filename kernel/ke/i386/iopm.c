@@ -31,10 +31,10 @@ Revision History:
 // Our notion of alignment is different, so force use of ours
 //
 
-#undef  ALIGN_UP
-#undef  ALIGN_DOWN
-#define ALIGN_DOWN(address,amt) ((ULONG)(address) & ~(( amt ) - 1))
-#define ALIGN_UP(address,amt) (ALIGN_DOWN( (address + (amt) - 1), (amt) ))
+#undef ALIGN_UP
+#undef ALIGN_DOWN
+#define ALIGN_DOWN(address, amt) ((ULONG)(address) & ~((amt) - 1))
+#define ALIGN_UP(address, amt) (ALIGN_DOWN((address + (amt) - 1), (amt)))
 
 //
 // Note on synchronization:
@@ -60,27 +60,12 @@ Revision History:
 // Define forward referenced function prototypes.
 //
 
-VOID
-KiSetIoMap(
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID MapSource,
-    IN PVOID MapNumber,
-    IN PVOID Parameter3
-    );
+VOID KiSetIoMap(IN PKIPI_CONTEXT SignalDone, IN PVOID MapSource, IN PVOID MapNumber, IN PVOID Parameter3);
 
-VOID
-KiLoadIopmOffset(
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
-
+VOID KiLoadIopmOffset(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3);
+
 BOOLEAN
-Ke386SetIoAccessMap (
-    ULONG MapNumber,
-    PKIO_ACCESS_MAP IoAccessMap
-    )
+Ke386SetIoAccessMap(ULONG MapNumber, PKIO_ACCESS_MAP IoAccessMap)
 
 /*++
 
@@ -121,7 +106,8 @@ Return Value:
     // Reject illegal requests
     //
 
-    if ((MapNumber > IOPM_COUNT) || (MapNumber == IO_ACCESS_MAP_NONE)) {
+    if ((MapNumber > IOPM_COUNT) || (MapNumber == IO_ACCESS_MAP_NONE))
+    {
         return FALSE;
     }
 
@@ -141,12 +127,9 @@ Return Value:
 #if !defined(NT_UP)
 
     TargetProcessors = KeActiveProcessors & ~Prcb->SetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSetIoMap,
-                        IoAccessMap,
-                        (PVOID)MapNumber,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSetIoMap, IoAccessMap, (PVOID)MapNumber, NULL);
     }
 
 #endif
@@ -155,7 +138,7 @@ Return Value:
     // Copy the IOPM map and load the map for the current process.
     //
 
-    pt = &(KiPcr()->TSS->IoMaps[MapNumber-1].IoMap);
+    pt = &(KiPcr()->TSS->IoMaps[MapNumber - 1].IoMap);
     RtlCopyMemory(pt, (PVOID)IoAccessMap, IOPM_SIZE);
     CurrentProcess = Prcb->CurrentThread->ApcState.Process;
     KiPcr()->TSS->IoMapBase = CurrentProcess->IopmOffset;
@@ -167,7 +150,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -183,14 +167,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-
-VOID
-KiSetIoMap(
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID MapSource,
-    IN PVOID MapNumber,
-    IN PVOID Parameter3
-    )
+
+VOID KiSetIoMap(IN PKIPI_CONTEXT SignalDone, IN PVOID MapSource, IN PVOID MapNumber, IN PVOID Parameter3)
 /*++
 
 Routine Description:
@@ -220,7 +198,7 @@ Return Value:
     //
 
     Prcb = KeGetCurrentPrcb();
-    pt = &(KiPcr()->TSS->IoMaps[((ULONG) MapNumber)-1].IoMap);
+    pt = &(KiPcr()->TSS->IoMaps[((ULONG)MapNumber) - 1].IoMap);
     RtlCopyMemory(pt, MapSource, IOPM_SIZE);
     CurrentProcess = Prcb->CurrentThread->ApcState.Process;
     KiPcr()->TSS->IoMapBase = CurrentProcess->IopmOffset;
@@ -230,12 +208,9 @@ Return Value:
 
 #endif
 
-
+
 BOOLEAN
-Ke386QueryIoAccessMap (
-    ULONG MapNumber,
-    PKIO_ACCESS_MAP IoAccessMap
-    )
+Ke386QueryIoAccessMap(ULONG MapNumber, PKIO_ACCESS_MAP IoAccessMap)
 
 /*++
 
@@ -270,7 +245,8 @@ Return Value:
     // Reject illegal requests
     //
 
-    if (MapNumber > IOPM_COUNT) {
+    if (MapNumber > IOPM_COUNT)
+    {
         return FALSE;
     }
 
@@ -284,24 +260,27 @@ Return Value:
     // Copy out the map
     //
 
-    if (MapNumber == IO_ACCESS_MAP_NONE) {
+    if (MapNumber == IO_ACCESS_MAP_NONE)
+    {
 
         //
         // no access case, simply return a map of all 1s
         //
 
         p = (PUCHAR)IoAccessMap;
-        for (i = 0; i < IOPM_SIZE; i++) {
+        for (i = 0; i < IOPM_SIZE; i++)
+        {
             p[i] = (UCHAR)-1;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // normal case, just copy the bits
         //
 
-        Map = (PVOID)&(KiPcr()->TSS->IoMaps[MapNumber-1].IoMap);
+        Map = (PVOID) & (KiPcr()->TSS->IoMaps[MapNumber - 1].IoMap);
         RtlCopyMemory((PVOID)IoAccessMap, Map, IOPM_SIZE);
     }
 
@@ -313,12 +292,9 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-Ke386IoSetAccessProcess (
-    PKPROCESS Process,
-    ULONG MapNumber
-    )
+Ke386IoSetAccessProcess(PKPROCESS Process, ULONG MapNumber)
 /*++
 
 Routine Description:
@@ -353,7 +329,8 @@ Return Value:
     // Reject illegal requests
     //
 
-    if (MapNumber > IOPM_COUNT) {
+    if (MapNumber > IOPM_COUNT)
+    {
         return FALSE;
     }
 
@@ -374,7 +351,8 @@ Return Value:
 
     TargetProcessors = Process->ActiveProcessors;
     Prcb = KeGetCurrentPrcb();
-    if (TargetProcessors & Prcb->SetMember) {
+    if (TargetProcessors & Prcb->SetMember)
+    {
         KiPcr()->TSS->IoMapBase = MapOffset;
     }
 
@@ -386,12 +364,9 @@ Return Value:
 #if !defined(NT_UP)
 
     TargetProcessors = TargetProcessors & ~Prcb->SetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiLoadIopmOffset,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiLoadIopmOffset, NULL, NULL, NULL);
 
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
@@ -408,14 +383,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-
-VOID
-KiLoadIopmOffset(
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiLoadIopmOffset(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -452,11 +421,8 @@ Return Value:
 
 #endif
 
-
-VOID
-Ke386SetIOPL(
-    IN PKPROCESS Process
-    )
+
+VOID Ke386SetIOPL(IN PKPROCESS Process)
 
 /*++
 
@@ -489,10 +455,10 @@ Return Value:
 
 {
 
-    PKTHREAD    Thread;
-    PKPROCESS   Process2;
-    PKTRAP_FRAME    TrapFrame;
-    CONTEXT     Context;
+    PKTHREAD Thread;
+    PKPROCESS Process2;
+    PKTRAP_FRAME TrapFrame;
+    CONTEXT Context;
 
     //
     // get current thread and Process2, set flag for IOPL in both of them
@@ -508,22 +474,15 @@ Return Value:
     // Force IOPL to be on for current thread
     //
 
-    TrapFrame = (PKTRAP_FRAME)((PUCHAR)Thread->InitialStack -
-                ALIGN_UP(sizeof(KTRAP_FRAME),KTRAP_FRAME_ALIGN) -
-                sizeof(FX_SAVE_AREA));
+    TrapFrame = (PKTRAP_FRAME)((PUCHAR)Thread->InitialStack - ALIGN_UP(sizeof(KTRAP_FRAME), KTRAP_FRAME_ALIGN) -
+                               sizeof(FX_SAVE_AREA));
 
     Context.ContextFlags = CONTEXT_CONTROL;
-    KeContextFromKframes(TrapFrame,
-                         NULL,
-                         &Context);
+    KeContextFromKframes(TrapFrame, NULL, &Context);
 
-    Context.EFlags |= (EFLAGS_IOPL_MASK & -1);  // IOPL == 3
+    Context.EFlags |= (EFLAGS_IOPL_MASK & -1); // IOPL == 3
 
-    KeContextToKframes(TrapFrame,
-                       NULL,
-                       &Context,
-                       CONTEXT_CONTROL,
-                       UserMode);
+    KeContextToKframes(TrapFrame, NULL, &Context, CONTEXT_CONTROL, UserMode);
 
     return;
 }

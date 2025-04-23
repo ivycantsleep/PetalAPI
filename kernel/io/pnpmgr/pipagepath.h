@@ -22,9 +22,4 @@ Revision History:
 --*/
 
 NTSTATUS
-PiPagePathSetState(
-    IN PFILE_OBJECT FileObject,
-    IN BOOLEAN      InPath
-    );
-
-
+PiPagePathSetState(IN PFILE_OBJECT FileObject, IN BOOLEAN InPath);

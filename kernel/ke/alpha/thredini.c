@@ -39,28 +39,25 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 //
 // The following assert macros are used to check that an input object is
 // really the proper type.
 //
 
-#define ASSERT_PROCESS(E) {                    \
-    ASSERT((E)->Header.Type == ProcessObject); \
-}
+#define ASSERT_PROCESS(E)                          \
+    {                                              \
+        ASSERT((E)->Header.Type == ProcessObject); \
+    }
 
-#define ASSERT_THREAD(E) {                    \
-    ASSERT((E)->Header.Type == ThreadObject); \
-}
-
-VOID
-KiInitializeContextThread (
-    IN PKTHREAD Thread,
-    IN PKSYSTEM_ROUTINE SystemRoutine,
-    IN PKSTART_ROUTINE StartRoutine OPTIONAL,
-    IN PVOID StartContext OPTIONAL,
-    IN PCONTEXT ContextRecord OPTIONAL
-    )
+#define ASSERT_THREAD(E)                          \
+    {                                             \
+        ASSERT((E)->Header.Type == ThreadObject); \
+    }
+
+VOID KiInitializeContextThread(IN PKTHREAD Thread, IN PKSYSTEM_ROUTINE SystemRoutine,
+                               IN PKSTART_ROUTINE StartRoutine OPTIONAL, IN PVOID StartContext OPTIONAL,
+                               IN PCONTEXT ContextRecord OPTIONAL)
 
 /*++
 
@@ -114,13 +111,11 @@ Return Value:
     //
 
     InitialStack = (ULONG_PTR)Thread->InitialStack;
-    if (ARGUMENT_PRESENT(ContextRecord)) {
-        TrFrame = (PKTRAP_FRAME)(((InitialStack) -
-                  sizeof(KTRAP_FRAME)) & ~((ULONG_PTR)15));
-        ExFrame = (PKEXCEPTION_FRAME)(((ULONG_PTR)TrFrame -
-                  sizeof(KEXCEPTION_FRAME)) & ~((ULONG_PTR)15));
-        CxFrame = (PKEXCEPTION_FRAME)(((ULONG_PTR)ExFrame -
-                  sizeof(KEXCEPTION_FRAME)) & ~((ULONG_PTR)15));
+    if (ARGUMENT_PRESENT(ContextRecord))
+    {
+        TrFrame = (PKTRAP_FRAME)(((InitialStack) - sizeof(KTRAP_FRAME)) & ~((ULONG_PTR)15));
+        ExFrame = (PKEXCEPTION_FRAME)(((ULONG_PTR)TrFrame - sizeof(KEXCEPTION_FRAME)) & ~((ULONG_PTR)15));
+        CxFrame = (PKEXCEPTION_FRAME)(((ULONG_PTR)ExFrame - sizeof(KEXCEPTION_FRAME)) & ~((ULONG_PTR)15));
 
         //
         // Zero the exception and trap frames and copy information from the
@@ -129,10 +124,7 @@ Return Value:
 
         RtlZeroMemory((PVOID)ExFrame, sizeof(KEXCEPTION_FRAME));
         RtlZeroMemory((PVOID)TrFrame, sizeof(KTRAP_FRAME));
-        KeContextToKframes(TrFrame, ExFrame,
-                           ContextRecord,
-                           ContextRecord->ContextFlags | CONTEXT_CONTROL,
-                           UserMode);
+        KeContextToKframes(TrFrame, ExFrame, ContextRecord, ContextRecord->ContextFlags | CONTEXT_CONTROL, UserMode);
 
         //
         // If the FPCR quadword in the specified context record is zero,
@@ -142,7 +134,8 @@ Return Value:
         // the SoftFpcr here also but not all threads have a Teb.
         //
 
-        if (TrFrame->Fpcr == 0) {
+        if (TrFrame->Fpcr == 0)
+        {
             ((PFPCR)(&TrFrame->Fpcr))->DynamicRoundingMode = ROUND_TO_NEAREST;
         }
 
@@ -159,11 +152,11 @@ Return Value:
         //
 
         ExFrame->IntRa = 0;
-
-    } else {
+    }
+    else
+    {
         ExFrame = NULL;
-        CxFrame = (PKEXCEPTION_FRAME)(((InitialStack) -
-                  sizeof(KEXCEPTION_FRAME)) & ~((ULONG_PTR)15));
+        CxFrame = (PKEXCEPTION_FRAME)(((InitialStack) - sizeof(KEXCEPTION_FRAME)) & ~((ULONG_PTR)15));
 
         //
         // Set the previous mode in thread object to kernel.
@@ -179,10 +172,12 @@ Return Value:
     //
 
     CxFrame->SwapReturn = (ULONGLONG)(LONG_PTR)KiThreadStartup;
-    if (ExFrame == NULL) {
+    if (ExFrame == NULL)
+    {
         CxFrame->IntFp = (ULONGLONG)(LONG_PTR)ExFrame;
-
-    } else {
+    }
+    else
+    {
         CxFrame->IntFp = (ULONGLONG)(LONG_PTR)TrFrame;
     }
 
@@ -191,7 +186,7 @@ Return Value:
     CxFrame->IntS2 = (ULONGLONG)(LONG_PTR)StartRoutine;
     CxFrame->IntS3 = (ULONGLONG)(LONG_PTR)SystemRoutine;
 
-    CxFrame->Psr = 0;			// clear everything
+    CxFrame->Psr = 0; // clear everything
     ((PSR *)(&CxFrame->Psr))->INTERRUPT_ENABLE = 1;
     ((PSR *)(&CxFrame->Psr))->IRQL = DISPATCH_LEVEL;
     ((PSR *)(&CxFrame->Psr))->MODE = 0;
@@ -203,12 +198,9 @@ Return Value:
     Thread->KernelStack = (PVOID)(ULONGLONG)(LONG_PTR)CxFrame;
     return;
 }
-
+
 BOOLEAN
-KeSetAutoAlignmentProcess (
-    IN PKPROCESS Process,
-    IN BOOLEAN Enable
-    )
+KeSetAutoAlignmentProcess(IN PKPROCESS Process, IN BOOLEAN Enable)
 
 /*++
 
@@ -264,12 +256,9 @@ Return Value:
     KiUnlockDispatcherDatabase(OldIrql);
     return Previous;
 }
-
+
 BOOLEAN
-KeSetAutoAlignmentThread (
-    IN PKTHREAD Thread,
-    IN BOOLEAN Enable
-    )
+KeSetAutoAlignmentThread(IN PKTHREAD Thread, IN BOOLEAN Enable)
 
 /*++
 

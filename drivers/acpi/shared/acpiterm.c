@@ -22,11 +22,8 @@ Environment:
 
 #include "pch.h"
 
-
-VOID
-ACPICleanUp(
-    VOID
-    )
+
+VOID ACPICleanUp(VOID)
 /*++
 
 Routine Description:
@@ -44,11 +41,8 @@ Return Value:
 
 --*/
 {
-     //
-     // Free the ACPIInformation structure.
-     //
-     ACPIPrint( (
-         ACPI_PRINT_WARNING,
-         "ACPICleanUp: Cleaning Up --- ACPI Terminated\n"
-         ) );
+    //
+    // Free the ACPIInformation structure.
+    //
+    ACPIPrint((ACPI_PRINT_WARNING, "ACPICleanUp: Cleaning Up --- ACPI Terminated\n"));
 }

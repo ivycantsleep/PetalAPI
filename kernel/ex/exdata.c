@@ -65,12 +65,14 @@ const WCHAR ExpWstrSystemInformationValue[] = L"Value";
 
 const WCHAR ExpWstrCallback[] = L"\\Callback";
 
-const EXP_INITIALIZE_GLOBAL_CALLBACKS  ExpInitializeCallback[] = {
-    &ExCbSetSystemTime,             L"\\Callback\\SetSystemTime",
-    &ExCbSetSystemState,            L"\\Callback\\SetSystemState",
-    &ExCbPowerState,                L"\\Callback\\PowerState",
-    NULL,                           NULL
-};
+const EXP_INITIALIZE_GLOBAL_CALLBACKS ExpInitializeCallback[] = { &ExCbSetSystemTime,
+                                                                  L"\\Callback\\SetSystemTime",
+                                                                  &ExCbSetSystemState,
+                                                                  L"\\Callback\\SetSystemState",
+                                                                  &ExCbPowerState,
+                                                                  L"\\Callback\\PowerState",
+                                                                  NULL,
+                                                                  NULL };
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg("PAGEDATA")

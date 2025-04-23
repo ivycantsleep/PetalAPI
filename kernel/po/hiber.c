@@ -23,20 +23,22 @@ Revision History:
 
 
 #include "pop.h"
-#include "stdio.h"              // for sprintf
+#include "stdio.h" // for sprintf
 #include "inbv.h"
-#include "xpress.h"             // XPRESS declarations
+#include "xpress.h" // XPRESS declarations
 
 // size of buffer to store compressed data
-#define POP_COMPRESSED_PAGE_SET_SIZE  (((XPRESS_MAX_SIZE + 2 * XPRESS_HEADER_SIZE + PAGE_SIZE - 1) >> PAGE_SHIFT) + 1)
+#define POP_COMPRESSED_PAGE_SET_SIZE (((XPRESS_MAX_SIZE + 2 * XPRESS_HEADER_SIZE + PAGE_SIZE - 1) >> PAGE_SHIFT) + 1)
 
 // Structure used to allocate memory for hand-crafted MDL
-typedef struct _DUMP_MDL {
-    MDL        BaseMdl;
+typedef struct _DUMP_MDL
+{
+    MDL BaseMdl;
     PFN_NUMBER PfnArray[POP_MAX_MDL_SIZE + 1];
 } DUMP_MDL[1];
 
-typedef struct _COMPRESSION_BLOCK {
+typedef struct _COMPRESSION_BLOCK
+{
     UCHAR Buffer[XPRESS_MAX_SIZE], *Ptr;
 } COMPRESSION_BLOCK, *PCOMPRESSION_BLOCK;
 
@@ -44,59 +46,62 @@ typedef struct _COMPRESSION_BLOCK {
 // Data structures for DMA-based IO
 typedef struct
 {
-    PUCHAR Beg;       // ptr to the beginning of entire
-    PUCHAR End;       // ptr to the end of memory block
+    PUCHAR Beg; // ptr to the beginning of entire
+    PUCHAR End; // ptr to the end of memory block
 
-    PUCHAR Ptr;       // ptr to beginning of region
-    LONG   Size;      // size of region after ptr
-    LONG   SizeOvl;       // size of overlapping piece starting from beginning of buffer
+    PUCHAR Ptr;   // ptr to beginning of region
+    LONG Size;    // size of region after ptr
+    LONG SizeOvl; // size of overlapping piece starting from beginning of buffer
 } IOREGION;
 
 
-#define IOREGION_BUFF_PAGES 64  /* 256 KB */
-#define IOREGION_BUFF_SIZE  (IOREGION_BUFF_PAGES << PAGE_SHIFT)
+#define IOREGION_BUFF_PAGES 64 /* 256 KB */
+#define IOREGION_BUFF_SIZE (IOREGION_BUFF_PAGES << PAGE_SHIFT)
 
-typedef struct {
-    PLARGE_INTEGER          FirstMcb;
-    PLARGE_INTEGER          Mcb;
-    ULONGLONG               Base;
+typedef struct
+{
+    PLARGE_INTEGER FirstMcb;
+    PLARGE_INTEGER Mcb;
+    ULONGLONG Base;
 } POP_MCB_CONTEXT, *PPOP_MCB_CONTEXT;
 
-#define HIBER_WRITE_PAGES_LOCALS_LIST(X)\
-    X (ULONGLONG,        FileBase);     \
-    X (ULONGLONG,        PhysBase);     \
-    X (ULONG_PTR,        Length);       \
-    X (ULONGLONG,        McbOffset);    \
-    X (LARGE_INTEGER,    IoLocation);   \
-    X (PHYSICAL_ADDRESS, pa);           \
-    X (PPOP_MCB_CONTEXT, CMcb);         \
-    X (PVOID,            PageVa);       \
-    X (PMDL,             Mdl);          \
-    X (PPFN_NUMBER,      MdlPage);      \
-    X (PFN_NUMBER,       NoPages);      \
-    X (PFN_NUMBER,       FilePage);     \
-    X (ULONG,            IoLength);     \
-    X (ULONG,            i);            \
-    X (NTSTATUS,         Status);
+#define HIBER_WRITE_PAGES_LOCALS_LIST(X) \
+    X(ULONGLONG, FileBase);              \
+    X(ULONGLONG, PhysBase);              \
+    X(ULONG_PTR, Length);                \
+    X(ULONGLONG, McbOffset);             \
+    X(LARGE_INTEGER, IoLocation);        \
+    X(PHYSICAL_ADDRESS, pa);             \
+    X(PPOP_MCB_CONTEXT, CMcb);           \
+    X(PVOID, PageVa);                    \
+    X(PMDL, Mdl);                        \
+    X(PPFN_NUMBER, MdlPage);             \
+    X(PFN_NUMBER, NoPages);              \
+    X(PFN_NUMBER, FilePage);             \
+    X(ULONG, IoLength);                  \
+    X(ULONG, i);                         \
+    X(NTSTATUS, Status);
 
 typedef struct
 {
     DUMP_MDL DumpMdl;
-#define X(type,name) type name
-    HIBER_WRITE_PAGES_LOCALS_LIST (X)
-#undef  X
+#define X(type, name) type name
+    HIBER_WRITE_PAGES_LOCALS_LIST(X)
+#undef X
 } HIBER_WRITE_PAGES_LOCALS;
 
-typedef struct {
+typedef struct
+{
     IOREGION Free, Used, Busy;
     PFN_NUMBER FilePage[IOREGION_BUFF_PAGES];
     PVOID DumpLocalData;
     ULONG UseDma;
     ULONG DmaInitialized;
 
-    struct {
+    struct
+    {
         PUCHAR Ptr;
-        ULONG  Bytes;
+        ULONG Bytes;
     } Chk;
 
     HIBER_WRITE_PAGES_LOCALS HiberWritePagesLocals;
@@ -106,19 +111,17 @@ typedef struct {
 
 // May we use DMA IO?
 #define HIBER_USE_DMA(HiberContext) \
-  (DmaIoPtr != NULL && \
-   DmaIoPtr->UseDma && \
-   HiberContext->DumpStack->Init.WritePendingRoutine != NULL)
+    (DmaIoPtr != NULL && DmaIoPtr->UseDma && HiberContext->DumpStack->Init.WritePendingRoutine != NULL)
 
-#define HbCopy(_hibercontext_,_dest_,_src_,_len_) {               \
-    ULONGLONG _starttime_;                                        \
-                                                                  \
-    (_hibercontext_)->PerfInfo.BytesCopied += (ULONG)(_len_);     \
-    _starttime_ = HIBER_GET_TICK_COUNT(NULL);                     \
-    RtlCopyMemory((_dest_),(_src_),(_len_));                       \
-    (_hibercontext_)->PerfInfo.CopyTicks +=                       \
-        HIBER_GET_TICK_COUNT(NULL) - _starttime_;                 \
-}
+#define HbCopy(_hibercontext_, _dest_, _src_, _len_)                                      \
+    {                                                                                     \
+        ULONGLONG _starttime_;                                                            \
+                                                                                          \
+        (_hibercontext_)->PerfInfo.BytesCopied += (ULONG)(_len_);                         \
+        _starttime_ = HIBER_GET_TICK_COUNT(NULL);                                         \
+        RtlCopyMemory((_dest_), (_src_), (_len_));                                        \
+        (_hibercontext_)->PerfInfo.CopyTicks += HIBER_GET_TICK_COUNT(NULL) - _starttime_; \
+    }
 
 
 #ifdef HIBER_DEBUG
@@ -135,23 +138,18 @@ typedef struct {
 #if !defined(i386)
 #define HIBER_GET_TICK_COUNT(_x_) KeQueryPerformanceCounter(_x_).QuadPart
 #else
-__inline
-LONGLONG
-HIBER_GET_TICK_COUNT(
-    OUT PLARGE_INTEGER Frequency OPTIONAL
-    )
+__inline LONGLONG HIBER_GET_TICK_COUNT(OUT PLARGE_INTEGER Frequency OPTIONAL)
 {
-    if (ARGUMENT_PRESENT(Frequency)) {
+    if (ARGUMENT_PRESENT(Frequency))
+    {
         Frequency->QuadPart = (ULONGLONG)KeGetCurrentPrcb()->MHz * 1000000;
     }
-    _asm _emit 0x0f
-    _asm _emit 0x31
+    _asm _emit 0x0f _asm _emit 0x31
 }
 #endif
 
 
-
-extern LARGE_INTEGER  KdTimerDifference;
+extern LARGE_INTEGER KdTimerDifference;
 extern UNICODE_STRING IoArcBootDeviceName;
 extern PUCHAR IoLoaderArcBootDeviceName;
 extern UNICODE_STRING IoArcHalDeviceName;
@@ -161,218 +159,95 @@ extern PFN_NUMBER MmHighestPhysicalPage;
 extern ULONG MmHiberPages;
 extern ULONG MmZeroPageFile;
 
-KPROCESSOR_STATE        PoWakeState;
+KPROCESSOR_STATE PoWakeState;
 
 //
 // Define the size of the I/Os used to zero the hiber file
 //
 #define POP_ZERO_CHUNK_SIZE (64 * 1024)
 
-VOID
-RtlpGetStackLimits (
-    OUT PULONG_PTR LowLimit,
-    OUT PULONG_PTR HighLimit
-    );
+VOID RtlpGetStackLimits(OUT PULONG_PTR LowLimit, OUT PULONG_PTR HighLimit);
 
 NTSTATUS
-PopCreateHiberFile (
-    IN PPOP_HIBER_FILE  HiberFile,
-    IN PWCHAR           NameString,
-    IN PLARGE_INTEGER   FileSize,
-    IN BOOLEAN          DebugHiberFile
-    );
+PopCreateHiberFile(IN PPOP_HIBER_FILE HiberFile, IN PWCHAR NameString, IN PLARGE_INTEGER FileSize,
+                   IN BOOLEAN DebugHiberFile);
 
 NTSTATUS
-PopCreateHiberLinkFile (
-    IN PPOP_HIBER_CONTEXT   HiberContext
-    );
+PopCreateHiberLinkFile(IN PPOP_HIBER_CONTEXT HiberContext);
 
-VOID
-PopClearHiberFileSignature (
-    IN BOOLEAN              GetStats
-    );
+VOID PopClearHiberFileSignature(IN BOOLEAN GetStats);
 
-VOID
-PopPreserveRange(
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           StartPage,
-    IN PFN_NUMBER           PageCount,
-    IN ULONG                Tag
-    );
+VOID PopPreserveRange(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER StartPage, IN PFN_NUMBER PageCount,
+                      IN ULONG Tag);
 
-VOID
-PopCloneRange(
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           StartPage,
-    IN PFN_NUMBER           PageCount,
-    IN ULONG                Tag
-    );
+VOID PopCloneRange(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER StartPage, IN PFN_NUMBER PageCount, IN ULONG Tag);
 
-VOID
-PopDiscardRange(
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           StartPage,
-    IN PFN_NUMBER           PageCount,
-    IN ULONG                Tag
-    );
+VOID PopDiscardRange(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER StartPage, IN PFN_NUMBER PageCount,
+                     IN ULONG Tag);
 
-VOID
-PopSetRange (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN ULONG                Flags,
-    IN PFN_NUMBER           StartPage,
-    IN PFN_NUMBER           PageCount,
-    IN ULONG                Tag
-    );
+VOID PopSetRange(IN PPOP_HIBER_CONTEXT HiberContext, IN ULONG Flags, IN PFN_NUMBER StartPage, IN PFN_NUMBER PageCount,
+                 IN ULONG Tag);
 
 ULONG
-PopSimpleRangeCheck (
-    IN PPOP_MEMORY_RANGE    Range
-    );
+PopSimpleRangeCheck(IN PPOP_MEMORY_RANGE Range);
 
-VOID
-PopCreateDumpMdl (
-    IN PMDL         Mdl,
-    IN PFN_NUMBER   StartPage,
-    IN PFN_NUMBER   EndPage
-    );
+VOID PopCreateDumpMdl(IN PMDL Mdl, IN PFN_NUMBER StartPage, IN PFN_NUMBER EndPage);
 
 PVOID
-PopAllocatePages (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           NoPages
-    );
+PopAllocatePages(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER NoPages);
 
-VOID
-PopWriteHiberPages (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PVOID                Page,
-    IN PFN_NUMBER           NoPages,
-    IN PFN_NUMBER           FilePage,
-    IN HIBER_WRITE_PAGES_LOCALS *Locals
-    );
+VOID PopWriteHiberPages(IN PPOP_HIBER_CONTEXT HiberContext, IN PVOID Page, IN PFN_NUMBER NoPages,
+                        IN PFN_NUMBER FilePage, IN HIBER_WRITE_PAGES_LOCALS *Locals);
 
 NTSTATUS
-PopWriteHiberImage (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PPO_MEMORY_IMAGE     MemImage,
-    IN PPOP_HIBER_FILE      HiberFile
-    );
+PopWriteHiberImage(IN PPOP_HIBER_CONTEXT HiberContext, IN PPO_MEMORY_IMAGE MemImage, IN PPOP_HIBER_FILE HiberFile);
 
-VOID
-PopUpdateHiberComplete (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN ULONG                Percent
-    );
+VOID PopUpdateHiberComplete(IN PPOP_HIBER_CONTEXT HiberContext, IN ULONG Percent);
 
-VOID
-PopReturnMemoryForHibernate (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN BOOLEAN              Unmap,
-    IN OUT PMDL             *MdlList
-    );
+VOID PopReturnMemoryForHibernate(IN PPOP_HIBER_CONTEXT HiberContext, IN BOOLEAN Unmap, IN OUT PMDL *MdlList);
 
-VOID
-PopAddPagesToCompressedPageSet(
-   IN BOOLEAN              AllowDataBuffering,
-   IN PPOP_HIBER_CONTEXT   HiberContext,
-   IN OUT PULONG_PTR       CompressedBufferOffset,
-   IN PVOID                StartVa,
-   IN PFN_NUMBER           NumPages,
-   IN OUT PPFN_NUMBER      SetFilePage
-   );
+VOID PopAddPagesToCompressedPageSet(IN BOOLEAN AllowDataBuffering, IN PPOP_HIBER_CONTEXT HiberContext,
+                                    IN OUT PULONG_PTR CompressedBufferOffset, IN PVOID StartVa, IN PFN_NUMBER NumPages,
+                                    IN OUT PPFN_NUMBER SetFilePage);
 
-VOID
-PopEndCompressedPageSet(
-   IN PPOP_HIBER_CONTEXT   HiberContext,
-   IN OUT PULONG_PTR       CompressedBufferOffset,
-   IN OUT PPFN_NUMBER      SetFilePage
-   );
+VOID PopEndCompressedPageSet(IN PPOP_HIBER_CONTEXT HiberContext, IN OUT PULONG_PTR CompressedBufferOffset,
+                             IN OUT PPFN_NUMBER SetFilePage);
 
 UCHAR
-PopGetHiberFlags(
-    VOID
-    );
+PopGetHiberFlags(VOID);
 
-PMDL
-PopSplitMdl(
-    IN PMDL Original,
-    IN ULONG SplitPages
-    );
+PMDL PopSplitMdl(IN PMDL Original, IN ULONG SplitPages);
 
-VOID
-PopZeroHiberFile(
-    IN HANDLE FileHandle,
-    IN PFILE_OBJECT FileObject
-    );
+VOID PopZeroHiberFile(IN HANDLE FileHandle, IN PFILE_OBJECT FileObject);
 
 PVOID
-PopAllocateOwnMemory(
-    IN PPOP_HIBER_CONTEXT HiberContext,
-    IN ULONG Bytes,
-    IN ULONG Tag
-    );
+PopAllocateOwnMemory(IN PPOP_HIBER_CONTEXT HiberContext, IN ULONG Bytes, IN ULONG Tag);
 
 PVOID
 XPRESS_CALL
-PopAllocateHiberContextCallback(
-    PVOID context,
-    int CompressionWorkspaceSize
-    );
+PopAllocateHiberContextCallback(PVOID context, int CompressionWorkspaceSize);
 
-VOID
-PopIORegionMove (
-    IN IOREGION *To,      // ptr to region descriptor to put bytes to
-    IN IOREGION *From,        // ptr to region descriptor to get bytes from
-    IN LONG Bytes         // # of bytes to add to the end of region
-    );
+VOID PopIORegionMove(IN IOREGION *To,   // ptr to region descriptor to put bytes to
+                     IN IOREGION *From, // ptr to region descriptor to get bytes from
+                     IN LONG Bytes      // # of bytes to add to the end of region
+);
 
 BOOLEAN
-PopIOResume (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN BOOLEAN Complete
-    );
+PopIOResume(IN PPOP_HIBER_CONTEXT HiberContext, IN BOOLEAN Complete);
 
-VOID
-XPRESS_CALL
-PopIOCallback (
-    PVOID Context,
-    int Compressed
-    );
+VOID XPRESS_CALL PopIOCallback(PVOID Context, int Compressed);
 
-VOID
-PopIOWrite (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PUCHAR               Ptr,
-    IN LONG                 Bytes,
-    IN PFN_NUMBER           FilePage
-    );
+VOID PopIOWrite(IN PPOP_HIBER_CONTEXT HiberContext, IN PUCHAR Ptr, IN LONG Bytes, IN PFN_NUMBER FilePage);
 
-VOID
-PopHiberPoolInit (
-    PPOP_HIBER_CONTEXT HiberContext,
-    PVOID Memory,
-    ULONG Size
-    );
+VOID PopHiberPoolInit(PPOP_HIBER_CONTEXT HiberContext, PVOID Memory, ULONG Size);
 
 BOOLEAN
-PopHiberPoolCheckFree(
-    PVOID HiberPoolPtr,
-    PVOID BlockPtr
-    );
+PopHiberPoolCheckFree(PVOID HiberPoolPtr, PVOID BlockPtr);
 
 PVOID
-PopHiberPoolAllocFree (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    PVOID MemoryPtr
-    );
+PopHiberPoolAllocFree(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag, PVOID MemoryPtr);
 
-VOID
-PopDumpStatistics(
-    IN PPO_HIBER_PERF PerfInfo
-    );
+VOID PopDumpStatistics(IN PPO_HIBER_PERF PerfInfo);
 
 
 #ifdef ALLOC_PRAGMA
@@ -419,9 +294,7 @@ PopDumpStatistics(
 #endif
 
 NTSTATUS
-PopEnableHiberFile (
-    IN BOOLEAN Enable
-    )
+PopEnableHiberFile(IN BOOLEAN Enable)
 /*++
 
 Routine Description:
@@ -441,18 +314,20 @@ Return Value:
 
 --*/
 {
-    PDUMP_STACK_CONTEXT             DumpStack;
-    NTSTATUS                        Status;
-    LARGE_INTEGER                   FileSize;
-    ULONG                           i;
-    PFN_NUMBER                      NoPages;
+    PDUMP_STACK_CONTEXT DumpStack;
+    NTSTATUS Status;
+    LARGE_INTEGER FileSize;
+    ULONG i;
+    PFN_NUMBER NoPages;
 
     //
     // If this is a disable handle it
     //
 
-    if (!Enable) {
-        if (!PopHiberFile.FileObject) {
+    if (!Enable)
+    {
+        if (!PopHiberFile.FileObject)
+        {
             Status = STATUS_SUCCESS;
             goto Done;
         }
@@ -460,23 +335,26 @@ Return Value:
         //
         // Disable hiber file
         //
-        if (MmZeroPageFile) {
+        if (MmZeroPageFile)
+        {
             PopZeroHiberFile(PopHiberFile.FileHandle, PopHiberFile.FileObject);
         }
 
-        ObDereferenceObject (PopHiberFile.FileObject);
-        ZwClose (PopHiberFile.FileHandle);
-        ExFreePool (PopHiberFile.PagedMcb);
-        RtlZeroMemory (&PopHiberFile, sizeof(PopHiberFile));
+        ObDereferenceObject(PopHiberFile.FileObject);
+        ZwClose(PopHiberFile.FileHandle);
+        ExFreePool(PopHiberFile.PagedMcb);
+        RtlZeroMemory(&PopHiberFile, sizeof(PopHiberFile));
 
-        if (PopHiberFileDebug.FileObject) {
+        if (PopHiberFileDebug.FileObject)
+        {
 
-            if (MmZeroPageFile) {
-                PopZeroHiberFile(PopHiberFileDebug.FileHandle,PopHiberFileDebug.FileObject );
+            if (MmZeroPageFile)
+            {
+                PopZeroHiberFile(PopHiberFileDebug.FileHandle, PopHiberFileDebug.FileObject);
             }
-            ObDereferenceObject (PopHiberFileDebug.FileObject);
-            ZwClose (PopHiberFileDebug.FileHandle);
-            RtlZeroMemory (&PopHiberFileDebug, sizeof(PopHiberFileDebug));
+            ObDereferenceObject(PopHiberFileDebug.FileObject);
+            ZwClose(PopHiberFileDebug.FileHandle);
+            RtlZeroMemory(&PopHiberFileDebug, sizeof(PopHiberFileDebug));
         }
 
         //
@@ -490,8 +368,8 @@ Return Value:
         //
         // recompute the policies and make the proper notification
         //
-        PopResetCurrentPolicies ();
-        PopSetNotificationWork (PO_NOTIFY_CAPABILITIES);
+        PopResetCurrentPolicies();
+        PopSetNotificationWork(PO_NOTIFY_CAPABILITIES);
         Status = STATUS_SUCCESS;
         goto Done;
     }
@@ -500,7 +378,8 @@ Return Value:
     // Enable hiber file
     //
 
-    if (PopHiberFile.FileObject) {
+    if (PopHiberFile.FileObject)
+    {
         Status = STATUS_SUCCESS;
         goto Done;
     }
@@ -509,7 +388,8 @@ Return Value:
     // If the hal hasn't registered an S4 handler, then it's not possible
     //
 
-    if (!PopCapabilities.SystemS4) {
+    if (!PopCapabilities.SystemS4)
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto Done;
     }
@@ -519,27 +399,28 @@ Return Value:
     //
 
     NoPages = 0;
-    for (i=0; i < MmPhysicalMemoryBlock->NumberOfRuns; i++) {
+    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i++)
+    {
         NoPages += MmPhysicalMemoryBlock->Run[i].PageCount;
     }
 
-    FileSize.QuadPart = (ULONGLONG) NoPages << PAGE_SHIFT;
+    FileSize.QuadPart = (ULONGLONG)NoPages << PAGE_SHIFT;
 
     //
     // If we've never verified that the dumpstack loads do so now
     // before we allocate a huge file on the boot disk
     //
 
-    if (!PopHeuristics.GetDumpStackVerified) {
-        Status = IoGetDumpStack ((PWCHAR)PopDumpStackPrefix,
-                                 &DumpStack,
-                                 DeviceUsageTypeHibernation,
-                                 (POP_IGNORE_UNSUPPORTED_DRIVERS & PopSimulate));
+    if (!PopHeuristics.GetDumpStackVerified)
+    {
+        Status = IoGetDumpStack((PWCHAR)PopDumpStackPrefix, &DumpStack, DeviceUsageTypeHibernation,
+                                (POP_IGNORE_UNSUPPORTED_DRIVERS & PopSimulate));
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto Done;
         }
-        IoFreeDumpStack (DumpStack);
+        IoFreeDumpStack(DumpStack);
         PopHeuristics.GetDumpStackVerified = TRUE;
     }
 
@@ -547,8 +428,9 @@ Return Value:
     // Create the hiberfile file
     //
 
-    Status = PopCreateHiberFile (&PopHiberFile, (PWCHAR)PopHiberFileName, &FileSize, FALSE);
-    if (!NT_SUCCESS(Status)) {
+    Status = PopCreateHiberFile(&PopHiberFile, (PWCHAR)PopHiberFileName, &FileSize, FALSE);
+    if (!NT_SUCCESS(Status))
+    {
         goto Done;
     }
 
@@ -556,8 +438,9 @@ Return Value:
     // Create the debug hiberfile file
     //
 
-    if (PopSimulate  & POP_DEBUG_HIBER_FILE) {
-        PopCreateHiberFile (&PopHiberFileDebug, (PWCHAR)PopDebugHiberFileName, &FileSize, TRUE);
+    if (PopSimulate & POP_DEBUG_HIBER_FILE)
+    {
+        PopCreateHiberFile(&PopHiberFileDebug, (PWCHAR)PopDebugHiberFileName, &FileSize, TRUE);
     }
 
     //
@@ -565,55 +448,52 @@ Return Value:
     //
 
     PopCapabilities.HiberFilePresent = TRUE;
-    if (!PopHeuristics.HiberFileEnabled) {
+    if (!PopHeuristics.HiberFileEnabled)
+    {
         PopHeuristics.HiberFileEnabled = TRUE;
         PopHeuristics.Dirty = TRUE;
     }
 
-    PopClearHiberFileSignature (FALSE);
+    PopClearHiberFileSignature(FALSE);
 
 Done:
-    PopSaveHeuristics ();
+    PopSaveHeuristics();
     return Status;
 }
 
 NTSTATUS
-PopCreateHiberFile (
-    IN PPOP_HIBER_FILE  HiberFile,
-    IN PWCHAR           NameString,
-    IN PLARGE_INTEGER   FileSize,
-    IN BOOLEAN          DebugHiberFile
-    )
+PopCreateHiberFile(IN PPOP_HIBER_FILE HiberFile, IN PWCHAR NameString, IN PLARGE_INTEGER FileSize,
+                   IN BOOLEAN DebugHiberFile)
 {
-    UNICODE_STRING                  BaseName;
-    UNICODE_STRING                  HiberFileName;
-    OBJECT_ATTRIBUTES               ObjectAttributes;
-    FILE_END_OF_FILE_INFORMATION    Eof;
-    NTSTATUS                        Status;
-    IO_STATUS_BLOCK                 IoStatus;
-    HANDLE                          FileHandle = NULL;
-    LONGLONG                        McbFileSize;
-    PFILE_OBJECT                    File = NULL;
-    PDEVICE_OBJECT                  DeviceObject;
-    PLARGE_INTEGER                  mcb;
-    ULONG                           i;
-    PUCHAR                          Bitmap;
-    LARGE_INTEGER                   ByteOffset;
-    KEVENT                          Event;
-    PMDL                            Mdl;
+    UNICODE_STRING BaseName;
+    UNICODE_STRING HiberFileName;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    FILE_END_OF_FILE_INFORMATION Eof;
+    NTSTATUS Status;
+    IO_STATUS_BLOCK IoStatus;
+    HANDLE FileHandle = NULL;
+    LONGLONG McbFileSize;
+    PFILE_OBJECT File = NULL;
+    PDEVICE_OBJECT DeviceObject;
+    PLARGE_INTEGER mcb;
+    ULONG i;
+    PUCHAR Bitmap;
+    LARGE_INTEGER ByteOffset;
+    KEVENT Event;
+    PMDL Mdl;
 
     HiberFileName.Buffer = NULL;
     mcb = NULL;
 
-    RtlInitUnicodeString (&BaseName, NameString);
+    RtlInitUnicodeString(&BaseName, NameString);
 
     HiberFileName.Length = 0;
     HiberFileName.MaximumLength = IoArcBootDeviceName.Length + BaseName.Length;
-    HiberFileName.Buffer = ExAllocatePoolWithTag (PagedPool|POOL_COLD_ALLOCATION,
-                                                  HiberFileName.MaximumLength,
-                                                  POP_HIBR_TAG);
+    HiberFileName.Buffer =
+        ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION, HiberFileName.MaximumLength, POP_HIBR_TAG);
 
-    if (!HiberFileName.Buffer) {
+    if (!HiberFileName.Buffer)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto Done;
     }
@@ -621,41 +501,24 @@ PopCreateHiberFile (
     RtlAppendUnicodeStringToString(&HiberFileName, &IoArcBootDeviceName);
     RtlAppendUnicodeStringToString(&HiberFileName, &BaseName);
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &HiberFileName,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &HiberFileName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    Status = IoCreateFile(
-                &FileHandle,
-                FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE,
-                &ObjectAttributes,
-                &IoStatus,
-                FileSize,
-                FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED,
-                0L,
-                FILE_SUPERSEDE,
-                FILE_NO_INTERMEDIATE_BUFFERING | FILE_NO_COMPRESSION | FILE_DELETE_ON_CLOSE,
-                (PVOID) NULL,
-                0L,
-                CreateFileTypeNone,
-                (PVOID) NULL,
-                IO_OPEN_PAGING_FILE | IO_NO_PARAMETER_CHECKING
-                );
+    Status =
+        IoCreateFile(&FileHandle, FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE, &ObjectAttributes, &IoStatus,
+                     FileSize, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, 0L,
+                     FILE_SUPERSEDE, FILE_NO_INTERMEDIATE_BUFFERING | FILE_NO_COMPRESSION | FILE_DELETE_ON_CLOSE,
+                     (PVOID)NULL, 0L, CreateFileTypeNone, (PVOID)NULL, IO_OPEN_PAGING_FILE | IO_NO_PARAMETER_CHECKING);
 
-    if (!NT_SUCCESS(Status)) {
-        PoPrint (PO_HIBERNATE, ("PopCreateHiberFile: failed to create file %x\n", Status));
+    if (!NT_SUCCESS(Status))
+    {
+        PoPrint(PO_HIBERNATE, ("PopCreateHiberFile: failed to create file %x\n", Status));
         goto Done;
     }
 
-    Status = ObReferenceObjectByHandle (FileHandle,
-                                        FILE_READ_DATA | FILE_WRITE_DATA,
-                                        IoFileObjectType,
-                                        KernelMode,
-                                        (PVOID *)&File,
-                                        NULL);
-    if (!NT_SUCCESS(Status)) {
+    Status = ObReferenceObjectByHandle(FileHandle, FILE_READ_DATA | FILE_WRITE_DATA, IoFileObjectType, KernelMode,
+                                       (PVOID *)&File, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         goto Done;
     }
 
@@ -664,29 +527,17 @@ PopCreateHiberFile (
     //
 
     Eof.EndOfFile.QuadPart = FileSize->QuadPart;
-    Status = ZwSetInformationFile (
-                   FileHandle,
-                   &IoStatus,
-                   &Eof,
-                   sizeof(Eof),
-                   FileEndOfFileInformation
-                   );
-    if (Status == STATUS_PENDING) {
-        Status = KeWaitForSingleObject(
-                        &File->Event,
-                        Executive,
-                        KernelMode,
-                        FALSE,
-                        NULL
-                        );
+    Status = ZwSetInformationFile(FileHandle, &IoStatus, &Eof, sizeof(Eof), FileEndOfFileInformation);
+    if (Status == STATUS_PENDING)
+    {
+        Status = KeWaitForSingleObject(&File->Event, Executive, KernelMode, FALSE, NULL);
 
         Status = IoStatus.Status;
     }
 
-    if (!NT_SUCCESS(Status) || !NT_SUCCESS(IoStatus.Status)) {
-        PoPrint (PO_HIBERNATE, ("PopCreateHiberFile: failed to set eof %x  %x\n",
-            Status, IoStatus.Status
-            ));
+    if (!NT_SUCCESS(Status) || !NT_SUCCESS(IoStatus.Status))
+    {
+        PoPrint(PO_HIBERNATE, ("PopCreateHiberFile: failed to set eof %x  %x\n", Status, IoStatus.Status));
         goto Done;
     }
 
@@ -696,7 +547,8 @@ PopCreateHiberFile (
     //
 
     DeviceObject = File->DeviceObject;
-    if (!(DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION)) {
+    if (!(DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION))
+    {
         Status = STATUS_UNSUCCESSFUL;
         goto Done;
     }
@@ -705,32 +557,18 @@ PopCreateHiberFile (
     // Get the hiber file's layout
     //
 
-    Status = ZwFsControlFile (
-                    FileHandle,
-                    (HANDLE) NULL,
-                    (PIO_APC_ROUTINE) NULL,
-                    (PVOID) NULL,
-                    &IoStatus,
-                    FSCTL_QUERY_RETRIEVAL_POINTERS,
-                    FileSize,
-                    sizeof (LARGE_INTEGER),
-                    &mcb,
-                    sizeof (PVOID)
-                    );
+    Status = ZwFsControlFile(FileHandle, (HANDLE)NULL, (PIO_APC_ROUTINE)NULL, (PVOID)NULL, &IoStatus,
+                             FSCTL_QUERY_RETRIEVAL_POINTERS, FileSize, sizeof(LARGE_INTEGER), &mcb, sizeof(PVOID));
 
-    if (Status == STATUS_PENDING) {
-        Status = KeWaitForSingleObject(
-                        &File->Event,
-                        Executive,
-                        KernelMode,
-                        FALSE,
-                        NULL
-                        );
+    if (Status == STATUS_PENDING)
+    {
+        Status = KeWaitForSingleObject(&File->Event, Executive, KernelMode, FALSE, NULL);
 
         Status = IoStatus.Status;
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto Done;
     }
 
@@ -740,53 +578,60 @@ PopCreateHiberFile (
     //
 
     McbFileSize = 0;
-    for (i=0; mcb[i].QuadPart; i += 2) {
+    for (i = 0; mcb[i].QuadPart; i += 2)
+    {
         McbFileSize += mcb[i].QuadPart;
-        if (mcb[i+1].HighPart < 0) {
+        if (mcb[i + 1].HighPart < 0)
+        {
             Status = STATUS_UNSUCCESSFUL;
             goto Done;
         }
     }
 
-    if (McbFileSize < FileSize->QuadPart) {
+    if (McbFileSize < FileSize->QuadPart)
+    {
         Status = STATUS_UNSUCCESSFUL;
         goto Done;
     }
 
     HiberFile->NonPagedMcb = mcb;
-    HiberFile->McbSize = (i+2) * sizeof(LARGE_INTEGER);
-    HiberFile->PagedMcb = ExAllocatePoolWithTag (PagedPool|POOL_COLD_ALLOCATION,
-                                                 HiberFile->McbSize,
-                                                 POP_HIBR_TAG);
+    HiberFile->McbSize = (i + 2) * sizeof(LARGE_INTEGER);
+    HiberFile->PagedMcb = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION, HiberFile->McbSize, POP_HIBR_TAG);
 
-    if (!HiberFile->PagedMcb) {
+    if (!HiberFile->PagedMcb)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto Done;
     }
 
-    memcpy (HiberFile->PagedMcb, mcb, HiberFile->McbSize);
+    memcpy(HiberFile->PagedMcb, mcb, HiberFile->McbSize);
     HiberFile->FileHandle = FileHandle;
     HiberFile->FileObject = File;
-    HiberFile->FilePages = (PFN_NUMBER) (FileSize->QuadPart >> PAGE_SHIFT);
-    HiberFile->McbCheck = PoSimpleCheck (0, HiberFile->PagedMcb, HiberFile->McbSize);
+    HiberFile->FilePages = (PFN_NUMBER)(FileSize->QuadPart >> PAGE_SHIFT);
+    HiberFile->McbCheck = PoSimpleCheck(0, HiberFile->PagedMcb, HiberFile->McbSize);
 
 Done:
-    if (!NT_SUCCESS(Status)) {
-        if (FileHandle != NULL) {
-            ZwClose (FileHandle);
+    if (!NT_SUCCESS(Status))
+    {
+        if (FileHandle != NULL)
+        {
+            ZwClose(FileHandle);
         }
-        if (File != NULL) {
+        if (File != NULL)
+        {
             ObDereferenceObject(File);
         }
     }
 
-    if (HiberFileName.Buffer) {
-        ExFreePool (HiberFileName.Buffer);
+    if (HiberFileName.Buffer)
+    {
+        ExFreePool(HiberFileName.Buffer);
     }
 
-    if (mcb  &&  !DebugHiberFile) {
+    if (mcb && !DebugHiberFile)
+    {
         HiberFile->NonPagedMcb = NULL;
-        ExFreePool (mcb);
+        ExFreePool(mcb);
     }
 
 
@@ -795,18 +640,17 @@ Done:
     // recompute the policies and make the proper notification
     //
 
-    if (NT_SUCCESS(Status)) {
-        PopResetCurrentPolicies ();
-        PopSetNotificationWork (PO_NOTIFY_CAPABILITIES);
+    if (NT_SUCCESS(Status))
+    {
+        PopResetCurrentPolicies();
+        PopSetNotificationWork(PO_NOTIFY_CAPABILITIES);
     }
 
     return Status;
 }
 
 NTSTATUS
-PopCreateHiberLinkFile (
-    IN PPOP_HIBER_CONTEXT       HiberContext
-    )
+PopCreateHiberLinkFile(IN PPOP_HIBER_CONTEXT HiberContext)
 /*++
 
 Routine Description:
@@ -824,40 +668,42 @@ Return Value:
 
 --*/
 {
-    UNICODE_STRING                  BaseName;
-    UNICODE_STRING                  HiberFileName;
-    OBJECT_ATTRIBUTES               ObjectAttributes;
-    NTSTATUS                        Status;
-    IO_STATUS_BLOCK                 IoStatus;
-    LARGE_INTEGER                   FileSize;
-    LARGE_INTEGER                   ByteOffset;
-    PPO_IMAGE_LINK                  LinkImage;
-    PUCHAR                          Buffer;
-    ULONG                           Length;
-    HANDLE                          FileHandle=NULL;
+    UNICODE_STRING BaseName;
+    UNICODE_STRING HiberFileName;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    NTSTATUS Status;
+    IO_STATUS_BLOCK IoStatus;
+    LARGE_INTEGER FileSize;
+    LARGE_INTEGER ByteOffset;
+    PPO_IMAGE_LINK LinkImage;
+    PUCHAR Buffer;
+    ULONG Length;
+    HANDLE FileHandle = NULL;
 
     Buffer = NULL;
 
-    RtlInitUnicodeString (&BaseName, PopHiberFileName);
+    RtlInitUnicodeString(&BaseName, PopHiberFileName);
 
     //
     // Allocate working space
     //
 
     Length = IoArcHalDeviceName.Length + BaseName.Length;
-    if (Length < IoArcBootDeviceName.Length + sizeof(PO_IMAGE_LINK)) {
+    if (Length < IoArcBootDeviceName.Length + sizeof(PO_IMAGE_LINK))
+    {
         Length = IoArcBootDeviceName.Length + sizeof(PO_IMAGE_LINK);
     }
 
-    Buffer = ExAllocatePoolWithTag (PagedPool, Length, POP_HIBR_TAG);
-    if (!Buffer) {
+    Buffer = ExAllocatePoolWithTag(PagedPool, Length, POP_HIBR_TAG);
+    if (!Buffer)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto Done;
     }
 
-    LinkImage = (PPO_IMAGE_LINK) Buffer;
-    HiberFileName.Buffer = (PWCHAR) Buffer;
-    HiberFileName.MaximumLength = (USHORT) Length;
+    LinkImage = (PPO_IMAGE_LINK)Buffer;
+    HiberFileName.Buffer = (PWCHAR)Buffer;
+    HiberFileName.MaximumLength = (USHORT)Length;
 
     //
     // Open hiberfil.sys on loader partition
@@ -867,36 +713,20 @@ Return Value:
     RtlAppendUnicodeStringToString(&HiberFileName, &IoArcHalDeviceName);
     RtlAppendUnicodeStringToString(&HiberFileName, &BaseName);
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &HiberFileName,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &HiberFileName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
     FileSize.QuadPart = 0;
-    Status = IoCreateFile (
-                &FileHandle,
-                FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE,
-                &ObjectAttributes,
-                &IoStatus,
-                &FileSize,
-                FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM,
-                0,
-                FILE_SUPERSEDE,
-                FILE_SYNCHRONOUS_IO_NONALERT | FILE_NO_COMPRESSION | FILE_DELETE_ON_CLOSE,
-                (PVOID) NULL,
-                0L,
-                CreateFileTypeNone,
-                (PVOID) NULL,
-                0
-                );
+    Status = IoCreateFile(&FileHandle, FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE, &ObjectAttributes, &IoStatus,
+                          &FileSize, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM, 0, FILE_SUPERSEDE,
+                          FILE_SYNCHRONOUS_IO_NONALERT | FILE_NO_COMPRESSION | FILE_DELETE_ON_CLOSE, (PVOID)NULL, 0L,
+                          CreateFileTypeNone, (PVOID)NULL, 0);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (Status != STATUS_SHARING_VIOLATION && Status != STATUS_ACCESS_DENIED) {
-            PoPrint (PO_HIBERNATE, ("PopCreateHiberLinkFile: failed to create file %x\n", Status));
+        if (Status != STATUS_SHARING_VIOLATION && Status != STATUS_ACCESS_DENIED)
+        {
+            PoPrint(PO_HIBERNATE, ("PopCreateHiberLinkFile: failed to create file %x\n", Status));
         }
 
         //
@@ -912,23 +742,15 @@ Return Value:
     //
 
     LinkImage->Signature = PO_IMAGE_SIGNATURE_LINK;
-    Length = strlen (IoLoaderArcBootDeviceName) + 1;
-    memcpy (LinkImage->Name, IoLoaderArcBootDeviceName, Length);
+    Length = strlen(IoLoaderArcBootDeviceName) + 1;
+    memcpy(LinkImage->Name, IoLoaderArcBootDeviceName, Length);
 
     ByteOffset.QuadPart = 0;
-    Status = ZwWriteFile (
-                FileHandle,
-                NULL,
-                NULL,
-                NULL,
-                &IoStatus,
-                LinkImage,
-                FIELD_OFFSET (PO_IMAGE_LINK, Name) + Length,
-                &ByteOffset,
-                NULL
-                );
+    Status = ZwWriteFile(FileHandle, NULL, NULL, NULL, &IoStatus, LinkImage, FIELD_OFFSET(PO_IMAGE_LINK, Name) + Length,
+                         &ByteOffset, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto Done;
     }
 
@@ -936,7 +758,7 @@ Return Value:
     // Link file needs to make it to the disk
     //
 
-    ZwFlushBuffersFile (FileHandle, &IoStatus);
+    ZwFlushBuffersFile(FileHandle, &IoStatus);
 
     //
     // Success, keep the file around
@@ -946,22 +768,20 @@ Return Value:
     HiberContext->LinkFileHandle = FileHandle;
 
 Done:
-    if (Buffer) {
-        ExFreePool (Buffer);
+    if (Buffer)
+    {
+        ExFreePool(Buffer);
     }
 
-    if ((!NT_SUCCESS(Status)) &&
-        (FileHandle != NULL)) {
-        ZwClose (FileHandle);
+    if ((!NT_SUCCESS(Status)) && (FileHandle != NULL))
+    {
+        ZwClose(FileHandle);
     }
     return Status;
 }
 
 
-VOID
-PopClearHiberFileSignature (
-    IN BOOLEAN GetStats
-    )
+VOID PopClearHiberFileSignature(IN BOOLEAN GetStats)
 /*++
 
 Routine Description:
@@ -982,123 +802,81 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            Status;
-    IO_STATUS_BLOCK     IoStatus;
-    PUCHAR              Buffer;
-    LARGE_INTEGER       ByteOffset;
-    KEVENT              Event;
-    PMDL                Mdl;
+    NTSTATUS Status;
+    IO_STATUS_BLOCK IoStatus;
+    PUCHAR Buffer;
+    LARGE_INTEGER ByteOffset;
+    KEVENT Event;
+    PMDL Mdl;
 
-    if (PopHiberFile.FileObject) {
-        Buffer = ExAllocatePoolWithTag (NonPagedPool, PAGE_SIZE, POP_HIBR_TAG);
-        if (Buffer == NULL) {
+    if (PopHiberFile.FileObject)
+    {
+        Buffer = ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, POP_HIBR_TAG);
+        if (Buffer == NULL)
+        {
             return;
         }
 
         KeInitializeEvent(&Event, NotificationEvent, FALSE);
-        RtlZeroMemory (Buffer, PAGE_SIZE);
+        RtlZeroMemory(Buffer, PAGE_SIZE);
         ByteOffset.QuadPart = 0;
 
-        Mdl = MmCreateMdl (NULL, Buffer, PAGE_SIZE);
-        MmBuildMdlForNonPagedPool (Mdl);
+        Mdl = MmCreateMdl(NULL, Buffer, PAGE_SIZE);
+        MmBuildMdlForNonPagedPool(Mdl);
 
-        if (GetStats) {
-            Status = IoPageRead(PopHiberFile.FileObject,
-                                Mdl,
-                                &ByteOffset,
-                                &Event,
-                                &IoStatus);
-            if (NT_SUCCESS(Status)) {
+        if (GetStats)
+        {
+            Status = IoPageRead(PopHiberFile.FileObject, Mdl, &ByteOffset, &Event, &IoStatus);
+            if (NT_SUCCESS(Status))
+            {
                 KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
-                if (NT_SUCCESS(IoStatus.Status)) {
-                    UNICODE_STRING          UnicodeString;
-                    OBJECT_ATTRIBUTES       ObjectAttributes;
-                    HANDLE                  Handle;
-                    ULONG                   Data;
-                    PPO_MEMORY_IMAGE        MemImage = (PPO_MEMORY_IMAGE)Buffer;
+                if (NT_SUCCESS(IoStatus.Status))
+                {
+                    UNICODE_STRING UnicodeString;
+                    OBJECT_ATTRIBUTES ObjectAttributes;
+                    HANDLE Handle;
+                    ULONG Data;
+                    PPO_MEMORY_IMAGE MemImage = (PPO_MEMORY_IMAGE)Buffer;
 
-                    RtlInitUnicodeString(&UnicodeString,
-                                         L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager\\Power");
-                    InitializeObjectAttributes(&ObjectAttributes,
-                                               &UnicodeString,
-                                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                                               NULL,
-                                               NULL);
-                    Status = ZwOpenKey(&Handle,
-                                       KEY_READ | KEY_WRITE,
-                                       &ObjectAttributes);
-                    if (NT_SUCCESS(Status)) {
+                    RtlInitUnicodeString(
+                        &UnicodeString,
+                        L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager\\Power");
+                    InitializeObjectAttributes(&ObjectAttributes, &UnicodeString,
+                                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+                    Status = ZwOpenKey(&Handle, KEY_READ | KEY_WRITE, &ObjectAttributes);
+                    if (NT_SUCCESS(Status))
+                    {
                         RtlInitUnicodeString(&UnicodeString, L"HiberElapsedTime");
                         Data = MemImage->PerfInfo.ElapsedTime;
-                        ZwSetValueKey(Handle,
-                                      &UnicodeString,
-                                      0,
-                                      REG_DWORD,
-                                      &Data,
-                                      sizeof(Data));
+                        ZwSetValueKey(Handle, &UnicodeString, 0, REG_DWORD, &Data, sizeof(Data));
 
                         RtlInitUnicodeString(&UnicodeString, L"HiberIoTime");
                         Data = MemImage->PerfInfo.IoTime;
-                        ZwSetValueKey(Handle,
-                                      &UnicodeString,
-                                      0,
-                                      REG_DWORD,
-                                      &Data,
-                                      sizeof(Data));
+                        ZwSetValueKey(Handle, &UnicodeString, 0, REG_DWORD, &Data, sizeof(Data));
 
                         RtlInitUnicodeString(&UnicodeString, L"HiberCopyTime");
                         Data = MemImage->PerfInfo.CopyTime;
-                        ZwSetValueKey(Handle,
-                                      &UnicodeString,
-                                      0,
-                                      REG_DWORD,
-                                      &Data,
-                                      sizeof(Data));
+                        ZwSetValueKey(Handle, &UnicodeString, 0, REG_DWORD, &Data, sizeof(Data));
 
                         RtlInitUnicodeString(&UnicodeString, L"HiberCopyBytes");
                         Data = MemImage->PerfInfo.BytesCopied;
-                        ZwSetValueKey(Handle,
-                                      &UnicodeString,
-                                      0,
-                                      REG_DWORD,
-                                      &Data,
-                                      sizeof(Data));
+                        ZwSetValueKey(Handle, &UnicodeString, 0, REG_DWORD, &Data, sizeof(Data));
 
                         RtlInitUnicodeString(&UnicodeString, L"HiberPagesWritten");
                         Data = MemImage->PerfInfo.PagesWritten;
-                        ZwSetValueKey(Handle,
-                                      &UnicodeString,
-                                      0,
-                                      REG_DWORD,
-                                      &Data,
-                                      sizeof(Data));
+                        ZwSetValueKey(Handle, &UnicodeString, 0, REG_DWORD, &Data, sizeof(Data));
 
                         RtlInitUnicodeString(&UnicodeString, L"HiberPagesProcessed");
                         Data = MemImage->PerfInfo.PagesProcessed;
-                        ZwSetValueKey(Handle,
-                                      &UnicodeString,
-                                      0,
-                                      REG_DWORD,
-                                      &Data,
-                                      sizeof(Data));
+                        ZwSetValueKey(Handle, &UnicodeString, 0, REG_DWORD, &Data, sizeof(Data));
 
                         RtlInitUnicodeString(&UnicodeString, L"HiberDumpCount");
                         Data = MemImage->PerfInfo.DumpCount;
-                        ZwSetValueKey(Handle,
-                                      &UnicodeString,
-                                      0,
-                                      REG_DWORD,
-                                      &Data,
-                                      sizeof(Data));
+                        ZwSetValueKey(Handle, &UnicodeString, 0, REG_DWORD, &Data, sizeof(Data));
 
                         RtlInitUnicodeString(&UnicodeString, L"HiberFileRuns");
                         Data = MemImage->PerfInfo.FileRuns;
-                        ZwSetValueKey(Handle,
-                                      &UnicodeString,
-                                      0,
-                                      REG_DWORD,
-                                      &Data,
-                                      sizeof(Data));
+                        ZwSetValueKey(Handle, &UnicodeString, 0, REG_DWORD, &Data, sizeof(Data));
 
                         ZwClose(Handle);
                     }
@@ -1106,29 +884,19 @@ Return Value:
             }
         }
 
-        RtlZeroMemory (Buffer, PAGE_SIZE);
+        RtlZeroMemory(Buffer, PAGE_SIZE);
         KeClearEvent(&Event);
 
-        IoSynchronousPageWrite (
-            PopHiberFile.FileObject,
-            Mdl,
-            &ByteOffset,
-            &Event,
-            &IoStatus
-            );
+        IoSynchronousPageWrite(PopHiberFile.FileObject, Mdl, &ByteOffset, &Event, &IoStatus);
 
         KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
-        ExFreePool (Mdl);
-        ExFreePool (Buffer);
+        ExFreePool(Mdl);
+        ExFreePool(Buffer);
     }
 }
 
-
-VOID
-PopZeroHiberFile(
-    IN HANDLE FileHandle,
-    IN PFILE_OBJECT FileObject
-    )
+
+VOID PopZeroHiberFile(IN HANDLE FileHandle, IN PFILE_OBJECT FileObject)
 /*++
 
 Routine Description:
@@ -1166,72 +934,63 @@ Return Value:
     //
     // Get the size of the file to be zeroed
     //
-    Status = ZwQueryInformationFile(FileHandle,
-                                    &IoStatusBlock,
-                                    &FileInfo,
-                                    sizeof(FileInfo),
-                                    FileStandardInformation);
-    if (NT_SUCCESS(Status)) {
+    Status = ZwQueryInformationFile(FileHandle, &IoStatusBlock, &FileInfo, sizeof(FileInfo), FileStandardInformation);
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Allocate a bunch of memory to use as zeroes
         //
-        Zeroes = ExAllocatePoolWithTag(NonPagedPool,
-                                       POP_ZERO_CHUNK_SIZE,
-                                       'rZoP');
-        if (Zeroes) {
+        Zeroes = ExAllocatePoolWithTag(NonPagedPool, POP_ZERO_CHUNK_SIZE, 'rZoP');
+        if (Zeroes)
+        {
             RtlZeroMemory(Zeroes, POP_ZERO_CHUNK_SIZE);
             Mdl = MmCreateMdl(NULL, Zeroes, POP_ZERO_CHUNK_SIZE);
-            if (Mdl) {
+            if (Mdl)
+            {
 
-                MmBuildMdlForNonPagedPool (Mdl);
+                MmBuildMdlForNonPagedPool(Mdl);
                 Offset.QuadPart = 0;
                 Remaining = FileInfo.AllocationSize.QuadPart;
                 Size = POP_ZERO_CHUNK_SIZE;
-                while (Remaining) {
-                    if (Remaining < POP_ZERO_CHUNK_SIZE) {
+                while (Remaining)
+                {
+                    if (Remaining < POP_ZERO_CHUNK_SIZE)
+                    {
                         Size = (ULONG)Remaining;
                         Mdl = MmCreateMdl(Mdl, Zeroes, Size);
                         MmBuildMdlForNonPagedPool(Mdl);
                     }
 
                     KeClearEvent(&Event);
-                    Status = IoSynchronousPageWrite(FileObject,
-                                                    Mdl,
-                                                    &Offset,
-                                                    &Event,
-                                                    &IoStatusBlock);
-                    if (NT_SUCCESS(Status)) {
+                    Status = IoSynchronousPageWrite(FileObject, Mdl, &Offset, &Event, &IoStatusBlock);
+                    if (NT_SUCCESS(Status))
+                    {
                         KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
                         Status = IoStatusBlock.Status;
                     }
-                    if (!NT_SUCCESS(Status)) {
-                        PoPrint (PO_HIBERNATE | PO_ERROR,
-                                 ("PopZeroHiberFile: Write of size %lx at offset %I64x failed %08lx\n",
-                                  Size,
-                                  Offset.QuadPart,
-                                  Status));
+                    if (!NT_SUCCESS(Status))
+                    {
+                        PoPrint(PO_HIBERNATE | PO_ERROR,
+                                ("PopZeroHiberFile: Write of size %lx at offset %I64x failed %08lx\n", Size,
+                                 Offset.QuadPart, Status));
                     }
 
                     Offset.QuadPart += Size;
                     Remaining -= Size;
                 }
 
-                ExFreePool (Mdl);
+                ExFreePool(Mdl);
             }
             ExFreePool(Zeroes);
         }
     }
-
 }
 
 
 PVOID
 XPRESS_CALL
-PopAllocateHiberContextCallback(
-    PVOID context,
-    int CompressionWorkspaceSize
-    )
+PopAllocateHiberContextCallback(PVOID context, int CompressionWorkspaceSize)
 /*++
 
 Routine Description:
@@ -1249,16 +1008,12 @@ Return Value:
 
 --*/
 {
-   // Allocate the memory required for the engine's workspace
-   return PopAllocateOwnMemory (context, CompressionWorkspaceSize, 'Xprs');
+    // Allocate the memory required for the engine's workspace
+    return PopAllocateOwnMemory(context, CompressionWorkspaceSize, 'Xprs');
 }
 
 PVOID
-PopAllocateOwnMemory(
-    IN PPOP_HIBER_CONTEXT HiberContext,
-    IN ULONG Bytes,
-    IN ULONG Tag
-    )
+PopAllocateOwnMemory(IN PPOP_HIBER_CONTEXT HiberContext, IN ULONG Bytes, IN ULONG Tag)
 /*++
 
 Routine Description:
@@ -1281,31 +1036,28 @@ Return Value:
     ULONG Pages;
 
     // Get # of full pages
-    Pages = (Bytes + (PAGE_SIZE-1)) >> PAGE_SHIFT;
+    Pages = (Bytes + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
 
     // Allocate memory
-    Ptr = PopAllocatePages (HiberContext, Pages);
+    Ptr = PopAllocatePages(HiberContext, Pages);
 
     // Check for error
-    if (Ptr == NULL) {
+    if (Ptr == NULL)
+    {
         HiberContext->Status = STATUS_INSUFFICIENT_RESOURCES;
-    } else {
+    }
+    else
+    {
         // Do not hibernate this memory
-        PoSetHiberRange (HiberContext,
-                         PO_MEM_DISCARD,
-                         Ptr,
-                         Pages << PAGE_SHIFT,
-                         Tag);
+        PoSetHiberRange(HiberContext, PO_MEM_DISCARD, Ptr, Pages << PAGE_SHIFT, Tag);
     }
 
-    return(Ptr);
+    return (Ptr);
 }
 
 
 NTSTATUS
-PopAllocateHiberContext (
-    VOID
-    )
+PopAllocateHiberContext(VOID)
 /*++
 
 Routine Description:
@@ -1324,19 +1076,19 @@ Return Value:
 
 --*/
 {
-    PPOP_HIBER_CONTEXT          HiberContext;
-    ULONG                       i, j, k;
-    PLIST_ENTRY                 NextEntry;
-    PDUMP_INITIALIZATION_CONTEXT     DumpInit;
-    PFN_NUMBER                  NoPages;
-    PFN_NUMBER                  Length;
-    PLIST_ENTRY                 Link;
-    PPOP_MEMORY_RANGE           Range;
-    ULONG                       result;
-    PHYSICAL_ADDRESS            pa;
-    NTSTATUS                    Status;
-    PVOID                       p1;
-    PULONG                      BitmapBuffer;
+    PPOP_HIBER_CONTEXT HiberContext;
+    ULONG i, j, k;
+    PLIST_ENTRY NextEntry;
+    PDUMP_INITIALIZATION_CONTEXT DumpInit;
+    PFN_NUMBER NoPages;
+    PFN_NUMBER Length;
+    PLIST_ENTRY Link;
+    PPOP_MEMORY_RANGE Range;
+    ULONG result;
+    PHYSICAL_ADDRESS pa;
+    NTSTATUS Status;
+    PVOID p1;
+    PULONG BitmapBuffer;
 
     // Compression Related
     ULONG CompressionWorkspaceSize, Unused;
@@ -1350,18 +1102,18 @@ Return Value:
 
     Status = STATUS_SUCCESS;
     HiberContext = PopAction.HiberContext;
-    if (!HiberContext) {
-        HiberContext = ExAllocatePoolWithTag (NonPagedPool,
-                                              sizeof (POP_HIBER_CONTEXT),
-                                              POP_HMAP_TAG);
-        if (!HiberContext) {
+    if (!HiberContext)
+    {
+        HiberContext = ExAllocatePoolWithTag(NonPagedPool, sizeof(POP_HIBER_CONTEXT), POP_HMAP_TAG);
+        if (!HiberContext)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        RtlZeroMemory (HiberContext, sizeof(*HiberContext));
+        RtlZeroMemory(HiberContext, sizeof(*HiberContext));
         PopAction.HiberContext = HiberContext;
 
-        InitializeListHead (&HiberContext->ClonedRanges);
-        KeInitializeSpinLock (&HiberContext->Lock);
+        InitializeListHead(&HiberContext->ClonedRanges);
+        KeInitializeSpinLock(&HiberContext->Lock);
     }
 
     //
@@ -1369,7 +1121,8 @@ Return Value:
     // is needed
     //
 
-    if (PopAction.SystemState == PowerSystemHibernate) {
+    if (PopAction.SystemState == PowerSystemHibernate)
+    {
 
         //
         // For a hibernate operation, the context is written
@@ -1383,8 +1136,9 @@ Return Value:
         HiberContext->ReserveLoaderMemory = TRUE;
         HiberContext->ReserveFreeMemory = TRUE;
         HiberContext->VerifyOnWake = FALSE;
-
-    } else if (PopSimulate & POP_CRC_MEMORY) {
+    }
+    else if (PopSimulate & POP_CRC_MEMORY)
+    {
 
         //
         // We want to checksum all of RAM during this sleep
@@ -1397,14 +1151,15 @@ Return Value:
         HiberContext->ReserveLoaderMemory = FALSE;
         HiberContext->ReserveFreeMemory = FALSE;
         HiberContext->VerifyOnWake = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // A hiber context is not needed for this sleep
         //
 
-        PopFreeHiberContext (TRUE);
+        PopFreeHiberContext(TRUE);
         return STATUS_SUCCESS;
     }
 
@@ -1412,7 +1167,8 @@ Return Value:
     // If there's an error in the current context, then we're done
     //
 
-    if (!NT_SUCCESS(HiberContext->Status)) {
+    if (!NT_SUCCESS(HiberContext->Status))
+    {
         goto Done;
     }
 
@@ -1420,24 +1176,26 @@ Return Value:
     // If writting to hibernation file, get a dump driver stack
     //
 
-    if (HiberContext->WriteToFile) {
+    if (HiberContext->WriteToFile)
+    {
 
         //
         // Get a dump stack
         //
 
-        if (!HiberContext->DumpStack) {
-            if (!PopHiberFile.FileObject) {
+        if (!HiberContext->DumpStack)
+        {
+            if (!PopHiberFile.FileObject)
+            {
                 Status = STATUS_NO_SUCH_FILE;
                 goto Done;
             }
 
-            Status = IoGetDumpStack ((PWCHAR)PopDumpStackPrefix,
-                                     &HiberContext->DumpStack,
-                                     DeviceUsageTypeHibernation,
-                                     (POP_IGNORE_UNSUPPORTED_DRIVERS & PopSimulate));
+            Status = IoGetDumpStack((PWCHAR)PopDumpStackPrefix, &HiberContext->DumpStack, DeviceUsageTypeHibernation,
+                                    (POP_IGNORE_UNSUPPORTED_DRIVERS & PopSimulate));
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 goto Done;
             }
 
@@ -1450,16 +1208,15 @@ Return Value:
             //      is waiting pointlessly before performing some hardware
             //      related action (such as ISR calls).
             //
-
-
         }
 
         //
         // Create a link file for the loader to locate the hibernation file
         //
 
-        Status = PopCreateHiberLinkFile (HiberContext);
-        if (!NT_SUCCESS(Status)) {
+        Status = PopCreateHiberLinkFile(HiberContext);
+        if (!NT_SUCCESS(Status))
+        {
             goto Done;
         }
 
@@ -1473,9 +1230,10 @@ Return Value:
     // Build a map of memory
     //
 
-    if (HiberContext->MemoryMap.Buffer == NULL) {
-        PULONG                      BitmapBuffer;
-        ULONG                       PageCount;
+    if (HiberContext->MemoryMap.Buffer == NULL)
+    {
+        PULONG BitmapBuffer;
+        ULONG PageCount;
 
         //
         // Initialize a bitmap describing all of physical memory.
@@ -1491,8 +1249,9 @@ Return Value:
 
         PERFINFO_HIBER_ADJUST_PAGECOUNT_FOR_BBTBUFFER(&PageCount);
 
-        BitmapBuffer = ExAllocatePoolWithTag(NonPagedPool, PageCount/8, POP_HMAP_TAG);
-        if (BitmapBuffer == NULL) {
+        BitmapBuffer = ExAllocatePoolWithTag(NonPagedPool, PageCount / 8, POP_HMAP_TAG);
+        if (BitmapBuffer == NULL)
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto Done;
         }
@@ -1500,11 +1259,10 @@ Return Value:
         RtlInitializeBitMap(&HiberContext->MemoryMap, BitmapBuffer, PageCount);
         RtlSetAllBits(&HiberContext->MemoryMap);
 
-        for (i=0; i < MmPhysicalMemoryBlock->NumberOfRuns; i++) {
-            PopPreserveRange(HiberContext,
-                             MmPhysicalMemoryBlock->Run[i].BasePage,
-                             MmPhysicalMemoryBlock->Run[i].PageCount,
-                             POP_MEM_TAG);
+        for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i++)
+        {
+            PopPreserveRange(HiberContext, MmPhysicalMemoryBlock->Run[i].BasePage,
+                             MmPhysicalMemoryBlock->Run[i].PageCount, POP_MEM_TAG);
         }
 
         PERFINFO_HIBER_HANDLE_BBTBUFFER_RANGE(HiberContext);
@@ -1513,34 +1271,30 @@ Return Value:
         // Handle kernel debugger's section
         //
 
-        if (!KdPitchDebugger) {
-            PoSetHiberRange (HiberContext,
-                             PO_MEM_CLONE,
-                             (PVOID) &KdTimerDifference,
-                             0,
-                             POP_DEBUGGER_TAG);
+        if (!KdPitchDebugger)
+        {
+            PoSetHiberRange(HiberContext, PO_MEM_CLONE, (PVOID)&KdTimerDifference, 0, POP_DEBUGGER_TAG);
         }
 
         //
         // Get Mm hibernation ranges and info
         //
 
-        MmHibernateInformation (HiberContext,
-                                &HiberContext->HiberVa,
-                                &HiberContext->HiberPte);
+        MmHibernateInformation(HiberContext, &HiberContext->HiberVa, &HiberContext->HiberPte);
 
         //
         // Get hal hibernation ranges
         //
 
-        HalLocateHiberRanges (HiberContext);
+        HalLocateHiberRanges(HiberContext);
 
         //
         // Get the dump drivers stack hibernation ranges
         //
 
-        if (HiberContext->DumpStack) {
-            IoGetDumpHiberRanges (HiberContext, HiberContext->DumpStack);
+        if (HiberContext->DumpStack)
+        {
+            IoGetDumpHiberRanges(HiberContext, HiberContext->DumpStack);
         }
 
         //
@@ -1549,8 +1303,9 @@ Return Value:
 
         NoPages = 0;
         Link = HiberContext->ClonedRanges.Flink;
-        while (Link != &HiberContext->ClonedRanges) {
-            Range = CONTAINING_RECORD (Link, POP_MEMORY_RANGE, Link);
+        while (Link != &HiberContext->ClonedRanges)
+        {
+            Range = CONTAINING_RECORD(Link, POP_MEMORY_RANGE, Link);
             Link = Link->Flink;
             NoPages += Range->EndPage - Range->StartPage;
         }
@@ -1566,16 +1321,17 @@ Return Value:
         // Allocate pages to hold clones
         //
 
-        PopGatherMemoryForHibernate (HiberContext, NoPages, &HiberContext->Spares, TRUE);
+        PopGatherMemoryForHibernate(HiberContext, NoPages, &HiberContext->Spares, TRUE);
 
         //
         // Slurp one page for doing non-aligned IOs
         //
 
-        HiberContext->IoPage = PopAllocatePages (HiberContext, 1);
+        HiberContext->IoPage = PopAllocatePages(HiberContext, 1);
     }
 
-    if (!NT_SUCCESS(HiberContext->Status)) {
+    if (!NT_SUCCESS(HiberContext->Status))
+    {
         goto Done;
     }
 
@@ -1584,17 +1340,16 @@ Return Value:
     // want to use compression.
     //
 
-    if(HiberContext->WriteToFile) {
+    if (HiberContext->WriteToFile)
+    {
 
         // Initialize XPRESS compression engine
 
         HiberContext->CompressionWorkspace =
-            (PVOID) XpressEncodeCreate (XPRESS_MAX_SIZE,
-                                        (PVOID)HiberContext,
-                                        PopAllocateHiberContextCallback,
-                                        0);
+            (PVOID)XpressEncodeCreate(XPRESS_MAX_SIZE, (PVOID)HiberContext, PopAllocateHiberContextCallback, 0);
 
-        if(!HiberContext->CompressionWorkspace) {
+        if (!HiberContext->CompressionWorkspace)
+        {
             // Not enough memory -- failure
             HiberContext->Status = STATUS_INSUFFICIENT_RESOURCES;
             goto Done;
@@ -1617,50 +1372,45 @@ Return Value:
 
         HiberContext->CompressedWriteBuffer =
             PopAllocateOwnMemory(HiberContext, (POP_COMPRESSED_PAGE_SET_SIZE + 2) << PAGE_SHIFT, 'Wbfr');
-        if(!HiberContext->CompressedWriteBuffer) {
+        if (!HiberContext->CompressedWriteBuffer)
+        {
             goto Done;
         }
 
         // Allocate space for compressed data
-        HiberContext->CompressionBlock =
-            PopAllocateOwnMemory (HiberContext, sizeof (COMPRESSION_BLOCK), 'Cblk');
-        if(!HiberContext->CompressionBlock)
+        HiberContext->CompressionBlock = PopAllocateOwnMemory(HiberContext, sizeof(COMPRESSION_BLOCK), 'Cblk');
+        if (!HiberContext->CompressionBlock)
             goto Done;
 
         // Set first output pointer
-        ((PCOMPRESSION_BLOCK) HiberContext->CompressionBlock)->Ptr =
-            ((PCOMPRESSION_BLOCK) HiberContext->CompressionBlock)->Buffer;
+        ((PCOMPRESSION_BLOCK)HiberContext->CompressionBlock)->Ptr =
+            ((PCOMPRESSION_BLOCK)HiberContext->CompressionBlock)->Buffer;
 
         // Allocate delayed IO buffer
         DmaIoPtr = NULL;
 
         {
             PUCHAR Ptr;
-            ULONG Size = (sizeof (DmaIoPtr[0]) + IO_DUMP_WRITE_DATA_SIZE + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1);
+            ULONG Size = (sizeof(DmaIoPtr[0]) + IO_DUMP_WRITE_DATA_SIZE + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
 
-            Ptr = PopAllocateOwnMemory (HiberContext, Size + IOREGION_BUFF_SIZE , 'IObk');
-            if (Ptr != NULL) {
+            Ptr = PopAllocateOwnMemory(HiberContext, Size + IOREGION_BUFF_SIZE, 'IObk');
+            if (Ptr != NULL)
+            {
                 // Memory layout:
                 // 1. DumpLocalData (temp data for WritePendingRouting preserved between Start/Resume/Finish calls)
                 // 2. DmaIoPtr itself
                 // 3. Buffers themselves
 
-                RtlZeroMemory (Ptr, Size);   // Clean IO and DumpLocalData
-                DmaIoPtr = (DMA_IOREGIONS *) (Ptr + IO_DUMP_WRITE_DATA_SIZE);
+                RtlZeroMemory(Ptr, Size); // Clean IO and DumpLocalData
+                DmaIoPtr = (DMA_IOREGIONS *)(Ptr + IO_DUMP_WRITE_DATA_SIZE);
 
                 DmaIoPtr->DumpLocalData = Ptr;
                 Ptr += Size;
 
-                DmaIoPtr->Free.Beg =
-                DmaIoPtr->Free.Ptr =
-                DmaIoPtr->Used.Ptr =
-                DmaIoPtr->Busy.Ptr =
-                DmaIoPtr->Used.Beg =
-                DmaIoPtr->Busy.Beg = Ptr;
+                DmaIoPtr->Free.Beg = DmaIoPtr->Free.Ptr = DmaIoPtr->Used.Ptr = DmaIoPtr->Busy.Ptr = DmaIoPtr->Used.Beg =
+                    DmaIoPtr->Busy.Beg = Ptr;
 
-                DmaIoPtr->Free.End =
-                DmaIoPtr->Used.End =
-                DmaIoPtr->Busy.End = Ptr + IOREGION_BUFF_SIZE;
+                DmaIoPtr->Free.End = DmaIoPtr->Used.End = DmaIoPtr->Busy.End = Ptr + IOREGION_BUFF_SIZE;
 
                 DmaIoPtr->Free.Size = IOREGION_BUFF_SIZE;
 
@@ -1668,7 +1418,6 @@ Return Value:
                 DmaIoPtr->UseDma = TRUE;
             }
         }
-
     }
 
     //
@@ -1676,14 +1425,16 @@ Return Value:
     // get the map of the hibernation file
     //
 
-    if (HiberContext->WriteToFile && !PopHiberFile.NonPagedMcb) {
+    if (HiberContext->WriteToFile && !PopHiberFile.NonPagedMcb)
+    {
 
         //
         // Since this writes to the physical sectors of the disk
         // verify the check on the MCB array before doing it
         //
 
-        if (PopHiberFile.McbCheck != PoSimpleCheck (0, PopHiberFile.PagedMcb, PopHiberFile.McbSize)) {
+        if (PopHiberFile.McbCheck != PoSimpleCheck(0, PopHiberFile.PagedMcb, PopHiberFile.McbSize))
+        {
             Status = STATUS_INTERNAL_ERROR;
             goto Done;
         }
@@ -1692,25 +1443,23 @@ Return Value:
         // Move the MCB array to nonpaged pool
         //
 
-        PopHiberFile.NonPagedMcb = ExAllocatePoolWithTag (NonPagedPool,
-                                                          PopHiberFile.McbSize,
-                                                          POP_HIBR_TAG);
+        PopHiberFile.NonPagedMcb = ExAllocatePoolWithTag(NonPagedPool, PopHiberFile.McbSize, POP_HIBR_TAG);
 
-        if (!PopHiberFile.NonPagedMcb) {
+        if (!PopHiberFile.NonPagedMcb)
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto Done;
         }
 
-        memcpy (PopHiberFile.NonPagedMcb, PopHiberFile.PagedMcb, PopHiberFile.McbSize);
+        memcpy(PopHiberFile.NonPagedMcb, PopHiberFile.PagedMcb, PopHiberFile.McbSize);
 
         //
         // Dump driver stack needs an 8 page memory block
         //
 
-        DumpInit->MemoryBlock = PopAllocateOwnMemory (HiberContext,
-                                                    IO_DUMP_MEMORY_BLOCK_PAGES << PAGE_SHIFT,
-                                                    'memD');
-        if (!DumpInit->MemoryBlock) {
+        DumpInit->MemoryBlock = PopAllocateOwnMemory(HiberContext, IO_DUMP_MEMORY_BLOCK_PAGES << PAGE_SHIFT, 'memD');
+        if (!DumpInit->MemoryBlock)
+        {
             goto Done;
         }
 
@@ -1718,23 +1467,19 @@ Return Value:
         // Remove common buffer pages from save area
         //
 
-        if (DumpInit->CommonBufferSize & (PAGE_SIZE-1)) {
-            PopInternalAddToDumpFile( DumpInit, sizeof(DUMP_INITIALIZATION_CONTEXT), NULL, NULL, NULL, NULL );
-            PopInternalAddToDumpFile( HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL );
-            KeBugCheckEx( INTERNAL_POWER_ERROR,
-                          0x102,
-                          POP_HIBER,
-                          (ULONG_PTR)DumpInit,
-                          (ULONG_PTR)HiberContext );
+        if (DumpInit->CommonBufferSize & (PAGE_SIZE - 1))
+        {
+            PopInternalAddToDumpFile(DumpInit, sizeof(DUMP_INITIALIZATION_CONTEXT), NULL, NULL, NULL, NULL);
+            PopInternalAddToDumpFile(HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL);
+            KeBugCheckEx(INTERNAL_POWER_ERROR, 0x102, POP_HIBER, (ULONG_PTR)DumpInit, (ULONG_PTR)HiberContext);
         }
 
-        for (i=0; i < 2; i++) {
-            if (DumpInit->CommonBuffer[i]) {
-                PoSetHiberRange (HiberContext,
-                                 PO_MEM_DISCARD,
-                                 DumpInit->CommonBuffer[i],
-                                 DumpInit->CommonBufferSize,
-                                 POP_COMMON_BUFFER_TAG);
+        for (i = 0; i < 2; i++)
+        {
+            if (DumpInit->CommonBuffer[i])
+            {
+                PoSetHiberRange(HiberContext, PO_MEM_DISCARD, DumpInit->CommonBuffer[i], DumpInit->CommonBufferSize,
+                                POP_COMMON_BUFFER_TAG);
             }
         }
     }
@@ -1743,7 +1488,8 @@ Return Value:
     // From here on, no new pages are added to the map.
     //
 
-    if (HiberContext->ReserveLoaderMemory && !HiberContext->LoaderMdl) {
+    if (HiberContext->ReserveLoaderMemory && !HiberContext->LoaderMdl)
+    {
 
         //
         // Have Mm remove enough pages from memory to allow the
@@ -1751,29 +1497,23 @@ Return Value:
         // from the hiber context memory map.
         //
 
-        PopGatherMemoryForHibernate (
-               HiberContext,
-               MmHiberPages,
-               &HiberContext->LoaderMdl,
-               TRUE
-               );
+        PopGatherMemoryForHibernate(HiberContext, MmHiberPages, &HiberContext->LoaderMdl, TRUE);
     }
 
 Done:
-    if (!NT_SUCCESS(Status)  &&  NT_SUCCESS(HiberContext->Status)) {
+    if (!NT_SUCCESS(Status) && NT_SUCCESS(HiberContext->Status))
+    {
         HiberContext->Status = Status;
     }
 
-    if (!NT_SUCCESS(HiberContext->Status)) {
-        PopFreeHiberContext (FALSE);
+    if (!NT_SUCCESS(HiberContext->Status))
+    {
+        PopFreeHiberContext(FALSE);
     }
     return HiberContext->Status;
 }
 
-VOID
-PopFreeHiberContext (
-    IN BOOLEAN FreeAll
-    )
+VOID PopFreeHiberContext(IN BOOLEAN FreeAll)
 /*++
 
 Routine Description:
@@ -1793,35 +1533,38 @@ Return Value:
 
 --*/
 {
-    PPOP_HIBER_CONTEXT          HiberContext;
-    PPOP_MEMORY_RANGE           Range;
-    PLIST_ENTRY                 Link;
-    PMDL                        Mdl;
+    PPOP_HIBER_CONTEXT HiberContext;
+    PPOP_MEMORY_RANGE Range;
+    PLIST_ENTRY Link;
+    PMDL Mdl;
 
     HiberContext = PopAction.HiberContext;
-    if (!HiberContext) {
-        return ;
+    if (!HiberContext)
+    {
+        return;
     }
 
     //
     // Return pages gathered from mm
     //
 
-    PopReturnMemoryForHibernate (HiberContext, FALSE, &HiberContext->LoaderMdl);
-    PopReturnMemoryForHibernate (HiberContext, TRUE,  &HiberContext->Clones);
-    PopReturnMemoryForHibernate (HiberContext, FALSE, &HiberContext->Spares);
+    PopReturnMemoryForHibernate(HiberContext, FALSE, &HiberContext->LoaderMdl);
+    PopReturnMemoryForHibernate(HiberContext, TRUE, &HiberContext->Clones);
+    PopReturnMemoryForHibernate(HiberContext, FALSE, &HiberContext->Spares);
 
     //
     // Free the cloned range list elements
     //
 
-    while (!IsListEmpty(&HiberContext->ClonedRanges)) {
-        Range = CONTAINING_RECORD (HiberContext->ClonedRanges.Flink, POP_MEMORY_RANGE, Link);
-        RemoveEntryList (&Range->Link);
-        ExFreePool (Range);
+    while (!IsListEmpty(&HiberContext->ClonedRanges))
+    {
+        Range = CONTAINING_RECORD(HiberContext->ClonedRanges.Flink, POP_MEMORY_RANGE, Link);
+        RemoveEntryList(&Range->Link);
+        ExFreePool(Range);
     }
 
-    if (HiberContext->MemoryMap.Buffer) {
+    if (HiberContext->MemoryMap.Buffer)
+    {
         ExFreePool(HiberContext->MemoryMap.Buffer);
         HiberContext->MemoryMap.Buffer = NULL;
     }
@@ -1830,8 +1573,9 @@ Return Value:
     // Free hiber file Mcb info
     //
 
-    if (PopHiberFile.NonPagedMcb) {
-        ExFreePool (PopHiberFile.NonPagedMcb);
+    if (PopHiberFile.NonPagedMcb)
+    {
+        ExFreePool(PopHiberFile.NonPagedMcb);
         PopHiberFile.NonPagedMcb = NULL;
     }
 
@@ -1839,20 +1583,23 @@ Return Value:
     // If this is a total free, free the header
     //
 
-    if (FreeAll) {
+    if (FreeAll)
+    {
         //
         // Free resources used by dump driver
         //
 
-        if (HiberContext->DumpStack) {
-            IoFreeDumpStack (HiberContext->DumpStack);
+        if (HiberContext->DumpStack)
+        {
+            IoFreeDumpStack(HiberContext->DumpStack);
         }
 
         //
         // If there's a link file, remove it
         //
 
-        if (HiberContext->LinkFile) {
+        if (HiberContext->LinkFile)
+        {
             ZwClose(HiberContext->LinkFileHandle);
         }
 
@@ -1860,23 +1607,24 @@ Return Value:
         // Sanity check all gathered pages have been returned to Mm
         //
 
-        if (HiberContext->PagesOut) {
-            PopInternalAddToDumpFile( HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL );
-            KeBugCheckEx( INTERNAL_POWER_ERROR,
-                          0x103,
-                          POP_HIBER,
-                          (ULONG_PTR)HiberContext,
-                          0 );
+        if (HiberContext->PagesOut)
+        {
+            PopInternalAddToDumpFile(HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL);
+            KeBugCheckEx(INTERNAL_POWER_ERROR, 0x103, POP_HIBER, (ULONG_PTR)HiberContext, 0);
         }
 
         //
         // If this is a wake, clear the signature in the image
         //
 
-        if (HiberContext->Status == STATUS_WAKE_SYSTEM) {
-            if (PopSimulate & POP_ENABLE_HIBER_PERF) {
+        if (HiberContext->Status == STATUS_WAKE_SYSTEM)
+        {
+            if (PopSimulate & POP_ENABLE_HIBER_PERF)
+            {
                 PopClearHiberFileSignature(TRUE);
-            } else {
+            }
+            else
+            {
                 PopClearHiberFileSignature(FALSE);
             }
         }
@@ -1886,17 +1634,13 @@ Return Value:
         //
 
         PopAction.HiberContext = NULL;
-        ExFreePool (HiberContext);
+        ExFreePool(HiberContext);
     }
 }
 
 ULONG
-PopGatherMemoryForHibernate (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           NoPages,
-    IN PMDL                 *MdlList,
-    IN BOOLEAN              Wait
-    )
+PopGatherMemoryForHibernate(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER NoPages, IN PMDL *MdlList,
+                            IN BOOLEAN Wait)
 /*++
 
 Routine Description:
@@ -1922,41 +1666,44 @@ Return Value:
 
 --*/
 {
-    ULONG                   Result;
-    PPFN_NUMBER             PhysPage;
-    ULONG                   i;
-    ULONG_PTR               Length;
-    PMDL                    Mdl;
-    ULONG                   PageCount;
+    ULONG Result;
+    PPFN_NUMBER PhysPage;
+    ULONG i;
+    ULONG_PTR Length;
+    PMDL Mdl;
+    ULONG PageCount;
 
     Result = 0;
     Length = NoPages << PAGE_SHIFT;
-    Mdl = ExAllocatePoolWithTag (NonPagedPool,
-                                 MmSizeOfMdl (NULL, Length),
-                                 POP_HMAP_TAG);
+    Mdl = ExAllocatePoolWithTag(NonPagedPool, MmSizeOfMdl(NULL, Length), POP_HMAP_TAG);
 
-    if (Mdl) {
+    if (Mdl)
+    {
         //
         // Call Mm to gather some pages, and keep track of how many
         // we have out
         //
 
         MmInitializeMdl(Mdl, NULL, Length);
-        Result = MmGatherMemoryForHibernate (Mdl, Wait);
+        Result = MmGatherMemoryForHibernate(Mdl, Wait);
     }
 
-    if (Result) {
+    if (Result)
+    {
 
         HiberContext->PagesOut += NoPages;
-        PhysPage = MmGetMdlPfnArray( Mdl );
-        for (i=0; i < NoPages; i += PageCount) {
+        PhysPage = MmGetMdlPfnArray(Mdl);
+        for (i = 0; i < NoPages; i += PageCount)
+        {
 
             //
             // Combine contiguous pages into a single call
             // to PopDiscardRange.
             //
-            for (PageCount = 1; (i+PageCount) < NoPages; PageCount++) {
-                if (PhysPage[i+PageCount-1]+1 != PhysPage[i+PageCount]) {
+            for (PageCount = 1; (i + PageCount) < NoPages; PageCount++)
+            {
+                if (PhysPage[i + PageCount - 1] + 1 != PhysPage[i + PageCount])
+                {
                     break;
                 }
             }
@@ -1965,15 +1712,18 @@ Return Value:
 
         Mdl->Next = *MdlList;
         *MdlList = Mdl;
+    }
+    else
+    {
 
-    } else {
-
-        if (Mdl) {
-            ExFreePool (Mdl);
+        if (Mdl)
+        {
+            ExFreePool(Mdl);
         }
 
-        if (Wait  &&  NT_SUCCESS(HiberContext->Status)) {
-            HiberContext->Status =  STATUS_INSUFFICIENT_RESOURCES;
+        if (Wait && NT_SUCCESS(HiberContext->Status))
+        {
+            HiberContext->Status = STATUS_INSUFFICIENT_RESOURCES;
         }
     }
 
@@ -1981,12 +1731,7 @@ Return Value:
 }
 
 
-VOID
-PopReturnMemoryForHibernate (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN BOOLEAN              Unmap,
-    IN OUT PMDL             *MdlList
-    )
+VOID PopReturnMemoryForHibernate(IN PPOP_HIBER_CONTEXT HiberContext, IN BOOLEAN Unmap, IN OUT PMDL *MdlList)
 /*++
 
 Routine Description:
@@ -2006,32 +1751,26 @@ Return Value:
 
 --*/
 {
-    PMDL            Mdl;
+    PMDL Mdl;
 
-    while (*MdlList) {
+    while (*MdlList)
+    {
         Mdl = *MdlList;
         *MdlList = Mdl->Next;
 
         HiberContext->PagesOut -= Mdl->ByteCount >> PAGE_SHIFT;
-        if (Unmap) {
-            MmUnmapLockedPages (Mdl->MappedSystemVa, Mdl);
+        if (Unmap)
+        {
+            MmUnmapLockedPages(Mdl->MappedSystemVa, Mdl);
         }
 
-        MmReturnMemoryForHibernate (Mdl);
-        ExFreePool (Mdl);
+        MmReturnMemoryForHibernate(Mdl);
+        ExFreePool(Mdl);
     }
 }
 
 
-
-VOID
-PoSetHiberRange (
-    IN PVOID        Map,
-    IN ULONG        Flags,
-    IN PVOID        StartVa,
-    IN ULONG_PTR    Length,
-    IN ULONG        Tag
-    )
+VOID PoSetHiberRange(IN PVOID Map, IN ULONG Flags, IN PVOID StartVa, IN ULONG_PTR Length, IN ULONG Tag)
 /*++
 
 Routine Description:
@@ -2062,16 +1801,16 @@ Return Value:
 
 --*/
 {
-    ULONG_PTR               Start;
-    PFN_NUMBER              StartPage;
-    PFN_NUMBER              EndPage;
-    PFN_NUMBER              FirstPage, PhysPage;
-    PFN_NUMBER              RunLen;
-    ULONG                   NewFlags;
-    PHYSICAL_ADDRESS        PhysAddr;
-    NTSTATUS                Status;
-    PPOP_HIBER_CONTEXT      HiberContext;
-    ULONG                   SectionLength;
+    ULONG_PTR Start;
+    PFN_NUMBER StartPage;
+    PFN_NUMBER EndPage;
+    PFN_NUMBER FirstPage, PhysPage;
+    PFN_NUMBER RunLen;
+    ULONG NewFlags;
+    PHYSICAL_ADDRESS PhysAddr;
+    NTSTATUS Status;
+    PPOP_HIBER_CONTEXT HiberContext;
+    ULONG SectionLength;
 
 
     HiberContext = Map;
@@ -2080,11 +1819,13 @@ Return Value:
     // If no length, include the entire section which the datum resides in
     //
 
-    if (Length == 0) {
-        Status = MmGetSectionRange (StartVa, &StartVa, &SectionLength);
-        if (!NT_SUCCESS(Status)) {
-            PoPrint (PO_HIBERNATE, ("PoSetHiberRange: Section for %08x not found - skipped\n", StartVa));
-            PopInternalError (POP_HIBER);
+    if (Length == 0)
+    {
+        Status = MmGetSectionRange(StartVa, &StartVa, &SectionLength);
+        if (!NT_SUCCESS(Status))
+        {
+            PoPrint(PO_HIBERNATE, ("PoSetHiberRange: Section for %08x not found - skipped\n", StartVa));
+            PopInternalError(POP_HIBER);
         }
         Length = SectionLength;
     }
@@ -2092,50 +1833,52 @@ Return Value:
     //
     // Turn PO_MEM_CL_OR_NCHK into just PO_MEM_CLONE
     //
-    if (Flags & PO_MEM_CL_OR_NCHK) {
+    if (Flags & PO_MEM_CL_OR_NCHK)
+    {
         Flags &= ~PO_MEM_CL_OR_NCHK;
         Flags |= PO_MEM_CLONE;
     }
 
-    Start = (ULONG_PTR) StartVa;
-    if (Flags & PO_MEM_PAGE_ADDRESS) {
+    Start = (ULONG_PTR)StartVa;
+    if (Flags & PO_MEM_PAGE_ADDRESS)
+    {
 
         //
         // Caller passed a physical page range
         //
 
         Flags &= ~PO_MEM_PAGE_ADDRESS;
-        PopSetRange (HiberContext,
-                     Flags,
-                     (PFN_NUMBER)Start,
-                     (PFN_NUMBER)Length,
-                     Tag);
-
-    } else {
+        PopSetRange(HiberContext, Flags, (PFN_NUMBER)Start, (PFN_NUMBER)Length, Tag);
+    }
+    else
+    {
 
         //
         // Round to page boundries
         //
 
         StartPage = (PFN_NUMBER)(Start >> PAGE_SHIFT);
-        EndPage = (PFN_NUMBER)((Start + Length + (PAGE_SIZE-1) & ~(PAGE_SIZE-1)) >> PAGE_SHIFT);
+        EndPage = (PFN_NUMBER)((Start + Length + (PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) >> PAGE_SHIFT);
 
         //
         // Set all pages in the range
         //
 
-        while (StartPage < EndPage) {
-            PhysAddr = MmGetPhysicalAddress((PVOID) (StartPage << PAGE_SHIFT));
-            FirstPage = (PFN_NUMBER) (PhysAddr.QuadPart >> PAGE_SHIFT);
+        while (StartPage < EndPage)
+        {
+            PhysAddr = MmGetPhysicalAddress((PVOID)(StartPage << PAGE_SHIFT));
+            FirstPage = (PFN_NUMBER)(PhysAddr.QuadPart >> PAGE_SHIFT);
 
             //
             // For how long the run is
             //
 
-            for (RunLen=1; StartPage + RunLen < EndPage; RunLen += 1) {
-                PhysAddr = MmGetPhysicalAddress ((PVOID) ((StartPage + RunLen) << PAGE_SHIFT) );
-                PhysPage = (PFN_NUMBER) (PhysAddr.QuadPart >> PAGE_SHIFT);
-                if (FirstPage+RunLen != PhysPage) {
+            for (RunLen = 1; StartPage + RunLen < EndPage; RunLen += 1)
+            {
+                PhysAddr = MmGetPhysicalAddress((PVOID)((StartPage + RunLen) << PAGE_SHIFT));
+                PhysPage = (PFN_NUMBER)(PhysAddr.QuadPart >> PAGE_SHIFT);
+                if (FirstPage + RunLen != PhysPage)
+                {
                     break;
                 }
             }
@@ -2144,18 +1887,14 @@ Return Value:
             // Set this run
             //
 
-            PopSetRange (HiberContext, Flags, FirstPage, RunLen, Tag);
+            PopSetRange(HiberContext, Flags, FirstPage, RunLen, Tag);
             StartPage += RunLen;
         }
     }
 }
 
 
-
-VOID
-PopCloneStack (
-    IN PPOP_HIBER_CONTEXT  HiberContext
-    )
+VOID PopCloneStack(IN PPOP_HIBER_CONTEXT HiberContext)
 /*++
 
 Routine Description:
@@ -2173,12 +1912,12 @@ Return Value:
 
 --*/
 {
-    PKTHREAD        Thread;
-    KIRQL           OldIrql;
-    ULONG_PTR       LowLimit;
-    ULONG_PTR       HighLimit;
+    PKTHREAD Thread;
+    KIRQL OldIrql;
+    ULONG_PTR LowLimit;
+    ULONG_PTR HighLimit;
 
-    KeAcquireSpinLock (&HiberContext->Lock, &OldIrql);
+    KeAcquireSpinLock(&HiberContext->Lock, &OldIrql);
 
     //
     // Add local stack to clone or disable check list
@@ -2186,39 +1925,22 @@ Return Value:
     RtlpGetStackLimits(&LowLimit, &HighLimit);
 
     Thread = KeGetCurrentThread();
-    PoSetHiberRange (HiberContext,
-                     PO_MEM_CLONE,
-                     (PVOID)LowLimit,
-                     HighLimit - LowLimit,
-                     POP_STACK_TAG);
+    PoSetHiberRange(HiberContext, PO_MEM_CLONE, (PVOID)LowLimit, HighLimit - LowLimit, POP_STACK_TAG);
 
     //
     // Put local processors PCR & PRCB in clone list
     //
 
-    PoSetHiberRange (HiberContext,
-                     PO_MEM_CLONE,
-                     (PVOID) KeGetPcr(),
-                     sizeof (KPCR),
-                     POP_PCR_TAG );
+    PoSetHiberRange(HiberContext, PO_MEM_CLONE, (PVOID)KeGetPcr(), sizeof(KPCR), POP_PCR_TAG);
 
-    PoSetHiberRange (HiberContext,
-                     PO_MEM_CLONE,
-                     KeGetCurrentPrcb(),
-                     sizeof (KPRCB),
-                     POP_PCRB_TAG );
+    PoSetHiberRange(HiberContext, PO_MEM_CLONE, KeGetCurrentPrcb(), sizeof(KPRCB), POP_PCRB_TAG);
 
-    KeReleaseSpinLock (&HiberContext->Lock, OldIrql);
+    KeReleaseSpinLock(&HiberContext->Lock, OldIrql);
 }
 
-
-VOID
-PopPreserveRange(
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           StartPage,
-    IN PFN_NUMBER           PageCount,
-    IN ULONG                Tag
-    )
+
+VOID PopPreserveRange(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER StartPage, IN PFN_NUMBER PageCount,
+                      IN ULONG Tag)
 /*++
 
 Routine Description:
@@ -2246,32 +1968,21 @@ Return Value:
     // If this range is outside the area covered by our bitmap, then we
     // will just clone it instead.
     //
-    if (StartPage + PageCount > HiberContext->MemoryMap.SizeOfBitMap) {
-        PoPrint (PO_HIBERNATE,
-                 ("PopPreserveRange: range %08lx, length %lx is outside bitmap of size %lx\n",
-                 StartPage,
-                 PageCount,
-                 HiberContext->MemoryMap.SizeOfBitMap));
+    if (StartPage + PageCount > HiberContext->MemoryMap.SizeOfBitMap)
+    {
+        PoPrint(PO_HIBERNATE, ("PopPreserveRange: range %08lx, length %lx is outside bitmap of size %lx\n", StartPage,
+                               PageCount, HiberContext->MemoryMap.SizeOfBitMap));
         PopCloneRange(HiberContext, StartPage, PageCount, Tag);
         return;
     }
 
     PoPrint(PO_HIBERNATE,
-            ("PopPreserveRange - setting page %08lx - %08lx, Tag %.4s\n",
-             StartPage,
-             StartPage + PageCount,
-             &Tag));
+            ("PopPreserveRange - setting page %08lx - %08lx, Tag %.4s\n", StartPage, StartPage + PageCount, &Tag));
     RtlClearBits(&HiberContext->MemoryMap, (ULONG)StartPage, (ULONG)PageCount);
 }
 
-
-VOID
-PopDiscardRange(
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           StartPage,
-    IN PFN_NUMBER           PageCount,
-    IN ULONG                Tag
-    )
+
+VOID PopDiscardRange(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER StartPage, IN PFN_NUMBER PageCount, IN ULONG Tag)
 /*++
 
 Routine Description:
@@ -2301,10 +2012,12 @@ Return Value:
     // If this range is outside the area covered by our bitmap, then
     // it's not going to get written anyway.
     //
-    if (StartPage <= HiberContext->MemoryMap.SizeOfBitMap) {
+    if (StartPage <= HiberContext->MemoryMap.SizeOfBitMap)
+    {
         sp = StartPage;
         count = PageCount;
-        if (sp + count > HiberContext->MemoryMap.SizeOfBitMap) {
+        if (sp + count > HiberContext->MemoryMap.SizeOfBitMap)
+        {
             //
             // trim PageCount
             //
@@ -2312,23 +2025,13 @@ Return Value:
         }
 
         PoPrint(PO_HIBERNATE,
-                ("PopDiscardRange - removing page %08lx - %08lx, Tag %.4s\n",
-                 StartPage,
-                 StartPage + PageCount,
-                 &Tag));
+                ("PopDiscardRange - removing page %08lx - %08lx, Tag %.4s\n", StartPage, StartPage + PageCount, &Tag));
         RtlSetBits(&HiberContext->MemoryMap, (ULONG)sp, (ULONG)count);
     }
-
 }
 
-
-VOID
-PopCloneRange(
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           StartPage,
-    IN PFN_NUMBER           PageCount,
-    IN ULONG                Tag
-    )
+
+VOID PopCloneRange(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER StartPage, IN PFN_NUMBER PageCount, IN ULONG Tag)
 /*++
 
 Routine Description:
@@ -2359,10 +2062,7 @@ Return Value:
     PFN_NUMBER EndPage;
 
     PoPrint(PO_HIBERNATE,
-            ("PopCloneRange - cloning page %08lx - %08lx, Tag %.4s\n",
-             StartPage,
-             StartPage + PageCount,
-             &Tag));
+            ("PopCloneRange - cloning page %08lx - %08lx, Tag %.4s\n", StartPage, StartPage + PageCount, &Tag));
     PopDiscardRange(HiberContext, StartPage, PageCount, Tag);
 
     EndPage = StartPage + PageCount;
@@ -2372,37 +2072,37 @@ Return Value:
     // Otherwise, insert a new range entry in sorted order.
     //
     Link = HiberContext->ClonedRanges.Flink;
-    while (Link != &HiberContext->ClonedRanges) {
-        Range = CONTAINING_RECORD (Link, POP_MEMORY_RANGE, Link);
+    while (Link != &HiberContext->ClonedRanges)
+    {
+        Range = CONTAINING_RECORD(Link, POP_MEMORY_RANGE, Link);
 
         //
         // Check for an overlapping or adjacent range.
         //
         if (((StartPage >= Range->StartPage) && (StartPage <= Range->EndPage)) ||
-            ((EndPage   >= Range->StartPage) && (EndPage   <= Range->EndPage)) ||
-            ((StartPage <= Range->StartPage) && (EndPage   >= Range->EndPage))) {
+            ((EndPage >= Range->StartPage) && (EndPage <= Range->EndPage)) ||
+            ((StartPage <= Range->StartPage) && (EndPage >= Range->EndPage)))
+        {
 
-            PoPrint(PO_HIBERNATE,
-                    ("PopCloneRange - coalescing range %lx - %lx (%.4s) with range %lx - %lx\n",
-                     StartPage,
-                     EndPage,
-                     &Tag,
-                     Range->StartPage,
-                     Range->EndPage));
+            PoPrint(PO_HIBERNATE, ("PopCloneRange - coalescing range %lx - %lx (%.4s) with range %lx - %lx\n",
+                                   StartPage, EndPage, &Tag, Range->StartPage, Range->EndPage));
 
             //
             // Coalesce this range.
             //
-            if (StartPage < Range->StartPage) {
+            if (StartPage < Range->StartPage)
+            {
                 Range->StartPage = StartPage;
             }
-            if (EndPage > Range->EndPage) {
+            if (EndPage > Range->EndPage)
+            {
                 Range->EndPage = EndPage;
             }
             return;
         }
 
-        if (Range->StartPage >= StartPage) {
+        if (Range->StartPage >= StartPage)
+        {
             //
             // We have found a range greater than the current one. Insert the new range
             // in this position.
@@ -2417,14 +2117,14 @@ Return Value:
     // An adjacent range was not found. Allocate a new entry and insert
     // it in front of the Link entry.
     //
-    Range = ExAllocatePoolWithTag (NonPagedPool,
-                                   sizeof (POP_MEMORY_RANGE),
-                                   POP_HMAP_TAG);
-    if (!Range) {
-        if (NT_SUCCESS(HiberContext->Status)) {
+    Range = ExAllocatePoolWithTag(NonPagedPool, sizeof(POP_MEMORY_RANGE), POP_HMAP_TAG);
+    if (!Range)
+    {
+        if (NT_SUCCESS(HiberContext->Status))
+        {
             HiberContext->Status = STATUS_INSUFFICIENT_RESOURCES;
         }
-        return ;
+        return;
     }
     Range->Tag = Tag;
     Range->StartPage = StartPage;
@@ -2436,11 +2136,9 @@ Return Value:
     return;
 }
 
-
+
 ULONG
-PopGetRangeCount(
-    IN PPOP_HIBER_CONTEXT HiberContext
-    )
+PopGetRangeCount(IN PPOP_HIBER_CONTEXT HiberContext)
 /*++
 
 Routine Description:
@@ -2460,29 +2158,22 @@ Return Value:
 --*/
 
 {
-    ULONG RunCount=0;
-    ULONG NextPage=0;
+    ULONG RunCount = 0;
+    ULONG NextPage = 0;
     ULONG Length;
 
-    while (NextPage < HiberContext->MemoryMap.SizeOfBitMap) {
-        Length = RtlFindNextForwardRunClear(&HiberContext->MemoryMap,
-                                            NextPage,
-                                            &NextPage);
+    while (NextPage < HiberContext->MemoryMap.SizeOfBitMap)
+    {
+        Length = RtlFindNextForwardRunClear(&HiberContext->MemoryMap, NextPage, &NextPage);
         NextPage += Length;
         ++RunCount;
     }
 
-    return(RunCount + HiberContext->ClonedRangeCount);
+    return (RunCount + HiberContext->ClonedRangeCount);
 }
 
-VOID
-PopSetRange (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN ULONG                Flags,
-    IN PFN_NUMBER           StartPage,
-    IN PFN_NUMBER           PageCount,
-    IN ULONG                Tag
-    )
+VOID PopSetRange(IN PPOP_HIBER_CONTEXT HiberContext, IN ULONG Flags, IN PFN_NUMBER StartPage, IN PFN_NUMBER PageCount,
+                 IN ULONG Tag)
 /*++
 
 Routine Description:
@@ -2506,48 +2197,40 @@ Return Value:
 
 --*/
 {
-    PoPrint (PO_HIBERNATE,
-             ("PopSetRange: Ty %04x  Sp %08x Len %08x  %.4s\n",
-               Flags,
-               StartPage,
-               PageCount,
-               &Tag));
+    PoPrint(PO_HIBERNATE, ("PopSetRange: Ty %04x  Sp %08x Len %08x  %.4s\n", Flags, StartPage, PageCount, &Tag));
 
-    if (HiberContext->MapFrozen) {
-        PopInternalAddToDumpFile( HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL );
-        KeBugCheckEx( INTERNAL_POWER_ERROR,
-                      0x104,
-                      POP_HIBER,
-                      (ULONG_PTR)HiberContext,
-                      0 );
+    if (HiberContext->MapFrozen)
+    {
+        PopInternalAddToDumpFile(HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL);
+        KeBugCheckEx(INTERNAL_POWER_ERROR, 0x104, POP_HIBER, (ULONG_PTR)HiberContext, 0);
     }
     //
     // Make sure flags which should have been cleared by now aren't still set.
     //
     ASSERT(!(Flags & (PO_MEM_PAGE_ADDRESS | PO_MEM_CL_OR_NCHK)));
 
-    if (Flags & PO_MEM_DISCARD) {
+    if (Flags & PO_MEM_DISCARD)
+    {
         PopDiscardRange(HiberContext, StartPage, PageCount, Tag);
-    } else if (Flags & PO_MEM_CLONE) {
+    }
+    else if (Flags & PO_MEM_CLONE)
+    {
         PopCloneRange(HiberContext, StartPage, PageCount, Tag);
-    } else if (Flags & PO_MEM_PRESERVE) {
+    }
+    else if (Flags & PO_MEM_PRESERVE)
+    {
         PopPreserveRange(HiberContext, StartPage, PageCount, Tag);
-    } else {
+    }
+    else
+    {
         ASSERT(FALSE);
-        PopInternalAddToDumpFile( HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL );
-        KeBugCheckEx( INTERNAL_POWER_ERROR,
-                      0x105,
-                      POP_HIBER,
-                      (ULONG_PTR)HiberContext,
-                      0 );
+        PopInternalAddToDumpFile(HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL);
+        KeBugCheckEx(INTERNAL_POWER_ERROR, 0x105, POP_HIBER, (ULONG_PTR)HiberContext, 0);
     }
 }
 
-
-VOID
-PopResetRangeEnum(
-    IN PPOP_HIBER_CONTEXT   HiberContext
-    )
+
+VOID PopResetRangeEnum(IN PPOP_HIBER_CONTEXT HiberContext)
 /*++
 
 Routine Description:
@@ -2569,14 +2252,9 @@ Return Value:
     HiberContext->NextPreserve = 0;
 }
 
-
-VOID
-PopGetNextRange(
-    IN PPOP_HIBER_CONTEXT HiberContext,
-    OUT PPFN_NUMBER StartPage,
-    OUT PPFN_NUMBER EndPage,
-    OUT PVOID *CloneVa
-    )
+
+VOID PopGetNextRange(IN PPOP_HIBER_CONTEXT HiberContext, OUT PPFN_NUMBER StartPage, OUT PPFN_NUMBER EndPage,
+                     OUT PVOID *CloneVa)
 /*++
 
 Routine Description:
@@ -2605,7 +2283,8 @@ Return Value:
     ULONG Length;
     ULONG StartIndex;
 
-    if (HiberContext->NextCloneRange != &HiberContext->ClonedRanges) {
+    if (HiberContext->NextCloneRange != &HiberContext->ClonedRanges)
+    {
         //
         // Return the next cloned range
         //
@@ -2613,19 +2292,18 @@ Return Value:
         HiberContext->NextCloneRange = HiberContext->NextCloneRange->Flink;
 
         *StartPage = Range->StartPage;
-        *EndPage   = Range->EndPage;
-        *CloneVa   = Range->CloneVa;
+        *EndPage = Range->EndPage;
+        *CloneVa = Range->CloneVa;
 
         ASSERT(Range->CloneVa != NULL);
-
-    } else {
+    }
+    else
+    {
 
         //
         // We have enumerated all the clone ranges, return the next preserved range
         //
-        Length = RtlFindNextForwardRunClear(&HiberContext->MemoryMap,
-                                            (ULONG)HiberContext->NextPreserve,
-                                            &StartIndex);
+        Length = RtlFindNextForwardRunClear(&HiberContext->MemoryMap, (ULONG)HiberContext->NextPreserve, &StartIndex);
         *StartPage = StartIndex;
         *EndPage = *StartPage + Length;
         HiberContext->NextPreserve = *EndPage;
@@ -2636,10 +2314,7 @@ Return Value:
 }
 
 PVOID
-PopAllocatePages (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PFN_NUMBER           NoPages
-    )
+PopAllocatePages(IN PPOP_HIBER_CONTEXT HiberContext, IN PFN_NUMBER NoPages)
 /*++
 
 Routine Description:
@@ -2661,19 +2336,21 @@ Return Value:
 
 --*/
 {
-    PUCHAR          Buffer=NULL;
-    PMDL            Mdl;
-    ULONG           result;
-    ULONG           SpareCount;
+    PUCHAR Buffer = NULL;
+    PMDL Mdl;
+    ULONG result;
+    ULONG SpareCount;
 
-    for (; ;) {
+    for (;;)
+    {
         //
         // If page is available in mapped clone page list, get it
         //
 
-        if (NoPages < HiberContext->NoClones) {
+        if (NoPages < HiberContext->NoClones)
+        {
             Buffer = HiberContext->NextClone;
-            HiberContext->NoClones  -= NoPages;
+            HiberContext->NoClones -= NoPages;
             HiberContext->NextClone += NoPages << PAGE_SHIFT;
             break;
         }
@@ -2682,22 +2359,27 @@ Return Value:
         // Need more virtual address space
         //
 
-        if (HiberContext->Spares) {
+        if (HiberContext->Spares)
+        {
 
             //
             // Turn spares into virtually mapped pages. Try to limit the
             // number of pages being mapped so we don't run out of PTEs
             // on large memory machines.
             //
-            if ((NoPages << PAGE_SHIFT) > PO_MAX_MAPPED_CLONES) {
-                SpareCount = (ULONG) (NoPages << PAGE_SHIFT);
-            } else {
+            if ((NoPages << PAGE_SHIFT) > PO_MAX_MAPPED_CLONES)
+            {
+                SpareCount = (ULONG)(NoPages << PAGE_SHIFT);
+            }
+            else
+            {
                 SpareCount = PO_MAX_MAPPED_CLONES;
             }
 
             Mdl = HiberContext->Spares;
 
-            if (Mdl->ByteCount > SpareCount) {
+            if (Mdl->ByteCount > SpareCount)
+            {
 
                 //
                 // Split out a smaller MDL from the spare since it is larger
@@ -2705,10 +2387,13 @@ Return Value:
                 //
 
                 Mdl = PopSplitMdl(Mdl, SpareCount >> PAGE_SHIFT);
-                if (Mdl == NULL) {
+                if (Mdl == NULL)
+                {
                     break;
                 }
-            } else {
+            }
+            else
+            {
 
                 //
                 // Map the entire spare MDL
@@ -2716,8 +2401,9 @@ Return Value:
                 HiberContext->Spares = Mdl->Next;
             }
             Mdl->MdlFlags |= MDL_MAPPING_CAN_FAIL;
-            HiberContext->NextClone = MmMapLockedPages (Mdl, KernelMode);
-            if (HiberContext->NextClone == NULL) {
+            HiberContext->NextClone = MmMapLockedPages(Mdl, KernelMode);
+            if (HiberContext->NextClone == NULL)
+            {
 
                 //
                 // Put the MDL back on the spare list so it gets cleaned up
@@ -2727,22 +2413,21 @@ Return Value:
                 HiberContext->Spares = Mdl;
                 break;
             }
-            HiberContext->NoClones  = Mdl->ByteCount >> PAGE_SHIFT;
+            HiberContext->NoClones = Mdl->ByteCount >> PAGE_SHIFT;
             Mdl->Next = HiberContext->Clones;
             HiberContext->Clones = Mdl;
-
-        } else {
+        }
+        else
+        {
 
             //
             // No spares, allocate more
             //
 
-            result = PopGatherMemoryForHibernate (HiberContext,
-                                                  NoPages*2,
-                                                  &HiberContext->Spares,
-                                                  TRUE);
+            result = PopGatherMemoryForHibernate(HiberContext, NoPages * 2, &HiberContext->Spares, TRUE);
 
-            if (!result) {
+            if (!result)
+            {
                 break;
             }
         }
@@ -2752,7 +2437,8 @@ Return Value:
     // If there's a failure, mark it now
     //
 
-    if (!Buffer  &&  NT_SUCCESS(HiberContext->Status)) {
+    if (!Buffer && NT_SUCCESS(HiberContext->Status))
+    {
         HiberContext->Status = STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2761,9 +2447,7 @@ Return Value:
 
 
 ULONG
-PopSimpleRangeCheck (
-    PPOP_MEMORY_RANGE       Range
-    )
+PopSimpleRangeCheck(PPOP_MEMORY_RANGE Range)
 /*++
 
 Routine Description:
@@ -2780,36 +2464,33 @@ Return Value:
 
 --*/
 {
-    PHYSICAL_ADDRESS        PhysAddr;
-    PFN_NUMBER              sp, ep, PageLen;
-    ULONG                   Check;
-    DUMP_MDL                DumpMdl;
-    PMDL                    Mdl;
+    PHYSICAL_ADDRESS PhysAddr;
+    PFN_NUMBER sp, ep, PageLen;
+    ULONG Check;
+    DUMP_MDL DumpMdl;
+    PMDL Mdl;
 
     sp = Range->StartPage;
     ep = Range->EndPage;
-    Mdl = (PMDL) DumpMdl;
+    Mdl = (PMDL)DumpMdl;
 
-    if (Range->CloneVa) {
-        return PoSimpleCheck (0, Range->CloneVa, (ep-sp) << PAGE_SHIFT);
+    if (Range->CloneVa)
+    {
+        return PoSimpleCheck(0, Range->CloneVa, (ep - sp) << PAGE_SHIFT);
     }
 
     Check = 0;
-    while (sp < ep) {
-        PopCreateDumpMdl (Mdl, sp, ep);
-        Check = PoSimpleCheck (Check, Mdl->MappedSystemVa, Mdl->ByteCount);
+    while (sp < ep)
+    {
+        PopCreateDumpMdl(Mdl, sp, ep);
+        Check = PoSimpleCheck(Check, Mdl->MappedSystemVa, Mdl->ByteCount);
         sp += Mdl->ByteCount >> PAGE_SHIFT;
     }
 
     return Check;
 }
 
-VOID
-PopCreateDumpMdl (
-    IN OUT PMDL     Mdl,
-    IN PFN_NUMBER   StartPage,
-    IN PFN_NUMBER   EndPage
-    )
+VOID PopCreateDumpMdl(IN OUT PMDL Mdl, IN PFN_NUMBER StartPage, IN PFN_NUMBER EndPage)
 /*++
 
 Routine Description:
@@ -2829,55 +2510,53 @@ Return Value:
 
 --*/
 {
-    PFN_NUMBER  Pages;
+    PFN_NUMBER Pages;
     PPFN_NUMBER PhysPage;
 
     // mapping better make sense
-    if (StartPage >= EndPage) {
-        PopInternalError (POP_HIBER);
+    if (StartPage >= EndPage)
+    {
+        PopInternalError(POP_HIBER);
     }
 
     Pages = EndPage - StartPage;
-    if (Pages > POP_MAX_MDL_SIZE) {
+    if (Pages > POP_MAX_MDL_SIZE)
+    {
         Pages = POP_MAX_MDL_SIZE;
     }
 
     MmInitializeMdl(Mdl, NULL, (Pages << PAGE_SHIFT));
 
-    PhysPage = MmGetMdlPfnArray( Mdl );
-    while (Pages) {
+    PhysPage = MmGetMdlPfnArray(Mdl);
+    while (Pages)
+    {
         *PhysPage++ = StartPage++;
         Pages -= 1;
     }
 
-    MmMapMemoryDumpMdl (Mdl);
+    MmMapMemoryDumpMdl(Mdl);
     Mdl->MdlFlags |= MDL_MAPPED_TO_SYSTEM_VA;
 
     // byte count must be a multiple of page size
-    if (Mdl->ByteCount & (PAGE_SIZE-1)) {
-        PopInternalAddToDumpFile( Mdl, sizeof(MDL), NULL, NULL, NULL, NULL );
-        KeBugCheckEx( INTERNAL_POWER_ERROR,
-                      0x106,
-                      POP_HIBER,
-                      (ULONG_PTR)Mdl,
-                      0 );
+    if (Mdl->ByteCount & (PAGE_SIZE - 1))
+    {
+        PopInternalAddToDumpFile(Mdl, sizeof(MDL), NULL, NULL, NULL, NULL);
+        KeBugCheckEx(INTERNAL_POWER_ERROR, 0x106, POP_HIBER, (ULONG_PTR)Mdl, 0);
     }
 }
 
-VOID
-PopHiberComplete (
-    IN NTSTATUS             Status,
-    IN PPOP_HIBER_CONTEXT   HiberContext
-    )
+VOID PopHiberComplete(IN NTSTATUS Status, IN PPOP_HIBER_CONTEXT HiberContext)
 {
     //
     // If the return from the hal is STATUS_DEVICE_DOES_NOT_EXIST, then
     // the hal doesn't know how to power off the machine.
     //
 
-    if (Status == STATUS_DEVICE_DOES_NOT_EXIST) {
+    if (Status == STATUS_DEVICE_DOES_NOT_EXIST)
+    {
 
-       if (InbvIsBootDriverInstalled()) {
+        if (InbvIsBootDriverInstalled())
+        {
 
             // Display system shut down screen
 
@@ -2886,24 +2565,28 @@ PopHiberComplete (
             Bitmap1 = InbvGetResourceAddress(3); // shutdown bitmap
             Bitmap2 = InbvGetResourceAddress(5); // logo bitmap
 
-			InbvSolidColorFill(190,279,468,294,0);
-            if (Bitmap1 && Bitmap2) {
+            InbvSolidColorFill(190, 279, 468, 294, 0);
+            if (Bitmap1 && Bitmap2)
+            {
                 InbvBitBlt(Bitmap1, 215, 282);
-				InbvBitBlt(Bitmap2, 217, 111);
+                InbvBitBlt(Bitmap2, 217, 111);
             }
-
-        } else {
-            InbvDisplayString ("State saved, power off the system\n");
+        }
+        else
+        {
+            InbvDisplayString("State saved, power off the system\n");
         }
 
         // If reseting, set the flag and return
-        if (PopSimulate & POP_RESET_ON_HIBER) {
+        if (PopSimulate & POP_RESET_ON_HIBER)
+        {
             HiberContext->Reset = TRUE;
-            return ;
+            return;
         }
 
         // done... wait for power off
-        for (; ;) ;
+        for (;;)
+            ;
     }
 
     //
@@ -2911,17 +2594,16 @@ PopHiberComplete (
     // then the checksums are valid
     //
 
-    if ((NT_SUCCESS(Status) ||
-         HiberContext->MemoryImage->Signature == PO_IMAGE_SIGNATURE) &&
-         HiberContext->VerifyOnWake) {
-
+    if ((NT_SUCCESS(Status) || HiberContext->MemoryImage->Signature == PO_IMAGE_SIGNATURE) &&
+        HiberContext->VerifyOnWake)
+    {
     }
 
     //
     // Release the dump PTEs
     //
 
-    MmReleaseDumpAddresses (POP_MAX_MDL_SIZE);
+    MmReleaseDumpAddresses(POP_MAX_MDL_SIZE);
 
     //
     // Hiber no longer in process
@@ -2932,10 +2614,7 @@ PopHiberComplete (
 }
 
 NTSTATUS
-PopBuildMemoryImageHeader (
-    IN PPOP_HIBER_CONTEXT  HiberContext,
-    IN SYSTEM_POWER_STATE  SystemState
-    )
+PopBuildMemoryImageHeader(IN PPOP_HIBER_CONTEXT HiberContext, IN SYSTEM_POWER_STATE SystemState)
 /*++
 
 Routine Description:
@@ -2958,49 +2637,47 @@ Return Value:
 
 --*/
 {
-    PPOP_MEMORY_RANGE       Range;
-    PPO_MEMORY_IMAGE        MemImage;
-    PLIST_ENTRY             Link;
-    PFN_NUMBER              Length;
-    PFN_NUMBER              StartPage;
-    ULONG                   StartIndex;
-    ULONG                   Index;
-    PMDL                    Mdl;
-    PPO_MEMORY_RANGE_ARRAY  Table;
-    ULONG                   TablePages;
-    ULONG                   NeededPages;
-    ULONG                   NoPages, i;
-    ULONG                   result;
+    PPOP_MEMORY_RANGE Range;
+    PPO_MEMORY_IMAGE MemImage;
+    PLIST_ENTRY Link;
+    PFN_NUMBER Length;
+    PFN_NUMBER StartPage;
+    ULONG StartIndex;
+    ULONG Index;
+    PMDL Mdl;
+    PPO_MEMORY_RANGE_ARRAY Table;
+    ULONG TablePages;
+    ULONG NeededPages;
+    ULONG NoPages, i;
+    ULONG result;
 
     //
     // Allocate memory image structure
     //
 
-    MemImage = PopAllocatePages (HiberContext, 1);
-    if (!MemImage) {
+    MemImage = PopAllocatePages(HiberContext, 1);
+    if (!MemImage)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    PoSetHiberRange (HiberContext,
-                     PO_MEM_CLONE,
-                     MemImage,
-                     sizeof(*MemImage),
-                     POP_MEMIMAGE_TAG);
+    PoSetHiberRange(HiberContext, PO_MEM_CLONE, MemImage, sizeof(*MemImage), POP_MEMIMAGE_TAG);
 
     RtlZeroMemory(MemImage, PAGE_SIZE);
     HiberContext->MemoryImage = MemImage;
     MemImage->PageSize = PAGE_SIZE;
     MemImage->LengthSelf = sizeof(*MemImage);
-    MemImage->PageSelf = (PFN_NUMBER) MmGetPhysicalAddress(MemImage).QuadPart >> PAGE_SHIFT;
-    KeQuerySystemTime (&MemImage->SystemTime);
+    MemImage->PageSelf = (PFN_NUMBER)MmGetPhysicalAddress(MemImage).QuadPart >> PAGE_SHIFT;
+    KeQuerySystemTime(&MemImage->SystemTime);
     MemImage->InterruptTime = KeQueryInterruptTime();
     MemImage->HiberVa = HiberContext->HiberVa;
     MemImage->HiberPte = HiberContext->HiberPte;
     MemImage->NoHiberPtes = POP_MAX_MDL_SIZE;
     MemImage->FeatureFlags = KeFeatureBits;
-    MemImage->ImageType  = KeProcessorArchitecture;
+    MemImage->ImageType = KeProcessorArchitecture;
     MemImage->HiberFlags = HiberContext->HiberFlags;
-    if (HiberContext->LoaderMdl) {
+    if (HiberContext->LoaderMdl)
+    {
         MemImage->NoFreePages = HiberContext->LoaderMdl->ByteCount >> PAGE_SHIFT;
     }
 
@@ -3009,8 +2686,9 @@ Return Value:
     //
 
     Link = HiberContext->ClonedRanges.Flink;
-    while (Link != &HiberContext->ClonedRanges) {
-        Range = CONTAINING_RECORD (Link, POP_MEMORY_RANGE, Link);
+    while (Link != &HiberContext->ClonedRanges)
+    {
+        Range = CONTAINING_RECORD(Link, POP_MEMORY_RANGE, Link);
         Link = Link->Flink;
 
         //
@@ -3019,11 +2697,11 @@ Return Value:
 
         Length = Range->EndPage - Range->StartPage;
         Range->CloneVa = PopAllocatePages(HiberContext, Length);
-        if (!Range->CloneVa) {
-            PoPrint (PO_HIBERNATE, ("PopBuildImage: Could not allocate clone for %08x - %08x\n",
-                        Range->StartPage,
-                        Range->EndPage));
-            return(STATUS_INSUFFICIENT_RESOURCES);
+        if (!Range->CloneVa)
+        {
+            PoPrint(PO_HIBERNATE,
+                    ("PopBuildImage: Could not allocate clone for %08x - %08x\n", Range->StartPage, Range->EndPage));
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
     }
 
@@ -3040,14 +2718,16 @@ Return Value:
 
     TablePages = 0;
 
-    for (; ;) {
+    for (;;)
+    {
         //
         // Compute table pages needed, if we have enough allocated
         // then freeze the memory map and build them
         //
 
-        NoPages = (PopGetRangeCount(HiberContext) +  PO_ENTRIES_PER_PAGE - 1) / PO_ENTRIES_PER_PAGE;
-        if (NoPages <= TablePages) {
+        NoPages = (PopGetRangeCount(HiberContext) + PO_ENTRIES_PER_PAGE - 1) / PO_ENTRIES_PER_PAGE;
+        if (NoPages <= TablePages)
+        {
             break;
         }
 
@@ -3056,10 +2736,12 @@ Return Value:
         //
         NeededPages = NoPages - TablePages;
         Table = PopAllocatePages(HiberContext, NeededPages);
-        if (!Table) {
+        if (!Table)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        for (i=0; i<NeededPages; i++) {
+        for (i = 0; i < NeededPages; i++)
+        {
             Table[0].Link.EntryCount = 0;
             Table[0].Link.NextTable = 0;
             Table[0].Link.CheckSum = 1;
@@ -3087,32 +2769,33 @@ Return Value:
     // Add the cloned ranges first.
     //
     Link = HiberContext->ClonedRanges.Flink;
-    while (Link != &HiberContext->ClonedRanges) {
-        Range = CONTAINING_RECORD (Link, POP_MEMORY_RANGE, Link);
+    while (Link != &HiberContext->ClonedRanges)
+    {
+        Range = CONTAINING_RECORD(Link, POP_MEMORY_RANGE, Link);
         Link = Link->Flink;
 
-        PoPrint (PO_HIBER_MAP, ("PopSave: Cloned Table %08x - %08x\n",
-                    Range->StartPage,
-                    Range->EndPage));
+        PoPrint(PO_HIBER_MAP, ("PopSave: Cloned Table %08x - %08x\n", Range->StartPage, Range->EndPage));
 
         Index += 1;
-        if (Index >= PO_MAX_RANGE_ARRAY) {
+        if (Index >= PO_MAX_RANGE_ARRAY)
+        {
             //
             // Table is full, next
             //
 
-            Table[0].Link.EntryCount = PO_MAX_RANGE_ARRAY-1;
+            Table[0].Link.EntryCount = PO_MAX_RANGE_ARRAY - 1;
             Table = Table[0].Link.Next;
-            if (!Table) {
-                PopInternalError (POP_HIBER);
+            if (!Table)
+            {
+                PopInternalError(POP_HIBER);
             }
             Index = 1;
         }
 
-        Table[Index].Range.PageNo    = 0;
+        Table[Index].Range.PageNo = 0;
         Table[Index].Range.StartPage = Range->StartPage;
-        Table[Index].Range.EndPage   = Range->EndPage;
-        Table[Index].Range.CheckSum  = 0;
+        Table[Index].Range.EndPage = Range->EndPage;
+        Table[Index].Range.CheckSum = 0;
     }
 
     //
@@ -3120,37 +2803,39 @@ Return Value:
     //
     Length = RtlFindFirstRunClear(&HiberContext->MemoryMap, &StartIndex);
     StartPage = StartIndex;
-    while (StartPage < HiberContext->MemoryMap.SizeOfBitMap) {
+    while (StartPage < HiberContext->MemoryMap.SizeOfBitMap)
+    {
         Index += 1;
-        if (Index >= PO_MAX_RANGE_ARRAY) {
+        if (Index >= PO_MAX_RANGE_ARRAY)
+        {
             //
             // Table is full, next
             //
 
-            Table[0].Link.EntryCount = PO_MAX_RANGE_ARRAY-1;
+            Table[0].Link.EntryCount = PO_MAX_RANGE_ARRAY - 1;
             Table = Table[0].Link.Next;
-            if (!Table) {
-                PopInternalError (POP_HIBER);
+            if (!Table)
+            {
+                PopInternalError(POP_HIBER);
             }
             Index = 1;
         }
 
-        Table[Index].Range.PageNo    = 0;
+        Table[Index].Range.PageNo = 0;
         Table[Index].Range.StartPage = StartPage;
-        Table[Index].Range.EndPage   = StartPage + Length;
-        Table[Index].Range.CheckSum  = 0;
+        Table[Index].Range.EndPage = StartPage + Length;
+        Table[Index].Range.CheckSum = 0;
 
         //
         // Handle the corner case where the last run exactly matches
         // the end of the bitmap.
         //
-        if (StartPage + Length == HiberContext->MemoryMap.SizeOfBitMap) {
+        if (StartPage + Length == HiberContext->MemoryMap.SizeOfBitMap)
+        {
             break;
         }
 
-        Length = RtlFindNextForwardRunClear(&HiberContext->MemoryMap,
-                                            (ULONG)(StartPage + Length),
-                                            &StartIndex);
+        Length = RtlFindNextForwardRunClear(&HiberContext->MemoryMap, (ULONG)(StartPage + Length), &StartIndex);
         StartPage = StartIndex;
     }
 
@@ -3159,9 +2844,7 @@ Return Value:
 }
 
 NTSTATUS
-PopSaveHiberContext (
-    IN PPOP_HIBER_CONTEXT  HiberContext
-    )
+PopSaveHiberContext(IN PPOP_HIBER_CONTEXT HiberContext)
 /*++
 
 Routine Description:
@@ -3181,22 +2864,22 @@ Return Value:
 
 --*/
 {
-    POP_MCB_CONTEXT         CurrentMcb;
-    PPO_MEMORY_IMAGE        MemImage;
-    PPOP_MEMORY_RANGE       Range;
-    PPO_MEMORY_RANGE_ARRAY  Table;
-    ULONG                   Index;
-    PFN_NUMBER              sp, ep;
-    DUMP_MDL                DumpMdl;
-    PMDL                    Mdl;
-    PUCHAR                  cp;
-    PLIST_ENTRY             Link;
-    PFN_NUMBER              PageNo;
-    PFN_NUMBER              Pages;
-    NTSTATUS                Status;
-    PPFN_NUMBER             TablePage;
-    ULONG                   i;
-    ULONGLONG               StartCount;
+    POP_MCB_CONTEXT CurrentMcb;
+    PPO_MEMORY_IMAGE MemImage;
+    PPOP_MEMORY_RANGE Range;
+    PPO_MEMORY_RANGE_ARRAY Table;
+    ULONG Index;
+    PFN_NUMBER sp, ep;
+    DUMP_MDL DumpMdl;
+    PMDL Mdl;
+    PUCHAR cp;
+    PLIST_ENTRY Link;
+    PFN_NUMBER PageNo;
+    PFN_NUMBER Pages;
+    NTSTATUS Status;
+    PPFN_NUMBER TablePage;
+    ULONG i;
+    ULONGLONG StartCount;
 
 
     // Compression related
@@ -3207,8 +2890,9 @@ Return Value:
     // Hal had better have interrupts disabled here
     //
 
-    if (KeDisableInterrupts() != FALSE) {
-        PopInternalError (POP_HIBER);
+    if (KeDisableInterrupts() != FALSE)
+    {
+        PopInternalError(POP_HIBER);
     }
 
     MemImage = HiberContext->MemoryImage;
@@ -3226,15 +2910,17 @@ Return Value:
     // the system is now waking up.
     //
 
-    if (MemImage->Signature) {
+    if (MemImage->Signature)
+    {
 
         //
         // If the debugger was active, reset it
         //
 
-        if (KdDebuggerEnabled  &&  !KdPitchDebugger) {
+        if (KdDebuggerEnabled && !KdPitchDebugger)
+        {
             KdDebuggerEnabled = FALSE;
-            KdInitSystem (0, NULL);
+            KdInitSystem(0, NULL);
         }
 
         //
@@ -3242,7 +2928,8 @@ Return Value:
         // presses the space bar while coming back from hibernate
         //
 
-        if (KdDebuggerEnabled) {
+        if (KdDebuggerEnabled)
+        {
 
             if (MemImage->Signature == PO_IMAGE_SIGNATURE_BREAK)
             {
@@ -3251,7 +2938,6 @@ Return Value:
             //
             // Notify the debugger we are coming back from hibernate
             //
-
         }
 
         return STATUS_WAKE_SYSTEM;
@@ -3271,9 +2957,11 @@ Return Value:
     // later and that memory will be modified.
     //
 
-    if (HiberContext->WriteToFile) {
+    if (HiberContext->WriteToFile)
+    {
 
-        if (InbvIsBootDriverInstalled()) {
+        if (InbvIsBootDriverInstalled())
+        {
 
             PUCHAR Bitmap1, Bitmap2;
 
@@ -3282,26 +2970,30 @@ Return Value:
 
             InbvEnableDisplayString(TRUE);
             InbvAcquireDisplayOwnership();
-            InbvResetDisplay();  // required to reset display
-            InbvSolidColorFill(0,0,639,479,0);
+            InbvResetDisplay(); // required to reset display
+            InbvSolidColorFill(0, 0, 639, 479, 0);
 
-            if (Bitmap1 && Bitmap2) {
+            if (Bitmap1 && Bitmap2)
+            {
                 InbvBitBlt(Bitmap1, 190, 279);
                 InbvBitBlt(Bitmap2, 217, 111);
             }
 
             InbvSetProgressBarSubset(0, 100);
-            InbvSetProgressBarCoordinates(303,282);
-        } else {
+            InbvSetProgressBarCoordinates(303, 282);
+        }
+        else
+        {
             InbvResetDisplay(); // required to reset display
         }
 
         StartCount = HIBER_GET_TICK_COUNT(NULL);
-        Status = IoInitializeDumpStack (HiberContext->DumpStack, NULL);
+        Status = IoInitializeDumpStack(HiberContext->DumpStack, NULL);
         HiberContext->PerfInfo.InitTicks += HIBER_GET_TICK_COUNT(NULL) - StartCount;
 
-        if (!NT_SUCCESS(Status)) {
-            PoPrint (PO_HIBERNATE, ("PopSave: dump driver initialization failed %08x\n", Status));
+        if (!NT_SUCCESS(Status))
+        {
+            PoPrint(PO_HIBERNATE, ("PopSave: dump driver initialization failed %08x\n", Status));
             return Status;
         }
     }
@@ -3334,19 +3026,21 @@ Return Value:
     //
 
     Link = HiberContext->ClonedRanges.Flink;
-    while (Link != &HiberContext->ClonedRanges) {
-        Range = CONTAINING_RECORD (Link, POP_MEMORY_RANGE, Link);
+    while (Link != &HiberContext->ClonedRanges)
+    {
+        Range = CONTAINING_RECORD(Link, POP_MEMORY_RANGE, Link);
         Link = Link->Flink;
 
         ASSERT(Range->CloneVa);
         cp = Range->CloneVa;
         sp = Range->StartPage;
         ep = Range->EndPage;
-        Mdl = (PMDL) DumpMdl;
+        Mdl = (PMDL)DumpMdl;
 
-        while (sp < ep) {
-            PopCreateDumpMdl (Mdl, sp, ep);
-            memcpy (cp, Mdl->MappedSystemVa, Mdl->ByteCount);
+        while (sp < ep)
+        {
+            PopCreateDumpMdl(Mdl, sp, ep);
+            memcpy(cp, Mdl->MappedSystemVa, Mdl->ByteCount);
             cp += Mdl->ByteCount;
             sp += Mdl->ByteCount >> PAGE_SHIFT;
         }
@@ -3363,13 +3057,15 @@ Return Value:
     //
 
     TablePage = &MemImage->FirstTablePage;
-    Table  = HiberContext->TableHead;
+    Table = HiberContext->TableHead;
     PageNo = PO_FIRST_RANGE_TABLE_PAGE;
-    while (Table) {
+    while (Table)
+    {
         *TablePage = PageNo;
         PageNo += 1;
 
-        for (Index=1; Index <= Table[0].Link.EntryCount; Index++) {
+        for (Index = 1; Index <= Table[0].Link.EntryCount; Index++)
+        {
             Table[Index].Range.PageNo = PageNo;
             Pages = Table[Index].Range.EndPage - Table[Index].Range.StartPage;
             PageNo += Pages;
@@ -3381,17 +3077,20 @@ Return Value:
     }
     MemImage->LastFilePage = PageNo;
 
-    PoPrint (PO_HIBERNATE, ("PopSave: NoFree pages %08x\n", MemImage->NoFreePages));
-    PoPrint (PO_HIBERNATE, ("PopSave: Memory pages %08x (%dMB)\n", MemImage->TotalPages, MemImage->TotalPages/(PAGE_SIZE/16)));
-    PoPrint (PO_HIBERNATE, ("PopSave: File   pages %08x (%dMB)\n", MemImage->LastFilePage, MemImage->LastFilePage/(PAGE_SIZE/16)));
-    PoPrint (PO_HIBERNATE, ("PopSave: HiberPte %08x for %x\n", MemImage->HiberVa, MemImage->NoHiberPtes));
+    PoPrint(PO_HIBERNATE, ("PopSave: NoFree pages %08x\n", MemImage->NoFreePages));
+    PoPrint(PO_HIBERNATE,
+            ("PopSave: Memory pages %08x (%dMB)\n", MemImage->TotalPages, MemImage->TotalPages / (PAGE_SIZE / 16)));
+    PoPrint(PO_HIBERNATE,
+            ("PopSave: File   pages %08x (%dMB)\n", MemImage->LastFilePage, MemImage->LastFilePage / (PAGE_SIZE / 16)));
+    PoPrint(PO_HIBERNATE, ("PopSave: HiberPte %08x for %x\n", MemImage->HiberVa, MemImage->NoHiberPtes));
 
     //
     // File should be large enough, but check
     //
 
-    if (HiberContext->WriteToFile  &&  PageNo > PopHiberFile.FilePages) {
-        PoPrint (PO_HIBERNATE, ("PopSave: File too small - need %x\n", PageNo));
+    if (HiberContext->WriteToFile && PageNo > PopHiberFile.FilePages)
+    {
+        PoPrint(PO_HIBERNATE, ("PopSave: File too small - need %x\n", PageNo));
         return STATUS_DISK_FULL;
     }
 
@@ -3399,11 +3098,12 @@ Return Value:
     // Write the hiberfile image
     //
 
-    Status = PopWriteHiberImage (HiberContext, MemImage, &PopHiberFile);
+    Status = PopWriteHiberImage(HiberContext, MemImage, &PopHiberFile);
 
     PERFINFO_HIBER_DUMP_PERF_BUFFER();
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -3411,8 +3111,9 @@ Return Value:
     // If debugging, do it again into a second image
     //
 
-    if (PopSimulate & POP_DEBUG_HIBER_FILE) {
-        Status = PopWriteHiberImage (HiberContext, MemImage, &PopHiberFileDebug);
+    if (PopSimulate & POP_DEBUG_HIBER_FILE)
+    {
+        Status = PopWriteHiberImage(HiberContext, MemImage, &PopHiberFileDebug);
     }
 
     return Status;
@@ -3420,34 +3121,30 @@ Return Value:
 
 
 NTSTATUS
-PopWriteHiberImage (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PPO_MEMORY_IMAGE     MemImage,
-    IN PPOP_HIBER_FILE      HiberFile
-    )
+PopWriteHiberImage(IN PPOP_HIBER_CONTEXT HiberContext, IN PPO_MEMORY_IMAGE MemImage, IN PPOP_HIBER_FILE HiberFile)
 {
-    PPOP_MCB_CONTEXT        CMcb;
-    PPOP_MEMORY_RANGE       Range;
-    PPO_MEMORY_RANGE_ARRAY  Table;
-    ULONG                   Index;
-    PFN_NUMBER              sp, ep;
-    DUMP_MDL                DumpMdl;
-    PMDL                    Mdl;
-    PUCHAR                  cp;
-    PFN_NUMBER              PageNo;
-    PFN_NUMBER              Pages;
-    PVOID                   IoPage;
-    NTSTATUS                Status;
-    PPFN_NUMBER             TablePage;
-    ULONG                   LastPercent;
-    ULONG                   i;
-    ULONG                   temp;
-    ULONG_PTR               CompressedWriteOffset = 0;
-    PVOID                   CloneVa;
+    PPOP_MCB_CONTEXT CMcb;
+    PPOP_MEMORY_RANGE Range;
+    PPO_MEMORY_RANGE_ARRAY Table;
+    ULONG Index;
+    PFN_NUMBER sp, ep;
+    DUMP_MDL DumpMdl;
+    PMDL Mdl;
+    PUCHAR cp;
+    PFN_NUMBER PageNo;
+    PFN_NUMBER Pages;
+    PVOID IoPage;
+    NTSTATUS Status;
+    PPFN_NUMBER TablePage;
+    ULONG LastPercent;
+    ULONG i;
+    ULONG temp;
+    ULONG_PTR CompressedWriteOffset = 0;
+    PVOID CloneVa;
     ULONG PoWakeCheck;
 
-    LONGLONG           EndCount;
-    LARGE_INTEGER           TickFrequency;
+    LONGLONG EndCount;
+    LARGE_INTEGER TickFrequency;
 
     HiberContext->PerfInfo.StartCount = HIBER_GET_TICK_COUNT(&TickFrequency);
 
@@ -3455,7 +3152,7 @@ PopWriteHiberImage (
     // Set the sector locations for the proper file
     //
 
-    CMcb = (PPOP_MCB_CONTEXT) HiberContext->CurrentMcb;
+    CMcb = (PPOP_MCB_CONTEXT)HiberContext->CurrentMcb;
     CMcb->FirstMcb = HiberFile->NonPagedMcb;
     CMcb->Mcb = HiberFile->NonPagedMcb;
     CMcb->Base = 0;
@@ -3465,8 +3162,9 @@ PopWriteHiberImage (
     // Write the free page map page
     //
 
-    RtlZeroMemory (IoPage, PAGE_SIZE);
-    if (HiberContext->LoaderMdl) {
+    RtlZeroMemory(IoPage, PAGE_SIZE);
+    if (HiberContext->LoaderMdl)
+    {
         //
         // The hibernation file has one page to hold the free page map.
         // If MmHiberPages is more pages than would fit, it's not possible
@@ -3474,7 +3172,8 @@ PopWriteHiberImage (
         // hibernation image, so don't hibernate.
         //
 
-        if (MmHiberPages > PAGE_SIZE / sizeof (ULONG)) {
+        if (MmHiberPages > PAGE_SIZE / sizeof(ULONG))
+        {
             return STATUS_NO_MEMORY;
         }
 
@@ -3484,14 +3183,19 @@ PopWriteHiberImage (
         // the required MmHiberPages.
         //
 
-        if (MemImage->NoFreePages >= MmHiberPages) {
-            cp = (PUCHAR) MmGetMdlPfnArray( HiberContext->LoaderMdl );
-            memcpy (IoPage, cp, MmHiberPages * sizeof(PFN_NUMBER));
+        if (MemImage->NoFreePages >= MmHiberPages)
+        {
+            cp = (PUCHAR)MmGetMdlPfnArray(HiberContext->LoaderMdl);
+            memcpy(IoPage, cp, MmHiberPages * sizeof(PFN_NUMBER));
             MemImage->NoFreePages = MmHiberPages;
-        } else {
+        }
+        else
+        {
             return STATUS_NO_MEMORY;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // If there are no free pages available to pass to the loader, don't
@@ -3501,27 +3205,26 @@ PopWriteHiberImage (
     }
 
     MemImage->FreeMapCheck = PoSimpleCheck(0, IoPage, PAGE_SIZE);
-    PopWriteHiberPages (HiberContext, IoPage, 1, PO_FREE_MAP_PAGE, NULL);
+    PopWriteHiberPages(HiberContext, IoPage, 1, PO_FREE_MAP_PAGE, NULL);
 
     //
     // Write the processors saved context
     //
 
-    RtlZeroMemory (IoPage, PAGE_SIZE);
-    memcpy (IoPage, HiberContext->WakeState, sizeof(KPROCESSOR_STATE));
-    PoWakeCheck =
-    MemImage->WakeCheck = PoSimpleCheck(0, IoPage, sizeof(KPROCESSOR_STATE));
-    PopWriteHiberPages (HiberContext, IoPage, 1, PO_PROCESSOR_CONTEXT_PAGE, NULL);
+    RtlZeroMemory(IoPage, PAGE_SIZE);
+    memcpy(IoPage, HiberContext->WakeState, sizeof(KPROCESSOR_STATE));
+    PoWakeCheck = MemImage->WakeCheck = PoSimpleCheck(0, IoPage, sizeof(KPROCESSOR_STATE));
+    PopWriteHiberPages(HiberContext, IoPage, 1, PO_PROCESSOR_CONTEXT_PAGE, NULL);
     temp = PoSimpleCheck(0, IoPage, sizeof(KPROCESSOR_STATE));
-    if (MemImage->WakeCheck != temp) {
-        DbgPrint("Checksum for context page changed from %lx to %lx\n",
-                 MemImage->WakeCheck, temp);
+    if (MemImage->WakeCheck != temp)
+    {
+        DbgPrint("Checksum for context page changed from %lx to %lx\n", MemImage->WakeCheck, temp);
         KeBugCheckEx(INTERNAL_POWER_ERROR, 3, MemImage->WakeCheck, temp, __LINE__);
     }
     temp = PoSimpleCheck(0, IoPage, PAGE_SIZE);
-    if (MemImage->WakeCheck != temp) {
-        DbgPrint("Checksum for partial context page %lx doesn't match full %lx\n",
-                 MemImage->WakeCheck, temp);
+    if (MemImage->WakeCheck != temp)
+    {
+        DbgPrint("Checksum for partial context page %lx doesn't match full %lx\n", MemImage->WakeCheck, temp);
         KeBugCheckEx(INTERNAL_POWER_ERROR, 4, MemImage->WakeCheck, temp, __LINE__);
     }
 
@@ -3530,9 +3233,8 @@ PopWriteHiberImage (
     // written in the saved image
     //
 
-    if (KdDebuggerEnabled  &&
-        !KdPitchDebugger &&
-        !(PopSimulate & POP_IGNORE_HIBER_SYMBOL_UNLOAD)) {
+    if (KdDebuggerEnabled && !KdPitchDebugger && !(PopSimulate & POP_IGNORE_HIBER_SYMBOL_UNLOAD))
+    {
 
         KdDeleteAllBreakpoints();
     }
@@ -3542,7 +3244,7 @@ PopWriteHiberImage (
     // and write each range to the file
     //
 
-    Table  = HiberContext->TableHead;
+    Table = HiberContext->TableHead;
     LastPercent = 100;
 
     HiberContext->PerfInfo.PagesProcessed = 0;
@@ -3551,35 +3253,29 @@ PopWriteHiberImage (
     PageNo = PO_FIRST_RANGE_TABLE_PAGE;
     PopResetRangeEnum(HiberContext);
 
-    while (Table) {
+    while (Table)
+    {
 
         // Keep track of where the page tables have been written
 
         *TablePage = PageNo;
         PageNo++;
 
-        for (Index=1; Index <= Table[0].Link.EntryCount; Index++) {
-            PopIOResume (HiberContext, FALSE);
+        for (Index = 1; Index <= Table[0].Link.EntryCount; Index++)
+        {
+            PopIOResume(HiberContext, FALSE);
 
             PopGetNextRange(HiberContext, &sp, &ep, &CloneVa);
 
-            if ((Table[Index].Range.StartPage != sp) ||
-                (Table[Index].Range.EndPage != ep)) {
+            if ((Table[Index].Range.StartPage != sp) || (Table[Index].Range.EndPage != ep))
+            {
 
-                PoPrint(PO_ERROR,("PopWriteHiberImage: Table entry %p [%lx-%lx] does not match next range [%lx-%lx]\n",
-                    Table+Index,
-                    Table[Index].Range.StartPage,
-                    Table[Index].Range.EndPage,
-                    sp,
-                    ep));
+                PoPrint(PO_ERROR, ("PopWriteHiberImage: Table entry %p [%lx-%lx] does not match next range [%lx-%lx]\n",
+                                   Table + Index, Table[Index].Range.StartPage, Table[Index].Range.EndPage, sp, ep));
 
-                PopInternalAddToDumpFile( HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL );
-                PopInternalAddToDumpFile( Table, PAGE_SIZE, NULL, NULL, NULL, NULL );                
-                KeBugCheckEx( INTERNAL_POWER_ERROR,
-                              0x107,
-                              POP_HIBER,
-                              (ULONG_PTR)HiberContext,
-                              (ULONG_PTR)Table );
+                PopInternalAddToDumpFile(HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL);
+                PopInternalAddToDumpFile(Table, PAGE_SIZE, NULL, NULL, NULL, NULL);
+                KeBugCheckEx(INTERNAL_POWER_ERROR, 0x107, POP_HIBER, (ULONG_PTR)HiberContext, (ULONG_PTR)Table);
             }
 
             Table[Index].Range.PageNo = PageNo;
@@ -3588,7 +3284,8 @@ PopWriteHiberImage (
             // Write the data to hiber file
             //
 
-            if (CloneVa) {
+            if (CloneVa)
+            {
 
                 //
                 // Use the cloned data which is already mapped
@@ -3603,55 +3300,50 @@ PopWriteHiberImage (
                 // Add the pages to the compressed page set
                 // (effectively writing them out)
 
-                PopAddPagesToCompressedPageSet(TRUE,
-                                               HiberContext,
-                                               &CompressedWriteOffset,
-                                               CloneVa,
-                                               Pages,
-                                               &PageNo);
+                PopAddPagesToCompressedPageSet(TRUE, HiberContext, &CompressedWriteOffset, CloneVa, Pages, &PageNo);
                 HiberContext->PerfInfo.PagesProcessed += (ULONG)Pages;
 
                 // Update the progress bar
 
                 i = (ULONG)((HiberContext->PerfInfo.PagesProcessed * 100) / MemImage->TotalPages);
 
-                if (i != LastPercent) {
+                if (i != LastPercent)
+                {
                     LastPercent = i;
                     PopUpdateHiberComplete(HiberContext, LastPercent);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Map a chunk and write it, loop until done
                 //
-                Mdl = (PMDL) DumpMdl;
+                Mdl = (PMDL)DumpMdl;
 
                 // Initialize Check Sum
 
                 Table[Index].Range.CheckSum = 0;
 
-                while (sp < ep) {
-                    PopCreateDumpMdl (Mdl, sp, ep);
+                while (sp < ep)
+                {
+                    PopCreateDumpMdl(Mdl, sp, ep);
 
                     Pages = Mdl->ByteCount >> PAGE_SHIFT;
 
                     // Add pages to compressed page set
                     // (effectively writing them out)
 
-                    PopAddPagesToCompressedPageSet(TRUE,
-                                                   HiberContext,
-                                                   &CompressedWriteOffset,
-                                                   Mdl->MappedSystemVa,
-                                                   Pages,
-                                                   &PageNo);
+                    PopAddPagesToCompressedPageSet(TRUE, HiberContext, &CompressedWriteOffset, Mdl->MappedSystemVa,
+                                                   Pages, &PageNo);
                     sp += Pages;
                     HiberContext->PerfInfo.PagesProcessed += (ULONG)Pages;
 
                     // Update the progress bar
 
                     i = (ULONG)((HiberContext->PerfInfo.PagesProcessed * 100) / MemImage->TotalPages);
-                    if (i != LastPercent) {
+                    if (i != LastPercent)
+                    {
                         LastPercent = i;
                         PopUpdateHiberComplete(HiberContext, LastPercent);
                     }
@@ -3677,9 +3369,10 @@ PopWriteHiberImage (
 
     Table = HiberContext->TableHead;
     PageNo = PO_FIRST_RANGE_TABLE_PAGE;
-    while (Table) {
+    while (Table)
+    {
         Table[0].Link.CheckSum = 0;
-        PopWriteHiberPages (HiberContext, Table, 1, PageNo, NULL);
+        PopWriteHiberPages(HiberContext, Table, 1, PageNo, NULL);
 
         PageNo = Table[0].Link.NextTable;
         Table = Table[0].Link.Next;
@@ -3689,10 +3382,9 @@ PopWriteHiberImage (
     // File is complete write a valid header
     //
 
-    if (MemImage->WakeCheck != PoWakeCheck) {
-        DbgPrint("MemImage->WakeCheck %lx doesn't make PoWakeCheck %lx\n",
-                 MemImage->WakeCheck,
-                 PoWakeCheck);
+    if (MemImage->WakeCheck != PoWakeCheck)
+    {
+        DbgPrint("MemImage->WakeCheck %lx doesn't make PoWakeCheck %lx\n", MemImage->WakeCheck, PoWakeCheck);
         KeBugCheckEx(INTERNAL_POWER_ERROR, 5, MemImage->WakeCheck, PoWakeCheck, __LINE__);
     }
 
@@ -3700,49 +3392,51 @@ PopWriteHiberImage (
     // Fill in perf information so we can read it after hibernation
     //
     EndCount = HIBER_GET_TICK_COUNT(&TickFrequency);
-    HiberContext->PerfInfo.ElapsedTime = (ULONG)((EndCount - HiberContext->PerfInfo.StartCount)*1000 / TickFrequency.QuadPart);
-    HiberContext->PerfInfo.IoTime = (ULONG)(HiberContext->PerfInfo.IoTicks*1000 / TickFrequency.QuadPart);
-    HiberContext->PerfInfo.CopyTime = (ULONG)(HiberContext->PerfInfo.CopyTicks*1000 / TickFrequency.QuadPart);
-    HiberContext->PerfInfo.InitTime = (ULONG)(HiberContext->PerfInfo.InitTicks*1000 / TickFrequency.QuadPart);
+    HiberContext->PerfInfo.ElapsedTime =
+        (ULONG)((EndCount - HiberContext->PerfInfo.StartCount) * 1000 / TickFrequency.QuadPart);
+    HiberContext->PerfInfo.IoTime = (ULONG)(HiberContext->PerfInfo.IoTicks * 1000 / TickFrequency.QuadPart);
+    HiberContext->PerfInfo.CopyTime = (ULONG)(HiberContext->PerfInfo.CopyTicks * 1000 / TickFrequency.QuadPart);
+    HiberContext->PerfInfo.InitTime = (ULONG)(HiberContext->PerfInfo.InitTicks * 1000 / TickFrequency.QuadPart);
     HiberContext->PerfInfo.FileRuns = PopHiberFile.McbSize / sizeof(LARGE_INTEGER) - 1;
 
     MemImage->Signature = PO_IMAGE_SIGNATURE;
     MemImage->PerfInfo = HiberContext->PerfInfo;
     MemImage->CheckSum = PoSimpleCheck(0, MemImage, sizeof(*MemImage));
-    PopWriteHiberPages (HiberContext, MemImage, 1, PO_IMAGE_HEADER_PAGE, NULL);
+    PopWriteHiberPages(HiberContext, MemImage, 1, PO_IMAGE_HEADER_PAGE, NULL);
 
     //
     // Image completely written flush the controller
     //
 
-    if (HiberContext->WriteToFile) {
-        while (NT_SUCCESS (HiberContext->Status) &&
-               (DmaIoPtr != NULL) &&
-               ((DmaIoPtr->Busy.Size != 0) || (DmaIoPtr->Used.Size != 0))) {
-            PopIOResume (HiberContext, TRUE);
+    if (HiberContext->WriteToFile)
+    {
+        while (NT_SUCCESS(HiberContext->Status) && (DmaIoPtr != NULL) &&
+               ((DmaIoPtr->Busy.Size != 0) || (DmaIoPtr->Used.Size != 0)))
+        {
+            PopIOResume(HiberContext, TRUE);
         }
 
         HiberContext->DumpStack->Init.FinishRoutine();
     }
 
-    if (PopSimulate & POP_ENABLE_HIBER_PERF) {
+    if (PopSimulate & POP_ENABLE_HIBER_PERF)
+    {
         PopDumpStatistics(&HiberContext->PerfInfo);
     }
 
     //
     // Failed to write the hiberfile.
     //
-    if ( !NT_SUCCESS(HiberContext->Status) || (PopSimulate & POP_FORCE_HIBERNATE_FAILURE) ) {
+    if (!NT_SUCCESS(HiberContext->Status) || (PopSimulate & POP_FORCE_HIBERNATE_FAILURE))
+    {
 #if DBG
-        PoPrint (PO_ERROR, ("PopWriteHiberImage: Error occured writing the hiberfile. (%x)\n", HiberContext->Status));
-        PopInternalAddToDumpFile( HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL );
-        KeBugCheckEx( INTERNAL_POWER_ERROR,
-                      0x108,
-                      POP_HIBER,
-                      (ULONG_PTR)HiberContext,
-                      0 );
+        PoPrint(PO_ERROR, ("PopWriteHiberImage: Error occured writing the hiberfile. (%x)\n", HiberContext->Status));
+        PopInternalAddToDumpFile(HiberContext, sizeof(POP_HIBER_CONTEXT), NULL, NULL, NULL, NULL);
+        KeBugCheckEx(INTERNAL_POWER_ERROR, 0x108, POP_HIBER, (ULONG_PTR)HiberContext, 0);
 #else
-        return( (NT_SUCCESS(HiberContext->Status) && (PopSimulate & POP_FORCE_HIBERNATE_FAILURE)) ? STATUS_UNSUCCESSFUL : (HiberContext->Status) );
+        return ((NT_SUCCESS(HiberContext->Status) && (PopSimulate & POP_FORCE_HIBERNATE_FAILURE))
+                    ? STATUS_UNSUCCESSFUL
+                    : (HiberContext->Status));
 #endif
     }
 
@@ -3751,9 +3445,10 @@ PopWriteHiberImage (
     // dump process didn't edit any memory pages
     //
 
-    if (PopSimulate & POP_TEST_CRC_MEMORY) {
-        if (!(PopSimulate & POP_DEBUG_HIBER_FILE) ||
-            (HiberFile == &PopHiberFileDebug)) {
+    if (PopSimulate & POP_TEST_CRC_MEMORY)
+    {
+        if (!(PopSimulate & POP_DEBUG_HIBER_FILE) || (HiberFile == &PopHiberFileDebug))
+        {
         }
     }
 
@@ -3761,9 +3456,10 @@ PopWriteHiberImage (
     // Tell the debugger we are hibernating
     //
 
-    if (!(PopSimulate & POP_IGNORE_HIBER_SYMBOL_UNLOAD)) {
+    if (!(PopSimulate & POP_IGNORE_HIBER_SYMBOL_UNLOAD))
+    {
 
-        KD_SYMBOLS_INFO SymbolInfo = {0};
+        KD_SYMBOLS_INFO SymbolInfo = { 0 };
         SymbolInfo.BaseOfDll = (PVOID)KD_HIBERNATE;
 
         DebugService2(NULL, &SymbolInfo, BREAKPOINT_UNLOAD_SYMBOLS);
@@ -3774,7 +3470,8 @@ PopWriteHiberImage (
     // error so we don't power down
     //
 
-    if (PopSimulate & POP_RESET_ON_HIBER) {
+    if (PopSimulate & POP_RESET_ON_HIBER)
+    {
         return STATUS_DEVICE_DOES_NOT_EXIST;
     }
 
@@ -3785,66 +3482,52 @@ PopWriteHiberImage (
     return STATUS_SUCCESS;
 }
 
-VOID
-PopDumpStatistics(
-    IN PPO_HIBER_PERF PerfInfo
-    )
+VOID PopDumpStatistics(IN PPO_HIBER_PERF PerfInfo)
 {
     LONGLONG EndCount;
     LARGE_INTEGER TickFrequency;
 
     EndCount = HIBER_GET_TICK_COUNT(&TickFrequency);
-    PerfInfo->ElapsedTime = (ULONG)((EndCount - PerfInfo->StartCount)*1000 / TickFrequency.QuadPart);
-    PerfInfo->IoTime = (ULONG)(PerfInfo->IoTicks*1000 / TickFrequency.QuadPart);
-    PerfInfo->CopyTime = (ULONG)(PerfInfo->CopyTicks*1000 / TickFrequency.QuadPart);
-    PerfInfo->InitTime = (ULONG)(PerfInfo->InitTicks*1000 / TickFrequency.QuadPart);
+    PerfInfo->ElapsedTime = (ULONG)((EndCount - PerfInfo->StartCount) * 1000 / TickFrequency.QuadPart);
+    PerfInfo->IoTime = (ULONG)(PerfInfo->IoTicks * 1000 / TickFrequency.QuadPart);
+    PerfInfo->CopyTime = (ULONG)(PerfInfo->CopyTicks * 1000 / TickFrequency.QuadPart);
+    PerfInfo->InitTime = (ULONG)(PerfInfo->InitTicks * 1000 / TickFrequency.QuadPart);
     PerfInfo->FileRuns = PopHiberFile.McbSize / sizeof(LARGE_INTEGER) - 1;
-    DbgPrint("HIBER: %lu Pages written in %lu Dumps (%lu runs).\n",
-             PerfInfo->PagesWritten,
-             PerfInfo->DumpCount,
+    DbgPrint("HIBER: %lu Pages written in %lu Dumps (%lu runs).\n", PerfInfo->PagesWritten, PerfInfo->DumpCount,
              PerfInfo->FileRuns);
-    DbgPrint("HIBER: %lu Pages processed (%d %% compression)\n",
-             PerfInfo->PagesProcessed,
-             PerfInfo->PagesWritten*100/PerfInfo->PagesProcessed);
-    DbgPrint("HIBER: Elapsed time %3d.%03d seconds\n",
-             PerfInfo->ElapsedTime / 1000,
-             PerfInfo->ElapsedTime % 1000);
-    DbgPrint("HIBER: I/O time     %3d.%03d seconds (%2d%%)  %d MB/sec\n",
-             PerfInfo->IoTime / 1000,
-             PerfInfo->IoTime % 1000,
-             PerfInfo->ElapsedTime ? PerfInfo->IoTime*100/PerfInfo->ElapsedTime : 0,
-             (PerfInfo->IoTime/100000) ? (PerfInfo->PagesWritten/(1024*1024/PAGE_SIZE)) / (PerfInfo->IoTime / 100000) : 0);
-    DbgPrint("HIBER: Init time     %3d.%03d seconds (%2d%%)\n",
-             PerfInfo->InitTime / 1000,
-             PerfInfo->InitTime % 1000,
-             PerfInfo->ElapsedTime ? PerfInfo->InitTime*100/PerfInfo->ElapsedTime : 0);
-    DbgPrint("HIBER: Copy time     %3d.%03d seconds (%2d%%)  %d Bytes\n",
-             PerfInfo->CopyTime / 1000,
-             PerfInfo->CopyTime % 1000,
-             PerfInfo->ElapsedTime ? PerfInfo->CopyTime*100/PerfInfo->ElapsedTime : 0,
-             PerfInfo->BytesCopied );
-
+    DbgPrint("HIBER: %lu Pages processed (%d %% compression)\n", PerfInfo->PagesProcessed,
+             PerfInfo->PagesWritten * 100 / PerfInfo->PagesProcessed);
+    DbgPrint("HIBER: Elapsed time %3d.%03d seconds\n", PerfInfo->ElapsedTime / 1000, PerfInfo->ElapsedTime % 1000);
+    DbgPrint("HIBER: I/O time     %3d.%03d seconds (%2d%%)  %d MB/sec\n", PerfInfo->IoTime / 1000,
+             PerfInfo->IoTime % 1000, PerfInfo->ElapsedTime ? PerfInfo->IoTime * 100 / PerfInfo->ElapsedTime : 0,
+             (PerfInfo->IoTime / 100000)
+                 ? (PerfInfo->PagesWritten / (1024 * 1024 / PAGE_SIZE)) / (PerfInfo->IoTime / 100000)
+                 : 0);
+    DbgPrint("HIBER: Init time     %3d.%03d seconds (%2d%%)\n", PerfInfo->InitTime / 1000, PerfInfo->InitTime % 1000,
+             PerfInfo->ElapsedTime ? PerfInfo->InitTime * 100 / PerfInfo->ElapsedTime : 0);
+    DbgPrint("HIBER: Copy time     %3d.%03d seconds (%2d%%)  %d Bytes\n", PerfInfo->CopyTime / 1000,
+             PerfInfo->CopyTime % 1000, PerfInfo->ElapsedTime ? PerfInfo->CopyTime * 100 / PerfInfo->ElapsedTime : 0,
+             PerfInfo->BytesCopied);
 }
 
 
-VOID
-PopUpdateHiberComplete (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN ULONG                Percent
-    )
+VOID PopUpdateHiberComplete(IN PPOP_HIBER_CONTEXT HiberContext, IN ULONG Percent)
 {
-    UCHAR                   Buffer[200];
+    UCHAR Buffer[200];
 
-    if (InbvIsBootDriverInstalled()) {
+    if (InbvIsBootDriverInstalled())
+    {
 
         InbvUpdateProgressBar(Percent + 1);
+    }
+    else
+    {
 
-    } else {
-
-        sprintf (Buffer, "PopSave: %d%%\r", Percent);
-        PoPrint (PO_HIBER_MAP, ("%s", Buffer));
-        if (HiberContext->WriteToFile) {
-            InbvDisplayString (Buffer);
+        sprintf(Buffer, "PopSave: %d%%\r", Percent);
+        PoPrint(PO_HIBER_MAP, ("%s", Buffer));
+        if (HiberContext->WriteToFile)
+        {
+            InbvDisplayString(Buffer);
         }
     }
 
@@ -3858,12 +3541,8 @@ PopUpdateHiberComplete (
 #endif
 }
 
-VOID
-PopEndCompressedPageSet(
-   IN PPOP_HIBER_CONTEXT   HiberContext,
-   IN OUT PULONG_PTR       CompressedBufferOffset,
-   IN OUT PPFN_NUMBER      SetFilePage
-   )
+VOID PopEndCompressedPageSet(IN PPOP_HIBER_CONTEXT HiberContext, IN OUT PULONG_PTR CompressedBufferOffset,
+                             IN OUT PPFN_NUMBER SetFilePage)
 /*++
 
 Routine Description:
@@ -3902,14 +3581,12 @@ Return Value:
     PCOMPRESSION_BLOCK Block = HiberContext->CompressionBlock;
 
     // is there are any blocked data?
-    if (Block->Ptr != Block->Buffer) {
+    if (Block->Ptr != Block->Buffer)
+    {
         // yes, flush the block
-        PopAddPagesToCompressedPageSet (FALSE,        // no buffering -- compress now
-                                        HiberContext,
-                                        CompressedBufferOffset,
-                                        Block->Buffer,
-                                        (PFN_NUMBER) ((Block->Ptr - Block->Buffer) >> PAGE_SHIFT),
-                                        SetFilePage);
+        PopAddPagesToCompressedPageSet(FALSE, // no buffering -- compress now
+                                       HiberContext, CompressedBufferOffset, Block->Buffer,
+                                       (PFN_NUMBER)((Block->Ptr - Block->Buffer) >> PAGE_SHIFT), SetFilePage);
 
         // reset block to empty
         Block->Ptr = Block->Buffer;
@@ -3919,17 +3596,14 @@ Return Value:
     // Figure out how many pages remain in the compression buffer.  Don't
     // use BYTES_TO_PAGES because that will truncate to ULONG.
 
-    Pages = (PFN_NUMBER) ((*CompressedBufferOffset + (PAGE_SIZE-1)) >> PAGE_SHIFT);
+    Pages = (PFN_NUMBER)((*CompressedBufferOffset + (PAGE_SIZE - 1)) >> PAGE_SHIFT);
 
-    if (Pages > 0) {
+    if (Pages > 0)
+    {
 
         // Write the remaining pages out
 
-        PopWriteHiberPages(HiberContext,
-                           (PVOID)HiberContext->CompressedWriteBuffer,
-                           Pages,
-                           *SetFilePage,
-                           NULL);
+        PopWriteHiberPages(HiberContext, (PVOID)HiberContext->CompressedWriteBuffer, Pages, *SetFilePage, NULL);
 
         // Reflect our usage of the hiber file
 
@@ -3939,15 +3613,9 @@ Return Value:
     *CompressedBufferOffset = 0;
 }
 
-VOID
-PopAddPagesToCompressedPageSet(
-   IN BOOLEAN              AllowDataBuffering,
-   IN PPOP_HIBER_CONTEXT   HiberContext,
-   IN OUT PULONG_PTR       CompressedBufferOffset,
-   IN PVOID                StartVa,
-   IN PFN_NUMBER           NumPages,
-   IN OUT PPFN_NUMBER      SetFilePage
-   )
+VOID PopAddPagesToCompressedPageSet(IN BOOLEAN AllowDataBuffering, IN PPOP_HIBER_CONTEXT HiberContext,
+                                    IN OUT PULONG_PTR CompressedBufferOffset, IN PVOID StartVa, IN PFN_NUMBER NumPages,
+                                    IN OUT PPFN_NUMBER SetFilePage)
 /*++
 
 Routine Description:
@@ -4029,22 +3697,25 @@ Return Value:
     ULONG AlignedCompressedSize;
     PUCHAR CompressedBuffer;
 
-    if (AllowDataBuffering) {
+    if (AllowDataBuffering)
+    {
         PCOMPRESSION_BLOCK Block = HiberContext->CompressionBlock;
 
         // Yes, try to buffer output
-        if (Block->Ptr != Block->Buffer) {
+        if (Block->Ptr != Block->Buffer)
+        {
             // Find # of free pages left in block
-            NumberOfPagesToCompress = (PFN_NUMBER)
-                                      ((Block->Buffer + sizeof (Block->Buffer) - Block->Ptr) >> PAGE_SHIFT);
+            NumberOfPagesToCompress = (PFN_NUMBER)((Block->Buffer + sizeof(Block->Buffer) - Block->Ptr) >> PAGE_SHIFT);
 
             // If it's exceed available truncate
-            if (NumberOfPagesToCompress > NumPages) {
+            if (NumberOfPagesToCompress > NumPages)
+            {
                 NumberOfPagesToCompress = NumPages;
             }
 
             // Any free space left?
-            if (NumberOfPagesToCompress != 0) {
+            if (NumberOfPagesToCompress != 0)
+            {
                 HbCopy(HiberContext, Block->Ptr, Page, NumberOfPagesToCompress << PAGE_SHIFT);
                 NumPages -= NumberOfPagesToCompress;
                 Page += NumberOfPagesToCompress << PAGE_SHIFT;
@@ -4052,31 +3723,27 @@ Return Value:
             }
 
             // Is block full?
-            if (Block->Ptr == Block->Buffer + sizeof (Block->Buffer)) {
+            if (Block->Ptr == Block->Buffer + sizeof(Block->Buffer))
+            {
                 // Yes, flush the block
-                PopAddPagesToCompressedPageSet (FALSE,       // no buffering
-                                                HiberContext,
-                                                CompressedBufferOffset,
-                                                Block->Buffer,
-                                                (PFN_NUMBER) ((Block->Ptr - Block->Buffer) >> PAGE_SHIFT),
-                                                SetFilePage);
+                PopAddPagesToCompressedPageSet(FALSE, // no buffering
+                                               HiberContext, CompressedBufferOffset, Block->Buffer,
+                                               (PFN_NUMBER)((Block->Ptr - Block->Buffer) >> PAGE_SHIFT), SetFilePage);
 
                 // Reset block to empty
                 Block->Ptr = Block->Buffer;
             }
         }
 
-        NumberOfPagesToCompress = sizeof (Block->Buffer) >> PAGE_SHIFT;
+        NumberOfPagesToCompress = sizeof(Block->Buffer) >> PAGE_SHIFT;
 
         // While too much to compress -- compress from original location
-        while (NumPages >= NumberOfPagesToCompress) {
+        while (NumPages >= NumberOfPagesToCompress)
+        {
             // Write pages
-            PopAddPagesToCompressedPageSet (FALSE,     // no buffering
-                                            HiberContext,
-                                            CompressedBufferOffset,
-                                            Page,
-                                            NumberOfPagesToCompress,
-                                            SetFilePage);
+            PopAddPagesToCompressedPageSet(FALSE, // no buffering
+                                           HiberContext, CompressedBufferOffset, Page, NumberOfPagesToCompress,
+                                           SetFilePage);
 
             // adjust pointer and counter
             Page += NumberOfPagesToCompress << PAGE_SHIFT;
@@ -4085,8 +3752,9 @@ Return Value:
 
         // If anything left save it in block
         // N.B.: either NumPages == 0 or there is enough space in Block
-        if (NumPages != 0) {
-            HbCopy (HiberContext, Block->Ptr, Page, NumPages << PAGE_SHIFT);
+        if (NumPages != 0)
+        {
+            HbCopy(HiberContext, Block->Ptr, Page, NumPages << PAGE_SHIFT);
             Block->Ptr += NumPages << PAGE_SHIFT;
         }
 
@@ -4097,33 +3765,35 @@ Return Value:
     // First make sure values of constants match our assumptions
 
 #if XPRESS_HEADER_SIZE < XPRESS_HEADER_STRING_SIZE + 8
-#error -- XPRESS_HEADER_SIZE shall be at least (XPRESS_HEADER_STRING_SIZE + 8)
+#error-- XPRESS_HEADER_SIZE shall be at least (XPRESS_HEADER_STRING_SIZE + 8)
 #endif
 
 #if XPRESS_MAX_SIZE < PAGE_SIZE || XPRESS_MAX_SIZE % PAGE_SIZE != 0
-#error -- XPRESS_MAX_SIZE shall be multiple of PAGE_SIZE
+#error-- XPRESS_MAX_SIZE shall be multiple of PAGE_SIZE
 #endif
 
 #if (XPRESS_ALIGNMENT & (XPRESS_ALIGNMENT - 1)) != 0
-#error -- XPRESS_ALIGNMENT shall be power of 2
+#error-- XPRESS_ALIGNMENT shall be power of 2
 #endif
 
 #if XPRESS_HEADER_SIZE % XPRESS_ALIGNMENT != 0
-#error -- XPRESS_HEADER_SIZE shall be multiple of XPRESS_ALIGNMENT
+#error-- XPRESS_HEADER_SIZE shall be multiple of XPRESS_ALIGNMENT
 #endif
 
     // make sure that compressed buffer and its header will fit into output buffer
-#if XPRESS_MAX_SIZE + XPRESS_HEADER + PAGE_SIZE  - 1 > (POP_COMPRESSED_PAGE_SET_SIZE << PAGE_SHIFT)
-#error -- POP_COMPRESSED_PAGE_SET_SIZE is too small
+#if XPRESS_MAX_SIZE + XPRESS_HEADER + PAGE_SIZE - 1 > (POP_COMPRESSED_PAGE_SET_SIZE << PAGE_SHIFT)
+#error-- POP_COMPRESSED_PAGE_SET_SIZE is too small
 #endif
 
     // Real compression starts here
 
     // Loop through all the pages ...
-    for (i = 0; i < NumPages; i += NumberOfPagesToCompress) {
+    for (i = 0; i < NumPages; i += NumberOfPagesToCompress)
+    {
 
         NumberOfPagesToCompress = XPRESS_MAX_PAGES;
-        if (NumberOfPagesToCompress > NumPages - i) {
+        if (NumberOfPagesToCompress > NumPages - i)
+        {
             NumberOfPagesToCompress = NumPages - i;
         }
 
@@ -4139,14 +3809,13 @@ Return Value:
         //      beyond the threshold) to always succeed.
         //
 
-        if (BufferOffset + (NumberOfPagesToCompress << PAGE_SHIFT) + XPRESS_HEADER_SIZE > (POP_COMPRESSED_PAGE_SET_SIZE << PAGE_SHIFT)) {
+        if (BufferOffset + (NumberOfPagesToCompress << PAGE_SHIFT) + XPRESS_HEADER_SIZE >
+            (POP_COMPRESSED_PAGE_SET_SIZE << PAGE_SHIFT))
+        {
             // Write out the compression buffer bytes below the threshold
 
-            PopWriteHiberPages(HiberContext,
-                               (PVOID)HiberContext->CompressedWriteBuffer,
-                               BufferOffset >> PAGE_SHIFT,
-                               *SetFilePage,
-                               NULL);
+            PopWriteHiberPages(HiberContext, (PVOID)HiberContext->CompressedWriteBuffer, BufferOffset >> PAGE_SHIFT,
+                               *SetFilePage, NULL);
 
             // We have used some pages in the Hiber file with the above write,
             // indicate that our next Hiber file page will be beyond those used pages.
@@ -4156,9 +3825,9 @@ Return Value:
             // Move buffer bytes that are above the write-out threshold to the
             // beginning of the buffer
 
-            if (BufferOffset & (PAGE_SIZE - 1)) {
-                HbCopy(HiberContext,
-                       HiberContext->CompressedWriteBuffer,
+            if (BufferOffset & (PAGE_SIZE - 1))
+            {
+                HbCopy(HiberContext, HiberContext->CompressedWriteBuffer,
                        HiberContext->CompressedWriteBuffer + (BufferOffset & ~(PAGE_SIZE - 1)),
                        (ULONG)BufferOffset & (PAGE_SIZE - 1));
             }
@@ -4176,41 +3845,33 @@ Return Value:
         CompressedBuffer = HiberContext->CompressedWriteBuffer + BufferOffset;
 
         // Clear the header
-        RtlZeroMemory (CompressedBuffer, XPRESS_HEADER_SIZE);
+        RtlZeroMemory(CompressedBuffer, XPRESS_HEADER_SIZE);
 
 
         // Compress pages into the compression buffer
 
-        if (HIBER_USE_DMA (HiberContext)) {
+        if (HIBER_USE_DMA(HiberContext))
+        {
             // Try to resume IO calling callback each 8192 bytes
-            CompressedSize = XpressEncode ((XpressEncodeStream) (HiberContext->CompressionWorkspace),
-                                           CompressedBuffer + XPRESS_HEADER_SIZE,
-                                           MaxCompressedSize,
-                                           (PVOID) Page,
-                                           (ULONG)NumberOfPagesToCompress << PAGE_SHIFT,
-                                           PopIOCallback,
-                                           HiberContext,
-                                           8192);
-        } else {
+            CompressedSize =
+                XpressEncode((XpressEncodeStream)(HiberContext->CompressionWorkspace),
+                             CompressedBuffer + XPRESS_HEADER_SIZE, MaxCompressedSize, (PVOID)Page,
+                             (ULONG)NumberOfPagesToCompress << PAGE_SHIFT, PopIOCallback, HiberContext, 8192);
+        }
+        else
+        {
             // No need for callbacks -- compress everything at once
-            CompressedSize = XpressEncode ((XpressEncodeStream) (HiberContext->CompressionWorkspace),
-                                            CompressedBuffer + XPRESS_HEADER_SIZE,
-                                            MaxCompressedSize,
-                                            (PVOID) Page,
-                                            (ULONG)NumberOfPagesToCompress << PAGE_SHIFT,
-                                            NULL,
-                                            NULL,
-                                            0);
+            CompressedSize = XpressEncode((XpressEncodeStream)(HiberContext->CompressionWorkspace),
+                                          CompressedBuffer + XPRESS_HEADER_SIZE, MaxCompressedSize, (PVOID)Page,
+                                          (ULONG)NumberOfPagesToCompress << PAGE_SHIFT, NULL, NULL, 0);
         }
 
         // If compression failed copy data as is original
 
-        if (CompressedSize >= MaxCompressedSize) {
+        if (CompressedSize >= MaxCompressedSize)
+        {
             CompressedSize = (ULONG)NumberOfPagesToCompress << PAGE_SHIFT;
-            HbCopy (HiberContext,
-                    CompressedBuffer + XPRESS_HEADER_SIZE,
-                    (PVOID) Page,
-                    CompressedSize);
+            HbCopy(HiberContext, CompressedBuffer + XPRESS_HEADER_SIZE, (PVOID)Page, CompressedSize);
         }
 
         //
@@ -4219,7 +3880,7 @@ Return Value:
 
 
         // Magic bytes (LZNT1 block cannot start from 0x81,0x81)
-        RtlCopyMemory (CompressedBuffer, XPRESS_HEADER_STRING, XPRESS_HEADER_STRING_SIZE);
+        RtlCopyMemory(CompressedBuffer, XPRESS_HEADER_STRING, XPRESS_HEADER_STRING_SIZE);
 
 
         // Size of original and compressed data
@@ -4227,20 +3888,22 @@ Return Value:
             ULONG dw = ((CompressedSize - 1) << 10) + ((ULONG)NumberOfPagesToCompress - 1);
 
 #if XPRESS_MAX_SIZE > (1 << 22)
-#error -- XPRESS_MAX_SIZE shall not exceed 4 MB
+#error-- XPRESS_MAX_SIZE shall not exceed 4 MB
 #endif
 
-            CompressedBuffer[XPRESS_HEADER_STRING_SIZE] = (UCHAR) dw;
-            CompressedBuffer[XPRESS_HEADER_STRING_SIZE+1] = (UCHAR) (dw >>  8);
-            CompressedBuffer[XPRESS_HEADER_STRING_SIZE+2] = (UCHAR) (dw >> 16);
-            CompressedBuffer[XPRESS_HEADER_STRING_SIZE+3] = (UCHAR) (dw >> 24);
+            CompressedBuffer[XPRESS_HEADER_STRING_SIZE] = (UCHAR)dw;
+            CompressedBuffer[XPRESS_HEADER_STRING_SIZE + 1] = (UCHAR)(dw >> 8);
+            CompressedBuffer[XPRESS_HEADER_STRING_SIZE + 2] = (UCHAR)(dw >> 16);
+            CompressedBuffer[XPRESS_HEADER_STRING_SIZE + 3] = (UCHAR)(dw >> 24);
         }
 
         // Align compressed data on 8-byte boundary
         AlignedCompressedSize = (CompressedSize + (XPRESS_ALIGNMENT - 1)) & ~(XPRESS_ALIGNMENT - 1);
-        if (CompressedSize != AlignedCompressedSize) {
+        if (CompressedSize != AlignedCompressedSize)
+        {
             // Fill up data with zeroes until aligned
-            RtlZeroMemory (CompressedBuffer + XPRESS_HEADER_SIZE + CompressedSize, AlignedCompressedSize - CompressedSize);
+            RtlZeroMemory(CompressedBuffer + XPRESS_HEADER_SIZE + CompressedSize,
+                          AlignedCompressedSize - CompressedSize);
         }
 
         // Indicate our new usage of the buffer
@@ -4256,212 +3919,215 @@ Return Value:
 }
 
 
-VOID
-PopIORegionMove (
-    IN IOREGION *To,      // ptr to region descriptor to put bytes to
-    IN IOREGION *From,        // ptr to region descriptor to get bytes from
-    IN LONG Bytes         // # of bytes to move from the beginning of one region to the end of another
-    )
+VOID PopIORegionMove(IN IOREGION *To,   // ptr to region descriptor to put bytes to
+                     IN IOREGION *From, // ptr to region descriptor to get bytes from
+                     IN LONG Bytes      // # of bytes to move from the beginning of one region to the end of another
+)
 {
-    ASSERT((Bytes & (PAGE_SIZE-1)) == 0);
+    ASSERT((Bytes & (PAGE_SIZE - 1)) == 0);
 
-    if (To->Size != To->End - To->Ptr) {
-        ASSERT (To->Ptr + To->Size == From->Ptr);
+    if (To->Size != To->End - To->Ptr)
+    {
+        ASSERT(To->Ptr + To->Size == From->Ptr);
         To->Size += Bytes;
-        ASSERT (To->Size <= To->End - To->Ptr);
-    } else {
-        ASSERT (To->Beg + To->SizeOvl == From->Ptr);
+        ASSERT(To->Size <= To->End - To->Ptr);
+    }
+    else
+    {
+        ASSERT(To->Beg + To->SizeOvl == From->Ptr);
         To->SizeOvl += Bytes;
-        ASSERT (To->Size + To->SizeOvl <= To->End - To->Beg);
+        ASSERT(To->Size + To->SizeOvl <= To->End - To->Beg);
     }
 
-    ASSERT (Bytes <= From->Size && From->Size <= From->End - From->Ptr);
+    ASSERT(Bytes <= From->Size && From->Size <= From->End - From->Ptr);
     From->Size -= Bytes;
     From->Ptr += Bytes;
-    if (From->Ptr == From->End) {
-        ASSERT (From->Size == 0);
+    if (From->Ptr == From->End)
+    {
+        ASSERT(From->Size == 0);
         From->Ptr = From->Beg;
         From->Size = From->SizeOvl;
         From->SizeOvl = 0;
     }
 }
 
-VOID
-XPRESS_CALL
-PopIOCallback (
-    PVOID Context,
-    int compressed
-    )
+VOID XPRESS_CALL PopIOCallback(PVOID Context, int compressed)
 {
     PPOP_HIBER_CONTEXT HiberContext = Context;
 
-    if (HiberContext == NULL || DmaIoPtr == NULL) {
+    if (HiberContext == NULL || DmaIoPtr == NULL)
+    {
         return;
     }
 
     if (DmaIoPtr->Busy.Size == 0 && DmaIoPtr->Used.Size == 0)
         return;
 
-    PopIOResume (Context, FALSE);
+    PopIOResume(Context, FALSE);
 }
 
-BOOLEAN PopIOResume (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN BOOLEAN Complete
-    )
+BOOLEAN PopIOResume(IN PPOP_HIBER_CONTEXT HiberContext, IN BOOLEAN Complete)
 {
     NTSTATUS status;
 
     // If there were error don't even bother
-    if (!NT_SUCCESS(HiberContext->Status)) {
-        return(FALSE);
+    if (!NT_SUCCESS(HiberContext->Status))
+    {
+        return (FALSE);
     }
 
-    if (DmaIoPtr == NULL) {
-        return(TRUE);
+    if (DmaIoPtr == NULL)
+    {
+        return (TRUE);
     }
 
     // if delayed operation then resume or complete it
-    while (DmaIoPtr->Busy.Size != 0) {
+    while (DmaIoPtr->Busy.Size != 0)
+    {
 
-        status = HiberContext->DumpStack->Init.WritePendingRoutine (Complete?IO_DUMP_WRITE_FINISH:IO_DUMP_WRITE_RESUME,
-                                                                    NULL,
-                                                                    NULL,
-                                                                    DmaIoPtr->DumpLocalData);
+        status = HiberContext->DumpStack->Init.WritePendingRoutine(
+            Complete ? IO_DUMP_WRITE_FINISH : IO_DUMP_WRITE_RESUME, NULL, NULL, DmaIoPtr->DumpLocalData);
 
-        if (status == STATUS_PENDING) {
+        if (status == STATUS_PENDING)
+        {
             // Pending IO; shall never happen if Complete
-            ASSERT (!Complete);
-            return(TRUE);
+            ASSERT(!Complete);
+            return (TRUE);
         }
 
         // If there were error then don't care
-        if (!NT_SUCCESS (status)) {
+        if (!NT_SUCCESS(status))
+        {
             HiberContext->Status = status;
-            return(FALSE);
+            return (FALSE);
         }
 
         // Now, resume PopWriteHiberPages
-        PopWriteHiberPages (HiberContext,
-                            NULL,
-                            0,
-                            0,
-                            &DmaIoPtr->HiberWritePagesLocals);
-        if (!NT_SUCCESS (HiberContext->Status)) {
-            return(FALSE);
+        PopWriteHiberPages(HiberContext, NULL, 0, 0, &DmaIoPtr->HiberWritePagesLocals);
+        if (!NT_SUCCESS(HiberContext->Status))
+        {
+            return (FALSE);
         }
 
         // If pending IO completed and we had to wait -- do not start new one
-        if (DmaIoPtr->Busy.Size == 0 && Complete) {
-            return(TRUE);
+        if (DmaIoPtr->Busy.Size == 0 && Complete)
+        {
+            return (TRUE);
         }
 
         // If not completed and do no wait -- return
-        if (DmaIoPtr->Busy.Size != 0 && !Complete) {
-            return(TRUE);
+        if (DmaIoPtr->Busy.Size != 0 && !Complete)
+        {
+            return (TRUE);
         }
     }
 
-    while (DmaIoPtr->Used.Size >= PAGE_SIZE) {
-        ULONG_PTR               i, j;
-        ULONG_PTR               NoPages;
-        ULONG_PTR               Length;
-        PUCHAR                  PageVa;
-        PFN_NUMBER              FilePage;
+    while (DmaIoPtr->Used.Size >= PAGE_SIZE)
+    {
+        ULONG_PTR i, j;
+        ULONG_PTR NoPages;
+        ULONG_PTR Length;
+        PUCHAR PageVa;
+        PFN_NUMBER FilePage;
 
         // Obtain size of region waiting for IO
         PageVa = DmaIoPtr->Used.Ptr;
         NoPages = (Length = DmaIoPtr->Used.Size) >> PAGE_SHIFT;
         // Make sure all pages should be contiguous
         i = DmaIoPtr->Used.Ptr - DmaIoPtr->Used.Beg;
-        ASSERT (((i | Length) & (PAGE_SIZE-1)) == 0);
+        ASSERT(((i | Length) & (PAGE_SIZE - 1)) == 0);
         i >>= PAGE_SHIFT;
 
         // Starting file offset (in pages)
         FilePage = DmaIoPtr->FilePage[i];
 
         // Increase counter while contiguous and used
-        if (HIBER_USE_DMA (HiberContext)) {
+        if (HIBER_USE_DMA(HiberContext))
+        {
             // If DMA is allowed write page-by-page
             j = 1;
-        } else {
+        }
+        else
+        {
             // Write as many pages as possible
             j = 0;
-            do {
+            do
+            {
                 ++j;
-            } while ((j != NoPages) &&
-                     (DmaIoPtr->FilePage[i + j] == FilePage + j));
+            } while ((j != NoPages) && (DmaIoPtr->FilePage[i + j] == FilePage + j));
         }
 
         // Re-evaluate # of pages and length of block
         Length = (NoPages = j) << PAGE_SHIFT;
 
         // Start IO
-        PopWriteHiberPages (HiberContext, PageVa, NoPages, FilePage, &DmaIoPtr->HiberWritePagesLocals);
-        if (!NT_SUCCESS (HiberContext->Status)) {
-            return(FALSE);
+        PopWriteHiberPages(HiberContext, PageVa, NoPages, FilePage, &DmaIoPtr->HiberWritePagesLocals);
+        if (!NT_SUCCESS(HiberContext->Status))
+        {
+            return (FALSE);
         }
 
         // If pending then return immediately (even if need to complete)
-        if (DmaIoPtr->Busy.Size != 0) {
-            return(TRUE);
+        if (DmaIoPtr->Busy.Size != 0)
+        {
+            return (TRUE);
         }
     }
 
-    return(TRUE);
+    return (TRUE);
 }
 
 
-VOID
-PopIOWrite (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PUCHAR               Ptr,
-    IN LONG                 Bytes,
-    IN PFN_NUMBER           FilePage
-    )
+VOID PopIOWrite(IN PPOP_HIBER_CONTEXT HiberContext, IN PUCHAR Ptr, IN LONG Bytes, IN PFN_NUMBER FilePage)
 {
     LONG i, Size;
     ULONGLONG StartCount;
 
     // Do not bother if don't writing and/or was an error
-    if (!HiberContext->WriteToFile || !NT_SUCCESS(HiberContext->Status)) {
+    if (!HiberContext->WriteToFile || !NT_SUCCESS(HiberContext->Status))
+    {
         return;
     }
 
-    ASSERT ((Bytes & (PAGE_SIZE-1)) == 0);
+    ASSERT((Bytes & (PAGE_SIZE - 1)) == 0);
 
-    while (Bytes > 0) {
+    while (Bytes > 0)
+    {
         // Complete or Resume IO
-        do {
-            if (!PopIOResume (HiberContext, (BOOLEAN) (DmaIoPtr->Free.Size == 0))) {
+        do
+        {
+            if (!PopIOResume(HiberContext, (BOOLEAN)(DmaIoPtr->Free.Size == 0)))
+            {
                 return;
             }
         } while (DmaIoPtr->Free.Size == 0);
 
         // Find how much can we write
         Size = DmaIoPtr->Free.Size;
-        ASSERT ((Size & (PAGE_SIZE-1)) == 0);
-        if (Size > Bytes) {
+        ASSERT((Size & (PAGE_SIZE - 1)) == 0);
+        if (Size > Bytes)
+        {
             Size = Bytes;
         }
-        ASSERT (Size != 0);
+        ASSERT(Size != 0);
         // Copy and adjust pointers
 
-        HbCopy (HiberContext, DmaIoPtr->Free.Ptr, Ptr, Size);
+        HbCopy(HiberContext, DmaIoPtr->Free.Ptr, Ptr, Size);
 
         Ptr += Size;
         Bytes -= Size;
 
         // Remember current page # index
         i = (ULONG)(DmaIoPtr->Free.Ptr - DmaIoPtr->Free.Beg);
-        ASSERT ((i & (PAGE_SIZE-1)) == 0);
+        ASSERT((i & (PAGE_SIZE - 1)) == 0);
         i >>= PAGE_SHIFT;
 
         // Mark free memory as used
-        PopIORegionMove (&DmaIoPtr->Used, &DmaIoPtr->Free, Size);
+        PopIORegionMove(&DmaIoPtr->Used, &DmaIoPtr->Free, Size);
 
         // Remember FilePage for newly used pages
-        do {
+        do
+        {
             DmaIoPtr->FilePage[i] = FilePage;
             ++i;
             ++FilePage;
@@ -4469,18 +4135,12 @@ PopIOWrite (
     }
 
     // Resume IO
-    PopIOResume (HiberContext, FALSE);
+    PopIOResume(HiberContext, FALSE);
 }
 
 
-VOID
-PopWriteHiberPages (
-    IN PPOP_HIBER_CONTEXT   HiberContext,
-    IN PVOID                ArgPageVa,
-    IN PFN_NUMBER           ArgNoPages,
-    IN PFN_NUMBER           ArgFilePage,
-    IN HIBER_WRITE_PAGES_LOCALS *Locals
-    )
+VOID PopWriteHiberPages(IN PPOP_HIBER_CONTEXT HiberContext, IN PVOID ArgPageVa, IN PFN_NUMBER ArgNoPages,
+                        IN PFN_NUMBER ArgFilePage, IN HIBER_WRITE_PAGES_LOCALS *Locals)
 /*++
 
 Routine Description:
@@ -4511,9 +4171,9 @@ Return Value:
 
 {
     DUMP_MDL DumpMdl;
-#define X(type,name) type name
-    HIBER_WRITE_PAGES_LOCALS_LIST (X)
-#undef  X
+#define X(type, name) type name
+    HIBER_WRITE_PAGES_LOCALS_LIST(X)
+#undef X
     ULONGLONG StartCount, EndCount;
 
     //
@@ -4527,14 +4187,15 @@ Return Value:
     // Allow debugger to break in when we are hibernating.
     //
 
-    KdCheckForDebugBreak ();
+    KdCheckForDebugBreak();
 
     //
     // If a file isn't being written, then ignore
     //
 
-    if (!HiberContext->WriteToFile) {
-        return ;
+    if (!HiberContext->WriteToFile)
+    {
+        return;
     }
 
     //
@@ -4542,45 +4203,49 @@ Return Value:
     // writing anymore
     //
 
-    if (!NT_SUCCESS(HiberContext->Status)) {
-        return ;
+    if (!NT_SUCCESS(HiberContext->Status))
+    {
+        return;
     }
 
-    Mdl = (PMDL) DumpMdl;
-    if (Locals != NULL) {
+    Mdl = (PMDL)DumpMdl;
+    if (Locals != NULL)
+    {
         // If we have async IO make sure that hand-made MDL will be
         // stored in safe place preserved between resume calls
-        Mdl = (PMDL) Locals->DumpMdl;
+        Mdl = (PMDL)Locals->DumpMdl;
 
-        if (DmaIoPtr->Busy.Size != 0) {
+        if (DmaIoPtr->Busy.Size != 0)
+        {
             // There was pending IO -- resume execution from the point we stopped
-#define X(type,name) name = Locals->name;
-            HIBER_WRITE_PAGES_LOCALS_LIST (X)
-#undef  X
+#define X(type, name) name = Locals->name;
+            HIBER_WRITE_PAGES_LOCALS_LIST(X)
+#undef X
             goto ResumeIO;
         }
 
         // Mark current region as busy
-        ASSERT (PageVa == DmaIoPtr->Used.Ptr);
-        PopIORegionMove (&DmaIoPtr->Busy, &DmaIoPtr->Used, (ULONG)NoPages << PAGE_SHIFT);
-    } else if (HiberContext->DumpStack->Init.WritePendingRoutine != 0 &&
-               DmaIoPtr != NULL &&
-               DmaIoPtr->DumpLocalData != NULL) {
-        if (!DmaIoPtr->DmaInitialized) {
+        ASSERT(PageVa == DmaIoPtr->Used.Ptr);
+        PopIORegionMove(&DmaIoPtr->Busy, &DmaIoPtr->Used, (ULONG)NoPages << PAGE_SHIFT);
+    }
+    else if (HiberContext->DumpStack->Init.WritePendingRoutine != 0 && DmaIoPtr != NULL &&
+             DmaIoPtr->DumpLocalData != NULL)
+    {
+        if (!DmaIoPtr->DmaInitialized)
+        {
             ULONGLONG StartCount = HIBER_GET_TICK_COUNT(NULL);
-            Status = HiberContext->DumpStack->Init.WritePendingRoutine (IO_DUMP_WRITE_INIT,
-                                                                        NULL,
-                                                                        NULL,
-                                                                        DmaIoPtr->DumpLocalData);
+            Status = HiberContext->DumpStack->Init.WritePendingRoutine(IO_DUMP_WRITE_INIT, NULL, NULL,
+                                                                       DmaIoPtr->DumpLocalData);
             HiberContext->PerfInfo.InitTicks += HIBER_GET_TICK_COUNT(NULL) - StartCount;
-            if (Status != STATUS_SUCCESS) {
+            if (Status != STATUS_SUCCESS)
+            {
                 DmaIoPtr->UseDma = FALSE;
             }
             DmaIoPtr->DmaInitialized = TRUE;
             DmaIoPtr->HiberWritePagesLocals.Status = STATUS_SUCCESS;
         }
 
-        PopIOWrite (HiberContext, PageVa, (ULONG)NoPages << PAGE_SHIFT, FilePage);
+        PopIOWrite(HiberContext, PageVa, (ULONG)NoPages << PAGE_SHIFT, FilePage);
         return;
     }
 
@@ -4588,34 +4253,38 @@ Return Value:
     // Page count must be below 4GB byte length
     //
 
-    if (NoPages > ((((ULONG_PTR) -1) << PAGE_SHIFT) >> PAGE_SHIFT)) {
-        PopInternalError (POP_HIBER);
+    if (NoPages > ((((ULONG_PTR)-1) << PAGE_SHIFT) >> PAGE_SHIFT))
+    {
+        PopInternalError(POP_HIBER);
     }
 
     //
     // Loop while there's data to be written
     //
 
-    CMcb = (PPOP_MCB_CONTEXT) HiberContext->CurrentMcb;
-    MdlPage = MmGetMdlPfnArray( Mdl );
+    CMcb = (PPOP_MCB_CONTEXT)HiberContext->CurrentMcb;
+    MdlPage = MmGetMdlPfnArray(Mdl);
 
-    FileBase = (ULONGLONG) FilePage << PAGE_SHIFT;
-    Length   = NoPages << PAGE_SHIFT;
+    FileBase = (ULONGLONG)FilePage << PAGE_SHIFT;
+    Length = NoPages << PAGE_SHIFT;
 
-    while (Length != 0) {
+    while (Length != 0)
+    {
 
         //
         // If this IO is outside the current Mcb locate the
         // proper Mcb
         //
 
-        if (FileBase < CMcb->Base || FileBase >= CMcb->Base + CMcb->Mcb[0].QuadPart) {
+        if (FileBase < CMcb->Base || FileBase >= CMcb->Base + CMcb->Mcb[0].QuadPart)
+        {
 
             //
             // If io is before this mcb, search from the begining
             //
 
-            if (FileBase < CMcb->Base) {
+            if (FileBase < CMcb->Base)
+            {
                 CMcb->Mcb = CMcb->FirstMcb;
                 CMcb->Base = 0;
             }
@@ -4625,7 +4294,8 @@ Return Value:
             // make it the current mcb
             //
 
-            while (FileBase >= CMcb->Base + CMcb->Mcb[0].QuadPart) {
+            while (FileBase >= CMcb->Base + CMcb->Mcb[0].QuadPart)
+            {
                 CMcb->Base += CMcb->Mcb[0].QuadPart;
                 CMcb->Mcb += 2;
             }
@@ -4635,17 +4305,20 @@ Return Value:
         // Determine physical IoLocation and IoLength to write.
         //
 
-        McbOffset  = FileBase - CMcb->Base;
+        McbOffset = FileBase - CMcb->Base;
         IoLocation.QuadPart = CMcb->Mcb[1].QuadPart + McbOffset;
 
         //
         // If the IoLength is beyond the Mcb, limit it to the Mcb
         //
 
-        if (McbOffset + Length > (ULONGLONG) CMcb->Mcb[0].QuadPart) {
-            IoLength = (ULONG) (CMcb->Mcb[0].QuadPart - McbOffset);
-        } else {
-            IoLength = (ULONG) Length;
+        if (McbOffset + Length > (ULONGLONG)CMcb->Mcb[0].QuadPart)
+        {
+            IoLength = (ULONG)(CMcb->Mcb[0].QuadPart - McbOffset);
+        }
+        else
+        {
+            IoLength = (ULONG)Length;
         }
 
         //
@@ -4653,21 +4326,23 @@ Return Value:
         // then shrink it
         //
 
-        NoPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES (PageVa, IoLength);
-        if (NoPages > IO_DUMP_MAX_MDL_PAGES) {
+        NoPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(PageVa, IoLength);
+        if (NoPages > IO_DUMP_MAX_MDL_PAGES)
+        {
             IoLength -= (ULONG)((NoPages - IO_DUMP_MAX_MDL_PAGES) << PAGE_SHIFT);
             NoPages = IO_DUMP_MAX_MDL_PAGES;
         }
 
-//
-// Debugging only
-// Make sure that we may handle non-page aligned IO
-// (simulate fragmented hiberfil.sys)
-//
-//        if (IoLength > 512) IoLength = 512;
-//
+        //
+        // Debugging only
+        // Make sure that we may handle non-page aligned IO
+        // (simulate fragmented hiberfil.sys)
+        //
+        //        if (IoLength > 512) IoLength = 512;
+        //
 
-        if (HIBER_USE_DMA (HiberContext)) {
+        if (HIBER_USE_DMA(HiberContext))
+        {
             ULONG Size;
 
             // Do not write accross page boundaries
@@ -4675,7 +4350,8 @@ Return Value:
             // Because of MCB's partial IOs may be smaller than one page
 
             Size = PAGE_SIZE - (ULONG)((ULONG_PTR)PageVa & (PAGE_SIZE - 1));
-            if (IoLength > Size) {
+            if (IoLength > Size)
+            {
                 IoLength = Size;
             }
         }
@@ -4687,9 +4363,10 @@ Return Value:
         MmInitializeMdl(Mdl, PageVa, IoLength);
         Mdl->MappedSystemVa = PageVa;
         Mdl->MdlFlags |= MDL_MAPPED_TO_SYSTEM_VA;
-        for (i=0; i < NoPages; i++) {
-            pa = MmGetPhysicalAddress((PVOID) (((ULONG_PTR)PageVa) + (i << PAGE_SHIFT)));
-            MdlPage[i] = (PFN_NUMBER) (pa.QuadPart >> PAGE_SHIFT);
+        for (i = 0; i < NoPages; i++)
+        {
+            pa = MmGetPhysicalAddress((PVOID)(((ULONG_PTR)PageVa) + (i << PAGE_SHIFT)));
+            MdlPage[i] = (PFN_NUMBER)(pa.QuadPart >> PAGE_SHIFT);
         }
 
         //
@@ -4698,20 +4375,22 @@ Return Value:
 
         StartCount = HIBER_GET_TICK_COUNT(NULL);
 
-        if (Locals != NULL && HIBER_USE_DMA (HiberContext)) {
-            Status = HiberContext->DumpStack->Init.WritePendingRoutine (IO_DUMP_WRITE_START,
-                                                                        &IoLocation,
-                                                                        Mdl,
-                                                                        DmaIoPtr->DumpLocalData);
+        if (Locals != NULL && HIBER_USE_DMA(HiberContext))
+        {
+            Status = HiberContext->DumpStack->Init.WritePendingRoutine(IO_DUMP_WRITE_START, &IoLocation, Mdl,
+                                                                       DmaIoPtr->DumpLocalData);
 
-            if (Status != STATUS_PENDING && !NT_SUCCESS (Status)) {
-                DBGOUT (("WriteDMA returned bad status 0x%x -- will use PIO\n", Status));
+            if (Status != STATUS_PENDING && !NT_SUCCESS(Status))
+            {
+                DBGOUT(("WriteDMA returned bad status 0x%x -- will use PIO\n", Status));
                 DmaIoPtr->UseDma = FALSE;
                 goto RetryWithPIO;
             }
-        } else {
-            RetryWithPIO:
-            Status = HiberContext->DumpStack->Init.WriteRoutine (&IoLocation, Mdl);
+        }
+        else
+        {
+        RetryWithPIO:
+            Status = HiberContext->DumpStack->Init.WriteRoutine(&IoLocation, Mdl);
         }
 
         EndCount = HIBER_GET_TICK_COUNT(NULL);
@@ -4723,46 +4402,48 @@ Return Value:
         //
 
         HiberContext->PerfInfo.PagesWritten += (ULONG)NoPages;
-        HiberContext->PerfInfo.DumpCount    += 1;
+        HiberContext->PerfInfo.DumpCount += 1;
 
         //
         // Io complete or will be complete
         //
 
-        Length   -= IoLength;
+        Length -= IoLength;
         FileBase += IoLength;
-        PageVa   = (PVOID) (((PUCHAR) PageVa) + IoLength);
+        PageVa = (PVOID)(((PUCHAR)PageVa) + IoLength);
 
         // Check status
-        if (Locals != NULL) {
-            if (Status == STATUS_PENDING) {
-#define X(type,name) Locals->name = name
-                HIBER_WRITE_PAGES_LOCALS_LIST (X)
-#undef  X
+        if (Locals != NULL)
+        {
+            if (Status == STATUS_PENDING)
+            {
+#define X(type, name) Locals->name = name
+                HIBER_WRITE_PAGES_LOCALS_LIST(X)
+#undef X
                 return;
-                ResumeIO:
+            ResumeIO:
                 Status = STATUS_SUCCESS;
             }
         }
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             HiberContext->Status = Status;
             break;
         }
     }
 
-    if (Locals != NULL) {
+    if (Locals != NULL)
+    {
         // Completed IO request -- mark region as free
-        ASSERT (PageVa == DmaIoPtr->Busy.Ptr + DmaIoPtr->Busy.Size);
-        PopIORegionMove (&DmaIoPtr->Free, &DmaIoPtr->Busy, DmaIoPtr->Busy.Size);
+        ASSERT(PageVa == DmaIoPtr->Busy.Ptr + DmaIoPtr->Busy.Size);
+        PopIORegionMove(&DmaIoPtr->Free, &DmaIoPtr->Busy, DmaIoPtr->Busy.Size);
     }
 }
 
-
+
 UCHAR
-PopGetHiberFlags(
-    VOID
-    )
+PopGetHiberFlags(VOID)
 /*++
 
 Routine Description:
@@ -4783,7 +4464,7 @@ Return Value:
 --*/
 
 {
-    UCHAR Flags=0;
+    UCHAR Flags = 0;
     HANDLE ApmActiveKey;
     OBJECT_ATTRIBUTES ObjectAttributes;
     UNICODE_STRING Name;
@@ -4800,45 +4481,34 @@ Return Value:
     // Open the APM active key to determine if APM is running.
     //
     RtlInitUnicodeString(&Name, PopApmActiveFlag);
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &Name,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
-    Status = ZwOpenKey(&ApmActiveKey,
-                       KEY_READ,
-                       &ObjectAttributes);
-    if (NT_SUCCESS(Status)) {
+    InitializeObjectAttributes(&ObjectAttributes, &Name, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+    Status = ZwOpenKey(&ApmActiveKey, KEY_READ, &ObjectAttributes);
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Query the Active value. A value of 1 indicates that APM is running.
         //
         RtlInitUnicodeString(&Name, PopApmFlag);
-        Status = ZwQueryValueKey(ApmActiveKey,
-                                 &Name,
-                                 KeyValuePartialInformation,
-                                 ValueInfo,
-                                 sizeof(ValueBuff),
+        Status = ZwQueryValueKey(ApmActiveKey, &Name, KeyValuePartialInformation, ValueInfo, sizeof(ValueBuff),
                                  &ResultLength);
         ZwClose(ApmActiveKey);
-        if (NT_SUCCESS(Status) && (ValueInfo->Type == REG_DWORD)) {
+        if (NT_SUCCESS(Status) && (ValueInfo->Type == REG_DWORD))
+        {
             ApmActive = (PULONG)&ValueInfo->Data;
-            if (*ApmActive == 1) {
+            if (*ApmActive == 1)
+            {
                 Flags |= PO_HIBER_APM_RECONNECT;
             }
         }
     }
 #endif
 
-    return(Flags);
+    return (Flags);
 }
 
-
-PMDL
-PopSplitMdl(
-    IN PMDL Original,
-    IN ULONG SplitPages
-    )
+
+PMDL PopSplitMdl(IN PMDL Original, IN ULONG SplitPages)
 /*++
 
 Routine Description:
@@ -4869,11 +4539,10 @@ Return Value:
 
     Length = SplitPages << PAGE_SHIFT;
 
-    NewMdl = ExAllocatePoolWithTag(NonPagedPool,
-                                   MmSizeOfMdl(NULL, Length),
-                                   POP_HMAP_TAG);
-    if (NewMdl == NULL) {
-        return(NULL);
+    NewMdl = ExAllocatePoolWithTag(NonPagedPool, MmSizeOfMdl(NULL, Length), POP_HMAP_TAG);
+    if (NewMdl == NULL)
+    {
+        return (NULL);
     }
     MmInitializeMdl(NewMdl, NULL, Length);
     DestPages = (PPFN_NUMBER)(NewMdl + 1);
@@ -4881,5 +4550,5 @@ Return Value:
     RtlCopyMemory(DestPages, SourcePages, SplitPages * sizeof(PFN_NUMBER));
     Original->ByteCount -= (SplitPages << PAGE_SIZE);
 
-    return(NewMdl);
+    return (NewMdl);
 }

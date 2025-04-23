@@ -29,47 +29,30 @@ Notes:
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-//
-// Function Prototypes
-//
+    //
+    // Function Prototypes
+    //
 
-NET_API_STATUS NET_API_FUNCTION
-NetApiBufferAllocate(
-    IN DWORD ByteCount,
-    OUT LPVOID * Buffer
-    );
+    NET_API_STATUS NET_API_FUNCTION NetApiBufferAllocate(IN DWORD ByteCount, OUT LPVOID *Buffer);
 
-NET_API_STATUS NET_API_FUNCTION
-NetApiBufferFree (
-    IN LPVOID Buffer
-    );
+    NET_API_STATUS NET_API_FUNCTION NetApiBufferFree(IN LPVOID Buffer);
 
-NET_API_STATUS NET_API_FUNCTION
-NetApiBufferReallocate(
-    IN LPVOID OldBuffer OPTIONAL,
-    IN DWORD NewByteCount,
-    OUT LPVOID * NewBuffer
-    );
+    NET_API_STATUS NET_API_FUNCTION NetApiBufferReallocate(IN LPVOID OldBuffer OPTIONAL, IN DWORD NewByteCount,
+                                                           OUT LPVOID *NewBuffer);
 
-NET_API_STATUS NET_API_FUNCTION
-NetApiBufferSize(
-    IN LPVOID Buffer,
-    OUT LPDWORD ByteCount
-    );
+    NET_API_STATUS NET_API_FUNCTION NetApiBufferSize(IN LPVOID Buffer, OUT LPDWORD ByteCount);
 
 
-//
-// The following private function will go away eventually.
-// Call NetApiBufferAllocate instead.
-//
-NET_API_STATUS NET_API_FUNCTION
-NetapipBufferAllocate (                 // Internal Function
-    IN DWORD ByteCount,
-    OUT LPVOID * Buffer
-    );
+    //
+    // The following private function will go away eventually.
+    // Call NetApiBufferAllocate instead.
+    //
+    NET_API_STATUS NET_API_FUNCTION NetapipBufferAllocate( // Internal Function
+        IN DWORD ByteCount, OUT LPVOID *Buffer);
 
 #ifdef __cplusplus
 }

@@ -41,22 +41,24 @@ Note:
 #define IsNEC_98 0
 #endif
 
-#define NO_PLACEHOLDER_DMA_IRQ_SUPPORT  1
+#define NO_PLACEHOLDER_DMA_IRQ_SUPPORT 1
 
 //
 // internal structures for resource translation
 //
 
-typedef struct _PB_DEPENDENT_RESOURCES {
+typedef struct _PB_DEPENDENT_RESOURCES
+{
     ULONG Count;
     UCHAR Flags;
     UCHAR Priority;
     struct _PB_DEPENDENT_RESOURCES *Next;
 } PB_DEPENDENT_RESOURCES, *PPB_DEPENDENT_RESOURCES;
 
-#define DEPENDENT_FLAGS_END  1
+#define DEPENDENT_FLAGS_END 1
 
-typedef struct _PB_ATERNATIVE_INFORMATION {
+typedef struct _PB_ATERNATIVE_INFORMATION
+{
     PPB_DEPENDENT_RESOURCES Resources;
     ULONG NoDependentFunctions;
     ULONG TotalResourceCount;
@@ -67,82 +69,44 @@ typedef struct _PB_ATERNATIVE_INFORMATION {
 //
 
 PPB_DEPENDENT_RESOURCES
-PbAddDependentResourcesToList (
-    IN OUT PUCHAR *ResourceDescriptor,
-    IN ULONG ListNo,
-    IN PPB_ALTERNATIVE_INFORMATION AlternativeList
-    );
+PbAddDependentResourcesToList(IN OUT PUCHAR *ResourceDescriptor, IN ULONG ListNo,
+                              IN PPB_ALTERNATIVE_INFORMATION AlternativeList);
 
 NTSTATUS
-PbBiosIrqToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    );
+PbBiosIrqToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor);
 
 NTSTATUS
-PbBiosDmaToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    );
+PbBiosDmaToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor);
 
 NTSTATUS
-PbBiosPortFixedToIoDescriptor (
-    IN OUT PUCHAR               *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR   IoDescriptor,
-    IN BOOLEAN                   ForceFixedIoTo16bit
-    );
+PbBiosPortFixedToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor,
+                              IN BOOLEAN ForceFixedIoTo16bit);
 
 NTSTATUS
-PbBiosPortToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    );
+PbBiosPortToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor);
 
 NTSTATUS
-PbBiosMemoryToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    );
+PbBiosMemoryToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor);
 
 NTSTATUS
-PpCmResourcesToBiosResources (
-    IN PCM_RESOURCE_LIST CmResources,
-    IN PUCHAR BiosRequirements,
-    IN PUCHAR *BiosResources,
-    IN PULONG Length
-    );
+PpCmResourcesToBiosResources(IN PCM_RESOURCE_LIST CmResources, IN PUCHAR BiosRequirements, IN PUCHAR *BiosResources,
+                             IN PULONG Length);
 
 NTSTATUS
-PbCmIrqToBiosDescriptor (
-    IN PUCHAR BiosRequirements,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
-    OUT PVOID ReturnDescriptor,
-    OUT PULONG Length
-    );
+PbCmIrqToBiosDescriptor(IN PUCHAR BiosRequirements, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
+                        OUT PVOID ReturnDescriptor, OUT PULONG Length);
 
 NTSTATUS
-PbCmDmaToBiosDescriptor (
-    IN PUCHAR BiosRequirements,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
-    OUT PVOID ReturnDescriptor,
-    OUT PULONG Length
-    );
+PbCmDmaToBiosDescriptor(IN PUCHAR BiosRequirements, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
+                        OUT PVOID ReturnDescriptor, OUT PULONG Length);
 
 NTSTATUS
-PbCmPortToBiosDescriptor (
-    IN PUCHAR BiosRequirements,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
-    OUT PVOID ReturnDescriptor,
-    OUT PULONG Length
-    );
+PbCmPortToBiosDescriptor(IN PUCHAR BiosRequirements, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
+                         OUT PVOID ReturnDescriptor, OUT PULONG Length);
 
 NTSTATUS
-PbCmMemoryToBiosDescriptor (
-    IN PUCHAR BiosRequirements,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
-    OUT PVOID ReturnDescriptor,
-    OUT PULONG Length
-    );
+PbCmMemoryToBiosDescriptor(IN PUCHAR BiosRequirements, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
+                           OUT PVOID ReturnDescriptor, OUT PULONG Length);
 
 #ifdef ALLOC_PRAGMA
 
@@ -161,18 +125,12 @@ PbCmMemoryToBiosDescriptor (
 #pragma alloc_text(PAGE, PbCmMemoryToBiosDescriptor)
 #endif
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg("PAGEDATA")
+#pragma data_seg("PAGEDATA")
 #endif
-
+
 NTSTATUS
-PpBiosResourcesToNtResources (
-    IN ULONG BusNumber,
-    IN ULONG SlotNumber,
-    IN OUT PUCHAR *BiosData,
-    IN ULONG ConvertFlags,
-    OUT PIO_RESOURCE_REQUIREMENTS_LIST *ReturnedList,
-    OUT PULONG ReturnedLength
-    )
+PpBiosResourcesToNtResources(IN ULONG BusNumber, IN ULONG SlotNumber, IN OUT PUCHAR *BiosData, IN ULONG ConvertFlags,
+                             OUT PIO_RESOURCE_REQUIREMENTS_LIST *ReturnedList, OUT PULONG ReturnedLength)
 
 /*++
 
@@ -226,25 +184,29 @@ Return Value:
     buffer = *BiosData;
     tagName = *buffer;
 
-    forceFixedIoTo16bit =
-        (BOOLEAN)((ConvertFlags & PPCONVERTFLAG_FORCE_FIXED_IO_16BIT_DECODE) != 0);
+    forceFixedIoTo16bit = (BOOLEAN)((ConvertFlags & PPCONVERTFLAG_FORCE_FIXED_IO_16BIT_DECODE) != 0);
 
-    for ( ; ; ) {
+    for (;;)
+    {
 
         //
         // Determine the size of the BIOS resource descriptor
         //
 
-        if (!(tagName & LARGE_RESOURCE_TAG)) {
+        if (!(tagName & LARGE_RESOURCE_TAG))
+        {
             increment = (USHORT)(tagName & SMALL_TAG_SIZE_MASK);
-            increment += 1;     // length of small tag
+            increment += 1; // length of small tag
             tagName &= SMALL_TAG_MASK;
-        } else {
-            increment = *(USHORT UNALIGNED *)(buffer+1);
-            increment += 3;     // length of large tag
+        }
+        else
+        {
+            increment = *(USHORT UNALIGNED *)(buffer + 1);
+            increment += 3; // length of large tag
         }
 
-        if (tagName == TAG_END) {
+        if (tagName == TAG_END)
+        {
             buffer += increment;
             break;
         }
@@ -254,92 +216,116 @@ Return Value:
         // the IO descriptors.
         //
 
-        switch (tagName) {
+        switch (tagName)
+        {
         case TAG_IRQ:
-             mask16 = ((PPNP_IRQ_DESCRIPTOR)buffer)->IrqMask;
-             i = 0;
+            mask16 = ((PPNP_IRQ_DESCRIPTOR)buffer)->IrqMask;
+            i = 0;
 
 #if NO_PLACEHOLDER_DMA_IRQ_SUPPORT
-             while (mask16) {
-                 if(mask16 & 1) {
+            while (mask16)
+            {
+                if (mask16 & 1)
+                {
                     i++;
-                 }
-                 mask16 >>= 1;
-             }
+                }
+                mask16 >>= 1;
+            }
 #else
-             if (mask16 == 0) {
-                 i++;
-             } else {
-                 while (mask16) {
-                     if(mask16 & 1) {
+            if (mask16 == 0)
+            {
+                i++;
+            }
+            else
+            {
+                while (mask16)
+                {
+                    if (mask16 & 1)
+                    {
                         i++;
-                     }
-                     mask16 >>= 1;
-                 }
-             }
+                    }
+                    mask16 >>= 1;
+                }
+            }
 #endif
-             if (!dependent) {
-                 commonResCount += i;
-             } else {
-                 dependDescCount += i;
-             }
-             break;
+            if (!dependent)
+            {
+                commonResCount += i;
+            }
+            else
+            {
+                dependDescCount += i;
+            }
+            break;
 
         case TAG_DMA:
-             mask8 = ((PPNP_DMA_DESCRIPTOR)buffer)->ChannelMask;
-             i = 0;
+            mask8 = ((PPNP_DMA_DESCRIPTOR)buffer)->ChannelMask;
+            i = 0;
 
 #if NO_PLACEHOLDER_DMA_IRQ_SUPPORT
-             while (mask8) {
-                 if (mask8 & 1) {
-                     i++;
-                 }
-                 mask8 >>= 1;
-             }
+            while (mask8)
+            {
+                if (mask8 & 1)
+                {
+                    i++;
+                }
+                mask8 >>= 1;
+            }
 #else
-             if (mask8 == 0) {
-                 i++;
-             } else {
-                 while (mask8) {
-                     if (mask8 & 1) {
-                         i++;
-                     }
-                     mask8 >>= 1;
-                 }
-             }
+            if (mask8 == 0)
+            {
+                i++;
+            }
+            else
+            {
+                while (mask8)
+                {
+                    if (mask8 & 1)
+                    {
+                        i++;
+                    }
+                    mask8 >>= 1;
+                }
+            }
 #endif
-             if (!dependent) {
-                 commonResCount += i;
-             } else {
-                 dependDescCount += i;
-             }
-             break;
+            if (!dependent)
+            {
+                commonResCount += i;
+            }
+            else
+            {
+                dependDescCount += i;
+            }
+            break;
         case TAG_START_DEPEND:
-             dependent = TRUE;
-             dependFunctionCount++;
-             break;
+            dependent = TRUE;
+            dependFunctionCount++;
+            break;
         case TAG_END_DEPEND:
-             dependent = FALSE;
-             alternativeListCount++;
-             break;
+            dependent = FALSE;
+            alternativeListCount++;
+            break;
         case TAG_IO_FIXED:
         case TAG_IO:
         case TAG_MEMORY:
         case TAG_MEMORY32:
         case TAG_MEMORY32_FIXED:
-             if (!dependent) {
-                 commonResCount++;
-             } else {
-                 dependDescCount++;
-             }
-             break;
+            if (!dependent)
+            {
+                commonResCount++;
+            }
+            else
+            {
+                dependDescCount++;
+            }
+            break;
         default:
 
-             //
-             // Unknown tag. Skip it.
-             //
+            //
+            // Unknown tag. Skip it.
+            //
 
-             break;
+            break;
         }
 
         //
@@ -348,12 +334,14 @@ Return Value:
 
         buffer += increment;
         tagName = *buffer;
-        if ((tagName & SMALL_TAG_MASK) == TAG_LOGICAL_ID) {
+        if ((tagName & SMALL_TAG_MASK) == TAG_LOGICAL_ID)
+        {
             break;
         }
     }
 
-    if (dependent) {
+    if (dependent)
+    {
         //
         // TAG_END_DEPEND was not found before we hit TAG_COMPLETE_END, so
         // simulate it.
@@ -366,7 +354,8 @@ Return Value:
     // if empty bios resources, simply return.
     //
 
-    if (commonResCount == 0 && dependFunctionCount == 0) {
+    if (commonResCount == 0 && dependFunctionCount == 0)
+    {
         *ReturnedList = NULL;
         *ReturnedLength = 0;
         *BiosData = buffer;
@@ -379,31 +368,27 @@ Return Value:
 
     dependFunctionCount += commonResCount;
     dependResources = (PPB_DEPENDENT_RESOURCES)ExAllocatePoolWithTag(
-                          PagedPool,
-                          dependFunctionCount * sizeof(PB_DEPENDENT_RESOURCES) +
-                              (commonResCount + dependDescCount) * sizeof(IO_RESOURCE_DESCRIPTOR),
-                          'bPnP'
-                          );
-    if (!dependResources) {
+        PagedPool,
+        dependFunctionCount * sizeof(PB_DEPENDENT_RESOURCES) +
+            (commonResCount + dependDescCount) * sizeof(IO_RESOURCE_DESCRIPTOR),
+        'bPnP');
+    if (!dependResources)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    dependResList = dependResources;  // remember it so we can free it.
+    dependResList = dependResources; // remember it so we can free it.
 
     alternativeListCount += commonResCount;
     alternativeList = (PPB_ALTERNATIVE_INFORMATION)ExAllocatePoolWithTag(
-                          PagedPool,
-                          sizeof(PB_ALTERNATIVE_INFORMATION) * (alternativeListCount + 1),
-                          'bPnP'
-                          );
-    if (!alternativeList) {
+        PagedPool, sizeof(PB_ALTERNATIVE_INFORMATION) * (alternativeListCount + 1), 'bPnP');
+    if (!alternativeList)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto exit0;
     }
-    RtlZeroMemory(alternativeList,
-                  sizeof(PB_ALTERNATIVE_INFORMATION) * alternativeListCount
-                  );
+    RtlZeroMemory(alternativeList, sizeof(PB_ALTERNATIVE_INFORMATION) * alternativeListCount);
 
     alternativeList[0].Resources = dependResources;
     ioDesc = (PIO_RESOURCE_DESCRIPTOR)(dependResources + 1);
@@ -419,17 +404,21 @@ Return Value:
     tagName = *buffer;
     dependent = FALSE;
 
-    for ( ; ; ) {
-        if (!(tagName & LARGE_RESOURCE_TAG)) {
+    for (;;)
+    {
+        if (!(tagName & LARGE_RESOURCE_TAG))
+        {
             tagName &= SMALL_TAG_MASK;
         }
 
-        if (tagName == TAG_END) {
+        if (tagName == TAG_END)
+        {
             buffer += (*buffer & SMALL_TAG_SIZE_MASK) + 1;
             break;
         }
 
-        switch (tagName) {
+        switch (tagName)
+        {
         case TAG_DMA:
         case TAG_IRQ:
         case TAG_IO:
@@ -438,96 +427,116 @@ Return Value:
         case TAG_MEMORY32:
         case TAG_MEMORY32_FIXED:
 
-             if (tagName == TAG_DMA) {
-                 status = PbBiosDmaToIoDescriptor(&buffer, ioDesc);
-             } else if (tagName == TAG_IRQ) {
-                 status = PbBiosIrqToIoDescriptor(&buffer, ioDesc);
-             } else if (tagName == TAG_IO) {
-                 status = PbBiosPortToIoDescriptor(&buffer, ioDesc);
-             } else if (tagName == TAG_IO_FIXED) {
-                 status = PbBiosPortFixedToIoDescriptor(&buffer, ioDesc, forceFixedIoTo16bit);
-             } else {
-                 status = PbBiosMemoryToIoDescriptor(&buffer, ioDesc);
-             }
+            if (tagName == TAG_DMA)
+            {
+                status = PbBiosDmaToIoDescriptor(&buffer, ioDesc);
+            }
+            else if (tagName == TAG_IRQ)
+            {
+                status = PbBiosIrqToIoDescriptor(&buffer, ioDesc);
+            }
+            else if (tagName == TAG_IO)
+            {
+                status = PbBiosPortToIoDescriptor(&buffer, ioDesc);
+            }
+            else if (tagName == TAG_IO_FIXED)
+            {
+                status = PbBiosPortFixedToIoDescriptor(&buffer, ioDesc, forceFixedIoTo16bit);
+            }
+            else
+            {
+                status = PbBiosMemoryToIoDescriptor(&buffer, ioDesc);
+            }
 
-             if (NT_SUCCESS(status)) {
-                 ioDesc++;
-                 if (dependent) {
-                     dependDescCount++;
-                 } else {
-                     alternativeList[alternativeListCount].NoDependentFunctions = 1;
-                     alternativeList[alternativeListCount].TotalResourceCount = 1;
-                     dependResources->Count = 1;
-                     dependResources->Flags = DEPENDENT_FLAGS_END;
-                     dependResources->Next = alternativeList[alternativeListCount].Resources;
-                     alternativeListCount++;
-                     alternativeList[alternativeListCount].Resources = (PPB_DEPENDENT_RESOURCES)ioDesc;
-                     dependResources = alternativeList[alternativeListCount].Resources;
-                     ioDesc = (PIO_RESOURCE_DESCRIPTOR)(dependResources + 1);
-                 }
-             }
-             break;
+            if (NT_SUCCESS(status))
+            {
+                ioDesc++;
+                if (dependent)
+                {
+                    dependDescCount++;
+                }
+                else
+                {
+                    alternativeList[alternativeListCount].NoDependentFunctions = 1;
+                    alternativeList[alternativeListCount].TotalResourceCount = 1;
+                    dependResources->Count = 1;
+                    dependResources->Flags = DEPENDENT_FLAGS_END;
+                    dependResources->Next = alternativeList[alternativeListCount].Resources;
+                    alternativeListCount++;
+                    alternativeList[alternativeListCount].Resources = (PPB_DEPENDENT_RESOURCES)ioDesc;
+                    dependResources = alternativeList[alternativeListCount].Resources;
+                    ioDesc = (PIO_RESOURCE_DESCRIPTOR)(dependResources + 1);
+                }
+            }
+            break;
         case TAG_START_DEPEND:
-             //
-             // Some card (OPTI) put empty START_DEPENDENT functions
-             //
+            //
+            // Some card (OPTI) put empty START_DEPENDENT functions
+            //
 
-             dependent = TRUE;
-             if (alternativeList[alternativeListCount].NoDependentFunctions != 0) {
+            dependent = TRUE;
+            if (alternativeList[alternativeListCount].NoDependentFunctions != 0)
+            {
 
-                 //
-                 // End of current dependent function
-                 //
+                //
+                // End of current dependent function
+                //
 
-                 dependResources->Count = dependDescCount;
-                 dependResources->Flags = 0;
-                 dependResources->Next = (PPB_DEPENDENT_RESOURCES)ioDesc;
-                 dependResources = dependResources->Next;
-                 ioDesc = (PIO_RESOURCE_DESCRIPTOR)(dependResources + 1);
-                 alternativeList[alternativeListCount].TotalResourceCount += dependDescCount;
-             }
-             alternativeList[alternativeListCount].NoDependentFunctions++;
-             if (*buffer & SMALL_TAG_SIZE_MASK) {
-                 dependResources->Priority = *(buffer + 1);
-             }
-             dependDescCount = 0;
-             buffer += 1 + (*buffer & SMALL_TAG_SIZE_MASK);
-             break;
+                dependResources->Count = dependDescCount;
+                dependResources->Flags = 0;
+                dependResources->Next = (PPB_DEPENDENT_RESOURCES)ioDesc;
+                dependResources = dependResources->Next;
+                ioDesc = (PIO_RESOURCE_DESCRIPTOR)(dependResources + 1);
+                alternativeList[alternativeListCount].TotalResourceCount += dependDescCount;
+            }
+            alternativeList[alternativeListCount].NoDependentFunctions++;
+            if (*buffer & SMALL_TAG_SIZE_MASK)
+            {
+                dependResources->Priority = *(buffer + 1);
+            }
+            dependDescCount = 0;
+            buffer += 1 + (*buffer & SMALL_TAG_SIZE_MASK);
+            break;
         case TAG_END_DEPEND:
-             alternativeList[alternativeListCount].TotalResourceCount += dependDescCount;
-             dependResources->Count = dependDescCount;
-             dependResources->Flags = DEPENDENT_FLAGS_END;
-             dependResources->Next = alternativeList[alternativeListCount].Resources;
-             dependent = FALSE;
-             dependDescCount = 0;
-             alternativeListCount++;
-             alternativeList[alternativeListCount].Resources = (PPB_DEPENDENT_RESOURCES)ioDesc;
-             dependResources = alternativeList[alternativeListCount].Resources;
-             ioDesc = (PIO_RESOURCE_DESCRIPTOR)(dependResources + 1);
-             buffer++;
-             break;
+            alternativeList[alternativeListCount].TotalResourceCount += dependDescCount;
+            dependResources->Count = dependDescCount;
+            dependResources->Flags = DEPENDENT_FLAGS_END;
+            dependResources->Next = alternativeList[alternativeListCount].Resources;
+            dependent = FALSE;
+            dependDescCount = 0;
+            alternativeListCount++;
+            alternativeList[alternativeListCount].Resources = (PPB_DEPENDENT_RESOURCES)ioDesc;
+            dependResources = alternativeList[alternativeListCount].Resources;
+            ioDesc = (PIO_RESOURCE_DESCRIPTOR)(dependResources + 1);
+            buffer++;
+            break;
         default:
 
             //
             // Don't-care tag simply advance the buffer pointer to next tag.
             //
 
-            if (*buffer & LARGE_RESOURCE_TAG) {
-                increment = *(USHORT UNALIGNED *)(buffer+1);
-                increment += 3;     // length of large tag
-            } else {
+            if (*buffer & LARGE_RESOURCE_TAG)
+            {
+                increment = *(USHORT UNALIGNED *)(buffer + 1);
+                increment += 3; // length of large tag
+            }
+            else
+            {
                 increment = (USHORT)(*buffer & SMALL_TAG_SIZE_MASK);
-                increment += 1;     // length of small tag
+                increment += 1; // length of small tag
             }
             buffer += increment;
         }
         tagName = *buffer;
-        if ((tagName & SMALL_TAG_MASK) == TAG_LOGICAL_ID) {
+        if ((tagName & SMALL_TAG_MASK) == TAG_LOGICAL_ID)
+        {
             break;
         }
     }
 
-    if (dependent) {
+    if (dependent)
+    {
         //
         // TAG_END_DEPEND was not found before we hit TAG_COMPLETE_END, so
         // simulate it.
@@ -544,7 +553,8 @@ Return Value:
         ioDesc = (PIO_RESOURCE_DESCRIPTOR)(dependResources + 1);
     }
 
-    if (alternativeListCount != 0) {
+    if (alternativeListCount != 0)
+    {
         alternativeList[alternativeListCount].Resources = NULL; // dummy alternativeList record
     }
     *BiosData = buffer;
@@ -554,33 +564,39 @@ Return Value:
     //
 
     noResLists = 1;
-    for (i = 0; i < alternativeListCount; i++) {
+    for (i = 0; i < alternativeListCount; i++)
+    {
         noResLists *= alternativeList[i].NoDependentFunctions;
     }
     totalDescCount = 0;
-    for (i = 0; i < alternativeListCount; i++) {
+    for (i = 0; i < alternativeListCount; i++)
+    {
         descCount = 1;
-        for (j = 0; j < alternativeListCount; j++) {
-            if (j == i) {
+        for (j = 0; j < alternativeListCount; j++)
+        {
+            if (j == i)
+            {
                 descCount *= alternativeList[j].TotalResourceCount;
-            } else {
+            }
+            else
+            {
                 descCount *= alternativeList[j].NoDependentFunctions;
             }
         }
         totalDescCount += descCount;
     }
-    listSize = sizeof(IO_RESOURCE_REQUIREMENTS_LIST) +
-               sizeof(IO_RESOURCE_LIST) * (noResLists - 1) +
-               sizeof(IO_RESOURCE_DESCRIPTOR) * totalDescCount -
-               sizeof(IO_RESOURCE_DESCRIPTOR) * noResLists +
-               sizeof(IO_RESOURCE_DESCRIPTOR) * commonResCount *  noResLists;
+    listSize = sizeof(IO_RESOURCE_REQUIREMENTS_LIST) + sizeof(IO_RESOURCE_LIST) * (noResLists - 1) +
+               sizeof(IO_RESOURCE_DESCRIPTOR) * totalDescCount - sizeof(IO_RESOURCE_DESCRIPTOR) * noResLists +
+               sizeof(IO_RESOURCE_DESCRIPTOR) * commonResCount * noResLists;
 
-    if (ConvertFlags & PPCONVERTFLAG_SET_RESTART_LCPRI) {
+    if (ConvertFlags & PPCONVERTFLAG_SET_RESTART_LCPRI)
+    {
         listSize += noResLists * sizeof(IO_RESOURCE_DESCRIPTOR);
     }
 
     ioResReqList = (PIO_RESOURCE_REQUIREMENTS_LIST)ExAllocatePoolWithTag(PagedPool, listSize, 'bPnP');
-    if (!ioResReqList) {
+    if (!ioResReqList)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto exit1;
@@ -600,12 +616,14 @@ Return Value:
     // Build resource lists
     //
 
-    for (i = 0; i < noResLists; i++) {
+    for (i = 0; i < noResLists; i++)
+    {
 
         ioResList->Version = 1;
         ioResList->Revision = 0x30 | (USHORT)i;
 
-        if (ConvertFlags & PPCONVERTFLAG_SET_RESTART_LCPRI) {
+        if (ConvertFlags & PPCONVERTFLAG_SET_RESTART_LCPRI)
+        {
 
             RtlZeroMemory(&ioResList->Descriptors[0], sizeof(IO_RESOURCE_DESCRIPTOR));
 
@@ -614,8 +632,9 @@ Return Value:
             ioResList->Descriptors[0].u.ConfigData.Priority = LCPRI_RESTART;
 
             buffer = (PUCHAR)&ioResList->Descriptors[1];
-
-        } else {
+        }
+        else
+        {
 
             buffer = (PUCHAR)&ioResList->Descriptors[0];
         }
@@ -624,7 +643,8 @@ Return Value:
         // Copy dependent functions if any.
         //
 
-        if (alternativeList) {
+        if (alternativeList)
+        {
             PbAddDependentResourcesToList(&buffer, 0, alternativeList);
         }
 
@@ -632,14 +652,15 @@ Return Value:
         // Update io resource list ptr
         //
 
-        ioResList->Count = ((ULONG)((ULONG_PTR)buffer - (ULONG_PTR)&ioResList->Descriptors[0])) /
-                             sizeof(IO_RESOURCE_DESCRIPTOR);
+        ioResList->Count =
+            ((ULONG)((ULONG_PTR)buffer - (ULONG_PTR)&ioResList->Descriptors[0])) / sizeof(IO_RESOURCE_DESCRIPTOR);
 
         //
         // Hack for user mode pnp mgr
         //
 
-        for (j = 0; j < ioResList->Count; j++) {
+        for (j = 0; j < ioResList->Count; j++)
+        {
             ioResList->Descriptors[j].Spare2 = (USHORT)j;
         }
         ioResList = (PIO_RESOURCE_LIST)buffer;
@@ -649,21 +670,19 @@ Return Value:
     status = STATUS_SUCCESS;
     *ReturnedList = ioResReqList;
 exit1:
-    if (alternativeList) {
+    if (alternativeList)
+    {
         ExFreePool(alternativeList);
     }
 exit0:
-    if (dependResList) {
+    if (dependResList)
+    {
         ExFreePool(dependResList);
     }
     return status;
 }
 
-VOID
-PpBiosResourcesSetToDisabled (
-    IN OUT PUCHAR BiosData,
-    OUT    PULONG Length
-    )
+VOID PpBiosResourcesSetToDisabled(IN OUT PUCHAR BiosData, OUT PULONG Length)
 
 /*++
 
@@ -687,7 +706,7 @@ Return Value:
 {
     PUCHAR buffer;
     USHORT increment;
-    UCHAR tagName ;
+    UCHAR tagName;
 
     //
     // First, scan the bios data to determine the memory requirement and
@@ -696,43 +715,45 @@ Return Value:
 
     buffer = BiosData;
 
-    do {
+    do
+    {
 
         tagName = *buffer;
 
         //
         // Determine the size of the BIOS resource descriptor
         //
-        if (!(tagName & LARGE_RESOURCE_TAG)) {
+        if (!(tagName & LARGE_RESOURCE_TAG))
+        {
             increment = (USHORT)(tagName & SMALL_TAG_SIZE_MASK);
             tagName &= SMALL_TAG_MASK;
 
             //
             // Be careful not to wipe out the version field. That's very bad.
             //
-            if (tagName != TAG_VERSION) {
-               memset(buffer+1, '\0', increment);
+            if (tagName != TAG_VERSION)
+            {
+                memset(buffer + 1, '\0', increment);
             }
-            increment += 1;     // length of small tag
-        } else {
-            increment = *(USHORT UNALIGNED *)(buffer+1);
-            memset(buffer+3, '\0', increment);
-            increment += 3;     // length of large tag
+            increment += 1; // length of small tag
+        }
+        else
+        {
+            increment = *(USHORT UNALIGNED *)(buffer + 1);
+            memset(buffer + 3, '\0', increment);
+            increment += 3; // length of large tag
         }
 
         buffer += increment;
-    } while (tagName != TAG_END) ;
+    } while (tagName != TAG_END);
 
-    *Length = (ULONG)(buffer - BiosData) ;
+    *Length = (ULONG)(buffer - BiosData);
 }
 
-
+
 PPB_DEPENDENT_RESOURCES
-PbAddDependentResourcesToList (
-    IN OUT PUCHAR *ResourceDescriptor,
-    IN ULONG ListNo,
-    IN PPB_ALTERNATIVE_INFORMATION AlternativeList
-    )
+PbAddDependentResourcesToList(IN OUT PUCHAR *ResourceDescriptor, IN ULONG ListNo,
+                              IN PPB_ALTERNATIVE_INFORMATION AlternativeList)
 
 /*++
 
@@ -763,7 +784,7 @@ Return Value:
     //
 
     dependentResources = AlternativeList[ListNo].Resources;
-    size = sizeof(IO_RESOURCE_DESCRIPTOR) *  dependentResources->Count;
+    size = sizeof(IO_RESOURCE_DESCRIPTOR) * dependentResources->Count;
     RtlMoveMemory(*ResourceDescriptor, dependentResources + 1, size);
     *ResourceDescriptor = *ResourceDescriptor + size;
 
@@ -771,26 +792,28 @@ Return Value:
     // Add dependent resource of next list to caller's buffer
     //
 
-    if (AlternativeList[ListNo + 1].Resources) {
+    if (AlternativeList[ListNo + 1].Resources)
+    {
         ptr = PbAddDependentResourcesToList(ResourceDescriptor, ListNo + 1, AlternativeList);
-    } else {
+    }
+    else
+    {
         ptr = NULL;
     }
-    if (ptr == NULL) {
+    if (ptr == NULL)
+    {
         AlternativeList[ListNo].Resources = dependentResources->Next;
-        if (!(dependentResources->Flags & DEPENDENT_FLAGS_END)) {
+        if (!(dependentResources->Flags & DEPENDENT_FLAGS_END))
+        {
             ptr = dependentResources->Next;
         }
     }
     return ptr;
 }
-
+
 #if NO_PLACEHOLDER_DMA_IRQ_SUPPORT
 NTSTATUS
-PbBiosIrqToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    )
+PbBiosIrqToIoDescriptor(IN OUT PUCHAR *BiosData, PIO_RESOURCE_DESCRIPTOR IoDescriptor)
 
 /*++
 
@@ -831,18 +854,23 @@ Return Value:
     // its option to alternative.
     //
 
-    if (bitPosition == 0) {
+    if (bitPosition == 0)
+    {
         option = 0;
-    } else {
+    }
+    else
+    {
         option = IO_RESOURCE_ALTERNATIVE;
     }
     size = buffer->Tag & SMALL_TAG_SIZE_MASK;
     mask = buffer->IrqMask;
     mask >>= bitPosition;
-    irq = (ULONG) -1;
+    irq = (ULONG)-1;
 
-    while (mask) {
-        if (mask & 1) {
+    while (mask)
+    {
+        if (mask & 1)
+        {
             irq = bitPosition;
             break;
         }
@@ -854,12 +882,14 @@ Return Value:
     // Fill in Io resource descriptor
     //
 
-    if (irq != (ULONG)-1) {
+    if (irq != (ULONG)-1)
+    {
         IoDescriptor->Option = option;
         IoDescriptor->Type = CmResourceTypeInterrupt;
         IoDescriptor->Flags = CM_RESOURCE_INTERRUPT_LATCHED;
         IoDescriptor->ShareDisposition = CmResourceShareDeviceExclusive;
-        if (size == 3 && buffer->Information & 0x0C) {
+        if (size == 3 && buffer->Information & 0x0C)
+        {
             IoDescriptor->Flags = CM_RESOURCE_INTERRUPT_LEVEL_SENSITIVE;
             IoDescriptor->ShareDisposition = CmResourceShareShared;
         }
@@ -867,20 +897,25 @@ Return Value:
         IoDescriptor->Spare2 = 0;
         IoDescriptor->u.Interrupt.MinimumVector = irq;
         IoDescriptor->u.Interrupt.MaximumVector = irq;
-    } else {
+    }
+    else
+    {
         status = STATUS_INVALID_PARAMETER;
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // try to move bitPosition to next 1 bit.
         //
 
-        while (mask) {
+        while (mask)
+        {
             mask >>= 1;
             bitPosition++;
-            if (mask & 1) {
+            if (mask & 1)
+            {
                 return status;
             }
         }
@@ -894,12 +929,9 @@ Return Value:
     *BiosData = (PUCHAR)buffer + size + 1;
     return status;
 }
-
+
 NTSTATUS
-PbBiosDmaToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    )
+PbBiosDmaToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor)
 
 /*++
 
@@ -939,17 +971,22 @@ Return Value:
     // its option to alternative.
     //
 
-    if (bitPosition == 0) {
+    if (bitPosition == 0)
+    {
         option = 0;
-    } else {
+    }
+    else
+    {
         option = IO_RESOURCE_ALTERNATIVE;
     }
     mask = buffer->ChannelMask;
     mask >>= bitPosition;
-    dma = (ULONG) -1;
+    dma = (ULONG)-1;
 
-    while (mask) {
-        if (mask & 1) {
+    while (mask)
+    {
+        if (mask & 1)
+        {
             dma = bitPosition;
             break;
         }
@@ -961,7 +998,8 @@ Return Value:
     // Fill in Io resource descriptor
     //
 
-    if (dma != (ULONG)-1) {
+    if (dma != (ULONG)-1)
+    {
         IoDescriptor->Option = option;
         IoDescriptor->Type = CmResourceTypeDma;
         IoDescriptor->Flags = 0;
@@ -970,20 +1008,25 @@ Return Value:
         IoDescriptor->Spare2 = 0;
         IoDescriptor->u.Dma.MinimumChannel = dma;
         IoDescriptor->u.Dma.MaximumChannel = dma;
-    } else {
+    }
+    else
+    {
         status = STATUS_INVALID_PARAMETER;
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // try to move bitPosition to next 1 bit.
         //
 
-        while (mask) {
+        while (mask)
+        {
             mask >>= 1;
             bitPosition++;
-            if (mask & 1) {
+            if (mask & 1)
+            {
                 return status;
             }
         }
@@ -1000,10 +1043,7 @@ Return Value:
 }
 #else
 NTSTATUS
-PbBiosIrqToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    )
+PbBiosIrqToIoDescriptor(IN OUT PUCHAR *BiosData, PIO_RESOURCE_DESCRIPTOR IoDescriptor)
 
 /*++
 
@@ -1043,18 +1083,23 @@ Return Value:
     // its option to alternative.
     //
 
-    if (bitPosition == 0) {
+    if (bitPosition == 0)
+    {
         option = 0;
-    } else {
+    }
+    else
+    {
         option = IO_RESOURCE_ALTERNATIVE;
     }
     size = buffer->Tag & SMALL_TAG_SIZE_MASK;
     mask = buffer->IrqMask;
     mask >>= bitPosition;
-    irq = (ULONG) -1;
+    irq = (ULONG)-1;
 
-    while (mask) {
-        if (mask & 1) {
+    while (mask)
+    {
+        if (mask & 1)
+        {
             irq = bitPosition;
             break;
         }
@@ -1070,7 +1115,8 @@ Return Value:
     IoDescriptor->Type = CmResourceTypeInterrupt;
     IoDescriptor->Flags = CM_RESOURCE_INTERRUPT_LATCHED;
     IoDescriptor->ShareDisposition = CmResourceShareDeviceExclusive;
-    if (size == 3 && buffer->Information & 0x0C) {
+    if (size == 3 && buffer->Information & 0x0C)
+    {
         IoDescriptor->Flags = CM_RESOURCE_INTERRUPT_LEVEL_SENSITIVE;
         IoDescriptor->ShareDisposition = CmResourceShareShared;
     }
@@ -1083,10 +1129,12 @@ Return Value:
     // try to move bitPosition to next 1 bit.
     //
 
-    while (mask) {
+    while (mask)
+    {
         mask >>= 1;
         bitPosition++;
-        if (mask & 1) {
+        if (mask & 1)
+        {
             return STATUS_SUCCESS;
         }
     }
@@ -1099,12 +1147,9 @@ Return Value:
     *BiosData = (PUCHAR)buffer + size + 1;
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PbBiosDmaToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    )
+PbBiosDmaToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor)
 
 /*++
 
@@ -1143,17 +1188,22 @@ Return Value:
     // its option to alternative.
     //
 
-    if (bitPosition == 0) {
+    if (bitPosition == 0)
+    {
         option = 0;
-    } else {
+    }
+    else
+    {
         option = IO_RESOURCE_ALTERNATIVE;
     }
     mask = buffer->ChannelMask;
     mask >>= bitPosition;
-    dma = (ULONG) -1;
+    dma = (ULONG)-1;
 
-    while (mask) {
-        if (mask & 1) {
+    while (mask)
+    {
+        if (mask & 1)
+        {
             dma = bitPosition;
             break;
         }
@@ -1178,10 +1228,12 @@ Return Value:
     // try to move bitPosition to next 1 bit.
     //
 
-    while (mask) {
+    while (mask)
+    {
         mask >>= 1;
         bitPosition++;
-        if (mask & 1) {
+        if (mask & 1)
+        {
             return STATUS_SUCCESS;
         }
     }
@@ -1196,13 +1248,10 @@ Return Value:
     return STATUS_SUCCESS;
 }
 #endif
-
+
 NTSTATUS
-PbBiosPortFixedToIoDescriptor (
-    IN OUT PUCHAR               *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR   IoDescriptor,
-    IN BOOLEAN                   ForceFixedIoTo16bit
-    )
+PbBiosPortFixedToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor,
+                              IN BOOLEAN ForceFixedIoTo16bit)
 
 /*++
 
@@ -1237,11 +1286,13 @@ Return Value:
     IoDescriptor->Option = 0;
     IoDescriptor->Type = CmResourceTypePort;
 
-    if (ForceFixedIoTo16bit) {
+    if (ForceFixedIoTo16bit)
+    {
 
         IoDescriptor->Flags = CM_RESOURCE_PORT_IO + CM_RESOURCE_PORT_16_BIT_DECODE;
-
-    } else {
+    }
+    else
+    {
 
         IoDescriptor->Flags = CM_RESOURCE_PORT_IO + CM_RESOURCE_PORT_10_BIT_DECODE;
     }
@@ -1255,12 +1306,14 @@ Return Value:
     //  the range of I/O resources .
     //
 
-    if (IsNEC_98) {
-        if ( (ULONG)buffer->MinimumAddress < 0x100 ) {
+    if (IsNEC_98)
+    {
+        if ((ULONG)buffer->MinimumAddress < 0x100)
+        {
             IoDescriptor->Flags = CM_RESOURCE_PORT_IO + CM_RESOURCE_PORT_16_BIT_DECODE;
         }
     }
-#endif                                                                                 // <--end changing code
+#endif // <--end changing code
 
     IoDescriptor->ShareDisposition = CmResourceShareDeviceExclusive;
     IoDescriptor->Spare1 = 0;
@@ -1268,8 +1321,8 @@ Return Value:
     IoDescriptor->u.Port.Length = (ULONG)buffer->Length;
     IoDescriptor->u.Port.MinimumAddress.LowPart = (ULONG)(buffer->MinimumAddress & 0x3ff);
     IoDescriptor->u.Port.MinimumAddress.HighPart = 0;
-    IoDescriptor->u.Port.MaximumAddress.LowPart = IoDescriptor->u.Port.MinimumAddress.LowPart +
-                                                      IoDescriptor->u.Port.Length - 1;
+    IoDescriptor->u.Port.MaximumAddress.LowPart =
+        IoDescriptor->u.Port.MinimumAddress.LowPart + IoDescriptor->u.Port.Length - 1;
     IoDescriptor->u.Port.MaximumAddress.HighPart = 0;
     IoDescriptor->u.Port.Alignment = 1;
 
@@ -1281,12 +1334,9 @@ Return Value:
     *BiosData = (PUCHAR)buffer;
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PbBiosPortToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    )
+PbBiosPortToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor)
 
 /*++
 
@@ -1318,9 +1368,12 @@ Return Value:
     IoDescriptor->Option = 0;
     IoDescriptor->Type = CmResourceTypePort;
     IoDescriptor->Flags = CM_RESOURCE_PORT_IO;
-    if (buffer->Information & 1) {
+    if (buffer->Information & 1)
+    {
         IoDescriptor->Flags |= CM_RESOURCE_PORT_16_BIT_DECODE;
-    } else {
+    }
+    else
+    {
         IoDescriptor->Flags |= CM_RESOURCE_PORT_10_BIT_DECODE;
     }
     IoDescriptor->ShareDisposition = CmResourceShareDeviceExclusive;
@@ -1329,8 +1382,10 @@ Return Value:
     IoDescriptor->u.Port.Length = (ULONG)buffer->Length;
 
 #if defined(_X86_)
-    if (IsNEC_98) {
-        if (buffer->Information & 0x80) {
+    if (IsNEC_98)
+    {
+        if (buffer->Information & 0x80)
+        {
             IoDescriptor->u.Port.Length *= 2;
         }
     }
@@ -1338,8 +1393,7 @@ Return Value:
 
     IoDescriptor->u.Port.MinimumAddress.LowPart = (ULONG)buffer->MinimumAddress;
     IoDescriptor->u.Port.MinimumAddress.HighPart = 0;
-    IoDescriptor->u.Port.MaximumAddress.LowPart = (ULONG)buffer->MaximumAddress +
-                                                     IoDescriptor->u.Port.Length - 1;
+    IoDescriptor->u.Port.MaximumAddress.LowPart = (ULONG)buffer->MaximumAddress + IoDescriptor->u.Port.Length - 1;
     IoDescriptor->u.Port.MaximumAddress.HighPart = 0;
     IoDescriptor->u.Port.Alignment = (ULONG)buffer->Alignment;
 
@@ -1351,12 +1405,9 @@ Return Value:
     *BiosData = (PUCHAR)buffer;
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PbBiosMemoryToIoDescriptor (
-    IN OUT PUCHAR *BiosData,
-    IN PIO_RESOURCE_DESCRIPTOR IoDescriptor
-    )
+PbBiosMemoryToIoDescriptor(IN OUT PUCHAR *BiosData, IN PIO_RESOURCE_DESCRIPTOR IoDescriptor)
 
 /*++
 
@@ -1390,28 +1441,30 @@ Return Value:
 
     minAddr.HighPart = 0;
     maxAddr.HighPart = 0;
-    switch (tag) {
+    switch (tag)
+    {
     case TAG_MEMORY:
-         minAddr.LowPart = ((ULONG)(((PPNP_MEMORY_DESCRIPTOR)buffer)->MinimumAddress)) << 8;
-         if ((alignment = ((PPNP_MEMORY_DESCRIPTOR)buffer)->Alignment) == 0) {
-             alignment = 0x10000;
-         }
-         length = ((ULONG)(((PPNP_MEMORY_DESCRIPTOR)buffer)->MemorySize)) << 8;
-         maxAddr.LowPart = (((ULONG)(((PPNP_MEMORY_DESCRIPTOR)buffer)->MaximumAddress)) << 8) + length - 1;
-         flags = CM_RESOURCE_MEMORY_24;
-         break;
+        minAddr.LowPart = ((ULONG)(((PPNP_MEMORY_DESCRIPTOR)buffer)->MinimumAddress)) << 8;
+        if ((alignment = ((PPNP_MEMORY_DESCRIPTOR)buffer)->Alignment) == 0)
+        {
+            alignment = 0x10000;
+        }
+        length = ((ULONG)(((PPNP_MEMORY_DESCRIPTOR)buffer)->MemorySize)) << 8;
+        maxAddr.LowPart = (((ULONG)(((PPNP_MEMORY_DESCRIPTOR)buffer)->MaximumAddress)) << 8) + length - 1;
+        flags = CM_RESOURCE_MEMORY_24;
+        break;
     case TAG_MEMORY32:
-         length = ((PPNP_MEMORY32_DESCRIPTOR)buffer)->MemorySize;
-         minAddr.LowPart = ((PPNP_MEMORY32_DESCRIPTOR)buffer)->MinimumAddress;
-         maxAddr.LowPart = ((PPNP_MEMORY32_DESCRIPTOR)buffer)->MaximumAddress + length - 1;
-         alignment = ((PPNP_MEMORY32_DESCRIPTOR)buffer)->Alignment;
-         break;
+        length = ((PPNP_MEMORY32_DESCRIPTOR)buffer)->MemorySize;
+        minAddr.LowPart = ((PPNP_MEMORY32_DESCRIPTOR)buffer)->MinimumAddress;
+        maxAddr.LowPart = ((PPNP_MEMORY32_DESCRIPTOR)buffer)->MaximumAddress + length - 1;
+        alignment = ((PPNP_MEMORY32_DESCRIPTOR)buffer)->Alignment;
+        break;
     case TAG_MEMORY32_FIXED:
-         length = ((PPNP_FIXED_MEMORY32_DESCRIPTOR)buffer)->MemorySize;
-         minAddr.LowPart = ((PPNP_FIXED_MEMORY32_DESCRIPTOR)buffer)->BaseAddress;
-         maxAddr.LowPart = minAddr.LowPart + length - 1;
-         alignment = 1;
-         break;
+        length = ((PPNP_FIXED_MEMORY32_DESCRIPTOR)buffer)->MemorySize;
+        minAddr.LowPart = ((PPNP_FIXED_MEMORY32_DESCRIPTOR)buffer)->BaseAddress;
+        maxAddr.LowPart = minAddr.LowPart + length - 1;
+        alignment = 1;
+        break;
     }
     //
     // Fill in Io resource descriptor
@@ -1436,14 +1489,10 @@ Return Value:
     *BiosData = (PUCHAR)buffer;
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PpCmResourcesToBiosResources (
-    IN PCM_RESOURCE_LIST CmResources,
-    IN PUCHAR BiosRequirements,
-    IN PUCHAR *BiosResources,
-    IN PULONG Length
-    )
+PpCmResourcesToBiosResources(IN PCM_RESOURCE_LIST CmResources, IN PUCHAR BiosRequirements, IN PUCHAR *BiosResources,
+                             IN PULONG Length)
 
 /*++
 
@@ -1482,7 +1531,8 @@ Return Value:
     *BiosResources = NULL;
     *Length = 0;
     CmResources->Count;
-    if (CmResources->Count == 0) {
+    if (CmResources->Count == 0)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -1492,27 +1542,31 @@ Return Value:
 
     count = 0;
     cmFullDesc = &CmResources->List[0];
-    for (l = 0; l < CmResources->Count; l++) {
+    for (l = 0; l < CmResources->Count; l++)
+    {
         cmDesc = cmFullDesc->PartialResourceList.PartialDescriptors;
-        for (i = 0; i < cmFullDesc->PartialResourceList.Count; i++) {
-            switch (cmDesc->Type) {
+        for (i = 0; i < cmFullDesc->PartialResourceList.Count; i++)
+        {
+            switch (cmDesc->Type)
+            {
             case CmResourceTypePort:
             case CmResourceTypeInterrupt:
             case CmResourceTypeMemory:
             case CmResourceTypeDma:
-                 count++;
-                 cmDesc++;
-                 break;
+                count++;
+                cmDesc++;
+                break;
             case CmResourceTypeDeviceSpecific:
-                 length = cmDesc->u.DeviceSpecificData.DataSize;
-                 cmDesc++;
-                 cmDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmDesc + length);
+                length = cmDesc->u.DeviceSpecificData.DataSize;
+                cmDesc++;
+                cmDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmDesc + length);
             }
         }
         cmFullDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)cmDesc;
     }
 
-    if (count == 0) {
+    if (count == 0)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -1520,62 +1574,47 @@ Return Value:
     // Allocate max amount of memory
     //
 
-    px = p= ExAllocatePoolWithTag(PagedPool,
-                             count * sizeof(PNP_MEMORY_DESCRIPTOR),
-                             'bPnP');
-    if (!p) {
+    px = p = ExAllocatePoolWithTag(PagedPool, count * sizeof(PNP_MEMORY_DESCRIPTOR), 'bPnP');
+    if (!p)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     status = STATUS_RESOURCE_TYPE_NOT_FOUND;
     cmFullDesc = &CmResources->List[0];
-    for (l = 0; l < CmResources->Count; l++) {
+    for (l = 0; l < CmResources->Count; l++)
+    {
         cmDesc = cmFullDesc->PartialResourceList.PartialDescriptors;
-        for (i = 0; i < cmFullDesc->PartialResourceList.Count; i++) {
-            switch (cmDesc->Type) {
+        for (i = 0; i < cmFullDesc->PartialResourceList.Count; i++)
+        {
+            switch (cmDesc->Type)
+            {
             case CmResourceTypePort:
-                 status = PbCmPortToBiosDescriptor (
-                                  BiosRequirements,
-                                  cmDesc,
-                                  &biosDesc,
-                                  &length
-                                  );
-                 break;
+                status = PbCmPortToBiosDescriptor(BiosRequirements, cmDesc, &biosDesc, &length);
+                break;
             case CmResourceTypeInterrupt:
-                 status = PbCmIrqToBiosDescriptor(
-                                  BiosRequirements,
-                                  cmDesc,
-                                  &biosDesc,
-                                  &length
-                                  );
-                 break;
+                status = PbCmIrqToBiosDescriptor(BiosRequirements, cmDesc, &biosDesc, &length);
+                break;
             case CmResourceTypeMemory:
-                 status = PbCmMemoryToBiosDescriptor (
-                                  BiosRequirements,
-                                  cmDesc,
-                                  &biosDesc,
-                                  &length
-                                  );
-                 break;
+                status = PbCmMemoryToBiosDescriptor(BiosRequirements, cmDesc, &biosDesc, &length);
+                break;
             case CmResourceTypeDma:
-                 status = PbCmDmaToBiosDescriptor (
-                                  BiosRequirements,
-                                  cmDesc,
-                                  &biosDesc,
-                                  &length
-                                  );
-                 break;
+                status = PbCmDmaToBiosDescriptor(BiosRequirements, cmDesc, &biosDesc, &length);
+                break;
             case CmResourceTypeDeviceSpecific:
-                 length = cmDesc->u.DeviceSpecificData.DataSize;
-                 cmDesc++;
-                 cmDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmDesc + length);
-                 continue;
+                length = cmDesc->u.DeviceSpecificData.DataSize;
+                cmDesc++;
+                cmDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmDesc + length);
+                continue;
             }
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 cmDesc++;
                 RtlCopyMemory(p, &biosDesc, length);
                 p += length;
                 totalSize += length;
-            } else {
+            }
+            else
+            {
                 ExFreePool(px);
                 goto exit;
             }
@@ -1584,24 +1623,21 @@ Return Value:
     }
 
 exit:
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         *p = TAG_COMPLETE_END;
         p++;
-        *p = 0;            // checksum ignored
+        *p = 0; // checksum ignored
         totalSize += 2;
         *BiosResources = px;
         *Length = totalSize;
     }
     return status;
 }
-
+
 NTSTATUS
-PbCmIrqToBiosDescriptor (
-    IN PUCHAR BiosRequirements,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
-    OUT PVOID ReturnDescriptor,
-    OUT PULONG Length
-    )
+PbCmIrqToBiosDescriptor(IN PUCHAR BiosRequirements, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
+                        OUT PVOID ReturnDescriptor, OUT PULONG Length)
 
 /*++
 
@@ -1637,22 +1673,31 @@ Return Value:
     PPNP_IRQ_DESCRIPTOR irqDesc = (PPNP_IRQ_DESCRIPTOR)ReturnDescriptor;
 
 
-    if (!(CmDescriptor->u.Interrupt.Level & 0xfffffff0)) {
+    if (!(CmDescriptor->u.Interrupt.Level & 0xfffffff0))
+    {
         irqMask = (USHORT)(1 << CmDescriptor->u.Interrupt.Level);
-    } else {
+    }
+    else
+    {
         return STATUS_INVALID_PARAMETER;
     }
-    if (!BiosRequirements) {
-        irqDesc->Tag = TAG_IRQ | (sizeof(PNP_IRQ_DESCRIPTOR) - 2);  // No Information
+    if (!BiosRequirements)
+    {
+        irqDesc->Tag = TAG_IRQ | (sizeof(PNP_IRQ_DESCRIPTOR) - 2); // No Information
         irqDesc->IrqMask = irqMask;
         *Length = sizeof(PNP_IRQ_DESCRIPTOR) - 1;
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         tag = *BiosRequirements;
-        while (tag != TAG_COMPLETE_END) {
-            if ((tag & SMALL_TAG_MASK) == TAG_IRQ) {
+        while (tag != TAG_COMPLETE_END)
+        {
+            if ((tag & SMALL_TAG_MASK) == TAG_IRQ)
+            {
                 biosDesc = (PPNP_IRQ_DESCRIPTOR)BiosRequirements;
-                if (biosDesc->IrqMask & irqMask) {
+                if (biosDesc->IrqMask & irqMask)
+                {
                     *Length = (biosDesc->Tag & SMALL_TAG_SIZE_MASK) + 1;
                     RtlCopyMemory(ReturnDescriptor, BiosRequirements, *Length);
                     ((PPNP_IRQ_DESCRIPTOR)ReturnDescriptor)->IrqMask = irqMask;
@@ -1665,12 +1710,15 @@ Return Value:
             // Don't-care tag simply advance the buffer pointer to next tag.
             //
 
-            if (tag & LARGE_RESOURCE_TAG) {
+            if (tag & LARGE_RESOURCE_TAG)
+            {
                 increment = *(USHORT UNALIGNED *)(BiosRequirements + 1);
-                increment += 3;     // length of large tag
-            } else {
+                increment += 3; // length of large tag
+            }
+            else
+            {
                 increment = (USHORT)(tag & SMALL_TAG_SIZE_MASK);
-                increment += 1;     // length of small tag
+                increment += 1; // length of small tag
             }
             BiosRequirements += increment;
             tag = *BiosRequirements;
@@ -1678,14 +1726,10 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-PbCmDmaToBiosDescriptor (
-    IN PUCHAR BiosRequirements,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
-    OUT PVOID ReturnDescriptor,
-    OUT PULONG Length
-    )
+PbCmDmaToBiosDescriptor(IN PUCHAR BiosRequirements, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
+                        OUT PVOID ReturnDescriptor, OUT PULONG Length)
 
 /*++
 
@@ -1720,40 +1764,56 @@ Return Value:
     PPNP_DMA_DESCRIPTOR dmaDesc = (PPNP_DMA_DESCRIPTOR)ReturnDescriptor;
     USHORT flags = CmDescriptor->Flags;
 
-    if (!(CmDescriptor->u.Dma.Channel & 0xfffffff0)) {
+    if (!(CmDescriptor->u.Dma.Channel & 0xfffffff0))
+    {
         dmaMask = (UCHAR)(1 << CmDescriptor->u.Dma.Channel);
-    } else {
+    }
+    else
+    {
         return STATUS_INVALID_PARAMETER;
     }
-    if (!BiosRequirements) {
+    if (!BiosRequirements)
+    {
         dmaDesc->Tag = TAG_DMA | (sizeof(PNP_DMA_DESCRIPTOR) - 1);
         dmaDesc->ChannelMask = dmaMask;
         dmaDesc->Flags = 0;
-        if (flags & CM_RESOURCE_DMA_8_AND_16) {
+        if (flags & CM_RESOURCE_DMA_8_AND_16)
+        {
             dmaDesc->Flags += 1;
-        } else if (flags & CM_RESOURCE_DMA_16) {
+        }
+        else if (flags & CM_RESOURCE_DMA_16)
+        {
             dmaDesc->Flags += 2;
         }
-        if (flags & CM_RESOURCE_DMA_BUS_MASTER) {
+        if (flags & CM_RESOURCE_DMA_BUS_MASTER)
+        {
             dmaDesc->Flags += 4;
         }
-        if (flags & CM_RESOURCE_DMA_TYPE_A) {
+        if (flags & CM_RESOURCE_DMA_TYPE_A)
+        {
             dmaDesc->Flags += 32;
         }
-        if (flags & CM_RESOURCE_DMA_TYPE_B) {
+        if (flags & CM_RESOURCE_DMA_TYPE_B)
+        {
             dmaDesc->Flags += 64;
         }
-        if (flags & CM_RESOURCE_DMA_TYPE_F) {
+        if (flags & CM_RESOURCE_DMA_TYPE_F)
+        {
             dmaDesc->Flags += 96;
         }
         *Length = sizeof(PNP_DMA_DESCRIPTOR);
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         tag = *BiosRequirements;
-        while (tag != TAG_COMPLETE_END) {
-            if ((tag & SMALL_TAG_MASK) == TAG_DMA) {
+        while (tag != TAG_COMPLETE_END)
+        {
+            if ((tag & SMALL_TAG_MASK) == TAG_DMA)
+            {
                 biosDesc = (PPNP_DMA_DESCRIPTOR)BiosRequirements;
-                if (biosDesc->ChannelMask & dmaMask) {
+                if (biosDesc->ChannelMask & dmaMask)
+                {
                     *Length = (biosDesc->Tag & SMALL_TAG_SIZE_MASK) + 1;
                     RtlMoveMemory(ReturnDescriptor, BiosRequirements, *Length);
                     ((PPNP_DMA_DESCRIPTOR)ReturnDescriptor)->ChannelMask = dmaMask;
@@ -1766,12 +1826,15 @@ Return Value:
             // Don't-care tag simply advance the buffer pointer to next tag.
             //
 
-            if (tag & LARGE_RESOURCE_TAG) {
+            if (tag & LARGE_RESOURCE_TAG)
+            {
                 increment = *(USHORT UNALIGNED *)(BiosRequirements + 1);
-                increment += 3;     // length of large tag
-            } else {
+                increment += 3; // length of large tag
+            }
+            else
+            {
                 increment = (USHORT)(tag & SMALL_TAG_SIZE_MASK);
-                increment += 1;     // length of small tag
+                increment += 1; // length of small tag
             }
             BiosRequirements += increment;
             tag = *BiosRequirements;
@@ -1779,14 +1842,10 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-PbCmPortToBiosDescriptor (
-    IN PUCHAR BiosRequirements,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
-    OUT PVOID ReturnDescriptor,
-    OUT PULONG Length
-    )
+PbCmPortToBiosDescriptor(IN PUCHAR BiosRequirements, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
+                         OUT PVOID ReturnDescriptor, OUT PULONG Length)
 
 /*++
 
@@ -1824,9 +1883,9 @@ Return Value:
     USHORT increment;
     BOOLEAN test = FALSE;
 
-    if (CmDescriptor->u.Port.Start.HighPart != 0 ||
-        CmDescriptor->u.Port.Start.LowPart & 0xffff0000 ||
-        CmDescriptor->u.Port.Length & 0xffffff00) {
+    if (CmDescriptor->u.Port.Start.HighPart != 0 || CmDescriptor->u.Port.Start.LowPart & 0xffff0000 ||
+        CmDescriptor->u.Port.Length & 0xffffff00)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -1835,18 +1894,22 @@ Return Value:
     // for the port range described by CmDescriptor.
     //
 
-    address = (USHORT) CmDescriptor->u.Port.Start.LowPart;
-    size = (UCHAR) CmDescriptor->u.Port.Length;
-    if (!BiosRequirements) {
+    address = (USHORT)CmDescriptor->u.Port.Start.LowPart;
+    size = (UCHAR)CmDescriptor->u.Port.Length;
+    if (!BiosRequirements)
+    {
 
         //
         // No BiosRequirement.  Use TAG_IO as default.
         //
 
         portDesc->Tag = TAG_IO | (sizeof(PNP_PORT_DESCRIPTOR) - 1);
-        if (CmDescriptor->Flags & CM_RESOURCE_PORT_16_BIT_DECODE) {
+        if (CmDescriptor->Flags & CM_RESOURCE_PORT_16_BIT_DECODE)
+        {
             portDesc->Information = 1;
-        } else {
+        }
+        else
+        {
             portDesc->Information = 0;
         }
         portDesc->Length = size;
@@ -1854,44 +1917,52 @@ Return Value:
         portDesc->MinimumAddress = (USHORT)CmDescriptor->u.Port.Start.LowPart;
         portDesc->MaximumAddress = (USHORT)CmDescriptor->u.Port.Start.LowPart;
         *Length = sizeof(PNP_PORT_DESCRIPTOR);
-    } else {
+    }
+    else
+    {
         tag = *BiosRequirements;
-        while (tag != TAG_COMPLETE_END) {
+        while (tag != TAG_COMPLETE_END)
+        {
             test = FALSE;
-            switch (tag & SMALL_TAG_MASK) {
+            switch (tag & SMALL_TAG_MASK)
+            {
             case TAG_IO:
-                 minAddr = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->MinimumAddress;
-                 alignment = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->Alignment;
-                 length = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->Length;
-                 maxAddr = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->MaximumAddress;
-                 information = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->Information;
-                 test = TRUE;
-                 returnTag = TAG_IO;
-                 if (!alignment) {
-                    if (minAddr == maxAddr) {
+                minAddr = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->MinimumAddress;
+                alignment = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->Alignment;
+                length = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->Length;
+                maxAddr = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->MaximumAddress;
+                information = ((PPNP_PORT_DESCRIPTOR)BiosRequirements)->Information;
+                test = TRUE;
+                returnTag = TAG_IO;
+                if (!alignment)
+                {
+                    if (minAddr == maxAddr)
+                    {
 
-                       //
-                       // If the max is equal to the min, the alignment is
-                       // meaningless. As we told OEMs 0 is appropriate here,
-                       // let us handle it.
-                       //
-                       alignment = 1 ;
+                        //
+                        // If the max is equal to the min, the alignment is
+                        // meaningless. As we told OEMs 0 is appropriate here,
+                        // let us handle it.
+                        //
+                        alignment = 1;
                     }
-                 }
-                 maxAddr += length - 1;
-                 break;
+                }
+                maxAddr += length - 1;
+                break;
             case TAG_IO_FIXED:
-                 length = ((PPNP_FIXED_PORT_DESCRIPTOR)BiosRequirements)->Length;
-                 minAddr = ((PPNP_FIXED_PORT_DESCRIPTOR)BiosRequirements)->MinimumAddress;
-                 maxAddr = minAddr + length - 1;
-                 alignment = 1;
-                 information = 0;  // 10 bit decode
-                 returnTag = TAG_IO_FIXED;
-                 test = TRUE;
-                 break;
+                length = ((PPNP_FIXED_PORT_DESCRIPTOR)BiosRequirements)->Length;
+                minAddr = ((PPNP_FIXED_PORT_DESCRIPTOR)BiosRequirements)->MinimumAddress;
+                maxAddr = minAddr + length - 1;
+                alignment = 1;
+                information = 0; // 10 bit decode
+                returnTag = TAG_IO_FIXED;
+                test = TRUE;
+                break;
             }
-            if (test) {
-                if (minAddr <= address && maxAddr >= (address + size - 1) && !(address & (alignment - 1 ))) {
+            if (test)
+            {
+                if (minAddr <= address && maxAddr >= (address + size - 1) && !(address & (alignment - 1)))
+                {
                     break;
                 }
                 test = FALSE;
@@ -1901,17 +1972,21 @@ Return Value:
             // Advance to next tag
             //
 
-            if (tag & LARGE_RESOURCE_TAG) {
+            if (tag & LARGE_RESOURCE_TAG)
+            {
                 increment = *(USHORT UNALIGNED *)(BiosRequirements + 1);
-                increment += 3;     // length of large tag
-            } else {
-                increment = (USHORT) tag & SMALL_TAG_SIZE_MASK;
-                increment += 1;     // length of small tag
+                increment += 3; // length of large tag
+            }
+            else
+            {
+                increment = (USHORT)tag & SMALL_TAG_SIZE_MASK;
+                increment += 1; // length of small tag
             }
             BiosRequirements += increment;
             tag = *BiosRequirements;
         }
-        if (tag == TAG_COMPLETE_END) {
+        if (tag == TAG_COMPLETE_END)
+        {
             return STATUS_UNSUCCESSFUL;
         }
 
@@ -1919,7 +1994,8 @@ Return Value:
         // Set the return port descriptor
         //
 
-        if (returnTag == TAG_IO) {
+        if (returnTag == TAG_IO)
+        {
             portDesc->Tag = TAG_IO + (sizeof(PNP_PORT_DESCRIPTOR) - 1);
             portDesc->Information = information;
             portDesc->Length = size;
@@ -1927,7 +2003,9 @@ Return Value:
             portDesc->MinimumAddress = (USHORT)CmDescriptor->u.Port.Start.LowPart;
             portDesc->MaximumAddress = (USHORT)CmDescriptor->u.Port.Start.LowPart;
             *Length = sizeof(PNP_PORT_DESCRIPTOR);
-        } else {
+        }
+        else
+        {
             PPNP_FIXED_PORT_DESCRIPTOR fixedPortDesc = (PPNP_FIXED_PORT_DESCRIPTOR)ReturnDescriptor;
 
             fixedPortDesc->Tag = TAG_IO_FIXED + (sizeof(PPNP_FIXED_PORT_DESCRIPTOR) - 1);
@@ -1937,16 +2015,11 @@ Return Value:
         }
     }
     return STATUS_SUCCESS;
-
 }
-
+
 NTSTATUS
-PbCmMemoryToBiosDescriptor (
-    IN PUCHAR BiosRequirements,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
-    OUT PVOID ReturnDescriptor,
-    OUT PULONG Length
-    )
+PbCmMemoryToBiosDescriptor(IN PUCHAR BiosRequirements, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR CmDescriptor,
+                           OUT PVOID ReturnDescriptor, OUT PULONG Length)
 
 /*++
 
@@ -1989,7 +2062,8 @@ Return Value:
 
     address = CmDescriptor->u.Memory.Start.LowPart;
     size = CmDescriptor->u.Memory.Length;
-    if (!BiosRequirements) {
+    if (!BiosRequirements)
+    {
 
         //
         // We don't support reserving legacy device's memory ranges from PNP
@@ -2003,36 +2077,39 @@ Return Value:
         return STATUS_SUCCESS;
     }
     tag = *BiosRequirements;
-    while (tag != TAG_COMPLETE_END) {
-        switch (tag & SMALL_TAG_MASK) {
+    while (tag != TAG_COMPLETE_END)
+    {
+        switch (tag & SMALL_TAG_MASK)
+        {
         case TAG_MEMORY:
-             minAddr = ((ULONG)(((PPNP_MEMORY_DESCRIPTOR)BiosRequirements)->MinimumAddress)) << 8;
-             if ((alignment = ((PPNP_MEMORY_DESCRIPTOR)BiosRequirements)->Alignment) == 0) {
-                 alignment = 0x10000;
-             }
-             length = ((ULONG)(((PPNP_MEMORY_DESCRIPTOR)BiosRequirements)->MemorySize)) << 8;
-             maxAddr = (((ULONG)(((PPNP_MEMORY_DESCRIPTOR)BiosRequirements)->MaximumAddress)) << 8)
-                             + length - 1;
-             test = TRUE;
-             break;
+            minAddr = ((ULONG)(((PPNP_MEMORY_DESCRIPTOR)BiosRequirements)->MinimumAddress)) << 8;
+            if ((alignment = ((PPNP_MEMORY_DESCRIPTOR)BiosRequirements)->Alignment) == 0)
+            {
+                alignment = 0x10000;
+            }
+            length = ((ULONG)(((PPNP_MEMORY_DESCRIPTOR)BiosRequirements)->MemorySize)) << 8;
+            maxAddr = (((ULONG)(((PPNP_MEMORY_DESCRIPTOR)BiosRequirements)->MaximumAddress)) << 8) + length - 1;
+            test = TRUE;
+            break;
         case TAG_MEMORY32:
-             length = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->MemorySize;
-             minAddr = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->MinimumAddress;
-             maxAddr = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->MaximumAddress
-                             + length - 1;
-             alignment = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->Alignment;
-             break;
+            length = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->MemorySize;
+            minAddr = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->MinimumAddress;
+            maxAddr = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->MaximumAddress + length - 1;
+            alignment = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->Alignment;
+            break;
         case TAG_MEMORY32_FIXED:
-             length = ((PPNP_FIXED_MEMORY32_DESCRIPTOR)BiosRequirements)->MemorySize;
-             minAddr = ((PPNP_FIXED_MEMORY32_DESCRIPTOR)BiosRequirements)->BaseAddress;
-             maxAddr = minAddr + length - 1;
-             alignment = 1;
-             test = TRUE;
-             break;
+            length = ((PPNP_FIXED_MEMORY32_DESCRIPTOR)BiosRequirements)->MemorySize;
+            minAddr = ((PPNP_FIXED_MEMORY32_DESCRIPTOR)BiosRequirements)->BaseAddress;
+            maxAddr = minAddr + length - 1;
+            alignment = 1;
+            test = TRUE;
+            break;
         }
 
-        if (test) {
-            if (minAddr <= address && maxAddr >= (address + size - 1) && !(address & (alignment - 1 ))) {
+        if (test)
+        {
+            if (minAddr <= address && maxAddr >= (address + size - 1) && !(address & (alignment - 1)))
+            {
                 information = ((PPNP_MEMORY32_DESCRIPTOR)BiosRequirements)->Information;
                 break;
             }
@@ -2043,17 +2120,21 @@ Return Value:
         // Advance to next tag
         //
 
-        if (tag & LARGE_RESOURCE_TAG) {
+        if (tag & LARGE_RESOURCE_TAG)
+        {
             increment = *(USHORT UNALIGNED *)(BiosRequirements + 1);
-            increment += 3;     // length of large tag
-        } else {
-            increment = (USHORT) tag & SMALL_TAG_SIZE_MASK;
-            increment += 1;     // length of small tag
+            increment += 3; // length of large tag
+        }
+        else
+        {
+            increment = (USHORT)tag & SMALL_TAG_SIZE_MASK;
+            increment += 1; // length of small tag
         }
         BiosRequirements += increment;
         tag = *BiosRequirements;
     }
-    if (tag == TAG_COMPLETE_END) {
+    if (tag == TAG_COMPLETE_END)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -2062,11 +2143,10 @@ Return Value:
     //
 
     memoryDesc->Tag = TAG_MEMORY32_FIXED;
-    memoryDesc->Length = sizeof (PNP_FIXED_MEMORY32_DESCRIPTOR);
+    memoryDesc->Length = sizeof(PNP_FIXED_MEMORY32_DESCRIPTOR);
     memoryDesc->Information = information;
     memoryDesc->BaseAddress = address;
     memoryDesc->MemorySize = size;
     *Length = sizeof(PNP_FIXED_MEMORY32_DESCRIPTOR);
     return STATUS_SUCCESS;
 }
-

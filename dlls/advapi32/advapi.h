@@ -38,19 +38,18 @@ Revision History:
 #include <windows.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-//
-// Include Common Definitions.
-//
+    //
+    // Include Common Definitions.
+    //
 
-ULONG
-BaseSetLastNTError(
-    IN NTSTATUS Status
-    );
+    ULONG
+    BaseSetLastNTError(IN NTSTATUS Status);
 
 
-extern RTL_CRITICAL_SECTION Logon32Lock ;
+    extern RTL_CRITICAL_SECTION Logon32Lock;
 
 #ifdef __cplusplus
 } // extern "C"

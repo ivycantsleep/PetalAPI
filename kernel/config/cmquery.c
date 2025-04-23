@@ -18,20 +18,15 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpQueryKeyName)
+#pragma alloc_text(PAGE, CmpQueryKeyName)
 #endif
-
+
 NTSTATUS
-CmpQueryKeyName(
-    IN PVOID Object,
-    IN BOOLEAN HasObjectName,
-    OUT POBJECT_NAME_INFORMATION ObjectNameInfo,
-    IN ULONG Length,
-    OUT PULONG ReturnLength
-    )
+CmpQueryKeyName(IN PVOID Object, IN BOOLEAN HasObjectName, OUT POBJECT_NAME_INFORMATION ObjectNameInfo, IN ULONG Length,
+                OUT PULONG ReturnLength)
 /*++
 
 Routine Description:
@@ -70,39 +65,45 @@ Return Value:
 
     UNREFERENCED_PARAMETER(HasObjectName);
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_PARSE,"CmpQueryKeyName:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_PARSE, "CmpQueryKeyName:\n"));
 
     CmpLockRegistry();
 
-    if ( ((PCM_KEY_BODY)Object)->KeyControlBlock->Delete) {
+    if (((PCM_KEY_BODY)Object)->KeyControlBlock->Delete)
+    {
         CmpUnlockRegistry();
         return STATUS_KEY_DELETED;
     }
     Name = CmpConstructName(((PCM_KEY_BODY)Object)->KeyControlBlock);
-    if (Name == NULL) {
+    if (Name == NULL)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         CmpUnlockRegistry();
         return status;
     }
 
-    if (Length <= sizeof(OBJECT_NAME_INFORMATION)) {
+    if (Length <= sizeof(OBJECT_NAME_INFORMATION))
+    {
         *ReturnLength = Name->Length + sizeof(WCHAR) + sizeof(OBJECT_NAME_INFORMATION);
         ExFreePoolWithTag(Name, CM_NAME_TAG | PROTECTED_POOL);
         CmpUnlockRegistry();
-        return STATUS_INFO_LENGTH_MISMATCH;  // they can't even handle null
+        return STATUS_INFO_LENGTH_MISMATCH; // they can't even handle null
     }
 
     t = (PWCHAR)(ObjectNameInfo + 1);
     s = Name->Buffer;
     l = Name->Length;
-    l += sizeof(WCHAR);     // account for null
+    l += sizeof(WCHAR); // account for null
 
 
     *ReturnLength = l + sizeof(OBJECT_NAME_INFORMATION);
-    if (l > Length - sizeof(OBJECT_NAME_INFORMATION)) {
+    if (l > Length - sizeof(OBJECT_NAME_INFORMATION))
+    {
         l = Length - sizeof(OBJECT_NAME_INFORMATION);
         status = STATUS_INFO_LENGTH_MISMATCH;
-    } else {
+    }
+    else
+    {
         status = STATUS_SUCCESS;
     }
     l -= sizeof(WCHAR);
@@ -116,13 +117,16 @@ Return Value:
     // that a top-level exception handler returns the correct error code. We just
     // need to make sure we drop our lock.
     //
-    try {
+    try
+    {
         RtlCopyMemory(t, s, l);
-        t[l/sizeof(WCHAR)] = UNICODE_NULL;
+        t[l / sizeof(WCHAR)] = UNICODE_NULL;
         ObjectNameInfo->Name.Length = (USHORT)l;
         ObjectNameInfo->Name.MaximumLength = ObjectNameInfo->Name.Length;
         ObjectNameInfo->Name.Buffer = t;
-    } finally {
+    }
+    finally
+    {
         ExFreePoolWithTag(Name, CM_NAME_TAG | PROTECTED_POOL);
         CmpUnlockRegistry();
     }

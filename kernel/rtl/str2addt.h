@@ -21,30 +21,36 @@ Revision History:
 
 --*/
 
-struct in6_addr {
-    union {
+struct in6_addr
+{
+    union
+    {
         UCHAR Byte[16];
         USHORT Word[8];
     } u;
 };
-#define s6_bytes   u.Byte
-#define s6_words   u.Word
+#define s6_bytes u.Byte
+#define s6_words u.Word
 
-struct in_addr {
-        union {
-                struct { UCHAR s_b1,s_b2,s_b3,s_b4; } S_un_b;
-                struct { USHORT s_w1,s_w2; } S_un_w;
-                ULONG S_addr;
-        } S_un;
+struct in_addr
+{
+    union
+    {
+        struct
+        {
+            UCHAR s_b1, s_b2, s_b3, s_b4;
+        } S_un_b;
+        struct
+        {
+            USHORT s_w1, s_w2;
+        } S_un_w;
+        ULONG S_addr;
+    } S_un;
 };
-#define s_addr  S_un.S_addr
+#define s_addr S_un.S_addr
 
 NTSTATUS
-RtlIpv6StringToAddressT(
-    IN LPCTSTR S,
-    OUT LPCTSTR *Terminator,
-    OUT struct in6_addr *Addr
-    )
+RtlIpv6StringToAddressT(IN LPCTSTR S, OUT LPCTSTR *Terminator, OUT struct in6_addr *Addr)
 
 /*++
 
@@ -83,7 +89,12 @@ Return Value:
 --*/
 
 {
-    enum { Start, InNumber, AfterDoubleColon } state = Start;
+    enum
+    {
+        Start,
+        InNumber,
+        AfterDoubleColon
+    } state = Start;
     const TCHAR *number = NULL;
     BOOLEAN sawHex;
     ULONG numColons = 0, numDots = 0, numDigits = 0;
@@ -99,11 +110,14 @@ Return Value:
     // remember a pointer to the first character of the number
     // and convert it after we see the following character.
 
-    while (c = *S) {
+    while (c = *S)
+    {
 
-        switch (state) {
+        switch (state)
+        {
         case Start:
-            if (c == _T(':')) {
+            if (c == _T(':'))
+            {
 
                 // this case only handles double-colon at the beginning
 
@@ -119,38 +133,42 @@ Return Value:
                 Addr->s6_words[i++] = 0; // pretend it was 0::
                 S++;
                 state = AfterDoubleColon;
+            }
+            else
+            case AfterDoubleColon:
+                if (_istdigit(c))
+                {
 
-            } else
-        case AfterDoubleColon:
-            if (_istdigit(c)) {
+                    sawHex = FALSE;
+                    number = S;
+                    state = InNumber;
+                    numDigits = 1;
+                }
+                else if (_istxdigit(c))
+                {
 
-                sawHex = FALSE;
-                number = S;
-                state = InNumber;
-                numDigits = 1;
+                    if (numDots > 0)
+                        goto Finish;
 
-            } else if (_istxdigit(c)) {
-
-                if (numDots > 0)
+                    sawHex = TRUE;
+                    number = S;
+                    state = InNumber;
+                    numDigits = 1;
+                }
+                else
                     goto Finish;
-
-                sawHex = TRUE;
-                number = S;
-                state = InNumber;
-                numDigits = 1;
-
-            } else
-                goto Finish;
             break;
 
         case InNumber:
-            if (_istdigit(c)) {
+            if (_istdigit(c))
+            {
 
                 numDigits++;
 
                 // remain in InNumber state
-
-            } else if (_istxdigit(c)) {
+            }
+            else if (_istxdigit(c))
+            {
 
                 numDigits++;
 
@@ -159,32 +177,36 @@ Return Value:
 
                 sawHex = TRUE;
                 // remain in InNumber state;
-
-            } else if (c == _T(':')) {
+            }
+            else if (c == _T(':'))
+            {
 
                 if (numDots > 0)
                     goto Finish;
                 if (numColons > 6)
                     goto Finish;
 
-                if (S[1] == _T(':')) {
+                if (S[1] == _T(':'))
+                {
 
                     if (sawDoubleColon)
                         goto Finish;
                     if (numColons > 5)
                         goto Finish;
 
-                    sawDoubleColon = numColons+1;
+                    sawDoubleColon = numColons + 1;
                     numColons += 2;
                     S++;
                     state = AfterDoubleColon;
-
-                } else {
+                }
+                else
+                {
                     numColons++;
                     state = Start;
                 }
-
-            } else if (c == _T('.')) {
+            }
+            else if (c == _T('.'))
+            {
 
                 if (sawHex)
                     goto Finish;
@@ -194,32 +216,35 @@ Return Value:
                     goto Finish;
                 numDots++;
                 state = Start;
-
-            } else
+            }
+            else
                 goto Finish;
             break;
         }
 
         // If we finished a number, parse it.
 
-        if ((state != InNumber) && (number != NULL)) {
+        if ((state != InNumber) && (number != NULL))
+        {
 
             // Note either numDots > 0 or numColons > 0,
             // because something terminated the number.
 
-            if (numDots == 0) {
+            if (numDots == 0)
+            {
                 if (numDigits > 4)
                     return STATUS_INVALID_PARAMETER;
-                Addr->s6_words[i++] =
-                    RtlUshortByteSwap((USHORT) _tcstol(number, NULL, 16));
-            } else {
+                Addr->s6_words[i++] = RtlUshortByteSwap((USHORT)_tcstol(number, NULL, 16));
+            }
+            else
+            {
                 ULONG Temp;
                 if (numDigits > 3)
                     return STATUS_INVALID_PARAMETER;
                 Temp = _tcstol(number, NULL, 10);
-                if (Temp > 255) 
+                if (Temp > 255)
                     return STATUS_INVALID_PARAMETER;
-                Addr->s6_bytes[2*i + numDots-1] = (UCHAR) Temp;
+                Addr->s6_bytes[2 * i + numDots - 1] = (UCHAR)Temp;
             }
         }
 
@@ -247,51 +272,49 @@ Finish:
 
     // Parse the last number, if necessary.
 
-    if (state == InNumber) {
+    if (state == InNumber)
+    {
 
-        if (numDots == 0) {
+        if (numDots == 0)
+        {
             if (numDigits > 4)
                 return STATUS_INVALID_PARAMETER;
-            Addr->s6_words[i] =
-                RtlUshortByteSwap((USHORT) _tcstol(number, NULL, 16));
-        } else {
+            Addr->s6_words[i] = RtlUshortByteSwap((USHORT)_tcstol(number, NULL, 16));
+        }
+        else
+        {
             ULONG Temp;
             if (numDigits > 3)
                 return STATUS_INVALID_PARAMETER;
             Temp = _tcstol(number, NULL, 10);
-            if (Temp > 255) 
+            if (Temp > 255)
                 return STATUS_INVALID_PARAMETER;
-            Addr->s6_bytes[2*i + numDots] = (UCHAR) Temp;
+            Addr->s6_bytes[2 * i + numDots] = (UCHAR)Temp;
         }
-
-    } else if (state == AfterDoubleColon) {
+    }
+    else if (state == AfterDoubleColon)
+    {
 
         Addr->s6_words[i] = 0; // pretend it was ::0
-
-    } else
+    }
+    else
         return STATUS_INVALID_PARAMETER;
 
     // Insert zeroes for the double-colon, if necessary.
 
-    if (sawDoubleColon) {
+    if (sawDoubleColon)
+    {
 
-        RtlMoveMemory(&Addr->s6_words[sawDoubleColon + 8 - numColons],
-                      &Addr->s6_words[sawDoubleColon],
+        RtlMoveMemory(&Addr->s6_words[sawDoubleColon + 8 - numColons], &Addr->s6_words[sawDoubleColon],
                       (numColons - sawDoubleColon) * sizeof(USHORT));
-        RtlZeroMemory(&Addr->s6_words[sawDoubleColon],
-                      (8 - numColons) * sizeof(USHORT));
+        RtlZeroMemory(&Addr->s6_words[sawDoubleColon], (8 - numColons) * sizeof(USHORT));
     }
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-RtlIpv4StringToAddressT(
-    IN LPCTSTR String,
-    IN BOOLEAN Strict,
-    OUT LPCTSTR *Terminator,
-    OUT struct in_addr *Addr
-    )
+RtlIpv4StringToAddressT(IN LPCTSTR String, IN BOOLEAN Strict, OUT LPCTSTR *Terminator, OUT struct in_addr *Addr)
 
 /*++
 
@@ -358,7 +381,7 @@ Return Value:
     LONG base;
     WCHAR c;
     ULONG parts[4], *pp = parts;
-    BOOLEAN sawDigit=FALSE; // Must see at least one digit for address to be valid
+    BOOLEAN sawDigit = FALSE; // Must see at least one digit for address to be valid
 
 again:
     /*
@@ -366,17 +389,22 @@ again:
      * Values are specified as for C:
      * 0x=hex, 0=octal, other=decimal.
      */
-    val = 0; base = 10;
-    if (*String == L'0') {
+    val = 0;
+    base = 10;
+    if (*String == L'0')
+    {
         String++;
-        if (iswdigit(*String)) {
+        if (iswdigit(*String))
+        {
             base = 8;
         }
-        else if (*String == L'x' || *String == L'X') {
+        else if (*String == L'x' || *String == L'X')
+        {
             base = 16;
             String++;
         }
-        else {
+        else
+        {
             /*
              * It is still decimal but we saw the digint
              * and it was 0.
@@ -384,19 +412,23 @@ again:
             sawDigit = TRUE;
         }
     }
-    if (Strict && (base != 10)) {
+    if (Strict && (base != 10))
+    {
         *Terminator = String;
         return STATUS_INVALID_PARAMETER;
     }
 
-    while (c = *String) {
-        if (iswdigit(c) && ((c - L'0') < base)) {
+    while (c = *String)
+    {
+        if (iswdigit(c) && ((c - L'0') < base))
+        {
             val = (val * base) + (c - L'0');
             String++;
             sawDigit = TRUE;
             continue;
         }
-        if (base == 16 && iswxdigit(c)) {
+        if (base == 16 && iswxdigit(c))
+        {
             val = (val << 4) + (c + 10 - (islower(c) ? L'a' : L'A'));
             String++;
             sawDigit = TRUE;
@@ -404,7 +436,8 @@ again:
         }
         break;
     }
-    if (*String == L'.') {
+    if (*String == L'.')
+    {
         /*
          * Internet format:
          *      a.b.c.d
@@ -412,7 +445,8 @@ again:
          *      a.b     (with b treated as 24 bits)
          */
         /* GSS - next line was corrected on 8/5/89, was 'parts + 4' */
-        if (pp >= parts + 3) {
+        if (pp >= parts + 3)
+        {
             *Terminator = String;
             return STATUS_INVALID_PARAMETER;
         }
@@ -423,7 +457,8 @@ again:
     /*
      * Check if we saw at least one digit.
      */
-    if (!sawDigit) {
+    if (!sawDigit)
+    {
         *Terminator = String;
         return STATUS_INVALID_PARAMETER;
     }
@@ -433,42 +468,43 @@ again:
      * the number of parts specified.
      */
     n = (ULONG)(pp - parts);
-    if (Strict && (n != 4)) {
+    if (Strict && (n != 4))
+    {
         *Terminator = String;
         return STATUS_INVALID_PARAMETER;
     }
-    switch ((int) n) {
+    switch ((int)n)
+    {
 
-    case 1:                         /* a -- 32 bits */
+    case 1: /* a -- 32 bits */
         val = parts[0];
         break;
 
-    case 2:                         /* a.b -- 8.24 bits */
-        if ((parts[0] > 0xff) || (parts[1] > 0xffffff)) {
+    case 2: /* a.b -- 8.24 bits */
+        if ((parts[0] > 0xff) || (parts[1] > 0xffffff))
+        {
             *Terminator = String;
             return STATUS_INVALID_PARAMETER;
         }
         val = (parts[0] << 24) | (parts[1] & 0xffffff);
         break;
 
-    case 3:                         /* a.b.c -- 8.8.16 bits */
-        if ((parts[0] > 0xff) || (parts[1] > 0xff) ||
-            (parts[2] > 0xffff)) {
+    case 3: /* a.b.c -- 8.8.16 bits */
+        if ((parts[0] > 0xff) || (parts[1] > 0xff) || (parts[2] > 0xffff))
+        {
             *Terminator = String;
             return STATUS_INVALID_PARAMETER;
         }
-        val = (parts[0] << 24) | ((parts[1] & 0xff) << 16) |
-                (parts[2] & 0xffff);
+        val = (parts[0] << 24) | ((parts[1] & 0xff) << 16) | (parts[2] & 0xffff);
         break;
 
-    case 4:                         /* a.b.c.d -- 8.8.8.8 bits */
-        if ((parts[0] > 0xff) || (parts[1] > 0xff) ||
-            (parts[2] > 0xff) || (parts[3] > 0xff)) {
+    case 4: /* a.b.c.d -- 8.8.8.8 bits */
+        if ((parts[0] > 0xff) || (parts[1] > 0xff) || (parts[2] > 0xff) || (parts[3] > 0xff))
+        {
             *Terminator = String;
             return STATUS_INVALID_PARAMETER;
         }
-        val = (parts[0] << 24) | ((parts[1] & 0xff) << 16) |
-              ((parts[2] & 0xff) << 8) | (parts[3] & 0xff);
+        val = (parts[0] << 24) | ((parts[1] & 0xff) << 16) | ((parts[2] & 0xff) << 8) | (parts[3] & 0xff);
         break;
 
     default:

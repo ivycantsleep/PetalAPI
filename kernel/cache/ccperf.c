@@ -24,10 +24,7 @@ Revision History:
 #pragma alloc_text(PAGEWMI, CcPerfFileRunDown)
 #endif //ALLOC_PRAGMA
 
-VOID
-CcPerfFileRunDown(
-    PPERFINFO_ENTRY_TABLE HashTable
-    )
+VOID CcPerfFileRunDown(PPERFINFO_ENTRY_TABLE HashTable)
 /*++
 
 Routine Description:
@@ -61,46 +58,43 @@ Environment:
     KIRQL OldIrql;
     PSHARED_CACHE_MAP SharedCacheMap;
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    CcAcquireMasterLock( &OldIrql );
+    CcAcquireMasterLock(&OldIrql);
 
     //
     // Walk through CcDirtySharedCacheMapList
     //
-    
-    SharedCacheMap = CONTAINING_RECORD( CcDirtySharedCacheMapList.SharedCacheMapLinks.Flink,
-                                        SHARED_CACHE_MAP,
-                                        SharedCacheMapLinks );
-    
-    while (&SharedCacheMap->SharedCacheMapLinks != &CcDirtySharedCacheMapList.SharedCacheMapLinks) {
+
+    SharedCacheMap =
+        CONTAINING_RECORD(CcDirtySharedCacheMapList.SharedCacheMapLinks.Flink, SHARED_CACHE_MAP, SharedCacheMapLinks);
+
+    while (&SharedCacheMap->SharedCacheMapLinks != &CcDirtySharedCacheMapList.SharedCacheMapLinks)
+    {
         //
         //  Skip over cursors
         //
-        if (!FlagOn(SharedCacheMap->Flags, IS_CURSOR)) {
+        if (!FlagOn(SharedCacheMap->Flags, IS_CURSOR))
+        {
             PerfInfoAddToFileHash(HashTable, SharedCacheMap->FileObject);
         }
-        SharedCacheMap = CONTAINING_RECORD( SharedCacheMap->SharedCacheMapLinks.Flink,
-                                            SHARED_CACHE_MAP,
-                                            SharedCacheMapLinks );
-    }                   
+        SharedCacheMap =
+            CONTAINING_RECORD(SharedCacheMap->SharedCacheMapLinks.Flink, SHARED_CACHE_MAP, SharedCacheMapLinks);
+    }
 
     //
     // CcCleanSharedCacheMapList
     //
-    SharedCacheMap = CONTAINING_RECORD( CcCleanSharedCacheMapList.Flink,
-                                        SHARED_CACHE_MAP,
-                                        SharedCacheMapLinks );
+    SharedCacheMap = CONTAINING_RECORD(CcCleanSharedCacheMapList.Flink, SHARED_CACHE_MAP, SharedCacheMapLinks);
 
-    while (&SharedCacheMap->SharedCacheMapLinks != &CcCleanSharedCacheMapList) {
+    while (&SharedCacheMap->SharedCacheMapLinks != &CcCleanSharedCacheMapList)
+    {
         PerfInfoAddToFileHash(HashTable, SharedCacheMap->FileObject);
 
-        SharedCacheMap = CONTAINING_RECORD( SharedCacheMap->SharedCacheMapLinks.Flink,
-                                            SHARED_CACHE_MAP,
-                                            SharedCacheMapLinks );
-
+        SharedCacheMap =
+            CONTAINING_RECORD(SharedCacheMap->SharedCacheMapLinks.Flink, SHARED_CACHE_MAP, SharedCacheMapLinks);
     }
 
-    CcReleaseMasterLock( OldIrql );
+    CcReleaseMasterLock(OldIrql);
     return;
 }

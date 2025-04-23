@@ -10,14 +10,15 @@
 #include "comsvcs.h"
 
 #ifdef __cplusplus
-extern "C"{
-#endif 
+extern "C"
+{
+#endif
 
-//
-// GetDispenserManager
-// A Dispenser calls this API to get a reference to DispenserManager.
-//
-__declspec(dllimport) HRESULT __cdecl GetDispenserManager(IDispenserManager**);
+    //
+    // GetDispenserManager
+    // A Dispenser calls this API to get a reference to DispenserManager.
+    //
+    __declspec(dllimport) HRESULT __cdecl GetDispenserManager(IDispenserManager **);
 
 
 #ifdef __cplusplus

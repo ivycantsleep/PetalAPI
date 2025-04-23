@@ -26,5 +26,4 @@ Revision History:
 //
 // Note the rounding up to the nearest ULONG.
 //
-#define OPTION_SIZE     ((VERIFIER_OPTION_MAX+sizeof(ULONG)*8-1)/8)
-
+#define OPTION_SIZE ((VERIFIER_OPTION_MAX + sizeof(ULONG) * 8 - 1) / 8)

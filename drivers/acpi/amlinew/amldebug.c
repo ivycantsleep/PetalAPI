@@ -19,10 +19,8 @@
 /*** Local function prototypes
  */
 
-LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                     ULONG dwNonSWArgs);
-LONG LOCAL DebugExpr(PSZ pszArg, PULONG_PTR puipValue, BOOLEAN *pfPhysical,
-                     PPNSOBJ ppns, PULONG pdwOffset);
+LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugExpr(PSZ pszArg, PULONG_PTR puipValue, BOOLEAN *pfPhysical, PPNSOBJ ppns, PULONG pdwOffset);
 BOOLEAN LOCAL IsNumber(PSZ pszStr, ULONG dwBase, PULONG_PTR puipValue);
 LONG LOCAL AddBrkPt(PUCHAR pbBrkPt);
 LONG LOCAL ClearBrkPt(int iBrkPt);
@@ -33,10 +31,8 @@ LONG LOCAL DebugBD(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugBE(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugBL(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugBP(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
-LONG LOCAL DebugClearLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                         ULONG dwNonSWArgs);
-LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen,
-                    BOOLEAN fPhysical);
+LONG LOCAL DebugClearLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen, BOOLEAN fPhysical);
 LONG LOCAL DebugDumpData(PCMDARG pArg, PSZ pszArg, ULONG dwfDataSize);
 LONG LOCAL DebugD(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugDB(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
@@ -45,66 +41,48 @@ LONG LOCAL DebugDD(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugDA(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 #ifdef DEBUG
 LONG LOCAL DebugDC(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
-LONG LOCAL DebugDumpHeap(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                         ULONG dwNonSWArgs);
+LONG LOCAL DebugDumpHeap(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 VOID LOCAL DumpHeap(PHEAP pheap);
 #endif
-LONG LOCAL DebugDumpLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                        ULONG dwNonSWArgs);
-LONG LOCAL DebugDumpStack(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                          ULONG dwNonSWArgs);
+LONG LOCAL DebugDumpLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugDumpStack(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 VOID LOCAL DumpStack(PCTXT pctxt, BOOLEAN fVerbose);
-LONG LOCAL DebugDumpNameSpace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                              ULONG dwNonSWArgs);
-LONG LOCAL DebugDumpObject(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                           ULONG dwNonSWArgs);
-LONG LOCAL DebugEditMem(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                        ULONG dwNonSWArgs);
-LONG LOCAL DebugFindNSObj(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                          ULONG dwNonSWArgs);
+LONG LOCAL DebugDumpNameSpace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugDumpObject(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugEditMem(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugFindNSObj(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 BOOLEAN LOCAL FindNSObj(NAMESEG dwName, PNSOBJ pnsRoot);
 LONG LOCAL InPort(ULONG dwPort, ULONG dwSize, PULONG pdwData);
 LONG LOCAL DebugInPort(PSZ pszArg, ULONG dwSize);
 LONG LOCAL DebugI(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugIW(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugID(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
-LONG LOCAL DebugQuit(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                     ULONG dwNonSWArgs);
-LONG LOCAL DebugListCtxts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                          ULONG dwNonSWArgs);
+LONG LOCAL DebugQuit(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugListCtxts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugLN(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
-LONG LOCAL DebugNotify(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                       ULONG dwNonSWArgs);
+LONG LOCAL DebugNotify(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL OutPort(ULONG dwPort, ULONG dwSize, ULONG dwData);
 LONG LOCAL DebugOutPort(PSZ pszArg, ULONG dwSize);
 LONG LOCAL DebugO(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugOW(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 LONG LOCAL DebugOD(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 VOID LOCAL PrintSymbol(PUCHAR pb);
-LONG LOCAL DebugTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                     ULONG dwNonSWArgs);
-LONG LOCAL DebugStep(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                     ULONG dwNonSWArgs);
+LONG LOCAL DebugTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugStep(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
 VOID LOCAL DumpContext(PCTXT pctxt);
-LONG LOCAL DebugDumpContext(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                            ULONG dwNonSWArgs);
-LONG LOCAL DebugSet(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                    ULONG dwNonSWArgs);
-LONG LOCAL DebugSetLogSize(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                           ULONG dwNonSWArgs);
-LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                      ULONG dwNonSWArgs);
-LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                          ULONG dwNonSWArgs);
-VOID EXPORT RunMethodCallBack(PNSOBJ pns, NTSTATUS rc, POBJDATA pdata,
-                              PVOID pvContext);
+LONG LOCAL DebugDumpContext(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugSet(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugSetLogSize(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs);
+VOID EXPORT RunMethodCallBack(PNSOBJ pns, NTSTATUS rc, POBJDATA pdata, PVOID pvContext);
 VOID LOCAL AddObjSymbol(PUCHAR pbOp, PNSOBJ pnsObj);
 BOOLEAN LOCAL FindObjSymbol(PUCHAR pbOp, PPNSOBJ ppns, PULONG pdwOffset);
 
 /*** Exported data
  */
 
-DBGR gDebugger = {0};
+DBGR gDebugger = { 0 };
 
 
 /*** Local data
@@ -112,259 +90,265 @@ DBGR gDebugger = {0};
 
 ULONG dwCmdArg = 0;
 
-CMDARG ArgsHelp[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugHelp,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsHelp[] = { NULL, AT_ACTION, 0, NULL, 0, DebugHelp, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsBC[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugBC,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsBC[] = { NULL, AT_ACTION, 0, NULL, 0, DebugBC, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsBD[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugBD,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsBD[] = { NULL, AT_ACTION, 0, NULL, 0, DebugBD, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsBE[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugBE,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsBE[] = { NULL, AT_ACTION, 0, NULL, 0, DebugBE, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsBP[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugBP,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsBP[] = { NULL, AT_ACTION, 0, NULL, 0, DebugBP, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsD[] =
-{
-    "l", AT_NUM, AF_SEP, &dwCmdArg, 16, DebugD,
-    NULL, AT_ACTION, 0, NULL, 0, DebugD,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsD[] = { "l",  AT_NUM, AF_SEP, &dwCmdArg, 16,     DebugD, NULL, AT_ACTION, 0,
+                   NULL, 0,      DebugD, NULL,      AT_END, 0,      NULL, 0,         NULL };
 
-CMDARG ArgsDB[] =
-{
-    "l", AT_NUM, AF_SEP, &dwCmdArg, 16, DebugDB,
-    NULL, AT_ACTION, 0, NULL, 0, DebugDB,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsDB[] = { "l",  AT_NUM, AF_SEP,  &dwCmdArg, 16,     DebugDB, NULL, AT_ACTION, 0,
+                    NULL, 0,      DebugDB, NULL,      AT_END, 0,       NULL, 0,         NULL };
 
-CMDARG ArgsDW[] =
-{
-    "l", AT_NUM, AF_SEP, &dwCmdArg, 16, DebugDW,
-    NULL, AT_ACTION, 0, NULL, 0, DebugDW,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsDW[] = { "l",  AT_NUM, AF_SEP,  &dwCmdArg, 16,     DebugDW, NULL, AT_ACTION, 0,
+                    NULL, 0,      DebugDW, NULL,      AT_END, 0,       NULL, 0,         NULL };
 
-CMDARG ArgsDD[] =
-{
-    "l", AT_NUM, AF_SEP, &dwCmdArg, 16, DebugDD,
-    NULL, AT_ACTION, 0, NULL, 0, DebugDD,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsDD[] = { "l",  AT_NUM, AF_SEP,  &dwCmdArg, 16,     DebugDD, NULL, AT_ACTION, 0,
+                    NULL, 0,      DebugDD, NULL,      AT_END, 0,       NULL, 0,         NULL };
 
-CMDARG ArgsDA[] =
-{
-    "l", AT_NUM, AF_SEP, &dwCmdArg, 16, DebugDA,
-    NULL, AT_ACTION, 0, NULL, 0, DebugDA,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsDA[] = { "l",  AT_NUM, AF_SEP,  &dwCmdArg, 16,     DebugDA, NULL, AT_ACTION, 0,
+                    NULL, 0,      DebugDA, NULL,      AT_END, 0,       NULL, 0,         NULL };
 
 #ifdef DEBUG
-CMDARG ArgsDumpHeap[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugDumpHeap,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsDumpHeap[] = { NULL, AT_ACTION, 0, NULL, 0, DebugDumpHeap, NULL, AT_END, 0, NULL, 0, NULL };
 #endif
 
-CMDARG ArgsDumpStack[] =
-{
-  #ifdef DEBUG
-    "v", AT_ENABLE, 0, &dwCmdArg, DSF_VERBOSE, NULL,
-  #endif
-    NULL, AT_ACTION, 0, NULL, 0, DebugDumpStack,
-    NULL, AT_END, 0, NULL, 0, NULL
+CMDARG ArgsDumpStack[] = {
+#ifdef DEBUG
+    "v",  AT_ENABLE, 0, &dwCmdArg, DSF_VERBOSE, NULL,
+#endif
+    NULL, AT_ACTION, 0, NULL,      0,           DebugDumpStack, NULL, AT_END, 0, NULL, 0, NULL
 };
 
-CMDARG ArgsDNS[] =
-{
-    "s", AT_ENABLE, 0, &dwCmdArg, DNSF_RECURSE, NULL,
-    NULL, AT_ACTION, 0, NULL, 0, DebugDumpNameSpace,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsDNS[] = { "s",       AT_ENABLE, 0,    &dwCmdArg, DNSF_RECURSE,       NULL, NULL,
+                     AT_ACTION, 0,         NULL, 0,         DebugDumpNameSpace, NULL, AT_END,
+                     0,         NULL,      0,    NULL };
 
-CMDARG ArgsDumpObject[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugDumpObject,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsDumpObject[] = { NULL, AT_ACTION, 0, NULL, 0, DebugDumpObject, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsEditMem[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugEditMem,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsEditMem[] = { NULL, AT_ACTION, 0, NULL, 0, DebugEditMem, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsFindNS[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugFindNSObj,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsFindNS[] = { NULL, AT_ACTION, 0, NULL, 0, DebugFindNSObj, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsI[] =
-{
-    NULL, AT_NUM, 0, &dwCmdArg, 16, DebugI,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsI[] = { NULL, AT_NUM, 0, &dwCmdArg, 16, DebugI, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsIW[] =
-{
-    NULL, AT_NUM, 0, &dwCmdArg, 16, DebugIW,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsIW[] = { NULL, AT_NUM, 0, &dwCmdArg, 16, DebugIW, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsID[] =
-{
-    NULL, AT_NUM, 0, &dwCmdArg, 16, DebugID,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsID[] = { NULL, AT_NUM, 0, &dwCmdArg, 16, DebugID, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsLN[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugLN,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsLN[] = { NULL, AT_ACTION, 0, NULL, 0, DebugLN, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsNotify[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugNotify,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsNotify[] = { NULL, AT_ACTION, 0, NULL, 0, DebugNotify, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsO[] =
-{
-    NULL, AT_NUM, 0, &dwCmdArg, 16, DebugO,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsO[] = { NULL, AT_NUM, 0, &dwCmdArg, 16, DebugO, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsOW[] =
-{
-    NULL, AT_NUM, 0, &dwCmdArg, 16, DebugOW,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsOW[] = { NULL, AT_NUM, 0, &dwCmdArg, 16, DebugOW, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsOD[] =
-{
-    NULL, AT_NUM, 0, &dwCmdArg, 16, DebugOD,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsOD[] = { NULL, AT_NUM, 0, &dwCmdArg, 16, DebugOD, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsDumpCtxt[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugDumpContext,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsDumpCtxt[] = { NULL, AT_ACTION, 0, NULL, 0, DebugDumpContext, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsRunMethod[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugRunMethod,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsRunMethod[] = { NULL, AT_ACTION, 0, NULL, 0, DebugRunMethod, NULL, AT_END, 0, NULL, 0, NULL };
 
-CMDARG ArgsSetOptions[] =
-{
-    "traceon", AT_ENABLE, 0, &gDebugger.dwfDebugger, DBGF_AMLTRACE_ON, NULL,
-    "traceoff", AT_DISABLE, 0, &gDebugger.dwfDebugger, DBGF_AMLTRACE_ON, NULL,
-    "spewon", AT_ENABLE, 0, &gDebugger.dwfDebugger, DBGF_DEBUG_SPEW_ON, NULL,
-    "spewoff", AT_DISABLE, 0, &gDebugger.dwfDebugger, DBGF_DEBUG_SPEW_ON, NULL,
-    "nesttraceon", AT_DISABLE, 0, &gDebugger.dwfDebugger, DBGF_TRACE_NONEST, NULL,
-    "nesttraceoff", AT_ENABLE, 0, &gDebugger.dwfDebugger, DBGF_TRACE_NONEST, NULL,
-    "lbrkon", AT_ENABLE, 0, &gdwfAMLIInit, AMLIIF_LOADDDB_BREAK, NULL,
-    "lbrkoff", AT_DISABLE, 0, &gdwfAMLIInit, AMLIIF_LOADDDB_BREAK, NULL,
-    "errbrkon", AT_ENABLE, 0, &gDebugger.dwfDebugger, DBGF_ERRBREAK_ON, NULL,
-    "errbrkoff", AT_DISABLE, 0, &gDebugger.dwfDebugger, DBGF_ERRBREAK_ON, NULL,
-    "verboseon", AT_ENABLE, 0, &gDebugger.dwfDebugger, DBGF_VERBOSE_ON, NULL,
-    "verboseoff", AT_DISABLE, 0, &gDebugger.dwfDebugger, DBGF_VERBOSE_ON, NULL,
-    "logon", AT_ENABLE, 0, &gDebugger.dwfDebugger, DBGF_LOGEVENT_ON, NULL,
-    "logoff", AT_DISABLE, 0, &gDebugger.dwfDebugger, DBGF_LOGEVENT_ON, NULL,
-    "logmuton", AT_ENABLE, 0, &gDebugger.dwfDebugger, DBGF_LOGEVENT_MUTEX, NULL,
-    "logmutoff", AT_DISABLE, 0, &gDebugger.dwfDebugger, DBGF_LOGEVENT_MUTEX, NULL,
-    "logsize", AT_NUM, AF_SEP, &dwCmdArg, 10, DebugSetLogSize,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsSetOptions[] = { "traceon",
+                            AT_ENABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_AMLTRACE_ON,
+                            NULL,
+                            "traceoff",
+                            AT_DISABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_AMLTRACE_ON,
+                            NULL,
+                            "spewon",
+                            AT_ENABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_DEBUG_SPEW_ON,
+                            NULL,
+                            "spewoff",
+                            AT_DISABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_DEBUG_SPEW_ON,
+                            NULL,
+                            "nesttraceon",
+                            AT_DISABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_TRACE_NONEST,
+                            NULL,
+                            "nesttraceoff",
+                            AT_ENABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_TRACE_NONEST,
+                            NULL,
+                            "lbrkon",
+                            AT_ENABLE,
+                            0,
+                            &gdwfAMLIInit,
+                            AMLIIF_LOADDDB_BREAK,
+                            NULL,
+                            "lbrkoff",
+                            AT_DISABLE,
+                            0,
+                            &gdwfAMLIInit,
+                            AMLIIF_LOADDDB_BREAK,
+                            NULL,
+                            "errbrkon",
+                            AT_ENABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_ERRBREAK_ON,
+                            NULL,
+                            "errbrkoff",
+                            AT_DISABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_ERRBREAK_ON,
+                            NULL,
+                            "verboseon",
+                            AT_ENABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_VERBOSE_ON,
+                            NULL,
+                            "verboseoff",
+                            AT_DISABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_VERBOSE_ON,
+                            NULL,
+                            "logon",
+                            AT_ENABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_LOGEVENT_ON,
+                            NULL,
+                            "logoff",
+                            AT_DISABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_LOGEVENT_ON,
+                            NULL,
+                            "logmuton",
+                            AT_ENABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_LOGEVENT_MUTEX,
+                            NULL,
+                            "logmutoff",
+                            AT_DISABLE,
+                            0,
+                            &gDebugger.dwfDebugger,
+                            DBGF_LOGEVENT_MUTEX,
+                            NULL,
+                            "logsize",
+                            AT_NUM,
+                            AF_SEP,
+                            &dwCmdArg,
+                            10,
+                            DebugSetLogSize,
+                            NULL,
+                            AT_END,
+                            0,
+                            NULL,
+                            0,
+                            NULL };
 
 #ifdef TRACING
-CMDARG ArgsSetTrace[] =
-{
-    "trigon", AT_ENABLE, 0, &gDebugger.dwfDebugger, DBGF_TRIGGER_MODE, NULL,
-    "trigoff", AT_DISABLE, 0, &gDebugger.dwfDebugger, DBGF_TRIGGER_MODE, NULL,
-    "level", AT_NUM, AF_SEP, &giTraceLevel, 0, NULL,
-    "add", AT_STRING, AF_SEP, &gpszTrigPts, 0, AddTraceTrigPts,
-    "zap", AT_STRING, AF_SEP, &gpszTrigPts, 0, ZapTraceTrigPts,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsSetTrace[] = { "trigon",
+                          AT_ENABLE,
+                          0,
+                          &gDebugger.dwfDebugger,
+                          DBGF_TRIGGER_MODE,
+                          NULL,
+                          "trigoff",
+                          AT_DISABLE,
+                          0,
+                          &gDebugger.dwfDebugger,
+                          DBGF_TRIGGER_MODE,
+                          NULL,
+                          "level",
+                          AT_NUM,
+                          AF_SEP,
+                          &giTraceLevel,
+                          0,
+                          NULL,
+                          "add",
+                          AT_STRING,
+                          AF_SEP,
+                          &gpszTrigPts,
+                          0,
+                          AddTraceTrigPts,
+                          "zap",
+                          AT_STRING,
+                          AF_SEP,
+                          &gpszTrigPts,
+                          0,
+                          ZapTraceTrigPts,
+                          NULL,
+                          AT_END,
+                          0,
+                          NULL,
+                          0,
+                          NULL };
 #endif
 
-CMDARG ArgsUnAsm[] =
-{
-    NULL, AT_ACTION, 0, NULL, 0, DebugUnAsm,
-    NULL, AT_END, 0, NULL, 0, NULL
-};
+CMDARG ArgsUnAsm[] = { NULL, AT_ACTION, 0, NULL, 0, DebugUnAsm, NULL, AT_END, 0, NULL, 0, NULL };
 
-DBGCMD DbgCmds[] =
-{
-    "?", 0, ArgsHelp, DebugHelp,
-    "bc", 0, ArgsBC, DebugBC,
-    "bd", 0, ArgsBD, DebugBD,
-    "be", 0, ArgsBE, DebugBE,
-    "bl", 0, NULL, DebugBL,
-    "bp", 0, ArgsBP, DebugBP,
-    "cl", 0, NULL, DebugClearLog,
-    "d", 0, ArgsD, DebugD,
-    "db", 0, ArgsDB, DebugDB,
-    "dw", 0, ArgsDW, DebugDW,
-    "dd", 0, ArgsDD, DebugDD,
-    "da", 0, ArgsDA, DebugDA,
-  #ifdef DEBUG
-    "dc", 0, NULL, DebugDC,
-    "dh", 0, ArgsDumpHeap, DebugDumpHeap,
-  #endif
-    "dl", 0, NULL, DebugDumpLog,
-    "ds", 0, ArgsDumpStack, DebugDumpStack,
-    "dns", 0, ArgsDNS, DebugDumpNameSpace,
-    "do", 0, ArgsDumpObject, DebugDumpObject,
-    "e", 0, ArgsEditMem, DebugEditMem,
-    "find", 0, ArgsFindNS, DebugFindNSObj,
-    "g", CMDF_QUIT, NULL, NULL,
-    "i", 0, ArgsI, DebugI,
-    "iw", 0, ArgsIW, DebugIW,
-    "id", 0, ArgsID, DebugID,
-    "lc", 0, NULL, DebugListCtxts,
-    "ln", 0, ArgsLN, DebugLN,
-    "notify", 0, ArgsNotify, DebugNotify,
-    "o", 0, ArgsO, DebugO,
-    "ow", 0, ArgsOW, DebugOW,
-    "od", 0, ArgsOD, DebugOD,
-    "p", 0, NULL, DebugStep,
-    "q", 0, NULL, DebugQuit,
-    "r", 0, ArgsDumpCtxt, DebugDumpContext,
-    "run", 0, ArgsRunMethod, DebugRunMethod,
-    "set", 0, ArgsSetOptions, DebugSet,
-    "t", 0, NULL, DebugTrace,
-  #ifdef TRACING
-    "trace", 0, ArgsSetTrace, SetTrace,
-  #endif
-    "u", 0, ArgsUnAsm, DebugUnAsm,
-    NULL, 0, NULL, NULL
-};
+DBGCMD DbgCmds[] = { "?",      0,         ArgsHelp,       DebugHelp,
+                     "bc",     0,         ArgsBC,         DebugBC,
+                     "bd",     0,         ArgsBD,         DebugBD,
+                     "be",     0,         ArgsBE,         DebugBE,
+                     "bl",     0,         NULL,           DebugBL,
+                     "bp",     0,         ArgsBP,         DebugBP,
+                     "cl",     0,         NULL,           DebugClearLog,
+                     "d",      0,         ArgsD,          DebugD,
+                     "db",     0,         ArgsDB,         DebugDB,
+                     "dw",     0,         ArgsDW,         DebugDW,
+                     "dd",     0,         ArgsDD,         DebugDD,
+                     "da",     0,         ArgsDA,         DebugDA,
+#ifdef DEBUG
+                     "dc",     0,         NULL,           DebugDC,
+                     "dh",     0,         ArgsDumpHeap,   DebugDumpHeap,
+#endif
+                     "dl",     0,         NULL,           DebugDumpLog,
+                     "ds",     0,         ArgsDumpStack,  DebugDumpStack,
+                     "dns",    0,         ArgsDNS,        DebugDumpNameSpace,
+                     "do",     0,         ArgsDumpObject, DebugDumpObject,
+                     "e",      0,         ArgsEditMem,    DebugEditMem,
+                     "find",   0,         ArgsFindNS,     DebugFindNSObj,
+                     "g",      CMDF_QUIT, NULL,           NULL,
+                     "i",      0,         ArgsI,          DebugI,
+                     "iw",     0,         ArgsIW,         DebugIW,
+                     "id",     0,         ArgsID,         DebugID,
+                     "lc",     0,         NULL,           DebugListCtxts,
+                     "ln",     0,         ArgsLN,         DebugLN,
+                     "notify", 0,         ArgsNotify,     DebugNotify,
+                     "o",      0,         ArgsO,          DebugO,
+                     "ow",     0,         ArgsOW,         DebugOW,
+                     "od",     0,         ArgsOD,         DebugOD,
+                     "p",      0,         NULL,           DebugStep,
+                     "q",      0,         NULL,           DebugQuit,
+                     "r",      0,         ArgsDumpCtxt,   DebugDumpContext,
+                     "run",    0,         ArgsRunMethod,  DebugRunMethod,
+                     "set",    0,         ArgsSetOptions, DebugSet,
+                     "t",      0,         NULL,           DebugTrace,
+#ifdef TRACING
+                     "trace",  0,         ArgsSetTrace,   SetTrace,
+#endif
+                     "u",      0,         ArgsUnAsm,      DebugUnAsm,
+                     NULL,     0,         NULL,           NULL };
 
 /***EP  AMLIDebugger - AMLI Debugger
  *
@@ -397,7 +381,7 @@ VOID STDCALL AMLIDebugger(BOOLEAN fCallFromVxD)
         PRINTF("\nRe-entering AML debugger is not allowed.\n"
                "Type 'g' to go back to the AML debugger.\n");
     }
-}       //AMLIDebugger
+} //AMLIDebugger
 
 /***LP  DebugHelp - help
  *
@@ -413,8 +397,7 @@ VOID STDCALL AMLIDebugger(BOOLEAN fCallFromVxD)
  *      returns negative error code
  */
 
-LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                     ULONG dwNonSWArgs)
+LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
 
@@ -509,7 +492,7 @@ LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             PRINTF("<Addr>       - data address (physical address if prefixed by \"%%\")\n");
             PRINTF("<MethodName> - full path of method name\n");
         }
-      #ifdef DEBUG
+#ifdef DEBUG
         else if (STRCMP(pszArg, "dc") == 0)
         {
             PRINTF("\nDump Memory Object Count Table:\n");
@@ -521,7 +504,7 @@ LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             PRINTF("Usage: dh [<Addr>]\n");
             PRINTF("<Addr> - address of the heap block, global heap if missing\n");
         }
-      #endif
+#endif
         else if (STRCMP(pszArg, "dl") == 0)
         {
             PRINTF("\nDump Event Log:\n");
@@ -530,12 +513,12 @@ LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
         else if (STRCMP(pszArg, "ds") == 0)
         {
             PRINTF("\nDump Stack:\n");
-          #ifdef DEBUG
+#ifdef DEBUG
             PRINTF("Usage: ds [/v] [<Addr>]\n");
             PRINTF("v - enable versbos mode\n");
-          #else
+#else
             PRINTF("Usage: ds [<Addr>]\n");
-          #endif
+#endif
             PRINTF("<Addr> - address of the context block, use current context if missing\n");
         }
         else if (STRCMP(pszArg, "dns") == 0)
@@ -680,7 +663,7 @@ LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             PRINTF("\nTrace Into AML Code:\n");
             PRINTF("Usage: t\n");
         }
-      #ifdef TRACING
+#ifdef TRACING
         else if (STRCMP(pszArg, "trace") == 0)
         {
             PRINTF("\nInterpreter Trace Mode:\n");
@@ -693,7 +676,7 @@ LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             PRINTF("zap          - zap trace trigger points\n");
             PRINTF("<TrigPtList> - list of trigger point numbers separated by commas\n");
         }
-      #endif
+#endif
         else if (STRCMP(pszArg, "u") == 0)
         {
             PRINTF("\nUnassemble AML code:\n");
@@ -726,13 +709,13 @@ LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
         PRINTF("Dump Data DWords         - dd [[l=<Len>] <Addr>]\n");
         PRINTF("Dump Data String         - da [[l=<Len>] <Addr>]\n");
         PRINTF("Dump Event Log           - dl\n");
-      #ifdef DEBUG
+#ifdef DEBUG
         PRINTF("Dump Object Count Table  - dc\n");
         PRINTF("Dump Heap                - dh [<Addr>]\n");
         PRINTF("Dump Stack               - ds [/v] [<Addr>]\n");
-      #else
+#else
         PRINTF("Dump Stack               - ds [<Addr>]\n");
-      #endif
+#endif
         PRINTF("Dump Name Space Object   - dns [[/s] [<NameStr> | <Addr>]]\n");
         PRINTF("Dump Data Object         - do <Addr>\n");
         PRINTF("Edit Memory              - e [<Addr> [<DataList>]]\n");
@@ -757,15 +740,15 @@ LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
                "                               [logon | logoff] [logmuton | logmutoff] \n"
                "                               [logsize=<MaxNumEvents>]\n");
         PRINTF("Trace Into AML Code      - t\n");
-      #ifdef TRACING
+#ifdef TRACING
         PRINTF("Interpreter Trace Mode   - trace [trigon] [trigoff] [level=<n>]\n"
                "                                 [add=<TrigPtStr] [zap=<TrigPtList>]\n");
-      #endif
+#endif
         PRINTF("Unassemble AML code      - u [<MethodName> | <CodeAddr>]\n");
     }
 
     return rc;
-}       //DebugHelp
+} //DebugHelp
 
 /***LP  DebugExpr - Parse debugger expression
  *
@@ -783,8 +766,7 @@ LONG LOCAL DebugHelp(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns DBGERR_CMD_FAILED
  */
 
-LONG LOCAL DebugExpr(PSZ pszArg, PULONG_PTR puipValue, BOOLEAN *pfPhysical,
-                     PPNSOBJ ppns, PULONG pdwOffset)
+LONG LOCAL DebugExpr(PSZ pszArg, PULONG_PTR puipValue, BOOLEAN *pfPhysical, PPNSOBJ ppns, PULONG pdwOffset)
 {
     LONG rc = DBGERR_NONE;
     PNSOBJ pns = NULL;
@@ -808,25 +790,21 @@ LONG LOCAL DebugExpr(PSZ pszArg, PULONG_PTR puipValue, BOOLEAN *pfPhysical,
     else if (!IsNumber(pszArg, 16, puipValue))
     {
         STRUPR(pszArg);
-        if ((GetNameSpaceObject(pszArg, NULL, &pns, NSF_LOCAL_SCOPE) ==
-             STATUS_SUCCESS) &&
+        if ((GetNameSpaceObject(pszArg, NULL, &pns, NSF_LOCAL_SCOPE) == STATUS_SUCCESS) &&
             (pns->ObjData.dwDataType == OBJTYPE_METHOD))
         {
-            *puipValue = (ULONG_PTR)
-                        (((PMETHODOBJ)pns->ObjData.pbDataBuff)->abCodeBuff);
+            *puipValue = (ULONG_PTR)(((PMETHODOBJ)pns->ObjData.pbDataBuff)->abCodeBuff);
         }
         else
         {
-            DBG_ERROR(("object not found or object is not a method - %s",
-                       pszArg));
+            DBG_ERROR(("object not found or object is not a method - %s", pszArg));
             rc = DBGERR_INVALID_CMD;
         }
     }
     else if (FindObjSymbol((PUCHAR)*puipValue, &pns, &dwOffset))
     {
         if ((pns->ObjData.dwDataType != OBJTYPE_METHOD) ||
-            (dwOffset >= pns->ObjData.dwDataLen -
-                         FIELD_OFFSET(METHODOBJ, abCodeBuff)))
+            (dwOffset >= pns->ObjData.dwDataLen - FIELD_OFFSET(METHODOBJ, abCodeBuff)))
         {
             pns = NULL;
             dwOffset = 0;
@@ -843,7 +821,7 @@ LONG LOCAL DebugExpr(PSZ pszArg, PULONG_PTR puipValue, BOOLEAN *pfPhysical,
     }
 
     return rc;
-}       //DebugExpr
+} //DebugExpr
 
 /***LP  IsNumber - Check if string is a number, if so return the number
  *
@@ -870,7 +848,7 @@ BOOLEAN LOCAL IsNumber(PSZ pszStr, ULONG dwBase, PULONG_PTR puipValue)
         rc = FALSE;
 
     return rc;
-}       //IsNumber
+} //IsNumber
 
 /***LP  AddBrkPt - Add breakpoint
  *
@@ -890,8 +868,7 @@ LONG LOCAL AddBrkPt(PUCHAR pbBrkPt)
 
     for (i = 0, iBrkPt = -1; i < MAX_BRK_PTS; ++i)
     {
-        if ((pbBrkPt == gDebugger.BrkPts[i].pbBrkPt) ||
-            (iBrkPt == -1) && (gDebugger.BrkPts[i].pbBrkPt == NULL))
+        if ((pbBrkPt == gDebugger.BrkPts[i].pbBrkPt) || (iBrkPt == -1) && (gDebugger.BrkPts[i].pbBrkPt == NULL))
         {
             iBrkPt = i;
         }
@@ -909,7 +886,7 @@ LONG LOCAL AddBrkPt(PUCHAR pbBrkPt)
     }
 
     return rc;
-}       //AddBrkPt
+} //AddBrkPt
 
 /***LP  ClearBrkPt - Clear breakpoint
  *
@@ -938,7 +915,7 @@ LONG LOCAL ClearBrkPt(int iBrkPt)
     }
 
     return rc;
-}       //ClearBrkPt
+} //ClearBrkPt
 
 /***LP  SetBrkPtState - Enable/Disable breakpoint
  *
@@ -974,7 +951,7 @@ LONG LOCAL SetBrkPtState(int iBrkPt, BOOLEAN fEnable)
     }
 
     return rc;
-}       //SetBrkPtState
+} //SetBrkPtState
 
 /***LP  EnableDisableBP - Enable/Disable BreakPoints
  *
@@ -1030,7 +1007,7 @@ LONG LOCAL EnableDisableBP(PSZ pszArg, BOOLEAN fEnable)
     }
 
     return rc;
-}       //EnableDisableBP
+} //EnableDisableBP
 
 /***LP  DebugBC - Clear BreakPoint
  *
@@ -1092,7 +1069,7 @@ LONG LOCAL DebugBC(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     }
 
     return rc;
-}       //DebugBC
+} //DebugBC
 
 /***LP  DebugBD - Disable BreakPoint
  *
@@ -1119,7 +1096,7 @@ LONG LOCAL DebugBD(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = EnableDisableBP(pszArg, FALSE);
 
     return rc;
-}       //DebugBD
+} //DebugBD
 
 /***LP  DebugBE - Enable BreakPoint
  *
@@ -1146,7 +1123,7 @@ LONG LOCAL DebugBE(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = EnableDisableBP(pszArg, TRUE);
 
     return rc;
-}       //DebugBE
+} //DebugBE
 
 /***LP  DebugBL - List BreakPoints
  *
@@ -1180,9 +1157,7 @@ LONG LOCAL DebugBL(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
         {
             if (gDebugger.BrkPts[i].pbBrkPt != NULL)
             {
-                PRINTF("%2d: <%c> %08x",
-                       i,
-                       (gDebugger.BrkPts[i].dwfBrkPt & BPF_ENABLED)? 'e': 'd',
+                PRINTF("%2d: <%c> %08x", i, (gDebugger.BrkPts[i].dwfBrkPt & BPF_ENABLED) ? 'e' : 'd',
                        gDebugger.BrkPts[i].pbBrkPt);
                 if (FindObjSymbol(gDebugger.BrkPts[i].pbBrkPt, &pns, &dwOffset))
                 {
@@ -1211,7 +1186,7 @@ LONG LOCAL DebugBL(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     }
 
     return rc;
-}       //DebugBL
+} //DebugBL
 
 /***LP  DebugBP - Set BreakPoint
  *
@@ -1240,8 +1215,7 @@ LONG LOCAL DebugBP(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     {
         PUCHAR pbBrkPt;
 
-        if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pbBrkPt, NULL, NULL, NULL)) ==
-            DBGERR_NONE)
+        if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pbBrkPt, NULL, NULL, NULL)) == DBGERR_NONE)
         {
             rc = AddBrkPt(pbBrkPt);
         }
@@ -1261,7 +1235,7 @@ LONG LOCAL DebugBP(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     }
 
     return rc;
-}       //DebugBP
+} //DebugBP
 
 /***LP  DebugClearLog - Clear event log
  *
@@ -1277,8 +1251,7 @@ LONG LOCAL DebugBP(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
  *      returns negative error code
  */
 
-LONG LOCAL DebugClearLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                         ULONG dwNonSWArgs)
+LONG LOCAL DebugClearLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc;
 
@@ -1290,7 +1263,7 @@ LONG LOCAL DebugClearLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     {
         if (gDebugger.pEventLog != NULL)
         {
-            MEMZERO(gDebugger.pEventLog, sizeof(EVENTLOG)*gDebugger.dwLogSize);
+            MEMZERO(gDebugger.pEventLog, sizeof(EVENTLOG) * gDebugger.dwLogSize);
             gDebugger.dwLogIndex = 0;
             rc = DBGERR_NONE;
         }
@@ -1307,7 +1280,7 @@ LONG LOCAL DebugClearLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugClearLog
+} //DebugClearLog
 
 /***LP  DumpData - Dump data
  *
@@ -1323,8 +1296,7 @@ LONG LOCAL DebugClearLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen,
-                    BOOLEAN fPhysical)
+LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen, BOOLEAN fPhysical)
 {
     LONG rc = DBGERR_NONE;
     PUCHAR pbData = NULL;
@@ -1336,8 +1308,7 @@ LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen,
     {
         gDebugger.dwfDebugger |= DBGF_DUMPDATA_PHYADDR;
         pszPrefix = "%%";
-        if (MapUnmapPhysMem(NULL, uipAddr, dwLen, (PULONG_PTR)&pbData) !=
-            STATUS_SUCCESS)
+        if (MapUnmapPhysMem(NULL, uipAddr, dwLen, (PULONG_PTR)&pbData) != STATUS_SUCCESS)
         {
             DBG_ERROR(("Failed to map physical address %x", uipAddr));
             rc = DBGERR_CMD_FAILED;
@@ -1354,8 +1325,7 @@ LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen,
             PRINTF("%s%08x: ", pszPrefix, uipAddr);
             while ((dwLen > 0) && (*pbData != '\0'))
             {
-                PRINTF("%c",
-                       ((*pbData >= ' ') && (*pbData <= '~'))? *pbData: '.');
+                PRINTF("%c", ((*pbData >= ' ') && (*pbData <= '~')) ? *pbData : '.');
                 pbData++;
                 dwLen--;
             }
@@ -1378,16 +1348,16 @@ LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen,
 
                 switch (dwDataSize)
                 {
-                    case sizeof(UCHAR):
-                        PRINTF("%02x", *pbData);
-                        break;
+                case sizeof(UCHAR):
+                    PRINTF("%02x", *pbData);
+                    break;
 
-                    case sizeof(USHORT):
-                        PRINTF("%04x", *((PUSHORT)pbData));
-                        break;
+                case sizeof(USHORT):
+                    PRINTF("%04x", *((PUSHORT)pbData));
+                    break;
 
-                    case sizeof(ULONG):
-                        PRINTF("%08x", *((PULONG)pbData));
+                case sizeof(ULONG):
+                    PRINTF("%08x", *((PULONG)pbData));
                 }
 
                 pbData += dwDataSize;
@@ -1403,7 +1373,7 @@ LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen,
                         for (i = 0x10; i > 0; --i)
                         {
                             b = *(pbData - i);
-                            PRINTF("%c", ((b >= ' ') && (b <= '~'))? b: '.');
+                            PRINTF("%c", ((b >= ' ') && (b <= '~')) ? b : '.');
                         }
                     }
                     i = 0;
@@ -1425,7 +1395,7 @@ LONG LOCAL DumpData(ULONG_PTR uipAddr, ULONG dwfUnitSize, ULONG dwLen,
     }
 
     return rc;
-}       //DumpData
+} //DumpData
 
 /***LP  DebugDumpData - Dump data to debugger
  *
@@ -1444,7 +1414,7 @@ LONG LOCAL DebugDumpData(PCMDARG pArg, PSZ pszArg, ULONG dwfDataSize)
 {
     LONG rc = DBGERR_NONE;
     static BOOLEAN fProcessed = FALSE;
-    #define DEF_LEN 0x80
+#define DEF_LEN 0x80
     static ULONG dwLen = DEF_LEN;
 
     if (pszArg != NULL)
@@ -1458,10 +1428,8 @@ LONG LOCAL DebugDumpData(PCMDARG pArg, PSZ pszArg, ULONG dwfDataSize)
             ULONG_PTR uipAddr;
             BOOLEAN fPhysical;
 
-            if (((rc = DebugExpr(pszArg, &uipAddr, &fPhysical, NULL, NULL)) ==
-                 DBGERR_NONE) &&
-                ((rc = DumpData(uipAddr, dwfDataSize, dwLen, fPhysical)) ==
-                 DBGERR_NONE))
+            if (((rc = DebugExpr(pszArg, &uipAddr, &fPhysical, NULL, NULL)) == DBGERR_NONE) &&
+                ((rc = DumpData(uipAddr, dwfDataSize, dwLen, fPhysical)) == DBGERR_NONE))
             {
                 fProcessed = TRUE;
             }
@@ -1474,14 +1442,13 @@ LONG LOCAL DebugDumpData(PCMDARG pArg, PSZ pszArg, ULONG dwfDataSize)
         else
         {
             rc = DumpData(gDebugger.uipDumpDataAddr, dwfDataSize, dwLen,
-                          (BOOLEAN)((gDebugger.dwfDebugger &
-                                     DBGF_DUMPDATA_PHYADDR) != 0));
+                          (BOOLEAN)((gDebugger.dwfDebugger & DBGF_DUMPDATA_PHYADDR) != 0));
         }
         dwLen = DEF_LEN;
     }
 
     return rc;
-}       //DebugDumpData
+} //DebugDumpData
 
 /***LP  DebugD - Dump data
  *
@@ -1504,11 +1471,10 @@ LONG LOCAL DebugD(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     DEREF(dwArgNum);
     DEREF(dwNonSWArgs);
 
-    rc = DebugDumpData(pArg, pszArg,
-                       gDebugger.dwfDebugger & DBGF_DUMPDATA_MASK);
+    rc = DebugDumpData(pArg, pszArg, gDebugger.dwfDebugger & DBGF_DUMPDATA_MASK);
 
     return rc;
-}       //DebugD
+} //DebugD
 
 /***LP  DebugDB - Dump data bytes
  *
@@ -1534,7 +1500,7 @@ LONG LOCAL DebugDB(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugDumpData(pArg, pszArg, DBGF_DUMPDATA_BYTE);
 
     return rc;
-}       //DebugDB
+} //DebugDB
 
 /***LP  DebugDW - Dump data words
  *
@@ -1560,7 +1526,7 @@ LONG LOCAL DebugDW(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugDumpData(pArg, pszArg, DBGF_DUMPDATA_WORD);
 
     return rc;
-}       //DebugDW
+} //DebugDW
 
 /***LP  DebugDD - Dump data dwords
  *
@@ -1586,7 +1552,7 @@ LONG LOCAL DebugDD(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugDumpData(pArg, pszArg, DBGF_DUMPDATA_DWORD);
 
     return rc;
-}       //DebugDD
+} //DebugDD
 
 /***LP  DebugDA - Dump data string
  *
@@ -1612,7 +1578,7 @@ LONG LOCAL DebugDA(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugDumpData(pArg, pszArg, DBGF_DUMPDATA_STRING);
 
     return rc;
-}       //DebugDA
+} //DebugDA
 
 #ifdef DEBUG
 /***LP  DebugDC - Dump memory object count table
@@ -1649,7 +1615,7 @@ LONG LOCAL DebugDC(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     }
 
     return rc;
-}       //DebugDC
+} //DebugDC
 
 /***LP  DebugDumpHeap - Dump heap
  *
@@ -1665,8 +1631,7 @@ LONG LOCAL DebugDC(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
  *      returns negative error code
  */
 
-LONG LOCAL DebugDumpHeap(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                         ULONG dwNonSWArgs)
+LONG LOCAL DebugDumpHeap(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static BOOLEAN fAddr = FALSE;
@@ -1680,8 +1645,7 @@ LONG LOCAL DebugDumpHeap(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     {
         if (!fAddr)
         {
-            if (IsNumber(pszArg, 16, (PULONG_PTR)&pheap) &&
-                ASSERTRANGE(pheap, sizeof(HEAP)))
+            if (IsNumber(pszArg, 16, (PULONG_PTR)&pheap) && ASSERTRANGE(pheap, sizeof(HEAP)))
             {
                 fAddr = TRUE;
             }
@@ -1711,9 +1675,7 @@ LONG LOCAL DebugDumpHeap(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
         }
         else
         {
-            for (pheap = pheap->pheapHead;
-                 pheap != NULL;
-                 pheap = pheap->pheapNext)
+            for (pheap = pheap->pheapHead; pheap != NULL; pheap = pheap->pheapNext)
             {
                 DumpHeap(pheap);
             }
@@ -1723,7 +1685,7 @@ LONG LOCAL DebugDumpHeap(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugDumpHeap
+} //DebugDumpHeap
 
 /***LP  DumpHeap - Dump heap block
  *
@@ -1739,22 +1701,18 @@ VOID LOCAL DumpHeap(PHEAP pheap)
     PHEAPOBJHDR phobj;
 
     ASSERT(pheap->dwSig == SIG_HEAP);
-    PRINTF("HeapBlock=%08x, HeapEnd=%08x, HeapHead=%08x, HeapNext=%08x\n",
-           pheap, pheap->pbHeapEnd, pheap->pheapHead, pheap->pheapNext);
-    PRINTF("HeapTop=%08x, HeapFreeList=%08x, UsedHeapSize=%d bytes\n",
-           pheap->pbHeapTop, pheap->plistFreeHeap,
+    PRINTF("HeapBlock=%08x, HeapEnd=%08x, HeapHead=%08x, HeapNext=%08x\n", pheap, pheap->pbHeapEnd, pheap->pheapHead,
+           pheap->pheapNext);
+    PRINTF("HeapTop=%08x, HeapFreeList=%08x, UsedHeapSize=%d bytes\n", pheap->pbHeapTop, pheap->plistFreeHeap,
            pheap->pbHeapTop - (PUCHAR)&pheap->Heap);
 
-    for (phobj = &pheap->Heap;
-         (PUCHAR)phobj < pheap->pbHeapTop;
-         phobj = (PHEAPOBJHDR)((PUCHAR)phobj + phobj->dwLen))
+    for (phobj = &pheap->Heap; (PUCHAR)phobj < pheap->pbHeapTop; phobj = (PHEAPOBJHDR)((PUCHAR)phobj + phobj->dwLen))
     {
-        PRINTF("%08x: %s, Len=%08d, Prev=%08x, Next=%08x\n",
-               phobj, (phobj->dwSig == 0)? "free": NameSegString(phobj->dwSig),
-               phobj->dwLen, (phobj->dwSig == 0)? phobj->list.plistPrev: 0,
-               (phobj->dwSig == 0)? phobj->list.plistNext: 0);
+        PRINTF("%08x: %s, Len=%08d, Prev=%08x, Next=%08x\n", phobj,
+               (phobj->dwSig == 0) ? "free" : NameSegString(phobj->dwSig), phobj->dwLen,
+               (phobj->dwSig == 0) ? phobj->list.plistPrev : 0, (phobj->dwSig == 0) ? phobj->list.plistNext : 0);
     }
-}       //DumpHeap
+} //DumpHeap
 #endif
 
 /***LP  DebugDumpStack - Dump stack
@@ -1771,8 +1729,7 @@ VOID LOCAL DumpHeap(PHEAP pheap)
  *      returns negative error code
  */
 
-LONG LOCAL DebugDumpStack(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                          ULONG dwNonSWArgs)
+LONG LOCAL DebugDumpStack(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static BOOLEAN fAddr = FALSE;
@@ -1786,8 +1743,7 @@ LONG LOCAL DebugDumpStack(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     {
         if (!fAddr)
         {
-            if (IsNumber(pszArg, 16, (PULONG_PTR)&pctxt) &&
-                ASSERTRANGE(pctxt, sizeof(CTXT)))
+            if (IsNumber(pszArg, 16, (PULONG_PTR)&pctxt) && ASSERTRANGE(pctxt, sizeof(CTXT)))
             {
                 fAddr = TRUE;
             }
@@ -1812,8 +1768,7 @@ LONG LOCAL DebugDumpStack(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
 
         if ((pctxt == NULL) || (pctxt->dwSig != SIG_CTXT))
         {
-            DBG_ERROR(("no current context or invalid context block at %x",
-                       pctxt));
+            DBG_ERROR(("no current context or invalid context block at %x", pctxt));
             rc = DBGERR_CMD_FAILED;
         }
         else
@@ -1826,7 +1781,7 @@ LONG LOCAL DebugDumpStack(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugDumpStack
+} //DebugDumpStack
 
 /***LP  DebugDumpLog - Dump event log
  *
@@ -1842,11 +1797,10 @@ LONG LOCAL DebugDumpStack(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DebugDumpLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                        ULONG dwNonSWArgs)
+LONG LOCAL DebugDumpLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
-    LONG         rc;
-    TIME_FIELDS  eventTime;
+    LONG rc;
+    TIME_FIELDS eventTime;
     LARGE_INTEGER eventTimeInt;
 
     DEREF(pArg);
@@ -1871,196 +1825,164 @@ LONG LOCAL DebugDumpLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
         ULONG dwOffset;
 
         PRINTF("\n");
-        for (i = gDebugger.dwLogIndex;;) {
+        for (i = gDebugger.dwLogIndex;;)
+        {
 
-            if (gDebugger.pEventLog[i].dwEvent != 0) {
+            if (gDebugger.pEventLog[i].dwEvent != 0)
+            {
                 plog = &gDebugger.pEventLog[i];
 
                 eventTimeInt.QuadPart = plog->ullTime;
-                RtlTimeToTimeFields( &eventTimeInt, &eventTime );
-                PRINTF(
-                    "%d:%02d:%02d.%03d: [%8x]",
-                    eventTime.Hour,
-                    eventTime.Minute,
-                    eventTime.Second,
-                    eventTime.Milliseconds,
-                    plog->uipData1
-                    );
-                switch (plog->dwEvent) {
-                    case 'AMUT':
-                        PRINTF("AcquireMutext         ");
-                        break;
-                    case 'RMUT':
-                        PRINTF("ReleaseMutext         ");
-                        break;
-                    case 'INSQ':
-                        PRINTF("InsertReadyQueue      ");
-                        break;
-                    case 'NEST':
-                        PRINTF("NestContext           ");
-                        break;
-                    case 'EVAL':
-                        PRINTF("EvaluateContext       ");
-                        break;
-                    case 'QCTX':
-                        PRINTF("QueueContext          ");
-                        break;
-                    case 'REST':
-                        PRINTF("RestartContext        ");
-                        break;
-                    case 'KICK':
-                        PRINTF("QueueWorkItem         ");
-                        break;
-                    case 'PAUS':
-                        PRINTF("PauseInterpreter      ");
-                        break;
-                    case 'RSCB':
-                        PRINTF("RestartCtxtCallback   ");
-                        break;
-                    case 'DONE':
-                        PRINTF("EvalMethodComplete    ");
-                        break;
-                    case 'ASCB':
-                        PRINTF("AsyncCallBack         ");
-                        break;
-                    case 'NSYN':
-                        PRINTF("NestedSyncEvalObject  ");
-                        break;
-                    case 'SYNC':
-                        PRINTF("SyncEvalObject        ");
-                        break;
-                    case 'ASYN':
-                        PRINTF("AsyncEvalObject       ");
-                        break;
-                    case 'NASY':
-                        PRINTF("NestedAsyncEvalObject ");
-                        break;
-                    case 'RUNC':
-                        PRINTF("RunContext            ");
-                        break;
-                    case 'PACB':
-                        PRINTF("PauseAsyncCallback    ");
-                        break;
-                    case 'RUN!':
-                        PRINTF("FinishedContext       ");
-                        break;
-                    case 'RSUM':
-                        PRINTF("ResumeInterpreter     ");
-                        break;
-                    case 'RSTQ':
-                        PRINTF("ResumeQueueWorkItem   ");
-                        break;
-                    default:
-                        break;
+                RtlTimeToTimeFields(&eventTimeInt, &eventTime);
+                PRINTF("%d:%02d:%02d.%03d: [%8x]", eventTime.Hour, eventTime.Minute, eventTime.Second,
+                       eventTime.Milliseconds, plog->uipData1);
+                switch (plog->dwEvent)
+                {
+                case 'AMUT':
+                    PRINTF("AcquireMutext         ");
+                    break;
+                case 'RMUT':
+                    PRINTF("ReleaseMutext         ");
+                    break;
+                case 'INSQ':
+                    PRINTF("InsertReadyQueue      ");
+                    break;
+                case 'NEST':
+                    PRINTF("NestContext           ");
+                    break;
+                case 'EVAL':
+                    PRINTF("EvaluateContext       ");
+                    break;
+                case 'QCTX':
+                    PRINTF("QueueContext          ");
+                    break;
+                case 'REST':
+                    PRINTF("RestartContext        ");
+                    break;
+                case 'KICK':
+                    PRINTF("QueueWorkItem         ");
+                    break;
+                case 'PAUS':
+                    PRINTF("PauseInterpreter      ");
+                    break;
+                case 'RSCB':
+                    PRINTF("RestartCtxtCallback   ");
+                    break;
+                case 'DONE':
+                    PRINTF("EvalMethodComplete    ");
+                    break;
+                case 'ASCB':
+                    PRINTF("AsyncCallBack         ");
+                    break;
+                case 'NSYN':
+                    PRINTF("NestedSyncEvalObject  ");
+                    break;
+                case 'SYNC':
+                    PRINTF("SyncEvalObject        ");
+                    break;
+                case 'ASYN':
+                    PRINTF("AsyncEvalObject       ");
+                    break;
+                case 'NASY':
+                    PRINTF("NestedAsyncEvalObject ");
+                    break;
+                case 'RUNC':
+                    PRINTF("RunContext            ");
+                    break;
+                case 'PACB':
+                    PRINTF("PauseAsyncCallback    ");
+                    break;
+                case 'RUN!':
+                    PRINTF("FinishedContext       ");
+                    break;
+                case 'RSUM':
+                    PRINTF("ResumeInterpreter     ");
+                    break;
+                case 'RSTQ':
+                    PRINTF("ResumeQueueWorkItem   ");
+                    break;
+                default:
+                    break;
                 }
                 switch (plog->dwEvent)
                 {
-                    case 'AMUT':
-                    case 'RMUT':
-                        PRINTF("\n    Mut=%08x Owner=%08x dwcOwned=%d rc=%x\n",
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4, plog->uipData5);
-                        break;
+                case 'AMUT':
+                case 'RMUT':
+                    PRINTF("\n    Mut=%08x Owner=%08x dwcOwned=%d rc=%x\n", plog->uipData2, plog->uipData3,
+                           plog->uipData4, plog->uipData5);
+                    break;
 
-                    case 'INSQ':
-                    case 'NEST':
-                    case 'EVAL':
-                    case 'QCTX':
-                    case 'REST':
-                        PRINTF("Context=%08x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x",
-                               plog->uipData5,
-                               GetObjectPath((PNSOBJ)plog->uipData6),
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4
-                               );
+                case 'INSQ':
+                case 'NEST':
+                case 'EVAL':
+                case 'QCTX':
+                case 'REST':
+                    PRINTF("Context=%08x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x", plog->uipData5,
+                           GetObjectPath((PNSOBJ)plog->uipData6), plog->uipData2, plog->uipData3, plog->uipData4);
 
 
-                        if (FindObjSymbol((PUCHAR)plog->uipData7, &pns,
-                                          &dwOffset)) {
+                    if (FindObjSymbol((PUCHAR)plog->uipData7, &pns, &dwOffset))
+                    {
 
-                            PRINTF(" pbOp=%s", GetObjectPath(pns));
-                            if (dwOffset != 0) {
+                        PRINTF(" pbOp=%s", GetObjectPath(pns));
+                        if (dwOffset != 0)
+                        {
 
-                                PRINTF("+%x", dwOffset);
-
-                            }
-
+                            PRINTF("+%x", dwOffset);
                         }
-                        PRINTF("\n");
-                        break;
+                    }
+                    PRINTF("\n");
+                    break;
 
-                    case 'KICK':
-                    case 'PAUS':
-                        PRINTF("\n    QTh=%08x QCt=%08x QFg=%08x rc=%x\n",
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4, plog->uipData5);
-                        break;
+                case 'KICK':
+                case 'PAUS':
+                    PRINTF("\n    QTh=%08x QCt=%08x QFg=%08x rc=%x\n", plog->uipData2, plog->uipData3, plog->uipData4,
+                           plog->uipData5);
+                    break;
 
-                    case 'RSCB':
-                        PRINTF("Context=%08x\n    QTh=%08x QCt=%08x QFg=%08x\n",
-                               plog->uipData5, plog->uipData2,
-                               plog->uipData3, plog->uipData4);
-                        break;
+                case 'RSCB':
+                    PRINTF("Context=%08x\n    QTh=%08x QCt=%08x QFg=%08x\n", plog->uipData5, plog->uipData2,
+                           plog->uipData3, plog->uipData4);
+                    break;
 
-                    case 'DONE':
-                    case 'ASCB':
-                        PRINTF("rc=%x pEvent=%x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x\n",
-                               plog->uipData6, plog->uipData7,
-                               GetObjectPath((PNSOBJ)plog->uipData5),
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4
-                               );
-                        break;
+                case 'DONE':
+                case 'ASCB':
+                    PRINTF("rc=%x pEvent=%x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x\n", plog->uipData6, plog->uipData7,
+                           GetObjectPath((PNSOBJ)plog->uipData5), plog->uipData2, plog->uipData3, plog->uipData4);
+                    break;
 
-                    case 'NSYN':
-                    case 'SYNC':
-                    case 'ASYN':
-                        PRINTF("IRQL=%2x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x\n",
-                               plog->uipData5 & 0xff,
-                               GetObjectPath((PNSOBJ)plog->uipData6),
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4
-                               );
-                        break;
+                case 'NSYN':
+                case 'SYNC':
+                case 'ASYN':
+                    PRINTF("IRQL=%2x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x\n", plog->uipData5 & 0xff,
+                           GetObjectPath((PNSOBJ)plog->uipData6), plog->uipData2, plog->uipData3, plog->uipData4);
+                    break;
 
-                    case 'NASY':
-                        PRINTF("Context=%x CallBack=%x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x\n",
-                               plog->uipData6, plog->uipData7,
-                               GetObjectPath((PNSOBJ)plog->uipData5),
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4
-                               );
-                        break;
+                case 'NASY':
+                    PRINTF("Context=%x CallBack=%x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x\n", plog->uipData6,
+                           plog->uipData7, GetObjectPath((PNSOBJ)plog->uipData5), plog->uipData2, plog->uipData3,
+                           plog->uipData4);
+                    break;
 
-                    case 'RUNC':
-                        PRINTF("Context=%x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x\n",
-                               plog->uipData5, GetObjectPath((PNSOBJ)plog->uipData6),
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4
-                               );
-                        break;
+                case 'RUNC':
+                    PRINTF("Context=%x\n    %s\n    QTh=%08x QCt=%08x QFg=%08x\n", plog->uipData5,
+                           GetObjectPath((PNSOBJ)plog->uipData6), plog->uipData2, plog->uipData3, plog->uipData4);
+                    break;
 
-                    case 'PACB':
-                    case 'RUN!':
-                        PRINTF("Context=%x rc=%x\n    QTh=%08x QCt=%08x QFg=%08x\n",
-                               plog->uipData5, plog->uipData6,
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4
-                               );
-                        break;
+                case 'PACB':
+                case 'RUN!':
+                    PRINTF("Context=%x rc=%x\n    QTh=%08x QCt=%08x QFg=%08x\n", plog->uipData5, plog->uipData6,
+                           plog->uipData2, plog->uipData3, plog->uipData4);
+                    break;
 
-                    case 'RSUM':
-                    case 'RSTQ':
-                        PRINTF("\n    QTh=%08x QCt=%08x QFg=%08x\n",
-                               plog->uipData2, plog->uipData3,
-                               plog->uipData4);
-                        break;
+                case 'RSUM':
+                case 'RSTQ':
+                    PRINTF("\n    QTh=%08x QCt=%08x QFg=%08x\n", plog->uipData2, plog->uipData3, plog->uipData4);
+                    break;
 
-                    default:
-                        PRINTF("D1=%08x,D2=%08x,D3=%08x,D4=%08x,D5=%08x,D6=%08x,D7=%08x\n",
-                               plog->uipData1, plog->uipData2, plog->uipData3,
-                               plog->uipData4, plog->uipData5, plog->uipData6,
-                               plog->uipData7);
+                default:
+                    PRINTF("D1=%08x,D2=%08x,D3=%08x,D4=%08x,D5=%08x,D6=%08x,D7=%08x\n", plog->uipData1, plog->uipData2,
+                           plog->uipData3, plog->uipData4, plog->uipData5, plog->uipData6, plog->uipData7);
                 }
             }
             PRINTF("\n");
@@ -2080,7 +2002,7 @@ LONG LOCAL DebugDumpLog(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugDumpLog
+} //DebugDumpLog
 
 /***LP  DumpStack - Dump stack of a context block
  *
@@ -2101,19 +2023,16 @@ VOID LOCAL DumpStack(PCTXT pctxt, BOOLEAN fVerbose)
 
     if (fVerbose)
     {
-        PRINTF("CtxtBlock=%x, StackTop=%x, StackEnd=%x\n\n",
-               pctxt, pctxt->LocalHeap.pbHeapEnd, pctxt->pbCtxtEnd);
+        PRINTF("CtxtBlock=%x, StackTop=%x, StackEnd=%x\n\n", pctxt, pctxt->LocalHeap.pbHeapEnd, pctxt->pbCtxtEnd);
     }
 
-    for (pfh = (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd;
-         (PUCHAR)pfh < pctxt->pbCtxtEnd;
+    for (pfh = (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd; (PUCHAR)pfh < pctxt->pbCtxtEnd;
          pfh = (PFRAMEHDR)((PUCHAR)pfh + pfh->dwLen))
     {
         if (fVerbose)
         {
-            PRINTF("%08x: %s, Len=%08d, FrameFlags=%08x, ParseFunc=%08x\n",
-                   pfh, NameSegString(pfh->dwSig), pfh->dwLen, pfh->dwfFrame,
-                   pfh->pfnParse);
+            PRINTF("%08x: %s, Len=%08d, FrameFlags=%08x, ParseFunc=%08x\n", pfh, NameSegString(pfh->dwSig), pfh->dwLen,
+                   pfh->dwfFrame, pfh->pfnParse);
         }
 
         if (pfh->dwSig == SIG_CALL)
@@ -2150,7 +2069,7 @@ VOID LOCAL DumpStack(PCTXT pctxt, BOOLEAN fVerbose)
             pbOp = ((PSCOPE)pfh)->pbOpRet;
         }
     }
-}       //DumpStack
+} //DumpStack
 
 /***LP  DebugDumpNameSpace - Dump Name Space
  *
@@ -2166,8 +2085,7 @@ VOID LOCAL DumpStack(PCTXT pctxt, BOOLEAN fVerbose)
  *      returns negative error code
  */
 
-LONG LOCAL DebugDumpNameSpace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                              ULONG dwNonSWArgs)
+LONG LOCAL DebugDumpNameSpace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static BOOLEAN fProcessed = FALSE;
@@ -2190,8 +2108,7 @@ LONG LOCAL DebugDumpNameSpace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             // The argument is not an address, could be a name space path.
             //
             STRUPR(pszArg);
-            rc = DumpNameSpaceObject(pszArg,
-                                     (BOOLEAN)((dwCmdArg & DNSF_RECURSE) != 0));
+            rc = DumpNameSpaceObject(pszArg, (BOOLEAN)((dwCmdArg & DNSF_RECURSE) != 0));
         }
         else if (ASSERTRANGE(pns, sizeof(NSOBJ)))
         {
@@ -2211,7 +2128,7 @@ LONG LOCAL DebugDumpNameSpace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             fProcessed = TRUE;
     }
     else
-    {   //
+    { //
         // User typed "dns" but did not specify any name space path or address
         //
         if (!fProcessed)
@@ -2224,7 +2141,7 @@ LONG LOCAL DebugDumpNameSpace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugDumpNameSpace
+} //DebugDumpNameSpace
 
 /***LP  DebugDumpObject - Dump data object
  *
@@ -2240,8 +2157,7 @@ LONG LOCAL DebugDumpNameSpace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DebugDumpObject(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                           ULONG dwNonSWArgs)
+LONG LOCAL DebugDumpObject(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
 
@@ -2257,21 +2173,19 @@ LONG LOCAL DebugDumpObject(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
         PSZ psz;
 
         pdata = (POBJDATA)UlongToPtr(STRTOUL(pszArg, &psz, 16));
-        if ((psz != pszArg) && (*psz == '\0') &&
-            ASSERTRANGE(pdata, sizeof(OBJDATA)))
+        if ((psz != pszArg) && (*psz == '\0') && ASSERTRANGE(pdata, sizeof(OBJDATA)))
         {
             DumpObject(pdata, NULL, 0);
         }
         else
         {
-            DBG_ERROR(("invalid name space object or object is not a method - %s",
-                       pszArg));
+            DBG_ERROR(("invalid name space object or object is not a method - %s", pszArg));
             rc = DBGERR_INVALID_CMD;
         }
     }
 
     return rc;
-}       //DebugDumpObject
+} //DebugDumpObject
 
 /***LP  DebugEditMem - Edit memory
  *
@@ -2286,8 +2200,7 @@ LONG LOCAL DebugDumpObject(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DebugEditMem(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                        ULONG dwNonSWArgs)
+LONG LOCAL DebugEditMem(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static BOOLEAN fProcessed = FALSE;
@@ -2334,12 +2247,9 @@ LONG LOCAL DebugEditMem(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             {
                 if (fPhysical)
                 {
-                    if (MapUnmapPhysMem(NULL, uipAddr, 1,
-                                        (PULONG_PTR)&pbMemAddr) !=
-                        STATUS_SUCCESS)
+                    if (MapUnmapPhysMem(NULL, uipAddr, 1, (PULONG_PTR)&pbMemAddr) != STATUS_SUCCESS)
                     {
-                        DBG_ERROR(("Failed to map physical address %p",
-                                   uipAddr));
+                        DBG_ERROR(("Failed to map physical address %p", uipAddr));
                         rc = DBGERR_CMD_FAILED;
                     }
                 }
@@ -2375,8 +2285,7 @@ LONG LOCAL DebugEditMem(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             icLen = STRLEN(pszArg);
             if (fPhysical)
             {
-                if (MapUnmapPhysMem(NULL, uipAddr, icLen,
-                                    (PULONG_PTR)&pbMemAddr) != STATUS_SUCCESS)
+                if (MapUnmapPhysMem(NULL, uipAddr, icLen, (PULONG_PTR)&pbMemAddr) != STATUS_SUCCESS)
                 {
                     DBG_ERROR(("Failed to map physical address %p", uipAddr));
                     rc = DBGERR_CMD_FAILED;
@@ -2427,7 +2336,7 @@ LONG LOCAL DebugEditMem(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugEditMem
+} //DebugEditMem
 
 /***LP  DebugFindNSObj - Find NameSpace Object
  *
@@ -2442,8 +2351,7 @@ LONG LOCAL DebugEditMem(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DebugFindNSObj(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                          ULONG dwNonSWArgs)
+LONG LOCAL DebugFindNSObj(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static BOOLEAN fProcessed = FALSE;
@@ -2490,7 +2398,7 @@ LONG LOCAL DebugFindNSObj(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugFindNSObj
+} //DebugFindNSObj
 
 /***LP  FindNSObj - Find and print the full path of a name space object
  *
@@ -2522,9 +2430,7 @@ BOOLEAN LOCAL FindNSObj(NAMESEG dwName, PNSOBJ pnsRoot)
 
             for (pns = pnsRoot->pnsFirstChild; pns != NULL; pns = pnsNext)
             {
-                pnsNext = ((PNSOBJ)pns->list.plistNext ==
-                           pnsRoot->pnsFirstChild)?
-                          NULL: (PNSOBJ)pns->list.plistNext;
+                pnsNext = ((PNSOBJ)pns->list.plistNext == pnsRoot->pnsFirstChild) ? NULL : (PNSOBJ)pns->list.plistNext;
 
                 rc |= FindNSObj(dwName, pns);
             }
@@ -2532,7 +2438,7 @@ BOOLEAN LOCAL FindNSObj(NAMESEG dwName, PNSOBJ pnsRoot)
     }
 
     return rc;
-}       //FindNSObj
+} //FindNSObj
 
 /***LP  InPort - Read from an I/O port
  *
@@ -2549,7 +2455,7 @@ BOOLEAN LOCAL FindNSObj(NAMESEG dwName, PNSOBJ pnsRoot)
 LONG LOCAL InPort(ULONG dwPort, ULONG dwSize, PULONG pdwData)
 {
     LONG rc = DBGERR_NONE;
-    PHYSICAL_ADDRESS phyaddr = {0, 0}, XlatedAddr;
+    PHYSICAL_ADDRESS phyaddr = { 0, 0 }, XlatedAddr;
     ULONG dwAddrSpace;
 
     phyaddr.LowPart = dwPort;
@@ -2566,7 +2472,7 @@ LONG LOCAL InPort(ULONG dwPort, ULONG dwSize, PULONG pdwData)
     }
 
     return rc;
-}       //InPort
+} //InPort
 
 /***LP  DebugInPort - Port input
  *
@@ -2603,16 +2509,16 @@ LONG LOCAL DebugInPort(PSZ pszArg, ULONG dwSize)
                 PRINTF("%04x: ", (ULONG)uipPort);
                 switch (dwSize)
                 {
-                    case sizeof(UCHAR):
-                        PRINTF("%02x", (UCHAR)dwData);
-                        break;
+                case sizeof(UCHAR):
+                    PRINTF("%02x", (UCHAR)dwData);
+                    break;
 
-                    case sizeof(USHORT):
-                        PRINTF("%04x", (USHORT)dwData);
-                        break;
+                case sizeof(USHORT):
+                    PRINTF("%04x", (USHORT)dwData);
+                    break;
 
-                    case sizeof(ULONG):
-                        PRINTF("%08x", dwData);
+                case sizeof(ULONG):
+                    PRINTF("%08x", dwData);
                 }
                 PRINTF("\n");
             }
@@ -2633,7 +2539,7 @@ LONG LOCAL DebugInPort(PSZ pszArg, ULONG dwSize)
     }
 
     return rc;
-}       //DebugInPort
+} //DebugInPort
 
 /***LP  DebugI - Byte port input
  *
@@ -2660,7 +2566,7 @@ LONG LOCAL DebugI(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugInPort(pszArg, sizeof(UCHAR));
 
     return rc;
-}       //DebugI
+} //DebugI
 
 /***LP  DebugIW - Word port input
  *
@@ -2687,7 +2593,7 @@ LONG LOCAL DebugIW(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugInPort(pszArg, sizeof(USHORT));
 
     return rc;
-}       //DebugIW
+} //DebugIW
 
 /***LP  DebugID - DWord port input
  *
@@ -2714,7 +2620,7 @@ LONG LOCAL DebugID(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugInPort(pszArg, sizeof(ULONG));
 
     return rc;
-}       //DebugID
+} //DebugID
 
 /***LP  DebugQuit - Quit to kernel debugger
  *
@@ -2730,8 +2636,7 @@ LONG LOCAL DebugID(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
  *      returns negative error code
  */
 
-LONG LOCAL DebugQuit(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                     ULONG dwNonSWArgs)
+LONG LOCAL DebugQuit(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc;
 
@@ -2762,7 +2667,7 @@ LONG LOCAL DebugQuit(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugQuit
+} //DebugQuit
 
 /***LP  DebugListCtxts - List all contexts
  *
@@ -2778,8 +2683,7 @@ LONG LOCAL DebugQuit(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DebugListCtxts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                          ULONG dwNonSWArgs)
+LONG LOCAL DebugListCtxts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc;
 
@@ -2794,23 +2698,16 @@ LONG LOCAL DebugListCtxts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
 
         for (plist = gplistCtxtHead; plist != NULL; plist = plistNext)
         {
-            plistNext = (plist->plistNext == gplistCtxtHead)?
-                        NULL: plist->plistNext;
+            plistNext = (plist->plistNext == gplistCtxtHead) ? NULL : plist->plistNext;
             pctxt = CONTAINING_RECORD(plist, CTXT, listCtxt);
             PRINTF("%cCtxt=%08x, ThID=%08x, Flgs=%c%c%c%c%c%c%c%c%c, pbOp=%08x, Obj=%s\n",
-                   (pctxt == gReadyQueue.pctxtCurrent)? '*': ' ', pctxt,
-                   (pctxt == gReadyQueue.pctxtCurrent)?
-                       gReadyQueue.pkthCurrent: 0,
-                   (pctxt->dwfCtxt & CTXTF_ASYNC_EVAL)? 'A': '-',
-                   (pctxt->dwfCtxt & CTXTF_NEST_EVAL)? 'N': '-',
-                   (pctxt->dwfCtxt & CTXTF_IN_READYQ)? 'Q': '-',
-                   (pctxt->dwfCtxt & CTXTF_NEED_CALLBACK)? 'C': '-',
-                   (pctxt->dwfCtxt & CTXTF_RUNNING)? 'R': '-',
-                   (pctxt->dwfCtxt & CTXTF_READY)? 'W': '-',
-                   (pctxt->dwfCtxt & CTXTF_TIMEOUT)? 'T': '-',
-                   (pctxt->dwfCtxt & CTXTF_TIMER_DISPATCH)? 'D': '-',
-                   (pctxt->dwfCtxt & CTXTF_TIMER_PENDING)? 'P': '-',
-                   pctxt->pbOp, GetObjectPath(pctxt->pnsObj));
+                   (pctxt == gReadyQueue.pctxtCurrent) ? '*' : ' ', pctxt,
+                   (pctxt == gReadyQueue.pctxtCurrent) ? gReadyQueue.pkthCurrent : 0,
+                   (pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) ? 'A' : '-', (pctxt->dwfCtxt & CTXTF_NEST_EVAL) ? 'N' : '-',
+                   (pctxt->dwfCtxt & CTXTF_IN_READYQ) ? 'Q' : '-', (pctxt->dwfCtxt & CTXTF_NEED_CALLBACK) ? 'C' : '-',
+                   (pctxt->dwfCtxt & CTXTF_RUNNING) ? 'R' : '-', (pctxt->dwfCtxt & CTXTF_READY) ? 'W' : '-',
+                   (pctxt->dwfCtxt & CTXTF_TIMEOUT) ? 'T' : '-', (pctxt->dwfCtxt & CTXTF_TIMER_DISPATCH) ? 'D' : '-',
+                   (pctxt->dwfCtxt & CTXTF_TIMER_PENDING) ? 'P' : '-', pctxt->pbOp, GetObjectPath(pctxt->pnsObj));
         }
         rc = DBGERR_NONE;
     }
@@ -2821,7 +2718,7 @@ LONG LOCAL DebugListCtxts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugListCtxts
+} //DebugListCtxts
 
 /***LP  DebugLN - Display nearest symbol
  *
@@ -2850,8 +2747,7 @@ LONG LOCAL DebugLN(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     {
         PUCHAR pb;
 
-        if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pb, NULL, NULL, NULL)) ==
-            DBGERR_NONE)
+        if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pb, NULL, NULL, NULL)) == DBGERR_NONE)
         {
             PrintSymbol(pb);
         }
@@ -2873,7 +2769,7 @@ LONG LOCAL DebugLN(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     }
 
     return rc;
-}       //DebugLN
+} //DebugLN
 
 /***LP  DummyCallBack - Callback that does absolutely nothing
  *
@@ -2887,7 +2783,7 @@ LONG LOCAL DebugLN(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 VOID LOCAL DummyCallBack(PVOID pv)
 {
     DEREF(pv);
-}       //DummyCallBack
+} //DummyCallBack
 
 /***LP  DebugNotify - Notify object
  *
@@ -2903,8 +2799,7 @@ VOID LOCAL DummyCallBack(PVOID pv)
  *      returns negative error code
  */
 
-LONG LOCAL DebugNotify(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                       ULONG dwNonSWArgs)
+LONG LOCAL DebugNotify(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static PNSOBJ pns = NULL;
@@ -2916,30 +2811,29 @@ LONG LOCAL DebugNotify(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     {
         switch (dwArgNum)
         {
-            case 1:
-                if (!IsNumber(pszArg, 16, (PULONG_PTR)&pns))
+        case 1:
+            if (!IsNumber(pszArg, 16, (PULONG_PTR)&pns))
+            {
+                STRUPR(pszArg);
+                if (GetNameSpaceObject(pszArg, NULL, &pns, NSF_LOCAL_SCOPE) != STATUS_SUCCESS)
                 {
-                    STRUPR(pszArg);
-                    if (GetNameSpaceObject(pszArg, NULL, &pns, NSF_LOCAL_SCOPE)
-                        != STATUS_SUCCESS)
-                    {
-                        DBG_ERROR(("object not found - %s", pszArg));
-                        rc = DBGERR_INVALID_CMD;
-                    }
-                }
-                break;
-
-            case 2:
-                if (!IsNumber(pszArg, 16, &uipValue))
-                {
-                    DBG_ERROR(("invalid notification value - %s", pszArg));
+                    DBG_ERROR(("object not found - %s", pszArg));
                     rc = DBGERR_INVALID_CMD;
                 }
-                break;
+            }
+            break;
 
-            default:
-                DBG_ERROR(("invalid notify command"));
+        case 2:
+            if (!IsNumber(pszArg, 16, &uipValue))
+            {
+                DBG_ERROR(("invalid notification value - %s", pszArg));
                 rc = DBGERR_INVALID_CMD;
+            }
+            break;
+
+        default:
+            DBG_ERROR(("invalid notify command"));
+            rc = DBGERR_INVALID_CMD;
         }
     }
     else
@@ -2956,17 +2850,15 @@ LONG LOCAL DebugNotify(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
         }
         else
         {
-            PRINTF("Queuing: Notify(%s, %x) ...\n",
-                   GetObjectPath(pns), uipValue);
+            PRINTF("Queuing: Notify(%s, %x) ...\n", GetObjectPath(pns), uipValue);
 
-            ((PFNNH)ghNotify.pfnHandler)(EVTYPE_NOTIFY, (ULONG)uipValue, pns,
-                                         (ULONG)ghNotify.uipParam,
-                                         DummyCallBack, NULL);
+            ((PFNNH)ghNotify.pfnHandler)(EVTYPE_NOTIFY, (ULONG)uipValue, pns, (ULONG)ghNotify.uipParam, DummyCallBack,
+                                         NULL);
         }
     }
 
     return rc;
-}       //DebugNotify
+} //DebugNotify
 
 /***LP  OutPort - Write to an I/O port
  *
@@ -2983,7 +2875,7 @@ LONG LOCAL DebugNotify(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
 LONG LOCAL OutPort(ULONG dwPort, ULONG dwSize, ULONG dwData)
 {
     LONG rc = DBGERR_NONE;
-    PHYSICAL_ADDRESS phyaddr = {0, 0}, XlatedAddr;
+    PHYSICAL_ADDRESS phyaddr = { 0, 0 }, XlatedAddr;
     ULONG dwAddrSpace;
 
     phyaddr.LowPart = dwPort;
@@ -3000,7 +2892,7 @@ LONG LOCAL OutPort(ULONG dwPort, ULONG dwSize, ULONG dwData)
     }
 
     return rc;
-}       //OutPort
+} //OutPort
 
 /***LP  DebugOutPort - Port output
  *
@@ -3053,7 +2945,7 @@ LONG LOCAL DebugOutPort(PSZ pszArg, ULONG dwSize)
     }
 
     return rc;
-}       //DebugOutPort
+} //DebugOutPort
 
 /***LP  DebugO - Byte port output
  *
@@ -3080,7 +2972,7 @@ LONG LOCAL DebugO(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugOutPort(pszArg, sizeof(UCHAR));
 
     return rc;
-}       //DebugO
+} //DebugO
 
 /***LP  DebugOW - Word port output
  *
@@ -3107,7 +2999,7 @@ LONG LOCAL DebugOW(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugOutPort(pszArg, sizeof(USHORT));
 
     return rc;
-}       //DebugOW
+} //DebugOW
 
 /***LP  DebugOD - DWord port output
  *
@@ -3134,7 +3026,7 @@ LONG LOCAL DebugOD(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     rc = DebugOutPort(pszArg, sizeof(ULONG));
 
     return rc;
-}       //DebugOD
+} //DebugOD
 
 /***LP  PrintSymbol - Print the nearest symbol of a given address
  *
@@ -3162,7 +3054,7 @@ VOID LOCAL PrintSymbol(PUCHAR pb)
     {
         PRINTF("%x: no symbols found", pb);
     }
-}       //PrintSymbol
+} //PrintSymbol
 
 /***LP  DebugStep - Trace and step over an AML instruction
  *
@@ -3178,8 +3070,7 @@ VOID LOCAL PrintSymbol(PUCHAR pb)
  *      returns negative error code
  */
 
-LONG LOCAL DebugStep(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                     ULONG dwNonSWArgs)
+LONG LOCAL DebugStep(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
 
@@ -3199,7 +3090,7 @@ LONG LOCAL DebugStep(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugStep
+} //DebugStep
 
 /***LP  DumpContext - Dump context
  *
@@ -3219,34 +3110,25 @@ VOID LOCAL DumpContext(PCTXT pctxt)
     PRESOURCE pres;
     PUCHAR pbBegin = NULL, pbEnd = NULL;
 
-  #ifdef DEBUG
-    PRINTF("\nContext=%08x%c, Queue=%08x, ResList=%08x\n",
-           pctxt, (pctxt == gReadyQueue.pctxtCurrent)? '*': ' ',
+#ifdef DEBUG
+    PRINTF("\nContext=%08x%c, Queue=%08x, ResList=%08x\n", pctxt, (pctxt == gReadyQueue.pctxtCurrent) ? '*' : ' ',
            pctxt->pplistCtxtQueue, pctxt->plistResources);
-    PRINTF("ThreadID=%08x, Flags=%08x\n",
-           (pctxt == gReadyQueue.pctxtCurrent)? gReadyQueue.pkthCurrent: 0,
+    PRINTF("ThreadID=%08x, Flags=%08x\n", (pctxt == gReadyQueue.pctxtCurrent) ? gReadyQueue.pkthCurrent : 0,
            pctxt->dwfCtxt);
-    PRINTF("StackTop=%08x, UsedStackSize=%d bytes, FreeStackSize=%d bytes\n",
-           pctxt->LocalHeap.pbHeapEnd,
-           pctxt->pbCtxtEnd - pctxt->LocalHeap.pbHeapEnd,
-           pctxt->LocalHeap.pbHeapEnd - pctxt->LocalHeap.pbHeapTop);
-    PRINTF("LocalHeap=%08x, CurrentHeap=%08x, UsedHeapSize=%d bytes\n",
-           &pctxt->LocalHeap, pctxt->pheapCurrent,
+    PRINTF("StackTop=%08x, UsedStackSize=%d bytes, FreeStackSize=%d bytes\n", pctxt->LocalHeap.pbHeapEnd,
+           pctxt->pbCtxtEnd - pctxt->LocalHeap.pbHeapEnd, pctxt->LocalHeap.pbHeapEnd - pctxt->LocalHeap.pbHeapTop);
+    PRINTF("LocalHeap=%08x, CurrentHeap=%08x, UsedHeapSize=%d bytes\n", &pctxt->LocalHeap, pctxt->pheapCurrent,
            pctxt->LocalHeap.pbHeapTop - (PUCHAR)&pctxt->LocalHeap);
     PRINTF("Object=%s, Scope=%s, ObjectOwner=%x, SyncLevel=%x\n",
-           pctxt->pnsObj? GetObjectPath(pctxt->pnsObj): "<none>",
-           pctxt->pnsScope? GetObjectPath(pctxt->pnsScope): "<none>",
-           pctxt->powner, pctxt->dwSyncLevel);
-    PRINTF("AsyncCallBack=%x, CallBackData=%x, CallBackContext=%x\n",
-           pctxt->pfnAsyncCallBack, pctxt->pdataCallBack,
+           pctxt->pnsObj ? GetObjectPath(pctxt->pnsObj) : "<none>",
+           pctxt->pnsScope ? GetObjectPath(pctxt->pnsScope) : "<none>", pctxt->powner, pctxt->dwSyncLevel);
+    PRINTF("AsyncCallBack=%x, CallBackData=%x, CallBackContext=%x\n", pctxt->pfnAsyncCallBack, pctxt->pdataCallBack,
            pctxt->pvContext);
-  #endif
+#endif
 
     if (pctxt->pcall != NULL)
     {
-        PRINTF("\nMethodObject=%s\n",
-               pctxt->pcall->pnsMethod?
-                   GetObjectPath(pctxt->pcall->pnsMethod): "<none>");
+        PRINTF("\nMethodObject=%s\n", pctxt->pcall->pnsMethod ? GetObjectPath(pctxt->pcall->pnsMethod) : "<none>");
         for (i = 0; i < pctxt->pcall->icArgs; ++i)
         {
             PRINTF("%08x: Arg%d=", &pctxt->pcall->pdataArgs[i], i);
@@ -3268,14 +3150,11 @@ VOID LOCAL DumpContext(PCTXT pctxt)
         PRINTF("\nResources Owned:\n");
         for (plist = pctxt->plistResources; plist != NULL; plist = plistNext)
         {
-            plistNext = (plist->plistNext != pctxt->plistResources)?
-                        plist->plistNext: NULL;
+            plistNext = (plist->plistNext != pctxt->plistResources) ? plist->plistNext : NULL;
 
             pres = CONTAINING_RECORD(plist, RESOURCE, list);
             ASSERT(pctxt == pres->pctxtOwner);
-            PRINTF("  ResType=%s, ResObj=%x\n",
-                   pres->dwResType == RESTYPE_MUTEX? "Mutex": "Unknown",
-                   pres->pvResObj);
+            PRINTF("  ResType=%s, ResObj=%x\n", pres->dwResType == RESTYPE_MUTEX ? "Mutex" : "Unknown", pres->pvResObj);
         }
     }
 
@@ -3296,8 +3175,7 @@ VOID LOCAL DumpContext(PCTXT pctxt)
         pbEnd = pns->ObjData.pbDataBuff + pns->ObjData.dwDataLen;
         gpnsCurUnAsmScope = pns;
     }
-    else if ((pbBegin >= gDebugger.pbBlkBegin) &&
-             (pbBegin < gDebugger.pbBlkEnd))
+    else if ((pbBegin >= gDebugger.pbBlkBegin) && (pbBegin < gDebugger.pbBlkEnd))
     {
         pbEnd = gDebugger.pbBlkEnd;
     }
@@ -3309,7 +3187,7 @@ VOID LOCAL DumpContext(PCTXT pctxt)
     }
 
     PRINTF("\n");
-}       //DumpContext
+} //DumpContext
 
 /***LP  DebugDumpContext - Dump debugger context
  *
@@ -3325,8 +3203,7 @@ VOID LOCAL DumpContext(PCTXT pctxt)
  *      returns negative error code
  */
 
-LONG LOCAL DebugDumpContext(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                            ULONG dwNonSWArgs)
+LONG LOCAL DebugDumpContext(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static BOOLEAN fProcessed = FALSE;
@@ -3339,8 +3216,7 @@ LONG LOCAL DebugDumpContext(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     {
         PCTXT pctxt;
 
-        if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pctxt, NULL, NULL, NULL)) ==
-            DBGERR_NONE)
+        if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pctxt, NULL, NULL, NULL)) == DBGERR_NONE)
         {
             if (pctxt->dwSig == SIG_CTXT)
             {
@@ -3372,7 +3248,7 @@ LONG LOCAL DebugDumpContext(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugDumpContext
+} //DebugDumpContext
 
 /***LP  DebugSet - Set debugger options
  *
@@ -3388,8 +3264,7 @@ LONG LOCAL DebugDumpContext(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DebugSet(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                    ULONG dwNonSWArgs)
+LONG LOCAL DebugSet(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
 
@@ -3398,37 +3273,30 @@ LONG LOCAL DebugSet(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
 
     if ((pszArg == NULL) && (dwArgNum == 0))
     {
-        PRINTF("AMLTrace        =%s\n",
-               (gDebugger.dwfDebugger & DBGF_AMLTRACE_ON)? "on": "off");
-        PRINTF("AMLDebugSpew    =%s\n",
-               (gDebugger.dwfDebugger & DBGF_DEBUG_SPEW_ON)? "on": "off");
-        PRINTF("LoadDDBBreak    =%s\n",
-               (gdwfAMLIInit & AMLIIF_LOADDDB_BREAK)? "on": "off");
-        PRINTF("ErrorBreak      =%s\n",
-               (gDebugger.dwfDebugger & DBGF_ERRBREAK_ON)? "on": "off");
-        PRINTF("VerboseMode     =%s\n",
-               (gDebugger.dwfDebugger & DBGF_VERBOSE_ON)? "on": "off");
-        PRINTF("LogEvent        =%s\n",
-               (gDebugger.dwfDebugger & DBGF_LOGEVENT_ON)? "on": "off");
+        PRINTF("AMLTrace        =%s\n", (gDebugger.dwfDebugger & DBGF_AMLTRACE_ON) ? "on" : "off");
+        PRINTF("AMLDebugSpew    =%s\n", (gDebugger.dwfDebugger & DBGF_DEBUG_SPEW_ON) ? "on" : "off");
+        PRINTF("LoadDDBBreak    =%s\n", (gdwfAMLIInit & AMLIIF_LOADDDB_BREAK) ? "on" : "off");
+        PRINTF("ErrorBreak      =%s\n", (gDebugger.dwfDebugger & DBGF_ERRBREAK_ON) ? "on" : "off");
+        PRINTF("VerboseMode     =%s\n", (gDebugger.dwfDebugger & DBGF_VERBOSE_ON) ? "on" : "off");
+        PRINTF("LogEvent        =%s\n", (gDebugger.dwfDebugger & DBGF_LOGEVENT_ON) ? "on" : "off");
         PRINTF("LogSize         =%d\n", gDebugger.dwLogSize);
     }
     else
     {
-        if(gDebugger.dwfDebugger & DBGF_DEBUG_SPEW_ON)
+        if (gDebugger.dwfDebugger & DBGF_DEBUG_SPEW_ON)
         {
-            if(!CheckAndEnableDebugSpew(TRUE))
-                gDebugger.dwfDebugger &= ~DBGF_DEBUG_SPEW_ON; 
+            if (!CheckAndEnableDebugSpew(TRUE))
+                gDebugger.dwfDebugger &= ~DBGF_DEBUG_SPEW_ON;
         }
-        else if(gDebugger.dwfDebugger & ~DBGF_DEBUG_SPEW_ON)
+        else if (gDebugger.dwfDebugger & ~DBGF_DEBUG_SPEW_ON)
         {
-            if(!CheckAndEnableDebugSpew(FALSE))
+            if (!CheckAndEnableDebugSpew(FALSE))
                 gDebugger.dwfDebugger |= DBGF_DEBUG_SPEW_ON;
         }
-
     }
 
     return rc;
-}       //DebugSet
+} //DebugSet
 
 /***LP  DebugSetLogSize - Set EventLog size
  *
@@ -3444,8 +3312,7 @@ LONG LOCAL DebugSet(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DebugSetLogSize(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                           ULONG dwNonSWArgs)
+LONG LOCAL DebugSetLogSize(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
 
@@ -3461,7 +3328,7 @@ LONG LOCAL DebugSetLogSize(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugSetLogSize
+} //DebugSetLogSize
 
 /***LP  SetLogSize - Set EventLog size
  *
@@ -3486,17 +3353,16 @@ BOOLEAN LOCAL SetLogSize(ULONG dwLogSize)
         gDebugger.dwLogIndex = 0;
     }
 
-    if ((gDebugger.pEventLog = MALLOC_LOCKED(sizeof(EVENTLOG)*dwLogSize,
-                                             'GOLE')) != NULL)
+    if ((gDebugger.pEventLog = MALLOC_LOCKED(sizeof(EVENTLOG) * dwLogSize, 'GOLE')) != NULL)
     {
         gDebugger.dwLogSize = dwLogSize;
         gDebugger.dwLogIndex = 0;
-        MEMZERO(gDebugger.pEventLog, sizeof(EVENTLOG)*dwLogSize);
+        MEMZERO(gDebugger.pEventLog, sizeof(EVENTLOG) * dwLogSize);
         rc = TRUE;
     }
 
     return rc;
-}       //SetLogSize
+} //SetLogSize
 
 /***LP  DebugTrace - Single-step an AML instruction
  *
@@ -3512,8 +3378,7 @@ BOOLEAN LOCAL SetLogSize(ULONG dwLogSize)
  *      returns negative error code
  */
 
-LONG LOCAL DebugTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                      ULONG dwNonSWArgs)
+LONG LOCAL DebugTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc;
 
@@ -3533,7 +3398,7 @@ LONG LOCAL DebugTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugTrace
+} //DebugTrace
 
 /***LP  DebugUnAsm - Unassemble AML code
  *
@@ -3549,8 +3414,7 @@ LONG LOCAL DebugTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                      ULONG dwNonSWArgs)
+LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static BOOLEAN fParsedAddr = FALSE;
@@ -3577,16 +3441,14 @@ LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             PUCHAR pbAddr;
 
             gpnsCurUnAsmScope = NULL;
-            if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pbAddr, NULL, &pns, NULL))
-                == DBGERR_NONE)
+            if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pbAddr, NULL, &pns, NULL)) == DBGERR_NONE)
             {
                 gDebugger.pbUnAsm = pbAddr;
                 gDebugger.pbUnAsmEnd = NULL;
                 fParsedAddr = TRUE;
                 if (pns != NULL)
                 {
-                    gDebugger.pbUnAsmEnd = pns->ObjData.pbDataBuff +
-                                           pns->ObjData.dwDataLen;
+                    gDebugger.pbUnAsmEnd = pns->ObjData.pbDataBuff + pns->ObjData.dwDataLen;
                     gpnsCurUnAsmScope = pns;
                 }
             }
@@ -3599,26 +3461,23 @@ LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
     else
     {
-        if (!fParsedAddr && (gDebugger.pbUnAsm == NULL) &&
-            (gReadyQueue.pctxtCurrent != NULL))
+        if (!fParsedAddr && (gDebugger.pbUnAsm == NULL) && (gReadyQueue.pctxtCurrent != NULL))
         {
             ULONG dwOffset;
 
             gDebugger.pbUnAsm = gReadyQueue.pctxtCurrent->pbOp;
             gDebugger.pbUnAsmEnd = NULL;
-        gpnsCurUnAsmScope = NULL;
+            gpnsCurUnAsmScope = NULL;
             if (FindObjSymbol(gDebugger.pbUnAsm, &pns, &dwOffset))
             {
-                gDebugger.pbUnAsmEnd = pns->ObjData.pbDataBuff +
-                                       pns->ObjData.dwDataLen;
+                gDebugger.pbUnAsmEnd = pns->ObjData.pbDataBuff + pns->ObjData.dwDataLen;
                 gpnsCurUnAsmScope = pns;
             }
         }
 
         if (gDebugger.pbUnAsmEnd == NULL)
         {
-            if ((gDebugger.pbUnAsm >= gDebugger.pbBlkBegin) &&
-                (gDebugger.pbUnAsm < gDebugger.pbBlkEnd))
+            if ((gDebugger.pbUnAsm >= gDebugger.pbBlkBegin) && (gDebugger.pbUnAsm < gDebugger.pbBlkEnd))
             {
                 gDebugger.pbUnAsmEnd = gDebugger.pbBlkEnd;
             }
@@ -3628,7 +3487,7 @@ LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
                 //
                 // don't know code len, start with 64K
                 //
-                for (dwLen = 64*1024; dwLen > 0; dwLen >>= 1)
+                for (dwLen = 64 * 1024; dwLen > 0; dwLen >>= 1)
                 {
                     if (ASSERTRANGE(gDebugger.pbUnAsm, dwLen))
                     {
@@ -3645,11 +3504,9 @@ LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             }
         }
 
-        if ((rc == DBGERR_NONE) && (gDebugger.pbUnAsm != NULL) &&
-            (gDebugger.pbUnAsmEnd > gDebugger.pbUnAsm))
+        if ((rc == DBGERR_NONE) && (gDebugger.pbUnAsm != NULL) && (gDebugger.pbUnAsmEnd > gDebugger.pbUnAsm))
         {
-            rc = UnAsmScope(&gDebugger.pbUnAsm, gDebugger.pbUnAsmEnd,
-                            fParsedAddr? 0: -1, 0);
+            rc = UnAsmScope(&gDebugger.pbUnAsm, gDebugger.pbUnAsmEnd, fParsedAddr ? 0 : -1, 0);
             PRINTF("\n");
             if (rc == UNASMERR_ABORT)
             {
@@ -3665,7 +3522,7 @@ LONG LOCAL DebugUnAsm(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugUnAsm
+} //DebugUnAsm
 
 BOOLEAN fRunningMethod = FALSE;
 
@@ -3683,13 +3540,12 @@ BOOLEAN fRunningMethod = FALSE;
  *      returns negative error code
  */
 
-LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                          ULONG dwNonSWArgs)
+LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     static int icArgs = -1;
     static PNSOBJ pns = NULL;
-    static OBJDATA Args[MAX_NUM_ARGS] = {0};
+    static OBJDATA Args[MAX_NUM_ARGS] = { 0 };
     static OBJDATA Result;
 
     DEREF(pArg);
@@ -3707,8 +3563,7 @@ LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
         {
             PUCHAR pbAddr;
 
-            if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pbAddr, NULL, &pns, NULL))
-                == DBGERR_NONE)
+            if ((rc = DebugExpr(pszArg, (PULONG_PTR)&pbAddr, NULL, &pns, NULL)) == DBGERR_NONE)
             {
                 if (pns != NULL)
                 {
@@ -3732,8 +3587,7 @@ LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
             }
             else
             {
-                DBG_ERROR(("invalid argument %s (can only be integer)",
-                           pszArg));
+                DBG_ERROR(("invalid argument %s (can only be integer)", pszArg));
                 rc = DBGERR_INVALID_CMD;
             }
         }
@@ -3749,9 +3603,7 @@ LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
 
         MEMZERO(&Result, sizeof(OBJDATA));
         fRunningMethod = TRUE;
-        if ((rcAMLI = AsyncEvalObject(pns, &Result, icArgs, Args,
-                                      RunMethodCallBack, NULL, TRUE)) !=
-            AMLISTA_PENDING)
+        if ((rcAMLI = AsyncEvalObject(pns, &Result, icArgs, Args, RunMethodCallBack, NULL, TRUE)) != AMLISTA_PENDING)
         {
             RunMethodCallBack(pns, rcAMLI, &Result, NULL);
             if (rcAMLI != STATUS_SUCCESS)
@@ -3778,7 +3630,7 @@ LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //DebugRunMethod
+} //DebugRunMethod
 
 /***LP  RunMethodCallBack - RunMethod completion callback
  *
@@ -3792,15 +3644,13 @@ LONG LOCAL DebugRunMethod(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      None
  */
 
-VOID EXPORT RunMethodCallBack(PNSOBJ pns, NTSTATUS rc, POBJDATA pdata,
-                              PVOID pvContext)
+VOID EXPORT RunMethodCallBack(PNSOBJ pns, NTSTATUS rc, POBJDATA pdata, PVOID pvContext)
 {
     DEREF(pvContext);
 
     if (rc == STATUS_SUCCESS)
     {
-        PRINTF("\n%s completed successfully with object data:\n",
-               GetObjectPath(pns));
+        PRINTF("\n%s completed successfully with object data:\n", GetObjectPath(pns));
         DumpObject(pdata, NULL, 0);
     }
     else
@@ -3808,11 +3658,10 @@ VOID EXPORT RunMethodCallBack(PNSOBJ pns, NTSTATUS rc, POBJDATA pdata,
         PSZ pszErr;
 
         AMLIGetLastError(&pszErr);
-        PRINTF("\n%s failed with the following error:\n%s\n",
-               GetObjectPath(pns), pszErr);
+        PRINTF("\n%s failed with the following error:\n%s\n", GetObjectPath(pns), pszErr);
     }
     fRunningMethod = FALSE;
-}       //RunMethodCallBack
+} //RunMethodCallBack
 
 /***LP  AddObjSymbol - Add object to symbol table
  *
@@ -3869,7 +3718,7 @@ VOID LOCAL AddObjSymbol(PUCHAR pbOp, PNSOBJ pnsObj)
             }
         }
     }
-}       //AddObjSymbol
+} //AddObjSymbol
 
 /***LP  FreeSymList - Free all object symbols
  *
@@ -3889,7 +3738,7 @@ VOID LOCAL FreeSymList(VOID)
         posNext = pos->posNext;
         FREESYOBJ(pos);
     }
-}       //FreeSymList
+} //FreeSymList
 
 /***LP  FindObjSymbol - Find nearest object with given address
  *
@@ -3927,7 +3776,7 @@ BOOLEAN LOCAL FindObjSymbol(PUCHAR pbOp, PPNSOBJ ppns, PULONG pdwOffset)
     }
 
     return rc;
-}       //FindObjSymbol
+} //FindObjSymbol
 
 /***LP  CheckBP - Check given address is in the breakpoint list
  *
@@ -3952,14 +3801,13 @@ int LOCAL CheckBP(PUCHAR pbOp)
         }
     }
 
-    if ((i == MAX_BRK_PTS) ||
-        !(gDebugger.BrkPts[i].dwfBrkPt & BPF_ENABLED))
+    if ((i == MAX_BRK_PTS) || !(gDebugger.BrkPts[i].dwfBrkPt & BPF_ENABLED))
     {
         i = -1;
     }
 
     return i;
-}       //CheckBP
+} //CheckBP
 
 /***LP  PrintfBuffData - Print buffer data
  *
@@ -3993,7 +3841,7 @@ VOID LOCAL PrintBuffData(PUCHAR pb, ULONG dwLen)
     PRINTF("}");
 
     EXIT(4, ("PrintBuffData!\n"));
-}       //PrintBuffData
+} //PrintBuffData
 
 /***LP  PrintIndent - Print indentation
  *
@@ -4018,7 +3866,7 @@ VOID LOCAL PrintIndent(PCTXT pctxt)
     }
 
     EXIT(4, ("PrintIndent!\n"));
-}       //PrintIndent
+} //PrintIndent
 
 /***LP  PrintObject - Print object content
  *
@@ -4038,42 +3886,38 @@ VOID LOCAL PrintObject(POBJDATA pdata)
 
     switch (pdata->dwDataType)
     {
-        case OBJTYPE_INTDATA:
-            PRINTF("0x%x", pdata->uipDataValue);
-            break;
+    case OBJTYPE_INTDATA:
+        PRINTF("0x%x", pdata->uipDataValue);
+        break;
 
-        case OBJTYPE_STRDATA:
-            PRINTF("\"%s\"", pdata->pbDataBuff);
-            break;
+    case OBJTYPE_STRDATA:
+        PRINTF("\"%s\"", pdata->pbDataBuff);
+        break;
 
-        case OBJTYPE_BUFFDATA:
-            PRINTF("Buffer(0x%x)", pdata->dwDataLen);
-            PrintBuffData(pdata->pbDataBuff, pdata->dwDataLen);
-            break;
+    case OBJTYPE_BUFFDATA:
+        PRINTF("Buffer(0x%x)", pdata->dwDataLen);
+        PrintBuffData(pdata->pbDataBuff, pdata->dwDataLen);
+        break;
 
-        case OBJTYPE_PKGDATA:
-            PRINTF("Package(%d){",
-                   ((PPACKAGEOBJ)pdata->pbDataBuff)->dwcElements);
-            for (i = 0;
-                 i < (int)((PPACKAGEOBJ)pdata->pbDataBuff)->dwcElements;
-                 ++i)
-            {
-                PRINTF("\n\t");
-                PrintObject(&((PPACKAGEOBJ)pdata->pbDataBuff)->adata[i]);
-                if (i + 1 < (int)((PPACKAGEOBJ)pdata->pbDataBuff)->dwcElements)
-                    PRINTF(",");
-            }
-            PRINTF("}");
-            break;
+    case OBJTYPE_PKGDATA:
+        PRINTF("Package(%d){", ((PPACKAGEOBJ)pdata->pbDataBuff)->dwcElements);
+        for (i = 0; i < (int)((PPACKAGEOBJ)pdata->pbDataBuff)->dwcElements; ++i)
+        {
+            PRINTF("\n\t");
+            PrintObject(&((PPACKAGEOBJ)pdata->pbDataBuff)->adata[i]);
+            if (i + 1 < (int)((PPACKAGEOBJ)pdata->pbDataBuff)->dwcElements)
+                PRINTF(",");
+        }
+        PRINTF("}");
+        break;
 
-        default:
-            PRINTF("<Obj=%x,Type=%s,Value=0x%x,Buff=%x,Len=%d>",
-                   pdata, GetObjectTypeName(pdata->dwDataType),
-                   pdata->uipDataValue, pdata->pbDataBuff, pdata->dwDataLen);
+    default:
+        PRINTF("<Obj=%x,Type=%s,Value=0x%x,Buff=%x,Len=%d>", pdata, GetObjectTypeName(pdata->dwDataType),
+               pdata->uipDataValue, pdata->pbDataBuff, pdata->dwDataLen);
     }
 
     EXIT(4, ("PrintObject!\n"));
-}       //PrintObject
+} //PrintObject
 
 /***LP  LogEvent - Log an event in the log buffer
  *
@@ -4091,12 +3935,10 @@ VOID LOCAL PrintObject(POBJDATA pdata)
  *      None
  */
 
-VOID LOCAL LogEvent(ULONG dwEvent, ULONG_PTR uipData1, ULONG_PTR uipData2,
-                    ULONG_PTR uipData3, ULONG_PTR uipData4, ULONG_PTR uipData5,
-                    ULONG_PTR uipData6, ULONG_PTR uipData7)
+VOID LOCAL LogEvent(ULONG dwEvent, ULONG_PTR uipData1, ULONG_PTR uipData2, ULONG_PTR uipData3, ULONG_PTR uipData4,
+                    ULONG_PTR uipData5, ULONG_PTR uipData6, ULONG_PTR uipData7)
 {
-    if ((gDebugger.dwfDebugger & DBGF_LOGEVENT_ON) &&
-        (gDebugger.pEventLog != NULL))
+    if ((gDebugger.dwfDebugger & DBGF_LOGEVENT_ON) && (gDebugger.pEventLog != NULL))
     {
         ULONG i = gDebugger.dwLogIndex;
 
@@ -4115,7 +3957,7 @@ VOID LOCAL LogEvent(ULONG dwEvent, ULONG_PTR uipData1, ULONG_PTR uipData2,
             gDebugger.dwLogIndex = 0;
         }
     }
-}       //LogEvent;
+} //LogEvent;
 
 /***LP  LogSchedEvent - Log a scheduler event in the log buffer
  *
@@ -4129,11 +3971,9 @@ VOID LOCAL LogEvent(ULONG dwEvent, ULONG_PTR uipData1, ULONG_PTR uipData2,
  *      None
  */
 
-VOID LOCAL LogSchedEvent(ULONG dwEvent, ULONG_PTR uipData1, ULONG_PTR uipData2,
-                         ULONG_PTR uipData3)
+VOID LOCAL LogSchedEvent(ULONG dwEvent, ULONG_PTR uipData1, ULONG_PTR uipData2, ULONG_PTR uipData3)
 {
-    if ((gDebugger.dwfDebugger & DBGF_LOGEVENT_ON) &&
-        (gDebugger.pEventLog != NULL))
+    if ((gDebugger.dwfDebugger & DBGF_LOGEVENT_ON) && (gDebugger.pEventLog != NULL))
     {
         ULONG i = gDebugger.dwLogIndex;
 
@@ -4152,7 +3992,7 @@ VOID LOCAL LogSchedEvent(ULONG dwEvent, ULONG_PTR uipData1, ULONG_PTR uipData2,
             gDebugger.dwLogIndex = 0;
         }
     }
-}       //LogSchedEvent
+} //LogSchedEvent
 
 /***LP  LogError - Log error code and message
  *
@@ -4168,46 +4008,79 @@ VOID LOCAL LogError(NTSTATUS rcErr)
     static struct _ErrMsg
     {
         NTSTATUS rcErr;
-        PSZ      pszMsg;
-    } ErrMsgTable[] =
-    {
-        AMLIERR_NONE,                   "Success",
-        AMLIERR_OUT_OF_MEM,             "Failed to allocate memory",
-        AMLIERR_INVALID_OPCODE,         "Invalid AML Opcode",
-        AMLIERR_NAME_TOO_LONG,          "Object name is too long",
-        AMLIERR_ASSERT_FAILED,          "Assertion failure",
-        AMLIERR_INVALID_NAME,           "Invalid object name",
-        AMLIERR_OBJ_NOT_FOUND,          "Object not found",
-        AMLIERR_OBJ_ALREADY_EXIST,      "Object already exist",
-        AMLIERR_INDEX_TOO_BIG,          "Index is too big",
-        AMLIERR_ARG_NOT_EXIST,          "Argument does not exist",
-        AMLIERR_FATAL,                  "Fatal error",
-        AMLIERR_INVALID_SUPERNAME,      "Invalid SuperName",
-        AMLIERR_UNEXPECTED_ARGTYPE,     "Unexpected argument type",
-        AMLIERR_UNEXPECTED_OBJTYPE,     "Unexpected object type",
-        AMLIERR_UNEXPECTED_TARGETTYPE,  "Unexpected target type",
-        AMLIERR_INCORRECT_NUMARG,       "Incorrect number of arguments",
-        AMLIERR_FAILED_ADDR_XLATE,      "Failed address translation",
-        AMLIERR_INVALID_EVENTTYPE,      "Invalid event type",
-        AMLIERR_REGHANDLER_FAILED,      "Failed to register event handler",
-        AMLIERR_HANDLER_EXIST,          "Event handler already exist",
-        AMLIERR_INVALID_DATA,           "Invalid data",
-        AMLIERR_INVALID_REGIONSPACE,    "Invalid RegionSpace",
-        AMLIERR_INVALID_ACCSIZE,        "Invalid AccessSize",
-        AMLIERR_INVALID_TABLE,          "Invalid table",
-        AMLIERR_ACQUIREGL_FAILED,       "Failed to acquire global lock",
-        AMLIERR_ALREADY_INITIALIZED,    "AML Interpreter is already initialized",
-        AMLIERR_NOT_INITIALIZED,        "AML Interpreter is not initialized",
-        AMLIERR_MUTEX_INVALID_LEVEL,    "Invalid mutex sync level",
-        AMLIERR_MUTEX_NOT_OWNED,        "Mutex object has no owner",
-        AMLIERR_MUTEX_NOT_OWNER,        "Mutex object is owned by a different owner",
-        AMLIERR_RS_ACCESS,              "RegionSpace handler error",
-        AMLIERR_STACK_OVERFLOW,         "AML Stack overflow",
-        AMLIERR_INVALID_BUFFSIZE,       "Invalid buffer size",
-        AMLIERR_BUFF_TOOSMALL,          "Buffer is too small",
-        AMLIERR_NOTIFY_FAILED,          "Notify handler failed",
-        0,                              NULL
-    };
+        PSZ pszMsg;
+    } ErrMsgTable[] = { AMLIERR_NONE,
+                        "Success",
+                        AMLIERR_OUT_OF_MEM,
+                        "Failed to allocate memory",
+                        AMLIERR_INVALID_OPCODE,
+                        "Invalid AML Opcode",
+                        AMLIERR_NAME_TOO_LONG,
+                        "Object name is too long",
+                        AMLIERR_ASSERT_FAILED,
+                        "Assertion failure",
+                        AMLIERR_INVALID_NAME,
+                        "Invalid object name",
+                        AMLIERR_OBJ_NOT_FOUND,
+                        "Object not found",
+                        AMLIERR_OBJ_ALREADY_EXIST,
+                        "Object already exist",
+                        AMLIERR_INDEX_TOO_BIG,
+                        "Index is too big",
+                        AMLIERR_ARG_NOT_EXIST,
+                        "Argument does not exist",
+                        AMLIERR_FATAL,
+                        "Fatal error",
+                        AMLIERR_INVALID_SUPERNAME,
+                        "Invalid SuperName",
+                        AMLIERR_UNEXPECTED_ARGTYPE,
+                        "Unexpected argument type",
+                        AMLIERR_UNEXPECTED_OBJTYPE,
+                        "Unexpected object type",
+                        AMLIERR_UNEXPECTED_TARGETTYPE,
+                        "Unexpected target type",
+                        AMLIERR_INCORRECT_NUMARG,
+                        "Incorrect number of arguments",
+                        AMLIERR_FAILED_ADDR_XLATE,
+                        "Failed address translation",
+                        AMLIERR_INVALID_EVENTTYPE,
+                        "Invalid event type",
+                        AMLIERR_REGHANDLER_FAILED,
+                        "Failed to register event handler",
+                        AMLIERR_HANDLER_EXIST,
+                        "Event handler already exist",
+                        AMLIERR_INVALID_DATA,
+                        "Invalid data",
+                        AMLIERR_INVALID_REGIONSPACE,
+                        "Invalid RegionSpace",
+                        AMLIERR_INVALID_ACCSIZE,
+                        "Invalid AccessSize",
+                        AMLIERR_INVALID_TABLE,
+                        "Invalid table",
+                        AMLIERR_ACQUIREGL_FAILED,
+                        "Failed to acquire global lock",
+                        AMLIERR_ALREADY_INITIALIZED,
+                        "AML Interpreter is already initialized",
+                        AMLIERR_NOT_INITIALIZED,
+                        "AML Interpreter is not initialized",
+                        AMLIERR_MUTEX_INVALID_LEVEL,
+                        "Invalid mutex sync level",
+                        AMLIERR_MUTEX_NOT_OWNED,
+                        "Mutex object has no owner",
+                        AMLIERR_MUTEX_NOT_OWNER,
+                        "Mutex object is owned by a different owner",
+                        AMLIERR_RS_ACCESS,
+                        "RegionSpace handler error",
+                        AMLIERR_STACK_OVERFLOW,
+                        "AML Stack overflow",
+                        AMLIERR_INVALID_BUFFSIZE,
+                        "Invalid buffer size",
+                        AMLIERR_BUFF_TOOSMALL,
+                        "Buffer is too small",
+                        AMLIERR_NOTIFY_FAILED,
+                        "Notify handler failed",
+                        0,
+                        NULL };
     int i;
 
     gDebugger.rcLastError = rcErr;
@@ -4215,14 +4088,13 @@ VOID LOCAL LogError(NTSTATUS rcErr)
     {
         if (rcErr == ErrMsgTable[i].rcErr)
         {
-            sprintf(gDebugger.szLastError, MODNAME "_ERROR(%08x): %s",
-                    rcErr, ErrMsgTable[i].pszMsg);
+            sprintf(gDebugger.szLastError, MODNAME "_ERROR(%08x): %s", rcErr, ErrMsgTable[i].pszMsg);
             break;
         }
     }
 
     ASSERT(ErrMsgTable[i].pszMsg != NULL);
-}       //LogError
+} //LogError
 
 /***LP  CatError - Concat to error buffer
  *
@@ -4241,13 +4113,12 @@ VOID LOCAL CatError(PSZ pszFormat, ...)
     STRCAT(gDebugger.szLastError, "\n");
     va_start(marker, pszFormat);
 
-    if(_vsnprintf(&gDebugger.szLastError[STRLEN(gDebugger.szLastError)],
-             sizeof(gDebugger.szLastError) - STRLEN(gDebugger.szLastError),
-             pszFormat, marker) == -1)
+    if (_vsnprintf(&gDebugger.szLastError[STRLEN(gDebugger.szLastError)],
+                   sizeof(gDebugger.szLastError) - STRLEN(gDebugger.szLastError), pszFormat, marker) == -1)
     {
         gDebugger.szLastError[sizeof(gDebugger.szLastError) - 1] = '\0';
     }
-    
+
     va_end(marker);
 
     ConPrintf(gDebugger.szLastError);
@@ -4257,7 +4128,7 @@ VOID LOCAL CatError(PSZ pszFormat, ...)
     {
         AMLIDebugger(FALSE);
     }
-}       //CatError
+} //CatError
 
 /***LP  ConPrintf - Console printf
  *
@@ -4277,19 +4148,17 @@ VOID LOCAL ConPrintf(PSZ pszFormat, ...)
     va_start(marker, pszFormat);
     vsprintf(szBuff, pszFormat, marker);
     va_end(marker);
-    if (gDebugger.hConMessage.pfnHandler != NULL) {
+    if (gDebugger.hConMessage.pfnHandler != NULL)
+    {
 
-        ((PFNCM)gDebugger.hConMessage.pfnHandler)(
-            szBuff,
-            gDebugger.hConMessage.uipParam
-            );
-
-    } else {
+        ((PFNCM)gDebugger.hConMessage.pfnHandler)(szBuff, gDebugger.hConMessage.uipParam);
+    }
+    else
+    {
 
         _PRINTF(szBuff);
-
     }
-}       //ConPrintf
+} //ConPrintf
 
 /***LP  ConPrompt - Console prompted input
  *
@@ -4302,21 +4171,20 @@ VOID LOCAL ConPrintf(PSZ pszFormat, ...)
 VOID LOCAL ConPrompt(PSZ pszPrompt, PSZ pszBuff, ULONG dwcbBuff)
 {
 
-    if(gDebugger.dwfDebugger & ~DBGF_DEBUG_SPEW_ON)
+    if (gDebugger.dwfDebugger & ~DBGF_DEBUG_SPEW_ON)
     {
         CheckAndEnableDebugSpew(TRUE);
     }
 
     if (gDebugger.hConPrompt.pfnHandler != NULL)
     {
-        ((PFNCP)gDebugger.hConPrompt.pfnHandler)(pszPrompt, pszBuff, dwcbBuff,
-                                                 gDebugger.hConPrompt.uipParam);
+        ((PFNCP)gDebugger.hConPrompt.pfnHandler)(pszPrompt, pszBuff, dwcbBuff, gDebugger.hConPrompt.uipParam);
     }
     else
     {
         DbgPrompt(pszPrompt, pszBuff, dwcbBuff);
     }
-}       //ConPrompt
+} //ConPrompt
 
 
 /***LP  CheckAndEnableDebugSpew - Enable debug spew if it is not already turned on.
@@ -4330,17 +4198,17 @@ VOID LOCAL ConPrompt(PSZ pszPrompt, PSZ pszBuff, ULONG dwcbBuff)
 BOOLEAN LOCAL CheckAndEnableDebugSpew(BOOLEAN fEnable)
 {
     BOOLEAN bRet = FALSE;
-    
-    if(KeGetCurrentIrql() < DISPATCH_LEVEL)
+
+    if (KeGetCurrentIrql() < DISPATCH_LEVEL)
     {
-        if(fEnable)
+        if (fEnable)
         {
             gDebugger.dwfDebugger |= DBGF_DEBUG_SPEW_ON;
-            DbgSetDebugFilterState( DPFLTR_AMLI_ID, -1, TRUE);
+            DbgSetDebugFilterState(DPFLTR_AMLI_ID, -1, TRUE);
         }
         else
         {
-            DbgSetDebugFilterState( DPFLTR_AMLI_ID, -1, FALSE);
+            DbgSetDebugFilterState(DPFLTR_AMLI_ID, -1, FALSE);
             gDebugger.dwfDebugger &= ~DBGF_DEBUG_SPEW_ON;
         }
 
@@ -4349,7 +4217,7 @@ BOOLEAN LOCAL CheckAndEnableDebugSpew(BOOLEAN fEnable)
     return bRet;
 }
 
-#endif  //ifdef DEBUGGER
+#endif //ifdef DEBUGGER
 
 #ifdef DEBUG
 /***LP  DumpMemObjCounts - display memory object counts
@@ -4393,7 +4261,6 @@ VOID LOCAL DumpMemObjCounts(VOID)
     PRINTF(szFormat, "ProcessorObj ", gdwcPCObjs);
     PRINTF(szFormat, "CtxtResObj   ", gdwcCRObjs);
     PRINTF(szFormat, "MiscObj      ",
-           gdwcMemObjs - gdwcCTObjs - gdwcHPObjs - gdwcSYObjs - gdwcRSObjs -
-           gdwcPHObjs - gdwcCRObjs);
-}       //DumpMemObjCounts
-#endif  //ifdef DEBUG
+           gdwcMemObjs - gdwcCTObjs - gdwcHPObjs - gdwcSYObjs - gdwcRSObjs - gdwcPHObjs - gdwcCRObjs);
+} //DumpMemObjCounts
+#endif //ifdef DEBUG

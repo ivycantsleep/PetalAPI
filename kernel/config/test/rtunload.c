@@ -33,25 +33,21 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-#define WORK_SIZE   1024
+#define WORK_SIZE 1024
 
 void __cdecl main(int, char *);
 void processargs();
 
-UNICODE_STRING  KeyPath;
-WCHAR           KeyPathBuffer[WORK_SIZE];
+UNICODE_STRING KeyPath;
+WCHAR KeyPathBuffer[WORK_SIZE];
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES KeyAttributes;
-    IO_STATUS_BLOCK  IoStatus;
-    HANDLE  FileHandle;
-    HANDLE  KeyHandle;
+    IO_STATUS_BLOCK IoStatus;
+    HANDLE FileHandle;
+    HANDLE KeyHandle;
     BOOLEAN WasEnabled;
 
     //
@@ -72,53 +68,38 @@ __cdecl main(
     // Set up KeyPath
     //
 
-    InitializeObjectAttributes(
-        &KeyAttributes,
-        &KeyPath,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&KeyAttributes, &KeyPath, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
     status = NtUnloadKey(&KeyAttributes);
 
     RtlAdjustPrivilege(SE_RESTORE_PRIVILEGE, WasEnabled, FALSE, &WasEnabled);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("rtunload: key unload failed status = %08lx\n", status);
         exit(1);
-    } else {
+    }
+    else
+    {
         printf("rtunload: success!\n");
     }
 
     exit(0);
 }
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
 
-    if ( (argc != 2) )
+    if ((argc != 2))
     {
-        printf("Usage: %s <KeyName>\n",
-                argv[0]);
+        printf("Usage: %s <KeyName>\n", argv[0]);
         exit(1);
     }
 
-    RtlInitAnsiString(
-        &temp,
-        argv[1]
-        );
+    RtlInitAnsiString(&temp, argv[1]);
 
-    RtlAnsiStringToUnicodeString(
-        &KeyPath,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&KeyPath, &temp, TRUE);
 
     return;
 }

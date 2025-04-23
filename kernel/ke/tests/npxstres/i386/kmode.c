@@ -22,16 +22,14 @@ Revision History:
 
 #include "pch.h"
 
-VOID
-KModeTouchNpx(
-    VOID
-    )
+VOID KModeTouchNpx(VOID)
 {
     BOOLEAN bSuccess;
 
     bSuccess = KModeTouchNpxViaDSound();
 
-    if (bSuccess == FALSE) {
+    if (bSuccess == FALSE)
+    {
 
         exit(1);
     }
@@ -39,17 +37,15 @@ KModeTouchNpx(
 
 
 BOOLEAN
-KModeTouchNpxViaDSound(
-    VOID
-    )
+KModeTouchNpxViaDSound(VOID)
 {
     LPDIRECTSOUND ds;
     LPDIRECTSOUNDBUFFER dsc;
     DSBUFFERDESC dsbc;
     WAVEFORMATEX wfx;
     HRESULT hr;
-    BYTE    x[1024];
-    PBYTE   y;
+    BYTE x[1024];
+    PBYTE y;
     int i;
 
     ZeroMemory(&wfx, sizeof(wfx));
@@ -68,14 +64,16 @@ KModeTouchNpxViaDSound(
     memcpy(x, &wfx, sizeof(wfx));
     y = x + sizeof(wfx);
 
-    for(i=0; i<200; i++) {
-        *y = (BYTE) i;
+    for (i = 0; i < 200; i++)
+    {
+        *y = (BYTE)i;
         y++;
     }
 
     hr = DirectSoundCreate(NULL, &ds, NULL);
 
-    if (ds == NULL) {
+    if (ds == NULL)
+    {
         fprintf(stderr, "DirectSoundCreate failed?!\n");
         return FALSE;
     }
@@ -86,22 +84,22 @@ KModeTouchNpxViaDSound(
     dsbc.dwBufferBytes = 10000;
     dsbc.dwFlags = 0;
     dsbc.dwSize = sizeof(dsbc);
-    dsbc.lpwfxFormat = (LPWAVEFORMATEX) x;
+    dsbc.lpwfxFormat = (LPWAVEFORMATEX)x;
 
     hr = ds->lpVtbl->CreateSoundBuffer(ds, &dsbc, &dsc, NULL);
 
-    if (dsc) {
+    if (dsc)
+    {
 
         hr = dsc->lpVtbl->Play(dsc, 0, 0, 0);
         dsc->lpVtbl->Release(dsc);
     }
 
-    if (ds) {
+    if (ds)
+    {
 
         ds->lpVtbl->Release(ds);
     }
 
     return TRUE;
 }
-
-

@@ -36,16 +36,14 @@ extern POBJECT_TYPE IoFileObjectType;
 
 WORK_QUEUE_ITEM PopShutdownWorkItem;
 WORK_QUEUE_ITEM PopUnlockAfterSleepWorkItem;
-KEVENT          PopUnlockComplete;
+KEVENT PopUnlockComplete;
 extern ERESOURCE ExpTimeRefreshLock;
 
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtSetThreadExecutionState(
-    IN EXECUTION_STATE NewFlags,                // ES_xxx flags
-    OUT EXECUTION_STATE *PreviousFlags
-    )
+NtSetThreadExecutionState(IN EXECUTION_STATE NewFlags, // ES_xxx flags
+                          OUT EXECUTION_STATE *PreviousFlags)
 /*++
 
 Routine Description:
@@ -65,10 +63,10 @@ Return Value:
 
 --*/
 {
-    ULONG               OldFlags;
-    PKTHREAD            Thread;
-    KPROCESSOR_MODE     PreviousMode;
-    NTSTATUS            Status;
+    ULONG OldFlags;
+    PKTHREAD Thread;
+    KPROCESSOR_MODE PreviousMode;
+    NTSTATUS Status;
 
     PAGED_CODE();
 
@@ -79,20 +77,25 @@ Return Value:
     // Verify no reserved bits set
     //
 
-    if (NewFlags & ~(ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_CONTINUOUS)) {
+    if (NewFlags & ~(ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_CONTINUOUS))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    try {
+    try
+    {
         //
         // Verify callers params
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
-            ProbeForWriteUlong (PreviousFlags);
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForWriteUlong(PreviousFlags);
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
@@ -102,19 +105,23 @@ Return Value:
 
     OldFlags = Thread->PowerState | ES_CONTINUOUS;
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        PopAcquirePolicyLock ();
+        PopAcquirePolicyLock();
 
         //
         // If the continous bit is set, modify current thread flags
         //
 
-        if (NewFlags & ES_CONTINUOUS) {
-            Thread->PowerState = (UCHAR) NewFlags;
-            PopApplyAttributeState (NewFlags, OldFlags);
-        } else {
-            PopApplyAttributeState (NewFlags, 0);
+        if (NewFlags & ES_CONTINUOUS)
+        {
+            Thread->PowerState = (UCHAR)NewFlags;
+            PopApplyAttributeState(NewFlags, OldFlags);
+        }
+        else
+        {
+            PopApplyAttributeState(NewFlags, 0);
         }
 
         //
@@ -123,16 +130,19 @@ Return Value:
         // this thread is waiting for the USER32 thread, which is broadcasting a
         // system message to this thread's window.
         //
-        PopReleasePolicyLock (FALSE);
+        PopReleasePolicyLock(FALSE);
         PopCheckForWork(TRUE);
 
         //
         // Return the results
         //
 
-        try {
+        try
+        {
             *PreviousFlags = OldFlags;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             Status = GetExceptionCode();
         }
     }
@@ -143,9 +153,8 @@ Return Value:
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtRequestWakeupLatency(
-    IN LATENCY_TIME latency             // LT_xxx flags
-    )
+NtRequestWakeupLatency(IN LATENCY_TIME latency // LT_xxx flags
+)
 /*++
 
 Routine Description:
@@ -163,8 +172,8 @@ Return Value:
 
 --*/
 {
-    PEPROCESS   Process;
-    ULONG       OldFlags, NewFlags;
+    PEPROCESS Process;
+    ULONG OldFlags, NewFlags;
 
 
     PAGED_CODE();
@@ -173,22 +182,23 @@ Return Value:
     // Verify latency is known
     //
 
-    switch (latency) {
-        case LT_DONT_CARE:
-            NewFlags = ES_CONTINUOUS;
-            break;
+    switch (latency)
+    {
+    case LT_DONT_CARE:
+        NewFlags = ES_CONTINUOUS;
+        break;
 
-        case LT_LOWEST_LATENCY:
-            NewFlags = ES_CONTINUOUS | POP_LOW_LATENCY;
-            break;
+    case LT_LOWEST_LATENCY:
+        NewFlags = ES_CONTINUOUS | POP_LOW_LATENCY;
+        break;
 
-        default:
-            return STATUS_INVALID_PARAMETER;
+    default:
+        return STATUS_INVALID_PARAMETER;
     }
 
 
     Process = PsGetCurrentProcess();
-    PopAcquirePolicyLock ();
+    PopAcquirePolicyLock();
 
     //
     // Get changes
@@ -200,31 +210,28 @@ Return Value:
     // Udpate latency flag in process field
     //
 
-    Process->Pcb.PowerState = (UCHAR) NewFlags;
+    Process->Pcb.PowerState = (UCHAR)NewFlags;
 
     //
     // Handle flags
     //
 
-    PopApplyAttributeState (NewFlags, OldFlags);
+    PopApplyAttributeState(NewFlags, OldFlags);
 
     //
     // Done
     //
 
-    PopReleasePolicyLock (TRUE);
+    PopReleasePolicyLock(TRUE);
     return STATUS_SUCCESS;
 }
 
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtInitiatePowerAction(
-    IN POWER_ACTION SystemAction,
-    IN SYSTEM_POWER_STATE LightestSystemState,
-    IN ULONG Flags,                 // POWER_ACTION_xxx flags
-    IN BOOLEAN Asynchronous
-    )
+NtInitiatePowerAction(IN POWER_ACTION SystemAction, IN SYSTEM_POWER_STATE LightestSystemState,
+                      IN ULONG Flags, // POWER_ACTION_xxx flags
+                      IN BOOLEAN Asynchronous)
 /*++
 
 Routine Description:
@@ -250,11 +257,11 @@ Return Value:
 
 --*/
 {
-    KPROCESSOR_MODE         PreviousMode;
-    POWER_ACTION_POLICY     Policy;
-    POP_ACTION_TRIGGER      Trigger;
-    PPOP_TRIGGER_WAIT       Wait;
-    NTSTATUS                Status;
+    KPROCESSOR_MODE PreviousMode;
+    POWER_ACTION_POLICY Policy;
+    POP_ACTION_TRIGGER Trigger;
+    PPOP_TRIGGER_WAIT Wait;
+    NTSTATUS Status;
 
     PAGED_CODE();
 
@@ -263,18 +270,22 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (!SeSinglePrivilegeCheck( SeShutdownPrivilege, PreviousMode )) {
+    if (!SeSinglePrivilegeCheck(SeShutdownPrivilege, PreviousMode))
+    {
         return STATUS_PRIVILEGE_NOT_HELD;
     }
 
-    if (SystemAction == PowerActionWarmEject) {
+    if (SystemAction == PowerActionWarmEject)
+    {
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             return STATUS_INVALID_PARAMETER_1;
         }
     }
 
-    if (Flags & POWER_ACTION_LIGHTEST_FIRST) {
+    if (Flags & POWER_ACTION_LIGHTEST_FIRST)
+    {
 
         return STATUS_INVALID_PARAMETER_3;
     }
@@ -283,14 +294,14 @@ Return Value:
     // Build a policy & trigger to cause the action
     //
 
-    RtlZeroMemory (&Policy, sizeof(Policy));
-    RtlZeroMemory (&Trigger, sizeof(Trigger));
+    RtlZeroMemory(&Policy, sizeof(Policy));
+    RtlZeroMemory(&Trigger, sizeof(Trigger));
 
     Policy.Action = SystemAction;
-    Policy.Flags  = Flags;
-    Trigger.Type  = PolicyInitiatePowerActionAPI;
+    Policy.Flags = Flags;
+    Trigger.Type = PolicyInitiatePowerActionAPI;
     Trigger.Flags = PO_TRG_SET;
-    Status        = STATUS_SUCCESS;
+    Status = STATUS_SUCCESS;
 
     //
     // If this is a synchronous power action request attach trigger
@@ -298,20 +309,18 @@ Return Value:
     //
 
     Wait = NULL;
-    if (!Asynchronous) {
-        Wait = ExAllocatePoolWithTag (
-                    NonPagedPool,
-                    sizeof (POP_TRIGGER_WAIT),
-                    POP_PACW_TAG
-                    );
-        if (!Wait) {
+    if (!Asynchronous)
+    {
+        Wait = ExAllocatePoolWithTag(NonPagedPool, sizeof(POP_TRIGGER_WAIT), POP_PACW_TAG);
+        if (!Wait)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        RtlZeroMemory (Wait, sizeof(POP_TRIGGER_WAIT));
+        RtlZeroMemory(Wait, sizeof(POP_TRIGGER_WAIT));
         Wait->Status = STATUS_SUCCESS;
         Wait->Trigger = &Trigger;
-        KeInitializeEvent (&Wait->Event, NotificationEvent, FALSE);
+        KeInitializeEvent(&Wait->Event, NotificationEvent, FALSE);
         Trigger.Flags |= PO_TRG_SYNC;
         Trigger.Wait = Wait;
     }
@@ -320,36 +329,35 @@ Return Value:
     // Acquire lock and fire it
     //
 
-    PopAcquirePolicyLock ();
+    PopAcquirePolicyLock();
 
-    try {
+    try
+    {
 
-        PopSetPowerAction(
-            &Trigger,
-            0,
-            &Policy,
-            LightestSystemState,
-            SubstituteLightestOverallDownwardBounded
-            );
-
-    } except (PopExceptionFilter(GetExceptionInformation(), TRUE)) {
+        PopSetPowerAction(&Trigger, 0, &Policy, LightestSystemState, SubstituteLightestOverallDownwardBounded);
+    }
+    except(PopExceptionFilter(GetExceptionInformation(), TRUE))
+    {
         Status = GetExceptionCode();
     }
 
-    PopReleasePolicyLock (TRUE);
+    PopReleasePolicyLock(TRUE);
 
     //
     // If queued, wait for it to complete
     //
 
-    if (Wait) {
+    if (Wait)
+    {
 
 
-        if (Wait->Link.Flink) {
+        if (Wait->Link.Flink)
+        {
 
             ASSERT(NT_SUCCESS(Status));
-            Status = KeWaitForSingleObject (&Wait->Event, Suspended, KernelMode, TRUE, NULL);
-            if (NT_SUCCESS(Status)) {
+            Status = KeWaitForSingleObject(&Wait->Event, Suspended, KernelMode, TRUE, NULL);
+            if (NT_SUCCESS(Status))
+            {
                 Status = Wait->Status;
             }
 
@@ -357,10 +365,12 @@ Return Value:
             // Remove wait block from the queue
             //
 
-            PopAcquirePolicyLock ();
-            RemoveEntryList (&Wait->Link);
-            PopReleasePolicyLock (FALSE);
-        } else {
+            PopAcquirePolicyLock();
+            RemoveEntryList(&Wait->Link);
+            PopReleasePolicyLock(FALSE);
+        }
+        else
+        {
             //
             // The wait block was not queued, it must have either failed or succeeded
             // immediately.
@@ -368,7 +378,7 @@ Return Value:
             Status = Wait->Status;
         }
 
-        ExFreePool (Wait);
+        ExFreePool(Wait);
     }
 
     return Status;
@@ -377,11 +387,9 @@ Return Value:
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtSetSystemPowerState (
-    IN POWER_ACTION SystemAction,
-    IN SYSTEM_POWER_STATE LightestSystemState,
-    IN ULONG Flags                  // POWER_ACTION_xxx flags
-    )
+NtSetSystemPowerState(IN POWER_ACTION SystemAction, IN SYSTEM_POWER_STATE LightestSystemState,
+                      IN ULONG Flags // POWER_ACTION_xxx flags
+)
 /*++
 
 Routine Description:
@@ -406,38 +414,40 @@ Return Value:
 
 --*/
 {
-    KPROCESSOR_MODE         PreviousMode;
-    NTSTATUS                Status, Status2;
-    POWER_ACTION_POLICY     Action;
-    BOOLEAN                 QueryDevices;
-    BOOLEAN                 TimerRefreshLockOwned;
-    BOOLEAN                 BootStatusUpdated;
-    BOOLEAN                 VolumesFlushed;
-    BOOLEAN                 PolicyLockOwned;
-    BOOLEAN                 OptionsExhausted;
-    PVOID                   WakeTimerObject;
-    PVOID                   S4DozeObject;
-    HANDLE                  S4DozeTimer;
-    OBJECT_ATTRIBUTES       ObjectAttributes;
+    KPROCESSOR_MODE PreviousMode;
+    NTSTATUS Status, Status2;
+    POWER_ACTION_POLICY Action;
+    BOOLEAN QueryDevices;
+    BOOLEAN TimerRefreshLockOwned;
+    BOOLEAN BootStatusUpdated;
+    BOOLEAN VolumesFlushed;
+    BOOLEAN PolicyLockOwned;
+    BOOLEAN OptionsExhausted;
+    PVOID WakeTimerObject;
+    PVOID S4DozeObject;
+    HANDLE S4DozeTimer;
+    OBJECT_ATTRIBUTES ObjectAttributes;
     TIMER_BASIC_INFORMATION TimerInformation;
-    POP_ACTION_TRIGGER      Trigger;
-    SYSTEM_POWER_STATE      DeepestSystemState;
-    ULONGLONG               WakeTime;
-    ULONGLONG               SleepTime;
-    TIME_FIELDS             WakeTimeFields;
-    LARGE_INTEGER           DueTime;
+    POP_ACTION_TRIGGER Trigger;
+    SYSTEM_POWER_STATE DeepestSystemState;
+    ULONGLONG WakeTime;
+    ULONGLONG SleepTime;
+    TIME_FIELDS WakeTimeFields;
+    LARGE_INTEGER DueTime;
     POP_SUBSTITUTION_POLICY SubstitutionPolicy;
-    NT_PRODUCT_TYPE         NtProductType;
-    PIO_ERROR_LOG_PACKET    ErrLog;
-    BOOLEAN                 WroteErrLog=FALSE;
+    NT_PRODUCT_TYPE NtProductType;
+    PIO_ERROR_LOG_PACKET ErrLog;
+    BOOLEAN WroteErrLog = FALSE;
 
     //
     // Verify callers access
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        if (!SeSinglePrivilegeCheck( SeShutdownPrivilege, PreviousMode )) {
+    if (PreviousMode != KernelMode)
+    {
+        if (!SeSinglePrivilegeCheck(SeShutdownPrivilege, PreviousMode))
+        {
             return STATUS_PRIVILEGE_NOT_HELD;
         }
 
@@ -445,7 +455,7 @@ Return Value:
         // Turn into kernel mode operation
         //
 
-        return ZwSetSystemPowerState (SystemAction, LightestSystemState, Flags);
+        return ZwSetSystemPowerState(SystemAction, LightestSystemState, Flags);
     }
 
     //
@@ -465,12 +475,12 @@ Return Value:
     WakeTimerObject = NULL;
     WakeTime = 0;
 
-    RtlZeroMemory (&Action, sizeof(Action));
+    RtlZeroMemory(&Action, sizeof(Action));
     Action.Action = SystemAction;
-    Action.Flags  = Flags;
+    Action.Flags = Flags;
 
-    RtlZeroMemory (&Trigger, sizeof(Trigger));
-    Trigger.Type  = PolicySetPowerStateAPI;
+    RtlZeroMemory(&Trigger, sizeof(Trigger));
+    Trigger.Type = PolicySetPowerStateAPI;
     Trigger.Flags = PO_TRG_SET;
 
     //
@@ -483,14 +493,14 @@ Return Value:
     ASSERT(ExPageLockHandle);
     KeWaitForSingleObject(&PopUnlockComplete, WrExecutive, KernelMode, FALSE, NULL);
     MmLockPagableSectionByHandle(ExPageLockHandle);
-    ExNotifyCallback (ExCbPowerState, (PVOID) PO_CB_SYSTEM_STATE_LOCK, (PVOID) 0);
+    ExNotifyCallback(ExCbPowerState, (PVOID)PO_CB_SYSTEM_STATE_LOCK, (PVOID)0);
     ExSwapinWorkerThreads(FALSE);
 
     //
     // Acquire policy manager lock
     //
 
-    PopAcquirePolicyLock ();
+    PopAcquirePolicyLock();
     PolicyLockOwned = TRUE;
 
     //
@@ -498,10 +508,11 @@ Return Value:
     // The caller (paction.c) will handle the collision.
     //
 
-    if (PopAction.State != PO_ACT_IDLE  &&  PopAction.State != PO_ACT_CALLOUT) {
-        PoPrint (PO_PACT, ("NtSetSystemPowerState: already committed\n"));
-        PopReleasePolicyLock (FALSE);
-        MmUnlockPagableImageSection (ExPageLockHandle);
+    if (PopAction.State != PO_ACT_IDLE && PopAction.State != PO_ACT_CALLOUT)
+    {
+        PoPrint(PO_PACT, ("NtSetSystemPowerState: already committed\n"));
+        PopReleasePolicyLock(FALSE);
+        MmUnlockPagableImageSection(ExPageLockHandle);
         ExSwapinWorkerThreads(TRUE);
         KeSetEvent(&PopUnlockComplete, 0, FALSE);
 
@@ -513,7 +524,8 @@ Return Value:
         return STATUS_ALREADY_COMMITTED;
     }
 
-    if (PopAction.State == PO_ACT_IDLE) {
+    if (PopAction.State == PO_ACT_IDLE)
+    {
         //
         // If there is no other request, we want to clean up PopAction before we start,
         // PopSetPowerAction() will not do this after we set State=PO_ACT_SET_SYSTEM_STATE.
@@ -532,22 +544,18 @@ Return Value:
 
     Status = STATUS_CANCELLED;
 
-    try {
+    try
+    {
 
         //
         // Verify params and promote the current action.
         //
-        PopSetPowerAction(
-            &Trigger,
-           0,
-           &Action,
-           LightestSystemState,
-           SubstituteLightestOverallDownwardBounded
-           );
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        PopSetPowerAction(&Trigger, 0, &Action, LightestSystemState, SubstituteLightestOverallDownwardBounded);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        ASSERT (!NT_SUCCESS(Status));
+        ASSERT(!NT_SUCCESS(Status));
     }
 
     //
@@ -556,7 +564,8 @@ Return Value:
     // there's no handler HalReturnToFirmware will know what to do)
     //
 
-    if (SystemAction == PowerActionShutdownOff) {
+    if (SystemAction == PowerActionShutdownOff)
+    {
         PopAction.Action = PowerActionShutdownOff;
     }
 
@@ -567,10 +576,11 @@ Return Value:
     // with PopRestartSetSystemState.
     //
     PopAllocateDevState();
-    if (PopAction.DevState == NULL) {
+    if (PopAction.DevState == NULL)
+    {
         PopAction.State = PO_ACT_IDLE;
         PopReleasePolicyLock(FALSE);
-        MmUnlockPagableImageSection( ExPageLockHandle );
+        MmUnlockPagableImageSection(ExPageLockHandle);
         ExSwapinWorkerThreads(TRUE);
         KeSetEvent(&PopUnlockComplete, 0, FALSE);
         //
@@ -586,7 +596,7 @@ Return Value:
     // so this is a good time to ensure that the CPU is back running as close
     // to 100% as we can make it.
     //
-    PopSetPerfFlag( PSTATE_DISABLE_THROTTLE_NTAPI, FALSE );
+    PopSetPerfFlag(PSTATE_DISABLE_THROTTLE_NTAPI, FALSE);
     PopUpdateAllThrottles();
 
     //
@@ -598,13 +608,15 @@ Return Value:
     // that all the policy limitations were also verified at some point too.
     //
 
-    for (; ;) {
+    for (;;)
+    {
         //
         // N.B. The system must be in the working state to be here
         //
 
-        if (!PolicyLockOwned) {
-            PopAcquirePolicyLock ();
+        if (!PolicyLockOwned)
+        {
+            PopAcquirePolicyLock();
             PolicyLockOwned = TRUE;
         }
 
@@ -612,7 +624,8 @@ Return Value:
         // If there's nothing to do, stop
         //
 
-        if (PopAction.Action == PowerActionNone) {
+        if (PopAction.Action == PowerActionNone)
+        {
             break;
         }
 
@@ -620,7 +633,7 @@ Return Value:
         // Hibernate actions are converted to sleep actions before here.
         //
 
-        ASSERT (PopAction.Action != PowerActionHibernate);
+        ASSERT(PopAction.Action != PowerActionHibernate);
 
         //
         // We're handling it - clear update flags
@@ -633,26 +646,27 @@ Return Value:
         // new operation
         //
 
-        if (Status == STATUS_CANCELLED) {
+        if (Status == STATUS_CANCELLED)
+        {
 
             //
             // If Re-issue is set we may need to abort back to PopSetPowerAction
             // to let apps know of the promotion
             //
 
-            if (PopAction.Updates & PO_PM_REISSUE) {
+            if (PopAction.Updates & PO_PM_REISSUE)
+            {
 
                 //
                 // Only abort if apps notificiation is allowed
                 //
 
-                if (!(PopAction.Flags & (POWER_ACTION_CRITICAL))  &&
-                     (PopAction.Flags & (POWER_ACTION_QUERY_ALLOWED |
-                                         POWER_ACTION_UI_ALLOWED))
-                    ) {
+                if (!(PopAction.Flags & (POWER_ACTION_CRITICAL)) &&
+                    (PopAction.Flags & (POWER_ACTION_QUERY_ALLOWED | POWER_ACTION_UI_ALLOWED)))
+                {
 
                     // abort with STATUS_CANCELLED to PopSetPowerAction
-                    PopGetPolicyWorker (PO_WORKER_ACTION_NORMAL);
+                    PopGetPolicyWorker(PO_WORKER_ACTION_NORMAL);
                     break;
                 }
             }
@@ -660,24 +674,19 @@ Return Value:
             //
             // Get limits and start (over) with the first sleep state to try.
             //
-            PopActionRetrieveInitialState(
-                &PopAction.LightestState,
-                &DeepestSystemState,
-                &PopAction.SystemState,
-                &QueryDevices
-                );
+            PopActionRetrieveInitialState(&PopAction.LightestState, &DeepestSystemState, &PopAction.SystemState,
+                                          &QueryDevices);
 
-            ASSERT (PopAction.SystemState != PowerActionNone);
+            ASSERT(PopAction.SystemState != PowerActionNone);
 
-            if ((PopAction.Action == PowerActionShutdown) ||
-                (PopAction.Action == PowerActionShutdownReset) ||
-                (PopAction.Action == PowerActionShutdownOff)) {
+            if ((PopAction.Action == PowerActionShutdown) || (PopAction.Action == PowerActionShutdownReset) ||
+                (PopAction.Action == PowerActionShutdownOff))
+            {
 
                 //
                 // This is a shutdown.
                 //
                 PopAction.Shutdown = TRUE;
-
             }
 
             Status = STATUS_SUCCESS;
@@ -688,17 +697,18 @@ Return Value:
         // validation doesn't change it.
         //
 #if DBG
-        if (QueryDevices && (PopAction.SystemState < PowerSystemShutdown)) {
+        if (QueryDevices && (PopAction.SystemState < PowerSystemShutdown))
+        {
 
             SYSTEM_POWER_STATE TempSystemState;
 
             TempSystemState = PopAction.SystemState;
             PopVerifySystemPowerState(&TempSystemState, SubstituteLightestOverallDownwardBounded);
 
-            if ((TempSystemState != PopAction.SystemState) ||
-                (TempSystemState == PowerSystemWorking)) {
+            if ((TempSystemState != PopAction.SystemState) || (TempSystemState == PowerSystemWorking))
+            {
 
-                PopInternalError (POP_INFO);
+                PopInternalError(POP_INFO);
             }
         }
 #endif
@@ -707,7 +717,8 @@ Return Value:
         // If not success, abort SetSystemPowerState operation
         //
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             break;
         }
 
@@ -730,20 +741,22 @@ Return Value:
         // Dump any previous device state error
         //
 
-        PopReportDevState (FALSE);
+        PopReportDevState(FALSE);
 
         //
         // What would be our next state to try?
         //
         PopAction.NextSystemState = PopAction.SystemState;
-        if (PopAction.Flags & POWER_ACTION_LIGHTEST_FIRST) {
+        if (PopAction.Flags & POWER_ACTION_LIGHTEST_FIRST)
+        {
 
             //
             // We started light, now we deepen our sleep state.
             //
             SubstitutionPolicy = SubstituteDeepenSleep;
-
-        } else {
+        }
+        else
+        {
 
             //
             // We started deep, now we're lightening up.
@@ -751,9 +764,7 @@ Return Value:
             SubstitutionPolicy = SubstituteLightenSleep;
         }
 
-        PopAdvanceSystemPowerState(&PopAction.NextSystemState,
-                                   SubstitutionPolicy,
-                                   PopAction.LightestState,
+        PopAdvanceSystemPowerState(&PopAction.NextSystemState, SubstitutionPolicy, PopAction.LightestState,
                                    DeepestSystemState);
 
         //
@@ -761,20 +772,22 @@ Return Value:
         //
 
         PopAction.IrpMinor = IRP_MN_QUERY_POWER;
-        if (QueryDevices) {
+        if (QueryDevices)
+        {
 
             //
             // Issue query to devices
             //
 
-            Status = PopSetDevicesSystemState (FALSE);
+            Status = PopSetDevicesSystemState(FALSE);
 
             //
             // If the last operation was a failure, but wasn't a total abort
             // continue with next best state
             //
 
-            if (!NT_SUCCESS(Status) && Status != STATUS_CANCELLED) {
+            if (!NT_SUCCESS(Status) && Status != STATUS_CANCELLED)
+            {
 
                 //
                 // Try next sleep state
@@ -786,9 +799,11 @@ Return Value:
                 // if we need to continue regardless of the device failures.
                 //
 
-                if (PopAction.SystemState == PowerSystemWorking) {
+                if (PopAction.SystemState == PowerSystemWorking)
+                {
 
-                    if (PopAction.Flags & POWER_ACTION_CRITICAL) {
+                    if (PopAction.Flags & POWER_ACTION_CRITICAL)
+                    {
 
                         //
                         // It's critical.  Stop querying and since the devices
@@ -796,14 +811,15 @@ Return Value:
                         // states, might as well use the max state
                         //
 
-                        ASSERT( PopAction.Action != PowerActionWarmEject );
-                        ASSERT( !(PopAction.Flags & POWER_ACTION_LIGHTEST_FIRST) );
+                        ASSERT(PopAction.Action != PowerActionWarmEject);
+                        ASSERT(!(PopAction.Flags & POWER_ACTION_LIGHTEST_FIRST));
 
                         QueryDevices = FALSE;
                         PopAction.SystemState = DeepestSystemState;
                         PopAction.Flags &= ~POWER_ACTION_LIGHTEST_FIRST;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // The query failure is final.  Don't retry
@@ -826,7 +842,8 @@ Return Value:
         // If some error, start over
         //
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             continue;
         }
 
@@ -843,12 +860,13 @@ Return Value:
         // into the eventlog. This allows for easy tracking of system downtime
         // by searching the eventlog for hibernate/resume events.
         //
-        if (RtlGetNtProductType(&NtProductType) &&
-            (NtProductType != NtProductWinNt)   &&
-            (PopAction.SystemState == PowerSystemHibernate)) {
+        if (RtlGetNtProductType(&NtProductType) && (NtProductType != NtProductWinNt) &&
+            (PopAction.SystemState == PowerSystemHibernate))
+        {
 
             ErrLog = IoAllocateGenericErrorLogEntry(sizeof(IO_ERROR_LOG_PACKET));
-            if (ErrLog) {
+            if (ErrLog)
+            {
 
                 //
                 // Fill it in and write it out
@@ -866,34 +884,33 @@ Return Value:
         //
 
 
-        Status = PopAllocateHiberContext ();
-        if (!NT_SUCCESS(Status) || (PopAction.Updates & (PO_PM_REISSUE | PO_PM_SETSTATE))) {
-              continue;
+        Status = PopAllocateHiberContext();
+        if (!NT_SUCCESS(Status) || (PopAction.Updates & (PO_PM_REISSUE | PO_PM_SETSTATE)))
+        {
+            continue;
         }
 
         //
         // If boot status hasn't already been updated then do so now.
         //
 
-        if(!BootStatusUpdated) {
+        if (!BootStatusUpdated)
+        {
 
-            if(PopAction.Shutdown) {
+            if (PopAction.Shutdown)
+            {
 
                 NTSTATUS bsdStatus;
                 HANDLE bsdHandle;
 
                 bsdStatus = RtlLockBootStatusData(&bsdHandle);
 
-                if(NT_SUCCESS(bsdStatus)) {
+                if (NT_SUCCESS(bsdStatus))
+                {
 
                     BOOLEAN t = TRUE;
 
-                    RtlGetSetBootStatusData(bsdHandle,
-                                            FALSE,
-                                            RtlBsdItemBootShutdown,
-                                            &t,
-                                            sizeof(t),
-                                            NULL);
+                    RtlGetSetBootStatusData(bsdHandle, FALSE, RtlBsdItemBootShutdown, &t, sizeof(t), NULL);
 
                     RtlUnlockBootStatusData(bsdHandle);
                 }
@@ -906,9 +923,10 @@ Return Value:
         // If not already flushed, flush the volumes
         //
 
-        if (!VolumesFlushed) {
+        if (!VolumesFlushed)
+        {
             VolumesFlushed = TRUE;
-            PopFlushVolumes ();
+            PopFlushVolumes();
         }
 
         //
@@ -916,7 +934,8 @@ Return Value:
         //
 
         PopAction.IrpMinor = IRP_MN_SET_POWER;
-        if (PopAction.Shutdown) {
+        if (PopAction.Shutdown)
+        {
 
             //
             // Force reacquisition of the dev list. We will be telling Pnp
@@ -931,14 +950,12 @@ Return Value:
             // current active process will exit cleanly.
             //
 
-            if (PsGetCurrentProcess() != PsInitialSystemProcess) {
+            if (PsGetCurrentProcess() != PsInitialSystemProcess)
+            {
 
-                ExInitializeWorkItem(&PopShutdownWorkItem,
-                                     &PopGracefulShutdown,
-                                     NULL);
+                ExInitializeWorkItem(&PopShutdownWorkItem, &PopGracefulShutdown, NULL);
 
-                ExQueueWorkItem(&PopShutdownWorkItem,
-                                PO_SHUTDOWN_QUEUE);
+                ExQueueWorkItem(&PopShutdownWorkItem, PO_SHUTDOWN_QUEUE);
 
                 // Clean up in prep for wait...
                 ASSERT(!PolicyLockOwned);
@@ -947,7 +964,8 @@ Return Value:
                 // If we acquired the timer refresh lock (can happen if we promoted to shutdown)
                 // then we need to release it so that suspend actually suspends.
                 //
-                if (TimerRefreshLockOwned) {
+                if (TimerRefreshLockOwned)
+                {
                     ExReleaseTimeRefreshLock();
                 }
 
@@ -963,8 +981,10 @@ Return Value:
                 KeSuspendThread(KeGetCurrentThread());
 
                 return STATUS_SYSTEM_SHUTDOWN;
-            } else {
-                PopGracefulShutdown (NULL);
+            }
+            else
+            {
+                PopGracefulShutdown(NULL);
             }
         }
 
@@ -973,7 +993,8 @@ Return Value:
         // adjustments.  On wake the time will be explicitly reset from Cmos
         //
 
-        if (!TimerRefreshLockOwned) {
+        if (!TimerRefreshLockOwned)
+        {
             TimerRefreshLockOwned = TRUE;
             ExAcquireTimeRefreshLock(TRUE);
         }
@@ -987,46 +1008,34 @@ Return Value:
         // N.B. this must be set before the paging devices are turned off
         //
 
-        if (S4DozeObject) {
+        if (S4DozeObject)
+        {
             S4DozeObject = NULL;
-            NtClose (S4DozeTimer);
+            NtClose(S4DozeTimer);
         }
 
-        if (PopPolicy->DozeS4Timeout  &&
-            !S4DozeObject &&
-            PopAction.SystemState != PowerSystemHibernate &&
-            SystemAction != PowerActionHibernate &&
-            PopCapabilities.SystemS4 &&
-            PopCapabilities.SystemS5 &&
-            PopCapabilities.HiberFilePresent) {
+        if (PopPolicy->DozeS4Timeout && !S4DozeObject && PopAction.SystemState != PowerSystemHibernate &&
+            SystemAction != PowerActionHibernate && PopCapabilities.SystemS4 && PopCapabilities.SystemS5 &&
+            PopCapabilities.HiberFilePresent)
+        {
 
             //
             // Create a timer to wake the machine up when we need to hibernate
             //
 
-            InitializeObjectAttributes (&ObjectAttributes, NULL, 0, NULL, NULL);
+            InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-            Status2 = NtCreateTimer (
-                        &S4DozeTimer,
-                        TIMER_ALL_ACCESS,
-                        &ObjectAttributes,
-                        NotificationTimer
-                        );
+            Status2 = NtCreateTimer(&S4DozeTimer, TIMER_ALL_ACCESS, &ObjectAttributes, NotificationTimer);
 
-            if (NT_SUCCESS(Status2)) {
+            if (NT_SUCCESS(Status2))
+            {
 
                 //
                 // Get the timer object for this timer
                 //
 
-                Status2 = ObReferenceObjectByHandle (
-                             S4DozeTimer,
-                             TIMER_ALL_ACCESS,
-                             NULL,
-                             KernelMode,
-                             &S4DozeObject,
-                             NULL
-                             );
+                Status2 =
+                    ObReferenceObjectByHandle(S4DozeTimer, TIMER_ALL_ACCESS, NULL, KernelMode, &S4DozeObject, NULL);
 
                 ASSERT(NT_SUCCESS(Status2));
                 ObDereferenceObject(S4DozeObject);
@@ -1037,8 +1046,9 @@ Return Value:
         // Inform drivers of the system sleeping state
         //
 
-        Status = PopSetDevicesSystemState (FALSE);
-        if (!NT_SUCCESS(Status)) {
+        Status = PopSetDevicesSystemState(FALSE);
+        if (!NT_SUCCESS(Status))
+        {
             continue;
         }
 
@@ -1047,13 +1057,15 @@ Return Value:
         // get the next wakeup time
         //
 
-        if (!(PopAction.Flags & POWER_ACTION_DISABLE_WAKES)) {
+        if (!(PopAction.Flags & POWER_ACTION_DISABLE_WAKES))
+        {
             //
             // Set S4Doze wakeup timer
             //
 
-            if (S4DozeObject) {
-                DueTime.QuadPart = -(LONGLONG) (US2SEC*US2TIME) * PopPolicy->DozeS4Timeout;
+            if (S4DozeObject)
+            {
+                DueTime.QuadPart = -(LONGLONG)(US2SEC * US2TIME) * PopPolicy->DozeS4Timeout;
                 NtSetTimer(S4DozeTimer, &DueTime, NULL, NULL, TRUE, 0, NULL);
             }
 
@@ -1064,31 +1076,27 @@ Return Value:
         // Only enable RTC wake if the system is going to an S-state that
         // supports the RTC wake.
         //
-        if (PopCapabilities.RtcWake != PowerSystemUnspecified &&
-            PopCapabilities.RtcWake >= PopAction.SystemState &&
-            WakeTime) {
+        if (PopCapabilities.RtcWake != PowerSystemUnspecified && PopCapabilities.RtcWake >= PopAction.SystemState &&
+            WakeTime)
+        {
 
 #if DBG
-            ULONGLONG       InterruptTime;
+            ULONGLONG InterruptTime;
 
             InterruptTime = KeQueryInterruptTime();
-            PoPrint (PO_PACT, ("Wake alarm set%s: %d:%02d:%02d %d (%d seconds from now)\n",
-                WakeTimerObject == S4DozeObject ? " for s4doze" : "",
-                WakeTimeFields.Hour,
-                WakeTimeFields.Minute,
-                WakeTimeFields.Second,
-                WakeTimeFields.Year,
-                (WakeTime - InterruptTime) / (US2TIME * US2SEC)
-                ));
+            PoPrint(PO_PACT,
+                    ("Wake alarm set%s: %d:%02d:%02d %d (%d seconds from now)\n",
+                     WakeTimerObject == S4DozeObject ? " for s4doze" : "", WakeTimeFields.Hour, WakeTimeFields.Minute,
+                     WakeTimeFields.Second, WakeTimeFields.Year, (WakeTime - InterruptTime) / (US2TIME * US2SEC)));
 #endif
             HalSetWakeEnable(TRUE);
             HalSetWakeAlarm(WakeTime, &WakeTimeFields);
-
-        } else {
+        }
+        else
+        {
 
             HalSetWakeEnable(TRUE);
-            HalSetWakeAlarm( 0, NULL );
-
+            HalSetWakeAlarm(0, NULL);
         }
 
         //
@@ -1100,8 +1108,7 @@ Return Value:
         // Implement system handler for sleep operation
         //
 
-        Status = PopSleepSystem (PopAction.SystemState,
-                                 PopAction.HiberContext);
+        Status = PopSleepSystem(PopAction.SystemState, PopAction.HiberContext);
         //
         // A sleep or shutdown operation attempt was performed, clean up
         //
@@ -1113,10 +1120,11 @@ Return Value:
     // If the system slept successfully, update the system time to
     // match the CMOS clock.
     //
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         PopAction.SleepTime = SleepTime;
         ASSERT(TimerRefreshLockOwned);
-        ExUpdateSystemTimeFromCmos (TRUE, 1);
+        ExUpdateSystemTimeFromCmos(TRUE, 1);
 
         PERFINFO_HIBER_START_LOGGING();
     }
@@ -1125,19 +1133,19 @@ Return Value:
     // If DevState was allocated, notify drivers the system is awake
     //
 
-    if (PopAction.DevState) {
+    if (PopAction.DevState)
+    {
 
         //
         // Log any failures
         //
 
-        PopReportDevState (TRUE);
+        PopReportDevState(TRUE);
 
         //
         // Notify drivers that the system is now running
         //
-        PopSetDevicesSystemState (TRUE);
-
+        PopSetDevicesSystemState(TRUE);
     }
 
     //
@@ -1152,17 +1160,19 @@ Return Value:
     // Get the policy lock for the rest of the cleanup
     //
 
-    if (!PolicyLockOwned) {
-        PopAcquirePolicyLock ();
+    if (!PolicyLockOwned)
+    {
+        PopAcquirePolicyLock();
         PolicyLockOwned = TRUE;
     }
 
     //
     // Cleanup DevState
     //
-    PopCleanupDevState ();
+    PopCleanupDevState();
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Now that the time has been fixed, record the last state
@@ -1177,28 +1187,27 @@ Return Value:
         // really agressive idle detection
         //
 
-        if (!AnyBitsSet (PopFullWake, PO_FULL_WAKE_STATUS | PO_FULL_WAKE_PENDING)) {
+        if (!AnyBitsSet(PopFullWake, PO_FULL_WAKE_STATUS | PO_FULL_WAKE_PENDING))
+        {
 
             //
             // If there was an S4Doze timer set, check to see if it's
             // expired and update the idle detection to enter S4
             //
 
-            if (S4DozeObject) {
+            if (S4DozeObject)
+            {
 
-                NtQueryTimer (S4DozeTimer,
-                              TimerBasicInformation,
-                              &TimerInformation,
-                              sizeof (TimerInformation),
-                              NULL);
+                NtQueryTimer(S4DozeTimer, TimerBasicInformation, &TimerInformation, sizeof(TimerInformation), NULL);
 
-                if (TimerInformation.TimerState) {
+                if (TimerInformation.TimerState)
+                {
 
                     //
                     // Update the idle detection action to be hibernate
                     //
 
-                    PoPrint (PO_PACT, ("Wake with S4 timer expired\n"));
+                    PoPrint(PO_PACT, ("Wake with S4 timer expired\n"));
 
                     //
                     // If the s4timer was the alarm time, and we're awake
@@ -1209,15 +1218,14 @@ Return Value:
                     //
 
                     if ((WakeTimerObject == S4DozeObject) &&
-                        (PopAction.WakeTime - WakeTime <
-                            SYS_IDLE_REENTER_TIMEOUT * US2TIME * US2SEC)) {
+                        (PopAction.WakeTime - WakeTime < SYS_IDLE_REENTER_TIMEOUT * US2TIME * US2SEC))
+                    {
 
                         PopAction.Action = PowerActionSleep;
                         PopAction.LightestState = PowerSystemHibernate;
                         PopAction.Updates |= PO_PM_REISSUE;
                     }
                 }
-
             }
 
             //
@@ -1225,7 +1233,7 @@ Return Value:
             // real agressively (assuming a full wake doesn't happen)
             //
 
-            PopInitSIdle ();
+            PopInitSIdle();
         }
     }
 
@@ -1233,12 +1241,13 @@ Return Value:
     // Free anything that's left of the hiber context
     //
 
-    PopFreeHiberContext (TRUE);
+    PopFreeHiberContext(TRUE);
 
     //
     // Clear out PopAction unless we have promoted directly to hibernate
     //
-    if ((PopAction.Updates & PO_PM_REISSUE) == 0) {
+    if ((PopAction.Updates & PO_PM_REISSUE) == 0)
+    {
         PopResetActionDefaults();
     }
 
@@ -1250,33 +1259,40 @@ Return Value:
     //
 
     PopAction.State = PO_ACT_CALLOUT;
-    PopReleasePolicyLock (FALSE);
+    PopReleasePolicyLock(FALSE);
 
     //
     // If there's been some sort of error, make sure gdi is enabled
     //
 
-    if (!NT_SUCCESS(Status)) {
-        PopDisplayRequired (0);
+    if (!NT_SUCCESS(Status))
+    {
+        PopDisplayRequired(0);
     }
 
     //
     // If some win32k wake event is pending, tell win32k
     //
 
-    if (PopFullWake & PO_FULL_WAKE_PENDING) {
-        PopSetNotificationWork (PO_NOTIFY_FULL_WAKE);
-    } else if (PopFullWake & PO_GDI_ON_PENDING) {
-        PopSetNotificationWork (PO_NOTIFY_DISPLAY_REQUIRED);
+    if (PopFullWake & PO_FULL_WAKE_PENDING)
+    {
+        PopSetNotificationWork(PO_NOTIFY_FULL_WAKE);
+    }
+    else if (PopFullWake & PO_GDI_ON_PENDING)
+    {
+        PopSetNotificationWork(PO_NOTIFY_DISPLAY_REQUIRED);
     }
 
     //
     // If the timer refresh lock was acquired, release it
     //
 
-    if (TimerRefreshLockOwned) {
+    if (TimerRefreshLockOwned)
+    {
         ExReleaseTimeRefreshLock();
-    } else {
+    }
+    else
+    {
         //
         // try to catch weird case where we exit this routine with the
         // time refresh lock held.
@@ -1295,18 +1311,21 @@ Return Value:
     // If a timer for s4 dozing was allocated, close it
     //
 
-    if (S4DozeObject) {
-        NtClose (S4DozeTimer);
+    if (S4DozeObject)
+    {
+        NtClose(S4DozeTimer);
     }
 
     //
     // If we wrote an errlog message indicating that we were hibernating, write a corresponding
     // one to indicate we have woken.
     //
-    if (WroteErrLog) {
+    if (WroteErrLog)
+    {
 
         ErrLog = IoAllocateGenericErrorLogEntry(sizeof(IO_ERROR_LOG_PACKET));
-        if (ErrLog) {
+        if (ErrLog)
+        {
 
             //
             // Fill it in and write it out
@@ -1320,7 +1339,7 @@ Return Value:
     //
     // Finally, we can revert the throttle back to a normal value
     //
-    PopSetPerfFlag( PSTATE_DISABLE_THROTTLE_NTAPI, TRUE );
+    PopSetPerfFlag(PSTATE_DISABLE_THROTTLE_NTAPI, TRUE);
     PopUpdateAllThrottles();
 
     //
@@ -1341,13 +1360,11 @@ Return Value:
     return Status;
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtRequestDeviceWakeup(
-    IN HANDLE Device
-    )
+NtRequestDeviceWakeup(IN HANDLE Device)
 /*++
 
 Routine Description:
@@ -1381,23 +1398,22 @@ Return Value:
     // Reference the file object in order to get to the device object
     // in question.
     //
-    status = ObReferenceObjectByHandle(Device,
-                                       0L,
-                                       IoFileObjectType,
-                                       KeGetPreviousMode(),
-                                       (PVOID *)&fileObject,
-                                       NULL);
-    if (!NT_SUCCESS(status)) {
-        return(status);
+    status = ObReferenceObjectByHandle(Device, 0L, IoFileObjectType, KeGetPreviousMode(), (PVOID *)&fileObject, NULL);
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
 
     //
     // Get the address of the target device object.
     //
-    if (!(fileObject->Flags & FO_DIRECT_DEVICE_OPEN)) {
-        deviceObject = IoGetAttachedDeviceReference( IoGetRelatedDeviceObject( fileObject ));
-    } else {
-        deviceObject = IoGetAttachedDeviceReference( fileObject->DeviceObject );
+    if (!(fileObject->Flags & FO_DIRECT_DEVICE_OPEN))
+    {
+        deviceObject = IoGetAttachedDeviceReference(IoGetRelatedDeviceObject(fileObject));
+    }
+    else
+    {
+        deviceObject = IoGetAttachedDeviceReference(fileObject->DeviceObject);
     }
 
     //
@@ -1409,13 +1425,11 @@ Return Value:
     return (STATUS_NOT_IMPLEMENTED);
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtCancelDeviceWakeupRequest(
-    IN HANDLE Device
-    )
+NtCancelDeviceWakeupRequest(IN HANDLE Device)
 /*++
 
 Routine Description:
@@ -1437,16 +1451,14 @@ Return Value:
 --*/
 
 {
-    return(STATUS_NOT_IMPLEMENTED);
+    return (STATUS_NOT_IMPLEMENTED);
 }
 
-
+
 NTSYSAPI
 BOOLEAN
 NTAPI
-NtIsSystemResumeAutomatic(
-    VOID
-    )
+NtIsSystemResumeAutomatic(VOID)
 /*++
 
 Routine Description:
@@ -1467,21 +1479,21 @@ Return Value:
 --*/
 
 {
-    if (AnyBitsSet(PopFullWake, PO_FULL_WAKE_STATUS | PO_FULL_WAKE_PENDING)) {
-        return(FALSE);
-    } else {
-        return(TRUE);
+    if (AnyBitsSet(PopFullWake, PO_FULL_WAKE_STATUS | PO_FULL_WAKE_PENDING))
+    {
+        return (FALSE);
+    }
+    else
+    {
+        return (TRUE);
     }
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtGetDevicePowerState(
-    IN HANDLE Device,
-    OUT DEVICE_POWER_STATE *State
-    )
+NtGetDevicePowerState(IN HANDLE Device, OUT DEVICE_POWER_STATE *State)
 /*++
 
 Routine Description:
@@ -1504,8 +1516,8 @@ Return Value:
     PFILE_OBJECT fileObject;
     PDEVICE_OBJECT deviceObject;
     NTSTATUS status;
-    PDEVOBJ_EXTENSION   doe;
-    KPROCESSOR_MODE     PreviousMode;
+    PDEVOBJ_EXTENSION doe;
+    KPROCESSOR_MODE PreviousMode;
     DEVICE_POWER_STATE dev_state;
 
     PAGED_CODE();
@@ -1514,12 +1526,16 @@ Return Value:
     // Verify caller's parameter
     //
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             ProbeForWriteUlong((PULONG)State);
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             status = GetExceptionCode();
-            return(status);
+            return (status);
         }
     }
 
@@ -1527,14 +1543,10 @@ Return Value:
     // Reference the file object in order to get to the device object
     // in question.
     //
-    status = ObReferenceObjectByHandle(Device,
-                                       0L,
-                                       IoFileObjectType,
-                                       KeGetPreviousMode(),
-                                       (PVOID *)&fileObject,
-                                       NULL);
-    if (!NT_SUCCESS(status)) {
-        return(status);
+    status = ObReferenceObjectByHandle(Device, 0L, IoFileObjectType, KeGetPreviousMode(), (PVOID *)&fileObject, NULL);
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
 
     //
@@ -1546,19 +1558,22 @@ Return Value:
     // Now that we have the device object, we are done with the file object
     //
     ObDereferenceObject(fileObject);
-    if (!NT_SUCCESS(status)) {
-        return(status);
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
 
     doe = deviceObject->DeviceObjectExtension;
     dev_state = PopLockGetDoDevicePowerState(doe);
-    try {
+    try
+    {
         *State = dev_state;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         status = GetExceptionCode();
     }
 
     ObDereferenceObject(deviceObject);
     return (status);
 }
-

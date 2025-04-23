@@ -22,7 +22,7 @@ Revision History:
 
 #include "ntrtlp.h"
 
-#if 0 // These are not actually used.
+#if 0 // These are not actually used. \
       // See also ntrtl.h, RtlUshortByteSwap, RtlUlongByteSwap, RtlUlonglongByteSwap.
 //
 // byte swapping macros (LE/BE) used for IA64 relocations
@@ -54,45 +54,34 @@ Revision History:
 //
 // Mark a HIGHADJ entry as needing an increment if reprocessing.
 //
-#define LDRP_RELOCATION_INCREMENT   0x1
+#define LDRP_RELOCATION_INCREMENT 0x1
 
 //
 // Mark a HIGHADJ entry as not suitable for reprocessing.
 //
-#define LDRP_RELOCATION_FINAL       0x2
+#define LDRP_RELOCATION_FINAL 0x2
 
 PIMAGE_BASE_RELOCATION
-LdrProcessRelocationBlockLongLong(
-    IN ULONG_PTR VA,
-    IN ULONG SizeOfBlock,
-    IN PUSHORT NextOffset,
-    IN LONGLONG Diff
-    );
+LdrProcessRelocationBlockLongLong(IN ULONG_PTR VA, IN ULONG SizeOfBlock, IN PUSHORT NextOffset, IN LONGLONG Diff);
 
 #if defined(NTOS_KERNEL_RUNTIME)
 
 #if defined(ALLOC_PRAGMA)
-#pragma alloc_text(PAGE,LdrRelocateImage)
-#pragma alloc_text(PAGE,LdrRelocateImageWithBias)
-#pragma alloc_text(PAGE,LdrProcessRelocationBlock)
-#pragma alloc_text(PAGE,LdrProcessRelocationBlockLongLong)
+#pragma alloc_text(PAGE, LdrRelocateImage)
+#pragma alloc_text(PAGE, LdrRelocateImageWithBias)
+#pragma alloc_text(PAGE, LdrProcessRelocationBlock)
+#pragma alloc_text(PAGE, LdrProcessRelocationBlockLongLong)
 #endif // ALLOC_PRAGMA
 
 #if defined(_ALPHA_)
 
 PIMAGE_BASE_RELOCATION
-LdrpProcessVolatileRelocationBlock(
-    IN ULONG_PTR VA,
-    IN ULONG SizeOfBlock,
-    IN PUSHORT NextOffset,
-    IN LONG_PTR Diff,
-    IN LONG_PTR OldDiff,
-    IN ULONG_PTR OldBase
-    );
+LdrpProcessVolatileRelocationBlock(IN ULONG_PTR VA, IN ULONG SizeOfBlock, IN PUSHORT NextOffset, IN LONG_PTR Diff,
+                                   IN LONG_PTR OldDiff, IN ULONG_PTR OldBase);
 
 #if defined(ALLOC_PRAGMA)
-#pragma alloc_text(INIT,LdrDoubleRelocateImage)
-#pragma alloc_text(INIT,LdrpProcessVolatileRelocationBlock)
+#pragma alloc_text(INIT, LdrDoubleRelocateImage)
+#pragma alloc_text(INIT, LdrpProcessVolatileRelocationBlock)
 #endif // ALLOC_PRAGMA
 #endif // _ALPHA_
 
@@ -109,13 +98,8 @@ typedef LDR_RELOCATE_IMAGE_RETURN_TYPE NTSTATUS;
 #endif
 
 LDR_RELOCATE_IMAGE_RETURN_TYPE
-LdrRelocateImage (
-    IN PVOID NewBase,
-    IN CONST CHAR* LoaderName,
-    IN LDR_RELOCATE_IMAGE_RETURN_TYPE Success,
-    IN LDR_RELOCATE_IMAGE_RETURN_TYPE Conflict,
-    IN LDR_RELOCATE_IMAGE_RETURN_TYPE Invalid
-    )
+LdrRelocateImage(IN PVOID NewBase, IN CONST CHAR *LoaderName, IN LDR_RELOCATE_IMAGE_RETURN_TYPE Success,
+                 IN LDR_RELOCATE_IMAGE_RETURN_TYPE Conflict, IN LDR_RELOCATE_IMAGE_RETURN_TYPE Invalid)
 /*++
 
 Routine Description:
@@ -148,24 +132,14 @@ Return Value:
     // Just call LdrRelocateImageWithBias() with a zero bias.
     //
 
-    return LdrRelocateImageWithBias( NewBase,
-                                     0,
-                                     LoaderName,
-                                     Success,
-                                     Conflict,
-                                     Invalid );
+    return LdrRelocateImageWithBias(NewBase, 0, LoaderName, Success, Conflict, Invalid);
 }
 
 
 LDR_RELOCATE_IMAGE_RETURN_TYPE
-LdrRelocateImageWithBias (
-    IN PVOID NewBase,
-    IN LONGLONG AdditionalBias,
-    IN CONST CHAR* LoaderName,
-    IN LDR_RELOCATE_IMAGE_RETURN_TYPE Success,
-    IN LDR_RELOCATE_IMAGE_RETURN_TYPE Conflict,
-    IN LDR_RELOCATE_IMAGE_RETURN_TYPE Invalid
-    )
+LdrRelocateImageWithBias(IN PVOID NewBase, IN LONGLONG AdditionalBias, IN CONST CHAR *LoaderName,
+                         IN LDR_RELOCATE_IMAGE_RETURN_TYPE Success, IN LDR_RELOCATE_IMAGE_RETURN_TYPE Conflict,
+                         IN LDR_RELOCATE_IMAGE_RETURN_TYPE Invalid)
 /*++
 
 Routine Description:
@@ -212,30 +186,34 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    NtHeaders = RtlImageNtHeader( NewBase );
-    if ( NtHeaders ) {
+    NtHeaders = RtlImageNtHeader(NewBase);
+    if (NtHeaders)
+    {
         OldBase = NtHeaders->OptionalHeader.ImageBase;
-        }
-    else {
+    }
+    else
+    {
         Status = Invalid;
         goto Exit;
-        }
+    }
 
     //
     // Locate the relocation section.
     //
 
-    NextBlock = (PIMAGE_BASE_RELOCATION)RtlImageDirectoryEntryToData(
-            NewBase, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &TotalCountBytes);
+    NextBlock = (PIMAGE_BASE_RELOCATION)RtlImageDirectoryEntryToData(NewBase, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC,
+                                                                     &TotalCountBytes);
 
     //
     // It is possible for a file to have no relocations, but the relocations
     // must not have been stripped.
     //
 
-    if (!NextBlock || !TotalCountBytes) {
-    
-        if (NtHeaders->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED) {
+    if (!NextBlock || !TotalCountBytes)
+    {
+
+        if (NtHeaders->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
+        {
 
 #if DBG
 
@@ -244,8 +222,9 @@ Return Value:
 #endif // DBG
 
             Status = Conflict;
-
-        } else {
+        }
+        else
+        {
             Status = Success;
         }
 
@@ -257,7 +236,8 @@ Return Value:
     // information to the image.
     //
     Diff = (PCHAR)NewBase - (PCHAR)OldBase + AdditionalBias;
-    while (TotalCountBytes) {
+    while (TotalCountBytes)
+    {
         SizeOfBlock = NextBlock->SizeOfBlock;
         TotalCountBytes -= SizeOfBlock;
         SizeOfBlock -= sizeof(IMAGE_BASE_RELOCATION);
@@ -266,10 +246,8 @@ Return Value:
 
         VA = (ULONG_PTR)NewBase + NextBlock->VirtualAddress;
 
-        if ( !(NextBlock = LdrProcessRelocationBlockLongLong( VA,
-                                                              SizeOfBlock,
-                                                              NextOffset,
-                                                              Diff)) ) {
+        if (!(NextBlock = LdrProcessRelocationBlockLongLong(VA, SizeOfBlock, NextOffset, Diff)))
+        {
 #if DBG
             DbgPrint("%s: Unknown base relocation type\n", LoaderName);
 #endif
@@ -280,23 +258,17 @@ Return Value:
 
     Status = Success;
 Exit:
-    if (Status != Success) {
-        DbgPrint(
-            "%s: %s() failed 0x%lx\n"
-            "%s: OldBase     : %p\n"
-            "%s: NewBase     : %p\n"
-            "%s: Diff        : 0x%I64x\n"
-            "%s: NextOffset  : %p\n"
-            "%s: *NextOffset : 0x%x\n"
-            "%s: SizeOfBlock : 0x%lx\n",
-            LoaderName, __FUNCTION__, Status,
-            LoaderName, OldBase,
-            LoaderName, NewBase,
-            LoaderName, Diff,
-            LoaderName, NextOffset,
-            LoaderName, (NextOffset != NULL) ? *NextOffset : 0,
-            LoaderName, SizeOfBlock
-            );
+    if (Status != Success)
+    {
+        DbgPrint("%s: %s() failed 0x%lx\n"
+                 "%s: OldBase     : %p\n"
+                 "%s: NewBase     : %p\n"
+                 "%s: Diff        : 0x%I64x\n"
+                 "%s: NextOffset  : %p\n"
+                 "%s: *NextOffset : 0x%x\n"
+                 "%s: SizeOfBlock : 0x%lx\n",
+                 LoaderName, __FUNCTION__, Status, LoaderName, OldBase, LoaderName, NewBase, LoaderName, Diff,
+                 LoaderName, NextOffset, LoaderName, (NextOffset != NULL) ? *NextOffset : 0, LoaderName, SizeOfBlock);
 #if DBG
         DbgBreakPoint();
 #endif
@@ -305,31 +277,18 @@ Exit:
 }
 
 PIMAGE_BASE_RELOCATION
-LdrProcessRelocationBlock(
-    IN ULONG_PTR VA,
-    IN ULONG SizeOfBlock,
-    IN PUSHORT NextOffset,
-    IN LONG_PTR Diff
-    )
+LdrProcessRelocationBlock(IN ULONG_PTR VA, IN ULONG SizeOfBlock, IN PUSHORT NextOffset, IN LONG_PTR Diff)
 {
     PIMAGE_BASE_RELOCATION baseRelocation;
 
-    baseRelocation = LdrProcessRelocationBlockLongLong( VA,
-                                                        SizeOfBlock,
-                                                        NextOffset,
-                                                        (LONGLONG)Diff );
+    baseRelocation = LdrProcessRelocationBlockLongLong(VA, SizeOfBlock, NextOffset, (LONGLONG)Diff);
 
     return baseRelocation;
 }
 
 
 PIMAGE_BASE_RELOCATION
-LdrProcessRelocationBlockLongLong(
-    IN ULONG_PTR VA,
-    IN ULONG SizeOfBlock,
-    IN PUSHORT NextOffset,
-    IN LONGLONG Diff
-    )
+LdrProcessRelocationBlockLongLong(IN ULONG_PTR VA, IN ULONG SizeOfBlock, IN PUSHORT NextOffset, IN LONGLONG Diff)
 {
     PUCHAR FixupVA;
     USHORT Offset;
@@ -342,244 +301,199 @@ LdrProcessRelocationBlockLongLong(
 
     RTL_PAGED_CODE();
 
-    while (SizeOfBlock--) {
+    while (SizeOfBlock--)
+    {
 
-       Offset = *NextOffset & (USHORT)0xfff;
-       FixupVA = (PUCHAR)(VA + Offset);
+        Offset = *NextOffset & (USHORT)0xfff;
+        FixupVA = (PUCHAR)(VA + Offset);
 
-       //
-       // Apply the fixups.
-       //
+        //
+        // Apply the fixups.
+        //
 
-       switch ((*NextOffset) >> 12) {
+        switch ((*NextOffset) >> 12)
+        {
 
-            case IMAGE_REL_BASED_HIGHLOW :
-                //
-                // HighLow - (32-bits) relocate the high and low half
-                //      of an address.
-                //
-                *(LONG UNALIGNED *)FixupVA += (ULONG) Diff;
-                break;
+        case IMAGE_REL_BASED_HIGHLOW:
+            //
+            // HighLow - (32-bits) relocate the high and low half
+            //      of an address.
+            //
+            *(LONG UNALIGNED *)FixupVA += (ULONG)Diff;
+            break;
 
-            case IMAGE_REL_BASED_HIGH :
-                //
-                // High - (16-bits) relocate the high half of an address.
-                //
-                Temp = *(PUSHORT)FixupVA << 16;
-                Temp += (ULONG) Diff;
-                *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
-                break;
+        case IMAGE_REL_BASED_HIGH:
+            //
+            // High - (16-bits) relocate the high half of an address.
+            //
+            Temp = *(PUSHORT)FixupVA << 16;
+            Temp += (ULONG)Diff;
+            *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
+            break;
 
-            case IMAGE_REL_BASED_HIGHADJ :
-                //
-                // Adjust high - (16-bits) relocate the high half of an
-                //      address and adjust for sign extension of low half.
-                //
+        case IMAGE_REL_BASED_HIGHADJ:
+            //
+            // Adjust high - (16-bits) relocate the high half of an
+            //      address and adjust for sign extension of low half.
+            //
 
 #if defined(NTOS_KERNEL_RUNTIME)
-                //
-                // If the address has already been relocated then don't
-                // process it again now or information will be lost.
-                //
-                if (Offset & LDRP_RELOCATION_FINAL) {
-                    ++NextOffset;
-                    --SizeOfBlock;
-                    break;
-                }
-#endif
-
-                Temp = *(PUSHORT)FixupVA << 16;
-#if defined(BLDR_KERNEL_RUNTIME)
-                TempOrig = Temp;
-#endif
+            //
+            // If the address has already been relocated then don't
+            // process it again now or information will be lost.
+            //
+            if (Offset & LDRP_RELOCATION_FINAL)
+            {
                 ++NextOffset;
                 --SizeOfBlock;
-                Temp += (LONG)(*(PSHORT)NextOffset);
-                Temp += (ULONG) Diff;
-                Temp += 0x8000;
-                *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
-
-#if defined(BLDR_KERNEL_RUNTIME)
-                ActualDiff = ((((ULONG_PTR)(Temp - TempOrig)) >> 16) -
-                              (((ULONG_PTR)Diff) >> 16 ));
-
-                if (ActualDiff == 1) {
-                    //
-                    // Mark the relocation as needing an increment if it is
-                    // relocated again.
-                    //
-                    *(NextOffset - 1) |= LDRP_RELOCATION_INCREMENT;
-                }
-                else if (ActualDiff != 0) {
-                    //
-                    // Mark the relocation as cannot be reprocessed.
-                    //
-                    *(NextOffset - 1) |= LDRP_RELOCATION_FINAL;
-                }
+                break;
+            }
 #endif
 
-                break;
+            Temp = *(PUSHORT)FixupVA << 16;
+#if defined(BLDR_KERNEL_RUNTIME)
+            TempOrig = Temp;
+#endif
+            ++NextOffset;
+            --SizeOfBlock;
+            Temp += (LONG)(*(PSHORT)NextOffset);
+            Temp += (ULONG)Diff;
+            Temp += 0x8000;
+            *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
 
-            case IMAGE_REL_BASED_LOW :
+#if defined(BLDR_KERNEL_RUNTIME)
+            ActualDiff = ((((ULONG_PTR)(Temp - TempOrig)) >> 16) - (((ULONG_PTR)Diff) >> 16));
+
+            if (ActualDiff == 1)
+            {
                 //
-                // Low - (16-bit) relocate the low half of an address.
+                // Mark the relocation as needing an increment if it is
+                // relocated again.
                 //
-                Temp = *(PSHORT)FixupVA;
-                Temp += (ULONG) Diff;
-                *(PUSHORT)FixupVA = (USHORT)Temp;
-                break;
-
-            case IMAGE_REL_BASED_IA64_IMM64:
-
+                *(NextOffset - 1) |= LDRP_RELOCATION_INCREMENT;
+            }
+            else if (ActualDiff != 0)
+            {
                 //
-                // Align it to bundle address before fixing up the
-                // 64-bit immediate value of the movl instruction.
+                // Mark the relocation as cannot be reprocessed.
                 //
+                *(NextOffset - 1) |= LDRP_RELOCATION_FINAL;
+            }
+#endif
 
-                FixupVA = (PUCHAR)((ULONG_PTR)FixupVA & ~(15));
-                Value64 = (ULONGLONG)0;
+            break;
 
-                //
-                // Extract the lower 32 bits of IMM64 from bundle
-                //
+        case IMAGE_REL_BASED_LOW:
+            //
+            // Low - (16-bit) relocate the low half of an address.
+            //
+            Temp = *(PSHORT)FixupVA;
+            Temp += (ULONG)Diff;
+            *(PUSHORT)FixupVA = (USHORT)Temp;
+            break;
+
+        case IMAGE_REL_BASED_IA64_IMM64:
+
+            //
+            // Align it to bundle address before fixing up the
+            // 64-bit immediate value of the movl instruction.
+            //
+
+            FixupVA = (PUCHAR)((ULONG_PTR)FixupVA & ~(15));
+            Value64 = (ULONGLONG)0;
+
+            //
+            // Extract the lower 32 bits of IMM64 from bundle
+            //
 
 
-                EXT_IMM64(Value64,
-                        (PULONG)FixupVA + EMARCH_ENC_I17_IMM7B_INST_WORD_X,
-                        EMARCH_ENC_I17_IMM7B_SIZE_X,
-                        EMARCH_ENC_I17_IMM7B_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM7B_VAL_POS_X);
-                EXT_IMM64(Value64,
-                        (PULONG)FixupVA + EMARCH_ENC_I17_IMM9D_INST_WORD_X,
-                        EMARCH_ENC_I17_IMM9D_SIZE_X,
-                        EMARCH_ENC_I17_IMM9D_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM9D_VAL_POS_X);
-                EXT_IMM64(Value64,
-                        (PULONG)FixupVA + EMARCH_ENC_I17_IMM5C_INST_WORD_X,
-                        EMARCH_ENC_I17_IMM5C_SIZE_X,
-                        EMARCH_ENC_I17_IMM5C_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM5C_VAL_POS_X);
-                EXT_IMM64(Value64,
-                        (PULONG)FixupVA + EMARCH_ENC_I17_IC_INST_WORD_X,
-                        EMARCH_ENC_I17_IC_SIZE_X,
-                        EMARCH_ENC_I17_IC_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IC_VAL_POS_X);
-                EXT_IMM64(Value64,
-                        (PULONG)FixupVA + EMARCH_ENC_I17_IMM41a_INST_WORD_X,
-                        EMARCH_ENC_I17_IMM41a_SIZE_X,
-                        EMARCH_ENC_I17_IMM41a_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM41a_VAL_POS_X);
+            EXT_IMM64(Value64, (PULONG)FixupVA + EMARCH_ENC_I17_IMM7B_INST_WORD_X, EMARCH_ENC_I17_IMM7B_SIZE_X,
+                      EMARCH_ENC_I17_IMM7B_INST_WORD_POS_X, EMARCH_ENC_I17_IMM7B_VAL_POS_X);
+            EXT_IMM64(Value64, (PULONG)FixupVA + EMARCH_ENC_I17_IMM9D_INST_WORD_X, EMARCH_ENC_I17_IMM9D_SIZE_X,
+                      EMARCH_ENC_I17_IMM9D_INST_WORD_POS_X, EMARCH_ENC_I17_IMM9D_VAL_POS_X);
+            EXT_IMM64(Value64, (PULONG)FixupVA + EMARCH_ENC_I17_IMM5C_INST_WORD_X, EMARCH_ENC_I17_IMM5C_SIZE_X,
+                      EMARCH_ENC_I17_IMM5C_INST_WORD_POS_X, EMARCH_ENC_I17_IMM5C_VAL_POS_X);
+            EXT_IMM64(Value64, (PULONG)FixupVA + EMARCH_ENC_I17_IC_INST_WORD_X, EMARCH_ENC_I17_IC_SIZE_X,
+                      EMARCH_ENC_I17_IC_INST_WORD_POS_X, EMARCH_ENC_I17_IC_VAL_POS_X);
+            EXT_IMM64(Value64, (PULONG)FixupVA + EMARCH_ENC_I17_IMM41a_INST_WORD_X, EMARCH_ENC_I17_IMM41a_SIZE_X,
+                      EMARCH_ENC_I17_IMM41a_INST_WORD_POS_X, EMARCH_ENC_I17_IMM41a_VAL_POS_X);
 
-                EXT_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41b_INST_WORD_X),
-                        EMARCH_ENC_I17_IMM41b_SIZE_X,
-                        EMARCH_ENC_I17_IMM41b_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM41b_VAL_POS_X);
-                EXT_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41c_INST_WORD_X),
-                        EMARCH_ENC_I17_IMM41c_SIZE_X,
-                        EMARCH_ENC_I17_IMM41c_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM41c_VAL_POS_X);
-                EXT_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_SIGN_INST_WORD_X),
-                        EMARCH_ENC_I17_SIGN_SIZE_X,
-                        EMARCH_ENC_I17_SIGN_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_SIGN_VAL_POS_X);
-                //
-                // Update 64-bit address
-                //
+            EXT_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41b_INST_WORD_X), EMARCH_ENC_I17_IMM41b_SIZE_X,
+                      EMARCH_ENC_I17_IMM41b_INST_WORD_POS_X, EMARCH_ENC_I17_IMM41b_VAL_POS_X);
+            EXT_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41c_INST_WORD_X), EMARCH_ENC_I17_IMM41c_SIZE_X,
+                      EMARCH_ENC_I17_IMM41c_INST_WORD_POS_X, EMARCH_ENC_I17_IMM41c_VAL_POS_X);
+            EXT_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_SIGN_INST_WORD_X), EMARCH_ENC_I17_SIGN_SIZE_X,
+                      EMARCH_ENC_I17_SIGN_INST_WORD_POS_X, EMARCH_ENC_I17_SIGN_VAL_POS_X);
+            //
+            // Update 64-bit address
+            //
 
-                Value64+=Diff;
+            Value64 += Diff;
 
-                //
-                // Insert IMM64 into bundle
-                //
+            //
+            // Insert IMM64 into bundle
+            //
 
-                INS_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IMM7B_INST_WORD_X),
-                        EMARCH_ENC_I17_IMM7B_SIZE_X,
-                        EMARCH_ENC_I17_IMM7B_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM7B_VAL_POS_X);
-                INS_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IMM9D_INST_WORD_X),
-                        EMARCH_ENC_I17_IMM9D_SIZE_X,
-                        EMARCH_ENC_I17_IMM9D_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM9D_VAL_POS_X);
-                INS_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IMM5C_INST_WORD_X),
-                        EMARCH_ENC_I17_IMM5C_SIZE_X,
-                        EMARCH_ENC_I17_IMM5C_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM5C_VAL_POS_X);
-                INS_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IC_INST_WORD_X),
-                        EMARCH_ENC_I17_IC_SIZE_X,
-                        EMARCH_ENC_I17_IC_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IC_VAL_POS_X);
-                INS_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41a_INST_WORD_X),
-                        EMARCH_ENC_I17_IMM41a_SIZE_X,
-                        EMARCH_ENC_I17_IMM41a_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM41a_VAL_POS_X);
-                INS_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41b_INST_WORD_X),
-                        EMARCH_ENC_I17_IMM41b_SIZE_X,
-                        EMARCH_ENC_I17_IMM41b_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM41b_VAL_POS_X);
-                INS_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41c_INST_WORD_X),
-                        EMARCH_ENC_I17_IMM41c_SIZE_X,
-                        EMARCH_ENC_I17_IMM41c_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_IMM41c_VAL_POS_X);
-                INS_IMM64(Value64,
-                        ((PULONG)FixupVA + EMARCH_ENC_I17_SIGN_INST_WORD_X),
-                        EMARCH_ENC_I17_SIGN_SIZE_X,
-                        EMARCH_ENC_I17_SIGN_INST_WORD_POS_X,
-                        EMARCH_ENC_I17_SIGN_VAL_POS_X);
-                break;
+            INS_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IMM7B_INST_WORD_X), EMARCH_ENC_I17_IMM7B_SIZE_X,
+                      EMARCH_ENC_I17_IMM7B_INST_WORD_POS_X, EMARCH_ENC_I17_IMM7B_VAL_POS_X);
+            INS_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IMM9D_INST_WORD_X), EMARCH_ENC_I17_IMM9D_SIZE_X,
+                      EMARCH_ENC_I17_IMM9D_INST_WORD_POS_X, EMARCH_ENC_I17_IMM9D_VAL_POS_X);
+            INS_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IMM5C_INST_WORD_X), EMARCH_ENC_I17_IMM5C_SIZE_X,
+                      EMARCH_ENC_I17_IMM5C_INST_WORD_POS_X, EMARCH_ENC_I17_IMM5C_VAL_POS_X);
+            INS_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IC_INST_WORD_X), EMARCH_ENC_I17_IC_SIZE_X,
+                      EMARCH_ENC_I17_IC_INST_WORD_POS_X, EMARCH_ENC_I17_IC_VAL_POS_X);
+            INS_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41a_INST_WORD_X), EMARCH_ENC_I17_IMM41a_SIZE_X,
+                      EMARCH_ENC_I17_IMM41a_INST_WORD_POS_X, EMARCH_ENC_I17_IMM41a_VAL_POS_X);
+            INS_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41b_INST_WORD_X), EMARCH_ENC_I17_IMM41b_SIZE_X,
+                      EMARCH_ENC_I17_IMM41b_INST_WORD_POS_X, EMARCH_ENC_I17_IMM41b_VAL_POS_X);
+            INS_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_IMM41c_INST_WORD_X), EMARCH_ENC_I17_IMM41c_SIZE_X,
+                      EMARCH_ENC_I17_IMM41c_INST_WORD_POS_X, EMARCH_ENC_I17_IMM41c_VAL_POS_X);
+            INS_IMM64(Value64, ((PULONG)FixupVA + EMARCH_ENC_I17_SIGN_INST_WORD_X), EMARCH_ENC_I17_SIGN_SIZE_X,
+                      EMARCH_ENC_I17_SIGN_INST_WORD_POS_X, EMARCH_ENC_I17_SIGN_VAL_POS_X);
+            break;
 
-            case IMAGE_REL_BASED_DIR64:
+        case IMAGE_REL_BASED_DIR64:
 
-                *(ULONGLONG UNALIGNED *)FixupVA += Diff;
+            *(ULONGLONG UNALIGNED *)FixupVA += Diff;
 
-                break;
+            break;
 
-            case IMAGE_REL_BASED_MIPS_JMPADDR :
-                //
-                // JumpAddress - (32-bits) relocate a MIPS jump address.
-                //
-                Temp = (*(PULONG)FixupVA & 0x3ffffff) << 2;
-                Temp += (ULONG) Diff;
-                *(PULONG)FixupVA = (*(PULONG)FixupVA & ~0x3ffffff) |
-                                                ((Temp >> 2) & 0x3ffffff);
+        case IMAGE_REL_BASED_MIPS_JMPADDR:
+            //
+            // JumpAddress - (32-bits) relocate a MIPS jump address.
+            //
+            Temp = (*(PULONG)FixupVA & 0x3ffffff) << 2;
+            Temp += (ULONG)Diff;
+            *(PULONG)FixupVA = (*(PULONG)FixupVA & ~0x3ffffff) | ((Temp >> 2) & 0x3ffffff);
 
-                break;
+            break;
 
-            case IMAGE_REL_BASED_ABSOLUTE :
-                //
-                // Absolute - no fixup required.
-                //
-                break;
+        case IMAGE_REL_BASED_ABSOLUTE:
+            //
+            // Absolute - no fixup required.
+            //
+            break;
 
-            case IMAGE_REL_BASED_SECTION :
-                //
-                // Section Relative reloc.  Ignore for now.
-                //
-                break;
+        case IMAGE_REL_BASED_SECTION:
+            //
+            // Section Relative reloc.  Ignore for now.
+            //
+            break;
 
-            case IMAGE_REL_BASED_REL32 :
-                //
-                // Relative intrasection. Ignore for now.
-                //
-                break;
+        case IMAGE_REL_BASED_REL32:
+            //
+            // Relative intrasection. Ignore for now.
+            //
+            break;
 
-            default :
-                //
-                // Illegal - illegal relocation type.
-                //
+        default:
+            //
+            // Illegal - illegal relocation type.
+            //
 
-                return (PIMAGE_BASE_RELOCATION)NULL;
-       }
-       ++NextOffset;
+            return (PIMAGE_BASE_RELOCATION)NULL;
+        }
+        ++NextOffset;
     }
     return (PIMAGE_BASE_RELOCATION)NextOffset;
 }
@@ -587,14 +501,8 @@ LdrProcessRelocationBlockLongLong(
 #if defined(NTOS_KERNEL_RUNTIME) && defined(_ALPHA_)
 
 NTSTATUS
-LdrDoubleRelocateImage (
-    IN PVOID NewBase,
-    IN PVOID CurrentBase,
-    IN CONST CHAR* LoaderName,
-    IN NTSTATUS Success,
-    IN NTSTATUS Conflict,
-    IN NTSTATUS Invalid
-    )
+LdrDoubleRelocateImage(IN PVOID NewBase, IN PVOID CurrentBase, IN CONST CHAR *LoaderName, IN NTSTATUS Success,
+                       IN NTSTATUS Conflict, IN NTSTATUS Invalid)
 
 /*++
 
@@ -646,7 +554,7 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    NtHeaders = RtlImageNtHeader( NewBase );
+    NtHeaders = RtlImageNtHeader(NewBase);
 
     OldBase = NtHeaders->OptionalHeader.ImageBase;
     OldDiff = (PCHAR)CurrentBase - (PCHAR)OldBase;
@@ -655,10 +563,11 @@ Return Value:
     // Locate the relocation section.
     //
 
-    NextBlock = (PIMAGE_BASE_RELOCATION)RtlImageDirectoryEntryToData(
-            NewBase, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &TotalCountBytes);
+    NextBlock = (PIMAGE_BASE_RELOCATION)RtlImageDirectoryEntryToData(NewBase, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC,
+                                                                     &TotalCountBytes);
 
-    if (!NextBlock || !TotalCountBytes) {
+    if (!NextBlock || !TotalCountBytes)
+    {
 
         //
         // The image does not contain a relocation table, and therefore
@@ -677,7 +586,8 @@ Return Value:
 
     Diff = (PCHAR)NewBase - (PCHAR)OldBase;
 
-    while (TotalCountBytes) {
+    while (TotalCountBytes)
+    {
         SizeOfBlock = NextBlock->SizeOfBlock;
         TotalCountBytes -= SizeOfBlock;
         SizeOfBlock -= sizeof(IMAGE_BASE_RELOCATION);
@@ -686,7 +596,8 @@ Return Value:
 
         VA = (ULONG_PTR)NewBase + NextBlock->VirtualAddress;
 
-        if ( !(NextBlock = LdrpProcessVolatileRelocationBlock(VA,SizeOfBlock,NextOffset,Diff, OldDiff, OldBase)) ) {
+        if (!(NextBlock = LdrpProcessVolatileRelocationBlock(VA, SizeOfBlock, NextOffset, Diff, OldDiff, OldBase)))
+        {
 #if DBG
             DbgPrint("%s: Unknown base relocation type\n", LoaderName);
 #endif
@@ -698,14 +609,8 @@ Return Value:
 }
 
 PIMAGE_BASE_RELOCATION
-LdrpProcessVolatileRelocationBlock(
-    IN ULONG_PTR VA,
-    IN ULONG SizeOfBlock,
-    IN PUSHORT NextOffset,
-    IN LONG_PTR Diff,
-    IN LONG_PTR OldDiff,
-    IN ULONG_PTR OldBase
-    )
+LdrpProcessVolatileRelocationBlock(IN ULONG_PTR VA, IN ULONG SizeOfBlock, IN PUSHORT NextOffset, IN LONG_PTR Diff,
+                                   IN LONG_PTR OldDiff, IN ULONG_PTR OldBase)
 
 /*++
 
@@ -746,54 +651,56 @@ Return Value:
 
     CurrentBase = (PVOID)((ULONG_PTR)OldDiff + OldBase);
 
-    while (SizeOfBlock--) {
+    while (SizeOfBlock--)
+    {
 
-       Offset = *NextOffset & (USHORT)0xfff;
-       FixupVA = (PUCHAR)(VA + Offset);
+        Offset = *NextOffset & (USHORT)0xfff;
+        FixupVA = (PUCHAR)(VA + Offset);
 
-       //
-       // Apply the fixups.
-       //
+        //
+        // Apply the fixups.
+        //
 
-       switch ((*NextOffset) >> 12) {
+        switch ((*NextOffset) >> 12)
+        {
 
-            case IMAGE_REL_BASED_HIGHADJ :
-                //
-                // Adjust high - (16-bits) relocate the high half of an
-                //      address and adjust for sign extension of low half.
-                //
+        case IMAGE_REL_BASED_HIGHADJ:
+            //
+            // Adjust high - (16-bits) relocate the high half of an
+            //      address and adjust for sign extension of low half.
+            //
 
-                //
-                // Return the relocation to its original state, checking for
-                // whether the entry was sign extended the 1st time it was
-                // relocated.
-                //
-                FixupVA = (PUCHAR)((LONG_PTR)FixupVA & (LONG_PTR)~(LDRP_RELOCATION_FINAL | LDRP_RELOCATION_INCREMENT));
-                Temp = *(PUSHORT)(FixupVA) << 16;
+            //
+            // Return the relocation to its original state, checking for
+            // whether the entry was sign extended the 1st time it was
+            // relocated.
+            //
+            FixupVA = (PUCHAR)((LONG_PTR)FixupVA & (LONG_PTR) ~(LDRP_RELOCATION_FINAL | LDRP_RELOCATION_INCREMENT));
+            Temp = *(PUSHORT)(FixupVA) << 16;
 
-                ++NextOffset;
-                --SizeOfBlock;
+            ++NextOffset;
+            --SizeOfBlock;
 
-                // remove the carry bit from the low word
-                Temp -= ((LONG)(*(PSHORT)NextOffset) + (USHORT)OldDiff + 0x8000) & ~0xFFFF;
+            // remove the carry bit from the low word
+            Temp -= ((LONG)(*(PSHORT)NextOffset) + (USHORT)OldDiff + 0x8000) & ~0xFFFF;
 
-                Temp -= (LONG)(OldDiff & ~0xffff);
+            Temp -= (LONG)(OldDiff & ~0xffff);
 
-                Temp += (LONG)(*(PSHORT)NextOffset);
-                Temp += (ULONG) Diff;
-                Temp += 0x8000;
-                *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
+            Temp += (LONG)(*(PSHORT)NextOffset);
+            Temp += (ULONG)Diff;
+            Temp += 0x8000;
+            *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
 
-                //
-                // Mark the relocation as needing no further reprocessing.
-                //
-                *(NextOffset - 1) |= LDRP_RELOCATION_FINAL;
-                break;
+            //
+            // Mark the relocation as needing no further reprocessing.
+            //
+            *(NextOffset - 1) |= LDRP_RELOCATION_FINAL;
+            break;
 
-            default :
-               break;
-       }
-       ++NextOffset;
+        default:
+            break;
+        }
+        ++NextOffset;
     }
     return (PIMAGE_BASE_RELOCATION)NextOffset;
 }

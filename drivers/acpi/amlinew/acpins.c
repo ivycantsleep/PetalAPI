@@ -9,7 +9,7 @@
 
 #include "pch.h"
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
@@ -28,15 +28,14 @@
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
-                                  ULONG dwfNS)
+NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns, ULONG dwfNS)
 {
     TRACENAME("GETNAMESPACEOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
     PSZ psz;
 
-    ENTER(3, ("GetNameSpaceObject(ObjPath=%s,Scope=%s,ppns=%x,Flags=%x)\n",
-              pszObjPath, GetObjectPath(pnsScope), ppns, dwfNS));
+    ENTER(3, ("GetNameSpaceObject(ObjPath=%s,Scope=%s,ppns=%x,Flags=%x)\n", pszObjPath, GetObjectPath(pnsScope), ppns,
+              dwfNS));
 
     if (pnsScope == NULL)
         pnsScope = gpnsNameSpaceRoot;
@@ -66,9 +65,7 @@ NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
         BOOLEAN fSearchUp;
         PNSOBJ pns;
 
-        fSearchUp = (BOOLEAN)(!(dwfNS & NSF_LOCAL_SCOPE) &&
-                              (pszObjPath[0] != '\\') &&
-                              (pszObjPath[0] != '^') &&
+        fSearchUp = (BOOLEAN)(!(dwfNS & NSF_LOCAL_SCOPE) && (pszObjPath[0] != '\\') && (pszObjPath[0] != '^') &&
                               (STRLEN(pszObjPath) <= sizeof(NAMESEG)));
         for (;;)
         {
@@ -90,9 +87,7 @@ NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
 
                     if (dwLen > sizeof(NAMESEG))
                     {
-                        rc = AMLI_LOGERR(AMLIERR_INVALID_NAME,
-                                         ("GetNameSpaceObject: invalid name - %s",
-                                          pszObjPath));
+                        rc = AMLI_LOGERR(AMLIERR_INVALID_NAME, ("GetNameSpaceObject: invalid name - %s", pszObjPath));
 
                         // Satisfy the compiler...
                         fFound = FALSE;
@@ -128,7 +123,7 @@ NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
                             {
                                 psz++;
                             }
-                else if (*psz == '\0')
+                            else if (*psz == '\0')
                             {
                                 *ppns = pnsScope;
                                 break;
@@ -138,8 +133,7 @@ NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
                 }
             } while (rc == STATUS_SUCCESS);
 
-            if ((rc == AMLIERR_OBJ_NOT_FOUND) && fSearchUp &&
-                (pnsScope != NULL) && (pnsScope->pnsParent != NULL))
+            if ((rc == AMLIERR_OBJ_NOT_FOUND) && fSearchUp && (pnsScope != NULL) && (pnsScope->pnsParent != NULL))
             {
                 pnsScope = pnsScope->pnsParent;
                 rc = STATUS_SUCCESS;
@@ -153,8 +147,7 @@ NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
 
     if ((dwfNS & NSF_WARN_NOTFOUND) && (rc == AMLIERR_OBJ_NOT_FOUND))
     {
-        rc = AMLI_LOGERR(rc, ("GetNameSpaceObject: object %s not found",
-                              pszObjPath));
+        rc = AMLI_LOGERR(rc, ("GetNameSpaceObject: object %s not found", pszObjPath));
     }
 
     if (rc != STATUS_SUCCESS)
@@ -164,7 +157,7 @@ NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
 
     EXIT(3, ("GetNameSpaceObject=%x (pns=%x)\n", rc, *ppns));
     return rc;
-}       //GetNameSpaceObject
+} //GetNameSpaceObject
 
 /***LP  CreateNameSpaceObject - Create a name space object under current scope
  *
@@ -182,16 +175,15 @@ NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
-                                     POBJOWNER powner, PPNSOBJ ppns,
+NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope, POBJOWNER powner, PPNSOBJ ppns,
                                      ULONG dwfNS)
 {
     TRACENAME("CREATENAMESPACEOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
     PNSOBJ pns = NULL;
 
-    ENTER(3, ("CreateNameSpaceObject(pheap=%x,Name=%s,pnsScope=%x,powner=%x,ppns=%x,Flags=%x)\n",
-              pheap, pszName? pszName: "<null>", pnsScope, powner, ppns, dwfNS));
+    ENTER(3, ("CreateNameSpaceObject(pheap=%x,Name=%s,pnsScope=%x,powner=%x,ppns=%x,Flags=%x)\n", pheap,
+              pszName ? pszName : "<null>", pnsScope, powner, ppns, dwfNS));
 
     if (pnsScope == NULL)
         pnsScope = gpnsNameSpaceRoot;
@@ -200,8 +192,7 @@ NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
     {
         if ((pns = NEWNSOBJ(pheap, sizeof(NSOBJ))) == NULL)
         {
-            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                             ("CreateNameSpaceObject: fail to allocate name space object"));
+            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("CreateNameSpaceObject: fail to allocate name space object"));
         }
         else
         {
@@ -209,19 +200,15 @@ NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
             MEMZERO(pns, sizeof(NSOBJ));
             pns->pnsParent = pnsScope;
             InsertOwnerObjList(powner, pns);
-            ListInsertTail(&pns->list,
-                           (PPLIST)&pnsScope->pnsFirstChild);
+            ListInsertTail(&pns->list, (PPLIST)&pnsScope->pnsFirstChild);
         }
     }
     else if ((*pszName != '\0') &&
-             ((rc = GetNameSpaceObject(pszName, pnsScope, &pns,
-                                       NSF_LOCAL_SCOPE)) == STATUS_SUCCESS))
+             ((rc = GetNameSpaceObject(pszName, pnsScope, &pns, NSF_LOCAL_SCOPE)) == STATUS_SUCCESS))
     {
         if (!(dwfNS & NSF_EXIST_OK))
         {
-            rc = AMLI_LOGERR(AMLIERR_OBJ_ALREADY_EXIST,
-                             ("CreateNameSpaceObject: object already exist - %s",
-                              pszName));
+            rc = AMLI_LOGERR(AMLIERR_OBJ_ALREADY_EXIST, ("CreateNameSpaceObject: object already exist - %s", pszName));
         }
     }
     else if ((*pszName == '\0') || (rc == AMLIERR_OBJ_NOT_FOUND))
@@ -236,8 +223,7 @@ NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
             ASSERT(powner == NULL);
             if ((pns = NEWNSOBJ(pheap, sizeof(NSOBJ))) == NULL)
             {
-                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("CreateNameSpaceObject: fail to allocate name space object"));
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("CreateNameSpaceObject: fail to allocate name space object"));
             }
             else
             {
@@ -256,8 +242,7 @@ NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
             {
                 *psz = '\0';
                 psz++;
-                rc = GetNameSpaceObject(pszName, pnsScope, &pnsParent,
-                                        NSF_LOCAL_SCOPE | NSF_WARN_NOTFOUND);
+                rc = GetNameSpaceObject(pszName, pnsScope, &pnsParent, NSF_LOCAL_SCOPE | NSF_WARN_NOTFOUND);
             }
             else if (*pszName == '\\')
             {
@@ -291,15 +276,11 @@ NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
 
                 if ((*psz != '\0') && (iLen > sizeof(NAMESEG)))
                 {
-                    rc = AMLI_LOGERR(AMLIERR_INVALID_NAME,
-                                     ("CreateNameSpaceObject: invalid name - %s",
-                                      psz));
+                    rc = AMLI_LOGERR(AMLIERR_INVALID_NAME, ("CreateNameSpaceObject: invalid name - %s", psz));
                 }
-                else if ((pns = NEWNSOBJ(pheap, sizeof(NSOBJ)))
-                         == NULL)
+                else if ((pns = NEWNSOBJ(pheap, sizeof(NSOBJ))) == NULL)
                 {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                     ("CreateNameSpaceObject: fail to allocate name space object"));
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("CreateNameSpaceObject: fail to allocate name space object"));
                 }
                 else
                 {
@@ -315,8 +296,7 @@ NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
 
                     pns->pnsParent = pnsParent;
                     InsertOwnerObjList(powner, pns);
-                    ListInsertTail(&pns->list,
-                                   (PPLIST)&pnsParent->pnsFirstChild);
+                    ListInsertTail(&pns->list, (PPLIST)&pnsParent->pnsFirstChild);
                 }
             }
         }
@@ -327,7 +307,7 @@ NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
 
     EXIT(3, ("CreateNameSpaceObject=%x (pns=%x)\n", rc, pns));
     return rc;
-}       //CreateNameSpaceObject
+} //CreateNameSpaceObject
 
 /***LP  FreeNameSpaceObjects - Free Name Space object and its children
  *
@@ -342,9 +322,9 @@ VOID LOCAL FreeNameSpaceObjects(PNSOBJ pnsObj)
 {
     TRACENAME("FREENAMESPACEOBJECTS")
     PNSOBJ pns, pnsSibling, pnsParent;
-  #ifdef DEBUGGER
+#ifdef DEBUGGER
     POBJSYM pos;
-  #endif
+#endif
 
     ENTER(3, ("FreeNameSpaceObjects(Obj=%s)\n", GetObjectPath(pnsObj)));
 
@@ -361,7 +341,7 @@ VOID LOCAL FreeNameSpaceObjects(PNSOBJ pnsObj)
         pnsParent = NSGETPARENT(pns);
 
         ENTER(4, ("FreeNSObj(Obj=%s)\n", GetObjectPath(pns)));
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         //
         // If I am in the symbol list, get rid of it before I die.
         //
@@ -382,7 +362,7 @@ VOID LOCAL FreeNameSpaceObjects(PNSOBJ pnsObj)
                 break;
             }
         }
-      #endif
+#endif
 
         //
         // All my children are gone, I must die now.
@@ -390,12 +370,10 @@ VOID LOCAL FreeNameSpaceObjects(PNSOBJ pnsObj)
         ASSERT(pns->pnsFirstChild == NULL);
 
         if ((pns->ObjData.dwDataType == OBJTYPE_OPREGION) &&
-            (((POPREGIONOBJ)pns->ObjData.pbDataBuff)->bRegionSpace ==
-             REGSPACE_MEM))
+            (((POPREGIONOBJ)pns->ObjData.pbDataBuff)->bRegionSpace == REGSPACE_MEM))
         {
             ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
-            MmUnmapIoSpace((PVOID)
-                           ((POPREGIONOBJ)pns->ObjData.pbDataBuff)->uipOffset,
+            MmUnmapIoSpace((PVOID)((POPREGIONOBJ)pns->ObjData.pbDataBuff)->uipOffset,
                            ((POPREGIONOBJ)pns->ObjData.pbDataBuff)->dwLen);
         }
 
@@ -409,8 +387,7 @@ VOID LOCAL FreeNameSpaceObjects(PNSOBJ pnsObj)
         }
         else
         {
-            ListRemoveEntry(&pns->list,
-                            (PPLIST)&pns->pnsParent->pnsFirstChild);
+            ListRemoveEntry(&pns->list, (PPLIST)&pns->pnsParent->pnsFirstChild);
         }
         //
         // Free any attached data buffer if any
@@ -452,7 +429,7 @@ VOID LOCAL FreeNameSpaceObjects(PNSOBJ pnsObj)
     }
 
     EXIT(3, ("FreeNameSpaceObjects!\n"));
-}       //FreeNameSpaceObjects
+} //FreeNameSpaceObjects
 
 /***LP  LoadDDB - Load and parse Differentiated Definition Block
  *
@@ -470,67 +447,57 @@ VOID LOCAL FreeNameSpaceObjects(PNSOBJ pnsObj)
 
 NTSTATUS
 LOCAL
-LoadDDB(
-    PCTXT pctxt,
-    PDSDT pdsdt,
-    PNSOBJ pnsScope,
-    POBJOWNER *ppowner
-    )
+LoadDDB(PCTXT pctxt, PDSDT pdsdt, PNSOBJ pnsScope, POBJOWNER *ppowner)
 {
     BOOLEAN freeTable = FALSE;
     NTSTATUS rc = STATUS_SUCCESS;
 
-    if (!ValidateTable(pdsdt)) {
+    if (!ValidateTable(pdsdt))
+    {
 
-        rc = AMLI_LOGERR(
-            AMLIERR_INVALID_TABLE,
-            ("LoadDDB: invalid table %s at 0x%08x",
-             NameSegString(pdsdt->Header.Signature), pdsdt)
-            );
+        rc = AMLI_LOGERR(AMLIERR_INVALID_TABLE,
+                         ("LoadDDB: invalid table %s at 0x%08x", NameSegString(pdsdt->Header.Signature), pdsdt));
         freeTable = TRUE;
+    }
+    else
+    {
 
-    } else {
+        rc = NewObjOwner(gpheapGlobal, ppowner);
+        if (rc == STATUS_SUCCESS)
+        {
 
-        rc = NewObjOwner( gpheapGlobal, ppowner);
-        if (rc == STATUS_SUCCESS) {
-
-            if (pctxt->pcall == NULL) {
+            if (pctxt->pcall == NULL)
+            {
 
                 rc = PushCall(pctxt, NULL, &pctxt->Result);
-
             }
-            if (rc == STATUS_SUCCESS) {
+            if (rc == STATUS_SUCCESS)
+            {
 
-              #ifdef DEBUGGER
+#ifdef DEBUGGER
                 gDebugger.pbBlkBegin = pdsdt->DiffDefBlock;
                 gDebugger.pbBlkEnd = (PUCHAR)pdsdt + pdsdt->Header.Length;
-              #endif
+#endif
 
-                rc = PushScope(
-                    pctxt,
-                    pdsdt->DiffDefBlock,
-                    (PUCHAR)pdsdt + pdsdt->Header.Length, pctxt->pbOp,
-                    pnsScope, *ppowner, gpheapGlobal, &pctxt->Result
-                    );
-
+                rc = PushScope(pctxt, pdsdt->DiffDefBlock, (PUCHAR)pdsdt + pdsdt->Header.Length, pctxt->pbOp, pnsScope,
+                               *ppowner, gpheapGlobal, &pctxt->Result);
             }
-
-        } else {
+        }
+        else
+        {
 
             freeTable = TRUE;
-
         }
-
     }
 
-    if (freeTable) {
+    if (freeTable)
+    {
 
         pctxt->powner = NULL;
         FreeContext(pctxt);
-
     }
     return rc;
-}       //LoadDDB
+} //LoadDDB
 
 /***LP  LoadMemDDB - Load DDB from physical memory
  *
@@ -550,17 +517,12 @@ NTSTATUS LOCAL LoadMemDDB(PCTXT pctxt, PDSDT pDDB, POBJOWNER *ppowner)
     TRACENAME("LOADMEMDDB")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(3, ("LoadMemDDB(pctxt=%x,Addr=%x,ppowner=%x)\n",
-              pctxt, pDDB, ppowner));
+    ENTER(3, ("LoadMemDDB(pctxt=%x,Addr=%x,ppowner=%x)\n", pctxt, pDDB, ppowner));
 
     if ((ghValidateTable.pfnHandler != NULL) &&
-        ((rc = ((PFNVT)ghValidateTable.pfnHandler)(pDDB,
-                                                   ghValidateTable.uipParam)) !=
-         STATUS_SUCCESS))
+        ((rc = ((PFNVT)ghValidateTable.pfnHandler)(pDDB, ghValidateTable.uipParam)) != STATUS_SUCCESS))
     {
-        rc = AMLI_LOGERR(AMLIERR_INVALID_TABLE,
-                         ("LoadMemDDB: table validation failed (rc=%x)",
-                          rc));
+        rc = AMLI_LOGERR(AMLIERR_INVALID_TABLE, ("LoadMemDDB: table validation failed (rc=%x)", rc));
     }
     else
     {
@@ -569,7 +531,7 @@ NTSTATUS LOCAL LoadMemDDB(PCTXT pctxt, PDSDT pDDB, POBJOWNER *ppowner)
 
     EXIT(3, ("LoadMemDDB=%x (powner=%x)\n", rc, *ppowner));
     return rc;
-}       //LoadMemDDB
+} //LoadMemDDB
 
 /***LP  LoadFieldUnitDDB - Load DDB from a FieldUnit object
  *
@@ -584,27 +546,23 @@ NTSTATUS LOCAL LoadMemDDB(PCTXT pctxt, PDSDT pDDB, POBJOWNER *ppowner)
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL LoadFieldUnitDDB(PCTXT pctxt, POBJDATA pdataObj,
-                                POBJOWNER *ppowner)
+NTSTATUS LOCAL LoadFieldUnitDDB(PCTXT pctxt, POBJDATA pdataObj, POBJOWNER *ppowner)
 {
     TRACENAME("LOADFIELDUNITDDB")
     NTSTATUS rc = STATUS_SUCCESS;
     POBJDATA pdataTmp;
     DESCRIPTION_HEADER *pdh;
 
-    ENTER(3, ("LoadFieldUnitDDB(pctxt=%x,pdataObj=%x,ppowner=%x)\n",
-              pctxt, pdataObj, ppowner));
+    ENTER(3, ("LoadFieldUnitDDB(pctxt=%x,pdataObj=%x,ppowner=%x)\n", pctxt, pdataObj, ppowner));
 
     if ((pdataTmp = NEWODOBJ(pctxt->pheapCurrent, sizeof(OBJDATA))) == NULL)
     {
-        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                         ("LoadFieldUnitDDB: failed to allocate temp. object data"));
+        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("LoadFieldUnitDDB: failed to allocate temp. object data"));
     }
     else if ((pdh = NEWBDOBJ(gpheapGlobal, sizeof(DESCRIPTION_HEADER))) == NULL)
     {
         FREEODOBJ(pdataTmp);
-        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                         ("LoadFieldUnitDDB: failed to allocate description header"));
+        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("LoadFieldUnitDDB: failed to allocate description header"));
     }
     else
     {
@@ -619,8 +577,7 @@ NTSTATUS LOCAL LoadFieldUnitDDB(PCTXT pctxt, POBJDATA pdataObj,
         {
             if ((pbTable = NEWBDOBJ(gpheapGlobal, pdh->Length)) == NULL)
             {
-                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("LoadFieldUnitDDB: failed to allocate buffer"));
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("LoadFieldUnitDDB: failed to allocate buffer"));
             }
             else
             {
@@ -628,28 +585,23 @@ NTSTATUS LOCAL LoadFieldUnitDDB(PCTXT pctxt, POBJDATA pdataObj,
                 pdataTmp->dwDataLen = pdh->Length - sizeof(DESCRIPTION_HEADER);
                 pdataTmp->pbDataBuff = pbTable + sizeof(DESCRIPTION_HEADER);
 
-                if ((rc = ReadObject(pctxt, pdataObj, pdataTmp)) ==
-                    STATUS_SUCCESS)
+                if ((rc = ReadObject(pctxt, pdataObj, pdataTmp)) == STATUS_SUCCESS)
                 {
                     if ((ghValidateTable.pfnHandler != NULL) &&
-                        ((rc = ((PFNVT)ghValidateTable.pfnHandler)(
-                                   (PDSDT)pbTable, ghValidateTable.uipParam)) !=
+                        ((rc = ((PFNVT)ghValidateTable.pfnHandler)((PDSDT)pbTable, ghValidateTable.uipParam)) !=
                          STATUS_SUCCESS))
                     {
                         rc = AMLI_LOGERR(AMLIERR_INVALID_TABLE,
-                                         ("LoadFieldUnitDDB: table validation failed (rc=%x)",
-                                          rc));
+                                         ("LoadFieldUnitDDB: table validation failed (rc=%x)", rc));
                     }
                     else
                     {
-                        rc = LoadDDB(pctxt, (PDSDT)pbTable, pctxt->pnsScope,
-                                     ppowner);
+                        rc = LoadDDB(pctxt, (PDSDT)pbTable, pctxt->pnsScope, ppowner);
                     }
                 }
                 else if (rc == AMLISTA_PENDING)
                 {
-                    rc = AMLI_LOGERR(AMLIERR_FATAL,
-                                     ("LoadFieldUnitDDB: definition block loading cannot block"));
+                    rc = AMLI_LOGERR(AMLIERR_FATAL, ("LoadFieldUnitDDB: definition block loading cannot block"));
                 }
 
                 FREEBDOBJ(pbTable);
@@ -657,8 +609,7 @@ NTSTATUS LOCAL LoadFieldUnitDDB(PCTXT pctxt, POBJDATA pdataObj,
         }
         else if (rc == AMLISTA_PENDING)
         {
-            rc = AMLI_LOGERR(AMLIERR_FATAL,
-                             ("LoadFieldUnitDDB: definition block loading cannot block"));
+            rc = AMLI_LOGERR(AMLIERR_FATAL, ("LoadFieldUnitDDB: definition block loading cannot block"));
         }
 
         FREEBDOBJ(pdh);
@@ -667,7 +618,7 @@ NTSTATUS LOCAL LoadFieldUnitDDB(PCTXT pctxt, POBJDATA pdataObj,
 
     EXIT(3, ("LoadFieldUnitDDB=%x (powner=%x)\n", rc, *ppowner));
     return rc;
-}       //LoadFieldUnitDDB
+} //LoadFieldUnitDDB
 
 /***LP  UnloadDDB - Unload Differentiated Definition Block
  *
@@ -689,18 +640,18 @@ VOID LOCAL UnloadDDB(POBJOWNER powner)
     // Walk name space and remove all objects belongs to this DDB.
     //
     FreeObjOwner(powner, TRUE);
-  #ifdef DEBUG
+#ifdef DEBUG
     {
-        KIRQL   oldIrql;
+        KIRQL oldIrql;
 
-        KeAcquireSpinLock( &gdwGHeapSpinLock, &oldIrql );
+        KeAcquireSpinLock(&gdwGHeapSpinLock, &oldIrql);
         gdwGHeapSnapshot = gdwGlobalHeapSize;
-        KeReleaseSpinLock( &gdwGHeapSpinLock, oldIrql );
+        KeReleaseSpinLock(&gdwGHeapSpinLock, oldIrql);
     }
-  #endif
+#endif
 
     EXIT(3, ("UnloadDDB!\n"));
-}       //UnloadDDB
+} //UnloadDDB
 
 /***LP  EvalPackageElement - Evaluate a package element
  *
@@ -715,14 +666,12 @@ VOID LOCAL UnloadDDB(POBJOWNER powner)
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL EvalPackageElement(PPACKAGEOBJ ppkg, int iPkgIndex,
-                                  POBJDATA pdataResult)
+NTSTATUS LOCAL EvalPackageElement(PPACKAGEOBJ ppkg, int iPkgIndex, POBJDATA pdataResult)
 {
     TRACENAME("EVALPACKAGEELEMENT")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(3, ("EvalPackageElement(ppkg=%x,Index=%d,pdataResult=%x)\n",
-              ppkg, iPkgIndex, pdataResult));
+    ENTER(3, ("EvalPackageElement(ppkg=%x,Index=%d,pdataResult=%x)\n", ppkg, iPkgIndex, pdataResult));
 
     ASSERT(pdataResult != NULL);
     if (iPkgIndex >= (int)ppkg->dwcElements)
@@ -734,12 +683,11 @@ NTSTATUS LOCAL EvalPackageElement(PPACKAGEOBJ ppkg, int iPkgIndex,
         rc = DupObjData(gpheapGlobal, pdataResult, &ppkg->adata[iPkgIndex]);
     }
 
-    EXIT(3, ("EvalPackageElement=%x (Type=%s,Value=%x,Len=%d,Buff=%x)\n",
-             rc, GetObjectTypeName(pdataResult->dwDataType),
-             pdataResult->uipDataValue, pdataResult->dwDataLen,
-             pdataResult->pbDataBuff));
+    EXIT(3,
+         ("EvalPackageElement=%x (Type=%s,Value=%x,Len=%d,Buff=%x)\n", rc, GetObjectTypeName(pdataResult->dwDataType),
+          pdataResult->uipDataValue, pdataResult->dwDataLen, pdataResult->pbDataBuff));
     return rc;
-}       //EvalPackageElement
+} //EvalPackageElement
 
 #ifdef DEBUGGER
 /***LP  DumpNameSpaceObject - Dump name space object
@@ -761,11 +709,9 @@ LONG LOCAL DumpNameSpaceObject(PSZ pszPath, BOOLEAN fRecursive)
     PNSOBJ pns;
     char szName[sizeof(NAMESEG) + 1];
 
-    ENTER(3, ("DumpNameSpaceObject(Path=%s,fRecursive=%x)\n",
-              pszPath, fRecursive));
+    ENTER(3, ("DumpNameSpaceObject(Path=%s,fRecursive=%x)\n", pszPath, fRecursive));
 
-    if ((rc = GetNameSpaceObject(pszPath, NULL, &pns,
-                                 NSF_LOCAL_SCOPE)) == STATUS_SUCCESS)
+    if ((rc = GetNameSpaceObject(pszPath, NULL, &pns, NSF_LOCAL_SCOPE)) == STATUS_SUCCESS)
     {
         PRINTF("\nACPI Name Space: %s (%x)\n", pszPath, pns);
         if (!fRecursive)
@@ -783,7 +729,7 @@ LONG LOCAL DumpNameSpaceObject(PSZ pszPath, BOOLEAN fRecursive)
 
     EXIT(3, ("DumpNameSpaceObject=%x\n", rc));
     return rc;
-}       //DumpNameSpaceObject
+} //DumpNameSpaceObject
 
 /***LP  DumpNameSpaceTree - Dump all the name space objects in the subtree
  *
@@ -824,6 +770,6 @@ VOID LOCAL DumpNameSpaceTree(PNSOBJ pnsObj, ULONG dwLevel)
     }
 
     EXIT(3, ("DumpNameSpaceTree!\n"));
-}       //DumpNameSpaceTree
+} //DumpNameSpaceTree
 
-#endif  //ifdef DEBUGGER
+#endif //ifdef DEBUGGER

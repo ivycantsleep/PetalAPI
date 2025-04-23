@@ -33,8 +33,8 @@ Revision History:
 
 #include "..\io\iop.h" // Includes vfdef.h
 
-#if (( defined(_X86_) ) && ( FPO ))
-#pragma optimize( "y", off )    // disable FPO for consistent stack traces
+#if ((defined(_X86_)) && (FPO))
+#pragma optimize("y", off) // disable FPO for consistent stack traces
 #endif
 
 #ifdef ALLOC_PRAGMA
@@ -46,55 +46,43 @@ Revision History:
 #pragma alloc_text(PAGEVRFY, VfDevObjAdjustFdoForVerifierFilters)
 #endif
 
-VOID
-VerifierIoAttachDeviceToDeviceStack(
-    IN PDEVICE_OBJECT NewDevice,
-    IN PDEVICE_OBJECT ExistingDevice
-    )
+VOID VerifierIoAttachDeviceToDeviceStack(IN PDEVICE_OBJECT NewDevice, IN PDEVICE_OBJECT ExistingDevice)
 {
-    UNREFERENCED_PARAMETER (NewDevice);
+    UNREFERENCED_PARAMETER(NewDevice);
 
     IovUtilFlushStackCache(ExistingDevice, DATABASELOCKSTATE_HELD);
 }
 
 
-VOID
-VerifierIoDetachDevice(
-    IN PDEVICE_OBJECT LowerDevice
-    )
+VOID VerifierIoDetachDevice(IN PDEVICE_OBJECT LowerDevice)
 {
     PVOID callerAddress;
     ULONG stackHash;
 
-    if (LowerDevice->AttachedDevice == NULL) {
+    if (LowerDevice->AttachedDevice == NULL)
+    {
 
-        if (RtlCaptureStackBackTrace(2, 1, &callerAddress, &stackHash) != 1) {
+        if (RtlCaptureStackBackTrace(2, 1, &callerAddress, &stackHash) != 1)
+        {
 
             callerAddress = NULL;
         }
 
-        WDM_FAIL_ROUTINE((
-            DCERROR_DETACH_NOT_ATTACHED,
-            DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-            callerAddress,
-            LowerDevice
-            ));
+        WDM_FAIL_ROUTINE((DCERROR_DETACH_NOT_ATTACHED, DCPARAM_ROUTINE + DCPARAM_DEVOBJ, callerAddress, LowerDevice));
     }
 
     IovUtilFlushStackCache(LowerDevice, DATABASELOCKSTATE_HELD);
 }
 
 
-VOID
-VerifierIoDeleteDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+VOID VerifierIoDeleteDevice(IN PDEVICE_OBJECT DeviceObject)
 {
     PDEVICE_OBJECT deviceBelow;
     PVOID callerAddress;
     ULONG stackHash;
 
-    if (RtlCaptureStackBackTrace(2, 1, &callerAddress, &stackHash) != 1) {
+    if (RtlCaptureStackBackTrace(2, 1, &callerAddress, &stackHash) != 1)
+    {
 
         callerAddress = NULL;
     }
@@ -104,38 +92,27 @@ VerifierIoDeleteDevice(
     //     second remove IRP to every deleted device object that was a member
     // of a WDM device stack. Just to check.
     //
-    if (IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED)) {
+    if (IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED))
+    {
 
-        WDM_FAIL_ROUTINE((
-            DCERROR_DOUBLE_DELETION,
-            DCPARAM_ROUTINE,
-            callerAddress
-            ));
+        WDM_FAIL_ROUTINE((DCERROR_DOUBLE_DELETION, DCPARAM_ROUTINE, callerAddress));
     }
 
     IovUtilMarkDeviceObject(DeviceObject, MARKTYPE_DELETED);
 
     IovUtilGetLowerDeviceObject(DeviceObject, &deviceBelow);
-    if (deviceBelow) {
+    if (deviceBelow)
+    {
 
-        WDM_FAIL_ROUTINE((
-            DCERROR_DELETE_WHILE_ATTACHED,
-            DCPARAM_ROUTINE,
-            callerAddress
-            ));
+        WDM_FAIL_ROUTINE((DCERROR_DELETE_WHILE_ATTACHED, DCPARAM_ROUTINE, callerAddress));
 
         ObDereferenceObject(deviceBelow);
     }
 }
 
 
-VOID
-VfDevObjPreAddDevice(
-    IN  PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN  PDRIVER_OBJECT      DriverObject,
-    IN  PDRIVER_ADD_DEVICE  AddDeviceFunction,
-    IN  VF_DEVOBJ_TYPE      DevObjType
-    )
+VOID VfDevObjPreAddDevice(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDRIVER_OBJECT DriverObject,
+                          IN PDRIVER_ADD_DEVICE AddDeviceFunction, IN VF_DEVOBJ_TYPE DevObjType)
 /*++
 
   Description:
@@ -164,23 +141,26 @@ VfDevObjPreAddDevice(
 
     UNREFERENCED_PARAMETER(AddDeviceFunction);
 
-    if (!MmIsDriverVerifying(DriverObject)) {
+    if (!MmIsDriverVerifying(DriverObject))
+    {
 
         return;
     }
 
-    if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_INSERT_WDM_FILTERS)) {
+    if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_INSERT_WDM_FILTERS))
+    {
 
-        if (DevObjType == VF_DEVOBJ_FDO) {
+        if (DevObjType == VF_DEVOBJ_FDO)
+        {
 
             //
             // If we are calling AddDevice for the FDO, first attempt to attach
             // a lower class filter.
             //
             objType = VF_DEVOBJ_LOWER_CLASS_FILTER;
-
-
-        } else {
+        }
+        else
+        {
 
             objType = DevObjType;
         }
@@ -193,14 +173,8 @@ VfDevObjPreAddDevice(
 }
 
 
-VOID
-VfDevObjPostAddDevice(
-    IN  PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN  PDRIVER_OBJECT      DriverObject,
-    IN  PDRIVER_ADD_DEVICE  AddDeviceFunction,
-    IN  VF_DEVOBJ_TYPE      DevObjType,
-    IN  NTSTATUS            Result
-    )
+VOID VfDevObjPostAddDevice(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDRIVER_OBJECT DriverObject,
+                           IN PDRIVER_ADD_DEVICE AddDeviceFunction, IN VF_DEVOBJ_TYPE DevObjType, IN NTSTATUS Result)
 /*++
 
   Description:
@@ -233,19 +207,21 @@ VfDevObjPostAddDevice(
 
     UNREFERENCED_PARAMETER(DriverObject);
 
-    if (NT_SUCCESS(Result) &&
-        VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_INSERT_WDM_FILTERS) &&
-        MmIsDriverVerifying(DriverObject)) {
+    if (NT_SUCCESS(Result) && VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_INSERT_WDM_FILTERS) &&
+        MmIsDriverVerifying(DriverObject))
+    {
 
-        if (DevObjType == VF_DEVOBJ_FDO) {
+        if (DevObjType == VF_DEVOBJ_FDO)
+        {
 
             //
             // If we've just attached an FDO, try to add a upper device filter
             // on top of it.
             //
             objType = VF_DEVOBJ_UPPER_DEVICE_FILTER;
-
-        } else {
+        }
+        else
+        {
 
             objType = DevObjType;
         }
@@ -256,7 +232,8 @@ VfDevObjPostAddDevice(
         VfDriverAttachFilter(PhysicalDeviceObject, objType);
     }
 
-    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_VERIFY_DO_FLAGS)) {
+    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_VERIFY_DO_FLAGS))
+    {
 
         return;
     }
@@ -264,21 +241,18 @@ VfDevObjPostAddDevice(
     //
     // Take this opportunity to check the PDO.
     //
-    if (!IovUtilIsDeviceObjectMarked(PhysicalDeviceObject, MARKTYPE_DEVICE_CHECKED)) {
+    if (!IovUtilIsDeviceObjectMarked(PhysicalDeviceObject, MARKTYPE_DEVICE_CHECKED))
+    {
 
-        if ((PhysicalDeviceObject->Flags & (DO_BUFFERED_IO | DO_DIRECT_IO)) ==
-            (DO_BUFFERED_IO | DO_DIRECT_IO)) {
+        if ((PhysicalDeviceObject->Flags & (DO_BUFFERED_IO | DO_DIRECT_IO)) == (DO_BUFFERED_IO | DO_DIRECT_IO))
+        {
 
             //
             // Both direct I/O and buffered I/O are set. These are mutually
             // exclusive.
             //
-            WDM_FAIL_ROUTINE((
-                DCERROR_INCONSISTANT_DO_FLAGS,
-                DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                PhysicalDeviceObject->DriverObject->DriverExtension->AddDevice,
-                PhysicalDeviceObject
-                ));
+            WDM_FAIL_ROUTINE((DCERROR_INCONSISTANT_DO_FLAGS, DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
+                              PhysicalDeviceObject->DriverObject->DriverExtension->AddDevice, PhysicalDeviceObject));
         }
 
         //
@@ -292,44 +266,40 @@ VfDevObjPostAddDevice(
     powerFailure = FALSE;
     deviceBelow = PhysicalDeviceObject;
     ObReferenceObject(deviceBelow);
-    while(1) {
+    while (1)
+    {
         IovUtilGetUpperDeviceObject(deviceBelow, &deviceAbove);
 
-        if (deviceAbove == NULL) {
+        if (deviceAbove == NULL)
+        {
 
             ObDereferenceObject(deviceBelow);
             break;
         }
 
-        if (!IovUtilIsDeviceObjectMarked(deviceAbove, MARKTYPE_DEVICE_CHECKED)) {
+        if (!IovUtilIsDeviceObjectMarked(deviceAbove, MARKTYPE_DEVICE_CHECKED))
+        {
 
-            if ((deviceAbove->Flags & (DO_BUFFERED_IO | DO_DIRECT_IO)) ==
-                (DO_BUFFERED_IO | DO_DIRECT_IO)) {
+            if ((deviceAbove->Flags & (DO_BUFFERED_IO | DO_DIRECT_IO)) == (DO_BUFFERED_IO | DO_DIRECT_IO))
+            {
 
                 //
                 // Both direct I/O and buffered I/O are set. These are mutually
                 // exclusive.
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_INCONSISTANT_DO_FLAGS,
-                    DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                    AddDeviceFunction,
-                    deviceAbove
-                    ));
+                WDM_FAIL_ROUTINE(
+                    (DCERROR_INCONSISTANT_DO_FLAGS, DCPARAM_ROUTINE + DCPARAM_DEVOBJ, AddDeviceFunction, deviceAbove));
             }
 
-            if (deviceAbove->Flags & DO_DEVICE_INITIALIZING) {
+            if (deviceAbove->Flags & DO_DEVICE_INITIALIZING)
+            {
 
                 //
                 // A device didn't clear the DO_DEVICE_INITIALIZING flag during
                 // AddDevice. Fail it now.
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_DO_INITIALIZING_NOT_CLEARED,
-                    DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                    AddDeviceFunction,
-                    deviceAbove
-                    ));
+                WDM_FAIL_ROUTINE((DCERROR_DO_INITIALIZING_NOT_CLEARED, DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
+                                  AddDeviceFunction, deviceAbove));
 
                 //
                 // Clean up the mess.
@@ -337,21 +307,18 @@ VfDevObjPostAddDevice(
                 deviceAbove->Flags &= ~DO_DEVICE_INITIALIZING;
             }
 
-            if ((deviceBelow->Flags & DO_POWER_PAGABLE) &&
-                (!(deviceAbove->Flags & DO_POWER_PAGABLE))) {
+            if ((deviceBelow->Flags & DO_POWER_PAGABLE) && (!(deviceAbove->Flags & DO_POWER_PAGABLE)))
+            {
 
-                if (!powerFailure) {
+                if (!powerFailure)
+                {
 
                     //
                     // We have caught a driver bug. deviceAbove didn't inherit the
                     // DO_POWER_PAGABLE flag.
                     //
-                    WDM_FAIL_ROUTINE((
-                        DCERROR_POWER_PAGABLE_NOT_INHERITED,
-                        DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                        AddDeviceFunction,
-                        deviceAbove
-                        ));
+                    WDM_FAIL_ROUTINE((DCERROR_POWER_PAGABLE_NOT_INHERITED, DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
+                                      AddDeviceFunction, deviceAbove));
 
                     //
                     // Don't blame anyone else.
@@ -362,46 +329,34 @@ VfDevObjPostAddDevice(
                 deviceAbove->Flags |= DO_POWER_PAGABLE;
             }
 
-            if ((deviceBelow->Flags & DO_BUFFERED_IO) &&
-                (!(deviceAbove->Flags & DO_BUFFERED_IO))) {
+            if ((deviceBelow->Flags & DO_BUFFERED_IO) && (!(deviceAbove->Flags & DO_BUFFERED_IO)))
+            {
 
                 //
                 // Buffered I/O flag not copied. Broken filter!
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_DO_FLAG_NOT_COPIED,
-                    DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                    AddDeviceFunction,
-                    deviceAbove
-                    ));
+                WDM_FAIL_ROUTINE(
+                    (DCERROR_DO_FLAG_NOT_COPIED, DCPARAM_ROUTINE + DCPARAM_DEVOBJ, AddDeviceFunction, deviceAbove));
             }
 
-            if ((deviceBelow->Flags & DO_DIRECT_IO) &&
-                (!(deviceAbove->Flags & DO_DIRECT_IO))) {
+            if ((deviceBelow->Flags & DO_DIRECT_IO) && (!(deviceAbove->Flags & DO_DIRECT_IO)))
+            {
 
                 //
                 // Direct I/O flag not copied. Broken filter!
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_DO_FLAG_NOT_COPIED,
-                    DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                    AddDeviceFunction,
-                    deviceAbove
-                    ));
+                WDM_FAIL_ROUTINE(
+                    (DCERROR_DO_FLAG_NOT_COPIED, DCPARAM_ROUTINE + DCPARAM_DEVOBJ, AddDeviceFunction, deviceAbove));
             }
 
-            if ((deviceBelow->DeviceType != FILE_DEVICE_UNKNOWN) &&
-                (deviceAbove->DeviceType == FILE_DEVICE_UNKNOWN)) {
+            if ((deviceBelow->DeviceType != FILE_DEVICE_UNKNOWN) && (deviceAbove->DeviceType == FILE_DEVICE_UNKNOWN))
+            {
 
                 //
                 // The device type wasn't copied by a filter!
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_DEVICE_TYPE_NOT_COPIED,
-                    DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                    AddDeviceFunction,
-                    deviceAbove
-                    ));
+                WDM_FAIL_ROUTINE(
+                    (DCERROR_DEVICE_TYPE_NOT_COPIED, DCPARAM_ROUTINE + DCPARAM_DEVOBJ, AddDeviceFunction, deviceAbove));
             }
 
             //
@@ -418,10 +373,7 @@ VfDevObjPostAddDevice(
 }
 
 
-VOID
-VfDevObjAdjustFdoForVerifierFilters(
-    IN OUT  PDEVICE_OBJECT *FunctionalDeviceObject
-    )
+VOID VfDevObjAdjustFdoForVerifierFilters(IN OUT PDEVICE_OBJECT *FunctionalDeviceObject)
 /*++
 
   Description:
@@ -444,7 +396,8 @@ VfDevObjAdjustFdoForVerifierFilters(
 
     fdo = *FunctionalDeviceObject;
 
-    if (VfDriverIsVerifierFilterObject(fdo)) {
+    if (VfDriverIsVerifierFilterObject(fdo))
+    {
 
         fdo = fdo->AttachedDevice;
         ASSERT(fdo);
@@ -452,4 +405,3 @@ VfDevObjAdjustFdoForVerifierFilters(
         *FunctionalDeviceObject = fdo;
     }
 }
-

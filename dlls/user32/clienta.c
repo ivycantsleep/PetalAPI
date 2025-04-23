@@ -17,7 +17,7 @@
 #define NONTOSPINTERLOCK
 #include <ntosp.h>
 
-#include <ntrtl.h>      // WINBASEP.H or something.
+#include <ntrtl.h> // WINBASEP.H or something.
 #include <nturtl.h>
 #include <ntcsrmsg.h>
 

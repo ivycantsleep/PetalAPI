@@ -28,7 +28,8 @@ Revision History:
 //  by the file system.  This structure must be allocated from non-paged pool.
 //
 
-typedef struct _VCB {
+typedef struct _VCB
+{
 
     //
     //  The type and size of this record (must be RAW_NTC_VCB)
@@ -55,7 +56,7 @@ typedef struct _VCB {
 
     //
     //  A pointer to a spare Vpb used for explicit dismount
-    // 
+    //
 
     PVPB SpareVpb;
 
@@ -92,8 +93,8 @@ typedef struct _VCB {
 } VCB;
 typedef VCB *PVCB;
 
-#define VCB_STATE_FLAG_LOCKED            (0x0001)
-#define VCB_STATE_FLAG_DISMOUNTED        (0x0002)
+#define VCB_STATE_FLAG_LOCKED (0x0001)
+#define VCB_STATE_FLAG_DISMOUNTED (0x0002)
 
 //
 //  The Volume Device Object is an I/O system device object with a
@@ -102,7 +103,8 @@ typedef VCB *PVCB;
 //  a volume mount operation.
 //
 
-typedef struct _VOLUME_DEVICE_OBJECT {
+typedef struct _VOLUME_DEVICE_OBJECT
+{
 
     DEVICE_OBJECT DeviceObject;
 

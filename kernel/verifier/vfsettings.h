@@ -25,7 +25,8 @@ Revision History:
 
 typedef PVOID PVERIFIER_SETTINGS_SNAPSHOT;
 
-typedef enum {
+typedef enum
+{
 
     //
     // This option lets the verifer begin tracking all IRPs. It must be enabled
@@ -241,7 +242,8 @@ typedef enum {
 
 } VERIFIER_OPTION;
 
-typedef enum {
+typedef enum
+{
 
     //
     // If VERIFIER_OPTION_DEFER_COMPLETION is set, this value contains the time
@@ -259,52 +261,24 @@ typedef enum {
 
 } VERIFIER_VALUE;
 
-VOID
-FASTCALL
-VfSettingsInit(
-    IN  ULONG   MmFlags
-    );
+VOID FASTCALL VfSettingsInit(IN ULONG MmFlags);
 
 BOOLEAN
 FASTCALL
-VfSettingsIsOptionEnabled(
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot  OPTIONAL,
-    IN  VERIFIER_OPTION             VerifierOption
-    );
+VfSettingsIsOptionEnabled(IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot OPTIONAL,
+                          IN VERIFIER_OPTION VerifierOption);
 
-VOID
-FASTCALL
-VfSettingsCreateSnapshot(
-    IN OUT  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot
-    );
+VOID FASTCALL VfSettingsCreateSnapshot(IN OUT PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot);
 
 ULONG
 FASTCALL
-VfSettingsGetSnapshotSize(
-    VOID
-    );
+VfSettingsGetSnapshotSize(VOID);
 
-VOID
-FASTCALL
-VfSettingsSetOption(
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot  OPTIONAL,
-    IN  VERIFIER_OPTION             VerifierOption,
-    IN  BOOLEAN                     Setting
-    );
+VOID FASTCALL VfSettingsSetOption(IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot OPTIONAL,
+                                  IN VERIFIER_OPTION VerifierOption, IN BOOLEAN Setting);
 
-VOID
-FASTCALL
-VfSettingsGetValue(
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot  OPTIONAL,
-    IN  VERIFIER_VALUE              VerifierValue,
-    OUT ULONG                       *Value
-    );
+VOID FASTCALL VfSettingsGetValue(IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot OPTIONAL,
+                                 IN VERIFIER_VALUE VerifierValue, OUT ULONG *Value);
 
-VOID
-FASTCALL
-VfSettingsSetValue(
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot  OPTIONAL,
-    IN  VERIFIER_VALUE              VerifierValue,
-    IN  ULONG                       Value
-    );
-
+VOID FASTCALL VfSettingsSetValue(IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot OPTIONAL,
+                                 IN VERIFIER_VALUE VerifierValue, IN ULONG Value);

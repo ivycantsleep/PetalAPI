@@ -47,22 +47,17 @@ Revision History:
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
 #undef ExAllocatePoolWithQuota
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'HscS')
-#define ExAllocatePoolWithQuota(a,b) ExAllocatePoolWithQuotaTag(a,b,'HscS')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'HscS')
+#define ExAllocatePoolWithQuota(a, b) ExAllocatePoolWithQuotaTag(a, b, 'HscS')
 #endif
 
 #define MAXIMUM_RETRIES 4
 
-typedef
-VOID
-(*PCLASS_ERROR) (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PSCSI_REQUEST_BLOCK Srb,
-    IN OUT NTSTATUS *Status,
-    IN OUT BOOLEAN *Retry
-    );
+typedef VOID (*PCLASS_ERROR)(IN PDEVICE_OBJECT DeviceObject, IN PSCSI_REQUEST_BLOCK Srb, IN OUT NTSTATUS *Status,
+                             IN OUT BOOLEAN *Retry);
 
-typedef struct _DEVICE_EXTENSION {
+typedef struct _DEVICE_EXTENSION
+{
 
     //
     // Back pointer to device object
@@ -228,146 +223,69 @@ typedef struct _DEVICE_EXTENSION {
 // Define context structure for asynchronous completions.
 //
 
-typedef struct _COMPLETION_CONTEXT {
+typedef struct _COMPLETION_CONTEXT
+{
     PDEVICE_OBJECT DeviceObject;
     SCSI_REQUEST_BLOCK Srb;
-}COMPLETION_CONTEXT, *PCOMPLETION_CONTEXT;
+} COMPLETION_CONTEXT, *PCOMPLETION_CONTEXT;
 
-
-NTSTATUS
-ScsiClassGetCapabilities(
-    IN PDEVICE_OBJECT PortDeviceObject,
-    OUT PIO_SCSI_CAPABILITIES *PortCapabilities
-    );
 
 NTSTATUS
-ScsiClassGetInquiryData(
-    IN PDEVICE_OBJECT PortDeviceObject,
-    IN PSCSI_ADAPTER_BUS_INFO *ConfigInfo
-    );
+ScsiClassGetCapabilities(IN PDEVICE_OBJECT PortDeviceObject, OUT PIO_SCSI_CAPABILITIES *PortCapabilities);
 
 NTSTATUS
-ScsiClassReadDriveCapacity(
-    IN PDEVICE_OBJECT DeviceObject
-    );
-
-VOID
-ScsiClassReleaseQueue(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+ScsiClassGetInquiryData(IN PDEVICE_OBJECT PortDeviceObject, IN PSCSI_ADAPTER_BUS_INFO *ConfigInfo);
 
 NTSTATUS
-ScsiClassRemoveDevice(
-    IN PDEVICE_OBJECT PortDeviceObject,
-    IN UCHAR PathId,
-    IN UCHAR TargetId,
-    IN UCHAR Lun
-    );
+ScsiClassReadDriveCapacity(IN PDEVICE_OBJECT DeviceObject);
+
+VOID ScsiClassReleaseQueue(IN PDEVICE_OBJECT DeviceObject);
 
 NTSTATUS
-ScsiClassAsynchronousCompletion(
-    PDEVICE_OBJECT DeviceObject,
-    PIRP Irp,
-    PVOID Context
-    );
-
-VOID
-ScsiClassSplitRequest(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG MaximumBytes
-    );
+ScsiClassRemoveDevice(IN PDEVICE_OBJECT PortDeviceObject, IN UCHAR PathId, IN UCHAR TargetId, IN UCHAR Lun);
 
 NTSTATUS
-ScsiClassDeviceControl(
-    PDEVICE_OBJECT DeviceObject,
-    PIRP Irp
-    );
+ScsiClassAsynchronousCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp, PVOID Context);
+
+VOID ScsiClassSplitRequest(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG MaximumBytes);
 
 NTSTATUS
-ScsiClassIoComplete(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    );
+ScsiClassDeviceControl(PDEVICE_OBJECT DeviceObject, PIRP Irp);
 
 NTSTATUS
-ScsiClassIoCompleteAssociated(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    );
+ScsiClassIoComplete(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
+
+NTSTATUS
+ScsiClassIoCompleteAssociated(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 BOOLEAN
-ScsiClassInterpretSenseInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PSCSI_REQUEST_BLOCK Srb,
-    IN UCHAR MajorFunctionCode,
-    IN ULONG IoDeviceCode,
-    IN ULONG RetryCount,
-    OUT NTSTATUS *Status
-    );
+ScsiClassInterpretSenseInfo(IN PDEVICE_OBJECT DeviceObject, IN PSCSI_REQUEST_BLOCK Srb, IN UCHAR MajorFunctionCode,
+                            IN ULONG IoDeviceCode, IN ULONG RetryCount, OUT NTSTATUS *Status);
 
 NTSTATUS
-ScsiClassSendSrbSynchronous(
-        PDEVICE_OBJECT DeviceObject,
-        PSCSI_REQUEST_BLOCK Srb,
-        PVOID BufferAddress,
-        ULONG BufferLength,
-        BOOLEAN WriteToDevice
-        );
+ScsiClassSendSrbSynchronous(PDEVICE_OBJECT DeviceObject, PSCSI_REQUEST_BLOCK Srb, PVOID BufferAddress,
+                            ULONG BufferLength, BOOLEAN WriteToDevice);
 
 NTSTATUS
-ScsiClassSendSrbAsynchronous(
-        PDEVICE_OBJECT DeviceObject,
-        PSCSI_REQUEST_BLOCK Srb,
-        PIRP Irp,
-        PVOID BufferAddress,
-        ULONG BufferLength,
-        BOOLEAN WriteToDevice
-        );
+ScsiClassSendSrbAsynchronous(PDEVICE_OBJECT DeviceObject, PSCSI_REQUEST_BLOCK Srb, PIRP Irp, PVOID BufferAddress,
+                             ULONG BufferLength, BOOLEAN WriteToDevice);
 
-VOID
-ScsiClassBuildRequest(
-    PDEVICE_OBJECT DeviceObject,
-    PIRP Irp
-    );
+VOID ScsiClassBuildRequest(PDEVICE_OBJECT DeviceObject, PIRP Irp);
 
 ULONG
-ScsiClassModeSense(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PCHAR ModeSenseBuffer,
-    IN ULONG Length,
-    IN UCHAR PageMode
-    );
+ScsiClassModeSense(IN PDEVICE_OBJECT DeviceObject, IN PCHAR ModeSenseBuffer, IN ULONG Length, IN UCHAR PageMode);
 
 BOOLEAN
-ScsiClassModeSelect(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PCHAR ModeSelectBuffer,
-    IN ULONG Length,
-    IN BOOLEAN SavePage
-    );
+ScsiClassModeSelect(IN PDEVICE_OBJECT DeviceObject, IN PCHAR ModeSelectBuffer, IN ULONG Length, IN BOOLEAN SavePage);
 
 PVOID
-ScsiClassFindModePage(
-    IN PCHAR ModeSenseBuffer,
-    IN ULONG Length,
-    IN UCHAR PageMode
-    );
+ScsiClassFindModePage(IN PCHAR ModeSenseBuffer, IN ULONG Length, IN UCHAR PageMode);
 
 NTSTATUS
-ScsiClassClaimDevice(
-    IN PDEVICE_OBJECT PortDeviceObject,
-    IN PSCSI_INQUIRY_DATA LunInfo,
-    IN BOOLEAN Release,
-    OUT PDEVICE_OBJECT *NewPortDeviceObject OPTIONAL
-    );
+ScsiClassClaimDevice(IN PDEVICE_OBJECT PortDeviceObject, IN PSCSI_INQUIRY_DATA LunInfo, IN BOOLEAN Release,
+                     OUT PDEVICE_OBJECT *NewPortDeviceObject OPTIONAL);
 
 NTSTATUS
-ScsiClassInternalIoControl (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+ScsiClassInternalIoControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 #endif /* _CLASS_ */

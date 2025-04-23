@@ -22,8 +22,7 @@
 * History:
 \***************************************************************************/
 
-void LBCalcItemRowsAndColumns(
-    PLBIV plb)
+void LBCalcItemRowsAndColumns(PLBIV plb)
 {
     RECT rc;
 
@@ -42,7 +41,8 @@ void LBCalcItemRowsAndColumns(
     // multicolumn && ownerdraw variable.
     //
 
-    if (rc.bottom && rc.right && plb->cyChar) {
+    if (rc.bottom && rc.right && plb->cyChar)
+    {
 
         /*
          * Only make these calculations if the width & height are positive
@@ -68,63 +68,63 @@ void LBCalcItemRowsAndColumns(
 * History:
 \***************************************************************************/
 
-void xxxLBoxCtlHScrollMultiColumn(
-    PLBIV plb,
-    INT cmd,
-    INT xAmt)
+void xxxLBoxCtlHScrollMultiColumn(PLBIV plb, INT cmd, INT xAmt)
 {
     INT iTop = plb->iTop;
 
     CheckLock(plb->spwnd);
 
-    if (!plb->cMac)  return;
+    if (!plb->cMac)
+        return;
 
-    switch (cmd) {
+    switch (cmd)
+    {
     case SB_LINEUP:
         if (plb->fRightAlign)
             goto ReallyLineDown;
-ReallyLineUp:
+    ReallyLineUp:
         iTop -= plb->itemsPerColumn;
         break;
     case SB_LINEDOWN:
         if (plb->fRightAlign)
             goto ReallyLineUp;
-ReallyLineDown:
+    ReallyLineDown:
         iTop += plb->itemsPerColumn;
         break;
     case SB_PAGEUP:
         if (plb->fRightAlign)
             goto ReallyPageDown;
-ReallyPageUp:
+    ReallyPageUp:
         iTop -= plb->itemsPerColumn * plb->numberOfColumns;
         break;
     case SB_PAGEDOWN:
         if (plb->fRightAlign)
             goto ReallyPageUp;
-ReallyPageDown:
+    ReallyPageDown:
         iTop += plb->itemsPerColumn * plb->numberOfColumns;
         break;
     case SB_THUMBTRACK:
     case SB_THUMBPOSITION:
-        if (plb->fRightAlign) {
-            int  iCols = plb->cMac ? ((plb->cMac-1) / plb->itemsPerColumn) + 1 : 0;
+        if (plb->fRightAlign)
+        {
+            int iCols = plb->cMac ? ((plb->cMac - 1) / plb->itemsPerColumn) + 1 : 0;
 
             xAmt = iCols - (xAmt + plb->numberOfColumns);
-            if (xAmt<0)
-                xAmt=0;
+            if (xAmt < 0)
+                xAmt = 0;
         }
         iTop = xAmt * plb->itemsPerColumn;
         break;
     case SB_TOP:
         if (plb->fRightAlign)
             goto ReallyBottom;
-ReallyTop:
+    ReallyTop:
         iTop = 0;
         break;
     case SB_BOTTOM:
         if (plb->fRightAlign)
             goto ReallyTop;
-ReallyBottom:
+    ReallyBottom:
         iTop = plb->cMac - 1 - ((plb->cMac - 1) % plb->itemsPerColumn);
         break;
     case SB_ENDSCROLL:

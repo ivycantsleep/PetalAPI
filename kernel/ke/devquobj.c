@@ -31,15 +31,13 @@ Revision History:
 // is really a kdevice_queue and not something else, like deallocated pool.
 //
 
-#define ASSERT_DEVICE_QUEUE(E) {            \
-    ASSERT((E)->Type == DeviceQueueObject); \
-}
+#define ASSERT_DEVICE_QUEUE(E)                  \
+    {                                           \
+        ASSERT((E)->Type == DeviceQueueObject); \
+    }
 
-
-VOID
-KeInitializeDeviceQueue (
-    IN PKDEVICE_QUEUE DeviceQueue
-    )
+
+VOID KeInitializeDeviceQueue(IN PKDEVICE_QUEUE DeviceQueue)
 
 /*++
 
@@ -78,12 +76,9 @@ Return Value:
     DeviceQueue->Busy = FALSE;
     return;
 }
-
+
 BOOLEAN
-KeInsertDeviceQueue (
-    IN PKDEVICE_QUEUE DeviceQueue,
-    IN PKDEVICE_QUEUE_ENTRY DeviceQueueEntry
-    )
+KeInsertDeviceQueue(IN PKDEVICE_QUEUE DeviceQueue, IN PKDEVICE_QUEUE_ENTRY DeviceQueueEntry)
 
 /*++
 
@@ -129,12 +124,13 @@ Return Value:
     // don't insert the device queue entry.
     //
 
-    if (DeviceQueue->Busy == TRUE) {
+    if (DeviceQueue->Busy == TRUE)
+    {
         Inserted = TRUE;
-        InsertTailList(&DeviceQueue->DeviceListHead,
-                       &DeviceQueueEntry->DeviceListEntry);
-
-    } else {
+        InsertTailList(&DeviceQueue->DeviceListHead, &DeviceQueueEntry->DeviceListEntry);
+    }
+    else
+    {
         DeviceQueue->Busy = TRUE;
         Inserted = FALSE;
     }
@@ -148,13 +144,9 @@ Return Value:
     KeReleaseInStackQueuedSpinLockFromDpcLevel(&LockHandle);
     return Inserted;
 }
-
+
 BOOLEAN
-KeInsertByKeyDeviceQueue (
-    IN PKDEVICE_QUEUE DeviceQueue,
-    IN PKDEVICE_QUEUE_ENTRY DeviceQueueEntry,
-    IN ULONG SortKey
-    )
+KeInsertByKeyDeviceQueue(IN PKDEVICE_QUEUE DeviceQueue, IN PKDEVICE_QUEUE_ENTRY DeviceQueueEntry, IN ULONG SortKey)
 
 /*++
 
@@ -209,15 +201,16 @@ Return Value:
     //
 
     DeviceQueueEntry->SortKey = SortKey;
-    if (DeviceQueue->Busy == TRUE) {
+    if (DeviceQueue->Busy == TRUE)
+    {
         Inserted = TRUE;
         NextEntry = DeviceQueue->DeviceListHead.Flink;
-        while (NextEntry != &DeviceQueue->DeviceListHead) {
-            QueueEntry = CONTAINING_RECORD(NextEntry,
-                                           KDEVICE_QUEUE_ENTRY,
-                                           DeviceListEntry);
+        while (NextEntry != &DeviceQueue->DeviceListHead)
+        {
+            QueueEntry = CONTAINING_RECORD(NextEntry, KDEVICE_QUEUE_ENTRY, DeviceListEntry);
 
-            if (SortKey < QueueEntry->SortKey) {
+            if (SortKey < QueueEntry->SortKey)
+            {
                 break;
             }
 
@@ -226,8 +219,9 @@ Return Value:
 
         NextEntry = NextEntry->Blink;
         InsertHeadList(NextEntry, &DeviceQueueEntry->DeviceListEntry);
-
-    } else {
+    }
+    else
+    {
         DeviceQueue->Busy = TRUE;
         Inserted = FALSE;
     }
@@ -241,11 +235,9 @@ Return Value:
     KeReleaseInStackQueuedSpinLockFromDpcLevel(&LockHandle);
     return Inserted;
 }
-
+
 PKDEVICE_QUEUE_ENTRY
-KeRemoveDeviceQueue (
-    IN PKDEVICE_QUEUE DeviceQueue
-    )
+KeRemoveDeviceQueue(IN PKDEVICE_QUEUE DeviceQueue)
 
 /*++
 
@@ -292,15 +284,15 @@ Return Value:
 
     ASSERT(DeviceQueue->Busy == TRUE);
 
-    if (IsListEmpty(&DeviceQueue->DeviceListHead) == TRUE) {
+    if (IsListEmpty(&DeviceQueue->DeviceListHead) == TRUE)
+    {
         DeviceQueue->Busy = FALSE;
         DeviceQueueEntry = NULL;
-
-    } else {
+    }
+    else
+    {
         NextEntry = RemoveHeadList(&DeviceQueue->DeviceListHead);
-        DeviceQueueEntry = CONTAINING_RECORD(NextEntry,
-                                             KDEVICE_QUEUE_ENTRY,
-                                             DeviceListEntry);
+        DeviceQueueEntry = CONTAINING_RECORD(NextEntry, KDEVICE_QUEUE_ENTRY, DeviceListEntry);
 
         DeviceQueueEntry->Inserted = FALSE;
     }
@@ -313,12 +305,9 @@ Return Value:
     KeReleaseInStackQueuedSpinLockFromDpcLevel(&LockHandle);
     return DeviceQueueEntry;
 }
-
+
 PKDEVICE_QUEUE_ENTRY
-KeRemoveByKeyDeviceQueue (
-    IN PKDEVICE_QUEUE DeviceQueue,
-    IN ULONG SortKey
-    )
+KeRemoveByKeyDeviceQueue(IN PKDEVICE_QUEUE DeviceQueue, IN ULONG SortKey)
 
 /*++
 
@@ -370,32 +359,34 @@ Return Value:
 
     ASSERT(DeviceQueue->Busy == TRUE);
 
-    if (IsListEmpty(&DeviceQueue->DeviceListHead) == TRUE) {
+    if (IsListEmpty(&DeviceQueue->DeviceListHead) == TRUE)
+    {
         DeviceQueue->Busy = FALSE;
         DeviceQueueEntry = NULL;
-
-    } else {
+    }
+    else
+    {
         NextEntry = DeviceQueue->DeviceListHead.Flink;
-        while (NextEntry != &DeviceQueue->DeviceListHead) {
-            DeviceQueueEntry = CONTAINING_RECORD(NextEntry,
-                                                 KDEVICE_QUEUE_ENTRY,
-                                                 DeviceListEntry);
+        while (NextEntry != &DeviceQueue->DeviceListHead)
+        {
+            DeviceQueueEntry = CONTAINING_RECORD(NextEntry, KDEVICE_QUEUE_ENTRY, DeviceListEntry);
 
-            if (SortKey <= DeviceQueueEntry->SortKey) {
+            if (SortKey <= DeviceQueueEntry->SortKey)
+            {
                 break;
             }
 
             NextEntry = NextEntry->Flink;
         }
 
-        if (NextEntry != &DeviceQueue->DeviceListHead) {
+        if (NextEntry != &DeviceQueue->DeviceListHead)
+        {
             RemoveEntryList(&DeviceQueueEntry->DeviceListEntry);
-
-        } else {
+        }
+        else
+        {
             NextEntry = RemoveHeadList(&DeviceQueue->DeviceListHead);
-            DeviceQueueEntry = CONTAINING_RECORD(NextEntry,
-                                                 KDEVICE_QUEUE_ENTRY,
-                                                 DeviceListEntry);
+            DeviceQueueEntry = CONTAINING_RECORD(NextEntry, KDEVICE_QUEUE_ENTRY, DeviceListEntry);
         }
 
         DeviceQueueEntry->Inserted = FALSE;
@@ -409,12 +400,9 @@ Return Value:
     KeReleaseInStackQueuedSpinLockFromDpcLevel(&LockHandle);
     return DeviceQueueEntry;
 }
-
+
 PKDEVICE_QUEUE_ENTRY
-KeRemoveByKeyDeviceQueueIfBusy (
-    IN PKDEVICE_QUEUE DeviceQueue,
-    IN ULONG SortKey
-    )
+KeRemoveByKeyDeviceQueueIfBusy(IN PKDEVICE_QUEUE DeviceQueue, IN ULONG SortKey)
 
 /*++
 
@@ -465,39 +453,43 @@ Return Value:
     // busy.
     //
 
-    if (DeviceQueue->Busy != FALSE) {
-        if (IsListEmpty(&DeviceQueue->DeviceListHead) != FALSE) {
+    if (DeviceQueue->Busy != FALSE)
+    {
+        if (IsListEmpty(&DeviceQueue->DeviceListHead) != FALSE)
+        {
             DeviceQueue->Busy = FALSE;
             DeviceQueueEntry = NULL;
-
-        } else {
+        }
+        else
+        {
             NextEntry = DeviceQueue->DeviceListHead.Flink;
-            while (NextEntry != &DeviceQueue->DeviceListHead) {
-                DeviceQueueEntry = CONTAINING_RECORD(NextEntry,
-                                                     KDEVICE_QUEUE_ENTRY,
-                                                     DeviceListEntry);
+            while (NextEntry != &DeviceQueue->DeviceListHead)
+            {
+                DeviceQueueEntry = CONTAINING_RECORD(NextEntry, KDEVICE_QUEUE_ENTRY, DeviceListEntry);
 
-                if (SortKey <= DeviceQueueEntry->SortKey) {
+                if (SortKey <= DeviceQueueEntry->SortKey)
+                {
                     break;
                 }
 
                 NextEntry = NextEntry->Flink;
             }
 
-            if (NextEntry != &DeviceQueue->DeviceListHead) {
+            if (NextEntry != &DeviceQueue->DeviceListHead)
+            {
                 RemoveEntryList(&DeviceQueueEntry->DeviceListEntry);
-
-            } else {
+            }
+            else
+            {
                 NextEntry = RemoveHeadList(&DeviceQueue->DeviceListHead);
-                DeviceQueueEntry = CONTAINING_RECORD(NextEntry,
-                                                     KDEVICE_QUEUE_ENTRY,
-                                                     DeviceListEntry);
+                DeviceQueueEntry = CONTAINING_RECORD(NextEntry, KDEVICE_QUEUE_ENTRY, DeviceListEntry);
             }
 
             DeviceQueueEntry->Inserted = FALSE;
         }
-
-    } else {
+    }
+    else
+    {
         DeviceQueueEntry = NULL;
     }
 
@@ -509,12 +501,9 @@ Return Value:
     KeReleaseInStackQueuedSpinLockFromDpcLevel(&LockHandle);
     return DeviceQueueEntry;
 }
-
+
 BOOLEAN
-KeRemoveEntryDeviceQueue (
-    IN PKDEVICE_QUEUE DeviceQueue,
-    IN PKDEVICE_QUEUE_ENTRY DeviceQueueEntry
-    )
+KeRemoveEntryDeviceQueue(IN PKDEVICE_QUEUE DeviceQueue, IN PKDEVICE_QUEUE_ENTRY DeviceQueueEntry)
 
 /*++
 
@@ -560,7 +549,8 @@ Return Value:
     //
 
     Removed = DeviceQueueEntry->Inserted;
-    if (Removed == TRUE) {
+    if (Removed == TRUE)
+    {
         DeviceQueueEntry->Inserted = FALSE;
         RemoveEntryList(&DeviceQueueEntry->DeviceListEntry);
     }

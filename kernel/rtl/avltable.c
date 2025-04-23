@@ -59,11 +59,11 @@ checkit(PVOID p)
 //  (Used for debug only.)
 //
 
-ULONG BestCaseFill[33] = {  0,          1,          3,          7,          0xf,        0x1f,       0x3f,       0x7f,
-                            0xff,       0x1ff,      0x3ff,      0x7ff,      0xfff,      0x1fff,     0x3fff,     0x7fff,
-                            0xffff,     0x1ffff,    0x3ffff,    0x7ffff,    0xfffff,    0x1fffff,   0x3fffff,   0x7fffff,
-                            0xffffff,   0x1ffffff,  0x3ffffff,  0x7ffffff,  0xfffffff,  0x1fffffff, 0x3fffffff, 0x7fffffff,
-                            0xffffffff  };
+ULONG BestCaseFill[33] = { 0,         1,          3,          7,          0xf,       0x1f,      0x3f,
+                           0x7f,      0xff,       0x1ff,      0x3ff,      0x7ff,     0xfff,     0x1fff,
+                           0x3fff,    0x7fff,     0xffff,     0x1ffff,    0x3ffff,   0x7ffff,   0xfffff,
+                           0x1fffff,  0x3fffff,   0x7fffff,   0xffffff,   0x1ffffff, 0x3ffffff, 0x7ffffff,
+                           0xfffffff, 0x1fffffff, 0x3fffffff, 0x7fffffff, 0xffffffff };
 
 //
 //  Build a table of the worst case efficiency of a balanced binary tree, holding the
@@ -88,11 +88,9 @@ ULONG BestCaseFill[33] = {  0,          1,          3,          7,          0xf,
 //  (Used for debug only.)
 //
 
-ULONG WorstCaseFill[33] = { 0,          1,          2,          4,          7,          12,         20,         33,
-                            54,         88,         143,        232,        376,        609,        986,        1596,
-                            2583,       4180,       6764,       10945,      17710,      28656,      46367,      75024,
-                            121392,     196417,     317810,     514228,     832039,     1346268,    2178308,    3524577,
-                            5702886     };
+ULONG WorstCaseFill[33] = { 0,     1,     2,      4,      7,      12,     20,     33,      54,      88,      143,
+                            232,   376,   609,    986,    1596,   2583,   4180,   6764,    10945,   17710,   28656,
+                            46367, 75024, 121392, 196417, 317810, 514228, 832039, 1346268, 2178308, 3524577, 5702886 };
 
 //
 //  This structure is the header for a generic table entry.
@@ -100,7 +98,8 @@ ULONG WorstCaseFill[33] = { 0,          1,          2,          4,          7,  
 //  data is correctly aligned.
 //
 
-typedef struct _TABLE_ENTRY_HEADER {
+typedef struct _TABLE_ENTRY_HEADER
+{
 
     RTL_BALANCED_LINKS BalancedLinks;
     LONGLONG UserData;
@@ -114,11 +113,7 @@ typedef struct _TABLE_ENTRY_HEADER {
 //
 
 NTSTATUS
-MatchAll (
-    IN PRTL_AVL_TABLE Table,
-    IN PVOID P1,
-    IN PVOID P2
-    )
+MatchAll(IN PRTL_AVL_TABLE Table, IN PVOID P1, IN PVOID P2)
 
 {
     return STATUS_SUCCESS;
@@ -127,13 +122,9 @@ MatchAll (
     UNREFERENCED_PARAMETER(P2);
 }
 
-
+
 TABLE_SEARCH_RESULT
-FindNodeOrParent(
-    IN PRTL_AVL_TABLE Table,
-    IN PVOID Buffer,
-    OUT PRTL_BALANCED_LINKS *NodeOrParent
-    )
+FindNodeOrParent(IN PRTL_AVL_TABLE Table, IN PVOID Buffer, OUT PRTL_BALANCED_LINKS *NodeOrParent)
 
 /*++
 
@@ -181,11 +172,13 @@ Return Value:
 
 {
 
-    if (RtlIsGenericTableEmptyAvl(Table)) {
+    if (RtlIsGenericTableEmptyAvl(Table))
+    {
 
         return TableEmptyTree;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Used as the iteration variable while stepping through
@@ -209,17 +202,14 @@ Return Value:
 
         ULONG NumberCompares = 0;
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             //
             //  Compare the buffer with the key in the tree element.
             //
 
-            Result = Table->CompareRoutine(
-                         Table,
-                         Buffer,
-                         &((PTABLE_ENTRY_HEADER) NodeToExamine)->UserData
-                         );
+            Result = Table->CompareRoutine(Table, Buffer, &((PTABLE_ENTRY_HEADER)NodeToExamine)->UserData);
 
             //
             //  Make sure the depth of tree is correct.
@@ -227,13 +217,16 @@ Return Value:
 
             ASSERT(++NumberCompares <= Table->DepthOfTree);
 
-            if (Result == GenericLessThan) {
+            if (Result == GenericLessThan)
+            {
 
-                if (Child = NodeToExamine->LeftChild) {
+                if (Child = NodeToExamine->LeftChild)
+                {
 
                     NodeToExamine = Child;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  Node is not in the tree.  Set the output
@@ -244,14 +237,17 @@ Return Value:
                     *NodeOrParent = NodeToExamine;
                     return TableInsertAsLeft;
                 }
+            }
+            else if (Result == GenericGreaterThan)
+            {
 
-            } else if (Result == GenericGreaterThan) {
-
-                if (Child = NodeToExamine->RightChild) {
+                if (Child = NodeToExamine->RightChild)
+                {
 
                     NodeToExamine = Child;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  Node is not in the tree.  Set the output
@@ -262,8 +258,9 @@ Return Value:
                     *NodeOrParent = NodeToExamine;
                     return TableInsertAsRight;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Node is in the tree (or it better be because of the
@@ -279,11 +276,8 @@ Return Value:
     }
 }
 
-
-VOID
-PromoteNode (
-    IN PRTL_BALANCED_LINKS C
-    )
+
+VOID PromoteNode(IN PRTL_BALANCED_LINKS C)
 
 /*++
 
@@ -332,7 +326,8 @@ Return Value:
     //  Break down the promotion into two cases based upon whether C is a left or right child.
     //
 
-    if (P->LeftChild == C) {
+    if (P->LeftChild == C)
+    {
 
         //
         //  This promotion looks like this:
@@ -348,7 +343,8 @@ Return Value:
 
         P->LeftChild = checkit(C->RightChild);
 
-        if (P->LeftChild != NULL) {
+        if (P->LeftChild != NULL)
+        {
             P->LeftChild->Parent = checkit(P);
         }
 
@@ -357,8 +353,9 @@ Return Value:
         //
         //  Fall through to update parent and G <-> C relationship in common code.
         //
-
-    } else {
+    }
+    else
+    {
 
         ASSERT(P->RightChild == C);
 
@@ -376,7 +373,8 @@ Return Value:
 
         P->RightChild = checkit(C->LeftChild);
 
-        if (P->RightChild != NULL) {
+        if (P->RightChild != NULL)
+        {
             P->RightChild->Parent = checkit(P);
         }
 
@@ -393,20 +391,21 @@ Return Value:
     //  Finally update G <-> C links for either case above.
     //
 
-    if (G->LeftChild == P) {
+    if (G->LeftChild == P)
+    {
         G->LeftChild = checkit(C);
-    } else {
+    }
+    else
+    {
         ASSERT(G->RightChild == P);
         G->RightChild = checkit(C);
     }
     C->Parent = checkit(G);
 }
 
-
+
 ULONG
-RebalanceNode (
-    IN PRTL_BALANCED_LINKS S
-    )
+RebalanceNode(IN PRTL_BALANCED_LINKS S)
 
 /*++
 
@@ -445,9 +444,12 @@ Return Value:
     //
 
     a = S->Balance;
-    if (a == +1) {
+    if (a == +1)
+    {
         R = S->RightChild;
-    } else {
+    }
+    else
+    {
         R = S->LeftChild;
     }
 
@@ -476,65 +478,70 @@ Return Value:
     //  rebalance it is h+2, so rebalancing must continue up the tree.
     //
 
-    if (R->Balance == a) {
+    if (R->Balance == a)
+    {
 
-        PromoteNode( R );
+        PromoteNode(R);
         R->Balance = 0;
         S->Balance = 0;
         return FALSE;
 
-    //
-    //  Otherwise, we have to promote the appropriate child of R twice (Case 2
-    //  in Knuth).  (Step A9, A10)
-    //
-    //  Here is a diagram of the Case 2 transformation, for a == +1 (a mirror
-    //  image transformation occurs when a == -1), and where the subtree
-    //  heights are h and h-1 as shown.  There are actually two minor subcases,
-    //  differing only in the original balance of P (++ indicates the node out
-    //  of balance).
-    //
-    //                  |                   |
-    //                  S++                 P
-    //                 / \                 / \
+        //
+        //  Otherwise, we have to promote the appropriate child of R twice (Case 2
+        //  in Knuth).  (Step A9, A10)
+        //
+        //  Here is a diagram of the Case 2 transformation, for a == +1 (a mirror
+        //  image transformation occurs when a == -1), and where the subtree
+        //  heights are h and h-1 as shown.  There are actually two minor subcases,
+        //  differing only in the original balance of P (++ indicates the node out
+        //  of balance).
+        //
+        //                  |                   |
+        //                  S++                 P
+        //                 / \                 / \
     //                /   \               /   \
     //               /     \             /     \
     //             (h)      R-   ==>    S-      R
-    //                     / \         / \     / \
+        //                     / \         / \     / \
     //                    P+ (h)     (h)(h-1)(h) (h)
-    //                   / \
+        //                   / \
     //               (h-1) (h)
-    //
-    //
-    //                  |                   |
-    //                  S++                 P
-    //                 / \                 / \
+        //
+        //
+        //                  |                   |
+        //                  S++                 P
+        //                 / \                 / \
     //                /   \               /   \
     //               /     \             /     \
     //             (h)      R-   ==>    S       R+
-    //                     / \         / \     / \
+        //                     / \         / \     / \
     //                    P- (h)     (h) (h)(h-1)(h)
-    //                   / \
+        //                   / \
     //                 (h) (h-1)
-    //
-    //  Note that on an insert we can hit this case by inserting an item in the
-    //  left subtree of R.  The original height of the subtree before the insert
-    //  was h+2, and it is still h+2 after the rebalance, so insert rebalancing may
-    //  terminate.
-    //
-    //  On a delete we can hit this case by deleting a node from the left subtree
-    //  of S.  The height of the subtree before the delete was h+3, and after the
-    //  rebalance it is h+2, so rebalancing must continue up the tree.
-    //
-
-    }  else if (R->Balance == -a) {
+        //
+        //  Note that on an insert we can hit this case by inserting an item in the
+        //  left subtree of R.  The original height of the subtree before the insert
+        //  was h+2, and it is still h+2 after the rebalance, so insert rebalancing may
+        //  terminate.
+        //
+        //  On a delete we can hit this case by deleting a node from the left subtree
+        //  of S.  The height of the subtree before the delete was h+3, and after the
+        //  rebalance it is h+2, so rebalancing must continue up the tree.
+        //
+    }
+    else if (R->Balance == -a)
+    {
 
         //
         //  Pick up the appropriate child P for the double rotation (Link(-a,R)).
         //
 
-        if (a == 1) {
+        if (a == 1)
+        {
             P = R->LeftChild;
-        } else {
+        }
+        else
+        {
             P = R->RightChild;
         }
 
@@ -542,8 +549,8 @@ Return Value:
         //  Promote him twice to implement the double rotation.
         //
 
-        PromoteNode( P );
-        PromoteNode( P );
+        PromoteNode(P);
+        PromoteNode(P);
 
         //
         //  Now adjust the balance factors.
@@ -551,55 +558,55 @@ Return Value:
 
         S->Balance = 0;
         R->Balance = 0;
-        if (P->Balance == a) {
+        if (P->Balance == a)
+        {
             S->Balance = -a;
-        } else if (P->Balance == -a) {
+        }
+        else if (P->Balance == -a)
+        {
             R->Balance = a;
         }
 
         P->Balance = 0;
         return FALSE;
 
-    //
-    //  Otherwise this is Case 3 which can only happen on Delete (identical to Case 1 except
-    //  R->Balance == 0).  We do a single rotation, adjust the balance factors appropriately,
-    //  and return TRUE.  Note that the balance of S stays the same.
-    //
-    //  Here is a diagram of the Case 3 transformation, for a == +1 (a mirror
-    //  image transformation occurs when a == -1), and where the subtree
-    //  heights are h and h+1 as shown (++ indicates the node out of balance):
-    //
-    //                  |                   |
-    //                  S++                 R-
-    //                 / \                 / \
+        //
+        //  Otherwise this is Case 3 which can only happen on Delete (identical to Case 1 except
+        //  R->Balance == 0).  We do a single rotation, adjust the balance factors appropriately,
+        //  and return TRUE.  Note that the balance of S stays the same.
+        //
+        //  Here is a diagram of the Case 3 transformation, for a == +1 (a mirror
+        //  image transformation occurs when a == -1), and where the subtree
+        //  heights are h and h+1 as shown (++ indicates the node out of balance):
+        //
+        //                  |                   |
+        //                  S++                 R-
+        //                 / \                 / \
     //               (h)  R      ==>      S+ (h+1)
-    //                   / \             / \
+        //                   / \             / \
     //                (h+1)(h+1)       (h) (h+1)
-    //
-    //  This case can not occur on an insert, because it is impossible for a single insert to
-    //  balance R, yet somehow grow the right subtree of S at the same time.  As we move up
-    //  the tree adjusting balance factors after an insert, we terminate the algorithm if a
-    //  node becomes balanced, because that means the subtree length did not change!
-    //
-    //  On a delete we can hit this case by deleting a node from the left subtree
-    //  of S.  The height of the subtree before the delete was h+3, and after the
-    //  rebalance it is still h+3, so rebalancing may terminate in the delete path.
-    //
+        //
+        //  This case can not occur on an insert, because it is impossible for a single insert to
+        //  balance R, yet somehow grow the right subtree of S at the same time.  As we move up
+        //  the tree adjusting balance factors after an insert, we terminate the algorithm if a
+        //  node becomes balanced, because that means the subtree length did not change!
+        //
+        //  On a delete we can hit this case by deleting a node from the left subtree
+        //  of S.  The height of the subtree before the delete was h+3, and after the
+        //  rebalance it is still h+3, so rebalancing may terminate in the delete path.
+        //
+    }
+    else
+    {
 
-    } else {
-
-        PromoteNode( R );
+        PromoteNode(R);
         R->Balance = -a;
         return TRUE;
     }
 }
 
-
-VOID
-DeleteNodeFromTree (
-    IN PRTL_AVL_TABLE Table,
-    IN PRTL_BALANCED_LINKS NodeToDelete
-    )
+
+VOID DeleteNodeFromTree(IN PRTL_AVL_TABLE Table, IN PRTL_BALANCED_LINKS NodeToDelete)
 
 /*++
 
@@ -635,33 +642,39 @@ Return Value:
     //  delete it directly.
     //
 
-    if ((NodeToDelete->LeftChild == NULL) || (NodeToDelete->RightChild == NULL)) {
+    if ((NodeToDelete->LeftChild == NULL) || (NodeToDelete->RightChild == NULL))
+    {
 
         EasyDelete = NodeToDelete;
 
-    //
-    //  Otherwise, we may as well pick the longest side to delete from (if one is
-    //  is longer), as that reduces the probability that we will have to rebalance.
-    //
-
-    } else if (NodeToDelete->Balance >= 0) {
+        //
+        //  Otherwise, we may as well pick the longest side to delete from (if one is
+        //  is longer), as that reduces the probability that we will have to rebalance.
+        //
+    }
+    else if (NodeToDelete->Balance >= 0)
+    {
 
         //
         //  Pick up the subtree successor.
         //
 
         EasyDelete = NodeToDelete->RightChild;
-        while (EasyDelete->LeftChild != NULL) {
+        while (EasyDelete->LeftChild != NULL)
+        {
             EasyDelete = EasyDelete->LeftChild;
         }
-    } else {
+    }
+    else
+    {
 
         //
         //  Pick up the subtree predecessor.
         //
 
         EasyDelete = NodeToDelete->LeftChild;
-        while (EasyDelete->RightChild != NULL) {
+        while (EasyDelete->RightChild != NULL)
+        {
             EasyDelete = EasyDelete->RightChild;
         }
     }
@@ -677,29 +690,38 @@ Return Value:
     //  Now we can do the simple deletion for the no left child case.
     //
 
-    if (EasyDelete->LeftChild == NULL) {
+    if (EasyDelete->LeftChild == NULL)
+    {
 
-        if (RtlIsLeftChild(EasyDelete)) {
+        if (RtlIsLeftChild(EasyDelete))
+        {
             EasyDelete->Parent->LeftChild = checkit(EasyDelete->RightChild);
-        } else {
+        }
+        else
+        {
             EasyDelete->Parent->RightChild = checkit(EasyDelete->RightChild);
             a = 1;
         }
 
-        if (EasyDelete->RightChild != NULL) {
+        if (EasyDelete->RightChild != NULL)
+        {
             EasyDelete->RightChild->Parent = checkit(EasyDelete->Parent);
         }
 
-    //
-    //  Now we can do the simple deletion for the no right child case,
-    //  plus we know there is a left child.
-    //
+        //
+        //  Now we can do the simple deletion for the no right child case,
+        //  plus we know there is a left child.
+        //
+    }
+    else
+    {
 
-    } else {
-
-        if (RtlIsLeftChild(EasyDelete)) {
+        if (RtlIsLeftChild(EasyDelete))
+        {
             EasyDelete->Parent->LeftChild = checkit(EasyDelete->LeftChild);
-        } else {
+        }
+        else
+        {
             EasyDelete->Parent->RightChild = checkit(EasyDelete->LeftChild);
             a = 1;
         }
@@ -720,7 +742,8 @@ Return Value:
     //  Loop until the tree is balanced.
     //
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         //
         //  First handle the case where the tree became more balanced.  Zero
@@ -728,17 +751,19 @@ Return Value:
         //  the parent.
         //
 
-        if (P->Balance == a) {
+        if (P->Balance == a)
+        {
 
             P->Balance = 0;
 
-        //
-        //  If this node is curently balanced, we can show it is now unbalanced
-        //  and terminate the scan since the subtree length has not changed.
-        //  (This may be the root, since we set Balance to 0 above!)
-        //
-
-        } else if (P->Balance == 0) {
+            //
+            //  If this node is curently balanced, we can show it is now unbalanced
+            //  and terminate the scan since the subtree length has not changed.
+            //  (This may be the root, since we set Balance to 0 above!)
+            //
+        }
+        else if (P->Balance == 0)
+        {
 
             P->Balance = -a;
 
@@ -747,28 +772,31 @@ Return Value:
             //  has one less level.
             //
 
-            if (Table->BalancedRoot.Balance != 0) {
+            if (Table->BalancedRoot.Balance != 0)
+            {
                 Table->DepthOfTree -= 1;
             }
 
             break;
 
-        //
-        //  Otherwise we made the short side 2 levels less than the long side,
-        //  and rebalancing is required.  On return, some node has been promoted
-        //  to above node P.  If Case 3 from Knuth was not encountered, then we
-        //  want to effectively resume rebalancing from P's original parent which
-        //  is effectively its grandparent now.
-        //
-
-        } else {
+            //
+            //  Otherwise we made the short side 2 levels less than the long side,
+            //  and rebalancing is required.  On return, some node has been promoted
+            //  to above node P.  If Case 3 from Knuth was not encountered, then we
+            //  want to effectively resume rebalancing from P's original parent which
+            //  is effectively its grandparent now.
+            //
+        }
+        else
+        {
 
             //
             //  We are done if Case 3 was hit, i.e., the depth of this subtree is
             //  now the same as before the delete.
             //
 
-            if (RebalanceNode(P)) {
+            if (RebalanceNode(P))
+            {
                 break;
             }
 
@@ -776,7 +804,8 @@ Return Value:
         }
 
         a = -1;
-        if (RtlIsRightChild(P)) {
+        if (RtlIsRightChild(P))
+        {
             a = 1;
         }
         P = P->Parent;
@@ -789,28 +818,32 @@ Return Value:
     //  longer be the case at this point.
     //
 
-    if (NodeToDelete != EasyDelete) {
+    if (NodeToDelete != EasyDelete)
+    {
         *EasyDelete = *NodeToDelete;
-        if (RtlIsLeftChild(NodeToDelete)) {
+        if (RtlIsLeftChild(NodeToDelete))
+        {
             EasyDelete->Parent->LeftChild = checkit(EasyDelete);
-        } else {
+        }
+        else
+        {
             ASSERT(RtlIsRightChild(NodeToDelete));
             EasyDelete->Parent->RightChild = checkit(EasyDelete);
         }
-        if (EasyDelete->LeftChild != NULL) {
+        if (EasyDelete->LeftChild != NULL)
+        {
             EasyDelete->LeftChild->Parent = checkit(EasyDelete);
         }
-        if (EasyDelete->RightChild != NULL) {
+        if (EasyDelete->RightChild != NULL)
+        {
             EasyDelete->RightChild->Parent = checkit(EasyDelete);
         }
     }
 }
 
-
+
 PRTL_BALANCED_LINKS
-RealSuccessor (
-    IN PRTL_BALANCED_LINKS Links
-    )
+RealSuccessor(IN PRTL_BALANCED_LINKS Links)
 
 /*++
 
@@ -848,14 +881,15 @@ Return Value:
                    \
     */
 
-    if ((Ptr = Links->RightChild) != NULL) {
+    if ((Ptr = Links->RightChild) != NULL)
+    {
 
-        while (Ptr->LeftChild != NULL) {
+        while (Ptr->LeftChild != NULL)
+        {
             Ptr = Ptr->LeftChild;
         }
 
         return Ptr;
-
     }
 
     /*
@@ -876,11 +910,13 @@ Return Value:
     */
 
     Ptr = Links;
-    while (RtlIsRightChild(Ptr)) {
+    while (RtlIsRightChild(Ptr))
+    {
         Ptr = Ptr->Parent;
     }
 
-    if (RtlIsLeftChild(Ptr)) {
+    if (RtlIsLeftChild(Ptr))
+    {
         return Ptr->Parent;
     }
 
@@ -897,11 +933,9 @@ Return Value:
     return NULL;
 }
 
-
+
 PRTL_BALANCED_LINKS
-RealPredecessor (
-    IN PRTL_BALANCED_LINKS Links
-    )
+RealPredecessor(IN PRTL_BALANCED_LINKS Links)
 
 /*++
 
@@ -939,14 +973,15 @@ Return Value:
                     /
     */
 
-    if ((Ptr = Links->LeftChild) != NULL) {
+    if ((Ptr = Links->LeftChild) != NULL)
+    {
 
-        while (Ptr->RightChild != NULL) {
+        while (Ptr->RightChild != NULL)
+        {
             Ptr = Ptr->RightChild;
         }
 
         return Ptr;
-
     }
 
     /*
@@ -967,11 +1002,13 @@ Return Value:
     */
 
     Ptr = Links;
-    while (RtlIsLeftChild(Ptr)) {
+    while (RtlIsLeftChild(Ptr))
+    {
         Ptr = Ptr->Parent;
     }
 
-    if (RtlIsRightChild(Ptr) && (Ptr->Parent->Parent != Ptr->Parent)) {
+    if (RtlIsRightChild(Ptr) && (Ptr->Parent->Parent != Ptr->Parent))
+    {
         return Ptr->Parent;
     }
 
@@ -981,18 +1018,12 @@ Return Value:
     //
 
     return NULL;
-
 }
 
-
-VOID
-RtlInitializeGenericTableAvl (
-    IN PRTL_AVL_TABLE Table,
-    IN PRTL_AVL_COMPARE_ROUTINE CompareRoutine,
-    IN PRTL_AVL_ALLOCATE_ROUTINE AllocateRoutine,
-    IN PRTL_AVL_FREE_ROUTINE FreeRoutine,
-    IN PVOID TableContext
-    )
+
+VOID RtlInitializeGenericTableAvl(IN PRTL_AVL_TABLE Table, IN PRTL_AVL_COMPARE_ROUTINE CompareRoutine,
+                                  IN PRTL_AVL_ALLOCATE_ROUTINE AllocateRoutine, IN PRTL_AVL_FREE_ROUTINE FreeRoutine,
+                                  IN PVOID TableContext)
 
 /*++
 
@@ -1029,8 +1060,9 @@ Return Value:
 #ifdef NTFS_FREE_ASSERTS
     ULONG i;
 
-    for (i=2; i < 33; i++) {
-        ASSERT(WorstCaseFill[i] == (1 + WorstCaseFill[i-1] + WorstCaseFill[i-2]));
+    for (i = 2; i < 33; i++)
+    {
+        ASSERT(WorstCaseFill[i] == (1 + WorstCaseFill[i - 1] + WorstCaseFill[i - 2]));
     }
 #endif
 
@@ -1038,23 +1070,18 @@ Return Value:
     //  Initialize each field of the Table parameter.
     //
 
-    RtlZeroMemory( Table, sizeof(RTL_AVL_TABLE) );
+    RtlZeroMemory(Table, sizeof(RTL_AVL_TABLE));
     Table->BalancedRoot.Parent = &Table->BalancedRoot;
     Table->CompareRoutine = CompareRoutine;
     Table->AllocateRoutine = AllocateRoutine;
     Table->FreeRoutine = FreeRoutine;
     Table->TableContext = TableContext;
-
 }
 
-
+
 PVOID
-RtlInsertElementGenericTableAvl (
-    IN PRTL_AVL_TABLE Table,
-    IN PVOID Buffer,
-    IN CLONG BufferSize,
-    OUT PBOOLEAN NewElement OPTIONAL
-    )
+RtlInsertElementGenericTableAvl(IN PRTL_AVL_TABLE Table, IN PVOID Buffer, IN CLONG BufferSize,
+                                OUT PBOOLEAN NewElement OPTIONAL)
 
 /*++
 
@@ -1115,36 +1142,20 @@ Return Value:
 
     TABLE_SEARCH_RESULT Lookup;
 
-    Lookup = FindNodeOrParent(
-                 Table,
-                 Buffer,
-                 &NodeOrParent
-                 );
+    Lookup = FindNodeOrParent(Table, Buffer, &NodeOrParent);
 
     //
     //  Call the full routine to do the real work.
     //
 
-    return RtlInsertElementGenericTableFullAvl(
-                Table,
-                Buffer,
-                BufferSize,
-                NewElement,
-                NodeOrParent,
-                Lookup
-                );
+    return RtlInsertElementGenericTableFullAvl(Table, Buffer, BufferSize, NewElement, NodeOrParent, Lookup);
 }
 
-
+
 PVOID
-RtlInsertElementGenericTableFullAvl (
-    IN PRTL_AVL_TABLE Table,
-    IN PVOID Buffer,
-    IN CLONG BufferSize,
-    OUT PBOOLEAN NewElement OPTIONAL,
-    IN PVOID NodeOrParent,
-    IN TABLE_SEARCH_RESULT SearchResult
-    )
+RtlInsertElementGenericTableFullAvl(IN PRTL_AVL_TABLE Table, IN PVOID Buffer, IN CLONG BufferSize,
+                                    OUT PBOOLEAN NewElement OPTIONAL, IN PVOID NodeOrParent,
+                                    IN TABLE_SEARCH_RESULT SearchResult)
 
 /*++
 
@@ -1203,14 +1214,15 @@ Return Value:
 
     PTABLE_ENTRY_HEADER NodeToReturn;
 
-    if (SearchResult != TableFoundNode) {
+    if (SearchResult != TableFoundNode)
+    {
 
         //
         //  We just check that the table isn't getting
         //  too big.
         //
 
-        ASSERT(Table->NumberGenericTableElements != (MAXULONG-1));
+        ASSERT(Table->NumberGenericTableElements != (MAXULONG - 1));
 
         //
         //  The node wasn't in the (possibly empty) tree.
@@ -1218,27 +1230,26 @@ Return Value:
         //  for the new node.
         //
 
-        NodeToReturn = Table->AllocateRoutine(
-                           Table,
-                           BufferSize+FIELD_OFFSET( TABLE_ENTRY_HEADER, UserData )
-                           );
+        NodeToReturn = Table->AllocateRoutine(Table, BufferSize + FIELD_OFFSET(TABLE_ENTRY_HEADER, UserData));
 
         //
         //  If the return is NULL, return NULL from here to indicate that
         //  the entry could not be added.
         //
 
-        if (NodeToReturn == NULL) {
+        if (NodeToReturn == NULL)
+        {
 
-            if (ARGUMENT_PRESENT(NewElement)) {
+            if (ARGUMENT_PRESENT(NewElement))
+            {
 
                 *NewElement = FALSE;
             }
 
-            return(NULL);
+            return (NULL);
         }
 
-        RtlZeroMemory( NodeToReturn, sizeof(RTL_BALANCED_LINKS) );
+        RtlZeroMemory(NodeToReturn, sizeof(RTL_BALANCED_LINKS));
 
         Table->NumberGenericTableElements++;
 
@@ -1246,23 +1257,27 @@ Return Value:
         //  Insert the new node in the tree.
         //
 
-        if (SearchResult == TableEmptyTree) {
+        if (SearchResult == TableEmptyTree)
+        {
 
             Table->BalancedRoot.RightChild = &NodeToReturn->BalancedLinks;
             NodeToReturn->BalancedLinks.Parent = &Table->BalancedRoot;
             ASSERT(Table->DepthOfTree == 0);
             Table->DepthOfTree = 1;
-
-        } else {
+        }
+        else
+        {
 
             PRTL_BALANCED_LINKS R = &NodeToReturn->BalancedLinks;
             PRTL_BALANCED_LINKS S = (PRTL_BALANCED_LINKS)NodeOrParent;
 
-            if (SearchResult == TableInsertAsLeft) {
+            if (SearchResult == TableInsertAsLeft)
+            {
 
                 ((PRTL_BALANCED_LINKS)NodeOrParent)->LeftChild = checkit(&NodeToReturn->BalancedLinks);
-
-            } else {
+            }
+            else
+            {
 
                 ((PRTL_BALANCED_LINKS)NodeOrParent)->RightChild = checkit(&NodeToReturn->BalancedLinks);
             }
@@ -1288,7 +1303,8 @@ Return Value:
             //  must be performed, using NodeOrParent to ascend the tree.
             //
 
-            while (TRUE) {
+            while (TRUE)
+            {
 
                 CHAR a;
 
@@ -1297,7 +1313,8 @@ Return Value:
                 //
 
                 a = 1;
-                if (RtlIsLeftChild(R)) {
+                if (RtlIsLeftChild(R))
+                {
                     a = -1;
                 }
 
@@ -1309,18 +1326,20 @@ Return Value:
                 //  rather than down the tree as in Knuth.
                 //
 
-                if (S->Balance == 0) {
+                if (S->Balance == 0)
+                {
 
                     S->Balance = a;
                     R = S;
                     S = S->Parent;
 
-                //
-                //  If this node has the opposite balance, then the tree got more balanced
-                //  (or we hit the root) and we are done.
-                //
-
-                } else if (S->Balance != a) {
+                    //
+                    //  If this node has the opposite balance, then the tree got more balanced
+                    //  (or we hit the root) and we are done.
+                    //
+                }
+                else if (S->Balance != a)
+                {
 
                     //
                     //  Step A7.ii
@@ -1334,21 +1353,23 @@ Return Value:
                     //  initialized the root balance to force it through here.)
                     //
 
-                    if (Table->BalancedRoot.Balance == 0) {
+                    if (Table->BalancedRoot.Balance == 0)
+                    {
                         Table->DepthOfTree += 1;
                     }
 
                     break;
 
-                //
-                //  Otherwise the tree became unbalanced (path length differs by 2 below us)
-                //  and we need to do one of the balancing operations, and then we are done.
-                //  The RebalanceNode routine does steps A7.iii, A8 and A9.
-                //
+                    //
+                    //  Otherwise the tree became unbalanced (path length differs by 2 below us)
+                    //  and we need to do one of the balancing operations, and then we are done.
+                    //  The RebalanceNode routine does steps A7.iii, A8 and A9.
+                    //
+                }
+                else
+                {
 
-                } else {
-
-                    RebalanceNode( S );
+                    RebalanceNode(S);
                     break;
                 }
             }
@@ -1358,9 +1379,10 @@ Return Value:
         //  Copy the users buffer into the user data area of the table.
         //
 
-        RtlCopyMemory( &NodeToReturn->UserData, Buffer, BufferSize );
-
-    } else {
+        RtlCopyMemory(&NodeToReturn->UserData, Buffer, BufferSize);
+    }
+    else
+    {
 
         NodeToReturn = NodeOrParent;
     }
@@ -1369,8 +1391,9 @@ Return Value:
     //  Optionally return the NewElement boolean.
     //
 
-    if (ARGUMENT_PRESENT(NewElement)) {
-        *NewElement = ((SearchResult == TableFoundNode)?(FALSE):(TRUE));
+    if (ARGUMENT_PRESENT(NewElement))
+    {
+        *NewElement = ((SearchResult == TableFoundNode) ? (FALSE) : (TRUE));
     }
 
     //
@@ -1387,12 +1410,9 @@ Return Value:
     return &NodeToReturn->UserData;
 }
 
-
+
 BOOLEAN
-RtlDeleteElementGenericTableAvl (
-    IN PRTL_AVL_TABLE Table,
-    IN PVOID Buffer
-    )
+RtlDeleteElementGenericTableAvl(IN PRTL_AVL_TABLE Table, IN PVOID Buffer)
 
 /*++
 
@@ -1432,17 +1452,15 @@ Return Value:
     //
     TABLE_SEARCH_RESULT Lookup;
 
-    Lookup = FindNodeOrParent(
-                 Table,
-                 Buffer,
-                 &NodeOrParent
-                 );
+    Lookup = FindNodeOrParent(Table, Buffer, &NodeOrParent);
 
-    if (Lookup != TableFoundNode) {
+    if (Lookup != TableFoundNode)
+    {
 
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Make RtlEnumerateGenericTableAvl safe by replacing the RestartKey
@@ -1451,8 +1469,9 @@ Return Value:
         //  resume from predecessor on delete!)
         //
 
-        if (NodeOrParent == Table->RestartKey) {
-            Table->RestartKey = RealPredecessor( NodeOrParent );
+        if (NodeOrParent == Table->RestartKey)
+        {
+            Table->RestartKey = RealPredecessor(NodeOrParent);
         }
 
         //
@@ -1466,7 +1485,7 @@ Return Value:
         //  Delete the node from the splay tree.
         //
 
-        DeleteNodeFromTree( Table, NodeOrParent );
+        DeleteNodeFromTree(Table, NodeOrParent);
         Table->NumberGenericTableElements--;
 
         //
@@ -1491,17 +1510,14 @@ Return Value:
         //  is assumed that the deallocation is rather bad.
         //
 
-        Table->FreeRoutine(Table,NodeOrParent);
+        Table->FreeRoutine(Table, NodeOrParent);
         return TRUE;
     }
 }
 
-
+
 PVOID
-RtlLookupElementGenericTableAvl (
-    IN PRTL_AVL_TABLE Table,
-    IN PVOID Buffer
-    )
+RtlLookupElementGenericTableAvl(IN PRTL_AVL_TABLE Table, IN PVOID Buffer)
 
 /*++
 
@@ -1537,23 +1553,14 @@ Return Value:
     //
     TABLE_SEARCH_RESULT Lookup;
 
-    return RtlLookupElementGenericTableFullAvl(
-                Table,
-                Buffer,
-                &NodeOrParent,
-                &Lookup
-                );
+    return RtlLookupElementGenericTableFullAvl(Table, Buffer, &NodeOrParent, &Lookup);
 }
 
-
+
 PVOID
 NTAPI
-RtlLookupElementGenericTableFullAvl (
-    PRTL_AVL_TABLE Table,
-    PVOID Buffer,
-    OUT PVOID *NodeOrParent,
-    OUT TABLE_SEARCH_RESULT *SearchResult
-    )
+RtlLookupElementGenericTableFullAvl(PRTL_AVL_TABLE Table, PVOID Buffer, OUT PVOID *NodeOrParent,
+                                    OUT TABLE_SEARCH_RESULT *SearchResult)
 
 /*++
 
@@ -1589,17 +1596,15 @@ Return Value:
     //  Lookup the element and save the result.
     //
 
-    *SearchResult = FindNodeOrParent(
-                        Table,
-                        Buffer,
-                        (PRTL_BALANCED_LINKS *)NodeOrParent
-                        );
+    *SearchResult = FindNodeOrParent(Table, Buffer, (PRTL_BALANCED_LINKS *)NodeOrParent);
 
-    if (*SearchResult != TableFoundNode) {
+    if (*SearchResult != TableFoundNode)
+    {
 
         return NULL;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Return a pointer to the user data.
@@ -1609,12 +1614,9 @@ Return Value:
     }
 }
 
-
+
 PVOID
-RtlEnumerateGenericTableAvl (
-    IN PRTL_AVL_TABLE Table,
-    IN BOOLEAN Restart
-    )
+RtlEnumerateGenericTableAvl(IN PRTL_AVL_TABLE Table, IN BOOLEAN Restart)
 
 /*++
 
@@ -1658,18 +1660,17 @@ Return Value:
     //  common routine.
     //
 
-    if (Restart) {
+    if (Restart)
+    {
         Table->RestartKey = NULL;
     }
 
-    return RtlEnumerateGenericTableWithoutSplayingAvl( Table, &Table->RestartKey );
+    return RtlEnumerateGenericTableWithoutSplayingAvl(Table, &Table->RestartKey);
 }
 
-
+
 BOOLEAN
-RtlIsGenericTableEmptyAvl (
-    IN PRTL_AVL_TABLE Table
-    )
+RtlIsGenericTableEmptyAvl(IN PRTL_AVL_TABLE Table)
 
 /*++
 
@@ -1694,15 +1695,12 @@ Return Value:
     //  Table is empty if the root pointer is null.
     //
 
-    return ((Table->NumberGenericTableElements)?(FALSE):(TRUE));
+    return ((Table->NumberGenericTableElements) ? (FALSE) : (TRUE));
 }
 
-
+
 PVOID
-RtlGetElementGenericTableAvl (
-    IN PRTL_AVL_TABLE Table,
-    IN ULONG I
-    )
+RtlGetElementGenericTableAvl(IN PRTL_AVL_TABLE Table, IN ULONG I)
 
 /*++
 
@@ -1761,7 +1759,7 @@ Return Value:
     //  Will hold distances to travel to the desired node;
     //
 
-    ULONG ForwardDistance,BackwardDistance;
+    ULONG ForwardDistance, BackwardDistance;
 
     //
     //  Will point to the current element in the linked list.
@@ -1773,20 +1771,19 @@ Return Value:
     //  If it's out of bounds get out quick.
     //
 
-    if ((I == MAXULONG) || ((I + 1) > NumberInTable)) return NULL;
+    if ((I == MAXULONG) || ((I + 1) > NumberInTable))
+        return NULL;
 
     //
     //  NULL means first node.  We just loop until we find the leftmost child of the root.
     //  Because of the above test, we know there is at least one element in the table.
     //
 
-    if (CurrentNode == NULL) {
+    if (CurrentNode == NULL)
+    {
 
-        for (
-            CurrentNode = Table->BalancedRoot.RightChild;
-            CurrentNode->LeftChild;
-            CurrentNode = CurrentNode->LeftChild
-            ) {
+        for (CurrentNode = Table->BalancedRoot.RightChild; CurrentNode->LeftChild; CurrentNode = CurrentNode->LeftChild)
+        {
             NOTHING;
         }
         CurrentLocation = 0;
@@ -1803,7 +1800,8 @@ Return Value:
     //  If we're already at the node then return it.
     //
 
-    if (I == CurrentLocation) {
+    if (I == CurrentLocation)
+    {
 
         return &((PTABLE_ENTRY_HEADER)CurrentNode)->UserData;
     }
@@ -1812,7 +1810,8 @@ Return Value:
     //  Calculate the forward and backward distance to the node.
     //
 
-    if (CurrentLocation > I) {
+    if (CurrentLocation > I)
+    {
 
         //
         //  When CurrentLocation is greater than where we want to go,
@@ -1828,34 +1827,31 @@ Return Value:
         //  currently are.
         //
 
-        if (I >= (CurrentLocation/2)) {
+        if (I >= (CurrentLocation / 2))
+        {
 
             //
             //  Where we want to go is more than half way from the listhead
             //  We can traval backwards from our current location.
             //
 
-            for (
-                BackwardDistance = CurrentLocation - I;
-                BackwardDistance;
-                BackwardDistance--
-                ) {
+            for (BackwardDistance = CurrentLocation - I; BackwardDistance; BackwardDistance--)
+            {
 
                 CurrentNode = RealPredecessor(CurrentNode);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  We just loop until we find the leftmost child of the root,
             //  which is the lowest entry in the tree.
             //
 
-            for (
-                CurrentNode = Table->BalancedRoot.RightChild;
-                CurrentNode->LeftChild;
-                CurrentNode = CurrentNode->LeftChild
-                ) {
+            for (CurrentNode = Table->BalancedRoot.RightChild; CurrentNode->LeftChild;
+                 CurrentNode = CurrentNode->LeftChild)
+            {
                 NOTHING;
             }
 
@@ -1864,17 +1860,15 @@ Return Value:
             //  and where we currently are.  Start from the first node.
             //
 
-            for (
-                ;
-                I;
-                I--
-                ) {
+            for (; I; I--)
+            {
 
                 CurrentNode = RealSuccessor(CurrentNode);
             }
         }
-
-    } else {
+    }
+    else
+    {
 
 
         //
@@ -1900,37 +1894,31 @@ Return Value:
         //  return the last element in the table!
         //
 
-        if (ForwardDistance <= (BackwardDistance + 1)) {
+        if (ForwardDistance <= (BackwardDistance + 1))
+        {
 
-            for (
-                ;
-                ForwardDistance;
-                ForwardDistance--
-                ) {
+            for (; ForwardDistance; ForwardDistance--)
+            {
 
                 CurrentNode = RealSuccessor(CurrentNode);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  We just loop until we find the rightmost child of the root,
             //  which is the highest entry in the tree.
             //
 
-            for (
-                CurrentNode = Table->BalancedRoot.RightChild;
-                CurrentNode->RightChild;
-                CurrentNode = CurrentNode->RightChild
-                ) {
+            for (CurrentNode = Table->BalancedRoot.RightChild; CurrentNode->RightChild;
+                 CurrentNode = CurrentNode->RightChild)
+            {
                 NOTHING;
             }
 
-            for (
-                ;
-                BackwardDistance;
-                BackwardDistance--
-                ) {
+            for (; BackwardDistance; BackwardDistance--)
+            {
 
                 CurrentNode = RealPredecessor(CurrentNode);
             }
@@ -1948,11 +1936,9 @@ Return Value:
     return &((PTABLE_ENTRY_HEADER)CurrentNode)->UserData;
 }
 
-
+
 ULONG
-RtlNumberGenericTableElementsAvl (
-    IN PRTL_AVL_TABLE Table
-    )
+RtlNumberGenericTableElementsAvl(IN PRTL_AVL_TABLE Table)
 
 /*++
 
@@ -1978,12 +1964,9 @@ Return Value:
     return Table->NumberGenericTableElements;
 }
 
-
+
 PVOID
-RtlEnumerateGenericTableWithoutSplayingAvl (
-    IN PRTL_AVL_TABLE Table,
-    IN PVOID *RestartKey
-    )
+RtlEnumerateGenericTableWithoutSplayingAvl(IN PRTL_AVL_TABLE Table, IN PVOID *RestartKey)
 
 /*++
 
@@ -2024,15 +2007,17 @@ Return Value:
 --*/
 
 {
-    if (RtlIsGenericTableEmptyAvl(Table)) {
+    if (RtlIsGenericTableEmptyAvl(Table))
+    {
 
         //
         //  Nothing to do if the table is empty.
         //
 
         return NULL;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Will be used as the "iteration" through the tree.
@@ -2044,23 +2029,23 @@ Return Value:
         //  in the tree.
         //
 
-        if (*RestartKey == NULL) {
+        if (*RestartKey == NULL)
+        {
 
             //
             //  We just loop until we find the leftmost child of the root.
             //
 
-            for (
-                NodeToReturn = Table->BalancedRoot.RightChild;
-                NodeToReturn->LeftChild;
-                NodeToReturn = NodeToReturn->LeftChild
-                ) {
+            for (NodeToReturn = Table->BalancedRoot.RightChild; NodeToReturn->LeftChild;
+                 NodeToReturn = NodeToReturn->LeftChild)
+            {
                 ;
             }
 
             *RestartKey = NodeToReturn;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  The caller has passed in the previous entry found
@@ -2070,7 +2055,8 @@ Return Value:
 
             NodeToReturn = RealSuccessor(*RestartKey);
 
-            if (NodeToReturn) {
+            if (NodeToReturn)
+            {
                 *RestartKey = NodeToReturn;
             }
         }
@@ -2080,24 +2066,16 @@ Return Value:
         //  then the pointer to return is right after the list links.
         //
 
-        return ((NodeToReturn)?
-                   ((PVOID)&((PTABLE_ENTRY_HEADER)NodeToReturn)->UserData)
-                  :((PVOID)(NULL)));
+        return ((NodeToReturn) ? ((PVOID) & ((PTABLE_ENTRY_HEADER)NodeToReturn)->UserData) : ((PVOID)(NULL)));
     }
 }
 
-
+
 PVOID
 NTAPI
-RtlEnumerateGenericTableLikeADirectory (
-    IN PRTL_AVL_TABLE Table,
-    IN PRTL_AVL_MATCH_FUNCTION MatchFunction OPTIONAL,
-    IN PVOID MatchData OPTIONAL,
-    IN ULONG NextFlag,
-    IN OUT PVOID *RestartKey,
-    IN OUT PULONG DeleteCount,
-    IN PVOID Buffer
-    )
+RtlEnumerateGenericTableLikeADirectory(IN PRTL_AVL_TABLE Table, IN PRTL_AVL_MATCH_FUNCTION MatchFunction OPTIONAL,
+                                       IN PVOID MatchData OPTIONAL, IN ULONG NextFlag, IN OUT PVOID *RestartKey,
+                                       IN OUT PULONG DeleteCount, IN PVOID Buffer)
 
 /*++
 
@@ -2236,7 +2214,8 @@ Return Value:
     //  Get out if the table is empty.
     //
 
-    if (RtlIsGenericTableEmptyAvl(Table)) {
+    if (RtlIsGenericTableEmptyAvl(Table))
+    {
 
         *RestartKey = NULL;
         return NULL;
@@ -2246,7 +2225,8 @@ Return Value:
     //  If no MatchFunction was specified, then match all.
     //
 
-    if (MatchFunction == NULL) {
+    if (MatchFunction == NULL)
+    {
         MatchFunction = &MatchAll;
     }
 
@@ -2255,7 +2235,8 @@ Return Value:
     //  cannot trust the RestartKey.
     //
 
-    if (*DeleteCount != Table->DeleteCount) {
+    if (*DeleteCount != Table->DeleteCount)
+    {
         NodeOrParent = NULL;
     }
 
@@ -2265,20 +2246,18 @@ Return Value:
 
     ASSERT(FIELD_OFFSET(TABLE_ENTRY_HEADER, BalancedLinks) == 0);
 
-    if (NodeOrParent == NULL) {
+    if (NodeOrParent == NULL)
+    {
 
-        Lookup = FindNodeOrParent(
-                     Table,
-                     Buffer,
-                     (PRTL_BALANCED_LINKS *)&NodeOrParent
-                     );
+        Lookup = FindNodeOrParent(Table, Buffer, (PRTL_BALANCED_LINKS *)&NodeOrParent);
 
         //
         //  If the exact key was not found, we can still use this position, but clea NextFlag
         //  so we do not skip over something that has not been returned yet.
         //
 
-        if (Lookup != TableFoundNode) {
+        if (Lookup != TableFoundNode)
+        {
 
             NextFlag = FALSE;
 
@@ -2289,7 +2268,8 @@ Return Value:
             //  specified key is the successor of  the current NodeOrParent.
             //
 
-            if (Lookup == TableInsertAsRight) {
+            if (Lookup == TableInsertAsRight)
+            {
                 NodeOrParent = (PTABLE_ENTRY_HEADER)RealSuccessor((PRTL_BALANCED_LINKS)NodeOrParent);
             }
         }
@@ -2299,7 +2279,8 @@ Return Value:
     //  Now see if we are supposed to skip one.
     //
 
-    if (NextFlag) {
+    if (NextFlag)
+    {
         ASSERT(NodeOrParent != NULL);
         NodeOrParent = (PTABLE_ENTRY_HEADER)RealSuccessor((PRTL_BALANCED_LINKS)NodeOrParent);
     }
@@ -2308,7 +2289,9 @@ Return Value:
     //  Continue to enumerate until we hit the end of the matches or get a match.
     //
 
-    while ((NodeOrParent != NULL) && ((Status = (*MatchFunction)(Table, &NodeOrParent->UserData, MatchData)) == STATUS_NO_MATCH)) {
+    while ((NodeOrParent != NULL) &&
+           ((Status = (*MatchFunction)(Table, &NodeOrParent->UserData, MatchData)) == STATUS_NO_MATCH))
+    {
         NodeOrParent = (PTABLE_ENTRY_HEADER)RealSuccessor((PRTL_BALANCED_LINKS)NodeOrParent);
     }
 
@@ -2319,15 +2302,16 @@ Return Value:
     //  got a match.
     //
 
-    if (NodeOrParent != NULL) {
+    if (NodeOrParent != NULL)
+    {
         ASSERT((Status == STATUS_SUCCESS) || (Status == STATUS_NO_MORE_MATCHES));
         *RestartKey = NodeOrParent;
         *DeleteCount = Table->DeleteCount;
-        if (Status == STATUS_SUCCESS) {
+        if (Status == STATUS_SUCCESS)
+        {
             return &NodeOrParent->UserData;
         }
     }
 
     return NULL;
 }
-

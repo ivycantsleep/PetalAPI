@@ -29,17 +29,12 @@ Revision History:
 //
 // Keep track of the number of Loads and Unloads present in the system
 //
-ULONG   AcpiTableDelta = 0;
-
+ULONG AcpiTableDelta = 0;
+
 NTSTATUS
 EXPORT
-ACPICallBackLoad(
-    IN  ULONG   EventType,
-    IN  ULONG   NotifyType,
-    IN  ULONG   EventData,
-    IN  PNSOBJ  AcpiObject,
-    IN  ULONG   EventParameter
-    )
+ACPICallBackLoad(IN ULONG EventType, IN ULONG NotifyType, IN ULONG EventData, IN PNSOBJ AcpiObject,
+                 IN ULONG EventParameter)
 /*++
 
 Routine Description:
@@ -65,26 +60,26 @@ Return Value:
 
 --*/
 {
-    ULONG   newValue;
+    ULONG newValue;
 
-    if (NotifyType == OPEXF_NOTIFY_PRE) {
+    if (NotifyType == OPEXF_NOTIFY_PRE)
+    {
 
         //
         // We are being called before the load operator. Increment
         // the count of Load()'s outstanding. If this value reaches
         // 1, then we know that this is the first instance..
         //
-        newValue = InterlockedIncrement( &AcpiTableDelta );
-        if (newValue == 1) {
+        newValue = InterlockedIncrement(&AcpiTableDelta);
+        if (newValue == 1)
+        {
 
             //
             // We need to get rid of the GPEs...
             //
             ACPIGpeClearEventMasks();
-
         }
         return STATUS_SUCCESS;
-
     }
 
     //
@@ -92,8 +87,9 @@ Return Value:
     // outstanding. If this value reaches 0, then we know what we are the
     // last instance
     //
-    newValue = InterlockedDecrement( &AcpiTableDelta );
-    if (newValue == 0) {
+    newValue = InterlockedDecrement(&AcpiTableDelta);
+    if (newValue == 0)
+    {
 
         //
         // We re-enable to re-enable the GPEs
@@ -104,20 +100,14 @@ Return Value:
         // We also need to process the table...
         //
         ACPITableLoad();
-
     }
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
 EXPORT
-ACPICallBackUnload(
-    IN  ULONG   EventType,
-    IN  ULONG   NotifyType,
-    IN  ULONG   EventData,
-    IN  PNSOBJ  AcpiObject,
-    IN  ULONG   EventParameter
-    )
+ACPICallBackUnload(IN ULONG EventType, IN ULONG NotifyType, IN ULONG EventData, IN PNSOBJ AcpiObject,
+                   IN ULONG EventParameter)
 /*++
 
 Routine Description:
@@ -140,33 +130,33 @@ Return Value:
 
 --*/
 {
-    ULONG   newValue;
+    ULONG newValue;
 
-    if (NotifyType == OPEXF_NOTIFY_PRE) {
+    if (NotifyType == OPEXF_NOTIFY_PRE)
+    {
 
         //
         // We are being called before the load operator. Increment
         // the count of Load()'s outstanding. If this value reaches
         // 1, then we know that this is the first instance..
         //
-        newValue = InterlockedIncrement( &AcpiTableDelta );
-        if (newValue == 1) {
+        newValue = InterlockedIncrement(&AcpiTableDelta);
+        if (newValue == 1)
+        {
 
             //
             // We need to get rid of the GPEs...
             //
             ACPIGpeClearEventMasks();
-
         }
 
         //
         // Lets try to flush the power and device queues
         //
-        ACPIBuildFlushQueue( RootDeviceExtension );
-        ACPIDevicePowerFlushQueue( RootDeviceExtension );
+        ACPIBuildFlushQueue(RootDeviceExtension);
+        ACPIDevicePowerFlushQueue(RootDeviceExtension);
 
         return STATUS_SUCCESS;
-
     }
 
     //
@@ -174,8 +164,9 @@ Return Value:
     // outstanding. If this value reaches 0, then we know what we are the
     // last instance
     //
-    newValue = InterlockedDecrement( &AcpiTableDelta );
-    if (newValue == 0) {
+    newValue = InterlockedDecrement(&AcpiTableDelta);
+    if (newValue == 0)
+    {
 
         //
         // We re-enable to re-enable the GPEs
@@ -186,7 +177,6 @@ Return Value:
         // We also need to process the disappearing table...
         //
         ACPITableUnload();
-
     }
     return STATUS_SUCCESS;
 }

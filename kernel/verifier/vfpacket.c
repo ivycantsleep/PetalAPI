@@ -41,13 +41,11 @@ Revision History:
 #pragma alloc_text(PAGEVRFY, VfPacketLogEntry)
 #endif
 
-#define POOL_TAG_TRACKING_DATA      'tprI'
+#define POOL_TAG_TRACKING_DATA 'tprI'
 
 PIOV_REQUEST_PACKET
 FASTCALL
-VfPacketCreateAndLock(
-    IN  PIRP    Irp
-    )
+VfPacketCreateAndLock(IN PIRP Irp)
 /*++
 
   Description:
@@ -72,13 +70,10 @@ VfPacketCreateAndLock(
 
     allocSize = sizeof(IOV_REQUEST_PACKET) + VfSettingsGetSnapshotSize();
 
-    iovPacket = ExAllocatePoolWithTag(
-        NonPagedPool,
-        allocSize,
-        POOL_TAG_TRACKING_DATA
-        );
+    iovPacket = ExAllocatePoolWithTag(NonPagedPool, allocSize, POOL_TAG_TRACKING_DATA);
 
-    if (!iovPacket) {
+    if (!iovPacket)
+    {
 
         return NULL;
     }
@@ -100,7 +95,7 @@ VfPacketCreateAndLock(
     iovPacket->PriorityBoost = 0;
     iovPacket->LastLocation = 0;
     iovPacket->RefTrackingCount = 0;
-    iovPacket->VerifierSettings = (PVERIFIER_SETTINGS_SNAPSHOT) (iovPacket+1);
+    iovPacket->VerifierSettings = (PVERIFIER_SETTINGS_SNAPSHOT)(iovPacket + 1);
     iovPacket->pIovSessionData = NULL;
     iovPacket->QuotaCharge = 0;
     iovPacket->QuotaProcess = NULL;
@@ -108,16 +103,13 @@ VfPacketCreateAndLock(
 #if DBG
     iovPacket->LogEntryHead = 0;
     iovPacket->LogEntryTail = 0;
-    RtlZeroMemory(iovPacket->LogEntries, sizeof(IOV_LOG_ENTRY)*IRP_LOG_ENTRIES);
+    RtlZeroMemory(iovPacket->LogEntries, sizeof(IOV_LOG_ENTRY) * IRP_LOG_ENTRIES);
 #endif
 
     VfSettingsCreateSnapshot(iovPacket->VerifierSettings);
 
-    successfullyInserted = VfIrpDatabaseEntryInsertAndLock(
-        Irp,
-        VfpPacketNotificationCallback,
-        (PIOV_DATABASE_HEADER) iovPacket
-        );
+    successfullyInserted =
+        VfIrpDatabaseEntryInsertAndLock(Irp, VfpPacketNotificationCallback, (PIOV_DATABASE_HEADER)iovPacket);
 
     return successfullyInserted ? iovPacket : NULL;
 }
@@ -125,9 +117,7 @@ VfPacketCreateAndLock(
 
 PIOV_REQUEST_PACKET
 FASTCALL
-VfPacketFindAndLock(
-    IN  PIRP    Irp
-    )
+VfPacketFindAndLock(IN PIRP Irp)
 /*++
 
   Description:
@@ -146,15 +136,11 @@ VfPacketFindAndLock(
 
 --*/
 {
-    return (PIOV_REQUEST_PACKET) VfIrpDatabaseEntryFindAndLock(Irp);
+    return (PIOV_REQUEST_PACKET)VfIrpDatabaseEntryFindAndLock(Irp);
 }
 
 
-VOID
-FASTCALL
-VfPacketAcquireLock(
-    IN  PIOV_REQUEST_PACKET IovPacket   OPTIONAL
-    )
+VOID FASTCALL VfPacketAcquireLock(IN PIOV_REQUEST_PACKET IovPacket OPTIONAL)
 /*++
 
   Description:
@@ -175,15 +161,11 @@ VfPacketAcquireLock(
      None.
 --*/
 {
-    VfIrpDatabaseEntryAcquireLock((PIOV_DATABASE_HEADER) IovPacket);
+    VfIrpDatabaseEntryAcquireLock((PIOV_DATABASE_HEADER)IovPacket);
 }
 
 
-VOID
-FASTCALL
-VfPacketReleaseLock(
-    IN  PIOV_REQUEST_PACKET IovPacket
-    )
+VOID FASTCALL VfPacketReleaseLock(IN PIOV_REQUEST_PACKET IovPacket)
 /*++
 
   Description:
@@ -202,37 +184,23 @@ VfPacketReleaseLock(
 
 --*/
 {
-    VfIrpDatabaseEntryReleaseLock((PIOV_DATABASE_HEADER) IovPacket);
+    VfIrpDatabaseEntryReleaseLock((PIOV_DATABASE_HEADER)IovPacket);
 }
 
 
-VOID
-FASTCALL
-VfPacketReference(
-    IN PIOV_REQUEST_PACKET IovPacket,
-    IN IOV_REFERENCE_TYPE  IovRefType
-    )
+VOID FASTCALL VfPacketReference(IN PIOV_REQUEST_PACKET IovPacket, IN IOV_REFERENCE_TYPE IovRefType)
 {
-    VfIrpDatabaseEntryReference((PIOV_DATABASE_HEADER) IovPacket, IovRefType);
+    VfIrpDatabaseEntryReference((PIOV_DATABASE_HEADER)IovPacket, IovRefType);
 }
 
 
-VOID
-FASTCALL
-VfPacketDereference(
-    IN PIOV_REQUEST_PACKET IovPacket,
-    IN IOV_REFERENCE_TYPE  IovRefType
-    )
+VOID FASTCALL VfPacketDereference(IN PIOV_REQUEST_PACKET IovPacket, IN IOV_REFERENCE_TYPE IovRefType)
 {
-    VfIrpDatabaseEntryDereference((PIOV_DATABASE_HEADER) IovPacket, IovRefType);
+    VfIrpDatabaseEntryDereference((PIOV_DATABASE_HEADER)IovPacket, IovRefType);
 }
 
 
-VOID
-FASTCALL
-VfpPacketFree(
-    IN  PIOV_REQUEST_PACKET IovPacket
-    )
+VOID FASTCALL VfpPacketFree(IN PIOV_REQUEST_PACKET IovPacket)
 /*++
 
   Description:
@@ -255,61 +223,48 @@ VfpPacketFree(
 }
 
 
-VOID
-VfpPacketNotificationCallback(
-    IN  PIOV_DATABASE_HEADER    IovHeader,
-    IN  PIRP                    TrackedIrp  OPTIONAL,
-    IN  IRP_DATABASE_EVENT      Event
-    )
+VOID VfpPacketNotificationCallback(IN PIOV_DATABASE_HEADER IovHeader, IN PIRP TrackedIrp OPTIONAL,
+                                   IN IRP_DATABASE_EVENT Event)
 {
-    switch(Event) {
+    switch (Event)
+    {
 
-        case IRPDBEVENT_POINTER_COUNT_ZERO:
+    case IRPDBEVENT_POINTER_COUNT_ZERO:
 
-            TrackedIrp->Flags &= ~IRPFLAG_EXAMINE_MASK;
-            break;
+        TrackedIrp->Flags &= ~IRPFLAG_EXAMINE_MASK;
+        break;
 
-        case IRPDBEVENT_REFERENCE_COUNT_ZERO:
+    case IRPDBEVENT_REFERENCE_COUNT_ZERO:
 
-            ASSERT((((PIOV_REQUEST_PACKET) IovHeader)->pIovSessionData == NULL) ||
-                   (IovHeader != IovHeader->ChainHead));
+        ASSERT((((PIOV_REQUEST_PACKET)IovHeader)->pIovSessionData == NULL) || (IovHeader != IovHeader->ChainHead));
 
-            VfpPacketFree((PIOV_REQUEST_PACKET) IovHeader);
-            break;
+        VfpPacketFree((PIOV_REQUEST_PACKET)IovHeader);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 }
 
 
 PIOV_SESSION_DATA
 FASTCALL
-VfPacketGetCurrentSessionData(
-    IN PIOV_REQUEST_PACKET IovPacket
-    )
+VfPacketGetCurrentSessionData(IN PIOV_REQUEST_PACKET IovPacket)
 {
     PIOV_REQUEST_PACKET headPacket;
 
-    headPacket = (PIOV_REQUEST_PACKET) IovPacket->ChainHead;
+    headPacket = (PIOV_REQUEST_PACKET)IovPacket->ChainHead;
 
     ASSERT_SPINLOCK_HELD(&IovPacket->IrpLock);
     ASSERT_SPINLOCK_HELD(&IovPacket->HeadPacket->IrpLock);
-    ASSERT((headPacket->pIovSessionData == NULL)||
-           (IovPacket->Flags&TRACKFLAG_ACTIVE)) ;
+    ASSERT((headPacket->pIovSessionData == NULL) || (IovPacket->Flags & TRACKFLAG_ACTIVE));
 
     return headPacket->pIovSessionData;
 }
 
 
-VOID
-FASTCALL
-VfPacketLogEntry(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN IOV_LOG_EVENT        IovLogEvent,
-    IN PVOID                Address,
-    IN ULONG_PTR            Data
-    )
+VOID FASTCALL VfPacketLogEntry(IN PIOV_REQUEST_PACKET IovPacket, IN IOV_LOG_EVENT IovLogEvent, IN PVOID Address,
+                               IN ULONG_PTR Data)
 /*++
 
   Description:
@@ -344,7 +299,8 @@ VfPacketLogEntry(
 
     IovPacket->LogEntryHead = ((IovPacket->LogEntryHead + 1) % IRP_LOG_ENTRIES);
 
-    if (IovPacket->LogEntryHead == IovPacket->LogEntryTail) {
+    if (IovPacket->LogEntryHead == IovPacket->LogEntryTail)
+    {
 
         IovPacket->LogEntryTail = ((IovPacket->LogEntryTail + 1) % IRP_LOG_ENTRIES);
     }
@@ -358,5 +314,3 @@ VfPacketLogEntry(
 
 #endif
 }
-
-

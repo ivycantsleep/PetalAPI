@@ -12,13 +12,13 @@
 #pragma hdrstop
 
 
-#define fnINDESTROYCLIPBRD      fnDWORD
-#define fnOUTDWORDDWORD         fnDWORD
-#define fnPOWERBROADCAST        fnDWORD
-#define fnLOGONNOTIFY           fnKERNELONLY
-#define fnINLPKDRAWSWITCHWND    fnKERNELONLY
+#define fnINDESTROYCLIPBRD fnDWORD
+#define fnOUTDWORDDWORD fnDWORD
+#define fnPOWERBROADCAST fnDWORD
+#define fnLOGONNOTIFY fnKERNELONLY
+#define fnINLPKDRAWSWITCHWND fnKERNELONLY
 
-#define MSGFN(func) fn ## func
+#define MSGFN(func) fn##func
 #define FNSCSENDMESSAGE CFNSCSENDMESSAGE
 
 #include "messages.h"
@@ -27,35 +27,35 @@
 BOOL gfTurboDWP = TRUE;
 #endif
 
-#define BEGIN_CALLWINPROC(fInsideHook, lRet)                            \
-    PCLIENTTHREADINFO pcti = GetClientInfo()->pClientThreadInfo;        \
-    BOOL fCallBack = ((pcti!=NULL) &&                                   \
-             TEST_BOOL_FLAG(pcti->CTIF_flags, CTIF_INCALLBACKMESSAGE)); \
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame \
-        = {                                                             \
-            sizeof(ActivationFrame),                                    \
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER \
-        };                                                              \
-    fInsideHook = FALSE;                                                \
-                                                                        \
-    if (!fCallBack) {                                                   \
-        RtlActivateActivationContextUnsafeFast(                         \
-            &ActivationFrame,                                           \
-            pActCtx);                                                   \
-                                                                        \
-        fInsideHook = _BeginIfHookedUserApiHook();                      \
-    }                                                                   \
-                                                                        \
-    __try {                                                             \
+#define BEGIN_CALLWINPROC(fInsideHook, lRet)                                                         \
+    PCLIENTTHREADINFO pcti = GetClientInfo()->pClientThreadInfo;                                     \
+    BOOL fCallBack = ((pcti != NULL) && TEST_BOOL_FLAG(pcti->CTIF_flags, CTIF_INCALLBACKMESSAGE));   \
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = {                          \
+        sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER \
+    };                                                                                               \
+    fInsideHook = FALSE;                                                                             \
+                                                                                                     \
+    if (!fCallBack)                                                                                  \
+    {                                                                                                \
+        RtlActivateActivationContextUnsafeFast(&ActivationFrame, pActCtx);                           \
+                                                                                                     \
+        fInsideHook = _BeginIfHookedUserApiHook();                                                   \
+    }                                                                                                \
+                                                                                                     \
+    __try                                                                                            \
+    {
 
 #define END_CALLWINPROC(fInsideHook)                                    \
-    } __finally {                                                       \
-        if (!fCallBack) {                                               \
-            if (fInsideHook) {                                          \
+    }                                                                   \
+    __finally                                                           \
+    {                                                                   \
+        if (!fCallBack)                                                 \
+        {                                                               \
+            if (fInsideHook)                                            \
+            {                                                           \
                 _EndUserApiHook();                                      \
             }                                                           \
-            RtlDeactivateActivationContextUnsafeFast(                   \
-                &ActivationFrame);                                      \
+            RtlDeactivateActivationContextUnsafeFast(&ActivationFrame); \
         }                                                               \
     }
 
@@ -70,43 +70,33 @@ BOOL gfTurboDWP = TRUE;
 \***************************************************************************/
 
 LRESULT
-UserCallWinProc(
-    PACTIVATION_CONTEXT pActCtx,
-    WNDPROC pfn,
-    HWND hwnd,
-    UINT msg,
-    WPARAM wParam,
-    LPARAM lParam)
+UserCallWinProc(PACTIVATION_CONTEXT pActCtx, WNDPROC pfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     BOOL fInsideHook;
     LRESULT lRet = 0;
 
     BEGIN_CALLWINPROC(fInsideHook, lRet)
-        BOOL fOverride = fInsideHook && IsMsgOverride(msg, &guah.uoiWnd.mm);
+    BOOL fOverride = fInsideHook && IsMsgOverride(msg, &guah.uoiWnd.mm);
 
-        pfn = MapKernelClientFnToClientFn(pfn);
+    pfn = MapKernelClientFnToClientFn(pfn);
 
-        if (fOverride) {
-            /*
+    if (fOverride)
+    {
+        /*
              * NOTE: It is important that the same lRet is passed to all three
              * calls, allowing the Before and After OWP's to examine the value.
              */
-            PVOID pvCookie = NULL;
-            if (!guah.uoiWnd.pfnBeforeOWP(hwnd, msg, wParam, lParam, &lRet, &pvCookie)) {
-                lRet = InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn),
-                                           hwnd,
-                                           msg,
-                                           wParam,
-                                           lParam);
-                guah.uoiWnd.pfnAfterOWP(hwnd, msg, wParam, lParam, &lRet, &pvCookie);
-            }
-        } else {
-            lRet = InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn),
-                                       hwnd,
-                                       msg,
-                                       wParam,
-                                       lParam);
+        PVOID pvCookie = NULL;
+        if (!guah.uoiWnd.pfnBeforeOWP(hwnd, msg, wParam, lParam, &lRet, &pvCookie))
+        {
+            lRet = InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam);
+            guah.uoiWnd.pfnAfterOWP(hwnd, msg, wParam, lParam, &lRet, &pvCookie);
         }
+    }
+    else
+    {
+        lRet = InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam);
+    }
     END_CALLWINPROC(fInsideHook)
 
     return lRet;
@@ -123,47 +113,44 @@ UserCallWinProc(
 \***************************************************************************/
 
 LRESULT
-UserCallWinProcCheckWow(
-    PACTIVATION_CONTEXT pActCtx,
-    WNDPROC pfn,
-    HWND hwnd,
-    UINT msg,
-    WPARAM wParam,
-    LPARAM lParam,
-    PVOID pww,
-    BOOL fEnableLiteHooks)
+UserCallWinProcCheckWow(PACTIVATION_CONTEXT pActCtx, WNDPROC pfn, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                        PVOID pww, BOOL fEnableLiteHooks)
 {
     BOOL fInsideHook;
     LRESULT lRet = 0;
 
     BEGIN_CALLWINPROC(fInsideHook, lRet)
 
-        BOOL fOverride = fInsideHook && fEnableLiteHooks && IsMsgOverride(msg, &guah.uoiWnd.mm);
+    BOOL fOverride = fInsideHook && fEnableLiteHooks && IsMsgOverride(msg, &guah.uoiWnd.mm);
 
-        pfn = MapKernelClientFnToClientFn(pfn);
+    pfn = MapKernelClientFnToClientFn(pfn);
 
-        if (fOverride) {
-            /*
+    if (fOverride)
+    {
+        /*
              * NOTE: It is important that the same lRet is passed to all three
              * calls, allowing the Before and After OWP's to examine the value.
              */
-            void * pvCookie = NULL;
-            if (guah.uoiWnd.pfnBeforeOWP(hwnd, msg, wParam, lParam, &lRet, &pvCookie)) {
-                goto DoneCalls;
-            }
-
-            lRet = (IsWOWProc(pfn) ? (*pfnWowWndProcEx)(hwnd, msg, wParam, lParam, PtrToUlong(pfn), KPVOID_TO_PVOID(pww)) :
-                InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam));
-
-            if (guah.uoiWnd.pfnAfterOWP(hwnd, msg, wParam, lParam, &lRet, &pvCookie)) {
-                // Fall through and exit normally
-            }
-DoneCalls:
-            ;
-        } else {
-            lRet = (IsWOWProc(pfn) ? (*pfnWowWndProcEx)(hwnd, msg, wParam, lParam, PtrToUlong(pfn), KPVOID_TO_PVOID(pww)) :
-                InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam));
+        void *pvCookie = NULL;
+        if (guah.uoiWnd.pfnBeforeOWP(hwnd, msg, wParam, lParam, &lRet, &pvCookie))
+        {
+            goto DoneCalls;
         }
+
+        lRet = (IsWOWProc(pfn) ? (*pfnWowWndProcEx)(hwnd, msg, wParam, lParam, PtrToUlong(pfn), KPVOID_TO_PVOID(pww))
+                               : InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam));
+
+        if (guah.uoiWnd.pfnAfterOWP(hwnd, msg, wParam, lParam, &lRet, &pvCookie))
+        {
+            // Fall through and exit normally
+        }
+    DoneCalls:;
+    }
+    else
+    {
+        lRet = (IsWOWProc(pfn) ? (*pfnWowWndProcEx)(hwnd, msg, wParam, lParam, PtrToUlong(pfn), KPVOID_TO_PVOID(pww))
+                               : InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam));
+    }
     END_CALLWINPROC(fInsideHook)
 
     return lRet;
@@ -182,16 +169,8 @@ DoneCalls:
 * 27-Apr-2000  jstall     Rewrote to support "lightweight hooks"
 \***************************************************************************/
 
-BOOL
-UserCallDlgProcCheckWow(
-    PACTIVATION_CONTEXT pActCtx,
-    DLGPROC pfn,
-    HWND hwnd,
-    UINT msg,
-    WPARAM wParam,
-    LPARAM lParam,
-    PVOID pww,
-    INT_PTR * pret)
+BOOL UserCallDlgProcCheckWow(PACTIVATION_CONTEXT pActCtx, DLGPROC pfn, HWND hwnd, UINT msg, WPARAM wParam,
+                             LPARAM lParam, PVOID pww, INT_PTR *pret)
 {
     BOOL fInsideHook;
     INT_PTR fRet = 0;
@@ -199,34 +178,38 @@ UserCallDlgProcCheckWow(
 
     BEGIN_CALLWINPROC(fInsideHook, fRet)
 
-        BOOL fOverride = fInsideHook && IsMsgOverride(msg, &guah.uoiDlg.mm);
+    BOOL fOverride = fInsideHook && IsMsgOverride(msg, &guah.uoiDlg.mm);
 
-        pfn = MapKernelClientFnToClientFn(pfn);
+    pfn = MapKernelClientFnToClientFn(pfn);
 
-        if (fOverride) {
-            /*
+    if (fOverride)
+    {
+        /*
              * NOTE: It is important that the same lRet is passed to all three
              * calls, allowing the Before and After OWP's to examine the value.
              */
-            void * pvCookie = NULL;
-            if (guah.uoiDlg.pfnBeforeOWP(hwnd, msg, wParam, lParam, (LRESULT*) &fRet, &pvCookie)) {
-                fHandled = TRUE;
-                goto DoneCalls;
-            }
-
-            fRet = (IsWOWProc(pfn) ? (*pfnWowDlgProcEx)(hwnd, msg, wParam, lParam, PtrToUlong(pfn), KPVOID_TO_PVOID(pww)) :
-                InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam));
-
-            if (guah.uoiDlg.pfnAfterOWP(hwnd, msg, wParam, lParam, (LRESULT*) &fRet, &pvCookie)) {
-                fHandled = TRUE;
-                // Fall through and exit normally
-            }
-DoneCalls:
-            ;
-        } else {
-            fRet = (IsWOWProc(pfn) ? (*pfnWowDlgProcEx)(hwnd, msg, wParam, lParam, PtrToUlong(pfn), KPVOID_TO_PVOID(pww)) :
-                InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam));
+        void *pvCookie = NULL;
+        if (guah.uoiDlg.pfnBeforeOWP(hwnd, msg, wParam, lParam, (LRESULT *)&fRet, &pvCookie))
+        {
+            fHandled = TRUE;
+            goto DoneCalls;
         }
+
+        fRet = (IsWOWProc(pfn) ? (*pfnWowDlgProcEx)(hwnd, msg, wParam, lParam, PtrToUlong(pfn), KPVOID_TO_PVOID(pww))
+                               : InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam));
+
+        if (guah.uoiDlg.pfnAfterOWP(hwnd, msg, wParam, lParam, (LRESULT *)&fRet, &pvCookie))
+        {
+            fHandled = TRUE;
+            // Fall through and exit normally
+        }
+    DoneCalls:;
+    }
+    else
+    {
+        fRet = (IsWOWProc(pfn) ? (*pfnWowDlgProcEx)(hwnd, msg, wParam, lParam, PtrToUlong(pfn), KPVOID_TO_PVOID(pww))
+                               : InternalCallWinProc((WNDPROC)KPVOID_TO_PVOID(pfn), hwnd, msg, wParam, lParam));
+    }
 
     END_CALLWINPROC(fInsideHook)
 
@@ -249,8 +232,7 @@ DoneCalls:
 * 12-Nov-1998 adams     Created.
 \***************************************************************************/
 
-WORD
-GetMouseKeyState(void)
+WORD GetMouseKeyState(void)
 {
     WORD keystate;
 
@@ -260,9 +242,10 @@ GetMouseKeyState(void)
      * are cached and don't require a trip to the kernel to fetch.
      */
 
-#define TESTANDSETKEYSTATE(x)            \
-    if (GetKeyState(VK_##x) & 0x8000) {  \
-        keystate |= MK_##x;              \
+#define TESTANDSETKEYSTATE(x)         \
+    if (GetKeyState(VK_##x) & 0x8000) \
+    {                                 \
+        keystate |= MK_##x;           \
     }
 
     keystate = 0;
@@ -287,41 +270,27 @@ GetMouseKeyState(void)
 * 03-Dec-1993 mikeke  added client side handling of some messages
 \***************************************************************************/
 
-LRESULT WINAPI DesktopWndProcWorker(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL fAnsi)
+LRESULT WINAPI DesktopWndProcWorker(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL fAnsi)
 {
     PWND pwnd;
 
-    if (FWINDOWMSG(message, FNID_DESKTOP)) {
-        return CsSendMessage(hwnd, message, wParam, lParam,
-                0L, FNID_DESKTOP, fAnsi);
+    if (FWINDOWMSG(message, FNID_DESKTOP))
+    {
+        return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DESKTOP, fAnsi);
     }
 
     if ((pwnd = ValidateHwnd(hwnd)) == NULL)
         return 0;
 
     return DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
-
 }
 
-LRESULT WINAPI DesktopWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI DesktopWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return DesktopWndProcWorker(hwnd, message, wParam, lParam, TRUE);
 }
 
-LRESULT WINAPI DesktopWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI DesktopWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return DesktopWndProcWorker(hwnd, message, wParam, lParam, FALSE);
 }
@@ -336,24 +305,20 @@ LRESULT WINAPI DesktopWndProcW(
 * 03-Dec-1993 mikeke  added client side handling of some messages
 \***************************************************************************/
 
-LRESULT WINAPI MenuWndProcWorker(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL fAnsi)
+LRESULT WINAPI MenuWndProcWorker(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL fAnsi)
 {
     PWND pwnd;
 
-    if (FWINDOWMSG(message, FNID_MENU)) {
-        return CsSendMessage(hwnd, message, wParam, lParam,
-                0L, FNID_MENU, fAnsi);
+    if (FWINDOWMSG(message, FNID_MENU))
+    {
+        return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_MENU, fAnsi);
     }
 
     if ((pwnd = ValidateHwnd(hwnd)) == NULL)
         return 0;
 
-    switch (message) {
+    switch (message)
+    {
     case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
     case WM_RBUTTONDBLCLK:
@@ -374,20 +339,12 @@ LRESULT WINAPI MenuWndProcWorker(
     return 0;
 }
 
-LRESULT WINAPI MenuWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI MenuWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return MenuWndProcWorker(hwnd, message, wParam, lParam, TRUE);
 }
 
-LRESULT WINAPI MenuWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI MenuWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return MenuWndProcWorker(hwnd, message, wParam, lParam, FALSE);
 }
@@ -396,26 +353,22 @@ LRESULT WINAPI MenuWndProcW(
 \***************************************************************************/
 
 
-LRESULT WINAPI ScrollBarWndProcWorker(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL fAnsi)
+LRESULT WINAPI ScrollBarWndProcWorker(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL fAnsi)
 {
     PSBWND psbwnd;
     LPSCROLLINFO lpsi;
     PSBDATA pw;
 
-    if (FWINDOWMSG(message, FNID_SCROLLBAR)) {
-        return CsSendMessage(hwnd, message, wParam, lParam,
-                0L, FNID_SCROLLBAR, fAnsi);
+    if (FWINDOWMSG(message, FNID_SCROLLBAR))
+    {
+        return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_SCROLLBAR, fAnsi);
     }
 
     if ((psbwnd = (PSBWND)ValidateHwnd(hwnd)) == NULL)
         return 0;
 
-    switch (message) {
+    switch (message)
+    {
     case WM_GETDLGCODE:
         return DLGC_WANTARROWS;
 
@@ -429,8 +382,8 @@ LRESULT WINAPI ScrollBarWndProcWorker(
 
     case SBM_GETSCROLLINFO:
         lpsi = (LPSCROLLINFO)lParam;
-        if ((lpsi->cbSize != sizeof(SCROLLINFO)) &&
-            (lpsi->cbSize != sizeof(SCROLLINFO) - 4)) {
+        if ((lpsi->cbSize != sizeof(SCROLLINFO)) && (lpsi->cbSize != sizeof(SCROLLINFO) - 4))
+        {
             RIPMSG0(RIP_ERROR, "SCROLLINFO: invalid cbSize");
             return FALSE;
         }
@@ -442,32 +395,23 @@ LRESULT WINAPI ScrollBarWndProcWorker(
         }
 
         pw = (PSBDATA)KPSBDATA_TO_PSBDATA(&(psbwnd->SBCalc));
-        return(NtUserSBGetParms(hwnd, SB_CTL, pw, lpsi));
+        return (NtUserSBGetParms(hwnd, SB_CTL, pw, lpsi));
 
     case SBM_GETSCROLLBARINFO:
         return NtUserGetScrollBarInfo(hwnd, OBJID_CLIENT, (PSCROLLBARINFO)lParam);
 
     default:
-        return DefWindowProcWorker((PWND)psbwnd, message,
-                wParam, lParam, fAnsi);
+        return DefWindowProcWorker((PWND)psbwnd, message, wParam, lParam, fAnsi);
     }
 }
 
 
-LRESULT WINAPI ScrollBarWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI ScrollBarWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return ScrollBarWndProcWorker(hwnd, message, wParam, lParam, TRUE);
 }
 
-LRESULT WINAPI ScrollBarWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI ScrollBarWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return ScrollBarWndProcWorker(hwnd, message, wParam, lParam, FALSE);
 }
@@ -482,12 +426,7 @@ LRESULT WINAPI ScrollBarWndProcW(
 * 04-27-92 DarrinM  Added code to support client-to-client SendMessages.
 \***************************************************************************/
 
-LRESULT SendMessageWorker(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL fAnsi)
+LRESULT SendMessageWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL fAnsi)
 {
     HWND hwnd = HWq(pwnd);
     PCLIENTINFO pci;
@@ -516,10 +455,10 @@ LRESULT SendMessageWorker(
      * Server must handle hooks (at least for now).
      */
     pci = GetClientInfo();
-    if (IsHooked(pci, (WHF_CALLWNDPROC | WHF_CALLWNDPROCRET))) {
-lbServerSendMessage:
-        return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                FNID_SENDMESSAGE, fAnsi);
+    if (IsHooked(pci, (WHF_CALLWNDPROC | WHF_CALLWNDPROCRET)))
+    {
+    lbServerSendMessage:
+        return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_SENDMESSAGE, fAnsi);
     }
 
     /*
@@ -532,13 +471,15 @@ lbServerSendMessage:
      * stored Unicode.
      */
     fAnsiRecv = !!(TestWF(pwnd, WFANSIPROC));
-    if (!fAnsi != !fAnsiRecv) {
+    if (!fAnsi != !fAnsiRecv)
+    {
 
         /*
          * Translation might be necessary between sender and receiver,
          * check to see if this is one of the messages we translate.
          */
-        switch (message) {
+        switch (message)
+        {
         case WM_CHARTOITEM:
         case EM_SETPASSWORDCHAR:
         case WM_CHAR:
@@ -548,11 +489,12 @@ lbServerSendMessage:
         case WM_MENUCHAR:
         case WM_IME_CHAR:
         case WM_IME_COMPOSITION:
-            if (fAnsi) {
+            if (fAnsi)
+            {
                 /*
                  * Setup DBCS Messaging for WM_CHAR...
                  */
-                BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_CLIENTA(message,wParam,TRUE);
+                BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_CLIENTA(message, wParam, TRUE);
 
                 /*
                  * Convert wParam to Unicode...
@@ -563,8 +505,10 @@ lbServerSendMessage:
                  * The message has been converted to Unicode.
                  */
                 fAnsi = FALSE;
-            } else {
-                POINT ptZero = {0,0};
+            }
+            else
+            {
+                POINT ptZero = { 0, 0 };
                 /*
                  * Convert wParam to ANSI...
                  */
@@ -573,8 +517,7 @@ lbServerSendMessage:
                 /*
                  * Let's DBCS messaging for WM_CHAR....
                  */
-                BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_CLIENTW(
-                    hwnd,message,wParam,lParam,0,ptZero,bDoDbcsMessaging);
+                BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_CLIENTW(hwnd, message, wParam, lParam, 0, ptZero, bDoDbcsMessaging);
 
                 /*
                  * The message has been converted to ANSI.
@@ -586,16 +529,17 @@ lbServerSendMessage:
         case EM_SETSEL:
         case EM_GETSEL:
         case CB_GETEDITSEL:
-            if (IS_DBCS_ENABLED()) {
-                RIPERR1(ERROR_INVALID_PARAMETER,
-                        RIP_WARNING,
-                        "Invalid DBCS message (%x) to SendMessageWorker",message);
+            if (IS_DBCS_ENABLED())
+            {
+                RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "Invalid DBCS message (%x) to SendMessageWorker",
+                        message);
             }
             //
             // Fall down...
 
         default:
-            if ((message < WM_USER) && MessageTable[message].bThunkMessage) {
+            if ((message < WM_USER) && MessageTable[message].bThunkMessage)
+            {
                 fNeedTranslation = TRUE;
             }
         }
@@ -609,32 +553,33 @@ lbServerSendMessage:
      */
     pcls = REBASEALWAYS(pwnd, pcls);
 
-    if ((!IsInsideUserApiHook()) &&
-        (pcls->fnid >= FNID_CONTROLSTART && pcls->fnid <= FNID_CONTROLEND) &&
+    if ((!IsInsideUserApiHook()) && (pcls->fnid >= FNID_CONTROLSTART && pcls->fnid <= FNID_CONTROLEND) &&
         ((KERNEL_ULONG_PTR)pwnd->lpfnWndProc == FNID_TO_CLIENT_PFNW_KERNEL(pcls->fnid) ||
-         (KERNEL_ULONG_PTR)pwnd->lpfnWndProc == FNID_TO_CLIENT_PFNA_KERNEL(pcls->fnid))) {
+         (KERNEL_ULONG_PTR)pwnd->lpfnWndProc == FNID_TO_CLIENT_PFNA_KERNEL(pcls->fnid)))
+    {
         PWNDMSG pwm = &gSharedInfo.awmControl[pcls->fnid - FNID_START];
 
         /*
          * If this message is not processed by the control, call
          * xxxDefWindowProc
          */
-        if (pwm->abMsgs && ((message > pwm->maxMsgs) ||
-                !((pwm->abMsgs)[message / 8] & (1 << (message & 7))))) {
+        if (pwm->abMsgs && ((message > pwm->maxMsgs) || !((pwm->abMsgs)[message / 8] & (1 << (message & 7)))))
+        {
 
             /*
              * Special case dialogs so that we can ignore unimportant
              * messages during dialog creation.
              */
-            if (pcls->fnid == FNID_DIALOG &&
-                    PDLG(pwnd) && PDLG(pwnd)->lpfnDlg != NULL) {
+            if (pcls->fnid == FNID_DIALOG && PDLG(pwnd) && PDLG(pwnd)->lpfnDlg != NULL)
+            {
                 /*
                  * If A/W translation are needed for Dialog,
                  * it should go to kernel side to perform proper message.
                  * DefDlgProcWorker will call aplication's DlgProc directly
                  * without A/W conversion.
                  */
-                if (fNeedTranslation) {
+                if (fNeedTranslation)
+                {
                     goto lbServerSendMessage;
                 }
                 /*
@@ -645,10 +590,12 @@ lbServerSendMessage:
                 /*
                  * if we have DBCS TrailingByte that should be sent, send it here..
                  */
-                DISPATCH_DBCS_MESSAGE_IF_EXIST(message,wParam,bDoDbcsMessaging,SendMessageToWorker1);
+                DISPATCH_DBCS_MESSAGE_IF_EXIST(message, wParam, bDoDbcsMessaging, SendMessageToWorker1);
 
                 return lRet;
-            } else {
+            }
+            else
+            {
                 /*
                  * Call worker procedure.
                  */
@@ -657,11 +604,13 @@ lbServerSendMessage:
                 /*
                  * if we have DBCS TrailingByte that should be sent, send it here..
                  */
-                 DISPATCH_DBCS_MESSAGE_IF_EXIST(message,wParam,bDoDbcsMessaging,SendMessageToDefWindow);
+                DISPATCH_DBCS_MESSAGE_IF_EXIST(message, wParam, bDoDbcsMessaging, SendMessageToDefWindow);
 
                 return lRet;
             }
-        } else {
+        }
+        else
+        {
             /*
              * Call woker procudure.
              */
@@ -671,7 +620,7 @@ lbServerSendMessage:
             /*
              * if we have DBCS TrailingByte that should be sent, send it here..
              */
-            DISPATCH_DBCS_MESSAGE_IF_EXIST(message,wParam,bDoDbcsMessaging,SendMessageToWorker2);
+            DISPATCH_DBCS_MESSAGE_IF_EXIST(message, wParam, bDoDbcsMessaging, SendMessageToWorker2);
 
             return lRet;
         }
@@ -681,7 +630,8 @@ lbServerSendMessage:
     /*
      * If this message needs to be translated, go through the kernel.
      */
-    if (fNeedTranslation) {
+    if (fNeedTranslation)
+    {
         goto lbServerSendMessage;
     }
 
@@ -689,12 +639,13 @@ lbServerSendMessage:
      * Call Client Windows procudure.
      */
 SendMessageToWndProcAgain:
-    lRet = UserCallWinProcCheckWow(pwnd->pActCtx, (WNDPROC)pwnd->lpfnWndProc, hwnd, message, wParam, lParam, &(pwnd->state), TRUE);
+    lRet = UserCallWinProcCheckWow(pwnd->pActCtx, (WNDPROC)pwnd->lpfnWndProc, hwnd, message, wParam, lParam,
+                                   &(pwnd->state), TRUE);
 
     /*
      * if we have DBCS TrailingByte that should be sent, send it here..
      */
-    DISPATCH_DBCS_MESSAGE_IF_EXIST(message,wParam,bDoDbcsMessaging,SendMessageToWndProc);
+    DISPATCH_DBCS_MESSAGE_IF_EXIST(message, wParam, bDoDbcsMessaging, SendMessageToWndProc);
 
     return lRet;
 }
@@ -710,33 +661,26 @@ SendMessageToWndProcAgain:
 * 07-21-92 ChrisBB  Created/modified SendMessageWorkder
 \***************************************************************************/
 
-LRESULT SendMessageTimeoutWorker(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    UINT fuFlags,
-    UINT uTimeout,
-    PULONG_PTR lpdwResult,
-    BOOL fAnsi)
+LRESULT SendMessageTimeoutWorker(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT fuFlags, UINT uTimeout,
+                                 PULONG_PTR lpdwResult, BOOL fAnsi)
 {
     SNDMSGTIMEOUT smto;
 
     /*
      * Prevent apps from setting hi 16 bits so we can use them internally.
      */
-    if (message & RESERVED_MSG_BITS) {
-        RIPERR1(ERROR_INVALID_PARAMETER,
-                RIP_WARNING,
-                "Invalid parameter \"message\" (%ld) to SendMessageTimeoutWorker",
+    if (message & RESERVED_MSG_BITS)
+    {
+        RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "Invalid parameter \"message\" (%ld) to SendMessageTimeoutWorker",
                 message);
 
-        return(0);
+        return (0);
     }
 
-    if (fuFlags & ~SMTO_VALID) {
+    if (fuFlags & ~SMTO_VALID)
+    {
         RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "invalid dwFlags (%x) for SendMessageTimeout\n", fuFlags);
-        return(0);
+        return (0);
     }
 
     if (lpdwResult != NULL)
@@ -756,7 +700,8 @@ LRESULT SendMessageTimeoutWorker(
      * Thunk through a special sendmessage for -1 hwnd's so that the general
      * purpose thunks don't allow -1 hwnd's.
      */
-    if (hwnd == (HWND)-1 || hwnd == (HWND)0x0000FFFF) {
+    if (hwnd == (HWND)-1 || hwnd == (HWND)0x0000FFFF)
+    {
         /*
          * Get a real hwnd so the thunks will validation ok. Note that since
          * -1 hwnd is really rare, calling GetDesktopWindow() here is not a
@@ -764,15 +709,15 @@ LRESULT SendMessageTimeoutWorker(
          */
         hwnd = GetDesktopWindow();
 
-        CsSendMessage(hwnd, message, wParam, lParam,
-                (ULONG_PTR)&smto, FNID_SENDMESSAGEFF, fAnsi);
-    } else {
-        CsSendMessage(hwnd, message, wParam, lParam,
-                (ULONG_PTR)&smto, FNID_SENDMESSAGEEX, fAnsi);
+        CsSendMessage(hwnd, message, wParam, lParam, (ULONG_PTR)&smto, FNID_SENDMESSAGEFF, fAnsi);
+    }
+    else
+    {
+        CsSendMessage(hwnd, message, wParam, lParam, (ULONG_PTR)&smto, FNID_SENDMESSAGEEX, fAnsi);
     }
 
     if (lpdwResult != NULL)
-         *lpdwResult = smto.lSMTOResult;
+        *lpdwResult = smto.lSMTOResult;
 
     return smto.lSMTOReturn;
 }
@@ -781,15 +726,17 @@ LRESULT SendMessageTimeoutWorker(
 
 PLAMEBTNPROC gpfnCommentReport;
 
-VOID LoadCommentReportIfNeeded(
-    VOID)
+VOID LoadCommentReportIfNeeded(VOID)
 {
-    if (gpfnCommentReport == NULL) {
+    if (gpfnCommentReport == NULL)
+    {
         HMODULE hmod = LoadLibrary(L"LAMEBTN.DLL");
 
-        if (hmod != NULL) {
+        if (hmod != NULL)
+        {
             gpfnCommentReport = (PLAMEBTNPROC)GetProcAddress(hmod, "CommentReport");
-            if (gpfnCommentReport == NULL) {
+            if (gpfnCommentReport == NULL)
+            {
                 FreeLibrary(hmod);
             }
         }
@@ -802,27 +749,26 @@ void CallLameButtonHandler(PWND pwnd, HWND hwnd)
 
     LoadCommentReportIfNeeded();
 
-    if (gpfnCommentReport != NULL) {
+    if (gpfnCommentReport != NULL)
+    {
         (*gpfnCommentReport)(hwnd, pwnd->pStackTrace);
     }
 }
 #endif // LAME_BUTTON
 
 
-void CopyMsgMask(
-    MSGMASK * pDest,
-    MSGMASK * pSrc,
-    BYTE * rgbLocal,
-    DWORD cbMax
-    )
+void CopyMsgMask(MSGMASK *pDest, MSGMASK *pSrc, BYTE *rgbLocal, DWORD cbMax)
 {
-    if ((pSrc->rgb != NULL) && (pSrc->cb > 0)) {
+    if ((pSrc->rgb != NULL) && (pSrc->cb > 0))
+    {
         pDest->rgb = rgbLocal;
-        pDest->cb  = min(cbMax, pSrc->cb);
+        pDest->cb = min(cbMax, pSrc->cb);
         CopyMemory(pDest->rgb, pSrc->rgb, pDest->cb);
-    } else {
+    }
+    else
+    {
         pDest->rgb = NULL;
-        pDest->cb  = 0;
+        pDest->cb = 0;
     }
 }
 
@@ -848,14 +794,12 @@ void CopyMsgMask(
 * 16-May-2000 JStall    Changed to support uninitialize callback
 * 12-Feb-2001 Mohamed   Added the check for read-only on reset ptr.
 \***************************************************************************/
-BOOL InitUserApiHook(
-    HMODULE hmod,
-    ULONG_PTR offPfnInitUserApiHook)
+BOOL InitUserApiHook(HMODULE hmod, ULONG_PTR offPfnInitUserApiHook)
 {
     INITUSERAPIHOOK pfnInitUserApi = NULL;
     USERAPIHOOK uahTemp;
 
-    BOOL bUpdate= FALSE;
+    BOOL bUpdate = FALSE;
     BOOL retval = FALSE;
 
     /*
@@ -869,7 +813,8 @@ BOOL InitUserApiHook(
      * Check that the value of pfnForceResetUserApiHook hasn't been changed
      * by client since this should be treated as read-only.
      */
-    if ((!bUpdate) || (uahTemp.cbSize <= 0) || (uahTemp.pfnForceResetUserApiHook != ForceResetUserApiHook)) {
+    if ((!bUpdate) || (uahTemp.cbSize <= 0) || (uahTemp.pfnForceResetUserApiHook != ForceResetUserApiHook))
+    {
         return FALSE;
     }
 
@@ -878,7 +823,8 @@ BOOL InitUserApiHook(
     /*
      * Need to check this again inside critical section.
      */
-    if (ghmodUserApiHook == NULL) {
+    if (ghmodUserApiHook == NULL)
+    {
         UserAssertMsg0(gpfnInitUserApi == NULL, "Ensure gpfnInitUserApi not set");
 
         /*
@@ -886,10 +832,10 @@ BOOL InitUserApiHook(
          * Copy the hooked functions
          */
         UserAssert(gcLoadUserApiHook == 0);
-        gcLoadUserApiHook   = 1;
-        gfUserApiHook       = TRUE;     // Turn calling the hooks on
-        ghmodUserApiHook    = hmod;
-        gpfnInitUserApi     = pfnInitUserApi;
+        gcLoadUserApiHook = 1;
+        gfUserApiHook = TRUE; // Turn calling the hooks on
+        ghmodUserApiHook = hmod;
+        gpfnInitUserApi = pfnInitUserApi;
 
         CopyMemory(&guah, &uahTemp, uahTemp.cbSize);
 
@@ -901,7 +847,9 @@ BOOL InitUserApiHook(
         CopyMsgMask(&guah.uoiDlg.mm, &uahTemp.uoiDlg.mm, grgbDlgLiteHookMsg, sizeof(grgbDlgLiteHookMsg));
 
         retval = TRUE;
-    } else if (ghmodUserApiHook == hmod) {
+    }
+    else if (ghmodUserApiHook == hmod)
+    {
         /*
          * This is the UserApiHook module, so bump up the reference count.
          */
@@ -913,7 +861,8 @@ BOOL InitUserApiHook(
 
     RtlLeaveCriticalSection(&gcsUserApiHook);
 
-    if (!retval) {
+    if (!retval)
+    {
         /*
          * Initialization failed, so ClientLoadLibrary() is going to
          * FreeLibrary().  Notify before we do this.
@@ -941,8 +890,7 @@ BOOL InitUserApiHook(
 * 16-May-2000 JStall    Changed to support uninitialize callback
 * 03-Apr-2001 Mohamed   Added support for UIAH_UNHOOK logic.
 \***************************************************************************/
-BOOL ClearUserApiHook(
-    HMODULE hmod)
+BOOL ClearUserApiHook(HMODULE hmod)
 {
     INITUSERAPIHOOK pfnInitUserApi = NULL;
     INITUSERAPIHOOK pfnSignalInitUserApi = NULL;
@@ -952,13 +900,15 @@ BOOL ClearUserApiHook(
      * global state.
      */
     RtlEnterCriticalSection(&gcsUserApiHook);
-    if (ghmodUserApiHook == hmod) {
+    if (ghmodUserApiHook == hmod)
+    {
         UserAssert(gcLoadUserApiHook > 0);
         UserAssertMsg0(gpfnInitUserApi != NULL, "Ensure gpfnInitUserApi properly set");
         UserAssertMsg0(ghmodUserApiHook != NULL, "Should still have valid ghmodUserApiHook");
         pfnInitUserApi = gpfnInitUserApi;
 
-        if (--gcLoadUserApiHook == 0) {
+        if (--gcLoadUserApiHook == 0)
+        {
             /*
              * Use the internal functions, so turn calling the hooks off.  It is
              * very important to set gfUserApiHook FALSE here so that new calls
@@ -968,7 +918,8 @@ BOOL ClearUserApiHook(
             gfUserApiHook = FALSE;
             ResetUserApiHook(&guah);
 
-            if (gcCallUserApiHook == 0) {
+            if (gcCallUserApiHook == 0)
+            {
                 /*
                  * We're not calling into it, we can free the module.
                  *
@@ -978,7 +929,9 @@ BOOL ClearUserApiHook(
                 hmod = ghmodUserApiHook;
                 ghmodUserApiHook = NULL;
                 gpfnInitUserApi = NULL;
-            } else {
+            }
+            else
+            {
                 /*
                  * We're still calling into the module, so we can't free it yet.
                  * This means we have to delay the last callback with UIAH_UNINITIALIZE
@@ -991,7 +944,9 @@ BOOL ClearUserApiHook(
                 pfnSignalInitUserApi = gpfnInitUserApi;
                 ++gcLoadUserApiHook;
             }
-        } else {
+        }
+        else
+        {
             /*
              * This part of code should never be executed since we guard against
              * multiple loads of same DLL in xxxLoadUserApiHook.  However, since
@@ -1007,7 +962,8 @@ BOOL ClearUserApiHook(
     /*
      * Signal that hooks have been uninitialized but DLL can't be unloaded due to outstanding calls.
      */
-    if (pfnSignalInitUserApi != NULL) {
+    if (pfnSignalInitUserApi != NULL)
+    {
         RIPMSG2(RIP_WARNING, "Unhook from Clear Load %lx Call %lx", gcLoadUserApiHook, gcCallUserApiHook);
         pfnSignalInitUserApi(UIAH_UNHOOK, NULL);
 
@@ -1023,8 +979,10 @@ BOOL ClearUserApiHook(
         UserAssertMsg0(ghmodUserApiHook != NULL, "Should still have valid ghmodUserApiHook");
         pfnInitUserApi = gpfnInitUserApi;
 
-        if (--gcLoadUserApiHook == 0) {
-            if (gcCallUserApiHook == 0) {
+        if (--gcLoadUserApiHook == 0)
+        {
+            if (gcCallUserApiHook == 0)
+            {
                 /*
                  * The outstanding call has completed while we were
                  * calling back and we can now safely clean up.
@@ -1034,7 +992,9 @@ BOOL ClearUserApiHook(
                 hmod = ghmodUserApiHook;
                 ghmodUserApiHook = NULL;
                 gpfnInitUserApi = NULL;
-            } else {
+            }
+            else
+            {
                 /*
                  * The outstanding call into the DLL hasn't returned.  However, we are done
                  * from this point.  The DLL has been notified of UNHOOK situation and the
@@ -1044,7 +1004,9 @@ BOOL ClearUserApiHook(
                 hmod = NULL;
                 pfnInitUserApi = NULL;
             }
-        } else {
+        }
+        else
+        {
             /*
              * This part of code should never be executed since we guard against
              * multiple loads of same DLL in xxxLoadUserApiHook.  However, since
@@ -1060,7 +1022,8 @@ BOOL ClearUserApiHook(
      * This is called in the case where the outstanding call into the DLL was completed in between
      * the two critical sections and we have completed the full cleanup at this end.
      */
-    if (pfnInitUserApi != NULL) {
+    if (pfnInitUserApi != NULL)
+    {
         RIPMSG2(RIP_WARNING, "Uninit from Clear Load %lx Call %lx", gcLoadUserApiHook, gcCallUserApiHook);
         pfnInitUserApi(UIAH_UNINITIALIZE, NULL);
     }
@@ -1079,7 +1042,7 @@ BOOL ClearUserApiHook(
 * History:
 * 27-Apr-2000 JStall   Created.
 \***************************************************************************/
-BOOL CALLBACK DefaultOWP(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT * pr, void ** pvCookie)
+BOOL CALLBACK DefaultOWP(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *pr, void **pvCookie)
 {
     UNREFERENCED_PARAMETER(hwnd);
     UNREFERENCED_PARAMETER(message);
@@ -1099,18 +1062,14 @@ BOOL CALLBACK DefaultOWP(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, 
 * History:
 * 20-Apr-2001 Mohamed Created.
 \***************************************************************************/
-void MDIRedrawFrame(
-    HWND hwndChild,
-    BOOL fAdd)
+void MDIRedrawFrame(HWND hwndChild, BOOL fAdd)
 {
     BEGIN_USERAPIHOOK()
-        guah.pfnMDIRedrawFrame(hwndChild, fAdd);
+    guah.pfnMDIRedrawFrame(hwndChild, fAdd);
     END_USERAPIHOOK()
 }
 
-void RealMDIRedrawFrame(
-    HWND hwndChild,
-    BOOL fAdd)
+void RealMDIRedrawFrame(HWND hwndChild, BOOL fAdd)
 {
     UNREFERENCED_PARAMETER(fAdd);
     NtUserRedrawFrame(hwndChild);
@@ -1129,33 +1088,33 @@ void RealMDIRedrawFrame(
 * 28-Mar-2000 JStall   Created.
 * 28-Oct-2000 mohamed  Added GetSystemMetrics and SystemParametersInfo hooks.
 \***************************************************************************/
-void ResetUserApiHook(USERAPIHOOK * puah)
+void ResetUserApiHook(USERAPIHOOK *puah)
 {
-    puah->cbSize                   = sizeof(USERAPIHOOK);
-    puah->pfnDefWindowProcA        = RealDefWindowProcA;
-    puah->pfnDefWindowProcW        = RealDefWindowProcW;
-    puah->mmDWP.rgb                = NULL;
-    puah->mmDWP.cb                 = 0;
-    puah->pfnGetScrollInfo         = RealGetScrollInfo;
-    puah->pfnSetScrollInfo         = RealSetScrollInfo;
-    puah->pfnEnableScrollBar       = RealEnableScrollBar;
-    puah->pfnAdjustWindowRectEx    = RealAdjustWindowRectEx;
-    puah->pfnSetWindowRgn          = RealSetWindowRgn;
-    puah->uoiWnd.pfnBeforeOWP      = DefaultOWP;
-    puah->uoiWnd.pfnAfterOWP       = DefaultOWP;
-    puah->uoiWnd.mm.rgb            = NULL;
-    puah->uoiWnd.mm.cb             = 0;
-    puah->uoiDlg.pfnBeforeOWP      = DefaultOWP;
-    puah->uoiDlg.pfnAfterOWP       = DefaultOWP;
-    puah->uoiDlg.mm.rgb            = NULL;
-    puah->uoiDlg.mm.cb             = 0;
-    puah->pfnGetSystemMetrics      = RealGetSystemMetrics;
+    puah->cbSize = sizeof(USERAPIHOOK);
+    puah->pfnDefWindowProcA = RealDefWindowProcA;
+    puah->pfnDefWindowProcW = RealDefWindowProcW;
+    puah->mmDWP.rgb = NULL;
+    puah->mmDWP.cb = 0;
+    puah->pfnGetScrollInfo = RealGetScrollInfo;
+    puah->pfnSetScrollInfo = RealSetScrollInfo;
+    puah->pfnEnableScrollBar = RealEnableScrollBar;
+    puah->pfnAdjustWindowRectEx = RealAdjustWindowRectEx;
+    puah->pfnSetWindowRgn = RealSetWindowRgn;
+    puah->uoiWnd.pfnBeforeOWP = DefaultOWP;
+    puah->uoiWnd.pfnAfterOWP = DefaultOWP;
+    puah->uoiWnd.mm.rgb = NULL;
+    puah->uoiWnd.mm.cb = 0;
+    puah->uoiDlg.pfnBeforeOWP = DefaultOWP;
+    puah->uoiDlg.pfnAfterOWP = DefaultOWP;
+    puah->uoiDlg.mm.rgb = NULL;
+    puah->uoiDlg.mm.cb = 0;
+    puah->pfnGetSystemMetrics = RealGetSystemMetrics;
     puah->pfnSystemParametersInfoA = RealSystemParametersInfoA;
     puah->pfnSystemParametersInfoW = RealSystemParametersInfoW;
     puah->pfnForceResetUserApiHook = ForceResetUserApiHook;
-    puah->pfnDrawFrameControl      = RealDrawFrameControl;
-    puah->pfnDrawCaption           = RealDrawCaption;
-    puah->pfnMDIRedrawFrame        = RealMDIRedrawFrame;
+    puah->pfnDrawFrameControl = RealDrawFrameControl;
+    puah->pfnDrawCaption = RealDrawCaption;
+    puah->pfnMDIRedrawFrame = RealMDIRedrawFrame;
 }
 
 
@@ -1181,9 +1140,7 @@ void ResetUserApiHook(USERAPIHOOK * puah)
 * History:
 * 02-Feb-2001 mohamed  Created.
 \***************************************************************************/
-BOOL
-ForceResetUserApiHook(
-    HMODULE hmod)
+BOOL ForceResetUserApiHook(HMODULE hmod)
 {
     /*
      * Verify that the calling module is indeed the same hooking module and that
@@ -1191,7 +1148,8 @@ ForceResetUserApiHook(
      * the loader lock.
      */
 
-    if (ghmodUserApiHook != hmod || !_InsideLoaderLock()){
+    if (ghmodUserApiHook != hmod || !_InsideLoaderLock())
+    {
         return FALSE;
     }
 
@@ -1222,23 +1180,26 @@ ForceResetUserApiHook(
 void _EndUserApiHook()
 {
     UserAssert(gcCallUserApiHook > 0);
-    if (InterlockedDecrement(&gcCallUserApiHook) == 0) {
+    if (InterlockedDecrement(&gcCallUserApiHook) == 0)
+    {
         /*
          * If the load count went to zero, free the library.
          */
-        if (gcLoadUserApiHook == 0) {
+        if (gcLoadUserApiHook == 0)
+        {
             HMODULE hmod = NULL;
             INITUSERAPIHOOK pfnInitUserApi = NULL;
 
             RtlEnterCriticalSection(&gcsUserApiHook);
-            if (gcLoadUserApiHook == 0) {
+            if (gcLoadUserApiHook == 0)
+            {
                 UserAssertMsg0(ghmodUserApiHook != NULL, "Should still have valid ghmodUserApiHook");
                 UserAssertMsg0(gpfnInitUserApi != NULL, "Should still have valid gpfnInitUserApi");
 
-                hmod                = ghmodUserApiHook;
-                pfnInitUserApi      = gpfnInitUserApi;
-                ghmodUserApiHook    = NULL;
-                gpfnInitUserApi     = NULL;
+                hmod = ghmodUserApiHook;
+                pfnInitUserApi = gpfnInitUserApi;
+                ghmodUserApiHook = NULL;
+                gpfnInitUserApi = NULL;
             }
 
             RtlLeaveCriticalSection(&gcsUserApiHook);
@@ -1247,12 +1208,14 @@ void _EndUserApiHook()
              * Make the callback that we delayed from ClearUserApiHook()
              * because there was still an outstanding API call.
              */
-            if (pfnInitUserApi != NULL) {
+            if (pfnInitUserApi != NULL)
+            {
                 RIPMSG2(RIP_WARNING, "Uninit from End Load %lx Call %lx", gcLoadUserApiHook, gcCallUserApiHook);
                 pfnInitUserApi(UIAH_UNINITIALIZE, NULL);
             }
 
-            if (hmod != NULL) {
+            if (hmod != NULL)
+            {
                 FreeLibrary(hmod);
             }
         }
@@ -1268,29 +1231,23 @@ void _EndUserApiHook()
 * 03-31-92 DarrinM      Created.
 \***************************************************************************/
 
-LRESULT DefWindowProcWorker(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    DWORD fAnsi)
+LRESULT DefWindowProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi)
 {
-    if (ghmodUserApiHook) {
-        if (fAnsi) {
+    if (ghmodUserApiHook)
+    {
+        if (fAnsi)
+        {
             return DefWindowProcA(HWq(pwnd), message, wParam, lParam);
-        } else {
+        }
+        else
+        {
             return DefWindowProcW(HWq(pwnd), message, wParam, lParam);
         }
     }
     return RealDefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
 }
 
-LRESULT RealDefWindowProcWorker(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    DWORD fAnsi)
+LRESULT RealDefWindowProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi)
 {
     HWND hwnd = HWq(pwnd);
     int icolBack;
@@ -1301,20 +1258,24 @@ LRESULT RealDefWindowProcWorker(
     PIMEUI pimeui;
 
 #if DBG
-    if (!gfTurboDWP) {
-        return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                FNID_DEFWINDOWPROC, fAnsi);
-    } else {
+    if (!gfTurboDWP)
+    {
+        return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
+    }
+    else
+    {
 #endif
 
-    if (FDEFWINDOWMSG(message, DefWindowMsgs)) {
-        return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                FNID_DEFWINDOWPROC, fAnsi);
-    } else if (!FDEFWINDOWMSG(message, DefWindowSpecMsgs)) {
-        return 0;
-    }
+        if (FDEFWINDOWMSG(message, DefWindowMsgs))
+        {
+            return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
+        }
+        else if (!FDEFWINDOWMSG(message, DefWindowSpecMsgs))
+        {
+            return 0;
+        }
 
-    /*
+        /*
      * Important:  If you add cases to the switch statement below,
      *             add the messages to server.c's gawDefWindowSpecMsgs.
      *             Similarly if you add cases to dwp.c's DefWindowProc
@@ -1322,101 +1283,113 @@ LRESULT RealDefWindowProcWorker(
      *             to gawDefWindowMsgs.
      */
 
-    switch (message) {
+        switch (message)
+        {
 #ifdef LAME_BUTTON
-    case WM_NCLBUTTONDOWN:
-        if (wParam == HTLAMEBUTTON) {
-            CallLameButtonHandler(pwnd, hwnd);
-        }
-        return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                   FNID_DEFWINDOWPROC, fAnsi);
+        case WM_NCLBUTTONDOWN:
+            if (wParam == HTLAMEBUTTON)
+            {
+                CallLameButtonHandler(pwnd, hwnd);
+            }
+            return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
 
-    case WM_SYSCHAR:
-        if(wParam == LAMEBUTTONHOTKEY && (HIWORD(lParam) & SYS_ALTERNATE) &&
-           TestWF(pwnd, WEFLAMEBUTTON)) {
-           CallLameButtonHandler(pwnd, hwnd);
-        }
-        return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                   FNID_DEFWINDOWPROC, fAnsi);
+        case WM_SYSCHAR:
+            if (wParam == LAMEBUTTONHOTKEY && (HIWORD(lParam) & SYS_ALTERNATE) && TestWF(pwnd, WEFLAMEBUTTON))
+            {
+                CallLameButtonHandler(pwnd, hwnd);
+            }
+            return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
 
-    case WM_SYSCOMMAND:
-        if(wParam == SC_LAMEBUTTON) {
-            CallLameButtonHandler(pwnd, hwnd);
-        }
-        return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                   FNID_DEFWINDOWPROC, fAnsi);
+        case WM_SYSCOMMAND:
+            if (wParam == SC_LAMEBUTTON)
+            {
+                CallLameButtonHandler(pwnd, hwnd);
+            }
+            return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
 #endif // LAME_BUTTON
 
-    case WM_HELP:
+        case WM_HELP:
         {
-        PWND  pwndDest;
+            PWND pwndDest;
 
-        /*
+            /*
          * If this window is a child window, Help message must be passed on
          * to it's parent; Else, this must be passed on to the owner window.
          */
-        pwndDest = (TestwndChild(pwnd) ? pwnd->spwndParent : pwnd->spwndOwner);
-        if (pwndDest) {
-            pwndDest = REBASEPTR(pwnd, pwndDest);
-            if (pwndDest != _GetDesktopWindow())
-                return SendMessageW(HWq(pwndDest), WM_HELP, wParam, lParam);;
-        }
-        return(0L);
+            pwndDest = (TestwndChild(pwnd) ? pwnd->spwndParent : pwnd->spwndOwner);
+            if (pwndDest)
+            {
+                pwndDest = REBASEPTR(pwnd, pwndDest);
+                if (pwndDest != _GetDesktopWindow())
+                    return SendMessageW(HWq(pwndDest), WM_HELP, wParam, lParam);
+                ;
+            }
+            return (0L);
         }
 
-    case WM_MOUSEWHEEL:
-        if (TestwndChild(pwnd)) {
-            pwndParent = REBASEPWND(pwnd, spwndParent);
-            SendMessageW(HW(pwndParent), WM_MOUSEWHEEL, wParam, lParam);
-        }
-        break;
+        case WM_MOUSEWHEEL:
+            if (TestwndChild(pwnd))
+            {
+                pwndParent = REBASEPWND(pwnd, spwndParent);
+                SendMessageW(HW(pwndParent), WM_MOUSEWHEEL, wParam, lParam);
+            }
+            break;
 
-    case WM_CONTEXTMENU:
-        if (TestwndChild(pwnd)) {
-            pwndParent = REBASEPWND(pwnd, spwndParent);
-            SendMessageW(HW(pwndParent), WM_CONTEXTMENU,
-                    (WPARAM)hwnd, lParam);
-        }
-        break;
+        case WM_CONTEXTMENU:
+            if (TestwndChild(pwnd))
+            {
+                pwndParent = REBASEPWND(pwnd, spwndParent);
+                SendMessageW(HW(pwndParent), WM_CONTEXTMENU, (WPARAM)hwnd, lParam);
+            }
+            break;
 
-    /*
+        /*
      * Default handling for WM_CONTEXTMENU support
      */
-    case WM_RBUTTONUP:
-        if (TestWF(pwnd, WEFLAYOUTRTL)) {
-            lParam = MAKELONG(pwnd->rcClient.right - GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) + pwnd->rcClient.top);
-        } else {
-            lParam = MAKELONG(GET_X_LPARAM(lParam) + pwnd->rcClient.left, GET_Y_LPARAM(lParam) + pwnd->rcClient.top);
-        }
-        SendMessageWorker(pwnd, WM_CONTEXTMENU, (WPARAM)hwnd, lParam, fAnsi);
-        break;
+        case WM_RBUTTONUP:
+            if (TestWF(pwnd, WEFLAYOUTRTL))
+            {
+                lParam =
+                    MAKELONG(pwnd->rcClient.right - GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) + pwnd->rcClient.top);
+            }
+            else
+            {
+                lParam =
+                    MAKELONG(GET_X_LPARAM(lParam) + pwnd->rcClient.left, GET_Y_LPARAM(lParam) + pwnd->rcClient.top);
+            }
+            SendMessageWorker(pwnd, WM_CONTEXTMENU, (WPARAM)hwnd, lParam, fAnsi);
+            break;
 
-    case WM_APPCOMMAND:
-        if (TestwndChild(pwnd)) {
-            /*
+        case WM_APPCOMMAND:
+            if (TestwndChild(pwnd))
+            {
+                /*
              * Bubble the message to the parent
              */
-            pwndParent = REBASEPWND(pwnd, spwndParent);
-            return SendMessageW(HW(pwndParent), WM_APPCOMMAND, wParam, lParam);
-        } else {
-            /*
+                pwndParent = REBASEPWND(pwnd, spwndParent);
+                return SendMessageW(HW(pwndParent), WM_APPCOMMAND, wParam, lParam);
+            }
+            else
+            {
+                /*
              * Call the server side to send the shell hook HSHELL_APPCOMMAND
              */
-            return CsSendMessage(hwnd, WM_APPCOMMAND, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
-        }
-        break;
+                return CsSendMessage(hwnd, WM_APPCOMMAND, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
+            }
+            break;
 
-    /*
+        /*
      * Default handling for WM_APPCOMMAND support
      */
-    case WM_NCXBUTTONUP:
-    case WM_XBUTTONUP:
+        case WM_NCXBUTTONUP:
+        case WM_XBUTTONUP:
         {
             WORD cmd;
             WORD keystate;
             LPARAM lParamAppCommand;
 
-            switch (GET_XBUTTON_WPARAM(wParam)) {
+            switch (GET_XBUTTON_WPARAM(wParam))
+            {
             case XBUTTON1:
                 cmd = APPCOMMAND_BROWSER_BACKWARD;
                 break;
@@ -1430,14 +1403,18 @@ LRESULT RealDefWindowProcWorker(
                 break;
             }
 
-            if (cmd == 0) {
+            if (cmd == 0)
+            {
                 break;
             }
 
             cmd |= FAPPCOMMAND_MOUSE;
-            if (message == WM_XBUTTONUP) {
+            if (message == WM_XBUTTONUP)
+            {
                 keystate = GET_KEYSTATE_WPARAM(wParam);
-            } else {
+            }
+            else
+            {
                 keystate = GetMouseKeyState();
             }
 
@@ -1446,33 +1423,37 @@ LRESULT RealDefWindowProcWorker(
             break;
         }
 
-    case WM_WINDOWPOSCHANGED: {
-        PWINDOWPOS ppos = (PWINDOWPOS)lParam;
+        case WM_WINDOWPOSCHANGED:
+        {
+            PWINDOWPOS ppos = (PWINDOWPOS)lParam;
 
-        if (!(ppos->flags & SWP_NOCLIENTMOVE)) {
-            POINT pt = {pwnd->rcClient.left, pwnd->rcClient.top};
-            pwndParent = REBASEPWND(pwnd, spwndParent);
+            if (!(ppos->flags & SWP_NOCLIENTMOVE))
+            {
+                POINT pt = { pwnd->rcClient.left, pwnd->rcClient.top };
+                pwndParent = REBASEPWND(pwnd, spwndParent);
 
-            if (pwndParent != _GetDesktopWindow()) {
-                pt.x -= pwndParent->rcClient.left;
-                pt.y -= pwndParent->rcClient.top;
+                if (pwndParent != _GetDesktopWindow())
+                {
+                    pt.x -= pwndParent->rcClient.left;
+                    pt.y -= pwndParent->rcClient.top;
+                }
+
+                SendMessageWorker(pwnd, WM_MOVE, FALSE, MAKELPARAM(pt.x, pt.y), fAnsi);
             }
 
-            SendMessageWorker(pwnd, WM_MOVE, FALSE, MAKELPARAM(pt.x, pt.y), fAnsi);
-        }
+            if ((ppos->flags & SWP_STATECHANGE) || !(ppos->flags & SWP_NOCLIENTSIZE))
+            {
+                UINT cmd;
+                RECT rc;
 
-        if ((ppos->flags & SWP_STATECHANGE) || !(ppos->flags & SWP_NOCLIENTSIZE)) {
-            UINT cmd;
-            RECT rc;
+                if (TestWF(pwnd, WFMINIMIZED))
+                    cmd = SIZEICONIC;
+                else if (TestWF(pwnd, WFMAXIMIZED))
+                    cmd = SIZEFULLSCREEN;
+                else
+                    cmd = SIZENORMAL;
 
-            if (TestWF(pwnd, WFMINIMIZED))
-                cmd = SIZEICONIC;
-            else if (TestWF(pwnd, WFMAXIMIZED))
-                cmd = SIZEFULLSCREEN;
-            else
-                cmd = SIZENORMAL;
-
-        /*
+                /*
          *  HACK ALERT:
          *  If the window is minimized then the real client width and height are
          *  zero. But, in win3.1 they were non-zero. Under Chicago, PrintShop
@@ -1480,587 +1461,598 @@ LRESULT RealDefWindowProcWorker(
          *  and height for old apps to be non-zero values.
          *  GetClientRect does that job for us.
          */
-            _GetClientRect(pwnd, &rc);
-            SendMessageWorker(pwnd, WM_SIZE, cmd,
-                    MAKELONG(rc.right - rc.left,
-                    rc.bottom - rc.top), fAnsi);
-        }
-        return 0;
+                _GetClientRect(pwnd, &rc);
+                SendMessageWorker(pwnd, WM_SIZE, cmd, MAKELONG(rc.right - rc.left, rc.bottom - rc.top), fAnsi);
+            }
+            return 0;
         }
 
-    case WM_MOUSEACTIVATE: {
-        PWND pwndT;
-        LRESULT lt;
+        case WM_MOUSEACTIVATE:
+        {
+            PWND pwndT;
+            LRESULT lt;
 
-        /*
+            /*
          * GetChildParent returns either a kernel pointer or NULL.
          */
-        pwndT = GetChildParent(pwnd);
-        if (pwndT != NULL) {
-            pwndT = REBASEPTR(pwnd, pwndT);
-            lt = SendMessageWorker(pwndT, WM_MOUSEACTIVATE, wParam, lParam, fAnsi);
-            if (lt != 0)
-                return lt;
-        }
+            pwndT = GetChildParent(pwnd);
+            if (pwndT != NULL)
+            {
+                pwndT = REBASEPTR(pwnd, pwndT);
+                lt = SendMessageWorker(pwndT, WM_MOUSEACTIVATE, wParam, lParam, fAnsi);
+                if (lt != 0)
+                    return lt;
+            }
 
-        /*
+            /*
          * Moving, sizing or minimizing? Activate AFTER we take action.
          */
-        return ((LOWORD(lParam) == HTCAPTION) && (HIWORD(lParam) == WM_LBUTTONDOWN )) ?
-                (LONG)MA_NOACTIVATE : (LONG)MA_ACTIVATE;
+            return ((LOWORD(lParam) == HTCAPTION) && (HIWORD(lParam) == WM_LBUTTONDOWN)) ? (LONG)MA_NOACTIVATE
+                                                                                         : (LONG)MA_ACTIVATE;
         }
 
-    case WM_CTLCOLORSCROLLBAR:
-        if ((gpsi->BitCount < 8) ||
-            (SYSRGB(3DHILIGHT) != SYSRGB(SCROLLBAR)) ||
-            (SYSRGB(3DHILIGHT) == SYSRGB(WINDOW)))
-        {
-            /*
+        case WM_CTLCOLORSCROLLBAR:
+            if ((gpsi->BitCount < 8) || (SYSRGB(3DHILIGHT) != SYSRGB(SCROLLBAR)) ||
+                (SYSRGB(3DHILIGHT) == SYSRGB(WINDOW)))
+            {
+                /*
              * Remove call to UnrealizeObject().  GDI Handles this for
              * brushes on NT.
              *
              * UnrealizeObject(ghbrGray);
              */
 
-            SetBkColor((HDC)wParam, SYSRGB(3DHILIGHT));
-            SetTextColor((HDC)wParam, SYSRGB(3DFACE));
-            return((LRESULT)gpsi->hbrGray);
-        }
+                SetBkColor((HDC)wParam, SYSRGB(3DHILIGHT));
+                SetTextColor((HDC)wParam, SYSRGB(3DFACE));
+                return ((LRESULT)gpsi->hbrGray);
+            }
 
-        icolBack = COLOR_3DHILIGHT;
-        icolFore = COLOR_BTNTEXT;
-        goto SetColor;
-
-    case WM_CTLCOLORBTN:
-        if (pwnd == NULL)
-            goto ColorDefault;
-
-        if (TestWF(pwnd, WFWIN40COMPAT)) {
-            icolBack = COLOR_3DFACE;
+            icolBack = COLOR_3DHILIGHT;
             icolFore = COLOR_BTNTEXT;
-        } else {
-            goto ColorDefault;
-        }
-        goto SetColor;
-
-    case WM_CTLCOLORSTATIC:
-    case WM_CTLCOLORDLG:
-    case WM_CTLCOLORMSGBOX:
-        // We want static controls in dialogs to have the 3D
-        // background color, but statics in windows to inherit
-        // their parents' background.
-
-        if (pwnd == NULL)
-            goto ColorDefault;
-
-        if (TestWF(pwnd, WFWIN40COMPAT)) {
-            icolBack = COLOR_3DFACE;
-            icolFore = COLOR_WINDOWTEXT;
             goto SetColor;
+
+        case WM_CTLCOLORBTN:
+            if (pwnd == NULL)
+                goto ColorDefault;
+
+            if (TestWF(pwnd, WFWIN40COMPAT))
+            {
+                icolBack = COLOR_3DFACE;
+                icolFore = COLOR_BTNTEXT;
+            }
+            else
+            {
+                goto ColorDefault;
+            }
+            goto SetColor;
+
+        case WM_CTLCOLORSTATIC:
+        case WM_CTLCOLORDLG:
+        case WM_CTLCOLORMSGBOX:
+            // We want static controls in dialogs to have the 3D
+            // background color, but statics in windows to inherit
+            // their parents' background.
+
+            if (pwnd == NULL)
+                goto ColorDefault;
+
+            if (TestWF(pwnd, WFWIN40COMPAT))
+            {
+                icolBack = COLOR_3DFACE;
+                icolFore = COLOR_WINDOWTEXT;
+                goto SetColor;
+            }
+            // ELSE FALL THRU...
+
+        case WM_CTLCOLOR: // here for WOW only
+        case WM_CTLCOLORLISTBOX:
+        case WM_CTLCOLOREDIT:
+        ColorDefault:
+            icolBack = COLOR_WINDOW;
+            icolFore = COLOR_WINDOWTEXT;
+
+        SetColor:
+        {
+            SetBkColor((HDC)wParam, gpsi->argbSystem[icolBack]);
+            SetTextColor((HDC)wParam, gpsi->argbSystem[icolFore]);
+            return (LRESULT)(SYSHBRUSH(icolBack));
         }
-        // ELSE FALL THRU...
 
-    case WM_CTLCOLOR:              // here for WOW only
-    case WM_CTLCOLORLISTBOX:
-    case WM_CTLCOLOREDIT:
-      ColorDefault:
-        icolBack = COLOR_WINDOW;
-        icolFore = COLOR_WINDOWTEXT;
+        case WM_NCHITTEST:
+            return FindNCHit(pwnd, (LONG)lParam);
 
-      SetColor:
-      {
-        SetBkColor((HDC)wParam, gpsi->argbSystem[icolBack]);
-        SetTextColor((HDC)wParam, gpsi->argbSystem[icolFore]);
-        return (LRESULT)(SYSHBRUSH(icolBack));
-      }
+        case WM_GETTEXT:
+            if (wParam != 0)
+            {
 
-    case WM_NCHITTEST:
-        return FindNCHit(pwnd, (LONG)lParam);
+                LPWSTR lpszText;
+                UINT cchSrc;
 
-    case WM_GETTEXT:
-        if (wParam != 0) {
+                if (pwnd->strName.Length)
+                {
 
-            LPWSTR lpszText;
-            UINT   cchSrc;
+                    lpszText = REBASE(pwnd, strName.Buffer);
+                    cchSrc = (UINT)pwnd->strName.Length / sizeof(WCHAR);
 
-            if (pwnd->strName.Length) {
+                    if (fAnsi)
+                    {
 
-                lpszText = REBASE(pwnd, strName.Buffer);
-                cchSrc = (UINT)pwnd->strName.Length / sizeof(WCHAR);
+                        LPSTR lpName = (LPSTR)lParam;
 
-                if (fAnsi) {
-
-                    LPSTR lpName = (LPSTR)lParam;
-
-                    /*
+                        /*
                      * Non-zero retval means some text to copy out.  Do not
                      * copy out more than the requested byte count
                      * 'chMaxCount'.
                      */
-                    cchSrc = WCSToMB(lpszText,
-                                     cchSrc,
-                                     (LPSTR *)&lpName,
-                                     (UINT)(wParam - 1),
-                                     FALSE);
+                        cchSrc = WCSToMB(lpszText, cchSrc, (LPSTR *)&lpName, (UINT)(wParam - 1), FALSE);
 
-                    lpName[cchSrc] = '\0';
+                        lpName[cchSrc] = '\0';
+                    }
+                    else
+                    {
 
-                } else {
+                        LPWSTR lpwName = (LPWSTR)lParam;
 
-                    LPWSTR lpwName = (LPWSTR)lParam;
+                        cchSrc = min(cchSrc, (UINT)(wParam - 1));
+                        RtlCopyMemory(lpwName, lpszText, cchSrc * sizeof(WCHAR));
+                        lpwName[cchSrc] = 0;
+                    }
 
-                    cchSrc = min(cchSrc, (UINT)(wParam - 1));
-                    RtlCopyMemory(lpwName, lpszText, cchSrc * sizeof(WCHAR));
-                    lpwName[cchSrc] = 0;
+                    return cchSrc;
                 }
 
-                return cchSrc;
-            }
-
-            /*
+                /*
              * else Null terminate the text buffer since there is no text.
              */
-            if (fAnsi) {
-                ((LPSTR)lParam)[0] = 0;
-            } else {
-                ((LPWSTR)lParam)[0] = 0;
+                if (fAnsi)
+                {
+                    ((LPSTR)lParam)[0] = 0;
+                }
+                else
+                {
+                    ((LPWSTR)lParam)[0] = 0;
+                }
             }
-        }
 
-        return 0;
+            return 0;
 
-    case WM_GETTEXTLENGTH:
-        if (pwnd->strName.Length) {
-            UINT cch;
-            if (fAnsi) {
-                RtlUnicodeToMultiByteSize(&cch,
-                                          REBASE(pwnd, strName.Buffer),
-                                          pwnd->strName.Length);
-            } else {
-                cch = pwnd->strName.Length / sizeof(WCHAR);
+        case WM_GETTEXTLENGTH:
+            if (pwnd->strName.Length)
+            {
+                UINT cch;
+                if (fAnsi)
+                {
+                    RtlUnicodeToMultiByteSize(&cch, REBASE(pwnd, strName.Buffer), pwnd->strName.Length);
+                }
+                else
+                {
+                    cch = pwnd->strName.Length / sizeof(WCHAR);
+                }
+                return cch;
             }
-            return cch;
-        }
-        return 0L;
+            return 0L;
 
-    case WM_QUERYDRAGICON:
-        /*
+        case WM_QUERYDRAGICON:
+            /*
          * If the window is WIN40COMPAT or has a kernel side procedure
          * do not attempt to look into the instance module
          */
-        if (TestWF(pwnd, WFWIN40COMPAT) || TestWF(pwnd, WFSERVERSIDEPROC)) {
-            return 0;
-        }
-        /*
+            if (TestWF(pwnd, WFWIN40COMPAT) || TestWF(pwnd, WFSERVERSIDEPROC))
+            {
+                return 0;
+            }
+            /*
          * For old apps, like the VB3 ones, try to load the icon from resources
          * This is how Win95 does.
          */
-        return (LRESULT)LoadIconW(KHANDLE_TO_HANDLE(pwnd->hModule), MAKEINTRESOURCE(1));
+            return (LRESULT)LoadIconW(KHANDLE_TO_HANDLE(pwnd->hModule), MAKEINTRESOURCE(1));
 
-    case WM_QUERYOPEN:
-    case WM_QUERYENDSESSION:
-    case WM_DEVICECHANGE:
-    case WM_POWERBROADCAST:
-        return TRUE;
+        case WM_QUERYOPEN:
+        case WM_QUERYENDSESSION:
+        case WM_DEVICECHANGE:
+        case WM_POWERBROADCAST:
+            return TRUE;
 
-    case WM_KEYDOWN:
-        if (wParam == VK_F10) {
-            return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                    FNID_DEFWINDOWPROC, fAnsi);
-        }
-        break;
+        case WM_KEYDOWN:
+            if (wParam == VK_F10)
+            {
+                return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
+            }
+            break;
 
-    case WM_SYSKEYDOWN:
-        if ((HIWORD(lParam) & SYS_ALTERNATE) || (wParam == VK_F10) ||
-                (wParam == VK_ESCAPE))
-            return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                    FNID_DEFWINDOWPROC, fAnsi);
-        break;
+        case WM_SYSKEYDOWN:
+            if ((HIWORD(lParam) & SYS_ALTERNATE) || (wParam == VK_F10) || (wParam == VK_ESCAPE))
+                return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
+            break;
 
-    case WM_UNICHAR:
-        if (wParam == UNICODE_NOCHAR) {
-            return FALSE;
-        }
-        break;
+        case WM_UNICHAR:
+            if (wParam == UNICODE_NOCHAR)
+            {
+                return FALSE;
+            }
+            break;
 
-    case WM_CHARTOITEM:
-    case WM_VKEYTOITEM:
-        /*
+        case WM_CHARTOITEM:
+        case WM_VKEYTOITEM:
+            /*
          * Do default processing for keystrokes into owner draw listboxes.
          */
-        return -1;
+            return -1;
 
-    case WM_ACTIVATE:
-        if (LOWORD(wParam))
-            return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                    FNID_DEFWINDOWPROC, fAnsi);
-        break;
+        case WM_ACTIVATE:
+            if (LOWORD(wParam))
+                return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
+            break;
 
-    case WM_SHOWWINDOW:
-        if (lParam != 0)
-            return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                    FNID_DEFWINDOWPROC, fAnsi);
-        break;
+        case WM_SHOWWINDOW:
+            if (lParam != 0)
+                return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
+            break;
 
-    case WM_DROPOBJECT:
-       return DO_DROPFILE;
+        case WM_DROPOBJECT:
+            return DO_DROPFILE;
 
-    case WM_WINDOWPOSCHANGING:
-        /*
+        case WM_WINDOWPOSCHANGING:
+/*
          * If the window's size is changing, adjust the passed-in size
          */
-        #define ppos ((WINDOWPOS *)lParam)
-        if (!(ppos->flags & SWP_NOSIZE))
-            return CsSendMessage(hwnd, message, wParam, lParam, 0L,
-                    FNID_DEFWINDOWPROC, fAnsi);
-        #undef ppos
-        break;
+#define ppos ((WINDOWPOS *)lParam)
+            if (!(ppos->flags & SWP_NOSIZE))
+                return CsSendMessage(hwnd, message, wParam, lParam, 0L, FNID_DEFWINDOWPROC, fAnsi);
+#undef ppos
+            break;
 
-    case WM_KLUDGEMINRECT:
+        case WM_KLUDGEMINRECT:
         {
-        SHELLHOOKINFO shi;
-        LPRECT lprc = (LPRECT)lParam;
+            SHELLHOOKINFO shi;
+            LPRECT lprc = (LPRECT)lParam;
 
-        shi.hwnd = (HWND)wParam;
-        shi.rc.left = MAKELONG(lprc->left, lprc->top);
-        shi.rc.top = MAKELONG(lprc->right, lprc->bottom);
+            shi.hwnd = (HWND)wParam;
+            shi.rc.left = MAKELONG(lprc->left, lprc->top);
+            shi.rc.top = MAKELONG(lprc->right, lprc->bottom);
 
-        if (gpsi->uiShellMsg == 0)
-            SetTaskmanWindow(NULL);
-        if (SendMessageWorker(pwnd, gpsi->uiShellMsg, HSHELL_GETMINRECT,
-                (LPARAM)&shi, fAnsi)) {
-            //
-            // Now convert the RECT back from two POINTS structures into two POINT
-            // structures.
-            //
-            lprc->left   = (SHORT)LOWORD(shi.rc.left);  // Sign extend
-            lprc->top    = (SHORT)HIWORD(shi.rc.left);  // Sign extend
-            lprc->right  = (SHORT)LOWORD(shi.rc.top);   // Sign extend
-            lprc->bottom = (SHORT)HIWORD(shi.rc.top);   // Sign extend
+            if (gpsi->uiShellMsg == 0)
+                SetTaskmanWindow(NULL);
+            if (SendMessageWorker(pwnd, gpsi->uiShellMsg, HSHELL_GETMINRECT, (LPARAM)&shi, fAnsi))
+            {
+                //
+                // Now convert the RECT back from two POINTS structures into two POINT
+                // structures.
+                //
+                lprc->left = (SHORT)LOWORD(shi.rc.left);  // Sign extend
+                lprc->top = (SHORT)HIWORD(shi.rc.left);   // Sign extend
+                lprc->right = (SHORT)LOWORD(shi.rc.top);  // Sign extend
+                lprc->bottom = (SHORT)HIWORD(shi.rc.top); // Sign extend
+            }
+            break;
         }
-        break;
-        }
 
-    case WM_NOTIFYFORMAT:
-        if (lParam == NF_QUERY)
-            return(TestWF(pwnd, WFANSICREATOR) ? NFR_ANSI : NFR_UNICODE);
-        break;
+        case WM_NOTIFYFORMAT:
+            if (lParam == NF_QUERY)
+                return (TestWF(pwnd, WFANSICREATOR) ? NFR_ANSI : NFR_UNICODE);
+            break;
 
-    case WM_IME_KEYDOWN:
-        if (fAnsi)
-            PostMessageA(hwnd, WM_KEYDOWN, wParam, lParam);
-        else
-            PostMessageW(hwnd, WM_KEYDOWN, wParam, lParam);
-        break;
+        case WM_IME_KEYDOWN:
+            if (fAnsi)
+                PostMessageA(hwnd, WM_KEYDOWN, wParam, lParam);
+            else
+                PostMessageW(hwnd, WM_KEYDOWN, wParam, lParam);
+            break;
 
-    case WM_IME_KEYUP:
-        if (fAnsi)
-            PostMessageA(hwnd, WM_KEYUP, wParam, lParam);
-        else
-            PostMessageW(hwnd, WM_KEYUP, wParam, lParam);
-        break;
+        case WM_IME_KEYUP:
+            if (fAnsi)
+                PostMessageA(hwnd, WM_KEYUP, wParam, lParam);
+            else
+                PostMessageW(hwnd, WM_KEYUP, wParam, lParam);
+            break;
 
-    case WM_IME_CHAR:
-        //if (TestCF(pwnd, CFIME))
-        //    break;
+        case WM_IME_CHAR:
+            //if (TestCF(pwnd, CFIME))
+            //    break;
 
-        if ( fAnsi ) {
-            if( IsDBCSLeadByteEx(THREAD_CODEPAGE(),(BYTE)(wParam >> 8)) ) {
-                PostMessageA(hwnd,
-                             WM_CHAR,
-                             (WPARAM)((BYTE)(wParam >> 8)),   // leading byte
-                             1L);
-                PostMessageA(hwnd,
-                             WM_CHAR,
-                             (WPARAM)((BYTE)wParam),         // trailing byte
-                             1L);
+            if (fAnsi)
+            {
+                if (IsDBCSLeadByteEx(THREAD_CODEPAGE(), (BYTE)(wParam >> 8)))
+                {
+                    PostMessageA(hwnd, WM_CHAR,
+                                 (WPARAM)((BYTE)(wParam >> 8)), // leading byte
+                                 1L);
+                    PostMessageA(hwnd, WM_CHAR,
+                                 (WPARAM)((BYTE)wParam), // trailing byte
+                                 1L);
+                }
+                else
+                    PostMessageA(hwnd, WM_CHAR, (WPARAM)(wParam), 1L);
             }
             else
-                PostMessageA(hwnd,
-                             WM_CHAR,
-                             (WPARAM)(wParam),
-                             1L);
-        } else {
-            PostMessageW(hwnd, WM_CHAR, wParam, 1L);
-        }
-        break;
+            {
+                PostMessageW(hwnd, WM_CHAR, wParam, 1L);
+            }
+            break;
 
-    case WM_IME_COMPOSITION:
-        //if (TestCF(pwnd, CFIME))
-        //    break;
+        case WM_IME_COMPOSITION:
+            //if (TestCF(pwnd, CFIME))
+            //    break;
 
-        if (lParam & GCS_RESULTSTR) {
-            HIMC  hImc;
-            DWORD cbLen;
+            if (lParam & GCS_RESULTSTR)
+            {
+                HIMC hImc;
+                DWORD cbLen;
 
-            if ((hImc = fpImmGetContext(hwnd)) == NULL_HIMC)
-                goto dwpime_ToIMEWnd_withchk;
+                if ((hImc = fpImmGetContext(hwnd)) == NULL_HIMC)
+                    goto dwpime_ToIMEWnd_withchk;
 
-            if (fAnsi) {
-                LPSTR pszBuffer, psz;
+                if (fAnsi)
+                {
+                    LPSTR pszBuffer, psz;
 
-                /*
+                    /*
                  * ImmGetComposition returns the size of buffer needed in byte.
                  */
-                if (!(cbLen = fpImmGetCompositionStringA(hImc, GCS_RESULTSTR, NULL, 0))) {
-                    fpImmReleaseContext(hwnd, hImc);
-                    goto dwpime_ToIMEWnd_withchk;
-                }
+                    if (!(cbLen = fpImmGetCompositionStringA(hImc, GCS_RESULTSTR, NULL, 0)))
+                    {
+                        fpImmReleaseContext(hwnd, hImc);
+                        goto dwpime_ToIMEWnd_withchk;
+                    }
 
-                pszBuffer = psz = (LPSTR)UserLocalAlloc(HEAP_ZERO_MEMORY,
-                                                        cbLen + sizeof(CHAR));
+                    pszBuffer = psz = (LPSTR)UserLocalAlloc(HEAP_ZERO_MEMORY, cbLen + sizeof(CHAR));
 
-                if (pszBuffer == NULL) {
-                    fpImmReleaseContext(hwnd, hImc);
-                    goto dwpime_ToIMEWnd_withchk;
-                }
+                    if (pszBuffer == NULL)
+                    {
+                        fpImmReleaseContext(hwnd, hImc);
+                        goto dwpime_ToIMEWnd_withchk;
+                    }
 
-                fpImmGetCompositionStringA(hImc, GCS_RESULTSTR, psz, cbLen);
+                    fpImmGetCompositionStringA(hImc, GCS_RESULTSTR, psz, cbLen);
 
-                while (*psz) {
-                    if (IsDBCSLeadByteEx(THREAD_CODEPAGE(),*psz)) {
-                        if (*(psz+1)) {
-                            SendMessageA( hwnd,
-                                          WM_IME_CHAR,
-                                          MAKEWPARAM(MAKEWORD(*(psz+1), *psz), 0),
-                                          1L );
+                    while (*psz)
+                    {
+                        if (IsDBCSLeadByteEx(THREAD_CODEPAGE(), *psz))
+                        {
+                            if (*(psz + 1))
+                            {
+                                SendMessageA(hwnd, WM_IME_CHAR, MAKEWPARAM(MAKEWORD(*(psz + 1), *psz), 0), 1L);
+                                psz++;
+                            }
                             psz++;
                         }
-                        psz++;
+                        else
+                            SendMessageA(hwnd, WM_IME_CHAR, MAKEWPARAM(MAKEWORD(*(psz++), 0), 0), 1L);
                     }
-                    else
-                        SendMessageA( hwnd,
-                                      WM_IME_CHAR,
-                                      MAKEWPARAM(MAKEWORD(*(psz++), 0), 0),
-                                      1L );
+
+                    UserLocalFree(pszBuffer);
+
+                    fpImmReleaseContext(hwnd, hImc);
                 }
+                else
+                {
+                    LPWSTR pwszBuffer, pwsz;
 
-                UserLocalFree(pszBuffer);
-
-                fpImmReleaseContext(hwnd, hImc);
-            }
-            else {
-                LPWSTR pwszBuffer, pwsz;
-
-                /*
+                    /*
                  * ImmGetComposition returns the size of buffer needed in byte
                  */
-                if (!(cbLen = fpImmGetCompositionStringW(hImc, GCS_RESULTSTR, NULL, 0))) {
+                    if (!(cbLen = fpImmGetCompositionStringW(hImc, GCS_RESULTSTR, NULL, 0)))
+                    {
+                        fpImmReleaseContext(hwnd, hImc);
+                        goto dwpime_ToIMEWnd_withchk;
+                    }
+
+                    pwszBuffer = pwsz = (LPWSTR)UserLocalAlloc(HEAP_ZERO_MEMORY, cbLen + sizeof(WCHAR));
+
+                    if (pwszBuffer == NULL)
+                    {
+                        fpImmReleaseContext(hwnd, hImc);
+                        goto dwpime_ToIMEWnd_withchk;
+                    }
+
+                    fpImmGetCompositionStringW(hImc, GCS_RESULTSTR, pwsz, cbLen);
+
+                    while (*pwsz)
+                        SendMessageW(hwnd, WM_IME_CHAR, MAKEWPARAM(*pwsz++, 0), 1L);
+
+                    UserLocalFree(pwszBuffer);
+
                     fpImmReleaseContext(hwnd, hImc);
-                    goto dwpime_ToIMEWnd_withchk;
                 }
-
-                pwszBuffer = pwsz = (LPWSTR)UserLocalAlloc(HEAP_ZERO_MEMORY,
-                                                           cbLen + sizeof(WCHAR));
-
-                if (pwszBuffer == NULL) {
-                    fpImmReleaseContext(hwnd, hImc);
-                    goto dwpime_ToIMEWnd_withchk;
-                }
-
-                fpImmGetCompositionStringW(hImc, GCS_RESULTSTR, pwsz, cbLen);
-
-                while (*pwsz)
-                    SendMessageW(hwnd, WM_IME_CHAR, MAKEWPARAM(*pwsz++, 0), 1L);
-
-                UserLocalFree(pwszBuffer);
-
-                fpImmReleaseContext(hwnd, hImc);
             }
-        }
 
-        /*
+            /*
          * Fall through to send to Default IME Window with checking
          * activated hIMC.
          */
 
-    case WM_IME_STARTCOMPOSITION:
-    case WM_IME_ENDCOMPOSITION:
-dwpime_ToIMEWnd_withchk:
-        //if (TestCF(pwnd, CFIME))
-        //    break;
+        case WM_IME_STARTCOMPOSITION:
+        case WM_IME_ENDCOMPOSITION:
+        dwpime_ToIMEWnd_withchk:
+            //if (TestCF(pwnd, CFIME))
+            //    break;
 
-        if (GetClientInfo()->dwTIFlags & TIF_DISABLEIME) {
-            break;
-        }
-        /*
+            if (GetClientInfo()->dwTIFlags & TIF_DISABLEIME)
+            {
+                break;
+            }
+            /*
          * We assume this Wnd uses DefaultIMEWindow.
          * If this window has its own IME window, it have to call
          * ImmIsUIMessage()....
          */
-        hwndDefIme = fpImmGetDefaultIMEWnd(hwnd);
+            hwndDefIme = fpImmGetDefaultIMEWnd(hwnd);
 
-        if (hwndDefIme == hwnd) {
-            /*
+            if (hwndDefIme == hwnd)
+            {
+                /*
              * VC++ 1.51 TLW0NCL.DLL subclass IME class window
              * and pass IME messages to DefWindowProc().
              */
-            RIPMSG1(RIP_WARNING,
-                "IME Class window is hooked and IME message [%X] are sent to DefWindowProc",
-                message);
-            ImeWndProcWorker(pwnd, message, wParam, lParam, fAnsi);
-            break;
-        }
-
-        if ((pwndDefIme = ValidateHwndNoRip(hwndDefIme)) != NULL) {
-            /*
-             * If hImc of this window is not activated for IME window,
-             * we don't send WM_IME_NOTIFY.
-             */
-            pimeui = ((PIMEWND)pwndDefIme)->pimeui;
-            if (pimeui->hIMC == fpImmGetContext(hwnd))
-                return SendMessageWorker(pwndDefIme, message, wParam, lParam, fAnsi);
-            else
-                RIPMSG1(RIP_WARNING,
-                    "DefWindowProc can not send WM_IME_message [%X] now",
-                    message);
-        }
-        break;
-
-dwpime_ToTopLevel_withchk:
-        //if (TestCF(pwnd, CFIME))
-        //    break;
-
-        /*
-         * We assume this Wnd uses DefaultIMEWindow.
-         * If this window has its own IME window, it have to call
-         * ImmIsUIMessage()....
-         */
-        hwndDefIme = fpImmGetDefaultIMEWnd(hwnd);
-
-        if (hwndDefIme == hwnd) {
-            /*
-             * VC++ 1.51 TLW0NCL.DLL subclass IME class window
-             * and pass IME messages to DefWindowProc().
-             */
-            RIPMSG1(RIP_WARNING,
-                "IME Class window is hooked and IME message [%X] are sent to DefWindowProc",
-                message);
-            ImeWndProcWorker(pwnd, message, wParam, lParam, fAnsi);
-            break;
-        }
-
-        pwndDefIme = ValidateHwndNoRip(hwndDefIme);
-
-        if ((pwndDefIme = ValidateHwndNoRip(hwndDefIme)) != NULL) {
-            PWND pwndT, pwndParent;
-
-            pwndT = pwnd;
-
-            while (TestwndChild(pwndT)) {
-                pwndParent = REBASEPWND(pwndT, spwndParent);
-                if (GETPTI(pwndParent) != GETPTI(pwnd))
-                    break;
-                pwndT = pwndParent;
+                RIPMSG1(RIP_WARNING, "IME Class window is hooked and IME message [%X] are sent to DefWindowProc",
+                        message);
+                ImeWndProcWorker(pwnd, message, wParam, lParam, fAnsi);
+                break;
             }
 
-            /*
+            if ((pwndDefIme = ValidateHwndNoRip(hwndDefIme)) != NULL)
+            {
+                /*
              * If hImc of this window is not activated for IME window,
              * we don't send WM_IME_NOTIFY.
              */
-            if (pwndT != pwnd) {
                 pimeui = ((PIMEWND)pwndDefIme)->pimeui;
                 if (pimeui->hIMC == fpImmGetContext(hwnd))
-                    return SendMessageWorker(pwndT, message, wParam, lParam, fAnsi);
+                    return SendMessageWorker(pwndDefIme, message, wParam, lParam, fAnsi);
                 else
-                    RIPMSG1(RIP_WARNING,
-                        "DefWindowProc can not send WM_IME_message [%X] now",
-                        message);
+                    RIPMSG1(RIP_WARNING, "DefWindowProc can not send WM_IME_message [%X] now", message);
             }
-            else {
+            break;
+
+        dwpime_ToTopLevel_withchk:
+            //if (TestCF(pwnd, CFIME))
+            //    break;
+
+            /*
+         * We assume this Wnd uses DefaultIMEWindow.
+         * If this window has its own IME window, it have to call
+         * ImmIsUIMessage()....
+         */
+            hwndDefIme = fpImmGetDefaultIMEWnd(hwnd);
+
+            if (hwndDefIme == hwnd)
+            {
                 /*
+             * VC++ 1.51 TLW0NCL.DLL subclass IME class window
+             * and pass IME messages to DefWindowProc().
+             */
+                RIPMSG1(RIP_WARNING, "IME Class window is hooked and IME message [%X] are sent to DefWindowProc",
+                        message);
+                ImeWndProcWorker(pwnd, message, wParam, lParam, fAnsi);
+                break;
+            }
+
+            pwndDefIme = ValidateHwndNoRip(hwndDefIme);
+
+            if ((pwndDefIme = ValidateHwndNoRip(hwndDefIme)) != NULL)
+            {
+                PWND pwndT, pwndParent;
+
+                pwndT = pwnd;
+
+                while (TestwndChild(pwndT))
+                {
+                    pwndParent = REBASEPWND(pwndT, spwndParent);
+                    if (GETPTI(pwndParent) != GETPTI(pwnd))
+                        break;
+                    pwndT = pwndParent;
+                }
+
+                /*
+             * If hImc of this window is not activated for IME window,
+             * we don't send WM_IME_NOTIFY.
+             */
+                if (pwndT != pwnd)
+                {
+                    pimeui = ((PIMEWND)pwndDefIme)->pimeui;
+                    if (pimeui->hIMC == fpImmGetContext(hwnd))
+                        return SendMessageWorker(pwndT, message, wParam, lParam, fAnsi);
+                    else
+                        RIPMSG1(RIP_WARNING, "DefWindowProc can not send WM_IME_message [%X] now", message);
+                }
+                else
+                {
+                    /*
                  * Review !!
                  * If this is the toplevel window, we pass messages to
                  * the default IME window...
                  */
-                return SendMessageWorker(pwndDefIme, message, wParam, lParam, fAnsi);
+                    return SendMessageWorker(pwndDefIme, message, wParam, lParam, fAnsi);
+                }
             }
-        }
-        break;
+            break;
 
-    case WM_IME_NOTIFY:
-        switch (wParam) {
-        case IMN_OPENSTATUSWINDOW:
-        case IMN_CLOSESTATUSWINDOW:
+        case WM_IME_NOTIFY:
+            switch (wParam)
+            {
+            case IMN_OPENSTATUSWINDOW:
+            case IMN_CLOSESTATUSWINDOW:
 #ifndef WKWOK_DEBUG
-            goto dwpime_ToIMEWnd_withchk;
+                goto dwpime_ToIMEWnd_withchk;
 #endif
-            goto dwpime_ToTopLevel_withchk;
+                goto dwpime_ToTopLevel_withchk;
 
-        default:
-            goto dwpime_ToIMEWnd_withchk;
-        }
-        break;
-
-    case WM_IME_REQUEST:
-        switch (wParam) {
-        case IMR_QUERYCHARPOSITION:
-            goto dwpime_ToIMEWnd_withchk;
-        default:
+            default:
+                goto dwpime_ToIMEWnd_withchk;
+            }
             break;
-        }
-        break;
 
-    case WM_IME_SYSTEM:
-        if (wParam == IMS_SETACTIVECONTEXT) {
-            RIPMSG0(RIP_WARNING, "DefWindowProc received unexpected WM_IME_SYSTEM");
+        case WM_IME_REQUEST:
+            switch (wParam)
+            {
+            case IMR_QUERYCHARPOSITION:
+                goto dwpime_ToIMEWnd_withchk;
+            default:
+                break;
+            }
             break;
-        }
 
-        /*
+        case WM_IME_SYSTEM:
+            if (wParam == IMS_SETACTIVECONTEXT)
+            {
+                RIPMSG0(RIP_WARNING, "DefWindowProc received unexpected WM_IME_SYSTEM");
+                break;
+            }
+
+            /*
          * IMS_SETOPENSTATUS is depended on the activated input context.
          * It needs to be sent to only the activated system window.
          */
-        if (wParam == IMS_SETOPENSTATUS)
-            goto dwpime_ToIMEWnd_withchk;
+            if (wParam == IMS_SETOPENSTATUS)
+                goto dwpime_ToIMEWnd_withchk;
 
-        /*
+            /*
          * Fall through to send to Default IME Window.
          */
 
-    case WM_IME_SETCONTEXT:
-        //if (TestCF(pwnd, CFIME))
-        //    break;
+        case WM_IME_SETCONTEXT:
+            //if (TestCF(pwnd, CFIME))
+            //    break;
 
-        hwndDefIme = fpImmGetDefaultIMEWnd(hwnd);
+            hwndDefIme = fpImmGetDefaultIMEWnd(hwnd);
 
-        if (hwndDefIme == hwnd) {
-            /*
+            if (hwndDefIme == hwnd)
+            {
+                /*
              * VC++ 1.51 TLW0NCL.DLL subclass IME class window
              * and pass IME messages to DefWindowProc().
              */
-            RIPMSG1(RIP_WARNING,
-                "IME Class window is hooked and IME message [%X] are sent to DefWindowProc",
-                message);
-            ImeWndProcWorker(pwnd, message, wParam, lParam, fAnsi);
+                RIPMSG1(RIP_WARNING, "IME Class window is hooked and IME message [%X] are sent to DefWindowProc",
+                        message);
+                ImeWndProcWorker(pwnd, message, wParam, lParam, fAnsi);
+                break;
+            }
+
+            if ((pwndDefIme = ValidateHwndNoRip(hwndDefIme)) != NULL)
+                return SendMessageWorker(pwndDefIme, message, wParam, lParam, fAnsi);
+
             break;
-        }
 
-        if ((pwndDefIme = ValidateHwndNoRip(hwndDefIme)) != NULL)
-            return SendMessageWorker(pwndDefIme, message, wParam, lParam, fAnsi);
+        case WM_IME_SELECT:
+            RIPMSG0(RIP_WARNING, "DefWindowProc should not receive WM_IME_SELECT");
+            break;
 
-        break;
+        case WM_IME_COMPOSITIONFULL:
+            //if (TestCF(pwnd, CFIME))
+            //    break;
 
-    case WM_IME_SELECT:
-        RIPMSG0(RIP_WARNING, "DefWindowProc should not receive WM_IME_SELECT");
-        break;
-
-    case WM_IME_COMPOSITIONFULL:
-        //if (TestCF(pwnd, CFIME))
-        //    break;
-
-        if (GETAPPVER() < VER40) {
-            /*
+            if (GETAPPVER() < VER40)
+            {
+                /*
              * This is a temporary solution for win31app.
              * FEREVIEW: For M5 this will call WINNLS message mapping logic
              *           -yutakan
              */
-            return SendMessageWorker(pwnd, WM_IME_REPORT,
-                             IR_FULLCONVERT, (LPARAM)0L, fAnsi);
-        }
-        break;
+                return SendMessageWorker(pwnd, WM_IME_REPORT, IR_FULLCONVERT, (LPARAM)0L, fAnsi);
+            }
+            break;
 
-    case WM_CHANGEUISTATE:
+        case WM_CHANGEUISTATE:
         {
             WORD wAction = LOWORD(wParam);
             WORD wFlags = HIWORD(wParam);
@@ -2069,26 +2061,35 @@ dwpime_ToTopLevel_withchk:
             /*
              * Validate parameters and determine the flags that should actually be changed.
              */
-            if ((wFlags & ~UISF_VALID) || (wAction > UIS_LASTVALID) || lParam) {
+            if ((wFlags & ~UISF_VALID) || (wAction > UIS_LASTVALID) || lParam)
+            {
                 return 0;
             }
 
-            if (wAction == UIS_INITIALIZE) {
+            if (wAction == UIS_INITIALIZE)
+            {
                 wFlags = 0;
-                if (TEST_KbdCuesPUSIF) {
-                    if (gpsi->bLastRITWasKeyboard) {
+                if (TEST_KbdCuesPUSIF)
+                {
+                    if (gpsi->bLastRITWasKeyboard)
+                    {
                         wAction = UIS_CLEAR;
-                    } else {
+                    }
+                    else
+                    {
                         wAction = UIS_SET;
                     }
                     wFlags = UISF_HIDEFOCUS | UISF_HIDEACCEL;
                     wParam = MAKEWPARAM(wAction, wFlags);
                 }
-            } else if (!TEST_KbdCuesPUSIF) {
+            }
+            else if (!TEST_KbdCuesPUSIF)
+            {
                 wFlags &= ~(UISF_HIDEFOCUS | UISF_HIDEACCEL);
             }
 
-            if (wFlags == 0) {
+            if (wFlags == 0)
+            {
                 return 0;
             }
 
@@ -2096,17 +2097,21 @@ dwpime_ToTopLevel_withchk:
             /*
              * If the state is not going to change, there's nothing to do here
              */
-            if (wFlags & UISF_HIDEFOCUS) {
+            if (wFlags & UISF_HIDEFOCUS)
+            {
                 bRealChange = (!!TestWF(pwnd, WEFPUIFOCUSHIDDEN)) ^ (wAction == UIS_SET);
             }
-            if (wFlags & UISF_HIDEACCEL) {
+            if (wFlags & UISF_HIDEACCEL)
+            {
                 bRealChange |= (!!TestWF(pwnd, WEFPUIACCELHIDDEN)) ^ (wAction == UIS_SET);
             }
-            if (wFlags & UISF_ACTIVE) {
+            if (wFlags & UISF_ACTIVE)
+            {
                 bRealChange |= (!!TestWF(pwnd, WEFPUIACTIVE)) ^ (wAction == UIS_SET);
             }
 
-            if (!bRealChange) {
+            if (!bRealChange)
+            {
                 break;
             }
             /*
@@ -2114,25 +2119,26 @@ dwpime_ToTopLevel_withchk:
              * Top level windows update send down to themselves WM_UPDATEUISTATE.
              * WM_UPDATEUISTATE will change the state bits and broadcast down the message
              */
-            if (TestwndChild(pwnd)) {
+            if (TestwndChild(pwnd))
+            {
 
-                return SendMessageWorker(REBASEPWND(pwnd, spwndParent), WM_CHANGEUISTATE,
-                              wParam, lParam, fAnsi);
-            } else {
+                return SendMessageWorker(REBASEPWND(pwnd, spwndParent), WM_CHANGEUISTATE, wParam, lParam, fAnsi);
+            }
+            else
+            {
                 return SendMessageWorker(pwnd, WM_UPDATEUISTATE, wParam, lParam, fAnsi);
             }
-
         }
         break;
 
-    case WM_QUERYUISTATE:
-        return (TestWF(pwnd, WEFPUIFOCUSHIDDEN) ? UISF_HIDEFOCUS : 0) |
-               (TestWF(pwnd, WEFPUIACCELHIDDEN) ? UISF_HIDEACCEL : 0) |
-               (TestWF(pwnd, WEFPUIACTIVE) ? UISF_ACTIVE : 0);
-        break;
-    }
+        case WM_QUERYUISTATE:
+            return (TestWF(pwnd, WEFPUIFOCUSHIDDEN) ? UISF_HIDEFOCUS : 0) |
+                   (TestWF(pwnd, WEFPUIACCELHIDDEN) ? UISF_HIDEACCEL : 0) |
+                   (TestWF(pwnd, WEFPUIACTIVE) ? UISF_ACTIVE : 0);
+            break;
+        }
 
-    return 0;
+        return 0;
 
 #if DBG
     } // gfTurboDWP
@@ -2150,13 +2156,8 @@ dwpime_ToTopLevel_withchk:
 * 04-17-91 DarrinM Created.
 \***************************************************************************/
 
-LRESULT WINAPI CallWindowProcAorW(
-    WNDPROC pfn,
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL bAnsi)             // Denotes if input is Ansi or Unicode
+LRESULT WINAPI CallWindowProcAorW(WNDPROC pfn, HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam,
+                                  BOOL bAnsi) // Denotes if input is Ansi or Unicode
 {
     PCALLPROCDATA pCPD;
     PWND pwnd;
@@ -2170,28 +2171,35 @@ LRESULT WINAPI CallWindowProcAorW(
      * For some reasons, Spy++ passes NULL as pfn to CallWindowProc
      *
      */
-    if (pfn == NULL) {
+    if (pfn == NULL)
+    {
         RIPMSG0(RIP_WARNING, "CallWidowProcAorW(): pfn == NULL!");
         return 0L;
     }
 
-// OPT!! check an ANSI\UNICODE table rather than fnDWORD
-// OPT!! convert WM_CHAR family messages in line
+    // OPT!! check an ANSI\UNICODE table rather than fnDWORD
+    // OPT!! convert WM_CHAR family messages in line
 
     /*
      * Check if pfn is really a CallProcData Handle
      * if it is and there is no ANSI data then convert the handle
      * into an address; otherwise call the server for translation
      */
-    if (ISCPDTAG(pfn)) {
-        if (pCPD = HMValidateHandleNoRip((HANDLE)pfn, TYPE_CALLPROC)) {
-            if ((message >= WM_USER) || !MessageTable[message].bThunkMessage) {
+    if (ISCPDTAG(pfn))
+    {
+        if (pCPD = HMValidateHandleNoRip((HANDLE)pfn, TYPE_CALLPROC))
+        {
+            if ((message >= WM_USER) || !MessageTable[message].bThunkMessage)
+            {
                 pfn = (WNDPROC)pCPD->pfnClientPrevious;
-            } else {
-                return CsSendMessage(hwnd, message, wParam, lParam, (ULONG_PTR)pfn,
-                        FNID_CALLWINDOWPROC, bAnsi);
             }
-        } else {
+            else
+            {
+                return CsSendMessage(hwnd, message, wParam, lParam, (ULONG_PTR)pfn, FNID_CALLWINDOWPROC, bAnsi);
+            }
+        }
+        else
+        {
             RIPMSG1(RIP_WARNING, "CallWindowProc tried using a deleted CPD %#p\n", pfn);
             return 0;
         }
@@ -2202,24 +2210,16 @@ LRESULT WINAPI CallWindowProcAorW(
 }
 
 
-FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, CallWindowProcA, WNDPROC, pfn, HWND, hwnd, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI CallWindowProcA(
-    WNDPROC pfn,
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, CallWindowProcA, WNDPROC, pfn, HWND, hwnd, UINT, message, WPARAM, wParam, LPARAM,
+         lParam)
+LRESULT WINAPI CallWindowProcA(WNDPROC pfn, HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return CallWindowProcAorW(pfn, hwnd, message, wParam, lParam, TRUE);
 }
 
-FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, CallWindowProcW, WNDPROC, pfn, HWND, hwnd, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI CallWindowProcW(
-    WNDPROC pfn,
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, CallWindowProcW, WNDPROC, pfn, HWND, hwnd, UINT, message, WPARAM, wParam, LPARAM,
+         lParam)
+LRESULT WINAPI CallWindowProcW(WNDPROC pfn, HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return CallWindowProcAorW(pfn, hwnd, message, wParam, lParam, FALSE);
 }
@@ -2233,29 +2233,19 @@ LRESULT WINAPI CallWindowProcW(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, MenuWindowProcW, HWND, hwnd, HWND, hwndMDIClient, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI MenuWindowProcW(
-    HWND hwnd,
-    HWND hwndMDIClient,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, MenuWindowProcW, HWND, hwnd, HWND, hwndMDIClient, UINT, message, WPARAM, wParam,
+         LPARAM, lParam)
+LRESULT WINAPI MenuWindowProcW(HWND hwnd, HWND hwndMDIClient, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    return CsSendMessage(hwnd, message, wParam, lParam,
-        (ULONG_PTR)hwndMDIClient, FNID_MENU, FALSE);
+    return CsSendMessage(hwnd, message, wParam, lParam, (ULONG_PTR)hwndMDIClient, FNID_MENU, FALSE);
 }
 
 
-FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, MenuWindowProcA, HWND, hwnd, HWND, hwndMDIClient, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI MenuWindowProcA(
-    HWND hwnd,
-    HWND hwndMDIClient,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, MenuWindowProcA, HWND, hwnd, HWND, hwndMDIClient, UINT, message, WPARAM, wParam,
+         LPARAM, lParam)
+LRESULT WINAPI MenuWindowProcA(HWND hwnd, HWND hwndMDIClient, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    return CsSendMessage(hwnd, message, wParam, lParam,
-        (ULONG_PTR)hwndMDIClient, FNID_MENU, TRUE);
+    return CsSendMessage(hwnd, message, wParam, lParam, (ULONG_PTR)hwndMDIClient, FNID_MENU, TRUE);
 }
 
 /***************************************************************************\
@@ -2274,13 +2264,9 @@ LRESULT WINAPI MenuWindowProcA(
 * 04-13-91 ScottLu Created.
 \***************************************************************************/
 
-DWORD WINAPI _ClientGetListboxString(
-    PWND pwnd,
-    UINT msg,
-    WPARAM wParam,
-    LPSTR lParam, // May be a unicode or ANSI string
-    ULONG_PTR xParam,
-    PROC xpfn)
+DWORD WINAPI _ClientGetListboxString(PWND pwnd, UINT msg, WPARAM wParam,
+                                     LPSTR lParam, // May be a unicode or ANSI string
+                                     ULONG_PTR xParam, PROC xpfn)
 {
     return ((DWORD)((GENERICPROC)xpfn)(pwnd, msg, wParam, (LPARAM)lParam, xParam));
 }
@@ -2293,9 +2279,7 @@ DWORD WINAPI _ClientGetListboxString(
 *
 * 04-24-92 DarrinM      Created.
 \***************************************************************************/
-LRESULT DispatchMessageWorker(
-    MSG *pmsg,
-    BOOL fAnsi)
+LRESULT DispatchMessageWorker(MSG *pmsg, BOOL fAnsi)
 {
     PWND pwnd;
     WPARAM wParamSaved;
@@ -2305,22 +2289,25 @@ LRESULT DispatchMessageWorker(
     /*
      * Prevent apps from setting hi 16 bits so we can use them internally.
      */
-    if (pmsg->message & RESERVED_MSG_BITS) {
-        RIPERR1(ERROR_INVALID_PARAMETER,
-                RIP_WARNING,
-                "Invalid parameter \"pmsg->message\" (%ld) to DispatchMessageWorker",
-                pmsg->message);
+    if (pmsg->message & RESERVED_MSG_BITS)
+    {
+        RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING,
+                "Invalid parameter \"pmsg->message\" (%ld) to DispatchMessageWorker", pmsg->message);
 
         return 0;
     }
 
-    if (pmsg->hwnd != NULL) {
+    if (pmsg->hwnd != NULL)
+    {
         pwnd = ValidateHwnd(pmsg->hwnd);
-        if (pwnd == NULL) {
+        if (pwnd == NULL)
+        {
             return 0;
         }
         pmsg->hwnd = HWq(pwnd); // get full 32-bit HWND in case this came from WoW
-    } else {
+    }
+    else
+    {
         pwnd = NULL;
     }
 
@@ -2333,11 +2320,13 @@ LRESULT DispatchMessageWorker(
      * (This api is only called in the context of a message loop, and you
      * don't get synchronous-only messages in a message loop).
      */
-    if (TESTSYNCONLYMESSAGE(pmsg->message, pmsg->wParam)) {
+    if (TESTSYNCONLYMESSAGE(pmsg->message, pmsg->wParam))
+    {
         /*
          * Fail if 32 bit app is calling.
          */
-        if (!(GetClientInfo()->dwTIFlags & TIF_16BIT)) {
+        if (!(GetClientInfo()->dwTIFlags & TIF_16BIT))
+        {
             RIPERR0(ERROR_MESSAGE_SYNC_ONLY, RIP_WARNING, "DispatchMessageWorker: must be sync only");
             return FALSE;
         }
@@ -2355,7 +2344,8 @@ LRESULT DispatchMessageWorker(
      * Timer callbacks that don't go through window procs are sent with
      * the callback address in lParam.  Identify and dispatch those timers.
      */
-    if ((pmsg->message == WM_TIMER) || (pmsg->message == WM_SYSTIMER)) {
+    if ((pmsg->message == WM_TIMER) || (pmsg->message == WM_SYSTIMER))
+    {
         /*
          * Console windows use WM_TIMER for the caret. However, they don't
          * use a timer callback, so if this is CSRSS and there's a WM_TIMER
@@ -2363,58 +2353,65 @@ LRESULT DispatchMessageWorker(
          * to make us fault. No, this isn't a nice thing to do, but there
          * are bad, bad people out there. Windows Bug #361246.
          */
-        if (pmsg->lParam != 0) {
+        if (pmsg->lParam != 0)
+        {
             /*
              * System timers must be executed on the server's context.
              */
-            if (pmsg->message == WM_SYSTIMER) {
+            if (pmsg->message == WM_SYSTIMER)
+            {
                 return NtUserDispatchMessage(pmsg);
-            } else if (!gfServerProcess) {
+            }
+            else if (!gfServerProcess)
+            {
                 /*
                  * WM_TIMER with lParam could be an attack from
                  * malicious apps.  To make sure the call is legitimate,
                  * let the kernel side validates it.
                  */
-                if (!NtUserValidateTimerCallback(pmsg->hwnd, pmsg->wParam, pmsg->lParam)) {
-                    RIPMSG3(RIP_WARNING, "DispatchMessageWorker: invalid timer: hwnd=%p, wParam=%p, lParam=%p", pmsg->hwnd, pmsg->wParam, pmsg->lParam);
+                if (!NtUserValidateTimerCallback(pmsg->hwnd, pmsg->wParam, pmsg->lParam))
+                {
+                    RIPMSG3(RIP_WARNING, "DispatchMessageWorker: invalid timer: hwnd=%p, wParam=%p, lParam=%p",
+                            pmsg->hwnd, pmsg->wParam, pmsg->lParam);
                     return 0;
                 }
 
-               /*
+                /*
                 * We can't really trust what's in lParam, so make sure we
                 * handle any exceptions that occur during this call.
                 */
-               try {
-                   /*
+                try
+                {
+                    /*
                     * Windows NT Bug #234292.
                     * Since the called window/dialog proc may have a different
                     * calling convention, we must wrap the call and, check esp
                     * and replace with a good esp when the call returns. This
                     * is what UserCallWinProc* does.
                     */
-                   lRet = UserCallWinProc(PACTCTXT(pwnd),
-                                          (WNDPROC)pmsg->lParam,
-                                          pmsg->hwnd,
-                                          pmsg->message,
-                                          pmsg->wParam,
-                                          NtGetTickCount());
-               } except ((GetAppCompatFlags2(VER40) & GACF2_NO_TRYEXCEPT_CALLWNDPROC) ?
-                         EXCEPTION_CONTINUE_SEARCH : W32ExceptionHandler(FALSE, RIP_WARNING)) {
-                     /*
+                    lRet = UserCallWinProc(PACTCTXT(pwnd), (WNDPROC)pmsg->lParam, pmsg->hwnd, pmsg->message,
+                                           pmsg->wParam, NtGetTickCount());
+                }
+                except((GetAppCompatFlags2(VER40) & GACF2_NO_TRYEXCEPT_CALLWNDPROC)
+                           ? EXCEPTION_CONTINUE_SEARCH
+                           : W32ExceptionHandler(FALSE, RIP_WARNING))
+                {
+                    /*
                       * Windows NT Bug #359866.
                       * Some applications like Hagaki Studio 2000 need to handle
                       * the exception in WndProc in their handler, even though it
                       * skips the API calls. For those apps, we have to honor the
                       * behavior of NT4, with no protection.
                       */
-                   lRet = 0;
-               }
-               return lRet;
+                    lRet = 0;
+                }
+                return lRet;
             }
         }
     }
 
-    if (pwnd == NULL) {
+    if (pwnd == NULL)
+    {
         return 0;
     }
 
@@ -2430,12 +2427,14 @@ LRESULT DispatchMessageWorker(
      * WM_PAINTs are passed over so the WFPAINTNOTPROCESSED code can be
      * executed.
      */
-    if (TestWF(pwnd, WFSERVERSIDEPROC) || (pmsg->message == WM_PAINT)) {
-        if (fAnsi) {
+    if (TestWF(pwnd, WFSERVERSIDEPROC) || (pmsg->message == WM_PAINT))
+    {
+        if (fAnsi)
+        {
             /*
              * Setup DBCS Messaging for WM_CHAR...
              */
-            BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(pmsg->message,pmsg->wParam,TRUE);
+            BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(pmsg->message, pmsg->wParam, TRUE);
 
             /*
              * Convert wParam to Unicode, if nessesary.
@@ -2452,25 +2451,30 @@ LRESULT DispatchMessageWorker(
      * then no message translation is necessary.  NOTE: this test
      * assumes that fAnsi is FALSE or TRUE, not just zero or non-zero.
      */
-    if (!fAnsi != !TestWF(pwnd, WFANSIPROC)) {
+    if (!fAnsi != !TestWF(pwnd, WFANSIPROC))
+    {
         // before: if (fAnsi != ((TestWF(pwnd, WFANSIPROC)) ? TRUE : FALSE)) {
 
-        if (PtiCurrent() != GETPTI(pwnd)) {
+        if (PtiCurrent() != GETPTI(pwnd))
+        {
             RIPMSG0(RIP_WARNING, "message belongs to a different Q");
             return 0;
         }
 
-        if (fAnsi) {
+        if (fAnsi)
+        {
             /*
              * Setup DBCS Messaging for WM_CHAR...
              */
-            BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_CLIENTA(pmsg->message,pmsg->wParam,TRUE);
+            BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_CLIENTA(pmsg->message, pmsg->wParam, TRUE);
 
             /*
              * Convert wParam to Unicode, if nessesary.
              */
             RtlMBMessageWParamCharToWCS(pmsg->message, &pmsg->wParam);
-        } else {
+        }
+        else
+        {
             /*
              * Convert wParam to ANSI...
              */
@@ -2479,20 +2483,19 @@ LRESULT DispatchMessageWorker(
             /*
              * Let's DBCS messaging for WM_CHAR....
              */
-            BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_CLIENTW(
-                pmsg->hwnd,pmsg->message,pmsg->wParam,pmsg->lParam,
-                pmsg->time,pmsg->pt,bDoDbcsMessaging);
+            BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_CLIENTW(pmsg->hwnd, pmsg->message, pmsg->wParam, pmsg->lParam,
+                                                       pmsg->time, pmsg->pt, bDoDbcsMessaging);
         }
     }
 
 DispatchMessageAgain:
-    lRet = UserCallWinProcCheckWow(pwnd->pActCtx, (WNDPROC)pwnd->lpfnWndProc, pmsg->hwnd, pmsg->message,
-            pmsg->wParam, pmsg->lParam, &(pwnd->state), TRUE);
+    lRet = UserCallWinProcCheckWow(pwnd->pActCtx, (WNDPROC)pwnd->lpfnWndProc, pmsg->hwnd, pmsg->message, pmsg->wParam,
+                                   pmsg->lParam, &(pwnd->state), TRUE);
 
     /*
      * if we have DBCS TrailingByte that should be sent, send it here..
      */
-    DISPATCH_DBCS_MESSAGE_IF_EXIST(pmsg->message,pmsg->wParam,bDoDbcsMessaging,DispatchMessage);
+    DISPATCH_DBCS_MESSAGE_IF_EXIST(pmsg->message, pmsg->wParam, bDoDbcsMessaging, DispatchMessage);
 
     pmsg->wParam = wParamSaved;
     return lRet;
@@ -2533,7 +2536,6 @@ LPARAM SetMessageExtraInfo(LPARAM lParam)
 }
 
 
-
 /***********************************************************************\
 * InSendMessage (API)
 *
@@ -2548,7 +2550,8 @@ BOOL InSendMessage(VOID)
 {
     PCLIENTTHREADINFO pcti = GetClientInfo()->pClientThreadInfo;
 
-    if (pcti) {
+    if (pcti)
+    {
         return TEST_BOOL_FLAG(pcti->CTIF_flags, CTIF_INSENDMESSAGE);
     }
     return NtUserGetThreadState(UserThreadStateInSendMessage) != ISMEX_NOSEND;
@@ -2570,7 +2573,8 @@ DWORD InSendMessageEx(LPVOID lpReserved)
     PCLIENTTHREADINFO pcti = GetClientInfo()->pClientThreadInfo;
     UNREFERENCED_PARAMETER(lpReserved);
 
-    if (pcti && !TEST_FLAG(pcti->CTIF_flags, CTIF_INSENDMESSAGE)) {
+    if (pcti && !TEST_FLAG(pcti->CTIF_flags, CTIF_INSENDMESSAGE))
+    {
         return ISMEX_NOSEND;
     }
     return (DWORD)NtUserGetThreadState(UserThreadStateInSendMessage);
@@ -2585,10 +2589,7 @@ DWORD InSendMessageEx(LPVOID lpReserved)
 * 11-15-94 JimA         Created.
 \***********************************************************************/
 
-ULONG_PTR GetCPD(
-    KERNEL_PVOID pWndOrCls,
-    DWORD options,
-    ULONG_PTR dwData)
+ULONG_PTR GetCPD(KERNEL_PVOID pWndOrCls, DWORD options, ULONG_PTR dwData)
 {
     return NtUserGetCPD(HW(pWndOrCls), options, dwData);
 }
@@ -2604,21 +2605,23 @@ ULONG_PTR GetCPD(
 * 11-15-98 PeterHal         Created.
 \***********************************************************************/
 WNDPROC_PWND
-MapKernelClientFnToClientFn(
-    WNDPROC_PWND lpfnWndProc
-    )
+MapKernelClientFnToClientFn(WNDPROC_PWND lpfnWndProc)
 {
     KPKERNEL_ULONG_PTR pp;
 
-    for (pp = (KPKERNEL_ULONG_PTR)&gpsi->apfnClientA; pp < (KPKERNEL_ULONG_PTR) (&gpsi->apfnClientA+1); pp ++) {
-        if ((KERNEL_ULONG_PTR)lpfnWndProc == *pp) {
-            return (WNDPROC_PWND)((KERNEL_ULONG_PTR*) &pfnClientA) [ (pp - (KPKERNEL_ULONG_PTR)&gpsi->apfnClientA) ];
+    for (pp = (KPKERNEL_ULONG_PTR)&gpsi->apfnClientA; pp < (KPKERNEL_ULONG_PTR)(&gpsi->apfnClientA + 1); pp++)
+    {
+        if ((KERNEL_ULONG_PTR)lpfnWndProc == *pp)
+        {
+            return (WNDPROC_PWND)((KERNEL_ULONG_PTR *)&pfnClientA)[(pp - (KPKERNEL_ULONG_PTR)&gpsi->apfnClientA)];
         }
     }
 
-    for (pp = (KPKERNEL_ULONG_PTR)&gpsi->apfnClientW; pp < (KPKERNEL_ULONG_PTR) (&gpsi->apfnClientW+1); pp ++) {
-        if ((KERNEL_ULONG_PTR)lpfnWndProc == *pp) {
-            return (WNDPROC_PWND)((KERNEL_ULONG_PTR*) &pfnClientW) [ (pp - (KPKERNEL_ULONG_PTR)&gpsi->apfnClientW) ];
+    for (pp = (KPKERNEL_ULONG_PTR)&gpsi->apfnClientW; pp < (KPKERNEL_ULONG_PTR)(&gpsi->apfnClientW + 1); pp++)
+    {
+        if ((KERNEL_ULONG_PTR)lpfnWndProc == *pp)
+        {
+            return (WNDPROC_PWND)((KERNEL_ULONG_PTR *)&pfnClientW)[(pp - (KPKERNEL_ULONG_PTR)&gpsi->apfnClientW)];
         }
     }
 
@@ -2629,15 +2632,13 @@ MapKernelClientFnToClientFn(
 #ifdef GENERIC_INPUT
 LRESULT
 APIENTRY
-DefRawInputProc(
-    PRAWINPUT* paRawInput,
-    INT nInput,
-    UINT cbSizeHeader)
+DefRawInputProc(PRAWINPUT *paRawInput, INT nInput, UINT cbSizeHeader)
 {
     UNREFERENCED_PARAMETER(paRawInput);
     UNREFERENCED_PARAMETER(nInput);
 
-    if (cbSizeHeader != sizeof(RAWINPUTHEADER)) {
+    if (cbSizeHeader != sizeof(RAWINPUTHEADER))
+    {
         return (LRESULT)-1;
     }
 
@@ -2645,4 +2646,3 @@ DefRawInputProc(
 }
 
 #endif
-

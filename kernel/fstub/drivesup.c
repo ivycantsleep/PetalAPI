@@ -41,54 +41,54 @@ Revision History:
 // Macro definitions
 //
 
-#define GET_STARTING_SECTOR( p ) (                  \
-        (ULONG) (p->StartingSectorLsb0) +           \
-        (ULONG) (p->StartingSectorLsb1 << 8) +      \
-        (ULONG) (p->StartingSectorMsb0 << 16) +     \
-        (ULONG) (p->StartingSectorMsb1 << 24) )
+#define GET_STARTING_SECTOR(p)                                                                                     \
+    ((ULONG)(p->StartingSectorLsb0) + (ULONG)(p->StartingSectorLsb1 << 8) + (ULONG)(p->StartingSectorMsb0 << 16) + \
+     (ULONG)(p->StartingSectorMsb1 << 24))
 
-#define GET_PARTITION_LENGTH( p ) (                 \
-        (ULONG) (p->PartitionLengthLsb0) +          \
-        (ULONG) (p->PartitionLengthLsb1 << 8) +     \
-        (ULONG) (p->PartitionLengthMsb0 << 16) +    \
-        (ULONG) (p->PartitionLengthMsb1 << 24) )
+#define GET_PARTITION_LENGTH(p)                                                                                       \
+    ((ULONG)(p->PartitionLengthLsb0) + (ULONG)(p->PartitionLengthLsb1 << 8) + (ULONG)(p->PartitionLengthMsb0 << 16) + \
+     (ULONG)(p->PartitionLengthMsb1 << 24))
 
 //
 //  Structure for determing if an 0xaa55 marked sector has a BPB in it.
 //
 
-typedef struct _BOOT_SECTOR_INFO {
-    UCHAR   JumpByte[1];
-    UCHAR   Ignore1[2];
-    UCHAR   OemData[8];
-    UCHAR   BytesPerSector[2];
-    UCHAR   Ignore2[6];
-    UCHAR   NumberOfSectors[2];
-    UCHAR   MediaByte[1];
-    UCHAR   Ignore3[2];
-    UCHAR   SectorsPerTrack[2];
-    UCHAR   NumberOfHeads[2];
+typedef struct _BOOT_SECTOR_INFO
+{
+    UCHAR JumpByte[1];
+    UCHAR Ignore1[2];
+    UCHAR OemData[8];
+    UCHAR BytesPerSector[2];
+    UCHAR Ignore2[6];
+    UCHAR NumberOfSectors[2];
+    UCHAR MediaByte[1];
+    UCHAR Ignore3[2];
+    UCHAR SectorsPerTrack[2];
+    UCHAR NumberOfHeads[2];
 } BOOT_SECTOR_INFO, *PBOOT_SECTOR_INFO;
 
-typedef struct _PARTITION_TABLE {
+typedef struct _PARTITION_TABLE
+{
     PARTITION_INFORMATION PartitionEntry[4];
 } PARTITION_TABLE, *PPARTITION_TABLE;
 
-typedef struct _DISK_LAYOUT {
+typedef struct _DISK_LAYOUT
+{
     ULONG TableCount;
     ULONG Signature;
     PARTITION_TABLE PartitionTable[1];
 } DISK_LAYOUT, *PDISK_LAYOUT;
 
-typedef struct _PTE {
-    UCHAR ActiveFlag;               // Bootable or not
-    UCHAR StartingTrack;            // Not used
-    USHORT StartingCylinder;        // Not used
-    UCHAR PartitionType;            // 12 bit FAT, 16 bit FAT etc.
-    UCHAR EndingTrack;              // Not used
-    USHORT EndingCylinder;          // Not used
-    ULONG StartingSector;           // Hidden sectors
-    ULONG PartitionLength;          // Sectors in this partition
+typedef struct _PTE
+{
+    UCHAR ActiveFlag;        // Bootable or not
+    UCHAR StartingTrack;     // Not used
+    USHORT StartingCylinder; // Not used
+    UCHAR PartitionType;     // 12 bit FAT, 16 bit FAT etc.
+    UCHAR EndingTrack;       // Not used
+    USHORT EndingCylinder;   // Not used
+    ULONG StartingSector;    // Hidden sectors
+    ULONG PartitionLength;   // Sectors in this partition
 } PTE;
 typedef PTE UNALIGNED *PPTE;
 
@@ -98,93 +98,47 @@ typedef PTE UNALIGNED *PPTE;
 //
 
 static PUCHAR DiskPartitionName = "\\Device\\Harddisk%d\\Partition%d";
-static PUCHAR RegistryKeyName   = DISK_REGISTRY_KEY;
+static PUCHAR RegistryKeyName = DISK_REGISTRY_KEY;
 
-VOID
-HalpCalculateChsValues(
-    IN PLARGE_INTEGER PartitionOffset,
-    IN PLARGE_INTEGER PartitionLength,
-    IN CCHAR ShiftCount,
-    IN ULONG SectorsPerTrack,
-    IN ULONG NumberOfTracks,
-    IN ULONG ConventionalCylinders,
-    OUT PPARTITION_DESCRIPTOR PartitionDescriptor
-    );
+VOID HalpCalculateChsValues(IN PLARGE_INTEGER PartitionOffset, IN PLARGE_INTEGER PartitionLength, IN CCHAR ShiftCount,
+                            IN ULONG SectorsPerTrack, IN ULONG NumberOfTracks, IN ULONG ConventionalCylinders,
+                            OUT PPARTITION_DESCRIPTOR PartitionDescriptor);
 
 NTSTATUS
-HalpQueryPartitionType(
-    IN  PUNICODE_STRING             DeviceName,
-    IN  PDRIVE_LAYOUT_INFORMATION   DriveLayout,
-    OUT PULONG                      PartitionType
-    );
+HalpQueryPartitionType(IN PUNICODE_STRING DeviceName, IN PDRIVE_LAYOUT_INFORMATION DriveLayout,
+                       OUT PULONG PartitionType);
 
 NTSTATUS
-HalpQueryDriveLayout(
-    IN  PUNICODE_STRING             DeviceName,
-    OUT PDRIVE_LAYOUT_INFORMATION*  DriveLayout
-    );
+HalpQueryDriveLayout(IN PUNICODE_STRING DeviceName, OUT PDRIVE_LAYOUT_INFORMATION *DriveLayout);
 
-VOID
-FASTCALL
-xHalGetPartialGeometry(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PULONG ConventionalCylinders,
-    IN PLONGLONG DiskSize
-    );
+VOID FASTCALL xHalGetPartialGeometry(IN PDEVICE_OBJECT DeviceObject, IN PULONG ConventionalCylinders,
+                                     IN PLONGLONG DiskSize);
 
 NTSTATUS
-HalpGetFullGeometry(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PDISK_GEOMETRY Geometry,
-    OUT PULONGLONG RealSectorCount
-    );
+HalpGetFullGeometry(IN PDEVICE_OBJECT DeviceObject, IN PDISK_GEOMETRY Geometry, OUT PULONGLONG RealSectorCount);
 
 BOOLEAN
-HalpIsValidPartitionEntry(
-    PPARTITION_DESCRIPTOR Entry,
-    ULONGLONG MaxOffset,
-    ULONGLONG MaxSector
-    );
+HalpIsValidPartitionEntry(PPARTITION_DESCRIPTOR Entry, ULONGLONG MaxOffset, ULONGLONG MaxSector);
 
 NTSTATUS
-HalpNextMountLetter(
-    IN  PUNICODE_STRING DeviceName,
-    OUT PUCHAR          DriveLetter
-    );
+HalpNextMountLetter(IN PUNICODE_STRING DeviceName, OUT PUCHAR DriveLetter);
 
 UCHAR
-HalpNextDriveLetter(
-    IN  PUNICODE_STRING DeviceName,
-    IN  PSTRING         NtDeviceName,
-    OUT PUCHAR          NtSystemPath,
-    IN  BOOLEAN         UseHardLinksIfNecessary
-    );
+HalpNextDriveLetter(IN PUNICODE_STRING DeviceName, IN PSTRING NtDeviceName, OUT PUCHAR NtSystemPath,
+                    IN BOOLEAN UseHardLinksIfNecessary);
 
-VOID
-HalpEnableAutomaticDriveLetterAssignment(
-    );
+VOID HalpEnableAutomaticDriveLetterAssignment();
 
 NTSTATUS
-HalpSetMountLetter(
-    IN  PUNICODE_STRING DeviceName,
-    IN  UCHAR           DriveLetter
-    );
+HalpSetMountLetter(IN PUNICODE_STRING DeviceName, IN UCHAR DriveLetter);
 
 BOOLEAN
-HalpIsOldStyleFloppy(
-    IN  PUNICODE_STRING DeviceName
-    );
+HalpIsOldStyleFloppy(IN PUNICODE_STRING DeviceName);
 
 PULONG
-IopComputeHarddiskDerangements(
-    IN  ULONG   DiskCount
-    );
+IopComputeHarddiskDerangements(IN ULONG DiskCount);
 
-VOID
-FstubFixupEfiPartition(
-    IN PPARTITION_DESCRIPTOR Entry,
-    IN ULONGLONG MaxSector
-    );
+VOID FstubFixupEfiPartition(IN PPARTITION_DESCRIPTOR Entry, IN ULONGLONG MaxSector);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, HalpCalculateChsValues)
@@ -206,15 +160,8 @@ FstubFixupEfiPartition(
 #endif
 
 
-
-VOID
-FASTCALL
-HalExamineMBR(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN ULONG MBRTypeIdentifier,
-    OUT PVOID *Buffer
-    )
+VOID FASTCALL HalExamineMBR(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN ULONG MBRTypeIdentifier,
+                            OUT PVOID *Buffer)
 
 /*++
 
@@ -260,7 +207,7 @@ Return Value:
 
 
     LARGE_INTEGER partitionTableOffset;
-    PUCHAR readBuffer = (PUCHAR) NULL;
+    PUCHAR readBuffer = (PUCHAR)NULL;
     KEVENT event;
     IO_STATUS_BLOCK ioStatus;
     PIRP irp;
@@ -277,9 +224,12 @@ Return Value:
     // multiple of 2, a fairly reasonable assumption.
     //
 
-    if (SectorSize >= 512) {
+    if (SectorSize >= 512)
+    {
         readSize = SectorSize;
-    } else {
+    }
+    else
+    {
         readSize = 512;
     }
 
@@ -287,19 +237,16 @@ Return Value:
     // Start at sector 0 of the device.
     //
 
-    partitionTableOffset = RtlConvertUlongToLargeInteger( 0 );
+    partitionTableOffset = RtlConvertUlongToLargeInteger(0);
 
     //
     // Allocate a buffer that will hold the reads.
     //
 
-    readBuffer = ExAllocatePoolWithTag(
-                     NonPagedPoolCacheAligned,
-                     PAGE_SIZE>readSize?PAGE_SIZE:readSize,
-                     'btsF'
-                     );
+    readBuffer = ExAllocatePoolWithTag(NonPagedPoolCacheAligned, PAGE_SIZE > readSize ? PAGE_SIZE : readSize, 'btsF');
 
-    if (readBuffer == NULL) {
+    if (readBuffer == NULL)
+    {
         return;
     }
 
@@ -310,37 +257,33 @@ Return Value:
     // the read request to complete.
     //
 
-    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-    irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ,
-                                        DeviceObject,
-                                        readBuffer,
-                                        readSize,
-                                        &partitionTableOffset,
-                                        &event,
-                                        &ioStatus );
+    irp = IoBuildSynchronousFsdRequest(IRP_MJ_READ, DeviceObject, readBuffer, readSize, &partitionTableOffset, &event,
+                                       &ioStatus);
 
-    if (!irp) {
+    if (!irp)
+    {
         ExFreePool(readBuffer);
         return;
-    } else {
+    }
+    else
+    {
         PIO_STACK_LOCATION irpStack;
         irpStack = IoGetNextIrpStackLocation(irp);
         irpStack->Flags |= SL_OVERRIDE_VERIFY_VOLUME;
     }
 
-    status = IoCallDriver( DeviceObject, irp );
+    status = IoCallDriver(DeviceObject, irp);
 
-    if (status == STATUS_PENDING) {
-        (VOID) KeWaitForSingleObject( &event,
-                                      Executive,
-                                      KernelMode,
-                                      FALSE,
-                                      (PLARGE_INTEGER) NULL);
+    if (status == STATUS_PENDING)
+    {
+        (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = ioStatus.Status;
     }
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         ExFreePool(readBuffer);
         return;
     }
@@ -349,7 +292,8 @@ Return Value:
     // Check for Boot Record signature.
     //
 
-    if (((PUSHORT) readBuffer)[BOOT_SIGNATURE_OFFSET] != BOOT_RECORD_SIGNATURE) {
+    if (((PUSHORT)readBuffer)[BOOT_SIGNATURE_OFFSET] != BOOT_RECORD_SIGNATURE)
+    {
         ExFreePool(readBuffer);
         return;
     }
@@ -358,18 +302,21 @@ Return Value:
     // Check for DM type partition.
     //
 
-    partitionTableEntry = (PPARTITION_DESCRIPTOR) &(((PUSHORT) readBuffer)[PARTITION_TABLE_OFFSET]);
+    partitionTableEntry = (PPARTITION_DESCRIPTOR) & (((PUSHORT)readBuffer)[PARTITION_TABLE_OFFSET]);
 
-    if (partitionTableEntry->PartitionType != MBRTypeIdentifier) {
+    if (partitionTableEntry->PartitionType != MBRTypeIdentifier)
+    {
 
         //
         // The partition type isn't what the caller cares about.
         //
         ExFreePool(readBuffer);
+    }
+    else
+    {
 
-    } else {
-
-        if (partitionTableEntry->PartitionType == 0x54) {
+        if (partitionTableEntry->PartitionType == 0x54)
+        {
 
             //
             // Rather than allocate a new piece of memory to return
@@ -379,8 +326,9 @@ Return Value:
 
             ((PULONG)readBuffer)[0] = 63;
             *Buffer = readBuffer;
-
-        } else if (partitionTableEntry->PartitionType == 0x55) {
+        }
+        else if (partitionTableEntry->PartitionType == 0x55)
+        {
 
             //
             // EzDrive Parititon.  Simply return the pointer to non-null
@@ -388,24 +336,17 @@ Return Value:
             //
 
             *Buffer = readBuffer;
-
-        } else {
+        }
+        else
+        {
 
             ASSERT(partitionTableEntry->PartitionType == 0x55);
-
         }
-
     }
-
 }
-
-VOID
-FASTCALL
-xHalGetPartialGeometry(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PULONG ConventionalCylinders,
-    IN PLONGLONG DiskSize
-    )
+
+VOID FASTCALL xHalGetPartialGeometry(IN PDEVICE_OBJECT DeviceObject, IN PULONG ConventionalCylinders,
+                                     IN PLONGLONG DiskSize)
 
 /*++
 
@@ -437,70 +378,45 @@ Return Value:
     *ConventionalCylinders = 0UL;
     *DiskSize = 0UL;
 
-    diskGeometry = ExAllocatePoolWithTag(
-                      NonPagedPool,
-                      sizeof(DISK_GEOMETRY),
-                      'btsF'
-                      );
+    diskGeometry = ExAllocatePoolWithTag(NonPagedPool, sizeof(DISK_GEOMETRY), 'btsF');
 
-    if (!diskGeometry) {
+    if (!diskGeometry)
+    {
 
         return;
-
     }
 
-    iosb = ExAllocatePoolWithTag(
-               NonPagedPool,
-               sizeof(IO_STATUS_BLOCK),
-               'btsF'
-               );
+    iosb = ExAllocatePoolWithTag(NonPagedPool, sizeof(IO_STATUS_BLOCK), 'btsF');
 
-    if (!iosb) {
+    if (!iosb)
+    {
 
         ExFreePool(diskGeometry);
         return;
-
     }
 
-    eventPtr = ExAllocatePoolWithTag(
-                   NonPagedPool,
-                   sizeof(KEVENT),
-                   'btsF'
-                   );
+    eventPtr = ExAllocatePoolWithTag(NonPagedPool, sizeof(KEVENT), 'btsF');
 
-    if (!eventPtr) {
+    if (!eventPtr)
+    {
 
         ExFreePool(iosb);
         ExFreePool(diskGeometry);
         return;
-
     }
 
-    KeInitializeEvent(
-        eventPtr,
-        NotificationEvent,
-        FALSE
-        );
+    KeInitializeEvent(eventPtr, NotificationEvent, FALSE);
 
-    localIrp = IoBuildDeviceIoControlRequest(
-                   IOCTL_DISK_GET_DRIVE_GEOMETRY,
-                   DeviceObject,
-                   NULL,
-                   0UL,
-                   diskGeometry,
-                   sizeof(DISK_GEOMETRY),
-                   FALSE,
-                   eventPtr,
-                   iosb
-                   );
+    localIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_DRIVE_GEOMETRY, DeviceObject, NULL, 0UL, diskGeometry,
+                                             sizeof(DISK_GEOMETRY), FALSE, eventPtr, iosb);
 
-    if (!localIrp) {
+    if (!localIrp)
+    {
 
         ExFreePool(eventPtr);
         ExFreePool(iosb);
         ExFreePool(diskGeometry);
         return;
-
     }
 
 
@@ -509,28 +425,21 @@ Return Value:
     // to finish.
     //
 
-    status = IoCallDriver(
-                 DeviceObject,
-                 localIrp
-                 );
+    status = IoCallDriver(DeviceObject, localIrp);
 
-    if (status == STATUS_PENDING) {
-        (VOID) KeWaitForSingleObject(
-                   eventPtr,
-                   Executive,
-                   KernelMode,
-                   FALSE,
-                   (PLARGE_INTEGER) NULL
-                   );
+    if (status == STATUS_PENDING)
+    {
+        (VOID) KeWaitForSingleObject(eventPtr, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = iosb->Status;
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-    //
-    // The operation completed successfully.  Get the cylinder
-    // count of the drive.
-    //
+        //
+        // The operation completed successfully.  Get the cylinder
+        // count of the drive.
+        //
 
         *ConventionalCylinders = diskGeometry->Cylinders.LowPart;
 
@@ -539,41 +448,30 @@ Return Value:
         // send back the 1024
         //
 
-        if (diskGeometry->Cylinders.QuadPart >= (LONGLONG)1024) {
+        if (diskGeometry->Cylinders.QuadPart >= (LONGLONG)1024)
+        {
 
             *ConventionalCylinders = 1024;
-
         }
 
         //
         // Calculate disk size from gemotry information
         //
 
-        *DiskSize = diskGeometry->Cylinders.QuadPart *
-                    diskGeometry->TracksPerCylinder *
-                    diskGeometry->SectorsPerTrack *
+        *DiskSize = diskGeometry->Cylinders.QuadPart * diskGeometry->TracksPerCylinder * diskGeometry->SectorsPerTrack *
                     diskGeometry->BytesPerSector;
-
     }
 
     ExFreePool(eventPtr);
     ExFreePool(iosb);
     ExFreePool(diskGeometry);
     return;
-
 }
 
-
-VOID
-HalpCalculateChsValues(
-    IN PLARGE_INTEGER PartitionOffset,
-    IN PLARGE_INTEGER PartitionLength,
-    IN CCHAR ShiftCount,
-    IN ULONG SectorsPerTrack,
-    IN ULONG NumberOfTracks,
-    IN ULONG ConventionalCylinders,
-    OUT PPARTITION_DESCRIPTOR PartitionDescriptor
-    )
+
+VOID HalpCalculateChsValues(IN PLARGE_INTEGER PartitionOffset, IN PLARGE_INTEGER PartitionLength, IN CCHAR ShiftCount,
+                            IN ULONG SectorsPerTrack, IN ULONG NumberOfTracks, IN ULONG ConventionalCylinders,
+                            OUT PPARTITION_DESCRIPTOR PartitionDescriptor)
 
 /*++
 
@@ -654,28 +552,28 @@ Note:
     endSector = startSector + sectorCount - 1;
 
     startC = startSector / sectorsPerCylinder;
-    endC   = endSector   / sectorsPerCylinder;
+    endC = endSector / sectorsPerCylinder;
 
-    if (!ConventionalCylinders) {
+    if (!ConventionalCylinders)
+    {
 
         ConventionalCylinders = 1024;
-
     }
 
     //
     // Set these values so that win95 is happy.
     //
 
-    if (startC >= ConventionalCylinders) {
+    if (startC >= ConventionalCylinders)
+    {
 
         startC = ConventionalCylinders - 1;
-
     }
 
-    if (endC >= ConventionalCylinders) {
+    if (endC >= ConventionalCylinders)
+    {
 
         endC = ConventionalCylinders - 1;
-
     }
 
     //
@@ -700,58 +598,53 @@ Note:
 
     // low 8 bits of the cylinder => C value
 
-    PartitionDescriptor->StartingCylinderMsb = (UCHAR) startC;
-    PartitionDescriptor->EndingCylinderMsb   = (UCHAR) endC;
+    PartitionDescriptor->StartingCylinderMsb = (UCHAR)startC;
+    PartitionDescriptor->EndingCylinderMsb = (UCHAR)endC;
 
     // 8 bits of head value => H value
 
-    PartitionDescriptor->StartingTrack = (UCHAR) startH;
-    PartitionDescriptor->EndingTrack   = (UCHAR) endH;
+    PartitionDescriptor->StartingTrack = (UCHAR)startH;
+    PartitionDescriptor->EndingTrack = (UCHAR)endH;
 
     // bits 8-9 of cylinder and 6 bits of the sector => S value
 
-    PartitionDescriptor->StartingCylinderLsb = (UCHAR) (((startS + 1) & 0x3f)
-                                                        | ((startC >> 2) & 0xc0));
+    PartitionDescriptor->StartingCylinderLsb = (UCHAR)(((startS + 1) & 0x3f) | ((startC >> 2) & 0xc0));
 
-    PartitionDescriptor->EndingCylinderLsb = (UCHAR) (((endS + 1) & 0x3f)
-                                                        | ((endC >> 2) & 0xc0));
+    PartitionDescriptor->EndingCylinderLsb = (UCHAR)(((endS + 1) & 0x3f) | ((endC >> 2) & 0xc0));
 }
 
-
-#define BOOTABLE_PARTITION  0
-#define PRIMARY_PARTITION   1
-#define LOGICAL_PARTITION   2
-#define FT_PARTITION        3
-#define OTHER_PARTITION     4
-#define GPT_PARTITION       5
+
+#define BOOTABLE_PARTITION 0
+#define PRIMARY_PARTITION 1
+#define LOGICAL_PARTITION 2
+#define FT_PARTITION 3
+#define OTHER_PARTITION 4
+#define GPT_PARTITION 5
 
 NTSTATUS
-HalpQueryPartitionType(
-    IN  PUNICODE_STRING             DeviceName,
-    IN  PDRIVE_LAYOUT_INFORMATION   DriveLayout,
-    OUT PULONG                      PartitionType
-    )
+HalpQueryPartitionType(IN PUNICODE_STRING DeviceName, IN PDRIVE_LAYOUT_INFORMATION DriveLayout,
+                       OUT PULONG PartitionType)
 
 {
-    NTSTATUS                    status;
-    PFILE_OBJECT                fileObject;
-    PDEVICE_OBJECT              deviceObject;
-    KEVENT                      event;
-    PIRP                        irp;
-    PARTITION_INFORMATION_EX    partInfo;
-    IO_STATUS_BLOCK             ioStatus;
-    ULONG                       i;
+    NTSTATUS status;
+    PFILE_OBJECT fileObject;
+    PDEVICE_OBJECT deviceObject;
+    KEVENT event;
+    PIRP irp;
+    PARTITION_INFORMATION_EX partInfo;
+    IO_STATUS_BLOCK ioStatus;
+    ULONG i;
 
-    status = IoGetDeviceObjectPointer(DeviceName,
-                                      FILE_READ_ATTRIBUTES,
-                                      &fileObject, &deviceObject);
-    if (!NT_SUCCESS(status)) {
+    status = IoGetDeviceObjectPointer(DeviceName, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
     deviceObject = IoGetAttachedDeviceReference(fileObject->DeviceObject);
     ObDereferenceObject(fileObject);
 
-    if (deviceObject->Characteristics&FILE_REMOVABLE_MEDIA) {
+    if (deviceObject->Characteristics & FILE_REMOVABLE_MEDIA)
+    {
         ObDereferenceObject(deviceObject);
         *PartitionType = LOGICAL_PARTITION;
         return STATUS_SUCCESS;
@@ -759,39 +652,43 @@ HalpQueryPartitionType(
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-    irp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_PARTITION_INFO_EX,
-                                        deviceObject, NULL, 0, &partInfo,
-                                        sizeof(partInfo), FALSE, &event,
-                                        &ioStatus);
-    if (!irp) {
+    irp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_PARTITION_INFO_EX, deviceObject, NULL, 0, &partInfo,
+                                        sizeof(partInfo), FALSE, &event, &ioStatus);
+    if (!irp)
+    {
         ObDereferenceObject(deviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     status = IoCallDriver(deviceObject, irp);
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
         KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
         status = ioStatus.Status;
     }
 
     ObDereferenceObject(deviceObject);
 
-    if (!NT_SUCCESS(status)) {
-        if (!DriveLayout) {
+    if (!NT_SUCCESS(status))
+    {
+        if (!DriveLayout)
+        {
             *PartitionType = LOGICAL_PARTITION;
             return STATUS_SUCCESS;
         }
         return status;
     }
 
-    if (partInfo.PartitionStyle != PARTITION_STYLE_MBR) {
-        if (partInfo.PartitionStyle != PARTITION_STYLE_GPT) {
+    if (partInfo.PartitionStyle != PARTITION_STYLE_MBR)
+    {
+        if (partInfo.PartitionStyle != PARTITION_STYLE_GPT)
+        {
             *PartitionType = OTHER_PARTITION;
             return STATUS_SUCCESS;
         }
 
-        if (IsEqualGUID(&partInfo.Gpt.PartitionType,
-                        &PARTITION_BASIC_DATA_GUID)) {
+        if (IsEqualGUID(&partInfo.Gpt.PartitionType, &PARTITION_BASIC_DATA_GUID))
+        {
 
             *PartitionType = GPT_PARTITION;
             return STATUS_SUCCESS;
@@ -801,28 +698,35 @@ HalpQueryPartitionType(
         return STATUS_SUCCESS;
     }
 
-    if (!IsRecognizedPartition(partInfo.Mbr.PartitionType)) {
+    if (!IsRecognizedPartition(partInfo.Mbr.PartitionType))
+    {
         *PartitionType = OTHER_PARTITION;
         return STATUS_SUCCESS;
     }
 
-    if (partInfo.Mbr.PartitionType&0x80) {
+    if (partInfo.Mbr.PartitionType & 0x80)
+    {
         *PartitionType = FT_PARTITION;
         return STATUS_SUCCESS;
     }
 
-    if (!DriveLayout) {
+    if (!DriveLayout)
+    {
         *PartitionType = LOGICAL_PARTITION;
         return STATUS_SUCCESS;
     }
 
-    for (i = 0; i < 4; i++) {
-        if (partInfo.StartingOffset.QuadPart ==
-            DriveLayout->PartitionEntry[i].StartingOffset.QuadPart) {
+    for (i = 0; i < 4; i++)
+    {
+        if (partInfo.StartingOffset.QuadPart == DriveLayout->PartitionEntry[i].StartingOffset.QuadPart)
+        {
 
-            if (partInfo.Mbr.BootIndicator) {
+            if (partInfo.Mbr.BootIndicator)
+            {
                 *PartitionType = BOOTABLE_PARTITION;
-            } else {
+            }
+            else
+            {
                 *PartitionType = PRIMARY_PARTITION;
             }
 
@@ -835,71 +739,66 @@ HalpQueryPartitionType(
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-HalpQueryDriveLayout(
-    IN  PUNICODE_STRING             DeviceName,
-    OUT PDRIVE_LAYOUT_INFORMATION*  DriveLayout
-    )
+HalpQueryDriveLayout(IN PUNICODE_STRING DeviceName, OUT PDRIVE_LAYOUT_INFORMATION *DriveLayout)
 
 {
-    NTSTATUS        status;
-    PFILE_OBJECT    fileObject;
-    PDEVICE_OBJECT  deviceObject;
-    KEVENT          event;
-    PIRP            irp;
-    DISK_GEOMETRY   geometry;
+    NTSTATUS status;
+    PFILE_OBJECT fileObject;
+    PDEVICE_OBJECT deviceObject;
+    KEVENT event;
+    PIRP irp;
+    DISK_GEOMETRY geometry;
     IO_STATUS_BLOCK ioStatus;
 
-    status = IoGetDeviceObjectPointer(DeviceName, FILE_READ_ATTRIBUTES,
-                                      &fileObject, &deviceObject);
-    if (!NT_SUCCESS(status)) {
+    status = IoGetDeviceObjectPointer(DeviceName, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
     deviceObject = IoGetAttachedDeviceReference(fileObject->DeviceObject);
     ObDereferenceObject(fileObject);
 
-    if (deviceObject->Characteristics&FILE_REMOVABLE_MEDIA) {
+    if (deviceObject->Characteristics & FILE_REMOVABLE_MEDIA)
+    {
         ObDereferenceObject(deviceObject);
         return STATUS_NO_MEDIA;
     }
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-    irp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_DRIVE_GEOMETRY,
-                                        deviceObject, NULL, 0, &geometry,
-                                        sizeof(geometry), FALSE, &event,
-                                        &ioStatus);
-    if (!irp) {
+    irp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_DRIVE_GEOMETRY, deviceObject, NULL, 0, &geometry,
+                                        sizeof(geometry), FALSE, &event, &ioStatus);
+    if (!irp)
+    {
         ObDereferenceObject(deviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     status = IoCallDriver(deviceObject, irp);
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
         KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
         status = ioStatus.Status;
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         ObDereferenceObject(deviceObject);
         return status;
     }
 
-    status = IoReadPartitionTable(deviceObject, geometry.BytesPerSector,
-                                  FALSE, DriveLayout);
+    status = IoReadPartitionTable(deviceObject, geometry.BytesPerSector, FALSE, DriveLayout);
 
     ObDereferenceObject(deviceObject);
 
     return status;
 }
 
-
+
 NTSTATUS
-HalpNextMountLetter(
-    IN  PUNICODE_STRING DeviceName,
-    OUT PUCHAR          DriveLetter
-    )
+HalpNextMountLetter(IN PUNICODE_STRING DeviceName, OUT PUCHAR DriveLetter)
 
 /*++
 
@@ -920,30 +819,27 @@ Return Value:
 --*/
 
 {
-    UNICODE_STRING                      name;
-    PFILE_OBJECT                        fileObject;
-    PDEVICE_OBJECT                      deviceObject;
-    PMOUNTMGR_DRIVE_LETTER_TARGET       input;
-    KEVENT                              event;
-    PIRP                                irp;
-    MOUNTMGR_DRIVE_LETTER_INFORMATION   output;
-    IO_STATUS_BLOCK                     ioStatus;
-    NTSTATUS                            status;
+    UNICODE_STRING name;
+    PFILE_OBJECT fileObject;
+    PDEVICE_OBJECT deviceObject;
+    PMOUNTMGR_DRIVE_LETTER_TARGET input;
+    KEVENT event;
+    PIRP irp;
+    MOUNTMGR_DRIVE_LETTER_INFORMATION output;
+    IO_STATUS_BLOCK ioStatus;
+    NTSTATUS status;
 
     RtlInitUnicodeString(&name, MOUNTMGR_DEVICE_NAME);
-    status = IoGetDeviceObjectPointer(&name, FILE_READ_ATTRIBUTES, &fileObject,
-                                      &deviceObject);
-    if (!NT_SUCCESS(status)) {
+    status = IoGetDeviceObjectPointer(&name, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    input = ExAllocatePoolWithTag(PagedPool,
-                                  (sizeof(MOUNTMGR_DRIVE_LETTER_TARGET) +
-                                   DeviceName->Length),
-                                  'btsF'
-                                 );
+    input = ExAllocatePoolWithTag(PagedPool, (sizeof(MOUNTMGR_DRIVE_LETTER_TARGET) + DeviceName->Length), 'btsF');
 
-    if (!input) {
+    if (!input)
+    {
         ObDereferenceObject(fileObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -952,20 +848,19 @@ Return Value:
     RtlCopyMemory(input->DeviceName, DeviceName->Buffer, DeviceName->Length);
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
-    irp = IoBuildDeviceIoControlRequest(IOCTL_MOUNTMGR_NEXT_DRIVE_LETTER,
-                                        deviceObject, input,
-                                        sizeof(MOUNTMGR_DRIVE_LETTER_TARGET) +
-                                        DeviceName->Length, &output,
-                                        sizeof(output), FALSE, &event,
-                                        &ioStatus);
-    if (!irp) {
+    irp = IoBuildDeviceIoControlRequest(IOCTL_MOUNTMGR_NEXT_DRIVE_LETTER, deviceObject, input,
+                                        sizeof(MOUNTMGR_DRIVE_LETTER_TARGET) + DeviceName->Length, &output,
+                                        sizeof(output), FALSE, &event, &ioStatus);
+    if (!irp)
+    {
         ExFreePool(input);
         ObDereferenceObject(fileObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     status = IoCallDriver(deviceObject, irp);
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
         KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
         status = ioStatus.Status;
     }
@@ -977,14 +872,10 @@ Return Value:
 
     return status;
 }
-
+
 UCHAR
-HalpNextDriveLetter(
-    IN  PUNICODE_STRING DeviceName,
-    IN  PSTRING         NtDeviceName,
-    OUT PUCHAR          NtSystemPath,
-    IN  BOOLEAN         UseHardLinksIfNecessary
-    )
+HalpNextDriveLetter(IN PUNICODE_STRING DeviceName, IN PSTRING NtDeviceName, OUT PUCHAR NtSystemPath,
+                    IN BOOLEAN UseHardLinksIfNecessary)
 
 /*++
 
@@ -1007,40 +898,51 @@ Return Value:
 --*/
 
 {
-    NTSTATUS        status;
-    UCHAR           firstDriveLetter, driveLetter;
-    WCHAR           name[40];
-    UNICODE_STRING  symName;
-    UNICODE_STRING  unicodeString, floppyPrefix, cdromPrefix;
+    NTSTATUS status;
+    UCHAR firstDriveLetter, driveLetter;
+    WCHAR name[40];
+    UNICODE_STRING symName;
+    UNICODE_STRING unicodeString, floppyPrefix, cdromPrefix;
 
     status = HalpNextMountLetter(DeviceName, &driveLetter);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         return driveLetter;
     }
 
-    if (!NtDeviceName || !NtSystemPath) {
+    if (!NtDeviceName || !NtSystemPath)
+    {
         return 0xFF;
     }
 
-    if (!UseHardLinksIfNecessary) {
+    if (!UseHardLinksIfNecessary)
+    {
         return 0;
     }
 
     RtlInitUnicodeString(&floppyPrefix, L"\\Device\\Floppy");
     RtlInitUnicodeString(&cdromPrefix, L"\\Device\\CdRom");
-    if (RtlPrefixUnicodeString(&floppyPrefix, DeviceName, TRUE)) {
+    if (RtlPrefixUnicodeString(&floppyPrefix, DeviceName, TRUE))
+    {
         firstDriveLetter = 'A';
-    } else if (RtlPrefixUnicodeString(&cdromPrefix, DeviceName, TRUE)) {
+    }
+    else if (RtlPrefixUnicodeString(&cdromPrefix, DeviceName, TRUE))
+    {
         firstDriveLetter = 'D';
-    } else {
+    }
+    else
+    {
         firstDriveLetter = 'C';
     }
 
-    for (driveLetter = firstDriveLetter; driveLetter <= 'Z'; driveLetter++) {
+    for (driveLetter = firstDriveLetter; driveLetter <= 'Z'; driveLetter++)
+    {
         status = HalpSetMountLetter(DeviceName, driveLetter);
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             RtlAnsiStringToUnicodeString(&unicodeString, NtDeviceName, TRUE);
-            if (RtlEqualUnicodeString(&unicodeString, DeviceName, TRUE)) {
+            if (RtlEqualUnicodeString(&unicodeString, DeviceName, TRUE))
+            {
                 NtSystemPath[0] = driveLetter;
             }
             RtlFreeUnicodeString(&unicodeString);
@@ -1048,13 +950,16 @@ Return Value:
         }
     }
 
-    for (driveLetter = firstDriveLetter; driveLetter <= 'Z'; driveLetter++) {
+    for (driveLetter = firstDriveLetter; driveLetter <= 'Z'; driveLetter++)
+    {
         swprintf(name, L"\\DosDevices\\%c:", driveLetter);
         RtlInitUnicodeString(&symName, name);
         status = IoCreateSymbolicLink(&symName, DeviceName);
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             RtlAnsiStringToUnicodeString(&unicodeString, NtDeviceName, TRUE);
-            if (RtlEqualUnicodeString(&unicodeString, DeviceName, TRUE)) {
+            if (RtlEqualUnicodeString(&unicodeString, DeviceName, TRUE))
+            {
                 NtSystemPath[0] = driveLetter;
             }
             RtlFreeUnicodeString(&unicodeString);
@@ -1065,10 +970,8 @@ Return Value:
     return 0;
 }
 
-
-VOID
-HalpEnableAutomaticDriveLetterAssignment(
-    )
+
+VOID HalpEnableAutomaticDriveLetterAssignment()
 
 /*++
 
@@ -1088,32 +991,33 @@ Return Value:
 --*/
 
 {
-    UNICODE_STRING  name;
-    PFILE_OBJECT    fileObject;
-    PDEVICE_OBJECT  deviceObject;
-    KEVENT          event;
-    PIRP            irp;
+    UNICODE_STRING name;
+    PFILE_OBJECT fileObject;
+    PDEVICE_OBJECT deviceObject;
+    KEVENT event;
+    PIRP irp;
     IO_STATUS_BLOCK ioStatus;
-    NTSTATUS        status;
+    NTSTATUS status;
 
     RtlInitUnicodeString(&name, MOUNTMGR_DEVICE_NAME);
-    status = IoGetDeviceObjectPointer(&name, FILE_READ_ATTRIBUTES, &fileObject,
-                                      &deviceObject);
-    if (!NT_SUCCESS(status)) {
+    status = IoGetDeviceObjectPointer(&name, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
+    if (!NT_SUCCESS(status))
+    {
         return;
     }
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
-    irp = IoBuildDeviceIoControlRequest(IOCTL_MOUNTMGR_AUTO_DL_ASSIGNMENTS,
-                                        deviceObject, NULL, 0, NULL, 0, FALSE,
+    irp = IoBuildDeviceIoControlRequest(IOCTL_MOUNTMGR_AUTO_DL_ASSIGNMENTS, deviceObject, NULL, 0, NULL, 0, FALSE,
                                         &event, &ioStatus);
-    if (!irp) {
+    if (!irp)
+    {
         ObDereferenceObject(fileObject);
         return;
     }
 
     status = IoCallDriver(deviceObject, irp);
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
         KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
         status = ioStatus.Status;
     }
@@ -1121,12 +1025,9 @@ Return Value:
     ObDereferenceObject(fileObject);
 }
 
-
+
 NTSTATUS
-HalpSetMountLetter(
-    IN  PUNICODE_STRING DeviceName,
-    IN  UCHAR           DriveLetter
-    )
+HalpSetMountLetter(IN PUNICODE_STRING DeviceName, IN UCHAR DriveLetter)
 
 /*++
 
@@ -1147,62 +1048,58 @@ Return Value:
 --*/
 
 {
-    WCHAR                           dosBuffer[30];
-    UNICODE_STRING                  dosName;
-    ULONG                           createPointSize;
-    PMOUNTMGR_CREATE_POINT_INPUT    createPoint;
-    UNICODE_STRING                  name;
-    NTSTATUS                        status;
-    PFILE_OBJECT                    fileObject;
-    PDEVICE_OBJECT                  deviceObject;
-    KEVENT                          event;
-    PIRP                            irp;
-    IO_STATUS_BLOCK                 ioStatus;
+    WCHAR dosBuffer[30];
+    UNICODE_STRING dosName;
+    ULONG createPointSize;
+    PMOUNTMGR_CREATE_POINT_INPUT createPoint;
+    UNICODE_STRING name;
+    NTSTATUS status;
+    PFILE_OBJECT fileObject;
+    PDEVICE_OBJECT deviceObject;
+    KEVENT event;
+    PIRP irp;
+    IO_STATUS_BLOCK ioStatus;
 
     swprintf(dosBuffer, L"\\DosDevices\\%c:", DriveLetter);
     RtlInitUnicodeString(&dosName, dosBuffer);
 
-    createPointSize = sizeof(MOUNTMGR_CREATE_POINT_INPUT) +
-                      dosName.Length + DeviceName->Length;
+    createPointSize = sizeof(MOUNTMGR_CREATE_POINT_INPUT) + dosName.Length + DeviceName->Length;
 
-    createPoint = (PMOUNTMGR_CREATE_POINT_INPUT)
-                  ExAllocatePoolWithTag(PagedPool, createPointSize, 'btsF');
-    if (!createPoint) {
+    createPoint = (PMOUNTMGR_CREATE_POINT_INPUT)ExAllocatePoolWithTag(PagedPool, createPointSize, 'btsF');
+    if (!createPoint)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     createPoint->SymbolicLinkNameOffset = sizeof(MOUNTMGR_CREATE_POINT_INPUT);
     createPoint->SymbolicLinkNameLength = dosName.Length;
-    createPoint->DeviceNameOffset = createPoint->SymbolicLinkNameOffset +
-                                    createPoint->SymbolicLinkNameLength;
+    createPoint->DeviceNameOffset = createPoint->SymbolicLinkNameOffset + createPoint->SymbolicLinkNameLength;
     createPoint->DeviceNameLength = DeviceName->Length;
 
-    RtlCopyMemory((PCHAR) createPoint + createPoint->SymbolicLinkNameOffset,
-                  dosName.Buffer, dosName.Length);
-    RtlCopyMemory((PCHAR) createPoint + createPoint->DeviceNameOffset,
-                  DeviceName->Buffer, DeviceName->Length);
+    RtlCopyMemory((PCHAR)createPoint + createPoint->SymbolicLinkNameOffset, dosName.Buffer, dosName.Length);
+    RtlCopyMemory((PCHAR)createPoint + createPoint->DeviceNameOffset, DeviceName->Buffer, DeviceName->Length);
 
     RtlInitUnicodeString(&name, MOUNTMGR_DEVICE_NAME);
-    status = IoGetDeviceObjectPointer(&name, FILE_READ_ATTRIBUTES, &fileObject,
-                                      &deviceObject);
-    if (!NT_SUCCESS(status)) {
+    status = IoGetDeviceObjectPointer(&name, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
+    if (!NT_SUCCESS(status))
+    {
         ExFreePool(createPoint);
         return status;
     }
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
-    irp = IoBuildDeviceIoControlRequest(IOCTL_MOUNTMGR_CREATE_POINT,
-                                        deviceObject, createPoint,
-                                        createPointSize, NULL, 0, FALSE,
-                                        &event, &ioStatus);
-    if (!irp) {
+    irp = IoBuildDeviceIoControlRequest(IOCTL_MOUNTMGR_CREATE_POINT, deviceObject, createPoint, createPointSize, NULL,
+                                        0, FALSE, &event, &ioStatus);
+    if (!irp)
+    {
         ObDereferenceObject(fileObject);
         ExFreePool(createPoint);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     status = IoCallDriver(deviceObject, irp);
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
         KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
         status = ioStatus.Status;
     }
@@ -1214,11 +1111,8 @@ Return Value:
 }
 
 
-
 BOOLEAN
-HalpIsOldStyleFloppy(
-    IN  PUNICODE_STRING DeviceName
-    )
+HalpIsOldStyleFloppy(IN PUNICODE_STRING DeviceName)
 
 /*++
 
@@ -1241,19 +1135,19 @@ Return Value:
 --*/
 
 {
-    PFILE_OBJECT    fileObject;
-    PDEVICE_OBJECT  deviceObject;
-    KEVENT          event;
-    PIRP            irp;
-    MOUNTDEV_NAME   name;
+    PFILE_OBJECT fileObject;
+    PDEVICE_OBJECT deviceObject;
+    KEVENT event;
+    PIRP irp;
+    MOUNTDEV_NAME name;
     IO_STATUS_BLOCK ioStatus;
-    NTSTATUS        status;
+    NTSTATUS status;
 
     PAGED_CODE();
 
-    status = IoGetDeviceObjectPointer(DeviceName, FILE_READ_ATTRIBUTES,
-                                      &fileObject, &deviceObject);
-    if (!NT_SUCCESS(status)) {
+    status = IoGetDeviceObjectPointer(DeviceName, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
     deviceObject = IoGetAttachedDeviceReference(fileObject->DeviceObject);
@@ -1261,34 +1155,33 @@ Return Value:
 
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
-    irp = IoBuildDeviceIoControlRequest(IOCTL_MOUNTDEV_QUERY_DEVICE_NAME,
-                                        deviceObject, NULL, 0, &name,
-                                        sizeof(name), FALSE, &event,
-                                        &ioStatus);
-    if (!irp) {
+    irp = IoBuildDeviceIoControlRequest(IOCTL_MOUNTDEV_QUERY_DEVICE_NAME, deviceObject, NULL, 0, &name, sizeof(name),
+                                        FALSE, &event, &ioStatus);
+    if (!irp)
+    {
         ObDereferenceObject(deviceObject);
         return FALSE;
     }
 
     status = IoCallDriver(deviceObject, irp);
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
         KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
         status = ioStatus.Status;
     }
 
     ObDereferenceObject(deviceObject);
 
-    if (status == STATUS_BUFFER_OVERFLOW) {
+    if (status == STATUS_BUFFER_OVERFLOW)
+    {
         return FALSE;
     }
 
     return TRUE;
 }
-
+
 PULONG
-IopComputeHarddiskDerangements(
-    IN  ULONG   DiskCount
-    )
+IopComputeHarddiskDerangements(IN ULONG DiskCount)
 
 /*++
 
@@ -1309,78 +1202,88 @@ Return Value:
 --*/
 
 {
-    PULONG                  r;
-    ULONG                   i, j;
-    WCHAR                   deviceNameBuffer[50];
-    UNICODE_STRING          deviceName;
-    NTSTATUS                status;
-    PFILE_OBJECT            fileObject;
-    PDEVICE_OBJECT          deviceObject;
-    KEVENT                  event;
-    PIRP                    irp;
-    STORAGE_DEVICE_NUMBER   number;
-    IO_STATUS_BLOCK         ioStatus;
+    PULONG r;
+    ULONG i, j;
+    WCHAR deviceNameBuffer[50];
+    UNICODE_STRING deviceName;
+    NTSTATUS status;
+    PFILE_OBJECT fileObject;
+    PDEVICE_OBJECT deviceObject;
+    KEVENT event;
+    PIRP irp;
+    STORAGE_DEVICE_NUMBER number;
+    IO_STATUS_BLOCK ioStatus;
 
-    if (DiskCount == 0) {
+    if (DiskCount == 0)
+    {
         return NULL;
     }
 
-    r = ExAllocatePool(PagedPool|POOL_COLD_ALLOCATION, DiskCount*sizeof(ULONG));
-    if (!r) {
+    r = ExAllocatePool(PagedPool | POOL_COLD_ALLOCATION, DiskCount * sizeof(ULONG));
+    if (!r)
+    {
         return NULL;
     }
 
-    for (i = 0; i < DiskCount; i++) {
+    for (i = 0; i < DiskCount; i++)
+    {
         swprintf(deviceNameBuffer, L"\\ArcName\\multi(0)disk(0)rdisk(%d)", i);
         RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
-        status = IoGetDeviceObjectPointer(&deviceName, FILE_READ_ATTRIBUTES,
-                                          &fileObject, &deviceObject);
-        if (!NT_SUCCESS(status)) {
-            r[i] = (ULONG) -1;
+        status = IoGetDeviceObjectPointer(&deviceName, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
+        if (!NT_SUCCESS(status))
+        {
+            r[i] = (ULONG)-1;
             continue;
         }
         deviceObject = IoGetAttachedDeviceReference(fileObject->DeviceObject);
         ObDereferenceObject(fileObject);
 
         KeInitializeEvent(&event, NotificationEvent, FALSE);
-        irp = IoBuildDeviceIoControlRequest(IOCTL_STORAGE_GET_DEVICE_NUMBER,
-                                            deviceObject, NULL, 0, &number,
-                                            sizeof(number), FALSE, &event,
-                                            &ioStatus);
-        if (!irp) {
+        irp = IoBuildDeviceIoControlRequest(IOCTL_STORAGE_GET_DEVICE_NUMBER, deviceObject, NULL, 0, &number,
+                                            sizeof(number), FALSE, &event, &ioStatus);
+        if (!irp)
+        {
             ObDereferenceObject(deviceObject);
-            r[i] = (ULONG) -1;
+            r[i] = (ULONG)-1;
             continue;
         }
 
         status = IoCallDriver(deviceObject, irp);
-        if (status == STATUS_PENDING) {
+        if (status == STATUS_PENDING)
+        {
             KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
             status = ioStatus.Status;
         }
 
         ObDereferenceObject(deviceObject);
 
-        if (!NT_SUCCESS(status)) {
-            r[i] = (ULONG) -1;
+        if (!NT_SUCCESS(status))
+        {
+            r[i] = (ULONG)-1;
             continue;
         }
 
         r[i] = number.DeviceNumber;
     }
 
-    for (i = 0; i < DiskCount; i++) {
-        for (j = 0; j < DiskCount; j++) {
-            if (r[j] == i) {
+    for (i = 0; i < DiskCount; i++)
+    {
+        for (j = 0; j < DiskCount; j++)
+        {
+            if (r[j] == i)
+            {
                 break;
             }
         }
-        if (j < DiskCount) {
+        if (j < DiskCount)
+        {
             continue;
         }
-        for (j = 0; j < DiskCount; j++) {
-            if (r[j] == (ULONG) -1) {
+        for (j = 0; j < DiskCount; j++)
+        {
+            if (r[j] == (ULONG)-1)
+            {
                 r[j] = i;
                 break;
             }
@@ -1389,15 +1292,9 @@ Return Value:
 
     return r;
 }
-
-VOID
-FASTCALL
-IoAssignDriveLetters(
-    IN struct _LOADER_PARAMETER_BLOCK *LoaderBlock,
-    IN PSTRING NtDeviceName,
-    OUT PUCHAR NtSystemPath,
-    OUT PSTRING NtSystemPathString
-    )
+
+VOID FASTCALL IoAssignDriveLetters(IN struct _LOADER_PARAMETER_BLOCK *LoaderBlock, IN PSTRING NtDeviceName,
+                                   OUT PUCHAR NtSystemPath, OUT PSTRING NtSystemPathString)
 
 /*++
 
@@ -1493,21 +1390,22 @@ Return Value:
     // Allocate general NT name buffer.
     //
 
-    ntName = ExAllocatePoolWithTag( NonPagedPool, 128, 'btsF');
+    ntName = ExAllocatePoolWithTag(NonPagedPool, 128, 'btsF');
 
-    ntPhysicalName = ExAllocatePoolWithTag( NonPagedPool, 64, 'btsF');
+    ntPhysicalName = ExAllocatePoolWithTag(NonPagedPool, 64, 'btsF');
 
-    if (ntName == NULL || ntPhysicalName == NULL) {
+    if (ntName == NULL || ntPhysicalName == NULL)
+    {
 
-        KeBugCheck( ASSIGN_DRIVE_LETTERS_FAILED );
-
+        KeBugCheck(ASSIGN_DRIVE_LETTERS_FAILED);
     }
 
     //
     // If we're doing a remote boot, set NtSystemPath appropriately.
     //
 
-    if (IoRemoteBootClient) {
+    if (IoRemoteBootClient)
+    {
 
         PUCHAR p;
         PUCHAR q;
@@ -1529,9 +1427,10 @@ Return Value:
         // the leading backslash).
         //
 
-        p = strrchr( LoaderBlock->NtBootPathName, '\\' );   // find last separator
+        p = strrchr(LoaderBlock->NtBootPathName, '\\'); // find last separator
         q = NULL;
-        if ( (p != NULL) && (*(p+1) == 0) ) {
+        if ((p != NULL) && (*(p + 1) == 0))
+        {
 
             //
             // NtBootPathName ends with a backslash, so we need to back up
@@ -1540,11 +1439,12 @@ Return Value:
 
             q = p;
             *q = 0;
-            p = strrchr( LoaderBlock->NtBootPathName, '\\' );   // find last separator
+            p = strrchr(LoaderBlock->NtBootPathName, '\\'); // find last separator
             *q = '\\';
         }
-        if ( p == NULL ) {
-            KeBugCheck( ASSIGN_DRIVE_LETTERS_FAILED );
+        if (p == NULL)
+        {
+            KeBugCheck(ASSIGN_DRIVE_LETTERS_FAILED);
         }
 
         //
@@ -1556,21 +1456,23 @@ Return Value:
         //
 
 #if defined(REMOTE_BOOT)
-        if ((LoaderBlock->SetupLoaderBlock->Flags & (SETUPBLK_FLAGS_REMOTE_INSTALL |
-                                                     SETUPBLK_FLAGS_SYSPREP_INSTALL)) == 0) {
+        if ((LoaderBlock->SetupLoaderBlock->Flags & (SETUPBLK_FLAGS_REMOTE_INSTALL | SETUPBLK_FLAGS_SYSPREP_INSTALL)) ==
+            0)
+        {
             NtSystemPath[0] = 'C';
-        } else
+        }
+        else
 #endif
         {
             NtSystemPath[0] = 'X';
         }
         NtSystemPath[1] = ':';
-        strcpy(&NtSystemPath[2], p );
-        if ( q != NULL ) {
-            NtSystemPath[strlen(NtSystemPath)-1] = '\0'; // remove trailing backslash
+        strcpy(&NtSystemPath[2], p);
+        if (q != NULL)
+        {
+            NtSystemPath[strlen(NtSystemPath) - 1] = '\0'; // remove trailing backslash
         }
         RtlInitString(NtSystemPathString, NtSystemPath);
-
     }
 
     //
@@ -1578,67 +1480,62 @@ Return Value:
     //
 
     diskCountIncrement = 0;
-    for (diskNumber = 0; diskNumber < diskCount; diskNumber++) {
+    for (diskNumber = 0; diskNumber < diskCount; diskNumber++)
+    {
 
         //
         // Create ANSI name string for physical disk.
         //
 
-        sprintf( ntName, DiskPartitionName, diskNumber, 0 );
+        sprintf(ntName, DiskPartitionName, diskNumber, 0);
 
         //
         // Convert to unicode string.
         //
 
-        RtlInitAnsiString( &ansiString, ntName );
+        RtlInitAnsiString(&ansiString, ntName);
 
-        RtlAnsiStringToUnicodeString( &unicodeString, &ansiString, TRUE );
+        RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, TRUE);
 
-        InitializeObjectAttributes( &objectAttributes,
-                                    &unicodeString,
-                                    OBJ_CASE_INSENSITIVE,
-                                    NULL,
-                                    NULL );
+        InitializeObjectAttributes(&objectAttributes, &unicodeString, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
         //
         // Open device by name.
         //
 
-        status = ZwOpenFile( &deviceHandle,
-                             FILE_READ_DATA | SYNCHRONIZE,
-                             &objectAttributes,
-                             &ioStatusBlock,
-                             FILE_SHARE_READ,
-                             FILE_SYNCHRONOUS_IO_NONALERT );
+        status = ZwOpenFile(&deviceHandle, FILE_READ_DATA | SYNCHRONIZE, &objectAttributes, &ioStatusBlock,
+                            FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
             //
             // The device was successfully opened.  Generate a DOS device name
             // for the drive itself.
             //
 
-            sprintf( ntPhysicalName, "\\DosDevices\\PhysicalDrive%d", diskNumber );
+            sprintf(ntPhysicalName, "\\DosDevices\\PhysicalDrive%d", diskNumber);
 
-            RtlInitAnsiString( &ansiPhysicalString, ntPhysicalName );
+            RtlInitAnsiString(&ansiPhysicalString, ntPhysicalName);
 
-            RtlAnsiStringToUnicodeString( &unicodePhysicalString, &ansiPhysicalString, TRUE );
+            RtlAnsiStringToUnicodeString(&unicodePhysicalString, &ansiPhysicalString, TRUE);
 
-            IoCreateSymbolicLink( &unicodePhysicalString, &unicodeString );
+            IoCreateSymbolicLink(&unicodePhysicalString, &unicodeString);
 
-            RtlFreeUnicodeString( &unicodePhysicalString );
+            RtlFreeUnicodeString(&unicodePhysicalString);
 
             ZwClose(deviceHandle);
 
             actualDiskCount = diskNumber + 1;
         }
 
-        RtlFreeUnicodeString( &unicodeString );
+        RtlFreeUnicodeString(&unicodeString);
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
 
 #if DBG
-            DbgPrint( "IoAssignDriveLetters: Failed to open %s\n", ntName );
+            DbgPrint("IoAssignDriveLetters: Failed to open %s\n", ntName);
 #endif // DBG
 
             //
@@ -1646,7 +1543,8 @@ Return Value:
             // not forever.
             //
 
-            if (diskCountIncrement < 50) {
+            if (diskCountIncrement < 50)
+            {
                 diskCountIncrement++;
                 diskCount++;
             }
@@ -1654,21 +1552,26 @@ Return Value:
 
     } // end for diskNumber ...
 
-    ExFreePool( ntName );
-    ExFreePool( ntPhysicalName );
+    ExFreePool(ntName);
+    ExFreePool(ntPhysicalName);
 
     diskCount -= diskCountIncrement;
-    if (actualDiskCount > diskCount) {
+    if (actualDiskCount > diskCount)
+    {
         diskCount = actualDiskCount;
     }
 
     harddiskDerangementArray = IopComputeHarddiskDerangements(diskCount);
 
-    for (k = 0; k < diskCount; k++) {
+    for (k = 0; k < diskCount; k++)
+    {
 
-        if (harddiskDerangementArray) {
+        if (harddiskDerangementArray)
+        {
             i = harddiskDerangementArray[k];
-        } else {
+        }
+        else
+        {
             i = k;
         }
 
@@ -1676,25 +1579,26 @@ Return Value:
         RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
         status = HalpQueryDriveLayout(&deviceName, &layout);
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             layout = NULL;
         }
 
         bootable = FALSE;
-        for (j = 1; ; j++) {
+        for (j = 1;; j++)
+        {
 
-            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d",
-                     i, j);
+            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d", i, j);
             RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
-            status = HalpQueryPartitionType(&deviceName, layout,
-                                            &partitionType);
-            if (!NT_SUCCESS(status)) {
+            status = HalpQueryPartitionType(&deviceName, layout, &partitionType);
+            if (!NT_SUCCESS(status))
+            {
                 break;
             }
 
-            if (partitionType != BOOTABLE_PARTITION &&
-                partitionType != GPT_PARTITION) {
+            if (partitionType != BOOTABLE_PARTITION && partitionType != GPT_PARTITION)
+            {
 
                 continue;
             }
@@ -1703,31 +1607,35 @@ Return Value:
 
             HalpNextDriveLetter(&deviceName, NtDeviceName, NtSystemPath, FALSE);
 
-            if (partitionType == BOOTABLE_PARTITION) {
+            if (partitionType == BOOTABLE_PARTITION)
+            {
                 break;
             }
         }
 
-        if (bootable) {
-            if (layout) {
+        if (bootable)
+        {
+            if (layout)
+            {
                 ExFreePool(layout);
             }
             continue;
         }
 
-        for (j = 1; ; j++) {
+        for (j = 1;; j++)
+        {
 
-            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d",
-                     i, j);
+            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d", i, j);
             RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
-            status = HalpQueryPartitionType(&deviceName, layout,
-                                            &partitionType);
-            if (!NT_SUCCESS(status)) {
+            status = HalpQueryPartitionType(&deviceName, layout, &partitionType);
+            if (!NT_SUCCESS(status))
+            {
                 break;
             }
 
-            if (partitionType != PRIMARY_PARTITION) {
+            if (partitionType != PRIMARY_PARTITION)
+            {
                 continue;
             }
 
@@ -1735,16 +1643,21 @@ Return Value:
             break;
         }
 
-        if (layout) {
+        if (layout)
+        {
             ExFreePool(layout);
         }
     }
 
-    for (k = 0; k < diskCount; k++) {
+    for (k = 0; k < diskCount; k++)
+    {
 
-        if (harddiskDerangementArray) {
+        if (harddiskDerangementArray)
+        {
             i = harddiskDerangementArray[k];
-        } else {
+        }
+        else
+        {
             i = k;
         }
 
@@ -1752,39 +1665,46 @@ Return Value:
         RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
         status = HalpQueryDriveLayout(&deviceName, &layout);
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             layout = NULL;
         }
 
-        for (j = 1; ; j++) {
+        for (j = 1;; j++)
+        {
 
-            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d",
-                     i, j);
+            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d", i, j);
             RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
-            status = HalpQueryPartitionType(&deviceName, layout,
-                                            &partitionType);
-            if (!NT_SUCCESS(status)) {
+            status = HalpQueryPartitionType(&deviceName, layout, &partitionType);
+            if (!NT_SUCCESS(status))
+            {
                 break;
             }
 
-            if (partitionType != LOGICAL_PARTITION) {
+            if (partitionType != LOGICAL_PARTITION)
+            {
                 continue;
             }
 
             HalpNextDriveLetter(&deviceName, NtDeviceName, NtSystemPath, FALSE);
         }
 
-        if (layout) {
+        if (layout)
+        {
             ExFreePool(layout);
         }
     }
 
-    for (k = 0; k < diskCount; k++) {
+    for (k = 0; k < diskCount; k++)
+    {
 
-        if (harddiskDerangementArray) {
+        if (harddiskDerangementArray)
+        {
             i = harddiskDerangementArray[k];
-        } else {
+        }
+        else
+        {
             i = k;
         }
 
@@ -1792,50 +1712,56 @@ Return Value:
         RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
         status = HalpQueryDriveLayout(&deviceName, &layout);
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             layout = NULL;
         }
 
         skip = 0;
-        for (j = 1; ; j++) {
+        for (j = 1;; j++)
+        {
 
-            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d",
-                     i, j);
+            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d", i, j);
             RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
-            status = HalpQueryPartitionType(&deviceName, layout,
-                                            &partitionType);
-            if (!NT_SUCCESS(status)) {
+            status = HalpQueryPartitionType(&deviceName, layout, &partitionType);
+            if (!NT_SUCCESS(status))
+            {
                 break;
             }
 
-            if (partitionType == BOOTABLE_PARTITION) {
+            if (partitionType == BOOTABLE_PARTITION)
+            {
                 skip = j;
-            } else if (partitionType == PRIMARY_PARTITION) {
-                if (!skip) {
+            }
+            else if (partitionType == PRIMARY_PARTITION)
+            {
+                if (!skip)
+                {
                     skip = j;
                 }
             }
         }
 
-        for (j = 1; ; j++) {
+        for (j = 1;; j++)
+        {
 
-            if (j == skip) {
+            if (j == skip)
+            {
                 continue;
             }
 
-            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d",
-                     i, j);
+            swprintf(deviceNameBuffer, L"\\Device\\Harddisk%d\\Partition%d", i, j);
             RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
-            status = HalpQueryPartitionType(&deviceName, layout,
-                                            &partitionType);
-            if (!NT_SUCCESS(status)) {
+            status = HalpQueryPartitionType(&deviceName, layout, &partitionType);
+            if (!NT_SUCCESS(status))
+            {
                 break;
             }
 
-            if (partitionType != PRIMARY_PARTITION &&
-                partitionType != FT_PARTITION) {
+            if (partitionType != PRIMARY_PARTITION && partitionType != FT_PARTITION)
+            {
 
                 continue;
             }
@@ -1843,40 +1769,47 @@ Return Value:
             HalpNextDriveLetter(&deviceName, NtDeviceName, NtSystemPath, FALSE);
         }
 
-        if (layout) {
+        if (layout)
+        {
             ExFreePool(layout);
         }
     }
 
-    if (harddiskDerangementArray) {
+    if (harddiskDerangementArray)
+    {
         ExFreePool(harddiskDerangementArray);
     }
 
-    for (i = 0; i < floppyCount; i++) {
+    for (i = 0; i < floppyCount; i++)
+    {
 
         swprintf(deviceNameBuffer, L"\\Device\\Floppy%d", i);
         RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
-        if (!HalpIsOldStyleFloppy(&deviceName)) {
+        if (!HalpIsOldStyleFloppy(&deviceName))
+        {
             continue;
         }
 
         HalpNextDriveLetter(&deviceName, NtDeviceName, NtSystemPath, TRUE);
     }
 
-    for (i = 0; i < floppyCount; i++) {
+    for (i = 0; i < floppyCount; i++)
+    {
 
         swprintf(deviceNameBuffer, L"\\Device\\Floppy%d", i);
         RtlInitUnicodeString(&deviceName, deviceNameBuffer);
 
-        if (HalpIsOldStyleFloppy(&deviceName)) {
+        if (HalpIsOldStyleFloppy(&deviceName))
+        {
             continue;
         }
 
         HalpNextDriveLetter(&deviceName, NtDeviceName, NtSystemPath, TRUE);
     }
 
-    for (i = 0; i < configurationInformation->CdRomCount; i++) {
+    for (i = 0; i < configurationInformation->CdRomCount; i++)
+    {
 
         swprintf(deviceNameBuffer, L"\\Device\\CdRom%d", i);
         RtlInitUnicodeString(&deviceName, deviceNameBuffer);
@@ -1884,26 +1817,38 @@ Return Value:
         HalpNextDriveLetter(&deviceName, NtDeviceName, NtSystemPath, TRUE);
     }
 
-    if (!IoRemoteBootClient) {
+    if (!IoRemoteBootClient)
+    {
         RtlAnsiStringToUnicodeString(&unicodeString, NtDeviceName, TRUE);
         driveLetter = HalpNextDriveLetter(&unicodeString, NULL, NULL, TRUE);
-        if (driveLetter) {
-            if (driveLetter != 0xFF) {
+        if (driveLetter)
+        {
+            if (driveLetter != 0xFF)
+            {
                 NtSystemPath[0] = driveLetter;
             }
-        } else {
+        }
+        else
+        {
             RtlInitUnicodeString(&floppyPrefix, L"\\Device\\Floppy");
             RtlInitUnicodeString(&cdromPrefix, L"\\Device\\CdRom");
-            if (RtlPrefixUnicodeString(&floppyPrefix, &unicodeString, TRUE)) {
+            if (RtlPrefixUnicodeString(&floppyPrefix, &unicodeString, TRUE))
+            {
                 driveLetter = 'A';
-            } else if (RtlPrefixUnicodeString(&cdromPrefix, &unicodeString, TRUE)) {
+            }
+            else if (RtlPrefixUnicodeString(&cdromPrefix, &unicodeString, TRUE))
+            {
                 driveLetter = 'D';
-            } else {
+            }
+            else
+            {
                 driveLetter = 'C';
             }
-            for (; driveLetter <= 'Z'; driveLetter++) {
+            for (; driveLetter <= 'Z'; driveLetter++)
+            {
                 status = HalpSetMountLetter(&unicodeString, driveLetter);
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     NtSystemPath[0] = driveLetter;
                 }
             }
@@ -1916,16 +1861,10 @@ Return Value:
 } // end IoAssignDriveLetters()
 
 
-
-
 NTSTATUS
 FASTCALL
-IoReadPartitionTable(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN BOOLEAN ReturnRecognizedPartitions,
-    OUT struct _DRIVE_LAYOUT_INFORMATION **PartitionBuffer
-    )
+IoReadPartitionTable(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN BOOLEAN ReturnRecognizedPartitions,
+                     OUT struct _DRIVE_LAYOUT_INFORMATION **PartitionBuffer)
 
 /*++
 
@@ -2003,7 +1942,7 @@ Notes:
     LARGE_INTEGER tempInt;
     BOOLEAN primaryPartitionTable;
     LONG partitionNumber;
-    PUCHAR readBuffer = (PUCHAR) NULL;
+    PUCHAR readBuffer = (PUCHAR)NULL;
     KEVENT event;
 
     IO_STATUS_BLOCK ioStatus;
@@ -2025,11 +1964,10 @@ Notes:
     // the list of partitions on the disk.
     //
 
-    *PartitionBuffer = ExAllocatePoolWithTag( NonPagedPool,
-                                              partitionBufferSize,
-                                              'btsF' );
+    *PartitionBuffer = ExAllocatePoolWithTag(NonPagedPool, partitionBufferSize, 'btsF');
 
-    if (*PartitionBuffer == NULL) {
+    if (*PartitionBuffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2041,9 +1979,12 @@ Notes:
     // multiple of 2, a fairly reasonable assumption.
     //
 
-    if (SectorSize >= 512) {
+    if (SectorSize >= 512)
+    {
         readSize = SectorSize;
-    } else {
+    }
+    else
+    {
         readSize = 512;
     }
 
@@ -2056,25 +1997,20 @@ Notes:
 
         PVOID buff;
 
-        HalExamineMBR(
-            DeviceObject,
-            readSize,
-            (ULONG)0x55,
-            &buff
-            );
+        HalExamineMBR(DeviceObject, readSize, (ULONG)0x55, &buff);
 
-        if (buff) {
+        if (buff)
+        {
 
             foundEZHooker = TRUE;
             ExFreePool(buff);
             partitionTableOffset.QuadPart = 512;
-
-        } else {
+        }
+        else
+        {
 
             partitionTableOffset.QuadPart = 0;
-
         }
-
     }
 
     //
@@ -2082,11 +2018,10 @@ Notes:
     // correct.
     //
 
-    status = HalpGetFullGeometry(DeviceObject,
-                                 &diskGeometry,
-                                 &maxOffset);
+    status = HalpGetFullGeometry(DeviceObject, &diskGeometry, &maxOffset);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         ExFreePool(*PartitionBuffer);
         *PartitionBuffer = NULL;
         return status;
@@ -2104,11 +2039,8 @@ Notes:
 
     maxSector = maxOffset * 2;
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               DPFLTR_TRACE_LEVEL,
-               "FSTUB: MaxOffset = %#I64x, maxSector = %#I64x\n",
-               maxOffset,
-               maxSector));
+    KdPrintEx(
+        (DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB: MaxOffset = %#I64x, maxSector = %#I64x\n", maxOffset, maxSector));
 
     //
     // Indicate that the primary partition table is being read and
@@ -2133,12 +2065,11 @@ Notes:
     // Allocate a buffer that will hold the reads.
     //
 
-    readBuffer = ExAllocatePoolWithTag( NonPagedPoolCacheAligned,
-                                        PAGE_SIZE,
-                                        'btsF' );
+    readBuffer = ExAllocatePoolWithTag(NonPagedPoolCacheAligned, PAGE_SIZE, 'btsF');
 
-    if (readBuffer == NULL) {
-        ExFreePool( *PartitionBuffer );
+    if (readBuffer == NULL)
+    {
+        ExFreePool(*PartitionBuffer);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2148,7 +2079,8 @@ Notes:
     // partition table, repeat.
     //
 
-    do {
+    do
+    {
 
         BOOLEAN tableIsValid;
         ULONG containerPartitionCount;
@@ -2162,7 +2094,7 @@ Notes:
         // the read request to complete.
         //
 
-        KeInitializeEvent( &event, NotificationEvent, FALSE );
+        KeInitializeEvent(&event, NotificationEvent, FALSE);
 
         //
         // Zero out the buffer we're reading into.  In case we get back
@@ -2171,31 +2103,26 @@ Notes:
 
         RtlZeroMemory(readBuffer, readSize);
 
-        irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ,
-                                            DeviceObject,
-                                            readBuffer,
-                                            readSize,
-                                            &partitionTableOffset,
-                                            &event,
-                                            &ioStatus );
+        irp = IoBuildSynchronousFsdRequest(IRP_MJ_READ, DeviceObject, readBuffer, readSize, &partitionTableOffset,
+                                           &event, &ioStatus);
 
-        if (!irp) {
+        if (!irp)
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
             break;
-        } else {
+        }
+        else
+        {
             PIO_STACK_LOCATION irpStack;
             irpStack = IoGetNextIrpStackLocation(irp);
             irpStack->Flags |= SL_OVERRIDE_VERIFY_VOLUME;
         }
 
-        status = IoCallDriver( DeviceObject, irp );
+        status = IoCallDriver(DeviceObject, irp);
 
-        if (status == STATUS_PENDING) {
-            (VOID) KeWaitForSingleObject( &event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER) NULL);
+        if (status == STATUS_PENDING)
+        {
+            (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
             status = ioStatus.Status;
         }
 
@@ -2205,11 +2132,13 @@ Notes:
         // where noone bothered to write anything to the non-filesystem sectors
         //
 
-        if(status == STATUS_NO_DATA_DETECTED) {
+        if (status == STATUS_NO_DATA_DETECTED)
+        {
             status = STATUS_SUCCESS;
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             break;
         }
 
@@ -2220,26 +2149,27 @@ Notes:
         // offset to 0.
         //
 
-        if (foundEZHooker && (partitionTableOffset.QuadPart == 512)) {
+        if (foundEZHooker && (partitionTableOffset.QuadPart == 512))
+        {
 
             partitionTableOffset.QuadPart = 0;
-
         }
 
         //
         // Check for Boot Record signature.
         //
 
-        if (((PUSHORT) readBuffer)[BOOT_SIGNATURE_OFFSET] != BOOT_RECORD_SIGNATURE) {
+        if (((PUSHORT)readBuffer)[BOOT_SIGNATURE_OFFSET] != BOOT_RECORD_SIGNATURE)
+        {
 
-            KdPrintEx((DPFLTR_FSTUB_ID,
-                       DPFLTR_WARNING_LEVEL,
+            KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL,
                        "FSTUB: (IoReadPartitionTable) No 0xaa55 found in partition table %d\n",
                        partitionTableCounter + 1));
 
             break;
-
-        } else {
+        }
+        else
+        {
             mbrSignatureFound = TRUE;
         }
 
@@ -2247,11 +2177,12 @@ Notes:
         // Copy NTFT disk signature to buffer
         //
 
-        if (partitionTableOffset.QuadPart == 0) {
-            (*PartitionBuffer)->Signature =  ((PULONG) readBuffer)[PARTITION_TABLE_OFFSET/2-1];
+        if (partitionTableOffset.QuadPart == 0)
+        {
+            (*PartitionBuffer)->Signature = ((PULONG)readBuffer)[PARTITION_TABLE_OFFSET / 2 - 1];
         }
 
-        partitionTableEntry = (PPARTITION_DESCRIPTOR) &(((PUSHORT) readBuffer)[PARTITION_TABLE_OFFSET]);
+        partitionTableEntry = (PPARTITION_DESCRIPTOR) & (((PUSHORT)readBuffer)[PARTITION_TABLE_OFFSET]);
 
         //
         // Keep count of partition tables in case we have an extended partition;
@@ -2264,75 +2195,64 @@ Notes:
         // table that are not link entries or are unused.
         //
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB: Partition Table %d:\n",
-                   partitionTableCounter));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB: Partition Table %d:\n", partitionTableCounter));
 
-        for (partitionEntry = 1, containerPartitionCount = 0;
-             partitionEntry <= NUM_PARTITION_TABLE_ENTRIES;
-             partitionEntry++, partitionTableEntry++) {
+        for (partitionEntry = 1, containerPartitionCount = 0; partitionEntry <= NUM_PARTITION_TABLE_ENTRIES;
+             partitionEntry++, partitionTableEntry++)
+        {
 
-            KdPrintEx((DPFLTR_FSTUB_ID,
-                       DPFLTR_TRACE_LEVEL,
-                       "Partition Entry %d,%d: type %#x %s\n",
-                       partitionTableCounter,
-                       partitionEntry,
-                       partitionTableEntry->PartitionType,
+            KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "Partition Entry %d,%d: type %#x %s\n",
+                       partitionTableCounter, partitionEntry, partitionTableEntry->PartitionType,
                        (partitionTableEntry->ActiveFlag) ? "Active" : ""));
 
-            KdPrintEx((DPFLTR_FSTUB_ID,
-                       DPFLTR_TRACE_LEVEL,
-                       "\tOffset %#08lx for %#08lx Sectors\n",
-                       GET_STARTING_SECTOR(partitionTableEntry),
-                       GET_PARTITION_LENGTH(partitionTableEntry)));
+            KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "\tOffset %#08lx for %#08lx Sectors\n",
+                       GET_STARTING_SECTOR(partitionTableEntry), GET_PARTITION_LENGTH(partitionTableEntry)));
 
-            if (partitionTableEntry->PartitionType == 0xEE) {
-                FstubFixupEfiPartition (partitionTableEntry,
-                                        maxOffset);
+            if (partitionTableEntry->PartitionType == 0xEE)
+            {
+                FstubFixupEfiPartition(partitionTableEntry, maxOffset);
             }
-            
+
             //
             // Do a quick pass over the entry to see if this table is valid.
             // It's only fatal if the master partition table is invalid.
             //
 
-            if((HalpIsValidPartitionEntry(partitionTableEntry,
-                                          maxOffset,
-                                          maxSector) == FALSE) &&
-               (partitionTableCounter == 0)) {
+            if ((HalpIsValidPartitionEntry(partitionTableEntry, maxOffset, maxSector) == FALSE) &&
+                (partitionTableCounter == 0))
+            {
 
                 tableIsValid = FALSE;
                 break;
-
             }
             //
             // Only one container partition is allowed per table - any more
             // and it's invalid.
             //
 
-            if(IsContainerPartition(partitionTableEntry->PartitionType)) {
+            if (IsContainerPartition(partitionTableEntry->PartitionType))
+            {
 
                 containerPartitionCount++;
 
-                if(containerPartitionCount != 1) {
+                if (containerPartitionCount != 1)
+                {
 
-                    KdPrintEx((DPFLTR_FSTUB_ID,
-                               DPFLTR_ERROR_LEVEL,
+                    KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_ERROR_LEVEL,
                                "FSTUB: Multiple container partitions found in "
-                                   "partition table %d\n - table is invalid\n",
+                               "partition table %d\n - table is invalid\n",
                                partitionTableCounter));
 
                     tableIsValid = FALSE;
                     break;
                 }
-
             }
 
-            if(emptyPartitionTable) {
+            if (emptyPartitionTable)
+            {
 
-                if((GET_STARTING_SECTOR(partitionTableEntry) != 0) ||
-                   (GET_PARTITION_LENGTH(partitionTableEntry) != 0)) {
+                if ((GET_STARTING_SECTOR(partitionTableEntry) != 0) || (GET_PARTITION_LENGTH(partitionTableEntry) != 0))
+                {
 
                     //
                     // There's a valid, non-empty partition here. The table
@@ -2349,7 +2269,8 @@ Notes:
             // recognized partition descriptors returned.
             //
 
-            if (ReturnRecognizedPartitions) {
+            if (ReturnRecognizedPartitions)
+            {
 
                 //
                 // Check if partition type is 0 (unused) or 5/f (extended).
@@ -2358,7 +2279,8 @@ Notes:
                 //
 
                 if ((partitionTableEntry->PartitionType == PARTITION_ENTRY_UNUSED) ||
-                    IsContainerPartition(partitionTableEntry->PartitionType)) {
+                    IsContainerPartition(partitionTableEntry->PartitionType))
+                {
 
                     continue;
                 }
@@ -2370,9 +2292,9 @@ Notes:
 
             partitionNumber++;
 
-            if (((partitionNumber * sizeof( PARTITION_INFORMATION )) +
-                 sizeof( DRIVE_LAYOUT_INFORMATION )) >
-                (ULONG) partitionBufferSize) {
+            if (((partitionNumber * sizeof(PARTITION_INFORMATION)) + sizeof(DRIVE_LAYOUT_INFORMATION)) >
+                (ULONG)partitionBufferSize)
+            {
 
                 //
                 // The partition list is too small to contain all of the
@@ -2381,21 +2303,18 @@ Notes:
                 // the new one.
                 //
 
-                newPartitionBuffer = ExAllocatePoolWithTag( NonPagedPool,
-                                                            partitionBufferSize << 1,
-                                                            'btsF' );
+                newPartitionBuffer = ExAllocatePoolWithTag(NonPagedPool, partitionBufferSize << 1, 'btsF');
 
-                if (newPartitionBuffer == NULL) {
+                if (newPartitionBuffer == NULL)
+                {
                     --partitionNumber;
                     status = STATUS_INSUFFICIENT_RESOURCES;
                     break;
                 }
 
-                RtlCopyMemory( newPartitionBuffer,
-                               *PartitionBuffer,
-                               partitionBufferSize );
+                RtlCopyMemory(newPartitionBuffer, *PartitionBuffer, partitionBufferSize);
 
-                ExFreePool( *PartitionBuffer );
+                ExFreePool(*PartitionBuffer);
 
                 //
                 // Reassign the new buffer to the return parameter and
@@ -2419,33 +2338,34 @@ Notes:
 
             partitionInfo->RewritePartition = FALSE;
 
-            if (partitionTableEntry->PartitionType != PARTITION_ENTRY_UNUSED) {
+            if (partitionTableEntry->PartitionType != PARTITION_ENTRY_UNUSED)
+            {
                 LONGLONG startOffset;
 
                 partitionInfo->BootIndicator =
-                    partitionTableEntry->ActiveFlag & PARTITION_ACTIVE_FLAG ?
-                        (BOOLEAN) TRUE : (BOOLEAN) FALSE;
+                    partitionTableEntry->ActiveFlag & PARTITION_ACTIVE_FLAG ? (BOOLEAN)TRUE : (BOOLEAN)FALSE;
 
-                if (IsContainerPartition(partitionTableEntry->PartitionType)) {
+                if (IsContainerPartition(partitionTableEntry->PartitionType))
+                {
                     partitionInfo->RecognizedPartition = FALSE;
                     startOffset = volumeStartOffset.QuadPart;
-                } else {
+                }
+                else
+                {
                     partitionInfo->RecognizedPartition = TRUE;
                     startOffset = partitionTableOffset.QuadPart;
                 }
 
-                partitionInfo->StartingOffset.QuadPart = startOffset +
-                    UInt32x32To64(GET_STARTING_SECTOR(partitionTableEntry),
-                                  SectorSize);
-                tempInt.QuadPart = (partitionInfo->StartingOffset.QuadPart -
-                                   startOffset) / SectorSize;
+                partitionInfo->StartingOffset.QuadPart =
+                    startOffset + UInt32x32To64(GET_STARTING_SECTOR(partitionTableEntry), SectorSize);
+                tempInt.QuadPart = (partitionInfo->StartingOffset.QuadPart - startOffset) / SectorSize;
                 partitionInfo->HiddenSectors = tempInt.LowPart;
 
                 partitionInfo->PartitionLength.QuadPart =
-                    UInt32x32To64(GET_PARTITION_LENGTH(partitionTableEntry),
-                                  SectorSize);
-
-            } else {
+                    UInt32x32To64(GET_PARTITION_LENGTH(partitionTableEntry), SectorSize);
+            }
+            else
+            {
 
                 //
                 // Partitions that are not used do not describe any part
@@ -2461,7 +2381,6 @@ Notes:
                 partitionInfo->PartitionLength.QuadPart = 0;
                 partitionInfo->HiddenSectors = 0;
             }
-
         }
 
         KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "\n"));
@@ -2470,11 +2389,13 @@ Notes:
         // If an error occurred, leave the routine now.
         //
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             break;
         }
 
-        if(tableIsValid == FALSE) {
+        if (tableIsValid == FALSE)
+        {
 
             //
             // Invalidate this partition table and stop looking for new ones.
@@ -2493,7 +2414,7 @@ Notes:
         // will point to the next table.
         //
 
-        partitionTableEntry = (PPARTITION_DESCRIPTOR) &(((PUSHORT) readBuffer)[PARTITION_TABLE_OFFSET]);
+        partitionTableEntry = (PPARTITION_DESCRIPTOR) & (((PUSHORT)readBuffer)[PARTITION_TABLE_OFFSET]);
 
         //
         // Assume that the link entry is empty.
@@ -2501,11 +2422,11 @@ Notes:
 
         partitionTableOffset.QuadPart = 0;
 
-        for (partitionEntry = 1;
-             partitionEntry <= NUM_PARTITION_TABLE_ENTRIES;
-             partitionEntry++, partitionTableEntry++) {
+        for (partitionEntry = 1; partitionEntry <= NUM_PARTITION_TABLE_ENTRIES; partitionEntry++, partitionTableEntry++)
+        {
 
-            if (IsContainerPartition(partitionTableEntry->PartitionType)) {
+            if (IsContainerPartition(partitionTableEntry->PartitionType))
+            {
 
                 //
                 // Obtain the address of the next partition table on the
@@ -2516,9 +2437,8 @@ Notes:
                 // be zero if this is the primary parition table.
                 //
 
-                partitionTableOffset.QuadPart = volumeStartOffset.QuadPart +
-                    UInt32x32To64(GET_STARTING_SECTOR(partitionTableEntry),
-                                  SectorSize);
+                partitionTableOffset.QuadPart =
+                    volumeStartOffset.QuadPart + UInt32x32To64(GET_STARTING_SECTOR(partitionTableEntry), SectorSize);
 
                 //
                 // Set the VolumeStartSector to be the begining of the
@@ -2527,7 +2447,8 @@ Notes:
                 // are relative to this extended partition.
                 //
 
-                if (primaryPartitionTable) {
+                if (primaryPartitionTable)
+                {
                     volumeStartOffset = partitionTableOffset;
                 }
 
@@ -2538,10 +2459,7 @@ Notes:
 
                 maxSector = GET_PARTITION_LENGTH(partitionTableEntry);
 
-                KdPrintEx((DPFLTR_FSTUB_ID,
-                           DPFLTR_TRACE_LEVEL,
-                           "FSTUB: MaxSector now = %#08lx\n",
-                           maxSector));
+                KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB: MaxSector now = %#08lx\n", maxSector));
 
                 //
                 // There is only ever one link entry per partition table,
@@ -2570,25 +2488,23 @@ Notes:
     // we don't then it's an unpartitioned disk.
     //
 
-    if((diskGeometry.MediaType == RemovableMedia) &&
-       (partitionTableCounter == 0) &&
-       (mbrSignatureFound == TRUE) &&
-       (emptyPartitionTable == TRUE)) {
+    if ((diskGeometry.MediaType == RemovableMedia) && (partitionTableCounter == 0) && (mbrSignatureFound == TRUE) &&
+        (emptyPartitionTable == TRUE))
+    {
 
-        PBOOT_SECTOR_INFO bootSector = (PBOOT_SECTOR_INFO) readBuffer;
+        PBOOT_SECTOR_INFO bootSector = (PBOOT_SECTOR_INFO)readBuffer;
 
-        if((bootSector->JumpByte[0] == 0xeb) ||
-           (bootSector->JumpByte[0] == 0xe9)) {
+        if ((bootSector->JumpByte[0] == 0xeb) || (bootSector->JumpByte[0] == 0xe9))
+        {
 
             //
             // We've got a superfloppy of some sort.
             //
 
-            KdPrintEx((DPFLTR_FSTUB_ID,
-                       DPFLTR_TRACE_LEVEL,
+            KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL,
                        "FSTUB: Jump byte %#x found "
-                           "along with empty partition table - disk is a "
-                           "super floppy and has no valid MBR\n",
+                       "along with empty partition table - disk is a "
+                       "super floppy and has no valid MBR\n",
                        bootSector->JumpByte));
 
             partitionTableCounter = -1;
@@ -2601,10 +2517,11 @@ Notes:
     // that contiains one partition spanning the entire disk.
     //
 
-    if(partitionTableCounter == -1) {
+    if (partitionTableCounter == -1)
+    {
 
-        if((mbrSignatureFound == TRUE) ||
-           (diskGeometry.MediaType == RemovableMedia)) {
+        if ((mbrSignatureFound == TRUE) || (diskGeometry.MediaType == RemovableMedia))
+        {
 
             //
             // Either we found a signature but the partition layout was
@@ -2613,19 +2530,18 @@ Notes:
             // superfloppy.
             //
 
-            KdPrintEx((DPFLTR_FSTUB_ID,
-                       DPFLTR_TRACE_LEVEL,
+            KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL,
                        "FSTUB: Drive %#p has no valid MBR. "
-                           "Make it into a super-floppy\n", DeviceObject));
+                       "Make it into a super-floppy\n",
+                       DeviceObject));
 
-            KdPrintEx((DPFLTR_FSTUB_ID,
-                       DPFLTR_TRACE_LEVEL,
+            KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL,
                        "FSTUB: Drive has %#08lx sectors "
-                           "and is %#016I64x bytes large\n",
-                       endSector,
-                       endSector * diskGeometry.BytesPerSector));
+                       "and is %#016I64x bytes large\n",
+                       endSector, endSector * diskGeometry.BytesPerSector));
 
-            if (endSector > 0) {
+            if (endSector > 0)
+            {
 
                 partitionInfo = &(*PartitionBuffer)->PartitionEntry[0];
 
@@ -2638,14 +2554,15 @@ Notes:
 
                 partitionInfo->StartingOffset.QuadPart = 0;
 
-                partitionInfo->PartitionLength.QuadPart =
-                    (endSector * diskGeometry.BytesPerSector);
+                partitionInfo->PartitionLength.QuadPart = (endSector * diskGeometry.BytesPerSector);
 
                 (*PartitionBuffer)->Signature = 1;
 
                 partitionNumber = 0;
             }
-        } else {
+        }
+        else
+        {
 
             //
             // We found no partitions.  Make sure the partition count is -1
@@ -2663,7 +2580,8 @@ Notes:
 
     (*PartitionBuffer)->PartitionCount = ++partitionNumber;
 
-    if (!partitionNumber) {
+    if (!partitionNumber)
+    {
 
         //
         // Zero out disk signature.
@@ -2676,31 +2594,30 @@ Notes:
     // Deallocate read buffer if it was allocated it.
     //
 
-    if (readBuffer != NULL) {
-        ExFreePool( readBuffer );
+    if (readBuffer != NULL)
+    {
+        ExFreePool(readBuffer);
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         ExFreePool(*PartitionBuffer);
         *PartitionBuffer = NULL;
     }
 
 #if DBG
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         FstubDbgPrintDriveLayout(*PartitionBuffer);
     }
 #endif
     return status;
 }
-
+
 NTSTATUS
 FASTCALL
-IoSetPartitionInformation(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN ULONG PartitionNumber,
-    IN ULONG PartitionType
-    )
+IoSetPartitionInformation(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN ULONG PartitionNumber,
+                          IN ULONG PartitionType)
 
 /*++
 
@@ -2756,11 +2673,9 @@ Notes:
 
 {
 
-#define GET_STARTING_SECTOR( p ) (                  \
-        (ULONG) (p->StartingSectorLsb0) +           \
-        (ULONG) (p->StartingSectorLsb1 << 8) +      \
-        (ULONG) (p->StartingSectorMsb0 << 16) +     \
-        (ULONG) (p->StartingSectorMsb1 << 24) )
+#define GET_STARTING_SECTOR(p)                                                                                     \
+    ((ULONG)(p->StartingSectorLsb0) + (ULONG)(p->StartingSectorLsb1 << 8) + (ULONG)(p->StartingSectorMsb0 << 16) + \
+     (ULONG)(p->StartingSectorMsb1 << 24))
 
     PIRP irp;
     KEVENT event;
@@ -2768,7 +2683,7 @@ Notes:
     NTSTATUS status;
     LARGE_INTEGER partitionTableOffset;
     LARGE_INTEGER volumeStartOffset;
-    PUCHAR buffer = (PUCHAR) NULL;
+    PUCHAR buffer = (PUCHAR)NULL;
     ULONG transferSize;
     ULONG partitionNumber;
     ULONG partitionEntry;
@@ -2788,9 +2703,12 @@ Notes:
     // fairly reasonable assumption.
     //
 
-    if (SectorSize >= 512) {
+    if (SectorSize >= 512)
+    {
         transferSize = SectorSize;
-    } else {
+    }
+    else
+    {
         transferSize = 512;
     }
 
@@ -2804,25 +2722,20 @@ Notes:
 
         PVOID buff;
 
-        HalExamineMBR(
-            DeviceObject,
-            transferSize,
-            (ULONG)0x55,
-            &buff
-            );
+        HalExamineMBR(DeviceObject, transferSize, (ULONG)0x55, &buff);
 
-        if (buff) {
+        if (buff)
+        {
 
             foundEZHooker = TRUE;
             ExFreePool(buff);
             partitionTableOffset.QuadPart = 512;
-
-        } else {
+        }
+        else
+        {
 
             partitionTableOffset.QuadPart = 0;
-
         }
-
     }
 
 
@@ -2849,8 +2762,9 @@ Notes:
     // Allocate a buffer that will hold the read/write data.
     //
 
-    buffer = ExAllocatePoolWithTag( NonPagedPoolCacheAligned, PAGE_SIZE, 'btsF');
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(NonPagedPoolCacheAligned, PAGE_SIZE, 'btsF');
+    if (buffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2859,50 +2773,47 @@ Notes:
     // with I/O completion.
     //
 
-    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
 
     //
     // Read each partition table scanning for the partition table entry that
     // the caller wishes to modify.
     //
 
-    do {
+    do
+    {
 
         //
         // Read the record containing the partition table.
         //
 
-        (VOID) KeResetEvent( &event );
+        (VOID) KeResetEvent(&event);
 
-        irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ,
-                                            DeviceObject,
-                                            buffer,
-                                            transferSize,
-                                            &partitionTableOffset,
-                                            &event,
-                                            &ioStatus );
+        irp = IoBuildSynchronousFsdRequest(IRP_MJ_READ, DeviceObject, buffer, transferSize, &partitionTableOffset,
+                                           &event, &ioStatus);
 
-        if (!irp) {
+        if (!irp)
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
             break;
-        } else {
+        }
+        else
+        {
             PIO_STACK_LOCATION irpStack;
             irpStack = IoGetNextIrpStackLocation(irp);
             irpStack->Flags |= SL_OVERRIDE_VERIFY_VOLUME;
         }
 
-        status = IoCallDriver( DeviceObject, irp );
+        status = IoCallDriver(DeviceObject, irp);
 
-        if (status == STATUS_PENDING) {
-            (VOID) KeWaitForSingleObject( &event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER) NULL );
+        if (status == STATUS_PENDING)
+        {
+            (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
             status = ioStatus.Status;
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             break;
         }
 
@@ -2913,10 +2824,10 @@ Notes:
         // offset to 0.
         //
 
-        if (foundEZHooker && (partitionTableOffset.QuadPart == 512)) {
+        if (foundEZHooker && (partitionTableOffset.QuadPart == 512))
+        {
 
             partitionTableOffset.QuadPart = 0;
-
         }
 
         //
@@ -2924,12 +2835,13 @@ Notes:
         // record.
         //
 
-        if (((PUSHORT) buffer)[BOOT_SIGNATURE_OFFSET] != BOOT_RECORD_SIGNATURE) {
+        if (((PUSHORT)buffer)[BOOT_SIGNATURE_OFFSET] != BOOT_RECORD_SIGNATURE)
+        {
             status = STATUS_BAD_MASTER_BOOT_RECORD;
             break;
         }
 
-        partitionTableEntry = (PPARTITION_DESCRIPTOR) &(((PUSHORT) buffer)[PARTITION_TABLE_OFFSET]);
+        partitionTableEntry = (PPARTITION_DESCRIPTOR) & (((PUSHORT)buffer)[PARTITION_TABLE_OFFSET]);
 
         //
         // Scan the partition entries in this partition table to determine if
@@ -2939,9 +2851,8 @@ Notes:
         // notion of the partition number can be located.
         //
 
-        for (partitionEntry = 1;
-            partitionEntry <= NUM_PARTITION_TABLE_ENTRIES;
-            partitionEntry++, partitionTableEntry++) {
+        for (partitionEntry = 1; partitionEntry <= NUM_PARTITION_TABLE_ENTRIES; partitionEntry++, partitionTableEntry++)
+        {
 
 
             //
@@ -2949,7 +2860,8 @@ Notes:
             //
 
             if ((partitionTableEntry->PartitionType == PARTITION_ENTRY_UNUSED) ||
-                IsContainerPartition(partitionTableEntry->PartitionType)) {
+                IsContainerPartition(partitionTableEntry->PartitionType))
+            {
                 continue;
             }
 
@@ -2961,7 +2873,8 @@ Notes:
 
             partitionNumber++;
 
-            if (partitionNumber == PartitionNumber) {
+            if (partitionNumber == PartitionNumber)
+            {
 
                 //
                 // This is the desired partition that is to be changed.  Simply
@@ -2969,35 +2882,30 @@ Notes:
                 // buffer back out to the disk.
                 //
 
-                partitionTableEntry->PartitionType = (UCHAR) PartitionType;
+                partitionTableEntry->PartitionType = (UCHAR)PartitionType;
 
-                (VOID) KeResetEvent( &event );
+                (VOID) KeResetEvent(&event);
 
-                irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE,
-                                                    DeviceObject,
-                                                    buffer,
-                                                    transferSize,
-                                                    &partitionTableOffset,
-                                                    &event,
-                                                    &ioStatus );
+                irp = IoBuildSynchronousFsdRequest(IRP_MJ_WRITE, DeviceObject, buffer, transferSize,
+                                                   &partitionTableOffset, &event, &ioStatus);
 
-                if (!irp) {
+                if (!irp)
+                {
                     status = STATUS_INSUFFICIENT_RESOURCES;
                     break;
-                } else {
+                }
+                else
+                {
                     PIO_STACK_LOCATION irpStack;
                     irpStack = IoGetNextIrpStackLocation(irp);
                     irpStack->Flags |= SL_OVERRIDE_VERIFY_VOLUME;
                 }
 
-                status = IoCallDriver( DeviceObject, irp );
+                status = IoCallDriver(DeviceObject, irp);
 
-                if (status == STATUS_PENDING) {
-                    (VOID) KeWaitForSingleObject( &event,
-                                                  Executive,
-                                                  KernelMode,
-                                                  FALSE,
-                                                  (PLARGE_INTEGER) NULL );
+                if (status == STATUS_PENDING)
+                {
+                    (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
                     status = ioStatus.Status;
                 }
 
@@ -3011,7 +2919,8 @@ Notes:
         // routine.
         //
 
-        if (partitionEntry <= NUM_PARTITION_TABLE_ENTRIES) {
+        if (partitionEntry <= NUM_PARTITION_TABLE_ENTRIES)
+        {
             break;
         }
 
@@ -3022,13 +2931,13 @@ Notes:
         // and it will point to the next table.
         //
 
-        partitionTableEntry = (PPARTITION_DESCRIPTOR) &(((PUSHORT) buffer)[PARTITION_TABLE_OFFSET]);
+        partitionTableEntry = (PPARTITION_DESCRIPTOR) & (((PUSHORT)buffer)[PARTITION_TABLE_OFFSET]);
 
-        for (partitionEntry = 1;
-            partitionEntry <= NUM_PARTITION_TABLE_ENTRIES;
-            partitionEntry++, partitionTableEntry++) {
+        for (partitionEntry = 1; partitionEntry <= NUM_PARTITION_TABLE_ENTRIES; partitionEntry++, partitionTableEntry++)
+        {
 
-            if (IsContainerPartition(partitionTableEntry->PartitionType)) {
+            if (IsContainerPartition(partitionTableEntry->PartitionType))
+            {
 
                 //
                 // Obtain the address of the next partition table on the disk.
@@ -3039,9 +2948,8 @@ Notes:
                 // if this is the primary partition table.
                 //
 
-                partitionTableOffset.QuadPart = volumeStartOffset.QuadPart +
-                    UInt32x32To64(GET_STARTING_SECTOR(partitionTableEntry),
-                                  SectorSize);
+                partitionTableOffset.QuadPart =
+                    volumeStartOffset.QuadPart + UInt32x32To64(GET_STARTING_SECTOR(partitionTableEntry), SectorSize);
 
                 //
                 // Set the starting offset of the volume to be the beginning of
@@ -3050,7 +2958,8 @@ Notes:
                 // are relative to this extended partition.
                 //
 
-                if (primaryPartitionTable) {
+                if (primaryPartitionTable)
+                {
                     volumeStartOffset = partitionTableOffset;
                 }
 
@@ -3063,7 +2972,8 @@ Notes:
         // partition, otherwise the desired partition will never be found.
         //
 
-        if (partitionEntry > NUM_PARTITION_TABLE_ENTRIES) {
+        if (partitionEntry > NUM_PARTITION_TABLE_ENTRIES)
+        {
             status = STATUS_BAD_MASTER_BOOT_RECORD;
             break;
         }
@@ -3080,22 +2990,18 @@ Notes:
     // If a data buffer was successfully allocated, deallocate it now.
     //
 
-    if (buffer != NULL) {
-        ExFreePool( buffer );
+    if (buffer != NULL)
+    {
+        ExFreePool(buffer);
     }
 
     return status;
 }
-
+
 NTSTATUS
 FASTCALL
-IoWritePartitionTable(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN ULONG SectorsPerTrack,
-    IN ULONG NumberOfHeads,
-    IN struct _DRIVE_LAYOUT_INFORMATION *PartitionBuffer
-    )
+IoWritePartitionTable(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN ULONG SectorsPerTrack,
+                      IN ULONG NumberOfHeads, IN struct _DRIVE_LAYOUT_INFORMATION *PartitionBuffer)
 
 /*++
 
@@ -3133,17 +3039,20 @@ Return Value:
 
 {
 
-//
-// This macro has the effect of Bit = log2(Data)
-//
+    //
+    // This macro has the effect of Bit = log2(Data)
+    //
 
-#define WHICH_BIT(Data, Bit) {                      \
-    for (Bit = 0; Bit < 32; Bit++) {                \
-        if ((Data >> Bit) == 1) {                   \
-            break;                                  \
-        }                                           \
-    }                                               \
-}
+#define WHICH_BIT(Data, Bit)           \
+    {                                  \
+        for (Bit = 0; Bit < 32; Bit++) \
+        {                              \
+            if ((Data >> Bit) == 1)    \
+            {                          \
+                break;                 \
+            }                          \
+        }                              \
+    }
 
     ULONG writeSize;
     PUSHORT writeBuffer = NULL;
@@ -3170,7 +3079,7 @@ Return Value:
     // Cast to a structure that is easier to use.
     //
 
-    PDISK_LAYOUT diskLayout = (PDISK_LAYOUT) PartitionBuffer;
+    PDISK_LAYOUT diskLayout = (PDISK_LAYOUT)PartitionBuffer;
 
     //
     // Ensure that no one is calling this function illegally.
@@ -3178,7 +3087,7 @@ Return Value:
 
     PAGED_CODE();
 
-    FstubDbgPrintDriveLayout ( PartitionBuffer );
+    FstubDbgPrintDriveLayout(PartitionBuffer);
 
     //
     // Determine the size of a write operation to ensure that at least 512
@@ -3188,15 +3097,16 @@ Return Value:
     // multiple of 2, a fairly reasonable assumption.
     //
 
-    if (SectorSize >= 512) {
+    if (SectorSize >= 512)
+    {
         writeSize = SectorSize;
-    } else {
+    }
+    else
+    {
         writeSize = 512;
     }
 
-    xHalGetPartialGeometry( DeviceObject,
-                            &conventionalCylinders,
-                            &diskSize );
+    xHalGetPartialGeometry(DeviceObject, &conventionalCylinders, &diskSize);
 
     //
     // Look to see if this is an EZDrive Disk.  If it is then get the
@@ -3207,25 +3117,20 @@ Return Value:
 
         PVOID buff;
 
-        HalExamineMBR(
-            DeviceObject,
-            writeSize,
-            (ULONG)0x55,
-            &buff
-            );
+        HalExamineMBR(DeviceObject, writeSize, (ULONG)0x55, &buff);
 
-        if (buff) {
+        if (buff)
+        {
 
             foundEZHooker = TRUE;
             ExFreePool(buff);
             partitionTableOffset.QuadPart = 512;
-
-        } else {
+        }
+        else
+        {
 
             partitionTableOffset.QuadPart = 0;
-
         }
-
     }
 
     //
@@ -3238,7 +3143,7 @@ Return Value:
     // Calculate shift count for converting between byte and sector.
     //
 
-    WHICH_BIT( SectorSize, shiftCount );
+    WHICH_BIT(SectorSize, shiftCount);
 
     //
     // Check to see if this device is partitioned (or is being partitioned)
@@ -3252,12 +3157,13 @@ Return Value:
     // result in a real MBR being written out.
     //
 
-    if(PartitionBuffer->PartitionCount == 1) {
+    if (PartitionBuffer->PartitionCount == 1)
+    {
 
         PPARTITION_INFORMATION partitionEntry = PartitionBuffer->PartitionEntry;
 
-        if((partitionEntry->StartingOffset.QuadPart == 0) &&
-           (partitionEntry->HiddenSectors == 0)) {
+        if ((partitionEntry->StartingOffset.QuadPart == 0) && (partitionEntry->HiddenSectors == 0))
+        {
 
             isSuperFloppy = TRUE;
 
@@ -3268,14 +3174,15 @@ Return Value:
             // the write operation.
             //
 
-            if((partitionEntry->PartitionNumber != 0) ||
-               (partitionEntry->PartitionType != PARTITION_FAT_16) ||
-               (partitionEntry->BootIndicator == TRUE)) {
+            if ((partitionEntry->PartitionNumber != 0) || (partitionEntry->PartitionType != PARTITION_FAT_16) ||
+                (partitionEntry->BootIndicator == TRUE))
+            {
 
                 return STATUS_INVALID_PARAMETER;
             }
 
-            if(partitionEntry->RewritePartition == TRUE) {
+            if (partitionEntry->RewritePartition == TRUE)
+            {
                 rewritePartition = TRUE;
             }
 
@@ -3288,17 +3195,16 @@ Return Value:
     //
 
     diskLayout->TableCount =
-        (PartitionBuffer->PartitionCount +
-        NUM_PARTITION_TABLE_ENTRIES - 1) /
-        NUM_PARTITION_TABLE_ENTRIES;
+        (PartitionBuffer->PartitionCount + NUM_PARTITION_TABLE_ENTRIES - 1) / NUM_PARTITION_TABLE_ENTRIES;
 
     //
     // Allocate a buffer for the sector writes.
     //
 
-    writeBuffer = ExAllocatePoolWithTag( NonPagedPoolCacheAligned, PAGE_SIZE, 'btsF');
+    writeBuffer = ExAllocatePoolWithTag(NonPagedPoolCacheAligned, PAGE_SIZE, 'btsF');
 
-    if (writeBuffer == NULL) {
+    if (writeBuffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -3306,20 +3212,19 @@ Return Value:
     // Point to the partition table entries in write buffer.
     //
 
-    partitionEntry = (PPTE) &writeBuffer[PARTITION_TABLE_OFFSET];
+    partitionEntry = (PPTE)&writeBuffer[PARTITION_TABLE_OFFSET];
 
-    for (partitionTableCount = 0;
-         partitionTableCount < diskLayout->TableCount;
-         partitionTableCount++) {
+    for (partitionTableCount = 0; partitionTableCount < diskLayout->TableCount; partitionTableCount++)
+    {
 
-        UCHAR   partitionType;
+        UCHAR partitionType;
 
         //
         // the first partition table is in the mbr (physical sector 0).
         // other partition tables are in ebr's within the extended partition.
         //
 
-        BOOLEAN mbr = (BOOLEAN) (!partitionTableCount);
+        BOOLEAN mbr = (BOOLEAN)(!partitionTableCount);
         LARGE_INTEGER extendedPartitionOffset;
 
         //
@@ -3328,37 +3233,33 @@ Return Value:
         // we don't clobber any boot code that might be there already.
         //
 
-        KeInitializeEvent( &event, NotificationEvent, FALSE );
+        KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-        irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ,
-                                        DeviceObject,
-                                        writeBuffer,
-                                        writeSize,
-                                        &partitionTableOffset,
-                                        &event,
-                                        &ioStatus );
+        irp = IoBuildSynchronousFsdRequest(IRP_MJ_READ, DeviceObject, writeBuffer, writeSize, &partitionTableOffset,
+                                           &event, &ioStatus);
 
-        if (!irp) {
+        if (!irp)
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
             break;
-        } else {
+        }
+        else
+        {
             PIO_STACK_LOCATION irpStack;
             irpStack = IoGetNextIrpStackLocation(irp);
             irpStack->Flags |= SL_OVERRIDE_VERIFY_VOLUME;
         }
 
-        status = IoCallDriver( DeviceObject, irp );
+        status = IoCallDriver(DeviceObject, irp);
 
-        if (status == STATUS_PENDING) {
-            (VOID) KeWaitForSingleObject( &event,
-                                      Executive,
-                                      KernelMode,
-                                      FALSE,
-                                      (PLARGE_INTEGER) NULL);
+        if (status == STATUS_PENDING)
+        {
+            (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
             status = ioStatus.Status;
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             break;
         }
 
@@ -3369,13 +3270,14 @@ Return Value:
         // offset to 0.
         //
 
-        if (foundEZHooker && (partitionTableOffset.QuadPart == 512)) {
+        if (foundEZHooker && (partitionTableOffset.QuadPart == 512))
+        {
 
             partitionTableOffset.QuadPart = 0;
-
         }
 
-        if(isSuperFloppy == FALSE) {
+        if (isSuperFloppy == FALSE)
+        {
 
             //
             // Write signature to last word of boot sector.
@@ -3388,13 +3290,13 @@ Return Value:
             //
 
             rewritePartition = FALSE;
-            if (partitionTableOffset.QuadPart == 0) {
+            if (partitionTableOffset.QuadPart == 0)
+            {
 
-                if (((PULONG)writeBuffer)[PARTITION_TABLE_OFFSET/2-1] !=
-                    PartitionBuffer->Signature) {
+                if (((PULONG)writeBuffer)[PARTITION_TABLE_OFFSET / 2 - 1] != PartitionBuffer->Signature)
+                {
 
-                    ((PULONG) writeBuffer)[PARTITION_TABLE_OFFSET/2-1] =
-                        PartitionBuffer->Signature;
+                    ((PULONG)writeBuffer)[PARTITION_TABLE_OFFSET / 2 - 1] = PartitionBuffer->Signature;
                     rewritePartition = TRUE;
                 }
             }
@@ -3411,19 +3313,18 @@ Return Value:
             // to be written out to disk.
             //
 
-            for (partitionEntryCount = 0;
-                 partitionEntryCount < NUM_PARTITION_TABLE_ENTRIES;
-                 partitionEntryCount++) {
+            for (partitionEntryCount = 0; partitionEntryCount < NUM_PARTITION_TABLE_ENTRIES; partitionEntryCount++)
+            {
 
-                partitionType =
-                        partitionTable->PartitionEntry[partitionEntryCount].PartitionType;
+                partitionType = partitionTable->PartitionEntry[partitionEntryCount].PartitionType;
 
                 //
                 // If the rewrite ISN'T true then copy then just leave the data
                 // alone that is in the on-disk table.
                 //
 
-                if (partitionTable->PartitionEntry[partitionEntryCount].RewritePartition) {
+                if (partitionTable->PartitionEntry[partitionEntryCount].RewritePartition)
+                {
 
                     //
                     // This boot record needs to be written back to disk.
@@ -3443,10 +3344,11 @@ Return Value:
                     //
 
                     partitionEntry[partitionEntryCount].ActiveFlag =
-                        partitionTable->PartitionEntry[partitionEntryCount].BootIndicator ?
-                        (UCHAR) PARTITION_ACTIVE_FLAG : (UCHAR) 0;
+                        partitionTable->PartitionEntry[partitionEntryCount].BootIndicator ? (UCHAR)PARTITION_ACTIVE_FLAG
+                                                                                          : (UCHAR)0;
 
-                    if (partitionType != PARTITION_ENTRY_UNUSED) {
+                    if (partitionType != PARTITION_ENTRY_UNUSED)
+                    {
 
                         LARGE_INTEGER sectorOffset;
 
@@ -3458,9 +3360,12 @@ Return Value:
                         // of extended partition.
                         //
 
-                        if (mbr || !IsContainerPartition(partitionType)) {
+                        if (mbr || !IsContainerPartition(partitionType))
+                        {
                             tempInt.QuadPart = partitionTableOffset.QuadPart;
-                        } else {
+                        }
+                        else
+                        {
                             tempInt.QuadPart = extendedPartitionOffset.QuadPart;
                         }
 
@@ -3475,23 +3380,21 @@ Return Value:
                         // Calculate partition length.
                         //
 
-                        tempInt.QuadPart = partitionTable->PartitionEntry[partitionEntryCount].PartitionLength.QuadPart >> shiftCount;
+                        tempInt.QuadPart =
+                            partitionTable->PartitionEntry[partitionEntryCount].PartitionLength.QuadPart >> shiftCount;
                         partitionEntry[partitionEntryCount].PartitionLength = tempInt.LowPart;
 
                         //
                         // Fill in CHS values
                         //
 
-                        HalpCalculateChsValues(
-                            &partitionTable->PartitionEntry[partitionEntryCount].StartingOffset,
-                            &partitionTable->PartitionEntry[partitionEntryCount].PartitionLength,
-                            shiftCount,
-                            SectorsPerTrack,
-                            NumberOfHeads,
-                            conventionalCylinders,
-                            (PPARTITION_DESCRIPTOR) &partitionEntry[partitionEntryCount]);
-
-                    } else {
+                        HalpCalculateChsValues(&partitionTable->PartitionEntry[partitionEntryCount].StartingOffset,
+                                               &partitionTable->PartitionEntry[partitionEntryCount].PartitionLength,
+                                               shiftCount, SectorsPerTrack, NumberOfHeads, conventionalCylinders,
+                                               (PPARTITION_DESCRIPTOR)&partitionEntry[partitionEntryCount]);
+                    }
+                    else
+                    {
 
                         //
                         // Zero out partition entry fields in case an entry
@@ -3505,24 +3408,23 @@ Return Value:
                         partitionEntry[partitionEntryCount].StartingCylinder = 0;
                         partitionEntry[partitionEntryCount].EndingCylinder = 0;
                     }
-
                 }
 
-                if (IsContainerPartition(partitionType)) {
+                if (IsContainerPartition(partitionType))
+                {
 
                     //
                     // Save next record offset.
                     //
 
-                    nextRecordOffset =
-                        partitionTable->PartitionEntry[partitionEntryCount].StartingOffset;
+                    nextRecordOffset = partitionTable->PartitionEntry[partitionEntryCount].StartingOffset;
                 }
 
             } // end for partitionEntryCount ...
-
         }
 
-        if (rewritePartition == TRUE) {
+        if (rewritePartition == TRUE)
+        {
 
             rewritePartition = FALSE;
 
@@ -3531,50 +3433,46 @@ Return Value:
             // the write request to complete.
             //
 
-            KeInitializeEvent( &event, NotificationEvent, FALSE );
+            KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-            if (foundEZHooker && (partitionTableOffset.QuadPart == 0)) {
+            if (foundEZHooker && (partitionTableOffset.QuadPart == 0))
+            {
 
                 partitionTableOffset.QuadPart = 512;
-
             }
-            irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE,
-                                            DeviceObject,
-                                            writeBuffer,
-                                            writeSize,
-                                            &partitionTableOffset,
-                                            &event,
-                                            &ioStatus );
+            irp = IoBuildSynchronousFsdRequest(IRP_MJ_WRITE, DeviceObject, writeBuffer, writeSize,
+                                               &partitionTableOffset, &event, &ioStatus);
 
-            if (!irp) {
+            if (!irp)
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 break;
-            } else {
+            }
+            else
+            {
                 PIO_STACK_LOCATION irpStack;
                 irpStack = IoGetNextIrpStackLocation(irp);
                 irpStack->Flags |= SL_OVERRIDE_VERIFY_VOLUME;
             }
 
-            status = IoCallDriver( DeviceObject, irp );
+            status = IoCallDriver(DeviceObject, irp);
 
-            if (status == STATUS_PENDING) {
-                (VOID) KeWaitForSingleObject( &event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER) NULL);
+            if (status == STATUS_PENDING)
+            {
+                (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
                 status = ioStatus.Status;
             }
 
-            if (!NT_SUCCESS( status )) {
+            if (!NT_SUCCESS(status))
+            {
                 break;
             }
 
 
-            if (foundEZHooker && (partitionTableOffset.QuadPart == 512)) {
+            if (foundEZHooker && (partitionTableOffset.QuadPart == 512))
+            {
 
                 partitionTableOffset.QuadPart = 0;
-
             }
 
         } // end if (reWrite ...
@@ -3584,7 +3482,8 @@ Return Value:
         //
 
         partitionTableOffset = nextRecordOffset;
-        if(mbr) {
+        if (mbr)
+        {
             extendedPartitionOffset = nextRecordOffset;
         }
 
@@ -3594,20 +3493,16 @@ Return Value:
     // Deallocate write buffer if it was allocated it.
     //
 
-    if (writeBuffer != NULL) {
-        ExFreePool( writeBuffer );
+    if (writeBuffer != NULL)
+    {
+        ExFreePool(writeBuffer);
     }
 
     return status;
 }
 
 
-
-VOID
-FstubFixupEfiPartition(
-    IN PPARTITION_DESCRIPTOR Entry,
-    IN ULONGLONG MaxSector
-    )
+VOID FstubFixupEfiPartition(IN PPARTITION_DESCRIPTOR Entry, IN ULONGLONG MaxSector)
 /*++
 
 Routine Description:
@@ -3633,38 +3528,33 @@ Return Value:
 
     PAGED_CODE();
 
-    partitionEntry = (PPTE) Entry;
+    partitionEntry = (PPTE)Entry;
 
     endingSector = partitionEntry->StartingSector;
     endingSector += partitionEntry->PartitionLength;
-    
-    if (endingSector > MaxSector) {
-        partitionEntry->PartitionLength =
-            (ULONG)(MaxSector - partitionEntry->StartingSector);
+
+    if (endingSector > MaxSector)
+    {
+        partitionEntry->PartitionLength = (ULONG)(MaxSector - partitionEntry->StartingSector);
     }
 }
-    
-    
-
+
+
 BOOLEAN
-HalpIsValidPartitionEntry(
-    PPARTITION_DESCRIPTOR Entry,
-    ULONGLONG MaxOffset,
-    ULONGLONG MaxSector
-    )
+HalpIsValidPartitionEntry(PPARTITION_DESCRIPTOR Entry, ULONGLONG MaxOffset, ULONGLONG MaxSector)
 {
     ULONGLONG endingSector;
 
     PAGED_CODE();
 
-    if(Entry->PartitionType == PARTITION_ENTRY_UNUSED) {
+    if (Entry->PartitionType == PARTITION_ENTRY_UNUSED)
+    {
 
         //
         // Unused partition entries are always valid.
         //
 
         return TRUE;
-
     }
 
     //
@@ -3678,63 +3568,37 @@ HalpIsValidPartitionEntry(
     //
     // Do this in two steps to avoid 32-bit truncation.
     //
-    
+
     endingSector = GET_STARTING_SECTOR(Entry);
     endingSector += GET_PARTITION_LENGTH(Entry);
 
-    if(endingSector > MaxSector) {
+    if (endingSector > MaxSector)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB: entry is invalid\n"));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB: entry is invalid\n"));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB:     offset %#08lx\n",
-                   GET_STARTING_SECTOR(Entry)));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB:     offset %#08lx\n", GET_STARTING_SECTOR(Entry)));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB:     length %#08lx\n",
-                   GET_PARTITION_LENGTH(Entry)));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB:     length %#08lx\n", GET_PARTITION_LENGTH(Entry)));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB:     end %#I64x\n",
-                   endingSector));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB:     end %#I64x\n", endingSector));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB:     max %#I64x\n",
-                   MaxSector));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB:     max %#I64x\n", MaxSector));
 
         return FALSE;
+    }
+    else if (GET_STARTING_SECTOR(Entry) > MaxOffset)
+    {
 
-    } else if(GET_STARTING_SECTOR(Entry) > MaxOffset) {
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB: entry is invalid\n"));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB: entry is invalid\n"));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB:    offset %#08lx\n", GET_STARTING_SECTOR(Entry)));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB:    offset %#08lx\n",
-                   GET_STARTING_SECTOR(Entry)));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB:    length %#08lx\n", GET_PARTITION_LENGTH(Entry)));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB:    length %#08lx\n",
-                   GET_PARTITION_LENGTH(Entry)));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB:    end %#I64x\n", endingSector));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB:    end %#I64x\n",
-                   endingSector));
-
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_TRACE_LEVEL,
-                   "FSTUB:    maxOffset %#I64x\n",
-                   MaxOffset));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL, "FSTUB:    maxOffset %#I64x\n", MaxOffset));
 
         return FALSE;
     }
@@ -3742,13 +3606,9 @@ HalpIsValidPartitionEntry(
     return TRUE;
 }
 
-
+
 NTSTATUS
-HalpGetFullGeometry(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PDISK_GEOMETRY Geometry,
-    OUT PULONGLONG RealSectorCount
-    )
+HalpGetFullGeometry(IN PDEVICE_OBJECT DeviceObject, IN PDISK_GEOMETRY Geometry, OUT PULONGLONG RealSectorCount)
 
 /*++
 
@@ -3781,35 +3641,20 @@ Return Value:
 
     PAGED_CODE();
 
-    eventPtr = ExAllocatePoolWithTag(
-                   NonPagedPool,
-                   sizeof(KEVENT),
-                   'btsF'
-                   );
+    eventPtr = ExAllocatePoolWithTag(NonPagedPool, sizeof(KEVENT), 'btsF');
 
-    if (!eventPtr) {
+    if (!eventPtr)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    KeInitializeEvent(
-        eventPtr,
-        NotificationEvent,
-        FALSE
-        );
+    KeInitializeEvent(eventPtr, NotificationEvent, FALSE);
 
-    localIrp = IoBuildDeviceIoControlRequest(
-                   IOCTL_DISK_GET_DRIVE_GEOMETRY,
-                   DeviceObject,
-                   NULL,
-                   0UL,
-                   Geometry,
-                   sizeof(DISK_GEOMETRY),
-                   FALSE,
-                   eventPtr,
-                   &iosb
-                   );
+    localIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_DRIVE_GEOMETRY, DeviceObject, NULL, 0UL, Geometry,
+                                             sizeof(DISK_GEOMETRY), FALSE, eventPtr, &iosb);
 
-    if (!localIrp) {
+    if (!localIrp)
+    {
         ExFreePool(eventPtr);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -3820,41 +3665,26 @@ Return Value:
     // to finish.
     //
 
-    status = IoCallDriver(
-                 DeviceObject,
-                 localIrp
-                 );
+    status = IoCallDriver(DeviceObject, localIrp);
 
-    if (status == STATUS_PENDING) {
-        (VOID) KeWaitForSingleObject(
-                   eventPtr,
-                   Executive,
-                   KernelMode,
-                   FALSE,
-                   (PLARGE_INTEGER) NULL
-                   );
+    if (status == STATUS_PENDING)
+    {
+        (VOID) KeWaitForSingleObject(eventPtr, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = iosb.Status;
     }
 
-    KeClearEvent (eventPtr);
-    
-    if(NT_SUCCESS(status)) {
+    KeClearEvent(eventPtr);
+
+    if (NT_SUCCESS(status))
+    {
 
         PARTITION_INFORMATION partitionInfo;
 
-        localIrp = IoBuildDeviceIoControlRequest(
-                       IOCTL_DISK_GET_PARTITION_INFO,
-                       DeviceObject,
-                       NULL,
-                       0UL,
-                       &partitionInfo,
-                       sizeof(PARTITION_INFORMATION),
-                       FALSE,
-                       eventPtr,
-                       &iosb
-                       );
+        localIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_PARTITION_INFO, DeviceObject, NULL, 0UL, &partitionInfo,
+                                                 sizeof(PARTITION_INFORMATION), FALSE, eventPtr, &iosb);
 
-        if (!localIrp) {
+        if (!localIrp)
+        {
             ExFreePool(eventPtr);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
@@ -3865,25 +3695,17 @@ Return Value:
         // to finish.
         //
 
-        status = IoCallDriver(
-                     DeviceObject,
-                     localIrp
-                     );
+        status = IoCallDriver(DeviceObject, localIrp);
 
-        if (status == STATUS_PENDING) {
-            (VOID) KeWaitForSingleObject(
-                       eventPtr,
-                       Executive,
-                       KernelMode,
-                       FALSE,
-                       (PLARGE_INTEGER) NULL
-                       );
+        if (status == STATUS_PENDING)
+        {
+            (VOID) KeWaitForSingleObject(eventPtr, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
             status = iosb.Status;
         }
 
-        if(NT_SUCCESS(status)) {
-            *RealSectorCount = (partitionInfo.PartitionLength.QuadPart /
-                                Geometry->BytesPerSector);
+        if (NT_SUCCESS(status))
+        {
+            *RealSectorCount = (partitionInfo.PartitionLength.QuadPart / Geometry->BytesPerSector);
         }
     }
 

@@ -27,27 +27,18 @@ Revision History:
 
 #include "ki.h"
 
-
+
 //
 // Put all code for kernel initialization in the INIT section. It will be
 // deallocated by memory management when phase 1 initialization is completed.
 //
 
-VOID
-KiInitializeProcessorIds(
-   IN PKPRCB Prcb
-   );
+VOID KiInitializeProcessorIds(IN PKPRCB Prcb);
 
 ULONG
-KiGetFeatureBits(
-   IN  PKPRCB Prcb
-   );
+KiGetFeatureBits(IN PKPRCB Prcb);
 
-VOID
-FASTCALL
-KiZeroPage (
-    PVOID PageBase
-    );
+VOID FASTCALL KiZeroPage(PVOID PageBase);
 
 #if defined(ALLOC_PRAGMA)
 
@@ -130,12 +121,10 @@ ULONGLONG KiIA64DCR = DCR_INITIAL;
 //
 
 LONGLONG KiVectorLogMask;
-
+
 
 ULONG
-KiGetFeatureBits(
-   PKPRCB Prcb
-   )
+KiGetFeatureBits(PKPRCB Prcb)
 /*++
 
   Routine Description:
@@ -161,26 +150,23 @@ KiGetFeatureBits(
 
 {
     // WARNING: NT system wide feature bits is a 32-bit type.
-    ULONG features = (ULONG) Prcb->ProcessorFeatureBits;
+    ULONG features = (ULONG)Prcb->ProcessorFeatureBits;
 
     //
     // Check for Long Branch instruction support.
     //
 
-    if ( features & 0x1 )  {
-       features |= KF_BRL;
+    if (features & 0x1)
+    {
+        features |= KF_BRL;
     }
 
     return features;
 
 } // KiGetFeatureBits()
 
-
 
-VOID
-KiInitializeProcessorIds(
-    IN PKPRCB Prcb
-    )
+VOID KiInitializeProcessorIds(IN PKPRCB Prcb)
 /*++
 
 Routine Description:
@@ -215,40 +201,35 @@ Comments:
     // The current A* steppings have these values zeroed.
     // Increment these values by 1, until we are getting B steppings.
 
-    val = __getReg( CV_IA64_CPUID3 );
-    Prcb->ProcessorModel    = (ULONG)(((val >> 16) & 0xFF) + 1);
-    Prcb->ProcessorRevision = (ULONG)(((val >> 8 ) & 0xFF) + 1);
-    Prcb->ProcessorFamily   = (ULONG) ((val >> 24) & 0xFF);
-    Prcb->ProcessorArchRev  = (ULONG) ((val >> 32) & 0xFF);
+    val = __getReg(CV_IA64_CPUID3);
+    Prcb->ProcessorModel = (ULONG)(((val >> 16) & 0xFF) + 1);
+    Prcb->ProcessorRevision = (ULONG)(((val >> 8) & 0xFF) + 1);
+    Prcb->ProcessorFamily = (ULONG)((val >> 24) & 0xFF);
+    Prcb->ProcessorArchRev = (ULONG)((val >> 32) & 0xFF);
 
     // IA64 architected CPUID0 & CPUID1: Vendor Information.
 
-    val = __getReg( CV_IA64_CPUID0 );
-    strncpy(  Prcb->ProcessorVendorString   , (PUCHAR)&val, 8 );
-    val = __getReg( CV_IA64_CPUID1 );
-    strncpy( &Prcb->ProcessorVendorString[8], (PUCHAR)&val, 8 );
+    val = __getReg(CV_IA64_CPUID0);
+    strncpy(Prcb->ProcessorVendorString, (PUCHAR)&val, 8);
+    val = __getReg(CV_IA64_CPUID1);
+    strncpy(&Prcb->ProcessorVendorString[8], (PUCHAR)&val, 8);
 
     // IA64 architected CPUID2: Processor Serial Number.
 
-    Prcb->ProcessorSerialNumber = __getReg( CV_IA64_CPUID2 );
+    Prcb->ProcessorSerialNumber = __getReg(CV_IA64_CPUID2);
 
     // IA64 architected CPUID4: General Features / Capability bits.
 
-    Prcb->ProcessorFeatureBits = __getReg( CV_IA64_CPUID4 );
+    Prcb->ProcessorFeatureBits = __getReg(CV_IA64_CPUID4);
 
     return;
 
 } // KiInitializeProcessorIds()
 
 #if defined(_MERCED_A0_)
-VOID
-KiProcessorWorkAround(
-    );
+VOID KiProcessorWorkAround();
 
-VOID
-KiSwitchToLogVector(
-    VOID
-     );
+VOID KiSwitchToLogVector(VOID);
 
 extern BOOLEAN KiIpiTbShootdown;
 
@@ -258,27 +239,27 @@ ULONGLONG KiConfigFlag;
 // Process the boot loader configuration flags.
 //
 
-VOID
-KiProcessorConfigFlag(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+VOID KiProcessorConfigFlag(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 {
     PUCHAR ConfigFlag;
-    ULONG ConfigFlagValue=0;
+    ULONG ConfigFlagValue = 0;
     ULONGLONG Cpuid3;
     ULONGLONG ItaniumId;
 
-    Cpuid3 = __getReg( CV_IA64_CPUID3 );
+    Cpuid3 = __getReg(CV_IA64_CPUID3);
 
     ConfigFlag = strstr(LoaderBlock->LoadOptions, "CONFIGFLAG");
-    if (ConfigFlag != NULL) {
+    if (ConfigFlag != NULL)
+    {
 
         ConfigFlag = strstr(ConfigFlag, "=");
-        if (ConfigFlag != NULL) {
-            ConfigFlagValue = atol(ConfigFlag+1);
+        if (ConfigFlag != NULL)
+        {
+            ConfigFlagValue = atol(ConfigFlag + 1);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Set the recommened ConfigFlagValue for Itanium, B1/B2
@@ -287,9 +268,11 @@ KiProcessorConfigFlag(
 
         ItaniumId = 0xFFFFFF0000I64 & Cpuid3;
 
-        if (ItaniumId == 0x0007000000) {
+        if (ItaniumId == 0x0007000000)
+        {
 
-            switch (Cpuid3) {
+            switch (Cpuid3)
+            {
             case 0x0007000004: // Itanium, A stepping
             case 0x0007000104: // Itanium, B0 stepping
                 ConfigFlagValue = 0;
@@ -306,7 +289,7 @@ KiProcessorConfigFlag(
                 ConfigFlagValue = 11135;
                 break;
             default:
-                ConfigFlagValue = 43903;            
+                ConfigFlagValue = 43903;
             }
         }
     }
@@ -328,9 +311,12 @@ KiProcessorConfigFlag(
     // switch to shadow IVT depending on ConfigFlag
     //
 
-    if (ConfigFlagValue & (1 << DISABLE_INTERRUPTION_LOG)) {
+    if (ConfigFlagValue & (1 << DISABLE_INTERRUPTION_LOG))
+    {
         KiVectorLogMask = 0;
-    } else {
+    }
+    else
+    {
 
         //
         // By default disable logging of:
@@ -346,23 +332,16 @@ KiProcessorConfigFlag(
     // check to see if the VHPT walker should be disabled
     //
 
-    if (ConfigFlagValue & (1 << DISABLE_VHPT_WALKER)) {
+    if (ConfigFlagValue & (1 << DISABLE_VHPT_WALKER))
+    {
         KiIA64PtaHpwEnabled = 0;
     }
-
 }
 #endif
 
-
-VOID
-KiInitializeKernel (
-    IN PKPROCESS Process,
-    IN PKTHREAD Thread,
-    IN PVOID IdleStack,
-    IN PKPRCB Prcb,
-    IN CCHAR Number,
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+
+VOID KiInitializeKernel(IN PKPROCESS Process, IN PKTHREAD Thread, IN PVOID IdleStack, IN PKPRCB Prcb, IN CCHAR Number,
+                        IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -418,7 +397,7 @@ Return Value:
     // a possibility for the HAL to look at them.
     //
 
-    KiInitializeProcessorIds( Prcb );
+    KiInitializeProcessorIds(Prcb);
 
     //
     // Perform platform dependent processor initialization.
@@ -505,7 +484,7 @@ Return Value:
     // Initialize processors PowerState
     //
 
-    PoInitializePrcb (Prcb);
+    PoInitializePrcb(Prcb);
 
     //
     // Set global processor architecture, level and revision.  The
@@ -514,14 +493,14 @@ Return Value:
 
     KeProcessorArchitecture = PROCESSOR_ARCHITECTURE_IA64;
 
-    if ((KeProcessorLevel == 0) ||
-        (KeProcessorLevel > (USHORT) Prcb->ProcessorModel)) {
-        KeProcessorLevel = (USHORT) Prcb->ProcessorModel;
+    if ((KeProcessorLevel == 0) || (KeProcessorLevel > (USHORT)Prcb->ProcessorModel))
+    {
+        KeProcessorLevel = (USHORT)Prcb->ProcessorModel;
     }
 
-    if ((KeProcessorRevision == 0) ||
-        (KeProcessorRevision > (USHORT) Prcb->ProcessorRevision)) {
-        KeProcessorRevision = (USHORT) Prcb->ProcessorRevision;
+    if ((KeProcessorRevision == 0) || (KeProcessorRevision > (USHORT)Prcb->ProcessorRevision))
+    {
+        KeProcessorRevision = (USHORT)Prcb->ProcessorRevision;
     }
 
     //
@@ -542,8 +521,8 @@ Return Value:
     //  Initialize pointers to the SAL event resource structures.
     //
 
-    PCR->OsMcaResourcePtr = (PSAL_EVENT_RESOURCES) &PCR->OsMcaResource;
-    PCR->OsInitResourcePtr = (PSAL_EVENT_RESOURCES) &PCR->OsInitResource;
+    PCR->OsMcaResourcePtr = (PSAL_EVENT_RESOURCES)&PCR->OsMcaResource;
+    PCR->OsInitResourcePtr = (PSAL_EVENT_RESOURCES)&PCR->OsInitResource;
 
     //
     // Initialize all interrupt vectors to transfer control to the unexpected
@@ -555,7 +534,8 @@ Return Value:
     //      vector.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
 
         //
         // Set default node.  Used in non-multinode systems and in
@@ -568,7 +548,8 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-        for (Index = 1; Index < MAXIMUM_CCNUMA_NODES; Index++) {
+        for (Index = 1; Index < MAXIMUM_CCNUMA_NODES; Index++)
+        {
 
             extern KNODE KiNodeInit[];
 
@@ -588,7 +569,7 @@ Return Value:
         // Initialize system wide FeatureBits with BSP processor feature bits.
         //
 
-        KeFeatureBits = KiGetFeatureBits( Prcb ) ;
+        KeFeatureBits = KiGetFeatureBits(Prcb);
 
         //
         // Initialize the Tb Broadcast spinlock.
@@ -619,9 +600,9 @@ Return Value:
         // object.
         //
 
-        for (Index = 0; Index < DISPATCH_LENGTH; Index += 1) {
-            KxUnexpectedInterrupt.DispatchCode[Index] =
-                *(((PULONG)(KxUnexpectedInterrupt.DispatchAddress))+Index);
+        for (Index = 0; Index < DISPATCH_LENGTH; Index += 1)
+        {
+            KxUnexpectedInterrupt.DispatchCode[Index] = *(((PULONG)(KxUnexpectedInterrupt.DispatchAddress)) + Index);
         }
 
         //
@@ -653,16 +634,11 @@ Return Value:
         KiIA64ImpVirtualMsb = (ULONG)KiIA64VmSummary2.ImplVaMsb;
         KiIA64VaSign = (ULONGLONG)1 << KiIA64ImpVirtualMsb;
         KiIA64PtaSign = KiIA64VaSign >> (PAGE_SHIFT - PTE_SHIFT);
-        KiIA64VaSignedFill =
-            (ULONGLONG)((LONGLONG)VRN_MASK >> (60-KiIA64ImpVirtualMsb)) & ~VRN_MASK;
-        KiIA64PtaBase =
-            (ULONGLONG)((LONGLONG)(VRN_MASK|KiIA64VaSignedFill)
-                        >> (PAGE_SHIFT - PTE_SHIFT)) & ~VRN_MASK;
+        KiIA64VaSignedFill = (ULONGLONG)((LONGLONG)VRN_MASK >> (60 - KiIA64ImpVirtualMsb)) & ~VRN_MASK;
+        KiIA64PtaBase = (ULONGLONG)((LONGLONG)(VRN_MASK | KiIA64VaSignedFill) >> (PAGE_SHIFT - PTE_SHIFT)) & ~VRN_MASK;
 
         KiIA64PtaContents =
-            KiIA64PtaBase |
-            ((KiIA64ImpVirtualMsb - PAGE_SHIFT + PTE_SHIFT + 1) <<  PS_SHIFT) |
-            KiIA64PtaHpwEnabled;
+            KiIA64PtaBase | ((KiIA64ImpVirtualMsb - PAGE_SHIFT + PTE_SHIFT + 1) << PS_SHIFT) | KiIA64PtaHpwEnabled;
 
         //
         // enable the VHPT
@@ -678,31 +654,30 @@ Return Value:
         PCR->PteUbase = UADDRESS_BASE | KiIA64PtaBase;
         PCR->PteKbase = KADDRESS_BASE | KiIA64PtaBase;
         PCR->PteSbase = SADDRESS_BASE | KiIA64PtaBase;
-        PCR->PdeUbase = PCR->PteUbase | (PCR->PteUbase >> (PTI_SHIFT-PTE_SHIFT));
-        PCR->PdeKbase = PCR->PteKbase | (PCR->PteKbase >> (PTI_SHIFT-PTE_SHIFT));
-        PCR->PdeSbase = PCR->PteSbase | (PCR->PteSbase >> (PTI_SHIFT-PTE_SHIFT));
-        PCR->PdeUtbase = PCR->PteUbase | (PCR->PdeUbase >> (PTI_SHIFT-PTE_SHIFT));
-        PCR->PdeKtbase = PCR->PteKbase | (PCR->PdeKbase >> (PTI_SHIFT-PTE_SHIFT));
-        PCR->PdeStbase = PCR->PteSbase | (PCR->PdeSbase >> (PTI_SHIFT-PTE_SHIFT));
-
+        PCR->PdeUbase = PCR->PteUbase | (PCR->PteUbase >> (PTI_SHIFT - PTE_SHIFT));
+        PCR->PdeKbase = PCR->PteKbase | (PCR->PteKbase >> (PTI_SHIFT - PTE_SHIFT));
+        PCR->PdeSbase = PCR->PteSbase | (PCR->PteSbase >> (PTI_SHIFT - PTE_SHIFT));
+        PCR->PdeUtbase = PCR->PteUbase | (PCR->PdeUbase >> (PTI_SHIFT - PTE_SHIFT));
+        PCR->PdeKtbase = PCR->PteKbase | (PCR->PdeKbase >> (PTI_SHIFT - PTE_SHIFT));
+        PCR->PdeStbase = PCR->PteSbase | (PCR->PdeSbase >> (PTI_SHIFT - PTE_SHIFT));
     }
-    else   {
+    else
+    {
 
         //
         // Mask off feature bits that are not supported on all processors.
         //
 
-        KeFeatureBits &= KiGetFeatureBits( Prcb );
-
+        KeFeatureBits &= KiGetFeatureBits(Prcb);
     }
 
     //
     // Point to UnexpectedInterrupt function pointer
     //
 
-    for (Index = 0; Index < MAXIMUM_VECTOR; Index += 1) {
-        PCR->InterruptRoutine[Index] =
-                    (PKINTERRUPT_ROUTINE)(&KxUnexpectedInterrupt.DispatchCode);
+    for (Index = 0; Index < MAXIMUM_VECTOR; Index += 1)
+    {
+        PCR->InterruptRoutine[Index] = (PKINTERRUPT_ROUTINE)(&KxUnexpectedInterrupt.DispatchCode);
     }
 
     //
@@ -769,7 +744,8 @@ Return Value:
     // number of processors and the current processor number.
     //
 
-    if ((Number + 1) > KeNumberProcessors) {
+    if ((Number + 1) > KeNumberProcessors)
+    {
         KeNumberProcessors = (CCHAR)(Number + 1);
     }
 
@@ -778,7 +754,8 @@ Return Value:
     // per system data structures.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
 
         Prcb->RestartBlock = NULL;
 
@@ -786,7 +763,8 @@ Return Value:
         // Initialize the kernel debugger.
         //
 
-        if (KdInitSystem(0, LoaderBlock) == FALSE) {
+        if (KdInitSystem(0, LoaderBlock) == FALSE)
+        {
             KeBugCheck(PHASE0_INITIALIZATION_FAILED);
         }
 
@@ -794,7 +772,8 @@ Return Value:
         // Initialize processor block array.
         //
 
-        for (Index = 1; Index < MAXIMUM_PROCESSORS; Index += 1) {
+        for (Index = 1; Index < MAXIMUM_PROCESSORS; Index += 1)
+        {
             KiProcessorBlock[Index] = (PKPRCB)NULL;
         }
 
@@ -815,14 +794,9 @@ Return Value:
         DirectoryTableBase[0] = 0;
         DirectoryTableBase[1] = 0;
 
-        KeInitializeProcess(Process,
-                            (KPRIORITY)0,
-                            (KAFFINITY)(-1),
-                            &DirectoryTableBase[0],
-                            FALSE);
+        KeInitializeProcess(Process, (KPRIORITY)0, (KAFFINITY)(-1), &DirectoryTableBase[0], FALSE);
 
         Process->ThreadQuantum = MAXCHAR;
-
     }
 
     // Update processor features.
@@ -849,10 +823,8 @@ Return Value:
     //          set.
     //
 
-    KeInitializeThread(Thread, (PVOID)((ULONG_PTR)IdleStack - PAGE_SIZE),
-                       (PKSYSTEM_ROUTINE)KeBugCheck,
-                       (PKSTART_ROUTINE)NULL,
-                       (PVOID)NULL, (PCONTEXT)NULL, (PVOID)NULL, Process);
+    KeInitializeThread(Thread, (PVOID)((ULONG_PTR)IdleStack - PAGE_SIZE), (PKSYSTEM_ROUTINE)KeBugCheck,
+                       (PKSTART_ROUTINE)NULL, (PVOID)NULL, (PCONTEXT)NULL, (PVOID)NULL, Process);
 
     Thread->InitialStack = IdleStack;
     Thread->InitialBStore = IdleStack;
@@ -870,7 +842,8 @@ Return Value:
     // active summary of the idle process.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
         Process->ActiveProcessors |= AFFINITY_MASK(Number);
     }
 
@@ -878,11 +851,13 @@ Return Value:
     // Execute the executive initialization.
     //
 
-    try {
+    try
+    {
         ExpInitializeExecutive(Number, LoaderBlock);
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        KeBugCheck (PHASE0_EXCEPTION);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        KeBugCheck(PHASE0_EXCEPTION);
     }
 
 #if 0
@@ -940,7 +915,8 @@ Return Value:
     // check for the exception deferral mode
     //
 
-    if (KiExceptionDeferralMode != 0) {
+    if (KiExceptionDeferralMode != 0)
+    {
         KiIA64DCR = 0x0000000000007e05;
     }
 
@@ -957,9 +933,9 @@ Return Value:
     // overrides.
     //
 
-    if (Number == 0) {
-        KiTimeIncrementReciprocal = KiComputeReciprocal((LONG)KeMaximumIncrement,
-                                                        &KiTimeIncrementShiftCount);
+    if (Number == 0)
+    {
+        KiTimeIncrementReciprocal = KiComputeReciprocal((LONG)KeMaximumIncrement, &KiTimeIncrementShiftCount);
 
         Prcb->MaximumDpcQueueDepth = KiMaximumDpcQueueDepth;
         Prcb->MinimumDpcRate = KiMinimumDpcRate;
@@ -998,7 +974,8 @@ Return Value:
     // idle summary.
     //
 
-    if (Number != 0) {
+    if (Number != 0)
+    {
         KiIdleSummary |= AFFINITY_MASK(Number);
     }
 
@@ -1007,11 +984,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-KiInitMachineDependent (
-    VOID
-    )
+KiInitMachineDependent(VOID)
 
 /*++
 
@@ -1036,29 +1011,28 @@ Return Value:
     HAL_PLATFORM_INFORMATION PlatformInfo;
     HAL_PROCESSOR_SPEED_INFORMATION ProcessorSpeedInfo;
     NTSTATUS Status;
-    BOOLEAN  UseFrameBufferCaching;
-    ULONG    Size;
+    BOOLEAN UseFrameBufferCaching;
+    ULONG Size;
 
     //
     // check to see if we should switch to PTC.G-based TB shootdown
     //
 
-    Status = HalQuerySystemInformation(HalPlatformInformation,
-                                       sizeof(PlatformInfo),
-                                       &PlatformInfo,
-                                       &Size);
-    if (NT_SUCCESS(Status) &&
-        (PlatformInfo.PlatformFlags & HAL_PLATFORM_DISABLE_PTCG)) {
+    Status = HalQuerySystemInformation(HalPlatformInformation, sizeof(PlatformInfo), &PlatformInfo, &Size);
+    if (NT_SUCCESS(Status) && (PlatformInfo.PlatformFlags & HAL_PLATFORM_DISABLE_PTCG))
+    {
         //
         // Will continue not to use PTC.G
         //
     }
-    else {
+    else
+    {
         //
         // Use PTC.G if processor support is there.
         //
 
-        if (KiConfigFlag & (1 << ENABLE_TB_BROADCAST)) {
+        if (KiConfigFlag & (1 << ENABLE_TB_BROADCAST))
+        {
             KiIpiTbShootdown = FALSE;
         }
     }
@@ -1067,12 +1041,11 @@ Return Value:
     // If the HAL indicates write combining is not supported, drop it.
     //
 
-    Status = HalQuerySystemInformation(HalFrameBufferCachingInformation,
-                                       sizeof(UseFrameBufferCaching),
-                                       &UseFrameBufferCaching,
-                                       &Size);
+    Status = HalQuerySystemInformation(HalFrameBufferCachingInformation, sizeof(UseFrameBufferCaching),
+                                       &UseFrameBufferCaching, &Size);
 
-    if (NT_SUCCESS(Status) && (UseFrameBufferCaching == FALSE)) {
+    if (NT_SUCCESS(Status) && (UseFrameBufferCaching == FALSE))
+    {
 
         //
         // Hal says don't use.
@@ -1080,27 +1053,28 @@ Return Value:
 
         NOTHING;
     }
-    else {
-        MmEnablePAT ();
+    else
+    {
+        MmEnablePAT();
     }
 
     //
     // Ask HAL for Processor Speed
     //
 
-    Status = HalQuerySystemInformation(HalProcessorSpeedInformation,
-                                       sizeof(ProcessorSpeedInfo),
-                                       &ProcessorSpeedInfo,
-                                       &Size);
-    if (NT_SUCCESS(Status)) {
-        PKPRCB   Prcb;
-        ULONG    i;
+    Status =
+        HalQuerySystemInformation(HalProcessorSpeedInformation, sizeof(ProcessorSpeedInfo), &ProcessorSpeedInfo, &Size);
+    if (NT_SUCCESS(Status))
+    {
+        PKPRCB Prcb;
+        ULONG i;
 
         //
         // Put the Processor Speed into the Prcb structure so others
         // can reference it later.
         //
-        for (i = 0; i < (ULONG)KeNumberProcessors; i++ ) {
+        for (i = 0; i < (ULONG)KeNumberProcessors; i++)
+        {
             Prcb = KiProcessorBlock[i];
             Prcb->MHz = (USHORT)ProcessorSpeedInfo.ProcessorSpeed;
         }

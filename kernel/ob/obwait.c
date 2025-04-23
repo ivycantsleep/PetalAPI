@@ -35,14 +35,10 @@ extern POBJECT_TYPE ExEventObjectType;
 extern POBJECT_TYPE ExMutantObjectType;
 extern POBJECT_TYPE ExSemaphoreObjectType;
 
-
+
 NTSTATUS
-NtSignalAndWaitForSingleObject (
-    IN HANDLE SignalHandle,
-    IN HANDLE WaitHandle,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+NtSignalAndWaitForSingleObject(IN HANDLE SignalHandle, IN HANDLE WaitHandle, IN BOOLEAN Alertable,
+                               IN PLARGE_INTEGER Timeout OPTIONAL)
 
 /*++
 
@@ -100,14 +96,17 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if ((ARGUMENT_PRESENT(Timeout)) && (PreviousMode != KernelMode)) {
+    if ((ARGUMENT_PRESENT(Timeout)) && (PreviousMode != KernelMode))
+    {
 
-        try {
+        try
+        {
 
             TimeoutValue = ProbeAndReadLargeInteger(Timeout);
             Timeout = &TimeoutValue;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             return GetExceptionCode();
         }
@@ -117,26 +116,17 @@ Return Value:
     //  Reference the signal object by handle.
     //
 
-    Status = ObReferenceObjectByHandle( SignalHandle,
-                                        0,
-                                        NULL,
-                                        PreviousMode,
-                                        &SignalObject,
-                                        &HandleInformation );
+    Status = ObReferenceObjectByHandle(SignalHandle, 0, NULL, PreviousMode, &SignalObject, &HandleInformation);
 
     //
     //  If the reference was successful, then reference the wait object by
     //  handle.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        Status = ObReferenceObjectByHandle( WaitHandle,
-                                            SYNCHRONIZE,
-                                            NULL,
-                                            PreviousMode,
-                                            &WaitObject,
-                                            NULL );
+        Status = ObReferenceObjectByHandle(WaitHandle, SYNCHRONIZE, NULL, PreviousMode, &WaitObject, NULL);
 
         //
         //  If the reference was successful, then determine the real wait
@@ -144,12 +134,14 @@ Return Value:
         //  and wait for the real wait object.
         //
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
             WaitObjectHeader = OBJECT_TO_OBJECT_HEADER(WaitObject);
             RealObject = WaitObjectHeader->Type->DefaultObject;
 
-            if ((LONG_PTR)RealObject >= 0) {
+            if ((LONG_PTR)RealObject >= 0)
+            {
 
                 RealObject = (PVOID)((PCHAR)WaitObject + (ULONG_PTR)RealObject);
             }
@@ -166,15 +158,16 @@ Return Value:
             SignalObjectHeader = OBJECT_TO_OBJECT_HEADER(SignalObject);
             Status = STATUS_ACCESS_DENIED;
 
-            if (SignalObjectHeader->Type == ExEventObjectType) {
+            if (SignalObjectHeader->Type == ExEventObjectType)
+            {
 
                 //
                 //  Check for access to the specified event object,
                 //
 
                 if ((PreviousMode != KernelMode) &&
-                    (SeComputeDeniedAccesses( HandleInformation.GrantedAccess,
-                                              EVENT_MODIFY_STATE) != 0 )) {
+                    (SeComputeDeniedAccesses(HandleInformation.GrantedAccess, EVENT_MODIFY_STATE) != 0))
+                {
 
                     goto WaitExit;
                 }
@@ -186,8 +179,9 @@ Return Value:
                 //
 
                 KeSetEvent((PKEVENT)SignalObject, EVENT_INCREMENT, TRUE);
-
-            } else if (SignalObjectHeader->Type == ExMutantObjectType) {
+            }
+            else if (SignalObjectHeader->Type == ExMutantObjectType)
+            {
 
                 //
                 //  Release the specified mutant and wait atomically.
@@ -196,29 +190,29 @@ Return Value:
                 //       thread is the owner of the mutant.
                 //
 
-                try {
+                try
+                {
 
-                    KeReleaseMutant( (PKMUTANT)SignalObject,
-                                     MUTANT_INCREMENT,
-                                     FALSE,
-                                     TRUE );
-
-                } except(EXCEPTION_EXECUTE_HANDLER) {
+                    KeReleaseMutant((PKMUTANT)SignalObject, MUTANT_INCREMENT, FALSE, TRUE);
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
 
                     Status = GetExceptionCode();
 
                     goto WaitExit;
                 }
-
-            } else if (SignalObjectHeader->Type == ExSemaphoreObjectType) {
+            }
+            else if (SignalObjectHeader->Type == ExSemaphoreObjectType)
+            {
 
                 //
                 //  Check for access to the specified semaphore object,
                 //
 
                 if ((PreviousMode != KernelMode) &&
-                    (SeComputeDeniedAccesses( HandleInformation.GrantedAccess,
-                                              SEMAPHORE_MODIFY_STATE) != 0 )) {
+                    (SeComputeDeniedAccesses(HandleInformation.GrantedAccess, SEMAPHORE_MODIFY_STATE) != 0))
+                {
 
                     goto WaitExit;
                 }
@@ -227,25 +221,25 @@ Return Value:
                 //  Release the specified semaphore and wait atomically.
                 //
 
-                try {
+                try
+                {
 
                     //
                     //  Release the specified semaphore and wait atomically.
                     //
 
-                    KeReleaseSemaphore( (PKSEMAPHORE)SignalObject,
-                                        SEMAPHORE_INCREMENT,
-                                        1,
-                                        TRUE );
-
-                } except(EXCEPTION_EXECUTE_HANDLER) {
+                    KeReleaseSemaphore((PKSEMAPHORE)SignalObject, SEMAPHORE_INCREMENT, 1, TRUE);
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
 
                     Status = GetExceptionCode();
 
                     goto WaitExit;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 Status = STATUS_OBJECT_TYPE_MISMATCH;
 
@@ -257,20 +251,18 @@ Return Value:
             //  For example, a mutant level is exceeded
             //
 
-            try {
+            try
+            {
 
-                Status = KeWaitForSingleObject( RealObject,
-                                                UserRequest,
-                                                PreviousMode,
-                                                Alertable,
-                                                Timeout );
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                Status = KeWaitForSingleObject(RealObject, UserRequest, PreviousMode, Alertable, Timeout);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 Status = GetExceptionCode();
             }
 
-WaitExit:
+        WaitExit:
 
             ObDereferenceObject(WaitObject);
         }
@@ -281,13 +273,9 @@ WaitExit:
     return Status;
 }
 
-
+
 NTSTATUS
-NtWaitForSingleObject (
-    IN HANDLE Handle,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+NtWaitForSingleObject(IN HANDLE Handle, IN BOOLEAN Alertable, IN PLARGE_INTEGER Timeout OPTIONAL)
 
 /*++
 
@@ -341,14 +329,17 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if ((ARGUMENT_PRESENT(Timeout)) && (PreviousMode != KernelMode)) {
+    if ((ARGUMENT_PRESENT(Timeout)) && (PreviousMode != KernelMode))
+    {
 
-        try {
+        try
+        {
 
             TimeoutValue = ProbeAndReadLargeInteger(Timeout);
             Timeout = &TimeoutValue;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             return GetExceptionCode();
         }
@@ -359,24 +350,21 @@ Return Value:
     //  access.
     //
 
-    Status = ObReferenceObjectByHandle( Handle,
-                                        SYNCHRONIZE,
-                                        NULL,
-                                        PreviousMode,
-                                        &Object,
-                                        NULL );
+    Status = ObReferenceObjectByHandle(Handle, SYNCHRONIZE, NULL, PreviousMode, &Object, NULL);
 
     //
     //  If access is granted, then check to determine if the specified object
     //  can be waited on.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+        ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
         WaitObject = ObjectHeader->Type->DefaultObject;
 
-        if ((LONG_PTR)WaitObject >= 0) {
+        if ((LONG_PTR)WaitObject >= 0)
+        {
 
             WaitObject = (PVOID)((PCHAR)Object + (ULONG_PTR)WaitObject);
         }
@@ -386,16 +374,14 @@ Return Value:
         //  For example, a mutant level is exceeded
         //
 
-        try {
+        try
+        {
             PERFINFO_DECLARE_OBJECT(Object);
 
-            Status = KeWaitForSingleObject( WaitObject,
-                                            UserRequest,
-                                            PreviousMode,
-                                            Alertable,
-                                            Timeout );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            Status = KeWaitForSingleObject(WaitObject, UserRequest, PreviousMode, Alertable, Timeout);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
@@ -406,15 +392,10 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-NtWaitForMultipleObjects (
-    IN ULONG Count,
-    IN HANDLE Handles[],
-    IN WAIT_TYPE WaitType,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+NtWaitForMultipleObjects(IN ULONG Count, IN HANDLE Handles[], IN WAIT_TYPE WaitType, IN BOOLEAN Alertable,
+                         IN PLARGE_INTEGER Timeout OPTIONAL)
 
 /*++
 
@@ -483,7 +464,8 @@ Return Value:
     //  that can be waited on, then return and invalid parameter status.
     //
 
-    if ((Count == 0) || (Count > MAXIMUM_WAIT_OBJECTS)) {
+    if ((Count == 0) || (Count > MAXIMUM_WAIT_OBJECTS))
+    {
 
         return STATUS_INVALID_PARAMETER_1;
     }
@@ -493,7 +475,8 @@ Return Value:
     //  parameter status.
     //
 
-    if ((WaitType != WaitAny) && (WaitType != WaitAll)) {
+    if ((WaitType != WaitAny) && (WaitType != WaitAll))
+    {
 
         return STATUS_INVALID_PARAMETER_3;
     }
@@ -505,22 +488,26 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    try {
+    try
+    {
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
-            if (ARGUMENT_PRESENT(Timeout)) {
+            if (ARGUMENT_PRESENT(Timeout))
+            {
 
                 TimeoutValue = ProbeAndReadLargeInteger(Timeout);
                 Timeout = &TimeoutValue;
             }
 
-            ProbeForRead( Handles, Count * sizeof(HANDLE), sizeof(HANDLE) );
+            ProbeForRead(Handles, Count * sizeof(HANDLE), sizeof(HANDLE));
         }
 
-        RtlCopyMemory (CapturedHandles, Handles, Count * sizeof(HANDLE));
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        RtlCopyMemory(CapturedHandles, Handles, Count * sizeof(HANDLE));
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         return GetExceptionCode();
     }
@@ -534,12 +521,14 @@ Return Value:
 
     WaitBlockArray = NULL;
 
-    if (Count > THREAD_WAIT_OBJECTS) {
+    if (Count > THREAD_WAIT_OBJECTS)
+    {
 
-        Size = Count * sizeof( KWAIT_BLOCK );
+        Size = Count * sizeof(KWAIT_BLOCK);
         WaitBlockArray = ExAllocatePoolWithTag(NonPagedPool, Size, 'tiaW');
 
-        if (WaitBlockArray == NULL) {
+        if (WaitBlockArray == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
         }
@@ -560,11 +549,12 @@ Return Value:
     //  entry lock
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     KeEnterCriticalRegionThread(&CurrentThread->Tcb);
     InCriticalRegion = TRUE;
 
-    do {
+    do
+    {
 
         //
         //  Get a pointer to the object table entry.  Check if this is a kernel
@@ -574,7 +564,8 @@ Return Value:
         //  that we aren't attached.
         //
 
-        if (IsKernelHandle( CapturedHandles[i], PreviousMode )) {
+        if (IsKernelHandle(CapturedHandles[i], PreviousMode))
+        {
 
             HANDLE KernelHandle;
 
@@ -583,19 +574,20 @@ Return Value:
             //  and get its handle table entry
             //
 
-            KernelHandle = DecodeKernelHandle( CapturedHandles[i] );
+            KernelHandle = DecodeKernelHandle(CapturedHandles[i]);
 
             HandleTable = ObpKernelHandleTable;
-            HandleEntry = ExMapHandleToPointerEx ( HandleTable, KernelHandle, PreviousMode );
-
-        } else {
+            HandleEntry = ExMapHandleToPointerEx(HandleTable, KernelHandle, PreviousMode);
+        }
+        else
+        {
 
             //
             //  Get the handle table entry
             //
 
-            HandleTable = PsGetCurrentProcessByThread (CurrentThread)->ObjectTable;
-            HandleEntry = ExMapHandleToPointerEx ( HandleTable, CapturedHandles[ i ], PreviousMode );
+            HandleTable = PsGetCurrentProcessByThread(CurrentThread)->ObjectTable;
+            HandleEntry = ExMapHandleToPointerEx(HandleTable, CapturedHandles[i], PreviousMode);
         }
 
         //
@@ -603,22 +595,26 @@ Return Value:
         //  entry
         //
 
-        if (HandleEntry != NULL) {
+        if (HandleEntry != NULL)
+        {
 
             //
             //  Get the granted access for the handle
             //
 
-#if i386 
+#if i386
 
-            if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB) {
+            if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB)
+            {
 
-                if (PreviousMode != KernelMode) {
+                if (PreviousMode != KernelMode)
+                {
 
-                    GrantedAccess = ObpTranslateGrantedAccessIndex( HandleEntry->GrantedAccessIndex );
+                    GrantedAccess = ObpTranslateGrantedAccessIndex(HandleEntry->GrantedAccessIndex);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 GrantedAccess = ObpDecodeGrantedAccess(HandleEntry->GrantedAccess);
             }
@@ -633,16 +629,17 @@ Return Value:
             //  object
             //
 
-            if ((PreviousMode != KernelMode) &&
-                (SeComputeDeniedAccesses( GrantedAccess, SYNCHRONIZE ) != 0)) {
+            if ((PreviousMode != KernelMode) && (SeComputeDeniedAccesses(GrantedAccess, SYNCHRONIZE) != 0))
+            {
 
                 Status = STATUS_ACCESS_DENIED;
 
-                ExUnlockHandleTableEntry( HandleTable, HandleEntry );
+                ExUnlockHandleTableEntry(HandleTable, HandleEntry);
 
                 goto ServiceFailed;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  We have a object with proper access so get the header
@@ -654,15 +651,17 @@ Return Value:
 
                 ObjectHeader = (POBJECT_HEADER)(((ULONG_PTR)(HandleEntry->Object)) & ~OBJ_HANDLE_ATTRIBUTES);
 
-                if ((LONG_PTR)ObjectHeader->Type->DefaultObject < 0) {
+                if ((LONG_PTR)ObjectHeader->Type->DefaultObject < 0)
+                {
 
                     RefCount += 1;
                     Objects[i] = NULL;
                     WaitObjects[i] = ObjectHeader->Type->DefaultObject;
+                }
+                else
+                {
 
-                } else {
-
-                    ObpIncrPointerCount( ObjectHeader );
+                    ObpIncrPointerCount(ObjectHeader);
                     RefCount += 1;
                     Objects[i] = &ObjectHeader->Body;
 
@@ -672,14 +671,14 @@ Return Value:
                     //  Compute the address of the kernel wait object.
                     //
 
-                    WaitObjects[i] = (PVOID)((PCHAR)&ObjectHeader->Body +
-                                             (ULONG_PTR)ObjectHeader->Type->DefaultObject);
+                    WaitObjects[i] = (PVOID)((PCHAR)&ObjectHeader->Body + (ULONG_PTR)ObjectHeader->Type->DefaultObject);
                 }
             }
 
-            ExUnlockHandleTableEntry( HandleTable, HandleEntry );
-
-        } else {
+            ExUnlockHandleTableEntry(HandleTable, HandleEntry);
+        }
+        else
+        {
 
             //
             //  The entry in the handle table isn't in use
@@ -702,14 +701,18 @@ Return Value:
     //  the user can specify the same object multiple times.
     //
 
-    if (WaitType == WaitAll) {
+    if (WaitType == WaitAll)
+    {
 
         i = 0;
 
-        do {
+        do
+        {
 
-            for (j = i + 1; j < Count; j += 1) {
-                if (WaitObjects[i] == WaitObjects[j]) {
+            for (j = i + 1; j < Count; j += 1)
+            {
+                if (WaitObjects[i] == WaitObjects[j])
+                {
 
                     Status = STATUS_INVALID_PARAMETER_MIX;
 
@@ -728,20 +731,16 @@ Return Value:
     //  to raise For example, a mutant level is exceeded
     //
 
-    try {
+    try
+    {
 
         InCriticalRegion = FALSE;
         KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
-        Status = KeWaitForMultipleObjects( Count,
-                                           WaitObjects,
-                                           WaitType,
-                                           UserRequest,
-                                           PreviousMode,
-                                           Alertable,
-                                           Timeout,
-                                           WaitBlockArray );
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        Status = KeWaitForMultipleObjects(Count, WaitObjects, WaitType, UserRequest, PreviousMode, Alertable, Timeout,
+                                          WaitBlockArray);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
     }
@@ -752,11 +751,13 @@ Return Value:
 
 ServiceFailed:
 
-    while (RefCount > 0) {
+    while (RefCount > 0)
+    {
 
         RefCount -= 1;
 
-        if (Objects[RefCount] != NULL) {
+        if (Objects[RefCount] != NULL)
+        {
 
             ObDereferenceObject(Objects[RefCount]);
         }
@@ -766,25 +767,23 @@ ServiceFailed:
     //  If a wait block array was allocated, then deallocate it.
     //
 
-    if (WaitBlockArray != NULL) {
+    if (WaitBlockArray != NULL)
+    {
 
         ExFreePool(WaitBlockArray);
     }
 
-    if (InCriticalRegion) {
+    if (InCriticalRegion)
+    {
         KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-ObWaitForSingleObject (
-    IN HANDLE Handle,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+ObWaitForSingleObject(IN HANDLE Handle, IN BOOLEAN Alertable, IN PLARGE_INTEGER Timeout OPTIONAL)
 
 /*++
 
@@ -826,27 +825,25 @@ Return Value:
     //  access.
     //
 
-    Status = ObReferenceObjectByHandle( Handle,
-                                        SYNCHRONIZE,
-                                        (POBJECT_TYPE)NULL,
-                                        KernelMode,
-                                        &Object,
-                                        NULL );
+    Status = ObReferenceObjectByHandle(Handle, SYNCHRONIZE, (POBJECT_TYPE)NULL, KernelMode, &Object, NULL);
 
     //
     //  If access is granted, then check to determine if the specified object
     //  can be waited on.
     //
 
-    if (NT_SUCCESS( Status ) != FALSE) {
+    if (NT_SUCCESS(Status) != FALSE)
+    {
 
-        ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+        ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
-        if ((LONG_PTR)ObjectHeader->Type->DefaultObject < 0) {
+        if ((LONG_PTR)ObjectHeader->Type->DefaultObject < 0)
+        {
 
             WaitObject = (PVOID)ObjectHeader->Type->DefaultObject;
-
-        } else {
+        }
+        else
+        {
 
             WaitObject = (PVOID)((PCHAR)Object + (ULONG_PTR)ObjectHeader->Type->DefaultObject);
         }
@@ -856,15 +853,13 @@ Return Value:
         //  to raise For example, a mutant level is exceeded
         //
 
-        try {
+        try
+        {
 
-            Status = KeWaitForSingleObject( WaitObject,
-                                            UserRequest,
-                                            KernelMode,
-                                            Alertable,
-                                            Timeout );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            Status = KeWaitForSingleObject(WaitObject, UserRequest, KernelMode, Alertable, Timeout);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }

@@ -16,28 +16,23 @@
 //
 // Dimension constants  --  D.U. == dialog units
 //
-#define DU_OUTERMARGIN    7
-#define DU_INNERMARGIN    10
+#define DU_OUTERMARGIN 7
+#define DU_INNERMARGIN 10
 
-#define DU_BTNGAP         4   // D.U. of space between buttons
-#define DU_BTNHEIGHT      14  // D.U. of button height
+#define DU_BTNGAP 4     // D.U. of space between buttons
+#define DU_BTNHEIGHT 14 // D.U. of button height
 // This is used only in kernel\inctlpan.c, so move it there
 //
 // #define DU_BTNWIDTH       50  // D.U. of button width, minimum
 //
 
-LPBYTE MB_UpdateDlgHdr(LPDLGTEMPLATE lpDlgTmp, long lStyle, long lExtendedStyle, BYTE bItemCount,
-           int iX, int iY, int iCX, int iCY, LPWSTR lpszCaption, int iCaptionLen);
-LPBYTE MB_UpdateDlgItem(LPDLGITEMTEMPLATE lpDlgItem, int iCtrlId, long lStyle, long lExtendedStyle,
-           int iX, int iY, int iCX, int iCY, LPWSTR lpszText, UINT wTextLen,
-           int iControlClass);
-UINT   MB_GetIconOrdNum(UINT rgBits);
-LPBYTE MB_AddPushButtons(
-    LPDLGITEMTEMPLATE lpDlgTmp,
-    LPMSGBOXDATA      lpmb,
-    UINT wLEdge,
-    UINT wBEdge);
-UINT MB_FindDlgTemplateSize( LPMSGBOXDATA lpmb );
+LPBYTE MB_UpdateDlgHdr(LPDLGTEMPLATE lpDlgTmp, long lStyle, long lExtendedStyle, BYTE bItemCount, int iX, int iY,
+                       int iCX, int iCY, LPWSTR lpszCaption, int iCaptionLen);
+LPBYTE MB_UpdateDlgItem(LPDLGITEMTEMPLATE lpDlgItem, int iCtrlId, long lStyle, long lExtendedStyle, int iX, int iY,
+                        int iCX, int iCY, LPWSTR lpszText, UINT wTextLen, int iControlClass);
+UINT MB_GetIconOrdNum(UINT rgBits);
+LPBYTE MB_AddPushButtons(LPDLGITEMTEMPLATE lpDlgTmp, LPMSGBOXDATA lpmb, UINT wLEdge, UINT wBEdge);
+UINT MB_FindDlgTemplateSize(LPMSGBOXDATA lpmb);
 int MessageBoxWorker(LPMSGBOXDATA pMsgBoxParams);
 VOID EndTaskModalDialog(HWND hwndDlg);
 VOID StartTaskModalDialog(HWND hwndDlg);
@@ -52,35 +47,37 @@ CONST WCHAR szEMIKey[] = L"\\Registry\\Machine\\System\\CurrentControlSet\\Contr
 CONST WCHAR szEMIEnable[] = L"EnableLogging";
 CONST WCHAR szEMISeverity[] = L"LogSeverity";
 CONST WCHAR szDMREnable[] = L"EnableDefaultReply";
-CONST WCHAR szEventKey[] = L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\EventLog\\Application\\Error Instrument\\";
+CONST WCHAR szEventKey[] =
+    L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\EventLog\\Application\\Error Instrument\\";
 CONST WCHAR szEventMsgFile[] = L"EventMessageFile";
 CONST WCHAR szEventType[] = L"TypesSupported";
 
-#define TITLE_SIZE          64
-#define DATETIME_SIZE       32
+#define TITLE_SIZE 64
+#define DATETIME_SIZE 32
 
-#define EMI_SEVERITY_ALL          0
-#define EMI_SEVERITY_USER         1
-#define EMI_SEVERITY_INFORMATION  2
-#define EMI_SEVERITY_QUESTION     3
-#define EMI_SEVERITY_WARNING      4
-#define EMI_SEVERITY_ERROR        5
-#define EMI_SEVERITY_MAX_VALUE    5
+#define EMI_SEVERITY_ALL 0
+#define EMI_SEVERITY_USER 1
+#define EMI_SEVERITY_INFORMATION 2
+#define EMI_SEVERITY_QUESTION 3
+#define EMI_SEVERITY_WARNING 4
+#define EMI_SEVERITY_ERROR 5
+#define EMI_SEVERITY_MAX_VALUE 5
 
 // element of error message
 PVOID gpReturnAddr = 0;
 HANDLE gdwEMIThreadID = 0;
-typedef struct _ERROR_ELEMENT {
-    WCHAR       ProcessName[MAX_PATH];
-    WCHAR       WindowTitle[TITLE_SIZE];
-    DWORD       dwStyle;
-    DWORD       dwErrorCode;
-    WCHAR       CallerModuleName[MAX_PATH];
-    PVOID       BaseAddr;
-    DWORD       dwImageSize;
-    PVOID       ReturnAddr;
-    LPWSTR      lpszCaption;
-    LPWSTR      lpszText;
+typedef struct _ERROR_ELEMENT
+{
+    WCHAR ProcessName[MAX_PATH];
+    WCHAR WindowTitle[TITLE_SIZE];
+    DWORD dwStyle;
+    DWORD dwErrorCode;
+    WCHAR CallerModuleName[MAX_PATH];
+    PVOID BaseAddr;
+    DWORD dwImageSize;
+    PVOID ReturnAddr;
+    LPWSTR lpszCaption;
+    LPWSTR lpszText;
 } ERROR_ELEMENT, *LPERROR_ELEMENT;
 
 BOOL ErrorMessageInst(LPMSGBOXDATA pMsgBoxParams);
@@ -91,17 +88,16 @@ HANDLE gEventSource;
 NTSTATUS CreateLogSource();
 BOOL LogMessageBox(LPERROR_ELEMENT lpErrEle);
 
-#define EMIGETRETURNADDRESS()                                    \
-{                                                                \
-    if (gfEMIEnable) {                                           \
-        if (InterlockedCompareExchangePointer(&gdwEMIThreadID,   \
-                                              GETTHREADID(),     \
-                                              0)                 \
-             == 0) {                                             \
-            gpReturnAddr = (PVOID) 1; \
-        }                                                        \
-    }                                                            \
-}
+#define EMIGETRETURNADDRESS()                                                              \
+    {                                                                                      \
+        if (gfEMIEnable)                                                                   \
+        {                                                                                  \
+            if (InterlockedCompareExchangePointer(&gdwEMIThreadID, GETTHREADID(), 0) == 0) \
+            {                                                                              \
+                gpReturnAddr = (PVOID)1;                                                   \
+            }                                                                              \
+        }                                                                                  \
+    }
 
 // _ReturnAddress();
 #else
@@ -109,8 +105,7 @@ BOOL LogMessageBox(LPERROR_ELEMENT lpErrEle);
 #endif //_JANUS_
 
 
-
-#define MB_MASKSHIFT    4
+#define MB_MASKSHIFT 4
 
 CONST WCHAR szEmpty[] = L"";
 WCHAR szERROR[10];
@@ -122,17 +117,11 @@ ATOM atomMsgBoxCallback;
 *
 *
 \***************************************************************************/
-VOID
-SendHelpMessage(
-    HWND   hwnd,
-    int    iType,
-    int    iCtrlId,
-    HANDLE hItemHandle,
-    DWORD  dwContextId,
-    MSGBOXCALLBACK lpfnCallback)
+VOID SendHelpMessage(HWND hwnd, int iType, int iCtrlId, HANDLE hItemHandle, DWORD dwContextId,
+                     MSGBOXCALLBACK lpfnCallback)
 {
-    HELPINFO    HelpInfo;
-    long        lValue;
+    HELPINFO HelpInfo;
+    long lValue;
 
     HelpInfo.cbSize = sizeof(HELPINFO);
     HelpInfo.iContextType = iType;
@@ -145,13 +134,19 @@ SendHelpMessage(
     HelpInfo.MousePos.y = GET_Y_LPARAM(lValue);
 
     // Check if there is an app supplied callback.
-    if (lpfnCallback != NULL) {
-        if (IsWOWProc(lpfnCallback)) {
+    if (lpfnCallback != NULL)
+    {
+        if (IsWOWProc(lpfnCallback))
+        {
             (*pfnWowMsgBoxIndirectCallback)(PtrToUlong(lpfnCallback), &HelpInfo);
-        } else {
+        }
+        else
+        {
             (*lpfnCallback)(&HelpInfo);
         }
-    } else {
+    }
+    else
+    {
         SendMessage(hwnd, WM_HELP, 0, (LPARAM)&HelpInfo);
     }
 }
@@ -165,11 +160,7 @@ SendHelpMessage(
 
 CONST int aidReturn[] = { 0, 0, IDABORT, IDCANCEL, IDIGNORE, IDNO, IDOK, IDRETRY, IDYES };
 
-int ServiceMessageBox(
-    LPCWSTR pText,
-    LPCWSTR pCaption,
-    UINT wType,
-    DWORD dwTimeout)
+int ServiceMessageBox(LPCWSTR pText, LPCWSTR pCaption, UINT wType, DWORD dwTimeout)
 {
     NTSTATUS Status;
     ULONG_PTR Parameters[4];
@@ -181,45 +172,40 @@ int ServiceMessageBox(
      * box should be displayed.  We do this by looking at the impersonation token
      * and use the session on which the client is running.
      */
-    if (ISTS()) {
-        HANDLE      TokenHandle;
-        NTSTATUS    Status;
-        ULONG       ClientSessionId;
-        ULONG       ProcessSessionId;
-        ULONG       ReturnLength;
-        BOOLEAN     bResult;
+    if (ISTS())
+    {
+        HANDLE TokenHandle;
+        NTSTATUS Status;
+        ULONG ClientSessionId;
+        ULONG ProcessSessionId;
+        ULONG ReturnLength;
+        BOOLEAN bResult;
 
         /*
          * Obtain access to the impersonation token if it's present.
          */
-        Status = NtOpenThreadToken (
-            GetCurrentThread(),
-            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-            TRUE,
-            &TokenHandle
-            );
-        if (NT_SUCCESS(Status)) {
+        Status = NtOpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, TRUE, &TokenHandle);
+        if (NT_SUCCESS(Status))
+        {
             /*
              * Query the Session ID out of the Token
              */
-            Status = NtQueryInformationToken (
-                TokenHandle,
-                TokenSessionId,
-                (PVOID)&ClientSessionId,
-                sizeof(ClientSessionId),
-                &ReturnLength
-                );
+            Status = NtQueryInformationToken(TokenHandle, TokenSessionId, (PVOID)&ClientSessionId,
+                                             sizeof(ClientSessionId), &ReturnLength);
             CloseHandle(TokenHandle);
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
                 /*
                  * Get the process session Id.  Use the Kernel32 API first because
                  * the PEB is writable in case someone is hacking it.
                  */
-                if (!ProcessIdToSessionId(GetCurrentProcessId(), &ProcessSessionId)) {
+                if (!ProcessIdToSessionId(GetCurrentProcessId(), &ProcessSessionId))
+                {
                     ProcessSessionId = NtCurrentPeb()->SessionId;
                 }
 
-                if (ClientSessionId != ProcessSessionId) {
+                if (ClientSessionId != ProcessSessionId)
+                {
                     /*
                      * This message box was intended for session other than the
                      * one on which this process is running.  Forward it to the
@@ -228,10 +214,12 @@ int ServiceMessageBox(
                     /*
                      * Handle case where Caption or Title is NULL
                      */
-                    if (pCaption == NULL) {
+                    if (pCaption == NULL)
+                    {
                         pCaption = szEmpty;
                     }
-                    if (pText == NULL) {
+                    if (pText == NULL)
+                    {
                         pText = szEmpty;
                     }
 
@@ -239,24 +227,23 @@ int ServiceMessageBox(
                      * MessageBoxTimeout assumes the timeout value is in milliseconds,
                      * but WinStationSendMessageW uses seconds.
                      */
-                    if (dwTimeout != INFINITE) {
+                    if (dwTimeout != INFINITE)
+                    {
                         dwTimeout /= 1000;
                     }
-                    bResult = WinStationSendMessageW(SERVERNAME_CURRENT,
-                                                     ClientSessionId,
-                                                     (LPWSTR)pCaption,
-                                                     wcslen(pCaption) * sizeof(WCHAR),
-                                                     (LPWSTR)pText,
-                                                     wcslen(pText) * sizeof(WCHAR),
-                                                     wType,
-                                                     dwTimeout,
-                                                     &Response,
-                                                     FALSE         // always wait
-                                                    );
-                    if (bResult != TRUE) {
+                    bResult = WinStationSendMessageW(SERVERNAME_CURRENT, ClientSessionId, (LPWSTR)pCaption,
+                                                     wcslen(pCaption) * sizeof(WCHAR), (LPWSTR)pText,
+                                                     wcslen(pText) * sizeof(WCHAR), wType, dwTimeout, &Response,
+                                                     FALSE // always wait
+                    );
+                    if (bResult != TRUE)
+                    {
                         Response = aidReturn[ResponseNotHandled];
-                    } else {
-                        if (Response == IDTIMEOUT || Response == IDERROR) {
+                    }
+                    else
+                    {
+                        if (Response == IDTIMEOUT || Response == IDERROR)
+                        {
                             Response = aidReturn[ResponseNotHandled];
                         }
                     }
@@ -280,14 +267,11 @@ int ServiceMessageBox(
     /*
      * Compatibility: Pass the override bit to make sure this box always shows
      */
-    Status = NtRaiseHardError(STATUS_SERVICE_NOTIFICATION | HARDERROR_OVERRIDE_ERRORMODE,
-                              ARRAY_SIZE(Parameters),
-                              3,
-                              Parameters,
-                              OptionOk,
-                              &Response);
+    Status = NtRaiseHardError(STATUS_SERVICE_NOTIFICATION | HARDERROR_OVERRIDE_ERRORMODE, ARRAY_SIZE(Parameters), 3,
+                              Parameters, OptionOk, &Response);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         RIPNTERR0(Status, RIP_VERBOSE, "");
     }
 
@@ -301,22 +285,14 @@ int ServiceMessageBox(
 * History:
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
-int MessageBoxA(
-    HWND hwndOwner,
-    LPCSTR lpszText,
-    LPCSTR lpszCaption,
-    UINT wStyle)
+int MessageBoxA(HWND hwndOwner, LPCSTR lpszText, LPCSTR lpszCaption, UINT wStyle)
 {
     EMIGETRETURNADDRESS();
     return MessageBoxExA(hwndOwner, lpszText, lpszCaption, wStyle, 0);
 }
 
 
-int MessageBoxW(
-    HWND hwndOwner,
-    LPCWSTR lpszText,
-    LPCWSTR lpszCaption,
-    UINT wStyle)
+int MessageBoxW(HWND hwndOwner, LPCWSTR lpszText, LPCWSTR lpszCaption, UINT wStyle)
 {
     EMIGETRETURNADDRESS();
     return MessageBoxExW(hwndOwner, lpszText, lpszCaption, wStyle, 0);
@@ -329,35 +305,15 @@ int MessageBoxW(
 * History:
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
-int MessageBoxExA(
-    HWND hwndOwner,
-    LPCSTR lpszText,
-    LPCSTR lpszCaption,
-    UINT wStyle,
-    WORD wLanguageId)
+int MessageBoxExA(HWND hwndOwner, LPCSTR lpszText, LPCSTR lpszCaption, UINT wStyle, WORD wLanguageId)
 {
-    return MessageBoxTimeoutA(hwndOwner,
-                              lpszText,
-                              lpszCaption,
-                              wStyle,
-                              wLanguageId,
-                              INFINITE);
+    return MessageBoxTimeoutA(hwndOwner, lpszText, lpszCaption, wStyle, wLanguageId, INFINITE);
 }
 
 
-int MessageBoxExW(
-    HWND hwndOwner,
-    LPCWSTR lpszText,
-    LPCWSTR lpszCaption,
-    UINT wStyle,
-    WORD wLanguageId)
+int MessageBoxExW(HWND hwndOwner, LPCWSTR lpszText, LPCWSTR lpszCaption, UINT wStyle, WORD wLanguageId)
 {
-    return MessageBoxTimeoutW(hwndOwner,
-                              lpszText,
-                              lpszCaption,
-                              wStyle,
-                              wLanguageId,
-                              INFINITE);
+    return MessageBoxTimeoutW(hwndOwner, lpszText, lpszCaption, wStyle, wLanguageId, INFINITE);
 }
 
 /***************************************************************************\
@@ -366,90 +322,80 @@ int MessageBoxExW(
 * History:
 * 04-28-2001 JasonSch   Wrote it.
 \***************************************************************************/
-int MessageBoxTimeoutW(
-    HWND hwndOwner,
-    LPCWSTR lpszText,
-    LPCWSTR lpszCaption,
-    UINT wStyle,
-    WORD wLanguageId,
-    DWORD dwTimeout)
+int MessageBoxTimeoutW(HWND hwndOwner, LPCWSTR lpszText, LPCWSTR lpszCaption, UINT wStyle, WORD wLanguageId,
+                       DWORD dwTimeout)
 {
-    MSGBOXDATA  MsgBoxParams;
+    MSGBOXDATA MsgBoxParams;
 
 #if DBG
     /*
      * MB_USERICON is valid for MessageBoxIndirect only.
      * MessageBoxWorker validates the other style bits
      */
-    if (wStyle & MB_USERICON) {
+    if (wStyle & MB_USERICON)
+    {
         RIPMSG0(RIP_WARNING, "MessageBoxExW: Invalid flag: MB_USERICON");
     }
 #endif
 
     RtlZeroMemory(&MsgBoxParams, sizeof(MsgBoxParams));
-    MsgBoxParams.cbSize           = sizeof(MSGBOXPARAMS);
-    MsgBoxParams.hwndOwner        = hwndOwner;
-    MsgBoxParams.hInstance        = NULL;
-    MsgBoxParams.lpszText         = lpszText;
-    MsgBoxParams.lpszCaption      = lpszCaption;
-    MsgBoxParams.dwStyle          = wStyle;
-    MsgBoxParams.wLanguageId      = wLanguageId;
-    MsgBoxParams.dwTimeout        = dwTimeout;
+    MsgBoxParams.cbSize = sizeof(MSGBOXPARAMS);
+    MsgBoxParams.hwndOwner = hwndOwner;
+    MsgBoxParams.hInstance = NULL;
+    MsgBoxParams.lpszText = lpszText;
+    MsgBoxParams.lpszCaption = lpszCaption;
+    MsgBoxParams.dwStyle = wStyle;
+    MsgBoxParams.wLanguageId = wLanguageId;
+    MsgBoxParams.dwTimeout = dwTimeout;
 
     EMIGETRETURNADDRESS();
     return MessageBoxWorker(&MsgBoxParams);
 }
 
-int MessageBoxTimeoutA(
-    HWND hwndOwner,
-    LPCSTR lpszText,
-    LPCSTR lpszCaption,
-    UINT wStyle,
-    WORD wLanguageId,
-    DWORD dwTimeout)
+int MessageBoxTimeoutA(HWND hwndOwner, LPCSTR lpszText, LPCSTR lpszCaption, UINT wStyle, WORD wLanguageId,
+                       DWORD dwTimeout)
 {
     int retval;
     LPWSTR lpwszText = NULL;
     LPWSTR lpwszCaption = NULL;
 
-    if (lpszText) {
+    if (lpszText)
+    {
         if (!MBToWCS(lpszText, -1, &lpwszText, -1, TRUE))
             return 0;
     }
 
-    if (lpszCaption) {
-        if (!MBToWCS(lpszCaption, -1, &lpwszCaption, -1, TRUE)) {
+    if (lpszCaption)
+    {
+        if (!MBToWCS(lpszCaption, -1, &lpwszCaption, -1, TRUE))
+        {
             UserLocalFree(lpwszText);
             return 0;
         }
     }
 
     EMIGETRETURNADDRESS();
-    retval = MessageBoxTimeoutW(hwndOwner,
-                                lpwszText,
-                                lpwszCaption,
-                                wStyle,
-                                wLanguageId,
-                                dwTimeout);
+    retval = MessageBoxTimeoutW(hwndOwner, lpwszText, lpwszCaption, wStyle, wLanguageId, dwTimeout);
 
     UserLocalFree(lpwszText);
-    if (lpwszCaption) {
+    if (lpwszCaption)
+    {
         UserLocalFree(lpwszCaption);
     }
 
     return retval;
 }
 
-#define MessageBoxIndirectInit(MsgBoxParams, lpmbp)                             \
-    do {                                                                        \
-        if (lpmbp->cbSize != sizeof(MSGBOXPARAMS)) {                            \
-            RIPMSG1(RIP_WARNING,                                                \
-                    "MessageBoxIndirect: Invalid cbSize 0x%x",                  \
-                    lpmbp->cbSize);                                             \
-        }                                                                       \
-                                                                                \
-        RtlZeroMemory(&MsgBoxParams, sizeof(MSGBOXDATA));                       \
-        RtlCopyMemory(&MsgBoxParams, lpmbp, sizeof(MSGBOXPARAMS));              \
+#define MessageBoxIndirectInit(MsgBoxParams, lpmbp)                                         \
+    do                                                                                      \
+    {                                                                                       \
+        if (lpmbp->cbSize != sizeof(MSGBOXPARAMS))                                          \
+        {                                                                                   \
+            RIPMSG1(RIP_WARNING, "MessageBoxIndirect: Invalid cbSize 0x%x", lpmbp->cbSize); \
+        }                                                                                   \
+                                                                                            \
+        RtlZeroMemory(&MsgBoxParams, sizeof(MSGBOXDATA));                                   \
+        RtlCopyMemory(&MsgBoxParams, lpmbp, sizeof(MSGBOXPARAMS));                          \
     } while (FALSE);
 
 /**************************************************************************\
@@ -457,24 +403,27 @@ int MessageBoxTimeoutA(
 *
 * 09-30-1994 FritzS      Created.
 \**************************************************************************/
-int MessageBoxIndirectA(
-    CONST MSGBOXPARAMSA *lpmbp)
+int MessageBoxIndirectA(CONST MSGBOXPARAMSA *lpmbp)
 {
     int retval;
-    MSGBOXDATA  MsgBoxParams;
+    MSGBOXDATA MsgBoxParams;
     LPWSTR lpwszText = NULL;
     LPWSTR lpwszCaption = NULL;
 
     MessageBoxIndirectInit(MsgBoxParams, lpmbp);
 
-    if (IS_PTR(MsgBoxParams.lpszText)) {
-        if (!MBToWCS((LPSTR)MsgBoxParams.lpszText, -1, &lpwszText, -1, TRUE)) {
+    if (IS_PTR(MsgBoxParams.lpszText))
+    {
+        if (!MBToWCS((LPSTR)MsgBoxParams.lpszText, -1, &lpwszText, -1, TRUE))
+        {
             return 0;
         }
         MsgBoxParams.lpszText = lpwszText;
     }
-    if (IS_PTR(MsgBoxParams.lpszCaption)) {
-        if (!MBToWCS((LPSTR)MsgBoxParams.lpszCaption, -1, &lpwszCaption, -1, TRUE)) {
+    if (IS_PTR(MsgBoxParams.lpszCaption))
+    {
+        if (!MBToWCS((LPSTR)MsgBoxParams.lpszCaption, -1, &lpwszCaption, -1, TRUE))
+        {
             UserLocalFree(lpwszText);
             return 0;
         }
@@ -484,20 +433,21 @@ int MessageBoxIndirectA(
     EMIGETRETURNADDRESS();
     retval = MessageBoxWorker(&MsgBoxParams);
 
-    if (lpwszText) {
+    if (lpwszText)
+    {
         UserLocalFree(lpwszText);
     }
-    if (lpwszCaption) {
+    if (lpwszCaption)
+    {
         UserLocalFree(lpwszCaption);
     }
 
     return retval;
 }
 
-int MessageBoxIndirectW(
-    CONST MSGBOXPARAMSW *lpmbp)
+int MessageBoxIndirectW(CONST MSGBOXPARAMSW *lpmbp)
 {
-    MSGBOXDATA  MsgBoxParams;
+    MSGBOXDATA MsgBoxParams;
 
     MessageBoxIndirectInit(MsgBoxParams, lpmbp);
 
@@ -512,32 +462,32 @@ int MessageBoxIndirectW(
 * 03-10-93 JohnL      Created
 \***************************************************************************/
 
-int MessageBoxWorker(
-    LPMSGBOXDATA pMsgBoxParams)
+int MessageBoxWorker(LPMSGBOXDATA pMsgBoxParams)
 {
-    DWORD  dwStyle = pMsgBoxParams->dwStyle;
-    UINT   wBtnCnt;
-    UINT   wDefButton;
-    UINT   i;
-    UINT   wBtnBeg;
-    WCHAR  szErrorBuf[64];
+    DWORD dwStyle = pMsgBoxParams->dwStyle;
+    UINT wBtnCnt;
+    UINT wDefButton;
+    UINT i;
+    UINT wBtnBeg;
+    WCHAR szErrorBuf[64];
     LPWSTR apstrButton[4];
-    int    aidButton[4];
-    BOOL   fCancel = FALSE;
-    int    retValue;
+    int aidButton[4];
+    BOOL fCancel = FALSE;
+    int retValue;
     PMBSTRING pMBString;
 
 #if DBG
-    if (dwStyle & ~MB_VALID) {
-        RIPMSG2(RIP_WARNING, "MessageBoxWorker: Invalid flags, %#lx & ~%#lx != 0",
-              dwStyle, MB_VALID);
+    if (dwStyle & ~MB_VALID)
+    {
+        RIPMSG2(RIP_WARNING, "MessageBoxWorker: Invalid flags, %#lx & ~%#lx != 0", dwStyle, MB_VALID);
     }
 #endif
 
     /*
      * dwTimeout == 0 means wait forever. This is mostly for compat reasons.
      */
-    if (pMsgBoxParams->dwTimeout == 0) {
+    if (pMsgBoxParams->dwTimeout == 0)
+    {
         pMsgBoxParams->dwTimeout = INFINITE;
     }
 
@@ -552,7 +502,8 @@ int MessageBoxWorker(
      * Check EMI enable
      */
 
-    if (gfEMIEnable) {
+    if (gfEMIEnable)
+    {
         if (!ErrorMessageInst(pMsgBoxParams))
             RIPMSG0(RIP_WARNING, "MessageBoxWorker: Fail to instrument error msg");
     };
@@ -562,7 +513,8 @@ int MessageBoxWorker(
      * can be returned automatically without putting up the message box
      */
 
-    if (gfDMREnable) {
+    if (gfDMREnable)
+    {
         /*
          * validate the style and default button as in the main code path
          */
@@ -570,28 +522,28 @@ int MessageBoxWorker(
         /*
          * Validate the "type" of message box requested.
          */
-        if ((dwStyle & MB_TYPEMASK) > MB_LASTVALIDTYPE) {
+        if ((dwStyle & MB_TYPEMASK) > MB_LASTVALIDTYPE)
+        {
             RIPERR0(ERROR_INVALID_MSGBOX_STYLE, RIP_VERBOSE, "");
             return 0;
         }
 
-        wBtnCnt = mpTypeCcmd[dwStyle & MB_TYPEMASK] +
-                                ((dwStyle & MB_HELP) ? 1 : 0);
+        wBtnCnt = mpTypeCcmd[dwStyle & MB_TYPEMASK] + ((dwStyle & MB_HELP) ? 1 : 0);
 
         /*
          * Set the default button value
          */
         wDefButton = (dwStyle & (UINT)MB_DEFMASK) / (UINT)(MB_DEFMASK & (MB_DEFMASK >> 3));
 
-        if (wDefButton >= wBtnCnt)   /* Check if valid */
-            wDefButton = 0;          /* Set the first button if error */
+        if (wDefButton >= wBtnCnt) /* Check if valid */
+            wDefButton = 0;        /* Set the first button if error */
 
         /*
          * return the default button
          */
 
         wBtnBeg = mpTypeIich[dwStyle & (UINT)MB_TYPEMASK];
-        pMBString = &gpsi->MBStrings[ SEBbuttons[wBtnBeg + wDefButton] ];
+        pMBString = &gpsi->MBStrings[SEBbuttons[wBtnBeg + wDefButton]];
         return pMBString->uID;
     }
 #endif // _JANUS_
@@ -601,32 +553,37 @@ int MessageBoxWorker(
      * string.
      * LATER: IanJa localize according to wLanguageId
      */
-    if (pMsgBoxParams->lpszCaption == NULL) {
+    if (pMsgBoxParams->lpszCaption == NULL)
+    {
         /*
          * Load the default error string if we haven't done it yet
          */
-        if (*szERROR == 0) {
+        if (*szERROR == 0)
+        {
             LoadStringW(hmodUser, STR_ERROR, szERROR, ARRAY_SIZE(szERROR));
         }
-        if (pMsgBoxParams->wLanguageId == 0) {
+        if (pMsgBoxParams->wLanguageId == 0)
+        {
             pMsgBoxParams->lpszCaption = szERROR;
-        } else {
-            LoadStringOrError(hmodUser,
-                                 STR_ERROR,
-                                 szErrorBuf,
-                                 sizeof(szErrorBuf)/sizeof(WCHAR),
-                                 pMsgBoxParams->wLanguageId);
+        }
+        else
+        {
+            LoadStringOrError(hmodUser, STR_ERROR, szErrorBuf, sizeof(szErrorBuf) / sizeof(WCHAR),
+                              pMsgBoxParams->wLanguageId);
 
             /*
              *  If it didn't find the string, use the default language
              */
-            if (*szErrorBuf) {
-               pMsgBoxParams->lpszCaption = szErrorBuf;
-            } else {
-               pMsgBoxParams->lpszCaption = szERROR;
+            if (*szErrorBuf)
+            {
+                pMsgBoxParams->lpszCaption = szErrorBuf;
+            }
+            else
+            {
+                pMsgBoxParams->lpszCaption = szERROR;
 
-               RIPMSG1(RIP_WARNING, "MessageBoxWorker: STR_ERROR string resource for language %#lx not found",
-                      pMsgBoxParams->wLanguageId);
+                RIPMSG1(RIP_WARNING, "MessageBoxWorker: STR_ERROR string resource for language %#lx not found",
+                        pMsgBoxParams->wLanguageId);
             }
         }
     }
@@ -637,7 +594,8 @@ int MessageBoxWorker(
      * So for old apps, we map it to the new value
      */
 
-    if ((dwStyle & MB_TOPMOST) && !Is400Compat(GetClientInfo()->dwExpWinVer)) {
+    if ((dwStyle & MB_TOPMOST) && !Is400Compat(GetClientInfo()->dwExpWinVer))
+    {
         dwStyle &= ~MB_TOPMOST;
         dwStyle |= MB_SERVICE_NOTIFICATION;
         pMsgBoxParams->dwStyle = dwStyle;
@@ -649,27 +607,28 @@ int MessageBoxWorker(
      * For backward compatiblity, use MB_SERVICE_NOTIFICATION if
      * it's going to the default desktop.
      */
-    if (dwStyle & (MB_DEFAULT_DESKTOP_ONLY | MB_SERVICE_NOTIFICATION)) {
+    if (dwStyle & (MB_DEFAULT_DESKTOP_ONLY | MB_SERVICE_NOTIFICATION))
+    {
 
         /*
          * Allow services to put up popups without getting
          * access to the current desktop.
          */
-        if (pMsgBoxParams->hwndOwner != NULL) {
+        if (pMsgBoxParams->hwndOwner != NULL)
+        {
             RIPERR0(ERROR_INVALID_PARAMETER, RIP_VERBOSE, "");
             return 0;
         }
 
-        return ServiceMessageBox(pMsgBoxParams->lpszText,
-                                 pMsgBoxParams->lpszCaption,
-                                 dwStyle & ~MB_SERVICE_NOTIFICATION,
-                                 pMsgBoxParams->dwTimeout);
+        return ServiceMessageBox(pMsgBoxParams->lpszText, pMsgBoxParams->lpszCaption,
+                                 dwStyle & ~MB_SERVICE_NOTIFICATION, pMsgBoxParams->dwTimeout);
     }
 
     /*
      * Make sure we have a valid window handle.
      */
-    if (pMsgBoxParams->hwndOwner && !IsWindow(pMsgBoxParams->hwndOwner)) {
+    if (pMsgBoxParams->hwndOwner && !IsWindow(pMsgBoxParams->hwndOwner))
+    {
         RIPERR0(ERROR_INVALID_WINDOW_HANDLE, RIP_VERBOSE, "");
         return 0;
     }
@@ -677,62 +636,66 @@ int MessageBoxWorker(
     /*
      * Validate the "type" of message box requested.
      */
-    if ((dwStyle & MB_TYPEMASK) > MB_LASTVALIDTYPE) {
+    if ((dwStyle & MB_TYPEMASK) > MB_LASTVALIDTYPE)
+    {
         RIPERR0(ERROR_INVALID_MSGBOX_STYLE, RIP_VERBOSE, "");
         return 0;
     }
 
-    wBtnCnt = mpTypeCcmd[dwStyle & MB_TYPEMASK] +
-                            ((dwStyle & MB_HELP) ? 1 : 0);
+    wBtnCnt = mpTypeCcmd[dwStyle & MB_TYPEMASK] + ((dwStyle & MB_HELP) ? 1 : 0);
 
     /*
      * Set the default button value
      */
     wDefButton = (dwStyle & (UINT)MB_DEFMASK) / (UINT)(MB_DEFMASK & (MB_DEFMASK >> 3));
 
-    if (wDefButton >= wBtnCnt)   /* Check if valid */
-        wDefButton = 0;          /* Set the first button if error */
+    if (wDefButton >= wBtnCnt) /* Check if valid */
+        wDefButton = 0;        /* Set the first button if error */
 
     /*
      * Calculate the strings to use in the message box
      */
     wBtnBeg = mpTypeIich[dwStyle & (UINT)MB_TYPEMASK];
-    for (i=0; i<wBtnCnt; i++) {
+    for (i = 0; i < wBtnCnt; i++)
+    {
 
         pMBString = &gpsi->MBStrings[SEBbuttons[wBtnBeg + i]];
         /*
          * Pick up the string for the button.
          */
-        if (pMsgBoxParams->wLanguageId == 0) {
+        if (pMsgBoxParams->wLanguageId == 0)
+        {
             apstrButton[i] = KPWSTR_TO_PWSTR(pMBString->szName);
-        } else {
+        }
+        else
+        {
             WCHAR szButtonBuf[64];
             // LATER is it possible to have button text greater than 64 chars
 
-           /*
+            /*
             *  BUG: gpsi->wMaxBtnSize might be too short for the length of this string...
             */
-            LoadStringOrError(hmodUser,
-                    pMBString->uStr,
-                    szButtonBuf,
-                    ARRAY_SIZE(szButtonBuf),
-                    pMsgBoxParams->wLanguageId);
+            LoadStringOrError(hmodUser, pMBString->uStr, szButtonBuf, ARRAY_SIZE(szButtonBuf),
+                              pMsgBoxParams->wLanguageId);
 
             /*
              *  If it didn't find the string, use the default language.
              */
-            if (*szButtonBuf) {
-               apstrButton[i] = TextAlloc(szButtonBuf);
-            } else {
-               apstrButton[i] = TextAlloc(KPWSTR_TO_PWSTR(pMBString->szName));
+            if (*szButtonBuf)
+            {
+                apstrButton[i] = TextAlloc(szButtonBuf);
+            }
+            else
+            {
+                apstrButton[i] = TextAlloc(KPWSTR_TO_PWSTR(pMBString->szName));
 
-               RIPMSG2(RIP_WARNING, "MessageBoxWorker: string resource %#lx for language %#lx not found",
-                      pMBString->uStr,
-                      pMsgBoxParams->wLanguageId);
+                RIPMSG2(RIP_WARNING, "MessageBoxWorker: string resource %#lx for language %#lx not found",
+                        pMBString->uStr, pMsgBoxParams->wLanguageId);
             }
         }
         aidButton[i] = pMBString->uID;
-        if (aidButton[i] == IDCANCEL) {
+        if (aidButton[i] == IDCANCEL)
+        {
             fCancel = TRUE;
         }
     }
@@ -747,88 +710,96 @@ int MessageBoxWorker(
      */
     NtUserModifyUserStartupInfoFlags(STARTF_USESHOWWINDOW, 0);
 
-    pMsgBoxParams->pidButton      = aidButton;
+    pMsgBoxParams->pidButton = aidButton;
     pMsgBoxParams->ppszButtonText = apstrButton;
-    pMsgBoxParams->DefButton      = wDefButton;
-    pMsgBoxParams->cButtons       = wBtnCnt;
-    pMsgBoxParams->CancelId      = ((dwStyle & MB_TYPEMASK) == 0) ? IDOK : (fCancel ? IDCANCEL : 0);
+    pMsgBoxParams->DefButton = wDefButton;
+    pMsgBoxParams->cButtons = wBtnCnt;
+    pMsgBoxParams->CancelId = ((dwStyle & MB_TYPEMASK) == 0) ? IDOK : (fCancel ? IDCANCEL : 0);
     retValue = SoftModalMessageBox(pMsgBoxParams);
 
-    if (pMsgBoxParams->wLanguageId != 0) {
-        for (i=0; i<wBtnCnt; i++)
-           UserLocalFree(apstrButton[i]);
+    if (pMsgBoxParams->wLanguageId != 0)
+    {
+        for (i = 0; i < wBtnCnt; i++)
+            UserLocalFree(apstrButton[i]);
     }
 
     return retValue;
 }
 
-#define MAX_RES_STRING  256
+#define MAX_RES_STRING 256
 
 /***************************************************************************\
 *
 *  SoftModalMessageBox()
 *
 \***************************************************************************/
-int  SoftModalMessageBox(LPMSGBOXDATA lpmb)
+int SoftModalMessageBox(LPMSGBOXDATA lpmb)
 {
-    LPBYTE              lpDlgTmp;
-    int                 cyIcon, cxIcon;
-    int                 cxButtons;
-    int                 cxMBMax;
-    int                 cxText, cyText, xText;
-    int                 cxBox, cyBox;
-    int                 cxFoo, cxCaption;
-    int                 xMB, yMB;
-    HDC                 hdc;
-    DWORD               wIconOrdNum;
-    DWORD               wCaptionLen;
-    DWORD               wTextLen;
-    WORD                OrdNum[2];  // Must be an array or WORDs
-    RECT                rc;
-    RECT                rcWork;
-    HCURSOR             hcurOld;
-    DWORD               dwStyleMsg, dwStyleText;
-    DWORD               dwExStyleMsg = 0;
-    DWORD               dwStyleDlg;
-    HWND                hwndOwner;
-    LPWSTR              lpsz;
-    int                 iRetVal     = 0;
-    HICON               hIcon;
-    HGLOBAL             hTemplate   = NULL;
-    HGLOBAL             hCaption    = NULL;
-    HGLOBAL             hText       = NULL;
-    HINSTANCE           hInstMsg    = lpmb->hInstance;
-    SIZE                size;
-    HFONT               hFontOld    = NULL;
-    int                 cntMBox;
-    PMONITOR            pMonitor;
+    LPBYTE lpDlgTmp;
+    int cyIcon, cxIcon;
+    int cxButtons;
+    int cxMBMax;
+    int cxText, cyText, xText;
+    int cxBox, cyBox;
+    int cxFoo, cxCaption;
+    int xMB, yMB;
+    HDC hdc;
+    DWORD wIconOrdNum;
+    DWORD wCaptionLen;
+    DWORD wTextLen;
+    WORD OrdNum[2]; // Must be an array or WORDs
+    RECT rc;
+    RECT rcWork;
+    HCURSOR hcurOld;
+    DWORD dwStyleMsg, dwStyleText;
+    DWORD dwExStyleMsg = 0;
+    DWORD dwStyleDlg;
+    HWND hwndOwner;
+    LPWSTR lpsz;
+    int iRetVal = 0;
+    HICON hIcon;
+    HGLOBAL hTemplate = NULL;
+    HGLOBAL hCaption = NULL;
+    HGLOBAL hText = NULL;
+    HINSTANCE hInstMsg = lpmb->hInstance;
+    SIZE size;
+    HFONT hFontOld = NULL;
+    int cntMBox;
+    PMONITOR pMonitor;
 
     ConnectIfNecessary(0);
 
     dwStyleMsg = lpmb->dwStyle;
 
-    if (dwStyleMsg & MB_RIGHT) {
+    if (dwStyleMsg & MB_RIGHT)
+    {
         dwExStyleMsg |= WS_EX_RIGHT;
     }
 
-    if (!IS_PTR(lpmb->lpszCaption)) {
+    if (!IS_PTR(lpmb->lpszCaption))
+    {
 
         // won't ever be NULL because MessageBox sticks "Error!" in in that case
-        if (hInstMsg && (hCaption = LocalAlloc(LPTR, MAX_RES_STRING * sizeof(WCHAR)))) {
-            lpsz = (LPWSTR) hCaption;
+        if (hInstMsg && (hCaption = LocalAlloc(LPTR, MAX_RES_STRING * sizeof(WCHAR))))
+        {
+            lpsz = (LPWSTR)hCaption;
             LoadString(hInstMsg, PTR_TO_ID(lpmb->lpszCaption), lpsz, MAX_RES_STRING);
-        } else
+        }
+        else
             lpsz = NULL;
 
         lpmb->lpszCaption = lpsz ? lpsz : szEmpty;
     }
 
-    if (!IS_PTR(lpmb->lpszText)) {
+    if (!IS_PTR(lpmb->lpszText))
+    {
         // NULL not allowed
-        if (hInstMsg && (hText = LocalAlloc(LPTR, MAX_RES_STRING * sizeof(WCHAR)))) {
-            lpsz = (LPWSTR) hText;
+        if (hInstMsg && (hText = LocalAlloc(LPTR, MAX_RES_STRING * sizeof(WCHAR))))
+        {
+            lpsz = (LPWSTR)hText;
             LoadString(hInstMsg, PTR_TO_ID(lpmb->lpszText), lpsz, MAX_RES_STRING);
-        } else
+        }
+        else
             lpsz = NULL;
 
         lpmb->lpszText = lpsz ? lpsz : szEmpty;
@@ -845,8 +816,8 @@ int  SoftModalMessageBox(LPMSGBOXDATA lpmb)
     // of MessageBoxes for BiDi Apps.  [samera]
     //
     if ((dwStyleMsg & MB_RTLREADING) ||
-            (lpmb->lpszText != NULL && (lpmb->lpszText[0] == UNICODE_RLM) &&
-            (lpmb->lpszText[1] == UNICODE_RLM))) {
+        (lpmb->lpszText != NULL && (lpmb->lpszText[0] == UNICODE_RLM) && (lpmb->lpszText[1] == UNICODE_RLM)))
+    {
         //
         // Set Mirroring so that MessageBox and its child controls
         // get mirrored. Otherwise, the message box and its child controls
@@ -858,7 +829,8 @@ int  SoftModalMessageBox(LPMSGBOXDATA lpmb)
         // And turn off any conflicting flags.
         //
         dwExStyleMsg &= ~WS_EX_RIGHT;
-        if (dwStyleMsg & MB_RTLREADING) {
+        if (dwStyleMsg & MB_RTLREADING)
+        {
             dwStyleMsg &= ~MB_RTLREADING;
             dwStyleMsg ^= MB_RIGHT;
         }
@@ -877,29 +849,43 @@ int  SoftModalMessageBox(LPMSGBOXDATA lpmb)
     // infinite loop later.
     // Bug #15896 -- WIN95B -- 2/17/95 -- SANKAR --
     if (!hwndOwner)
-      {
+    {
         WCHAR pwszLibFileName[MAX_PATH];
-        static WCHAR szPB040[] = L"PB040";  // Module name of PowerBuilder4.0
+        static WCHAR szPB040[] = L"PB040"; // Module name of PowerBuilder4.0
         WCHAR *pw1;
 
         //Is this a win3.1 or older app?
-        if (!Is400Compat(GETAPPVER())) {
-            if (GetModuleFileName(NULL, pwszLibFileName, sizeof(pwszLibFileName)/sizeof(WCHAR)) == 0) goto getthedc;
+        if (!Is400Compat(GETAPPVER()))
+        {
+            if (GetModuleFileName(NULL, pwszLibFileName, sizeof(pwszLibFileName) / sizeof(WCHAR)) == 0)
+                goto getthedc;
             pw1 = pwszLibFileName + wcslen(pwszLibFileName) - 1;
-            while (pw1 > pwszLibFileName) {
-                if (*pw1 == TEXT('.')) *pw1-- = 0;
-                else if (*pw1 == TEXT(':')) {pw1++; break;}
-                else if (*pw1 == TEXT('\\')) {pw1++; break;}
-                else pw1--;
+            while (pw1 > pwszLibFileName)
+            {
+                if (*pw1 == TEXT('.'))
+                    *pw1-- = 0;
+                else if (*pw1 == TEXT(':'))
+                {
+                    pw1++;
+                    break;
+                }
+                else if (*pw1 == TEXT('\\'))
+                {
+                    pw1++;
+                    break;
+                }
+                else
+                    pw1--;
             }
             // Is this the PowerBuilder 4.0 module?
             if (!_wcsicmp(pw1, szPB040))
                 hwndOwner = NtUserGetForegroundWindow(); // Make the MsgBox owned.
-          }
-      }
+        }
+    }
 getthedc:
     // Check if we're out of cache DCs until robustness...
-    if (!(hdc = NtUserGetDCEx(NULL, NULL, DCX_WINDOW | DCX_CACHE))) {
+    if (!(hdc = NtUserGetDCEx(NULL, NULL, DCX_WINDOW | DCX_CACHE)))
+    {
 
         /*
          * The above call might fail for TIF_RESTRICTED processes
@@ -911,14 +897,17 @@ getthedc:
 
     // Figure out the types and dimensions of buttons
 
-    cxButtons = (lpmb->cButtons * gpsi->wMaxBtnSize) + ((lpmb->cButtons - 1) * XPixFromXDU(DU_BTNGAP, gpsi->cxMsgFontChar));
+    cxButtons =
+        (lpmb->cButtons * gpsi->wMaxBtnSize) + ((lpmb->cButtons - 1) * XPixFromXDU(DU_BTNGAP, gpsi->cxMsgFontChar));
 
     // Ditto for the icon, if there is one.  If not, cxIcon & cyIcon are 0.
 
-    if (wIconOrdNum = MB_GetIconOrdNum(dwStyleMsg)) {
+    if (wIconOrdNum = MB_GetIconOrdNum(dwStyleMsg))
+    {
         cxIcon = SYSMET(CXICON) + XPixFromXDU(DU_INNERMARGIN, gpsi->cxMsgFontChar);
         cyIcon = SYSMET(CYICON);
-    } else
+    }
+    else
         cxIcon = cyIcon = 0;
 
     hFontOld = SelectObject(hdc, KHFONT_TO_HFONT(gpsi->hCaptionFont));
@@ -926,7 +915,7 @@ getthedc:
     // Find the max between the caption text and the buttons
     wCaptionLen = wcslen(lpmb->lpszCaption);
     GetTextExtentPoint(hdc, lpmb->lpszCaption, wCaptionLen, &size);
-    cxCaption = size.cx + 2*SYSMET(CXSIZE);
+    cxCaption = size.cx + 2 * SYSMET(CXSIZE);
 
     //
     // The max width of the message box is 5/8 of the work area for most
@@ -937,7 +926,7 @@ getthedc:
     CopyRect(&rcWork, KPRECT_TO_PRECT(&pMonitor->rcWork));
     cxMBMax = MultDiv(rcWork.right - rcWork.left, 5, 8);
 
-    cxFoo = 2*XPixFromXDU(DU_OUTERMARGIN, gpsi->cxMsgFontChar);
+    cxFoo = 2 * XPixFromXDU(DU_OUTERMARGIN, gpsi->cxMsgFontChar);
 
     SelectObject(hdc, KHFONT_TO_HFONT(gpsi->hMsgFont));
 
@@ -950,16 +939,16 @@ ReSize:
     // but not bigger than the maximum width.
     //
 
-    cxBox = cxMBMax - 2*SYSMET(CXFIXEDFRAME);
+    cxBox = cxMBMax - 2 * SYSMET(CXFIXEDFRAME);
 
     // Ask DrawText for the right cx and cy
-    rc.left     = 0;
-    rc.top      = 0;
-    rc.right    = cxBox - cxFoo - cxIcon;
-    rc.bottom   = rcWork.bottom - rcWork.top;
+    rc.left = 0;
+    rc.top = 0;
+    rc.right = cxBox - cxFoo - cxIcon;
+    rc.bottom = rcWork.bottom - rcWork.top;
     cyText = DrawTextExW(hdc, (LPWSTR)lpmb->lpszText, -1, &rc,
-                DT_CALCRECT | DT_WORDBREAK | DT_EXPANDTABS |
-                DT_NOPREFIX | DT_EXTERNALLEADING | DT_EDITCONTROL, NULL);
+                         DT_CALCRECT | DT_WORDBREAK | DT_EXPANDTABS | DT_NOPREFIX | DT_EXTERNALLEADING | DT_EDITCONTROL,
+                         NULL);
     //
     // Make sure we have enough width to hold the buttons, in addition to
     // the icon+text.  Always force the buttons.  If they don't fit, it's
@@ -977,17 +966,18 @@ ReSize:
     // Now we know the text width for sure.  Really calculate how high the
     // text will be.
     //
-    rc.left     = 0;
-    rc.top      = 0;
-    rc.right    = cxText;
-    rc.bottom   = rcWork.bottom - rcWork.top;
-    cyText      = DrawTextExW(hdc, (LPWSTR)lpmb->lpszText, -1, &rc, DT_CALCRECT | DT_WORDBREAK
-        | DT_EXPANDTABS | DT_NOPREFIX | DT_EXTERNALLEADING | DT_EDITCONTROL, NULL);
+    rc.left = 0;
+    rc.top = 0;
+    rc.right = cxText;
+    rc.bottom = rcWork.bottom - rcWork.top;
+    cyText = DrawTextExW(hdc, (LPWSTR)lpmb->lpszText, -1, &rc,
+                         DT_CALCRECT | DT_WORDBREAK | DT_EXPANDTABS | DT_NOPREFIX | DT_EXTERNALLEADING | DT_EDITCONTROL,
+                         NULL);
 
     // Find the window size.
-    cxBox += 2*SYSMET(CXFIXEDFRAME);
-    cyBox = 2*SYSMET(CYFIXEDFRAME) + SYSMET(CYCAPTION) + YPixFromYDU(2*DU_OUTERMARGIN +
-        DU_INNERMARGIN + DU_BTNHEIGHT, gpsi->cyMsgFontChar);
+    cxBox += 2 * SYSMET(CXFIXEDFRAME);
+    cyBox = 2 * SYSMET(CYFIXEDFRAME) + SYSMET(CYCAPTION) +
+            YPixFromYDU(2 * DU_OUTERMARGIN + DU_INNERMARGIN + DU_BTNHEIGHT, gpsi->cyMsgFontChar);
 
     cyBox += max(cyIcon, cyText);
 
@@ -1038,9 +1028,11 @@ ReSize:
     // height.  Bottom justify it at least if too big even for that, so
     // that the buttons are visible.
     //
-    if (yMB + cyBox > rcWork.bottom) {
+    if (yMB + cyBox > rcWork.bottom)
+    {
         yMB = rcWork.bottom - SYSMET(CYEDGE) - cyBox;
-        if (yMB < rcWork.top) {
+        if (yMB < rcWork.top)
+        {
             yMB = pMonitor->rcMonitor.bottom - SYSMET(CYEDGE) - cyBox;
         }
     }
@@ -1053,13 +1045,12 @@ ReSize:
     if (!hTemplate)
         goto SMB_Exit;
 
-    lpDlgTmp = (LPBYTE) hTemplate;
+    lpDlgTmp = (LPBYTE)hTemplate;
 
     //
     // Setup the dialog style for the message box
     //
-    dwStyleDlg = WS_POPUPWINDOW | WS_CAPTION | DS_ABSALIGN | DS_NOIDLEMSG |
-                 DS_SETFONT | DS_3DLOOK;
+    dwStyleDlg = WS_POPUPWINDOW | WS_CAPTION | DS_ABSALIGN | DS_NOIDLEMSG | DS_SETFONT | DS_3DLOOK;
 
     if ((dwStyleMsg & MB_MODEMASK) == MB_SYSTEMMODAL)
         dwStyleDlg |= DS_SYSMODAL | DS_SETFOREGROUND;
@@ -1071,19 +1062,19 @@ ReSize:
 
     // Add the Header of the Dlg Template
     // BOGUS !!!  don't ADD bools
-    lpDlgTmp = MB_UpdateDlgHdr((LPDLGTEMPLATE) lpDlgTmp, dwStyleDlg, dwExStyleMsg,
-        (BYTE) (lpmb->cButtons + (wIconOrdNum != 0) + (lpmb->lpszText != NULL)),
-        xMB, yMB, cxBox, cyBox, (LPWSTR)lpmb->lpszCaption, wCaptionLen);
+    lpDlgTmp = MB_UpdateDlgHdr((LPDLGTEMPLATE)lpDlgTmp, dwStyleDlg, dwExStyleMsg,
+                               (BYTE)(lpmb->cButtons + (wIconOrdNum != 0) + (lpmb->lpszText != NULL)), xMB, yMB, cxBox,
+                               cyBox, (LPWSTR)lpmb->lpszCaption, wCaptionLen);
 
     //
     // Center the buttons
     //
 
-    cxFoo = (cxBox - 2*SYSMET(CXFIXEDFRAME) - cxButtons) / 2;
+    cxFoo = (cxBox - 2 * SYSMET(CXFIXEDFRAME) - cxButtons) / 2;
 
     lpDlgTmp = MB_AddPushButtons((LPDLGITEMTEMPLATE)lpDlgTmp, lpmb, cxFoo,
-        cyBox - SYSMET(CYCAPTION) - (2 * SYSMET(CYFIXEDFRAME)) -
-        YPixFromYDU(DU_OUTERMARGIN, gpsi->cyMsgFontChar));
+                                 cyBox - SYSMET(CYCAPTION) - (2 * SYSMET(CYFIXEDFRAME)) -
+                                     YPixFromYDU(DU_OUTERMARGIN, gpsi->cyMsgFontChar));
 
     // Add Icon, if any, to the Dlg template
     //
@@ -1091,22 +1082,24 @@ ReSize:
     // height of the icon, we center it.  Otherwise the text will start at
     // the top.
     //
-    if (wIconOrdNum) {
-        OrdNum[0] = 0xFFFF;  // To indicate that an Ordinal number follows
-        OrdNum[1] = (WORD) wIconOrdNum;
+    if (wIconOrdNum)
+    {
+        OrdNum[0] = 0xFFFF; // To indicate that an Ordinal number follows
+        OrdNum[1] = (WORD)wIconOrdNum;
 
-        lpDlgTmp = MB_UpdateDlgItem((LPDLGITEMTEMPLATE)lpDlgTmp, IDUSERICON,        // Control Id
-            SS_ICON | WS_GROUP | WS_CHILD | WS_VISIBLE, 0,
-            XPixFromXDU(DU_OUTERMARGIN, gpsi->cxMsgFontChar),   // X co-ordinate
-            YPixFromYDU(DU_OUTERMARGIN, gpsi->cyMsgFontChar),   // Y co-ordinate
-            0,  0,          // For Icons, CX and CY are ignored, can be zero
-            OrdNum,         // Ordinal number of Icon
-            ARRAY_SIZE(OrdNum), // Length of OrdNum
-            STATICCODE);
+        lpDlgTmp = MB_UpdateDlgItem((LPDLGITEMTEMPLATE)lpDlgTmp, IDUSERICON, // Control Id
+                                    SS_ICON | WS_GROUP | WS_CHILD | WS_VISIBLE, 0,
+                                    XPixFromXDU(DU_OUTERMARGIN, gpsi->cxMsgFontChar), // X co-ordinate
+                                    YPixFromYDU(DU_OUTERMARGIN, gpsi->cyMsgFontChar), // Y co-ordinate
+                                    0, 0,               // For Icons, CX and CY are ignored, can be zero
+                                    OrdNum,             // Ordinal number of Icon
+                                    ARRAY_SIZE(OrdNum), // Length of OrdNum
+                                    STATICCODE);
     }
 
     // Add the Text of the Message to the Dlg Template
-    if (lpmb->lpszText) {
+    if (lpmb->lpszText)
+    {
         //
         // Center the text if shorter than the icon.
         //
@@ -1116,18 +1109,20 @@ ReSize:
             cxFoo = (cyIcon - cyText) / 2;
 
         dwStyleText = SS_NOPREFIX | WS_GROUP | WS_CHILD | WS_VISIBLE | SS_EDITCONTROL;
-        if (dwStyleMsg & MB_RIGHT) {
+        if (dwStyleMsg & MB_RIGHT)
+        {
             dwStyleText |= SS_RIGHT;
             xText = cxBox - (SYSMET(CXSIZE) + cxText);
-        } else {
+        }
+        else
+        {
             dwStyleText |= SS_LEFT;
             xText = cxIcon + XPixFromXDU(DU_INNERMARGIN, gpsi->cxMsgFontChar);
         }
 
         MB_UpdateDlgItem((LPDLGITEMTEMPLATE)lpDlgTmp, -1, dwStyleText, dwExStyleMsg, xText,
-            YPixFromYDU(DU_OUTERMARGIN, gpsi->cyMsgFontChar) + cxFoo,
-            cxText, cyText,
-            (LPWSTR)lpmb->lpszText, wTextLen, STATICCODE);
+                         YPixFromYDU(DU_OUTERMARGIN, gpsi->cyMsgFontChar) + cxFoo, cxText, cyText,
+                         (LPWSTR)lpmb->lpszText, wTextLen, STATICCODE);
     }
 
     // The dialog template is ready
@@ -1137,29 +1132,29 @@ ReSize:
     //
     hcurOld = NtUserSetCursor(LoadCursor(NULL, IDC_ARROW));
 
-    lpmb->lpszIcon = (LPWSTR) hIcon;
+    lpmb->lpszIcon = (LPWSTR)hIcon;
 
     if (!(lpmb->dwStyle & MB_USERICON))
     {
         int wBeep = (LOWORD(lpmb->dwStyle & MB_ICONMASK)) >> MB_MASKSHIFT;
-        if (wBeep < USER_SOUND_MAX) {
+        if (wBeep < USER_SOUND_MAX)
+        {
             NtUserCallOneParam(wBeep, SFI_PLAYEVENTSOUND);
         }
     }
 
-    iRetVal = (int)InternalDialogBox(hmodUser, hTemplate, hwndOwner,
-        MB_DlgProc, (LPARAM) lpmb, FALSE);
+    iRetVal = (int)InternalDialogBox(hmodUser, hTemplate, hwndOwner, MB_DlgProc, (LPARAM)lpmb, FALSE);
 
     //
     // Fix up return value
     if (iRetVal == -1)
-        iRetVal = 0;                /* Messagebox should also return error */
+        iRetVal = 0; /* Messagebox should also return error */
 
-     //
-     // If the messagebox contains only OK button, then its ID is changed as
-     // IDCANCEL in MB_DlgProc; So, we must change it back to IDOK irrespective
-     // of whether ESC is pressed or Carriage return is pressed;
-     //
+    //
+    // If the messagebox contains only OK button, then its ID is changed as
+    // IDCANCEL in MB_DlgProc; So, we must change it back to IDOK irrespective
+    // of whether ESC is pressed or Carriage return is pressed;
+    //
     if (((dwStyleMsg & MB_TYPEMASK) == MB_OK) && iRetVal)
         iRetVal = IDOK;
 
@@ -1174,11 +1169,13 @@ SMB_Exit:
     if (hTemplate)
         UserLocalFree(hTemplate);
 
-    if (hCaption) {
+    if (hCaption)
+    {
         UserLocalFree(hCaption);
     }
 
-    if (hText) {
+    if (hText)
+    {
         UserLocalFree(hText);
     }
 
@@ -1203,15 +1200,13 @@ SMB_Exit:
 * History:
 * 08-03-97 MCostea      Created
 \***************************************************************************/
-VOID
-MB_CopyToClipboard(
-    HWND hwndDlg)
+VOID MB_CopyToClipboard(HWND hwndDlg)
 {
     LPCWSTR lpszRead;
-    LPWSTR  lpszAll, lpszWrite;
-    HANDLE  hData;
-    static  WCHAR   szLine[] = L"---------------------------\r\n";
-    UINT    cBufSize, i, cWrote;
+    LPWSTR lpszAll, lpszWrite;
+    HANDLE hData;
+    static WCHAR szLine[] = L"---------------------------\r\n";
+    UINT cBufSize, i, cWrote;
     LPMSGBOXDATA lpmb;
 
     if (!(lpmb = (LPMSGBOXDATA)GetWindowLongPtr(hwndDlg, GWLP_USERDATA)))
@@ -1225,32 +1220,28 @@ MB_CopyToClipboard(
      *      - the message text can be all \n, that will become \r\n
      *      - there are a few extra \r\n (that's why 8)
      */
-    cBufSize =  (lpmb->lpszCaption ? wcslen(lpmb->lpszCaption) : 0) +
-                (lpmb->lpszText ? 2*wcslen(lpmb->lpszText) : 0) +
-                4*sizeof(szLine) +
-                lpmb->cButtons * gpsi->wMaxBtnSize +
-                8;
+    cBufSize = (lpmb->lpszCaption ? wcslen(lpmb->lpszCaption) : 0) + (lpmb->lpszText ? 2 * wcslen(lpmb->lpszText) : 0) +
+               4 * sizeof(szLine) + lpmb->cButtons * gpsi->wMaxBtnSize + 8;
 
     cBufSize *= sizeof(WCHAR);
 
-    if (!(hData = UserGlobalAlloc(LHND, (LONG)(cBufSize))) ) {
+    if (!(hData = UserGlobalAlloc(LHND, (LONG)(cBufSize))))
+    {
         goto CloseClip;
     }
 
     USERGLOBALLOCK(hData, lpszAll);
     UserAssert(lpszAll);
 
-    cWrote = wsprintf(lpszAll, L"%s%s\r\n%s",
-                                szLine,
-                                lpmb->lpszCaption ? lpmb->lpszCaption : L"",
-                                szLine);
+    cWrote = wsprintf(lpszAll, L"%s%s\r\n%s", szLine, lpmb->lpszCaption ? lpmb->lpszCaption : L"", szLine);
 
     lpszWrite = lpszAll + cWrote;
     lpszRead = lpmb->lpszText;
     /*
      * Change \n to \r\n in the text
      */
-    for (i = 0; *lpszRead; i++) {
+    for (i = 0; *lpszRead; i++)
+    {
 
         if (*lpszRead == L'\n')
             *lpszWrite++ = L'\r';
@@ -1264,11 +1255,14 @@ MB_CopyToClipboard(
     /*
      * Remove & from the button texts
      */
-    for (i = 0; i<lpmb->cButtons; i++) {
+    for (i = 0; i < lpmb->cButtons; i++)
+    {
 
         lpszRead = lpmb->ppszButtonText[i];
-        while (*lpszRead) {
-            if (*lpszRead != L'&') {
+        while (*lpszRead)
+        {
+            if (*lpszRead != L'&')
+            {
                 *lpszWrite++ = *lpszRead;
             }
             lpszRead++;
@@ -1294,7 +1288,8 @@ MB_CopyToClipboard(
      * If we added others we might want to move this into EmptyClipboard
      * and have two versions.
      */
-    if (GetClientInfo()->CI_flags & CI_16BIT) {
+    if (GetClientInfo()->CI_flags & CI_16BIT)
+    {
         pfnWowEmptyClipBoard();
     }
 
@@ -1302,7 +1297,6 @@ MB_CopyToClipboard(
 
 CloseClip:
     NtUserCloseClipboard();
-
 }
 
 /***************************************************************************\
@@ -1312,17 +1306,8 @@ CloseClip:
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
 
-LPBYTE MB_UpdateDlgHdr(
-    LPDLGTEMPLATE lpDlgTmp,
-    long lStyle,
-    long lExtendedStyle,
-    BYTE bItemCount,
-    int iX,
-    int iY,
-    int iCX,
-    int iCY,
-    LPWSTR lpszCaption,
-    int cchCaptionLen)
+LPBYTE MB_UpdateDlgHdr(LPDLGTEMPLATE lpDlgTmp, long lStyle, long lExtendedStyle, BYTE bItemCount, int iX, int iY,
+                       int iCX, int iCY, LPWSTR lpszCaption, int cchCaptionLen)
 {
     LPTSTR lpStr;
     RECT rc;
@@ -1330,10 +1315,10 @@ LPBYTE MB_UpdateDlgHdr(
     /*
      * Adjust the rectangle dimensions.
      */
-    rc.left     = iX + SYSMET(CXFIXEDFRAME);
-    rc.top      = iY + SYSMET(CYFIXEDFRAME);
-    rc.right    = iX + iCX - SYSMET(CXFIXEDFRAME);
-    rc.bottom   = iY + iCY - SYSMET(CYFIXEDFRAME);
+    rc.left = iX + SYSMET(CXFIXEDFRAME);
+    rc.top = iY + SYSMET(CYFIXEDFRAME);
+    rc.right = iX + iCX - SYSMET(CXFIXEDFRAME);
+    rc.bottom = iY + iCY - SYSMET(CYFIXEDFRAME);
 
 
     /*
@@ -1344,8 +1329,8 @@ LPBYTE MB_UpdateDlgHdr(
     lpDlgTmp->style = lStyle;
     lpDlgTmp->dwExtendedStyle = lExtendedStyle;
     lpDlgTmp->cdit = bItemCount;
-    lpDlgTmp->x  = XDUFromXPix(rc.left, gpsi->cxMsgFontChar);
-    lpDlgTmp->y  = YDUFromYPix(rc.top, gpsi->cyMsgFontChar);
+    lpDlgTmp->x = XDUFromXPix(rc.left, gpsi->cxMsgFontChar);
+    lpDlgTmp->y = YDUFromYPix(rc.top, gpsi->cyMsgFontChar);
     lpDlgTmp->cx = XDUFromXPix(rc.right - rc.left, gpsi->cxMsgFontChar);
     lpDlgTmp->cy = YDUFromYPix(rc.bottom - rc.top, gpsi->cyMsgFontChar);
 
@@ -1354,18 +1339,18 @@ LPBYTE MB_UpdateDlgHdr(
      * message box, a zero window class (means dialog box class).
      */
     lpStr = (LPWSTR)(lpDlgTmp + 1);
-    *lpStr++ = 0;                           // Menu
+    *lpStr++ = 0; // Menu
     lpStr = (LPWSTR)NextWordBoundary(lpStr);
-    *lpStr++ = 0;                           // Class
+    *lpStr++ = 0; // Class
     lpStr = (LPWSTR)NextWordBoundary(lpStr);
 
     /*
      * NOTE: iCaptionLen may be less than the length of the Caption string;
      * So, DO NOT USE lstrcpy();
      */
-    RtlCopyMemory(lpStr, lpszCaption, cchCaptionLen*sizeof(WCHAR));
+    RtlCopyMemory(lpStr, lpszCaption, cchCaptionLen * sizeof(WCHAR));
     lpStr += cchCaptionLen;
-    *lpStr++ = TEXT('\0');                // Null terminate the caption str
+    *lpStr++ = TEXT('\0'); // Null terminate the caption str
 
     /*
      * Font height of 0x7FFF means use the message box font
@@ -1382,36 +1367,32 @@ LPBYTE MB_UpdateDlgHdr(
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
 
-LPBYTE MB_AddPushButtons(
-    LPDLGITEMTEMPLATE  lpDlgTmp,
-    LPMSGBOXDATA       lpmb,
-    UINT               wLEdge,
-    UINT               wBEdge)
+LPBYTE MB_AddPushButtons(LPDLGITEMTEMPLATE lpDlgTmp, LPMSGBOXDATA lpmb, UINT wLEdge, UINT wBEdge)
 {
-    UINT   wYValue;
-    UINT   i;
-    UINT   wHeight;
-    UINT   wCount = lpmb->cButtons;
+    UINT wYValue;
+    UINT i;
+    UINT wHeight;
+    UINT wCount = lpmb->cButtons;
 
     wHeight = YPixFromYDU(DU_BTNHEIGHT, gpsi->cyMsgFontChar);
 
-    wYValue = wBEdge - wHeight;         // Y co-ordinate for push buttons
+    wYValue = wBEdge - wHeight; // Y co-ordinate for push buttons
 
-    for (i = 0; i < wCount; i++) {
+    for (i = 0; i < wCount; i++)
+    {
 
-        lpDlgTmp = (LPDLGITEMTEMPLATE)MB_UpdateDlgItem(
-                lpDlgTmp,                       /* Ptr to template */
-                lpmb->pidButton[i],             /* Control Id */
-                WS_TABSTOP | WS_CHILD | WS_VISIBLE | (i == 0 ? WS_GROUP : 0) |
-                ((UINT)i == lpmb->DefButton ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON),
-                0,
-                wLEdge,                         /* X co-ordinate */
-                wYValue,                        /* Y co-ordinate */
-                gpsi->wMaxBtnSize,              /* CX */
-                wHeight,                        /* CY */
-                lpmb->ppszButtonText[i],        /* String for button */
-                (UINT)wcslen(lpmb->ppszButtonText[i]),/* Length */
-                BUTTONCODE);
+        lpDlgTmp =
+            (LPDLGITEMTEMPLATE)MB_UpdateDlgItem(lpDlgTmp,           /* Ptr to template */
+                                                lpmb->pidButton[i], /* Control Id */
+                                                WS_TABSTOP | WS_CHILD | WS_VISIBLE | (i == 0 ? WS_GROUP : 0) |
+                                                    ((UINT)i == lpmb->DefButton ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON),
+                                                0, wLEdge,                             /* X co-ordinate */
+                                                wYValue,                               /* Y co-ordinate */
+                                                gpsi->wMaxBtnSize,                     /* CX */
+                                                wHeight,                               /* CY */
+                                                lpmb->ppszButtonText[i],               /* String for button */
+                                                (UINT)wcslen(lpmb->ppszButtonText[i]), /* Length */
+                                                BUTTONCODE);
 
         /*
          * Get the X co-ordinate for the next Push button
@@ -1429,29 +1410,19 @@ LPBYTE MB_AddPushButtons(
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
 
-LPBYTE MB_UpdateDlgItem(
-    LPDLGITEMTEMPLATE lpDlgItem,
-    int iCtrlId,
-    long lStyle,
-    long lExtendedStyle,
-    int iX,
-    int iY,
-    int iCX,
-    int iCY,
-    LPWSTR lpszText,
-    UINT cchTextLen,
-    int iControlClass)
+LPBYTE MB_UpdateDlgItem(LPDLGITEMTEMPLATE lpDlgItem, int iCtrlId, long lStyle, long lExtendedStyle, int iX, int iY,
+                        int iCX, int iCY, LPWSTR lpszText, UINT cchTextLen, int iControlClass)
 {
     LPWSTR lpStr;
     BOOL fIsOrdNum;
 
 
-    lpDlgItem->x        = XDUFromXPix(iX, gpsi->cxMsgFontChar);
-    lpDlgItem->y        = YDUFromYPix(iY, gpsi->cyMsgFontChar);
-    lpDlgItem->cx       = XDUFromXPix(iCX,gpsi->cxMsgFontChar);
-    lpDlgItem->cy       = YDUFromYPix(iCY,gpsi->cyMsgFontChar);
-    lpDlgItem->id       = (WORD)iCtrlId;
-    lpDlgItem->style    = lStyle;
+    lpDlgItem->x = XDUFromXPix(iX, gpsi->cxMsgFontChar);
+    lpDlgItem->y = YDUFromYPix(iY, gpsi->cyMsgFontChar);
+    lpDlgItem->cx = XDUFromXPix(iCX, gpsi->cxMsgFontChar);
+    lpDlgItem->cy = YDUFromYPix(iCY, gpsi->cyMsgFontChar);
+    lpDlgItem->id = (WORD)iCtrlId;
+    lpDlgItem->style = lStyle;
     lpDlgItem->dwExtendedStyle = lExtendedStyle;
 
     /*
@@ -1473,8 +1444,8 @@ LPBYTE MB_UpdateDlgItem(
      * So, test the lStyle field only with 0x0F instead of 0xFF;
      * Fix for Bugs #5933 and 5935 --SANKAR-- 11-28-89
      */
-    if (iControlClass == STATICCODE &&
-         (((lStyle & 0x0F) == SS_LEFT) || ((lStyle & 0x0F) == SS_RIGHT))) {
+    if (iControlClass == STATICCODE && (((lStyle & 0x0F) == SS_LEFT) || ((lStyle & 0x0F) == SS_RIGHT)))
+    {
 
         /*
          * This is static text
@@ -1493,25 +1464,26 @@ LPBYTE MB_UpdateDlgItem(
      */
     *lpStr++ = 0xFFFF;
     *lpStr++ = (BYTE)iControlClass;
-    lpStr = (LPWSTR)NextWordBoundary(lpStr);        // WORD-align lpszText
+    lpStr = (LPWSTR)NextWordBoundary(lpStr); // WORD-align lpszText
 
     /*
      * Check if the String contains Ordinal number or not
      */
-    fIsOrdNum = ((*lpszText == 0xFFFF) && (cchTextLen == sizeof(DWORD)/sizeof(WCHAR)));
+    fIsOrdNum = ((*lpszText == 0xFFFF) && (cchTextLen == sizeof(DWORD) / sizeof(WCHAR)));
 
     /*
      * NOTE: cchTextLen may be less than the length of lpszText.  So,
      * DO NOT USE lstrcpy() for the copy.
      */
-    RtlCopyMemory(lpStr, lpszText, cchTextLen*sizeof(WCHAR));
+    RtlCopyMemory(lpStr, lpszText, cchTextLen * sizeof(WCHAR));
     lpStr = lpStr + cchTextLen;
-    if (!fIsOrdNum) {
-        *lpStr = TEXT('\0');    // NULL terminate the string
+    if (!fIsOrdNum)
+    {
+        *lpStr = TEXT('\0'); // NULL terminate the string
         lpStr = (LPWSTR)NextWordBoundary(lpStr + 1);
     }
 
-    *lpStr++ = 0;           // sizeof control data (there is none)
+    *lpStr++ = 0; // sizeof control data (there is none)
 
     return NextDWordBoundary(lpStr);
 }
@@ -1544,9 +1516,7 @@ LPBYTE MB_UpdateDlgItem(
 * History:
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
-UINT
-MB_FindDlgTemplateSize(
-    LPMSGBOXDATA lpmb)
+UINT MB_FindDlgTemplateSize(LPMSGBOXDATA lpmb)
 {
     ULONG_PTR cbLen;
     UINT cbT;
@@ -1561,7 +1531,7 @@ MB_FindDlgTemplateSize(
     cbLen = (ULONG_PTR)NextWordBoundary(sizeof(DLGTEMPLATE) + sizeof(WCHAR));
     cbLen = (ULONG_PTR)NextWordBoundary(cbLen + sizeof(WCHAR));
     cbLen += wcslen(lpmb->lpszCaption) * sizeof(WCHAR) + sizeof(WCHAR);
-    cbLen += sizeof(WORD);                   // Font height
+    cbLen += sizeof(WORD); // Font height
     cbLen = (ULONG_PTR)NextDWordBoundary(cbLen);
 
     /*
@@ -1573,9 +1543,9 @@ MB_FindDlgTemplateSize(
     /*
      * Find the number of buttons in the msg box.
      */
-    for (i = 0; i < wCount; i++) {
-        cbLen = (ULONG_PTR)NextWordBoundary(cbLen + sizeof(DLGITEMTEMPLATE) +
-                (2 * sizeof(WCHAR)));
+    for (i = 0; i < wCount; i++)
+    {
+        cbLen = (ULONG_PTR)NextWordBoundary(cbLen + sizeof(DLGITEMTEMPLATE) + (2 * sizeof(WCHAR)));
         cbT = (wcslen(lpmb->ppszButtonText[i]) + 1) * sizeof(WCHAR);
         cbLen = (ULONG_PTR)NextWordBoundary(cbLen + cbT);
         cbLen += sizeof(WCHAR);
@@ -1585,9 +1555,9 @@ MB_FindDlgTemplateSize(
     /*
      * Add in the space required for the text message (if there is one).
      */
-    if (lpmb->lpszText != NULL) {
-        cbLen = (ULONG_PTR)NextWordBoundary(cbLen + sizeof(DLGITEMTEMPLATE) +
-                (2 * sizeof(WCHAR)));
+    if (lpmb->lpszText != NULL)
+    {
+        cbLen = (ULONG_PTR)NextWordBoundary(cbLen + sizeof(DLGITEMTEMPLATE) + (2 * sizeof(WCHAR)));
         cbT = (wcslen(lpmb->lpszText) + 1) * sizeof(WCHAR);
         cbLen = (ULONG_PTR)NextWordBoundary(cbLen + cbT);
         cbLen += sizeof(WCHAR);
@@ -1604,10 +1574,10 @@ MB_FindDlgTemplateSize(
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
 
-UINT MB_GetIconOrdNum(
-    UINT rgBits)
+UINT MB_GetIconOrdNum(UINT rgBits)
 {
-    switch (rgBits & MB_ICONMASK) {
+    switch (rgBits & MB_ICONMASK)
+    {
     case MB_USERICON:
     case MB_ICONHAND:
         return PtrToUlong(IDI_HAND);
@@ -1631,8 +1601,7 @@ UINT MB_GetIconOrdNum(
 * History:
 *  1-24-95 JerrySh      Created.
 \***************************************************************************/
-LPWSTR MB_GetString(
-    UINT wBtn)
+LPWSTR MB_GetString(UINT wBtn)
 {
     if (wBtn < MAX_SEB_STYLES)
         return GETGPSIMBPSTR(wBtn);
@@ -1651,11 +1620,7 @@ LPWSTR MB_GetString(
 * History:
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
-INT_PTR MB_DlgProc(
-    HWND hwndDlg,
-    UINT wMsg,
-    WPARAM wParam,
-    LPARAM lParam)
+INT_PTR MB_DlgProc(HWND hwndDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndT;
     int iCount;
@@ -1665,16 +1630,17 @@ INT_PTR MB_DlgProc(
     PWND pwnd;
     BOOL bTimedOut = FALSE;
 
-    switch (wMsg) {
+    switch (wMsg)
+    {
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
         if ((pwnd = ValidateHwnd(hwndDlg)) == NULL)
             return 0L;
-        return DefWindowProcWorker(pwnd, WM_CTLCOLORMSGBOX,
-                                   wParam, lParam, FALSE);
+        return DefWindowProcWorker(pwnd, WM_CTLCOLORMSGBOX, wParam, lParam, FALSE);
 
     case WM_TIMER:
-        if (!bTimedOut) {
+        if (!bTimedOut)
+        {
             bTimedOut = TRUE;
             EndTaskModalDialog(hwndDlg);
             EndDialog(hwndDlg, IDTIMEOUT);
@@ -1682,17 +1648,19 @@ INT_PTR MB_DlgProc(
         break;
 
     case WM_NCDESTROY:
-        if ((lpmb = (LPMSGBOXDATA)GetWindowLongPtr(hwndDlg, GWLP_USERDATA))) {
-            if (lpmb->dwTimeout != INFINITE) {
+        if ((lpmb = (LPMSGBOXDATA)GetWindowLongPtr(hwndDlg, GWLP_USERDATA)))
+        {
+            if (lpmb->dwTimeout != INFINITE)
+            {
                 NtUserKillTimer(hwndDlg, 0);
                 lpmb->dwTimeout = INFINITE;
             }
         }
-        if ((pwnd = ValidateHwnd(hwndDlg)) == NULL) {
+        if ((pwnd = ValidateHwnd(hwndDlg)) == NULL)
+        {
             return 0L;
         }
-        return DefWindowProcWorker(pwnd, wMsg,
-                                   wParam, lParam, FALSE);
+        return DefWindowProcWorker(pwnd, wMsg, wParam, lParam, FALSE);
 
 
     case WM_INITDIALOG:
@@ -1705,34 +1673,40 @@ INT_PTR MB_DlgProc(
         /*
          * Create the message box atoms, if we haven't done it yet
          */
-        if (atomBwlProp == 0) {
+        if (atomBwlProp == 0)
+        {
             atomBwlProp = AddAtomW(WINDOWLIST_PROP_NAME);
             atomMsgBoxCallback = AddAtomW(MSGBOX_CALLBACK);
 
-            if (atomBwlProp == 0 || atomMsgBoxCallback == 0) {
+            if (atomBwlProp == 0 || atomMsgBoxCallback == 0)
+            {
                 RIPMSG0(RIP_WARNING, "MB_DlgProc: AddAtomW failed.  Out of memory?");
             }
         }
 
-        if (lpmb->dwStyle & MB_HELP) {
+        if (lpmb->dwStyle & MB_HELP)
+        {
             NtUserSetWindowContextHelpId(hwndDlg, lpmb->dwContextHelpId);
             //See if there is an app supplied callback.
             if (!gfServerProcess && lpmb->lpfnMsgBoxCallback)
-                SetProp(hwndDlg, MAKEINTATOM(atomMsgBoxCallback),
-                            lpmb->lpfnMsgBoxCallback);
+                SetProp(hwndDlg, MAKEINTATOM(atomMsgBoxCallback), lpmb->lpfnMsgBoxCallback);
         }
 
         if (lpmb->dwStyle & MB_TOPMOST)
             NtUserSetWindowPos(hwndDlg, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-        if (lpmb->dwStyle & MB_USERICON) {
+        if (lpmb->dwStyle & MB_USERICON)
+        {
             SendDlgItemMessage(hwndDlg, IDUSERICON, STM_SETICON, (WPARAM)(lpmb->lpszIcon), 0);
             iCount = ALERT_SYSTEM_WARNING;
-        } else {
+        }
+        else
+        {
             /*
              * Generate an alert notification
              */
-            switch (lpmb->dwStyle & MB_ICONMASK) {
+            switch (lpmb->dwStyle & MB_ICONMASK)
+            {
             case MB_ICONWARNING:
                 iCount = ALERT_SYSTEM_WARNING;
                 break;
@@ -1755,8 +1729,8 @@ INT_PTR MB_DlgProc(
         NotifyWinEvent(EVENT_SYSTEM_ALERT, hwndDlg, OBJID_ALERT, iCount);
 
 #ifdef LATER
-// darrinm - 06/17/91
-// SYSMODAL dialogs are history for now.
+        // darrinm - 06/17/91
+        // SYSMODAL dialogs are history for now.
 
         /*
          * Check if the Dialog box is a Sys Modal Dialog Box
@@ -1765,8 +1739,8 @@ INT_PTR MB_DlgProc(
             SetSysModalWindow(hwndDlg);
 #endif
 
-        if ((lpmb->hwndOwner == NULL) &&
-                ((lpmb->dwStyle & MB_MODEMASK) == MB_TASKMODAL)) {
+        if ((lpmb->hwndOwner == NULL) && ((lpmb->dwStyle & MB_MODEMASK) == MB_TASKMODAL))
+        {
             StartTaskModalDialog(hwndDlg);
         }
 
@@ -1807,16 +1781,21 @@ INT_PTR MB_DlgProc(
 
             hwndDlg = GetDlgItem(hwndDlg, IDOK);
 
-            if (hwndDlg != NULL) {
-            //    hwndDlg->hMenu = (HMENU)IDCANCEL;
+            if (hwndDlg != NULL)
+            {
+                //    hwndDlg->hMenu = (HMENU)IDCANCEL;
                 SetWindowLongPtr(hwndDlg, GWLP_ID, IDCANCEL);
-            } else {
+            }
+            else
+            {
                 RIPMSG0(RIP_WARNING, "MB_DlgProc- IDOK control not found");
             }
         }
 
-        if (lpmb->dwTimeout != INFINITE) {
-            if (NtUserSetTimer(hwndT, 0, lpmb->dwTimeout, NULL) == 0) {
+        if (lpmb->dwTimeout != INFINITE)
+        {
+            if (NtUserSetTimer(hwndT, 0, lpmb->dwTimeout, NULL) == 0)
+            {
                 /*
                  * Couldn't create the timer, so "clear" out the timeout value
                  * for future reference.
@@ -1835,24 +1814,25 @@ INT_PTR MB_DlgProc(
         // It is possible that this MsgBox has a callback instead of a
         // parent. So, we must behave as if the user hit the HELP button.
 
-        goto  MB_GenerateHelp;
+        goto MB_GenerateHelp;
 
     case WM_COMMAND:
-        switch (LOWORD(wParam)) {
+        switch (LOWORD(wParam))
+        {
         case IDOK:
         case IDCANCEL:
-           //
-           // Check if a control exists with the given ID; This
-           // check is needed because DlgManager returns IDCANCEL
-           // blindly when ESC is pressed even if a button with
-           // IDCANCEL is not present.
-           // Bug #4445 --SANKAR--09-13-1989--
-           //
-           if (!GetDlgItem(hwndDlg, LOWORD(wParam)))
-              return FALSE;
+            //
+            // Check if a control exists with the given ID; This
+            // check is needed because DlgManager returns IDCANCEL
+            // blindly when ESC is pressed even if a button with
+            // IDCANCEL is not present.
+            // Bug #4445 --SANKAR--09-13-1989--
+            //
+            if (!GetDlgItem(hwndDlg, LOWORD(wParam)))
+                return FALSE;
 
 
-           // else FALL THRO....This is intentional.
+            // else FALL THRO....This is intentional.
         case IDABORT:
         case IDIGNORE:
         case IDNO:
@@ -1860,35 +1840,37 @@ INT_PTR MB_DlgProc(
         case IDYES:
         case IDTRYAGAIN:
         case IDCONTINUE:
-           EndTaskModalDialog(hwndDlg);
-           EndDialog(hwndDlg, LOWORD(wParam));
-             break;
+            EndTaskModalDialog(hwndDlg);
+            EndDialog(hwndDlg, LOWORD(wParam));
+            break;
         case IDHELP:
-MB_GenerateHelp:
-                // Generate the WM_HELP message and send it to owner or callback
-           hwndOwner = NULL;
+        MB_GenerateHelp:
+            // Generate the WM_HELP message and send it to owner or callback
+            hwndOwner = NULL;
 
-           // Check if there is an app supplied callback for this MsgBox
-           if (!(lpfnCallback = (PVOID)GetProp(hwndDlg,
-                                  MAKEINTATOM(atomMsgBoxCallback)))) {
-               // If not, see if we need to inform the parent.
-               hwndOwner = GetWindow(hwndDlg, GW_OWNER);
+            // Check if there is an app supplied callback for this MsgBox
+            if (!(lpfnCallback = (PVOID)GetProp(hwndDlg, MAKEINTATOM(atomMsgBoxCallback))))
+            {
+                // If not, see if we need to inform the parent.
+                hwndOwner = GetWindow(hwndDlg, GW_OWNER);
 #ifdef LATER
-               // Chicagoism
-               if (hwndOwner && hwndOwner == GetDesktopWindow())
-                   hwndOwner = NULL;
+                // Chicagoism
+                if (hwndOwner && hwndOwner == GetDesktopWindow())
+                    hwndOwner = NULL;
 #endif
-           }
+            }
 
-                // See if we need to generate the Help message or call back.
-           if (hwndOwner || lpfnCallback) {
-               if (lpfnCallback && gfServerProcess) {
-                   break;
-               }
-               SendHelpMessage(hwndOwner, HELPINFO_WINDOW, IDHELP,
-                   hwndDlg, NtUserGetWindowContextHelpId(hwndDlg), lpfnCallback);
-           }
-           break;
+            // See if we need to generate the Help message or call back.
+            if (hwndOwner || lpfnCallback)
+            {
+                if (lpfnCallback && gfServerProcess)
+                {
+                    break;
+                }
+                SendHelpMessage(hwndOwner, HELPINFO_WINDOW, IDHELP, hwndDlg, NtUserGetWindowContextHelpId(hwndDlg),
+                                lpfnCallback);
+            }
+            break;
 
         default:
             return FALSE;
@@ -1914,9 +1896,7 @@ MB_GenerateHelp:
 * History:
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
-VOID
-StartTaskModalDialog(
-    HWND hwndDlg)
+VOID StartTaskModalDialog(HWND hwndDlg)
 {
     int cHwnd;
     HWND *phwnd;
@@ -1928,7 +1908,8 @@ StartTaskModalDialog(
      * Get the hwnd list.  It is returned in a block of memory
      * allocated with LocalAlloc.
      */
-    if ((cHwnd = BuildHwndList(NULL, NULL, FALSE, GetCurrentThreadId(), &phwndList)) == 0) {
+    if ((cHwnd = BuildHwndList(NULL, NULL, FALSE, GetCurrentThreadId(), &phwndList)) == 0)
+    {
         return;
     }
     /*
@@ -1936,13 +1917,15 @@ StartTaskModalDialog(
      * and we need to free the hwndList as EndTaskModalDialog will not be able to do that
      * MCostea 226543
      */
-    if (!SetProp(hwndDlg, MAKEINTATOM(atomBwlProp), (HANDLE)phwndList)) {
+    if (!SetProp(hwndDlg, MAKEINTATOM(atomBwlProp), (HANDLE)phwndList))
+    {
         UserLocalFree(phwndList);
         return;
     }
 
     phwndEnd = phwndList + cHwnd;
-    for (phwnd = phwndList; phwnd < phwndEnd; phwnd++) {
+    for (phwnd = phwndList; phwnd < phwndEnd; phwnd++)
+    {
         if ((hwnd = *phwnd) == NULL || (pwnd = RevalidateHwnd(hwnd)) == NULL)
             continue;
 
@@ -1951,9 +1934,12 @@ StartTaskModalDialog(
          * it.  All other windows are NULL'd out, to prevent their being
          * enabled later
          */
-        if (!TestWF(pwnd, WFDISABLED) && DIFFWOWHANDLE(hwnd, hwndDlg)) {
+        if (!TestWF(pwnd, WFDISABLED) && DIFFWOWHANDLE(hwnd, hwndDlg))
+        {
             NtUserEnableWindow(hwnd, FALSE);
-        } else {
+        }
+        else
+        {
             *phwnd = NULL;
         }
     }
@@ -1966,9 +1952,7 @@ StartTaskModalDialog(
 * History:
 * 11-20-90 DarrinM      Ported from Win 3.0 sources.
 \***************************************************************************/
-VOID
-EndTaskModalDialog(
-    HWND hwndDlg)
+VOID EndTaskModalDialog(HWND hwndDlg)
 {
     HWND *phwnd;
     HWND *phwndList;
@@ -1981,8 +1965,10 @@ EndTaskModalDialog(
 
     RemoveProp(hwndDlg, MAKEINTATOM(atomBwlProp));
 
-    for (phwnd = phwndList; *phwnd != (HWND)1; phwnd++) {
-        if ((hwnd = *phwnd) != NULL) {
+    for (phwnd = phwndList; *phwnd != (HWND)1; phwnd++)
+    {
+        if ((hwnd = *phwnd) != NULL)
+        {
             NtUserEnableWindow(hwnd, TRUE);
         }
     }
@@ -2003,8 +1989,7 @@ EndTaskModalDialog(
 *   8-5-98 Chienho      Created
 \***************************************************************************/
 
-BOOL ErrorMessageInst(
-     LPMSGBOXDATA pMsgBoxParams)
+BOOL ErrorMessageInst(LPMSGBOXDATA pMsgBoxParams)
 {
     ERROR_ELEMENT ErrEle;
     WCHAR *pwcs;
@@ -2016,45 +2001,52 @@ BOOL ErrorMessageInst(
     /*
      * Check if the MessageBox style is within the logged severity level
      */
-    switch (pMsgBoxParams->dwStyle & MB_ICONMASK) {
+    switch (pMsgBoxParams->dwStyle & MB_ICONMASK)
+    {
     case MB_ICONHAND:
         /*
          * when EMI is enabled, we at least log error messages
          */
         break;
     case MB_ICONEXCLAMATION:
-        if (gdwEMIControl > EMI_SEVERITY_WARNING) {
+        if (gdwEMIControl > EMI_SEVERITY_WARNING)
+        {
             rc = TRUE;
             goto End;
         }
         break;
     case MB_ICONQUESTION:
-        if (gdwEMIControl > EMI_SEVERITY_QUESTION) {
+        if (gdwEMIControl > EMI_SEVERITY_QUESTION)
+        {
             rc = TRUE;
             goto End;
         }
         break;
     case MB_ICONASTERISK:
-        if (gdwEMIControl > EMI_SEVERITY_INFORMATION) {
+        if (gdwEMIControl > EMI_SEVERITY_INFORMATION)
+        {
             rc = TRUE;
             goto End;
         }
         break;
     case MB_USERICON:
-        if (gdwEMIControl > EMI_SEVERITY_USER) {
+        if (gdwEMIControl > EMI_SEVERITY_USER)
+        {
             rc = TRUE;
             goto End;
         }
         break;
     default:
-        if (gdwEMIControl > EMI_SEVERITY_ALL) {
+        if (gdwEMIControl > EMI_SEVERITY_ALL)
+        {
             rc = TRUE;
             goto End;
         }
         break;
     }
 
-    if (gdwEMIThreadID != GETTHREADID()) {
+    if (gdwEMIThreadID != GETTHREADID())
+    {
         rc = FALSE;
         goto End;
     }
@@ -2085,7 +2077,8 @@ BOOL ErrorMessageInst(
      * get the window title
      */
     GetWindowTextW(pMsgBoxParams->hwndOwner, ErrEle.WindowTitle, TITLE_SIZE);
-    if (!(*(ErrEle.WindowTitle))) {
+    if (!(*(ErrEle.WindowTitle)))
+    {
         lstrcpy(ErrEle.WindowTitle, szUnknown);
     }
 
@@ -2099,26 +2092,36 @@ BOOL ErrorMessageInst(
     /*
      * resolve the module name of caller
      */
-    if (!RtlPcToFileHeader((PVOID)ErrEle.ReturnAddr, &ImageBase)) {
+    if (!RtlPcToFileHeader((PVOID)ErrEle.ReturnAddr, &ImageBase))
+    {
         RIPMSG0(RIP_WARNING, "ErrorMessageInst: Can't find Caller");
         ErrEle.BaseAddr = (PVOID)-1;
         ErrEle.dwImageSize = -1;
         lstrcpy(ErrEle.CallerModuleName, szUnknown);
-    } else {
+    }
+    else
+    {
         ErrEle.BaseAddr = ImageBase;
-        if (GetModuleFileName((HMODULE)ImageBase, ErrEle.CallerModuleName, MAX_PATH)) {
+        if (GetModuleFileName((HMODULE)ImageBase, ErrEle.CallerModuleName, MAX_PATH))
+        {
             pwcs = wcsrchr(ErrEle.CallerModuleName, TEXT('\\'));
-            if (pwcs) {
+            if (pwcs)
+            {
                 pwcs++;
                 lstrcpy(ErrEle.CallerModuleName, pwcs);
             }
-        } else {
+        }
+        else
+        {
             lstrcpy(ErrEle.CallerModuleName, szUnknown);
         }
         NtHeaders = RtlImageNtHeader(ImageBase);
-        if (NtHeaders == NULL) {
+        if (NtHeaders == NULL)
+        {
             ErrEle.dwImageSize = -1;
-        } else {
+        }
+        else
+        {
             ErrEle.dwImageSize = NtHeaders->OptionalHeader.SizeOfImage;
         }
     }
@@ -2129,9 +2132,11 @@ BOOL ErrorMessageInst(
      * registering the event simultaneously.
      */
 
-    if (!gEventSource) {
+    if (!gEventSource)
+    {
         gEventSource = RegisterEventSourceW(NULL, L"Error Instrument");
-        if (!gEventSource) {
+        if (!gEventSource)
+        {
             ErrEle.dwErrorCode = GetLastError();
             rc = FALSE;
         }
@@ -2140,8 +2145,9 @@ BOOL ErrorMessageInst(
     /*
      * report event
      */
-    if (gEventSource) {
-       rc = LogMessageBox(&ErrEle);
+    if (gEventSource)
+    {
+        rc = LogMessageBox(&ErrEle);
     }
 
     /*
@@ -2161,8 +2167,7 @@ End:
 *          FALSE - Initialization Fail
 *
 \***************************************************************************/
-BOOL InitInstrument(
-    LPDWORD lpEMIControl)
+BOOL InitInstrument(LPDWORD lpEMIControl)
 {
     NTSTATUS Status;
     HKEY hKeyEMI = NULL;
@@ -2172,7 +2177,8 @@ BOOL InitInstrument(
     OBJECT_ATTRIBUTES ObjA;
     DWORD EMIEnable = 0; //means disable
     DWORD EMISeverity;
-    struct {
+    struct
+    {
         KEY_VALUE_PARTIAL_INFORMATION;
         LARGE_INTEGER;
     } EMIValueInfo;
@@ -2182,7 +2188,8 @@ BOOL InitInstrument(
     InitializeObjectAttributes(&ObjA, &UnicodeStringEMIKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     Status = NtOpenKey(&hKeyEMI, KEY_READ, &ObjA);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         /*
          * Key doesn't exist, assume disable
          */
@@ -2193,34 +2200,31 @@ BOOL InitInstrument(
      * read the logging enable and setting
      */
     RtlInitUnicodeString(&UnicodeStringEnable, szEMIEnable);
-    Status = NtQueryValueKey(hKeyEMI,
-                     &UnicodeStringEnable,
-                     KeyValuePartialInformation,
-                     &EMIValueInfo,
-                     sizeof(EMIValueInfo),
-                     &dwDisposition);
+    Status = NtQueryValueKey(hKeyEMI, &UnicodeStringEnable, KeyValuePartialInformation, &EMIValueInfo,
+                             sizeof(EMIValueInfo), &dwDisposition);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         RtlCopyMemory(&EMIEnable, &EMIValueInfo.Data, sizeof(EMIEnable));
 
         RtlInitUnicodeString(&UnicodeStringStyle, szEMISeverity);
-        Status = NtQueryValueKey(hKeyEMI,
-                         &UnicodeStringStyle,
-                         KeyValuePartialInformation,
-                         &EMIValueInfo,
-                         sizeof(EMIValueInfo),
-                         &dwDisposition);
+        Status = NtQueryValueKey(hKeyEMI, &UnicodeStringStyle, KeyValuePartialInformation, &EMIValueInfo,
+                                 sizeof(EMIValueInfo), &dwDisposition);
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             RtlCopyMemory(&EMISeverity, &EMIValueInfo.Data, sizeof(EMISeverity));
             /*
              * Validate data
              */
-            if (EMISeverity > EMI_SEVERITY_MAX_VALUE) {
+            if (EMISeverity > EMI_SEVERITY_MAX_VALUE)
+            {
                 EMISeverity = EMI_SEVERITY_MAX_VALUE;
             }
-        } else {
+        }
+        else
+        {
             /*
              * default severity for instrument
              */
@@ -2233,27 +2237,26 @@ BOOL InitInstrument(
      * read default message reply enable
      */
     RtlInitUnicodeString(&UnicodeStringEnable, szDMREnable);
-    Status = NtQueryValueKey(hKeyEMI,
-                     &UnicodeStringEnable,
-                     KeyValuePartialInformation,
-                     &EMIValueInfo,
-                     sizeof(EMIValueInfo),
-                     &dwDisposition);
+    Status = NtQueryValueKey(hKeyEMI, &UnicodeStringEnable, KeyValuePartialInformation, &EMIValueInfo,
+                             sizeof(EMIValueInfo), &dwDisposition);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         RtlCopyMemory(&gfDMREnable, &EMIValueInfo.Data, sizeof(gfDMREnable));
     }
 
     NtClose(hKeyEMI);
 
-    if (EMIEnable) {
+    if (EMIEnable)
+    {
 
-          /*
+        /*
            * add eventlog file
            */
-          if (NT_SUCCESS(CreateLogSource())) {
-              return TRUE;
-          }
+        if (NT_SUCCESS(CreateLogSource()))
+        {
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -2278,22 +2281,21 @@ NTSTATUS CreateLogSource()
     RtlInitUnicodeString(&UnicodeStringEventKey, szEventKey);
     InitializeObjectAttributes(&ObjA, &UnicodeStringEventKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    if (NT_SUCCESS(Status = NtOpenKey(&hKeyEvent, KEY_READ, &ObjA))) {
+    if (NT_SUCCESS(Status = NtOpenKey(&hKeyEvent, KEY_READ, &ObjA)))
+    {
 
-        struct {
+        struct
+        {
             KEY_VALUE_PARTIAL_INFORMATION KeyInfo;
             WCHAR awchMsgFileName[256];
         } MsgFile;
 
         RtlInitUnicodeString(&UnicodeString, szEventMsgFile);
 
-        Status = NtQueryValueKey(hKeyEvent,
-                                 &UnicodeString,
-                                 KeyValuePartialInformation,
-                                 &MsgFile,
-                                 sizeof MsgFile,
+        Status = NtQueryValueKey(hKeyEvent, &UnicodeString, KeyValuePartialInformation, &MsgFile, sizeof MsgFile,
                                  &dwDisposition);
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             Status = lstrcmpi((LPWSTR)MsgFile.KeyInfo.Data, L"%SystemRoot%\\System32\\user32.dll");
         }
         NtClose(hKeyEvent);
@@ -2308,18 +2310,17 @@ NTSTATUS CreateLogSource()
 * Output error message record into eventlog
 *
 \***************************************************************************/
-BOOL LogMessageBox(
-    LPERROR_ELEMENT lpErrEle)
+BOOL LogMessageBox(LPERROR_ELEMENT lpErrEle)
 {
 
-    LPWSTR      lps[8];
-    DWORD       dwData[2];
-    WCHAR       BaseAddress[19];
-    WCHAR       ImageSize[19];
-    WCHAR       ReturnAddress[19];
+    LPWSTR lps[8];
+    DWORD dwData[2];
+    WCHAR BaseAddress[19];
+    WCHAR ImageSize[19];
+    WCHAR ReturnAddress[19];
     PTOKEN_USER pTokenUser = NULL;
-    PSID        pSid = NULL;
-    BOOL        rc;
+    PSID pSid = NULL;
+    BOOL rc;
 
     lps[0] = lpErrEle->ProcessName;
     lps[1] = lpErrEle->WindowTitle;
@@ -2340,11 +2341,11 @@ BOOL LogMessageBox(
         pSid = pTokenUser->User.Sid;
 
     UserAssert(gEventSource != NULL);
-    rc = ReportEventW(gEventSource, EVENTLOG_INFORMATION_TYPE, 0,
-                      STATUS_LOG_ERROR_MSG, pSid, sizeof(lps) / sizeof(*lps),
-                      sizeof(dwData), lps, dwData);
+    rc = ReportEventW(gEventSource, EVENTLOG_INFORMATION_TYPE, 0, STATUS_LOG_ERROR_MSG, pSid,
+                      sizeof(lps) / sizeof(*lps), sizeof(dwData), lps, dwData);
 
-    if (pTokenUser) {
+    if (pTokenUser)
+    {
 
         VirtualFree(pTokenUser, 0, MEM_RELEASE);
     }

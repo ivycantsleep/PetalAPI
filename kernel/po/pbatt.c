@@ -27,15 +27,9 @@ Revision History:
 //
 
 
-VOID
-PopRecalculateCBTriggerLevels (
-    ULONG     Flags
-    );
+VOID PopRecalculateCBTriggerLevels(ULONG Flags);
 
-VOID
-PopComputeCBTime (
-    VOID
-    );
+VOID PopComputeCBTime(VOID);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PopRecalculateCBTriggerLevels)
@@ -45,10 +39,7 @@ PopComputeCBTime (
 #pragma alloc_text(PAGE, PopCurrentPowerState)
 #endif
 
-VOID
-PopCompositeBatteryUpdateThrottleLimit(
-    IN  ULONG   CurrentCapacity
-    )
+VOID PopCompositeBatteryUpdateThrottleLimit(IN ULONG CurrentCapacity)
 /*++
 
 Routine Description:
@@ -69,16 +60,16 @@ Return Value:
 
 --*/
 {
-    KAFFINITY               currentAffinity;
-    KAFFINITY               processors;
-    PPROCESSOR_PERF_STATE   perfStates;
-    PPROCESSOR_POWER_STATE  pState;
-    ULONG                   perfStatesCount;
-    ULONG                   i;
-    KIRQL                   oldIrql;
+    KAFFINITY currentAffinity;
+    KAFFINITY processors;
+    PPROCESSOR_PERF_STATE perfStates;
+    PPROCESSOR_POWER_STATE pState;
+    ULONG perfStatesCount;
+    ULONG i;
+    KIRQL oldIrql;
 #if DBG
-    ULONGLONG               currentTime;
-    UCHAR                   t[40];
+    ULONGLONG currentTime;
+    UCHAR t[40];
 
     currentTime = KeQueryInterruptTime();
     PopTimeString(t, currentTime);
@@ -86,16 +77,17 @@ Return Value:
 
     currentAffinity = 1;
     processors = KeActiveProcessors;
-    while (processors) {
+    while (processors)
+    {
 
-        if (!(processors & currentAffinity)) {
+        if (!(processors & currentAffinity))
+        {
 
             currentAffinity <<= 1;
             continue;
-
         }
 
-        KeSetSystemAffinityThread( currentAffinity );
+        KeSetSystemAffinityThread(currentAffinity);
         processors &= ~currentAffinity;
         currentAffinity <<= 1;
 
@@ -103,20 +95,20 @@ Return Value:
         // We need to be running at DISPATCH_LEVEL to access the
         // structures referenced within the pState...
         //
-        KeRaiseIrql( DISPATCH_LEVEL, &oldIrql );
+        KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
         pState = &(KeGetCurrentPrcb()->PowerState);
 
         //
         // Does this processor support throttling?
         //
-        if ((pState->Flags & PSTATE_SUPPORTS_THROTTLE) == 0) {
+        if ((pState->Flags & PSTATE_SUPPORTS_THROTTLE) == 0)
+        {
 
             //
             // No, then we don't care about it...
             //
-            KeLowerIrql( oldIrql );
+            KeLowerIrql(oldIrql);
             continue;
-
         }
 
         //
@@ -136,41 +128,38 @@ Return Value:
         // capacity matches which state, so its only a matter
         // of walking the array...
         //
-        for (i = pState->KneeThrottleIndex; i < perfStatesCount; i++) {
+        for (i = pState->KneeThrottleIndex; i < perfStatesCount; i++)
+        {
 
-            if (perfStates[i].MinCapacity <= CurrentCapacity) {
+            if (perfStates[i].MinCapacity <= CurrentCapacity)
+            {
 
                 break;
-
             }
-
         }
 
         //
         // Update the throttle limit index
         //
-        if (pState->ThrottleLimitIndex != i) {
+        if (pState->ThrottleLimitIndex != i)
+        {
 
-            pState->ThrottleLimitIndex = (UCHAR) i;
+            pState->ThrottleLimitIndex = (UCHAR)i;
 #if DBG
-            PoPrint(
-                PO_THROTTLE,
-                ("PopApplyThermalThrottle - %s - New Limit (%d) Index (%d)\n",
-                 t,perfStates[i].PercentFrequency,i)
-                );
+            PoPrint(PO_THROTTLE, ("PopApplyThermalThrottle - %s - New Limit (%d) Index (%d)\n", t,
+                                  perfStates[i].PercentFrequency, i));
 #endif
 
             //
             // Force a throttle update
             //
             PopUpdateProcessorThrottle();
-
         }
 
         //
         // Revert back to our previous IRQL
         //
-        KeLowerIrql( oldIrql );
+        KeLowerIrql(oldIrql);
 
     } // while
 
@@ -178,15 +167,9 @@ Return Value:
     // Revert to the affinity of the original thread
     //
     KeRevertToUserAffinityThread();
-
 }
 
-VOID
-PopCompositeBatteryDeviceHandler (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp,
-    IN PVOID            Context
-    )
+VOID PopCompositeBatteryDeviceHandler(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -212,278 +195,274 @@ Return Value:
 
 --*/
 {
-    PIO_STACK_LOCATION      IrpSp, IrpPrevSp;
-    PVOID                   InputBuffer, OutputBuffer;
-    ULONG                   InputBufferLength, OutputBufferLength;
-    ULONG                   IoctlCode;
-    PSYSTEM_POWER_POLICY    Policy;
+    PIO_STACK_LOCATION IrpSp, IrpPrevSp;
+    PVOID InputBuffer, OutputBuffer;
+    ULONG InputBufferLength, OutputBufferLength;
+    ULONG IoctlCode;
+    PSYSTEM_POWER_POLICY Policy;
     PPROCESSOR_POWER_POLICY ProcessorPolicy;
-    ULONG                   i, j;
-    NTSTATUS                Status;
-    ULONG                   currentCapacity;
+    ULONG i, j;
+    NTSTATUS Status;
+    ULONG currentCapacity;
 #if DBG
-    ULONGLONG               currentTime;
-    UCHAR                   t[40];
+    ULONGLONG currentTime;
+    UCHAR t[40];
 
     currentTime = KeQueryInterruptTime();
     PopTimeString(t, currentTime);
 #endif
 
     ASSERT_POLICY_LOCK_OWNED();
-    ASSERT (Irp == PopCB.StatusIrp);
+    ASSERT(Irp == PopCB.StatusIrp);
     IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
-    if (NT_SUCCESS(Irp->IoStatus.Status)) {
+    if (NT_SUCCESS(Irp->IoStatus.Status))
+    {
 
         //
         // Handle the completed request
         //
 
-        switch (PopCB.State) {
-            case PO_CB_READ_TAG:
-            case PO_CB_WAIT_TAG:
-                // tag is now valid, read info
-                PoPrint(PO_BATT, ("PopCB: New battery tag\n"));
+        switch (PopCB.State)
+        {
+        case PO_CB_READ_TAG:
+        case PO_CB_WAIT_TAG:
+            // tag is now valid, read info
+            PoPrint(PO_BATT, ("PopCB: New battery tag\n"));
+
+            //
+            // Reset the triggers.
+            //
+            // We reset PO_TRG_SET, so the level will be recalculated, but on
+            // battery tag change we don't want to make the actions happen again.
+            // If the trigger has not yet been set off, it will still be armed.
+            //
+
+            PopResetCBTriggers(PO_TRG_SET);
+            PopCB.State = PO_CB_READ_INFO;
+            PopCB.Tag = PopCB.u.Tag;
+
+            // Ensure that the power state passed in is bad, so QUERY_STATUS
+            // will return immediately.
+            PopCB.Status.PowerState = (ULONG)-1;
+            break;
+
+        case PO_CB_READ_INFO:
+            // info is read directly into buffer
+            PoPrint(PO_BATT, ("PopCB: info read\n"));
+            PopCB.State = PO_CB_READ_STATUS;
+            RtlCopyMemory(&PopCB.Info, &PopCB.u.Info, sizeof(PopCB.Info));
+            break;
+
+        case PO_CB_READ_STATUS:
+            //
+            // Status has been read, check it
+            //
+
+            PoPrint(PO_BATT, ("PopCB: Status PwrState %x, Cap %x, Volt %x, Cur %x\n", PopCB.u.Status.PowerState,
+                              PopCB.u.Status.Capacity, PopCB.u.Status.Voltage, PopCB.u.Status.Current));
+
+            PopCB.StatusTime = KeQueryInterruptTime();
+
+            //
+            // Check if the current policy should be ac or dc
+            //
+
+            if (PopCB.u.Status.PowerState & BATTERY_POWER_ON_LINE)
+            {
+                ProcessorPolicy = &PopAcProcessorPolicy;
+                Policy = &PopAcPolicy;
+            }
+            else
+            {
+                ProcessorPolicy = &PopDcProcessorPolicy;
+                Policy = &PopDcPolicy;
+            }
+
+            //
+            // Did the policy change?
+            //
+
+            if (PopPolicy != Policy || PopProcessorPolicy != ProcessorPolicy)
+            {
 
                 //
-                // Reset the triggers.
+                // Change the active policy and reset the battery triggers
                 //
-                // We reset PO_TRG_SET, so the level will be recalculated, but on
-                // battery tag change we don't want to make the actions happen again.
-                // If the trigger has not yet been set off, it will still be armed.
-                //
-
-                PopResetCBTriggers (PO_TRG_SET);
-                PopCB.State = PO_CB_READ_INFO;
-                PopCB.Tag = PopCB.u.Tag;
-
-                // Ensure that the power state passed in is bad, so QUERY_STATUS
-                // will return immediately.
-                PopCB.Status.PowerState = (ULONG) -1;
-                break;
-
-            case PO_CB_READ_INFO:
-                // info is read directly into buffer
-                PoPrint(PO_BATT, ("PopCB: info read\n"));
-                PopCB.State = PO_CB_READ_STATUS;
-                RtlCopyMemory (&PopCB.Info, &PopCB.u.Info, sizeof(PopCB.Info));
-                break;
-
-            case PO_CB_READ_STATUS:
-                //
-                // Status has been read, check it
-                //
-
-                PoPrint(PO_BATT, ("PopCB: Status PwrState %x, Cap %x, Volt %x, Cur %x\n",
-                    PopCB.u.Status.PowerState,
-                    PopCB.u.Status.Capacity,
-                    PopCB.u.Status.Voltage,
-                    PopCB.u.Status.Current
-                    ));
-
-                PopCB.StatusTime = KeQueryInterruptTime();
+                PopProcessorPolicy = ProcessorPolicy;
+                PopPolicy = Policy;
 
                 //
-                // Check if the current policy should be ac or dc
+                // Reset triggers.
                 //
-
-                if (PopCB.u.Status.PowerState & BATTERY_POWER_ON_LINE) {
-                    ProcessorPolicy = &PopAcProcessorPolicy;
-                    Policy = &PopAcPolicy;
-                } else {
-                    ProcessorPolicy = &PopDcProcessorPolicy;
-                    Policy = &PopDcPolicy;
-                }
+                // In this case we re-arm both the user and system triggers.
+                // The system trigger will be disarmed when we recalculate
+                // trigger levels if the capacity was already below that level.
+                //
+                PopResetCBTriggers(PO_TRG_SET | PO_TRG_USER | PO_TRG_SYSTEM);
+                PopSetNotificationWork(PO_NOTIFY_ACDC_CALLBACK | PO_NOTIFY_POLICY | PO_NOTIFY_PROCESSOR_POLICY);
 
                 //
-                // Did the policy change?
+                // Recompute thermal throttle and cooling mode
                 //
-
-                if (PopPolicy != Policy || PopProcessorPolicy != ProcessorPolicy) {
-
-                    //
-                    // Change the active policy and reset the battery triggers
-                    //
-                    PopProcessorPolicy = ProcessorPolicy;
-                    PopPolicy = Policy;
-
-                    //
-                    // Reset triggers.
-                    //
-                    // In this case we re-arm both the user and system triggers.
-                    // The system trigger will be disarmed when we recalculate
-                    // trigger levels if the capacity was already below that level.
-                    //
-                    PopResetCBTriggers (PO_TRG_SET | PO_TRG_USER | PO_TRG_SYSTEM);
-                    PopSetNotificationWork (
-                        PO_NOTIFY_ACDC_CALLBACK |
-                        PO_NOTIFY_POLICY |
-                        PO_NOTIFY_PROCESSOR_POLICY
-                        );
-
-                    //
-                    // Recompute thermal throttle and cooling mode
-                    //
-                    // Note that PopApplyThermalThrottle will take care of any dynamic
-                    // throttling that might need to happen due to the AC/DC transition.
-                    //
-                    PopApplyThermalThrottle ();
-                    PopIdleUpdateIdleHandlers();
-
-                    //
-                    // Recompute system idle values
-                    //
-                    PopInitSIdle ();
-
-                }
+                // Note that PopApplyThermalThrottle will take care of any dynamic
+                // throttling that might need to happen due to the AC/DC transition.
+                //
+                PopApplyThermalThrottle();
+                PopIdleUpdateIdleHandlers();
 
                 //
-                // Did battery cross resolution setting?
-                // Correction... Has it changed at all.  If so, all apps should be updated,
-                // even if it hasn't crossed a resolution setting.  Otherwise, if one app
-                // queries the current status, it could be displaying a different value than
-                // the battery meter.
+                // Recompute system idle values
                 //
+                PopInitSIdle();
+            }
 
-                if ((PopCB.u.Status.Capacity != PopCB.Status.Capacity) ||
-                        PopCB.Status.PowerState != PopCB.u.Status.PowerState) {
-                    PopSetNotificationWork (PO_NOTIFY_BATTERY_STATUS);
-                    PopCB.State = PO_CB_READ_EST_TIME;
-                }
+            //
+            // Did battery cross resolution setting?
+            // Correction... Has it changed at all.  If so, all apps should be updated,
+            // even if it hasn't crossed a resolution setting.  Otherwise, if one app
+            // queries the current status, it could be displaying a different value than
+            // the battery meter.
+            //
 
-                PopRecalculateCBTriggerLevels (PO_TRG_SYSTEM);
+            if ((PopCB.u.Status.Capacity != PopCB.Status.Capacity) ||
+                PopCB.Status.PowerState != PopCB.u.Status.PowerState)
+            {
+                PopSetNotificationWork(PO_NOTIFY_BATTERY_STATUS);
+                PopCB.State = PO_CB_READ_EST_TIME;
+            }
 
-                //
-                // Update current battery status
-                //
+            PopRecalculateCBTriggerLevels(PO_TRG_SYSTEM);
 
-                memcpy (&PopCB.Status, &PopCB.u.Status, sizeof (PopCB.Status));
+            //
+            // Update current battery status
+            //
 
-                //
-                // Check for discharging and if any discharge policies have tripped
-                //
+            memcpy(&PopCB.Status, &PopCB.u.Status, sizeof(PopCB.Status));
 
-                if (Policy == &PopDcPolicy) {
-                    for (i=0; i < PO_NUM_POWER_LEVELS; i++) {
-                        if (PopCB.Status.Capacity <= PopCB.Trigger[i].Battery.Level) {
+            //
+            // Check for discharging and if any discharge policies have tripped
+            //
 
-                            //
-                            // Fire this power action
-                            //
-                            PopSetPowerAction(
-                                &PopCB.Trigger[i],
-                                PO_NOTIFY_BATTERY_STATUS,
-                                &Policy->DischargePolicy[i].PowerPolicy,
-                                Policy->DischargePolicy[i].MinSystemState,
-                                SubstituteLightestOverallDownwardBounded
-                                );
-
-                            PopCB.State = PO_CB_READ_EST_TIME;
-
-                        } else {
-
-                            //
-                            // Clear the trigger for this event
-                            //
-
-                            PopCB.Trigger[i].Flags &= ~(PO_TRG_USER|PO_TRG_SYSTEM);
-                        }
-
-                    }
-
-                    //
-                    // Figure out what our current capacity is...
-                    //
-                    if (PopCB.Info.FullChargedCapacity) {
-
-                        currentCapacity = PopCB.Status.Capacity * 100 /
-                            PopCB.Info.FullChargedCapacity;
-
-                    } else {
+            if (Policy == &PopDcPolicy)
+            {
+                for (i = 0; i < PO_NUM_POWER_LEVELS; i++)
+                {
+                    if (PopCB.Status.Capacity <= PopCB.Trigger[i].Battery.Level)
+                    {
 
                         //
-                        // Assume that the battery is fully charged...
-                        // This will cause us to reset the throttle limiter
+                        // Fire this power action
                         //
-                        currentCapacity = 100;
+                        PopSetPowerAction(
+                            &PopCB.Trigger[i], PO_NOTIFY_BATTERY_STATUS, &Policy->DischargePolicy[i].PowerPolicy,
+                            Policy->DischargePolicy[i].MinSystemState, SubstituteLightestOverallDownwardBounded);
 
+                        PopCB.State = PO_CB_READ_EST_TIME;
                     }
+                    else
+                    {
 
-                } else {
+                        //
+                        // Clear the trigger for this event
+                        //
+
+                        PopCB.Trigger[i].Flags &= ~(PO_TRG_USER | PO_TRG_SYSTEM);
+                    }
+                }
+
+                //
+                // Figure out what our current capacity is...
+                //
+                if (PopCB.Info.FullChargedCapacity)
+                {
+
+                    currentCapacity = PopCB.Status.Capacity * 100 / PopCB.Info.FullChargedCapacity;
+                }
+                else
+                {
 
                     //
                     // Assume that the battery is fully charged...
                     // This will cause us to reset the throttle limiter
                     //
                     currentCapacity = 100;
-
                 }
+            }
+            else
+            {
 
                 //
-                // This is kind of silly code to put in here, but since
-                // want to minize our synchronization elsewhere, we have
-                // to examine every processor's powerstate and update
-                // the throttlelimitindex on each. This may be actually
-                // a smarth thing to do if not all processors support
-                // the same set of states
+                // Assume that the battery is fully charged...
+                // This will cause us to reset the throttle limiter
                 //
-                PopCompositeBatteryUpdateThrottleLimit( currentCapacity );
+                currentCapacity = 100;
+            }
 
-                //
-                // If there's a thread waiting or if we notified user (since
-                // the response to the notify will be to read the power status) for
-                // power state, read the est time now else read new status
-                //
+            //
+            // This is kind of silly code to put in here, but since
+            // want to minize our synchronization elsewhere, we have
+            // to examine every processor's powerstate and update
+            // the throttlelimitindex on each. This may be actually
+            // a smarth thing to do if not all processors support
+            // the same set of states
+            //
+            PopCompositeBatteryUpdateThrottleLimit(currentCapacity);
 
-                if (PopCB.ThreadWaiting) {
-                    PopCB.State = PO_CB_READ_EST_TIME;
-                }
-                break;
+            //
+            // If there's a thread waiting or if we notified user (since
+            // the response to the notify will be to read the power status) for
+            // power state, read the est time now else read new status
+            //
 
-            case PO_CB_READ_EST_TIME:
-                //
-                // Estimated time is read after sucessful status
-                // read and (currently) only when there's a thread
-                // waiting for the system power state
-                //
+            if (PopCB.ThreadWaiting)
+            {
+                PopCB.State = PO_CB_READ_EST_TIME;
+            }
+            break;
 
-                PoPrint(PO_BATT, ("PopCB: EstTime read\n"));
-                PopCB.EstTime = PopCB.u.EstTime;
+        case PO_CB_READ_EST_TIME:
+            //
+            // Estimated time is read after sucessful status
+            // read and (currently) only when there's a thread
+            // waiting for the system power state
+            //
 
-                PopCB.EstTimeTime = KeQueryInterruptTime();
-                PopComputeCBTime();
+            PoPrint(PO_BATT, ("PopCB: EstTime read\n"));
+            PopCB.EstTime = PopCB.u.EstTime;
 
-                //
-                // Signal waiting threads
-                //
+            PopCB.EstTimeTime = KeQueryInterruptTime();
+            PopComputeCBTime();
 
-                PopCB.ThreadWaiting = FALSE;
-                KeSetEvent (&PopCB.Event, 0, FALSE);
+            //
+            // Signal waiting threads
+            //
 
-                //
-                // Go back are read status
-                //
+            PopCB.ThreadWaiting = FALSE;
+            KeSetEvent(&PopCB.Event, 0, FALSE);
 
-                PopCB.State = PO_CB_READ_STATUS;
-                break;
+            //
+            // Go back are read status
+            //
 
-            default:
-                PopInternalAddToDumpFile( Irp, sizeof(IRP), DeviceObject, NULL, NULL, NULL );
-                KeBugCheckEx( INTERNAL_POWER_ERROR,
-                              0x300,
-                              POP_BATT,
-                              (ULONG_PTR)DeviceObject,
-                              (ULONG_PTR)Irp );
-                break;
+            PopCB.State = PO_CB_READ_STATUS;
+            break;
+
+        default:
+            PopInternalAddToDumpFile(Irp, sizeof(IRP), DeviceObject, NULL, NULL, NULL);
+            KeBugCheckEx(INTERNAL_POWER_ERROR, 0x300, POP_BATT, (ULONG_PTR)DeviceObject, (ULONG_PTR)Irp);
+            break;
         }
-
-    } else {
+    }
+    else
+    {
         //
         // some sort of error, if the request was canceld re-issue
         // it else backup to reinitialize
         //
 
-        if (Irp->IoStatus.Status != STATUS_CANCELLED) {
+        if (Irp->IoStatus.Status != STATUS_CANCELLED)
+        {
 
             //
             // This occurs under two circumstances.  It is either the first time
@@ -495,13 +474,12 @@ Return Value:
             //
 
             PopCB.State = PopCB.State == PO_CB_READ_TAG ? PO_CB_WAIT_TAG : PO_CB_READ_TAG;
-            PoPrint(PO_BATT, ("PopCB: error %x - new state %d\n",
-                Irp->IoStatus.Status,
-                PopCB.State
-                ));
-        } else {
+            PoPrint(PO_BATT, ("PopCB: error %x - new state %d\n", Irp->IoStatus.Status, PopCB.State));
+        }
+        else
+        {
             PoPrint(PO_BATT, ("PopCB: irp cancelled\n"));
-            PopRecalculateCBTriggerLevels (PO_TRG_SYSTEM | PO_TRG_USER);
+            PopRecalculateCBTriggerLevels(PO_TRG_SYSTEM | PO_TRG_USER);
         }
     }
 
@@ -509,7 +487,8 @@ Return Value:
     // If new state is none, then there's no battery
     //
 
-    if (PopCB.State != PO_CB_NONE) {
+    if (PopCB.State != PO_CB_NONE)
+    {
 
         //
         // Issue new request based on current state
@@ -522,125 +501,128 @@ Return Value:
         InputBuffer = &PopCB.u.QueryInfo;
         InputBufferLength = sizeof(PopCB.u.QueryInfo);
 
-        switch (PopCB.State) {
-            case PO_CB_READ_TAG:
-                PoPrint(PO_BATT, ("PopCB: query tag\n"));
-                IoctlCode = IOCTL_BATTERY_QUERY_TAG;
-                PopCB.u.Tag = (ULONG) 0;
-                InputBufferLength = sizeof(ULONG);
-                OutputBufferLength = sizeof(PopCB.Tag);
-                break;
+        switch (PopCB.State)
+        {
+        case PO_CB_READ_TAG:
+            PoPrint(PO_BATT, ("PopCB: query tag\n"));
+            IoctlCode = IOCTL_BATTERY_QUERY_TAG;
+            PopCB.u.Tag = (ULONG)0;
+            InputBufferLength = sizeof(ULONG);
+            OutputBufferLength = sizeof(PopCB.Tag);
+            break;
 
-            case PO_CB_WAIT_TAG:
-                PoPrint(PO_BATT, ("PopCB: query tag\n"));
+        case PO_CB_WAIT_TAG:
+            PoPrint(PO_BATT, ("PopCB: query tag\n"));
 
-                //
-                // Battery is gone.  Wait for it to appear
-                //
+            //
+            // Battery is gone.  Wait for it to appear
+            //
 
-                IoctlCode = IOCTL_BATTERY_QUERY_TAG;
-                PopCB.u.Tag = (ULONG) -1;
-                InputBufferLength = sizeof(ULONG);
-                OutputBufferLength = sizeof(PopCB.Tag);
+            IoctlCode = IOCTL_BATTERY_QUERY_TAG;
+            PopCB.u.Tag = (ULONG)-1;
+            InputBufferLength = sizeof(ULONG);
+            OutputBufferLength = sizeof(PopCB.Tag);
 
-                //
-                // Notify battery status change, and wake any threads
-                //
+            //
+            // Notify battery status change, and wake any threads
+            //
 
-                PopSetNotificationWork (PO_NOTIFY_BATTERY_STATUS);
+            PopSetNotificationWork(PO_NOTIFY_BATTERY_STATUS);
 
-                if (PopCB.ThreadWaiting) {
-                    PopCB.ThreadWaiting = FALSE;
-                    KeSetEvent (&PopCB.Event, 0, FALSE);
-                }
+            if (PopCB.ThreadWaiting)
+            {
+                PopCB.ThreadWaiting = FALSE;
+                KeSetEvent(&PopCB.Event, 0, FALSE);
+            }
 
-                break;
+            break;
 
-            case PO_CB_READ_INFO:
-                PoPrint(PO_BATT, ("PopCB: query info\n"));
-                PopCB.u.QueryInfo.InformationLevel = BatteryInformation;
-                OutputBufferLength = sizeof(PopCB.Info);
-                break;
+        case PO_CB_READ_INFO:
+            PoPrint(PO_BATT, ("PopCB: query info\n"));
+            PopCB.u.QueryInfo.InformationLevel = BatteryInformation;
+            OutputBufferLength = sizeof(PopCB.Info);
+            break;
 
-            case PO_CB_READ_STATUS:
-                //
-                // Calculate next wait
-                //
+        case PO_CB_READ_STATUS:
+            //
+            // Calculate next wait
+            //
 
-                PopCB.u.Wait.BatteryTag   = PopCB.Tag;
-                PopCB.u.Wait.PowerState   = PopCB.Status.PowerState;
-                PopCB.u.Wait.Timeout      = (ULONG) -1;
-                if (PopCB.ThreadWaiting) {
-                    PopCB.u.Wait.Timeout  = 0;
-                }
+            PopCB.u.Wait.BatteryTag = PopCB.Tag;
+            PopCB.u.Wait.PowerState = PopCB.Status.PowerState;
+            PopCB.u.Wait.Timeout = (ULONG)-1;
+            if (PopCB.ThreadWaiting)
+            {
+                PopCB.u.Wait.Timeout = 0;
+            }
 
-                i = (PopCB.Info.FullChargedCapacity *
-                     PopPolicy->BroadcastCapacityResolution) / 100;
-                if (!i) {
-                    i = 1;
-                }
+            i = (PopCB.Info.FullChargedCapacity * PopPolicy->BroadcastCapacityResolution) / 100;
+            if (!i)
+            {
+                i = 1;
+            }
 
-                if (PopCB.Status.Capacity > i) {
-                    PopCB.u.Wait.LowCapacity  =  PopCB.Status.Capacity - i;
-                } else {
-                    PopCB.u.Wait.LowCapacity  = 0;
-                }
+            if (PopCB.Status.Capacity > i)
+            {
+                PopCB.u.Wait.LowCapacity = PopCB.Status.Capacity - i;
+            }
+            else
+            {
+                PopCB.u.Wait.LowCapacity = 0;
+            }
 
-                PopCB.u.Wait.HighCapacity = PopCB.Status.Capacity + i;
-                if (PopCB.u.Wait.HighCapacity < i) {
-                    // avoid rare case of overflow
-                    PopCB.u.Wait.HighCapacity = (ULONG) -1;
-                }
+            PopCB.u.Wait.HighCapacity = PopCB.Status.Capacity + i;
+            if (PopCB.u.Wait.HighCapacity < i)
+            {
+                // avoid rare case of overflow
+                PopCB.u.Wait.HighCapacity = (ULONG)-1;
+            }
 
-                //
-                // Check limits against power policies
-                //
+            //
+            // Check limits against power policies
+            //
 
-                for (i=0; i < PO_NUM_POWER_LEVELS; i++) {
-                    if (PopCB.Trigger[i].Flags & PO_TRG_SET) {
+            for (i = 0; i < PO_NUM_POWER_LEVELS; i++)
+            {
+                if (PopCB.Trigger[i].Flags & PO_TRG_SET)
+                {
 
-                        if (PopCB.Trigger[i].Battery.Level < PopCB.Status.Capacity   &&
-                            PopCB.Trigger[i].Battery.Level > PopCB.u.Wait.LowCapacity) {
+                    if (PopCB.Trigger[i].Battery.Level < PopCB.Status.Capacity &&
+                        PopCB.Trigger[i].Battery.Level > PopCB.u.Wait.LowCapacity)
+                    {
 
-                            PopCB.u.Wait.LowCapacity = PopCB.Trigger[i].Battery.Level;
-                        }
+                        PopCB.u.Wait.LowCapacity = PopCB.Trigger[i].Battery.Level;
+                    }
 
-                        if (PopCB.Trigger[i].Battery.Level > PopCB.Status.Capacity   &&
-                            PopCB.Trigger[i].Battery.Level < PopCB.u.Wait.HighCapacity) {
+                    if (PopCB.Trigger[i].Battery.Level > PopCB.Status.Capacity &&
+                        PopCB.Trigger[i].Battery.Level < PopCB.u.Wait.HighCapacity)
+                    {
 
-                            PopCB.u.Wait.HighCapacity = PopCB.Trigger[i].Battery.Level;
-                        }
+                        PopCB.u.Wait.HighCapacity = PopCB.Trigger[i].Battery.Level;
                     }
                 }
+            }
 
-                IoctlCode = IOCTL_BATTERY_QUERY_STATUS;
-                InputBuffer = &PopCB.u.Wait;
-                InputBufferLength = sizeof(PopCB.u.Wait);
-                OutputBufferLength = sizeof(PopCB.Status);
-                PoPrint(PO_BATT, ("PopCB: timeout %x, pwrstate %x, low %x - high %x\n",
-                    PopCB.u.Wait.Timeout,
-                    PopCB.u.Wait.PowerState,
-                    PopCB.u.Wait.LowCapacity,
-                    PopCB.u.Wait.HighCapacity
-                    ));
+            IoctlCode = IOCTL_BATTERY_QUERY_STATUS;
+            InputBuffer = &PopCB.u.Wait;
+            InputBufferLength = sizeof(PopCB.u.Wait);
+            OutputBufferLength = sizeof(PopCB.Status);
+            PoPrint(PO_BATT, ("PopCB: timeout %x, pwrstate %x, low %x - high %x\n", PopCB.u.Wait.Timeout,
+                              PopCB.u.Wait.PowerState, PopCB.u.Wait.LowCapacity, PopCB.u.Wait.HighCapacity));
 
-                break;
+            break;
 
-            case PO_CB_READ_EST_TIME:
-                PoPrint(PO_BATT, ("PopCB: query est time\n"));
-                PopCB.u.QueryInfo.InformationLevel = BatteryEstimatedTime;
-                PopCB.u.QueryInfo.AtRate = 0;
-                OutputBufferLength = sizeof(PopCB.EstTime);
-                break;
+        case PO_CB_READ_EST_TIME:
+            PoPrint(PO_BATT, ("PopCB: query est time\n"));
+            PopCB.u.QueryInfo.InformationLevel = BatteryEstimatedTime;
+            PopCB.u.QueryInfo.AtRate = 0;
+            OutputBufferLength = sizeof(PopCB.EstTime);
+            break;
 
-            default:
-                PopInternalAddToDumpFile( IrpSp, sizeof(IO_STACK_LOCATION), DeviceObject, NULL, NULL, NULL );
-                KeBugCheckEx( INTERNAL_POWER_ERROR,
-                              0x301,
-                              POP_BATT,
-                              (ULONG_PTR)DeviceObject,
-                              (ULONG_PTR)IrpSp );
-                break;
+        default:
+            PopInternalAddToDumpFile(IrpSp, sizeof(IO_STACK_LOCATION), DeviceObject, NULL, NULL, NULL);
+            KeBugCheckEx(INTERNAL_POWER_ERROR, 0x301, POP_BATT, (ULONG_PTR)DeviceObject, (ULONG_PTR)IrpSp);
+            break;
         }
 
         //
@@ -654,58 +636,54 @@ Return Value:
         Irp->UserBuffer = &PopCB.u;
         Irp->PendingReturned = FALSE;
         Irp->Cancel = FALSE;
-        IoSetCompletionRoutine (Irp, PopCompletePolicyIrp, NULL, TRUE, TRUE, TRUE);
-        IoCallDriver (DeviceObject, Irp);
-
-    } else {
+        IoSetCompletionRoutine(Irp, PopCompletePolicyIrp, NULL, TRUE, TRUE, TRUE);
+        IoCallDriver(DeviceObject, Irp);
+    }
+    else
+    {
         //
         // Battery has disappeared  (state is PO_CB_NONE)
         //
 
         PoPrint(PO_BATT, ("PopCB: Battery removed\n"));
-        PopSetNotificationWork (PO_NOTIFY_BATTERY_STATUS);
+        PopSetNotificationWork(PO_NOTIFY_BATTERY_STATUS);
 
         //
         // Set policy to AC
         //
 
-        if (PopPolicy != &PopAcPolicy) {
+        if (PopPolicy != &PopAcPolicy)
+        {
             PopPolicy = &PopAcPolicy;
             PopProcessorPolicy = &PopAcProcessorPolicy;
-            PopSetNotificationWork(
-                PO_NOTIFY_ACDC_CALLBACK |
-                PO_NOTIFY_POLICY |
-                PO_NOTIFY_PROCESSOR_POLICY
-                );
+            PopSetNotificationWork(PO_NOTIFY_ACDC_CALLBACK | PO_NOTIFY_POLICY | PO_NOTIFY_PROCESSOR_POLICY);
             PopApplyThermalThrottle();
             PopIdleUpdateIdleHandlers();
-            PopInitSIdle ();
+            PopInitSIdle();
         }
 
         //
         // Wake any threads
         //
 
-        if (PopCB.ThreadWaiting) {
+        if (PopCB.ThreadWaiting)
+        {
             PopCB.ThreadWaiting = FALSE;
-            KeSetEvent (&PopCB.Event, 0, FALSE);
+            KeSetEvent(&PopCB.Event, 0, FALSE);
         }
 
         //
         // Cleanup
         //
 
-        IoFreeIrp (Irp);
+        IoFreeIrp(Irp);
         PopCB.StatusIrp = NULL;
-        ObDereferenceObject (DeviceObject);
+        ObDereferenceObject(DeviceObject);
     }
 }
 
 
-VOID
-PopRecalculateCBTriggerLevels (
-    ULONG     Flags
-    )
+VOID PopRecalculateCBTriggerLevels(ULONG Flags)
 /*++
 
 Routine Description:
@@ -730,21 +708,23 @@ Return Value:
 
 --*/
 {
-    PSYSTEM_POWER_LEVEL     DPolicy;
-    ULONG                   i;
+    PSYSTEM_POWER_LEVEL DPolicy;
+    ULONG i;
 
     //
     // Calculate any level settings
     //
 
-    for (i=0; i < PO_NUM_POWER_LEVELS; i++) {
+    for (i = 0; i < PO_NUM_POWER_LEVELS; i++)
+    {
         DPolicy = &PopPolicy->DischargePolicy[i];
 
         //
         // If this setting not calculated handle it
         //
 
-        if (!(PopCB.Trigger[i].Flags & PO_TRG_SET)  &&  DPolicy->Enable) {
+        if (!(PopCB.Trigger[i].Flags & PO_TRG_SET) && DPolicy->Enable)
+        {
 
             //
             // Compute battery capacity setting for percentage
@@ -752,14 +732,14 @@ Return Value:
 
             PopCB.Trigger[i].Flags |= PO_TRG_SET;
             PopCB.Trigger[i].Battery.Level =
-                PopCB.Info.FullChargedCapacity * DPolicy->BatteryLevel / 100 +
-                PopCB.Info.FullChargedCapacity / 200;
+                PopCB.Info.FullChargedCapacity * DPolicy->BatteryLevel / 100 + PopCB.Info.FullChargedCapacity / 200;
 
             //
             // Make sure setting is not below the lowest default
             //
 
-            if (PopCB.Trigger[i].Battery.Level < PopCB.Info.DefaultAlert1) {
+            if (PopCB.Trigger[i].Battery.Level < PopCB.Info.DefaultAlert1)
+            {
                 PopCB.Trigger[i].Battery.Level = PopCB.Info.DefaultAlert1;
             }
 
@@ -769,7 +749,8 @@ Return Value:
             // and when AC comes or goes.
             //
 
-            if (PopCB.Status.Capacity < PopCB.Trigger[i].Battery.Level) {
+            if (PopCB.Status.Capacity < PopCB.Trigger[i].Battery.Level)
+            {
                 PopCB.Trigger[i].Flags |= Flags;
             }
         }
@@ -777,10 +758,7 @@ Return Value:
 }
 
 
-VOID
-PopComputeCBTime (
-    VOID
-    )
+VOID PopComputeCBTime(VOID)
 /*++
 
 Routine Description:
@@ -805,10 +783,7 @@ Return Value:
     PopCB.AdjustedEstTime = PopCB.EstTime;
 }
 
-VOID
-PopResetCBTriggers (
-    IN UCHAR    Flags
-    )
+VOID PopResetCBTriggers(IN UCHAR Flags)
 /*++
 
 Routine Description:
@@ -827,7 +802,7 @@ Return Value:
 
 --*/
 {
-    ULONG       i;
+    ULONG i;
 
     ASSERT_POLICY_LOCK_OWNED();
 
@@ -836,7 +811,8 @@ Return Value:
     //
 
     Flags = ~Flags;
-    for (i=0; i < PO_NUM_POWER_LEVELS; i++) {
+    for (i = 0; i < PO_NUM_POWER_LEVELS; i++)
+    {
         PopCB.Trigger[i].Flags &= Flags;
     }
 
@@ -844,15 +820,14 @@ Return Value:
     // Reread battery status
     //
 
-    if (PopCB.StatusIrp) {
-        IoCancelIrp (PopCB.StatusIrp);
+    if (PopCB.StatusIrp)
+    {
+        IoCancelIrp(PopCB.StatusIrp);
     }
 }
 
 NTSTATUS
-PopCurrentPowerState (
-    OUT PSYSTEM_BATTERY_STATE  PowerState
-    )
+PopCurrentPowerState(OUT PSYSTEM_BATTERY_STATE PowerState)
 /*++
 
 Routine Description:
@@ -874,26 +849,28 @@ Return Value:
 
 --*/
 {
-    ULONGLONG       CurrentTime;
-    NTSTATUS        Status;
+    ULONGLONG CurrentTime;
+    NTSTATUS Status;
 
 
     ASSERT_POLICY_LOCK_OWNED();
 
     Status = STATUS_SUCCESS;
-    RtlZeroMemory (PowerState, sizeof(SYSTEM_BATTERY_STATE));
+    RtlZeroMemory(PowerState, sizeof(SYSTEM_BATTERY_STATE));
 
     //
     // Wait for valid state in PopCB
     //
 
-    do {
+    do
+    {
 
         //
         // If there's not a composite battery, then return
         //
 
-        if (PopCB.State == PO_CB_NONE || PopCB.State == PO_CB_WAIT_TAG) {
+        if (PopCB.State == PO_CB_NONE || PopCB.State == PO_CB_WAIT_TAG)
+        {
             PowerState->AcOnLine = PopPolicy == &PopAcPolicy;
 
             // Indicate no battery found...
@@ -906,7 +883,8 @@ Return Value:
         // If device state not being read, we need to wait
         //
 
-        if (PopCB.State == PO_CB_READ_STATUS) {
+        if (PopCB.State == PO_CB_READ_STATUS)
+        {
             //
             // If last EstTime was calculated within PO_MAX_CB_CACHE_TIME,
             // use the current data.  (note this implies status was sucessfully
@@ -914,7 +892,8 @@ Return Value:
             //
 
             CurrentTime = KeQueryInterruptTime();
-            if (CurrentTime - PopCB.EstTimeTime < PO_MAX_CB_CACHE_TIME) {
+            if (CurrentTime - PopCB.EstTimeTime < PO_MAX_CB_CACHE_TIME)
+            {
                 break;
             }
         }
@@ -924,17 +903,19 @@ Return Value:
         // system power state, then setup for wait
         //
 
-        if (!PopCB.ThreadWaiting) {
+        if (!PopCB.ThreadWaiting)
+        {
             PopCB.ThreadWaiting = TRUE;
-            KeResetEvent (&PopCB.Event);
+            KeResetEvent(&PopCB.Event);
 
             //
             // If read status is in progress, cancel it so we
             // can read status now
             //
 
-            if (PopCB.State == PO_CB_READ_STATUS) {
-                IoCancelIrp (PopCB.StatusIrp);
+            if (PopCB.State == PO_CB_READ_STATUS)
+            {
+                IoCancelIrp(PopCB.StatusIrp);
             }
         }
 
@@ -942,25 +923,25 @@ Return Value:
         // Wait for status update
         //
 
-        PopReleasePolicyLock (FALSE);
-        Status = KeWaitForSingleObject (&PopCB.Event, Executive, KernelMode, TRUE, NULL);
-        PopAcquirePolicyLock ();
+        PopReleasePolicyLock(FALSE);
+        Status = KeWaitForSingleObject(&PopCB.Event, Executive, KernelMode, TRUE, NULL);
+        PopAcquirePolicyLock();
     } while (NT_SUCCESS(Status));
 
     //
     // Generate power state
     //
 
-    PowerState->AcOnLine       = (PopCB.Status.PowerState & BATTERY_POWER_ON_LINE) ? TRUE : FALSE;
+    PowerState->AcOnLine = (PopCB.Status.PowerState & BATTERY_POWER_ON_LINE) ? TRUE : FALSE;
     PowerState->BatteryPresent = TRUE;
-    PowerState->Charging       = (PopCB.Status.PowerState & BATTERY_CHARGING) ? TRUE : FALSE;
-    PowerState->Discharging    = (PopCB.Status.PowerState & BATTERY_DISCHARGING) ? TRUE : FALSE;
-    PowerState->MaxCapacity    = PopCB.Info.FullChargedCapacity;
+    PowerState->Charging = (PopCB.Status.PowerState & BATTERY_CHARGING) ? TRUE : FALSE;
+    PowerState->Discharging = (PopCB.Status.PowerState & BATTERY_DISCHARGING) ? TRUE : FALSE;
+    PowerState->MaxCapacity = PopCB.Info.FullChargedCapacity;
     PowerState->RemainingCapacity = PopCB.Status.Capacity;
-    PowerState->Rate           = PopCB.Status.Current;
-    PowerState->EstimatedTime  = PopCB.AdjustedEstTime;
-    PowerState->DefaultAlert1  = PopCB.Info.DefaultAlert1;
-    PowerState->DefaultAlert2  = PopCB.Info.DefaultAlert2;
+    PowerState->Rate = PopCB.Status.Current;
+    PowerState->EstimatedTime = PopCB.AdjustedEstTime;
+    PowerState->DefaultAlert1 = PopCB.Info.DefaultAlert1;
+    PowerState->DefaultAlert2 = PopCB.Info.DefaultAlert2;
 
     PERFINFO_POWER_BATTERY_LIFE_INFO(PowerState->RemainingCapacity, PowerState->Rate);
 

@@ -20,10 +20,7 @@ Revision History:
 
 #include "ntrtlp.h"
 
-VOID
-RtlpInitializeSListHead (
-    IN PSLIST_HEADER SListHead
-    )
+VOID RtlpInitializeSListHead(IN PSLIST_HEADER SListHead)
 
 /*++
 
@@ -48,9 +45,7 @@ Return Value:
 }
 
 USHORT
-RtlpQueryDepthSList (
-    IN PSLIST_HEADER SListHead
-    )
+RtlpQueryDepthSList(IN PSLIST_HEADER SListHead)
 
 /*++
 
@@ -70,5 +65,5 @@ Return Value:
 --*/
 
 {
-     return QueryDepthSList(SListHead);
+    return QueryDepthSList(SListHead);
 }

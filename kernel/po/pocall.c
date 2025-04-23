@@ -21,29 +21,16 @@ Revision History:
 #include "pop.h"
 
 
-
-PIRP
-PopFindIrpByInrush(
-    );
+PIRP PopFindIrpByInrush();
 
 
 NTSTATUS
-PopPresentIrp(
-    PIO_STACK_LOCATION  IrpSp,
-    PIRP                Irp
-    );
+PopPresentIrp(PIO_STACK_LOCATION IrpSp, PIRP Irp);
 
-VOID
-PopPassivePowerCall(
-    PVOID   Parameter
-    );
+VOID PopPassivePowerCall(PVOID Parameter);
 
 NTSTATUS
-PopCompleteRequestIrp (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp,
-    IN PVOID            Context
-    );
+PopCompleteRequestIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 #if 0
 #define PATHTEST(a) DbgPrint(a)
@@ -58,10 +45,7 @@ PopCompleteRequestIrp (
 
 NTKERNELAPI
 NTSTATUS
-PoCallDriver (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN OUT PIRP         Irp
-    )
+PoCallDriver(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp)
 /*++
 
 Routine Description:
@@ -91,14 +75,14 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PIO_STACK_LOCATION  irpsp;
-    PDEVOBJ_EXTENSION   doe;
-    PWORK_QUEUE_ITEM    pwi;
-    KIRQL               oldIrql;
+    NTSTATUS status;
+    PIO_STACK_LOCATION irpsp;
+    PDEVOBJ_EXTENSION doe;
+    PWORK_QUEUE_ITEM pwi;
+    KIRQL oldIrql;
 
 
-    ASSERT(KeGetCurrentIrql()<=DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
     PopLockIrpSerialList(&oldIrql);
 
 
@@ -108,8 +92,9 @@ Return Value:
 
     ASSERT(irpsp->MajorFunction == IRP_MJ_POWER);
 
-    PoPowerTrace(POWERTRACE_CALL,DeviceObject,Irp,irpsp);
-    if (DeviceObject->Flags & DO_POWER_NOOP) {
+    PoPowerTrace(POWERTRACE_CALL, DeviceObject, Irp, irpsp);
+    if (DeviceObject->Flags & DO_POWER_NOOP)
+    {
         PATHTEST("PoCallDriver #01\n");
         Irp->IoStatus.Status = STATUS_SUCCESS;
         Irp->IoStatus.Information = 0L;
@@ -123,11 +108,11 @@ Return Value:
         return STATUS_SUCCESS;
     }
 
-    if (irpsp->MinorFunction != IRP_MN_SET_POWER &&
-        irpsp->MinorFunction != IRP_MN_QUERY_POWER) {
+    if (irpsp->MinorFunction != IRP_MN_SET_POWER && irpsp->MinorFunction != IRP_MN_QUERY_POWER)
+    {
 
         PopUnlockIrpSerialList(oldIrql);
-        return IoCallDriver (DeviceObject, Irp);
+        return IoCallDriver(DeviceObject, Irp);
     }
 
     //
@@ -136,15 +121,14 @@ Return Value:
     // If this is an inrush sensitive DevObj, and we're going TO PowerDeviceD0,
     // then serialize on the gobal Inrush flag.
     //
-    if ((irpsp->MinorFunction == IRP_MN_SET_POWER) &&
-        (irpsp->Parameters.Power.Type == DevicePowerState) &&
+    if ((irpsp->MinorFunction == IRP_MN_SET_POWER) && (irpsp->Parameters.Power.Type == DevicePowerState) &&
         (irpsp->Parameters.Power.State.DeviceState == PowerDeviceD0) &&
-        (PopGetDoDevicePowerState(doe) != PowerDeviceD0) &&
-        (DeviceObject->Flags & DO_POWER_INRUSH))
+        (PopGetDoDevicePowerState(doe) != PowerDeviceD0) && (DeviceObject->Flags & DO_POWER_INRUSH))
     {
         PATHTEST("PoCallDriver #02\n");
 
-        if (PopInrushIrpPointer == Irp) {
+        if (PopInrushIrpPointer == Irp)
+        {
 
             //
             // This irp has already been identified as an INRUSH irp,
@@ -155,12 +139,14 @@ Return Value:
             PATHTEST("PoCallDriver #03\n");
             ASSERT((irpsp->Parameters.Power.SystemContext & POP_INRUSH_CONTEXT) == POP_INRUSH_CONTEXT);
             PopInrushIrpReferenceCount++;
-            if (PopInrushIrpReferenceCount > 256) {
-                PopInternalAddToDumpFile ( irpsp, sizeof(IO_STACK_LOCATION), DeviceObject, NULL, NULL, NULL );
+            if (PopInrushIrpReferenceCount > 256)
+            {
+                PopInternalAddToDumpFile(irpsp, sizeof(IO_STACK_LOCATION), DeviceObject, NULL, NULL, NULL);
                 KeBugCheckEx(INTERNAL_POWER_ERROR, 0x400, 1, (ULONG_PTR)irpsp, (ULONG_PTR)DeviceObject);
             }
-
-        } else if ((!PopInrushIrpPointer) && (!PopInrushPending)) {
+        }
+        else if ((!PopInrushIrpPointer) && (!PopInrushPending))
+        {
 
             //
             // This is a freshly starting inrush IRP, AND there is not
@@ -175,9 +161,10 @@ Return Value:
             //
             // Inrush irps will cause us to free the processor throttling.
             //
-            PopPerfHandleInrush ( TRUE );
-
-        } else {
+            PopPerfHandleInrush(TRUE);
+        }
+        else
+        {
 
             PATHTEST("PoCallDriver #05\n");
             ASSERT(PopInrushIrpPointer || PopInrushPending);
@@ -188,22 +175,21 @@ Return Value:
             //
             doe->PowerFlags |= POPF_DEVICE_PENDING;
             irpsp->Parameters.Power.SystemContext = POP_INRUSH_CONTEXT;
-            InsertTailList(
-                &PopIrpSerialList,
-                &(Irp->Tail.Overlay.ListEntry)
-                );
+            InsertTailList(&PopIrpSerialList, &(Irp->Tail.Overlay.ListEntry));
             PopIrpSerialListLength++;
 
-            #if DBG
-            if (PopIrpSerialListLength > 10) {
+#if DBG
+            if (PopIrpSerialListLength > 10)
+            {
                 DbgPrint("WARNING: PopIrpSerialListLength > 10!!!\n");
             }
-            if (PopIrpSerialListLength > 100) {
+            if (PopIrpSerialListLength > 100)
+            {
                 DbgPrint("WARNING: PopIrpSerialListLength > **100**!!!\n");
-                PopInternalAddToDumpFile ( &PopIrpSerialList, PAGE_SIZE, DeviceObject, NULL, NULL, NULL );
+                PopInternalAddToDumpFile(&PopIrpSerialList, PAGE_SIZE, DeviceObject, NULL, NULL, NULL);
                 KeBugCheckEx(INTERNAL_POWER_ERROR, 0x401, 2, (ULONG_PTR)&PopIrpSerialList, (ULONG_PTR)DeviceObject);
             }
-            #endif
+#endif
 
             PopInrushPending = TRUE;
             PopUnlockIrpSerialList(oldIrql);
@@ -216,11 +202,13 @@ Return Value:
     // device object.  If not, send this one on.  If so, enqueue
     // it to wait.
     //
-    if (irpsp->Parameters.Power.Type == SystemPowerState) {
+    if (irpsp->Parameters.Power.Type == SystemPowerState)
+    {
 
         PATHTEST("PoCallDriver #06\n");
 
-        if (doe->PowerFlags & POPF_SYSTEM_ACTIVE) {
+        if (doe->PowerFlags & POPF_SYSTEM_ACTIVE)
+        {
 
             //
             // we already have one active system power state irp for the devobj,
@@ -229,37 +217,38 @@ Return Value:
             //
             PATHTEST("PoCallDriver #07\n");
             doe->PowerFlags |= POPF_SYSTEM_PENDING;
-            InsertTailList(
-                &PopIrpSerialList,
-                (&(Irp->Tail.Overlay.ListEntry))
-                );
+            InsertTailList(&PopIrpSerialList, (&(Irp->Tail.Overlay.ListEntry)));
             PopIrpSerialListLength++;
 
-            #if DBG
-            if (PopIrpSerialListLength > 10) {
+#if DBG
+            if (PopIrpSerialListLength > 10)
+            {
                 DbgPrint("WARNING: PopIrpSerialListLength > 10!!!\n");
             }
-            if (PopIrpSerialListLength > 100) {
+            if (PopIrpSerialListLength > 100)
+            {
                 DbgPrint("WARNING: PopIrpSerialListLength > **100**!!!\n");
-                PopInternalAddToDumpFile ( &PopIrpSerialList, PAGE_SIZE, DeviceObject, NULL, NULL, NULL );
+                PopInternalAddToDumpFile(&PopIrpSerialList, PAGE_SIZE, DeviceObject, NULL, NULL, NULL);
                 KeBugCheckEx(INTERNAL_POWER_ERROR, 0x402, 3, (ULONG_PTR)&PopIrpSerialList, (ULONG_PTR)DeviceObject);
             }
-            #endif
+#endif
 
             PopUnlockIrpSerialList(oldIrql);
             return STATUS_PENDING;
-        } else {
+        }
+        else
+        {
             PATHTEST("PoCallDriver #08\n");
             doe->PowerFlags |= POPF_SYSTEM_ACTIVE;
         }
     }
 
-    if (irpsp->Parameters.Power.Type == DevicePowerState) {
+    if (irpsp->Parameters.Power.Type == DevicePowerState)
+    {
 
         PATHTEST("PoCallDriver #09\n");
 
-        if ((doe->PowerFlags & POPF_DEVICE_ACTIVE) ||
-            (doe->PowerFlags & POPF_DEVICE_PENDING))
+        if ((doe->PowerFlags & POPF_DEVICE_ACTIVE) || (doe->PowerFlags & POPF_DEVICE_PENDING))
         {
             //
             // we already have one active device power state irp for the devobj,
@@ -269,26 +258,27 @@ Return Value:
             //
             PATHTEST("PoCallDriver #10\n");
             doe->PowerFlags |= POPF_DEVICE_PENDING;
-            InsertTailList(
-                &PopIrpSerialList,
-                &(Irp->Tail.Overlay.ListEntry)
-                );
+            InsertTailList(&PopIrpSerialList, &(Irp->Tail.Overlay.ListEntry));
             PopIrpSerialListLength++;
 
-            #if DBG
-            if (PopIrpSerialListLength > 10) {
+#if DBG
+            if (PopIrpSerialListLength > 10)
+            {
                 DbgPrint("WARNING: PopIrpSerialListLength > 10!!!\n");
             }
-            if (PopIrpSerialListLength > 100) {
+            if (PopIrpSerialListLength > 100)
+            {
                 DbgPrint("WARNING: PopIrpSerialListLength > **100**!!!\n");
-                PopInternalAddToDumpFile ( &PopIrpSerialList, PAGE_SIZE, DeviceObject, NULL, NULL, NULL );                
+                PopInternalAddToDumpFile(&PopIrpSerialList, PAGE_SIZE, DeviceObject, NULL, NULL, NULL);
                 KeBugCheckEx(INTERNAL_POWER_ERROR, 0x403, 4, (ULONG_PTR)&PopIrpSerialList, (ULONG_PTR)DeviceObject);
             }
-            #endif
+#endif
 
             PopUnlockIrpSerialList(oldIrql);
             return STATUS_PENDING;
-        } else {
+        }
+        else
+        {
             PATHTEST("PoCallDriver #11\n");
             doe->PowerFlags |= POPF_DEVICE_ACTIVE;
         }
@@ -317,12 +307,9 @@ Return Value:
     return status;
 }
 
-
+
 NTSTATUS
-PopPresentIrp(
-    PIO_STACK_LOCATION  IrpSp,
-    PIRP                Irp
-    )
+PopPresentIrp(PIO_STACK_LOCATION IrpSp, PIRP Irp)
 /*++
 
 Routine Description:
@@ -345,31 +332,33 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PWORK_QUEUE_ITEM    pwi;
-    PDEVICE_OBJECT      devobj;
-    BOOLEAN             PassiveLevel;
-    KIRQL               OldIrql;
+    NTSTATUS status;
+    PWORK_QUEUE_ITEM pwi;
+    PDEVICE_OBJECT devobj;
+    BOOLEAN PassiveLevel;
+    KIRQL OldIrql;
 
     PATHTEST("PopPresentIrp #01\n");
     devobj = IrpSp->DeviceObject;
 
-    ASSERT (IrpSp->MajorFunction == IRP_MJ_POWER);
+    ASSERT(IrpSp->MajorFunction == IRP_MJ_POWER);
     PassiveLevel = TRUE;
     if (IrpSp->MinorFunction == IRP_MN_SET_POWER &&
-        (!(devobj->Flags & DO_POWER_PAGABLE) || (devobj->Flags & DO_POWER_INRUSH)) ) {
+        (!(devobj->Flags & DO_POWER_PAGABLE) || (devobj->Flags & DO_POWER_INRUSH)))
+    {
 
         if ((PopCallSystemState & PO_CALL_NON_PAGED) ||
-            ( (IrpSp->Parameters.Power.Type == DevicePowerState &&
-               IrpSp->Parameters.Power.State.DeviceState == PowerDeviceD0) ||
-              (IrpSp->Parameters.Power.Type == SystemPowerState &&
-               IrpSp->Parameters.Power.State.SystemState == PowerSystemWorking)) ) {
+            ((IrpSp->Parameters.Power.Type == DevicePowerState &&
+              IrpSp->Parameters.Power.State.DeviceState == PowerDeviceD0) ||
+             (IrpSp->Parameters.Power.Type == SystemPowerState &&
+              IrpSp->Parameters.Power.State.SystemState == PowerSystemWorking)))
+        {
 
             PassiveLevel = FALSE;
         }
     }
 
-    PoPowerTrace(POWERTRACE_PRESENT,devobj,Irp,IrpSp);
+    PoPowerTrace(POWERTRACE_PRESENT, devobj, Irp, IrpSp);
     if (PassiveLevel)
     {
         //
@@ -377,17 +366,18 @@ Return Value:
         //
         ASSERT(sizeof(WORK_QUEUE_ITEM) <= sizeof(Irp->Tail.Overlay.DriverContext));
 
-        #if DBG
-        if ((IrpSp->Parameters.Power.SystemContext & POP_INRUSH_CONTEXT) == POP_INRUSH_CONTEXT) {
+#if DBG
+        if ((IrpSp->Parameters.Power.SystemContext & POP_INRUSH_CONTEXT) == POP_INRUSH_CONTEXT)
+        {
             //
             // we are sending an inrush irp off to a passive dispatch devobj
             // this is *probably* a bug
             //
             KdPrint(("PopPresentIrp: inrush irp to passive level dispatch!!!\n"));
-            PopInternalAddToDumpFile ( IrpSp, sizeof(IO_STACK_LOCATION), devobj, NULL, NULL, NULL );
+            PopInternalAddToDumpFile(IrpSp, sizeof(IO_STACK_LOCATION), devobj, NULL, NULL, NULL);
             KeBugCheckEx(INTERNAL_POWER_ERROR, 0x404, 5, (ULONG_PTR)IrpSp, (ULONG_PTR)devobj);
         }
-        #endif
+#endif
 
         PATHTEST("PopPresentIrp #02\n");
 
@@ -395,11 +385,13 @@ Return Value:
         // If we're already at passive level, just dispatch the irp
         //
 
-        if (KeGetCurrentIrql() == PASSIVE_LEVEL) {
+        if (KeGetCurrentIrql() == PASSIVE_LEVEL)
+        {
 
             status = IoCallDriver(IrpSp->DeviceObject, Irp);
-
-        } else {
+        }
+        else
+        {
 
             //
             // Irp needs to be queued to some worker thread before
@@ -411,16 +403,18 @@ Return Value:
 
             PopLockWorkerQueue(&OldIrql);
 
-            if (PopCallSystemState & PO_CALL_SYSDEV_QUEUE) {
+            if (PopCallSystemState & PO_CALL_SYSDEV_QUEUE)
+            {
 
                 //
                 // Queue to dedicated system power worker thread
                 //
 
-                InsertTailList (&PopAction.DevState->PresentIrpQueue, &(Irp->Tail.Overlay.ListEntry));
-                KeSetEvent (&PopAction.DevState->Event, IO_NO_INCREMENT, FALSE);
-
-            } else {
+                InsertTailList(&PopAction.DevState->PresentIrpQueue, &(Irp->Tail.Overlay.ListEntry));
+                KeSetEvent(&PopAction.DevState->Event, IO_NO_INCREMENT, FALSE);
+            }
+            else
+            {
 
                 //
                 // Queue to generic system worker thread
@@ -433,13 +427,14 @@ Return Value:
 
             PopUnlockWorkerQueue(OldIrql);
         }
-
-    } else {
+    }
+    else
+    {
         //
         // Non-blocking request.  To ensure proper behaviour, dispatch
         // the irp from dispatch_level
         //
-            PATHTEST("PopPresentIrp #03\n");
+        PATHTEST("PopPresentIrp #03\n");
 #if DBG
         KeRaiseIrql(DISPATCH_LEVEL, &OldIrql);
         status = IoCallDriver(IrpSp->DeviceObject, Irp);
@@ -452,16 +447,13 @@ Return Value:
     return status;
 }
 
-
-VOID
-PopPassivePowerCall(
-    PVOID   Parameter
-    )
+
+VOID PopPassivePowerCall(PVOID Parameter)
 {
     PIO_STACK_LOCATION irpsp;
-    PIRP               Irp;
-    PDEVICE_OBJECT      devobj;
-    NTSTATUS            status;
+    PIRP Irp;
+    PDEVICE_OBJECT devobj;
+    NTSTATUS status;
 
     //
     // Parameter points to Irp we are to send to driver
@@ -476,10 +468,7 @@ PopPassivePowerCall(
 
 
 NTKERNELAPI
-VOID
-PoStartNextPowerIrp(
-    IN PIRP             Irp
-    )
+VOID PoStartNextPowerIrp(IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -513,15 +502,15 @@ Return Value:
 
 --*/
 {
-    PIO_STACK_LOCATION  irpsp;
-    PIO_STACK_LOCATION  nextsp;
-    PIO_STACK_LOCATION  secondsp;
-    PDEVICE_OBJECT      deviceObject;
-    PDEVOBJ_EXTENSION   doe;
-    KIRQL               oldirql;
-    PIRP                nextirp;
-    PIRP                secondirp;
-    PIRP                hangirp;
+    PIO_STACK_LOCATION irpsp;
+    PIO_STACK_LOCATION nextsp;
+    PIO_STACK_LOCATION secondsp;
+    PDEVICE_OBJECT deviceObject;
+    PDEVOBJ_EXTENSION doe;
+    KIRQL oldirql;
+    PIRP nextirp;
+    PIRP secondirp;
+    PIRP hangirp;
 
     irpsp = IoGetCurrentIrpStackLocation(Irp);
     ASSERT(irpsp->MajorFunction == IRP_MJ_POWER);
@@ -531,42 +520,44 @@ Return Value:
     nextirp = NULL;
     secondirp = NULL;
 
-    PoPowerTrace(POWERTRACE_STARTNEXT,deviceObject,Irp,irpsp);
+    PoPowerTrace(POWERTRACE_STARTNEXT, deviceObject, Irp, irpsp);
 
-//
-//  a. if (partially completed inrush irp)
-//      run any pending non-inrush irps on this DeviceObject, would be queued up
-//      as DevicePowerState irps since inrush is always DevicePowerState
-//
-//  b. else if (fully complete inrush irp)
-//      clear the ir busy flag
-//      find next inrush irp that applies to any DeviceObject
-//          find any irps in queue for same DeviceObject ahead of inrush irp
-//              if no leader, and target DeviceObject not DEVICE_ACTIVE, present inrush irp
-//              else an active normal irp will unplug it all, so ignore that DeviceObject
-//              [this makes sure next inrush is unstuck, wherever it is]
-//      if no irp was presented, or an irp was presented to a DeviceObject other than us
-//          look for next pending (non-inrush) irp to run on this DeviceObject
-//          [this makes sure this DeviceObject is unstuck]
-//
-//  c. else [normal irp has just completed]
-//      find next irp of same type that applies to this DeviceObject
-//      if (it's an inrush irp) && (inrush flag is set)
-//          don't try to present anything
-//      else
-//          present the irp
-//
+    //
+    //  a. if (partially completed inrush irp)
+    //      run any pending non-inrush irps on this DeviceObject, would be queued up
+    //      as DevicePowerState irps since inrush is always DevicePowerState
+    //
+    //  b. else if (fully complete inrush irp)
+    //      clear the ir busy flag
+    //      find next inrush irp that applies to any DeviceObject
+    //          find any irps in queue for same DeviceObject ahead of inrush irp
+    //              if no leader, and target DeviceObject not DEVICE_ACTIVE, present inrush irp
+    //              else an active normal irp will unplug it all, so ignore that DeviceObject
+    //              [this makes sure next inrush is unstuck, wherever it is]
+    //      if no irp was presented, or an irp was presented to a DeviceObject other than us
+    //          look for next pending (non-inrush) irp to run on this DeviceObject
+    //          [this makes sure this DeviceObject is unstuck]
+    //
+    //  c. else [normal irp has just completed]
+    //      find next irp of same type that applies to this DeviceObject
+    //      if (it's an inrush irp) && (inrush flag is set)
+    //          don't try to present anything
+    //      else
+    //          present the irp
+    //
 
 
     PATHTEST("PoStartNextPowerIrp #01\n");
     PopLockIrpSerialList(&oldirql);
 
-    if (PopInrushIrpPointer == Irp) {
+    if (PopInrushIrpPointer == Irp)
+    {
 
         ASSERT((irpsp->Parameters.Power.SystemContext & POP_INRUSH_CONTEXT) == POP_INRUSH_CONTEXT);
         PATHTEST("PoStartNextPowerIrp #02\n");
 
-        if (PopInrushIrpReferenceCount > 1) {
+        if (PopInrushIrpReferenceCount > 1)
+        {
             //
             // case a.
             // we have an inrush irp, and it has NOT completed all of its power
@@ -579,21 +570,26 @@ Return Value:
             ASSERT(PopInrushIrpReferenceCount >= 0);
 
             nextirp = PopFindIrpByDeviceObject(deviceObject, DevicePowerState);
-            if (nextirp) {
+            if (nextirp)
+            {
                 PATHTEST("PoStartNextPowerIrp #04\n");
                 nextsp = IoGetNextIrpStackLocation(nextirp);
 
-                if ( ! ((nextsp->Parameters.Power.SystemContext & POP_INRUSH_CONTEXT) == POP_INRUSH_CONTEXT)) {
+                if (!((nextsp->Parameters.Power.SystemContext & POP_INRUSH_CONTEXT) == POP_INRUSH_CONTEXT))
+                {
                     PATHTEST("PoStartNextPowerIrp #05\n");
                     RemoveEntryList((&(nextirp->Tail.Overlay.ListEntry)));
                     PopIrpSerialListLength--;
-                } else {
+                }
+                else
+                {
                     PATHTEST("PoStartNextPowerIrp #06\n");
                     nextirp = NULL;
                 }
             }
 
-            if (!nextirp) {
+            if (!nextirp)
+            {
                 //
                 // there's no more device irp waiting for this do, so
                 // we can clear DO pending and active
@@ -607,14 +603,17 @@ Return Value:
 
             PopUnlockIrpSerialList(oldirql);
 
-            if (nextirp) {
+            if (nextirp)
+            {
                 PATHTEST("PoStartNextPowerIrp #08\n");
                 ASSERT(nextsp->DeviceObject->DeviceObjectExtension->PowerFlags & POPF_DEVICE_ACTIVE);
                 PopPresentIrp(nextsp, nextirp);
             }
 
-            return;         // end of case a.
-        } else {
+            return; // end of case a.
+        }
+        else
+        {
             //
             // case b.
             // we've just completed the last work item of an inrush irp, so we
@@ -625,13 +624,15 @@ Return Value:
             ASSERT(PopInrushIrpReferenceCount == 0);
             nextirp = PopFindIrpByInrush();
 
-            if (nextirp) {
+            if (nextirp)
+            {
                 PATHTEST("PoStartNextPowerIrp #10\n");
                 ASSERT(PopInrushPending);
                 nextsp = IoGetNextIrpStackLocation(nextirp);
                 hangirp = PopFindIrpByDeviceObject(nextsp->DeviceObject, DevicePowerState);
 
-                if (hangirp) {
+                if (hangirp)
+                {
                     //
                     // if we get where, there is a non inrush irp in front of the next inrush
                     // irp, so try to run the non-inrush one, and set flags for later
@@ -645,19 +646,24 @@ Return Value:
                     //
                     // Can allow processor voltages to swing again
                     //
-                    PopPerfHandleInrush ( FALSE );
+                    PopPerfHandleInrush(FALSE);
 
-                    if (!(nextsp->DeviceObject->DeviceObjectExtension->PowerFlags & POPF_DEVICE_ACTIVE)) {
+                    if (!(nextsp->DeviceObject->DeviceObjectExtension->PowerFlags & POPF_DEVICE_ACTIVE))
+                    {
                         PATHTEST("PoStartNextPowerIrp #12\n");
                         RemoveEntryList((&(nextirp->Tail.Overlay.ListEntry)));
                         nextsp->DeviceObject->DeviceObjectExtension->PowerFlags |= POPF_DEVICE_ACTIVE;
                         PopIrpSerialListLength--;
-                    } else {
+                    }
+                    else
+                    {
                         PATHTEST("PoStartNextPowerIrp #13\n");
                         nextirp = NULL;
                         nextsp = NULL;
                     }
-                } else {
+                }
+                else
+                {
                     //
                     // we did find another inrush irp, and it's NOT block by a normal
                     // irp, so we will run it.
@@ -669,7 +675,9 @@ Return Value:
                     PopInrushIrpPointer = nextirp;
                     PopInrushIrpReferenceCount = 1;
                 }
-            } else { // nextirp
+            }
+            else
+            { // nextirp
                 //
                 // this inrush irp is done, and we didn't find any others
                 //
@@ -681,28 +689,31 @@ Return Value:
                 //
                 // Can allow processor voltages to swing again
                 //
-                PopPerfHandleInrush ( FALSE );
-
+                PopPerfHandleInrush(FALSE);
             }
 
             //
             // see if *either* of the above possible irps is posted against
             // this devobj.  if not, see if there's one to run here
             //
-            if ( ! ((nextsp) && (nextsp->DeviceObject == deviceObject))) {
+            if (!((nextsp) && (nextsp->DeviceObject == deviceObject)))
+            {
                 //
                 // same is if nextsp == null or nextsp->do != do..
                 // either case, there may be one more irp to run
                 //
                 PATHTEST("PoStartNextPowerIrp #16\n");
                 secondirp = PopFindIrpByDeviceObject(deviceObject, DevicePowerState);
-                if (secondirp) {
+                if (secondirp)
+                {
                     PATHTEST("PoStartNextPowerIrp #17\n");
-                    secondsp =  IoGetNextIrpStackLocation(secondirp);
+                    secondsp = IoGetNextIrpStackLocation(secondirp);
                     RemoveEntryList((&(secondirp->Tail.Overlay.ListEntry)));
                     secondsp->DeviceObject->DeviceObjectExtension->PowerFlags |= POPF_DEVICE_ACTIVE;
                     PopIrpSerialListLength--;
-                } else {
+                }
+                else
+                {
                     PATHTEST("PoStartNextPowerIrp #18\n");
                     secondsp = NULL;
 
@@ -714,8 +725,9 @@ Return Value:
                     doe->PowerFlags = doe->PowerFlags & ~POPF_DEVICE_ACTIVE;
                     doe->PowerFlags = doe->PowerFlags & ~POPF_DEVICE_PENDING;
                 }
-
-            } else {
+            }
+            else
+            {
                 PATHTEST("PoStartNextPowerIrp #19\n");
                 secondirp = NULL;
                 secondsp = NULL;
@@ -724,19 +736,21 @@ Return Value:
                 //
             }
         } // end of case b.
-
-    } else if (irpsp->MinorFunction == IRP_MN_SET_POWER ||
-               irpsp->MinorFunction == IRP_MN_QUERY_POWER) {
+    }
+    else if (irpsp->MinorFunction == IRP_MN_SET_POWER || irpsp->MinorFunction == IRP_MN_QUERY_POWER)
+    {
 
         //
         // case c.
         //
         // might be pending inrush to run, might be just non-inrush to run
         //
-        if (irpsp->Parameters.Power.Type == DevicePowerState) {
+        if (irpsp->Parameters.Power.Type == DevicePowerState)
+        {
             PATHTEST("PoStartNextPowerIrp #20\n");
 
-            if ((PopInrushIrpPointer == NULL) && (PopInrushPending)) {
+            if ((PopInrushIrpPointer == NULL) && (PopInrushPending))
+            {
                 //
                 // it may be that the completion of the ordinary irp
                 // that brought us here has made some inrush irp runnable, AND
@@ -746,11 +760,13 @@ Return Value:
                 PATHTEST("PoStartNextPowerIrp #21\n");
                 nextirp = PopFindIrpByInrush();
 
-                if (nextirp) {
+                if (nextirp)
+                {
                     PATHTEST("PoStartNextPowerIrp #22\n");
-                    nextsp =  IoGetNextIrpStackLocation(nextirp);
+                    nextsp = IoGetNextIrpStackLocation(nextirp);
 
-                    if (!(nextsp->DeviceObject->DeviceObjectExtension->PowerFlags & POPF_DEVICE_ACTIVE)) {
+                    if (!(nextsp->DeviceObject->DeviceObjectExtension->PowerFlags & POPF_DEVICE_ACTIVE))
+                    {
                         //
                         // we've found an inrush irp, and it's runnable...
                         //
@@ -764,14 +780,17 @@ Return Value:
                         //
                         // Running Inrush irp. Disable processor throttling.
                         //
-                        PopPerfHandleInrush ( TRUE );
-
-                    } else {
+                        PopPerfHandleInrush(TRUE);
+                    }
+                    else
+                    {
                         PATHTEST("PoStartNextPowerIrp #24\n");
                         nextirp = NULL;
                         nextsp = NULL;
                     }
-                } else {
+                }
+                else
+                {
                     //
                     // no more inrush irps in queue
                     //
@@ -779,7 +798,9 @@ Return Value:
                     nextsp = NULL;
                     PopInrushPending = FALSE;
                 }
-            } else { // end of inrush
+            }
+            else
+            { // end of inrush
                 PATHTEST("PoStartNextPowerIrp #26\n");
                 nextirp = NULL;
                 nextsp = NULL;
@@ -789,22 +810,26 @@ Return Value:
             // look for for next devicepowerstate irp for this DeviceObject
             // unless we're already found an inrush irp, and it's for us
             //
-            if  ( ! ((nextirp) && (nextsp->DeviceObject == deviceObject))) {
+            if (!((nextirp) && (nextsp->DeviceObject == deviceObject)))
+            {
                 PATHTEST("PoStartNextPowerIrp #27\n");
                 secondirp = PopFindIrpByDeviceObject(deviceObject, DevicePowerState);
 
-                if (!secondirp) {
+                if (!secondirp)
+                {
                     PATHTEST("PoStartNextPowerIrp #28\n");
                     doe->PowerFlags = doe->PowerFlags & ~POPF_DEVICE_ACTIVE;
                     doe->PowerFlags = doe->PowerFlags & ~POPF_DEVICE_PENDING;
                 }
-            } else {
+            }
+            else
+            {
                 PATHTEST("PoStartNextPowerIrp #29\n");
                 secondirp = NULL;
             }
-
-
-        } else if (irpsp->Parameters.Power.Type == SystemPowerState) {
+        }
+        else if (irpsp->Parameters.Power.Type == SystemPowerState)
+        {
 
             //
             // look for next systempowerstate irp for this DeviceObject
@@ -813,24 +838,25 @@ Return Value:
             nextirp = NULL;
             nextsp = NULL;
             secondirp = PopFindIrpByDeviceObject(deviceObject, SystemPowerState);
-            if (!secondirp) {
+            if (!secondirp)
+            {
                 PATHTEST("PoStartNextPowerIrp #31\n");
                 doe->PowerFlags = doe->PowerFlags & ~POPF_SYSTEM_ACTIVE;
                 doe->PowerFlags = doe->PowerFlags & ~POPF_SYSTEM_PENDING;
             }
         }
 
-        if (secondirp) {
+        if (secondirp)
+        {
             PATHTEST("PoStartNextPowerIrp #33\n");
-            secondsp =  IoGetNextIrpStackLocation(secondirp);
+            secondsp = IoGetNextIrpStackLocation(secondirp);
             RemoveEntryList((&(secondirp->Tail.Overlay.ListEntry)));
             PopIrpSerialListLength--;
         }
-
-    } else {  // end of case c.
-        PoPrint(PO_POCALL, ("PoStartNextPowerIrp: Irp @ %08x, minor function %d\n",
-                    Irp, irpsp->MinorFunction
-                    ));
+    }
+    else
+    { // end of case c.
+        PoPrint(PO_POCALL, ("PoStartNextPowerIrp: Irp @ %08x, minor function %d\n", Irp, irpsp->MinorFunction));
     }
 
 
@@ -840,17 +866,21 @@ Return Value:
     // case b. and case c. might both make two pending irps runnable,
     // could be a normal irp and an inrush irp, or only 1 of the two, or neither of the two
     //
-    if (nextirp || secondirp) {
+    if (nextirp || secondirp)
+    {
 
-        if (nextirp) {
+        if (nextirp)
+        {
             PATHTEST("PoStartNextPowerIrp #34\n");
             ASSERT(nextsp->DeviceObject->DeviceObjectExtension->PowerFlags & (POPF_DEVICE_ACTIVE | POPF_SYSTEM_ACTIVE));
             PopPresentIrp(nextsp, nextirp);
         }
 
-        if (secondirp) {
+        if (secondirp)
+        {
             PATHTEST("PoStartNextPowerIrp #35\n");
-            ASSERT(secondsp->DeviceObject->DeviceObjectExtension->PowerFlags & (POPF_DEVICE_ACTIVE | POPF_SYSTEM_ACTIVE));
+            ASSERT(secondsp->DeviceObject->DeviceObjectExtension->PowerFlags &
+                   (POPF_DEVICE_ACTIVE | POPF_SYSTEM_ACTIVE));
             PopPresentIrp(secondsp, secondirp);
         }
     }
@@ -858,9 +888,7 @@ Return Value:
 }
 
 
-PIRP
-PopFindIrpByInrush(
-    )
+PIRP PopFindIrpByInrush()
 /*++
 
 Routine Description:
@@ -879,17 +907,19 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY         item;
-    PIRP                irp;
-    PIO_STACK_LOCATION  irpsp;
+    PLIST_ENTRY item;
+    PIRP irp;
+    PIO_STACK_LOCATION irpsp;
 
     item = PopIrpSerialList.Flink;
-    while (item != &PopIrpSerialList) {
+    while (item != &PopIrpSerialList)
+    {
 
         irp = CONTAINING_RECORD(item, IRP, Tail.Overlay.ListEntry);
         irpsp = IoGetNextIrpStackLocation(irp);
 
-        if ((irpsp->Parameters.Power.SystemContext & POP_INRUSH_CONTEXT) == POP_INRUSH_CONTEXT) {
+        if ((irpsp->Parameters.Power.SystemContext & POP_INRUSH_CONTEXT) == POP_INRUSH_CONTEXT)
+        {
             //
             // we've found an inrush irp
             //
@@ -900,11 +930,7 @@ Return Value:
     return NULL;
 }
 
-PIRP
-PopFindIrpByDeviceObject(
-    PDEVICE_OBJECT  DeviceObject,
-    POWER_STATE_TYPE    Type
-    )
+PIRP PopFindIrpByDeviceObject(PDEVICE_OBJECT DeviceObject, POWER_STATE_TYPE Type)
 /*++
 
 Routine Description:
@@ -929,23 +955,23 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY         item;
-    PIRP                irp;
-    PIO_STACK_LOCATION  irpsp;
+    PLIST_ENTRY item;
+    PIRP irp;
+    PIO_STACK_LOCATION irpsp;
 
-    for(item = PopIrpSerialList.Flink;
-        item != &PopIrpSerialList;
-        item = item->Flink)
+    for (item = PopIrpSerialList.Flink; item != &PopIrpSerialList; item = item->Flink)
     {
         irp = CONTAINING_RECORD(item, IRP, Tail.Overlay.ListEntry);
         irpsp = IoGetNextIrpStackLocation(irp);
 
-        if (irpsp->DeviceObject == DeviceObject) {
+        if (irpsp->DeviceObject == DeviceObject)
+        {
             //
             // we've found a waiting irp that applies to the device object
             // the caller is interested in
             //
-            if (irpsp->Parameters.Power.Type == Type) {
+            if (irpsp->Parameters.Power.Type == Type)
+            {
                 //
                 // irp is of the type that the caller wants
                 //
@@ -958,14 +984,8 @@ Return Value:
 
 
 NTSTATUS
-PoRequestPowerIrp (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN UCHAR MinorFunction,
-    IN POWER_STATE PowerState,
-    IN PREQUEST_POWER_COMPLETE CompletionFunction,
-    IN PVOID Context,
-    OUT PIRP *ResultIrp OPTIONAL
-    )
+PoRequestPowerIrp(IN PDEVICE_OBJECT DeviceObject, IN UCHAR MinorFunction, IN POWER_STATE PowerState,
+                  IN PREQUEST_POWER_COMPLETE CompletionFunction, IN PVOID Context, OUT PIRP *ResultIrp OPTIONAL)
 /*++
 
 Routine Description:
@@ -996,15 +1016,16 @@ Return Value:
 
 --*/
 {
-    PIRP                    Irp;
-    PIO_STACK_LOCATION      IrpSp;
-    PDEVICE_OBJECT          TargetDevice;
-    POWER_ACTION            IrpAction;
+    PIRP Irp;
+    PIO_STACK_LOCATION IrpSp;
+    PDEVICE_OBJECT TargetDevice;
+    POWER_ACTION IrpAction;
 
-    TargetDevice = IoGetAttachedDeviceReference (DeviceObject);
-    Irp = IoAllocateIrp ((CCHAR) (TargetDevice->StackSize+2), FALSE);
-    if (!Irp) {
-        ObDereferenceObject (TargetDevice);
+    TargetDevice = IoGetAttachedDeviceReference(DeviceObject);
+    Irp = IoAllocateIrp((CCHAR)(TargetDevice->StackSize + 2), FALSE);
+    if (!Irp)
+    {
+        ObDereferenceObject(TargetDevice);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1016,13 +1037,9 @@ Return Value:
     //
 
     IrpSp = IoGetNextIrpStackLocation(Irp);
-    ExInterlockedInsertTailList(
-        &PopRequestedIrps,
-        (PLIST_ENTRY) &IrpSp->Parameters.Others.Argument1,
-        &PopIrpSerialLock
-        );
+    ExInterlockedInsertTailList(&PopRequestedIrps, (PLIST_ENTRY)&IrpSp->Parameters.Others.Argument1, &PopIrpSerialLock);
     IrpSp->Parameters.Others.Argument3 = Irp;
-    IoSetNextIrpStackLocation (Irp);
+    IoSetNextIrpStackLocation(Irp);
 
     //
     // Save the datum needed to complete this request
@@ -1030,99 +1047,93 @@ Return Value:
 
     IrpSp = IoGetNextIrpStackLocation(Irp);
     IrpSp->DeviceObject = TargetDevice;
-    IrpSp->Parameters.Others.Argument1 = (PVOID) DeviceObject;
-    IrpSp->Parameters.Others.Argument2 = (PVOID) MinorFunction;
-    IrpSp->Parameters.Others.Argument3 = (PVOID) PowerState.DeviceState;
-    IrpSp->Parameters.Others.Argument4 = (PVOID) Context;
-    IoSetNextIrpStackLocation (Irp);
+    IrpSp->Parameters.Others.Argument1 = (PVOID)DeviceObject;
+    IrpSp->Parameters.Others.Argument2 = (PVOID)MinorFunction;
+    IrpSp->Parameters.Others.Argument3 = (PVOID)PowerState.DeviceState;
+    IrpSp->Parameters.Others.Argument4 = (PVOID)Context;
+    IoSetNextIrpStackLocation(Irp);
 
     //
     // Build the power irp
     //
 
-    Irp->IoStatus.Status = STATUS_NOT_SUPPORTED ;
+    Irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     IrpSp = IoGetNextIrpStackLocation(Irp);
     IrpSp->MajorFunction = IRP_MJ_POWER;
     IrpSp->MinorFunction = MinorFunction;
     IrpSp->DeviceObject = TargetDevice;
-    switch (MinorFunction) {
-        case IRP_MN_WAIT_WAKE:
-            IrpSp->Parameters.WaitWake.PowerState = PowerState.SystemState;
-            break;
+    switch (MinorFunction)
+    {
+    case IRP_MN_WAIT_WAKE:
+        IrpSp->Parameters.WaitWake.PowerState = PowerState.SystemState;
+        break;
 
-        case IRP_MN_SET_POWER:
-        case IRP_MN_QUERY_POWER:
-            IrpSp->Parameters.Power.SystemContext = POP_DEVICE_REQUEST;
-            IrpSp->Parameters.Power.Type = DevicePowerState;
-            IrpSp->Parameters.Power.State.DeviceState = PowerState.DeviceState;
+    case IRP_MN_SET_POWER:
+    case IRP_MN_QUERY_POWER:
+        IrpSp->Parameters.Power.SystemContext = POP_DEVICE_REQUEST;
+        IrpSp->Parameters.Power.Type = DevicePowerState;
+        IrpSp->Parameters.Power.State.DeviceState = PowerState.DeviceState;
 
-            //
-            // N.B.
-            //
-            //     You would think we stamp every D-state IRP with
-            // PowerActionNone. However, we have a special scenario to consider
-            // for hibernation. Let's say S4 goes to a stack. If the device is
-            // on the hibernate path, one of two designs for WDM is possible:
-            // (BTW, we chose the 2nd)
-            //
-            // 1) The FDO sees an S-IRP but because it's device is on the
-            //    hibernate path, it simply forwards the S Irp down. The PDO
-            //    takes note of the S-IRP being PowerSystemHibernate, and it
-            //    records hardware settings. Upon wake-up, the stack receives
-            //    an S0 IRP, which the FDO converts into a D0 request. Upon
-            //    receiving the D0 IRP, the PDO restores the settings.
-            // 2) The FDO *always* requests the corresponding D IRP, regardless
-            //    of if it's on the hibernate path. The D-IRP also comes stamped
-            //    with the PowerAction in ShutdownType (ie, PowerActionSleeping,
-            //    PowerActionShutdown, PowerActionHibernate). Now the PDO can
-            //    identify transitions to D3 for the purpose of hibernation. The
-            //    PDO would *not* actually transition into D3, but it would save
-            //    it's state, and restore it at D0 time.
-            //
-            // < These are mutually exclusive designs >
-            //
-            // The reason we choose #2 as a design is so miniport models can
-            // expose only D IRPs as neccessary, and S IRPs can be abstracted
-            // out. There is a penalty for this design in that PoRequestPowerIrp
-            // doesn't *take* a PowerAction or the old S-IRP, so we pick up the
-            // existing action that the system is already undertaking.
-            // Therefore, if the device powers itself on when the system decides
-            // to begin a hibernation. the stack may receive nonsensical data
-            // like an IRP_MN_SET_POWER(DevicePower, D0, PowerActionHibernate).
-            //
+        //
+        // N.B.
+        //
+        //     You would think we stamp every D-state IRP with
+        // PowerActionNone. However, we have a special scenario to consider
+        // for hibernation. Let's say S4 goes to a stack. If the device is
+        // on the hibernate path, one of two designs for WDM is possible:
+        // (BTW, we chose the 2nd)
+        //
+        // 1) The FDO sees an S-IRP but because it's device is on the
+        //    hibernate path, it simply forwards the S Irp down. The PDO
+        //    takes note of the S-IRP being PowerSystemHibernate, and it
+        //    records hardware settings. Upon wake-up, the stack receives
+        //    an S0 IRP, which the FDO converts into a D0 request. Upon
+        //    receiving the D0 IRP, the PDO restores the settings.
+        // 2) The FDO *always* requests the corresponding D IRP, regardless
+        //    of if it's on the hibernate path. The D-IRP also comes stamped
+        //    with the PowerAction in ShutdownType (ie, PowerActionSleeping,
+        //    PowerActionShutdown, PowerActionHibernate). Now the PDO can
+        //    identify transitions to D3 for the purpose of hibernation. The
+        //    PDO would *not* actually transition into D3, but it would save
+        //    it's state, and restore it at D0 time.
+        //
+        // < These are mutually exclusive designs >
+        //
+        // The reason we choose #2 as a design is so miniport models can
+        // expose only D IRPs as neccessary, and S IRPs can be abstracted
+        // out. There is a penalty for this design in that PoRequestPowerIrp
+        // doesn't *take* a PowerAction or the old S-IRP, so we pick up the
+        // existing action that the system is already undertaking.
+        // Therefore, if the device powers itself on when the system decides
+        // to begin a hibernation. the stack may receive nonsensical data
+        // like an IRP_MN_SET_POWER(DevicePower, D0, PowerActionHibernate).
+        //
 
-            IrpAction = PopMapInternalActionToIrpAction (
-                PopAction.Action,
-                PopAction.SystemState,
-                TRUE // UnmapWarmEject
-                );
-
-            IrpSp->Parameters.Power.ShutdownType = IrpAction;
-
-            //
-            // Log the call.
-            //
-
-            if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
-                PopLogNotifyDevice(TargetDevice, NULL, Irp);
-            }
-            break;
-        default:
-            ObDereferenceObject (TargetDevice);
-            IoFreeIrp (Irp);
-            return STATUS_INVALID_PARAMETER_2;
-    }
-
-    IoSetCompletionRoutine(
-        Irp,
-        PopCompleteRequestIrp,
-        (PVOID) CompletionFunction,
-        TRUE,
-        TRUE,
-        TRUE
+        IrpAction = PopMapInternalActionToIrpAction(PopAction.Action, PopAction.SystemState,
+                                                    TRUE // UnmapWarmEject
         );
 
-    if (ResultIrp) {
+        IrpSp->Parameters.Power.ShutdownType = IrpAction;
+
+        //
+        // Log the call.
+        //
+
+        if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+        {
+            PopLogNotifyDevice(TargetDevice, NULL, Irp);
+        }
+        break;
+    default:
+        ObDereferenceObject(TargetDevice);
+        IoFreeIrp(Irp);
+        return STATUS_INVALID_PARAMETER_2;
+    }
+
+    IoSetCompletionRoutine(Irp, PopCompleteRequestIrp, (PVOID)CompletionFunction, TRUE, TRUE, TRUE);
+
+    if (ResultIrp)
+    {
         *ResultIrp = Irp;
     }
 
@@ -1131,11 +1142,7 @@ Return Value:
 }
 
 NTSTATUS
-PopCompleteRequestIrp (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp,
-    IN PVOID            Context
-    )
+PopCompleteRequestIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1158,22 +1165,21 @@ Return Value:
 
 --*/
 {
-    PIO_STACK_LOCATION      IrpSp;
+    PIO_STACK_LOCATION IrpSp;
     PREQUEST_POWER_COMPLETE CompletionFunction;
-    POWER_STATE             PowerState;
-    KIRQL                   OldIrql;
+    POWER_STATE PowerState;
+    KIRQL OldIrql;
 
     //
     // Log the completion.
     //
 
-    if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+    {
         PERFINFO_PO_NOTIFY_DEVICE_COMPLETE LogEntry;
         LogEntry.Irp = Irp;
         LogEntry.Status = Irp->IoStatus.Status;
-        PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_NOTIFY_DEVICE_COMPLETE,
-                         &LogEntry,
-                         sizeof(LogEntry));
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_NOTIFY_DEVICE_COMPLETE, &LogEntry, sizeof(LogEntry));
     }
 
     //
@@ -1181,17 +1187,14 @@ Return Value:
     //
 
     IrpSp = IoGetCurrentIrpStackLocation(Irp);
-    CompletionFunction = (PREQUEST_POWER_COMPLETE) Context;
-    PowerState.DeviceState = (DEVICE_POWER_STATE) ((ULONG_PTR)IrpSp->Parameters.Others.Argument3);
+    CompletionFunction = (PREQUEST_POWER_COMPLETE)Context;
+    PowerState.DeviceState = (DEVICE_POWER_STATE)((ULONG_PTR)IrpSp->Parameters.Others.Argument3);
 
-    if (CompletionFunction) {
-        CompletionFunction (
-            (PDEVICE_OBJECT) IrpSp->Parameters.Others.Argument1,
-            (UCHAR)          (ULONG_PTR)IrpSp->Parameters.Others.Argument2,
-            PowerState,
-            (PVOID)          IrpSp->Parameters.Others.Argument4,
-            &Irp->IoStatus
-            );
+    if (CompletionFunction)
+    {
+        CompletionFunction((PDEVICE_OBJECT)IrpSp->Parameters.Others.Argument1,
+                           (UCHAR)(ULONG_PTR)IrpSp->Parameters.Others.Argument2, PowerState,
+                           (PVOID)IrpSp->Parameters.Others.Argument4, &Irp->IoStatus);
     }
 
 
@@ -1201,25 +1204,22 @@ Return Value:
 
     IoSkipCurrentIrpStackLocation(Irp);
     IrpSp = IoGetCurrentIrpStackLocation(Irp);
-    KeAcquireSpinLock (&PopIrpSerialLock, &OldIrql);
-    RemoveEntryList ((PLIST_ENTRY) &IrpSp->Parameters.Others.Argument1);
-    KeReleaseSpinLock (&PopIrpSerialLock, OldIrql);
+    KeAcquireSpinLock(&PopIrpSerialLock, &OldIrql);
+    RemoveEntryList((PLIST_ENTRY)&IrpSp->Parameters.Others.Argument1);
+    KeReleaseSpinLock(&PopIrpSerialLock, OldIrql);
 
     //
     // Mark the irp CurrentLocation as completed (to catch multiple completes)
     //
 
-    Irp->CurrentLocation = (CCHAR) (Irp->StackCount + 2);
+    Irp->CurrentLocation = (CCHAR)(Irp->StackCount + 2);
 
-    ObDereferenceObject (DeviceObject);
-    IoFreeIrp (Irp);
+    ObDereferenceObject(DeviceObject);
+    IoFreeIrp(Irp);
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-VOID
-PopSystemIrpDispatchWorker (
-    IN BOOLEAN  LastCall
-    )
+VOID PopSystemIrpDispatchWorker(IN BOOLEAN LastCall)
 /*++
 
 Routine Description:
@@ -1245,8 +1245,8 @@ Return Value:
 --*/
 {
     PLIST_ENTRY Item;
-    PIRP        Irp;
-    KIRQL       OldIrql;
+    PIRP Irp;
+    KIRQL OldIrql;
 
     ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
@@ -1256,8 +1256,10 @@ Return Value:
     // Dispatch everything on the queue
     //
 
-    if (PopAction.DevState != NULL) {
-        while (!IsListEmpty(&PopAction.DevState->PresentIrpQueue)) {
+    if (PopAction.DevState != NULL)
+    {
+        while (!IsListEmpty(&PopAction.DevState->PresentIrpQueue))
+        {
             Item = RemoveHeadList(&PopAction.DevState->PresentIrpQueue);
             Irp = CONTAINING_RECORD(Item, IRP, Tail.Overlay.ListEntry);
 
@@ -1267,7 +1269,8 @@ Return Value:
         }
     }
 
-    if (LastCall) {
+    if (LastCall)
+    {
         PopCallSystemState = 0;
     }
 

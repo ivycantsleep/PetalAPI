@@ -29,7 +29,7 @@ Revision History:
 #include "viirp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,     VfIrpInit)
+#pragma alloc_text(INIT, VfIrpInit)
 #pragma alloc_text(PAGEVRFY, VfIrpReserveCallStackData)
 #pragma alloc_text(PAGEVRFY, VfIrpPrepareAllocaCallStackData)
 #pragma alloc_text(PAGEVRFY, VfIrpReleaseCallStackData)
@@ -47,16 +47,12 @@ Revision History:
 #pragma alloc_text(PAGEVRFY, VfIrpWatermark)
 #endif
 
-#define POOL_TAG_PROTECTED_IRP      '+prI'
-#define POOL_TAG_CALL_STACK_DATA    'CprI'
+#define POOL_TAG_PROTECTED_IRP '+prI'
+#define POOL_TAG_CALL_STACK_DATA 'CprI'
 
 NPAGED_LOOKASIDE_LIST ViIrpCallStackDataList;
 
-VOID
-FASTCALL
-VfIrpInit(
-    VOID
-    )
+VOID FASTCALL VfIrpInit(VOID)
 /*++
 
 Description:
@@ -73,24 +69,14 @@ Return Value:
 
 --*/
 {
-    ExInitializeNPagedLookasideList(
-        &ViIrpCallStackDataList,
-        NULL,
-        NULL,
-        0,
-        sizeof(IOFCALLDRIVER_STACKDATA),
-        POOL_TAG_CALL_STACK_DATA,
-        0
-        );
+    ExInitializeNPagedLookasideList(&ViIrpCallStackDataList, NULL, NULL, 0, sizeof(IOFCALLDRIVER_STACKDATA),
+                                    POOL_TAG_CALL_STACK_DATA, 0);
 }
 
 
 BOOLEAN
 FASTCALL
-VfIrpReserveCallStackData(
-    IN  PIRP                            Irp,
-    OUT PIOFCALLDRIVER_STACKDATA       *IofCallDriverStackData
-    )
+VfIrpReserveCallStackData(IN PIRP Irp, OUT PIOFCALLDRIVER_STACKDATA *IofCallDriverStackData)
 /*++
 
 Description:
@@ -118,7 +104,8 @@ Return Value:
 
     *IofCallDriverStackData = newCallStackData;
 
-    if (newCallStackData == NULL) {
+    if (newCallStackData == NULL)
+    {
 
         //
         // We're low on memory, test the IRP to see if it's critical. If not,
@@ -137,11 +124,7 @@ Return Value:
 }
 
 
-VOID
-FASTCALL
-VfIrpPrepareAllocaCallStackData(
-    OUT PIOFCALLDRIVER_STACKDATA        IofCallDriverStackData
-    )
+VOID FASTCALL VfIrpPrepareAllocaCallStackData(OUT PIOFCALLDRIVER_STACKDATA IofCallDriverStackData)
 /*++
 
 Description:
@@ -168,11 +151,7 @@ Return Value:
 }
 
 
-VOID
-FASTCALL
-VfIrpReleaseCallStackData(
-    IN  PIOFCALLDRIVER_STACKDATA        IofCallDriverStackData  OPTIONAL
-    )
+VOID FASTCALL VfIrpReleaseCallStackData(IN PIOFCALLDRIVER_STACKDATA IofCallDriverStackData OPTIONAL)
 /*++
 
 Description:
@@ -190,13 +169,10 @@ Return Value:
 
 --*/
 {
-    if (IofCallDriverStackData &&
-        (IofCallDriverStackData->Flags & CALLFLAG_STACK_DATA_ALLOCATED)) {
+    if (IofCallDriverStackData && (IofCallDriverStackData->Flags & CALLFLAG_STACK_DATA_ALLOCATED))
+    {
 
-        ExFreeToNPagedLookasideList(
-            &ViIrpCallStackDataList,
-            IofCallDriverStackData
-            );
+        ExFreeToNPagedLookasideList(&ViIrpCallStackDataList, IofCallDriverStackData);
     }
 }
 
@@ -216,11 +192,7 @@ Return Value:
  *
  */
 
-PIRP
-FASTCALL
-VfIrpAllocate(
-    IN  CCHAR       StackSize
-    )
+PIRP FASTCALL VfIrpAllocate(IN CCHAR StackSize)
 /*++
 
   Description:
@@ -252,26 +224,16 @@ VfIrpAllocate(
 
     ASSERT((sizeOfAllocation % (sizeof(ULONG))) == 0);
 
-    irpPtr = (ULONG_PTR) ExAllocatePoolWithTagPriority(
-        NonPagedPool,
-        sizeOfAllocation,
-        POOL_TAG_PROTECTED_IRP,
-        HighPoolPrioritySpecialPoolOverrun
-        );
+    irpPtr = (ULONG_PTR)ExAllocatePoolWithTagPriority(NonPagedPool, sizeOfAllocation, POOL_TAG_PROTECTED_IRP,
+                                                      HighPoolPrioritySpecialPoolOverrun);
 
-    pIrp = (PIRP) (irpPtr);
+    pIrp = (PIRP)(irpPtr);
 
     return pIrp;
 }
 
 
-VOID
-FASTCALL
-ViIrpAllocateLockedPacket(
-    IN      CCHAR               StackSize,
-    IN      BOOLEAN             ChargeQuota,
-    OUT     PIOV_REQUEST_PACKET *IovPacket
-    )
+VOID FASTCALL ViIrpAllocateLockedPacket(IN CCHAR StackSize, IN BOOLEAN ChargeQuota, OUT PIOV_REQUEST_PACKET *IovPacket)
 /*++
 
   Description:
@@ -306,7 +268,8 @@ ViIrpAllocateLockedPacket(
 
     irp = VfIrpAllocate(StackSize);
 
-    if (irp == NULL) {
+    if (irp == NULL)
+    {
 
         return;
     }
@@ -319,17 +282,16 @@ ViIrpAllocateLockedPacket(
     quotaCharge = 0;
     quotaProcess = NULL;
 
-    if (ChargeQuota) {
+    if (ChargeQuota)
+    {
 
         quotaCharge = PAGE_SIZE;
         quotaProcess = PsGetCurrentProcess();
 
-        status = PsChargeProcessNonPagedPoolQuota(
-            quotaProcess,
-            quotaCharge
-            );
+        status = PsChargeProcessNonPagedPoolQuota(quotaProcess, quotaCharge);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             VfIrpFree(irp);
             return;
@@ -343,16 +305,15 @@ ViIrpAllocateLockedPacket(
 
     iovNewPacket = VfPacketCreateAndLock(irp);
 
-    if (iovNewPacket == NULL) {
+    if (iovNewPacket == NULL)
+    {
 
         VfIrpFree(irp);
 
-        if (ChargeQuota) {
+        if (ChargeQuota)
+        {
 
-            PsReturnProcessNonPagedPoolQuota(
-                quotaProcess,
-                quotaCharge
-                );
+            PsReturnProcessNonPagedPoolQuota(quotaProcess, quotaCharge);
         }
 
         return;
@@ -363,7 +324,8 @@ ViIrpAllocateLockedPacket(
 
     irp->Flags |= IRPFLAG_EXAMINE_TRACKED;
     irp->AllocationFlags |= IRP_ALLOCATION_MONITORED;
-    if (ChargeQuota) {
+    if (ChargeQuota)
+    {
 
         irp->AllocationFlags |= IRP_QUOTA_CHARGED;
 
@@ -376,11 +338,7 @@ ViIrpAllocateLockedPacket(
 }
 
 
-VOID
-FASTCALL
-VfIrpMakeUntouchable(
-    IN  PIRP    Irp     OPTIONAL
-    )
+VOID FASTCALL VfIrpMakeUntouchable(IN PIRP Irp OPTIONAL)
 /*++
 
   Description:
@@ -397,7 +355,8 @@ VfIrpMakeUntouchable(
 
 --*/
 {
-    if (!Irp) {
+    if (!Irp)
+    {
 
         return;
     }
@@ -406,11 +365,7 @@ VfIrpMakeUntouchable(
 }
 
 
-VOID
-FASTCALL
-VfIrpMakeTouchable(
-    IN  PIRP    Irp
-    )
+VOID FASTCALL VfIrpMakeTouchable(IN PIRP Irp)
 /*++
 
   Description:
@@ -430,11 +385,7 @@ VfIrpMakeTouchable(
 }
 
 
-VOID
-FASTCALL
-VfIrpFree(
-    IN  PIRP  Irp OPTIONAL
-    )
+VOID FASTCALL VfIrpFree(IN PIRP Irp OPTIONAL)
 /*++
 
   Description:
@@ -452,7 +403,8 @@ VfIrpFree(
      None.
 --*/
 {
-    if (!Irp) {
+    if (!Irp)
+    {
 
         return;
     }
@@ -461,13 +413,7 @@ VfIrpFree(
 }
 
 
-VOID
-FASTCALL
-VerifierIoAllocateIrp1(
-    IN      CCHAR               StackSize,
-    IN      BOOLEAN             ChargeQuota,
-    IN OUT  PIRP                *IrpPointer
-    )
+VOID FASTCALL VerifierIoAllocateIrp1(IN CCHAR StackSize, IN BOOLEAN ChargeQuota, IN OUT PIRP *IrpPointer)
 /*++
 
   Description:
@@ -499,12 +445,14 @@ VerifierIoAllocateIrp1(
     ULONG stackHash;
 
     *IrpPointer = NULL;
-    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_MONITOR_IRP_ALLOCS)) {
+    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_MONITOR_IRP_ALLOCS))
+    {
 
         return;
     }
 
-    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_POLICE_IRPS)) {
+    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
         return;
     }
@@ -514,7 +462,8 @@ VerifierIoAllocateIrp1(
     //
     ViIrpAllocateLockedPacket(StackSize, ChargeQuota, &iovPacket);
 
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         return;
     }
@@ -529,22 +478,14 @@ VerifierIoAllocateIrp1(
     //
     RtlCaptureStackBackTrace(1, IRP_ALLOC_COUNT, iovPacket->AllocatorStack, &stackHash);
 
-    VfPacketLogEntry(
-        iovPacket,
-        IOV_EVENT_IO_ALLOCATE_IRP,
-        iovPacket->AllocatorStack[0],
-        (ULONG_PTR) iovPacket->AllocatorStack[2]
-        );
+    VfPacketLogEntry(iovPacket, IOV_EVENT_IO_ALLOCATE_IRP, iovPacket->AllocatorStack[0],
+                     (ULONG_PTR)iovPacket->AllocatorStack[2]);
 
     VfPacketReleaseLock(iovPacket);
 }
 
 
-VOID
-FASTCALL
-VerifierIoAllocateIrp2(
-    IN     PIRP               Irp
-    )
+VOID FASTCALL VerifierIoAllocateIrp2(IN PIRP Irp)
 /*++
 
   Description:
@@ -565,13 +506,15 @@ VerifierIoAllocateIrp2(
     PIOV_REQUEST_PACKET iovPacket;
     ULONG stackHash;
 
-    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_MONITOR_IRP_ALLOCS)) {
+    if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_MONITOR_IRP_ALLOCS))
+    {
 
         return;
     }
 
     iovPacket = VfPacketCreateAndLock(Irp);
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         return;
     }
@@ -586,23 +529,14 @@ VerifierIoAllocateIrp2(
     //
     RtlCaptureStackBackTrace(1, IRP_ALLOC_COUNT, iovPacket->AllocatorStack, &stackHash);
 
-    VfPacketLogEntry(
-        iovPacket,
-        IOV_EVENT_IO_ALLOCATE_IRP,
-        iovPacket->AllocatorStack[0],
-        (ULONG_PTR) iovPacket->AllocatorStack[2]
-        );
+    VfPacketLogEntry(iovPacket, IOV_EVENT_IO_ALLOCATE_IRP, iovPacket->AllocatorStack[0],
+                     (ULONG_PTR)iovPacket->AllocatorStack[2]);
 
     VfPacketReleaseLock(iovPacket);
 }
 
 
-VOID
-FASTCALL
-VerifierIoFreeIrp(
-    IN      PIRP                Irp,
-    IN OUT  PBOOLEAN            FreeHandled
-    )
+VOID FASTCALL VerifierIoFreeIrp(IN PIRP Irp, IN OUT PBOOLEAN FreeHandled)
 /*++
 
   Description:
@@ -634,40 +568,34 @@ VerifierIoFreeIrp(
 
     iovPacket = VfPacketFindAndLock(Irp);
 
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         //
         // The below assertion might fire if an IRP allocated then freed twice.
         // Normally we won't even survive the assert as the IRP would have been
         // allocated from special pool.
         //
-        ASSERT(!(Irp->AllocationFlags&IRP_ALLOCATION_MONITORED));
+        ASSERT(!(Irp->AllocationFlags & IRP_ALLOCATION_MONITORED));
         *FreeHandled = FALSE;
         return;
     }
 
-    VfPacketLogEntry(
-        iovPacket,
-        IOV_EVENT_IO_FREE_IRP,
-        NULL,
-        0
-        );
+    VfPacketLogEntry(iovPacket, IOV_EVENT_IO_FREE_IRP, NULL, 0);
 
-    if (RtlCaptureStackBackTrace(2, 1, &callerAddress, &stackHash) != 1) {
+    if (RtlCaptureStackBackTrace(2, 1, &callerAddress, &stackHash) != 1)
+    {
 
         callerAddress = NULL;
     }
 
-    if (!IsListEmpty(&Irp->ThreadListEntry)) {
+    if (!IsListEmpty(&Irp->ThreadListEntry))
+    {
 
-        if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+        if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+        {
 
-            WDM_FAIL_ROUTINE((
-                DCERROR_FREE_OF_THREADED_IRP,
-                DCPARAM_IRP + DCPARAM_ROUTINE,
-                callerAddress,
-                Irp
-                ));
+            WDM_FAIL_ROUTINE((DCERROR_FREE_OF_THREADED_IRP, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, Irp));
         }
 
         //
@@ -678,7 +606,8 @@ VerifierIoFreeIrp(
         return;
     }
 
-    if (VfPacketGetCurrentSessionData(iovPacket)) {
+    if (VfPacketGetCurrentSessionData(iovPacket))
+    {
 
         //
         // If there's a current session, that means someone is freeing an IRP
@@ -687,14 +616,10 @@ VerifierIoFreeIrp(
         // assert here (we'd probably end up blaiming kernel).
         //
         if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS) &&
-            (!(iovPacket->Flags&TRACKFLAG_UNWOUND_BADLY))) {
+            (!(iovPacket->Flags & TRACKFLAG_UNWOUND_BADLY)))
+        {
 
-            WDM_FAIL_ROUTINE((
-                DCERROR_FREE_OF_INUSE_IRP,
-                DCPARAM_IRP + DCPARAM_ROUTINE,
-                callerAddress,
-                Irp
-                ));
+            WDM_FAIL_ROUTINE((DCERROR_FREE_OF_INUSE_IRP, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, Irp));
         }
 
         //
@@ -706,7 +631,8 @@ VerifierIoFreeIrp(
         return;
     }
 
-    if (!(iovPacket->Flags&TRACKFLAG_IO_ALLOCATED)) {
+    if (!(iovPacket->Flags & TRACKFLAG_IO_ALLOCATED))
+    {
 
         //
         // We weren't tracking this at allocation time. We shouldn't got our
@@ -726,7 +652,8 @@ VerifierIoFreeIrp(
     //ASSERT(Irp->AllocationFlags&IRP_ALLOCATION_MONITORED);
     //
 
-    if (!(iovPacket->Flags&TRACKFLAG_PROTECTEDIRP)) {
+    if (!(iovPacket->Flags & TRACKFLAG_PROTECTEDIRP))
+    {
 
         //
         // We're just tagging along this IRP. Drop our pointer count but bail.
@@ -750,12 +677,10 @@ VerifierIoFreeIrp(
     //
     // Release any quota we charged.
     //
-    if (Irp->AllocationFlags & IRP_QUOTA_CHARGED) {
+    if (Irp->AllocationFlags & IRP_QUOTA_CHARGED)
+    {
 
-        PsReturnProcessNonPagedPoolQuota(
-                    iovPacket->QuotaProcess,
-                    iovPacket->QuotaCharge
-                    );
+        PsReturnProcessNonPagedPoolQuota(iovPacket->QuotaProcess, iovPacket->QuotaCharge);
 
         ObDereferenceObject(iovPacket->QuotaProcess);
     }
@@ -774,14 +699,8 @@ VerifierIoFreeIrp(
 }
 
 
-VOID
-FASTCALL
-VerifierIoInitializeIrp(
-    IN OUT PIRP               Irp,
-    IN     USHORT             PacketSize,
-    IN     CCHAR              StackSize,
-    IN OUT PBOOLEAN           InitializeHandled
-    )
+VOID FASTCALL VerifierIoInitializeIrp(IN OUT PIRP Irp, IN USHORT PacketSize, IN CCHAR StackSize,
+                                      IN OUT PBOOLEAN InitializeHandled)
 /*++
 
   Description:
@@ -819,38 +738,39 @@ VerifierIoInitializeIrp(
     PVOID callerAddress;
     ULONG stackHash;
 
-    UNREFERENCED_PARAMETER (PacketSize);
-    UNREFERENCED_PARAMETER (StackSize);
+    UNREFERENCED_PARAMETER(PacketSize);
+    UNREFERENCED_PARAMETER(StackSize);
 
     iovPacket = VfPacketFindAndLock(Irp);
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         *InitializeHandled = FALSE;
         return;
     }
 
-    if (RtlCaptureStackBackTrace(2, 1, &callerAddress, &stackHash) != 1) {
+    if (RtlCaptureStackBackTrace(2, 1, &callerAddress, &stackHash) != 1)
+    {
 
         callerAddress = NULL;
     }
 
     if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS) &&
 
-       (iovPacket->Flags&TRACKFLAG_IO_ALLOCATED)) {
+        (iovPacket->Flags & TRACKFLAG_IO_ALLOCATED))
+    {
 
-        if (Irp->AllocationFlags&IRP_QUOTA_CHARGED) {
+        if (Irp->AllocationFlags & IRP_QUOTA_CHARGED)
+        {
 
             //
             // Don't let us leak quota now!
             //
-            WDM_FAIL_ROUTINE((
-                DCERROR_REINIT_OF_ALLOCATED_IRP_WITH_QUOTA,
-                DCPARAM_IRP + DCPARAM_ROUTINE,
-                callerAddress,
-                Irp
-                ));
-
-        } else {
+            WDM_FAIL_ROUTINE(
+                (DCERROR_REINIT_OF_ALLOCATED_IRP_WITH_QUOTA, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, Irp));
+        }
+        else
+        {
 
             //
             // In this case we are draining our lookaside lists erroneously.
@@ -865,15 +785,9 @@ VerifierIoInitializeIrp(
     VfPacketReleaseLock(iovPacket);
 }
 BOOLEAN
-VfIrpSendSynchronousIrp(
-    IN      PDEVICE_OBJECT      DeviceObject,
-    IN      PIO_STACK_LOCATION  TopStackLocation,
-    IN      BOOLEAN             Untouchable,
-    IN      NTSTATUS            InitialStatus,
-    IN      ULONG_PTR           InitialInformation  OPTIONAL,
-    OUT     ULONG_PTR           *FinalInformation   OPTIONAL,
-    OUT     NTSTATUS            *FinalStatus        OPTIONAL
-    )
+VfIrpSendSynchronousIrp(IN PDEVICE_OBJECT DeviceObject, IN PIO_STACK_LOCATION TopStackLocation, IN BOOLEAN Untouchable,
+                        IN NTSTATUS InitialStatus, IN ULONG_PTR InitialInformation OPTIONAL,
+                        OUT ULONG_PTR *FinalInformation OPTIONAL, OUT NTSTATUS *FinalStatus OPTIONAL)
 /*++
 
 Routine Description:
@@ -917,12 +831,14 @@ Return Value:
     //
     // Preinit for failure
     //
-    if (ARGUMENT_PRESENT(FinalInformation)) {
+    if (ARGUMENT_PRESENT(FinalInformation))
+    {
 
         *FinalInformation = 0;
     }
 
-    if (ARGUMENT_PRESENT(FinalStatus)) {
+    if (ARGUMENT_PRESENT(FinalStatus))
+    {
 
         *FinalStatus = STATUS_SUCCESS;
     }
@@ -938,13 +854,15 @@ Return Value:
     // the current process for this IRP.
     //
     irp = IoAllocateIrp(topDeviceObject->StackSize, FALSE);
-    if (irp == NULL){
+    if (irp == NULL)
+    {
 
         ObDereferenceObject(topDeviceObject);
         return FALSE;
     }
 
-    if (Untouchable) {
+    if (Untouchable)
+    {
 
         SPECIALIRP_WATERMARK_IRP(irp, IRP_BOGUS);
     }
@@ -971,14 +889,7 @@ Return Value:
     //
     // Set a top level completion routine.
     //
-    IoSetCompletionRoutine(
-        irp,
-        ViIrpSynchronousCompletionRoutine,
-        (PVOID) &event,
-        TRUE,
-        TRUE,
-        TRUE
-        );
+    IoSetCompletionRoutine(irp, ViIrpSynchronousCompletionRoutine, (PVOID)&event, TRUE, TRUE, TRUE);
 
     //
     // Call the driver
@@ -989,25 +900,22 @@ Return Value:
     //
     // If a driver returns STATUS_PENDING, we will wait for it to complete
     //
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
 
-        KeWaitForSingleObject(
-            &event,
-            Executive,
-            KernelMode,
-            FALSE,
-            (PLARGE_INTEGER) NULL
-            );
+        KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
         status = irp->IoStatus.Status;
     }
 
-    if (ARGUMENT_PRESENT(FinalStatus)) {
+    if (ARGUMENT_PRESENT(FinalStatus))
+    {
 
         *FinalStatus = status;
     }
 
-    if (ARGUMENT_PRESENT(FinalInformation)) {
+    if (ARGUMENT_PRESENT(FinalInformation))
+    {
 
         *FinalInformation = irp->IoStatus.Information;
     }
@@ -1018,38 +926,31 @@ Return Value:
 
 
 NTSTATUS
-ViIrpSynchronousCompletionRoutine(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp,
-    IN PVOID            Context
-    )
+ViIrpSynchronousCompletionRoutine(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 {
     UNREFERENCED_PARAMETER(DeviceObject);
     UNREFERENCED_PARAMETER(Irp);
 
-    KeSetEvent((PKEVENT) Context, IO_NO_INCREMENT, FALSE);
+    KeSetEvent((PKEVENT)Context, IO_NO_INCREMENT, FALSE);
 
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
 
-VOID
-FASTCALL
-VfIrpWatermark(
-    IN PIRP  Irp,
-    IN ULONG Flags
-    )
+VOID FASTCALL VfIrpWatermark(IN PIRP Irp, IN ULONG Flags)
 {
     PIOV_REQUEST_PACKET iovPacket;
 
     iovPacket = VfPacketFindAndLock(Irp);
 
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         return;
     }
 
-    if (Flags & IRP_SYSTEM_RESTRICTED) {
+    if (Flags & IRP_SYSTEM_RESTRICTED)
+    {
 
         //
         // Note that calling this function is not in itself enough to get the
@@ -1060,14 +961,11 @@ VfIrpWatermark(
         iovPacket->Flags |= TRACKFLAG_WATERMARKED;
     }
 
-    if (Flags & IRP_BOGUS) {
+    if (Flags & IRP_BOGUS)
+    {
 
         iovPacket->Flags |= TRACKFLAG_BOGUS;
     }
 
     VfPacketReleaseLock(iovPacket);
 }
-
-
-
-

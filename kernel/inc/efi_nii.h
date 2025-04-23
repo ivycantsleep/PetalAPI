@@ -22,11 +22,13 @@ Revision history:
 
 #define EFI_NETWORK_INTERFACE_IDENTIFIER_INTERFACE_REVISION 0x00010000
 
-typedef enum {
+typedef enum
+{
     EfiNetworkInterfaceUndi = 1
 } EFI_NETWORK_INTERFACE_TYPE;
 
-typedef struct {
+typedef struct
+{
 
     UINT64 Revision;
     /*  Revision of the network interface identifier protocol interface. */

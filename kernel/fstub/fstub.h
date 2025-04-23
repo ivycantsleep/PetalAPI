@@ -21,7 +21,8 @@ Revision History:
 #pragma once
 
 
-typedef struct _INTERNAL_DISK_GEOMETRY {
+typedef struct _INTERNAL_DISK_GEOMETRY
+{
     DISK_GEOMETRY Geometry;
     LARGE_INTEGER DiskSize;
 } INTERNAL_DISK_GEOMETRY, *PINTERNAL_DISK_GEOMETRY;
@@ -31,10 +32,8 @@ typedef struct _INTERNAL_DISK_GEOMETRY {
 // structure.
 //
 
-C_ASSERT (FIELD_OFFSET (DISK_GEOMETRY_EX, Geometry) ==
-            FIELD_OFFSET (INTERNAL_DISK_GEOMETRY, Geometry) &&
-          FIELD_OFFSET (DISK_GEOMETRY_EX, DiskSize) ==
-            FIELD_OFFSET (INTERNAL_DISK_GEOMETRY, DiskSize));
+C_ASSERT(FIELD_OFFSET(DISK_GEOMETRY_EX, Geometry) == FIELD_OFFSET(INTERNAL_DISK_GEOMETRY, Geometry) &&
+         FIELD_OFFSET(DISK_GEOMETRY_EX, DiskSize) == FIELD_OFFSET(INTERNAL_DISK_GEOMETRY, DiskSize));
 
 //
 // Debugging macros and flags
@@ -44,33 +43,15 @@ C_ASSERT (FIELD_OFFSET (DISK_GEOMETRY_EX, Geometry) ==
 
 #if DBG
 
-VOID
-FstubDbgPrintPartition(
-    IN PPARTITION_INFORMATION Partition,
-    IN ULONG PartitionCount
-    );
+VOID FstubDbgPrintPartition(IN PPARTITION_INFORMATION Partition, IN ULONG PartitionCount);
 
-VOID
-FstubDbgPrintDriveLayout(
-    IN PDRIVE_LAYOUT_INFORMATION  Layout
-    );
+VOID FstubDbgPrintDriveLayout(IN PDRIVE_LAYOUT_INFORMATION Layout);
 
-VOID
-FstubDbgPrintPartitionEx(
-    IN PPARTITION_INFORMATION_EX PartitionEx,
-    IN ULONG PartitionCount
-    );
+VOID FstubDbgPrintPartitionEx(IN PPARTITION_INFORMATION_EX PartitionEx, IN ULONG PartitionCount);
 
-VOID
-FstubDbgPrintDriveLayoutEx(
-    IN PDRIVE_LAYOUT_INFORMATION_EX LayoutEx
-    );
+VOID FstubDbgPrintDriveLayoutEx(IN PDRIVE_LAYOUT_INFORMATION_EX LayoutEx);
 
-VOID
-FstubDbgPrintSetPartitionEx(
-    IN PSET_PARTITION_INFORMATION_EX SetPartition,
-    IN ULONG PartitionNumber
-    );
+VOID FstubDbgPrintSetPartitionEx(IN PSET_PARTITION_INFORMATION_EX SetPartition, IN ULONG PartitionNumber);
 
 #else
 
@@ -81,5 +62,3 @@ FstubDbgPrintSetPartitionEx(
 #define FstubDbgPrintSetPartitionEx(SetPartition, PartitionNumber)
 
 #endif // !DBG
-
-

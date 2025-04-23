@@ -48,11 +48,7 @@ Revision History:
 BOOLEAN PpvUtilVerifierEnabled = FALSE;
 
 
-VOID
-FASTCALL
-PpvUtilInit(
-    VOID
-    )
+VOID FASTCALL PpvUtilInit(VOID)
 {
     PpvUtilVerifierEnabled = TRUE;
 }
@@ -60,16 +56,13 @@ PpvUtilInit(
 
 NTSTATUS
 FASTCALL
-PpvUtilCallAddDevice(
-    IN  PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN  PDRIVER_OBJECT      DriverObject,
-    IN  PDRIVER_ADD_DEVICE  AddDeviceFunction,
-    IN  VF_DEVOBJ_TYPE      DevObjType
-    )
+PpvUtilCallAddDevice(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDRIVER_OBJECT DriverObject,
+                     IN PDRIVER_ADD_DEVICE AddDeviceFunction, IN VF_DEVOBJ_TYPE DevObjType)
 {
     NTSTATUS status;
 
-    if (!PpvUtilVerifierEnabled) {
+    if (!PpvUtilVerifierEnabled)
+    {
 
         return AddDeviceFunction(DriverObject, PhysicalDeviceObject);
     }
@@ -77,104 +70,71 @@ PpvUtilCallAddDevice(
     //
     // Notify the verifier prior to AddDevice
     //
-    VfDevObjPreAddDevice(
-        PhysicalDeviceObject,
-        DriverObject,
-        AddDeviceFunction,
-        DevObjType
-        );
+    VfDevObjPreAddDevice(PhysicalDeviceObject, DriverObject, AddDeviceFunction, DevObjType);
 
     status = AddDeviceFunction(DriverObject, PhysicalDeviceObject);
 
     //
     // Let the verifier know how it turned out.
     //
-    VfDevObjPostAddDevice(
-        PhysicalDeviceObject,
-        DriverObject,
-        AddDeviceFunction,
-        DevObjType,
-        status
-        );
+    VfDevObjPostAddDevice(PhysicalDeviceObject, DriverObject, AddDeviceFunction, DevObjType, status);
 
     return status;
 }
 
 
-VOID
-FASTCALL
-PpvUtilTestStartedPdoStack(
-    IN  PDEVICE_OBJECT  DeviceObject
-    )
+VOID FASTCALL PpvUtilTestStartedPdoStack(IN PDEVICE_OBJECT DeviceObject)
 {
-    if (PpvUtilVerifierEnabled) {
+    if (PpvUtilVerifierEnabled)
+    {
 
         VfMajorTestStartedPdoStack(DeviceObject);
     }
 }
 
 
-VOID
-FASTCALL
-PpvUtilFailDriver(
-    IN  PPVFAILURE_TYPE FailureType,
-    IN  PVOID           CulpritAddress,
-    IN  PDEVICE_OBJECT  DeviceObject    OPTIONAL,
-    IN  PVOID           ExtraneousInfo  OPTIONAL
-    )
+VOID FASTCALL PpvUtilFailDriver(IN PPVFAILURE_TYPE FailureType, IN PVOID CulpritAddress,
+                                IN PDEVICE_OBJECT DeviceObject OPTIONAL, IN PVOID ExtraneousInfo OPTIONAL)
 {
-    if (!PpvUtilVerifierEnabled) {
+    if (!PpvUtilVerifierEnabled)
+    {
 
         return;
     }
 
-    switch(FailureType) {
+    switch (FailureType)
+    {
 
-        case PPVERROR_DUPLICATE_PDO_ENUMERATED:
-            WDM_FAIL_ROUTINE((
-                DCERROR_DUPLICATE_ENUMERATION,
-                DCPARAM_ROUTINE + DCPARAM_DEVOBJ*2,
-                CulpritAddress,
-                DeviceObject,
-                ExtraneousInfo
-                ));
-            break;
+    case PPVERROR_DUPLICATE_PDO_ENUMERATED:
+        WDM_FAIL_ROUTINE((DCERROR_DUPLICATE_ENUMERATION, DCPARAM_ROUTINE + DCPARAM_DEVOBJ * 2, CulpritAddress,
+                          DeviceObject, ExtraneousInfo));
+        break;
 
-        case PPVERROR_MISHANDLED_TARGET_DEVICE_RELATIONS:
-            WDM_FAIL_ROUTINE((
-                DCERROR_MISHANDLED_TARGET_DEVICE_RELATIONS,
-                DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                CulpritAddress,
-                DeviceObject
-                ));
-            break;
+    case PPVERROR_MISHANDLED_TARGET_DEVICE_RELATIONS:
+        WDM_FAIL_ROUTINE((DCERROR_MISHANDLED_TARGET_DEVICE_RELATIONS, DCPARAM_ROUTINE + DCPARAM_DEVOBJ, CulpritAddress,
+                          DeviceObject));
+        break;
 
-        case PPVERROR_DDI_REQUIRES_PDO:
-            WDM_FAIL_ROUTINE((
-                DCERROR_DDI_REQUIRES_PDO,
-                DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                CulpritAddress,
-                DeviceObject
-                ));
-            break;
+    case PPVERROR_DDI_REQUIRES_PDO:
+        WDM_FAIL_ROUTINE((DCERROR_DDI_REQUIRES_PDO, DCPARAM_ROUTINE + DCPARAM_DEVOBJ, CulpritAddress, DeviceObject));
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 }
 
 
 PPVREMOVAL_OPTION
 FASTCALL
-PpvUtilGetDevnodeRemovalOption(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject
-    )
+PpvUtilGetDevnodeRemovalOption(IN PDEVICE_OBJECT PhysicalDeviceObject)
 {
     PDEVICE_NODE devNode;
 
     devNode = PhysicalDeviceObject->DeviceObjectExtension->DeviceNode;
 
-    if (devNode == NULL) {
+    if (devNode == NULL)
+    {
 
         //
         // This must be PartMgr device, we have no opinion
@@ -182,22 +142,25 @@ PpvUtilGetDevnodeRemovalOption(
         return PPVREMOVAL_MAY_DEFER_DELETION;
     }
 
-    if (devNode->Flags & DNF_ENUMERATED) {
+    if (devNode->Flags & DNF_ENUMERATED)
+    {
 
         //
         // It's still present, so it mustn't delete itself.
         //
         return PPVREMOVAL_SHOULDNT_DELETE;
-
-    } else if (devNode->Flags & DNF_DEVICE_GONE) {
+    }
+    else if (devNode->Flags & DNF_DEVICE_GONE)
+    {
 
         //
         // It's been reported missing, it must delete itself now as it's parent
         // may already have been removed.
         //
         return PPVREMOVAL_SHOULD_DELETE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Corner case - in theory it should delete itself, but it's parent
@@ -211,13 +174,12 @@ PpvUtilGetDevnodeRemovalOption(
 
 BOOLEAN
 FASTCALL
-PpvUtilIsHardwareBeingVerified(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject
-    )
+PpvUtilIsHardwareBeingVerified(IN PDEVICE_OBJECT PhysicalDeviceObject)
 {
     PDEVICE_NODE devNode;
 
-    if (!IS_PDO(PhysicalDeviceObject)) {
+    if (!IS_PDO(PhysicalDeviceObject))
+    {
 
         return FALSE;
     }
@@ -236,23 +198,15 @@ PpvUtilIsHardwareBeingVerified(
 // support for the verifier.
 //
 
-VOID
-FASTCALL
-PpvUtilInit(
-    VOID
-    )
+VOID FASTCALL PpvUtilInit(VOID)
 {
 }
 
 
 NTSTATUS
 FASTCALL
-PpvUtilCallAddDevice(
-    IN  PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN  PDRIVER_OBJECT      DriverObject,
-    IN  PDRIVER_ADD_DEVICE  AddDeviceFunction,
-    IN  VF_DEVOBJ_TYPE      DevObjType
-    )
+PpvUtilCallAddDevice(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDRIVER_OBJECT DriverObject,
+                     IN PDRIVER_ADD_DEVICE AddDeviceFunction, IN VF_DEVOBJ_TYPE DevObjType)
 {
     UNREFERENCED_PARAMETER(DevObjType);
 
@@ -260,24 +214,14 @@ PpvUtilCallAddDevice(
 }
 
 
-VOID
-FASTCALL
-PpvUtilTestStartedPdoStack(
-    IN  PDEVICE_OBJECT  DeviceObject
-    )
+VOID FASTCALL PpvUtilTestStartedPdoStack(IN PDEVICE_OBJECT DeviceObject)
 {
     UNREFERENCED_PARAMETER(DeviceObject);
 }
 
 
-VOID
-FASTCALL
-PpvUtilFailDriver(
-    IN  PPVFAILURE_TYPE FailureType,
-    IN  PVOID           CulpritAddress,
-    IN  PDEVICE_OBJECT  DeviceObject    OPTIONAL,
-    IN  PVOID           ExtraneousInfo  OPTIONAL
-    )
+VOID FASTCALL PpvUtilFailDriver(IN PPVFAILURE_TYPE FailureType, IN PVOID CulpritAddress,
+                                IN PDEVICE_OBJECT DeviceObject OPTIONAL, IN PVOID ExtraneousInfo OPTIONAL)
 {
     UNREFERENCED_PARAMETER(FailureType);
     UNREFERENCED_PARAMETER(CulpritAddress);
@@ -286,4 +230,3 @@ PpvUtilFailDriver(
 }
 
 #endif
-

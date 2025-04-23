@@ -23,16 +23,19 @@ Revision History:
 #ifndef _STKTRACE_H_
 #define _STKTRACE_H_
 
-typedef struct _RTL_STACK_TRACE_ENTRY {
+typedef struct _RTL_STACK_TRACE_ENTRY
+{
     struct _RTL_STACK_TRACE_ENTRY *HashChain;
     ULONG TraceCount;
     USHORT Index;
     USHORT Depth;
-    PVOID BackTrace[ MAX_STACK_DEPTH ];
+    PVOID BackTrace[MAX_STACK_DEPTH];
 } RTL_STACK_TRACE_ENTRY, *PRTL_STACK_TRACE_ENTRY;
 
-typedef struct _STACK_TRACE_DATABASE {
-    union {
+typedef struct _STACK_TRACE_DATABASE
+{
+    union
+    {
         RTL_CRITICAL_SECTION CriticalSection;
         ERESOURCE Resource;
     } Lock;
@@ -50,15 +53,14 @@ typedef struct _STACK_TRACE_DATABASE {
     PCHAR NextFreeUpperMemory;
     ULONG NumberOfEntriesLookedUp;
     ULONG NumberOfEntriesAdded;
-    PRTL_STACK_TRACE_ENTRY *EntryIndexArray;    // Indexed by [-1 .. -NumberOfEntriesAdded]
+    PRTL_STACK_TRACE_ENTRY *EntryIndexArray; // Indexed by [-1 .. -NumberOfEntriesAdded]
     ULONG NumberOfBuckets;
-    PRTL_STACK_TRACE_ENTRY Buckets[ 1 ];
+    PRTL_STACK_TRACE_ENTRY Buckets[1];
 } STACK_TRACE_DATABASE, *PSTACK_TRACE_DATABASE;
 
 PSTACK_TRACE_DATABASE
-RtlpAcquireStackTraceDataBase( VOID );
+RtlpAcquireStackTraceDataBase(VOID);
 
-VOID
-RtlpReleaseStackTraceDataBase( VOID );
+VOID RtlpReleaseStackTraceDataBase(VOID);
 
 #endif // _STKTRACE_H_

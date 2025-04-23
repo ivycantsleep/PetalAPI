@@ -16,41 +16,41 @@
 /****************************************************************************
  ****************************************************************************/
 
-#define ICON_MAGIC      0
-#define ICO_MAGIC1      1
-#define CUR_MAGIC1      2
-#define BMP_MAGIC       ((WORD)'B'+((WORD)'M'<<8))
-#define ANI_MAGIC       ((WORD)'R'+((WORD)'I'<<8))
-#define ANI_MAGIC1      ((WORD)'F'+((WORD)'F'<<8))
-#define ANI_MAGIC4      ((WORD)'A'+((WORD)'C'<<8))
-#define ANI_MAGIC5      ((WORD)'O'+((WORD)'N'<<8))
-#define MZMAGIC         ((WORD)'M'+((WORD)'Z'<<8))
-#define PEMAGIC         ((WORD)'P'+((WORD)'E'<<8))
-#define LEMAGIC         ((WORD)'L'+((WORD)'E'<<8))
+#define ICON_MAGIC 0
+#define ICO_MAGIC1 1
+#define CUR_MAGIC1 2
+#define BMP_MAGIC ((WORD)'B' + ((WORD)'M' << 8))
+#define ANI_MAGIC ((WORD)'R' + ((WORD)'I' << 8))
+#define ANI_MAGIC1 ((WORD)'F' + ((WORD)'F' << 8))
+#define ANI_MAGIC4 ((WORD)'A' + ((WORD)'C' << 8))
+#define ANI_MAGIC5 ((WORD)'O' + ((WORD)'N' << 8))
+#define MZMAGIC ((WORD)'M' + ((WORD)'Z' << 8))
+#define PEMAGIC ((WORD)'P' + ((WORD)'E' << 8))
+#define LEMAGIC ((WORD)'L' + ((WORD)'E' << 8))
 
-typedef struct new_exe          NEWEXE,      *LPNEWEXE;
-typedef struct exe_hdr          EXEHDR,      *LPEXEHDR;
-typedef struct rsrc_nameinfo    RESNAMEINFO, *LPRESNAMEINFO;
-typedef struct rsrc_typeinfo    RESTYPEINFO, *LPRESTYPEINFO;
-typedef struct rsrc_typeinfo    UNALIGNED    *ULPRESTYPEINFO;
-typedef struct new_rsrc         RESTABLE,    *LPRESTABLE;
+typedef struct new_exe NEWEXE, *LPNEWEXE;
+typedef struct exe_hdr EXEHDR, *LPEXEHDR;
+typedef struct rsrc_nameinfo RESNAMEINFO, *LPRESNAMEINFO;
+typedef struct rsrc_typeinfo RESTYPEINFO, *LPRESTYPEINFO;
+typedef struct rsrc_typeinfo UNALIGNED *ULPRESTYPEINFO;
+typedef struct new_rsrc RESTABLE, *LPRESTABLE;
 
 #define NUMBER_OF_SECTIONS(x) ((x)->FileHeader.NumberOfSections)
 
-#define FCC(c0,c1,c2,c3) ((DWORD)(c0)|((DWORD)(c1)<<8)|((DWORD)(c2)<<16)|((DWORD)(c3)<<24))
+#define FCC(c0, c1, c2, c3) ((DWORD)(c0) | ((DWORD)(c1) << 8) | ((DWORD)(c2) << 16) | ((DWORD)(c3) << 24))
 
-#define COM_FILE    FCC('.', 'c', 'o', 'm')
-#define BAT_FILE    FCC('.', 'b', 'a', 't')
-#define CMD_FILE    FCC('.', 'c', 'm', 'd')
-#define PIF_FILE    FCC('.', 'p', 'i', 'f')
-#define LNK_FILE    FCC('.', 'l', 'n', 'k')
-#define ICO_FILE    FCC('.', 'i', 'c', 'o')
-#define EXE_FILE    FCC('.', 'e', 'x', 'e')
+#define COM_FILE FCC('.', 'c', 'o', 'm')
+#define BAT_FILE FCC('.', 'b', 'a', 't')
+#define CMD_FILE FCC('.', 'c', 'm', 'd')
+#define PIF_FILE FCC('.', 'p', 'i', 'f')
+#define LNK_FILE FCC('.', 'l', 'n', 'k')
+#define ICO_FILE FCC('.', 'i', 'c', 'o')
+#define EXE_FILE FCC('.', 'e', 'x', 'e')
 
 
-#define WIN32VER30  0x00030000  // for CreateIconFromResource()
+#define WIN32VER30 0x00030000 // for CreateIconFromResource()
 
-#define GET_COUNT   424242
+#define GET_COUNT 424242
 
 
 /***************************************************************************\
@@ -61,8 +61,7 @@ typedef struct new_rsrc         RESTABLE,    *LPRESTABLE;
 *
 \***************************************************************************/
 
-__inline BOOL PathIsUNC(
-    LPWSTR psz)
+__inline BOOL PathIsUNC(LPWSTR psz)
 {
     return (psz[0] == L'\\' && psz[1] == L'\\');
 }
@@ -75,8 +74,7 @@ __inline BOOL PathIsUNC(
 *
 \***************************************************************************/
 
-BOOL ReadAByte(
-    LPCVOID pMem)
+BOOL ReadAByte(LPCVOID pMem)
 {
     return ((*(PBYTE)pMem) == 0);
 }
@@ -87,31 +85,29 @@ BOOL ReadAByte(
 *
 \***************************************************************************/
 
-LPVOID RVAtoP(
-    LPVOID pBase,
-    DWORD  rva)
+LPVOID RVAtoP(LPVOID pBase, DWORD rva)
 {
-    LPEXEHDR             pmz;
-    IMAGE_NT_HEADERS     *ppe;
+    LPEXEHDR pmz;
+    IMAGE_NT_HEADERS *ppe;
     IMAGE_SECTION_HEADER *pSection; // section table
-    int                  i;
-    DWORD                size;
+    int i;
+    DWORD size;
 
     pmz = (LPEXEHDR)pBase;
-    ppe = (IMAGE_NT_HEADERS*)((BYTE*)pBase + pmz->e_lfanew);
+    ppe = (IMAGE_NT_HEADERS *)((BYTE *)pBase + pmz->e_lfanew);
 
     /*
      * Scan the section table looking for the RVA
      */
     pSection = IMAGE_FIRST_SECTION(ppe);
 
-    for (i = 0; i < NUMBER_OF_SECTIONS(ppe); i++) {
+    for (i = 0; i < NUMBER_OF_SECTIONS(ppe); i++)
+    {
 
-        size = pSection[i].Misc.VirtualSize ?
-               pSection[i].Misc.VirtualSize : pSection[i].SizeOfRawData;
+        size = pSection[i].Misc.VirtualSize ? pSection[i].Misc.VirtualSize : pSection[i].SizeOfRawData;
 
-        if (rva >= pSection[i].VirtualAddress &&
-            rva <  pSection[i].VirtualAddress + size) {
+        if (rva >= pSection[i].VirtualAddress && rva < pSection[i].VirtualAddress + size)
+        {
 
             return (LPBYTE)pBase + pSection[i].PointerToRawData + (rva - pSection[i].VirtualAddress);
         }
@@ -126,14 +122,13 @@ LPVOID RVAtoP(
 *
 \***************************************************************************/
 
-LPVOID GetResourceTablePE(
-    LPVOID pBase)
+LPVOID GetResourceTablePE(LPVOID pBase)
 {
-    LPEXEHDR         pmz;
+    LPEXEHDR pmz;
     IMAGE_NT_HEADERS *ppe;
 
     pmz = (LPEXEHDR)pBase;
-    ppe = (IMAGE_NT_HEADERS*)((BYTE*)pBase + pmz->e_lfanew);
+    ppe = (IMAGE_NT_HEADERS *)((BYTE *)pBase + pmz->e_lfanew);
 
     if (pmz->e_magic != MZMAGIC)
         return 0;
@@ -145,7 +140,7 @@ LPVOID GetResourceTablePE(
     // and make sure that we treat them as a IMAGE_NT_HEADERS64
     if (ppe->FileHeader.Machine == IMAGE_FILE_MACHINE_IA64)
     {
-        IMAGE_NT_HEADERS64* ppe64 = (IMAGE_NT_HEADERS64*)ppe;
+        IMAGE_NT_HEADERS64 *ppe64 = (IMAGE_NT_HEADERS64 *)ppe;
 
         if (ppe64->FileHeader.SizeOfOptionalHeader < IMAGE_SIZEOF_NT_OPTIONAL64_HEADER)
         {
@@ -153,10 +148,10 @@ LPVOID GetResourceTablePE(
         }
         return RVAtoP(pBase, ppe64->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress);
     }
-    else 
+    else
     {
         // assume a 32-bit image
-        IMAGE_NT_HEADERS32* ppe32 = (IMAGE_NT_HEADERS32*)ppe;
+        IMAGE_NT_HEADERS32 *ppe32 = (IMAGE_NT_HEADERS32 *)ppe;
 
         if (ppe32->FileHeader.SizeOfOptionalHeader < IMAGE_SIZEOF_NT_OPTIONAL32_HEADER)
         {
@@ -177,61 +172,59 @@ LPVOID GetResourceTablePE(
 *
 \*****************************************************************************/
 
-LPVOID FindResourcePE(
-    LPVOID pBase,
-    LPVOID prt,
-    int    iResIndex,
-    int    ResType,
-    DWORD  *pcb)
+LPVOID FindResourcePE(LPVOID pBase, LPVOID prt, int iResIndex, int ResType, DWORD *pcb)
 {
-    int                            i;
-    int                            cnt;
-    IMAGE_RESOURCE_DIRECTORY       *pdir;
+    int i;
+    int cnt;
+    IMAGE_RESOURCE_DIRECTORY *pdir;
     IMAGE_RESOURCE_DIRECTORY_ENTRY *pres;
-    IMAGE_RESOURCE_DATA_ENTRY      *pent;
+    IMAGE_RESOURCE_DATA_ENTRY *pent;
 
     pdir = (IMAGE_RESOURCE_DIRECTORY *)prt;
 
     /*
      * First find the type always a ID so ignore strings totaly
      */
-    cnt  = pdir->NumberOfIdEntries + pdir->NumberOfNamedEntries;
-    pres = (IMAGE_RESOURCE_DIRECTORY_ENTRY*)(pdir+1);
+    cnt = pdir->NumberOfIdEntries + pdir->NumberOfNamedEntries;
+    pres = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(pdir + 1);
 
-    for (i = 0; i < cnt; i++) {
+    for (i = 0; i < cnt; i++)
+    {
 
         if (pres[i].Name == (DWORD)ResType)
             break;
     }
 
-    if (i==cnt)             // did not find the type
+    if (i == cnt) // did not find the type
         return 0;
 
     /*
      * Now go find the actual resource  either by id (iResIndex < 0) or
      * by ordinal (iResIndex >= 0)
      */
-    pdir = (IMAGE_RESOURCE_DIRECTORY*)((LPBYTE)prt +
-        (pres[i].OffsetToData & ~IMAGE_RESOURCE_DATA_IS_DIRECTORY));
+    pdir = (IMAGE_RESOURCE_DIRECTORY *)((LPBYTE)prt + (pres[i].OffsetToData & ~IMAGE_RESOURCE_DATA_IS_DIRECTORY));
 
-    cnt  = pdir->NumberOfIdEntries + pdir->NumberOfNamedEntries;
-    pres = (IMAGE_RESOURCE_DIRECTORY_ENTRY*)(pdir+1);
+    cnt = pdir->NumberOfIdEntries + pdir->NumberOfNamedEntries;
+    pres = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(pdir + 1);
 
     /*
      * If we just want size, do it.
      */
     if (iResIndex == GET_COUNT)
-        return (LPVOID)UIntToPtr( cnt );
+        return (LPVOID)UIntToPtr(cnt);
 
     /*
      * if we are to search for a specific id do it.
      */
-    if (iResIndex < 0) {
+    if (iResIndex < 0)
+    {
 
         for (i = 0; i < cnt; i++)
             if (pres[i].Name == (DWORD)(-iResIndex))
                 break;
-    } else {
+    }
+    else
+    {
         i = iResIndex;
     }
 
@@ -248,12 +241,12 @@ LPVOID FindResourcePE(
      * anywhere that could specify a language. As this is called from an
      * API (albeit a private one), changing this behavior is dangerous.
      */
-    if (pres[i].OffsetToData & IMAGE_RESOURCE_DATA_IS_DIRECTORY) {
+    if (pres[i].OffsetToData & IMAGE_RESOURCE_DATA_IS_DIRECTORY)
+    {
 
-        pdir = (IMAGE_RESOURCE_DIRECTORY*)((LPBYTE)prt +
-                (pres[i].OffsetToData & ~IMAGE_RESOURCE_DATA_IS_DIRECTORY));
-        pres = (IMAGE_RESOURCE_DIRECTORY_ENTRY*)(pdir+1);
-        i = 0;  // choose first one
+        pdir = (IMAGE_RESOURCE_DIRECTORY *)((LPBYTE)prt + (pres[i].OffsetToData & ~IMAGE_RESOURCE_DATA_IS_DIRECTORY));
+        pres = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(pdir + 1);
+        i = 0; // choose first one
     }
 
     /*
@@ -262,7 +255,7 @@ LPVOID FindResourcePE(
     if (pres[i].OffsetToData & IMAGE_RESOURCE_DATA_IS_DIRECTORY)
         return 0;
 
-    pent = (IMAGE_RESOURCE_DATA_ENTRY*)((LPBYTE)prt + pres[i].OffsetToData);
+    pent = (IMAGE_RESOURCE_DATA_ENTRY *)((LPBYTE)prt + pres[i].OffsetToData);
 
     /*
      * all OffsetToData fields except the final one are relative to
@@ -280,8 +273,7 @@ LPVOID FindResourcePE(
 *
 \***************************************************************************/
 
-LPVOID GetResourceTableNE(
-    LPVOID pBase)
+LPVOID GetResourceTableNE(LPVOID pBase)
 {
     LPNEWEXE pne;
     LPEXEHDR pmz;
@@ -292,20 +284,20 @@ LPVOID GetResourceTableNE(
     if (pmz->e_magic != MZMAGIC)
         return 0;
 
-    if (pne->ne_magic != NEMAGIC)           // must be a NEWEXE
+    if (pne->ne_magic != NEMAGIC) // must be a NEWEXE
         return 0;
 
-    if (pne->ne_exetyp != NE_WINDOWS &&     // must be a Win DLL/EXE/386
+    if (pne->ne_exetyp != NE_WINDOWS && // must be a Win DLL/EXE/386
         pne->ne_exetyp != NE_DEV386)
         return 0;
 
-    if (pne->ne_expver < 0x0300)            // must be 3.0 or greater
+    if (pne->ne_expver < 0x0300) // must be 3.0 or greater
         return 0;
 
-    if (pne->ne_rsrctab == pne->ne_restab)  // no resources
+    if (pne->ne_rsrctab == pne->ne_restab) // no resources
         return 0;
 
-    return (LPBYTE)pne + pne->ne_rsrctab;   // return resource table pointer
+    return (LPBYTE)pne + pne->ne_rsrctab; // return resource table pointer
 }
 
 /***************************************************************************\
@@ -324,34 +316,33 @@ LPVOID GetResourceTableNE(
 *
 \***************************************************************************/
 
-LPVOID FindResourceNE(
-    LPVOID lpBase,
-    LPVOID prt,
-    int    iResIndex,
-    int    iResType,
-    DWORD  *pcb)
+LPVOID FindResourceNE(LPVOID lpBase, LPVOID prt, int iResIndex, int iResType, DWORD *pcb)
 {
-    LPRESTABLE     lpResTable;
+    LPRESTABLE lpResTable;
     ULPRESTYPEINFO ulpResTypeInfo;
-    LPRESNAMEINFO  lpResNameInfo;  // 16 bit alignment ok - had ushorts only
-    int            i;
+    LPRESNAMEINFO lpResNameInfo; // 16 bit alignment ok - had ushorts only
+    int i;
 
     lpResTable = (LPRESTABLE)prt;
-//ulpResTypeInfo = (ULPRESTYPEINFO)(LPWBYTE)&lpResTable->rs_typeinfo;
+    //ulpResTypeInfo = (ULPRESTYPEINFO)(LPWBYTE)&lpResTable->rs_typeinfo;
     ulpResTypeInfo = (ULPRESTYPEINFO)((LPBYTE)lpResTable + 2);
 
-    while (ulpResTypeInfo->rt_id) {
+    while (ulpResTypeInfo->rt_id)
+    {
 
-        if (ulpResTypeInfo->rt_id == (iResType | RSORDID)) {
+        if (ulpResTypeInfo->rt_id == (iResType | RSORDID))
+        {
 
             lpResNameInfo = (LPRESNAMEINFO)(ulpResTypeInfo + 1);
 
             if (iResIndex == GET_COUNT)
                 return (LPVOID)ulpResTypeInfo->rt_nres;
 
-            if (iResIndex < 0) {
+            if (iResIndex < 0)
+            {
 
-                for (i=0; i < (int)ulpResTypeInfo->rt_nres; i++) {
+                for (i = 0; i < (int)ulpResTypeInfo->rt_nres; i++)
+                {
 
                     if (lpResNameInfo[i].rn_id == ((-iResIndex) | RSORDID))
                         break;
@@ -367,9 +358,7 @@ LPVOID FindResourceNE(
             return (LPBYTE)lpBase + ((long)lpResNameInfo[iResIndex].rn_offset << lpResTable->rs_align);
         }
 
-        ulpResTypeInfo =
-               (ULPRESTYPEINFO)((LPRESNAMEINFO)(ulpResTypeInfo + 1) +
-                ulpResTypeInfo->rt_nres);
+        ulpResTypeInfo = (ULPRESTYPEINFO)((LPRESNAMEINFO)(ulpResTypeInfo + 1) + ulpResTypeInfo->rt_nres);
     }
 
     *pcb = 0;
@@ -382,13 +371,7 @@ LPVOID FindResourceNE(
 *
 \***************************************************************************/
 
-UINT ExtractIconFromICO(
-    LPTSTR szFile,
-    int    nIconIndex,
-    int    cxIcon,
-    int    cyIcon,
-    HICON  *phicon,
-    UINT   flags)
+UINT ExtractIconFromICO(LPTSTR szFile, int nIconIndex, int cxIcon, int cyIcon, HICON *phicon, UINT flags)
 {
     HICON hicon;
 
@@ -399,12 +382,7 @@ UINT ExtractIconFromICO(
 
 again:
 
-    hicon = LoadImage(NULL,
-                      szFile,
-                      IMAGE_ICON,
-                      LOWORD(cxIcon),
-                      LOWORD(cyIcon),
-                      flags);
+    hicon = LoadImage(NULL, szFile, IMAGE_ICON, LOWORD(cxIcon), LOWORD(cyIcon), flags);
 
     if (hicon == NULL)
         return 0;
@@ -420,7 +398,8 @@ again:
     /*
      * Check for large/small icon extract
      */
-    if (HIWORD(cxIcon)) {
+    if (HIWORD(cxIcon))
+    {
 
         cxIcon = HIWORD(cxIcon);
         cyIcon = HIWORD(cyIcon);
@@ -440,19 +419,13 @@ again:
 
 #define ROP_DSna 0x00220326
 
-UINT ExtractIconFromBMP(
-    LPTSTR szFile,
-    int    nIconIndex,
-    int    cxIcon,
-    int    cyIcon,
-    HICON  *phicon,
-    UINT   flags)
+UINT ExtractIconFromBMP(LPTSTR szFile, int nIconIndex, int cxIcon, int cyIcon, HICON *phicon, UINT flags)
 {
-    HICON    hicon;
-    HBITMAP  hbm;
-    HBITMAP  hbmMask;
-    HDC      hdc;
-    HDC      hdcMask;
+    HICON hicon;
+    HBITMAP hbm;
+    HBITMAP hbmMask;
+    HDC hdc;
+    HDC hdcMask;
     ICONINFO ii;
 
     if (nIconIndex >= 1)
@@ -466,12 +439,7 @@ UINT ExtractIconFromBMP(
 
 again:
 
-    hbm = (HBITMAP)LoadImage(NULL,
-                             szFile,
-                             IMAGE_BITMAP,
-                             LOWORD(cxIcon),
-                             LOWORD(cyIcon),
-                             flags);
+    hbm = (HBITMAP)LoadImage(NULL, szFile, IMAGE_BITMAP, LOWORD(cxIcon), LOWORD(cyIcon), flags);
 
     if (hbm == NULL)
         return 0;
@@ -479,7 +447,8 @@ again:
     /*
      *  do we just want a count?
      */
-    if (phicon == NULL) {
+    if (phicon == NULL)
+    {
         DeleteObject(hbm);
         return 1;
     }
@@ -497,11 +466,11 @@ again:
     BitBlt(hdcMask, 0, 0, LOWORD(cxIcon), LOWORD(cyIcon), hdc, 0, 0, SRCCOPY);
     BitBlt(hdc, 0, 0, LOWORD(cxIcon), LOWORD(cyIcon), hdcMask, 0, 0, ROP_DSna);
 
-    ii.fIcon    = TRUE;
+    ii.fIcon = TRUE;
     ii.xHotspot = 0;
     ii.yHotspot = 0;
     ii.hbmColor = hbm;
-    ii.hbmMask  = hbmMask;
+    ii.hbmMask = hbmMask;
     hicon = CreateIconIndirect(&ii);
 
     DeleteObject(hdc);
@@ -514,7 +483,8 @@ again:
     /*
      * Check for large/small icon extract
      */
-    if (HIWORD(cxIcon)) {
+    if (HIWORD(cxIcon))
+    {
         cxIcon = HIWORD(cxIcon);
         cyIcon = HIWORD(cyIcon);
         phicon++;
@@ -531,33 +501,22 @@ again:
 *
 \***************************************************************************/
 
-UINT ExtractIconFromEXE(
-    HANDLE hFile,
-    int    nIconIndex,
-    int    cxIconSize,
-    int    cyIconSize,
-    HICON  *phicon,
-    UINT   *piconid,
-    UINT   nIcons,
-    UINT   flags)
+UINT ExtractIconFromEXE(HANDLE hFile, int nIconIndex, int cxIconSize, int cyIconSize, HICON *phicon, UINT *piconid,
+                        UINT nIcons, UINT flags)
 {
-    HANDLE           hFileMap = INVALID_HANDLE_VALUE;
-    LPVOID           lpFile = NULL;
-    EXEHDR           *pmz;
+    HANDLE hFileMap = INVALID_HANDLE_VALUE;
+    LPVOID lpFile = NULL;
+    EXEHDR *pmz;
     NEWEXE UNALIGNED *pne;
-    LPVOID           pBase;
-    LPVOID           pres = NULL;
-    UINT             result = 0;
-    LONG             FileLength;
-    DWORD            cbSize;
-    int              cxIcon;
-    int              cyIcon;
+    LPVOID pBase;
+    LPVOID pres = NULL;
+    UINT result = 0;
+    LONG FileLength;
+    DWORD cbSize;
+    int cxIcon;
+    int cyIcon;
 
-    LPVOID (*FindResourceX)(LPVOID pBase,
-                            LPVOID prt,
-                            int    iResIndex,
-                            int    iResType,
-                            DWORD  *pcb);
+    LPVOID (*FindResourceX)(LPVOID pBase, LPVOID prt, int iResIndex, int iResType, DWORD *pcb);
 
     FileLength = (LONG)GetFileSize(hFile, NULL);
 
@@ -572,20 +531,22 @@ UINT ExtractIconFromEXE(
     pBase = (LPVOID)lpFile;
     pmz = (struct exe_hdr *)pBase;
 
-    _try {
+    _try
+    {
 
         if (pmz->e_magic != MZMAGIC)
             goto exit;
 
-        if (pmz->e_lfanew <= 0)             // not a new exe
+        if (pmz->e_lfanew <= 0) // not a new exe
             goto exit;
 
-        if (pmz->e_lfanew >= FileLength)    // not a new exe
+        if (pmz->e_lfanew >= FileLength) // not a new exe
             goto exit;
 
-        pne = (NEWEXE UNALIGNED *)((BYTE*)pmz + pmz->e_lfanew);
+        pne = (NEWEXE UNALIGNED *)((BYTE *)pmz + pmz->e_lfanew);
 
-        switch (pne->ne_magic) {
+        switch (pne->ne_magic)
+        {
         case NEMAGIC:
             pres = GetResourceTableNE(pBase);
             FindResourceX = FindResourceNE;
@@ -606,20 +567,18 @@ UINT ExtractIconFromEXE(
         /*
          * do we just want a count?
          */
-        if (phicon == NULL) {
-            result = PtrToUlong(FindResourceX(pBase,
-                                             pres,
-                                             GET_COUNT,
-                                             (LONG_PTR)RT_GROUP_ICON,
-                                             &cbSize));
+        if (phicon == NULL)
+        {
+            result = PtrToUlong(FindResourceX(pBase, pres, GET_COUNT, (LONG_PTR)RT_GROUP_ICON, &cbSize));
             goto exit;
         }
 
-        while (result < nIcons) {
+        while (result < nIcons)
+        {
 
             LPVOID lpIconDir;
             LPVOID lpIcon;
-            int    idIcon;
+            int idIcon;
 
             cxIcon = cxIconSize;
             cyIcon = cyIconSize;
@@ -627,37 +586,26 @@ UINT ExtractIconFromEXE(
             /*
              *  find the icon dir for this icon.
              */
-            lpIconDir = FindResourceX(pBase,
-                                      pres,
-                                      nIconIndex,
-                                      (LONG_PTR)RT_GROUP_ICON,
-                                      &cbSize);
+            lpIconDir = FindResourceX(pBase, pres, nIconIndex, (LONG_PTR)RT_GROUP_ICON, &cbSize);
 
             if (lpIconDir == NULL)
                 goto exit;
 
-            if ((((LPNEWHEADER)lpIconDir)->Reserved != 0) ||
-                (((LPNEWHEADER)lpIconDir)->ResType != FT_ICON)) {
+            if ((((LPNEWHEADER)lpIconDir)->Reserved != 0) || (((LPNEWHEADER)lpIconDir)->ResType != FT_ICON))
+            {
 
                 goto exit;
             }
-again:
-            idIcon = LookupIconIdFromDirectoryEx((LPBYTE)lpIconDir,
-                                                 TRUE,
-                                                 LOWORD(cxIcon),
-                                                 LOWORD(cyIcon),
-                                                 flags);
-            lpIcon = FindResourceX(pBase,
-                                   pres,
-                                   -idIcon,
-                                   (LONG_PTR)RT_ICON,
-                                   &cbSize);
+        again:
+            idIcon = LookupIconIdFromDirectoryEx((LPBYTE)lpIconDir, TRUE, LOWORD(cxIcon), LOWORD(cyIcon), flags);
+            lpIcon = FindResourceX(pBase, pres, -idIcon, (LONG_PTR)RT_ICON, &cbSize);
 
             if (lpIcon == NULL)
                 goto exit;
 
             if ((((UPBITMAPINFOHEADER)lpIcon)->biSize != sizeof(BITMAPINFOHEADER)) &&
-                (((UPBITMAPINFOHEADER)lpIcon)->biSize != sizeof(BITMAPCOREHEADER))) {
+                (((UPBITMAPINFOHEADER)lpIcon)->biSize != sizeof(BITMAPCOREHEADER)))
+            {
 
                 goto exit;
             }
@@ -673,18 +621,14 @@ again:
             if (piconid)
                 piconid[result] = idIcon;
 
-            phicon[result++] = CreateIconFromResourceEx((LPBYTE)lpIcon,
-                                                        cbSize,
-                                                        TRUE,
-                                                        WIN32VER30,
-                                                        LOWORD(cxIcon),
-                                                        LOWORD(cyIcon),
-                                                        flags);
+            phicon[result++] = CreateIconFromResourceEx((LPBYTE)lpIcon, cbSize, TRUE, WIN32VER30, LOWORD(cxIcon),
+                                                        LOWORD(cyIcon), flags);
 
             /*
              * check for large/small icon extract
              */
-            if (HIWORD(cxIcon)) {
+            if (HIWORD(cxIcon))
+            {
 
                 cxIcon = HIWORD(cxIcon);
                 cyIcon = HIWORD(cyIcon);
@@ -692,10 +636,11 @@ again:
                 goto again;
             }
 
-            nIconIndex++;       // next icon index
+            nIconIndex++; // next icon index
         }
-
-    } _except (W32ExceptionHandler(FALSE, RIP_WARNING)) {
+    }
+    _except(W32ExceptionHandler(FALSE, RIP_WARNING))
+    {
         result = 0;
     }
 
@@ -716,21 +661,22 @@ exit:
 *
 \***************************************************************************/
 
-LPWSTR PathFindExtension(
-    LPWSTR pszPath)
+LPWSTR PathFindExtension(LPWSTR pszPath)
 {
     LPWSTR pszDot;
 
-    for (pszDot = NULL; *pszPath; pszPath = CharNext(pszPath)) {
+    for (pszDot = NULL; *pszPath; pszPath = CharNext(pszPath))
+    {
 
-        switch (*pszPath) {
+        switch (*pszPath)
+        {
         case L'.':
-            pszDot = pszPath;    // remember the last dot
+            pszDot = pszPath; // remember the last dot
             break;
 
         case L'\\':
-        case L' ':               // extensions can't have spaces
-            pszDot = NULL;       // forget last dot, it was in a directory
+        case L' ':         // extensions can't have spaces
+            pszDot = NULL; // forget last dot, it was in a directory
             break;
         }
     }
@@ -749,24 +695,16 @@ LPWSTR PathFindExtension(
 *
 \***************************************************************************/
 
-WINUSERAPI UINT PrivateExtractIconExA(
-    LPCSTR szFileName,
-    int    nIconIndex,
-    HICON  *phiconLarge,
-    HICON  *phiconSmall,
-    UINT   nIcons)
+WINUSERAPI UINT PrivateExtractIconExA(LPCSTR szFileName, int nIconIndex, HICON *phiconLarge, HICON *phiconSmall,
+                                      UINT nIcons)
 {
     LPWSTR szFileNameW;
-    UINT    uRet;
+    UINT uRet;
 
     if (!MBToWCS(szFileName, -1, &szFileNameW, -1, TRUE))
         return 0;
 
-    uRet = PrivateExtractIconExW(szFileNameW,
-                                 nIconIndex,
-                                 phiconLarge,
-                                 phiconSmall,
-                                 nIcons);
+    uRet = PrivateExtractIconExW(szFileNameW, nIconIndex, phiconLarge, phiconSmall, nIcons);
 
     UserLocalFree(szFileNameW);
 
@@ -779,8 +717,7 @@ WINUSERAPI UINT PrivateExtractIconExA(
 *
 \***************************************************************************/
 
-DWORD HasExtension(
-    LPWSTR pszPath)
+DWORD HasExtension(LPWSTR pszPath)
 {
     LPWSTR p = PathFindExtension(pszPath);
 
@@ -796,19 +733,27 @@ DWORD HasExtension(
      * stuff elsewhere (e.g., shlwapi\urlpars.cpp).  EXTKEY is a QWORD
      * so UNICODE would fit.
      */
-    if (*p == L'.') {
+    if (*p == L'.')
+    {
 
         WCHAR szExt[5];
 
         lstrcpynW(szExt, p, 5);
 
-        if (lstrcmpiW(szExt,TEXT(".com")) == 0) return COM_FILE;
-        if (lstrcmpiW(szExt,TEXT(".bat")) == 0) return BAT_FILE;
-        if (lstrcmpiW(szExt,TEXT(".cmd")) == 0) return CMD_FILE;
-        if (lstrcmpiW(szExt,TEXT(".pif")) == 0) return PIF_FILE;
-        if (lstrcmpiW(szExt,TEXT(".lnk")) == 0) return LNK_FILE;
-        if (lstrcmpiW(szExt,TEXT(".ico")) == 0) return ICO_FILE;
-        if (lstrcmpiW(szExt,TEXT(".exe")) == 0) return EXE_FILE;
+        if (lstrcmpiW(szExt, TEXT(".com")) == 0)
+            return COM_FILE;
+        if (lstrcmpiW(szExt, TEXT(".bat")) == 0)
+            return BAT_FILE;
+        if (lstrcmpiW(szExt, TEXT(".cmd")) == 0)
+            return CMD_FILE;
+        if (lstrcmpiW(szExt, TEXT(".pif")) == 0)
+            return PIF_FILE;
+        if (lstrcmpiW(szExt, TEXT(".lnk")) == 0)
+            return LNK_FILE;
+        if (lstrcmpiW(szExt, TEXT(".ico")) == 0)
+            return ICO_FILE;
+        if (lstrcmpiW(szExt, TEXT(".exe")) == 0)
+            return EXE_FILE;
     }
 
     return 0;
@@ -848,23 +793,16 @@ DWORD HasExtension(
 *
 \***************************************************************************/
 
-WINUSERAPI UINT WINAPI PrivateExtractIconsW(
-    LPCWSTR szFileName,
-    int     nIconIndex,
-    int     cxIcon,
-    int     cyIcon,
-    HICON   *phicon,
-    UINT    *piconid,
-    UINT    nIcons,
-    UINT    flags)
+WINUSERAPI UINT WINAPI PrivateExtractIconsW(LPCWSTR szFileName, int nIconIndex, int cxIcon, int cyIcon, HICON *phicon,
+                                            UINT *piconid, UINT nIcons, UINT flags)
 {
-    HANDLE   hFile = (HANDLE)INVALID_HANDLE_VALUE;
-    UINT     result = 0;
-    WORD     magic[6];
-    WCHAR    achFileName[MAX_PATH];
+    HANDLE hFile = (HANDLE)INVALID_HANDLE_VALUE;
+    UINT result = 0;
+    WORD magic[6];
+    WCHAR achFileName[MAX_PATH];
     FILETIME ftAccess;
-    WCHAR    szExpFileName[MAX_PATH];
-    DWORD    dwBytesRead;
+    WCHAR szExpFileName[MAX_PATH];
+    DWORD dwBytesRead;
 
     /*
      * Set failure defaults.
@@ -875,7 +813,8 @@ WINUSERAPI UINT WINAPI PrivateExtractIconsW(
     /*
      * Check for special extensions, and fail quick
      */
-    switch (HasExtension((LPWSTR)szFileName)) {
+    switch (HasExtension((LPWSTR)szFileName))
+    {
     case COM_FILE:
     case BAT_FILE:
     case CMD_FILE:
@@ -891,49 +830,41 @@ WINUSERAPI UINT WINAPI PrivateExtractIconsW(
      * Try expanding environment variables in the file name we're passed.
      */
     ExpandEnvironmentStrings(szFileName, szExpFileName, MAX_PATH);
-    szExpFileName[ MAX_PATH-1 ] = (WCHAR)0;
+    szExpFileName[MAX_PATH - 1] = (WCHAR)0;
 
     /*
      * Open the file - First check to see if it is a UNC path.  If it
      * is make sure that we have access to the path...
      */
-    if (PathIsUNC(szExpFileName)) {
+    if (PathIsUNC(szExpFileName))
+    {
 
         lstrcpynW(achFileName, szExpFileName, ARRAYSIZE(achFileName));
+    }
+    else
+    {
 
-    } else {
-
-        if (SearchPath(NULL,
-                       szExpFileName,
-                       NULL,
-                       ARRAYSIZE(achFileName),
-                       achFileName, NULL) == 0) {
+        if (SearchPath(NULL, szExpFileName, NULL, ARRAYSIZE(achFileName), achFileName, NULL) == 0)
+        {
 
             goto error_file;
         }
     }
 
-    hFile = CreateFile(achFileName,
-                       GENERIC_READ|FILE_WRITE_ATTRIBUTES,
-                       FILE_SHARE_WRITE | FILE_SHARE_READ,
-                       NULL,
-                       OPEN_EXISTING,
-                       FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
-                       0);
+    hFile = CreateFile(achFileName, GENERIC_READ | FILE_WRITE_ATTRIBUTES, FILE_SHARE_WRITE | FILE_SHARE_READ, NULL,
+                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, 0);
 
-    if (hFile == INVALID_HANDLE_VALUE) {
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
 
-        hFile = CreateFile(achFileName, GENERIC_READ,
-                           FILE_SHARE_READ,
-                           NULL,
-                           OPEN_EXISTING,
-                           FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
-                           0);
+        hFile = CreateFile(achFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, 0);
 
         if (hFile == INVALID_HANDLE_VALUE)
             goto error_file;
-
-    } else {
+    }
+    else
+    {
 
         /*
          * Restore the Access Date
@@ -948,47 +879,31 @@ WINUSERAPI UINT WINAPI PrivateExtractIconsW(
         goto exit;
 
     if (piconid)
-        *piconid = (UINT)-1;    // Fill in "don't know" value
+        *piconid = (UINT)-1; // Fill in "don't know" value
 
-    switch (magic[0]) {
+    switch (magic[0])
+    {
     case MZMAGIC:
-        result = ExtractIconFromEXE(hFile,
-                                    nIconIndex,
-                                    cxIcon,
-                                    cyIcon,
-                                    phicon,
-                                    piconid,
-                                    nIcons,
-                                    flags);
+        result = ExtractIconFromEXE(hFile, nIconIndex, cxIcon, cyIcon, phicon, piconid, nIcons, flags);
         break;
 
-    case ANI_MAGIC:    // possible .ani cursor
+    case ANI_MAGIC: // possible .ani cursor
 
         /*
          * Ani cursors are easy they are RIFF files of type 'ACON'
          */
-        if (magic[1] == ANI_MAGIC1 && magic[4] == ANI_MAGIC4 &&
-            magic[5] == ANI_MAGIC5) {
+        if (magic[1] == ANI_MAGIC1 && magic[4] == ANI_MAGIC4 && magic[5] == ANI_MAGIC5)
+        {
 
-            result = ExtractIconFromICO(achFileName,
-                                        nIconIndex,
-                                        cxIcon,
-                                        cyIcon,
-                                        phicon,
-                                        flags);
+            result = ExtractIconFromICO(achFileName, nIconIndex, cxIcon, cyIcon, phicon, flags);
         }
         break;
 
-    case BMP_MAGIC:    // possible bitmap
-        result = ExtractIconFromBMP(achFileName,
-                                    nIconIndex,
-                                    cxIcon,
-                                    cyIcon,
-                                    phicon,
-                                    flags);
+    case BMP_MAGIC: // possible bitmap
+        result = ExtractIconFromBMP(achFileName, nIconIndex, cxIcon, cyIcon, phicon, flags);
         break;
 
-    case ICON_MAGIC:   // possible .ico or .cur
+    case ICON_MAGIC: // possible .ico or .cur
 
         /*
          * Icons and cursors look like this
@@ -999,21 +914,17 @@ WINUSERAPI UINT WINAPI PrivateExtractIconsW(
          *
          * We only allow 1 <= cresIcons <= 10
          */
-        if (magic[1] == ICO_MAGIC1 || magic[1] == CUR_MAGIC1) {
+        if (magic[1] == ICO_MAGIC1 || magic[1] == CUR_MAGIC1)
+        {
 
-            result = ExtractIconFromICO(achFileName,
-                                        nIconIndex,
-                                        cxIcon,
-                                        cyIcon,
-                                        phicon,
-                                        flags);
+            result = ExtractIconFromICO(achFileName, nIconIndex, cxIcon, cyIcon, phicon, flags);
         }
         break;
     }
 
 exit:
 
-    if (hFile!=INVALID_HANDLE_VALUE)
+    if (hFile != INVALID_HANDLE_VALUE)
         CloseHandle(hFile);
 
     return result;
@@ -1036,15 +947,8 @@ error_file:
 *
 \***************************************************************************/
 
-WINUSERAPI UINT WINAPI PrivateExtractIconsA(
-    LPCSTR szFileName,
-    int     nIconIndex,
-    int     cxIcon,
-    int     cyIcon,
-    HICON   *phicon,
-    UINT    *piconid,
-    UINT    nIcons,
-    UINT    flags)
+WINUSERAPI UINT WINAPI PrivateExtractIconsA(LPCSTR szFileName, int nIconIndex, int cxIcon, int cyIcon, HICON *phicon,
+                                            UINT *piconid, UINT nIcons, UINT flags)
 {
     LPWSTR szFileNameW;
     UINT uRet;
@@ -1052,14 +956,7 @@ WINUSERAPI UINT WINAPI PrivateExtractIconsA(
     if (!MBToWCS(szFileName, -1, &szFileNameW, -1, TRUE))
         return 0;
 
-    uRet = PrivateExtractIconsW(szFileNameW,
-                                nIconIndex,
-                                cxIcon,
-                                cyIcon,
-                                phicon,
-                                piconid,
-                                nIcons,
-                                flags);
+    uRet = PrivateExtractIconsW(szFileNameW, nIconIndex, cxIcon, cyIcon, phicon, piconid, nIcons, flags);
 
     UserLocalFree(szFileNameW);
 
@@ -1089,60 +986,39 @@ WINUSERAPI UINT WINAPI PrivateExtractIconsA(
 *
 \***************************************************************************/
 
-WINUSERAPI UINT PrivateExtractIconExW(
-    LPCWSTR szFileName,
-    int     nIconIndex,
-    HICON   *phiconLarge,
-    HICON   *phiconSmall,
-    UINT    nIcons)
+WINUSERAPI UINT PrivateExtractIconExW(LPCWSTR szFileName, int nIconIndex, HICON *phiconLarge, HICON *phiconSmall,
+                                      UINT nIcons)
 {
     UINT result = 0;
 
     if ((nIconIndex == -1) || ((phiconLarge == NULL) && (phiconSmall == NULL)))
         return PrivateExtractIconsW(szFileName, 0, 0, 0, NULL, NULL, 0, 0);
 
-    if (phiconLarge && phiconSmall && (nIcons == 1)) {
+    if (phiconLarge && phiconSmall && (nIcons == 1))
+    {
 
         HICON ahicon[2];
 
         ahicon[0] = NULL;
         ahicon[1] = NULL;
 
-        result = PrivateExtractIconsW(szFileName,
-                                      nIconIndex,
-                                      MAKELONG(GetSystemMetrics(SM_CXICON),
-                                               GetSystemMetrics(SM_CXSMICON)),
-                                      MAKELONG(GetSystemMetrics(SM_CYICON),
-                                               GetSystemMetrics(SM_CYSMICON)),
-                                      ahicon,
-                                      NULL,
-                                      2,
-                                      0);
+        result = PrivateExtractIconsW(
+            szFileName, nIconIndex, MAKELONG(GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CXSMICON)),
+            MAKELONG(GetSystemMetrics(SM_CYICON), GetSystemMetrics(SM_CYSMICON)), ahicon, NULL, 2, 0);
 
         *phiconLarge = ahicon[0];
         *phiconSmall = ahicon[1];
-
-    } else {
+    }
+    else
+    {
 
         if (phiconLarge)
-            result = PrivateExtractIconsW(szFileName,
-                                          nIconIndex,
-                                          GetSystemMetrics(SM_CXICON),
-                                          GetSystemMetrics(SM_CYICON),
-                                          phiconLarge,
-                                          NULL,
-                                          nIcons,
-                                          0);
+            result = PrivateExtractIconsW(szFileName, nIconIndex, GetSystemMetrics(SM_CXICON),
+                                          GetSystemMetrics(SM_CYICON), phiconLarge, NULL, nIcons, 0);
 
         if (phiconSmall)
-            result = PrivateExtractIconsW(szFileName,
-                                          nIconIndex,
-                                          GetSystemMetrics(SM_CXSMICON),
-                                          GetSystemMetrics(SM_CYSMICON),
-                                          phiconSmall,
-                                          NULL,
-                                          nIcons,
-                                          0);
+            result = PrivateExtractIconsW(szFileName, nIconIndex, GetSystemMetrics(SM_CXSMICON),
+                                          GetSystemMetrics(SM_CYSMICON), phiconSmall, NULL, nIcons, 0);
     }
 
     return result;

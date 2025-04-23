@@ -23,8 +23,8 @@ Revision History:
 #include "mi.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtExtendSection)
-#pragma alloc_text(PAGE,MmExtendSection)
+#pragma alloc_text(PAGE, NtExtendSection)
+#pragma alloc_text(PAGE, MmExtendSection)
 #endif
 
 extern SIZE_T MmAllocationFragment;
@@ -32,10 +32,7 @@ extern SIZE_T MmAllocationFragment;
 ULONG MiExtendedSubsectionsConvertedToDynamic;
 
 #if DBG
-VOID
-MiSubsectionConsistent(
-    IN PSUBSECTION Subsection
-    )
+VOID MiSubsectionConsistent(IN PSUBSECTION Subsection)
 /*++
 
 Routine Description:
@@ -53,15 +50,16 @@ Return Value:
 --*/
 
 {
-    ULONG   Sectors;
-    ULONG   FullPtes;
+    ULONG Sectors;
+    ULONG FullPtes;
 
     //
     // Compare the disk sectors (4K units) to the PTE allocation
     //
 
     Sectors = Subsection->NumberOfFullSectors;
-    if (Subsection->u.SubsectionFlags.SectorEndOffset) {
+    if (Subsection->u.SubsectionFlags.SectorEndOffset)
+    {
         Sectors += 1;
     }
 
@@ -71,25 +69,22 @@ Return Value:
 
     FullPtes = Sectors >> (PAGE_SHIFT - MM4K_SHIFT);
 
-    if (Sectors & ((1 << (PAGE_SHIFT - MM4K_SHIFT)) - 1)) {
+    if (Sectors & ((1 << (PAGE_SHIFT - MM4K_SHIFT)) - 1))
+    {
         FullPtes += 1;
     }
 
-    if (FullPtes != Subsection->PtesInSubsection) {
-        DbgPrint("Mm: Subsection inconsistent (%x vs %x)\n",
-            FullPtes,
-            Subsection->PtesInSubsection);
+    if (FullPtes != Subsection->PtesInSubsection)
+    {
+        DbgPrint("Mm: Subsection inconsistent (%x vs %x)\n", FullPtes, Subsection->PtesInSubsection);
         DbgBreakPoint();
     }
 }
 #endif
 
-
+
 NTSTATUS
-NtExtendSection (
-    IN HANDLE SectionHandle,
-    IN OUT PLARGE_INTEGER NewSectionSize
-    )
+NtExtendSection(IN HANDLE SectionHandle, IN OUT PLARGE_INTEGER NewSectionSize)
 
 /*++
 
@@ -125,17 +120,18 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForWriteSmallStructure (NewSectionSize,
-                                         sizeof(LARGE_INTEGER),
-                                         PROBE_ALIGNMENT (LARGE_INTEGER));
+            ProbeForWriteSmallStructure(NewSectionSize, sizeof(LARGE_INTEGER), PROBE_ALIGNMENT(LARGE_INTEGER));
 
             CapturedNewSectionSize = *NewSectionSize;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -145,9 +141,9 @@ Return Value:
 
             return GetExceptionCode();
         }
-
     }
-    else {
+    else
+    {
 
         CapturedNewSectionSize = *NewSectionSize;
     }
@@ -156,46 +152,41 @@ Return Value:
     // Reference the section object.
     //
 
-    Status = ObReferenceObjectByHandle (SectionHandle,
-                                        SECTION_EXTEND_SIZE,
-                                        MmSectionObjectType,
-                                        PreviousMode,
-                                        (PVOID *)&Section,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(SectionHandle, SECTION_EXTEND_SIZE, MmSectionObjectType, PreviousMode,
+                                       (PVOID *)&Section, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    Status = MmExtendSection (Section, &CapturedNewSectionSize, FALSE);
+    Status = MmExtendSection(Section, &CapturedNewSectionSize, FALSE);
 
-    ObDereferenceObject (Section);
+    ObDereferenceObject(Section);
 
     //
     // Update the NewSectionSize field.
     //
 
-    try {
+    try
+    {
 
         //
         // Return the captured section size.
         //
 
         *NewSectionSize = CapturedNewSectionSize;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         NOTHING;
     }
 
     return Status;
 }
 
-
-VOID
-MiAppendSubsectionChain (
-    IN PMSUBSECTION LastSubsection,
-    IN PMSUBSECTION ExtendedSubsectionHead
-    )
+
+VOID MiAppendSubsectionChain(IN PMSUBSECTION LastSubsection, IN PMSUBSECTION ExtendedSubsectionHead)
 
 /*++
 
@@ -220,11 +211,11 @@ Return Value:
     KIRQL OldIrql;
     PMSUBSECTION NewSubsection;
 
-    ASSERT (ExtendedSubsectionHead->NextSubsection != NULL);
+    ASSERT(ExtendedSubsectionHead->NextSubsection != NULL);
 
-    ASSERT (ExtendedSubsectionHead->u.SubsectionFlags.SectorEndOffset == 0);
+    ASSERT(ExtendedSubsectionHead->u.SubsectionFlags.SectorEndOffset == 0);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // This subsection may be extending a range that is already
@@ -240,26 +231,27 @@ Return Value:
     // so the first check below will be FALSE.
     //
 
-    if (LastSubsection->ControlArea->NumberOfUserReferences == 0) {
+    if (LastSubsection->ControlArea->NumberOfUserReferences == 0)
+    {
 
-        NewSubsection = (PMSUBSECTION) ExtendedSubsectionHead->NextSubsection;
+        NewSubsection = (PMSUBSECTION)ExtendedSubsectionHead->NextSubsection;
 
-        do {
-            ASSERT (NewSubsection->u.SubsectionFlags.SubsectionStatic == 1);
+        do
+        {
+            ASSERT(NewSubsection->u.SubsectionFlags.SubsectionStatic == 1);
 
-            MI_SNAP_SUB (NewSubsection, 0x1);
+            MI_SNAP_SUB(NewSubsection, 0x1);
 
             NewSubsection->u.SubsectionFlags.SubsectionStatic = 0;
             NewSubsection->u2.SubsectionFlags2.SubsectionConverted = 1;
             NewSubsection->NumberOfMappedViews = 1;
 
-            MiRemoveViewsFromSection (NewSubsection, 
-                                      NewSubsection->PtesInSubsection);
+            MiRemoveViewsFromSection(NewSubsection, NewSubsection->PtesInSubsection);
 
             MiExtendedSubsectionsConvertedToDynamic += 1;
 
-            MI_SNAP_SUB (NewSubsection, 0x2);
-            NewSubsection = (PMSUBSECTION) NewSubsection->NextSubsection;
+            MI_SNAP_SUB(NewSubsection, 0x2);
+            NewSubsection = (PMSUBSECTION)NewSubsection->NextSubsection;
         } while (NewSubsection != NULL);
     }
 
@@ -274,20 +266,16 @@ Return Value:
     // lock free for improved performance.
     //
 
-    KeMemoryBarrier ();
+    KeMemoryBarrier();
 
     LastSubsection->NextSubsection = ExtendedSubsectionHead->NextSubsection;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 }
 
-
+
 NTSTATUS
-MmExtendSection (
-    IN PVOID SectionToExtend,
-    IN OUT PLARGE_INTEGER NewSectionSize,
-    IN ULONG IgnoreFileSizeChecking
-    )
+MmExtendSection(IN PVOID SectionToExtend, IN OUT PLARGE_INTEGER NewSectionSize, IN ULONG IgnoreFileSizeChecking)
 
 /*++
 
@@ -356,8 +344,8 @@ Return Value:
     Segment = Section->Segment;
     ControlArea = Segment->ControlArea;
 
-    if ((ControlArea->u.Flags.PhysicalMemory || ControlArea->u.Flags.Image) ||
-         (ControlArea->FilePointer == NULL)) {
+    if ((ControlArea->u.Flags.PhysicalMemory || ControlArea->u.Flags.Image) || (ControlArea->FilePointer == NULL))
+    {
         return STATUS_SECTION_NOT_EXTENDED;
     }
 
@@ -366,9 +354,9 @@ Return Value:
     // updating the size at the same time.
     //
 
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
-    ExAcquireResourceExclusiveLite (&MmSectionExtendResource, TRUE);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
+    ExAcquireResourceExclusiveLite(&MmSectionExtendResource, TRUE);
 
     //
     // Calculate the number of prototype PTE chunks to build for this section.
@@ -395,24 +383,29 @@ Return Value:
 
     NumberOfPtes = (ULONG)NumberOfPtesForEntireFile;
 
-    if (NewSectionSize->QuadPart > MI_MAXIMUM_SECTION_SIZE) {
+    if (NewSectionSize->QuadPart > MI_MAXIMUM_SECTION_SIZE)
+    {
         Status = STATUS_SECTION_TOO_BIG;
         goto ReleaseAndReturn;
     }
 
-    if (NumberOfPtesForEntireFile > (UINT64)((MAXULONG_PTR / sizeof(MMPTE)) - sizeof (SEGMENT))) {
+    if (NumberOfPtesForEntireFile > (UINT64)((MAXULONG_PTR / sizeof(MMPTE)) - sizeof(SEGMENT)))
+    {
         Status = STATUS_SECTION_TOO_BIG;
         goto ReleaseAndReturn;
     }
 
-    if (NumberOfPtesForEntireFile > (UINT64)NewSectionSize->QuadPart) {
+    if (NumberOfPtesForEntireFile > (UINT64)NewSectionSize->QuadPart)
+    {
         Status = STATUS_SECTION_TOO_BIG;
         goto ReleaseAndReturn;
     }
 
-    if (ControlArea->u.Flags.WasPurged == 0) {
+    if (ControlArea->u.Flags.WasPurged == 0)
+    {
 
-        if ((UINT64)NewSectionSize->QuadPart <= (UINT64)Section->SizeOfSection.QuadPart) {
+        if ((UINT64)NewSectionSize->QuadPart <= (UINT64)Section->SizeOfSection.QuadPart)
+        {
             *NewSectionSize = Section->SizeOfSection;
             goto ReleaseAndReturnSuccess;
         }
@@ -422,20 +415,21 @@ Return Value:
     // If a file handle was specified, set the allocation size of the file.
     //
 
-    if (IgnoreFileSizeChecking == FALSE) {
+    if (IgnoreFileSizeChecking == FALSE)
+    {
 
         //
         // Release the resource so we don't deadlock with the file
         // system trying to extend this section at the same time.
         //
 
-        ExReleaseResourceLite (&MmSectionExtendResource);
+        ExReleaseResourceLite(&MmSectionExtendResource);
 
         //
         // Get a different resource to single thread query/set operations.
         //
 
-        ExAcquireResourceExclusiveLite (&MmSectionExtendSetResource, TRUE);
+        ExAcquireResourceExclusiveLite(&MmSectionExtendSetResource, TRUE);
 
         //
         // Query the file size to see if this file really needs extending.
@@ -444,16 +438,17 @@ Return Value:
         // the current size.
         //
 
-        Status = FsRtlGetFileSize (ControlArea->FilePointer,
-                                   (PLARGE_INTEGER)&EndOfFile);
+        Status = FsRtlGetFileSize(ControlArea->FilePointer, (PLARGE_INTEGER)&EndOfFile);
 
-        if (!NT_SUCCESS (Status)) {
-            ExReleaseResourceLite (&MmSectionExtendSetResource);
-            KeLeaveCriticalRegionThread (CurrentThread);
+        if (!NT_SUCCESS(Status))
+        {
+            ExReleaseResourceLite(&MmSectionExtendSetResource);
+            KeLeaveCriticalRegionThread(CurrentThread);
             return Status;
         }
 
-        if ((UINT64)NewSectionSize->QuadPart > EndOfFile) {
+        if ((UINT64)NewSectionSize->QuadPart > EndOfFile)
+        {
 
             //
             // Don't allow section extension unless the section was originally
@@ -463,13 +458,14 @@ Return Value:
             //
 
             if (((Section->InitialPageProtection & PAGE_READWRITE) |
-                (Section->InitialPageProtection & PAGE_EXECUTE_READWRITE)) == 0) {
+                 (Section->InitialPageProtection & PAGE_EXECUTE_READWRITE)) == 0)
+            {
 #if DBG
-                    DbgPrint("Section extension failed %x\n", Section);
+                DbgPrint("Section extension failed %x\n", Section);
 #endif
-                    ExReleaseResourceLite (&MmSectionExtendSetResource);
-                    KeLeaveCriticalRegionThread (CurrentThread);
-                    return STATUS_SECTION_NOT_EXTENDED;
+                ExReleaseResourceLite(&MmSectionExtendSetResource);
+                KeLeaveCriticalRegionThread(CurrentThread);
+                return STATUS_SECTION_NOT_EXTENDED;
             }
 
             //
@@ -478,22 +474,24 @@ Return Value:
 
             EndOfFile = *(PUINT64)NewSectionSize;
 
-            Status = FsRtlSetFileSize (ControlArea->FilePointer,
-                                       (PLARGE_INTEGER)&EndOfFile);
+            Status = FsRtlSetFileSize(ControlArea->FilePointer, (PLARGE_INTEGER)&EndOfFile);
 
-            if (!NT_SUCCESS (Status)) {
-                ExReleaseResourceLite (&MmSectionExtendSetResource);
-                KeLeaveCriticalRegionThread (CurrentThread);
+            if (!NT_SUCCESS(Status))
+            {
+                ExReleaseResourceLite(&MmSectionExtendSetResource);
+                KeLeaveCriticalRegionThread(CurrentThread);
                 return Status;
             }
         }
 
-        if (Segment->ExtendInfo) {
-            ExAcquireFastMutex (&MmSectionBasedMutex);
-            if (Segment->ExtendInfo) {
+        if (Segment->ExtendInfo)
+        {
+            ExAcquireFastMutex(&MmSectionBasedMutex);
+            if (Segment->ExtendInfo)
+            {
                 Segment->ExtendInfo->CommittedSize = EndOfFile;
             }
-            ExReleaseFastMutex (&MmSectionBasedMutex);
+            ExReleaseFastMutex(&MmSectionBasedMutex);
         }
 
         //
@@ -501,40 +499,46 @@ Return Value:
         // resource.
         //
 
-        ExReleaseResourceLite (&MmSectionExtendSetResource);
-        ExAcquireResourceExclusiveLite (&MmSectionExtendResource, TRUE);
+        ExReleaseResourceLite(&MmSectionExtendSetResource);
+        ExAcquireResourceExclusiveLite(&MmSectionExtendResource, TRUE);
     }
 
     //
     // Find the last subsection.
     //
 
-    ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 0);
+    ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 0);
 
-    if (((PMAPPED_FILE_SEGMENT)Segment)->LastSubsectionHint != NULL) {
-        LastSubsection = (PSUBSECTION) ((PMAPPED_FILE_SEGMENT)Segment)->LastSubsectionHint;
+    if (((PMAPPED_FILE_SEGMENT)Segment)->LastSubsectionHint != NULL)
+    {
+        LastSubsection = (PSUBSECTION)((PMAPPED_FILE_SEGMENT)Segment)->LastSubsectionHint;
     }
-    else {
-        if (ControlArea->u.Flags.Rom == 1) {
+    else
+    {
+        if (ControlArea->u.Flags.Rom == 1)
+        {
             LastSubsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
         }
-        else {
+        else
+        {
             LastSubsection = (PSUBSECTION)(ControlArea + 1);
         }
     }
 
-    while (LastSubsection->NextSubsection != NULL) {
-        ASSERT (LastSubsection->UnusedPtes == 0);
+    while (LastSubsection->NextSubsection != NULL)
+    {
+        ASSERT(LastSubsection->UnusedPtes == 0);
         LastSubsection = LastSubsection->NextSubsection;
     }
 
-    MI_CHECK_SUBSECTION (LastSubsection);
+    MI_CHECK_SUBSECTION(LastSubsection);
 
     //
     // Does the structure need extending?
     //
 
-    if (NumberOfPtes <= Segment->TotalNumberOfPtes) {
+    if (NumberOfPtes <= Segment->TotalNumberOfPtes)
+    {
 
         //
         // The segment is already large enough, just update
@@ -542,7 +546,8 @@ Return Value:
         //
 
         Section->SizeOfSection = *NewSectionSize;
-        if (Segment->SizeOfSegment < (UINT64)NewSectionSize->QuadPart) {
+        if (Segment->SizeOfSegment < (UINT64)NewSectionSize->QuadPart)
+        {
 
             //
             // Only update if it is really bigger.
@@ -554,12 +559,11 @@ Return Value:
 
             Last4KChunk.QuadPart = (NewSectionSize->QuadPart >> MM4K_SHIFT) - Starting4K.QuadPart;
 
-            ASSERT (Last4KChunk.HighPart == 0);
+            ASSERT(Last4KChunk.HighPart == 0);
 
             LastSubsection->NumberOfFullSectors = Last4KChunk.LowPart;
-            LastSubsection->u.SubsectionFlags.SectorEndOffset =
-                                        NewSectionSize->LowPart & MM4K_MASK;
-            MI_CHECK_SUBSECTION (LastSubsection);
+            LastSubsection->u.SubsectionFlags.SectorEndOffset = NewSectionSize->LowPart & MM4K_MASK;
+            MI_CHECK_SUBSECTION(LastSubsection);
         }
         goto ReleaseAndReturnSuccess;
     }
@@ -572,7 +576,8 @@ Return Value:
     RequiredPtes = NumberOfPtes - Segment->TotalNumberOfPtes;
     PtesUsed = 0;
 
-    if (RequiredPtes < LastSubsection->UnusedPtes) {
+    if (RequiredPtes < LastSubsection->UnusedPtes)
+    {
 
         //
         // There are ample PTEs to extend the section already allocated.
@@ -580,9 +585,9 @@ Return Value:
 
         PtesUsed = RequiredPtes;
         RequiredPtes = 0;
-
     }
-    else {
+    else
+    {
         PtesUsed = LastSubsection->UnusedPtes;
         RequiredPtes -= PtesUsed;
     }
@@ -592,7 +597,8 @@ Return Value:
     Segment->SizeOfSegment += (UINT64)PtesUsed * PAGE_SIZE;
     Segment->TotalNumberOfPtes += PtesUsed;
 
-    if (RequiredPtes == 0) {
+    if (RequiredPtes == 0)
+    {
 
         //
         // There is no extension necessary, update the high VBN.
@@ -602,15 +608,15 @@ Return Value:
 
         Last4KChunk.QuadPart = (NewSectionSize->QuadPart >> MM4K_SHIFT) - Starting4K.QuadPart;
 
-        ASSERT (Last4KChunk.HighPart == 0);
+        ASSERT(Last4KChunk.HighPart == 0);
 
         LastSubsection->NumberOfFullSectors = Last4KChunk.LowPart;
 
-        LastSubsection->u.SubsectionFlags.SectorEndOffset =
-                                    NewSectionSize->LowPart & MM4K_MASK;
-        MI_CHECK_SUBSECTION (LastSubsection);
+        LastSubsection->u.SubsectionFlags.SectorEndOffset = NewSectionSize->LowPart & MM4K_MASK;
+        MI_CHECK_SUBSECTION(LastSubsection);
     }
-    else {
+    else
+    {
 
         //
         // An extension is required.  Allocate the subsection and prototype
@@ -620,7 +626,7 @@ Return Value:
         NewSubsectionCount = 0;
 
         NumberOf4KsForEntireFile.QuadPart = Segment->SizeOfSegment >> MM4K_SHIFT;
-        AllocationSize = (ULONG) ROUND_TO_PAGES (RequiredPtes * sizeof(MMPTE));
+        AllocationSize = (ULONG)ROUND_TO_PAGES(RequiredPtes * sizeof(MMPTE));
 
         AllocationFragment = MmAllocationFragment;
 
@@ -630,7 +636,7 @@ Return Value:
 
         LastExtendedSubsection = &ExtendedSubsectionHead;
 
-        ASSERT (LastExtendedSubsection->NextSubsection == NULL);
+        ASSERT(LastExtendedSubsection->NextSubsection == NULL);
 
         //
         // Initializing NextSubsection4KStart is not needed for correctness
@@ -640,7 +646,8 @@ Return Value:
 
         NextSubsection4KStart.QuadPart = 0;
 
-        do {
+        do
+        {
 
             PartialSize = AllocationSize - RunningSize;
 
@@ -652,35 +659,34 @@ Return Value:
             //     individually without losing (or requiring) contiguous pool.
             //
 
-            if (PartialSize > AllocationFragment) {
-                PartialSize = (ULONG) AllocationFragment;
+            if (PartialSize > AllocationFragment)
+            {
+                PartialSize = (ULONG)AllocationFragment;
             }
 
             //
             // Allocate an extended subsection.
             //
 
-            ExtendedSubsection = (PMSUBSECTION) ExAllocatePoolWithTag (NonPagedPool,
-                                                            sizeof(MSUBSECTION),
-                                                            'dSmM');
-            if (ExtendedSubsection == NULL) {
+            ExtendedSubsection = (PMSUBSECTION)ExAllocatePoolWithTag(NonPagedPool, sizeof(MSUBSECTION), 'dSmM');
+            if (ExtendedSubsection == NULL)
+            {
                 goto ExtensionFailed;
             }
 
             ExtendedSubsection->NextSubsection = NULL;
-            LastExtendedSubsection->NextSubsection = (PSUBSECTION) ExtendedSubsection;
+            LastExtendedSubsection->NextSubsection = (PSUBSECTION)ExtendedSubsection;
 
-            ProtoPtes = (PMMPTE)ExAllocatePoolWithTag (PagedPool,
-                                                       PartialSize,
-                                                       MMSECT);
+            ProtoPtes = (PMMPTE)ExAllocatePoolWithTag(PagedPool, PartialSize, MMSECT);
 
             ExtendedSubsection->SubsectionBase = ProtoPtes;
 
-            if (ProtoPtes == NULL) {
+            if (ProtoPtes == NULL)
+            {
                 goto ExtensionFailed;
             }
 
-            ASSERT (ControlArea->FilePointer != NULL);
+            ASSERT(ControlArea->FilePointer != NULL);
 
             ExtendedSubsection->u.LongFlags = 0;
 
@@ -691,7 +697,8 @@ Return Value:
 
             RunningSize += PartialSize;
 
-            if (RunningSize > (RequiredPtes * sizeof(MMPTE))) {
+            if (RunningSize > (RequiredPtes * sizeof(MMPTE)))
+            {
                 UnusedPtes = RunningSize / sizeof(MMPTE) - RequiredPtes;
                 ExtendedSubsection->PtesInSubsection -= UnusedPtes;
                 ExtendedSubsection->UnusedPtes = UnusedPtes;
@@ -706,15 +713,14 @@ Return Value:
             // for various protections.
             //
 
-            TempPte.u.Long = MiGetSubsectionAddressForPte (ExtendedSubsection);
+            TempPte.u.Long = MiGetSubsectionAddressForPte(ExtendedSubsection);
             TempPte.u.Soft.Prototype = 1;
 
             TempPte.u.Soft.Protection = Segment->SegmentPteTemplate.u.Soft.Protection;
 
-            MiFillMemoryPte (ProtoPtes, PartialSize, TempPte.u.Long);
+            MiFillMemoryPte(ProtoPtes, PartialSize, TempPte.u.Long);
 
-            ExtendedSubsection->u.SubsectionFlags.Protection =
-                                        (unsigned) TempPte.u.Soft.Protection;
+            ExtendedSubsection->u.SubsectionFlags.Protection = (unsigned)TempPte.u.Soft.Protection;
 
             ExtendedSubsection->DereferenceList.Flink = NULL;
             ExtendedSubsection->DereferenceList.Blink = NULL;
@@ -746,18 +752,19 @@ Return Value:
             // to the chained subsection until the loop completes successfully.
             //
 
-            if (LastExtendedSubsection == &ExtendedSubsectionHead) {
+            if (LastExtendedSubsection == &ExtendedSubsectionHead)
+            {
 
-                Mi4KStartFromSubsection (&Starting4K, LastExtendedSubsection);
+                Mi4KStartFromSubsection(&Starting4K, LastExtendedSubsection);
 
-                Last4KChunk.QuadPart = NumberOf4KsForEntireFile.QuadPart -
-                                            Starting4K.QuadPart;
+                Last4KChunk.QuadPart = NumberOf4KsForEntireFile.QuadPart - Starting4K.QuadPart;
 
-                if (LastExtendedSubsection->u.SubsectionFlags.SectorEndOffset) {
+                if (LastExtendedSubsection->u.SubsectionFlags.SectorEndOffset)
+                {
                     Last4KChunk.QuadPart += 1;
                 }
 
-                ASSERT (Last4KChunk.HighPart == 0);
+                ASSERT(Last4KChunk.HighPart == 0);
 
                 LastExtendedSubsection->NumberOfFullSectors = Last4KChunk.LowPart;
                 LastExtendedSubsection->u.SubsectionFlags.SectorEndOffset = 0;
@@ -768,16 +775,18 @@ Return Value:
                 // fill it now.
                 //
 
-                if (LastExtendedSubsection->NumberOfFullSectors & ((1 << (PAGE_SHIFT - MM4K_SHIFT)) - 1)) {
+                if (LastExtendedSubsection->NumberOfFullSectors & ((1 << (PAGE_SHIFT - MM4K_SHIFT)) - 1))
+                {
                     LastExtendedSubsection->NumberOfFullSectors += 1;
                 }
 
-                MI_CHECK_SUBSECTION (LastExtendedSubsection);
+                MI_CHECK_SUBSECTION(LastExtendedSubsection);
 
                 Starting4K.QuadPart += LastExtendedSubsection->NumberOfFullSectors;
                 NextSubsection4KStart.QuadPart = Starting4K.QuadPart;
             }
-            else {
+            else
+            {
                 NextSubsection4KStart.QuadPart += LastExtendedSubsection->NumberOfFullSectors;
             }
 
@@ -785,36 +794,35 @@ Return Value:
             // Initialize the newly allocated subsection.
             //
 
-            Mi4KStartForSubsection (&NextSubsection4KStart, ExtendedSubsection);
+            Mi4KStartForSubsection(&NextSubsection4KStart, ExtendedSubsection);
 
-            if (RunningSize < AllocationSize) {
+            if (RunningSize < AllocationSize)
+            {
 
                 //
                 // Not the final subsection so all quantities are full pages.
                 //
 
-                ExtendedSubsection->NumberOfFullSectors =
-                        (PartialSize / sizeof (MMPTE)) << (PAGE_SHIFT - MM4K_SHIFT);
+                ExtendedSubsection->NumberOfFullSectors = (PartialSize / sizeof(MMPTE)) << (PAGE_SHIFT - MM4K_SHIFT);
                 ExtendedSubsection->u.SubsectionFlags.SectorEndOffset = 0;
             }
-            else {
+            else
+            {
 
                 //
                 // The final subsection so quantities are not always full pages.
                 //
 
-                Last4KChunk.QuadPart =
-                    (NewSectionSize->QuadPart >> MM4K_SHIFT) - NextSubsection4KStart.QuadPart;
+                Last4KChunk.QuadPart = (NewSectionSize->QuadPart >> MM4K_SHIFT) - NextSubsection4KStart.QuadPart;
 
-                ASSERT (Last4KChunk.HighPart == 0);
+                ASSERT(Last4KChunk.HighPart == 0);
 
                 ExtendedSubsection->NumberOfFullSectors = Last4KChunk.LowPart;
 
-                ExtendedSubsection->u.SubsectionFlags.SectorEndOffset =
-                                    NewSectionSize->LowPart & MM4K_MASK;
+                ExtendedSubsection->u.SubsectionFlags.SectorEndOffset = NewSectionSize->LowPart & MM4K_MASK;
             }
 
-            MI_CHECK_SUBSECTION (ExtendedSubsection);
+            MI_CHECK_SUBSECTION(ExtendedSubsection);
 
             LastExtendedSubsection = ExtendedSubsection;
 
@@ -822,7 +830,7 @@ Return Value:
 
         } while (RunningSize < AllocationSize);
 
-        ASSERT (ControlArea->DereferenceList.Flink == NULL);
+        ASSERT(ControlArea->DereferenceList.Flink == NULL);
 
         //
         // Link the newly created subsection chain into the existing list.
@@ -834,21 +842,20 @@ Return Value:
         // parallel by another thread).
         //
 
-        if (ControlArea->NumberOfUserReferences == 0) {
-            ASSERT (IgnoreFileSizeChecking == TRUE);
+        if (ControlArea->NumberOfUserReferences == 0)
+        {
+            ASSERT(IgnoreFileSizeChecking == TRUE);
         }
 
         Segment->TotalNumberOfPtes += RequiredPtes;
 
-        MiAppendSubsectionChain ((PMSUBSECTION)LastSubsection,
-                                 &ExtendedSubsectionHead);
+        MiAppendSubsectionChain((PMSUBSECTION)LastSubsection, &ExtendedSubsectionHead);
 
-        ControlArea->NumberOfSubsections =
-            (USHORT)(ControlArea->NumberOfSubsections + NewSubsectionCount);
+        ControlArea->NumberOfSubsections = (USHORT)(ControlArea->NumberOfSubsections + NewSubsectionCount);
 
-        if (LastExtendedSubsection != &ExtendedSubsectionHead) {
-            ((PMAPPED_FILE_SEGMENT)Segment)->LastSubsectionHint =
-                    LastExtendedSubsection;
+        if (LastExtendedSubsection != &ExtendedSubsectionHead)
+        {
+            ((PMAPPED_FILE_SEGMENT)Segment)->LastSubsectionHint = LastExtendedSubsection;
         }
     }
 
@@ -861,8 +868,8 @@ ReleaseAndReturnSuccess:
 
 ReleaseAndReturn:
 
-    ExReleaseResourceLite (&MmSectionExtendResource);
-    KeLeaveCriticalRegionThread (CurrentThread);
+    ExReleaseResourceLite(&MmSectionExtendResource);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return Status;
 
@@ -885,25 +892,24 @@ ExtensionFailed:
 
     LastSubsection = ExtendedSubsectionHead.NextSubsection;
 
-    while (LastSubsection != NULL) {
+    while (LastSubsection != NULL)
+    {
         Subsection = LastSubsection->NextSubsection;
-        if (LastSubsection->SubsectionBase != NULL) {
-            ExFreePool (LastSubsection->SubsectionBase);
+        if (LastSubsection->SubsectionBase != NULL)
+        {
+            ExFreePool(LastSubsection->SubsectionBase);
         }
-        ExFreePool (LastSubsection);
+        ExFreePool(LastSubsection);
         LastSubsection = Subsection;
     }
 
     Status = STATUS_INSUFFICIENT_RESOURCES;
     goto ReleaseAndReturn;
 }
-
+
 PMMPTE
 FASTCALL
-MiGetProtoPteAddressExtended (
-    IN PMMVAD Vad,
-    IN ULONG_PTR Vpn
-    )
+MiGetProtoPteAddressExtended(IN PMMVAD Vad, IN ULONG_PTR Vpn)
 
 /*++
 
@@ -932,10 +938,12 @@ Return Value:
 
     ControlArea = Vad->ControlArea;
 
-    if (ControlArea->u.Flags.GlobalOnlyPerSession == 0) {
+    if (ControlArea->u.Flags.GlobalOnlyPerSession == 0)
+    {
         Subsection = (PSUBSECTION)(ControlArea + 1);
     }
-    else {
+    else
+    {
         Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
     }
 
@@ -944,32 +952,31 @@ Return Value:
     // for this VAD.
     //
 
-    while ((Subsection->SubsectionBase == NULL) ||
-           (Vad->FirstPrototypePte < Subsection->SubsectionBase) ||
-           (Vad->FirstPrototypePte >=
-               &Subsection->SubsectionBase[Subsection->PtesInSubsection])) {
+    while ((Subsection->SubsectionBase == NULL) || (Vad->FirstPrototypePte < Subsection->SubsectionBase) ||
+           (Vad->FirstPrototypePte >= &Subsection->SubsectionBase[Subsection->PtesInSubsection]))
+    {
 
         //
         // Get the next subsection.
         //
 
         Subsection = Subsection->NextSubsection;
-        if (Subsection == NULL) {
+        if (Subsection == NULL)
+        {
             return NULL;
         }
     }
 
-    ASSERT (Subsection->SubsectionBase != NULL);
+    ASSERT(Subsection->SubsectionBase != NULL);
 
     //
     // How many PTEs beyond this subsection must we go?
     //
 
-    PteOffset = (ULONG) (((Vpn - Vad->StartingVpn) +
-                 (ULONG)(Vad->FirstPrototypePte - Subsection->SubsectionBase)) -
-                 Subsection->PtesInSubsection);
+    PteOffset = (ULONG)(((Vpn - Vad->StartingVpn) + (ULONG)(Vad->FirstPrototypePte - Subsection->SubsectionBase)) -
+                        Subsection->PtesInSubsection);
 
-    ASSERT (PteOffset < 0xF0000000);
+    ASSERT(PteOffset < 0xF0000000);
 
     PteOffset += Subsection->PtesInSubsection;
 
@@ -977,10 +984,12 @@ Return Value:
     // Locate the subsection which contains the prototype PTEs.
     //
 
-    while (PteOffset >= Subsection->PtesInSubsection) {
+    while (PteOffset >= Subsection->PtesInSubsection)
+    {
         PteOffset -= Subsection->PtesInSubsection;
         Subsection = Subsection->NextSubsection;
-        if (Subsection == NULL) {
+        if (Subsection == NULL)
+        {
             return NULL;
         }
     }
@@ -989,20 +998,16 @@ Return Value:
     // The PTEs are in this subsection.
     //
 
-    ASSERT (Subsection->SubsectionBase != NULL);
+    ASSERT(Subsection->SubsectionBase != NULL);
 
-    ASSERT (PteOffset < Subsection->PtesInSubsection);
+    ASSERT(PteOffset < Subsection->PtesInSubsection);
 
     return &Subsection->SubsectionBase[PteOffset];
-
 }
-
+
 PSUBSECTION
 FASTCALL
-MiLocateSubsection (
-    IN PMMVAD Vad,
-    IN ULONG_PTR Vpn
-    )
+MiLocateSubsection(IN PMMVAD Vad, IN ULONG_PTR Vpn)
 
 /*++
 
@@ -1033,16 +1038,20 @@ Return Value:
 
     ControlArea = Vad->ControlArea;
 
-    if (ControlArea->u.Flags.Rom == 0) {
+    if (ControlArea->u.Flags.Rom == 0)
+    {
         Subsection = (PSUBSECTION)(ControlArea + 1);
     }
-    else {
+    else
+    {
         Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
     }
 
-    if (ControlArea->u.Flags.Image) {
+    if (ControlArea->u.Flags.Image)
+    {
 
-        if (ControlArea->u.Flags.GlobalOnlyPerSession == 1) {
+        if (ControlArea->u.Flags.GlobalOnlyPerSession == 1)
+        {
             Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
         }
 
@@ -1053,7 +1062,7 @@ Return Value:
         return Subsection;
     }
 
-    ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 0);
+    ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 0);
 
     //
     // Locate the subsection which contains the First Prototype PTE
@@ -1064,50 +1073,51 @@ Return Value:
     // can be NULL.
     //
 
-    while ((Subsection->SubsectionBase == NULL) ||
-           (Vad->FirstPrototypePte < Subsection->SubsectionBase) ||
-           (Vad->FirstPrototypePte >=
-               &Subsection->SubsectionBase[Subsection->PtesInSubsection])) {
+    while ((Subsection->SubsectionBase == NULL) || (Vad->FirstPrototypePte < Subsection->SubsectionBase) ||
+           (Vad->FirstPrototypePte >= &Subsection->SubsectionBase[Subsection->PtesInSubsection]))
+    {
 
         //
         // Get the next subsection.
         //
 
         Subsection = Subsection->NextSubsection;
-        if (Subsection == NULL) {
+        if (Subsection == NULL)
+        {
             return NULL;
         }
     }
 
-    ASSERT (Subsection->SubsectionBase != NULL);
+    ASSERT(Subsection->SubsectionBase != NULL);
 
     //
     // How many PTEs beyond this subsection must we go?
     //
 
-    PteOffset = (ULONG)((Vpn - Vad->StartingVpn) +
-         (ULONG)(Vad->FirstPrototypePte - Subsection->SubsectionBase));
+    PteOffset = (ULONG)((Vpn - Vad->StartingVpn) + (ULONG)(Vad->FirstPrototypePte - Subsection->SubsectionBase));
 
-    ASSERT (PteOffset < 0xF0000000);
+    ASSERT(PteOffset < 0xF0000000);
 
     //
     // Locate the subsection which contains the prototype PTEs.
     //
 
-    while (PteOffset >= Subsection->PtesInSubsection) {
+    while (PteOffset >= Subsection->PtesInSubsection)
+    {
         PteOffset -= Subsection->PtesInSubsection;
         Subsection = Subsection->NextSubsection;
-        if (Subsection == NULL) {
+        if (Subsection == NULL)
+        {
             return NULL;
         }
-        ASSERT (Subsection->SubsectionBase != NULL);
+        ASSERT(Subsection->SubsectionBase != NULL);
     }
 
     //
     // The PTEs are in this subsection.
     //
 
-    ASSERT (Subsection->SubsectionBase != NULL);
+    ASSERT(Subsection->SubsectionBase != NULL);
 
     return Subsection;
 }

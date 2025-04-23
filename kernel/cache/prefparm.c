@@ -61,9 +61,7 @@ WCHAR *CcPfBootScenarioTypePrefix = L"Boot";
 //
 
 NTSTATUS
-CcPfParametersInitialize (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    )
+CcPfParametersInitialize(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters)
 
 /*++
 
@@ -89,7 +87,7 @@ Notes:
 
 --*/
 
-{   
+{
     OBJECT_ATTRIBUTES ObjectAttributes;
     UNICODE_STRING KeyName;
     NTSTATUS Status;
@@ -108,15 +106,13 @@ Notes:
     //
 
     ExInitializeResourceLite(&PrefetcherParameters->ParametersLock);
-    
+
     //
     // Initialize the workitem used for registry notifications on the
     // parameters key.
     //
 
-    ExInitializeWorkItem(&PrefetcherParameters->RegistryWatchWorkItem, 
-                         CcPfParametersWatcher, 
-                         PrefetcherParameters);
+    ExInitializeWorkItem(&PrefetcherParameters->RegistryWatchWorkItem, CcPfParametersWatcher, PrefetcherParameters);
 
     //
     // Set default parameters.
@@ -130,69 +126,56 @@ Notes:
 
     RtlInitUnicodeString(&KeyName, CCPF_PARAMETERS_KEY);
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &KeyName,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    Status = ZwCreateKey(&PrefetcherParameters->ParametersKey,
-                         KEY_ALL_ACCESS,
-                         &ObjectAttributes,
-                         0,
-                         NULL,
-                         REG_OPTION_NON_VOLATILE,
-                         0);
+    Status = ZwCreateKey(&PrefetcherParameters->ParametersKey, KEY_ALL_ACCESS, &ObjectAttributes, 0, NULL,
+                         REG_OPTION_NON_VOLATILE, 0);
 
-    if (NT_SUCCESS(Status)) {      
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Update the default parameters with those in the registry.
         //
-    
-        Status = CcPfParametersRead(PrefetcherParameters); 
-    
-        if (!NT_SUCCESS(Status)) {
-            DBGPR((CCPFID,PFERR,"CCPF: Init-FailedReadParams=%x\n",Status));
+
+        Status = CcPfParametersRead(PrefetcherParameters);
+
+        if (!NT_SUCCESS(Status))
+        {
+            DBGPR((CCPFID, PFERR, "CCPF: Init-FailedReadParams=%x\n", Status));
         }
 
         //
         // Request notification when something changes in the
         // prefetcher parameters key.
         //
-    
-        Status = ZwNotifyChangeKey(PrefetcherParameters->ParametersKey,
-                                   NULL,
-                                   (PIO_APC_ROUTINE)&PrefetcherParameters->RegistryWatchWorkItem,
-                                   (PVOID)(UINT_PTR)(unsigned int)DelayedWorkQueue,
-                                   &PrefetcherParameters->RegistryWatchIosb,
-                                   REG_LEGAL_CHANGE_FILTER,
-                                   FALSE,
-                                   &PrefetcherParameters->RegistryWatchBuffer,
-                                   sizeof(PrefetcherParameters->RegistryWatchBuffer),
-                                   TRUE);
-    
-        if (!NT_SUCCESS(Status)) {
+
+        Status = ZwNotifyChangeKey(
+            PrefetcherParameters->ParametersKey, NULL, (PIO_APC_ROUTINE)&PrefetcherParameters->RegistryWatchWorkItem,
+            (PVOID)(UINT_PTR)(unsigned int)DelayedWorkQueue, &PrefetcherParameters->RegistryWatchIosb,
+            REG_LEGAL_CHANGE_FILTER, FALSE, &PrefetcherParameters->RegistryWatchBuffer,
+            sizeof(PrefetcherParameters->RegistryWatchBuffer), TRUE);
+
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // Although we could not register a notification, this
             // is not a fatal error.
             //
 
-            DBGPR((CCPFID,PFERR,"CCPF: Init-FailedSetParamNotify=%x\n",Status));
+            DBGPR((CCPFID, PFERR, "CCPF: Init-FailedSetParamNotify=%x\n", Status));
         }
-
-    } else {
-        DBGPR((CCPFID,PFERR,"CCPF: Init-FailedCreateParamKey=%x\n",Status));
+    }
+    else
+    {
+        DBGPR((CCPFID, PFERR, "CCPF: Init-FailedCreateParamKey=%x\n", Status));
     }
 
     return Status;
 }
 
-VOID
-CcPfParametersSetDefaults (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    )
+VOID CcPfParametersSetDefaults(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters)
 
 /*++
 
@@ -229,7 +212,8 @@ Notes:
 
     Parameters = &PrefetcherParameters->Parameters;
 
-    for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++) {
+    for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++)
+    {
 
         //
         // PfSvNotSpecified is currently treated as disabled.
@@ -243,41 +227,40 @@ Notes:
 
         TraceLimits = &Parameters->TraceLimits[ScenarioType];
 
-        switch(ScenarioType) {
+        switch (ScenarioType)
+        {
 
         case PfApplicationLaunchScenarioType:
 
-            TraceLimits->MaxNumPages =    4000;
+            TraceLimits->MaxNumPages = 4000;
             TraceLimits->MaxNumSections = 170;
-            TraceLimits->TimerPeriod =    (-1 * 1000 * 1000 * 10);
+            TraceLimits->TimerPeriod = (-1 * 1000 * 1000 * 10);
 
-            PrefetcherParameters->ScenarioTypePrefixes[ScenarioType] = 
-                CcPfAppLaunchScenarioTypePrefix;
+            PrefetcherParameters->ScenarioTypePrefixes[ScenarioType] = CcPfAppLaunchScenarioTypePrefix;
 
             break;
 
         case PfSystemBootScenarioType:
 
-            TraceLimits->MaxNumPages =    128000;
+            TraceLimits->MaxNumPages = 128000;
             TraceLimits->MaxNumSections = 4080;
-            TraceLimits->TimerPeriod =    (-1 * 12000 * 1000 * 10);
+            TraceLimits->TimerPeriod = (-1 * 12000 * 1000 * 10);
 
-            PrefetcherParameters->ScenarioTypePrefixes[ScenarioType] = 
-                CcPfBootScenarioTypePrefix;
+            PrefetcherParameters->ScenarioTypePrefixes[ScenarioType] = CcPfBootScenarioTypePrefix;
 
             break;
-        
+
         default:
-        
+
             //
             // We should be handling all scenario types above.
             //
 
             CCPF_ASSERT(FALSE);
 
-            TraceLimits->MaxNumPages =    PF_MAXIMUM_PAGES;
+            TraceLimits->MaxNumPages = PF_MAXIMUM_PAGES;
             TraceLimits->MaxNumSections = PF_MAXIMUM_SECTIONS;
-            TraceLimits->TimerPeriod =    (-1 * 1000 * 1000 * 10);
+            TraceLimits->TimerPeriod = (-1 * 1000 * 1000 * 10);
 
             PrefetcherParameters->ScenarioTypePrefixes[ScenarioType] = L"XXX";
         }
@@ -298,9 +281,7 @@ Notes:
     // hardcoded in txtsetup.inx.
     //
 
-    wcsncpy(Parameters->RootDirPath, 
-            L"Prefetch",
-            PF_MAX_PREFETCH_ROOT_PATH);
+    wcsncpy(Parameters->RootDirPath, L"Prefetch", PF_MAX_PREFETCH_ROOT_PATH);
 
     Parameters->RootDirPath[PF_MAX_PREFETCH_ROOT_PATH - 1] = 0;
 
@@ -308,9 +289,7 @@ Notes:
     // This is the default list of known hosting applications.
     //
 
-    wcsncpy(Parameters->HostingApplicationList,
-            L"DLLHOST.EXE,MMC.EXE,RUNDLL32.EXE",
-            PF_HOSTING_APP_LIST_MAX_CHARS);
+    wcsncpy(Parameters->HostingApplicationList, L"DLLHOST.EXE,MMC.EXE,RUNDLL32.EXE", PF_HOSTING_APP_LIST_MAX_CHARS);
 
     Parameters->HostingApplicationList[PF_HOSTING_APP_LIST_MAX_CHARS - 1] = 0;
 
@@ -319,13 +298,10 @@ Notes:
     //
 
     CCPF_ASSERT(NT_SUCCESS(CcPfParametersVerify(Parameters)));
-
 }
 
 NTSTATUS
-CcPfParametersRead (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    )
+CcPfParametersRead(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters)
 
 /*++
 
@@ -371,28 +347,30 @@ Environment:
     // Initialize locals.
     //
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
     AcquiredParametersLock = FALSE;
     RetryCount = 0;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersRead()\n"));
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersRead()\n"));
 
     //
     // If we could not initialize the parameters key, we would fail
     // all the following ops miserably.
     //
 
-    if (!PrefetcherParameters->ParametersKey) {
+    if (!PrefetcherParameters->ParametersKey)
+    {
         Status = STATUS_REINITIALIZATION_NEEDED;
         goto cleanup;
     }
 
-    do {
+    do
+    {
 
         //
-        // Get the parameters lock shared. 
-        // 
-        
+        // Get the parameters lock shared.
+        //
+
         KeEnterCriticalRegionThread(CurrentThread);
         ExAcquireResourceSharedLite(&PrefetcherParameters->ParametersLock, TRUE);
         AcquiredParametersLock = TRUE;
@@ -403,7 +381,7 @@ Environment:
         // Save current version of parameters. Each time parameters gets
         // updated, the version is bumped.
         //
-        
+
         CurrentVersion = PrefetcherParameters->ParametersVersion;
 
         //
@@ -421,22 +399,20 @@ Environment:
         //
 
         Length = sizeof(EnablePrefetcher);
-        Status = CcPfGetParameter(ParametersKey,
-                                  L"EnablePrefetcher",
-                                  REG_DWORD,
-                                  &EnablePrefetcher,
-                                  &Length);
+        Status = CcPfGetParameter(ParametersKey, L"EnablePrefetcher", REG_DWORD, &EnablePrefetcher, &Length);
 
-        if (!NT_SUCCESS(Status)) {
-        
+        if (!NT_SUCCESS(Status))
+        {
+
             //
             // Enable status is not specified or we cannot access it.
             //
 
             EnableStatusSpecified = FALSE;
+        }
+        else
+        {
 
-        } else {
-        
             EnableStatusSpecified = TRUE;
         }
 
@@ -444,7 +420,8 @@ Environment:
         // Get per scenario parameters.
         //
 
-        for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++) {
+        for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++)
+        {
 
             ValueNamePrefix = PrefetcherParameters->ScenarioTypePrefixes[ScenarioType];
 
@@ -453,14 +430,20 @@ Environment:
             // prefeching for this scenario type is on or off is
             // determined by the ScenarioType'th bit in EnablePrefetcher.
             //
-        
-            if (EnableStatusSpecified) {
-                if (EnablePrefetcher & (1 << ScenarioType)) {
+
+            if (EnableStatusSpecified)
+            {
+                if (EnablePrefetcher & (1 << ScenarioType))
+                {
                     Parameters.EnableStatus[ScenarioType] = PfSvEnabled;
-                } else {
+                }
+                else
+                {
                     Parameters.EnableStatus[ScenarioType] = PfSvDisabled;
                 }
-            } else {
+            }
+            else
+            {
                 Parameters.EnableStatus[ScenarioType] = PfSvNotSpecified;
             }
 
@@ -472,92 +455,65 @@ Environment:
             //
 
             TraceLimits = &Parameters.TraceLimits[ScenarioType];
-            
-            wcscpy(ValueName, ValueNamePrefix);       
+
+            wcscpy(ValueName, ValueNamePrefix);
             wcscat(ValueName, L"MaxNumPages");
             Length = sizeof(TraceLimits->MaxNumPages);
-            CcPfGetParameter(ParametersKey,
-                             ValueName,
-                             REG_DWORD,
-                             &TraceLimits->MaxNumPages,
-                             &Length);
+            CcPfGetParameter(ParametersKey, ValueName, REG_DWORD, &TraceLimits->MaxNumPages, &Length);
 
-            wcscpy(ValueName, ValueNamePrefix);       
+            wcscpy(ValueName, ValueNamePrefix);
             wcscat(ValueName, L"MaxNumSections");
             Length = sizeof(TraceLimits->MaxNumSections);
-            CcPfGetParameter(ParametersKey,
-                             ValueName,
-                             REG_DWORD,
-                             &TraceLimits->MaxNumSections,
-                             &Length);
+            CcPfGetParameter(ParametersKey, ValueName, REG_DWORD, &TraceLimits->MaxNumSections, &Length);
 
-            wcscpy(ValueName, ValueNamePrefix);       
+            wcscpy(ValueName, ValueNamePrefix);
             wcscat(ValueName, L"TimerPeriod");
             Length = sizeof(TraceLimits->TimerPeriod);
-            CcPfGetParameter(ParametersKey,
-                             ValueName,
-                             REG_BINARY,
-                             &TraceLimits->TimerPeriod,
-                             &Length);
+            CcPfGetParameter(ParametersKey, ValueName, REG_BINARY, &TraceLimits->TimerPeriod, &Length);
         }
 
         //
-        // Update maximum number of active traces. 
+        // Update maximum number of active traces.
         //
 
         Length = sizeof(Parameters.MaxNumActiveTraces);
-        CcPfGetParameter(ParametersKey,
-                         L"MaxNumActiveTraces",
-                         REG_DWORD,
-                         &Parameters.MaxNumActiveTraces,
-                         &Length);
-    
+        CcPfGetParameter(ParametersKey, L"MaxNumActiveTraces", REG_DWORD, &Parameters.MaxNumActiveTraces, &Length);
+
         //
-        // Update maximum number of saved traces. 
+        // Update maximum number of saved traces.
         //
 
         Length = sizeof(Parameters.MaxNumSavedTraces);
-        CcPfGetParameter(ParametersKey,
-                         L"MaxNumSavedTraces",
-                         REG_DWORD,
-                         &Parameters.MaxNumSavedTraces,
-                         &Length);
-    
+        CcPfGetParameter(ParametersKey, L"MaxNumSavedTraces", REG_DWORD, &Parameters.MaxNumSavedTraces, &Length);
+
         //
         // Update the root directory path.
         //
-    
+
         Length = sizeof(Parameters.RootDirPath);
-        CcPfGetParameter(ParametersKey,
-                         L"RootDirPath",
-                         REG_SZ,
-                         Parameters.RootDirPath,
-                         &Length);
+        CcPfGetParameter(ParametersKey, L"RootDirPath", REG_SZ, Parameters.RootDirPath, &Length);
 
         //
         // Update list of known hosting applications.
         //
 
         Length = sizeof(Parameters.HostingApplicationList);
-        CcPfGetParameter(ParametersKey,
-                         L"HostingAppList",
-                         REG_SZ,
-                         Parameters.HostingApplicationList,
-                         &Length);
-        
+        CcPfGetParameter(ParametersKey, L"HostingAppList", REG_SZ, Parameters.HostingApplicationList, &Length);
+
         Parameters.HostingApplicationList[PF_HOSTING_APP_LIST_MAX_CHARS - 1] = 0;
         _wcsupr(Parameters.HostingApplicationList);
-         
+
         //
         // Verify the parameters updated from the registry.
         //
 
         Status = CcPfParametersVerify(&Parameters);
-    
-        if (!NT_SUCCESS(Status)) {
+
+        if (!NT_SUCCESS(Status))
+        {
             goto cleanup;
         }
-        
+
         //
         // Release the shared lock and acquire it exclusive.
         //
@@ -567,12 +523,13 @@ Environment:
 
         KeEnterCriticalRegionThread(CurrentThread);
         ExAcquireResourceExclusiveLite(&PrefetcherParameters->ParametersLock, TRUE);
-        
+
         //
         // Check if somebody already updated the parameters before us.
         //
-        
-        if (CurrentVersion != PrefetcherParameters->ParametersVersion) {
+
+        if (CurrentVersion != PrefetcherParameters->ParametersVersion)
+        {
 
             //
             // Bummer. Somebody updated parameters when we released
@@ -588,23 +545,23 @@ Environment:
             RetryCount++;
             continue;
         }
-        
+
         //
         // We are updating the parameters, bump the version.
         //
 
         PrefetcherParameters->ParametersVersion++;
-        
+
         PrefetcherParameters->Parameters = Parameters;
 
         //
         // Release the exclusive lock and break out.
         //
-        
+
         ExReleaseResourceLite(&PrefetcherParameters->ParametersLock);
         KeLeaveCriticalRegionThread(CurrentThread);
         AcquiredParametersLock = FALSE;
-        
+
         break;
 
     } while (RetryCount < 10);
@@ -614,7 +571,8 @@ Environment:
     // the parameters.
     //
 
-    if (RetryCount >= 10) {
+    if (RetryCount >= 10)
+    {
         Status = STATUS_RETRY;
         goto cleanup;
     }
@@ -625,22 +583,21 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    if (AcquiredParametersLock) {
+    if (AcquiredParametersLock)
+    {
         ExReleaseResourceLite(&PrefetcherParameters->ParametersLock);
         KeLeaveCriticalRegionThread(CurrentThread);
     }
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersRead()=%x\n", Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersRead()=%x\n", Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfParametersSave (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    )
+CcPfParametersSave(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters)
 
 /*++
 
@@ -681,27 +638,28 @@ Environment:
     // Initialize locals.
     //
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
     ParametersKey = PrefetcherParameters->ParametersKey;
     Parameters = &PrefetcherParameters->Parameters;
     AcquiredParametersLock = FALSE;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersSave()\n"));
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersSave()\n"));
 
     //
     // If we could not initialize the parameters key, we would fail
     // all the following ops miserably.
     //
 
-    if (!PrefetcherParameters->ParametersKey) {
+    if (!PrefetcherParameters->ParametersKey)
+    {
         Status = STATUS_REINITIALIZATION_NEEDED;
         goto cleanup;
     }
 
     //
-    // Get the parameters lock shared. 
-    // 
-    
+    // Get the parameters lock shared.
+    //
+
     KeEnterCriticalRegionThread(CurrentThread);
     ExAcquireResourceSharedLite(&PrefetcherParameters->ParametersLock, TRUE);
     AcquiredParametersLock = TRUE;
@@ -709,32 +667,36 @@ Environment:
     //
     // Build up the prefetcher enable value.
     //
-    
+
     EnableStatusSpecified = FALSE;
     EnablePrefetcher = 0;
 
-    for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++) {
+    for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++)
+    {
 
         //
         // By default prefetching for all scenario types will be
         // disabled, except it is explicitly enabled.
         //
 
-        if (Parameters->EnableStatus[ScenarioType] == PfSvEnabled) {
+        if (Parameters->EnableStatus[ScenarioType] == PfSvEnabled)
+        {
             EnablePrefetcher |= (1 << ScenarioType);
-        }       
-        
+        }
+
         //
         // Even if enable status for one scenario type is specified,
-        // we have to save the enable prefetcher key. 
+        // we have to save the enable prefetcher key.
         //
 
-        if (Parameters->EnableStatus[ScenarioType] != PfSvNotSpecified) {
+        if (Parameters->EnableStatus[ScenarioType] != PfSvNotSpecified)
+        {
             EnableStatusSpecified = TRUE;
         }
     }
 
-    if (EnableStatusSpecified) {
+    if (EnableStatusSpecified)
+    {
 
         //
         // Save the prefetcher enable key.
@@ -742,13 +704,10 @@ Environment:
 
         Length = sizeof(EnablePrefetcher);
 
-        Status = CcPfSetParameter(ParametersKey,
-                                  L"EnablePrefetcher",
-                                  REG_DWORD,
-                                  &EnablePrefetcher,
-                                  Length);
+        Status = CcPfSetParameter(ParametersKey, L"EnablePrefetcher", REG_DWORD, &EnablePrefetcher, Length);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto cleanup;
         }
     }
@@ -757,127 +716,106 @@ Environment:
     // Save per scenario parameters.
     //
 
-    for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++) {
-        
+    for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++)
+    {
+
         ValueNamePrefix = PrefetcherParameters->ScenarioTypePrefixes[ScenarioType];
-        
+
         //
         // Update trace limits for this scenario type.
         //
 
         TraceLimits = &Parameters->TraceLimits[ScenarioType];
-        
-        wcscpy(ValueName, ValueNamePrefix);       
+
+        wcscpy(ValueName, ValueNamePrefix);
         wcscat(ValueName, L"MaxNumPages");
         Length = sizeof(TraceLimits->MaxNumPages);
-        Status = CcPfSetParameter(ParametersKey,
-                                  ValueName,
-                                  REG_DWORD,
-                                  &TraceLimits->MaxNumPages,
-                                  Length);
-        if (!NT_SUCCESS(Status)) {
-            goto cleanup;
-        }
-        
-        wcscpy(ValueName, ValueNamePrefix);       
-        wcscat(ValueName, L"MaxNumSections");
-        Length = sizeof(TraceLimits->MaxNumSections);
-        Status = CcPfSetParameter(ParametersKey,
-                         ValueName,
-                         REG_DWORD,
-                         &TraceLimits->MaxNumSections,
-                         Length);
-        if (!NT_SUCCESS(Status)) {
+        Status = CcPfSetParameter(ParametersKey, ValueName, REG_DWORD, &TraceLimits->MaxNumPages, Length);
+        if (!NT_SUCCESS(Status))
+        {
             goto cleanup;
         }
 
-        wcscpy(ValueName, ValueNamePrefix);       
+        wcscpy(ValueName, ValueNamePrefix);
+        wcscat(ValueName, L"MaxNumSections");
+        Length = sizeof(TraceLimits->MaxNumSections);
+        Status = CcPfSetParameter(ParametersKey, ValueName, REG_DWORD, &TraceLimits->MaxNumSections, Length);
+        if (!NT_SUCCESS(Status))
+        {
+            goto cleanup;
+        }
+
+        wcscpy(ValueName, ValueNamePrefix);
         wcscat(ValueName, L"TimerPeriod");
         Length = sizeof(TraceLimits->TimerPeriod);
-        Status = CcPfSetParameter(ParametersKey,
-                                  ValueName,
-                                  REG_BINARY,
-                                  &TraceLimits->TimerPeriod,
-                                  Length);
-        if (!NT_SUCCESS(Status)) {
+        Status = CcPfSetParameter(ParametersKey, ValueName, REG_BINARY, &TraceLimits->TimerPeriod, Length);
+        if (!NT_SUCCESS(Status))
+        {
             goto cleanup;
         }
     }
-    
+
     //
-    // Update maximum number of active traces. 
+    // Update maximum number of active traces.
     //
-    
+
     Length = sizeof(Parameters->MaxNumActiveTraces);
-    Status = CcPfSetParameter(ParametersKey,
-                              L"MaxNumActiveTraces",
-                              REG_DWORD,
-                              &Parameters->MaxNumActiveTraces,
-                              Length);
-    if (!NT_SUCCESS(Status)) {
+    Status = CcPfSetParameter(ParametersKey, L"MaxNumActiveTraces", REG_DWORD, &Parameters->MaxNumActiveTraces, Length);
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
-    
+
     //
-    // Update maximum number of saved traces. 
+    // Update maximum number of saved traces.
     //
 
     Length = sizeof(Parameters->MaxNumSavedTraces);
-    Status = CcPfSetParameter(ParametersKey,
-                              L"MaxNumSavedTraces",
-                              REG_DWORD,
-                              &Parameters->MaxNumSavedTraces,
-                              Length);
-    if (!NT_SUCCESS(Status)) {
+    Status = CcPfSetParameter(ParametersKey, L"MaxNumSavedTraces", REG_DWORD, &Parameters->MaxNumSavedTraces, Length);
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
     //
     // Update the root directory path.
     //
-    
+
     Length = (wcslen(Parameters->RootDirPath) + 1) * sizeof(WCHAR);
-    Status = CcPfSetParameter(ParametersKey,
-                              L"RootDirPath",
-                              REG_SZ,
-                              Parameters->RootDirPath,
-                              Length);
-    if (!NT_SUCCESS(Status)) {
+    Status = CcPfSetParameter(ParametersKey, L"RootDirPath", REG_SZ, Parameters->RootDirPath, Length);
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
     //
     // Update the hosting application list path.
     //
-    
+
     Length = (wcslen(Parameters->HostingApplicationList) + 1) * sizeof(WCHAR);
-    Status = CcPfSetParameter(ParametersKey,
-                              L"HostingAppList",
-                              REG_SZ,
-                              Parameters->HostingApplicationList,
-                              Length);
-    if (!NT_SUCCESS(Status)) {
+    Status = CcPfSetParameter(ParametersKey, L"HostingAppList", REG_SZ, Parameters->HostingApplicationList, Length);
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    if (AcquiredParametersLock) {
+    if (AcquiredParametersLock)
+    {
         ExReleaseResourceLite(&PrefetcherParameters->ParametersLock);
         KeLeaveCriticalRegionThread(CurrentThread);
     }
-    
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersSave()=%x\n", Status));
+
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersSave()=%x\n", Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfParametersVerify (
-    PPF_SYSTEM_PREFETCH_PARAMETERS Parameters
-    )
+CcPfParametersVerify(PPF_SYSTEM_PREFETCH_PARAMETERS Parameters)
 
 /*++
 
@@ -915,22 +853,25 @@ Environment:
     Status = STATUS_INVALID_PARAMETER;
     FailedCheckId = 0;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersVerify\n"));
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersVerify\n"));
 
     //
     // Make sure RootDirPath is NUL terminated.
     //
-    
+
     FoundNUL = FALSE;
 
-    for (CharIdx = 0; CharIdx < PF_MAX_PREFETCH_ROOT_PATH; CharIdx++) {
-        if (Parameters->RootDirPath[CharIdx] == 0) {
+    for (CharIdx = 0; CharIdx < PF_MAX_PREFETCH_ROOT_PATH; CharIdx++)
+    {
+        if (Parameters->RootDirPath[CharIdx] == 0)
+        {
             FoundNUL = TRUE;
             break;
         }
     }
 
-    if (FoundNUL == FALSE) {
+    if (FoundNUL == FALSE)
+    {
         FailedCheckId = 10;
         goto cleanup;
     }
@@ -941,14 +882,17 @@ Environment:
 
     FoundNUL = FALSE;
 
-    for (CharIdx = 0; CharIdx < PF_HOSTING_APP_LIST_MAX_CHARS; CharIdx++) {
-        if (Parameters->HostingApplicationList[CharIdx] == 0) {
+    for (CharIdx = 0; CharIdx < PF_HOSTING_APP_LIST_MAX_CHARS; CharIdx++)
+    {
+        if (Parameters->HostingApplicationList[CharIdx] == 0)
+        {
             FoundNUL = TRUE;
             break;
         }
     }
 
-    if (FoundNUL == FALSE) {
+    if (FoundNUL == FALSE)
+    {
         FailedCheckId = 15;
         goto cleanup;
     }
@@ -958,9 +902,11 @@ Environment:
     // sanity limits.
     //
 
-    for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++) {
+    for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++)
+    {
 
-        if (Parameters->EnableStatus[ScenarioType] >= PfSvMaxEnableStatus) {
+        if (Parameters->EnableStatus[ScenarioType] >= PfSvMaxEnableStatus)
+        {
             FailedCheckId = 20;
             goto cleanup;
         }
@@ -968,21 +914,23 @@ Environment:
         //
         // Check trace limits.
         //
-        
+
         TraceLimits = &Parameters->TraceLimits[ScenarioType];
-        
-        if (TraceLimits->MaxNumPages > PF_MAXIMUM_PAGES) {
+
+        if (TraceLimits->MaxNumPages > PF_MAXIMUM_PAGES)
+        {
             FailedCheckId = 30;
             goto cleanup;
         }
-        
-        if (TraceLimits->MaxNumSections > PF_MAXIMUM_SECTIONS) {
+
+        if (TraceLimits->MaxNumSections > PF_MAXIMUM_SECTIONS)
+        {
             FailedCheckId = 40;
             goto cleanup;
         }
 
-        if ((TraceLimits->TimerPeriod < PF_MAXIMUM_TIMER_PERIOD) ||
-            (TraceLimits->TimerPeriod >= 0)) {
+        if ((TraceLimits->TimerPeriod < PF_MAXIMUM_TIMER_PERIOD) || (TraceLimits->TimerPeriod >= 0))
+        {
             FailedCheckId = 50;
             goto cleanup;
         }
@@ -992,12 +940,14 @@ Environment:
     // Check limits on active/saved traces.
     //
 
-    if (Parameters->MaxNumActiveTraces > PF_MAXIMUM_ACTIVE_TRACES) {
+    if (Parameters->MaxNumActiveTraces > PF_MAXIMUM_ACTIVE_TRACES)
+    {
         FailedCheckId = 60;
         goto cleanup;
     }
 
-    if (Parameters->MaxNumSavedTraces > PF_MAXIMUM_SAVED_TRACES) {
+    if (Parameters->MaxNumSavedTraces > PF_MAXIMUM_SAVED_TRACES)
+    {
         FailedCheckId = 70;
         goto cleanup;
     }
@@ -1008,17 +958,14 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersVerify()=%x,%d\n", Status, FailedCheckId));
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersVerify()=%x,%d\n", Status, FailedCheckId));
 
     return Status;
 }
 
-VOID
-CcPfParametersWatcher(
-    IN PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    )
+VOID CcPfParametersWatcher(IN PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters)
 
 /*++
 
@@ -1048,7 +995,7 @@ Environment:
     PKTHREAD CurrentThread;
     HANDLE TempHandle;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersWatcher()\n"));
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersWatcher()\n"));
 
     //
     // In order to have setup a registry watch, we should have
@@ -1064,49 +1011,39 @@ Environment:
     // off a notification for each key.
     //
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
     KeEnterCriticalRegionThread(CurrentThread);
     ExAcquireResourceExclusiveLite(&PrefetcherParameters->ParametersLock, TRUE);
     ExReleaseResourceLite(&PrefetcherParameters->ParametersLock);
     KeLeaveCriticalRegionThread(CurrentThread);
 
-    Status = ZwNotifyChangeKey(PrefetcherParameters->ParametersKey,
-                               NULL,
-                               (PIO_APC_ROUTINE)&PrefetcherParameters->RegistryWatchWorkItem,
-                               (PVOID)(UINT_PTR)(unsigned int)DelayedWorkQueue,
-                               &PrefetcherParameters->RegistryWatchIosb,
-                               REG_LEGAL_CHANGE_FILTER,
-                               FALSE,
-                               &PrefetcherParameters->RegistryWatchBuffer,
-                               sizeof(PrefetcherParameters->RegistryWatchBuffer),
-                               TRUE);
+    Status = ZwNotifyChangeKey(
+        PrefetcherParameters->ParametersKey, NULL, (PIO_APC_ROUTINE)&PrefetcherParameters->RegistryWatchWorkItem,
+        (PVOID)(UINT_PTR)(unsigned int)DelayedWorkQueue, &PrefetcherParameters->RegistryWatchIosb,
+        REG_LEGAL_CHANGE_FILTER, FALSE, &PrefetcherParameters->RegistryWatchBuffer,
+        sizeof(PrefetcherParameters->RegistryWatchBuffer), TRUE);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // Somebody may have deleted the key. We have to recreate it then.
         //
 
-        if (Status == STATUS_KEY_DELETED) {
+        if (Status == STATUS_KEY_DELETED)
+        {
 
             RtlInitUnicodeString(&KeyName, CCPF_PARAMETERS_KEY);
-            
-            InitializeObjectAttributes(&ObjectAttributes,
-                                       &KeyName,
-                                       OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                                       NULL,
-                                       NULL);
-            
-            Status = ZwCreateKey(&ParametersKey,
-                                 KEY_ALL_ACCESS,
-                                 &ObjectAttributes,
-                                 0,
-                                 NULL,
-                                 REG_OPTION_NON_VOLATILE,
-                                 0);
 
-            if (!NT_SUCCESS(Status)) {
-                DBGPR((CCPFID,PFERR,"CCPF: ParametersWatcher-FailedRecreate=%x\n",Status));
+            InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL,
+                                       NULL);
+
+            Status =
+                ZwCreateKey(&ParametersKey, KEY_ALL_ACCESS, &ObjectAttributes, 0, NULL, REG_OPTION_NON_VOLATILE, 0);
+
+            if (!NT_SUCCESS(Status))
+            {
+                DBGPR((CCPFID, PFERR, "CCPF: ParametersWatcher-FailedRecreate=%x\n", Status));
                 return;
             }
 
@@ -1119,7 +1056,7 @@ Environment:
 
             TempHandle = PrefetcherParameters->ParametersKey;
             PrefetcherParameters->ParametersKey = ParametersKey;
-            
+
             ExReleaseResourceLite(&PrefetcherParameters->ParametersLock);
             KeLeaveCriticalRegionThread(CurrentThread);
 
@@ -1129,24 +1066,22 @@ Environment:
             // Retry setting a notification again.
             //
 
-            Status = ZwNotifyChangeKey(PrefetcherParameters->ParametersKey,
-                                       NULL,
+            Status = ZwNotifyChangeKey(PrefetcherParameters->ParametersKey, NULL,
                                        (PIO_APC_ROUTINE)&PrefetcherParameters->RegistryWatchWorkItem,
                                        (PVOID)(UINT_PTR)(unsigned int)DelayedWorkQueue,
-                                       &PrefetcherParameters->RegistryWatchIosb,
-                                       REG_LEGAL_CHANGE_FILTER,
-                                       FALSE,
+                                       &PrefetcherParameters->RegistryWatchIosb, REG_LEGAL_CHANGE_FILTER, FALSE,
                                        &PrefetcherParameters->RegistryWatchBuffer,
-                                       sizeof(PrefetcherParameters->RegistryWatchBuffer),
-                                       TRUE);
+                                       sizeof(PrefetcherParameters->RegistryWatchBuffer), TRUE);
 
-            if (!NT_SUCCESS(Status)) {
-                DBGPR((CCPFID,PFERR,"CCPF: ParametersWatcher-FailedReSetNotify=%x\n",Status));
+            if (!NT_SUCCESS(Status))
+            {
+                DBGPR((CCPFID, PFERR, "CCPF: ParametersWatcher-FailedReSetNotify=%x\n", Status));
                 return;
             }
-
-        } else {
-            DBGPR((CCPFID,PFERR,"CCPF: ParametersWatcher-FailedSetNotify=%x\n",Status));
+        }
+        else
+        {
+            DBGPR((CCPFID, PFERR, "CCPF: ParametersWatcher-FailedSetNotify=%x\n", Status));
             return;
         }
     }
@@ -1157,18 +1092,19 @@ Environment:
 
     Status = CcPfParametersRead(PrefetcherParameters);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Determine if prefetching is enabled.
         //
-        
+
         CcPfDetermineEnablePrefetcher();
-        
+
         //
         // Set the event so the service queries for the latest parameters.
         //
-        
+
         CcPfParametersSetChangedEvent(PrefetcherParameters);
     }
 
@@ -1176,9 +1112,7 @@ Environment:
 }
 
 NTSTATUS
-CcPfParametersSetChangedEvent(
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    )
+CcPfParametersSetChangedEvent(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters)
 
 /*++
 
@@ -1208,19 +1142,21 @@ Environment:
     HANDLE EventHandle;
     PKTHREAD CurrentThread;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersSetChangedEvent()\n"));
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersSetChangedEvent()\n"));
 
     //
     // If we have already opened the event, just signal it.
     //
 
-    if (PrefetcherParameters->ParametersChangedEvent) {
+    if (PrefetcherParameters->ParametersChangedEvent)
+    {
 
         ZwSetEvent(PrefetcherParameters->ParametersChangedEvent, NULL);
 
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Try to open the event. We don't open this at initialization
@@ -1232,27 +1168,23 @@ Environment:
 
         RtlInitUnicodeString(&EventName, PF_PARAMETERS_CHANGED_EVENT_NAME);
 
-        InitializeObjectAttributes(&EventObjAttr,
-                                   &EventName,
-                                   OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                                   NULL,
-                                   NULL);
-        
-        Status = ZwOpenEvent(&EventHandle,
-                             EVENT_ALL_ACCESS,
-                             &EventObjAttr);
-        
-        if (NT_SUCCESS(Status)) {
+        InitializeObjectAttributes(&EventObjAttr, &EventName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+
+        Status = ZwOpenEvent(&EventHandle, EVENT_ALL_ACCESS, &EventObjAttr);
+
+        if (NT_SUCCESS(Status))
+        {
 
             //
             // Acquire the lock and set the global handle.
             //
-            CurrentThread = KeGetCurrentThread ();
+            CurrentThread = KeGetCurrentThread();
 
             KeEnterCriticalRegionThread(CurrentThread);
             ExAcquireResourceExclusiveLite(&PrefetcherParameters->ParametersLock, TRUE);
 
-            if (!PrefetcherParameters->ParametersChangedEvent) {
+            if (!PrefetcherParameters->ParametersChangedEvent)
+            {
 
                 //
                 // Set the global handle.
@@ -1267,7 +1199,8 @@ Environment:
             ExReleaseResourceLite(&PrefetcherParameters->ParametersLock);
             KeLeaveCriticalRegionThread(CurrentThread);
 
-            if (EventHandle != NULL) {
+            if (EventHandle != NULL)
+            {
                 //
                 // Somebody already initialized the global handle
                 // before us. Close our handle and use the one they
@@ -1277,28 +1210,22 @@ Environment:
                 ZwClose(EventHandle);
             }
 
-            
+
             //
             // We have an event now. Signal it.
             //
-            
+
             ZwSetEvent(PrefetcherParameters->ParametersChangedEvent, NULL);
         }
     }
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ParametersSetChangedEvent()=%x\n", Status));
- 
+    DBGPR((CCPFID, PFTRC, "CCPF: ParametersSetChangedEvent()=%x\n", Status));
+
     return Status;
 }
-                 
+
 NTSTATUS
-CcPfGetParameter (
-    HANDLE ParametersKey,
-    WCHAR *ValueNameBuffer,
-    ULONG ValueType,
-    PVOID Value,
-    ULONG *ValueSize
-    )
+CcPfGetParameter(HANDLE ParametersKey, WCHAR *ValueNameBuffer, ULONG ValueType, PVOID Value, ULONG *ValueSize)
 
 /*++
 
@@ -1332,7 +1259,7 @@ Environment:
 --*/
 
 {
-    UNICODE_STRING ValueName;    
+    UNICODE_STRING ValueName;
     CHAR Buffer[CCPF_MAX_PARAMETER_VALUE_BUFFER];
     PKEY_VALUE_PARTIAL_INFORMATION ValueBuffer;
     ULONG Length;
@@ -1342,42 +1269,40 @@ Environment:
     // Initialize locals.
     //
 
-    ValueBuffer = (PKEY_VALUE_PARTIAL_INFORMATION) Buffer;
+    ValueBuffer = (PKEY_VALUE_PARTIAL_INFORMATION)Buffer;
     Length = CCPF_MAX_PARAMETER_VALUE_BUFFER;
     RtlInitUnicodeString(&ValueName, ValueNameBuffer);
 
-    DBGPR((CCPFID,PFTRC,"CCPF: GetParameter(%ws,%x)\n", ValueNameBuffer, ValueType));
+    DBGPR((CCPFID, PFTRC, "CCPF: GetParameter(%ws,%x)\n", ValueNameBuffer, ValueType));
 
     //
     // Query value.
     //
 
-    Status = ZwQueryValueKey(ParametersKey,
-                             &ValueName,
-                             KeyValuePartialInformation,
-                             ValueBuffer,
-                             Length,
-                             &Length);
-    
-    if (!NT_SUCCESS(Status)) {
+    Status = ZwQueryValueKey(ParametersKey, &ValueName, KeyValuePartialInformation, ValueBuffer, Length, &Length);
+
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
     //
     // Make sure ZwQueryValue returns valid information.
     //
-    
-    if (Length < sizeof(KEY_VALUE_PARTIAL_INFORMATION)) {
+
+    if (Length < sizeof(KEY_VALUE_PARTIAL_INFORMATION))
+    {
         CCPF_ASSERT(Length >= sizeof(KEY_VALUE_PARTIAL_INFORMATION));
         Status = STATUS_UNSUCCESSFUL;
         goto cleanup;
     }
-    
+
     //
     // Check value type.
     //
 
-    if (ValueBuffer->Type != ValueType) {
+    if (ValueBuffer->Type != ValueType)
+    {
         Status = STATUS_OBJECT_TYPE_MISMATCH;
         goto cleanup;
     }
@@ -1386,7 +1311,8 @@ Environment:
     // Check if data will fit into the buffer caller passed in.
     //
 
-    if (ValueBuffer->DataLength > *ValueSize) {
+    if (ValueBuffer->DataLength > *ValueSize)
+    {
         Status = STATUS_BUFFER_TOO_SMALL;
         goto cleanup;
     }
@@ -1405,21 +1331,15 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    DBGPR((CCPFID,PFTRC,"CCPF: GetParameter(%ws)=%x\n", ValueNameBuffer, Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: GetParameter(%ws)=%x\n", ValueNameBuffer, Status));
 
     return Status;
-}  
-                 
+}
+
 NTSTATUS
-CcPfSetParameter (
-    HANDLE ParametersKey,
-    WCHAR *ValueNameBuffer,
-    ULONG ValueType,
-    PVOID Value,
-    ULONG ValueSize
-    )
+CcPfSetParameter(HANDLE ParametersKey, WCHAR *ValueNameBuffer, ULONG ValueType, PVOID Value, ULONG ValueSize)
 
 /*++
 
@@ -1450,7 +1370,7 @@ Environment:
 --*/
 
 {
-    UNICODE_STRING ValueName;    
+    UNICODE_STRING ValueName;
     NTSTATUS Status;
 
     //
@@ -1459,32 +1379,25 @@ Environment:
 
     RtlInitUnicodeString(&ValueName, ValueNameBuffer);
 
-    DBGPR((CCPFID,PFTRC,"CCPF: SetParameter(%ws,%x)\n", ValueNameBuffer, ValueType));
+    DBGPR((CCPFID, PFTRC, "CCPF: SetParameter(%ws,%x)\n", ValueNameBuffer, ValueType));
 
     //
     // Save the value.
     //
 
-    Status = ZwSetValueKey(ParametersKey,
-                           &ValueName,
-                           0,
-                           ValueType,
-                           Value,
-                           ValueSize);
-    
+    Status = ZwSetValueKey(ParametersKey, &ValueName, 0, ValueType, Value, ValueSize);
+
     //
     // Return the status.
     //
 
-    DBGPR((CCPFID,PFTRC,"CCPF: SetParameter(%ws)=%x\n", ValueNameBuffer, Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: SetParameter(%ws)=%x\n", ValueNameBuffer, Status));
 
     return Status;
-}  
+}
 
 LOGICAL
-CcPfDetermineEnablePrefetcher(
-    VOID
-    )
+CcPfDetermineEnablePrefetcher(VOID)
 
 /*++
 
@@ -1525,13 +1438,13 @@ Environment:
 
     EnablePrefetcher = FALSE;
     PrefetcherParameters = &CcPfGlobals.Parameters;
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
 
     //
     // Ignore whether prefetching is enabled for boot, if we've
     // already past the point in boot where this matters.
     //
-    
+
     IgnoreBootScenarioType = (CcPfBootPhase >= PfSessionManagerInitPhase) ? TRUE : FALSE;
 
     KeEnterCriticalRegionThread(CurrentThread);
@@ -1541,31 +1454,37 @@ Environment:
     // If we have booted to safe mode, the prefetcher will be disabled.
     //
 
-    if (InitSafeBootMode) {
+    if (InitSafeBootMode)
+    {
 
         EnablePrefetcher = FALSE;
+    }
+    else
+    {
 
-    } else {
-        
         //
         // By default prefetching is disabled. If prefetching is
         // enabled for any scenario type, then the prefetcher is
         // enabled.
         //
-    
-        for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++) {
-            
+
+        for (ScenarioType = 0; ScenarioType < PfMaxScenarioType; ScenarioType++)
+        {
+
             //
             // Skip enable status for the boot scenario if requested.
             //
-            
-            if (IgnoreBootScenarioType) {
-                if (ScenarioType == PfSystemBootScenarioType) {
+
+            if (IgnoreBootScenarioType)
+            {
+                if (ScenarioType == PfSystemBootScenarioType)
+                {
                     continue;
                 }
             }
-            
-            if (PrefetcherParameters->Parameters.EnableStatus[ScenarioType] == PfSvEnabled) {
+
+            if (PrefetcherParameters->Parameters.EnableStatus[ScenarioType] == PfSvEnabled)
+            {
                 EnablePrefetcher = TRUE;
                 break;
             }
@@ -1585,9 +1504,7 @@ Environment:
 }
 
 BOOLEAN
-CcPfIsHostingApplication(
-    IN PWCHAR ExecutableName
-    )
+CcPfIsHostingApplication(IN PWCHAR ExecutableName)
 
 /*++
 
@@ -1620,7 +1537,7 @@ Environment:
     PWCHAR ListEnd;
     ULONG ExecutableNameLength;
     BOOLEAN FoundInList;
-    
+
     //
     // Initialize locals.
     //
@@ -1644,15 +1561,16 @@ Environment:
     ListStart = PrefetcherParameters->Parameters.HostingApplicationList;
     ListEnd = ListStart + wcslen(PrefetcherParameters->Parameters.HostingApplicationList);
 
-    for (CurrentPosition = wcsstr(ListStart, ExecutableName);
-         CurrentPosition != NULL;
-         CurrentPosition = wcsstr(CurrentPosition + 1, ExecutableName)) {
+    for (CurrentPosition = wcsstr(ListStart, ExecutableName); CurrentPosition != NULL;
+         CurrentPosition = wcsstr(CurrentPosition + 1, ExecutableName))
+    {
 
         //
         // We should not go beyond the limits.
         //
 
-        if (CurrentPosition < ListStart || CurrentPosition >= ListEnd) {
+        if (CurrentPosition < ListStart || CurrentPosition >= ListEnd)
+        {
             CCPF_ASSERT(CurrentPosition >= ListStart);
             CCPF_ASSERT(CurrentPosition < ListEnd);
             break;
@@ -1662,7 +1580,8 @@ Environment:
         // It should be the first item in the list or be preceded by a comma.
         //
 
-        if (CurrentPosition != ListStart && *(CurrentPosition - 1) != L',') {
+        if (CurrentPosition != ListStart && *(CurrentPosition - 1) != L',')
+        {
             continue;
         }
 
@@ -1670,8 +1589,8 @@ Environment:
         // It should be the last item in the list or be followed by a comma.
         //
 
-        if (CurrentPosition + ExecutableNameLength != ListEnd &&
-            CurrentPosition[ExecutableNameLength] != L',') {
+        if (CurrentPosition + ExecutableNameLength != ListEnd && CurrentPosition[ExecutableNameLength] != L',')
+        {
             continue;
         }
 
@@ -1681,7 +1600,6 @@ Environment:
 
         FoundInList = TRUE;
         break;
-
     }
 
     //
@@ -1695,6 +1613,5 @@ Environment:
     // Return whether the executable was found in the list.
     //
 
-    return FoundInList;    
+    return FoundInList;
 }
-

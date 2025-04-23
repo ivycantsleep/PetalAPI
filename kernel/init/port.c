@@ -35,109 +35,110 @@ Revision History:
 #include <inbv.h>
 #include <bootvid.h>
 
-
+
 //
 // Define COM Port registers.
 //
 
-#define COM1_PORT   0x03f8
-#define COM2_PORT   0x02f8
+#define COM1_PORT 0x03f8
+#define COM2_PORT 0x02f8
 
-#define COM_DAT     0x00
-#define COM_IEN     0x01            // interrupt enable register
-#define COM_FCR     0x02            // FIFO Control Register
-#define COM_LCR     0x03            // line control registers
-#define COM_MCR     0x04            // modem control reg
-#define COM_LSR     0x05            // line status register
-#define COM_MSR     0x06            // modem status register
-#define COM_DLL     0x00            // divisor latch least sig
-#define COM_DLM     0x01            // divisor latch most sig
+#define COM_DAT 0x00
+#define COM_IEN 0x01 // interrupt enable register
+#define COM_FCR 0x02 // FIFO Control Register
+#define COM_LCR 0x03 // line control registers
+#define COM_MCR 0x04 // modem control reg
+#define COM_LSR 0x05 // line status register
+#define COM_MSR 0x06 // modem status register
+#define COM_DLL 0x00 // divisor latch least sig
+#define COM_DLM 0x01 // divisor latch most sig
 
-#define COM_BI      0x10            // Break detect
-#define COM_FE      0x08            // Framing error
-#define COM_PE      0x04            // Parity error
-#define COM_OE      0x02            // Overrun error
+#define COM_BI 0x10 // Break detect
+#define COM_FE 0x08 // Framing error
+#define COM_PE 0x04 // Parity error
+#define COM_OE 0x02 // Overrun error
 
-#define LC_DLAB     0x80            // divisor latch access bit
+#define LC_DLAB 0x80 // divisor latch access bit
 
-#define CLOCK_RATE  0x1C200         // USART clock rate
+#define CLOCK_RATE 0x1C200 // USART clock rate
 
-#define MC_DTRRTS   0x03            // Control bits to assert DTR and RTS
-#define MS_DSRCTSCD 0xB0            // Status bits for DSR, CTS and CD
-#define MS_CD       0x80
+#define MC_DTRRTS 0x03   // Control bits to assert DTR and RTS
+#define MS_DSRCTSCD 0xB0 // Status bits for DSR, CTS and CD
+#define MS_CD 0x80
 
-#define BD_150      150
-#define BD_300      300
-#define BD_600      600
-#define BD_1200     1200
-#define BD_2400     2400
-#define BD_4800     4800
-#define BD_9600     9600
-#define BD_14400    14400
-#define BD_19200    19200
-#define BD_56000    57600
-#define BD_115200   115200
+#define BD_150 150
+#define BD_300 300
+#define BD_600 600
+#define BD_1200 1200
+#define BD_2400 2400
+#define BD_4800 4800
+#define BD_9600 9600
+#define BD_14400 14400
+#define BD_19200 19200
+#define BD_56000 57600
+#define BD_115200 115200
 
-#define COM_OUTRDY  0x20
-#define COM_DATRDY  0x01
+#define COM_OUTRDY 0x20
+#define COM_DATRDY 0x01
 
 //
 // Status Constants for reading data from comport
 //
 
-#define CP_GET_SUCCESS  0
-#define CP_GET_NODATA   1
-#define CP_GET_ERROR    2
+#define CP_GET_SUCCESS 0
+#define CP_GET_NODATA 1
+#define CP_GET_ERROR 2
 
 //
 // This bit controls the loopback testing mode of the device. Basically
 // the outputs are connected to the inputs (and vice versa).
 //
 
-#define SERIAL_MCR_LOOP     0x10
+#define SERIAL_MCR_LOOP 0x10
 
 //
 // This bit is used for general purpose output.
 //
 
-#define SERIAL_MCR_OUT1     0x04
+#define SERIAL_MCR_OUT1 0x04
 
 //
 // This bit contains the (complemented) state of the clear to send
 // (CTS) line.
 //
 
-#define SERIAL_MSR_CTS      0x10
+#define SERIAL_MSR_CTS 0x10
 
 //
 // This bit contains the (complemented) state of the data set ready
 // (DSR) line.
 //
 
-#define SERIAL_MSR_DSR      0x20
+#define SERIAL_MSR_DSR 0x20
 
 //
 // This bit contains the (complemented) state of the ring indicator
 // (RI) line.
 //
 
-#define SERIAL_MSR_RI       0x40
+#define SERIAL_MSR_RI 0x40
 
 //
 // This bit contains the (complemented) state of the data carrier detect
 // (DCD) line.
 //
 
-#define SERIAL_MSR_DCD      0x80
+#define SERIAL_MSR_DCD 0x80
 
-typedef struct _CPPORT {
+typedef struct _CPPORT
+{
     PUCHAR Address;
     ULONG Baud;
     USHORT Flags;
 } CPPORT, *PCPPORT;
 
-#define PORT_DEFAULTRATE    0x0001      // baud rate not specified, using default
-#define PORT_MODEMCONTROL   0x0002      // using modem controls
+#define PORT_DEFAULTRATE 0x0001  // baud rate not specified, using default
+#define PORT_MODEMCONTROL 0x0002 // using modem controls
 
 //
 // Define wait timeout value.
@@ -149,77 +150,40 @@ typedef struct _CPPORT {
 //
 // Routines for reading/writing bytes out to the UART.
 //
-UCHAR
-(*READ_UCHAR)(
-    IN PUCHAR Addr
-    );
+UCHAR (*READ_UCHAR)(IN PUCHAR Addr);
 
-VOID
-(*WRITE_UCHAR)(
-    IN PUCHAR Addr,
-    IN UCHAR  Value
-    );
-
+VOID (*WRITE_UCHAR)(IN PUCHAR Addr, IN UCHAR Value);
 
 
 //
 // Define COM Port function prototypes.
 //
 
-VOID
-CpInitialize (
-    PCPPORT Port,
-    PUCHAR Address,
-    ULONG Rate
-    );
+VOID CpInitialize(PCPPORT Port, PUCHAR Address, ULONG Rate);
 
-VOID 
-CpEnableFifo(
-    IN PUCHAR   Address,
-    IN BOOLEAN  bEnable
-    );
+VOID CpEnableFifo(IN PUCHAR Address, IN BOOLEAN bEnable);
 
 BOOLEAN
-CpDoesPortExist(
-    IN PUCHAR Address
-    );
+CpDoesPortExist(IN PUCHAR Address);
 
 UCHAR
-CpReadLsr (
-    IN PCPPORT Port,
-    IN UCHAR Waiting
-    );
+CpReadLsr(IN PCPPORT Port, IN UCHAR Waiting);
 
-VOID
-CpSetBaud (
-    PCPPORT Port,
-    ULONG Rate
-    );
+VOID CpSetBaud(PCPPORT Port, ULONG Rate);
 
 USHORT
-CpGetByte (
-    PCPPORT Port,
-    PUCHAR Byte,
-    BOOLEAN WaitForData,
-    BOOLEAN PollOnly
-    );
+CpGetByte(PCPPORT Port, PUCHAR Byte, BOOLEAN WaitForData, BOOLEAN PollOnly);
 
-VOID
-CpPutByte (
-    PCPPORT Port,
-    UCHAR Byte
-    );
+VOID CpPutByte(PCPPORT Port, UCHAR Byte);
 
 //
 // Define debugger port initial state.
 //
-CPPORT Port[4] = {
-                  {NULL, 0, PORT_DEFAULTRATE},
-                  {NULL, 0, PORT_DEFAULTRATE},
-                  {NULL, 0, PORT_DEFAULTRATE},
-                  {NULL, 0, PORT_DEFAULTRATE}
-                 };
-
+CPPORT Port[4] = { { NULL, 0, PORT_DEFAULTRATE },
+                   { NULL, 0, PORT_DEFAULTRATE },
+                   { NULL, 0, PORT_DEFAULTRATE },
+                   { NULL, 0, PORT_DEFAULTRATE } };
+
 
 //
 // We'll use these to fill in some function pointers,
@@ -233,40 +197,32 @@ CPPORT Port[4] = {
 // will inturn simply call the correct READ/WRITE functions/macros.
 //
 UCHAR
-MY_READ_PORT_UCHAR( IN PUCHAR Addr )
+MY_READ_PORT_UCHAR(IN PUCHAR Addr)
 {
-    return( READ_PORT_UCHAR(Addr) );
+    return (READ_PORT_UCHAR(Addr));
 }
 
 UCHAR
-MY_READ_REGISTER_UCHAR( IN PUCHAR Addr )
+MY_READ_REGISTER_UCHAR(IN PUCHAR Addr)
 {
-    return( READ_REGISTER_UCHAR(Addr) );
+    return (READ_REGISTER_UCHAR(Addr));
 }
 
-
-VOID
-MY_WRITE_PORT_UCHAR( IN PUCHAR Addr, IN UCHAR  Value )
+
+VOID MY_WRITE_PORT_UCHAR(IN PUCHAR Addr, IN UCHAR Value)
 {
     WRITE_PORT_UCHAR(Addr, Value);
 }
 
-VOID
-MY_WRITE_REGISTER_UCHAR( IN PUCHAR Addr, IN UCHAR  Value )
+VOID MY_WRITE_REGISTER_UCHAR(IN PUCHAR Addr, IN UCHAR Value)
 {
     WRITE_REGISTER_UCHAR(Addr, Value);
 }
 
 
-
 BOOLEAN
-InbvPortInitialize(
-    IN ULONG BaudRate,
-    IN ULONG PortNumber,
-    IN PUCHAR PortAddress,
-    OUT PULONG BlFileId,
-    IN BOOLEAN IsMMIOAddress
-    )
+InbvPortInitialize(IN ULONG BaudRate, IN ULONG PortNumber, IN PUCHAR PortAddress, OUT PULONG BlFileId,
+                   IN BOOLEAN IsMMIOAddress)
 
 /*++
 
@@ -300,7 +256,8 @@ Returned Value:
     // If the baud rate is not specified, then default the baud rate to 19.2.
     //
 
-    if (BaudRate == 0) {
+    if (BaudRate == 0)
+    {
         BaudRate = BD_19200;
     }
 
@@ -309,28 +266,35 @@ Returned Value:
     // port 1. Otherwise, use the specified port.
     //
 
-    if (PortNumber == 0) {
-        if (CpDoesPortExist((PUCHAR)COM2_PORT)) {
+    if (PortNumber == 0)
+    {
+        if (CpDoesPortExist((PUCHAR)COM2_PORT))
+        {
             PortNumber = 2;
             PortAddress = (PUCHAR)COM2_PORT;
-
-        } else if (CpDoesPortExist((PUCHAR)COM1_PORT)) {
+        }
+        else if (CpDoesPortExist((PUCHAR)COM1_PORT))
+        {
             PortNumber = 1;
             PortAddress = (PUCHAR)COM1_PORT;
-
-        } else {
+        }
+        else
+        {
             return FALSE;
         }
+    }
+    else
+    {
 
-    } else {
-
-        if( PortAddress == NULL ) {
+        if (PortAddress == NULL)
+        {
 
             //
             // The port address wasn't specified.  Guess what it
             // is based on the COM port number.
             //
-            switch (PortNumber) {
+            switch (PortNumber)
+            {
             case 1:
                 PortAddress = (PUCHAR)0x3f8;
                 break;
@@ -353,7 +317,8 @@ Returned Value:
     //
     // Check if the port is already in use.
     //
-    if (Port[PortNumber-1].Address != NULL) {
+    if (Port[PortNumber - 1].Address != NULL)
+    {
         return FALSE;
     }
 
@@ -362,19 +327,21 @@ Returned Value:
     // we need to handle the case where we're dealing with
     // MMIO space (as opposed to System I/O space).
     //
-    if( IsMMIOAddress ) {
-        PHYSICAL_ADDRESS    PhysAddr;
-        PVOID               MyPtr;
+    if (IsMMIOAddress)
+    {
+        PHYSICAL_ADDRESS PhysAddr;
+        PVOID MyPtr;
 
         PhysAddr.LowPart = PtrToUlong(PortAddress);
         PhysAddr.HighPart = 0;
-        MyPtr = MmMapIoSpace(PhysAddr,(1+COM_MSR),FALSE);
+        MyPtr = MmMapIoSpace(PhysAddr, (1 + COM_MSR), FALSE);
         PortAddress = MyPtr;
 
         READ_UCHAR = MY_READ_REGISTER_UCHAR;
         WRITE_UCHAR = MY_WRITE_REGISTER_UCHAR;
-
-    } else {
+    }
+    else
+    {
 
         // System IO space.
         READ_UCHAR = MY_READ_PORT_UCHAR;
@@ -385,19 +352,15 @@ Returned Value:
     // Initialize the specified port.
     //
 
-    CpInitialize(&(Port[PortNumber-1]),
-                 PortAddress,
-                 BaudRate);
+    CpInitialize(&(Port[PortNumber - 1]), PortAddress, BaudRate);
 
-    *BlFileId = (PortNumber-1);
+    *BlFileId = (PortNumber - 1);
     return TRUE;
 }
 
-
+
 BOOLEAN
-InbvPortTerminate(
-    IN ULONG BlFileId
-    )
+InbvPortTerminate(IN ULONG BlFileId)
 
 /*++
 
@@ -419,28 +382,21 @@ Returned Value:
     //
     // Check if the port is already in use.
     //
-    if (Port[BlFileId].Address != NULL) {
+    if (Port[BlFileId].Address != NULL)
+    {
         //
-        // Do any cleanup necessary here.  Note that we don't require any 
+        // Do any cleanup necessary here.  Note that we don't require any
         // cleanup today so this is a NOP.
         //
         NOTHING;
-    } 
+    }
 
     Port[BlFileId].Address = NULL;
-    return(TRUE);
-
+    return (TRUE);
 }
 
 
-
-
-
-VOID
-InbvPortPutByte (
-    IN ULONG BlFileId,
-    IN UCHAR Output
-    )
+VOID InbvPortPutByte(IN ULONG BlFileId, IN UCHAR Output)
 
 /*++
 
@@ -462,17 +418,14 @@ Return Value:
 
 {
     CpPutByte(&Port[BlFileId], Output);
-    
-    if (Output == '\n') {
-        CpPutByte(&(Port[BlFileId]), '\r');       
+
+    if (Output == '\n')
+    {
+        CpPutByte(&(Port[BlFileId]), '\r');
     }
 }
-
-VOID
-InbvPortPutString (
-    IN ULONG BlFileId,
-    IN PUCHAR Output
-    )
+
+VOID InbvPortPutString(IN ULONG BlFileId, IN PUCHAR Output)
 
 /*++
 
@@ -493,22 +446,21 @@ Return Value:
 --*/
 
 {
-    if (BlFileId == 0) {
+    if (BlFileId == 0)
+    {
         return;
     }
-    
-    while (*Output != '\0') {
+
+    while (*Output != '\0')
+    {
         InbvPortPutByte(BlFileId, *Output);
         Output++;
     }
 }
 
-
+
 BOOLEAN
-InbvPortGetByte (
-    IN ULONG BlFileId,
-    OUT PUCHAR Input
-    )
+InbvPortGetByte(IN ULONG BlFileId, OUT PUCHAR Input)
 
 /*++
 
@@ -531,11 +483,9 @@ Return Value:
 {
     return (CpGetByte(&(Port[BlFileId]), Input, TRUE, FALSE) == CP_GET_SUCCESS);
 }
-
+
 BOOLEAN
-InbvPortPollOnly (
-    IN ULONG BlFileId
-    )
+InbvPortPollOnly(IN ULONG BlFileId)
 
 /*++
 
@@ -558,13 +508,8 @@ Return Value:
 
     return (CpGetByte(&(Port[BlFileId]), &Input, FALSE, TRUE) == CP_GET_SUCCESS);
 }
-
-VOID
-CpInitialize (
-    PCPPORT Port,
-    PUCHAR Address,
-    ULONG Rate
-    )
+
+VOID CpInitialize(PCPPORT Port, PUCHAR Address, ULONG Rate)
 
 /*++
 
@@ -587,7 +532,7 @@ CpInitialize (
 {
 
     PUCHAR hwport;
-    UCHAR   mcr, ier;
+    UCHAR mcr, ier;
 
     Port->Address = Address;
     Port->Baud = 0;
@@ -612,12 +557,8 @@ CpInitialize (
 
     return;
 }
-
-VOID
-InbvPortEnableFifo(
-    IN ULONG 	DeviceId,
-    IN BOOLEAN	bEnable
-    )
+
+VOID InbvPortEnableFifo(IN ULONG DeviceId, IN BOOLEAN bEnable)
 /*++
 
 Routine Description:
@@ -639,18 +580,10 @@ Return Value:
 --*/
 {
 
-    CpEnableFifo(
-        Port[DeviceId].Address,
-        bEnable
-        );        
-
+    CpEnableFifo(Port[DeviceId].Address, bEnable);
 }
-
-VOID 
-CpEnableFifo(
-    IN PUCHAR   Address,
-    IN BOOLEAN  bEnable
-    )
+
+VOID CpEnableFifo(IN PUCHAR Address, IN BOOLEAN bEnable)
 /*++
 
 Routine Description:
@@ -678,13 +611,11 @@ Return Value:
     //
     PUCHAR hwport = Address;
     hwport += COM_FCR;
-    WRITE_UCHAR(hwport, bEnable);   // set the FIFO state
+    WRITE_UCHAR(hwport, bEnable); // set the FIFO state
 }
-
+
 BOOLEAN
-CpDoesPortExist(
-    IN PUCHAR Address
-    )
+CpDoesPortExist(IN PUCHAR Address)
 
 /*++
 
@@ -743,8 +674,8 @@ Return Value:
     //
 
     ModemStatus = READ_UCHAR(Address + COM_MSR);
-    if (ModemStatus & (SERIAL_MSR_CTS | SERIAL_MSR_DSR |
-                       SERIAL_MSR_RI  | SERIAL_MSR_DCD)) {
+    if (ModemStatus & (SERIAL_MSR_CTS | SERIAL_MSR_DSR | SERIAL_MSR_RI | SERIAL_MSR_DCD))
+    {
         ReturnValue = FALSE;
         goto AllDone;
     }
@@ -756,7 +687,8 @@ Return Value:
 
     WRITE_UCHAR(Address + COM_MCR, (SERIAL_MCR_OUT1 | SERIAL_MCR_LOOP));
     ModemStatus = READ_UCHAR(Address + COM_MSR);
-    if (!(ModemStatus & SERIAL_MSR_RI)) {
+    if (!(ModemStatus & SERIAL_MSR_RI))
+    {
         ReturnValue = FALSE;
         goto AllDone;
     }
@@ -769,12 +701,9 @@ AllDone:
     WRITE_UCHAR(Address + COM_MCR, OldModemStatus);
     return ReturnValue;
 }
-
+
 UCHAR
-CpReadLsr (
-    PCPPORT Port,
-    UCHAR waiting
-    )
+CpReadLsr(PCPPORT Port, UCHAR waiting)
 
 /*++
 
@@ -797,14 +726,16 @@ CpReadLsr (
 
 {
 
-    static  UCHAR ringflag = 0;
-    UCHAR   lsr, msr;
+    static UCHAR ringflag = 0;
+    UCHAR lsr, msr;
 
     lsr = READ_UCHAR(Port->Address + COM_LSR);
-    if ((lsr & waiting) == 0) {
-        msr = READ_UCHAR (Port->Address + COM_MSR);
+    if ((lsr & waiting) == 0)
+    {
+        msr = READ_UCHAR(Port->Address + COM_MSR);
         ringflag |= (msr & SERIAL_MSR_RI) ? 1 : 2;
-        if (ringflag == 3) {
+        if (ringflag == 3)
+        {
 
             //
             // The ring indicate line has toggled, use modem control from
@@ -817,12 +748,8 @@ CpReadLsr (
 
     return lsr;
 }
-
-VOID
-CpSetBaud (
-    PCPPORT Port,
-    ULONG Rate
-    )
+
+VOID CpSetBaud(PCPPORT Port, ULONG Rate)
 
 /*++
 
@@ -840,9 +767,9 @@ CpSetBaud (
 
 {
 
-    ULONG   divisorlatch;
-    PUCHAR  hwport;
-    UCHAR   lcr;
+    ULONG divisorlatch;
+    PUCHAR hwport;
+    UCHAR lcr;
 
     //
     // compute the divsor
@@ -855,7 +782,7 @@ CpSetBaud (
     //
 
     hwport = Port->Address;
-    hwport += COM_LCR;                  // hwport = LCR register
+    hwport += COM_LCR; // hwport = LCR register
 
     lcr = READ_UCHAR(hwport);
 
@@ -867,10 +794,10 @@ CpSetBaud (
     //
 
     hwport = Port->Address;
-    hwport += COM_DLM;                  // divisor latch msb
+    hwport += COM_DLM; // divisor latch msb
     WRITE_UCHAR(hwport, (UCHAR)((divisorlatch >> 8) & 0xff));
 
-    hwport--;                           // divisor latch lsb
+    hwport--; // divisor latch lsb
     WRITE_UCHAR(hwport, (UCHAR)(divisorlatch & 0xff));
 
     //
@@ -888,14 +815,9 @@ CpSetBaud (
     Port->Baud = Rate;
     return;
 }
-
+
 USHORT
-CpGetByte (
-    PCPPORT Port,
-    PUCHAR Byte,
-    BOOLEAN WaitForByte,
-    BOOLEAN PollOnly
-    )
+CpGetByte(PCPPORT Port, PUCHAR Byte, BOOLEAN WaitForByte, BOOLEAN PollOnly)
 
 /*++
 
@@ -925,9 +847,9 @@ CpGetByte (
 
 {
 
-    UCHAR   lsr;
-    UCHAR   value;
-    ULONG   limitcount;
+    UCHAR lsr;
+    UCHAR value;
+    ULONG limitcount;
 
     //
     // Check to make sure the CPPORT we were passed has been initialized.
@@ -935,16 +857,19 @@ CpGetByte (
     // is disabled, in which case we just return.)
     //
 
-    if (Port->Address == NULL) {
+    if (Port->Address == NULL)
+    {
         return CP_GET_NODATA;
     }
 
     limitcount = WaitForByte ? TIMEOUT_COUNT : 1;
-    while (limitcount != 0) {
+    while (limitcount != 0)
+    {
         limitcount--;
 
         lsr = CpReadLsr(Port, COM_DATRDY);
-        if ((lsr & COM_DATRDY) == COM_DATRDY) {
+        if ((lsr & COM_DATRDY) == COM_DATRDY)
+        {
 
             //
             // Check for errors
@@ -956,12 +881,14 @@ CpGetByte (
             // the LSR clears this bit, so the first read already cleared the
             // overrun error.
             //
-            if (lsr & (COM_FE | COM_PE)) {
+            if (lsr & (COM_FE | COM_PE))
+            {
                 *Byte = 0;
                 return CP_GET_ERROR;
             }
 
-            if (PollOnly) {
+            if (PollOnly)
+            {
                 return CP_GET_SUCCESS;
             }
 
@@ -970,13 +897,15 @@ CpGetByte (
             //
 
             *Byte = READ_UCHAR(Port->Address + COM_DAT);
-            if (Port->Flags & PORT_MODEMCONTROL) {
+            if (Port->Flags & PORT_MODEMCONTROL)
+            {
 
                 //
                 // Using modem control.  If no CD, then skip this byte.
                 //
 
-                if ((READ_UCHAR(Port->Address + COM_MSR) & MS_CD) == 0) {
+                if ((READ_UCHAR(Port->Address + COM_MSR) & MS_CD) == 0)
+                {
                     continue;
                 }
             }
@@ -988,12 +917,8 @@ CpGetByte (
     CpReadLsr(Port, 0);
     return CP_GET_NODATA;
 }
-
-VOID
-CpPutByte (
-    PCPPORT  Port,
-    UCHAR   Byte
-    )
+
+VOID CpPutByte(PCPPORT Port, UCHAR Byte)
 
 /*++
 
@@ -1011,22 +936,24 @@ CpPutByte (
 
 {
 
-    UCHAR   msr, lsr;
+    UCHAR msr, lsr;
 
     //
     // If modem control, make sure DSR, CTS and CD are all set before
     // sending any data.
     //
 
-    while ((Port->Flags & PORT_MODEMCONTROL)  &&
-           (msr = READ_UCHAR(Port->Address + COM_MSR) & MS_DSRCTSCD) != MS_DSRCTSCD) {
+    while ((Port->Flags & PORT_MODEMCONTROL) &&
+           (msr = READ_UCHAR(Port->Address + COM_MSR) & MS_DSRCTSCD) != MS_DSRCTSCD)
+    {
 
         //
         // If no CD, and there's a charactor ready, eat it
         //
 
         lsr = CpReadLsr(Port, 0);
-        if ((msr & MS_CD) == 0  && (lsr & COM_DATRDY) == COM_DATRDY) {
+        if ((msr & MS_CD) == 0 && (lsr & COM_DATRDY) == COM_DATRDY)
+        {
             READ_UCHAR(Port->Address + COM_DAT);
         }
     }
@@ -1035,7 +962,8 @@ CpPutByte (
     //  Wait for port to not be busy
     //
 
-    while (!(CpReadLsr(Port, COM_OUTRDY) & COM_OUTRDY)) ;
+    while (!(CpReadLsr(Port, COM_OUTRDY) & COM_OUTRDY))
+        ;
 
     //
     // Send the byte

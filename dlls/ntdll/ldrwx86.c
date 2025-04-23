@@ -41,48 +41,33 @@ Revision History:
 #include "ntos.h"
 #include "ldrp.h"
 
-#define PAGE_SIZE_X86   (0x1000)
+#define PAGE_SIZE_X86 (0x1000)
 
 #if defined(BUILD_WOW6432)
 
 
-//   
+//
 // From mi\mi.h:
 //
 
-#define MI_ROUND_TO_SIZE(LENGTH,ALIGNMENT)     \
-                    (((LENGTH) + ((ALIGNMENT) - 1)) & ~((ALIGNMENT) - 1))
-                    
-PIMAGE_BASE_RELOCATION LdrpWx86ProcessRelocationBlock(
-    IN ULONG_PTR VA,
-    IN PUCHAR ImageBase,
-    IN ULONG SizeOfBlock,
-    IN PUSHORT NextOffset,
-    IN ULONG Diff,
-    IN ULONG_PTR SectionStartVA,
-    IN ULONG_PTR SectionEndVA);
+#define MI_ROUND_TO_SIZE(LENGTH, ALIGNMENT) (((LENGTH) + ((ALIGNMENT) - 1)) & ~((ALIGNMENT) - 1))
 
-NTSTATUS 
-FixupBlockList(
-    IN PUCHAR ImageBase);
+PIMAGE_BASE_RELOCATION LdrpWx86ProcessRelocationBlock(IN ULONG_PTR VA, IN PUCHAR ImageBase, IN ULONG SizeOfBlock,
+                                                      IN PUSHORT NextOffset, IN ULONG Diff, IN ULONG_PTR SectionStartVA,
+                                                      IN ULONG_PTR SectionEndVA);
 
-VOID 
-FixupSectionHeader(
-    IN PUCHAR ImageBase);
+NTSTATUS
+FixupBlockList(IN PUCHAR ImageBase);
+
+VOID FixupSectionHeader(IN PUCHAR ImageBase);
 
 
 NTSTATUS
-LdrpWx86FixupExportedSharedSection (
-    IN PVOID ImageBase,
-    IN PIMAGE_NT_HEADERS NtHeaders
-    );
+LdrpWx86FixupExportedSharedSection(IN PVOID ImageBase, IN PIMAGE_NT_HEADERS NtHeaders);
 
 
 BOOLEAN
-LdrpWx86DetectSectionOverlap (
-    IN PVOID ImageBase,
-    IN PIMAGE_NT_HEADERS NtHeaders
-    )
+LdrpWx86DetectSectionOverlap(IN PVOID ImageBase, IN PIMAGE_NT_HEADERS NtHeaders)
 {
     PIMAGE_SECTION_HEADER SectionHeader;
     ULONG SrcRawData;
@@ -102,70 +87,74 @@ LdrpWx86DetectSectionOverlap (
     // that has already been moved up.
     //
 
-    SectionHeader = IMAGE_FIRST_SECTION (NtHeaders);
+    SectionHeader = IMAGE_FIRST_SECTION(NtHeaders);
 
-    for (Section = NtHeaders->FileHeader.NumberOfSections-1, Count=0 ; 
-         Count < NtHeaders->FileHeader.NumberOfSections ; Section--, Count++) {
+    for (Section = NtHeaders->FileHeader.NumberOfSections - 1, Count = 0;
+         Count < NtHeaders->FileHeader.NumberOfSections; Section--, Count++)
+    {
 
         SrcRawData = SectionHeader[Section].PointerToRawData;
         SrcSize = SectionHeader[Section].SizeOfRawData;
         if ((SectionHeader[Section].Misc.VirtualSize > 0) &&
-            (SrcRawData > MI_ROUND_TO_SIZE(SectionHeader[Section].Misc.VirtualSize, PAGE_SIZE_X86))) {
-           SrcRawData = MI_ROUND_TO_SIZE(SectionHeader[Section].Misc.VirtualSize, PAGE_SIZE_X86);
+            (SrcRawData > MI_ROUND_TO_SIZE(SectionHeader[Section].Misc.VirtualSize, PAGE_SIZE_X86)))
+        {
+            SrcRawData = MI_ROUND_TO_SIZE(SectionHeader[Section].Misc.VirtualSize, PAGE_SIZE_X86);
         }
 
-        if (SectionHeader[Section].VirtualAddress <= SrcRawData) {
+        if (SectionHeader[Section].VirtualAddress <= SrcRawData)
+        {
             break;
         }
-        
+
         SrcEndRawData = SrcRawData + SrcSize;
 
         //
         // This section needs to be moved down
         //
-        for (SectionCheck = 0 ; SectionCheck < NtHeaders->FileHeader.NumberOfSections ; SectionCheck++) {
+        for (SectionCheck = 0; SectionCheck < NtHeaders->FileHeader.NumberOfSections; SectionCheck++)
+        {
 
-            if (Section == SectionCheck) {
+            if (Section == SectionCheck)
+            {
                 continue;
             }
 
             OverlapData = SectionHeader[SectionCheck].PointerToRawData;
             SrcSize = SectionHeader[SectionCheck].SizeOfRawData;
             if ((SectionHeader[SectionCheck].Misc.VirtualSize > 0) &&
-                (SrcRawData > MI_ROUND_TO_SIZE(SectionHeader[SectionCheck].Misc.VirtualSize, PAGE_SIZE_X86))) {
-               SrcRawData = MI_ROUND_TO_SIZE(SectionHeader[SectionCheck].Misc.VirtualSize, PAGE_SIZE_X86);
+                (SrcRawData > MI_ROUND_TO_SIZE(SectionHeader[SectionCheck].Misc.VirtualSize, PAGE_SIZE_X86)))
+            {
+                SrcRawData = MI_ROUND_TO_SIZE(SectionHeader[SectionCheck].Misc.VirtualSize, PAGE_SIZE_X86);
             }
 
-            if (SectionHeader[SectionCheck].VirtualAddress > OverlapData) {
+            if (SectionHeader[SectionCheck].VirtualAddress > OverlapData)
+            {
                 break;
             }
 
-            if (((SrcRawData >= SectionHeader[SectionCheck].VirtualAddress) && 
-                (SrcRawData < (SectionHeader[SectionCheck].VirtualAddress + SrcSize))) || 
+            if (((SrcRawData >= SectionHeader[SectionCheck].VirtualAddress) &&
+                 (SrcRawData < (SectionHeader[SectionCheck].VirtualAddress + SrcSize))) ||
                 ((SrcEndRawData >= SectionHeader[SectionCheck].VirtualAddress) &&
-                 (SrcEndRawData < (SectionHeader[SectionCheck].VirtualAddress + SrcSize)))) {
+                 (SrcEndRawData < (SectionHeader[SectionCheck].VirtualAddress + SrcSize))))
+            {
 
                 Result = TRUE;
                 break;
             }
         }
 
-        if (Result == TRUE) {
+        if (Result == TRUE)
+        {
             break;
         }
-
     }
 
     return Result;
 }
 
 NTSTATUS
-LdrpWx86CheckVirtualSectionOverlap (
-    IN PUNICODE_STRING ImageName OPTIONAL,
-    IN PVOID ImageBase,
-    IN PIMAGE_NT_HEADERS NtHeaders,
-    OUT PVOID *SrcImageMap
-    )
+LdrpWx86CheckVirtualSectionOverlap(IN PUNICODE_STRING ImageName OPTIONAL, IN PVOID ImageBase,
+                                   IN PIMAGE_NT_HEADERS NtHeaders, OUT PVOID *SrcImageMap)
 
 /*++
 
@@ -203,17 +192,18 @@ Return Value:
     PVOID ViewBase;
     SIZE_T ViewSize;
     LARGE_INTEGER SectionOffset;
-    UCHAR Buffer[ DOS_MAX_PATH_LENGTH ];
+    UCHAR Buffer[DOS_MAX_PATH_LENGTH];
     NTSTATUS NtStatus = STATUS_UNSUCCESSFUL;
 
 
     //
     // Check for any overlap inside the image.
     //
-    
-    Result = LdrpWx86DetectSectionOverlap (ImageBase, NtHeaders);
 
-    if (Result == FALSE) {
+    Result = LdrpWx86DetectSectionOverlap(ImageBase, NtHeaders);
+
+    if (Result == FALSE)
+    {
         return NtStatus;
     }
 
@@ -222,99 +212,65 @@ Return Value:
     //
     // Make sure we have a path.
     //
-    
+
     NtPathName = (PUNICODE_STRING)Buffer;
-    if (ARGUMENT_PRESENT (ImageName) == 0) {
+    if (ARGUMENT_PRESENT(ImageName) == 0)
+    {
 
-        NtStatus = NtQueryInformationProcess(
-                       NtCurrentProcess(),
-                       ProcessImageFileName,
-                       NtPathName,
-                       sizeof (Buffer),
-                       NULL
-                       );
-    } else {
+        NtStatus =
+            NtQueryInformationProcess(NtCurrentProcess(), ProcessImageFileName, NtPathName, sizeof(Buffer), NULL);
+    }
+    else
+    {
 
-        Result = RtlDosPathNameToNtPathName_U(
-                     ImageName->Buffer,
-                     NtPathName,
-                     NULL,
-                     NULL
-                     );
-        
-        if (Result != FALSE) {
-            
+        Result = RtlDosPathNameToNtPathName_U(ImageName->Buffer, NtPathName, NULL, NULL);
+
+        if (Result != FALSE)
+        {
+
             FreeBuffer = NtPathName->Buffer;
             NtStatus = STATUS_SUCCESS;
         }
     }
 
-    if (NT_SUCCESS (NtStatus)) {
+    if (NT_SUCCESS(NtStatus))
+    {
 
-        InitializeObjectAttributes(
-            &ObjectAttributes,
-            NtPathName,
-            OBJ_CASE_INSENSITIVE,
-            NULL,
-            NULL
-            );
+        InitializeObjectAttributes(&ObjectAttributes, NtPathName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
 
-        NtStatus = NtCreateFile(
-                       &FileHandle,
-                       (ACCESS_MASK) GENERIC_READ | SYNCHRONIZE | FILE_READ_ATTRIBUTES,
-                       &ObjectAttributes,
-                       &IoStatusBlock,
-                       NULL,
-                       0L,
-                       FILE_SHARE_READ | FILE_SHARE_DELETE,
-                       FILE_OPEN,
-                       0L,
-                       NULL,
-                       0L
-                       );
+        NtStatus =
+            NtCreateFile(&FileHandle, (ACCESS_MASK)GENERIC_READ | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &ObjectAttributes,
+                         &IoStatusBlock, NULL, 0L, FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_OPEN, 0L, NULL, 0L);
 
-        if (FreeBuffer != NULL) {
-            RtlFreeHeap (RtlProcessHeap(), 0, FreeBuffer);
+        if (FreeBuffer != NULL)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
         }
 
-        if (NT_SUCCESS (NtStatus)) {
+        if (NT_SUCCESS(NtStatus))
+        {
 
-            NtStatus = NtCreateSection(
-                           &MappingHandle,
-                           STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
-                           NULL,
-                           NULL,
-                           PAGE_READONLY,
-                           SEC_COMMIT,
-                           FileHandle
-                           );
+            NtStatus = NtCreateSection(&MappingHandle, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
+                                       NULL, NULL, PAGE_READONLY, SEC_COMMIT, FileHandle);
 
-            NtClose (FileHandle);
+            NtClose(FileHandle);
 
-            if (NT_SUCCESS (NtStatus)) {
+            if (NT_SUCCESS(NtStatus))
+            {
 
                 SectionOffset.LowPart = 0;
                 SectionOffset.HighPart = 0;
                 ViewSize = 0;
                 ViewBase = NULL;
 
-                NtStatus = NtMapViewOfSection(
-                               MappingHandle,
-                               NtCurrentProcess(),
-                               &ViewBase,
-                               0L,
-                               0L,
-                               &SectionOffset,
-                               &ViewSize,
-                               ViewShare,
-                               0L,
-                               PAGE_READONLY
-                               );
+                NtStatus = NtMapViewOfSection(MappingHandle, NtCurrentProcess(), &ViewBase, 0L, 0L, &SectionOffset,
+                                              &ViewSize, ViewShare, 0L, PAGE_READONLY);
 
-                NtClose (MappingHandle);
+                NtClose(MappingHandle);
 
-                if (NT_SUCCESS (NtStatus)) {
+                if (NT_SUCCESS(NtStatus))
+                {
                     *SrcImageMap = ViewBase;
                 }
             }
@@ -325,13 +281,8 @@ Return Value:
 }
 
 
-
-
 NTSTATUS
-Wx86SetRelocatedSharedProtection (
-    IN PVOID Base,
-    IN BOOLEAN Reset
-    )
+Wx86SetRelocatedSharedProtection(IN PVOID Base, IN BOOLEAN Reset)
 
 /*++
 
@@ -372,321 +323,332 @@ Return Value:
 
     NtHeaders = RtlImageNtHeader(Base);
 
-    SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)NtHeaders + sizeof(ULONG) +
-                        sizeof(IMAGE_FILE_HEADER) +
-                        NtHeaders->FileHeader.SizeOfOptionalHeader
-                        );
+    SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)NtHeaders + sizeof(ULONG) + sizeof(IMAGE_FILE_HEADER) +
+                                            NtHeaders->FileHeader.SizeOfOptionalHeader);
 
     NumberOfSharedDataPages = 0;
-    NumberOfNativePagesForImage =
-        NATIVE_BYTES_TO_PAGES (NtHeaders->OptionalHeader.SizeOfImage);
+    NumberOfNativePagesForImage = NATIVE_BYTES_TO_PAGES(NtHeaders->OptionalHeader.SizeOfImage);
 
-    for (i=0; i<NtHeaders->FileHeader.NumberOfSections; i++, SectionHeader++) {
-        
+    for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++, SectionHeader++)
+    {
+
         RegionSize = SectionHeader->SizeOfRawData;
-        if ((SectionHeader->Characteristics & IMAGE_SCN_MEM_SHARED) && 
+        if ((SectionHeader->Characteristics & IMAGE_SCN_MEM_SHARED) &&
             (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
              (SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE)) &&
-            (RegionSize != 0)) {
-            
-            VirtualAddress = (PVOID)((ULONG_PTR)Base + 
-                                    ((NumberOfNativePagesForImage + NumberOfSharedDataPages) << NATIVE_PAGE_SHIFT));
-            NumberOfNativePagesForImage +=  MI_ROUND_TO_SIZE (RegionSize, NATIVE_PAGE_SIZE) >> NATIVE_PAGE_SHIFT;
+            (RegionSize != 0))
+        {
 
-            if (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE)) {
+            VirtualAddress = (PVOID)((ULONG_PTR)Base +
+                                     ((NumberOfNativePagesForImage + NumberOfSharedDataPages) << NATIVE_PAGE_SHIFT));
+            NumberOfNativePagesForImage += MI_ROUND_TO_SIZE(RegionSize, NATIVE_PAGE_SIZE) >> NATIVE_PAGE_SHIFT;
+
+            if (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE))
+            {
                 //
                 // Object isn't writeable, so change it.
                 //
-                if (Reset) {
-                    if (SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) {
+                if (Reset)
+                {
+                    if (SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE)
+                    {
                         NewProtect = PAGE_EXECUTE;
-                    } 
-                    else {
+                    }
+                    else
+                    {
                         NewProtect = PAGE_READONLY;
                     }
                     NewProtect |= (SectionHeader->Characteristics & IMAGE_SCN_MEM_NOT_CACHED) ? PAGE_NOCACHE : 0;
-                } 
-                else {
+                }
+                else
+                {
                     NewProtect = PAGE_READWRITE;
                 }
 
-                st = NtProtectVirtualMemory(CurrentProcessHandle, &VirtualAddress,
-                                            &RegionSize, NewProtect, &OldProtect);
+                st =
+                    NtProtectVirtualMemory(CurrentProcessHandle, &VirtualAddress, &RegionSize, NewProtect, &OldProtect);
 
-                if (!NT_SUCCESS(st)) {
+                if (!NT_SUCCESS(st))
+                {
                     return st;
                 }
             }
         }
     }
 
-    if (Reset) {
-        NtFlushInstructionCache(NtCurrentProcess(), 
-                                Base, 
-                                NumberOfNativePagesForImage << NATIVE_PAGE_SHIFT
-                               );
+    if (Reset)
+    {
+        NtFlushInstructionCache(NtCurrentProcess(), Base, NumberOfNativePagesForImage << NATIVE_PAGE_SHIFT);
     }
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-LdrpWx86FormatVirtualImage(
-    IN PUNICODE_STRING DosImagePathName,
-    IN PIMAGE_NT_HEADERS32 NtHeaders,
-    IN PVOID DllBase
-    )
+LdrpWx86FormatVirtualImage(IN PUNICODE_STRING DosImagePathName, IN PIMAGE_NT_HEADERS32 NtHeaders, IN PVOID DllBase)
 {
-   PIMAGE_SECTION_HEADER SectionTable, Section, LastSection, FirstSection;
-   ULONG VirtualImageSize;
-   PUCHAR NextVirtualAddress, SrcVirtualAddress, DestVirtualAddress;
-   PUCHAR ImageBase= DllBase;
-   LONG Size;
-   ULONG NumberOfSharedDataPages;
-   ULONG NumberOfNativePagesForImage;
-   ULONG NumberOfExtraPagesForImage;
-   ULONG_PTR PreferredImageBase;
-   BOOLEAN ImageHasRelocatedSharedSection = FALSE;
-   ULONG SubSectionSize;
-   PVOID AlternateBase;
-   NTSTATUS st;
+    PIMAGE_SECTION_HEADER SectionTable, Section, LastSection, FirstSection;
+    ULONG VirtualImageSize;
+    PUCHAR NextVirtualAddress, SrcVirtualAddress, DestVirtualAddress;
+    PUCHAR ImageBase = DllBase;
+    LONG Size;
+    ULONG NumberOfSharedDataPages;
+    ULONG NumberOfNativePagesForImage;
+    ULONG NumberOfExtraPagesForImage;
+    ULONG_PTR PreferredImageBase;
+    BOOLEAN ImageHasRelocatedSharedSection = FALSE;
+    ULONG SubSectionSize;
+    PVOID AlternateBase;
+    NTSTATUS st;
 
-   
-   AlternateBase = NULL;
-   st = LdrpWx86CheckVirtualSectionOverlap (DosImagePathName,
-                                            DllBase,
-                                            NtHeaders,
-                                            &AlternateBase
-                                            );
 
-   st = Wx86SetRelocatedSharedProtection(DllBase, FALSE);
-   if (!NT_SUCCESS(st)) {
-       DbgPrint("Wx86SetRelocatedSharedProtection failed with return status %x\n", st);
-       Wx86SetRelocatedSharedProtection(DllBase, TRUE);
-       if (AlternateBase != NULL) {
-           NtUnmapViewOfSection (NtCurrentProcess(), AlternateBase);
-       }
-       return st;
-   }
+    AlternateBase = NULL;
+    st = LdrpWx86CheckVirtualSectionOverlap(DosImagePathName, DllBase, NtHeaders, &AlternateBase);
 
-   //
-   // Copy each section from its raw file address to its virtual address
-   //
+    st = Wx86SetRelocatedSharedProtection(DllBase, FALSE);
+    if (!NT_SUCCESS(st))
+    {
+        DbgPrint("Wx86SetRelocatedSharedProtection failed with return status %x\n", st);
+        Wx86SetRelocatedSharedProtection(DllBase, TRUE);
+        if (AlternateBase != NULL)
+        {
+            NtUnmapViewOfSection(NtCurrentProcess(), AlternateBase);
+        }
+        return st;
+    }
 
-   SectionTable = IMAGE_FIRST_SECTION(NtHeaders);
-   LastSection = SectionTable + NtHeaders->FileHeader.NumberOfSections;
+    //
+    // Copy each section from its raw file address to its virtual address
+    //
 
-   if (SectionTable->PointerToRawData == SectionTable->VirtualAddress) {
-       // If the first section does not need to be moved then we exclude it
-       // from consideration in passes 1 and 2
-       FirstSection = SectionTable + 1;
-       }
-   else {
-       FirstSection = SectionTable;
-       }
+    SectionTable = IMAGE_FIRST_SECTION(NtHeaders);
+    LastSection = SectionTable + NtHeaders->FileHeader.NumberOfSections;
 
-   //
-   // First pass starts at the top and works down moving up each section that
-   // is to be moved up.
-   //
-   Section = FirstSection;
-   while (Section < LastSection) {
-       SrcVirtualAddress = ImageBase + Section->PointerToRawData;
-       DestVirtualAddress = Section->VirtualAddress + ImageBase;
+    if (SectionTable->PointerToRawData == SectionTable->VirtualAddress)
+    {
+        // If the first section does not need to be moved then we exclude it
+        // from consideration in passes 1 and 2
+        FirstSection = SectionTable + 1;
+    }
+    else
+    {
+        FirstSection = SectionTable;
+    }
 
-       if (DestVirtualAddress > SrcVirtualAddress) {
-           // Section needs to be moved down
-           break;
-           }
+    //
+    // First pass starts at the top and works down moving up each section that
+    // is to be moved up.
+    //
+    Section = FirstSection;
+    while (Section < LastSection)
+    {
+        SrcVirtualAddress = ImageBase + Section->PointerToRawData;
+        DestVirtualAddress = Section->VirtualAddress + ImageBase;
 
-       // Section needs to be moved up
-      if (Section->SizeOfRawData != 0) {
-          if (Section->PointerToRawData != 0) {
-              RtlMoveMemory(DestVirtualAddress,
-                            SrcVirtualAddress,
-                            Section->SizeOfRawData);
-              }
-          }
-      else {
-          Section->PointerToRawData = 0;
-          }
+        if (DestVirtualAddress > SrcVirtualAddress)
+        {
+            // Section needs to be moved down
+            break;
+        }
 
-       Section++;
-       }
+        // Section needs to be moved up
+        if (Section->SizeOfRawData != 0)
+        {
+            if (Section->PointerToRawData != 0)
+            {
+                RtlMoveMemory(DestVirtualAddress, SrcVirtualAddress, Section->SizeOfRawData);
+            }
+        }
+        else
+        {
+            Section->PointerToRawData = 0;
+        }
 
-   //
-   // Second pass is from the end of the image and work backwards since src and
-   // dst overlap
-   //
-   Section = --LastSection;
-   NextVirtualAddress = ImageBase + NtHeaders->OptionalHeader.SizeOfImage;
+        Section++;
+    }
 
-   while (Section >= FirstSection) {
-       SrcVirtualAddress = ImageBase + Section->PointerToRawData;
-       DestVirtualAddress = Section->VirtualAddress + ImageBase;
+    //
+    // Second pass is from the end of the image and work backwards since src and
+    // dst overlap
+    //
+    Section = --LastSection;
+    NextVirtualAddress = ImageBase + NtHeaders->OptionalHeader.SizeOfImage;
 
-       //
-       // Compute the subsection size.  The mm is really flexible here...
-       // it will allow a SizeOfRawData that far exceeds the virtual size,
-       // so we can't trust that.  If that happens, just use the page-aligned
-       // virtual size, since that is all that the mm will map in.
-       //
-       SubSectionSize = Section->SizeOfRawData;
-       if (Section->Misc.VirtualSize &&
-           SubSectionSize > MI_ROUND_TO_SIZE(Section->Misc.VirtualSize, PAGE_SIZE_X86)) {
-          SubSectionSize = MI_ROUND_TO_SIZE(Section->Misc.VirtualSize, PAGE_SIZE_X86);
-       }
+    while (Section >= FirstSection)
+    {
+        SrcVirtualAddress = ImageBase + Section->PointerToRawData;
+        DestVirtualAddress = Section->VirtualAddress + ImageBase;
 
-      //
-      // ensure Virtual section doesn't overlap the next section
-      //
-      if (DestVirtualAddress + SubSectionSize > NextVirtualAddress) {
-          Wx86SetRelocatedSharedProtection(DllBase, TRUE);
-          if (AlternateBase != NULL) {
-              NtUnmapViewOfSection (NtCurrentProcess(), AlternateBase);
-          }
-          return STATUS_INVALID_IMAGE_FORMAT;
-          }
+        //
+        // Compute the subsection size.  The mm is really flexible here...
+        // it will allow a SizeOfRawData that far exceeds the virtual size,
+        // so we can't trust that.  If that happens, just use the page-aligned
+        // virtual size, since that is all that the mm will map in.
+        //
+        SubSectionSize = Section->SizeOfRawData;
+        if (Section->Misc.VirtualSize && SubSectionSize > MI_ROUND_TO_SIZE(Section->Misc.VirtualSize, PAGE_SIZE_X86))
+        {
+            SubSectionSize = MI_ROUND_TO_SIZE(Section->Misc.VirtualSize, PAGE_SIZE_X86);
+        }
 
-       if (DestVirtualAddress < SrcVirtualAddress) {
-           // Section needs to be moved up
-           break;
-           }
+        //
+        // ensure Virtual section doesn't overlap the next section
+        //
+        if (DestVirtualAddress + SubSectionSize > NextVirtualAddress)
+        {
+            Wx86SetRelocatedSharedProtection(DllBase, TRUE);
+            if (AlternateBase != NULL)
+            {
+                NtUnmapViewOfSection(NtCurrentProcess(), AlternateBase);
+            }
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
 
-       // Section needs to be moved down
-      if (Section->SizeOfRawData != 0) {
-          if (Section->PointerToRawData != 0) {
-              RtlMoveMemory(DestVirtualAddress,
-                     (AlternateBase != NULL) ? 
-                            ((PCHAR)AlternateBase + Section->PointerToRawData) : SrcVirtualAddress,
-                     SubSectionSize);
-              }
-          }
-      else {
-          Section->PointerToRawData = 0;
-          }
+        if (DestVirtualAddress < SrcVirtualAddress)
+        {
+            // Section needs to be moved up
+            break;
+        }
 
-       NextVirtualAddress = DestVirtualAddress;
-       Section--;
-       }
+        // Section needs to be moved down
+        if (Section->SizeOfRawData != 0)
+        {
+            if (Section->PointerToRawData != 0)
+            {
+                RtlMoveMemory(DestVirtualAddress,
+                              (AlternateBase != NULL) ? ((PCHAR)AlternateBase + Section->PointerToRawData)
+                                                      : SrcVirtualAddress,
+                              SubSectionSize);
+            }
+        }
+        else
+        {
+            Section->PointerToRawData = 0;
+        }
 
-   //
-   // Third pass is for zeroing out any memory left between the end of a
-   // section and the end of the page. We'll do this from end to top
-   //
-   Section = LastSection;
-   NextVirtualAddress = ImageBase + NtHeaders->OptionalHeader.SizeOfImage;
+        NextVirtualAddress = DestVirtualAddress;
+        Section--;
+    }
 
-   NumberOfSharedDataPages = 0;  
-   while (Section >= SectionTable) {
-       DestVirtualAddress = Section->VirtualAddress + ImageBase;
+    //
+    // Third pass is for zeroing out any memory left between the end of a
+    // section and the end of the page. We'll do this from end to top
+    //
+    Section = LastSection;
+    NextVirtualAddress = ImageBase + NtHeaders->OptionalHeader.SizeOfImage;
 
-      //
-      // Shared Data sections cannot be shared, because of
-      // page misalignment, and are treated as Exec- Copy on Write.
-      //
-       if ((Section->Characteristics & IMAGE_SCN_MEM_SHARED) && 
-           (!(Section->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
-            (Section->Characteristics & IMAGE_SCN_MEM_WRITE))) {
-          ImageHasRelocatedSharedSection = TRUE;
+    NumberOfSharedDataPages = 0;
+    while (Section >= SectionTable)
+    {
+        DestVirtualAddress = Section->VirtualAddress + ImageBase;
+
+        //
+        // Shared Data sections cannot be shared, because of
+        // page misalignment, and are treated as Exec- Copy on Write.
+        //
+        if ((Section->Characteristics & IMAGE_SCN_MEM_SHARED) &&
+            (!(Section->Characteristics & IMAGE_SCN_MEM_EXECUTE) || (Section->Characteristics & IMAGE_SCN_MEM_WRITE)))
+        {
+            ImageHasRelocatedSharedSection = TRUE;
 #if 0
           DbgPrint("Unsuported IMAGE_SCN_MEM_SHARED %x\n",
                    Section->Characteristics
                    );
 #endif
-      }
+        }
 
-      //
-      // If section was empty zero it out
-      //
-      if (Section->SizeOfRawData != 0) {
-          if (Section->PointerToRawData == 0) {
-              RtlZeroMemory(DestVirtualAddress,
-                            Section->SizeOfRawData
-                            );
-              }
-          }
-
-
-      SubSectionSize = Section->SizeOfRawData;
-      if (Section->Misc.VirtualSize &&
-          SubSectionSize > MI_ROUND_TO_SIZE(Section->Misc.VirtualSize, PAGE_SIZE_X86)) {
-          SubSectionSize = MI_ROUND_TO_SIZE(Section->Misc.VirtualSize, PAGE_SIZE_X86);
-      }
+        //
+        // If section was empty zero it out
+        //
+        if (Section->SizeOfRawData != 0)
+        {
+            if (Section->PointerToRawData == 0)
+            {
+                RtlZeroMemory(DestVirtualAddress, Section->SizeOfRawData);
+            }
+        }
 
 
-      //
-      // Zero out remaining bytes up to the next section
-      //
-      RtlZeroMemory(DestVirtualAddress + Section->SizeOfRawData,
-                    (ULONG)(NextVirtualAddress - DestVirtualAddress - SubSectionSize)
-                    );
-
-       NextVirtualAddress = DestVirtualAddress;
-       Section--;
-       }
-
-   //
-   // Unmap the alternate base if it is there
-   //
-   if (AlternateBase != NULL) {
-       NtUnmapViewOfSection (NtCurrentProcess(), AlternateBase);
-   }
-
-   // Pass 4: if the dll has any shared sections, change the shared data
-   // references to point to additional shared pages at the end of the image.
-   //
-   // Note that our fixups are applied assuming that the dll is loaded at
-   // its preferred base; if it is loaded at some other address, it will
-   // be relocated again along will al other addresses.
+        SubSectionSize = Section->SizeOfRawData;
+        if (Section->Misc.VirtualSize && SubSectionSize > MI_ROUND_TO_SIZE(Section->Misc.VirtualSize, PAGE_SIZE_X86))
+        {
+            SubSectionSize = MI_ROUND_TO_SIZE(Section->Misc.VirtualSize, PAGE_SIZE_X86);
+        }
 
 
-   if (!ImageHasRelocatedSharedSection) {
-       goto LdrwWx86FormatVirtualImageDone;
-   }
+        //
+        // Zero out remaining bytes up to the next section
+        //
+        RtlZeroMemory(DestVirtualAddress + Section->SizeOfRawData,
+                      (ULONG)(NextVirtualAddress - DestVirtualAddress - SubSectionSize));
+
+        NextVirtualAddress = DestVirtualAddress;
+        Section--;
+    }
+
+    //
+    // Unmap the alternate base if it is there
+    //
+    if (AlternateBase != NULL)
+    {
+        NtUnmapViewOfSection(NtCurrentProcess(), AlternateBase);
+    }
+
+    // Pass 4: if the dll has any shared sections, change the shared data
+    // references to point to additional shared pages at the end of the image.
+    //
+    // Note that our fixups are applied assuming that the dll is loaded at
+    // its preferred base; if it is loaded at some other address, it will
+    // be relocated again along will al other addresses.
 
 
+    if (!ImageHasRelocatedSharedSection)
+    {
+        goto LdrwWx86FormatVirtualImageDone;
+    }
 
-   st = FixupBlockList(DllBase);
-   if (!NT_SUCCESS(st)) {
-       Wx86SetRelocatedSharedProtection(DllBase, TRUE);
-       return st;
-   }
 
-   NumberOfNativePagesForImage =
-        NATIVE_BYTES_TO_PAGES (NtHeaders->OptionalHeader.SizeOfImage);
-   NumberOfExtraPagesForImage = 0;
+    st = FixupBlockList(DllBase);
+    if (!NT_SUCCESS(st))
+    {
+        Wx86SetRelocatedSharedProtection(DllBase, TRUE);
+        return st;
+    }
 
-   // Account for raw data that extends beyond SizeOfImage
+    NumberOfNativePagesForImage = NATIVE_BYTES_TO_PAGES(NtHeaders->OptionalHeader.SizeOfImage);
+    NumberOfExtraPagesForImage = 0;
 
-   for (Section = SectionTable; Section <= LastSection; Section++)
-   {
-       ULONG EndOfSection;
-       ULONG ExtraPages;
-       ULONG ImagePages = NATIVE_BYTES_TO_PAGES (NtHeaders->OptionalHeader.SizeOfImage);
-       
-       EndOfSection = Section->PointerToRawData + Section->SizeOfRawData;
-       
-       if (NATIVE_BYTES_TO_PAGES (EndOfSection) > ImagePages) {
-           
-           ExtraPages = NATIVE_BYTES_TO_PAGES (EndOfSection) - ImagePages;
-           if (ExtraPages > NumberOfExtraPagesForImage) {
-               NumberOfExtraPagesForImage = ExtraPages;
-           }
-       }
-   }
+    // Account for raw data that extends beyond SizeOfImage
 
-   PreferredImageBase = NtHeaders->OptionalHeader.ImageBase;
+    for (Section = SectionTable; Section <= LastSection; Section++)
+    {
+        ULONG EndOfSection;
+        ULONG ExtraPages;
+        ULONG ImagePages = NATIVE_BYTES_TO_PAGES(NtHeaders->OptionalHeader.SizeOfImage);
 
-   NumberOfNativePagesForImage += NumberOfExtraPagesForImage;
-   NumberOfSharedDataPages = 0;
-   for (Section = SectionTable; Section <= LastSection; Section++)
-   {
+        EndOfSection = Section->PointerToRawData + Section->SizeOfRawData;
+
+        if (NATIVE_BYTES_TO_PAGES(EndOfSection) > ImagePages)
+        {
+
+            ExtraPages = NATIVE_BYTES_TO_PAGES(EndOfSection) - ImagePages;
+            if (ExtraPages > NumberOfExtraPagesForImage)
+            {
+                NumberOfExtraPagesForImage = ExtraPages;
+            }
+        }
+    }
+
+    PreferredImageBase = NtHeaders->OptionalHeader.ImageBase;
+
+    NumberOfNativePagesForImage += NumberOfExtraPagesForImage;
+    NumberOfSharedDataPages = 0;
+    for (Section = SectionTable; Section <= LastSection; Section++)
+    {
         ULONG bFirst = 1;
 
-        if ((Section->Characteristics & IMAGE_SCN_MEM_SHARED) && 
-            (!(Section->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
-             (Section->Characteristics & IMAGE_SCN_MEM_WRITE))) 
+        if ((Section->Characteristics & IMAGE_SCN_MEM_SHARED) &&
+            (!(Section->Characteristics & IMAGE_SCN_MEM_EXECUTE) || (Section->Characteristics & IMAGE_SCN_MEM_WRITE)))
         {
             PIMAGE_BASE_RELOCATION NextBlock;
             PUSHORT NextOffset;
@@ -708,9 +670,7 @@ LdrpWx86FormatVirtualImage(
             SectionEndVA = SectionStartVA + SectionVirtualSize;
 
 
-            NextBlock = RtlImageDirectoryEntryToData(DllBase, TRUE,
-                                        IMAGE_DIRECTORY_ENTRY_BASERELOC,
-                                        &TotalBytes);
+            NextBlock = RtlImageDirectoryEntryToData(DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &TotalBytes);
             if (!NextBlock || !TotalBytes)
             {
                 // Note that if this fails, it should fail in the very
@@ -722,8 +682,8 @@ LdrpWx86FormatVirtualImage(
                     if (ShowSnaps)
                     {
                         DbgPrint("LdrpWx86FormatVirtualImage: failure "
-                        "after relocating some sections for image at %x\n",
-                                DllBase);
+                                 "after relocating some sections for image at %x\n",
+                                 DllBase);
                     }
                     Wx86SetRelocatedSharedProtection(DllBase, TRUE);
                     return STATUS_INVALID_IMAGE_FORMAT;
@@ -732,18 +692,17 @@ LdrpWx86FormatVirtualImage(
                 if (ShowSnaps)
                 {
                     DbgPrint("LdrpWx86FormatVirtualImage: No fixup info "
-                                "for image at %x; private sections will be "
-                                "used for shared data sections.\n",
-                            DllBase);
+                             "for image at %x; private sections will be "
+                             "used for shared data sections.\n",
+                             DllBase);
                 }
                 break;
             }
 
             bFirst = 0;
 
-            Diff = (NumberOfNativePagesForImage +
-                                NumberOfSharedDataPages) << NATIVE_PAGE_SHIFT;
-            Diff -= (ULONG) (SectionStartVA - PreferredImageBase);
+            Diff = (NumberOfNativePagesForImage + NumberOfSharedDataPages) << NATIVE_PAGE_SHIFT;
+            Diff -= (ULONG)(SectionStartVA - PreferredImageBase);
 
             if (ShowSnaps)
             {
@@ -756,86 +715,72 @@ LdrpWx86FormatVirtualImage(
             while (TotalBytes)
             {
                 SizeOfBlock = NextBlock->SizeOfBlock;
-                if (SizeOfBlock == 0) {
-                    
-                    if (ShowSnaps) {
-                        DbgPrint("Image at %lx contains invalid block size. Stopping fixups\n", 
-                                 ImageBase);
+                if (SizeOfBlock == 0)
+                {
+
+                    if (ShowSnaps)
+                    {
+                        DbgPrint("Image at %lx contains invalid block size. Stopping fixups\n", ImageBase);
                     }
                     break;
                 }
                 TotalBytes -= SizeOfBlock;
                 SizeOfBlock -= sizeof(IMAGE_BASE_RELOCATION);
                 SizeOfBlock /= sizeof(USHORT);
-                NextOffset = (PUSHORT) ((PCHAR)NextBlock +
-                                        sizeof(IMAGE_BASE_RELOCATION));
-                VA = (ULONG_PTR) DllBase + NextBlock->VirtualAddress;
+                NextOffset = (PUSHORT)((PCHAR)NextBlock + sizeof(IMAGE_BASE_RELOCATION));
+                VA = (ULONG_PTR)DllBase + NextBlock->VirtualAddress;
 
-                NextBlock = LdrpWx86ProcessRelocationBlock(VA, DllBase, SizeOfBlock,
-                                                        NextOffset,
-                                                        Diff,
-                                                        SectionStartVA,
-                                                        SectionEndVA);
+                NextBlock = LdrpWx86ProcessRelocationBlock(VA, DllBase, SizeOfBlock, NextOffset, Diff, SectionStartVA,
+                                                           SectionEndVA);
                 if (NextBlock == NULL)
                 {
                     // Trouble
                     if (ShowSnaps)
                     {
                         DbgPrint("LdrpWx86FormatVirtualImage: failure "
-                        "after relocating some sections for image at %x; "
-                        "Relocation information invalid\n",
-                                DllBase);
+                                 "after relocating some sections for image at %x; "
+                                 "Relocation information invalid\n",
+                                 DllBase);
                     }
                     Wx86SetRelocatedSharedProtection(DllBase, TRUE);
                     return STATUS_INVALID_IMAGE_FORMAT;
                 }
             }
-            NumberOfSharedDataPages += MI_ROUND_TO_SIZE (SectionVirtualSize,
-                                                        NATIVE_PAGE_SIZE) >>
-                                                        NATIVE_PAGE_SHIFT;
-
+            NumberOfSharedDataPages += MI_ROUND_TO_SIZE(SectionVirtualSize, NATIVE_PAGE_SIZE) >> NATIVE_PAGE_SHIFT;
         }
-   }
+    }
 
 
-   //
-   // If any of the variables inside the shared section is exported, then
-   // we need to fix up its RVA to point to the proper location at
-   // the end of the image.
-   //
+    //
+    // If any of the variables inside the shared section is exported, then
+    // we need to fix up its RVA to point to the proper location at
+    // the end of the image.
+    //
 
-   LdrpWx86FixupExportedSharedSection (
-       DllBase,
-       NtHeaders
-       );
-
+    LdrpWx86FixupExportedSharedSection(DllBase, NtHeaders);
 
 
 LdrwWx86FormatVirtualImageDone:
-   //
-   // Zero out first section's Raw Data up to its VirtualAddress
-   //
-   if (SectionTable->PointerToRawData != 0) {
-       DestVirtualAddress = SectionTable->PointerToRawData + ImageBase;
-       Size = (LONG)(NextVirtualAddress - DestVirtualAddress);
-       if (Size > 0) {
-           RtlZeroMemory(DestVirtualAddress,
-                     (ULONG)Size
-                     );
-           }
-   }
+    //
+    // Zero out first section's Raw Data up to its VirtualAddress
+    //
+    if (SectionTable->PointerToRawData != 0)
+    {
+        DestVirtualAddress = SectionTable->PointerToRawData + ImageBase;
+        Size = (LONG)(NextVirtualAddress - DestVirtualAddress);
+        if (Size > 0)
+        {
+            RtlZeroMemory(DestVirtualAddress, (ULONG)Size);
+        }
+    }
 
-   Wx86SetRelocatedSharedProtection(DllBase, TRUE);
-   return STATUS_SUCCESS;
-
+    Wx86SetRelocatedSharedProtection(DllBase, TRUE);
+    return STATUS_SUCCESS;
 }
 
 
 NTSTATUS
-LdrpWx86FixupExportedSharedSection (
-    IN PVOID ImageBase,
-    IN PIMAGE_NT_HEADERS NtHeaders
-    )
+LdrpWx86FixupExportedSharedSection(IN PVOID ImageBase, IN PIMAGE_NT_HEADERS NtHeaders)
 
 /*++
 
@@ -867,37 +812,30 @@ Return Value:
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
 
-    ImageExportDirectory = RtlImageDirectoryEntryToData (
-        ImageBase, 
-        TRUE,                                            
-        IMAGE_DIRECTORY_ENTRY_EXPORT,
-        &TotalBytes);
+    ImageExportDirectory = RtlImageDirectoryEntryToData(ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &TotalBytes);
 
-    if ((ImageExportDirectory == NULL) || (TotalBytes == 0)) {
+    if ((ImageExportDirectory == NULL) || (TotalBytes == 0))
+    {
         return NtStatus;
     }
 
     ExportEntry = (PULONG)((ULONG)ImageBase + ImageExportDirectory->AddressOfFunctions);
 
-    for (Export = 0 ; Export < ImageExportDirectory->NumberOfFunctions ; Export++) {
+    for (Export = 0; Export < ImageExportDirectory->NumberOfFunctions; Export++)
+    {
 
-        SharedRelocFixup = LdrpWx86RelocatedFixupDiff (
-            ImageBase,
-            NtHeaders,
-            ExportEntry[Export]
-            );
+        SharedRelocFixup = LdrpWx86RelocatedFixupDiff(ImageBase, NtHeaders, ExportEntry[Export]);
 
-        if (SharedRelocFixup != 0) {
+        if (SharedRelocFixup != 0)
+        {
 
-            if (ShowSnaps) {
-                DbgPrint("LdrpWx86FixupExportedSharedSection: Changing export Export[%lx] from %lx to %lx\n", 
-                         Export, 
-                         ExportEntry[Export], 
-                         ExportEntry [Export] + SharedRelocFixup);
+            if (ShowSnaps)
+            {
+                DbgPrint("LdrpWx86FixupExportedSharedSection: Changing export Export[%lx] from %lx to %lx\n", Export,
+                         ExportEntry[Export], ExportEntry[Export] + SharedRelocFixup);
             }
-            ExportEntry [Export] += SharedRelocFixup;
+            ExportEntry[Export] += SharedRelocFixup;
         }
-
     }
 
     return NtStatus;
@@ -906,185 +844,177 @@ Return Value:
 ////////////////////////////////////////////////////
 
 ULONG
-LdrpWx86RelocatedFixupDiff(
-    IN PUCHAR ImageBase,
-    IN PIMAGE_NT_HEADERS NtHeaders,
-    IN ULONG  Offset
-    )
+LdrpWx86RelocatedFixupDiff(IN PUCHAR ImageBase, IN PIMAGE_NT_HEADERS NtHeaders, IN ULONG Offset)
 {
-   PIMAGE_SECTION_HEADER SectionHeader;
-   ULONG i;
-   ULONG NumberOfSharedDataPages;
-   ULONG NumberOfNativePagesForImage;
-   ULONG Diff = 0;
-   ULONG_PTR FixupAddr = (ULONG_PTR)(ImageBase + Offset);
+    PIMAGE_SECTION_HEADER SectionHeader;
+    ULONG i;
+    ULONG NumberOfSharedDataPages;
+    ULONG NumberOfNativePagesForImage;
+    ULONG Diff = 0;
+    ULONG_PTR FixupAddr = (ULONG_PTR)(ImageBase + Offset);
 
-   SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)NtHeaders + sizeof(ULONG) +
-                    sizeof(IMAGE_FILE_HEADER) +
-                    NtHeaders->FileHeader.SizeOfOptionalHeader
-                    );
+    SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)NtHeaders + sizeof(ULONG) + sizeof(IMAGE_FILE_HEADER) +
+                                            NtHeaders->FileHeader.SizeOfOptionalHeader);
 
-   NumberOfNativePagesForImage =
-        NATIVE_BYTES_TO_PAGES (NtHeaders->OptionalHeader.SizeOfImage);
-   NumberOfSharedDataPages = 0;
+    NumberOfNativePagesForImage = NATIVE_BYTES_TO_PAGES(NtHeaders->OptionalHeader.SizeOfImage);
+    NumberOfSharedDataPages = 0;
 
-   for (i=0; i<NtHeaders->FileHeader.NumberOfSections; i++, SectionHeader++) 
-   {
-       ULONG_PTR SectionStartVA;
-       ULONG_PTR SectionEndVA;
-       ULONG SectionVirtualSize;
+    for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++, SectionHeader++)
+    {
+        ULONG_PTR SectionStartVA;
+        ULONG_PTR SectionEndVA;
+        ULONG SectionVirtualSize;
 
-       SectionVirtualSize = SectionHeader->Misc.VirtualSize;
-       if (SectionVirtualSize == 0) {
-           SectionVirtualSize = SectionHeader->SizeOfRawData;
-       }
+        SectionVirtualSize = SectionHeader->Misc.VirtualSize;
+        if (SectionVirtualSize == 0)
+        {
+            SectionVirtualSize = SectionHeader->SizeOfRawData;
+        }
 
-       SectionStartVA = (ULONG_PTR)ImageBase + SectionHeader->VirtualAddress;
-       SectionEndVA = SectionStartVA + SectionVirtualSize;
+        SectionStartVA = (ULONG_PTR)ImageBase + SectionHeader->VirtualAddress;
+        SectionEndVA = SectionStartVA + SectionVirtualSize;
 
-       if (((ULONG_PTR)FixupAddr >= SectionStartVA) && ((ULONG_PTR)FixupAddr <= SectionEndVA)) {
-           if ((SectionHeader->Characteristics & IMAGE_SCN_MEM_SHARED) && 
-               (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
-                (SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE))) {
-               Diff = (NumberOfNativePagesForImage +
-                       NumberOfSharedDataPages) << NATIVE_PAGE_SHIFT;
-               Diff -= (ULONG)SectionHeader->VirtualAddress;
-           }
-           break;
-       }
- 
-       if ((SectionHeader->Characteristics & IMAGE_SCN_MEM_SHARED) && 
-           (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
-            (SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE))) {
-           NumberOfSharedDataPages += MI_ROUND_TO_SIZE (SectionVirtualSize,
-                                                        NATIVE_PAGE_SIZE) >>
-                                                        NATIVE_PAGE_SHIFT;
-       }
-   }
+        if (((ULONG_PTR)FixupAddr >= SectionStartVA) && ((ULONG_PTR)FixupAddr <= SectionEndVA))
+        {
+            if ((SectionHeader->Characteristics & IMAGE_SCN_MEM_SHARED) &&
+                (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
+                 (SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE)))
+            {
+                Diff = (NumberOfNativePagesForImage + NumberOfSharedDataPages) << NATIVE_PAGE_SHIFT;
+                Diff -= (ULONG)SectionHeader->VirtualAddress;
+            }
+            break;
+        }
 
-   return Diff;
+        if ((SectionHeader->Characteristics & IMAGE_SCN_MEM_SHARED) &&
+            (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
+             (SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE)))
+        {
+            NumberOfSharedDataPages += MI_ROUND_TO_SIZE(SectionVirtualSize, NATIVE_PAGE_SIZE) >> NATIVE_PAGE_SHIFT;
+        }
+    }
+
+    return Diff;
 }
 
 
-NTSTATUS 
-FixupBlockList(
-    IN PUCHAR ImageBase)
+NTSTATUS
+FixupBlockList(IN PUCHAR ImageBase)
 {
-   PIMAGE_BASE_RELOCATION NextBlock;
-   PUSHORT NextOffset;
-   ULONG TotalBytes;
-   ULONG SizeOfBlock;
-   PIMAGE_NT_HEADERS NtHeaders;
+    PIMAGE_BASE_RELOCATION NextBlock;
+    PUSHORT NextOffset;
+    ULONG TotalBytes;
+    ULONG SizeOfBlock;
+    PIMAGE_NT_HEADERS NtHeaders;
 
-   NTSTATUS st;
+    NTSTATUS st;
 
-   NextBlock = RtlImageDirectoryEntryToData(ImageBase, TRUE,
-                                            IMAGE_DIRECTORY_ENTRY_BASERELOC,
-                                            &TotalBytes);
+    NextBlock = RtlImageDirectoryEntryToData(ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_BASERELOC, &TotalBytes);
 
-   if (!NextBlock || !TotalBytes) {
-       if (ShowSnaps) {
-           DbgPrint("LdrpWx86FixupBlockList: No fixup info "
-                    "for image at %x; private sections will be "
-                    "used for shared data sections.\n",
-                    ImageBase);
-       }
-       return STATUS_SUCCESS;
-   }
+    if (!NextBlock || !TotalBytes)
+    {
+        if (ShowSnaps)
+        {
+            DbgPrint("LdrpWx86FixupBlockList: No fixup info "
+                     "for image at %x; private sections will be "
+                     "used for shared data sections.\n",
+                     ImageBase);
+        }
+        return STATUS_SUCCESS;
+    }
 
-   NtHeaders = RtlImageNtHeader (ImageBase);
+    NtHeaders = RtlImageNtHeader(ImageBase);
 
-   while (TotalBytes) {
-       
-       SizeOfBlock = NextBlock->SizeOfBlock;
-       
-       if (SizeOfBlock == 0) {
+    while (TotalBytes)
+    {
 
-           if (ShowSnaps) {
-               DbgPrint("Image at %lx contains invalid block size. Stopping fixups\n", 
-                        ImageBase);
-           }
-           break;
-       }
-       TotalBytes -= SizeOfBlock;
-       SizeOfBlock -= sizeof(IMAGE_BASE_RELOCATION);
-       SizeOfBlock /= sizeof(USHORT);
-       NextOffset = (PUSHORT) ((PCHAR)NextBlock +
-                               sizeof(IMAGE_BASE_RELOCATION));
-       
-       NextBlock->VirtualAddress += LdrpWx86RelocatedFixupDiff (
-           ImageBase, 
-           NtHeaders,
-           NextBlock->VirtualAddress
-           );
+        SizeOfBlock = NextBlock->SizeOfBlock;
 
-       while (SizeOfBlock--) {
-           switch ((*NextOffset) >> 12) {
-               case IMAGE_REL_BASED_HIGHLOW :
-               case IMAGE_REL_BASED_HIGH :
-               case IMAGE_REL_BASED_LOW :
-                   break;
+        if (SizeOfBlock == 0)
+        {
 
-               case IMAGE_REL_BASED_HIGHADJ :
-                   ++NextOffset;
-                   --SizeOfBlock;
-                   break;
+            if (ShowSnaps)
+            {
+                DbgPrint("Image at %lx contains invalid block size. Stopping fixups\n", ImageBase);
+            }
+            break;
+        }
+        TotalBytes -= SizeOfBlock;
+        SizeOfBlock -= sizeof(IMAGE_BASE_RELOCATION);
+        SizeOfBlock /= sizeof(USHORT);
+        NextOffset = (PUSHORT)((PCHAR)NextBlock + sizeof(IMAGE_BASE_RELOCATION));
 
-               case IMAGE_REL_BASED_IA64_IMM64:
-               case IMAGE_REL_BASED_DIR64:
-               case IMAGE_REL_BASED_MIPS_JMPADDR :
-               case IMAGE_REL_BASED_ABSOLUTE :
-               case IMAGE_REL_BASED_SECTION :
-               case IMAGE_REL_BASED_REL32 :
-                   break;
+        NextBlock->VirtualAddress += LdrpWx86RelocatedFixupDiff(ImageBase, NtHeaders, NextBlock->VirtualAddress);
 
-               default :
-                   return STATUS_INVALID_IMAGE_FORMAT;
-           }
-           ++NextOffset;
-       }
+        while (SizeOfBlock--)
+        {
+            switch ((*NextOffset) >> 12)
+            {
+            case IMAGE_REL_BASED_HIGHLOW:
+            case IMAGE_REL_BASED_HIGH:
+            case IMAGE_REL_BASED_LOW:
+                break;
 
-       NextBlock = (PIMAGE_BASE_RELOCATION)NextOffset;
+            case IMAGE_REL_BASED_HIGHADJ:
+                ++NextOffset;
+                --SizeOfBlock;
+                break;
 
-       if (NextBlock == NULL) {
-           // Trouble
-           if (ShowSnaps) {
-               DbgPrint("LdrpWx86FixupBlockList: failure "
-                        "after relocating some sections for image at %x; "
-                        "Relocation information invalid\n",
-                        ImageBase);
-           }
-           return STATUS_INVALID_IMAGE_FORMAT;
-      }
-   }
+            case IMAGE_REL_BASED_IA64_IMM64:
+            case IMAGE_REL_BASED_DIR64:
+            case IMAGE_REL_BASED_MIPS_JMPADDR:
+            case IMAGE_REL_BASED_ABSOLUTE:
+            case IMAGE_REL_BASED_SECTION:
+            case IMAGE_REL_BASED_REL32:
+                break;
 
-   return STATUS_SUCCESS;
+            default:
+                return STATUS_INVALID_IMAGE_FORMAT;
+            }
+            ++NextOffset;
+        }
+
+        NextBlock = (PIMAGE_BASE_RELOCATION)NextOffset;
+
+        if (NextBlock == NULL)
+        {
+            // Trouble
+            if (ShowSnaps)
+            {
+                DbgPrint("LdrpWx86FixupBlockList: failure "
+                         "after relocating some sections for image at %x; "
+                         "Relocation information invalid\n",
+                         ImageBase);
+            }
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
+    }
+
+    return STATUS_SUCCESS;
 }
 
 
 BOOLEAN
-LdrpWx86DllHasRelocatedSharedSection(
-    IN PUCHAR ImageBase)
+LdrpWx86DllHasRelocatedSharedSection(IN PUCHAR ImageBase)
 {
-   PIMAGE_SECTION_HEADER SectionHeader;
-   ULONG i;
-   PIMAGE_NT_HEADERS32 NtHeaders = (PIMAGE_NT_HEADERS32)RtlImageNtHeader(ImageBase);
+    PIMAGE_SECTION_HEADER SectionHeader;
+    ULONG i;
+    PIMAGE_NT_HEADERS32 NtHeaders = (PIMAGE_NT_HEADERS32)RtlImageNtHeader(ImageBase);
 
-   SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)NtHeaders + sizeof(ULONG) +
-                    sizeof(IMAGE_FILE_HEADER) +
-                    NtHeaders->FileHeader.SizeOfOptionalHeader
-                    );
+    SectionHeader = (PIMAGE_SECTION_HEADER)((ULONG_PTR)NtHeaders + sizeof(ULONG) + sizeof(IMAGE_FILE_HEADER) +
+                                            NtHeaders->FileHeader.SizeOfOptionalHeader);
 
-   for (i=0; i<NtHeaders->FileHeader.NumberOfSections; i++, SectionHeader++) 
-   {
-       if ((SectionHeader->Characteristics & IMAGE_SCN_MEM_SHARED) && 
-           (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
-            (SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE))) {
-           return TRUE;
-       }
-   }
+    for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++, SectionHeader++)
+    {
+        if ((SectionHeader->Characteristics & IMAGE_SCN_MEM_SHARED) &&
+            (!(SectionHeader->Characteristics & IMAGE_SCN_MEM_EXECUTE) ||
+             (SectionHeader->Characteristics & IMAGE_SCN_MEM_WRITE)))
+        {
+            return TRUE;
+        }
+    }
 
-   return FALSE;
+    return FALSE;
 }
 
 
@@ -1102,14 +1032,9 @@ LdrpWx86DllHasRelocatedSharedSection(
 // which is pretty much the entire function. So we chose to replicate the
 // function as it was and change it to make the test.
 
-PIMAGE_BASE_RELOCATION LdrpWx86ProcessRelocationBlock(
-    IN ULONG_PTR VA,
-    IN PUCHAR ImageBase,
-    IN ULONG SizeOfBlock,
-    IN PUSHORT NextOffset,
-    IN ULONG Diff,
-    IN ULONG_PTR SectionStartVA,
-    IN ULONG_PTR SectionEndVA)
+PIMAGE_BASE_RELOCATION LdrpWx86ProcessRelocationBlock(IN ULONG_PTR VA, IN PUCHAR ImageBase, IN ULONG SizeOfBlock,
+                                                      IN PUSHORT NextOffset, IN ULONG Diff, IN ULONG_PTR SectionStartVA,
+                                                      IN ULONG_PTR SectionEndVA)
 {
     PUCHAR FixupVA;
     USHORT Offset;
@@ -1117,134 +1042,134 @@ PIMAGE_BASE_RELOCATION LdrpWx86ProcessRelocationBlock(
     ULONG_PTR DataVA;
 
 
-    while (SizeOfBlock--) {
+    while (SizeOfBlock--)
+    {
 
-       Offset = *NextOffset & (USHORT)0xfff;
-       FixupVA = (PUCHAR)(VA + Offset);
-       //
-       // Apply the fixups.
-       //
+        Offset = *NextOffset & (USHORT)0xfff;
+        FixupVA = (PUCHAR)(VA + Offset);
+        //
+        // Apply the fixups.
+        //
 
-       switch ((*NextOffset) >> 12) {
+        switch ((*NextOffset) >> 12)
+        {
 
-            case IMAGE_REL_BASED_HIGHLOW :
-                //
-                // HighLow - (32-bits) relocate the high and low half
-                //      of an address.
-                //
-                Temp = *(LONG UNALIGNED *)FixupVA;
-                DataVA = (ULONG_PTR) Temp;
-                if (DataVA >= SectionStartVA && DataVA <= SectionEndVA)
-                {
-                    Temp += (ULONG) Diff;
-                    *(LONG UNALIGNED *)FixupVA = Temp;
-                }
+        case IMAGE_REL_BASED_HIGHLOW:
+            //
+            // HighLow - (32-bits) relocate the high and low half
+            //      of an address.
+            //
+            Temp = *(LONG UNALIGNED *)FixupVA;
+            DataVA = (ULONG_PTR)Temp;
+            if (DataVA >= SectionStartVA && DataVA <= SectionEndVA)
+            {
+                Temp += (ULONG)Diff;
+                *(LONG UNALIGNED *)FixupVA = Temp;
+            }
 
-                break;
+            break;
 
-            case IMAGE_REL_BASED_HIGH :
-                //
-                // High - (16-bits) relocate the high half of an address.
-                //
-                Temp = *(PUSHORT)FixupVA << 16;
-                DataVA = (ULONG_PTR) Temp;
-                if (DataVA >= SectionStartVA && DataVA <= SectionEndVA)
-                {
-                    Temp += (ULONG) Diff;
-                    *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
-                }
-                break;
+        case IMAGE_REL_BASED_HIGH:
+            //
+            // High - (16-bits) relocate the high half of an address.
+            //
+            Temp = *(PUSHORT)FixupVA << 16;
+            DataVA = (ULONG_PTR)Temp;
+            if (DataVA >= SectionStartVA && DataVA <= SectionEndVA)
+            {
+                Temp += (ULONG)Diff;
+                *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
+            }
+            break;
 
-            case IMAGE_REL_BASED_HIGHADJ :
-                //
-                // Adjust high - (16-bits) relocate the high half of an
-                //      address and adjust for sign extension of low half.
-                //
-                Temp = *(PUSHORT)FixupVA << 16;
-                ++NextOffset;
-                --SizeOfBlock;
-                Temp += (LONG)(*(PSHORT)NextOffset);
-                DataVA = (ULONG_PTR) Temp;
-                if (DataVA >= SectionStartVA && DataVA <= SectionEndVA)
-                {
-                    Temp += (ULONG) Diff;
-                    Temp += 0x8000;
-                    *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
-                }
-                break;
+        case IMAGE_REL_BASED_HIGHADJ:
+            //
+            // Adjust high - (16-bits) relocate the high half of an
+            //      address and adjust for sign extension of low half.
+            //
+            Temp = *(PUSHORT)FixupVA << 16;
+            ++NextOffset;
+            --SizeOfBlock;
+            Temp += (LONG)(*(PSHORT)NextOffset);
+            DataVA = (ULONG_PTR)Temp;
+            if (DataVA >= SectionStartVA && DataVA <= SectionEndVA)
+            {
+                Temp += (ULONG)Diff;
+                Temp += 0x8000;
+                *(PUSHORT)FixupVA = (USHORT)(Temp >> 16);
+            }
+            break;
 
-            case IMAGE_REL_BASED_LOW :
-                //
-                // Low - (16-bit) relocate the low half of an address.
-                //
-                Temp = *(PSHORT)FixupVA;
-                DataVA = (ULONG_PTR) Temp;
-                if (DataVA >= SectionStartVA && DataVA <= SectionEndVA)
-                {
-                    Temp += (ULONG) Diff;
-                    *(PUSHORT)FixupVA = (USHORT)Temp;
-                }
-                break;
+        case IMAGE_REL_BASED_LOW:
+            //
+            // Low - (16-bit) relocate the low half of an address.
+            //
+            Temp = *(PSHORT)FixupVA;
+            DataVA = (ULONG_PTR)Temp;
+            if (DataVA >= SectionStartVA && DataVA <= SectionEndVA)
+            {
+                Temp += (ULONG)Diff;
+                *(PUSHORT)FixupVA = (USHORT)Temp;
+            }
+            break;
 
-            case IMAGE_REL_BASED_IA64_IMM64:
+        case IMAGE_REL_BASED_IA64_IMM64:
 
-                //
-                // Align it to bundle address before fixing up the
-                // 64-bit immediate value of the movl instruction.
-                //
+            //
+            // Align it to bundle address before fixing up the
+            // 64-bit immediate value of the movl instruction.
+            //
 
-                // No need to support
+            // No need to support
 
-                break;
+            break;
 
-            case IMAGE_REL_BASED_DIR64:
+        case IMAGE_REL_BASED_DIR64:
 
-                //
-                // Update 32-bit address
-                //
+            //
+            // Update 32-bit address
+            //
 
-                // No need to support
+            // No need to support
 
-                break;
+            break;
 
-            case IMAGE_REL_BASED_MIPS_JMPADDR :
-                //
-                // JumpAddress - (32-bits) relocate a MIPS jump address.
-                //
+        case IMAGE_REL_BASED_MIPS_JMPADDR:
+            //
+            // JumpAddress - (32-bits) relocate a MIPS jump address.
+            //
 
-                // No need to support
-                break;
+            // No need to support
+            break;
 
-            case IMAGE_REL_BASED_ABSOLUTE :
-                //
-                // Absolute - no fixup required.
-                //
-                break;
+        case IMAGE_REL_BASED_ABSOLUTE:
+            //
+            // Absolute - no fixup required.
+            //
+            break;
 
-            case IMAGE_REL_BASED_SECTION :
-                //
-                // Section Relative reloc.  Ignore for now.
-                //
-                break;
+        case IMAGE_REL_BASED_SECTION:
+            //
+            // Section Relative reloc.  Ignore for now.
+            //
+            break;
 
-            case IMAGE_REL_BASED_REL32 :
-                //
-                // Relative intrasection. Ignore for now.
-                //
-                break;
+        case IMAGE_REL_BASED_REL32:
+            //
+            // Relative intrasection. Ignore for now.
+            //
+            break;
 
-            default :
-                //
-                // Illegal - illegal relocation type.
-                //
+        default:
+            //
+            // Illegal - illegal relocation type.
+            //
 
-                return (PIMAGE_BASE_RELOCATION)NULL;
-       }
-       ++NextOffset;
+            return (PIMAGE_BASE_RELOCATION)NULL;
+        }
+        ++NextOffset;
     }
     return (PIMAGE_BASE_RELOCATION)NextOffset;
 }
 
-#endif  // BUILD_WOW6432
-
-
+#endif // BUILD_WOW6432

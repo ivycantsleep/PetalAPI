@@ -16,19 +16,19 @@
  * This is intended only for the PDK release.  Subsequent releases will
  * use the NLSAPI and Unicode.
  */
-#define LATIN_CAPITAL_LETTER_A_GRAVE    (WCHAR)0xc0
-#define LATIN_CAPITAL_LETTER_THORN      (WCHAR)0xde
-#define LATIN_SMALL_LETTER_SHARP_S      (WCHAR)0xdf
-#define LATIN_SMALL_LETTER_Y_DIAERESIS  (WCHAR)0xff
-#define DIVISION_SIGN                   (WCHAR)0xf7
-#define MULTIPLICATION_SIGN             (WCHAR)0xd7
+#define LATIN_CAPITAL_LETTER_A_GRAVE (WCHAR)0xc0
+#define LATIN_CAPITAL_LETTER_THORN (WCHAR)0xde
+#define LATIN_SMALL_LETTER_SHARP_S (WCHAR)0xdf
+#define LATIN_SMALL_LETTER_Y_DIAERESIS (WCHAR)0xff
+#define DIVISION_SIGN (WCHAR)0xf7
+#define MULTIPLICATION_SIGN (WCHAR)0xd7
 
 
 /*
  * Temporary defines to support Unicode block 1 (0x0000 - 0x00ff).
  */
-#define WCTOA(wch)  ((wch) & 0xff)
-#define IS_UNICODE_BLK1(wch)  ((int)(wch) <= 0x00ff)
+#define WCTOA(wch) ((wch) & 0xff)
+#define IS_UNICODE_BLK1(wch) ((int)(wch) <= 0x00ff)
 
 
 /***************************************************************************\
@@ -48,25 +48,20 @@
 
 
 FUNCLOG1(LOG_GENERAL, LPWSTR, WINAPI, CharLowerW, LPWSTR, pwsz)
-LPWSTR WINAPI CharLowerW(
-    LPWSTR pwsz)
+LPWSTR WINAPI CharLowerW(LPWSTR pwsz)
 {
     /*
      * Early out for NULL string or '\0'
      */
-    if (pwsz == NULL) {
+    if (pwsz == NULL)
+    {
         return pwsz;
     }
 
-    if (!IS_PTR(pwsz)) {
-        if (!LCMapStringW(
-                 LOCALE_USER_DEFAULT,
-                 LCMAP_LOWERCASE,
-                 (LPWSTR)&pwsz,
-                 1,
-                 (LPWSTR)&pwsz,
-                 1
-                 )) {
+    if (!IS_PTR(pwsz))
+    {
+        if (!LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, (LPWSTR)&pwsz, 1, (LPWSTR)&pwsz, 1))
+        {
             /*
              * We don't expect LCMapString to fail!  The caller is not expecting
              * failure, CharLowerW does not have a failure indicator, so we do
@@ -81,7 +76,7 @@ LPWSTR WINAPI CharLowerW(
     /*
      * pwsz is a null-terminated string
      */
-    CharLowerBuffW(pwsz, wcslen(pwsz)+1);
+    CharLowerBuffW(pwsz, wcslen(pwsz) + 1);
     return pwsz;
 }
 
@@ -103,25 +98,20 @@ LPWSTR WINAPI CharLowerW(
 
 
 FUNCLOG1(LOG_GENERAL, LPWSTR, WINAPI, CharUpperW, LPWSTR, pwsz)
-LPWSTR WINAPI CharUpperW(
-    LPWSTR pwsz)
+LPWSTR WINAPI CharUpperW(LPWSTR pwsz)
 {
     /*
      * Early out for NULL string or '\0'
      */
-    if (pwsz == NULL) {
+    if (pwsz == NULL)
+    {
         return pwsz;
     }
 
-    if (!IS_PTR(pwsz)) {
-        if (!LCMapStringW(
-                 LOCALE_USER_DEFAULT,
-                 LCMAP_UPPERCASE,
-                 (LPWSTR)&pwsz,
-                 1,
-                 (LPWSTR)&pwsz,
-                 1
-                 )) {
+    if (!IS_PTR(pwsz))
+    {
+        if (!LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, (LPWSTR)&pwsz, 1, (LPWSTR)&pwsz, 1))
+        {
             /*
              * We don't expect LCMapString to fail!  The caller is not expecting
              * failure, CharLowerW does not have a failure indicator, so we do
@@ -136,7 +126,7 @@ LPWSTR WINAPI CharUpperW(
     /*
      * pwsz is a null-terminated string
      */
-    CharUpperBuffW(pwsz, wcslen(pwsz)+1);
+    CharUpperBuffW(pwsz, wcslen(pwsz) + 1);
     return pwsz;
 }
 
@@ -157,31 +147,29 @@ LPWSTR WINAPI CharUpperW(
 
 
 FUNCLOG1(LOG_GENERAL, LPWSTR, WINAPI, CharNextW, LPCWSTR, lpwCurrentChar)
-LPWSTR WINAPI CharNextW(
-    LPCWSTR lpwCurrentChar)
+LPWSTR WINAPI CharNextW(LPCWSTR lpwCurrentChar)
 {
     WORD ctype3info;
 
-    if (*lpwCurrentChar) {
+    if (*lpwCurrentChar)
+    {
         //
         // Examine each code element.  Skip all combining elements.
         //
-        while (*(++lpwCurrentChar)) {
-            if (!GetStringTypeW(
-                    CT_CTYPE3,
-                    lpwCurrentChar,
-                    1,
-                    &ctype3info)) {
+        while (*(++lpwCurrentChar))
+        {
+            if (!GetStringTypeW(CT_CTYPE3, lpwCurrentChar, 1, &ctype3info))
+            {
                 /*
                  * GetStringTypeW failed!  The caller is not expecting failure,
                  * CharNextW does not have a failure indicator, so just return
                  * a pointer to the character we couldn't analyze.
                  */
-                RIPMSG2(RIP_WARNING, "CharNextW failed, L'\\x%.4x' at %#p",
-                        *lpwCurrentChar, lpwCurrentChar);
+                RIPMSG2(RIP_WARNING, "CharNextW failed, L'\\x%.4x' at %#p", *lpwCurrentChar, lpwCurrentChar);
                 break;
             }
-            if (!((ctype3info & C3_NONSPACING) && (!(ctype3info & C3_ALPHA)))) {
+            if (!((ctype3info & C3_NONSPACING) && (!(ctype3info & C3_ALPHA))))
+            {
                 break;
             }
         }
@@ -208,36 +196,33 @@ LPWSTR WINAPI CharNextW(
 
 
 FUNCLOG2(LOG_GENERAL, LPWSTR, WINAPI, CharPrevW, LPCWSTR, lpwStart, LPCWSTR, lpwCurrentChar)
-LPWSTR WINAPI CharPrevW(
-    LPCWSTR lpwStart,
-    LPCWSTR lpwCurrentChar)
+LPWSTR WINAPI CharPrevW(LPCWSTR lpwStart, LPCWSTR lpwCurrentChar)
 {
     WORD ctype3info;
     LPWSTR lpwValidChar = (LPWSTR)lpwCurrentChar;
 
 
-    if (lpwCurrentChar > lpwStart) {
+    if (lpwCurrentChar > lpwStart)
+    {
         //
         // Examine each code element.  Skip all combining elements.
         //
-        while (lpwCurrentChar-- > lpwStart) {
-            if (!GetStringTypeW(
-                    CT_CTYPE3,
-                    lpwCurrentChar,
-                    1,
-                    &ctype3info)) {
+        while (lpwCurrentChar-- > lpwStart)
+        {
+            if (!GetStringTypeW(CT_CTYPE3, lpwCurrentChar, 1, &ctype3info))
+            {
                 /*
                  * GetStringTypeW failed!  The caller is not expecting failure,
                  * CharPrevW does not have a failure indicator, so just return
                  * a pointer to the character we couldn't analyze.
                  */
-                RIPMSG2(RIP_WARNING, "CharPrevW failed, L'\\x%.4x' at %#p",
-                        *lpwCurrentChar, lpwCurrentChar);
+                RIPMSG2(RIP_WARNING, "CharPrevW failed, L'\\x%.4x' at %#p", *lpwCurrentChar, lpwCurrentChar);
                 break;
             }
-            if (!((ctype3info & C3_NONSPACING) && (!(ctype3info & C3_ALPHA)))) {
+            if (!((ctype3info & C3_NONSPACING) && (!(ctype3info & C3_ALPHA))))
+            {
                 lpwValidChar = (LPWSTR)lpwCurrentChar;
-                break;  // found non-combining code element
+                break; // found non-combining code element
             }
         }
 
@@ -246,7 +231,8 @@ LPWSTR WINAPI CharPrevW(
          * the entire buffer and haven't found a "legitimate" character, just
          * step back. See bug #27649.
          */
-        if(lpwCurrentChar < lpwStart){
+        if (lpwCurrentChar < lpwStart)
+        {
             --lpwValidChar;
             UserAssert(lpwValidChar >= lpwStart);
         }
@@ -269,21 +255,20 @@ LPWSTR WINAPI CharPrevW(
 
 
 FUNCLOG2(LOG_GENERAL, DWORD, WINAPI, CharLowerBuffW, LPWSTR, pwsz, DWORD, cwch)
-DWORD WINAPI CharLowerBuffW(
-    LPWSTR pwsz,
-    DWORD cwch)
+DWORD WINAPI CharLowerBuffW(LPWSTR pwsz, DWORD cwch)
 {
     int cwchT;
     DWORD i;
 
-    if (cwch == 0) {
+    if (cwch == 0)
+    {
         return 0;
     }
 
-    cwchT = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE,
-                pwsz, cwch, pwsz, cwch);
+    cwchT = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, pwsz, cwch, pwsz, cwch);
 
-    if (cwchT != 0) {
+    if (cwchT != 0)
+    {
         return cwchT;
     }
 
@@ -294,9 +279,11 @@ DWORD WINAPI CharLowerBuffW(
      */
     RIPMSG1(RIP_WARNING, "CharLowerBuffW(%ls) failed", pwsz);
 
-    for (i=0; i < cwch; i++) {
-        if (IS_UNICODE_BLK1(pwsz[i]) && IsCharUpperA((char)pwsz[i])) {
-            pwsz[i] += 'a'-'A';
+    for (i = 0; i < cwch; i++)
+    {
+        if (IS_UNICODE_BLK1(pwsz[i]) && IsCharUpperA((char)pwsz[i]))
+        {
+            pwsz[i] += 'a' - 'A';
         }
     }
 
@@ -317,21 +304,20 @@ DWORD WINAPI CharLowerBuffW(
 
 
 FUNCLOG2(LOG_GENERAL, DWORD, WINAPI, CharUpperBuffW, LPWSTR, pwsz, DWORD, cwch)
-DWORD WINAPI CharUpperBuffW(
-    LPWSTR pwsz,
-    DWORD cwch)
+DWORD WINAPI CharUpperBuffW(LPWSTR pwsz, DWORD cwch)
 {
     int cwchT;
     DWORD i;
 
-    if (cwch == 0) {
+    if (cwch == 0)
+    {
         return 0;
     }
 
-    cwchT = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE,
-                pwsz, cwch, pwsz, cwch);
+    cwchT = LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_UPPERCASE, pwsz, cwch, pwsz, cwch);
 
-    if (cwchT != 0) {
+    if (cwchT != 0)
+    {
         return cwchT;
     }
 
@@ -342,18 +328,17 @@ DWORD WINAPI CharUpperBuffW(
      */
     RIPMSG1(RIP_WARNING, "CharUpperBuffW(%ls) failed", pwsz);
 
-    for (i=0; i < cwch; i++) {
-        if (IS_UNICODE_BLK1(pwsz[i]) &&
-                IsCharLowerA((char)pwsz[i]) &&
-                (pwsz[i] != LATIN_SMALL_LETTER_SHARP_S) &&
-                (pwsz[i] != LATIN_SMALL_LETTER_Y_DIAERESIS)) {
-            pwsz[i] += (WCHAR)('A'-'a');
+    for (i = 0; i < cwch; i++)
+    {
+        if (IS_UNICODE_BLK1(pwsz[i]) && IsCharLowerA((char)pwsz[i]) && (pwsz[i] != LATIN_SMALL_LETTER_SHARP_S) &&
+            (pwsz[i] != LATIN_SMALL_LETTER_Y_DIAERESIS))
+        {
+            pwsz[i] += (WCHAR)('A' - 'a');
         }
     }
 
     return cwch;
 }
-
 
 
 /***************************************************************************\
@@ -369,15 +354,18 @@ DWORD WINAPI CharUpperBuffW(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, IsCharLowerW, WCHAR, wChar)
-BOOL WINAPI IsCharLowerW(
-    WCHAR wChar)
+BOOL WINAPI IsCharLowerW(WCHAR wChar)
 {
     WORD ctype1info;
 
-    if (GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info)) {
-        if (ctype1info & C1_LOWER) {
+    if (GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info))
+    {
+        if (ctype1info & C1_LOWER)
+        {
             return TRUE;
-        } else {
+        }
+        else
+        {
             return FALSE;
         }
     }
@@ -389,9 +377,12 @@ BOOL WINAPI IsCharLowerW(
      */
     RIPMSG1(RIP_WARNING, "IsCharLowerW(L'\\x%.4lx') failed", wChar);
 
-    if (IS_UNICODE_BLK1(wChar)) {
+    if (IS_UNICODE_BLK1(wChar))
+    {
         return IsCharLowerA((CHAR)wChar);
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
@@ -410,15 +401,18 @@ BOOL WINAPI IsCharLowerW(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, IsCharUpperW, WCHAR, wChar)
-BOOL WINAPI IsCharUpperW(
-    WCHAR wChar)
+BOOL WINAPI IsCharUpperW(WCHAR wChar)
 {
     WORD ctype1info;
 
-    if (GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info)) {
-        if (ctype1info & C1_UPPER) {
+    if (GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info))
+    {
+        if (ctype1info & C1_UPPER)
+        {
             return TRUE;
-        } else {
+        }
+        else
+        {
             return FALSE;
         }
     }
@@ -430,9 +424,12 @@ BOOL WINAPI IsCharUpperW(
      */
     RIPMSG1(RIP_WARNING, "IsCharUpper(L'\\x%.4lx') failed", wChar);
 
-    if (IS_UNICODE_BLK1(wChar)) {
+    if (IS_UNICODE_BLK1(wChar))
+    {
         return IsCharUpperA((CHAR)wChar);
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
@@ -452,12 +449,12 @@ BOOL WINAPI IsCharUpperW(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, IsCharAlphaNumericW, WCHAR, wChar)
-BOOL WINAPI IsCharAlphaNumericW(
-    WCHAR wChar)
+BOOL WINAPI IsCharAlphaNumericW(WCHAR wChar)
 {
     WORD ctype1info;
 
-    if (!GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info)) {
+    if (!GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info))
+    {
         //
         // GetStringTypeW returned an error!  IsCharAlphaNumericW has no
         // provision for returning an error...  The best we can do is to
@@ -473,14 +470,16 @@ BOOL WINAPI IsCharAlphaNumericW(
     //    Tibetan digits, etc.).
     //
 #ifdef FE_SB // IsCharAlphaNumericW()
-    if (ctype1info & C1_ALPHA) {
+    if (ctype1info & C1_ALPHA)
+    {
         WORD ctype3info = 0;
         /*
          * We don't want to return TRUE for halfwidth katakana.
          * Katakana is linguistic character (C1_ALPHA), but it is not
          * alphabet character.
          */
-        if (!GetStringTypeW(CT_CTYPE3, &wChar, 1, &ctype3info)) {
+        if (!GetStringTypeW(CT_CTYPE3, &wChar, 1, &ctype3info))
+        {
             UserAssert(FALSE);
             /*
              * Assume, it is alphabet character, because it has
@@ -489,23 +488,33 @@ BOOL WINAPI IsCharAlphaNumericW(
             return TRUE;
         }
 
-        if (ctype3info & (C3_KATAKANA|C3_HIRAGANA)) {
+        if (ctype3info & (C3_KATAKANA | C3_HIRAGANA))
+        {
             /*
              * This is 'Katakana'.
              */
             return FALSE;
-        } else {
+        }
+        else
+        {
             return TRUE;
         }
-    } else if (ctype1info & C1_DIGIT) {
+    }
+    else if (ctype1info & C1_DIGIT)
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 #else
-    if ((ctype1info & C1_ALPHA) || (ctype1info & C1_DIGIT)) {
+    if ((ctype1info & C1_ALPHA) || (ctype1info & C1_DIGIT))
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 #endif // FE_SB
@@ -526,12 +535,12 @@ BOOL WINAPI IsCharAlphaNumericW(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, IsCharAlphaW, WCHAR, wChar)
-BOOL WINAPI IsCharAlphaW(
-    WCHAR wChar)
+BOOL WINAPI IsCharAlphaW(WCHAR wChar)
 {
     WORD ctype1info;
 
-    if (!GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info)) {
+    if (!GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info))
+    {
         //
         // GetStringTypeW returned an error!  IsCharAlphaW has no
         // provision for returning an error...  The best we can do
@@ -540,7 +549,8 @@ BOOL WINAPI IsCharAlphaW(
         UserAssert(FALSE);
         return FALSE;
     }
-    if (ctype1info & C1_ALPHA) {
+    if (ctype1info & C1_ALPHA)
+    {
 #ifdef FE_SB // IsCharAlphaA()
         WORD ctype3info = 0;
         /*
@@ -548,7 +558,8 @@ BOOL WINAPI IsCharAlphaW(
          * Katakana is linguistic character (C1_ALPHA), but it is not
          * alphabet character.
          */
-        if (!GetStringTypeW(CT_CTYPE3, &wChar, 1, &ctype3info)) {
+        if (!GetStringTypeW(CT_CTYPE3, &wChar, 1, &ctype3info))
+        {
             UserAssert(FALSE);
             /*
              * Assume, it is alphabet character, because it has
@@ -557,18 +568,23 @@ BOOL WINAPI IsCharAlphaW(
             return TRUE;
         }
 
-        if (ctype3info & (C3_KATAKANA|C3_HIRAGANA)) {
+        if (ctype3info & (C3_KATAKANA | C3_HIRAGANA))
+        {
             /*
              * This is 'Katakana'.
              */
             return FALSE;
-        } else {
+        }
+        else
+        {
             return TRUE;
         }
 #else
         return TRUE;
 #endif // FE_SB
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }

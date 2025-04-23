@@ -21,10 +21,6 @@ Environment:
 #ifndef _ACPITERM_H_
 #define _ACPITERM_H_
 
-    VOID
-    ACPICleanUp(
-        VOID
-        );
+VOID ACPICleanUp(VOID);
 
 #endif
-

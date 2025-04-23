@@ -45,41 +45,41 @@ Module Name:
 #include "acpiosnt.h"
 #include "..\nt\irqarb.h"
 
-DESCRIPTION_HEADER                  descriptionheader;
-FADT                                fadt;
-RSDP                                rsdp;
-FACS                                facs;
-RSDT                                rsdt;
-ACPIInformation                     acpiinformation;
-RSDTELEMENT                         rsdtelem;
-OBJDATA                             objdata;
-PACKAGEOBJ                          packageobj;
-FIELDUNITOBJ                        fieldunitobj;
-METHODOBJ                           methodobj;
-POWERRESOBJ                         powerresobj;
-PROCESSOROBJ                        processorobj;
-BUFFFIELDOBJ                        bufferfieldobj;
-NSOBJ                               nsobj;
-OPREGIONOBJ                         opregionobj;
-DEVICE_EXTENSION                    deviceextension;
-RSDTINFORMATION                     rsdtinformation;
-ULONG                               ulong;
-VECTOR_BLOCK                        vectorblock;
-ARBITER_EXTENSION                   arbiterextension;
-LINK_NODE                           linknode;
-LINK_NODE_ATTACHED_DEVICES          linknodeattacheddevices;
-PROCLOCALAPIC                       proclocalapic;
-DBGR                                dbgr;
-LIST                                list;
-CTXTQ                               ctxtq;
-ULONG                               gdwfAMLIInit;
-BRKPT                               brkpt;
-CALL                                call;
-RESOURCE                            resource;
-HEAP                                heap;
-HEAPOBJHDR                          heapobjhdr;
+DESCRIPTION_HEADER descriptionheader;
+FADT fadt;
+RSDP rsdp;
+FACS facs;
+RSDT rsdt;
+ACPIInformation acpiinformation;
+RSDTELEMENT rsdtelem;
+OBJDATA objdata;
+PACKAGEOBJ packageobj;
+FIELDUNITOBJ fieldunitobj;
+METHODOBJ methodobj;
+POWERRESOBJ powerresobj;
+PROCESSOROBJ processorobj;
+BUFFFIELDOBJ bufferfieldobj;
+NSOBJ nsobj;
+OPREGIONOBJ opregionobj;
+DEVICE_EXTENSION deviceextension;
+RSDTINFORMATION rsdtinformation;
+ULONG ulong;
+VECTOR_BLOCK vectorblock;
+ARBITER_EXTENSION arbiterextension;
+LINK_NODE linknode;
+LINK_NODE_ATTACHED_DEVICES linknodeattacheddevices;
+PROCLOCALAPIC proclocalapic;
+DBGR dbgr;
+LIST list;
+CTXTQ ctxtq;
+ULONG gdwfAMLIInit;
+BRKPT brkpt;
+CALL call;
+RESOURCE resource;
+HEAP heap;
+HEAPOBJHDR heapobjhdr;
 
-int cdecl main() {
+int cdecl main()
+{
     return 0;
 }
-

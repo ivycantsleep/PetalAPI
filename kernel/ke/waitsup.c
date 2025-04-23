@@ -26,12 +26,7 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-FASTCALL
-KiUnlinkThread (
-    IN PRKTHREAD Thread,
-    IN LONG_PTR WaitStatus
-    )
+VOID FASTCALL KiUnlinkThread(IN PRKTHREAD Thread, IN LONG_PTR WaitStatus)
 
 /*++
 
@@ -65,12 +60,14 @@ Return Value:
 
     Thread->WaitStatus |= WaitStatus;
     WaitBlock = Thread->WaitBlockList;
-    do {
+    do
+    {
         RemoveEntryList(&WaitBlock->WaitListEntry);
         WaitBlock = WaitBlock->NextWaitBlock;
     } while (WaitBlock != Thread->WaitBlockList);
 
-    if (Thread->WaitListEntry.Flink != NULL) {
+    if (Thread->WaitListEntry.Flink != NULL)
+    {
         RemoveEntryList(&Thread->WaitListEntry);
     }
 
@@ -79,7 +76,8 @@ Return Value:
     //
 
     Timer = &Thread->Timer;
-    if (Timer->Header.Inserted != FALSE) {
+    if (Timer->Header.Inserted != FALSE)
+    {
         KiRemoveTreeTimer(Timer);
     }
 
@@ -89,21 +87,16 @@ Return Value:
     //
 
     Queue = Thread->Queue;
-    if (Queue != NULL) {
+    if (Queue != NULL)
+    {
         Queue->CurrentCount += 1;
     }
 
     return;
 }
 
-VOID
-FASTCALL
-KiUnwaitThread (
-    IN PRKTHREAD Thread,
-    IN LONG_PTR WaitStatus,
-    IN KPRIORITY Increment,
-    IN PLIST_ENTRY ThreadList OPTIONAL
-    )
+VOID FASTCALL KiUnwaitThread(IN PRKTHREAD Thread, IN LONG_PTR WaitStatus, IN KPRIORITY Increment,
+                             IN PLIST_ENTRY ThreadList OPTIONAL)
 
 /*++
 
@@ -149,9 +142,10 @@ Return Value:
     //
 
     Process = Thread->ApcState.Process;
-    if (Thread->Priority < LOW_REALTIME_PRIORITY) {
-        if ((Thread->PriorityDecrement == 0) &&
-            (Thread->DisableBoost == FALSE)) {
+    if (Thread->Priority < LOW_REALTIME_PRIORITY)
+    {
+        if ((Thread->PriorityDecrement == 0) && (Thread->DisableBoost == FALSE))
+        {
             NewPriority = Thread->BasePriority + Increment;
 
             //
@@ -159,7 +153,8 @@ Return Value:
             // memory priority, then add the foreground boost separation.
             //
 
-            if (((PEPROCESS)Process)->Vm.Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND) {
+            if (((PEPROCESS)Process)->Vm.Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND)
+            {
                 NewPriority += PsPrioritySeperation;
             }
 
@@ -169,8 +164,10 @@ Return Value:
             // real time minus one.
             //
 
-            if (NewPriority > Thread->Priority) {
-                if (NewPriority >= LOW_REALTIME_PRIORITY) {
+            if (NewPriority > Thread->Priority)
+            {
+                if (NewPriority >= LOW_REALTIME_PRIORITY)
+                {
                     NewPriority = LOW_REALTIME_PRIORITY - 1;
                 }
 
@@ -181,9 +178,9 @@ Return Value:
                 // remove the separation boost after one quantum.
                 //
 
-                if (NewPriority > (Thread->BasePriority + Increment)) {
-                    Thread->PriorityDecrement =
-                        (SCHAR)(NewPriority - Thread->BasePriority - Increment);
+                if (NewPriority > (Thread->BasePriority + Increment))
+                {
+                    Thread->PriorityDecrement = (SCHAR)(NewPriority - Thread->BasePriority - Increment);
 
                     Thread->DecrementCount = ROUND_TRIP_DECREMENT_COUNT;
                 }
@@ -192,10 +189,12 @@ Return Value:
             }
         }
 
-        if (Thread->BasePriority >= TIME_CRITICAL_PRIORITY_BOUND) {
+        if (Thread->BasePriority >= TIME_CRITICAL_PRIORITY_BOUND)
+        {
             Thread->Quantum = Process->ThreadQuantum;
-
-        } else {
+        }
+        else
+        {
 
             //
             // If the thread is being unwaited to execute a kernel APC,
@@ -203,22 +202,26 @@ Return Value:
             // will charge quantum after the kernel APC has executed and
             // the wait is actually satisifed.
             //
-        
-            if (WaitStatus != STATUS_KERNEL_APC) {
+
+            if (WaitStatus != STATUS_KERNEL_APC)
+            {
                 Thread->Quantum -= WAIT_QUANTUM_DECREMENT;
-                if (Thread->Quantum <= 0) {
+                if (Thread->Quantum <= 0)
+                {
                     Thread->Quantum = Process->ThreadQuantum;
                     Thread->Priority -= (Thread->PriorityDecrement + 1);
-                    if (Thread->Priority < Thread->BasePriority) {
+                    if (Thread->Priority < Thread->BasePriority)
+                    {
                         Thread->Priority = Thread->BasePriority;
                     }
-    
+
                     Thread->PriorityDecrement = 0;
                 }
             }
         }
-    
-    } else {
+    }
+    else
+    {
         Thread->Quantum = Process->ThreadQuantum;
     }
 
@@ -227,20 +230,19 @@ Return Value:
     // specified list. Otherwise, ready the thread for execution.
     //
 
-    if (ARGUMENT_PRESENT(ThreadList)) {
+    if (ARGUMENT_PRESENT(ThreadList))
+    {
         InsertTailList(ThreadList, &Thread->WaitListEntry);
-
-    } else {
+    }
+    else
+    {
         KiReadyThread(Thread);
     }
 
     return;
 }
 
-VOID
-KeBoostCurrentThread(
-    VOID
-    )
+VOID KeBoostCurrentThread(VOID)
 
 /*++
 
@@ -288,20 +290,24 @@ redoboost:
     // If the thread priority is above 14, then no boost is applied.
     //
 
-    if ((Thread->PriorityDecrement == 0) && (Thread->Priority < 14)) {
+    if ((Thread->PriorityDecrement == 0) && (Thread->Priority < 14))
+    {
         Thread->PriorityDecrement = 14 - Thread->BasePriority;
         Thread->DecrementCount = ROUND_TRIP_DECREMENT_COUNT;
         Thread->Priority = 14;
         Thread->Quantum = Thread->ApcState.Process->ThreadQuantum * 2;
-
-    } else if (Thread->PriorityDecrement != 0) {
+    }
+    else if (Thread->PriorityDecrement != 0)
+    {
         Thread->DecrementCount -= 1;
-        if (Thread->DecrementCount == 0) {
+        if (Thread->DecrementCount == 0)
+        {
             KiUnlockDispatcherDatabase(OldIrql);
             KeSetPriorityThread(Thread, Thread->BasePriority);
             goto redoboost;
-
-        } else {
+        }
+        else
+        {
             Thread->Quantum = Thread->ApcState.Process->ThreadQuantum * 2;
         }
     }
@@ -310,11 +316,7 @@ redoboost:
     return;
 }
 
-VOID
-FASTCALL
-KiWaitSatisfyAll (
-    IN PRKWAIT_BLOCK WaitBlock
-    )
+VOID FASTCALL KiWaitSatisfyAll(IN PRKWAIT_BLOCK WaitBlock)
 
 /*++
 
@@ -347,8 +349,10 @@ Return Value:
 
     WaitBlock1 = WaitBlock;
     Thread = WaitBlock1->Thread;
-    do {
-        if (WaitBlock1->WaitKey != (CSHORT)STATUS_TIMEOUT) {
+    do
+    {
+        if (WaitBlock1->WaitKey != (CSHORT)STATUS_TIMEOUT)
+        {
             Object = (PKMUTANT)WaitBlock1->Object;
             KiWaitSatisfyAny(Object, Thread);
         }
@@ -359,12 +363,7 @@ Return Value:
     return;
 }
 
-VOID
-FASTCALL
-KiWaitTest (
-    IN PVOID Object,
-    IN KPRIORITY Increment
-    )
+VOID FASTCALL KiWaitTest(IN PVOID Object, IN KPRIORITY Increment)
 
 /*++
 
@@ -407,8 +406,8 @@ Return Value:
     ListHead = &Event->Header.WaitListHead;
     WaitEntry = ListHead->Flink;
     InitializeListHead(&ReadyList);
-    while ((Event->Header.SignalState > 0) &&
-           (WaitEntry != ListHead)) {
+    while ((Event->Header.SignalState > 0) && (WaitEntry != ListHead))
+    {
 
         WaitBlock = CONTAINING_RECORD(WaitEntry, KWAIT_BLOCK, WaitListEntry);
         Thread = WaitBlock->Thread;
@@ -423,7 +422,8 @@ Return Value:
         //      types.
         //
 
-        if (WaitBlock->WaitType == WaitAny) {
+        if (WaitBlock->WaitType == WaitAny)
+        {
             WaitStatus = (NTSTATUS)WaitBlock->WaitKey;
             KiWaitSatisfyAny((PKMUTANT)Event, Thread);
         }
@@ -439,7 +439,8 @@ Return Value:
     // looking at it.
     //
 
-    while (!IsListEmpty(&ReadyList)) {
+    while (!IsListEmpty(&ReadyList))
+    {
         ThreadEntry = RemoveHeadList(&ReadyList);
         Thread = CONTAINING_RECORD(ThreadEntry, KTHREAD, WaitListEntry);
         KiReadyThread(Thread);

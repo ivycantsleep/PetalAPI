@@ -22,12 +22,9 @@ Revision History:
 --*/
 
 #include "mi.h"
-
+
 PVOID
-MiMapPageInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PKIRQL OldIrql
-    )
+MiMapPageInHyperSpace(IN PFN_NUMBER PageFrameIndex, IN PKIRQL OldIrql)
 
 /*++
 
@@ -74,11 +71,9 @@ Environment:
 
     return KSEG_ADDRESS(PageFrameIndex);
 }
-
+
 PVOID
-MiMapPageInHyperSpaceAtDpc (
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiMapPageInHyperSpaceAtDpc(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -124,11 +119,9 @@ Environment:
 
     return KSEG_ADDRESS(PageFrameIndex);
 }
-
+
 PVOID
-MiMapImageHeaderInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiMapImageHeaderInHyperSpace(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -158,24 +151,27 @@ Environment:
 
 #if DBG
 
-    if (PageFrameIndex == 0) {
+    if (PageFrameIndex == 0)
+    {
         DbgPrint("attempt to map physical page 0 in hyper space\n");
-        KeBugCheck (MEMORY_MANAGEMENT);
+        KeBugCheck(MEMORY_MANAGEMENT);
     }
 
 #endif //DBG
 
-    PointerPte = MiGetPteAddress (IMAGE_MAPPING_PTE);
+    PointerPte = MiGetPteAddress(IMAGE_MAPPING_PTE);
 
     LOCK_PFN(OldIrql);
 
-    while (PointerPte->u.Long != 0) {
+    while (PointerPte->u.Long != 0)
+    {
 
         //
         // If there is no event specified, set one up.
         //
 
-        if (MmWorkingSetList->WaitingForImageMapping == (PKEVENT)NULL) {
+        if (MmWorkingSetList->WaitingForImageMapping == (PKEVENT)NULL)
+        {
 
             //
             // Set the global event into the field and wait for it.
@@ -193,33 +189,27 @@ Environment:
 
         UNLOCK_PFN_AND_THEN_WAIT(OldIrql);
 
-        KeWaitForSingleObject(MmWorkingSetList->WaitingForImageMapping,
-                              Executive,
-                              KernelMode,
-                              FALSE,
+        KeWaitForSingleObject(MmWorkingSetList->WaitingForImageMapping, Executive, KernelMode, FALSE,
                               (PLARGE_INTEGER)NULL);
 
         KeLeaveCriticalRegion();
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
     }
 
-    ASSERT (PointerPte->u.Long == 0);
+    ASSERT(PointerPte->u.Long == 0);
 
     TempPte = ValidPtePte;
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
 
     *PointerPte = TempPte;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    return (PVOID)MiGetVirtualAddressMappedByPte (PointerPte);
+    return (PVOID)MiGetVirtualAddressMappedByPte(PointerPte);
 }
-
-VOID
-MiUnmapImageHeaderInHyperSpace (
-    VOID
-    )
+
+VOID MiUnmapImageHeaderInHyperSpace(VOID)
 
 /*++
 
@@ -257,7 +247,7 @@ Environment:
 
     TempPte.u.Long = 0;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Capture the current state of the event field and clear it out.
@@ -267,29 +257,27 @@ Environment:
 
     MmWorkingSetList->WaitingForImageMapping = (PKEVENT)NULL;
 
-    ASSERT (PointerPte->u.Long != 0);
+    ASSERT(PointerPte->u.Long != 0);
 
-    KeFlushSingleTb (IMAGE_MAPPING_PTE, TRUE, FALSE,
-                     (PHARDWARE_PTE)PointerPte, TempPte.u.Hard);
+    KeFlushSingleTb(IMAGE_MAPPING_PTE, TRUE, FALSE, (PHARDWARE_PTE)PointerPte, TempPte.u.Hard);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    if (Event != (PKEVENT)NULL) {
+    if (Event != (PKEVENT)NULL)
+    {
 
         //
         // If there was an event specified, set the event.
         //
 
-        KePulseEvent (Event, 0, FALSE);
+        KePulseEvent(Event, 0, FALSE);
     }
 
     return;
 }
-
+
 PVOID
-MiMapPageToZeroInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiMapPageToZeroInHyperSpace(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 

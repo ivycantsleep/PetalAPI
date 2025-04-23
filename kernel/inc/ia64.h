@@ -21,7 +21,8 @@ Revision History:
 #ifndef _IA64H_
 #define _IA64H_
 
-#if !(defined(_NTDRIVER_) || defined(_NTDDK_) || defined(_NTIFS_) || defined(_NTHAL_) || defined(_NTOSP_)) && !defined(_BLDR_)
+#if !(defined(_NTDRIVER_) || defined(_NTDDK_) || defined(_NTIFS_) || defined(_NTHAL_) || defined(_NTOSP_)) && \
+    !defined(_BLDR_)
 
 #define ExRaiseException RtlRaiseException
 #define ExRaiseStatus RtlRaiseStatus
@@ -38,21 +39,22 @@ Revision History:
 //      history records may become part of the KPCR structure.
 //
 
-typedef struct _IHISTORY_RECORD {
+typedef struct _IHISTORY_RECORD
+{
     ULONGLONG InterruptionType;
     ULONGLONG IIP;
     ULONGLONG IPSR;
     ULONGLONG Extra0;
 } IHISTORY_RECORD;
 
-#define MAX_NUMBER_OF_IHISTORY_RECORDS  128
+#define MAX_NUMBER_OF_IHISTORY_RECORDS 128
 
 //
 // For PSR bit field definitions
 //
 #include "kxia64.h"
 
-
+
 // begin_ntddk begin_wdm begin_nthal begin_ntndis begin_ntosp
 
 #if defined(_IA64_)
@@ -86,53 +88,54 @@ typedef ULONG_PTR PFN_NUMBER, *PPFN_NUMBER;
 
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-unsigned __int64 __getReg (int);
-void __setReg (int, unsigned __int64);
-void __isrlz (void);
-void __dsrlz (void);
-void __fwb (void);
-void __mf (void);
-void __mfa (void);
-void __synci (void);
-__int64 __thash (__int64);
-__int64 __ttag (__int64);
-void __ptcl (__int64, __int64);
-void __ptcg (__int64, __int64);
-void __ptcga (__int64, __int64);
-void __ptri (__int64, __int64);
-void __ptrd (__int64, __int64);
-void __invalat (void);
-void __break (int);
-void __fc (__int64);
-void __sum (int);
-void __rsm (int);
-void _ReleaseSpinLock( unsigned __int64 *);
+    unsigned __int64 __getReg(int);
+    void __setReg(int, unsigned __int64);
+    void __isrlz(void);
+    void __dsrlz(void);
+    void __fwb(void);
+    void __mf(void);
+    void __mfa(void);
+    void __synci(void);
+    __int64 __thash(__int64);
+    __int64 __ttag(__int64);
+    void __ptcl(__int64, __int64);
+    void __ptcg(__int64, __int64);
+    void __ptcga(__int64, __int64);
+    void __ptri(__int64, __int64);
+    void __ptrd(__int64, __int64);
+    void __invalat(void);
+    void __break(int);
+    void __fc(__int64);
+    void __sum(int);
+    void __rsm(int);
+    void _ReleaseSpinLock(unsigned __int64 *);
 
 #ifdef _M_IA64
-#pragma intrinsic (__getReg)
-#pragma intrinsic (__setReg)
-#pragma intrinsic (__isrlz)
-#pragma intrinsic (__dsrlz)
-#pragma intrinsic (__fwb)
-#pragma intrinsic (__mf)
-#pragma intrinsic (__mfa)
-#pragma intrinsic (__synci)
-#pragma intrinsic (__thash)
-#pragma intrinsic (__ttag)
-#pragma intrinsic (__ptcl)
-#pragma intrinsic (__ptcg)
-#pragma intrinsic (__ptcga)
-#pragma intrinsic (__ptri)
-#pragma intrinsic (__ptrd)
-#pragma intrinsic (__invalat)
-#pragma intrinsic (__break)
-#pragma intrinsic (__fc)
-#pragma intrinsic (__sum)
-#pragma intrinsic (__rsm)
-#pragma intrinsic (_ReleaseSpinLock)
+#pragma intrinsic(__getReg)
+#pragma intrinsic(__setReg)
+#pragma intrinsic(__isrlz)
+#pragma intrinsic(__dsrlz)
+#pragma intrinsic(__fwb)
+#pragma intrinsic(__mf)
+#pragma intrinsic(__mfa)
+#pragma intrinsic(__synci)
+#pragma intrinsic(__thash)
+#pragma intrinsic(__ttag)
+#pragma intrinsic(__ptcl)
+#pragma intrinsic(__ptcg)
+#pragma intrinsic(__ptcga)
+#pragma intrinsic(__ptri)
+#pragma intrinsic(__ptrd)
+#pragma intrinsic(__invalat)
+#pragma intrinsic(__break)
+#pragma intrinsic(__fc)
+#pragma intrinsic(__sum)
+#pragma intrinsic(__rsm)
+#pragma intrinsic(_ReleaseSpinLock)
 
 #endif // _M_IA64
 
@@ -173,9 +176,10 @@ void _ReleaseSpinLock( unsigned __int64 *);
 // Constants for values are in i386.h, mips.h, etc.
 //
 
-typedef enum _INTERLOCKED_RESULT {
+typedef enum _INTERLOCKED_RESULT
+{
     ResultNegative = RESULT_NEGATIVE,
-    ResultZero     = RESULT_ZERO,
+    ResultZero = RESULT_ZERO,
     ResultPositive = RESULT_POSITIVE
 } INTERLOCKED_RESULT;
 
@@ -184,39 +188,29 @@ typedef enum _INTERLOCKED_RESULT {
 //
 
 #if PRAGMA_DEPRECATED_DDK
-#pragma deprecated(ExInterlockedIncrementLong)      // Use InterlockedIncrement
-#pragma deprecated(ExInterlockedDecrementLong)      // Use InterlockedDecrement
-#pragma deprecated(ExInterlockedExchangeUlong)      // Use InterlockedExchange
+#pragma deprecated(ExInterlockedIncrementLong) // Use InterlockedIncrement
+#pragma deprecated(ExInterlockedDecrementLong) // Use InterlockedDecrement
+#pragma deprecated(ExInterlockedExchangeUlong) // Use InterlockedExchange
 #endif
 
-#define ExInterlockedIncrementLong(Addend, Lock) \
-    ExIa64InterlockedIncrementLong(Addend)
+#define ExInterlockedIncrementLong(Addend, Lock) ExIa64InterlockedIncrementLong(Addend)
 
-#define ExInterlockedDecrementLong(Addend, Lock) \
-    ExIa64InterlockedDecrementLong(Addend)
+#define ExInterlockedDecrementLong(Addend, Lock) ExIa64InterlockedDecrementLong(Addend)
 
-#define ExInterlockedExchangeUlong(Target, Value, Lock) \
-    ExIa64InterlockedExchangeUlong(Target, Value)
+#define ExInterlockedExchangeUlong(Target, Value, Lock) ExIa64InterlockedExchangeUlong(Target, Value)
 
 NTKERNELAPI
 INTERLOCKED_RESULT
-ExIa64InterlockedIncrementLong (
-    IN PLONG Addend
-    );
+ExIa64InterlockedIncrementLong(IN PLONG Addend);
 
 NTKERNELAPI
 INTERLOCKED_RESULT
-ExIa64InterlockedDecrementLong (
-    IN PLONG Addend
-    );
+ExIa64InterlockedDecrementLong(IN PLONG Addend);
 
 NTKERNELAPI
 ULONG
-ExIa64InterlockedExchangeUlong (
-    IN PULONG Target,
-    IN ULONG Value
-    );
-
+ExIa64InterlockedExchangeUlong(IN PULONG Target, IN ULONG Value);
+
 // begin_wdm
 
 //
@@ -225,7 +219,7 @@ ExIa64InterlockedExchangeUlong (
 // Define length of interrupt object dispatch code in longwords.
 //
 
-#define DISPATCH_LENGTH 2*2                // Length of dispatch code template in 32-bit words
+#define DISPATCH_LENGTH 2 * 2 // Length of dispatch code template in 32-bit words
 
 //
 // Begin of a block of definitions that must be synchronized with kxia64.h.
@@ -235,26 +229,26 @@ ExIa64InterlockedExchangeUlong (
 // Define Interrupt Request Levels.
 //
 
-#define PASSIVE_LEVEL            0      // Passive release level
-#define LOW_LEVEL                0      // Lowest interrupt level
-#define APC_LEVEL                1      // APC interrupt level
-#define DISPATCH_LEVEL           2      // Dispatcher level
-#define CMC_LEVEL                3      // Correctable machine check level
-#define DEVICE_LEVEL_BASE        4      // 4 - 11 - Device IRQLs
-#define PC_LEVEL                12      // Performance Counter IRQL
-#define IPI_LEVEL               14      // IPI IRQL
-#define CLOCK_LEVEL             13      // Clock Timer IRQL
-#define POWER_LEVEL             15      // Power failure level
-#define PROFILE_LEVEL           15      // Profiling level
-#define HIGH_LEVEL              15      // Highest interrupt level
+#define PASSIVE_LEVEL 0     // Passive release level
+#define LOW_LEVEL 0         // Lowest interrupt level
+#define APC_LEVEL 1         // APC interrupt level
+#define DISPATCH_LEVEL 2    // Dispatcher level
+#define CMC_LEVEL 3         // Correctable machine check level
+#define DEVICE_LEVEL_BASE 4 // 4 - 11 - Device IRQLs
+#define PC_LEVEL 12         // Performance Counter IRQL
+#define IPI_LEVEL 14        // IPI IRQL
+#define CLOCK_LEVEL 13      // Clock Timer IRQL
+#define POWER_LEVEL 15      // Power failure level
+#define PROFILE_LEVEL 15    // Profiling level
+#define HIGH_LEVEL 15       // Highest interrupt level
 
 #if defined(NT_UP)
 
-#define SYNCH_LEVEL             DISPATCH_LEVEL  // Synchronization level - UP
+#define SYNCH_LEVEL DISPATCH_LEVEL // Synchronization level - UP
 
 #else
 
-#define SYNCH_LEVEL             (IPI_LEVEL-1) // Synchronization level - MP
+#define SYNCH_LEVEL (IPI_LEVEL - 1) // Synchronization level - MP
 
 #endif
 
@@ -264,7 +258,7 @@ ExIa64InterlockedExchangeUlong (
 // IRQL from the TPR. See the GET/SET_IRQL macros.
 //
 
-#define TPR_MIC        4
+#define TPR_MIC 4
 #define TPR_IRQL_SHIFT TPR_MIC
 
 // To go from vector number <-> IRQL we just do a shift
@@ -274,8 +268,8 @@ ExIa64InterlockedExchangeUlong (
 // Interrupt Vector Definitions
 //
 
-#define APC_VECTOR          APC_LEVEL << VECTOR_IRQL_SHIFT
-#define DISPATCH_VECTOR     DISPATCH_LEVEL << VECTOR_IRQL_SHIFT
+#define APC_VECTOR APC_LEVEL << VECTOR_IRQL_SHIFT
+#define DISPATCH_VECTOR DISPATCH_LEVEL << VECTOR_IRQL_SHIFT
 
 
 //
@@ -286,10 +280,10 @@ ExIa64InterlockedExchangeUlong (
 // Define profile intervals.
 //
 
-#define DEFAULT_PROFILE_COUNT 0x40000000 // ~= 20 seconds @50mhz
-#define DEFAULT_PROFILE_INTERVAL (10 * 500) // 500 microseconds
+#define DEFAULT_PROFILE_COUNT 0x40000000            // ~= 20 seconds @50mhz
+#define DEFAULT_PROFILE_INTERVAL (10 * 500)         // 500 microseconds
 #define MAXIMUM_PROFILE_INTERVAL (10 * 1000 * 1000) // 1 second
-#define MINIMUM_PROFILE_INTERVAL (10 * 40) // 40 microseconds
+#define MINIMUM_PROFILE_INTERVAL (10 * 40)          // 40 microseconds
 
 #if defined(_M_IA64) && !defined(RC_INVOKED)
 
@@ -311,105 +305,47 @@ ExIa64InterlockedExchangeUlong (
 #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-LONG
-__cdecl
-InterlockedAdd (
-    LONG volatile *Addend,
-    LONG Value
-    );
+    LONG __cdecl InterlockedAdd(LONG volatile *Addend, LONG Value);
 
-LONGLONG
-__cdecl
-InterlockedAdd64 (
-    LONGLONG volatile *Addend,
-    LONGLONG Value
-    );
+    LONGLONG
+    __cdecl InterlockedAdd64(LONGLONG volatile *Addend, LONGLONG Value);
 
-LONG
-__cdecl
-InterlockedIncrement(
-    IN OUT LONG volatile *Addend
-    );
+    LONG __cdecl InterlockedIncrement(IN OUT LONG volatile *Addend);
 
-LONG
-__cdecl
-InterlockedDecrement(
-    IN OUT LONG volatile *Addend
-    );
+    LONG __cdecl InterlockedDecrement(IN OUT LONG volatile *Addend);
 
-LONG
-__cdecl
-InterlockedExchange(
-    IN OUT LONG volatile *Target,
-    IN LONG Value
-    );
+    LONG __cdecl InterlockedExchange(IN OUT LONG volatile *Target, IN LONG Value);
 
-LONG
-__cdecl
-InterlockedExchangeAdd(
-    IN OUT LONG volatile *Addend,
-    IN LONG Value
-    );
+    LONG __cdecl InterlockedExchangeAdd(IN OUT LONG volatile *Addend, IN LONG Value);
 
-LONG
-__cdecl
-InterlockedCompareExchange (
-    IN OUT LONG volatile *Destination,
-    IN LONG ExChange,
-    IN LONG Comperand
-    );
+    LONG __cdecl InterlockedCompareExchange(IN OUT LONG volatile *Destination, IN LONG ExChange, IN LONG Comperand);
 
-LONGLONG
-__cdecl
-InterlockedIncrement64(
-    IN OUT LONGLONG volatile *Addend
-    );
+    LONGLONG
+    __cdecl InterlockedIncrement64(IN OUT LONGLONG volatile *Addend);
 
-LONGLONG
-__cdecl
-InterlockedDecrement64(
-    IN OUT LONGLONG volatile *Addend
-    );
+    LONGLONG
+    __cdecl InterlockedDecrement64(IN OUT LONGLONG volatile *Addend);
 
-LONGLONG
-__cdecl
-InterlockedExchange64(
-    IN OUT LONGLONG volatile *Target,
-    IN LONGLONG Value
-    );
+    LONGLONG
+    __cdecl InterlockedExchange64(IN OUT LONGLONG volatile *Target, IN LONGLONG Value);
 
-LONGLONG
-__cdecl
-InterlockedExchangeAdd64(
-    IN OUT LONGLONG volatile *Addend,
-    IN LONGLONG Value
-    );
+    LONGLONG
+    __cdecl InterlockedExchangeAdd64(IN OUT LONGLONG volatile *Addend, IN LONGLONG Value);
 
-LONGLONG
-__cdecl
-InterlockedCompareExchange64 (
-    IN OUT LONGLONG volatile *Destination,
-    IN LONGLONG ExChange,
-    IN LONGLONG Comperand
-    );
+    LONGLONG
+    __cdecl InterlockedCompareExchange64(IN OUT LONGLONG volatile *Destination, IN LONGLONG ExChange,
+                                         IN LONGLONG Comperand);
 
-PVOID
-__cdecl
-InterlockedCompareExchangePointer (
-    IN OUT PVOID volatile *Destination,
-    IN PVOID Exchange,
-    IN PVOID Comperand
-    );
+    PVOID
+    __cdecl InterlockedCompareExchangePointer(IN OUT PVOID volatile *Destination, IN PVOID Exchange,
+                                              IN PVOID Comperand);
 
-PVOID
-__cdecl
-InterlockedExchangePointer(
-    IN OUT PVOID volatile *Target,
-    IN PVOID Value
-    );
+    PVOID
+    __cdecl InterlockedExchangePointer(IN OUT PVOID volatile *Target, IN PVOID Value);
 
 #pragma intrinsic(_InterlockedAdd)
 #pragma intrinsic(_InterlockedIncrement)
@@ -436,44 +372,32 @@ InterlockedExchangePointer(
 
 // begin_ntddk
 
-__inline
-LONG
-InterlockedAnd (
-    IN OUT LONG volatile *Target,
-    LONG Set
-    )
+__inline LONG InterlockedAnd(IN OUT LONG volatile *Target, LONG Set)
 {
     LONG i;
     LONG j;
 
     j = *Target;
-    do {
+    do
+    {
         i = j;
-        j = InterlockedCompareExchange(Target,
-                                       i & Set,
-                                       i);
+        j = InterlockedCompareExchange(Target, i & Set, i);
 
     } while (i != j);
 
     return j;
 }
 
-__inline
-LONG
-InterlockedOr (
-    IN OUT LONG volatile *Target,
-    IN LONG Set
-    )
+__inline LONG InterlockedOr(IN OUT LONG volatile *Target, IN LONG Set)
 {
     LONG i;
     LONG j;
 
     j = *Target;
-    do {
+    do
+    {
         i = j;
-        j = InterlockedCompareExchange(Target,
-                                       i | Set,
-                                       i);
+        j = InterlockedCompareExchange(Target, i | Set, i);
 
     } while (i != j);
 
@@ -482,10 +406,10 @@ InterlockedOr (
 
 // end_ntddk
 
-#define KiSynchIrql SYNCH_LEVEL         // enable portable code
-#define KiProfileIrql PROFILE_LEVEL     // enable portable code
+#define KiSynchIrql SYNCH_LEVEL     // enable portable code
+#define KiProfileIrql PROFILE_LEVEL // enable portable code
 
-
+
 //
 // Sanitize FPSR based on processor mode.
 //
@@ -496,24 +420,26 @@ InterlockedOr (
 //      let the caller specify all bits, except reserved
 //
 
-__inline
-ULONG64
-SANITIZE_FSR(ULONG64 fsr, MODE mode)
+__inline ULONG64 SANITIZE_FSR(ULONG64 fsr, MODE mode)
 {
     UNREFERENCED_PARAMETER(mode);
 
-    fsr &= ~(MASK_IA64(FPSR_MBZ0,FPSR_MBZ0_V)| MASK_IA64(FPSR_TD0, 1));
+    fsr &= ~(MASK_IA64(FPSR_MBZ0, FPSR_MBZ0_V) | MASK_IA64(FPSR_TD0, 1));
 
-    if (((fsr >> FPSR_PC0) & 3i64) == 1) {
+    if (((fsr >> FPSR_PC0) & 3i64) == 1)
+    {
         fsr = fsr | (3i64 << FPSR_PC0);
     }
-    if (((fsr >> FPSR_PC1) & 3i64) == 1) {
+    if (((fsr >> FPSR_PC1) & 3i64) == 1)
+    {
         fsr = fsr | (3i64 << FPSR_PC1);
     }
-    if (((fsr >> FPSR_PC2) & 3i64) == 1) {
+    if (((fsr >> FPSR_PC2) & 3i64) == 1)
+    {
         fsr = fsr | (3i64 << FPSR_PC2);
     }
-    if (((fsr >> FPSR_PC3) & 3i64) == 1) {
+    if (((fsr >> FPSR_PC3) & 3i64) == 1)
+    {
         fsr = fsr | (3i64 << FPSR_PC3);
     }
 
@@ -534,67 +460,65 @@ SANITIZE_FSR(ULONG64 fsr, MODE mode)
 //      let caller specify BE, UP, PP, AC, DFL, DFH, SP, SI, DI, DB, TB, IS, ID, DA, DD, SS, RI, ED
 //
 
-#define PSR_KERNEL_CLR  (MASK_IA64(PSR_BE,1i64) | MASK_IA64(PSR_SP,1i64) | MASK_IA64(PSR_PK,1i64) |  \
-                         MASK_IA64(PSR_CPL,0x3i64) | MASK_IA64(PSR_MC,1i64) | MASK_IA64(PSR_MBZ0,PSR_MBZ0_V) |  \
-                         MASK_IA64(PSR_MBZ1,PSR_MBZ1_V) | MASK_IA64(PSR_MBZ2,PSR_MBZ2) |  \
-                         MASK_IA64(PSR_DFL, 1i64))
+#define PSR_KERNEL_CLR                                                                                          \
+    (MASK_IA64(PSR_BE, 1i64) | MASK_IA64(PSR_SP, 1i64) | MASK_IA64(PSR_PK, 1i64) | MASK_IA64(PSR_CPL, 0x3i64) | \
+     MASK_IA64(PSR_MC, 1i64) | MASK_IA64(PSR_MBZ0, PSR_MBZ0_V) | MASK_IA64(PSR_MBZ1, PSR_MBZ1_V) |              \
+     MASK_IA64(PSR_MBZ2, PSR_MBZ2) | MASK_IA64(PSR_DFL, 1i64))
 
 #if defined(_IA64_PSR_DI_X86_)
 
-#define PSR_KERNEL_SET  (MASK_IA64(PSR_IC,1i64) | MASK_IA64(PSR_DT,1i64) |  \
-                         MASK_IA64(PSR_IT,1i64) | MASK_IA64(PSR_RT,1i64))
+#define PSR_KERNEL_SET \
+    (MASK_IA64(PSR_IC, 1i64) | MASK_IA64(PSR_DT, 1i64) | MASK_IA64(PSR_IT, 1i64) | MASK_IA64(PSR_RT, 1i64))
 
-#define PSR_KERNEL_CPY  (MASK_IA64(PSR_UP,1i64) | MASK_IA64(PSR_AC,1i64) | MASK_IA64(PSR_DI,1i64) |  \
-                         MASK_IA64(PSR_I,1i64) | MASK_IA64(PSR_BN,1i64)  | MASK_IA64(PSR_DFH,1i64) | \
-                         MASK_IA64(PSR_PP,1i64) | MASK_IA64(PSR_SI,1i64) | MASK_IA64(PSR_DB,1i64) |  \
-                         MASK_IA64(PSR_TB,1i64) | MASK_IA64(PSR_IS,1i64) | MASK_IA64(PSR_ID,1i64) |  \
-                         MASK_IA64(PSR_DA,1i64) | MASK_IA64(PSR_DD,1i64) | MASK_IA64(PSR_SS,1i64) |  \
-                         MASK_IA64(PSR_RI,0x3i64) | MASK_IA64(PSR_ED,1i64) | MASK_IA64(PSR_LP,1i64))
+#define PSR_KERNEL_CPY                                                                                         \
+    (MASK_IA64(PSR_UP, 1i64) | MASK_IA64(PSR_AC, 1i64) | MASK_IA64(PSR_DI, 1i64) | MASK_IA64(PSR_I, 1i64) |    \
+     MASK_IA64(PSR_BN, 1i64) | MASK_IA64(PSR_DFH, 1i64) | MASK_IA64(PSR_PP, 1i64) | MASK_IA64(PSR_SI, 1i64) |  \
+     MASK_IA64(PSR_DB, 1i64) | MASK_IA64(PSR_TB, 1i64) | MASK_IA64(PSR_IS, 1i64) | MASK_IA64(PSR_ID, 1i64) |   \
+     MASK_IA64(PSR_DA, 1i64) | MASK_IA64(PSR_DD, 1i64) | MASK_IA64(PSR_SS, 1i64) | MASK_IA64(PSR_RI, 0x3i64) | \
+     MASK_IA64(PSR_ED, 1i64) | MASK_IA64(PSR_LP, 1i64))
 
-#else  // !_IA64_PSR_DI_X86_
+#else // !_IA64_PSR_DI_X86_
 
-#define PSR_KERNEL_SET  (MASK_IA64(PSR_IC,1i64) | MASK_IA64(PSR_DT,1i64) |  \
-                         MASK_IA64(PSR_DI,1i64) | MASK_IA64(PSR_IT,1i64) |  \
-                         MASK_IA64(PSR_RT,1i64))
+#define PSR_KERNEL_SET                                                                                       \
+    (MASK_IA64(PSR_IC, 1i64) | MASK_IA64(PSR_DT, 1i64) | MASK_IA64(PSR_DI, 1i64) | MASK_IA64(PSR_IT, 1i64) | \
+     MASK_IA64(PSR_RT, 1i64))
 
-#define PSR_KERNEL_CPY  (MASK_IA64(PSR_UP,1i64) | MASK_IA64(PSR_AC,1i64) |  \
-                         MASK_IA64(PSR_I,1i64) | MASK_IA64(PSR_BN,1i64)  | MASK_IA64(PSR_DFH,1i64) | \
-                         MASK_IA64(PSR_PP,1i64) | MASK_IA64(PSR_SI,1i64) | MASK_IA64(PSR_DB,1i64) |  \
-                         MASK_IA64(PSR_TB,1i64) | MASK_IA64(PSR_IS,1i64) | MASK_IA64(PSR_ID,1i64) |  \
-                         MASK_IA64(PSR_DA,1i64) | MASK_IA64(PSR_DD,1i64) | MASK_IA64(PSR_SS,1i64) |  \
-                         MASK_IA64(PSR_RI,0x3i64) | MASK_IA64(PSR_ED,1i64) | MASK_IA64(PSR_LP,1i64))
+#define PSR_KERNEL_CPY                                                                                         \
+    (MASK_IA64(PSR_UP, 1i64) | MASK_IA64(PSR_AC, 1i64) | MASK_IA64(PSR_I, 1i64) | MASK_IA64(PSR_BN, 1i64) |    \
+     MASK_IA64(PSR_DFH, 1i64) | MASK_IA64(PSR_PP, 1i64) | MASK_IA64(PSR_SI, 1i64) | MASK_IA64(PSR_DB, 1i64) |  \
+     MASK_IA64(PSR_TB, 1i64) | MASK_IA64(PSR_IS, 1i64) | MASK_IA64(PSR_ID, 1i64) | MASK_IA64(PSR_DA, 1i64) |   \
+     MASK_IA64(PSR_DD, 1i64) | MASK_IA64(PSR_SS, 1i64) | MASK_IA64(PSR_RI, 0x3i64) | MASK_IA64(PSR_ED, 1i64) | \
+     MASK_IA64(PSR_LP, 1i64))
 
-#endif  // !_IA64_PSR_DI_X86_
+#endif // !_IA64_PSR_DI_X86_
 
-#define PSR_USER_CLR    (MASK_IA64(PSR_MC,1i64) |  \
-                         MASK_IA64(PSR_MBZ0,PSR_MBZ0_V) | MASK_IA64(PSR_PK,1i64) |  \
-                         MASK_IA64(PSR_MBZ1,PSR_MBZ1_V) | MASK_IA64(PSR_MBZ2,PSR_MBZ2) |  \
-                         MASK_IA64(PSR_LP,1i64))
+#define PSR_USER_CLR                                                                       \
+    (MASK_IA64(PSR_MC, 1i64) | MASK_IA64(PSR_MBZ0, PSR_MBZ0_V) | MASK_IA64(PSR_PK, 1i64) | \
+     MASK_IA64(PSR_MBZ1, PSR_MBZ1_V) | MASK_IA64(PSR_MBZ2, PSR_MBZ2) | MASK_IA64(PSR_LP, 1i64))
 
-#define PSR_USER_SET    (MASK_IA64(PSR_IC,1i64) | MASK_IA64(PSR_I,1i64)  |  \
-                         MASK_IA64(PSR_DT,1i64) | MASK_IA64(PSR_BN,1i64) |  \
-                         MASK_IA64(PSR_RT,1i64) |  \
-                         MASK_IA64(PSR_CPL,0x3i64) | MASK_IA64(PSR_IT,1i64))
+#define PSR_USER_SET                                                                                        \
+    (MASK_IA64(PSR_IC, 1i64) | MASK_IA64(PSR_I, 1i64) | MASK_IA64(PSR_DT, 1i64) | MASK_IA64(PSR_BN, 1i64) | \
+     MASK_IA64(PSR_RT, 1i64) | MASK_IA64(PSR_CPL, 0x3i64) | MASK_IA64(PSR_IT, 1i64))
 
-#define PSR_USER_CPY    (MASK_IA64(PSR_BE,1i64) | MASK_IA64(PSR_UP,1i64) | MASK_IA64(PSR_PP,1i64) | \
-                         MASK_IA64(PSR_AC,1i64) | MASK_IA64(PSR_DFL,1i64) | MASK_IA64(PSR_DFH,1i64) |  \
-                         MASK_IA64(PSR_SP,1i64) | MASK_IA64(PSR_DI,1i64) | MASK_IA64(PSR_DB,1i64) |  \
-                         MASK_IA64(PSR_TB,1i64) | MASK_IA64(PSR_IS,1i64) | MASK_IA64(PSR_ID,1i64) |  \
-                         MASK_IA64(PSR_DA,1i64) | MASK_IA64(PSR_DD,1i64) | MASK_IA64(PSR_SS, 1i64) |  \
-                         MASK_IA64(PSR_RI,0x3i64) | MASK_IA64(PSR_ED,1i64) | MASK_IA64(PSR_SI,1i64))
+#define PSR_USER_CPY                                                                                           \
+    (MASK_IA64(PSR_BE, 1i64) | MASK_IA64(PSR_UP, 1i64) | MASK_IA64(PSR_PP, 1i64) | MASK_IA64(PSR_AC, 1i64) |   \
+     MASK_IA64(PSR_DFL, 1i64) | MASK_IA64(PSR_DFH, 1i64) | MASK_IA64(PSR_SP, 1i64) | MASK_IA64(PSR_DI, 1i64) | \
+     MASK_IA64(PSR_DB, 1i64) | MASK_IA64(PSR_TB, 1i64) | MASK_IA64(PSR_IS, 1i64) | MASK_IA64(PSR_ID, 1i64) |   \
+     MASK_IA64(PSR_DA, 1i64) | MASK_IA64(PSR_DD, 1i64) | MASK_IA64(PSR_SS, 1i64) | MASK_IA64(PSR_RI, 0x3i64) | \
+     MASK_IA64(PSR_ED, 1i64) | MASK_IA64(PSR_SI, 1i64))
 
-#define PSR_DEBUG_SET   (MASK_IA64(PSR_DB,1i64) | MASK_IA64(PSR_SS,1i64) | MASK_IA64(PSR_TB,1i64) |  \
-                         MASK_IA64(PSR_ID,1i64) | MASK_IA64(PSR_DD,1i64))
+#define PSR_DEBUG_SET                                                                                        \
+    (MASK_IA64(PSR_DB, 1i64) | MASK_IA64(PSR_SS, 1i64) | MASK_IA64(PSR_TB, 1i64) | MASK_IA64(PSR_ID, 1i64) | \
+     MASK_IA64(PSR_DD, 1i64))
 
-__inline
-ULONG64
-SANITIZE_PSR(ULONG64 psr, MODE mode){
+__inline ULONG64 SANITIZE_PSR(ULONG64 psr, MODE mode)
+{
 
-    psr = (mode) == KernelMode ?
-        (PSR_KERNEL_SET | ((psr) & (PSR_KERNEL_CPY | ~PSR_KERNEL_CLR))) :
-        (PSR_USER_SET | ((psr) & (PSR_USER_CPY | ~PSR_USER_CLR)));
+    psr = (mode) == KernelMode ? (PSR_KERNEL_SET | ((psr) & (PSR_KERNEL_CPY | ~PSR_KERNEL_CLR)))
+                               : (PSR_USER_SET | ((psr) & (PSR_USER_CPY | ~PSR_USER_CLR)));
 
-    if (((psr >> PSR_RI) & 3) == 3) {
+    if (((psr >> PSR_RI) & 3) == 3)
+    {
 
         //
         // 3 is an invalid slot number; sanitize it to zero
@@ -603,16 +527,15 @@ SANITIZE_PSR(ULONG64 psr, MODE mode){
         psr &= ~(3i64 << PSR_RI);
     }
 
-    return(psr);
+    return (psr);
 }
 
 //
 // Define SANITIZE_IFS for IA64
 //
 
-__inline
-ULONG64
-SANITIZE_IFS(ULONG64 pfsarg, MODE mode){
+__inline ULONG64 SANITIZE_IFS(ULONG64 pfsarg, MODE mode)
+{
 
     IA64_PFS pfs;
     ULONGLONG sof;
@@ -634,14 +557,15 @@ SANITIZE_IFS(ULONG64 pfsarg, MODE mode){
     // Set the valid bit.
     //
 
-    pfs.ull |= MASK_IA64(IFS_V,1i64);
+    pfs.ull |= MASK_IA64(IFS_V, 1i64);
 
     //
     // Verify the size of frame is not greater than allowed.
     //
 
     sof = pfs.sb.pfs_sof;
-    if (sof > PFS_MAXIMUM_REGISTER_SIZE) {
+    if (sof > PFS_MAXIMUM_REGISTER_SIZE)
+    {
         sof = PFS_MAXIMUM_REGISTER_SIZE;
         pfs.sb.pfs_sof = PFS_MAXIMUM_REGISTER_SIZE;
     }
@@ -650,7 +574,8 @@ SANITIZE_IFS(ULONG64 pfsarg, MODE mode){
     // Verify the size of locals is not greater than size of frame.
     //
 
-    if (sof < pfs.sb.pfs_sol) {
+    if (sof < pfs.sb.pfs_sol)
+    {
         pfs.sb.pfs_sol = sof;
     }
 
@@ -658,7 +583,8 @@ SANITIZE_IFS(ULONG64 pfsarg, MODE mode){
     // Verify the size of locals is not greater than size of frame.
     //
 
-    if (sof < (pfs.sb.pfs_sor * 8)) {
+    if (sof < (pfs.sb.pfs_sor * 8))
+    {
         pfs.sb.pfs_sor = sof / 8;
     }
 
@@ -666,32 +592,34 @@ SANITIZE_IFS(ULONG64 pfsarg, MODE mode){
     // Verify rename bases are less than the size of the rotaing regions.
     //
 
-    if (pfs.sb.pfs_rrb_gr >= (pfs.sb.pfs_sor * 8)) {
+    if (pfs.sb.pfs_rrb_gr >= (pfs.sb.pfs_sor * 8))
+    {
         pfs.sb.pfs_rrb_gr = 0;
     }
 
-    if (pfs.sb.pfs_rrb_fr >= PFS_MAXIMUM_REGISTER_SIZE) {
+    if (pfs.sb.pfs_rrb_fr >= PFS_MAXIMUM_REGISTER_SIZE)
+    {
         pfs.sb.pfs_rrb_fr = 0;
     }
 
-    if (pfs.sb.pfs_rrb_pr >= PFS_MAXIMUM_PREDICATE_SIZE) {
+    if (pfs.sb.pfs_rrb_pr >= PFS_MAXIMUM_PREDICATE_SIZE)
+    {
         pfs.sb.pfs_rrb_pr = 0;
     }
 
-    return(pfs.ull);
-
+    return (pfs.ull);
 }
 
-__inline
-ULONG64
-SANITIZE_PFS(ULONG64 pfsarg, MODE mode){
+__inline ULONG64 SANITIZE_PFS(ULONG64 pfsarg, MODE mode)
+{
 
     IA64_PFS pfs;
     ULONGLONG sof;
 
     pfs.ull = pfsarg;
 
-    if (mode != KernelMode) {
+    if (mode != KernelMode)
+    {
         pfs.sb.pfs_ppl = IA64_USER_PL;
     }
 
@@ -703,7 +631,8 @@ SANITIZE_PFS(ULONG64 pfsarg, MODE mode){
     //
 
     sof = pfs.sb.pfs_sof;
-    if (sof > PFS_MAXIMUM_REGISTER_SIZE) {
+    if (sof > PFS_MAXIMUM_REGISTER_SIZE)
+    {
         sof = PFS_MAXIMUM_REGISTER_SIZE;
         pfs.sb.pfs_sof = PFS_MAXIMUM_REGISTER_SIZE;
     }
@@ -712,7 +641,8 @@ SANITIZE_PFS(ULONG64 pfsarg, MODE mode){
     // Verify the size of locals is not greater than size of frame.
     //
 
-    if (sof < pfs.sb.pfs_sol) {
+    if (sof < pfs.sb.pfs_sol)
+    {
         pfs.sb.pfs_sol = sof;
     }
 
@@ -720,7 +650,8 @@ SANITIZE_PFS(ULONG64 pfsarg, MODE mode){
     // Verify the size of locals is not greater than size of frame.
     //
 
-    if (sof < (pfs.sb.pfs_sor * 8)) {
+    if (sof < (pfs.sb.pfs_sor * 8))
+    {
         pfs.sb.pfs_sor = sof / 8;
     }
 
@@ -728,20 +659,22 @@ SANITIZE_PFS(ULONG64 pfsarg, MODE mode){
     // Verify rename bases are less than the size of the rotaing regions.
     //
 
-    if (pfs.sb.pfs_rrb_gr >= (pfs.sb.pfs_sor * 8)) {
+    if (pfs.sb.pfs_rrb_gr >= (pfs.sb.pfs_sor * 8))
+    {
         pfs.sb.pfs_rrb_gr = 0;
     }
 
-    if (pfs.sb.pfs_rrb_fr >= PFS_MAXIMUM_REGISTER_SIZE) {
+    if (pfs.sb.pfs_rrb_fr >= PFS_MAXIMUM_REGISTER_SIZE)
+    {
         pfs.sb.pfs_rrb_fr = 0;
     }
 
-    if (pfs.sb.pfs_rrb_pr >= PFS_MAXIMUM_PREDICATE_SIZE) {
+    if (pfs.sb.pfs_rrb_pr >= PFS_MAXIMUM_PREDICATE_SIZE)
+    {
         pfs.sb.pfs_rrb_pr = 0;
     }
 
-    return(pfs.ull);
-
+    return (pfs.ull);
 }
 
 //
@@ -749,8 +682,7 @@ SANITIZE_PFS(ULONG64 pfsarg, MODE mode){
 // RSE frame to be preloaded on kernel exit
 //
 
-#define ZERO_PRELOAD_SIZE(RseRsc)  \
-    (RseRsc & ~(((1i64 << RSC_LOADRS_LEN)-1) << RSC_MBZ1))
+#define ZERO_PRELOAD_SIZE(RseRsc) (RseRsc & ~(((1i64 << RSC_LOADRS_LEN) - 1) << RSC_MBZ1))
 
 //
 // Macro used to sanitize the RSC
@@ -760,40 +692,28 @@ SANITIZE_PFS(ULONG64 pfsarg, MODE mode){
 
 extern ULONGLONG KiIA64DCR;
 
-#define SANITIZE_DCR(dcr, mode)  \
-    ((mode) == KernelMode ? dcr : KiIA64DCR)
+#define SANITIZE_DCR(dcr, mode) ((mode) == KernelMode ? dcr : KiIA64DCR)
 
 //
 // Macro to sanitize debug registers
 //
 
-#define SANITIZE_DR(dr, mode)  \
-    ((mode) == KernelMode ?  \
-        (dr) :  \
-        (dr & ~(0x7i64 << DR_PLM0)) /* disable pl 0-2 */  \
+#define SANITIZE_DR(dr, mode)                                                       \
+    ((mode) == KernelMode ? (dr) : (dr & ~(0x7i64 << DR_PLM0)) /* disable pl 0-2 */ \
     )
 
-
 
+#define SANITIZE_AR21_FCR(FCR, mode) (((FCR) & 0x0000FFBF00001F3Fi64) | 0x40i64)
 
-#define SANITIZE_AR21_FCR(FCR,mode) \
-    (((FCR)&0x0000FFBF00001F3Fi64)|0x40i64)
+#define SANITIZE_AR24_EFLAGS(EFLAGS, mode) (((EFLAGS) & 0x00000000003E0DD7i64) | 0x02i64)
 
-#define SANITIZE_AR24_EFLAGS(EFLAGS,mode) \
-    (((EFLAGS)&0x00000000003E0DD7i64)|0x02i64)
+#define SANITIZE_AR27_CFLG(CFLG, mode) ((CFLG) & (0x000007FFE005003Fi64))
 
-#define SANITIZE_AR27_CFLG(CFLG,mode) \
-    ((CFLG)&(0x000007FFE005003Fi64))
+#define SANITIZE_AR28_FSR(FSR, mode) ((FSR) & 0x0000FFBF5555FFFFi64)
 
-#define SANITIZE_AR28_FSR(FSR,mode) \
-    ((FSR)&0x0000FFBF5555FFFFi64)
+#define SANITIZE_AR29_FIR(FIR, mode) ((FIR) & 0x07FFFFFFFFFFFFFFi64)
 
-#define SANITIZE_AR29_FIR(FIR,mode) \
-    ((FIR)&0x07FFFFFFFFFFFFFFi64)
-
-#define SANITIZE_AR30_FDR(FDR,mode) \
-    ((FDR)&0x0000FFFFFFFFFFFFi64)
-
+#define SANITIZE_AR30_FDR(FDR, mode) ((FDR) & 0x0000FFFFFFFFFFFFi64)
 
 
 // begin_nthal
@@ -802,7 +722,7 @@ extern ULONGLONG KiIA64DCR;
 // Define interrupt request physical address (maps to HAL virtual address)
 //
 
-#define INTERRUPT_REQUEST_PHYSICAL_ADDRESS  0xFFE00000
+#define INTERRUPT_REQUEST_PHYSICAL_ADDRESS 0xFFE00000
 
 //
 // Define Address of Processor Control Registers.
@@ -813,8 +733,8 @@ extern ULONGLONG KiIA64DCR;
 // Define Pointer to Processor Control Registers.
 //
 
-#define KIPCR ((ULONG_PTR)(KADDRESS_BASE + 0xFFFF0000))            // kernel address of first PCR
-#define PCR ((volatile KPCR * const)KIPCR)
+#define KIPCR ((ULONG_PTR)(KADDRESS_BASE + 0xFFFF0000)) // kernel address of first PCR
+#define PCR ((volatile KPCR *const)KIPCR)
 
 //
 // Define address for epc system calls
@@ -823,8 +743,8 @@ extern ULONGLONG KiIA64DCR;
 #define MM_EPC_VA (KADDRESS_BASE + 0xFFA00000)
 
 //
-// Define Base Address of PAL Mapping 
-// 
+// Define Base Address of PAL Mapping
+//
 //
 
 #define HAL_PAL_VIRTUAL_ADDRESS (KADDRESS_BASE + 0xE0000000)
@@ -833,7 +753,7 @@ extern ULONGLONG KiIA64DCR;
 // begin_ntddk begin_wdm begin_ntosp
 
 #define KI_USER_SHARED_DATA ((ULONG_PTR)(KADDRESS_BASE + 0xFFFE0000))
-#define SharedUserData ((KUSER_SHARED_DATA * const)KI_USER_SHARED_DATA)
+#define SharedUserData ((KUSER_SHARED_DATA *const)KI_USER_SHARED_DATA)
 
 //
 // Prototype for get current IRQL. **** TBD (read TPR)
@@ -876,7 +796,7 @@ KeGetCurrentIrql();
 //
 
 #if PRAGMA_DEPRECATED_DDK
-#pragma deprecated(KeGetDcacheFillSize)      // Use GetDmaAlignment
+#pragma deprecated(KeGetDcacheFillSize) // Use GetDmaAlignment
 #endif
 
 #define KeGetDcacheFillSize() PCR->DcacheFillSize
@@ -889,9 +809,7 @@ KeGetCurrentIrql();
 
 
 BOOLEAN
-KeIsExecutingDpc (
-    VOID
-    );
+KeIsExecutingDpc(VOID);
 
 
 //
@@ -899,11 +817,11 @@ KeIsExecutingDpc (
 //
 // begin_ntddk begin_wdm begin_ntosp
 
-#define KeSaveFloatingPointState(a)         STATUS_SUCCESS
-#define KeRestoreFloatingPointState(a)      STATUS_SUCCESS
+#define KeSaveFloatingPointState(a) STATUS_SUCCESS
+#define KeRestoreFloatingPointState(a) STATUS_SUCCESS
 
 // end_ntddk end_wdm end_ntosp
-
+
 
 //++
 //
@@ -928,7 +846,7 @@ KeIsExecutingDpc (
 //    None.
 //--
 
-#if defined (NT_UP)
+#if defined(NT_UP)
 
 #define KeMemoryBarrier()
 
@@ -936,7 +854,7 @@ KeIsExecutingDpc (
 
 #define KE_MEMORY_BARRIER_REQUIRED
 
-#define KeMemoryBarrier() __mf ()
+#define KeMemoryBarrier() __mf()
 
 #endif
 
@@ -968,9 +886,10 @@ KeIsExecutingDpc (
 // A Page Table Entry on an IA64 has the following definition.
 //
 
-#define _HARDWARE_PTE_WORKING_SET_BITS  11
+#define _HARDWARE_PTE_WORKING_SET_BITS 11
 
-typedef struct _HARDWARE_PTE {
+typedef struct _HARDWARE_PTE
+{
     ULONG64 Valid : 1;
     ULONG64 Rsvd0 : 1;
     ULONG64 Cache : 3;
@@ -996,136 +915,99 @@ typedef struct _HARDWARE_PTE {
 // compared to VHPT searching it automatically.
 //
 
-#define KiVhptEntry(va)  ((PVOID)__thash((__int64)va))
-#define KiVhptEntryTag(va)  ((ULONGLONG)__ttag((__int64)va))
+#define KiVhptEntry(va) ((PVOID)__thash((__int64)va))
+#define KiVhptEntryTag(va) ((ULONGLONG)__ttag((__int64)va))
 
-#define KiFlushSingleTb(Invalid, va)                   \
-    __ptcl((__int64)va,PAGE_SHIFT << 2);  __isrlz()
+#define KiFlushSingleTb(Invalid, va)      \
+    __ptcl((__int64)va, PAGE_SHIFT << 2); \
+    __isrlz()
 
-#define KeFillEntryTb(PointerPte, Virtual, Invalid)    \
-       KiFlushSingleTb(0, Virtual);                    \
+#define KeFillEntryTb(PointerPte, Virtual, Invalid) KiFlushSingleTb(0, Virtual);
 
 #define KiFlushFixedInstTb(Invalid, va)   \
-    __ptri((__int64)va, PAGE_SHIFT << 2); __isrlz()
+    __ptri((__int64)va, PAGE_SHIFT << 2); \
+    __isrlz()
 
 #define KiFlushFixedDataTb(Invalid, va)   \
-    __ptrd((__int64)va, PAGE_SHIFT << 2); __dsrlz()
+    __ptrd((__int64)va, PAGE_SHIFT << 2); \
+    __dsrlz()
 
 
 NTKERNELAPI
-VOID
-KeFillLargeEntryTb (
-    IN HARDWARE_PTE Pte[2],
-    IN PVOID Virtual,
-    IN ULONG PageSize
-    );
+VOID KeFillLargeEntryTb(IN HARDWARE_PTE Pte[2], IN PVOID Virtual, IN ULONG PageSize);
 
 //
 // Fill TB fixed entry
 //
 
 NTKERNELAPI
-VOID
-KeFillFixedEntryTb (
-    IN HARDWARE_PTE Pte[2],
-    IN PVOID Virtual,
-    IN ULONG PageSize,
-    IN ULONG Index
-    );
+VOID KeFillFixedEntryTb(IN HARDWARE_PTE Pte[2], IN PVOID Virtual, IN ULONG PageSize, IN ULONG Index);
 
 NTKERNELAPI
-VOID
-KeFillFixedLargeEntryTb (
-    IN HARDWARE_PTE Pte[2],
-    IN PVOID Virtual,
-    IN ULONG PageSize,
-    IN ULONG Index
-    );
+VOID KeFillFixedLargeEntryTb(IN HARDWARE_PTE Pte[2], IN PVOID Virtual, IN ULONG PageSize, IN ULONG Index);
 
 #define INST_TB_BASE 0x80000000
 #define DATA_TB_BASE 0
 
-#define INST_TB_KERNEL_INDEX          (INST_TB_BASE|ITR_KERNEL_INDEX)
-#define INST_TB_EPC_INDEX             (INST_TB_BASE|ITR_EPC_INDEX)
-#define INST_TB_HAL_INDEX             (INST_TB_BASE|ITR_HAL_INDEX)
-#define INST_TB_PAL_INDEX             (INST_TB_BASE|ITR_PAL_INDEX)
+#define INST_TB_KERNEL_INDEX (INST_TB_BASE | ITR_KERNEL_INDEX)
+#define INST_TB_EPC_INDEX (INST_TB_BASE | ITR_EPC_INDEX)
+#define INST_TB_HAL_INDEX (INST_TB_BASE | ITR_HAL_INDEX)
+#define INST_TB_PAL_INDEX (INST_TB_BASE | ITR_PAL_INDEX)
 
-#define DATA_TB_DRIVER0_INDEX         (DATA_TB_BASE|DTR_DRIVER0_INDEX)
-#define DATA_TB_DRIVER1_INDEX         (DATA_TB_BASE|DTR_DRIVER1_INDEX)
-#define DATA_TB_KTBASE_INDEX          (DATA_TB_BASE|DTR_KTBASE_INDEX)
-#define DATA_TB_UTBASE_INDEX          (DATA_TB_BASE|DTR_UTBASE_INDEX)
-#define DATA_TB_STBASE_INDEX          (DATA_TB_BASE|DTR_STBASE_INDEX)
-#define DATA_TB_IOPORT_INDEX          (DATA_TB_BASE|DTR_IO_PORT_INDEX)
-#define DATA_TB_KTBASE_TMP_INDEX      (DATA_TB_BASE|DTR_KTBASE_INDEX_TMP)
-#define DATA_TB_UTBASE_TMP_INDEX      (DATA_TB_BASE|DTR_UTBASE_INDEX_TMP)
-#define DATA_TB_HAL_INDEX             (DATA_TB_BASE|DTR_HAL_INDEX)
-#define DATA_TB_PAL_INDEX             (DATA_TB_BASE|DTR_PAL_INDEX)
+#define DATA_TB_DRIVER0_INDEX (DATA_TB_BASE | DTR_DRIVER0_INDEX)
+#define DATA_TB_DRIVER1_INDEX (DATA_TB_BASE | DTR_DRIVER1_INDEX)
+#define DATA_TB_KTBASE_INDEX (DATA_TB_BASE | DTR_KTBASE_INDEX)
+#define DATA_TB_UTBASE_INDEX (DATA_TB_BASE | DTR_UTBASE_INDEX)
+#define DATA_TB_STBASE_INDEX (DATA_TB_BASE | DTR_STBASE_INDEX)
+#define DATA_TB_IOPORT_INDEX (DATA_TB_BASE | DTR_IO_PORT_INDEX)
+#define DATA_TB_KTBASE_TMP_INDEX (DATA_TB_BASE | DTR_KTBASE_INDEX_TMP)
+#define DATA_TB_UTBASE_TMP_INDEX (DATA_TB_BASE | DTR_UTBASE_INDEX_TMP)
+#define DATA_TB_HAL_INDEX (DATA_TB_BASE | DTR_HAL_INDEX)
+#define DATA_TB_PAL_INDEX (DATA_TB_BASE | DTR_PAL_INDEX)
 
 //
 // Fill Inst TB entry
 //
 
 NTKERNELAPI
-VOID
-KeFillInstEntryTb (
-    IN HARDWARE_PTE Pte,
-    IN PVOID Virtual
-    );
+VOID KeFillInstEntryTb(IN HARDWARE_PTE Pte, IN PVOID Virtual);
 
 NTKERNELAPI
-VOID
-KeFlushCurrentTb (
-    VOID
-    );
+VOID KeFlushCurrentTb(VOID);
 
 //
 // Get a VHPT entry address
 //
 
 PVOID
-KiVhptEntry64(
-   IN ULONG VirtualPageNumber
-   );
+KiVhptEntry64(IN ULONG VirtualPageNumber);
 
 //
 // Get a VHPT entry TAG value
 //
 
 ULONGLONG
-KiVhptEntryTag64(
-    IN ULONG VirtualPageNumber
-    );
+KiVhptEntryTag64(IN ULONG VirtualPageNumber);
 
 //
 // Fill a VHPT entry
 //
 
-VOID
-KiFillEntryVhpt(
-   IN PHARDWARE_PTE PointerPte,
-   IN PVOID Virtual
-   );
+VOID KiFillEntryVhpt(IN PHARDWARE_PTE PointerPte, IN PVOID Virtual);
 
 
 //
 // Flush the kernel portions of Tb
 //
 
-
-VOID
-KeFlushKernelTb(
-    IN BOOLEAN AllProcessors
-    );
+
+VOID KeFlushKernelTb(IN BOOLEAN AllProcessors);
 
 //
 // Flush the user portions of Tb
 //
 
-VOID
-KeFlushUserTb(
-    IN BOOLEAN AllProcessors
-    );
-
+VOID KeFlushUserTb(IN BOOLEAN AllProcessors);
 
 
 //
@@ -1134,51 +1016,26 @@ KeFlushUserTb(
 //
 
 NTKERNELAPI
-VOID
-KeChangeColorPage (
-    IN PVOID NewColor,
-    IN PVOID OldColor,
-    IN ULONG PageFrame
-    );
+VOID KeChangeColorPage(IN PVOID NewColor, IN PVOID OldColor, IN ULONG PageFrame);
 
 NTKERNELAPI
-VOID
-KeSweepDcache (
-    IN BOOLEAN AllProcessors
-    );
+VOID KeSweepDcache(IN BOOLEAN AllProcessors);
 
 #define KeSweepCurrentDcache()
 
 NTKERNELAPI
-VOID
-KeSweepIcache (
-    IN BOOLEAN AllProcessors
-    );
+VOID KeSweepIcache(IN BOOLEAN AllProcessors);
 
 NTKERNELAPI
-VOID
-KeSweepIcacheRange (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN SIZE_T Length
-    );
+VOID KeSweepIcacheRange(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN SIZE_T Length);
 
 NTKERNELAPI
-VOID
-KeSweepCurrentIcacheRange (
-    IN PVOID BaseAddress,
-    IN SIZE_T Length
-    );
+VOID KeSweepCurrentIcacheRange(IN PVOID BaseAddress, IN SIZE_T Length);
 
 #define KeSweepCurrentIcache()
 
 NTKERNELAPI
-VOID
-KeSweepCacheRangeWithDrain (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG Length
-    );
+VOID KeSweepCacheRangeWithDrain(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG Length);
 
 // begin_ntddk begin_ntndis begin_wdm begin_ntosp
 //
@@ -1186,12 +1043,7 @@ KeSweepCacheRangeWithDrain (
 //
 
 NTKERNELAPI
-VOID
-KeFlushIoBuffers (
-    IN PMDL Mdl,
-    IN BOOLEAN ReadOperation,
-    IN BOOLEAN DmaOperation
-    );
+VOID KeFlushIoBuffers(IN PMDL Mdl, IN BOOLEAN ReadOperation, IN BOOLEAN DmaOperation);
 
 // end_ntddk end_ntndis end_wdm end_ntosp
 
@@ -1203,38 +1055,21 @@ struct _KEXCEPTION_FRAME;
 struct _KTRAP_FRAME;
 
 NTKERNELAPI
-VOID
-KeIpiInterrupt (
-    IN struct _KTRAP_FRAME *TrapFrame
-    );
+VOID KeIpiInterrupt(IN struct _KTRAP_FRAME *TrapFrame);
 
 #define KeYieldProcessor()
 
 NTKERNELAPI
-VOID
-KeProfileInterrupt (
-    IN struct _KTRAP_FRAME *TrapFrame
-    );
+VOID KeProfileInterrupt(IN struct _KTRAP_FRAME *TrapFrame);
 
 NTKERNELAPI
-VOID
-KeProfileInterruptWithSource (
-    IN struct _KTRAP_FRAME *TrapFrame,
-    IN KPROFILE_SOURCE ProfileSource
-    );
+VOID KeProfileInterruptWithSource(IN struct _KTRAP_FRAME *TrapFrame, IN KPROFILE_SOURCE ProfileSource);
 
 NTKERNELAPI
-VOID
-KeUpdateRunTime (
-    IN struct _KTRAP_FRAME *TrapFrame
-    );
+VOID KeUpdateRunTime(IN struct _KTRAP_FRAME *TrapFrame);
 
 NTKERNELAPI
-VOID
-KeUpdateSystemTime (
-    IN struct _KTRAP_FRAME *TrapFrame,
-    IN ULONG Increment
-    );
+VOID KeUpdateSystemTime(IN struct _KTRAP_FRAME *TrapFrame, IN ULONG Increment);
 
 //
 // The following function prototypes are exported for use in MP HALs.
@@ -1247,10 +1082,7 @@ KeUpdateSystemTime (
 #else
 
 NTKERNELAPI
-VOID
-KiAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    );
+VOID KiAcquireSpinLock(IN PKSPIN_LOCK SpinLock);
 
 #endif
 
@@ -1260,10 +1092,7 @@ KiAcquireSpinLock (
 
 #else
 
-VOID
-KiReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    );
+VOID KiReleaseSpinLock(IN PKSPIN_LOCK SpinLock);
 
 // #define KiReleaseSpinLock _ReleaseSpinLock
 
@@ -1282,9 +1111,7 @@ KiReleaseSpinLock (
 #else
 
 BOOLEAN
-KeTestSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    );
+KeTestSpinLock(IN PKSPIN_LOCK SpinLock);
 
 #endif
 
@@ -1292,17 +1119,10 @@ KeTestSpinLock (
 // Define cache error routine type and prototype.
 //
 
-typedef
-VOID
-(*PKCACHE_ERROR_ROUTINE) (
-    VOID
-    );
+typedef VOID (*PKCACHE_ERROR_ROUTINE)(VOID);
 
 NTKERNELAPI
-VOID
-KeSetCacheErrorRoutine (
-    IN PKCACHE_ERROR_ROUTINE Routine
-    );
+VOID KeSetCacheErrorRoutine(IN PKCACHE_ERROR_ROUTINE Routine);
 
 // begin_ntddk begin_wdm
 
@@ -1310,10 +1130,7 @@ KeSetCacheErrorRoutine (
 // Kernel breakin breakpoint
 //
 
-VOID
-KeBreakinBreakpoint (
-    VOID
-    );
+VOID KeBreakinBreakpoint(VOID);
 
 // end_ntddk end_nthal end_wdm
 
@@ -1352,15 +1169,9 @@ KeBreakinBreakpoint (
 
 #if defined(_M_IA64)
 
-VOID
-_disable (
-    VOID
-    );
+VOID _disable(VOID);
 
-VOID
-_enable (
-    VOID
-    );
+VOID _enable(VOID);
 
 #pragma intrinsic(_disable)
 #pragma intrinsic(_enable)
@@ -1370,15 +1181,13 @@ _enable (
 #if defined(NT_UP) && !DBG
 #define ExAcquireFastLock(Lock, OldIrql) _disable()
 #else
-#define ExAcquireFastLock(Lock, OldIrql) \
-    ExAcquireSpinLock(Lock, OldIrql)
+#define ExAcquireFastLock(Lock, OldIrql) ExAcquireSpinLock(Lock, OldIrql)
 #endif
 
 #if defined(NT_UP) && !DBG
 #define ExReleaseFastLock(Lock, OldIrql) _enable()
 #else
-#define ExReleaseFastLock(Lock, OldIrql) \
-    ExReleaseSpinLock(Lock, OldIrql)
+#define ExReleaseFastLock(Lock, OldIrql) ExReleaseSpinLock(Lock, OldIrql)
 #endif
 
 //
@@ -1386,27 +1195,14 @@ _enable (
 //
 
 BOOLEAN
-KeBusError (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN struct _KTRAP_FRAME *TrapFrame,
-    IN PVOID VirtualAddress,
-    IN PHYSICAL_ADDRESS PhysicalAddress
-    );
+KeBusError(IN PEXCEPTION_RECORD ExceptionRecord, IN struct _KEXCEPTION_FRAME *ExceptionFrame,
+           IN struct _KTRAP_FRAME *TrapFrame, IN PVOID VirtualAddress, IN PHYSICAL_ADDRESS PhysicalAddress);
 
-VOID
-KiDataBusError (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN struct _KTRAP_FRAME *TrapFrame
-    );
+VOID KiDataBusError(IN PEXCEPTION_RECORD ExceptionRecord, IN struct _KEXCEPTION_FRAME *ExceptionFrame,
+                    IN struct _KTRAP_FRAME *TrapFrame);
 
-VOID
-KiInstructionBusError (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN struct _KTRAP_FRAME *TrapFrame
-    );
+VOID KiInstructionBusError(IN PEXCEPTION_RECORD ExceptionRecord, IN struct _KEXCEPTION_FRAME *ExceptionFrame,
+                           IN struct _KTRAP_FRAME *TrapFrame);
 
 //
 // Define query tick count macro.
@@ -1417,8 +1213,7 @@ KiInstructionBusError (
 
 // begin_wdm
 
-#define KeQueryTickCount(CurrentCount ) \
-    *(PULONGLONG)(CurrentCount) = **((volatile ULONGLONG **)(&KeTickCount));
+#define KeQueryTickCount(CurrentCount) *(PULONGLONG)(CurrentCount) = **((volatile ULONGLONG **)(&KeTickCount));
 
 // end_wdm
 
@@ -1426,16 +1221,12 @@ KiInstructionBusError (
 
 // end_ntddk end_nthal end_ntosp
 
-#define KiQueryTickCount(CurrentCount) \
-    *(PULONGLONG)(CurrentCount) = KeTickCount.QuadPart;
+#define KiQueryTickCount(CurrentCount) *(PULONGLONG)(CurrentCount) = KeTickCount.QuadPart;
 
 // begin_ntddk begin_nthal begin_ntosp
 
 NTKERNELAPI
-VOID
-KeQueryTickCount (
-    OUT PLARGE_INTEGER CurrentCount
-    );
+VOID KeQueryTickCount(OUT PLARGE_INTEGER CurrentCount);
 
 #endif // defined(_NTDRIVER_) || defined(_NTDDK_) || defined(_NTIFS_)
 
@@ -1447,64 +1238,32 @@ KeQueryTickCount (
 //
 
 ULONG
-KiEmulateBranch (
-    IN struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN struct _KTRAP_FRAME *TrapFrame
-    );
+KiEmulateBranch(IN struct _KEXCEPTION_FRAME *ExceptionFrame, IN struct _KTRAP_FRAME *TrapFrame);
 
 BOOLEAN
-KiEmulateFloating (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN OUT struct _KTRAP_FRAME *TrapFrame
-    );
+KiEmulateFloating(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
+                  IN OUT struct _KTRAP_FRAME *TrapFrame);
 
 BOOLEAN
-KiEmulateReference (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN OUT struct _KTRAP_FRAME *TrapFrame
-    );
+KiEmulateReference(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
+                   IN OUT struct _KTRAP_FRAME *TrapFrame);
 
 ULONGLONG
-KiGetRegisterValue (
-    IN ULONG Register,
-    IN struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN struct _KTRAP_FRAME *TrapFrame
-    );
+KiGetRegisterValue(IN ULONG Register, IN struct _KEXCEPTION_FRAME *ExceptionFrame, IN struct _KTRAP_FRAME *TrapFrame);
 
-VOID
-KiSetRegisterValue (
-    IN ULONG Register,
-    IN ULONGLONG Value,
-    OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
-    OUT struct _KTRAP_FRAME *TrapFrame
-    );
+VOID KiSetRegisterValue(IN ULONG Register, IN ULONGLONG Value, OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
+                        OUT struct _KTRAP_FRAME *TrapFrame);
 
 FLOAT128
-KiGetFloatRegisterValue (
-    IN ULONG Register,
-    IN struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN struct _KTRAP_FRAME *TrapFrame
-    );
+KiGetFloatRegisterValue(IN ULONG Register, IN struct _KEXCEPTION_FRAME *ExceptionFrame,
+                        IN struct _KTRAP_FRAME *TrapFrame);
 
-VOID
-KiSetFloatRegisterValue (
-    IN ULONG Register,
-    IN FLOAT128 Value,
-    OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
-    OUT struct _KTRAP_FRAME *TrapFrame
-    );
+VOID KiSetFloatRegisterValue(IN ULONG Register, IN FLOAT128 Value, OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
+                             OUT struct _KTRAP_FRAME *TrapFrame);
 
-VOID
-KiAdvanceInstPointer(
-    IN OUT struct _KTRAP_FRAME *TrapFrame
-    );
+VOID KiAdvanceInstPointer(IN OUT struct _KTRAP_FRAME *TrapFrame);
 
-VOID
-KiRequestSoftwareInterrupt (
-    KIRQL RequestIrql
-    );
+VOID KiRequestSoftwareInterrupt(KIRQL RequestIrql);
 
 // begin_ntddk begin_nthal begin_ntndis begin_wdm begin_ntosp
 //
@@ -1513,178 +1272,141 @@ KiRequestSoftwareInterrupt (
 
 NTHALAPI
 UCHAR
-READ_PORT_UCHAR (
-    PUCHAR RegisterAddress
-    );
+READ_PORT_UCHAR(PUCHAR RegisterAddress);
 
 NTHALAPI
 USHORT
-READ_PORT_USHORT (
-    PUSHORT RegisterAddress
-    );
+READ_PORT_USHORT(PUSHORT RegisterAddress);
 
 NTHALAPI
 ULONG
-READ_PORT_ULONG (
-    PULONG RegisterAddress
-    );
+READ_PORT_ULONG(PULONG RegisterAddress);
 
 NTHALAPI
-VOID
-READ_PORT_BUFFER_UCHAR (
-    PUCHAR portAddress,
-    PUCHAR readBuffer,
-    ULONG  readCount
-    );
+VOID READ_PORT_BUFFER_UCHAR(PUCHAR portAddress, PUCHAR readBuffer, ULONG readCount);
 
 NTHALAPI
-VOID
-READ_PORT_BUFFER_USHORT (
-    PUSHORT portAddress,
-    PUSHORT readBuffer,
-    ULONG  readCount
-    );
+VOID READ_PORT_BUFFER_USHORT(PUSHORT portAddress, PUSHORT readBuffer, ULONG readCount);
 
 NTHALAPI
-VOID
-READ_PORT_BUFFER_ULONG (
-    PULONG portAddress,
-    PULONG readBuffer,
-    ULONG  readCount
-    );
+VOID READ_PORT_BUFFER_ULONG(PULONG portAddress, PULONG readBuffer, ULONG readCount);
 
 NTHALAPI
-VOID
-WRITE_PORT_UCHAR (
-    PUCHAR portAddress,
-    UCHAR  Data
-    );
+VOID WRITE_PORT_UCHAR(PUCHAR portAddress, UCHAR Data);
 
 NTHALAPI
-VOID
-WRITE_PORT_USHORT (
-    PUSHORT portAddress,
-    USHORT  Data
-    );
+VOID WRITE_PORT_USHORT(PUSHORT portAddress, USHORT Data);
 
 NTHALAPI
-VOID
-WRITE_PORT_ULONG (
-    PULONG portAddress,
-    ULONG  Data
-    );
+VOID WRITE_PORT_ULONG(PULONG portAddress, ULONG Data);
 
 NTHALAPI
-VOID
-WRITE_PORT_BUFFER_UCHAR (
-    PUCHAR portAddress,
-    PUCHAR writeBuffer,
-    ULONG  writeCount
-    );
+VOID WRITE_PORT_BUFFER_UCHAR(PUCHAR portAddress, PUCHAR writeBuffer, ULONG writeCount);
 
 NTHALAPI
-VOID
-WRITE_PORT_BUFFER_USHORT (
-    PUSHORT portAddress,
-    PUSHORT writeBuffer,
-    ULONG  writeCount
-    );
+VOID WRITE_PORT_BUFFER_USHORT(PUSHORT portAddress, PUSHORT writeBuffer, ULONG writeCount);
 
 NTHALAPI
-VOID
-WRITE_PORT_BUFFER_ULONG (
-    PULONG portAddress,
-    PULONG writeBuffer,
-    ULONG  writeCount
-    );
+VOID WRITE_PORT_BUFFER_ULONG(PULONG portAddress, PULONG writeBuffer, ULONG writeCount);
 
 
-#define READ_REGISTER_UCHAR(x) \
-    (__mf(), *(volatile UCHAR * const)(x))
+#define READ_REGISTER_UCHAR(x) (__mf(), *(volatile UCHAR *const)(x))
 
-#define READ_REGISTER_USHORT(x) \
-    (__mf(), *(volatile USHORT * const)(x))
+#define READ_REGISTER_USHORT(x) (__mf(), *(volatile USHORT *const)(x))
 
-#define READ_REGISTER_ULONG(x) \
-    (__mf(), *(volatile ULONG * const)(x))
+#define READ_REGISTER_ULONG(x) (__mf(), *(volatile ULONG *const)(x))
 
-#define READ_REGISTER_BUFFER_UCHAR(x, y, z) {                           \
-    PUCHAR registerBuffer = x;                                          \
-    PUCHAR readBuffer = y;                                              \
-    ULONG readCount;                                                    \
-    __mf();                                                             \
-    for (readCount = z; readCount--; readBuffer++, registerBuffer++) {  \
-        *readBuffer = *(volatile UCHAR * const)(registerBuffer);        \
-    }                                                                   \
-}
+#define READ_REGISTER_BUFFER_UCHAR(x, y, z)                              \
+    {                                                                    \
+        PUCHAR registerBuffer = x;                                       \
+        PUCHAR readBuffer = y;                                           \
+        ULONG readCount;                                                 \
+        __mf();                                                          \
+        for (readCount = z; readCount--; readBuffer++, registerBuffer++) \
+        {                                                                \
+            *readBuffer = *(volatile UCHAR *const)(registerBuffer);      \
+        }                                                                \
+    }
 
-#define READ_REGISTER_BUFFER_USHORT(x, y, z) {                          \
-    PUSHORT registerBuffer = x;                                         \
-    PUSHORT readBuffer = y;                                             \
-    ULONG readCount;                                                    \
-    __mf();                                                             \
-    for (readCount = z; readCount--; readBuffer++, registerBuffer++) {  \
-        *readBuffer = *(volatile USHORT * const)(registerBuffer);       \
-    }                                                                   \
-}
+#define READ_REGISTER_BUFFER_USHORT(x, y, z)                             \
+    {                                                                    \
+        PUSHORT registerBuffer = x;                                      \
+        PUSHORT readBuffer = y;                                          \
+        ULONG readCount;                                                 \
+        __mf();                                                          \
+        for (readCount = z; readCount--; readBuffer++, registerBuffer++) \
+        {                                                                \
+            *readBuffer = *(volatile USHORT *const)(registerBuffer);     \
+        }                                                                \
+    }
 
-#define READ_REGISTER_BUFFER_ULONG(x, y, z) {                           \
-    PULONG registerBuffer = x;                                          \
-    PULONG readBuffer = y;                                              \
-    ULONG readCount;                                                    \
-    __mf();                                                             \
-    for (readCount = z; readCount--; readBuffer++, registerBuffer++) {  \
-        *readBuffer = *(volatile ULONG * const)(registerBuffer);        \
-    }                                                                   \
-}
+#define READ_REGISTER_BUFFER_ULONG(x, y, z)                              \
+    {                                                                    \
+        PULONG registerBuffer = x;                                       \
+        PULONG readBuffer = y;                                           \
+        ULONG readCount;                                                 \
+        __mf();                                                          \
+        for (readCount = z; readCount--; readBuffer++, registerBuffer++) \
+        {                                                                \
+            *readBuffer = *(volatile ULONG *const)(registerBuffer);      \
+        }                                                                \
+    }
 
-#define WRITE_REGISTER_UCHAR(x, y) {    \
-    *(volatile UCHAR * const)(x) = y;   \
-    KeFlushWriteBuffer();               \
-}
+#define WRITE_REGISTER_UCHAR(x, y)       \
+    {                                    \
+        *(volatile UCHAR *const)(x) = y; \
+        KeFlushWriteBuffer();            \
+    }
 
-#define WRITE_REGISTER_USHORT(x, y) {   \
-    *(volatile USHORT * const)(x) = y;  \
-    KeFlushWriteBuffer();               \
-}
+#define WRITE_REGISTER_USHORT(x, y)       \
+    {                                     \
+        *(volatile USHORT *const)(x) = y; \
+        KeFlushWriteBuffer();             \
+    }
 
-#define WRITE_REGISTER_ULONG(x, y) {    \
-    *(volatile ULONG * const)(x) = y;   \
-    KeFlushWriteBuffer();               \
-}
+#define WRITE_REGISTER_ULONG(x, y)       \
+    {                                    \
+        *(volatile ULONG *const)(x) = y; \
+        KeFlushWriteBuffer();            \
+    }
 
-#define WRITE_REGISTER_BUFFER_UCHAR(x, y, z) {                            \
-    PUCHAR registerBuffer = x;                                            \
-    PUCHAR writeBuffer = y;                                               \
-    ULONG writeCount;                                                     \
-    for (writeCount = z; writeCount--; writeBuffer++, registerBuffer++) { \
-        *(volatile UCHAR * const)(registerBuffer) = *writeBuffer;         \
-    }                                                                     \
-    KeFlushWriteBuffer();                                                 \
-}
+#define WRITE_REGISTER_BUFFER_UCHAR(x, y, z)                                \
+    {                                                                       \
+        PUCHAR registerBuffer = x;                                          \
+        PUCHAR writeBuffer = y;                                             \
+        ULONG writeCount;                                                   \
+        for (writeCount = z; writeCount--; writeBuffer++, registerBuffer++) \
+        {                                                                   \
+            *(volatile UCHAR *const)(registerBuffer) = *writeBuffer;        \
+        }                                                                   \
+        KeFlushWriteBuffer();                                               \
+    }
 
-#define WRITE_REGISTER_BUFFER_USHORT(x, y, z) {                           \
-    PUSHORT registerBuffer = x;                                           \
-    PUSHORT writeBuffer = y;                                              \
-    ULONG writeCount;                                                     \
-    for (writeCount = z; writeCount--; writeBuffer++, registerBuffer++) { \
-        *(volatile USHORT * const)(registerBuffer) = *writeBuffer;        \
-    }                                                                     \
-    KeFlushWriteBuffer();                                                 \
-}
+#define WRITE_REGISTER_BUFFER_USHORT(x, y, z)                               \
+    {                                                                       \
+        PUSHORT registerBuffer = x;                                         \
+        PUSHORT writeBuffer = y;                                            \
+        ULONG writeCount;                                                   \
+        for (writeCount = z; writeCount--; writeBuffer++, registerBuffer++) \
+        {                                                                   \
+            *(volatile USHORT *const)(registerBuffer) = *writeBuffer;       \
+        }                                                                   \
+        KeFlushWriteBuffer();                                               \
+    }
 
-#define WRITE_REGISTER_BUFFER_ULONG(x, y, z) {                            \
-    PULONG registerBuffer = x;                                            \
-    PULONG writeBuffer = y;                                               \
-    ULONG writeCount;                                                     \
-    for (writeCount = z; writeCount--; writeBuffer++, registerBuffer++) { \
-        *(volatile ULONG * const)(registerBuffer) = *writeBuffer;         \
-    }                                                                     \
-    KeFlushWriteBuffer();                                                 \
-}
+#define WRITE_REGISTER_BUFFER_ULONG(x, y, z)                                \
+    {                                                                       \
+        PULONG registerBuffer = x;                                          \
+        PULONG writeBuffer = y;                                             \
+        ULONG writeCount;                                                   \
+        for (writeCount = z; writeCount--; writeBuffer++, registerBuffer++) \
+        {                                                                   \
+            *(volatile ULONG *const)(registerBuffer) = *writeBuffer;        \
+        }                                                                   \
+        KeFlushWriteBuffer();                                               \
+    }
 
 // end_ntddk end_ntndis end_wdm end_ntosp
-
 
 
 //
@@ -1693,7 +1415,8 @@ WRITE_PORT_BUFFER_ULONG (
 //  This structure defines the higher FP volatile registers.
 //
 
-typedef struct _KHIGHER_FP_VOLATILE {
+typedef struct _KHIGHER_FP_VOLATILE
+{
     // volatile higher floating registers f32 - f127
     FLOAT128 FltF32;
     FLOAT128 FltF33;
@@ -1802,7 +1525,8 @@ typedef struct _KHIGHER_FP_VOLATILE {
 // The hardware may actually have more.
 //
 
-typedef struct _KDEBUG_REGISTERS {
+typedef struct _KDEBUG_REGISTERS
+{
 
     ULONGLONG DbI0;
     ULONGLONG DbI1;
@@ -1828,7 +1552,8 @@ typedef struct _KDEBUG_REGISTERS {
 // misc. application registers (mapped to IA-32 registers)
 //
 
-typedef struct _KAPPLICATION_REGISTERS {
+typedef struct _KAPPLICATION_REGISTERS
+{
     ULONGLONG Ar21;
     ULONGLONG Ar24;
     ULONGLONG Ar25;
@@ -1843,7 +1568,8 @@ typedef struct _KAPPLICATION_REGISTERS {
 // performance registers
 //
 
-typedef struct _KPERFORMANCE_REGISTERS {
+typedef struct _KPERFORMANCE_REGISTERS
+{
     ULONGLONG Perfr0;
     ULONGLONG Perfr1;
     ULONGLONG Perfr2;
@@ -1865,7 +1591,8 @@ typedef struct _KPERFORMANCE_REGISTERS {
 // The order of these area is significant.
 //
 
-typedef struct _KTHREAD_STATE_SAVEAREA {
+typedef struct _KTHREAD_STATE_SAVEAREA
+{
 
     KAPPLICATION_REGISTERS AppRegisters;
     KPERFORMANCE_REGISTERS PerfRegisters;
@@ -1876,14 +1603,21 @@ typedef struct _KTHREAD_STATE_SAVEAREA {
 
 #define KTHREAD_STATE_SAVEAREA_LENGTH ((sizeof(KTHREAD_STATE_SAVEAREA) + 15) & ~((ULONG_PTR)15))
 
-#define GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(StackBase)     \
-    (PKHIGHER_FP_VOLATILE) &(((PKTHREAD_STATE_SAVEAREA)(((ULONG_PTR)StackBase - sizeof(KTHREAD_STATE_SAVEAREA)) & ~((ULONG_PTR)15)))->HigherFPVolatile)
+#define GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(StackBase)                                                     \
+    (PKHIGHER_FP_VOLATILE) &                                                                                     \
+        (((PKTHREAD_STATE_SAVEAREA)(((ULONG_PTR)StackBase - sizeof(KTHREAD_STATE_SAVEAREA)) & ~((ULONG_PTR)15))) \
+             ->HigherFPVolatile)
 
-#define GET_DEBUG_REGISTER_SAVEAREA()                       \
-    (PKDEBUG_REGISTERS) &(((PKTHREAD_STATE_SAVEAREA)(((ULONG_PTR)KeGetCurrentThread()->StackBase - sizeof(KTHREAD_STATE_SAVEAREA)) & ~((ULONG_PTR)15)))->DebugRegisters)
+#define GET_DEBUG_REGISTER_SAVEAREA()                                                                               \
+    (PKDEBUG_REGISTERS) &                                                                                           \
+        (((PKTHREAD_STATE_SAVEAREA)(((ULONG_PTR)KeGetCurrentThread()->StackBase - sizeof(KTHREAD_STATE_SAVEAREA)) & \
+                                    ~((ULONG_PTR)15)))                                                              \
+             ->DebugRegisters)
 
-#define GET_APPLICATION_REGISTER_SAVEAREA(StackBase)     \
-    (PKAPPLICATION_REGISTERS) &(((PKTHREAD_STATE_SAVEAREA)(((ULONG_PTR)StackBase - sizeof(KTHREAD_STATE_SAVEAREA)) & ~((ULONG_PTR)15)))->AppRegisters)
+#define GET_APPLICATION_REGISTER_SAVEAREA(StackBase)                                                             \
+    (PKAPPLICATION_REGISTERS) &                                                                                  \
+        (((PKTHREAD_STATE_SAVEAREA)(((ULONG_PTR)StackBase - sizeof(KTHREAD_STATE_SAVEAREA)) & ~((ULONG_PTR)15))) \
+             ->AppRegisters)
 
 
 //
@@ -1897,13 +1631,14 @@ typedef struct _KTHREAD_STATE_SAVEAREA {
 //  The frame is 16-byte aligned to maintain 16-byte alignment for the stack,
 //
 
-typedef struct _KEXCEPTION_FRAME {
+typedef struct _KEXCEPTION_FRAME
+{
 
 
     // Preserved application registers
-    ULONGLONG ApEC;       // epilogue count
-    ULONGLONG ApLC;       // loop count
-    ULONGLONG IntNats;    // Nats for S0-S3; i.e. ar.UNAT after spill
+    ULONGLONG ApEC;    // epilogue count
+    ULONGLONG ApLC;    // loop count
+    ULONGLONG IntNats; // Nats for S0-S3; i.e. ar.UNAT after spill
 
     // Preserved (saved) interger registers, s0-s3
     ULONGLONG IntS0;
@@ -1955,12 +1690,13 @@ typedef struct _KEXCEPTION_FRAME {
 //  The frame is 16-byte aligned to maintain 16-byte alignment for the stack,
 //
 
-typedef struct _KSWITCH_FRAME {
+typedef struct _KSWITCH_FRAME
+{
 
     ULONGLONG SwitchPredicates; // Predicates for Switch
     ULONGLONG SwitchRp;         // return pointer for Switch
     ULONGLONG SwitchPFS;        // PFS for Switch
-    ULONGLONG SwitchFPSR;   // ProcessorFP status at thread switch
+    ULONGLONG SwitchFPSR;       // ProcessorFP status at thread switch
     ULONGLONG SwitchBsp;
     ULONGLONG SwitchRnat;
     // ULONGLONG Pad;
@@ -1978,17 +1714,18 @@ typedef struct _KSWITCH_FRAME {
 //  N.B - the 16-byte alignment is required to maintain the stack alignment.
 //
 
-#define KTRAP_FRAME_ARGUMENTS (8 * 8)       // up to 8 in-memory syscall args
+#define KTRAP_FRAME_ARGUMENTS (8 * 8) // up to 8 in-memory syscall args
 
 
-typedef struct _KTRAP_FRAME {
+typedef struct _KTRAP_FRAME
+{
 
     //
     // Reserved for additional memory arguments and stack scratch area
     // The size of Reserved[] must be a multiple of 16 bytes.
     //
 
-    ULONGLONG Reserved[(KTRAP_FRAME_ARGUMENTS+16)/8];
+    ULONGLONG Reserved[(KTRAP_FRAME_ARGUMENTS + 16) / 8];
 
     // Temporary (volatile) FP registers - f6-f15 (don't use f32+ in kernel)
     FLOAT128 FltT0;
@@ -2003,21 +1740,21 @@ typedef struct _KTRAP_FRAME {
     FLOAT128 FltT9;
 
     // Temporary (volatile) interger registers
-    ULONGLONG IntGp;    // global pointer (r1)
+    ULONGLONG IntGp; // global pointer (r1)
     ULONGLONG IntT0;
     ULONGLONG IntT1;
-                        // The following 4 registers fill in space of preserved  (S0-S3) to align Nats
-    ULONGLONG ApUNAT;   // ar.UNAT on kernel entry
-    ULONGLONG ApCCV;    // ar.CCV
-    ULONGLONG ApDCR;    // DCR register on kernel entry
-    ULONGLONG Preds;    // Predicates
+    // The following 4 registers fill in space of preserved  (S0-S3) to align Nats
+    ULONGLONG ApUNAT; // ar.UNAT on kernel entry
+    ULONGLONG ApCCV;  // ar.CCV
+    ULONGLONG ApDCR;  // DCR register on kernel entry
+    ULONGLONG Preds;  // Predicates
 
-    ULONGLONG IntV0;    // return value (r8)
+    ULONGLONG IntV0; // return value (r8)
     ULONGLONG IntT2;
     ULONGLONG IntT3;
     ULONGLONG IntT4;
-    ULONGLONG IntSp;    // stack pointer (r12)
-    ULONGLONG IntTeb;   // teb (r13)
+    ULONGLONG IntSp;  // stack pointer (r12)
+    ULONGLONG IntTeb; // teb (r13)
     ULONGLONG IntT5;
     ULONGLONG IntT6;
     ULONGLONG IntT7;
@@ -2037,34 +1774,34 @@ typedef struct _KTRAP_FRAME {
     ULONGLONG IntT21;
     ULONGLONG IntT22;
 
-    ULONGLONG IntNats;  // Temporary (volatile) registers' Nats directly from ar.UNAT at point of spill
+    ULONGLONG IntNats; // Temporary (volatile) registers' Nats directly from ar.UNAT at point of spill
 
-    ULONGLONG BrRp;     // Return pointer on kernel entry
+    ULONGLONG BrRp; // Return pointer on kernel entry
 
-    ULONGLONG BrT0;     // Temporary (volatile) branch registers (b6-b7)
+    ULONGLONG BrT0; // Temporary (volatile) branch registers (b6-b7)
     ULONGLONG BrT1;
 
     // Register stack info
-    ULONGLONG RsRSC;    // RSC on kernel entry
-    ULONGLONG RsBSP;    // BSP on kernel entry
+    ULONGLONG RsRSC;      // RSC on kernel entry
+    ULONGLONG RsBSP;      // BSP on kernel entry
     ULONGLONG RsBSPSTORE; // User BSP Store at point of switch to kernel backing store
-    ULONGLONG RsRNAT;   // old RNAT at point of switch to kernel backing store
-    ULONGLONG RsPFS;    // PFS on kernel entry
+    ULONGLONG RsRNAT;     // old RNAT at point of switch to kernel backing store
+    ULONGLONG RsPFS;      // PFS on kernel entry
 
     // Trap Status Information
-    ULONGLONG StIPSR;   // Interruption Processor Status Register
-    ULONGLONG StIIP;    // Interruption IP
-    ULONGLONG StIFS;    // Interruption Function State
-    ULONGLONG StFPSR;   // FP status
-    ULONGLONG StISR;    // Interruption Status Register
-    ULONGLONG StIFA;    // Interruption Data Address
-    ULONGLONG StIIPA;   // Last executed bundle address
-    ULONGLONG StIIM;    // Interruption Immediate
-    ULONGLONG StIHA;    // Interruption Hash Address
+    ULONGLONG StIPSR; // Interruption Processor Status Register
+    ULONGLONG StIIP;  // Interruption IP
+    ULONGLONG StIFS;  // Interruption Function State
+    ULONGLONG StFPSR; // FP status
+    ULONGLONG StISR;  // Interruption Status Register
+    ULONGLONG StIFA;  // Interruption Data Address
+    ULONGLONG StIIPA; // Last executed bundle address
+    ULONGLONG StIIM;  // Interruption Immediate
+    ULONGLONG StIHA;  // Interruption Hash Address
 
-    ULONG OldIrql;      // Previous Irql.
-    ULONG PreviousMode; // Previous Mode.
-    ULONGLONG TrapFrame;// Previous Trap Frame
+    ULONG OldIrql;       // Previous Irql.
+    ULONG PreviousMode;  // Previous Mode.
+    ULONGLONG TrapFrame; // Previous Trap Frame
 
     //
     // Exception record
@@ -2072,7 +1809,7 @@ typedef struct _KTRAP_FRAME {
     UCHAR ExceptionRecord[(sizeof(EXCEPTION_RECORD) + 15) & (~15)];
 
     // End of frame marker (for debugging)
-    ULONGLONG Handler;  // Handler for this trap
+    ULONGLONG Handler; // Handler for this trap
     ULONGLONG EOFMarker;
 } KTRAP_FRAME, *PKTRAP_FRAME;
 
@@ -2085,12 +1822,12 @@ typedef struct _KTRAP_FRAME {
 // Use the lowest 4 bits of EOFMarker field to encode the trap frame type
 //
 
-#define SYSCALL_FRAME      0
-#define INTERRUPT_FRAME    1
-#define EXCEPTION_FRAME    2
-#define CONTEXT_FRAME      10
+#define SYSCALL_FRAME 0
+#define INTERRUPT_FRAME 1
+#define EXCEPTION_FRAME 2
+#define CONTEXT_FRAME 10
 
-#define TRAP_FRAME_TYPE(tf)  (tf->EOFMarker & 0xf)
+#define TRAP_FRAME_TYPE(tf) (tf->EOFMarker & 0xf)
 
 //
 // Define the kernel mode and user mode callback frame structures.
@@ -2105,63 +1842,65 @@ typedef struct _KTRAP_FRAME {
 //      and it must be 16-byte aligned.
 //
 
-typedef struct _KCALLOUT_FRAME {
+typedef struct _KCALLOUT_FRAME
+{
 
 
-    ULONGLONG   BrRp;
-    ULONGLONG   RsPFS;
-    ULONGLONG   Preds;
-    ULONGLONG   ApUNAT;
-    ULONGLONG   ApLC;
-    ULONGLONG   RsRNAT;
-    ULONGLONG   IntNats;
+    ULONGLONG BrRp;
+    ULONGLONG RsPFS;
+    ULONGLONG Preds;
+    ULONGLONG ApUNAT;
+    ULONGLONG ApLC;
+    ULONGLONG RsRNAT;
+    ULONGLONG IntNats;
 
-    ULONGLONG   IntS0;
-    ULONGLONG   IntS1;
-    ULONGLONG   IntS2;
-    ULONGLONG   IntS3;
+    ULONGLONG IntS0;
+    ULONGLONG IntS1;
+    ULONGLONG IntS2;
+    ULONGLONG IntS3;
 
-    ULONGLONG   BrS0;
-    ULONGLONG   BrS1;
-    ULONGLONG   BrS2;
-    ULONGLONG   BrS3;
-    ULONGLONG   BrS4;
+    ULONGLONG BrS0;
+    ULONGLONG BrS1;
+    ULONGLONG BrS2;
+    ULONGLONG BrS3;
+    ULONGLONG BrS4;
 
-    FLOAT128    FltS0;          // 16-byte aligned boundary
-    FLOAT128    FltS1;
-    FLOAT128    FltS2;
-    FLOAT128    FltS3;
-    FLOAT128    FltS4;
-    FLOAT128    FltS5;
-    FLOAT128    FltS6;
-    FLOAT128    FltS7;
-    FLOAT128    FltS8;
-    FLOAT128    FltS9;
-    FLOAT128    FltS10;
-    FLOAT128    FltS11;
-    FLOAT128    FltS12;
-    FLOAT128    FltS13;
-    FLOAT128    FltS14;
-    FLOAT128    FltS15;
-    FLOAT128    FltS16;
-    FLOAT128    FltS17;
-    FLOAT128    FltS18;
-    FLOAT128    FltS19;
+    FLOAT128 FltS0; // 16-byte aligned boundary
+    FLOAT128 FltS1;
+    FLOAT128 FltS2;
+    FLOAT128 FltS3;
+    FLOAT128 FltS4;
+    FLOAT128 FltS5;
+    FLOAT128 FltS6;
+    FLOAT128 FltS7;
+    FLOAT128 FltS8;
+    FLOAT128 FltS9;
+    FLOAT128 FltS10;
+    FLOAT128 FltS11;
+    FLOAT128 FltS12;
+    FLOAT128 FltS13;
+    FLOAT128 FltS14;
+    FLOAT128 FltS15;
+    FLOAT128 FltS16;
+    FLOAT128 FltS17;
+    FLOAT128 FltS18;
+    FLOAT128 FltS19;
 
-    ULONGLONG   A0;             // saved argument registers a0-a2
-    ULONGLONG   A1;
-    ULONGLONG   CbStk;          // saved callback stack address
-    ULONGLONG   InStack;        // saved initial stack address
-    ULONGLONG   CbBStore;       // saved callback stack address
-    ULONGLONG   InBStore;       // saved initial stack address
-    ULONGLONG   TrFrame;        // saved callback trap frame address
-    ULONGLONG   TrStIIP;        // saved continuation address
+    ULONGLONG A0; // saved argument registers a0-a2
+    ULONGLONG A1;
+    ULONGLONG CbStk;    // saved callback stack address
+    ULONGLONG InStack;  // saved initial stack address
+    ULONGLONG CbBStore; // saved callback stack address
+    ULONGLONG InBStore; // saved initial stack address
+    ULONGLONG TrFrame;  // saved callback trap frame address
+    ULONGLONG TrStIIP;  // saved continuation address
 
 
 } KCALLOUT_FRAME, *PKCALLOUT_FRAME;
 
 
-typedef struct _UCALLOUT_FRAME {
+typedef struct _UCALLOUT_FRAME
+{
     PVOID Buffer;
     ULONG Length;
     ULONG ApiNumber;
@@ -2179,13 +1918,14 @@ typedef struct _UCALLOUT_FRAME {
 // Non-volatile floating point state
 //
 
-typedef struct _KFLOATING_SAVE {
-    ULONG   Reserved;
+typedef struct _KFLOATING_SAVE
+{
+    ULONG Reserved;
 } KFLOATING_SAVE, *PKFLOATING_SAVE;
 
 // end_ntddk end_wdm end_ntosp
 
-#define STATUS_IA64_INVALID_STACK     STATUS_BAD_STACK
+#define STATUS_IA64_INVALID_STACK STATUS_BAD_STACK
 
 //
 // iA32 control bits definition
@@ -2194,50 +1934,50 @@ typedef struct _KFLOATING_SAVE {
 // Define constants to access the bits in CR0.
 //
 
-#define CR0_PG  0x80000000          // paging
-#define CR0_ET  0x00000010          // extension type (80387)
-#define CR0_TS  0x00000008          // task switched
-#define CR0_EM  0x00000004          // emulate math coprocessor
-#define CR0_MP  0x00000002          // math present
-#define CR0_PE  0x00000001          // protection enable
+#define CR0_PG 0x80000000 // paging
+#define CR0_ET 0x00000010 // extension type (80387)
+#define CR0_TS 0x00000008 // task switched
+#define CR0_EM 0x00000004 // emulate math coprocessor
+#define CR0_MP 0x00000002 // math present
+#define CR0_PE 0x00000001 // protection enable
 
 //
 // More CR0 bits; these only apply to the 80486.
 //
 
-#define CR0_CD  0x40000000          // cache disable
-#define CR0_NW  0x20000000          // not write-through
-#define CR0_AM  0x00040000          // alignment mask
-#define CR0_WP  0x00010000          // write protect
-#define CR0_NE  0x00000020          // numeric error
+#define CR0_CD 0x40000000 // cache disable
+#define CR0_NW 0x20000000 // not write-through
+#define CR0_AM 0x00040000 // alignment mask
+#define CR0_WP 0x00010000 // write protect
+#define CR0_NE 0x00000020 // numeric error
 
 //
 // Define constants to access CFLG bits
 //
-#define CFLG_IO 0x00000040          // IO bit map checking on
-#define CFLG_IF 0x00000080          // EFLAG.if to control external interrupt
-#define CFLG_II 0x00000100          // enable EFLAG.if interception
+#define CFLG_IO 0x00000040 // IO bit map checking on
+#define CFLG_IF 0x00000080 // EFLAG.if to control external interrupt
+#define CFLG_II 0x00000100 // enable EFLAG.if interception
 
 //
 // CR4 bits;  These only apply to Pentium
 //
-#define CR4_VME 0x00000001          // V86 mode extensions
-#define CR4_PVI 0x00000002          // Protected mode virtual interrupts
-#define CR4_TSD 0x00000004          // Time stamp disable
-#define CR4_DE  0x00000008          // Debugging Extensions
-#define CR4_PSE 0x00000010          // Page size extensions
-#define CR4_PAE 0x00000020          // Physical address extensions
-#define CR4_MCE 0x00000040          // Machine check enable
-#define CR4_PGE 0x00000080          // Page global enable
-#define CR4_FXSR 0x00000200         // FXSR used by OS
-#define CR4_XMMEXCPT 0x00000400     // XMMI used by OS
+#define CR4_VME 0x00000001      // V86 mode extensions
+#define CR4_PVI 0x00000002      // Protected mode virtual interrupts
+#define CR4_TSD 0x00000004      // Time stamp disable
+#define CR4_DE 0x00000008       // Debugging Extensions
+#define CR4_PSE 0x00000010      // Page size extensions
+#define CR4_PAE 0x00000020      // Physical address extensions
+#define CR4_MCE 0x00000040      // Machine check enable
+#define CR4_PGE 0x00000080      // Page global enable
+#define CR4_FXSR 0x00000200     // FXSR used by OS
+#define CR4_XMMEXCPT 0x00000400 // XMMI used by OS
 
 //
 // Define constants to access ThNpxState
 //
 
-#define NPX_STATE_NOT_LOADED    (CR0_TS | CR0_MP)
-#define NPX_STATE_LOADED        0
+#define NPX_STATE_NOT_LOADED (CR0_TS | CR0_MP)
+#define NPX_STATE_LOADED 0
 
 //
 // begin_nthal
@@ -2256,66 +1996,66 @@ typedef struct _KFLOATING_SAVE {
 // All PAL calls done through HAL. HAL may block some calls
 //
 
-#define PAL_CACHE_FLUSH                                       1I64
-#define PAL_CACHE_INFO                                        2I64
-#define PAL_CACHE_INIT                                        3I64
-#define PAL_CACHE_SUMMARY                                     4I64
-#define PAL_PTCE_INFO                                         6I64
-#define PAL_MEM_ATTRIB                                        5I64
-#define PAL_VM_INFO                                           7I64
-#define PAL_VM_SUMMARY                                        8I64
-#define PAL_BUS_GET_FEATURES                                  9I64
-#define PAL_BUS_SET_FEATURES                                 10I64
-#define PAL_DEBUG_INFO                                       11I64
-#define PAL_FIXED_ADDR                                       12I64
-#define PAL_FREQ_BASE                                        13I64
-#define PAL_FREQ_RATIOS                                      14I64
-#define PAL_PERF_MON_INFO                                    15I64
-#define PAL_PLATFORM_ADDR                                    16I64
-#define PAL_PROC_GET_FEATURES                                17I64
-#define PAL_PROC_SET_FEATURES                                18I64
-#define PAL_RSE_INFO                                         19I64
-#define PAL_VERSION                                          20I64
-#define PAL_MC_CLEAR_LOG                                     21I64
-#define PAL_MC_DRAIN                                         22I64
-#define PAL_MC_EXPECTED                                      23I64
-#define PAL_MC_DYNAMIC_STATE                                 24I64
-#define PAL_MC_ERROR_INFO                                    25I64
-#define PAL_MC_RESUME                                        26I64
-#define PAL_MC_REGISTER_MEM                                  27I64
-#define PAL_HALT                                             28I64
-#define PAL_HALT_LIGHT                                       29I64
-#define PAL_COPY_INFO                                        30I64
-#define PAL_CACHE_LINE_INIT                                  31I64
-#define PAL_PMI_ENTRYPOINT                                   32I64
-#define PAL_ENTER_IA_32_ENV                                  33I64
-#define PAL_VM_PAGE_SIZE                                     34I64
-#define PAL_MEM_FOR_TEST                                     37I64
-#define PAL_CACHE_PROT_INFO                                  38I64
-#define PAL_REGISTER_INFO                                    39I64
-#define PAL_SHUTDOWN                                         44I64
-#define PAL_PREFETCH_VISIBILITY                              41I64
+#define PAL_CACHE_FLUSH 1I64
+#define PAL_CACHE_INFO 2I64
+#define PAL_CACHE_INIT 3I64
+#define PAL_CACHE_SUMMARY 4I64
+#define PAL_PTCE_INFO 6I64
+#define PAL_MEM_ATTRIB 5I64
+#define PAL_VM_INFO 7I64
+#define PAL_VM_SUMMARY 8I64
+#define PAL_BUS_GET_FEATURES 9I64
+#define PAL_BUS_SET_FEATURES 10I64
+#define PAL_DEBUG_INFO 11I64
+#define PAL_FIXED_ADDR 12I64
+#define PAL_FREQ_BASE 13I64
+#define PAL_FREQ_RATIOS 14I64
+#define PAL_PERF_MON_INFO 15I64
+#define PAL_PLATFORM_ADDR 16I64
+#define PAL_PROC_GET_FEATURES 17I64
+#define PAL_PROC_SET_FEATURES 18I64
+#define PAL_RSE_INFO 19I64
+#define PAL_VERSION 20I64
+#define PAL_MC_CLEAR_LOG 21I64
+#define PAL_MC_DRAIN 22I64
+#define PAL_MC_EXPECTED 23I64
+#define PAL_MC_DYNAMIC_STATE 24I64
+#define PAL_MC_ERROR_INFO 25I64
+#define PAL_MC_RESUME 26I64
+#define PAL_MC_REGISTER_MEM 27I64
+#define PAL_HALT 28I64
+#define PAL_HALT_LIGHT 29I64
+#define PAL_COPY_INFO 30I64
+#define PAL_CACHE_LINE_INIT 31I64
+#define PAL_PMI_ENTRYPOINT 32I64
+#define PAL_ENTER_IA_32_ENV 33I64
+#define PAL_VM_PAGE_SIZE 34I64
+#define PAL_MEM_FOR_TEST 37I64
+#define PAL_CACHE_PROT_INFO 38I64
+#define PAL_REGISTER_INFO 39I64
+#define PAL_SHUTDOWN 44I64
+#define PAL_PREFETCH_VISIBILITY 41I64
 
-#define PAL_COPY_PAL                                        256I64
-#define PAL_HALT_INFO                                       257I64
-#define PAL_TEST_PROC                                       258I64
-#define PAL_CACHE_READ                                      259I64
-#define PAL_CACHE_WRITE                                     260I64
-#define PAL_VM_TR_READ                                      261I64
+#define PAL_COPY_PAL 256I64
+#define PAL_HALT_INFO 257I64
+#define PAL_TEST_PROC 258I64
+#define PAL_CACHE_READ 259I64
+#define PAL_CACHE_WRITE 260I64
+#define PAL_VM_TR_READ 261I64
 
 //
 // iA-64 defined PAL return values
 //
 
-#define PAL_STATUS_INVALID_CACHELINE                          1I64
-#define PAL_STATUS_SUPPORT_NOT_NEEDED                         1I64
-#define PAL_STATUS_SUCCESS                                    0
-#define PAL_STATUS_NOT_IMPLEMENTED                           -1I64
-#define PAL_STATUS_INVALID_ARGUMENT                          -2I64
-#define PAL_STATUS_ERROR                                     -3I64
-#define PAL_STATUS_UNABLE_TO_INIT_CACHE_LEVEL_AND_TYPE       -4I64
-#define PAL_STATUS_NOT_FOUND_IN_CACHE                        -5I64
-#define PAL_STATUS_NO_ERROR_INFO_AVAILABLE                   -6I64
+#define PAL_STATUS_INVALID_CACHELINE 1I64
+#define PAL_STATUS_SUPPORT_NOT_NEEDED 1I64
+#define PAL_STATUS_SUCCESS 0
+#define PAL_STATUS_NOT_IMPLEMENTED -1I64
+#define PAL_STATUS_INVALID_ARGUMENT -2I64
+#define PAL_STATUS_ERROR -3I64
+#define PAL_STATUS_UNABLE_TO_INIT_CACHE_LEVEL_AND_TYPE -4I64
+#define PAL_STATUS_NOT_FOUND_IN_CACHE -5I64
+#define PAL_STATUS_NO_ERROR_INFO_AVAILABLE -6I64
 
 
 // end_nthal
@@ -2332,15 +2072,16 @@ typedef struct _KFLOATING_SAVE {
 //              or ring-3.  Ring-1 or Ring-2 support will require changing
 //              this value and all of the code that refers to it.
 
-#define MODE_MASK    1
-#define RPL_MASK     3
+#define MODE_MASK 1
+#define RPL_MASK 3
 
 //
 // SetProcessInformation Structure for ProcessSetIoHandlers info class
 //
 
-typedef struct _PROCESS_IO_PORT_HANDLER_INFORMATION {
-    BOOLEAN Install;            // true if handlers to be installed
+typedef struct _PROCESS_IO_PORT_HANDLER_INFORMATION
+{
+    BOOLEAN Install; // true if handlers to be installed
     ULONG NumEntries;
     ULONG Context;
     PEMULATOR_ACCESS_ENTRY EmulatorAccessEntries;
@@ -2349,21 +2090,21 @@ typedef struct _PROCESS_IO_PORT_HANDLER_INFORMATION {
 //
 // Definitions that used by CSD and SSD
 //
-#define USER_CODE_DESCRIPTOR  0xCFBFFFFF00000000i64
-#define USER_DATA_DESCRIPTOR  0xCF3FFFFF00000000i64
+#define USER_CODE_DESCRIPTOR 0xCFBFFFFF00000000i64
+#define USER_DATA_DESCRIPTOR 0xCF3FFFFF00000000i64
 
 //
 // Used for cleaning up ia32 contexts
 // This is taken from i386.h
 //
-#define EFLAGS_DF_MASK        0x00000400L
+#define EFLAGS_DF_MASK 0x00000400L
 #define EFLAGS_INTERRUPT_MASK 0x00000200L
-#define EFLAGS_V86_MASK       0x00020000L
-#define EFLAGS_ALIGN_CHECK    0x00040000L
-#define EFLAGS_IOPL_MASK      0x00003000L
-#define EFLAGS_VIF            0x00080000L
-#define EFLAGS_VIP            0x00100000L
-#define EFLAGS_USER_SANITIZE  0x003e0dd7L
+#define EFLAGS_V86_MASK 0x00020000L
+#define EFLAGS_ALIGN_CHECK 0x00040000L
+#define EFLAGS_IOPL_MASK 0x00003000L
+#define EFLAGS_VIF 0x00080000L
+#define EFLAGS_VIP 0x00100000L
+#define EFLAGS_USER_SANITIZE 0x003e0dd7L
 
 
 // begin_windbgkd begin_nthal
@@ -2374,7 +2115,8 @@ typedef struct _PROCESS_IO_PORT_HANDLER_INFORMATION {
 // Stack Registers for IA64
 //
 
-typedef struct _STACK_REGISTERS {
+typedef struct _STACK_REGISTERS
+{
 
 
     ULONGLONG IntR32;
@@ -2482,24 +2224,24 @@ typedef struct _STACK_REGISTERS {
     ULONGLONG IntR125;
     ULONGLONG IntR126;
     ULONGLONG IntR127;
-                                 // Nat bits for stack registers
-    ULONGLONG IntNats2;          // r32-r95 in bit positions 1 to 63
-    ULONGLONG IntNats3;          // r96-r127 in bit position 1 to 31
+    // Nat bits for stack registers
+    ULONGLONG IntNats2; // r32-r95 in bit positions 1 to 63
+    ULONGLONG IntNats3; // r96-r127 in bit position 1 to 31
 
 
 } STACK_REGISTERS, *PSTACK_REGISTERS;
-
 
 
 //
 // Special Registers for IA64
 //
 
-typedef struct _KSPECIAL_REGISTERS {
+typedef struct _KSPECIAL_REGISTERS
+{
 
     // Kernel debug breakpoint registers
 
-    ULONGLONG KernelDbI0;         // Instruction debug registers
+    ULONGLONG KernelDbI0; // Instruction debug registers
     ULONGLONG KernelDbI1;
     ULONGLONG KernelDbI2;
     ULONGLONG KernelDbI3;
@@ -2508,7 +2250,7 @@ typedef struct _KSPECIAL_REGISTERS {
     ULONGLONG KernelDbI6;
     ULONGLONG KernelDbI7;
 
-    ULONGLONG KernelDbD0;         // Data debug registers
+    ULONGLONG KernelDbD0; // Data debug registers
     ULONGLONG KernelDbD1;
     ULONGLONG KernelDbD2;
     ULONGLONG KernelDbD3;
@@ -2519,7 +2261,7 @@ typedef struct _KSPECIAL_REGISTERS {
 
     // Kernel performance monitor registers
 
-    ULONGLONG KernelPfC0;         // Performance configuration registers
+    ULONGLONG KernelPfC0; // Performance configuration registers
     ULONGLONG KernelPfC1;
     ULONGLONG KernelPfC2;
     ULONGLONG KernelPfC3;
@@ -2528,7 +2270,7 @@ typedef struct _KSPECIAL_REGISTERS {
     ULONGLONG KernelPfC6;
     ULONGLONG KernelPfC7;
 
-    ULONGLONG KernelPfD0;         // Performance data registers
+    ULONGLONG KernelPfD0; // Performance data registers
     ULONGLONG KernelPfD1;
     ULONGLONG KernelPfD2;
     ULONGLONG KernelPfD3;
@@ -2569,103 +2311,103 @@ typedef struct _KSPECIAL_REGISTERS {
     ULONGLONG ApCPUID7; // Cpuid Register 7
 
     //       - Kernel Registers - AR
-    ULONGLONG ApKR0;    // Kernel Register 0 (User RO)
-    ULONGLONG ApKR1;    // Kernel Register 1 (User RO)
-    ULONGLONG ApKR2;    // Kernel Register 2 (User RO)
-    ULONGLONG ApKR3;    // Kernel Register 3 (User RO)
-    ULONGLONG ApKR4;    // Kernel Register 4
-    ULONGLONG ApKR5;    // Kernel Register 5
-    ULONGLONG ApKR6;    // Kernel Register 6
-    ULONGLONG ApKR7;    // Kernel Register 7
+    ULONGLONG ApKR0; // Kernel Register 0 (User RO)
+    ULONGLONG ApKR1; // Kernel Register 1 (User RO)
+    ULONGLONG ApKR2; // Kernel Register 2 (User RO)
+    ULONGLONG ApKR3; // Kernel Register 3 (User RO)
+    ULONGLONG ApKR4; // Kernel Register 4
+    ULONGLONG ApKR5; // Kernel Register 5
+    ULONGLONG ApKR6; // Kernel Register 6
+    ULONGLONG ApKR7; // Kernel Register 7
 
-    ULONGLONG ApITC;    // Interval Timer Counter
+    ULONGLONG ApITC; // Interval Timer Counter
 
     // Global control registers
 
-    ULONGLONG ApITM;    // Interval Timer Match register
-    ULONGLONG ApIVA;    // Interrupt Vector Address
-    ULONGLONG ApPTA;    // Page Table Address
-    ULONGLONG ApGPTA;   // ia32 Page Table Address
+    ULONGLONG ApITM;  // Interval Timer Match register
+    ULONGLONG ApIVA;  // Interrupt Vector Address
+    ULONGLONG ApPTA;  // Page Table Address
+    ULONGLONG ApGPTA; // ia32 Page Table Address
 
-    ULONGLONG StISR;    // Interrupt status
-    ULONGLONG StIFA;    // Interruption Faulting Address
-    ULONGLONG StITIR;   // Interruption TLB Insertion Register
-    ULONGLONG StIIPA;   // Interruption Instruction Previous Address (RO)
-    ULONGLONG StIIM;    // Interruption Immediate register (RO)
-    ULONGLONG StIHA;    // Interruption Hash Address (RO)
+    ULONGLONG StISR;  // Interrupt status
+    ULONGLONG StIFA;  // Interruption Faulting Address
+    ULONGLONG StITIR; // Interruption TLB Insertion Register
+    ULONGLONG StIIPA; // Interruption Instruction Previous Address (RO)
+    ULONGLONG StIIM;  // Interruption Immediate register (RO)
+    ULONGLONG StIHA;  // Interruption Hash Address (RO)
 
     //       - External Interrupt control registers (SAPIC)
-    ULONGLONG SaLID;    // Local SAPIC ID
-    ULONGLONG SaIVR;    // Interrupt Vector Register (RO)
-    ULONGLONG SaTPR;    // Task Priority Register
-    ULONGLONG SaEOI;    // End Of Interrupt
-    ULONGLONG SaIRR0;   // Interrupt Request Register 0 (RO)
-    ULONGLONG SaIRR1;   // Interrupt Request Register 1 (RO)
-    ULONGLONG SaIRR2;   // Interrupt Request Register 2 (RO)
-    ULONGLONG SaIRR3;   // Interrupt Request Register 3 (RO)
-    ULONGLONG SaITV;    // Interrupt Timer Vector
-    ULONGLONG SaPMV;    // Performance Monitor Vector
-    ULONGLONG SaCMCV;   // Corrected Machine Check Vector
-    ULONGLONG SaLRR0;   // Local Interrupt Redirection Vector 0
-    ULONGLONG SaLRR1;   // Local Interrupt Redirection Vector 1
+    ULONGLONG SaLID;  // Local SAPIC ID
+    ULONGLONG SaIVR;  // Interrupt Vector Register (RO)
+    ULONGLONG SaTPR;  // Task Priority Register
+    ULONGLONG SaEOI;  // End Of Interrupt
+    ULONGLONG SaIRR0; // Interrupt Request Register 0 (RO)
+    ULONGLONG SaIRR1; // Interrupt Request Register 1 (RO)
+    ULONGLONG SaIRR2; // Interrupt Request Register 2 (RO)
+    ULONGLONG SaIRR3; // Interrupt Request Register 3 (RO)
+    ULONGLONG SaITV;  // Interrupt Timer Vector
+    ULONGLONG SaPMV;  // Performance Monitor Vector
+    ULONGLONG SaCMCV; // Corrected Machine Check Vector
+    ULONGLONG SaLRR0; // Local Interrupt Redirection Vector 0
+    ULONGLONG SaLRR1; // Local Interrupt Redirection Vector 1
 
     // System Registers
     //       - Region registers
-    ULONGLONG Rr0;  // Region register 0
-    ULONGLONG Rr1;  // Region register 1
-    ULONGLONG Rr2;  // Region register 2
-    ULONGLONG Rr3;  // Region register 3
-    ULONGLONG Rr4;  // Region register 4
-    ULONGLONG Rr5;  // Region register 5
-    ULONGLONG Rr6;  // Region register 6
-    ULONGLONG Rr7;  // Region register 7
+    ULONGLONG Rr0; // Region register 0
+    ULONGLONG Rr1; // Region register 1
+    ULONGLONG Rr2; // Region register 2
+    ULONGLONG Rr3; // Region register 3
+    ULONGLONG Rr4; // Region register 4
+    ULONGLONG Rr5; // Region register 5
+    ULONGLONG Rr6; // Region register 6
+    ULONGLONG Rr7; // Region register 7
 
     //      - Protection Key registers
-    ULONGLONG Pkr0;     // Protection Key register 0
-    ULONGLONG Pkr1;     // Protection Key register 1
-    ULONGLONG Pkr2;     // Protection Key register 2
-    ULONGLONG Pkr3;     // Protection Key register 3
-    ULONGLONG Pkr4;     // Protection Key register 4
-    ULONGLONG Pkr5;     // Protection Key register 5
-    ULONGLONG Pkr6;     // Protection Key register 6
-    ULONGLONG Pkr7;     // Protection Key register 7
-    ULONGLONG Pkr8;     // Protection Key register 8
-    ULONGLONG Pkr9;     // Protection Key register 9
-    ULONGLONG Pkr10;    // Protection Key register 10
-    ULONGLONG Pkr11;    // Protection Key register 11
-    ULONGLONG Pkr12;    // Protection Key register 12
-    ULONGLONG Pkr13;    // Protection Key register 13
-    ULONGLONG Pkr14;    // Protection Key register 14
-    ULONGLONG Pkr15;    // Protection Key register 15
+    ULONGLONG Pkr0;  // Protection Key register 0
+    ULONGLONG Pkr1;  // Protection Key register 1
+    ULONGLONG Pkr2;  // Protection Key register 2
+    ULONGLONG Pkr3;  // Protection Key register 3
+    ULONGLONG Pkr4;  // Protection Key register 4
+    ULONGLONG Pkr5;  // Protection Key register 5
+    ULONGLONG Pkr6;  // Protection Key register 6
+    ULONGLONG Pkr7;  // Protection Key register 7
+    ULONGLONG Pkr8;  // Protection Key register 8
+    ULONGLONG Pkr9;  // Protection Key register 9
+    ULONGLONG Pkr10; // Protection Key register 10
+    ULONGLONG Pkr11; // Protection Key register 11
+    ULONGLONG Pkr12; // Protection Key register 12
+    ULONGLONG Pkr13; // Protection Key register 13
+    ULONGLONG Pkr14; // Protection Key register 14
+    ULONGLONG Pkr15; // Protection Key register 15
 
     //      -  Translation Lookaside buffers
-    ULONGLONG TrI0;     // Instruction Translation Register 0
-    ULONGLONG TrI1;     // Instruction Translation Register 1
-    ULONGLONG TrI2;     // Instruction Translation Register 2
-    ULONGLONG TrI3;     // Instruction Translation Register 3
-    ULONGLONG TrI4;     // Instruction Translation Register 4
-    ULONGLONG TrI5;     // Instruction Translation Register 5
-    ULONGLONG TrI6;     // Instruction Translation Register 6
-    ULONGLONG TrI7;     // Instruction Translation Register 7
+    ULONGLONG TrI0; // Instruction Translation Register 0
+    ULONGLONG TrI1; // Instruction Translation Register 1
+    ULONGLONG TrI2; // Instruction Translation Register 2
+    ULONGLONG TrI3; // Instruction Translation Register 3
+    ULONGLONG TrI4; // Instruction Translation Register 4
+    ULONGLONG TrI5; // Instruction Translation Register 5
+    ULONGLONG TrI6; // Instruction Translation Register 6
+    ULONGLONG TrI7; // Instruction Translation Register 7
 
-    ULONGLONG TrD0;     // Data Translation Register 0
-    ULONGLONG TrD1;     // Data Translation Register 1
-    ULONGLONG TrD2;     // Data Translation Register 2
-    ULONGLONG TrD3;     // Data Translation Register 3
-    ULONGLONG TrD4;     // Data Translation Register 4
-    ULONGLONG TrD5;     // Data Translation Register 5
-    ULONGLONG TrD6;     // Data Translation Register 6
-    ULONGLONG TrD7;     // Data Translation Register 7
+    ULONGLONG TrD0; // Data Translation Register 0
+    ULONGLONG TrD1; // Data Translation Register 1
+    ULONGLONG TrD2; // Data Translation Register 2
+    ULONGLONG TrD3; // Data Translation Register 3
+    ULONGLONG TrD4; // Data Translation Register 4
+    ULONGLONG TrD5; // Data Translation Register 5
+    ULONGLONG TrD6; // Data Translation Register 6
+    ULONGLONG TrD7; // Data Translation Register 7
 
     //      -  Machine Specific Registers
-    ULONGLONG SrMSR0;   // Machine Specific Register 0
-    ULONGLONG SrMSR1;   // Machine Specific Register 1
-    ULONGLONG SrMSR2;   // Machine Specific Register 2
-    ULONGLONG SrMSR3;   // Machine Specific Register 3
-    ULONGLONG SrMSR4;   // Machine Specific Register 4
-    ULONGLONG SrMSR5;   // Machine Specific Register 5
-    ULONGLONG SrMSR6;   // Machine Specific Register 6
-    ULONGLONG SrMSR7;   // Machine Specific Register 7
+    ULONGLONG SrMSR0; // Machine Specific Register 0
+    ULONGLONG SrMSR1; // Machine Specific Register 1
+    ULONGLONG SrMSR2; // Machine Specific Register 2
+    ULONGLONG SrMSR3; // Machine Specific Register 3
+    ULONGLONG SrMSR4; // Machine Specific Register 4
+    ULONGLONG SrMSR5; // Machine Specific Register 5
+    ULONGLONG SrMSR6; // Machine Specific Register 6
+    ULONGLONG SrMSR7; // Machine Specific Register 7
 
 } KSPECIAL_REGISTERS, *PKSPECIAL_REGISTERS;
 
@@ -2674,7 +2416,8 @@ typedef struct _KSPECIAL_REGISTERS {
 // Processor State structure.
 //
 
-typedef struct _KPROCESSOR_STATE {
+typedef struct _KPROCESSOR_STATE
+{
     struct _CONTEXT ContextFrame;
     struct _KSPECIAL_REGISTERS SpecialRegisters;
 } KPROCESSOR_STATE, *PKPROCESSOR_STATE;
@@ -2691,26 +2434,27 @@ typedef struct _KPROCESSOR_STATE {
 
 #define PRCB_MINOR_VERSION 1
 #define PRCB_MAJOR_VERSION 1
-#define PRCB_BUILD_DEBUG        0x0001
+#define PRCB_BUILD_DEBUG 0x0001
 #define PRCB_BUILD_UNIPROCESSOR 0x0002
 
 struct _RESTART_BLOCK;
 
-typedef struct _KPRCB {
+typedef struct _KPRCB
+{
 
-//
-// Major and minor version numbers of the PCR.
-//
+    //
+    // Major and minor version numbers of the PCR.
+    //
 
     USHORT MinorVersion;
     USHORT MajorVersion;
 
-//
-// Start of the architecturally defined section of the PRCB. This section
-// may be directly addressed by vendor/platform specific HAL code and will
-// not change from version to version of NT.
-//
-//
+    //
+    // Start of the architecturally defined section of the PRCB. This section
+    // may be directly addressed by vendor/platform specific HAL code and will
+    // not change from version to version of NT.
+    //
+    //
 
     struct _KTHREAD *CurrentThread;
     struct _KTHREAD *RESTRICTED_POINTER NextThread;
@@ -2723,34 +2467,34 @@ typedef struct _KPRCB {
     ULONG_PTR PcrPage;
     ULONG Spare0[4];
 
-//
-// Processor Idendification Registers.
-//
+    //
+    // Processor Idendification Registers.
+    //
 
-    ULONG     ProcessorModel;
-    ULONG     ProcessorRevision;
-    ULONG     ProcessorFamily;
-    ULONG     ProcessorArchRev;
+    ULONG ProcessorModel;
+    ULONG ProcessorRevision;
+    ULONG ProcessorFamily;
+    ULONG ProcessorArchRev;
     ULONGLONG ProcessorSerialNumber;
     ULONGLONG ProcessorFeatureBits;
-    UCHAR     ProcessorVendorString[16];
+    UCHAR ProcessorVendorString[16];
 
-//
-// Space reserved for the system.
-//
+    //
+    // Space reserved for the system.
+    //
 
     ULONGLONG SystemReserved[8];
 
-//
-// Space reserved for the HAL.
-//
+    //
+    // Space reserved for the HAL.
+    //
 
     ULONGLONG HalReserved[16];
 
-//
-// End of the architecturally defined section of the PRCB.
-// end_nthal end_ntddk end_ntosp
-//
+    //
+    // End of the architecturally defined section of the PRCB.
+    // end_nthal end_ntddk end_ntosp
+    //
 
     ULONG DpcTime;
     ULONG InterruptTime;
@@ -2761,32 +2505,32 @@ typedef struct _KPRCB {
     ULONG Spare1[5];
     ULONG PageColor;
 
-//
-// MP information.
-//
+    //
+    // MP information.
+    //
 
-    struct _KNODE * ParentNode;         // Node this processor is a member of
+    struct _KNODE *ParentNode; // Node this processor is a member of
     PVOID Spare2;
     PVOID Spare3;
     volatile ULONG IpiFrozen;
     struct _KPROCESSOR_STATE ProcessorState;
 
-//
-//  Per-processor data for various hot code which resides in the
-//  kernel image. Each processor is given it's own copy of the data
-//  to lessen the cache impact of sharing the data between multiple
-//  processors.
-//
+    //
+    //  Per-processor data for various hot code which resides in the
+    //  kernel image. Each processor is given it's own copy of the data
+    //  to lessen the cache impact of sharing the data between multiple
+    //  processors.
+    //
 
-//
-//  Spares (formerly fsrtl filelock free lists)
-//
+    //
+    //  Spares (formerly fsrtl filelock free lists)
+    //
 
     PVOID SpareHotData[2];
 
-//
-//  Cache manager performance counters.
-//
+    //
+    //  Cache manager performance counters.
+    //
 
     ULONG CcFastReadNoWait;
     ULONG CcFastReadWait;
@@ -2795,9 +2539,9 @@ typedef struct _KPRCB {
     ULONG CcCopyReadWait;
     ULONG CcCopyReadNoWaitMiss;
 
-//
-// Kernel performance counters.
-//
+    //
+    // Kernel performance counters.
+    //
 
     ULONG KeAlignmentFixupCount;
     ULONG KeContextSwitches;
@@ -2809,87 +2553,87 @@ typedef struct _KPRCB {
     ULONG KeSecondLevelTbFills;
     ULONG KeSystemCalls;
 
-//
-//  Reserved for future counters.
-//
+    //
+    //  Reserved for future counters.
+    //
 
     ULONG ReservedCounter[8];
 
-//
-// I/O IRP float.
-//
+    //
+    // I/O IRP float.
+    //
 
     LONG LookasideIrpFloat;
 
     UCHAR MoreSpareHotData[52];
 
-//
-// Nonpaged per processor lookaside lists.
-//
+    //
+    // Nonpaged per processor lookaside lists.
+    //
 
     PP_LOOKASIDE_LIST PPLookasideList[16];
 
-//
-// Nonpaged per processor small pool lookaside lists.
-//
+    //
+    // Nonpaged per processor small pool lookaside lists.
+    //
 
     PP_LOOKASIDE_LIST PPNPagedLookasideList[POOL_SMALL_LISTS];
 
-//
-// Paged per processor small pool lookaside lists.
-//
+    //
+    // Paged per processor small pool lookaside lists.
+    //
 
     PP_LOOKASIDE_LIST PPPagedLookasideList[POOL_SMALL_LISTS];
 
-//
-// Per processor lock queue entries.
-//
+    //
+    // Per processor lock queue entries.
+    //
 
     KSPIN_LOCK_QUEUE LockQueue[16];
 
     UCHAR ReservedPad[(3 * 8) - 4];
 
-//
-// MP interprocessor request packet barrier.
-//
-// N.B. This is carefully allocated in a different cache line from
-//      the request packet.
-//
+    //
+    // MP interprocessor request packet barrier.
+    //
+    // N.B. This is carefully allocated in a different cache line from
+    //      the request packet.
+    //
 
     volatile ULONG PacketBarrier;
 
-//
-// MP interprocessor request packet and summary.
-//
-// N.B. This is carefully aligned to be on a cache line boundary.
-//
+    //
+    // MP interprocessor request packet and summary.
+    //
+    // N.B. This is carefully aligned to be on a cache line boundary.
+    //
 
     volatile PVOID CurrentPacket[3];
     volatile KAFFINITY TargetSet;
     volatile PKIPI_WORKER WorkerRoutine;
 
-// N.B. Place MHz here so we can keep alignment and size
-// of this structure unchanged.
+    // N.B. Place MHz here so we can keep alignment and size
+    // of this structure unchanged.
     ULONG MHz;
     ULONG CachePad0;
     ULONGLONG CachePad1[10];
 
-//
-// N.B. These two longwords must be on a quadword boundary and adjacent.
-//
+    //
+    // N.B. These two longwords must be on a quadword boundary and adjacent.
+    //
 
     volatile ULONG RequestSummary;
     volatile struct _KPRCB *SignalDone;
 
-//
-// Spare counters.
-//
+    //
+    // Spare counters.
+    //
 
     ULONGLONG Spare4[14];
 
-//
-// DPC interrupt requested.
-//
+    //
+    // DPC interrupt requested.
+    //
 
     ULONG DpcInterruptRequested;
     ULONGLONG Spare5[15];
@@ -2899,9 +2643,9 @@ typedef struct _KPRCB {
     ULONG DpcRequestRate;
     LARGE_INTEGER StartCount;
 
-//
-// DPC list head, spinlock, and count.
-//
+    //
+    // DPC list head, spinlock, and count.
+    //
 
     LIST_ENTRY DpcListHead;
     KSPIN_LOCK DpcLock;
@@ -2911,31 +2655,31 @@ typedef struct _KPRCB {
     ULONG DpcRoutineActive;
     ULONG DpcQueueDepth;
 
-//
-// Debug & Processor Information
-//
+    //
+    // Debug & Processor Information
+    //
 
     BOOLEAN SkipTick;
     UCHAR Spare6;
 
-//
-// Processor ID from HAL (ACPI ID/EID).
-//
+    //
+    // Processor ID from HAL (ACPI ID/EID).
+    //
 
     USHORT ProcessorId;
 
-//
-// Address of MP interprocessor operation counters.
-//
+    //
+    // Address of MP interprocessor operation counters.
+    //
 
     PKIPI_COUNTS IpiCounts;
 
-//
-// Processors power state
-//
+    //
+    // Processors power state
+    //
     PROCESSOR_POWER_STATE PowerState;
 
-// begin_nthal begin_ntddk begin_ntosp
+    // begin_nthal begin_ntddk begin_ntosp
 } KPRCB, *PKPRCB, *RESTRICTED_POINTER PRKPRCB;
 
 // begin_ntndis
@@ -2947,21 +2691,23 @@ typedef struct _KPRCB {
 //       corresponding SAL Revision Hand-Off structures.
 //
 
-typedef struct _SAL_HANDOFF_STATE   {
-    ULONGLONG     PalProcEntryPoint;
-    ULONGLONG     SalProcEntryPoint;
-    ULONGLONG     SalGlobalPointer;
-     LONGLONG     RendezVousResult;
-    ULONGLONG     SalReturnAddress;
-    ULONGLONG     MinStateSavePtr;
+typedef struct _SAL_HANDOFF_STATE
+{
+    ULONGLONG PalProcEntryPoint;
+    ULONGLONG SalProcEntryPoint;
+    ULONGLONG SalGlobalPointer;
+    LONGLONG RendezVousResult;
+    ULONGLONG SalReturnAddress;
+    ULONGLONG MinStateSavePtr;
 } SAL_HANDOFF_STATE, *PSAL_HANDOFF_STATE;
 
-typedef struct _OS_HANDOFF_STATE    {
-    ULONGLONG     Result;
-    ULONGLONG     SalGlobalPointer;
-    ULONGLONG     MinStateSavePtr;
-    ULONGLONG     SalReturnAddress;
-    ULONGLONG     NewContextFlag;
+typedef struct _OS_HANDOFF_STATE
+{
+    ULONGLONG Result;
+    ULONGLONG SalGlobalPointer;
+    ULONGLONG MinStateSavePtr;
+    ULONGLONG SalReturnAddress;
+    ULONGLONG NewContextFlag;
 } OS_HANDOFF_STATE, *POS_HANDOFF_STATE;
 
 //
@@ -2969,65 +2715,67 @@ typedef struct _OS_HANDOFF_STATE    {
 //
 
 
-#define SER_EVENT_STACK_FRAME_ENTRIES    8
+#define SER_EVENT_STACK_FRAME_ENTRIES 8
 
-typedef struct _SAL_EVENT_RESOURCES {
+typedef struct _SAL_EVENT_RESOURCES
+{
 
-    SAL_HANDOFF_STATE   SalToOsHandOff;
-    OS_HANDOFF_STATE    OsToSalHandOff;
-    PVOID               StateDump;
-    ULONGLONG           StateDumpPhysical;
-    PVOID               BackStore;
-    ULONGLONG           BackStoreLimit;
-    PVOID               Stack;
-    ULONGLONG           StackLimit;
-    PULONGLONG          PTOM;
-    ULONGLONG           StackFrame[SER_EVENT_STACK_FRAME_ENTRIES];
-    PVOID               EventPool;
-    ULONG               EventPoolSize;
+    SAL_HANDOFF_STATE SalToOsHandOff;
+    OS_HANDOFF_STATE OsToSalHandOff;
+    PVOID StateDump;
+    ULONGLONG StateDumpPhysical;
+    PVOID BackStore;
+    ULONGLONG BackStoreLimit;
+    PVOID Stack;
+    ULONGLONG StackLimit;
+    PULONGLONG PTOM;
+    ULONGLONG StackFrame[SER_EVENT_STACK_FRAME_ENTRIES];
+    PVOID EventPool;
+    ULONG EventPoolSize;
 } SAL_EVENT_RESOURCES, *PSAL_EVENT_RESOURCES;
 
 //
 // PAL Mini-save area, used by MCA and INIT
 //
 
-typedef struct _PAL_MINI_SAVE_AREA {
-    ULONGLONG IntNats;      //  Nat bits for r1-r31
-                            //  r1-r31 in bits 1 thru 31.
-    ULONGLONG IntGp;        //  r1, volatile
-    ULONGLONG IntT0;        //  r2-r3, volatile
-    ULONGLONG IntT1;        //
-    ULONGLONG IntS0;        //  r4-r7, preserved
+typedef struct _PAL_MINI_SAVE_AREA
+{
+    ULONGLONG IntNats; //  Nat bits for r1-r31
+                       //  r1-r31 in bits 1 thru 31.
+    ULONGLONG IntGp;   //  r1, volatile
+    ULONGLONG IntT0;   //  r2-r3, volatile
+    ULONGLONG IntT1;   //
+    ULONGLONG IntS0;   //  r4-r7, preserved
     ULONGLONG IntS1;
     ULONGLONG IntS2;
     ULONGLONG IntS3;
-    ULONGLONG IntV0;        //  r8, volatile
-    ULONGLONG IntT2;        //  r9-r11, volatile
+    ULONGLONG IntV0; //  r8, volatile
+    ULONGLONG IntT2; //  r9-r11, volatile
     ULONGLONG IntT3;
     ULONGLONG IntT4;
-    ULONGLONG IntSp;        //  stack pointer (r12), special
-    ULONGLONG IntTeb;       //  teb (r13), special
-    ULONGLONG IntT5;        //  r14-r31, volatile
+    ULONGLONG IntSp;  //  stack pointer (r12), special
+    ULONGLONG IntTeb; //  teb (r13), special
+    ULONGLONG IntT5;  //  r14-r31, volatile
     ULONGLONG IntT6;
 
-    ULONGLONG B0R16;        // Bank 0 registers 16-31
-    ULONGLONG B0R17;        
-    ULONGLONG B0R18;        
-    ULONGLONG B0R19;        
-    ULONGLONG B0R20;        
-    ULONGLONG B0R21;        
-    ULONGLONG B0R22;        
-    ULONGLONG B0R23;        
-    ULONGLONG B0R24;        
-    ULONGLONG B0R25;        
-    ULONGLONG B0R26;        
-    ULONGLONG B0R27;        
-    ULONGLONG B0R28;        
-    ULONGLONG B0R29;        
-    ULONGLONG B0R30;        
-    ULONGLONG B0R31;        
+    ULONGLONG B0R16; // Bank 0 registers 16-31
+    ULONGLONG B0R17;
+    ULONGLONG B0R18;
+    ULONGLONG B0R19;
+    ULONGLONG B0R20;
+    ULONGLONG B0R21;
+    ULONGLONG B0R22;
+    ULONGLONG B0R23;
+    ULONGLONG B0R24;
+    ULONGLONG B0R25;
+    ULONGLONG B0R26;
+    ULONGLONG B0R27;
+    ULONGLONG B0R28;
+    ULONGLONG B0R29;
+    ULONGLONG B0R30;
+    ULONGLONG B0R31;
 
-    ULONGLONG IntT7;        // Bank 1 registers 16-31
+    ULONGLONG IntT7; // Bank 1 registers 16-31
     ULONGLONG IntT8;
     ULONGLONG IntT9;
     ULONGLONG IntT10;
@@ -3044,16 +2792,16 @@ typedef struct _PAL_MINI_SAVE_AREA {
     ULONGLONG IntT21;
     ULONGLONG IntT22;
 
-    ULONGLONG Preds;        //  predicates, preserved
-    ULONGLONG BrRp;         //  return pointer, b0, preserved
-    ULONGLONG RsRSC;        //  RSE configuration, volatile
-    ULONGLONG StIIP;        //  Interruption IP
-    ULONGLONG StIPSR;       //  Interruption Processor Status
-    ULONGLONG StIFS;        //  Interruption Function State
-    ULONGLONG XIP;          //  Event IP
-    ULONGLONG XPSR;         //  Event Processor Status
-    ULONGLONG XFS;          //  Event Function State
-    
+    ULONGLONG Preds;  //  predicates, preserved
+    ULONGLONG BrRp;   //  return pointer, b0, preserved
+    ULONGLONG RsRSC;  //  RSE configuration, volatile
+    ULONGLONG StIIP;  //  Interruption IP
+    ULONGLONG StIPSR; //  Interruption Processor Status
+    ULONGLONG StIFS;  //  Interruption Function State
+    ULONGLONG XIP;    //  Event IP
+    ULONGLONG XPSR;   //  Event Processor Status
+    ULONGLONG XFS;    //  Event Function State
+
 } PAL_MINI_SAVE_AREA, *PPAL_MINI_SAVE_AREA;
 
 //
@@ -3063,23 +2811,24 @@ typedef struct _PAL_MINI_SAVE_AREA {
 #define PCR_MINOR_VERSION 1
 #define PCR_MAJOR_VERSION 1
 
-typedef struct _KPCR {
+typedef struct _KPCR
+{
 
-//
-// Major and minor version numbers of the PCR.
-//
+    //
+    // Major and minor version numbers of the PCR.
+    //
     ULONG MinorVersion;
     ULONG MajorVersion;
 
-//
-// Start of the architecturally defined section of the PCR. This section
-// may be directly addressed by vendor/platform specific HAL code and will
-// not change from version to version of NT.
-//
+    //
+    // Start of the architecturally defined section of the PCR. This section
+    // may be directly addressed by vendor/platform specific HAL code and will
+    // not change from version to version of NT.
+    //
 
-//
-// First and second level cache parameters.
-//
+    //
+    // First and second level cache parameters.
+    //
 
     ULONG FirstLevelDcacheSize;
     ULONG FirstLevelDcacheFillSize;
@@ -3090,198 +2839,200 @@ typedef struct _KPCR {
     ULONG SecondLevelIcacheSize;
     ULONG SecondLevelIcacheFillSize;
 
-//
-// Data cache alignment and fill size used for cache flushing and alignment.
-// These fields are set to the larger of the first and second level data
-// cache fill sizes.
-//
+    //
+    // Data cache alignment and fill size used for cache flushing and alignment.
+    // These fields are set to the larger of the first and second level data
+    // cache fill sizes.
+    //
 
     ULONG DcacheAlignment;
     ULONG DcacheFillSize;
 
-//
-// Instruction cache alignment and fill size used for cache flushing and
-// alignment. These fields are set to the larger of the first and second
-// level data cache fill sizes.
-//
+    //
+    // Instruction cache alignment and fill size used for cache flushing and
+    // alignment. These fields are set to the larger of the first and second
+    // level data cache fill sizes.
+    //
 
     ULONG IcacheAlignment;
     ULONG IcacheFillSize;
 
-//
-// Processor identification from PrId register.
-//
+    //
+    // Processor identification from PrId register.
+    //
 
     ULONG ProcessorId;
 
-//
-// Profiling data.
-//
+    //
+    // Profiling data.
+    //
 
     ULONG ProfileInterval;
     ULONG ProfileCount;
 
-//
-// Stall execution count and scale factor.
-//
+    //
+    // Stall execution count and scale factor.
+    //
 
     ULONG StallExecutionCount;
     ULONG StallScaleFactor;
 
     ULONG InterruptionCount;
 
-//
-// Space reserved for the system.
-//
+    //
+    // Space reserved for the system.
+    //
 
-    ULONGLONG   SystemReserved[6];
+    ULONGLONG SystemReserved[6];
 
-//
-// Space reserved for the HAL
-//
+    //
+    // Space reserved for the HAL
+    //
 
-    ULONGLONG   HalReserved[64];
+    ULONGLONG HalReserved[64];
 
-//
-// IRQL mapping tables.
-//
+    //
+    // IRQL mapping tables.
+    //
 
     UCHAR IrqlMask[64];
     UCHAR IrqlTable[64];
 
-//
-// External Interrupt vectors.
-//
+    //
+    // External Interrupt vectors.
+    //
 
     PKINTERRUPT_ROUTINE InterruptRoutine[MAXIMUM_VECTOR];
 
-//
-// Reserved interrupt vector mask.
-//
+    //
+    // Reserved interrupt vector mask.
+    //
 
     ULONG ReservedVectors;
 
-//
-// Processor affinity mask.
-//
+    //
+    // Processor affinity mask.
+    //
 
     KAFFINITY SetMember;
 
-//
-// Complement of the processor affinity mask.
-//
+    //
+    // Complement of the processor affinity mask.
+    //
 
     KAFFINITY NotMember;
 
-//
-// Pointer to processor control block.
-//
+    //
+    // Pointer to processor control block.
+    //
 
     struct _KPRCB *Prcb;
 
-//
-//  Shadow copy of Prcb->CurrentThread for fast access
-//
+    //
+    //  Shadow copy of Prcb->CurrentThread for fast access
+    //
 
     struct _KTHREAD *CurrentThread;
 
-//
-// Processor number.
-//
+    //
+    // Processor number.
+    //
 
-    CCHAR Number;                        // Processor Number
-    UCHAR DebugActive;                   // debug register active in user flag
-    UCHAR KernelDebugActive;             // debug register active in kernel flag
-    UCHAR CurrentIrql;                   // Current IRQL
-    union {
+    CCHAR Number;            // Processor Number
+    UCHAR DebugActive;       // debug register active in user flag
+    UCHAR KernelDebugActive; // debug register active in kernel flag
+    UCHAR CurrentIrql;       // Current IRQL
+    union
+    {
         USHORT SoftwareInterruptPending; // Software Interrupt Pending Flag
-        struct {
-            UCHAR ApcInterrupt;          // 0x01 if APC int pending
-            UCHAR DispatchInterrupt;     // 0x01 if dispatch int pending
+        struct
+        {
+            UCHAR ApcInterrupt;      // 0x01 if APC int pending
+            UCHAR DispatchInterrupt; // 0x01 if dispatch int pending
         };
     };
 
-//
-// Address of per processor SAPIC EOI Table
-//
+    //
+    // Address of per processor SAPIC EOI Table
+    //
 
-    PVOID       EOITable;
+    PVOID EOITable;
 
-//
-// IA-64 Machine Check Events trackers
-//
+    //
+    // IA-64 Machine Check Events trackers
+    //
 
-    UCHAR       InOsMca;
-    UCHAR       InOsInit;
-    UCHAR       InOsCmc;
-    UCHAR       InOsCpe;
-    ULONG       InOsULONG_Spare; // Spare ULONG
+    UCHAR InOsMca;
+    UCHAR InOsInit;
+    UCHAR InOsCmc;
+    UCHAR InOsCpe;
+    ULONG InOsULONG_Spare; // Spare ULONG
     PSAL_EVENT_RESOURCES OsMcaResourcePtr;
     PSAL_EVENT_RESOURCES OsInitResourcePtr;
 
-//
-// End of the architecturally defined section of the PCR. This section
-// may be directly addressed by vendor/platform specific HAL code and will
-// not change from version to version of NT.
-//
+    //
+    // End of the architecturally defined section of the PCR. This section
+    // may be directly addressed by vendor/platform specific HAL code and will
+    // not change from version to version of NT.
+    //
 
-// end_nthal end_ntddk
+    // end_nthal end_ntddk
 
-//
-// OS Part
-//
+    //
+    // OS Part
+    //
 
-//
-//  Address of the thread who currently owns the high fp register set
-//
+    //
+    //  Address of the thread who currently owns the high fp register set
+    //
 
     struct _KTHREAD *HighFpOwner;
 
-//  Per processor kernel (ntoskrnl.exe) global pointer
-    ULONGLONG   KernelGP;
-//  Per processor initial kernel stack for current thread
-    ULONGLONG   InitialStack;
-//  Per processor pointer to kernel BSP
-    ULONGLONG   InitialBStore;
-//  Per processor kernel stack limit
-    ULONGLONG   StackLimit;
-//  Per processor kernel backing store limit
-    ULONGLONG   BStoreLimit;
-//  Per processor panic kernel stack
-    ULONGLONG   PanicStack;
+    //  Per processor kernel (ntoskrnl.exe) global pointer
+    ULONGLONG KernelGP;
+    //  Per processor initial kernel stack for current thread
+    ULONGLONG InitialStack;
+    //  Per processor pointer to kernel BSP
+    ULONGLONG InitialBStore;
+    //  Per processor kernel stack limit
+    ULONGLONG StackLimit;
+    //  Per processor kernel backing store limit
+    ULONGLONG BStoreLimit;
+    //  Per processor panic kernel stack
+    ULONGLONG PanicStack;
 
-//
-//  Save area for kernel entry/exit
-//
-    ULONGLONG   SavedIIM;
-    ULONGLONG   SavedIFA;
+    //
+    //  Save area for kernel entry/exit
+    //
+    ULONGLONG SavedIIM;
+    ULONGLONG SavedIFA;
 
-    ULONGLONG   ForwardProgressBuffer[16];
-    PVOID       Pcb;      // holds KPROCESS for MP region synchronization
+    ULONGLONG ForwardProgressBuffer[16];
+    PVOID Pcb; // holds KPROCESS for MP region synchronization
 
-//
-//  Nt page table base addresses
-//
-    ULONGLONG   PteUbase;
-    ULONGLONG   PteKbase;
-    ULONGLONG   PteSbase;
-    ULONGLONG   PdeUbase;
-    ULONGLONG   PdeKbase;
-    ULONGLONG   PdeSbase;
-    ULONGLONG   PdeUtbase;
-    ULONGLONG   PdeKtbase;
-    ULONGLONG   PdeStbase;
+    //
+    //  Nt page table base addresses
+    //
+    ULONGLONG PteUbase;
+    ULONGLONG PteKbase;
+    ULONGLONG PteSbase;
+    ULONGLONG PdeUbase;
+    ULONGLONG PdeKbase;
+    ULONGLONG PdeSbase;
+    ULONGLONG PdeUtbase;
+    ULONGLONG PdeKtbase;
+    ULONGLONG PdeStbase;
 
-//
-//  The actual resources for the OS_INIT and OS_MCA handlers
-//  are placed at the end of the PCR structure so that auto
-//  can be used to get to get between the public and private
-//  sections of the PCR in the traps and context routines.
-//
+    //
+    //  The actual resources for the OS_INIT and OS_MCA handlers
+    //  are placed at the end of the PCR structure so that auto
+    //  can be used to get to get between the public and private
+    //  sections of the PCR in the traps and context routines.
+    //
     SAL_EVENT_RESOURCES OsMcaResource;
     SAL_EVENT_RESOURCES OsInitResource;
 
-// begin_nthal begin_ntddk
+    // begin_nthal begin_ntddk
 
 } KPCR, *PKPCR;
 
@@ -3351,15 +3102,14 @@ extern NTKERNELAPI ULONG_PTR MmUserProbeAddress;
 // The lowest user address reserves the low 64k.
 //
 
-#define MM_LOWEST_USER_ADDRESS  (PVOID)((ULONG_PTR)(UADDRESS_BASE+0x00010000))
+#define MM_LOWEST_USER_ADDRESS (PVOID)((ULONG_PTR)(UADDRESS_BASE + 0x00010000))
 
 // begin_wdm
 
 #define MmGetProcedureAddress(Address) (Address)
-#define MmLockPagableCodeSection(PLabelAddress) \
-    MmLockPagableDataSection((PVOID)(*((PULONGLONG)PLabelAddress)))
+#define MmLockPagableCodeSection(PLabelAddress) MmLockPagableDataSection((PVOID)(*((PULONGLONG)PLabelAddress)))
 
-#define VRN_MASK   0xE000000000000000UI64    // Virtual Region Number mask
+#define VRN_MASK 0xE000000000000000UI64 // Virtual Region Number mask
 
 // end_ntddk end_wdm end_ntosp
 
@@ -3368,11 +3118,13 @@ extern NTKERNELAPI ULONG_PTR MmUserProbeAddress;
 // This means "Large Address Aware" apps are not supported in emulation mode.
 //
 
-#define MM_MAX_WOW64_ADDRESS       (0x00000000080000000UI64)
+#define MM_MAX_WOW64_ADDRESS (0x00000000080000000UI64)
 
-#define MI_HIGHEST_USER_ADDRESS (PVOID) (ULONG_PTR)((UADDRESS_BASE + 0x6FC00000000 - 0x10000 - 1)) // highest user address
-#define MI_USER_PROBE_ADDRESS ((ULONG_PTR)(UADDRESS_BASE + 0x6FC00000000UI64 - 0x10000)) // starting address of guard page
-#define MI_SYSTEM_RANGE_START (PVOID) (UADDRESS_BASE + 0x6FC00000000) // start of system space
+#define MI_HIGHEST_USER_ADDRESS \
+    (PVOID)(ULONG_PTR)((UADDRESS_BASE + 0x6FC00000000 - 0x10000 - 1)) // highest user address
+#define MI_USER_PROBE_ADDRESS \
+    ((ULONG_PTR)(UADDRESS_BASE + 0x6FC00000000UI64 - 0x10000))       // starting address of guard page
+#define MI_SYSTEM_RANGE_START (PVOID)(UADDRESS_BASE + 0x6FC00000000) // start of system space
 
 //
 // Define the page table base and the page directory base for
@@ -3388,27 +3140,27 @@ extern ULONG_PTR KiIA64PtaSign;
 #define PTA_SIGN KiIA64PtaSign
 #define VA_FILL KiIA64VaSignedFill
 
-#define SADDRESS_BASE 0x2000000000000000UI64  // session base address
+#define SADDRESS_BASE 0x2000000000000000UI64 // session base address
 
-#define PTE_UBASE  PCR->PteUbase
-#define PTE_KBASE  PCR->PteKbase
-#define PTE_SBASE  PCR->PteSbase
+#define PTE_UBASE PCR->PteUbase
+#define PTE_KBASE PCR->PteKbase
+#define PTE_SBASE PCR->PteSbase
 
-#define PTE_UTOP (PTE_UBASE|(((ULONG_PTR)1 << PDI1_SHIFT) - 1)) // top level PDR address (user)
-#define PTE_KTOP (PTE_KBASE|(((ULONG_PTR)1 << PDI1_SHIFT) - 1)) // top level PDR address (kernel)
-#define PTE_STOP (PTE_SBASE|(((ULONG_PTR)1 << PDI1_SHIFT) - 1)) // top level PDR address (session)
+#define PTE_UTOP (PTE_UBASE | (((ULONG_PTR)1 << PDI1_SHIFT) - 1)) // top level PDR address (user)
+#define PTE_KTOP (PTE_KBASE | (((ULONG_PTR)1 << PDI1_SHIFT) - 1)) // top level PDR address (kernel)
+#define PTE_STOP (PTE_SBASE | (((ULONG_PTR)1 << PDI1_SHIFT) - 1)) // top level PDR address (session)
 
 //
 // Second level user and kernel PDR address
 //
 
-#define PDE_UBASE  PCR->PdeUbase
-#define PDE_KBASE  PCR->PdeKbase
-#define PDE_SBASE  PCR->PdeSbase
+#define PDE_UBASE PCR->PdeUbase
+#define PDE_KBASE PCR->PdeKbase
+#define PDE_SBASE PCR->PdeSbase
 
-#define PDE_UTOP (PDE_UBASE|(((ULONG_PTR)1 << PDI_SHIFT) - 1)) // second level PDR address (user)
-#define PDE_KTOP (PDE_KBASE|(((ULONG_PTR)1 << PDI_SHIFT) - 1)) // second level PDR address (kernel)
-#define PDE_STOP (PDE_SBASE|(((ULONG_PTR)1 << PDI_SHIFT) - 1)) // second level PDR address (session)
+#define PDE_UTOP (PDE_UBASE | (((ULONG_PTR)1 << PDI_SHIFT) - 1)) // second level PDR address (user)
+#define PDE_KTOP (PDE_KBASE | (((ULONG_PTR)1 << PDI_SHIFT) - 1)) // second level PDR address (kernel)
+#define PDE_STOP (PDE_SBASE | (((ULONG_PTR)1 << PDI_SHIFT) - 1)) // second level PDR address (session)
 
 //
 // 8KB first level user and kernel PDR address
@@ -3418,17 +3170,17 @@ extern ULONG_PTR KiIA64PtaSign;
 #define PDE_KTBASE PCR->PdeKtbase
 #define PDE_STBASE PCR->PdeStbase
 
-#define PDE_USELFMAP (PDE_UTBASE|(PAGE_SIZE - (1<<PTE_SHIFT))) // self mapped PPE address (user)
-#define PDE_KSELFMAP (PDE_KTBASE|(PAGE_SIZE - (1<<PTE_SHIFT))) // self mapped PPE address (kernel)
-#define PDE_SSELFMAP (PDE_STBASE|(PAGE_SIZE - (1<<PTE_SHIFT))) // self mapped PPE address (kernel)
+#define PDE_USELFMAP (PDE_UTBASE | (PAGE_SIZE - (1 << PTE_SHIFT))) // self mapped PPE address (user)
+#define PDE_KSELFMAP (PDE_KTBASE | (PAGE_SIZE - (1 << PTE_SHIFT))) // self mapped PPE address (kernel)
+#define PDE_SSELFMAP (PDE_STBASE | (PAGE_SIZE - (1 << PTE_SHIFT))) // self mapped PPE address (kernel)
 
-#define PTE_BASE    PTE_UBASE
-#define PDE_BASE    PDE_UBASE
-#define PDE_TBASE   PDE_UTBASE
+#define PTE_BASE PTE_UBASE
+#define PDE_BASE PDE_UBASE
+#define PDE_TBASE PDE_UTBASE
 #define PDE_SELFMAP PDE_USELFMAP
 
-#define KSEG0_BASE (KADDRESS_BASE + 0x80000000)           // base of kernel
-#define KSEG2_BASE (KADDRESS_BASE + 0xA0000000)           // end of kernel
+#define KSEG0_BASE (KADDRESS_BASE + 0x80000000) // base of kernel
+#define KSEG2_BASE (KADDRESS_BASE + 0xA0000000) // end of kernel
 
 #define KSEG3_BASE 0x8000000000000000UI64
 #define KSEG3_LIMIT 0x8000100000000000UI64
@@ -3464,7 +3216,8 @@ extern ULONG_PTR KiIA64PtaSign;
 
 #define MAXIMUM_FWP_BUFFER_ENTRY 8
 
-typedef struct _REGION_MAP_INFO {
+typedef struct _REGION_MAP_INFO
+{
     ULONG RegionId;
     ULONG PageSize;
     ULONGLONG SequenceNumber;
@@ -3478,22 +3231,22 @@ typedef struct _REGION_MAP_INFO {
 #define MM_LOWEST_SYSTEM_ADDRESS ((PVOID)((ULONG_PTR)(KADDRESS_BASE + 0xC0C00000)))
 // end_nthal end_ntddk end_wdm
 
-#define SYSTEM_BASE (KADDRESS_BASE + 0xC3000000)          // start of system space (no typecast)
+#define SYSTEM_BASE (KADDRESS_BASE + 0xC3000000) // start of system space (no typecast)
 
 //
 // Define macro to initialize directory table base.
 //
 
-#define INITIALIZE_DIRECTORY_TABLE_BASE(dirbase, pfn)   \
-    *((PULONGLONG)(dirbase)) = 0;                       \
-    ((PHARDWARE_PTE)(dirbase))->PageFrameNumber = pfn;  \
-    ((PHARDWARE_PTE)(dirbase))->Accessed = 1;           \
-    ((PHARDWARE_PTE)(dirbase))->Dirty = 1;              \
-    ((PHARDWARE_PTE)(dirbase))->Cache = 0;              \
-    ((PHARDWARE_PTE)(dirbase))->Write = 1;              \
+#define INITIALIZE_DIRECTORY_TABLE_BASE(dirbase, pfn)  \
+    *((PULONGLONG)(dirbase)) = 0;                      \
+    ((PHARDWARE_PTE)(dirbase))->PageFrameNumber = pfn; \
+    ((PHARDWARE_PTE)(dirbase))->Accessed = 1;          \
+    ((PHARDWARE_PTE)(dirbase))->Dirty = 1;             \
+    ((PHARDWARE_PTE)(dirbase))->Cache = 0;             \
+    ((PHARDWARE_PTE)(dirbase))->Write = 1;             \
     ((PHARDWARE_PTE)(dirbase))->Valid = 1;
 
-
+
 //
 // IA64 function definitions
 //
@@ -3526,7 +3279,7 @@ typedef struct _REGION_MAP_INFO {
 // ia64 Feature bit definitions
 //
 
-#define KF_BRL              0x00000001   // processor supports long branch instruction.
+#define KF_BRL 0x00000001 // processor supports long branch instruction.
 
 //
 // Define macro to test if x86 feature is present.

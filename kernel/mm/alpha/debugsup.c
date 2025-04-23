@@ -24,9 +24,7 @@ Revision History:
 #include "mi.h"
 
 PVOID
-MmDbgReadCheck (
-    IN PVOID VirtualAddress
-    )
+MmDbgReadCheck(IN PVOID VirtualAddress)
 
 /*++
 
@@ -54,23 +52,21 @@ Environment:
 --*/
 
 {
-    if ((VirtualAddress >= (PVOID)KSEG0_BASE) &&
-        (VirtualAddress < (PVOID)KSEG2_BASE)) {
+    if ((VirtualAddress >= (PVOID)KSEG0_BASE) && (VirtualAddress < (PVOID)KSEG2_BASE))
+    {
         return VirtualAddress;
     }
 
-    if (!MmIsAddressValid (VirtualAddress)) {
+    if (!MmIsAddressValid(VirtualAddress))
+    {
         return NULL;
     }
 
     return VirtualAddress;
 }
-
+
 PVOID
-MmDbgWriteCheck (
-    IN PVOID VirtualAddress,
-    IN PHARDWARE_PTE Opaque
-    )
+MmDbgWriteCheck(IN PVOID VirtualAddress, IN PHARDWARE_PTE Opaque)
 
 /*++
 
@@ -116,18 +112,19 @@ Environment:
 
     InputPte->u.Long = 0;
 
-    if ((VirtualAddress >= (PVOID)KSEG0_BASE) &&
-        (VirtualAddress < (PVOID)KSEG2_BASE)) {
+    if ((VirtualAddress >= (PVOID)KSEG0_BASE) && (VirtualAddress < (PVOID)KSEG2_BASE))
+    {
         return VirtualAddress;
     }
 
-    if (!MmIsAddressValid (VirtualAddress)) {
+    if (!MmIsAddressValid(VirtualAddress))
+    {
         return NULL;
     }
 
-    PointerPte = MiGetPteAddress (VirtualAddress);
-    if ((VirtualAddress <= MM_HIGHEST_USER_ADDRESS) &&
-         (PointerPte->u.Hard.PageFrameNumber < MM_PAGES_IN_KSEG0)) {
+    PointerPte = MiGetPteAddress(VirtualAddress);
+    if ((VirtualAddress <= MM_HIGHEST_USER_ADDRESS) && (PointerPte->u.Hard.PageFrameNumber < MM_PAGES_IN_KSEG0))
+    {
 
         //
         // User mode - return the physical address.  This prevents
@@ -142,28 +139,28 @@ Environment:
         //        the access is made through this alternate mapping.
         //
 
-        return (PVOID)
-           ((ULONG)MmGetPhysicalAddress(VirtualAddress).LowPart + KSEG0_BASE);
+        return (PVOID)((ULONG)MmGetPhysicalAddress(VirtualAddress).LowPart + KSEG0_BASE);
     }
 
-    if (PointerPte->u.Hard.Write == 0) {
+    if (PointerPte->u.Hard.Write == 0)
+    {
 
         //
         // PTE is not writable, make it so.
         //
 
         PteContents = *PointerPte;
-    
+
         *InputPte = PteContents;
-    
+
         //
         // Modify the PTE to ensure write permissions.
         //
-    
+
         PteContents.u.Hard.Write = 1;
 
         *PointerPte = PteContents;
-    
+
         //
         // KeFillEntryTb is liable to IPI the other processors. This is
         // definitely NOT what we want as the other processors are frozen
@@ -174,17 +171,12 @@ Environment:
         //
 
         KiFlushSingleTb(TRUE, VirtualAddress);
-
     }
 
     return VirtualAddress;
 }
-
-VOID
-MmDbgReleaseAddress (
-    IN PVOID VirtualAddress,
-    IN PHARDWARE_PTE Opaque
-    )
+
+VOID MmDbgReleaseAddress(IN PVOID VirtualAddress, IN PHARDWARE_PTE Opaque)
 
 /*++
 
@@ -218,16 +210,17 @@ Environment:
 
     InputPte = (PMMPTE)Opaque;
 
-    ASSERT (MmIsAddressValid (VirtualAddress));
+    ASSERT(MmIsAddressValid(VirtualAddress));
 
-    if (InputPte->u.Long != 0) {
+    if (InputPte->u.Long != 0)
+    {
 
-        PointerPte = MiGetPteAddress (VirtualAddress);
-    
+        PointerPte = MiGetPteAddress(VirtualAddress);
+
         TempPte = *InputPte;
-        
+
         *PointerPte = TempPte;
-    
+
         //
         // KeFillEntryTb is liable to IPI the other processors. This is
         // definitely NOT what we want as the other processors are frozen
@@ -242,11 +235,9 @@ Environment:
 
     return;
 }
-
+
 PVOID64
-MmDbgReadCheck64 (
-    IN PVOID64 VirtualAddress
-    )
+MmDbgReadCheck64(IN PVOID64 VirtualAddress)
 
 /*++
 
@@ -278,7 +269,8 @@ Environment:
 {
 #ifdef VLM_SUPPORT
 
-    if (!MmIsAddressValid64 (VirtualAddress)) {
+    if (!MmIsAddressValid64(VirtualAddress))
+    {
         return NULL;
     }
 
@@ -287,11 +279,9 @@ Environment:
     return NULL;
 #endif
 }
-
+
 PVOID64
-MmDbgWriteCheck64 (
-    IN PVOID64 VirtualAddress
-    )
+MmDbgWriteCheck64(IN PVOID64 VirtualAddress)
 
 /*++
 
@@ -323,13 +313,15 @@ Environment:
 #ifdef VLM_SUPPORT
     PMMPTE PointerPte;
 
-    if (!MmIsAddressValid64 (VirtualAddress)) {
+    if (!MmIsAddressValid64(VirtualAddress))
+    {
         return NULL;
     }
 
-    PointerPte = MiGetPteAddress64 (VirtualAddress);
+    PointerPte = MiGetPteAddress64(VirtualAddress);
 
-    if (PointerPte->u.Hard.Write == 0) {
+    if (PointerPte->u.Hard.Write == 0)
+    {
         return NULL;
     }
 
@@ -338,11 +330,9 @@ Environment:
     return NULL;
 #endif
 }
-
+
 PVOID64
-MmDbgTranslatePhysicalAddress64 (
-    IN PHYSICAL_ADDRESS PhysicalAddress
-    )
+MmDbgTranslatePhysicalAddress64(IN PHYSICAL_ADDRESS PhysicalAddress)
 
 /*++
 
@@ -375,7 +365,8 @@ Environment:
 --*/
 
 {
-    switch (KeProcessorLevel) {
+    switch (KeProcessorLevel)
+    {
 
     case PROCESSOR_ALPHA_21064:
     case PROCESSOR_ALPHA_21066:
@@ -397,7 +388,6 @@ Environment:
 
     default:
         return NULL64;
-
     }
 
     return (PVOID64)PhysicalAddress.QuadPart;

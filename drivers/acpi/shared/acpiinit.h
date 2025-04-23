@@ -26,33 +26,23 @@ Revision History:
 #ifndef _ACPIINIT_H_
 #define _ACPIINIT_H_
 
-    extern PACPIInformation AcpiInformation;
-    extern PRSDTINFORMATION RsdtInformation;
-    extern PNSOBJ           ProcessorList[];
+extern PACPIInformation AcpiInformation;
+extern PRSDTINFORMATION RsdtInformation;
+extern PNSOBJ ProcessorList[];
 
-    BOOLEAN
-    ACPIInitialize(
-        IN  PVOID   Context
-        );
+BOOLEAN
+ACPIInitialize(IN PVOID Context);
 
-    NTSTATUS
-    ACPIInitializeAMLI(
-        VOID
-        );
+NTSTATUS
+ACPIInitializeAMLI(VOID);
 
-    NTSTATUS
-    ACPIInitializeDDB(
-        IN  ULONG   Index
-        );
+NTSTATUS
+ACPIInitializeDDB(IN ULONG Index);
 
-    NTSTATUS
-    ACPIInitializeDDBs(
-        VOID
-        );
+NTSTATUS
+ACPIInitializeDDBs(VOID);
 
-    ULONG
-    GetPBlkAddress(
-        IN  UCHAR   Processor
-        );
+ULONG
+GetPBlkAddress(IN UCHAR Processor);
 
 #endif

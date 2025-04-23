@@ -32,22 +32,11 @@ Revision History:
 // operations.
 //
 
-VOID
-ExpInterlockedPopEntrySListEnd (
-    VOID
-    );
+VOID ExpInterlockedPopEntrySListEnd(VOID);
 
-VOID
-ExpInterlockedPopEntrySListResume (
-    VOID
-    );
+VOID ExpInterlockedPopEntrySListResume(VOID);
 
-VOID
-KiDeliverApc (
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame
-    )
+VOID KiDeliverApc(IN KPROCESSOR_MODE PreviousMode, IN PKEXCEPTION_FRAME ExceptionFrame, IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -87,7 +76,7 @@ Return Value:
     ULONG64 NewPC;
     PVOID NormalContext;
     PKNORMAL_ROUTINE NormalRoutine;
-    ULONG64 PC; 
+    ULONG64 PC;
     PKPROCESS Process;
     PVOID SystemArgument1;
     PVOID SystemArgument2;
@@ -96,15 +85,17 @@ Return Value:
 
     //
     // If the thread was interrupted in the middle of the SLIST pop code,
-    // then back up the PC to the start of the SLIST pop. 
+    // then back up the PC to the start of the SLIST pop.
     //
 
-    if (TrapFrame != NULL) {
+    if (TrapFrame != NULL)
+    {
 
 #if defined(_AMD64_)
 
         if ((TrapFrame->Rip >= (ULONG64)&ExpInterlockedPopEntrySListResume) &&
-            (TrapFrame->Rip <= (ULONG64)&ExpInterlockedPopEntrySListEnd)) {
+            (TrapFrame->Rip <= (ULONG64)&ExpInterlockedPopEntrySListEnd))
+        {
 
             TrapFrame->Rip = (ULONG64)&ExpInterlockedPopEntrySListResume;
         }
@@ -118,8 +109,8 @@ Return Value:
 
         PC = TrapFrame->StIIP + ((TrapFrame->StIPSR & IPSR_RI_MASK) >> PSR_RI);
         NewPC = (ULONG64)((PPLABEL_DESCRIPTOR)ExpInterlockedPopEntrySListResume)->EntryPoint;
-        if ((PC >= NewPC) &&
-            (PC <= (ULONG64)((PPLABEL_DESCRIPTOR)ExpInterlockedPopEntrySListEnd)->EntryPoint)) {
+        if ((PC >= NewPC) && (PC <= (ULONG64)((PPLABEL_DESCRIPTOR)ExpInterlockedPopEntrySListEnd)->EntryPoint))
+        {
 
             TrapFrame->StIIP = NewPC;
             TrapFrame->StIPSR &= ~IPSR_RI_MASK;
@@ -128,7 +119,8 @@ Return Value:
 #elif defined(_X86_)
 
         if ((TrapFrame->Eip >= (ULONG)&ExpInterlockedPopEntrySListResume) &&
-            (TrapFrame->Eip <= (ULONG)&ExpInterlockedPopEntrySListEnd)) {
+            (TrapFrame->Eip <= (ULONG)&ExpInterlockedPopEntrySListEnd))
+        {
 
             TrapFrame->Eip = (ULONG)&ExpInterlockedPopEntrySListResume;
         }
@@ -136,7 +128,6 @@ Return Value:
 #else
 #error "No Target Architecture"
 #endif
-
     }
 
     //
@@ -157,7 +148,8 @@ Return Value:
     //
 
     Thread->ApcState.KernelApcPending = FALSE;
-    while (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE) {
+    while (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE)
+    {
         NextEntry = Thread->ApcState.ApcListHead[KernelMode].Flink;
         Apc = CONTAINING_RECORD(NextEntry, KAPC, ApcListEntry);
         KernelRoutine = Apc->KernelRoutine;
@@ -165,7 +157,8 @@ Return Value:
         NormalContext = Apc->NormalContext;
         SystemArgument1 = Apc->SystemArgument1;
         SystemArgument2 = Apc->SystemArgument2;
-        if (NormalRoutine == (PKNORMAL_ROUTINE)NULL) {
+        if (NormalRoutine == (PKNORMAL_ROUTINE)NULL)
+        {
 
             //
             // First entry in the kernel APC queue is a special kernel APC.
@@ -178,27 +171,22 @@ Return Value:
             RemoveEntryList(NextEntry);
             Apc->Inserted = FALSE;
             KeReleaseInStackQueuedSpinLock(&LockHandle);
-            (KernelRoutine)(Apc,
-                            &NormalRoutine,
-                            &NormalContext,
-                            &SystemArgument1,
-                            &SystemArgument2);
+            (KernelRoutine)(Apc, &NormalRoutine, &NormalContext, &SystemArgument1, &SystemArgument2);
 
 #if DBG
 
-            if (KeGetCurrentIrql() != LockHandle.OldIrql) {
-                KeBugCheckEx(IRQL_UNEXPECTED_VALUE,
-                             KeGetCurrentIrql() << 16 | LockHandle.OldIrql << 8,
-                             (ULONG_PTR)KernelRoutine,
-                             (ULONG_PTR)Apc,
-                             (ULONG_PTR)NormalRoutine);
+            if (KeGetCurrentIrql() != LockHandle.OldIrql)
+            {
+                KeBugCheckEx(IRQL_UNEXPECTED_VALUE, KeGetCurrentIrql() << 16 | LockHandle.OldIrql << 8,
+                             (ULONG_PTR)KernelRoutine, (ULONG_PTR)Apc, (ULONG_PTR)NormalRoutine);
             }
 
 #endif
 
             KeAcquireInStackQueuedSpinLock(&Thread->ApcQueueLock, &LockHandle);
-
-        } else {
+        }
+        else
+        {
 
             //
             // First entry in the kernel APC queue is a normal kernel APC.
@@ -211,43 +199,37 @@ Return Value:
             // the APC queue, and clear kernel APC in progress.
             //
 
-            if ((Thread->ApcState.KernelApcInProgress == FALSE) &&
-               (Thread->KernelApcDisable == 0)) {
+            if ((Thread->ApcState.KernelApcInProgress == FALSE) && (Thread->KernelApcDisable == 0))
+            {
                 RemoveEntryList(NextEntry);
                 Apc->Inserted = FALSE;
                 KeReleaseInStackQueuedSpinLock(&LockHandle);
-                (KernelRoutine)(Apc,
-                                &NormalRoutine,
-                                &NormalContext,
-                                &SystemArgument1,
-                                &SystemArgument2);
+                (KernelRoutine)(Apc, &NormalRoutine, &NormalContext, &SystemArgument1, &SystemArgument2);
 
 #if DBG
 
-                if (KeGetCurrentIrql() != LockHandle.OldIrql) {
-                    KeBugCheckEx(IRQL_UNEXPECTED_VALUE,
-                                 KeGetCurrentIrql() << 16 | LockHandle.OldIrql << 8 | 1,
-                                 (ULONG_PTR)KernelRoutine,
-                                 (ULONG_PTR)Apc,
-                                 (ULONG_PTR)NormalRoutine);
+                if (KeGetCurrentIrql() != LockHandle.OldIrql)
+                {
+                    KeBugCheckEx(IRQL_UNEXPECTED_VALUE, KeGetCurrentIrql() << 16 | LockHandle.OldIrql << 8 | 1,
+                                 (ULONG_PTR)KernelRoutine, (ULONG_PTR)Apc, (ULONG_PTR)NormalRoutine);
                 }
 
 #endif
 
-                if (NormalRoutine != (PKNORMAL_ROUTINE)NULL) {
+                if (NormalRoutine != (PKNORMAL_ROUTINE)NULL)
+                {
                     Thread->ApcState.KernelApcInProgress = TRUE;
                     KeLowerIrql(0);
-                    (NormalRoutine)(NormalContext,
-                                    SystemArgument1,
-                                    SystemArgument2);
+                    (NormalRoutine)(NormalContext, SystemArgument1, SystemArgument2);
 
                     KeRaiseIrql(APC_LEVEL, &LockHandle.OldIrql);
                 }
 
                 KeAcquireInStackQueuedSpinLock(&Thread->ApcQueueLock, &LockHandle);
                 Thread->ApcState.KernelApcInProgress = FALSE;
-
-            } else {
+            }
+            else
+            {
                 KeReleaseInStackQueuedSpinLock(&LockHandle);
                 goto CheckProcess;
             }
@@ -265,8 +247,9 @@ Return Value:
     // another user mode APC can be processed.
     //
 
-    if ((IsListEmpty(&Thread->ApcState.ApcListHead[UserMode]) == FALSE) &&
-       (PreviousMode == UserMode) && (Thread->ApcState.UserApcPending != FALSE)) {
+    if ((IsListEmpty(&Thread->ApcState.ApcListHead[UserMode]) == FALSE) && (PreviousMode == UserMode) &&
+        (Thread->ApcState.UserApcPending != FALSE))
+    {
         Thread->ApcState.UserApcPending = FALSE;
         NextEntry = Thread->ApcState.ApcListHead[UserMode].Flink;
         Apc = CONTAINING_RECORD(NextEntry, KAPC, ApcListEntry);
@@ -278,25 +261,20 @@ Return Value:
         RemoveEntryList(NextEntry);
         Apc->Inserted = FALSE;
         KeReleaseInStackQueuedSpinLock(&LockHandle);
-        (KernelRoutine)(Apc,
-                        &NormalRoutine,
-                        &NormalContext,
-                        &SystemArgument1,
-                        &SystemArgument2);
+        (KernelRoutine)(Apc, &NormalRoutine, &NormalContext, &SystemArgument1, &SystemArgument2);
 
-        if (NormalRoutine == (PKNORMAL_ROUTINE)NULL) {
+        if (NormalRoutine == (PKNORMAL_ROUTINE)NULL)
+        {
             KeTestAlertThread(UserMode);
-
-        } else {
-            KiInitializeUserApc(ExceptionFrame,
-                                TrapFrame,
-                                NormalRoutine,
-                                NormalContext,
-                                SystemArgument1,
+        }
+        else
+        {
+            KiInitializeUserApc(ExceptionFrame, TrapFrame, NormalRoutine, NormalContext, SystemArgument1,
                                 SystemArgument2);
         }
-
-    } else {
+    }
+    else
+    {
         KeReleaseInStackQueuedSpinLock(&LockHandle);
     }
 
@@ -305,12 +283,10 @@ Return Value:
     //
 
 CheckProcess:
-    if (Thread->ApcState.Process != Process) {
-        KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT,
-                     (ULONG_PTR)Process,
-                     (ULONG_PTR)Thread->ApcState.Process,
-                     (ULONG)Thread->ApcStateIndex,
-                     (ULONG)KeIsExecutingDpc());
+    if (Thread->ApcState.Process != Process)
+    {
+        KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT, (ULONG_PTR)Process, (ULONG_PTR)Thread->ApcState.Process,
+                     (ULONG)Thread->ApcStateIndex, (ULONG)KeIsExecutingDpc());
     }
 
     Thread->TrapFrame = OldTrapFrame;
@@ -319,10 +295,7 @@ CheckProcess:
 
 BOOLEAN
 FASTCALL
-KiInsertQueueApc (
-    IN PKAPC Apc,
-    IN KPRIORITY Increment
-    )
+KiInsertQueueApc(IN PKAPC Apc, IN KPRIORITY Increment)
 
 /*++
 
@@ -376,11 +349,14 @@ Return Value:
     //
 
     Thread = Apc->Thread;
-    if (Apc->Inserted) {
+    if (Apc->Inserted)
+    {
         Inserted = FALSE;
-
-    } else {
-        if (Apc->ApcStateIndex == InsertApcEnvironment) {
+    }
+    else
+    {
+        if (Apc->ApcStateIndex == InsertApcEnvironment)
+        {
             Apc->ApcStateIndex = Thread->ApcStateIndex;
         }
 
@@ -396,22 +372,26 @@ Return Value:
         //
 
         ApcMode = Apc->ApcMode;
-        if (Apc->NormalRoutine != NULL) {
-            if ((ApcMode != KernelMode) && (Apc->KernelRoutine == PsExitSpecialApc)) {
+        if (Apc->NormalRoutine != NULL)
+        {
+            if ((ApcMode != KernelMode) && (Apc->KernelRoutine == PsExitSpecialApc))
+            {
                 Thread->ApcState.UserApcPending = TRUE;
-                InsertHeadList(&ApcState->ApcListHead[ApcMode],
-                               &Apc->ApcListEntry);
-
-            } else {
-                InsertTailList(&ApcState->ApcListHead[ApcMode],
-                               &Apc->ApcListEntry);
+                InsertHeadList(&ApcState->ApcListHead[ApcMode], &Apc->ApcListEntry);
             }
-
-        } else {
+            else
+            {
+                InsertTailList(&ApcState->ApcListHead[ApcMode], &Apc->ApcListEntry);
+            }
+        }
+        else
+        {
             ListEntry = ApcState->ApcListHead[ApcMode].Blink;
-            while (ListEntry != &ApcState->ApcListHead[ApcMode]) {
+            while (ListEntry != &ApcState->ApcListHead[ApcMode])
+            {
                 ApcEntry = CONTAINING_RECORD(ListEntry, KAPC, ApcListEntry);
-                if (ApcEntry->NormalRoutine == NULL) {
+                if (ApcEntry->NormalRoutine == NULL)
+                {
                     break;
                 }
 
@@ -429,7 +409,8 @@ Return Value:
         // thread execution or sequence the thread out of a wait state.
         //
 
-        if (Apc->ApcStateIndex == Thread->ApcStateIndex) {
+        if (Apc->ApcStateIndex == Thread->ApcStateIndex)
+        {
 
             //
             // If the processor mode of the APC is kernel, then check if
@@ -438,23 +419,24 @@ Return Value:
             // sequence the thread out of an alertable Waiting state.
             //
 
-            if (ApcMode == KernelMode) {
+            if (ApcMode == KernelMode)
+            {
                 Thread->ApcState.KernelApcPending = TRUE;
-                if (Thread->State == Running) {
+                if (Thread->State == Running)
+                {
                     KiRequestApcInterrupt(Thread->NextProcessor);
-
-                } else if ((Thread->State == Waiting) &&
-                          (Thread->WaitIrql == 0) &&
-                          ((Apc->NormalRoutine == NULL) ||
-                          ((Thread->KernelApcDisable == 0) &&
-                          (Thread->ApcState.KernelApcInProgress == FALSE)))) {
+                }
+                else if ((Thread->State == Waiting) && (Thread->WaitIrql == 0) &&
+                         ((Apc->NormalRoutine == NULL) ||
+                          ((Thread->KernelApcDisable == 0) && (Thread->ApcState.KernelApcInProgress == FALSE))))
+                {
 
                     KiUnwaitThread(Thread, STATUS_KERNEL_APC, Increment, NULL);
                 }
-
-            } else if ((Thread->State == Waiting) &&
-                      (Thread->WaitMode == UserMode) &&
-                      (Thread->Alertable || Thread->ApcState.UserApcPending)) {
+            }
+            else if ((Thread->State == Waiting) && (Thread->WaitMode == UserMode) &&
+                     (Thread->Alertable || Thread->ApcState.UserApcPending))
+            {
 
                 Thread->ApcState.UserApcPending = TRUE;
                 KiUnwaitThread(Thread, STATUS_USER_APC, Increment, NULL);

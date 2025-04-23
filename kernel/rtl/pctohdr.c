@@ -34,14 +34,11 @@ Revision History:
 #endif
 
 #if !defined(NTOS_KERNEL_RUNTIME)
-extern PVOID NtDllBase;             // defined in ntdll\ldrinit.c
+extern PVOID NtDllBase; // defined in ntdll\ldrinit.c
 #endif
 
 PVOID
-RtlPcToFileHeader(
-    IN PVOID PcValue,
-    OUT PVOID *BaseOfImage
-    )
+RtlPcToFileHeader(IN PVOID PcValue, OUT PVOID *BaseOfImage)
 
 /*++
 
@@ -90,22 +87,24 @@ Return Value:
     //
 
     OldIrql = KeGetCurrentIrql();
-    if (OldIrql < DISPATCH_LEVEL) {
+    if (OldIrql < DISPATCH_LEVEL)
+    {
         KeRaiseIrqlToDpcLevel();
     }
 
     ExAcquireSpinLockAtDpcLevel(&PsLoadedModuleSpinLock);
     Next = PsLoadedModuleList.Flink;
-    if (Next != NULL) {
-        while (Next != &PsLoadedModuleList) {
-            Entry = CONTAINING_RECORD(Next,
-                                      LDR_DATA_TABLE_ENTRY,
-                                      InLoadOrderLinks);
+    if (Next != NULL)
+    {
+        while (Next != &PsLoadedModuleList)
+        {
+            Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
             Next = Next->Flink;
             Base = Entry->DllBase;
             Bounds = (ULONG_PTR)Base + Entry->SizeOfImage;
-            if (((ULONG_PTR)PcValue >= (ULONG_PTR)Base) && ((ULONG_PTR)PcValue < Bounds)) {
+            if (((ULONG_PTR)PcValue >= (ULONG_PTR)Base) && ((ULONG_PTR)PcValue < Bounds))
+            {
                 ExReleaseSpinLock(&PsLoadedModuleSpinLock, OldIrql);
                 *BaseOfImage = Base;
                 return Base;
@@ -142,59 +141,72 @@ Return Value:
     // have been initialized.
     //
 
-    LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_TRY_ONLY | LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, &LoaderLockDisposition, &LockCookie);
+    LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_TRY_ONLY | LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS,
+                      &LoaderLockDisposition, &LockCookie);
 
-    if (LoaderLockDisposition == LDR_LOCK_LOADER_LOCK_DISPOSITION_LOCK_NOT_ACQUIRED) {
+    if (LoaderLockDisposition == LDR_LOCK_LOADER_LOCK_DISPOSITION_LOCK_NOT_ACQUIRED)
+    {
         //
         // We could not get the loader lock, so call the system to find the image that
         // contains this pc
         //
 
-        st = NtQueryVirtualMemory(
-                NtCurrentProcess(),
-                PcValue,
-                MemoryBasicInformation,
-                &MemInfo,
-                sizeof(MemInfo),
-                NULL);
-        if ( !NT_SUCCESS(st) ) {
+        st = NtQueryVirtualMemory(NtCurrentProcess(), PcValue, MemoryBasicInformation, &MemInfo, sizeof(MemInfo), NULL);
+        if (!NT_SUCCESS(st))
+        {
             MemInfo.AllocationBase = NULL;
-        } else {
-            if ( MemInfo.Type == MEM_IMAGE ) {
-                try {
+        }
+        else
+        {
+            if (MemInfo.Type == MEM_IMAGE)
+            {
+                try
+                {
                     *BaseOfImage = MemInfo.AllocationBase;
-                } except (EXCEPTION_EXECUTE_HANDLER) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     MemInfo.AllocationBase = NULL;
                 }
-            } else {
-                MemInfo.AllocationBase = NULL;;
+            }
+            else
+            {
+                MemInfo.AllocationBase = NULL;
+                ;
             }
         }
         return MemInfo.AllocationBase;
     }
 
     // If we *did* get the loader lock, let's avoid the syscall and search the tables.
-    __try {
+    __try
+    {
         Teb = NtCurrentTeb();
-        if (Teb != NULL) {
+        if (Teb != NULL)
+        {
             Peb = Teb->ProcessEnvironmentBlock;
-            if (Peb->Ldr != NULL) {
+            if (Peb->Ldr != NULL)
+            {
                 ModuleListHead = &Peb->Ldr->InLoadOrderModuleList;
                 Next = ModuleListHead->Flink;
-                if (Next != NULL) {
-                    while (Next != ModuleListHead) {
+                if (Next != NULL)
+                {
+                    while (Next != ModuleListHead)
+                    {
                         Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
                         Next = Next->Flink;
                         Base = Entry->DllBase;
                         NtHeaders = RtlImageNtHeader(Base);
                         Bounds = (ULONG_PTR)Base + NtHeaders->OptionalHeader.SizeOfImage;
-                        if (((ULONG_PTR)PcValue >= (ULONG_PTR)Base) && ((ULONG_PTR)PcValue < Bounds)) {
+                        if (((ULONG_PTR)PcValue >= (ULONG_PTR)Base) && ((ULONG_PTR)PcValue < Bounds))
+                        {
                             goto Done;
                         }
                     }
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  ( Peb->Ldr == NULL )
@@ -207,10 +219,12 @@ Return Value:
                 //  on RISC machines.
                 //
 
-                if (NtDllBase != NULL) {
+                if (NtDllBase != NULL)
+                {
                     Base = NtDllBase;
                     NtHeaders = RtlImageNtHeader(Base);
-                    if (NtHeaders == NULL) {
+                    if (NtHeaders == NULL)
+                    {
                         Base = NULL;
                         goto Done;
                     }
@@ -223,9 +237,10 @@ Return Value:
         }
 
         Base = NULL;
-Done:
-        ;
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
+    Done:;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
         Base = NULL;
     }
 
@@ -235,5 +250,4 @@ Done:
     return Base;
 
 #endif
-
 }

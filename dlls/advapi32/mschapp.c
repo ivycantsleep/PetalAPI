@@ -41,49 +41,39 @@ Abstract:
 
 
 //////////////////////////////////////////////////////////////
-//                                                          //  
+//                                                          //
 //                                                          //
 //         Exported MSChap change password Functions        //
 //                                                          //
 //                                                          //
 //////////////////////////////////////////////////////////////
 
-//critical section for MSChap change password functions                 
+//critical section for MSChap change password functions
 CRITICAL_SECTION MSChapChangePassword;
 
 //function pointers for MSChap Functions
-HINSTANCE         hSamlib = NULL;
+HINSTANCE hSamlib = NULL;
 
-typedef NTSTATUS(* FNSAMCONNECT)(PUNICODE_STRING,
-                                   PSAM_HANDLE,
-                                   ACCESS_MASK,
-                                   POBJECT_ATTRIBUTES);
-typedef NTSTATUS(* FNSAMOPENDOMAIN)(SAM_HANDLE,
-                                      ACCESS_MASK,
-                                      PSID,
-                                      PSAM_HANDLE);
-typedef NTSTATUS(* FNSAMLOOKUPNAMESINDOMAIN)(SAM_HANDLE,ULONG,PUNICODE_STRING,
-                                             PULONG*,PSID_NAME_USE *);
-typedef NTSTATUS(* FNSAMOPENUSER)(SAM_HANDLE,ACCESS_MASK,ULONG,PSAM_HANDLE);
-typedef NTSTATUS(* FNSAMICHANGEPASSWORDUSER)(SAM_HANDLE,BOOLEAN,PLM_OWF_PASSWORD,PLM_OWF_PASSWORD,
-                                             BOOLEAN,PNT_OWF_PASSWORD,PNT_OWF_PASSWORD);
-typedef NTSTATUS(* FNSAMICHANGEPASSWORDUSER2)(PUNICODE_STRING,
-                                                PUNICODE_STRING,
-                                                PSAMPR_ENCRYPTED_USER_PASSWORD,
-                                                PENCRYPTED_NT_OWF_PASSWORD,
-                                                BOOLEAN,PSAMPR_ENCRYPTED_USER_PASSWORD,
-                                                PENCRYPTED_LM_OWF_PASSWORD);
-typedef NTSTATUS(* FNSAMCLOSEHANDLE)(SAM_HANDLE);
-typedef NTSTATUS(* FNSAMFREEMEMORY)(PVOID);
+typedef NTSTATUS (*FNSAMCONNECT)(PUNICODE_STRING, PSAM_HANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES);
+typedef NTSTATUS (*FNSAMOPENDOMAIN)(SAM_HANDLE, ACCESS_MASK, PSID, PSAM_HANDLE);
+typedef NTSTATUS (*FNSAMLOOKUPNAMESINDOMAIN)(SAM_HANDLE, ULONG, PUNICODE_STRING, PULONG *, PSID_NAME_USE *);
+typedef NTSTATUS (*FNSAMOPENUSER)(SAM_HANDLE, ACCESS_MASK, ULONG, PSAM_HANDLE);
+typedef NTSTATUS (*FNSAMICHANGEPASSWORDUSER)(SAM_HANDLE, BOOLEAN, PLM_OWF_PASSWORD, PLM_OWF_PASSWORD, BOOLEAN,
+                                             PNT_OWF_PASSWORD, PNT_OWF_PASSWORD);
+typedef NTSTATUS (*FNSAMICHANGEPASSWORDUSER2)(PUNICODE_STRING, PUNICODE_STRING, PSAMPR_ENCRYPTED_USER_PASSWORD,
+                                              PENCRYPTED_NT_OWF_PASSWORD, BOOLEAN, PSAMPR_ENCRYPTED_USER_PASSWORD,
+                                              PENCRYPTED_LM_OWF_PASSWORD);
+typedef NTSTATUS (*FNSAMCLOSEHANDLE)(SAM_HANDLE);
+typedef NTSTATUS (*FNSAMFREEMEMORY)(PVOID);
 
-FNSAMCONNECT              FnSamConnect              = NULL;
-FNSAMOPENDOMAIN           FnSamOpenDomain           = NULL;
-FNSAMLOOKUPNAMESINDOMAIN  FnSamLookupNamesInDomain  = NULL;
-FNSAMOPENUSER             FnSamOpenUser             = NULL;
-FNSAMICHANGEPASSWORDUSER  FnSamiChangePasswordUser  = NULL;
+FNSAMCONNECT FnSamConnect = NULL;
+FNSAMOPENDOMAIN FnSamOpenDomain = NULL;
+FNSAMLOOKUPNAMESINDOMAIN FnSamLookupNamesInDomain = NULL;
+FNSAMOPENUSER FnSamOpenUser = NULL;
+FNSAMICHANGEPASSWORDUSER FnSamiChangePasswordUser = NULL;
 FNSAMICHANGEPASSWORDUSER2 FnSamiChangePasswordUser2 = NULL;
-FNSAMCLOSEHANDLE          FnSamCloseHandle          = NULL;
-FNSAMFREEMEMORY           FnSamFreeMemory           = NULL; 
+FNSAMCLOSEHANDLE FnSamCloseHandle = NULL;
+FNSAMFREEMEMORY FnSamFreeMemory = NULL;
 
 
 /*++
@@ -152,19 +142,15 @@ Return Value:
     STATUS_INVALID_PARAMETER_MIX - LmOldPresent or NtPresent or both must be
         TRUE.
 
---*/     
-WINADVAPI DWORD WINAPI
-MSChapSrvChangePassword(
-   IN LPWSTR ServerName,
-   IN LPWSTR UserName,
-   IN BOOLEAN LmOldPresent,
-   IN PLM_OWF_PASSWORD LmOldOwfPassword,
-   IN PLM_OWF_PASSWORD LmNewOwfPassword,
-   IN PNT_OWF_PASSWORD NtOldOwfPassword,
-   IN PNT_OWF_PASSWORD NtNewOwfPassword)
+--*/
+WINADVAPI DWORD WINAPI MSChapSrvChangePassword(IN LPWSTR ServerName, IN LPWSTR UserName, IN BOOLEAN LmOldPresent,
+                                               IN PLM_OWF_PASSWORD LmOldOwfPassword,
+                                               IN PLM_OWF_PASSWORD LmNewOwfPassword,
+                                               IN PNT_OWF_PASSWORD NtOldOwfPassword,
+                                               IN PNT_OWF_PASSWORD NtNewOwfPassword)
 {
-    NTSTATUS Status=STATUS_SUCCESS;
-    DWORD    WinErr=ERROR_SUCCESS;
+    NTSTATUS Status = STATUS_SUCCESS;
+    DWORD WinErr = ERROR_SUCCESS;
     OBJECT_ATTRIBUTES oa;
     UNICODE_STRING UnicodeName;
     SAM_HANDLE SamHandle = NULL;
@@ -175,8 +161,9 @@ MSChapSrvChangePassword(
     PULONG RelativeIds = NULL;
     PSID_NAME_USE Use = NULL;
 
-    if (NULL == UserName || NULL == LmOldOwfPassword || NULL == LmNewOwfPassword ||
-        NULL == NtOldOwfPassword || NULL == NtNewOwfPassword) {
+    if (NULL == UserName || NULL == LmOldOwfPassword || NULL == LmNewOwfPassword || NULL == NtOldOwfPassword ||
+        NULL == NtNewOwfPassword)
+    {
         WinErr = ERROR_INVALID_PARAMETER;
         goto Cleanup;
     }
@@ -186,72 +173,74 @@ MSChapSrvChangePassword(
     // Initialization.
     //
 
-    if ( hSamlib == NULL )
+    if (hSamlib == NULL)
     {
-        RtlEnterCriticalSection( &MSChapChangePassword );
-    
-        if ( hSamlib == NULL )
+        RtlEnterCriticalSection(&MSChapChangePassword);
+
+        if (hSamlib == NULL)
         {
             hSamlib = LoadLibrary(L"samlib.dll");
-            WinErr  = GetLastError();
-            if (ERROR_SUCCESS != WinErr) {
+            WinErr = GetLastError();
+            if (ERROR_SUCCESS != WinErr)
+            {
                 goto Cleanup;
             }
-            if (hSamlib != NULL) {
-    
-                FnSamConnect             = (FNSAMCONNECT)             GetProcAddress(hSamlib,
-                                                                         "SamConnect");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+            if (hSamlib != NULL)
+            {
+
+                FnSamConnect = (FNSAMCONNECT)GetProcAddress(hSamlib, "SamConnect");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamOpenDomain          = (FNSAMOPENDOMAIN)          GetProcAddress(hSamlib,
-                                                                         "SamOpenDomain");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamOpenDomain = (FNSAMOPENDOMAIN)GetProcAddress(hSamlib, "SamOpenDomain");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamLookupNamesInDomain = (FNSAMLOOKUPNAMESINDOMAIN) GetProcAddress(hSamlib,
-                                                                         "SamLookupNamesInDomain");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamLookupNamesInDomain = (FNSAMLOOKUPNAMESINDOMAIN)GetProcAddress(hSamlib, "SamLookupNamesInDomain");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamOpenUser            = (FNSAMOPENUSER)            GetProcAddress(hSamlib,
-                                                                         "SamOpenUser");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamOpenUser = (FNSAMOPENUSER)GetProcAddress(hSamlib, "SamOpenUser");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamCloseHandle         = (FNSAMCLOSEHANDLE)         GetProcAddress(hSamlib,
-                                                                         "SamCloseHandle");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamCloseHandle = (FNSAMCLOSEHANDLE)GetProcAddress(hSamlib, "SamCloseHandle");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamFreeMemory          = (FNSAMFREEMEMORY)          GetProcAddress(hSamlib,
-                                                                         "SamFreeMemory");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamFreeMemory = (FNSAMFREEMEMORY)GetProcAddress(hSamlib, "SamFreeMemory");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamiChangePasswordUser = (FNSAMICHANGEPASSWORDUSER) GetProcAddress(hSamlib,
-                                                                         "SamiChangePasswordUser");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamiChangePasswordUser = (FNSAMICHANGEPASSWORDUSER)GetProcAddress(hSamlib, "SamiChangePasswordUser");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamiChangePasswordUser2 = (FNSAMICHANGEPASSWORDUSER2) GetProcAddress(hSamlib,
-                                                                         "SamiChangePasswordUser2");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamiChangePasswordUser2 =
+                    (FNSAMICHANGEPASSWORDUSER2)GetProcAddress(hSamlib, "SamiChangePasswordUser2");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
             }
         }
-    
-        RtlLeaveCriticalSection( &MSChapChangePassword );
-    
+
+        RtlLeaveCriticalSection(&MSChapChangePassword);
     }
 
     RtlInitUnicodeString(&UnicodeName, ServerName);
@@ -262,55 +251,35 @@ MSChapSrvChangePassword(
     // Connect to the LSA on the server
     //
 
-    Status = LsaOpenPolicy(
-                &UnicodeName,
-                &oa,
-                POLICY_VIEW_LOCAL_INFORMATION,
-                &LsaHandle);
+    Status = LsaOpenPolicy(&UnicodeName, &oa, POLICY_VIEW_LOCAL_INFORMATION, &LsaHandle);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = LsaQueryInformationPolicy(
-                LsaHandle,
-                PolicyAccountDomainInformation,
-                (PVOID *)&DomainInfo);
+    Status = LsaQueryInformationPolicy(LsaHandle, PolicyAccountDomainInformation, (PVOID *)&DomainInfo);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = FnSamConnect(
-                &UnicodeName,
-                &SamHandle,
-                SAM_SERVER_LOOKUP_DOMAIN,
-                &oa);
+    Status = FnSamConnect(&UnicodeName, &SamHandle, SAM_SERVER_LOOKUP_DOMAIN, &oa);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = FnSamOpenDomain(
-                SamHandle,
-                DOMAIN_LOOKUP | DOMAIN_READ_PASSWORD_PARAMETERS | DOMAIN_READ_PASSWORD_PARAMETERS,
-                DomainInfo->DomainSid,
-                &DomainHandle);
+    Status =
+        FnSamOpenDomain(SamHandle, DOMAIN_LOOKUP | DOMAIN_READ_PASSWORD_PARAMETERS | DOMAIN_READ_PASSWORD_PARAMETERS,
+                        DomainInfo->DomainSid, &DomainHandle);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    RtlInitUnicodeString(
-        &UnicodeName,
-        UserName);
+    RtlInitUnicodeString(&UnicodeName, UserName);
 
-    Status = FnSamLookupNamesInDomain(
-                DomainHandle,
-                1,
-                &UnicodeName,
-                &RelativeIds,
-                &Use);
+    Status = FnSamLookupNamesInDomain(DomainHandle, 1, &UnicodeName, &RelativeIds, &Use);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
@@ -322,24 +291,17 @@ MSChapSrvChangePassword(
         goto Cleanup;
     }
 
-    Status = FnSamOpenUser(
-                DomainHandle,
-                USER_CHANGE_PASSWORD,
-                RelativeIds[0],
-                &UserHandle);
+    Status = FnSamOpenUser(DomainHandle, USER_CHANGE_PASSWORD, RelativeIds[0], &UserHandle);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = FnSamiChangePasswordUser(
-                UserHandle,
-                LmOldPresent, // Only false if Old password too complex
-                LmOldOwfPassword,
-                LmNewOwfPassword,
-                TRUE, // NT password present
-                NtOldOwfPassword,
-                NtNewOwfPassword);
+    Status = FnSamiChangePasswordUser(UserHandle,
+                                      LmOldPresent, // Only false if Old password too complex
+                                      LmOldOwfPassword, LmNewOwfPassword,
+                                      TRUE, // NT password present
+                                      NtOldOwfPassword, NtNewOwfPassword);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
@@ -376,7 +338,8 @@ Cleanup:
         FnSamFreeMemory(Use);
     }
 
-    if (ERROR_SUCCESS != WinErr) {
+    if (ERROR_SUCCESS != WinErr)
+    {
         return WinErr;
     }
 
@@ -446,24 +409,21 @@ Return Value:
     STATUS_INVALID_DOMAIN_ROLE - The domain server is serving the incorrect
         role (primary or backup) to perform the requested operation.
 
---*/  
-WINADVAPI DWORD WINAPI
-MSChapSrvChangePassword2(
-    IN LPWSTR ServerName,
-    IN LPWSTR UserName,
-    IN PSAMPR_ENCRYPTED_USER_PASSWORD NewPasswordEncryptedWithOldNt,
-    IN PENCRYPTED_NT_OWF_PASSWORD OldNtOwfPasswordEncryptedWithNewNt,
-    IN BOOLEAN LmPresent,
-    IN PSAMPR_ENCRYPTED_USER_PASSWORD NewPasswordEncryptedWithOldLm,
-    IN PENCRYPTED_LM_OWF_PASSWORD OldLmOwfPasswordEncryptedWithNewLmOrNt)
+--*/
+WINADVAPI DWORD WINAPI MSChapSrvChangePassword2(IN LPWSTR ServerName, IN LPWSTR UserName,
+                                                IN PSAMPR_ENCRYPTED_USER_PASSWORD NewPasswordEncryptedWithOldNt,
+                                                IN PENCRYPTED_NT_OWF_PASSWORD OldNtOwfPasswordEncryptedWithNewNt,
+                                                IN BOOLEAN LmPresent,
+                                                IN PSAMPR_ENCRYPTED_USER_PASSWORD NewPasswordEncryptedWithOldLm,
+                                                IN PENCRYPTED_LM_OWF_PASSWORD OldLmOwfPasswordEncryptedWithNewLmOrNt)
 {
     UNICODE_STRING UnicodeServer;
     UNICODE_STRING UnicodeUser;
     DWORD WinErr = ERROR_SUCCESS;
 
-    if (NULL == UserName || NULL == NewPasswordEncryptedWithOldNt ||
-        NULL == NewPasswordEncryptedWithOldLm || NULL ==OldNtOwfPasswordEncryptedWithNewNt ||
-        NULL == OldLmOwfPasswordEncryptedWithNewLmOrNt) {
+    if (NULL == UserName || NULL == NewPasswordEncryptedWithOldNt || NULL == NewPasswordEncryptedWithOldLm ||
+        NULL == OldNtOwfPasswordEncryptedWithNewNt || NULL == OldLmOwfPasswordEncryptedWithNewLmOrNt)
+    {
         WinErr = ERROR_INVALID_PARAMETER;
         goto Cleanup;
     }
@@ -472,88 +432,85 @@ MSChapSrvChangePassword2(
     // Initialization.
     //
 
-    if ( hSamlib == NULL )
+    if (hSamlib == NULL)
     {
-        RtlEnterCriticalSection( &MSChapChangePassword );
-    
-        if ( hSamlib == NULL )
+        RtlEnterCriticalSection(&MSChapChangePassword);
+
+        if (hSamlib == NULL)
         {
             hSamlib = LoadLibrary(L"samlib.dll");
-            WinErr  = GetLastError();
-            if (ERROR_SUCCESS != WinErr) {
+            WinErr = GetLastError();
+            if (ERROR_SUCCESS != WinErr)
+            {
                 goto Cleanup;
             }
-            if (hSamlib != NULL) {
-    
-                FnSamConnect             = (FNSAMCONNECT)             GetProcAddress(hSamlib,
-                                                                         "SamConnect");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+            if (hSamlib != NULL)
+            {
+
+                FnSamConnect = (FNSAMCONNECT)GetProcAddress(hSamlib, "SamConnect");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamOpenDomain          = (FNSAMOPENDOMAIN)          GetProcAddress(hSamlib,
-                                                                         "SamOpenDomain");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamOpenDomain = (FNSAMOPENDOMAIN)GetProcAddress(hSamlib, "SamOpenDomain");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamLookupNamesInDomain = (FNSAMLOOKUPNAMESINDOMAIN) GetProcAddress(hSamlib,
-                                                                         "SamLookupNamesInDomain");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamLookupNamesInDomain = (FNSAMLOOKUPNAMESINDOMAIN)GetProcAddress(hSamlib, "SamLookupNamesInDomain");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamOpenUser            = (FNSAMOPENUSER)            GetProcAddress(hSamlib,
-                                                                         "SamOpenUser");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamOpenUser = (FNSAMOPENUSER)GetProcAddress(hSamlib, "SamOpenUser");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamCloseHandle         = (FNSAMCLOSEHANDLE)         GetProcAddress(hSamlib,
-                                                                         "SamCloseHandle");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamCloseHandle = (FNSAMCLOSEHANDLE)GetProcAddress(hSamlib, "SamCloseHandle");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamFreeMemory          = (FNSAMFREEMEMORY)          GetProcAddress(hSamlib,
-                                                                         "SamFreeMemory");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamFreeMemory = (FNSAMFREEMEMORY)GetProcAddress(hSamlib, "SamFreeMemory");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamiChangePasswordUser = (FNSAMICHANGEPASSWORDUSER) GetProcAddress(hSamlib,
-                                                                         "SamiChangePasswordUser");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamiChangePasswordUser = (FNSAMICHANGEPASSWORDUSER)GetProcAddress(hSamlib, "SamiChangePasswordUser");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
-                FnSamiChangePasswordUser2 = (FNSAMICHANGEPASSWORDUSER2) GetProcAddress(hSamlib,
-                                                                         "SamiChangePasswordUser2");
-                WinErr  = GetLastError();
-                if (ERROR_SUCCESS != WinErr) {
+                FnSamiChangePasswordUser2 =
+                    (FNSAMICHANGEPASSWORDUSER2)GetProcAddress(hSamlib, "SamiChangePasswordUser2");
+                WinErr = GetLastError();
+                if (ERROR_SUCCESS != WinErr)
+                {
                     goto Cleanup;
                 }
             }
         }
-    
-    
-        RtlLeaveCriticalSection( &MSChapChangePassword );
-    
-    }                                                                                               
+
+
+        RtlLeaveCriticalSection(&MSChapChangePassword);
+    }
 
 
     RtlInitUnicodeString(&UnicodeServer, ServerName);
-    RtlInitUnicodeString(&UnicodeUser,   UserName);
+    RtlInitUnicodeString(&UnicodeUser, UserName);
 
-    return RtlNtStatusToDosError(FnSamiChangePasswordUser2(&UnicodeServer,
-                                                           &UnicodeUser,
-                                                           NewPasswordEncryptedWithOldNt,
-                                                           OldNtOwfPasswordEncryptedWithNewNt,
-                                                           LmPresent,
-                                                           NewPasswordEncryptedWithOldLm,
-                                                           OldLmOwfPasswordEncryptedWithNewLmOrNt));
+    return RtlNtStatusToDosError(FnSamiChangePasswordUser2(
+        &UnicodeServer, &UnicodeUser, NewPasswordEncryptedWithOldNt, OldNtOwfPasswordEncryptedWithNewNt, LmPresent,
+        NewPasswordEncryptedWithOldLm, OldLmOwfPasswordEncryptedWithNewLmOrNt));
 
-    Cleanup:
+Cleanup:
     return WinErr;
-
-}          
+}

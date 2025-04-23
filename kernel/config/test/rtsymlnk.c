@@ -31,17 +31,13 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    UNICODE_STRING  KeyName;
-    UNICODE_STRING  LinkName;
-    UNICODE_STRING  NullName;
+    UNICODE_STRING KeyName;
+    UNICODE_STRING LinkName;
+    UNICODE_STRING NullName;
     ANSI_STRING AnsiKeyName;
     ANSI_STRING AnsiLinkName;
     HANDLE KeyHandle;
@@ -50,22 +46,25 @@ __cdecl main(
     // Process args
     //
 
-    if (argc != 3) {
-        printf("Usage: %s <KeyPath> <SymLink>\n",argv[0]);
+    if (argc != 3)
+    {
+        printf("Usage: %s <KeyPath> <SymLink>\n", argv[0]);
         exit(1);
     }
 
     RtlInitAnsiString(&AnsiKeyName, argv[1]);
     Status = RtlAnsiStringToUnicodeString(&KeyName, &AnsiKeyName, TRUE);
-    if (!NT_SUCCESS(Status)) {
-        printf("RtlAnsiStringToUnicodeString failed %lx\n",Status);
+    if (!NT_SUCCESS(Status))
+    {
+        printf("RtlAnsiStringToUnicodeString failed %lx\n", Status);
         exit(1);
     }
 
     RtlInitAnsiString(&AnsiLinkName, argv[2]);
     Status = RtlAnsiStringToUnicodeString(&LinkName, &AnsiLinkName, TRUE);
-    if (!NT_SUCCESS(Status)) {
-        printf("RtlAnsiStringToUnicodeString failed %lx\n",Status);
+    if (!NT_SUCCESS(Status))
+    {
+        printf("RtlAnsiStringToUnicodeString failed %lx\n", Status);
         exit(1);
     }
 
@@ -75,22 +74,11 @@ __cdecl main(
     // Open node that we want to make a symbolic link.
     //
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &KeyName,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
-    Status = NtCreateKey(&KeyHandle,
-                         KEY_READ | KEY_WRITE,
-                         &ObjectAttributes,
-                         0,
-                         NULL,
-                         0,
-                         NULL);
-    if (!NT_SUCCESS(Status)) {
+    Status = NtCreateKey(&KeyHandle, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, NULL, 0, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         printf("rtsymlnk: NtCreateKey failed: %08lx\n", Status);
         exit(1);
     }
@@ -98,19 +86,16 @@ __cdecl main(
     NullName.Length = NullName.MaximumLength = 0;
     NullName.Buffer = NULL;
 
-    Status = NtSetValueKey(KeyHandle,
-                           &NullName,
-                           0,
-                           REG_LINK,
-                           LinkName.Buffer,
-                           LinkName.Length);
-    if (!NT_SUCCESS(Status)) {
-        printf("rtsymlnk: NtSetValueKey failed: %08lx\n",Status);
+    Status = NtSetValueKey(KeyHandle, &NullName, 0, REG_LINK, LinkName.Buffer, LinkName.Length);
+    if (!NT_SUCCESS(Status))
+    {
+        printf("rtsymlnk: NtSetValueKey failed: %08lx\n", Status);
         exit(1);
     }
 
     Status = NtClose(KeyHandle);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         printf("rtsymlnk: NtClose failed: %08lx\n", Status);
         exit(1);
     }

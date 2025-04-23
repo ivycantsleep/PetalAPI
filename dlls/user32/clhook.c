@@ -23,12 +23,7 @@
 * 05-15-91 ScottLu Created.
 \***************************************************************************/
 
-HHOOK SetWindowsHookExAW(
-    int idHook,
-    HOOKPROC lpfn,
-    HINSTANCE hmod,
-    DWORD dwThreadID,
-    DWORD dwFlags)
+HHOOK SetWindowsHookExAW(int idHook, HOOKPROC lpfn, HINSTANCE hmod, DWORD dwThreadID, DWORD dwFlags)
 {
     WCHAR pwszLibFileName[MAX_PATH];
 
@@ -37,9 +32,10 @@ HHOOK SetWindowsHookExAW(
      * module while we're still on the client since module handles
      * are NOT global.
      */
-    if (hmod != NULL) {
-        if (GetModuleFileNameW(hmod, pwszLibFileName,
-                sizeof(pwszLibFileName)/sizeof(TCHAR)) == 0) {
+    if (hmod != NULL)
+    {
+        if (GetModuleFileNameW(hmod, pwszLibFileName, sizeof(pwszLibFileName) / sizeof(TCHAR)) == 0)
+        {
 
             /*
              * hmod is bogus - return NULL.
@@ -48,9 +44,7 @@ HHOOK SetWindowsHookExAW(
         }
     }
 
-    return _SetWindowsHookEx(hmod,
-            (hmod == NULL) ? NULL : pwszLibFileName,
-            dwThreadID, idHook, (PROC)lpfn, dwFlags);
+    return _SetWindowsHookEx(hmod, (hmod == NULL) ? NULL : pwszLibFileName, dwThreadID, idHook, (PROC)lpfn, dwFlags);
 }
 
 /***************************************************************************\
@@ -68,21 +62,16 @@ HHOOK SetWindowsHookExAW(
 FUNCLOG2(LOG_GENERAL, HHOOK, WINAPI, SetWindowsHookA, int, nFilterType, HOOKPROC, pfnFilterProc)
 HHOOK
 WINAPI
-SetWindowsHookA(
-    int nFilterType,
-    HOOKPROC pfnFilterProc)
+SetWindowsHookA(int nFilterType, HOOKPROC pfnFilterProc)
 {
     return NtUserSetWindowsHookAW(nFilterType, pfnFilterProc, HF_ANSI);
 }
 
 
-
 FUNCLOG2(LOG_GENERAL, HHOOK, WINAPI, SetWindowsHookW, int, nFilterType, HOOKPROC, pfnFilterProc)
 HHOOK
 WINAPI
-SetWindowsHookW(
-    int nFilterType,
-    HOOKPROC pfnFilterProc)
+SetWindowsHookW(int nFilterType, HOOKPROC pfnFilterProc)
 {
     return NtUserSetWindowsHookAW(nFilterType, pfnFilterProc, 0);
 }
@@ -100,23 +89,14 @@ SetWindowsHookW(
 \***************************************************************************/
 
 FUNCLOG4(LOG_GENERAL, HHOOK, WINAPI, SetWindowsHookExA, int, idHook, HOOKPROC, lpfn, HINSTANCE, hmod, DWORD, dwThreadId)
-HHOOK WINAPI SetWindowsHookExA(
-    int idHook,
-    HOOKPROC lpfn,
-    HINSTANCE hmod,
-    DWORD dwThreadId)
+HHOOK WINAPI SetWindowsHookExA(int idHook, HOOKPROC lpfn, HINSTANCE hmod, DWORD dwThreadId)
 {
     return SetWindowsHookExAW(idHook, lpfn, hmod, dwThreadId, HF_ANSI);
 }
 
 
 FUNCLOG4(LOG_GENERAL, HHOOK, WINAPI, SetWindowsHookExW, int, idHook, HOOKPROC, lpfn, HINSTANCE, hmod, DWORD, dwThreadId)
-HHOOK WINAPI SetWindowsHookExW(
-    int idHook,
-    HOOKPROC lpfn,
-    HINSTANCE hmod,
-    DWORD dwThreadId)
+HHOOK WINAPI SetWindowsHookExW(int idHook, HOOKPROC lpfn, HINSTANCE hmod, DWORD dwThreadId)
 {
     return SetWindowsHookExAW(idHook, lpfn, hmod, dwThreadId, 0);
 }
-

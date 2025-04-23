@@ -24,19 +24,11 @@ Author:
 //
 
 EXCEPTION_DISPOSITION
-RtlpExecuteHandlerForException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN ULONG64 EstablisherFrame,
-    IN OUT PCONTEXT ContextRecord,
-    IN OUT PDISPATCHER_CONTEXT DispatcherContext
-    );
+RtlpExecuteHandlerForException(IN PEXCEPTION_RECORD ExceptionRecord, IN ULONG64 EstablisherFrame,
+                               IN OUT PCONTEXT ContextRecord, IN OUT PDISPATCHER_CONTEXT DispatcherContext);
 
 EXCEPTION_DISPOSITION
-RtlpExecuteHandlerForUnwind (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN ULONG_PTR EstablisherFrame,
-    IN OUT PCONTEXT ContextRecord,
-    IN OUT PDISPATCHER_CONTEXT DispatcherContext
-    );
+RtlpExecuteHandlerForUnwind(IN PEXCEPTION_RECORD ExceptionRecord, IN ULONG_PTR EstablisherFrame,
+                            IN OUT PCONTEXT ContextRecord, IN OUT PDISPATCHER_CONTEXT DispatcherContext);
 
 #endif // _NTRTLAMD64_

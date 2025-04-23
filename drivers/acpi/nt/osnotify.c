@@ -26,24 +26,21 @@ Revision History:
 //
 // Make sure that we have permanent storage for our fatal error context
 //
-ACPI_FATAL_ERROR_CONTEXT    AcpiFatalContext;
+ACPI_FATAL_ERROR_CONTEXT AcpiFatalContext;
 
 //
 // Spinlock to protect the entire thing
-KSPIN_LOCK                  AcpiFatalLock;
+KSPIN_LOCK AcpiFatalLock;
 
 //
 // Is there an outstanding Fatal Error Context?
 //
-BOOLEAN                     AcpiFatalOutstanding;
+BOOLEAN AcpiFatalOutstanding;
 
-
+
 NTSTATUS
 EXPORT
-OSNotifyCreate(
-    IN  ULONG   ObjType,
-    IN  PNSOBJ  AcpiObject
-    )
+OSNotifyCreate(IN ULONG ObjType, IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -62,76 +59,65 @@ Return Value:
 
 --*/
 {
-    KIRQL       oldIrql;
-    NTSTATUS    status = STATUS_SUCCESS;
-    ASSERT( AcpiObject != NULL );
+    KIRQL oldIrql;
+    NTSTATUS status = STATUS_SUCCESS;
+    ASSERT(AcpiObject != NULL);
 
     //
     // We will touch the device tree. So we need to hold the correct lock
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
-    switch(ObjType) {
-        case OBJTYPE_DEVICE:
+    switch (ObjType)
+    {
+    case OBJTYPE_DEVICE:
 
-            status = OSNotifyCreateDevice( AcpiObject, 0 );
-            break;
+        status = OSNotifyCreateDevice(AcpiObject, 0);
+        break;
 
-        case OBJTYPE_OPREGION:
+    case OBJTYPE_OPREGION:
 
-            status = OSNotifyCreateOperationRegion( AcpiObject );
-            break;
+        status = OSNotifyCreateOperationRegion(AcpiObject);
+        break;
 
-        case OBJTYPE_POWERRES:
+    case OBJTYPE_POWERRES:
 
-            status = OSNotifyCreatePowerResource( AcpiObject );
-            break;
+        status = OSNotifyCreatePowerResource(AcpiObject);
+        break;
 
-        case OBJTYPE_PROCESSOR:
+    case OBJTYPE_PROCESSOR:
 
-            status = OSNotifyCreateProcessor( AcpiObject, 0 );
-            break;
-        case OBJTYPE_THERMALZONE:
+        status = OSNotifyCreateProcessor(AcpiObject, 0);
+        break;
+    case OBJTYPE_THERMALZONE:
 
-            status = OSNotifyCreateThermalZone( AcpiObject, 0 );
-            break;
+        status = OSNotifyCreateThermalZone(AcpiObject, 0);
+        break;
 
-        default:
-            ACPIPrint( (
-                ACPI_PRINT_WARNING,
-                "OSNotifyCreate: received unhandled type %x\n",
-                ObjType
-                ) );
-            status = STATUS_SUCCESS;
+    default:
+        ACPIPrint((ACPI_PRINT_WARNING, "OSNotifyCreate: received unhandled type %x\n", ObjType));
+        status = STATUS_SUCCESS;
     }
 
     //
     // Done with this lock
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     //
     // What happened?
     //
-    ACPIPrint( (
-        ACPI_PRINT_LOADING,
-        "OSNotifyCreate: %p (%s) = %08lx\n",
-        AcpiObject,
-        ACPIAmliNameObject( AcpiObject ),
-        status
-        ) );
+    ACPIPrint(
+        (ACPI_PRINT_LOADING, "OSNotifyCreate: %p (%s) = %08lx\n", AcpiObject, ACPIAmliNameObject(AcpiObject), status));
 
     //
     // Done --- Always succeed
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-OSNotifyCreateDevice(
-    IN  PNSOBJ      AcpiObject,
-    IN  ULONGLONG   OptionalFlags
-    )
+OSNotifyCreateDevice(IN PNSOBJ AcpiObject, IN ULONGLONG OptionalFlags)
 /*++
 
 Routine Description:
@@ -151,50 +137,47 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status = STATUS_SUCCESS;
-    PDEVICE_EXTENSION   deviceExtension = NULL;
-    PDEVICE_EXTENSION   parentExtension;
-    PNSOBJ              parentObject;
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION deviceExtension = NULL;
+    PDEVICE_EXTENSION parentExtension;
+    PNSOBJ parentObject;
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( AcpiObject != NULL);
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(AcpiObject != NULL);
 
     //
     // First, we need a pointer to the parent node
     //
     parentObject = AcpiObject->pnsParent;
-    ASSERT( parentObject != NULL );
+    ASSERT(parentObject != NULL);
 
     //
     // Grab the device extension associated with the parent. We need
     // this information to help link the parent properly into the tree
     //
-    parentExtension = (PDEVICE_EXTENSION) parentObject->Context;
-    if (parentExtension == NULL) {
+    parentExtension = (PDEVICE_EXTENSION)parentObject->Context;
+    if (parentExtension == NULL)
+    {
 
         //
         // In this case, we can assume that the parent extension is the root
         // device extension.
         //
         parentExtension = RootDeviceExtension;
-
     }
-    ASSERT( parentExtension != NULL );
+    ASSERT(parentExtension != NULL);
 
     //
     // Now build an extension for the node
     //
-    status = ACPIBuildDeviceExtension(
-        AcpiObject,
-        parentExtension,
-        &deviceExtension
-        );
-    if (deviceExtension == NULL) {
+    status = ACPIBuildDeviceExtension(AcpiObject, parentExtension, &deviceExtension);
+    if (deviceExtension == NULL)
+    {
 
         status = STATUS_UNSUCCESSFUL;
-
     }
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Incremement the reference count on the node. We do this because
@@ -203,57 +186,38 @@ Return Value:
         // entire time. If we incr the reference count, then we guarantee that
         // no one can come along and kick the feet out from underneath us
         //
-        InterlockedIncrement( &(deviceExtension->ReferenceCount) );
-
+        InterlockedIncrement(&(deviceExtension->ReferenceCount));
     }
 
     //
     // What happend to the creation of the extension?
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // We should have succeeded at whatever we are doing --- so this is
         // a bad place to be
         //
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyCreateDevice: NSObj %p Failed %08lx\n",
-            AcpiObject,
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "OSNotifyCreateDevice: NSObj %p Failed %08lx\n", AcpiObject, status));
         goto OSNotifyCreateDeviceExit;
-
     }
 
     //
     // Set the optional flags if there are any
     //
-    ACPIInternalUpdateFlags(
-        &(deviceExtension->Flags),
-        OptionalFlags,
-        FALSE
-        );
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), OptionalFlags, FALSE);
 
     //
     // Make sure to queue the request
     //
-    status = ACPIBuildDeviceRequest(
-        deviceExtension,
-        NULL,
-        NULL,
-        FALSE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIBuildDeviceRequest(deviceExtension, NULL, NULL, FALSE);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyCreateDevice: ACPIBuildDeviceRequest(%p) = %08lx\n",
-            deviceExtension,
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "OSNotifyCreateDevice: ACPIBuildDeviceRequest(%p) = %08lx\n", deviceExtension,
+                   status));
         goto OSNotifyCreateDeviceExit;
-
     }
 
 OSNotifyCreateDeviceExit:
@@ -263,11 +227,9 @@ OSNotifyCreateDeviceExit:
     //
     return status;
 }
-
+
 NTSTATUS
-OSNotifyCreateOperationRegion(
-    IN  PNSOBJ      AcpiObject
-    )
+OSNotifyCreateOperationRegion(IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -285,30 +247,30 @@ Return Value:
 
 --*/
 {
-    PDEVICE_EXTENSION   parentExtension;
-    PNSOBJ              parentObject;
-    POPREGIONOBJ        opRegion;
+    PDEVICE_EXTENSION parentExtension;
+    PNSOBJ parentObject;
+    POPREGIONOBJ opRegion;
 
     //
     // Sanity Check
     //
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( AcpiObject != NULL );
-    ASSERT( NSGETOBJTYPE(AcpiObject) == OBJTYPE_OPREGION );
-    ASSERT( AcpiObject->ObjData.pbDataBuff != NULL );
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(AcpiObject != NULL);
+    ASSERT(NSGETOBJTYPE(AcpiObject) == OBJTYPE_OPREGION);
+    ASSERT(AcpiObject->ObjData.pbDataBuff != NULL);
 
     //
     // Get the OpRegion Object from the namespace object
     //
-    opRegion = (POPREGIONOBJ) AcpiObject->ObjData.pbDataBuff;
-    if (opRegion->bRegionSpace != REGSPACE_PCIBARTARGET) {
+    opRegion = (POPREGIONOBJ)AcpiObject->ObjData.pbDataBuff;
+    if (opRegion->bRegionSpace != REGSPACE_PCIBARTARGET)
+    {
 
         //
         // This isn't a PCI Bar Target Operation Region, so there
         // is nothing to do
         //
         return STATUS_SUCCESS;
-
     }
 
     //
@@ -321,43 +283,39 @@ Return Value:
     // or is a device...
     //
     parentObject = AcpiObject->pnsParent;
-    while (parentObject != NULL) {
+    while (parentObject != NULL)
+    {
 
         //
         // If the parent object is a method, then look at its parent
         //
-        if (NSGETOBJTYPE(parentObject) == OBJTYPE_METHOD) {
+        if (NSGETOBJTYPE(parentObject) == OBJTYPE_METHOD)
+        {
 
             parentObject = parentObject->pnsParent;
             continue;
-
         }
 
         //
         // If the parent object isn't a device, then stop...
         //
-        if (NSGETOBJTYPE(parentObject) != OBJTYPE_DEVICE) {
+        if (NSGETOBJTYPE(parentObject) != OBJTYPE_DEVICE)
+        {
 
             break;
-
         }
 
         //
         // Grab the device extension (bad things happen if it doesn't
         // already exist
         //
-        parentExtension = (PDEVICE_EXTENSION) parentObject->Context;
-        if (parentExtension) {
+        parentExtension = (PDEVICE_EXTENSION)parentObject->Context;
+        if (parentExtension)
+        {
 
-            ACPIInternalUpdateFlags(
-                &(parentExtension->Flags),
-                DEV_CAP_PCI_BAR_TARGET,
-                FALSE
-                );
-
+            ACPIInternalUpdateFlags(&(parentExtension->Flags), DEV_CAP_PCI_BAR_TARGET, FALSE);
         }
         break;
-
     }
 
     //
@@ -365,11 +323,9 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-OSNotifyCreatePowerResource(
-    IN  PNSOBJ  AcpiObject
-    )
+OSNotifyCreatePowerResource(IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -387,52 +343,39 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                status;
+    NTSTATUS status;
     PACPI_POWER_DEVICE_NODE powerNode;
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( AcpiObject != NULL);
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(AcpiObject != NULL);
 
     //
     // Build the power extension
     //
-    status = ACPIBuildPowerResourceExtension( AcpiObject, &powerNode );
+    status = ACPIBuildPowerResourceExtension(AcpiObject, &powerNode);
 
     //
     // What happened?
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyCreatePowerResource: %p = %08lx\n",
-            AcpiObject,
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "OSNotifyCreatePowerResource: %p = %08lx\n", AcpiObject, status));
         goto OSNotifyCreatePowerResourceExit;
-
     }
 
     //
     // Make sure to request that this node gets processed
     //
-    status = ACPIBuildPowerResourceRequest(
-        powerNode,
-        NULL,
-        NULL,
-        FALSE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIBuildPowerResourceRequest(powerNode, NULL, NULL, FALSE);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyCreatePowerResource:  "
-            "ACPIBuildPowerResourceRequest(%p) = %08lx\n",
-            powerNode,
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL,
+                   "OSNotifyCreatePowerResource:  "
+                   "ACPIBuildPowerResourceRequest(%p) = %08lx\n",
+                   powerNode, status));
         goto OSNotifyCreatePowerResourceExit;
-
     }
 
 OSNotifyCreatePowerResourceExit:
@@ -442,12 +385,9 @@ OSNotifyCreatePowerResourceExit:
     //
     return status;
 }
-
+
 NTSTATUS
-OSNotifyCreateProcessor(
-    IN  PNSOBJ      AcpiObject,
-    IN  ULONGLONG   OptionalFlags
-    )
+OSNotifyCreateProcessor(IN PNSOBJ AcpiObject, IN ULONGLONG OptionalFlags)
 /*++
 
 Routine Description:
@@ -467,42 +407,37 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status = STATUS_SUCCESS;
-    PDEVICE_EXTENSION   deviceExtension = NULL;
-    PDEVICE_EXTENSION   parentExtension;
-    PNSOBJ              parentObject;
-    UCHAR               index = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION deviceExtension = NULL;
+    PDEVICE_EXTENSION parentExtension;
+    PNSOBJ parentObject;
+    UCHAR index = 0;
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( AcpiObject != NULL);
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(AcpiObject != NULL);
 
     //
     // Note: ProcessorList is now implicitly protected by the device tree
     // lock since we need to acquire that lock before calling this function
     //
     //
-    while (ProcessorList[index] && index < ACPI_SUPPORTED_PROCESSORS) {
+    while (ProcessorList[index] && index < ACPI_SUPPORTED_PROCESSORS)
+    {
 
         index++;
-
     }
 
     //
     // We must make sure that the current entry is empty...
     //
-    if (index >= ACPI_SUPPORTED_PROCESSORS || ProcessorList[index] != NULL) {
+    if (index >= ACPI_SUPPORTED_PROCESSORS || ProcessorList[index] != NULL)
+    {
 
         return STATUS_UNSUCCESSFUL;
-
     }
 
 
-    ACPIPrint( (
-        ACPI_PRINT_LOADING,
-        "OSNotifyCreateProcessor: Processor Object #%x: %x\n",
-        index+1,
-        AcpiObject
-        ) );
+    ACPIPrint((ACPI_PRINT_LOADING, "OSNotifyCreateProcessor: Processor Object #%x: %x\n", index + 1, AcpiObject));
 
     //
     // Remember that to store where the new processor object is located
@@ -513,34 +448,30 @@ Return Value:
     // First, we need a pointer to the parent node
     //
     parentObject = AcpiObject->pnsParent;
-    ASSERT( parentObject != NULL );
+    ASSERT(parentObject != NULL);
 
     //
     // Grab the device extension associated with the parent. We need
     // this information to help link the parent properly into the tree
     //
-    parentExtension = (PDEVICE_EXTENSION) parentObject->Context;
-    if (parentExtension == NULL) {
+    parentExtension = (PDEVICE_EXTENSION)parentObject->Context;
+    if (parentExtension == NULL)
+    {
 
         //
         // In this case, we can assume that the parent extension is the root
         // device extension.
         //
         parentExtension = RootDeviceExtension;
-
     }
-    ASSERT( parentExtension != NULL );
+    ASSERT(parentExtension != NULL);
     //
     // Now build an extension for the node
     //
-    status = ACPIBuildProcessorExtension(
-        AcpiObject,
-        parentExtension,
-        &deviceExtension,
-        index
-        );
+    status = ACPIBuildProcessorExtension(AcpiObject, parentExtension, &deviceExtension, index);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Incremement the reference count on the node. We do this because
@@ -549,58 +480,40 @@ Return Value:
         // entire time. If we incr the reference count, then we guarantee that
         // no one can come along and kick the feet out from underneath us
         //
-        InterlockedIncrement( &(deviceExtension->ReferenceCount) );
-
+        InterlockedIncrement(&(deviceExtension->ReferenceCount));
     }
 
     //
     // What happend to the creation of the extension?
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // We should have succeeded at whatever we are doing --- so this is
         // a bad place to be
         //
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyCreateProcessor: NSObj %p Failed %08lx\n",
-            AcpiObject,
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "OSNotifyCreateProcessor: NSObj %p Failed %08lx\n", AcpiObject, status));
         goto OSNotifyCreateProcessorExit;
-
     }
 
     //
     // Set the optional flags if there are any
     //
-    ACPIInternalUpdateFlags(
-        &(deviceExtension->Flags),
-        OptionalFlags,
-        FALSE
-        );
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), OptionalFlags, FALSE);
 
     //
     // Make sure to queue the request
     //
-    status = ACPIBuildProcessorRequest(
-        deviceExtension,
-        NULL,
-        NULL,
-        FALSE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIBuildProcessorRequest(deviceExtension, NULL, NULL, FALSE);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyCreateProcessor: "
-            "ACPIBuildProcessorRequest(%p) = %08lx\n",
-            deviceExtension,
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL,
+                   "OSNotifyCreateProcessor: "
+                   "ACPIBuildProcessorRequest(%p) = %08lx\n",
+                   deviceExtension, status));
         goto OSNotifyCreateProcessorExit;
-
     }
 
 OSNotifyCreateProcessorExit:
@@ -610,12 +523,9 @@ OSNotifyCreateProcessorExit:
     //
     return status;
 }
-
+
 NTSTATUS
-OSNotifyCreateThermalZone(
-    IN  PNSOBJ      AcpiObject,
-    IN  ULONGLONG   OptionalFlags
-    )
+OSNotifyCreateThermalZone(IN PNSOBJ AcpiObject, IN ULONGLONG OptionalFlags)
 /*++
 
 Routine Description:
@@ -635,22 +545,19 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status = STATUS_SUCCESS;
-    PDEVICE_EXTENSION   deviceExtension = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION deviceExtension = NULL;
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( AcpiObject != NULL);
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(AcpiObject != NULL);
 
     //
     // Now build an extension for the node
     //
-    status = ACPIBuildThermalZoneExtension(
-        AcpiObject,
-        RootDeviceExtension,
-        &deviceExtension
-        );
+    status = ACPIBuildThermalZoneExtension(AcpiObject, RootDeviceExtension, &deviceExtension);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Incremement the reference count on the node. We do this because
@@ -659,58 +566,40 @@ Return Value:
         // entire time. If we incr the reference count, then we guarantee that
         // no one can come along and kick the feet out from underneath us
         //
-        InterlockedIncrement( &(deviceExtension->ReferenceCount) );
-
+        InterlockedIncrement(&(deviceExtension->ReferenceCount));
     }
 
     //
     // What happend to the creation of the extension?
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // We should have succeeded at whatever we are doing --- so this is
         // a bad place to be
         //
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyCreateThermalZone: NSObj %p Failed %08lx\n",
-            AcpiObject,
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "OSNotifyCreateThermalZone: NSObj %p Failed %08lx\n", AcpiObject, status));
         goto OSNotifyCreateThermalZoneExit;
-
     }
 
     //
     // Set the optional flags if there are any
     //
-    ACPIInternalUpdateFlags(
-        &(deviceExtension->Flags),
-        OptionalFlags,
-        FALSE
-        );
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), OptionalFlags, FALSE);
 
     //
     // Make sure to queue the request
     //
-    status = ACPIBuildThermalZoneRequest(
-        deviceExtension,
-        NULL,
-        NULL,
-        FALSE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIBuildThermalZoneRequest(deviceExtension, NULL, NULL, FALSE);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyCreateThermalZone: "
-            "ACPIBuildThermalZoneRequest(%p) = %08lx\n",
-            deviceExtension,
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL,
+                   "OSNotifyCreateThermalZone: "
+                   "ACPIBuildThermalZoneRequest(%p) = %08lx\n",
+                   deviceExtension, status));
         goto OSNotifyCreateThermalZoneExit;
-
     }
 
 OSNotifyCreateThermalZoneExit:
@@ -720,12 +609,10 @@ OSNotifyCreateThermalZoneExit:
     //
     return status;
 }
-
+
 NTSTATUS
 EXPORT
-OSNotifyDeviceCheck_SP1(
-    IN  PNSOBJ  AcpiObject
-    )
+OSNotifyDeviceCheck_SP1(IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -748,46 +635,39 @@ Return Value:
 
 --*/
 {
-    PDEVICE_EXTENSION   deviceExtension;
+    PDEVICE_EXTENSION deviceExtension;
 
-    ASSERT( AcpiObject != NULL );
+    ASSERT(AcpiObject != NULL);
 
     //
     // Let the world know
     //
-    ACPIPrint( (
-        ACPI_PRINT_PNP,
-        "OSNotifyDeviceCheck: 0x%p (%s)\n",
-        AcpiObject,
-        ACPIAmliNameObject( AcpiObject )
-        ) );
+    ACPIPrint((ACPI_PRINT_PNP, "OSNotifyDeviceCheck: 0x%p (%s)\n", AcpiObject, ACPIAmliNameObject(AcpiObject)));
 
-    deviceExtension = (PDEVICE_EXTENSION) AcpiObject->Context;
-    if (deviceExtension == NULL) {
+    deviceExtension = (PDEVICE_EXTENSION)AcpiObject->Context;
+    if (deviceExtension == NULL)
+    {
 
         return STATUS_SUCCESS;
-
     }
 
     //
     // Notify(,1) on a dock node is an eject request request. Handle specially.
     //
-    if (ACPIDockIsDockDevice(AcpiObject)) {
+    if (ACPIDockIsDockDevice(AcpiObject))
+    {
 
         //
         // We only let BIOS's get away with this because we rev'd the spec
         // after Win98. Both OS's will agree with the release of NT5 and
         // Win98 SP1
         //
-        ACPIPrint( (
-            ACPI_PRINT_WARNING,
-            "OSNotifyDeviceCheck: BIOS issued Notify(dock,1), should use "
-            " Notify(dock,3) to request ejection of a dock.\n",
-            AcpiObject,
-            ACPIAmliNameObject( AcpiObject )
-            ) );
+        ACPIPrint((ACPI_PRINT_WARNING,
+                   "OSNotifyDeviceCheck: BIOS issued Notify(dock,1), should use "
+                   " Notify(dock,3) to request ejection of a dock.\n",
+                   AcpiObject, ACPIAmliNameObject(AcpiObject)));
 
-        return OSNotifyDeviceEject(AcpiObject) ;
+        return OSNotifyDeviceEject(AcpiObject);
     }
 
     //
@@ -800,26 +680,23 @@ Return Value:
     // more efficient.
     //
     deviceExtension = deviceExtension->ParentExtension;
-    while (deviceExtension) {
+    while (deviceExtension)
+    {
 
-        if (!(deviceExtension->Flags & DEV_TYPE_NOT_FOUND)) {
+        if (!(deviceExtension->Flags & DEV_TYPE_NOT_FOUND))
+        {
 
             //
             // Invalid the device relations for this device tree
             //
-            IoInvalidateDeviceRelations(
-                deviceExtension->PhysicalDeviceObject,
-                BusRelations
-                );
+            IoInvalidateDeviceRelations(deviceExtension->PhysicalDeviceObject, BusRelations);
             break;
-
         }
 
         //
         // Try the parent device
         //
         deviceExtension = deviceExtension->ParentExtension;
-
     }
 
     //
@@ -831,13 +708,9 @@ Return Value:
 
 #ifdef _X86_
 // SP3
-__declspec(naked) NTSTATUS
-EXPORT
-OSNotifyDeviceCheck(
-    IN  PNSOBJ  AcpiObject
-    )
+__declspec(naked) NTSTATUS EXPORT OSNotifyDeviceCheck(IN PNSOBJ AcpiObject)
 {
-__asm {
+    __asm {
                 mov     edi, edi
                 push    ebp
                 mov     ebp, esp
@@ -907,17 +780,15 @@ loc_1C9B0:
                 pop     ebx
                 pop     ebp
                 ret
-}
+    }
 }
 // SP3
 #endif
 
-
+
 NTSTATUS
 EXPORT
-OSNotifyDeviceEnum(
-    IN  PNSOBJ  AcpiObject
-    )
+OSNotifyDeviceEnum(IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -935,47 +806,40 @@ Return Value:
 
 --*/
 {
-    PDEVICE_EXTENSION   deviceExtension;
-    PDEVICE_EXTENSION   dockExtension;
+    PDEVICE_EXTENSION deviceExtension;
+    PDEVICE_EXTENSION dockExtension;
 
-    ASSERT( AcpiObject != NULL );
+    ASSERT(AcpiObject != NULL);
 
     //
     // Let the world know
     //
-    ACPIPrint( (
-        ACPI_PRINT_PNP,
-        "OSNotifyDeviceEnum: 0x%p (%s)\n",
-        AcpiObject,
-        ACPIAmliNameObject( AcpiObject )
-        ) );
+    ACPIPrint((ACPI_PRINT_PNP, "OSNotifyDeviceEnum: 0x%p (%s)\n", AcpiObject, ACPIAmliNameObject(AcpiObject)));
 
-    deviceExtension = (PDEVICE_EXTENSION) AcpiObject->Context;
-    if (deviceExtension == NULL) {
+    deviceExtension = (PDEVICE_EXTENSION)AcpiObject->Context;
+    if (deviceExtension == NULL)
+    {
 
         return STATUS_SUCCESS;
-
     }
 
     //
     // Notify(,0) on a dock node is a dock request. Handle specially.
     //
-    if (ACPIDockIsDockDevice(AcpiObject)) {
+    if (ACPIDockIsDockDevice(AcpiObject))
+    {
 
-        dockExtension = ACPIDockFindCorrespondingDock( deviceExtension );
+        dockExtension = ACPIDockFindCorrespondingDock(deviceExtension);
 
-        if (!dockExtension) {
+        if (!dockExtension)
+        {
 
-            ACPIPrint( (
-                ACPI_PRINT_FAILURE,
-                "OSNotifyDeviceEnum: Dock device 0x%p (%s) "
-                "does not have a profile provider!\n",
-                AcpiObject,
-                ACPIAmliNameObject( AcpiObject )
-                ) );
+            ACPIPrint((ACPI_PRINT_FAILURE,
+                       "OSNotifyDeviceEnum: Dock device 0x%p (%s) "
+                       "does not have a profile provider!\n",
+                       AcpiObject, ACPIAmliNameObject(AcpiObject)));
 
             return STATUS_SUCCESS;
-
         }
 
         //
@@ -984,61 +848,47 @@ Return Value:
         // dock's _STA said "here", we would assume _DCK(0) was ran by the BIOS
         // itself.
         //
-        InterlockedCompareExchange(
-            (PULONG) &dockExtension->Dock.IsolationState,
-            IS_ISOLATED,
-            IS_UNKNOWN
-            );
+        InterlockedCompareExchange((PULONG)&dockExtension->Dock.IsolationState, IS_ISOLATED, IS_UNKNOWN);
 
-        if (dockExtension->Dock.IsolationState == IS_ISOLATED) {
+        if (dockExtension->Dock.IsolationState == IS_ISOLATED)
+        {
 
-            if (dockExtension->Flags&DEV_TYPE_NOT_FOUND) {
+            if (dockExtension->Flags & DEV_TYPE_NOT_FOUND)
+            {
 
                 //
                 // We haven't made a PDO for the docking station yet. This may
                 // be a request to bring it online. Mark the profile provider
                 // so that we notice the new dock appearing
                 //
-                ACPIInternalUpdateFlags(
-                    &dockExtension->Flags,
-                    DEV_CAP_UNATTACHED_DOCK,
-                    FALSE
-                    );
-
+                ACPIInternalUpdateFlags(&dockExtension->Flags, DEV_CAP_UNATTACHED_DOCK, FALSE);
             }
 
             //
             // Invalidate the beginning of the tree. This will cause our fake
             // dock node to start.
             //
-            IoInvalidateDeviceRelations(
-                RootDeviceExtension->PhysicalDeviceObject,
-                SingleBusRelations
-                );
-
+            IoInvalidateDeviceRelations(RootDeviceExtension->PhysicalDeviceObject, SingleBusRelations);
         }
 
         return STATUS_SUCCESS;
-
     }
 
     //
     // Search for the parent of the first device that the OS is aware, and
     // issue a device check notify
     //
-    while (deviceExtension) {
+    while (deviceExtension)
+    {
 
-        if (!(deviceExtension->Flags & DEV_TYPE_NOT_FOUND)) {
+        if (!(deviceExtension->Flags & DEV_TYPE_NOT_FOUND))
+        {
 
             //
             // Invalid the device relations for this device tree
             //
-            IoInvalidateDeviceRelations(
-                deviceExtension->PhysicalDeviceObject,
-                BusRelations
-                );
+            IoInvalidateDeviceRelations(deviceExtension->PhysicalDeviceObject, BusRelations);
             break;
-
         }
 
         //
@@ -1052,12 +902,10 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
 EXPORT
-OSNotifyDeviceEject(
-    IN  PNSOBJ  AcpiObject
-    )
+OSNotifyDeviceEject(IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -1075,51 +923,46 @@ Return Value:
 
 --*/
 {
-    PDEVICE_EXTENSION   deviceExtension;
+    PDEVICE_EXTENSION deviceExtension;
 
-    ASSERT( AcpiObject != NULL );
+    ASSERT(AcpiObject != NULL);
 
     //
     // Let the world know
     //
-    ACPIPrint( (
-        ACPI_PRINT_REMOVE,
-        "OSNotifyDeviceEject: 0x%p (%s)\n",
-        AcpiObject,
-        ACPIAmliNameObject( AcpiObject )
-        ) );
+    ACPIPrint((ACPI_PRINT_REMOVE, "OSNotifyDeviceEject: 0x%p (%s)\n", AcpiObject, ACPIAmliNameObject(AcpiObject)));
 
 
     //
     // Inform the OS of which device wants to go away.  If the OS doesn't
     // know about the device, then don't bother
     //
-    deviceExtension = (PDEVICE_EXTENSION) AcpiObject->Context;
+    deviceExtension = (PDEVICE_EXTENSION)AcpiObject->Context;
 
     //
     // If this is a dock, queue the eject against the profile provider.
     //
-    if (ACPIDockIsDockDevice(AcpiObject)) {
+    if (ACPIDockIsDockDevice(AcpiObject))
+    {
 
-        deviceExtension = ACPIDockFindCorrespondingDock( deviceExtension );
+        deviceExtension = ACPIDockFindCorrespondingDock(deviceExtension);
 
-        if (!deviceExtension) {
+        if (!deviceExtension)
+        {
 
-            ACPIPrint( (
-                ACPI_PRINT_FAILURE,
-                 "OSNotifyDeviceEject: Dock device 0x%p (%s) "
-                 "does not have a profile provider!\n",
-                 AcpiObject,
-                 ACPIAmliNameObject( AcpiObject )
-                 ) );
+            ACPIPrint((ACPI_PRINT_FAILURE,
+                       "OSNotifyDeviceEject: Dock device 0x%p (%s) "
+                       "does not have a profile provider!\n",
+                       AcpiObject, ACPIAmliNameObject(AcpiObject)));
 
             return STATUS_SUCCESS;
         }
     }
 
-    if (deviceExtension  &&  !(deviceExtension->Flags & DEV_TYPE_NOT_FOUND)) {
+    if (deviceExtension && !(deviceExtension->Flags & DEV_TYPE_NOT_FOUND))
+    {
 
-        IoRequestDeviceEject (deviceExtension->PhysicalDeviceObject);
+        IoRequestDeviceEject(deviceExtension->PhysicalDeviceObject);
     }
 
     //
@@ -1127,12 +970,10 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
 EXPORT
-OSNotifyDeviceWake(
-    IN  PNSOBJ  AcpiObject
-    )
+OSNotifyDeviceWake(IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -1149,95 +990,68 @@ Return Value:
 
 --*/
 {
-    KIRQL               oldIrql;
-    NTSTATUS            status = STATUS_SUCCESS;
-    PDEVICE_EXTENSION   deviceExtension;
-    PLIST_ENTRY         powerList;
+    KIRQL oldIrql;
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION deviceExtension;
+    PLIST_ENTRY powerList;
 
-    ASSERT( AcpiObject != NULL );
+    ASSERT(AcpiObject != NULL);
 
     //
     // Grab the device extension associated with this NS object
     //
-    deviceExtension = (PDEVICE_EXTENSION) AcpiObject->Context;
-    ASSERT( deviceExtension != NULL );
+    deviceExtension = (PDEVICE_EXTENSION)AcpiObject->Context;
+    ASSERT(deviceExtension != NULL);
 
     //
     // Let the world know
     //
-    ACPIDevPrint( (
-        ACPI_PRINT_WAKE,
-        deviceExtension,
-        "OSNotifyDeviceWake - 0x%p (%s)\n",
-        AcpiObject,
-        ACPIAmliNameObject( AcpiObject )
-        ) );
+    ACPIDevPrint((ACPI_PRINT_WAKE, deviceExtension, "OSNotifyDeviceWake - 0x%p (%s)\n", AcpiObject,
+                  ACPIAmliNameObject(AcpiObject)));
 
     //
     // Initialize the list that will hold the requests
     //
-    powerList = ExAllocatePoolWithTag(
-       NonPagedPool,
-       sizeof(LIST_ENTRY),
-       ACPI_MISC_POOLTAG
-       );
-    if (powerList == NULL) {
+    powerList = ExAllocatePoolWithTag(NonPagedPool, sizeof(LIST_ENTRY), ACPI_MISC_POOLTAG);
+    if (powerList == NULL)
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_CRITICAL,
-            deviceExtension,
-            "OSNotifyDeviceWake - Cannot Allocate LIST_ENTRY\n"
-            ) );
+        ACPIDevPrint((ACPI_PRINT_CRITICAL, deviceExtension, "OSNotifyDeviceWake - Cannot Allocate LIST_ENTRY\n"));
         return STATUS_SUCCESS;
-
     }
-    InitializeListHead( powerList );
+    InitializeListHead(powerList);
 
     //
     // Remove the affected requests from the wait list
     //
-    IoAcquireCancelSpinLock( &oldIrql );
-    KeAcquireSpinLockAtDpcLevel( &AcpiPowerLock );
-    ACPIWakeRemoveDevicesAndUpdate( deviceExtension, powerList );
-    KeReleaseSpinLockFromDpcLevel( &AcpiPowerLock );
-    IoReleaseCancelSpinLock( oldIrql );
+    IoAcquireCancelSpinLock(&oldIrql);
+    KeAcquireSpinLockAtDpcLevel(&AcpiPowerLock);
+    ACPIWakeRemoveDevicesAndUpdate(deviceExtension, powerList);
+    KeReleaseSpinLockFromDpcLevel(&AcpiPowerLock);
+    IoReleaseCancelSpinLock(oldIrql);
 
     //
     // If the list is non-empty, then disable those requests
     //
-    if (!IsListEmpty( powerList ) ) {
+    if (!IsListEmpty(powerList))
+    {
 
-        status = ACPIWakeDisableAsync(
-            deviceExtension,
-            powerList,
-            OSNotifyDeviceWakeCallBack,
-            powerList
-            );
-        if (status != STATUS_PENDING) {
+        status = ACPIWakeDisableAsync(deviceExtension, powerList, OSNotifyDeviceWakeCallBack, powerList);
+        if (status != STATUS_PENDING)
+        {
 
-            OSNotifyDeviceWakeCallBack(
-                NULL,
-                status,
-                NULL,
-                powerList
-                );
-
+            OSNotifyDeviceWakeCallBack(NULL, status, NULL, powerList);
         }
 
-        ACPIDevPrint( (
-             ACPI_PRINT_WAKE,
-             deviceExtension,
-             "OSNotifyDeviceWake - ACPIWakeDisableAsync = %08lx\n",
-             status
-             ) );
-
-    } else {
+        ACPIDevPrint((ACPI_PRINT_WAKE, deviceExtension, "OSNotifyDeviceWake - ACPIWakeDisableAsync = %08lx\n", status));
+    }
+    else
+    {
 
         //
         // We must free this memory ourselves
         //
-        ExFreePool( powerList );
-
+        ExFreePool(powerList);
     }
 
     //
@@ -1245,15 +1059,9 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
-VOID
-EXPORT
-OSNotifyDeviceWakeCallBack(
-    IN  PNSOBJ      AcpiObject,
-    IN  NTSTATUS    Status,
-    IN  POBJDATA    ObjectData,
-    IN  PVOID       Context
-    )
+
+VOID EXPORT OSNotifyDeviceWakeCallBack(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA ObjectData,
+                                       IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1275,23 +1083,19 @@ Return Value:
 {
 #if DBG
     PACPI_POWER_REQUEST powerRequest;
-    PDEVICE_EXTENSION   deviceExtension;
+    PDEVICE_EXTENSION deviceExtension;
 #endif
-    PLIST_ENTRY         powerList = (PLIST_ENTRY) Context;
+    PLIST_ENTRY powerList = (PLIST_ENTRY)Context;
 
     //
     // Do we have some work to do?
     //
-    if (IsListEmpty( powerList ) ) {
+    if (IsListEmpty(powerList))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_WARNING,
-            "OSNotifyDeviceWakeCallBack: %p is an empty list\n",
-            powerList
-            ) );
-        ExFreePool( powerList );
+        ACPIPrint((ACPI_PRINT_WARNING, "OSNotifyDeviceWakeCallBack: %p is an empty list\n", powerList));
+        ExFreePool(powerList);
         return;
-
     }
 
 #if DBG
@@ -1299,12 +1103,8 @@ Return Value:
     // Get the first record, so that we have a clue as to the device
     // that was completed
     //
-    powerRequest = CONTAINING_RECORD(
-        powerList->Flink,
-        ACPI_POWER_REQUEST,
-        ListEntry
-        );
-    ASSERT( powerRequest->Signature == ACPI_SIGNATURE );
+    powerRequest = CONTAINING_RECORD(powerList->Flink, ACPI_POWER_REQUEST, ListEntry);
+    ASSERT(powerRequest->Signature == ACPI_SIGNATURE);
 
     //
     // Grab the device extension
@@ -1314,36 +1114,21 @@ Return Value:
     //
     // Tell the world
     //
-    ACPIDevPrint( (
-        ACPI_PRINT_WAKE,
-        deviceExtension,
-        "OSNotifyDeviceWakeCallBack = 0x%08lx\n",
-        Status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_WAKE, deviceExtension, "OSNotifyDeviceWakeCallBack = 0x%08lx\n", Status));
 #endif
 
     //
     // Complete the requests
     //
-    ACPIWakeCompleteRequestQueue(
-        powerList,
-        Status
-        );
+    ACPIWakeCompleteRequestQueue(powerList, Status);
 
     //
     // Free the list pointer
     //
-    ExFreePool( powerList );
-
+    ExFreePool(powerList);
 }
-
-VOID
-EXPORT
-OSNotifyDeviceWakeByGPEEvent(
-    IN  ULONG   GpeIndex,
-    IN  ULONG   GpeRegister,
-    IN  ULONG   GpeMask
-    )
+
+VOID EXPORT OSNotifyDeviceWakeByGPEEvent(IN ULONG GpeIndex, IN ULONG GpeRegister, IN ULONG GpeMask)
 /*++
 
 Routine Description:
@@ -1362,78 +1147,61 @@ Return Value:
 
 --*/
 {
-    KIRQL               oldIrql;
-    NTSTATUS            status;
+    KIRQL oldIrql;
+    NTSTATUS status;
     PACPI_POWER_REQUEST powerRequest;
-    PDEVICE_EXTENSION   deviceExtension;
-    PLIST_ENTRY         listEntry;
-    PLIST_ENTRY         powerList;
+    PDEVICE_EXTENSION deviceExtension;
+    PLIST_ENTRY listEntry;
+    PLIST_ENTRY powerList;
 
     //
     // Let the world know
     //
-    ACPIPrint( (
-        ACPI_PRINT_WAKE,
-        "OSNotifyDeviceWakeByGPEEvent: %02lx[%x] & %02lx\n",
-        GpeRegister, GpeIndex, GpeMask
-        ) );
+    ACPIPrint((ACPI_PRINT_WAKE, "OSNotifyDeviceWakeByGPEEvent: %02lx[%x] & %02lx\n", GpeRegister, GpeIndex, GpeMask));
 
     //
     // Initialize the list that will hold the requests
     //
-    powerList = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(LIST_ENTRY),
-        ACPI_MISC_POOLTAG
-        );
-    if (powerList == NULL) {
+    powerList = ExAllocatePoolWithTag(NonPagedPool, sizeof(LIST_ENTRY), ACPI_MISC_POOLTAG);
+    if (powerList == NULL)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "OSNotifyDeviceWakeByGPEEvent: Cannot Allocate LIST_ENTRY\n"
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "OSNotifyDeviceWakeByGPEEvent: Cannot Allocate LIST_ENTRY\n"));
         return;
-
     }
-    InitializeListHead( powerList );
+    InitializeListHead(powerList);
 
     //
     // We need to be holding these locks
     //
-    IoAcquireCancelSpinLock( &oldIrql );
-    KeAcquireSpinLockAtDpcLevel( &AcpiPowerLock );
+    IoAcquireCancelSpinLock(&oldIrql);
+    KeAcquireSpinLockAtDpcLevel(&AcpiPowerLock);
 
     //
     // Look for a matching power request for this GPE
     //
-    for (listEntry = AcpiPowerWaitWakeList.Flink;
-         listEntry != &AcpiPowerWaitWakeList;
-         listEntry = listEntry->Flink) {
+    for (listEntry = AcpiPowerWaitWakeList.Flink; listEntry != &AcpiPowerWaitWakeList; listEntry = listEntry->Flink)
+    {
 
         //
         // Grab the request
         //
-        powerRequest = CONTAINING_RECORD(
-            listEntry,
-            ACPI_POWER_REQUEST,
-            ListEntry
-            );
-        ASSERT( powerRequest->Signature == ACPI_SIGNATURE );
+        powerRequest = CONTAINING_RECORD(listEntry, ACPI_POWER_REQUEST, ListEntry);
+        ASSERT(powerRequest->Signature == ACPI_SIGNATURE);
         deviceExtension = powerRequest->DeviceExtension;
 
         //
         // See if this request matches
         //
-        if (deviceExtension->PowerInfo.WakeBit == GpeIndex) {
+        if (deviceExtension->PowerInfo.WakeBit == GpeIndex)
+        {
 
             //
             // Get all of the wait requests for this device
             //
-            ACPIWakeRemoveDevicesAndUpdate( deviceExtension, powerList );
+            ACPIWakeRemoveDevicesAndUpdate(deviceExtension, powerList);
             break;
-
         }
-
     }
 
     //
@@ -1441,54 +1209,41 @@ Return Value:
     // devices waiting for it, as that would be a design which could cause a
     // deadlock
     //
-    if (!IsListEmpty( powerList ) ) {
+    if (!IsListEmpty(powerList))
+    {
 
-        ASSERT( !(GpeWakeEnable[GpeRegister] & GpeMask) );
-
+        ASSERT(!(GpeWakeEnable[GpeRegister] & GpeMask));
     }
 
     //
     // No longer need these locks
     //
-    KeReleaseSpinLockFromDpcLevel( &AcpiPowerLock );
-    IoReleaseCancelSpinLock( oldIrql );
+    KeReleaseSpinLockFromDpcLevel(&AcpiPowerLock);
+    IoReleaseCancelSpinLock(oldIrql);
 
     //
     // If the list is non-empty, then disable those requests
     //
-    if (!IsListEmpty( powerList ) ) {
+    if (!IsListEmpty(powerList))
+    {
 
-        status = ACPIWakeDisableAsync(
-            deviceExtension,
-            powerList,
-            OSNotifyDeviceWakeCallBack,
-            powerList
-            );
-        if (status != STATUS_PENDING) {
+        status = ACPIWakeDisableAsync(deviceExtension, powerList, OSNotifyDeviceWakeCallBack, powerList);
+        if (status != STATUS_PENDING)
+        {
 
-            OSNotifyDeviceWakeCallBack(
-                NULL,
-                status,
-                NULL,
-                powerList
-                );
-
+            OSNotifyDeviceWakeCallBack(NULL, status, NULL, powerList);
         }
 
-        ACPIDevPrint( (
-             ACPI_PRINT_WAKE,
-             deviceExtension,
-             "OSNotifyDeviceWakeByGPEIndex - ACPIWakeDisableAsync = %08lx\n",
-             status
-             ) );
-
-    } else {
+        ACPIDevPrint((ACPI_PRINT_WAKE, deviceExtension, "OSNotifyDeviceWakeByGPEIndex - ACPIWakeDisableAsync = %08lx\n",
+                      status));
+    }
+    else
+    {
 
         //
         // We must free this memory ourselves
         //
-        ExFreePool( powerList );
-
+        ExFreePool(powerList);
     }
 
     //
@@ -1496,16 +1251,10 @@ Return Value:
     //
     return;
 }
-
+
 NTSTATUS
 EXPORT
-OSNotifyFatalError(
-    IN  ULONG       Param1,
-    IN  ULONG       Param2,
-    IN  ULONG       Param3,
-    IN  ULONG_PTR   AmlContext,
-    IN  ULONG_PTR   Context
-    )
+OSNotifyFatalError(IN ULONG Param1, IN ULONG Param2, IN ULONG Param3, IN ULONG_PTR AmlContext, IN ULONG_PTR Context)
 /*++
 
 Routine Description:
@@ -1514,21 +1263,21 @@ Routine Description:
     machine can no longer handle. It
 --*/
 {
-    KIRQL   oldIrql;
+    KIRQL oldIrql;
 
     //
     // Acquire the spinlock and see if there is an outstanding fatal error
     // pending already
     //
-    KeAcquireSpinLock( &AcpiPowerLock, &oldIrql );
-    if (AcpiFatalOutstanding != FALSE) {
+    KeAcquireSpinLock(&AcpiPowerLock, &oldIrql);
+    if (AcpiFatalOutstanding != FALSE)
+    {
 
         //
         // There is one outstanding already... don't do anything
         //
-        KeReleaseSpinLock( &AcpiPowerLock, oldIrql );
+        KeReleaseSpinLock(&AcpiPowerLock, oldIrql);
         return STATUS_SUCCESS;
-
     }
 
     //
@@ -1539,28 +1288,21 @@ Routine Description:
     //
     // Initialize the work queue
     //
-    ExInitializeWorkItem(
-        &(AcpiFatalContext.Item),
-        OSNotifyFatalErrorWorker,
-        &AcpiFatalContext
-        );
-    AcpiFatalContext.Param1  = Param1;
-    AcpiFatalContext.Param2  = Param2;
-    AcpiFatalContext.Param3  = Param3;
+    ExInitializeWorkItem(&(AcpiFatalContext.Item), OSNotifyFatalErrorWorker, &AcpiFatalContext);
+    AcpiFatalContext.Param1 = Param1;
+    AcpiFatalContext.Param2 = Param2;
+    AcpiFatalContext.Param3 = Param3;
     AcpiFatalContext.Context = AmlContext;
 
 
     //
     // Queue the work item and return
     //
-    ExQueueWorkItem( &(AcpiFatalContext.Item), DelayedWorkQueue );
+    ExQueueWorkItem(&(AcpiFatalContext.Item), DelayedWorkQueue);
     return STATUS_SUCCESS;
 }
-
-VOID
-OSNotifyFatalErrorWorker(
-    IN  PVOID   Context
-    )
+
+VOID OSNotifyFatalErrorWorker(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1578,7 +1320,7 @@ Return Value:
 
 --*/
 {
-    PACPI_FATAL_ERROR_CONTEXT   fatal = (PACPI_FATAL_ERROR_CONTEXT) Context;
+    PACPI_FATAL_ERROR_CONTEXT fatal = (PACPI_FATAL_ERROR_CONTEXT)Context;
 #if 0
     PWCHAR                      stringData[1];
     ULONG                       data[3];
@@ -1606,13 +1348,6 @@ Return Value:
     //
     // Now, we can bugcheck
     //
-    PoShutdownBugCheck(
-        TRUE,
-        ACPI_BIOS_FATAL_ERROR,
-        fatal->Param1,
-        fatal->Param2,
-        fatal->Param3,
-        fatal->Context
-        );
+    PoShutdownBugCheck(TRUE, ACPI_BIOS_FATAL_ERROR, fatal->Param1, fatal->Param2, fatal->Param3, fatal->Context);
 #endif
 }

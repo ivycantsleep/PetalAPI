@@ -9,9 +9,9 @@
 
 #include "pch.h"
 
-#ifdef	LOCKABLE_PRAGMA
-#pragma	ACPI_LOCKABLE_DATA
-#pragma	ACPI_LOCKABLE_CODE
+#ifdef LOCKABLE_PRAGMA
+#pragma ACPI_LOCKABLE_DATA
+#pragma ACPI_LOCKABLE_CODE
 #endif
 
 /***LP  ListRemoveEntry - Remove an entry from the list
@@ -56,7 +56,7 @@ VOID EXPORT ListRemoveEntry(PLIST plist, PPLIST pplistHead)
     }
 
     EXIT(4, ("ListRemoveEntry! (plistHead=%x)\n", *pplistHead));
-}       //ListRemoveEntry
+} //ListRemoveEntry
 
 /***LP  ListRemoveHead - Remove the head entry of the list
  *
@@ -80,7 +80,7 @@ PLIST EXPORT ListRemoveHead(PPLIST pplistHead)
 
     EXIT(4, ("ListRemoveHead=%x (plistHead=%x)\n", plist, *pplistHead));
     return plist;
-}       //ListRemoveHead
+} //ListRemoveHead
 
 /***LP  ListRemoveTail - Remove the tail entry of the list
  *
@@ -112,7 +112,7 @@ PLIST EXPORT ListRemoveTail(PPLIST pplistHead)
 
     EXIT(4, ("ListRemoveTail=%x (plistHead=%x)\n", plist, *pplistHead));
     return plist;
-}       //ListRemoveTail
+} //ListRemoveTail
 
 /***LP  ListRemoveAll - Remove all elements in the list
  *
@@ -136,7 +136,7 @@ VOID EXPORT ListRemoveAll(PPLIST pplistHead)
     }
 
     EXIT(4, ("ListRemoveAll! (plistHead=%x)\n", *pplistHead));
-}       //ListRemoveAll
+} //ListRemoveAll
 
 /***LP  ListInsertHead - Insert an entry at the head of the list
  *
@@ -160,7 +160,7 @@ VOID EXPORT ListInsertHead(PLIST plist, PPLIST pplistHead)
     *pplistHead = plist;
 
     EXIT(4, ("ListInsertHead! (plistHead=%x)\n", *pplistHead));
-}       //ListInsertHead
+} //ListInsertHead
 
 /***LP  ListInsertTail - Insert an entry at the tail of the list
  *
@@ -197,4 +197,4 @@ VOID EXPORT ListInsertTail(PLIST plist, PPLIST pplistHead)
     }
 
     EXIT(4, ("ListInsertTail! (plistHead=%x)\n", *pplistHead));
-}       //ListInsertTail
+} //ListInsertTail

@@ -27,38 +27,29 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-KeContextToKframesSpecial (
-    IN PKTHREAD Thread,
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN PCONTEXT ContextFrame,
-    IN ULONG ContextFlags
-    );
+VOID KeContextToKframesSpecial(IN PKTHREAD Thread, IN OUT PKTRAP_FRAME TrapFrame,
+                               IN OUT PKEXCEPTION_FRAME ExceptionFrame, IN PCONTEXT ContextFrame,
+                               IN ULONG ContextFlags);
 
 //
 // The following assert macros are used to check that an input object is
 // really the proper type.
 //
 
-#define ASSERT_PROCESS(E) {                    \
-    ASSERT((E)->Header.Type == ProcessObject); \
-}
+#define ASSERT_PROCESS(E)                          \
+    {                                              \
+        ASSERT((E)->Header.Type == ProcessObject); \
+    }
 
-#define ASSERT_THREAD(E) {                    \
-    ASSERT((E)->Header.Type == ThreadObject); \
-}
+#define ASSERT_THREAD(E)                          \
+    {                                             \
+        ASSERT((E)->Header.Type == ThreadObject); \
+    }
 
 
-
-VOID
-KiInitializeContextThread (
-    IN PKTHREAD Thread,
-    IN PKSYSTEM_ROUTINE SystemRoutine,
-    IN PKSTART_ROUTINE StartRoutine OPTIONAL,
-    IN PVOID StartContext OPTIONAL,
-    IN PCONTEXT ContextRecord OPTIONAL
-    )
+VOID KiInitializeContextThread(IN PKTHREAD Thread, IN PKSYSTEM_ROUTINE SystemRoutine,
+                               IN PKSTART_ROUTINE StartRoutine OPTIONAL, IN PVOID StartContext OPTIONAL,
+                               IN PCONTEXT ContextRecord OPTIONAL)
 
 /*++
 
@@ -134,22 +125,18 @@ Return Value:
     // allocate the switch frame.
     //
 
-    if (ARGUMENT_PRESENT(ContextRecord)) {
+    if (ARGUMENT_PRESENT(ContextRecord))
+    {
 
-        TrFrame = (PKTRAP_FRAME)((InitialStack) 
-                      - KTHREAD_STATE_SAVEAREA_LENGTH
-                      - KTRAP_FRAME_LENGTH);
+        TrFrame = (PKTRAP_FRAME)((InitialStack)-KTHREAD_STATE_SAVEAREA_LENGTH - KTRAP_FRAME_LENGTH);
 
-        ExFrame = (PKEXCEPTION_FRAME)(((ULONG_PTR)TrFrame + 
-                      STACK_SCRATCH_AREA - 
-                      sizeof(KEXCEPTION_FRAME)) & ~((ULONG_PTR)15));
+        ExFrame = (PKEXCEPTION_FRAME)(((ULONG_PTR)TrFrame + STACK_SCRATCH_AREA - sizeof(KEXCEPTION_FRAME)) &
+                                      ~((ULONG_PTR)15));
 
-        SwFrame = (PKSWITCH_FRAME)(((ULONG_PTR)ExFrame -
-                      sizeof(KSWITCH_FRAME)) & ~((ULONG_PTR)15));
+        SwFrame = (PKSWITCH_FRAME)(((ULONG_PTR)ExFrame - sizeof(KSWITCH_FRAME)) & ~((ULONG_PTR)15));
 
-        KeContextToKframesSpecial(Thread, TrFrame, ExFrame,
-                           ContextRecord,
-                           ContextRecord->ContextFlags | CONTEXT_CONTROL);
+        KeContextToKframesSpecial(Thread, TrFrame, ExFrame, ContextRecord,
+                                  ContextRecord->ContextFlags | CONTEXT_CONTROL);
 
         //
         // Set the saved previous processor mode in the trap frame and the
@@ -170,8 +157,9 @@ Return Value:
         //
 
         TrFrame->IntTeb = (ULONGLONG)Thread->Teb;
-
-    } else {
+    }
+    else
+    {
 
         SwFrame = (PKSWITCH_FRAME)((InitialStack) - sizeof(KSWITCH_FRAME));
 
@@ -187,21 +175,21 @@ Return Value:
     // The Swap return pointer and SystemRoutine are entry points, not function pointers.
     //
 
-    RtlZeroMemory((PVOID)SwFrame, sizeof(KSWITCH_FRAME));   // init all to 0
+    RtlZeroMemory((PVOID)SwFrame, sizeof(KSWITCH_FRAME)); // init all to 0
 
     SwFrame->SwitchRp = ((PPLABEL_DESCRIPTOR)KiThreadStartup)->EntryPoint;
     SwFrame->SwitchExceptionFrame.IntS0 = (ULONGLONG)ContextRecord;
     SwFrame->SwitchExceptionFrame.IntS1 = (ULONGLONG)StartContext;
     SwFrame->SwitchExceptionFrame.IntS2 = (ULONGLONG)StartRoutine;
-    SwFrame->SwitchExceptionFrame.IntS3 = 
-        ((PPLABEL_DESCRIPTOR)SystemRoutine)->EntryPoint;
+    SwFrame->SwitchExceptionFrame.IntS3 = ((PPLABEL_DESCRIPTOR)SystemRoutine)->EntryPoint;
     SwFrame->SwitchFPSR = FPSR_FOR_KERNEL;
     SwFrame->SwitchBsp = (ULONGLONG)Thread->InitialBStore;
 
     Thread->KernelBStore = Thread->InitialBStore;
-    Thread->KernelStack = (PVOID)((ULONG_PTR)SwFrame-STACK_SCRATCH_AREA);
+    Thread->KernelStack = (PVOID)((ULONG_PTR)SwFrame - STACK_SCRATCH_AREA);
 
-    if (Thread->Teb) {
+    if (Thread->Teb)
+    {
         PKAPPLICATION_REGISTERS AppRegs;
 
         AppRegs = GET_APPLICATION_REGISTER_SAVEAREA(Thread->StackBase);
@@ -213,26 +201,21 @@ Return Value:
         // Based on i386 eflags SANITIZE_FLAGS
         // This is simplier, though since never running i386 in kernel
         // mode
-        AppRegs->Ar24 = EFLAGS_INTERRUPT_MASK | (((ULONG) ContextRecord->Eflag) &  EFLAGS_USER_SANITIZE);
+        AppRegs->Ar24 = EFLAGS_INTERRUPT_MASK | (((ULONG)ContextRecord->Eflag) & EFLAGS_USER_SANITIZE);
 
         AppRegs->Ar25 = USER_CODE_DESCRIPTOR;
         AppRegs->Ar26 = USER_DATA_DESCRIPTOR;
-        AppRegs->Ar27 = (((ULONGLONG) CR4_VME | CR4_FXSR | CR4_XMMEXCPT) << 32)
-                      | (CR0_PE | CFLG_II);
-        AppRegs->Ar28 = SANITIZE_AR28_FSR (ContextRecord->StFSR, UserMode);
-        AppRegs->Ar29 = SANITIZE_AR29_FIR (ContextRecord->StFIR, UserMode);
-        AppRegs->Ar30 = SANITIZE_AR30_FDR (ContextRecord->StFDR, UserMode);
-        
+        AppRegs->Ar27 = (((ULONGLONG)CR4_VME | CR4_FXSR | CR4_XMMEXCPT) << 32) | (CR0_PE | CFLG_II);
+        AppRegs->Ar28 = SANITIZE_AR28_FSR(ContextRecord->StFSR, UserMode);
+        AppRegs->Ar29 = SANITIZE_AR29_FIR(ContextRecord->StFIR, UserMode);
+        AppRegs->Ar30 = SANITIZE_AR30_FDR(ContextRecord->StFDR, UserMode);
     }
 
     return;
 }
-
+
 BOOLEAN
-KeSetAutoAlignmentProcess (
-    IN PRKPROCESS Process,
-    IN BOOLEAN Enable
-    )
+KeSetAutoAlignmentProcess(IN PRKPROCESS Process, IN BOOLEAN Enable)
 
 /*++
 
@@ -288,12 +271,9 @@ Return Value:
     KiUnlockDispatcherDatabase(OldIrql);
     return Previous;
 }
-
+
 BOOLEAN
-KeSetAutoAlignmentThread (
-    IN PKTHREAD Thread,
-    IN BOOLEAN Enable
-    )
+KeSetAutoAlignmentThread(IN PKTHREAD Thread, IN BOOLEAN Enable)
 
 /*++
 

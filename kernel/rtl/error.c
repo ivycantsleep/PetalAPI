@@ -40,11 +40,9 @@ Revision History:
 #if ERROR_SUCCESS != 0 || NO_ERROR != 0
 #error Invalid value for ERROR_SUCCESS.
 #endif
-
+
 ULONG
-RtlNtStatusToDosError (
-    IN NTSTATUS Status
-    )
+RtlNtStatusToDosError(IN NTSTATUS Status)
 
 /*++
 
@@ -68,20 +66,22 @@ Return Value:
 
     Teb = NtCurrentTeb();
 
-    if (Teb) {
-        try {
+    if (Teb)
+    {
+        try
+        {
             Teb->LastStatusValue = Status;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
     }
 
-    return RtlNtStatusToDosErrorNoTeb( Status );
+    return RtlNtStatusToDosErrorNoTeb(Status);
 }
-
+
 ULONG
-RtlNtStatusToDosErrorNoTeb (
-    IN NTSTATUS Status
-    )
+RtlNtStatusToDosErrorNoTeb(IN NTSTATUS Status)
 
 /*++
 
@@ -112,7 +112,8 @@ Return Value:
     //
 
 
-    if (Status & 0x20000000) {
+    if (Status & 0x20000000)
+    {
 
         //
         // The customer bit is set so lets just pass the
@@ -120,17 +121,18 @@ Return Value:
         //
 
         return Status;
-
     }
-    else if ((Status & 0xffff0000) == 0x80070000) {
+    else if ((Status & 0xffff0000) == 0x80070000)
+    {
 
         //
         // The status code  was a win32 error already.
         //
 
-        return(Status & 0x0000ffff);
+        return (Status & 0x0000ffff);
     }
-    else if ((Status & 0xf0000000) == 0xd0000000) {
+    else if ((Status & 0xf0000000) == 0xd0000000)
+    {
 
         //
         // The status code is a HRESULT from NTSTATUS
@@ -146,23 +148,29 @@ Return Value:
 
     Entry = 0;
     Index = 0;
-    do {
-        if ((ULONG)Status >= RtlpRunTable[Entry + 1].BaseCode) {
+    do
+    {
+        if ((ULONG)Status >= RtlpRunTable[Entry + 1].BaseCode)
+        {
             Index += (RtlpRunTable[Entry].RunLength * RtlpRunTable[Entry].CodeSize);
-
-        } else {
+        }
+        else
+        {
             Offset = (ULONG)Status - RtlpRunTable[Entry].BaseCode;
-            if (Offset >= RtlpRunTable[Entry].RunLength) {
+            if (Offset >= RtlpRunTable[Entry].RunLength)
+            {
                 break;
-
-            } else {
+            }
+            else
+            {
                 Index += (Offset * (ULONG)RtlpRunTable[Entry].CodeSize);
-                if (RtlpRunTable[Entry].CodeSize == 1) {
+                if (RtlpRunTable[Entry].CodeSize == 1)
+                {
                     return (ULONG)RtlpStatusTable[Index];
-
-                } else {
-                    return (((ULONG)RtlpStatusTable[Index + 1] << 16) |
-                                                (ULONG)RtlpStatusTable[Index]);
+                }
+                else
+                {
+                    return (((ULONG)RtlpStatusTable[Index + 1] << 16) | (ULONG)RtlpStatusTable[Index]);
                 }
             }
         }
@@ -177,12 +185,13 @@ Return Value:
     // the high 16 bits.  Detect this and return the low 16 bits if true.
     //
 
-    if (((ULONG)Status >> 16) == 0xC001) {
+    if (((ULONG)Status >> 16) == 0xC001)
+    {
         return ((ULONG)Status & 0xFFFF);
     }
 
 #ifndef NTOS_KERNEL_RUNTIME
-    DbgPrint("RTL: RtlNtStatusToDosError(0x%lx): No Valid Win32 Error Mapping\n",Status);
+    DbgPrint("RTL: RtlNtStatusToDosError(0x%lx): No Valid Win32 Error Mapping\n", Status);
     DbgPrint("RTL: Edit ntos\\rtl\\generr.c to correct the problem\n");
     DbgPrint("RTL: ERROR_MR_MID_NOT_FOUND is being returned\n");
 
@@ -197,55 +206,37 @@ Return Value:
 
 NTSTATUS
 NTAPI
-RtlGetLastNtStatus(
-	VOID
-	)
+RtlGetLastNtStatus(VOID)
 {
-	return NtCurrentTeb()->LastStatusValue;
+    return NtCurrentTeb()->LastStatusValue;
 }
 
-LONG
-NTAPI
-RtlGetLastWin32Error(
-	VOID
-	)
+LONG NTAPI RtlGetLastWin32Error(VOID)
 {
-	return NtCurrentTeb()->LastErrorValue;
+    return NtCurrentTeb()->LastErrorValue;
 }
 
-VOID
-NTAPI
-RtlSetLastWin32ErrorAndNtStatusFromNtStatus(
-	NTSTATUS Status
-	)
+VOID NTAPI RtlSetLastWin32ErrorAndNtStatusFromNtStatus(NTSTATUS Status)
 {
-	//
-	// RtlNtStatusToDosError stores into NtCurrentTeb()->LastStatusValue.
-	//
-	RtlSetLastWin32Error(RtlNtStatusToDosError(Status));
+    //
+    // RtlNtStatusToDosError stores into NtCurrentTeb()->LastStatusValue.
+    //
+    RtlSetLastWin32Error(RtlNtStatusToDosError(Status));
 }
 
-VOID
-NTAPI
-RtlSetLastWin32Error(
-	LONG Win32Error
-	)
+VOID NTAPI RtlSetLastWin32Error(LONG Win32Error)
 {
-//
-// Arguably this should clear or reset the last nt status, but it does not
-// touch it.
-//
-	NtCurrentTeb()->LastErrorValue = Win32Error;
+    //
+    // Arguably this should clear or reset the last nt status, but it does not
+    // touch it.
+    //
+    NtCurrentTeb()->LastErrorValue = Win32Error;
 }
 
-VOID
-NTAPI
-RtlRestoreLastWin32Error(
-	LONG Win32Error
-	)
+VOID NTAPI RtlRestoreLastWin32Error(LONG Win32Error)
 {
 #if DBG
-	if ((LONG)NtCurrentTeb()->LastErrorValue != Win32Error)
+    if ((LONG)NtCurrentTeb()->LastErrorValue != Win32Error)
 #endif
-		NtCurrentTeb()->LastErrorValue = Win32Error;
+        NtCurrentTeb()->LastErrorValue = Win32Error;
 }

@@ -29,136 +29,96 @@ Revision History:
 // Guid related definitions
 //
 
-#define GUID_STRING_LENGTH  38
-#define GUID_STRING_SIZE    GUID_STRING_LENGTH * sizeof(WCHAR)
+#define GUID_STRING_LENGTH 38
+#define GUID_STRING_SIZE GUID_STRING_LENGTH * sizeof(WCHAR)
 
 //
 // Definitions for IoGetDeviceInterfaces
 //
 
-#define INITIAL_INFO_BUFFER_SIZE         512
-#define INFO_BUFFER_GROW_SIZE            64
-#define INITIAL_SYMLINK_BUFFER_SIZE      1024
-#define SYMLINK_BUFFER_GROW_SIZE         128
-#define INITIAL_RETURN_BUFFER_SIZE       4096
-#define RETURN_BUFFER_GROW_SIZE          512
+#define INITIAL_INFO_BUFFER_SIZE 512
+#define INFO_BUFFER_GROW_SIZE 64
+#define INITIAL_SYMLINK_BUFFER_SIZE 1024
+#define SYMLINK_BUFFER_GROW_SIZE 128
+#define INITIAL_RETURN_BUFFER_SIZE 4096
+#define RETURN_BUFFER_GROW_SIZE 512
 
 //
 // This should never have to grow, since it accomodates the maximum length of a
 // device instance name.
 //
-#define INITIAL_DEVNODE_NAME_BUFFER_SIZE   (FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) + (MAX_DEVICE_ID_LEN * sizeof(WCHAR)))
+#define INITIAL_DEVNODE_NAME_BUFFER_SIZE \
+    (FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) + (MAX_DEVICE_ID_LEN * sizeof(WCHAR)))
 
 //
 // Definitions for IoOpenDeviceInterfaceRegistryKey
 //
 
-#define KEY_STRING_PREFIX                  TEXT("##?#")
+#define KEY_STRING_PREFIX TEXT("##?#")
 
 //
 // Definitions for IoRegisterDeviceInterface
 //
 
-#define SEPERATOR_STRING                   TEXT("\\")
-#define SEPERATOR_CHAR                     (L'\\')
-#define ALT_SEPERATOR_CHAR                 (L'/')
-#define REPLACED_SEPERATOR_STRING          TEXT("#")
-#define REPLACED_SEPERATOR_CHAR            (L'#')
-#define USER_SYMLINK_STRING_PREFIX         TEXT("\\\\?\\")
-#define KERNEL_SYMLINK_STRING_PREFIX       TEXT("\\??\\")
-#define GLOBAL_SYMLINK_STRING_PREFIX       TEXT("\\GLOBAL??\\")
-#define REFSTRING_PREFIX_CHAR              (L'#')
+#define SEPERATOR_STRING TEXT("\\")
+#define SEPERATOR_CHAR (L'\\')
+#define ALT_SEPERATOR_CHAR (L'/')
+#define REPLACED_SEPERATOR_STRING TEXT("#")
+#define REPLACED_SEPERATOR_CHAR (L'#')
+#define USER_SYMLINK_STRING_PREFIX TEXT("\\\\?\\")
+#define KERNEL_SYMLINK_STRING_PREFIX TEXT("\\??\\")
+#define GLOBAL_SYMLINK_STRING_PREFIX TEXT("\\GLOBAL??\\")
+#define REFSTRING_PREFIX_CHAR (L'#')
 
 //
 // Prototypes
 //
 
 NTSTATUS
-IopAppendBuffer(
-    IN PBUFFER_INFO Info,
-    IN PVOID Data,
-    IN ULONG DataSize
-    );
+IopAppendBuffer(IN PBUFFER_INFO Info, IN PVOID Data, IN ULONG DataSize);
 
 NTSTATUS
-IopOverwriteBuffer(
-    IN PBUFFER_INFO Info,
-    IN PVOID Data,
-    IN ULONG DataSize
-    );
+IopOverwriteBuffer(IN PBUFFER_INFO Info, IN PVOID Data, IN ULONG DataSize);
 
 NTSTATUS
-IopRealloc(
-    IN OUT PVOID *Buffer,
-    IN ULONG OldSize,
-    IN ULONG NewSize
-    );
+IopRealloc(IN OUT PVOID *Buffer, IN ULONG OldSize, IN ULONG NewSize);
 
 NTSTATUS
-IopBuildSymbolicLinkStrings(
-    IN PUNICODE_STRING DeviceString,
-    IN PUNICODE_STRING GuidString,
-    IN PUNICODE_STRING ReferenceString      OPTIONAL,
-    OUT PUNICODE_STRING UserString,
-    OUT PUNICODE_STRING KernelString
-    );
+IopBuildSymbolicLinkStrings(IN PUNICODE_STRING DeviceString, IN PUNICODE_STRING GuidString,
+                            IN PUNICODE_STRING ReferenceString OPTIONAL, OUT PUNICODE_STRING UserString,
+                            OUT PUNICODE_STRING KernelString);
 
 NTSTATUS
-IopBuildGlobalSymbolicLinkString(
-    IN  PUNICODE_STRING SymbolicLinkName,
-    OUT PUNICODE_STRING GlobalString
-    );
+IopBuildGlobalSymbolicLinkString(IN PUNICODE_STRING SymbolicLinkName, OUT PUNICODE_STRING GlobalString);
 
 NTSTATUS
-IopDeviceInterfaceKeysFromSymbolicLink(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE DeviceInterfaceClassKey     OPTIONAL,
-    OUT PHANDLE DeviceInterfaceKey          OPTIONAL,
-    OUT PHANDLE DeviceInterfaceInstanceKey  OPTIONAL
-    );
+IopDeviceInterfaceKeysFromSymbolicLink(IN PUNICODE_STRING SymbolicLinkName, IN ACCESS_MASK DesiredAccess,
+                                       OUT PHANDLE DeviceInterfaceClassKey OPTIONAL,
+                                       OUT PHANDLE DeviceInterfaceKey OPTIONAL,
+                                       OUT PHANDLE DeviceInterfaceInstanceKey OPTIONAL);
 
 NTSTATUS
-IopDropReferenceString(
-    OUT PUNICODE_STRING OutString,
-    IN PUNICODE_STRING InString
-    );
+IopDropReferenceString(OUT PUNICODE_STRING OutString, IN PUNICODE_STRING InString);
 
 NTSTATUS
-IopOpenOrCreateDeviceInterfaceSubKeys(
-    OUT PHANDLE InterfaceKeyHandle           OPTIONAL,
-    OUT PULONG InterfaceKeyDisposition       OPTIONAL,
-    OUT PHANDLE InterfaceInstanceKeyHandle   OPTIONAL,
-    OUT PULONG InterfaceInstanceDisposition  OPTIONAL,
-    IN HANDLE InterfaceClassKeyHandle,
-    IN PUNICODE_STRING DeviceInterfaceName,
-    IN ACCESS_MASK DesiredAccess,
-    IN BOOLEAN Create
-    );
+IopOpenOrCreateDeviceInterfaceSubKeys(OUT PHANDLE InterfaceKeyHandle OPTIONAL,
+                                      OUT PULONG InterfaceKeyDisposition OPTIONAL,
+                                      OUT PHANDLE InterfaceInstanceKeyHandle OPTIONAL,
+                                      OUT PULONG InterfaceInstanceDisposition OPTIONAL,
+                                      IN HANDLE InterfaceClassKeyHandle, IN PUNICODE_STRING DeviceInterfaceName,
+                                      IN ACCESS_MASK DesiredAccess, IN BOOLEAN Create);
 
 NTSTATUS
-IopParseSymbolicLinkName(
-    IN  PUNICODE_STRING SymbolicLinkName,
-    OUT PUNICODE_STRING PrefixString        OPTIONAL,
-    OUT PUNICODE_STRING MungedPathString    OPTIONAL,
-    OUT PUNICODE_STRING GuidString          OPTIONAL,
-    OUT PUNICODE_STRING RefString           OPTIONAL,
-    OUT PBOOLEAN        RefStringPresent    OPTIONAL,
-    OUT LPGUID Guid                         OPTIONAL
-    );
+IopParseSymbolicLinkName(IN PUNICODE_STRING SymbolicLinkName, OUT PUNICODE_STRING PrefixString OPTIONAL,
+                         OUT PUNICODE_STRING MungedPathString OPTIONAL, OUT PUNICODE_STRING GuidString OPTIONAL,
+                         OUT PUNICODE_STRING RefString OPTIONAL, OUT PBOOLEAN RefStringPresent OPTIONAL,
+                         OUT LPGUID Guid OPTIONAL);
 
 NTSTATUS
-IopReplaceSeperatorWithPound(
-    OUT PUNICODE_STRING OutString,
-    IN PUNICODE_STRING InString
-    );
+IopReplaceSeperatorWithPound(OUT PUNICODE_STRING OutString, IN PUNICODE_STRING InString);
 
 NTSTATUS
-IopSetRegistryStringValue(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING ValueName,
-    IN PUNICODE_STRING ValueData
-    );
+IopSetRegistryStringValue(IN HANDLE KeyHandle, IN PUNICODE_STRING ValueName, IN PUNICODE_STRING ValueData);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, IoGetDeviceInterfaceAlias)
@@ -191,13 +151,9 @@ IopSetRegistryStringValue(
 #pragma alloc_text(PAGE, IopUnregisterDeviceInterface)
 #endif // ALLOC_PRAGMA
 
-
 
 NTSTATUS
-IopAllocateBuffer(
-    IN PBUFFER_INFO Info,
-    IN ULONG Size
-    )
+IopAllocateBuffer(IN PBUFFER_INFO Info, IN ULONG Size)
 
 /*++
 
@@ -223,7 +179,8 @@ Return Value:
     ASSERT(Info);
 
     Info->Buffer = ExAllocatePool(PagedPool, Size);
-    if (Info->Buffer == NULL) {
+    if (Info->Buffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -235,11 +192,7 @@ Return Value:
 
 
 NTSTATUS
-IopResizeBuffer(
-    IN PBUFFER_INFO Info,
-    IN ULONG NewSize,
-    IN BOOLEAN CopyContents
-    )
+IopResizeBuffer(IN PBUFFER_INFO Info, IN ULONG NewSize, IN BOOLEAN CopyContents)
 
 /*++
 
@@ -273,11 +226,13 @@ Return Value:
     used = (ULONG)(Info->Current - Info->Buffer);
 
     newBuffer = ExAllocatePool(PagedPool, NewSize);
-    if (newBuffer == NULL) {
+    if (newBuffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if (CopyContents) {
+    if (CopyContents)
+    {
 
         //
         // Assert there is room in the buffer
@@ -285,13 +240,12 @@ Return Value:
 
         ASSERT(used < NewSize);
 
-        RtlCopyMemory(newBuffer,
-                      Info->Buffer,
-                      used);
+        RtlCopyMemory(newBuffer, Info->Buffer, used);
 
         Info->Current = newBuffer + used;
-
-    } else {
+    }
+    else
+    {
 
         Info->Current = newBuffer;
     }
@@ -304,10 +258,7 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-VOID
-IopFreeBuffer(
-    IN PBUFFER_INFO Info
-    )
+VOID IopFreeBuffer(IN PBUFFER_INFO Info)
 
 /*++
 
@@ -344,11 +295,7 @@ Return Value:
 }
 
 NTSTATUS
-IopAppendBuffer(
-    IN PBUFFER_INFO Info,
-    IN PVOID Data,
-    IN ULONG DataSize
-    )
+IopAppendBuffer(IN PBUFFER_INFO Info, IN PVOID Data, IN ULONG DataSize)
 
 /*++
 
@@ -380,22 +327,21 @@ Return Value:
     used = (ULONG)(Info->Current - Info->Buffer);
     free = Info->MaxSize - used;
 
-    if (free < DataSize) {
+    if (free < DataSize)
+    {
         status = IopResizeBuffer(Info, used + DataSize, TRUE);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto clean0;
         }
-
     }
 
     //
     // Copy the data into the buffer
     //
 
-    RtlCopyMemory(Info->Current,
-                  Data,
-                  DataSize);
+    RtlCopyMemory(Info->Current, Data, DataSize);
 
     //
     // Advance down the buffer
@@ -405,15 +351,10 @@ Return Value:
 
 clean0:
     return status;
-
 }
 
 NTSTATUS
-IopOverwriteBuffer(
-    IN PBUFFER_INFO Info,
-    IN PVOID Data,
-    IN ULONG DataSize
-    )
+IopOverwriteBuffer(IN PBUFFER_INFO Info, IN PVOID Data, IN ULONG DataSize)
 
 /*++
 
@@ -446,22 +387,21 @@ Return Value:
     free = Info->MaxSize;
 
 
-    if (free < DataSize) {
+    if (free < DataSize)
+    {
         status = IopResizeBuffer(Info, DataSize, FALSE);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto clean0;
         }
-
     }
 
     //
     // Copy the data into the buffer
     //
 
-    RtlCopyMemory(Info->Buffer,
-                  Data,
-                  DataSize);
+    RtlCopyMemory(Info->Buffer, Data, DataSize);
 
     //
     // Advance down the buffer
@@ -475,14 +415,8 @@ clean0:
 
 
 NTSTATUS
-IopGetDeviceInterfaces(
-        IN CONST GUID *InterfaceClassGuid,
-        IN PUNICODE_STRING DevicePath   OPTIONAL,
-        IN ULONG Flags,
-        IN BOOLEAN UserModeFormat,
-        OUT PWSTR *SymbolicLinkList,
-        OUT PULONG SymbolicLinkListSize OPTIONAL
-        )
+IopGetDeviceInterfaces(IN CONST GUID *InterfaceClassGuid, IN PUNICODE_STRING DevicePath OPTIONAL, IN ULONG Flags,
+                       IN BOOLEAN UserModeFormat, OUT PWSTR *SymbolicLinkList, OUT PULONG SymbolicLinkListSize OPTIONAL)
 
 /*++
 
@@ -544,7 +478,8 @@ Return Value:
     //
 
     status = RtlStringFromGUID(InterfaceClassGuid, &guidString);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto finalClean;
     }
 
@@ -552,35 +487,31 @@ Return Value:
     // Allocate initial buffers
     //
 
-    status = IopAllocateBuffer(&returnBuffer,
-                               INITIAL_RETURN_BUFFER_SIZE
-                               );
+    status = IopAllocateBuffer(&returnBuffer, INITIAL_RETURN_BUFFER_SIZE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
-    status = IopAllocateBuffer(&infoBuffer,
-                               INITIAL_INFO_BUFFER_SIZE
-                               );
+    status = IopAllocateBuffer(&infoBuffer, INITIAL_INFO_BUFFER_SIZE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
-    status = IopAllocateBuffer(&symLinkBuffer,
-                               INITIAL_SYMLINK_BUFFER_SIZE
-                               );
+    status = IopAllocateBuffer(&symLinkBuffer, INITIAL_SYMLINK_BUFFER_SIZE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
-    status = IopAllocateBuffer(&devnodeNameBuffer,
-                               INITIAL_DEVNODE_NAME_BUFFER_SIZE
-                               );
+    status = IopAllocateBuffer(&devnodeNameBuffer, INITIAL_DEVNODE_NAME_BUFFER_SIZE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean2a;
     }
 
@@ -600,15 +531,10 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&tempString, REGSTR_FULL_PATH_DEVICE_CLASSES);
-    status = IopCreateRegistryKeyEx( &hDeviceClasses,
-                                     NULL,
-                                     &tempString,
-                                     KEY_ALL_ACCESS,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status = IopCreateRegistryKeyEx(&hDeviceClasses, NULL, &tempString, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE, NULL);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean3;
     }
 
@@ -616,14 +542,11 @@ Return Value:
     // Open function class GUID key
     //
 
-    status = IopOpenRegistryKeyEx( &hClass,
-                                   hDeviceClasses,
-                                   &guidString,
-                                   KEY_ALL_ACCESS
-                                   );
+    status = IopOpenRegistryKeyEx(&hClass, hDeviceClasses, &guidString, KEY_ALL_ACCESS);
     ZwClose(hDeviceClasses);
 
-    if(status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_PATH_NOT_FOUND) {
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_PATH_NOT_FOUND)
+    {
 
         //
         // The path does not exist - return a single null character buffer
@@ -631,7 +554,9 @@ Return Value:
 
         status = STATUS_SUCCESS;
         goto clean5;
-    } else if (!NT_SUCCESS(status)) {
+    }
+    else if (!NT_SUCCESS(status))
+    {
         goto clean3;
     }
 
@@ -639,52 +564,45 @@ Return Value:
     // Get the default value if it exists
     //
 
-    status = IopGetRegistryValue(hClass,
-                                 REGSTR_VAL_DEFAULT,
-                                 &pDefaultInfo
-                                 );
+    status = IopGetRegistryValue(hClass, REGSTR_VAL_DEFAULT, &pDefaultInfo);
 
 
-    if (NT_SUCCESS(status)
-        && pDefaultInfo->Type == REG_SZ
-        && pDefaultInfo->DataLength >= sizeof(WCHAR)) {
+    if (NT_SUCCESS(status) && pDefaultInfo->Type == REG_SZ && pDefaultInfo->DataLength >= sizeof(WCHAR))
+    {
 
         //
         // We have a default - construct a counted string from the default
         //
 
         defaultPresent = TRUE;
-        defaultString.Buffer = (PWSTR) KEY_VALUE_DATA(pDefaultInfo);
-        defaultString.Length = (USHORT) pDefaultInfo->DataLength - sizeof(UNICODE_NULL);
+        defaultString.Buffer = (PWSTR)KEY_VALUE_DATA(pDefaultInfo);
+        defaultString.Length = (USHORT)pDefaultInfo->DataLength - sizeof(UNICODE_NULL);
         defaultString.MaximumLength = defaultString.Length;
 
         //
         // Open the device interface instance key for the default name.
         //
-        status = IopOpenOrCreateDeviceInterfaceSubKeys(NULL,
-                                                       NULL,
-                                                       &hKey,
-                                                       NULL,
-                                                       hClass,
-                                                       &defaultString,
-                                                       KEY_READ,
-                                                       FALSE
-                                                      );
+        status =
+            IopOpenOrCreateDeviceInterfaceSubKeys(NULL, NULL, &hKey, NULL, hClass, &defaultString, KEY_READ, FALSE);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             defaultPresent = FALSE;
             ExFreePool(pDefaultInfo);
             //
             // Continue with the call but ignore the invalid default entry
             //
-        } else {
+        }
+        else
+        {
 
             //
             // If we are just supposed to return live interfaces, then make sure this default
             // interface is linked.
             //
 
-            if (!(Flags & DEVICE_INTERFACE_INCLUDE_NONACTIVE)) {
+            if (!(Flags & DEVICE_INTERFACE_INCLUDE_NONACTIVE))
+            {
 
                 defaultPresent = FALSE;
 
@@ -693,26 +611,18 @@ Return Value:
                 //
 
                 PiWstrToUnicodeString(&tempString, REGSTR_KEY_CONTROL);
-                status = IopOpenRegistryKeyEx( &hControl,
-                                               hKey,
-                                               &tempString,
-                                               KEY_ALL_ACCESS
-                                               );
+                status = IopOpenRegistryKeyEx(&hControl, hKey, &tempString, KEY_ALL_ACCESS);
 
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     //
                     // Get the linked value
                     //
 
                     PiWstrToUnicodeString(&tempString, REGSTR_VAL_LINKED);
                     ASSERT(infoBuffer.MaxSize >= sizeof(KEY_VALUE_PARTIAL_INFORMATION));
-                    status = ZwQueryValueKey(hControl,
-                                             &tempString,
-                                             KeyValuePartialInformation,
-                                             (PVOID) infoBuffer.Buffer,
-                                             infoBuffer.MaxSize,
-                                             &resultSize
-                                             );
+                    status = ZwQueryValueKey(hControl, &tempString, KeyValuePartialInformation,
+                                             (PVOID)infoBuffer.Buffer, infoBuffer.MaxSize, &resultSize);
 
                     //
                     // A return value of STATUS_BUFFER_TOO_SMALL would mean that there
@@ -727,53 +637,56 @@ Return Value:
                     // off that way and doesn't get any smaller!
                     //
 
-                    if (NT_SUCCESS(status)
-                        && (((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->Type == REG_DWORD)
-                        && (((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->DataLength == sizeof(ULONG))) {
+                    if (NT_SUCCESS(status) &&
+                        (((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->Type == REG_DWORD) &&
+                        (((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->DataLength == sizeof(ULONG)))
+                    {
 
-                        defaultPresent = *(PULONG)(((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->Data)
-                                       ? TRUE
-                                       : FALSE;
+                        defaultPresent =
+                            *(PULONG)(((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->Data) ? TRUE : FALSE;
                     }
                 }
             }
 
             ZwClose(hKey);
 
-            if(defaultPresent) {
+            if (defaultPresent)
+            {
                 //
                 // Add the default as the first entry in the return buffer and patch to usermode if necessary
                 //
-                status = IopAppendBuffer(&returnBuffer,
-                                         defaultString.Buffer,
-                                         defaultString.Length + sizeof(UNICODE_NULL)
-                                        );
+                status =
+                    IopAppendBuffer(&returnBuffer, defaultString.Buffer, defaultString.Length + sizeof(UNICODE_NULL));
 
-                if (!UserModeFormat) {
+                if (!UserModeFormat)
+                {
 
-                    RtlCopyMemory(returnBuffer.Buffer,
-                                  KERNEL_SYMLINK_STRING_PREFIX,
-                                  IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX)
-                                  );
+                    RtlCopyMemory(returnBuffer.Buffer, KERNEL_SYMLINK_STRING_PREFIX,
+                                  IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX));
                 }
-
-            } else {
+            }
+            else
+            {
                 //
                 // The default device interface isn't active--free the memory for the name buffer now.
                 //
                 ExFreePool(pDefaultInfo);
             }
         }
-
-    } else if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_PATH_NOT_FOUND) {
+    }
+    else if (status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_PATH_NOT_FOUND)
+    {
         //
         // Do nothing - there is no default
         //
-    } else {
+    }
+    else
+    {
         //
         // An unexpected error occured - clean up
         //
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             ExFreePool(pDefaultInfo);
             status = STATUS_UNSUCCESSFUL;
@@ -788,13 +701,9 @@ Return Value:
     //
     keyIndex = 0;
     ASSERT(infoBuffer.MaxSize >= sizeof(KEY_BASIC_INFORMATION));
-    while((status = ZwEnumerateKey(hClass,
-                                   keyIndex,
-                                   KeyBasicInformation,
-                                   (PVOID) infoBuffer.Buffer,
-                                   infoBuffer.MaxSize,
-                                   &resultSize
-                                   )) != STATUS_NO_MORE_ENTRIES) {
+    while ((status = ZwEnumerateKey(hClass, keyIndex, KeyBasicInformation, (PVOID)infoBuffer.Buffer, infoBuffer.MaxSize,
+                                    &resultSize)) != STATUS_NO_MORE_ENTRIES)
+    {
 
         //
         // A return value of STATUS_BUFFER_TOO_SMALL would mean that there
@@ -802,10 +711,13 @@ Return Value:
         //
         ASSERT(status != STATUS_BUFFER_TOO_SMALL);
 
-        if (status == STATUS_BUFFER_OVERFLOW) {
+        if (status == STATUS_BUFFER_OVERFLOW)
+        {
             status = IopResizeBuffer(&infoBuffer, resultSize, FALSE);
             continue;
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
             ZwClose(hClass);
             goto clean4;
         }
@@ -813,7 +725,7 @@ Return Value:
         //
         // Open up this interface key.
         //
-        tempString.Length = (USHORT) ((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->NameLength;
+        tempString.Length = (USHORT)((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->NameLength;
         tempString.MaximumLength = tempString.Length;
         tempString.Buffer = ((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->Name;
 
@@ -821,13 +733,10 @@ Return Value:
         // Open the associated key
         //
 
-        status = IopOpenRegistryKeyEx( &hKey,
-                                       hClass,
-                                       &tempString,
-                                       KEY_READ
-                                       );
+        status = IopOpenRegistryKeyEx(&hKey, hClass, &tempString, KEY_READ);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             //
             // For some reason we couldn't open this key--skip it and move on.
             //
@@ -841,17 +750,14 @@ Return Value:
         //
         PiWstrToUnicodeString(&tempString, REGSTR_VAL_DEVICE_INSTANCE);
         ASSERT(devnodeNameBuffer.MaxSize >= sizeof(KEY_VALUE_PARTIAL_INFORMATION));
-        while ((status = ZwQueryValueKey(hKey,
-                                         &tempString,
-                                         KeyValuePartialInformation,
-                                         devnodeNameBuffer.Buffer,
-                                         devnodeNameBuffer.MaxSize,
-                                         &resultSize
-                                         )) == STATUS_BUFFER_OVERFLOW) {
+        while ((status = ZwQueryValueKey(hKey, &tempString, KeyValuePartialInformation, devnodeNameBuffer.Buffer,
+                                         devnodeNameBuffer.MaxSize, &resultSize)) == STATUS_BUFFER_OVERFLOW)
+        {
 
             status = IopResizeBuffer(&devnodeNameBuffer, resultSize, FALSE);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 ZwClose(hKey);
                 ZwClose(hClass);
                 goto clean4;
@@ -864,9 +770,9 @@ Return Value:
         //
         ASSERT(status != STATUS_BUFFER_TOO_SMALL);
 
-        if (!(NT_SUCCESS(status)
-              && ((PKEY_VALUE_PARTIAL_INFORMATION)(devnodeNameBuffer.Buffer))->Type == REG_SZ
-              && ((PKEY_VALUE_PARTIAL_INFORMATION)(devnodeNameBuffer.Buffer))->DataLength > sizeof(WCHAR))) {
+        if (!(NT_SUCCESS(status) && ((PKEY_VALUE_PARTIAL_INFORMATION)(devnodeNameBuffer.Buffer))->Type == REG_SZ &&
+              ((PKEY_VALUE_PARTIAL_INFORMATION)(devnodeNameBuffer.Buffer))->DataLength > sizeof(WCHAR)))
+        {
             goto CloseInterfaceKeyAndContinue;
         }
 
@@ -874,22 +780,19 @@ Return Value:
         // Build counted string
         //
 
-        devnodeString.Length = (USHORT) ((PKEY_VALUE_PARTIAL_INFORMATION)(devnodeNameBuffer.Buffer))->DataLength - sizeof(UNICODE_NULL);
+        devnodeString.Length =
+            (USHORT)((PKEY_VALUE_PARTIAL_INFORMATION)(devnodeNameBuffer.Buffer))->DataLength - sizeof(UNICODE_NULL);
         devnodeString.MaximumLength = tempString.Length;
-        devnodeString.Buffer = (PWSTR) ((PKEY_VALUE_PARTIAL_INFORMATION)(devnodeNameBuffer.Buffer))->Data;
+        devnodeString.Buffer = (PWSTR)((PKEY_VALUE_PARTIAL_INFORMATION)(devnodeNameBuffer.Buffer))->Data;
 
         //
         // Enumerate each interface instance subkey under this PDO's interface key.
         //
         instanceKeyIndex = 0;
         ASSERT(infoBuffer.MaxSize >= sizeof(KEY_BASIC_INFORMATION));
-        while((status = ZwEnumerateKey(hKey,
-                                       instanceKeyIndex,
-                                       KeyBasicInformation,
-                                       (PVOID) infoBuffer.Buffer,
-                                       infoBuffer.MaxSize,
-                                       &resultSize
-                                       )) != STATUS_NO_MORE_ENTRIES) {
+        while ((status = ZwEnumerateKey(hKey, instanceKeyIndex, KeyBasicInformation, (PVOID)infoBuffer.Buffer,
+                                        infoBuffer.MaxSize, &resultSize)) != STATUS_NO_MORE_ENTRIES)
+        {
 
             //
             // A return value of STATUS_BUFFER_TOO_SMALL would mean that there
@@ -897,10 +800,13 @@ Return Value:
             //
             ASSERT(status != STATUS_BUFFER_TOO_SMALL);
 
-            if (status == STATUS_BUFFER_OVERFLOW) {
+            if (status == STATUS_BUFFER_OVERFLOW)
+            {
                 status = IopResizeBuffer(&infoBuffer, resultSize, FALSE);
                 continue;
-            } else if (!NT_SUCCESS(status)) {
+            }
+            else if (!NT_SUCCESS(status))
+            {
                 ZwClose(hKey);
                 ZwClose(hClass);
                 goto clean4;
@@ -909,7 +815,7 @@ Return Value:
             //
             // Open up this interface instance key.
             //
-            tempString.Length = (USHORT) ((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->NameLength;
+            tempString.Length = (USHORT)((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->NameLength;
             tempString.MaximumLength = tempString.Length;
             tempString.Buffer = ((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->Name;
 
@@ -917,13 +823,10 @@ Return Value:
             // Open the associated key
             //
 
-            status = IopOpenRegistryKeyEx( &hInstanceKey,
-                                           hKey,
-                                           &tempString,
-                                           KEY_READ
-                                           );
+            status = IopOpenRegistryKeyEx(&hInstanceKey, hKey, &tempString, KEY_READ);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 //
                 // For some reason we couldn't open this key--skip it and move on.
                 //
@@ -931,20 +834,18 @@ Return Value:
                 continue;
             }
 
-            if (!(Flags & DEVICE_INTERFACE_INCLUDE_NONACTIVE)) {
+            if (!(Flags & DEVICE_INTERFACE_INCLUDE_NONACTIVE))
+            {
 
                 //
                 // Open the control subkey
                 //
 
                 PiWstrToUnicodeString(&tempString, REGSTR_KEY_CONTROL);
-                status = IopOpenRegistryKeyEx( &hControl,
-                                               hInstanceKey,
-                                               &tempString,
-                                               KEY_READ
-                                               );
+                status = IopOpenRegistryKeyEx(&hControl, hInstanceKey, &tempString, KEY_READ);
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
 
                     //
                     // We have no control subkey so can't be linked -
@@ -959,13 +860,8 @@ Return Value:
 
                 PiWstrToUnicodeString(&tempString, REGSTR_VAL_LINKED);
                 ASSERT(infoBuffer.MaxSize >= sizeof(KEY_VALUE_PARTIAL_INFORMATION));
-                status = ZwQueryValueKey(hControl,
-                                         &tempString,
-                                         KeyValuePartialInformation,
-                                         (PVOID) infoBuffer.Buffer,
-                                         infoBuffer.MaxSize,
-                                         &resultSize
-                                         );
+                status = ZwQueryValueKey(hControl, &tempString, KeyValuePartialInformation, (PVOID)infoBuffer.Buffer,
+                                         infoBuffer.MaxSize, &resultSize);
 
                 //
                 // A return value of STATUS_BUFFER_TOO_SMALL would mean that there
@@ -980,10 +876,10 @@ Return Value:
                 // off that way and doesn't get any smaller!
                 //
 
-                if (!NT_SUCCESS(status)
-                    || (((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->Type != REG_DWORD)
-                    || (((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->DataLength != sizeof(ULONG))
-                    || !*(PULONG)(((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->Data)) {
+                if (!NT_SUCCESS(status) || (((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->Type != REG_DWORD) ||
+                    (((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->DataLength != sizeof(ULONG)) ||
+                    !*(PULONG)(((PKEY_VALUE_PARTIAL_INFORMATION)(infoBuffer.Buffer))->Data))
+                {
 
                     //
                     // We are NOT linked so continue enumerating the keys ignoring this one
@@ -998,17 +894,15 @@ Return Value:
 
             PiWstrToUnicodeString(&tempString, REGSTR_VAL_SYMBOLIC_LINK);
             ASSERT(symLinkBuffer.MaxSize >= sizeof(KEY_VALUE_PARTIAL_INFORMATION));
-            while ((status = ZwQueryValueKey(hInstanceKey,
-                                             &tempString,
-                                             KeyValuePartialInformation,
-                                             symLinkBuffer.Buffer,
-                                             symLinkBuffer.MaxSize,
-                                             &resultSize
-                                             )) == STATUS_BUFFER_OVERFLOW) {
+            while ((status = ZwQueryValueKey(hInstanceKey, &tempString, KeyValuePartialInformation,
+                                             symLinkBuffer.Buffer, symLinkBuffer.MaxSize, &resultSize)) ==
+                   STATUS_BUFFER_OVERFLOW)
+            {
 
                 status = IopResizeBuffer(&symLinkBuffer, resultSize, FALSE);
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     ZwClose(hInstanceKey);
                     ZwClose(hKey);
                     ZwClose(hClass);
@@ -1022,9 +916,9 @@ Return Value:
             //
             ASSERT(status != STATUS_BUFFER_TOO_SMALL);
 
-            if (!(NT_SUCCESS(status)
-                && ((PKEY_VALUE_PARTIAL_INFORMATION)(symLinkBuffer.Buffer))->Type == REG_SZ
-                && ((PKEY_VALUE_PARTIAL_INFORMATION)(symLinkBuffer.Buffer))->DataLength > sizeof(WCHAR))) {
+            if (!(NT_SUCCESS(status) && ((PKEY_VALUE_PARTIAL_INFORMATION)(symLinkBuffer.Buffer))->Type == REG_SZ &&
+                  ((PKEY_VALUE_PARTIAL_INFORMATION)(symLinkBuffer.Buffer))->DataLength > sizeof(WCHAR)))
+            {
                 goto CloseInterfaceInstanceKeyAndContinue;
             }
 
@@ -1032,17 +926,20 @@ Return Value:
             // Build counted string from value data
             //
 
-            symLinkString.Length = (USHORT) ((PKEY_VALUE_PARTIAL_INFORMATION)(symLinkBuffer.Buffer))->DataLength - sizeof(UNICODE_NULL);
+            symLinkString.Length =
+                (USHORT)((PKEY_VALUE_PARTIAL_INFORMATION)(symLinkBuffer.Buffer))->DataLength - sizeof(UNICODE_NULL);
             symLinkString.MaximumLength = symLinkString.Length;
-            symLinkString.Buffer = (PWSTR) ((PKEY_VALUE_PARTIAL_INFORMATION)(symLinkBuffer.Buffer))->Data;
+            symLinkString.Buffer = (PWSTR)((PKEY_VALUE_PARTIAL_INFORMATION)(symLinkBuffer.Buffer))->Data;
 
             //
             // If we have a default, check this is not it
             //
 
-            if (defaultPresent) {
+            if (defaultPresent)
+            {
 
-                if (RtlCompareUnicodeString(&defaultString, &symLinkString, TRUE) == 0) {
+                if (RtlCompareUnicodeString(&defaultString, &symLinkString, TRUE) == 0)
+                {
 
                     //
                     // We have already added the default to the beginning of the buffer so skip it
@@ -1055,11 +952,13 @@ Return Value:
             // If we are only returning interfaces for a particular PDO then check
             // this is from that PDO
             //
-            if (ARGUMENT_PRESENT(DevicePath)) {
+            if (ARGUMENT_PRESENT(DevicePath))
+            {
                 //
                 // Check if it is from the same PDO
                 //
-                if (RtlCompareUnicodeString(DevicePath, &devnodeString, TRUE) != 0) {
+                if (RtlCompareUnicodeString(DevicePath, &devnodeString, TRUE) != 0)
+                {
                     //
                     // If not then go onto the next key
                     //
@@ -1071,31 +970,27 @@ Return Value:
             // Copy the symLink string to the return buffer including the NULL termination
             //
 
-            status = IopAppendBuffer(&returnBuffer,
-                                     symLinkString.Buffer,
-                                     symLinkString.Length + sizeof(UNICODE_NULL)
-                                     );
+            status = IopAppendBuffer(&returnBuffer, symLinkString.Buffer, symLinkString.Length + sizeof(UNICODE_NULL));
 
-            ASSERT(((PWSTR) returnBuffer.Current)[-1] == UNICODE_NULL);
+            ASSERT(((PWSTR)returnBuffer.Current)[-1] == UNICODE_NULL);
 
             //
             // If we are returning KM strings then patch the prefix
             //
 
-            if (!UserModeFormat) {
+            if (!UserModeFormat)
+            {
 
                 RtlCopyMemory(returnBuffer.Current - (symLinkString.Length + sizeof(UNICODE_NULL)),
-                              KERNEL_SYMLINK_STRING_PREFIX,
-                              IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX)
-                              );
+                              KERNEL_SYMLINK_STRING_PREFIX, IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX));
             }
 
-CloseInterfaceInstanceKeyAndContinue:
+        CloseInterfaceInstanceKeyAndContinue:
             ZwClose(hInstanceKey);
             instanceKeyIndex++;
         }
 
-CloseInterfaceKeyAndContinue:
+    CloseInterfaceKeyAndContinue:
         ZwClose(hKey);
         keyIndex++;
     }
@@ -1107,21 +1002,21 @@ clean5:
     // We've got then all!  Resize to leave space for a terminating NULL.
     //
 
-    status = IopResizeBuffer(&returnBuffer,
-                             (ULONG) (returnBuffer.Current - returnBuffer.Buffer + sizeof(UNICODE_NULL)),
-                             TRUE
-                             );
+    status = IopResizeBuffer(&returnBuffer, (ULONG)(returnBuffer.Current - returnBuffer.Buffer + sizeof(UNICODE_NULL)),
+                             TRUE);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Terminate the buffer
         //
-        *((PWSTR) returnBuffer.Current) = UNICODE_NULL;
+        *((PWSTR)returnBuffer.Current) = UNICODE_NULL;
     }
 
 clean4:
-    if (defaultPresent) {
+    if (defaultPresent)
+    {
         ExFreePool(pDefaultInfo);
     }
 
@@ -1136,7 +1031,8 @@ clean2:
     IopFreeBuffer(&infoBuffer);
 
 clean1:
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         IopFreeBuffer(&returnBuffer);
     }
 
@@ -1144,34 +1040,33 @@ clean0:
     RtlFreeUnicodeString(&guidString);
 
 finalClean:
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        *SymbolicLinkList = (PWSTR) returnBuffer.Buffer;
+        *SymbolicLinkList = (PWSTR)returnBuffer.Buffer;
 
-        if (ARGUMENT_PRESENT(SymbolicLinkListSize)) {
+        if (ARGUMENT_PRESENT(SymbolicLinkListSize))
+        {
             *SymbolicLinkListSize = returnBuffer.MaxSize;
         }
-
-    } else {
+    }
+    else
+    {
 
         *SymbolicLinkList = NULL;
 
-        if (ARGUMENT_PRESENT(SymbolicLinkListSize)) {
+        if (ARGUMENT_PRESENT(SymbolicLinkListSize))
+        {
             *SymbolicLinkListSize = 0;
         }
-
     }
 
     return status;
 }
-
+
 NTSTATUS
-IoGetDeviceInterfaces(
-    IN CONST GUID *InterfaceClassGuid,
-    IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
-    IN ULONG Flags,
-    OUT PWSTR *SymbolicLinkList
-    )
+IoGetDeviceInterfaces(IN CONST GUID *InterfaceClassGuid, IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
+                      IN ULONG Flags, OUT PWSTR *SymbolicLinkList)
 
 /*++
 
@@ -1219,30 +1114,21 @@ Return Value:
     // Check we have a PDO and if so extract the instance path from it
     //
 
-    if (ARGUMENT_PRESENT(PhysicalDeviceObject)) {
+    if (ARGUMENT_PRESENT(PhysicalDeviceObject))
+    {
 
         ASSERT_PDO(PhysicalDeviceObject);
-        pDeviceNode = (PDEVICE_NODE) PhysicalDeviceObject->DeviceObjectExtension->DeviceNode;
+        pDeviceNode = (PDEVICE_NODE)PhysicalDeviceObject->DeviceObjectExtension->DeviceNode;
         pDeviceName = &pDeviceNode->InstancePath;
     }
 
-    status = IopGetDeviceInterfaces(InterfaceClassGuid,
-                                    pDeviceName,
-                                    Flags,
-                                    FALSE,
-                                    SymbolicLinkList,
-                                    NULL
-                                    );
+    status = IopGetDeviceInterfaces(InterfaceClassGuid, pDeviceName, Flags, FALSE, SymbolicLinkList, NULL);
     return status;
 }
 
-
+
 NTSTATUS
-IopRealloc(
-    IN OUT PVOID *Buffer,
-    IN ULONG OldSize,
-    IN ULONG NewSize
-)
+IopRealloc(IN OUT PVOID *Buffer, IN ULONG OldSize, IN ULONG NewSize)
 
 /*++
 
@@ -1281,7 +1167,8 @@ Return Value:
     //
 
     newBuffer = ExAllocatePool(PagedPool, NewSize);
-    if (newBuffer == NULL) {
+    if (newBuffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1289,10 +1176,13 @@ Return Value:
     // Copy the contents of the old buffer
     //
 
-    if(OldSize <= NewSize) {
-        RtlCopyMemory(newBuffer, *Buffer , OldSize);
-    } else {
-        RtlCopyMemory(newBuffer, *Buffer , NewSize);
+    if (OldSize <= NewSize)
+    {
+        RtlCopyMemory(newBuffer, *Buffer, OldSize);
+    }
+    else
+    {
+        RtlCopyMemory(newBuffer, *Buffer, NewSize);
     }
     //
     // Free up the old buffer
@@ -1307,14 +1197,10 @@ Return Value:
     *Buffer = newBuffer;
 
     return STATUS_SUCCESS;
-
 }
-
+
 NTSTATUS
-IoSetDeviceInterfaceState(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN BOOLEAN Enable
-    )
+IoSetDeviceInterfaceState(IN PUNICODE_STRING SymbolicLinkName, IN BOOLEAN Enable)
 
 /*++
 
@@ -1357,7 +1243,8 @@ Return Value:
 
     PiUnlockPnpRegistry();
 
-    if (!NT_SUCCESS(status) && !Enable) {
+    if (!NT_SUCCESS(status) && !Enable)
+    {
         //
         // If we failed to disable an interface (most likely because the
         // interface keys have already been deleted) report success.
@@ -1367,13 +1254,10 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-IoOpenDeviceInterfaceRegistryKey(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE DeviceInterfaceKey
-    )
+IoOpenDeviceInterfaceRegistryKey(IN PUNICODE_STRING SymbolicLinkName, IN ACCESS_MASK DesiredAccess,
+                                 OUT PHANDLE DeviceInterfaceKey)
 
 /*++
 
@@ -1419,13 +1303,9 @@ Return Value:
     // Open the interface device key
     //
 
-    status = IopDeviceInterfaceKeysFromSymbolicLink(SymbolicLinkName,
-                                                    KEY_READ,
-                                                    NULL,
-                                                    NULL,
-                                                    &hKey
-                                                    );
-    if(!NT_SUCCESS(status)) {
+    status = IopDeviceInterfaceKeysFromSymbolicLink(SymbolicLinkName, KEY_READ, NULL, NULL, &hKey);
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -1434,13 +1314,8 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&unicodeString, REGSTR_KEY_DEVICEPARAMETERS);
-    status = IopCreateRegistryKeyEx( DeviceInterfaceKey,
-                                     hKey,
-                                     &unicodeString,
-                                     DesiredAccess,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status =
+        IopCreateRegistryKeyEx(DeviceInterfaceKey, hKey, &unicodeString, DesiredAccess, REG_OPTION_NON_VOLATILE, NULL);
     ZwClose(hKey);
 
 clean0:
@@ -1448,15 +1323,12 @@ clean0:
 
     return status;
 }
-
+
 NTSTATUS
-IopDeviceInterfaceKeysFromSymbolicLink(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE DeviceInterfaceClassKey    OPTIONAL,
-    OUT PHANDLE DeviceInterfaceKey         OPTIONAL,
-    OUT PHANDLE DeviceInterfaceInstanceKey OPTIONAL
-    )
+IopDeviceInterfaceKeysFromSymbolicLink(IN PUNICODE_STRING SymbolicLinkName, IN ACCESS_MASK DesiredAccess,
+                                       OUT PHANDLE DeviceInterfaceClassKey OPTIONAL,
+                                       OUT PHANDLE DeviceInterfaceKey OPTIONAL,
+                                       OUT PHANDLE DeviceInterfaceInstanceKey OPTIONAL)
 
 /*++
 
@@ -1502,14 +1374,9 @@ Return Value:
     // class guid string - note that this is also a way of verifying that the
     // SymbolicLinkName string is valid.
     //
-    status = IopParseSymbolicLinkName(SymbolicLinkName,
-                                      NULL,
-                                      NULL,
-                                      &guidString,
-                                      NULL,
-                                      NULL,
-                                      NULL);
-    if(!NT_SUCCESS(status)){
+    status = IopParseSymbolicLinkName(SymbolicLinkName, NULL, NULL, &guidString, NULL, NULL, NULL);
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -1522,20 +1389,17 @@ Return Value:
     // portion solves this problem
     //
 
-    PiLockPnpRegistry(TRUE);        
+    PiLockPnpRegistry(TRUE);
 
     //
     // Open HKLM\System\CurrentControlSet\Control\DeviceClasses key
     //
 
     PiWstrToUnicodeString(&tempString, REGSTR_FULL_PATH_DEVICE_CLASSES);
-    status = IopOpenRegistryKeyEx( &hDeviceClasses,
-                                   NULL,
-                                   &tempString,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&hDeviceClasses, NULL, &tempString, KEY_READ);
 
-    if( !NT_SUCCESS(status) ){
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -1543,32 +1407,25 @@ Return Value:
     // Open function class GUID key
     //
 
-    status = IopOpenRegistryKeyEx( &hFunctionClass,
-                                   hDeviceClasses,
-                                   &guidString,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&hFunctionClass, hDeviceClasses, &guidString, KEY_READ);
 
-    if( !NT_SUCCESS(status) ){
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
     //
     // Open device interface instance key
     //
-    status = IopOpenOrCreateDeviceInterfaceSubKeys(DeviceInterfaceKey,
-                                                   NULL,
-                                                   DeviceInterfaceInstanceKey,
-                                                   NULL,
-                                                   hFunctionClass,
-                                                   SymbolicLinkName,
-                                                   DesiredAccess,
-                                                   FALSE
-                                                  );
+    status = IopOpenOrCreateDeviceInterfaceSubKeys(DeviceInterfaceKey, NULL, DeviceInterfaceInstanceKey, NULL,
+                                                   hFunctionClass, SymbolicLinkName, DesiredAccess, FALSE);
 
-    if((!NT_SUCCESS(status)) || (!ARGUMENT_PRESENT(DeviceInterfaceClassKey))) {
+    if ((!NT_SUCCESS(status)) || (!ARGUMENT_PRESENT(DeviceInterfaceClassKey)))
+    {
         ZwClose(hFunctionClass);
-    } else {
+    }
+    else
+    {
         *DeviceInterfaceClassKey = hFunctionClass;
     }
 
@@ -1578,16 +1435,11 @@ clean1:
     PiUnlockPnpRegistry();
 clean0:
     return status;
-
 }
-
+
 NTSTATUS
-IoRegisterDeviceInterface(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN CONST GUID *InterfaceClassGuid,
-    IN PUNICODE_STRING ReferenceString      OPTIONAL,
-    OUT PUNICODE_STRING SymbolicLinkName
-    )
+IoRegisterDeviceInterface(IN PDEVICE_OBJECT PhysicalDeviceObject, IN CONST GUID *InterfaceClassGuid,
+                          IN PUNICODE_STRING ReferenceString OPTIONAL, OUT PUNICODE_STRING SymbolicLinkName)
 
 /*++
 
@@ -1620,8 +1472,8 @@ Return Value:
     PDEVICE_NODE pDeviceNode;
     PUNICODE_STRING pDeviceString;
     NTSTATUS status;
-    PWSTR   pRefString;
-    USHORT  count;
+    PWSTR pRefString;
+    USHORT count;
 
     PAGED_CODE();
 
@@ -1635,55 +1487,56 @@ Return Value:
     // Ensure we have a PDO - only PDO's have a device node attached
     //
 
-    pDeviceNode = (PDEVICE_NODE) PhysicalDeviceObject->DeviceObjectExtension->DeviceNode;
-    if (pDeviceNode) {
+    pDeviceNode = (PDEVICE_NODE)PhysicalDeviceObject->DeviceObjectExtension->DeviceNode;
+    if (pDeviceNode)
+    {
 
         //
         // Get the instance path string
         //
         pDeviceString = &pDeviceNode->InstancePath;
 
-        if (pDeviceNode->InstancePath.Length == 0) {
+        if (pDeviceNode->InstancePath.Length == 0)
+        {
             return STATUS_INVALID_DEVICE_REQUEST;
         }
 
         //
         // Make sure the ReferenceString does not contain any path seperator characters
         //
-        if (ReferenceString) {
+        if (ReferenceString)
+        {
             pRefString = ReferenceString->Buffer;
             count = ReferenceString->Length / sizeof(WCHAR);
-            while (count--) {
-                if((*pRefString == SEPERATOR_CHAR) || (*pRefString == ALT_SEPERATOR_CHAR)) {
+            while (count--)
+            {
+                if ((*pRefString == SEPERATOR_CHAR) || (*pRefString == ALT_SEPERATOR_CHAR))
+                {
                     status = STATUS_INVALID_DEVICE_REQUEST;
-                    IopDbgPrint((   IOP_ERROR_LEVEL,
-                                    "IoRegisterDeviceInterface: Invalid RefString!! failed with status = %8.8X\n", status));
+                    IopDbgPrint((IOP_ERROR_LEVEL,
+                                 "IoRegisterDeviceInterface: Invalid RefString!! failed with status = %8.8X\n",
+                                 status));
                     return status;
                 }
                 pRefString++;
             }
         }
 
-        return IopRegisterDeviceInterface(pDeviceString,
-                                          InterfaceClassGuid,
-                                          ReferenceString,
-                                          FALSE,           // kernel-mode format
-                                          SymbolicLinkName
-                                          );
-    } else {
+        return IopRegisterDeviceInterface(pDeviceString, InterfaceClassGuid, ReferenceString,
+                                          FALSE, // kernel-mode format
+                                          SymbolicLinkName);
+    }
+    else
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 }
-
+
 NTSTATUS
-IopRegisterDeviceInterface(
-    IN PUNICODE_STRING DeviceInstanceName,
-    IN CONST GUID *InterfaceClassGuid,
-    IN PUNICODE_STRING ReferenceString      OPTIONAL,
-    IN BOOLEAN UserModeFormat,
-    OUT PUNICODE_STRING SymbolicLinkName
-    )
+IopRegisterDeviceInterface(IN PUNICODE_STRING DeviceInstanceName, IN CONST GUID *InterfaceClassGuid,
+                           IN PUNICODE_STRING ReferenceString OPTIONAL, IN BOOLEAN UserModeFormat,
+                           OUT PUNICODE_STRING SymbolicLinkName)
 
 /*++
 
@@ -1734,7 +1587,8 @@ Return Value:
     //
 
     status = RtlStringFromGUID(InterfaceClassGuid, &guidString);
-    if( !NT_SUCCESS(status) ){
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -1744,21 +1598,20 @@ Return Value:
     // saves us from having to copy the appropriate string over to their string
     // later).
     //
-    if(UserModeFormat) {
+    if (UserModeFormat)
+    {
         pUserString = SymbolicLinkName;
         pKernelString = &otherString;
-    } else {
+    }
+    else
+    {
         pKernelString = SymbolicLinkName;
         pUserString = &otherString;
     }
 
-    status = IopBuildSymbolicLinkStrings(DeviceInstanceName,
-                                         &guidString,
-                                         ReferenceString,
-                                         pUserString,
-                                         pKernelString
-                                         );
-    if (!NT_SUCCESS(status)) {
+    status = IopBuildSymbolicLinkStrings(DeviceInstanceName, &guidString, ReferenceString, pUserString, pKernelString);
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -1778,15 +1631,10 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&tempString, REGSTR_FULL_PATH_DEVICE_CLASSES);
-    status = IopCreateRegistryKeyEx( &hTemp1,
-                                     NULL,
-                                     &tempString,
-                                     KEY_CREATE_SUB_KEY,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status = IopCreateRegistryKeyEx(&hTemp1, NULL, &tempString, KEY_CREATE_SUB_KEY, REG_OPTION_NON_VOLATILE, NULL);
 
-    if( !NT_SUCCESS(status) ){
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
@@ -1794,16 +1642,11 @@ Return Value:
     // Open/create function class GUID key into hTemp2
     //
 
-    status = IopCreateRegistryKeyEx( &hTemp2,
-                                     hTemp1,
-                                     &guidString,
-                                     KEY_CREATE_SUB_KEY,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status = IopCreateRegistryKeyEx(&hTemp2, hTemp1, &guidString, KEY_CREATE_SUB_KEY, REG_OPTION_NON_VOLATILE, NULL);
     ZwClose(hTemp1);
 
-    if( !NT_SUCCESS(status) ){
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
@@ -1811,19 +1654,14 @@ Return Value:
     // Now open/create the two-level device interface hierarchy underneath this
     // interface class key.
     //
-    status = IopOpenOrCreateDeviceInterfaceSubKeys(&hTemp1,
-                                                   &InterfaceDisposition,
-                                                   &hInterfaceInstanceKey,
-                                                   &InterfaceInstanceDisposition,
-                                                   hTemp2,
-                                                   pUserString,
-                                                   KEY_WRITE | DELETE,
-                                                   TRUE
-                                                  );
+    status = IopOpenOrCreateDeviceInterfaceSubKeys(&hTemp1, &InterfaceDisposition, &hInterfaceInstanceKey,
+                                                   &InterfaceInstanceDisposition, hTemp2, pUserString,
+                                                   KEY_WRITE | DELETE, TRUE);
 
     ZwClose(hTemp2);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
@@ -1832,11 +1670,9 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&tempString, REGSTR_VAL_DEVICE_INSTANCE);
-    status = IopSetRegistryStringValue(hTemp1,
-                                       &tempString,
-                                       DeviceInstanceName
-                                       );
-    if(!NT_SUCCESS(status)) {
+    status = IopSetRegistryStringValue(hTemp1, &tempString, DeviceInstanceName);
+    if (!NT_SUCCESS(status))
+    {
         goto clean3;
     }
 
@@ -1845,22 +1681,22 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&tempString, REGSTR_VAL_SYMBOLIC_LINK);
-    status = IopSetRegistryStringValue(hInterfaceInstanceKey,
-                                       &tempString,
-                                       pUserString
-                                       );
+    status = IopSetRegistryStringValue(hInterfaceInstanceKey, &tempString, pUserString);
 
 clean3:
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         //
         // Since we failed to register the device interface, delete any keys
         // that were newly created in the attempt.
         //
-        if(InterfaceInstanceDisposition == REG_CREATED_NEW_KEY) {
+        if (InterfaceInstanceDisposition == REG_CREATED_NEW_KEY)
+        {
             ZwDeleteKey(hInterfaceInstanceKey);
         }
 
-        if(InterfaceDisposition == REG_CREATED_NEW_KEY) {
+        if (InterfaceDisposition == REG_CREATED_NEW_KEY)
+        {
             ZwDeleteKey(hTemp1);
         }
     }
@@ -1871,7 +1707,8 @@ clean3:
 clean2:
     PiUnlockPnpRegistry();
     IopFreeAllocatedUnicodeString(&otherString);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         IopFreeAllocatedUnicodeString(SymbolicLinkName);
     }
 
@@ -1880,11 +1717,9 @@ clean1:
 clean0:
     return status;
 }
-
+
 NTSTATUS
-IopUnregisterDeviceInterface(
-    IN PUNICODE_STRING SymbolicLinkName
-    )
+IopUnregisterDeviceInterface(IN PUNICODE_STRING SymbolicLinkName)
 
 /*++
 
@@ -1909,15 +1744,14 @@ Return Value:
 --*/
 
 {
-    NTSTATUS        status = STATUS_SUCCESS;
-    HANDLE          hInterfaceClassKey=NULL, hInterfaceKey=NULL,
-                    hInterfaceInstanceKey=NULL, hControl=NULL;
-    UNICODE_STRING  tempString, mungedPathString, guidString, refString;
-    BOOLEAN         refStringPresent;
-    GUID            guid;
-    UNICODE_STRING  interfaceKeyName, instanceKeyName;
-    ULONG           linked, remainingSubKeys;
-    USHORT          length;
+    NTSTATUS status = STATUS_SUCCESS;
+    HANDLE hInterfaceClassKey = NULL, hInterfaceKey = NULL, hInterfaceInstanceKey = NULL, hControl = NULL;
+    UNICODE_STRING tempString, mungedPathString, guidString, refString;
+    BOOLEAN refStringPresent;
+    GUID guid;
+    UNICODE_STRING interfaceKeyName, instanceKeyName;
+    ULONG linked, remainingSubKeys;
+    USHORT length;
     PKEY_VALUE_FULL_INFORMATION keyValueInformation;
     PKEY_FULL_INFORMATION keyInformation;
 
@@ -1927,14 +1761,10 @@ Return Value:
     // Check that the supplied symbolic link can be parsed - note that this is
     // also a way of verifying that the SymbolicLinkName string is valid.
     //
-    status = IopParseSymbolicLinkName(SymbolicLinkName,
-                                      NULL,
-                                      &mungedPathString,
-                                      &guidString,
-                                      &refString,
-                                      &refStringPresent,
-                                      &guid);
-    if (!NT_SUCCESS(status)) {
+    status = IopParseSymbolicLinkName(SymbolicLinkName, NULL, &mungedPathString, &guidString, &refString,
+                                      &refStringPresent, &guid);
+    if (!NT_SUCCESS(status))
+    {
         status = STATUS_INVALID_PARAMETER;
         goto clean0;
     }
@@ -1944,9 +1774,9 @@ Return Value:
     // (includes the REFSTRING_PREFIX_CHAR, and ReferenceString, if present)
     //
     length = sizeof(WCHAR) + refString.Length;
-    status = IopAllocateUnicodeString(&instanceKeyName,
-                                      length);
-    if(!NT_SUCCESS(status)) {
+    status = IopAllocateUnicodeString(&instanceKeyName, length);
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -1961,23 +1791,23 @@ Return Value:
     //
     // Append the ReferenceString to the prefix char, if necessary.
     //
-    if (refStringPresent) {
+    if (refStringPresent)
+    {
         RtlAppendUnicodeStringToString(&instanceKeyName, &refString);
     }
 
-    instanceKeyName.Buffer[instanceKeyName.Length/sizeof(WCHAR)] = UNICODE_NULL;
+    instanceKeyName.Buffer[instanceKeyName.Length / sizeof(WCHAR)] = UNICODE_NULL;
 
     //
     // Allocate a unicode string for the interface key name.
     // (includes KEY_STRING_PREFIX, mungedPathString, separating '#'
     //  char, and the guidString)
     //
-    length = IopConstStringSize(KEY_STRING_PREFIX) + mungedPathString.Length +
-             sizeof(WCHAR) + guidString.Length;
+    length = IopConstStringSize(KEY_STRING_PREFIX) + mungedPathString.Length + sizeof(WCHAR) + guidString.Length;
 
-    status = IopAllocateUnicodeString(&interfaceKeyName,
-                                      length);
-    if(!NT_SUCCESS(status)) {
+    status = IopAllocateUnicodeString(&interfaceKeyName, length);
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -1988,14 +1818,12 @@ Return Value:
     //
     RtlCopyMemory(interfaceKeyName.Buffer, SymbolicLinkName->Buffer, length);
     interfaceKeyName.Length = length;
-    interfaceKeyName.Buffer[interfaceKeyName.Length/sizeof(WCHAR)] = UNICODE_NULL;
+    interfaceKeyName.Buffer[interfaceKeyName.Length / sizeof(WCHAR)] = UNICODE_NULL;
 
     //
     // Replace the "\??\" or "\\?\" symbolic link name prefix with "##?#"
     //
-    RtlCopyMemory(interfaceKeyName.Buffer,
-                  KEY_STRING_PREFIX,
-                  IopConstStringSize(KEY_STRING_PREFIX));
+    RtlCopyMemory(interfaceKeyName.Buffer, KEY_STRING_PREFIX, IopConstStringSize(KEY_STRING_PREFIX));
 
     //
     // Enter critical section and acquire a lock on the registry.  Both these
@@ -2005,19 +1833,16 @@ Return Value:
     // never be released -> deadlock.  Critical sectioning the registry manipulation
     // portion solves this problem
     //
-    
+
     PiLockPnpRegistry(TRUE);
 
     //
     // Get class, interface, and instance handles
     //
-    status = IopDeviceInterfaceKeysFromSymbolicLink(SymbolicLinkName,
-                                                    KEY_ALL_ACCESS,
-                                                    &hInterfaceClassKey,
-                                                    &hInterfaceKey,
-                                                    &hInterfaceInstanceKey
-                                                    );
-    if (!NT_SUCCESS(status)) {
+    status = IopDeviceInterfaceKeysFromSymbolicLink(SymbolicLinkName, KEY_ALL_ACCESS, &hInterfaceClassKey,
+                                                    &hInterfaceKey, &hInterfaceInstanceKey);
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
@@ -2026,26 +1851,22 @@ Return Value:
     //
     linked = 0;
     PiWstrToUnicodeString(&tempString, REGSTR_KEY_CONTROL);
-    status = IopOpenRegistryKeyEx( &hControl,
-                                   hInterfaceInstanceKey,
-                                   &tempString,
-                                   KEY_ALL_ACCESS
-                                   );
-    if (NT_SUCCESS(status)) {
+    status = IopOpenRegistryKeyEx(&hControl, hInterfaceInstanceKey, &tempString, KEY_ALL_ACCESS);
+    if (NT_SUCCESS(status))
+    {
         //
         // Check the "linked" value under the "Control" subkey of this
         // interface instance
         //
-        keyValueInformation=NULL;
-        status = IopGetRegistryValue(hControl,
-                                     REGSTR_VAL_LINKED,
-                                     &keyValueInformation);
+        keyValueInformation = NULL;
+        status = IopGetRegistryValue(hControl, REGSTR_VAL_LINKED, &keyValueInformation);
 
-        if(NT_SUCCESS(status)) {
-            if (keyValueInformation->Type == REG_DWORD &&
-                keyValueInformation->DataLength == sizeof(ULONG)) {
+        if (NT_SUCCESS(status))
+        {
+            if (keyValueInformation->Type == REG_DWORD && keyValueInformation->DataLength == sizeof(ULONG))
+            {
 
-                linked = *((PULONG) KEY_VALUE_DATA(keyValueInformation));
+                linked = *((PULONG)KEY_VALUE_DATA(keyValueInformation));
                 ExFreePool(keyValueInformation);
             }
         }
@@ -2069,7 +1890,8 @@ Return Value:
     //
     status = STATUS_SUCCESS;
 
-    if (linked) {
+    if (linked)
+    {
         //
         // Disabled the active interface before unregistering it, ignore any
         // status returned, we'll delete this interface instance key anyways.
@@ -2082,14 +1904,14 @@ Return Value:
     //
     ZwClose(hInterfaceInstanceKey);
     hInterfaceInstanceKey = NULL;
-    IopDeleteKeyRecursive (hInterfaceKey, instanceKeyName.Buffer);
+    IopDeleteKeyRecursive(hInterfaceKey, instanceKeyName.Buffer);
 
     //
     // Find out how many subkeys to the interface key remain.
     //
-    status = IopGetRegistryKeyInformation(hInterfaceKey,
-                                          &keyInformation);
-    if (!NT_SUCCESS(status)) {
+    status = IopGetRegistryKeyInformation(hInterfaceKey, &keyInformation);
+    if (!NT_SUCCESS(status))
+    {
         goto clean3;
     }
 
@@ -2101,17 +1923,14 @@ Return Value:
     // See if a volatile "Control" subkey exists under this interface key
     //
     PiWstrToUnicodeString(&tempString, REGSTR_KEY_CONTROL);
-    status = IopOpenRegistryKeyEx( &hControl,
-                                   hInterfaceKey,
-                                   &tempString,
-                                   KEY_READ
-                                   );
-    if (NT_SUCCESS(status)) {
+    status = IopOpenRegistryKeyEx(&hControl, hInterfaceKey, &tempString, KEY_READ);
+    if (NT_SUCCESS(status))
+    {
         ZwClose(hControl);
         hControl = NULL;
     }
-    if ((remainingSubKeys==0) ||
-        ((remainingSubKeys==1) && (NT_SUCCESS(status)))) {
+    if ((remainingSubKeys == 0) || ((remainingSubKeys == 1) && (NT_SUCCESS(status))))
+    {
         //
         // If the interface key has no subkeys, or the only the remaining subkey
         // is the volatile interface "Control" subkey, then there are no more
@@ -2121,23 +1940,27 @@ Return Value:
         ZwClose(hInterfaceKey);
         hInterfaceKey = NULL;
 
-        IopDeleteKeyRecursive (hInterfaceClassKey, interfaceKeyName.Buffer);
+        IopDeleteKeyRecursive(hInterfaceClassKey, interfaceKeyName.Buffer);
     }
 
     status = STATUS_SUCCESS;
 
 
 clean3:
-    if (hControl) {
+    if (hControl)
+    {
         ZwClose(hControl);
     }
-    if (hInterfaceInstanceKey) {
+    if (hInterfaceInstanceKey)
+    {
         ZwClose(hInterfaceInstanceKey);
     }
-    if (hInterfaceKey) {
+    if (hInterfaceKey)
+    {
         ZwClose(hInterfaceKey);
     }
-    if (hInterfaceClassKey) {
+    if (hInterfaceClassKey)
+    {
         ZwClose(hInterfaceClassKey);
     }
 
@@ -2152,11 +1975,9 @@ clean1:
 clean0:
     return status;
 }
-
+
 NTSTATUS
-IopRemoveDeviceInterfaces(
-    IN PUNICODE_STRING DeviceInstancePath
-    )
+IopRemoveDeviceInterfaces(IN PUNICODE_STRING DeviceInstancePath)
 
 /*++
 
@@ -2185,31 +2006,31 @@ Return Value:
 --*/
 
 {
-    NTSTATUS       status;
-    HANDLE         hDeviceClasses=NULL, hClassGUID=NULL, hInterface=NULL;
+    NTSTATUS status;
+    HANDLE hDeviceClasses = NULL, hClassGUID = NULL, hInterface = NULL;
     UNICODE_STRING tempString, guidString, interfaceString, deviceInstanceString;
-    ULONG          resultSize, classIndex, interfaceIndex;
-    ULONG          symbolicLinkListSize;
-    PWCHAR         symbolicLinkList, symLink;
-    BUFFER_INFO    classInfoBuffer, interfaceInfoBuffer;
+    ULONG resultSize, classIndex, interfaceIndex;
+    ULONG symbolicLinkListSize;
+    PWCHAR symbolicLinkList, symLink;
+    BUFFER_INFO classInfoBuffer, interfaceInfoBuffer;
     PKEY_VALUE_FULL_INFORMATION deviceInstanceInfo;
-    BOOLEAN        deletedInterface;
-    GUID           classGUID;
+    BOOLEAN deletedInterface;
+    GUID classGUID;
 
     PAGED_CODE();
 
     //
     // Allocate initial buffers
     //
-    status = IopAllocateBuffer(&classInfoBuffer,
-                               INITIAL_INFO_BUFFER_SIZE);
-    if (!NT_SUCCESS(status)) {
+    status = IopAllocateBuffer(&classInfoBuffer, INITIAL_INFO_BUFFER_SIZE);
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
-    status = IopAllocateBuffer(&interfaceInfoBuffer,
-                               INITIAL_INFO_BUFFER_SIZE);
-    if (!NT_SUCCESS(status)) {
+    status = IopAllocateBuffer(&interfaceInfoBuffer, INITIAL_INFO_BUFFER_SIZE);
+    if (!NT_SUCCESS(status))
+    {
         IopFreeBuffer(&classInfoBuffer);
         goto clean0;
     }
@@ -2218,12 +2039,9 @@ Return Value:
     // Open HKLM\System\CurrentControlSet\Control\DeviceClasses
     //
     PiWstrToUnicodeString(&tempString, REGSTR_FULL_PATH_DEVICE_CLASSES);
-    status = IopOpenRegistryKeyEx( &hDeviceClasses,
-                                   NULL,
-                                   &tempString,
-                                   KEY_READ
-                                   );
-    if(!NT_SUCCESS(status)){
+    status = IopOpenRegistryKeyEx(&hDeviceClasses, NULL, &tempString, KEY_READ);
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -2232,13 +2050,9 @@ Return Value:
     //
     classIndex = 0;
     ASSERT(classInfoBuffer.MaxSize >= sizeof(KEY_BASIC_INFORMATION));
-    while((status = ZwEnumerateKey(hDeviceClasses,
-                                   classIndex,
-                                   KeyBasicInformation,
-                                   (PVOID) classInfoBuffer.Buffer,
-                                   classInfoBuffer.MaxSize,
-                                   &resultSize
-                                   )) != STATUS_NO_MORE_ENTRIES) {
+    while ((status = ZwEnumerateKey(hDeviceClasses, classIndex, KeyBasicInformation, (PVOID)classInfoBuffer.Buffer,
+                                    classInfoBuffer.MaxSize, &resultSize)) != STATUS_NO_MORE_ENTRIES)
+    {
 
         //
         // A return value of STATUS_BUFFER_TOO_SMALL would mean that there
@@ -2246,10 +2060,13 @@ Return Value:
         //
         ASSERT(status != STATUS_BUFFER_TOO_SMALL);
 
-        if (status == STATUS_BUFFER_OVERFLOW) {
+        if (status == STATUS_BUFFER_OVERFLOW)
+        {
             status = IopResizeBuffer(&classInfoBuffer, resultSize, FALSE);
             continue;
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
             goto clean1;
         }
 
@@ -2263,12 +2080,9 @@ Return Value:
         //
         // Open the key for this device class
         //
-        status = IopOpenRegistryKeyEx( &hClassGUID,
-                                       hDeviceClasses,
-                                       &guidString,
-                                       KEY_ALL_ACCESS
-                                       );
-        if (!NT_SUCCESS(status)) {
+        status = IopOpenRegistryKeyEx(&hClassGUID, hDeviceClasses, &guidString, KEY_ALL_ACCESS);
+        if (!NT_SUCCESS(status))
+        {
             //
             // Couldn't open key for this device class -- skip it and move on.
             //
@@ -2280,13 +2094,10 @@ Return Value:
         //
         interfaceIndex = 0;
         ASSERT(interfaceInfoBuffer.MaxSize >= sizeof(KEY_BASIC_INFORMATION));
-        while((status = ZwEnumerateKey(hClassGUID,
-                                       interfaceIndex,
-                                       KeyBasicInformation,
-                                       (PVOID) interfaceInfoBuffer.Buffer,
-                                       interfaceInfoBuffer.MaxSize,
-                                       &resultSize
-                                       )) != STATUS_NO_MORE_ENTRIES) {
+        while ((status = ZwEnumerateKey(hClassGUID, interfaceIndex, KeyBasicInformation,
+                                        (PVOID)interfaceInfoBuffer.Buffer, interfaceInfoBuffer.MaxSize, &resultSize)) !=
+               STATUS_NO_MORE_ENTRIES)
+        {
 
             //
             // A return value of STATUS_BUFFER_TOO_SMALL would mean that there
@@ -2294,10 +2105,13 @@ Return Value:
             //
             ASSERT(status != STATUS_BUFFER_TOO_SMALL);
 
-            if (status == STATUS_BUFFER_OVERFLOW) {
+            if (status == STATUS_BUFFER_OVERFLOW)
+            {
                 status = IopResizeBuffer(&interfaceInfoBuffer, resultSize, FALSE);
                 continue;
-            } else if (!NT_SUCCESS(status)) {
+            }
+            else if (!NT_SUCCESS(status))
+            {
                 goto clean1;
             }
 
@@ -2309,29 +2123,26 @@ Return Value:
             //
             // Create a NULL-terminated unicode string for the interface key name
             //
-            status = IopAllocateUnicodeString(&interfaceString,
-                                              (USHORT)((PKEY_BASIC_INFORMATION)(interfaceInfoBuffer.Buffer))->NameLength);
+            status = IopAllocateUnicodeString(
+                &interfaceString, (USHORT)((PKEY_BASIC_INFORMATION)(interfaceInfoBuffer.Buffer))->NameLength);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto clean1;
             }
 
             interfaceString.Length = (USHORT)((PKEY_BASIC_INFORMATION)(interfaceInfoBuffer.Buffer))->NameLength;
             interfaceString.MaximumLength = interfaceString.Length + sizeof(UNICODE_NULL);
-            RtlCopyMemory(interfaceString.Buffer,
-                          ((PKEY_BASIC_INFORMATION)(interfaceInfoBuffer.Buffer))->Name,
+            RtlCopyMemory(interfaceString.Buffer, ((PKEY_BASIC_INFORMATION)(interfaceInfoBuffer.Buffer))->Name,
                           interfaceString.Length);
-            interfaceString.Buffer[interfaceString.Length/sizeof(WCHAR)] = UNICODE_NULL;
+            interfaceString.Buffer[interfaceString.Length / sizeof(WCHAR)] = UNICODE_NULL;
 
             //
             // Open the device interface key
             //
-            status = IopOpenRegistryKeyEx( &hInterface,
-                                           hClassGUID,
-                                           &interfaceString,
-                                           KEY_ALL_ACCESS
-                                           );
-            if (!NT_SUCCESS(status)) {
+            status = IopOpenRegistryKeyEx(&hInterface, hClassGUID, &interfaceString, KEY_ALL_ACCESS);
+            if (!NT_SUCCESS(status))
+            {
                 //
                 // Couldn't open the device interface key -- skip it and move on.
                 //
@@ -2342,11 +2153,10 @@ Return Value:
             //
             // Get the DeviceInstance value for this interface key
             //
-            status = IopGetRegistryValue(hInterface,
-                                         REGSTR_VAL_DEVICE_INSTANCE,
-                                         &deviceInstanceInfo);
+            status = IopGetRegistryValue(hInterface, REGSTR_VAL_DEVICE_INSTANCE, &deviceInstanceInfo);
 
-            if(!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 //
                 //  Couldn't get the DeviceInstance for this interface --
                 //  skip it and move on.
@@ -2354,26 +2164,26 @@ Return Value:
                 goto CloseInterfaceKeyAndContinue;
             }
 
-            if((deviceInstanceInfo->Type == REG_SZ) &&
-               (deviceInstanceInfo->DataLength != 0)) {
+            if ((deviceInstanceInfo->Type == REG_SZ) && (deviceInstanceInfo->DataLength != 0))
+            {
 
-                IopRegistryDataToUnicodeString(&deviceInstanceString,
-                                               (PWSTR)KEY_VALUE_DATA(deviceInstanceInfo),
+                IopRegistryDataToUnicodeString(&deviceInstanceString, (PWSTR)KEY_VALUE_DATA(deviceInstanceInfo),
                                                deviceInstanceInfo->DataLength);
-
-            } else {
+            }
+            else
+            {
                 //
                 // DeviceInstance value is invalid -- skip it and move on.
                 //
                 ExFreePool(deviceInstanceInfo);
                 goto CloseInterfaceKeyAndContinue;
-
             }
 
             //
             // Compare the DeviceInstance of this interface to DeviceInstancePath
             //
-            if (RtlEqualUnicodeString(&deviceInstanceString, DeviceInstancePath, TRUE)) {
+            if (RtlEqualUnicodeString(&deviceInstanceString, DeviceInstancePath, TRUE))
+            {
 
                 ZwClose(hInterface);
                 hInterface = NULL;
@@ -2384,20 +2194,19 @@ Return Value:
                 //
                 RtlGUIDFromString(&guidString, &classGUID);
 
-                status = IopGetDeviceInterfaces(&classGUID,
-                                                DeviceInstancePath,
-                                                DEVICE_INTERFACE_INCLUDE_NONACTIVE,
-                                                FALSE,       // kernel-mode format
-                                                &symbolicLinkList,
-                                                &symbolicLinkListSize);
+                status = IopGetDeviceInterfaces(&classGUID, DeviceInstancePath, DEVICE_INTERFACE_INCLUDE_NONACTIVE,
+                                                FALSE, // kernel-mode format
+                                                &symbolicLinkList, &symbolicLinkListSize);
 
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
 
                     //
                     // Iterate through all instances of the interface
                     //
                     symLink = symbolicLinkList;
-                    while(*symLink != UNICODE_NULL) {
+                    while (*symLink != UNICODE_NULL)
+                    {
 
                         RtlInitUnicodeString(&tempString, symLink);
 
@@ -2423,20 +2232,19 @@ Return Value:
                 // the interface key will not have been deleted.  We'll catch
                 // that here.
                 //
-                status = IopOpenRegistryKeyEx( &hInterface,
-                                               hClassGUID,
-                                               &interfaceString,
-                                               KEY_READ
-                                               );
-                if(NT_SUCCESS(status)){
-                    if (NT_SUCCESS(IopDeleteKeyRecursive(hClassGUID,
-                                                         interfaceString.Buffer))) {
+                status = IopOpenRegistryKeyEx(&hInterface, hClassGUID, &interfaceString, KEY_READ);
+                if (NT_SUCCESS(status))
+                {
+                    if (NT_SUCCESS(IopDeleteKeyRecursive(hClassGUID, interfaceString.Buffer)))
+                    {
                         deletedInterface = TRUE;
                     }
                     ZwDeleteKey(hInterface);
                     ZwClose(hInterface);
                     hInterface = NULL;
-                } else if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+                }
+                else if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+                {
                     //
                     // Interface was already deleted by IopUnregisterDeviceInterface
                     //
@@ -2449,9 +2257,10 @@ Return Value:
             //
             ExFreePool(deviceInstanceInfo);
 
-CloseInterfaceKeyAndContinue:
+        CloseInterfaceKeyAndContinue:
 
-            if (hInterface != NULL) {
+            if (hInterface != NULL)
+            {
                 ZwClose(hInterface);
                 hInterface = NULL;
             }
@@ -2461,15 +2270,16 @@ CloseInterfaceKeyAndContinue:
             //
             // Only increment the enumeration index for non-deleted keys
             //
-            if (!deletedInterface) {
+            if (!deletedInterface)
+            {
                 interfaceIndex++;
             }
-
         }
 
-CloseClassKeyAndContinue:
+    CloseClassKeyAndContinue:
 
-        if (hClassGUID != NULL) {
+        if (hClassGUID != NULL)
+        {
             ZwClose(hClassGUID);
             hClassGUID = NULL;
         }
@@ -2477,13 +2287,16 @@ CloseClassKeyAndContinue:
     }
 
 clean1:
-    if (hInterface) {
+    if (hInterface)
+    {
         ZwClose(hInterface);
     }
-    if (hClassGUID) {
+    if (hClassGUID)
+    {
         ZwClose(hClassGUID);
     }
-    if (hDeviceClasses) {
+    if (hDeviceClasses)
+    {
         ZwClose(hDeviceClasses);
     }
 
@@ -2495,11 +2308,8 @@ clean0:
 }
 
 
-
 NTSTATUS
-IopDisableDeviceInterfaces(
-    IN PUNICODE_STRING DeviceInstancePath
-    )
+IopDisableDeviceInterfaces(IN PUNICODE_STRING DeviceInstancePath)
 /*++
 
 Routine Description:
@@ -2537,10 +2347,10 @@ Return Value:
     //
     // Allocate initial buffer to hold device class GUID subkeys.
     //
-    status = IopAllocateBuffer(&classInfoBuffer,
-                               sizeof(KEY_BASIC_INFORMATION) +
-                               GUID_STRING_SIZE + sizeof(UNICODE_NULL));
-    if (!NT_SUCCESS(status)) {
+    status =
+        IopAllocateBuffer(&classInfoBuffer, sizeof(KEY_BASIC_INFORMATION) + GUID_STRING_SIZE + sizeof(UNICODE_NULL));
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -2558,12 +2368,9 @@ Return Value:
     // Open HKLM\System\CurrentControlSet\Control\DeviceClasses
     //
     PiWstrToUnicodeString(&tempString, REGSTR_FULL_PATH_DEVICE_CLASSES);
-    status = IopOpenRegistryKeyEx(&hDeviceClasses,
-                                  NULL,
-                                  &tempString,
-                                  KEY_READ
-                                  );
-    if (!NT_SUCCESS(status)){
+    status = IopOpenRegistryKeyEx(&hDeviceClasses, NULL, &tempString, KEY_READ);
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -2572,13 +2379,9 @@ Return Value:
     //
     classIndex = 0;
     ASSERT(classInfoBuffer.MaxSize >= sizeof(KEY_BASIC_INFORMATION));
-    while((status = ZwEnumerateKey(hDeviceClasses,
-                                   classIndex,
-                                   KeyBasicInformation,
-                                   (PVOID)classInfoBuffer.Buffer,
-                                   classInfoBuffer.MaxSize,
-                                   &resultSize
-                                   )) != STATUS_NO_MORE_ENTRIES) {
+    while ((status = ZwEnumerateKey(hDeviceClasses, classIndex, KeyBasicInformation, (PVOID)classInfoBuffer.Buffer,
+                                    classInfoBuffer.MaxSize, &resultSize)) != STATUS_NO_MORE_ENTRIES)
+    {
 
         //
         // A return value of STATUS_BUFFER_TOO_SMALL would mean that there
@@ -2586,10 +2389,13 @@ Return Value:
         //
         ASSERT(status != STATUS_BUFFER_TOO_SMALL);
 
-        if (status == STATUS_BUFFER_OVERFLOW) {
+        if (status == STATUS_BUFFER_OVERFLOW)
+        {
             status = IopResizeBuffer(&classInfoBuffer, resultSize, FALSE);
             continue;
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
             ZwClose(hDeviceClasses);
             goto clean0;
         }
@@ -2607,14 +2413,13 @@ Return Value:
         //
         RtlGUIDFromString(&guidString, &classGuid);
 
-        status = IopGetDeviceInterfaces(&classGuid,
-                                        DeviceInstancePath,
+        status = IopGetDeviceInterfaces(&classGuid, DeviceInstancePath,
                                         0,     // active interfaces only
                                         FALSE, // kernel-mode format
-                                        &symbolicLinkList,
-                                        &symbolicLinkListSize);
+                                        &symbolicLinkList, &symbolicLinkListSize);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Iterate through all enabled instances of this device interface
@@ -2622,14 +2427,14 @@ Return Value:
             // device instance.
             //
             symLink = symbolicLinkList;
-            while(*symLink != UNICODE_NULL) {
+            while (*symLink != UNICODE_NULL)
+            {
 
                 RtlInitUnicodeString(&tempString, symLink);
 
                 IopDbgPrint((IOP_WARNING_LEVEL,
-                           "IopDisableDeviceInterfaces: auto-disabling interface %Z for device instance %Z\n",
-                           tempString,
-                           DeviceInstancePath));
+                             "IopDisableDeviceInterfaces: auto-disabling interface %Z for device instance %Z\n",
+                             tempString, DeviceInstancePath));
 
                 //
                 // Disable this device interface.
@@ -2645,7 +2450,7 @@ Return Value:
 
     ZwClose(hDeviceClasses);
 
- clean0:
+clean0:
 
     IopFreeBuffer(&classInfoBuffer);
 
@@ -2655,18 +2460,13 @@ Return Value:
 }
 
 
-
 NTSTATUS
-IopOpenOrCreateDeviceInterfaceSubKeys(
-    OUT PHANDLE InterfaceKeyHandle           OPTIONAL,
-    OUT PULONG InterfaceKeyDisposition       OPTIONAL,
-    OUT PHANDLE InterfaceInstanceKeyHandle   OPTIONAL,
-    OUT PULONG InterfaceInstanceDisposition  OPTIONAL,
-    IN HANDLE InterfaceClassKeyHandle,
-    IN PUNICODE_STRING DeviceInterfaceName,
-    IN ACCESS_MASK DesiredAccess,
-    IN BOOLEAN Create
-    )
+IopOpenOrCreateDeviceInterfaceSubKeys(OUT PHANDLE InterfaceKeyHandle OPTIONAL,
+                                      OUT PULONG InterfaceKeyDisposition OPTIONAL,
+                                      OUT PHANDLE InterfaceInstanceKeyHandle OPTIONAL,
+                                      OUT PULONG InterfaceInstanceDisposition OPTIONAL,
+                                      IN HANDLE InterfaceClassKeyHandle, IN PUNICODE_STRING DeviceInterfaceName,
+                                      IN ACCESS_MASK DesiredAccess, IN BOOLEAN Create)
 
 /*++
 
@@ -2717,7 +2517,7 @@ Return Value:
     WCHAR PoundCharBuffer;
     HANDLE hTempInterface, hTempInterfaceInstance;
     ULONG TempInterfaceDisposition;
-    BOOLEAN RefStringPresent=FALSE;
+    BOOLEAN RefStringPresent = FALSE;
 
     PAGED_CODE();
 
@@ -2726,7 +2526,8 @@ Return Value:
     //
     status = IopAllocateUnicodeString(&TempString, DeviceInterfaceName->Length);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -2736,20 +2537,16 @@ Return Value:
     // Parse the SymbolicLinkName for the refstring component (if there is one).
     // Note that this is also a way of verifying that the string is valid.
     //
-    status = IopParseSymbolicLinkName(&TempString,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      &RefString,
-                                      &RefStringPresent,
-                                      NULL);
+    status = IopParseSymbolicLinkName(&TempString, NULL, NULL, NULL, &RefString, &RefStringPresent, NULL);
     ASSERT(NT_SUCCESS(status));
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
-    if(RefStringPresent) {
+    if (RefStringPresent)
+    {
         //
         // Truncate the device interface name before the refstring separator char.
         //
@@ -2757,7 +2554,9 @@ Return Value:
         RefString.Length += sizeof(WCHAR);
         RefString.MaximumLength += sizeof(WCHAR);
         TempString.MaximumLength = TempString.Length = (USHORT)((PUCHAR)RefString.Buffer - (PUCHAR)TempString.Buffer);
-    } else {
+    }
+    else
+    {
         //
         // Set up refstring to point to a temporary character buffer that will hold
         // the single '#' used for the key name when no refstring is present.
@@ -2780,23 +2579,18 @@ Return Value:
     // Now open/create this subkey under the interface class key.
     //
 
-    if (Create) {
-        status = IopCreateRegistryKeyEx( &hTempInterface,
-                                         InterfaceClassKeyHandle,
-                                         &TempString,
-                                         DesiredAccess,
-                                         REG_OPTION_NON_VOLATILE,
-                                         &TempInterfaceDisposition
-                                         );
-    } else {
-        status = IopOpenRegistryKeyEx( &hTempInterface,
-                                       InterfaceClassKeyHandle,
-                                       &TempString,
-                                       DesiredAccess
-                                       );
+    if (Create)
+    {
+        status = IopCreateRegistryKeyEx(&hTempInterface, InterfaceClassKeyHandle, &TempString, DesiredAccess,
+                                        REG_OPTION_NON_VOLATILE, &TempInterfaceDisposition);
+    }
+    else
+    {
+        status = IopOpenRegistryKeyEx(&hTempInterface, InterfaceClassKeyHandle, &TempString, DesiredAccess);
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -2811,49 +2605,54 @@ Return Value:
     // (i.e., differentiated by refstring).
     //
 
-    if (Create) {
-        status = IopCreateRegistryKeyEx( &hTempInterfaceInstance,
-                                       hTempInterface,
-                                       &RefString,
-                                       DesiredAccess,
-                                       REG_OPTION_NON_VOLATILE,
-                                       InterfaceInstanceDisposition
-                                       );
-    } else {
-        status = IopOpenRegistryKeyEx( &hTempInterfaceInstance,
-                                       hTempInterface,
-                                       &RefString,
-                                       DesiredAccess
-                                       );
+    if (Create)
+    {
+        status = IopCreateRegistryKeyEx(&hTempInterfaceInstance, hTempInterface, &RefString, DesiredAccess,
+                                        REG_OPTION_NON_VOLATILE, InterfaceInstanceDisposition);
+    }
+    else
+    {
+        status = IopOpenRegistryKeyEx(&hTempInterfaceInstance, hTempInterface, &RefString, DesiredAccess);
 
         TempInterfaceDisposition = REG_OPENED_EXISTING_KEY;
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // Store any requested return values in the caller-supplied buffers.
         //
-        if (InterfaceKeyHandle) {
+        if (InterfaceKeyHandle)
+        {
             *InterfaceKeyHandle = hTempInterface;
-        } else {
+        }
+        else
+        {
             ZwClose(hTempInterface);
         }
-        if (InterfaceKeyDisposition) {
+        if (InterfaceKeyDisposition)
+        {
             *InterfaceKeyDisposition = TempInterfaceDisposition;
         }
-        if (InterfaceInstanceKeyHandle) {
+        if (InterfaceInstanceKeyHandle)
+        {
             *InterfaceInstanceKeyHandle = hTempInterfaceInstance;
-        } else {
+        }
+        else
+        {
             ZwClose(hTempInterfaceInstance);
         }
         //
         // (no need to set InterfaceInstanceDisposition--we already set it above)
         //
-    } else {
+    }
+    else
+    {
         //
         // If the interface key was newly-created above, then delete it.
         //
-        if (TempInterfaceDisposition == REG_CREATED_NEW_KEY) {
+        if (TempInterfaceDisposition == REG_CREATED_NEW_KEY)
+        {
             ZwDeleteKey(hTempInterface);
         }
         ZwClose(hTempInterface);
@@ -2865,13 +2664,10 @@ clean1:
 clean0:
     return status;
 }
-
+
 NTSTATUS
-IoGetDeviceInterfaceAlias(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN CONST GUID *AliasInterfaceClassGuid,
-    OUT PUNICODE_STRING AliasSymbolicLinkName
-    )
+IoGetDeviceInterfaceAlias(IN PUNICODE_STRING SymbolicLinkName, IN CONST GUID *AliasInterfaceClassGuid,
+                          OUT PUNICODE_STRING AliasSymbolicLinkName)
 
 /*++
 
@@ -2922,8 +2718,8 @@ Return Value:
     // Make sure we have a SymbolicLinkName to parse.
     //
 
-    if ((!ARGUMENT_PRESENT(SymbolicLinkName)) ||
-        (SymbolicLinkName->Buffer == NULL)) {
+    if ((!ARGUMENT_PRESENT(SymbolicLinkName)) || (SymbolicLinkName->Buffer == NULL))
+    {
         status = STATUS_INVALID_PARAMETER;
         goto clean0;
     }
@@ -2934,7 +2730,8 @@ Return Value:
 
     ASSERT(IopConstStringSize(USER_SYMLINK_STRING_PREFIX) == IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX));
 
-    if (SymbolicLinkName->Length < (IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX)+GUID_STRING_SIZE+1)) {
+    if (SymbolicLinkName->Length < (IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX) + GUID_STRING_SIZE + 1))
+    {
         status = STATUS_INVALID_PARAMETER;
         goto clean0;
     }
@@ -2944,7 +2741,8 @@ Return Value:
     //
 
     status = RtlStringFromGUID(AliasInterfaceClassGuid, &guidString);
-    if( !NT_SUCCESS(status) ){
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -2963,13 +2761,9 @@ Return Value:
     // Open the (parent) device interface key--not the refstring-specific one.
     //
 
-    status = IopDeviceInterfaceKeysFromSymbolicLink(SymbolicLinkName,
-                                                    KEY_READ,
-                                                    NULL,
-                                                    &hKey,
-                                                    NULL
-                                                    );
-    if(!NT_SUCCESS(status)) {
+    status = IopDeviceInterfaceKeysFromSymbolicLink(SymbolicLinkName, KEY_READ, NULL, &hKey, NULL);
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -2981,22 +2775,22 @@ Return Value:
 
     ZwClose(hKey);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
-    if(pDeviceInstanceInfo->Type == REG_SZ) {
+    if (pDeviceInstanceInfo->Type == REG_SZ)
+    {
 
-        IopRegistryDataToUnicodeString(&deviceInstanceString,
-                                       (PWSTR)KEY_VALUE_DATA(pDeviceInstanceInfo),
-                                       pDeviceInstanceInfo->DataLength
-                                      );
-
-    } else {
+        IopRegistryDataToUnicodeString(&deviceInstanceString, (PWSTR)KEY_VALUE_DATA(pDeviceInstanceInfo),
+                                       pDeviceInstanceInfo->DataLength);
+    }
+    else
+    {
 
         status = STATUS_INVALID_PARAMETER_1;
         goto clean2;
-
     }
 
     //
@@ -3008,39 +2802,31 @@ Return Value:
     // failed above when we called IopDeviceInterfaceKeysFromSymbolicLink (since it also
     // calls IopParseSymbolicLinkName internally.)
     //
-    status = IopParseSymbolicLinkName(SymbolicLinkName,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      &refString,
-                                      &refStringPresent,
-                                      NULL);
+    status = IopParseSymbolicLinkName(SymbolicLinkName, NULL, NULL, NULL, &refString, &refStringPresent, NULL);
     ASSERT(NT_SUCCESS(status));
 
     //
     // Did the caller supply us with a user-mode or kernel-mode format path?
     //
     userModeFormat = (BOOLEAN)(IopConstStringSize(USER_SYMLINK_STRING_PREFIX) ==
-                          RtlCompareMemory(SymbolicLinkName->Buffer,
-                                           USER_SYMLINK_STRING_PREFIX,
-                                           IopConstStringSize(USER_SYMLINK_STRING_PREFIX)
-                                          ));
+                               RtlCompareMemory(SymbolicLinkName->Buffer, USER_SYMLINK_STRING_PREFIX,
+                                                IopConstStringSize(USER_SYMLINK_STRING_PREFIX)));
 
-    if(userModeFormat) {
+    if (userModeFormat)
+    {
         pUserString = AliasSymbolicLinkName;
         pKernelString = &otherString;
-    } else {
+    }
+    else
+    {
         pKernelString = AliasSymbolicLinkName;
         pUserString = &otherString;
     }
 
-    status = IopBuildSymbolicLinkStrings(&deviceInstanceString,
-                                         &guidString,
-                                         refStringPresent ? &refString : NULL,
-                                         pUserString,
-                                         pKernelString
-                                         );
-    if (!NT_SUCCESS(status)) {
+    status = IopBuildSymbolicLinkStrings(&deviceInstanceString, &guidString, refStringPresent ? &refString : NULL,
+                                         pUserString, pKernelString);
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
@@ -3048,19 +2834,17 @@ Return Value:
     // OK, we now have the symbolic link name of the alias, but we don't yet know whether
     // it actually exists.  Check this by attempting to open the associated registry key.
     //
-    status = IopDeviceInterfaceKeysFromSymbolicLink(AliasSymbolicLinkName,
-                                                    KEY_READ,
-                                                    NULL,
-                                                    NULL,
-                                                    &hKey
-                                                    );
+    status = IopDeviceInterfaceKeysFromSymbolicLink(AliasSymbolicLinkName, KEY_READ, NULL, NULL, &hKey);
 
-    if(NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // Alias exists--close the key handle.
         //
         ZwClose(hKey);
-    } else {
+    }
+    else
+    {
         IopFreeAllocatedUnicodeString(AliasSymbolicLinkName);
     }
 
@@ -3076,15 +2860,11 @@ clean1:
 clean0:
     return status;
 }
-
+
 NTSTATUS
-IopBuildSymbolicLinkStrings(
-    IN PUNICODE_STRING DeviceString,
-    IN PUNICODE_STRING GuidString,
-    IN PUNICODE_STRING ReferenceString      OPTIONAL,
-    OUT PUNICODE_STRING UserString,
-    OUT PUNICODE_STRING KernelString
-)
+IopBuildSymbolicLinkStrings(IN PUNICODE_STRING DeviceString, IN PUNICODE_STRING GuidString,
+                            IN PUNICODE_STRING ReferenceString OPTIONAL, OUT PUNICODE_STRING UserString,
+                            OUT PUNICODE_STRING KernelString)
 /*++
 
 Routine Description:
@@ -3141,7 +2921,8 @@ Return Value:
     length = IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX) + DeviceString->Length +
              IopConstStringSize(REPLACED_SEPERATOR_STRING) + GuidString->Length;
 
-    if(ARGUMENT_PRESENT(ReferenceString) && (ReferenceString->Length != 0)) {
+    if (ARGUMENT_PRESENT(ReferenceString) && (ReferenceString->Length != 0))
+    {
         length += IopConstStringSize(SEPERATOR_STRING) + ReferenceString->Length;
     }
 
@@ -3150,12 +2931,14 @@ Return Value:
     //
 
     status = IopAllocateUnicodeString(KernelString, length);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
     status = IopAllocateUnicodeString(UserString, length);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -3164,7 +2947,8 @@ Return Value:
     //
 
     status = IopAllocateUnicodeString(&mungedDeviceString, DeviceString->Length);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
@@ -3173,7 +2957,8 @@ Return Value:
     //
 
     status = IopReplaceSeperatorWithPound(&mungedDeviceString, DeviceString);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean3;
     }
 
@@ -3186,45 +2971,42 @@ Return Value:
     RtlAppendUnicodeToString(UserString, REPLACED_SEPERATOR_STRING);
     RtlAppendUnicodeStringToString(UserString, GuidString);
 
-    if (ARGUMENT_PRESENT(ReferenceString) && (ReferenceString->Length != 0)) {
+    if (ARGUMENT_PRESENT(ReferenceString) && (ReferenceString->Length != 0))
+    {
         RtlAppendUnicodeToString(UserString, SEPERATOR_STRING);
         RtlAppendUnicodeStringToString(UserString, ReferenceString);
     }
 
-    ASSERT( UserString->Length == length );
+    ASSERT(UserString->Length == length);
 
     //
     // Construct the kernel mode string by replacing the prefix on the value string
     //
 
     RtlCopyUnicodeString(KernelString, UserString);
-    RtlCopyMemory(KernelString->Buffer,
-                  KERNEL_SYMLINK_STRING_PREFIX,
-                  IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX)
-                 );
+    RtlCopyMemory(KernelString->Buffer, KERNEL_SYMLINK_STRING_PREFIX, IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX));
 
 clean3:
     IopFreeAllocatedUnicodeString(&mungedDeviceString);
 
 clean2:
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         IopFreeAllocatedUnicodeString(UserString);
     }
 
 clean1:
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         IopFreeAllocatedUnicodeString(KernelString);
     }
 
 clean0:
     return status;
 }
-
+
 NTSTATUS
-IopReplaceSeperatorWithPound(
-    OUT PUNICODE_STRING OutString,
-    IN PUNICODE_STRING InString
-    )
+IopReplaceSeperatorWithPound(OUT PUNICODE_STRING OutString, IN PUNICODE_STRING InString)
 
 /*++
 
@@ -3264,7 +3046,8 @@ Remarks:
     // Ensure we have enough space in the output string
     //
 
-    if(InString->Length > OutString->MaximumLength) {
+    if (InString->Length > OutString->MaximumLength)
+    {
         return STATUS_BUFFER_TOO_SMALL;
     }
 
@@ -3277,10 +3060,14 @@ Remarks:
     // with '#'
     //
 
-    while (count--) {
-        if((*pInPosition == SEPERATOR_CHAR) || (*pInPosition == ALT_SEPERATOR_CHAR)) {
+    while (count--)
+    {
+        if ((*pInPosition == SEPERATOR_CHAR) || (*pInPosition == ALT_SEPERATOR_CHAR))
+        {
             *pOutPosition = REPLACED_SEPERATOR_CHAR;
-        } else {
+        }
+        else
+        {
             *pOutPosition = *pInPosition;
         }
         pInPosition++;
@@ -3290,14 +3077,10 @@ Remarks:
     OutString->Length = InString->Length;
 
     return STATUS_SUCCESS;
-
 }
-
+
 NTSTATUS
-IopDropReferenceString(
-    OUT PUNICODE_STRING OutString,
-    IN PUNICODE_STRING InString
-    )
+IopDropReferenceString(OUT PUNICODE_STRING OutString, IN PUNICODE_STRING InString)
 
 /*++
 
@@ -3341,15 +3124,10 @@ Remarks:
     // Parse the SymbolicLinkName for the refstring component (if there is one).
     // Note that this is also a way of verifying that the string is valid.
     //
-    status = IopParseSymbolicLinkName(InString,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      &refString,
-                                      &refStringPresent,
-                                      NULL);
+    status = IopParseSymbolicLinkName(InString, NULL, NULL, NULL, &refString, &refStringPresent, NULL);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // The refstring is always at the end, so just use the same buffer and
         // set the length of the output string accordingly.
@@ -3359,13 +3137,17 @@ Remarks:
         //
         // If we have a refstring then subtract it's length
         //
-        if (refStringPresent) {
+        if (refStringPresent)
+        {
             OutString->Length = InString->Length - (refString.Length + sizeof(WCHAR));
-        } else {
+        }
+        else
+        {
             OutString->Length = InString->Length;
         }
-
-    } else {
+    }
+    else
+    {
         //
         // Invalidate the returned string
         //
@@ -3377,12 +3159,9 @@ Remarks:
 
     return status;
 }
-
+
 NTSTATUS
-IopBuildGlobalSymbolicLinkString(
-    IN  PUNICODE_STRING SymbolicLinkName,
-    OUT PUNICODE_STRING GlobalString
-    )
+IopBuildGlobalSymbolicLinkString(IN PUNICODE_STRING SymbolicLinkName, OUT PUNICODE_STRING GlobalString)
 /*++
 
 Routine Description:
@@ -3428,14 +3207,13 @@ Return Value:
     // prefix then fail.
     //
 
-    if ((RtlCompareMemory(SymbolicLinkName->Buffer,
-                          USER_SYMLINK_STRING_PREFIX,
-                          IopConstStringSize(USER_SYMLINK_STRING_PREFIX))
-         != IopConstStringSize(USER_SYMLINK_STRING_PREFIX)) &&
-        (RtlCompareMemory(SymbolicLinkName->Buffer,
-                          KERNEL_SYMLINK_STRING_PREFIX,
-                          IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX))
-         != IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX))) {
+    if ((RtlCompareMemory(SymbolicLinkName->Buffer, USER_SYMLINK_STRING_PREFIX,
+                          IopConstStringSize(USER_SYMLINK_STRING_PREFIX)) !=
+         IopConstStringSize(USER_SYMLINK_STRING_PREFIX)) &&
+        (RtlCompareMemory(SymbolicLinkName->Buffer, KERNEL_SYMLINK_STRING_PREFIX,
+                          IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX)) !=
+         IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX)))
+    {
         status = STATUS_INVALID_PARAMETER;
         goto clean0;
     }
@@ -3452,7 +3230,8 @@ Return Value:
     //
 
     status = IopAllocateUnicodeString(GlobalString, length);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -3460,11 +3239,11 @@ Return Value:
     // Copy the \GLOBAL?? symbolic link name prefix to the string.
     //
 
-    status = RtlAppendUnicodeToString(GlobalString,
-                                      GLOBAL_SYMLINK_STRING_PREFIX);
+    status = RtlAppendUnicodeToString(GlobalString, GLOBAL_SYMLINK_STRING_PREFIX);
     ASSERT(NT_SUCCESS(status));
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         IopFreeAllocatedUnicodeString(GlobalString);
         goto clean0;
     }
@@ -3473,18 +3252,16 @@ Return Value:
     // Append the part of the SymbolicLinkName that follows the prefix.
     //
 
-    tempString.Buffer = SymbolicLinkName->Buffer +
-        IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX);
-    tempString.Length = SymbolicLinkName->Length -
-        IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX);
-    tempString.MaximumLength = SymbolicLinkName->MaximumLength -
-        IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX);
+    tempString.Buffer = SymbolicLinkName->Buffer + IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX);
+    tempString.Length = SymbolicLinkName->Length - IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX);
+    tempString.MaximumLength = SymbolicLinkName->MaximumLength - IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX);
 
     status = RtlAppendUnicodeStringToString(GlobalString, &tempString);
 
     ASSERT(NT_SUCCESS(status));
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         IopFreeAllocatedUnicodeString(GlobalString);
         goto clean0;
     }
@@ -3495,17 +3272,12 @@ clean0:
 
     return status;
 }
-
+
 NTSTATUS
-IopParseSymbolicLinkName(
-    IN  PUNICODE_STRING SymbolicLinkName,
-    OUT PUNICODE_STRING PrefixString        OPTIONAL,
-    OUT PUNICODE_STRING MungedPathString    OPTIONAL,
-    OUT PUNICODE_STRING GuidString          OPTIONAL,
-    OUT PUNICODE_STRING RefString           OPTIONAL,
-    OUT PBOOLEAN        RefStringPresent    OPTIONAL,
-    OUT LPGUID Guid                         OPTIONAL
-    )
+IopParseSymbolicLinkName(IN PUNICODE_STRING SymbolicLinkName, OUT PUNICODE_STRING PrefixString OPTIONAL,
+                         OUT PUNICODE_STRING MungedPathString OPTIONAL, OUT PUNICODE_STRING GuidString OPTIONAL,
+                         OUT PUNICODE_STRING RefString OPTIONAL, OUT PBOOLEAN RefStringPresent OPTIONAL,
+                         OUT LPGUID Guid OPTIONAL)
 
 /*++
 
@@ -3558,9 +3330,8 @@ Return Value:
     // Make sure we have a SymbolicLinkName to parse.
     //
 
-    if ((!ARGUMENT_PRESENT(SymbolicLinkName)) ||
-        (SymbolicLinkName->Buffer == NULL)    ||
-        (SymbolicLinkName->Length == 0)) {
+    if ((!ARGUMENT_PRESENT(SymbolicLinkName)) || (SymbolicLinkName->Buffer == NULL) || (SymbolicLinkName->Length == 0))
+    {
         status = STATUS_INVALID_PARAMETER;
         goto clean0;
     }
@@ -3571,7 +3342,8 @@ Return Value:
 
     ASSERT(IopConstStringSize(USER_SYMLINK_STRING_PREFIX) == IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX));
 
-    if (SymbolicLinkName->Length < (IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX)+GUID_STRING_SIZE+1)) {
+    if (SymbolicLinkName->Length < (IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX) + GUID_STRING_SIZE + 1))
+    {
         status = STATUS_INVALID_PARAMETER;
         goto clean0;
     }
@@ -3580,14 +3352,13 @@ Return Value:
     // Sanity check on the incoming string - if it does not have a \\?\ or \??\ prefix then fail
     //
 
-    if ((RtlCompareMemory(SymbolicLinkName->Buffer,
-                          USER_SYMLINK_STRING_PREFIX,
-                          IopConstStringSize(USER_SYMLINK_STRING_PREFIX))
-         != IopConstStringSize(USER_SYMLINK_STRING_PREFIX)) &&
-        (RtlCompareMemory(SymbolicLinkName->Buffer,
-                          KERNEL_SYMLINK_STRING_PREFIX,
-                          IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX))
-         != IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX))) {
+    if ((RtlCompareMemory(SymbolicLinkName->Buffer, USER_SYMLINK_STRING_PREFIX,
+                          IopConstStringSize(USER_SYMLINK_STRING_PREFIX)) !=
+         IopConstStringSize(USER_SYMLINK_STRING_PREFIX)) &&
+        (RtlCompareMemory(SymbolicLinkName->Buffer, KERNEL_SYMLINK_STRING_PREFIX,
+                          IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX)) !=
+         IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX)))
+    {
         status = STATUS_INVALID_PARAMETER;
         goto clean0;
     }
@@ -3606,24 +3377,27 @@ Return Value:
 
     for (current = 0;
          current < (SymbolicLinkName->Length / sizeof(WCHAR)) - IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX);
-         current++, pCurrent++) {
+         current++, pCurrent++)
+    {
 
-        if(*pCurrent == SEPERATOR_CHAR) {
+        if (*pCurrent == SEPERATOR_CHAR)
+        {
             reference = current + 1 + IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX);
             break;
         }
-
     }
 
     //
     // If we don't have a reference string fake it to where it would have been
     //
 
-    if (reference == 0) {
+    if (reference == 0)
+    {
         haveRefString = FALSE;
         reference = SymbolicLinkName->Length / sizeof(WCHAR) + 1;
-
-    } else {
+    }
+    else
+    {
         haveRefString = TRUE;
     }
 
@@ -3635,7 +3409,8 @@ Return Value:
     tempString.MaximumLength = GUID_STRING_SIZE;
     tempString.Buffer = SymbolicLinkName->Buffer + reference - GUID_STRING_LENGTH - 1;
 
-    if (!NT_SUCCESS( RtlGUIDFromString(&tempString, &tempGuid) )) {
+    if (!NT_SUCCESS(RtlGUIDFromString(&tempString, &tempGuid)))
+    {
         status = STATUS_INVALID_PARAMETER;
         goto clean0;
     }
@@ -3646,63 +3421,65 @@ Return Value:
     // Setup return strings
     //
 
-    if (ARGUMENT_PRESENT(PrefixString)) {
+    if (ARGUMENT_PRESENT(PrefixString))
+    {
         PrefixString->Length = IopConstStringSize(KERNEL_SYMLINK_STRING_PREFIX);
         PrefixString->MaximumLength = PrefixString->Length;
         PrefixString->Buffer = SymbolicLinkName->Buffer;
     }
 
-    if (ARGUMENT_PRESENT(MungedPathString)) {
-        MungedPathString->Length = (reference - 1 - GUID_STRING_LENGTH - 1 -
-                                   IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX)) *
-                                   sizeof(WCHAR);
+    if (ARGUMENT_PRESENT(MungedPathString))
+    {
+        MungedPathString->Length =
+            (reference - 1 - GUID_STRING_LENGTH - 1 - IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX)) *
+            sizeof(WCHAR);
         MungedPathString->MaximumLength = MungedPathString->Length;
-        MungedPathString->Buffer = SymbolicLinkName->Buffer +
-                                   IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX);
-
+        MungedPathString->Buffer = SymbolicLinkName->Buffer + IopConstStringLength(KERNEL_SYMLINK_STRING_PREFIX);
     }
 
-    if (ARGUMENT_PRESENT(GuidString)) {
+    if (ARGUMENT_PRESENT(GuidString))
+    {
         GuidString->Length = GUID_STRING_SIZE;
         GuidString->MaximumLength = GuidString->Length;
-        GuidString->Buffer = SymbolicLinkName->Buffer + reference -
-                             GUID_STRING_LENGTH - 1;
+        GuidString->Buffer = SymbolicLinkName->Buffer + reference - GUID_STRING_LENGTH - 1;
     }
 
-    if (ARGUMENT_PRESENT(RefString)) {
+    if (ARGUMENT_PRESENT(RefString))
+    {
         //
         // Check if we have a refstring
         //
-        if (haveRefString) {
-            RefString->Length = SymbolicLinkName->Length -
-                                  (reference * sizeof(WCHAR));
+        if (haveRefString)
+        {
+            RefString->Length = SymbolicLinkName->Length - (reference * sizeof(WCHAR));
             RefString->MaximumLength = RefString->Length;
             RefString->Buffer = SymbolicLinkName->Buffer + reference;
-        } else {
+        }
+        else
+        {
             RefString->Length = 0;
             RefString->MaximumLength = 0;
             RefString->Buffer = NULL;
         }
     }
 
-    if (ARGUMENT_PRESENT(RefStringPresent)) {
+    if (ARGUMENT_PRESENT(RefStringPresent))
+    {
         *RefStringPresent = haveRefString;
     }
 
-    if(ARGUMENT_PRESENT(Guid)) {
+    if (ARGUMENT_PRESENT(Guid))
+    {
         *Guid = tempGuid;
     }
 
 clean0:
 
     return status;
-
 }
-
+
 NTSTATUS
-IopDoDeferredSetInterfaceState(
-    IN PDEVICE_NODE DeviceNode
-    )
+IopDoDeferredSetInterfaceState(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -3719,23 +3496,24 @@ Return Value:
 
 --*/
 {
-    KIRQL           irql;
-    PDEVICE_OBJECT  attachedDevice;
+    KIRQL irql;
+    PDEVICE_OBJECT attachedDevice;
 
     PiLockPnpRegistry(TRUE);
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-    for (attachedDevice = DeviceNode->PhysicalDeviceObject;
-         attachedDevice;
-         attachedDevice = attachedDevice->AttachedDevice) {
+    for (attachedDevice = DeviceNode->PhysicalDeviceObject; attachedDevice;
+         attachedDevice = attachedDevice->AttachedDevice)
+    {
 
         attachedDevice->DeviceObjectExtension->ExtensionFlags &= ~DOE_START_PENDING;
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
-    while (!IsListEmpty(&DeviceNode->PendedSetInterfaceState)) {
+    while (!IsListEmpty(&DeviceNode->PendedSetInterfaceState))
+    {
 
         PPENDING_SET_INTERFACE_STATE entry;
 
@@ -3752,13 +3530,9 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopProcessSetInterfaceState(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN BOOLEAN Enable,
-    IN BOOLEAN DeferNotStarted
-    )
+IopProcessSetInterfaceState(IN PUNICODE_STRING SymbolicLinkName, IN BOOLEAN Enable, IN BOOLEAN DeferNotStarted)
 /*++
 
 Routine Description:
@@ -3788,7 +3562,7 @@ Return Value:
 {
     NTSTATUS status;
     HANDLE hInterfaceClassKey = NULL;
-    HANDLE hInterfaceParentKey= NULL, hInterfaceInstanceKey = NULL;
+    HANDLE hInterfaceParentKey = NULL, hInterfaceInstanceKey = NULL;
     HANDLE hInterfaceParentControl = NULL, hInterfaceInstanceControl = NULL;
     UNICODE_STRING tempString, deviceNameString;
     UNICODE_STRING actualSymbolicLinkName, globalSymbolicLinkName;
@@ -3807,14 +3581,9 @@ Return Value:
     // SymbolicLinkName string is valid.
     //
 
-    status = IopParseSymbolicLinkName(SymbolicLinkName,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      &guid);
-    if (!NT_SUCCESS(status)) {
+    status = IopParseSymbolicLinkName(SymbolicLinkName, NULL, NULL, NULL, NULL, NULL, &guid);
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -3824,7 +3593,8 @@ Return Value:
 
     status = IopDropReferenceString(&actualSymbolicLinkName, SymbolicLinkName);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -3836,10 +3606,10 @@ Return Value:
     // IoSetDeviceInterfaceState, no matter what context it is called in.
     //
 
-    status = IopBuildGlobalSymbolicLinkString(&actualSymbolicLinkName,
-                                              &globalSymbolicLinkName);
+    status = IopBuildGlobalSymbolicLinkString(&actualSymbolicLinkName, &globalSymbolicLinkName);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean0;
     }
 
@@ -3847,14 +3617,11 @@ Return Value:
     // Get function class instance handle
     //
 
-    status = IopDeviceInterfaceKeysFromSymbolicLink(SymbolicLinkName,
-                                                    KEY_READ | KEY_WRITE,
-                                                    &hInterfaceClassKey,
-                                                    &hInterfaceParentKey,
-                                                    &hInterfaceInstanceKey
-                                                    );
+    status = IopDeviceInterfaceKeysFromSymbolicLink(SymbolicLinkName, KEY_READ | KEY_WRITE, &hInterfaceClassKey,
+                                                    &hInterfaceParentKey, &hInterfaceInstanceKey);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -3862,14 +3629,10 @@ Return Value:
     // Open the parent interface control subkey
     //
     PiWstrToUnicodeString(&tempString, REGSTR_KEY_CONTROL);
-    status = IopCreateRegistryKeyEx( &hInterfaceParentControl,
-                                     hInterfaceParentKey,
-                                     &tempString,
-                                     KEY_READ,
-                                     REG_OPTION_VOLATILE,
-                                     NULL
-                                     );
-    if (!NT_SUCCESS(status)) {
+    status = IopCreateRegistryKeyEx(&hInterfaceParentControl, hInterfaceParentKey, &tempString, KEY_READ,
+                                    REG_OPTION_VOLATILE, NULL);
+    if (!NT_SUCCESS(status))
+    {
         goto clean1;
     }
 
@@ -3877,46 +3640,40 @@ Return Value:
     //
     // Find out the name of the device instance that 'owns' this interface.
     //
-    status = IopGetRegistryValue(hInterfaceParentKey,
-                                 REGSTR_VAL_DEVICE_INSTANCE,
-                                 &pKeyValueInfo
-                                 );
+    status = IopGetRegistryValue(hInterfaceParentKey, REGSTR_VAL_DEVICE_INSTANCE, &pKeyValueInfo);
 
-    if(NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // Open the device instance control subkey
         //
         PiWstrToUnicodeString(&tempString, REGSTR_KEY_CONTROL);
-        status = IopCreateRegistryKeyEx( &hInterfaceInstanceControl,
-                                         hInterfaceInstanceKey,
-                                         &tempString,
-                                         KEY_READ,
-                                         REG_OPTION_VOLATILE,
-                                         NULL
-                                         );
-        if(!NT_SUCCESS(status)) {
+        status = IopCreateRegistryKeyEx(&hInterfaceInstanceControl, hInterfaceInstanceKey, &tempString, KEY_READ,
+                                        REG_OPTION_VOLATILE, NULL);
+        if (!NT_SUCCESS(status))
+        {
             ExFreePool(pKeyValueInfo);
             hInterfaceInstanceControl = NULL;
         }
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
     //
     // Find the PDO corresponding to this device instance name.
     //
-    if (pKeyValueInfo->Type == REG_SZ) {
+    if (pKeyValueInfo->Type == REG_SZ)
+    {
 
-        IopRegistryDataToUnicodeString(&tempString,
-                                        (PWSTR)KEY_VALUE_DATA(pKeyValueInfo),
-                                        pKeyValueInfo->DataLength
-                                        );
+        IopRegistryDataToUnicodeString(&tempString, (PWSTR)KEY_VALUE_DATA(pKeyValueInfo), pKeyValueInfo->DataLength);
 
         physicalDeviceObject = IopDeviceObjectFromDeviceInstance(&tempString);
 
-        if (physicalDeviceObject) {
+        if (physicalDeviceObject)
+        {
 
             //
             // DeferNotStarted is set TRUE if we are being called from
@@ -3925,9 +3682,11 @@ Return Value:
             // device.
             //
 
-            if (DeferNotStarted) {
+            if (DeferNotStarted)
+            {
 
-                if (physicalDeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_START_PENDING) {
+                if (physicalDeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_START_PENDING)
+                {
 
                     PDEVICE_NODE deviceNode;
                     PPENDING_SET_INTERFACE_STATE pendingSetState;
@@ -3938,17 +3697,18 @@ Return Value:
                     //
                     deviceNode = (PDEVICE_NODE)physicalDeviceObject->DeviceObjectExtension->DeviceNode;
 
-                    if (Enable) {
+                    if (Enable)
+                    {
 
-                        pendingSetState = ExAllocatePool( PagedPool,
-                                                          sizeof(PENDING_SET_INTERFACE_STATE));
+                        pendingSetState = ExAllocatePool(PagedPool, sizeof(PENDING_SET_INTERFACE_STATE));
 
-                        if (pendingSetState != NULL) {
+                        if (pendingSetState != NULL)
+                        {
 
-                            pendingSetState->LinkName.Buffer = ExAllocatePool( PagedPool,
-                                                                               SymbolicLinkName->Length);
+                            pendingSetState->LinkName.Buffer = ExAllocatePool(PagedPool, SymbolicLinkName->Length);
 
-                            if (pendingSetState->LinkName.Buffer != NULL) {
+                            if (pendingSetState->LinkName.Buffer != NULL)
+                            {
 
                                 //
                                 // Capture the callers info and queue it to the
@@ -3957,11 +3717,9 @@ Return Value:
                                 //
                                 pendingSetState->LinkName.MaximumLength = SymbolicLinkName->Length;
                                 pendingSetState->LinkName.Length = SymbolicLinkName->Length;
-                                RtlCopyMemory( pendingSetState->LinkName.Buffer,
-                                               SymbolicLinkName->Buffer,
-                                               SymbolicLinkName->Length);
-                                InsertTailList( &deviceNode->PendedSetInterfaceState,
-                                                &pendingSetState->List);
+                                RtlCopyMemory(pendingSetState->LinkName.Buffer, SymbolicLinkName->Buffer,
+                                              SymbolicLinkName->Length);
+                                InsertTailList(&deviceNode->PendedSetInterfaceState, &pendingSetState->List);
 
                                 ExFreePool(pKeyValueInfo);
 
@@ -3969,8 +3727,9 @@ Return Value:
 
                                 status = STATUS_SUCCESS;
                                 goto clean2;
-
-                            } else {
+                            }
+                            else
+                            {
                                 //
                                 // Couldn't allocate a buffer to hold the
                                 // symbolic link name.
@@ -3979,8 +3738,9 @@ Return Value:
                                 ExFreePool(pendingSetState);
                                 status = STATUS_INSUFFICIENT_RESOURCES;
                             }
-
-                        } else {
+                        }
+                        else
+                        {
                             //
                             // Couldn't allocate the PENDING_SET_INTERFACE_STATE
                             // structure.
@@ -3989,8 +3749,9 @@ Return Value:
 
                             status = STATUS_INSUFFICIENT_RESOURCES;
                         }
-
-                    } else {
+                    }
+                    else
+                    {
 
                         PLIST_ENTRY entry;
 
@@ -4002,16 +3763,13 @@ Return Value:
                         //
 
                         for (entry = deviceNode->PendedSetInterfaceState.Flink;
-                             entry != &deviceNode->PendedSetInterfaceState;
-                             entry = entry->Flink)  {
+                             entry != &deviceNode->PendedSetInterfaceState; entry = entry->Flink)
+                        {
 
-                            pendingSetState = CONTAINING_RECORD( entry,
-                                                                 PENDING_SET_INTERFACE_STATE,
-                                                                 List );
+                            pendingSetState = CONTAINING_RECORD(entry, PENDING_SET_INTERFACE_STATE, List);
 
-                            if (RtlEqualUnicodeString( &pendingSetState->LinkName,
-                                                       SymbolicLinkName,
-                                                       TRUE)) {
+                            if (RtlEqualUnicodeString(&pendingSetState->LinkName, SymbolicLinkName, TRUE))
+                            {
 
                                 //
                                 // We found it, remove it from the list and
@@ -4053,15 +3811,19 @@ Return Value:
                 }
             }
 
-            if (!Enable || !NT_SUCCESS(status)) {
+            if (!Enable || !NT_SUCCESS(status))
+            {
                 ObDereferenceObject(physicalDeviceObject);
             }
-        } else {
+        }
+        else
+        {
 
             status = STATUS_INVALID_DEVICE_REQUEST;
         }
-
-    } else {
+    }
+    else
+    {
         //
         // This will only happen if the registry information is messed up.
         //
@@ -4069,7 +3831,8 @@ Return Value:
         status = STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    if (!Enable) {
+    if (!Enable)
+    {
         //
         // In the case of Disable we want to continue even if there was an error
         // finding the PDO.  Prior to adding support for deferring the
@@ -4082,41 +3845,45 @@ Return Value:
 
     ExFreePool(pKeyValueInfo);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean2;
     }
 
-    if (Enable) {
+    if (Enable)
+    {
         //
         // Retrieve the PDO's device object name.  (Start out with a reasonably-sized
         // buffer so we hopefully only have to retrieve this once.
         //
         deviceNameBufferLength = 256 * sizeof(WCHAR);
 
-        for ( ; ; ) {
+        for (;;)
+        {
 
             deviceNameBuffer = ExAllocatePool(PagedPool, deviceNameBufferLength);
-            if (!deviceNameBuffer) {
+            if (!deviceNameBuffer)
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 break;
             }
 
-            status = IoGetDeviceProperty( physicalDeviceObject,
-                                          DevicePropertyPhysicalDeviceObjectName,
-                                          deviceNameBufferLength,
-                                          deviceNameBuffer,
-                                          &deviceNameBufferLength
-                                         );
+            status = IoGetDeviceProperty(physicalDeviceObject, DevicePropertyPhysicalDeviceObjectName,
+                                         deviceNameBufferLength, deviceNameBuffer, &deviceNameBufferLength);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 break;
-            } else {
+            }
+            else
+            {
                 //
                 // Free the current buffer before we figure out what went wrong.
                 //
                 ExFreePool(deviceNameBuffer);
 
-                if (status != STATUS_BUFFER_TOO_SMALL) {
+                if (status != STATUS_BUFFER_TOO_SMALL)
+                {
                     //
                     // Our failure wasn't because the buffer was too small--bail now.
                     //
@@ -4134,7 +3901,8 @@ Return Value:
         //
         ObDereferenceObject(physicalDeviceObject);
 
-        if (!NT_SUCCESS(status) || deviceNameBufferLength == 0) {
+        if (!NT_SUCCESS(status) || deviceNameBufferLength == 0)
+        {
             goto clean2;
         }
 
@@ -4148,19 +3916,22 @@ Return Value:
     //
     // Retrieve the linked value from the control subkey.
     //
-    pKeyValueInfo=NULL;
+    pKeyValueInfo = NULL;
     status = IopGetRegistryValue(hInterfaceInstanceControl, REGSTR_VAL_LINKED, &pKeyValueInfo);
 
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
 
         //
         // The absence of a linked value is taken to mean not linked
         //
 
         linked = 0;
-
-    } else {
-        if (!NT_SUCCESS(status)) {
+    }
+    else
+    {
+        if (!NT_SUCCESS(status))
+        {
             //
             // If the call failed, pKeyValueInfo was never allocated
             //
@@ -4171,11 +3942,13 @@ Return Value:
         // Check linked is a DWORD
         //
 
-        if(pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(ULONG)) {
+        if (pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(ULONG))
+        {
 
-            linked = *((PULONG) KEY_VALUE_DATA(pKeyValueInfo));
-
-        } else {
+            linked = *((PULONG)KEY_VALUE_DATA(pKeyValueInfo));
+        }
+        else
+        {
 
             //
             // The registry is messed up - assume linked is 0 and the registry will be fixed when
@@ -4183,12 +3956,11 @@ Return Value:
             //
 
             linked = 0;
-
         }
-
     }
-    if (pKeyValueInfo) {
-        ExFreePool (pKeyValueInfo);
+    if (pKeyValueInfo)
+    {
+        ExFreePool(pKeyValueInfo);
     }
 
     //
@@ -4196,21 +3968,21 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&tempString, REGSTR_VAL_REFERENCECOUNT);
-    status = IopGetRegistryValue(hInterfaceParentControl,
-                                 tempString.Buffer,
-                                 &pKeyValueInfo
-                                 );
+    status = IopGetRegistryValue(hInterfaceParentControl, tempString.Buffer, &pKeyValueInfo);
 
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
 
         //
         // The absence of a refcount value is taken to mean refcount == 0
         //
 
         refcount = 0;
-
-    } else {
-        if (!NT_SUCCESS(status)) {
+    }
+    else
+    {
+        if (!NT_SUCCESS(status))
+        {
             goto clean3;
         }
 
@@ -4218,11 +3990,13 @@ Return Value:
         // Check refcount is a DWORD
         //
 
-        if(pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(ULONG)) {
+        if (pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(ULONG))
+        {
 
-            refcount = *((PULONG) KEY_VALUE_DATA(pKeyValueInfo));
-
-        } else {
+            refcount = *((PULONG)KEY_VALUE_DATA(pKeyValueInfo));
+        }
+        else
+        {
 
             //
             // The registry is messed up - assume refcount is 0 and the registry will be fixed when
@@ -4230,27 +4004,31 @@ Return Value:
             //
 
             refcount = 0;
-
         }
 
         ExFreePool(pKeyValueInfo);
     }
 
 
-    if (Enable) {
+    if (Enable)
+    {
 
-        if (!linked) {
+        if (!linked)
+        {
             //
             // check and update the reference count
             //
 
-            if (refcount > 0) {
+            if (refcount > 0)
+            {
                 //
                 // Another device instance has already referenced this interface;
                 // just increment the reference count; don't try create a symbolic link.
                 //
                 refcount += 1;
-            } else {
+            }
+            else
+            {
                 //
                 // According to the reference count, no other device instances currently
                 // reference this interface, and therefore no symbolic links should exist,
@@ -4260,16 +4038,16 @@ Return Value:
 
                 status = IoCreateSymbolicLink(&globalSymbolicLinkName, &deviceNameString);
 
-                if (status == STATUS_OBJECT_NAME_COLLISION) {
+                if (status == STATUS_OBJECT_NAME_COLLISION)
+                {
                     //
                     // The reference count is messed up.
                     //
-                    IopDbgPrint((   IOP_ERROR_LEVEL,
-                                    "IoSetDeviceInterfaceState: symbolic link for %ws already exists! status = %8.8X\n",
-                                    globalSymbolicLinkName.Buffer, status));
+                    IopDbgPrint((IOP_ERROR_LEVEL,
+                                 "IoSetDeviceInterfaceState: symbolic link for %ws already exists! status = %8.8X\n",
+                                 globalSymbolicLinkName.Buffer, status));
                     status = STATUS_SUCCESS;
                 }
-
             }
 
             linked = 1;
@@ -4278,8 +4056,9 @@ Return Value:
             IopSetupDeviceObjectFromDeviceClass(physicalDeviceObject,
                                                 hInterfaceClassKey);
 #endif
-
-        } else {
+        }
+        else
+        {
 
             //
             // The association already exists - don't perform the notification
@@ -4287,23 +4066,28 @@ Return Value:
 
             status = STATUS_OBJECT_NAME_EXISTS; // Informational message not error
             goto clean3;
-
         }
-    } else {
+    }
+    else
+    {
 
-        if (linked) {
+        if (linked)
+        {
 
             //
             // check and update the reference count
             //
 
-            if (refcount > 1) {
+            if (refcount > 1)
+            {
                 //
                 // Another device instance already references this interface;
                 // just decrement the reference count; don't try to remove the symbolic link.
                 //
                 refcount -= 1;
-            } else {
+            }
+            else
+            {
                 //
                 // According to the reference count, only this device instance currently
                 // references this interface, so it is ok to delete this symbolic link
@@ -4311,21 +4095,22 @@ Return Value:
                 refcount = 0;
                 status = IoDeleteSymbolicLink(&globalSymbolicLinkName);
 
-                if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+                if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+                {
                     //
                     // The reference count is messed up.
                     //
-                    IopDbgPrint((   IOP_ERROR_LEVEL,
-                                    "IoSetDeviceInterfaceState: no symbolic link for %ws to delete! status = %8.8X\n",
-                             globalSymbolicLinkName.Buffer, status));
+                    IopDbgPrint((IOP_ERROR_LEVEL,
+                                 "IoSetDeviceInterfaceState: no symbolic link for %ws to delete! status = %8.8X\n",
+                                 globalSymbolicLinkName.Buffer, status));
                     status = STATUS_SUCCESS;
                 }
-
             }
 
             linked = 0;
-
-        } else {
+        }
+        else
+        {
 
             //
             // The association does not exists - fail and do not perform notification
@@ -4335,7 +4120,8 @@ Return Value:
         }
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto clean3;
     }
 
@@ -4344,52 +4130,44 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&tempString, REGSTR_VAL_LINKED);
-    status = ZwSetValueKey(hInterfaceInstanceControl,
-                           &tempString,
-                           0,
-                           REG_DWORD,
-                           &linked,
-                           sizeof(linked)
-                          );
+    status = ZwSetValueKey(hInterfaceInstanceControl, &tempString, 0, REG_DWORD, &linked, sizeof(linked));
 
     //
     // Update the value of refcount
     //
 
     PiWstrToUnicodeString(&tempString, REGSTR_VAL_REFERENCECOUNT);
-    status = ZwSetValueKey(hInterfaceParentControl,
-                           &tempString,
-                           0,
-                           REG_DWORD,
-                           &refcount,
-                           sizeof(refcount)
-                          );
+    status = ZwSetValueKey(hInterfaceParentControl, &tempString, 0, REG_DWORD, &refcount, sizeof(refcount));
 
 
     //
     // Notify anyone that is interested
     //
 
-    if (linked) {
+    if (linked)
+    {
 
-        PpSetDeviceClassChange( (LPGUID) &GUID_DEVICE_INTERFACE_ARRIVAL, &guid, SymbolicLinkName);
+        PpSetDeviceClassChange((LPGUID)&GUID_DEVICE_INTERFACE_ARRIVAL, &guid, SymbolicLinkName);
+    }
+    else
+    {
 
-    } else {
-
-        PpSetDeviceClassChange( (LPGUID) &GUID_DEVICE_INTERFACE_REMOVAL, &guid, SymbolicLinkName);
-
+        PpSetDeviceClassChange((LPGUID)&GUID_DEVICE_INTERFACE_REMOVAL, &guid, SymbolicLinkName);
     }
 
 clean3:
-    if (deviceNameBuffer != NULL) {
+    if (deviceNameBuffer != NULL)
+    {
         ExFreePool(deviceNameBuffer);
     }
 
 clean2:
-    if (hInterfaceParentControl) {
+    if (hInterfaceParentControl)
+    {
         ZwClose(hInterfaceParentControl);
     }
-    if (hInterfaceInstanceControl) {
+    if (hInterfaceInstanceControl)
+    {
         ZwClose(hInterfaceInstanceControl);
     }
 
@@ -4397,18 +4175,22 @@ clean1:
 
     IopFreeAllocatedUnicodeString(&globalSymbolicLinkName);
 
-    if (hInterfaceParentKey) {
+    if (hInterfaceParentKey)
+    {
         ZwClose(hInterfaceParentKey);
     }
-    if (hInterfaceInstanceKey) {
+    if (hInterfaceInstanceKey)
+    {
         ZwClose(hInterfaceInstanceKey);
     }
-    if(hInterfaceClassKey != NULL) {
+    if (hInterfaceClassKey != NULL)
+    {
         ZwClose(hInterfaceClassKey);
     }
 
 clean0:
-    if (!NT_SUCCESS(status) && !Enable) {
+    if (!NT_SUCCESS(status) && !Enable)
+    {
         //
         // If we failed to disable an interface (most likely because the
         // interface keys have already been deleted) report success.
@@ -4418,13 +4200,9 @@ clean0:
 
     return status;
 }
-
+
 NTSTATUS
-IopSetRegistryStringValue(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING ValueName,
-    IN PUNICODE_STRING ValueData
-    )
+IopSetRegistryStringValue(IN HANDLE KeyHandle, IN PUNICODE_STRING ValueName, IN PUNICODE_STRING ValueData)
 
 /*++
 
@@ -4461,7 +4239,8 @@ Return Value:
     // Null terminate the string
     //
 
-    if ((ValueData->MaximumLength - ValueData->Length) >= sizeof(UNICODE_NULL)) {
+    if ((ValueData->MaximumLength - ValueData->Length) >= sizeof(UNICODE_NULL))
+    {
 
         //
         // There is room in the buffer so just append a null
@@ -4473,15 +4252,11 @@ Return Value:
         // Set the registry value
         //
 
-        status = ZwSetValueKey(KeyHandle,
-                               ValueName,
-                               0,
-                               REG_SZ,
-                               (PVOID) ValueData->Buffer,
-                               ValueData->Length + sizeof(UNICODE_NULL)
-                               );
-
-    } else {
+        status = ZwSetValueKey(KeyHandle, ValueName, 0, REG_SZ, (PVOID)ValueData->Buffer,
+                               ValueData->Length + sizeof(UNICODE_NULL));
+    }
+    else
+    {
 
         UNICODE_STRING tempString;
 
@@ -4492,7 +4267,8 @@ Return Value:
 
         status = IopAllocateUnicodeString(&tempString, ValueData->Length);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto clean0;
         }
 
@@ -4513,32 +4289,22 @@ Return Value:
         // Set the registry value
         //
 
-        status = ZwSetValueKey(KeyHandle,
-                               ValueName,
-                               0,
-                               REG_SZ,
-                               (PVOID) tempString.Buffer,
-                               tempString.Length + sizeof(UNICODE_NULL)
-                               );
+        status = ZwSetValueKey(KeyHandle, ValueName, 0, REG_SZ, (PVOID)tempString.Buffer,
+                               tempString.Length + sizeof(UNICODE_NULL));
 
         //
         // Free the temporary string
         //
 
         IopFreeAllocatedUnicodeString(&tempString);
-
     }
 
 clean0:
     return status;
-
 }
-
+
 NTSTATUS
-IopAllocateUnicodeString(
-    IN OUT PUNICODE_STRING String,
-    IN USHORT Length
-    )
+IopAllocateUnicodeString(IN OUT PUNICODE_STRING String, IN USHORT Length)
 
 /*++
 
@@ -4577,17 +4343,17 @@ Remarks:
     String->MaximumLength = Length + sizeof(UNICODE_NULL);
 
     String->Buffer = ExAllocatePool(PagedPool, Length + sizeof(UNICODE_NULL));
-    if (String->Buffer == NULL) {
+    if (String->Buffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
-    } else {
+    }
+    else
+    {
         return STATUS_SUCCESS;
     }
 }
-
-VOID
-IopFreeAllocatedUnicodeString(
-    PUNICODE_STRING String
-    )
+
+VOID IopFreeAllocatedUnicodeString(PUNICODE_STRING String)
 
 /*++
 

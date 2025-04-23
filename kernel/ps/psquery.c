@@ -39,56 +39,33 @@ extern PEPROCESS ExpDefaultErrorPortProcess;
 BOOLEAN PsWatchEnabled = FALSE;
 
 
-
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("PAGECONST")
 #endif
-const KPRIORITY PspPriorityTable[PROCESS_PRIORITY_CLASS_ABOVE_NORMAL+1] = {8,4,8,13,24,6,10};
+const KPRIORITY PspPriorityTable[PROCESS_PRIORITY_CLASS_ABOVE_NORMAL + 1] = { 8, 4, 8, 13, 24, 6, 10 };
 
 
 NTSTATUS
-PsConvertToGuiThread(
-    VOID
-    );
+PsConvertToGuiThread(VOID);
 
 NTSTATUS
-PspQueryWorkingSetWatch(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    OUT PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    OUT PULONG ReturnLength OPTIONAL,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+PspQueryWorkingSetWatch(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass,
+                        OUT PVOID ProcessInformation, IN ULONG ProcessInformationLength,
+                        OUT PULONG ReturnLength OPTIONAL, IN KPROCESSOR_MODE PreviousMode);
 
 NTSTATUS
-PspQueryQuotaLimits(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    OUT PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    OUT PULONG ReturnLength OPTIONAL,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+PspQueryQuotaLimits(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass, OUT PVOID ProcessInformation,
+                    IN ULONG ProcessInformationLength, OUT PULONG ReturnLength OPTIONAL,
+                    IN KPROCESSOR_MODE PreviousMode);
 
 NTSTATUS
-PspQueryPooledQuotaLimits(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    OUT PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    OUT PULONG ReturnLength OPTIONAL,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+PspQueryPooledQuotaLimits(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass,
+                          OUT PVOID ProcessInformation, IN ULONG ProcessInformationLength,
+                          OUT PULONG ReturnLength OPTIONAL, IN KPROCESSOR_MODE PreviousMode);
 
 NTSTATUS
-PspSetQuotaLimits(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    IN PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+PspSetQuotaLimits(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass, IN PVOID ProcessInformation,
+                  IN ULONG ProcessInformationLength, IN KPROCESSOR_MODE PreviousMode);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PsEstablishWin32Callouts)
@@ -107,14 +84,9 @@ PspSetQuotaLimits(
 #endif
 
 NTSTATUS
-PspQueryWorkingSetWatch(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    OUT PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    OUT PULONG ReturnLength OPTIONAL,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+PspQueryWorkingSetWatch(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass,
+                        OUT PVOID ProcessInformation, IN ULONG ProcessInformationLength,
+                        OUT PULONG ReturnLength OPTIONAL, IN KPROCESSOR_MODE PreviousMode)
 {
     PPAGEFAULT_HISTORY WorkingSetCatcher;
     ULONG SpaceNeeded;
@@ -122,29 +94,28 @@ PspQueryWorkingSetWatch(
     KIRQL OldIrql;
     NTSTATUS st;
 
-    UNREFERENCED_PARAMETER (ProcessInformationClass);
+    UNREFERENCED_PARAMETER(ProcessInformationClass);
 
-    st = ObReferenceObjectByHandle (ProcessHandle,
-                                    PROCESS_QUERY_INFORMATION,
-                                    PsProcessType,
-                                    PreviousMode,
-                                    (PVOID *)&Process,
-                                    NULL);
+    st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                   (PVOID *)&Process, NULL);
 
-    if (!NT_SUCCESS (st)) {
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
     WorkingSetCatcher = Process->WorkingSetWatch;
-    if (WorkingSetCatcher == NULL) {
-        ObDereferenceObject (Process);
+    if (WorkingSetCatcher == NULL)
+    {
+        ObDereferenceObject(Process);
         return STATUS_UNSUCCESSFUL;
     }
 
-    MmLockPagableSectionByHandle (ExPageLockHandle);
-    ExAcquireSpinLock (&WorkingSetCatcher->SpinLock,&OldIrql);
+    MmLockPagableSectionByHandle(ExPageLockHandle);
+    ExAcquireSpinLock(&WorkingSetCatcher->SpinLock, &OldIrql);
 
-    if (WorkingSetCatcher->CurrentIndex) {
+    if (WorkingSetCatcher->CurrentIndex)
+    {
 
         //
         // Null Terminate the first empty entry in the buffer
@@ -155,24 +126,30 @@ PspQueryWorkingSetWatch(
         //Store a special Va value if the buffer was full and
         //page faults could have been lost
 
-        if (WorkingSetCatcher->CurrentIndex != WorkingSetCatcher->MaxIndex) {
+        if (WorkingSetCatcher->CurrentIndex != WorkingSetCatcher->MaxIndex)
+        {
             WorkingSetCatcher->WatchInfo[WorkingSetCatcher->CurrentIndex].FaultingVa = NULL;
-        } else {
-            WorkingSetCatcher->WatchInfo[WorkingSetCatcher->CurrentIndex].FaultingVa = (PVOID) 1;
+        }
+        else
+        {
+            WorkingSetCatcher->WatchInfo[WorkingSetCatcher->CurrentIndex].FaultingVa = (PVOID)1;
         }
 
-        SpaceNeeded = (WorkingSetCatcher->CurrentIndex+1) * sizeof(PROCESS_WS_WATCH_INFORMATION);
-    } else {
-        ExReleaseSpinLock (&WorkingSetCatcher->SpinLock, OldIrql);
-        MmUnlockPagableImageSection (ExPageLockHandle);
-        ObDereferenceObject (Process);
+        SpaceNeeded = (WorkingSetCatcher->CurrentIndex + 1) * sizeof(PROCESS_WS_WATCH_INFORMATION);
+    }
+    else
+    {
+        ExReleaseSpinLock(&WorkingSetCatcher->SpinLock, OldIrql);
+        MmUnlockPagableImageSection(ExPageLockHandle);
+        ObDereferenceObject(Process);
         return STATUS_NO_MORE_ENTRIES;
     }
 
-    if (ProcessInformationLength < SpaceNeeded) {
-        ExReleaseSpinLock (&WorkingSetCatcher->SpinLock, OldIrql);
-        MmUnlockPagableImageSection (ExPageLockHandle);
-        ObDereferenceObject (Process);
+    if (ProcessInformationLength < SpaceNeeded)
+    {
+        ExReleaseSpinLock(&WorkingSetCatcher->SpinLock, OldIrql);
+        MmUnlockPagableImageSection(ExPageLockHandle);
+        ObDereferenceObject(Process);
         return STATUS_BUFFER_TOO_SMALL;
     }
 
@@ -183,70 +160,68 @@ PspQueryWorkingSetWatch(
 
     WorkingSetCatcher->CurrentIndex = MAX_WS_CATCH_INDEX;
 
-    ExReleaseSpinLock (&WorkingSetCatcher->SpinLock,OldIrql);
+    ExReleaseSpinLock(&WorkingSetCatcher->SpinLock, OldIrql);
 
-    try {
-        RtlCopyMemory (ProcessInformation, &WorkingSetCatcher->WatchInfo[0], SpaceNeeded);
-        if (ARGUMENT_PRESENT (ReturnLength) ) {
+    try
+    {
+        RtlCopyMemory(ProcessInformation, &WorkingSetCatcher->WatchInfo[0], SpaceNeeded);
+        if (ARGUMENT_PRESENT(ReturnLength))
+        {
             *ReturnLength = SpaceNeeded;
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        st = GetExceptionCode ();
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        st = GetExceptionCode();
     }
 
-    ExAcquireSpinLock (&WorkingSetCatcher->SpinLock, &OldIrql);
+    ExAcquireSpinLock(&WorkingSetCatcher->SpinLock, &OldIrql);
     WorkingSetCatcher->CurrentIndex = 0;
-    ExReleaseSpinLock (&WorkingSetCatcher->SpinLock, OldIrql);
+    ExReleaseSpinLock(&WorkingSetCatcher->SpinLock, OldIrql);
 
-    MmUnlockPagableImageSection (ExPageLockHandle);
-    ObDereferenceObject (Process);
+    MmUnlockPagableImageSection(ExPageLockHandle);
+    ObDereferenceObject(Process);
 
     return st;
 }
 
 NTSTATUS
-PspQueryQuotaLimits(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    OUT PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    OUT PULONG ReturnLength OPTIONAL,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+PspQueryQuotaLimits(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass, OUT PVOID ProcessInformation,
+                    IN ULONG ProcessInformationLength, OUT PULONG ReturnLength OPTIONAL,
+                    IN KPROCESSOR_MODE PreviousMode)
 {
     QUOTA_LIMITS QuotaLimits;
     PEPROCESS Process;
     NTSTATUS st;
     PEPROCESS_QUOTA_BLOCK QuotaBlock;
 
-    UNREFERENCED_PARAMETER (ProcessInformationClass);
+    UNREFERENCED_PARAMETER(ProcessInformationClass);
 
-    if ( ProcessInformationLength != (ULONG) sizeof(QUOTA_LIMITS) ) {
+    if (ProcessInformationLength != (ULONG)sizeof(QUOTA_LIMITS))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
-    st = ObReferenceObjectByHandle(
-            ProcessHandle,
-            PROCESS_QUERY_INFORMATION,
-            PsProcessType,
-            PreviousMode,
-            (PVOID *)&Process,
-            NULL
-            );
-    if ( !NT_SUCCESS(st) ) {
+    st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                   (PVOID *)&Process, NULL);
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
 
     QuotaBlock = Process->QuotaBlock;
 
-    if (QuotaBlock != &PspDefaultQuotaBlock) {
+    if (QuotaBlock != &PspDefaultQuotaBlock)
+    {
         QuotaLimits.PagedPoolLimit = QuotaBlock->QuotaEntry[PsPagedPool].Limit;
         QuotaLimits.NonPagedPoolLimit = QuotaBlock->QuotaEntry[PsNonPagedPool].Limit;
         QuotaLimits.PagefileLimit = QuotaBlock->QuotaEntry[PsPageFile].Limit;
         QuotaLimits.TimeLimit.LowPart = 0xffffffff;
         QuotaLimits.TimeLimit.HighPart = 0xffffffff;
-    } else {
+    }
+    else
+    {
         QuotaLimits.PagedPoolLimit = (SIZE_T)-1;
         QuotaLimits.NonPagedPoolLimit = (SIZE_T)-1;
         QuotaLimits.PagefileLimit = (SIZE_T)-1;
@@ -254,10 +229,8 @@ PspQueryQuotaLimits(
         QuotaLimits.TimeLimit.HighPart = 0xffffffff;
     }
 
-    QuotaLimits.MinimumWorkingSetSize =
-                        ((SIZE_T) Process->Vm.MinimumWorkingSetSize) << PAGE_SHIFT;
-    QuotaLimits.MaximumWorkingSetSize =
-                        ((SIZE_T) Process->Vm.MaximumWorkingSetSize) << PAGE_SHIFT;
+    QuotaLimits.MinimumWorkingSetSize = ((SIZE_T)Process->Vm.MinimumWorkingSetSize) << PAGE_SHIFT;
+    QuotaLimits.MaximumWorkingSetSize = ((SIZE_T)Process->Vm.MaximumWorkingSetSize) << PAGE_SHIFT;
 
     ObDereferenceObject(Process);
 
@@ -269,13 +242,17 @@ PspQueryQuotaLimits(
 
     st = STATUS_SUCCESS;
 
-    try {
-        *(PQUOTA_LIMITS) ProcessInformation = QuotaLimits;
+    try
+    {
+        *(PQUOTA_LIMITS)ProcessInformation = QuotaLimits;
 
-        if (ARGUMENT_PRESENT(ReturnLength) ) {
+        if (ARGUMENT_PRESENT(ReturnLength))
+        {
             *ReturnLength = sizeof(QUOTA_LIMITS);
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         st = GetExceptionCode();
     }
 
@@ -283,68 +260,60 @@ PspQueryQuotaLimits(
 }
 
 NTSTATUS
-PspQueryPooledQuotaLimits(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    OUT PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    OUT PULONG ReturnLength OPTIONAL,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+PspQueryPooledQuotaLimits(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass,
+                          OUT PVOID ProcessInformation, IN ULONG ProcessInformationLength,
+                          OUT PULONG ReturnLength OPTIONAL, IN KPROCESSOR_MODE PreviousMode)
 {
     PEPROCESS Process;
     NTSTATUS st;
     PEPROCESS_QUOTA_BLOCK QuotaBlock;
     POOLED_USAGE_AND_LIMITS UsageAndLimits;
 
-    UNREFERENCED_PARAMETER (ProcessInformationClass);
+    UNREFERENCED_PARAMETER(ProcessInformationClass);
 
-    if ( ProcessInformationLength != (ULONG) sizeof(POOLED_USAGE_AND_LIMITS) ) {
+    if (ProcessInformationLength != (ULONG)sizeof(POOLED_USAGE_AND_LIMITS))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
-    st = ObReferenceObjectByHandle(
-            ProcessHandle,
-            PROCESS_QUERY_INFORMATION,
-            PsProcessType,
-            PreviousMode,
-            (PVOID *)&Process,
-            NULL
-            );
-    if ( !NT_SUCCESS(st) ) {
+    st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                   (PVOID *)&Process, NULL);
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
 
     QuotaBlock = Process->QuotaBlock;
 
-    UsageAndLimits.PagedPoolLimit        = QuotaBlock->QuotaEntry[PsPagedPool].Limit;
-    UsageAndLimits.NonPagedPoolLimit     = QuotaBlock->QuotaEntry[PsNonPagedPool].Limit;
-    UsageAndLimits.PagefileLimit         = QuotaBlock->QuotaEntry[PsPageFile].Limit;
+    UsageAndLimits.PagedPoolLimit = QuotaBlock->QuotaEntry[PsPagedPool].Limit;
+    UsageAndLimits.NonPagedPoolLimit = QuotaBlock->QuotaEntry[PsNonPagedPool].Limit;
+    UsageAndLimits.PagefileLimit = QuotaBlock->QuotaEntry[PsPageFile].Limit;
 
 
-    UsageAndLimits.PagedPoolUsage        = QuotaBlock->QuotaEntry[PsPagedPool].Usage;
-    UsageAndLimits.NonPagedPoolUsage     = QuotaBlock->QuotaEntry[PsNonPagedPool].Usage;
-    UsageAndLimits.PagefileUsage         = QuotaBlock->QuotaEntry[PsPageFile].Usage;
+    UsageAndLimits.PagedPoolUsage = QuotaBlock->QuotaEntry[PsPagedPool].Usage;
+    UsageAndLimits.NonPagedPoolUsage = QuotaBlock->QuotaEntry[PsNonPagedPool].Usage;
+    UsageAndLimits.PagefileUsage = QuotaBlock->QuotaEntry[PsPageFile].Usage;
 
-    UsageAndLimits.PeakPagedPoolUsage    = QuotaBlock->QuotaEntry[PsPagedPool].Peak;
+    UsageAndLimits.PeakPagedPoolUsage = QuotaBlock->QuotaEntry[PsPagedPool].Peak;
     UsageAndLimits.PeakNonPagedPoolUsage = QuotaBlock->QuotaEntry[PsNonPagedPool].Peak;
-    UsageAndLimits.PeakPagefileUsage     = QuotaBlock->QuotaEntry[PsPageFile].Peak;
+    UsageAndLimits.PeakPagefileUsage = QuotaBlock->QuotaEntry[PsPageFile].Peak;
 
     //
     // Since the quota charge and return are lock free we may see Peak and Limit out of step.
     // Usage <= Limit and Usage <= Peak
     // Since Limit is adjusted up and down it does not hold that Peak <= Limit.
     //
-#define PSMAX(a,b) ((a > b)?(a):(b))
+#define PSMAX(a, b) ((a > b) ? (a) : (b))
 
-    UsageAndLimits.PagedPoolLimit        = PSMAX (UsageAndLimits.PagedPoolLimit,    UsageAndLimits.PagedPoolUsage);
-    UsageAndLimits.NonPagedPoolLimit     = PSMAX (UsageAndLimits.NonPagedPoolLimit, UsageAndLimits.NonPagedPoolUsage);
-    UsageAndLimits.PagefileLimit         = PSMAX (UsageAndLimits.PagefileLimit,     UsageAndLimits.PagefileUsage);
+    UsageAndLimits.PagedPoolLimit = PSMAX(UsageAndLimits.PagedPoolLimit, UsageAndLimits.PagedPoolUsage);
+    UsageAndLimits.NonPagedPoolLimit = PSMAX(UsageAndLimits.NonPagedPoolLimit, UsageAndLimits.NonPagedPoolUsage);
+    UsageAndLimits.PagefileLimit = PSMAX(UsageAndLimits.PagefileLimit, UsageAndLimits.PagefileUsage);
 
-    UsageAndLimits.PeakPagedPoolUsage    = PSMAX (UsageAndLimits.PeakPagedPoolUsage,    UsageAndLimits.PagedPoolUsage);
-    UsageAndLimits.PeakNonPagedPoolUsage = PSMAX (UsageAndLimits.PeakNonPagedPoolUsage, UsageAndLimits.NonPagedPoolUsage);
-    UsageAndLimits.PeakPagefileUsage     = PSMAX (UsageAndLimits.PeakPagefileUsage,     UsageAndLimits.PagefileUsage);
+    UsageAndLimits.PeakPagedPoolUsage = PSMAX(UsageAndLimits.PeakPagedPoolUsage, UsageAndLimits.PagedPoolUsage);
+    UsageAndLimits.PeakNonPagedPoolUsage =
+        PSMAX(UsageAndLimits.PeakNonPagedPoolUsage, UsageAndLimits.NonPagedPoolUsage);
+    UsageAndLimits.PeakPagefileUsage = PSMAX(UsageAndLimits.PeakPagefileUsage, UsageAndLimits.PagefileUsage);
 
     ObDereferenceObject(Process);
 
@@ -354,14 +323,18 @@ PspQueryPooledQuotaLimits(
     // status code. No further cleanup needs to be done.
     //
 
-    try {
-        *(PPOOLED_USAGE_AND_LIMITS) ProcessInformation = UsageAndLimits;
+    try
+    {
+        *(PPOOLED_USAGE_AND_LIMITS)ProcessInformation = UsageAndLimits;
 
-        if (ARGUMENT_PRESENT(ReturnLength) ) {
+        if (ARGUMENT_PRESENT(ReturnLength))
+        {
             *ReturnLength = sizeof(POOLED_USAGE_AND_LIMITS);
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        return GetExceptionCode ();
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return GetExceptionCode();
     }
 
     return STATUS_SUCCESS;
@@ -369,13 +342,8 @@ PspQueryPooledQuotaLimits(
 
 
 NTSTATUS
-PspSetPrimaryToken(
-    IN HANDLE ProcessHandle OPTIONAL,
-    IN PEPROCESS ProcessPointer OPTIONAL,
-    IN HANDLE TokenHandle OPTIONAL,
-    IN PACCESS_TOKEN TokenPointer OPTIONAL,
-    IN BOOLEAN PrivilegeChecked
-    )
+PspSetPrimaryToken(IN HANDLE ProcessHandle OPTIONAL, IN PEPROCESS ProcessPointer OPTIONAL,
+                   IN HANDLE TokenHandle OPTIONAL, IN PACCESS_TOKEN TokenPointer OPTIONAL, IN BOOLEAN PrivilegeChecked)
 /*++
 
     Sets the primary token for a process.
@@ -395,22 +363,20 @@ PspSetPrimaryToken(
     // token. If so, we don't need to do the privilege check.
     //
 
-    PreviousMode = KeGetPreviousMode ();
+    PreviousMode = KeGetPreviousMode();
 
-    if (TokenPointer == NULL) {
+    if (TokenPointer == NULL)
+    {
         //
         // Reference the specified token, and make sure it can be assigned
         // as a primary token.
         //
 
-       Status = ObReferenceObjectByHandle (TokenHandle,
-                                           TOKEN_ASSIGN_PRIMARY,
-                                           SeTokenObjectType,
-                                           PreviousMode,
-                                           &TokenPointer,
-                                           NULL);
+        Status = ObReferenceObjectByHandle(TokenHandle, TOKEN_ASSIGN_PRIMARY, SeTokenObjectType, PreviousMode,
+                                           &TokenPointer, NULL);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
@@ -419,58 +385,61 @@ PspSetPrimaryToken(
     // If the privilege check has already been done (when the token was
     // assign to a job for example). We don't want to do it here.
     //
-    if (!PrivilegeChecked) {
-        Status = SeIsChildTokenByPointer (TokenPointer,
-                                          &IsChildToken);
+    if (!PrivilegeChecked)
+    {
+        Status = SeIsChildTokenByPointer(TokenPointer, &IsChildToken);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            if (TokenHandle != NULL) {
-                ObDereferenceObject (TokenPointer);
+            if (TokenHandle != NULL)
+            {
+                ObDereferenceObject(TokenPointer);
             }
             return Status;
         }
 
-        if (!IsChildToken) {
+        if (!IsChildToken)
+        {
 
 
             //
             // SeCheckPrivilegedObject will perform auditing as appropriate
             //
 
-            HasPrivilege = SeCheckPrivilegedObject (SeAssignPrimaryTokenPrivilege,
-                                                    ProcessHandle,
-                                                    PROCESS_SET_INFORMATION,
-                                                    PreviousMode);
+            HasPrivilege = SeCheckPrivilegedObject(SeAssignPrimaryTokenPrivilege, ProcessHandle,
+                                                   PROCESS_SET_INFORMATION, PreviousMode);
 
-            if (!HasPrivilege) {
+            if (!HasPrivilege)
+            {
 
-                if (TokenHandle != NULL) {
-                    ObDereferenceObject (TokenPointer);
+                if (TokenHandle != NULL)
+                {
+                    ObDereferenceObject(TokenPointer);
                 }
 
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
         }
-
     }
 
-    if (ProcessPointer == NULL) {
-        Status = ObReferenceObjectByHandle (ProcessHandle,
-                                            PROCESS_SET_INFORMATION,
-                                            PsProcessType,
-                                            PreviousMode,
-                                            &Process,
-                                            NULL);
+    if (ProcessPointer == NULL)
+    {
+        Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                           &Process, NULL);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            if (TokenHandle != NULL) {
-                ObDereferenceObject (TokenPointer);
+            if (TokenHandle != NULL)
+            {
+                ObDereferenceObject(TokenPointer);
             }
             return Status;
         }
-    } else {
+    }
+    else
+    {
         Process = ProcessPointer;
     }
 
@@ -480,14 +449,15 @@ PspSetPrimaryToken(
     // token for the process.
     //
 
-    Status = PspAssignPrimaryToken (Process, NULL, TokenPointer);
+    Status = PspAssignPrimaryToken(Process, NULL, TokenPointer);
 
     //
     // Recompute the process's access to itself for use
     // with the CurrentProcess() pseudo handle.
     //
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         NTSTATUS accesst;
         BOOLEAN AccessCheck;
@@ -495,30 +465,22 @@ PspSetPrimaryToken(
         PSECURITY_DESCRIPTOR SecurityDescriptor;
         SECURITY_SUBJECT_CONTEXT SubjectContext;
 
-        Status = ObGetObjectSecurity (Process,
-                                      &SecurityDescriptor,
-                                      &MemoryAllocated);
+        Status = ObGetObjectSecurity(Process, &SecurityDescriptor, &MemoryAllocated);
 
-        if (NT_SUCCESS (Status)) {
+        if (NT_SUCCESS(Status))
+        {
             SubjectContext.ProcessAuditId = Process;
-            SubjectContext.PrimaryToken = PsReferencePrimaryToken (Process);
+            SubjectContext.PrimaryToken = PsReferencePrimaryToken(Process);
             SubjectContext.ClientToken = NULL;
-            AccessCheck = SeAccessCheck (SecurityDescriptor,
-                                         &SubjectContext,
-                                         FALSE,
-                                         MAXIMUM_ALLOWED,
-                                         0,
-                                         NULL,
-                                         &PsProcessType->TypeInfo.GenericMapping,
-                                         PreviousMode,
-                                         &Process->GrantedAccess,
-                                         &accesst);
+            AccessCheck =
+                SeAccessCheck(SecurityDescriptor, &SubjectContext, FALSE, MAXIMUM_ALLOWED, 0, NULL,
+                              &PsProcessType->TypeInfo.GenericMapping, PreviousMode, &Process->GrantedAccess, &accesst);
 
             PsDereferencePrimaryTokenEx(Process, SubjectContext.PrimaryToken);
-            ObReleaseObjectSecurity (SecurityDescriptor,
-                                     MemoryAllocated);
+            ObReleaseObjectSecurity(SecurityDescriptor, MemoryAllocated);
 
-            if (!AccessCheck) {
+            if (!AccessCheck)
+            {
                 Process->GrantedAccess = 0;
             }
 
@@ -530,11 +492,9 @@ PspSetPrimaryToken(
             // process.
             //
 
-            Process->GrantedAccess |= (PROCESS_VM_OPERATION | PROCESS_VM_READ |
-                                       PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION |
-                                       PROCESS_TERMINATE | PROCESS_CREATE_THREAD |
-                                       PROCESS_DUP_HANDLE | PROCESS_CREATE_PROCESS |
-                                       PROCESS_SET_INFORMATION);
+            Process->GrantedAccess |= (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE |
+                                       PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE | PROCESS_CREATE_THREAD |
+                                       PROCESS_DUP_HANDLE | PROCESS_CREATE_PROCESS | PROCESS_SET_INFORMATION);
         }
         //
         // Since the process token is being set,
@@ -542,17 +502,20 @@ PspSetPrimaryToken(
         // During the next reference to the process' device map,
         // the object manager will set the device map for the process
         //
-        if (ObIsLUIDDeviceMapsEnabled() != 0) {
-            ObDereferenceDeviceMap( Process );
+        if (ObIsLUIDDeviceMapsEnabled() != 0)
+        {
+            ObDereferenceDeviceMap(Process);
         }
     }
 
-    if (ProcessHandle != NULL) {
-        ObDereferenceObject (Process);
+    if (ProcessHandle != NULL)
+    {
+        ObDereferenceObject(Process);
     }
 
-    if (TokenHandle != NULL) {
-        ObDereferenceObject (TokenPointer);
+    if (TokenHandle != NULL)
+    {
+        ObDereferenceObject(TokenPointer);
     }
 
     return Status;
@@ -560,13 +523,9 @@ PspSetPrimaryToken(
 
 
 NTSTATUS
-NtQueryInformationProcess(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    OUT PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryInformationProcess(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass,
+                          OUT PVOID ProcessInformation, IN ULONG ProcessInformationLength,
+                          OUT PULONG ReturnLength OPTIONAL)
 
 {
     PEPROCESS Process;
@@ -595,15 +554,18 @@ NtQueryInformationProcess(
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
-            ProbeForWrite(ProcessInformation,
-                          ProcessInformationLength,
-                          sizeof(ULONG));
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
+            ProbeForWrite(ProcessInformation, ProcessInformationLength, sizeof(ULONG));
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUlong(ReturnLength);
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
@@ -612,100 +574,88 @@ NtQueryInformationProcess(
     // Check argument validity.
     //
 
-    switch ( ProcessInformationClass ) {
+    switch (ProcessInformationClass)
+    {
 
     case ProcessImageFileName:
+    {
+        ULONG LengthNeeded = 0;
+
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
+
+        if (!NT_SUCCESS(st))
         {
-            ULONG LengthNeeded = 0;
-
-            st = ObReferenceObjectByHandle(
-                    ProcessHandle,
-                    PROCESS_QUERY_INFORMATION,
-                    PsProcessType,
-                    PreviousMode,
-                    (PVOID *)&Process,
-                    NULL
-                    );
-
-            if (!NT_SUCCESS(st)) {
-                return st;
-            }
-
-            //
-            // SeLocateProcessImageName will allocate space for a UNICODE_STRING and point pTempNameInfo
-            // at that string.  This memory will be freed later in the routine.
-            //
-
-            st = SeLocateProcessImageName(Process, &pTempNameInfo);
-
-            if (!NT_SUCCESS(st)) {
-                ObDereferenceObject(Process);
-                return st;
-            }
-
-            LengthNeeded = sizeof(UNICODE_STRING) + pTempNameInfo->MaximumLength;
-
-            //
-            // Either of these may cause an access violation. The
-            // exception handler will return access violation as
-            // status code. No further cleanup needs to be done.
-            //
-
-            try {
-
-                if (ARGUMENT_PRESENT(ReturnLength) ) {
-                    *ReturnLength = LengthNeeded;
-                }
-
-                if (ProcessInformationLength >= LengthNeeded) {
-                    RtlCopyMemory(
-                        ProcessInformation,
-                        pTempNameInfo,
-                        sizeof(UNICODE_STRING) + pTempNameInfo->MaximumLength
-                        );
-                    ((PUNICODE_STRING) ProcessInformation)->Buffer = (PWSTR)((PUCHAR) ProcessInformation + sizeof(UNICODE_STRING));
-
-                } else {
-                    st = STATUS_INFO_LENGTH_MISMATCH;
-                }
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
-                st = GetExceptionCode ();
-            }
-            
-            ObDereferenceObject(Process);
-            ExFreePool( pTempNameInfo );
-
             return st;
-
         }
+
+        //
+        // SeLocateProcessImageName will allocate space for a UNICODE_STRING and point pTempNameInfo
+        // at that string.  This memory will be freed later in the routine.
+        //
+
+        st = SeLocateProcessImageName(Process, &pTempNameInfo);
+
+        if (!NT_SUCCESS(st))
+        {
+            ObDereferenceObject(Process);
+            return st;
+        }
+
+        LengthNeeded = sizeof(UNICODE_STRING) + pTempNameInfo->MaximumLength;
+
+        //
+        // Either of these may cause an access violation. The
+        // exception handler will return access violation as
+        // status code. No further cleanup needs to be done.
+        //
+
+        try
+        {
+
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
+                *ReturnLength = LengthNeeded;
+            }
+
+            if (ProcessInformationLength >= LengthNeeded)
+            {
+                RtlCopyMemory(ProcessInformation, pTempNameInfo, sizeof(UNICODE_STRING) + pTempNameInfo->MaximumLength);
+                ((PUNICODE_STRING)ProcessInformation)->Buffer =
+                    (PWSTR)((PUCHAR)ProcessInformation + sizeof(UNICODE_STRING));
+            }
+            else
+            {
+                st = STATUS_INFO_LENGTH_MISMATCH;
+            }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            st = GetExceptionCode();
+        }
+
+        ObDereferenceObject(Process);
+        ExFreePool(pTempNameInfo);
+
+        return st;
+    }
 
     case ProcessWorkingSetWatch:
 
-        return PspQueryWorkingSetWatch(
-                    ProcessHandle,
-                    ProcessInformationClass,
-                    ProcessInformation,
-                    ProcessInformationLength,
-                    ReturnLength,
-                    PreviousMode
-                    );
+        return PspQueryWorkingSetWatch(ProcessHandle, ProcessInformationClass, ProcessInformation,
+                                       ProcessInformationLength, ReturnLength, PreviousMode);
 
     case ProcessBasicInformation:
 
-        if ( ProcessInformationLength != (ULONG) sizeof(PROCESS_BASIC_INFORMATION) ) {
+        if (ProcessInformationLength != (ULONG)sizeof(PROCESS_BASIC_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
-        if ( !NT_SUCCESS(st) ) {
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -724,34 +674,34 @@ NtQueryInformationProcess(
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            *(PPROCESS_BASIC_INFORMATION) ProcessInformation = BasicInfo;
+        try
+        {
+            *(PPROCESS_BASIC_INFORMATION)ProcessInformation = BasicInfo;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(PROCESS_BASIC_INFORMATION);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
     case ProcessDefaultHardErrorMode:
 
-        if ( ProcessInformationLength != sizeof(ULONG) ) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -759,54 +709,42 @@ NtQueryInformationProcess(
 
         ObDereferenceObject(Process);
 
-        try {
-            *(PULONG) ProcessInformation = DefaultHardErrorMode;
+        try
+        {
+            *(PULONG)ProcessInformation = DefaultHardErrorMode;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
     case ProcessQuotaLimits:
 
-        return PspQueryQuotaLimits(
-                    ProcessHandle,
-                    ProcessInformationClass,
-                    ProcessInformation,
-                    ProcessInformationLength,
-                    ReturnLength,
-                    PreviousMode
-                    );
+        return PspQueryQuotaLimits(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength,
+                                   ReturnLength, PreviousMode);
 
     case ProcessPooledUsageAndLimits:
 
-        return PspQueryPooledQuotaLimits(
-                    ProcessHandle,
-                    ProcessInformationClass,
-                    ProcessInformation,
-                    ProcessInformationLength,
-                    ReturnLength,
-                    PreviousMode
-                    );
+        return PspQueryPooledQuotaLimits(ProcessHandle, ProcessInformationClass, ProcessInformation,
+                                         ProcessInformationLength, ReturnLength, PreviousMode);
 
     case ProcessIoCounters:
 
-        if ( ProcessInformationLength != (ULONG) sizeof(IO_COUNTERS) ) {
+        if (ProcessInformationLength != (ULONG)sizeof(IO_COUNTERS))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
-        if ( !NT_SUCCESS(st) ) {
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -825,34 +763,34 @@ NtQueryInformationProcess(
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            *(PIO_COUNTERS) ProcessInformation = IoCounters;
+        try
+        {
+            *(PIO_COUNTERS)ProcessInformation = IoCounters;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(IO_COUNTERS);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
     case ProcessVmCounters:
 
-        if (ProcessInformationLength != (ULONG) sizeof (VM_COUNTERS)
-            && ProcessInformationLength != (ULONG) sizeof (VM_COUNTERS_EX)) {
+        if (ProcessInformationLength != (ULONG)sizeof(VM_COUNTERS) &&
+            ProcessInformationLength != (ULONG)sizeof(VM_COUNTERS_EX))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
-        if ( !NT_SUCCESS(st) ) {
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -865,15 +803,15 @@ NtQueryInformationProcess(
         VmCounters.PeakVirtualSize = Process->PeakVirtualSize;
         VmCounters.VirtualSize = Process->VirtualSize;
         VmCounters.PageFaultCount = Process->Vm.PageFaultCount;
-        VmCounters.PeakWorkingSetSize = ((SIZE_T) Process->Vm.PeakWorkingSetSize) << PAGE_SHIFT;
-        VmCounters.WorkingSetSize = ((SIZE_T) Process->Vm.WorkingSetSize) << PAGE_SHIFT;
+        VmCounters.PeakWorkingSetSize = ((SIZE_T)Process->Vm.PeakWorkingSetSize) << PAGE_SHIFT;
+        VmCounters.WorkingSetSize = ((SIZE_T)Process->Vm.WorkingSetSize) << PAGE_SHIFT;
         VmCounters.QuotaPeakPagedPoolUsage = Process->QuotaPeak[PsPagedPool];
         VmCounters.QuotaPagedPoolUsage = Process->QuotaUsage[PsPagedPool];
         VmCounters.QuotaPeakNonPagedPoolUsage = Process->QuotaPeak[PsNonPagedPool];
         VmCounters.QuotaNonPagedPoolUsage = Process->QuotaUsage[PsNonPagedPool];
-        VmCounters.PagefileUsage = ((SIZE_T) Process->QuotaUsage[PsPageFile]) << PAGE_SHIFT;
-        VmCounters.PeakPagefileUsage = ((SIZE_T) Process->QuotaPeak[PsPageFile]) << PAGE_SHIFT;
-        VmCounters.PrivateUsage = ((SIZE_T) Process->CommitCharge) << PAGE_SHIFT;
+        VmCounters.PagefileUsage = ((SIZE_T)Process->QuotaUsage[PsPageFile]) << PAGE_SHIFT;
+        VmCounters.PeakPagefileUsage = ((SIZE_T)Process->QuotaPeak[PsPageFile]) << PAGE_SHIFT;
+        VmCounters.PrivateUsage = ((SIZE_T)Process->CommitCharge) << PAGE_SHIFT;
 
         ObDereferenceObject(Process);
 
@@ -883,37 +821,34 @@ NtQueryInformationProcess(
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            RtlCopyMemory(ProcessInformation,
-                          &VmCounters,
-                          ProcessInformationLength);
+        try
+        {
+            RtlCopyMemory(ProcessInformation, &VmCounters, ProcessInformationLength);
 
-            if (ARGUMENT_PRESENT (ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = ProcessInformationLength;
             }
-            
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
     case ProcessTimes:
 
-        if ( ProcessInformationLength != (ULONG) sizeof(KERNEL_USER_TIMES) ) {
+        if (ProcessInformationLength != (ULONG)sizeof(KERNEL_USER_TIMES))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -921,11 +856,9 @@ NtQueryInformationProcess(
         // Need some type of interlock on KiTimeLock
         //
 
-        SysUserTime.KernelTime.QuadPart = UInt32x32To64(Process->Pcb.KernelTime,
-                                                        KeMaximumIncrement);
+        SysUserTime.KernelTime.QuadPart = UInt32x32To64(Process->Pcb.KernelTime, KeMaximumIncrement);
 
-        SysUserTime.UserTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime,
-                                                      KeMaximumIncrement);
+        SysUserTime.UserTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime, KeMaximumIncrement);
 
         SysUserTime.CreateTime = Process->CreateTime;
         SysUserTime.ExitTime = Process->ExitTime;
@@ -938,46 +871,47 @@ NtQueryInformationProcess(
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            *(PKERNEL_USER_TIMES) ProcessInformation = SysUserTime;
+        try
+        {
+            *(PKERNEL_USER_TIMES)ProcessInformation = SysUserTime;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(KERNEL_USER_TIMES);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
-    case ProcessDebugPort :
+    case ProcessDebugPort:
 
         //
-        if ( ProcessInformationLength != (ULONG) sizeof(HANDLE) ) {
+        if (ProcessInformationLength != (ULONG)sizeof(HANDLE))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        if (Process->DebugPort == NULL) {
+        if (Process->DebugPort == NULL)
+        {
 
             DebugPort = NULL;
-
-        } else {
+        }
+        else
+        {
 
             DebugPort = (HANDLE)-1;
-
         }
 
         ObDereferenceObject(Process);
@@ -988,44 +922,45 @@ NtQueryInformationProcess(
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            *(PHANDLE) ProcessInformation = DebugPort;
+        try
+        {
+            *(PHANDLE)ProcessInformation = DebugPort;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(HANDLE);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
-    case ProcessDebugObjectHandle :
+    case ProcessDebugObjectHandle:
         //
-        if (ProcessInformationLength != sizeof (HANDLE)) {
+        if (ProcessInformationLength != sizeof(HANDLE))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_QUERY_INFORMATION,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode, &Process,
+                                       NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        st = DbgkOpenProcessDebugPort (Process,
-                                       PreviousMode,
-                                       &DebugPort);
+        st = DbgkOpenProcessDebugPort(Process, PreviousMode, &DebugPort);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             DebugPort = NULL;
         }
 
-        ObDereferenceObject (Process);
+        ObDereferenceObject(Process);
 
         //
         // Either of these may cause an access violation. The
@@ -1033,72 +968,74 @@ NtQueryInformationProcess(
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            *(PHANDLE) ProcessInformation = DebugPort;
+        try
+        {
+            *(PHANDLE)ProcessInformation = DebugPort;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(HANDLE);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return st;
 
-    case ProcessDebugFlags :
+    case ProcessDebugFlags:
 
-        if (ProcessInformationLength != sizeof (ULONG)) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_QUERY_INFORMATION,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode, &Process,
+                                       NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
-        
 
 
-        try {
-            *(PULONG) ProcessInformation = (Process->Flags&PS_PROCESS_FLAGS_NO_DEBUG_INHERIT)?0:PROCESS_DEBUG_INHERIT;
+        try
+        {
+            *(PULONG)ProcessInformation =
+                (Process->Flags & PS_PROCESS_FLAGS_NO_DEBUG_INHERIT) ? 0 : PROCESS_DEBUG_INHERIT;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(HANDLE);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            st = GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            st = GetExceptionCode();
         }
 
-        ObDereferenceObject (Process);
+        ObDereferenceObject(Process);
 
         return st;
 
 
-    case ProcessHandleCount :
+    case ProcessHandleCount:
 
-        if ( ProcessInformationLength != (ULONG) sizeof(ULONG) ) {
+        if (ProcessInformationLength != (ULONG)sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        HandleCount = ObGetProcessHandleCount (Process);
+        HandleCount = ObGetProcessHandleCount(Process);
 
         ObDereferenceObject(Process);
 
@@ -1108,61 +1045,53 @@ NtQueryInformationProcess(
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            *(PULONG) ProcessInformation = HandleCount;
+        try
+        {
+            *(PULONG)ProcessInformation = HandleCount;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
-    case ProcessLdtInformation :
+    case ProcessLdtInformation:
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, PsProcessType,
+                                       PreviousMode, (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        st = PspQueryLdtInformation (Process,
-                                     ProcessInformation,
-                                     ProcessInformationLength,
-                                     ReturnLength);
+        st = PspQueryLdtInformation(Process, ProcessInformation, ProcessInformationLength, ReturnLength);
 
         ObDereferenceObject(Process);
         return st;
 
 
-    case ProcessWx86Information :
+    case ProcessWx86Information:
 
         return STATUS_INVALID_INFO_CLASS;
 
     case ProcessPriorityBoost:
-        if ( ProcessInformationLength != sizeof(ULONG) ) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -1170,13 +1099,17 @@ NtQueryInformationProcess(
 
         ObDereferenceObject(Process);
 
-        try {
+        try
+        {
             *(PULONG)ProcessInformation = DisableBoost;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
@@ -1184,98 +1117,96 @@ NtQueryInformationProcess(
 
     case ProcessDeviceMap:
         DeviceMapInfo = (PPROCESS_DEVICEMAP_INFORMATION)ProcessInformation;
-        if ( ProcessInformationLength < sizeof(DeviceMapInfo->Query) ) {
+        if (ProcessInformationLength < sizeof(DeviceMapInfo->Query))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        if ( ProcessInformationLength == sizeof(PROCESS_DEVICEMAP_INFORMATION_EX) ) {
-            try {
+        if (ProcessInformationLength == sizeof(PROCESS_DEVICEMAP_INFORMATION_EX))
+        {
+            try
+            {
                 Flags = ((PPROCESS_DEVICEMAP_INFORMATION_EX)DeviceMapInfo)->Flags;
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                return GetExceptionCode ();
             }
-            if ( (Flags & ~(PROCESS_LUID_DOSDEVICES_ONLY)) ||
-                 (ObIsLUIDDeviceMapsEnabled() == 0) ) {
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                return GetExceptionCode();
+            }
+            if ((Flags & ~(PROCESS_LUID_DOSDEVICES_ONLY)) || (ObIsLUIDDeviceMapsEnabled() == 0))
+            {
                 return STATUS_INVALID_PARAMETER;
             }
         }
-        else {
-            if ( ProcessInformationLength == sizeof(DeviceMapInfo->Query) ) {
+        else
+        {
+            if (ProcessInformationLength == sizeof(DeviceMapInfo->Query))
+            {
                 Flags = 0;
             }
-            else {
+            else
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
-            }
+        }
 
-        st = ObQueryDeviceMapInformation( Process, DeviceMapInfo, Flags );
+        st = ObQueryDeviceMapInformation(Process, DeviceMapInfo, Flags);
         ObDereferenceObject(Process);
         return st;
 
-    case ProcessSessionInformation :
+    case ProcessSessionInformation:
 
-        if ( ProcessInformationLength != (ULONG) sizeof(PROCESS_SESSION_INFORMATION) ) {
+        if (ProcessInformationLength != (ULONG)sizeof(PROCESS_SESSION_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
-        if ( !NT_SUCCESS(st) ) {
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        SessionInfo.SessionId = MmGetSessionId (Process);
+        SessionInfo.SessionId = MmGetSessionId(Process);
 
         ObDereferenceObject(Process);
 
-        try {
-            *(PPROCESS_SESSION_INFORMATION) ProcessInformation = SessionInfo;
+        try
+        {
+            *(PPROCESS_SESSION_INFORMATION)ProcessInformation = SessionInfo;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(PROCESS_SESSION_INFORMATION);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
 
-
     case ProcessPriorityClass:
 
-        if ( ProcessInformationLength != sizeof(PROCESS_PRIORITY_CLASS) ) {
+        if (ProcessInformationLength != sizeof(PROCESS_PRIORITY_CLASS))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
-        if ( !NT_SUCCESS(st) ) {
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -1284,14 +1215,18 @@ NtQueryInformationProcess(
 
         ObDereferenceObject(Process);
 
-        try {
-            *(PPROCESS_PRIORITY_CLASS) ProcessInformation = PriorityClass;
+        try
+        {
+            *(PPROCESS_PRIORITY_CLASS)ProcessInformation = PriorityClass;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(PROCESS_PRIORITY_CLASS);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
@@ -1299,19 +1234,15 @@ NtQueryInformationProcess(
 
     case ProcessWow64Information:
 
-        if ( ProcessInformationLength != sizeof(ULONG_PTR) ) {
+        if (ProcessInformationLength != sizeof(ULONG_PTR))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_QUERY_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
-        if ( !NT_SUCCESS(st) ) {
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -1321,97 +1252,108 @@ NtQueryInformationProcess(
         // Acquire process rundown protection as we are about to look at process structures torn down at
         // process exit.
         //
-        if (ExAcquireRundownProtection (&Process->RundownProtect)) {
+        if (ExAcquireRundownProtection(&Process->RundownProtect))
+        {
             PWOW64_PROCESS Wow64Process;
 
-            if ((Wow64Process = PS_GET_WOW64_PROCESS (Process)) != NULL) {
+            if ((Wow64Process = PS_GET_WOW64_PROCESS(Process)) != NULL)
+            {
                 Wow64Info = (ULONG_PTR)(Wow64Process->Wow64);
             }
 
-            ExReleaseRundownProtection (&Process->RundownProtect);
+            ExReleaseRundownProtection(&Process->RundownProtect);
         }
 
 
         ObDereferenceObject(Process);
 
-        try {
+        try
+        {
             *(PULONG_PTR)ProcessInformation = Wow64Info;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG_PTR);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
-        return( STATUS_SUCCESS );
+        return (STATUS_SUCCESS);
 
 
     case ProcessLUIDDeviceMapsEnabled:
 
-        if ( ProcessInformationLength != sizeof(ULONG) ) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             *(PULONG)ProcessInformation = ObIsLUIDDeviceMapsEnabled();
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
-        return( STATUS_SUCCESS );
+        return (STATUS_SUCCESS);
 
     case ProcessBreakOnTermination:
 
-        if ( ProcessInformationLength != sizeof(ULONG) ) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-            ProcessHandle,
-            PROCESS_QUERY_INFORMATION,
-            PsProcessType,
-            PreviousMode,
-            (PVOID *)&Process,
-            NULL
-            );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        if (Process->Flags
-            & PS_PROCESS_FLAGS_BREAK_ON_TERMINATION) {
+        if (Process->Flags & PS_PROCESS_FLAGS_BREAK_ON_TERMINATION)
+        {
 
             BreakOnTerminationEnabled = 1;
-
-        } else {
+        }
+        else
+        {
 
             BreakOnTerminationEnabled = 0;
-
         }
 
         ObDereferenceObject(Process);
 
-        try {
+        try
+        {
 
             *(PULONG)ProcessInformation = BreakOnTerminationEnabled;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-            
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
-    case ProcessHandleTracing: {
+    case ProcessHandleTracing:
+    {
         PPROCESS_HANDLE_TRACING_QUERY Pht;
         PHANDLE_TABLE HandleTable;
         PHANDLE_TRACE_DEBUG_INFO DebugInfo;
@@ -1420,71 +1362,82 @@ NtQueryInformationProcess(
         ULONG StacksLeft;
         ULONG i, j;
 
-        if (ProcessInformationLength < FIELD_OFFSET (PROCESS_HANDLE_TRACING_QUERY,
-                                                     HandleTrace)) {
+        if (ProcessInformationLength < FIELD_OFFSET(PROCESS_HANDLE_TRACING_QUERY, HandleTrace))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        Pht = (PPROCESS_HANDLE_TRACING_QUERY) ProcessInformation;
-        StacksLeft = (ProcessInformationLength - FIELD_OFFSET (PROCESS_HANDLE_TRACING_QUERY,
-                                                              HandleTrace)) /
-                     sizeof (Pht->HandleTrace[0]);
+        Pht = (PPROCESS_HANDLE_TRACING_QUERY)ProcessInformation;
+        StacksLeft = (ProcessInformationLength - FIELD_OFFSET(PROCESS_HANDLE_TRACING_QUERY, HandleTrace)) /
+                     sizeof(Pht->HandleTrace[0]);
         NextTrace = &Pht->HandleTrace[0];
 
-        st = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_QUERY_INFORMATION,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode, &Process,
+                                       NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
-        HandleTable = ObReferenceProcessHandleTable (Process);
+        HandleTable = ObReferenceProcessHandleTable(Process);
 
-        if (HandleTable != NULL) {
+        if (HandleTable != NULL)
+        {
             DebugInfo = HandleTable->DebugInfo;
-            if (DebugInfo != 0) {
-                try {
+            if (DebugInfo != 0)
+            {
+                try
+                {
                     Pht->TotalTraces = 0;
                     j = DebugInfo->CurrentStackIndex % HANDLE_TRACE_DB_MAX_STACKS;
-                    for (i = 0; i < HANDLE_TRACE_DB_MAX_STACKS; i++) {
-                        RtlCopyMemory (&Trace, &DebugInfo->TraceDb[j], sizeof (Trace));
-                        if ((Pht->Handle == Trace.Handle || Pht->Handle == 0) && Trace.Type != 0) {
+                    for (i = 0; i < HANDLE_TRACE_DB_MAX_STACKS; i++)
+                    {
+                        RtlCopyMemory(&Trace, &DebugInfo->TraceDb[j], sizeof(Trace));
+                        if ((Pht->Handle == Trace.Handle || Pht->Handle == 0) && Trace.Type != 0)
+                        {
                             Pht->TotalTraces++;
-                            if (StacksLeft > 0) {
+                            if (StacksLeft > 0)
+                            {
                                 StacksLeft--;
                                 NextTrace->Handle = Trace.Handle;
                                 NextTrace->ClientId = Trace.ClientId;
                                 NextTrace->Type = Trace.Type;
-                                RtlCopyMemory (NextTrace->Stacks,
-                                               Trace.StackTrace,
-                                               min (sizeof (NextTrace->Stacks),
-                                                    sizeof (Trace.StackTrace)));
+                                RtlCopyMemory(NextTrace->Stacks, Trace.StackTrace,
+                                              min(sizeof(NextTrace->Stacks), sizeof(Trace.StackTrace)));
                                 NextTrace++;
-
-                            } else {
+                            }
+                            else
+                            {
                                 st = STATUS_INFO_LENGTH_MISMATCH;
                             }
                         }
-                        if (j == 0) {
+                        if (j == 0)
+                        {
                             j = HANDLE_TRACE_DB_MAX_STACKS - 1;
-                        } else {
+                        }
+                        else
+                        {
                             j--;
                         }
                     }
-                    if (ARGUMENT_PRESENT (ReturnLength)) {
-                        *ReturnLength = (ULONG) ((PUCHAR) NextTrace - (PUCHAR) Pht);
+                    if (ARGUMENT_PRESENT(ReturnLength))
+                    {
+                        *ReturnLength = (ULONG)((PUCHAR)NextTrace - (PUCHAR)Pht);
                     }
-                } except (EXCEPTION_EXECUTE_HANDLER) {
-                    st = GetExceptionCode ();
                 }
-            } else {
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
+                    st = GetExceptionCode();
+                }
+            }
+            else
+            {
                 st = STATUS_INVALID_PARAMETER;
             }
-            ObDereferenceProcessHandleTable (Process);
-        } else {
+            ObDereferenceProcessHandleTable(Process);
+        }
+        else
+        {
             st = STATUS_PROCESS_IS_TERMINATING;
         }
 
@@ -1496,13 +1449,10 @@ NtQueryInformationProcess(
 
         return STATUS_INVALID_INFO_CLASS;
     }
-
 }
 
 NTSTATUS
-NtQueryPortInformationProcess(
-    VOID
-    )
+NtQueryPortInformationProcess(VOID)
 
 /*++
 
@@ -1542,27 +1492,24 @@ Return Value:
 
     Thread = PsGetCurrentThread();
     Process = PsGetCurrentProcessByThread(Thread);
-    if ((Process->DebugPort != NULL) &&
-        ((Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_HIDEFROMDBG) == 0)) {
+    if ((Process->DebugPort != NULL) && ((Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_HIDEFROMDBG) == 0))
+    {
 
         return TRUE;
-
-    } else if (Process->ExceptionPort != NULL) {
+    }
+    else if (Process->ExceptionPort != NULL)
+    {
         return TRUE;
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 NTSTATUS
-PspSetQuotaLimits(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    IN PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+PspSetQuotaLimits(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass, IN PVOID ProcessInformation,
+                  IN ULONG ProcessInformationLength, IN KPROCESSOR_MODE PreviousMode)
 {
     PEPROCESS Process;
     PETHREAD CurrentThread;
@@ -1573,32 +1520,31 @@ PspSetQuotaLimits(
     PEJOB Job;
     KAPC_STATE ApcState;
 
-    UNREFERENCED_PARAMETER (ProcessInformationClass);
+    UNREFERENCED_PARAMETER(ProcessInformationClass);
 
-    if ( ProcessInformationLength != sizeof(QUOTA_LIMITS) ) {
+    if (ProcessInformationLength != sizeof(QUOTA_LIMITS))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
-    try {
-        RequestedLimits = *(PQUOTA_LIMITS) ProcessInformation;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        return GetExceptionCode ();
+    try
+    {
+        RequestedLimits = *(PQUOTA_LIMITS)ProcessInformation;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return GetExceptionCode();
     }
 
-    st = ObReferenceObjectByHandle(
-            ProcessHandle,
-            PROCESS_SET_QUOTA,
-            PsProcessType,
-            PreviousMode,
-            (PVOID *)&Process,
-            NULL
-            );
+    st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_QUOTA, PsProcessType, PreviousMode, (PVOID *)&Process,
+                                   NULL);
 
-    if ( !NT_SUCCESS(st) ) {
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     //
     // Now we are ready to set the quota limits for the process
@@ -1618,72 +1564,78 @@ PspSetQuotaLimits(
 
     ReturnStatus = STATUS_SUCCESS;
 
-    if (Process->QuotaBlock == &PspDefaultQuotaBlock) {
-        if (RequestedLimits.MinimumWorkingSetSize &&
-            RequestedLimits.MaximumWorkingSetSize) {
+    if (Process->QuotaBlock == &PspDefaultQuotaBlock)
+    {
+        if (RequestedLimits.MinimumWorkingSetSize && RequestedLimits.MaximumWorkingSetSize)
+        {
 
             if (RequestedLimits.MinimumWorkingSetSize != (SIZE_T)-1 &&
-                RequestedLimits.MaximumWorkingSetSize != (SIZE_T)-1) {
+                RequestedLimits.MaximumWorkingSetSize != (SIZE_T)-1)
+            {
                 Job = Process->Job;
-                if (Job != NULL) {
-                    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-                    ExAcquireResourceSharedLite (&Job->JobLock, TRUE);
+                if (Job != NULL)
+                {
+                    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+                    ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
-                    if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET) {
+                    if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET)
+                    {
                         RequestedLimits.MinimumWorkingSetSize = Job->MinimumWorkingSetSize;
                         RequestedLimits.MaximumWorkingSetSize = Job->MaximumWorkingSetSize;
                     }
 
-                    ExReleaseResourceLite (&Job->JobLock);
-                    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+                    ExReleaseResourceLite(&Job->JobLock);
+                    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
                 }
             }
 
-            if (SeSinglePrivilegeCheck (SeIncreaseBasePriorityPrivilege,
-                                        PreviousMode)) {
+            if (SeSinglePrivilegeCheck(SeIncreaseBasePriorityPrivilege, PreviousMode))
+            {
                 OkToIncrease = TRUE;
-            } else {
+            }
+            else
+            {
                 OkToIncrease = FALSE;
             }
 
-            KeStackAttachProcess (&Process->Pcb, &ApcState);
+            KeStackAttachProcess(&Process->Pcb, &ApcState);
 
-            ReturnStatus = MmAdjustWorkingSetSize (
-                            RequestedLimits.MinimumWorkingSetSize,
-                            RequestedLimits.MaximumWorkingSetSize,
-                            FALSE,
-                            OkToIncrease);
+            ReturnStatus = MmAdjustWorkingSetSize(RequestedLimits.MinimumWorkingSetSize,
+                                                  RequestedLimits.MaximumWorkingSetSize, FALSE, OkToIncrease);
 
-            KeUnstackDetachProcess (&ApcState);
-
-        } else {
+            KeUnstackDetachProcess(&ApcState);
+        }
+        else
+        {
 
 
             //
             // You must have a privilege to assign quotas
             //
 
-            if (!SeSinglePrivilegeCheck (SeIncreaseQuotaPrivilege, PreviousMode)) {
-                ObDereferenceObject (Process);
+            if (!SeSinglePrivilegeCheck(SeIncreaseQuotaPrivilege, PreviousMode))
+            {
+                ObDereferenceObject(Process);
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
 
-            NewQuotaBlock = ExAllocatePoolWithTag (NonPagedPool, sizeof(*NewQuotaBlock), 'bQsP');
-            if (NewQuotaBlock == NULL) {
-                ObDereferenceObject (Process);
+            NewQuotaBlock = ExAllocatePoolWithTag(NonPagedPool, sizeof(*NewQuotaBlock), 'bQsP');
+            if (NewQuotaBlock == NULL)
+            {
+                ObDereferenceObject(Process);
                 return STATUS_NO_MEMORY;
             }
-            RtlZeroMemory (NewQuotaBlock, sizeof (*NewQuotaBlock));
+            RtlZeroMemory(NewQuotaBlock, sizeof(*NewQuotaBlock));
 
             //
             // Initialize the quota block
             //
             NewQuotaBlock->ReferenceCount = 1;
-            NewQuotaBlock->ProcessCount   = 1;
+            NewQuotaBlock->ProcessCount = 1;
 
-            NewQuotaBlock->QuotaEntry[PsNonPagedPool].Peak  = Process->QuotaPeak[PsNonPagedPool];
-            NewQuotaBlock->QuotaEntry[PsPagedPool].Peak     = Process->QuotaPeak[PsPagedPool];
-            NewQuotaBlock->QuotaEntry[PsPageFile].Peak      = Process->QuotaPeak[PsPageFile];
+            NewQuotaBlock->QuotaEntry[PsNonPagedPool].Peak = Process->QuotaPeak[PsNonPagedPool];
+            NewQuotaBlock->QuotaEntry[PsPagedPool].Peak = Process->QuotaPeak[PsPagedPool];
+            NewQuotaBlock->QuotaEntry[PsPageFile].Peak = Process->QuotaPeak[PsPageFile];
 
             //
             // Now compute limits
@@ -1693,83 +1645,82 @@ PspSetQuotaLimits(
             // Get the defaults that the system would pick.
             //
 
-            NewQuotaBlock->QuotaEntry[PsPagedPool].Limit    = PspDefaultPagedLimit;
+            NewQuotaBlock->QuotaEntry[PsPagedPool].Limit = PspDefaultPagedLimit;
             NewQuotaBlock->QuotaEntry[PsNonPagedPool].Limit = PspDefaultNonPagedLimit;
-            NewQuotaBlock->QuotaEntry[PsPageFile].Limit     = PspDefaultPagefileLimit;
+            NewQuotaBlock->QuotaEntry[PsPageFile].Limit = PspDefaultPagefileLimit;
 
             // Everything is set. Now double check to quota block field
             // If we still have no quota block then assign and succeed.
             // Otherwise punt.
             //
 
-            if (InterlockedCompareExchangePointer (&Process->QuotaBlock,
-                                                   NewQuotaBlock,
-                                                   &PspDefaultQuotaBlock) != &PspDefaultQuotaBlock) {
-                ExFreePool (NewQuotaBlock);
-            } else {
-                PspInsertQuotaBlock (NewQuotaBlock);
+            if (InterlockedCompareExchangePointer(&Process->QuotaBlock, NewQuotaBlock, &PspDefaultQuotaBlock) !=
+                &PspDefaultQuotaBlock)
+            {
+                ExFreePool(NewQuotaBlock);
+            }
+            else
+            {
+                PspInsertQuotaBlock(NewQuotaBlock);
             }
 
             ReturnStatus = STATUS_SUCCESS;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // Only allow a working set size change
         //
 
-        if (RequestedLimits.MinimumWorkingSetSize &&
-            RequestedLimits.MaximumWorkingSetSize) {
+        if (RequestedLimits.MinimumWorkingSetSize && RequestedLimits.MaximumWorkingSetSize)
+        {
 
             if (RequestedLimits.MinimumWorkingSetSize != (SIZE_T)-1 &&
-                RequestedLimits.MaximumWorkingSetSize != (SIZE_T)-1) {
+                RequestedLimits.MaximumWorkingSetSize != (SIZE_T)-1)
+            {
                 Job = Process->Job;
-                if (Job != NULL) {
-                    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-                    ExAcquireResourceSharedLite (&Job->JobLock, TRUE);
+                if (Job != NULL)
+                {
+                    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+                    ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
-                    if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET) {
+                    if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET)
+                    {
                         RequestedLimits.MinimumWorkingSetSize = Job->MinimumWorkingSetSize;
                         RequestedLimits.MaximumWorkingSetSize = Job->MaximumWorkingSetSize;
                     }
 
-                    ExReleaseResourceLite (&Job->JobLock);
-                    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+                    ExReleaseResourceLite(&Job->JobLock);
+                    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
                 }
             }
 
-            if (SeSinglePrivilegeCheck (SeIncreaseBasePriorityPrivilege,
-                                        PreviousMode)) {
+            if (SeSinglePrivilegeCheck(SeIncreaseBasePriorityPrivilege, PreviousMode))
+            {
                 OkToIncrease = TRUE;
-            } else {
+            }
+            else
+            {
                 OkToIncrease = FALSE;
             }
 
-            KeStackAttachProcess (&Process->Pcb, &ApcState);
-            ReturnStatus = MmAdjustWorkingSetSize (
-                            RequestedLimits.MinimumWorkingSetSize,
-                            RequestedLimits.MaximumWorkingSetSize,
-                            FALSE,
-                            OkToIncrease
-                            );
+            KeStackAttachProcess(&Process->Pcb, &ApcState);
+            ReturnStatus = MmAdjustWorkingSetSize(RequestedLimits.MinimumWorkingSetSize,
+                                                  RequestedLimits.MaximumWorkingSetSize, FALSE, OkToIncrease);
 
-            KeUnstackDetachProcess (&ApcState);
-
+            KeUnstackDetachProcess(&ApcState);
         }
     }
     ObDereferenceObject(Process);
 
     return ReturnStatus;
-
 }
 
 NTSTATUS
-NtSetInformationProcess(
-    IN HANDLE ProcessHandle,
-    IN PROCESSINFOCLASS ProcessInformationClass,
-    IN PVOID ProcessInformation,
-    IN ULONG ProcessInformationLength
-    )
+NtSetInformationProcess(IN HANDLE ProcessHandle, IN PROCESSINFOCLASS ProcessInformationClass,
+                        IN PVOID ProcessInformation, IN ULONG ProcessInformationLength)
 
 /*++
 
@@ -1830,33 +1781,43 @@ Return Value:
     // Get previous processor mode and probe input argument if necessary.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        if (ProcessInformationClass == ProcessBasePriority) {
+        if (ProcessInformationClass == ProcessBasePriority)
+        {
             ProbeAlignment = sizeof(KPRIORITY);
-
-        } else if (ProcessInformationClass == ProcessEnableAlignmentFaultFixup) {
+        }
+        else if (ProcessInformationClass == ProcessEnableAlignmentFaultFixup)
+        {
             ProbeAlignment = sizeof(BOOLEAN);
-        } else if (ProcessInformationClass == ProcessForegroundInformation) {
+        }
+        else if (ProcessInformationClass == ProcessForegroundInformation)
+        {
             ProbeAlignment = sizeof(PROCESS_FOREGROUND_BACKGROUND);
-        } else if (ProcessInformationClass == ProcessPriorityClass) {
+        }
+        else if (ProcessInformationClass == ProcessPriorityClass)
+        {
             ProbeAlignment = sizeof(BOOLEAN);
-        } else if (ProcessInformationClass == ProcessAffinityMask) {
-            ProbeAlignment = sizeof (ULONG_PTR);
-        } else {
+        }
+        else if (ProcessInformationClass == ProcessAffinityMask)
+        {
+            ProbeAlignment = sizeof(ULONG_PTR);
+        }
+        else
+        {
             ProbeAlignment = sizeof(ULONG);
         }
 
-        try {
-            ProbeForRead(
-                ProcessInformation,
-                ProcessInformationLength,
-                ProbeAlignment
-                );
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            ProbeForRead(ProcessInformation, ProcessInformationLength, ProbeAlignment);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
@@ -1865,51 +1826,55 @@ Return Value:
     // Check argument validity.
     //
 
-    switch ( ProcessInformationClass ) {
+    switch (ProcessInformationClass)
+    {
 
-    case ProcessWorkingSetWatch: {
+    case ProcessWorkingSetWatch:
+    {
         PPAGEFAULT_HISTORY WorkingSetCatcher;
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        st = PsChargeProcessNonPagedPoolQuota (Process, WS_CATCH_SIZE);
-        if (NT_SUCCESS(st)) {
+        st = PsChargeProcessNonPagedPoolQuota(Process, WS_CATCH_SIZE);
+        if (NT_SUCCESS(st))
+        {
 
-            WorkingSetCatcher = ExAllocatePoolWithTag (NonPagedPool, WS_CATCH_SIZE, 'sWsP');
-            if (!WorkingSetCatcher) {
+            WorkingSetCatcher = ExAllocatePoolWithTag(NonPagedPool, WS_CATCH_SIZE, 'sWsP');
+            if (!WorkingSetCatcher)
+            {
                 st = STATUS_NO_MEMORY;
-            } else {
+            }
+            else
+            {
 
                 PsWatchEnabled = TRUE;
                 WorkingSetCatcher->CurrentIndex = 0;
                 WorkingSetCatcher->MaxIndex = MAX_WS_CATCH_INDEX;
-                KeInitializeSpinLock (&WorkingSetCatcher->SpinLock);
+                KeInitializeSpinLock(&WorkingSetCatcher->SpinLock);
 
                 //
                 // This only ever goes on the process and isn't removed till process object deletion.
                 // We just need to protect against multiple callers here.
                 //
-                if (InterlockedCompareExchangePointer (&Process->WorkingSetWatch,
-                                                       WorkingSetCatcher, NULL) == NULL) {
+                if (InterlockedCompareExchangePointer(&Process->WorkingSetWatch, WorkingSetCatcher, NULL) == NULL)
+                {
                     st = STATUS_SUCCESS;
-                } else {
-                    ExFreePool (WorkingSetCatcher);
+                }
+                else
+                {
+                    ExFreePool(WorkingSetCatcher);
                     st = STATUS_PORT_ALREADY_SET;
                 }
             }
-            if (!NT_SUCCESS (st)) {
-                PsReturnProcessNonPagedPoolQuota (Process, WS_CATCH_SIZE);
+            if (!NT_SUCCESS(st))
+            {
+                PsReturnProcessNonPagedPoolQuota(Process, WS_CATCH_SIZE);
             }
         }
 
@@ -1918,51 +1883,55 @@ Return Value:
         return st;
     }
 
-    case ProcessBasePriority: {
+    case ProcessBasePriority:
+    {
 
 
         //
         // THIS ITEM CODE IS OBSOLETE !
         //
 
-        if ( ProcessInformationLength != sizeof(KPRIORITY) ) {
+        if (ProcessInformationLength != sizeof(KPRIORITY))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             BasePriority = *(KPRIORITY *)ProcessInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        if (BasePriority & 0x80000000) {
+        if (BasePriority & 0x80000000)
+        {
             MemoryPriority = MEMORY_PRIORITY_FOREGROUND;
             BasePriority &= ~0x80000000;
-        } else {
+        }
+        else
+        {
             MemoryPriority = MEMORY_PRIORITY_BACKGROUND;
         }
 
-        if ( BasePriority > HIGH_PRIORITY ||
-             BasePriority <= LOW_PRIORITY ) {
+        if (BasePriority > HIGH_PRIORITY || BasePriority <= LOW_PRIORITY)
+        {
 
             return STATUS_INVALID_PARAMETER;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
 
-        if ( BasePriority > Process->Pcb.BasePriority ) {
+        if (BasePriority > Process->Pcb.BasePriority)
+        {
 
             //
             // Increasing the base priority of a process is a
@@ -1970,58 +1939,57 @@ Return Value:
             // here.
             //
 
-            HasPrivilege = SeCheckPrivilegedObject(
-                               SeIncreaseBasePriorityPrivilege,
-                               ProcessHandle,
-                               PROCESS_SET_INFORMATION,
-                               PreviousMode
-                               );
+            HasPrivilege = SeCheckPrivilegedObject(SeIncreaseBasePriorityPrivilege, ProcessHandle,
+                                                   PROCESS_SET_INFORMATION, PreviousMode);
 
-            if (!HasPrivilege) {
+            if (!HasPrivilege)
+            {
 
                 ObDereferenceObject(Process);
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
         }
 
-        KeSetPriorityProcess (&Process->Pcb,BasePriority);
-        MmSetMemoryPriorityProcess (Process, MemoryPriority);
-        ObDereferenceObject (Process);
+        KeSetPriorityProcess(&Process->Pcb, BasePriority);
+        MmSetMemoryPriorityProcess(Process, MemoryPriority);
+        ObDereferenceObject(Process);
 
         return STATUS_SUCCESS;
     }
 
-    case ProcessPriorityClass: {
-        if ( ProcessInformationLength != sizeof(PROCESS_PRIORITY_CLASS) ) {
+    case ProcessPriorityClass:
+    {
+        if (ProcessInformationLength != sizeof(PROCESS_PRIORITY_CLASS))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             LocalPriorityClass = *(PPROCESS_PRIORITY_CLASS)ProcessInformation;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        if (LocalPriorityClass.PriorityClass > PROCESS_PRIORITY_CLASS_ABOVE_NORMAL) {
+        if (LocalPriorityClass.PriorityClass > PROCESS_PRIORITY_CLASS_ABOVE_NORMAL)
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
 
         if (LocalPriorityClass.PriorityClass != Process->PriorityClass &&
-            LocalPriorityClass.PriorityClass == PROCESS_PRIORITY_CLASS_REALTIME) {
+            LocalPriorityClass.PriorityClass == PROCESS_PRIORITY_CLASS_REALTIME)
+        {
 
             //
             // Increasing the base priority of a process is a
@@ -2029,12 +1997,11 @@ Return Value:
             // here.
             //
 
-            HasPrivilege = SeCheckPrivilegedObject (SeIncreaseBasePriorityPrivilege,
-                                                    ProcessHandle,
-                                                    PROCESS_SET_INFORMATION,
-                                                    PreviousMode);
+            HasPrivilege = SeCheckPrivilegedObject(SeIncreaseBasePriorityPrivilege, ProcessHandle,
+                                                   PROCESS_SET_INFORMATION, PreviousMode);
 
-            if (!HasPrivilege) {
+            if (!HasPrivilege)
+            {
 
                 ObDereferenceObject(Process);
                 return STATUS_PRIVILEGE_NOT_HELD;
@@ -2046,22 +2013,24 @@ Return Value:
         // is calling with with the value from the job object
         //
         Job = Process->Job;
-        if (Job != NULL) {
-            KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-            ExAcquireResourceSharedLite (&Job->JobLock, TRUE);
+        if (Job != NULL)
+        {
+            KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+            ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
-            if (Job->LimitFlags & JOB_OBJECT_LIMIT_PRIORITY_CLASS) {
+            if (Job->LimitFlags & JOB_OBJECT_LIMIT_PRIORITY_CLASS)
+            {
                 LocalPriorityClass.PriorityClass = Job->PriorityClass;
             }
 
-            ExReleaseResourceLite (&Job->JobLock);
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+            ExReleaseResourceLite(&Job->JobLock);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
         }
 
         Process->PriorityClass = LocalPriorityClass.PriorityClass;
 
-        PsSetProcessPriorityByClass(Process, LocalPriorityClass.Foreground ?
-                PsProcessPriorityForeground : PsProcessPriorityBackground);
+        PsSetProcessPriorityByClass(Process, LocalPriorityClass.Foreground ? PsProcessPriorityForeground
+                                                                           : PsProcessPriorityBackground);
 
         ObDereferenceObject(Process);
 
@@ -2069,42 +2038,41 @@ Return Value:
     }
 
     case ProcessForegroundInformation:
-        {
+    {
 
-        if ( ProcessInformationLength != sizeof(PROCESS_FOREGROUND_BACKGROUND) ) {
+        if (ProcessInformationLength != sizeof(PROCESS_FOREGROUND_BACKGROUND))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             LocalForeground = *(PPROCESS_FOREGROUND_BACKGROUND)ProcessInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
-            }
+        }
 
 
-        PsSetProcessPriorityByClass(Process, LocalForeground.Foreground ?
-                PsProcessPriorityForeground : PsProcessPriorityBackground);
+        PsSetProcessPriorityByClass(Process, LocalForeground.Foreground ? PsProcessPriorityForeground
+                                                                        : PsProcessPriorityBackground);
 
         ObDereferenceObject(Process);
 
         return STATUS_SUCCESS;
-        }
+    }
 
     case ProcessRaisePriority:
-        {
+    {
         //
         // This code is used to boost the priority of all threads
         // within a process. It cannot be used to change a thread into
@@ -2114,26 +2082,25 @@ Return Value:
         //
 
 
-        if ( ProcessInformationLength != sizeof(ULONG) ) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             BoostValue = *(PULONG)ProcessInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -2143,108 +2110,111 @@ Return Value:
         //
 
 
-        if (ExAcquireRundownProtection (&Process->RundownProtect)) {
-            for (Thread = PsGetNextProcessThread (Process, NULL);
-                 Thread != NULL;
-                 Thread = PsGetNextProcessThread (Process, Thread)) {
+        if (ExAcquireRundownProtection(&Process->RundownProtect))
+        {
+            for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+                 Thread = PsGetNextProcessThread(Process, Thread))
+            {
 
-                 KeBoostPriorityThread(&Thread->Tcb,(KPRIORITY)BoostValue);
+                KeBoostPriorityThread(&Thread->Tcb, (KPRIORITY)BoostValue);
             }
-            ExReleaseRundownProtection (&Process->RundownProtect);
-        } else {
+            ExReleaseRundownProtection(&Process->RundownProtect);
+        }
+        else
+        {
             st = STATUS_PROCESS_IS_TERMINATING;
         }
 
         ObDereferenceObject(Process);
 
         return st;
-        }
+    }
 
     case ProcessDefaultHardErrorMode:
+    {
+        if (ProcessInformationLength != sizeof(ULONG))
         {
-        if ( ProcessInformationLength != sizeof(ULONG) ) {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             DefaultHardErrorMode = *(PULONG)ProcessInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
         Process->DefaultHardErrorProcessing = DefaultHardErrorMode;
-        if (DefaultHardErrorMode & PROCESS_HARDERROR_ALIGNMENT_BIT) {
-            KeSetAutoAlignmentProcess(&Process->Pcb,TRUE);
-        } else {
-            KeSetAutoAlignmentProcess(&Process->Pcb,FALSE);
+        if (DefaultHardErrorMode & PROCESS_HARDERROR_ALIGNMENT_BIT)
+        {
+            KeSetAutoAlignmentProcess(&Process->Pcb, TRUE);
+        }
+        else
+        {
+            KeSetAutoAlignmentProcess(&Process->Pcb, FALSE);
         }
 
         ObDereferenceObject(Process);
 
         return STATUS_SUCCESS;
-        }
-
-    case ProcessQuotaLimits: {
-        return PspSetQuotaLimits (ProcessHandle,
-                                  ProcessInformationClass,
-                                  ProcessInformation,
-                                  ProcessInformationLength,
-                                  PreviousMode);
     }
 
-    case ProcessExceptionPort : {
-        if ( ProcessInformationLength != sizeof(HANDLE) ) {
+    case ProcessQuotaLimits:
+    {
+        return PspSetQuotaLimits(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength,
+                                 PreviousMode);
+    }
+
+    case ProcessExceptionPort:
+    {
+        if (ProcessInformationLength != sizeof(HANDLE))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
-            ExceptionPortHandle = *(PHANDLE) ProcessInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        try
+        {
+            ExceptionPortHandle = *(PHANDLE)ProcessInformation;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle (ExceptionPortHandle,
-                                        0,
-                                        LpcPortObjectType,
-                                        PreviousMode,
-                                        &ExceptionPort,
-                                        NULL);
-        if (!NT_SUCCESS (st)) {
+        st = ObReferenceObjectByHandle(ExceptionPortHandle, 0, LpcPortObjectType, PreviousMode, &ExceptionPort, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        st = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_SET_PORT,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_PORT, PsProcessType, PreviousMode, &Process, NULL);
 
-        if (!NT_SUCCESS (st)) {
-            ObDereferenceObject (ExceptionPort);
+        if (!NT_SUCCESS(st))
+        {
+            ObDereferenceObject(ExceptionPort);
             return st;
         }
 
         //
         // We are only allowed to put the exception port on. It doesn't get remoted till process delete.
         //
-        if (InterlockedCompareExchangePointer (&Process->ExceptionPort, ExceptionPort, NULL) == NULL) {
+        if (InterlockedCompareExchangePointer(&Process->ExceptionPort, ExceptionPort, NULL) == NULL)
+        {
             st = STATUS_SUCCESS;
-        } else {
-            ObDereferenceObject (ExceptionPort);
+        }
+        else
+        {
+            ObDereferenceObject(ExceptionPort);
             st = STATUS_PORT_ALREADY_SET;
         }
         ObDereferenceObject(Process);
@@ -2252,24 +2222,25 @@ Return Value:
         return st;
     }
 
-    case ProcessAccessToken : {
+    case ProcessAccessToken:
+    {
 
-        if ( ProcessInformationLength != sizeof(PROCESS_ACCESS_TOKEN) ) {
+        if (ProcessInformationLength != sizeof(PROCESS_ACCESS_TOKEN))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
-            PrimaryTokenHandle  = ((PROCESS_ACCESS_TOKEN *)ProcessInformation)->Token;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            PrimaryTokenHandle = ((PROCESS_ACCESS_TOKEN *)ProcessInformation)->Token;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
 
-        st = PspSetPrimaryToken (ProcessHandle,
-                                 NULL,
-                                 PrimaryTokenHandle,
-                                 NULL,
-                                 FALSE);
+        st = PspSetPrimaryToken(ProcessHandle, NULL, PrimaryTokenHandle, NULL, FALSE);
 
         return st;
     }
@@ -2277,61 +2248,45 @@ Return Value:
 
     case ProcessLdtInformation:
 
-        st = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_SET_INFORMATION | PROCESS_VM_WRITE,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION | PROCESS_VM_WRITE, PsProcessType,
+                                       PreviousMode, &Process, NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        st = PspSetLdtInformation (Process,
-                                   ProcessInformation,
-                                   ProcessInformationLength);
+        st = PspSetLdtInformation(Process, ProcessInformation, ProcessInformationLength);
 
         ObDereferenceObject(Process);
         return st;
 
     case ProcessLdtSize:
 
-        st = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_SET_INFORMATION | PROCESS_VM_WRITE,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION | PROCESS_VM_WRITE, PsProcessType,
+                                       PreviousMode, &Process, NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        st = PspSetLdtSize (Process,
-                            ProcessInformation,
-                            ProcessInformationLength);
+        st = PspSetLdtSize(Process, ProcessInformation, ProcessInformationLength);
 
         ObDereferenceObject(Process);
         return st;
 
     case ProcessIoPortHandlers:
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        st = PspSetProcessIoHandlers (Process,
-                                      ProcessInformation,
-                                      ProcessInformationLength);
+        st = PspSetProcessIoHandlers(Process, ProcessInformation, ProcessInformationLength);
 
         ObDereferenceObject(Process);
         return st;
@@ -2344,24 +2299,17 @@ Return Value:
         // If the calls returns FALSE we must return an error code.
         //
 
-        if (!SeSinglePrivilegeCheck(RtlConvertLongToLuid(
-                                    SE_TCB_PRIVILEGE),
-                                    PreviousMode )) {
+        if (!SeSinglePrivilegeCheck(RtlConvertLongToLuid(SE_TCB_PRIVILEGE), PreviousMode))
+        {
 
             return STATUS_PRIVILEGE_NOT_HELD;
-
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( NT_SUCCESS(st) ) {
+        if (NT_SUCCESS(st))
+        {
 
 #if defined(_X86_) && !defined(_AMD64_)
 
@@ -2380,75 +2328,74 @@ Return Value:
 
     case ProcessEnableAlignmentFaultFixup:
 
-        if ( ProcessInformationLength != sizeof(BOOLEAN) ) {
+        if (ProcessInformationLength != sizeof(BOOLEAN))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             EnableAlignmentFaultFixup = *(PBOOLEAN)ProcessInformation;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        if ( EnableAlignmentFaultFixup ) {
+        if (EnableAlignmentFaultFixup)
+        {
             Process->DefaultHardErrorProcessing |= PROCESS_HARDERROR_ALIGNMENT_BIT;
-            }
-        else {
+        }
+        else
+        {
             Process->DefaultHardErrorProcessing &= ~PROCESS_HARDERROR_ALIGNMENT_BIT;
-            }
+        }
 
-        KeSetAutoAlignmentProcess( &(Process->Pcb), EnableAlignmentFaultFixup );
+        KeSetAutoAlignmentProcess(&(Process->Pcb), EnableAlignmentFaultFixup);
         ObDereferenceObject(Process);
         return STATUS_SUCCESS;
 
 
-    case ProcessWx86Information :
+    case ProcessWx86Information:
 
         return STATUS_INVALID_INFO_CLASS;
 
     case ProcessAffinityMask:
 
-        if (ProcessInformationLength != sizeof (KAFFINITY)) {
+        if (ProcessInformationLength != sizeof(KAFFINITY))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             Affinity = *(PKAFFINITY)ProcessInformation;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
         AffinityWithMasks = Affinity & KeActiveProcessors;
 
-        if (!Affinity || (AffinityWithMasks != Affinity)) {
+        if (!Affinity || (AffinityWithMasks != Affinity))
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -2457,58 +2404,62 @@ Return Value:
         // is calling with with the value from the job object
         //
         Job = Process->Job;
-        if (Job != NULL) {
-            KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-            ExAcquireResourceSharedLite (&Job->JobLock, TRUE);
+        if (Job != NULL)
+        {
+            KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+            ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
-            if (Job->LimitFlags & JOB_OBJECT_LIMIT_AFFINITY) {
+            if (Job->LimitFlags & JOB_OBJECT_LIMIT_AFFINITY)
+            {
                 AffinityWithMasks = Job->Affinity;
             }
 
-            ExReleaseResourceLite (&Job->JobLock);
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+            ExReleaseResourceLite(&Job->JobLock);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
         }
 
-        if (ExAcquireRundownProtection (&Process->RundownProtect)) {
+        if (ExAcquireRundownProtection(&Process->RundownProtect))
+        {
 
-            PspLockProcessExclusive (Process, CurrentThread);
+            PspLockProcessExclusive(Process, CurrentThread);
 
-            KeSetAffinityProcess (&Process->Pcb, AffinityWithMasks);
+            KeSetAffinityProcess(&Process->Pcb, AffinityWithMasks);
 
-            PspUnlockProcessExclusive (Process, CurrentThread);
+            PspUnlockProcessExclusive(Process, CurrentThread);
 
-            ExReleaseRundownProtection (&Process->RundownProtect);
+            ExReleaseRundownProtection(&Process->RundownProtect);
 
             st = STATUS_SUCCESS;
-        } else {
+        }
+        else
+        {
             st = STATUS_PROCESS_IS_TERMINATING;
         }
         ObDereferenceObject(Process);
         return st;
 
     case ProcessPriorityBoost:
-        if ( ProcessInformationLength != sizeof(ULONG) ) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             DisableBoost = *(PULONG)ProcessInformation;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
         bDisableBoost = (DisableBoost ? TRUE : FALSE);
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -2520,93 +2471,103 @@ Return Value:
         //
 
 
-        if (!ExAcquireRundownProtection (&Process->RundownProtect)) {
+        if (!ExAcquireRundownProtection(&Process->RundownProtect))
+        {
             st = STATUS_PROCESS_IS_TERMINATING;
-        } else {
+        }
+        else
+        {
             PLIST_ENTRY Next;
 
-            PspLockProcessExclusive (Process, CurrentThread);
+            PspLockProcessExclusive(Process, CurrentThread);
 
             Process->Pcb.DisableBoost = bDisableBoost;
 
-            for (Next = Process->ThreadListHead.Flink;
-                 Next != &Process->ThreadListHead;
-                 Next = Next->Flink) {
-                Thread = (PETHREAD)(CONTAINING_RECORD(Next,ETHREAD,ThreadListEntry));
-                KeSetDisableBoostThread(&Thread->Tcb,bDisableBoost);
+            for (Next = Process->ThreadListHead.Flink; Next != &Process->ThreadListHead; Next = Next->Flink)
+            {
+                Thread = (PETHREAD)(CONTAINING_RECORD(Next, ETHREAD, ThreadListEntry));
+                KeSetDisableBoostThread(&Thread->Tcb, bDisableBoost);
             }
 
-            PspUnlockProcessExclusive (Process, CurrentThread);
+            PspUnlockProcessExclusive(Process, CurrentThread);
 
-            ExReleaseRundownProtection (&Process->RundownProtect);
+            ExReleaseRundownProtection(&Process->RundownProtect);
         }
 
         ObDereferenceObject(Process);
         return st;
 
-    case ProcessDebugFlags : {
+    case ProcessDebugFlags:
+    {
         ULONG Flags;
 
-        if (ProcessInformationLength != sizeof (ULONG)) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_SET_INFORMATION,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode, &Process,
+                                       NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        try {
-            Flags = *(PULONG) ProcessInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            Flags = 0;
-            st = GetExceptionCode ();
+        try
+        {
+            Flags = *(PULONG)ProcessInformation;
         }
-        if (NT_SUCCESS (st)) {
-            if (Flags & ~PROCESS_DEBUG_INHERIT) {
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            Flags = 0;
+            st = GetExceptionCode();
+        }
+        if (NT_SUCCESS(st))
+        {
+            if (Flags & ~PROCESS_DEBUG_INHERIT)
+            {
                 st = STATUS_INVALID_PARAMETER;
-            } else {
-                if (Flags&PROCESS_DEBUG_INHERIT) {
-                    PS_CLEAR_BITS (&Process->Flags, PS_PROCESS_FLAGS_NO_DEBUG_INHERIT);
-                } else {
-                    PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_NO_DEBUG_INHERIT);
+            }
+            else
+            {
+                if (Flags & PROCESS_DEBUG_INHERIT)
+                {
+                    PS_CLEAR_BITS(&Process->Flags, PS_PROCESS_FLAGS_NO_DEBUG_INHERIT);
+                }
+                else
+                {
+                    PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_NO_DEBUG_INHERIT);
                 }
             }
         }
 
-        ObDereferenceObject (Process);
+        ObDereferenceObject(Process);
 
         return st;
     }
 
     case ProcessDeviceMap:
         DeviceMapInfo = (PPROCESS_DEVICEMAP_INFORMATION)ProcessInformation;
-        if ( ProcessInformationLength != sizeof(DeviceMapInfo->Set) ) {
+        if (ProcessInformationLength != sizeof(DeviceMapInfo->Set))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             DirectoryHandle = DeviceMapInfo->Set.DirectoryHandle;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -2615,140 +2576,149 @@ Return Value:
         // The devmap fields here are synchronized using a private ob spinlock. We don't need to protect with a
         // lock at this level.
         //
-        st = ObSetDeviceMap( Process, DirectoryHandle );
+        st = ObSetDeviceMap(Process, DirectoryHandle);
 
         ObDereferenceObject(Process);
         return st;
 
-    case ProcessSessionInformation :
+    case ProcessSessionInformation:
 
         //
         // Update Multi-User session specific process information
         //
-        if ( ProcessInformationLength != (ULONG) sizeof(PROCESS_SESSION_INFORMATION) ) {
+        if (ProcessInformationLength != (ULONG)sizeof(PROCESS_SESSION_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
-            SessionInfo = *(PPROCESS_SESSION_INFORMATION) ProcessInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            SessionInfo = *(PPROCESS_SESSION_INFORMATION)ProcessInformation;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
         //
         // We only allow TCB to set SessionId's
         //
-        if ( !SeSinglePrivilegeCheck(SeTcbPrivilege,PreviousMode) ) {
-            return( STATUS_PRIVILEGE_NOT_HELD );
+        if (!SeSinglePrivilegeCheck(SeTcbPrivilege, PreviousMode))
+        {
+            return (STATUS_PRIVILEGE_NOT_HELD);
         }
 
         //
         // Reference process object
         //
-        st = ObReferenceObjectByHandle(
-                ProcessHandle,
-                PROCESS_SET_INFORMATION | PROCESS_SET_SESSIONID,
-                PsProcessType,
-                PreviousMode,
-                (PVOID *)&Process,
-                NULL
-                );
-        if ( !NT_SUCCESS(st) ) {
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION | PROCESS_SET_SESSIONID, PsProcessType,
+                                       PreviousMode, (PVOID *)&Process, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
         //
         // Update SessionId in the Token
         //
-        if (SessionInfo.SessionId != MmGetSessionId (Process)) {
+        if (SessionInfo.SessionId != MmGetSessionId(Process))
+        {
             st = STATUS_ACCESS_DENIED;
-        } else {
+        }
+        else
+        {
             st = STATUS_SUCCESS;
         }
 
         ObDereferenceObject(Process);
 
-        return( st );
+        return (st);
 
     case ProcessBreakOnTermination:
 
-        if ( ProcessInformationLength != sizeof(ULONG) ) {
+        if (ProcessInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
 
             EnableBreakOnTermination = *(PULONG)ProcessInformation;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
-        
-        if (!SeSinglePrivilegeCheck (SeDebugPrivilege, PreviousMode)) {
+
+        if (!SeSinglePrivilegeCheck(SeDebugPrivilege, PreviousMode))
+        {
             return STATUS_PRIVILEGE_NOT_HELD;
         }
 
-        st = ObReferenceObjectByHandle(
-            ProcessHandle,
-            PROCESS_SET_INFORMATION,
-            PsProcessType,
-            PreviousMode,
-            (PVOID *)&Process,
-            NULL
-            );
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        if ( EnableBreakOnTermination ) {
+        if (EnableBreakOnTermination)
+        {
 
-            PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_BREAK_ON_TERMINATION);
+            PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_BREAK_ON_TERMINATION);
+        }
+        else
+        {
 
-        } else {
-
-            PS_CLEAR_BITS (&Process->Flags, PS_PROCESS_FLAGS_BREAK_ON_TERMINATION);
-
+            PS_CLEAR_BITS(&Process->Flags, PS_PROCESS_FLAGS_BREAK_ON_TERMINATION);
         }
 
         ObDereferenceObject(Process);
 
         return STATUS_SUCCESS;
 
-    case ProcessHandleTracing: {
+    case ProcessHandleTracing:
+    {
         PPROCESS_HANDLE_TRACING_ENABLE Pht;
         PHANDLE_TABLE HandleTable;
 
-        if (ProcessInformationLength != sizeof (PROCESS_HANDLE_TRACING_ENABLE)) {
+        if (ProcessInformationLength != sizeof(PROCESS_HANDLE_TRACING_ENABLE))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        Pht = (PPROCESS_HANDLE_TRACING_ENABLE) ProcessInformation;
+        Pht = (PPROCESS_HANDLE_TRACING_ENABLE)ProcessInformation;
 
-        try {
-            if (Pht->Flags != 0) {
+        try
+        {
+            if (Pht->Flags != 0)
+            {
                 return STATUS_INVALID_PARAMETER;
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_SET_INFORMATION,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_INFORMATION, PsProcessType, PreviousMode, &Process,
+                                       NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
-        HandleTable = ObReferenceProcessHandleTable (Process);
+        HandleTable = ObReferenceProcessHandleTable(Process);
 
-        if (HandleTable != NULL) {
-            st = ExEnableHandleTracing (HandleTable);
-            ObDereferenceProcessHandleTable (Process);
-        } else {
+        if (HandleTable != NULL)
+        {
+            st = ExEnableHandleTracing(HandleTable);
+            ObDereferenceProcessHandleTable(Process);
+        }
+        else
+        {
             st = STATUS_PROCESS_IS_TERMINATING;
         }
 
@@ -2759,18 +2729,12 @@ Return Value:
     default:
         return STATUS_INVALID_INFO_CLASS;
     }
-
 }
 
 
 NTSTATUS
-NtQueryInformationThread(
-    IN HANDLE ThreadHandle,
-    IN THREADINFOCLASS ThreadInformationClass,
-    OUT PVOID ThreadInformation,
-    IN ULONG ThreadInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryInformationThread(IN HANDLE ThreadHandle, IN THREADINFOCLASS ThreadInformationClass, OUT PVOID ThreadInformation,
+                         IN ULONG ThreadInformationLength, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -2813,7 +2777,7 @@ Return Value:
     KERNEL_USER_TIMES SysUserTime;
     PVOID Win32StartAddressValue;
     ULONG DisableBoost;
-    ULONG IoPending ;
+    ULONG IoPending;
     ULONG BreakOnTerminationEnabled;
     PETHREAD CurrentThread;
 
@@ -2823,19 +2787,22 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    PreviousMode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
+    PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (PreviousMode != KernelMode) {
-        try {
-            ProbeForWrite(ThreadInformation,
-                          ThreadInformationLength,
-                          sizeof(ULONG));
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
+            ProbeForWrite(ThreadInformation, ThreadInformationLength, sizeof(ULONG));
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUlong(ReturnLength);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
@@ -2844,33 +2811,33 @@ Return Value:
     // Check argument validity.
     //
 
-    switch ( ThreadInformationClass ) {
+    switch (ThreadInformationClass)
+    {
 
     case ThreadBasicInformation:
 
-        if ( ThreadInformationLength != (ULONG) sizeof(THREAD_BASIC_INFORMATION) ) {
+        if (ThreadInformationLength != (ULONG)sizeof(THREAD_BASIC_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_QUERY_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
-        if ( !NT_SUCCESS(st) ) {
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        if (KeReadStateThread(&Thread->Tcb)) {
+        if (KeReadStateThread(&Thread->Tcb))
+        {
             BasicInfo.ExitStatus = Thread->ExitStatus;
-        } else {
+        }
+        else
+        {
             BasicInfo.ExitStatus = STATUS_PENDING;
         }
 
-        BasicInfo.TebBaseAddress = (PTEB) Thread->Tcb.Teb;
+        BasicInfo.TebBaseAddress = (PTEB)Thread->Tcb.Teb;
         BasicInfo.ClientId = Thread->Cid;
         BasicInfo.AffinityMask = Thread->Tcb.Affinity;
         BasicInfo.Priority = Thread->Tcb.Priority;
@@ -2884,13 +2851,17 @@ Return Value:
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            *(PTHREAD_BASIC_INFORMATION) ThreadInformation = BasicInfo;
+        try
+        {
+            *(PTHREAD_BASIC_INFORMATION)ThreadInformation = BasicInfo;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(THREAD_BASIC_INFORMATION);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return STATUS_SUCCESS;
         }
 
@@ -2898,33 +2869,30 @@ Return Value:
 
     case ThreadTimes:
 
-        if ( ThreadInformationLength != (ULONG) sizeof(KERNEL_USER_TIMES) ) {
+        if (ThreadInformationLength != (ULONG)sizeof(KERNEL_USER_TIMES))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_QUERY_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        SysUserTime.KernelTime.QuadPart = UInt32x32To64(Thread->Tcb.KernelTime,
-                                                        KeMaximumIncrement);
+        SysUserTime.KernelTime.QuadPart = UInt32x32To64(Thread->Tcb.KernelTime, KeMaximumIncrement);
 
-        SysUserTime.UserTime.QuadPart = UInt32x32To64(Thread->Tcb.UserTime,
-                                                      KeMaximumIncrement);
+        SysUserTime.UserTime.QuadPart = UInt32x32To64(Thread->Tcb.UserTime, KeMaximumIncrement);
 
         SysUserTime.CreateTime.QuadPart = PS_GET_THREAD_CREATE_TIME(Thread);
-        if (KeReadStateThread(&Thread->Tcb)) {
+        if (KeReadStateThread(&Thread->Tcb))
+        {
             SysUserTime.ExitTime = Thread->ExitTime;
-        } else {
+        }
+        else
+        {
             SysUserTime.ExitTime.QuadPart = 0;
         }
         ObDereferenceObject(Thread);
@@ -2935,70 +2903,66 @@ Return Value:
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            *(PKERNEL_USER_TIMES) ThreadInformation = SysUserTime;
+        try
+        {
+            *(PKERNEL_USER_TIMES)ThreadInformation = SysUserTime;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(KERNEL_USER_TIMES);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
-    case ThreadDescriptorTableEntry :
+    case ThreadDescriptorTableEntry:
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_QUERY_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        st = PspQueryDescriptorThread (Thread,
-                                       ThreadInformation,
-                                       ThreadInformationLength,
-                                       ReturnLength);
+        st = PspQueryDescriptorThread(Thread, ThreadInformation, ThreadInformationLength, ReturnLength);
 
         ObDereferenceObject(Thread);
 
         return st;
 
     case ThreadQuerySetWin32StartAddress:
-        if ( ThreadInformationLength != sizeof(ULONG_PTR) ) {
+        if (ThreadInformationLength != sizeof(ULONG_PTR))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_QUERY_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
         Win32StartAddressValue = Thread->Win32StartAddress;
         ObDereferenceObject(Thread);
 
-        try {
-            *(PVOID *) ThreadInformation = Win32StartAddressValue;
+        try
+        {
+            *(PVOID *)ThreadInformation = Win32StartAddressValue;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG_PTR);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
@@ -3009,24 +2973,20 @@ Return Value:
         //
 
     case ThreadPerformanceCount:
-        if ( ThreadInformationLength != sizeof(LARGE_INTEGER) ) {
+        if (ThreadInformationLength != sizeof(LARGE_INTEGER))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_QUERY_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-#if defined (PERF_DATA)
+#if defined(PERF_DATA)
         PerformanceCount.LowPart = Thread->PerformanceCountLow;
         PerformanceCount.HighPart = Thread->PerformanceCountHigh;
 #else
@@ -3034,58 +2994,66 @@ Return Value:
 #endif
         ObDereferenceObject(Thread);
 
-        try {
+        try
+        {
             *(PLARGE_INTEGER)ThreadInformation = PerformanceCount;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(LARGE_INTEGER);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
         return st;
 
     case ThreadAmILastThread:
-        if ( ThreadInformationLength != sizeof(ULONG) ) {
+        if (ThreadInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        Process = THREAD_TO_PROCESS (CurrentThread);
+        Process = THREAD_TO_PROCESS(CurrentThread);
 
-        if (Process->ActiveThreads == 1) {
+        if (Process->ActiveThreads == 1)
+        {
             LastThread = 1;
-        } else {
+        }
+        else
+        {
             LastThread = 0;
         }
 
-        try {
+        try
+        {
             *(PULONG)ThreadInformation = LastThread;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
 
     case ThreadPriorityBoost:
-        if ( ThreadInformationLength != sizeof(ULONG) ) {
+        if (ThreadInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_QUERY_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -3093,13 +3061,17 @@ Return Value:
 
         ObDereferenceObject(Thread);
 
-        try {
+        try
+        {
             *(PULONG)ThreadInformation = DisableBoost;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
@@ -3107,18 +3079,16 @@ Return Value:
 
     case ThreadIsIoPending:
 
-        if ( ThreadInformationLength != sizeof(ULONG) ) {
+        if (ThreadInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle (ThreadHandle,
-                                        THREAD_QUERY_INFORMATION,
-                                        PsThreadType,
-                                        PreviousMode,
-                                        &Thread,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode, &Thread,
+                                       NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -3127,65 +3097,68 @@ Return Value:
         // Since the result is worthless the second its fetched
         // this isn't a problem.
         //
-        IoPending = !IsListEmpty (&Thread->IrpList);
+        IoPending = !IsListEmpty(&Thread->IrpList);
 
 
-        ObDereferenceObject (Thread);
+        ObDereferenceObject(Thread);
 
-        try {
-            *(PULONG)ThreadInformation = IoPending ;
+        try
+        {
+            *(PULONG)ThreadInformation = IoPending;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        return STATUS_SUCCESS ;
+        return STATUS_SUCCESS;
 
     case ThreadBreakOnTermination:
 
-        if ( ThreadInformationLength != sizeof(ULONG) ) {
+        if (ThreadInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle(
-            ThreadHandle,
-            THREAD_QUERY_INFORMATION,
-            PsThreadType,
-            PreviousMode,
-            (PVOID *)&Thread,
-            NULL
-            );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        if (Thread->CrossThreadFlags
-            & PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION) {
+        if (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION)
+        {
 
             BreakOnTerminationEnabled = 1;
-
-        } else {
+        }
+        else
+        {
 
             BreakOnTerminationEnabled = 0;
-
         }
-        
+
         ObDereferenceObject(Thread);
 
-        try {
+        try
+        {
 
-            *(PULONG) ThreadInformation = BreakOnTerminationEnabled;
+            *(PULONG)ThreadInformation = BreakOnTerminationEnabled;
 
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(ULONG);
             }
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
         return STATUS_SUCCESS;
@@ -3193,16 +3166,11 @@ Return Value:
     default:
         return STATUS_INVALID_INFO_CLASS;
     }
-
 }
 
 NTSTATUS
-NtSetInformationThread(
-    IN HANDLE ThreadHandle,
-    IN THREADINFOCLASS ThreadInformationClass,
-    IN PVOID ThreadInformation,
-    IN ULONG ThreadInformationLength
-    )
+NtSetInformationThread(IN HANDLE ThreadHandle, IN THREADINFOCLASS ThreadInformationClass, IN PVOID ThreadInformation,
+                       IN ULONG ThreadInformationLength)
 
 /*++
 
@@ -3258,35 +3226,36 @@ Return Value:
     // Get previous processor mode and probe input argument if necessary.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    PreviousMode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
+    PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
-            switch (ThreadInformationClass) {
+            switch (ThreadInformationClass)
+            {
 
-            case ThreadPriority :
+            case ThreadPriority:
                 ProbeAlignment = sizeof(KPRIORITY);
                 break;
-            case ThreadAffinityMask :
-            case ThreadQuerySetWin32StartAddress :
-                ProbeAlignment = sizeof (ULONG_PTR);
+            case ThreadAffinityMask:
+            case ThreadQuerySetWin32StartAddress:
+                ProbeAlignment = sizeof(ULONG_PTR);
                 break;
-            case ThreadEnableAlignmentFaultFixup :
-                ProbeAlignment = sizeof (BOOLEAN);
+            case ThreadEnableAlignmentFaultFixup:
+                ProbeAlignment = sizeof(BOOLEAN);
                 break;
-            default :
+            default:
                 ProbeAlignment = sizeof(ULONG);
             }
 
-            ProbeForRead(
-                ThreadInformation,
-                ThreadInformationLength,
-                ProbeAlignment
-                );
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForRead(ThreadInformation, ThreadInformationLength, ProbeAlignment);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
@@ -3295,59 +3264,57 @@ Return Value:
     // Check argument validity.
     //
 
-    switch ( ThreadInformationClass ) {
+    switch (ThreadInformationClass)
+    {
 
     case ThreadPriority:
 
-        if ( ThreadInformationLength != sizeof(KPRIORITY) ) {
+        if (ThreadInformationLength != sizeof(KPRIORITY))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             Priority = *(KPRIORITY *)ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        if ( Priority > HIGH_PRIORITY ||
-             Priority <= LOW_PRIORITY ) {
+        if (Priority > HIGH_PRIORITY || Priority <= LOW_PRIORITY)
+        {
 
             return STATUS_INVALID_PARAMETER;
         }
 
-	if ( Priority >= LOW_REALTIME_PRIORITY ) {
+        if (Priority >= LOW_REALTIME_PRIORITY)
+        {
 
-	  //
-	  // Increasing the priority of a thread beyond
-	  // LOW_REALTIME_PRIORITY is a privileged operation.
-	  //
+            //
+            // Increasing the priority of a thread beyond
+            // LOW_REALTIME_PRIORITY is a privileged operation.
+            //
 
-	  HasPrivilege = SeCheckPrivilegedObject(
-	    SeIncreaseBasePriorityPrivilege,
-	    ThreadHandle,
-	    THREAD_SET_INFORMATION,
-	    PreviousMode
-	    );
+            HasPrivilege = SeCheckPrivilegedObject(SeIncreaseBasePriorityPrivilege, ThreadHandle,
+                                                   THREAD_SET_INFORMATION, PreviousMode);
 
-	  if (!HasPrivilege) {
-	    return STATUS_PRIVILEGE_NOT_HELD;
-	  }
-	}
+            if (!HasPrivilege)
+            {
+                return STATUS_PRIVILEGE_NOT_HELD;
+            }
+        }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        KeSetPriorityThread(&Thread->Tcb,Priority);
+        KeSetPriorityThread(&Thread->Tcb, Priority);
 
         ObDereferenceObject(Thread);
 
@@ -3355,47 +3322,51 @@ Return Value:
 
     case ThreadBasePriority:
 
-        if (ThreadInformationLength != sizeof (LONG)) {
+        if (ThreadInformationLength != sizeof(LONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             BasePriority = *(PLONG)ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if (!NT_SUCCESS(st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
         Process = THREAD_TO_PROCESS(Thread);
 
 
-        if (BasePriority > THREAD_BASE_PRIORITY_MAX ||
-            BasePriority < THREAD_BASE_PRIORITY_MIN) {
-            if (BasePriority == THREAD_BASE_PRIORITY_LOWRT+1 ||
-                BasePriority == THREAD_BASE_PRIORITY_IDLE-1) {
+        if (BasePriority > THREAD_BASE_PRIORITY_MAX || BasePriority < THREAD_BASE_PRIORITY_MIN)
+        {
+            if (BasePriority == THREAD_BASE_PRIORITY_LOWRT + 1 || BasePriority == THREAD_BASE_PRIORITY_IDLE - 1)
+            {
                 ;
-            } else {
+            }
+            else
+            {
 
                 //
                 // Allow csrss, or realtime processes to select any
                 // priority
                 //
 
-                if (PsGetCurrentProcessByThread (CurrentThread) == ExpDefaultErrorPortProcess ||
-                    Process->PriorityClass == PROCESS_PRIORITY_CLASS_REALTIME) {
+                if (PsGetCurrentProcessByThread(CurrentThread) == ExpDefaultErrorPortProcess ||
+                    Process->PriorityClass == PROCESS_PRIORITY_CLASS_REALTIME)
+                {
                     ;
-                } else {
+                }
+                else
+                {
                     ObDereferenceObject(Thread);
                     return STATUS_INVALID_PARAMETER;
                 }
@@ -3410,16 +3381,19 @@ Return Value:
         //
 
         Job = Process->Job;
-        if (Job != NULL && (Job->LimitFlags & JOB_OBJECT_LIMIT_PRIORITY_CLASS)) {
-            if (Process->PriorityClass != PROCESS_PRIORITY_CLASS_REALTIME){
-                if (BasePriority > 0) {
+        if (Job != NULL && (Job->LimitFlags & JOB_OBJECT_LIMIT_PRIORITY_CLASS))
+        {
+            if (Process->PriorityClass != PROCESS_PRIORITY_CLASS_REALTIME)
+            {
+                if (BasePriority > 0)
+                {
                     ObDereferenceObject(Thread);
                     return STATUS_SUCCESS;
                 }
             }
         }
 
-        KeSetBasePriorityThread(&Thread->Tcb,BasePriority);
+        KeSetBasePriorityThread(&Thread->Tcb, BasePriority);
 
         ObDereferenceObject(Thread);
 
@@ -3427,30 +3401,29 @@ Return Value:
 
     case ThreadEnableAlignmentFaultFixup:
 
-        if ( ThreadInformationLength != sizeof(BOOLEAN) ) {
+        if (ThreadInformationLength != sizeof(BOOLEAN))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             EnableAlignmentFaultFixup = *(PBOOLEAN)ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        KeSetAutoAlignmentThread (&(Thread->Tcb), EnableAlignmentFaultFixup);
+        KeSetAutoAlignmentThread(&(Thread->Tcb), EnableAlignmentFaultFixup);
 
         ObDereferenceObject(Thread);
 
@@ -3458,53 +3431,57 @@ Return Value:
 
     case ThreadAffinityMask:
 
-        if ( ThreadInformationLength != sizeof(KAFFINITY) ) {
+        if (ThreadInformationLength != sizeof(KAFFINITY))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             Affinity = *(PKAFFINITY)ThreadInformation;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        if (!Affinity) {
+        if (!Affinity)
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
         Process = THREAD_TO_PROCESS(Thread);
 
-        if (ExAcquireRundownProtection (&Process->RundownProtect)) {
+        if (ExAcquireRundownProtection(&Process->RundownProtect))
+        {
 
-            PspLockProcessShared (Process, CurrentThread);
+            PspLockProcessShared(Process, CurrentThread);
 
             AffinityWithMasks = Affinity & Process->Pcb.Affinity;
-            if (AffinityWithMasks != Affinity) {
+            if (AffinityWithMasks != Affinity)
+            {
                 st = STATUS_INVALID_PARAMETER;
-            } else {
-                KeSetAffinityThread (&Thread->Tcb,
-                                     AffinityWithMasks);
+            }
+            else
+            {
+                KeSetAffinityThread(&Thread->Tcb, AffinityWithMasks);
                 st = STATUS_SUCCESS;
             }
 
-            PspUnlockProcessShared (Process, CurrentThread);
+            PspUnlockProcessShared(Process, CurrentThread);
 
-            ExReleaseRundownProtection (&Process->RundownProtect);
-        } else {
+            ExReleaseRundownProtection(&Process->RundownProtect);
+        }
+        else
+        {
             st = STATUS_PROCESS_IS_TERMINATING;
         }
 
@@ -3515,28 +3492,27 @@ Return Value:
     case ThreadImpersonationToken:
 
 
-        if ( ThreadInformationLength != sizeof(HANDLE) ) {
+        if (ThreadInformationLength != sizeof(HANDLE))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
 
-        try {
-            ImpersonationTokenHandle = *(PHANDLE) ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            ImpersonationTokenHandle = *(PHANDLE)ThreadInformation;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_THREAD_TOKEN,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_THREAD_TOKEN, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -3545,7 +3521,7 @@ Return Value:
         // it as the thread's impersonation token.
         //
 
-        st = PsAssignImpersonationToken( Thread, ImpersonationTokenHandle );
+        st = PsAssignImpersonationToken(Thread, ImpersonationTokenHandle);
 
 
         ObDereferenceObject(Thread);
@@ -3553,28 +3529,27 @@ Return Value:
         return st;
 
     case ThreadQuerySetWin32StartAddress:
-        if ( ThreadInformationLength != sizeof(ULONG_PTR) ) {
+        if (ThreadInformationLength != sizeof(ULONG_PTR))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
 
-        try {
-            Win32StartAddressValue = *(PVOID *) ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            Win32StartAddressValue = *(PVOID *)ThreadInformation;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -3586,28 +3561,29 @@ Return Value:
 
     case ThreadIdealProcessor:
 
-        if ( ThreadInformationLength != sizeof(ULONG) ) {
+        if (ThreadInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
 
-        try {
+        try
+        {
             IdealProcessor = *(PULONG)ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        if ( IdealProcessor > MAXIMUM_PROCESSORS ) {
+        if (IdealProcessor > MAXIMUM_PROCESSORS)
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
-        st = ObReferenceObjectByHandle (ThreadHandle,
-                                        THREAD_SET_INFORMATION,
-                                        PsThreadType,
-                                        PreviousMode,
-                                        &Thread,
-                                        NULL);
-        if (!NT_SUCCESS (st)) {
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode, &Thread, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -3616,14 +3592,15 @@ Return Value:
         // api
         //
 
-        st = (NTSTATUS)KeSetIdealProcessorThread (&Thread->Tcb, (CCHAR)IdealProcessor);
+        st = (NTSTATUS)KeSetIdealProcessorThread(&Thread->Tcb, (CCHAR)IdealProcessor);
 
         //
         // We could be making cross process and/or cross thread references here.
         // Acquire rundown protection to make sure the teb can't go away.
         //
         Teb = Thread->Tcb.Teb;
-        if (Teb != NULL && ExAcquireRundownProtection (&Thread->RundownProtect)) {
+        if (Teb != NULL && ExAcquireRundownProtection(&Thread->RundownProtect))
+        {
             PEPROCESS TargetProcess;
             BOOLEAN Attached;
             KAPC_STATE ApcState;
@@ -3632,96 +3609,98 @@ Return Value:
             //
             // See if we are crossing process boundaries and if so attach to the target
             //
-            TargetProcess = THREAD_TO_PROCESS (Thread);
-            if (TargetProcess != PsGetCurrentProcessByThread (CurrentThread)) {
-                KeStackAttachProcess (&TargetProcess->Pcb, &ApcState);
+            TargetProcess = THREAD_TO_PROCESS(Thread);
+            if (TargetProcess != PsGetCurrentProcessByThread(CurrentThread))
+            {
+                KeStackAttachProcess(&TargetProcess->Pcb, &ApcState);
                 Attached = TRUE;
             }
 
-            try {
-     
+            try
+            {
+
                 Teb->IdealProcessor = Thread->Tcb.IdealProcessor;
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
             }
 
-            if (Attached) {
-                KeUnstackDetachProcess (&ApcState);
+            if (Attached)
+            {
+                KeUnstackDetachProcess(&ApcState);
             }
 
-            ExReleaseRundownProtection (&Thread->RundownProtect);
-
-
+            ExReleaseRundownProtection(&Thread->RundownProtect);
         }
 
 
-        ObDereferenceObject (Thread);
+        ObDereferenceObject(Thread);
 
         return st;
 
 
     case ThreadPriorityBoost:
-        if ( ThreadInformationLength != sizeof(ULONG) ) {
+        if (ThreadInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
             DisableBoost = *(PULONG)ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        KeSetDisableBoostThread(&Thread->Tcb,DisableBoost ? TRUE : FALSE);
+        KeSetDisableBoostThread(&Thread->Tcb, DisableBoost ? TRUE : FALSE);
 
         ObDereferenceObject(Thread);
 
         return st;
 
     case ThreadZeroTlsCell:
-        if ( ThreadInformationLength != sizeof(ULONG) ) {
+        if (ThreadInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
-            TlsIndex = *(PULONG) ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            TlsIndex = *(PULONG)ThreadInformation;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        ObDereferenceObject (Thread);
+        ObDereferenceObject(Thread);
 
-        if (Thread != CurrentThread) {
+        if (Thread != CurrentThread)
+        {
             return STATUS_INVALID_PARAMETER;
         }
         {
             PTEB Teb;
 
-            Process = THREAD_TO_PROCESS (Thread);
+            Process = THREAD_TO_PROCESS(Thread);
 
 
             // The 32bit TEB needs to be set if this is a WOW64 process on a 64BIT system.
@@ -3733,98 +3712,112 @@ Return Value:
             // is bad programming, but this function is hardly time constrained and
             // fixing this with complex macros would not be worth it due to the loss of clairity.
 
-            for (Thread = PsGetNextProcessThread (Process, NULL);
-                 Thread != NULL;
-                 Thread = PsGetNextProcessThread (Process, Thread)) {
+            for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+                 Thread = PsGetNextProcessThread(Process, Thread))
+            {
 
                 //
                 // We are doing cross thread TEB references and need to prevent TEB deletion.
                 //
-                if (ExAcquireRundownProtection (&Thread->RundownProtect)) {
+                if (ExAcquireRundownProtection(&Thread->RundownProtect))
+                {
                     Teb = Thread->Tcb.Teb;
-                    if (Teb != NULL) {
-                        try {
-                            #if defined(_WIN64)
+                    if (Teb != NULL)
+                    {
+                        try
+                        {
+#if defined(_WIN64)
                             PTEB32 Teb32 = NULL;
                             PLONG ExpansionSlots32;
 
-                            if (Process->Wow64Process) { //wow64 process
-                                Teb32 = WOW64_GET_TEB32(Teb);  //No probing needed on regular TEB.
+                            if (Process->Wow64Process)
+                            {                                 //wow64 process
+                                Teb32 = WOW64_GET_TEB32(Teb); //No probing needed on regular TEB.
                             }
-                            #endif
-                            if ( TlsIndex > TLS_MINIMUM_AVAILABLE-1 ) {
-                                if ( TlsIndex < (TLS_MINIMUM_AVAILABLE+TLS_EXPANSION_SLOTS) - 1 ) {
-                                    //
-                                    // This is an expansion slot, so see if the thread
-                                    // has an expansion cell
-                                    //
-                                    #if defined(_WIN64)
-                                    if (Process->Wow64Process) { //Wow64 process.
-                                       if (Teb32) {
-                                          ExpansionSlots32 = ULongToPtr(ProbeAndReadUlong(&(Teb32->TlsExpansionSlots)));
-                                          if (ExpansionSlots32) {
-                                             ProbeAndWriteLong(ExpansionSlots32 + TlsIndex - TLS_MINIMUM_AVAILABLE, 0);
-                                          }
-                                       }
+#endif
+                            if (TlsIndex > TLS_MINIMUM_AVAILABLE - 1)
+                            {
+                                if (TlsIndex < (TLS_MINIMUM_AVAILABLE + TLS_EXPANSION_SLOTS) - 1)
+                                {
+//
+// This is an expansion slot, so see if the thread
+// has an expansion cell
+//
+#if defined(_WIN64)
+                                    if (Process->Wow64Process)
+                                    { //Wow64 process.
+                                        if (Teb32)
+                                        {
+                                            ExpansionSlots32 =
+                                                ULongToPtr(ProbeAndReadUlong(&(Teb32->TlsExpansionSlots)));
+                                            if (ExpansionSlots32)
+                                            {
+                                                ProbeAndWriteLong(ExpansionSlots32 + TlsIndex - TLS_MINIMUM_AVAILABLE,
+                                                                  0);
+                                            }
+                                        }
                                     }
                                     else
-                                    #endif
+#endif
                                     {
                                         ExpansionSlots = Teb->TlsExpansionSlots;
-                                        ProbeForReadSmallStructure (ExpansionSlots, TLS_EXPANSION_SLOTS*4, 8);
-                                        if ( ExpansionSlots ) {
-                                            ExpansionSlots[TlsIndex-TLS_MINIMUM_AVAILABLE] = 0;
+                                        ProbeForReadSmallStructure(ExpansionSlots, TLS_EXPANSION_SLOTS * 4, 8);
+                                        if (ExpansionSlots)
+                                        {
+                                            ExpansionSlots[TlsIndex - TLS_MINIMUM_AVAILABLE] = 0;
                                         }
-
                                     }
                                 }
-                            } else {
-                                #if defined(_WIN64)
-                                if (Process->Wow64Process) { //wow64 process
-                                   if(Teb32) {
-                                      ProbeAndWriteUlong(Teb32->TlsSlots + TlsIndex, 0);
-                                   }
+                            }
+                            else
+                            {
+#if defined(_WIN64)
+                                if (Process->Wow64Process)
+                                { //wow64 process
+                                    if (Teb32)
+                                    {
+                                        ProbeAndWriteUlong(Teb32->TlsSlots + TlsIndex, 0);
+                                    }
                                 }
                                 else
-                                #endif
+#endif
                                 {
-                                   Teb->TlsSlots[TlsIndex] = NULL;
+                                    Teb->TlsSlots[TlsIndex] = NULL;
                                 }
                             }
-                        } except (EXCEPTION_EXECUTE_HANDLER) {
                         }
-
+                        except(EXCEPTION_EXECUTE_HANDLER)
+                        {
+                        }
                     }
-                    ExReleaseRundownProtection (&Thread->RundownProtect);
+                    ExReleaseRundownProtection(&Thread->RundownProtect);
                 }
-
             }
         }
         return st;
         break;
 
     case ThreadSetTlsArrayAddress:
-        if ( ThreadInformationLength != sizeof(PVOID) ) {
+        if (ThreadInformationLength != sizeof(PVOID))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
 
-        try {
+        try
+        {
             TlsArrayAddress = *(PVOID *)ThreadInformation;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if ( !NT_SUCCESS(st) ) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
@@ -3836,22 +3829,19 @@ Return Value:
         break;
 
     case ThreadHideFromDebugger:
-        if (ThreadInformationLength != 0) {
+        if (ThreadInformationLength != 0)
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        st = ObReferenceObjectByHandle (ThreadHandle,
-                                        THREAD_SET_INFORMATION,
-                                        PsThreadType,
-                                        PreviousMode,
-                                        &Thread,
-                                        NULL);
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode, &Thread, NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        PS_SET_BITS (&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_HIDEFROMDBG);
+        PS_SET_BITS(&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_HIDEFROMDBG);
 
         ObDereferenceObject(Thread);
 
@@ -3860,43 +3850,43 @@ Return Value:
 
     case ThreadBreakOnTermination:
 
-        if (ThreadInformationLength != sizeof (ULONG)) {
+        if (ThreadInformationLength != sizeof(ULONG))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
-        try {
+        try
+        {
 
             EnableBreakOnTermination = *(PULONG)ThreadInformation;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
-        
-        if (!SeSinglePrivilegeCheck (SeDebugPrivilege, PreviousMode)) {
+
+        if (!SeSinglePrivilegeCheck(SeDebugPrivilege, PreviousMode))
+        {
             return STATUS_PRIVILEGE_NOT_HELD;
         }
 
-        st = ObReferenceObjectByHandle(
-                ThreadHandle,
-                THREAD_SET_INFORMATION,
-                PsThreadType,
-                PreviousMode,
-                (PVOID *)&Thread,
-                NULL
-                );
+        st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)&Thread, NULL);
 
-        if (!NT_SUCCESS (st)) {
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
 
-        if ( EnableBreakOnTermination ) {
+        if (EnableBreakOnTermination)
+        {
 
-            PS_SET_BITS (&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION);
+            PS_SET_BITS(&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION);
+        }
+        else
+        {
 
-        } else {
-
-            PS_CLEAR_BITS (&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION);
-
+            PS_CLEAR_BITS(&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION);
         }
 
         ObDereferenceObject(Thread);
@@ -3909,12 +3899,7 @@ Return Value:
 }
 
 
-VOID
-PsWatchWorkingSet(
-    IN NTSTATUS Status,
-    IN PVOID PcValue,
-    IN PVOID Va
-    )
+VOID PsWatchWorkingSet(IN NTSTATUS Status, IN PVOID PcValue, IN PVOID Va)
 
 /*++
 
@@ -3945,19 +3930,22 @@ Arguments:
     // reads count as hard faults.
     //
 
-    if ( Status <= STATUS_PAGE_FAULT_DEMAND_ZERO ) {
+    if (Status <= STATUS_PAGE_FAULT_DEMAND_ZERO)
+    {
         TransitionFault = TRUE;
     }
 
     Process = PsGetCurrentProcess();
     WorkingSetCatcher = Process->WorkingSetWatch;
-    if (WorkingSetCatcher == NULL) {
+    if (WorkingSetCatcher == NULL)
+    {
         return;
     }
 
-    ExAcquireSpinLock(&WorkingSetCatcher->SpinLock,&OldIrql);
-    if (WorkingSetCatcher->CurrentIndex >= WorkingSetCatcher->MaxIndex) {
-        ExReleaseSpinLock(&WorkingSetCatcher->SpinLock,OldIrql);
+    ExAcquireSpinLock(&WorkingSetCatcher->SpinLock, &OldIrql);
+    if (WorkingSetCatcher->CurrentIndex >= WorkingSetCatcher->MaxIndex)
+    {
+        ExReleaseSpinLock(&WorkingSetCatcher->SpinLock, OldIrql);
         return;
     }
 
@@ -3967,9 +3955,10 @@ Arguments:
     //
 
     WorkingSetCatcher->WatchInfo[WorkingSetCatcher->CurrentIndex].FaultingPc = PcValue;
-    WorkingSetCatcher->WatchInfo[WorkingSetCatcher->CurrentIndex].FaultingVa = TransitionFault ? (PVOID)((ULONG_PTR)Va | 1) : (PVOID)((ULONG_PTR)Va & 0xfffffffe) ;
+    WorkingSetCatcher->WatchInfo[WorkingSetCatcher->CurrentIndex].FaultingVa =
+        TransitionFault ? (PVOID)((ULONG_PTR)Va | 1) : (PVOID)((ULONG_PTR)Va & 0xfffffffe);
     WorkingSetCatcher->CurrentIndex++;
-    ExReleaseSpinLock(&WorkingSetCatcher->SpinLock,OldIrql);
+    ExReleaseSpinLock(&WorkingSetCatcher->SpinLock, OldIrql);
     return;
 }
 
@@ -3987,11 +3976,8 @@ extern PKWIN32_POWEREVENT_CALLOUT PopEventCallout;
 extern PKWIN32_POWERSTATE_CALLOUT PopStateCallout;
 
 
-
 NTKERNELAPI
-VOID
-PsEstablishWin32Callouts(
-   IN PKWIN32_CALLOUTS_FPNS pWin32Callouts )
+VOID PsEstablishWin32Callouts(IN PKWIN32_CALLOUTS_FPNS pWin32Callouts)
 
 /*++
 
@@ -4039,7 +4025,7 @@ Return Value:
     PopEventCallout = pWin32Callouts->PowerEventCallout;
     PopStateCallout = pWin32Callouts->PowerStateCallout;
     PspW32JobCallout = pWin32Callouts->JobCallout;
-//    PoSetSystemState(ES_SYSTEM_REQUIRED);
+    //    PoSetSystemState(ES_SYSTEM_REQUIRED);
 
 
     ExDesktopOpenProcedureCallout = pWin32Callouts->DesktopOpenProcedure;
@@ -4051,15 +4037,10 @@ Return Value:
     ExWindowStationDeleteProcedureCallout = pWin32Callouts->WindowStationDeleteProcedure;
     ExWindowStationParseProcedureCallout = pWin32Callouts->WindowStationParseProcedure;
     ExWindowStationOpenProcedureCallout = pWin32Callouts->WindowStationOpenProcedure;
-
 }
 
 
-VOID
-PsSetProcessPriorityByClass(
-    IN PEPROCESS Process,
-    IN PSPROCESSPRIORITYMODE PriorityMode
-    )
+VOID PsSetProcessPriorityByClass(IN PEPROCESS Process, IN PSPROCESSPRIORITYMODE PriorityMode)
 {
     KPRIORITY BasePriority;
     UCHAR MemoryPriority;
@@ -4072,39 +4053,47 @@ PsSetProcessPriorityByClass(
     BasePriority = PspPriorityTable[Process->PriorityClass];
 
 
-    if (PriorityMode == PsProcessPriorityForeground ) {
+    if (PriorityMode == PsProcessPriorityForeground)
+    {
         QuantumIndex = PsPrioritySeperation;
         MemoryPriority = MEMORY_PRIORITY_FOREGROUND;
-    } else {
+    }
+    else
+    {
         QuantumIndex = 0;
         MemoryPriority = MEMORY_PRIORITY_BACKGROUND;
     }
 
-    if (Process->PriorityClass != PROCESS_PRIORITY_CLASS_IDLE) {
+    if (Process->PriorityClass != PROCESS_PRIORITY_CLASS_IDLE)
+    {
         Job = Process->Job;
-        if (Job != NULL && PspUseJobSchedulingClasses ) {
+        if (Job != NULL && PspUseJobSchedulingClasses)
+        {
             Process->Pcb.ThreadQuantum = PspJobSchedulingClasses[Job->SchedulingClass];
-        } else {
+        }
+        else
+        {
             Process->Pcb.ThreadQuantum = PspForegroundQuantum[QuantumIndex];
         }
-    } else {
+    }
+    else
+    {
         Process->Pcb.ThreadQuantum = THREAD_QUANTUM;
     }
 
-    KeSetPriorityProcess (&Process->Pcb,BasePriority);
-    if (PriorityMode != PsProcessPrioritySpinning ) {
+    KeSetPriorityProcess(&Process->Pcb, BasePriority);
+    if (PriorityMode != PsProcessPrioritySpinning)
+    {
         MmSetMemoryPriorityProcess(Process, MemoryPriority);
     }
 }
 
 #if defined(_X86_)
-#pragma optimize ("y",off)
+#pragma optimize("y", off)
 #endif
 
 NTSTATUS
-PsConvertToGuiThread(
-    VOID
-    )
+PsConvertToGuiThread(VOID)
 
 /*++
 
@@ -4141,11 +4130,13 @@ Return Value:
 
     Thread = PsGetCurrentThread();
 
-    if (KeGetPreviousModeByThread(&Thread->Tcb) == KernelMode) {
+    if (KeGetPreviousModeByThread(&Thread->Tcb) == KernelMode)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (!PspW32ProcessCallout) {
+    if (!PspW32ProcessCallout)
+    {
         return STATUS_ACCESS_DENIED;
     }
 
@@ -4155,41 +4146,44 @@ Return Value:
     // a limit violation has occured on the Win32k system service table.
     //
 
-    if (Thread->Tcb.ServiceTable != (PVOID)&KeServiceDescriptorTable[0]) {
+    if (Thread->Tcb.ServiceTable != (PVOID)&KeServiceDescriptorTable[0])
+    {
         return STATUS_ALREADY_WIN32;
     }
 
-    Process = PsGetCurrentProcessByThread (Thread);
+    Process = PsGetCurrentProcessByThread(Thread);
 
     //
     // Get a larger kernel stack if we haven't already.
     //
 
-    if (!Thread->Tcb.LargeStack) {
+    if (!Thread->Tcb.LargeStack)
+    {
 
         NewStack = MmCreateKernelStack(TRUE, Thread->Tcb.InitialNode);
 
-        if ( !NewStack ) {
+        if (!NewStack)
+        {
 
-            try {
+            try
+            {
                 NtCurrentTeb()->LastErrorValue = (LONG)ERROR_NOT_ENOUGH_MEMORY;
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
             }
 
             return STATUS_NO_MEMORY;
         }
 
 #if defined(_IA64_)
-        OldStack = KeSwitchKernelStack(NewStack,
-                                   (UCHAR *)NewStack - KERNEL_LARGE_STACK_COMMIT,
-                                   (UCHAR *)NewStack + KERNEL_LARGE_BSTORE_COMMIT);
+        OldStack = KeSwitchKernelStack(NewStack, (UCHAR *)NewStack - KERNEL_LARGE_STACK_COMMIT,
+                                       (UCHAR *)NewStack + KERNEL_LARGE_BSTORE_COMMIT);
 #else
-        OldStack = KeSwitchKernelStack(NewStack,
-                                   (UCHAR *)NewStack - KERNEL_LARGE_STACK_COMMIT);
+        OldStack = KeSwitchKernelStack(NewStack, (UCHAR *)NewStack - KERNEL_LARGE_STACK_COMMIT);
 #endif // defined(_IA64_)
 
         MmDeleteKernelStack(OldStack, FALSE);
-
     }
 
     PERFINFO_CONVERT_TO_GUI_THREAD(Thread);
@@ -4199,9 +4193,10 @@ Return Value:
     // to the base exec structures
     //
 
-    Status = (PspW32ProcessCallout) (Process, TRUE);
+    Status = (PspW32ProcessCallout)(Process, TRUE);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -4212,22 +4207,22 @@ Return Value:
 
     Thread->Tcb.ServiceTable = (PVOID)&KeServiceDescriptorTableShadow[0];
 
-    ASSERT (Thread->Tcb.Win32Thread == 0);
+    ASSERT(Thread->Tcb.Win32Thread == 0);
 
 
     //
     // Make the thread callout.
     //
 
-    Status = (PspW32ThreadCallout)(Thread,PsW32ThreadCalloutInitialize);
-    if (!NT_SUCCESS (Status)) {
+    Status = (PspW32ThreadCallout)(Thread, PsW32ThreadCalloutInitialize);
+    if (!NT_SUCCESS(Status))
+    {
         Thread->Tcb.ServiceTable = (PVOID)&KeServiceDescriptorTable[0];
     }
 
     return Status;
-
 }
 
 #if defined(_X86_)
-#pragma optimize ("y",on)
+#pragma optimize("y", on)
 #endif

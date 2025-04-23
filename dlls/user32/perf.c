@@ -24,17 +24,15 @@
 
 typedef CSR_QLPC_API_MSG *PCSRMSG;
 
-typedef PDWORD (* PINSTUBFUNC)(PDWORD, PDWORD, PDWORD, PDWORD);
-typedef void (* POUTSTUBFUNC)(PDWORD, PDWORD);
+typedef PDWORD (*PINSTUBFUNC)(PDWORD, PDWORD, PDWORD, PDWORD);
+typedef void (*POUTSTUBFUNC)(PDWORD, PDWORD);
 
-PDWORD Copy4(PDWORD psrc,PDWORD pdst,PDWORD pparam,PDWORD pmax);
-PDWORD Copy5(PDWORD psrc,PDWORD pdst,PDWORD pparam,PDWORD pmax);
-PDWORD CopySTR(PDWORD psrc,PDWORD pdst,PDWORD pparam,PDWORD pmax);
+PDWORD Copy4(PDWORD psrc, PDWORD pdst, PDWORD pparam, PDWORD pmax);
+PDWORD Copy5(PDWORD psrc, PDWORD pdst, PDWORD pparam, PDWORD pmax);
+PDWORD CopySTR(PDWORD psrc, PDWORD pdst, PDWORD pparam, PDWORD pmax);
 
 #if !defined(_MIPS_) && !defined(_PPC_)
-void OutCopy4(
-    PDWORD psrc,
-    PDWORD pdst)
+void OutCopy4(PDWORD psrc, PDWORD pdst)
 {
     pdst[0] = psrc[0];
     pdst[1] = psrc[1];
@@ -42,13 +40,10 @@ void OutCopy4(
     pdst[3] = psrc[3];
 }
 
-PDWORD Copy4(
-    PDWORD psrc,
-    PDWORD pdst,
-    PDWORD pparam,
-    PDWORD pmax)
+PDWORD Copy4(PDWORD psrc, PDWORD pdst, PDWORD pparam, PDWORD pmax)
 {
-    if (pdst + 5 <= pmax) {
+    if (pdst + 5 <= pmax)
+    {
         pdst[0] = psrc[0];
         pdst[1] = psrc[1];
         pdst[2] = psrc[2];
@@ -59,13 +54,10 @@ PDWORD Copy4(
     pparam;
 }
 
-PDWORD Copy5(
-    PDWORD psrc,
-    PDWORD pdst,
-    PDWORD pparam,
-    PDWORD pmax)
+PDWORD Copy5(PDWORD psrc, PDWORD pdst, PDWORD pparam, PDWORD pmax)
 {
-    if (pdst + 5 <= pmax) {
+    if (pdst + 5 <= pmax)
+    {
         pdst[0] = psrc[0];
         pdst[1] = psrc[1];
         pdst[2] = psrc[2];
@@ -77,13 +69,10 @@ PDWORD Copy5(
     pparam;
 }
 
-PDWORD Copy6(
-    PDWORD psrc,
-    PDWORD pdst,
-    PDWORD pparam,
-    PDWORD pmax)
+PDWORD Copy6(PDWORD psrc, PDWORD pdst, PDWORD pparam, PDWORD pmax)
 {
-    if (pdst + 6 <= pmax) {
+    if (pdst + 6 <= pmax)
+    {
         pdst[0] = psrc[0];
         pdst[1] = psrc[1];
         pdst[2] = psrc[2];
@@ -96,11 +85,7 @@ PDWORD Copy6(
     pparam;
 }
 
-PDWORD CopySTR(
-    PDWORD psrc,
-    PDWORD pdst,
-    PDWORD pparam,
-    PDWORD pmax)
+PDWORD CopySTR(PDWORD psrc, PDWORD pdst, PDWORD pparam, PDWORD pmax)
 {
     PBYTE length = (PBYTE)psrc;
 
@@ -108,10 +93,12 @@ PDWORD CopySTR(
         length++;
 
     length = (length - (PBYTE)psrc + (PBYTE)pdst);
-    length = (PBYTE)(((DWORD)length +3 ) & ~3);
+    length = (PBYTE)(((DWORD)length + 3) & ~3);
 
-    if (length <= (PBYTE)pmax) {
-        while ((PBYTE)pdst != (PBYTE)length) {
+    if (length <= (PBYTE)pmax)
+    {
+        while ((PBYTE)pdst != (PBYTE)length)
+        {
             *pdst = *psrc;
             pdst++;
             psrc++;
@@ -126,40 +113,33 @@ PDWORD CopySTR(
 /**************************************************************************\
 \**************************************************************************/
 
-PDWORD AIDoClientInStuff(
-    PDWORD psrc,
-    PDWORD pbase,
-    PDWORD ptemplate,
-    PDWORD pmax);
+PDWORD AIDoClientInStuff(PDWORD psrc, PDWORD pbase, PDWORD ptemplate, PDWORD pmax);
 
-VOID AIDoClientOutStuff(
-    PDWORD psrc,
-    PDWORD pbase,
-    PDWORD ptemplate);
+VOID AIDoClientOutStuff(PDWORD psrc, PDWORD pbase, PDWORD ptemplate);
 
-PDWORD DoClientInStuff(
-    PDWORD psrc,
-    PDWORD pbase,
-    PDWORD ptemplate,
-    PDWORD pmax)
+PDWORD DoClientInStuff(PDWORD psrc, PDWORD pbase, PDWORD ptemplate, PDWORD pmax)
 {
     PDWORD pparam;
     PDWORD param;
     PDWORD pdst;
 
-    if (ptemplate[0]) {
+    if (ptemplate[0])
+    {
         pdst = ((PINSTUBFUNC)ptemplate[0])(psrc, pbase, NULL, pmax);
-        if (!pdst) {
+        if (!pdst)
+        {
             return 0;
         }
         ptemplate++;
 
-        while (ptemplate[0]) {
+        while (ptemplate[0])
+        {
             pparam = (PDWORD)((PBYTE)pbase + ptemplate[1]);
             param = (PDWORD)*pparam;
             *pparam = (PBYTE)pdst - (PBYTE)pbase;
             pdst = ((PINSTUBFUNC)ptemplate[0])(param, pdst, pparam, pmax);
-            if (!pdst) {
+            if (!pdst)
+            {
                 return 0;
             }
             ptemplate += 2;
@@ -167,19 +147,14 @@ PDWORD DoClientInStuff(
     }
 }
 
-VOID DoClientOutStuff(
-    PDWORD psrc,
-    PDWORD pdst,
-    PDWORD ptemplate)
+VOID DoClientOutStuff(PDWORD psrc, PDWORD pdst, PDWORD ptemplate)
 {
     PDWORD pparam;
 
-    while (ptemplate[0]) {
+    while (ptemplate[0])
+    {
         pparam = (PDWORD)((PBYTE)psrc + ptemplate[1]);
-        ((POUTSTUBFUNC)ptemplate[0])(
-            (PDWORD)((PBYTE)psrc + *pparam),
-            *(PDWORD *)((PBYTE)pdst + ptemplate[1])
-        );
+        ((POUTSTUBFUNC)ptemplate[0])((PDWORD)((PBYTE)psrc + *pparam), *(PDWORD *)((PBYTE)pdst + ptemplate[1]));
         ptemplate += 2;
     }
 }
@@ -187,12 +162,7 @@ VOID DoClientOutStuff(
 /**************************************************************************\
 \**************************************************************************/
 
-DWORD MakeCSCall(
-    DWORD findex,
-    PDWORD psrc,
-    PDWORD pInTemplate,
-    PDWORD pOutTemplate
-    )
+DWORD MakeCSCall(DWORD findex, PDWORD psrc, PDWORD pInTemplate, PDWORD pOutTemplate)
 {
     PCSR_QLPC_TEB pteb = (PCSR_QLPC_TEB)NtCurrentTeb()->CsrQlpcTeb;
     PCSR_QLPC_STACK pstack;
@@ -207,41 +177,51 @@ DWORD MakeCSCall(
     // connect to the server
     //
 
-    if (pteb == NULL) {
+    if (pteb == NULL)
+    {
         pteb = CsrClientThreadConnect();
-        if (pteb == NULL) {
+        if (pteb == NULL)
+        {
             return 0;
         }
     }
 
     pstack = pteb->MessageStack;
-    if (pstack->BatchCount) {
+    if (pstack->BatchCount)
+    {
         CsrClientSendMessage();
         pbase = (PDWORD)((PBYTE)pstack + pstack->Base);
-    } else {
+    }
+    else
+    {
         pbase = (PDWORD)((PBYTE)pstack + pstack->Current);
     }
     pmax = (PDWORD)((PBYTE)pstack + pstack->Limit);
-    pmsg = (PCSRMSG)(pbase+1);
+    pmsg = (PCSRMSG)(pbase + 1);
 
     //
     // is there enough space left on the stack?
     //
 
     pdst = (PDWORD)(pmsg + 1);
-    if (pdst <= pmax) {
+    if (pdst <= pmax)
+    {
 
         //
         // copy the data to shared memory
         //
 
-        if (pInTemplate) {
+        if (pInTemplate)
+        {
             plast = DoClientInStuff(psrc, pdst, pInTemplate, pmax);
-        } else {
+        }
+        else
+        {
             plast = pdst;
         }
 
-        if (plast) {
+        if (plast)
+        {
 
             //
             // Make the call
@@ -250,7 +230,7 @@ DWORD MakeCSCall(
             pmsg->Length = (PBYTE)plast - (PBYTE)pmsg;
             pmsg->ApiNumber = findex;
             *pbase = pstack->Base;
-            pstack->Base = pstack->Current+4;
+            pstack->Base = pstack->Current + 4;
             pstack->Current = (PBYTE)pdst - (PBYTE)pstack;
             pstack->BatchCount = 1;
 
@@ -263,7 +243,8 @@ DWORD MakeCSCall(
             // Do any post call copies
             //
 
-            if (pOutTemplate) {
+            if (pOutTemplate)
+            {
                 DoClientOutStuff(pdst, psrc, pOutTemplate);
             }
 
@@ -282,12 +263,7 @@ DWORD MakeCSCall(
 \**************************************************************************/
 
 #if defined(_MIPS_) || defined(_PPC_)
-DWORD AIMakeCSCall(
-    DWORD findex,
-    PDWORD psrc,
-    PDWORD pInTemplate,
-    PDWORD pOutTemplate
-    )
+DWORD AIMakeCSCall(DWORD findex, PDWORD psrc, PDWORD pInTemplate, PDWORD pOutTemplate)
 {
     PCSR_QLPC_TEB pteb = (PCSR_QLPC_TEB)NtCurrentTeb()->CsrQlpcTeb;
     PCSR_QLPC_STACK pstack;
@@ -302,41 +278,51 @@ DWORD AIMakeCSCall(
     // connect to the server
     //
 
-    if (pteb == NULL) {
+    if (pteb == NULL)
+    {
         pteb = CsrClientThreadConnect();
-        if (pteb == NULL) {
+        if (pteb == NULL)
+        {
             return 0;
         }
     }
 
     pstack = pteb->MessageStack;
-    if (pstack->BatchCount) {
+    if (pstack->BatchCount)
+    {
         CsrClientSendMessage();
         pbase = (PDWORD)((PBYTE)pstack + pstack->Base);
-    } else {
+    }
+    else
+    {
         pbase = (PDWORD)((PBYTE)pstack + pstack->Current);
     }
     pmax = (PDWORD)((PBYTE)pstack + pstack->Limit);
-    pmsg = (PCSRMSG)(pbase+1);
+    pmsg = (PCSRMSG)(pbase + 1);
 
     //
     // is there enough space left on the stack?
     //
 
-    if ((PDWORD)((PBYTE)pmsg + sizeof(PCSRMSG)) <= pmax) {
+    if ((PDWORD)((PBYTE)pmsg + sizeof(PCSRMSG)) <= pmax)
+    {
 
         //
         // copy the data to shared memory
         //
 
         pdst = (PDWORD)(pmsg + 1);
-        if (pInTemplate) {
+        if (pInTemplate)
+        {
             plast = AIDoClientInStuff(psrc, pdst, pInTemplate, pmax);
-        } else {
+        }
+        else
+        {
             plast = pdst;
         }
 
-        if (plast) {
+        if (plast)
+        {
 
             //
             // Make the call
@@ -345,7 +331,7 @@ DWORD AIMakeCSCall(
             pmsg->Length = (PBYTE)plast - (PBYTE)pmsg;
             pmsg->ApiNumber = findex;
             *pbase = pstack->Base;
-            pstack->Base = pstack->Current+4;
+            pstack->Base = pstack->Current + 4;
             pstack->Current = (PBYTE)pdst - (PBYTE)pstack;
             pstack->BatchCount = 1;
 
@@ -358,7 +344,8 @@ DWORD AIMakeCSCall(
             // Do any post call copies
             //
 
-            if (pOutTemplate) {
+            if (pOutTemplate)
+            {
                 AIDoClientOutStuff(pdst, psrc, pOutTemplate);
             }
 
@@ -378,7 +365,8 @@ DWORD AIMakeCSCall(
 \**************************************************************************/
 
 #ifdef LATER
-typedef struct _TESTMSG {
+typedef struct _TESTMSG
+{
     int a;
     int b;
     RECT *lprc;
@@ -387,16 +375,14 @@ typedef struct _TESTMSG {
     RECT rc;
 } TESTMSG;
 
-PDWORD CSInTestCall(
-    PDWORD psrc,
-    PDWORD pdst,
-    PDWORD pmax)
+PDWORD CSInTestCall(PDWORD psrc, PDWORD pdst, PDWORD pmax)
 {
     PDWORD pvar;
     TESTMSG *pmsg;
     TESTMSG *pparam;
 
-    if (pmax > pdst + sizeof(TESTMSG)) {
+    if (pmax > pdst + sizeof(TESTMSG))
+    {
         pmsg = (TESTMSG *)pdst;
         pparam = (TESTMSG *)psrc;
         pvar = (PDWORD)(pmsg + 1);
@@ -405,20 +391,22 @@ PDWORD CSInTestCall(
         pmsg->b = pparam->b;
         pmsg->c = pparam->c;
 
-        pmsg->lprc = (RECT *)(((PBYTE)&(pmsg->rc)) - (PBYTE)pmsg);
+        pmsg->lprc = (RECT *)(((PBYTE) & (pmsg->rc)) - (PBYTE)pmsg);
         pmsg->rc = *(pparam->lprc);
 
         pmsg->lpstr = (LPSTR)((PBYTE)pvar - (PBYTE)pmsg);
         pvar = CopySTR((PDWORD)pparam->lpstr, pvar, NULL, pmax);
 
-        if (pvar) {
+        if (pvar)
+        {
             return (PDWORD)pvar;
         }
     }
     return 0;
 }
 
-typedef struct _TESTMSG {
+typedef struct _TESTMSG
+{
     HWND hwnd;
     int a;
     int b;
@@ -427,15 +415,13 @@ typedef struct _TESTMSG {
     int e;
 } TESTMSG;
 
-PDWORD CSInTestCall(
-    PDWORD psrc,
-    PDWORD pdst,
-    PDWORD pmax)
+PDWORD CSInTestCall(PDWORD psrc, PDWORD pdst, PDWORD pmax)
 {
     TESTMSG *pmsg;
     TESTMSG *pparam;
 
-    if (pmax > pdst + sizeof(TESTMSG)) {
+    if (pmax > pdst + sizeof(TESTMSG))
+    {
         pmsg = (TESTMSG *)pdst;
         pparam = (TESTMSG *)psrc;
 
@@ -454,16 +440,11 @@ PDWORD CSInTestCall(
 /**************************************************************************\
 \**************************************************************************/
 
-typedef PDWORD (* PCSINFUNC)(PDWORD, PDWORD, PDWORD);
-typedef PDWORD (* PCSOUTFUNC)(PDWORD, PDWORD);
+typedef PDWORD (*PCSINFUNC)(PDWORD, PDWORD, PDWORD);
+typedef PDWORD (*PCSOUTFUNC)(PDWORD, PDWORD);
 
 
-DWORD CSMakeCall(
-    DWORD findex,
-    PDWORD psrc,
-    PCSINFUNC pInFunc,
-    PCSOUTFUNC pOutFunc
-    )
+DWORD CSMakeCall(DWORD findex, PDWORD psrc, PCSINFUNC pInFunc, PCSOUTFUNC pOutFunc)
 {
     PCSR_QLPC_TEB pteb = (PCSR_QLPC_TEB)NtCurrentTeb()->CsrQlpcTeb;
     PCSR_QLPC_STACK pstack;
@@ -478,41 +459,51 @@ DWORD CSMakeCall(
     // connect to the server
     //
 
-    if (pteb == NULL) {
+    if (pteb == NULL)
+    {
         pteb = CsrClientThreadConnect();
-        if (pteb == NULL) {
+        if (pteb == NULL)
+        {
             return 0;
         }
     }
 
     pstack = pteb->MessageStack;
-    if (pstack->BatchCount) {
+    if (pstack->BatchCount)
+    {
         CsrClientSendMessage();
         pbase = (PDWORD)((PBYTE)pstack + pstack->Base);
-    } else {
+    }
+    else
+    {
         pbase = (PDWORD)((PBYTE)pstack + pstack->Current);
     }
     pmax = (PDWORD)((PBYTE)pstack + pstack->Limit);
-    pmsg = (PCSRMSG)(pbase+1);
+    pmsg = (PCSRMSG)(pbase + 1);
 
     //
     // is there enough space left on the stack?
     //
 
     pdst = (PDWORD)(pmsg + 1);
-    if (pdst <= pmax) {
+    if (pdst <= pmax)
+    {
 
         //
         // copy the data to shared memory
         //
 
-        if (pInFunc) {
+        if (pInFunc)
+        {
             plast = pInFunc(psrc, pdst, pmax);
-        } else {
+        }
+        else
+        {
             plast = pdst;
         }
 
-        if (plast) {
+        if (plast)
+        {
 
             //
             // Make the call
@@ -521,7 +512,7 @@ DWORD CSMakeCall(
             pmsg->Length = (PBYTE)plast - (PBYTE)pmsg;
             pmsg->ApiNumber = findex;
             *pbase = pstack->Base;
-            pstack->Base = pstack->Current+4;
+            pstack->Base = pstack->Current + 4;
             pstack->Current = (PBYTE)pdst - (PBYTE)pstack;
             pstack->BatchCount = 1;
 
@@ -534,7 +525,8 @@ DWORD CSMakeCall(
             // Do any post call copies
             //
 
-            if (pOutFunc) {
+            if (pOutFunc)
+            {
                 pOutFunc(pdst, psrc);
             }
 
@@ -575,43 +567,24 @@ DWORD CTestCall(HWND hwnd, int a, int b, int c, int d, int e)
 \**************************************************************************/
 
 #ifdef LATER
-DWORD InTestCall[] = {
-    (DWORD)Copy5,
-    (DWORD)Copy4,
-    8,
-    (DWORD)CopySTR,
-    16,
-    0
-};
+DWORD InTestCall[] = { (DWORD)Copy5, (DWORD)Copy4, 8, (DWORD)CopySTR, 16, 0 };
 #endif
 
-DWORD InTestCall[] = {
-    (DWORD)Copy6,
-    0
-};
+DWORD InTestCall[] = { (DWORD)Copy6, 0 };
 
 DWORD ITestCall(HWND hwnd, int a, int b, int c, int d, int e)
 {
-   return MakeCSCall(
-       CSR_MAKE_API_NUMBER(4,FI_CTESTCALL),
-       (PDWORD)&hwnd,
-       InTestCall,
-       NULL
-   );
+    return MakeCSCall(CSR_MAKE_API_NUMBER(4, FI_CTESTCALL), (PDWORD)&hwnd, InTestCall, NULL);
 }
 
 DWORD AITestCall(HWND hwnd, int a, int b, int c, int d, int e)
 {
 #if defined(_MIPS_) || defined(_PPC_)
-   return AIMakeCSCall(
+    return AIMakeCSCall(
 #else
-   return MakeCSCall(
+    return MakeCSCall(
 #endif
-       CSR_MAKE_API_NUMBER(4,FI_CTESTCALL),
-       (PDWORD)&hwnd,
-       InTestCall,
-       NULL
-   );
+        CSR_MAKE_API_NUMBER(4, FI_CTESTCALL), (PDWORD)&hwnd, InTestCall, NULL);
 }
 
 /**************************************************************************\

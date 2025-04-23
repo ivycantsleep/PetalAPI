@@ -31,11 +31,7 @@
 *   11-18-90 JimA       Created.
 \***************************************************************************/
 
-int FindMnemChar(
-    LPWSTR lpstr,
-    WCHAR ch,
-    BOOL fFirst,
-    BOOL fPrefix)
+int FindMnemChar(LPWSTR lpstr, WCHAR ch, BOOL fFirst, BOOL fPrefix)
 {
     WCHAR chc;
     WCHAR chFirst;
@@ -43,10 +39,11 @@ int FindMnemChar(
     while (*lpstr == TEXT(' '))
         lpstr++;
 
-    ch = (WCHAR)(ULONG_PTR)CharLowerW((LPWSTR)ULongToPtr( (DWORD)(UTCHAR)ch ));
-    chFirst = (WCHAR)(ULONG_PTR)CharLowerW((LPWSTR)ULongToPtr( (DWORD)(UTCHAR)(*lpstr) ));
+    ch = (WCHAR)(ULONG_PTR)CharLowerW((LPWSTR)ULongToPtr((DWORD)(UTCHAR)ch));
+    chFirst = (WCHAR)(ULONG_PTR)CharLowerW((LPWSTR)ULongToPtr((DWORD)(UTCHAR)(*lpstr)));
 
-    if (fPrefix) {
+    if (fPrefix)
+    {
         WORD wvch, xvkey;
         //
         // get OEM-dependent virtual key code
@@ -54,40 +51,48 @@ int FindMnemChar(
         if (IS_DBCS_ENABLED() && (wvch = VkKeyScanW(ch)) != -1)
             wvch &= 0x00FF;
 
-        while (chc = *lpstr++) {
+        while (chc = *lpstr++)
+        {
             //
             // This should think about KOREA & TAIWAN case. But probably OK.
             //
-            if ((chc == CH_PREFIX) || (chc == CH_ENGLISHPREFIX && IS_DBCS_ENABLED())) {
+            if ((chc == CH_PREFIX) || (chc == CH_ENGLISHPREFIX && IS_DBCS_ENABLED()))
+            {
 
-                WORD chnext = (WCHAR)(ULONG_PTR)CharLowerW((LPWSTR)ULongToPtr( (DWORD)(UTCHAR)*lpstr ));
+                WORD chnext = (WCHAR)(ULONG_PTR)CharLowerW((LPWSTR)ULongToPtr((DWORD)(UTCHAR)*lpstr));
 
-                if (chnext == CH_PREFIX) {
+                if (chnext == CH_PREFIX)
+                {
                     //
                     // Two CH_PREFIX in the resrc string results in one "&" in the text displayed
                     //
                     lpstr++;
-                } else {
-                    if (chnext == ch) {
+                }
+                else
+                {
+                    if (chnext == ch)
+                    {
                         return 0x01;
                     }
-                    if (IS_DBCS_ENABLED()) {
+                    if (IS_DBCS_ENABLED())
+                    {
                         //
                         // Compare should be done with virtual key in Kanji menu mode
                         // in order to accept Digit shortcut key and save English
                         // windows applications!
                         //
                         xvkey = VkKeyScanW(chnext);
-                        if (xvkey != 0xFFFF && ((xvkey & 0x00FF) == wvch)) {
+                        if (xvkey != 0xFFFF && ((xvkey & 0x00FF) == wvch))
+                        {
                             return 0x01;
                         }
-                   }
-                   return 0x00;
+                    }
+                    return 0x00;
                 }
             }
         }
     }
-#if 0   // the original US code on NT4
+#if 0  // the original US code on NT4
     if (fPrefix) {
         while (chc = *lpstr++) {
             if (((WCHAR)CharLower((LPWSTR)(DWORD)(UTCHAR)chc) == CH_PREFIX)) {
@@ -121,10 +126,7 @@ int FindMnemChar(
 * History:
 \***************************************************************************/
 
-PWND xxxGNM_FindNextMnem(
-    PWND pwndDlg,
-    PWND pwnd,
-    WCHAR ch)
+PWND xxxGNM_FindNextMnem(PWND pwndDlg, PWND pwnd, WCHAR ch)
 {
     PWND pwndStart;
     PWND pwndT;
@@ -144,14 +146,16 @@ PWND xxxGNM_FindNextMnem(
     pwndStart = _GetChildControl(pwndDlg, pwnd);
     ThreadLock(pwndStart, &tlpwndStart);
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         pwndT = _GetNextDlgGroupItem(pwndDlg, pwndStart, FALSE);
 
         ThreadUnlock(&tlpwndStart);
 
         i++;
-        if (pwndT == NULL || pwndT == pwnd || i > INFINITE_LOOP_CURE) {
+        if (pwndT == NULL || pwndT == pwnd || i > INFINITE_LOOP_CURE)
+        {
 
             /*
              * If we have returned to our starting window or if we have gone
@@ -173,10 +177,11 @@ PWND xxxGNM_FindNextMnem(
         ThreadLock(pwndStart, &tlpwndStart);
 
         dwDlgCode = (DWORD)SendMessage(HWq(pwndT), WM_GETDLGCODE, 0, 0L);
-        if (!(dwDlgCode & DLGC_WANTCHARS) &&
-                (!(dwDlgCode & DLGC_STATIC) || !(pwndT->style & SS_NOPREFIX))) {
-            GetWindowText(HWq(pwndT), rgchText, sizeof(rgchText)/sizeof(WCHAR));
-            if (FindMnemChar(rgchText, ch, FALSE, TRUE) != 0) {
+        if (!(dwDlgCode & DLGC_WANTCHARS) && (!(dwDlgCode & DLGC_STATIC) || !(pwndT->style & SS_NOPREFIX)))
+        {
+            GetWindowText(HWq(pwndT), rgchText, sizeof(rgchText) / sizeof(WCHAR));
+            if (FindMnemChar(rgchText, ch, FALSE, TRUE) != 0)
+            {
                 ThreadUnlock(&tlpwndStart);
                 return pwndT;
             }
@@ -187,7 +192,8 @@ PWND xxxGNM_FindNextMnem(
     i = 0;
 
     ThreadLock(pwnd, &tlpwnd);
-    while (TRUE) {
+    while (TRUE)
+    {
 
         /*
          * Start with next so we see multiples of same mnemonic.
@@ -201,15 +207,16 @@ PWND xxxGNM_FindNextMnem(
          * and control isn't a static control with SS_NOPREFIX
          */
         dwDlgCode = (DWORD)SendMessage(HW(pwnd), WM_GETDLGCODE, 0, 0L);
-        if (!(dwDlgCode & DLGC_WANTCHARS) &&
-                (!(dwDlgCode & DLGC_STATIC) || !(pwnd->style & SS_NOPREFIX))) {
-            GetWindowText(HW(pwnd), rgchText, sizeof(rgchText)/sizeof(WCHAR));
+        if (!(dwDlgCode & DLGC_WANTCHARS) && (!(dwDlgCode & DLGC_STATIC) || !(pwnd->style & SS_NOPREFIX)))
+        {
+            GetWindowText(HW(pwnd), rgchText, sizeof(rgchText) / sizeof(WCHAR));
             if (FindMnemChar(rgchText, ch, FALSE, TRUE) != 0)
                 break;
         }
 
         i++;
-        if (pwnd == pwndStart || i > INFINITE_LOOP_CURE) {
+        if (pwnd == pwndStart || i > INFINITE_LOOP_CURE)
+        {
             pwnd = NULL;
             break;
         }
@@ -225,10 +232,7 @@ PWND xxxGNM_FindNextMnem(
 * History:
 \***************************************************************************/
 
-PWND xxxGotoNextMnem(
-    PWND pwndDlg,
-    PWND pwnd,
-    WCHAR ch)
+PWND xxxGotoNextMnem(PWND pwndDlg, PWND pwnd, WCHAR ch)
 {
     UINT code;
     PWND pwndFirstFound = NULL;
@@ -245,12 +249,14 @@ PWND xxxGotoNextMnem(
     /*
      * Loop for a long time but not long enough so we hang...
      */
-    while (count < INFINITE_LOOP_CURE) {
+    while (count < INFINITE_LOOP_CURE)
+    {
 
         /*
          * If the dialog box doesn't has the mnemonic specified, return NULL.
          */
-        if ((pwnd = xxxGNM_FindNextMnem(pwndDlg, pwnd, ch)) == NULL) {
+        if ((pwnd = xxxGNM_FindNextMnem(pwndDlg, pwnd, ch)) == NULL)
+        {
             ThreadUnlock(&tlpwnd);
             return NULL;
         }
@@ -264,7 +270,8 @@ PWND xxxGotoNextMnem(
         /*
          * If a non-disabled static item, then jump ahead to nearest tabstop.
          */
-        if (code & DLGC_STATIC && !TestWF(pwnd, WFDISABLED)) {
+        if (code & DLGC_STATIC && !TestWF(pwnd, WFDISABLED))
+        {
             pwndT = _GetNextDlgTabItem(pwndDlg, pwnd, FALSE);
 
             /*
@@ -287,23 +294,28 @@ PWND xxxGotoNextMnem(
             code = (UINT)SendMessage(hwnd, WM_GETDLGCODE, 0, 0L);
         }
 
-        if (!TestWF(pwnd, WFDISABLED)) {
+        if (!TestWF(pwnd, WFDISABLED))
+        {
 
             /*
              * Is it a Pushbutton?
              */
-            if (!(code & DLGC_BUTTON)) {
+            if (!(code & DLGC_BUTTON))
+            {
 
                 /*
                  * No, simply give it the focus.
                  */
                 DlgSetFocus(hwnd);
-            } else {
+            }
+            else
+            {
 
                 /*
                  * Yes, click it, but don't give it the focus.
                  */
-                if ((code & DLGC_DEFPUSHBUTTON) || (code & DLGC_UNDEFPUSHBUTTON)) {
+                if ((code & DLGC_DEFPUSHBUTTON) || (code & DLGC_UNDEFPUSHBUTTON))
+                {
 
                     /*
                      * Flash the button.
@@ -314,8 +326,8 @@ PWND xxxGotoNextMnem(
                      * Delay
                      */
 #ifdef LATER
-// JimA - 2/19/92
-// There oughta be a better way of doing this...
+                    // JimA - 2/19/92
+                    // There oughta be a better way of doing this...
                     for (i = 0; i < 10000; i++)
                         ;
 #else
@@ -331,11 +343,12 @@ PWND xxxGotoNextMnem(
                      * Send the WM_COMMAND message.
                      */
                     pwndT = REBASEPWND(pwnd, spwndParent);
-                    SendMessage(HW(pwndT), WM_COMMAND,
-                            MAKELONG(PTR_TO_ID(pwnd->spmenu), BN_CLICKED), (LPARAM)hwnd);
+                    SendMessage(HW(pwndT), WM_COMMAND, MAKELONG(PTR_TO_ID(pwnd->spmenu), BN_CLICKED), (LPARAM)hwnd);
                     ThreadUnlock(&tlpwnd);
                     return (PWND)1;
-                } else {
+                }
+                else
+                {
 
                     /*
                      * Because BM_CLICK processing will result in BN_CLICK msg,
@@ -347,23 +360,28 @@ PWND xxxGotoNextMnem(
                     PBUTN pbutn;
 
                     fIsNTButton = IS_BUTTON(pwnd);
-                    if (fIsNTButton) {
-                      pbutn = ((PBUTNWND)pwnd)->pbutn;
-                      BUTTONSTATE(pbutn) |= BST_DONTCLICK;
-                    } else {
-                     RIPMSG0(RIP_WARNING, "xxxGotoNextMnem: fnid != FNID_BUTTON");
+                    if (fIsNTButton)
+                    {
+                        pbutn = ((PBUTNWND)pwnd)->pbutn;
+                        BUTTONSTATE(pbutn) |= BST_DONTCLICK;
+                    }
+                    else
+                    {
+                        RIPMSG0(RIP_WARNING, "xxxGotoNextMnem: fnid != FNID_BUTTON");
                     }
 
                     DlgSetFocus(hwnd);
 
-                    if (fIsNTButton) {
-                      BUTTONSTATE(pbutn) &= ~BST_DONTCLICK;
+                    if (fIsNTButton)
+                    {
+                        BUTTONSTATE(pbutn) &= ~BST_DONTCLICK;
                     }
 
                     /*
                      * Send click message if button has a UNIQUE mnemonic
                      */
-                    if (xxxGNM_FindNextMnem(pwndDlg, pwnd, ch) == pwnd) {
+                    if (xxxGNM_FindNextMnem(pwndDlg, pwnd, ch) == pwnd)
+                    {
                         SendMessage(hwnd, BM_CLICK, TRUE, 0L);
                     }
                 }
@@ -371,12 +389,15 @@ PWND xxxGotoNextMnem(
 
             ThreadUnlock(&tlpwnd);
             return pwnd;
-        } else {
+        }
+        else
+        {
 
             /*
              * Stop if we've looped back to the first item we checked
              */
-            if (pwnd == pwndFirstFound) {
+            if (pwnd == pwndFirstFound)
+            {
                 ThreadUnlock(&tlpwnd);
                 return NULL;
             }
@@ -387,7 +408,7 @@ PWND xxxGotoNextMnem(
 
         count++;
 
-    }  /* Loop for a long time */
+    } /* Loop for a long time */
 
     ThreadUnlock(&tlpwnd);
     return NULL;

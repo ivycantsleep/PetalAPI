@@ -45,15 +45,9 @@ POBJECT_TYPE ExEventObjectType;
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const GENERIC_MAPPING ExpEventMapping = {
-    STANDARD_RIGHTS_READ |
-        EVENT_QUERY_STATE,
-    STANDARD_RIGHTS_WRITE |
-        EVENT_MODIFY_STATE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    EVENT_ALL_ACCESS
-};
+const GENERIC_MAPPING ExpEventMapping = { STANDARD_RIGHTS_READ | EVENT_QUERY_STATE,
+                                          STANDARD_RIGHTS_WRITE | EVENT_MODIFY_STATE,
+                                          STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, EVENT_ALL_ACCESS };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
@@ -69,10 +63,9 @@ const GENERIC_MAPPING ExpEventMapping = {
 #pragma alloc_text(PAGE, NtSetEvent)
 #pragma alloc_text(PAGE, NtSetEventBoostPriority)
 #endif
-
+
 BOOLEAN
-ExpEventInitialization (
-    )
+ExpEventInitialization()
 
 /*++
 
@@ -116,10 +109,7 @@ Return Value:
     ObjectTypeInitializer.PoolType = NonPagedPool;
     ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(KEVENT);
     ObjectTypeInitializer.ValidAccessMask = EVENT_ALL_ACCESS;
-    Status = ObCreateObjectType(&TypeName,
-                                &ObjectTypeInitializer,
-                                (PSECURITY_DESCRIPTOR)NULL,
-                                &ExEventObjectType);
+    Status = ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &ExEventObjectType);
 
     //
     // If the event object type descriptor was successfully created, then
@@ -128,11 +118,9 @@ Return Value:
 
     return (BOOLEAN)(NT_SUCCESS(Status));
 }
-
+
 NTSTATUS
-NtClearEvent (
-    IN HANDLE EventHandle
-    )
+NtClearEvent(IN HANDLE EventHandle)
 
 /*++
 
@@ -159,11 +147,7 @@ Return Value:
     // Reference event object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(EventHandle,
-                                       EVENT_MODIFY_STATE,
-                                       ExEventObjectType,
-                                       KeGetPreviousMode(),
-                                       &Event,
+    Status = ObReferenceObjectByHandle(EventHandle, EVENT_MODIFY_STATE, ExEventObjectType, KeGetPreviousMode(), &Event,
                                        NULL);
 
     //
@@ -171,7 +155,8 @@ Return Value:
     // object to Not-Signaled and dereference event object.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         PERFINFO_DECLARE_OBJECT(Event);
         KeClearEvent((PKEVENT)Event);
         ObDereferenceObject(Event);
@@ -183,15 +168,10 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtCreateEvent (
-    OUT PHANDLE EventHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN EVENT_TYPE EventType,
-    IN BOOLEAN InitialState
-    )
+NtCreateEvent(OUT PHANDLE EventHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+              IN EVENT_TYPE EventType, IN BOOLEAN InitialState)
 
 /*++
 
@@ -241,10 +221,14 @@ Return Value:
     // necessary.
     //
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             ProbeForWriteHandle(EventHandle);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -253,7 +237,8 @@ Return Value:
     // Check argument validity.
     //
 
-    if ((EventType != NotificationEvent) && (EventType != SynchronizationEvent)) {
+    if ((EventType != NotificationEvent) && (EventType != SynchronizationEvent))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -261,14 +246,7 @@ Return Value:
     // Allocate event object.
     //
 
-    Status = ObCreateObject(PreviousMode,
-                            ExEventObjectType,
-                            ObjectAttributes,
-                            PreviousMode,
-                            NULL,
-                            sizeof(KEVENT),
-                            0,
-                            0,
+    Status = ObCreateObject(PreviousMode, ExEventObjectType, ObjectAttributes, PreviousMode, NULL, sizeof(KEVENT), 0, 0,
                             (PVOID *)&Event);
 
     //
@@ -277,14 +255,10 @@ Return Value:
     // process' handle table.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         KeInitializeEvent((PKEVENT)Event, EventType, InitialState);
-        Status = ObInsertObject(Event,
-                                NULL,
-                                DesiredAccess,
-                                0,
-                                (PVOID *)NULL,
-                                &Handle);
+        Status = ObInsertObject(Event, NULL, DesiredAccess, 0, (PVOID *)NULL, &Handle);
 
         //
         // If the event object was successfully inserted in the current
@@ -294,16 +268,21 @@ Return Value:
         // an access violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
-            if (PreviousMode != KernelMode) {
-                try {
+        if (NT_SUCCESS(Status))
+        {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
                     *EventHandle = Handle;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
             }
-            else {
+            else
+            {
                 *EventHandle = Handle;
             }
         }
@@ -315,13 +294,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtOpenEvent (
-    OUT PHANDLE EventHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenEvent(OUT PHANDLE EventHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes)
 
 /*++
 
@@ -365,10 +340,14 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             ProbeForWriteHandle(EventHandle);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -377,13 +356,7 @@ Return Value:
     // Open handle to the event object with the specified desired access.
     //
 
-    Status = ObOpenObjectByName(ObjectAttributes,
-                                ExEventObjectType,
-                                PreviousMode,
-                                NULL,
-                                DesiredAccess,
-                                NULL,
-                                &Handle);
+    Status = ObOpenObjectByName(ObjectAttributes, ExEventObjectType, PreviousMode, NULL, DesiredAccess, NULL, &Handle);
 
     //
     // If the open was successful, then attempt to write the event object
@@ -392,16 +365,21 @@ Return Value:
     // access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
-        if (PreviousMode != KernelMode) {
-            try {
+    if (NT_SUCCESS(Status))
+    {
+        if (PreviousMode != KernelMode)
+        {
+            try
+            {
                 *EventHandle = Handle;
-
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 NOTHING;
             }
         }
-        else {
+        else
+        {
             *EventHandle = Handle;
         }
     }
@@ -412,12 +390,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtPulseEvent (
-    IN HANDLE EventHandle,
-    OUT PLONG PreviousState OPTIONAL
-    )
+NtPulseEvent(IN HANDLE EventHandle, OUT PLONG PreviousState OPTIONAL)
 
 /*++
 
@@ -462,10 +437,14 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (ARGUMENT_PRESENT(PreviousState) && (PreviousMode != KernelMode)) {
-        try {
+    if (ARGUMENT_PRESENT(PreviousState) && (PreviousMode != KernelMode))
+    {
+        try
+        {
             ProbeForWriteLong(PreviousState);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -474,12 +453,7 @@ Return Value:
     // Reference event object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(EventHandle,
-                                       EVENT_MODIFY_STATE,
-                                       ExEventObjectType,
-                                       PreviousMode,
-                                       &Event,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(EventHandle, EVENT_MODIFY_STATE, ExEventObjectType, PreviousMode, &Event, NULL);
 
     //
     // If the reference was successful, then pulse the event object,
@@ -489,20 +463,26 @@ Return Value:
     // state value, an access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         PERFINFO_DECLARE_OBJECT(Event);
         State = KePulseEvent((PKEVENT)Event, ExpEventBoost, FALSE);
         ObDereferenceObject(Event);
-        if (ARGUMENT_PRESENT(PreviousState)) {
-            if (PreviousMode != KernelMode) {
-                try {
+        if (ARGUMENT_PRESENT(PreviousState))
+        {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
                     *PreviousState = State;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
             }
-            else {
+            else
+            {
                 *PreviousState = State;
             }
         }
@@ -514,15 +494,10 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtQueryEvent (
-    IN HANDLE EventHandle,
-    IN EVENT_INFORMATION_CLASS EventInformationClass,
-    OUT PVOID EventInformation,
-    IN ULONG EventInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryEvent(IN HANDLE EventHandle, IN EVENT_INFORMATION_CLASS EventInformationClass, OUT PVOID EventInformation,
+             IN ULONG EventInformationLength, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -564,11 +539,13 @@ Return Value:
     // Check argument validity.
     //
 
-    if (EventInformationClass != EventBasicInformation) {
+    if (EventInformationClass != EventBasicInformation)
+    {
         return STATUS_INVALID_INFO_CLASS;
     }
 
-    if (EventInformationLength != sizeof(EVENT_BASIC_INFORMATION)) {
+    if (EventInformationLength != sizeof(EVENT_BASIC_INFORMATION))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
@@ -586,17 +563,20 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
-            ProbeForWrite(EventInformation,
-                          sizeof(EVENT_BASIC_INFORMATION),
-                          sizeof(ULONG));
+            ProbeForWrite(EventInformation, sizeof(EVENT_BASIC_INFORMATION), sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUlong(ReturnLength);
             }
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -605,11 +585,7 @@ Return Value:
     // Reference event object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(EventHandle,
-                                       EVENT_QUERY_STATE,
-                                       ExEventObjectType,
-                                       PreviousMode,
-                                       (PVOID *)&Event,
+    Status = ObReferenceObjectByHandle(EventHandle, EVENT_QUERY_STATE, ExEventObjectType, PreviousMode, (PVOID *)&Event,
                                        NULL);
 
     //
@@ -621,27 +597,34 @@ Return Value:
     // the information structure or length an access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         State = KeReadStateEvent(Event);
         EventType = Event->Header.Type;
         ObDereferenceObject(Event);
 
-        if (PreviousMode != KernelMode) {
-            try {
+        if (PreviousMode != KernelMode)
+        {
+            try
+            {
                 ((PEVENT_BASIC_INFORMATION)EventInformation)->EventType = EventType;
                 ((PEVENT_BASIC_INFORMATION)EventInformation)->EventState = State;
-                if (ARGUMENT_PRESENT(ReturnLength)) {
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
                     *ReturnLength = sizeof(EVENT_BASIC_INFORMATION);
                 }
-
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 NOTHING;
             }
         }
-        else {
+        else
+        {
             ((PEVENT_BASIC_INFORMATION)EventInformation)->EventType = EventType;
             ((PEVENT_BASIC_INFORMATION)EventInformation)->EventState = State;
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(EVENT_BASIC_INFORMATION);
             }
         }
@@ -653,12 +636,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtResetEvent (
-    IN HANDLE EventHandle,
-    OUT PLONG PreviousState OPTIONAL
-    )
+NtResetEvent(IN HANDLE EventHandle, OUT PLONG PreviousState OPTIONAL)
 
 /*++
 
@@ -701,11 +681,15 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if ((ARGUMENT_PRESENT(PreviousState)) && (PreviousMode != KernelMode)) {
+    if ((ARGUMENT_PRESENT(PreviousState)) && (PreviousMode != KernelMode))
+    {
 
-        try {
+        try
+        {
             ProbeForWriteLong(PreviousState);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -714,12 +698,7 @@ Return Value:
     // Reference event object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(EventHandle,
-                                       EVENT_MODIFY_STATE,
-                                       ExEventObjectType,
-                                       PreviousMode,
-                                       &Event,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(EventHandle, EVENT_MODIFY_STATE, ExEventObjectType, PreviousMode, &Event, NULL);
 
     //
     // If the reference was successful, then set the state of the event
@@ -729,21 +708,27 @@ Return Value:
     // to access the previous state value, an access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         PERFINFO_DECLARE_OBJECT(Event);
         State = KeResetEvent((PKEVENT)Event);
         ObDereferenceObject(Event);
 
-        if (ARGUMENT_PRESENT(PreviousState)) {
-            if (PreviousMode != KernelMode) {
-                try {
+        if (ARGUMENT_PRESENT(PreviousState))
+        {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
                     *PreviousState = State;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
             }
-            else {
+            else
+            {
                 *PreviousState = State;
             }
         }
@@ -755,12 +740,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtSetEvent (
-    IN HANDLE EventHandle,
-    OUT PLONG PreviousState OPTIONAL
-    )
+NtSetEvent(IN HANDLE EventHandle, OUT PLONG PreviousState OPTIONAL)
 
 /*++
 
@@ -815,16 +797,17 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    try {
+    try
+    {
 
 #if DBG
-        if ((PreviousMode != KernelMode) &&
-            (ARGUMENT_PRESENT(PreviousState)) &&
-            (PreviousState != (PLONG)1)) {
+        if ((PreviousMode != KernelMode) && (ARGUMENT_PRESENT(PreviousState)) && (PreviousState != (PLONG)1))
+        {
             ProbeForWriteLong(PreviousState);
         }
 #else
-        if ((PreviousMode != KernelMode) && (ARGUMENT_PRESENT(PreviousState))) {
+        if ((PreviousMode != KernelMode) && (ARGUMENT_PRESENT(PreviousState)))
+        {
             ProbeForWriteLong(PreviousState);
         }
 #endif
@@ -834,16 +817,13 @@ Return Value:
         //
 
 #if DBG
-        Status = ObReferenceObjectByHandle(EventHandle,
-                                           EVENT_MODIFY_STATE,
-                                           ExEventObjectType,
-                                           PreviousMode,
-                                           &Event,
+        Status = ObReferenceObjectByHandle(EventHandle, EVENT_MODIFY_STATE, ExEventObjectType, PreviousMode, &Event,
                                            &HandleInfo);
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
-            if ((HandleInfo.HandleAttributes & 1) &&
-                (PreviousState != (PLONG)1)) {
+            if ((HandleInfo.HandleAttributes & 1) && (PreviousState != (PLONG)1))
+            {
 #if 0
                 //
                 // This is a protected handle. If the low bit of PreviousState is NOT set,
@@ -855,23 +835,19 @@ Return Value:
                 PreviousState = NULL;
 #endif
             }
-        } else {
-            if ((KeGetPreviousMode() != KernelMode) &&
-                (EventHandle != NULL) &&
-                ((NtGlobalFlag & FLG_ENABLE_CLOSE_EXCEPTIONS) ||
-                 (PsGetCurrentProcess()->DebugPort != NULL))) {
+        }
+        else
+        {
+            if ((KeGetPreviousMode() != KernelMode) && (EventHandle != NULL) &&
+                ((NtGlobalFlag & FLG_ENABLE_CLOSE_EXCEPTIONS) || (PsGetCurrentProcess()->DebugPort != NULL)))
+            {
 
                 return KeRaiseUserException(STATUS_INVALID_HANDLE);
-
             }
         }
 #else
-        Status = ObReferenceObjectByHandle(EventHandle,
-                                           EVENT_MODIFY_STATE,
-                                           ExEventObjectType,
-                                           PreviousMode,
-                                           &Event,
-                                           NULL);
+        Status =
+            ObReferenceObjectByHandle(EventHandle, EVENT_MODIFY_STATE, ExEventObjectType, PreviousMode, &Event, NULL);
 #endif
 
         //
@@ -882,26 +858,31 @@ Return Value:
         // previous state value, an access violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             PERFINFO_DECLARE_OBJECT(Event);
             State = KeSetEvent((PKEVENT)Event, ExpEventBoost, FALSE);
             ObDereferenceObject(Event);
-            if (ARGUMENT_PRESENT(PreviousState)) {
-                try {
+            if (ARGUMENT_PRESENT(PreviousState))
+            {
+                try
+                {
                     *PreviousState = State;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                 }
             }
         }
 
-    //
-    // If an exception occurs during the probe of the previous state, then
-    // always handle the exception and return the exception code as the status
-    // value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the previous state, then
+        // always handle the exception and return the exception code as the status
+        // value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         return GetExceptionCode();
     }
 
@@ -911,11 +892,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtSetEventBoostPriority (
-    IN HANDLE EventHandle
-    )
+NtSetEventBoostPriority(IN HANDLE EventHandle)
 
 /*++
 
@@ -948,11 +927,7 @@ Return Value:
     // Reference event object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(EventHandle,
-                                       EVENT_MODIFY_STATE,
-                                       ExEventObjectType,
-                                       KeGetPreviousMode(),
-                                       &Event,
+    Status = ObReferenceObjectByHandle(EventHandle, EVENT_MODIFY_STATE, ExEventObjectType, KeGetPreviousMode(), &Event,
                                        NULL);
 
     //
@@ -962,11 +937,14 @@ Return Value:
     // the unwaited thread priority as appropriate.
     //
 
-    if (NT_SUCCESS(Status)) {
-        if (Event->Header.Type == NotificationEvent) {
+    if (NT_SUCCESS(Status))
+    {
+        if (Event->Header.Type == NotificationEvent)
+        {
             Status = STATUS_OBJECT_TYPE_MISMATCH;
-
-        } else {
+        }
+        else
+        {
             KeSetEventBoostPriority(Event, NULL);
         }
 

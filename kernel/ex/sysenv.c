@@ -35,14 +35,15 @@ GUID ExpUnknownDeviceGuid = UNKNOWN_DEVICE_GUID;
 
 #endif
 
-#define ADD_OFFSET(_p,_o) (PVOID)((PUCHAR)(_p) + (_p)->_o)
+#define ADD_OFFSET(_p, _o) (PVOID)((PUCHAR)(_p) + (_p)->_o)
 
 //
 // Signature type
 //
-typedef union _DISK_SIGNATURE_NEW {
-    GUID Guid;          // GPT disk signature
-    ULONG Signature;    // MBR disk signature
+typedef union _DISK_SIGNATURE_NEW
+{
+    GUID Guid;       // GPT disk signature
+    ULONG Signature; // MBR disk signature
 } DISK_SIGNATURE_NEW, *PDISK_SIGNATURE_NEW;
 
 
@@ -51,204 +52,101 @@ typedef union _DISK_SIGNATURE_NEW {
 //
 
 NTSTATUS
-ExpSetBootEntry (
-    IN LOGICAL CreateNewEntry,
-    IN PBOOT_ENTRY BootEntry,
-    OUT PULONG Id OPTIONAL
-    );
+ExpSetBootEntry(IN LOGICAL CreateNewEntry, IN PBOOT_ENTRY BootEntry, OUT PULONG Id OPTIONAL);
 
 #if defined(EFI_NVRAM_ENABLED)
 
 ULONG
-ExpSafeWcslen (
-    IN PWSTR String,
-    IN PWSTR Max
-    );
+ExpSafeWcslen(IN PWSTR String, IN PWSTR Max);
 
 NTSTATUS
-ExpTranslateArcPath (
-    IN PFILE_PATH InputPath,
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength
-    );
+ExpTranslateArcPath(IN PFILE_PATH InputPath, IN ULONG OutputType, OUT PFILE_PATH OutputPath,
+                    IN OUT PULONG OutputPathLength);
 
 NTSTATUS
-ExpTranslateEfiPath (
-    IN PFILE_PATH InputPath,
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength
-    );
+ExpTranslateEfiPath(IN PFILE_PATH InputPath, IN ULONG OutputType, OUT PFILE_PATH OutputPath,
+                    IN OUT PULONG OutputPathLength);
 
 NTSTATUS
-ExpTranslateNtPath (
-    IN PFILE_PATH InputPath,
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength
-    );
+ExpTranslateNtPath(IN PFILE_PATH InputPath, IN ULONG OutputType, OUT PFILE_PATH OutputPath,
+                   IN OUT PULONG OutputPathLength);
 
 LOGICAL
-ExpTranslateBootEntryNameToId (
-    IN PWSTR Name,
-    OUT PULONG Id
-    );
+ExpTranslateBootEntryNameToId(IN PWSTR Name, OUT PULONG Id);
 
 NTSTATUS
-ExpTranslateSymbolicLink (
-    IN PWSTR LinkName,
-    OUT PUNICODE_STRING ResultName
-    );
+ExpTranslateSymbolicLink(IN PWSTR LinkName, OUT PUNICODE_STRING ResultName);
 
 NTSTATUS
-ExpVerifyFilePath (
-    PFILE_PATH FilePath,
-    PUCHAR Max
-    );
+ExpVerifyFilePath(PFILE_PATH FilePath, PUCHAR Max);
 
 LOGICAL
-ExpIsDevicePathForRemovableMedia (
-    EFI_DEVICE_PATH *DevicePath
-    );
+ExpIsDevicePathForRemovableMedia(EFI_DEVICE_PATH *DevicePath);
 
 NTSTATUS
-ExpVerifyWindowsOsOptions (
-    PWINDOWS_OS_OPTIONS WindowsOsOptions,
-    ULONG Length
-    );
+ExpVerifyWindowsOsOptions(PWINDOWS_OS_OPTIONS WindowsOsOptions, ULONG Length);
 
 NTSTATUS
-ExpParseArcPathName (
-    IN PWSTR ArcName,
-    OUT PWSTR *ppDeviceName,
-    OUT PWSTR *ppPathName,
-    OUT PULONG pDeviceNameCount,
-    OUT PBOOLEAN pSignatureFormat
-    );
+ExpParseArcPathName(IN PWSTR ArcName, OUT PWSTR *ppDeviceName, OUT PWSTR *ppPathName, OUT PULONG pDeviceNameCount,
+                    OUT PBOOLEAN pSignatureFormat);
 
 NTSTATUS
-ExpParseSignatureName (
-    IN PWSTR deviceName,
-    IN ULONG deviceNameCount,
-    OUT PDISK_SIGNATURE_NEW diskSignature,
-    OUT PULONG partitionNumber,
-    OUT PULONGLONG partitionStart,
-    OUT PULONGLONG partitionSize,
-    OUT PBOOLEAN GPTpartition,
-    OUT PBOOLEAN longSignature
-    );
+ExpParseSignatureName(IN PWSTR deviceName, IN ULONG deviceNameCount, OUT PDISK_SIGNATURE_NEW diskSignature,
+                      OUT PULONG partitionNumber, OUT PULONGLONG partitionStart, OUT PULONGLONG partitionSize,
+                      OUT PBOOLEAN GPTpartition, OUT PBOOLEAN longSignature);
 
 NTSTATUS
-ExpParseEfiPath (
-    IN EFI_DEVICE_PATH *pDevicePath,
-    OUT HARDDRIVE_DEVICE_PATH **ppHardDriveDP,
-    OUT PWSTR *ppPathName,
-    OUT PBOOLEAN GPTpartition
-    );
+ExpParseEfiPath(IN EFI_DEVICE_PATH *pDevicePath, OUT HARDDRIVE_DEVICE_PATH **ppHardDriveDP, OUT PWSTR *ppPathName,
+                OUT PBOOLEAN GPTpartition);
 
 NTSTATUS
-ExpConvertArcName (
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PWSTR pDeviceName,
-    IN PWSTR pPathName,
-    IN ULONG DeviceNameCount
-    );
+ExpConvertArcName(IN ULONG OutputType, OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength, IN PWSTR pDeviceName,
+                  IN PWSTR pPathName, IN ULONG DeviceNameCount);
 
 NTSTATUS
-ExpConvertSignatureName (
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PWSTR pDeviceName,
-    IN PWSTR pPathName,
-    IN ULONG DeviceNameCount
-    );
+ExpConvertSignatureName(IN ULONG OutputType, OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength,
+                        IN PWSTR pDeviceName, IN PWSTR pPathName, IN ULONG DeviceNameCount);
 
 NTSTATUS
-ExpTranslateHexStringToULONG (
-    IN PWSTR Name,
-    OUT PULONG Number
-    );
+ExpTranslateHexStringToULONG(IN PWSTR Name, OUT PULONG Number);
 
 NTSTATUS
-ExpTranslateHexStringToULONGLONG (
-    IN PWSTR Name,
-    OUT PULONGLONG Number
-    );
+ExpTranslateHexStringToULONGLONG(IN PWSTR Name, OUT PULONGLONG Number);
 
 NTSTATUS
-ExpTranslateHexStringToGUID (
-    IN PWSTR Name,
-    OUT GUID *pGuid
-    );
+ExpTranslateHexStringToGUID(IN PWSTR Name, OUT GUID *pGuid);
 
 NTSTATUS
-ExpCreateOutputEFI (
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PDISK_SIGNATURE_NEW pDiskSignature,
-    IN PULONG pPartitionNumber,
-    IN PULONGLONG pPartitionStart,
-    IN PULONGLONG pPartitionSize,
-    IN PWSTR pPathName,
-    IN BOOLEAN GPTpartition
-    );
+ExpCreateOutputEFI(OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength, IN PDISK_SIGNATURE_NEW pDiskSignature,
+                   IN PULONG pPartitionNumber, IN PULONGLONG pPartitionStart, IN PULONGLONG pPartitionSize,
+                   IN PWSTR pPathName, IN BOOLEAN GPTpartition);
 
 NTSTATUS
-ExpCreateOutputNT (
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PUNICODE_STRING pDeviceNameString,
-    IN PWSTR pPathName
-    );
+ExpCreateOutputNT(OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength, IN PUNICODE_STRING pDeviceNameString,
+                  IN PWSTR pPathName);
 
 NTSTATUS
-ExpCreateOutputARC (
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PUNICODE_STRING pDeviceNameString,
-    IN PWSTR pPathName
-    );
+ExpCreateOutputARC(OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength, IN PUNICODE_STRING pDeviceNameString,
+                   IN PWSTR pPathName);
 
 NTSTATUS
-ExpCreateOutputSIGNATURE (
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PDISK_SIGNATURE_NEW pDiskSignature,
-    IN PULONG pPartitionNumber,
-    IN PULONGLONG pPartitionStart,
-    IN PULONGLONG pPartitionSize,
-    IN PWSTR pPathName,
-    IN BOOLEAN GPTpartition
-    );
+ExpCreateOutputSIGNATURE(OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength,
+                         IN PDISK_SIGNATURE_NEW pDiskSignature, IN PULONG pPartitionNumber,
+                         IN PULONGLONG pPartitionStart, IN PULONGLONG pPartitionSize, IN PWSTR pPathName,
+                         IN BOOLEAN GPTpartition);
 
 NTSTATUS
-ExpFindArcName (
-    IN PUNICODE_STRING pDeviceNameString,
-    OUT PWSTR *pArcName
-    );
+ExpFindArcName(IN PUNICODE_STRING pDeviceNameString, OUT PWSTR *pArcName);
 
 NTSTATUS
-ExpFindDiskSignature (
-    IN PDISK_SIGNATURE_NEW pSignature,
-    IN OUT PULONG pPartitionNumber,
-    OUT PULONG pDiskNumber,
-    OUT PULONGLONG pPartitionStart,
-    OUT PULONGLONG pPartitionSize,
-    IN BOOLEAN GPTpartition
-    );
+ExpFindDiskSignature(IN PDISK_SIGNATURE_NEW pSignature, IN OUT PULONG pPartitionNumber, OUT PULONG pDiskNumber,
+                     OUT PULONGLONG pPartitionStart, OUT PULONGLONG pPartitionSize, IN BOOLEAN GPTpartition);
 
 NTSTATUS
-ExpGetPartitionTableInfo (
-    IN PWSTR pDeviceName,
-    OUT PDRIVE_LAYOUT_INFORMATION_EX *ppDriveLayout
-    );
+ExpGetPartitionTableInfo(IN PWSTR pDeviceName, OUT PDRIVE_LAYOUT_INFORMATION_EX *ppDriveLayout);
 
 #endif // defined(EFI_NVRAM_ENABLED)
-
+
 #if defined(ALLOC_PRAGMA)
 #pragma alloc_text(PAGE, NtQuerySystemEnvironmentValue)
 #pragma alloc_text(PAGE, NtSetSystemEnvironmentValue)
@@ -312,14 +210,10 @@ FAST_MUTEX ExpEnvironmentLock;
 GUID EfiBootVariablesGuid = EFI_GLOBAL_VARIABLE;
 #endif
 
-
+
 NTSTATUS
-NtQuerySystemEnvironmentValue (
-    IN PUNICODE_STRING VariableName,
-    OUT PWSTR VariableValue,
-    IN USHORT ValueLength,
-    OUT PUSHORT ReturnLength OPTIONAL
-    )
+NtQuerySystemEnvironmentValue(IN PUNICODE_STRING VariableName, OUT PWSTR VariableValue, IN USHORT ValueLength,
+                              OUT PUSHORT ReturnLength OPTIONAL)
 
 /*++
 
@@ -387,23 +281,23 @@ Return Value:
     // attempt fails, then return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe and capture the string descriptor for the system
             // environment variable name.
             //
 
-            ProbeForReadSmallStructure((PVOID)VariableName,
-                                       sizeof(UNICODE_STRING),
-                                       sizeof(ULONG));
+            ProbeForReadSmallStructure((PVOID)VariableName, sizeof(UNICODE_STRING), sizeof(ULONG));
 
             UnicodeString = *VariableName;
 
@@ -411,13 +305,12 @@ Return Value:
             // Probe the system environment variable name.
             //
 
-            if (UnicodeString.Length == 0) {
+            if (UnicodeString.Length == 0)
+            {
                 return STATUS_ACCESS_VIOLATION;
             }
 
-            ProbeForRead((PVOID)UnicodeString.Buffer,
-                         UnicodeString.Length,
-                         sizeof(WCHAR));
+            ProbeForRead((PVOID)UnicodeString.Buffer, UnicodeString.Length, sizeof(WCHAR));
 
             //
             // Probe the system environment value buffer.
@@ -429,7 +322,8 @@ Return Value:
             // If argument is present, probe the return length value.
             //
 
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUshort(ReturnLength);
             }
 
@@ -438,14 +332,15 @@ Return Value:
             // environment variable.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                              PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
-                return(STATUS_PRIVILEGE_NOT_HELD);
+            if (HasPrivilege == FALSE)
+            {
+                return (STATUS_PRIVILEGE_NOT_HELD);
             }
-
-        } else {
+        }
+        else
+        {
             UnicodeString = *VariableName;
         }
 
@@ -457,30 +352,32 @@ Return Value:
 
         AnsiLength = RtlUnicodeStringToAnsiSize(&UnicodeString);
         AnsiString.Buffer = (PCHAR)ExAllocatePoolWithTag(NonPagedPool, AnsiLength, 'rvnE');
-        if (AnsiString.Buffer == NULL) {
+        if (AnsiString.Buffer == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         AnsiString.MaximumLength = (USHORT)AnsiLength;
-        NtStatus = RtlUnicodeStringToAnsiString(&AnsiString,
-                                                &UnicodeString,
-                                                FALSE);
+        NtStatus = RtlUnicodeStringToAnsiString(&AnsiString, &UnicodeString, FALSE);
 
-        if (NT_SUCCESS(NtStatus) == FALSE) {
+        if (NT_SUCCESS(NtStatus) == FALSE)
+        {
             ExFreePool((PVOID)AnsiString.Buffer);
             return NtStatus;
         }
 
-    //
-    // If an exception occurs during the read of the variable descriptor,
-    // the read of the variable name, the probe of the variable value, or
-    // the probe of the return length, then always handle the exception,
-    // free the ANSI string buffer if necessary, and return the exception
-    // code as the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        if (AnsiString.Buffer != NULL) {
+        //
+        // If an exception occurs during the read of the variable descriptor,
+        // the read of the variable name, the probe of the variable value, or
+        // the probe of the return length, then always handle the exception,
+        // free the ANSI string buffer if necessary, and return the exception
+        // code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (AnsiString.Buffer != NULL)
+        {
             ExFreePool((PVOID)AnsiString.Buffer);
         }
 
@@ -492,7 +389,8 @@ Return Value:
     //
 
     ValueBuffer = (PCHAR)ExAllocatePoolWithTag(NonPagedPool, MAXIMUM_ENVIRONMENT_VALUE, 'rvnE');
-    if (ValueBuffer == NULL) {
+    if (ValueBuffer == NULL)
+    {
         ExFreePool((PVOID)AnsiString.Buffer);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -503,9 +401,7 @@ Return Value:
 
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
-    ArcStatus = HalGetEnvironmentVariable(AnsiString.Buffer,
-                                          MAXIMUM_ENVIRONMENT_VALUE,
-                                          ValueBuffer);
+    ArcStatus = HalGetEnvironmentVariable(AnsiString.Buffer, MAXIMUM_ENVIRONMENT_VALUE, ValueBuffer);
 
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
     KeLeaveCriticalRegion();
@@ -521,7 +417,8 @@ Return Value:
     // the value buffer and return an unsuccessful status.
     //
 
-    if (ArcStatus != ESUCCESS) {
+    if (ArcStatus != ESUCCESS)
+    {
         ExFreePool((PVOID)ValueBuffer);
         return STATUS_UNSUCCESSFUL;
     }
@@ -532,7 +429,8 @@ Return Value:
     // then return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Initialize an ANSI string descriptor, set the maximum length and
@@ -543,16 +441,15 @@ Return Value:
         RtlInitString(&AnsiString, ValueBuffer);
         UnicodeString.Buffer = (PWSTR)VariableValue;
         UnicodeString.MaximumLength = ValueLength;
-        NtStatus = RtlAnsiStringToUnicodeString(&UnicodeString,
-                                                &AnsiString,
-                                                FALSE);
+        NtStatus = RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, FALSE);
 
         //
         // If argument is present, then write the length of the UNICODE
         // variable value.
         //
 
-        if (ARGUMENT_PRESENT(ReturnLength)) {
+        if (ARGUMENT_PRESENT(ReturnLength))
+        {
             *ReturnLength = UnicodeString.Length;
         }
 
@@ -563,23 +460,21 @@ Return Value:
         ExFreePool((PVOID)ValueBuffer);
         return NtStatus;
 
-    //
-    // If an exception occurs during the write of the variable value, or
-    // the write of the return length, then always handle the exception
-    // and return the exception code as the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the write of the variable value, or
+        // the write of the return length, then always handle the exception
+        // and return the exception code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         ExFreePool((PVOID)ValueBuffer);
         return GetExceptionCode();
     }
 }
-
+
 NTSTATUS
-NtSetSystemEnvironmentValue (
-    IN PUNICODE_STRING VariableName,
-    IN PUNICODE_STRING VariableValue
-    )
+NtSetSystemEnvironmentValue(IN PUNICODE_STRING VariableName, IN PUNICODE_STRING VariableValue)
 
 /*++
 
@@ -641,23 +536,23 @@ Return Value:
     // denied as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe and capture the string descriptor for the system
             // environment variable name.
             //
 
-            ProbeForReadSmallStructure((PVOID)VariableName,
-                                       sizeof(UNICODE_STRING),
-                                       sizeof(ULONG));
+            ProbeForReadSmallStructure((PVOID)VariableName, sizeof(UNICODE_STRING), sizeof(ULONG));
 
             UnicodeString1 = *VariableName;
 
@@ -667,7 +562,8 @@ Return Value:
             // the HAL return code too.
             //
 
-            if (UnicodeString1.Length == 0) {
+            if (UnicodeString1.Length == 0)
+            {
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
 
@@ -675,18 +571,14 @@ Return Value:
             // Probe the system environment variable name.
             //
 
-            ProbeForRead((PVOID)UnicodeString1.Buffer,
-                         UnicodeString1.Length,
-                         sizeof(WCHAR));
+            ProbeForRead((PVOID)UnicodeString1.Buffer, UnicodeString1.Length, sizeof(WCHAR));
 
             //
             // Probe and capture the string descriptor for the system
             // environment variable value.
             //
 
-            ProbeForReadSmallStructure((PVOID)VariableValue,
-                                       sizeof(UNICODE_STRING),
-                                       sizeof(ULONG));
+            ProbeForReadSmallStructure((PVOID)VariableValue, sizeof(UNICODE_STRING), sizeof(ULONG));
 
             UnicodeString2 = *VariableValue;
 
@@ -696,7 +588,8 @@ Return Value:
             // the HAL return code too.
             //
 
-            if (UnicodeString2.Length == 0) {
+            if (UnicodeString2.Length == 0)
+            {
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
 
@@ -704,23 +597,22 @@ Return Value:
             // Probe the system environment variable value.
             //
 
-            ProbeForRead((PVOID)UnicodeString2.Buffer,
-                         UnicodeString2.Length,
-                         sizeof(WCHAR));
+            ProbeForRead((PVOID)UnicodeString2.Buffer, UnicodeString2.Length, sizeof(WCHAR));
 
             //
             // Check if the current thread has the privilege to query a system
             // environment variable.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                              PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
-                return(STATUS_PRIVILEGE_NOT_HELD);
+            if (HasPrivilege == FALSE)
+            {
+                return (STATUS_PRIVILEGE_NOT_HELD);
             }
-
-        } else {
+        }
+        else
+        {
             UnicodeString1 = *VariableName;
             UnicodeString2 = *VariableValue;
         }
@@ -733,16 +625,16 @@ Return Value:
 
         AnsiLength1 = RtlUnicodeStringToAnsiSize(&UnicodeString1);
         AnsiString1.Buffer = (PCHAR)ExAllocatePoolWithTag(NonPagedPool, AnsiLength1, 'rvnE');
-        if (AnsiString1.Buffer == NULL) {
+        if (AnsiString1.Buffer == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         AnsiString1.MaximumLength = (USHORT)AnsiLength1;
-        NtStatus = RtlUnicodeStringToAnsiString(&AnsiString1,
-                                                &UnicodeString1,
-                                                FALSE);
+        NtStatus = RtlUnicodeStringToAnsiString(&AnsiString1, &UnicodeString1, FALSE);
 
-        if (NT_SUCCESS(NtStatus) == FALSE) {
+        if (NT_SUCCESS(NtStatus) == FALSE)
+        {
             ExFreePool((PVOID)AnsiString1.Buffer);
             return NtStatus;
         }
@@ -754,36 +646,39 @@ Return Value:
 
         AnsiLength2 = RtlUnicodeStringToAnsiSize(&UnicodeString2);
         AnsiString2.Buffer = (PCHAR)ExAllocatePoolWithTag(NonPagedPool, AnsiLength2, 'rvnE');
-        if (AnsiString2.Buffer == NULL) {
+        if (AnsiString2.Buffer == NULL)
+        {
             ExFreePool((PVOID)AnsiString1.Buffer);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         AnsiString2.MaximumLength = (USHORT)AnsiLength2;
-        NtStatus = RtlUnicodeStringToAnsiString(&AnsiString2,
-                                                &UnicodeString2,
-                                                FALSE);
+        NtStatus = RtlUnicodeStringToAnsiString(&AnsiString2, &UnicodeString2, FALSE);
 
-        if (NT_SUCCESS(NtStatus) == FALSE) {
+        if (NT_SUCCESS(NtStatus) == FALSE)
+        {
             ExFreePool((PVOID)AnsiString1.Buffer);
             ExFreePool((PVOID)AnsiString2.Buffer);
             return NtStatus;
         }
 
-    //
-    // If an exception occurs during the read of the variable descriptor,
-    // the read of the variable name, the read of the value descriptor, or
-    // the read of the value, then always handle the exception, free the
-    // ANSI string buffers if necessary, and return the exception code as
-    // the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        if (AnsiString1.Buffer != NULL) {
+        //
+        // If an exception occurs during the read of the variable descriptor,
+        // the read of the variable name, the read of the value descriptor, or
+        // the read of the value, then always handle the exception, free the
+        // ANSI string buffers if necessary, and return the exception code as
+        // the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (AnsiString1.Buffer != NULL)
+        {
             ExFreePool((PVOID)AnsiString1.Buffer);
         }
 
-        if (AnsiString2.Buffer != NULL) {
+        if (AnsiString2.Buffer != NULL)
+        {
             ExFreePool((PVOID)AnsiString2.Buffer);
         }
 
@@ -796,8 +691,7 @@ Return Value:
 
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
-    ArcStatus = HalSetEnvironmentVariable(AnsiString1.Buffer,
-                                          AnsiString2.Buffer);
+    ArcStatus = HalSetEnvironmentVariable(AnsiString1.Buffer, AnsiString2.Buffer);
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
     KeLeaveCriticalRegion();
 
@@ -814,22 +708,19 @@ Return Value:
     // insufficient resources.
     //
 
-    if (ArcStatus == ESUCCESS) {
+    if (ArcStatus == ESUCCESS)
+    {
         return STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 }
-
+
 NTSTATUS
-NtQuerySystemEnvironmentValueEx (
-    IN PUNICODE_STRING VariableName,
-    IN LPGUID VendorGuid,
-    OUT PVOID Value,
-    IN OUT PULONG ValueLength,
-    OUT PULONG Attributes OPTIONAL
-    )
+NtQuerySystemEnvironmentValueEx(IN PUNICODE_STRING VariableName, IN LPGUID VendorGuid, OUT PVOID Value,
+                                IN OUT PULONG ValueLength, OUT PULONG Attributes OPTIONAL)
 
 /*++
 
@@ -908,23 +799,23 @@ Return Value:
     // as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe and capture the string descriptor for the system
             // environment variable name.
             //
 
-            ProbeForReadSmallStructure((PVOID)VariableName,
-                                       sizeof(UNICODE_STRING),
-                                       sizeof(ULONG));
+            ProbeForReadSmallStructure((PVOID)VariableName, sizeof(UNICODE_STRING), sizeof(ULONG));
 
             UnicodeString = *VariableName;
 
@@ -932,13 +823,12 @@ Return Value:
             // Probe the system environment variable name.
             //
 
-            if (UnicodeString.Length == 0) {
+            if (UnicodeString.Length == 0)
+            {
                 return STATUS_ACCESS_VIOLATION;
             }
 
-            ProbeForRead((PVOID)UnicodeString.Buffer,
-                         UnicodeString.Length,
-                         sizeof(WCHAR));
+            ProbeForRead((PVOID)UnicodeString.Buffer, UnicodeString.Length, sizeof(WCHAR));
 
             //
             // Probe the vendor GUID.
@@ -958,11 +848,13 @@ Return Value:
             // Probe the system environment value buffer.
             //
 
-            if (!ARGUMENT_PRESENT(Value)) {
+            if (!ARGUMENT_PRESENT(Value))
+            {
                 LocalValueLength = 0;
             }
 
-            if (LocalValueLength != 0) {
+            if (LocalValueLength != 0)
+            {
                 ProbeForWrite((PVOID)Value, LocalValueLength, sizeof(UCHAR));
             }
 
@@ -970,7 +862,8 @@ Return Value:
             // If argument is present, probe the attributes parameter.
             //
 
-            if (ARGUMENT_PRESENT(Attributes)) {
+            if (ARGUMENT_PRESENT(Attributes))
+            {
                 ProbeForWriteUlong(Attributes);
             }
 
@@ -979,16 +872,19 @@ Return Value:
             // environment variable.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
-        } else {
+        }
+        else
+        {
             UnicodeString = *VariableName;
             LocalValueLength = *ValueLength;
-            if (!ARGUMENT_PRESENT(Value)) {
+            if (!ARGUMENT_PRESENT(Value))
+            {
                 LocalValueLength = 0;
             }
         }
@@ -997,7 +893,7 @@ Return Value:
         // Capture the vendor GUID.
         //
 
-        RtlCopyMemory( &LocalGuid, VendorGuid, sizeof(GUID) );
+        RtlCopyMemory(&LocalGuid, VendorGuid, sizeof(GUID));
 
         //
         // Allocate a nonpaged buffer and copy the specified Unicode variable
@@ -1006,27 +902,28 @@ Return Value:
         // terminated, and it might not be already.
         //
 
-        LocalUnicodeBuffer = (PWSTR)ExAllocatePoolWithTag(NonPagedPool,
-                                                          UnicodeString.Length + sizeof(WCHAR),
-                                                          'rvnE');
-        if (LocalUnicodeBuffer == NULL) {
+        LocalUnicodeBuffer = (PWSTR)ExAllocatePoolWithTag(NonPagedPool, UnicodeString.Length + sizeof(WCHAR), 'rvnE');
+        if (LocalUnicodeBuffer == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         RtlCopyMemory(LocalUnicodeBuffer, UnicodeString.Buffer, UnicodeString.Length);
-        LocalUnicodeBuffer[UnicodeString.Length/sizeof(WCHAR)] = 0;
+        LocalUnicodeBuffer[UnicodeString.Length / sizeof(WCHAR)] = 0;
 
-    //
-    // If an exception occurs during the read of the variable descriptor,
-    // the read of the variable name, the read of the vendor GUID, the probe
-    // of the variable value, the read of the input length, or the probe
-    // of the attributes parameter, then always handle the exception,
-    // free the Unicode string buffer if necessary, and return the exception
-    // code as the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        if (LocalUnicodeBuffer != NULL) {
+        //
+        // If an exception occurs during the read of the variable descriptor,
+        // the read of the variable name, the read of the vendor GUID, the probe
+        // of the variable value, the read of the input length, or the probe
+        // of the attributes parameter, then always handle the exception,
+        // free the Unicode string buffer if necessary, and return the exception
+        // code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (LocalUnicodeBuffer != NULL)
+        {
             ExFreePool((PVOID)LocalUnicodeBuffer);
         }
 
@@ -1037,16 +934,17 @@ Return Value:
     // Lock the caller's value buffer in memory.
     //
 
-    if (LocalValueLength != 0) {
-        NtStatus = ExLockUserBuffer(Value,
-                                    LocalValueLength,
-                                    &LockedValueBuffer,
-                                    &LockVariable);
-        if (!NT_SUCCESS(NtStatus)) {
+    if (LocalValueLength != 0)
+    {
+        NtStatus = ExLockUserBuffer(Value, LocalValueLength, &LockedValueBuffer, &LockVariable);
+        if (!NT_SUCCESS(NtStatus))
+        {
             ExFreePool((PVOID)LocalUnicodeBuffer);
             return NtStatus;
         }
-    } else {
+    }
+    else
+    {
         LockedValueBuffer = NULL;
         LockVariable = NULL;
     }
@@ -1058,10 +956,7 @@ Return Value:
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
-    NtStatus = HalGetEnvironmentVariableEx(LocalUnicodeBuffer,
-                                           &LocalGuid,
-                                           LockedValueBuffer,
-                                           &LocalValueLength,
+    NtStatus = HalGetEnvironmentVariableEx(LocalUnicodeBuffer, &LocalGuid, LockedValueBuffer, &LocalValueLength,
                                            &LocalAttributes);
 
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
@@ -1077,7 +972,8 @@ Return Value:
     // Unlock the value buffer.
     //
 
-    if (LockVariable != NULL) {
+    if (LockVariable != NULL)
+    {
         ExUnlockUserBuffer(LockVariable);
     }
 
@@ -1087,7 +983,8 @@ Return Value:
     // then return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Write the length of the variable value.
@@ -1099,34 +996,31 @@ Return Value:
         // If argument is present, then write the variable attributes.
         //
 
-        if (ARGUMENT_PRESENT(Attributes)) {
+        if (ARGUMENT_PRESENT(Attributes))
+        {
             *Attributes = LocalAttributes;
         }
 
         return NtStatus;
 
-    //
-    // If an exception occurs during the write of the return length or
-    // the write of the attributes, then always handle the exception
-    // and return the exception code as the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the write of the return length or
+        // the write of the attributes, then always handle the exception
+        // and return the exception code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtQuerySystemEnvironmentValueEx
-
+
 NTSTATUS
-NtSetSystemEnvironmentValueEx (
-    IN PUNICODE_STRING VariableName,
-    IN LPGUID VendorGuid,
-    IN PVOID Value,
-    IN ULONG ValueLength,
-    IN ULONG Attributes
-    )
+NtSetSystemEnvironmentValueEx(IN PUNICODE_STRING VariableName, IN LPGUID VendorGuid, IN PVOID Value,
+                              IN ULONG ValueLength, IN ULONG Attributes)
 
 /*++
 
@@ -1193,23 +1087,23 @@ Return Value:
     // attempt fails, then return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe and capture the string descriptor for the system
             // environment variable name.
             //
 
-            ProbeForReadSmallStructure((PVOID)VariableName,
-                                       sizeof(UNICODE_STRING),
-                                       sizeof(ULONG));
+            ProbeForReadSmallStructure((PVOID)VariableName, sizeof(UNICODE_STRING), sizeof(ULONG));
 
             UnicodeString = *VariableName;
 
@@ -1217,13 +1111,12 @@ Return Value:
             // Probe the system environment variable name.
             //
 
-            if (UnicodeString.Length == 0) {
+            if (UnicodeString.Length == 0)
+            {
                 return STATUS_ACCESS_VIOLATION;
             }
 
-            ProbeForRead((PVOID)UnicodeString.Buffer,
-                         UnicodeString.Length,
-                         sizeof(WCHAR));
+            ProbeForRead((PVOID)UnicodeString.Buffer, UnicodeString.Length, sizeof(WCHAR));
 
             //
             // Probe the vendor GUID.
@@ -1235,11 +1128,13 @@ Return Value:
             // Probe the system environment value buffer.
             //
 
-            if (!ARGUMENT_PRESENT(Value)) {
+            if (!ARGUMENT_PRESENT(Value))
+            {
                 ValueLength = 0;
             }
 
-            if (ValueLength != 0) {
+            if (ValueLength != 0)
+            {
                 ProbeForWrite((PVOID)Value, ValueLength, sizeof(UCHAR));
             }
 
@@ -1248,15 +1143,18 @@ Return Value:
             // environment variable.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
-        } else {
+        }
+        else
+        {
             UnicodeString = *VariableName;
-            if (!ARGUMENT_PRESENT(Value)) {
+            if (!ARGUMENT_PRESENT(Value))
+            {
                 ValueLength = 0;
             }
         }
@@ -1265,7 +1163,7 @@ Return Value:
         // Capture the vendor GUID.
         //
 
-        RtlCopyMemory( &LocalGuid, VendorGuid, sizeof(GUID) );
+        RtlCopyMemory(&LocalGuid, VendorGuid, sizeof(GUID));
 
         //
         // Allocate a nonpaged buffer and copy the specified Unicode variable
@@ -1274,26 +1172,27 @@ Return Value:
         // terminated, and it might not be already.
         //
 
-        LocalUnicodeBuffer = (PWSTR)ExAllocatePoolWithTag(NonPagedPool,
-                                                          UnicodeString.Length + sizeof(WCHAR),
-                                                          'rvnE');
-        if (LocalUnicodeBuffer == NULL) {
+        LocalUnicodeBuffer = (PWSTR)ExAllocatePoolWithTag(NonPagedPool, UnicodeString.Length + sizeof(WCHAR), 'rvnE');
+        if (LocalUnicodeBuffer == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         RtlCopyMemory(LocalUnicodeBuffer, UnicodeString.Buffer, UnicodeString.Length);
-        LocalUnicodeBuffer[UnicodeString.Length/sizeof(WCHAR)] = 0;
+        LocalUnicodeBuffer[UnicodeString.Length / sizeof(WCHAR)] = 0;
 
-    //
-    // If an exception occurs during the read of the variable descriptor,
-    // the read of the variable name, the read of the vendor GUID or the probe
-    // of the variable value, then always handle the exception, free the Unicode
-    // string buffer if necessary, and return the exception code as the status
-    // value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        if (LocalUnicodeBuffer != NULL) {
+        //
+        // If an exception occurs during the read of the variable descriptor,
+        // the read of the variable name, the read of the vendor GUID or the probe
+        // of the variable value, then always handle the exception, free the Unicode
+        // string buffer if necessary, and return the exception code as the status
+        // value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (LocalUnicodeBuffer != NULL)
+        {
             ExFreePool((PVOID)LocalUnicodeBuffer);
         }
 
@@ -1304,16 +1203,17 @@ Return Value:
     // Lock the caller's value buffer in memory.
     //
 
-    if (ValueLength != 0) {
-        NtStatus = ExLockUserBuffer(Value,
-                                    ValueLength,
-                                    &LockedValueBuffer,
-                                    &LockVariable);
-        if (!NT_SUCCESS(NtStatus)) {
+    if (ValueLength != 0)
+    {
+        NtStatus = ExLockUserBuffer(Value, ValueLength, &LockedValueBuffer, &LockVariable);
+        if (!NT_SUCCESS(NtStatus))
+        {
             ExFreePool((PVOID)LocalUnicodeBuffer);
             return NtStatus;
         }
-    } else {
+    }
+    else
+    {
         LockedValueBuffer = NULL;
         LockVariable = NULL;
     }
@@ -1325,11 +1225,7 @@ Return Value:
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
-    NtStatus = HalSetEnvironmentVariableEx(LocalUnicodeBuffer,
-                                           &LocalGuid,
-                                           LockedValueBuffer,
-                                           ValueLength,
-                                           Attributes);
+    NtStatus = HalSetEnvironmentVariableEx(LocalUnicodeBuffer, &LocalGuid, LockedValueBuffer, ValueLength, Attributes);
 
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
     KeLeaveCriticalRegion();
@@ -1344,7 +1240,8 @@ Return Value:
     // Unlock the value buffer.
     //
 
-    if (LockVariable != NULL) {
+    if (LockVariable != NULL)
+    {
         ExUnlockUserBuffer(LockVariable);
     }
 
@@ -1353,13 +1250,9 @@ Return Value:
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtSetSystemEnvironmentValueEx
-
+
 NTSTATUS
-NtEnumerateSystemEnvironmentValuesEx (
-    IN ULONG InformationClass,
-    OUT PVOID Buffer,
-    IN OUT PULONG BufferLength
-    )
+NtEnumerateSystemEnvironmentValuesEx(IN ULONG InformationClass, OUT PVOID Buffer, IN OUT PULONG BufferLength)
 
 /*++
 
@@ -1417,14 +1310,16 @@ Return Value:
     // return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe and capture the input buffer length.
@@ -1438,11 +1333,13 @@ Return Value:
             // Probe the return buffer.
             //
 
-            if (!ARGUMENT_PRESENT(Buffer)) {
+            if (!ARGUMENT_PRESENT(Buffer))
+            {
                 LocalBufferLength = 0;
             }
 
-            if (LocalBufferLength != 0) {
+            if (LocalBufferLength != 0)
+            {
                 ProbeForWrite((PVOID)Buffer, LocalBufferLength, sizeof(ULONG));
             }
 
@@ -1451,26 +1348,30 @@ Return Value:
             // system environment variables.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
-        } else {
+        }
+        else
+        {
             LocalBufferLength = *BufferLength;
-            if (!ARGUMENT_PRESENT(Buffer)) {
+            if (!ARGUMENT_PRESENT(Buffer))
+            {
                 LocalBufferLength = 0;
             }
         }
 
-    //
-    // If an exception occurs during the probe of the return buffer or the
-    // read of the input length, then always handle the exception and return
-    // the exception code as the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the return buffer or the
+        // read of the input length, then always handle the exception and return
+        // the exception code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -1478,15 +1379,16 @@ Return Value:
     // Lock the caller's return buffer in memory.
     //
 
-    if (LocalBufferLength != 0) {
-        NtStatus = ExLockUserBuffer(Buffer,
-                                    LocalBufferLength,
-                                    &LockedBuffer,
-                                    &LockVariable);
-        if (!NT_SUCCESS(NtStatus)) {
+    if (LocalBufferLength != 0)
+    {
+        NtStatus = ExLockUserBuffer(Buffer, LocalBufferLength, &LockedBuffer, &LockVariable);
+        if (!NT_SUCCESS(NtStatus))
+        {
             return NtStatus;
         }
-    } else {
+    }
+    else
+    {
         LockedBuffer = NULL;
         LockVariable = NULL;
     }
@@ -1498,9 +1400,7 @@ Return Value:
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
-    NtStatus = HalEnumerateEnvironmentVariablesEx(InformationClass,
-                                                  LockedBuffer,
-                                                  &LocalBufferLength);
+    NtStatus = HalEnumerateEnvironmentVariablesEx(InformationClass, LockedBuffer, &LocalBufferLength);
 
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
     KeLeaveCriticalRegion();
@@ -1509,7 +1409,8 @@ Return Value:
     // Unlock the return buffer.
     //
 
-    if (LockVariable != NULL) {
+    if (LockVariable != NULL)
+    {
         ExUnlockUserBuffer(LockVariable);
     }
 
@@ -1519,35 +1420,34 @@ Return Value:
     // service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Write the length of the returned data.
         //
 
         *BufferLength = LocalBufferLength;
-    
+
         return NtStatus;
 
-    //
-    // If an exception occurs during the write of the return length, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the write of the return length, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtEnumerateSystemEnvironmentValuesEx
-
+
 NTSTATUS
-NtAddBootEntry (
-    IN PBOOT_ENTRY BootEntry,
-    OUT PULONG Id OPTIONAL
-    )
+NtAddBootEntry(IN PBOOT_ENTRY BootEntry, OUT PULONG Id OPTIONAL)
 
 /*++
 
@@ -1581,11 +1481,9 @@ Return Value:
     return ExpSetBootEntry(TRUE, BootEntry, Id);
 
 } // NtAddBootEntry
-
+
 NTSTATUS
-NtDeleteBootEntry (
-    IN ULONG Id
-    )
+NtDeleteBootEntry(IN ULONG Id)
 
 /*++
 
@@ -1628,22 +1526,24 @@ Return Value:
     // Verify that the input identifier is in range.
     //
 
-    if (Id > MAXUSHORT) {
+    if (Id > MAXUSHORT)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Check if the current thread has the privilege to query the
         // system boot order list.
         //
 
-        HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                              PreviousMode);
+        HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-        if (HasPrivilege == FALSE) {
+        if (HasPrivilege == FALSE)
+        {
             return STATUS_PRIVILEGE_NOT_HELD;
         }
     }
@@ -1655,25 +1555,19 @@ Return Value:
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
-    swprintf( idString, L"Boot%04x", Id);
+    swprintf(idString, L"Boot%04x", Id);
     length = 0;
-    NtStatus = HalGetEnvironmentVariableEx(idString,
-                                           &EfiBootVariablesGuid,
-                                           NULL,
-                                           &length,
-                                           NULL);
-    if ((NtStatus == STATUS_SUCCESS) || (NtStatus == STATUS_BUFFER_TOO_SMALL)) {
+    NtStatus = HalGetEnvironmentVariableEx(idString, &EfiBootVariablesGuid, NULL, &length, NULL);
+    if ((NtStatus == STATUS_SUCCESS) || (NtStatus == STATUS_BUFFER_TOO_SMALL))
+    {
 
         //
         // Delete the boot entry environment variable by writing a zero length
         // value.
         //
 
-        NtStatus = HalSetEnvironmentVariableEx(idString,
-                                               &EfiBootVariablesGuid,
-                                               NULL,
-                                               0,
-                                               VARIABLE_ATTRIBUTE_NON_VOLATILE);
+        NtStatus =
+            HalSetEnvironmentVariableEx(idString, &EfiBootVariablesGuid, NULL, 0, VARIABLE_ATTRIBUTE_NON_VOLATILE);
     }
 
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
@@ -1684,11 +1578,9 @@ Return Value:
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtDeleteBootEntry
-
+
 NTSTATUS
-NtModifyBootEntry (
-    IN PBOOT_ENTRY BootEntry
-    )
+NtModifyBootEntry(IN PBOOT_ENTRY BootEntry)
 
 /*++
 
@@ -1721,12 +1613,9 @@ Return Value:
     return ExpSetBootEntry(FALSE, BootEntry, NULL);
 
 } // NtModifyBootEntry
-
+
 NTSTATUS
-NtEnumerateBootEntries (
-    OUT PVOID Buffer,
-    IN OUT PULONG BufferLength
-    )
+NtEnumerateBootEntries(OUT PVOID Buffer, IN OUT PULONG BufferLength)
 
 /*++
 
@@ -1788,7 +1677,8 @@ Return Value:
     // Verify that the input buffer is properly aligned.
     //
 
-    if ( ALIGN_DOWN_POINTER(Buffer, ULONG) != Buffer ) {
+    if (ALIGN_DOWN_POINTER(Buffer, ULONG) != Buffer)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -1798,14 +1688,16 @@ Return Value:
     // return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe and capture the input buffer length.
@@ -1819,11 +1711,13 @@ Return Value:
             // Probe the return buffer.
             //
 
-            if (!ARGUMENT_PRESENT(Buffer)) {
+            if (!ARGUMENT_PRESENT(Buffer))
+            {
                 LocalBufferLength = 0;
             }
 
-            if (LocalBufferLength != 0) {
+            if (LocalBufferLength != 0)
+            {
                 ProbeForWrite((PVOID)Buffer, LocalBufferLength, sizeof(ULONG));
             }
 
@@ -1832,26 +1726,30 @@ Return Value:
             // system boot entry list.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
-        } else {
+        }
+        else
+        {
             LocalBufferLength = *BufferLength;
-            if (!ARGUMENT_PRESENT(Buffer)) {
+            if (!ARGUMENT_PRESENT(Buffer))
+            {
                 LocalBufferLength = 0;
             }
         }
 
-    //
-    // If an exception occurs during the probe of the return buffer or the
-    // read of the input length, then always handle the exception and return
-    // the exception code as the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the return buffer or the
+        // read of the input length, then always handle the exception and return
+        // the exception code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -1859,15 +1757,16 @@ Return Value:
     // Lock the caller's return buffer in memory.
     //
 
-    if (LocalBufferLength != 0) {
-        NtStatus = ExLockUserBuffer(Buffer,
-                                    LocalBufferLength,
-                                    &LockedBuffer,
-                                    &LockVariable);
-        if (!NT_SUCCESS(NtStatus)) {
+    if (LocalBufferLength != 0)
+    {
+        NtStatus = ExLockUserBuffer(Buffer, LocalBufferLength, &LockedBuffer, &LockVariable);
+        if (!NT_SUCCESS(NtStatus))
+        {
             return NtStatus;
         }
-    } else {
+    }
+    else
+    {
         LockedBuffer = NULL;
         LockVariable = NULL;
     }
@@ -1881,7 +1780,8 @@ Return Value:
 
     filling = (LOGICAL)(remainingLength != 0);
     fillStatus = STATUS_SUCCESS;
-    if ( !filling ) {
+    if (!filling)
+    {
         fillStatus = STATUS_BUFFER_TOO_SMALL;
     }
 
@@ -1895,26 +1795,30 @@ Return Value:
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
     variableBufferLength = 0;
-    NtStatus = HalEnumerateEnvironmentVariablesEx(VARIABLE_INFORMATION_VALUES,
-                                                  NULL,
-                                                  &variableBufferLength);
-    if (NtStatus != STATUS_BUFFER_TOO_SMALL) {
+    NtStatus = HalEnumerateEnvironmentVariablesEx(VARIABLE_INFORMATION_VALUES, NULL, &variableBufferLength);
+    if (NtStatus != STATUS_BUFFER_TOO_SMALL)
+    {
         variableBufferLength = 0;
-    } else {
+    }
+    else
+    {
         variableBuffer = ExAllocatePoolWithTag(NonPagedPool, variableBufferLength, 'rvnE');
-        if (variableBuffer == NULL) {
+        if (variableBuffer == NULL)
+        {
             NtStatus = STATUS_INSUFFICIENT_RESOURCES;
-        } else {
-            NtStatus = HalEnumerateEnvironmentVariablesEx(VARIABLE_INFORMATION_VALUES,
-                                                          variableBuffer,
-                                                          &variableBufferLength);
+        }
+        else
+        {
+            NtStatus =
+                HalEnumerateEnvironmentVariablesEx(VARIABLE_INFORMATION_VALUES, variableBuffer, &variableBufferLength);
         }
     }
 
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
     KeLeaveCriticalRegion();
 
-    if ((NtStatus != STATUS_SUCCESS) || (variableBufferLength == 0)) {
+    if ((NtStatus != STATUS_SUCCESS) || (variableBufferLength == 0))
+    {
         goto done;
     }
 
@@ -1927,13 +1831,15 @@ Return Value:
     variablePtr = variableBuffer;
     maxVariablePtr = (PWSTR)variableBuffer + variableBufferLength;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         ULONG id;
 
         if ((memcmp(&variablePtr->VendorGuid, &EfiBootVariablesGuid, sizeof(GUID)) == 0) &&
             ExpTranslateBootEntryNameToId(variablePtr->Name, &id) &&
-            (variablePtr->ValueLength >= sizeof(EFI_LOAD_OPTION))) {
+            (variablePtr->ValueLength >= sizeof(EFI_LOAD_OPTION)))
+        {
 
             PEFI_LOAD_OPTION efiLoadOption;
             ULONG descriptionLength;
@@ -1943,16 +1849,15 @@ Return Value:
             efiLoadOption = ADD_OFFSET(variablePtr, ValueOffset);
             filePathLength = efiLoadOption->FilePathLength;
             descriptionLength = ExpSafeWcslen(efiLoadOption->Description, maxVariablePtr);
-            if ( descriptionLength != 0xffffffff ) {
+            if (descriptionLength != 0xffffffff)
+            {
                 descriptionLength = (descriptionLength + 1) * sizeof(WCHAR);
             }
-            minimumLength = FIELD_OFFSET(EFI_LOAD_OPTION, Description) +
-                            descriptionLength +
-                            filePathLength;
+            minimumLength = FIELD_OFFSET(EFI_LOAD_OPTION, Description) + descriptionLength + filePathLength;
 
-            if ((descriptionLength != 0xffffffff) &&
-                (filePathLength < variablePtr->ValueLength) &&
-                (variablePtr->ValueLength >= minimumLength)) {
+            if ((descriptionLength != 0xffffffff) && (filePathLength < variablePtr->ValueLength) &&
+                (variablePtr->ValueLength >= minimumLength))
+            {
 
                 EFI_DEVICE_PATH *dp;
                 PUCHAR options;
@@ -1966,19 +1871,23 @@ Return Value:
                 options = (PUCHAR)dp + filePathLength;
                 optionsLength = variablePtr->ValueLength - minimumLength;
 
-                if (ALIGN_UP_POINTER(currentPtr, ULONG) != currentPtr) {
-                    PUCHAR alignedPtr = ALIGN_UP_POINTER( currentPtr, ULONG );
+                if (ALIGN_UP_POINTER(currentPtr, ULONG) != currentPtr)
+                {
+                    PUCHAR alignedPtr = ALIGN_UP_POINTER(currentPtr, ULONG);
                     ULONG fill = (ULONG)(alignedPtr - (PUCHAR)currentPtr);
                     currentPtr = (PBOOT_ENTRY_LIST)alignedPtr;
-                    if (remainingLength < fill) {
+                    if (remainingLength < fill)
+                    {
                         filling = FALSE;
                         remainingLength = 0;
                         fillStatus = STATUS_BUFFER_TOO_SMALL;
-                    } else {
+                    }
+                    else
+                    {
                         remainingLength -= fill;
                     }
                 }
-        
+
                 requiredLength = FIELD_OFFSET(BOOT_ENTRY, OsOptions);
                 requiredLength += optionsLength;
                 requiredLength = ALIGN_UP(requiredLength, ULONG);
@@ -1994,18 +1903,21 @@ Return Value:
                 actualLength = requiredLength;
                 requiredLength += FIELD_OFFSET(BOOT_ENTRY_LIST, BootEntry);
 
-                if (remainingLength < requiredLength) {
-        
+                if (remainingLength < requiredLength)
+                {
+
                     remainingLength = 0;
                     filling = FALSE;
                     fillStatus = STATUS_BUFFER_TOO_SMALL;
-        
-                } else {
-        
+                }
+                else
+                {
+
                     remainingLength -= requiredLength;
                 }
 
-                if ( filling ) {
+                if (filling)
+                {
 
                     PWCHAR friendlyName;
                     PFILE_PATH bootFilePath;
@@ -2017,20 +1929,21 @@ Return Value:
                     bootEntry->Length = actualLength;
                     bootEntry->Id = id;
                     bootEntry->Attributes = 0;
-                    if ((efiLoadOption->Attributes & LOAD_OPTION_ACTIVE) != 0) {
+                    if ((efiLoadOption->Attributes & LOAD_OPTION_ACTIVE) != 0)
+                    {
                         bootEntry->Attributes = BOOT_ENTRY_ATTRIBUTE_ACTIVE;
                     }
                     bootEntry->FriendlyNameOffset = friendlyNameOffset;
                     bootEntry->BootFilePathOffset = bootFilePathOffset;
                     bootEntry->OsOptionsLength = optionsLength;
                     memcpy(bootEntry->OsOptions, options, optionsLength);
-                    if (optionsLength > FIELD_OFFSET(WINDOWS_OS_OPTIONS,OsLoadOptions)) {
+                    if (optionsLength > FIELD_OFFSET(WINDOWS_OS_OPTIONS, OsLoadOptions))
+                    {
                         PWINDOWS_OS_OPTIONS windowsOsOptions;
                         windowsOsOptions = (PWINDOWS_OS_OPTIONS)bootEntry->OsOptions;
-                        if ((strcmp((char *)windowsOsOptions->Signature,
-                                    WINDOWS_OS_OPTIONS_SIGNATURE) == 0) &&
-                            NT_SUCCESS(ExpVerifyWindowsOsOptions(windowsOsOptions,
-                                                                 optionsLength))) {
+                        if ((strcmp((char *)windowsOsOptions->Signature, WINDOWS_OS_OPTIONS_SIGNATURE) == 0) &&
+                            NT_SUCCESS(ExpVerifyWindowsOsOptions(windowsOsOptions, optionsLength)))
+                        {
                             bootEntry->Attributes |= BOOT_ENTRY_ATTRIBUTE_WINDOWS;
                         }
                     }
@@ -2041,15 +1954,15 @@ Return Value:
                     bootFilePath->Length = FIELD_OFFSET(FILE_PATH, FilePath) + filePathLength;
                     bootFilePath->Type = FILE_PATH_TYPE_EFI;
                     memcpy(bootFilePath->FilePath, dp, filePathLength);
-                    if (NT_SUCCESS(ExpVerifyFilePath(bootFilePath,
-                                                     ADD_OFFSET(bootFilePath, Length))) &&
-                        ExpIsDevicePathForRemovableMedia(dp)) {
+                    if (NT_SUCCESS(ExpVerifyFilePath(bootFilePath, ADD_OFFSET(bootFilePath, Length))) &&
+                        ExpIsDevicePathForRemovableMedia(dp))
+                    {
                         bootEntry->Attributes |= BOOT_ENTRY_ATTRIBUTE_REMOVABLE_MEDIA;
                     }
 
-                    if ( previousEntry != NULL ) {
-                        previousEntry->NextEntryOffset =
-                                    (ULONG)((PUCHAR)currentPtr - (PUCHAR)previousEntry);
+                    if (previousEntry != NULL)
+                    {
+                        previousEntry->NextEntryOffset = (ULONG)((PUCHAR)currentPtr - (PUCHAR)previousEntry);
                     }
                     previousEntry = currentPtr;
                 }
@@ -2058,13 +1971,15 @@ Return Value:
             }
         }
 
-        if (variablePtr->NextEntryOffset == 0) {
+        if (variablePtr->NextEntryOffset == 0)
+        {
             break;
         }
         variablePtr = ADD_OFFSET(variablePtr, NextEntryOffset);
     }
 
-    if ( previousEntry != NULL ) {
+    if (previousEntry != NULL)
+    {
         previousEntry->NextEntryOffset = 0;
     }
 
@@ -2074,7 +1989,8 @@ done:
     // Free allocated pool.
     //
 
-    if (variableBuffer != NULL) {
+    if (variableBuffer != NULL)
+    {
         ExFreePool(variableBuffer);
     }
 
@@ -2082,7 +1998,8 @@ done:
     // Unlock the return buffer.
     //
 
-    if (LockVariable != NULL) {
+    if (LockVariable != NULL)
+    {
         ExUnlockUserBuffer(LockVariable);
     }
 
@@ -2091,7 +2008,8 @@ done:
     // status as the final status.
     //
 
-    if (NT_SUCCESS(NtStatus)) {
+    if (NT_SUCCESS(NtStatus))
+    {
         NtStatus = fillStatus;
     }
 
@@ -2101,35 +2019,34 @@ done:
     // service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Write the length of the returned data.
         //
 
         *BufferLength = (ULONG)((PUCHAR)currentPtr - (PUCHAR)LockedBuffer);
-    
+
         return NtStatus;
 
-    //
-    // If an exception occurs during the write of the return length, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the write of the return length, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtEnumerateBootEntries
-
+
 NTSTATUS
-NtQueryBootEntryOrder (
-    OUT PULONG Ids,
-    IN OUT PULONG Count
-    )
+NtQueryBootEntryOrder(OUT PULONG Ids, IN OUT PULONG Count)
 
 /*++
 
@@ -2184,14 +2101,16 @@ Return Value:
     // return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe and capture the input buffer length.
@@ -2205,11 +2124,13 @@ Return Value:
             // Probe the return buffer.
             //
 
-            if (!ARGUMENT_PRESENT(Ids)) {
+            if (!ARGUMENT_PRESENT(Ids))
+            {
                 LocalBufferLength = 0;
             }
 
-            if (LocalBufferLength != 0) {
+            if (LocalBufferLength != 0)
+            {
                 ProbeForWrite((PVOID)Ids, LocalBufferLength, sizeof(ULONG));
             }
 
@@ -2218,26 +2139,30 @@ Return Value:
             // system boot order list.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
-        } else {
+        }
+        else
+        {
             LocalBufferLength = *Count * sizeof(ULONG);
-            if (!ARGUMENT_PRESENT(Ids)) {
+            if (!ARGUMENT_PRESENT(Ids))
+            {
                 LocalBufferLength = 0;
             }
         }
 
-    //
-    // If an exception occurs during the probe of the return buffer or the
-    // read of the input length, then always handle the exception and return
-    // the exception code as the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the return buffer or the
+        // read of the input length, then always handle the exception and return
+        // the exception code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -2245,15 +2170,16 @@ Return Value:
     // Lock the caller's return buffer in memory.
     //
 
-    if (LocalBufferLength != 0) {
-        NtStatus = ExLockUserBuffer(Ids,
-                                    LocalBufferLength,
-                                    &LockedBuffer,
-                                    &LockVariable);
-        if (!NT_SUCCESS(NtStatus)) {
+    if (LocalBufferLength != 0)
+    {
+        NtStatus = ExLockUserBuffer(Ids, LocalBufferLength, &LockedBuffer, &LockVariable);
+        if (!NT_SUCCESS(NtStatus))
+        {
             return NtStatus;
         }
-    } else {
+    }
+    else
+    {
         LockedBuffer = NULL;
         LockVariable = NULL;
     }
@@ -2272,11 +2198,7 @@ Return Value:
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
-    NtStatus = HalGetEnvironmentVariableEx(L"BootOrder",
-                                           &EfiBootVariablesGuid,
-                                           LockedBuffer,
-                                           &LocalBufferLength,
-                                           NULL);
+    NtStatus = HalGetEnvironmentVariableEx(L"BootOrder", &EfiBootVariablesGuid, LockedBuffer, &LocalBufferLength, NULL);
 
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
     KeLeaveCriticalRegion();
@@ -2287,17 +2209,20 @@ Return Value:
     // end of the array to avoid stomping on needed data.
     //
 
-    if (NT_SUCCESS(NtStatus)) {
+    if (NT_SUCCESS(NtStatus))
+    {
 
         ULONG count = LocalBufferLength / sizeof(USHORT);
         PUSHORT sp = &((PUSHORT)LockedBuffer)[count - 1];
         PULONG lp = &((PULONG)LockedBuffer)[count - 1];
-        while (count > 0) {
+        while (count > 0)
+        {
             *lp-- = *sp--;
             count--;
         }
-
-    } else if (NtStatus == STATUS_VARIABLE_NOT_FOUND) {
+    }
+    else if (NtStatus == STATUS_VARIABLE_NOT_FOUND)
+    {
 
         //
         // The BootOrder variable doesn't exist. This is unusual,
@@ -2314,7 +2239,8 @@ Return Value:
     // Unlock the buffer.
     //
 
-    if (LockVariable != NULL) {
+    if (LockVariable != NULL)
+    {
         ExUnlockUserBuffer(LockVariable);
     }
 
@@ -2324,7 +2250,8 @@ Return Value:
     // service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Write the length of the returned data.
@@ -2334,25 +2261,23 @@ Return Value:
 
         return NtStatus;
 
-    //
-    // If an exception occurs during the write of the return length, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the write of the return length, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtQueryBootEntryOrder
-
+
 NTSTATUS
-NtSetBootEntryOrder (
-    IN PULONG Ids,
-    IN ULONG Count
-    )
+NtSetBootEntryOrder(IN PULONG Ids, IN ULONG Count)
 
 /*++
 
@@ -2400,7 +2325,8 @@ Return Value:
     // Calculate the length in bytes of the buffer.
     //
 
-    if ((Count == 0) || (Count > MAXULONG/sizeof(ULONG))) {
+    if ((Count == 0) || (Count > MAXULONG / sizeof(ULONG)))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -2411,7 +2337,8 @@ Return Value:
     //
 
     shortBuffer = ExAllocatePoolWithTag(NonPagedPool, Count * sizeof(USHORT), 'rvnE');
-    if (shortBuffer == NULL) {
+    if (shortBuffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2421,14 +2348,16 @@ Return Value:
     // service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe the input buffer.
@@ -2441,10 +2370,10 @@ Return Value:
             // system boot order list.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 ExFreePool(shortBuffer);
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
@@ -2455,21 +2384,24 @@ Return Value:
         // the local buffer.
         //
 
-        for ( i = 0; i < Count; i++ ) {
-            if (Ids[i] > MAXUSHORT) {
+        for (i = 0; i < Count; i++)
+        {
+            if (Ids[i] > MAXUSHORT)
+            {
                 ExFreePool(shortBuffer);
                 return STATUS_INVALID_PARAMETER;
             }
             shortBuffer[i] = (USHORT)Ids[i];
         }
 
-    //
-    // If an exception occurs during the probe of the input buffer, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the input buffer, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         ExFreePool(shortBuffer);
         return GetExceptionCode();
     }
@@ -2481,10 +2413,7 @@ Return Value:
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
-    NtStatus = HalSetEnvironmentVariableEx(L"BootOrder",
-                                           &EfiBootVariablesGuid,
-                                           shortBuffer,
-                                           Count * sizeof(USHORT),
+    NtStatus = HalSetEnvironmentVariableEx(L"BootOrder", &EfiBootVariablesGuid, shortBuffer, Count * sizeof(USHORT),
                                            VARIABLE_ATTRIBUTE_NON_VOLATILE);
 
     ExReleaseFastMutexUnsafe(&ExpEnvironmentLock);
@@ -2497,12 +2426,9 @@ Return Value:
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtSetBootEntryOrder
-
+
 NTSTATUS
-NtQueryBootOptions (
-    OUT PBOOT_OPTIONS BootOptions,
-    IN OUT PULONG BootOptionsLength
-    )
+NtQueryBootOptions(OUT PBOOT_OPTIONS BootOptions, IN OUT PULONG BootOptionsLength)
 
 /*++
 
@@ -2560,14 +2486,16 @@ Return Value:
     // return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe and capture the input buffer length.
@@ -2581,11 +2509,13 @@ Return Value:
             // Probe the return buffer.
             //
 
-            if (!ARGUMENT_PRESENT(BootOptions)) {
+            if (!ARGUMENT_PRESENT(BootOptions))
+            {
                 LocalBufferLength = 0;
             }
 
-            if (LocalBufferLength != 0) {
+            if (LocalBufferLength != 0)
+            {
                 ProbeForWrite((PVOID)BootOptions, LocalBufferLength, sizeof(ULONG));
             }
 
@@ -2594,26 +2524,30 @@ Return Value:
             // system boot order list.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
-        } else {
+        }
+        else
+        {
             LocalBufferLength = *BootOptionsLength;
-            if (!ARGUMENT_PRESENT(BootOptions)) {
+            if (!ARGUMENT_PRESENT(BootOptions))
+            {
                 LocalBufferLength = 0;
             }
         }
 
-    //
-    // If an exception occurs during the probe of the return buffer or the
-    // read of the input length, then always handle the exception and return
-    // the exception code as the status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the return buffer or the
+        // read of the input length, then always handle the exception and return
+        // the exception code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -2623,9 +2557,10 @@ Return Value:
     // length up front.
     //
 
-    requiredLength = FIELD_OFFSET(BOOT_OPTIONS,HeadlessRedirection) + sizeof(WCHAR);
+    requiredLength = FIELD_OFFSET(BOOT_OPTIONS, HeadlessRedirection) + sizeof(WCHAR);
 
-    if (LocalBufferLength < requiredLength) {
+    if (LocalBufferLength < requiredLength)
+    {
         NtStatus = STATUS_BUFFER_TOO_SMALL;
         goto done;
     }
@@ -2646,23 +2581,25 @@ Return Value:
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
     VariableLength = 4;
-    NtStatus = HalGetEnvironmentVariableEx(L"Timeout",
-                                           &EfiBootVariablesGuid,
-                                           &Timeout,
-                                           &VariableLength,
-                                           NULL);
+    NtStatus = HalGetEnvironmentVariableEx(L"Timeout", &EfiBootVariablesGuid, &Timeout, &VariableLength, NULL);
 
-    switch (NtStatus) {
-    
+    switch (NtStatus)
+    {
+
     case STATUS_SUCCESS:
-        if (VariableLength > 2) {
-            if (Timeout == 0xffffffff) {
+        if (VariableLength > 2)
+        {
+            if (Timeout == 0xffffffff)
+            {
                 Timeout = 0xffff;
-            } else if (Timeout > 0xffff) {
+            }
+            else if (Timeout > 0xffff)
+            {
                 Timeout = 0xfffe;
             }
         }
-        if ( Timeout == 0xffff ) {
+        if (Timeout == 0xffff)
+        {
             Timeout = 0xffffffff;
         }
         break;
@@ -2680,16 +2617,14 @@ Return Value:
     }
 
     VariableLength = 4;
-    NtStatus = HalGetEnvironmentVariableEx(L"BootCurrent",
-                                           &EfiBootVariablesGuid,
-                                           &BootCurrent,
-                                           &VariableLength,
-                                           NULL);
+    NtStatus = HalGetEnvironmentVariableEx(L"BootCurrent", &EfiBootVariablesGuid, &BootCurrent, &VariableLength, NULL);
 
-    switch (NtStatus) {
-    
+    switch (NtStatus)
+    {
+
     case STATUS_SUCCESS:
-        if (VariableLength > 2) {
+        if (VariableLength > 2)
+        {
             BootCurrent &= 0xffff;
         }
         break;
@@ -2704,16 +2639,14 @@ Return Value:
     }
 
     VariableLength = 2;
-    NtStatus = HalGetEnvironmentVariableEx(L"BootNext",
-                                           &EfiBootVariablesGuid,
-                                           &BootNext,
-                                           &VariableLength,
-                                           NULL);
+    NtStatus = HalGetEnvironmentVariableEx(L"BootNext", &EfiBootVariablesGuid, &BootNext, &VariableLength, NULL);
 
-    switch (NtStatus) {
-    
+    switch (NtStatus)
+    {
+
     case STATUS_SUCCESS:
-        if (VariableLength > 2) {
+        if (VariableLength > 2)
+        {
             BootNext &= 0xffff;
         }
         break;
@@ -2741,15 +2674,17 @@ done:
     // exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Write the output buffer.
         //
 
-        if ((NtStatus == STATUS_SUCCESS) && ARGUMENT_PRESENT(BootOptions)) {
+        if ((NtStatus == STATUS_SUCCESS) && ARGUMENT_PRESENT(BootOptions))
+        {
             BootOptions->Version = BOOT_OPTIONS_VERSION;
-            BootOptions->Length = (FIELD_OFFSET(BOOT_OPTIONS,HeadlessRedirection) + sizeof(WCHAR));
+            BootOptions->Length = (FIELD_OFFSET(BOOT_OPTIONS, HeadlessRedirection) + sizeof(WCHAR));
             BootOptions->Timeout = Timeout;
             BootOptions->CurrentBootEntryId = BootCurrent;
             BootOptions->NextBootEntryId = BootNext;
@@ -2764,25 +2699,23 @@ done:
 
         return NtStatus;
 
-    //
-    // If an exception occurs during the write of the return data, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the write of the return data, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtQueryBootOptions
-
+
 NTSTATUS
-NtSetBootOptions (
-    IN PBOOT_OPTIONS BootOptions,
-    IN ULONG FieldsToChange
-    )
+NtSetBootOptions(IN PBOOT_OPTIONS BootOptions, IN ULONG FieldsToChange)
 
 /*++
 
@@ -2832,7 +2765,8 @@ Return Value:
     // code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Verify that the input buffer is big enough. It must extend at
@@ -2840,21 +2774,26 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             LocalBufferLength = ProbeAndReadUlong(&BootOptions->Length);
-        } else {
+        }
+        else
+        {
             LocalBufferLength = BootOptions->Length;
         }
 
-        if (LocalBufferLength < FIELD_OFFSET(BOOT_OPTIONS,HeadlessRedirection)) {
+        if (LocalBufferLength < FIELD_OFFSET(BOOT_OPTIONS, HeadlessRedirection))
+        {
             return STATUS_INVALID_PARAMETER;
         }
-    
+
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe the input buffer.
@@ -2867,10 +2806,10 @@ Return Value:
             // system boot order list.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
         }
@@ -2879,8 +2818,8 @@ Return Value:
         // Verify the structure version.
         //
 
-        if ((BootOptions->Version == 0) ||
-            (BootOptions->Version > BOOT_OPTIONS_VERSION)) {
+        if ((BootOptions->Version == 0) || (BootOptions->Version > BOOT_OPTIONS_VERSION))
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
@@ -2891,13 +2830,14 @@ Return Value:
         Timeout = BootOptions->Timeout;
         BootNext = BootOptions->NextBootEntryId;
 
-    //
-    // If an exception occurs during the probe and capture of the input buffer,
-    // then always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe and capture of the input buffer,
+        // then always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -2905,8 +2845,10 @@ Return Value:
     // If requested, set the Timeout and BootNext system environment variables.
     //
 
-    if ((FieldsToChange & BOOT_OPTIONS_FIELD_NEXT_BOOT_ENTRY_ID) != 0) {
-        if (BootNext > MAXUSHORT) {
+    if ((FieldsToChange & BOOT_OPTIONS_FIELD_NEXT_BOOT_ENTRY_ID) != 0)
+    {
+        if (BootNext > MAXUSHORT)
+        {
             return STATUS_INVALID_PARAMETER;
         }
     }
@@ -2916,28 +2858,26 @@ Return Value:
 
     NtStatus = STATUS_SUCCESS;
 
-    if ((FieldsToChange & BOOT_OPTIONS_FIELD_TIMEOUT) != 0) {
+    if ((FieldsToChange & BOOT_OPTIONS_FIELD_TIMEOUT) != 0)
+    {
 
-        if (Timeout == 0xffffffff) {
+        if (Timeout == 0xffffffff)
+        {
             Timeout = 0xffff;
-        } else if (Timeout > 0xfffe) {
+        }
+        else if (Timeout > 0xfffe)
+        {
             Timeout = 0xfffe;
         }
 
-        NtStatus = HalSetEnvironmentVariableEx(L"Timeout",
-                                               &EfiBootVariablesGuid,
-                                               &Timeout,
-                                               2,
+        NtStatus = HalSetEnvironmentVariableEx(L"Timeout", &EfiBootVariablesGuid, &Timeout, 2,
                                                VARIABLE_ATTRIBUTE_NON_VOLATILE);
     }
 
-    if (NT_SUCCESS(NtStatus) &&
-        ((FieldsToChange & BOOT_OPTIONS_FIELD_NEXT_BOOT_ENTRY_ID) != 0)) {
+    if (NT_SUCCESS(NtStatus) && ((FieldsToChange & BOOT_OPTIONS_FIELD_NEXT_BOOT_ENTRY_ID) != 0))
+    {
 
-        NtStatus = HalSetEnvironmentVariableEx(L"BootNext",
-                                               &EfiBootVariablesGuid,
-                                               &BootNext,
-                                               2,
+        NtStatus = HalSetEnvironmentVariableEx(L"BootNext", &EfiBootVariablesGuid, &BootNext, 2,
                                                VARIABLE_ATTRIBUTE_NON_VOLATILE);
     }
 
@@ -2949,14 +2889,10 @@ Return Value:
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtSetBootOptions
-
+
 NTSTATUS
-NtTranslateFilePath (
-    IN PFILE_PATH InputFilePath,
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputFilePath,
-    IN OUT PULONG OutputFilePathLength
-    )
+NtTranslateFilePath(IN PFILE_PATH InputFilePath, IN ULONG OutputType, OUT PFILE_PATH OutputFilePath,
+                    IN OUT PULONG OutputFilePathLength)
 
 /*++
 
@@ -3006,8 +2942,8 @@ Return Value:
     // Verify the output type.
     //
 
-    if ((OutputType < FILE_PATH_TYPE_MIN) ||
-        (OutputType > FILE_PATH_TYPE_MAX)) {
+    if ((OutputType < FILE_PATH_TYPE_MIN) || (OutputType > FILE_PATH_TYPE_MAX))
+    {
         //DbgPrint( "NtTranslateFilePath: OutputType outside range\n" );
         return STATUS_INVALID_PARAMETER;
     }
@@ -3019,7 +2955,8 @@ Return Value:
     // status.
     //
 
-    try {
+    try
+    {
 
         //
         // Verify that the input buffer is big enough. It must extend at
@@ -3027,22 +2964,27 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             localInputPathLength = ProbeAndReadUlong(&InputFilePath->Length);
-        } else {
+        }
+        else
+        {
             localInputPathLength = InputFilePath->Length;
         }
 
-        if (localInputPathLength < FIELD_OFFSET(FILE_PATH,FilePath)) {
+        if (localInputPathLength < FIELD_OFFSET(FILE_PATH, FilePath))
+        {
             //DbgPrint( "NtTranslateFilePath: input buffer too short\n" );
             return STATUS_INVALID_PARAMETER;
         }
-    
+
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe the input buffer.
@@ -3062,11 +3004,13 @@ Return Value:
             // Probe the output buffer.
             //
 
-            if (!ARGUMENT_PRESENT(OutputFilePath)) {
+            if (!ARGUMENT_PRESENT(OutputFilePath))
+            {
                 localOutputPathLength = 0;
             }
 
-            if (localOutputPathLength != 0) {
+            if (localOutputPathLength != 0)
+            {
                 ProbeForWrite((PVOID)OutputFilePath, localOutputPathLength, sizeof(ULONG));
             }
 
@@ -3075,15 +3019,18 @@ Return Value:
             // system boot order list.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
-        } else {
+        }
+        else
+        {
             localOutputPathLength = *OutputFilePathLength;
-            if (!ARGUMENT_PRESENT(OutputFilePath)) {
+            if (!ARGUMENT_PRESENT(OutputFilePath))
+            {
                 localOutputPathLength = 0;
             }
         }
@@ -3092,9 +3039,10 @@ Return Value:
         // Allocate a nonpaged buffer to hold a copy of the input buffer.
         // Copy the input buffer into the local buffer.
         //
-    
+
         localInputPath = ExAllocatePoolWithTag(NonPagedPool, localInputPathLength, 'rvnE');
-        if (localInputPath == NULL) {
+        if (localInputPath == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
@@ -3104,25 +3052,31 @@ Return Value:
         // Allocate a nonpaged buffer into which to build the output path.
         //
 
-        if (localOutputPathLength != 0) {
+        if (localOutputPathLength != 0)
+        {
             localOutputPath = ExAllocatePoolWithTag(NonPagedPool, localOutputPathLength, 'rvnE');
-            if (localOutputPath == NULL) {
+            if (localOutputPath == NULL)
+            {
                 ExFreePool(localInputPath);
                 localInputPath = NULL;
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
-        } else {
+        }
+        else
+        {
             localOutputPath = NULL;
         }
 
-    //
-    // If an exception occurs during the probe and capture of the input buffer,
-    // then always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        if (localInputPath != NULL) {
+        //
+        // If an exception occurs during the probe and capture of the input buffer,
+        // then always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (localInputPath != NULL)
+        {
             ExFreePool(localInputPath);
         }
         return GetExceptionCode();
@@ -3133,56 +3087,50 @@ Return Value:
     //
 
     status = ExpVerifyFilePath(localInputPath, ADD_OFFSET(localInputPath, Length));
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // If the output type is the same as the input type, just copy the input
         // path to the output path.
         //
 
-        if (OutputType == localInputPath->Type) {
-    
-            if (localOutputPathLength >= localInputPathLength) {
+        if (OutputType == localInputPath->Type)
+        {
+
+            if (localOutputPathLength >= localInputPathLength)
+            {
                 RtlCopyMemory(localOutputPath, localInputPath, localInputPathLength);
-            } else {
+            }
+            else
+            {
                 status = STATUS_BUFFER_TOO_SMALL;
             }
             localOutputPathLength = localInputPathLength;
+        }
+        else
+        {
 
-        } else {
-    
             //
             // Conversion is required.
             //
-        
-            switch (localInputPath->Type) {
-            
+
+            switch (localInputPath->Type)
+            {
+
             case FILE_PATH_TYPE_ARC:
             case FILE_PATH_TYPE_ARC_SIGNATURE:
-                status = ExpTranslateArcPath(
-                            localInputPath,
-                            OutputType,
-                            localOutputPath,
-                            &localOutputPathLength
-                            );
+                status = ExpTranslateArcPath(localInputPath, OutputType, localOutputPath, &localOutputPathLength);
                 break;
-        
+
             case FILE_PATH_TYPE_NT:
-                status = ExpTranslateNtPath(
-                            localInputPath,
-                            OutputType,
-                            localOutputPath,
-                            &localOutputPathLength);
+                status = ExpTranslateNtPath(localInputPath, OutputType, localOutputPath, &localOutputPathLength);
                 break;
-        
+
             case FILE_PATH_TYPE_EFI:
-                status = ExpTranslateEfiPath(
-                            localInputPath,
-                            OutputType,
-                            localOutputPath,
-                            &localOutputPathLength);
+                status = ExpTranslateEfiPath(localInputPath, OutputType, localOutputPath, &localOutputPathLength);
                 break;
-        
+
             default:
                 ASSERT(FALSE);
                 //DbgPrint( "NtTranslateFilePath: input type outside range\n" );
@@ -3200,17 +3148,20 @@ Return Value:
     // return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Copy the output path.
         //
 
-        if (NT_SUCCESS(status) && (localOutputPath != NULL)) {
+        if (NT_SUCCESS(status) && (localOutputPath != NULL))
+        {
             RtlCopyMemory(OutputFilePath, localOutputPath, localOutputPathLength);
         }
 
-        if (localOutputPath != NULL) {
+        if (localOutputPath != NULL)
+        {
             ExFreePool(localOutputPath);
             localOutputPath = NULL;
         }
@@ -3219,20 +3170,23 @@ Return Value:
         // Write the output length.
         //
 
-        if (ARGUMENT_PRESENT(OutputFilePathLength)) {
+        if (ARGUMENT_PRESENT(OutputFilePathLength))
+        {
             *OutputFilePathLength = localOutputPathLength;
         }
 
         return status;
 
-    //
-    // If an exception occurs during the write of the return data, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        if (localOutputPath != NULL) {
+        //
+        // If an exception occurs during the write of the return data, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (localOutputPath != NULL)
+        {
             ExFreePool(localOutputPath);
         }
         return GetExceptionCode();
@@ -3241,13 +3195,9 @@ Return Value:
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // NtTranslateFilePath
-
+
 NTSTATUS
-ExpSetBootEntry (
-    IN LOGICAL CreateNewEntry,
-    IN PBOOT_ENTRY BootEntry,
-    OUT PULONG Id OPTIONAL
-    )
+ExpSetBootEntry(IN LOGICAL CreateNewEntry, IN PBOOT_ENTRY BootEntry, OUT PULONG Id OPTIONAL)
 
 /*++
 
@@ -3320,7 +3270,8 @@ Return Value:
     // attempt fails, then return the exception code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Verify that the input buffer is big enough. It must extend at
@@ -3328,21 +3279,26 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             LocalBufferLength = ProbeAndReadUlong(&BootEntry->Length);
-        } else {
+        }
+        else
+        {
             LocalBufferLength = BootEntry->Length;
         }
 
-        if (LocalBufferLength < FIELD_OFFSET(BOOT_ENTRY,OsOptions)) {
+        if (LocalBufferLength < FIELD_OFFSET(BOOT_ENTRY, OsOptions))
+        {
             return STATUS_INVALID_PARAMETER;
         }
-    
+
         //
         // Get previous processor mode and probe arguments if necessary.
         //
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Probe the input buffer.
@@ -3354,7 +3310,8 @@ Return Value:
             // Probe the output identifier.
             //
 
-            if (ARGUMENT_PRESENT(Id)) {
+            if (ARGUMENT_PRESENT(Id))
+            {
                 ProbeForWriteUlong(Id);
             }
 
@@ -3363,10 +3320,10 @@ Return Value:
             // system boot order list.
             //
 
-            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege,
-                                                  PreviousMode);
+            HasPrivilege = SeSinglePrivilegeCheck(SeSystemEnvironmentPrivilege, PreviousMode);
 
-            if (HasPrivilege == FALSE) {
+            if (HasPrivilege == FALSE)
+            {
                 return STATUS_PRIVILEGE_NOT_HELD;
             }
         }
@@ -3375,22 +3332,25 @@ Return Value:
         // Allocate a nonpaged buffer to hold a copy of the input buffer.
         // Copy the input buffer into the local buffer.
         //
-    
+
         localBootEntry = ExAllocatePoolWithTag(NonPagedPool, LocalBufferLength, 'rvnE');
-        if (localBootEntry == NULL) {
+        if (localBootEntry == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         RtlCopyMemory(localBootEntry, BootEntry, LocalBufferLength);
 
-    //
-    // If an exception occurs during the probe and capture of the input buffer,
-    // then always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        if (localBootEntry != NULL) {
+        //
+        // If an exception occurs during the probe and capture of the input buffer,
+        // then always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (localBootEntry != NULL)
+        {
             ExFreePool(localBootEntry);
         }
         return GetExceptionCode();
@@ -3406,8 +3366,8 @@ Return Value:
     // Verify the structure version.
     //
 
-    if ((localBootEntry->Version == 0) ||
-        (localBootEntry->Version > BOOT_ENTRY_VERSION)) {
+    if ((localBootEntry->Version == 0) || (localBootEntry->Version > BOOT_ENTRY_VERSION))
+    {
         NtStatus = STATUS_INVALID_PARAMETER;
         goto done;
     }
@@ -3417,7 +3377,8 @@ Return Value:
     // in range.
     //
 
-    if (!CreateNewEntry && (localBootEntry->Id > MAXUSHORT)) {
+    if (!CreateNewEntry && (localBootEntry->Id > MAXUSHORT))
+    {
         NtStatus = STATUS_INVALID_PARAMETER;
         goto done;
     }
@@ -3433,7 +3394,8 @@ Return Value:
     //
 
     if (((localBootEntry->FriendlyNameOffset & (sizeof(WCHAR) - 1)) != 0) ||
-        ((localBootEntry->BootFilePathOffset & (sizeof(ULONG) - 1)) != 0)) {
+        ((localBootEntry->BootFilePathOffset & (sizeof(ULONG) - 1)) != 0))
+    {
         NtStatus = STATUS_INVALID_PARAMETER;
         goto done;
     }
@@ -3443,7 +3405,8 @@ Return Value:
     //
 
     if ((localBootEntry->OsOptionsLength > LocalBufferLength) ||
-        ((localBootEntry->OsOptions + localBootEntry->OsOptionsLength) >= MaxBuffer)) {
+        ((localBootEntry->OsOptions + localBootEntry->OsOptionsLength) >= MaxBuffer))
+    {
         NtStatus = STATUS_INVALID_PARAMETER;
         goto done;
     }
@@ -3454,24 +3417,27 @@ Return Value:
 
     windowsOsOptions = (PWINDOWS_OS_OPTIONS)localBootEntry->OsOptions;
 
-    if ((localBootEntry->OsOptionsLength >= FIELD_OFFSET(WINDOWS_OS_OPTIONS,Version)) &&
-        (strcmp((char *)windowsOsOptions->Signature, WINDOWS_OS_OPTIONS_SIGNATURE) == 0)) {
+    if ((localBootEntry->OsOptionsLength >= FIELD_OFFSET(WINDOWS_OS_OPTIONS, Version)) &&
+        (strcmp((char *)windowsOsOptions->Signature, WINDOWS_OS_OPTIONS_SIGNATURE) == 0))
+    {
 
-        if (localBootEntry->OsOptionsLength <= FIELD_OFFSET(WINDOWS_OS_OPTIONS,OsLoadOptions)) {
+        if (localBootEntry->OsOptionsLength <= FIELD_OFFSET(WINDOWS_OS_OPTIONS, OsLoadOptions))
+        {
             NtStatus = STATUS_INVALID_PARAMETER;
             goto done;
         }
 
-        NtStatus = ExpVerifyWindowsOsOptions(windowsOsOptions,
-                                          localBootEntry->OsOptionsLength);
-        if (!NT_SUCCESS(NtStatus)) {
+        NtStatus = ExpVerifyWindowsOsOptions(windowsOsOptions, localBootEntry->OsOptionsLength);
+        if (!NT_SUCCESS(NtStatus))
+        {
             goto done;
         }
 
         isWindowsOs = TRUE;
         windowsFilePath = ADD_OFFSET(windowsOsOptions, OsLoadPathOffset);
-
-    } else {
+    }
+    else
+    {
 
         isWindowsOs = FALSE;
         windowsFilePath = NULL; // keep the compiler quiet
@@ -3482,7 +3448,8 @@ Return Value:
     //
 
     friendlyName = ADD_OFFSET(localBootEntry, FriendlyNameOffset);
-    if ((friendlyNameLength = ExpSafeWcslen(friendlyName, (PWSTR)MaxBuffer)) == 0xffffffff) {
+    if ((friendlyNameLength = ExpSafeWcslen(friendlyName, (PWSTR)MaxBuffer)) == 0xffffffff)
+    {
         NtStatus = STATUS_INVALID_PARAMETER;
         goto done;
     }
@@ -3501,7 +3468,8 @@ Return Value:
 
     bootFilePath = ADD_OFFSET(localBootEntry, BootFilePathOffset);
     NtStatus = ExpVerifyFilePath(bootFilePath, MaxBuffer);
-    if (!NT_SUCCESS(NtStatus)) {
+    if (!NT_SUCCESS(NtStatus))
+    {
         goto done;
     }
 
@@ -3511,7 +3479,8 @@ Return Value:
     //
 
     if (((localBootEntry->OsOptions + localBootEntry->OsOptionsLength) > (PUCHAR)friendlyName) ||
-        (((PUCHAR)friendlyName + friendlyNameLength) > (PUCHAR)bootFilePath)) {
+        (((PUCHAR)friendlyName + friendlyNameLength) > (PUCHAR)bootFilePath))
+    {
         NtStatus = STATUS_INVALID_PARAMETER;
         goto done;
     }
@@ -3523,35 +3492,34 @@ Return Value:
     // format, they need to be translated.
     //
 
-    if (bootFilePath->Type != FILE_PATH_TYPE_EFI) {
+    if (bootFilePath->Type != FILE_PATH_TYPE_EFI)
+    {
         efiBootFilePathLength = 0;
-        NtStatus = ZwTranslateFilePath(bootFilePath,
-                                       FILE_PATH_TYPE_EFI,
-                                       NULL,
-                                       &efiBootFilePathLength);
-        if (NtStatus != STATUS_BUFFER_TOO_SMALL) {
+        NtStatus = ZwTranslateFilePath(bootFilePath, FILE_PATH_TYPE_EFI, NULL, &efiBootFilePathLength);
+        if (NtStatus != STATUS_BUFFER_TOO_SMALL)
+        {
             goto done;
         }
-        translatedBootFilePath = ExAllocatePoolWithTag(NonPagedPool,
-                                                       efiBootFilePathLength,
-                                                       'rvnE');
-        if (translatedBootFilePath == NULL) {
+        translatedBootFilePath = ExAllocatePoolWithTag(NonPagedPool, efiBootFilePathLength, 'rvnE');
+        if (translatedBootFilePath == NULL)
+        {
             NtStatus = STATUS_INSUFFICIENT_RESOURCES;
             goto done;
         }
         RtlZeroMemory(translatedBootFilePath, efiBootFilePathLength);
         length = efiBootFilePathLength;
-        NtStatus = ZwTranslateFilePath(bootFilePath,
-                                       FILE_PATH_TYPE_EFI,
-                                       translatedBootFilePath,
-                                       &length);
-        if (!NT_SUCCESS(NtStatus)) {
+        NtStatus = ZwTranslateFilePath(bootFilePath, FILE_PATH_TYPE_EFI, translatedBootFilePath, &length);
+        if (!NT_SUCCESS(NtStatus))
+        {
             goto done;
         }
-        if (length != efiBootFilePathLength) {
+        if (length != efiBootFilePathLength)
+        {
             NtStatus = STATUS_UNSUCCESSFUL;
         }
-    } else {
+    }
+    else
+    {
         efiBootFilePathLength = bootFilePath->Length;
         translatedBootFilePath = bootFilePath;
     }
@@ -3559,18 +3527,17 @@ Return Value:
     efiBootFilePathLength = efiBootFilePathLength - FIELD_OFFSET(FILE_PATH, FilePath);
 
     efiWindowsFilePathLength = 0;
-    if (isWindowsOs &&
-        (windowsFilePath->Type != FILE_PATH_TYPE_EFI)) {
-        NtStatus = ZwTranslateFilePath(windowsFilePath,
-                                       FILE_PATH_TYPE_EFI,
-                                       NULL,
-                                       &efiWindowsFilePathLength);
-        if (NtStatus != STATUS_BUFFER_TOO_SMALL) {
+    if (isWindowsOs && (windowsFilePath->Type != FILE_PATH_TYPE_EFI))
+    {
+        NtStatus = ZwTranslateFilePath(windowsFilePath, FILE_PATH_TYPE_EFI, NULL, &efiWindowsFilePathLength);
+        if (NtStatus != STATUS_BUFFER_TOO_SMALL)
+        {
             goto done;
         }
-        osOptionsLength = localBootEntry->OsOptionsLength -
-                            windowsFilePath->Length + efiWindowsFilePathLength;
-    } else {
+        osOptionsLength = localBootEntry->OsOptionsLength - windowsFilePath->Length + efiWindowsFilePathLength;
+    }
+    else
+    {
         osOptionsLength = localBootEntry->OsOptionsLength;
     }
 
@@ -3588,7 +3555,8 @@ Return Value:
     //
 
     efiLoadOption = ExAllocatePoolWithTag(NonPagedPool, requiredLength, 'rvnE');
-    if (efiLoadOption == NULL) {
+    if (efiLoadOption == NULL)
+    {
         NtStatus = STATUS_INSUFFICIENT_RESOURCES;
         goto done;
     }
@@ -3599,7 +3567,8 @@ Return Value:
     //
 
     efiLoadOption->Attributes = 0;
-    if ((localBootEntry->Attributes & BOOT_ENTRY_ATTRIBUTE_ACTIVE) != 0) {
+    if ((localBootEntry->Attributes & BOOT_ENTRY_ATTRIBUTE_ACTIVE) != 0)
+    {
         efiLoadOption->Attributes = LOAD_OPTION_ACTIVE;
     }
 
@@ -3611,8 +3580,8 @@ Return Value:
     memcpy(efiBootFilePath, translatedBootFilePath->FilePath, efiBootFilePathLength);
 
     efiOsOptions = efiBootFilePath + efiBootFilePathLength;
-    if (isWindowsOs &&
-        (windowsFilePath->Type != FILE_PATH_TYPE_EFI)) {
+    if (isWindowsOs && (windowsFilePath->Type != FILE_PATH_TYPE_EFI))
+    {
 
         PFILE_PATH efiWindowsFilePath;
 
@@ -3621,18 +3590,19 @@ Return Value:
 
         efiWindowsFilePath = (PFILE_PATH)(efiOsOptions + windowsOsOptions->OsLoadPathOffset);
         length = efiWindowsFilePathLength;
-        NtStatus = ZwTranslateFilePath(windowsFilePath,
-                                       FILE_PATH_TYPE_EFI,
-                                       efiWindowsFilePath,
-                                       &efiWindowsFilePathLength);
-        if (NtStatus != STATUS_SUCCESS) {
+        NtStatus =
+            ZwTranslateFilePath(windowsFilePath, FILE_PATH_TYPE_EFI, efiWindowsFilePath, &efiWindowsFilePathLength);
+        if (NtStatus != STATUS_SUCCESS)
+        {
             goto done;
         }
-        if (length != efiWindowsFilePathLength) {
+        if (length != efiWindowsFilePathLength)
+        {
             NtStatus = STATUS_UNSUCCESSFUL;
         }
-
-    } else {
+    }
+    else
+    {
 
         memcpy(efiOsOptions, localBootEntry->OsOptions, osOptionsLength);
     }
@@ -3646,40 +3616,39 @@ Return Value:
     KeEnterCriticalRegion();
     ExAcquireFastMutexUnsafe(&ExpEnvironmentLock);
 
-    if (CreateNewEntry) {
+    if (CreateNewEntry)
+    {
 
-        for ( id = 0; id <= MAXUSHORT; id++ ) {
-            swprintf( idString, L"Boot%04x", id);
+        for (id = 0; id <= MAXUSHORT; id++)
+        {
+            swprintf(idString, L"Boot%04x", id);
             length = 0;
-            NtStatus = HalGetEnvironmentVariableEx(idString,
-                                                   &EfiBootVariablesGuid,
-                                                   NULL,
-                                                   &length,
-                                                   NULL);
-            if (NtStatus == STATUS_VARIABLE_NOT_FOUND) {
+            NtStatus = HalGetEnvironmentVariableEx(idString, &EfiBootVariablesGuid, NULL, &length, NULL);
+            if (NtStatus == STATUS_VARIABLE_NOT_FOUND)
+            {
                 break;
             }
-            if ((NtStatus != STATUS_SUCCESS) && (NtStatus != STATUS_BUFFER_TOO_SMALL)) {
+            if ((NtStatus != STATUS_SUCCESS) && (NtStatus != STATUS_BUFFER_TOO_SMALL))
+            {
                 goto done_unlock;
             }
         }
 
-        if (id > MAXUSHORT) {
+        if (id > MAXUSHORT)
+        {
             NtStatus = STATUS_INSUFFICIENT_RESOURCES;
             goto done_unlock;
         }
-
-    } else {
+    }
+    else
+    {
 
         id = localBootEntry->Id;
-        swprintf( idString, L"Boot%04x", localBootEntry->Id);
+        swprintf(idString, L"Boot%04x", localBootEntry->Id);
         length = 0;
-        NtStatus = HalGetEnvironmentVariableEx(idString,
-                                               &EfiBootVariablesGuid,
-                                               NULL,
-                                               &length,
-                                               NULL);
-        if ((NtStatus != STATUS_SUCCESS) && (NtStatus != STATUS_BUFFER_TOO_SMALL)) {
+        NtStatus = HalGetEnvironmentVariableEx(idString, &EfiBootVariablesGuid, NULL, &length, NULL);
+        if ((NtStatus != STATUS_SUCCESS) && (NtStatus != STATUS_BUFFER_TOO_SMALL))
+        {
             goto done_unlock;
         }
     }
@@ -3688,10 +3657,7 @@ Return Value:
     // Set or update the boot entry environment variable.
     //
 
-    NtStatus = HalSetEnvironmentVariableEx(idString,
-                                           &EfiBootVariablesGuid,
-                                           efiLoadOption,
-                                           requiredLength,
+    NtStatus = HalSetEnvironmentVariableEx(idString, &EfiBootVariablesGuid, efiLoadOption, requiredLength,
                                            VARIABLE_ATTRIBUTE_NON_VOLATILE);
 
 done_unlock:
@@ -3701,11 +3667,13 @@ done_unlock:
 
 done:
 
-    if (efiLoadOption != NULL) {
+    if (efiLoadOption != NULL)
+    {
         ExFreePool(efiLoadOption);
     }
 
-    if ((translatedBootFilePath != NULL) && (translatedBootFilePath != bootFilePath)) {
+    if ((translatedBootFilePath != NULL) && (translatedBootFilePath != bootFilePath))
+    {
         ExFreePool(translatedBootFilePath);
     }
 
@@ -3717,32 +3685,35 @@ done:
     // code as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Write the return identifier.
         //
 
-        if (CreateNewEntry && ARGUMENT_PRESENT(Id) && NT_SUCCESS(NtStatus)) {
+        if (CreateNewEntry && ARGUMENT_PRESENT(Id) && NT_SUCCESS(NtStatus))
+        {
             *Id = id;
         }
 
         return NtStatus;
 
-    //
-    // If an exception occurs during the write of the return data, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the write of the return data, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
 #endif // else !defined(EFI_NVRAM_ENABLED)
 
 } // ExpSetBootEntry
-
+
 //
 // The remainder of this module is routines that are only compiled when
 // EFI_NVRAM_ENABLED is defined.
@@ -3751,32 +3722,27 @@ done:
 #if defined(EFI_NVRAM_ENABLED)
 
 ULONG
-ExpSafeWcslen (
-    IN PWSTR String,
-    IN PWSTR Max
-    )
+ExpSafeWcslen(IN PWSTR String, IN PWSTR Max)
 {
     PWSTR p = String;
-    
-    while ((p < Max) && (*p != 0)) {
+
+    while ((p < Max) && (*p != 0))
+    {
         p++;
     }
 
-    if (p < Max) {
+    if (p < Max)
+    {
         return (ULONG)(p - String);
     }
 
     return 0xffffffff;
 
 } // ExpSafeWcslen
-
+
 NTSTATUS
-ExpTranslateArcPath (
-    IN PFILE_PATH InputPath,
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength
-    )
+ExpTranslateArcPath(IN PFILE_PATH InputPath, IN ULONG OutputType, OUT PFILE_PATH OutputPath,
+                    IN OUT PULONG OutputPathLength)
 {
 #if 0
     UNREFERENCED_PARAMETER(InputPath);
@@ -3804,64 +3770,45 @@ ExpTranslateArcPath (
     // Determine if ArcName has signature() format
     // Parse out DeviceName & FilePart
     //
-    status = ExpParseArcPathName (
-                (PWSTR)(InputPath->FilePath),
-                &deviceName,
-                &pathName,
-                &deviceNameCount,
-                &signatureFormat
-                );
+    status =
+        ExpParseArcPathName((PWSTR)(InputPath->FilePath), &deviceName, &pathName, &deviceNameCount, &signatureFormat);
 
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     //
     // not signature() format
     //
-    if( signatureFormat == FALSE ) {
-        if( InputPath->Type != FILE_PATH_TYPE_ARC ) {
-            return( STATUS_INVALID_PARAMETER );
+    if (signatureFormat == FALSE)
+    {
+        if (InputPath->Type != FILE_PATH_TYPE_ARC)
+        {
+            return (STATUS_INVALID_PARAMETER);
         }
 
-        status = ExpConvertArcName(
-                    OutputType,
-                    OutputPath,
-                    OutputPathLength,
-                    deviceName,
-                    pathName,
-                    deviceNameCount
-                    );
+        status = ExpConvertArcName(OutputType, OutputPath, OutputPathLength, deviceName, pathName, deviceNameCount);
 
-        return( status );
+        return (status);
     }
 
     //
     // This arc signature() format should be FILE_PATH_TYPE_ARC_SIGNATURE
     //
-    if( InputPath->Type != FILE_PATH_TYPE_ARC_SIGNATURE ) {
-       return( STATUS_INVALID_PARAMETER );
+    if (InputPath->Type != FILE_PATH_TYPE_ARC_SIGNATURE)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
-    status = ExpConvertSignatureName(
-                    OutputType,
-                    OutputPath,
-                    OutputPathLength,
-                    deviceName,
-                    pathName,
-                    deviceNameCount
-                    );
+    status = ExpConvertSignatureName(OutputType, OutputPath, OutputPathLength, deviceName, pathName, deviceNameCount);
 
-    return( status );
+    return (status);
 } // ExpTranslateArcPath
-
+
 NTSTATUS
-ExpTranslateEfiPath (
-    IN PFILE_PATH InputPath,
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength
-    )
+ExpTranslateEfiPath(IN PFILE_PATH InputPath, IN ULONG OutputType, OUT PFILE_PATH OutputPath,
+                    IN OUT PULONG OutputPathLength)
 {
     NTSTATUS status;
     HARDDRIVE_DEVICE_PATH *dpHarddrive = NULL;
@@ -3881,15 +3828,11 @@ ExpTranslateEfiPath (
     // the first one.
     //
 
-    status = ExpParseEfiPath(
-                (EFI_DEVICE_PATH *)InputPath->FilePath,
-                &dpHarddrive,
-                &pPathName,
-                &GPTpartition
-                );
+    status = ExpParseEfiPath((EFI_DEVICE_PATH *)InputPath->FilePath, &dpHarddrive, &pPathName, &GPTpartition);
 
-    if( !NT_SUCCESS( status ) ) {
-        return( status );
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
 
     //
@@ -3898,29 +3841,23 @@ ExpTranslateEfiPath (
     // with the given signature.
     //
 
-    if ( OutputType == FILE_PATH_TYPE_ARC_SIGNATURE ) {
+    if (OutputType == FILE_PATH_TYPE_ARC_SIGNATURE)
+    {
 
         partitionNumber = dpHarddrive->PartitionNumber;
         partitionStart = dpHarddrive->PartitionStart;
         partitionSize = dpHarddrive->PartitionSize;
-        status = ExpCreateOutputSIGNATURE(
-                    OutputPath,
-                    OutputPathLength,
-                    (PDISK_SIGNATURE_NEW)(dpHarddrive->Signature),
-                    &(partitionNumber),
-                    &(partitionStart),
-                    &(partitionSize),
-                    pPathName,
-                    GPTpartition
-                    );
-        if( pPathName != NULL ) {
-            ExFreePool( pPathName );
+        status =
+            ExpCreateOutputSIGNATURE(OutputPath, OutputPathLength, (PDISK_SIGNATURE_NEW)(dpHarddrive->Signature),
+                                     &(partitionNumber), &(partitionStart), &(partitionSize), pPathName, GPTpartition);
+        if (pPathName != NULL)
+        {
+            ExFreePool(pPathName);
         }
 
         ExFreePool(dpHarddrive);
 
-        return( status );
-
+        return (status);
     }
 
     //
@@ -3942,12 +3879,15 @@ ExpTranslateEfiPath (
     //     for the EFI system partition, this routine cannot be used to
     //     translate an EFI device path for the system partition to an NT path.
     //
-    if( GPTpartition == TRUE ) {
+    if (GPTpartition == TRUE)
+    {
 
-        status = RtlStringFromGUID( (LPGUID)dpHarddrive->Signature, &guidString );
-        if ( !NT_SUCCESS(status) ) {
-            if( pPathName != NULL ) {
-                ExFreePool( pPathName );
+        status = RtlStringFromGUID((LPGUID)dpHarddrive->Signature, &guidString);
+        if (!NT_SUCCESS(status))
+        {
+            if (pPathName != NULL)
+            {
+                ExFreePool(pPathName);
             }
 
             ExFreePool(dpHarddrive);
@@ -3957,51 +3897,47 @@ ExpTranslateEfiPath (
 
 #define LINK_NAME_PREFIX L"\\??\\Volume"
 
-        requiredLength = ((ULONG)wcslen( LINK_NAME_PREFIX ) + 1) * sizeof(WCHAR);
+        requiredLength = ((ULONG)wcslen(LINK_NAME_PREFIX) + 1) * sizeof(WCHAR);
         requiredLength += guidString.Length;
-        linkName = ExAllocatePoolWithTag( NonPagedPool, requiredLength, 'rvnE' );
-        if ( linkName == NULL ) {
-            ExFreePool( guidString.Buffer );
-            if( pPathName != NULL ) {
-                ExFreePool( pPathName );
+        linkName = ExAllocatePoolWithTag(NonPagedPool, requiredLength, 'rvnE');
+        if (linkName == NULL)
+        {
+            ExFreePool(guidString.Buffer);
+            if (pPathName != NULL)
+            {
+                ExFreePool(pPathName);
             }
-            
+
             ExFreePool(dpHarddrive);
 
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        wcscpy( linkName, LINK_NAME_PREFIX );
-        wcscat( linkName, guidString.Buffer );
-        ExFreePool( guidString.Buffer );
+        wcscpy(linkName, LINK_NAME_PREFIX);
+        wcscat(linkName, guidString.Buffer);
+        ExFreePool(guidString.Buffer);
 
-        status = ExpTranslateSymbolicLink(
-            linkName,
-            &deviceNameString
-            );
-        ExFreePool( linkName );
+        status = ExpTranslateSymbolicLink(linkName, &deviceNameString);
+        ExFreePool(linkName);
     }
 
     //
     // check if the quick path was not taken or no object was found
     //
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // long path, opens all disks in search of the signature
         //
         partitionNumber = dpHarddrive->PartitionNumber;
-        status = ExpFindDiskSignature(
-                    (PDISK_SIGNATURE_NEW)(dpHarddrive->Signature),
-                    &partitionNumber,
-                    &diskNumber,
-                    &partitionStart,
-                    &partitionSize,
-                    GPTpartition
-                    );
+        status = ExpFindDiskSignature((PDISK_SIGNATURE_NEW)(dpHarddrive->Signature), &partitionNumber, &diskNumber,
+                                      &partitionStart, &partitionSize, GPTpartition);
 
-        if ( !NT_SUCCESS(status) ) {
-            if( pPathName != NULL ) {
-                ExFreePool( pPathName );
+        if (!NT_SUCCESS(status))
+        {
+            if (pPathName != NULL)
+            {
+                ExFreePool(pPathName);
             }
 
             ExFreePool(dpHarddrive);
@@ -4013,17 +3949,18 @@ ExpTranslateEfiPath (
         // The user has provided the partition number, start address,
         // and size; so verify the input with the found results.
         //
-        if( (dpHarddrive->PartitionNumber != partitionNumber) ||
-            (dpHarddrive->PartitionStart != partitionStart) ||
-            (dpHarddrive->PartitionSize != partitionSize) ) {
+        if ((dpHarddrive->PartitionNumber != partitionNumber) || (dpHarddrive->PartitionStart != partitionStart) ||
+            (dpHarddrive->PartitionSize != partitionSize))
+        {
 
-            if( pPathName != NULL ) {
-                ExFreePool( pPathName );
+            if (pPathName != NULL)
+            {
+                ExFreePool(pPathName);
             }
-            
+
             ExFreePool(dpHarddrive);
 
-            return( STATUS_INVALID_PARAMETER );
+            return (STATUS_INVALID_PARAMETER);
         }
 
         //
@@ -4031,45 +3968,36 @@ ExpTranslateEfiPath (
         // \Device\Harddisk[diskNumber]\Partition[PartitionNumber]
         //
 #define NT_DISK_NAME_FORMAT L"\\Device\\Harddisk%lu\\Partition%lu"
-#define NT_DISK_NAME_COUNT 47    // 7 + 9 + (10) + 10 + (10) + 1
+#define NT_DISK_NAME_COUNT 47 // 7 + 9 + (10) + 10 + (10) + 1
 
-        linkName = ExAllocatePoolWithTag(
-                        NonPagedPool,
-                        ( NT_DISK_NAME_COUNT * sizeof( WCHAR ) ),
-                        'rvnE'
-                        );
+        linkName = ExAllocatePoolWithTag(NonPagedPool, (NT_DISK_NAME_COUNT * sizeof(WCHAR)), 'rvnE');
 
-        if( linkName == NULL ) {
-            if( pPathName != NULL ) {
-                ExFreePool( pPathName );
+        if (linkName == NULL)
+        {
+            if (pPathName != NULL)
+            {
+                ExFreePool(pPathName);
             }
-            
+
             ExFreePool(dpHarddrive);
 
-            return( STATUS_INSUFFICIENT_RESOURCES );
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
-        _snwprintf(
-            linkName,
-            NT_DISK_NAME_COUNT,
-            NT_DISK_NAME_FORMAT,
-            diskNumber,
-            partitionNumber
-            );
+        _snwprintf(linkName, NT_DISK_NAME_COUNT, NT_DISK_NAME_FORMAT, diskNumber, partitionNumber);
 
-        status = ExpTranslateSymbolicLink(
-            linkName,
-            &deviceNameString
-            );
-        ExFreePool( linkName );
-        if( !NT_SUCCESS(status) ) {
-            if( pPathName != NULL ) {
-                ExFreePool( pPathName );
+        status = ExpTranslateSymbolicLink(linkName, &deviceNameString);
+        ExFreePool(linkName);
+        if (!NT_SUCCESS(status))
+        {
+            if (pPathName != NULL)
+            {
+                ExFreePool(pPathName);
             }
-            
+
             ExFreePool(dpHarddrive);
 
-            return( status );
+            return (status);
         }
     }
 
@@ -4077,51 +4005,40 @@ ExpTranslateEfiPath (
     // We now have the NT name of the device. If the target type is NT, then
     // we have all of the information we need.
     //
-    if ( OutputType == FILE_PATH_TYPE_NT ) {
+    if (OutputType == FILE_PATH_TYPE_NT)
+    {
 
-        status = ExpCreateOutputNT(
-                    OutputPath,
-                    OutputPathLength,
-                    &deviceNameString,
-                    pPathName
-                    );
-        ExFreePool( deviceNameString.Buffer );
-        if( pPathName != NULL ) {
-            ExFreePool( pPathName );
+        status = ExpCreateOutputNT(OutputPath, OutputPathLength, &deviceNameString, pPathName);
+        ExFreePool(deviceNameString.Buffer);
+        if (pPathName != NULL)
+        {
+            ExFreePool(pPathName);
         }
-        
+
         ExFreePool(dpHarddrive);
 
-        return( status );
+        return (status);
     }
 
     //
     // The output type is ARC.
     //
-    status = ExpCreateOutputARC(
-                    OutputPath,
-                    OutputPathLength,
-                    &deviceNameString,
-                    pPathName
-                    );
-    ExFreePool( deviceNameString.Buffer );
-    if( pPathName != NULL ) {
-        ExFreePool( pPathName );
+    status = ExpCreateOutputARC(OutputPath, OutputPathLength, &deviceNameString, pPathName);
+    ExFreePool(deviceNameString.Buffer);
+    if (pPathName != NULL)
+    {
+        ExFreePool(pPathName);
     }
 
     ExFreePool(dpHarddrive);
 
-    return( status );
+    return (status);
 
 } // ExpTranslateEfiPath
-
+
 NTSTATUS
-ExpTranslateNtPath (
-    IN PFILE_PATH InputPath,
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength
-    )
+ExpTranslateNtPath(IN PFILE_PATH InputPath, IN ULONG OutputType, OUT PFILE_PATH OutputPath,
+                   IN OUT PULONG OutputPathLength)
 
 {
     NTSTATUS status;
@@ -4141,10 +4058,11 @@ ExpTranslateNtPath (
 
 
     deviceName = (PWSTR)InputPath->FilePath;
-    RtlInitUnicodeString( &string, deviceName );
+    RtlInitUnicodeString(&string, deviceName);
     pathName = (PWSTR)((PUCHAR)deviceName + string.Length + sizeof(WCHAR));
     pathNameLength = (ULONG)wcslen(pathName);
-    if (pathNameLength == 0) {
+    if (pathNameLength == 0)
+    {
         pathName = NULL;
     }
 
@@ -4154,114 +4072,85 @@ ExpTranslateNtPath (
     // if NT object exists
     //      match with symlink in \ArcName
     //
-    if (OutputType == FILE_PATH_TYPE_ARC) {
-        status = ExpTranslateSymbolicLink(
-                    deviceName,
-                    &deviceNameString
-                    );
-        if (!NT_SUCCESS(status)) {
+    if (OutputType == FILE_PATH_TYPE_ARC)
+    {
+        status = ExpTranslateSymbolicLink(deviceName, &deviceNameString);
+        if (!NT_SUCCESS(status))
+        {
             //
             // If non-symlink NT name exists as an object in the NT namespace,
             //    then the return code will be STATUS_OBJECT_TYPE_MISMATCH
             //    else the return code will be STATUS_OBJECT_NAME_NOT_FOUND
             //
-            if (status != STATUS_OBJECT_TYPE_MISMATCH) {
-                return( status );
+            if (status != STATUS_OBJECT_TYPE_MISMATCH)
+            {
+                return (status);
             }
             deviceNameString.Buffer = string.Buffer;
             deviceNameString.Length = string.Length;
             deviceNameString.MaximumLength = string.MaximumLength;
             TranslatedSymLink = FALSE;
         }
-        status = ExpCreateOutputARC(
-                    OutputPath,
-                    OutputPathLength,
-                    &deviceNameString,
-                    pathName
-                    );
-        if (TranslatedSymLink == TRUE) {
-            ExFreePool( deviceNameString.Buffer );
+        status = ExpCreateOutputARC(OutputPath, OutputPathLength, &deviceNameString, pathName);
+        if (TranslatedSymLink == TRUE)
+        {
+            ExFreePool(deviceNameString.Buffer);
         }
-        return( status );
+        return (status);
     }
 
     //
     // Open the target partition and get its partition information.
     //
 
-    InitializeObjectAttributes(
-        &obja,
-        &string,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&obja, &string, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    status = ZwOpenFile(
-                &handle,
-                FILE_READ_ATTRIBUTES | SYNCHRONIZE,
-                &obja,
-                &iosb,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_NON_DIRECTORY_FILE
-                );
-    if (!NT_SUCCESS(status)) {
+    status = ZwOpenFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &obja, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        FILE_NON_DIRECTORY_FILE);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    status = ZwDeviceIoControlFile(
-                handle,
-                NULL,
-                NULL,
-                NULL,
-                &iosb,
-                IOCTL_DISK_GET_PARTITION_INFO_EX,
-                NULL,
-                0,
-                &partitionInfo,
-                sizeof(partitionInfo)
-                );
-    if (!NT_SUCCESS(status)) {
+    status = ZwDeviceIoControlFile(handle, NULL, NULL, NULL, &iosb, IOCTL_DISK_GET_PARTITION_INFO_EX, NULL, 0,
+                                   &partitionInfo, sizeof(partitionInfo));
+    if (!NT_SUCCESS(status))
+    {
         ZwClose(handle);
         return status;
     }
 
-    if ((partitionInfo.PartitionStyle != PARTITION_STYLE_MBR) &&
-        (partitionInfo.PartitionStyle != PARTITION_STYLE_GPT)) {
+    if ((partitionInfo.PartitionStyle != PARTITION_STYLE_MBR) && (partitionInfo.PartitionStyle != PARTITION_STYLE_GPT))
+    {
         ZwClose(handle);
         return STATUS_UNRECOGNIZED_MEDIA;
     }
 
-    if (partitionInfo.PartitionStyle == PARTITION_STYLE_MBR) {
+    if (partitionInfo.PartitionStyle == PARTITION_STYLE_MBR)
+    {
 
-        driveLayoutLength = FIELD_OFFSET(DRIVE_LAYOUT_INFORMATION_EX, PartitionEntry) +
-                                (sizeof(PARTITION_INFORMATION_EX) * 16);
+        driveLayoutLength =
+            FIELD_OFFSET(DRIVE_LAYOUT_INFORMATION_EX, PartitionEntry) + (sizeof(PARTITION_INFORMATION_EX) * 16);
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             driveLayoutInfo = ExAllocatePoolWithTag(NonPagedPool, driveLayoutLength, 'rvnE');
-            if (driveLayoutInfo == NULL ) {
+            if (driveLayoutInfo == NULL)
+            {
                 ZwClose(handle);
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
 
-            status = ZwDeviceIoControlFile(
-                        handle,
-                        NULL,
-                        NULL,
-                        NULL,
-                        &iosb,
-                        IOCTL_DISK_GET_DRIVE_LAYOUT_EX,
-                        NULL,
-                        0,
-                        driveLayoutInfo,
-                        driveLayoutLength
-                        );
-            if (NT_SUCCESS(status)) {
+            status = ZwDeviceIoControlFile(handle, NULL, NULL, NULL, &iosb, IOCTL_DISK_GET_DRIVE_LAYOUT_EX, NULL, 0,
+                                           driveLayoutInfo, driveLayoutLength);
+            if (NT_SUCCESS(status))
+            {
                 break;
             }
             ExFreePool(driveLayoutInfo);
-            if (status == STATUS_BUFFER_TOO_SMALL) {
+            if (status == STATUS_BUFFER_TOO_SMALL)
+            {
                 driveLayoutLength *= 2;
                 continue;
             }
@@ -4269,7 +4158,8 @@ ExpTranslateNtPath (
             return status;
         }
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             signatureMBR = driveLayoutInfo->Mbr.Signature;
             ExFreePool(driveLayoutInfo);
         }
@@ -4277,77 +4167,70 @@ ExpTranslateNtPath (
 
     ZwClose(handle);
 
-    if (partitionInfo.PartitionStyle == PARTITION_STYLE_GPT) {
+    if (partitionInfo.PartitionStyle == PARTITION_STYLE_GPT)
+    {
         pDiskSignature = (PDISK_SIGNATURE_NEW)(&(partitionInfo.Gpt.PartitionId));
         GPTpartition = TRUE;
-    } else {
+    }
+    else
+    {
         pDiskSignature = (PDISK_SIGNATURE_NEW)(&signatureMBR);
         GPTpartition = FALSE;
     }
 
-    if (OutputType == FILE_PATH_TYPE_EFI) {
+    if (OutputType == FILE_PATH_TYPE_EFI)
+    {
 
-        status = ExpCreateOutputEFI(
-                    OutputPath,
-                    OutputPathLength,
-                    pDiskSignature,
-                    &(partitionInfo.PartitionNumber),
-                    (PULONGLONG)(&(partitionInfo.StartingOffset.QuadPart)),
-                    (PULONGLONG)(&(partitionInfo.PartitionLength.QuadPart)),
-                    pathName,
-                    GPTpartition
-                    );
-        return( status );
+        status = ExpCreateOutputEFI(OutputPath, OutputPathLength, pDiskSignature, &(partitionInfo.PartitionNumber),
+                                    (PULONGLONG)(&(partitionInfo.StartingOffset.QuadPart)),
+                                    (PULONGLONG)(&(partitionInfo.PartitionLength.QuadPart)), pathName, GPTpartition);
+        return (status);
     }
 
     //
     // OutputType is ARC_SIGNATURE
     //
-    status = ExpCreateOutputSIGNATURE(
-                    OutputPath,
-                    OutputPathLength,
-                    pDiskSignature,
-                    &(partitionInfo.PartitionNumber),
-                    (PULONGLONG)(&(partitionInfo.StartingOffset.QuadPart)),
-                    (PULONGLONG)(&(partitionInfo.PartitionLength.QuadPart)),
-                    pathName,
-                    GPTpartition
-                    );
-    return( status );
+    status = ExpCreateOutputSIGNATURE(OutputPath, OutputPathLength, pDiskSignature, &(partitionInfo.PartitionNumber),
+                                      (PULONGLONG)(&(partitionInfo.StartingOffset.QuadPart)),
+                                      (PULONGLONG)(&(partitionInfo.PartitionLength.QuadPart)), pathName, GPTpartition);
+    return (status);
 
 } // ExpTranslateNtPath
 
-
+
 LOGICAL
-ExpTranslateBootEntryNameToId (
-    IN PWSTR Name,
-    OUT PULONG Id
-    )
+ExpTranslateBootEntryNameToId(IN PWSTR Name, OUT PULONG Id)
 {
     ULONG number;
     ULONG i;
     WCHAR c;
 
-    if ((towlower(Name[0]) != 'b') ||
-        (towlower(Name[1]) != 'o') ||
-        (towlower(Name[2]) != 'o') ||
-        (towlower(Name[3]) != 't') ) {
+    if ((towlower(Name[0]) != 'b') || (towlower(Name[1]) != 'o') || (towlower(Name[2]) != 'o') ||
+        (towlower(Name[3]) != 't'))
+    {
         return FALSE;
     }
 
     number = 0;
-    for (i = 4; i < 8; i++) {
+    for (i = 4; i < 8; i++)
+    {
         c = towlower(Name[i]);
-        if ((c >= L'0') && (c <= L'9')) {
+        if ((c >= L'0') && (c <= L'9'))
+        {
             number = (number * 16) + (c - L'0');
-        } else if ((c >= L'a') && (c <= L'f')) {
+        }
+        else if ((c >= L'a') && (c <= L'f'))
+        {
             number = (number * 16) + (c - L'a' + 10);
-        } else {
+        }
+        else
+        {
             return FALSE;
         }
     }
 
-    if (Name[8] != 0) {
+    if (Name[8] != 0)
+    {
         return FALSE;
     }
 
@@ -4355,12 +4238,9 @@ ExpTranslateBootEntryNameToId (
     return TRUE;
 
 } // ExpTranslateBootEntryNameToId
-
+
 NTSTATUS
-ExpTranslateSymbolicLink (
-    IN PWSTR LinkName,
-    OUT PUNICODE_STRING ResultName
-    )
+ExpTranslateSymbolicLink(IN PWSTR LinkName, OUT PUNICODE_STRING ResultName)
 
 /*++
 
@@ -4403,46 +4283,36 @@ Return Value:
     // Open the input link.
     //
 
-    RtlInitUnicodeString( &linkString, LinkName );
+    RtlInitUnicodeString(&linkString, LinkName);
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &linkString,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &linkString, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    status = ZwOpenSymbolicLinkObject(
-                &handle,
-                (ACCESS_MASK)SYMBOLIC_LINK_QUERY,
-                &objectAttributes
-                );
+    status = ZwOpenSymbolicLinkObject(&handle, (ACCESS_MASK)SYMBOLIC_LINK_QUERY, &objectAttributes);
 
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    while ( TRUE ) {
+    while (TRUE)
+    {
 
-        while ( TRUE ) {
+        while (TRUE)
+        {
 
             //
             // Get the translation for this link, allocating more
             // space as needed.
             //
-    
+
             resultString.Length = 0;
             resultString.MaximumLength = (USHORT)(resultBufferLength - sizeof(WCHAR));
             resultString.Buffer = resultBuffer;
-    
-            status = ZwQuerySymbolicLinkObject(
-                        handle,
-                        &resultString,
-                        &requiredLength
-                        );
 
-            if ( status != STATUS_BUFFER_TOO_SMALL ) {
+            status = ZwQuerySymbolicLinkObject(handle, &resultString, &requiredLength);
+
+            if (status != STATUS_BUFFER_TOO_SMALL)
+            {
                 break;
             }
 
@@ -4452,13 +4322,15 @@ Return Value:
             // and try again.
             //
 
-            if ( resultBuffer != NULL ) {
-                ExFreePool( resultBuffer );
+            if (resultBuffer != NULL)
+            {
+                ExFreePool(resultBuffer);
             }
             resultBufferLength = requiredLength + sizeof(WCHAR);
-            resultBuffer = ExAllocatePoolWithTag( NonPagedPool, resultBufferLength, 'rvnE' );
-            if ( resultBuffer == NULL ) {
-                ZwClose( handle );
+            resultBuffer = ExAllocatePoolWithTag(NonPagedPool, resultBufferLength, 'rvnE');
+            if (resultBuffer == NULL)
+            {
+                ZwClose(handle);
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
         }
@@ -4468,11 +4340,13 @@ Return Value:
         // the failure status.
         //
 
-        ZwClose( handle );
+        ZwClose(handle);
 
-        if (!NT_SUCCESS(status)) {
-            if ( resultBuffer != NULL) {
-                ExFreePool( resultBuffer );
+        if (!NT_SUCCESS(status))
+        {
+            if (resultBuffer != NULL)
+            {
+                ExFreePool(resultBuffer);
             }
             return status;
         }
@@ -4490,30 +4364,21 @@ Return Value:
         // this name as the result.
         //
 
-        RtlInitUnicodeString( &linkString, resultBuffer );
+        RtlInitUnicodeString(&linkString, resultBuffer);
 
-        InitializeObjectAttributes(
-            &objectAttributes,
-            &linkString,
-            OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-            NULL,
-            NULL
-            );
+        InitializeObjectAttributes(&objectAttributes, &linkString, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL,
+                                   NULL);
 
-        status = ZwOpenSymbolicLinkObject(
-                    &handle,
-                    (ACCESS_MASK)SYMBOLIC_LINK_QUERY,
-                    &objectAttributes
-                    );
+        status = ZwOpenSymbolicLinkObject(&handle, (ACCESS_MASK)SYMBOLIC_LINK_QUERY, &objectAttributes);
 
-        if ( !NT_SUCCESS(status) ) {
+        if (!NT_SUCCESS(status))
+        {
             break;
         }
 
         //
         // This name is also a symbolic link. Loop back and translate it.
         //
-
     }
 
     //
@@ -4525,11 +4390,9 @@ Return Value:
     return STATUS_SUCCESS;
 
 } // ExpTranslateSymbolicLink
-
+
 LOGICAL
-ExpIsDevicePathForRemovableMedia (
-    EFI_DEVICE_PATH *DevicePath
-    )
+ExpIsDevicePathForRemovableMedia(EFI_DEVICE_PATH *DevicePath)
 
 /*++
 
@@ -4572,14 +4435,18 @@ Return Value:
     // Walk the device path, looking for elements that we care about.
     //
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        if (IsDevicePathEndType(dp)) {
+        if (IsDevicePathEndType(dp))
+        {
             break;
         }
 
-        if (DevicePathType(dp) == HARDWARE_DEVICE_PATH) {
-            if (DevicePathSubType(dp) == HW_VENDOR_DP) {
+        if (DevicePathType(dp) == HARDWARE_DEVICE_PATH)
+        {
+            if (DevicePathSubType(dp) == HW_VENDOR_DP)
+            {
 
                 //
                 // Found a HARDWARE/VENDOR element. If it has the
@@ -4587,22 +4454,26 @@ Return Value:
                 //
 
                 vdp = (VENDOR_DEVICE_PATH UNALIGNED *)dp;
-                if ( memcmp( &vdp->Guid, &ExpUnknownDeviceGuid, 16 ) == 0 ) {
+                if (memcmp(&vdp->Guid, &ExpUnknownDeviceGuid, 16) == 0)
+                {
                     vendorDp = vdp;
                 }
             }
+        }
+        else if (DevicePathType(dp) == MEDIA_DEVICE_PATH)
+        {
 
-        } else if (DevicePathType(dp) == MEDIA_DEVICE_PATH) {
-
-            if (DevicePathSubType(dp) == MEDIA_HARDDRIVE_DP) {
+            if (DevicePathSubType(dp) == MEDIA_HARDDRIVE_DP)
+            {
 
                 //
                 // Found a MEDIA/HARDDRIVE element. Remember it.
                 //
 
                 harddriveDp = (HARDDRIVE_DEVICE_PATH *)dp;
-
-            } else if (DevicePathSubType(dp) == MEDIA_FILEPATH_DP) {
+            }
+            else if (DevicePathSubType(dp) == MEDIA_FILEPATH_DP)
+            {
 
                 //
                 // Found a MEDIA/FILEPATH element. Remember it.
@@ -4621,43 +4492,40 @@ Return Value:
     // not a removable media device path.
     //
 
-    if ((vendorDp == NULL) || (harddriveDp != NULL) || (filepathDp != NULL)) {
+    if ((vendorDp == NULL) || (harddriveDp != NULL) || (filepathDp != NULL))
+    {
         return FALSE;
     }
 
     return TRUE;
 
 } // ExpIsDevicePathForRemovableMedia
-
+
 NTSTATUS
-ExpVerifyFilePath (
-    PFILE_PATH FilePath,
-    PUCHAR Max
-    )
+ExpVerifyFilePath(PFILE_PATH FilePath, PUCHAR Max)
 {
     EFI_DEVICE_PATH *dp;
     PUCHAR dpMax;
     ULONG length;
     PWSTR p;
 
-    if (((PUCHAR)FilePath > Max) ||
-        (((PUCHAR)FilePath + FIELD_OFFSET(FILE_PATH, FilePath)) > Max) ||
+    if (((PUCHAR)FilePath > Max) || (((PUCHAR)FilePath + FIELD_OFFSET(FILE_PATH, FilePath)) > Max) ||
         (FilePath->Length < FIELD_OFFSET(FILE_PATH, FilePath)) ||
-        (((PUCHAR)FilePath + FilePath->Length) < (PUCHAR)FilePath) ||
-        (((PUCHAR)FilePath + FilePath->Length) > Max) ||
-        (FilePath->Version == 0) ||
-        (FilePath->Version > FILE_PATH_VERSION) ||
-        (FilePath->Type < FILE_PATH_TYPE_MIN) ||
-        (FilePath->Type > FILE_PATH_TYPE_MAX)) {
+        (((PUCHAR)FilePath + FilePath->Length) < (PUCHAR)FilePath) || (((PUCHAR)FilePath + FilePath->Length) > Max) ||
+        (FilePath->Version == 0) || (FilePath->Version > FILE_PATH_VERSION) || (FilePath->Type < FILE_PATH_TYPE_MIN) ||
+        (FilePath->Type > FILE_PATH_TYPE_MAX))
+    {
         //DbgPrint( "ExpVerifyFilePath: file path invalid\n" );
         return STATUS_INVALID_PARAMETER;
     }
 
-    switch (FilePath->Type) {
-    
+    switch (FilePath->Type)
+    {
+
     case FILE_PATH_TYPE_ARC:
     case FILE_PATH_TYPE_ARC_SIGNATURE:
-        if (ExpSafeWcslen((PWCHAR)FilePath->FilePath, (PWCHAR)Max) == 0xffffffff) {
+        if (ExpSafeWcslen((PWCHAR)FilePath->FilePath, (PWCHAR)Max) == 0xffffffff)
+        {
             //DbgPrint( "ExpVerifyFilePath: ARC string overruns buffer end\n" );
             return STATUS_INVALID_PARAMETER;
         }
@@ -4666,11 +4534,13 @@ ExpVerifyFilePath (
     case FILE_PATH_TYPE_NT:
         p = (PWSTR)FilePath->FilePath;
         length = ExpSafeWcslen(p, (PWCHAR)Max);
-        if (length != 0xffffffff) {
+        if (length != 0xffffffff)
+        {
             p = p + length + 1;
             length = ExpSafeWcslen(p, (PWCHAR)Max);
         }
-        if (length == 0xffffffff) {
+        if (length == 0xffffffff)
+        {
             //DbgPrint( "ExpVerifyFilePath: NT string overruns buffer end\n" );
             return STATUS_INVALID_PARAMETER;
         }
@@ -4678,24 +4548,29 @@ ExpVerifyFilePath (
 
     case FILE_PATH_TYPE_EFI:
         dp = (EFI_DEVICE_PATH *)FilePath->FilePath;
-        while (TRUE) {
-            if (((PUCHAR)dp + sizeof(EFI_DEVICE_PATH)) > Max) {
+        while (TRUE)
+        {
+            if (((PUCHAR)dp + sizeof(EFI_DEVICE_PATH)) > Max)
+            {
                 //DbgPrint( "ExpVerifyFilePath: EFI device path overruns buffer end\n" );
                 return STATUS_INVALID_PARAMETER;
             }
             length = DevicePathNodeLength(dp);
-            if (((PUCHAR)dp + length) > Max) {
+            if (((PUCHAR)dp + length) > Max)
+            {
                 //DbgPrint( "ExpVerifyFilePath: EFI device path overruns buffer end\n" );
                 return STATUS_INVALID_PARAMETER;
             }
             dpMax = (PUCHAR)dp + length;
-            if (IsDevicePathEndType(dp)) {
+            if (IsDevicePathEndType(dp))
+            {
                 break;
             }
-            if ((DevicePathType(dp) == MEDIA_DEVICE_PATH) &&
-                (DevicePathSubType(dp) == MEDIA_FILEPATH_DP)) {
+            if ((DevicePathType(dp) == MEDIA_DEVICE_PATH) && (DevicePathSubType(dp) == MEDIA_FILEPATH_DP))
+            {
                 FILEPATH_DEVICE_PATH *fp = (FILEPATH_DEVICE_PATH *)dp;
-                if (ExpSafeWcslen(fp->PathName, (PWCHAR)dpMax) == 0xffffffff) {
+                if (ExpSafeWcslen(fp->PathName, (PWCHAR)dpMax) == 0xffffffff)
+                {
                     //DbgPrint( "ExpVerifyFilePath: EFI filepath string overruns buffer end\n" );
                     return STATUS_INVALID_PARAMETER;
                 }
@@ -4712,26 +4587,22 @@ ExpVerifyFilePath (
     return STATUS_SUCCESS;
 
 } // ExpVerifyFilePath
-
+
 NTSTATUS
-ExpVerifyWindowsOsOptions (
-    PWINDOWS_OS_OPTIONS WindowsOsOptions,
-    ULONG Length
-    )
+ExpVerifyWindowsOsOptions(PWINDOWS_OS_OPTIONS WindowsOsOptions, ULONG Length)
 {
     PUCHAR Max = (PUCHAR)WindowsOsOptions + Length;
     ULONG loadOptionsLength = ExpSafeWcslen(WindowsOsOptions->OsLoadOptions, (PWSTR)Max);
     PFILE_PATH windowsFilePath;
 
     if ((WindowsOsOptions->Length < FIELD_OFFSET(WINDOWS_OS_OPTIONS, OsLoadOptions)) ||
-        (WindowsOsOptions->Length > Length) ||
-        (WindowsOsOptions->Version == 0) ||
+        (WindowsOsOptions->Length > Length) || (WindowsOsOptions->Version == 0) ||
         (WindowsOsOptions->Version > WINDOWS_OS_OPTIONS_VERSION) ||
         ((WindowsOsOptions->OsLoadPathOffset & (sizeof(ULONG) - 1)) != 0) ||
-        (WindowsOsOptions->OsLoadPathOffset >= Length) ||
-        (loadOptionsLength == 0xffffffff) ||
+        (WindowsOsOptions->OsLoadPathOffset >= Length) || (loadOptionsLength == 0xffffffff) ||
         ((PUCHAR)(WindowsOsOptions->OsLoadOptions + loadOptionsLength + 1) >
-            (PUCHAR)ADD_OFFSET(WindowsOsOptions, OsLoadPathOffset))) {
+         (PUCHAR)ADD_OFFSET(WindowsOsOptions, OsLoadPathOffset)))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -4740,68 +4611,70 @@ ExpVerifyWindowsOsOptions (
 
 } // ExpVerifyWindowsOsOptions
 
-
+
 NTSTATUS
-ExpParseArcPathName (
-    IN PWSTR ArcName,
-    OUT PWSTR *ppDeviceName,
-    OUT PWSTR *ppPathName,
-    OUT PULONG pDeviceNameCount,
-    OUT PBOOLEAN pSignatureFormat
-    )
+ExpParseArcPathName(IN PWSTR ArcName, OUT PWSTR *ppDeviceName, OUT PWSTR *ppPathName, OUT PULONG pDeviceNameCount,
+                    OUT PBOOLEAN pSignatureFormat)
 {
-#define SIGNATURE_PREFIX    L"signature("
-#define SIGNATURE_PREFIX_COUNT  10
-#define BUFFER_COUNT        (SIGNATURE_PREFIX_COUNT + 1)
+#define SIGNATURE_PREFIX L"signature("
+#define SIGNATURE_PREFIX_COUNT 10
+#define BUFFER_COUNT (SIGNATURE_PREFIX_COUNT + 1)
 
     PWSTR CurrentName, pathName = NULL;
-    WCHAR signaturePrefix[ BUFFER_COUNT ];
+    WCHAR signaturePrefix[BUFFER_COUNT];
     ULONG i;
     BOOLEAN SigFormat = FALSE, PrefixFound = TRUE;
 
-    if( ArcName == NULL ) {
-        return( STATUS_INVALID_PARAMETER );
+    if (ArcName == NULL)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
-    wcscpy( signaturePrefix, SIGNATURE_PREFIX );
+    wcscpy(signaturePrefix, SIGNATURE_PREFIX);
 
     //
     // check if the ArcName has a signature() format
     //
-    for( i = 0; i < SIGNATURE_PREFIX_COUNT; i++ ) {
-        if( towlower(ArcName[ i ]) != signaturePrefix[ i ] ) {
+    for (i = 0; i < SIGNATURE_PREFIX_COUNT; i++)
+    {
+        if (towlower(ArcName[i]) != signaturePrefix[i])
+        {
             PrefixFound = FALSE;
             break;
         }
     }
 
     CurrentName = ArcName;
-    if( PrefixFound == TRUE ) {
+    if (PrefixFound == TRUE)
+    {
         CurrentName += SIGNATURE_PREFIX_COUNT;
     }
 
     i = 0;
-    while( CurrentName[ i ] != UNICODE_NULL ) {
+    while (CurrentName[i] != UNICODE_NULL)
+    {
         //
         // Check if FilePathName has been reached
         //
-        if( CurrentName[ i ] == '\\' ) {
+        if (CurrentName[i] == '\\')
+        {
             pathName = CurrentName;
             pathName += i;
             break;
         }
 
-        if( (PrefixFound == TRUE) && (CurrentName[ i ] == ')') ) {
+        if ((PrefixFound == TRUE) && (CurrentName[i] == ')'))
+        {
             SigFormat = TRUE;
-            PrefixFound = FALSE;    // set to FALSE, to stop checking
+            PrefixFound = FALSE; // set to FALSE, to stop checking
 
             //
             // the FilePathName or UNICODE_NULL must follow
             //
-            if( (CurrentName[ i + 1 ] != '\\') &&
-                (CurrentName[ i + 1 ] != UNICODE_NULL) ) {
+            if ((CurrentName[i + 1] != '\\') && (CurrentName[i + 1] != UNICODE_NULL))
+            {
 
-                return( STATUS_INVALID_PARAMETER );
+                return (STATUS_INVALID_PARAMETER);
             }
         }
 
@@ -4814,8 +4687,9 @@ ExpParseArcPathName (
     // if i == 0
     //      DeviceName does not exist
     //
-    if( (PrefixFound == TRUE) || (i == 0) ) {
-        return( STATUS_INVALID_PARAMETER );
+    if ((PrefixFound == TRUE) || (i == 0))
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     *ppDeviceName = CurrentName;
@@ -4823,22 +4697,15 @@ ExpParseArcPathName (
     *pDeviceNameCount = i;
     *pSignatureFormat = SigFormat;
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 
 } // ExpParseArcPathName
 
-
+
 NTSTATUS
-ExpParseSignatureName (
-    IN PWSTR deviceName,
-    IN ULONG deviceNameCount,
-    OUT PDISK_SIGNATURE_NEW diskSignature,
-    OUT PULONG partitionNumber,
-    OUT PULONGLONG partitionStart,
-    OUT PULONGLONG partitionSize,
-    OUT PBOOLEAN GPTpartition,
-    OUT PBOOLEAN longSignature
-    )
+ExpParseSignatureName(IN PWSTR deviceName, IN ULONG deviceNameCount, OUT PDISK_SIGNATURE_NEW diskSignature,
+                      OUT PULONG partitionNumber, OUT PULONGLONG partitionStart, OUT PULONGLONG partitionSize,
+                      OUT PBOOLEAN GPTpartition, OUT PBOOLEAN longSignature)
 {
     UNICODE_STRING bufferString;
     ULONG i, prevI, chCount;
@@ -4850,7 +4717,8 @@ ExpParseSignatureName (
     //
     // Possible formats
     //
-    if( deviceName[ 0 ] == '{' ) {
+    if (deviceName[0] == '{')
+    {
         foundGUID = TRUE;
     }
 
@@ -4858,18 +4726,24 @@ ExpParseSignatureName (
     // parse the GUID or signature
     //
     i = 0;
-    while( i < deviceNameCount ) {
-        if( deviceName[ i ] == ')' ) {
+    while (i < deviceNameCount)
+    {
+        if (deviceName[i] == ')')
+        {
             break;
         }
-        if( foundGUID == TRUE ) {
-            if( deviceName[ i ] == '}' ) {
+        if (foundGUID == TRUE)
+        {
+            if (deviceName[i] == '}')
+            {
                 prettyGUID = TRUE;
                 break;
             }
         }
-        else {
-            if( deviceName[ i ] == '-' ) {
+        else
+        {
+            if (deviceName[i] == '-')
+            {
                 break;
             }
         }
@@ -4880,16 +4754,19 @@ ExpParseSignatureName (
     // Verify that pretty GUID format has a '}'
     // {33221100-5544-7766-8899-aabbccddeeff}
     //
-    if( (foundGUID == TRUE) && (prettyGUID == FALSE) ) {
-        return( STATUS_INVALID_PARAMETER );
+    if ((foundGUID == TRUE) && (prettyGUID == FALSE))
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
 #define MBR_SIGNATURE_COUNT 8
-    if( i > MBR_SIGNATURE_COUNT ) {
+    if (i > MBR_SIGNATURE_COUNT)
+    {
         foundGUID = TRUE;
     }
 
-    if( (foundGUID == TRUE) && (prettyGUID == TRUE) ) {
+    if ((foundGUID == TRUE) && (prettyGUID == TRUE))
+    {
         //
         // pretty GUID format
         // {33221100-5544-7766-8899-aabbccddeeff}
@@ -4903,50 +4780,43 @@ ExpParseSignatureName (
         bufferString.Length = (USHORT)(i * sizeof(WCHAR));
         bufferString.MaximumLength = bufferString.Length;
 
-        status = RtlGUIDFromString(
-                    &bufferString,
-                    &(diskSignature->Guid)
-                    );
-        if( !NT_SUCCESS(status) ) {
+        status = RtlGUIDFromString(&bufferString, &(diskSignature->Guid));
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
     }
-    else {
-        numberString = ExAllocatePoolWithTag(
-                            NonPagedPool,
-                            (i + 1) * sizeof(WCHAR),
-                            'rvnE'
-                            );
+    else
+    {
+        numberString = ExAllocatePoolWithTag(NonPagedPool, (i + 1) * sizeof(WCHAR), 'rvnE');
 
-        if ( numberString == NULL ) {
+        if (numberString == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        wcsncpy( numberString, deviceName, i );
-        numberString[ i ] = UNICODE_NULL;
+        wcsncpy(numberString, deviceName, i);
+        numberString[i] = UNICODE_NULL;
 
-        if( foundGUID == FALSE ) {
+        if (foundGUID == FALSE)
+        {
             //
             // MBR Signature format
             // 8459abcc
             //
-            status = ExpTranslateHexStringToULONG(
-                        numberString,
-                        &(diskSignature->Signature)
-                        );
+            status = ExpTranslateHexStringToULONG(numberString, &(diskSignature->Signature));
         }
-        else {
+        else
+        {
             //
             // ordinary GUID format
             // 00112233445566778899aabbccddeeff
             //
-            status = ExpTranslateHexStringToGUID (
-                        numberString,
-                        &(diskSignature->Guid)
-                        );
+            status = ExpTranslateHexStringToGUID(numberString, &(diskSignature->Guid));
         }
-        ExFreePool( numberString );
-        if( !NT_SUCCESS(status) ) {
+        ExFreePool(numberString);
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
     }
@@ -4954,7 +4824,8 @@ ExpParseSignatureName (
     //
     // check if there is more information in the signature name
     //
-    if( (i < deviceNameCount) && (deviceName[ i ] == '-') ) {
+    if ((i < deviceNameCount) && (deviceName[i] == '-'))
+    {
         longSigFound = TRUE;
         i++;
         //
@@ -4966,8 +4837,9 @@ ExpParseSignatureName (
         //  <size> - 16 hex digits representing the ULONGLONG partition size.
         //      (Formatted using %016I64x.)
         //
-        if( i >= deviceNameCount ) {
-            return( STATUS_INVALID_PARAMETER );
+        if (i >= deviceNameCount)
+        {
+            return (STATUS_INVALID_PARAMETER);
         }
 
 #define ULONG_COUNT 8
@@ -4975,21 +4847,20 @@ ExpParseSignatureName (
         //
         // Allocate a buffer to hold a ULONGLONG
         //
-        numberString = ExAllocatePoolWithTag(
-                            NonPagedPool,
-                            (ULONGLONG_COUNT + 1) * sizeof(WCHAR),
-                            'rvnE'
-                            );
+        numberString = ExAllocatePoolWithTag(NonPagedPool, (ULONGLONG_COUNT + 1) * sizeof(WCHAR), 'rvnE');
 
-        if ( numberString == NULL ) {
+        if (numberString == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         prevI = i;
         currentName = deviceName;
         currentName += i;
-        while( i < deviceNameCount ) {
-            if( deviceName[ i ] == '-' ) {
+        while (i < deviceNameCount)
+        {
+            if (deviceName[i] == '-')
+            {
                 break;
             }
             i++;
@@ -4997,17 +4868,19 @@ ExpParseSignatureName (
 
         chCount = i - prevI;
 
-        if( (chCount == 0) || (chCount > ULONG_COUNT) ) {
-            ExFreePool( numberString );
-            return( STATUS_INVALID_PARAMETER );
+        if ((chCount == 0) || (chCount > ULONG_COUNT))
+        {
+            ExFreePool(numberString);
+            return (STATUS_INVALID_PARAMETER);
         }
 
-        wcsncpy( numberString, currentName, chCount );
-        numberString[ chCount ] = UNICODE_NULL;
+        wcsncpy(numberString, currentName, chCount);
+        numberString[chCount] = UNICODE_NULL;
 
-        status = ExpTranslateHexStringToULONG( numberString, partitionNumber );
-        if( !NT_SUCCESS(status) ) {
-            ExFreePool( numberString );
+        status = ExpTranslateHexStringToULONG(numberString, partitionNumber);
+        if (!NT_SUCCESS(status))
+        {
+            ExFreePool(numberString);
             return status;
         }
 
@@ -5015,33 +4888,38 @@ ExpParseSignatureName (
         // get the partition start
         //
         i++;
-        if( i >= deviceNameCount ) {
-            ExFreePool( numberString );
-            return( STATUS_INVALID_PARAMETER );
+        if (i >= deviceNameCount)
+        {
+            ExFreePool(numberString);
+            return (STATUS_INVALID_PARAMETER);
         }
 
         prevI = i;
         currentName = deviceName;
         currentName += i;
-        while( i < deviceNameCount ) {
-            if( deviceName[ i ] == '-' ) {
+        while (i < deviceNameCount)
+        {
+            if (deviceName[i] == '-')
+            {
                 break;
             }
             i++;
         }
 
         chCount = i - prevI;
-        if( (chCount == 0) || (chCount > ULONGLONG_COUNT) ) {
-            ExFreePool( numberString );
-            return( STATUS_INVALID_PARAMETER );
+        if ((chCount == 0) || (chCount > ULONGLONG_COUNT))
+        {
+            ExFreePool(numberString);
+            return (STATUS_INVALID_PARAMETER);
         }
 
-        wcsncpy( numberString, currentName, chCount );
-        numberString[ chCount ] = UNICODE_NULL;
+        wcsncpy(numberString, currentName, chCount);
+        numberString[chCount] = UNICODE_NULL;
 
-        status = ExpTranslateHexStringToULONGLONG( numberString, partitionStart );
-        if( !NT_SUCCESS(status) ) {
-            ExFreePool( numberString );
+        status = ExpTranslateHexStringToULONGLONG(numberString, partitionStart);
+        if (!NT_SUCCESS(status))
+        {
+            ExFreePool(numberString);
             return status;
         }
 
@@ -5049,33 +4927,38 @@ ExpParseSignatureName (
         // get the partition size
         //
         i++;
-        if( i >= deviceNameCount ) {
-            ExFreePool( numberString );
-            return( STATUS_INVALID_PARAMETER );
+        if (i >= deviceNameCount)
+        {
+            ExFreePool(numberString);
+            return (STATUS_INVALID_PARAMETER);
         }
 
         prevI = i;
         currentName = deviceName;
         currentName += i;
-        while( i < deviceNameCount ) {
-            if( deviceName[ i ] == ')' ) {  // should be a ')' delimiter
+        while (i < deviceNameCount)
+        {
+            if (deviceName[i] == ')')
+            { // should be a ')' delimiter
                 break;
             }
             i++;
         }
 
         chCount = i - prevI;
-        if( (chCount == 0) || (chCount > ULONGLONG_COUNT) ) {
-            ExFreePool( numberString );
-            return( STATUS_INVALID_PARAMETER );
+        if ((chCount == 0) || (chCount > ULONGLONG_COUNT))
+        {
+            ExFreePool(numberString);
+            return (STATUS_INVALID_PARAMETER);
         }
 
-        wcsncpy( numberString, currentName, chCount );
-        numberString[ chCount ] = UNICODE_NULL;
+        wcsncpy(numberString, currentName, chCount);
+        numberString[chCount] = UNICODE_NULL;
 
-        status = ExpTranslateHexStringToULONGLONG( numberString, partitionSize );
-        ExFreePool( numberString );
-        if( !NT_SUCCESS(status) ) {
+        status = ExpTranslateHexStringToULONGLONG(numberString, partitionSize);
+        ExFreePool(numberString);
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
     }
@@ -5086,26 +4969,21 @@ ExpParseSignatureName (
     // current positition should be a ')'
     // MBR signature must have the long signature() format (need partition number)
     //
-    if( (i >= deviceNameCount) ||
-        (deviceName[ i ] != ')') ||
-        ((foundGUID == FALSE) && (longSigFound == FALSE)) ) {
-        return( STATUS_INVALID_PARAMETER );
+    if ((i >= deviceNameCount) || (deviceName[i] != ')') || ((foundGUID == FALSE) && (longSigFound == FALSE)))
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     *GPTpartition = foundGUID;
     *longSignature = longSigFound;
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 
 } // ExpParseSignatureName
 
-
+
 NTSTATUS
-ExpParseEfiPath(
-    IN EFI_DEVICE_PATH *pDevicePath,
-    OUT HARDDRIVE_DEVICE_PATH **ppHardDriveDP,
-    OUT PWSTR *ppPathName,
-    OUT PBOOLEAN GPTpartition
-    )
+ExpParseEfiPath(IN EFI_DEVICE_PATH *pDevicePath, OUT HARDDRIVE_DEVICE_PATH **ppHardDriveDP, OUT PWSTR *ppPathName,
+                OUT PBOOLEAN GPTpartition)
 
 /*++
 Routine Description:
@@ -5143,7 +5021,7 @@ Return Value:
     EFI_DEVICE_PATH *pDevPath;
     HARDDRIVE_DEVICE_PATH UNALIGNED *pHD_DP = NULL;
     FILEPATH_DEVICE_PATH *pFP_DP = NULL;
-    ULONG fpLength,dpLength;
+    ULONG fpLength, dpLength;
     PWSTR pFilePathName;
     NTSTATUS Status;
 
@@ -5152,13 +5030,15 @@ Return Value:
     pDevPath = pDevicePath;
     Status = STATUS_INVALID_PARAMETER;
 
-    while( IsDevicePathEndType( pDevPath ) == FALSE ) {
+    while (IsDevicePathEndType(pDevPath) == FALSE)
+    {
 
-        if( ( DevicePathType( pDevPath ) != MEDIA_DEVICE_PATH ) ||
-            ( DevicePathSubType( pDevPath ) != MEDIA_HARDDRIVE_DP ) ) {
-            pDevPath = NextDevicePathNode( pDevPath );
+        if ((DevicePathType(pDevPath) != MEDIA_DEVICE_PATH) || (DevicePathSubType(pDevPath) != MEDIA_HARDDRIVE_DP))
+        {
+            pDevPath = NextDevicePathNode(pDevPath);
         }
-        else {
+        else
+        {
             //
             // return the HardDrive node
             //
@@ -5168,11 +5048,11 @@ Return Value:
             // Assume successful operations until an error is detected
             //
             Status = STATUS_SUCCESS;
-            dpLength += DevicePathNodeLength( pDevPath );
-            pDevPath = NextDevicePathNode( pDevPath );
+            dpLength += DevicePathNodeLength(pDevPath);
+            pDevPath = NextDevicePathNode(pDevPath);
 
-            if( ( DevicePathType( pDevPath ) == MEDIA_DEVICE_PATH ) &&
-                ( DevicePathSubType( pDevPath ) == MEDIA_FILEPATH_DP ) ) {
+            if ((DevicePathType(pDevPath) == MEDIA_DEVICE_PATH) && (DevicePathSubType(pDevPath) == MEDIA_FILEPATH_DP))
+            {
 
                 //
                 // return the FilePath node
@@ -5183,24 +5063,25 @@ Return Value:
                 // Sum up the lengths of all PathNames in the
                 // FilePath nodes
                 //
-                do {
+                do
+                {
                     //
                     // Length of PathName is
                     //   FILEPATH_DEVICE_PATH.Length - (offset to PathName field)
                     //
-                    fpLength += (DevicePathNodeLength(pDevPath) -
-                                    FIELD_OFFSET(FILEPATH_DEVICE_PATH, PathName));
-                    dpLength += DevicePathNodeLength( pDevPath );
-                    pDevPath = NextDevicePathNode( pDevPath );
+                    fpLength += (DevicePathNodeLength(pDevPath) - FIELD_OFFSET(FILEPATH_DEVICE_PATH, PathName));
+                    dpLength += DevicePathNodeLength(pDevPath);
+                    pDevPath = NextDevicePathNode(pDevPath);
 
-                } while( ( DevicePathType( pDevPath ) == MEDIA_DEVICE_PATH ) &&
-                         ( DevicePathSubType( pDevPath ) == MEDIA_FILEPATH_DP ) );
+                } while ((DevicePathType(pDevPath) == MEDIA_DEVICE_PATH) &&
+                         (DevicePathSubType(pDevPath) == MEDIA_FILEPATH_DP));
             }
 
             //
             // At this point, the node must be a END_DEVICE_PATH
             //
-            if( IsDevicePathEndType( pDevPath ) == FALSE ) {
+            if (IsDevicePathEndType(pDevPath) == FALSE)
+            {
                 Status = STATUS_INVALID_PARAMETER;
             }
 
@@ -5212,45 +5093,54 @@ Return Value:
     // If no MEDIA/HARDDRIVE element was found, we cannot continue. The
     // MEDIA/FILEPATH element is optional.
     //
-    if( !NT_SUCCESS( Status ) ) {
-        return( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
     // Check the partition type, must be GPT or MBR
     //
-    if( pHD_DP->SignatureType == SIGNATURE_TYPE_GUID ) {
+    if (pHD_DP->SignatureType == SIGNATURE_TYPE_GUID)
+    {
         *GPTpartition = TRUE;
     }
-    else {
-        if ( pHD_DP->SignatureType == SIGNATURE_TYPE_MBR ) {
+    else
+    {
+        if (pHD_DP->SignatureType == SIGNATURE_TYPE_MBR)
+        {
             *GPTpartition = FALSE;
         }
-        else {
+        else
+        {
             //DbgPrint( "ExpParseEfiPath: partition signature type unknown\n" );
-            return( STATUS_INVALID_PARAMETER );
+            return (STATUS_INVALID_PARAMETER);
         }
     }
 
-    if( fpLength != 0 ) {
-        fpLength += sizeof(WCHAR);      // add null-terminator
-        pFilePathName = ExAllocatePoolWithTag( NonPagedPool, fpLength, 'rvnE' );
-        if( pFilePathName == NULL ) {
-            return( STATUS_INSUFFICIENT_RESOURCES );
+    if (fpLength != 0)
+    {
+        fpLength += sizeof(WCHAR); // add null-terminator
+        pFilePathName = ExAllocatePoolWithTag(NonPagedPool, fpLength, 'rvnE');
+        if (pFilePathName == NULL)
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
-        wcscpy( pFilePathName, pFP_DP->PathName );
+        wcscpy(pFilePathName, pFP_DP->PathName);
 
         pDevPath = (EFI_DEVICE_PATH *)pFP_DP;
-        pDevPath = NextDevicePathNode( pDevPath );
+        pDevPath = NextDevicePathNode(pDevPath);
 
-        while( IsDevicePathEndType( pDevPath ) == FALSE ) {
+        while (IsDevicePathEndType(pDevPath) == FALSE)
+        {
             pFP_DP = (FILEPATH_DEVICE_PATH *)pDevPath;
-            wcscat( pFilePathName, pFP_DP->PathName );
-            pDevPath = NextDevicePathNode( pDevPath );
+            wcscat(pFilePathName, pFP_DP->PathName);
+            pDevPath = NextDevicePathNode(pDevPath);
         }
     }
-    else {
+    else
+    {
         pFilePathName = NULL;
     }
 
@@ -5258,30 +5148,26 @@ Return Value:
     // almost done.  allocate an aligned buffer for the device path and copy
     // the unaligned contents into this buffer.
     //
-    *ppHardDriveDP = ExAllocatePoolWithTag( NonPagedPool, dpLength, 'rvnE' );
-    if (*ppHardDriveDP == NULL) {
-        if (pFilePathName) {
-            ExFreePool(pFilePathName);            
+    *ppHardDriveDP = ExAllocatePoolWithTag(NonPagedPool, dpLength, 'rvnE');
+    if (*ppHardDriveDP == NULL)
+    {
+        if (pFilePathName)
+        {
+            ExFreePool(pFilePathName);
         }
-        return( STATUS_INSUFFICIENT_RESOURCES );
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
-    RtlCopyMemory( *ppHardDriveDP, pHD_DP, dpLength );
+    RtlCopyMemory(*ppHardDriveDP, pHD_DP, dpLength);
     *ppPathName = pFilePathName;
 
-    return( Status );
+    return (Status);
 } // ExpParseEfiPath
 
-
+
 NTSTATUS
-ExpConvertArcName(
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PWSTR pDeviceName,
-    IN PWSTR pPathName,
-    IN ULONG DeviceNameCount
-    )
+ExpConvertArcName(IN ULONG OutputType, OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength, IN PWSTR pDeviceName,
+                  IN PWSTR pPathName, IN ULONG DeviceNameCount)
 {
     ULONG requiredCount, requiredLength, filePathLength;
     PWSTR linkName;
@@ -5293,41 +5179,36 @@ ExpConvertArcName(
     //
     // Allocate Pool to hold the ArcName's NT Name
     //
-#define ARC_DIR_PREFIX  L"\\ArcName\\"
-#define ARC_DIR_PREFIX_COUNT    9
+#define ARC_DIR_PREFIX L"\\ArcName\\"
+#define ARC_DIR_PREFIX_COUNT 9
 
     requiredCount = DeviceNameCount + ARC_DIR_PREFIX_COUNT + 1;
     requiredLength = requiredCount * sizeof(WCHAR);
-    linkName = ExAllocatePoolWithTag( NonPagedPool, requiredLength, 'rvnE' );
-    if ( linkName == NULL ) {
+    linkName = ExAllocatePoolWithTag(NonPagedPool, requiredLength, 'rvnE');
+    if (linkName == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    wcscpy( linkName, ARC_DIR_PREFIX );
-    wcsncat( linkName, pDeviceName, DeviceNameCount );
-    linkName[ requiredCount - 1 ] = UNICODE_NULL;
+    wcscpy(linkName, ARC_DIR_PREFIX);
+    wcsncat(linkName, pDeviceName, DeviceNameCount);
+    linkName[requiredCount - 1] = UNICODE_NULL;
 
-    if( OutputType == FILE_PATH_TYPE_NT ) {
+    if (OutputType == FILE_PATH_TYPE_NT)
+    {
         //
         // Open the symbolic link object & drill down to the target
         // return symbolic link target
         //
-        status = ExpTranslateSymbolicLink(
-                    linkName,
-                    &deviceNameString
-                    );
-        ExFreePool( linkName );
-        if ( !NT_SUCCESS(status) ) {
-            return( status );
+        status = ExpTranslateSymbolicLink(linkName, &deviceNameString);
+        ExFreePool(linkName);
+        if (!NT_SUCCESS(status))
+        {
+            return (status);
         }
 
-        status = ExpCreateOutputNT(
-                    OutputPath,
-                    OutputPathLength,
-                    &deviceNameString,
-                    pPathName
-                    );
-        ExFreePool( deviceNameString.Buffer );
-        return( status );
+        status = ExpCreateOutputNT(OutputPath, OutputPathLength, &deviceNameString, pPathName);
+        ExFreePool(deviceNameString.Buffer);
+        return (status);
     }
 
     //
@@ -5336,16 +5217,18 @@ ExpConvertArcName(
     // Create a input FILE_PATH with the NT name
     //
     filePathLength = requiredLength + FIELD_OFFSET(FILE_PATH, FilePath);
-    if ( pPathName != NULL ) {
-        filePathLength += ((ULONG)(wcslen( pPathName )) * sizeof(WCHAR));
+    if (pPathName != NULL)
+    {
+        filePathLength += ((ULONG)(wcslen(pPathName)) * sizeof(WCHAR));
     }
 
     filePathLength += sizeof(WCHAR);
 
-    filePath = ExAllocatePoolWithTag( NonPagedPool, filePathLength, 'rvnE' );
+    filePath = ExAllocatePoolWithTag(NonPagedPool, filePathLength, 'rvnE');
 
-    if ( filePath == NULL ) {
-        ExFreePool( linkName );
+    if (filePath == NULL)
+    {
+        ExFreePool(linkName);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -5357,40 +5240,31 @@ ExpConvertArcName(
     filePath->Type = FILE_PATH_TYPE_NT;
 
     p = (PWSTR)filePath->FilePath;
-    wcscpy( p, linkName );
+    wcscpy(p, linkName);
     p = (PWSTR)((PUCHAR)p + requiredLength);
 
-    ExFreePool( linkName );
+    ExFreePool(linkName);
 
-    if ( pPathName != NULL ) {
-        wcscpy( p, pPathName );
+    if (pPathName != NULL)
+    {
+        wcscpy(p, pPathName);
     }
-    else {
+    else
+    {
         *p = UNICODE_NULL;
     }
 
-    status = ExpTranslateNtPath(
-                filePath,
-                OutputType,
-                OutputPath,
-                OutputPathLength
-                );
+    status = ExpTranslateNtPath(filePath, OutputType, OutputPath, OutputPathLength);
 
-    ExFreePool( filePath );
+    ExFreePool(filePath);
 
-    return( status );
+    return (status);
 } // ExpConvertArcName
 
-
+
 NTSTATUS
-ExpConvertSignatureName(
-    IN ULONG OutputType,
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PWSTR pDeviceName,
-    IN PWSTR pPathName,
-    IN ULONG DeviceNameCount
-    )
+ExpConvertSignatureName(IN ULONG OutputType, OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength,
+                        IN PWSTR pDeviceName, IN PWSTR pPathName, IN ULONG DeviceNameCount)
 {
     DISK_SIGNATURE_NEW diskSignature;
     ULONG inputPartitionNumber, outputPartitionNumber;
@@ -5405,18 +5279,11 @@ ExpConvertSignatureName(
     //
     // Determine the signature() format
     //
-    status = ExpParseSignatureName (
-                pDeviceName,
-                DeviceNameCount,
-                &diskSignature,
-                &inputPartitionNumber,
-                &inputPartitionStart,
-                &inputPartitionSize,
-                &GPTpartition,
-                &longSignature
-                );
+    status = ExpParseSignatureName(pDeviceName, DeviceNameCount, &diskSignature, &inputPartitionNumber,
+                                   &inputPartitionStart, &inputPartitionSize, &GPTpartition, &longSignature);
 
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -5425,36 +5292,25 @@ ExpConvertSignatureName(
     //    ( OutputType == FILE_PATH_TYPE_EFI )
     //        return EFI_DEVICE_PATH format
     //
-    if( (longSignature == TRUE) && (OutputType == FILE_PATH_TYPE_EFI) ) {
-        status = ExpCreateOutputEFI(
-                    OutputPath,
-                    OutputPathLength,
-                    &diskSignature,
-                    &inputPartitionNumber,
-                    &inputPartitionStart,
-                    &inputPartitionSize,
-                    pPathName,
-                    GPTpartition
-                    );
-        return( status );
+    if ((longSignature == TRUE) && (OutputType == FILE_PATH_TYPE_EFI))
+    {
+        status = ExpCreateOutputEFI(OutputPath, OutputPathLength, &diskSignature, &inputPartitionNumber,
+                                    &inputPartitionStart, &inputPartitionSize, pPathName, GPTpartition);
+        return (status);
     }
 
     //
     // open all disks and search for partition GUID
     //
-    if( GPTpartition == FALSE ) {
+    if (GPTpartition == FALSE)
+    {
         outputPartitionNumber = inputPartitionNumber;
     }
-    status = ExpFindDiskSignature(
-                &diskSignature,
-                &outputPartitionNumber,
-                &diskNumber,
-                &outputPartitionStart,
-                &outputPartitionSize,
-                GPTpartition
-                );
+    status = ExpFindDiskSignature(&diskSignature, &outputPartitionNumber, &diskNumber, &outputPartitionStart,
+                                  &outputPartitionSize, GPTpartition);
 
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -5462,94 +5318,64 @@ ExpConvertSignatureName(
     // If the user has provided the partition number, start address,
     // and size; then verify the input with the found results.
     //
-    if( (longSignature == TRUE) &&
-        ( (inputPartitionNumber != outputPartitionNumber) ||
-          (inputPartitionStart != outputPartitionStart) ||
-          (inputPartitionSize != outputPartitionSize)
-        ) ) {
+    if ((longSignature == TRUE) &&
+        ((inputPartitionNumber != outputPartitionNumber) || (inputPartitionStart != outputPartitionStart) ||
+         (inputPartitionSize != outputPartitionSize)))
+    {
 
-        return( STATUS_INVALID_PARAMETER );
+        return (STATUS_INVALID_PARAMETER);
     }
 
-    if( OutputType == FILE_PATH_TYPE_EFI ) {
-        status = ExpCreateOutputEFI(
-                    OutputPath,
-                    OutputPathLength,
-                    &diskSignature,
-                    &outputPartitionNumber,
-                    &outputPartitionStart,
-                    &outputPartitionSize,
-                    pPathName,
-                    GPTpartition
-                    );
-        return( status );
+    if (OutputType == FILE_PATH_TYPE_EFI)
+    {
+        status = ExpCreateOutputEFI(OutputPath, OutputPathLength, &diskSignature, &outputPartitionNumber,
+                                    &outputPartitionStart, &outputPartitionSize, pPathName, GPTpartition);
+        return (status);
     }
 
     //
     // translate \Device\Harddisk[diskNumber]\Partition[PartitionNumber]
     //
 #define DISK_NAME_FORMAT L"\\Device\\Harddisk%lu\\Partition%lu"
-#define DISK_NAME_COUNT 47    // 7 + 9 + (10) + 10 + (10) + 1
+#define DISK_NAME_COUNT 47 // 7 + 9 + (10) + 10 + (10) + 1
 
-    pDiskName = ExAllocatePoolWithTag(
-                    NonPagedPool,
-                    ( DISK_NAME_COUNT * sizeof( WCHAR ) ),
-                    'rvnE'
-                    );
+    pDiskName = ExAllocatePoolWithTag(NonPagedPool, (DISK_NAME_COUNT * sizeof(WCHAR)), 'rvnE');
 
-    if( pDiskName == NULL ) {
-        return( STATUS_INSUFFICIENT_RESOURCES );
+    if (pDiskName == NULL)
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
-    _snwprintf(
-        pDiskName,
-        DISK_NAME_COUNT,
-        DISK_NAME_FORMAT,
-        diskNumber,
-        outputPartitionNumber
-        );
+    _snwprintf(pDiskName, DISK_NAME_COUNT, DISK_NAME_FORMAT, diskNumber, outputPartitionNumber);
 
-    status = ExpTranslateSymbolicLink(
-                pDiskName,
-                &DiskNameString
-                );
-    ExFreePool( pDiskName );
-    if ( !NT_SUCCESS(status) ) {
-        return( status );
+    status = ExpTranslateSymbolicLink(pDiskName, &DiskNameString);
+    ExFreePool(pDiskName);
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
 
-    if( OutputType == FILE_PATH_TYPE_NT ) {
-        status = ExpCreateOutputNT(
-                    OutputPath,
-                    OutputPathLength,
-                    &DiskNameString,
-                    pPathName
-                    );
-        ExFreePool( DiskNameString.Buffer );
-        return( status );
+    if (OutputType == FILE_PATH_TYPE_NT)
+    {
+        status = ExpCreateOutputNT(OutputPath, OutputPathLength, &DiskNameString, pPathName);
+        ExFreePool(DiskNameString.Buffer);
+        return (status);
     }
 
-    if( OutputType == FILE_PATH_TYPE_ARC ) {
-        status = ExpCreateOutputARC(
-                    OutputPath,
-                    OutputPathLength,
-                    &DiskNameString,
-                    pPathName
-                    );
-        ExFreePool( DiskNameString.Buffer );
-        return( status );
+    if (OutputType == FILE_PATH_TYPE_ARC)
+    {
+        status = ExpCreateOutputARC(OutputPath, OutputPathLength, &DiskNameString, pPathName);
+        ExFreePool(DiskNameString.Buffer);
+        return (status);
     }
 
-    ExFreePool( DiskNameString.Buffer );
-    return( STATUS_INVALID_PARAMETER );
+    ExFreePool(DiskNameString.Buffer);
+    return (STATUS_INVALID_PARAMETER);
 } // ExpConvertSignatureName
 
-
+
 NTSTATUS
-ExpTranslateHexStringToULONG (
-    IN PWSTR Name,
-    OUT PULONG Number
-    )
+ExpTranslateHexStringToULONG(IN PWSTR Name, OUT PULONG Number)
 {
     ULONG number;
     ULONG i, max;
@@ -5557,35 +5383,39 @@ ExpTranslateHexStringToULONG (
 
 #define ULONG_HEX_MAX 8
 
-    max = (ULONG)wcslen( Name );
+    max = (ULONG)wcslen(Name);
 
-    if( max > ULONG_HEX_MAX ) {
-        return( STATUS_INVALID_PARAMETER );
+    if (max > ULONG_HEX_MAX)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     number = 0;
-    for (i = 0; i < max; i++) {
+    for (i = 0; i < max; i++)
+    {
         c = towlower(Name[i]);
-        if ((c >= L'0') && (c <= L'9')) {
+        if ((c >= L'0') && (c <= L'9'))
+        {
             number = (number * 16) + (c - L'0');
-        } else if ((c >= L'a') && (c <= L'f')) {
+        }
+        else if ((c >= L'a') && (c <= L'f'))
+        {
             number = (number * 16) + (c - L'a' + 10);
-        } else {
-            return( STATUS_INVALID_PARAMETER );
+        }
+        else
+        {
+            return (STATUS_INVALID_PARAMETER);
         }
     }
 
     *Number = number;
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 
 } // ExpTranslateHexStringToULONG
 
-
+
 NTSTATUS
-ExpTranslateHexStringToULONGLONG (
-    IN PWSTR Name,
-    OUT PULONGLONG Number
-    )
+ExpTranslateHexStringToULONGLONG(IN PWSTR Name, OUT PULONGLONG Number)
 {
     ULONGLONG number;
     ULONG i, max;
@@ -5593,35 +5423,39 @@ ExpTranslateHexStringToULONGLONG (
 
 #define ULONGLONG_HEX_MAX 16
 
-    max = (ULONG)wcslen( Name );
+    max = (ULONG)wcslen(Name);
 
-    if( max > ULONGLONG_HEX_MAX ) {
-        return( STATUS_INVALID_PARAMETER );
+    if (max > ULONGLONG_HEX_MAX)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     number = 0;
-    for (i = 0; i < max; i++) {
+    for (i = 0; i < max; i++)
+    {
         c = towlower(Name[i]);
-        if ((c >= L'0') && (c <= L'9')) {
+        if ((c >= L'0') && (c <= L'9'))
+        {
             number = (number * 16) + (c - L'0');
-        } else if ((c >= L'a') && (c <= L'f')) {
+        }
+        else if ((c >= L'a') && (c <= L'f'))
+        {
             number = (number * 16) + (c - L'a' + 10);
-        } else {
-            return( STATUS_INVALID_PARAMETER );
+        }
+        else
+        {
+            return (STATUS_INVALID_PARAMETER);
         }
     }
 
     *Number = number;
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 
 } // ExpTranslateHexStringToULONGLONG
 
-
+
 NTSTATUS
-ExpTranslateHexStringToGUID (
-    IN PWSTR Name,
-    OUT GUID *pGuid
-    )
+ExpTranslateHexStringToGUID(IN PWSTR Name, OUT GUID *pGuid)
 {
     GUID resultGuid;
     ULONG i, max, number, result;
@@ -5630,32 +5464,42 @@ ExpTranslateHexStringToGUID (
 
 #define GUID_HEX_MAX 32
 
-    max = (ULONG)wcslen( Name );
+    max = (ULONG)wcslen(Name);
 
-    if( max != GUID_HEX_MAX ) {
-        return( STATUS_INVALID_PARAMETER );
+    if (max != GUID_HEX_MAX)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     number = 0;
     formatStyle = 0;
     position = 0;
     result = 0;
-    for (i = 0; i < max; i++) {
+    for (i = 0; i < max; i++)
+    {
         c = towlower(Name[i]);
-        if ((c >= L'0') && (c <= L'9')) {
+        if ((c >= L'0') && (c <= L'9'))
+        {
             number = (number * 16) + (c - L'0');
-        } else if ((c >= L'a') && (c <= L'f')) {
+        }
+        else if ((c >= L'a') && (c <= L'f'))
+        {
             number = (number * 16) + (c - L'a' + 10);
-        } else {
-            return( STATUS_INVALID_PARAMETER );
+        }
+        else
+        {
+            return (STATUS_INVALID_PARAMETER);
         }
 
-        if ((i % 2) == 1) {
-            switch( formatStyle ) {
+        if ((i % 2) == 1)
+        {
+            switch (formatStyle)
+            {
             case 0:
                 result += (number << (position * 8));
                 position++;
-                if( position == 4 ) {
+                if (position == 4)
+                {
                     resultGuid.Data1 = result;
                     formatStyle++;
                     position = 0;
@@ -5665,7 +5509,8 @@ ExpTranslateHexStringToGUID (
             case 1:
                 result += (number << (position * 8));
                 position++;
-                if( position == 2 ) {
+                if (position == 2)
+                {
                     resultGuid.Data2 = (USHORT)result;
                     formatStyle++;
                     position = 0;
@@ -5675,7 +5520,8 @@ ExpTranslateHexStringToGUID (
             case 2:
                 result += (number << (position * 8));
                 position++;
-                if( position == 2 ) {
+                if (position == 2)
+                {
                     resultGuid.Data3 = (USHORT)result;
                     formatStyle++;
                     position = 0;
@@ -5683,14 +5529,15 @@ ExpTranslateHexStringToGUID (
                 }
                 break;
             case 3:
-                resultGuid.Data4[ position ] = (UCHAR)number;
+                resultGuid.Data4[position] = (UCHAR)number;
                 position++;
-                if( position == 8 ) {
+                if (position == 8)
+                {
                     formatStyle++;
                 }
                 break;
             default:
-                return( STATUS_INVALID_PARAMETER );
+                return (STATUS_INVALID_PARAMETER);
                 break;
             }
             number = 0;
@@ -5698,22 +5545,15 @@ ExpTranslateHexStringToGUID (
     }
 
     memcpy(pGuid, &(resultGuid), sizeof(GUID));
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 
 } // ExpTranslateHexStringToGUID
 
-
+
 NTSTATUS
-ExpCreateOutputEFI (
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PDISK_SIGNATURE_NEW pDiskSignature,
-    IN PULONG pPartitionNumber,
-    IN PULONGLONG pPartitionStart,
-    IN PULONGLONG pPartitionSize,
-    IN PWSTR pPathName,
-    IN BOOLEAN GPTpartition
-    )
+ExpCreateOutputEFI(OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength, IN PDISK_SIGNATURE_NEW pDiskSignature,
+                   IN PULONG pPartitionNumber, IN PULONGLONG pPartitionStart, IN PULONGLONG pPartitionSize,
+                   IN PWSTR pPathName, IN BOOLEAN GPTpartition)
 {
     ULONG requiredLength, pathNameLength = 0;
     EFI_DEVICE_PATH *dp;
@@ -5729,7 +5569,8 @@ ExpCreateOutputEFI (
 
     requiredLength = FIELD_OFFSET(FILE_PATH, FilePath);
     requiredLength += sizeof(HARDDRIVE_DEVICE_PATH);
-    if (pPathName != NULL) {
+    if (pPathName != NULL)
+    {
         pathNameLength = (ULONG)wcslen(pPathName);
         pathNameLength = (pathNameLength + 1) * sizeof(WCHAR);
         requiredLength += FIELD_OFFSET(FILEPATH_DEVICE_PATH, PathName);
@@ -5741,7 +5582,8 @@ ExpCreateOutputEFI (
     // Compare the required length against the output buffer length.
     //
 
-    if ( *OutputPathLength < requiredLength ) {
+    if (*OutputPathLength < requiredLength)
+    {
         *OutputPathLength = requiredLength;
         return STATUS_BUFFER_TOO_SMALL;
     }
@@ -5762,17 +5604,21 @@ ExpCreateOutputEFI (
     dpHarddrive->PartitionNumber = *pPartitionNumber;
     dpHarddrive->PartitionStart = *pPartitionStart;
     dpHarddrive->PartitionSize = *pPartitionSize;
-    if (GPTpartition == TRUE) {
+    if (GPTpartition == TRUE)
+    {
         memcpy(dpHarddrive->Signature, &(pDiskSignature->Guid), sizeof(GUID));
         dpHarddrive->MBRType = MBR_TYPE_EFI_PARTITION_TABLE_HEADER;
         dpHarddrive->SignatureType = SIGNATURE_TYPE_GUID;
-    } else {
+    }
+    else
+    {
         memcpy(dpHarddrive->Signature, &(pDiskSignature->Signature), sizeof(ULONG));
         dpHarddrive->MBRType = MBR_TYPE_PCAT;
         dpHarddrive->SignatureType = SIGNATURE_TYPE_MBR;
     }
 
-    if (pPathName != NULL) {
+    if (pPathName != NULL)
+    {
         dp = NextDevicePathNode(dp);
         dpFilepath = (FILEPATH_DEVICE_PATH *)dp;
         dp->Type = MEDIA_DEVICE_PATH;
@@ -5789,14 +5635,10 @@ ExpCreateOutputEFI (
 
 } // ExpCreateOutputEFI
 
-
+
 NTSTATUS
-ExpCreateOutputNT (
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PUNICODE_STRING pDeviceNameString,
-    IN PWSTR pPathName
-    )
+ExpCreateOutputNT(OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength, IN PUNICODE_STRING pDeviceNameString,
+                  IN PWSTR pPathName)
 {
     ULONG requiredLength;
     PWCHAR p;
@@ -5808,8 +5650,9 @@ ExpCreateOutputNT (
     // output string length by the length of the path string.
     //
 
-    if ( pPathName != NULL ) {
-        requiredLength += ((ULONG)(wcslen( pPathName )) * sizeof(WCHAR));
+    if (pPathName != NULL)
+    {
+        requiredLength += ((ULONG)(wcslen(pPathName)) * sizeof(WCHAR));
     }
 
     //
@@ -5824,7 +5667,8 @@ ExpCreateOutputNT (
 
     requiredLength += FIELD_OFFSET(FILE_PATH, FilePath);
 
-    if ( *OutputPathLength < requiredLength ) {
+    if (*OutputPathLength < requiredLength)
+    {
         *OutputPathLength = requiredLength;
         return STATUS_BUFFER_TOO_SMALL;
     }
@@ -5838,13 +5682,15 @@ ExpCreateOutputNT (
     OutputPath->Type = FILE_PATH_TYPE_NT;
 
     p = (PWSTR)OutputPath->FilePath;
-    wcscpy( p, pDeviceNameString->Buffer );
+    wcscpy(p, pDeviceNameString->Buffer);
     p = (PWSTR)((PUCHAR)p + pDeviceNameString->Length + sizeof(WCHAR));
 
-    if ( pPathName != NULL ) {
-        wcscpy( p, pPathName );
+    if (pPathName != NULL)
+    {
+        wcscpy(p, pPathName);
     }
-    else {
+    else
+    {
         *p = UNICODE_NULL;
     }
 
@@ -5853,26 +5699,20 @@ ExpCreateOutputNT (
 
 } // ExpCreateOutputNT
 
-
+
 NTSTATUS
-ExpCreateOutputARC (
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PUNICODE_STRING pDeviceNameString,
-    IN PWSTR pPathName
-    )
+ExpCreateOutputARC(OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength, IN PUNICODE_STRING pDeviceNameString,
+                   IN PWSTR pPathName)
 {
     ULONG requiredLength, ArcNameLength;
     PWCHAR p;
     PWSTR pArcDeviceName;
     NTSTATUS status;
 
-    status = ExpFindArcName(
-                pDeviceNameString,
-                &pArcDeviceName
-                );
-    if (!NT_SUCCESS(status)) {
-        return( status );
+    status = ExpFindArcName(pDeviceNameString, &pArcDeviceName);
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
 
     ArcNameLength = ((ULONG)wcslen(pArcDeviceName)) * sizeof(WCHAR);
@@ -5883,8 +5723,9 @@ ExpCreateOutputARC (
     // output string length by the length of the path string.
     //
 
-    if ( pPathName != NULL ) {
-        requiredLength += ((ULONG)(wcslen( pPathName )) * sizeof(WCHAR));
+    if (pPathName != NULL)
+    {
+        requiredLength += ((ULONG)(wcslen(pPathName)) * sizeof(WCHAR));
     }
 
     //
@@ -5894,9 +5735,10 @@ ExpCreateOutputARC (
 
     requiredLength += FIELD_OFFSET(FILE_PATH, FilePath);
 
-    if ( *OutputPathLength < requiredLength ) {
+    if (*OutputPathLength < requiredLength)
+    {
         *OutputPathLength = requiredLength;
-        ExFreePool( pArcDeviceName );
+        ExFreePool(pArcDeviceName);
         return STATUS_BUFFER_TOO_SMALL;
     }
 
@@ -5909,12 +5751,13 @@ ExpCreateOutputARC (
     OutputPath->Type = FILE_PATH_TYPE_ARC;
 
     p = (PWSTR)OutputPath->FilePath;
-    wcscpy( p, pArcDeviceName );
+    wcscpy(p, pArcDeviceName);
     p = (PWSTR)((PUCHAR)p + ArcNameLength);
-    ExFreePool( pArcDeviceName );
+    ExFreePool(pArcDeviceName);
 
-    if ( pPathName != NULL ) {
-        wcscpy( p, pPathName );
+    if (pPathName != NULL)
+    {
+        wcscpy(p, pPathName);
     }
 
     *OutputPathLength = requiredLength;
@@ -5922,18 +5765,12 @@ ExpCreateOutputARC (
 
 } // ExpCreateOutputARC
 
-
+
 NTSTATUS
-ExpCreateOutputSIGNATURE (
-    OUT PFILE_PATH OutputPath,
-    IN OUT PULONG OutputPathLength,
-    IN PDISK_SIGNATURE_NEW pDiskSignature,
-    IN PULONG pPartitionNumber,
-    IN PULONGLONG pPartitionStart,
-    IN PULONGLONG pPartitionSize,
-    IN PWSTR pPathName,
-    IN BOOLEAN GPTpartition
-    )
+ExpCreateOutputSIGNATURE(OUT PFILE_PATH OutputPath, IN OUT PULONG OutputPathLength,
+                         IN PDISK_SIGNATURE_NEW pDiskSignature, IN PULONG pPartitionNumber,
+                         IN PULONGLONG pPartitionStart, IN PULONGLONG pPartitionSize, IN PWSTR pPathName,
+                         IN BOOLEAN GPTpartition)
 {
     ULONG requiredLength, pathNameCount;
     PWCHAR p;
@@ -5963,20 +5800,22 @@ ExpCreateOutputSIGNATURE (
     // MBR disk, the output string length is 62 WCHARs.
     //
 
-    requiredLength = (ULONG)strlen("signature(") +
-                     1 +                        // "-"
-                     (sizeof(ULONG) * 2) +      // <part#>
-                     1 +                        // "-"
-                     (sizeof(ULONGLONG) * 2) +  // <start>
-                     1 +                        // "-"
-                     (sizeof(ULONGLONG) * 2) +  // <size>
-                     1 +                        // ")"
-                     1;                         // null terminator
+    requiredLength = (ULONG)strlen("signature(") + 1 + // "-"
+                     (sizeof(ULONG) * 2) +             // <part#>
+                     1 +                               // "-"
+                     (sizeof(ULONGLONG) * 2) +         // <start>
+                     1 +                               // "-"
+                     (sizeof(ULONGLONG) * 2) +         // <size>
+                     1 +                               // ")"
+                     1;                                // null terminator
 
-    if ( GPTpartition == TRUE ) {
+    if (GPTpartition == TRUE)
+    {
         requiredLength += (sizeof(GUID) * 2);
-        requiredLength += 6;    // for the {} & four '-' in the pretty GUID format
-    } else {
+        requiredLength += 6; // for the {} & four '-' in the pretty GUID format
+    }
+    else
+    {
         requiredLength += sizeof(ULONG) * 2;
     }
 
@@ -5985,11 +5824,13 @@ ExpCreateOutputSIGNATURE (
     // output string length by the length of the path string.
     //
 
-    if (pPathName != NULL) {
+    if (pPathName != NULL)
+    {
         pathNameCount = (ULONG)wcslen(pPathName);
         requiredLength += pathNameCount;
     }
-    else {
+    else
+    {
         pathNameCount = 0;
     }
 
@@ -6002,7 +5843,8 @@ ExpCreateOutputSIGNATURE (
     requiredLength *= sizeof(WCHAR);
     requiredLength += FIELD_OFFSET(FILE_PATH, FilePath);
 
-    if ( *OutputPathLength < requiredLength ) {
+    if (*OutputPathLength < requiredLength)
+    {
         *OutputPathLength = requiredLength;
         return STATUS_BUFFER_TOO_SMALL;
     }
@@ -6016,36 +5858,32 @@ ExpCreateOutputSIGNATURE (
     OutputPath->Type = FILE_PATH_TYPE_ARC_SIGNATURE;
 
     p = (PWSTR)OutputPath->FilePath;
-    wcscpy( p, L"signature(" );
-    p += wcslen( p );
+    wcscpy(p, L"signature(");
+    p += wcslen(p);
 
-    if ( GPTpartition == TRUE ) {
-        status = RtlStringFromGUID(
-                    (LPGUID)(&(pDiskSignature->Guid)),
-                    &GuidString
-                    );
-        if ( !NT_SUCCESS(status) ) {
+    if (GPTpartition == TRUE)
+    {
+        status = RtlStringFromGUID((LPGUID)(&(pDiskSignature->Guid)), &GuidString);
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
-        wcscat( p, GuidString.Buffer );
+        wcscat(p, GuidString.Buffer);
         p = (PWCHAR)((PUCHAR)p + GuidString.Length);
-        ExFreePool( GuidString.Buffer );
-    } else {
-        swprintf( p, L"%08x", pDiskSignature->Signature );
-        p += wcslen( p );
+        ExFreePool(GuidString.Buffer);
+    }
+    else
+    {
+        swprintf(p, L"%08x", pDiskSignature->Signature);
+        p += wcslen(p);
     }
 
-    swprintf(
-        p,
-        L"-%08x-%016I64x-%016I64x)",
-        *pPartitionNumber,
-        *pPartitionStart,
-        *pPartitionSize
-        );
-    p += wcslen( p );
+    swprintf(p, L"-%08x-%016I64x-%016I64x)", *pPartitionNumber, *pPartitionStart, *pPartitionSize);
+    p += wcslen(p);
 
-    if ( pathNameCount != 0 ) {
-        wcscpy( p, pPathName );
+    if (pathNameCount != 0)
+    {
+        wcscpy(p, pPathName);
     }
 
     *OutputPathLength = requiredLength;
@@ -6053,12 +5891,9 @@ ExpCreateOutputSIGNATURE (
 
 } // ExpCreateOutputSIGNATURE
 
-
+
 NTSTATUS
-ExpFindArcName (
-    IN PUNICODE_STRING pDeviceNameString,
-    OUT PWSTR *pArcName
-    )
+ExpFindArcName(IN PUNICODE_STRING pDeviceNameString, OUT PWSTR *pArcName)
 {
     NTSTATUS status;
     UNICODE_STRING ArcString, SymLinkTypeString;
@@ -6074,75 +5909,61 @@ ExpFindArcName (
     // Open a handle to the directory object for \ArcName
     // Get a kernel handle
     //
-#define ARC_DIR_NAME    L"\\ArcName"
-#define ARC_DIR_SIZE    (9 * sizeof(WCHAR))
+#define ARC_DIR_NAME L"\\ArcName"
+#define ARC_DIR_SIZE (9 * sizeof(WCHAR))
 #define ARC_DIR_NAME_PREFIX L"\\ArcName\\"
 #define ARC_DIR_SIZE_PREFIX (9 * sizeof(WCHAR))
 
-    pArcDirName = ExAllocatePoolWithTag( NonPagedPool, ARC_DIR_SIZE, 'rvnE' );
-    if ( pArcDirName == NULL ) {
-        return( STATUS_INSUFFICIENT_RESOURCES );
+    pArcDirName = ExAllocatePoolWithTag(NonPagedPool, ARC_DIR_SIZE, 'rvnE');
+    if (pArcDirName == NULL)
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
-    wcscpy( pArcDirName, ARC_DIR_NAME );
+    wcscpy(pArcDirName, ARC_DIR_NAME);
 
-    RtlInitUnicodeString( &ArcString, pArcDirName );
+    RtlInitUnicodeString(&ArcString, pArcDirName);
 
-    InitializeObjectAttributes(
-        &Attributes,
-        &ArcString,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&Attributes, &ArcString, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    status = ZwOpenDirectoryObject(
-                &hArcDirectory,
-                DIRECTORY_QUERY,
-                &Attributes
-                );
-    ExFreePool( pArcDirName );
-    if (!NT_SUCCESS(status)) {
-        return( status );
+    status = ZwOpenDirectoryObject(&hArcDirectory, DIRECTORY_QUERY, &Attributes);
+    ExFreePool(pArcDirName);
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
 
     pDirInfo = NULL;
     dirInfoLength = 0;
     restartScan = TRUE;
-    RtlInitUnicodeString( &SymLinkTypeString, L"SymbolicLink" );
-    while (TRUE) {
-        status = ZwQueryDirectoryObject(
-                    hArcDirectory,
-                    pDirInfo,
-                    dirInfoLength,
-                    TRUE,           // force one at a time
-                    restartScan,
-                    &dirContext,
-                    &neededLength
-                    );
-        if (status == STATUS_BUFFER_TOO_SMALL) {
+    RtlInitUnicodeString(&SymLinkTypeString, L"SymbolicLink");
+    while (TRUE)
+    {
+        status = ZwQueryDirectoryObject(hArcDirectory, pDirInfo, dirInfoLength,
+                                        TRUE, // force one at a time
+                                        restartScan, &dirContext, &neededLength);
+        if (status == STATUS_BUFFER_TOO_SMALL)
+        {
             dirInfoLength = neededLength;
-            if (pDirInfo != NULL) {
+            if (pDirInfo != NULL)
+            {
                 ExFreePool(pDirInfo);
             }
-            pDirInfo = ExAllocatePoolWithTag( NonPagedPool, dirInfoLength, 'rvnE' );
-            if (pDirInfo == NULL) {
+            pDirInfo = ExAllocatePoolWithTag(NonPagedPool, dirInfoLength, 'rvnE');
+            if (pDirInfo == NULL)
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 break;
             }
-            status = ZwQueryDirectoryObject(
-                        hArcDirectory,
-                        pDirInfo,
-                        dirInfoLength,
-                        TRUE,       // force one at a time
-                        restartScan,
-                        &dirContext,
-                        &neededLength
-                        );
+            status = ZwQueryDirectoryObject(hArcDirectory, pDirInfo, dirInfoLength,
+                                            TRUE, // force one at a time
+                                            restartScan, &dirContext, &neededLength);
         }
         restartScan = FALSE;
 
-        if (!NT_SUCCESS(status)) {
-            if (status == STATUS_NO_MORE_ENTRIES) {
+        if (!NT_SUCCESS(status))
+        {
+            if (status == STATUS_NO_MORE_ENTRIES)
+            {
                 status = STATUS_SUCCESS;
             }
             break;
@@ -6151,92 +5972,71 @@ ExpFindArcName (
         //
         // Check if the element is not a symbolic link
         //
-        if (RtlEqualUnicodeString(
-                &(pDirInfo->TypeName),
-                &SymLinkTypeString,
-                FALSE) == FALSE) {
+        if (RtlEqualUnicodeString(&(pDirInfo->TypeName), &SymLinkTypeString, FALSE) == FALSE)
+        {
             continue;
         }
 
         neededLength = ARC_DIR_SIZE_PREFIX + pDirInfo->Name.Length;
-        pArcLinkName = ExAllocatePoolWithTag(
-                            NonPagedPool,
-                            neededLength + sizeof(WCHAR),
-                            'rvnE' );
-        if ( pArcLinkName == NULL ) {
+        pArcLinkName = ExAllocatePoolWithTag(NonPagedPool, neededLength + sizeof(WCHAR), 'rvnE');
+        if (pArcLinkName == NULL)
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
             break;
         }
-        arcNameCount = pDirInfo->Name.Length/sizeof(WCHAR);
-        wcscpy( pArcLinkName, ARC_DIR_NAME_PREFIX );
-        wcsncat(
-            pArcLinkName,
-            pDirInfo->Name.Buffer,
-            arcNameCount
-            );
-        pArcLinkName[ neededLength/sizeof(WCHAR) ] = UNICODE_NULL;
+        arcNameCount = pDirInfo->Name.Length / sizeof(WCHAR);
+        wcscpy(pArcLinkName, ARC_DIR_NAME_PREFIX);
+        wcsncat(pArcLinkName, pDirInfo->Name.Buffer, arcNameCount);
+        pArcLinkName[neededLength / sizeof(WCHAR)] = UNICODE_NULL;
 
         //
         // Drill down this symbolic link to the device object
         //
-        status = ExpTranslateSymbolicLink(
-                    pArcLinkName,
-                    &ArcString
-                    );
-        if ( !NT_SUCCESS(status) ) {
-            ExFreePool( pArcLinkName );
+        status = ExpTranslateSymbolicLink(pArcLinkName, &ArcString);
+        if (!NT_SUCCESS(status))
+        {
+            ExFreePool(pArcLinkName);
             break;
         }
 
         //
         // Check if this Arc Name points the same device object
         //
-        ArcNameFound = RtlEqualUnicodeString(
-                            &ArcString,
-                            pDeviceNameString,
-                            TRUE
-                            );
-        ExFreePool( ArcString.Buffer );
+        ArcNameFound = RtlEqualUnicodeString(&ArcString, pDeviceNameString, TRUE);
+        ExFreePool(ArcString.Buffer);
 
-        if (ArcNameFound == TRUE) {
+        if (ArcNameFound == TRUE)
+        {
             //
             // copy the arc name without the \ArcName\ prefix
             //
-            wcsncpy(
-                pArcLinkName,
-                pDirInfo->Name.Buffer,
-                arcNameCount
-                );
-            pArcLinkName[ arcNameCount ] = UNICODE_NULL;
+            wcsncpy(pArcLinkName, pDirInfo->Name.Buffer, arcNameCount);
+            pArcLinkName[arcNameCount] = UNICODE_NULL;
             *pArcName = pArcLinkName;
             break;
         }
-        ExFreePool( pArcLinkName );
+        ExFreePool(pArcLinkName);
     }
 
-    if( NT_SUCCESS(status) && (ArcNameFound == FALSE ) ) {
+    if (NT_SUCCESS(status) && (ArcNameFound == FALSE))
+    {
         status = STATUS_OBJECT_PATH_NOT_FOUND;
     }
 
-    if (pDirInfo != NULL) {
+    if (pDirInfo != NULL)
+    {
         ExFreePool(pDirInfo);
     }
 
-    ZwClose( hArcDirectory );
-    return( status );
+    ZwClose(hArcDirectory);
+    return (status);
 
 } // ExpFindArcName
 
-
+
 NTSTATUS
-ExpFindDiskSignature (
-    IN PDISK_SIGNATURE_NEW pSignature,
-    IN OUT PULONG pPartitionNumber,
-    OUT PULONG pDiskNumber,
-    OUT PULONGLONG pPartitionStart,
-    OUT PULONGLONG pPartitionSize,
-    IN BOOLEAN GPTpartition
-    )
+ExpFindDiskSignature(IN PDISK_SIGNATURE_NEW pSignature, IN OUT PULONG pPartitionNumber, OUT PULONG pDiskNumber,
+                     OUT PULONGLONG pPartitionStart, OUT PULONGLONG pPartitionSize, IN BOOLEAN GPTpartition)
 /*++
 
 Routine Description:
@@ -6278,49 +6078,44 @@ Return Value:
 
 --*/
 {
-    PDRIVE_LAYOUT_INFORMATION_EX    pDriveLayout = NULL;
-    PPARTITION_INFORMATION_EX       pPartitionInfoEx = NULL;
-    SYSTEM_DEVICE_INFORMATION       SysDevInfo;
-    ULONG               PartitionStyle;
-    BOOLEAN             PartitionFound = FALSE;
-    ULONG               Index, PartitionIndex;
-    PWSTR               pDeviceName;
-    NTSTATUS            Status;
+    PDRIVE_LAYOUT_INFORMATION_EX pDriveLayout = NULL;
+    PPARTITION_INFORMATION_EX pPartitionInfoEx = NULL;
+    SYSTEM_DEVICE_INFORMATION SysDevInfo;
+    ULONG PartitionStyle;
+    BOOLEAN PartitionFound = FALSE;
+    ULONG Index, PartitionIndex;
+    PWSTR pDeviceName;
+    NTSTATUS Status;
 
     //
     // Find all disks on the system
     //
 
-    Status = ZwQuerySystemInformation(
-                SystemDeviceInformation,
-                &SysDevInfo,
-                sizeof(SYSTEM_DEVICE_INFORMATION),
-                NULL
-                );
+    Status = ZwQuerySystemInformation(SystemDeviceInformation, &SysDevInfo, sizeof(SYSTEM_DEVICE_INFORMATION), NULL);
 
-    if( !NT_SUCCESS( Status ) ) {
-        return( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
 #define DEVICE_NAME_FORMAT L"\\Device\\Harddisk%lu\\Partition0"
-#define DEVICE_NAME_CHAR_COUNT 38    // 7 + 9 + (10) + 11 + 1
+#define DEVICE_NAME_CHAR_COUNT 38 // 7 + 9 + (10) + 11 + 1
     //
     // Allocate the buffer for the disk names
     //
-    pDeviceName = ExAllocatePoolWithTag(
-                    NonPagedPool,
-                    ( DEVICE_NAME_CHAR_COUNT * sizeof( WCHAR ) ),
-                    'rvnE'
-                    );
+    pDeviceName = ExAllocatePoolWithTag(NonPagedPool, (DEVICE_NAME_CHAR_COUNT * sizeof(WCHAR)), 'rvnE');
 
-    if( pDeviceName == NULL ) {
-        return( STATUS_INSUFFICIENT_RESOURCES );
+    if (pDeviceName == NULL)
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
-    if( GPTpartition == TRUE ) {
+    if (GPTpartition == TRUE)
+    {
         PartitionStyle = PARTITION_STYLE_GPT;
     }
-    else {
+    else
+    {
         PartitionStyle = PARTITION_STYLE_MBR;
     }
 
@@ -6334,99 +6129,96 @@ Return Value:
     // else
     //      skip the disk
     //
-    for( Index = 0; Index < SysDevInfo.NumberOfDisks; Index++ ) {
+    for (Index = 0; Index < SysDevInfo.NumberOfDisks; Index++)
+    {
 
         //
         // Form the disk name
         // \Device\Harddisk[DiskNumber]\Partition0
         //
-        _snwprintf(
-                pDeviceName,
-                DEVICE_NAME_CHAR_COUNT,
-                DEVICE_NAME_FORMAT,
-                Index
-                );
+        _snwprintf(pDeviceName, DEVICE_NAME_CHAR_COUNT, DEVICE_NAME_FORMAT, Index);
 
-        Status = ExpGetPartitionTableInfo(
-                    pDeviceName,
-                    &pDriveLayout
-                    );
+        Status = ExpGetPartitionTableInfo(pDeviceName, &pDriveLayout);
 
-        if( !NT_SUCCESS( Status ) ) {
+        if (!NT_SUCCESS(Status))
+        {
             continue;
         }
 
-        if( pDriveLayout->PartitionStyle != PartitionStyle ) {
-            ExFreePool( pDriveLayout );
+        if (pDriveLayout->PartitionStyle != PartitionStyle)
+        {
+            ExFreePool(pDriveLayout);
             continue;
         }
 
-        if( (PartitionStyle == PARTITION_STYLE_MBR) &&
-            (pDriveLayout->Mbr.Signature != pSignature->Signature) ) {
-            ExFreePool( pDriveLayout );
+        if ((PartitionStyle == PARTITION_STYLE_MBR) && (pDriveLayout->Mbr.Signature != pSignature->Signature))
+        {
+            ExFreePool(pDriveLayout);
             continue;
         }
 
         //
         // search partition list
         //
-        for( PartitionIndex = 0;
-             PartitionIndex < pDriveLayout->PartitionCount;
-             PartitionIndex++ ) {
+        for (PartitionIndex = 0; PartitionIndex < pDriveLayout->PartitionCount; PartitionIndex++)
+        {
 
             //
             // Get the partition entry
             //
             pPartitionInfoEx = (&(pDriveLayout->PartitionEntry[PartitionIndex]));
 
-            if( PartitionStyle == PARTITION_STYLE_MBR ) {
-                if (pPartitionInfoEx->PartitionNumber == *pPartitionNumber) {
+            if (PartitionStyle == PARTITION_STYLE_MBR)
+            {
+                if (pPartitionInfoEx->PartitionNumber == *pPartitionNumber)
+                {
                     PartitionFound = TRUE;
                     break;
                 }
             }
-            else {
-                if (IsEqualGUID( &(pPartitionInfoEx->Gpt.PartitionId),
-                                 &(pSignature->Guid) )) {
+            else
+            {
+                if (IsEqualGUID(&(pPartitionInfoEx->Gpt.PartitionId), &(pSignature->Guid)))
+                {
                     PartitionFound = TRUE;
                     break;
                 }
             }
         }
 
-        if( PartitionFound == TRUE ) {
+        if (PartitionFound == TRUE)
+        {
             break;
         }
-        ExFreePool( pDriveLayout );
+        ExFreePool(pDriveLayout);
     }
 
 
-    if( NT_SUCCESS( Status ) && ( PartitionFound == FALSE ) ) {
+    if (NT_SUCCESS(Status) && (PartitionFound == FALSE))
+    {
         Status = STATUS_OBJECT_PATH_NOT_FOUND;
     }
 
     //
     // Partition Found - copy the needed information
     //
-    if( PartitionFound == TRUE ) {
+    if (PartitionFound == TRUE)
+    {
         *pPartitionNumber = pPartitionInfoEx->PartitionNumber;
         *pDiskNumber = Index;
         *pPartitionStart = pPartitionInfoEx->StartingOffset.QuadPart;
         *pPartitionSize = pPartitionInfoEx->PartitionLength.QuadPart;
-        ExFreePool( pDriveLayout );
+        ExFreePool(pDriveLayout);
     }
 
-    ExFreePool( pDeviceName );
-    return( Status );
+    ExFreePool(pDeviceName);
+    return (Status);
 
 } // ExpFindDiskSignature
 
-
+
 NTSTATUS
-ExpGetPartitionTableInfo (
-    IN PWSTR pDeviceName,
-    OUT PDRIVE_LAYOUT_INFORMATION_EX *ppDriveLayout
-    )
+ExpGetPartitionTableInfo(IN PWSTR pDeviceName, OUT PDRIVE_LAYOUT_INFORMATION_EX *ppDriveLayout)
 {
     NTSTATUS status;
     UNICODE_STRING string;
@@ -6442,55 +6234,38 @@ ExpGetPartitionTableInfo (
 
     RtlInitUnicodeString(&string, pDeviceName);
 
-    InitializeObjectAttributes(
-        &obja,
-        &string,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&obja, &string, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    status = ZwOpenFile(
-                &handle,
-                FILE_READ_ATTRIBUTES | SYNCHRONIZE,
-                &obja,
-                &iosb,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_NON_DIRECTORY_FILE
-                );
-    if (!NT_SUCCESS(status)) {
+    status = ZwOpenFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &obja, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        FILE_NON_DIRECTORY_FILE);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    driveLayoutLength = FIELD_OFFSET(DRIVE_LAYOUT_INFORMATION_EX, PartitionEntry) +
-                            (sizeof(PARTITION_INFORMATION_EX) * 16);
+    driveLayoutLength =
+        FIELD_OFFSET(DRIVE_LAYOUT_INFORMATION_EX, PartitionEntry) + (sizeof(PARTITION_INFORMATION_EX) * 16);
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         driveLayoutInfo = ExAllocatePoolWithTag(NonPagedPool, driveLayoutLength, 'rvnE');
-        if (driveLayoutInfo == NULL ) {
+        if (driveLayoutInfo == NULL)
+        {
             ZwClose(handle);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        status = ZwDeviceIoControlFile(
-                    handle,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &iosb,
-                    IOCTL_DISK_GET_DRIVE_LAYOUT_EX,
-                    NULL,
-                    0,
-                    driveLayoutInfo,
-                    driveLayoutLength
-                    );
-        if (NT_SUCCESS(status)) {
+        status = ZwDeviceIoControlFile(handle, NULL, NULL, NULL, &iosb, IOCTL_DISK_GET_DRIVE_LAYOUT_EX, NULL, 0,
+                                       driveLayoutInfo, driveLayoutLength);
+        if (NT_SUCCESS(status))
+        {
             break;
         }
 
         ExFreePool(driveLayoutInfo);
-        if (status == STATUS_BUFFER_TOO_SMALL) {
+        if (status == STATUS_BUFFER_TOO_SMALL)
+        {
             driveLayoutLength *= 2;
             continue;
         }
@@ -6505,4 +6280,3 @@ ExpGetPartitionTableInfo (
 } // ExpGetPartitionTableInfo
 
 #endif // defined(EFI_NVRAM_ENABLED)
-

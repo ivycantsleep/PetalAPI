@@ -33,11 +33,11 @@ Revision History:
 #include <dockintf.h>
 
 #ifndef SPEC_VER
-    #define SPEC_VER   100
+#define SPEC_VER 100
 #endif
 
 #ifndef FAR
-    #define FAR
+#define FAR
 #endif
 
 #include <poclass.h>
@@ -132,7 +132,6 @@ Revision History:
 // Make sure to have the correct tag
 //
 #ifdef ExAllocatePool
-    #undef ExAllocatePool
+#undef ExAllocatePool
 #endif
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'ipcA')
-
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'ipcA')

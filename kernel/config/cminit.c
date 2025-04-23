@@ -19,43 +19,30 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
 //
 // Prototypes local to this module
 //
 NTSTATUS
-CmpOpenFileWithExtremePrejudice(
-    OUT PHANDLE Primary,
-    IN POBJECT_ATTRIBUTES Obja,
-    IN ULONG IoFlags,
-    IN ULONG AttributeFlags
-    );
+CmpOpenFileWithExtremePrejudice(OUT PHANDLE Primary, IN POBJECT_ATTRIBUTES Obja, IN ULONG IoFlags,
+                                IN ULONG AttributeFlags);
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpOpenHiveFiles)
-#pragma alloc_text(PAGE,CmpInitializeHive)
-#pragma alloc_text(PAGE,CmpDestroyHive)
-#pragma alloc_text(PAGE,CmpOpenFileWithExtremePrejudice)
+#pragma alloc_text(PAGE, CmpOpenHiveFiles)
+#pragma alloc_text(PAGE, CmpInitializeHive)
+#pragma alloc_text(PAGE, CmpDestroyHive)
+#pragma alloc_text(PAGE, CmpOpenFileWithExtremePrejudice)
 #endif
 
 extern PCMHIVE CmpMasterHive;
 extern LIST_ENTRY CmpHiveListHead;
 
 NTSTATUS
-CmpOpenHiveFiles(
-    PUNICODE_STRING     BaseName,
-    PWSTR               Extension OPTIONAL,
-    PHANDLE             Primary,
-    PHANDLE             Secondary,
-    PULONG              PrimaryDisposition,
-    PULONG              SecondaryDisposition,
-    BOOLEAN             CreateAllowed,
-    BOOLEAN             MarkAsSystemHive,
-    BOOLEAN             NoBuffering,
-    OUT OPTIONAL PULONG ClusterSize
-    )
+CmpOpenHiveFiles(PUNICODE_STRING BaseName, PWSTR Extension OPTIONAL, PHANDLE Primary, PHANDLE Secondary,
+                 PULONG PrimaryDisposition, PULONG SecondaryDisposition, BOOLEAN CreateAllowed,
+                 BOOLEAN MarkAsSystemHive, BOOLEAN NoBuffering, OUT OPTIONAL PULONG ClusterSize)
 /*++
 
 Routine Description:
@@ -112,36 +99,37 @@ Return Value:
 
 --*/
 {
-    IO_STATUS_BLOCK     IoStatus;
-    IO_STATUS_BLOCK     FsctlIoStatus;
+    IO_STATUS_BLOCK IoStatus;
+    IO_STATUS_BLOCK FsctlIoStatus;
     FILE_FS_SIZE_INFORMATION FsSizeInformation;
     ULONG Cluster;
-    ULONG               CreateDisposition;
-    OBJECT_ATTRIBUTES   ObjectAttributes;
-    NTSTATUS            status;
-    UNICODE_STRING      ExtName;
-    UNICODE_STRING      WorkName;
-    PVOID               WorkBuffer;
-    USHORT              NameSize;
-    ULONG               IoFlags;
-    ULONG               AttributeFlags;
-    ULONG               ShareMode;
-    ULONG               DesiredAccess;
-    USHORT              CompressionState;
-    HANDLE              hEvent;
-    PKEVENT             pEvent;
+    ULONG CreateDisposition;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    NTSTATUS status;
+    UNICODE_STRING ExtName;
+    UNICODE_STRING WorkName;
+    PVOID WorkBuffer;
+    USHORT NameSize;
+    ULONG IoFlags;
+    ULONG AttributeFlags;
+    ULONG ShareMode;
+    ULONG DesiredAccess;
+    USHORT CompressionState;
+    HANDLE hEvent;
+    PKEVENT pEvent;
 #ifdef CM_RETRY_CREATE_FILE
-    ULONG               RetryCreateCount = 0;
+    ULONG RetryCreateCount = 0;
 #endif //CM_RETRY_CREATE_FILE
 
     //
     // Allocate an event to use for our overlapped I/O
     //
     status = CmpCreateEvent(NotificationEvent, &hEvent, &pEvent);
-    if (!NT_SUCCESS(status)) {
-        return(status);
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
-    
+
     //
     // Allocate a buffer big enough to hold the full name
     //
@@ -151,18 +139,22 @@ Return Value:
     WorkBuffer = NULL;
 
     NameSize = BaseName->Length;
-    if (ARGUMENT_PRESENT(Extension)) {
-        NameSize += (wcslen(Extension)+1) * sizeof(WCHAR);
+    if (ARGUMENT_PRESENT(Extension))
+    {
+        NameSize += (wcslen(Extension) + 1) * sizeof(WCHAR);
         WorkBuffer = ExAllocatePool(PagedPool, NameSize);
         WorkName.Buffer = WorkBuffer;
-        if (WorkBuffer == NULL) {
+        if (WorkBuffer == NULL)
+        {
             ObDereferenceObject(pEvent);
             ZwClose(hEvent);
             return STATUS_NO_MEMORY;
         }
         WorkName.MaximumLength = NameSize;
         RtlAppendStringToString((PSTRING)&WorkName, (PSTRING)BaseName);
-    } else {
+    }
+    else
+    {
         WorkName = *BaseName;
     }
 
@@ -170,24 +162,22 @@ Return Value:
     //
     // Open/Create the primary
     //
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &WorkName,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &WorkName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    if (CreateAllowed && !CmpShareSystemHives) {
+    if (CreateAllowed && !CmpShareSystemHives)
+    {
         CreateDisposition = FILE_OPEN_IF;
-    } else {
+    }
+    else
+    {
         CreateDisposition = FILE_OPEN;
     }
 
     ASSERT_PASSIVE_LEVEL();
 
     AttributeFlags = FILE_OPEN_FOR_BACKUP_INTENT | FILE_NO_COMPRESSION | FILE_RANDOM_ACCESS;
-    if( NoBuffering == TRUE ) {
+    if (NoBuffering == TRUE)
+    {
         AttributeFlags |= FILE_NO_INTERMEDIATE_BUFFERING;
     }
 #ifdef CM_RETRY_CREATE_FILE
@@ -197,45 +187,47 @@ RetryCreate1:
     //
     // Share the file if needed
     //
-    if (CmpMiniNTBoot && CmpShareSystemHives) {
-    	DesiredAccess = FILE_READ_DATA;
-    	ShareMode = FILE_SHARE_READ;	
-    } else {
-    	ShareMode = 0;
-    	DesiredAccess = FILE_READ_DATA | FILE_WRITE_DATA;
-    }				
+    if (CmpMiniNTBoot && CmpShareSystemHives)
+    {
+        DesiredAccess = FILE_READ_DATA;
+        ShareMode = FILE_SHARE_READ;
+    }
+    else
+    {
+        ShareMode = 0;
+        DesiredAccess = FILE_READ_DATA | FILE_WRITE_DATA;
+    }
 
-    status = ZwCreateFile(
-                Primary,
-                DesiredAccess,
-                &ObjectAttributes,
-                &IoStatus,
-                NULL,                               // alloc size = none
-                FILE_ATTRIBUTE_NORMAL,
-                ShareMode,                                  // share nothing
-                CreateDisposition,
-                ////FILE_NO_INTERMEDIATE_BUFFERING | 
-                //FILE_OPEN_FOR_BACKUP_INTENT |
-                //FILE_NO_COMPRESSION,
-                AttributeFlags,
-                NULL,                               // eabuffer
-                0                                   // ealength
-                );
+    status = ZwCreateFile(Primary, DesiredAccess, &ObjectAttributes, &IoStatus,
+                          NULL, // alloc size = none
+                          FILE_ATTRIBUTE_NORMAL,
+                          ShareMode, // share nothing
+                          CreateDisposition,
+                          ////FILE_NO_INTERMEDIATE_BUFFERING |
+                          //FILE_OPEN_FOR_BACKUP_INTENT |
+                          //FILE_NO_COMPRESSION,
+                          AttributeFlags,
+                          NULL, // eabuffer
+                          0     // ealength
+    );
 #ifdef CM_RETRY_CREATE_FILE
-    if( !NT_SUCCESS(status) ) {
-        if( RetryCreateCount == 0 ) {
+    if (!NT_SUCCESS(status))
+    {
+        if (RetryCreateCount == 0)
+        {
             RetryCreateCount++;
             DbgBreakPoint();
             goto RetryCreate1;
-        } 
-    } 
+        }
+    }
     //
     // reset it for the log
     //
     RetryCreateCount = 0;
 #endif //CM_RETRY_CREATE_FILE
 
-    if (status == STATUS_ACCESS_DENIED) {
+    if (status == STATUS_ACCESS_DENIED)
+    {
 
         //
         // This means some  person has put a read-only attribute
@@ -243,32 +235,18 @@ RetryCreate1:
         // don't hurt themselves.
         //
 
-        status = CmpOpenFileWithExtremePrejudice(Primary,
-                                                 &ObjectAttributes,
-                                                 AttributeFlags,
-                                                 FILE_ATTRIBUTE_NORMAL);
+        status = CmpOpenFileWithExtremePrejudice(Primary, &ObjectAttributes, AttributeFlags, FILE_ATTRIBUTE_NORMAL);
     }
 
-    if (!CmpShareSystemHives && (MarkAsSystemHive) &&
-        (NT_SUCCESS(status))) {
+    if (!CmpShareSystemHives && (MarkAsSystemHive) && (NT_SUCCESS(status)))
+    {
 
         ASSERT_PASSIVE_LEVEL();
-        status = ZwFsControlFile(*Primary,
-                                 hEvent,
-                                 NULL,
-                                 NULL,
-                                 &FsctlIoStatus,
-                                 FSCTL_MARK_AS_SYSTEM_HIVE,
-                                 NULL,
-                                 0,
-                                 NULL,
-                                 0);
-        if (status == STATUS_PENDING) {
-            KeWaitForSingleObject(pEvent,
-                                  Executive,
-                                  KernelMode,
-                                  FALSE,
-                                  NULL);
+        status =
+            ZwFsControlFile(*Primary, hEvent, NULL, NULL, &FsctlIoStatus, FSCTL_MARK_AS_SYSTEM_HIVE, NULL, 0, NULL, 0);
+        if (status == STATUS_PENDING)
+        {
+            KeWaitForSingleObject(pEvent, Executive, KernelMode, FALSE, NULL);
             status = FsctlIoStatus.Status;
         }
 
@@ -276,22 +254,26 @@ RetryCreate1:
         //  STATUS_INVALID_DEVICE_REQUEST is OK.
         //
 
-        if (status == STATUS_INVALID_DEVICE_REQUEST) {
+        if (status == STATUS_INVALID_DEVICE_REQUEST)
+        {
             status = STATUS_SUCCESS;
-
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
             ZwClose(*Primary);
         }
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CMINIT: CmpOpenHiveFile: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"\tPrimary Open/Create failed for:\n"));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"\t%wZ\n", &WorkName));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"\tstatus = %08lx\n", status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CMINIT: CmpOpenHiveFile: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "\tPrimary Open/Create failed for:\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "\t%wZ\n", &WorkName));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "\tstatus = %08lx\n", status));
 
-        if (WorkBuffer != NULL) {
+        if (WorkBuffer != NULL)
+        {
             ExFreePool(WorkBuffer);
         }
         ObDereferenceObject(pEvent);
@@ -310,77 +292,67 @@ RetryCreate1:
     //
     CompressionState = 0;
     ASSERT_PASSIVE_LEVEL();
-    status = ZwFsControlFile(*Primary,
-                             hEvent,
-                             NULL,
-                             NULL,
-                             &FsctlIoStatus,
-                             FSCTL_SET_COMPRESSION,
-                             &CompressionState,
-                             sizeof(CompressionState),
-                             NULL,
-                             0);
-    if (status == STATUS_PENDING) {
-        KeWaitForSingleObject(pEvent,
-                              Executive,
-                              KernelMode,
-                              FALSE,
-                              NULL);
+    status = ZwFsControlFile(*Primary, hEvent, NULL, NULL, &FsctlIoStatus, FSCTL_SET_COMPRESSION, &CompressionState,
+                             sizeof(CompressionState), NULL, 0);
+    if (status == STATUS_PENDING)
+    {
+        KeWaitForSingleObject(pEvent, Executive, KernelMode, FALSE, NULL);
     }
 
-    *PrimaryDisposition = (ULONG) IoStatus.Information;
+    *PrimaryDisposition = (ULONG)IoStatus.Information;
 
-    if( *PrimaryDisposition != FILE_CREATED ) {
+    if (*PrimaryDisposition != FILE_CREATED)
+    {
         //
         // 0-lengthed file case
         //
-        FILE_STANDARD_INFORMATION   FileInformation;
-        NTSTATUS                    status2;
-        
-        status2 = ZwQueryInformationFile(*Primary,
-                                         &IoStatus,
-                                         (PVOID)&FileInformation,
-                                         sizeof( FileInformation ),
-                                         FileStandardInformation
-                                       );
-        if (NT_SUCCESS( status2 )) {
-            if(FileInformation.EndOfFile.QuadPart == 0) {
+        FILE_STANDARD_INFORMATION FileInformation;
+        NTSTATUS status2;
+
+        status2 = ZwQueryInformationFile(*Primary, &IoStatus, (PVOID)&FileInformation, sizeof(FileInformation),
+                                         FileStandardInformation);
+        if (NT_SUCCESS(status2))
+        {
+            if (FileInformation.EndOfFile.QuadPart == 0)
+            {
                 //
                 // treat it as a non-existant one.
                 //
                 *PrimaryDisposition = FILE_CREATED;
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"Primary file is zero-lengthed => treat it as non-existant\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+                             "Primary file is zero-lengthed => treat it as non-existant\n"));
             }
         }
     }
 
-    if (ARGUMENT_PRESENT(ClusterSize)) {
+    if (ARGUMENT_PRESENT(ClusterSize))
+    {
 
         ASSERT_PASSIVE_LEVEL();
-        status = ZwQueryVolumeInformationFile(*Primary,
-                                              &IoStatus,
-                                              &FsSizeInformation,
-                                              sizeof(FILE_FS_SIZE_INFORMATION),
+        status = ZwQueryVolumeInformationFile(*Primary, &IoStatus, &FsSizeInformation, sizeof(FILE_FS_SIZE_INFORMATION),
                                               FileFsSizeInformation);
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             ObDereferenceObject(pEvent);
             ZwClose(hEvent);
-            return(status);
+            return (status);
         }
-        if (FsSizeInformation.BytesPerSector > HBLOCK_SIZE) {
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpOpenHiveFiles: sectorsize %lx > HBLOCK_SIZE\n"));
+        if (FsSizeInformation.BytesPerSector > HBLOCK_SIZE)
+        {
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpOpenHiveFiles: sectorsize %lx > HBLOCK_SIZE\n"));
             ObDereferenceObject(pEvent);
             ZwClose(hEvent);
-            return(STATUS_CANNOT_LOAD_REGISTRY_FILE);
+            return (STATUS_CANNOT_LOAD_REGISTRY_FILE);
         }
 
         Cluster = FsSizeInformation.BytesPerSector / HSECTOR_SIZE;
         *ClusterSize = (Cluster < 1) ? 1 : Cluster;
-
     }
 
-    if ( ! ARGUMENT_PRESENT(Extension)) {
-        if (WorkBuffer != NULL) {
+    if (!ARGUMENT_PRESENT(Extension))
+    {
+        if (WorkBuffer != NULL)
+        {
             ExFreePool(WorkBuffer);
         }
         ObDereferenceObject(pEvent);
@@ -392,27 +364,27 @@ RetryCreate1:
     // Open/Create the secondary
     //
     CreateDisposition = CmpShareSystemHives ? FILE_OPEN : FILE_OPEN_IF;
-    
-    if (*PrimaryDisposition == FILE_CREATED) {
+
+    if (*PrimaryDisposition == FILE_CREATED)
+    {
         CreateDisposition = FILE_SUPERSEDE;
     }
 
-    RtlInitUnicodeString(&ExtName,Extension);
+    RtlInitUnicodeString(&ExtName, Extension);
     status = RtlAppendStringToString((PSTRING)&WorkName, (PSTRING)&ExtName);
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &WorkName,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &WorkName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
     //
     // non-cached log files (or alternates)
     //
     IoFlags = FILE_NO_COMPRESSION | FILE_NO_INTERMEDIATE_BUFFERING;
-    if (_wcsnicmp(Extension, L".log", 4) != 0) {
+    if (_wcsnicmp(Extension, L".log", 4) != 0)
+    {
         AttributeFlags = FILE_ATTRIBUTE_NORMAL;
-    } else {
+    }
+    else
+    {
         AttributeFlags = FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_HIDDEN;
     }
 
@@ -422,30 +394,26 @@ RetryCreate2:
 
 
     ASSERT_PASSIVE_LEVEL();
-    status = ZwCreateFile(
-                Secondary,
-                DesiredAccess,
-                &ObjectAttributes,
-                &IoStatus,
-                NULL,                               // alloc size = none
-                AttributeFlags,
-                ShareMode,
-                CreateDisposition,
-                IoFlags,
-                NULL,                               // eabuffer
-                0                                   // ealength
-                );
+    status = ZwCreateFile(Secondary, DesiredAccess, &ObjectAttributes, &IoStatus,
+                          NULL, // alloc size = none
+                          AttributeFlags, ShareMode, CreateDisposition, IoFlags,
+                          NULL, // eabuffer
+                          0     // ealength
+    );
 #ifdef CM_RETRY_CREATE_FILE
-    if( !NT_SUCCESS(status) ) {
-        if( RetryCreateCount == 0 ) {
+    if (!NT_SUCCESS(status))
+    {
+        if (RetryCreateCount == 0)
+        {
             RetryCreateCount++;
             DbgBreakPoint();
             goto RetryCreate2;
-        } 
-    } 
+        }
+    }
 #endif //CM_RETRY_CREATE_FILE
 
-    if (status == STATUS_ACCESS_DENIED) {
+    if (status == STATUS_ACCESS_DENIED)
+    {
 
         //
         // This means some person has put a read-only attribute
@@ -453,58 +421,47 @@ RetryCreate2:
         // don't hurt themselves.
         //
 
-        status = CmpOpenFileWithExtremePrejudice(Secondary,
-                                                 &ObjectAttributes,
-                                                 IoFlags,
-                                                 AttributeFlags);
+        status = CmpOpenFileWithExtremePrejudice(Secondary, &ObjectAttributes, IoFlags, AttributeFlags);
     }
 
-    if (!CmpShareSystemHives && (MarkAsSystemHive) &&
-        (NT_SUCCESS(status))) {
+    if (!CmpShareSystemHives && (MarkAsSystemHive) && (NT_SUCCESS(status)))
+    {
 
         ASSERT_PASSIVE_LEVEL();
-        status = ZwFsControlFile(*Secondary,
-                                 hEvent,
-                                 NULL,
-                                 NULL,
-                                 &FsctlIoStatus,
-                                 FSCTL_MARK_AS_SYSTEM_HIVE,
-                                 NULL,
-                                 0,
-                                 NULL,
-                                 0);
-        if (status == STATUS_PENDING) {
-            KeWaitForSingleObject(pEvent,
-                                  Executive,
-                                  KernelMode,
-                                  FALSE,
-                                  NULL);
+        status = ZwFsControlFile(*Secondary, hEvent, NULL, NULL, &FsctlIoStatus, FSCTL_MARK_AS_SYSTEM_HIVE, NULL, 0,
+                                 NULL, 0);
+        if (status == STATUS_PENDING)
+        {
+            KeWaitForSingleObject(pEvent, Executive, KernelMode, FALSE, NULL);
             status = FsctlIoStatus.Status;
         }
         //
         //  STATUS_INVALID_DEVICE_REQUEST is OK.
         //
 
-        if (status == STATUS_INVALID_DEVICE_REQUEST) {
+        if (status == STATUS_INVALID_DEVICE_REQUEST)
+        {
             status = STATUS_SUCCESS;
-
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
 
             ZwClose(*Secondary);
         }
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CMINIT: CmpOpenHiveFile: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"\tSecondary Open/Create failed for:\n"));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"\t%wZ\n", &WorkName));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"\tstatus = %08lx\n", status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CMINIT: CmpOpenHiveFile: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "\tSecondary Open/Create failed for:\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "\t%wZ\n", &WorkName));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "\tstatus = %08lx\n", status));
 
         *Secondary = NULL;
     }
 
-    *SecondaryDisposition = (ULONG) IoStatus.Information;
+    *SecondaryDisposition = (ULONG)IoStatus.Information;
 
     //
     // Make sure the file is uncompressed in order to prevent the filesystem
@@ -518,25 +475,15 @@ RetryCreate2:
     CompressionState = 0;
 
     ASSERT_PASSIVE_LEVEL();
-    status = ZwFsControlFile(*Secondary,
-                             hEvent,
-                             NULL,
-                             NULL,
-                             &FsctlIoStatus,
-                             FSCTL_SET_COMPRESSION,
-                             &CompressionState,
-                             sizeof(CompressionState),
-                             NULL,
-                             0);
-    if (status == STATUS_PENDING) {
-        KeWaitForSingleObject(pEvent,
-                              Executive,
-                              KernelMode,
-                              FALSE,
-                              NULL);
+    status = ZwFsControlFile(*Secondary, hEvent, NULL, NULL, &FsctlIoStatus, FSCTL_SET_COMPRESSION, &CompressionState,
+                             sizeof(CompressionState), NULL, 0);
+    if (status == STATUS_PENDING)
+    {
+        KeWaitForSingleObject(pEvent, Executive, KernelMode, FALSE, NULL);
     }
 
-    if (WorkBuffer != NULL) {
+    if (WorkBuffer != NULL)
+    {
         ExFreePool(WorkBuffer);
     }
     ObDereferenceObject(pEvent);
@@ -544,20 +491,10 @@ RetryCreate2:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-CmpInitializeHive(
-    PCMHIVE         *CmHive,
-    ULONG           OperationType,
-    ULONG           HiveFlags,
-    ULONG           FileType,
-    PVOID           HiveData OPTIONAL,
-    HANDLE          Primary,
-    HANDLE          Log,
-    HANDLE          External,
-    PUNICODE_STRING FileName OPTIONAL,
-    ULONG           CheckFlags
-    )
+CmpInitializeHive(PCMHIVE *CmHive, ULONG OperationType, ULONG HiveFlags, ULONG FileType, PVOID HiveData OPTIONAL,
+                  HANDLE Primary, HANDLE Log, HANDLE External, PUNICODE_STRING FileName OPTIONAL, ULONG CheckFlags)
 /*++
 
 Routine Description:
@@ -604,24 +541,21 @@ Return Value:
 
 --*/
 {
-    FILE_FS_SIZE_INFORMATION    FsSizeInformation;
-    IO_STATUS_BLOCK             IoStatusBlock;
-    ULONG                       Cluster;
-    NTSTATUS                    Status;
-    PCMHIVE                     cmhive2;
-    ULONG                       rc;
+    FILE_FS_SIZE_INFORMATION FsSizeInformation;
+    IO_STATUS_BLOCK IoStatusBlock;
+    ULONG Cluster;
+    NTSTATUS Status;
+    PCMHIVE cmhive2;
+    ULONG rc;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"CmpInitializeHive:\t\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "CmpInitializeHive:\t\n"));
 
     //
     // Reject illegal parms
     //
-    if ( (External && (Primary || Log)) ||
-         (Log && !Primary) ||
-         (!CmpShareSystemHives && (HiveFlags & HIVE_VOLATILE) && (Primary || External || Log)) ||
-         ((OperationType == HINIT_MEMORY) && (!ARGUMENT_PRESENT(HiveData))) ||
-         (Log && (FileType != HFILE_TYPE_LOG)) 
-       )
+    if ((External && (Primary || Log)) || (Log && !Primary) ||
+        (!CmpShareSystemHives && (HiveFlags & HIVE_VOLATILE) && (Primary || External || Log)) ||
+        ((OperationType == HINIT_MEMORY) && (!ARGUMENT_PRESENT(HiveData))) || (Log && (FileType != HFILE_TYPE_LOG)))
     {
         return (STATUS_INVALID_PARAMETER);
     }
@@ -629,31 +563,32 @@ Return Value:
     //
     // compute control
     //
-    if (Primary) {
+    if (Primary)
+    {
 
         ASSERT_PASSIVE_LEVEL();
-        Status = ZwQueryVolumeInformationFile(
-                    Primary,
-                    &IoStatusBlock,
-                    &FsSizeInformation,
-                    sizeof(FILE_FS_SIZE_INFORMATION),
-                    FileFsSizeInformation
-                    );
-        if (!NT_SUCCESS(Status)) {
+        Status = ZwQueryVolumeInformationFile(Primary, &IoStatusBlock, &FsSizeInformation,
+                                              sizeof(FILE_FS_SIZE_INFORMATION), FileFsSizeInformation);
+        if (!NT_SUCCESS(Status))
+        {
             return (Status);
         }
-        if (FsSizeInformation.BytesPerSector > HBLOCK_SIZE) {
+        if (FsSizeInformation.BytesPerSector > HBLOCK_SIZE)
+        {
             return (STATUS_REGISTRY_IO_FAILED);
         }
         Cluster = FsSizeInformation.BytesPerSector / HSECTOR_SIZE;
         Cluster = (Cluster < 1) ? 1 : Cluster;
-    } else {
+    }
+    else
+    {
         Cluster = 1;
     }
 
-    cmhive2 = CmpAllocate(sizeof(CMHIVE), FALSE,CM_FIND_LEAK_TAG10);
+    cmhive2 = CmpAllocate(sizeof(CMHIVE), FALSE, CM_FIND_LEAK_TAG10);
 
-    if (cmhive2 == NULL) {
+    if (cmhive2 == NULL)
+    {
         return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
@@ -669,19 +604,21 @@ Return Value:
 
     InitializeListHead(&(cmhive2->KcbConvertListHead));
     InitializeListHead(&(cmhive2->KnodeConvertListHead));
-	cmhive2->CellRemapArray	= NULL;
+    cmhive2->CellRemapArray = NULL;
     //
     // Allocate the mutex from NonPagedPool so it will not be swapped to the disk
     //
-    cmhive2->HiveLock = (PFAST_MUTEX)ExAllocatePoolWithTag(NonPagedPool, sizeof(FAST_MUTEX), CM_POOL_TAG );
-    if( cmhive2->HiveLock == NULL ) {
+    cmhive2->HiveLock = (PFAST_MUTEX)ExAllocatePoolWithTag(NonPagedPool, sizeof(FAST_MUTEX), CM_POOL_TAG);
+    if (cmhive2->HiveLock == NULL)
+    {
         CmpFree(cmhive2, sizeof(CMHIVE));
         return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
-    cmhive2->ViewLock = (PFAST_MUTEX)ExAllocatePoolWithTag(NonPagedPool, sizeof(FAST_MUTEX), CM_POOL_TAG );
-    if( cmhive2->ViewLock == NULL ) {
-        ASSERT( cmhive2->HiveLock );
+    cmhive2->ViewLock = (PFAST_MUTEX)ExAllocatePoolWithTag(NonPagedPool, sizeof(FAST_MUTEX), CM_POOL_TAG);
+    if (cmhive2->ViewLock == NULL)
+    {
+        ASSERT(cmhive2->HiveLock);
         ExFreePool(cmhive2->HiveLock);
         CmpFree(cmhive2, sizeof(CMHIVE));
         return (STATUS_INSUFFICIENT_RESOURCES);
@@ -701,7 +638,7 @@ Return Value:
     // Initialize the Cm hive control block
     //
     //
-    ASSERT((HFILE_TYPE_EXTERNAL+1) == HFILE_TYPE_MAX);
+    ASSERT((HFILE_TYPE_EXTERNAL + 1) == HFILE_TYPE_MAX);
     cmhive2->FileHandles[HFILE_TYPE_PRIMARY] = Primary;
     cmhive2->FileHandles[HFILE_TYPE_LOG] = Log;
     cmhive2->FileHandles[HFILE_TYPE_EXTERNAL] = External;
@@ -717,48 +654,39 @@ Return Value:
     // Initialize the view list
     //
 #if DBG
-    if( FileName ) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"Initializing HiveViewList for hive (%p) (%.*S) \n\n",cmhive2,FileName->Length / sizeof(WCHAR),FileName->Buffer));
+    if (FileName)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "Initializing HiveViewList for hive (%p) (%.*S) \n\n",
+                     cmhive2, FileName->Length / sizeof(WCHAR), FileName->Buffer));
     }
 #endif
 
     //
     // Initialize the security cache
-    // 
+    //
     CmpInitSecurityCache(cmhive2);
-    
+
     //
     // Initialize the Hv hive control block
     //
-    Status = HvInitializeHive(
-                &(cmhive2->Hive),
-                OperationType,
-                HiveFlags,
-                FileType,
-                HiveData,
-                CmpAllocate,
-                CmpFree,
-                CmpFileSetSize,
-                CmpFileWrite,
-                CmpFileRead,
-                CmpFileFlush,
-                Cluster,
-                FileName
-                );
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpInitializeHive: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"HvInitializeHive failed, Status = %08lx\n", Status));
-        
+    Status = HvInitializeHive(&(cmhive2->Hive), OperationType, HiveFlags, FileType, HiveData, CmpAllocate, CmpFree,
+                              CmpFileSetSize, CmpFileWrite, CmpFileRead, CmpFileFlush, Cluster, FileName);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpInitializeHive: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "HvInitializeHive failed, Status = %08lx\n", Status));
+
 #ifdef DRAGOSS_PRIVATE_DEBUG
-        if( OperationType == HINIT_FILE ) DbgBreakPoint();
+        if (OperationType == HINIT_FILE)
+            DbgBreakPoint();
 #endif //DRAGOSS_PRIVATE_DEBUG
-        
-        ASSERT( cmhive2->HiveLock );
+
+        ASSERT(cmhive2->HiveLock);
         ExFreePool(cmhive2->HiveLock);
-        ASSERT( cmhive2->ViewLock );
+        ASSERT(cmhive2->ViewLock);
         ExFreePool(cmhive2->ViewLock);
         CmpDestroyHiveViewList(cmhive2);
-        CmpDestroySecurityCache (cmhive2);
+        CmpDestroySecurityCache(cmhive2);
         CmpDropFileObjectForHive(cmhive2);
 
         CmpCheckForOrphanedKcbs((PHHIVE)cmhive2);
@@ -766,24 +694,24 @@ Return Value:
         CmpFree(cmhive2, sizeof(CMHIVE));
         return (Status);
     }
-    if ( (OperationType == HINIT_FILE) ||
-         (OperationType == HINIT_MAPFILE) ||
-         (OperationType == HINIT_MEMORY) ||
-         (OperationType == HINIT_MEMORY_INPLACE))
+    if ((OperationType == HINIT_FILE) || (OperationType == HINIT_MAPFILE) || (OperationType == HINIT_MEMORY) ||
+        (OperationType == HINIT_MEMORY_INPLACE))
     {
 
         rc = CmCheckRegistry(cmhive2, CheckFlags);
-        if (rc != 0) {
-            PCM_VIEW_OF_FILE    CmView;
+        if (rc != 0)
+        {
+            PCM_VIEW_OF_FILE CmView;
 
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpInitializeHive: "));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmCheckRegistry failed, rc = %08lx\n",rc));
-            // 
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpInitializeHive: "));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmCheckRegistry failed, rc = %08lx\n", rc));
+            //
             // we have dirtied some cells (by clearing the volatile information)
             // we need first to unpin all the views
 
 #ifdef DRAGOSS_PRIVATE_DEBUG
-            if( OperationType == HINIT_FILE ) DbgBreakPoint();
+            if (OperationType == HINIT_FILE)
+                DbgBreakPoint();
 #endif //DRAGOSS_PRIVATE_DEBUG
 
             //
@@ -794,18 +722,21 @@ Return Value:
             CmpDestroySecurityCache(cmhive2);
             CmpDropFileObjectForHive(cmhive2);
 
-            if (OperationType == HINIT_FILE) {
+            if (OperationType == HINIT_FILE)
+            {
                 HvFreeHive((PHHIVE)cmhive2);
-            } else {
+            }
+            else
+            {
                 CmpCheckForOrphanedKcbs((PHHIVE)cmhive2);
             }
-            ASSERT( cmhive2->HiveLock );
+            ASSERT(cmhive2->HiveLock);
             ExFreePool(cmhive2->HiveLock);
-            ASSERT( cmhive2->ViewLock );
+            ASSERT(cmhive2->ViewLock);
             ExFreePool(cmhive2->ViewLock);
 
             CmpFree(cmhive2, sizeof(CMHIVE));
-            return(STATUS_REGISTRY_CORRUPT);
+            return (STATUS_REGISTRY_CORRUPT);
         }
     }
 
@@ -816,12 +747,9 @@ Return Value:
     return (STATUS_SUCCESS);
 }
 
-
+
 BOOLEAN
-CmpDestroyHive(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell
-    )
+CmpDestroyHive(IN PHHIVE Hive, IN HCELL_INDEX Cell)
 
 /*++
 
@@ -851,7 +779,8 @@ Return Value:
     // First find the link cell.
     //
     CellData = HvGetCell(Hive, Cell);
-    if( CellData == NULL ) {
+    if (CellData == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -866,27 +795,26 @@ Return Value:
     ASSERT(FIELD_OFFSET(CMHIVE, Hive) == 0);
     Status = CmpFreeKeyByCell((PHHIVE)CmpMasterHive, LinkCell, TRUE);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         //
         // Take the hive out of the hive list
         //
         LOCK_HIVE_LIST();
-        CmpRemoveEntryList(&( ((PCMHIVE)Hive)->HiveList));
+        CmpRemoveEntryList(&(((PCMHIVE)Hive)->HiveList));
         UNLOCK_HIVE_LIST();
-        return(TRUE);
-    } else {
-        return(FALSE);
+        return (TRUE);
+    }
+    else
+    {
+        return (FALSE);
     }
 }
 
-
+
 NTSTATUS
-CmpOpenFileWithExtremePrejudice(
-    OUT PHANDLE Primary,
-    IN POBJECT_ATTRIBUTES Obja,
-    IN ULONG IoFlags,
-    IN ULONG AttributeFlags
-    )
+CmpOpenFileWithExtremePrejudice(OUT PHANDLE Primary, IN POBJECT_ATTRIBUTES Obja, IN ULONG IoFlags,
+                                IN ULONG AttributeFlags)
 
 /*++
 
@@ -922,9 +850,11 @@ Return Value:
     //
     ASSERT_PASSIVE_LEVEL();
     Status = ZwQueryAttributesFile(Obja, &FileInfo);
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"ZwQueryAttributesFile failed with IO status  %lx\n",Status));
-        return(Status);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "ZwQueryAttributesFile failed with IO status  %lx\n", Status));
+        return (Status);
     }
 
     //
@@ -935,48 +865,35 @@ Return Value:
     //
     // Open the file
     //
-    Status = ZwOpenFile(&Handle,
-                        FILE_WRITE_ATTRIBUTES,
-                        Obja,
-                        &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                        FILE_OPEN_FOR_BACKUP_INTENT);
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    Status = ZwOpenFile(&Handle, FILE_WRITE_ATTRIBUTES, Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN_FOR_BACKUP_INTENT);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
     // Set the new attributes
     //
-    Status = ZwSetInformationFile(Handle,
-                                  &IoStatusBlock,
-                                  &FileInfo,
-                                  sizeof(FileInfo),
-                                  FileBasicInformation);
+    Status = ZwSetInformationFile(Handle, &IoStatusBlock, &FileInfo, sizeof(FileInfo), FileBasicInformation);
     ZwClose(Handle);
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         //
         // Reopen the file with the access that we really need.
         //
-        Status = ZwCreateFile(Primary,
-                              FILE_READ_DATA | FILE_WRITE_DATA,
-                              Obja,
-                              &IoStatusBlock,
-                              NULL,
-                              AttributeFlags,
-                              0,
-                              FILE_OPEN,
-                              IoFlags,
-                              NULL,
-                              0);
+        Status = ZwCreateFile(Primary, FILE_READ_DATA | FILE_WRITE_DATA, Obja, &IoStatusBlock, NULL, AttributeFlags, 0,
+                              FILE_OPEN, IoFlags, NULL, 0);
     }
 #if DBG
-    else {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"ZwSetInformationFile failed with IO status  %lx\n",Status));
+    else
+    {
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "ZwSetInformationFile failed with IO status  %lx\n", Status));
     }
-    CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpOpenFileWithExtremePrejudice returns with IO status  %lx\n",Status));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpOpenFileWithExtremePrejudice returns with IO status  %lx\n",
+                 Status));
 #endif
 
-    return(Status);
-
+    return (Status);
 }

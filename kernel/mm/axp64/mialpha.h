@@ -132,28 +132,28 @@ FFFFFFFFFFFFFFFF |                                    | MM_SYSTEM_SPACE_END
 // Define empty list marker.
 //
 
-#define MM_EMPTY_LIST (-1)              //
+#define MM_EMPTY_LIST (-1)               //
 #define MM_EMPTY_PTE_LIST 0xFFFFFFFFUI64 // N.B. tied to MMPTE definition
 
-#define MI_PTE_BASE_FOR_LOWEST_KERNEL_ADDRESS (MiGetPteAddress (PTE_BASE))
+#define MI_PTE_BASE_FOR_LOWEST_KERNEL_ADDRESS (MiGetPteAddress(PTE_BASE))
 
 //
 // Define start of KSEG0.
 //
 
-#define MM_KSEG0_BASE KSEG0_BASE        //
+#define MM_KSEG0_BASE KSEG0_BASE //
 
 //
 // 43-Bit virtual address mask.
 //
 
-#define MASK_43 0x7FFFFFFFFFFUI64       //
+#define MASK_43 0x7FFFFFFFFFFUI64 //
 
 //
 // Top level page parent is the same for both kernel and user in AXP64.
 //
 
-#define PDE_KTBASE  PDE_TBASE
+#define PDE_KTBASE PDE_TBASE
 
 //
 // Address space definitions.
@@ -165,17 +165,16 @@ FFFFFFFFFFFFFFFF |                                    | MM_SYSTEM_SPACE_END
 
 #define MM_PAGES_IN_KSEG0 (ULONG)(((KSEG2_BASE - KSEG0_BASE) >> PAGE_SHIFT))
 
-#define MM_USER_ADDRESS_RANGE_LIMIT    0xFFFFFFFFFFFFFFFF // user address range limit
-#define MM_MAXIMUM_ZERO_BITS 53         // maximum number of zero bits
+#define MM_USER_ADDRESS_RANGE_LIMIT 0xFFFFFFFFFFFFFFFF // user address range limit
+#define MM_MAXIMUM_ZERO_BITS 53                        // maximum number of zero bits
 
 #define MM_SYSTEM_SPACE_START 0xFFFFFE0600000000UI64
 
 #define MM_SYSTEM_CACHE_START 0xFFFFFE0800000000UI64
 
-#define MM_SYSTEM_CACHE_END   0xFFFFFF0800000000UI64
+#define MM_SYSTEM_CACHE_END 0xFFFFFF0800000000UI64
 
-#define MM_MAXIMUM_SYSTEM_CACHE_SIZE \
-    ((MM_SYSTEM_CACHE_END - MM_SYSTEM_CACHE_START) >> PAGE_SHIFT)
+#define MM_MAXIMUM_SYSTEM_CACHE_SIZE ((MM_SYSTEM_CACHE_END - MM_SYSTEM_CACHE_START) >> PAGE_SHIFT)
 
 #define MM_SYSTEM_CACHE_WORKING_SET 0xFFFFFE0600000000UI64
 
@@ -193,7 +192,7 @@ FFFFFFFFFFFFFFFF |                                    | MM_SYSTEM_SPACE_END
 
 #define MM_NONPAGED_POOL_END ((PVOID)(0xFFFFFF6800000000 - (16 * PAGE_SIZE)))
 
-#define NON_PAGED_SYSTEM_END ((PVOID)0xFFFFFFFFFFFFFFF0)  //quadword aligned.
+#define NON_PAGED_SYSTEM_END ((PVOID)0xFFFFFFFFFFFFFFF0) //quadword aligned.
 
 #define MM_SYSTEM_SPACE_END 0xFFFFFFFFFFFFFFFFUI64
 
@@ -202,7 +201,7 @@ FFFFFFFFFFFFFFFF |                                    | MM_SYSTEM_SPACE_END
 //
 
 #define MM_MINIMUM_SYSTEM_PTES 5000
-#define MM_MAXIMUM_SYSTEM_PTES (16*1024*1024)
+#define MM_MAXIMUM_SYSTEM_PTES (16 * 1024 * 1024)
 #define MM_DEFAULT_SYSTEM_PTES 11000
 
 //
@@ -240,28 +239,28 @@ FFFFFFFFFFFFFFFF |                                    | MM_SYSTEM_SPACE_END
 //
 
 #define GH3 (3)
-#define GH3_PAGE_SIZE  (PAGE_SIZE << 9)
+#define GH3_PAGE_SIZE (PAGE_SIZE << 9)
 
 //
 // Granularity Hint = 2, page size = 8**2 * PAGE_SIZE
 //
 
 #define GH2 (2)
-#define GH2_PAGE_SIZE  (PAGE_SIZE << 6)
+#define GH2_PAGE_SIZE (PAGE_SIZE << 6)
 
 //
 // Granularity Hint = 1, page size = 8**1 * PAGE_SIZE
 //
 
 #define GH1 (1)
-#define GH1_PAGE_SIZE  (PAGE_SIZE << 3)
+#define GH1_PAGE_SIZE (PAGE_SIZE << 3)
 
 //
 // Granularity Hint = 0, page size = PAGE_SIZE
 //
 
 #define GH0 (0)
-#define GH0_PAGE_SIZE  PAGE_SIZE
+#define GH0_PAGE_SIZE PAGE_SIZE
 
 
 //
@@ -361,14 +360,13 @@ FFFFFFFFFFFFFFFF |                                    | MM_SYSTEM_SPACE_END
 // mapping and the working set list.
 //
 
-#define HYPER_SPACE     ((PVOID)0xFFFFFE0200000000)
+#define HYPER_SPACE ((PVOID)0xFFFFFE0200000000)
 
-#define FIRST_MAPPING_PTE       0xFFFFFE0200000000UI64
+#define FIRST_MAPPING_PTE 0xFFFFFE0200000000UI64
 
 #define NUMBER_OF_MAPPING_PTES 639
 
-#define LAST_MAPPING_PTE   \
-    (FIRST_MAPPING_PTE + (NUMBER_OF_MAPPING_PTES * PAGE_SIZE))
+#define LAST_MAPPING_PTE (FIRST_MAPPING_PTE + (NUMBER_OF_MAPPING_PTES * PAGE_SIZE))
 
 #define IMAGE_MAPPING_PTE ((PMMPTE)((ULONG_PTR)LAST_MAPPING_PTE + PAGE_SIZE))
 
@@ -395,31 +393,31 @@ FFFFFFFFFFFFFFFF |                                    | MM_SYSTEM_SPACE_END
 // shifting and masking to insert and extract these fields.
 //
 
-#define MM_PTE_VALID_MASK         0x1105 // kernel read-write, fault-on-write, valid
-#define MM_PTE_PROTOTYPE_MASK     0x2   // not valid and prototype
-#define MM_PTE_DIRTY_MASK         0x4   // fault on write
-#define MM_PTE_TRANSITION_MASK    0x4   // not valid and transition
-#define MM_PTE_GLOBAL_MASK        0x10  // global
-#define MM_PTE_WRITE_MASK         0x10000 // software write
+#define MM_PTE_VALID_MASK 0x1105          // kernel read-write, fault-on-write, valid
+#define MM_PTE_PROTOTYPE_MASK 0x2         // not valid and prototype
+#define MM_PTE_DIRTY_MASK 0x4             // fault on write
+#define MM_PTE_TRANSITION_MASK 0x4        // not valid and transition
+#define MM_PTE_GLOBAL_MASK 0x10           // global
+#define MM_PTE_WRITE_MASK 0x10000         // software write
 #define MM_PTE_COPY_ON_WRITE_MASK 0x20000 // software copy-on-write
-#define MM_PTE_OWNER_MASK         0x2200 // user read-write
+#define MM_PTE_OWNER_MASK 0x2200          // user read-write
 
 //
 // Bit fields to or into PTE to make a PTE valid based on the protection
 // field of the invalid PTE.
 //
 
-#define MM_PTE_NOACCESS          0x0    // not expressable on ALPHA
-#define MM_PTE_READONLY          0x4    // fault on write
-#define MM_PTE_READWRITE         (MM_PTE_WRITE_MASK) // software write enable
-#define MM_PTE_WRITECOPY         (MM_PTE_WRITE_MASK | MM_PTE_COPY_ON_WRITE_MASK) //
-#define MM_PTE_EXECUTE           0x4    // fault on write
-#define MM_PTE_EXECUTE_READ      0x4    // fault on write
-#define MM_PTE_EXECUTE_READWRITE (MM_PTE_WRITE_MASK) // software write enable
+#define MM_PTE_NOACCESS 0x0                                                      // not expressable on ALPHA
+#define MM_PTE_READONLY 0x4                                                      // fault on write
+#define MM_PTE_READWRITE (MM_PTE_WRITE_MASK)                                     // software write enable
+#define MM_PTE_WRITECOPY (MM_PTE_WRITE_MASK | MM_PTE_COPY_ON_WRITE_MASK)         //
+#define MM_PTE_EXECUTE 0x4                                                       // fault on write
+#define MM_PTE_EXECUTE_READ 0x4                                                  // fault on write
+#define MM_PTE_EXECUTE_READWRITE (MM_PTE_WRITE_MASK)                             // software write enable
 #define MM_PTE_EXECUTE_WRITECOPY (MM_PTE_WRITE_MASK | MM_PTE_COPY_ON_WRITE_MASK) //
-#define MM_PTE_NOCACHE           0x0    // not expressable on ALPHA
-#define MM_PTE_GUARD             0x0    // not expressable on ALPHA
-#define MM_PTE_CACHE             0x0    //
+#define MM_PTE_NOCACHE 0x0                                                       // not expressable on ALPHA
+#define MM_PTE_GUARD 0x0                                                         // not expressable on ALPHA
+#define MM_PTE_CACHE 0x0                                                         //
 
 #define MM_PROTECT_FIELD_SHIFT 3
 
@@ -479,7 +477,7 @@ FFFFFFFFFFFFFFFF |                                    | MM_SYSTEM_SPACE_END
 
 #define PDE_PER_PAGE 1024
 #define PTE_PER_PAGE 1024
-#define PTE_PER_PAGE_BITS 11    // This handles the case where the page is full
+#define PTE_PER_PAGE_BITS 11 // This handles the case where the page is full
 
 #if PTE_PER_PAGE_BITS > 32
 error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
@@ -525,16 +523,19 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_MAKE_VALID_PTE(OUTPTE, FRAME, PMASK, PPTE) {             \
-    (OUTPTE).u.Long = MmProtectToPteMask[PMASK] | MM_PTE_VALID_MASK; \
-    (OUTPTE).u.Hard.PageFrameNumber = (FRAME);                      \
-    if (MI_DETERMINE_OWNER(PPTE)) {                                 \
-        (OUTPTE).u.Long |= MM_PTE_OWNER_MASK;                       \
-    }                                                               \
-    if (((PMMPTE)PPTE) >= MiGetPteAddress(MM_SYSTEM_SPACE_START)) { \
-        (OUTPTE).u.Hard.Global = 1;                                 \
-    }                                                               \
-}
+#define MI_MAKE_VALID_PTE(OUTPTE, FRAME, PMASK, PPTE)                    \
+    {                                                                    \
+        (OUTPTE).u.Long = MmProtectToPteMask[PMASK] | MM_PTE_VALID_MASK; \
+        (OUTPTE).u.Hard.PageFrameNumber = (FRAME);                       \
+        if (MI_DETERMINE_OWNER(PPTE))                                    \
+        {                                                                \
+            (OUTPTE).u.Long |= MM_PTE_OWNER_MASK;                        \
+        }                                                                \
+        if (((PMMPTE)PPTE) >= MiGetPteAddress(MM_SYSTEM_SPACE_START))    \
+        {                                                                \
+            (OUTPTE).u.Hard.Global = 1;                                  \
+        }                                                                \
+    }
 
 //++
 //VOID
@@ -560,11 +561,11 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_MAKE_VALID_PTE_TRANSITION(OUTPTE, PROTECT)     \
-                (OUTPTE).u.Soft.Transition = 1;           \
-                (OUTPTE).u.Soft.Valid = 0;                \
-                (OUTPTE).u.Soft.Prototype = 0;            \
-                (OUTPTE).u.Soft.Protection = PROTECT;
+#define MI_MAKE_VALID_PTE_TRANSITION(OUTPTE, PROTECT) \
+    (OUTPTE).u.Soft.Transition = 1;                   \
+    (OUTPTE).u.Soft.Valid = 0;                        \
+    (OUTPTE).u.Soft.Prototype = 0;                    \
+    (OUTPTE).u.Soft.Protection = PROTECT;
 
 //++
 //VOID
@@ -596,11 +597,11 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_MAKE_TRANSITION_PTE(OUTPTE,PAGE,PROTECT,PPTE)   \
-                (OUTPTE).u.Long = 0;                       \
-                (OUTPTE).u.Trans.PageFrameNumber = PAGE;   \
-                (OUTPTE).u.Trans.Transition = 1;           \
-                (OUTPTE).u.Trans.Protection = PROTECT;
+#define MI_MAKE_TRANSITION_PTE(OUTPTE, PAGE, PROTECT, PPTE) \
+    (OUTPTE).u.Long = 0;                                    \
+    (OUTPTE).u.Trans.PageFrameNumber = PAGE;                \
+    (OUTPTE).u.Trans.Transition = 1;                        \
+    (OUTPTE).u.Trans.Protection = PROTECT;
 
 //++
 //VOID
@@ -625,16 +626,19 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_MAKE_TRANSITION_PTE_VALID(OUTPTE, PPTE) {                \
-    (OUTPTE).u.Long = MmProtectToPteMask[(PPTE)->u.Trans.Protection] | MM_PTE_VALID_MASK; \
-    (OUTPTE).u.Hard.PageFrameNumber = (PPTE)->u.Hard.PageFrameNumber; \
-    if (MI_DETERMINE_OWNER(PPTE)) {                                 \
-        (OUTPTE).u.Long |= MM_PTE_OWNER_MASK;                       \
-    }                                                               \
-    if (((PMMPTE)PPTE) >= MiGetPteAddress(MM_SYSTEM_SPACE_START)) { \
-        (OUTPTE).u.Hard.Global = 1;                                 \
-    }                                                               \
-}
+#define MI_MAKE_TRANSITION_PTE_VALID(OUTPTE, PPTE)                                            \
+    {                                                                                         \
+        (OUTPTE).u.Long = MmProtectToPteMask[(PPTE)->u.Trans.Protection] | MM_PTE_VALID_MASK; \
+        (OUTPTE).u.Hard.PageFrameNumber = (PPTE)->u.Hard.PageFrameNumber;                     \
+        if (MI_DETERMINE_OWNER(PPTE))                                                         \
+        {                                                                                     \
+            (OUTPTE).u.Long |= MM_PTE_OWNER_MASK;                                             \
+        }                                                                                     \
+        if (((PMMPTE)PPTE) >= MiGetPteAddress(MM_SYSTEM_SPACE_START))                         \
+        {                                                                                     \
+            (OUTPTE).u.Hard.Global = 1;                                                       \
+        }                                                                                     \
+    }
 
 //++
 //VOID
@@ -663,13 +667,14 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_SET_PTE_IN_WORKING_SET(PTE, WSINDEX) {             \
-    MMPTE _TempPte;                                           \
-    _TempPte = *(PTE);                                        \
-    _TempPte.u.Hard.SoftwareWsIndex = (WSINDEX);              \
-    ASSERT (_TempPte.u.Long != 0);                            \
-    *(PTE) = _TempPte;                                        \
-}
+#define MI_SET_PTE_IN_WORKING_SET(PTE, WSINDEX)      \
+    {                                                \
+        MMPTE _TempPte;                              \
+        _TempPte = *(PTE);                           \
+        _TempPte.u.Hard.SoftwareWsIndex = (WSINDEX); \
+        ASSERT(_TempPte.u.Long != 0);                \
+        *(PTE) = _TempPte;                           \
+    }
 
 //++
 //ULONG WsIndex
@@ -691,7 +696,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_GET_WORKING_SET_FROM_PTE(PTE)  (ULONG)(PTE)->u.Hard.SoftwareWsIndex
+#define MI_GET_WORKING_SET_FROM_PTE(PTE) (ULONG)(PTE)->u.Hard.SoftwareWsIndex
 
 //++
 //VOID
@@ -925,8 +930,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_SET_PFN_DELETED(PPFN) \
-    (((ULONG_PTR)(PPFN)->PteAddress) = ((((ULONG_PTR)(PPFN)->PteAddress) << 1) >> 1))
+#define MI_SET_PFN_DELETED(PPFN) (((ULONG_PTR)(PPFN)->PteAddress) = ((((ULONG_PTR)(PPFN)->PteAddress) << 1) >> 1))
 
 //++
 //BOOLEAN
@@ -949,8 +953,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_IS_PFN_DELETED(PPFN) \
-    ((((ULONG_PTR)(PPFN)->PteAddress) >> 63) == 0)
+#define MI_IS_PFN_DELETED(PPFN) ((((ULONG_PTR)(PPFN)->PteAddress) >> 63) == 0)
 
 //++
 // VOID
@@ -1023,8 +1026,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_GET_PAGE_COLOR_FROM_PTE(PTEADDRESS)  \
-         ((ULONG)((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask))
+#define MI_GET_PAGE_COLOR_FROM_PTE(PTEADDRESS) ((ULONG)((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask))
 
 //++
 //ULONG
@@ -1047,8 +1049,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_GET_PAGE_COLOR_FROM_VA(ADDRESS)  \
-         ((ULONG)((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask))
+#define MI_GET_PAGE_COLOR_FROM_VA(ADDRESS) ((ULONG)((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask))
 
 //++
 //ULONG
@@ -1072,8 +1073,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //--
 
 
-#define MI_GET_PAGE_COLOR_FROM_SESSION(_SessionSpace)  \
-         ((ULONG)((_SessionSpace->Color++) & MmSecondaryColorMask))
+#define MI_GET_PAGE_COLOR_FROM_SESSION(_SessionSpace) ((ULONG)((_SessionSpace->Color++) & MmSecondaryColorMask))
 
 //++
 //ULONG
@@ -1099,8 +1099,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //--
 
 
-#define MI_PAGE_COLOR_PTE_PROCESS(PTE,COLOR)  \
-         ((ULONG)((*(COLOR))++) & MmSecondaryColorMask)
+#define MI_PAGE_COLOR_PTE_PROCESS(PTE, COLOR) ((ULONG)((*(COLOR))++) & MmSecondaryColorMask)
 
 
 //++
@@ -1125,8 +1124,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_PAGE_COLOR_VA_PROCESS(ADDRESS,COLOR) \
-         ((ULONG)((*(COLOR))++) & MmSecondaryColorMask)
+#define MI_PAGE_COLOR_VA_PROCESS(ADDRESS, COLOR) ((ULONG)((*(COLOR))++) & MmSecondaryColorMask)
 
 //++
 //ULONG
@@ -1148,7 +1146,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_GET_NEXT_COLOR(COLOR) ((COLOR+1) & MM_COLOR_MASK)
+#define MI_GET_NEXT_COLOR(COLOR) ((COLOR + 1) & MM_COLOR_MASK)
 
 //++
 //ULONG
@@ -1170,9 +1168,9 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_GET_PREVIOUS_COLOR(COLOR) ((COLOR-1) & MM_COLOR_MASK)
+#define MI_GET_PREVIOUS_COLOR(COLOR) ((COLOR - 1) & MM_COLOR_MASK)
 
-#define MI_GET_SECONDARY_COLOR(PAGE,PFN) (PAGE & MmSecondaryColorMask)
+#define MI_GET_SECONDARY_COLOR(PAGE, PFN) (PAGE & MmSecondaryColorMask)
 
 #define MI_GET_COLOR_FROM_SECONDARY(SECONDARY_COLOR) (0)
 
@@ -1202,8 +1200,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_GET_MODIFIED_PAGE_BY_COLOR(PAGE,COLOR) \
-            PAGE = MmModifiedPageListByColor[COLOR].Flink
+#define MI_GET_MODIFIED_PAGE_BY_COLOR(PAGE, COLOR) PAGE = MmModifiedPageListByColor[COLOR].Flink
 
 //++
 //VOID
@@ -1233,17 +1230,21 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_GET_MODIFIED_PAGE_ANY_COLOR(PAGE,COLOR)                        \
-{                                                                         \
-    if( MmTotalPagesForPagingFile == 0 ){                                 \
-        PAGE = MM_EMPTY_LIST;                                             \
-    } else {                                                              \
-        while( MmModifiedPageListByColor[COLOR].Flink == MM_EMPTY_LIST ){ \
-            COLOR = MI_GET_NEXT_COLOR(COLOR);                             \
-        }                                                                 \
-        PAGE = MmModifiedPageListByColor[COLOR].Flink;                    \
-    }                                                                     \
-}
+#define MI_GET_MODIFIED_PAGE_ANY_COLOR(PAGE, COLOR)                         \
+    {                                                                       \
+        if (MmTotalPagesForPagingFile == 0)                                 \
+        {                                                                   \
+            PAGE = MM_EMPTY_LIST;                                           \
+        }                                                                   \
+        else                                                                \
+        {                                                                   \
+            while (MmModifiedPageListByColor[COLOR].Flink == MM_EMPTY_LIST) \
+            {                                                               \
+                COLOR = MI_GET_NEXT_COLOR(COLOR);                           \
+            }                                                               \
+            PAGE = MmModifiedPageListByColor[COLOR].Flink;                  \
+        }                                                                   \
+    }
 
 //++
 //VOID
@@ -1267,11 +1268,12 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_MAKE_VALID_PTE_WRITE_COPY(PPTE)                         \
-                    if ((PPTE)->u.Hard.Write == 1) {               \
-                        (PPTE)->u.Hard.CopyOnWrite = 1;            \
-                        (PPTE)->u.Hard.FaultOnWrite = MM_PTE_CLEAN;\
-                    }
+#define MI_MAKE_VALID_PTE_WRITE_COPY(PPTE)          \
+    if ((PPTE)->u.Hard.Write == 1)                  \
+    {                                               \
+        (PPTE)->u.Hard.CopyOnWrite = 1;             \
+        (PPTE)->u.Hard.FaultOnWrite = MM_PTE_CLEAN; \
+    }
 
 //++
 //ULONG
@@ -1294,8 +1296,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_DETERMINE_OWNER(PPTE) \
-    ((PMMPTE)(PPTE) <= MiHighestUserPte)
+#define MI_DETERMINE_OWNER(PPTE) ((PMMPTE)(PPTE) <= MiHighestUserPte)
 
 //++
 //VOID
@@ -1317,7 +1318,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_SET_ACCESSED_IN_PTE(PPTE,ACCESSED)
+#define MI_SET_ACCESSED_IN_PTE(PPTE, ACCESSED)
 
 //++
 //ULONG
@@ -1362,8 +1363,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_SET_OWNER_IN_PTE(PPTE, OWNER) \
-    ((PPTE)->u.Hard.UserReadAccess = (PPTE)->u.Hard.UserWriteAccess = OWNER)
+#define MI_SET_OWNER_IN_PTE(PPTE, OWNER) ((PPTE)->u.Hard.UserReadAccess = (PPTE)->u.Hard.UserWriteAccess = OWNER)
 
 //++
 //ULONG
@@ -1424,11 +1424,10 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_SET_PAGING_FILE_INFO(OUTPTE,PPTE,FILEINFO,OFFSET)            \
-       (OUTPTE).u.Long = (PPTE).u.Long;                                 \
-       (OUTPTE).u.Long &= CLEAR_FOR_PAGE_FILE;                          \
-       (OUTPTE).u.Long |= ((((FILEINFO) & 0xF) << 28) |                 \
-            (((ULONG64)(OFFSET) & 0xFFFFFFFF) << 32));
+#define MI_SET_PAGING_FILE_INFO(OUTPTE, PPTE, FILEINFO, OFFSET) \
+    (OUTPTE).u.Long = (PPTE).u.Long;                            \
+    (OUTPTE).u.Long &= CLEAR_FOR_PAGE_FILE;                     \
+    (OUTPTE).u.Long |= ((((FILEINFO) & 0xF) << 28) | (((ULONG64)(OFFSET) & 0xFFFFFFFF) << 32));
 
 
 //++
@@ -1452,8 +1451,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MiPteToProto(lpte) \
-    ((PMMPTE)((lpte)->u.Proto.ProtoAddress))
+#define MiPteToProto(lpte) ((PMMPTE)((lpte)->u.Proto.ProtoAddress))
 
 //++
 // ULONG_PTR
@@ -1481,8 +1479,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MiProtoAddressForPte(proto_va) \
-    (((ULONG_PTR)proto_va << 16) | MM_PTE_PROTOTYPE_MASK)
+#define MiProtoAddressForPte(proto_va) (((ULONG_PTR)proto_va << 16) | MM_PTE_PROTOTYPE_MASK)
 
 //++
 // ULONG_PTR
@@ -1535,8 +1532,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MiGetSubsectionAddress(lpte) \
-    ((PSUBSECTION)((lpte)->u.Subsect.SubsectionAddress))
+#define MiGetSubsectionAddress(lpte) ((PSUBSECTION)((lpte)->u.Subsect.SubsectionAddress))
 
 //++
 // ULONG_PTR
@@ -1586,7 +1582,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MiGetPpeAddress(va)   ((PMMPTE)PDE_TBASE + MiGetPpeOffset(va))
+#define MiGetPpeAddress(va) ((PMMPTE)PDE_TBASE + MiGetPpeOffset(va))
 
 //++
 //PMMPTE
@@ -1611,11 +1607,9 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MiGetPdeAddress(va)  \
-    MiGetPteAddress(MiGetPteAddress(va))
+#define MiGetPdeAddress(va) MiGetPteAddress(MiGetPteAddress(va))
 
-#define MiGetPdeAddress64(va) \
-    MiGetPteAddress(MiGetPteAddress(va))
+#define MiGetPdeAddress64(va) MiGetPteAddress(MiGetPteAddress(va))
 
 //++
 //PMMPTE
@@ -1638,11 +1632,9 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MiGetPteAddress(va) \
-    ((PMMPTE)(((((ULONG_PTR)(va) & MASK_43) >> PTI_SHIFT) << 3) + PTE_BASE))
+#define MiGetPteAddress(va) ((PMMPTE)(((((ULONG_PTR)(va) & MASK_43) >> PTI_SHIFT) << 3) + PTE_BASE))
 
-#define MiGetPteAddress64(va) \
-    ((PMMPTE)(((((ULONG_PTR)(va) & MASK_43) >> PTI_SHIFT) << 3) + PTE_BASE))
+#define MiGetPteAddress64(va) ((PMMPTE)(((((ULONG_PTR)(va) & MASK_43) >> PTI_SHIFT) << 3) + PTE_BASE))
 
 //++
 // ULONG
@@ -1788,8 +1780,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MiGetVirtualAddressMappedByPpe(PPE) \
-    MiGetVirtualAddressMappedByPte(MiGetVirtualAddressMappedByPde(PPE))
+#define MiGetVirtualAddressMappedByPpe(PPE) MiGetVirtualAddressMappedByPte(MiGetVirtualAddressMappedByPde(PPE))
 
 //++
 //PVOID
@@ -1812,8 +1803,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MiGetVirtualAddressMappedByPde(Pde) \
-    MiGetVirtualAddressMappedByPte(MiGetVirtualAddressMappedByPte(Pde))
+#define MiGetVirtualAddressMappedByPde(Pde) MiGetVirtualAddressMappedByPte(MiGetVirtualAddressMappedByPte(Pde))
 
 //++
 //PVOID
@@ -1842,8 +1832,7 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 #define MiGetVirtualAddressMappedByPte64(Pte) \
     ((PVOID)((LONG_PTR)(((LONG_PTR)(Pte) - PTE_BASE64) << (PAGE_SHIFT + VA_SHIFT - 3)) >> VA_SHIFT))
 
-#define MiGetVirtualPageNumberMappedByPte64(Pte) \
-    ((PVOID)(((ULONG_PTR)(Pte) - PTE_BASE64) >> 3))
+#define MiGetVirtualPageNumberMappedByPte64(Pte) ((PVOID)(((ULONG_PTR)(Pte) - PTE_BASE64) >> 3))
 
 //++
 //LOGICAL
@@ -2072,9 +2061,10 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //--
 
 #define MI_MAKE_PROTECT_WRITE_COPY(PTE) \
-        if ((PTE).u.Long & 0x20) {      \
-            ((PTE).u.Long |= 0x8);      \
-        }
+    if ((PTE).u.Long & 0x20)            \
+    {                                   \
+        ((PTE).u.Long |= 0x8);          \
+    }
 
 //++
 //VOID
@@ -2104,10 +2094,11 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_SET_PAGE_DIRTY(PPTE,VA,PFNHELD)                          \
-            if ((PPTE)->u.Hard.FaultOnWrite == MM_PTE_CLEAN) {      \
-                MiSetDirtyBit ((VA),(PPTE),(PFNHELD));              \
-            }
+#define MI_SET_PAGE_DIRTY(PPTE, VA, PFNHELD)         \
+    if ((PPTE)->u.Hard.FaultOnWrite == MM_PTE_CLEAN) \
+    {                                                \
+        MiSetDirtyBit((VA), (PPTE), (PFNHELD));      \
+    }
 
 //++
 //VOID
@@ -2139,12 +2130,15 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_NO_FAULT_FOUND(TEMP, PPTE, VA, PFNHELD)                  \
-            if (StoreInstruction && ((PPTE)->u.Hard.FaultOnWrite == MM_PTE_CLEAN)) {  \
-                MiSetDirtyBit((VA),(PPTE), (PFNHELD));              \
-            } else {                                                \
-                KiFlushSingleTb(1, VA);                             \
-            }
+#define MI_NO_FAULT_FOUND(TEMP, PPTE, VA, PFNHELD)                         \
+    if (StoreInstruction && ((PPTE)->u.Hard.FaultOnWrite == MM_PTE_CLEAN)) \
+    {                                                                      \
+        MiSetDirtyBit((VA), (PPTE), (PFNHELD));                            \
+    }                                                                      \
+    else                                                                   \
+    {                                                                      \
+        KiFlushSingleTb(1, VA);                                            \
+    }
 
 //++
 //ULONG
@@ -2174,16 +2168,16 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_CAPTURE_DIRTY_BIT_TO_PFN(PPTE,PPFN)                               \
-         if (((PPFN)->u3.e1.Modified == 0) &&                                \
-             ((PPTE)->u.Hard.FaultOnWrite == MM_PTE_DIRTY)) {                       \
-             (PPFN)->u3.e1.Modified = 1;                                     \
-             if (((PPFN)->OriginalPte.u.Soft.Prototype == 0) &&              \
-                          ((PPFN)->u3.e1.WriteInProgress == 0)) {            \
-                 MiReleasePageFileSpace ((PPFN)->OriginalPte);               \
-                 (PPFN)->OriginalPte.u.Soft.PageFileHigh = 0;                \
-             }                                                               \
-         }
+#define MI_CAPTURE_DIRTY_BIT_TO_PFN(PPTE, PPFN)                                                  \
+    if (((PPFN)->u3.e1.Modified == 0) && ((PPTE)->u.Hard.FaultOnWrite == MM_PTE_DIRTY))          \
+    {                                                                                            \
+        (PPFN)->u3.e1.Modified = 1;                                                              \
+        if (((PPFN)->OriginalPte.u.Soft.Prototype == 0) && ((PPFN)->u3.e1.WriteInProgress == 0)) \
+        {                                                                                        \
+            MiReleasePageFileSpace((PPFN)->OriginalPte);                                         \
+            (PPFN)->OriginalPte.u.Soft.PageFileHigh = 0;                                         \
+        }                                                                                        \
+    }
 
 //++
 //BOOLEAN
@@ -2206,9 +2200,9 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_IS_PHYSICAL_ADDRESS(Va) \
+#define MI_IS_PHYSICAL_ADDRESS(Va)                                             \
     ((((ULONG_PTR)(Va) >= KSEG43_BASE) && ((ULONG_PTR)(Va) < KSEG43_LIMIT)) || \
-    (((ULONG_PTR)(Va) >= KSEG0_BASE) && ((ULONG_PTR)(Va) < KSEG2_BASE)))
+     (((ULONG_PTR)(Va) >= KSEG0_BASE) && ((ULONG_PTR)(Va) < KSEG2_BASE)))
 
 //++
 //PFN_NUMBER
@@ -2231,10 +2225,9 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_CONVERT_PHYSICAL_TO_PFN(Va)                            \
-    (((ULONG_PTR)(Va) < KSEG0_BASE) ?                              \
-        ((PFN_NUMBER)(((ULONG_PTR)(Va) - KSEG43_BASE) >> PAGE_SHIFT)) : \
-        ((PFN_NUMBER)(((ULONG_PTR)(Va) - KSEG0_BASE) >> PAGE_SHIFT)))
+#define MI_CONVERT_PHYSICAL_TO_PFN(Va)                                                              \
+    (((ULONG_PTR)(Va) < KSEG0_BASE) ? ((PFN_NUMBER)(((ULONG_PTR)(Va) - KSEG43_BASE) >> PAGE_SHIFT)) \
+                                    : ((PFN_NUMBER)(((ULONG_PTR)(Va) - KSEG0_BASE) >> PAGE_SHIFT)))
 
 //++
 // PFN_NUMBER
@@ -2257,16 +2250,17 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 //
 //--
 
-#define MI_CONVERT_PHYSICAL_BUS_TO_PFN(Pa) \
-    ((PFN_NUMBER)((Pa).QuadPart >> ((CCHAR)PAGE_SHIFT)))
+#define MI_CONVERT_PHYSICAL_BUS_TO_PFN(Pa) ((PFN_NUMBER)((Pa).QuadPart >> ((CCHAR)PAGE_SHIFT)))
 
-
-typedef struct _MMCOLOR_TABLES {
+
+                                                    typedef struct _MMCOLOR_TABLES
+{
     PFN_NUMBER Flink;
     PVOID Blink;
 } MMCOLOR_TABLES, *PMMCOLOR_TABLES;
 
-typedef struct _MMPRIMARY_COLOR_TABLES {
+typedef struct _MMPRIMARY_COLOR_TABLES
+{
     LIST_ENTRY ListHead;
 } MMPRIMARY_COLOR_TABLES, *PMMPRIMARY_COLOR_TABLES;
 
@@ -2281,26 +2275,28 @@ extern PFN_NUMBER MmTotalPagesForPagingFile;
 
 #define MI_PTE_LOOKUP_NEEDED ((ULONG64)0xffffffff)
 
-
+
 //
 // The hardware PTE is defined in ntos\inc\alpha.h.
 //
 // Invalid PTEs have the following definition.
 //
 
-typedef struct _MMPTE_SOFTWARE {
-    ULONGLONG Valid: 1;
+typedef struct _MMPTE_SOFTWARE
+{
+    ULONGLONG Valid : 1;
     ULONGLONG Prototype : 1;
     ULONGLONG Transition : 1;
     ULONGLONG Protection : 5;
     ULONGLONG UsedPageTableEntries : PTE_PER_PAGE_BITS;
     ULONGLONG Reserved : 20 - PTE_PER_PAGE_BITS;
-    ULONGLONG PageFileLow: 4;
+    ULONGLONG PageFileLow : 4;
     ULONGLONG PageFileHigh : 32;
 } MMPTE_SOFTWARE;
 
 
-typedef struct _MMPTE_TRANSITION {
+typedef struct _MMPTE_TRANSITION
+{
     ULONGLONG Valid : 1;
     ULONGLONG Prototype : 1;
     ULONGLONG Transition : 1;
@@ -2310,7 +2306,8 @@ typedef struct _MMPTE_TRANSITION {
 } MMPTE_TRANSITION;
 
 
-typedef struct _MMPTE_PROTOTYPE {
+typedef struct _MMPTE_PROTOTYPE
+{
     ULONGLONG Valid : 1;
     ULONGLONG Prototype : 1;
     ULONGLONG ReadOnly : 1;
@@ -2319,7 +2316,8 @@ typedef struct _MMPTE_PROTOTYPE {
     LONGLONG ProtoAddress : 48;
 } MMPTE_PROTOTYPE;
 
-typedef struct _MMPTE_LIST {
+typedef struct _MMPTE_LIST
+{
     ULONGLONG Valid : 1;
     ULONGLONG filler07 : 7;
     ULONGLONG OneEntry : 1;
@@ -2327,7 +2325,8 @@ typedef struct _MMPTE_LIST {
     ULONGLONG NextEntry : 32;
 } MMPTE_LIST;
 
-typedef struct _MMPTE_SUBSECTION {
+typedef struct _MMPTE_SUBSECTION
+{
     ULONGLONG Valid : 1;
     ULONGLONG Prototype : 1;
     ULONGLONG WhichPool : 1;
@@ -2370,8 +2369,10 @@ typedef struct _MMPTE_SUBSECTION {
 // A Page Table Entry on a DEC ALPHA has the following definition.
 //
 
-typedef struct _MMPTE {
-    union  {
+typedef struct _MMPTE
+{
+    union
+    {
         ULONG_PTR Long;
         HARDWARE_PTE Hard;
         HARDWARE_PTE Flush;
@@ -2380,7 +2381,7 @@ typedef struct _MMPTE {
         MMPTE_TRANSITION Trans;
         MMPTE_LIST List;
         MMPTE_SUBSECTION Subsect;
-        } u;
+    } u;
 } MMPTE, *PMMPTE;
 
 //++
@@ -2407,8 +2408,7 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_WRITE_VALID_PTE(_PointerPte, _PteContents)    \
-            (*(_PointerPte) = (_PteContents))
+#define MI_WRITE_VALID_PTE(_PointerPte, _PteContents) (*(_PointerPte) = (_PteContents))
 
 //++
 //VOID
@@ -2434,8 +2434,7 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_WRITE_INVALID_PTE(_PointerPte, _PteContents)  \
-            (*(_PointerPte) = (_PteContents))
+#define MI_WRITE_INVALID_PTE(_PointerPte, _PteContents) (*(_PointerPte) = (_PteContents))
 
 //++
 //VOID
@@ -2461,8 +2460,7 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_WRITE_VALID_PTE_NEW_PROTECTION(_PointerPte, _PteContents)    \
-            (*(_PointerPte) = (_PteContents))
+#define MI_WRITE_VALID_PTE_NEW_PROTECTION(_PointerPte, _PteContents) (*(_PointerPte) = (_PteContents))
 
 //++
 //VOID
@@ -2491,8 +2489,7 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MiFillMemoryPte(Destination, Length, Pattern) \
-    RtlFillMemoryUlonglong((Destination), (Length), (Pattern))
+#define MiFillMemoryPte(Destination, Length, Pattern) RtlFillMemoryUlonglong((Destination), (Length), (Pattern))
 
 //++
 //BOOLEAN
@@ -2515,8 +2512,7 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_IS_PAGE_TABLE_ADDRESS(VA)   \
-            ((PVOID)(VA) >= (PVOID)PTE_BASE && (PVOID)(VA) <= (PVOID)PDE_TOP)
+#define MI_IS_PAGE_TABLE_ADDRESS(VA) ((PVOID)(VA) >= (PVOID)PTE_BASE && (PVOID)(VA) <= (PVOID)PDE_TOP)
 
 //++
 //BOOLEAN
@@ -2539,8 +2535,8 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_IS_KERNEL_PAGE_TABLE_ADDRESS(VA)   \
-            ((PVOID)(VA) >= (PVOID)MiGetPteAddress(MmSystemRangeStart) && (PVOID)(VA) <= (PVOID)PDE_TOP)
+#define MI_IS_KERNEL_PAGE_TABLE_ADDRESS(VA) \
+    ((PVOID)(VA) >= (PVOID)MiGetPteAddress(MmSystemRangeStart) && (PVOID)(VA) <= (PVOID)PDE_TOP)
 
 
 //++
@@ -2564,8 +2560,7 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_IS_PAGE_DIRECTORY_ADDRESS(VA)   \
-            ((PVOID)(VA) >= (PVOID)PDE_UBASE && (PVOID)(VA) <= (PVOID)PDE_TOP)
+#define MI_IS_PAGE_DIRECTORY_ADDRESS(VA) ((PVOID)(VA) >= (PVOID)PDE_UBASE && (PVOID)(VA) <= (PVOID)PDE_TOP)
 
 
 //++
@@ -2589,8 +2584,7 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_IS_HYPER_SPACE_ADDRESS(VA)   \
-            ((PVOID)(VA) >= (PVOID)HYPER_SPACE && (PVOID)(VA) <= (PVOID)HYPER_SPACE_END)
+#define MI_IS_HYPER_SPACE_ADDRESS(VA) ((PVOID)(VA) >= (PVOID)HYPER_SPACE && (PVOID)(VA) <= (PVOID)HYPER_SPACE_END)
 
 
 //++
@@ -2615,9 +2609,9 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_IS_PROCESS_SPACE_ADDRESS(VA)   \
-            (((PVOID)(VA) <= (PVOID)MM_HIGHEST_USER_ADDRESS) || \
-             ((PVOID)(VA) >= (PVOID)PTE_BASE && (PVOID)(VA) <= (PVOID)HYPER_SPACE_END))
+#define MI_IS_PROCESS_SPACE_ADDRESS(VA)                 \
+    (((PVOID)(VA) <= (PVOID)MM_HIGHEST_USER_ADDRESS) || \
+     ((PVOID)(VA) >= (PVOID)PTE_BASE && (PVOID)(VA) <= (PVOID)HYPER_SPACE_END))
 
 //++
 //BOOLEAN
@@ -2639,8 +2633,7 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_IS_PTE_PROTOTYPE(PTE)   \
-            ((PTE) > (PMMPTE)PDE_TOP)
+#define MI_IS_PTE_PROTOTYPE(PTE) ((PTE) > (PMMPTE)PDE_TOP)
 
 //++
 //BOOLEAN
@@ -2663,9 +2656,8 @@ typedef struct _MMPTE {
 //
 //--
 
-#define MI_IS_SYSTEM_CACHE_ADDRESS(VA)                      \
-         (((PVOID)(VA) >= (PVOID)MmSystemCacheStart &&      \
-		     (PVOID)(VA) <= (PVOID)MmSystemCacheEnd))
+#define MI_IS_SYSTEM_CACHE_ADDRESS(VA) \
+    (((PVOID)(VA) >= (PVOID)MmSystemCacheStart && (PVOID)(VA) <= (PVOID)MmSystemCacheEnd))
 
 //++
 //VOID
@@ -2710,13 +2702,13 @@ typedef struct _MMPTE {
 //--
 
 #if defined(NT_UP)
-#define MI_BARRIER_SYNCHRONIZE(TimeStamp)               \
-        __MB();
+#define MI_BARRIER_SYNCHRONIZE(TimeStamp) __MB();
 #else
-#define MI_BARRIER_SYNCHRONIZE(TimeStamp)               \
-        if ((ULONG)TimeStamp == KeReadMbTimeStamp()) {  \
-            KeSynchronizeMemoryAccess();                \
-        }
+#define MI_BARRIER_SYNCHRONIZE(TimeStamp)        \
+    if ((ULONG)TimeStamp == KeReadMbTimeStamp()) \
+    {                                            \
+        KeSynchronizeMemoryAccess();             \
+    }
 #endif
 
 //++
@@ -2763,7 +2755,7 @@ typedef struct _MMPTE {
 // Routine Description:
 //
 //    MI_FLUSH_SINGLE_SESSION_TB flushes the requested single address
-//    translation from the TB.  
+//    translation from the TB.
 //
 //    Since Alpha supports ASNs and session space doesn't have one, the entire
 //    TB needs to be flushed.
@@ -2789,9 +2781,9 @@ typedef struct _MMPTE {
 //--
 
 #define MI_FLUSH_SINGLE_SESSION_TB(Virtual, Invalid, AllProcessors, PtePointer, PteValue, PreviousPte) \
-    PreviousPte.u.Flush = *PtePointer;                  \
-    *PtePointer = PteValue;                             \
-    KeFlushEntireTb (TRUE, TRUE);
+    PreviousPte.u.Flush = *PtePointer;                                                                 \
+    *PtePointer = PteValue;                                                                            \
+    KeFlushEntireTb(TRUE, TRUE);
 
 
 //++
@@ -2817,5 +2809,4 @@ typedef struct _MMPTE {
 //    None.
 //
 
-#define MI_FLUSH_ENTIRE_SESSION_TB(Invalid, AllProcessors) \
-    KeFlushEntireTb (Invalid, AllProcessors);
+#define MI_FLUSH_ENTIRE_SESSION_TB(Invalid, AllProcessors) KeFlushEntireTb(Invalid, AllProcessors);

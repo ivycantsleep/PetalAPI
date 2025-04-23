@@ -25,19 +25,19 @@ Revision History:
 
 #include "ki.h"
 
-#pragma alloc_text (PAGE, KeInitializeEventPair)
+#pragma alloc_text(PAGE, KeInitializeEventPair)
 
 #undef KeClearEvent
-
+
 //
 // The following assert macro is used to check that an input event is
 // really a kernel event and not something else, like deallocated pool.
 //
 
-#define ASSERT_EVENT(E) {                             \
-    ASSERT((E)->Header.Type == NotificationEvent ||   \
-           (E)->Header.Type == SynchronizationEvent); \
-}
+#define ASSERT_EVENT(E)                                                                            \
+    {                                                                                              \
+        ASSERT((E)->Header.Type == NotificationEvent || (E)->Header.Type == SynchronizationEvent); \
+    }
 
 //
 // The following assert macro is used to check that an input event is
@@ -45,19 +45,15 @@ Revision History:
 // pool.
 //
 
-#define ASSERT_EVENT_PAIR(E) {                        \
-    ASSERT((E)->Type == EventPairObject);             \
-}
-
+#define ASSERT_EVENT_PAIR(E)                  \
+    {                                         \
+        ASSERT((E)->Type == EventPairObject); \
+    }
+
 
 #undef KeInitializeEvent
 
-VOID
-KeInitializeEvent (
-    IN PRKEVENT Event,
-    IN EVENT_TYPE Type,
-    IN BOOLEAN State
-    )
+VOID KeInitializeEvent(IN PRKEVENT Event, IN EVENT_TYPE Type, IN BOOLEAN State)
 
 /*++
 
@@ -94,11 +90,8 @@ Return Value:
     InitializeListHead(&Event->Header.WaitListHead);
     return;
 }
-
-VOID
-KeInitializeEventPair (
-    IN PKEVENT_PAIR EventPair
-    )
+
+VOID KeInitializeEventPair(IN PKEVENT_PAIR EventPair)
 
 /*++
 
@@ -132,11 +125,8 @@ Return Value:
     KeInitializeEvent(&EventPair->EventHigh, SynchronizationEvent, FALSE);
     return;
 }
-
-VOID
-KeClearEvent (
-    IN PRKEVENT Event
-    )
+
+VOID KeClearEvent(IN PRKEVENT Event)
 
 /*++
 
@@ -165,13 +155,8 @@ Return Value:
     Event->Header.SignalState = 0;
     return;
 }
-
-LONG
-KePulseEvent (
-    IN PRKEVENT Event,
-    IN KPRIORITY Increment,
-    IN BOOLEAN Wait
-    )
+
+LONG KePulseEvent(IN PRKEVENT Event, IN KPRIORITY Increment, IN BOOLEAN Wait)
 
 /*++
 
@@ -222,7 +207,8 @@ Return Value:
     //
 
     OldState = Event->Header.SignalState;
-    if ((OldState == 0) && (IsListEmpty(&Event->Header.WaitListHead) == FALSE)) {
+    if ((OldState == 0) && (IsListEmpty(&Event->Header.WaitListHead) == FALSE))
+    {
         Event->Header.SignalState = 1;
         KiWaitTest(Event, Increment);
     }
@@ -236,13 +222,15 @@ Return Value:
     // previous value.
     //
 
-    if (Wait != FALSE) {
+    if (Wait != FALSE)
+    {
         Thread = KeGetCurrentThread();
         Thread->WaitIrql = OldIrql;
         Thread->WaitNext = Wait;
-
-    } else {
-       KiUnlockDispatcherDatabase(OldIrql);
+    }
+    else
+    {
+        KiUnlockDispatcherDatabase(OldIrql);
     }
 
     //
@@ -251,11 +239,8 @@ Return Value:
 
     return OldState;
 }
-
-LONG
-KeReadStateEvent (
-    IN PRKEVENT Event
-    )
+
+LONG KeReadStateEvent(IN PRKEVENT Event)
 
 /*++
 
@@ -283,11 +268,8 @@ Return Value:
 
     return Event->Header.SignalState;
 }
-
-LONG
-KeResetEvent (
-    IN PRKEVENT Event
-    )
+
+LONG KeResetEvent(IN PRKEVENT Event)
 
 /*++
 
@@ -341,13 +323,8 @@ Return Value:
 
     return OldState;
 }
-
-LONG
-KeSetEvent (
-    IN PRKEVENT Event,
-    IN KPRIORITY Increment,
-    IN BOOLEAN Wait
-    )
+
+LONG KeSetEvent(IN PRKEVENT Event, IN KPRIORITY Increment, IN BOOLEAN Wait)
 
 /*++
 
@@ -406,10 +383,12 @@ Return Value:
     //
 
     OldState = Event->Header.SignalState;
-    if (IsListEmpty(&Event->Header.WaitListHead) != FALSE) {
+    if (IsListEmpty(&Event->Header.WaitListHead) != FALSE)
+    {
         Event->Header.SignalState = 1;
-
-    } else {
+    }
+    else
+    {
 
         //
         // If the event is a notification event or the wait is not a wait any,
@@ -418,22 +397,19 @@ Return Value:
         // directly unwaiting the thread.
         //
 
-        WaitBlock = CONTAINING_RECORD(Event->Header.WaitListHead.Flink,
-                                      KWAIT_BLOCK,
-                                      WaitListEntry);
+        WaitBlock = CONTAINING_RECORD(Event->Header.WaitListHead.Flink, KWAIT_BLOCK, WaitListEntry);
 
-        if ((Event->Header.Type == NotificationEvent) ||
-            (WaitBlock->WaitType != WaitAny)) {
-            if (OldState == 0) {
+        if ((Event->Header.Type == NotificationEvent) || (WaitBlock->WaitType != WaitAny))
+        {
+            if (OldState == 0)
+            {
                 Event->Header.SignalState = 1;
                 KiWaitTest(Event, Increment);
             }
-
-        } else {
-            KiUnwaitThread(WaitBlock->Thread,
-                           (NTSTATUS)WaitBlock->WaitKey,
-                           Increment,
-                           NULL);
+        }
+        else
+        {
+            KiUnwaitThread(WaitBlock->Thread, (NTSTATUS)WaitBlock->WaitKey, Increment, NULL);
         }
     }
 
@@ -444,13 +420,15 @@ Return Value:
     // previous value.
     //
 
-    if (Wait != FALSE) {
-       Thread = KeGetCurrentThread();
-       Thread->WaitNext = Wait;
-       Thread->WaitIrql = OldIrql;
-
-    } else {
-       KiUnlockDispatcherDatabase(OldIrql);
+    if (Wait != FALSE)
+    {
+        Thread = KeGetCurrentThread();
+        Thread->WaitNext = Wait;
+        Thread->WaitIrql = OldIrql;
+    }
+    else
+    {
+        KiUnlockDispatcherDatabase(OldIrql);
     }
 
     //
@@ -459,12 +437,8 @@ Return Value:
 
     return OldState;
 }
-
-VOID
-KeSetEventBoostPriority (
-    IN PRKEVENT Event,
-    IN PRKTHREAD *Thread OPTIONAL
-    )
+
+VOID KeSetEventBoostPriority(IN PRKEVENT Event, IN PRKTHREAD *Thread OPTIONAL)
 
 /*++
 
@@ -515,10 +489,12 @@ Return Value:
     // of the event object.
     //
 
-    if (IsListEmpty(&Event->Header.WaitListHead) != FALSE) {
+    if (IsListEmpty(&Event->Header.WaitListHead) != FALSE)
+    {
         Event->Header.SignalState = 1;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Get the address of the first wait block in the event list.
@@ -534,15 +510,15 @@ Return Value:
         //      event type, but not the wait type.
         //
 
-        WaitBlock = CONTAINING_RECORD(Event->Header.WaitListHead.Flink,
-                                      KWAIT_BLOCK,
-                                      WaitListEntry);
+        WaitBlock = CONTAINING_RECORD(Event->Header.WaitListHead.Flink, KWAIT_BLOCK, WaitListEntry);
 
-        if (WaitBlock->WaitType == WaitAll) {
+        if (WaitBlock->WaitType == WaitAll)
+        {
             Event->Header.SignalState = 1;
             KiWaitTest(Event, EVENT_INCREMENT);
-
-        } else {
+        }
+        else
+        {
 
             //
             // Get the address of the waiting thread and return the address
@@ -550,7 +526,8 @@ Return Value:
             //
 
             WaitThread = WaitBlock->Thread;
-            if (ARGUMENT_PRESENT(Thread)) {
+            if (ARGUMENT_PRESENT(Thread))
+            {
                 *Thread = WaitThread;
             }
 
@@ -575,11 +552,10 @@ Return Value:
             //
 
             if ((WaitThread->Priority <= CurrentThread->Priority) &&
-                (WaitThread->Priority < TIME_CRITICAL_PRIORITY_BOUND) &&
-                (WaitThread->DisableBoost == FALSE)) {
+                (WaitThread->Priority < TIME_CRITICAL_PRIORITY_BOUND) && (WaitThread->DisableBoost == FALSE))
+            {
                 WaitThread->Priority -= WaitThread->PriorityDecrement;
-                Priority = min(CurrentThread->Priority + 1,
-                               TIME_CRITICAL_PRIORITY_BOUND - 1);
+                Priority = min(CurrentThread->Priority + 1, TIME_CRITICAL_PRIORITY_BOUND - 1);
 
                 WaitThread->PriorityDecrement = (SCHAR)(Priority - WaitThread->Priority);
                 WaitThread->DecrementCount = ROUND_TRIP_DECREMENT_COUNT;
@@ -591,7 +567,8 @@ Return Value:
             // lock ownership.
             //
 
-            if (WaitThread->Quantum < (WAIT_QUANTUM_DECREMENT * 4)) {
+            if (WaitThread->Quantum < (WAIT_QUANTUM_DECREMENT * 4))
+            {
                 WaitThread->Quantum = WAIT_QUANTUM_DECREMENT * 4;
             }
 

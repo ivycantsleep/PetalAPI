@@ -33,7 +33,8 @@ Revision History:
 #include "ntacpi.h"
 #include "rules.h"
 
-#define TABLE_ENTRIES_FROM_RSDT_POINTER(p)  (((p)->Header.Length-min((p)->Header.Length, sizeof(DESCRIPTION_HEADER))) / 4)
+#define TABLE_ENTRIES_FROM_RSDT_POINTER(p) \
+    (((p)->Header.Length - min((p)->Header.Length, sizeof(DESCRIPTION_HEADER))) / 4)
 
 
 //
@@ -46,15 +47,9 @@ Revision History:
 // PnP BIOS structure signature.
 //
 
-#define PNPBIOS_SIGNATURE   'PnP$'
+#define PNPBIOS_SIGNATURE 'PnP$'
 
-typedef
-BOOLEAN
-(* PFN_RULE)(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+typedef BOOLEAN (*PFN_RULE)(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 typedef struct _PNP_BIOS_TABLE PNP_BIOS_TABLE, *PPNP_BIOS_TABLE;
 
@@ -62,189 +57,99 @@ typedef struct _PNP_BIOS_TABLE PNP_BIOS_TABLE, *PPNP_BIOS_TABLE;
 
 struct _PNP_BIOS_TABLE
 {
-    ULONG   Signature;
-    UCHAR   Version;
-    UCHAR   Length;
-    USHORT  ControlField;
-    UCHAR   CheckSum;
-    ULONG   EventNotification;
-    USHORT  RMOffset;
-    USHORT  RMSegment;
-    USHORT  PMOffset;
-    ULONG   PMSegment;
-    ULONG   Oem;
-    USHORT  RMData;
-    ULONG   PMData;
+    ULONG Signature;
+    UCHAR Version;
+    UCHAR Length;
+    USHORT ControlField;
+    UCHAR CheckSum;
+    ULONG EventNotification;
+    USHORT RMOffset;
+    USHORT RMSegment;
+    USHORT PMOffset;
+    ULONG PMSegment;
+    ULONG Oem;
+    USHORT RMData;
+    ULONG PMData;
 };
 
 #pragma pack(pop)
 
 ULONG
-CmpComputeChecksum(
-    IN PCHAR    Address,
-    IN ULONG    Size
-    );
+CmpComputeChecksum(IN PCHAR Address, IN ULONG Size);
 
 NTSTATUS
-CmpFindRSDTTable(
-    OUT PACPI_BIOS_MULTI_NODE   *Rsdt
-    );
+CmpFindRSDTTable(OUT PACPI_BIOS_MULTI_NODE *Rsdt);
 
 NTSTATUS
-CmpGetRegistryValue(
-    IN  HANDLE                          KeyName,
-    IN  PWSTR                           ValueName,
-    OUT PKEY_VALUE_PARTIAL_INFORMATION  *Information
-    );
+CmpGetRegistryValue(IN HANDLE KeyName, IN PWSTR ValueName, OUT PKEY_VALUE_PARTIAL_INFORMATION *Information);
 
 BOOLEAN
-CmpCheckOperator(
-    IN PCHAR Operator,
-    IN ULONG Lhs,
-    IN ULONG Rhs
-    );
+CmpCheckOperator(IN PCHAR Operator, IN ULONG Lhs, IN ULONG Rhs);
 
 PVOID
-CmpMapPhysicalAddress(
-    IN OUT PVOID *BaseAddress,
-    IN ULONG_PTR Address,
-    IN ULONG Size
-    );
+CmpMapPhysicalAddress(IN OUT PVOID *BaseAddress, IN ULONG_PTR Address, IN ULONG Size);
 
 BOOLEAN
-CmpGetInfData(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG KeyIndex,
-    IN ULONG LineIndex,
-    IN OUT PCHAR Buffer,
-    IN OUT PULONG BufferSize
-    );
+CmpGetInfData(IN PVOID InfHandle, IN PCHAR Section, IN ULONG KeyIndex, IN ULONG LineIndex, IN OUT PCHAR Buffer,
+              IN OUT PULONG BufferSize);
 
 PVOID
-CmpFindPattern(
-    IN PCHAR Buffer,
-    IN ULONG BufSize,
-    IN PCHAR Pattern,
-    IN ULONG PatSize,
-    IN BOOLEAN IgnoreCase,
-    IN ULONG Step
-    );
+CmpFindPattern(IN PCHAR Buffer, IN ULONG BufSize, IN PCHAR Pattern, IN ULONG PatSize, IN BOOLEAN IgnoreCase,
+               IN ULONG Step);
 
- ULONG
- CmpGetPnPBIOSTableAddress(
-    VOID
-    );
+ULONG
+CmpGetPnPBIOSTableAddress(VOID);
 
 BOOLEAN
-CmpMatchDescription(
-    IN PVOID InfHandle,
-    IN PCHAR Description
-    );
+CmpMatchDescription(IN PVOID InfHandle, IN PCHAR Description);
 
 BOOLEAN
-CmpMatchDateRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchDateRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchMemoryRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchMemoryRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchSearchRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchSearchRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchNextMatchRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchNextMatchRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchPointerRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchPointerRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchOemIdRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchOemIdRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchPModeRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchPModeRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchRmPmSameRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchRmPmSameRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchInstallRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchInstallRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchAcpiOemIdRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchAcpiOemIdRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchAcpiOemTableIdRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchAcpiOemTableIdRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchAcpiOemRevisionRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchAcpiOemRevisionRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchAcpiRevisionRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchAcpiRevisionRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 BOOLEAN
-CmpMatchAcpiCreatorRevisionRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    );
+CmpMatchAcpiCreatorRevisionRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex);
 
 //
 // Number of rules currently implemented.
 //
 
-#define NUM_OF_RULES    14
+#define NUM_OF_RULES 14
 
 //
 // Rule table.
@@ -254,69 +159,64 @@ CmpMatchAcpiCreatorRevisionRule(
 #pragma data_seg("INITDATA")
 #pragma const_seg("INITCONST")
 #endif
-struct {
-    PCHAR       Name;
-    PFN_RULE    Action;
-} const gRuleTable[NUM_OF_RULES] =
+struct
 {
-    {"Date", CmpMatchDateRule},
-    {"Memory", CmpMatchMemoryRule},
-    {"Search", CmpMatchSearchRule},
-    {"NextMatch", CmpMatchNextMatchRule},
-    {"Pointer", CmpMatchPointerRule},
-    {"OemId", CmpMatchOemIdRule},
-    {"PMode", CmpMatchPModeRule},
-    {"RmPmSame", CmpMatchRmPmSameRule},
-    {"Install", CmpMatchInstallRule},
-    {"ACPIOemId", CmpMatchAcpiOemIdRule},
-    {"ACPIOemTableId", CmpMatchAcpiOemTableIdRule},
-    {"ACPIOemRevision", CmpMatchAcpiOemRevisionRule},
-    {"ACPIRevision", CmpMatchAcpiRevisionRule},
-    {"ACPICreatorRevision", CmpMatchAcpiCreatorRevisionRule}
-};
+    PCHAR Name;
+    PFN_RULE Action;
+} const gRuleTable[NUM_OF_RULES] = { { "Date", CmpMatchDateRule },
+                                     { "Memory", CmpMatchMemoryRule },
+                                     { "Search", CmpMatchSearchRule },
+                                     { "NextMatch", CmpMatchNextMatchRule },
+                                     { "Pointer", CmpMatchPointerRule },
+                                     { "OemId", CmpMatchOemIdRule },
+                                     { "PMode", CmpMatchPModeRule },
+                                     { "RmPmSame", CmpMatchRmPmSameRule },
+                                     { "Install", CmpMatchInstallRule },
+                                     { "ACPIOemId", CmpMatchAcpiOemIdRule },
+                                     { "ACPIOemTableId", CmpMatchAcpiOemTableIdRule },
+                                     { "ACPIOemRevision", CmpMatchAcpiOemRevisionRule },
+                                     { "ACPIRevision", CmpMatchAcpiRevisionRule },
+                                     { "ACPICreatorRevision", CmpMatchAcpiCreatorRevisionRule } };
 
-PVOID   gSearchAddress = NULL;
+PVOID gSearchAddress = NULL;
 
-static const WCHAR rgzMultiFunctionAdapter[] = L"\\Registry\\Machine\\Hardware\\Description\\System\\MultifunctionAdapter";
+static const WCHAR rgzMultiFunctionAdapter[] =
+    L"\\Registry\\Machine\\Hardware\\Description\\System\\MultifunctionAdapter";
 static const WCHAR rgzAcpiConfigurationData[] = L"Configuration Data";
 static const WCHAR rgzAcpiIdentifier[] = L"Identifier";
 static const WCHAR rgzBIOSIdentifier[] = L"ACPI BIOS";
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CmpGetRegistryValue)
-#pragma alloc_text(INIT,CmpFindACPITable)
-#pragma alloc_text(INIT,CmpFindRSDTTable)
-#pragma alloc_text(INIT,CmpComputeChecksum)
-#pragma alloc_text(INIT,CmpCheckOperator)
-#pragma alloc_text(INIT,CmpMapPhysicalAddress)
-#pragma alloc_text(INIT,CmpGetInfData)
-#pragma alloc_text(INIT,CmpFindPattern)
-#pragma alloc_text(INIT,CmpGetPnPBIOSTableAddress)
-#pragma alloc_text(INIT,CmpMatchInfList)
-#pragma alloc_text(INIT,CmpMatchDescription)
-#pragma alloc_text(INIT,CmpMatchDateRule)
-#pragma alloc_text(INIT,CmpMatchMemoryRule)
-#pragma alloc_text(INIT,CmpMatchSearchRule)
-#pragma alloc_text(INIT,CmpMatchNextMatchRule)
-#pragma alloc_text(INIT,CmpMatchPointerRule)
-#pragma alloc_text(INIT,CmpMatchOemIdRule)
-#pragma alloc_text(INIT,CmpMatchPModeRule)
-#pragma alloc_text(INIT,CmpMatchRmPmSameRule)
-#pragma alloc_text(INIT,CmpMatchInstallRule)
-#pragma alloc_text(INIT,CmpMatchAcpiOemIdRule)
-#pragma alloc_text(INIT,CmpMatchAcpiOemTableIdRule)
-#pragma alloc_text(INIT,CmpMatchAcpiOemRevisionRule)
-#pragma alloc_text(INIT,CmpMatchAcpiRevisionRule)
-#pragma alloc_text(INIT,CmpMatchAcpiCreatorRevisionRule)
+#pragma alloc_text(INIT, CmpGetRegistryValue)
+#pragma alloc_text(INIT, CmpFindACPITable)
+#pragma alloc_text(INIT, CmpFindRSDTTable)
+#pragma alloc_text(INIT, CmpComputeChecksum)
+#pragma alloc_text(INIT, CmpCheckOperator)
+#pragma alloc_text(INIT, CmpMapPhysicalAddress)
+#pragma alloc_text(INIT, CmpGetInfData)
+#pragma alloc_text(INIT, CmpFindPattern)
+#pragma alloc_text(INIT, CmpGetPnPBIOSTableAddress)
+#pragma alloc_text(INIT, CmpMatchInfList)
+#pragma alloc_text(INIT, CmpMatchDescription)
+#pragma alloc_text(INIT, CmpMatchDateRule)
+#pragma alloc_text(INIT, CmpMatchMemoryRule)
+#pragma alloc_text(INIT, CmpMatchSearchRule)
+#pragma alloc_text(INIT, CmpMatchNextMatchRule)
+#pragma alloc_text(INIT, CmpMatchPointerRule)
+#pragma alloc_text(INIT, CmpMatchOemIdRule)
+#pragma alloc_text(INIT, CmpMatchPModeRule)
+#pragma alloc_text(INIT, CmpMatchRmPmSameRule)
+#pragma alloc_text(INIT, CmpMatchInstallRule)
+#pragma alloc_text(INIT, CmpMatchAcpiOemIdRule)
+#pragma alloc_text(INIT, CmpMatchAcpiOemTableIdRule)
+#pragma alloc_text(INIT, CmpMatchAcpiOemRevisionRule)
+#pragma alloc_text(INIT, CmpMatchAcpiRevisionRule)
+#pragma alloc_text(INIT, CmpMatchAcpiCreatorRevisionRule)
 #endif
 
 
 BOOLEAN
-CmpMatchInfList(
-    IN PVOID InfImage,
-    IN ULONG ImageSize,
-    IN PCHAR Section
-    )
+CmpMatchInfList(IN PVOID InfImage, IN ULONG ImageSize, IN PCHAR Section)
 
 /*++
 
@@ -339,9 +239,9 @@ CmpMatchInfList(
 --*/
 
 {
-    PCHAR   computerName;
-    ULONG   i = 0;
-    PVOID   infHandle;
+    PCHAR computerName;
+    ULONG i = 0;
+    PVOID infHandle;
     BOOLEAN result = FALSE;
 
     infHandle = CmpOpenInfFile(InfImage, ImageSize);
@@ -373,7 +273,8 @@ CmpMatchInfList(
 
             if (CmpMatchDescription(infHandle, computerName))
             {
-                CmKdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_WARNING_LEVEL, "CmpMatchInfList: Machine matches %s description!\n", computerName));
+                CmKdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_WARNING_LEVEL,
+                             "CmpMatchInfList: Machine matches %s description!\n", computerName));
                 result = TRUE;
             }
         }
@@ -389,10 +290,7 @@ CmpMatchInfList(
 }
 
 BOOLEAN
-CmpMatchDescription(
-    IN PVOID InfHandle,
-    IN PCHAR Description
-    )
+CmpMatchDescription(IN PVOID InfHandle, IN PCHAR Description)
 
 /*++
 
@@ -413,9 +311,9 @@ CmpMatchDescription(
 --*/
 
 {
-    ULONG   ruleNumber;
-    ULONG   i;
-    PCHAR   ruleName;
+    ULONG ruleNumber;
+    ULONG i;
+    PCHAR ruleName;
 
     //
     // Proceed only if the section does exist.
@@ -435,18 +333,15 @@ CmpMatchDescription(
             // Search for the rule in our table.
             //
 
-            for (   i = 0;
-                    i < NUM_OF_RULES &&
-                        _stricmp(ruleName, gRuleTable[i].Name);
-                    i++);
+            for (i = 0; i < NUM_OF_RULES && _stricmp(ruleName, gRuleTable[i].Name); i++)
+                ;
 
             //
             // If we did not find the rule or the rule failed,
             // return failure.
             //
 
-            if (    i >= NUM_OF_RULES ||
-                    !(*gRuleTable[i].Action)(InfHandle, Description, ruleNumber++))
+            if (i >= NUM_OF_RULES || !(*gRuleTable[i].Action)(InfHandle, Description, ruleNumber++))
             {
                 return (FALSE);
             }
@@ -471,11 +366,7 @@ CmpMatchDescription(
 }
 
 BOOLEAN
-CmpMatchDateRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchDateRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 
 /*++
 
@@ -511,16 +402,16 @@ CmpMatchDateRule(
 --*/
 
 {
-    PCHAR   op;
-    PCHAR   month;
-    PCHAR   day;
-    PCHAR   year;
-    ULONG   infDate;
-    ULONG   yr;
-    ULONG   biosDate;
-    CHAR    temp[3];
-    PVOID   baseAddress;
-    PCHAR   address;
+    PCHAR op;
+    PCHAR month;
+    PCHAR day;
+    PCHAR year;
+    ULONG infDate;
+    ULONG yr;
+    ULONG biosDate;
+    CHAR temp[3];
+    PVOID baseAddress;
+    PCHAR address;
 
     op = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
     month = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
@@ -530,10 +421,8 @@ CmpMatchDateRule(
     if (op && month && day && year)
     {
         yr = strtoul(year, NULL, 16);
-        infDate = ((yr < 0x80) ? 0x20000000 : 0x19000000) +
-                    (yr << 16) +
-                    (strtoul(month, NULL, 16) << 8) +
-                    (strtoul(day, NULL, 16));
+        infDate = ((yr < 0x80) ? 0x20000000 : 0x19000000) + (yr << 16) + (strtoul(month, NULL, 16) << 8) +
+                  (strtoul(day, NULL, 16));
 
         address = CmpMapPhysicalAddress(&baseAddress, 0xFFFF5, 8);
         if (address)
@@ -542,8 +431,7 @@ CmpMatchDateRule(
 
             RtlCopyBytes(temp, address + 6, 2);
             yr = strtoul(temp, NULL, 16);
-            biosDate = ((yr < 0x80) ? 0x20000000 : 0x19000000) +
-                        (yr << 16);
+            biosDate = ((yr < 0x80) ? 0x20000000 : 0x19000000) + (yr << 16);
 
             RtlCopyBytes(temp, address, 2);
             biosDate |= (strtoul(temp, NULL, 16) << 8);
@@ -564,11 +452,7 @@ CmpMatchDateRule(
 }
 
 BOOLEAN
-CmpMatchMemoryRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchMemoryRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 
 /*++
 
@@ -607,14 +491,14 @@ CmpMatchMemoryRule(
 --*/
 
 {
-    BOOLEAN             match = FALSE;
-    PCHAR               segment;
-    PCHAR               offset;
-    CHAR                data[MAX_DESCRIPTION_LEN + 1];
-    ULONG               cbData;
-    PVOID               baseAddress;
-    PCHAR               address;
-    ULONG               memory;
+    BOOLEAN match = FALSE;
+    PCHAR segment;
+    PCHAR offset;
+    CHAR data[MAX_DESCRIPTION_LEN + 1];
+    ULONG cbData;
+    PVOID baseAddress;
+    PCHAR address;
+    ULONG memory;
 
     //
     // Read in the segment and offset of the address specified.
@@ -661,11 +545,7 @@ CmpMatchMemoryRule(
 }
 
 BOOLEAN
-CmpMatchSearchRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchSearchRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 
 /*++
 
@@ -701,15 +581,15 @@ CmpMatchSearchRule(
 
 {
     BOOLEAN match = FALSE;
-    PCHAR   segment;
-    PCHAR   offset;
-    PCHAR   size;
-    CHAR    data[MAX_DESCRIPTION_LEN + 1];
-    ULONG   cbData;
-    ULONG   memory;
-    ULONG   length;
-    PVOID   baseAddress;
-    PCHAR   address;
+    PCHAR segment;
+    PCHAR offset;
+    PCHAR size;
+    CHAR data[MAX_DESCRIPTION_LEN + 1];
+    ULONG cbData;
+    ULONG memory;
+    ULONG length;
+    PVOID baseAddress;
+    PCHAR address;
 
     segment = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
     offset = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
@@ -741,8 +621,8 @@ CmpMatchSearchRule(
                     // If we found the pattern, compute the actual address for it.
                     //
 
-                    (PCHAR)gSearchAddress -= (ULONG_PTR)address;
-                    (PCHAR)gSearchAddress += memory;
+                    (PCHAR) gSearchAddress -= (ULONG_PTR)address;
+                    (PCHAR) gSearchAddress += memory;
                     match = TRUE;
                 }
 
@@ -759,11 +639,7 @@ CmpMatchSearchRule(
 }
 
 BOOLEAN
-CmpMatchNextMatchRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchNextMatchRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 
 /*++
 
@@ -799,11 +675,11 @@ CmpMatchNextMatchRule(
 
 {
     BOOLEAN match = FALSE;
-    PCHAR   offset;
-    CHAR    data[MAX_DESCRIPTION_LEN + 1];
-    ULONG   cbData;
-    PVOID   baseAddress;
-    PCHAR   address;
+    PCHAR offset;
+    CHAR data[MAX_DESCRIPTION_LEN + 1];
+    ULONG cbData;
+    PVOID baseAddress;
+    PCHAR address;
 
     if (gSearchAddress)
     {
@@ -818,7 +694,7 @@ CmpMatchNextMatchRule(
 
             if (CmpGetInfData(InfHandle, Description, RuleIndex, 1, data, &cbData))
             {
-                (PCHAR)gSearchAddress += strtoul(offset, NULL, 16);
+                (PCHAR) gSearchAddress += strtoul(offset, NULL, 16);
 
                 //
                 // Map in the physical address.
@@ -848,25 +724,21 @@ CmpMatchNextMatchRule(
 }
 
 BOOLEAN
-CmpMatchPointerRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchPointerRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 {
     BOOLEAN match = FALSE;
-    PCHAR   segment1;
-    PCHAR   offset1;
-    PCHAR   segment2;
-    PCHAR   offset2;
-    PCHAR   index;
-    PCHAR   op;
-    CHAR    data[MAX_DESCRIPTION_LEN + 1];
-    ULONG   cbData;
-    ULONG   memory;
-    ULONG   pointer;
-    PVOID   baseAddress;
-    PCHAR   address;
+    PCHAR segment1;
+    PCHAR offset1;
+    PCHAR segment2;
+    PCHAR offset2;
+    PCHAR index;
+    PCHAR op;
+    CHAR data[MAX_DESCRIPTION_LEN + 1];
+    ULONG cbData;
+    ULONG memory;
+    ULONG pointer;
+    PVOID baseAddress;
+    PCHAR address;
 
     segment1 = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
     offset1 = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
@@ -875,9 +747,7 @@ CmpMatchPointerRule(
     index = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 4);
     op = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 5);
 
-    if (    segment1 && offset1 &&
-            segment2 && offset2 &&
-            index && op)
+    if (segment1 && offset1 && segment2 && offset2 && index && op)
     {
         //
         // Get the data specified in the inf.
@@ -952,18 +822,14 @@ CmpMatchPointerRule(
 }
 
 BOOLEAN
-CmpMatchOemIdRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchOemIdRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 {
-    BOOLEAN         match = FALSE;
-    ULONG           address;
-    PCHAR           op;
-    PCHAR           oemIdStr;
-    ULONG           oemId;
-    PCHAR           baseAddress;
+    BOOLEAN match = FALSE;
+    ULONG address;
+    PCHAR op;
+    PCHAR oemIdStr;
+    ULONG oemId;
+    PCHAR baseAddress;
     PPNP_BIOS_TABLE biosTable;
 
     //
@@ -983,23 +849,15 @@ CmpMatchOemIdRule(
         if (op && oemIdStr)
         {
 
-            if (    strlen(oemIdStr) == 7 &&
-                    isalpha(oemIdStr[0]) &&
-                    isalpha(oemIdStr[1]) &&
-                    isalpha(oemIdStr[2]) &&
-                    isxdigit(oemIdStr[3]) &&
-                    isxdigit(oemIdStr[4]) &&
-                    isxdigit(oemIdStr[5]) &&
-                    isxdigit(oemIdStr[6]))
+            if (strlen(oemIdStr) == 7 && isalpha(oemIdStr[0]) && isalpha(oemIdStr[1]) && isalpha(oemIdStr[2]) &&
+                isxdigit(oemIdStr[3]) && isxdigit(oemIdStr[4]) && isxdigit(oemIdStr[5]) && isxdigit(oemIdStr[6]))
             {
 
                 biosTable = (PPNP_BIOS_TABLE)CmpMapPhysicalAddress(&baseAddress, address, sizeof(PNP_BIOS_TABLE));
                 if (biosTable)
                 {
-                    oemId = ((ULONG)(oemIdStr[0] & 0x1F) << 26) +
-                            ((ULONG)(oemIdStr[1] & 0x1F) << 21) +
-                            ((ULONG)(oemIdStr[2] & 0x1F) << 16) +
-                            strtoul(&oemIdStr[3], NULL, 16);
+                    oemId = ((ULONG)(oemIdStr[0] & 0x1F) << 26) + ((ULONG)(oemIdStr[1] & 0x1F) << 21) +
+                            ((ULONG)(oemIdStr[2] & 0x1F) << 16) + strtoul(&oemIdStr[3], NULL, 16);
 
                     //
                     // We only support EQUAL and NOT EQUAL operators.
@@ -1009,9 +867,7 @@ CmpMatchOemIdRule(
                     {
                         match = (oemId == biosTable->Oem);
                     }
-                    else if(    strcmp(op, "<>") == 0 ||
-                                strcmp(op, "!=") == 0 ||
-                                strcmp(op, "=!") == 0)
+                    else if (strcmp(op, "<>") == 0 || strcmp(op, "!=") == 0 || strcmp(op, "=!") == 0)
                     {
                         match = (oemId != biosTable->Oem);
                     }
@@ -1030,20 +886,16 @@ CmpMatchOemIdRule(
 }
 
 BOOLEAN
-CmpMatchPModeRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchPModeRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 {
-    BOOLEAN         match = FALSE;
-    ULONG           address;
-    CHAR            data[MAX_DESCRIPTION_LEN + 1];
-    ULONG           cbData;
-    PVOID           baseAddress;
+    BOOLEAN match = FALSE;
+    ULONG address;
+    CHAR data[MAX_DESCRIPTION_LEN + 1];
+    ULONG cbData;
+    PVOID baseAddress;
     PPNP_BIOS_TABLE biosTable;
-    ULONG           pmAddress;
-    PCHAR           pmodeEntry;
+    ULONG pmAddress;
+    PCHAR pmodeEntry;
 
     //
     // Search for the PnPBIOS structure in the BIOS ROM.
@@ -1099,15 +951,11 @@ CmpMatchPModeRule(
 }
 
 BOOLEAN
-CmpMatchRmPmSameRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchRmPmSameRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 {
     BOOLEAN match = FALSE;
-    ULONG           address;
-    PCHAR           baseAddress;
+    ULONG address;
+    PCHAR baseAddress;
     PPNP_BIOS_TABLE biosTable;
 
     //
@@ -1125,8 +973,7 @@ CmpMatchRmPmSameRule(
         biosTable = CmpMapPhysicalAddress(&baseAddress, address, sizeof(PNP_BIOS_TABLE));
         if (biosTable)
         {
-            match = (   biosTable->RMSegment == biosTable->PMSegment &&
-                        biosTable->RMOffset == biosTable->PMOffset);
+            match = (biosTable->RMSegment == biosTable->PMSegment && biosTable->RMOffset == biosTable->PMOffset);
 
             //
             // Unmap the physical address.
@@ -1140,14 +987,10 @@ CmpMatchRmPmSameRule(
 }
 
 BOOLEAN
-CmpMatchInstallRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchInstallRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 {
     BOOLEAN match = FALSE;
-    PCHAR   install;
+    PCHAR install;
 
     install = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
     if (install)
@@ -1166,11 +1009,7 @@ CmpMatchInstallRule(
 }
 
 BOOLEAN
-CmpMatchAcpiOemIdRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchAcpiOemIdRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 /*++
 
 Routine Description:
@@ -1204,90 +1043,71 @@ Return Value:
 --*/
 
 {
-    BOOLEAN             anyCase = FALSE;
-    BOOLEAN             match = FALSE;
-    PCHAR               tableName;
-    PCHAR               oemId;
-    PCHAR               optionalArgs;
-    ULONG               length;
+    BOOLEAN anyCase = FALSE;
+    BOOLEAN match = FALSE;
+    PCHAR tableName;
+    PCHAR oemId;
+    PCHAR optionalArgs;
+    ULONG length;
     PDESCRIPTION_HEADER header;
-    CHAR                tableOemId[7];
-    STRING              acpiString;
-    STRING              tableString;
+    CHAR tableOemId[7];
+    STRING acpiString;
+    STRING tableString;
 
-    tableName = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        0
-        );
-    oemId = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        1
-        );
-    if (tableName && oemId) {
+    tableName = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
+    oemId = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
+    if (tableName && oemId)
+    {
 
         //
         // See if we have to do a case insensitive match
         //
-        optionalArgs = CmpGetSectionLineIndex(
-            InfHandle,
-            Description,
-            RuleIndex,
-            2
-            );
-        if (optionalArgs) {
+        optionalArgs = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 2);
+        if (optionalArgs)
+        {
 
-            if (_stricmp(optionalArgs,"any") == 0) {
+            if (_stricmp(optionalArgs, "any") == 0)
+            {
 
                 anyCase = TRUE;
-
             }
-
         }
 
         //
         // Find the specified table in the BIOS ROM.
         //
         header = CmpFindACPITable(*(PULONG)tableName, &length);
-        if (header) {
+        if (header)
+        {
 
             //
             // Build the OEM id from the table
             //
             RtlZeroMemory(tableOemId, sizeof(tableOemId));
             RtlCopyMemory(tableOemId, header->OEMID, sizeof(header->OEMID));
-            RtlInitString( &tableString, tableOemId );
+            RtlInitString(&tableString, tableOemId);
 
             //
             // And one from the string in the file
             //
-            RtlInitString( &acpiString, oemId );
+            RtlInitString(&acpiString, oemId);
 
             //
             // Now see if they are equal
             //
-            match = RtlEqualString( &acpiString, &tableString, anyCase );
+            match = RtlEqualString(&acpiString, &tableString, anyCase);
 
             //
             // Unmap the table
             //
-            MmUnmapIoSpace(header, length );
-
+            MmUnmapIoSpace(header, length);
         }
-
     }
     return (match);
 }
 
 BOOLEAN
-CmpMatchAcpiOemTableIdRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchAcpiOemTableIdRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 /*++
 
 Routine Description:
@@ -1321,57 +1141,43 @@ Return Value:
 --*/
 
 {
-    BOOLEAN             match = FALSE;
-    PCHAR               tableName;
-    PCHAR               oemTableId;
-    ULONG               length;
+    BOOLEAN match = FALSE;
+    PCHAR tableName;
+    PCHAR oemTableId;
+    ULONG length;
     PDESCRIPTION_HEADER header;
-    ULONG               idLength;
-    CHAR                acpiOemTableId[8];
+    ULONG idLength;
+    CHAR acpiOemTableId[8];
 
-    tableName = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        0
-        );
-    oemTableId = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        1
-        );
-    if (tableName && oemTableId) {
+    tableName = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
+    oemTableId = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
+    if (tableName && oemTableId)
+    {
 
         //
         // Find the specified table in the BIOS ROM.
         //
         header = CmpFindACPITable(*(PULONG)tableName, &length);
-        if (header) {
+        if (header)
+        {
 
             RtlZeroMemory(acpiOemTableId, sizeof(acpiOemTableId));
             idLength = strlen(oemTableId);
-            if (idLength > sizeof(acpiOemTableId)) {
+            if (idLength > sizeof(acpiOemTableId))
+            {
 
                 idLength = sizeof(acpiOemTableId);
-
             }
             RtlCopyMemory(acpiOemTableId, oemTableId, idLength);
             match = RtlEqualMemory(acpiOemTableId, header->OEMTableID, sizeof(header->OEMTableID));
-            MmUnmapIoSpace( header, length );
-
+            MmUnmapIoSpace(header, length);
         }
-
     }
     return (match);
 }
 
 BOOLEAN
-CmpMatchAcpiOemRevisionRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchAcpiOemRevisionRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 /*++
 
 Routine Description:
@@ -1405,57 +1211,37 @@ Return Value:
 --*/
 
 {
-    BOOLEAN             match = FALSE;
-    PCHAR               op;
-    PCHAR               tableName;
-    PCHAR               oemRevisionStr;
-    ULONG               oemRevision;
-    ULONG               length;
+    BOOLEAN match = FALSE;
+    PCHAR op;
+    PCHAR tableName;
+    PCHAR oemRevisionStr;
+    ULONG oemRevision;
+    ULONG length;
     PDESCRIPTION_HEADER header;
 
-    op = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        0
-        );
-    tableName = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        1
-        );
-    oemRevisionStr = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        2
-        );
-    if (op && tableName && oemRevisionStr) {
+    op = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
+    tableName = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
+    oemRevisionStr = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 2);
+    if (op && tableName && oemRevisionStr)
+    {
 
         //
         // Find the specified table.
         //
         header = CmpFindACPITable(*(PULONG)tableName, &length);
-        if (header) {
+        if (header)
+        {
 
             RtlCharToInteger(oemRevisionStr, 16, &oemRevision);
             match = CmpCheckOperator(op, header->OEMRevision, oemRevision);
             MmUnmapIoSpace(header, length);
-
         }
-
     }
-    return(match);
-
+    return (match);
 }
 
 BOOLEAN
-CmpMatchAcpiRevisionRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchAcpiRevisionRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 /*++
 
 Routine Description:
@@ -1489,57 +1275,37 @@ Return Value:
 --*/
 
 {
-    BOOLEAN             match = FALSE;
-    PCHAR               op;
-    PCHAR               tableName;
-    PCHAR               revisionStr;
-    ULONG               revision;
-    ULONG               length;
+    BOOLEAN match = FALSE;
+    PCHAR op;
+    PCHAR tableName;
+    PCHAR revisionStr;
+    ULONG revision;
+    ULONG length;
     PDESCRIPTION_HEADER header;
 
-    op = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        0
-        );
-    tableName = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        1
-        );
-    revisionStr = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        2
-        );
-    if (op && tableName && revisionStr){
+    op = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
+    tableName = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
+    revisionStr = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 2);
+    if (op && tableName && revisionStr)
+    {
 
         //
         // Find the specified table.
         //
         header = CmpFindACPITable(*(PULONG)tableName, &length);
-        if (header) {
+        if (header)
+        {
 
             RtlCharToInteger(revisionStr, 16, &revision);
             match = CmpCheckOperator(op, header->Revision, revision);
             MmUnmapIoSpace(header, length);
-
         }
-
     }
-    return(match);
-
+    return (match);
 }
 
 BOOLEAN
-CmpMatchAcpiCreatorRevisionRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchAcpiCreatorRevisionRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 /*++
 
 Routine Description:
@@ -1573,56 +1339,37 @@ Return Value:
 --*/
 
 {
-    BOOLEAN             match = FALSE;
-    PCHAR               op;
-    PCHAR               tableName;
-    PCHAR               creatorRevisionStr;
-    ULONG               creatorRevision;
-    ULONG               length;
+    BOOLEAN match = FALSE;
+    PCHAR op;
+    PCHAR tableName;
+    PCHAR creatorRevisionStr;
+    ULONG creatorRevision;
+    ULONG length;
     PDESCRIPTION_HEADER header;
 
-    op = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        0
-        );
-    tableName = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        1
-        );
-    creatorRevisionStr = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        2
-        );
-    if (op && tableName && creatorRevisionStr) {
+    op = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
+    tableName = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
+    creatorRevisionStr = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 2);
+    if (op && tableName && creatorRevisionStr)
+    {
 
         //
         // Find the specified table.
         //
         header = CmpFindACPITable(*(PULONG)tableName, &length);
-        if (header){
+        if (header)
+        {
 
             RtlCharToInteger(creatorRevisionStr, 16, &creatorRevision);
             match = CmpCheckOperator(op, header->CreatorRev, creatorRevision);
-            MmUnmapIoSpace( header, length );
-
+            MmUnmapIoSpace(header, length);
         }
-
     }
-    return(match);
+    return (match);
 }
 
 BOOLEAN
-CmpMatchAcpiCreatorIdRule(
-    IN PVOID InfHandle,
-    IN PCHAR Description,
-    IN ULONG RuleIndex
-    )
+CmpMatchAcpiCreatorIdRule(IN PVOID InfHandle, IN PCHAR Description, IN ULONG RuleIndex)
 /*++
 
 Routine Description:
@@ -1652,60 +1399,44 @@ Return Value:
 --*/
 
 {
-    BOOLEAN             match = FALSE;
-    PCHAR               tableName;
-    PCHAR               creatorId;
-    ULONG               length;
+    BOOLEAN match = FALSE;
+    PCHAR tableName;
+    PCHAR creatorId;
+    ULONG length;
     PDESCRIPTION_HEADER header;
-    ULONG               idLength;
-    CHAR                acpiCreatorId[6];
+    ULONG idLength;
+    CHAR acpiCreatorId[6];
 
-    tableName = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        0
-        );
-    creatorId = CmpGetSectionLineIndex(
-        InfHandle,
-        Description,
-        RuleIndex,
-        1
-        );
-    if (tableName && creatorId) {
+    tableName = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 0);
+    creatorId = CmpGetSectionLineIndex(InfHandle, Description, RuleIndex, 1);
+    if (tableName && creatorId)
+    {
 
         //
         // Find the specified table.
         //
         header = CmpFindACPITable(*(PULONG)tableName, &length);
-        if (header) {
+        if (header)
+        {
 
             RtlZeroMemory(acpiCreatorId, sizeof(acpiCreatorId));
             idLength = strlen(creatorId);
-            if (idLength > sizeof(acpiCreatorId)) {
+            if (idLength > sizeof(acpiCreatorId))
+            {
 
                 idLength = sizeof(acpiCreatorId);
-
             }
             RtlCopyMemory(acpiCreatorId, creatorId, idLength);
             match = RtlEqualMemory(acpiCreatorId, header->CreatorID, sizeof(header->CreatorID));
-            MmUnmapIoSpace( header, length );
-
+            MmUnmapIoSpace(header, length);
         }
-
     }
-    return(match);
+    return (match);
 }
 
 BOOLEAN
-CmpGetInfData(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex,
-    IN ULONG ValueIndex,
-    IN OUT PCHAR Buffer,
-    IN OUT PULONG BufferSize
-    )
+CmpGetInfData(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex, IN ULONG ValueIndex, IN OUT PCHAR Buffer,
+              IN OUT PULONG BufferSize)
 
 /*++
 
@@ -1744,9 +1475,9 @@ CmpGetInfData(
 
 {
     BOOLEAN result = FALSE;
-    ULONG   cbData;
-    PCHAR   data;
-    ULONG   remainingBytes;
+    ULONG cbData;
+    PCHAR data;
+    ULONG remainingBytes;
 
     //
     // Validate input parameters.
@@ -1780,7 +1511,7 @@ CmpGetInfData(
 
                 for (result = TRUE; result == TRUE && remainingBytes; remainingBytes--)
                 {
-                    CHAR    value;
+                    CHAR value;
 
                     //
                     // Read in the data.
@@ -1820,7 +1551,7 @@ CmpGetInfData(
             // Process String data.
             //
 
-            else if(_stricmp(type, "S") == 0)
+            else if (_stricmp(type, "S") == 0)
             {
                 //
                 // Read in the string.
@@ -1849,11 +1580,7 @@ CmpGetInfData(
 }
 
 PVOID
-CmpMapPhysicalAddress(
-    IN OUT PVOID *BaseAddress,
-    IN ULONG_PTR Address,
-    IN ULONG Size
-    )
+CmpMapPhysicalAddress(IN OUT PVOID *BaseAddress, IN ULONG_PTR Address, IN ULONG Size)
 
 /*++
 
@@ -1875,41 +1602,28 @@ CmpMapPhysicalAddress(
 --*/
 
 {
-    UNICODE_STRING      sectionName;
-    OBJECT_ATTRIBUTES   objectAttributes;
-    HANDLE              sectionHandle;
-    NTSTATUS            status;
-    PVOID               baseAddress;
-    SIZE_T              viewSize;
-    LARGE_INTEGER       viewBase;
-    PVOID               ptr = NULL;
+    UNICODE_STRING sectionName;
+    OBJECT_ATTRIBUTES objectAttributes;
+    HANDLE sectionHandle;
+    NTSTATUS status;
+    PVOID baseAddress;
+    SIZE_T viewSize;
+    LARGE_INTEGER viewBase;
+    PVOID ptr = NULL;
 
     *BaseAddress = NULL;
 
     RtlInitUnicodeString(&sectionName, L"\\Device\\PhysicalMemory");
-    InitializeObjectAttributes( &objectAttributes,
-                                &sectionName,
-                                OBJ_CASE_INSENSITIVE,
-                                (HANDLE)NULL,
-                                (PSECURITY_DESCRIPTOR)NULL);
-    status = ZwOpenSection( &sectionHandle,
-                            SECTION_MAP_READ,
-                            &objectAttributes);
+    InitializeObjectAttributes(&objectAttributes, &sectionName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
+                               (PSECURITY_DESCRIPTOR)NULL);
+    status = ZwOpenSection(&sectionHandle, SECTION_MAP_READ, &objectAttributes);
     if (NT_SUCCESS(status))
     {
         baseAddress = NULL;
         viewSize = Size;
         viewBase.QuadPart = Address & ~(0xFFF);
-        status = ZwMapViewOfSection(    sectionHandle,
-                                        NtCurrentProcess(),
-                                        &baseAddress,
-                                        0,
-                                        viewSize,
-                                        &viewBase,
-                                        &viewSize,
-                                        ViewUnmap,
-                                        MEM_DOS_LIM,
-                                        PAGE_READWRITE);
+        status = ZwMapViewOfSection(sectionHandle, NtCurrentProcess(), &baseAddress, 0, viewSize, &viewBase, &viewSize,
+                                    ViewUnmap, MEM_DOS_LIM, PAGE_READWRITE);
         if (NT_SUCCESS(status))
         {
             ptr = (PVOID)((PCHAR)baseAddress + (Address & 0xFFF));
@@ -1920,12 +1634,8 @@ CmpMapPhysicalAddress(
     return (ptr);
 }
 
-    BOOLEAN
-CmpCheckOperator(
-    IN PCHAR Operator,
-    IN ULONG Lhs,
-    IN ULONG Rhs
-    )
+BOOLEAN
+CmpCheckOperator(IN PCHAR Operator, IN ULONG Lhs, IN ULONG Rhs)
 
 /*++
 
@@ -1968,9 +1678,7 @@ CmpCheckOperator(
     // "!=" or "=!" or "<>" for NOT EQUAL.
     //
 
-    else if(    strcmp(Operator, "!=") == 0 ||
-                strcmp(Operator, "<>") == 0 ||
-                strcmp(Operator, "=!") == 0)
+    else if (strcmp(Operator, "!=") == 0 || strcmp(Operator, "<>") == 0 || strcmp(Operator, "=!") == 0)
     {
         result = (Lhs != Rhs);
     }
@@ -1979,7 +1687,7 @@ CmpCheckOperator(
     // "<" for LESS THAN.
     //
 
-    else if(strcmp(Operator, "<") == 0)
+    else if (strcmp(Operator, "<") == 0)
     {
         result = (Lhs < Rhs);
     }
@@ -1988,7 +1696,7 @@ CmpCheckOperator(
     // "<=" or "=<" for LESS THAN or EQUAL.
     //
 
-    else if(strcmp(Operator, "<=") == 0 || strcmp(Operator, "=<") == 0)
+    else if (strcmp(Operator, "<=") == 0 || strcmp(Operator, "=<") == 0)
     {
         result = (Lhs <= Rhs);
     }
@@ -1997,7 +1705,7 @@ CmpCheckOperator(
     // ">" for GREATER THAN.
     //
 
-    else if(strcmp(Operator, ">") == 0)
+    else if (strcmp(Operator, ">") == 0)
     {
         result = (Lhs > Rhs);
     }
@@ -2006,14 +1714,14 @@ CmpCheckOperator(
     // ">=" or "=>" for GREATER THAN or EQUAL.
     //
 
-    else if(strcmp(Operator, ">=") == 0 || strcmp(Operator, "=>") == 0)
+    else if (strcmp(Operator, ">=") == 0 || strcmp(Operator, "=>") == 0)
     {
         result = (Lhs >= Rhs);
     }
     else
     {
 #ifndef _CM_LDR_
-        DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Invalid operator %s used!\n", Operator);
+        DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Invalid operator %s used!\n", Operator);
 #endif //_CM_LDR_
     }
 
@@ -2021,14 +1729,8 @@ CmpCheckOperator(
 }
 
 PVOID
-CmpFindPattern(
-    IN PCHAR Buffer,
-    IN ULONG BufSize,
-    IN PCHAR Pattern,
-    IN ULONG PatSize,
-    IN BOOLEAN IgnoreCase,
-    IN ULONG Step
-    )
+CmpFindPattern(IN PCHAR Buffer, IN ULONG BufSize, IN PCHAR Pattern, IN ULONG PatSize, IN BOOLEAN IgnoreCase,
+               IN ULONG Step)
 
 /*++
 
@@ -2055,7 +1757,7 @@ CmpFindPattern(
 --*/
 
 {
-    PCHAR   bufEnd;
+    PCHAR bufEnd;
 
     if (PatSize > BufSize)
     {
@@ -2072,9 +1774,7 @@ CmpFindPattern(
         Step = 1;
     }
 
-    for (   bufEnd = Buffer + BufSize;
-            Buffer + PatSize < bufEnd;
-            Buffer += Step)
+    for (bufEnd = Buffer + BufSize; Buffer + PatSize < bufEnd; Buffer += Step)
     {
         if (IgnoreCase)
         {
@@ -2093,12 +1793,10 @@ CmpFindPattern(
     }
 
     return (NULL);
- }
+}
 
- ULONG
- CmpGetPnPBIOSTableAddress(
-    VOID
-    )
+ULONG
+CmpGetPnPBIOSTableAddress(VOID)
 
 /*++
 
@@ -2119,12 +1817,12 @@ CmpFindPattern(
 --*/
 
 {
-    static ULONG    tableAddress = (ULONG)-1;
-    PVOID           baseAddress;
+    static ULONG tableAddress = (ULONG)-1;
+    PVOID baseAddress;
     PPNP_BIOS_TABLE address;
     PPNP_BIOS_TABLE lastAddress;
-    ULONG           i;
-    ULONG           checksum;
+    ULONG i;
+    ULONG checksum;
 
     if (tableAddress == (ULONG)-1)
     {
@@ -2135,23 +1833,20 @@ CmpFindPattern(
         address = (PPNP_BIOS_TABLE)CmpMapPhysicalAddress(&baseAddress, 0xF0000, SYSTEM_BIOS_LENGTH);
         if (address)
         {
-            for (   lastAddress = (PPNP_BIOS_TABLE)((PCHAR)address + SYSTEM_BIOS_LENGTH - 0x10);
-                    address < lastAddress;
-                    (PCHAR)address += 0x10)
+            for (lastAddress = (PPNP_BIOS_TABLE)((PCHAR)address + SYSTEM_BIOS_LENGTH - 0x10); address < lastAddress;
+                 (PCHAR)address += 0x10)
             {
                 if (address->Signature == PNPBIOS_SIGNATURE)
                 {
-                    for (   i = 0, checksum = 0;
-                            i < address->Length;
-                            i++)
+                    for (i = 0, checksum = 0; i < address->Length; i++)
                     {
                         checksum += ((PUCHAR)address)[i];
                     }
 
-                    if (    (checksum & 0xFF) == 0 &&
-                            address->Length >= 0x21)
+                    if ((checksum & 0xFF) == 0 && address->Length >= 0x21)
                     {
-                        tableAddress = 0xF0000 + (SYSTEM_BIOS_LENGTH - 10) - (ULONG)((PCHAR)lastAddress - (PCHAR)address);
+                        tableAddress =
+                            0xF0000 + (SYSTEM_BIOS_LENGTH - 10) - (ULONG)((PCHAR)lastAddress - (PCHAR)address);
                         break;
                     }
                 }
@@ -2169,33 +1864,31 @@ CmpFindPattern(
 }
 
 PDESCRIPTION_HEADER
-CmpFindACPITable(
-    IN ULONG        Signature,
-    IN OUT PULONG   Length
-    )
+CmpFindACPITable(IN ULONG Signature, IN OUT PULONG Length)
 {
-    PDESCRIPTION_HEADER     header      = NULL;
-    PDESCRIPTION_HEADER     tempHeader  = NULL;
+    PDESCRIPTION_HEADER header = NULL;
+    PDESCRIPTION_HEADER tempHeader = NULL;
     static PHYSICAL_ADDRESS rsdtAddress = { -1, -1 };
-    ULONG                   length      = 0;
+    ULONG length = 0;
 
     //
     // Use the cached location of RSDT address if available.
     //
-    if (rsdtAddress.QuadPart == -1) {
+    if (rsdtAddress.QuadPart == -1)
+    {
 
-        NTSTATUS                status;
-        PACPI_BIOS_MULTI_NODE   rsdpMulti;
+        NTSTATUS status;
+        PACPI_BIOS_MULTI_NODE rsdpMulti;
 
         rsdtAddress.QuadPart = 0;
         //
         // Get the multinode
         //
-        status = CmpFindRSDTTable( &rsdpMulti );
-        if (!NT_SUCCESS(status)) {
+        status = CmpFindRSDTTable(&rsdpMulti);
+        if (!NT_SUCCESS(status))
+        {
 
             return NULL;
-
         }
 
         //
@@ -2207,48 +1900,48 @@ CmpFindACPITable(
         //
         // Done with the multinode
         //
-        ExFreePool( rsdpMulti );
-
+        ExFreePool(rsdpMulti);
     }
 
     //
     // If we have an address
     //
-    if (rsdtAddress.QuadPart) {
+    if (rsdtAddress.QuadPart)
+    {
 
         //
         // Map in the the rsdt table
         //
-        tempHeader = MmMapIoSpace(
-            rsdtAddress,
-            sizeof(DESCRIPTION_HEADER),
-            MmCached
-            );
-        if (tempHeader == NULL) {
+        tempHeader = MmMapIoSpace(rsdtAddress, sizeof(DESCRIPTION_HEADER), MmCached);
+        if (tempHeader == NULL)
+        {
 
 #ifndef _CM_LDR_
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpFindACPITable: Cannot map RSDT at %I64x\n", rsdtAddress.QuadPart);
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpFindACPITable: Cannot map RSDT at %I64x\n",
+                       rsdtAddress.QuadPart);
 #endif //_CM_LDR_
             return NULL;
-
         }
 
         //
         // If what we are looking for is the RSDT, then we are done
         //
-        if (Signature == RSDT_SIGNATURE) {
+        if (Signature == RSDT_SIGNATURE)
+        {
 
             header = tempHeader;
             length = sizeof(DESCRIPTION_HEADER);
+        }
+        else if (Signature == DSDT_SIGNATURE)
+        {
 
-        } else if (Signature == DSDT_SIGNATURE) {
+            PFADT fadt;
+            PHYSICAL_ADDRESS dsdtAddress;
+            ULONG tempLength;
 
-            PFADT               fadt;
-            PHYSICAL_ADDRESS    dsdtAddress;
-            ULONG               tempLength;
-
-            fadt = (PFADT) CmpFindACPITable( FADT_SIGNATURE, &length );
-            if (fadt) {
+            fadt = (PFADT)CmpFindACPITable(FADT_SIGNATURE, &length);
+            if (fadt)
+            {
 
                 dsdtAddress.HighPart = 0;
                 dsdtAddress.LowPart = fadt->dsdt;
@@ -2256,76 +1949,70 @@ CmpFindACPITable(
                 //
                 // Done with the FADT
                 //
-                MmUnmapIoSpace( fadt, length );
+                MmUnmapIoSpace(fadt, length);
 
                 //
                 // Map in the dsdt table
                 //
-                header = MmMapIoSpace(
-                    dsdtAddress,
-                    sizeof(DESCRIPTION_HEADER),
-                    MmCached
-                    );
-                if (header == NULL) {
+                header = MmMapIoSpace(dsdtAddress, sizeof(DESCRIPTION_HEADER), MmCached);
+                if (header == NULL)
+                {
 
 #ifndef _CM_LDR_
-                    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,
-                        "CmpFindACPITable: Cannot map DSDT at %I64x\n",
-                        dsdtAddress.QuadPart
-                        );
+                    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpFindACPITable: Cannot map DSDT at %I64x\n",
+                               dsdtAddress.QuadPart);
 #endif //_CM_LDR_
-                    MmUnmapIoSpace( tempHeader, sizeof(DESCRIPTION_HEADER) );
+                    MmUnmapIoSpace(tempHeader, sizeof(DESCRIPTION_HEADER));
                     return NULL;
-
                 }
                 length = sizeof(DESCRIPTION_HEADER);
-
-            } else {
+            }
+            else
+            {
 
 #ifndef _CM_LDR_
-                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpFindACPITable: Cannot find FADT\n");
+                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpFindACPITable: Cannot find FADT\n");
 #endif //_CM_LDR_
-                MmUnmapIoSpace( tempHeader, sizeof(DESCRIPTION_HEADER) );
+                MmUnmapIoSpace(tempHeader, sizeof(DESCRIPTION_HEADER));
                 return NULL;
-
             }
+        }
+        else
+        {
 
-        } else {
-
-            PHYSICAL_ADDRESS    tableAddress;
-            PRSDT               rsdt;
-            ULONG               i;
-            ULONG               num;
-            ULONG               rsdtLength;
+            PHYSICAL_ADDRESS tableAddress;
+            PRSDT rsdt;
+            ULONG i;
+            ULONG num;
+            ULONG rsdtLength;
 
             //
             // Map in the entire RSDT
             //
             rsdtLength = tempHeader->Length;
-            rsdt = (PRSDT) MmMapIoSpace( rsdtAddress, rsdtLength, MmCached );
-            if (rsdt == NULL) {
+            rsdt = (PRSDT)MmMapIoSpace(rsdtAddress, rsdtLength, MmCached);
+            if (rsdt == NULL)
+            {
 
 #ifndef _CM_LDR_
-                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,
-                    "CmpFindACPITable: Cannot map RSDT at %I64x\n",
-                    rsdtAddress.QuadPart
-                    );
+                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpFindACPITable: Cannot map RSDT at %I64x\n",
+                           rsdtAddress.QuadPart);
 #endif //_CM_LDR_
-                MmUnmapIoSpace( tempHeader, sizeof(DESCRIPTION_HEADER) );
+                MmUnmapIoSpace(tempHeader, sizeof(DESCRIPTION_HEADER));
                 return NULL;
-
             }
 
             //
             // Done with the temp header
             //
-            MmUnmapIoSpace( tempHeader, sizeof(DESCRIPTION_HEADER) );
+            MmUnmapIoSpace(tempHeader, sizeof(DESCRIPTION_HEADER));
 
             //
             // Look at all the table entries for the header that we care about
             //
-            num = TABLE_ENTRIES_FROM_RSDT_POINTER( rsdt );
-            for (i = 0; i < num ; i ++) {
+            num = TABLE_ENTRIES_FROM_RSDT_POINTER(rsdt);
+            for (i = 0; i < num; i++)
+            {
 
                 //
                 // Get the address of the table
@@ -2336,74 +2023,67 @@ CmpFindACPITable(
                 //
                 // Map in the header
                 //
-                tempHeader = MmMapIoSpace(
-                    tableAddress,
-                    sizeof(DESCRIPTION_HEADER),
-                    MmCached
-                    );
-                if (!tempHeader) {
+                tempHeader = MmMapIoSpace(tableAddress, sizeof(DESCRIPTION_HEADER), MmCached);
+                if (!tempHeader)
+                {
 
 #ifndef _CM_LDR_
-                    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,
-                        "CmpFindACPITable: Cannot map header at %I64x\n",
-                        tableAddress.QuadPart
-                        );
+                    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpFindACPITable: Cannot map header at %I64x\n",
+                               tableAddress.QuadPart);
 #endif //_CM_LDR_
-                    MmUnmapIoSpace( rsdt, rsdtLength );
+                    MmUnmapIoSpace(rsdt, rsdtLength);
                     return NULL;
-
                 }
 
                 //
                 // Signature check
                 //
-                if (tempHeader->Signature != Signature) {
+                if (tempHeader->Signature != Signature)
+                {
 
-                    MmUnmapIoSpace( tempHeader, sizeof(DESCRIPTION_HEADER) );
+                    MmUnmapIoSpace(tempHeader, sizeof(DESCRIPTION_HEADER));
                     continue;
-
                 }
 
                 //
                 // Are we looking at the FADT?
                 //
-                if (Signature == FADT_SIGNATURE) {
+                if (Signature == FADT_SIGNATURE)
+                {
 
                     //
                     // Map the entire table for this one
                     //
                     length = tempHeader->Length;
-                    header = MmMapIoSpace( tableAddress, length, MmCached );
+                    header = MmMapIoSpace(tableAddress, length, MmCached);
 
                     //
                     // Unmap the old table
                     //
-                    MmUnmapIoSpace( tempHeader, sizeof(DESCRIPTION_HEADER) );
+                    MmUnmapIoSpace(tempHeader, sizeof(DESCRIPTION_HEADER));
 
                     //
                     // Did we successfully map the header?
                     //
-                    if (header == NULL ) {
+                    if (header == NULL)
+                    {
 
 #ifndef _CM_LDR_
-                        DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,
-                            "CmpFindACPITable: Cannot map FADT at %I64x\n",
-                            tableAddress.QuadPart
-                            );
+                        DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpFindACPITable: Cannot map FADT at %I64x\n",
+                                   tableAddress.QuadPart);
 #endif //_CM_LDR_
-                        MmUnmapIoSpace( rsdt, rsdtLength );
+                        MmUnmapIoSpace(rsdt, rsdtLength);
                         return NULL;
-
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Remember where the table and length are stored
                     //
                     length = sizeof(DESCRIPTION_HEADER);
                     header = tempHeader;
-
                 }
 
             } // for
@@ -2411,36 +2091,33 @@ CmpFindACPITable(
             //
             // Done with the rsdt
             //
-            MmUnmapIoSpace( rsdt, rsdtLength );
-
+            MmUnmapIoSpace(rsdt, rsdtLength);
         }
 
         //
         // If we found the table, return its length.
         //
-        if (Length) {
+        if (Length)
+        {
 
-            if (header) {
+            if (header)
+            {
 
                 *Length = length;
-
-            } else {
+            }
+            else
+            {
 
                 *Length = 0;
-
             }
-
         }
-
     }
 
     return (header);
 }
 
 NTSTATUS
-CmpFindRSDTTable(
-    OUT PACPI_BIOS_MULTI_NODE   *Rsdt
-    )
+CmpFindRSDTTable(OUT PACPI_BIOS_MULTI_NODE *Rsdt)
 /*++
 
 Routine Description:
@@ -2462,45 +2139,42 @@ Return Value:
 
 --*/
 {
-    BOOLEAN                         same;
-    HANDLE                          hMFunc;
-    HANDLE                          hBus;
-    NTSTATUS                        status;
-    OBJECT_ATTRIBUTES               objectAttributes;
-    PACPI_BIOS_MULTI_NODE           multiNode;
+    BOOLEAN same;
+    HANDLE hMFunc;
+    HANDLE hBus;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES objectAttributes;
+    PACPI_BIOS_MULTI_NODE multiNode;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR prd;
-    PCM_PARTIAL_RESOURCE_LIST       prl;
-    PKEY_VALUE_PARTIAL_INFORMATION  valueInfo;
-    PWSTR                           p;
-    ULONG                           i;
-    ULONG                           length;
-    ULONG                           multiNodeSize;
-    UNICODE_STRING                  unicodeString;
-    UNICODE_STRING                  unicodeValueName;
-    UNICODE_STRING                  biosId;
-    WCHAR                           wbuffer[10];
+    PCM_PARTIAL_RESOURCE_LIST prl;
+    PKEY_VALUE_PARTIAL_INFORMATION valueInfo;
+    PWSTR p;
+    ULONG i;
+    ULONG length;
+    ULONG multiNodeSize;
+    UNICODE_STRING unicodeString;
+    UNICODE_STRING unicodeValueName;
+    UNICODE_STRING biosId;
+    WCHAR wbuffer[10];
 
     PAGED_CODE();
 
     //
     // Look in the registry for the "ACPI BIOS bus" data
     //
-    RtlInitUnicodeString( &unicodeString, rgzMultiFunctionAdapter );
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &unicodeString,
-        OBJ_CASE_INSENSITIVE,
-        NULL,       // handle
-        NULL
-        );
-    status = ZwOpenKey( &hMFunc, KEY_READ, &objectAttributes );
-    if (!NT_SUCCESS(status)) {
+    RtlInitUnicodeString(&unicodeString, rgzMultiFunctionAdapter);
+    InitializeObjectAttributes(&objectAttributes, &unicodeString, OBJ_CASE_INSENSITIVE,
+                               NULL, // handle
+                               NULL);
+    status = ZwOpenKey(&hMFunc, KEY_READ, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
 
 #ifndef _CM_LDR_
-        DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_WARNING_LEVEL,"CmpFindRSDTTable: Cannot open MultifunctionAdapter registry key.\n");
+        DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_WARNING_LEVEL,
+                   "CmpFindRSDTTable: Cannot open MultifunctionAdapter registry key.\n");
 #endif //_CM_LDR_
         return status;
-
     }
 
     //
@@ -2509,54 +2183,50 @@ Return Value:
     //
     unicodeString.Buffer = wbuffer;
     unicodeString.MaximumLength = sizeof(wbuffer);
-    RtlInitUnicodeString( &biosId, rgzBIOSIdentifier );
+    RtlInitUnicodeString(&biosId, rgzBIOSIdentifier);
 
     //
     // Loop over all subkeys
     //
-    for (i = 0; TRUE; i++) {
+    for (i = 0; TRUE; i++)
+    {
 
         //
         // Turn the number into a key name
         //
-        RtlIntegerToUnicodeString( i, 10, &unicodeString);
-        InitializeObjectAttributes(
-            &objectAttributes,
-            &unicodeString,
-            OBJ_CASE_INSENSITIVE,
-            hMFunc,
-            NULL
-            );
+        RtlIntegerToUnicodeString(i, 10, &unicodeString);
+        InitializeObjectAttributes(&objectAttributes, &unicodeString, OBJ_CASE_INSENSITIVE, hMFunc, NULL);
 
         //
         // Open the named subkey
         //
-        status = ZwOpenKey( &hBus, KEY_READ, &objectAttributes );
-        if (!NT_SUCCESS(status)) {
+        status = ZwOpenKey(&hBus, KEY_READ, &objectAttributes);
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // Out of Multifunction adapter entries...
             //
 #ifndef _CM_LDR_
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_WARNING_LEVEL,"CmpFindRSDTTable: ACPI BIOS MultifunctionAdapter registry key not found.\n");
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_WARNING_LEVEL,
+                       "CmpFindRSDTTable: ACPI BIOS MultifunctionAdapter registry key not found.\n");
 #endif //_CM_LDR_
-            ZwClose (hMFunc);
+            ZwClose(hMFunc);
             return STATUS_UNSUCCESSFUL;
-
         }
 
         //
         // Check the Indentifier to see if this is an ACPI BIOS entry
         //
-        status = CmpGetRegistryValue( hBus, (PWCHAR)rgzAcpiIdentifier, &valueInfo );
-        if (!NT_SUCCESS (status)) {
+        status = CmpGetRegistryValue(hBus, (PWCHAR)rgzAcpiIdentifier, &valueInfo);
+        if (!NT_SUCCESS(status))
+        {
 
-            ZwClose( hBus );
+            ZwClose(hBus);
             continue;
-
         }
 
-        p = (PWSTR) ((PUCHAR) valueInfo->Data);
+        p = (PWSTR)((PUCHAR)valueInfo->Data);
         unicodeValueName.Buffer = p;
         unicodeValueName.MaximumLength = (USHORT)valueInfo->DataLength;
         length = valueInfo->DataLength;
@@ -2564,45 +2234,43 @@ Return Value:
         //
         // Determine the real length of the ID string
         //
-        while (length) {
+        while (length)
+        {
 
-            if (p[length / sizeof(WCHAR) - 1] == UNICODE_NULL) {
+            if (p[length / sizeof(WCHAR) - 1] == UNICODE_NULL)
+            {
 
                 length -= 2;
-
-            } else {
+            }
+            else
+            {
 
                 break;
             }
-
         }
 
         //
         // Do we have a match the "ACPI BIOS" identifier?
         //
         unicodeValueName.Length = (USHORT)length;
-        same = RtlEqualUnicodeString( &biosId, &unicodeValueName, TRUE );
-        ExFreePool( valueInfo );
-        if (!same) {
+        same = RtlEqualUnicodeString(&biosId, &unicodeValueName, TRUE);
+        ExFreePool(valueInfo);
+        if (!same)
+        {
 
-            ZwClose( hBus );
+            ZwClose(hBus);
             continue;
-
         }
 
         //
         // We do, so get the configuration data
         //
-        status = CmpGetRegistryValue(
-            hBus,
-            (PWCHAR)rgzAcpiConfigurationData,
-            &valueInfo
-            );
-        ZwClose( hBus );
-        if (!NT_SUCCESS(status)) {
+        status = CmpGetRegistryValue(hBus, (PWCHAR)rgzAcpiConfigurationData, &valueInfo);
+        ZwClose(hBus);
+        if (!NT_SUCCESS(status))
+        {
 
-            continue ;
-
+            continue;
         }
 
         //
@@ -2611,27 +2279,20 @@ Return Value:
         //
         prl = (PCM_PARTIAL_RESOURCE_LIST)(valueInfo->Data);
         prd = &prl->PartialDescriptors[0];
-        multiNode = (PACPI_BIOS_MULTI_NODE)
-            ( (PCHAR) prd + sizeof(CM_PARTIAL_RESOURCE_LIST) );
+        multiNode = (PACPI_BIOS_MULTI_NODE)((PCHAR)prd + sizeof(CM_PARTIAL_RESOURCE_LIST));
         break;
-
     }
 
     //
     // Calculate the size of the data so that we can make a copy
     //
-    multiNodeSize = sizeof(ACPI_BIOS_MULTI_NODE) +
-        ( (ULONG)(multiNode->Count - 1) * sizeof(ACPI_E820_ENTRY) );
-    *Rsdt = (PACPI_BIOS_MULTI_NODE) ExAllocatePoolWithTag(
-        NonPagedPool,
-        multiNodeSize,
-        'IPCA'
-        );
-    if (*Rsdt == NULL) {
+    multiNodeSize = sizeof(ACPI_BIOS_MULTI_NODE) + ((ULONG)(multiNode->Count - 1) * sizeof(ACPI_E820_ENTRY));
+    *Rsdt = (PACPI_BIOS_MULTI_NODE)ExAllocatePoolWithTag(NonPagedPool, multiNodeSize, 'IPCA');
+    if (*Rsdt == NULL)
+    {
 
-        ExFreePool( valueInfo );
+        ExFreePool(valueInfo);
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
     RtlCopyMemory(*Rsdt, multiNode, multiNodeSize);
 
@@ -2647,11 +2308,7 @@ Return Value:
 }
 
 NTSTATUS
-CmpGetRegistryValue(
-    IN  HANDLE                          KeyHandle,
-    IN  PWSTR                           ValueName,
-    OUT PKEY_VALUE_PARTIAL_INFORMATION  *Information
-    )
+CmpGetRegistryValue(IN HANDLE KeyHandle, IN PWSTR ValueName, OUT PKEY_VALUE_PARTIAL_INFORMATION *Information)
 /*++
 
 Routine Description:
@@ -2678,65 +2335,47 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                        status;
-    PKEY_VALUE_PARTIAL_INFORMATION  infoBuffer;
-    ULONG                           keyValueLength;
-    UNICODE_STRING                  unicodeString;
+    NTSTATUS status;
+    PKEY_VALUE_PARTIAL_INFORMATION infoBuffer;
+    ULONG keyValueLength;
+    UNICODE_STRING unicodeString;
 
     PAGED_CODE();
 
-    RtlInitUnicodeString( &unicodeString, ValueName );
+    RtlInitUnicodeString(&unicodeString, ValueName);
 
     //
     // Figure out how big the data value is so that a buffer of the
     // appropriate size can be allocated.
     //
-    status = ZwQueryValueKey(
-        KeyHandle,
-        &unicodeString,
-        KeyValuePartialInformation,
-        (PVOID) NULL,
-        0,
-        &keyValueLength
-        );
-    if (status != STATUS_BUFFER_OVERFLOW &&
-        status != STATUS_BUFFER_TOO_SMALL) {
+    status = ZwQueryValueKey(KeyHandle, &unicodeString, KeyValuePartialInformation, (PVOID)NULL, 0, &keyValueLength);
+    if (status != STATUS_BUFFER_OVERFLOW && status != STATUS_BUFFER_TOO_SMALL)
+    {
 
         return status;
-
     }
 
     //
     // Allocate a buffer large enough to contain the entire key data value.
     //
-    infoBuffer = ExAllocatePoolWithTag(
-        NonPagedPool,
-        keyValueLength,
-        'IPCA'
-        );
-    if (!infoBuffer) {
+    infoBuffer = ExAllocatePoolWithTag(NonPagedPool, keyValueLength, 'IPCA');
+    if (!infoBuffer)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
 
     //
     // Query the data for the key value.
     //
-    status = ZwQueryValueKey(
-        KeyHandle,
-        &unicodeString,
-        KeyValuePartialInformation,
-        infoBuffer,
-        keyValueLength,
-        &keyValueLength
-        );
-    if (!NT_SUCCESS( status )) {
+    status = ZwQueryValueKey(KeyHandle, &unicodeString, KeyValuePartialInformation, infoBuffer, keyValueLength,
+                             &keyValueLength);
+    if (!NT_SUCCESS(status))
+    {
 
-        ExFreePool( infoBuffer );
+        ExFreePool(infoBuffer);
 
         return status;
-
     }
 
     //
@@ -2745,5 +2384,4 @@ Return Value:
     //
     *Information = infoBuffer;
     return STATUS_SUCCESS;
-
 }

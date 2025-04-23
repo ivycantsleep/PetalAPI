@@ -7,11 +7,7 @@
 
 #include <stddef.h>
 
-BOOL
-FindDeviceDriver(
-    LPVOID ImageBase,
-    PRTL_PROCESS_MODULE_INFORMATION Module
-    )
+BOOL FindDeviceDriver(LPVOID ImageBase, PRTL_PROCESS_MODULE_INFORMATION Module)
 
 /*++
 
@@ -44,65 +40,56 @@ Arguments:
     PRTL_PROCESS_MODULES pModuleInformation;
     DWORD i, ReturnedLength;
 
-    Status = NtQuerySystemInformation(
-                SystemModuleInformation,
-                &ModuleInformation,
-                sizeof(ModuleInformation),
-                &ReturnedLength
-                );
+    Status = NtQuerySystemInformation(SystemModuleInformation, &ModuleInformation, sizeof(ModuleInformation),
+                                      &ReturnedLength);
 
-    if ( !NT_SUCCESS(Status) && (Status != STATUS_INFO_LENGTH_MISMATCH) ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
-        }
+    if (!NT_SUCCESS(Status) && (Status != STATUS_INFO_LENGTH_MISMATCH))
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
 
     cbModuleInformation = offsetof(RTL_PROCESS_MODULES, Modules);
     cbModuleInformation += ModuleInformation.NumberOfModules * sizeof(RTL_PROCESS_MODULE_INFORMATION);
 
-    pModuleInformation = (PRTL_PROCESS_MODULES) LocalAlloc(LMEM_FIXED, cbModuleInformation);
+    pModuleInformation = (PRTL_PROCESS_MODULES)LocalAlloc(LMEM_FIXED, cbModuleInformation);
 
-    if (pModuleInformation == NULL) {
-        return(FALSE);
-        }
+    if (pModuleInformation == NULL)
+    {
+        return (FALSE);
+    }
 
-    Status = NtQuerySystemInformation(
-                SystemModuleInformation,
-                pModuleInformation,
-                cbModuleInformation,
-                &ReturnedLength
-                );
+    Status =
+        NtQuerySystemInformation(SystemModuleInformation, pModuleInformation, cbModuleInformation, &ReturnedLength);
 
-    if ( !NT_SUCCESS(Status) ) {
-        LocalFree((HLOCAL) pModuleInformation);
+    if (!NT_SUCCESS(Status))
+    {
+        LocalFree((HLOCAL)pModuleInformation);
 
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
-        }
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
 
-    for (i = 0; i < ModuleInformation.NumberOfModules; i++) {
-        if (pModuleInformation->Modules[i].ImageBase == ImageBase) {
+    for (i = 0; i < ModuleInformation.NumberOfModules; i++)
+    {
+        if (pModuleInformation->Modules[i].ImageBase == ImageBase)
+        {
             *Module = pModuleInformation->Modules[i];
 
-            LocalFree((HLOCAL) pModuleInformation);
+            LocalFree((HLOCAL)pModuleInformation);
 
-            return(TRUE);
-            }
+            return (TRUE);
         }
+    }
 
-    LocalFree((HLOCAL) pModuleInformation);
+    LocalFree((HLOCAL)pModuleInformation);
 
     SetLastError(ERROR_INVALID_HANDLE);
-    return(FALSE);
+    return (FALSE);
 }
 
 
-BOOL
-WINAPI
-EnumDeviceDrivers(
-    LPVOID *lpImageBase,
-    DWORD cb,
-    LPDWORD lpcbNeeded
-    )
+BOOL WINAPI EnumDeviceDrivers(LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)
 {
     RTL_PROCESS_MODULES ModuleInformation;
     NTSTATUS Status;
@@ -111,82 +98,79 @@ EnumDeviceDrivers(
     DWORD cpvMax;
     DWORD i, ReturnedLength;
 
-    Status = NtQuerySystemInformation(
-                SystemModuleInformation,
-                &ModuleInformation,
-                sizeof(ModuleInformation),
-                &ReturnedLength
-                );
+    Status = NtQuerySystemInformation(SystemModuleInformation, &ModuleInformation, sizeof(ModuleInformation),
+                                      &ReturnedLength);
 
-    if ( !NT_SUCCESS(Status) && (Status != STATUS_INFO_LENGTH_MISMATCH) ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
-        }
+    if (!NT_SUCCESS(Status) && (Status != STATUS_INFO_LENGTH_MISMATCH))
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
 
     cbModuleInformation = offsetof(RTL_PROCESS_MODULES, Modules);
     cbModuleInformation += ModuleInformation.NumberOfModules * sizeof(RTL_PROCESS_MODULE_INFORMATION);
 
-    pModuleInformation = (PRTL_PROCESS_MODULES) LocalAlloc(LMEM_FIXED, cbModuleInformation);
+    pModuleInformation = (PRTL_PROCESS_MODULES)LocalAlloc(LMEM_FIXED, cbModuleInformation);
 
-    if (pModuleInformation == NULL) {
-        return(FALSE);
-        }
+    if (pModuleInformation == NULL)
+    {
+        return (FALSE);
+    }
 
-    Status = NtQuerySystemInformation(
-                SystemModuleInformation,
-                pModuleInformation,
-                cbModuleInformation,
-                &ReturnedLength
-                );
+    Status =
+        NtQuerySystemInformation(SystemModuleInformation, pModuleInformation, cbModuleInformation, &ReturnedLength);
 
-    if ( !NT_SUCCESS(Status) ) {
-        LocalFree((HLOCAL) pModuleInformation);
+    if (!NT_SUCCESS(Status))
+    {
+        LocalFree((HLOCAL)pModuleInformation);
 
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
-        }
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
 
     cpvMax = cb / sizeof(LPVOID);
 
-    for (i = 0; i < ModuleInformation.NumberOfModules; i++) {
-        if (i == cpvMax) {
+    for (i = 0; i < ModuleInformation.NumberOfModules; i++)
+    {
+        if (i == cpvMax)
+        {
             break;
-            }
-
-        try {
-               lpImageBase[i] = pModuleInformation->Modules[i].ImageBase;
-            }
-        except (EXCEPTION_EXECUTE_HANDLER) {
-            LocalFree((HLOCAL) pModuleInformation);
-
-            SetLastError( RtlNtStatusToDosError( GetExceptionCode() ) );
-            return(FALSE);
-            }
         }
 
-    try {
+        try
+        {
+            lpImageBase[i] = pModuleInformation->Modules[i].ImageBase;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            LocalFree((HLOCAL)pModuleInformation);
+
+            SetLastError(RtlNtStatusToDosError(GetExceptionCode()));
+            return (FALSE);
+        }
+    }
+
+    try
+    {
         *lpcbNeeded = ModuleInformation.NumberOfModules * sizeof(LPVOID);
-        }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        LocalFree((HLOCAL) pModuleInformation);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        LocalFree((HLOCAL)pModuleInformation);
 
-        SetLastError( RtlNtStatusToDosError( GetExceptionCode() ) );
-        return(FALSE);
-        }
+        SetLastError(RtlNtStatusToDosError(GetExceptionCode()));
+        return (FALSE);
+    }
 
-    LocalFree((HLOCAL) pModuleInformation);
+    LocalFree((HLOCAL)pModuleInformation);
 
-    return(TRUE);
+    return (TRUE);
 }
 
 
 DWORD
 WINAPI
-GetDeviceDriverFileNameW(
-    LPVOID ImageBase,
-    LPWSTR lpFilename,
-    DWORD nSize
-    )
+GetDeviceDriverFileNameW(LPVOID ImageBase, LPWSTR lpFilename, DWORD nSize)
 
 /*++
 
@@ -223,76 +207,74 @@ Arguments:
     DWORD cch;
     DWORD cchT;
 
-    lpstr = (LPSTR) LocalAlloc(LMEM_FIXED, nSize);
+    lpstr = (LPSTR)LocalAlloc(LMEM_FIXED, nSize);
 
-    if (lpstr == NULL) {
-        return(0);
-        }
+    if (lpstr == NULL)
+    {
+        return (0);
+    }
 
     cchT = cch = GetDeviceDriverFileNameA(ImageBase, lpstr, nSize);
 
-    if (!cch) {
-        LocalFree((HLOCAL) lpstr);
+    if (!cch)
+    {
+        LocalFree((HLOCAL)lpstr);
         return 0;
     }
 
-    if (cchT < nSize) {
+    if (cchT < nSize)
+    {
         //
         // Include NULL terminator
         //
 
         cchT++;
-        }
+    }
 
-    if (!MultiByteToWideChar(CP_ACP, 0, lpstr, cchT, lpFilename, nSize)) {
+    if (!MultiByteToWideChar(CP_ACP, 0, lpstr, cchT, lpFilename, nSize))
+    {
         cch = 0;
-        }
+    }
 
-    LocalFree((HLOCAL) lpstr);
+    LocalFree((HLOCAL)lpstr);
 
-    return(cch);
+    return (cch);
 }
-
 
 
 DWORD
 WINAPI
-GetDeviceDriverFileNameA(
-    LPVOID ImageBase,
-    LPSTR lpFilename,
-    DWORD nSize
-    )
+GetDeviceDriverFileNameA(LPVOID ImageBase, LPSTR lpFilename, DWORD nSize)
 {
     RTL_PROCESS_MODULE_INFORMATION Module;
     DWORD cchT;
     DWORD cch;
 
-    if (!FindDeviceDriver(ImageBase, &Module)) {
-        return(0);
-        }
+    if (!FindDeviceDriver(ImageBase, &Module))
+    {
+        return (0);
+    }
 
-    cch = cchT = (DWORD) (strlen(Module.FullPathName) + 1);
-    if ( nSize < cch ) {
+    cch = cchT = (DWORD)(strlen(Module.FullPathName) + 1);
+    if (nSize < cch)
+    {
         cch = nSize;
-        }
+    }
 
     CopyMemory(lpFilename, Module.FullPathName, cch);
 
-    if (cch == cchT) {
+    if (cch == cchT)
+    {
         cch--;
-        }
+    }
 
-    return(cch);
+    return (cch);
 }
 
 
 DWORD
 WINAPI
-GetDeviceDriverBaseNameW(
-    LPVOID ImageBase,
-    LPWSTR lpFilename,
-    DWORD nSize
-    )
+GetDeviceDriverBaseNameW(LPVOID ImageBase, LPWSTR lpFilename, DWORD nSize)
 
 /*++
 
@@ -329,64 +311,66 @@ Arguments:
     DWORD cch;
     DWORD cchT;
 
-    lpstr = (LPSTR) LocalAlloc(LMEM_FIXED, nSize);
+    lpstr = (LPSTR)LocalAlloc(LMEM_FIXED, nSize);
 
-    if (lpstr == NULL) {
-        return(0);
-        }
+    if (lpstr == NULL)
+    {
+        return (0);
+    }
 
     cchT = cch = GetDeviceDriverBaseNameA(ImageBase, lpstr, nSize);
 
-    if (!cch) {
-        LocalFree((HLOCAL) lpstr);
+    if (!cch)
+    {
+        LocalFree((HLOCAL)lpstr);
         return 0;
     }
 
-    if (cchT < nSize) {
+    if (cchT < nSize)
+    {
         //
         // Include NULL terminator
         //
 
         cchT++;
-        }
+    }
 
-    if (!MultiByteToWideChar(CP_ACP, 0, lpstr, cchT, lpFilename, nSize)) {
+    if (!MultiByteToWideChar(CP_ACP, 0, lpstr, cchT, lpFilename, nSize))
+    {
         cch = 0;
-        }
+    }
 
-    LocalFree((HLOCAL) lpstr);
+    LocalFree((HLOCAL)lpstr);
 
-    return(cch);
+    return (cch);
 }
-
 
 
 DWORD
 WINAPI
-GetDeviceDriverBaseNameA(
-    LPVOID ImageBase,
-    LPSTR lpFilename,
-    DWORD nSize
-    )
+GetDeviceDriverBaseNameA(LPVOID ImageBase, LPSTR lpFilename, DWORD nSize)
 {
     RTL_PROCESS_MODULE_INFORMATION Module;
     DWORD cchT;
     DWORD cch;
 
-    if (!FindDeviceDriver(ImageBase, &Module)) {
-        return(0);
-        }
+    if (!FindDeviceDriver(ImageBase, &Module))
+    {
+        return (0);
+    }
 
-    cch = cchT = (DWORD) (strlen(Module.FullPathName + Module.OffsetToFileName) + 1);
-    if ( nSize < cch ) {
+    cch = cchT = (DWORD)(strlen(Module.FullPathName + Module.OffsetToFileName) + 1);
+    if (nSize < cch)
+    {
         cch = nSize;
-        }
+    }
 
     CopyMemory(lpFilename, Module.FullPathName + Module.OffsetToFileName, cch);
 
-    if (cch == cchT) {
+    if (cch == cchT)
+    {
         cch--;
-        }
+    }
 
-    return(cch);
+    return (cch);
 }

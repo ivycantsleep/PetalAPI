@@ -28,16 +28,12 @@ Revision History:
 #define me 0x0000040
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CcSetLogHandleForFile)
+#pragma alloc_text(PAGE, CcSetLogHandleForFile)
 #endif
 
-
-VOID
-CcSetAdditionalCacheAttributes (
-    IN PFILE_OBJECT FileObject,
-    IN BOOLEAN DisableReadAhead,
-    IN BOOLEAN DisableWriteBehind
-    )
+
+VOID CcSetAdditionalCacheAttributes(IN PFILE_OBJECT FileObject, IN BOOLEAN DisableReadAhead,
+                                    IN BOOLEAN DisableWriteBehind)
 
 /*++
 
@@ -77,26 +73,30 @@ Return Value:
     //  Now set the flags and return.
     //
 
-    CcAcquireMasterLock( &OldIrql );
-    if (DisableReadAhead) {
+    CcAcquireMasterLock(&OldIrql);
+    if (DisableReadAhead)
+    {
         SetFlag(SharedCacheMap->Flags, DISABLE_READ_AHEAD);
-    } else {
+    }
+    else
+    {
         ClearFlag(SharedCacheMap->Flags, DISABLE_READ_AHEAD);
     }
-    if (DisableWriteBehind) {
+    if (DisableWriteBehind)
+    {
         SetFlag(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND | MODIFIED_WRITE_DISABLED);
-    } else {
+    }
+    else
+    {
         ClearFlag(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND);
     }
-    CcReleaseMasterLock( OldIrql );
+    CcReleaseMasterLock(OldIrql);
 }
 
-
+
 NTKERNELAPI
 BOOLEAN
-CcSetPrivateWriteFile(
-    PFILE_OBJECT FileObject
-    )
+CcSetPrivateWriteFile(PFILE_OBJECT FileObject)
 
 /*++
 
@@ -135,19 +135,21 @@ Return Value:
     //  other purge/map activity.
     //
 
-    FsRtlAcquireFileExclusive( FileObject );
+    FsRtlAcquireFileExclusive(FileObject);
 
     //
     //  Get pointer to SharedCacheMap.
     //
-    
-    if( FileObject->SectionObjectPointer == NULL ) {
+
+    if (FileObject->SectionObjectPointer == NULL)
+    {
         return FALSE;
     }
 
     SharedCacheMap = FileObject->SectionObjectPointer->SharedCacheMap;
 
-    if( !SharedCacheMap ) {
+    if (!SharedCacheMap)
+    {
         return FALSE;
     }
 
@@ -170,26 +172,27 @@ Return Value:
     //  If there is an active Vacb, then nuke it now (before waiting!).
     //
 
-    CcAcquireMasterLock( &OldIrql );
-    GetActiveVacbAtDpcLevel( SharedCacheMap, Vacb, ActivePage, PageIsDirty );
-    CcReleaseMasterLock( OldIrql );
-    
-    if (Vacb != NULL) {
+    CcAcquireMasterLock(&OldIrql);
+    GetActiveVacbAtDpcLevel(SharedCacheMap, Vacb, ActivePage, PageIsDirty);
+    CcReleaseMasterLock(OldIrql);
 
-        CcFreeActiveVacb( SharedCacheMap, Vacb, ActivePage, PageIsDirty );
+    if (Vacb != NULL)
+    {
+
+        CcFreeActiveVacb(SharedCacheMap, Vacb, ActivePage, PageIsDirty);
     }
 
-    while ((SharedCacheMap->Vacbs != NULL) &&
-           !CcUnmapVacbArray( SharedCacheMap, NULL, 0, FALSE )) {
+    while ((SharedCacheMap->Vacbs != NULL) && !CcUnmapVacbArray(SharedCacheMap, NULL, 0, FALSE))
+    {
 
-        CcWaitOnActiveCount( SharedCacheMap );
+        CcWaitOnActiveCount(SharedCacheMap);
     }
 
     //
     //  Knock the file down.
-    // 
+    //
 
-    CcFlushCache( FileObject->SectionObjectPointer, NULL, 0, NULL );
+    CcFlushCache(FileObject->SectionObjectPointer, NULL, 0, NULL);
 
     //
     //  Now the file is clean and unmapped. We can still have a racing
@@ -205,18 +208,20 @@ Return Value:
     //  This wait takes on the order of ~.5s avg. case.
     //
 
-    CcAcquireMasterLock( &OldIrql );
-    
-    if (FlagOn( SharedCacheMap->Flags, WRITE_QUEUED )) {
-        
-        CcReleaseMasterLock( OldIrql );
-        FsRtlReleaseFile( FileObject );
+    CcAcquireMasterLock(&OldIrql);
+
+    if (FlagOn(SharedCacheMap->Flags, WRITE_QUEUED))
+    {
+
+        CcReleaseMasterLock(OldIrql);
+        FsRtlReleaseFile(FileObject);
         CcWaitForCurrentLazyWriterActivity();
-        FsRtlAcquireFileExclusive( FileObject );
+        FsRtlAcquireFileExclusive(FileObject);
+    }
+    else
+    {
 
-    } else {
-
-        CcReleaseMasterLock( OldIrql );
+        CcReleaseMasterLock(OldIrql);
     }
 
     //
@@ -224,30 +229,26 @@ Return Value:
     //  since we don't want to fully promote this cache map.  Future?
     //
 
-    Disabled = MmDisableModifiedWriteOfSection( FileObject->SectionObjectPointer );
+    Disabled = MmDisableModifiedWriteOfSection(FileObject->SectionObjectPointer);
 
-    if (Disabled) {
-        CcAcquireMasterLock( &OldIrql );
+    if (Disabled)
+    {
+        CcAcquireMasterLock(&OldIrql);
         SetFlag(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND | PRIVATE_WRITE);
-        CcReleaseMasterLock( OldIrql );
+        CcReleaseMasterLock(OldIrql);
     }
 
     //
     //  Now release the file for regular operation.
     //
 
-    FsRtlReleaseFile( FileObject );
+    FsRtlReleaseFile(FileObject);
 
     return Disabled;
 }
 
-
-VOID
-CcSetLogHandleForFile (
-    IN PFILE_OBJECT FileObject,
-    IN PVOID LogHandle,
-    IN PFLUSH_TO_LSN FlushToLsnRoutine
-    )
+
+VOID CcSetLogHandleForFile(IN PFILE_OBJECT FileObject, IN PVOID LogHandle, IN PFLUSH_TO_LSN FlushToLsnRoutine)
 
 /*++
 
@@ -291,14 +292,9 @@ Return Value:
     SharedCacheMap->FlushToLsnRoutine = FlushToLsnRoutine;
 }
 
-
+
 LARGE_INTEGER
-CcGetDirtyPages (
-    IN PVOID LogHandle,
-    IN PDIRTY_PAGE_ROUTINE DirtyPageRoutine,
-    IN PVOID Context1,
-    IN PVOID Context2
-    )
+CcGetDirtyPages(IN PVOID LogHandle, IN PDIRTY_PAGE_ROUTINE DirtyPageRoutine, IN PVOID Context1, IN PVOID Context2)
 
 /*++
 
@@ -333,17 +329,16 @@ Return Value:
     KLOCK_QUEUE_HANDLE LockHandle;
     LARGE_INTEGER SavedFileOffset, SavedOldestLsn, SavedNewestLsn;
     ULONG SavedByteLength;
-    LARGE_INTEGER OldestLsn = {0,0};
+    LARGE_INTEGER OldestLsn = { 0, 0 };
 
     //
     //  Synchronize with changes to the SharedCacheMap list.
     //
 
-    CcAcquireMasterLock( &LockHandle.OldIrql );
+    CcAcquireMasterLock(&LockHandle.OldIrql);
 
-    SharedCacheMap = CONTAINING_RECORD( CcDirtySharedCacheMapList.SharedCacheMapLinks.Flink,
-                                        SHARED_CACHE_MAP,
-                                        SharedCacheMapLinks );
+    SharedCacheMap =
+        CONTAINING_RECORD(CcDirtySharedCacheMapList.SharedCacheMapLinks.Flink, SHARED_CACHE_MAP, SharedCacheMapLinks);
 
     //
     //  Use try/finally for cleanup.  The only spot where we can raise is out of the
@@ -351,9 +346,11 @@ Return Value:
     //  constantly setting/unsetting it.
     //
 
-    try {
+    try
+    {
 
-        while (&SharedCacheMap->SharedCacheMapLinks != &CcDirtySharedCacheMapList.SharedCacheMapLinks) {
+        while (&SharedCacheMap->SharedCacheMapLinks != &CcDirtySharedCacheMapList.SharedCacheMapLinks)
+        {
 
             //
             //  Skip over cursors, SharedCacheMaps for other LogHandles, and ones with
@@ -361,35 +358,38 @@ Return Value:
             //
 
             if (!FlagOn(SharedCacheMap->Flags, IS_CURSOR) && (SharedCacheMap->LogHandle == LogHandle) &&
-                (SharedCacheMap->DirtyPages != 0)) {
+                (SharedCacheMap->DirtyPages != 0))
+            {
 
                 //
                 //  This SharedCacheMap should stick around for a while in the dirty list.
                 //
 
-                CcIncrementOpenCount( SharedCacheMap, 'pdGS' );
+                CcIncrementOpenCount(SharedCacheMap, 'pdGS');
                 SharedCacheMap->DirtyPages += 1;
-                CcReleaseMasterLock( LockHandle.OldIrql );
+                CcReleaseMasterLock(LockHandle.OldIrql);
 
                 //
                 //  Set our initial resume point and point to first Bcb in List.
                 //
 
-                KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
-                Bcb = CONTAINING_RECORD( SharedCacheMap->BcbList.Flink, BCB, BcbLinks );
+                KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
+                Bcb = CONTAINING_RECORD(SharedCacheMap->BcbList.Flink, BCB, BcbLinks);
 
                 //
                 //  Scan to the end of the Bcb list.
                 //
 
-                while (&Bcb->BcbLinks != &SharedCacheMap->BcbList) {
+                while (&Bcb->BcbLinks != &SharedCacheMap->BcbList)
+                {
 
                     //
                     //  If the Bcb is dirty, then capture the inputs for the
                     //  callback routine so we can call without holding a spinlock.
                     //
 
-                    if ((Bcb->NodeTypeCode == CACHE_NTC_BCB) && Bcb->Dirty) {
+                    if ((Bcb->NodeTypeCode == CACHE_NTC_BCB) && Bcb->Dirty)
+                    {
 
                         SavedFileOffset = Bcb->FileOffset;
                         SavedByteLength = Bcb->ByteLength;
@@ -402,14 +402,15 @@ Return Value:
 
                         Bcb->PinCount += 1;
 
-                        KeReleaseInStackQueuedSpinLock( &LockHandle );
+                        KeReleaseInStackQueuedSpinLock(&LockHandle);
 
                         //
                         //  Any Bcb to unref from a previous loop?
                         //
 
-                        if (BcbToUnpin != NULL) {
-                            CcUnpinFileData( BcbToUnpin, TRUE, UNREF );
+                        if (BcbToUnpin != NULL)
+                        {
+                            CcUnpinFileData(BcbToUnpin, TRUE, UNREF);
                             BcbToUnpin = NULL;
                         }
 
@@ -417,20 +418,16 @@ Return Value:
                         //  Call the file system.  This callback may raise status.
                         //
 
-                        (*DirtyPageRoutine)( SharedCacheMap->FileObject,
-                                             &SavedFileOffset,
-                                             SavedByteLength,
-                                             &SavedOldestLsn,
-                                             &SavedNewestLsn,
-                                             Context1,
-                                             Context2 );
+                        (*DirtyPageRoutine)(SharedCacheMap->FileObject, &SavedFileOffset, SavedByteLength,
+                                            &SavedOldestLsn, &SavedNewestLsn, Context1, Context2);
 
                         //
                         //  Possibly update OldestLsn
                         //
 
                         if ((SavedOldestLsn.QuadPart != 0) &&
-                            ((OldestLsn.QuadPart == 0) || (SavedOldestLsn.QuadPart < OldestLsn.QuadPart ))) {
+                            ((OldestLsn.QuadPart == 0) || (SavedOldestLsn.QuadPart < OldestLsn.QuadPart)))
+                        {
                             OldestLsn = SavedOldestLsn;
                         }
 
@@ -439,7 +436,7 @@ Return Value:
                         //  point to the next Bcb to return in the descending list.
                         //
 
-                        KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                        KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
                         //
                         //  Normally the Bcb can stay around a while, but if not,
@@ -449,21 +446,24 @@ Return Value:
                         //
                         //  This is cheating, but it works and is sane since we're
                         //  already traversing the bcb list - dropping the bcb count
-                        //  is OK, as long as we don't hit zero.  Zero requires a 
+                        //  is OK, as long as we don't hit zero.  Zero requires a
                         //  slight bit more attention that shouldn't be replicated.
                         //  (unmapping the view)
                         //
 
-                        if (Bcb->PinCount > 1) {
+                        if (Bcb->PinCount > 1)
+                        {
                             Bcb->PinCount -= 1;
-                        } else {
+                        }
+                        else
+                        {
                             BcbToUnpin = Bcb;
                         }
                     }
 
-                    Bcb = CONTAINING_RECORD( Bcb->BcbLinks.Flink, BCB, BcbLinks );
+                    Bcb = CONTAINING_RECORD(Bcb->BcbLinks.Flink, BCB, BcbLinks);
                 }
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
 
                 //
                 //  We need to unref any Bcb we are holding before moving on to
@@ -471,19 +471,20 @@ Return Value:
                 //  also delete this Bcb.
                 //
 
-                if (BcbToUnpin != NULL) {
+                if (BcbToUnpin != NULL)
+                {
 
-                    CcUnpinFileData( BcbToUnpin, TRUE, UNREF );
+                    CcUnpinFileData(BcbToUnpin, TRUE, UNREF);
                     BcbToUnpin = NULL;
                 }
 
-                CcAcquireMasterLock( &LockHandle.OldIrql );
+                CcAcquireMasterLock(&LockHandle.OldIrql);
 
                 //
                 //  Now release the SharedCacheMap, leaving it in the dirty list.
                 //
 
-                CcDecrementOpenCount( SharedCacheMap, 'pdGF' );
+                CcDecrementOpenCount(SharedCacheMap, 'pdGF');
                 SharedCacheMap->DirtyPages -= 1;
             }
 
@@ -492,14 +493,13 @@ Return Value:
             //
 
             SharedCacheMap =
-                CONTAINING_RECORD( SharedCacheMap->SharedCacheMapLinks.Flink,
-                                   SHARED_CACHE_MAP,
-                                   SharedCacheMapLinks );
+                CONTAINING_RECORD(SharedCacheMap->SharedCacheMapLinks.Flink, SHARED_CACHE_MAP, SharedCacheMapLinks);
         }
 
-        CcReleaseMasterLock( LockHandle.OldIrql );
-
-    } finally {
+        CcReleaseMasterLock(LockHandle.OldIrql);
+    }
+    finally
+    {
 
         //
         //  Drop the Bcb if we are being ejected.  We are guaranteed that the
@@ -507,20 +507,19 @@ Return Value:
         //  pincount.
         //
 
-        if (AbnormalTermination()) {
+        if (AbnormalTermination())
+        {
 
-            CcUnpinFileData( Bcb, TRUE, UNPIN );
+            CcUnpinFileData(Bcb, TRUE, UNPIN);
         }
     }
 
     return OldestLsn;
 }
 
-
+
 BOOLEAN
-CcIsThereDirtyData (
-    IN PVPB Vpb
-    )
+CcIsThereDirtyData(IN PVPB Vpb)
 
 /*++
 
@@ -549,13 +548,13 @@ Return Value:
     //  Synchronize with changes to the SharedCacheMap list.
     //
 
-    CcAcquireMasterLock( &OldIrql );
+    CcAcquireMasterLock(&OldIrql);
 
-    SharedCacheMap = CONTAINING_RECORD( CcDirtySharedCacheMapList.SharedCacheMapLinks.Flink,
-                                        SHARED_CACHE_MAP,
-                                        SharedCacheMapLinks );
+    SharedCacheMap =
+        CONTAINING_RECORD(CcDirtySharedCacheMapList.SharedCacheMapLinks.Flink, SHARED_CACHE_MAP, SharedCacheMapLinks);
 
-    while (&SharedCacheMap->SharedCacheMapLinks != &CcDirtySharedCacheMapList.SharedCacheMapLinks) {
+    while (&SharedCacheMap->SharedCacheMapLinks != &CcDirtySharedCacheMapList.SharedCacheMapLinks)
+    {
 
         //
         //  Look at this one if the Vpb matches and if there is dirty data.
@@ -563,12 +562,11 @@ Return Value:
         //  as that should not concern the caller if it wants to dismount.
         //
 
-        if (!FlagOn(SharedCacheMap->Flags, IS_CURSOR) &&
-            (SharedCacheMap->FileObject->Vpb == Vpb) &&
-            (SharedCacheMap->DirtyPages != 0) &&
-            !FlagOn(SharedCacheMap->FileObject->Flags, FO_TEMPORARY_FILE)) {
+        if (!FlagOn(SharedCacheMap->Flags, IS_CURSOR) && (SharedCacheMap->FileObject->Vpb == Vpb) &&
+            (SharedCacheMap->DirtyPages != 0) && !FlagOn(SharedCacheMap->FileObject->Flags, FO_TEMPORARY_FILE))
+        {
 
-            CcReleaseMasterLock( OldIrql );
+            CcReleaseMasterLock(OldIrql);
             return TRUE;
         }
 
@@ -578,15 +576,15 @@ Return Value:
         //  keep it in this list.
         //
 
-        if ((++LoopsWithLockHeld >= 20) &&
-            !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED | IS_CURSOR)) {
+        if ((++LoopsWithLockHeld >= 20) && !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED | IS_CURSOR))
+        {
 
-            SetFlag( *((ULONG volatile *)&SharedCacheMap->Flags), WRITE_QUEUED);
+            SetFlag(*((ULONG volatile *)&SharedCacheMap->Flags), WRITE_QUEUED);
             *((ULONG volatile *)&SharedCacheMap->DirtyPages) += 1;
-            CcReleaseMasterLock( OldIrql );
+            CcReleaseMasterLock(OldIrql);
             LoopsWithLockHeld = 0;
-            CcAcquireMasterLock( &OldIrql );
-            ClearFlag( *((ULONG volatile *)&SharedCacheMap->Flags), WRITE_QUEUED);
+            CcAcquireMasterLock(&OldIrql);
+            ClearFlag(*((ULONG volatile *)&SharedCacheMap->Flags), WRITE_QUEUED);
             *((ULONG volatile *)&SharedCacheMap->DirtyPages) -= 1;
         }
 
@@ -595,21 +593,16 @@ Return Value:
         //
 
         SharedCacheMap =
-            CONTAINING_RECORD( SharedCacheMap->SharedCacheMapLinks.Flink,
-                               SHARED_CACHE_MAP,
-                               SharedCacheMapLinks );
+            CONTAINING_RECORD(SharedCacheMap->SharedCacheMapLinks.Flink, SHARED_CACHE_MAP, SharedCacheMapLinks);
     }
 
-    CcReleaseMasterLock( OldIrql );
+    CcReleaseMasterLock(OldIrql);
 
     return FALSE;
 }
 
 LARGE_INTEGER
-CcGetLsnForFileObject(
-    IN PFILE_OBJECT FileObject,
-    OUT PLARGE_INTEGER OldestLsn OPTIONAL
-    )
+CcGetLsnForFileObject(IN PFILE_OBJECT FileObject, OUT PLARGE_INTEGER OldestLsn OPTIONAL)
 
 /*++
 
@@ -644,7 +637,8 @@ Return Value:
     Newest.LowPart = 0;
     Newest.HighPart = 0;
 
-    if(SharedCacheMap == NULL) {
+    if (SharedCacheMap == NULL)
+    {
         return Oldest;
     }
 
@@ -654,37 +648,39 @@ Return Value:
     //  Now point to first Bcb in List, and loop through it.
     //
 
-    Bcb = CONTAINING_RECORD( SharedCacheMap->BcbList.Flink, BCB, BcbLinks );
+    Bcb = CONTAINING_RECORD(SharedCacheMap->BcbList.Flink, BCB, BcbLinks);
 
-    while (&Bcb->BcbLinks != &SharedCacheMap->BcbList) {
+    while (&Bcb->BcbLinks != &SharedCacheMap->BcbList)
+    {
 
         //
         //  If the Bcb is dirty then capture the oldest and newest lsn
         //
 
 
-        if ((Bcb->NodeTypeCode == CACHE_NTC_BCB) && Bcb->Dirty) {
+        if ((Bcb->NodeTypeCode == CACHE_NTC_BCB) && Bcb->Dirty)
+        {
 
             LARGE_INTEGER BcbLsn, BcbNewest;
 
             BcbLsn = Bcb->OldestLsn;
             BcbNewest = Bcb->NewestLsn;
 
-            if ((BcbLsn.QuadPart != 0) &&
-                ((Oldest.QuadPart == 0) ||
-                 (BcbLsn.QuadPart < Oldest.QuadPart))) {
+            if ((BcbLsn.QuadPart != 0) && ((Oldest.QuadPart == 0) || (BcbLsn.QuadPart < Oldest.QuadPart)))
+            {
 
-                 Oldest = BcbLsn;
+                Oldest = BcbLsn;
             }
 
-            if ((BcbLsn.QuadPart != 0) && (BcbNewest.QuadPart > Newest.QuadPart)) {
+            if ((BcbLsn.QuadPart != 0) && (BcbNewest.QuadPart > Newest.QuadPart))
+            {
 
                 Newest = BcbNewest;
             }
         }
 
 
-        Bcb = CONTAINING_RECORD( Bcb->BcbLinks.Flink, BCB, BcbLinks );
+        Bcb = CONTAINING_RECORD(Bcb->BcbLinks.Flink, BCB, BcbLinks);
     }
 
     //
@@ -692,9 +688,10 @@ Return Value:
     //  if we got something.
     //
 
-    KeReleaseInStackQueuedSpinLock( &LockHandle );
+    KeReleaseInStackQueuedSpinLock(&LockHandle);
 
-    if (ARGUMENT_PRESENT(OldestLsn)) {
+    if (ARGUMENT_PRESENT(OldestLsn))
+    {
 
         *OldestLsn = Oldest;
     }

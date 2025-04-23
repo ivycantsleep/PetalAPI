@@ -26,39 +26,19 @@ Revision History:
 //
 // Exception handling procedure prototypes.
 //
-VOID
-RtlpCaptureContext (
-    OUT PCONTEXT ContextRecord
-    );
+VOID RtlpCaptureContext(OUT PCONTEXT ContextRecord);
 
-VOID
-RtlpUnlinkHandler (
-    PEXCEPTION_REGISTRATION_RECORD UnlinkPointer
-    );
+VOID RtlpUnlinkHandler(PEXCEPTION_REGISTRATION_RECORD UnlinkPointer);
 
 PEXCEPTION_REGISTRATION_RECORD
-RtlpGetRegistrationHead (
-    VOID
-    );
+RtlpGetRegistrationHead(VOID);
 
 //
 //  Record dump procedures.
 //
 
-VOID
-RtlpContextDump(
-    IN PVOID Object,
-    IN ULONG Control OPTIONAL
-    );
+VOID RtlpContextDump(IN PVOID Object, IN ULONG Control OPTIONAL);
 
-VOID
-RtlpExceptionReportDump(
-    IN PVOID Object,
-    IN ULONG Control OPTIONAL
-    );
+VOID RtlpExceptionReportDump(IN PVOID Object, IN ULONG Control OPTIONAL);
 
-VOID
-RtlpExceptionRegistrationDump(
-    IN PVOID Object,
-    IN ULONG Control OPTIONAL
-    );
+VOID RtlpExceptionRegistrationDump(IN PVOID Object, IN ULONG Control OPTIONAL);

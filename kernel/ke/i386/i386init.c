@@ -19,47 +19,41 @@ Revision History:
 
 --*/
 
-#include    "ki.h"
+#include "ki.h"
 
-VOID
-KiInitializeMachineType (
-    VOID
-    );
+VOID KiInitializeMachineType(VOID);
 
-#pragma alloc_text(INIT,KiInitializeMachineType)
+#pragma alloc_text(INIT, KiInitializeMachineType)
 
-KIRQL   KiProfileIrql = PROFILE_LEVEL;
-ULONG   KeI386MachineType = 0;
+KIRQL KiProfileIrql = PROFILE_LEVEL;
+ULONG KeI386MachineType = 0;
 BOOLEAN KeI386NpxPresent;
 BOOLEAN KeI386FxsrPresent;
-ULONG   KeI386ForceNpxEmulation;
-ULONG   KiMXCsrMask;
-ULONG   KeI386CpuType;
-ULONG   KeI386CpuStep;
-PVOID   Ki387RoundModeTable;    // R3 emulators RoundingMode vector table
-ULONG   KiBootFeatureBits;
+ULONG KeI386ForceNpxEmulation;
+ULONG KiMXCsrMask;
+ULONG KeI386CpuType;
+ULONG KeI386CpuStep;
+PVOID Ki387RoundModeTable; // R3 emulators RoundingMode vector table
+ULONG KiBootFeatureBits;
 
 ULONG KiInBiosCall = FALSE;
-ULONG FlagState = 0;                    // bios calls shouldn't automatically turn interrupts back on.
+ULONG FlagState = 0; // bios calls shouldn't automatically turn interrupts back on.
 
 KTRAP_FRAME KiBiosFrame;
 
 #if DBG
-UCHAR   MsgDpcTrashedEsp[] = "\n*** DPC routine %lx trashed ESP\n";
-UCHAR   MsgDpcTimeout[]    = "\n*** DPC routine > 1 sec --- This is not a break in KeUpdateSystemTime\n";
-UCHAR   MsgISRTimeout[]    = "\n*** ISR at %lx took over .5 second\n";
+UCHAR MsgDpcTrashedEsp[] = "\n*** DPC routine %lx trashed ESP\n";
+UCHAR MsgDpcTimeout[] = "\n*** DPC routine > 1 sec --- This is not a break in KeUpdateSystemTime\n";
+UCHAR MsgISRTimeout[] = "\n*** ISR at %lx took over .5 second\n";
 
-ULONG   KiDPCTimeout       = 110;
-ULONG   KiISRTimeout       = 55;
-ULONG   KiSpinlockTimeout  = 55;
+ULONG KiDPCTimeout = 110;
+ULONG KiISRTimeout = 55;
+ULONG KiSpinlockTimeout = 55;
 #endif
-UCHAR   MsgISROverflow[]    = "\n*** ISR at %lx appears to have an interrupt storm\n";
-USHORT  KiISROverflow      = 30000;
+UCHAR MsgISROverflow[] = "\n*** ISR at %lx appears to have an interrupt storm\n";
+USHORT KiISROverflow = 30000;
 
-VOID
-KiInitializeMachineType (
-    VOID
-    )
+VOID KiInitializeMachineType(VOID)
 
 /*++
 

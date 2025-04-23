@@ -27,52 +27,26 @@ Revision History:
 #include "iomgr.h"
 
 NTSTATUS
-BuildQueryDirectoryIrp(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID FileInformation,
-    IN ULONG Length,
-    IN FILE_INFORMATION_CLASS FileInformationClass,
-    IN BOOLEAN ReturnSingleEntry,
-    IN PUNICODE_STRING FileName OPTIONAL,
-    IN BOOLEAN RestartScan,
-    IN UCHAR MinorFunction,
-    OUT BOOLEAN *SynchronousIo,
-    OUT PDEVICE_OBJECT *DeviceObject,
-    OUT PIRP *Irp,
-    OUT PFILE_OBJECT *FileObject,
-    OUT KPROCESSOR_MODE *RequestorMode
-    );
+BuildQueryDirectoryIrp(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                       IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID FileInformation,
+                       IN ULONG Length, IN FILE_INFORMATION_CLASS FileInformationClass, IN BOOLEAN ReturnSingleEntry,
+                       IN PUNICODE_STRING FileName OPTIONAL, IN BOOLEAN RestartScan, IN UCHAR MinorFunction,
+                       OUT BOOLEAN *SynchronousIo, OUT PDEVICE_OBJECT *DeviceObject, OUT PIRP *Irp,
+                       OUT PFILE_OBJECT *FileObject, OUT KPROCESSOR_MODE *RequestorMode);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, BuildQueryDirectoryIrp)
 #pragma alloc_text(PAGE, NtQueryDirectoryFile)
 #pragma alloc_text(PAGE, NtNotifyChangeDirectoryFile)
 #endif
-
+
 NTSTATUS
-BuildQueryDirectoryIrp(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID FileInformation,
-    IN ULONG Length,
-    IN FILE_INFORMATION_CLASS FileInformationClass,
-    IN BOOLEAN ReturnSingleEntry,
-    IN PUNICODE_STRING FileName OPTIONAL,
-    IN BOOLEAN RestartScan,
-    IN UCHAR MinorFunction,
-    OUT BOOLEAN *SynchronousIo,
-    OUT PDEVICE_OBJECT *DeviceObject,
-    OUT PIRP *Irp,
-    OUT PFILE_OBJECT *FileObject,
-    OUT KPROCESSOR_MODE *RequestorMode
-    )
+BuildQueryDirectoryIrp(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                       IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID FileInformation,
+                       IN ULONG Length, IN FILE_INFORMATION_CLASS FileInformationClass, IN BOOLEAN ReturnSingleEntry,
+                       IN PUNICODE_STRING FileName OPTIONAL, IN BOOLEAN RestartScan, IN UCHAR MinorFunction,
+                       OUT BOOLEAN *SynchronousIo, OUT PDEVICE_OBJECT *DeviceObject, OUT PIRP *Irp,
+                       OUT PFILE_OBJECT *FileObject, OUT KPROCESSOR_MODE *RequestorMode)
 
 /*++
 
@@ -162,9 +136,9 @@ Return Value:
     NTSTATUS status;
     PFILE_OBJECT fileObject;
     PDEVICE_OBJECT deviceObject;
-    PKEVENT eventObject = (PKEVENT) NULL;
+    PKEVENT eventObject = (PKEVENT)NULL;
     KPROCESSOR_MODE requestorMode;
-    PCHAR auxiliaryBuffer = (PCHAR) NULL;
+    PCHAR auxiliaryBuffer = (PCHAR)NULL;
     PIO_STACK_LOCATION irpSp;
     PMDL mdl;
     PETHREAD CurrentThread;
@@ -175,15 +149,17 @@ Return Value:
     // Get the previous mode;  i.e., the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
     *RequestorMode = requestorMode;
 
-    try {
+    try
+    {
 
-        if (requestorMode != KernelMode) {
+        if (requestorMode != KernelMode)
+        {
 
-            ULONG operationlength = 0;  // assume invalid
+            ULONG operationlength = 0; // assume invalid
 
             //
             // The caller's access mode is not kernel so probe and validate
@@ -197,16 +173,19 @@ Return Value:
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatusEx( IoStatusBlock, ApcRoutine);
+            ProbeForWriteIoStatusEx(IoStatusBlock, ApcRoutine);
 
             //
             // Ensure that the FileInformationClass parameter is legal for
             // querying information about files in the directory or object.
             //
 
-            if (FileInformationClass == FileDirectoryInformation) {
+            if (FileInformationClass == FileDirectoryInformation)
+            {
                 operationlength = sizeof(FILE_DIRECTORY_INFORMATION);
-            } else if (MinorFunction == IRP_MN_QUERY_DIRECTORY) {
+            }
+            else if (MinorFunction == IRP_MN_QUERY_DIRECTORY)
+            {
                 switch (FileInformationClass)
                 {
                 case FileFullDirectoryInformation:
@@ -239,7 +218,7 @@ Return Value:
 
                 case FileReparsePointInformation:
                     operationlength = sizeof(FILE_REPARSE_POINT_INFORMATION);
-                    break;                    
+                    break;
                 }
             }
 
@@ -247,7 +226,8 @@ Return Value:
             // If the FileInformationClass parameter is illegal, fail now.
             //
 
-            if (operationlength == 0) {
+            if (operationlength == 0)
+            {
                 return STATUS_INVALID_INFO_CLASS;
             }
 
@@ -257,7 +237,8 @@ Return Value:
             // query.
             //
 
-            if (Length < operationlength) {
+            if (Length < operationlength)
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
 
@@ -267,25 +248,24 @@ Return Value:
             //
 
 #if defined(_X86_)
-            ProbeForWrite( FileInformation, Length, sizeof( ULONG ) );
+            ProbeForWrite(FileInformation, Length, sizeof(ULONG));
 #elif defined(_WIN64)
 
             //
             // If we are a wow64 process, follow the X86 rules
             //
 
-            if (PsGetCurrentProcessByThread(CurrentThread)->Wow64Process) {
-                ProbeForWrite( FileInformation, Length, sizeof( ULONG ) );
-            } else {
-                ProbeForWrite( FileInformation,
-                               Length,
-                               IopQuerySetAlignmentRequirement[FileInformationClass] );
+            if (PsGetCurrentProcessByThread(CurrentThread)->Wow64Process)
+            {
+                ProbeForWrite(FileInformation, Length, sizeof(ULONG));
             }
-            
+            else
+            {
+                ProbeForWrite(FileInformation, Length, IopQuerySetAlignmentRequirement[FileInformationClass]);
+            }
+
 #else
-            ProbeForWrite( FileInformation,
-                           Length,
-                           IopQuerySetAlignmentRequirement[FileInformationClass] );
+            ProbeForWrite(FileInformation, Length, IopQuerySetAlignmentRequirement[FileInformationClass]);
 #endif
         }
 
@@ -297,7 +277,8 @@ Return Value:
         // returning an access violation status.
         //
 
-        if (ARGUMENT_PRESENT( FileName )) {
+        if (ARGUMENT_PRESENT(FileName))
+        {
 
             UNICODE_STRING fileName;
             PUNICODE_STRING nameBuffer;
@@ -308,13 +289,17 @@ Return Value:
             // able to change the memory while its being checked.
             //
 
-            if (requestorMode != KernelMode) {
-                fileName = ProbeAndReadUnicodeString( FileName );
-            } else {
+            if (requestorMode != KernelMode)
+            {
+                fileName = ProbeAndReadUnicodeString(FileName);
+            }
+            else
+            {
                 fileName = *FileName;
             }
 
-            if (fileName.Length) {
+            if (fileName.Length)
+            {
 
                 //
                 // The length of the string is non-zero, so probe the
@@ -324,16 +309,16 @@ Return Value:
                 // to ensure that it is not too long.
                 //
 
-                if (requestorMode != KernelMode) {
-                    ProbeForRead( fileName.Buffer,
-                                  fileName.Length,
-                                  sizeof( UCHAR ) );
+                if (requestorMode != KernelMode)
+                {
+                    ProbeForRead(fileName.Buffer, fileName.Length, sizeof(UCHAR));
                     //
                     // account for unicode
                     //
 
-                    if (fileName.Length > MAXIMUM_FILENAME_LENGTH<<1) {
-                        ExRaiseStatus( STATUS_INVALID_PARAMETER );
+                    if (fileName.Length > MAXIMUM_FILENAME_LENGTH << 1)
+                    {
+                        ExRaiseStatus(STATUS_INVALID_PARAMETER);
                     }
                 }
 
@@ -344,25 +329,23 @@ Return Value:
                 // buffer.
                 //
 
-                auxiliaryBuffer = ExAllocatePoolWithQuota( NonPagedPool,
-                                                           fileName.Length + sizeof( UNICODE_STRING ) );
-                RtlCopyMemory( auxiliaryBuffer + sizeof( UNICODE_STRING ),
-                               fileName.Buffer,
-                               fileName.Length );
+                auxiliaryBuffer = ExAllocatePoolWithQuota(NonPagedPool, fileName.Length + sizeof(UNICODE_STRING));
+                RtlCopyMemory(auxiliaryBuffer + sizeof(UNICODE_STRING), fileName.Buffer, fileName.Length);
 
                 //
                 // Finally, build the Unicode string descriptor in the
                 // auxiliary buffer.
                 //
 
-                nameBuffer = (PUNICODE_STRING) auxiliaryBuffer;
+                nameBuffer = (PUNICODE_STRING)auxiliaryBuffer;
                 nameBuffer->Length = fileName.Length;
                 nameBuffer->MaximumLength = fileName.Length;
-                nameBuffer->Buffer = (PWSTR) (auxiliaryBuffer + sizeof( UNICODE_STRING ) );
+                nameBuffer->Buffer = (PWSTR)(auxiliaryBuffer + sizeof(UNICODE_STRING));
             }
         }
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // An exception was incurred while probing the caller's buffers,
@@ -371,8 +354,9 @@ Return Value:
         // up, and return an appropriate error status code.
         //
 
-        if (auxiliaryBuffer) {
-            ExFreePool( auxiliaryBuffer );
+        if (auxiliaryBuffer)
+        {
+            ExFreePool(auxiliaryBuffer);
         }
 
 
@@ -386,15 +370,13 @@ Return Value:
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        FILE_LIST_DIRECTORY,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        (POBJECT_HANDLE_INFORMATION) NULL );
-    if (!NT_SUCCESS( status )) {
-        if (auxiliaryBuffer) {
-            ExFreePool( auxiliaryBuffer );
+    status = ObReferenceObjectByHandle(FileHandle, FILE_LIST_DIRECTORY, IoFileObjectType, requestorMode,
+                                       (PVOID *)&fileObject, (POBJECT_HANDLE_INFORMATION)NULL);
+    if (!NT_SUCCESS(status))
+    {
+        if (auxiliaryBuffer)
+        {
+            ExFreePool(auxiliaryBuffer);
         }
         return status;
     }
@@ -406,13 +388,14 @@ Return Value:
     // exclusive methods for I/O completion notification.
     //
 
-    if (fileObject->CompletionContext && IopApcRoutinePresent( ApcRoutine )) {
-        ObDereferenceObject( fileObject );
-        if (auxiliaryBuffer) {
-            ExFreePool( auxiliaryBuffer );
+    if (fileObject->CompletionContext && IopApcRoutinePresent(ApcRoutine))
+    {
+        ObDereferenceObject(fileObject);
+        if (auxiliaryBuffer)
+        {
+            ExFreePool(auxiliaryBuffer);
         }
         return STATUS_INVALID_PARAMETER;
-
     }
 
     //
@@ -422,21 +405,22 @@ Return Value:
     // written, then the reference will fail.
     //
 
-    if (ARGUMENT_PRESENT( Event )) {
-        status = ObReferenceObjectByHandle( Event,
-                                            EVENT_MODIFY_STATE,
-                                            ExEventObjectType,
-                                            requestorMode,
-                                            (PVOID *) &eventObject,
-                                            (POBJECT_HANDLE_INFORMATION) NULL );
-        if (!NT_SUCCESS( status )) {
-            if (auxiliaryBuffer) {
-                ExFreePool( auxiliaryBuffer );
+    if (ARGUMENT_PRESENT(Event))
+    {
+        status = ObReferenceObjectByHandle(Event, EVENT_MODIFY_STATE, ExEventObjectType, requestorMode,
+                                           (PVOID *)&eventObject, (POBJECT_HANDLE_INFORMATION)NULL);
+        if (!NT_SUCCESS(status))
+        {
+            if (auxiliaryBuffer)
+            {
+                ExFreePool(auxiliaryBuffer);
             }
-            ObDereferenceObject( fileObject );
+            ObDereferenceObject(fileObject);
             return status;
-        } else {
-            KeClearEvent( eventObject );
+        }
+        else
+        {
+            KeClearEvent(eventObject);
         }
     }
 
@@ -446,28 +430,33 @@ Return Value:
     // the current thread.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                if (auxiliaryBuffer != NULL) {
-                    ExFreePool( auxiliaryBuffer );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                if (auxiliaryBuffer != NULL)
+                {
+                    ExFreePool(auxiliaryBuffer);
                 }
-                if (eventObject != NULL) {
-                    ObDereferenceObject( eventObject );
+                if (eventObject != NULL)
+                {
+                    ObDereferenceObject(eventObject);
                 }
-                ObDereferenceObject( fileObject );
+                ObDereferenceObject(fileObject);
                 return status;
             }
         }
         *SynchronousIo = TRUE;
-    } else {
+    }
+    else
+    {
         *SynchronousIo = FALSE;
     }
 
@@ -475,13 +464,13 @@ Return Value:
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( fileObject );
+    deviceObject = IoGetRelatedDeviceObject(fileObject);
     *DeviceObject = deviceObject;
 
     //
@@ -489,17 +478,19 @@ Return Value:
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IoAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IoAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        IopAllocateIrpCleanup( fileObject, eventObject );
-        if (auxiliaryBuffer) {
-            ExFreePool( auxiliaryBuffer );
+        IopAllocateIrpCleanup(fileObject, eventObject);
+        if (auxiliaryBuffer)
+        {
+            ExFreePool(auxiliaryBuffer);
         }
 
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -524,7 +515,7 @@ Return Value:
     // used to pass the original function codes and parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->MajorFunction = IRP_MJ_DIRECTORY_CONTROL;
     irpSp->MinorFunction = MinorFunction;
     irpSp->FileObject = fileObject;
@@ -534,8 +525,8 @@ Return Value:
     //
 
     irp->Tail.Overlay.AuxiliaryBuffer = auxiliaryBuffer;
-    irp->AssociatedIrp.SystemBuffer = (PVOID) NULL;
-    irp->MdlAddress = (PMDL) NULL;
+    irp->AssociatedIrp.SystemBuffer = (PVOID)NULL;
+    irp->MdlAddress = (PMDL)NULL;
 
     //
     // Now determine whether this driver expects to have data buffered to it
@@ -546,7 +537,8 @@ Return Value:
     // locked down using it.
     //
 
-    if (deviceObject->Flags & DO_BUFFERED_IO) {
+    if (deviceObject->Flags & DO_BUFFERED_IO)
+    {
 
         //
         // The device does not support direct I/O.  Allocate a system buffer
@@ -556,17 +548,18 @@ Return Value:
         // that will perform cleanup if the operation fails.
         //
 
-        try {
+        try
+        {
 
             //
             // Allocate the intermediary system buffer from nonpaged pool and
             // charge quota for it.
             //
 
-            irp->AssociatedIrp.SystemBuffer =
-                ExAllocatePoolWithQuota( NonPagedPool, Length );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            irp->AssociatedIrp.SystemBuffer = ExAllocatePoolWithQuota(NonPagedPool, Length);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while either probing the caller's
@@ -575,17 +568,14 @@ Return Value:
             // status code.
             //
 
-            IopExceptionCleanup( fileObject,
-                                 irp,
-                                 eventObject,
-                                 (PKEVENT) NULL );
+            IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
-            if (auxiliaryBuffer != NULL) {
-                ExFreePool( auxiliaryBuffer );
+            if (auxiliaryBuffer != NULL)
+            {
+                ExFreePool(auxiliaryBuffer);
             }
 
             return GetExceptionCode();
-
         }
 
         //
@@ -595,11 +585,10 @@ Return Value:
         //
 
         irp->UserBuffer = FileInformation;
-        irp->Flags = (ULONG) (IRP_BUFFERED_IO |
-                              IRP_DEALLOCATE_BUFFER |
-                              IRP_INPUT_OPERATION);
-
-    } else if (deviceObject->Flags & DO_DIRECT_IO) {
+        irp->Flags = (ULONG)(IRP_BUFFERED_IO | IRP_DEALLOCATE_BUFFER | IRP_INPUT_OPERATION);
+    }
+    else if (deviceObject->Flags & DO_DIRECT_IO)
+    {
 
         //
         // This is a direct I/O operation.  Allocate an MDL and invoke the
@@ -608,9 +597,10 @@ Return Value:
         // operation fails.
         //
 
-        mdl = (PMDL) NULL;
+        mdl = (PMDL)NULL;
 
-        try {
+        try
+        {
 
             //
             // Allocate an MDL, charging quota for it, and hang it off of the
@@ -619,13 +609,15 @@ Return Value:
             // those pages.
             //
 
-            mdl = IoAllocateMdl( FileInformation, Length, FALSE, TRUE, irp );
-            if (mdl == NULL) {
-                ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+            mdl = IoAllocateMdl(FileInformation, Length, FALSE, TRUE, irp);
+            if (mdl == NULL)
+            {
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
-            MmProbeAndLockPages( mdl, requestorMode, IoWriteAccess );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            MmProbeAndLockPages(mdl, requestorMode, IoWriteAccess);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while either probing the caller's
@@ -633,20 +625,18 @@ Return Value:
             // clean everything up, and return an appropriate error status code.
             //
 
-            IopExceptionCleanup( fileObject,
-                                 irp,
-                                 eventObject,
-                                 (PKEVENT) NULL );
+            IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
-            if (auxiliaryBuffer != NULL) {
-                ExFreePool( auxiliaryBuffer );
+            if (auxiliaryBuffer != NULL)
+            {
+                ExFreePool(auxiliaryBuffer);
             }
 
             return GetExceptionCode();
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Pass the address of the user's buffer so the driver has access to
@@ -654,7 +644,6 @@ Return Value:
         //
 
         irp->UserBuffer = FileInformation;
-
     }
 
     //
@@ -665,12 +654,14 @@ Return Value:
     irpSp->Parameters.QueryDirectory.Length = Length;
     irpSp->Parameters.QueryDirectory.FileInformationClass = FileInformationClass;
     irpSp->Parameters.QueryDirectory.FileIndex = 0;
-    irpSp->Parameters.QueryDirectory.FileName = (PSTRING) auxiliaryBuffer;
+    irpSp->Parameters.QueryDirectory.FileName = (PSTRING)auxiliaryBuffer;
     irpSp->Flags = 0;
-    if (RestartScan) {
+    if (RestartScan)
+    {
         irpSp->Flags = SL_RESTART_SCAN;
     }
-    if (ReturnSingleEntry) {
+    if (ReturnSingleEntry)
+    {
         irpSp->Flags |= SL_RETURN_SINGLE_ENTRY;
     }
 
@@ -682,21 +673,12 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-NtQueryDirectoryFile(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID FileInformation,
-    IN ULONG Length,
-    IN FILE_INFORMATION_CLASS FileInformationClass,
-    IN BOOLEAN ReturnSingleEntry,
-    IN PUNICODE_STRING FileName OPTIONAL,
-    IN BOOLEAN RestartScan
-    )
+NtQueryDirectoryFile(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                     IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID FileInformation,
+                     IN ULONG Length, IN FILE_INFORMATION_CLASS FileInformationClass, IN BOOLEAN ReturnSingleEntry,
+                     IN PUNICODE_STRING FileName OPTIONAL, IN BOOLEAN RestartScan)
 
 /*++
 
@@ -792,52 +774,27 @@ Return Value:
     // Build the irp with the appropriate minor function & allowed info levels.
     //
 
-    status = BuildQueryDirectoryIrp( FileHandle,
-                                     Event,
-                                     ApcRoutine,
-                                     ApcContext,
-                                     IoStatusBlock,
-                                     FileInformation,
-                                     Length,
-                                     FileInformationClass,
-                                     ReturnSingleEntry,
-                                     FileName,
-                                     RestartScan,
-                                     IRP_MN_QUERY_DIRECTORY,
-                                     &synchronousIo,
-                                     &deviceObject,
-                                     &irp,
-                                     &fileObject,
-                                     &requestorMode);
-    if (status  == STATUS_SUCCESS) {
+    status =
+        BuildQueryDirectoryIrp(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation, Length,
+                               FileInformationClass, ReturnSingleEntry, FileName, RestartScan, IRP_MN_QUERY_DIRECTORY,
+                               &synchronousIo, &deviceObject, &irp, &fileObject, &requestorMode);
+    if (status == STATUS_SUCCESS)
+    {
 
         //
         // Queue the packet, call the driver, and synchronize appopriately with
         // I/O completion.
         //
-        status = IopSynchronousServiceTail( deviceObject,
-                                            irp,
-                                            fileObject,
-                                            TRUE,
-                                            requestorMode,
-                                            synchronousIo,
-                                            OtherTransfer );
+        status =
+            IopSynchronousServiceTail(deviceObject, irp, fileObject, TRUE, requestorMode, synchronousIo, OtherTransfer);
     }
     return status;
 }
-
+
 NTSTATUS
-NtNotifyChangeDirectoryFile(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
-    IN ULONG Length,
-    IN ULONG CompletionFilter,
-    IN BOOLEAN WatchTree
-    )
+NtNotifyChangeDirectoryFile(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                            IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID Buffer,
+                            IN ULONG Length, IN ULONG CompletionFilter, IN BOOLEAN WatchTree)
 
 /*++
 
@@ -892,7 +849,7 @@ Return Value:
     NTSTATUS status;
     PFILE_OBJECT fileObject;
     PDEVICE_OBJECT deviceObject;
-    PKEVENT eventObject = (PKEVENT) NULL;
+    PKEVENT eventObject = (PKEVENT)NULL;
     KPROCESSOR_MODE requestorMode;
     PIO_STACK_LOCATION irpSp;
     BOOLEAN synchronousIo;
@@ -904,10 +861,11 @@ Return Value:
     // Get the previous mode;  i.e., the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is user, so probe each of the arguments
@@ -917,25 +875,26 @@ Return Value:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatusEx( IoStatusBlock , ApcRoutine);
+            ProbeForWriteIoStatusEx(IoStatusBlock, ApcRoutine);
 
             //
             // The Buffer parameter must be writeable by the caller.
             //
 
-            if (Length != 0) {
-                ProbeForWrite( Buffer,
-                               Length,
-                               sizeof( ULONG ) );
+            if (Length != 0)
+            {
+                ProbeForWrite(Buffer, Length, sizeof(ULONG));
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred probing the caller's I/O status
@@ -943,7 +902,6 @@ Return Value:
             //
 
             return GetExceptionCode();
-
         }
 
         //
@@ -952,11 +910,10 @@ Return Value:
         // the caller must supply a non-null buffer.
         //
 
-        if (((CompletionFilter & ~FILE_NOTIFY_VALID_MASK) ||
-            !CompletionFilter)) {
+        if (((CompletionFilter & ~FILE_NOTIFY_VALID_MASK) || !CompletionFilter))
+        {
             return STATUS_INVALID_PARAMETER;
         }
-
     }
 
     //
@@ -966,13 +923,10 @@ Return Value:
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        FILE_LIST_DIRECTORY,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        (POBJECT_HANDLE_INFORMATION) NULL );
-    if (!NT_SUCCESS( status )) {
+    status = ObReferenceObjectByHandle(FileHandle, FILE_LIST_DIRECTORY, IoFileObjectType, requestorMode,
+                                       (PVOID *)&fileObject, (POBJECT_HANDLE_INFORMATION)NULL);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -982,8 +936,9 @@ Return Value:
     // exclusive methods for I/O completion notification.
     //
 
-    if (fileObject->CompletionContext && IopApcRoutinePresent( ApcRoutine )) {
-        ObDereferenceObject( fileObject );
+    if (fileObject->CompletionContext && IopApcRoutinePresent(ApcRoutine))
+    {
+        ObDereferenceObject(fileObject);
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -994,18 +949,18 @@ Return Value:
     // written, then the reference will fail.
     //
 
-    if (ARGUMENT_PRESENT( Event )) {
-        status = ObReferenceObjectByHandle( Event,
-                                            EVENT_MODIFY_STATE,
-                                            ExEventObjectType,
-                                            requestorMode,
-                                            (PVOID *) &eventObject,
-                                            (POBJECT_HANDLE_INFORMATION) NULL );
-        if (!NT_SUCCESS( status )) {
-            ObDereferenceObject( fileObject );
+    if (ARGUMENT_PRESENT(Event))
+    {
+        status = ObReferenceObjectByHandle(Event, EVENT_MODIFY_STATE, ExEventObjectType, requestorMode,
+                                           (PVOID *)&eventObject, (POBJECT_HANDLE_INFORMATION)NULL);
+        if (!NT_SUCCESS(status))
+        {
+            ObDereferenceObject(fileObject);
             return status;
-        } else {
-            KeClearEvent( eventObject );
+        }
+        else
+        {
+            KeClearEvent(eventObject);
         }
     }
 
@@ -1015,25 +970,29 @@ Return Value:
     // the current thread.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                if (eventObject != NULL) {
-                    ObDereferenceObject( eventObject );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                if (eventObject != NULL)
+                {
+                    ObDereferenceObject(eventObject);
                 }
-                ObDereferenceObject( fileObject );
+                ObDereferenceObject(fileObject);
                 return status;
             }
         }
         synchronousIo = TRUE;
-    } else {
+    }
+    else
+    {
         synchronousIo = FALSE;
     }
 
@@ -1041,28 +1000,29 @@ Return Value:
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( fileObject );
+    deviceObject = IoGetRelatedDeviceObject(fileObject);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IoAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IoAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        IopAllocateIrpCleanup( fileObject, eventObject );
+        IopAllocateIrpCleanup(fileObject, eventObject);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -1084,7 +1044,7 @@ Return Value:
     // used to pass the original function codes and the parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->MajorFunction = IRP_MJ_DIRECTORY_CONTROL;
     irpSp->MinorFunction = IRP_MN_NOTIFY_CHANGE_DIRECTORY;
     irpSp->FileObject = fileObject;
@@ -1098,9 +1058,11 @@ Return Value:
     // locked down using it.
     //
 
-    if (Length != 0) {
+    if (Length != 0)
+    {
 
-        if (deviceObject->Flags & DO_BUFFERED_IO) {
+        if (deviceObject->Flags & DO_BUFFERED_IO)
+        {
 
             //
             // The device does not support direct I/O.  Allocate a system
@@ -1111,17 +1073,18 @@ Return Value:
             // fails.
             //
 
-            try {
+            try
+            {
 
                 //
                 // Allocate the intermediary system buffer from nonpaged pool
                 // and charge quota for it.
                 //
 
-                irp->AssociatedIrp.SystemBuffer =
-                     ExAllocatePoolWithQuota( NonPagedPool, Length );
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                irp->AssociatedIrp.SystemBuffer = ExAllocatePoolWithQuota(NonPagedPool, Length);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // An exception was incurred while attempting to allocate the
@@ -1129,13 +1092,9 @@ Return Value:
                 // an appropriate error status code.
                 //
 
-                IopExceptionCleanup( fileObject,
-                                     irp,
-                                     eventObject,
-                                     (PKEVENT) NULL );
+                IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
                 return GetExceptionCode();
-
             }
 
             //
@@ -1146,11 +1105,10 @@ Return Value:
             //
 
             irp->UserBuffer = Buffer;
-            irp->Flags = IRP_BUFFERED_IO |
-                         IRP_DEALLOCATE_BUFFER |
-                         IRP_INPUT_OPERATION;
-
-        } else if (deviceObject->Flags & DO_DIRECT_IO) {
+            irp->Flags = IRP_BUFFERED_IO | IRP_DEALLOCATE_BUFFER | IRP_INPUT_OPERATION;
+        }
+        else if (deviceObject->Flags & DO_DIRECT_IO)
+        {
 
             //
             // This is a direct I/O operation.  Allocate an MDL and invoke the
@@ -1161,9 +1119,10 @@ Return Value:
 
             PMDL mdl;
 
-            mdl = (PMDL) NULL;
+            mdl = (PMDL)NULL;
 
-            try {
+            try
+            {
 
                 //
                 // Allocate an MDL, charging quota for it, and hang it off of
@@ -1172,13 +1131,15 @@ Return Value:
                 // the PFNs of those pages.
                 //
 
-                mdl = IoAllocateMdl( Buffer, Length, FALSE, TRUE, irp );
-                if (mdl == NULL) {
-                    ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                mdl = IoAllocateMdl(Buffer, Length, FALSE, TRUE, irp);
+                if (mdl == NULL)
+                {
+                    ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
                 }
-                MmProbeAndLockPages( mdl, requestorMode, IoWriteAccess );
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                MmProbeAndLockPages(mdl, requestorMode, IoWriteAccess);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // An exception was incurred while either probing the caller's
@@ -1187,16 +1148,13 @@ Return Value:
                 // error status code.
                 //
 
-                IopExceptionCleanup( fileObject,
-                                     irp,
-                                     eventObject,
-                                     (PKEVENT) NULL );
+                IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
                 return GetExceptionCode();
-
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // Pass the address of the user's buffer so the driver has access
@@ -1204,7 +1162,6 @@ Return Value:
             //
 
             irp->UserBuffer = Buffer;
-
         }
     }
 
@@ -1215,7 +1172,8 @@ Return Value:
 
     irpSp->Parameters.NotifyDirectory.Length = Length;
     irpSp->Parameters.NotifyDirectory.CompletionFilter = CompletionFilter;
-    if (WatchTree) {
+    if (WatchTree)
+    {
         irpSp->Flags = SL_WATCH_TREE;
     }
 
@@ -1224,11 +1182,5 @@ Return Value:
     // I/O completion.
     //
 
-    return IopSynchronousServiceTail( deviceObject,
-                                      irp,
-                                      fileObject,
-                                      FALSE,
-                                      requestorMode,
-                                      synchronousIo,
-                                      OtherTransfer );
+    return IopSynchronousServiceTail(deviceObject, irp, fileObject, FALSE, requestorMode, synchronousIo, OtherTransfer);
 }

@@ -73,10 +73,10 @@ Notes:
 //
 // Define the severity codes
 //
-#define STATUS_SEVERITY_WARNING          0x2
-#define STATUS_SEVERITY_SUCCESS          0x0
-#define STATUS_SEVERITY_INFORMATIONAL    0x1
-#define STATUS_SEVERITY_ERROR            0x3
+#define STATUS_SEVERITY_WARNING 0x2
+#define STATUS_SEVERITY_SUCCESS 0x0
+#define STATUS_SEVERITY_INFORMATIONAL 0x1
+#define STATUS_SEVERITY_ERROR 0x3
 
 
 //
@@ -86,7 +86,7 @@ Notes:
 //
 //  The server's call to a system service failed unexpectedly.
 //
-#define EVENT_SRV_SERVICE_FAILED         0xC00007D0L
+#define EVENT_SRV_SERVICE_FAILED 0xC00007D0L
 
 //
 // MessageId: EVENT_SRV_RESOURCE_SHORTAGE
@@ -95,7 +95,7 @@ Notes:
 //
 //  The server was unable to perform an operation due to a shortage of available resources.
 //
-#define EVENT_SRV_RESOURCE_SHORTAGE      0xC00007D1L
+#define EVENT_SRV_RESOURCE_SHORTAGE 0xC00007D1L
 
 //
 // MessageId: EVENT_SRV_CANT_CREATE_DEVICE
@@ -104,7 +104,7 @@ Notes:
 //
 //  The server could not create its device.  The server could not be started.
 //
-#define EVENT_SRV_CANT_CREATE_DEVICE     0xC00007D2L
+#define EVENT_SRV_CANT_CREATE_DEVICE 0xC00007D2L
 
 //
 // MessageId: EVENT_SRV_CANT_CREATE_PROCESS
@@ -113,7 +113,7 @@ Notes:
 //
 //  The server could not create a process.  The server could not be started.
 //
-#define EVENT_SRV_CANT_CREATE_PROCESS    0xC00007D3L
+#define EVENT_SRV_CANT_CREATE_PROCESS 0xC00007D3L
 
 //
 // MessageId: EVENT_SRV_CANT_CREATE_THREAD
@@ -122,7 +122,7 @@ Notes:
 //
 //  The server could not create a startup thread.  The server could not be started.
 //
-#define EVENT_SRV_CANT_CREATE_THREAD     0xC00007D4L
+#define EVENT_SRV_CANT_CREATE_THREAD 0xC00007D4L
 
 //
 // MessageId: EVENT_SRV_UNEXPECTED_DISC
@@ -131,7 +131,7 @@ Notes:
 //
 //  The server received an unexpected disconnection from a client.
 //
-#define EVENT_SRV_UNEXPECTED_DISC        0xC00007D5L
+#define EVENT_SRV_UNEXPECTED_DISC 0xC00007D5L
 
 //
 // MessageId: EVENT_SRV_INVALID_REQUEST
@@ -140,7 +140,7 @@ Notes:
 //
 //  The server received an incorrectly formatted request from %2.
 //
-#define EVENT_SRV_INVALID_REQUEST        0xC00007D6L
+#define EVENT_SRV_INVALID_REQUEST 0xC00007D6L
 
 //
 // MessageId: EVENT_SRV_CANT_OPEN_NPFS
@@ -149,7 +149,7 @@ Notes:
 //
 //  The server could not open the named pipe file system.  Remote named pipes are disabled.
 //
-#define EVENT_SRV_CANT_OPEN_NPFS         0xC00007D7L
+#define EVENT_SRV_CANT_OPEN_NPFS 0xC00007D7L
 
 //
 // MessageId: EVENT_SRV_CANT_GROW_TABLE
@@ -158,7 +158,7 @@ Notes:
 //
 //  The server could not expand a table because the table reached the maximum size.
 //
-#define EVENT_SRV_CANT_GROW_TABLE        0x800007D9L
+#define EVENT_SRV_CANT_GROW_TABLE 0x800007D9L
 
 //
 // MessageId: EVENT_SRV_CANT_START_SCAVENGER
@@ -167,7 +167,7 @@ Notes:
 //
 //  The server could not start the scavenger thread.  The server could not be started.
 //
-#define EVENT_SRV_CANT_START_SCAVENGER   0xC00007DAL
+#define EVENT_SRV_CANT_START_SCAVENGER 0xC00007DAL
 
 //
 // MessageId: EVENT_SRV_IRP_STACK_SIZE
@@ -176,7 +176,7 @@ Notes:
 //
 //  The server's configuration parameter "irpstacksize" is too small for the server to use a local device.  Please increase the value of this parameter.
 //
-#define EVENT_SRV_IRP_STACK_SIZE         0xC00007DBL
+#define EVENT_SRV_IRP_STACK_SIZE 0xC00007DBL
 
 //
 // MessageId: EVENT_SRV_NETWORK_ERROR
@@ -188,7 +188,7 @@ Notes:
 //  error in your network configuration.  The error status code is contained within
 //  the returned data (formatted as Words) and may point you towards the problem.
 //
-#define EVENT_SRV_NETWORK_ERROR          0x800007DCL
+#define EVENT_SRV_NETWORK_ERROR 0x800007DCL
 
 //
 // MessageId: EVENT_SRV_DISK_FULL
@@ -197,7 +197,7 @@ Notes:
 //
 //  The %2 disk is at or near capacity.  You may need to delete some files.
 //
-#define EVENT_SRV_DISK_FULL              0x800007DDL
+#define EVENT_SRV_DISK_FULL 0x800007DDL
 
 //
 // MessageId: EVENT_SRV_NO_VIRTUAL_MEMORY
@@ -206,7 +206,7 @@ Notes:
 //
 //  The server was unable to allocate virtual memory.
 //
-#define EVENT_SRV_NO_VIRTUAL_MEMORY      0xC00007E0L
+#define EVENT_SRV_NO_VIRTUAL_MEMORY 0xC00007E0L
 
 //
 // MessageId: EVENT_SRV_NONPAGED_POOL_LIMIT
@@ -215,7 +215,7 @@ Notes:
 //
 //  The server was unable to allocate from the system nonpaged pool because the server reached the configured limit for nonpaged pool allocations.
 //
-#define EVENT_SRV_NONPAGED_POOL_LIMIT    0xC00007E1L
+#define EVENT_SRV_NONPAGED_POOL_LIMIT 0xC00007E1L
 
 //
 // MessageId: EVENT_SRV_PAGED_POOL_LIMIT
@@ -224,7 +224,7 @@ Notes:
 //
 //  The server was unable to allocate from the system paged pool because the server reached the configured limit for paged pool allocations.
 //
-#define EVENT_SRV_PAGED_POOL_LIMIT       0xC00007E2L
+#define EVENT_SRV_PAGED_POOL_LIMIT 0xC00007E2L
 
 //
 // MessageId: EVENT_SRV_NO_NONPAGED_POOL
@@ -233,7 +233,7 @@ Notes:
 //
 //  The server was unable to allocate from the system nonpaged pool because the pool was empty.
 //
-#define EVENT_SRV_NO_NONPAGED_POOL       0xC00007E3L
+#define EVENT_SRV_NO_NONPAGED_POOL 0xC00007E3L
 
 //
 // MessageId: EVENT_SRV_NO_PAGED_POOL
@@ -242,7 +242,7 @@ Notes:
 //
 //  The server was unable to allocate from the system paged pool because the pool was empty.
 //
-#define EVENT_SRV_NO_PAGED_POOL          0xC00007E4L
+#define EVENT_SRV_NO_PAGED_POOL 0xC00007E4L
 
 //
 // MessageId: EVENT_SRV_NO_WORK_ITEM
@@ -251,7 +251,7 @@ Notes:
 //
 //  The server was unable to allocate a work item %2 times in the last %3 seconds.
 //
-#define EVENT_SRV_NO_WORK_ITEM           0x800007E5L
+#define EVENT_SRV_NO_WORK_ITEM 0x800007E5L
 
 //
 // MessageId: EVENT_SRV_NO_FREE_CONNECTIONS
@@ -263,7 +263,7 @@ Notes:
 //  connections to add headroom.  To do that, modify the MinFreeConnections and MaxFreeConnections for the LanmanServer
 //  in the registry.
 //
-#define EVENT_SRV_NO_FREE_CONNECTIONS    0x800007E6L
+#define EVENT_SRV_NO_FREE_CONNECTIONS 0x800007E6L
 
 //
 // MessageId: EVENT_SRV_NO_FREE_RAW_WORK_ITEM
@@ -272,7 +272,7 @@ Notes:
 //
 //  The server was unable to find a free raw work item %2 times in the last %3 seconds.
 //
-#define EVENT_SRV_NO_FREE_RAW_WORK_ITEM  0x800007E7L
+#define EVENT_SRV_NO_FREE_RAW_WORK_ITEM 0x800007E7L
 
 //
 // MessageId: EVENT_SRV_NO_BLOCKING_IO
@@ -281,7 +281,7 @@ Notes:
 //
 //  The server was unable to allocate resources for blocking I/O %2 times in the last %3 seconds.
 //
-#define EVENT_SRV_NO_BLOCKING_IO         0x800007E8L
+#define EVENT_SRV_NO_BLOCKING_IO 0x800007E8L
 
 //
 // MessageId: EVENT_SRV_DOS_ATTACK_DETECTED
@@ -290,7 +290,7 @@ Notes:
 //
 //  The server has detected an attempted Denial-Of-Service attack from client %2, and has disconnected the connection.
 //
-#define EVENT_SRV_DOS_ATTACK_DETECTED    0x800007E9L
+#define EVENT_SRV_DOS_ATTACK_DETECTED 0x800007E9L
 
 //
 // MessageId: EVENT_SRV_TOO_MANY_DOS
@@ -301,7 +301,7 @@ Notes:
 //  events for any more of them.  Be advised it is likely someone is actively attacking
 //  your machine.
 //
-#define EVENT_SRV_TOO_MANY_DOS           0x800007EAL
+#define EVENT_SRV_TOO_MANY_DOS 0x800007EAL
 
 //
 // MessageId: EVENT_SRV_OUT_OF_WORK_ITEM_DOS
@@ -312,7 +312,7 @@ Notes:
 //  were disconnected to protect against this.  If this is not the case, please raise the MaxWorkItems for the server or
 //  disable DoS detection.  This event will not be logged again for 24 hours.
 //
-#define EVENT_SRV_OUT_OF_WORK_ITEM_DOS   0x800007EBL
+#define EVENT_SRV_OUT_OF_WORK_ITEM_DOS 0x800007EBL
 
 
 // Server service events, issued from user mode.  %1 is the first
@@ -325,7 +325,7 @@ Notes:
 //
 //  The server's Registry key %1 was not present.  The server could not start.
 //
-#define EVENT_SRV_KEY_NOT_FOUND          0xC00009C5L
+#define EVENT_SRV_KEY_NOT_FOUND 0xC00009C5L
 
 //
 // MessageId: EVENT_SRV_KEY_NOT_CREATED
@@ -334,7 +334,7 @@ Notes:
 //
 //  The server's Registry key %1 was not present and could not be created.  The server could not start.
 //
-#define EVENT_SRV_KEY_NOT_CREATED        0xC00009C6L
+#define EVENT_SRV_KEY_NOT_CREATED 0xC00009C6L
 
 //
 // MessageId: EVENT_SRV_NO_TRANSPORTS_BOUND
@@ -343,7 +343,7 @@ Notes:
 //
 //  The server did not bind to any transports.  The server could not start.
 //
-#define EVENT_SRV_NO_TRANSPORTS_BOUND    0xC00009C7L
+#define EVENT_SRV_NO_TRANSPORTS_BOUND 0xC00009C7L
 
 //
 // MessageId: EVENT_SRV_CANT_BIND_TO_TRANSPORT
@@ -361,7 +361,7 @@ Notes:
 //
 //  The server could not bind to the transport %1 because another computer on the network has the same name.  The server could not start.
 //
-#define EVENT_SRV_CANT_BIND_DUP_NAME     0xC00009C9L
+#define EVENT_SRV_CANT_BIND_DUP_NAME 0xC00009C9L
 
 //
 // MessageId: EVENT_SRV_INVALID_REGISTRY_VALUE
@@ -382,7 +382,7 @@ Notes:
 //
 //  The security descriptor stored in the Registry for the share %1 was invalid.  The share was not automatically recreated.
 //
-#define EVENT_SRV_INVALID_SD             0x800009CBL
+#define EVENT_SRV_INVALID_SD 0x800009CBL
 
 //
 // MessageId: EVENT_SRV_CANT_LOAD_DRIVER
@@ -391,7 +391,7 @@ Notes:
 //
 //  The server service was unable to load the server driver.
 //
-#define EVENT_SRV_CANT_LOAD_DRIVER       0x800009CCL
+#define EVENT_SRV_CANT_LOAD_DRIVER 0x800009CCL
 
 //
 // MessageId: EVENT_SRV_CANT_UNLOAD_DRIVER
@@ -400,7 +400,7 @@ Notes:
 //
 //  The server service was unable to unload the server driver.
 //
-#define EVENT_SRV_CANT_UNLOAD_DRIVER     0x800009CDL
+#define EVENT_SRV_CANT_UNLOAD_DRIVER 0x800009CDL
 
 //
 // MessageId: EVENT_SRV_CANT_MAP_ERROR
@@ -409,7 +409,7 @@ Notes:
 //
 //  The server service was unable to map error code %1.
 //
-#define EVENT_SRV_CANT_MAP_ERROR         0x800009CEL
+#define EVENT_SRV_CANT_MAP_ERROR 0x800009CEL
 
 //
 // MessageId: EVENT_SRV_CANT_RECREATE_SHARE
@@ -418,7 +418,7 @@ Notes:
 //
 //  The server service was unable to recreate the share %1 because the directory %2 no longer exists.  Please run "net share %1 /delete" to delete the share, or recreate the directory %2.
 //
-#define EVENT_SRV_CANT_RECREATE_SHARE    0x800009CFL
+#define EVENT_SRV_CANT_RECREATE_SHARE 0x800009CFL
 
 //
 // MessageId: EVENT_SRV_CANT_CHANGE_DOMAIN_NAME
@@ -445,7 +445,7 @@ Notes:
 //
 //  The redirector was unable to allocate memory.
 //
-#define EVENT_RDR_RESOURCE_SHORTAGE      0x80000BB9L
+#define EVENT_RDR_RESOURCE_SHORTAGE 0x80000BB9L
 
 //
 // MessageId: EVENT_RDR_CANT_CREATE_DEVICE
@@ -454,7 +454,7 @@ Notes:
 //
 //  The redirector could not create its device.  The redirector could not be started.
 //
-#define EVENT_RDR_CANT_CREATE_DEVICE     0x80000BBAL
+#define EVENT_RDR_CANT_CREATE_DEVICE 0x80000BBAL
 
 //
 // MessageId: EVENT_RDR_CANT_CREATE_THREAD
@@ -463,7 +463,7 @@ Notes:
 //
 //  The redirector could not create a system thread.
 //
-#define EVENT_RDR_CANT_CREATE_THREAD     0x80000BBBL
+#define EVENT_RDR_CANT_CREATE_THREAD 0x80000BBBL
 
 //
 // MessageId: EVENT_RDR_CANT_SET_THREAD
@@ -472,7 +472,7 @@ Notes:
 //
 //  The redirector could not set the priority for a system thread.
 //
-#define EVENT_RDR_CANT_SET_THREAD        0x80000BBCL
+#define EVENT_RDR_CANT_SET_THREAD 0x80000BBCL
 
 //
 // MessageId: EVENT_RDR_INVALID_REPLY
@@ -481,7 +481,7 @@ Notes:
 //
 //  The redirector received an incorrectly formatted response from %2.
 //
-#define EVENT_RDR_INVALID_REPLY          0x80000BBDL
+#define EVENT_RDR_INVALID_REPLY 0x80000BBDL
 
 //
 // MessageId: EVENT_RDR_INVALID_SMB
@@ -490,7 +490,7 @@ Notes:
 //
 //  The redirector received an SMB that was too short.
 //
-#define EVENT_RDR_INVALID_SMB            0x80000BBEL
+#define EVENT_RDR_INVALID_SMB 0x80000BBEL
 
 //
 // MessageId: EVENT_RDR_INVALID_LOCK_REPLY
@@ -499,7 +499,7 @@ Notes:
 //
 //  The redirector received an incorrect response from %2 to a lock request.
 //
-#define EVENT_RDR_INVALID_LOCK_REPLY     0x80000BBFL
+#define EVENT_RDR_INVALID_LOCK_REPLY 0x80000BBFL
 
 //
 // MessageId: EVENT_RDR_FAILED_UNLOCK
@@ -508,7 +508,7 @@ Notes:
 //
 //  The redirector failed to unlock part of a file on server %2.
 //
-#define EVENT_RDR_FAILED_UNLOCK          0x80000BC1L
+#define EVENT_RDR_FAILED_UNLOCK 0x80000BC1L
 
 //
 // MessageId: EVENT_RDR_CLOSE_BEHIND
@@ -517,7 +517,7 @@ Notes:
 //
 //  The redirector failed to write data to server %2 after the file was closed.
 //
-#define EVENT_RDR_CLOSE_BEHIND           0x80000BC3L
+#define EVENT_RDR_CLOSE_BEHIND 0x80000BC3L
 
 //
 // MessageId: EVENT_RDR_UNEXPECTED_ERROR
@@ -526,7 +526,7 @@ Notes:
 //
 //  An unexpected network error has occurred on the virtual circuit to %2.
 //
-#define EVENT_RDR_UNEXPECTED_ERROR       0x80000BC4L
+#define EVENT_RDR_UNEXPECTED_ERROR 0x80000BC4L
 
 //
 // MessageId: EVENT_RDR_TIMEOUT
@@ -535,7 +535,7 @@ Notes:
 //
 //  The redirector has timed out a request to %2.
 //
-#define EVENT_RDR_TIMEOUT                0x80000BC5L
+#define EVENT_RDR_TIMEOUT 0x80000BC5L
 
 //
 // MessageId: EVENT_RDR_INVALID_OPLOCK
@@ -544,7 +544,7 @@ Notes:
 //
 //  The redirector received an invalid oplock level from %2.
 //
-#define EVENT_RDR_INVALID_OPLOCK         0x80000BC6L
+#define EVENT_RDR_INVALID_OPLOCK 0x80000BC6L
 
 //
 // MessageId: EVENT_RDR_CONNECTION_REFERENCE
@@ -553,7 +553,7 @@ Notes:
 //
 //  The redirector dereferenced a connection through zero.
 //
-#define EVENT_RDR_CONNECTION_REFERENCE   0x80000BC7L
+#define EVENT_RDR_CONNECTION_REFERENCE 0x80000BC7L
 
 //
 // MessageId: EVENT_RDR_SERVER_REFERENCE
@@ -562,7 +562,7 @@ Notes:
 //
 //  The redirector dereferenced a server through zero.
 //
-#define EVENT_RDR_SERVER_REFERENCE       0x80000BC8L
+#define EVENT_RDR_SERVER_REFERENCE 0x80000BC8L
 
 //
 // MessageId: EVENT_RDR_SMB_REFERENCE
@@ -571,7 +571,7 @@ Notes:
 //
 //  The redirector dereferenced the allocated SMB count through zero.
 //
-#define EVENT_RDR_SMB_REFERENCE          0x80000BC9L
+#define EVENT_RDR_SMB_REFERENCE 0x80000BC9L
 
 //
 // MessageId: EVENT_RDR_ENCRYPT
@@ -581,7 +581,7 @@ Notes:
 //  The redirector accessed a share-level server that indicates it encrypts passwords.
 //  This combination is not supported.
 //
-#define EVENT_RDR_ENCRYPT                0x80000BCAL
+#define EVENT_RDR_ENCRYPT 0x80000BCAL
 
 //
 // MessageId: EVENT_RDR_CONNECTION
@@ -590,7 +590,7 @@ Notes:
 //
 //  The redirector failed to determine the connection type.
 //
-#define EVENT_RDR_CONNECTION             0x80000BCBL
+#define EVENT_RDR_CONNECTION 0x80000BCBL
 
 //
 // MessageId: EVENT_RDR_MAXCMDS
@@ -600,7 +600,7 @@ Notes:
 //  The redirector failed to allocate a multiplex table entry.  This indicates that
 //  the MAXCMDS parameter to the redirector is insufficient for the users needs.
 //
-#define EVENT_RDR_MAXCMDS                0x80000BCDL
+#define EVENT_RDR_MAXCMDS 0x80000BCDL
 
 //
 // MessageId: EVENT_RDR_OPLOCK_SMB
@@ -609,7 +609,7 @@ Notes:
 //
 //  The redirector failed to allocate a buffer for an oplock break.
 //
-#define EVENT_RDR_OPLOCK_SMB             0x80000BCEL
+#define EVENT_RDR_OPLOCK_SMB 0x80000BCEL
 
 //
 // MessageId: EVENT_RDR_DISPOSITION
@@ -618,7 +618,7 @@ Notes:
 //
 //  The redirector failed to map the requested file disposition (for NtCreateFile).
 //
-#define EVENT_RDR_DISPOSITION            0x80000BCFL
+#define EVENT_RDR_DISPOSITION 0x80000BCFL
 
 //
 // MessageId: EVENT_RDR_CONTEXTS
@@ -628,7 +628,7 @@ Notes:
 //  The redirector is allocating additional resources for input/output request packet contexts.  This is
 //  probably caused by a resource leak in the redirector.
 //
-#define EVENT_RDR_CONTEXTS               0x80000BD0L
+#define EVENT_RDR_CONTEXTS 0x80000BD0L
 
 //
 // MessageId: EVENT_RDR_WRITE_BEHIND_FLUSH_FAILED
@@ -646,7 +646,7 @@ Notes:
 //
 //  The redirector was unable to create a worker thread because it has already created the maximum number of configured work threads.
 //
-#define EVENT_RDR_AT_THREAD_MAX          0x80000BD2L
+#define EVENT_RDR_AT_THREAD_MAX 0x80000BD2L
 
 //
 // MessageId: EVENT_RDR_CANT_READ_REGISTRY
@@ -655,7 +655,7 @@ Notes:
 //
 //  The redirector was unable to initialize variables from the Registry.
 //
-#define EVENT_RDR_CANT_READ_REGISTRY     0x80000BD3L
+#define EVENT_RDR_CANT_READ_REGISTRY 0x80000BD3L
 
 //
 // MessageId: EVENT_RDR_TIMEZONE_BIAS_TOO_LARGE
@@ -696,7 +696,7 @@ Notes:
 //  The redirector was unable to delete the file specified on server %2 when it was closed by the application.
 //  The data contains the name of the file.
 //
-#define EVENT_RDR_DELETEONCLOSE_FAILED   0x80000BD7L
+#define EVENT_RDR_DELETEONCLOSE_FAILED 0x80000BD7L
 
 //
 // MessageId: EVENT_RDR_CANT_BIND_TRANSPORT
@@ -705,7 +705,7 @@ Notes:
 //
 //  The redirector was unable to register the domain %2 on to transport %3 for the following reason: %4. Transport has been taken offline.
 //
-#define EVENT_RDR_CANT_BIND_TRANSPORT    0x80000BD8L
+#define EVENT_RDR_CANT_BIND_TRANSPORT 0x80000BD8L
 
 //
 // MessageId: EVENT_RDR_CANT_REGISTER_ADDRESS
@@ -714,7 +714,7 @@ Notes:
 //
 //  The redirector was unable to register the address for transport %3 for the following reason: %4. Transport has been taken offline.
 //
-#define EVENT_RDR_CANT_REGISTER_ADDRESS  0x80000BD9L
+#define EVENT_RDR_CANT_REGISTER_ADDRESS 0x80000BD9L
 
 //
 // MessageId: EVENT_RDR_CANT_GET_SECURITY_CONTEXT
@@ -732,7 +732,7 @@ Notes:
 //
 //  The redirector was unable to build SMB header.
 //
-#define EVENT_RDR_CANT_BUILD_SMB_HEADER  0x80000BDBL
+#define EVENT_RDR_CANT_BUILD_SMB_HEADER 0x80000BDBL
 
 //
 // MessageId: EVENT_RDR_SECURITY_SIGNATURE_MISMATCH
@@ -742,7 +742,6 @@ Notes:
 //  The redirector detected a security signature mismatch. The connection has been disconnected.
 //
 #define EVENT_RDR_SECURITY_SIGNATURE_MISMATCH 0x80000BDCL
-
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -761,8 +760,7 @@ Notes:
 //
 //  The Microsoft IPv6 Developer Edition driver was started.
 //
-#define EVENT_TCPIP6_STARTED             0x40000C1CL
-
+#define EVENT_TCPIP6_STARTED 0x40000C1CL
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -781,7 +779,7 @@ Notes:
 //
 //  %2.
 //
-#define EVENT_STREAMS_STRLOG             0xC0000FA0L
+#define EVENT_STREAMS_STRLOG 0xC0000FA0L
 
 //
 // MessageId: EVENT_STREAMS_ALLOCB_FAILURE
@@ -790,7 +788,7 @@ Notes:
 //
 //  Unable to allocate a %2 byte message.
 //
-#define EVENT_STREAMS_ALLOCB_FAILURE     0x80000FA1L
+#define EVENT_STREAMS_ALLOCB_FAILURE 0x80000FA1L
 
 //
 // MessageId: EVENT_STREAMS_ALLOCB_FAILURE_CNT
@@ -808,7 +806,7 @@ Notes:
 //
 //  Unable to allocate a %2 byte external message.
 //
-#define EVENT_STREAMS_ESBALLOC_FAILURE   0x80000FA3L
+#define EVENT_STREAMS_ESBALLOC_FAILURE 0x80000FA3L
 
 //
 // MessageId: EVENT_STREAMS_ESBALLOC_FAILURE_CNT
@@ -818,7 +816,6 @@ Notes:
 //  %2 external message allocations have failed since initialization.
 //
 #define EVENT_STREAMS_ESBALLOC_FAILURE_CNT 0x80000FA4L
-
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -882,7 +879,7 @@ Notes:
 //  IP has been bound to more than the maximum number of supported interfaces.
 //  Some interfaces on adapter %2 will not be initialized.
 //
-#define EVENT_TCPIP_TOO_MANY_NETS        0xC0001059L
+#define EVENT_TCPIP_TOO_MANY_NETS 0xC0001059L
 
 //
 // MessageId: EVENT_TCPIP_NO_MASK
@@ -892,7 +889,7 @@ Notes:
 //  No subnet mask was specified for interface %2. This interface and
 //  all subsequent interfaces on adapter %3 cannot be initialized.
 //
-#define EVENT_TCPIP_NO_MASK              0xC000105AL
+#define EVENT_TCPIP_NO_MASK 0xC000105AL
 
 //
 // MessageId: EVENT_TCPIP_INVALID_ADDRESS
@@ -902,7 +899,7 @@ Notes:
 //  Invalid address %2 was specified for adapter %3. This interface
 //  cannot be initialized.
 //
-#define EVENT_TCPIP_INVALID_ADDRESS      0xC000105BL
+#define EVENT_TCPIP_INVALID_ADDRESS 0xC000105BL
 
 //
 // MessageId: EVENT_TCPIP_INVALID_MASK
@@ -912,7 +909,7 @@ Notes:
 //  Invalid subnet mask %2 was specified for address %3 on adapter %4.
 //  This interface cannot be initialized.
 //
-#define EVENT_TCPIP_INVALID_MASK         0xC000105CL
+#define EVENT_TCPIP_INVALID_MASK 0xC000105CL
 
 //
 // MessageId: EVENT_TCPIP_NO_ADAPTER_RESOURCES
@@ -934,7 +931,7 @@ Notes:
 //  configured properly. Interfaces on this adapter not configured by
 //  DHCP will be unaffected.
 //
-#define EVENT_TCPIP_DHCP_INIT_FAILED     0x8000105EL
+#define EVENT_TCPIP_DHCP_INIT_FAILED 0x8000105EL
 
 //
 // MessageId: EVENT_TCPIP_ADAPTER_REG_FAILURE
@@ -944,7 +941,7 @@ Notes:
 //  IP could not open the registry key for adapter %2.
 //  Interfaces on this adapter will not be initialized.
 //
-#define EVENT_TCPIP_ADAPTER_REG_FAILURE  0xC000105FL
+#define EVENT_TCPIP_ADAPTER_REG_FAILURE 0xC000105FL
 
 //
 // MessageId: EVENT_TCPIP_INVALID_DEFAULT_GATEWAY
@@ -964,7 +961,7 @@ Notes:
 //  Unable to read the configured IP addresses for adapter %2.
 //  IP interfaces will not be initialized on this adapter.
 //
-#define EVENT_TCPIP_NO_ADDRESS_LIST      0xC0001061L
+#define EVENT_TCPIP_NO_ADDRESS_LIST 0xC0001061L
 
 //
 // MessageId: EVENT_TCPIP_NO_MASK_LIST
@@ -974,7 +971,7 @@ Notes:
 //  Unable to read the configured subnet masks for adapter %2.
 //  IP interfaces will not be initialized on this adapter.
 //
-#define EVENT_TCPIP_NO_MASK_LIST         0xC0001062L
+#define EVENT_TCPIP_NO_MASK_LIST 0xC0001062L
 
 //
 // MessageId: EVENT_TCPIP_NO_BINDINGS
@@ -984,7 +981,7 @@ Notes:
 //  IP was unable to read its bindings from the registry. No network interfaces
 //  were configured.
 //
-#define EVENT_TCPIP_NO_BINDINGS          0xC0001063L
+#define EVENT_TCPIP_NO_BINDINGS 0xC0001063L
 
 //
 // MessageId: EVENT_TCPIP_IP_INIT_FAILED
@@ -993,7 +990,7 @@ Notes:
 //
 //  Initialization of IP failed.
 //
-#define EVENT_TCPIP_IP_INIT_FAILED       0xC0001064L
+#define EVENT_TCPIP_IP_INIT_FAILED 0xC0001064L
 
 //
 // MessageId: EVENT_TCPIP_TOO_MANY_GATEWAYS
@@ -1003,7 +1000,7 @@ Notes:
 //  More than the maximum number of default gateways were specified for
 //  adapter %2. Some remote networks may not be reachable as a result.
 //
-#define EVENT_TCPIP_TOO_MANY_GATEWAYS    0x80001065L
+#define EVENT_TCPIP_TOO_MANY_GATEWAYS 0x80001065L
 
 //
 // MessageId: EVENT_TCPIP_ADDRESS_CONFLICT1
@@ -1013,7 +1010,7 @@ Notes:
 //  The system detected an address conflict for IP address %2 with the system
 //  having network hardware address %3. The local interface has been disabled.
 //
-#define EVENT_TCPIP_ADDRESS_CONFLICT1    0xC0001066L
+#define EVENT_TCPIP_ADDRESS_CONFLICT1 0xC0001066L
 
 //
 // MessageId: EVENT_TCPIP_ADDRESS_CONFLICT2
@@ -1024,7 +1021,7 @@ Notes:
 //  having network hardware address %3. Network operations on this system may
 //  be disrupted as a result.
 //
-#define EVENT_TCPIP_ADDRESS_CONFLICT2    0xC0001067L
+#define EVENT_TCPIP_ADDRESS_CONFLICT2 0xC0001067L
 
 //
 // MessageId: EVENT_TCPIP_NTE_CONTEXT_LIST_FAILURE
@@ -1044,7 +1041,7 @@ Notes:
 //  The system detected that network adapter %2 was connected to the network,
 //  and has initiated normal operation over the network adapter.
 //
-#define EVENT_TCPIP_MEDIA_CONNECT        0x40001069L
+#define EVENT_TCPIP_MEDIA_CONNECT 0x40001069L
 
 //
 // MessageId: EVENT_TCPIP_MEDIA_DISCONNECT
@@ -1056,7 +1053,7 @@ Notes:
 //  adapter was not disconnected, this may indicate that it has malfunctioned.
 //  Please contact your vendor for updated drivers.
 //
-#define EVENT_TCPIP_MEDIA_DISCONNECT     0x4000106AL
+#define EVENT_TCPIP_MEDIA_DISCONNECT 0x4000106AL
 
 
 //
@@ -1072,7 +1069,7 @@ Notes:
 //
 //  Initialization of TCP/UDP failed.
 //
-#define EVENT_TCPIP_TCP_INIT_FAILED      0xC0001081L
+#define EVENT_TCPIP_TCP_INIT_FAILED 0xC0001081L
 
 
 //
@@ -1088,7 +1085,7 @@ Notes:
 //
 //  Backlog of pending datagram sends reached. Please increase the value of Tcpip\Parameters\DGMaxSendFree in the registry.
 //
-#define EVENT_TCPIP_UDP_LIMIT_REACHED    0x800010A9L
+#define EVENT_TCPIP_UDP_LIMIT_REACHED 0x800010A9L
 
 //
 // IPSEC messages
@@ -1122,7 +1119,7 @@ Notes:
 //  Received %2 packet(s) with a bad Security Parameters Index from %3.
 //  This could be a temporary glitch; if it persists please stop and restart the IPSec Policy Agent service on this machine.
 //
-#define EVENT_IPSEC_BAD_SPI_RECEIVED     0xC00010BBL
+#define EVENT_IPSEC_BAD_SPI_RECEIVED 0xC00010BBL
 
 //
 // MessageId: EVENT_IPSEC_UNEXPECTED_CLEARTEXT
@@ -1142,7 +1139,7 @@ Notes:
 //  Failed to authenticate the hash for %2 packet(s) received from %3.
 //  This could be a temporary glitch; if it persists please stop and restart the IPSec Policy Agent service on this machine.
 //
-#define EVENT_IPSEC_AUTH_FAILURE         0xC00010BDL
+#define EVENT_IPSEC_AUTH_FAILURE 0xC00010BDL
 
 //
 // MessageId: EVENT_IPSEC_BAD_PACKET_SYNTAX
@@ -1152,7 +1149,7 @@ Notes:
 //  Received %2 packet(s) from %3 with invalid packet syntax.
 //  This could be a temporary glitch; if it persists please stop and restart the IPSec Policy Agent service on this machine.
 //
-#define EVENT_IPSEC_BAD_PACKET_SYNTAX    0xC00010BEL
+#define EVENT_IPSEC_BAD_PACKET_SYNTAX 0xC00010BEL
 
 //
 // MessageId: EVENT_IPSEC_BAD_PROTOCOL_RECEIVED
@@ -1172,7 +1169,7 @@ Notes:
 //  Received %2 packet(s) from %3 that failed the IPSec processing for an unknown reason.
 //  This could be a temporary glitch; if it persists please stop and restart the IPSec Policy Agent service on this machine..
 //
-#define EVENT_IPSEC_GENERIC_FAILURE      0xC00010C0L
+#define EVENT_IPSEC_GENERIC_FAILURE 0xC00010C0L
 
 //
 // MessageId: EVENT_IPSEC_NEG_FAILURE
@@ -1184,7 +1181,7 @@ Notes:
 //  Please check the configuration on this machine to ensure at least one
 //  filter matches the destination.
 //
-#define EVENT_IPSEC_NEG_FAILURE          0xC00010C1L
+#define EVENT_IPSEC_NEG_FAILURE 0xC00010C1L
 
 //
 // MessageId: EVENT_IPSEC_DROP_PACKET_INBOUND
@@ -1202,7 +1199,7 @@ Notes:
 //  %nOffset for Offload flags(0=no offload):        0x20
 //  %nOffset for packet start:                       0x28
 //
-#define EVENT_IPSEC_DROP_PACKET_INBOUND  0x400010C2L
+#define EVENT_IPSEC_DROP_PACKET_INBOUND 0x400010C2L
 
 //
 // MessageId: EVENT_IPSEC_DROP_PACKET_OUTBOUND
@@ -1223,7 +1220,6 @@ Notes:
 #define EVENT_IPSEC_DROP_PACKET_OUTBOUND 0x400010C3L
 
 
-
 /////////////////////////////////////////////////////////////////////////
 //
 // NBT Events
@@ -1231,7 +1227,6 @@ Notes:
 // Codes 4300 - 4399
 //
 /////////////////////////////////////////////////////////////////////////
-
 
 
 // Don't use %1 for driver supplied insertion strings.  The IO subsystem
@@ -1244,7 +1239,7 @@ Notes:
 //
 //  The driver could not be created.
 //
-#define EVENT_NBT_CREATE_DRIVER          0xC00010CCL
+#define EVENT_NBT_CREATE_DRIVER 0xC00010CCL
 
 //
 // MessageId: EVENT_NBT_OPEN_REG_PARAMS
@@ -1253,7 +1248,7 @@ Notes:
 //
 //  Unable to open the Registry Parameters to read configuration information.
 //
-#define EVENT_NBT_OPEN_REG_PARAMS        0xC00010CDL
+#define EVENT_NBT_OPEN_REG_PARAMS 0xC00010CDL
 
 //
 // MessageId: EVENT_NBT_NO_BACKUP_WINS
@@ -1262,7 +1257,7 @@ Notes:
 //
 //  The backup WINS server address is not configured in the registry.
 //
-#define EVENT_NBT_NO_BACKUP_WINS         0x800010CEL
+#define EVENT_NBT_NO_BACKUP_WINS 0x800010CEL
 
 //
 // MessageId: EVENT_NBT_NO_WINS
@@ -1271,7 +1266,7 @@ Notes:
 //
 //  The primary WINS server address is not configured in the registry.
 //
-#define EVENT_NBT_NO_WINS                0x800010CFL
+#define EVENT_NBT_NO_WINS 0x800010CFL
 
 //
 // MessageId: EVENT_NBT_BAD_BACKUP_WINS_ADDR
@@ -1280,7 +1275,7 @@ Notes:
 //
 //  The backup WINS server address is not formated correctly in the registry.
 //
-#define EVENT_NBT_BAD_BACKUP_WINS_ADDR   0x800010D0L
+#define EVENT_NBT_BAD_BACKUP_WINS_ADDR 0x800010D0L
 
 //
 // MessageId: EVENT_NBT_BAD_PRIMARY_WINS_ADDR
@@ -1289,7 +1284,7 @@ Notes:
 //
 //  The primary WINS server address is not formated correctly in the registry.
 //
-#define EVENT_NBT_BAD_PRIMARY_WINS_ADDR  0x800010D1L
+#define EVENT_NBT_BAD_PRIMARY_WINS_ADDR 0x800010D1L
 
 //
 // MessageId: EVENT_NBT_NAME_SERVER_ADDRS
@@ -1298,7 +1293,7 @@ Notes:
 //
 //  Unable to configure the addresses of the WINS servers.
 //
-#define EVENT_NBT_NAME_SERVER_ADDRS      0xC00010D2L
+#define EVENT_NBT_NAME_SERVER_ADDRS 0xC00010D2L
 
 //
 // MessageId: EVENT_NBT_CREATE_ADDRESS
@@ -1307,7 +1302,7 @@ Notes:
 //
 //  Initialization failed because the transport refused to open initial Addresses.
 //
-#define EVENT_NBT_CREATE_ADDRESS         0xC00010D3L
+#define EVENT_NBT_CREATE_ADDRESS 0xC00010D3L
 
 //
 // MessageId: EVENT_NBT_CREATE_CONNECTION
@@ -1316,7 +1311,7 @@ Notes:
 //
 //  Initialization failed because the transport refused to open initial Connections.
 //
-#define EVENT_NBT_CREATE_CONNECTION      0xC00010D4L
+#define EVENT_NBT_CREATE_CONNECTION 0xC00010D4L
 
 //
 // MessageId: EVENT_NBT_NON_OS_INIT
@@ -1325,7 +1320,7 @@ Notes:
 //
 //  Data structure initialization failed.
 //
-#define EVENT_NBT_NON_OS_INIT            0xC00010D5L
+#define EVENT_NBT_NON_OS_INIT 0xC00010D5L
 
 //
 // MessageId: EVENT_NBT_TIMERS
@@ -1334,7 +1329,7 @@ Notes:
 //
 //  Initialization failed because the timers could not be started.
 //
-#define EVENT_NBT_TIMERS                 0xC00010D6L
+#define EVENT_NBT_TIMERS 0xC00010D6L
 
 //
 // MessageId: EVENT_NBT_CREATE_DEVICE
@@ -1343,7 +1338,7 @@ Notes:
 //
 //  Initialization failed because the driver device could not be created.
 //
-#define EVENT_NBT_CREATE_DEVICE          0xC00010D7L
+#define EVENT_NBT_CREATE_DEVICE 0xC00010D7L
 
 //
 // MessageId: EVENT_NBT_NO_DEVICES
@@ -1352,7 +1347,7 @@ Notes:
 //
 //  There are no adapters configured for this protocol stack.
 //
-#define EVENT_NBT_NO_DEVICES             0x800010D8L
+#define EVENT_NBT_NO_DEVICES 0x800010D8L
 
 //
 // MessageId: EVENT_NBT_OPEN_REG_LINKAGE
@@ -1361,7 +1356,7 @@ Notes:
 //
 //  Unable to open the Registry Linkage to read configuration information.
 //
-#define EVENT_NBT_OPEN_REG_LINKAGE       0xC00010D9L
+#define EVENT_NBT_OPEN_REG_LINKAGE 0xC00010D9L
 
 //
 // MessageId: EVENT_NBT_READ_BIND
@@ -1370,7 +1365,7 @@ Notes:
 //
 //  Unable to read the driver's bindings to the transport from the registry.
 //
-#define EVENT_NBT_READ_BIND              0xC00010DAL
+#define EVENT_NBT_READ_BIND 0xC00010DAL
 
 //
 // MessageId: EVENT_NBT_READ_EXPORT
@@ -1379,7 +1374,7 @@ Notes:
 //
 //  Unable to read the driver's exported linkage configuration information.
 //
-#define EVENT_NBT_READ_EXPORT            0xC00010DBL
+#define EVENT_NBT_READ_EXPORT 0xC00010DBL
 
 //
 // MessageId: EVENT_NBT_OPEN_REG_NAMESERVER
@@ -1388,7 +1383,7 @@ Notes:
 //
 //  Unable to open the Registry to read the WINS server addresses.
 //
-#define EVENT_NBT_OPEN_REG_NAMESERVER    0x800010DCL
+#define EVENT_NBT_OPEN_REG_NAMESERVER 0x800010DCL
 
 //
 // MessageId: EVENT_SCOPE_LABEL_TOO_LONG
@@ -1399,7 +1394,7 @@ Notes:
 //  in the Scope cannot be longer than 63 bytes.  Use the Control Panel, Network
 //  applet to change the scope.
 //
-#define EVENT_SCOPE_LABEL_TOO_LONG       0x800010DDL
+#define EVENT_SCOPE_LABEL_TOO_LONG 0x800010DDL
 
 //
 // MessageId: EVENT_SCOPE_TOO_LONG
@@ -1409,7 +1404,7 @@ Notes:
 //  The Netbios Name Scope is too long. The scope cannot be longer than
 //  255 bytes. Use the Control Panel, Network applet to change the scope.
 //
-#define EVENT_SCOPE_TOO_LONG             0x800010DEL
+#define EVENT_SCOPE_TOO_LONG 0x800010DEL
 
 //
 // MessageId: EVENT_NBT_DUPLICATE_NAME
@@ -1420,7 +1415,7 @@ Notes:
 //  the machine that sent the message is in the data. Use nbtstat -n in a
 //  command window to see which name is in the Conflict state.
 //
-#define EVENT_NBT_DUPLICATE_NAME         0xC00010DFL
+#define EVENT_NBT_DUPLICATE_NAME 0xC00010DFL
 
 //
 // MessageId: EVENT_NBT_NAME_RELEASE
@@ -1432,7 +1427,7 @@ Notes:
 //  of the node that sent the message is in the data. Use nbtstat -n in a
 //  command window to see which name is in the Conflict state.
 //
-#define EVENT_NBT_NAME_RELEASE           0xC00010E0L
+#define EVENT_NBT_NAME_RELEASE 0xC00010E0L
 
 //
 // MessageId: EVENT_NBT_DUPLICATE_NAME_ERROR
@@ -1443,7 +1438,7 @@ Notes:
 //  The machine with the IP address %4 did not allow the name to be claimed by
 //  this machine.
 //
-#define EVENT_NBT_DUPLICATE_NAME_ERROR   0xC00010E1L
+#define EVENT_NBT_DUPLICATE_NAME_ERROR 0xC00010E1L
 
 //
 // MessageId: EVENT_NBT_NO_RESOURCES
@@ -1453,7 +1448,7 @@ Notes:
 //  NetBT failed to process a request because it encountered OutOfResources
 //  exception(s) in the last 1 hour.
 //
-#define EVENT_NBT_NO_RESOURCES           0xC00010E2L
+#define EVENT_NBT_NO_RESOURCES 0xC00010E2L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -1472,7 +1467,7 @@ Notes:
 //
 //  %2 : Has encountered a conflict in resources and could not load.
 //
-#define EVENT_NDIS_RESOURCE_CONFLICT     0xC0001388L
+#define EVENT_NDIS_RESOURCE_CONFLICT 0xC0001388L
 
 //
 // MessageId: EVENT_NDIS_OUT_OF_RESOURCE
@@ -1481,7 +1476,7 @@ Notes:
 //
 //  %2 : Could not allocate the resources necessary for operation.
 //
-#define EVENT_NDIS_OUT_OF_RESOURCE       0xC0001389L
+#define EVENT_NDIS_OUT_OF_RESOURCE 0xC0001389L
 
 //
 // MessageId: EVENT_NDIS_HARDWARE_FAILURE
@@ -1490,7 +1485,7 @@ Notes:
 //
 //  %2 : Has determined that the adapter is not functioning properly.
 //
-#define EVENT_NDIS_HARDWARE_FAILURE      0xC000138AL
+#define EVENT_NDIS_HARDWARE_FAILURE 0xC000138AL
 
 //
 // MessageId: EVENT_NDIS_ADAPTER_NOT_FOUND
@@ -1499,7 +1494,7 @@ Notes:
 //
 //  %2 : Could not find an adapter.
 //
-#define EVENT_NDIS_ADAPTER_NOT_FOUND     0xC000138BL
+#define EVENT_NDIS_ADAPTER_NOT_FOUND 0xC000138BL
 
 //
 // MessageId: EVENT_NDIS_INTERRUPT_CONNECT
@@ -1508,7 +1503,7 @@ Notes:
 //
 //  %2 : Could not connect to the interrupt number supplied.
 //
-#define EVENT_NDIS_INTERRUPT_CONNECT     0xC000138CL
+#define EVENT_NDIS_INTERRUPT_CONNECT 0xC000138CL
 
 //
 // MessageId: EVENT_NDIS_DRIVER_FAILURE
@@ -1517,7 +1512,7 @@ Notes:
 //
 //  %2 : Has encountered an internal error and has failed.
 //
-#define EVENT_NDIS_DRIVER_FAILURE        0xC000138DL
+#define EVENT_NDIS_DRIVER_FAILURE 0xC000138DL
 
 //
 // MessageId: EVENT_NDIS_BAD_VERSION
@@ -1526,7 +1521,7 @@ Notes:
 //
 //  %2 : The version number is incorrect for this driver.
 //
-#define EVENT_NDIS_BAD_VERSION           0xC000138EL
+#define EVENT_NDIS_BAD_VERSION 0xC000138EL
 
 //
 // MessageId: EVENT_NDIS_TIMEOUT
@@ -1535,7 +1530,7 @@ Notes:
 //
 //  %2 : Timed out during an operation.
 //
-#define EVENT_NDIS_TIMEOUT               0x8000138FL
+#define EVENT_NDIS_TIMEOUT 0x8000138FL
 
 //
 // MessageId: EVENT_NDIS_NETWORK_ADDRESS
@@ -1544,7 +1539,7 @@ Notes:
 //
 //  %2 : Has encountered an invalid network address.
 //
-#define EVENT_NDIS_NETWORK_ADDRESS       0xC0001390L
+#define EVENT_NDIS_NETWORK_ADDRESS 0xC0001390L
 
 //
 // MessageId: EVENT_NDIS_UNSUPPORTED_CONFIGURATION
@@ -1580,7 +1575,7 @@ Notes:
 //
 //  %2 : The I/O base address supplied does not match the jumpers on the adapter.
 //
-#define EVENT_NDIS_BAD_IO_BASE_ADDRESS   0xC0001394L
+#define EVENT_NDIS_BAD_IO_BASE_ADDRESS 0xC0001394L
 
 //
 // MessageId: EVENT_NDIS_RECEIVE_SPACE_SMALL
@@ -1590,7 +1585,7 @@ Notes:
 //  %2 : The adapter is configured such that the receive space is smaller than
 //  the maximum packet size.  Some packets may be lost.
 //
-#define EVENT_NDIS_RECEIVE_SPACE_SMALL   0x40001395L
+#define EVENT_NDIS_RECEIVE_SPACE_SMALL 0x40001395L
 
 //
 // MessageId: EVENT_NDIS_ADAPTER_DISABLED
@@ -1599,7 +1594,7 @@ Notes:
 //
 //  %2 : The adapter is disabled.  The driver cannot open the adapter.
 //
-#define EVENT_NDIS_ADAPTER_DISABLED      0x80001396L
+#define EVENT_NDIS_ADAPTER_DISABLED 0x80001396L
 
 //
 // MessageId: EVENT_NDIS_IO_PORT_CONFLICT
@@ -1608,7 +1603,7 @@ Notes:
 //
 //  %2 : There is an I/O port conflict.
 //
-#define EVENT_NDIS_IO_PORT_CONFLICT      0x80001397L
+#define EVENT_NDIS_IO_PORT_CONFLICT 0x80001397L
 
 //
 // MessageId: EVENT_NDIS_PORT_OR_DMA_CONFLICT
@@ -1617,7 +1612,7 @@ Notes:
 //
 //  %2 : There is an I/O port or DMA channel conflict.
 //
-#define EVENT_NDIS_PORT_OR_DMA_CONFLICT  0x80001398L
+#define EVENT_NDIS_PORT_OR_DMA_CONFLICT 0x80001398L
 
 //
 // MessageId: EVENT_NDIS_MEMORY_CONFLICT
@@ -1626,7 +1621,7 @@ Notes:
 //
 //  %2 : There is a memory conflict at address 0x%3.
 //
-#define EVENT_NDIS_MEMORY_CONFLICT       0x80001399L
+#define EVENT_NDIS_MEMORY_CONFLICT 0x80001399L
 
 //
 // MessageId: EVENT_NDIS_INTERRUPT_CONFLICT
@@ -1635,7 +1630,7 @@ Notes:
 //
 //  %2 : There is a interrupt conflict at interrupt number %3.
 //
-#define EVENT_NDIS_INTERRUPT_CONFLICT    0x8000139AL
+#define EVENT_NDIS_INTERRUPT_CONFLICT 0x8000139AL
 
 //
 // MessageId: EVENT_NDIS_DMA_CONFLICT
@@ -1644,7 +1639,7 @@ Notes:
 //
 //  %2 : There is a resource conflict at DMA channel %3.
 //
-#define EVENT_NDIS_DMA_CONFLICT          0x8000139BL
+#define EVENT_NDIS_DMA_CONFLICT 0x8000139BL
 
 //
 // MessageId: EVENT_NDIS_INVALID_DOWNLOAD_FILE_ERROR
@@ -1663,7 +1658,7 @@ Notes:
 //  %2 : The specified Registry entry MaxReceives is out of range.  Using
 //  default value.
 //
-#define EVENT_NDIS_MAXRECEIVES_ERROR     0x8000139DL
+#define EVENT_NDIS_MAXRECEIVES_ERROR 0x8000139DL
 
 //
 // MessageId: EVENT_NDIS_MAXTRANSMITS_ERROR
@@ -1673,7 +1668,7 @@ Notes:
 //  %2 : The specified Registry entry MaxTransmits is out of range.  Using
 //  default value.
 //
-#define EVENT_NDIS_MAXTRANSMITS_ERROR    0x8000139EL
+#define EVENT_NDIS_MAXTRANSMITS_ERROR 0x8000139EL
 
 //
 // MessageId: EVENT_NDIS_MAXFRAMESIZE_ERROR
@@ -1683,7 +1678,7 @@ Notes:
 //  %2 : The specified Registry entry MaxFrameSize is out of range.  Using
 //  default value.
 //
-#define EVENT_NDIS_MAXFRAMESIZE_ERROR    0x8000139FL
+#define EVENT_NDIS_MAXFRAMESIZE_ERROR 0x8000139FL
 
 //
 // MessageId: EVENT_NDIS_MAXINTERNALBUFS_ERROR
@@ -1703,7 +1698,7 @@ Notes:
 //  %2 : The specified Registry entry MaxMulticast is out of range.  Using
 //  default value.
 //
-#define EVENT_NDIS_MAXMULTICAST_ERROR    0x800013A1L
+#define EVENT_NDIS_MAXMULTICAST_ERROR 0x800013A1L
 
 //
 // MessageId: EVENT_NDIS_PRODUCTID_ERROR
@@ -1713,7 +1708,7 @@ Notes:
 //  %2 : The specified Registry entry ProductId is out of range.  Using
 //  default value.
 //
-#define EVENT_NDIS_PRODUCTID_ERROR       0x800013A2L
+#define EVENT_NDIS_PRODUCTID_ERROR 0x800013A2L
 
 //
 // MessageId: EVENT_NDIS_LOBE_FAILUE_ERROR
@@ -1724,7 +1719,7 @@ Notes:
 //  connections.  The adapter will continue to try to reinsert back
 //  into the ring.
 //
-#define EVENT_NDIS_LOBE_FAILUE_ERROR     0x800013A3L
+#define EVENT_NDIS_LOBE_FAILUE_ERROR 0x800013A3L
 
 //
 // MessageId: EVENT_NDIS_SIGNAL_LOSS_ERROR
@@ -1734,7 +1729,7 @@ Notes:
 //  %2 : The adapter had detected a loss of signal on the ring.  The adapter
 //  will continue to try to reinsert back into the ring.
 //
-#define EVENT_NDIS_SIGNAL_LOSS_ERROR     0x800013A4L
+#define EVENT_NDIS_SIGNAL_LOSS_ERROR 0x800013A4L
 
 //
 // MessageId: EVENT_NDIS_REMOVE_RECEIVED_ERROR
@@ -1763,7 +1758,7 @@ Notes:
 //  %2 : The adapter has detected an Adapter Check as a result of some
 //  unrecoverable hardware of software error.  Please contact your service provider.
 //
-#define EVENT_NDIS_ADAPTER_CHECK_ERROR   0xC00013A7L
+#define EVENT_NDIS_ADAPTER_CHECK_ERROR 0xC00013A7L
 
 //
 // MessageId: EVENT_NDIS_RESET_FAILURE_ERROR
@@ -1773,7 +1768,7 @@ Notes:
 //  %2 : The adapter failed to reset within a specified time.  The adapter will
 //  continue to try to reset.  This could be the result of a hardware failure.
 //
-#define EVENT_NDIS_RESET_FAILURE_ERROR   0x800013A8L
+#define EVENT_NDIS_RESET_FAILURE_ERROR 0x800013A8L
 
 //
 // MessageId: EVENT_NDIS_CABLE_DISCONNECTED_ERROR
@@ -1812,7 +1807,7 @@ Notes:
 //
 //  The %1 log file is full.
 //
-#define EVENT_LOG_FULL                   0x80001770L
+#define EVENT_LOG_FULL 0x80001770L
 
 //
 // MessageId: EVENT_LogFileNotOpened
@@ -1821,7 +1816,7 @@ Notes:
 //
 //  The %1 log file cannot be opened.
 //
-#define EVENT_LogFileNotOpened           0x80001771L
+#define EVENT_LogFileNotOpened 0x80001771L
 
 //
 // MessageId: EVENT_LogFileCorrupt
@@ -1830,7 +1825,7 @@ Notes:
 //
 //  The %1 log file is corrupted and will be cleared.
 //
-#define EVENT_LogFileCorrupt             0x80001772L
+#define EVENT_LogFileCorrupt 0x80001772L
 
 //
 // MessageId: EVENT_DefaultLogCorrupt
@@ -1840,7 +1835,7 @@ Notes:
 //  The Application log file could not be opened.  %1 will be used as the default
 //  log file.
 //
-#define EVENT_DefaultLogCorrupt          0x80001773L
+#define EVENT_DefaultLogCorrupt 0x80001773L
 
 //
 // MessageId: EVENT_BadDriverPacket
@@ -1850,7 +1845,7 @@ Notes:
 //  A driver packet received from the I/O subsystem was invalid.  The data is the
 //  packet.
 //
-#define EVENT_BadDriverPacket            0x80001774L
+#define EVENT_BadDriverPacket 0x80001774L
 
 //
 // MessageId: EVENT_EventlogStarted
@@ -1859,7 +1854,7 @@ Notes:
 //
 //  The Event log service was started.
 //
-#define EVENT_EventlogStarted            0x80001775L
+#define EVENT_EventlogStarted 0x80001775L
 
 //
 // MessageId: EVENT_EventlogStopped
@@ -1868,7 +1863,7 @@ Notes:
 //
 //  The Event log service was stopped.
 //
-#define EVENT_EventlogStopped            0x80001776L
+#define EVENT_EventlogStopped 0x80001776L
 
 //
 // MessageId: TITLE_EventlogMessageBox
@@ -1877,7 +1872,7 @@ Notes:
 //
 //  Eventlog Service %0
 //
-#define TITLE_EventlogMessageBox         0x80001777L
+#define TITLE_EventlogMessageBox 0x80001777L
 
 //
 // MessageId: EVENT_EventlogAbnormalShutdown
@@ -1886,7 +1881,7 @@ Notes:
 //
 //  The previous system shutdown at %1 on %2 was unexpected.
 //
-#define EVENT_EventlogAbnormalShutdown   0x80001778L
+#define EVENT_EventlogAbnormalShutdown 0x80001778L
 
 //
 // MessageId: EVENT_EventLogProductInfo
@@ -1895,7 +1890,7 @@ Notes:
 //
 //  Microsoft (R) Windows (R) %1 %2 %3 %4.
 //
-#define EVENT_EventLogProductInfo        0x80001779L
+#define EVENT_EventLogProductInfo 0x80001779L
 
 //
 // MessageId: EVENT_ServiceNoEventLog
@@ -1904,7 +1899,7 @@ Notes:
 //
 //  The %1 service was unable to set up an event source.
 //
-#define EVENT_ServiceNoEventLog          0xC000177AL
+#define EVENT_ServiceNoEventLog 0xC000177AL
 
 //
 // MessageId: EVENT_ComputerNameChange
@@ -1913,7 +1908,7 @@ Notes:
 //
 //  The NetBIOS name and DNS host name of this machine have been changed from %1 to %2.
 //
-#define EVENT_ComputerNameChange         0xC000177BL
+#define EVENT_ComputerNameChange 0xC000177BL
 
 //
 // MessageId: EVENT_DNSDomainNameChange
@@ -1922,7 +1917,7 @@ Notes:
 //
 //  The DNS domain assigned to this computer has been changed from %1 to %2.
 //
-#define EVENT_DNSDomainNameChange        0xC000177CL
+#define EVENT_DNSDomainNameChange 0xC000177CL
 
 //
 // System Events 6100 - 6199
@@ -1934,7 +1929,7 @@ Notes:
 //
 //  A uniprocessor-specific driver was loaded on a multiprocessor system.  The driver could not load.
 //
-#define EVENT_UP_DRIVER_ON_MP            0xC00017D4L
+#define EVENT_UP_DRIVER_ON_MP 0xC00017D4L
 
 //
 // Service Controller Events 7000 - 7899
@@ -1946,7 +1941,7 @@ Notes:
 //
 //  The %1 service failed to start due to the following error: %n%2
 //
-#define EVENT_SERVICE_START_FAILED       0xC0001B58L
+#define EVENT_SERVICE_START_FAILED 0xC0001B58L
 
 //
 // MessageId: EVENT_SERVICE_START_FAILED_II
@@ -1955,7 +1950,7 @@ Notes:
 //
 //  The %1 service depends on the %2 service which failed to start because of the following error: %n%3
 //
-#define EVENT_SERVICE_START_FAILED_II    0xC0001B59L
+#define EVENT_SERVICE_START_FAILED_II 0xC0001B59L
 
 //
 // MessageId: EVENT_SERVICE_START_FAILED_GROUP
@@ -1973,7 +1968,7 @@ Notes:
 //
 //  The %1 service depends on the following nonexistent service: %2
 //
-#define EVENT_SERVICE_START_FAILED_NONE  0xC0001B5BL
+#define EVENT_SERVICE_START_FAILED_NONE 0xC0001B5BL
 
 //
 // MessageId: EVENT_CALL_TO_FUNCTION_FAILED
@@ -1982,7 +1977,7 @@ Notes:
 //
 //  The %1 call failed with the following error: %n%2
 //
-#define EVENT_CALL_TO_FUNCTION_FAILED    0xC0001B5DL
+#define EVENT_CALL_TO_FUNCTION_FAILED 0xC0001B5DL
 
 //
 // MessageId: EVENT_CALL_TO_FUNCTION_FAILED_II
@@ -2000,7 +1995,7 @@ Notes:
 //
 //  The system reverted to its last known good configuration.  The system is restarting....
 //
-#define EVENT_REVERTED_TO_LASTKNOWNGOOD  0xC0001B5FL
+#define EVENT_REVERTED_TO_LASTKNOWNGOOD 0xC0001B5FL
 
 //
 // MessageId: EVENT_BAD_ACCOUNT_NAME
@@ -2009,7 +2004,7 @@ Notes:
 //
 //  No backslash is in the account name.
 //
-#define EVENT_BAD_ACCOUNT_NAME           0xC0001B60L
+#define EVENT_BAD_ACCOUNT_NAME 0xC0001B60L
 
 //
 // MessageId: EVENT_CONNECTION_TIMEOUT
@@ -2018,7 +2013,7 @@ Notes:
 //
 //  Timeout (%1 milliseconds) waiting for the %2 service to connect.
 //
-#define EVENT_CONNECTION_TIMEOUT         0xC0001B61L
+#define EVENT_CONNECTION_TIMEOUT 0xC0001B61L
 
 //
 // MessageId: EVENT_READFILE_TIMEOUT
@@ -2027,7 +2022,7 @@ Notes:
 //
 //  Timeout (%1 milliseconds) waiting for ReadFile.
 //
-#define EVENT_READFILE_TIMEOUT           0xC0001B62L
+#define EVENT_READFILE_TIMEOUT 0xC0001B62L
 
 //
 // MessageId: EVENT_TRANSACT_TIMEOUT
@@ -2036,7 +2031,7 @@ Notes:
 //
 //  Timeout (%1 milliseconds) waiting for a transaction response from the %2 service.
 //
-#define EVENT_TRANSACT_TIMEOUT           0xC0001B63L
+#define EVENT_TRANSACT_TIMEOUT 0xC0001B63L
 
 //
 // MessageId: EVENT_TRANSACT_INVALID
@@ -2045,7 +2040,7 @@ Notes:
 //
 //  Message returned in transaction has incorrect size.
 //
-#define EVENT_TRANSACT_INVALID           0xC0001B64L
+#define EVENT_TRANSACT_INVALID 0xC0001B64L
 
 //
 // MessageId: EVENT_FIRST_LOGON_FAILED
@@ -2054,7 +2049,7 @@ Notes:
 //
 //  Logon attempt with current password failed with the following error: %n%1
 //
-#define EVENT_FIRST_LOGON_FAILED         0xC0001B65L
+#define EVENT_FIRST_LOGON_FAILED 0xC0001B65L
 
 //
 // MessageId: EVENT_SECOND_LOGON_FAILED
@@ -2063,7 +2058,7 @@ Notes:
 //
 //  Second logon attempt with old password also failed with the following error: %n%1
 //
-#define EVENT_SECOND_LOGON_FAILED        0xC0001B66L
+#define EVENT_SECOND_LOGON_FAILED 0xC0001B66L
 
 //
 // MessageId: EVENT_INVALID_DRIVER_DEPENDENCY
@@ -2072,7 +2067,7 @@ Notes:
 //
 //  Boot-start or system-start driver (%1) must not depend on a service.
 //
-#define EVENT_INVALID_DRIVER_DEPENDENCY  0xC0001B67L
+#define EVENT_INVALID_DRIVER_DEPENDENCY 0xC0001B67L
 
 //
 // MessageId: EVENT_BAD_SERVICE_STATE
@@ -2081,7 +2076,7 @@ Notes:
 //
 //  The %1 service has reported an invalid current state %2.
 //
-#define EVENT_BAD_SERVICE_STATE          0xC0001B68L
+#define EVENT_BAD_SERVICE_STATE 0xC0001B68L
 
 //
 // MessageId: EVENT_CIRCULAR_DEPENDENCY_DEMAND
@@ -2099,7 +2094,7 @@ Notes:
 //
 //  Detected circular dependencies auto-starting services.
 //
-#define EVENT_CIRCULAR_DEPENDENCY_AUTO   0xC0001B6AL
+#define EVENT_CIRCULAR_DEPENDENCY_AUTO 0xC0001B6AL
 
 //
 // MessageId: EVENT_DEPEND_ON_LATER_SERVICE
@@ -2108,7 +2103,7 @@ Notes:
 //
 //  Circular dependency: The %1 service depends on a service in a group which starts later.
 //
-#define EVENT_DEPEND_ON_LATER_SERVICE    0xC0001B6BL
+#define EVENT_DEPEND_ON_LATER_SERVICE 0xC0001B6BL
 
 //
 // MessageId: EVENT_DEPEND_ON_LATER_GROUP
@@ -2117,7 +2112,7 @@ Notes:
 //
 //  Circular dependency: The %1 service depends on a group which starts later.
 //
-#define EVENT_DEPEND_ON_LATER_GROUP      0xC0001B6CL
+#define EVENT_DEPEND_ON_LATER_GROUP 0xC0001B6CL
 
 //
 // MessageId: EVENT_SEVERE_SERVICE_FAILED
@@ -2126,7 +2121,7 @@ Notes:
 //
 //  About to revert to the last known good configuration because the %1 service failed to start.
 //
-#define EVENT_SEVERE_SERVICE_FAILED      0xC0001B6DL
+#define EVENT_SEVERE_SERVICE_FAILED 0xC0001B6DL
 
 //
 // MessageId: EVENT_SERVICE_START_HUNG
@@ -2135,7 +2130,7 @@ Notes:
 //
 //  The %1 service hung on starting.
 //
-#define EVENT_SERVICE_START_HUNG         0xC0001B6EL
+#define EVENT_SERVICE_START_HUNG 0xC0001B6EL
 
 //
 // MessageId: EVENT_SERVICE_EXIT_FAILED
@@ -2144,7 +2139,7 @@ Notes:
 //
 //  The %1 service terminated with the following error: %n%2
 //
-#define EVENT_SERVICE_EXIT_FAILED        0xC0001B6FL
+#define EVENT_SERVICE_EXIT_FAILED 0xC0001B6FL
 
 //
 // MessageId: EVENT_SERVICE_EXIT_FAILED_SPECIFIC
@@ -2180,7 +2175,7 @@ Notes:
 //
 //  Windows 2000 could not be started as configured.  A previous working configuration was used instead.
 //
-#define EVENT_RUNNING_LASTKNOWNGOOD      0xC0001B73L
+#define EVENT_RUNNING_LASTKNOWNGOOD 0xC0001B73L
 
 //
 // MessageId: EVENT_TAKE_OWNERSHIP
@@ -2189,7 +2184,7 @@ Notes:
 //
 //  The %1 Registry key denied access to SYSTEM account programs so the Service Control Manager took ownership of the Registry key.
 //
-#define EVENT_TAKE_OWNERSHIP             0xC0001B74L
+#define EVENT_TAKE_OWNERSHIP 0xC0001B74L
 
 //
 // This Text is used as a title for the message box used to display
@@ -2202,7 +2197,7 @@ Notes:
 //
 //  Service Control Manager %0
 //
-#define TITLE_SC_MESSAGE_BOX             0xC0001B75L
+#define TITLE_SC_MESSAGE_BOX 0xC0001B75L
 
 //
 // MessageId: EVENT_SERVICE_NOT_INTERACTIVE
@@ -2211,7 +2206,7 @@ Notes:
 //
 //  The %1 service is marked as an interactive service.  However, the system is configured to not allow interactive services.  This service may not function properly.
 //
-#define EVENT_SERVICE_NOT_INTERACTIVE    0xC0001B76L
+#define EVENT_SERVICE_NOT_INTERACTIVE 0xC0001B76L
 
 //
 // Parameter %4 is the value, in decimal, of the SC_ACTION_ constant for
@@ -2224,7 +2219,7 @@ Notes:
 //
 //  The %1 service terminated unexpectedly.  It has done this %2 time(s).  The following corrective action will be taken in %3 milliseconds: %5.
 //
-#define EVENT_SERVICE_CRASH              0xC0001B77L
+#define EVENT_SERVICE_CRASH 0xC0001B77L
 
 //
 // Parameter %1 is the value, in decimal, of the SC_ACTION_ constant for
@@ -2237,7 +2232,7 @@ Notes:
 //
 //  The Service Control Manager tried to take a corrective action (%2) after the unexpected termination of the %3 service, but this action failed with the following error: %n%4
 //
-#define EVENT_SERVICE_RECOVERY_FAILED    0xC0001B78L
+#define EVENT_SERVICE_RECOVERY_FAILED 0xC0001B78L
 
 //
 // MessageId: EVENT_SERVICE_SCESRV_FAILED
@@ -2248,7 +2243,7 @@ Notes:
 //  configuration server (scesrv.dll) failed to initialize with error %1.  The
 //  system is restarting...
 //
-#define EVENT_SERVICE_SCESRV_FAILED      0xC0001B79L
+#define EVENT_SERVICE_SCESRV_FAILED 0xC0001B79L
 
 //
 // MessageId: EVENT_SERVICE_CRASH_NO_ACTION
@@ -2257,7 +2252,7 @@ Notes:
 //
 //  The %1 service terminated unexpectedly.  It has done this %2 time(s).
 //
-#define EVENT_SERVICE_CRASH_NO_ACTION    0xC0001B7AL
+#define EVENT_SERVICE_CRASH_NO_ACTION 0xC0001B7AL
 
 //
 // Parameter %2 is the string name of the control
@@ -2269,7 +2264,7 @@ Notes:
 //
 //  The %1 service was successfully sent a %2 control.
 //
-#define EVENT_SERVICE_CONTROL_SUCCESS    0x40001B7BL
+#define EVENT_SERVICE_CONTROL_SUCCESS 0x40001B7BL
 
 //
 // Parameter %2 is the string name of the control
@@ -2281,7 +2276,7 @@ Notes:
 //
 //  The %1 service entered the %2 state.
 //
-#define EVENT_SERVICE_STATUS_SUCCESS     0x40001B7CL
+#define EVENT_SERVICE_STATUS_SUCCESS 0x40001B7CL
 
 //
 // MessageId: EVENT_SERVICE_CONFIG_BACKOUT_FAILED
@@ -2290,7 +2285,7 @@ Notes:
 //
 //  The Service Control Manager encountered an error undoing a configuration change
 //  to the %1 service.  The service's %2 is currently in an unpredictable state.
-//  
+//
 //  If you do not correct this configuration, you may not be able to restart the %1
 //  service or may encounter other errors.  To ensure that the service is configured
 //  properly, use the Services snap-in in Microsoft Management Console (MMC).
@@ -2307,7 +2302,7 @@ Notes:
 //  configured properly, use the Services snap-in in Microsoft Management
 //  Console (MMC).
 //
-#define EVENT_FIRST_LOGON_FAILED_II      0xC0001B7EL
+#define EVENT_FIRST_LOGON_FAILED_II 0xC0001B7EL
 
 //
 // Schedule (AT command) Service Events 7900 - 7999
@@ -2321,7 +2316,7 @@ Notes:
 //  configured to not allow interactive command execution.  This command may not
 //  function properly.
 //
-#define EVENT_COMMAND_NOT_INTERACTIVE    0xC0001EDCL
+#define EVENT_COMMAND_NOT_INTERACTIVE 0xC0001EDCL
 
 //
 // MessageId: EVENT_COMMAND_START_FAILED
@@ -2330,7 +2325,7 @@ Notes:
 //
 //  The %1 command failed to start due to the following error: %n%2
 //
-#define EVENT_COMMAND_START_FAILED       0xC0001EDDL
+#define EVENT_COMMAND_START_FAILED 0xC0001EDDL
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -2379,7 +2374,7 @@ Notes:
 //
 //  The browser has received an illegal datagram from the remote computer %2 to name %3 on transport %4.  The data is the datagram.
 //
-#define EVENT_BOWSER_ILLEGAL_DATAGRAM    0x80001F46L
+#define EVENT_BOWSER_ILLEGAL_DATAGRAM 0x80001F46L
 
 //
 // MessageId: EVENT_BROWSER_STATUS_BITS_UPDATE_FAILED
@@ -2434,7 +2429,7 @@ Notes:
 //
 //  The browser driver has received an election packet from computer %2 on network %3.  The data is the packet received.
 //
-#define EVENT_BOWSER_ELECTION_RECEIVED   0x00001F4CL
+#define EVENT_BOWSER_ELECTION_RECEIVED 0x00001F4CL
 
 //
 // MessageId: EVENT_BOWSER_ELECTION_SENT_GETBLIST_FAILED
@@ -2537,7 +2532,7 @@ Notes:
 //
 //  The value for the parameter %1 to the browser service was illegal.
 //
-#define EVENT_BROWSER_ILLEGAL_CONFIG     0x80001F57L
+#define EVENT_BROWSER_ILLEGAL_CONFIG 0x80001F57L
 
 //
 // MessageId: EVENT_BOWSER_OLD_BACKUP_FOUND
@@ -2546,7 +2541,7 @@ Notes:
 //
 //  The backup browser server %2 is out-of-date.  Consider upgrading this computer.
 //
-#define EVENT_BOWSER_OLD_BACKUP_FOUND    0x40001F58L
+#define EVENT_BOWSER_OLD_BACKUP_FOUND 0x40001F58L
 
 //
 // MessageId: EVENT_BROWSER_SERVER_LIST_RETRIEVED
@@ -2577,7 +2572,7 @@ Notes:
 //  The data contains the election version, election criteria, and remote computer time up, and the same information for
 //  the current computer.
 //
-#define EVENT_BOWSER_PDC_LOST_ELECTION   0x40001F5BL
+#define EVENT_BOWSER_PDC_LOST_ELECTION 0x40001F5BL
 
 //
 // MessageId: EVENT_BOWSER_NON_PDC_WON_ELECTION
@@ -2597,7 +2592,7 @@ Notes:
 //
 //  The browser driver was unable to initialize variables from the Registry.
 //
-#define EVENT_BOWSER_CANT_READ_REGISTRY  0x40001F5DL
+#define EVENT_BOWSER_CANT_READ_REGISTRY 0x40001F5DL
 
 //
 // MessageId: EVENT_BOWSER_MAILSLOT_DATAGRAM_THRESHOLD_EXCEEDED
@@ -2625,7 +2620,7 @@ Notes:
 //  The browser service has failed to retrieve the backup list too many times on transport %1.
 //  The backup browser is stopping.
 //
-#define EVENT_BROWSER_BACKUP_STOPPED     0xC0001F60L
+#define EVENT_BROWSER_BACKUP_STOPPED 0xC0001F60L
 
 //
 // MessageId: EVENT_BROWSER_ELECTION_SENT_LANMAN_NT_STOPPED
@@ -2679,7 +2674,7 @@ Notes:
 //
 //  The Registry Key %1 was not present.  The Sap Agent could not start.
 //
-#define NWSAP_EVENT_KEY_NOT_FOUND        0xC0002134L
+#define NWSAP_EVENT_KEY_NOT_FOUND 0xC0002134L
 
 //
 // MessageId: NWSAP_EVENT_WSASTARTUP_FAILED
@@ -2688,7 +2683,7 @@ Notes:
 //
 //  Winsock startup routine failed.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_WSASTARTUP_FAILED    0xC0002135L
+#define NWSAP_EVENT_WSASTARTUP_FAILED 0xC0002135L
 
 //
 // MessageId: NWSAP_EVENT_SOCKET_FAILED
@@ -2697,7 +2692,7 @@ Notes:
 //
 //  Socket create call failed for main socket. The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_SOCKET_FAILED        0xC0002136L
+#define NWSAP_EVENT_SOCKET_FAILED 0xC0002136L
 
 //
 // MessageId: NWSAP_EVENT_SETOPTBCAST_FAILED
@@ -2706,7 +2701,7 @@ Notes:
 //
 //  Setting broadcast option on socket failed.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_SETOPTBCAST_FAILED   0xC0002137L
+#define NWSAP_EVENT_SETOPTBCAST_FAILED 0xC0002137L
 
 //
 // MessageId: NWSAP_EVENT_BIND_FAILED
@@ -2715,7 +2710,7 @@ Notes:
 //
 //  Binding to SAP Socket failed.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_BIND_FAILED          0xC0002138L
+#define NWSAP_EVENT_BIND_FAILED 0xC0002138L
 
 //
 // MessageId: NWSAP_EVENT_GETSOCKNAME_FAILED
@@ -2724,7 +2719,7 @@ Notes:
 //
 //  Getting bound address of socket failed.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_GETSOCKNAME_FAILED   0xC0002139L
+#define NWSAP_EVENT_GETSOCKNAME_FAILED 0xC0002139L
 
 //
 // MessageId: NWSAP_EVENT_OPTEXTENDEDADDR_FAILED
@@ -2751,7 +2746,7 @@ Notes:
 //
 //  Error allocating memory to hold a card structure.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_CARDMALLOC_FAILED    0xC000213CL
+#define NWSAP_EVENT_CARDMALLOC_FAILED 0xC000213CL
 
 //
 // MessageId: NWSAP_EVENT_NOCARDS
@@ -2760,7 +2755,7 @@ Notes:
 //
 //  Enumeration of cards returned 0 cards.
 //
-#define NWSAP_EVENT_NOCARDS              0xC000213DL
+#define NWSAP_EVENT_NOCARDS 0xC000213DL
 
 //
 // MessageId: NWSAP_EVENT_THREADEVENT_FAIL
@@ -2769,7 +2764,7 @@ Notes:
 //
 //  Error creating thread counting event.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_THREADEVENT_FAIL     0xC000213EL
+#define NWSAP_EVENT_THREADEVENT_FAIL 0xC000213EL
 
 //
 // MessageId: NWSAP_EVENT_RECVSEM_FAIL
@@ -2778,7 +2773,7 @@ Notes:
 //
 //  Error creating receive semaphore.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_RECVSEM_FAIL         0xC000213FL
+#define NWSAP_EVENT_RECVSEM_FAIL 0xC000213FL
 
 //
 // MessageId: NWSAP_EVENT_SENDEVENT_FAIL
@@ -2787,7 +2782,7 @@ Notes:
 //
 //  Error creating send event.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_SENDEVENT_FAIL       0xC0002140L
+#define NWSAP_EVENT_SENDEVENT_FAIL 0xC0002140L
 
 //
 // MessageId: NWSAP_EVENT_STARTRECEIVE_ERROR
@@ -2796,7 +2791,7 @@ Notes:
 //
 //  Error starting receive thread.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_STARTRECEIVE_ERROR   0xC0002141L
+#define NWSAP_EVENT_STARTRECEIVE_ERROR 0xC0002141L
 
 //
 // MessageId: NWSAP_EVENT_STARTWORKER_ERROR
@@ -2805,7 +2800,7 @@ Notes:
 //
 //  Error starting worker thread.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_STARTWORKER_ERROR    0xC0002142L
+#define NWSAP_EVENT_STARTWORKER_ERROR 0xC0002142L
 
 //
 // MessageId: NWSAP_EVENT_TABLE_MALLOC_FAILED
@@ -2814,7 +2809,7 @@ Notes:
 //
 //  Error allocating database array.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_TABLE_MALLOC_FAILED  0xC0002143L
+#define NWSAP_EVENT_TABLE_MALLOC_FAILED 0xC0002143L
 
 //
 // MessageId: NWSAP_EVENT_HASHTABLE_MALLOC_FAILED
@@ -2841,7 +2836,7 @@ Notes:
 //
 //  Error creating the LPC port.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_CREATELPCPORT_ERROR  0xC0002146L
+#define NWSAP_EVENT_CREATELPCPORT_ERROR 0xC0002146L
 
 //
 // MessageId: NWSAP_EVENT_CREATELPCEVENT_ERROR
@@ -2877,7 +2872,7 @@ Notes:
 //
 //  The value for WANFilter in the registry must be 0-2.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_BADWANFILTER_VALUE   0xC000214AL
+#define NWSAP_EVENT_BADWANFILTER_VALUE 0xC000214AL
 
 //
 // MessageId: NWSAP_EVENT_CARDLISTEVENT_FAIL
@@ -2886,7 +2881,7 @@ Notes:
 //
 //  Error creating event for card list access synchronization.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_CARDLISTEVENT_FAIL   0xC000214BL
+#define NWSAP_EVENT_CARDLISTEVENT_FAIL 0xC000214BL
 
 //
 // MessageId: NWSAP_EVENT_SDMDEVENT_FAIL
@@ -2895,7 +2890,7 @@ Notes:
 //
 //  Error creating event for database access synchronization.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_SDMDEVENT_FAIL       0xC000214CL
+#define NWSAP_EVENT_SDMDEVENT_FAIL 0xC000214CL
 
 //
 // MessageId: NWSAP_EVENT_INVALID_FILTERNAME
@@ -2904,7 +2899,7 @@ Notes:
 //
 //  Name too long in key %1: Name = %s.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_INVALID_FILTERNAME   0x8000214DL
+#define NWSAP_EVENT_INVALID_FILTERNAME 0x8000214DL
 
 //
 // MessageId: NWSAP_EVENT_WANSEM_FAIL
@@ -2913,7 +2908,7 @@ Notes:
 //
 //  Error creating WAN control semaphore.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_WANSEM_FAIL          0xC000214EL
+#define NWSAP_EVENT_WANSEM_FAIL 0xC000214EL
 
 //
 // MessageId: NWSAP_EVENT_WANSOCKET_FAILED
@@ -2922,7 +2917,7 @@ Notes:
 //
 //  Socket create call failed for WAN socket.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_WANSOCKET_FAILED     0xC000214FL
+#define NWSAP_EVENT_WANSOCKET_FAILED 0xC000214FL
 
 //
 // MessageId: NWSAP_EVENT_WANBIND_FAILED
@@ -2931,7 +2926,7 @@ Notes:
 //
 //  Binding to WAN socket failed.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_WANBIND_FAILED       0xC0002150L
+#define NWSAP_EVENT_WANBIND_FAILED 0xC0002150L
 
 //
 // MessageId: NWSAP_EVENT_STARTWANWORKER_ERROR
@@ -2949,7 +2944,7 @@ Notes:
 //
 //  Error starting WAN check thread.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_STARTWANCHECK_ERROR  0xC0002152L
+#define NWSAP_EVENT_STARTWANCHECK_ERROR 0xC0002152L
 
 //
 // MessageId: NWSAP_EVENT_OPTMAXADAPTERNUM_ERROR
@@ -2976,7 +2971,7 @@ Notes:
 //
 //  Error creating the WAN thread event.  The Sap Agent cannot continue.
 //
-#define NWSAP_EVENT_WANEVENT_ERROR       0xC0002155L
+#define NWSAP_EVENT_WANEVENT_ERROR 0xC0002155L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -2994,7 +2989,7 @@ Notes:
 //
 //  %2 could not allocate a resource of type %3 due to system resource problems.
 //
-#define EVENT_TRANSPORT_RESOURCE_POOL    0x80002329L
+#define EVENT_TRANSPORT_RESOURCE_POOL 0x80002329L
 
 //
 // MessageId: EVENT_TRANSPORT_RESOURCE_LIMIT
@@ -3003,7 +2998,7 @@ Notes:
 //
 //  %2 could not allocate a resource of type %3 due to its configured size of %4.
 //
-#define EVENT_TRANSPORT_RESOURCE_LIMIT   0x8000232AL
+#define EVENT_TRANSPORT_RESOURCE_LIMIT 0x8000232AL
 
 //
 // MessageId: EVENT_TRANSPORT_RESOURCE_SPECIFIC
@@ -3021,7 +3016,7 @@ Notes:
 //
 //  %2 failed to register itself with the NDIS wrapper.
 //
-#define EVENT_TRANSPORT_REGISTER_FAILED  0xC000232CL
+#define EVENT_TRANSPORT_REGISTER_FAILED 0xC000232CL
 
 //
 // MessageId: EVENT_TRANSPORT_BINDING_FAILED
@@ -3030,7 +3025,7 @@ Notes:
 //
 //  %2 failed to bind to adapter %3.
 //
-#define EVENT_TRANSPORT_BINDING_FAILED   0xC000232DL
+#define EVENT_TRANSPORT_BINDING_FAILED 0xC000232DL
 
 //
 // MessageId: EVENT_TRANSPORT_ADAPTER_NOT_FOUND
@@ -3048,7 +3043,7 @@ Notes:
 //
 //  %2 failed while setting OID %3 on adapter %4.
 //
-#define EVENT_TRANSPORT_SET_OID_FAILED   0xC000232FL
+#define EVENT_TRANSPORT_SET_OID_FAILED 0xC000232FL
 
 //
 // MessageId: EVENT_TRANSPORT_QUERY_OID_FAILED
@@ -3066,7 +3061,7 @@ Notes:
 //
 //  %2 could not transfer a packet from the adapter.  The packet was dropped.
 //
-#define EVENT_TRANSPORT_TRANSFER_DATA    0x40002331L
+#define EVENT_TRANSPORT_TRANSFER_DATA 0x40002331L
 
 //
 // MessageId: EVENT_TRANSPORT_TOO_MANY_LINKS
@@ -3075,7 +3070,7 @@ Notes:
 //
 //  %2 could not create a link to a remote computer.  Your computer has exceeded the number of connections it can make to that remote computer.
 //
-#define EVENT_TRANSPORT_TOO_MANY_LINKS   0x40002332L
+#define EVENT_TRANSPORT_TOO_MANY_LINKS 0x40002332L
 
 //
 // MessageId: EVENT_TRANSPORT_BAD_PROTOCOL
@@ -3084,7 +3079,7 @@ Notes:
 //
 //  %2 received an unexpected %3 packet from a remote computer.
 //
-#define EVENT_TRANSPORT_BAD_PROTOCOL     0x40002333L
+#define EVENT_TRANSPORT_BAD_PROTOCOL 0x40002333L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -3103,7 +3098,7 @@ Notes:
 //  The default frame type for auto-detection on %2 was changed to %3.
 //  This type is now the default if no frame type can be detected.
 //
-#define EVENT_IPX_NEW_DEFAULT_TYPE       0x4000251DL
+#define EVENT_IPX_NEW_DEFAULT_TYPE 0x4000251DL
 
 //
 // MessageId: EVENT_IPX_SAP_ANNOUNCE
@@ -3114,7 +3109,7 @@ Notes:
 //  networks, but no internal network is configured. This may prevent
 //  machines on some networks from locating the advertised service.
 //
-#define EVENT_IPX_SAP_ANNOUNCE           0x8000251EL
+#define EVENT_IPX_SAP_ANNOUNCE 0x8000251EL
 
 //
 // MessageId: EVENT_IPX_ILLEGAL_CONFIG
@@ -3123,7 +3118,7 @@ Notes:
 //
 //  The value for the %2 parameter %3 was illegal.
 //
-#define EVENT_IPX_ILLEGAL_CONFIG         0x8000251FL
+#define EVENT_IPX_ILLEGAL_CONFIG 0x8000251FL
 
 //
 // MessageId: EVENT_IPX_INTERNAL_NET_INVALID
@@ -3134,7 +3129,7 @@ Notes:
 //  number conflicts with one of the attached networks. The configured
 //  internal network number will be ignored.
 //
-#define EVENT_IPX_INTERNAL_NET_INVALID   0xC0002520L
+#define EVENT_IPX_INTERNAL_NET_INVALID 0xC0002520L
 
 //
 // MessageId: EVENT_IPX_NO_FRAME_TYPES
@@ -3143,7 +3138,7 @@ Notes:
 //
 //  %2 had no frame types configured for the binding to adapter %3.
 //
-#define EVENT_IPX_NO_FRAME_TYPES         0xC0002521L
+#define EVENT_IPX_NO_FRAME_TYPES 0xC0002521L
 
 //
 // MessageId: EVENT_IPX_CREATE_DEVICE
@@ -3152,7 +3147,7 @@ Notes:
 //
 //  %2 failed to initialize because the driver device could not be created.
 //
-#define EVENT_IPX_CREATE_DEVICE          0xC0002522L
+#define EVENT_IPX_CREATE_DEVICE 0xC0002522L
 
 //
 // MessageId: EVENT_IPX_NO_ADAPTERS
@@ -3161,7 +3156,7 @@ Notes:
 //
 //  %2 could not bind to any adapters. The transport could not start.
 //
-#define EVENT_IPX_NO_ADAPTERS            0xC0002523L
+#define EVENT_IPX_NO_ADAPTERS 0xC0002523L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -3220,7 +3215,7 @@ Notes:
 //  DCOM got error "%%%1" and was unable to logon %2\%3
 //  in order to run the server:%n%4
 //
-#define EVENT_RPCSS_RUNAS_CANT_LOGIN     0xC0002714L
+#define EVENT_RPCSS_RUNAS_CANT_LOGIN 0xC0002714L
 
 //
 // MessageId: EVENT_RPCSS_START_SERVICE_FAILURE
@@ -3240,7 +3235,7 @@ Notes:
 //  DCOM got error "%%%1" from the computer %2 when attempting to
 //  activate the server:%n%3
 //
-#define EVENT_RPCSS_REMOTE_SIDE_ERROR    0xC0002716L
+#define EVENT_RPCSS_REMOTE_SIDE_ERROR 0xC0002716L
 
 //
 // MessageId: EVENT_RPCSS_ACTIVATION_ERROR
@@ -3250,7 +3245,7 @@ Notes:
 //  DCOM got error "%%%1" when attempting to
 //  activate the server:%n%2
 //
-#define EVENT_RPCSS_ACTIVATION_ERROR     0xC0002717L
+#define EVENT_RPCSS_ACTIVATION_ERROR 0xC0002717L
 
 //
 // MessageId: EVENT_RPCSS_REMOTE_SIDE_ERROR_WITH_FILE
@@ -3300,7 +3295,7 @@ Notes:
 //  %2
 //  %3
 //
-#define EVENT_DCOM_ASSERTION_FAILURE     0xC000271CL
+#define EVENT_DCOM_ASSERTION_FAILURE 0xC000271CL
 
 //
 // MessageId: EVENT_DCOM_INVALID_ENDPOINT_DATA
@@ -4329,7 +4324,7 @@ Notes:
 //    IP Address(es) :%n
 //      %6
 //
-#define EVENT_DNSAPI_REGISTERED_ADAPTER  0x40002BC0L
+#define EVENT_DNSAPI_REGISTERED_ADAPTER 0x40002BC0L
 
 //
 // MessageId: EVENT_DNSAPI_REGISTERED_PTR
@@ -4347,7 +4342,7 @@ Notes:
 //    Sent update to server : %6%n
 //    IP Address : %7
 //
-#define EVENT_DNSAPI_REGISTERED_PTR      0x40002BC1L
+#define EVENT_DNSAPI_REGISTERED_PTR 0x40002BC1L
 
 //
 // MessageId: EVENT_DNSAPI_REGISTERED_ADAPTER_PRIMARY_DN
@@ -4385,7 +4380,7 @@ Notes:
 //
 //  The WMI service was unable to open the WMI service device. The status code is in the additional data.
 //
-#define EVENT_WMI_CANT_OPEN_DEVICE       0xC0002EE0L
+#define EVENT_WMI_CANT_OPEN_DEVICE 0xC0002EE0L
 
 
 //
@@ -4399,7 +4394,7 @@ Notes:
 //
 //  The binary MOF in the resource named %1 in the image file %2 is not valid.
 //
-#define EVENT_WMI_INVALID_MOF            0x80002F44L
+#define EVENT_WMI_INVALID_MOF 0x80002F44L
 
 //
 // MessageId: EVENT_WMI_MOF_LOAD_FAILURE
@@ -4408,7 +4403,7 @@ Notes:
 //
 //  The binary MOF in the resource named %1 in the image file %2 could not be loaded.
 //
-#define EVENT_WMI_MOF_LOAD_FAILURE       0x80002F45L
+#define EVENT_WMI_MOF_LOAD_FAILURE 0x80002F45L
 
 //
 // MessageId: EVENT_WMI_INVALID_REGINFO
@@ -4417,7 +4412,7 @@ Notes:
 //
 //  The registration information for the image file %1 is not valid.
 //
-#define EVENT_WMI_INVALID_REGINFO        0x80002F46L
+#define EVENT_WMI_INVALID_REGINFO 0x80002F46L
 
 //
 // MessageId: EVENT_WMI_INVALID_REGPATH
@@ -4426,7 +4421,7 @@ Notes:
 //
 //  The registry path (%1) passed by a kernel mode driver is invalid. The driver device object is in the additional data.
 //
-#define EVENT_WMI_INVALID_REGPATH        0x80002F47L
+#define EVENT_WMI_INVALID_REGPATH 0x80002F47L
 
 //
 // MessageId: EVENT_WMI_CANT_RESOLVE_INSTANCE
@@ -4435,7 +4430,7 @@ Notes:
 //
 //  An event was fired specifying a static instance name that could not be resolved.
 //
-#define EVENT_WMI_CANT_RESOLVE_INSTANCE  0x80002F48L
+#define EVENT_WMI_CANT_RESOLVE_INSTANCE 0x80002F48L
 
 //
 // MessageId: EVENT_WMI_CANT_GET_EVENT_DATA
@@ -4444,7 +4439,7 @@ Notes:
 //
 //  An error occured while attempting to query for the event data referenced by a fired event.
 //
-#define EVENT_WMI_CANT_GET_EVENT_DATA    0x80002F49L
+#define EVENT_WMI_CANT_GET_EVENT_DATA 0x80002F49L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -4460,7 +4455,7 @@ Notes:
 //
 //  An internal error occured in Distributed Link Tracking.  The error code was %1.
 //
-#define EVENT_TRK_INTERNAL_ERROR         0xC00030D4L
+#define EVENT_TRK_INTERNAL_ERROR 0xC00030D4L
 
 //
 // MessageId: EVENT_TRK_SERVICE_START_SUCCESS
@@ -4469,7 +4464,7 @@ Notes:
 //
 //  Service started successfully
 //
-#define EVENT_TRK_SERVICE_START_SUCCESS  0x400030D5L
+#define EVENT_TRK_SERVICE_START_SUCCESS 0x400030D5L
 
 //
 // MessageId: EVENT_TRK_SERVICE_START_FAILURE
@@ -4478,7 +4473,7 @@ Notes:
 //
 //  Service failed to start.  Error = %1
 //
-#define EVENT_TRK_SERVICE_START_FAILURE  0xC00030D6L
+#define EVENT_TRK_SERVICE_START_FAILURE 0xC00030D6L
 
 //
 // MessageId: EVENT_TRK_SERVICE_CORRUPT_LOG
@@ -4487,7 +4482,7 @@ Notes:
 //
 //  The Distributed Link Tracking log was corrupt on volume %1: and has been re-created.  This log is used to automatically repair file links, such as Shell Shortcuts and OLE links, when for some reason those links become broken.
 //
-#define EVENT_TRK_SERVICE_CORRUPT_LOG    0xC00030D7L
+#define EVENT_TRK_SERVICE_CORRUPT_LOG 0xC00030D7L
 
 //
 // MessageId: EVENT_TRK_SERVICE_VOL_QUOTA_EXCEEDED
@@ -4506,7 +4501,7 @@ Notes:
 //  A new volume ID has been assigned for %1:%n%2%n%n
 //  This ID is used by Distributed Link Tracking to automatically repair file links, such as Shell Shortcuts and OLE links, when for some reason those links become broken.  If there previously were links to files on this volume that are broken, they might not be automatically repairable.
 //
-#define EVENT_TRK_SERVICE_VOLUME_CREATE  0x400030D9L
+#define EVENT_TRK_SERVICE_VOLUME_CREATE 0x400030D9L
 
 //
 // MessageId: EVENT_TRK_SERVICE_VOLUME_CLAIM
@@ -4515,7 +4510,7 @@ Notes:
 //
 //  Ownership of the volume ID for %1: has been successfully claimed.  This volume ID is used by Distributed Link Tracking to automatically repair file links, such as Shell Shortcuts and OLE links, when for some reason those links become broken.
 //
-#define EVENT_TRK_SERVICE_VOLUME_CLAIM   0x400030DAL
+#define EVENT_TRK_SERVICE_VOLUME_CLAIM 0x400030DAL
 
 //
 // MessageId: EVENT_TRK_SERVICE_DUPLICATE_VOLIDS
@@ -4736,7 +4731,7 @@ Notes:
 //
 //  File Replication Service
 //
-#define EVENT_FRS_ERROR                  0xC00034BCL
+#define EVENT_FRS_ERROR 0xC00034BCL
 
 //
 // MessageId: EVENT_FRS_STARTING
@@ -4745,7 +4740,7 @@ Notes:
 //
 //  The File Replication Service is starting.
 //
-#define EVENT_FRS_STARTING               0x400034BDL
+#define EVENT_FRS_STARTING 0x400034BDL
 
 //
 // MessageId: EVENT_FRS_STOPPING
@@ -4754,7 +4749,7 @@ Notes:
 //
 //  The File Replication Service is stopping.
 //
-#define EVENT_FRS_STOPPING               0x400034BEL
+#define EVENT_FRS_STOPPING 0x400034BEL
 
 //
 // MessageId: EVENT_FRS_STOPPED
@@ -4763,7 +4758,7 @@ Notes:
 //
 //  The File Replication Service has stopped.
 //
-#define EVENT_FRS_STOPPED                0x400034BFL
+#define EVENT_FRS_STOPPED 0x400034BFL
 
 //
 // MessageId: EVENT_FRS_STOPPED_FORCE
@@ -4772,7 +4767,7 @@ Notes:
 //
 //  The File Replication Service stopped without cleaning up.
 //
-#define EVENT_FRS_STOPPED_FORCE          0xC00034C0L
+#define EVENT_FRS_STOPPED_FORCE 0xC00034C0L
 
 //
 // MessageId: EVENT_FRS_STOPPED_ASSERT
@@ -4781,7 +4776,7 @@ Notes:
 //
 //  The File Replication Service has stopped after taking an assertion failure.
 //
-#define EVENT_FRS_STOPPED_ASSERT         0xC00034C1L
+#define EVENT_FRS_STOPPED_ASSERT 0xC00034C1L
 
 //
 // MessageId: EVENT_FRS_ASSERT
@@ -4800,7 +4795,7 @@ Notes:
 //  My Computer and then click on Manage, System Tools, Services,
 //  File Replication Service, and Recovery.
 //
-#define EVENT_FRS_ASSERT                 0xC00034C2L
+#define EVENT_FRS_ASSERT 0xC00034C2L
 
 //
 // MessageId: EVENT_FRS_VOLUME_NOT_SUPPORTED
@@ -4814,7 +4809,7 @@ Notes:
 //  %n
 //  %nThe volume can be upgraded to NTFS 5.0 or later by typing "chkntfs /E %4".
 //
-#define EVENT_FRS_VOLUME_NOT_SUPPORTED   0xC00034C3L
+#define EVENT_FRS_VOLUME_NOT_SUPPORTED 0xC00034C3L
 
 //
 // MessageId: EVENT_FRS_LONG_JOIN
@@ -4834,7 +4829,7 @@ Notes:
 //  is fixed you will see another event log message indicating that the connection
 //  has been established.
 //
-#define EVENT_FRS_LONG_JOIN              0x800034C4L
+#define EVENT_FRS_LONG_JOIN 0x800034C4L
 
 //
 // MessageId: EVENT_FRS_LONG_JOIN_DONE
@@ -4844,7 +4839,7 @@ Notes:
 //  The File Replication Service has enabled replication from %1 to %2 for %3
 //  after repeated retries.
 //
-#define EVENT_FRS_LONG_JOIN_DONE         0x800034C5L
+#define EVENT_FRS_LONG_JOIN_DONE 0x800034C5L
 
 //
 // MessageId: EVENT_FRS_CANNOT_COMMUNICATE
@@ -4897,7 +4892,7 @@ Notes:
 //  %nOther network and computer problems are beyond the scope of
 //  this event log message.
 //
-#define EVENT_FRS_CANNOT_COMMUNICATE     0xC00034C6L
+#define EVENT_FRS_CANNOT_COMMUNICATE 0xC00034C6L
 
 //
 // MessageId: EVENT_FRS_DATABASE_SPACE
@@ -4922,7 +4917,7 @@ Notes:
 //  %nFor more information about managing space on a volume type "copy /?",
 //  "rename /?", "del /?", "rmdir /?", and "dir /?".
 //
-#define EVENT_FRS_DATABASE_SPACE         0xC00034C7L
+#define EVENT_FRS_DATABASE_SPACE 0xC00034C7L
 
 //
 // MessageId: EVENT_FRS_DISK_WRITE_CACHE_ENABLED
@@ -4949,7 +4944,7 @@ Notes:
 //  %nOnce the database has been successfully recovered the
 //  File Replication Service can be restarted by typing "net start ntfrs".
 //
-#define EVENT_FRS_JET_1414               0xC00034C9L
+#define EVENT_FRS_JET_1414 0xC00034C9L
 
 //
 // MessageId: EVENT_FRS_SYSVOL_NOT_READY
@@ -4969,7 +4964,7 @@ Notes:
 //  the availability of other domain controllers, and the replication
 //  interval between domain controllers.
 //
-#define EVENT_FRS_SYSVOL_NOT_READY       0x800034CAL
+#define EVENT_FRS_SYSVOL_NOT_READY 0x800034CAL
 
 //
 // MessageId: EVENT_FRS_SYSVOL_NOT_READY_PRIMARY
@@ -5015,7 +5010,7 @@ Notes:
 //  %n
 //  %nType "net share" to check for the SYSVOL share.
 //
-#define EVENT_FRS_SYSVOL_READY           0x400034CCL
+#define EVENT_FRS_SYSVOL_READY 0x400034CCL
 
 //
 // MessageId: EVENT_FRS_ACCESS_CHECKS_DISABLED
@@ -5097,7 +5092,7 @@ Notes:
 //  %n
 //  %nSpace can be recovered at any time by deleting the files in %2.
 //
-#define EVENT_FRS_MOVED_PREEXISTING      0x800034D0L
+#define EVENT_FRS_MOVED_PREEXISTING 0x800034D0L
 
 //
 // MessageId: EVENT_FRS_CANNOT_START_BACKUP_RESTORE_IN_PROGRESS
@@ -5151,7 +5146,7 @@ Notes:
 //  CurrentControlSet, Services, NtFrs, Parameters, and the value
 //  "Staging Space Limit in KB".
 //
-#define EVENT_FRS_STAGING_AREA_FULL      0x800034D2L
+#define EVENT_FRS_STAGING_AREA_FULL 0x800034D2L
 
 //
 // MessageId: EVENT_FRS_HUGE_FILE
@@ -5172,7 +5167,7 @@ Notes:
 //  CurrentControlSet, Services, NtFrs, Parameters, and the value
 //  "Staging Space Limit in KB".
 //
-#define EVENT_FRS_HUGE_FILE              0x800034D3L
+#define EVENT_FRS_HUGE_FILE 0x800034D3L
 
 //
 // MessageId: EVENT_FRS_CANNOT_CREATE_UUID
@@ -5193,7 +5188,7 @@ Notes:
 //  My Computer and then click on Manage, System Tools, Services,
 //  File Replication Service, and Recovery.
 //
-#define EVENT_FRS_CANNOT_CREATE_UUID     0xC00034D4L
+#define EVENT_FRS_CANNOT_CREATE_UUID 0xC00034D4L
 
 //
 // MessageId: EVENT_FRS_NO_DNS_ATTRIBUTE
@@ -5207,7 +5202,7 @@ Notes:
 //  %nThe File Replication Service will try using the name "%1" until the
 //  computer's DNS name appears.
 //
-#define EVENT_FRS_NO_DNS_ATTRIBUTE       0x800034D5L
+#define EVENT_FRS_NO_DNS_ATTRIBUTE 0x800034D5L
 
 //
 // MessageId: EVENT_FRS_NO_SID
@@ -5220,7 +5215,7 @@ Notes:
 //  %n
 //  %nThe File Replication Service will retry later.
 //
-#define EVENT_FRS_NO_SID                 0xC00034D6L
+#define EVENT_FRS_NO_SID 0xC00034D6L
 
 //
 // MessageId: NTFRSPRF_OPEN_RPC_BINDING_ERROR_SET
@@ -5329,7 +5324,7 @@ Notes:
 //  FileReplicaSet object contains the performance counters of the Replica sets
 //  whose files are being replicated by the File Replication Service.
 //
-#define NTFRSPRF_VIRTUALALLOC_ERROR_SET  0xC00034DFL
+#define NTFRSPRF_VIRTUALALLOC_ERROR_SET 0xC00034DFL
 
 //
 // MessageId: NTFRSPRF_VIRTUALALLOC_ERROR_CONN
@@ -5353,7 +5348,7 @@ Notes:
 //  FileReplicaSet object contains the performance counters of the Replica sets
 //  whose files are being replicated by the File Replication Service.
 //
-#define NTFRSPRF_REGISTRY_ERROR_SET      0xC00034E1L
+#define NTFRSPRF_REGISTRY_ERROR_SET 0xC00034E1L
 
 //
 // MessageId: NTFRSPRF_REGISTRY_ERROR_CONN
@@ -5365,7 +5360,7 @@ Notes:
 //  FileReplicaConn object contains the performance counters of the connections over
 //  which files are being replicated by the File Replication Service.
 //
-#define NTFRSPRF_REGISTRY_ERROR_CONN     0xC00034E2L
+#define NTFRSPRF_REGISTRY_ERROR_CONN 0xC00034E2L
 
 //
 // MessageId: EVENT_FRS_ROOT_NOT_VALID
@@ -5376,7 +5371,7 @@ Notes:
 //  pathname of the replicated directory is not the fully qualified
 //  pathname of an existing, accessible local directory.
 //
-#define EVENT_FRS_ROOT_NOT_VALID         0xC00034E3L
+#define EVENT_FRS_ROOT_NOT_VALID 0xC00034E3L
 
 //
 // MessageId: EVENT_FRS_STAGE_NOT_VALID
@@ -5388,7 +5383,7 @@ Notes:
 //  %n    %2
 //  %n is not the fully qualified pathname of an existing, accessible local directory.
 //
-#define EVENT_FRS_STAGE_NOT_VALID        0xC00034E4L
+#define EVENT_FRS_STAGE_NOT_VALID 0xC00034E4L
 
 //
 // MessageId: EVENT_FRS_OVERLAPS_LOGGING
@@ -5398,7 +5393,7 @@ Notes:
 //  The File Replication Service cannot replicate %1 because it overlaps
 //  the File Replication Service's logging pathname %2.
 //
-#define EVENT_FRS_OVERLAPS_LOGGING       0xC00034E5L
+#define EVENT_FRS_OVERLAPS_LOGGING 0xC00034E5L
 
 //
 // MessageId: EVENT_FRS_OVERLAPS_WORKING
@@ -5408,7 +5403,7 @@ Notes:
 //  The File Replication Service cannot replicate %1 because it overlaps
 //  the File Replication Service's working directory %2.
 //
-#define EVENT_FRS_OVERLAPS_WORKING       0xC00034E6L
+#define EVENT_FRS_OVERLAPS_WORKING 0xC00034E6L
 
 //
 // MessageId: EVENT_FRS_OVERLAPS_STAGE
@@ -5418,7 +5413,7 @@ Notes:
 //  The File Replication Service cannot replicate %1 because it overlaps
 //  the staging directory %2.
 //
-#define EVENT_FRS_OVERLAPS_STAGE         0xC00034E7L
+#define EVENT_FRS_OVERLAPS_STAGE 0xC00034E7L
 
 //
 // MessageId: EVENT_FRS_OVERLAPS_ROOT
@@ -5428,7 +5423,7 @@ Notes:
 //  The File Replication Service cannot replicate %1 because it overlaps
 //  the replicating directory %2.
 //
-#define EVENT_FRS_OVERLAPS_ROOT          0xC00034E8L
+#define EVENT_FRS_OVERLAPS_ROOT 0xC00034E8L
 
 //
 // MessageId: EVENT_FRS_OVERLAPS_OTHER_STAGE
@@ -5438,7 +5433,7 @@ Notes:
 //  The File Replication Service cannot replicate %1 because it overlaps
 //  the staging directory %2 of the replicating directory %3.
 //
-#define EVENT_FRS_OVERLAPS_OTHER_STAGE   0xC00034E9L
+#define EVENT_FRS_OVERLAPS_OTHER_STAGE 0xC00034E9L
 
 //
 // MessageId: EVENT_FRS_PREPARE_ROOT_FAILED
@@ -5453,7 +5448,7 @@ Notes:
 //  %nCheck that the path leading up to the root directory exists and is
 //  accessible.
 //
-#define EVENT_FRS_PREPARE_ROOT_FAILED    0xC00034EAL
+#define EVENT_FRS_PREPARE_ROOT_FAILED 0xC00034EAL
 
 //
 // MessageId: EVENT_FRS_BAD_REG_DATA
@@ -5484,7 +5479,7 @@ Notes:
 //  above registry data type.  Make sure you observe the data units and allowed range
 //  when entering the value.
 //
-#define EVENT_FRS_BAD_REG_DATA           0x800034EBL
+#define EVENT_FRS_BAD_REG_DATA 0x800034EBL
 
 //
 // MessageId: EVENT_FRS_JOIN_FAIL_TIME_SKEW
@@ -5522,7 +5517,7 @@ Notes:
 //  under the Edit Menu item. Type the value name exactly as shown above using the
 //  the registry data type REG_DWORD.
 //
-#define EVENT_FRS_JOIN_FAIL_TIME_SKEW    0xC00034ECL
+#define EVENT_FRS_JOIN_FAIL_TIME_SKEW 0xC00034ECL
 
 //
 // MessageId: EVENT_FRS_RMTCO_TIME_SKEW
@@ -5546,7 +5541,7 @@ Notes:
 //  computer time was initially set.  Check that the timezone and time are
 //  correctly set on the partner computer.
 //
-#define EVENT_FRS_RMTCO_TIME_SKEW        0xC00034EDL
+#define EVENT_FRS_RMTCO_TIME_SKEW 0xC00034EDL
 
 //
 // MessageId: EVENT_FRS_CANT_OPEN_STAGE
@@ -5571,7 +5566,7 @@ Notes:
 //  %nCorrect the problem and the service will attempt to restart replication
 //  automatically at a later time.
 //
-#define EVENT_FRS_CANT_OPEN_STAGE        0xC00034EEL
+#define EVENT_FRS_CANT_OPEN_STAGE 0xC00034EEL
 
 //
 // MessageId: EVENT_FRS_CANT_OPEN_PREINSTALL
@@ -5597,7 +5592,7 @@ Notes:
 //  %nCorrect the problem and the service will attempt to restart replication
 //  automatically at a later time.
 //
-#define EVENT_FRS_CANT_OPEN_PREINSTALL   0xC00034EFL
+#define EVENT_FRS_CANT_OPEN_PREINSTALL 0xC00034EFL
 
 //
 // MessageId: EVENT_FRS_REPLICA_SET_CREATE_FAIL
@@ -5645,7 +5640,7 @@ Notes:
 //  %nReplica staging directory path is "%5"
 //  %nReplica working directory path is "%6"
 //
-#define EVENT_FRS_REPLICA_SET_CREATE_OK  0x400034F1L
+#define EVENT_FRS_REPLICA_SET_CREATE_OK 0x400034F1L
 
 //
 // MessageId: EVENT_FRS_REPLICA_SET_CXTIONS
@@ -5667,7 +5662,7 @@ Notes:
 //  %n
 //  %nMore information may appear in subsequent event log messages.
 //
-#define EVENT_FRS_REPLICA_SET_CXTIONS    0x400034F2L
+#define EVENT_FRS_REPLICA_SET_CXTIONS 0x400034F2L
 
 //
 // MessageId: EVENT_FRS_IN_ERROR_STATE
@@ -5739,7 +5734,7 @@ Notes:
 //  particular replica set then perform steps (4-a) and (4-e) above on only
 //  one of the members.
 //
-#define EVENT_FRS_IN_ERROR_STATE         0xC00034F3L
+#define EVENT_FRS_IN_ERROR_STATE 0xC00034F3L
 
 //
 // MessageId: EVENT_FRS_REPLICA_NO_ROOT_CHANGE
@@ -5823,7 +5818,7 @@ Notes:
 //  %n [5] Under "%6" look for duplicate connections from "%1".
 //  %n [6] Delete all but one of the connections.
 //
-#define EVENT_FRS_DUPLICATE_IN_CXTION    0xC00034F6L
+#define EVENT_FRS_DUPLICATE_IN_CXTION 0xC00034F6L
 
 //
 // MessageId: EVENT_FRS_ROOT_HAS_MOVED
@@ -5847,7 +5842,7 @@ Notes:
 //  location. The files may or may not be deleted from the old location depending on whether
 //  they are needed or not.
 //
-#define EVENT_FRS_ROOT_HAS_MOVED         0xC00034F7L
+#define EVENT_FRS_ROOT_HAS_MOVED 0xC00034F7L
 
 //
 // MessageId: EVENT_FRS_ERROR_REPLICA_SET_DELETED
@@ -5873,7 +5868,7 @@ Notes:
 //  %n Replica root path is   : "%2"
 //  %n Replica root volume is : "%3"
 //  %n
-//  
+//
 //  A Replica set hits JRNL_WRAP_ERROR when the record that it is trying to read from the NTFS USN journal is not found.
 //  This can occur because of one of the following reasons.
 //  %n
@@ -5903,7 +5898,7 @@ Notes:
 //  %n %2
 //  %n
 //
-#define EVENT_FRS_DS_POLL_ERROR_SUMMARY  0x800034FAL
+#define EVENT_FRS_DS_POLL_ERROR_SUMMARY 0x800034FAL
 
 /////////////////////////////////////////////////////////////////////////
 //
@@ -5922,7 +5917,7 @@ Notes:
 //
 //  QoS: The Packet Scheduler failed to register with the Generic Packet Classifier (msgpc.sys).
 //
-#define EVENT_PS_GPC_REGISTER_FAILED     0xC00036B0L
+#define EVENT_PS_GPC_REGISTER_FAILED 0xC00036B0L
 
 //
 // MessageId: EVENT_PS_NO_RESOURCES_FOR_INIT
@@ -5931,7 +5926,7 @@ Notes:
 //
 //  QoS: The Packet Scheduler was unable to allocate required resources for initialization.
 //
-#define EVENT_PS_NO_RESOURCES_FOR_INIT   0xC00036B1L
+#define EVENT_PS_NO_RESOURCES_FOR_INIT 0xC00036B1L
 
 //
 // MessageId: EVENT_PS_REGISTER_PROTOCOL_FAILED
@@ -5961,7 +5956,7 @@ Notes:
 //
 //  QoS [Adapter %2]:%nThe BestEffortLimit value set in the registry exceeds the LinkSpeed. Defaulting to Unlimited BestEffort.
 //
-#define EVENT_PS_BAD_BESTEFFORT_LIMIT    0x80003714L
+#define EVENT_PS_BAD_BESTEFFORT_LIMIT 0x80003714L
 
 //
 // MessageId: EVENT_PS_QUERY_OID_GEN_MAXIMUM_FRAME_SIZE
@@ -5997,7 +5992,7 @@ Notes:
 //
 //  QoS [Adapter %2]:%nThe Packet Scheduler failed to bind to the netcard's miniport driver.
 //
-#define EVENT_PS_BINDING_FAILED          0xC0003718L
+#define EVENT_PS_BINDING_FAILED 0xC0003718L
 
 //
 // MessageId: EVENT_PS_MISSING_ADAPTER_REGISTRY_DATA
@@ -6024,7 +6019,7 @@ Notes:
 //
 //  QoS [Adapter %2]:%nThe Packet Scheduler could not initialize the virtual miniport with NDIS.
 //
-#define EVENT_PS_INIT_DEVICE_FAILED      0xC000371BL
+#define EVENT_PS_INIT_DEVICE_FAILED 0xC000371BL
 
 //
 // MessageId: EVENT_PS_WMI_INSTANCE_NAME_FAILED
@@ -6042,7 +6037,7 @@ Notes:
 //
 //  Qos [Adapter %2]:%nThe registry entry for BestEffortLimit is not supported over WAN links. Defaulting to Unlimited BestEffort mode.
 //
-#define EVENT_PS_WAN_LIMITED_BESTEFFORT  0x8000371DL
+#define EVENT_PS_WAN_LIMITED_BESTEFFORT 0x8000371DL
 
 //
 // MessageId: EVENT_PS_RESOURCE_POOL
@@ -6051,7 +6046,7 @@ Notes:
 //
 //  QoS [Adapter %2]:%nCould not initialize due to insufficient nonpaged pool memory.
 //
-#define EVENT_PS_RESOURCE_POOL           0xC000371EL
+#define EVENT_PS_RESOURCE_POOL 0xC000371EL
 
 //
 // MessageId: EVENT_PS_ADMISSIONCONTROL_OVERFLOW
@@ -6069,7 +6064,7 @@ Notes:
 //
 //  QoS [Adapter %2]:%nCould not allocate non paged pool memory for storing Network Addresses.
 //
-#define EVENT_PS_NETWORK_ADDRESS_FAIL    0xC0003720L
+#define EVENT_PS_NETWORK_ADDRESS_FAIL 0xC0003720L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -6088,7 +6083,7 @@ Notes:
 //
 //  An extra ExitPoint %2 was found at server %3
 //
-#define EXTRA_EXIT_POINT                 0xC00037DCL
+#define EXTRA_EXIT_POINT 0xC00037DCL
 
 //
 // MessageId: MISSING_EXIT_POINT
@@ -6097,7 +6092,7 @@ Notes:
 //
 //  The ExitPoint %2 was missing at server %3
 //
-#define MISSING_EXIT_POINT               0xC00037DDL
+#define MISSING_EXIT_POINT 0xC00037DDL
 
 //
 // MessageId: MISSING_VOLUME
@@ -6106,7 +6101,7 @@ Notes:
 //
 //  The Volume %2 was missing at server %3
 //
-#define MISSING_VOLUME                   0xC00037DEL
+#define MISSING_VOLUME 0xC00037DEL
 
 //
 // MessageId: EXTRA_VOLUME
@@ -6115,7 +6110,7 @@ Notes:
 //
 //  The extra Volume %2 was found at server %3
 //
-#define EXTRA_VOLUME                     0xC00037DFL
+#define EXTRA_VOLUME 0xC00037DFL
 
 //
 // MessageId: EXTRA_EXIT_POINT_DELETED
@@ -6124,7 +6119,7 @@ Notes:
 //
 //  The extra ExitPoint %2 was deleted successfully from the server %3
 //
-#define EXTRA_EXIT_POINT_DELETED         0xC00037E0L
+#define EXTRA_EXIT_POINT_DELETED 0xC00037E0L
 
 //
 // MessageId: EXTRA_EXIT_POINT_NOT_DELETED
@@ -6133,7 +6128,7 @@ Notes:
 //
 //  Unable to delete the extra ExitPoint %2 at the server %3
 //
-#define EXTRA_EXIT_POINT_NOT_DELETED     0xC00037E1L
+#define EXTRA_EXIT_POINT_NOT_DELETED 0xC00037E1L
 
 //
 // MessageId: MISSING_EXIT_POINT_CREATED
@@ -6142,7 +6137,7 @@ Notes:
 //
 //  The missing ExitPoint %2 was created at the server %3 successfully
 //
-#define MISSING_EXIT_POINT_CREATED       0xC00037E2L
+#define MISSING_EXIT_POINT_CREATED 0xC00037E2L
 
 //
 // MessageId: MISSING_EXIT_POINT_NOT_CREATED
@@ -6151,7 +6146,7 @@ Notes:
 //
 //  Unable to create the missing Exit Point %2 at the server %3
 //
-#define MISSING_EXIT_POINT_NOT_CREATED   0xC00037E3L
+#define MISSING_EXIT_POINT_NOT_CREATED 0xC00037E3L
 
 //
 // MessageId: MISSING_VOLUME_CREATED
@@ -6160,7 +6155,7 @@ Notes:
 //
 //  Successfully created the missing volume %2 knowledge at the server %3
 //
-#define MISSING_VOLUME_CREATED           0xC00037E4L
+#define MISSING_VOLUME_CREATED 0xC00037E4L
 
 //
 // MessageId: MISSING_VOLUME_NOT_CREATED
@@ -6169,7 +6164,7 @@ Notes:
 //
 //  Unable to create the missing Volume %2 info at server %3
 //
-#define MISSING_VOLUME_NOT_CREATED       0xC00037E5L
+#define MISSING_VOLUME_NOT_CREATED 0xC00037E5L
 
 //
 // MessageId: EXTRA_VOLUME_DELETED
@@ -6178,7 +6173,7 @@ Notes:
 //
 //  The extra Volume %2 info was deleted at server %3
 //
-#define EXTRA_VOLUME_DELETED             0xC00037E6L
+#define EXTRA_VOLUME_DELETED 0xC00037E6L
 
 //
 // MessageId: EXTRA_VOLUME_NOT_DELETED
@@ -6187,7 +6182,7 @@ Notes:
 //
 //  The extra Volume %2 info was not deleted at server %3
 //
-#define EXTRA_VOLUME_NOT_DELETED         0xC00037E7L
+#define EXTRA_VOLUME_NOT_DELETED 0xC00037E7L
 
 //
 // MessageId: COULD_NOT_VERIFY_VOLUMES
@@ -6196,7 +6191,7 @@ Notes:
 //
 //  Since the DC %2 was unavailable could not verify volumes knowledge.
 //
-#define COULD_NOT_VERIFY_VOLUMES         0xC00037E8L
+#define COULD_NOT_VERIFY_VOLUMES 0xC00037E8L
 
 //
 // MessageId: KNOWLEDGE_INCONSISTENCY_DETECTED
@@ -6214,7 +6209,7 @@ Notes:
 //
 //  The local Prefix %2 was represented as %3 at remote server %4
 //
-#define PREFIX_MISMATCH                  0xC00037EAL
+#define PREFIX_MISMATCH 0xC00037EAL
 
 //
 // MessageId: PREFIX_MISMATCH_FIXED
@@ -6223,7 +6218,7 @@ Notes:
 //
 //  The remote Prefix %3 was corrected to %2 at remote server %4
 //
-#define PREFIX_MISMATCH_FIXED            0xC00037EBL
+#define PREFIX_MISMATCH_FIXED 0xC00037EBL
 
 //
 // MessageId: PREFIX_MISMATCH_NOT_FIXED
@@ -6232,7 +6227,7 @@ Notes:
 //
 //  The remote Prefix %3 was NOT corrected to %2 at remote server %4
 //
-#define PREFIX_MISMATCH_NOT_FIXED        0xC00037ECL
+#define PREFIX_MISMATCH_NOT_FIXED 0xC00037ECL
 
 //
 // MessageId: MACHINE_UNJOINED
@@ -6241,7 +6236,7 @@ Notes:
 //
 //  The machine %2 has become unlinked from the domain. Re-join the machine the machine to this domain.
 //
-#define MACHINE_UNJOINED                 0xC00037EDL
+#define MACHINE_UNJOINED 0xC00037EDL
 
 //
 // MessageId: DFS_REFERRAL_REQUEST
@@ -6250,7 +6245,7 @@ Notes:
 //
 //  Dfs received a referral request for "%2".  The return code is in the data.
 //
-#define DFS_REFERRAL_REQUEST             0x400037EEL
+#define DFS_REFERRAL_REQUEST 0x400037EEL
 
 //
 // Client-side Dfs (mup.sys) errors (14400-14499)
@@ -6262,7 +6257,7 @@ Notes:
 //
 //  The path "%2" is not a dfs path
 //
-#define NOT_A_DFS_PATH                   0x40003840L
+#define NOT_A_DFS_PATH 0x40003840L
 
 //
 // MessageId: LM_REDIR_FAILURE
@@ -6271,7 +6266,7 @@ Notes:
 //
 //  Dfs was unable to open the Lan Redir
 //
-#define LM_REDIR_FAILURE                 0x40003841L
+#define LM_REDIR_FAILURE 0x40003841L
 
 //
 // MessageId: DFS_CONNECTION_FAILURE
@@ -6280,7 +6275,7 @@ Notes:
 //
 //  Dfs was unable to open a connection to server %2.  The error returned is in the record data.
 //
-#define DFS_CONNECTION_FAILURE           0x40003842L
+#define DFS_CONNECTION_FAILURE 0x40003842L
 
 //
 // MessageId: DFS_REFERRAL_FAILURE
@@ -6289,7 +6284,7 @@ Notes:
 //
 //  Dfs was unable to obtain a referral for "%2" from %3.  The error returned is in the record data.
 //
-#define DFS_REFERRAL_FAILURE             0x40003843L
+#define DFS_REFERRAL_FAILURE 0x40003843L
 
 //
 // MessageId: DFS_REFERRAL_SUCCESS
@@ -6298,7 +6293,7 @@ Notes:
 //
 //  Dfs obtained a referral for "%2" from %3
 //
-#define DFS_REFERRAL_SUCCESS             0x40003844L
+#define DFS_REFERRAL_SUCCESS 0x40003844L
 
 //
 // MessageId: DFS_MAX_DNR_ATTEMPTS
@@ -6307,7 +6302,7 @@ Notes:
 //
 //  Dfs reached its limit of attempts of resolution of "%2".
 //
-#define DFS_MAX_DNR_ATTEMPTS             0x40003845L
+#define DFS_MAX_DNR_ATTEMPTS 0x40003845L
 
 //
 // MessageId: DFS_SPECIAL_REFERRAL_FAILURE
@@ -6316,7 +6311,7 @@ Notes:
 //
 //  Dfs was unable to obtain the special referral table from %2.  The error returned is in the record data.
 //
-#define DFS_SPECIAL_REFERRAL_FAILURE     0x40003846L
+#define DFS_SPECIAL_REFERRAL_FAILURE 0x40003846L
 
 //
 // MessageId: DFS_OPEN_FAILURE
@@ -6325,7 +6320,7 @@ Notes:
 //
 //  Dfs failed on open of %2 directed to %3.  The error returned is in the record data.
 //
-#define DFS_OPEN_FAILURE                 0x40003847L
+#define DFS_OPEN_FAILURE 0x40003847L
 
 //
 // Dfs service (dfssvc) errors (14500-14599)
@@ -6337,7 +6332,7 @@ Notes:
 //
 //  NetrDfsEnum received an enumeration.  The return code is in the record data.
 //
-#define NET_DFS_ENUM                     0x400038A4L
+#define NET_DFS_ENUM 0x400038A4L
 
 //
 // MessageId: NET_DFS_ENUMEX
@@ -6346,7 +6341,7 @@ Notes:
 //
 //  NetrDfsEnumEx received an enumeration.  The return code is in the record data.
 //
-#define NET_DFS_ENUMEX                   0x400038A5L
+#define NET_DFS_ENUMEX 0x400038A5L
 
 //
 // MessageId: DFS_ERROR_CREATE_DIRECTORY_FAILURE
@@ -6391,7 +6386,7 @@ Notes:
 //
 //  DFS could not write to the Active Directory on Root %1. The return code is in the record data.
 //
-#define DFS_ERROR_AD_WRITE_ERROR         0xC00038AAL
+#define DFS_ERROR_AD_WRITE_ERROR 0xC00038AAL
 
 //
 // MessageId: DFS_ERROR_AD_READ_ERROR
@@ -6400,7 +6395,7 @@ Notes:
 //
 //  DFS could not read from the Active Directory on Root %1. The return code is in the record data.
 //
-#define DFS_ERROR_AD_READ_ERROR          0xC00038ABL
+#define DFS_ERROR_AD_READ_ERROR 0xC00038ABL
 
 //
 // MessageId: DFS_ERROR_DIRECTORY_NOT_EMPTY
@@ -6409,7 +6404,7 @@ Notes:
 //
 //  Directory %1 mapped to %2 is not empty. The directory will not be removed.
 //
-#define DFS_ERROR_DIRECTORY_NOT_EMPTY    0xC00038ACL
+#define DFS_ERROR_DIRECTORY_NOT_EMPTY 0xC00038ACL
 
 //
 // MessageId: DFS_ERROR_TOO_MANY_ERRORS
@@ -6418,7 +6413,7 @@ Notes:
 //
 //  Root %1 has too many errors. No further eventlogs will be logged on this root.
 //
-#define DFS_ERROR_TOO_MANY_ERRORS        0xC00038ADL
+#define DFS_ERROR_TOO_MANY_ERRORS 0xC00038ADL
 
 /////////////////////////////////////////////////////////////////////////
 //
@@ -6473,7 +6468,7 @@ Notes:
 //
 //  Bridge: The bridge could not be initialized because the bridge failed to determine a MAC address for itself.
 //
-#define EVENT_BRIDGE_NO_BRIDGE_MAC_ADDR  0xC000390CL
+#define EVENT_BRIDGE_NO_BRIDGE_MAC_ADDR 0xC000390CL
 
 //
 // MessageId: EVENT_BRIDGE_MINIPORT_INIT_FAILED
@@ -6509,7 +6504,7 @@ Notes:
 //
 //  Bridge: The bridge could not initialize because it failed to reference its system thread.
 //
-#define EVENT_BRIDGE_THREAD_REF_FAILED   0xC0003910L
+#define EVENT_BRIDGE_THREAD_REF_FAILED 0xC0003910L
 
 //
 // MessageId: EVENT_BRIDGE_PACKET_POOL_CREATION_FAILED
@@ -6536,7 +6531,7 @@ Notes:
 //
 //  Bridge: The bridge could not initialize because it failed to allocate memory.
 //
-#define EVENT_BRIDGE_INIT_MALLOC_FAILED  0xC0003913L
+#define EVENT_BRIDGE_INIT_MALLOC_FAILED 0xC0003913L
 
 //
 // Adapter-specific events (14700 - 14799)
@@ -6639,4 +6634,3 @@ Notes:
 
 
 #endif // _NETEVENT
-

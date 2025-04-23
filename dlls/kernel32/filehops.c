@@ -22,73 +22,67 @@ Revision History:
 
 HANDLE
 WINAPI
-GetStdHandle(
-    DWORD nStdHandle
-    )
+GetStdHandle(DWORD nStdHandle)
 {
     PPEB Peb;
     HANDLE rv;
 
 
     Peb = NtCurrentPeb();
-    switch( nStdHandle ) {
-        case STD_INPUT_HANDLE:
-            rv = Peb->ProcessParameters->StandardInput;
-            break;
+    switch (nStdHandle)
+    {
+    case STD_INPUT_HANDLE:
+        rv = Peb->ProcessParameters->StandardInput;
+        break;
 
-        case STD_OUTPUT_HANDLE:
-            rv = Peb->ProcessParameters->StandardOutput;
-            break;
+    case STD_OUTPUT_HANDLE:
+        rv = Peb->ProcessParameters->StandardOutput;
+        break;
 
-        case STD_ERROR_HANDLE:
-            rv = Peb->ProcessParameters->StandardError;
-            break;
-        default:
-            rv = INVALID_HANDLE_VALUE;
-            break;
+    case STD_ERROR_HANDLE:
+        rv = Peb->ProcessParameters->StandardError;
+        break;
+    default:
+        rv = INVALID_HANDLE_VALUE;
+        break;
     }
-    if ( rv == INVALID_HANDLE_VALUE ) {
+    if (rv == INVALID_HANDLE_VALUE)
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
-        }
+    }
     return rv;
 }
 
-BOOL
-WINAPI
-SetStdHandle(
-    DWORD nStdHandle,
-    HANDLE hHandle
-    )
+BOOL WINAPI SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
 {
     PPEB Peb;
 
     Peb = NtCurrentPeb();
-    switch( nStdHandle ) {
-        case STD_INPUT_HANDLE:
-            Peb->ProcessParameters->StandardInput = hHandle;
-            break;
+    switch (nStdHandle)
+    {
+    case STD_INPUT_HANDLE:
+        Peb->ProcessParameters->StandardInput = hHandle;
+        break;
 
-        case STD_OUTPUT_HANDLE:
-            Peb->ProcessParameters->StandardOutput = hHandle;
-            break;
+    case STD_OUTPUT_HANDLE:
+        Peb->ProcessParameters->StandardOutput = hHandle;
+        break;
 
-        case STD_ERROR_HANDLE:
-            Peb->ProcessParameters->StandardError = hHandle;
-            break;
+    case STD_ERROR_HANDLE:
+        Peb->ProcessParameters->StandardError = hHandle;
+        break;
 
-        default:
-            BaseSetLastNTError(STATUS_INVALID_HANDLE);
-            return FALSE;
+    default:
+        BaseSetLastNTError(STATUS_INVALID_HANDLE);
+        return FALSE;
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
 DWORD
 WINAPI
-GetFileType(
-    HANDLE hFile
-    )
+GetFileType(HANDLE hFile)
 
 /*++
 
@@ -123,25 +117,28 @@ Return Value:
 
     Peb = NtCurrentPeb();
 
-    switch( HandleToUlong(hFile) ) {
-        case STD_INPUT_HANDLE:
-            hFile = Peb->ProcessParameters->StandardInput;
-            break;
-        case STD_OUTPUT_HANDLE:
-            hFile = Peb->ProcessParameters->StandardOutput;
-            break;
-        case STD_ERROR_HANDLE:
-            hFile = Peb->ProcessParameters->StandardError;
-            break;
+    switch (HandleToUlong(hFile))
+    {
+    case STD_INPUT_HANDLE:
+        hFile = Peb->ProcessParameters->StandardInput;
+        break;
+    case STD_OUTPUT_HANDLE:
+        hFile = Peb->ProcessParameters->StandardOutput;
+        break;
+    case STD_ERROR_HANDLE:
+        hFile = Peb->ProcessParameters->StandardError;
+        break;
     }
 
-    if (CONSOLE_HANDLE(hFile) && VerifyConsoleIoHandle(hFile)) {
-        return( FILE_TYPE_CHAR );
+    if (CONSOLE_HANDLE(hFile) && VerifyConsoleIoHandle(hFile))
+    {
+        return (FILE_TYPE_CHAR);
     }
 
-    if (hFile == NULL) {
-        BaseSetLastNTError( STATUS_INVALID_HANDLE );
-        return( FILE_TYPE_UNKNOWN );    
+    if (hFile == NULL)
+    {
+        BaseSetLastNTError(STATUS_INVALID_HANDLE);
+        return (FILE_TYPE_UNKNOWN);
     }
 
     //
@@ -149,25 +146,24 @@ Return Value:
     // the call instead of calling with a bogus value NtQuery.
     //
 
-    if (((ULONG_PTR)hFile & 0x01)) {
+    if (((ULONG_PTR)hFile & 0x01))
+    {
 
-        BaseSetLastNTError( STATUS_INVALID_HANDLE );
-        return( FILE_TYPE_UNKNOWN );
+        BaseSetLastNTError(STATUS_INVALID_HANDLE);
+        return (FILE_TYPE_UNKNOWN);
     }
 
-    Status = NtQueryVolumeInformationFile( hFile,
-                                           &IoStatusBlock,
-                                           &DeviceInformation,
-                                           sizeof( DeviceInformation ),
-                                           FileFsDeviceInformation
-                                         );
+    Status = NtQueryVolumeInformationFile(hFile, &IoStatusBlock, &DeviceInformation, sizeof(DeviceInformation),
+                                          FileFsDeviceInformation);
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FILE_TYPE_UNKNOWN );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FILE_TYPE_UNKNOWN);
     }
 
-    switch( DeviceInformation.DeviceType ) {
+    switch (DeviceInformation.DeviceType)
+    {
 
     case FILE_DEVICE_SCREEN:
     case FILE_DEVICE_KEYBOARD:
@@ -178,7 +174,7 @@ Return Value:
     case FILE_DEVICE_MODEM:
     case FILE_DEVICE_SOUND:
     case FILE_DEVICE_NULL:
-        return( FILE_TYPE_CHAR );
+        return (FILE_TYPE_CHAR);
 
     case FILE_DEVICE_CD_ROM:
     case FILE_DEVICE_CD_ROM_FILE_SYSTEM:
@@ -188,10 +184,10 @@ Return Value:
     case FILE_DEVICE_DISK:
     case FILE_DEVICE_DISK_FILE_SYSTEM:
     case FILE_DEVICE_VIRTUAL_DISK:
-        return( FILE_TYPE_DISK );
+        return (FILE_TYPE_DISK);
 
     case FILE_DEVICE_NAMED_PIPE:
-        return( FILE_TYPE_PIPE );
+        return (FILE_TYPE_PIPE);
 
     case FILE_DEVICE_NETWORK:
     case FILE_DEVICE_NETWORK_FILE_SYSTEM:
@@ -203,20 +199,13 @@ Return Value:
 
     case FILE_DEVICE_UNKNOWN:
     default:
-        SetLastError( NO_ERROR );
-        return( FILE_TYPE_UNKNOWN );
+        SetLastError(NO_ERROR);
+        return (FILE_TYPE_UNKNOWN);
     }
 }
 
-BOOL
-WINAPI
-ReadFile(
-    HANDLE hFile,
-    LPVOID lpBuffer,
-    DWORD nNumberOfBytesToRead,
-    LPDWORD lpNumberOfBytesRead,
-    LPOVERLAPPED lpOverlapped
-    )
+BOOL WINAPI ReadFile(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPDWORD lpNumberOfBytesRead,
+                     LPOVERLAPPED lpOverlapped)
 
 /*++
 
@@ -282,152 +271,148 @@ Return Value:
     PPEB Peb;
     DWORD InputMode;
 
-    if ( ARGUMENT_PRESENT(lpNumberOfBytesRead) ) {
+    if (ARGUMENT_PRESENT(lpNumberOfBytesRead))
+    {
         *lpNumberOfBytesRead = 0;
-        }
+    }
 
     Peb = NtCurrentPeb();
 
-    switch( HandleToUlong(hFile) ) {
-        case STD_INPUT_HANDLE:  hFile = Peb->ProcessParameters->StandardInput;
-                                break;
-        case STD_OUTPUT_HANDLE: hFile = Peb->ProcessParameters->StandardOutput;
-                                break;
-        case STD_ERROR_HANDLE:  hFile = Peb->ProcessParameters->StandardError;
-                                break;
-        }
+    switch (HandleToUlong(hFile))
+    {
+    case STD_INPUT_HANDLE:
+        hFile = Peb->ProcessParameters->StandardInput;
+        break;
+    case STD_OUTPUT_HANDLE:
+        hFile = Peb->ProcessParameters->StandardOutput;
+        break;
+    case STD_ERROR_HANDLE:
+        hFile = Peb->ProcessParameters->StandardError;
+        break;
+    }
 
-    if (CONSOLE_HANDLE(hFile)) {
-        if (ReadConsoleA(hFile,
-                        lpBuffer,
-                        nNumberOfBytesToRead,
-                        lpNumberOfBytesRead,
-                        lpOverlapped
-                       )
-           ) {
+    if (CONSOLE_HANDLE(hFile))
+    {
+        if (ReadConsoleA(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped))
+        {
             Status = STATUS_SUCCESS;
-            if (!GetConsoleMode( hFile, &InputMode )) {
+            if (!GetConsoleMode(hFile, &InputMode))
+            {
                 InputMode = 0;
-                }
+            }
 
-            if (InputMode & ENABLE_PROCESSED_INPUT) {
-                try {
-                    if (*(PCHAR)lpBuffer == 0x1A) {
+            if (InputMode & ENABLE_PROCESSED_INPUT)
+            {
+                try
+                {
+                    if (*(PCHAR)lpBuffer == 0x1A)
+                    {
                         *lpNumberOfBytesRead = 0;
-                        }
                     }
-                except( EXCEPTION_EXECUTE_HANDLER ) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     Status = GetExceptionCode();
-                    }
                 }
+            }
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
                 return TRUE;
-                }
-            else {
+            }
+            else
+            {
                 BaseSetLastNTError(Status);
                 return FALSE;
-                }
-            }
-        else {
-            return FALSE;
             }
         }
+        else
+        {
+            return FALSE;
+        }
+    }
 
-    if ( ARGUMENT_PRESENT( lpOverlapped ) ) {
+    if (ARGUMENT_PRESENT(lpOverlapped))
+    {
         LARGE_INTEGER Li;
 
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
         Li.LowPart = lpOverlapped->Offset;
         Li.HighPart = lpOverlapped->OffsetHigh;
-        Status = NtReadFile(
-                hFile,
-                lpOverlapped->hEvent,
-                NULL,
-                (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-                (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                lpBuffer,
-                nNumberOfBytesToRead,
-                &Li,
-                NULL
-                );
+        Status =
+            NtReadFile(hFile, lpOverlapped->hEvent, NULL, (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+                       (PIO_STATUS_BLOCK)&lpOverlapped->Internal, lpBuffer, nNumberOfBytesToRead, &Li, NULL);
 
 
-        if ( NT_SUCCESS(Status) && Status != STATUS_PENDING) {
-            if ( ARGUMENT_PRESENT(lpNumberOfBytesRead) ) {
-                try {
+        if (NT_SUCCESS(Status) && Status != STATUS_PENDING)
+        {
+            if (ARGUMENT_PRESENT(lpNumberOfBytesRead))
+            {
+                try
+                {
                     *lpNumberOfBytesRead = (DWORD)lpOverlapped->InternalHigh;
-                    }
-                except(EXCEPTION_EXECUTE_HANDLER) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     *lpNumberOfBytesRead = 0;
-                    }
                 }
+            }
             return TRUE;
-            }
-        else
-        if (Status == STATUS_END_OF_FILE) {
-            if ( ARGUMENT_PRESENT(lpNumberOfBytesRead) ) {
+        }
+        else if (Status == STATUS_END_OF_FILE)
+        {
+            if (ARGUMENT_PRESENT(lpNumberOfBytesRead))
+            {
                 *lpNumberOfBytesRead = 0;
-                }
-            BaseSetLastNTError(Status);
-            return FALSE;
             }
-        else {
             BaseSetLastNTError(Status);
             return FALSE;
+        }
+        else
+        {
+            BaseSetLastNTError(Status);
+            return FALSE;
+        }
+    }
+    else
+    {
+        Status = NtReadFile(hFile, NULL, NULL, NULL, &IoStatusBlock, lpBuffer, nNumberOfBytesToRead, NULL, NULL);
+
+        if (Status == STATUS_PENDING)
+        {
+            // Operation must complete before return & IoStatusBlock destroyed
+            Status = NtWaitForSingleObject(hFile, FALSE, NULL);
+            if (NT_SUCCESS(Status))
+            {
+                Status = IoStatusBlock.Status;
             }
         }
-    else
+
+        if (NT_SUCCESS(Status))
         {
-        Status = NtReadFile(
-                hFile,
-                NULL,
-                NULL,
-                NULL,
-                &IoStatusBlock,
-                lpBuffer,
-                nNumberOfBytesToRead,
-                NULL,
-                NULL
-                );
-
-        if ( Status == STATUS_PENDING) {
-            // Operation must complete before return & IoStatusBlock destroyed
-            Status = NtWaitForSingleObject( hFile, FALSE, NULL );
-            if ( NT_SUCCESS(Status)) {
-                Status = IoStatusBlock.Status;
-                }
-            }
-
-        if ( NT_SUCCESS(Status) ) {
             *lpNumberOfBytesRead = (DWORD)IoStatusBlock.Information;
             return TRUE;
-            }
-        else
-        if (Status == STATUS_END_OF_FILE) {
+        }
+        else if (Status == STATUS_END_OF_FILE)
+        {
             *lpNumberOfBytesRead = 0;
             return TRUE;
-            }
-        else {
-            if ( NT_WARNING(Status) ) {
+        }
+        else
+        {
+            if (NT_WARNING(Status))
+            {
                 *lpNumberOfBytesRead = (DWORD)IoStatusBlock.Information;
-                }
+            }
             BaseSetLastNTError(Status);
             return FALSE;
-            }
         }
+    }
 }
 
 
-BOOL
-WINAPI
-WriteFile(
-    HANDLE hFile,
-    LPCVOID lpBuffer,
-    DWORD nNumberOfBytesToWrite,
-    LPDWORD lpNumberOfBytesWritten,
-    LPOVERLAPPED lpOverlapped
-    )
+BOOL WINAPI WriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten,
+                      LPOVERLAPPED lpOverlapped)
 
 /*++
 
@@ -495,103 +480,95 @@ Return Value:
     IO_STATUS_BLOCK IoStatusBlock;
     PPEB Peb;
 
-    if ( ARGUMENT_PRESENT(lpNumberOfBytesWritten) ) {
+    if (ARGUMENT_PRESENT(lpNumberOfBytesWritten))
+    {
         *lpNumberOfBytesWritten = 0;
-        }
+    }
 
     Peb = NtCurrentPeb();
-    switch( HandleToUlong(hFile) ) {
-        case STD_INPUT_HANDLE:  hFile = Peb->ProcessParameters->StandardInput;
-                                break;
-        case STD_OUTPUT_HANDLE: hFile = Peb->ProcessParameters->StandardOutput;
-                                break;
-        case STD_ERROR_HANDLE:  hFile = Peb->ProcessParameters->StandardError;
-                                break;
-        }
+    switch (HandleToUlong(hFile))
+    {
+    case STD_INPUT_HANDLE:
+        hFile = Peb->ProcessParameters->StandardInput;
+        break;
+    case STD_OUTPUT_HANDLE:
+        hFile = Peb->ProcessParameters->StandardOutput;
+        break;
+    case STD_ERROR_HANDLE:
+        hFile = Peb->ProcessParameters->StandardError;
+        break;
+    }
 
-    if (CONSOLE_HANDLE(hFile)) {
-        return WriteConsoleA(hFile,
-                            (LPVOID)lpBuffer,
-                            nNumberOfBytesToWrite,
-                            lpNumberOfBytesWritten,
-                            lpOverlapped
-                           );
-        }
+    if (CONSOLE_HANDLE(hFile))
+    {
+        return WriteConsoleA(hFile, (LPVOID)lpBuffer, nNumberOfBytesToWrite, lpNumberOfBytesWritten, lpOverlapped);
+    }
 
-    if ( ARGUMENT_PRESENT( lpOverlapped ) ) {
+    if (ARGUMENT_PRESENT(lpOverlapped))
+    {
         LARGE_INTEGER Li;
 
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
         Li.LowPart = lpOverlapped->Offset;
         Li.HighPart = lpOverlapped->OffsetHigh;
-        Status = NtWriteFile(
-                hFile,
-                lpOverlapped->hEvent,
-                NULL,
-                (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-                (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                (PVOID)lpBuffer,
-                nNumberOfBytesToWrite,
-                &Li,
-                NULL
-                );
+        Status =
+            NtWriteFile(hFile, lpOverlapped->hEvent, NULL, (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+                        (PIO_STATUS_BLOCK)&lpOverlapped->Internal, (PVOID)lpBuffer, nNumberOfBytesToWrite, &Li, NULL);
 
-        if ( !NT_ERROR(Status) && Status != STATUS_PENDING) {
-            if ( ARGUMENT_PRESENT(lpNumberOfBytesWritten) ) {
-                try {
+        if (!NT_ERROR(Status) && Status != STATUS_PENDING)
+        {
+            if (ARGUMENT_PRESENT(lpNumberOfBytesWritten))
+            {
+                try
+                {
                     *lpNumberOfBytesWritten = (DWORD)lpOverlapped->InternalHigh;
-                    }
-                except(EXCEPTION_EXECUTE_HANDLER) {
-                    *lpNumberOfBytesWritten = 0;
-                    }
                 }
-            return TRUE;
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
+                    *lpNumberOfBytesWritten = 0;
+                }
             }
-        else  {
+            return TRUE;
+        }
+        else
+        {
             BaseSetLastNTError(Status);
             return FALSE;
+        }
+    }
+    else
+    {
+        Status =
+            NtWriteFile(hFile, NULL, NULL, NULL, &IoStatusBlock, (PVOID)lpBuffer, nNumberOfBytesToWrite, NULL, NULL);
+
+        if (Status == STATUS_PENDING)
+        {
+            // Operation must complete before return & IoStatusBlock destroyed
+            Status = NtWaitForSingleObject(hFile, FALSE, NULL);
+            if (NT_SUCCESS(Status))
+            {
+                Status = IoStatusBlock.Status;
             }
         }
-    else {
-        Status = NtWriteFile(
-                hFile,
-                NULL,
-                NULL,
-                NULL,
-                &IoStatusBlock,
-                (PVOID)lpBuffer,
-                nNumberOfBytesToWrite,
-                NULL,
-                NULL
-                );
 
-        if ( Status == STATUS_PENDING) {
-            // Operation must complete before return & IoStatusBlock destroyed
-            Status = NtWaitForSingleObject( hFile, FALSE, NULL );
-            if ( NT_SUCCESS(Status)) {
-                Status = IoStatusBlock.Status;
-                }
-            }
-
-        if ( NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             *lpNumberOfBytesWritten = (DWORD)IoStatusBlock.Information;
             return TRUE;
-            }
-        else {
-            if ( NT_WARNING(Status) ) {
+        }
+        else
+        {
+            if (NT_WARNING(Status))
+            {
                 *lpNumberOfBytesWritten = (DWORD)IoStatusBlock.Information;
-                }
+            }
             BaseSetLastNTError(Status);
             return FALSE;
-            }
         }
+    }
 }
 
-BOOL
-WINAPI
-SetEndOfFile(
-    HANDLE hFile
-    )
+BOOL WINAPI SetEndOfFile(HANDLE hFile)
 
 /*++
 
@@ -628,26 +605,23 @@ Return Value:
     FILE_END_OF_FILE_INFORMATION EndOfFile;
     FILE_ALLOCATION_INFORMATION Allocation;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
     //
     // Get the current position of the file pointer
     //
 
-    Status = NtQueryInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &CurrentPosition,
-                sizeof(CurrentPosition),
-                FilePositionInformation
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQueryInformationFile(hFile, &IoStatusBlock, &CurrentPosition, sizeof(CurrentPosition),
+                                    FilePositionInformation);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     //
     // Set the end of file based on the current file position
@@ -655,17 +629,12 @@ Return Value:
 
     EndOfFile.EndOfFile = CurrentPosition.CurrentByteOffset;
 
-    Status = NtSetInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &EndOfFile,
-                sizeof(EndOfFile),
-                FileEndOfFileInformation
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtSetInformationFile(hFile, &IoStatusBlock, &EndOfFile, sizeof(EndOfFile), FileEndOfFileInformation);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     //
     // Set the allocation based on the current file size
@@ -673,30 +642,21 @@ Return Value:
 
     Allocation.AllocationSize = CurrentPosition.CurrentByteOffset;
 
-    Status = NtSetInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &Allocation,
-                sizeof(Allocation),
-                FileAllocationInformation
-                );
-    if ( NT_SUCCESS(Status) ) {
+    Status = NtSetInformationFile(hFile, &IoStatusBlock, &Allocation, sizeof(Allocation), FileAllocationInformation);
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
 DWORD
 WINAPI
-SetFilePointer(
-    HANDLE hFile,
-    LONG lDistanceToMove,
-    PLONG lpDistanceToMoveHigh,
-    DWORD dwMoveMethod
-    )
+SetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod)
 
 /*++
 
@@ -769,64 +729,59 @@ Return Value:
     FILE_STANDARD_INFORMATION StandardInfo;
     LARGE_INTEGER Large;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return (DWORD)-1;
-        }
+    }
 
-    if (ARGUMENT_PRESENT(lpDistanceToMoveHigh)) {
+    if (ARGUMENT_PRESENT(lpDistanceToMoveHigh))
+    {
         Large.HighPart = *lpDistanceToMoveHigh;
         Large.LowPart = lDistanceToMove;
-        }
-    else {
+    }
+    else
+    {
         Large.QuadPart = lDistanceToMove;
-        }
-    switch (dwMoveMethod) {
-        case FILE_BEGIN :
-            CurrentPosition.CurrentByteOffset = Large;
-                break;
+    }
+    switch (dwMoveMethod)
+    {
+    case FILE_BEGIN:
+        CurrentPosition.CurrentByteOffset = Large;
+        break;
 
-        case FILE_CURRENT :
+    case FILE_CURRENT:
 
-            //
-            // Get the current position of the file pointer
-            //
+        //
+        // Get the current position of the file pointer
+        //
 
-            Status = NtQueryInformationFile(
-                        hFile,
-                        &IoStatusBlock,
-                        &CurrentPosition,
-                        sizeof(CurrentPosition),
-                        FilePositionInformation
-                        );
-            if ( !NT_SUCCESS(Status) ) {
-                BaseSetLastNTError(Status);
-                return (DWORD)-1;
-                }
-            CurrentPosition.CurrentByteOffset.QuadPart += Large.QuadPart;
-            break;
-
-        case FILE_END :
-            Status = NtQueryInformationFile(
-                        hFile,
-                        &IoStatusBlock,
-                        &StandardInfo,
-                        sizeof(StandardInfo),
-                        FileStandardInformation
-                        );
-            if ( !NT_SUCCESS(Status) ) {
-                BaseSetLastNTError(Status);
-                return (DWORD)-1;
-                }
-            CurrentPosition.CurrentByteOffset.QuadPart =
-                                StandardInfo.EndOfFile.QuadPart + Large.QuadPart;
-            break;
-
-        default:
-            SetLastError(ERROR_INVALID_PARAMETER);
+        Status = NtQueryInformationFile(hFile, &IoStatusBlock, &CurrentPosition, sizeof(CurrentPosition),
+                                        FilePositionInformation);
+        if (!NT_SUCCESS(Status))
+        {
+            BaseSetLastNTError(Status);
             return (DWORD)-1;
-            break;
         }
+        CurrentPosition.CurrentByteOffset.QuadPart += Large.QuadPart;
+        break;
+
+    case FILE_END:
+        Status =
+            NtQueryInformationFile(hFile, &IoStatusBlock, &StandardInfo, sizeof(StandardInfo), FileStandardInformation);
+        if (!NT_SUCCESS(Status))
+        {
+            BaseSetLastNTError(Status);
+            return (DWORD)-1;
+        }
+        CurrentPosition.CurrentByteOffset.QuadPart = StandardInfo.EndOfFile.QuadPart + Large.QuadPart;
+        break;
+
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (DWORD)-1;
+        break;
+    }
 
     //
     // If the resulting file position is negative, or if the app is not
@@ -834,55 +789,50 @@ Return Value:
     // then 32 bits than fail
     //
 
-    if ( CurrentPosition.CurrentByteOffset.QuadPart < 0 ) {
+    if (CurrentPosition.CurrentByteOffset.QuadPart < 0)
+    {
         SetLastError(ERROR_NEGATIVE_SEEK);
         return (DWORD)-1;
-        }
-    if ( !ARGUMENT_PRESENT(lpDistanceToMoveHigh) &&
-        (CurrentPosition.CurrentByteOffset.HighPart & MAXLONG) ) {
+    }
+    if (!ARGUMENT_PRESENT(lpDistanceToMoveHigh) && (CurrentPosition.CurrentByteOffset.HighPart & MAXLONG))
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return (DWORD)-1;
-        }
+    }
 
 
     //
     // Set the current file position
     //
 
-    Status = NtSetInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &CurrentPosition,
-                sizeof(CurrentPosition),
-                FilePositionInformation
-                );
-    if ( NT_SUCCESS(Status) ) {
-        if (ARGUMENT_PRESENT(lpDistanceToMoveHigh)){
+    Status =
+        NtSetInformationFile(hFile, &IoStatusBlock, &CurrentPosition, sizeof(CurrentPosition), FilePositionInformation);
+    if (NT_SUCCESS(Status))
+    {
+        if (ARGUMENT_PRESENT(lpDistanceToMoveHigh))
+        {
             *lpDistanceToMoveHigh = CurrentPosition.CurrentByteOffset.HighPart;
-            }
-        if ( CurrentPosition.CurrentByteOffset.LowPart == -1 ) {
+        }
+        if (CurrentPosition.CurrentByteOffset.LowPart == -1)
+        {
             SetLastError(0);
-            }
+        }
         return CurrentPosition.CurrentByteOffset.LowPart;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
-        if (ARGUMENT_PRESENT(lpDistanceToMoveHigh)){
+        if (ARGUMENT_PRESENT(lpDistanceToMoveHigh))
+        {
             *lpDistanceToMoveHigh = -1;
-            }
-        return (DWORD)-1;
         }
+        return (DWORD)-1;
+    }
 }
 
 
-BOOL
-WINAPI
-SetFilePointerEx(
-    HANDLE hFile,
-    LARGE_INTEGER liDistanceToMove,
-    PLARGE_INTEGER lpNewFilePointer,
-    DWORD dwMoveMethod
-    )
+BOOL WINAPI SetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove, PLARGE_INTEGER lpNewFilePointer,
+                             DWORD dwMoveMethod)
 
 /*++
 
@@ -946,100 +896,86 @@ Return Value:
     FILE_STANDARD_INFORMATION StandardInfo;
     LARGE_INTEGER Large;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
     Large = liDistanceToMove;
 
-    switch (dwMoveMethod) {
-        case FILE_BEGIN :
-            CurrentPosition.CurrentByteOffset = Large;
-                break;
+    switch (dwMoveMethod)
+    {
+    case FILE_BEGIN:
+        CurrentPosition.CurrentByteOffset = Large;
+        break;
 
-        case FILE_CURRENT :
+    case FILE_CURRENT:
 
-            //
-            // Get the current position of the file pointer
-            //
+        //
+        // Get the current position of the file pointer
+        //
 
-            Status = NtQueryInformationFile(
-                        hFile,
-                        &IoStatusBlock,
-                        &CurrentPosition,
-                        sizeof(CurrentPosition),
-                        FilePositionInformation
-                        );
-            if ( !NT_SUCCESS(Status) ) {
-                BaseSetLastNTError(Status);
-                return FALSE;
-                }
-            CurrentPosition.CurrentByteOffset.QuadPart += Large.QuadPart;
-            break;
-
-        case FILE_END :
-            Status = NtQueryInformationFile(
-                        hFile,
-                        &IoStatusBlock,
-                        &StandardInfo,
-                        sizeof(StandardInfo),
-                        FileStandardInformation
-                        );
-            if ( !NT_SUCCESS(Status) ) {
-                BaseSetLastNTError(Status);
-                return FALSE;
-                }
-            CurrentPosition.CurrentByteOffset.QuadPart =
-                                StandardInfo.EndOfFile.QuadPart + Large.QuadPart;
-            break;
-
-        default:
-            SetLastError(ERROR_INVALID_PARAMETER);
+        Status = NtQueryInformationFile(hFile, &IoStatusBlock, &CurrentPosition, sizeof(CurrentPosition),
+                                        FilePositionInformation);
+        if (!NT_SUCCESS(Status))
+        {
+            BaseSetLastNTError(Status);
             return FALSE;
-            break;
         }
+        CurrentPosition.CurrentByteOffset.QuadPart += Large.QuadPart;
+        break;
+
+    case FILE_END:
+        Status =
+            NtQueryInformationFile(hFile, &IoStatusBlock, &StandardInfo, sizeof(StandardInfo), FileStandardInformation);
+        if (!NT_SUCCESS(Status))
+        {
+            BaseSetLastNTError(Status);
+            return FALSE;
+        }
+        CurrentPosition.CurrentByteOffset.QuadPart = StandardInfo.EndOfFile.QuadPart + Large.QuadPart;
+        break;
+
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+        break;
+    }
 
     //
     // If the resulting file position is negative fail
     //
 
-    if ( CurrentPosition.CurrentByteOffset.QuadPart < 0 ) {
+    if (CurrentPosition.CurrentByteOffset.QuadPart < 0)
+    {
         SetLastError(ERROR_NEGATIVE_SEEK);
         return FALSE;
-        }
+    }
 
 
     //
     // Set the current file position
     //
 
-    Status = NtSetInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &CurrentPosition,
-                sizeof(CurrentPosition),
-                FilePositionInformation
-                );
-    if ( NT_SUCCESS(Status) ) {
-        if (ARGUMENT_PRESENT(lpNewFilePointer)){
+    Status =
+        NtSetInformationFile(hFile, &IoStatusBlock, &CurrentPosition, sizeof(CurrentPosition), FilePositionInformation);
+    if (NT_SUCCESS(Status))
+    {
+        if (ARGUMENT_PRESENT(lpNewFilePointer))
+        {
             *lpNewFilePointer = CurrentPosition.CurrentByteOffset;
-            }
-        return TRUE;
         }
-    else {
+        return TRUE;
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
 
-
-BOOL
-WINAPI
-GetFileInformationByHandle(
-    HANDLE hFile,
-    LPBY_HANDLE_FILE_INFORMATION lpFileInformation
-    )
+BOOL WINAPI GetFileInformationByHandle(HANDLE hFile, LPBY_HANDLE_FILE_INFORMATION lpFileInformation)
 
 /*++
 
@@ -1074,40 +1010,34 @@ Return Value:
     FILE_ALL_INFORMATION FileInformation;
     FILE_FS_VOLUME_INFORMATION VolumeInfo;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
-    Status = NtQueryVolumeInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &VolumeInfo,
-                sizeof(VolumeInfo),
-                FileFsVolumeInformation
-                );
-    if ( !NT_ERROR(Status) ) {
+    Status =
+        NtQueryVolumeInformationFile(hFile, &IoStatusBlock, &VolumeInfo, sizeof(VolumeInfo), FileFsVolumeInformation);
+    if (!NT_ERROR(Status))
+    {
         LocalFileInformation.dwVolumeSerialNumber = VolumeInfo.VolumeSerialNumber;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
 
-    Status = NtQueryInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &FileInformation,
-                sizeof(FileInformation),
-                FileAllInformation
-                );
+    Status =
+        NtQueryInformationFile(hFile, &IoStatusBlock, &FileInformation, sizeof(FileInformation), FileAllInformation);
 
     //
     // we really plan for buffer overflow
     //
 
-    if ( !NT_ERROR(Status) ) {
+    if (!NT_ERROR(Status))
+    {
         LocalFileInformation.dwFileAttributes = FileInformation.BasicInformation.FileAttributes;
         LocalFileInformation.ftCreationTime = *(LPFILETIME)&FileInformation.BasicInformation.CreationTime;
         LocalFileInformation.ftLastAccessTime = *(LPFILETIME)&FileInformation.BasicInformation.LastAccessTime;
@@ -1117,23 +1047,18 @@ Return Value:
         LocalFileInformation.nNumberOfLinks = FileInformation.StandardInformation.NumberOfLinks;
         LocalFileInformation.nFileIndexHigh = FileInformation.InternalInformation.IndexNumber.HighPart;
         LocalFileInformation.nFileIndexLow = FileInformation.InternalInformation.IndexNumber.LowPart;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     *lpFileInformation = LocalFileInformation;
     return TRUE;
 }
 
-BOOL
-APIENTRY
-GetFileTime(
-    HANDLE hFile,
-    LPFILETIME lpCreationTime,
-    LPFILETIME lpLastAccessTime,
-    LPFILETIME lpLastWriteTime
-    )
+BOOL APIENTRY GetFileTime(HANDLE hFile, LPFILETIME lpCreationTime, LPFILETIME lpLastAccessTime,
+                          LPFILETIME lpLastWriteTime)
 
 /*++
 
@@ -1185,51 +1110,45 @@ Return Value:
     IO_STATUS_BLOCK IoStatusBlock;
     FILE_BASIC_INFORMATION BasicInfo;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
     //
     // Get the attributes
     //
 
-    Status = NtQueryInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &BasicInfo,
-                sizeof(BasicInfo),
-                FileBasicInformation
-                );
+    Status = NtQueryInformationFile(hFile, &IoStatusBlock, &BasicInfo, sizeof(BasicInfo), FileBasicInformation);
 
-    if ( NT_SUCCESS(Status) ) {
-        if (ARGUMENT_PRESENT( lpCreationTime )) {
+    if (NT_SUCCESS(Status))
+    {
+        if (ARGUMENT_PRESENT(lpCreationTime))
+        {
             *lpCreationTime = *(LPFILETIME)&BasicInfo.CreationTime;
-            }
-
-        if (ARGUMENT_PRESENT( lpLastAccessTime )) {
-            *lpLastAccessTime = *(LPFILETIME)&BasicInfo.LastAccessTime;
-            }
-
-        if (ARGUMENT_PRESENT( lpLastWriteTime )) {
-            *lpLastWriteTime = *(LPFILETIME)&BasicInfo.LastWriteTime;
-            }
-        return TRUE;
         }
-    else {
+
+        if (ARGUMENT_PRESENT(lpLastAccessTime))
+        {
+            *lpLastAccessTime = *(LPFILETIME)&BasicInfo.LastAccessTime;
+        }
+
+        if (ARGUMENT_PRESENT(lpLastWriteTime))
+        {
+            *lpLastWriteTime = *(LPFILETIME)&BasicInfo.LastWriteTime;
+        }
+        return TRUE;
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
-BOOL
-WINAPI
-SetFileTime(
-    HANDLE hFile,
-    CONST FILETIME *lpCreationTime,
-    CONST FILETIME *lpLastAccessTime,
-    CONST FILETIME *lpLastWriteTime
-    )
+BOOL WINAPI SetFileTime(HANDLE hFile, CONST FILETIME *lpCreationTime, CONST FILETIME *lpLastAccessTime,
+                        CONST FILETIME *lpLastWriteTime)
 
 /*++
 
@@ -1278,62 +1197,58 @@ Return Value:
     IO_STATUS_BLOCK IoStatusBlock;
     FILE_BASIC_INFORMATION BasicInfo;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
     //
     // Zero all the time values we can set.
     //
 
-    RtlZeroMemory(&BasicInfo,sizeof(BasicInfo));
+    RtlZeroMemory(&BasicInfo, sizeof(BasicInfo));
 
     //
     // For each time value that is specified, copy it to the I/O system
     // record.
     //
-    if (ARGUMENT_PRESENT( lpCreationTime )) {
+    if (ARGUMENT_PRESENT(lpCreationTime))
+    {
         BasicInfo.CreationTime.LowPart = lpCreationTime->dwLowDateTime;
         BasicInfo.CreationTime.HighPart = lpCreationTime->dwHighDateTime;
-        }
+    }
 
-    if (ARGUMENT_PRESENT( lpLastAccessTime )) {
+    if (ARGUMENT_PRESENT(lpLastAccessTime))
+    {
         BasicInfo.LastAccessTime.LowPart = lpLastAccessTime->dwLowDateTime;
         BasicInfo.LastAccessTime.HighPart = lpLastAccessTime->dwHighDateTime;
-        }
+    }
 
-    if (ARGUMENT_PRESENT( lpLastWriteTime )) {
+    if (ARGUMENT_PRESENT(lpLastWriteTime))
+    {
         BasicInfo.LastWriteTime.LowPart = lpLastWriteTime->dwLowDateTime;
         BasicInfo.LastWriteTime.HighPart = lpLastWriteTime->dwHighDateTime;
-        }
+    }
 
     //
     // Set the requested times.
     //
 
-    Status = NtSetInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &BasicInfo,
-                sizeof(BasicInfo),
-                FileBasicInformation
-                );
+    Status = NtSetInformationFile(hFile, &IoStatusBlock, &BasicInfo, sizeof(BasicInfo), FileBasicInformation);
 
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
-BOOL
-WINAPI
-FlushFileBuffers(
-    HANDLE hFile
-    )
+BOOL WINAPI FlushFileBuffers(HANDLE hFile)
 
 /*++
 
@@ -1367,39 +1282,39 @@ Return Value:
 
     Peb = NtCurrentPeb();
 
-    switch( HandleToUlong(hFile) ) {
-        case STD_INPUT_HANDLE:  hFile = Peb->ProcessParameters->StandardInput;
-                                break;
-        case STD_OUTPUT_HANDLE: hFile = Peb->ProcessParameters->StandardOutput;
-                                break;
-        case STD_ERROR_HANDLE:  hFile = Peb->ProcessParameters->StandardError;
-                                break;
-        }
+    switch (HandleToUlong(hFile))
+    {
+    case STD_INPUT_HANDLE:
+        hFile = Peb->ProcessParameters->StandardInput;
+        break;
+    case STD_OUTPUT_HANDLE:
+        hFile = Peb->ProcessParameters->StandardOutput;
+        break;
+    case STD_ERROR_HANDLE:
+        hFile = Peb->ProcessParameters->StandardError;
+        break;
+    }
 
-    if (CONSOLE_HANDLE(hFile)) {
-        return( FlushConsoleInputBuffer( hFile ) );
-        }
+    if (CONSOLE_HANDLE(hFile))
+    {
+        return (FlushConsoleInputBuffer(hFile));
+    }
 
-    Status = NtFlushBuffersFile(hFile,&IoStatusBlock);
+    Status = NtFlushBuffersFile(hFile, &IoStatusBlock);
 
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
-BOOL
-WINAPI
-LockFile(
-    HANDLE hFile,
-    DWORD dwFileOffsetLow,
-    DWORD dwFileOffsetHigh,
-    DWORD nNumberOfBytesToLockLow,
-    DWORD nNumberOfBytesToLockHigh
-    )
+BOOL WINAPI LockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh, DWORD nNumberOfBytesToLockLow,
+                     DWORD nNumberOfBytesToLockHigh)
 
 /*++
 
@@ -1456,10 +1371,11 @@ Return Value:
     LARGE_INTEGER Length;
     IO_STATUS_BLOCK IoStatusBlock;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
     ByteOffset.LowPart = dwFileOffsetLow;
     ByteOffset.HighPart = dwFileOffsetHigh;
@@ -1467,46 +1383,32 @@ Return Value:
     Length.LowPart = nNumberOfBytesToLockLow;
     Length.HighPart = nNumberOfBytesToLockHigh;
 
-    Status = NtLockFile( hFile,
-                         NULL,
-                         NULL,
-                         NULL,
-                         &IoStatusBlock,
-                         &ByteOffset,
-                         &Length,
-                         0,
-                         TRUE,
-                         TRUE
-                       );
+    Status = NtLockFile(hFile, NULL, NULL, NULL, &IoStatusBlock, &ByteOffset, &Length, 0, TRUE, TRUE);
 
-    if (Status == STATUS_PENDING) {
+    if (Status == STATUS_PENDING)
+    {
 
-        Status = NtWaitForSingleObject( hFile, FALSE, NULL );
-        if (NT_SUCCESS( Status )) {
+        Status = NtWaitForSingleObject(hFile, FALSE, NULL);
+        if (NT_SUCCESS(Status))
+        {
             Status = IoStatusBlock.Status;
-            }
         }
+    }
 
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
 
-BOOL
-WINAPI
-LockFileEx(
-    HANDLE hFile,
-    DWORD dwFlags,
-    DWORD dwReserved,
-    DWORD nNumberOfBytesToLockLow,
-    DWORD nNumberOfBytesToLockHigh,
-    LPOVERLAPPED lpOverlapped
-    )
+BOOL WINAPI LockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved, DWORD nNumberOfBytesToLockLow,
+                       DWORD nNumberOfBytesToLockHigh, LPOVERLAPPED lpOverlapped)
 
 /*++
 
@@ -1578,15 +1480,17 @@ Return Value:
     LARGE_INTEGER ByteOffset;
     LARGE_INTEGER Length;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
-    if (dwReserved != 0) {
+    if (dwReserved != 0)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
 
     ByteOffset.LowPart = lpOverlapped->Offset;
     ByteOffset.HighPart = lpOverlapped->OffsetHigh;
@@ -1595,37 +1499,25 @@ Return Value:
     Length.HighPart = nNumberOfBytesToLockHigh;
     lpOverlapped->Internal = (DWORD)STATUS_PENDING;
 
-    Status = NtLockFile( hFile,
-                         lpOverlapped->hEvent,
-                         NULL,
-                         (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-                         (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                         &ByteOffset,
-                         &Length,
-                         0,
-                         (BOOLEAN)((dwFlags & LOCKFILE_FAIL_IMMEDIATELY) ? TRUE : FALSE),
-                         (BOOLEAN)((dwFlags & LOCKFILE_EXCLUSIVE_LOCK) ? TRUE : FALSE)
-                       );
+    Status = NtLockFile(hFile, lpOverlapped->hEvent, NULL, (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+                        (PIO_STATUS_BLOCK)&lpOverlapped->Internal, &ByteOffset, &Length, 0,
+                        (BOOLEAN)((dwFlags & LOCKFILE_FAIL_IMMEDIATELY) ? TRUE : FALSE),
+                        (BOOLEAN)((dwFlags & LOCKFILE_EXCLUSIVE_LOCK) ? TRUE : FALSE));
 
-    if ( NT_SUCCESS(Status) && Status != STATUS_PENDING) {
+    if (NT_SUCCESS(Status) && Status != STATUS_PENDING)
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
 
-BOOL
-WINAPI
-UnlockFile(
-    HANDLE hFile,
-    DWORD dwFileOffsetLow,
-    DWORD dwFileOffsetHigh,
-    DWORD nNumberOfBytesToUnlockLow,
-    DWORD nNumberOfBytesToUnlockHigh
-    )
+BOOL WINAPI UnlockFile(HANDLE hFile, DWORD dwFileOffsetLow, DWORD dwFileOffsetHigh, DWORD nNumberOfBytesToUnlockLow,
+                       DWORD nNumberOfBytesToUnlockHigh)
 
 /*++
 
@@ -1682,42 +1574,34 @@ Return Value:
 
     Overlapped.Offset = dwFileOffsetLow;
     Overlapped.OffsetHigh = dwFileOffsetHigh;
-    bResult = UnlockFileEx( hFile,
-                            0,
-                            nNumberOfBytesToUnlockLow,
-                            nNumberOfBytesToUnlockHigh,
-                            &Overlapped
-                          );
-    if (!bResult && GetLastError() == ERROR_IO_PENDING) {
-        Status = NtWaitForSingleObject( hFile, FALSE, NULL );
-        if (NT_SUCCESS( Status )) {
+    bResult = UnlockFileEx(hFile, 0, nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh, &Overlapped);
+    if (!bResult && GetLastError() == ERROR_IO_PENDING)
+    {
+        Status = NtWaitForSingleObject(hFile, FALSE, NULL);
+        if (NT_SUCCESS(Status))
+        {
             Status = (NTSTATUS)Overlapped.Internal;
-            }
+        }
 
-        if ( NT_SUCCESS(Status) ) {
+        if (NT_SUCCESS(Status))
+        {
             return TRUE;
-            }
-        else {
+        }
+        else
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
         }
-    else {
+    }
+    else
+    {
         return bResult;
-        }
+    }
 }
 
 
-
-BOOL
-WINAPI
-UnlockFileEx(
-    HANDLE hFile,
-    DWORD dwReserved,
-    DWORD nNumberOfBytesToUnlockLow,
-    DWORD nNumberOfBytesToUnlockHigh,
-    LPOVERLAPPED lpOverlapped
-    )
+BOOL WINAPI UnlockFileEx(HANDLE hFile, DWORD dwReserved, DWORD nNumberOfBytesToUnlockLow,
+                         DWORD nNumberOfBytesToUnlockHigh, LPOVERLAPPED lpOverlapped)
 
 /*++
 
@@ -1769,15 +1653,17 @@ Return Value:
     LARGE_INTEGER ByteOffset;
     LARGE_INTEGER Length;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
-    if (dwReserved != 0) {
+    if (dwReserved != 0)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
 
     ByteOffset.LowPart = lpOverlapped->Offset;
     ByteOffset.HighPart = lpOverlapped->OffsetHigh;
@@ -1785,28 +1671,20 @@ Return Value:
     Length.LowPart = nNumberOfBytesToUnlockLow;
     Length.HighPart = nNumberOfBytesToUnlockHigh;
 
-    Status = NtUnlockFile(
-                hFile,
-                (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                &ByteOffset,
-                &Length,
-                0
-                );
+    Status = NtUnlockFile(hFile, (PIO_STATUS_BLOCK)&lpOverlapped->Internal, &ByteOffset, &Length, 0);
 
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
-UINT
-WINAPI
-SetHandleCount(
-    UINT uNumber
-    )
+UINT WINAPI SetHandleCount(UINT uNumber)
 
 /*++
 
@@ -1836,10 +1714,7 @@ Return Value:
 
 DWORD
 WINAPI
-GetFileSize(
-    HANDLE hFile,
-    LPDWORD lpFileSizeHigh
-    )
+GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh)
 
 /*++
 
@@ -1881,30 +1756,29 @@ Return Value:
     BOOL b;
     LARGE_INTEGER Li;
 
-    b = GetFileSizeEx(hFile,&Li);
+    b = GetFileSizeEx(hFile, &Li);
 
-    if ( b ) {
+    if (b)
+    {
 
-        if ( ARGUMENT_PRESENT(lpFileSizeHigh) ) {
+        if (ARGUMENT_PRESENT(lpFileSizeHigh))
+        {
             *lpFileSizeHigh = (DWORD)Li.HighPart;
-            }
-        if (Li.LowPart == -1 ) {
+        }
+        if (Li.LowPart == -1)
+        {
             SetLastError(0);
-            }
         }
-    else {
+    }
+    else
+    {
         Li.LowPart = -1;
-        }
+    }
 
     return Li.LowPart;
 }
 
-BOOL
-WINAPI
-GetFileSizeEx(
-    HANDLE hFile,
-    PLARGE_INTEGER lpFileSize
-    )
+BOOL WINAPI GetFileSizeEx(HANDLE hFile, PLARGE_INTEGER lpFileSize)
 
 /*++
 
@@ -1938,30 +1812,21 @@ Return Value:
     IO_STATUS_BLOCK IoStatusBlock;
     FILE_STANDARD_INFORMATION StandardInfo;
 
-    Status = NtQueryInformationFile(
-                hFile,
-                &IoStatusBlock,
-                &StandardInfo,
-                sizeof(StandardInfo),
-                FileStandardInformation
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status =
+        NtQueryInformationFile(hFile, &IoStatusBlock, &StandardInfo, sizeof(StandardInfo), FileStandardInformation);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
-    else {
+    }
+    else
+    {
         *lpFileSize = StandardInfo.EndOfFile;
         return TRUE;
-        }
+    }
 }
 
-VOID
-WINAPI
-BasepIoCompletion(
-    PVOID ApcContext,
-    PIO_STATUS_BLOCK IoStatusBlock,
-    DWORD Reserved
-    )
+VOID WINAPI BasepIoCompletion(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, DWORD Reserved)
 
 
 /*++
@@ -2038,42 +1903,44 @@ Return Value:
     DWORD dwNumberOfBytesTransfered;
     LPOVERLAPPED lpOverlapped;
     NTSTATUS Status;
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = { sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = {
+        sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
+    };
     PACTIVATION_CONTEXT ActivationContext = NULL;
 
-    if ( NT_ERROR(IoStatusBlock->Status) ) {
+    if (NT_ERROR(IoStatusBlock->Status))
+    {
         dwErrorCode = RtlNtStatusToDosError(IoStatusBlock->Status);
         dwNumberOfBytesTransfered = 0;
-    } else {
+    }
+    else
+    {
         dwErrorCode = 0;
         dwNumberOfBytesTransfered = (DWORD)IoStatusBlock->Information;
     }
 
-    ActivationBlock = (PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK) ApcContext;
+    ActivationBlock = (PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK)ApcContext;
     ActivationContext = ActivationBlock->ActivationContext;
-    CompletionRoutine = (LPOVERLAPPED_COMPLETION_ROUTINE) ActivationBlock->CallbackFunction;
-    lpOverlapped = (LPOVERLAPPED) CONTAINING_RECORD(IoStatusBlock, OVERLAPPED, Internal);
+    CompletionRoutine = (LPOVERLAPPED_COMPLETION_ROUTINE)ActivationBlock->CallbackFunction;
+    lpOverlapped = (LPOVERLAPPED)CONTAINING_RECORD(IoStatusBlock, OVERLAPPED, Internal);
 
     if (!(ActivationBlock->Flags & BASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_FREE_AFTER_CALLBACK))
         BasepFreeActivationContextActivationBlock(ActivationBlock);
 
     RtlActivateActivationContextUnsafeFast(&ActivationFrame, ActivationContext);
-    __try {
+    __try
+    {
         (*CompletionRoutine)(dwErrorCode, dwNumberOfBytesTransfered, lpOverlapped);
-    } __finally {
+    }
+    __finally
+    {
         RtlDeactivateActivationContextUnsafeFast(&ActivationFrame);
     }
 
     Reserved;
 }
 
-VOID
-WINAPI
-BasepIoCompletionSimple(
-    PVOID ApcContext,
-    PIO_STATUS_BLOCK IoStatusBlock,
-    DWORD Reserved
-    )
+VOID WINAPI BasepIoCompletionSimple(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, DWORD Reserved)
 
 
 /*++
@@ -2151,32 +2018,27 @@ Return Value:
 
     dwErrorCode = 0;
 
-    if ( NT_ERROR(IoStatusBlock->Status) ) {
+    if (NT_ERROR(IoStatusBlock->Status))
+    {
         dwErrorCode = RtlNtStatusToDosError(IoStatusBlock->Status);
         dwNumberOfBytesTransfered = 0;
-        }
-    else {
+    }
+    else
+    {
         dwErrorCode = 0;
         dwNumberOfBytesTransfered = (DWORD)IoStatusBlock->Information;
-        }
+    }
 
     CompletionRoutine = (LPOVERLAPPED_COMPLETION_ROUTINE)ApcContext;
-    lpOverlapped = (LPOVERLAPPED)CONTAINING_RECORD(IoStatusBlock,OVERLAPPED,Internal);
+    lpOverlapped = (LPOVERLAPPED)CONTAINING_RECORD(IoStatusBlock, OVERLAPPED, Internal);
 
-    (CompletionRoutine)(dwErrorCode,dwNumberOfBytesTransfered,lpOverlapped);
+    (CompletionRoutine)(dwErrorCode, dwNumberOfBytesTransfered, lpOverlapped);
 
     Reserved;
 }
 
-BOOL
-WINAPI
-ReadFileEx(
-    HANDLE hFile,
-    LPVOID lpBuffer,
-    DWORD nNumberOfBytesToRead,
-    LPOVERLAPPED lpOverlapped,
-    LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
-    )
+BOOL WINAPI ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, LPOVERLAPPED lpOverlapped,
+                       LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 
 /*++
 
@@ -2256,36 +2118,29 @@ Return Value:
 
     // If there's an APC routine to call we need to allocate a little chunk of heap
     // to pass the activation context to the APC callback.
-    if (lpCompletionRoutine != NULL) {
+    if (lpCompletionRoutine != NULL)
+    {
         Status = BasepAllocateActivationContextActivationBlock(
             BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_ALLOCATE_IF_PROCESS_DEFAULT,
-            lpCompletionRoutine,
-            lpOverlapped,
-            &ActivationBlock);
-        if (!NT_SUCCESS(Status)) {
+            lpCompletionRoutine, lpOverlapped, &ActivationBlock);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
         }
 
         // If there's nothing to do, call the simpler one that doesn't try to do activation context stuff
-        if (ActivationBlock != NULL) {
+        if (ActivationBlock != NULL)
+        {
             IoApcRoutine = &BasepIoCompletion;
             ApcContext = ActivationBlock;
         }
     }
 
-    Status = NtReadFile(
-                hFile,
-                NULL,
-                IoApcRoutine,
-                ApcContext,
-                (PIO_STATUS_BLOCK) &lpOverlapped->Internal,
-                lpBuffer,
-                nNumberOfBytesToRead,
-                &Li,
-                NULL
-                );
-    if ( NT_ERROR(Status) ) {
+    Status = NtReadFile(hFile, NULL, IoApcRoutine, ApcContext, (PIO_STATUS_BLOCK)&lpOverlapped->Internal, lpBuffer,
+                        nNumberOfBytesToRead, &Li, NULL);
+    if (NT_ERROR(Status))
+    {
         if (ActivationBlock != NULL)
             BasepFreeActivationContextActivationBlock(ActivationBlock);
         BaseSetLastNTError(Status);
@@ -2295,15 +2150,8 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-WINAPI
-WriteFileEx(
-    HANDLE hFile,
-    LPCVOID lpBuffer,
-    DWORD nNumberOfBytesToWrite,
-    LPOVERLAPPED lpOverlapped,
-    LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine
-    )
+BOOL WINAPI WriteFileEx(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPOVERLAPPED lpOverlapped,
+                        LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine)
 
 /*++
 
@@ -2388,58 +2236,43 @@ Return Value:
     // we'll replace the parameters to the common NtWriteFile call below so that
     // the control flow is obvious.
     //
-    if (lpCompletionRoutine != NULL) {
+    if (lpCompletionRoutine != NULL)
+    {
         Status = BasepAllocateActivationContextActivationBlock(
             BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_ALLOCATE_IF_PROCESS_DEFAULT,
-            lpCompletionRoutine,
-            lpOverlapped,
-            &ActivationBlock);
-        if (!NT_SUCCESS(Status)) {
+            lpCompletionRoutine, lpOverlapped, &ActivationBlock);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
         }
 
         // If there's nothing to do, call the simpler one that doesn't try to do activation context stuff
-        if (ActivationBlock != NULL) {
+        if (ActivationBlock != NULL)
+        {
             IoApcRoutine = &BasepIoCompletion;
             ApcContext = ActivationBlock;
         }
     }
 
-    Status = NtWriteFile(
-                hFile,
-                NULL,
-                IoApcRoutine,
-                ApcContext,
-                (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                (LPVOID)lpBuffer,
-                nNumberOfBytesToWrite,
-                &Li,
-                NULL
-                );
-    if ( NT_ERROR(Status) ) {
-        if (ActivationBlock != NULL) {
+    Status = NtWriteFile(hFile, NULL, IoApcRoutine, ApcContext, (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
+                         (LPVOID)lpBuffer, nNumberOfBytesToWrite, &Li, NULL);
+    if (NT_ERROR(Status))
+    {
+        if (ActivationBlock != NULL)
+        {
             BasepFreeActivationContextActivationBlock(ActivationBlock);
         }
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     return TRUE;
 }
 
-BOOL
-WINAPI
-DeviceIoControl(
-    HANDLE hDevice,
-    DWORD dwIoControlCode,
-    LPVOID lpInBuffer,
-    DWORD nInBufferSize,
-    LPVOID lpOutBuffer,
-    DWORD nOutBufferSize,
-    LPDWORD lpBytesReturned,
-    LPOVERLAPPED lpOverlapped
-    )
+BOOL WINAPI DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize,
+                            LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned,
+                            LPOVERLAPPED lpOverlapped)
 
 /*++
 
@@ -2502,126 +2335,130 @@ Return Value:
     NTSTATUS Status;
     BOOLEAN DevIoCtl;
 
-    if ( dwIoControlCode >> 16 == FILE_DEVICE_FILE_SYSTEM ) {
+    if (dwIoControlCode >> 16 == FILE_DEVICE_FILE_SYSTEM)
+    {
         DevIoCtl = FALSE;
-        }
-    else {
+    }
+    else
+    {
         DevIoCtl = TRUE;
-        }
+    }
 
-    if ( ARGUMENT_PRESENT( lpOverlapped ) ) {
+    if (ARGUMENT_PRESENT(lpOverlapped))
+    {
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
 
-        if ( DevIoCtl ) {
+        if (DevIoCtl)
+        {
 
-            Status = NtDeviceIoControlFile(
-                        hDevice,
-                        lpOverlapped->hEvent,
-                        NULL,             // APC routine
-                        (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-                        (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                        dwIoControlCode,  // IoControlCode
-                        lpInBuffer,       // Buffer for data to the FS
-                        nInBufferSize,
-                        lpOutBuffer,      // OutputBuffer for data from the FS
-                        nOutBufferSize    // OutputBuffer Length
-                        );
-            }
-        else {
+            Status = NtDeviceIoControlFile(hDevice, lpOverlapped->hEvent,
+                                           NULL, // APC routine
+                                           (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+                                           (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
+                                           dwIoControlCode, // IoControlCode
+                                           lpInBuffer,      // Buffer for data to the FS
+                                           nInBufferSize,
+                                           lpOutBuffer,   // OutputBuffer for data from the FS
+                                           nOutBufferSize // OutputBuffer Length
+            );
+        }
+        else
+        {
 
-            Status = NtFsControlFile(
-                        hDevice,
-                        lpOverlapped->hEvent,
-                        NULL,             // APC routine
-                        (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-                        (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                        dwIoControlCode,  // IoControlCode
-                        lpInBuffer,       // Buffer for data to the FS
-                        nInBufferSize,
-                        lpOutBuffer,      // OutputBuffer for data from the FS
-                        nOutBufferSize    // OutputBuffer Length
-                        );
-
-            }
+            Status = NtFsControlFile(hDevice, lpOverlapped->hEvent,
+                                     NULL, // APC routine
+                                     (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+                                     (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
+                                     dwIoControlCode, // IoControlCode
+                                     lpInBuffer,      // Buffer for data to the FS
+                                     nInBufferSize,
+                                     lpOutBuffer,   // OutputBuffer for data from the FS
+                                     nOutBufferSize // OutputBuffer Length
+            );
+        }
 
         // handle warning value STATUS_BUFFER_OVERFLOW somewhat correctly
-        if ( !NT_ERROR(Status) && ARGUMENT_PRESENT(lpBytesReturned) ) {
-            try {
+        if (!NT_ERROR(Status) && ARGUMENT_PRESENT(lpBytesReturned))
+        {
+            try
+            {
                 *lpBytesReturned = (DWORD)lpOverlapped->InternalHigh;
-                }
-            except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 *lpBytesReturned = 0;
-                }
-            }
-        if ( NT_SUCCESS(Status) && Status != STATUS_PENDING) {
-            return TRUE;
-            }
-        else {
-            BaseSetLastNTError(Status);
-            return FALSE;
             }
         }
-    else
+        if (NT_SUCCESS(Status) && Status != STATUS_PENDING)
         {
+            return TRUE;
+        }
+        else
+        {
+            BaseSetLastNTError(Status);
+            return FALSE;
+        }
+    }
+    else
+    {
         IO_STATUS_BLOCK Iosb;
 
-        if ( DevIoCtl ) {
-            Status = NtDeviceIoControlFile(
-                        hDevice,
-                        NULL,
-                        NULL,             // APC routine
-                        NULL,             // APC Context
-                        &Iosb,
-                        dwIoControlCode,  // IoControlCode
-                        lpInBuffer,       // Buffer for data to the FS
-                        nInBufferSize,
-                        lpOutBuffer,      // OutputBuffer for data from the FS
-                        nOutBufferSize    // OutputBuffer Length
-                        );
-            }
-        else {
-            Status = NtFsControlFile(
-                        hDevice,
-                        NULL,
-                        NULL,             // APC routine
-                        NULL,             // APC Context
-                        &Iosb,
-                        dwIoControlCode,  // IoControlCode
-                        lpInBuffer,       // Buffer for data to the FS
-                        nInBufferSize,
-                        lpOutBuffer,      // OutputBuffer for data from the FS
-                        nOutBufferSize    // OutputBuffer Length
-                        );
-            }
+        if (DevIoCtl)
+        {
+            Status = NtDeviceIoControlFile(hDevice, NULL,
+                                           NULL, // APC routine
+                                           NULL, // APC Context
+                                           &Iosb,
+                                           dwIoControlCode, // IoControlCode
+                                           lpInBuffer,      // Buffer for data to the FS
+                                           nInBufferSize,
+                                           lpOutBuffer,   // OutputBuffer for data from the FS
+                                           nOutBufferSize // OutputBuffer Length
+            );
+        }
+        else
+        {
+            Status = NtFsControlFile(hDevice, NULL,
+                                     NULL, // APC routine
+                                     NULL, // APC Context
+                                     &Iosb,
+                                     dwIoControlCode, // IoControlCode
+                                     lpInBuffer,      // Buffer for data to the FS
+                                     nInBufferSize,
+                                     lpOutBuffer,   // OutputBuffer for data from the FS
+                                     nOutBufferSize // OutputBuffer Length
+            );
+        }
 
-        if ( Status == STATUS_PENDING) {
+        if (Status == STATUS_PENDING)
+        {
             // Operation must complete before return & Iosb destroyed
-            Status = NtWaitForSingleObject( hDevice, FALSE, NULL );
-            if ( NT_SUCCESS(Status)) {
+            Status = NtWaitForSingleObject(hDevice, FALSE, NULL);
+            if (NT_SUCCESS(Status))
+            {
                 Status = Iosb.Status;
-                }
             }
+        }
 
-        if ( NT_SUCCESS(Status) ) {
+        if (NT_SUCCESS(Status))
+        {
             *lpBytesReturned = (DWORD)Iosb.Information;
             return TRUE;
-            }
-        else {
+        }
+        else
+        {
             // handle warning value STATUS_BUFFER_OVERFLOW somewhat correctly
-            if ( !NT_ERROR(Status) ) {
+            if (!NT_ERROR(Status))
+            {
                 *lpBytesReturned = (DWORD)Iosb.Information;
             }
             BaseSetLastNTError(Status);
             return FALSE;
-            }
         }
+    }
 }
 
-BOOL
-WINAPI
-CancelIo(
-    HANDLE hFile
-    )
+BOOL WINAPI CancelIo(HANDLE hFile)
 
 /*++
 
@@ -2654,25 +2491,19 @@ Return Value:
 
     Status = NtCancelIoFile(hFile, &IoStatusBlock);
 
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
-
+    }
 }
 
-BOOL
-WINAPI
-ReadFileScatter(
-    HANDLE hFile,
-    FILE_SEGMENT_ELEMENT aSegementArray[],
-    DWORD nNumberOfBytesToRead,
-    LPDWORD lpReserved,
-    LPOVERLAPPED lpOverlapped
-    )
+BOOL WINAPI ReadFileScatter(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegementArray[], DWORD nNumberOfBytesToRead,
+                            LPDWORD lpReserved, LPOVERLAPPED lpOverlapped)
 /*++
 
 Routine Description:
@@ -2736,117 +2567,106 @@ Return Value:
     IO_STATUS_BLOCK IoStatusBlock;
     LPDWORD lpNumberOfBytesRead = NULL;
 
-    if ( ARGUMENT_PRESENT(lpReserved) ||
-         !ARGUMENT_PRESENT( lpOverlapped )) {
+    if (ARGUMENT_PRESENT(lpReserved) || !ARGUMENT_PRESENT(lpOverlapped))
+    {
 
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
+    }
 
-        }
-
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
-    if ( ARGUMENT_PRESENT(lpNumberOfBytesRead) ) {
+    if (ARGUMENT_PRESENT(lpNumberOfBytesRead))
+    {
         *lpNumberOfBytesRead = 0;
-        }
+    }
 
-    if ( ARGUMENT_PRESENT( lpOverlapped ) ) {
+    if (ARGUMENT_PRESENT(lpOverlapped))
+    {
         LARGE_INTEGER Li;
 
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
         Li.LowPart = lpOverlapped->Offset;
         Li.HighPart = lpOverlapped->OffsetHigh;
         Status = NtReadFileScatter(
-                hFile,
-                lpOverlapped->hEvent,
-                NULL,
-                (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-                (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                aSegementArray,
-                nNumberOfBytesToRead,
-                &Li,
-                NULL
-                );
+            hFile, lpOverlapped->hEvent, NULL, (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+            (PIO_STATUS_BLOCK)&lpOverlapped->Internal, aSegementArray, nNumberOfBytesToRead, &Li, NULL);
 
 
-        if ( NT_SUCCESS(Status) && Status != STATUS_PENDING) {
-            if ( ARGUMENT_PRESENT(lpNumberOfBytesRead) ) {
-                try {
+        if (NT_SUCCESS(Status) && Status != STATUS_PENDING)
+        {
+            if (ARGUMENT_PRESENT(lpNumberOfBytesRead))
+            {
+                try
+                {
                     *lpNumberOfBytesRead = (DWORD)lpOverlapped->InternalHigh;
-                    }
-                except(EXCEPTION_EXECUTE_HANDLER) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     *lpNumberOfBytesRead = 0;
-                    }
                 }
+            }
             return TRUE;
-            }
-        else
-        if (Status == STATUS_END_OF_FILE) {
-            if ( ARGUMENT_PRESENT(lpNumberOfBytesRead) ) {
+        }
+        else if (Status == STATUS_END_OF_FILE)
+        {
+            if (ARGUMENT_PRESENT(lpNumberOfBytesRead))
+            {
                 *lpNumberOfBytesRead = 0;
-                }
-            BaseSetLastNTError(Status);
-            return FALSE;
             }
-        else {
             BaseSetLastNTError(Status);
             return FALSE;
+        }
+        else
+        {
+            BaseSetLastNTError(Status);
+            return FALSE;
+        }
+    }
+    else
+    {
+        Status = NtReadFileScatter(hFile, NULL, NULL, NULL, &IoStatusBlock, aSegementArray, nNumberOfBytesToRead, NULL,
+                                   NULL);
+
+        if (Status == STATUS_PENDING)
+        {
+            // Operation must complete before return & IoStatusBlock destroyed
+            Status = NtWaitForSingleObject(hFile, FALSE, NULL);
+            if (NT_SUCCESS(Status))
+            {
+                Status = IoStatusBlock.Status;
             }
         }
-    else
+
+        if (NT_SUCCESS(Status))
         {
-        Status = NtReadFileScatter(
-                hFile,
-                NULL,
-                NULL,
-                NULL,
-                &IoStatusBlock,
-                aSegementArray,
-                nNumberOfBytesToRead,
-                NULL,
-                NULL
-                );
-
-        if ( Status == STATUS_PENDING) {
-            // Operation must complete before return & IoStatusBlock destroyed
-            Status = NtWaitForSingleObject( hFile, FALSE, NULL );
-            if ( NT_SUCCESS(Status)) {
-                Status = IoStatusBlock.Status;
-                }
-            }
-
-        if ( NT_SUCCESS(Status) ) {
             *lpNumberOfBytesRead = (DWORD)IoStatusBlock.Information;
             return TRUE;
-            }
-        else
-        if (Status == STATUS_END_OF_FILE) {
+        }
+        else if (Status == STATUS_END_OF_FILE)
+        {
             *lpNumberOfBytesRead = 0;
             return TRUE;
-            }
-        else {
-            if ( NT_WARNING(Status) ) {
+        }
+        else
+        {
+            if (NT_WARNING(Status))
+            {
                 *lpNumberOfBytesRead = (DWORD)IoStatusBlock.Information;
-                }
+            }
             BaseSetLastNTError(Status);
             return FALSE;
-            }
         }
+    }
 }
 
 
-BOOL
-WINAPI
-WriteFileGather(
-    HANDLE hFile,
-    FILE_SEGMENT_ELEMENT aSegementArray[],
-    DWORD nNumberOfBytesToWrite,
-    LPDWORD lpReserved,
-    LPOVERLAPPED lpOverlapped
-    )
+BOOL WINAPI WriteFileGather(HANDLE hFile, FILE_SEGMENT_ELEMENT aSegementArray[], DWORD nNumberOfBytesToWrite,
+                            LPDWORD lpReserved, LPOVERLAPPED lpOverlapped)
 
 /*++
 
@@ -2917,99 +2737,90 @@ Return Value:
     IO_STATUS_BLOCK IoStatusBlock;
     LPDWORD lpNumberOfBytesWritten = NULL;
 
-    if ( ARGUMENT_PRESENT(lpReserved) ||
-         !ARGUMENT_PRESENT( lpOverlapped )) {
+    if (ARGUMENT_PRESENT(lpReserved) || !ARGUMENT_PRESENT(lpOverlapped))
+    {
 
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
+    }
 
-        }
-
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
-    if ( ARGUMENT_PRESENT(lpNumberOfBytesWritten) ) {
+    if (ARGUMENT_PRESENT(lpNumberOfBytesWritten))
+    {
         *lpNumberOfBytesWritten = 0;
-        }
+    }
 
-    if ( ARGUMENT_PRESENT( lpOverlapped ) ) {
+    if (ARGUMENT_PRESENT(lpOverlapped))
+    {
         LARGE_INTEGER Li;
 
         lpOverlapped->Internal = (DWORD)STATUS_PENDING;
         Li.LowPart = lpOverlapped->Offset;
         Li.HighPart = lpOverlapped->OffsetHigh;
         Status = NtWriteFileGather(
-                hFile,
-                lpOverlapped->hEvent,
-                NULL,
-                (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
-                (PIO_STATUS_BLOCK)&lpOverlapped->Internal,
-                aSegementArray,
-                nNumberOfBytesToWrite,
-                &Li,
-                NULL
-                );
+            hFile, lpOverlapped->hEvent, NULL, (ULONG_PTR)lpOverlapped->hEvent & 1 ? NULL : lpOverlapped,
+            (PIO_STATUS_BLOCK)&lpOverlapped->Internal, aSegementArray, nNumberOfBytesToWrite, &Li, NULL);
 
-        if ( !NT_ERROR(Status) && Status != STATUS_PENDING) {
-            if ( ARGUMENT_PRESENT(lpNumberOfBytesWritten) ) {
-                try {
+        if (!NT_ERROR(Status) && Status != STATUS_PENDING)
+        {
+            if (ARGUMENT_PRESENT(lpNumberOfBytesWritten))
+            {
+                try
+                {
                     *lpNumberOfBytesWritten = (DWORD)lpOverlapped->InternalHigh;
-                    }
-                except(EXCEPTION_EXECUTE_HANDLER) {
-                    *lpNumberOfBytesWritten = 0;
-                    }
                 }
-            return TRUE;
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
+                    *lpNumberOfBytesWritten = 0;
+                }
             }
-        else  {
+            return TRUE;
+        }
+        else
+        {
             BaseSetLastNTError(Status);
             return FALSE;
+        }
+    }
+    else
+    {
+        Status = NtWriteFileGather(hFile, NULL, NULL, NULL, &IoStatusBlock, aSegementArray, nNumberOfBytesToWrite, NULL,
+                                   NULL);
+
+        if (Status == STATUS_PENDING)
+        {
+            // Operation must complete before return & IoStatusBlock destroyed
+            Status = NtWaitForSingleObject(hFile, FALSE, NULL);
+            if (NT_SUCCESS(Status))
+            {
+                Status = IoStatusBlock.Status;
             }
         }
-    else {
-        Status = NtWriteFileGather(
-                hFile,
-                NULL,
-                NULL,
-                NULL,
-                &IoStatusBlock,
-                aSegementArray,
-                nNumberOfBytesToWrite,
-                NULL,
-                NULL
-                );
 
-        if ( Status == STATUS_PENDING) {
-            // Operation must complete before return & IoStatusBlock destroyed
-            Status = NtWaitForSingleObject( hFile, FALSE, NULL );
-            if ( NT_SUCCESS(Status)) {
-                Status = IoStatusBlock.Status;
-                }
-            }
-
-        if ( NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             *lpNumberOfBytesWritten = (DWORD)IoStatusBlock.Information;
             return TRUE;
-            }
-        else {
-            if ( NT_WARNING(Status) ) {
+        }
+        else
+        {
+            if (NT_WARNING(Status))
+            {
                 *lpNumberOfBytesWritten = (DWORD)IoStatusBlock.Information;
-                }
+            }
             BaseSetLastNTError(Status);
             return FALSE;
-            }
         }
+    }
 }
 
 
-BOOL
-APIENTRY
-SetFileValidData(
-    IN HANDLE hFile,
-    IN LONGLONG ValidDataLength
-    )
+BOOL APIENTRY SetFileValidData(IN HANDLE hFile, IN LONGLONG ValidDataLength)
 
 /*++
 
@@ -3038,21 +2849,18 @@ Return Value:
     IO_STATUS_BLOCK IoStatusBlock;
     FILE_VALID_DATA_LENGTH_INFORMATION ValidDataInfo;
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
     }
 
     ValidDataInfo.ValidDataLength.QuadPart = ValidDataLength;
 
-    Status = NtSetInformationFile(
-        hFile,
-        &IoStatusBlock,
-        &ValidDataInfo,
-        sizeof(FILE_VALID_DATA_LENGTH_INFORMATION),
-        FileValidDataLengthInformation
-        );
-    if (!NT_SUCCESS(Status)) {
+    Status = NtSetInformationFile(hFile, &IoStatusBlock, &ValidDataInfo, sizeof(FILE_VALID_DATA_LENGTH_INFORMATION),
+                                  FileValidDataLengthInformation);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3061,12 +2869,7 @@ Return Value:
 }
 
 
-BOOL
-APIENTRY
-SetFileShortNameW(
-    IN HANDLE hFile,
-    IN LPCWSTR lpShortName
-    )
+BOOL APIENTRY SetFileShortNameW(IN HANDLE hFile, IN LPCWSTR lpShortName)
 
 /*++
 
@@ -3097,62 +2900,53 @@ Return Value:
     DWORD FileInformationClass;
 
 
-    if (CONSOLE_HANDLE(hFile)) {
+    if (CONSOLE_HANDLE(hFile))
+    {
         BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
     }
 
-    if (!ARGUMENT_PRESENT(lpShortName)) {
+    if (!ARGUMENT_PRESENT(lpShortName))
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    FileNameInfoSize = FIELD_OFFSET(FILE_NAME_INFORMATION, FileName) + ((wcslen(lpShortName)+1)*sizeof(WCHAR));
-    FileNameInfo = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG(TMP_TAG), FileNameInfoSize );
-    if (!FileNameInfo) {
+    FileNameInfoSize = FIELD_OFFSET(FILE_NAME_INFORMATION, FileName) + ((wcslen(lpShortName) + 1) * sizeof(WCHAR));
+    FileNameInfo = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), FileNameInfoSize);
+    if (!FileNameInfo)
+    {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return FALSE;
     }
 
     FileNameInfo->FileNameLength = wcslen(lpShortName) * sizeof(WCHAR);
-    wcscpy( FileNameInfo->FileName, lpShortName );
+    wcscpy(FileNameInfo->FileName, lpShortName);
 
-    Status = NtSetInformationFile(
-        hFile,
-        &IoStatusBlock,
-        FileNameInfo,
-        FileNameInfoSize,
-        FileShortNameInformation
-        );
+    Status = NtSetInformationFile(hFile, &IoStatusBlock, FileNameInfo, FileNameInfoSize, FileShortNameInformation);
 
-    RtlFreeHeap( RtlProcessHeap(), 0, FileNameInfo );
+    RtlFreeHeap(RtlProcessHeap(), 0, FileNameInfo);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
     FileInformationClass = FileShortNameInformation;
 
-    if ((FileInformationClass == FileEndOfFileInformation) ||
-         (FileInformationClass == FileAllocationInformation) ||
-         (FileInformationClass == FilePositionInformation))
+    if ((FileInformationClass == FileEndOfFileInformation) || (FileInformationClass == FileAllocationInformation) ||
+        (FileInformationClass == FilePositionInformation))
     {
         return FALSE;
     }
-
 
 
     return TRUE;
 }
 
 
-BOOL
-APIENTRY
-SetFileShortNameA(
-    IN HANDLE hFile,
-    IN LPCSTR lpShortName
-    )
+BOOL APIENTRY SetFileShortNameA(IN HANDLE hFile, IN LPCSTR lpShortName)
 
 /*++
 
@@ -3178,14 +2972,11 @@ Return Value:
 {
     PUNICODE_STRING Unicode;
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpShortName );
-    if (Unicode == NULL) {
+    Unicode = Basep8BitStringToStaticUnicodeString(lpShortName);
+    if (Unicode == NULL)
+    {
         return FALSE;
     }
 
-    return ( SetFileShortNameW(
-                hFile,
-                (LPCWSTR)Unicode->Buffer
-                )
-            );
+    return (SetFileShortNameW(hFile, (LPCWSTR)Unicode->Buffer));
 }

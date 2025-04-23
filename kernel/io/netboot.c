@@ -37,7 +37,7 @@ Revision History:
 #include <setupblk.h>
 #include <remboot.h>
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  const_seg("INITCONST")
+#pragma const_seg("INITCONST")
 #endif
 #include <oscpkt.h>
 #include <windef.h>
@@ -62,48 +62,27 @@ BOOLEAN IopRemoteBootCardInitialized = FALSE;
 // TCP/IP definitions
 //
 
-#define DEFAULT_DEST                    0
-#define DEFAULT_DEST_MASK               0
-#define DEFAULT_METRIC                  1
+#define DEFAULT_DEST 0
+#define DEFAULT_DEST_MASK 0
+#define DEFAULT_METRIC 1
 
 NTSTATUS
-IopWriteIpAddressToRegistry(
-        HANDLE handle,
-        PWCHAR regkey,
-        PUCHAR value
-        );
+IopWriteIpAddressToRegistry(HANDLE handle, PWCHAR regkey, PUCHAR value);
 
 NTSTATUS
-IopTCPQueryInformationEx(
-    IN HANDLE                 TCPHandle,
-    IN TDIObjectID FAR       *ID,
-    OUT void FAR             *Buffer,
-    IN OUT DWORD FAR         *BufferSize,
-    IN OUT BYTE FAR          *Context
-    );
+IopTCPQueryInformationEx(IN HANDLE TCPHandle, IN TDIObjectID FAR *ID, OUT void FAR *Buffer,
+                         IN OUT DWORD FAR *BufferSize, IN OUT BYTE FAR *Context);
 
 NTSTATUS
-IopTCPSetInformationEx(
-    IN HANDLE             TCPHandle,
-    IN TDIObjectID FAR   *ID,
-    IN void FAR          *Buffer,
-    IN DWORD FAR          BufferSize
-    );
+IopTCPSetInformationEx(IN HANDLE TCPHandle, IN TDIObjectID FAR *ID, IN void FAR *Buffer, IN DWORD FAR BufferSize);
 
 NTSTATUS
-IopSetDefaultGateway(
-    IN ULONG GatewayAddress
-    );
+IopSetDefaultGateway(IN ULONG GatewayAddress);
 
 NTSTATUS
-IopCacheNetbiosNameForIpAddress(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+IopCacheNetbiosNameForIpAddress(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
-VOID
-IopAssignNetworkDriveLetter (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+VOID IopAssignNetworkDriveLetter(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 
 //
@@ -112,27 +91,24 @@ IopAssignNetworkDriveLetter (
 //
 
 #ifdef ALLOC_PRAGMA
-__inline long
-htonl(long x);
-#pragma alloc_text(INIT,IopAddRemoteBootValuesToRegistry)
-#pragma alloc_text(INIT,IopStartNetworkForRemoteBoot)
-#pragma alloc_text(INIT,IopStartTcpIpForRemoteBoot)
-#pragma alloc_text(INIT,IopIsRemoteBootCard)
-#pragma alloc_text(INIT,IopSetupRemoteBootCard)
-#pragma alloc_text(INIT,IopAssignNetworkDriveLetter)
-#pragma alloc_text(INIT,IopWriteIpAddressToRegistry)
-#pragma alloc_text(INIT,IopSetDefaultGateway)
-#pragma alloc_text(INIT,htonl)
-#pragma alloc_text(INIT,IopCacheNetbiosNameForIpAddress)
-#pragma alloc_text(INIT,IopTCPQueryInformationEx)
-#pragma alloc_text(INIT,IopTCPSetInformationEx)
+__inline long htonl(long x);
+#pragma alloc_text(INIT, IopAddRemoteBootValuesToRegistry)
+#pragma alloc_text(INIT, IopStartNetworkForRemoteBoot)
+#pragma alloc_text(INIT, IopStartTcpIpForRemoteBoot)
+#pragma alloc_text(INIT, IopIsRemoteBootCard)
+#pragma alloc_text(INIT, IopSetupRemoteBootCard)
+#pragma alloc_text(INIT, IopAssignNetworkDriveLetter)
+#pragma alloc_text(INIT, IopWriteIpAddressToRegistry)
+#pragma alloc_text(INIT, IopSetDefaultGateway)
+#pragma alloc_text(INIT, htonl)
+#pragma alloc_text(INIT, IopCacheNetbiosNameForIpAddress)
+#pragma alloc_text(INIT, IopTCPQueryInformationEx)
+#pragma alloc_text(INIT, IopTCPSetInformationEx)
 #endif
 
 
 NTSTATUS
-IopAddRemoteBootValuesToRegistry (
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IopAddRemoteBootValuesToRegistry(PLOADER_PARAMETER_BLOCK LoaderBlock)
 {
     NTSTATUS status = STATUS_SUCCESS;
     HANDLE handle;
@@ -154,23 +130,23 @@ IopAddRemoteBootValuesToRegistry (
     UNICODE_STRING netbiosNameString;
     ULONG tmpValue;
 
-    if (LoaderBlock->SetupLoaderBlock->ComputerName[0] != 0) {
+    if (LoaderBlock->SetupLoaderBlock->ComputerName[0] != 0)
+    {
 
         //
         // Convert the name to a Netbios name.
         //
 
-        _wcsupr( LoaderBlock->SetupLoaderBlock->ComputerName );
+        _wcsupr(LoaderBlock->SetupLoaderBlock->ComputerName);
 
-        RtlInitUnicodeString( &dnsNameString, LoaderBlock->SetupLoaderBlock->ComputerName );
+        RtlInitUnicodeString(&dnsNameString, LoaderBlock->SetupLoaderBlock->ComputerName);
 
-        status = RtlDnsHostNameToComputerName(
-                     &netbiosNameString,
-                     &dnsNameString,
-                     TRUE);            // allocate netbiosNameString
+        status = RtlDnsHostNameToComputerName(&netbiosNameString, &dnsNameString,
+                                              TRUE); // allocate netbiosNameString
 
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopAddRemoteBootValuesToRegistry: Failed RtlDnsHostNameToComputerName: %x\n", status ));
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopAddRemoteBootValuesToRegistry: Failed RtlDnsHostNameToComputerName: %x\n", status));
             goto cleanup;
         }
 
@@ -178,38 +154,29 @@ IopAddRemoteBootValuesToRegistry (
         // Add a value for the computername.
         //
 
-        RtlInitUnicodeString( &string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName\\ComputerName" );
+        RtlInitUnicodeString(&string,
+                             L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName\\ComputerName");
 
-        InitializeObjectAttributes(
-            &objectAttributes,
-            &string,
-            OBJ_CASE_INSENSITIVE,
-            NULL,
-            NULL
-            );
+        InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-        status = NtOpenKey( &handle, KEY_ALL_ACCESS, &objectAttributes );
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to open ComputerName key: %x\n", status ));
-            RtlFreeUnicodeString( &netbiosNameString );
+        status = NtOpenKey(&handle, KEY_ALL_ACCESS, &objectAttributes);
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to open ComputerName key: %x\n", status));
+            RtlFreeUnicodeString(&netbiosNameString);
             goto cleanup;
         }
 
-        RtlInitUnicodeString( &string, L"ComputerName" );
+        RtlInitUnicodeString(&string, L"ComputerName");
 
-        status = NtSetValueKey(
-                    handle,
-                    &string,
-                    0,
-                    REG_SZ,
-                    netbiosNameString.Buffer,
-                    netbiosNameString.Length + sizeof(WCHAR)
-                    );
-        NtClose( handle );
-        RtlFreeUnicodeString( &netbiosNameString );
+        status = NtSetValueKey(handle, &string, 0, REG_SZ, netbiosNameString.Buffer,
+                               netbiosNameString.Length + sizeof(WCHAR));
+        NtClose(handle);
+        RtlFreeUnicodeString(&netbiosNameString);
 
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to set ComputerName value: %x\n", status ));
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to set ComputerName value: %x\n", status));
             goto cleanup;
         }
 
@@ -217,37 +184,27 @@ IopAddRemoteBootValuesToRegistry (
         // Add a value for the host name.
         //
 
-        RtlInitUnicodeString( &string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters" );
+        RtlInitUnicodeString(&string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters");
 
-        InitializeObjectAttributes(
-            &objectAttributes,
-            &string,
-            OBJ_CASE_INSENSITIVE,
-            NULL,
-            NULL
-            );
+        InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-        status = NtOpenKey( &handle, KEY_ALL_ACCESS, &objectAttributes );
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to open Tcpip\\Parameters key: %x\n", status ));
+        status = NtOpenKey(&handle, KEY_ALL_ACCESS, &objectAttributes);
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to open Tcpip\\Parameters key: %x\n", status));
             goto cleanup;
         }
 
-        _wcslwr( LoaderBlock->SetupLoaderBlock->ComputerName );
+        _wcslwr(LoaderBlock->SetupLoaderBlock->ComputerName);
 
-        RtlInitUnicodeString( &string, L"Hostname" );
+        RtlInitUnicodeString(&string, L"Hostname");
 
-        status = NtSetValueKey(
-                    handle,
-                    &string,
-                    0,
-                    REG_SZ,
-                    LoaderBlock->SetupLoaderBlock->ComputerName,
-                    (wcslen(LoaderBlock->SetupLoaderBlock->ComputerName) + 1) * sizeof(WCHAR)
-                    );
-        NtClose( handle );
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to set Hostname value: %x\n", status ));
+        status = NtSetValueKey(handle, &string, 0, REG_SZ, LoaderBlock->SetupLoaderBlock->ComputerName,
+                               (wcslen(LoaderBlock->SetupLoaderBlock->ComputerName) + 1) * sizeof(WCHAR));
+        NtClose(handle);
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to set Hostname value: %x\n", status));
             goto cleanup;
         }
     }
@@ -256,26 +213,22 @@ IopAddRemoteBootValuesToRegistry (
     //  If the UNC path to the system files is supplied then store it in the registry.
     //
 
-    ASSERT( _stricmp(LoaderBlock->ArcBootDeviceName,"net(0)") == 0 );
+    ASSERT(_stricmp(LoaderBlock->ArcBootDeviceName, "net(0)") == 0);
 
-    RtlInitUnicodeString( &string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control" );
+    RtlInitUnicodeString(&string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control");
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &string,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenKey( &handle, KEY_ALL_ACCESS, &objectAttributes );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to open Control key: %x\n", status ));
+    status = NtOpenKey(&handle, KEY_ALL_ACCESS, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to open Control key: %x\n", status));
         goto skiproot;
     }
 
-    p = strrchr( LoaderBlock->NtBootPathName, '\\' );   // find last separator
-    if ( (p != NULL) && (*(p+1) == 0) ) {
+    p = strrchr(LoaderBlock->NtBootPathName, '\\'); // find last separator
+    if ((p != NULL) && (*(p + 1) == 0))
+    {
 
         //
         // NtBootPathName ends with a backslash, so we need to back up
@@ -284,64 +237,54 @@ IopAddRemoteBootValuesToRegistry (
 
         q = p;
         *q = 0;
-        p = strrchr( LoaderBlock->NtBootPathName, '\\' );   // find last separator
+        p = strrchr(LoaderBlock->NtBootPathName, '\\'); // find last separator
         *q = '\\';
     }
-    if ( p == NULL ) {
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: malformed NtBootPathName: %s\n", LoaderBlock->NtBootPathName ));
-        NtClose( handle );
+    if (p == NULL)
+    {
+        KdPrint(("IopAddRemoteBootValuesToRegistry: malformed NtBootPathName: %s\n", LoaderBlock->NtBootPathName));
+        NtClose(handle);
         goto skiproot;
     }
-    *p = 0;                                 // terminate \server\share\images\machine
+    *p = 0; // terminate \server\share\images\machine
 
-    strcpy( ntName, "\\Device\\LanmanRedirector");
-    strcat( ntName, LoaderBlock->NtBootPathName );  // append \server\share\images\machine
+    strcpy(ntName, "\\Device\\LanmanRedirector");
+    strcat(ntName, LoaderBlock->NtBootPathName); // append \server\share\images\machine
     *p = '\\';
 
-    RtlInitAnsiString( &ansiString, ntName );
-    RtlAnsiStringToUnicodeString( &unicodeString, &ansiString, TRUE );
+    RtlInitAnsiString(&ansiString, ntName);
+    RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, TRUE);
 
-    RtlInitUnicodeString( &string, L"RemoteBootRoot" );
+    RtlInitUnicodeString(&string, L"RemoteBootRoot");
 
-    status = NtSetValueKey(
-                handle,
-                &string,
-                0,
-                REG_SZ,
-                unicodeString.Buffer,
-                unicodeString.Length + sizeof(WCHAR)
-                );
+    status = NtSetValueKey(handle, &string, 0, REG_SZ, unicodeString.Buffer, unicodeString.Length + sizeof(WCHAR));
 
-    RtlFreeUnicodeString( &unicodeString );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to set RemoteBootRoot value: %x\n", status ));
+    RtlFreeUnicodeString(&unicodeString);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to set RemoteBootRoot value: %x\n", status));
     }
 
-    if ((LoaderBlock->SetupLoaderBlock->Flags & SETUPBLK_FLAGS_IS_TEXTMODE) != 0) {
+    if ((LoaderBlock->SetupLoaderBlock->Flags & SETUPBLK_FLAGS_IS_TEXTMODE) != 0)
+    {
 
-        strcpy( ntName, "\\Device\\LanmanRedirector");
-        strcat( ntName, LoaderBlock->SetupLoaderBlock->MachineDirectoryPath );
-        RtlInitAnsiString( &ansiString, ntName );
-        RtlAnsiStringToUnicodeString( &unicodeString, &ansiString, TRUE );
+        strcpy(ntName, "\\Device\\LanmanRedirector");
+        strcat(ntName, LoaderBlock->SetupLoaderBlock->MachineDirectoryPath);
+        RtlInitAnsiString(&ansiString, ntName);
+        RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, TRUE);
 
-        RtlInitUnicodeString( &string, L"RemoteBootMachineDirectory" );
+        RtlInitUnicodeString(&string, L"RemoteBootMachineDirectory");
 
-        status = NtSetValueKey(
-                    handle,
-                    &string,
-                    0,
-                    REG_SZ,
-                    unicodeString.Buffer,
-                    unicodeString.Length + sizeof(WCHAR)
-                    );
+        status = NtSetValueKey(handle, &string, 0, REG_SZ, unicodeString.Buffer, unicodeString.Length + sizeof(WCHAR));
 
-        RtlFreeUnicodeString( &unicodeString );
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to set RemoteBootMachineDirectory value: %x\n", status ));
+        RtlFreeUnicodeString(&unicodeString);
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to set RemoteBootMachineDirectory value: %x\n", status));
         }
     }
 
-    NtClose( handle );
+    NtClose(handle);
 
 skiproot:
 
@@ -352,53 +295,48 @@ skiproot:
     // GUID for the NetbootCard.
     //
 
-    RtlInitUnicodeString( &string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\{54C7D140-09EF-11D1-B25A-F5FE627ED95E}" );
+    RtlInitUnicodeString(&string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interf"
+                                  L"aces\\{54C7D140-09EF-11D1-B25A-F5FE627ED95E}");
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &string,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenKey( &handle, KEY_ALL_ACCESS, &objectAttributes );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to open Tcpip\\Parameters\\Interfaces\\{54C7D140-09EF-11D1-B25A-F5FE627ED95E} key: %x\n", status ));
+    status = NtOpenKey(&handle, KEY_ALL_ACCESS, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to open "
+                 "Tcpip\\Parameters\\Interfaces\\{54C7D140-09EF-11D1-B25A-F5FE627ED95E} key: %x\n",
+                 status));
         goto cleanup;
     }
 
-    status = IopWriteIpAddressToRegistry(handle,
-                                         L"DhcpIPAddress",
-                                         (PUCHAR)&(LoaderBlock->SetupLoaderBlock->IpAddress)
-                                        );
+    status =
+        IopWriteIpAddressToRegistry(handle, L"DhcpIPAddress", (PUCHAR) & (LoaderBlock->SetupLoaderBlock->IpAddress));
 
-    if ( !NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         NtClose(handle);
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to write DhcpIPAddress: %x\n", status ));
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to write DhcpIPAddress: %x\n", status));
         goto cleanup;
     }
 
-    status = IopWriteIpAddressToRegistry(handle,
-                                         L"DhcpSubnetMask",
-                                         (PUCHAR)&(LoaderBlock->SetupLoaderBlock->SubnetMask)
-                                        );
+    status =
+        IopWriteIpAddressToRegistry(handle, L"DhcpSubnetMask", (PUCHAR) & (LoaderBlock->SetupLoaderBlock->SubnetMask));
 
-    if ( !NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         NtClose(handle);
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to write DhcpSubnetMask: %x\n", status ));
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to write DhcpSubnetMask: %x\n", status));
         goto cleanup;
     }
 
-    status = IopWriteIpAddressToRegistry(handle,
-                                         L"DhcpDefaultGateway",
-                                         (PUCHAR)&(LoaderBlock->SetupLoaderBlock->DefaultRouter)
-                                        );
+    status = IopWriteIpAddressToRegistry(handle, L"DhcpDefaultGateway",
+                                         (PUCHAR) & (LoaderBlock->SetupLoaderBlock->DefaultRouter));
 
     NtClose(handle);
 
-    if ( !NT_SUCCESS(status)) {
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to write DhcpDefaultGateway: %x\n", status ));
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to write DhcpDefaultGateway: %x\n", status));
         goto cleanup;
     }
 
@@ -407,40 +345,28 @@ skiproot:
     // the Type value there or the card won't be initialized.
     //
 
-    status = IopOpenRegistryKey(&handle,
-                                NULL,
-                                &CmRegistryMachineSystemCurrentControlSetServices,
-                                KEY_ALL_ACCESS,
-                                FALSE
-                                );
+    status =
+        IopOpenRegistryKey(&handle, NULL, &CmRegistryMachineSystemCurrentControlSetServices, KEY_ALL_ACCESS, FALSE);
 
-    if (!NT_SUCCESS(status)) {
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to open CurrentControlSet\\Services: %x\n", status ));
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to open CurrentControlSet\\Services: %x\n", status));
         goto cleanup;
     }
 
     RtlInitUnicodeString(&string, LoaderBlock->SetupLoaderBlock->NetbootCardServiceName);
 
-    InitializeObjectAttributes(&objectAttributes,
-                               &string,
-                               OBJ_CASE_INSENSITIVE,
-                               handle,
-                               (PSECURITY_DESCRIPTOR)NULL
-                               );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, handle, (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ZwCreateKey(&serviceHandle,
-                         KEY_ALL_ACCESS,
-                         &objectAttributes,
-                         0,
-                         (PUNICODE_STRING)NULL,
-                         0,
-                         &tmpValue     // disposition
-                         );
+    status = ZwCreateKey(&serviceHandle, KEY_ALL_ACCESS, &objectAttributes, 0, (PUNICODE_STRING)NULL, 0,
+                         &tmpValue // disposition
+    );
 
     ZwClose(handle);
 
-    if (!NT_SUCCESS(status)) {
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to open/create netboot card service key: %x\n", status ));
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to open/create netboot card service key: %x\n", status));
         goto cleanup;
     }
 
@@ -452,17 +378,13 @@ skiproot:
     wcscpy(imagePath, L"system32\\drivers\\");
     wcscat(imagePath, LoaderBlock->SetupLoaderBlock->NetbootCardDriverName);
 
-    status = ZwSetValueKey(serviceHandle,
-                           &string,
-                           TITLE_INDEX_VALUE,
-                           REG_SZ,
-                           imagePath,
-                           (wcslen(imagePath) + 1) * sizeof(WCHAR)
-                           );
+    status = ZwSetValueKey(serviceHandle, &string, TITLE_INDEX_VALUE, REG_SZ, imagePath,
+                           (wcslen(imagePath) + 1) * sizeof(WCHAR));
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         NtClose(serviceHandle);
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to write ImagePath: %x\n", status ));
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to write ImagePath: %x\n", status));
         goto cleanup;
     }
 
@@ -473,29 +395,22 @@ skiproot:
     IopWstrToUnicodeString(&string, L"Type");
     tmpValue = 1;
 
-    ZwSetValueKey(serviceHandle,
-                  &string,
-                  TITLE_INDEX_VALUE,
-                  REG_DWORD,
-                  &tmpValue,
-                  sizeof(tmpValue)
-                  );
+    ZwSetValueKey(serviceHandle, &string, TITLE_INDEX_VALUE, REG_DWORD, &tmpValue, sizeof(tmpValue));
 
     NtClose(serviceHandle);
 
-    if (!NT_SUCCESS(status)) {
-        KdPrint(( "IopAddRemoteBootValuesToRegistry: Unable to write Type: %x\n", status ));
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopAddRemoteBootValuesToRegistry: Unable to write Type: %x\n", status));
     }
 
 cleanup:
 
     return status;
 }
-
+
 NTSTATUS
-IopStartNetworkForRemoteBoot (
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IopStartNetworkForRemoteBoot(PLOADER_PARAMETER_BLOCK LoaderBlock)
 {
     NTSTATUS status;
     HANDLE dgHandle;
@@ -533,15 +448,14 @@ IopStartNetworkForRemoteBoot (
     // various FSCTLs we send down.
     //
 
-    bufferLength = max(sizeof(LMR_REQUEST_PACKET) + (MAX_PATH + 1) * sizeof(WCHAR) +
-                                                 (DNLEN + 1) * sizeof(WCHAR),
-                       max(sizeof(LMDR_REQUEST_PACKET),
-                           FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) + MAX_PATH));
+    bufferLength = max(sizeof(LMR_REQUEST_PACKET) + (MAX_PATH + 1) * sizeof(WCHAR) + (DNLEN + 1) * sizeof(WCHAR),
+                       max(sizeof(LMDR_REQUEST_PACKET), FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) + MAX_PATH));
     bufferLength = max(bufferLength, sizeof(LMMR_RI_INITIALIZE_SECRET));
 
-    buffer = ExAllocatePoolWithTag( NonPagedPool, bufferLength, 'bRoI' );
-    if (buffer == NULL) {
-        KdPrint(( "IopStartNetworkForRemoteBoot: Unable to allocate buffer\n"));
+    buffer = ExAllocatePoolWithTag(NonPagedPool, bufferLength, 'bRoI');
+    if (buffer == NULL)
+    {
+        KdPrint(("IopStartNetworkForRemoteBoot: Unable to allocate buffer\n"));
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -553,59 +467,29 @@ IopStartNetworkForRemoteBoot (
     // Open the redirector and the datagram receiver.
     //
 
-    RtlInitUnicodeString( &string, L"\\Device\\LanmanRedirector" );
+    RtlInitUnicodeString(&string, L"\\Device\\LanmanRedirector");
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &string,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtCreateFile(
-                &RdrHandle,
-                GENERIC_READ | GENERIC_WRITE,
-                &objectAttributes,
-                &ioStatusBlock,
-                NULL,
-                0,
-                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                FILE_OPEN,
-                FILE_SYNCHRONOUS_IO_NONALERT,
-                NULL,
-                0
-                );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopStartNetworkForRemoteBoot: Unable to open redirector: %x\n", status ));
+    status = NtCreateFile(&RdrHandle, GENERIC_READ | GENERIC_WRITE, &objectAttributes, &ioStatusBlock, NULL, 0,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopStartNetworkForRemoteBoot: Unable to open redirector: %x\n", status));
         goto cleanup;
     }
 
-    RtlInitUnicodeString( &string, DD_BROWSER_DEVICE_NAME_U );
+    RtlInitUnicodeString(&string, DD_BROWSER_DEVICE_NAME_U);
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &string,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtCreateFile(
-                &dgHandle,
-                GENERIC_READ | GENERIC_WRITE,
-                &objectAttributes,
-                &ioStatusBlock,
-                NULL,
-                0,
-                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                FILE_OPEN,
-                FILE_SYNCHRONOUS_IO_NONALERT,
-                NULL,
-                0
-                );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopStartNetworkForRemoteBoot: Unable to open datagram receiver: %x\n", status ));
+    status = NtCreateFile(&dgHandle, GENERIC_READ | GENERIC_WRITE, &objectAttributes, &ioStatusBlock, NULL, 0,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopStartNetworkForRemoteBoot: Unable to open datagram receiver: %x\n", status));
         goto cleanup;
     }
 
@@ -619,29 +503,18 @@ IopStartNetworkForRemoteBoot (
         PLMMR_RI_INITIALIZE_SECRET RbInit = (PLMMR_RI_INITIALIZE_SECRET)buffer;
 
         ASSERT(LoaderBlock->SetupLoaderBlock->NetBootSecret != NULL);
-        RtlCopyMemory(
-            &RbInit->Secret,
-            LoaderBlock->SetupLoaderBlock->NetBootSecret,
-            sizeof(RI_SECRET));
+        RtlCopyMemory(&RbInit->Secret, LoaderBlock->SetupLoaderBlock->NetBootSecret, sizeof(RI_SECRET));
 
-        status = NtFsControlFile(
-                    RdrHandle,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &ioStatusBlock,
-                    FSCTL_LMMR_RI_INITIALIZE_SECRET,
-                    buffer,
-                    sizeof(LMMR_RI_INITIALIZE_SECRET),
-                    NULL,
-                    0
-                    );
+        status = NtFsControlFile(RdrHandle, NULL, NULL, NULL, &ioStatusBlock, FSCTL_LMMR_RI_INITIALIZE_SECRET, buffer,
+                                 sizeof(LMMR_RI_INITIALIZE_SECRET), NULL, 0);
 
-        if ( NT_SUCCESS(status) ) {
+        if (NT_SUCCESS(status))
+        {
             status = ioStatusBlock.Status;
         }
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopStartNetworkForRemoteBoot: Unable to FSCTL(RB initialize) redirector: %x\n", status ));
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopStartNetworkForRemoteBoot: Unable to FSCTL(RB initialize) redirector: %x\n", status));
             goto cleanup;
         }
     }
@@ -652,85 +525,72 @@ IopStartNetworkForRemoteBoot (
     // the domain name will not be there, so we won't start the datagram
     // receiver, which is fine.
     //
-    RtlInitUnicodeString( &string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName\\ComputerName" );
+    RtlInitUnicodeString(&string,
+                         L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName\\ComputerName");
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &string,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenKey( &keyHandle, KEY_ALL_ACCESS, &objectAttributes );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopStartNetworkForRemoteBoot: Unable to open ComputerName key: %x\n", status ));
+    status = NtOpenKey(&keyHandle, KEY_ALL_ACCESS, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopStartNetworkForRemoteBoot: Unable to open ComputerName key: %x\n", status));
         goto cleanup;
     }
 
-    RtlInitUnicodeString( &string, L"ComputerName" );
+    RtlInitUnicodeString(&string, L"ComputerName");
 
     keyValue = (PKEY_VALUE_PARTIAL_INFORMATION)buffer;
     RtlZeroMemory(buffer, bufferLength);
 
-    status = NtQueryValueKey(
-                 keyHandle,
-                 &string,
-                 KeyValuePartialInformation,
-                 keyValue,
-                 bufferLength,
-                 &length);
+    status = NtQueryValueKey(keyHandle, &string, KeyValuePartialInformation, keyValue, bufferLength, &length);
 
-    NtClose( keyHandle );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopStartNetworkForRemoteBoot: Unable to query ComputerName value: %x\n", status ));
+    NtClose(keyHandle);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopStartNetworkForRemoteBoot: Unable to query ComputerName value: %x\n", status));
         goto cleanup;
     }
 
-    if ( !RtlCreateUnicodeString(&computerName, (PWSTR)keyValue->Data) ) {
-        KdPrint(( "IopStartNetworkForRemoteBoot: Unable to create ComputerName string\n" ));
+    if (!RtlCreateUnicodeString(&computerName, (PWSTR)keyValue->Data))
+    {
+        KdPrint(("IopStartNetworkForRemoteBoot: Unable to create ComputerName string\n"));
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
 
     domainName.Length = 0;
 
-    RtlInitUnicodeString( &string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName\\DomainName" );
+    RtlInitUnicodeString(&string, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ComputerName\\DomainName");
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &string,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenKey( &keyHandle, KEY_ALL_ACCESS, &objectAttributes );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopStartNetworkForRemoteBoot: Unable to open DomainName key: %x\n", status ));
+    status = NtOpenKey(&keyHandle, KEY_ALL_ACCESS, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopStartNetworkForRemoteBoot: Unable to open DomainName key: %x\n", status));
         startDatagramReceiver = FALSE;
-    } else {
+    }
+    else
+    {
 
-        RtlInitUnicodeString( &string, L"DomainName" );
+        RtlInitUnicodeString(&string, L"DomainName");
 
         keyValue = (PKEY_VALUE_PARTIAL_INFORMATION)buffer;
         RtlZeroMemory(buffer, bufferLength);
 
-        status = NtQueryValueKey(
-                     keyHandle,
-                     &string,
-                     KeyValuePartialInformation,
-                     keyValue,
-                     bufferLength,
-                     &length);
+        status = NtQueryValueKey(keyHandle, &string, KeyValuePartialInformation, keyValue, bufferLength, &length);
 
-        NtClose( keyHandle );
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopStartNetworkForRemoteBoot: Unable to query Domain value: %x\n", status ));
+        NtClose(keyHandle);
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopStartNetworkForRemoteBoot: Unable to query Domain value: %x\n", status));
             startDatagramReceiver = FALSE;
-        } else {
-            if ( !RtlCreateUnicodeString(&domainName, (PWSTR)keyValue->Data) ) {
-                KdPrint(( "IopStartNetworkForRemoteBoot: Unable to create DomainName string\n" ));
+        }
+        else
+        {
+            if (!RtlCreateUnicodeString(&domainName, (PWSTR)keyValue->Data))
+            {
+                KdPrint(("IopStartNetworkForRemoteBoot: Unable to create DomainName string\n"));
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto cleanup;
             }
@@ -746,13 +606,10 @@ IopStartNetworkForRemoteBoot (
     rrp->Version = REQUEST_PACKET_VERSION;
 
     rrp->Parameters.Start.RedirectorNameLength = computerName.Length;
-    RtlCopyMemory(rrp->Parameters.Start.RedirectorName,
-                  computerName.Buffer,
-                  computerName.Length);
+    RtlCopyMemory(rrp->Parameters.Start.RedirectorName, computerName.Buffer, computerName.Length);
 
     rrp->Parameters.Start.DomainNameLength = domainName.Length;
-    RtlCopyMemory(((PUCHAR)rrp->Parameters.Start.RedirectorName) + computerName.Length,
-                  domainName.Buffer,
+    RtlCopyMemory(((PUCHAR)rrp->Parameters.Start.RedirectorName) + computerName.Length, domainName.Buffer,
                   domainName.Length);
 
     RtlFreeUnicodeString(&computerName);
@@ -794,30 +651,23 @@ IopStartNetworkForRemoteBoot (
     wkstaConfig.wki502_force_core_create_mode = TRUE;
     wkstaConfig.wki502_use_512_byte_max_transfer = FALSE;
 
-    status = NtFsControlFile(
-                RdrHandle,
-                NULL,
-                NULL,
-                NULL,
-                &ioStatusBlock,
-                FSCTL_LMR_START | 0x80000000,
-                rrp,
-                sizeof(LMR_REQUEST_PACKET) +
-                    rrp->Parameters.Start.RedirectorNameLength +
-                    rrp->Parameters.Start.DomainNameLength,
-                &wkstaConfig,
-                sizeof(wkstaConfig)
-                );
+    status = NtFsControlFile(RdrHandle, NULL, NULL, NULL, &ioStatusBlock, FSCTL_LMR_START | 0x80000000, rrp,
+                             sizeof(LMR_REQUEST_PACKET) + rrp->Parameters.Start.RedirectorNameLength +
+                                 rrp->Parameters.Start.DomainNameLength,
+                             &wkstaConfig, sizeof(wkstaConfig));
 
-    if ( NT_SUCCESS(status) ) {
+    if (NT_SUCCESS(status))
+    {
         status = ioStatusBlock.Status;
     }
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopStartNetworkForRemoteBoot: Unable to FSCTL(start) redirector: %x\n", status ));
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopStartNetworkForRemoteBoot: Unable to FSCTL(start) redirector: %x\n", status));
         goto cleanup;
     }
 
-    if (startDatagramReceiver) {
+    if (startDatagramReceiver)
+    {
 
         //
         // Tell the datagram receiver to start.
@@ -833,34 +683,27 @@ IopStartNetworkForRemoteBoot (
 
         drrp->Parameters.Start.IsLanManNt = FALSE;
 
-        status = NtDeviceIoControlFile(
-                    dgHandle,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &ioStatusBlock,
-                    IOCTL_LMDR_START,
-                    drrp,
-                    sizeof(LMDR_REQUEST_PACKET),
-                    NULL,
-                    0
-                    );
+        status = NtDeviceIoControlFile(dgHandle, NULL, NULL, NULL, &ioStatusBlock, IOCTL_LMDR_START, drrp,
+                                       sizeof(LMDR_REQUEST_PACKET), NULL, 0);
 
-        if ( NT_SUCCESS(status) ) {
+        if (NT_SUCCESS(status))
+        {
             status = ioStatusBlock.Status;
         }
 
-        NtClose( dgHandle );
+        NtClose(dgHandle);
         dgHandle = NULL;
 
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopStartNetworkForRemoteBoot: Unable to IOCTL(start) datagram receiver: %x\n", status ));
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopStartNetworkForRemoteBoot: Unable to IOCTL(start) datagram receiver: %x\n", status));
             goto cleanup;
         }
+    }
+    else
+    {
 
-    } else {
-
-        NtClose( dgHandle );
+        NtClose(dgHandle);
         dgHandle = NULL;
 
         //
@@ -872,25 +715,17 @@ IopStartNetworkForRemoteBoot (
         // this FSCTL if we're not starting the datagram receiver.
         //
 
-        status = NtFsControlFile(
-                    RdrHandle,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &ioStatusBlock,
-                    FSCTL_LMR_BIND_TO_TRANSPORT | 0x80000000,
-                    NULL,
-                    0,
-                    NULL,
-                    0
-                    );
+        status = NtFsControlFile(RdrHandle, NULL, NULL, NULL, &ioStatusBlock, FSCTL_LMR_BIND_TO_TRANSPORT | 0x80000000,
+                                 NULL, 0, NULL, 0);
 
-        if ( NT_SUCCESS(status) ) {
+        if (NT_SUCCESS(status))
+        {
             status = ioStatusBlock.Status;
         }
 
-        if ( !NT_SUCCESS(status) ) {
-            KdPrint(( "IopStartNetworkForRemoteBoot: Unable to FSCTL(bind) redirector: %x\n", status ));
+        if (!NT_SUCCESS(status))
+        {
+            KdPrint(("IopStartNetworkForRemoteBoot: Unable to FSCTL(bind) redirector: %x\n", status));
             goto cleanup;
         }
     }
@@ -904,10 +739,11 @@ IopStartNetworkForRemoteBoot (
         // five times total.
         //
 
-        interval.QuadPart = -500 * 1000 * 10;    // 1/2 second, relative
+        interval.QuadPart = -500 * 1000 * 10; // 1/2 second, relative
         enumerateAttempts = 0;
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             KeDelayExecutionThread(KernelMode, FALSE, &interval);
 
@@ -916,40 +752,36 @@ IopStartNetworkForRemoteBoot (
             rrp->Type = EnumerateTransports;
             rrp->Version = REQUEST_PACKET_VERSION;
 
-            status = NtFsControlFile(
-                        RdrHandle,
-                        NULL,
-                        NULL,
-                        NULL,
-                        &ioStatusBlock,
-                        FSCTL_LMR_ENUMERATE_TRANSPORTS,
-                        rrp,
-                        sizeof(LMR_REQUEST_PACKET),
-                        &wkstaTransportInfo,
-                        sizeof(wkstaTransportInfo)
-                        );
+            status = NtFsControlFile(RdrHandle, NULL, NULL, NULL, &ioStatusBlock, FSCTL_LMR_ENUMERATE_TRANSPORTS, rrp,
+                                     sizeof(LMR_REQUEST_PACKET), &wkstaTransportInfo, sizeof(wkstaTransportInfo));
 
-            if ( NT_SUCCESS(status) ) {
+            if (NT_SUCCESS(status))
+            {
                 status = ioStatusBlock.Status;
             }
-            if ( !NT_SUCCESS(status) ) {
+            if (!NT_SUCCESS(status))
+            {
                 //KdPrint(( "IopStartNetworkForRemoteBoot: Unable to FSCTL(enumerate) redirector: %x\n", status ));
-            } else if (rrp->Parameters.Get.TotalBytesNeeded == 0) {
+            }
+            else if (rrp->Parameters.Get.TotalBytesNeeded == 0)
+            {
                 //KdPrint(( "IopStartNetworkForRemoteBoot: FSCTL(enumerate) returned 0 entries\n" ));
-            } else {
+            }
+            else
+            {
                 break;
             }
 
             ++enumerateAttempts;
 
-            if (enumerateAttempts == 5) {
-                KdPrint(( "IopStartNetworkForRemoteBoot: Redirector didn't start\n" ));
+            if (enumerateAttempts == 5)
+            {
+                KdPrint(("IopStartNetworkForRemoteBoot: Redirector didn't start\n"));
                 status = STATUS_REDIRECTOR_NOT_STARTED;
                 goto cleanup;
             }
 
             interval.QuadPart *= 2;
-
         }
     }
 
@@ -963,23 +795,22 @@ IopStartNetworkForRemoteBoot (
 
 cleanup:
 
-    RtlFreeUnicodeString( &computerName );
-    RtlFreeUnicodeString( &domainName );
-    if ( buffer != NULL ) {
-        ExFreePool( buffer );
+    RtlFreeUnicodeString(&computerName);
+    RtlFreeUnicodeString(&domainName);
+    if (buffer != NULL)
+    {
+        ExFreePool(buffer);
     }
 
-    if ( dgHandle != NULL ) {
-        NtClose( dgHandle );
+    if (dgHandle != NULL)
+    {
+        NtClose(dgHandle);
     }
 
     return status;
 }
-
-VOID
-IopAssignNetworkDriveLetter (
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+
+VOID IopAssignNetworkDriveLetter(PLOADER_PARAMETER_BLOCK LoaderBlock)
 {
     PUCHAR p;
     PUCHAR q;
@@ -999,11 +830,13 @@ IopAssignNetworkDriveLetter (
     // installation. But for a true remote boot, we use C:.
     //
 
-    if ((LoaderBlock->SetupLoaderBlock->Flags & (SETUPBLK_FLAGS_REMOTE_INSTALL |
-                                                 SETUPBLK_FLAGS_SYSPREP_INSTALL)) != 0) {
-        RtlInitUnicodeString( &unicodeString2, L"\\DosDevices\\X:");
-    } else {
-        RtlInitUnicodeString( &unicodeString2, L"\\DosDevices\\C:");
+    if ((LoaderBlock->SetupLoaderBlock->Flags & (SETUPBLK_FLAGS_REMOTE_INSTALL | SETUPBLK_FLAGS_SYSPREP_INSTALL)) != 0)
+    {
+        RtlInitUnicodeString(&unicodeString2, L"\\DosDevices\\X:");
+    }
+    else
+    {
+        RtlInitUnicodeString(&unicodeString2, L"\\DosDevices\\C:");
     }
 
     //
@@ -1020,8 +853,9 @@ IopAssignNetworkDriveLetter (
     // path.
     //
 
-    p = strrchr( LoaderBlock->NtBootPathName, '\\' );   // find last separator
-    if ( (p != NULL) && (*(p+1) == 0) ) {
+    p = strrchr(LoaderBlock->NtBootPathName, '\\'); // find last separator
+    if ((p != NULL) && (*(p + 1) == 0))
+    {
 
         //
         // NtBootPathName ends with a backslash, so we need to back up
@@ -1030,40 +864,40 @@ IopAssignNetworkDriveLetter (
 
         q = p;
         *q = 0;
-        p = strrchr( LoaderBlock->NtBootPathName, '\\' );   // find last separator
+        p = strrchr(LoaderBlock->NtBootPathName, '\\'); // find last separator
         *q = '\\';
     }
-    if ( p == NULL ) {
-        KdPrint(( "IopAssignNetworkDriveLetter: malformed NtBootPathName: %s\n", LoaderBlock->NtBootPathName ));
-        KeBugCheck( ASSIGN_DRIVE_LETTERS_FAILED );
+    if (p == NULL)
+    {
+        KdPrint(("IopAssignNetworkDriveLetter: malformed NtBootPathName: %s\n", LoaderBlock->NtBootPathName));
+        KeBugCheck(ASSIGN_DRIVE_LETTERS_FAILED);
     }
-    *p = 0;                                 // terminate \server\share\images\machine
+    *p = 0; // terminate \server\share\images\machine
 
-    strcpy( ntName, "\\Device\\LanmanRedirector");
-    strcat( ntName, LoaderBlock->NtBootPathName );  // append \server\share\images\machine
+    strcpy(ntName, "\\Device\\LanmanRedirector");
+    strcat(ntName, LoaderBlock->NtBootPathName); // append \server\share\images\machine
 
-    RtlInitAnsiString( &ansiString, ntName );
-    RtlAnsiStringToUnicodeString( &unicodeString, &ansiString, TRUE );
+    RtlInitAnsiString(&ansiString, ntName);
+    RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, TRUE);
 
     status = IoCreateSymbolicLink(&unicodeString2, &unicodeString);
-    if (!NT_SUCCESS(status)) {
-        KdPrint(( "IopAssignNetworkDriveLetter: unable to create DOS link for redirected boot drive: %x\n", status ));
-        KeBugCheck( ASSIGN_DRIVE_LETTERS_FAILED );
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopAssignNetworkDriveLetter: unable to create DOS link for redirected boot drive: %x\n", status));
+        KeBugCheck(ASSIGN_DRIVE_LETTERS_FAILED);
     }
     // DbgPrint("IopAssignNetworkDriveLetter: assigned %wZ to %wZ\n", &unicodeString2, &unicodeString);
 
-    RtlFreeUnicodeString( &unicodeString );
+    RtlFreeUnicodeString(&unicodeString);
 
-    *p = '\\';                              // restore string
+    *p = '\\'; // restore string
 
     return;
 }
 
-
+
 NTSTATUS
-IopStartTcpIpForRemoteBoot (
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IopStartTcpIpForRemoteBoot(PLOADER_PARAMETER_BLOCK LoaderBlock)
 {
     UNICODE_STRING IpString;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1072,55 +906,31 @@ IopStartTcpIpForRemoteBoot (
     IO_STATUS_BLOCK ioStatusBlock;
     IP_SET_ADDRESS_REQUEST IpRequest;
 
-    RtlInitUnicodeString( &IpString, DD_IP_DEVICE_NAME );
+    RtlInitUnicodeString(&IpString, DD_IP_DEVICE_NAME);
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &IpString,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &IpString, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     IpRequest.Context = (USHORT)2;
     IpRequest.Address = LoaderBlock->SetupLoaderBlock->IpAddress;
     IpRequest.SubnetMask = LoaderBlock->SetupLoaderBlock->SubnetMask;
 
-    status = NtCreateFile(
-                &handle,
-                GENERIC_READ | GENERIC_WRITE,
-                &objectAttributes,
-                &ioStatusBlock,
-                NULL,
-                0,
-                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                FILE_OPEN,
-                FILE_SYNCHRONOUS_IO_NONALERT,
-                NULL,
-                0
-                );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopStartTcpIpForRemoteBoot: Unable to open IP: %x\n", status ));
+    status = NtCreateFile(&handle, GENERIC_READ | GENERIC_WRITE, &objectAttributes, &ioStatusBlock, NULL, 0,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopStartTcpIpForRemoteBoot: Unable to open IP: %x\n", status));
         goto cleanup;
     }
 
-    status = NtDeviceIoControlFile(
-                handle,
-                NULL,
-                NULL,
-                NULL,
-                &ioStatusBlock,
-                IOCTL_IP_SET_ADDRESS_DUP,
-                &IpRequest,
-                sizeof(IP_SET_ADDRESS_REQUEST),
-                NULL,
-                0
-                );
+    status = NtDeviceIoControlFile(handle, NULL, NULL, NULL, &ioStatusBlock, IOCTL_IP_SET_ADDRESS_DUP, &IpRequest,
+                                   sizeof(IP_SET_ADDRESS_REQUEST), NULL, 0);
 
-    NtClose( handle );
+    NtClose(handle);
 
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopStartTcpIpForRemoteBoot: Unable to IOCTL IP: %x\n", status ));
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopStartTcpIpForRemoteBoot: Unable to IOCTL IP: %x\n", status));
         goto cleanup;
     }
 
@@ -1128,13 +938,10 @@ cleanup:
 
     return status;
 }
-
+
 BOOLEAN
-IopIsRemoteBootCard(
-    IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements,
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN PWCHAR HwIds
-    )
+IopIsRemoteBootCard(IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements, IN PLOADER_PARAMETER_BLOCK LoaderBlock,
+                    IN PWCHAR HwIds)
 
 /*++
 
@@ -1179,8 +986,10 @@ Return Value:
 
     curHwId = HwIds;
 
-    while (*curHwId != L'\0') {
-        if (wcscmp(curHwId, setupLoaderBlock->NetbootCardHardwareId) == 0) {
+    while (*curHwId != L'\0')
+    {
+        if (wcscmp(curHwId, setupLoaderBlock->NetbootCardHardwareId) == 0)
+        {
 
             ULONG BusNumber, DeviceNumber, FunctionNumber;
 
@@ -1197,20 +1006,18 @@ Return Value:
             KdPrint(("IopIsRemoteBootCard: FOUND %ws\n", setupLoaderBlock->NetbootCardHardwareId));
             if ((ResourceRequirements->BusNumber != BusNumber) ||
                 ((ResourceRequirements->SlotNumber & 0x1f) != DeviceNumber) ||
-                (((ResourceRequirements->SlotNumber >> 5) & 0x3) != FunctionNumber)) {
+                (((ResourceRequirements->SlotNumber >> 5) & 0x3) != FunctionNumber))
+            {
                 KdPrint(("IopIsRemoteBootCard: ignoring non-matching card:\n"));
-                KdPrint(("  devnode bus %d, busdevfunc bus %d\n",
-                    ResourceRequirements->BusNumber,
-                    BusNumber));
-                KdPrint(("  devnode slot %d (%d %d), busdevfunc slot %d (%d %d)\n",
-                    ResourceRequirements->SlotNumber,
-                    (ResourceRequirements->SlotNumber & 0x1f),
-                    ((ResourceRequirements->SlotNumber >> 5) & 0x3),
-                    (ULONG)(((PNET_CARD_INFO)setupLoaderBlock->NetbootCardInfo)->pci.BusDevFunc),
-                    DeviceNumber,
-                    FunctionNumber));
+                KdPrint(("  devnode bus %d, busdevfunc bus %d\n", ResourceRequirements->BusNumber, BusNumber));
+                KdPrint(("  devnode slot %d (%d %d), busdevfunc slot %d (%d %d)\n", ResourceRequirements->SlotNumber,
+                         (ResourceRequirements->SlotNumber & 0x1f), ((ResourceRequirements->SlotNumber >> 5) & 0x3),
+                         (ULONG)(((PNET_CARD_INFO)setupLoaderBlock->NetbootCardInfo)->pci.BusDevFunc), DeviceNumber,
+                         FunctionNumber));
                 return FALSE;
-            } else {
+            }
+            else
+            {
                 return TRUE;
             }
         }
@@ -1219,13 +1026,10 @@ Return Value:
 
     return FALSE;
 }
-
+
 NTSTATUS
-IopSetupRemoteBootCard(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN HANDLE UniqueIdHandle,
-    IN PUNICODE_STRING UnicodeDeviceInstance
-    )
+IopSetupRemoteBootCard(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN HANDLE UniqueIdHandle,
+                       IN PUNICODE_STRING UnicodeDeviceInstance)
 
 /*++
 
@@ -1281,7 +1085,8 @@ Return Value:
     // bus/slot.
     //
 
-    if (IopRemoteBootCardInitialized) {
+    if (IopRemoteBootCardInitialized)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -1296,14 +1101,11 @@ Return Value:
     // Open the current control set.
     //
 
-    status = IopOpenRegistryKey(&currentControlSetHandle,
-                                NULL,
-                                &CmRegistryMachineSystemCurrentControlSet,
-                                KEY_ALL_ACCESS,
-                                FALSE
-                                );
+    status = IopOpenRegistryKey(&currentControlSetHandle, NULL, &CmRegistryMachineSystemCurrentControlSet,
+                                KEY_ALL_ACCESS, FALSE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1313,23 +1115,14 @@ Return Value:
 
     IopWstrToUnicodeString(&unicodeName, L"Control\\RemoteBoot");
 
-    InitializeObjectAttributes(&objectAttributes,
-                               &unicodeName,
-                               OBJ_CASE_INSENSITIVE,
-                               currentControlSetHandle,
-                               (PSECURITY_DESCRIPTOR)NULL
-                               );
+    InitializeObjectAttributes(&objectAttributes, &unicodeName, OBJ_CASE_INSENSITIVE, currentControlSetHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ZwCreateKey(&remoteBootHandle,
-                         KEY_ALL_ACCESS,
-                         &objectAttributes,
-                         0,
-                         (PUNICODE_STRING)NULL,
-                         0,
-                         &disposition
-                         );
+    status =
+        ZwCreateKey(&remoteBootHandle, KEY_ALL_ACCESS, &objectAttributes, 0, (PUNICODE_STRING)NULL, 0, &disposition);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1340,25 +1133,17 @@ Return Value:
     // to create the last node in the path.
     //
 
-    IopWstrToUnicodeString(&unicodeName, L"Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\{54C7D140-09EF-11D1-B25A-F5FE627ED95E}");
+    IopWstrToUnicodeString(
+        &unicodeName,
+        L"Control\\Network\\{4D36E972-E325-11CE-BFC1-08002BE10318}\\{54C7D140-09EF-11D1-B25A-F5FE627ED95E}");
 
-    InitializeObjectAttributes(&objectAttributes,
-                               &unicodeName,
-                               OBJ_CASE_INSENSITIVE,
-                               currentControlSetHandle,
-                               (PSECURITY_DESCRIPTOR)NULL
-                               );
+    InitializeObjectAttributes(&objectAttributes, &unicodeName, OBJ_CASE_INSENSITIVE, currentControlSetHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ZwCreateKey(&instanceHandle,
-                         KEY_ALL_ACCESS,
-                         &objectAttributes,
-                         0,
-                         (PUNICODE_STRING)NULL,
-                         0,
-                         &disposition
-                         );
+    status = ZwCreateKey(&instanceHandle, KEY_ALL_ACCESS, &objectAttributes, 0, (PUNICODE_STRING)NULL, 0, &disposition);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // If the PnpInstanceID of the first netboot card matches the one
@@ -1372,13 +1157,8 @@ Return Value:
         keyValue = (PKEY_VALUE_PARTIAL_INFORMATION)dataBuffer;
         RtlZeroMemory(dataBuffer, sizeof(dataBuffer));
 
-        status = ZwQueryValueKey(
-                     instanceHandle,
-                     &unicodeName,
-                     KeyValuePartialInformation,
-                     keyValue,
-                     sizeof(dataBuffer),
-                     &length);
+        status = ZwQueryValueKey(instanceHandle, &unicodeName, KeyValuePartialInformation, keyValue, sizeof(dataBuffer),
+                                 &length);
 
         //
         // Check that it matches. We can init the string because we zeroed
@@ -1386,12 +1166,13 @@ Return Value:
         // registry value had no NULL at the end that is OK.
         //
 
-        if ((NT_SUCCESS(status)) &&
-            (keyValue->Type == REG_SZ)) {
+        if ((NT_SUCCESS(status)) && (keyValue->Type == REG_SZ))
+        {
 
             RtlInitUnicodeString(&pnpInstanceId, (PWSTR)(keyValue->Data));
 
-            if (RtlEqualUnicodeString(UnicodeDeviceInstance, &pnpInstanceId, TRUE)) {
+            if (RtlEqualUnicodeString(UnicodeDeviceInstance, &pnpInstanceId, TRUE))
+            {
 
                 //
                 // Instance ID matched, see if the NET_CARD_INFO matches.
@@ -1400,18 +1181,13 @@ Return Value:
                 IopWstrToUnicodeString(&unicodeName, L"NetCardInfo");
                 RtlZeroMemory(dataBuffer, sizeof(dataBuffer));
 
-                status = ZwQueryValueKey(
-                             remoteBootHandle,
-                             &unicodeName,
-                             KeyValuePartialInformation,
-                             keyValue,
-                             sizeof(dataBuffer),
-                             &length);
+                status = ZwQueryValueKey(remoteBootHandle, &unicodeName, KeyValuePartialInformation, keyValue,
+                                         sizeof(dataBuffer), &length);
 
-                if ((NT_SUCCESS(status)) &&
-                    (keyValue->Type == REG_BINARY) &&
+                if ((NT_SUCCESS(status)) && (keyValue->Type == REG_BINARY) &&
                     (keyValue->DataLength == sizeof(NET_CARD_INFO)) &&
-                    (memcmp(keyValue->Data, setupLoaderBlock->NetbootCardInfo, sizeof(NET_CARD_INFO)) == 0)) {
+                    (memcmp(keyValue->Data, setupLoaderBlock->NetbootCardInfo, sizeof(NET_CARD_INFO)) == 0))
+                {
 
                     //
                     // Everything matched, so no need to do any setup.
@@ -1419,7 +1195,6 @@ Return Value:
 
                     status = STATUS_SUCCESS;
                     goto cleanup;
-
                 }
             }
         }
@@ -1437,39 +1212,25 @@ Return Value:
     //
 
     IopWstrToUnicodeString(&unicodeName, REGSTR_VALUE_SERVICE);
-    ZwSetValueKey(UniqueIdHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_SZ,
-                  setupLoaderBlock->NetbootCardServiceName,
-                  (wcslen(setupLoaderBlock->NetbootCardServiceName) + 1) * sizeof(WCHAR)
-                  );
+    ZwSetValueKey(UniqueIdHandle, &unicodeName, TITLE_INDEX_VALUE, REG_SZ, setupLoaderBlock->NetbootCardServiceName,
+                  (wcslen(setupLoaderBlock->NetbootCardServiceName) + 1) * sizeof(WCHAR));
 
     //
     // ClassGUID is the known net card GUID.
     //
 
     IopWstrToUnicodeString(&unicodeName, REGSTR_VALUE_CLASSGUID);
-    ZwSetValueKey(UniqueIdHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_SZ,
-                  L"{4D36E972-E325-11CE-BFC1-08002BE10318}",
-                  sizeof(L"{4D36E972-E325-11CE-BFC1-08002BE10318}")
-                  );
+    ZwSetValueKey(UniqueIdHandle, &unicodeName, TITLE_INDEX_VALUE, REG_SZ, L"{4D36E972-E325-11CE-BFC1-08002BE10318}",
+                  sizeof(L"{4D36E972-E325-11CE-BFC1-08002BE10318}"));
 
     //
     // Driver is the first net card.
     //
 
     IopWstrToUnicodeString(&unicodeName, REGSTR_VALUE_DRIVER);
-    ZwSetValueKey(UniqueIdHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_SZ,
+    ZwSetValueKey(UniqueIdHandle, &unicodeName, TITLE_INDEX_VALUE, REG_SZ,
                   L"{4D36E972-E325-11CE-BFC1-08002BE10318}\\0000",
-                  sizeof(L"{4D36E972-E325-11CE-BFC1-08002BE10318}\\0000")
-                  );
+                  sizeof(L"{4D36E972-E325-11CE-BFC1-08002BE10318}\\0000"));
 
 
     //
@@ -1477,29 +1238,22 @@ Return Value:
     // whatever the BINL server told us to write.
     //
 
-    status = IopOpenRegistryKey(&tmpHandle,
-                                NULL,
-                                &CmRegistryMachineSystemCurrentControlSetControlClass,
-                                KEY_ALL_ACCESS,
-                                FALSE
-                                );
+    status = IopOpenRegistryKey(&tmpHandle, NULL, &CmRegistryMachineSystemCurrentControlSetControlClass, KEY_ALL_ACCESS,
+                                FALSE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
     IopWstrToUnicodeString(&unicodeName, L"{4D36E972-E325-11CE-BFC1-08002BE10318}\\0000");
 
-    status = IopOpenRegistryKey(&parametersHandle,
-                                tmpHandle,
-                                &unicodeName,
-                                KEY_ALL_ACCESS,
-                                FALSE
-                                );
+    status = IopOpenRegistryKey(&parametersHandle, tmpHandle, &unicodeName, KEY_ALL_ACCESS, FALSE);
 
     ZwClose(tmpHandle);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1510,24 +1264,21 @@ Return Value:
     keyValueBasic = (PKEY_VALUE_BASIC_INFORMATION)dataBuffer;
     enumerateIndex = 0;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         RtlZeroMemory(dataBuffer, sizeof(dataBuffer));
 
-        status = ZwEnumerateValueKey(
-                    parametersHandle,
-                    enumerateIndex,
-                    KeyValueBasicInformation,
-                    keyValueBasic,
-                    sizeof(dataBuffer),
-                    &length
-                    );
-        if (status == STATUS_NO_MORE_ENTRIES) {
+        status = ZwEnumerateValueKey(parametersHandle, enumerateIndex, KeyValueBasicInformation, keyValueBasic,
+                                     sizeof(dataBuffer), &length);
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
             status = STATUS_SUCCESS;
             break;
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto cleanup;
         }
 
@@ -1537,23 +1288,22 @@ Return Value:
         // this is a replacement not a clean install.
         //
 
-        if (_wcsicmp(keyValueBasic->Name, L"NetCfgInstanceID") != 0) {
+        if (_wcsicmp(keyValueBasic->Name, L"NetCfgInstanceID") != 0)
+        {
 
             RtlInitUnicodeString(&keyName, keyValueBasic->Name);
-            status = ZwDeleteValueKey(
-                        parametersHandle,
-                        &keyName
-                        );
+            status = ZwDeleteValueKey(parametersHandle, &keyName);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto cleanup;
             }
-
-        } else {
-
-            enumerateIndex = 1;   // leave NetCfgInstanceID at index 0
         }
+        else
+        {
 
+            enumerateIndex = 1; // leave NetCfgInstanceID at index 0
+        }
     }
 
     //
@@ -1563,13 +1313,7 @@ Return Value:
 
     IopWstrToUnicodeString(&unicodeName, L"RemoteBootCard");
     tmpValue = 1;
-    ZwSetValueKey(parametersHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_DWORD,
-                  &tmpValue,
-                  sizeof(tmpValue)
-                  );
+    ZwSetValueKey(parametersHandle, &unicodeName, TITLE_INDEX_VALUE, REG_DWORD, &tmpValue, sizeof(tmpValue));
 
 
     //
@@ -1578,7 +1322,8 @@ Return Value:
 
     registryList = setupLoaderBlock->NetbootCardRegistry;
 
-    if (registryList != NULL) {
+    if (registryList != NULL)
+    {
 
         STRING aString;
         UNICODE_STRING uString, uString2;
@@ -1594,7 +1339,8 @@ Return Value:
         uString.Buffer = tempNameBuffer;
         uString.MaximumLength = sizeof(tempNameBuffer);
 
-        while (*registryList != '\0') {
+        while (*registryList != '\0')
+        {
 
             //
             // First the name.
@@ -1609,65 +1355,55 @@ Return Value:
 
             registryList += (strlen(registryList) + 1);
 
-            if (*registryList == '1') {
+            if (*registryList == '1')
+            {
 
                 //
                 // A DWORD, parse it.
                 //
 
-                registryList += 2;   // skip "1\0"
+                registryList += 2; // skip "1\0"
                 tmpValue = 0;
 
-                while (*registryList != '\0') {
+                while (*registryList != '\0')
+                {
                     tmpValue = (tmpValue * 10) + (*registryList - '0');
                     ++registryList;
                 }
 
-                ZwSetValueKey(parametersHandle,
-                              &uString,
-                              TITLE_INDEX_VALUE,
-                              REG_DWORD,
-                              &tmpValue,
-                              sizeof(tmpValue)
-                              );
+                ZwSetValueKey(parametersHandle, &uString, TITLE_INDEX_VALUE, REG_DWORD, &tmpValue, sizeof(tmpValue));
 
                 registryList += (strlen(registryList) + 1);
-
-            } else if (*registryList == '2') {
+            }
+            else if (*registryList == '2')
+            {
 
                 //
                 // An SZ, convert to Unicode.
                 //
 
-                registryList += 2;   // skip "2\0"
+                registryList += 2; // skip "2\0"
 
                 uString2.Buffer = tempValueBuffer;
                 uString2.MaximumLength = sizeof(tempValueBuffer);
                 RtlInitAnsiString(&aString, registryList);
                 RtlAnsiStringToUnicodeString(&uString2, &aString, FALSE);
 
-                ZwSetValueKey(parametersHandle,
-                              &uString,
-                              TITLE_INDEX_VALUE,
-                              REG_SZ,
-                              uString2.Buffer,
-                              uString2.Length + sizeof(WCHAR)
-                              );
+                ZwSetValueKey(parametersHandle, &uString, TITLE_INDEX_VALUE, REG_SZ, uString2.Buffer,
+                              uString2.Length + sizeof(WCHAR));
 
                 registryList += (strlen(registryList) + 1);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Not "1" or "2", so stop processing registryList.
                 //
 
                 break;
-
             }
-
         }
-
     }
 
     //
@@ -1676,13 +1412,8 @@ Return Value:
 
     IopWstrToUnicodeString(&unicodeName, L"NetCardInfo");
 
-    ZwSetValueKey(remoteBootHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_BINARY,
-                  setupLoaderBlock->NetbootCardInfo,
-                  sizeof(NET_CARD_INFO)
-                  );
+    ZwSetValueKey(remoteBootHandle, &unicodeName, TITLE_INDEX_VALUE, REG_BINARY, setupLoaderBlock->NetbootCardInfo,
+                  sizeof(NET_CARD_INFO));
 
 
     //
@@ -1693,33 +1424,18 @@ Return Value:
 
     IopWstrToUnicodeString(&unicodeName, L"HardwareId");
 
-    ZwSetValueKey(remoteBootHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_SZ,
-                  setupLoaderBlock->NetbootCardHardwareId,
-                  (wcslen(setupLoaderBlock->NetbootCardHardwareId) + 1) * sizeof(WCHAR)
-                  );
+    ZwSetValueKey(remoteBootHandle, &unicodeName, TITLE_INDEX_VALUE, REG_SZ, setupLoaderBlock->NetbootCardHardwareId,
+                  (wcslen(setupLoaderBlock->NetbootCardHardwareId) + 1) * sizeof(WCHAR));
 
     IopWstrToUnicodeString(&unicodeName, L"DriverName");
 
-    ZwSetValueKey(remoteBootHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_SZ,
-                  setupLoaderBlock->NetbootCardDriverName,
-                  (wcslen(setupLoaderBlock->NetbootCardDriverName) + 1) * sizeof(WCHAR)
-                  );
+    ZwSetValueKey(remoteBootHandle, &unicodeName, TITLE_INDEX_VALUE, REG_SZ, setupLoaderBlock->NetbootCardDriverName,
+                  (wcslen(setupLoaderBlock->NetbootCardDriverName) + 1) * sizeof(WCHAR));
 
     IopWstrToUnicodeString(&unicodeName, L"ServiceName");
 
-    ZwSetValueKey(remoteBootHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_SZ,
-                  setupLoaderBlock->NetbootCardServiceName,
-                  (wcslen(setupLoaderBlock->NetbootCardServiceName) + 1) * sizeof(WCHAR)
-                  );
+    ZwSetValueKey(remoteBootHandle, &unicodeName, TITLE_INDEX_VALUE, REG_SZ, setupLoaderBlock->NetbootCardServiceName,
+                  (wcslen(setupLoaderBlock->NetbootCardServiceName) + 1) * sizeof(WCHAR));
 
     //
     // Save the device instance, in case we need to ID the card later.
@@ -1727,13 +1443,8 @@ Return Value:
 
     IopWstrToUnicodeString(&unicodeName, L"DeviceInstance");
 
-    ZwSetValueKey(remoteBootHandle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_SZ,
-                  UnicodeDeviceInstance->Buffer,
-                  UnicodeDeviceInstance->Length + sizeof(WCHAR)
-                  );
+    ZwSetValueKey(remoteBootHandle, &unicodeName, TITLE_INDEX_VALUE, REG_SZ, UnicodeDeviceInstance->Buffer,
+                  UnicodeDeviceInstance->Length + sizeof(WCHAR));
 
     //
     // Make sure we only pick one card to setup this way!
@@ -1743,29 +1454,28 @@ Return Value:
 
 
 cleanup:
-    if (instanceHandle != NULL) {
+    if (instanceHandle != NULL)
+    {
         ZwClose(instanceHandle);
     }
-    if (remoteBootHandle != NULL) {
+    if (remoteBootHandle != NULL)
+    {
         ZwClose(remoteBootHandle);
     }
-    if (parametersHandle != NULL) {
+    if (parametersHandle != NULL)
+    {
         ZwClose(parametersHandle);
     }
-    if (currentControlSetHandle != NULL) {
+    if (currentControlSetHandle != NULL)
+    {
         ZwClose(currentControlSetHandle);
     }
 
     return status;
-
 }
-
+
 NTSTATUS
-IopWriteIpAddressToRegistry(
-        HANDLE handle,
-        PWCHAR regkey,
-        PUCHAR value
-        )
+IopWriteIpAddressToRegistry(HANDLE handle, PWCHAR regkey, PUCHAR value)
 {
     NTSTATUS status;
     UNICODE_STRING string;
@@ -1774,13 +1484,9 @@ IopWriteIpAddressToRegistry(
     STRING addressStringA;
     UNICODE_STRING addressStringW;
 
-    RtlInitUnicodeString( &string, regkey );
+    RtlInitUnicodeString(&string, regkey);
 
-    sprintf(addressA, "%d.%d.%d.%d",
-             value[0],
-             value[1],
-             value[2],
-             value[3]);
+    sprintf(addressA, "%d.%d.%d.%d", value[0], value[1], value[2], value[3]);
 
     RtlInitAnsiString(&addressStringA, addressA);
     addressStringW.Buffer = addressW;
@@ -1788,25 +1494,17 @@ IopWriteIpAddressToRegistry(
 
     RtlAnsiStringToUnicodeString(&addressStringW, &addressStringA, FALSE);
 
-    status = NtSetValueKey(
-                handle,
-                &string,
-                0,
-                REG_MULTI_SZ,
-                addressW,
-                addressStringW.Length + sizeof(WCHAR)
-                );
-    if ( !NT_SUCCESS(status) ) {
-        KdPrint(( "IopWriteIpAddressToRegistry: Unable to set %ws value: %x\n", regkey, status ));
+    status = NtSetValueKey(handle, &string, 0, REG_MULTI_SZ, addressW, addressStringW.Length + sizeof(WCHAR));
+    if (!NT_SUCCESS(status))
+    {
+        KdPrint(("IopWriteIpAddressToRegistry: Unable to set %ws value: %x\n", regkey, status));
     }
     return status;
 }
 
-
+
 NTSTATUS
-IopSetDefaultGateway(
-    IN ULONG GatewayAddress
-    )
+IopSetDefaultGateway(IN ULONG GatewayAddress)
 /*++
 
 Routine Description:
@@ -1840,35 +1538,21 @@ Return Value:
     UNICODE_STRING NameString;
     IO_STATUS_BLOCK ioStatusBlock;
 
-    if (GatewayAddress == 0) {
+    if (GatewayAddress == 0)
+    {
         return STATUS_SUCCESS;
     }
 
-    RtlInitUnicodeString( &NameString, DD_TCP_DEVICE_NAME );
+    RtlInitUnicodeString(&NameString, DD_TCP_DEVICE_NAME);
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &NameString,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &NameString, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = NtCreateFile(
-                &Handle,
-                GENERIC_READ | GENERIC_WRITE,
-                &objectAttributes,
-                &ioStatusBlock,
-                NULL,
-                0,
-                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                FILE_OPEN,
-                FILE_SYNCHRONOUS_IO_NONALERT,
-                NULL,
-                0
-                );
-    if ( !NT_SUCCESS(Status) ) {
-        KdPrint(( "IopSetDefaultGateway: Unable to open TCPIP: %x\n", Status ));
+    Status = NtCreateFile(&Handle, GENERIC_READ | GENERIC_WRITE, &objectAttributes, &ioStatusBlock, NULL, 0,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("IopSetDefaultGateway: Unable to open TCPIP: %x\n", Status));
         return Status;
     }
 
@@ -1876,32 +1560,29 @@ Return Value:
     // Get the NetAddr info, to find an interface index for the gateway.
     //
 
-    ID.toi_entity.tei_entity   = CL_NL_ENTITY;
+    ID.toi_entity.tei_entity = CL_NL_ENTITY;
     ID.toi_entity.tei_instance = 0;
-    ID.toi_class               = INFO_CLASS_PROTOCOL;
-    ID.toi_type                = INFO_TYPE_PROVIDER;
-    ID.toi_id                  = IP_MIB_STATS_ID;
+    ID.toi_class = INFO_CLASS_PROTOCOL;
+    ID.toi_type = INFO_TYPE_PROVIDER;
+    ID.toi_id = IP_MIB_STATS_ID;
 
     Size = sizeof(IPStats);
     memset(&IPStats, 0x0, Size);
     memset(Context, 0x0, CONTEXT_SIZE);
 
-    Status = IopTCPQueryInformationEx(
-                Handle,
-                &ID,
-                &IPStats,
-                &Size,
-                Context);
+    Status = IopTCPQueryInformationEx(Handle, &ID, &IPStats, &Size, Context);
 
-    if (!NT_SUCCESS(Status)) {
-        KdPrint(( "IopSetDefaultGateway: Unable to query TCPIP(1): %x\n", Status ));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("IopSetDefaultGateway: Unable to query TCPIP(1): %x\n", Status));
         goto Cleanup;
     }
 
     Size = IPStats.ipsi_numaddr * sizeof(IPAddrEntry);
     AddrTable = ExAllocatePoolWithTag(PagedPool, Size, 'bRoI');
 
-    if (AddrTable == NULL) {
+    if (AddrTable == NULL)
+    {
         Status = STATUS_NO_MEMORY;
         goto Cleanup;
     }
@@ -1909,19 +1590,15 @@ Return Value:
     ID.toi_id = IP_MIB_ADDRTABLE_ENTRY_ID;
     memset(Context, 0x0, CONTEXT_SIZE);
 
-    Status = IopTCPQueryInformationEx(
-                Handle,
-                &ID,
-                AddrTable,
-                &Size,
-                Context);
+    Status = IopTCPQueryInformationEx(Handle, &ID, AddrTable, &Size, Context);
 
-    if (!NT_SUCCESS(Status)) {
-        KdPrint(( "IopSetDefaultGateway: Unable to query TCPIP(2): %x\n", Status ));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("IopSetDefaultGateway: Unable to query TCPIP(2): %x\n", Status));
         goto Cleanup;
     }
 
-    NumReturned = Size/sizeof(IPAddrEntry);
+    NumReturned = Size / sizeof(IPAddrEntry);
 
     //
     // We've got the address table. Loop through it. If we find an exact
@@ -1931,9 +1608,11 @@ Return Value:
     //
 
     Type = IRE_TYPE_INDIRECT;
-    for (i = 0, MatchIndex = 0xffff; i < NumReturned; i++) {
+    for (i = 0, MatchIndex = 0xffff; i < NumReturned; i++)
+    {
 
-        if( AddrTable[i].iae_addr == GatewayAddress ) {
+        if (AddrTable[i].iae_addr == GatewayAddress)
+        {
 
             //
             // Found an exact match.
@@ -1949,11 +1628,9 @@ Return Value:
         // we haven't already found a match, remember this one.
         //
 
-        if ( (MatchIndex == 0xffff) &&
-             (AddrTable[i].iae_addr != 0) &&
-             (AddrTable[i].iae_mask != 0) &&
-             ((AddrTable[i].iae_addr & AddrTable[i].iae_mask) ==
-                (GatewayAddress  & AddrTable[i].iae_mask)) ) {
+        if ((MatchIndex == 0xffff) && (AddrTable[i].iae_addr != 0) && (AddrTable[i].iae_mask != 0) &&
+            ((AddrTable[i].iae_addr & AddrTable[i].iae_mask) == (GatewayAddress & AddrTable[i].iae_mask)))
+        {
 
             MatchIndex = i;
         }
@@ -1963,13 +1640,14 @@ Return Value:
     // We've looked at all of the entries. See if we found a match.
     //
 
-    if (MatchIndex == 0xffff) {
+    if (MatchIndex == 0xffff)
+    {
         //
         // Didn't find a match.
         //
 
         Status = STATUS_UNSUCCESSFUL;
-        KdPrint(( "IopSetDefaultGateway: Unable to find match for gateway\n" ));
+        KdPrint(("IopSetDefaultGateway: Unable to find match for gateway\n"));
         goto Cleanup;
     }
 
@@ -1996,14 +1674,11 @@ Return Value:
 
     ID.toi_id = IP_MIB_RTTABLE_ENTRY_ID;
 
-    Status = IopTCPSetInformationEx(
-                Handle,
-                &ID,
-                &RouteEntry,
-                Size );
+    Status = IopTCPSetInformationEx(Handle, &ID, &RouteEntry, Size);
 
-    if (!NT_SUCCESS(Status)) {
-        KdPrint(( "IopSetDefaultGateway: Unable to set default gateway: %x\n", Status ));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("IopSetDefaultGateway: Unable to set default gateway: %x\n", Status));
     }
 
     NtClose(Handle);
@@ -2012,31 +1687,28 @@ Return Value:
 
 Cleanup:
 
-    if (Handle != NULL) {
+    if (Handle != NULL)
+    {
         NtClose(Handle);
     }
 
-    if( AddrTable != NULL ) {
-        ExFreePool( AddrTable );
+    if (AddrTable != NULL)
+    {
+        ExFreePool(AddrTable);
     }
 
     return Status;
 }
 
-
-__inline long
-htonl(long x)
+
+__inline long htonl(long x)
 {
-        return((((x) >> 24) & 0x000000FFL) |
-           (((x) >>  8) & 0x0000FF00L) |
-           (((x) <<  8) & 0x00FF0000L) |
-           (((x) << 24) & 0xFF000000L));
+    return ((((x) >> 24) & 0x000000FFL) | (((x) >> 8) & 0x0000FF00L) | (((x) << 8) & 0x00FF0000L) |
+            (((x) << 24) & 0xFF000000L));
 }
 
 NTSTATUS
-IopCacheNetbiosNameForIpAddress(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IopCacheNetbiosNameForIpAddress(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -2068,34 +1740,16 @@ Return Value:
     // Open NetBT.
     //
 
-    RtlInitUnicodeString(
-        &NameString,
-        L"\\Device\\NetBT_Tcpip_{54C7D140-09EF-11D1-B25A-F5FE627ED95E}"
-        );
+    RtlInitUnicodeString(&NameString, L"\\Device\\NetBT_Tcpip_{54C7D140-09EF-11D1-B25A-F5FE627ED95E}");
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &NameString,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &NameString, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = NtCreateFile(
-                &Handle,
-                GENERIC_READ | GENERIC_WRITE,
-                &objectAttributes,
-                &ioStatusBlock,
-                NULL,
-                0,
-                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                FILE_OPEN,
-                FILE_SYNCHRONOUS_IO_NONALERT,
-                NULL,
-                0
-                );
-    if ( !NT_SUCCESS(Status) ) {
-        KdPrint(( "IopCacheNetbiosNameForIpAddress: Unable to open NETBT: %x\n", Status ));
+    Status = NtCreateFile(&Handle, GENERIC_READ | GENERIC_WRITE, &objectAttributes, &ioStatusBlock, NULL, 0,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("IopCacheNetbiosNameForIpAddress: Unable to open NETBT: %x\n", Status));
         return Status;
     }
 
@@ -2112,12 +1766,14 @@ Return Value:
     //
 
     serverName = LoaderBlock->NtBootPathName;
-    if ( *serverName == '\\' ) {
+    if (*serverName == '\\')
+    {
         serverName++;
     }
-    endOfServerName = strchr( serverName, '\\' );
-    if ( endOfServerName == NULL ) {
-        endOfServerName = strchr( serverName, '\0' );
+    endOfServerName = strchr(serverName, '\\');
+    if (endOfServerName == NULL)
+    {
+        endOfServerName = strchr(serverName, '\0');
     }
 
     //
@@ -2135,26 +1791,18 @@ Return Value:
     // Submit the IOCTL.
     //
 
-    Status = NtDeviceIoControlFile(
-               Handle,
-               NULL,
-               NULL,
-               NULL,
-               &ioStatusBlock,
-               IOCTL_NETBT_ADD_TO_REMOTE_TABLE,
-               &cacheInfo,
-               sizeof(cacheInfo),
-               Context,
-               sizeof(Context)
-               );
+    Status = NtDeviceIoControlFile(Handle, NULL, NULL, NULL, &ioStatusBlock, IOCTL_NETBT_ADD_TO_REMOTE_TABLE,
+                                   &cacheInfo, sizeof(cacheInfo), Context, sizeof(Context));
 
-    ASSERT( Status != STATUS_PENDING );
-    if ( NT_SUCCESS(Status) ) {
+    ASSERT(Status != STATUS_PENDING);
+    if (NT_SUCCESS(Status))
+    {
         Status = ioStatusBlock.Status;
     }
 
-    if ( !NT_SUCCESS(Status) ) {
-        KdPrint(( "IopCacheNetbiosNameForIpAddress: Adapter status failed: %x\n", Status ));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("IopCacheNetbiosNameForIpAddress: Adapter status failed: %x\n", Status));
     }
 
     NtClose(Handle);
@@ -2162,15 +1810,10 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-IopTCPQueryInformationEx(
-    IN HANDLE                 TCPHandle,
-    IN TDIObjectID FAR       *ID,
-    OUT void FAR             *Buffer,
-    IN OUT DWORD FAR         *BufferSize,
-    IN OUT BYTE FAR          *Context
-    )
+IopTCPQueryInformationEx(IN HANDLE TCPHandle, IN TDIObjectID FAR *ID, OUT void FAR *Buffer,
+                         IN OUT DWORD FAR *BufferSize, IN OUT BYTE FAR *Context)
 /*++
 
 Routine Description:
@@ -2197,60 +1840,59 @@ Return Value:
 --*/
 
 {
-    TCP_REQUEST_QUERY_INFORMATION_EX   queryBuffer;
-    DWORD                              queryBufferSize;
-    NTSTATUS                           status;
-    IO_STATUS_BLOCK                    ioStatusBlock;
+    TCP_REQUEST_QUERY_INFORMATION_EX queryBuffer;
+    DWORD queryBufferSize;
+    NTSTATUS status;
+    IO_STATUS_BLOCK ioStatusBlock;
 
 
-    if (TCPHandle == NULL) {
-        return(STATUS_INVALID_PARAMETER);
+    if (TCPHandle == NULL)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     queryBufferSize = sizeof(TCP_REQUEST_QUERY_INFORMATION_EX);
     memcpy(&(queryBuffer.ID), ID, sizeof(TDIObjectID));
     memcpy(&(queryBuffer.Context), Context, CONTEXT_SIZE);
 
-    status = NtDeviceIoControlFile(
-                 TCPHandle,                       // Driver handle
-                 NULL,                            // Event
-                 NULL,                            // APC Routine
-                 NULL,                            // APC context
-                 &ioStatusBlock,                  // Status block
-                 IOCTL_TCP_QUERY_INFORMATION_EX,  // Control code
-                 &queryBuffer,                    // Input buffer
-                 queryBufferSize,                 // Input buffer size
-                 Buffer,                          // Output buffer
-                 *BufferSize                      // Output buffer size
-                 );
+    status = NtDeviceIoControlFile(TCPHandle,                      // Driver handle
+                                   NULL,                           // Event
+                                   NULL,                           // APC Routine
+                                   NULL,                           // APC context
+                                   &ioStatusBlock,                 // Status block
+                                   IOCTL_TCP_QUERY_INFORMATION_EX, // Control code
+                                   &queryBuffer,                   // Input buffer
+                                   queryBufferSize,                // Input buffer size
+                                   Buffer,                         // Output buffer
+                                   *BufferSize                     // Output buffer size
+    );
 
-    ASSERT( status != STATUS_PENDING );
-    if ( NT_SUCCESS(status) ) {
+    ASSERT(status != STATUS_PENDING);
+    if (NT_SUCCESS(status))
+    {
         status = ioStatusBlock.Status;
     }
 
-    if (status == STATUS_SUCCESS) {
+    if (status == STATUS_SUCCESS)
+    {
         //
         // Copy the return context to the caller's context buffer
         //
         memcpy(Context, &(queryBuffer.Context), CONTEXT_SIZE);
         *BufferSize = (ULONG)ioStatusBlock.Information;
         status = ioStatusBlock.Status;
-    } else {
+    }
+    else
+    {
         *BufferSize = 0;
     }
 
-    return(status);
+    return (status);
 }
 
-
+
 NTSTATUS
-IopTCPSetInformationEx(
-    IN HANDLE             TCPHandle,
-    IN TDIObjectID FAR   *ID,
-    IN void FAR          *Buffer,
-    IN DWORD FAR          BufferSize
-    )
+IopTCPSetInformationEx(IN HANDLE TCPHandle, IN TDIObjectID FAR *ID, IN void FAR *Buffer, IN DWORD FAR BufferSize)
 /*++
 
 Routine Description:
@@ -2273,22 +1915,24 @@ Return Value:
 --*/
 
 {
-    PTCP_REQUEST_SET_INFORMATION_EX    setBuffer;
-    NTSTATUS                           status;
-    IO_STATUS_BLOCK                    ioStatusBlock;
-    DWORD                              setBufferSize;
+    PTCP_REQUEST_SET_INFORMATION_EX setBuffer;
+    NTSTATUS status;
+    IO_STATUS_BLOCK ioStatusBlock;
+    DWORD setBufferSize;
 
 
-    if (TCPHandle == NULL) {
-        return(STATUS_INVALID_PARAMETER);
+    if (TCPHandle == NULL)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     setBufferSize = FIELD_OFFSET(TCP_REQUEST_SET_INFORMATION_EX, Buffer) + BufferSize;
 
     setBuffer = ExAllocatePoolWithTag(PagedPool, setBufferSize, 'bRoI');
 
-    if (setBuffer == NULL) {
-        return(STATUS_INSUFFICIENT_RESOURCES);
+    if (setBuffer == NULL)
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
     setBuffer->BufferSize = BufferSize;
@@ -2297,26 +1941,25 @@ Return Value:
 
     memcpy(&(setBuffer->Buffer[0]), Buffer, BufferSize);
 
-    status = NtDeviceIoControlFile(
-                 TCPHandle,                       // Driver handle
-                 NULL,                            // Event
-                 NULL,                            // APC Routine
-                 NULL,                            // APC context
-                 &ioStatusBlock,                  // Status block
-                 IOCTL_TCP_SET_INFORMATION_EX,    // Control code
-                 setBuffer,                       // Input buffer
-                 setBufferSize,                   // Input buffer size
-                 NULL,                            // Output buffer
-                 0                                // Output buffer size
-                 );
+    status = NtDeviceIoControlFile(TCPHandle,                    // Driver handle
+                                   NULL,                         // Event
+                                   NULL,                         // APC Routine
+                                   NULL,                         // APC context
+                                   &ioStatusBlock,               // Status block
+                                   IOCTL_TCP_SET_INFORMATION_EX, // Control code
+                                   setBuffer,                    // Input buffer
+                                   setBufferSize,                // Input buffer size
+                                   NULL,                         // Output buffer
+                                   0                             // Output buffer size
+    );
 
-    ASSERT( status != STATUS_PENDING );
-    if ( NT_SUCCESS(status) ) {
+    ASSERT(status != STATUS_PENDING);
+    if (NT_SUCCESS(status))
+    {
         status = ioStatusBlock.Status;
     }
 
     ExFreePool(setBuffer);
 
-    return(status);
+    return (status);
 }
-

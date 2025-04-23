@@ -24,11 +24,9 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 NTSTATUS
-NtYieldExecution (
-    VOID
-    )
+NtYieldExecution(VOID)
 
 /*++
 
@@ -60,7 +58,8 @@ Return Value:
     //
 
     Status = STATUS_NO_YIELD_PERFORMED;
-    if (KiReadySummary != 0) {
+    if (KiReadySummary != 0)
+    {
 
         //
         // If a thread has not already been selected for execution, then
@@ -70,7 +69,8 @@ Return Value:
         Thread = KeGetCurrentThread();
         KiLockDispatcherDatabase(&Thread->WaitIrql);
         Prcb = KeGetCurrentPrcb();
-        if (Prcb->NextThread == NULL) {
+        if (Prcb->NextThread == NULL)
+        {
             Prcb->NextThread = KiFindReadyThread(Thread->NextProcessor, 1);
         }
 
@@ -79,7 +79,8 @@ Return Value:
         // immediately to the selected thread.
         //
 
-        if (Prcb->NextThread != NULL) {
+        if (Prcb->NextThread != NULL)
+        {
 
             //
             // Give the current thread a new quantum, simulate a quantum
@@ -90,26 +91,27 @@ Return Value:
             Thread->Quantum = Thread->ApcState.Process->ThreadQuantum;
             Thread->State = Ready;
             Priority = Thread->Priority;
-            if (Priority < LOW_REALTIME_PRIORITY) {
+            if (Priority < LOW_REALTIME_PRIORITY)
+            {
                 Priority = Priority - Thread->PriorityDecrement - 1;
-                if (Priority < Thread->BasePriority) {
+                if (Priority < Thread->BasePriority)
+                {
                     Priority = Thread->BasePriority;
                 }
 
                 Thread->PriorityDecrement = 0;
-
             }
 
             Thread->Priority = (SCHAR)Priority;
 
-            InsertTailList(&KiDispatcherReadyListHead[Priority],
-                           &Thread->WaitListEntry);
+            InsertTailList(&KiDispatcherReadyListHead[Priority], &Thread->WaitListEntry);
 
             SetMember(Priority, KiReadySummary);
             KiSwapThread();
             Status = STATUS_SUCCESS;
-
-        } else {
+        }
+        else
+        {
             KiUnlockDispatcherDatabase(Thread->WaitIrql);
         }
     }

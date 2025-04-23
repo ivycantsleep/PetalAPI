@@ -35,7 +35,7 @@ Revision History:
 #include "vibugcheck.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,     VfBugcheckInit)
+#pragma alloc_text(INIT, VfBugcheckInit)
 #pragma alloc_text(PAGEVRFY, VfBugcheckThrowIoException)
 #pragma alloc_text(PAGEVRFY, VfBugcheckThrowException)
 #pragma alloc_text(PAGEVRFY, ViBucheckProcessParams)
@@ -52,9 +52,9 @@ Revision History:
 #pragma data_seg("PAGEVRFD")
 #endif
 
-ULONG           ViBugCheckInitialControl;
-ULONG           ViBugCheckControlOverride;
-UNICODE_STRING  ViBugCheckEmptyString;
+ULONG ViBugCheckInitialControl;
+ULONG ViBugCheckControlOverride;
+UNICODE_STRING ViBugCheckEmptyString;
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("PAGEVRFC")
@@ -64,22 +64,13 @@ UNICODE_STRING  ViBugCheckEmptyString;
 // When invoking the driver check macro's, pass Irps first, Routines second,
 // DevObj's third, and any Status's last...
 //
-const DCPARAM_TYPE_ENTRY ViBugCheckParamTable[] = {
-    { DCPARAM_ROUTINE, "Routine"    },
-    { DCPARAM_IRP,     "Irp"        },
-    { DCPARAM_IRPSNAP, "Snapshot"   },
-    { DCPARAM_DEVOBJ,  "DevObj"     },
-    { DCPARAM_STATUS,  "Status"     },
-    { DCPARAM_ULONG,   "Ulong"      },
-    { DCPARAM_PVOID,   "Pvoid"      }
-};
+const DCPARAM_TYPE_ENTRY ViBugCheckParamTable[] = { { DCPARAM_ROUTINE, "Routine" },  { DCPARAM_IRP, "Irp" },
+                                                    { DCPARAM_IRPSNAP, "Snapshot" }, { DCPARAM_DEVOBJ, "DevObj" },
+                                                    { DCPARAM_STATUS, "Status" },    { DCPARAM_ULONG, "Ulong" },
+                                                    { DCPARAM_PVOID, "Pvoid" } };
 
 
-VOID
-FASTCALL
-VfBugcheckInit(
-    VOID
-    )
+VOID FASTCALL VfBugcheckInit(VOID)
 /*++
 
 Routine Description:
@@ -103,11 +94,7 @@ Return Value:
 
 
 NTSTATUS
-VfBugcheckThrowIoException(
-    IN DCERROR_ID           MessageID,
-    IN ULONG                MessageParameterMask,
-    ...
-    )
+VfBugcheckThrowIoException(IN DCERROR_ID MessageID, IN ULONG MessageParameterMask, ...)
 /*++
 
    Description:
@@ -136,7 +123,7 @@ VfBugcheckThrowIoException(
 --*/
 {
     PVFMESSAGE_TEMPLATE_TABLE ioVerifierTable;
-    UCHAR paramFormat[9*3*ARRAY_COUNT(ViBugCheckParamTable)+1];
+    UCHAR paramFormat[9 * 3 * ARRAY_COUNT(ViBugCheckParamTable) + 1];
     ULONG paramType, paramMask, curMask;
     NTSTATUS status;
     va_list arglist;
@@ -144,33 +131,24 @@ VfBugcheckThrowIoException(
     curMask = MessageParameterMask;
     paramFormat[0] = '\0';
 
-    for(paramType=0; paramType<ARRAY_COUNT(ViBugCheckParamTable); paramType++) {
+    for (paramType = 0; paramType < ARRAY_COUNT(ViBugCheckParamTable); paramType++)
+    {
 
         paramMask = ViBugCheckParamTable[paramType].DcParamMask;
-        while(curMask & (paramMask*3)) {
+        while (curMask & (paramMask * 3))
+        {
 
-            strcat(
-                (char *) paramFormat,
-                ViBugCheckParamTable[paramType].DcParamName
-                );
+            strcat((char *)paramFormat, ViBugCheckParamTable[paramType].DcParamName);
 
             curMask -= paramMask;
         }
     }
 
-    VfMessageRetrieveInternalTable(
-        VFMESSAGE_TABLE_IOVERIFIER,
-        &ioVerifierTable
-        );
+    VfMessageRetrieveInternalTable(VFMESSAGE_TABLE_IOVERIFIER, &ioVerifierTable);
 
     va_start(arglist, MessageParameterMask);
 
-    status = VfBugcheckThrowException(
-        ioVerifierTable,
-        (VFMESSAGE_ERRORID) MessageID,
-        (PCSTR) paramFormat,
-        &arglist
-        );
+    status = VfBugcheckThrowException(ioVerifierTable, (VFMESSAGE_ERRORID)MessageID, (PCSTR)paramFormat, &arglist);
 
     va_end(arglist);
 
@@ -179,12 +157,8 @@ VfBugcheckThrowIoException(
 
 
 NTSTATUS
-VfBugcheckThrowException(
-    IN PVFMESSAGE_TEMPLATE_TABLE    MessageTable        OPTIONAL,
-    IN VFMESSAGE_ERRORID            MessageID,
-    IN PCSTR                        MessageParamFormat,
-    IN va_list *                    MessageParameters
-    )
+VfBugcheckThrowException(IN PVFMESSAGE_TEMPLATE_TABLE MessageTable OPTIONAL, IN VFMESSAGE_ERRORID MessageID,
+                         IN PCSTR MessageParamFormat, IN va_list *MessageParameters)
 /*++
 
    Description:
@@ -206,7 +180,7 @@ VfBugcheckThrowException(
     UCHAR finalBuffer[512];
     NTSTATUS status;
     DC_CHECK_DATA dcCheckData;
-    PVOID dcParamArray[3*ARRAY_COUNT(ViBugCheckParamTable)];
+    PVOID dcParamArray[3 * ARRAY_COUNT(ViBugCheckParamTable)];
     BOOLEAN exitAssertion;
 
     //
@@ -218,16 +192,10 @@ VfBugcheckThrowException(
     // Determine what our basic policy towards this check will be and fill out
     // the dcCheckData structure as well as we can.
     //
-    ViBucheckProcessParams(
-        MessageTable,
-        MessageID,
-        MessageParamFormat,
-        MessageParameters,
-        dcParamArray,
-        &dcCheckData
-        );
+    ViBucheckProcessParams(MessageTable, MessageID, MessageParamFormat, MessageParameters, dcParamArray, &dcCheckData);
 
-    if (!ViBugcheckApplyControl(&dcCheckData)) {
+    if (!ViBugcheckApplyControl(&dcCheckData))
+    {
 
         //
         // Nothing to see here, just ignore the assert...
@@ -239,13 +207,10 @@ VfBugcheckThrowException(
     // We are going to express our disatifaction somehow. Expand out the
     // message we've prepared for this scenario.
     //
-    status = ViBugcheckProcessMessageText(
-        sizeof(finalBuffer),
-        (PSTR)finalBuffer,
-        &dcCheckData
-        );
+    status = ViBugcheckProcessMessageText(sizeof(finalBuffer), (PSTR)finalBuffer, &dcCheckData);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         ASSERT(0);
 
@@ -255,7 +220,8 @@ VfBugcheckThrowException(
         return status;
     }
 
-    do {
+    do
+    {
 
         ViBugcheckPrintBuffer(&dcCheckData);
         ViBugcheckPrintParamData(&dcCheckData);
@@ -269,15 +235,9 @@ VfBugcheckThrowException(
 }
 
 
-VOID
-ViBucheckProcessParams(
-    IN  PVFMESSAGE_TEMPLATE_TABLE   MessageTable        OPTIONAL,
-    IN  VFMESSAGE_ERRORID           MessageID,
-    IN  PCSTR                       MessageParamFormat,
-    IN  va_list *                   MessageParameters,
-    IN  PVOID *                     DcParamArray,
-    OUT PDC_CHECK_DATA              DcCheckData
-    )
+VOID ViBucheckProcessParams(IN PVFMESSAGE_TEMPLATE_TABLE MessageTable OPTIONAL, IN VFMESSAGE_ERRORID MessageID,
+                            IN PCSTR MessageParamFormat, IN va_list *MessageParameters, IN PVOID *DcParamArray,
+                            OUT PDC_CHECK_DATA DcCheckData)
 {
     PVOID culpritAddress;
     ULONG i, paramType, paramLen;
@@ -296,21 +256,23 @@ ViBucheckProcessParams(
     //
     RtlZeroMemory(paramIndices, sizeof(paramIndices));
     format = MessageParamFormat;
-    while(*format) {
+    while (*format)
+    {
 
-        if ((format[0] == ' ')||(format[0] == '%')) {
+        if ((format[0] == ' ') || (format[0] == '%'))
+        {
 
             format++;
             continue;
         }
 
-        for(paramType = 0;
-            paramType < ARRAY_COUNT(ViBugCheckParamTable);
-            paramType++) {
+        for (paramType = 0; paramType < ARRAY_COUNT(ViBugCheckParamTable); paramType++)
+        {
 
             paramLen = (ULONG)strlen(ViBugCheckParamTable[paramType].DcParamName);
 
-            if (!_strnicmp(ViBugCheckParamTable[paramType].DcParamName, format, paramLen)) {
+            if (!_strnicmp(ViBugCheckParamTable[paramType].DcParamName, format, paramLen))
+            {
 
                 //
                 // Match! Advance the pointer...
@@ -320,29 +282,32 @@ ViBucheckProcessParams(
                 //
                 // If the caller specified an index, grab it. Otherwise infer.
                 //
-                if ((format[0] >= '1') && (format[0] <= '3')) {
+                if ((format[0] >= '1') && (format[0] <= '3'))
+                {
 
                     i = format[0] - '1';
                     format++;
-
-                } else {
+                }
+                else
+                {
 
                     i = paramIndices[paramType];
                     ASSERT(i < 3);
                 }
 
-                if (i < 3) {
+                if (i < 3)
+                {
 
                     //
                     // Param number is within bounds.
                     //
-                    DcParamArray[paramType*3+i] = va_arg(*MessageParameters, PVOID);
+                    DcParamArray[paramType * 3 + i] = va_arg(*MessageParameters, PVOID);
                 }
 
                 //
                 // Update the current parameter index for the given type.
                 //
-                paramIndices[paramType] = i+1;
+                paramIndices[paramType] = i + 1;
 
                 //
                 // Get out early
@@ -351,7 +316,8 @@ ViBucheckProcessParams(
             }
         }
 
-        if (paramType == ARRAY_COUNT(ViBugCheckParamTable)) {
+        if (paramType == ARRAY_COUNT(ViBugCheckParamTable))
+        {
 
             //
             // We could'nt find an entry matching the format text. Bail.
@@ -372,16 +338,14 @@ ViBucheckProcessParams(
     //
     // Extract the culprit's name if possible...
     //
-    if (culpritAddress) {
+    if (culpritAddress)
+    {
 
-        status = KevUtilAddressToFileHeader(
-            (PVOID) culpritAddress,
-            (PUINT_PTR)(&DcCheckData->OffsetIntoImage),
-            &DcCheckData->DriverName,
-            &DcCheckData->InVerifierList
-            );
+        status = KevUtilAddressToFileHeader((PVOID)culpritAddress, (PUINT_PTR)(&DcCheckData->OffsetIntoImage),
+                                            &DcCheckData->DriverName, &DcCheckData->InVerifierList);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // IF we don't know who it is, assert anyway.
@@ -400,38 +364,23 @@ ViBucheckProcessParams(
     //
     // Get an ANSI version of the driver name.
     //
-    KeBugCheckUnicodeToAnsi(
-        DcCheckData->DriverName,
-        ansiDriverName,
-        sizeof(ansiDriverName)
-        );
+    KeBugCheckUnicodeToAnsi(DcCheckData->DriverName, ansiDriverName, sizeof(ansiDriverName));
 
     //
     // Retrieve a pointer to the appropriate message data.
     //
-    VfMessageRetrieveErrorData(
-        MessageTable,
-        MessageID,
-        ansiDriverName,
-        &DcCheckData->BugCheckMajor,
-        &DcCheckData->AssertionClass,
-        &DcCheckData->MessageTextTemplate,
-        &DcCheckData->Control
-        );
+    VfMessageRetrieveErrorData(MessageTable, MessageID, ansiDriverName, &DcCheckData->BugCheckMajor,
+                               &DcCheckData->AssertionClass, &DcCheckData->MessageTextTemplate, &DcCheckData->Control);
 }
 
 
 NTSTATUS
 FASTCALL
-ViBugcheckProcessMessageText(
-    IN ULONG               MaxOutputBufferSize,
-    OUT PSTR               OutputBuffer,
-    IN OUT PDC_CHECK_DATA  DcCheckData
-    )
+ViBugcheckProcessMessageText(IN ULONG MaxOutputBufferSize, OUT PSTR OutputBuffer, IN OUT PDC_CHECK_DATA DcCheckData)
 {
     ULONG paramType, maxParameterTypes;
     ULONG arrayIndex, paramLength;
-    char const* messageHead;
+    char const *messageHead;
     PSTR newMessage;
     LONG charsRemaining, length;
 
@@ -444,26 +393,31 @@ ViBugcheckProcessMessageText(
     // Now manually build out the message.
     //
     newMessage = OutputBuffer;
-    charsRemaining = (MaxOutputBufferSize/sizeof(UCHAR))-1;
+    charsRemaining = (MaxOutputBufferSize / sizeof(UCHAR)) - 1;
     maxParameterTypes = ARRAY_COUNT(ViBugCheckParamTable);
 
-    while(*messageHead != '\0') {
+    while (*messageHead != '\0')
+    {
 
-        if (charsRemaining <= 0) {
+        if (charsRemaining <= 0)
+        {
 
             return STATUS_BUFFER_OVERFLOW;
         }
 
-        if (*messageHead != '%') {
+        if (*messageHead != '%')
+        {
 
             *newMessage = *messageHead;
             newMessage++;
             messageHead++;
             charsRemaining--;
+        }
+        else
+        {
 
-        } else {
-
-            for(paramType = 0; paramType < maxParameterTypes; paramType++) {
+            for (paramType = 0; paramType < maxParameterTypes; paramType++)
+            {
 
                 paramLength = (ULONG)strlen(ViBugCheckParamTable[paramType].DcParamName);
 
@@ -473,52 +427,46 @@ ViBugcheckProcessMessageText(
                 // N.B. - We don't do any case 'de-sensitizing' anywhere, so
                 //        everything's cases must match!
                 //
-                if (RtlCompareMemory(
-                    messageHead+1,
-                    ViBugCheckParamTable[paramType].DcParamName,
-                    paramLength*sizeof(UCHAR)) == paramLength*sizeof(UCHAR)) {
+                if (RtlCompareMemory(messageHead + 1, ViBugCheckParamTable[paramType].DcParamName,
+                                     paramLength * sizeof(UCHAR)) == paramLength * sizeof(UCHAR))
+                {
 
-                    arrayIndex = paramType*3;
-                    messageHead += (paramLength+1);
+                    arrayIndex = paramType * 3;
+                    messageHead += (paramLength + 1);
 
                     //
                     // Was an index passed in (ie, "3rd" irp requested)?
                     //
-                    if ((*messageHead >= '1') && (*messageHead <= '3')) {
+                    if ((*messageHead >= '1') && (*messageHead <= '3'))
+                    {
 
                         //
                         // Adjust table index appropriately.
                         //
-                        arrayIndex += (*messageHead - '1') ;
+                        arrayIndex += (*messageHead - '1');
                         messageHead++;
                     }
 
-                    if ((arrayIndex < 6) || (arrayIndex >=9)) {
+                    if ((arrayIndex < 6) || (arrayIndex >= 9))
+                    {
 
                         //
                         // Normal param, print the pointer
                         //
-                        length = _snprintf(
-                            newMessage,
-                            charsRemaining+1,
-                            "%p",
-                            DcCheckData->DcParamArray[arrayIndex]
-                            );
-
-                    } else {
+                        length = _snprintf(newMessage, charsRemaining + 1, "%p", DcCheckData->DcParamArray[arrayIndex]);
+                    }
+                    else
+                    {
 
                         //
                         // IRP Snapshot, extract the IRP and print that
                         //
-                        length = _snprintf(
-                            newMessage,
-                            charsRemaining+1,
-                            "%p",
-                            ((PIRP_SNAPSHOT) DcCheckData->DcParamArray[arrayIndex])->Irp
-                            );
+                        length = _snprintf(newMessage, charsRemaining + 1, "%p",
+                                           ((PIRP_SNAPSHOT)DcCheckData->DcParamArray[arrayIndex])->Irp);
                     }
 
-                    if (length == -1) {
+                    if (length == -1)
+                    {
 
                         return STATUS_BUFFER_OVERFLOW;
                     }
@@ -529,7 +477,8 @@ ViBugcheckProcessMessageText(
                 }
             }
 
-            if (paramType == maxParameterTypes) {
+            if (paramType == maxParameterTypes)
+            {
 
                 //
                 // Either the message we looked up is malformed, we don't recognize
@@ -540,7 +489,8 @@ ViBugcheckProcessMessageText(
                 newMessage++;
                 charsRemaining--;
 
-                if (*messageHead == '%') {
+                if (*messageHead == '%')
+                {
 
                     messageHead++;
                 }
@@ -562,38 +512,38 @@ ViBugcheckProcessMessageText(
 
 BOOLEAN
 FASTCALL
-ViBugcheckApplyControl(
-    IN OUT PDC_CHECK_DATA  DcCheckData
-    )
+ViBugcheckApplyControl(IN OUT PDC_CHECK_DATA DcCheckData)
 {
     ULONG assertionControl;
 
-    if (ViBugCheckControlOverride) {
+    if (ViBugCheckControlOverride)
+    {
 
         assertionControl = ViBugCheckControlOverride;
-
-    } else if (DcCheckData->Control) {
+    }
+    else if (DcCheckData->Control)
+    {
 
         //
         // Initialize the control if appropo
         //
-        if (!((*DcCheckData->Control) & VFM_FLAG_INITIALIZED)) {
+        if (!((*DcCheckData->Control) & VFM_FLAG_INITIALIZED))
+        {
 
-            *DcCheckData->Control |= (
-                VFM_FLAG_INITIALIZED | ViBugCheckInitialControl |
-                DcCheckData->AssertionClass->ClassFlags );
+            *DcCheckData->Control |=
+                (VFM_FLAG_INITIALIZED | ViBugCheckInitialControl | DcCheckData->AssertionClass->ClassFlags);
         }
 
         assertionControl = *DcCheckData->Control;
+    }
+    else
+    {
 
-    } else {
-
-        assertionControl =
-            ( ViBugCheckInitialControl |
-              DcCheckData->AssertionClass->ClassFlags );
+        assertionControl = (ViBugCheckInitialControl | DcCheckData->AssertionClass->ClassFlags);
     }
 
-    if (assertionControl & VFM_FLAG_CLEARED) {
+    if (assertionControl & VFM_FLAG_CLEARED)
+    {
 
         //
         // If the breakpoint was cleared, then return, print/rip not.
@@ -601,8 +551,8 @@ ViBugcheckApplyControl(
         return FALSE;
     }
 
-    if ((!(assertionControl & VFM_IGNORE_DRIVER_LIST)) &&
-        (!DcCheckData->InVerifierList)) {
+    if ((!(assertionControl & VFM_IGNORE_DRIVER_LIST)) && (!DcCheckData->InVerifierList))
+    {
 
         //
         // Not of interest, skip this one.
@@ -616,7 +566,8 @@ ViBugcheckApplyControl(
     // The one exception is if VFM_DEPLOYMENT_FAILURE is set. Then we shall
     // invoke the driver bugcheck...
     //
-    if ((!KdDebuggerEnabled) && (!(assertionControl & VFM_DEPLOYMENT_FAILURE))) {
+    if ((!KdDebuggerEnabled) && (!(assertionControl & VFM_DEPLOYMENT_FAILURE)))
+    {
 
         return FALSE;
     }
@@ -629,11 +580,7 @@ ViBugcheckApplyControl(
 }
 
 
-VOID
-FASTCALL
-ViBugcheckHalt(
-    IN PDC_CHECK_DATA DcCheckData
-    )
+VOID FASTCALL ViBugcheckHalt(IN PDC_CHECK_DATA DcCheckData)
 {
     PVOID parameterArray[4];
     char captionBuffer[256];
@@ -643,8 +590,8 @@ ViBugcheckHalt(
     // Do not bugcheck if a kernel debugger is attached, nor if this isn't a
     // fatal error.
     //
-    if (KdDebuggerEnabled ||
-        (!(DcCheckData->AssertionControl & VFM_DEPLOYMENT_FAILURE))) {
+    if (KdDebuggerEnabled || (!(DcCheckData->AssertionControl & VFM_DEPLOYMENT_FAILURE)))
+    {
 
         return;
     }
@@ -659,102 +606,82 @@ ViBugcheckHalt(
     parameterArray[2] = DcCheckData->DcParamArray[3];
     parameterArray[3] = DcCheckData->DcParamArray[9];
 
-    if (DcCheckData->BugCheckMajor == DRIVER_VERIFIER_IOMANAGER_VIOLATION) {
+    if (DcCheckData->BugCheckMajor == DRIVER_VERIFIER_IOMANAGER_VIOLATION)
+    {
 
-        KeBugCheckUnicodeToAnsi(
-            DcCheckData->DriverName,
-            ansiDriverName,
-            sizeof(ansiDriverName)
-            );
+        KeBugCheckUnicodeToAnsi(DcCheckData->DriverName, ansiDriverName, sizeof(ansiDriverName));
 
-        _snprintf(
-            captionBuffer,
-            sizeof(captionBuffer),
-            "IO SYSTEM VERIFICATION ERROR in %s (%s %x)\n[%s+%x at %p]\n",
-            ansiDriverName,
-            DcCheckData->ClassText,
-            DcCheckData->MessageID,
-            ansiDriverName,
-            DcCheckData->OffsetIntoImage,
-            DcCheckData->CulpritAddress
-            );
+        _snprintf(captionBuffer, sizeof(captionBuffer), "IO SYSTEM VERIFICATION ERROR in %s (%s %x)\n[%s+%x at %p]\n",
+                  ansiDriverName, DcCheckData->ClassText, DcCheckData->MessageID, ansiDriverName,
+                  DcCheckData->OffsetIntoImage, DcCheckData->CulpritAddress);
 
-        KeBugCheckEx(
-            FATAL_UNHANDLED_HARD_ERROR,
-            DcCheckData->BugCheckMajor,
-            (ULONG_PTR) parameterArray,
-            (ULONG_PTR) captionBuffer,
-            (ULONG_PTR) "" // DcCheckData->AssertionText is too technical
-            );
+        KeBugCheckEx(FATAL_UNHANDLED_HARD_ERROR, DcCheckData->BugCheckMajor, (ULONG_PTR)parameterArray,
+                     (ULONG_PTR)captionBuffer,
+                     (ULONG_PTR) "" // DcCheckData->AssertionText is too technical
+        );
+    }
+    else
+    {
 
-    } else {
-
-        KeBugCheckEx(
-            DcCheckData->BugCheckMajor,
-            DcCheckData->MessageID,
-            (ULONG_PTR) DcCheckData->DcParamArray[9],
-            (ULONG_PTR) DcCheckData->DcParamArray[15],
-            (ULONG_PTR) DcCheckData->DcParamArray[16]
-            );
+        KeBugCheckEx(DcCheckData->BugCheckMajor, DcCheckData->MessageID, (ULONG_PTR)DcCheckData->DcParamArray[9],
+                     (ULONG_PTR)DcCheckData->DcParamArray[15], (ULONG_PTR)DcCheckData->DcParamArray[16]);
     }
 }
 
 
-VOID
-FASTCALL
-ViBugcheckPrintBuffer(
-    IN PDC_CHECK_DATA DcCheckData
-    )
+VOID FASTCALL ViBugcheckPrintBuffer(IN PDC_CHECK_DATA DcCheckData)
 {
     UCHAR buffer[82];
     UCHAR classBuf[81];
-    UCHAR callerBuf[81+40];
+    UCHAR callerBuf[81 + 40];
     UCHAR ansiDriverName[81];
-    LONG  lMargin, i, lMarginCur, rMargin=78;
+    LONG lMargin, i, lMarginCur, rMargin = 78;
     PSTR lineStart, lastWord, current, lMarginText;
 
     //
     // Put down a carriage return
     //
-    DbgPrint("\n") ;
+    DbgPrint("\n");
 
     //
     // Drop a banner if this is a fatal assert or a logo failure.
     //
-    if (DcCheckData->AssertionControl &
-        (VFM_DEPLOYMENT_FAILURE | VFM_LOGO_FAILURE)) {
+    if (DcCheckData->AssertionControl & (VFM_DEPLOYMENT_FAILURE | VFM_LOGO_FAILURE))
+    {
 
-        DbgPrint(
-            "***********************************************************************\n"
-            "* THIS VALIDATION BUG IS FATAL AND WILL CAUSE THE VERIFIER TO HALT    *\n"
-            "* WINDOWS (BUGCHECK) WHEN THE MACHINE IS NOT UNDER A KERNEL DEBUGGER! *\n"
-            "***********************************************************************\n"
-            "\n"
-            );
+        DbgPrint("***********************************************************************\n"
+                 "* THIS VALIDATION BUG IS FATAL AND WILL CAUSE THE VERIFIER TO HALT    *\n"
+                 "* WINDOWS (BUGCHECK) WHEN THE MACHINE IS NOT UNDER A KERNEL DEBUGGER! *\n"
+                 "***********************************************************************\n"
+                 "\n");
     }
 
     //
     // Prepare left margin (ClassText)
     //
-    if (DcCheckData->ClassText != NULL) {
+    if (DcCheckData->ClassText != NULL)
+    {
 
-        lMargin = (LONG)strlen(DcCheckData->ClassText)+2;
+        lMargin = (LONG)strlen(DcCheckData->ClassText) + 2;
 
         DbgPrint("%s: ", DcCheckData->ClassText);
-
-    } else {
+    }
+    else
+    {
 
         lMargin = 0;
     }
 
-    if (lMargin+1>=rMargin) {
+    if (lMargin + 1 >= rMargin)
+    {
 
-        lMargin=0;
+        lMargin = 0;
     }
 
-    for(i=0; i<lMargin; i++) classBuf[i] = ' ';
+    for (i = 0; i < lMargin; i++)
+        classBuf[i] = ' ';
     classBuf[lMargin] = '\0';
-    lMarginText = (PSTR)(classBuf+lMargin);
+    lMarginText = (PSTR)(classBuf + lMargin);
     lMarginCur = lMargin;
 
     lineStart = lastWord = current = DcCheckData->AssertionText;
@@ -762,22 +689,18 @@ ViBugcheckPrintBuffer(
     //
     // Print out culprit if we have him...
     //
-    if (DcCheckData->CulpritAddress) {
+    if (DcCheckData->CulpritAddress)
+    {
 
-        if (DcCheckData->DriverName->Length) {
+        if (DcCheckData->DriverName->Length)
+        {
 
-            KeBugCheckUnicodeToAnsi(
-                DcCheckData->DriverName,
-                (PSTR)ansiDriverName,
-                sizeof(ansiDriverName)
-                );
+            KeBugCheckUnicodeToAnsi(DcCheckData->DriverName, (PSTR)ansiDriverName, sizeof(ansiDriverName));
 
-            sprintf((PCHAR)callerBuf, "[%s @ 0x%p] ",
-                ansiDriverName,
-                DcCheckData->CulpritAddress
-                );
-
-        } else {
+            sprintf((PCHAR)callerBuf, "[%s @ 0x%p] ", ansiDriverName, DcCheckData->CulpritAddress);
+        }
+        else
+        {
 
             sprintf((PCHAR)callerBuf, "[0x%p] ", DcCheckData->CulpritAddress);
         }
@@ -789,25 +712,28 @@ ViBugcheckPrintBuffer(
     //
     // Format and print our assertion text
     //
-    while(*current) {
+    while (*current)
+    {
 
-        if (*current == ' ') {
+        if (*current == ' ')
+        {
 
-            if ((current - lineStart) >= (rMargin-lMarginCur-1)) {
+            if ((current - lineStart) >= (rMargin - lMarginCur - 1))
+            {
 
                 DbgPrint("%s", lMarginText);
                 lMarginText = (PSTR)classBuf;
                 lMarginCur = lMargin;
 
-                if ((lastWord-lineStart)<rMargin) {
+                if ((lastWord - lineStart) < rMargin)
+                {
 
-                    memcpy(buffer, lineStart, (ULONG)(lastWord-lineStart)*sizeof(UCHAR));
-                    buffer[lastWord-lineStart] = '\0';
+                    memcpy(buffer, lineStart, (ULONG)(lastWord - lineStart) * sizeof(UCHAR));
+                    buffer[lastWord - lineStart] = '\0';
                     DbgPrint("%s\n", buffer);
-
                 }
 
-                lineStart = lastWord+1;
+                lineStart = lastWord + 1;
             }
 
             lastWord = current;
@@ -816,72 +742,58 @@ ViBugcheckPrintBuffer(
         current++;
     }
 
-    if ((current - lineStart) >= (rMargin-lMarginCur-1)) {
+    if ((current - lineStart) >= (rMargin - lMarginCur - 1))
+    {
 
         DbgPrint("%s", lMarginText);
         lMarginText = (PSTR)classBuf;
 
-        if ((lastWord-lineStart)<rMargin) {
+        if ((lastWord - lineStart) < rMargin)
+        {
 
-            memcpy(buffer, lineStart, (ULONG)(lastWord-lineStart)*sizeof(UCHAR));
-            buffer[lastWord-lineStart] = '\0';
+            memcpy(buffer, lineStart, (ULONG)(lastWord - lineStart) * sizeof(UCHAR));
+            buffer[lastWord - lineStart] = '\0';
             DbgPrint("%s\n", buffer);
         }
 
-        lineStart = lastWord+1;
+        lineStart = lastWord + 1;
     }
 
-    if (lineStart<current) {
+    if (lineStart < current)
+    {
 
         DbgPrint("%s%s\n", lMarginText, lineStart);
     }
 }
 
 
-VOID
-FASTCALL
-ViBugcheckPrintParamData(
-    IN PDC_CHECK_DATA DcCheckData
-    )
+VOID FASTCALL ViBugcheckPrintParamData(IN PDC_CHECK_DATA DcCheckData)
 {
-    if (DcCheckData->DcParamArray[3]) {
+    if (DcCheckData->DcParamArray[3])
+    {
 
-        VfPrintDumpIrp((PIRP) DcCheckData->DcParamArray[3]);
+        VfPrintDumpIrp((PIRP)DcCheckData->DcParamArray[3]);
     }
 
-    if (DcCheckData->DcParamArray[6]) {
+    if (DcCheckData->DcParamArray[6])
+    {
 
-        VfPrintDumpIrpStack(
-            &((PIRP_SNAPSHOT) DcCheckData->DcParamArray[6])->IoStackLocation
-            );
+        VfPrintDumpIrpStack(&((PIRP_SNAPSHOT)DcCheckData->DcParamArray[6])->IoStackLocation);
     }
 }
 
 
-VOID
-FASTCALL
-ViBugcheckPrintUrl(
-    IN PDC_CHECK_DATA DcCheckData
-    )
+VOID FASTCALL ViBugcheckPrintUrl(IN PDC_CHECK_DATA DcCheckData)
 {
-    DbgPrint(
-        "http://www.microsoft.com/hwdq/bc/default.asp?os=%d.%d.%d&major=0x%x&minor=0x%x&lang=0x%x\n",
-        VER_PRODUCTMAJORVERSION,
-        VER_PRODUCTMINORVERSION,
-        VER_PRODUCTBUILD,
-        DcCheckData->BugCheckMajor,
-        DcCheckData->MessageID,
-        9 // English
-        );
+    DbgPrint("http://www.microsoft.com/hwdq/bc/default.asp?os=%d.%d.%d&major=0x%x&minor=0x%x&lang=0x%x\n",
+             VER_PRODUCTMAJORVERSION, VER_PRODUCTMINORVERSION, VER_PRODUCTBUILD, DcCheckData->BugCheckMajor,
+             DcCheckData->MessageID,
+             9 // English
+    );
 }
 
 
-VOID
-FASTCALL
-ViBugcheckPrompt(
-    IN      PDC_CHECK_DATA  DcCheckData,
-    OUT     PBOOLEAN        ExitAssertion
-    )
+VOID FASTCALL ViBugcheckPrompt(IN PDC_CHECK_DATA DcCheckData, OUT PBOOLEAN ExitAssertion)
 {
     char response[2];
     ULONG assertionControl;
@@ -894,12 +806,14 @@ ViBugcheckPrompt(
     //
     // Vocalize if so ordered.
     //
-    if (assertionControl & VFM_FLAG_BEEP) {
+    if (assertionControl & VFM_FLAG_BEEP)
+    {
 
         DbgPrint("%c", 7);
     }
 
-    if (assertionControl & VFM_FLAG_ZAPPED) {
+    if (assertionControl & VFM_FLAG_ZAPPED)
+    {
 
         return;
     }
@@ -908,65 +822,70 @@ ViBugcheckPrompt(
     // Wait for input...
     //
     waitForInput = TRUE;
-    while(waitForInput) {
+    while (waitForInput)
+    {
 
-        if (DcCheckData->Control) {
+        if (DcCheckData->Control)
+        {
 
-            DbgPrompt( "Break, Ignore, Zap, Remove, Disable all (bizrd)? ", response, sizeof( response ));
-        } else {
+            DbgPrompt("Break, Ignore, Zap, Remove, Disable all (bizrd)? ", response, sizeof(response));
+        }
+        else
+        {
 
-            DbgPrompt( "Break, Ignore, Disable all (bid)? ", response, sizeof( response ));
+            DbgPrompt("Break, Ignore, Disable all (bid)? ", response, sizeof(response));
         }
 
-        switch (response[0]) {
+        switch (response[0])
+        {
 
-            case 'B':
-            case 'b':
-                DbgPrint("Breaking in... (press g<enter> to return to assert menu)\n");
-                DbgBreakPoint();
+        case 'B':
+        case 'b':
+            DbgPrint("Breaking in... (press g<enter> to return to assert menu)\n");
+            DbgBreakPoint();
+            waitForInput = FALSE;
+            *ExitAssertion = FALSE;
+            break;
+
+        case 'I':
+        case 'i':
+            waitForInput = FALSE;
+            break;
+
+        case 'Z':
+        case 'z':
+            if (DcCheckData->Control)
+            {
+
+                DbgPrint("Breakpoint zapped (OS will print text and return)\n");
+                assertionControl |= VFM_FLAG_ZAPPED;
+                assertionControl &= ~VFM_FLAG_BEEP;
                 waitForInput = FALSE;
-                *ExitAssertion = FALSE;
-                break;
+            }
+            break;
 
-            case 'I':
-            case 'i':
+        case 'D':
+        case 'd':
+            ViBugCheckControlOverride = VFM_FLAG_CLEARED;
+            DbgPrint("Verification asserts disabled.\n");
+            waitForInput = FALSE;
+            break;
+
+        case 'R':
+        case 'r':
+            if (DcCheckData->Control)
+            {
+
+                DbgPrint("Breakpoint removed\n");
+                assertionControl |= VFM_FLAG_CLEARED;
                 waitForInput = FALSE;
-                break;
-
-            case 'Z':
-            case 'z':
-                if (DcCheckData->Control) {
-
-                   DbgPrint("Breakpoint zapped (OS will print text and return)\n");
-                   assertionControl |= VFM_FLAG_ZAPPED;
-                   assertionControl &=~ VFM_FLAG_BEEP;
-                   waitForInput = FALSE;
-                }
-                break;
-
-            case 'D':
-            case 'd':
-                ViBugCheckControlOverride = VFM_FLAG_CLEARED;
-                DbgPrint("Verification asserts disabled.\n");
-                waitForInput = FALSE;
-                break;
-
-            case 'R':
-            case 'r':
-                if (DcCheckData->Control) {
-
-                   DbgPrint("Breakpoint removed\n") ;
-                   assertionControl |= VFM_FLAG_CLEARED;
-                   waitForInput = FALSE;
-                }
-                break;
+            }
+            break;
         }
     }
 
-    if (DcCheckData->Control) {
+    if (DcCheckData->Control)
+    {
         *DcCheckData->Control = assertionControl;
     }
 }
-
-
-

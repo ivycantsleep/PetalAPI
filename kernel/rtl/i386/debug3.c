@@ -32,22 +32,10 @@
 //
 
 NTSTATUS
-DebugService(
-    ULONG ServiceClass,
-    PVOID Arg1,
-    PVOID Arg2,
-    PVOID Arg3,
-    PVOID Arg4
-    );
+DebugService(ULONG ServiceClass, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4);
 
 NTSTATUS
-DebugService(
-    ULONG ServiceClass,
-    PVOID Arg1,
-    PVOID Arg2,
-    PVOID Arg3,
-    PVOID Arg4
-    )
+DebugService(ULONG ServiceClass, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4)
 
 //++
 //
@@ -70,7 +58,7 @@ DebugService(
 //--
 
 {
-    NTSTATUS    RetValue;
+    NTSTATUS RetValue;
 
 #if defined(BUILD_WOW6432)
 
@@ -101,13 +89,8 @@ DebugService(
     return RetValue;
 }
 
-
-VOID
-DebugService2(
-    PVOID Arg1,
-    PVOID Arg2,
-    ULONG ServiceClass
-    )
+
+VOID DebugService2(PVOID Arg1, PVOID Arg2, ULONG ServiceClass)
 
 //++
 //
@@ -155,7 +138,6 @@ DebugService2(
 }
 
 
-
 // DebugPrint must appear after DebugSerive.  Moved
 // it down below DebugService, so BBT would have a label after DebugService.
 // A label after the above _asm  is necessary so BBT can treat DebugService
@@ -164,29 +146,15 @@ DebugService2(
 //
 
 NTSTATUS
-DebugPrint(
-    IN PSTRING Output,
-    IN ULONG ComponentId,
-    IN ULONG Level
-    )
+DebugPrint(IN PSTRING Output, IN ULONG ComponentId, IN ULONG Level)
 {
-    return DebugService(BREAKPOINT_PRINT,
-                        Output->Buffer,
-                        (PVOID)Output->Length,
-                        (PVOID)ComponentId,
-                        (PVOID)Level);
+    return DebugService(BREAKPOINT_PRINT, Output->Buffer, (PVOID)Output->Length, (PVOID)ComponentId, (PVOID)Level);
 }
 
-
+
 ULONG
-DebugPrompt(
-    IN PSTRING Output,
-    IN PSTRING Input
-    )
+DebugPrompt(IN PSTRING Output, IN PSTRING Input)
 {
-    return DebugService(BREAKPOINT_PROMPT,
-                        Output->Buffer,
-                        (PVOID)Output->Length,
-                        Input->Buffer,
+    return DebugService(BREAKPOINT_PROMPT, Output->Buffer, (PVOID)Output->Length, Input->Buffer,
                         (PVOID)Input->MaximumLength);
 }

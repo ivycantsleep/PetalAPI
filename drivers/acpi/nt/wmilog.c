@@ -19,36 +19,28 @@ Revision History:
 --*/
 
 
-
 #include "pch.h"
 #include <evntrace.h>
-
 
 
 #ifdef WMI_TRACING
 //
 //Globals
 //
-GUID        GUID_List[] =
-{
-    {0xF2E0E060L, 0xBF32, 0x4B88, 0xB8, 0xE4, 0x5C, 0xAD, 0x15, 0xAF, 0x6A, 0xE9} /* AMLI log GUID */
+GUID GUID_List[] = {
+    { 0xF2E0E060L, 0xBF32, 0x4B88, 0xB8, 0xE4, 0x5C, 0xAD, 0x15, 0xAF, 0x6A, 0xE9 } /* AMLI log GUID */
     /* Add new logging GUIDS here */
 };
 
 
-
-ULONG       ACPIWmiTraceEnable = 0;
-ULONG       ACPIWmiTraceGlobalEnable = 0;
+ULONG ACPIWmiTraceEnable = 0;
+ULONG ACPIWmiTraceGlobalEnable = 0;
 TRACEHANDLE ACPIWmiLoggerHandle = 0;
 
 // End Globals
 
 
-
-VOID
-ACPIWmiInitLog(
-    IN  PDEVICE_OBJECT ACPIDeviceObject
-    )
+VOID ACPIWmiInitLog(IN PDEVICE_OBJECT ACPIDeviceObject)
 /*++
 
 Routine Description:
@@ -68,22 +60,15 @@ Return Value:
     //
     // Register with WMI.
     //
-    status = IoWMIRegistrationControl(ACPIDeviceObject,
-                                      WMIREG_ACTION_REGISTER);
+    status = IoWMIRegistrationControl(ACPIDeviceObject, WMIREG_ACTION_REGISTER);
     if (!NT_SUCCESS(status))
     {
-        ACPIPrint( (
-                    DPFLTR_ERROR_LEVEL,
-                    "ACPIWmiInitLog: Failed to register for WMI support\n"
-                 ) );
+        ACPIPrint((DPFLTR_ERROR_LEVEL, "ACPIWmiInitLog: Failed to register for WMI support\n"));
     }
     return;
 }
 
-VOID
-ACPIWmiUnRegisterLog(
-    IN  PDEVICE_OBJECT ACPIDeviceObject
-    )
+VOID ACPIWmiUnRegisterLog(IN PDEVICE_OBJECT ACPIDeviceObject)
 /*++
 
 Routine Description:
@@ -103,24 +88,16 @@ Return Value:
     //
     // Register with WMI.
     //
-    status = IoWMIRegistrationControl(ACPIDeviceObject,
-                                      WMIREG_ACTION_DEREGISTER);
+    status = IoWMIRegistrationControl(ACPIDeviceObject, WMIREG_ACTION_DEREGISTER);
     if (!NT_SUCCESS(status))
     {
-        ACPIPrint( (
-                    DPFLTR_ERROR_LEVEL,
-                    "ACPIWmiInitLog: Failed to unregister for WMI support\n"
-                 ) );
+        ACPIPrint((DPFLTR_ERROR_LEVEL, "ACPIWmiInitLog: Failed to unregister for WMI support\n"));
     }
     return;
 }
 
 NTSTATUS
-ACPIWmiRegisterGuids(
-    IN  PWMIREGINFO             WmiRegInfo,
-    IN  ULONG                   wmiRegInfoSize,
-    IN  PULONG                  pReturnSize
-    )
+ACPIWmiRegisterGuids(IN PWMIREGINFO WmiRegInfo, IN ULONG wmiRegInfoSize, IN PULONG pReturnSize)
 /*++
 
 Routine Description:
@@ -141,17 +118,17 @@ Return Value:
     // Register a Control Guid as a Trace Guid.
     //
 
-    ULONG           SizeNeeded;
-    PWMIREGGUIDW    WmiRegGuidPtr;
-    ULONG           Status;
-    ULONG           GuidCount;
-    LPGUID          ControlGuid;
-    ULONG           RegistryPathSize;
-    ULONG           MofResourceSize;
-    PUCHAR          ptmp;
-    GUID            ACPITraceGuid  = {0xDAB01D4DL, 0x2D48, 0x477D, 0xB1, 0xC3, 0xDA, 0xAD, 0x0C, 0xE6, 0xF0, 0x6B};
+    ULONG SizeNeeded;
+    PWMIREGGUIDW WmiRegGuidPtr;
+    ULONG Status;
+    ULONG GuidCount;
+    LPGUID ControlGuid;
+    ULONG RegistryPathSize;
+    ULONG MofResourceSize;
+    PUCHAR ptmp;
+    GUID ACPITraceGuid = { 0xDAB01D4DL, 0x2D48, 0x477D, 0xB1, 0xC3, 0xDA, 0xAD, 0x0C, 0xE6, 0xF0, 0x6B };
 
-    
+
     *pReturnSize = 0;
     GuidCount = 1;
     ControlGuid = &ACPITraceGuid;
@@ -160,13 +137,12 @@ Return Value:
     // Allocate WMIREGINFO for controlGuid + GuidCount.
     //
     RegistryPathSize = sizeof(ACPI_REGISTRY_KEY) - sizeof(WCHAR) + sizeof(USHORT);
-    MofResourceSize =  sizeof(ACPI_TRACE_MOF_FILE) - sizeof(WCHAR) + sizeof(USHORT);
-    SizeNeeded = sizeof(WMIREGINFOW) + GuidCount * sizeof(WMIREGGUIDW) +
-                 RegistryPathSize +
-                 MofResourceSize;
+    MofResourceSize = sizeof(ACPI_TRACE_MOF_FILE) - sizeof(WCHAR) + sizeof(USHORT);
+    SizeNeeded = sizeof(WMIREGINFOW) + GuidCount * sizeof(WMIREGGUIDW) + RegistryPathSize + MofResourceSize;
 
 
-    if (SizeNeeded  > wmiRegInfoSize) {
+    if (SizeNeeded > wmiRegInfoSize)
+    {
         *((PULONG)WmiRegInfo) = SizeNeeded;
         *pReturnSize = sizeof(ULONG);
         return STATUS_SUCCESS;
@@ -198,16 +174,12 @@ Return Value:
     ptmp += sizeof(USHORT);
     RtlCopyMemory(ptmp, ACPI_TRACE_MOF_FILE, sizeof(ACPI_TRACE_MOF_FILE) - sizeof(WCHAR));
 
-    *pReturnSize =  SizeNeeded;
-    return(STATUS_SUCCESS);
-
+    *pReturnSize = SizeNeeded;
+    return (STATUS_SUCCESS);
 }
 
 
-VOID
-ACPIGetWmiLogGlobalHandle(
-    VOID
-    )
+VOID ACPIGetWmiLogGlobalHandle(VOID)
 /*++
 
 Routine Description:
@@ -224,13 +196,10 @@ Return Value:
 --*/
 {
     WmiSetLoggerId(WMI_GLOBAL_LOGGER_ID, &ACPIWmiLoggerHandle);
-    if(ACPIWmiLoggerHandle)
+    if (ACPIWmiLoggerHandle)
     {
-       ACPIPrint( (
-                    DPFLTR_INFO_LEVEL,
-                    "ACPIGetWmiLogGlobalHandle: Global handle aquired. Handle = %I64u\n",
-                    ACPIWmiLoggerHandle
-                ) );
+        ACPIPrint((DPFLTR_INFO_LEVEL, "ACPIGetWmiLogGlobalHandle: Global handle aquired. Handle = %I64u\n",
+                   ACPIWmiLoggerHandle));
 
         ACPIWmiTraceGlobalEnable = 1;
     }
@@ -239,10 +208,7 @@ Return Value:
 
 
 NTSTATUS
-ACPIWmiEnableLog(
-    IN  PVOID Buffer,
-    IN  ULONG BufferSize
-    )
+ACPIWmiEnableLog(IN PVOID Buffer, IN ULONG BufferSize)
 /*++
 
 Routine Description:
@@ -258,38 +224,30 @@ Return Value:
 
 --*/
 {
-    PWNODE_HEADER Wnode=NULL;
+    PWNODE_HEADER Wnode = NULL;
 
     InterlockedExchange(&ACPIWmiTraceEnable, 1);
 
     Wnode = (PWNODE_HEADER)Buffer;
-    if (BufferSize >= sizeof(WNODE_HEADER)) {
+    if (BufferSize >= sizeof(WNODE_HEADER))
+    {
         ACPIWmiLoggerHandle = Wnode->HistoricalContext;
         //
         // reset the global logger if it is active.
         //
-        if(ACPIWmiTraceGlobalEnable)
+        if (ACPIWmiTraceGlobalEnable)
             ACPIWmiTraceGlobalEnable = 0;
 
-       ACPIPrint( (
-                    DPFLTR_INFO_LEVEL,
-                    "ACPIWmiEnableLog: LoggerHandle = %I64u. BufferSize = %d. Flags = %x. Version = %x\n",
-                    ACPIWmiLoggerHandle,
-                    Wnode->BufferSize,
-                    Wnode->Flags,
-                    Wnode->Version
-                ) );
-
+        ACPIPrint((DPFLTR_INFO_LEVEL,
+                   "ACPIWmiEnableLog: LoggerHandle = %I64u. BufferSize = %d. Flags = %x. Version = %x\n",
+                   ACPIWmiLoggerHandle, Wnode->BufferSize, Wnode->Flags, Wnode->Version));
     }
 
-    return(STATUS_SUCCESS);
-
+    return (STATUS_SUCCESS);
 }
 
 NTSTATUS
-ACPIWmiDisableLog(
-    VOID
-    )
+ACPIWmiDisableLog(VOID)
 /*++
 
 Routine Description:
@@ -307,17 +265,11 @@ Return Value:
     InterlockedExchange(&ACPIWmiTraceEnable, 0);
     ACPIWmiLoggerHandle = 0;
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 NTSTATUS
-ACPIWmiLogEvent(
-    IN UCHAR    LogLevel,
-    IN UCHAR    LogType,
-    IN GUID     LogGUID,
-    IN PUCHAR   Format,
-    IN ...
-    )
+ACPIWmiLogEvent(IN UCHAR LogLevel, IN UCHAR LogType, IN GUID LogGUID, IN PUCHAR Format, IN...)
 /*++
 
 Routine Description:
@@ -337,19 +289,19 @@ Return Value:
 
 --*/
 {
-    static char         Buffer[1024];
-    va_list             marker;
-    WMI_LOG_DATA        Wmi_log_data ={0,0};
-    EVENT_TRACE_HEADER  *Wnode;
-    NTSTATUS            status = STATUS_UNSUCCESSFUL;
+    static char Buffer[1024];
+    va_list marker;
+    WMI_LOG_DATA Wmi_log_data = { 0, 0 };
+    EVENT_TRACE_HEADER *Wnode;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
 
     va_start(marker, Format);
     vsprintf(Buffer, Format, marker);
     va_end(marker);
 
-    if(ACPIWmiTraceEnable || ACPIWmiTraceGlobalEnable)
+    if (ACPIWmiTraceEnable || ACPIWmiTraceGlobalEnable)
     {
-        if(ACPIWmiLoggerHandle)
+        if (ACPIWmiLoggerHandle)
         {
             Wmi_log_data.Data.DataPtr = (ULONG64)&Buffer;
             Wmi_log_data.Data.Length = strlen(Buffer) + 1;
@@ -365,33 +317,25 @@ Return Value:
             // Call TraceLogger to  write this event
             //
 
-            status = IoWMIWriteEvent((PVOID)&(Wmi_log_data.Header));
+            status = IoWMIWriteEvent((PVOID) & (Wmi_log_data.Header));
 
             //
             // if IoWMIWriteEvent fails and we are using the global logger handle,
             // we need to stop loging.
             //
-            if(status != STATUS_SUCCESS)
+            if (status != STATUS_SUCCESS)
             {
-                if(ACPIWmiTraceGlobalEnable)
+                if (ACPIWmiTraceGlobalEnable)
                 {
                     ACPIWmiLoggerHandle = 0;
                     ACPIWmiTraceGlobalEnable = 0;
-                    ACPIPrint( (
-                            ACPI_PRINT_INFO,
-                            "ACPIWmiLogEvent: Disabling WMI loging using global handle. status = %x\n",
-                            status
-                         ) );
+                    ACPIPrint((ACPI_PRINT_INFO,
+                               "ACPIWmiLogEvent: Disabling WMI loging using global handle. status = %x\n", status));
                 }
                 else
                 {
-                    ACPIPrint( (
-                                DPFLTR_ERROR_LEVEL,
-                                "ACPIWmiLogEvent: Failed to log. status = %x\n",
-                                status
-                             ) );
+                    ACPIPrint((DPFLTR_ERROR_LEVEL, "ACPIWmiLogEvent: Failed to log. status = %x\n", status));
                 }
-
             }
         }
     }
@@ -401,14 +345,11 @@ Return Value:
 
 
 NTSTATUS
-ACPIDispatchWmiLog(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp
-    )
+ACPIDispatchWmiLog(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
-    NTSTATUS                status;
-    PIO_STACK_LOCATION      irpSp;
-    UCHAR                   minorFunction;
+    NTSTATUS status;
+    PIO_STACK_LOCATION irpSp;
+    UCHAR minorFunction;
 
     irpSp = IoGetCurrentIrpStackLocation(Irp);
 
@@ -418,55 +359,54 @@ ACPIDispatchWmiLog(
     //
     ASSERT(RootDeviceExtension->DeviceObject == DeviceObject);
 
-    if (DeviceObject != (PDEVICE_OBJECT) irpSp->Parameters.WMI.ProviderId) {
+    if (DeviceObject != (PDEVICE_OBJECT)irpSp->Parameters.WMI.ProviderId)
+    {
 
         return ACPIDispatchForwardIrp(DeviceObject, Irp);
     }
 
     minorFunction = irpSp->MinorFunction;
 
-    switch(minorFunction){
+    switch (minorFunction)
+    {
 
-        case IRP_MN_REGINFO:{
-            
-            ULONG ReturnSize = 0;
-            ULONG BufferSize = irpSp->Parameters.WMI.BufferSize;
-            PVOID Buffer = irpSp->Parameters.WMI.Buffer;
+    case IRP_MN_REGINFO:
+    {
 
-            status=ACPIWmiRegisterGuids(
-                                         Buffer,
-                                         BufferSize,
-                                         &ReturnSize
-                                        );
+        ULONG ReturnSize = 0;
+        ULONG BufferSize = irpSp->Parameters.WMI.BufferSize;
+        PVOID Buffer = irpSp->Parameters.WMI.Buffer;
 
-            Irp->IoStatus.Information = ReturnSize;
-            Irp->IoStatus.Status = status;
+        status = ACPIWmiRegisterGuids(Buffer, BufferSize, &ReturnSize);
 
-            IoCompleteRequest( Irp, IO_NO_INCREMENT );
-            return status;
-        }
-        case IRP_MN_ENABLE_EVENTS:{
-            
-            status=ACPIWmiEnableLog(
-                                    irpSp->Parameters.WMI.Buffer,
-                                    irpSp->Parameters.WMI.BufferSize
-                                   );
-            Irp->IoStatus.Status = status;
-            IoCompleteRequest( Irp, IO_NO_INCREMENT );
-            return status;
-        }
-        case IRP_MN_DISABLE_EVENTS:{
-            
-            status=ACPIWmiDisableLog();
-            Irp->IoStatus.Status = status;
-            IoCompleteRequest( Irp, IO_NO_INCREMENT );
-            return status;
-        }
-        default:{
-            
-            status = ACPIDispatchForwardIrp(DeviceObject, Irp);
-            return status;
-        }
+        Irp->IoStatus.Information = ReturnSize;
+        Irp->IoStatus.Status = status;
+
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        return status;
+    }
+    case IRP_MN_ENABLE_EVENTS:
+    {
+
+        status = ACPIWmiEnableLog(irpSp->Parameters.WMI.Buffer, irpSp->Parameters.WMI.BufferSize);
+        Irp->IoStatus.Status = status;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        return status;
+    }
+    case IRP_MN_DISABLE_EVENTS:
+    {
+
+        status = ACPIWmiDisableLog();
+        Irp->IoStatus.Status = status;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        return status;
+    }
+    default:
+    {
+
+        status = ACPIDispatchForwardIrp(DeviceObject, Irp);
+        return status;
+    }
     }
     return status;
 }

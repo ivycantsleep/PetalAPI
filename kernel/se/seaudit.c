@@ -29,110 +29,64 @@ Revision History:
 
 #pragma hdrstop
 
-VOID
-SepProbeAndCaptureString_U (
-    IN PUNICODE_STRING SourceString,
-    OUT PUNICODE_STRING *DestString
-    );
+VOID SepProbeAndCaptureString_U(IN PUNICODE_STRING SourceString, OUT PUNICODE_STRING *DestString);
 
-VOID
-SepFreeCapturedString(
-    IN PUNICODE_STRING CapturedString
-    );
+VOID SepFreeCapturedString(IN PUNICODE_STRING CapturedString);
 
-VOID
-SepAuditTypeList (
-    IN PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN PNTSTATUS AccessStatus,
-    IN ULONG StartIndex,
-    OUT PBOOLEAN GenerateSuccessAudit,
-    OUT PBOOLEAN GenerateFailureAudit
-    );
+VOID SepAuditTypeList(IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength, IN PNTSTATUS AccessStatus,
+                      IN ULONG StartIndex, OUT PBOOLEAN GenerateSuccessAudit, OUT PBOOLEAN GenerateFailureAudit);
 
-VOID
-SepExamineSaclEx(
-    IN PACL Sacl,
-    IN PACCESS_TOKEN Token,
-    IN ACCESS_MASK DesiredAccess,
-    IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN BOOLEAN ReturnResultList,
-    IN PNTSTATUS AccessStatus,
-    IN PACCESS_MASK GrantedAccess,
-    IN PSID PrincipalSelfSid,
-    OUT PBOOLEAN GenerateSuccessAudit,
-    OUT PBOOLEAN GenerateFailureAudit
-    );
+VOID SepExamineSaclEx(IN PACL Sacl, IN PACCESS_TOKEN Token, IN ACCESS_MASK DesiredAccess,
+                      IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+                      IN BOOLEAN ReturnResultList, IN PNTSTATUS AccessStatus, IN PACCESS_MASK GrantedAccess,
+                      IN PSID PrincipalSelfSid, OUT PBOOLEAN GenerateSuccessAudit, OUT PBOOLEAN GenerateFailureAudit);
 
 NTSTATUS
-SepAccessCheckAndAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN PHANDLE ClientToken OPTIONAL,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PUNICODE_STRING ObjectName,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN ACCESS_MASK DesiredAccess,
-    IN AUDIT_EVENT_TYPE AuditType,
-    IN ULONG Flags,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus,
-    OUT PBOOLEAN GenerateOnClose,
-    IN BOOLEAN ReturnResultList
-    );
+SepAccessCheckAndAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId, IN PHANDLE ClientToken OPTIONAL,
+                            IN PUNICODE_STRING ObjectTypeName, IN PUNICODE_STRING ObjectName,
+                            IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid,
+                            IN ACCESS_MASK DesiredAccess, IN AUDIT_EVENT_TYPE AuditType, IN ULONG Flags,
+                            IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+                            IN PGENERIC_MAPPING GenericMapping, OUT PACCESS_MASK GrantedAccess,
+                            OUT PNTSTATUS AccessStatus, OUT PBOOLEAN GenerateOnClose, IN BOOLEAN ReturnResultList);
 
 #ifdef ALLOC_PRAGMA
-VOID
-SepSetAuditInfoForObjectType(
-    IN  UCHAR AceFlags,
-    IN  ACCESS_MASK AccessMask,
-    IN  ACCESS_MASK DesiredAccess,
-    IN  PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN  ULONG ObjectTypeListLength,
-    IN  BOOLEAN ReturnResultList,
-    IN  ULONG ObjectTypeIndex,
-    IN  PNTSTATUS AccessStatus,
-    IN  PACCESS_MASK GrantedAccess,
-    IN  BOOLEAN FailedMaximumAllowed,
-    OUT PBOOLEAN GenerateSuccessAudit,
-    OUT PBOOLEAN GenerateFailureAudit
-    );
-#pragma alloc_text(PAGE,SepSinglePrivilegeCheck)
-#pragma alloc_text(PAGE,SeCheckAuditPrivilege)
-#pragma alloc_text(PAGE,SepProbeAndCaptureString_U)
-#pragma alloc_text(PAGE,SepFreeCapturedString)
-#pragma alloc_text(PAGE,NtPrivilegeObjectAuditAlarm)
-#pragma alloc_text(PAGE,SePrivilegeObjectAuditAlarm)
-#pragma alloc_text(PAGE,NtPrivilegedServiceAuditAlarm)
-#pragma alloc_text(PAGE,SePrivilegedServiceAuditAlarm)
-#pragma alloc_text(PAGE,SepAccessCheckAndAuditAlarm)
-#pragma alloc_text(PAGE,NtAccessCheckAndAuditAlarm)
-#pragma alloc_text(PAGE,NtAccessCheckByTypeAndAuditAlarm)
-#pragma alloc_text(PAGE,NtAccessCheckByTypeResultListAndAuditAlarm)
-#pragma alloc_text(PAGE,NtAccessCheckByTypeResultListAndAuditAlarmByHandle)
-#pragma alloc_text(PAGE,NtOpenObjectAuditAlarm)
-#pragma alloc_text(PAGE,NtCloseObjectAuditAlarm)
-#pragma alloc_text(PAGE,NtDeleteObjectAuditAlarm)
-#pragma alloc_text(PAGE,SeOpenObjectAuditAlarm)
-#pragma alloc_text(PAGE,SeOpenObjectForDeleteAuditAlarm)
-#pragma alloc_text(PAGE,SeObjectReferenceAuditAlarm)
-#pragma alloc_text(PAGE,SeAuditHandleCreation)
-#pragma alloc_text(PAGE,SeCloseObjectAuditAlarm)
-#pragma alloc_text(PAGE,SeDeleteObjectAuditAlarm)
-#pragma alloc_text(PAGE,SepExamineSacl)
-#pragma alloc_text(PAGE,SepAuditTypeList)
-#pragma alloc_text(PAGE,SepSetAuditInfoForObjectType)
-#pragma alloc_text(PAGE,SepExamineSaclEx)
-#pragma alloc_text(INIT,SepInitializePrivilegeFilter)
-#pragma alloc_text(PAGE,SepFilterPrivilegeAudits)
-#pragma alloc_text(PAGE,SeAuditingFileOrGlobalEvents)
-#pragma alloc_text(PAGE,SeAuditingFileEvents)
-#pragma alloc_text(PAGE,SeAuditingHardLinkEvents)
+VOID SepSetAuditInfoForObjectType(IN UCHAR AceFlags, IN ACCESS_MASK AccessMask, IN ACCESS_MASK DesiredAccess,
+                                  IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength,
+                                  IN BOOLEAN ReturnResultList, IN ULONG ObjectTypeIndex, IN PNTSTATUS AccessStatus,
+                                  IN PACCESS_MASK GrantedAccess, IN BOOLEAN FailedMaximumAllowed,
+                                  OUT PBOOLEAN GenerateSuccessAudit, OUT PBOOLEAN GenerateFailureAudit);
+#pragma alloc_text(PAGE, SepSinglePrivilegeCheck)
+#pragma alloc_text(PAGE, SeCheckAuditPrivilege)
+#pragma alloc_text(PAGE, SepProbeAndCaptureString_U)
+#pragma alloc_text(PAGE, SepFreeCapturedString)
+#pragma alloc_text(PAGE, NtPrivilegeObjectAuditAlarm)
+#pragma alloc_text(PAGE, SePrivilegeObjectAuditAlarm)
+#pragma alloc_text(PAGE, NtPrivilegedServiceAuditAlarm)
+#pragma alloc_text(PAGE, SePrivilegedServiceAuditAlarm)
+#pragma alloc_text(PAGE, SepAccessCheckAndAuditAlarm)
+#pragma alloc_text(PAGE, NtAccessCheckAndAuditAlarm)
+#pragma alloc_text(PAGE, NtAccessCheckByTypeAndAuditAlarm)
+#pragma alloc_text(PAGE, NtAccessCheckByTypeResultListAndAuditAlarm)
+#pragma alloc_text(PAGE, NtAccessCheckByTypeResultListAndAuditAlarmByHandle)
+#pragma alloc_text(PAGE, NtOpenObjectAuditAlarm)
+#pragma alloc_text(PAGE, NtCloseObjectAuditAlarm)
+#pragma alloc_text(PAGE, NtDeleteObjectAuditAlarm)
+#pragma alloc_text(PAGE, SeOpenObjectAuditAlarm)
+#pragma alloc_text(PAGE, SeOpenObjectForDeleteAuditAlarm)
+#pragma alloc_text(PAGE, SeObjectReferenceAuditAlarm)
+#pragma alloc_text(PAGE, SeAuditHandleCreation)
+#pragma alloc_text(PAGE, SeCloseObjectAuditAlarm)
+#pragma alloc_text(PAGE, SeDeleteObjectAuditAlarm)
+#pragma alloc_text(PAGE, SepExamineSacl)
+#pragma alloc_text(PAGE, SepAuditTypeList)
+#pragma alloc_text(PAGE, SepSetAuditInfoForObjectType)
+#pragma alloc_text(PAGE, SepExamineSaclEx)
+#pragma alloc_text(INIT, SepInitializePrivilegeFilter)
+#pragma alloc_text(PAGE, SepFilterPrivilegeAudits)
+#pragma alloc_text(PAGE, SeAuditingFileOrGlobalEvents)
+#pragma alloc_text(PAGE, SeAuditingFileEvents)
+#pragma alloc_text(PAGE, SeAuditingHardLinkEvents)
 #endif
 
 //
@@ -143,7 +97,7 @@ SepSetAuditInfoForObjectType(
 
 //BOOLEAN SepAuditShutdownEvents = FALSE;
 
-
+
 //
 //  Private useful routines
 //
@@ -157,11 +111,7 @@ SepSetAuditInfoForObjectType(
 //
 
 BOOLEAN
-SepSinglePrivilegeCheck (
-   LUID DesiredPrivilege,
-   IN PACCESS_TOKEN Token,
-   IN KPROCESSOR_MODE PreviousMode
-   )
+SepSinglePrivilegeCheck(LUID DesiredPrivilege, IN PACCESS_TOKEN Token, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -185,38 +135,29 @@ Return Value:
 
 {
 
-   LUID_AND_ATTRIBUTES Privilege;
-   BOOLEAN Result;
+    LUID_AND_ATTRIBUTES Privilege;
+    BOOLEAN Result;
 
-   PAGED_CODE();
-   
-   //
-   // Don't let anyone call this to test for SeTcbPrivilege
-   //
+    PAGED_CODE();
 
-   ASSERT(!((DesiredPrivilege.LowPart == SeTcbPrivilege.LowPart) &&
-            (DesiredPrivilege.HighPart == SeTcbPrivilege.HighPart)));
+    //
+    // Don't let anyone call this to test for SeTcbPrivilege
+    //
 
-   Privilege.Luid = DesiredPrivilege;
-   Privilege.Attributes = 0;
+    ASSERT(!((DesiredPrivilege.LowPart == SeTcbPrivilege.LowPart) &&
+             (DesiredPrivilege.HighPart == SeTcbPrivilege.HighPart)));
 
-   Result = SepPrivilegeCheck(
-               Token,
-               &Privilege,
-               1,
-               PRIVILEGE_SET_ALL_NECESSARY,
-               PreviousMode
-               );
+    Privilege.Luid = DesiredPrivilege;
+    Privilege.Attributes = 0;
 
-   return(Result);
+    Result = SepPrivilegeCheck(Token, &Privilege, 1, PRIVILEGE_SET_ALL_NECESSARY, PreviousMode);
+
+    return (Result);
 }
 
-
+
 BOOLEAN
-SeCheckAuditPrivilege (
-   IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
-   IN KPROCESSOR_MODE PreviousMode
-   )
+SeCheckAuditPrivilege(IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext, IN KPROCESSOR_MODE PreviousMode)
 /*++
 
 Routine Description:
@@ -250,33 +191,24 @@ Return Value:
     RequiredPrivileges.Privilege[0].Luid = SeAuditPrivilege;
     RequiredPrivileges.Privilege[0].Attributes = 0;
 
-    AccessGranted = SepPrivilegeCheck(
-                        SubjectSecurityContext->PrimaryToken,     // token
-                        RequiredPrivileges.Privilege,             // privilege set
-                        RequiredPrivileges.PrivilegeCount,        // privilege count
-                        PRIVILEGE_SET_ALL_NECESSARY,              // privilege control
-                        PreviousMode                              // previous mode
-                        );
+    AccessGranted = SepPrivilegeCheck(SubjectSecurityContext->PrimaryToken, // token
+                                      RequiredPrivileges.Privilege,         // privilege set
+                                      RequiredPrivileges.PrivilegeCount,    // privilege count
+                                      PRIVILEGE_SET_ALL_NECESSARY,          // privilege control
+                                      PreviousMode                          // previous mode
+    );
 
-    if ( PreviousMode != KernelMode ) {
+    if (PreviousMode != KernelMode)
+    {
 
-        SePrivilegedServiceAuditAlarm (
-            NULL,
-            SubjectSecurityContext,
-            &RequiredPrivileges,
-            AccessGranted
-            );
+        SePrivilegedServiceAuditAlarm(NULL, SubjectSecurityContext, &RequiredPrivileges, AccessGranted);
     }
 
-    return( AccessGranted );
+    return (AccessGranted);
 }
 
-
-VOID
-SepProbeAndCaptureString_U (
-    IN PUNICODE_STRING SourceString,
-    OUT PUNICODE_STRING *DestString
-    )
+
+VOID SepProbeAndCaptureString_U(IN PUNICODE_STRING SourceString, OUT PUNICODE_STRING *DestString)
 /*++
 
 Routine Description:
@@ -315,7 +247,8 @@ Return Value:
     *DestString = NULL;
 
     Status = STATUS_SUCCESS;
-    try {
+    try
+    {
 
         //
         // Probe and capture the name string descriptor and probe the
@@ -323,10 +256,7 @@ Return Value:
         //
 
         InputString = ProbeAndReadUnicodeString(SourceString);
-        ProbeForRead(InputString.Buffer,
-                     InputString.Length,
-                     sizeof(WCHAR));
-
+        ProbeForRead(InputString.Buffer, InputString.Length, sizeof(WCHAR));
 
 
         //
@@ -336,57 +266,52 @@ Return Value:
         //
 
         Length = InputString.Length;
-        if (((Length & (sizeof(WCHAR) - 1)) != 0) ||
-            (Length == (MAXUSHORT - sizeof(WCHAR) + 1))) {
+        if (((Length & (sizeof(WCHAR) - 1)) != 0) || (Length == (MAXUSHORT - sizeof(WCHAR) + 1)))
+        {
             Status = STATUS_INVALID_PARAMETER;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Allocate a buffer for the specified name string.
             //
 
-            *DestString = ExAllocatePoolWithTag(
-                            PagedPool,
-                            InputString.Length + sizeof(UNICODE_STRING),
-                            'sUeS');
+            *DestString = ExAllocatePoolWithTag(PagedPool, InputString.Length + sizeof(UNICODE_STRING), 'sUeS');
 
-            if (*DestString == NULL) {
+            if (*DestString == NULL)
+            {
                 Status = STATUS_INSUFFICIENT_RESOURCES;
-
-            } else {
+            }
+            else
+            {
                 (*DestString)->Length = InputString.Length;
                 (*DestString)->MaximumLength = InputString.Length;
-                (*DestString)->Buffer = (PWSTR) ((*DestString) + 1);
+                (*DestString)->Buffer = (PWSTR)((*DestString) + 1);
 
-                if (InputString.Length != 0) {
+                if (InputString.Length != 0)
+                {
 
-                    RtlCopyMemory(
-                        (*DestString)->Buffer,
-                        InputString.Buffer,
-                        InputString.Length);
+                    RtlCopyMemory((*DestString)->Buffer, InputString.Buffer, InputString.Length);
                 }
-
             }
         }
-
-    } except(ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
         Status = GetExceptionCode();
-        if (*DestString != NULL) {
+        if (*DestString != NULL)
+        {
             ExFreePool(*DestString);
             *DestString = NULL;
         }
     }
 
     return;
-
 }
 
-
-VOID
-SepFreeCapturedString(
-    IN PUNICODE_STRING CapturedString
-    )
+
+VOID SepFreeCapturedString(IN PUNICODE_STRING CapturedString)
 
 /*++
 
@@ -408,7 +333,7 @@ Return Value:
 {
     PAGED_CODE();
 
-    ExFreePool( CapturedString );
+    ExFreePool(CapturedString);
     return;
 }
 
@@ -418,16 +343,10 @@ Return Value:
 //                                                                    //
 ////////////////////////////////////////////////////////////////////////
 
-
+
 NTSTATUS
-NtPrivilegeObjectAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN HANDLE ClientToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN PPRIVILEGE_SET Privileges,
-    IN BOOLEAN AccessGranted
-    )
+NtPrivilegeObjectAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId, IN HANDLE ClientToken,
+                            IN ACCESS_MASK DesiredAccess, IN PPRIVILEGE_SET Privileges, IN BOOLEAN AccessGranted)
 /*++
 
 Routine Description:
@@ -493,17 +412,17 @@ Return value:
 
     ASSERT(PreviousMode != KernelMode);
 
-    Status = ObReferenceObjectByHandle(
-         ClientToken,             // Handle
-         TOKEN_QUERY,             // DesiredAccess
-         SeTokenObjectType,      // ObjectType
-         PreviousMode,            // AccessMode
-         (PVOID *)&Token,         // Object
-         NULL                     // GrantedAccess
-         );
+    Status = ObReferenceObjectByHandle(ClientToken,       // Handle
+                                       TOKEN_QUERY,       // DesiredAccess
+                                       SeTokenObjectType, // ObjectType
+                                       PreviousMode,      // AccessMode
+                                       (PVOID *)&Token,   // Object
+                                       NULL               // GrantedAccess
+    );
 
-    if (!NT_SUCCESS( Status )) {
-        return( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
@@ -511,119 +430,108 @@ Return value:
     // it is at SecurityIdentification or above.
     //
 
-    if (Token->TokenType == TokenImpersonation) {
+    if (Token->TokenType == TokenImpersonation)
+    {
 
-        if (Token->ImpersonationLevel < SecurityIdentification) {
+        if (Token->ImpersonationLevel < SecurityIdentification)
+        {
 
-            ObDereferenceObject( (PVOID)Token );
+            ObDereferenceObject((PVOID)Token);
 
-            return( STATUS_BAD_IMPERSONATION_LEVEL );
-
+            return (STATUS_BAD_IMPERSONATION_LEVEL);
         }
     }
 
-//    //
-//    // Make sure the passed token is an impersonation token...
-//    //
-//
-//    if (Token->TokenType != TokenImpersonation) {
-//
-//        ObDereferenceObject( (PVOID)Token );
-//
-//        return( STATUS_NO_IMPERSONATION_TOKEN );
-//
-//    }
-//
-//    //
-//    //  ...and at a high enough impersonation level
-//    //
-//
-//    if (Token->ImpersonationLevel < SecurityIdentification) {
-//
-//        ObDereferenceObject( (PVOID)Token );
-//
-//        return( STATUS_BAD_IMPERSONATION_LEVEL );
-//
-//    }
+    //    //
+    //    // Make sure the passed token is an impersonation token...
+    //    //
+    //
+    //    if (Token->TokenType != TokenImpersonation) {
+    //
+    //        ObDereferenceObject( (PVOID)Token );
+    //
+    //        return( STATUS_NO_IMPERSONATION_TOKEN );
+    //
+    //    }
+    //
+    //    //
+    //    //  ...and at a high enough impersonation level
+    //    //
+    //
+    //    if (Token->ImpersonationLevel < SecurityIdentification) {
+    //
+    //        ObDereferenceObject( (PVOID)Token );
+    //
+    //        return( STATUS_BAD_IMPERSONATION_LEVEL );
+    //
+    //    }
 
     //
     // Check for SeAuditPrivilege
     //
 
-    SeCaptureSubjectContext ( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    Result = SeCheckAuditPrivilege (
-                 &SubjectSecurityContext,
-                 PreviousMode
-                 );
+    Result = SeCheckAuditPrivilege(&SubjectSecurityContext, PreviousMode);
 
-    if (!Result) {
+    if (!Result)
+    {
 
-        ObDereferenceObject( (PVOID)Token );
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
-        return(STATUS_PRIVILEGE_NOT_HELD);
-
+        ObDereferenceObject((PVOID)Token);
+        SeReleaseSubjectContext(&SubjectSecurityContext);
+        return (STATUS_PRIVILEGE_NOT_HELD);
     }
 
-    try {
+    try
+    {
 
-        SepProbeAndCaptureString_U ( SubsystemName,
-                                     &CapturedSubsystemName );
+        SepProbeAndCaptureString_U(SubsystemName, &CapturedSubsystemName);
 
-        ProbeForReadSmallStructure(
-            Privileges,
-            sizeof(PRIVILEGE_SET),
-            sizeof(ULONG)
-            );
+        ProbeForReadSmallStructure(Privileges, sizeof(PRIVILEGE_SET), sizeof(ULONG));
         PrivilegeCount = Privileges->PrivilegeCount;
 
-        if (!IsValidElementCount(PrivilegeCount, LUID_AND_ATTRIBUTES)) {
-            Status= STATUS_INVALID_PARAMETER;
-            leave ;
+        if (!IsValidElementCount(PrivilegeCount, LUID_AND_ATTRIBUTES))
+        {
+            Status = STATUS_INVALID_PARAMETER;
+            leave;
         }
-        PrivilegeParameterLength = (ULONG)sizeof(PRIVILEGE_SET) +
-                          ((PrivilegeCount - ANYSIZE_ARRAY) *
-                            (ULONG)sizeof(LUID_AND_ATTRIBUTES)  );
+        PrivilegeParameterLength =
+            (ULONG)sizeof(PRIVILEGE_SET) + ((PrivilegeCount - ANYSIZE_ARRAY) * (ULONG)sizeof(LUID_AND_ATTRIBUTES));
 
-        ProbeForRead(
-            Privileges,
-            PrivilegeParameterLength,
-            sizeof(ULONG)
-            );
+        ProbeForRead(Privileges, PrivilegeParameterLength, sizeof(ULONG));
 
-        CapturedPrivileges = ExAllocatePoolWithTag( PagedPool,
-                                                    PrivilegeParameterLength,
-                                                    'rPeS'
-                                                  );
+        CapturedPrivileges = ExAllocatePoolWithTag(PagedPool, PrivilegeParameterLength, 'rPeS');
 
-        if (CapturedPrivileges != NULL) {
+        if (CapturedPrivileges != NULL)
+        {
 
-            RtlCopyMemory ( CapturedPrivileges,
-                            Privileges,
-                            PrivilegeParameterLength );
+            RtlCopyMemory(CapturedPrivileges, Privileges, PrivilegeParameterLength);
             CapturedPrivileges->PrivilegeCount = PrivilegeCount;
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
     }
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (CapturedPrivileges != NULL) {
-            ExFreePool( CapturedPrivileges );
+        if (CapturedPrivileges != NULL)
+        {
+            ExFreePool(CapturedPrivileges);
         }
 
-        if (CapturedSubsystemName != NULL) {
-            SepFreeCapturedString ( CapturedSubsystemName );
+        if (CapturedSubsystemName != NULL)
+        {
+            SepFreeCapturedString(CapturedSubsystemName);
         }
 
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
 
-        ObDereferenceObject( (PVOID)Token );
+        ObDereferenceObject((PVOID)Token);
 
         return Status;
-
     }
 
     //
@@ -636,42 +544,33 @@ Return value:
     // to determine if we're supposed to be auditing here.
     //
 
-    AuditPerformed = SepAdtPrivilegeObjectAuditAlarm (
-                         CapturedSubsystemName,
-                         HandleId,
-                         Token,                                // ClientToken
-                         SubjectSecurityContext.PrimaryToken,  // PrimaryToken
-                         SubjectSecurityContext.ProcessAuditId,
-                         DesiredAccess,
-                         CapturedPrivileges,
-                         AccessGranted
-                         );
+    AuditPerformed = SepAdtPrivilegeObjectAuditAlarm(CapturedSubsystemName, HandleId,
+                                                     Token,                               // ClientToken
+                                                     SubjectSecurityContext.PrimaryToken, // PrimaryToken
+                                                     SubjectSecurityContext.ProcessAuditId, DesiredAccess,
+                                                     CapturedPrivileges, AccessGranted);
 
-    if (CapturedPrivileges != NULL) {
-        ExFreePool( CapturedPrivileges );
+    if (CapturedPrivileges != NULL)
+    {
+        ExFreePool(CapturedPrivileges);
     }
 
-    if (CapturedSubsystemName != NULL) {
-        SepFreeCapturedString ( CapturedSubsystemName );
+    if (CapturedSubsystemName != NULL)
+    {
+        SepFreeCapturedString(CapturedSubsystemName);
     }
 
-    SeReleaseSubjectContext ( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
-    ObDereferenceObject( (PVOID)Token );
+    ObDereferenceObject((PVOID)Token);
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-
-VOID
-SePrivilegeObjectAuditAlarm(
-    IN HANDLE Handle,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
-    IN ACCESS_MASK DesiredAccess,
-    IN PPRIVILEGE_SET Privileges,
-    IN BOOLEAN AccessGranted,
-    IN KPROCESSOR_MODE AccessMode
-    )
+
+VOID SePrivilegeObjectAuditAlarm(IN HANDLE Handle, IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
+                                 IN ACCESS_MASK DesiredAccess, IN PPRIVILEGE_SET Privileges, IN BOOLEAN AccessGranted,
+                                 IN KPROCESSOR_MODE AccessMode)
 
 /*++
 
@@ -721,37 +620,27 @@ Return Value:
 
     PAGED_CODE();
 
-    if (AccessMode != KernelMode) {
+    if (AccessMode != KernelMode)
+    {
 
-        AuditPerformed = SepAdtPrivilegeObjectAuditAlarm (
-                             (PUNICODE_STRING)&SeSubsystemName,
-                             Handle,
-                             SubjectSecurityContext->ClientToken,
-                             SubjectSecurityContext->PrimaryToken,
-                             SubjectSecurityContext->ProcessAuditId,
-                             DesiredAccess,
-                             Privileges,
-                             AccessGranted
-                             );
+        AuditPerformed = SepAdtPrivilegeObjectAuditAlarm(
+            (PUNICODE_STRING)&SeSubsystemName, Handle, SubjectSecurityContext->ClientToken,
+            SubjectSecurityContext->PrimaryToken, SubjectSecurityContext->ProcessAuditId, DesiredAccess, Privileges,
+            AccessGranted);
     }
 }
 
-
+
 ////////////////////////////////////////////////////////////////////////
 //                                                                    //
 //                  Privileged Service Audit Alarms                   //
 //                                                                    //
 ////////////////////////////////////////////////////////////////////////
 
-
+
 NTSTATUS
-NtPrivilegedServiceAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PUNICODE_STRING ServiceName,
-    IN HANDLE ClientToken,
-    IN PPRIVILEGE_SET Privileges,
-    IN BOOLEAN AccessGranted
-    )
+NtPrivilegedServiceAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PUNICODE_STRING ServiceName, IN HANDLE ClientToken,
+                              IN PPRIVILEGE_SET Privileges, IN BOOLEAN AccessGranted)
 
 /*++
 
@@ -817,17 +706,17 @@ Return value:
 
     ASSERT(PreviousMode != KernelMode);
 
-    Status = ObReferenceObjectByHandle(
-                 ClientToken,             // Handle
-                 TOKEN_QUERY,             // DesiredAccess
-                 SeTokenObjectType,      // ObjectType
-                 PreviousMode,            // AccessMode
-                 (PVOID *)&Token,         // Object
-                 NULL                     // GrantedAccess
-                 );
+    Status = ObReferenceObjectByHandle(ClientToken,       // Handle
+                                       TOKEN_QUERY,       // DesiredAccess
+                                       SeTokenObjectType, // ObjectType
+                                       PreviousMode,      // AccessMode
+                                       (PVOID *)&Token,   // Object
+                                       NULL               // GrantedAccess
+    );
 
-    if ( !NT_SUCCESS( Status )) {
-        return( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
@@ -835,139 +724,129 @@ Return value:
     // it is at SecurityIdentification or above.
     //
 
-    if (Token->TokenType == TokenImpersonation) {
+    if (Token->TokenType == TokenImpersonation)
+    {
 
-        if (Token->ImpersonationLevel < SecurityIdentification) {
+        if (Token->ImpersonationLevel < SecurityIdentification)
+        {
 
-            ObDereferenceObject( (PVOID)Token );
+            ObDereferenceObject((PVOID)Token);
 
-            return( STATUS_BAD_IMPERSONATION_LEVEL );
-
+            return (STATUS_BAD_IMPERSONATION_LEVEL);
         }
     }
 
-//    //
-//    // Make sure the passed token is an impersonation token...
-//    //
-//
-//    if (Token->TokenType != TokenImpersonation) {
-//
-//        ObDereferenceObject( (PVOID)Token );
-//
-//        return( STATUS_NO_IMPERSONATION_TOKEN );
-//
-//    }
-//
-//    //
-//    //  ...and at a high enough impersonation level
-//    //
-//
-//    if (Token->ImpersonationLevel < SecurityIdentification) {
-//
-//        ObDereferenceObject( (PVOID)Token );
-//
-//        return( STATUS_BAD_IMPERSONATION_LEVEL );
-//
-//    }
+    //    //
+    //    // Make sure the passed token is an impersonation token...
+    //    //
+    //
+    //    if (Token->TokenType != TokenImpersonation) {
+    //
+    //        ObDereferenceObject( (PVOID)Token );
+    //
+    //        return( STATUS_NO_IMPERSONATION_TOKEN );
+    //
+    //    }
+    //
+    //    //
+    //    //  ...and at a high enough impersonation level
+    //    //
+    //
+    //    if (Token->ImpersonationLevel < SecurityIdentification) {
+    //
+    //        ObDereferenceObject( (PVOID)Token );
+    //
+    //        return( STATUS_BAD_IMPERSONATION_LEVEL );
+    //
+    //    }
 
     //
     // Check for SeAuditPrivilege
     //
 
-    SeCaptureSubjectContext ( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    Result = SeCheckAuditPrivilege (
-                 &SubjectSecurityContext,
-                 PreviousMode
-                 );
+    Result = SeCheckAuditPrivilege(&SubjectSecurityContext, PreviousMode);
 
-    if (!Result) {
+    if (!Result)
+    {
 
-        ObDereferenceObject( (PVOID)Token );
+        ObDereferenceObject((PVOID)Token);
 
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
 
-        return(STATUS_PRIVILEGE_NOT_HELD);
+        return (STATUS_PRIVILEGE_NOT_HELD);
     }
 
-    try {
+    try
+    {
 
-        if ( ARGUMENT_PRESENT( SubsystemName )) {
-            SepProbeAndCaptureString_U ( SubsystemName,
-                                         &CapturedSubsystemName );
+        if (ARGUMENT_PRESENT(SubsystemName))
+        {
+            SepProbeAndCaptureString_U(SubsystemName, &CapturedSubsystemName);
         }
 
-        if ( ARGUMENT_PRESENT( ServiceName )) {
-            SepProbeAndCaptureString_U ( ServiceName,
-                                         &CapturedServiceName );
-
+        if (ARGUMENT_PRESENT(ServiceName))
+        {
+            SepProbeAndCaptureString_U(ServiceName, &CapturedServiceName);
         }
 
-        ProbeForReadSmallStructure(
-            Privileges,
-            sizeof(PRIVILEGE_SET),
-            sizeof(ULONG)
-            );
+        ProbeForReadSmallStructure(Privileges, sizeof(PRIVILEGE_SET), sizeof(ULONG));
 
         PrivilegeCount = Privileges->PrivilegeCount;
 
-        if (!IsValidElementCount( PrivilegeCount, LUID_AND_ATTRIBUTES ) ) {
+        if (!IsValidElementCount(PrivilegeCount, LUID_AND_ATTRIBUTES))
+        {
             Status = STATUS_INVALID_PARAMETER;
-            leave ;
+            leave;
         }
-        PrivilegeParameterLength = (ULONG)sizeof(PRIVILEGE_SET) +
-                          ((PrivilegeCount - ANYSIZE_ARRAY) *
-                            (ULONG)sizeof(LUID_AND_ATTRIBUTES)  );
+        PrivilegeParameterLength =
+            (ULONG)sizeof(PRIVILEGE_SET) + ((PrivilegeCount - ANYSIZE_ARRAY) * (ULONG)sizeof(LUID_AND_ATTRIBUTES));
 
-        ProbeForRead(
-            Privileges,
-            PrivilegeParameterLength,
-            sizeof(ULONG)
-            );
+        ProbeForRead(Privileges, PrivilegeParameterLength, sizeof(ULONG));
 
-        CapturedPrivileges = ExAllocatePoolWithTag( PagedPool,
-                                                    PrivilegeParameterLength,
-                                                    'rPeS'
-                                                  );
+        CapturedPrivileges = ExAllocatePoolWithTag(PagedPool, PrivilegeParameterLength, 'rPeS');
 
         //
         // If ExAllocatePool has failed, too bad.  Carry on and do as much of the
         // audit as we can.
         //
 
-        if (CapturedPrivileges != NULL) {
+        if (CapturedPrivileges != NULL)
+        {
 
-            RtlCopyMemory ( CapturedPrivileges,
-                            Privileges,
-                            PrivilegeParameterLength );
+            RtlCopyMemory(CapturedPrivileges, Privileges, PrivilegeParameterLength);
             CapturedPrivileges->PrivilegeCount = PrivilegeCount;
-
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (CapturedSubsystemName != NULL) {
-            SepFreeCapturedString ( CapturedSubsystemName );
+        if (CapturedSubsystemName != NULL)
+        {
+            SepFreeCapturedString(CapturedSubsystemName);
         }
 
-        if (CapturedServiceName != NULL) {
-            SepFreeCapturedString ( CapturedServiceName );
+        if (CapturedServiceName != NULL)
+        {
+            SepFreeCapturedString(CapturedServiceName);
         }
 
-        if (CapturedPrivileges != NULL) {
-            ExFreePool ( CapturedPrivileges );
+        if (CapturedPrivileges != NULL)
+        {
+            ExFreePool(CapturedPrivileges);
         }
 
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
 
-        ObDereferenceObject( (PVOID)Token );
+        ObDereferenceObject((PVOID)Token);
 
         return Status;
-
     }
 
     //
@@ -975,40 +854,34 @@ Return value:
     // so we may reference it without having the token read-locked.
     //
 
-    SepAdtPrivilegedServiceAuditAlarm ( CapturedSubsystemName,
-                                        CapturedServiceName,
-                                        Token,
-                                        SubjectSecurityContext.PrimaryToken,
-                                        CapturedPrivileges,
-                                        AccessGranted );
+    SepAdtPrivilegedServiceAuditAlarm(CapturedSubsystemName, CapturedServiceName, Token,
+                                      SubjectSecurityContext.PrimaryToken, CapturedPrivileges, AccessGranted);
 
-    if (CapturedSubsystemName != NULL) {
-        SepFreeCapturedString ( CapturedSubsystemName );
+    if (CapturedSubsystemName != NULL)
+    {
+        SepFreeCapturedString(CapturedSubsystemName);
     }
 
-    if (CapturedServiceName != NULL) {
-        SepFreeCapturedString ( CapturedServiceName );
+    if (CapturedServiceName != NULL)
+    {
+        SepFreeCapturedString(CapturedServiceName);
     }
 
-    if (CapturedPrivileges != NULL) {
-        ExFreePool ( CapturedPrivileges );
+    if (CapturedPrivileges != NULL)
+    {
+        ExFreePool(CapturedPrivileges);
     }
 
-    ObDereferenceObject( (PVOID)Token );
+    ObDereferenceObject((PVOID)Token);
 
-    SeReleaseSubjectContext ( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-
-VOID
-SePrivilegedServiceAuditAlarm (
-    IN PUNICODE_STRING ServiceName,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
-    IN PPRIVILEGE_SET Privileges,
-    IN BOOLEAN AccessGranted
-    )
+
+VOID SePrivilegedServiceAuditAlarm(IN PUNICODE_STRING ServiceName, IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
+                                   IN PPRIVILEGE_SET Privileges, IN BOOLEAN AccessGranted)
 /*++
 
 Routine Description:
@@ -1040,49 +913,33 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( SepAdtAuditThisEvent( AuditCategoryPrivilegeUse, &AccessGranted ) &&
-         SepFilterPrivilegeAudits( Privileges )) {
+    if (SepAdtAuditThisEvent(AuditCategoryPrivilegeUse, &AccessGranted) && SepFilterPrivilegeAudits(Privileges))
+    {
 
-        Token = (PTOKEN)EffectiveToken( SubjectSecurityContext );
+        Token = (PTOKEN)EffectiveToken(SubjectSecurityContext);
 
-        if ( RtlEqualSid( SeLocalSystemSid, SepTokenUserSid( Token ))) {
+        if (RtlEqualSid(SeLocalSystemSid, SepTokenUserSid(Token)))
+        {
             return;
         }
 
-        SepAdtPrivilegedServiceAuditAlarm (
-            (PUNICODE_STRING)&SeSubsystemName,
-            ServiceName,
-            SubjectSecurityContext->ClientToken,
-            SubjectSecurityContext->PrimaryToken,
-            Privileges,
-            AccessGranted
-            );
+        SepAdtPrivilegedServiceAuditAlarm((PUNICODE_STRING)&SeSubsystemName, ServiceName,
+                                          SubjectSecurityContext->ClientToken, SubjectSecurityContext->PrimaryToken,
+                                          Privileges, AccessGranted);
     }
 
     return;
 }
 
-
+
 NTSTATUS
-SepAccessCheckAndAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN PHANDLE ClientToken OPTIONAL,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PUNICODE_STRING ObjectName,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN ACCESS_MASK DesiredAccess,
-    IN AUDIT_EVENT_TYPE AuditType,
-    IN ULONG Flags,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus,
-    OUT PBOOLEAN GenerateOnClose,
-    IN BOOLEAN ReturnResultList
-    )
+SepAccessCheckAndAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId, IN PHANDLE ClientToken OPTIONAL,
+                            IN PUNICODE_STRING ObjectTypeName, IN PUNICODE_STRING ObjectName,
+                            IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid,
+                            IN ACCESS_MASK DesiredAccess, IN AUDIT_EVENT_TYPE AuditType, IN ULONG Flags,
+                            IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+                            IN PGENERIC_MAPPING GenericMapping, OUT PACCESS_MASK GrantedAccess,
+                            OUT PNTSTATUS AccessStatus, OUT PBOOLEAN GenerateOnClose, IN BOOLEAN ReturnResultList)
 /*++
 
 Routine Description:
@@ -1180,10 +1037,10 @@ Return Value:
 
     KPROCESSOR_MODE PreviousMode;
 
-    PUNICODE_STRING CapturedSubsystemName = (PUNICODE_STRING) NULL;
-    PUNICODE_STRING CapturedObjectTypeName = (PUNICODE_STRING) NULL;
-    PUNICODE_STRING CapturedObjectName = (PUNICODE_STRING) NULL;
-    PSECURITY_DESCRIPTOR CapturedSecurityDescriptor = (PSECURITY_DESCRIPTOR) NULL;
+    PUNICODE_STRING CapturedSubsystemName = (PUNICODE_STRING)NULL;
+    PUNICODE_STRING CapturedObjectTypeName = (PUNICODE_STRING)NULL;
+    PUNICODE_STRING CapturedObjectName = (PUNICODE_STRING)NULL;
+    PSECURITY_DESCRIPTOR CapturedSecurityDescriptor = (PSECURITY_DESCRIPTOR)NULL;
     PSID CapturedPrincipalSelfSid = NULL;
     PIOBJECT_TYPE_LIST LocalObjectTypeList = NULL;
 
@@ -1210,23 +1067,28 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    ASSERT( PreviousMode != KernelMode );
+    ASSERT(PreviousMode != KernelMode);
 
     //
     // Capture the subject Context
     //
 
-    SeCaptureSubjectContext ( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
     //
     // Convert AuditType
     //
 
-    if ( AuditType == AuditEventObjectAccess ) {
+    if (AuditType == AuditEventObjectAccess)
+    {
         NtAuditType = AuditCategoryObjectAccess;
-    } else if ( AuditType == AuditEventDirectoryServiceAccess ) {
+    }
+    else if (AuditType == AuditEventDirectoryServiceAccess)
+    {
         NtAuditType = AuditCategoryDirectoryServiceAccess;
-    } else {
+    }
+    else
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Cleanup;
     }
@@ -1235,13 +1097,15 @@ Return Value:
     // Impersonation checks should be done only if the ClientToken is NULL.
     //
 
-    if ( !ARGUMENT_PRESENT( ClientToken ) ) {
+    if (!ARGUMENT_PRESENT(ClientToken))
+    {
 
         //
         // Make sure we're impersonating a client...
         //
 
-        if ( (SubjectSecurityContext.ClientToken == NULL) ) {
+        if ((SubjectSecurityContext.ClientToken == NULL))
+        {
             Status = STATUS_NO_IMPERSONATION_TOKEN;
             goto Cleanup;
         }
@@ -1251,71 +1115,68 @@ Return Value:
         // ...and at a high enough impersonation level
         //
 
-        if (SubjectSecurityContext.ImpersonationLevel < SecurityIdentification) {
+        if (SubjectSecurityContext.ImpersonationLevel < SecurityIdentification)
+        {
             Status = STATUS_BAD_IMPERSONATION_LEVEL;
             goto Cleanup;
         }
     }
 
-    try {
+    try
+    {
 
-        if ( ReturnResultList ) {
+        if (ReturnResultList)
+        {
 
-            if ( ObjectTypeListLength == 0 ) {
+            if (ObjectTypeListLength == 0)
+            {
                 Status = STATUS_INVALID_PARAMETER;
                 leave;
             }
 
-            if (!IsValidElementCount(ObjectTypeListLength, ULONG)) {
+            if (!IsValidElementCount(ObjectTypeListLength, ULONG))
+            {
                 Status = STATUS_INVALID_PARAMETER;
                 leave;
             }
-            ProbeForWrite(
-                AccessStatus,
-                sizeof(NTSTATUS) * ObjectTypeListLength,
-                sizeof(ULONG)
-                );
+            ProbeForWrite(AccessStatus, sizeof(NTSTATUS) * ObjectTypeListLength, sizeof(ULONG));
 
-            ProbeForWrite(
-                GrantedAccess,
-                sizeof(ACCESS_MASK) * ObjectTypeListLength,
-                sizeof(ULONG)
-                );
-
-        } else {
+            ProbeForWrite(GrantedAccess, sizeof(ACCESS_MASK) * ObjectTypeListLength, sizeof(ULONG));
+        }
+        else
+        {
             ProbeForWriteUlong((PULONG)AccessStatus);
             ProbeForWriteUlong((PULONG)GrantedAccess);
         }
 
-        ProbeForReadSmallStructure(
-            GenericMapping,
-            sizeof(GENERIC_MAPPING),
-            sizeof(ULONG)
-            );
+        ProbeForReadSmallStructure(GenericMapping, sizeof(GENERIC_MAPPING), sizeof(ULONG));
 
         LocalGenericMapping = *GenericMapping;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto Cleanup;
     }
 
-    if ( ARGUMENT_PRESENT( ClientToken ) ) {
+    if (ARGUMENT_PRESENT(ClientToken))
+    {
 
-        Status = ObReferenceObjectByHandle(
-                     *ClientToken,                 // Handle
-                     (ACCESS_MASK)TOKEN_QUERY,     // DesiredAccess
-                     SeTokenObjectType,           // ObjectType
-                     PreviousMode,                 // AccessMode
-                     (PVOID *)&NewToken,           // Object
-                     NULL                          // GrantedAccess
-                     );
+        Status = ObReferenceObjectByHandle(*ClientToken,             // Handle
+                                           (ACCESS_MASK)TOKEN_QUERY, // DesiredAccess
+                                           SeTokenObjectType,        // ObjectType
+                                           PreviousMode,             // AccessMode
+                                           (PVOID *)&NewToken,       // Object
+                                           NULL                      // GrantedAccess
+        );
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             NewToken = NULL;
             goto Cleanup;
         }
@@ -1341,22 +1202,23 @@ Return Value:
     // Check for SeAuditPrivilege
     //
 
-    Result = SeCheckAuditPrivilege (
-                 &SubjectSecurityContext,
-                 PreviousMode
-                 );
+    Result = SeCheckAuditPrivilege(&SubjectSecurityContext, PreviousMode);
 
-    if (!Result) {
-        if ( Flags & AUDIT_ALLOW_NO_PRIVILEGE ) {
+    if (!Result)
+    {
+        if (Flags & AUDIT_ALLOW_NO_PRIVILEGE)
+        {
             AvoidAudit = TRUE;
-        } else {
+        }
+        else
+        {
             Status = STATUS_PRIVILEGE_NOT_HELD;
             goto Cleanup;
         }
     }
 
-    if (DesiredAccess &
-        ( GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL )) {
+    if (DesiredAccess & (GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL))
+    {
 
         Status = STATUS_GENERIC_NOT_MAPPED;
         goto Cleanup;
@@ -1369,20 +1231,17 @@ Return Value:
     // so we don't have to
     //
 
-    Status = SeCaptureSecurityDescriptor (
-                SecurityDescriptor,
-                PreviousMode,
-                PagedPool,
-                FALSE,
-                &CapturedSecurityDescriptor
-                );
+    Status =
+        SeCaptureSecurityDescriptor(SecurityDescriptor, PreviousMode, PagedPool, FALSE, &CapturedSecurityDescriptor);
 
-    if (!NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         CapturedSecurityDescriptor = NULL;
         goto Cleanup;
     }
 
-    if ( CapturedSecurityDescriptor == NULL ) {
+    if (CapturedSecurityDescriptor == NULL)
+    {
         Status = STATUS_INVALID_SECURITY_DESCR;
         goto Cleanup;
     }
@@ -1391,12 +1250,9 @@ Return Value:
     // A valid security descriptor must have an owner and a group
     //
 
-    if ( RtlpOwnerAddrSecurityDescriptor(
-                (PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor
-                ) == NULL ||
-         RtlpGroupAddrSecurityDescriptor(
-                (PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor
-                ) == NULL ) {
+    if (RtlpOwnerAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor) == NULL ||
+        RtlpGroupAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor) == NULL)
+    {
 
         Status = STATUS_INVALID_SECURITY_DESCR;
         goto Cleanup;
@@ -1406,37 +1262,34 @@ Return Value:
     //  Probe and capture the STRING arguments
     //
 
-    try {
+    try
+    {
 
         ProbeForWriteBoolean(GenerateOnClose);
 
-        SepProbeAndCaptureString_U ( SubsystemName, &CapturedSubsystemName );
+        SepProbeAndCaptureString_U(SubsystemName, &CapturedSubsystemName);
 
-        SepProbeAndCaptureString_U ( ObjectTypeName, &CapturedObjectTypeName );
+        SepProbeAndCaptureString_U(ObjectTypeName, &CapturedObjectTypeName);
 
-        SepProbeAndCaptureString_U ( ObjectName, &CapturedObjectName );
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        SepProbeAndCaptureString_U(ObjectName, &CapturedObjectName);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
         goto Cleanup;
-
     }
 
     //
     // Capture the PrincipalSelfSid.
     //
 
-    if ( PrincipalSelfSid != NULL ) {
-        Status = SeCaptureSid(
-                     PrincipalSelfSid,
-                     PreviousMode,
-                     NULL, 0,
-                     PagedPool,
-                     TRUE,
-                     &CapturedPrincipalSelfSid );
+    if (PrincipalSelfSid != NULL)
+    {
+        Status = SeCaptureSid(PrincipalSelfSid, PreviousMode, NULL, 0, PagedPool, TRUE, &CapturedPrincipalSelfSid);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             CapturedPrincipalSelfSid = NULL;
             goto Cleanup;
         }
@@ -1446,12 +1299,10 @@ Return Value:
     // Capture any Object type list
     //
 
-    Status = SeCaptureObjectTypeList( ObjectTypeList,
-                                      ObjectTypeListLength,
-                                      PreviousMode,
-                                      &LocalObjectTypeList );
+    Status = SeCaptureObjectTypeList(ObjectTypeList, ObjectTypeListLength, PreviousMode, &LocalObjectTypeList);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto Cleanup;
     }
 
@@ -1460,46 +1311,46 @@ Return Value:
     // satisfied by privileges.
     //
 
-    Status = SePrivilegePolicyCheck(
-                 &DesiredAccess,
-                 &PreviouslyGrantedAccess,
-                 &SubjectSecurityContext,
-                 NULL,
-                 &PrivilegeSet,
-                 PreviousMode
-                 );
+    Status = SePrivilegePolicyCheck(&DesiredAccess, &PreviouslyGrantedAccess, &SubjectSecurityContext, NULL,
+                                    &PrivilegeSet, PreviousMode);
 
-    SeLockSubjectContext( &SubjectSecurityContext );
+    SeLockSubjectContext(&SubjectSecurityContext);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
         AccessGranted = FALSE;
         AccessDenied = TRUE;
         LocalAccessStatus = Status;
 
-        if ( ReturnResultList ) {
+        if (ReturnResultList)
+        {
             ULONG ResultListIndex;
-            LocalGrantedAccessPointer =
-                ExAllocatePoolWithTag( PagedPool, (sizeof(ACCESS_MASK)+sizeof(NTSTATUS)) * ObjectTypeListLength, 'aGeS' );
+            LocalGrantedAccessPointer = ExAllocatePoolWithTag(
+                PagedPool, (sizeof(ACCESS_MASK) + sizeof(NTSTATUS)) * ObjectTypeListLength, 'aGeS');
 
-            if (LocalGrantedAccessPointer == NULL) {
-                SeUnlockSubjectContext( &SubjectSecurityContext );
+            if (LocalGrantedAccessPointer == NULL)
+            {
+                SeUnlockSubjectContext(&SubjectSecurityContext);
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 goto Cleanup;
             }
             LocalGrantedAccessAllocated = TRUE;
             LocalAccessStatusPointer = (PNTSTATUS)(LocalGrantedAccessPointer + ObjectTypeListLength);
 
-            for ( ResultListIndex=0; ResultListIndex<ObjectTypeListLength; ResultListIndex++ ) {
+            for (ResultListIndex = 0; ResultListIndex < ObjectTypeListLength; ResultListIndex++)
+            {
                 LocalGrantedAccessPointer[ResultListIndex] = LocalGrantedAccess;
                 LocalAccessStatusPointer[ResultListIndex] = LocalAccessStatus;
             }
-
-        } else {
-        LocalGrantedAccessPointer = &LocalGrantedAccess;
-        LocalAccessStatusPointer =  &LocalAccessStatus;
         }
-
-    } else {
+        else
+        {
+            LocalGrantedAccessPointer = &LocalGrantedAccess;
+            LocalAccessStatusPointer = &LocalAccessStatus;
+        }
+    }
+    else
+    {
 
         //
         // If the user in the token is the owner of the object, we
@@ -1509,75 +1360,87 @@ Return Value:
         // access checking (ref section 4, DSA ACL Arch)
         //
 
-        if ( DesiredAccess & (WRITE_DAC | READ_CONTROL | MAXIMUM_ALLOWED) ) {
+        if (DesiredAccess & (WRITE_DAC | READ_CONTROL | MAXIMUM_ALLOWED))
+        {
 
-            if (SepTokenIsOwner( SubjectSecurityContext.ClientToken, CapturedSecurityDescriptor, TRUE )) {
+            if (SepTokenIsOwner(SubjectSecurityContext.ClientToken, CapturedSecurityDescriptor, TRUE))
+            {
 
-                if ( DesiredAccess & MAXIMUM_ALLOWED ) {
+                if (DesiredAccess & MAXIMUM_ALLOWED)
+                {
 
-                    PreviouslyGrantedAccess |= ( WRITE_DAC | READ_CONTROL );
-
-                } else {
+                    PreviouslyGrantedAccess |= (WRITE_DAC | READ_CONTROL);
+                }
+                else
+                {
 
                     PreviouslyGrantedAccess |= (DesiredAccess & (WRITE_DAC | READ_CONTROL));
                 }
 
                 DesiredAccess &= ~(WRITE_DAC | READ_CONTROL);
             }
-
         }
 
-        if (DesiredAccess == 0) {
+        if (DesiredAccess == 0)
+        {
 
             LocalGrantedAccess = PreviouslyGrantedAccess;
             AccessGranted = TRUE;
             AccessDenied = FALSE;
             LocalAccessStatus = STATUS_SUCCESS;
 
-            if ( ReturnResultList ) {
+            if (ReturnResultList)
+            {
                 ULONG ResultListIndex;
-                LocalGrantedAccessPointer =
-                    ExAllocatePoolWithTag( PagedPool, (sizeof(ACCESS_MASK)+sizeof(NTSTATUS)) * ObjectTypeListLength, 'aGeS' );
+                LocalGrantedAccessPointer = ExAllocatePoolWithTag(
+                    PagedPool, (sizeof(ACCESS_MASK) + sizeof(NTSTATUS)) * ObjectTypeListLength, 'aGeS');
 
-                if (LocalGrantedAccessPointer == NULL) {
+                if (LocalGrantedAccessPointer == NULL)
+                {
                     Status = STATUS_INSUFFICIENT_RESOURCES;
-                    SeUnlockSubjectContext( &SubjectSecurityContext );
+                    SeUnlockSubjectContext(&SubjectSecurityContext);
                     goto Cleanup;
                 }
                 LocalGrantedAccessAllocated = TRUE;
                 LocalAccessStatusPointer = (PNTSTATUS)(LocalGrantedAccessPointer + ObjectTypeListLength);
 
-                for ( ResultListIndex=0; ResultListIndex<ObjectTypeListLength; ResultListIndex++ ) {
+                for (ResultListIndex = 0; ResultListIndex < ObjectTypeListLength; ResultListIndex++)
+                {
                     LocalGrantedAccessPointer[ResultListIndex] = LocalGrantedAccess;
                     LocalAccessStatusPointer[ResultListIndex] = LocalAccessStatus;
                 }
-
-            } else {
-            LocalGrantedAccessPointer = &LocalGrantedAccess;
-            LocalAccessStatusPointer =  &LocalAccessStatus;
             }
-
-        } else {
+            else
+            {
+                LocalGrantedAccessPointer = &LocalGrantedAccess;
+                LocalAccessStatusPointer = &LocalAccessStatus;
+            }
+        }
+        else
+        {
 
             //
             // Finally, do the access check
             //
 
-            if ( ReturnResultList ) {
-                LocalGrantedAccessPointer =
-                    ExAllocatePoolWithTag( PagedPool, (sizeof(ACCESS_MASK)+sizeof(NTSTATUS)) * ObjectTypeListLength, 'aGeS' );
+            if (ReturnResultList)
+            {
+                LocalGrantedAccessPointer = ExAllocatePoolWithTag(
+                    PagedPool, (sizeof(ACCESS_MASK) + sizeof(NTSTATUS)) * ObjectTypeListLength, 'aGeS');
 
-                if (LocalGrantedAccessPointer == NULL) {
+                if (LocalGrantedAccessPointer == NULL)
+                {
                     Status = STATUS_INSUFFICIENT_RESOURCES;
-                    SeUnlockSubjectContext( &SubjectSecurityContext );
+                    SeUnlockSubjectContext(&SubjectSecurityContext);
                     goto Cleanup;
                 }
                 LocalGrantedAccessAllocated = TRUE;
                 LocalAccessStatusPointer = (PNTSTATUS)(LocalGrantedAccessPointer + ObjectTypeListLength);
-
-            } else {
+            }
+            else
+            {
                 LocalGrantedAccessPointer = &LocalGrantedAccess;
-                LocalAccessStatusPointer =  &LocalAccessStatus;
+                LocalAccessStatusPointer = &LocalAccessStatus;
             }
 
 
@@ -1586,25 +1449,12 @@ Return Value:
             // the return value of the call.
             //
 
-            (VOID) SepAccessCheck (
-                        CapturedSecurityDescriptor,
-                        CapturedPrincipalSelfSid,
-                        SubjectSecurityContext.PrimaryToken,
-                        SubjectSecurityContext.ClientToken,
-                        DesiredAccess,
-                        LocalObjectTypeList,
-                        ObjectTypeListLength,
-                        &LocalGenericMapping,
-                        PreviouslyGrantedAccess,
-                        PreviousMode,
-                        LocalGrantedAccessPointer,
-                        NULL,       // Privileges already checked
-                        LocalAccessStatusPointer,
-                        ReturnResultList,
-                        &AccessGranted,
-                        &AccessDenied
-                        );
-
+            (VOID) SepAccessCheck(CapturedSecurityDescriptor, CapturedPrincipalSelfSid,
+                                  SubjectSecurityContext.PrimaryToken, SubjectSecurityContext.ClientToken,
+                                  DesiredAccess, LocalObjectTypeList, ObjectTypeListLength, &LocalGenericMapping,
+                                  PreviouslyGrantedAccess, PreviousMode, LocalGrantedAccessPointer,
+                                  NULL, // Privileges already checked
+                                  LocalAccessStatusPointer, ReturnResultList, &AccessGranted, &AccessDenied);
         }
     }
 
@@ -1612,26 +1462,20 @@ Return Value:
     // sound the alarms...
     //
 
-    if ( !AvoidAudit ) {
-        if ( SepAdtAuditThisEventEx( NtAuditType, AccessGranted, AccessDenied )) {
+    if (!AvoidAudit)
+    {
+        if (SepAdtAuditThisEventEx(NtAuditType, AccessGranted, AccessDenied))
+        {
 
-            SepExamineSaclEx(
-                RtlpSaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor ),
-                EffectiveToken( &SubjectSecurityContext ),
-                DesiredAccess | PreviouslyGrantedAccess,
-                LocalObjectTypeList,
-                ObjectTypeListLength,
-                ReturnResultList,
-                LocalAccessStatusPointer,
-                LocalGrantedAccessPointer,
-                CapturedPrincipalSelfSid,
-                &GenerateSuccessAudit,
-                &GenerateFailureAudit
-                );
+            SepExamineSaclEx(RtlpSaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor),
+                             EffectiveToken(&SubjectSecurityContext), DesiredAccess | PreviouslyGrantedAccess,
+                             LocalObjectTypeList, ObjectTypeListLength, ReturnResultList, LocalAccessStatusPointer,
+                             LocalGrantedAccessPointer, CapturedPrincipalSelfSid, &GenerateSuccessAudit,
+                             &GenerateFailureAudit);
         }
 
-        if ( GenerateSuccessAudit ||
-             GenerateFailureAudit ) {
+        if (GenerateSuccessAudit || GenerateFailureAudit)
+        {
 
             //
             // Save this to a local here, so we don't
@@ -1639,7 +1483,8 @@ Return Value:
             // potentially having to exit before the audit
             //
 
-            if ( AccessGranted ) {
+            if (AccessGranted)
+            {
 
                 //
                 // SAM calls NtCloseObjectAuditAlarm despite the fact that it may not
@@ -1654,79 +1499,60 @@ Return Value:
             //
             // Generate the success audit if needed.
             //
-            if ( GenerateSuccessAudit ) {
-                ExAllocateLocallyUniqueId( &OperationId );
+            if (GenerateSuccessAudit)
+            {
+                ExAllocateLocallyUniqueId(&OperationId);
 
                 // ??
-                ASSERT( AccessGranted );
-                AuditPerformed = SepAdtOpenObjectAuditAlarm (
-                                     CapturedSubsystemName,
-                                     AccessGranted ? &HandleId : NULL, // Don't audit handle if failure
-                                     CapturedObjectTypeName,
-                                     CapturedObjectName,
-                                     SubjectSecurityContext.ClientToken,
-                                     SubjectSecurityContext.PrimaryToken,
-                                     *LocalGrantedAccessPointer,
-                                     *LocalGrantedAccessPointer,
-                                     &OperationId,
-                                     PrivilegeSet,
-                                     TRUE,  // Generate success case
-                                     PsProcessAuditId( PsGetCurrentProcess() ),
-                                     NtAuditType,
-                                     LocalObjectTypeList,
-                                     ObjectTypeListLength,
-                                     ReturnResultList ? LocalGrantedAccessPointer : NULL
-                                     );
-
+                ASSERT(AccessGranted);
+                AuditPerformed = SepAdtOpenObjectAuditAlarm(
+                    CapturedSubsystemName,
+                    AccessGranted ? &HandleId : NULL, // Don't audit handle if failure
+                    CapturedObjectTypeName, CapturedObjectName, SubjectSecurityContext.ClientToken,
+                    SubjectSecurityContext.PrimaryToken, *LocalGrantedAccessPointer, *LocalGrantedAccessPointer,
+                    &OperationId, PrivilegeSet,
+                    TRUE, // Generate success case
+                    PsProcessAuditId(PsGetCurrentProcess()), NtAuditType, LocalObjectTypeList, ObjectTypeListLength,
+                    ReturnResultList ? LocalGrantedAccessPointer : NULL);
             }
 
             //
             // Generate failure audit if it is needed.
             //
-            if ( GenerateFailureAudit ) {
-                ExAllocateLocallyUniqueId( &OperationId );
+            if (GenerateFailureAudit)
+            {
+                ExAllocateLocallyUniqueId(&OperationId);
 
                 // ??
-                ASSERT( AccessDenied );
-                AuditPerformed = SepAdtOpenObjectAuditAlarm (
-                                     CapturedSubsystemName,
-                                     AccessGranted ? &HandleId : NULL, // Don't audit handle if failure
-                                     CapturedObjectTypeName,
-                                     CapturedObjectName,
-                                     SubjectSecurityContext.ClientToken,
-                                     SubjectSecurityContext.PrimaryToken,
-                                     DesiredAccess,
-                                     DesiredAccess,
-                                     &OperationId,
-                                     PrivilegeSet,
-                                     FALSE, // Generate failure case
-                                     PsProcessAuditId( PsGetCurrentProcess() ),
-                                     NtAuditType,
-                                     LocalObjectTypeList,
-                                     ObjectTypeListLength,
-                                     ReturnResultList ? LocalGrantedAccessPointer : NULL
-                                     );
+                ASSERT(AccessDenied);
+                AuditPerformed = SepAdtOpenObjectAuditAlarm(
+                    CapturedSubsystemName,
+                    AccessGranted ? &HandleId : NULL, // Don't audit handle if failure
+                    CapturedObjectTypeName, CapturedObjectName, SubjectSecurityContext.ClientToken,
+                    SubjectSecurityContext.PrimaryToken, DesiredAccess, DesiredAccess, &OperationId, PrivilegeSet,
+                    FALSE, // Generate failure case
+                    PsProcessAuditId(PsGetCurrentProcess()), NtAuditType, LocalObjectTypeList, ObjectTypeListLength,
+                    ReturnResultList ? LocalGrantedAccessPointer : NULL);
             }
-        } else {
+        }
+        else
+        {
 
             //
             // We didn't generate an audit due to the SACL.  If privileges were used, we need
             // to audit that.
             //
 
-            if ( PrivilegeSet != NULL ) {
+            if (PrivilegeSet != NULL)
+            {
 
-                if ( SepAdtAuditThisEvent( AuditCategoryPrivilegeUse, &AccessGranted) ) {
+                if (SepAdtAuditThisEvent(AuditCategoryPrivilegeUse, &AccessGranted))
+                {
 
-                    AuditPerformed = SepAdtPrivilegeObjectAuditAlarm ( CapturedSubsystemName,
-                                                                       &HandleId,
-                                                                       SubjectSecurityContext.ClientToken,
-                                                                       SubjectSecurityContext.PrimaryToken,
-                                                                       PsProcessAuditId( PsGetCurrentProcess() ),
-                                                                       DesiredAccess,
-                                                                       PrivilegeSet,
-                                                                       AccessGranted
-                                                                       );
+                    AuditPerformed = SepAdtPrivilegeObjectAuditAlarm(
+                        CapturedSubsystemName, &HandleId, SubjectSecurityContext.ClientToken,
+                        SubjectSecurityContext.PrimaryToken, PsProcessAuditId(PsGetCurrentProcess()), DesiredAccess,
+                        PrivilegeSet, AccessGranted);
 
                     //
                     // We don't want close audits to be generated.  May need to revisit this.
@@ -1738,31 +1564,40 @@ Return Value:
         }
     }
 
-    SeUnlockSubjectContext( &SubjectSecurityContext );
+    SeUnlockSubjectContext(&SubjectSecurityContext);
 
-    try {
-            if ( ReturnResultList ) {
-                ULONG ResultListIndex;
-                if ( LocalAccessStatusPointer == NULL ) {
-                    for ( ResultListIndex=0; ResultListIndex<ObjectTypeListLength; ResultListIndex++ ) {
-                        AccessStatus[ResultListIndex] = LocalAccessStatus;
-                        GrantedAccess[ResultListIndex] = LocalGrantedAccess;
-                    }
-                } else {
-                    for ( ResultListIndex=0; ResultListIndex<ObjectTypeListLength; ResultListIndex++ ) {
-                        AccessStatus[ResultListIndex] = LocalAccessStatusPointer[ResultListIndex];
-                        GrantedAccess[ResultListIndex] = LocalGrantedAccessPointer[ResultListIndex];
-                    }
+    try
+    {
+        if (ReturnResultList)
+        {
+            ULONG ResultListIndex;
+            if (LocalAccessStatusPointer == NULL)
+            {
+                for (ResultListIndex = 0; ResultListIndex < ObjectTypeListLength; ResultListIndex++)
+                {
+                    AccessStatus[ResultListIndex] = LocalAccessStatus;
+                    GrantedAccess[ResultListIndex] = LocalGrantedAccess;
                 }
-
-            } else {
-                *AccessStatus = LocalAccessStatus;
-                *GrantedAccess = LocalGrantedAccess;
             }
-            *GenerateOnClose    = LocalGenerateOnClose;
-            Status = STATUS_SUCCESS;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+            else
+            {
+                for (ResultListIndex = 0; ResultListIndex < ObjectTypeListLength; ResultListIndex++)
+                {
+                    AccessStatus[ResultListIndex] = LocalAccessStatusPointer[ResultListIndex];
+                    GrantedAccess[ResultListIndex] = LocalGrantedAccessPointer[ResultListIndex];
+                }
+            }
+        }
+        else
+        {
+            *AccessStatus = LocalAccessStatus;
+            *GrantedAccess = LocalGrantedAccess;
+        }
+        *GenerateOnClose = LocalGenerateOnClose;
+        Status = STATUS_SUCCESS;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
     }
@@ -1772,13 +1607,14 @@ Return Value:
     //
 Cleanup:
 
-    if ( TokenSwapped ) {
+    if (TokenSwapped)
+    {
 
         //
         // Decrement the reference count for the ClientToken that was passed in.
         //
 
-        ObDereferenceObject( (PVOID)NewToken );
+        ObDereferenceObject((PVOID)NewToken);
 
         //
         // Reset the value of the token from saved value.
@@ -1791,60 +1627,57 @@ Cleanup:
     // Free any privileges allocated as part of the access check
     //
 
-    if (PrivilegeSet != NULL) {
-        ExFreePool( PrivilegeSet );
+    if (PrivilegeSet != NULL)
+    {
+        ExFreePool(PrivilegeSet);
     }
 
-    SeReleaseSubjectContext ( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
-    SeReleaseSecurityDescriptor ( CapturedSecurityDescriptor,
-                                  PreviousMode,
-                                  FALSE );
+    SeReleaseSecurityDescriptor(CapturedSecurityDescriptor, PreviousMode, FALSE);
 
-    if (CapturedSubsystemName != NULL) {
-      SepFreeCapturedString( CapturedSubsystemName );
+    if (CapturedSubsystemName != NULL)
+    {
+        SepFreeCapturedString(CapturedSubsystemName);
     }
 
-    if (CapturedObjectTypeName != NULL) {
-      SepFreeCapturedString( CapturedObjectTypeName );
+    if (CapturedObjectTypeName != NULL)
+    {
+        SepFreeCapturedString(CapturedObjectTypeName);
     }
 
-    if (CapturedObjectName != NULL) {
-      SepFreeCapturedString( CapturedObjectName );
+    if (CapturedObjectName != NULL)
+    {
+        SepFreeCapturedString(CapturedObjectName);
     }
 
-    if (CapturedPrincipalSelfSid != NULL) {
-        SeReleaseSid( CapturedPrincipalSelfSid, PreviousMode, TRUE);
+    if (CapturedPrincipalSelfSid != NULL)
+    {
+        SeReleaseSid(CapturedPrincipalSelfSid, PreviousMode, TRUE);
     }
 
-    if ( LocalObjectTypeList != NULL ) {
-        SeFreeCapturedObjectTypeList( LocalObjectTypeList );
+    if (LocalObjectTypeList != NULL)
+    {
+        SeFreeCapturedObjectTypeList(LocalObjectTypeList);
     }
 
-    if ( LocalGrantedAccessAllocated ) {
-        if ( LocalGrantedAccessPointer != NULL ) {
-            ExFreePool( LocalGrantedAccessPointer );
+    if (LocalGrantedAccessAllocated)
+    {
+        if (LocalGrantedAccessPointer != NULL)
+        {
+            ExFreePool(LocalGrantedAccessPointer);
         }
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-NtAccessCheckAndAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PUNICODE_STRING ObjectName,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN ACCESS_MASK DesiredAccess,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN BOOLEAN ObjectCreation,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus,
-    OUT PBOOLEAN GenerateOnClose
-    )
+NtAccessCheckAndAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId, IN PUNICODE_STRING ObjectTypeName,
+                           IN PUNICODE_STRING ObjectName, IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                           IN ACCESS_MASK DesiredAccess, IN PGENERIC_MAPPING GenericMapping, IN BOOLEAN ObjectCreation,
+                           OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus, OUT PBOOLEAN GenerateOnClose)
 /*++
 
 Routine Description:
@@ -1868,49 +1701,28 @@ Return Value:
 {
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( ObjectCreation );
-    
-    return SepAccessCheckAndAuditAlarm(
-            SubsystemName,
-            HandleId,
-            NULL,
-            ObjectTypeName,
-            ObjectName,
-            SecurityDescriptor,
-            NULL,       // No Principal Self sid
-            DesiredAccess,
-            AuditEventObjectAccess,  // Default to ObjectAccess
-            0,          // No Flags
-            NULL,       // No ObjectType List
-            0,          // No ObjectType List
-            GenericMapping,
-            GrantedAccess,
-            AccessStatus,
-            GenerateOnClose,
-            FALSE );    // Return a single GrantedAccess and AccessStatus
+    UNREFERENCED_PARAMETER(ObjectCreation);
 
+    return SepAccessCheckAndAuditAlarm(SubsystemName, HandleId, NULL, ObjectTypeName, ObjectName, SecurityDescriptor,
+                                       NULL, // No Principal Self sid
+                                       DesiredAccess,
+                                       AuditEventObjectAccess, // Default to ObjectAccess
+                                       0,                      // No Flags
+                                       NULL,                   // No ObjectType List
+                                       0,                      // No ObjectType List
+                                       GenericMapping, GrantedAccess, AccessStatus, GenerateOnClose,
+                                       FALSE); // Return a single GrantedAccess and AccessStatus
 }
 
-
+
 NTSTATUS
-NtAccessCheckByTypeAndAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PUNICODE_STRING ObjectName,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN ACCESS_MASK DesiredAccess,
-    IN AUDIT_EVENT_TYPE AuditType,
-    IN ULONG Flags,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN BOOLEAN ObjectCreation,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus,
-    OUT PBOOLEAN GenerateOnClose
-    )
+NtAccessCheckByTypeAndAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId, IN PUNICODE_STRING ObjectTypeName,
+                                 IN PUNICODE_STRING ObjectName, IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                 IN PSID PrincipalSelfSid, IN ACCESS_MASK DesiredAccess, IN AUDIT_EVENT_TYPE AuditType,
+                                 IN ULONG Flags, IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
+                                 IN ULONG ObjectTypeListLength, IN PGENERIC_MAPPING GenericMapping,
+                                 IN BOOLEAN ObjectCreation, OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus,
+                                 OUT PBOOLEAN GenerateOnClose)
 /*++
 
 Routine Description:
@@ -1934,49 +1746,25 @@ Return Value:
 {
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( ObjectCreation );
-    
-    return SepAccessCheckAndAuditAlarm(
-            SubsystemName,
-            HandleId,
-            NULL,
-            ObjectTypeName,
-            ObjectName,
-            SecurityDescriptor,
-            PrincipalSelfSid,
-            DesiredAccess,
-            AuditType,
-            Flags,
-            ObjectTypeList,
-            ObjectTypeListLength,
-            GenericMapping,
-            GrantedAccess,
-            AccessStatus,
-            GenerateOnClose,
-            FALSE );  // Return a single GrantedAccess and AccessStatus
+    UNREFERENCED_PARAMETER(ObjectCreation);
 
+    return SepAccessCheckAndAuditAlarm(SubsystemName, HandleId, NULL, ObjectTypeName, ObjectName, SecurityDescriptor,
+                                       PrincipalSelfSid, DesiredAccess, AuditType, Flags, ObjectTypeList,
+                                       ObjectTypeListLength, GenericMapping, GrantedAccess, AccessStatus,
+                                       GenerateOnClose,
+                                       FALSE); // Return a single GrantedAccess and AccessStatus
 }
 
-
+
 NTSTATUS
-NtAccessCheckByTypeResultListAndAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PUNICODE_STRING ObjectName,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN ACCESS_MASK DesiredAccess,
-    IN AUDIT_EVENT_TYPE AuditType,
-    IN ULONG Flags,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN BOOLEAN ObjectCreation,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus,
-    OUT PBOOLEAN GenerateOnClose
-    )
+NtAccessCheckByTypeResultListAndAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId,
+                                           IN PUNICODE_STRING ObjectTypeName, IN PUNICODE_STRING ObjectName,
+                                           IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid,
+                                           IN ACCESS_MASK DesiredAccess, IN AUDIT_EVENT_TYPE AuditType, IN ULONG Flags,
+                                           IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+                                           IN PGENERIC_MAPPING GenericMapping, IN BOOLEAN ObjectCreation,
+                                           OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus,
+                                           OUT PBOOLEAN GenerateOnClose)
 /*++
 
 Routine Description:
@@ -2000,50 +1788,23 @@ Return Value:
 {
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( ObjectCreation );
-    
-    return SepAccessCheckAndAuditAlarm(
-            SubsystemName,
-            HandleId,
-            NULL,
-            ObjectTypeName,
-            ObjectName,
-            SecurityDescriptor,
-            PrincipalSelfSid,
-            DesiredAccess,
-            AuditType,
-            Flags,
-            ObjectTypeList,
-            ObjectTypeListLength,
-            GenericMapping,
-            GrantedAccess,
-            AccessStatus,
-            GenerateOnClose,
-            TRUE );  // Return an array of GrantedAccess and AccessStatus
+    UNREFERENCED_PARAMETER(ObjectCreation);
 
+    return SepAccessCheckAndAuditAlarm(SubsystemName, HandleId, NULL, ObjectTypeName, ObjectName, SecurityDescriptor,
+                                       PrincipalSelfSid, DesiredAccess, AuditType, Flags, ObjectTypeList,
+                                       ObjectTypeListLength, GenericMapping, GrantedAccess, AccessStatus,
+                                       GenerateOnClose,
+                                       TRUE); // Return an array of GrantedAccess and AccessStatus
 }
 
-
+
 NTSTATUS
-NtAccessCheckByTypeResultListAndAuditAlarmByHandle (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN HANDLE ClientToken,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PUNICODE_STRING ObjectName,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN ACCESS_MASK DesiredAccess,
-    IN AUDIT_EVENT_TYPE AuditType,
-    IN ULONG Flags,
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN BOOLEAN ObjectCreation,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PNTSTATUS AccessStatus,
-    OUT PBOOLEAN GenerateOnClose
-    )
+NtAccessCheckByTypeResultListAndAuditAlarmByHandle(
+    IN PUNICODE_STRING SubsystemName, IN PVOID HandleId, IN HANDLE ClientToken, IN PUNICODE_STRING ObjectTypeName,
+    IN PUNICODE_STRING ObjectName, IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid,
+    IN ACCESS_MASK DesiredAccess, IN AUDIT_EVENT_TYPE AuditType, IN ULONG Flags,
+    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength, IN PGENERIC_MAPPING GenericMapping,
+    IN BOOLEAN ObjectCreation, OUT PACCESS_MASK GrantedAccess, OUT PNTSTATUS AccessStatus, OUT PBOOLEAN GenerateOnClose)
 /*++
 
 Routine Description:
@@ -2067,45 +1828,22 @@ Return Value:
 {
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( ObjectCreation );
-    
-    return SepAccessCheckAndAuditAlarm(
-            SubsystemName,
-            HandleId,
-            &ClientToken,
-            ObjectTypeName,
-            ObjectName,
-            SecurityDescriptor,
-            PrincipalSelfSid,
-            DesiredAccess,
-            AuditType,
-            Flags,
-            ObjectTypeList,
-            ObjectTypeListLength,
-            GenericMapping,
-            GrantedAccess,
-            AccessStatus,
-            GenerateOnClose,
-            TRUE );  // Return an array of GrantedAccess and AccessStatus
+    UNREFERENCED_PARAMETER(ObjectCreation);
 
+    return SepAccessCheckAndAuditAlarm(SubsystemName, HandleId, &ClientToken, ObjectTypeName, ObjectName,
+                                       SecurityDescriptor, PrincipalSelfSid, DesiredAccess, AuditType, Flags,
+                                       ObjectTypeList, ObjectTypeListLength, GenericMapping, GrantedAccess,
+                                       AccessStatus, GenerateOnClose,
+                                       TRUE); // Return an array of GrantedAccess and AccessStatus
 }
 
-
+
 NTSTATUS
-NtOpenObjectAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId OPTIONAL,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PUNICODE_STRING ObjectName,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL,
-    IN HANDLE ClientToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN ACCESS_MASK GrantedAccess,
-    IN PPRIVILEGE_SET Privileges OPTIONAL,
-    IN BOOLEAN ObjectCreation,
-    IN BOOLEAN AccessGranted,
-    OUT PBOOLEAN GenerateOnClose
-    )
+NtOpenObjectAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId OPTIONAL, IN PUNICODE_STRING ObjectTypeName,
+                       IN PUNICODE_STRING ObjectName, IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL,
+                       IN HANDLE ClientToken, IN ACCESS_MASK DesiredAccess, IN ACCESS_MASK GrantedAccess,
+                       IN PPRIVILEGE_SET Privileges OPTIONAL, IN BOOLEAN ObjectCreation, IN BOOLEAN AccessGranted,
+                       OUT PBOOLEAN GenerateOnClose)
 /*++
 
     Routine Description:
@@ -2179,10 +1917,10 @@ Return Value:
 
     KPROCESSOR_MODE PreviousMode;
     ULONG PrivilegeParameterLength;
-    PUNICODE_STRING CapturedSubsystemName = (PUNICODE_STRING) NULL;
-    PUNICODE_STRING CapturedObjectTypeName = (PUNICODE_STRING) NULL;
-    PUNICODE_STRING CapturedObjectName = (PUNICODE_STRING) NULL;
-    PSECURITY_DESCRIPTOR CapturedSecurityDescriptor = (PSECURITY_DESCRIPTOR) NULL;
+    PUNICODE_STRING CapturedSubsystemName = (PUNICODE_STRING)NULL;
+    PUNICODE_STRING CapturedObjectTypeName = (PUNICODE_STRING)NULL;
+    PUNICODE_STRING CapturedObjectName = (PUNICODE_STRING)NULL;
+    PSECURITY_DESCRIPTOR CapturedSecurityDescriptor = (PSECURITY_DESCRIPTOR)NULL;
     PPRIVILEGE_SET CapturedPrivileges = NULL;
     BOOLEAN LocalGenerateOnClose = FALSE;
     SECURITY_SUBJECT_CONTEXT SubjectSecurityContext;
@@ -2199,22 +1937,23 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( ObjectCreation );
-    
+    UNREFERENCED_PARAMETER(ObjectCreation);
+
     PreviousMode = KeGetPreviousMode();
 
-    ASSERT( PreviousMode != KernelMode );
+    ASSERT(PreviousMode != KernelMode);
 
-    Status = ObReferenceObjectByHandle( ClientToken,             // Handle
-                                        TOKEN_QUERY,             // DesiredAccess
-                                        SeTokenObjectType,      // ObjectType
-                                        PreviousMode,            // AccessMode
-                                        (PVOID *)&Token,         // Object
-                                        NULL                     // GrantedAccess
-                                        );
+    Status = ObReferenceObjectByHandle(ClientToken,       // Handle
+                                       TOKEN_QUERY,       // DesiredAccess
+                                       SeTokenObjectType, // ObjectType
+                                       PreviousMode,      // AccessMode
+                                       (PVOID *)&Token,   // Object
+                                       NULL               // GrantedAccess
+    );
 
-    if (!NT_SUCCESS(Status)) {
-        return( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
@@ -2222,14 +1961,15 @@ Return Value:
     // it is at SecurityIdentification or above.
     //
 
-    if (Token->TokenType == TokenImpersonation) {
+    if (Token->TokenType == TokenImpersonation)
+    {
 
-        if (Token->ImpersonationLevel < SecurityIdentification) {
+        if (Token->ImpersonationLevel < SecurityIdentification)
+        {
 
-            ObDereferenceObject( (PVOID)Token );
+            ObDereferenceObject((PVOID)Token);
 
-            return( STATUS_BAD_IMPERSONATION_LEVEL );
-
+            return (STATUS_BAD_IMPERSONATION_LEVEL);
         }
     }
 
@@ -2238,107 +1978,91 @@ Return Value:
     // the caller's primary token.
     //
 
-    SeCaptureSubjectContext ( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    Result = SeCheckAuditPrivilege (
-                 &SubjectSecurityContext,
-                 PreviousMode
-                 );
+    Result = SeCheckAuditPrivilege(&SubjectSecurityContext, PreviousMode);
 
-    if (!Result) {
+    if (!Result)
+    {
 
-        ObDereferenceObject( (PVOID)Token );
+        ObDereferenceObject((PVOID)Token);
 
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
 
-        return(STATUS_PRIVILEGE_NOT_HELD);
+        return (STATUS_PRIVILEGE_NOT_HELD);
     }
 
     //
     // This will just return NULL if the input descriptor is NULL
     //
 
-    Status = SeCaptureSecurityDescriptor ( SecurityDescriptor,
-                                           PreviousMode,
-                                           PagedPool,
-                                           FALSE,
-                                           &CapturedSecurityDescriptor
-                                           );
+    Status =
+        SeCaptureSecurityDescriptor(SecurityDescriptor, PreviousMode, PagedPool, FALSE, &CapturedSecurityDescriptor);
 
     //
     // At this point in time, if there's no security descriptor, there's
     // nothing to do.  Return success.
     //
 
-    if (!NT_SUCCESS( Status ) || CapturedSecurityDescriptor == NULL) {
+    if (!NT_SUCCESS(Status) || CapturedSecurityDescriptor == NULL)
+    {
 
-        ObDereferenceObject( (PVOID)Token );
+        ObDereferenceObject((PVOID)Token);
 
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
 
-        return( Status );
+        return (Status);
     }
 
-    try {
+    try
+    {
 
         //
         // Only capture the privileges if we've completed a successful
         // access check.  Otherwise they don't mean anything.
         //
 
-        if (AccessGranted && ARGUMENT_PRESENT(Privileges)) {
+        if (AccessGranted && ARGUMENT_PRESENT(Privileges))
+        {
 
-            ProbeForReadSmallStructure(
-                Privileges,
-                sizeof(PRIVILEGE_SET),
-                sizeof(ULONG)
-                );
+            ProbeForReadSmallStructure(Privileges, sizeof(PRIVILEGE_SET), sizeof(ULONG));
 
             PrivilegeCount = Privileges->PrivilegeCount;
 
-            if (!IsValidPrivilegeCount( PrivilegeCount )) {
+            if (!IsValidPrivilegeCount(PrivilegeCount))
+            {
                 Status = STATUS_INVALID_PARAMETER;
                 leave;
             }
 
-            PrivilegeParameterLength = (ULONG)sizeof(PRIVILEGE_SET) +
-                              ((PrivilegeCount - ANYSIZE_ARRAY) *
-                                (ULONG)sizeof(LUID_AND_ATTRIBUTES)  );
+            PrivilegeParameterLength =
+                (ULONG)sizeof(PRIVILEGE_SET) + ((PrivilegeCount - ANYSIZE_ARRAY) * (ULONG)sizeof(LUID_AND_ATTRIBUTES));
 
-            ProbeForRead(
-                Privileges,
-                PrivilegeParameterLength,
-                sizeof(ULONG)
-                );
+            ProbeForRead(Privileges, PrivilegeParameterLength, sizeof(ULONG));
 
-            CapturedPrivileges = ExAllocatePoolWithTag( PagedPool,
-                                                        PrivilegeParameterLength,
-                                                        'rPeS'
-                                                      );
+            CapturedPrivileges = ExAllocatePoolWithTag(PagedPool, PrivilegeParameterLength, 'rPeS');
 
-            if (CapturedPrivileges != NULL) {
+            if (CapturedPrivileges != NULL)
+            {
 
-                RtlCopyMemory ( CapturedPrivileges,
-                                Privileges,
-                                PrivilegeParameterLength );
+                RtlCopyMemory(CapturedPrivileges, Privileges, PrivilegeParameterLength);
                 CapturedPrivileges->PrivilegeCount = PrivilegeCount;
-            } else {
-
-                SeReleaseSecurityDescriptor ( CapturedSecurityDescriptor,
-                                              PreviousMode,
-                                              FALSE );
-
-                ObDereferenceObject( (PVOID)Token );
-                SeReleaseSubjectContext ( &SubjectSecurityContext );
-                return( STATUS_INSUFFICIENT_RESOURCES );
             }
+            else
+            {
 
+                SeReleaseSecurityDescriptor(CapturedSecurityDescriptor, PreviousMode, FALSE);
 
+                ObDereferenceObject((PVOID)Token);
+                SeReleaseSubjectContext(&SubjectSecurityContext);
+                return (STATUS_INSUFFICIENT_RESOURCES);
+            }
         }
 
-        if (ARGUMENT_PRESENT( HandleId )) {
+        if (ARGUMENT_PRESENT(HandleId))
+        {
 
-            ProbeForReadSmallStructure( (PHANDLE)HandleId, sizeof(PVOID), sizeof(PVOID) );
+            ProbeForReadSmallStructure((PHANDLE)HandleId, sizeof(PVOID), sizeof(PVOID));
             CapturedHandleId = *(PHANDLE)HandleId;
         }
 
@@ -2351,64 +2075,61 @@ Return Value:
         // NULL and we will continue with the audit.
         //
 
-        SepProbeAndCaptureString_U ( SubsystemName,
-                                     &CapturedSubsystemName );
+        SepProbeAndCaptureString_U(SubsystemName, &CapturedSubsystemName);
 
-        SepProbeAndCaptureString_U ( ObjectTypeName,
-                                     &CapturedObjectTypeName );
+        SepProbeAndCaptureString_U(ObjectTypeName, &CapturedObjectTypeName);
 
-        SepProbeAndCaptureString_U ( ObjectName,
-                                     &CapturedObjectName );
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        SepProbeAndCaptureString_U(ObjectName, &CapturedObjectName);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (CapturedSubsystemName != NULL) {
-          SepFreeCapturedString( CapturedSubsystemName );
+        if (CapturedSubsystemName != NULL)
+        {
+            SepFreeCapturedString(CapturedSubsystemName);
         }
 
-        if (CapturedObjectTypeName != NULL) {
-          SepFreeCapturedString( CapturedObjectTypeName );
+        if (CapturedObjectTypeName != NULL)
+        {
+            SepFreeCapturedString(CapturedObjectTypeName);
         }
 
-        if (CapturedObjectName != NULL) {
-          SepFreeCapturedString( CapturedObjectName );
+        if (CapturedObjectName != NULL)
+        {
+            SepFreeCapturedString(CapturedObjectName);
         }
 
-        if (CapturedPrivileges != NULL) {
-          ExFreePool( CapturedPrivileges );
+        if (CapturedPrivileges != NULL)
+        {
+            ExFreePool(CapturedPrivileges);
         }
 
-        if (CapturedSecurityDescriptor != NULL) {
+        if (CapturedSecurityDescriptor != NULL)
+        {
 
-            SeReleaseSecurityDescriptor ( CapturedSecurityDescriptor,
-                                          PreviousMode,
-                                          FALSE );
+            SeReleaseSecurityDescriptor(CapturedSecurityDescriptor, PreviousMode, FALSE);
         }
 
-        ObDereferenceObject( (PVOID)Token );
+        ObDereferenceObject((PVOID)Token);
 
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
 
         return Status;
-
     }
 
-    if ( SepAdtAuditThisEvent( AuditCategoryObjectAccess, &AccessGranted) ) {
+    if (SepAdtAuditThisEvent(AuditCategoryObjectAccess, &AccessGranted))
+    {
 
-        SepExamineSacl(
-            RtlpSaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor ),
-            Token,
-            DesiredAccess | GrantedAccess,
-            AccessGranted,
-            &GenerateAudit,
-            &GenerateAlarm
-            );
+        SepExamineSacl(RtlpSaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)CapturedSecurityDescriptor), Token,
+                       DesiredAccess | GrantedAccess, AccessGranted, &GenerateAudit, &GenerateAlarm);
 
-        if (GenerateAudit || GenerateAlarm) {
+        if (GenerateAudit || GenerateAlarm)
+        {
 
             //
             // Take a read lock on the token, because we're going to extract
@@ -2417,48 +2138,33 @@ Return Value:
 
             LocalGenerateOnClose = TRUE;
 
-            AuditPerformed = SepAdtOpenObjectAuditAlarm ( CapturedSubsystemName,
-                                                          ARGUMENT_PRESENT(HandleId) ? (PVOID)&CapturedHandleId : NULL,
-                                                          CapturedObjectTypeName,
-                                                          CapturedObjectName,
-                                                          Token,
-                                                          SubjectSecurityContext.PrimaryToken,
-                                                          DesiredAccess,
-                                                          GrantedAccess,
-                                                          NULL,
-                                                          CapturedPrivileges,
-                                                          AccessGranted,
-                                                          PsProcessAuditId( PsGetCurrentProcess() ),
-                                                          AuditCategoryObjectAccess,
-                                                          NULL,
-                                                          0,
-                                                          NULL
-                                                          );
+            AuditPerformed = SepAdtOpenObjectAuditAlarm(
+                CapturedSubsystemName, ARGUMENT_PRESENT(HandleId) ? (PVOID)&CapturedHandleId : NULL,
+                CapturedObjectTypeName, CapturedObjectName, Token, SubjectSecurityContext.PrimaryToken, DesiredAccess,
+                GrantedAccess, NULL, CapturedPrivileges, AccessGranted, PsProcessAuditId(PsGetCurrentProcess()),
+                AuditCategoryObjectAccess, NULL, 0, NULL);
 
             LocalGenerateOnClose = AuditPerformed;
         }
     }
 
-    if ( !(GenerateAudit || GenerateAlarm) ) {
+    if (!(GenerateAudit || GenerateAlarm))
+    {
 
         //
         // We didn't attempt to generate an audit above, so if privileges were used,
         // see if we should generate an audit here.
         //
 
-        if ( ARGUMENT_PRESENT(Privileges) ) {
+        if (ARGUMENT_PRESENT(Privileges))
+        {
 
-            if ( SepAdtAuditThisEvent( AuditCategoryPrivilegeUse, &AccessGranted) ) {
+            if (SepAdtAuditThisEvent(AuditCategoryPrivilegeUse, &AccessGranted))
+            {
 
-                AuditPerformed = SepAdtPrivilegeObjectAuditAlarm ( CapturedSubsystemName,
-                                                                   CapturedHandleId,
-                                                                   Token,
-                                                                   SubjectSecurityContext.PrimaryToken,
-                                                                   PsProcessAuditId( PsGetCurrentProcess() ),
-                                                                   DesiredAccess,
-                                                                   CapturedPrivileges,
-                                                                   AccessGranted
-                                                                   );
+                AuditPerformed = SepAdtPrivilegeObjectAuditAlarm(
+                    CapturedSubsystemName, CapturedHandleId, Token, SubjectSecurityContext.PrimaryToken,
+                    PsProcessAuditId(PsGetCurrentProcess()), DesiredAccess, CapturedPrivileges, AccessGranted);
                 //
                 // If we generate an audit due to use of privilege, don't set generate on close,
                 // because then we'll have a close audit without a corresponding open audit.
@@ -2469,53 +2175,53 @@ Return Value:
         }
     }
 
-    if (CapturedSecurityDescriptor != NULL) {
+    if (CapturedSecurityDescriptor != NULL)
+    {
 
-        SeReleaseSecurityDescriptor ( CapturedSecurityDescriptor,
-                                      PreviousMode,
-                                      FALSE );
+        SeReleaseSecurityDescriptor(CapturedSecurityDescriptor, PreviousMode, FALSE);
     }
 
-    if (CapturedSubsystemName != NULL) {
-      SepFreeCapturedString( CapturedSubsystemName );
+    if (CapturedSubsystemName != NULL)
+    {
+        SepFreeCapturedString(CapturedSubsystemName);
     }
 
-    if (CapturedObjectTypeName != NULL) {
-      SepFreeCapturedString( CapturedObjectTypeName );
+    if (CapturedObjectTypeName != NULL)
+    {
+        SepFreeCapturedString(CapturedObjectTypeName);
     }
 
-    if (CapturedObjectName != NULL) {
-      SepFreeCapturedString( CapturedObjectName );
+    if (CapturedObjectName != NULL)
+    {
+        SepFreeCapturedString(CapturedObjectName);
     }
 
-    if (CapturedPrivileges != NULL) {
-      ExFreePool( CapturedPrivileges );
+    if (CapturedPrivileges != NULL)
+    {
+        ExFreePool(CapturedPrivileges);
     }
 
-    ObDereferenceObject( (PVOID)Token );
+    ObDereferenceObject((PVOID)Token);
 
-    SeReleaseSubjectContext ( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
-    try {
+    try
+    {
 
         *GenerateOnClose = LocalGenerateOnClose;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-
-            return GetExceptionCode();
+        return GetExceptionCode();
     }
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 
-
 NTSTATUS
-NtCloseObjectAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN BOOLEAN GenerateOnClose
-    )
+NtCloseObjectAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId, IN BOOLEAN GenerateOnClose)
 
 /*++
 
@@ -2565,54 +2271,47 @@ Return value:
 
     ASSERT(PreviousMode != KernelMode);
 
-    if (!GenerateOnClose) {
-        return( STATUS_SUCCESS );
+    if (!GenerateOnClose)
+    {
+        return (STATUS_SUCCESS);
     }
 
     //
     // Check for SeAuditPrivilege
     //
 
-    SeCaptureSubjectContext ( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    Result = SeCheckAuditPrivilege (
-                 &SubjectSecurityContext,
-                 PreviousMode
-                 );
+    Result = SeCheckAuditPrivilege(&SubjectSecurityContext, PreviousMode);
 
-    if (!Result) {
+    if (!Result)
+    {
         Status = STATUS_PRIVILEGE_NOT_HELD;
         goto Cleanup;
     }
 
-    UserSid = SepTokenUserSid( EffectiveToken (&SubjectSecurityContext));
+    UserSid = SepTokenUserSid(EffectiveToken(&SubjectSecurityContext));
 
-    CapturedUserSid = ExAllocatePoolWithTag(
-                          PagedPool,
-                          SeLengthSid( UserSid ),
-                          'iSeS'
-                          );
+    CapturedUserSid = ExAllocatePoolWithTag(PagedPool, SeLengthSid(UserSid), 'iSeS');
 
-    if ( CapturedUserSid == NULL ) {
+    if (CapturedUserSid == NULL)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto Cleanup;
     }
 
-    Status =  RtlCopySid (
-                  SeLengthSid( UserSid ),
-                  CapturedUserSid,
-                  UserSid
-                  );
+    Status = RtlCopySid(SeLengthSid(UserSid), CapturedUserSid, UserSid);
 
-    ASSERT( NT_SUCCESS( Status ));
+    ASSERT(NT_SUCCESS(Status));
 
 
-    try {
+    try
+    {
 
-        SepProbeAndCaptureString_U ( SubsystemName,
-                                   &CapturedSubsystemName );
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        SepProbeAndCaptureString_U(SubsystemName, &CapturedSubsystemName);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
         goto Cleanup;
     }
@@ -2621,31 +2320,29 @@ Return value:
     // This routine will check to see if auditing is enabled
     //
 
-    SepAdtCloseObjectAuditAlarm( CapturedSubsystemName, HandleId, CapturedUserSid );
+    SepAdtCloseObjectAuditAlarm(CapturedSubsystemName, HandleId, CapturedUserSid);
 
     Status = STATUS_SUCCESS;
 
 Cleanup:
-    if ( CapturedSubsystemName != NULL ) {
-        SepFreeCapturedString( CapturedSubsystemName );
+    if (CapturedSubsystemName != NULL)
+    {
+        SepFreeCapturedString(CapturedSubsystemName);
     }
 
-    if ( CapturedUserSid != NULL ) {
-        ExFreePool( CapturedUserSid );
+    if (CapturedUserSid != NULL)
+    {
+        ExFreePool(CapturedUserSid);
     }
 
-    SeReleaseSubjectContext ( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
     return Status;
 }
 
-
+
 NTSTATUS
-NtDeleteObjectAuditAlarm (
-    IN PUNICODE_STRING SubsystemName,
-    IN PVOID HandleId,
-    IN BOOLEAN GenerateOnClose
-    )
+NtDeleteObjectAuditAlarm(IN PUNICODE_STRING SubsystemName, IN PVOID HandleId, IN BOOLEAN GenerateOnClose)
 
 /*++
 
@@ -2695,99 +2392,82 @@ Return value:
 
     ASSERT(PreviousMode != KernelMode);
 
-    if (!GenerateOnClose) {
-        return( STATUS_SUCCESS );
+    if (!GenerateOnClose)
+    {
+        return (STATUS_SUCCESS);
     }
 
     //
     // Check for SeAuditPrivilege
     //
 
-    SeCaptureSubjectContext ( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    Result = SeCheckAuditPrivilege (
-                 &SubjectSecurityContext,
-                 PreviousMode
-                 );
+    Result = SeCheckAuditPrivilege(&SubjectSecurityContext, PreviousMode);
 
-    if (!Result) {
+    if (!Result)
+    {
 
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
-        return(STATUS_PRIVILEGE_NOT_HELD);
+        SeReleaseSubjectContext(&SubjectSecurityContext);
+        return (STATUS_PRIVILEGE_NOT_HELD);
     }
 
-    UserSid = SepTokenUserSid( EffectiveToken (&SubjectSecurityContext));
+    UserSid = SepTokenUserSid(EffectiveToken(&SubjectSecurityContext));
 
-    CapturedUserSid = ExAllocatePoolWithTag(
-                          PagedPool,
-                          SeLengthSid( UserSid ),
-                          'iSeS'
-                          );
+    CapturedUserSid = ExAllocatePoolWithTag(PagedPool, SeLengthSid(UserSid), 'iSeS');
 
-    if ( CapturedUserSid == NULL ) {
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
-        return( STATUS_INSUFFICIENT_RESOURCES );
+    if (CapturedUserSid == NULL)
+    {
+        SeReleaseSubjectContext(&SubjectSecurityContext);
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
-    Status =  RtlCopySid (
-                  SeLengthSid( UserSid ),
-                  CapturedUserSid,
-                  UserSid
-                  );
+    Status = RtlCopySid(SeLengthSid(UserSid), CapturedUserSid, UserSid);
 
-    ASSERT( NT_SUCCESS( Status ));
+    ASSERT(NT_SUCCESS(Status));
 
 
-    try {
+    try
+    {
 
-        SepProbeAndCaptureString_U ( SubsystemName,
-                                   &CapturedSubsystemName );
+        SepProbeAndCaptureString_U(SubsystemName, &CapturedSubsystemName);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-
-        if ( CapturedSubsystemName != NULL ) {
-            SepFreeCapturedString( CapturedSubsystemName );
+        if (CapturedSubsystemName != NULL)
+        {
+            SepFreeCapturedString(CapturedSubsystemName);
         }
 
-        ExFreePool( CapturedUserSid );
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
+        ExFreePool(CapturedUserSid);
+        SeReleaseSubjectContext(&SubjectSecurityContext);
         return GetExceptionCode();
-
     }
 
     //
     // This routine will check to see if auditing is enabled
     //
 
-    SepAdtDeleteObjectAuditAlarm ( CapturedSubsystemName,
-                               HandleId,
-                               CapturedUserSid
-                               );
+    SepAdtDeleteObjectAuditAlarm(CapturedSubsystemName, HandleId, CapturedUserSid);
 
-    SeReleaseSubjectContext ( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
-    if ( CapturedSubsystemName != NULL ) {
-        SepFreeCapturedString( CapturedSubsystemName );
+    if (CapturedSubsystemName != NULL)
+    {
+        SepFreeCapturedString(CapturedSubsystemName);
     }
 
-    ExFreePool( CapturedUserSid );
+    ExFreePool(CapturedUserSid);
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-
-VOID
-SeOpenObjectAuditAlarm (
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PVOID Object OPTIONAL,
-    IN PUNICODE_STRING AbsoluteObjectName OPTIONAL,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PACCESS_STATE AccessState,
-    IN BOOLEAN ObjectCreated,
-    IN BOOLEAN AccessGranted,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PBOOLEAN GenerateOnClose
-    )
+
+VOID SeOpenObjectAuditAlarm(IN PUNICODE_STRING ObjectTypeName, IN PVOID Object OPTIONAL,
+                            IN PUNICODE_STRING AbsoluteObjectName OPTIONAL, IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                            IN PACCESS_STATE AccessState, IN BOOLEAN ObjectCreated, IN BOOLEAN AccessGranted,
+                            IN KPROCESSOR_MODE AccessMode, OUT PBOOLEAN GenerateOnClose)
 /*++
 
 Routine Description:
@@ -2868,54 +2548,47 @@ Return value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( ObjectCreated );
-    
-    if ( AccessMode == KernelMode ) {
+    UNREFERENCED_PARAMETER(ObjectCreated);
+
+    if (AccessMode == KernelMode)
+    {
         return;
     }
 
     AuxData = (PAUX_ACCESS_DATA)AccessState->AuxData;
 
-    Token = EffectiveToken( &AccessState->SubjectSecurityContext );
+    Token = EffectiveToken(&AccessState->SubjectSecurityContext);
 
-    if (ARGUMENT_PRESENT(Token->AuditData)) {
+    if (ARGUMENT_PRESENT(Token->AuditData))
+    {
 
         MappedGrantMask = Token->AuditData->GrantMask;
 
-        RtlMapGenericMask(
-            &MappedGrantMask,
-            &AuxData->GenericMapping
-            );
+        RtlMapGenericMask(&MappedGrantMask, &AuxData->GenericMapping);
 
         MappedDenyMask = Token->AuditData->DenyMask;
 
-        RtlMapGenericMask(
-            &MappedDenyMask,
-            &AuxData->GenericMapping
-            );
+        RtlMapGenericMask(&MappedDenyMask, &AuxData->GenericMapping);
     }
 
-    if (SecurityDescriptor != NULL) {
+    if (SecurityDescriptor != NULL)
+    {
 
-        RequestedAccess = AccessState->RemainingDesiredAccess |
-                          AccessState->PreviouslyGrantedAccess;
+        RequestedAccess = AccessState->RemainingDesiredAccess | AccessState->PreviouslyGrantedAccess;
 
-        if ( SepAdtAuditThisEvent( AuditCategoryObjectAccess, &AccessGranted )) {
+        if (SepAdtAuditThisEvent(AuditCategoryObjectAccess, &AccessGranted))
+        {
 
-            if ( RequestedAccess & (AccessGranted ? MappedGrantMask : MappedDenyMask)) {
+            if (RequestedAccess & (AccessGranted ? MappedGrantMask : MappedDenyMask))
+            {
 
                 GenerateAudit = TRUE;
+            }
+            else
+            {
 
-            } else {
-
-                SepExamineSacl(
-                    RtlpSaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)SecurityDescriptor ),
-                    Token,
-                    RequestedAccess,
-                    AccessGranted,
-                    &GenerateAudit,
-                    &GenerateAlarm
-                    );
+                SepExamineSacl(RtlpSaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)SecurityDescriptor), Token,
+                               RequestedAccess, AccessGranted, &GenerateAudit, &GenerateAlarm);
             }
 
             //
@@ -2923,7 +2596,8 @@ Return value:
             // settings.
             //
 
-            if (GenerateAudit) {
+            if (GenerateAudit)
+            {
 
                 *GenerateOnClose = TRUE;
 
@@ -2931,14 +2605,11 @@ Return value:
                 // Construct the audit mask that will be placed into the handle.
                 //
 
-                if (AccessGranted) {
+                if (AccessGranted)
+                {
 
-                    SeMaximumAuditMask(
-                        RtlpSaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)SecurityDescriptor ),
-                        RequestedAccess,
-                        Token,
-                        &AuxData->MaximumAuditMask
-                        );
+                    SeMaximumAuditMask(RtlpSaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)SecurityDescriptor),
+                                       RequestedAccess, Token, &AuxData->MaximumAuditMask);
                 }
             }
         }
@@ -2953,18 +2624,21 @@ Return value:
     // do this test of access has been granted.
     //
 
-    if (!GenerateAudit && (AccessGranted == TRUE)) {
+    if (!GenerateAudit && (AccessGranted == TRUE))
+    {
 
-        if ( SepAdtAuditThisEvent( AuditCategoryPrivilegeUse, &AccessGranted )) {
+        if (SepAdtAuditThisEvent(AuditCategoryPrivilegeUse, &AccessGranted))
+        {
 
-            if ((AuxData->PrivilegesUsed != NULL) &&
-                (AuxData->PrivilegesUsed->PrivilegeCount > 0) ) {
+            if ((AuxData->PrivilegesUsed != NULL) && (AuxData->PrivilegesUsed->PrivilegeCount > 0))
+            {
 
                 //
                 // Make sure these are actually privileges that we want to audit
                 //
 
-                if (SepFilterPrivilegeAudits( AuxData->PrivilegesUsed )) {
+                if (SepFilterPrivilegeAudits(AuxData->PrivilegesUsed))
+                {
 
                     GenerateAudit = TRUE;
 
@@ -2985,7 +2659,8 @@ Return value:
     // the stuff that we're going to audit later into the AccessState structure.
     //
 
-    if (GenerateAudit || GenerateAlarm) {
+    if (GenerateAudit || GenerateAlarm)
+    {
 
         AccessState->GenerateAudit = TRUE;
 
@@ -2994,36 +2669,44 @@ Return value:
         // missing information as possible.
         //
 
-        if ( !ARGUMENT_PRESENT( AbsoluteObjectName )) {
+        if (!ARGUMENT_PRESENT(AbsoluteObjectName))
+        {
 
-            if ( ARGUMENT_PRESENT( Object )) {
+            if (ARGUMENT_PRESENT(Object))
+            {
 
-                ObjectNameInfo = SepQueryNameString( Object  );
+                ObjectNameInfo = SepQueryNameString(Object);
 
-                if ( ObjectNameInfo != NULL ) {
+                if (ObjectNameInfo != NULL)
+                {
 
                     ObjectName = &ObjectNameInfo->Name;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             ObjectName = AbsoluteObjectName;
         }
 
-        if ( !ARGUMENT_PRESENT( ObjectTypeName )) {
+        if (!ARGUMENT_PRESENT(ObjectTypeName))
+        {
 
-            if ( ARGUMENT_PRESENT( Object )) {
+            if (ARGUMENT_PRESENT(Object))
+            {
 
-                ObjectTypeNameInfo = SepQueryTypeString( Object );
+                ObjectTypeNameInfo = SepQueryTypeString(Object);
 
-                if ( ObjectTypeNameInfo != NULL ) {
+                if (ObjectTypeNameInfo != NULL)
+                {
 
                     LocalObjectTypeName = ObjectTypeNameInfo;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             LocalObjectTypeName = ObjectTypeName;
         }
@@ -3034,93 +2717,87 @@ Return value:
         //
         //
 
-        if (!AccessGranted) {
+        if (!AccessGranted)
+        {
 
-            AuditPerformed = SepAdtOpenObjectAuditAlarm ( (PUNICODE_STRING)&SeSubsystemName,
-                                                          NULL,
-                                                          LocalObjectTypeName,
-                                                          ObjectName,
-                                                          AccessState->SubjectSecurityContext.ClientToken,
-                                                          AccessState->SubjectSecurityContext.PrimaryToken,
-                                                          AccessState->OriginalDesiredAccess,
-                                                          AccessState->PreviouslyGrantedAccess,
-                                                          &AccessState->OperationID,
-                                                          AuxData->PrivilegesUsed,
-                                                          FALSE,
-                                                          AccessState->SubjectSecurityContext.ProcessAuditId,
-                                                          AuditCategoryObjectAccess,
-                                                          NULL,
-                                                          0,
-                                                          NULL );
-        } else {
+            AuditPerformed = SepAdtOpenObjectAuditAlarm(
+                (PUNICODE_STRING)&SeSubsystemName, NULL, LocalObjectTypeName, ObjectName,
+                AccessState->SubjectSecurityContext.ClientToken, AccessState->SubjectSecurityContext.PrimaryToken,
+                AccessState->OriginalDesiredAccess, AccessState->PreviouslyGrantedAccess, &AccessState->OperationID,
+                AuxData->PrivilegesUsed, FALSE, AccessState->SubjectSecurityContext.ProcessAuditId,
+                AuditCategoryObjectAccess, NULL, 0, NULL);
+        }
+        else
+        {
 
             //
             // Copy all the stuff we're going to need into the
             // AccessState and return.
             //
 
-            if ( ObjectName != NULL ) {
+            if (ObjectName != NULL)
+            {
 
-                 if ( AccessState->ObjectName.Buffer != NULL ) {
+                if (AccessState->ObjectName.Buffer != NULL)
+                {
 
-                     ExFreePool( AccessState->ObjectName.Buffer );
-                     AccessState->ObjectName.Length = 0;
-                     AccessState->ObjectName.MaximumLength = 0;
-                 }
+                    ExFreePool(AccessState->ObjectName.Buffer);
+                    AccessState->ObjectName.Length = 0;
+                    AccessState->ObjectName.MaximumLength = 0;
+                }
 
-                AccessState->ObjectName.Buffer = ExAllocatePool( PagedPool,ObjectName->MaximumLength );
-                if (AccessState->ObjectName.Buffer != NULL) {
+                AccessState->ObjectName.Buffer = ExAllocatePool(PagedPool, ObjectName->MaximumLength);
+                if (AccessState->ObjectName.Buffer != NULL)
+                {
 
                     AccessState->ObjectName.MaximumLength = ObjectName->MaximumLength;
-                    RtlCopyUnicodeString( &AccessState->ObjectName, ObjectName );
+                    RtlCopyUnicodeString(&AccessState->ObjectName, ObjectName);
                 }
             }
 
-            if ( LocalObjectTypeName != NULL ) {
+            if (LocalObjectTypeName != NULL)
+            {
 
-                 if ( AccessState->ObjectTypeName.Buffer != NULL ) {
+                if (AccessState->ObjectTypeName.Buffer != NULL)
+                {
 
-                     ExFreePool( AccessState->ObjectTypeName.Buffer );
-                     AccessState->ObjectTypeName.Length = 0;
-                     AccessState->ObjectTypeName.MaximumLength = 0;
-                 }
+                    ExFreePool(AccessState->ObjectTypeName.Buffer);
+                    AccessState->ObjectTypeName.Length = 0;
+                    AccessState->ObjectTypeName.MaximumLength = 0;
+                }
 
-                AccessState->ObjectTypeName.Buffer = ExAllocatePool( PagedPool, LocalObjectTypeName->MaximumLength );
-                if (AccessState->ObjectTypeName.Buffer != NULL) {
+                AccessState->ObjectTypeName.Buffer = ExAllocatePool(PagedPool, LocalObjectTypeName->MaximumLength);
+                if (AccessState->ObjectTypeName.Buffer != NULL)
+                {
 
                     AccessState->ObjectTypeName.MaximumLength = LocalObjectTypeName->MaximumLength;
-                    RtlCopyUnicodeString( &AccessState->ObjectTypeName, LocalObjectTypeName );
+                    RtlCopyUnicodeString(&AccessState->ObjectTypeName, LocalObjectTypeName);
                 }
             }
         }
 
-        if ( ObjectNameInfo != NULL ) {
+        if (ObjectNameInfo != NULL)
+        {
 
-            ExFreePool( ObjectNameInfo );
+            ExFreePool(ObjectNameInfo);
         }
 
-        if ( ObjectTypeNameInfo != NULL ) {
+        if (ObjectTypeNameInfo != NULL)
+        {
 
-            ExFreePool( ObjectTypeNameInfo );
+            ExFreePool(ObjectTypeNameInfo);
         }
     }
 
     return;
 }
 
-
-VOID
-SeOpenObjectForDeleteAuditAlarm (
-    IN PUNICODE_STRING ObjectTypeName,
-    IN PVOID Object OPTIONAL,
-    IN PUNICODE_STRING AbsoluteObjectName OPTIONAL,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PACCESS_STATE AccessState,
-    IN BOOLEAN ObjectCreated,
-    IN BOOLEAN AccessGranted,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PBOOLEAN GenerateOnClose
-    )
+
+VOID SeOpenObjectForDeleteAuditAlarm(IN PUNICODE_STRING ObjectTypeName, IN PVOID Object OPTIONAL,
+                                     IN PUNICODE_STRING AbsoluteObjectName OPTIONAL,
+                                     IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PACCESS_STATE AccessState,
+                                     IN BOOLEAN ObjectCreated, IN BOOLEAN AccessGranted, IN KPROCESSOR_MODE AccessMode,
+                                     OUT PBOOLEAN GenerateOnClose)
 /*++
 
 Routine Description:
@@ -3203,54 +2880,47 @@ Return value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( ObjectCreated );
-    
-    if ( AccessMode == KernelMode ) {
+    UNREFERENCED_PARAMETER(ObjectCreated);
+
+    if (AccessMode == KernelMode)
+    {
         return;
     }
 
     AuxData = (PAUX_ACCESS_DATA)AccessState->AuxData;
 
-    Token = EffectiveToken( &AccessState->SubjectSecurityContext );
+    Token = EffectiveToken(&AccessState->SubjectSecurityContext);
 
-    if (ARGUMENT_PRESENT(Token->AuditData)) {
+    if (ARGUMENT_PRESENT(Token->AuditData))
+    {
 
         MappedGrantMask = Token->AuditData->GrantMask;
 
-        RtlMapGenericMask(
-            &MappedGrantMask,
-            &AuxData->GenericMapping
-            );
+        RtlMapGenericMask(&MappedGrantMask, &AuxData->GenericMapping);
 
         MappedDenyMask = Token->AuditData->DenyMask;
 
-        RtlMapGenericMask(
-            &MappedDenyMask,
-            &AuxData->GenericMapping
-            );
+        RtlMapGenericMask(&MappedDenyMask, &AuxData->GenericMapping);
     }
 
-    if (SecurityDescriptor != NULL) {
+    if (SecurityDescriptor != NULL)
+    {
 
-        RequestedAccess = AccessState->RemainingDesiredAccess |
-                          AccessState->PreviouslyGrantedAccess;
+        RequestedAccess = AccessState->RemainingDesiredAccess | AccessState->PreviouslyGrantedAccess;
 
-        if ( SepAdtAuditThisEvent( AuditCategoryObjectAccess, &AccessGranted )) {
+        if (SepAdtAuditThisEvent(AuditCategoryObjectAccess, &AccessGranted))
+        {
 
-            if ( RequestedAccess & (AccessGranted ? MappedGrantMask : MappedDenyMask)) {
+            if (RequestedAccess & (AccessGranted ? MappedGrantMask : MappedDenyMask))
+            {
 
                 GenerateAudit = TRUE;
+            }
+            else
+            {
 
-            } else {
-
-                SepExamineSacl(
-                    RtlpSaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)SecurityDescriptor ),
-                    Token,
-                    RequestedAccess,
-                    AccessGranted,
-                    &GenerateAudit,
-                    &GenerateAlarm
-                    );
+                SepExamineSacl(RtlpSaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)SecurityDescriptor), Token,
+                               RequestedAccess, AccessGranted, &GenerateAudit, &GenerateAlarm);
             }
 
             //
@@ -3258,7 +2928,8 @@ Return value:
             // settings.
             //
 
-            if (GenerateAudit) {
+            if (GenerateAudit)
+            {
                 *GenerateOnClose = TRUE;
             }
         }
@@ -3273,18 +2944,21 @@ Return value:
     // do this test of access has been granted.
     //
 
-    if (!GenerateAudit && (AccessGranted == TRUE)) {
+    if (!GenerateAudit && (AccessGranted == TRUE))
+    {
 
-        if ( SepAdtAuditThisEvent( AuditCategoryPrivilegeUse, &AccessGranted )) {
+        if (SepAdtAuditThisEvent(AuditCategoryPrivilegeUse, &AccessGranted))
+        {
 
-            if ((AuxData->PrivilegesUsed != NULL) &&
-                (AuxData->PrivilegesUsed->PrivilegeCount > 0) ) {
+            if ((AuxData->PrivilegesUsed != NULL) && (AuxData->PrivilegesUsed->PrivilegeCount > 0))
+            {
 
                 //
                 // Make sure these are actually privileges that we want to audit
                 //
 
-                if (SepFilterPrivilegeAudits( AuxData->PrivilegesUsed )) {
+                if (SepFilterPrivilegeAudits(AuxData->PrivilegesUsed))
+                {
 
                     GenerateAudit = TRUE;
 
@@ -3305,7 +2979,8 @@ Return value:
     // the stuff that we're going to audit later into the AccessState structure.
     //
 
-    if (GenerateAudit || GenerateAlarm) {
+    if (GenerateAudit || GenerateAlarm)
+    {
 
         AccessState->GenerateAudit = TRUE;
 
@@ -3314,36 +2989,44 @@ Return value:
         // missing information as possible.
         //
 
-        if ( !ARGUMENT_PRESENT( AbsoluteObjectName )) {
+        if (!ARGUMENT_PRESENT(AbsoluteObjectName))
+        {
 
-            if ( ARGUMENT_PRESENT( Object )) {
+            if (ARGUMENT_PRESENT(Object))
+            {
 
-                ObjectNameInfo = SepQueryNameString( Object  );
+                ObjectNameInfo = SepQueryNameString(Object);
 
-                if ( ObjectNameInfo != NULL ) {
+                if (ObjectNameInfo != NULL)
+                {
 
                     ObjectName = &ObjectNameInfo->Name;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             ObjectName = AbsoluteObjectName;
         }
 
-        if ( !ARGUMENT_PRESENT( ObjectTypeName )) {
+        if (!ARGUMENT_PRESENT(ObjectTypeName))
+        {
 
-            if ( ARGUMENT_PRESENT( Object )) {
+            if (ARGUMENT_PRESENT(Object))
+            {
 
-                ObjectTypeNameInfo = SepQueryTypeString( Object );
+                ObjectTypeNameInfo = SepQueryTypeString(Object);
 
-                if ( ObjectTypeNameInfo != NULL ) {
+                if (ObjectTypeNameInfo != NULL)
+                {
 
                     LocalObjectTypeName = ObjectTypeNameInfo;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             LocalObjectTypeName = ObjectTypeName;
         }
@@ -3354,109 +3037,97 @@ Return value:
         //
         //
 
-        if (!AccessGranted) {
+        if (!AccessGranted)
+        {
 
-            AuditPerformed = SepAdtOpenObjectAuditAlarm ( (PUNICODE_STRING)&SeSubsystemName,
-                                                          NULL,
-                                                          LocalObjectTypeName,
-                                                          ObjectName,
-                                                          AccessState->SubjectSecurityContext.ClientToken,
-                                                          AccessState->SubjectSecurityContext.PrimaryToken,
-                                                          AccessState->OriginalDesiredAccess,
-                                                          AccessState->PreviouslyGrantedAccess,
-                                                          &AccessState->OperationID,
-                                                          AuxData->PrivilegesUsed,
-                                                          FALSE,
-                                                          AccessState->SubjectSecurityContext.ProcessAuditId,
-                                                          AuditCategoryObjectAccess,
-                                                          NULL,
-                                                          0,
-                                                          NULL );
-        } else {
+            AuditPerformed = SepAdtOpenObjectAuditAlarm(
+                (PUNICODE_STRING)&SeSubsystemName, NULL, LocalObjectTypeName, ObjectName,
+                AccessState->SubjectSecurityContext.ClientToken, AccessState->SubjectSecurityContext.PrimaryToken,
+                AccessState->OriginalDesiredAccess, AccessState->PreviouslyGrantedAccess, &AccessState->OperationID,
+                AuxData->PrivilegesUsed, FALSE, AccessState->SubjectSecurityContext.ProcessAuditId,
+                AuditCategoryObjectAccess, NULL, 0, NULL);
+        }
+        else
+        {
 
             //
             // Generate the delete audit first
             //
 
-            SepAdtOpenObjectForDeleteAuditAlarm ( (PUNICODE_STRING)&SeSubsystemName,
-                                                  NULL,
-                                                  LocalObjectTypeName,
-                                                  ObjectName,
-                                                  AccessState->SubjectSecurityContext.ClientToken,
-                                                  AccessState->SubjectSecurityContext.PrimaryToken,
-                                                  AccessState->OriginalDesiredAccess,
-                                                  AccessState->PreviouslyGrantedAccess,
-                                                  &AccessState->OperationID,
-                                                  AuxData->PrivilegesUsed,
-                                                  TRUE,
-                                                  AccessState->SubjectSecurityContext.ProcessAuditId );
+            SepAdtOpenObjectForDeleteAuditAlarm(
+                (PUNICODE_STRING)&SeSubsystemName, NULL, LocalObjectTypeName, ObjectName,
+                AccessState->SubjectSecurityContext.ClientToken, AccessState->SubjectSecurityContext.PrimaryToken,
+                AccessState->OriginalDesiredAccess, AccessState->PreviouslyGrantedAccess, &AccessState->OperationID,
+                AuxData->PrivilegesUsed, TRUE, AccessState->SubjectSecurityContext.ProcessAuditId);
 
             //
             // Copy all the stuff we're going to need into the
             // AccessState and return.
             //
 
-            if ( ObjectName != NULL ) {
+            if (ObjectName != NULL)
+            {
 
-                 if ( AccessState->ObjectName.Buffer != NULL ) {
+                if (AccessState->ObjectName.Buffer != NULL)
+                {
 
-                     ExFreePool( AccessState->ObjectName.Buffer );
-                     AccessState->ObjectName.Length = 0;
-                     AccessState->ObjectName.MaximumLength = 0;
-                 }
+                    ExFreePool(AccessState->ObjectName.Buffer);
+                    AccessState->ObjectName.Length = 0;
+                    AccessState->ObjectName.MaximumLength = 0;
+                }
 
-                AccessState->ObjectName.Buffer = ExAllocatePool( PagedPool,ObjectName->MaximumLength );
-                if (AccessState->ObjectName.Buffer != NULL) {
+                AccessState->ObjectName.Buffer = ExAllocatePool(PagedPool, ObjectName->MaximumLength);
+                if (AccessState->ObjectName.Buffer != NULL)
+                {
 
                     AccessState->ObjectName.MaximumLength = ObjectName->MaximumLength;
-                    RtlCopyUnicodeString( &AccessState->ObjectName, ObjectName );
+                    RtlCopyUnicodeString(&AccessState->ObjectName, ObjectName);
                 }
             }
 
-            if ( LocalObjectTypeName != NULL ) {
+            if (LocalObjectTypeName != NULL)
+            {
 
-                 if ( AccessState->ObjectTypeName.Buffer != NULL ) {
+                if (AccessState->ObjectTypeName.Buffer != NULL)
+                {
 
-                     ExFreePool( AccessState->ObjectTypeName.Buffer );
-                     AccessState->ObjectTypeName.Length = 0;
-                     AccessState->ObjectTypeName.MaximumLength = 0;
-                 }
+                    ExFreePool(AccessState->ObjectTypeName.Buffer);
+                    AccessState->ObjectTypeName.Length = 0;
+                    AccessState->ObjectTypeName.MaximumLength = 0;
+                }
 
-                AccessState->ObjectTypeName.Buffer = ExAllocatePool( PagedPool, LocalObjectTypeName->MaximumLength );
-                if (AccessState->ObjectTypeName.Buffer != NULL) {
+                AccessState->ObjectTypeName.Buffer = ExAllocatePool(PagedPool, LocalObjectTypeName->MaximumLength);
+                if (AccessState->ObjectTypeName.Buffer != NULL)
+                {
 
                     AccessState->ObjectTypeName.MaximumLength = LocalObjectTypeName->MaximumLength;
-                    RtlCopyUnicodeString( &AccessState->ObjectTypeName, LocalObjectTypeName );
+                    RtlCopyUnicodeString(&AccessState->ObjectTypeName, LocalObjectTypeName);
                 }
             }
         }
 
-        if ( ObjectNameInfo != NULL ) {
+        if (ObjectNameInfo != NULL)
+        {
 
-            ExFreePool( ObjectNameInfo );
+            ExFreePool(ObjectNameInfo);
         }
 
-        if ( ObjectTypeNameInfo != NULL ) {
+        if (ObjectTypeNameInfo != NULL)
+        {
 
-            ExFreePool( ObjectTypeNameInfo );
+            ExFreePool(ObjectTypeNameInfo);
         }
     }
 
     return;
 }
 
-
-VOID
-SeObjectReferenceAuditAlarm(
-    IN PLUID OperationID OPTIONAL,
-    IN PVOID Object,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
-    IN ACCESS_MASK DesiredAccess,
-    IN PPRIVILEGE_SET Privileges OPTIONAL,
-    IN BOOLEAN AccessGranted,
-    IN KPROCESSOR_MODE AccessMode
-    )
+
+VOID SeObjectReferenceAuditAlarm(IN PLUID OperationID OPTIONAL, IN PVOID Object,
+                                 IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                 IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext, IN ACCESS_MASK DesiredAccess,
+                                 IN PPRIVILEGE_SET Privileges OPTIONAL, IN BOOLEAN AccessGranted,
+                                 IN KPROCESSOR_MODE AccessMode)
 
 /*++
 
@@ -3483,49 +3154,37 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( OperationID );
-    UNREFERENCED_PARAMETER( Privileges );
-    
-    if (AccessMode == KernelMode) {
+    UNREFERENCED_PARAMETER(OperationID);
+    UNREFERENCED_PARAMETER(Privileges);
+
+    if (AccessMode == KernelMode)
+    {
         return;
     }
 
-    if ( SecurityDescriptor != NULL ) {
+    if (SecurityDescriptor != NULL)
+    {
 
-        if ( SepAdtAuditThisEvent( AuditCategoryDetailedTracking, &AccessGranted )) {
+        if (SepAdtAuditThisEvent(AuditCategoryDetailedTracking, &AccessGranted))
+        {
 
-            SepExamineSacl(
-                RtlpSaclAddrSecurityDescriptor( (PISECURITY_DESCRIPTOR)SecurityDescriptor ),
-                EffectiveToken( SubjectSecurityContext ),
-                DesiredAccess,
-                AccessGranted,
-                &GenerateAudit,
-                &GenerateAlarm
-                );
+            SepExamineSacl(RtlpSaclAddrSecurityDescriptor((PISECURITY_DESCRIPTOR)SecurityDescriptor),
+                           EffectiveToken(SubjectSecurityContext), DesiredAccess, AccessGranted, &GenerateAudit,
+                           &GenerateAlarm);
 
-            if ( GenerateAudit || GenerateAlarm ) {
+            if (GenerateAudit || GenerateAlarm)
+            {
 
-                SepAdtObjectReferenceAuditAlarm(
-                    Object,
-                    SubjectSecurityContext,
-                    DesiredAccess,
-                    AccessGranted
-                    );
+                SepAdtObjectReferenceAuditAlarm(Object, SubjectSecurityContext, DesiredAccess, AccessGranted);
             }
         }
     }
 
     return;
-
 }
 
 
-
-VOID
-SeAuditHandleCreation(
-    IN PACCESS_STATE AccessState,
-    IN HANDLE Handle
-    )
+VOID SeAuditHandleCreation(IN PACCESS_STATE AccessState, IN HANDLE Handle)
 
 /*++
 
@@ -3561,39 +3220,26 @@ Return Value:
 
     AuxData = (PAUX_ACCESS_DATA)AccessState->AuxData;
 
-    if ( AccessState->GenerateAudit ) {
+    if (AccessState->GenerateAudit)
+    {
 
-        if ( AccessState->AuditPrivileges ) {
+        if (AccessState->AuditPrivileges)
+        {
 
-            AuditPerformed = SepAdtPrivilegeObjectAuditAlarm (
-                                 (PUNICODE_STRING)&SeSubsystemName,
-                                 Handle,
-                                 (PTOKEN)AccessState->SubjectSecurityContext.ClientToken,
-                                 (PTOKEN)AccessState->SubjectSecurityContext.PrimaryToken,
-                                 AccessState->SubjectSecurityContext.ProcessAuditId,
-                                 AccessState->PreviouslyGrantedAccess,
-                                 AuxData->PrivilegesUsed,
-                                 TRUE
-                                 );
-        } else {
+            AuditPerformed = SepAdtPrivilegeObjectAuditAlarm(
+                (PUNICODE_STRING)&SeSubsystemName, Handle, (PTOKEN)AccessState->SubjectSecurityContext.ClientToken,
+                (PTOKEN)AccessState->SubjectSecurityContext.PrimaryToken,
+                AccessState->SubjectSecurityContext.ProcessAuditId, AccessState->PreviouslyGrantedAccess,
+                AuxData->PrivilegesUsed, TRUE);
+        }
+        else
+        {
 
-            AuditPerformed = SepAdtOpenObjectAuditAlarm (
-                                 (PUNICODE_STRING)&SeSubsystemName,
-                                 &Handle,
-                                 &AccessState->ObjectTypeName,
-                                 &AccessState->ObjectName,
-                                 AccessState->SubjectSecurityContext.ClientToken,
-                                 AccessState->SubjectSecurityContext.PrimaryToken,
-                                 AccessState->OriginalDesiredAccess,
-                                 AccessState->PreviouslyGrantedAccess,
-                                 &AccessState->OperationID,
-                                 AuxData->PrivilegesUsed,
-                                 TRUE,
-                                 PsGetCurrentProcessId(),
-                                 AuditCategoryObjectAccess,
-                                 NULL,
-                                 0,
-                                 NULL );
+            AuditPerformed = SepAdtOpenObjectAuditAlarm(
+                (PUNICODE_STRING)&SeSubsystemName, &Handle, &AccessState->ObjectTypeName, &AccessState->ObjectName,
+                AccessState->SubjectSecurityContext.ClientToken, AccessState->SubjectSecurityContext.PrimaryToken,
+                AccessState->OriginalDesiredAccess, AccessState->PreviouslyGrantedAccess, &AccessState->OperationID,
+                AuxData->PrivilegesUsed, TRUE, PsGetCurrentProcessId(), AuditCategoryObjectAccess, NULL, 0, NULL);
         }
     }
 
@@ -3606,13 +3252,8 @@ Return Value:
     return;
 }
 
-
-VOID
-SeCloseObjectAuditAlarm(
-    IN PVOID Object,
-    IN HANDLE Handle,
-    IN BOOLEAN GenerateOnClose
-    )
+
+VOID SeCloseObjectAuditAlarm(IN PVOID Object, IN HANDLE Handle, IN BOOLEAN GenerateOnClose)
 
 /*++
 
@@ -3651,31 +3292,26 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( Object );
-    
-    if (GenerateOnClose) {
+    UNREFERENCED_PARAMETER(Object);
 
-        SeCaptureSubjectContext ( &SubjectSecurityContext );
+    if (GenerateOnClose)
+    {
 
-        UserSid = SepTokenUserSid( EffectiveToken (&SubjectSecurityContext));
+        SeCaptureSubjectContext(&SubjectSecurityContext);
+
+        UserSid = SepTokenUserSid(EffectiveToken(&SubjectSecurityContext));
 
 
-        SepAdtCloseObjectAuditAlarm( (PUNICODE_STRING) &SeSubsystemName,
-                                     Handle,
-                                     UserSid );
+        SepAdtCloseObjectAuditAlarm((PUNICODE_STRING)&SeSubsystemName, Handle, UserSid);
 
-        SeReleaseSubjectContext ( &SubjectSecurityContext );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
     }
 
     return;
 }
 
-
-VOID
-SeDeleteObjectAuditAlarm(
-    IN PVOID Object,
-    IN HANDLE Handle
-    )
+
+VOID SeDeleteObjectAuditAlarm(IN PVOID Object, IN HANDLE Handle)
 
 /*++
 
@@ -3711,35 +3347,23 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( Object );
-    
-    SeCaptureSubjectContext ( &SubjectSecurityContext );
+    UNREFERENCED_PARAMETER(Object);
 
-    UserSid = SepTokenUserSid( EffectiveToken (&SubjectSecurityContext));
+    SeCaptureSubjectContext(&SubjectSecurityContext);
+
+    UserSid = SepTokenUserSid(EffectiveToken(&SubjectSecurityContext));
 
 
+    SepAdtDeleteObjectAuditAlarm((PUNICODE_STRING)&SeSubsystemName, (PVOID)Handle, UserSid);
 
-    SepAdtDeleteObjectAuditAlarm (
-        (PUNICODE_STRING)&SeSubsystemName,
-        (PVOID)Handle,
-        UserSid
-        );
-
-    SeReleaseSubjectContext ( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
     return;
 }
 
-
-VOID
-SepExamineSacl(
-    IN PACL Sacl,
-    IN PACCESS_TOKEN Token,
-    IN ACCESS_MASK DesiredAccess,
-    IN BOOLEAN AccessGranted,
-    OUT PBOOLEAN GenerateAudit,
-    OUT PBOOLEAN GenerateAlarm
-    )
+
+VOID SepExamineSacl(IN PACL Sacl, IN PACCESS_TOKEN Token, IN ACCESS_MASK DesiredAccess, IN BOOLEAN AccessGranted,
+                    OUT PBOOLEAN GenerateAudit, OUT PBOOLEAN GenerateAlarm)
 
 /*++
 
@@ -3794,7 +3418,8 @@ Return Value:
     //
 
     FailedMaximumAllowed = FALSE;
-    if (!AccessGranted && (DesiredAccess & MAXIMUM_ALLOWED)) {
+    if (!AccessGranted && (DesiredAccess & MAXIMUM_ALLOWED))
+    {
         FailedMaximumAllowed = TRUE;
     }
 
@@ -3802,14 +3427,16 @@ Return Value:
     // If the Sacl is null, do nothing and return
     //
 
-    if (Sacl == NULL) {
+    if (Sacl == NULL)
+    {
 
         return;
     }
 
     AceCount = Sacl->AceCount;
 
-    if (AceCount == 0) {
+    if (AceCount == 0)
+    {
         return;
     }
 
@@ -3819,46 +3446,56 @@ Return Value:
     // in which case it doesn't pay to look any further
     //
 
-    for ( i = 0, Ace = FirstAce( Sacl ) ;
-          (i < AceCount) && !(*GenerateAudit && *GenerateAlarm);
-          i++, Ace = NextAce( Ace ) ) {
+    for (i = 0, Ace = FirstAce(Sacl); (i < AceCount) && !(*GenerateAudit && *GenerateAlarm); i++, Ace = NextAce(Ace))
+    {
 
-        if ( !(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE)) {
+        if (!(((PACE_HEADER)Ace)->AceFlags & INHERIT_ONLY_ACE))
+        {
 
-             if ( (((PACE_HEADER)Ace)->AceType == SYSTEM_AUDIT_ACE_TYPE) ) {
+            if ((((PACE_HEADER)Ace)->AceType == SYSTEM_AUDIT_ACE_TYPE))
+            {
 
-                if ( SepSidInToken( (PACCESS_TOKEN)Token, NULL, &((PSYSTEM_AUDIT_ACE)Ace)->SidStart, FALSE ) ) {
+                if (SepSidInToken((PACCESS_TOKEN)Token, NULL, &((PSYSTEM_AUDIT_ACE)Ace)->SidStart, FALSE))
+                {
 
                     AccessMask = ((PSYSTEM_AUDIT_ACE)Ace)->Mask;
-                    AceFlags   = ((PACE_HEADER)Ace)->AceFlags;
+                    AceFlags = ((PACE_HEADER)Ace)->AceFlags;
 
-                    if ( AccessMask & DesiredAccess ) {
+                    if (AccessMask & DesiredAccess)
+                    {
 
                         if (((AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG) && AccessGranted) ||
-                              ((AceFlags & FAILED_ACCESS_ACE_FLAG) && !AccessGranted)) {
+                            ((AceFlags & FAILED_ACCESS_ACE_FLAG) && !AccessGranted))
+                        {
 
                             *GenerateAudit = TRUE;
                         }
-                    } else if ( FailedMaximumAllowed && (AceFlags & FAILED_ACCESS_ACE_FLAG) ) {
-                            *GenerateAudit = TRUE;
+                    }
+                    else if (FailedMaximumAllowed && (AceFlags & FAILED_ACCESS_ACE_FLAG))
+                    {
+                        *GenerateAudit = TRUE;
                     }
                 }
 
-                 continue;
-             }
+                continue;
+            }
 
-             if ( (((PACE_HEADER)Ace)->AceType == SYSTEM_ALARM_ACE_TYPE) ) {
+            if ((((PACE_HEADER)Ace)->AceType == SYSTEM_ALARM_ACE_TYPE))
+            {
 
-                if ( SepSidInToken( (PACCESS_TOKEN)Token, NULL, &((PSYSTEM_ALARM_ACE)Ace)->SidStart, FALSE ) ) {
+                if (SepSidInToken((PACCESS_TOKEN)Token, NULL, &((PSYSTEM_ALARM_ACE)Ace)->SidStart, FALSE))
+                {
 
                     AccessMask = ((PSYSTEM_ALARM_ACE)Ace)->Mask;
 
-                    if ( AccessMask & DesiredAccess ) {
+                    if (AccessMask & DesiredAccess)
+                    {
 
-                        AceFlags   = ((PACE_HEADER)Ace)->AceFlags;
+                        AceFlags = ((PACE_HEADER)Ace)->AceFlags;
 
                         if (((AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG) && AccessGranted) ||
-                              ((AceFlags & FAILED_ACCESS_ACE_FLAG) && !AccessGranted)) {
+                            ((AceFlags & FAILED_ACCESS_ACE_FLAG) && !AccessGranted))
+                        {
 
                             *GenerateAlarm = TRUE;
                         }
@@ -3871,16 +3508,9 @@ Return Value:
     return;
 }
 
-
-VOID
-SepAuditTypeList (
-    IN PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN ULONG ObjectTypeListLength,
-    IN PNTSTATUS AccessStatus,
-    IN ULONG StartIndex,
-    OUT PBOOLEAN GenerateSuccessAudit,
-    OUT PBOOLEAN GenerateFailureAudit
-    )
+
+VOID SepAuditTypeList(IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength, IN PNTSTATUS AccessStatus,
+                      IN ULONG StartIndex, OUT PBOOLEAN GenerateSuccessAudit, OUT PBOOLEAN GenerateFailureAudit)
 /*++
 
 Routine Description:
@@ -3921,13 +3551,14 @@ Return Value:
     // Determine if the target was successful.
     //
 
-    WasSuccess = NT_SUCCESS( AccessStatus[StartIndex] );
+    WasSuccess = NT_SUCCESS(AccessStatus[StartIndex]);
 
     //
     // Loop handling all children of the target.
     //
 
-    for ( Index=StartIndex+1; Index < ObjectTypeListLength; Index++ ) {
+    for (Index = StartIndex + 1; Index < ObjectTypeListLength; Index++)
+    {
 
         //
         // By definition, the children of an object are all those entries
@@ -3937,7 +3568,8 @@ Return Value:
         // (an uncle).
         //
 
-        if ( ObjectTypeList[Index].Level <= ObjectTypeList[StartIndex].Level ) {
+        if (ObjectTypeList[Index].Level <= ObjectTypeList[StartIndex].Level)
+        {
             break;
         }
 
@@ -3946,12 +3578,14 @@ Return Value:
         //  mark the child.
         //
 
-        if ( WasSuccess && !NT_SUCCESS( AccessStatus[Index]) ) {
+        if (WasSuccess && !NT_SUCCESS(AccessStatus[Index]))
+        {
 
             *GenerateFailureAudit = TRUE;
             ObjectTypeList[Index].Flags |= OBJECT_FAILURE_AUDIT;
-
-        } else if ( !WasSuccess && NT_SUCCESS( AccessStatus[Index]) ) {
+        }
+        else if (!WasSuccess && NT_SUCCESS(AccessStatus[Index]))
+        {
 
             *GenerateSuccessAudit = TRUE;
             ObjectTypeList[Index].Flags |= OBJECT_SUCCESS_AUDIT;
@@ -3960,21 +3594,11 @@ Return Value:
 }
 
 
-VOID
-SepSetAuditInfoForObjectType(
-    IN  UCHAR AceFlags,
-    IN  ACCESS_MASK AccessMask,
-    IN  ACCESS_MASK DesiredAccess,
-    IN  PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN  ULONG ObjectTypeListLength,
-    IN  BOOLEAN ReturnResultList,
-    IN  ULONG ObjectTypeIndex,
-    IN  PNTSTATUS AccessStatus,
-    IN  PACCESS_MASK GrantedAccess,
-    IN  BOOLEAN FailedMaximumAllowed,
-    OUT PBOOLEAN GenerateSuccessAudit,
-    OUT PBOOLEAN GenerateFailureAudit
-    )
+VOID SepSetAuditInfoForObjectType(IN UCHAR AceFlags, IN ACCESS_MASK AccessMask, IN ACCESS_MASK DesiredAccess,
+                                  IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength,
+                                  IN BOOLEAN ReturnResultList, IN ULONG ObjectTypeIndex, IN PNTSTATUS AccessStatus,
+                                  IN PACCESS_MASK GrantedAccess, IN BOOLEAN FailedMaximumAllowed,
+                                  OUT PBOOLEAN GenerateSuccessAudit, OUT PBOOLEAN GenerateFailureAudit)
 /*++
 
 Routine Description:
@@ -3996,72 +3620,62 @@ Return Value:
 {
     PAGED_CODE();
 
-    if ( AccessMask & (DesiredAccess|GrantedAccess[ObjectTypeIndex]) ) {
+    if (AccessMask & (DesiredAccess | GrantedAccess[ObjectTypeIndex]))
+    {
 
-        if ( ( AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG ) &&
-             NT_SUCCESS(AccessStatus[ObjectTypeIndex]) ) {
+        if ((AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG) && NT_SUCCESS(AccessStatus[ObjectTypeIndex]))
+        {
 
-                *GenerateSuccessAudit = TRUE;
+            *GenerateSuccessAudit = TRUE;
 
-                if ( ObjectTypeListLength != 0 ) {
+            if (ObjectTypeListLength != 0)
+            {
 
-                    ObjectTypeList[ObjectTypeIndex].Flags |= OBJECT_SUCCESS_AUDIT;
+                ObjectTypeList[ObjectTypeIndex].Flags |= OBJECT_SUCCESS_AUDIT;
 
-                    if ( ReturnResultList ) {
+                if (ReturnResultList)
+                {
 
-                        SepAuditTypeList( ObjectTypeList,
-                                          ObjectTypeListLength,
-                                          AccessStatus,
-                                          ObjectTypeIndex,
-                                          GenerateSuccessAudit,
-                                          GenerateFailureAudit );
-                    }
+                    SepAuditTypeList(ObjectTypeList, ObjectTypeListLength, AccessStatus, ObjectTypeIndex,
+                                     GenerateSuccessAudit, GenerateFailureAudit);
                 }
-        } else if ( ( AceFlags & FAILED_ACCESS_ACE_FLAG ) &&
-                    !NT_SUCCESS(AccessStatus[ObjectTypeIndex]) ) {
-
-                *GenerateFailureAudit = TRUE;
-
-                if ( ObjectTypeListLength != 0 ) {
-
-                    ObjectTypeList[ObjectTypeIndex].Flags |= OBJECT_FAILURE_AUDIT;
-
-                    if ( ReturnResultList ) {
-
-                        SepAuditTypeList( ObjectTypeList,
-                                          ObjectTypeListLength,
-                                          AccessStatus,
-                                          ObjectTypeIndex,
-                                          GenerateSuccessAudit,
-                                          GenerateFailureAudit );
-                    }
-                }
+            }
         }
-        
-    } else if ( FailedMaximumAllowed && (AceFlags & FAILED_ACCESS_ACE_FLAG) ) {
+        else if ((AceFlags & FAILED_ACCESS_ACE_FLAG) && !NT_SUCCESS(AccessStatus[ObjectTypeIndex]))
+        {
+
+            *GenerateFailureAudit = TRUE;
+
+            if (ObjectTypeListLength != 0)
+            {
+
+                ObjectTypeList[ObjectTypeIndex].Flags |= OBJECT_FAILURE_AUDIT;
+
+                if (ReturnResultList)
+                {
+
+                    SepAuditTypeList(ObjectTypeList, ObjectTypeListLength, AccessStatus, ObjectTypeIndex,
+                                     GenerateSuccessAudit, GenerateFailureAudit);
+                }
+            }
+        }
+    }
+    else if (FailedMaximumAllowed && (AceFlags & FAILED_ACCESS_ACE_FLAG))
+    {
 
         *GenerateFailureAudit = TRUE;
-        if ( ObjectTypeListLength != 0 ) {
+        if (ObjectTypeListLength != 0)
+        {
             ObjectTypeList[ObjectTypeIndex].Flags |= OBJECT_FAILURE_AUDIT;
         }
     }
 }
 
-
-VOID
-SepExamineSaclEx(
-    IN PACL Sacl,
-    IN PACCESS_TOKEN Token,
-    IN ACCESS_MASK DesiredAccess,
-    IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN BOOLEAN ReturnResultList,
-    IN PNTSTATUS AccessStatus,
-    IN PACCESS_MASK GrantedAccess,
-    IN PSID PrincipalSelfSid,
-    OUT PBOOLEAN GenerateSuccessAudit,
-    OUT PBOOLEAN GenerateFailureAudit
-    )
+
+VOID SepExamineSaclEx(IN PACL Sacl, IN PACCESS_TOKEN Token, IN ACCESS_MASK DesiredAccess,
+                      IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+                      IN BOOLEAN ReturnResultList, IN PNTSTATUS AccessStatus, IN PACCESS_MASK GrantedAccess,
+                      IN PSID PrincipalSelfSid, OUT PBOOLEAN GenerateSuccessAudit, OUT PBOOLEAN GenerateFailureAudit)
 
 /*++
 
@@ -4118,7 +3732,7 @@ Return Value:
     ULONG i, j;
     PVOID Ace;
     ULONG AceCount;
-    ACCESS_MASK AccessMask=0;
+    ACCESS_MASK AccessMask = 0;
     UCHAR AceFlags;
     BOOLEAN FailedMaximumAllowed;
     ULONG Index;
@@ -4137,7 +3751,8 @@ Return Value:
     //
 
     FailedMaximumAllowed = FALSE;
-    if (!NT_SUCCESS(*AccessStatus) && (DesiredAccess & MAXIMUM_ALLOWED)) {
+    if (!NT_SUCCESS(*AccessStatus) && (DesiredAccess & MAXIMUM_ALLOWED))
+    {
         FailedMaximumAllowed = TRUE;
     }
 
@@ -4145,13 +3760,15 @@ Return Value:
     // If the Sacl is null, do nothing and return
     //
 
-    if (Sacl == NULL) {
+    if (Sacl == NULL)
+    {
         return;
     }
 
     AceCount = Sacl->AceCount;
 
-    if (AceCount == 0) {
+    if (AceCount == 0)
+    {
         return;
     }
 
@@ -4162,60 +3779,61 @@ Return Value:
     // in which case it doesn't pay to look any further
     //
 
-    for ( i = 0, Ace = FirstAce( Sacl ) ;
-          (i < AceCount) && !((*GenerateSuccessAudit || *GenerateFailureAudit) && ObjectTypeListLength <= 1 );
-          i++, Ace = NextAce( Ace ) ) {
+    for (i = 0, Ace = FirstAce(Sacl);
+         (i < AceCount) && !((*GenerateSuccessAudit || *GenerateFailureAudit) && ObjectTypeListLength <= 1);
+         i++, Ace = NextAce(Ace))
+    {
 
         AceFlags = ((PACE_HEADER)Ace)->AceFlags;
-        
-        if ( AceFlags & INHERIT_ONLY_ACE ) {
+
+        if (AceFlags & INHERIT_ONLY_ACE)
+        {
 
             continue;
         }
-        
+
 
         Index = INVALID_OBJECT_TYPE_LIST_INDEX;
 
-        if ( (((PACE_HEADER)Ace)->AceType == SYSTEM_AUDIT_ACE_TYPE) ) {
+        if ((((PACE_HEADER)Ace)->AceType == SYSTEM_AUDIT_ACE_TYPE))
+        {
 
-            if ( SepSidInToken( Token, PrincipalSelfSid, &((PSYSTEM_AUDIT_ACE)Ace)->SidStart, (BOOLEAN) ((AceFlags & FAILED_ACCESS_ACE_FLAG) != 0) ) ) {
+            if (SepSidInToken(Token, PrincipalSelfSid, &((PSYSTEM_AUDIT_ACE)Ace)->SidStart,
+                              (BOOLEAN)((AceFlags & FAILED_ACCESS_ACE_FLAG) != 0)))
+            {
 
                 AccessMask = ((PSYSTEM_AUDIT_ACE)Ace)->Mask;
 
-                if (ObjectTypeListLength == 0) {
+                if (ObjectTypeListLength == 0)
+                {
 
-                    if ( NT_SUCCESS(AccessStatus[0]) ) {
-                        
-                        if ( ( AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG ) &&
-                             ( AccessMask & GrantedAccess[0] ) ) {
+                    if (NT_SUCCESS(AccessStatus[0]))
+                    {
+
+                        if ((AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG) && (AccessMask & GrantedAccess[0]))
+                        {
 
                             *GenerateSuccessAudit = TRUE;
                         }
+                    }
+                    else
+                    {
 
-                    } else {
+                        if ((AceFlags & FAILED_ACCESS_ACE_FLAG) && (AccessMask & DesiredAccess))
+                        {
 
-                        if ( ( AceFlags & FAILED_ACCESS_ACE_FLAG ) &&
-                             ( AccessMask & DesiredAccess ) ) {
-                            
                             *GenerateFailureAudit = TRUE;
                         }
                     }
-                } else {
-                    for (j=0; j < ObjectTypeListLength; j++)
+                }
+                else
+                {
+                    for (j = 0; j < ObjectTypeListLength; j++)
                     {
-                        SepSetAuditInfoForObjectType(AceFlags,
-                                                     AccessMask,
-                                                     DesiredAccess,
-                                                     ObjectTypeList,
-                                                     ObjectTypeListLength,
-                                                     ReturnResultList,
-                                                     j,
-                                                     AccessStatus,
-                                                     GrantedAccess,
-                                                     FailedMaximumAllowed,
-                                                     GenerateSuccessAudit,
-                                                     GenerateFailureAudit
-                                                     );
+                        SepSetAuditInfoForObjectType(AceFlags, AccessMask, DesiredAccess, ObjectTypeList,
+                                                     ObjectTypeListLength, ReturnResultList, j, AccessStatus,
+                                                     GrantedAccess, FailedMaximumAllowed, GenerateSuccessAudit,
+                                                     GenerateFailureAudit);
                     }
                     Index = INVALID_OBJECT_TYPE_LIST_INDEX;
                 }
@@ -4224,36 +3842,32 @@ Return Value:
             //
             // Handle an object specific audit ACE
             //
-        } else if ( (((PACE_HEADER)Ace)->AceType == SYSTEM_AUDIT_OBJECT_ACE_TYPE) ) {
+        }
+        else if ((((PACE_HEADER)Ace)->AceType == SYSTEM_AUDIT_OBJECT_ACE_TYPE))
+        {
             GUID *ObjectTypeInAce;
 
-              //
-              // If no object type is in the ACE,
-              //  treat this as a normal audit ACE.
-              //
+            //
+            // If no object type is in the ACE,
+            //  treat this as a normal audit ACE.
+            //
 
             AccessMask = ((PSYSTEM_AUDIT_OBJECT_ACE)Ace)->Mask;
             ObjectTypeInAce = RtlObjectAceObjectType(Ace);
 
-            if ( ObjectTypeInAce == NULL ) {
+            if (ObjectTypeInAce == NULL)
+            {
 
-                if ( SepSidInToken( Token, PrincipalSelfSid, RtlObjectAceSid(Ace), (BOOLEAN)((AceFlags & FAILED_ACCESS_ACE_FLAG) != 0) ) ) {
+                if (SepSidInToken(Token, PrincipalSelfSid, RtlObjectAceSid(Ace),
+                                  (BOOLEAN)((AceFlags & FAILED_ACCESS_ACE_FLAG) != 0)))
+                {
 
-                    for (j=0; j < ObjectTypeListLength; j++)
+                    for (j = 0; j < ObjectTypeListLength; j++)
                     {
-                        SepSetAuditInfoForObjectType(AceFlags,
-                                                     AccessMask,
-                                                     DesiredAccess,
-                                                     ObjectTypeList,
-                                                     ObjectTypeListLength,
-                                                     ReturnResultList,
-                                                     j,
-                                                     AccessStatus,
-                                                     GrantedAccess,
-                                                     FailedMaximumAllowed,
-                                                     GenerateSuccessAudit,
-                                                     GenerateFailureAudit
-                                                     );
+                        SepSetAuditInfoForObjectType(AceFlags, AccessMask, DesiredAccess, ObjectTypeList,
+                                                     ObjectTypeListLength, ReturnResultList, j, AccessStatus,
+                                                     GrantedAccess, FailedMaximumAllowed, GenerateSuccessAudit,
+                                                     GenerateFailureAudit);
                     }
                     Index = INVALID_OBJECT_TYPE_LIST_INDEX;
                 }
@@ -4262,20 +3876,21 @@ Return Value:
                 // If an object type is in the ACE,
                 //   Find it in the LocalTypeList before using the ACE.
                 //
-            } else {
+            }
+            else
+            {
 
-                if ( SepSidInToken( Token, PrincipalSelfSid, RtlObjectAceSid(Ace), (BOOLEAN)((AceFlags & FAILED_ACCESS_ACE_FLAG) != 0) ) ) {
+                if (SepSidInToken(Token, PrincipalSelfSid, RtlObjectAceSid(Ace),
+                                  (BOOLEAN)((AceFlags & FAILED_ACCESS_ACE_FLAG) != 0)))
+                {
 
-                    if ( !SepObjectInTypeList( ObjectTypeInAce,
-                                               ObjectTypeList,
-                                               ObjectTypeListLength,
-                                               &Index ) ) {
+                    if (!SepObjectInTypeList(ObjectTypeInAce, ObjectTypeList, ObjectTypeListLength, &Index))
+                    {
 
                         Index = INVALID_OBJECT_TYPE_LIST_INDEX;
                     }
                 }
             }
-
         }
 
         //
@@ -4283,7 +3898,8 @@ Return Value:
         //  handle it.
         //
 
-        if ( Index != INVALID_OBJECT_TYPE_LIST_INDEX ) {
+        if (Index != INVALID_OBJECT_TYPE_LIST_INDEX)
+        {
 
             //
             // ASSERT: we have an ACE to be audited.
@@ -4295,28 +3911,16 @@ Return Value:
             //  a success or failure audit is to be generated
             //
 
-            SepSetAuditInfoForObjectType(AceFlags,
-                                         AccessMask,
-                                         DesiredAccess,
-                                         ObjectTypeList,
-                                         ObjectTypeListLength,
-                                         ReturnResultList,
-                                         Index,
-                                         AccessStatus,
-                                         GrantedAccess,
-                                         FailedMaximumAllowed,
-                                         GenerateSuccessAudit,
-                                         GenerateFailureAudit
-                                         );
+            SepSetAuditInfoForObjectType(AceFlags, AccessMask, DesiredAccess, ObjectTypeList, ObjectTypeListLength,
+                                         ReturnResultList, Index, AccessStatus, GrantedAccess, FailedMaximumAllowed,
+                                         GenerateSuccessAudit, GenerateFailureAudit);
         }
-
     }
 
     return;
 }
 
 
-
 /******************************************************************************
 *                                                                             *
 *    The following list of privileges is checked at high frequency            *
@@ -4338,19 +3942,12 @@ Return Value:
 #pragma const_seg("PAGECONST")
 #endif
 
-PLUID const * SepFilterPrivileges = NULL;
+PLUID const *SepFilterPrivileges = NULL;
 
-const PLUID SepFilterPrivilegesLong[] =
-    {
-        &SeChangeNotifyPrivilege,
-        &SeAuditPrivilege,
-        &SeCreateTokenPrivilege,
-        &SeAssignPrimaryTokenPrivilege,
-        &SeBackupPrivilege,
-        &SeRestorePrivilege,
-        &SeDebugPrivilege,
-        NULL
-    };
+const PLUID SepFilterPrivilegesLong[] = { &SeChangeNotifyPrivilege, &SeAuditPrivilege,
+                                          &SeCreateTokenPrivilege,  &SeAssignPrimaryTokenPrivilege,
+                                          &SeBackupPrivilege,       &SeRestorePrivilege,
+                                          &SeDebugPrivilege,        NULL };
 
 /******************************************************************************
 *                                                                             *
@@ -4363,20 +3960,11 @@ const PLUID SepFilterPrivilegesLong[] =
 *                                                                             *
 ******************************************************************************/
 
-const PLUID SepFilterPrivilegesShort[] =
-    {
-        &SeChangeNotifyPrivilege,
-        &SeAuditPrivilege,
-        &SeCreateTokenPrivilege,
-        &SeAssignPrimaryTokenPrivilege,
-        &SeDebugPrivilege,
-        NULL
-    };
+const PLUID SepFilterPrivilegesShort[] = { &SeChangeNotifyPrivilege,       &SeAuditPrivilege, &SeCreateTokenPrivilege,
+                                           &SeAssignPrimaryTokenPrivilege, &SeDebugPrivilege, NULL };
 
 BOOLEAN
-SepInitializePrivilegeFilter(
-    BOOLEAN Verbose
-    )
+SepInitializePrivilegeFilter(BOOLEAN Verbose)
 /*++
 
 Routine Description:
@@ -4394,20 +3982,21 @@ Return Value:
 
 --*/
 {
-    if (Verbose) {
+    if (Verbose)
+    {
         SepFilterPrivileges = SepFilterPrivilegesShort;
-    } else {
+    }
+    else
+    {
         SepFilterPrivileges = SepFilterPrivilegesLong;
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-SepFilterPrivilegeAudits(
-    IN PPRIVILEGE_SET PrivilegeSet
-    )
+SepFilterPrivilegeAudits(IN PPRIVILEGE_SET PrivilegeSet)
 
 /*++
 
@@ -4434,43 +4023,45 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( !ARGUMENT_PRESENT(PrivilegeSet) ||
-        (PrivilegeSet->PrivilegeCount == 0) ) {
-        return( FALSE );
+    if (!ARGUMENT_PRESENT(PrivilegeSet) || (PrivilegeSet->PrivilegeCount == 0))
+    {
+        return (FALSE);
     }
 
-    for (i=0; i<PrivilegeSet->PrivilegeCount; i++) {
+    for (i = 0; i < PrivilegeSet->PrivilegeCount; i++)
+    {
 
         Privilege = SepFilterPrivileges;
 
-        do {
+        do
+        {
 
-            if ( RtlEqualLuid( &PrivilegeSet->Privilege[i].Luid, *Privilege )) {
+            if (RtlEqualLuid(&PrivilegeSet->Privilege[i].Luid, *Privilege))
+            {
 
                 Match++;
                 break;
             }
 
-        } while ( *++Privilege != NULL  );
+        } while (*++Privilege != NULL);
     }
 
-    if ( Match == PrivilegeSet->PrivilegeCount ) {
+    if (Match == PrivilegeSet->PrivilegeCount)
+    {
 
-        return( FALSE );
+        return (FALSE);
+    }
+    else
+    {
 
-    } else {
-
-        return( TRUE );
+        return (TRUE);
     }
 }
 
-
+
 BOOLEAN
-SeAuditingFileOrGlobalEvents(
-    IN BOOLEAN AccessGranted,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext
-    )
+SeAuditingFileOrGlobalEvents(IN BOOLEAN AccessGranted, IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                             IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext)
 
 /*++
 
@@ -4493,28 +4084,27 @@ Return Value:
 --*/
 
 {
-    PISECURITY_DESCRIPTOR ISecurityDescriptor = (PISECURITY_DESCRIPTOR) SecurityDescriptor;
+    PISECURITY_DESCRIPTOR ISecurityDescriptor = (PISECURITY_DESCRIPTOR)SecurityDescriptor;
 
     PAGED_CODE();
 
-    if ( ((PTOKEN)EffectiveToken( SubjectSecurityContext ))->AuditData != NULL) {
-        return( TRUE );
+    if (((PTOKEN)EffectiveToken(SubjectSecurityContext))->AuditData != NULL)
+    {
+        return (TRUE);
     }
 
-    if ( RtlpSaclAddrSecurityDescriptor( ISecurityDescriptor ) == NULL ) {
+    if (RtlpSaclAddrSecurityDescriptor(ISecurityDescriptor) == NULL)
+    {
 
-        return( FALSE );
+        return (FALSE);
     }
 
-    return( SepAdtAuditThisEvent( AuditCategoryObjectAccess, &AccessGranted ) );
+    return (SepAdtAuditThisEvent(AuditCategoryObjectAccess, &AccessGranted));
 }
 
-
+
 BOOLEAN
-SeAuditingFileEvents(
-    IN BOOLEAN AccessGranted,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+SeAuditingFileEvents(IN BOOLEAN AccessGranted, IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -4539,17 +4129,14 @@ Return Value:
 {
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( SecurityDescriptor );
+    UNREFERENCED_PARAMETER(SecurityDescriptor);
 
-    return( SepAdtAuditThisEvent( AuditCategoryObjectAccess, &AccessGranted ) );
+    return (SepAdtAuditThisEvent(AuditCategoryObjectAccess, &AccessGranted));
 }
 
-
-BOOLEAN                                  
-SeAuditingHardLinkEvents(                                
-    IN BOOLEAN AccessGranted,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+
+BOOLEAN
+SeAuditingHardLinkEvents(IN BOOLEAN AccessGranted, IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -4574,22 +4161,21 @@ Return Value:
 
 {
 
-    PISECURITY_DESCRIPTOR pSD  = SecurityDescriptor;
-    PACL                  Sacl = RtlpSaclAddrSecurityDescriptor( pSD );
+    PISECURITY_DESCRIPTOR pSD = SecurityDescriptor;
+    PACL Sacl = RtlpSaclAddrSecurityDescriptor(pSD);
 
     PAGED_CODE();
-   
+
     //
     // Audit hard link creation if object access auditing is on and the original file
     // has a non empty SACL.
     //
 
-    if ( (SepAdtAuditThisEvent( AuditCategoryObjectAccess, &AccessGranted )) &&
-         (NULL != Sacl)                                                      &&
-         (0 != Sacl->AceCount)) {
+    if ((SepAdtAuditThisEvent(AuditCategoryObjectAccess, &AccessGranted)) && (NULL != Sacl) && (0 != Sacl->AceCount))
+    {
 
         return TRUE;
     }
-    
+
     return FALSE;
 }

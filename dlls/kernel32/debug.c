@@ -21,12 +21,13 @@ Revision History:
 #include "basedll.h"
 #pragma hdrstop
 
-#define TmpHandleHead ((PTMPHANDLES *) (&NtCurrentTeb()->DbgSsReserved[0]))
+#define TmpHandleHead ((PTMPHANDLES *)(&NtCurrentTeb()->DbgSsReserved[0]))
 //
 // This structure is used to preserve the strange mechanisms used by win2k and nt4 to close the handles to open processes,
 // threads and main image file.
 //
-typedef struct _TMPHANDLES {
+typedef struct _TMPHANDLES
+{
     struct _TMPHANDLES *Next;
     HANDLE Thread;
     HANDLE Process;
@@ -35,11 +36,7 @@ typedef struct _TMPHANDLES {
     BOOLEAN DeletePending;
 } TMPHANDLES, *PTMPHANDLES;
 
-VOID
-SaveThreadHandle (
-    DWORD dwProcessId,
-    DWORD dwThreadId,
-    HANDLE HandleToThread)
+VOID SaveThreadHandle(DWORD dwProcessId, DWORD dwThreadId, HANDLE HandleToThread)
 /*++
 
 Routine Description:
@@ -61,8 +58,9 @@ Return Value:
 {
     PTMPHANDLES Tmp;
 
-    Tmp = RtlAllocateHeap (RtlProcessHeap(), 0, sizeof (TMPHANDLES));
-    if (Tmp != NULL) {
+    Tmp = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(TMPHANDLES));
+    if (Tmp != NULL)
+    {
         Tmp->Thread = HandleToThread;
         Tmp->Process = NULL;
         Tmp->dwProcessId = dwProcessId;
@@ -73,11 +71,7 @@ Return Value:
     }
 }
 
-VOID
-SaveProcessHandle (
-    DWORD dwProcessId,
-    HANDLE HandleToProcess
-    )
+VOID SaveProcessHandle(DWORD dwProcessId, HANDLE HandleToProcess)
 /*++
 
 Routine Description:
@@ -99,8 +93,9 @@ Return Value:
 {
     PTMPHANDLES Tmp;
 
-    Tmp = RtlAllocateHeap (RtlProcessHeap(), 0, sizeof (TMPHANDLES));
-    if (Tmp != NULL) {
+    Tmp = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(TMPHANDLES));
+    if (Tmp != NULL)
+    {
         Tmp->Process = HandleToProcess;
         Tmp->Thread = NULL;
         Tmp->dwProcessId = dwProcessId;
@@ -111,10 +106,7 @@ Return Value:
     }
 }
 
-VOID
-MarkThreadHandle (
-    DWORD dwThreadId
-    )
+VOID MarkThreadHandle(DWORD dwThreadId)
 /*++
 
 Routine Description:
@@ -136,8 +128,10 @@ Return Value:
 
     Tmp = *TmpHandleHead;
 
-    while (Tmp != NULL) {
-        if (Tmp->dwThreadId == dwThreadId) {
+    while (Tmp != NULL)
+    {
+        if (Tmp->dwThreadId == dwThreadId)
+        {
             Tmp->DeletePending = TRUE;
             break;
         }
@@ -145,17 +139,16 @@ Return Value:
     }
 }
 
-VOID
-MarkProcessHandle (
-    DWORD dwProcessId
-    )
+VOID MarkProcessHandle(DWORD dwProcessId)
 {
     PTMPHANDLES Tmp;
 
     Tmp = *TmpHandleHead;
 
-    while (Tmp != NULL) {
-        if (Tmp->dwProcessId == dwProcessId && Tmp->dwThreadId == 0) {
+    while (Tmp != NULL)
+    {
+        if (Tmp->dwProcessId == dwProcessId && Tmp->dwThreadId == 0)
+        {
             Tmp->DeletePending = TRUE;
             break;
         }
@@ -163,11 +156,7 @@ MarkProcessHandle (
     }
 }
 
-VOID 
-RemoveHandles (
-    DWORD dwThreadId,
-    DWORD dwProcessId
-    )
+VOID RemoveHandles(DWORD dwThreadId, DWORD dwProcessId)
 /*++
 
 Routine Description:
@@ -190,17 +179,22 @@ Return Value:
     Last = TmpHandleHead;
 
     Tmp = *Last;
-    while (Tmp != NULL) {
-        if (Tmp->DeletePending) {
-            if (Tmp->dwProcessId == dwProcessId || Tmp->dwThreadId == dwThreadId) {
-                if (Tmp->Thread != NULL) {
-                    CloseHandle (Tmp->Thread);
+    while (Tmp != NULL)
+    {
+        if (Tmp->DeletePending)
+        {
+            if (Tmp->dwProcessId == dwProcessId || Tmp->dwThreadId == dwThreadId)
+            {
+                if (Tmp->Thread != NULL)
+                {
+                    CloseHandle(Tmp->Thread);
                 }
-                if (Tmp->Process != NULL) {
-                    CloseHandle (Tmp->Process);
+                if (Tmp->Process != NULL)
+                {
+                    CloseHandle(Tmp->Process);
                 }
                 *Last = Tmp->Next;
-                RtlFreeHeap (RtlProcessHeap(), 0, Tmp);
+                RtlFreeHeap(RtlProcessHeap(), 0, Tmp);
                 Tmp = *Last;
                 continue;
             }
@@ -210,10 +204,7 @@ Return Value:
     }
 }
 
-VOID
-CloseAllProcessHandles (
-    DWORD dwProcessId
-    )
+VOID CloseAllProcessHandles(DWORD dwProcessId)
 /*++
 
 Routine Description:
@@ -235,31 +226,30 @@ Return Value:
     Last = TmpHandleHead;
 
     Tmp = *Last;
-    while (Tmp != NULL) {
-        if (Tmp->dwProcessId == dwProcessId) {
-            if (Tmp->Thread != NULL) {
-                CloseHandle (Tmp->Thread);
+    while (Tmp != NULL)
+    {
+        if (Tmp->dwProcessId == dwProcessId)
+        {
+            if (Tmp->Thread != NULL)
+            {
+                CloseHandle(Tmp->Thread);
             }
-            if (Tmp->Process != NULL) {
-                CloseHandle (Tmp->Process);
+            if (Tmp->Process != NULL)
+            {
+                CloseHandle(Tmp->Process);
             }
             *Last = Tmp->Next;
-            RtlFreeHeap (RtlProcessHeap(), 0, Tmp);
+            RtlFreeHeap(RtlProcessHeap(), 0, Tmp);
             Tmp = *Last;
             continue;
         }
         Last = &Tmp->Next;
         Tmp = Tmp->Next;
     }
-
 }
 
 
-BOOL
-APIENTRY
-IsDebuggerPresent(
-    VOID
-    )
+BOOL APIENTRY IsDebuggerPresent(VOID)
 
 /*++
 
@@ -282,12 +272,7 @@ Return Value:
     return NtCurrentPeb()->BeingDebugged;
 }
 
-BOOL
-APIENTRY
-CheckRemoteDebuggerPresent(
-    IN HANDLE hProcess,
-    OUT PBOOL pbDebuggerPresent
-    )
+BOOL APIENTRY CheckRemoteDebuggerPresent(IN HANDLE hProcess, OUT PBOOL pbDebuggerPresent)
 
 /*++
 
@@ -314,21 +299,17 @@ Return Value:
     HANDLE hDebugPort;
     NTSTATUS Status;
 
-    if( (hProcess == NULL) || (pbDebuggerPresent == NULL) ) {
-        SetLastError( ERROR_INVALID_PARAMETER );
+    if ((hProcess == NULL) || (pbDebuggerPresent == NULL))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessDebugPort,
-                (PVOID)(&hDebugPort),
-                sizeof(hDebugPort),
-                NULL
-                );
+    Status = NtQueryInformationProcess(hProcess, ProcessDebugPort, (PVOID)(&hDebugPort), sizeof(hDebugPort), NULL);
 
-    if( !NT_SUCCESS(Status) ) {
-        BaseSetLastNTError( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return FALSE;
     }
 
@@ -341,11 +322,7 @@ Return Value:
 //#ifdef i386
 //#pragma optimize("",off)
 //#endif // i386
-VOID
-APIENTRY
-DebugBreak(
-    VOID
-    )
+VOID APIENTRY DebugBreak(VOID)
 
 /*++
 
@@ -375,11 +352,7 @@ Return Value:
 //#pragma optimize("",on)
 //#endif // i386
 
-VOID
-APIENTRY
-OutputDebugStringW(
-    LPCWSTR lpOutputString
-    )
+VOID APIENTRY OutputDebugStringW(LPCWSTR lpOutputString)
 
 /*++
 
@@ -394,27 +367,30 @@ Routine Description:
     ANSI_STRING AnsiString;
     NTSTATUS Status;
 
-    RtlInitUnicodeString(&UnicodeString,lpOutputString);
-    Status = RtlUnicodeStringToAnsiString(&AnsiString,&UnicodeString,TRUE);
-    if ( !NT_SUCCESS(Status) ) {
+    RtlInitUnicodeString(&UnicodeString, lpOutputString);
+    Status = RtlUnicodeStringToAnsiString(&AnsiString, &UnicodeString, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
         AnsiString.Buffer = "";
-        }
+    }
     OutputDebugStringA(AnsiString.Buffer);
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
         RtlFreeAnsiString(&AnsiString);
-        }
+    }
 }
 
 
-#define DBWIN_TIMEOUT   10000
-HANDLE CreateDBWinMutex(VOID) {
+#define DBWIN_TIMEOUT 10000
+HANDLE CreateDBWinMutex(VOID)
+{
 
     SECURITY_ATTRIBUTES SecurityAttributes;
     SECURITY_DESCRIPTOR sd;
     NTSTATUS Status;
     SID_IDENTIFIER_AUTHORITY authNT = SECURITY_NT_AUTHORITY;
     SID_IDENTIFIER_AUTHORITY authWorld = SECURITY_WORLD_SID_AUTHORITY;
-    PSID  psidSystem = NULL, psidAdmin = NULL, psidEveryone = NULL;
+    PSID psidSystem = NULL, psidAdmin = NULL, psidEveryone = NULL;
     PACL pAcl = NULL;
     DWORD cbAcl, aceIndex;
     HANDLE h = NULL;
@@ -423,8 +399,7 @@ HANDLE CreateDBWinMutex(VOID) {
     // Get the system sid
     //
 
-    Status = RtlAllocateAndInitializeSid(&authNT, 1, SECURITY_LOCAL_SYSTEM_RID,
-                   0, 0, 0, 0, 0, 0, 0, &psidSystem);
+    Status = RtlAllocateAndInitializeSid(&authNT, 1, SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0, &psidSystem);
     if (!NT_SUCCESS(Status))
         goto Exit;
 
@@ -433,9 +408,8 @@ HANDLE CreateDBWinMutex(VOID) {
     // Get the Admin sid
     //
 
-    Status = RtlAllocateAndInitializeSid(&authNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
-                       DOMAIN_ALIAS_RID_ADMINS, 0, 0,
-                       0, 0, 0, 0, &psidAdmin);
+    Status = RtlAllocateAndInitializeSid(&authNT, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0,
+                                         0, 0, &psidAdmin);
 
     if (!NT_SUCCESS(Status))
         goto Exit;
@@ -445,25 +419,22 @@ HANDLE CreateDBWinMutex(VOID) {
     // Get the World sid
     //
 
-    Status = RtlAllocateAndInitializeSid(&authWorld, 1, SECURITY_WORLD_RID,
-                      0, 0, 0, 0, 0, 0, 0, &psidEveryone);
+    Status = RtlAllocateAndInitializeSid(&authWorld, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &psidEveryone);
 
     if (!NT_SUCCESS(Status))
-          goto Exit;
+        goto Exit;
 
 
     //
     // Allocate space for the ACL
     //
 
-    cbAcl = sizeof(ACL) +
-            3 * (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
-            RtlLengthSid(psidSystem) +
-            RtlLengthSid(psidAdmin) +
-            RtlLengthSid(psidEveryone);
+    cbAcl = sizeof(ACL) + 3 * (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) + RtlLengthSid(psidSystem) +
+            RtlLengthSid(psidAdmin) + RtlLengthSid(psidEveryone);
 
-    pAcl = (PACL) GlobalAlloc(GMEM_FIXED, cbAcl);
-    if (!pAcl) {
+    pAcl = (PACL)GlobalAlloc(GMEM_FIXED, cbAcl);
+    if (!pAcl)
+    {
         goto Exit;
     }
 
@@ -490,11 +461,11 @@ HANDLE CreateDBWinMutex(VOID) {
 
     Status = RtlCreateSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
     if (!NT_SUCCESS(Status))
-       goto Exit;
+        goto Exit;
 
     Status = RtlSetDaclSecurityDescriptor(&sd, TRUE, pAcl, FALSE);
     if (!NT_SUCCESS(Status))
-       goto Exit;
+        goto Exit;
 
 
     SecurityAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -502,43 +473,44 @@ HANDLE CreateDBWinMutex(VOID) {
     SecurityAttributes.lpSecurityDescriptor = &sd;
 
     i = 0;
-    while (1) {
-        h = OpenMutex (READ_CONTROL | SYNCHRONIZE | MUTEX_MODIFY_STATE,
-                       TRUE,
-                       "DBWinMutex");
-        if (h != NULL) {
+    while (1)
+    {
+        h = OpenMutex(READ_CONTROL | SYNCHRONIZE | MUTEX_MODIFY_STATE, TRUE, "DBWinMutex");
+        if (h != NULL)
+        {
             break;
         }
         h = CreateMutex(&SecurityAttributes, FALSE, "DBWinMutex");
-        if (h != NULL || GetLastError () != ERROR_ACCESS_DENIED || i++ > 100) {
+        if (h != NULL || GetLastError() != ERROR_ACCESS_DENIED || i++ > 100)
+        {
             break;
         }
     }
 Exit:
-    if (psidSystem) {
+    if (psidSystem)
+    {
         RtlFreeSid(psidSystem);
     }
 
-    if (psidAdmin) {
+    if (psidAdmin)
+    {
         RtlFreeSid(psidAdmin);
     }
 
-    if (psidEveryone) {
+    if (psidEveryone)
+    {
         RtlFreeSid(psidEveryone);
     }
 
-    if (pAcl) {
-        GlobalFree (pAcl);
+    if (pAcl)
+    {
+        GlobalFree(pAcl);
     }
     return h;
 }
 
 
-VOID
-APIENTRY
-OutputDebugStringA(
-    IN LPCSTR lpOutputString
-    )
+VOID APIENTRY OutputDebugStringA(IN LPCSTR lpOutputString)
 
 /*++
 
@@ -569,12 +541,14 @@ Return Value:
     // called.
     //
 
-    try {
-        ExceptionArguments[0]=strlen(lpOutputString)+1;
-        ExceptionArguments[1]=(ULONG_PTR)lpOutputString;
-        RaiseException(DBG_PRINTEXCEPTION_C,0,2,ExceptionArguments);
-        }
-    except(EXCEPTION_EXECUTE_HANDLER) {
+    try
+    {
+        ExceptionArguments[0] = strlen(lpOutputString) + 1;
+        ExceptionArguments[1] = (ULONG_PTR)lpOutputString;
+        RaiseException(DBG_PRINTEXCEPTION_C, 0, 2, ExceptionArguments);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // We caught the debug exception, so there's no user-mode
@@ -584,7 +558,7 @@ Return Value:
         // time, so force-feed it.
         //
 
-        char   szBuf[512];
+        char szBuf[512];
         size_t cchRemaining;
         LPCSTR pszRemainingOutput;
 
@@ -600,103 +574,100 @@ Return Value:
         // look for DBWIN.
         //
 
-        if (!DBWinMutex && !CantGetMutex) {
+        if (!DBWinMutex && !CantGetMutex)
+        {
             DBWinMutex = CreateDBWinMutex();
             if (!DBWinMutex)
                 CantGetMutex = TRUE;
         }
 
-        if (DBWinMutex) {
+        if (DBWinMutex)
+        {
 
             WaitForSingleObject(DBWinMutex, INFINITE);
 
             SharedFile = OpenFileMapping(FILE_MAP_WRITE, FALSE, "DBWIN_BUFFER");
 
-            if (SharedFile) {
+            if (SharedFile)
+            {
 
-                SharedMem = MapViewOfFile( SharedFile,
-                                        FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, 0);
-                if (SharedMem) {
+                SharedMem = MapViewOfFile(SharedFile, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
+                if (SharedMem)
+                {
 
-                    AckEvent = OpenEvent(SYNCHRONIZE, FALSE,
-                                                         "DBWIN_BUFFER_READY");
-                    if (AckEvent) {
-                        ReadyEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE,
-                                                           "DBWIN_DATA_READY");
-                        }
+                    AckEvent = OpenEvent(SYNCHRONIZE, FALSE, "DBWIN_BUFFER_READY");
+                    if (AckEvent)
+                    {
+                        ReadyEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, "DBWIN_DATA_READY");
                     }
                 }
-
-            if (!ReadyEvent) {
-                ReleaseMutex(DBWinMutex);
-                }
-
             }
 
-        try {
+            if (!ReadyEvent)
+            {
+                ReleaseMutex(DBWinMutex);
+            }
+        }
+
+        try
+        {
             pszRemainingOutput = lpOutputString;
             cchRemaining = strlen(pszRemainingOutput);
 
-            while (cchRemaining > 0) {
+            while (cchRemaining > 0)
+            {
                 int used;
 
-                if (ReadyEvent && WaitForSingleObject(AckEvent, DBWIN_TIMEOUT)
-                                                            == WAIT_OBJECT_0) {
+                if (ReadyEvent && WaitForSingleObject(AckEvent, DBWIN_TIMEOUT) == WAIT_OBJECT_0)
+                {
 
                     *((DWORD *)SharedMem) = GetCurrentProcessId();
 
-                    used = (int)((cchRemaining < 4095 - sizeof(DWORD)) ?
-                                         cchRemaining : (4095 - sizeof(DWORD)));
+                    used = (int)((cchRemaining < 4095 - sizeof(DWORD)) ? cchRemaining : (4095 - sizeof(DWORD)));
 
-                    RtlCopyMemory(SharedMem+sizeof(DWORD),
-                                  pszRemainingOutput,
-                                  used);
-                    SharedMem[used+sizeof(DWORD)] = 0;
+                    RtlCopyMemory(SharedMem + sizeof(DWORD), pszRemainingOutput, used);
+                    SharedMem[used + sizeof(DWORD)] = 0;
                     SetEvent(ReadyEvent);
-
-                    }
-                else {
-                    used = (int)((cchRemaining < sizeof(szBuf) - 1) ?
-                                           cchRemaining : (int)(sizeof(szBuf) - 1));
+                }
+                else
+                {
+                    used = (int)((cchRemaining < sizeof(szBuf) - 1) ? cchRemaining : (int)(sizeof(szBuf) - 1));
 
                     RtlCopyMemory(szBuf, pszRemainingOutput, used);
                     szBuf[used] = 0;
                     DbgPrint("%s", szBuf);
-                    }
+                }
 
                 pszRemainingOutput += used;
-                cchRemaining       -= used;
-
-                }
+                cchRemaining -= used;
             }
-        except(STATUS_ACCESS_VIOLATION == GetExceptionCode()) {
+        }
+        except(STATUS_ACCESS_VIOLATION == GetExceptionCode())
+        {
             DbgPrint("\nOutputDebugString faulted during output\n");
-            }
-
-        if (AckEvent) {
-            CloseHandle(AckEvent);
-            }
-        if (SharedMem) {
-            UnmapViewOfFile(SharedMem);
-            }
-        if (SharedFile) {
-            CloseHandle(SharedFile);
-            }
-        if (ReadyEvent) {
-            CloseHandle(ReadyEvent);
-            ReleaseMutex(DBWinMutex);
-            }
-
         }
 
+        if (AckEvent)
+        {
+            CloseHandle(AckEvent);
+        }
+        if (SharedMem)
+        {
+            UnmapViewOfFile(SharedMem);
+        }
+        if (SharedFile)
+        {
+            CloseHandle(SharedFile);
+        }
+        if (ReadyEvent)
+        {
+            CloseHandle(ReadyEvent);
+            ReleaseMutex(DBWinMutex);
+        }
+    }
 }
 
-BOOL
-APIENTRY
-WaitForDebugEvent(
-    LPDEBUG_EVENT lpDebugEvent,
-    DWORD dwMilliseconds
-    )
+BOOL APIENTRY WaitForDebugEvent(LPDEBUG_EVENT lpDebugEvent, DWORD dwMilliseconds)
 
 /*++
 
@@ -736,72 +707,73 @@ Return Value:
     PLARGE_INTEGER pTimeOut;
 
 
-    pTimeOut = BaseFormatTimeOut(&TimeOut,dwMilliseconds);
+    pTimeOut = BaseFormatTimeOut(&TimeOut, dwMilliseconds);
 
 again:
-    Status = DbgUiWaitStateChange(&StateChange,pTimeOut);
-    if ( Status == STATUS_ALERTED || Status == STATUS_USER_APC) {
+    Status = DbgUiWaitStateChange(&StateChange, pTimeOut);
+    if (Status == STATUS_ALERTED || Status == STATUS_USER_APC)
+    {
         goto again;
-        }
-    if ( !NT_SUCCESS(Status) && Status != DBG_UNABLE_TO_PROVIDE_HANDLE ) {
-        BaseSetLastNTError(Status);
-        return FALSE;
-        }
-
-    if ( Status == STATUS_TIMEOUT ) {
-        SetLastError(ERROR_SEM_TIMEOUT);
-        return FALSE;
-        }
-    Status = DbgUiConvertStateChangeStructure  (&StateChange, lpDebugEvent);
-    if (!NT_SUCCESS (Status)) {
+    }
+    if (!NT_SUCCESS(Status) && Status != DBG_UNABLE_TO_PROVIDE_HANDLE)
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    switch (lpDebugEvent->dwDebugEventCode) {
+    if (Status == STATUS_TIMEOUT)
+    {
+        SetLastError(ERROR_SEM_TIMEOUT);
+        return FALSE;
+    }
+    Status = DbgUiConvertStateChangeStructure(&StateChange, lpDebugEvent);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return FALSE;
+    }
 
-    case CREATE_THREAD_DEBUG_EVENT :
+    switch (lpDebugEvent->dwDebugEventCode)
+    {
+
+    case CREATE_THREAD_DEBUG_EVENT:
         //
         // Save away thread handle for later cleanup.
         //
-        SaveThreadHandle (lpDebugEvent->dwProcessId,
-                          lpDebugEvent->dwThreadId,
-                          lpDebugEvent->u.CreateThread.hThread);
+        SaveThreadHandle(lpDebugEvent->dwProcessId, lpDebugEvent->dwThreadId, lpDebugEvent->u.CreateThread.hThread);
         break;
 
-    case CREATE_PROCESS_DEBUG_EVENT :
+    case CREATE_PROCESS_DEBUG_EVENT:
 
-        SaveProcessHandle (lpDebugEvent->dwProcessId,
-                           lpDebugEvent->u.CreateProcessInfo.hProcess);
+        SaveProcessHandle(lpDebugEvent->dwProcessId, lpDebugEvent->u.CreateProcessInfo.hProcess);
 
-        SaveThreadHandle (lpDebugEvent->dwProcessId,
-                          lpDebugEvent->dwThreadId,
-                          lpDebugEvent->u.CreateProcessInfo.hThread);
+        SaveThreadHandle(lpDebugEvent->dwProcessId, lpDebugEvent->dwThreadId,
+                         lpDebugEvent->u.CreateProcessInfo.hThread);
 
         break;
 
-    case EXIT_THREAD_DEBUG_EVENT :
+    case EXIT_THREAD_DEBUG_EVENT:
 
-        MarkThreadHandle (lpDebugEvent->dwThreadId);
-
-        break;
-
-    case EXIT_PROCESS_DEBUG_EVENT :
-
-        MarkThreadHandle (lpDebugEvent->dwThreadId);
-        MarkProcessHandle (lpDebugEvent->dwProcessId);
+        MarkThreadHandle(lpDebugEvent->dwThreadId);
 
         break;
 
-    case OUTPUT_DEBUG_STRING_EVENT :
-    case RIP_EVENT :
-    case EXCEPTION_DEBUG_EVENT :
+    case EXIT_PROCESS_DEBUG_EVENT:
+
+        MarkThreadHandle(lpDebugEvent->dwThreadId);
+        MarkProcessHandle(lpDebugEvent->dwProcessId);
+
         break;
 
-    case LOAD_DLL_DEBUG_EVENT :
+    case OUTPUT_DEBUG_STRING_EVENT:
+    case RIP_EVENT:
+    case EXCEPTION_DEBUG_EVENT:
         break;
 
-    case UNLOAD_DLL_DEBUG_EVENT :
+    case LOAD_DLL_DEBUG_EVENT:
+        break;
+
+    case UNLOAD_DLL_DEBUG_EVENT:
         break;
 
     default:
@@ -810,13 +782,7 @@ again:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-ContinueDebugEvent(
-    DWORD dwProcessId,
-    DWORD dwThreadId,
-    DWORD dwContinueStatus
-    )
+BOOL APIENTRY ContinueDebugEvent(DWORD dwProcessId, DWORD dwThreadId, DWORD dwContinueStatus)
 
 /*++
 
@@ -895,53 +861,51 @@ Return Value:
     ClientId.UniqueThread = (HANDLE)LongToHandle(dwThreadId);
 
 
-    Status = DbgUiContinue(&ClientId,(NTSTATUS)dwContinueStatus);
-    if ( !NT_SUCCESS(Status) ) {
+    Status = DbgUiContinue(&ClientId, (NTSTATUS)dwContinueStatus);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
-    RemoveHandles (dwThreadId, dwProcessId);
+    RemoveHandles(dwThreadId, dwProcessId);
 
     return TRUE;
 }
 
 HANDLE
-ProcessIdToHandle (
-    IN DWORD dwProcessId
-    )
+ProcessIdToHandle(IN DWORD dwProcessId)
 {
     OBJECT_ATTRIBUTES oa;
     HANDLE Process;
     CLIENT_ID ClientId;
     NTSTATUS Status;
 
-    if (dwProcessId == -1) {
-        ClientId.UniqueProcess = CsrGetProcessId ();
-    } else {
+    if (dwProcessId == -1)
+    {
+        ClientId.UniqueProcess = CsrGetProcessId();
+    }
+    else
+    {
         ClientId.UniqueProcess = LongToHandle(dwProcessId);
     }
     ClientId.UniqueThread = NULL;
 
-    InitializeObjectAttributes (&oa, NULL, 0, NULL, NULL);
+    InitializeObjectAttributes(&oa, NULL, 0, NULL, NULL);
 
-    Status = NtOpenProcess (&Process,
-                            PROCESS_SET_PORT|PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|
-                                PROCESS_VM_WRITE|PROCESS_VM_READ,
-                            &oa,
-                            &ClientId);
-    if (!NT_SUCCESS(Status)) {
+    Status = NtOpenProcess(&Process,
+                           PROCESS_SET_PORT | PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION |
+                               PROCESS_VM_WRITE | PROCESS_VM_READ,
+                           &oa, &ClientId);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         Process = NULL;
     }
     return Process;
 }
 
-BOOL
-APIENTRY
-DebugActiveProcess(
-    DWORD dwProcessId
-    )
+BOOL APIENTRY DebugActiveProcess(DWORD dwProcessId)
 
 /*++
 
@@ -1011,9 +975,10 @@ Return Value:
     // Connect to dbgss as a user interface
     //
 
-    Status = DbgUiConnectToDbg ();
-    if (!NT_SUCCESS (Status)) {
-        BaseSetLastNTError (Status);
+    Status = DbgUiConnectToDbg();
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return FALSE;
     }
 
@@ -1021,32 +986,30 @@ Return Value:
     //
     // Convert the process ID to a handle
     //
-    Process = ProcessIdToHandle (dwProcessId);
-    if (Process == NULL) {
+    Process = ProcessIdToHandle(dwProcessId);
+    if (Process == NULL)
+    {
         return FALSE;
     }
 
 
-    Status = DbgUiDebugActiveProcess (Process);
+    Status = DbgUiDebugActiveProcess(Process);
 
-    if (!NT_SUCCESS (Status))  {
-        Status1 = NtClose (Process);
-        ASSERT (NT_SUCCESS (Status1));
-        BaseSetLastNTError (Status);
+    if (!NT_SUCCESS(Status))
+    {
+        Status1 = NtClose(Process);
+        ASSERT(NT_SUCCESS(Status1));
+        BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    Status1 = NtClose (Process);
-    ASSERT (NT_SUCCESS (Status1));
+    Status1 = NtClose(Process);
+    ASSERT(NT_SUCCESS(Status1));
 
     return TRUE;
 }
 
-BOOL
-APIENTRY
-DebugActiveProcessStop(
-    DWORD dwProcessId
-    )
+BOOL APIENTRY DebugActiveProcessStop(DWORD dwProcessId)
 
 /*++
 
@@ -1074,22 +1037,24 @@ Return Value:
     NTSTATUS Status1;
     DWORD ThreadId;
 
-    Process = ProcessIdToHandle (dwProcessId);
-    if (Process == NULL) {
+    Process = ProcessIdToHandle(dwProcessId);
+    if (Process == NULL)
+    {
         return FALSE;
     }
     //
     // Tell dbgss we have finished with this process.
     //
 
-    CloseAllProcessHandles (dwProcessId);
-    Status = DbgUiStopDebugging (Process);
+    CloseAllProcessHandles(dwProcessId);
+    Status = DbgUiStopDebugging(Process);
 
-    Status1 = NtClose (Process);
+    Status1 = NtClose(Process);
 
-    ASSERT (NT_SUCCESS (Status1));
+    ASSERT(NT_SUCCESS(Status1));
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         SetLastError(ERROR_ACCESS_DENIED);
         return FALSE;
     }
@@ -1097,11 +1062,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-DebugBreakProcess (
-    IN HANDLE Process
-    )
+BOOL APIENTRY DebugBreakProcess(IN HANDLE Process)
 /*++
 
 Routine Description:
@@ -1123,20 +1084,19 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = DbgUiIssueRemoteBreakin (Process);
-    if (NT_SUCCESS (Status)) {
+    Status = DbgUiIssueRemoteBreakin(Process);
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-    } else {
-        BaseSetLastNTError (Status);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
         return FALSE;
     }
 }
 
-BOOL
-APIENTRY
-DebugSetProcessKillOnExit (
-    IN BOOL KillOnExit
-    )
+BOOL APIENTRY DebugSetProcessKillOnExit(IN BOOL KillOnExit)
 /*++
 
 Routine Description:
@@ -1160,37 +1120,32 @@ Return Value:
     ULONG Flags;
     NTSTATUS Status;
 
-    DebugHandle = DbgUiGetThreadDebugObject ();
-    if (DebugHandle == NULL) {
-        BaseSetLastNTError (STATUS_INVALID_HANDLE);
+    DebugHandle = DbgUiGetThreadDebugObject();
+    if (DebugHandle == NULL)
+    {
+        BaseSetLastNTError(STATUS_INVALID_HANDLE);
         return FALSE;
     }
 
-    if (KillOnExit) {
+    if (KillOnExit)
+    {
         Flags = DEBUG_KILL_ON_CLOSE;
-    } else {
+    }
+    else
+    {
         Flags = 0;
     }
 
-    Status = NtSetInformationDebugObject (DebugHandle,
-                                          DebugObjectFlags,
-                                          &Flags,
-                                          sizeof (Flags),
-                                          NULL);
-    if (!NT_SUCCESS (Status)) {
-        BaseSetLastNTError (Status);
+    Status = NtSetInformationDebugObject(DebugHandle, DebugObjectFlags, &Flags, sizeof(Flags), NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return FALSE;
     }
     return TRUE;
 }
 
-BOOL
-APIENTRY
-GetThreadSelectorEntry(
-    HANDLE hThread,
-    DWORD dwSelector,
-    LPLDT_ENTRY lpSelectorEntry
-    )
+BOOL APIENTRY GetThreadSelectorEntry(HANDLE hThread, DWORD dwSelector, LPLDT_ENTRY lpSelectorEntry)
 
 /*++
 
@@ -1237,17 +1192,13 @@ Return Value:
     NTSTATUS Status;
 
     DescriptorEntry.Selector = dwSelector;
-    Status = NtQueryInformationThread(
-                hThread,
-                ThreadDescriptorTableEntry,
-                &DescriptorEntry,
-                sizeof(DescriptorEntry),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status =
+        NtQueryInformationThread(hThread, ThreadDescriptorTableEntry, &DescriptorEntry, sizeof(DescriptorEntry), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     *lpSelectorEntry = DescriptorEntry.Descriptor;
     return TRUE;
 
@@ -1255,5 +1206,4 @@ Return Value:
     BaseSetLastNTError(STATUS_NOT_SUPPORTED);
     return FALSE;
 #endif // i386
-
 }

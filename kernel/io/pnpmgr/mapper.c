@@ -29,7 +29,7 @@ Revision History :
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'rpaM')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'rpaM')
 #endif
 
 
@@ -38,58 +38,62 @@ Revision History :
 // tree of the registry
 //
 
-typedef struct _FIRMWARE_CONFIGURATION {
+typedef struct _FIRMWARE_CONFIGURATION
+{
     struct _FIRMWARE_CONFIGURATION *Next;
-    INTERFACE_TYPE     BusType;
-    ULONG              BusNumber;
+    INTERFACE_TYPE BusType;
+    ULONG BusNumber;
     CONFIGURATION_TYPE ControllerType;
-    ULONG              ControllerNumber;
+    ULONG ControllerNumber;
     CONFIGURATION_TYPE PeripheralType;
-    ULONG              PeripheralNumber;
-    ULONG              NumberBases;
-    ULONG              ResourceDescriptorSize;
-    PVOID              ResourceDescriptor;
-    ULONG              IdentifierLength;
-    ULONG              IdentifierType;
-    PVOID              Identifier;
-    WCHAR const*       PnPId;
-    BOOLEAN            NewlyCreated;
+    ULONG PeripheralNumber;
+    ULONG NumberBases;
+    ULONG ResourceDescriptorSize;
+    PVOID ResourceDescriptor;
+    ULONG IdentifierLength;
+    ULONG IdentifierType;
+    PVOID Identifier;
+    WCHAR const *PnPId;
+    BOOLEAN NewlyCreated;
 } FIRMWARE_CONFIGURATION, *PFIRMWARE_CONFIGURATION;
 
 //
 // Device extension information
 //
 
-typedef struct _DEVICE_EXTENSION {
-    PDEVICE_OBJECT     DeviceObject;
-    PDRIVER_OBJECT     DriverObject;
-    INTERFACE_TYPE     InterfaceType;
-    ULONG              BusNumber;
+typedef struct _DEVICE_EXTENSION
+{
+    PDEVICE_OBJECT DeviceObject;
+    PDRIVER_OBJECT DriverObject;
+    INTERFACE_TYPE InterfaceType;
+    ULONG BusNumber;
     PFIRMWARE_CONFIGURATION FirmwareList;
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 //
 // mapping table from firmware to enum
 //
 
-typedef struct _FIRMWARE_IDENT_TO_PNP_ID {
-    PWCHAR  FirmwareName;
-    PWCHAR  PnPId;
+typedef struct _FIRMWARE_IDENT_TO_PNP_ID
+{
+    PWCHAR FirmwareName;
+    PWCHAR PnPId;
 } FIRMWARE_IDENT_TO_PNP_ID, *PFIRMWARE_IDENT_TO_PNP_ID;
 
 //
 // table to hold seed information for a firmware tree entry.
 //
 
-#define OPTIONS_NONE                    0x00000000
-#define OPTIONS_INSERT_PNP_ID           0x00000001
-#define OPTIONS_INSERT_DEVICEDESC       0x00000002
-#define OPTIONS_INSERT_COMPATIBLE_IDS   0x00000004
-#define OPTIONS_INSERT_PHANTOM_MARKER   0x00000008
-typedef struct _MAPPER_SEED {
-    PWCHAR  ValueName;
-    ULONG   ValueType;
-    ULONG   DwordValueContent;
-    ULONG   Options;
+#define OPTIONS_NONE 0x00000000
+#define OPTIONS_INSERT_PNP_ID 0x00000001
+#define OPTIONS_INSERT_DEVICEDESC 0x00000002
+#define OPTIONS_INSERT_COMPATIBLE_IDS 0x00000004
+#define OPTIONS_INSERT_PHANTOM_MARKER 0x00000008
+typedef struct _MAPPER_SEED
+{
+    PWCHAR ValueName;
+    ULONG ValueType;
+    ULONG DwordValueContent;
+    ULONG Options;
 } MAPPER_SEED, *PMAPPER_SEED;
 
 //
@@ -97,12 +101,13 @@ typedef struct _MAPPER_SEED {
 // in the root enumerator tree
 //
 
-#define KEY_SEED_REQUIRED               0x00000000
-#define KEY_SEED_DEVICE_PARAMETERS      0x00000001
-typedef struct _KEY_SEED {
-    PWCHAR  KeyName;
-    ULONG   Attribute;
-    ULONG   Options;
+#define KEY_SEED_REQUIRED 0x00000000
+#define KEY_SEED_DEVICE_PARAMETERS 0x00000001
+typedef struct _KEY_SEED
+{
+    PWCHAR KeyName;
+    ULONG Attribute;
+    ULONG Options;
 } KEY_SEED, *PKEY_SEED;
 
 
@@ -122,46 +127,69 @@ DEVICE_EXTENSION MapperDeviceExtension;
 // to the root enumerator PNP id for keyboard devices.
 //
 
-const FIRMWARE_IDENT_TO_PNP_ID KeyboardMap[] = {
-    L"XT_83KEY",        L"*PNP0300",
-    L"PCAT_86KEY",      L"*PNP0301",
-    L"PCXT_84KEY",      L"*PNP0302",
-    L"XT_84KEY",        L"*PNP0302",
-    L"101-KEY",         L"*PNP0303",
-    L"OLI_83KEY",       L"*PNP0304",
-    L"ATT_301",         L"*PNP0304",
-    L"OLI_102KEY",      L"*PNP0305",
-    L"OLI_86KEY",       L"*PNP0306",
-    L"OLI_A101_102KEY", L"*PNP0309",
-    L"ATT_302",         L"*PNP030a",
-    L"PCAT_ENHANCED",   L"*PNP030b",
-    L"PC98_106KEY",     L"*nEC1300",
-    L"PC98_LaptopKEY",  L"*nEC1300",
-    L"PC98_N106KEY",    L"*PNP0303",
-    NULL, NULL
-};
+const FIRMWARE_IDENT_TO_PNP_ID KeyboardMap[] = { L"XT_83KEY",
+                                                 L"*PNP0300",
+                                                 L"PCAT_86KEY",
+                                                 L"*PNP0301",
+                                                 L"PCXT_84KEY",
+                                                 L"*PNP0302",
+                                                 L"XT_84KEY",
+                                                 L"*PNP0302",
+                                                 L"101-KEY",
+                                                 L"*PNP0303",
+                                                 L"OLI_83KEY",
+                                                 L"*PNP0304",
+                                                 L"ATT_301",
+                                                 L"*PNP0304",
+                                                 L"OLI_102KEY",
+                                                 L"*PNP0305",
+                                                 L"OLI_86KEY",
+                                                 L"*PNP0306",
+                                                 L"OLI_A101_102KEY",
+                                                 L"*PNP0309",
+                                                 L"ATT_302",
+                                                 L"*PNP030a",
+                                                 L"PCAT_ENHANCED",
+                                                 L"*PNP030b",
+                                                 L"PC98_106KEY",
+                                                 L"*nEC1300",
+                                                 L"PC98_LaptopKEY",
+                                                 L"*nEC1300",
+                                                 L"PC98_N106KEY",
+                                                 L"*PNP0303",
+                                                 NULL,
+                                                 NULL };
 
-#define PS2_KEYBOARD_COMPATIBLE_ID  L"PS2_KEYBOARD"
-#define PS2_MOUSE_COMPATIBLE_ID     L"PS2_MOUSE"
+#define PS2_KEYBOARD_COMPATIBLE_ID L"PS2_KEYBOARD"
+#define PS2_MOUSE_COMPATIBLE_ID L"PS2_MOUSE"
 
 //
 // This table is used to translate the firmware tree information
 // to the root enumerator PNP id for pointer devices.
 //
 
-const FIRMWARE_IDENT_TO_PNP_ID PointerMap[] = {
-    L"PS2 MOUSE",                        L"*PNP0F0E",
-    L"SERIAL MOUSE",                     L"*PNP0F0C",
-    L"MICROSOFT PS2 MOUSE",              L"*PNP0F03",
-    L"LOGITECH PS2 MOUSE",               L"*PNP0F12",
-    L"MICROSOFT INPORT MOUSE",           L"*PNP0F02",
-    L"MICROSOFT SERIAL MOUSE",           L"*PNP0F01",
-    L"MICROSOFT BALLPOINT SERIAL MOUSE", L"*PNP0F09",
-    L"LOGITECH SERIAL MOUSE",            L"*PNP0F08",
-    L"MICROSOFT BUS MOUSE",              L"*PNP0F00",
-    L"NEC PC-9800 BUS MOUSE",            L"*nEC1F00",
-    NULL, NULL
-};
+const FIRMWARE_IDENT_TO_PNP_ID PointerMap[] = { L"PS2 MOUSE",
+                                                L"*PNP0F0E",
+                                                L"SERIAL MOUSE",
+                                                L"*PNP0F0C",
+                                                L"MICROSOFT PS2 MOUSE",
+                                                L"*PNP0F03",
+                                                L"LOGITECH PS2 MOUSE",
+                                                L"*PNP0F12",
+                                                L"MICROSOFT INPORT MOUSE",
+                                                L"*PNP0F02",
+                                                L"MICROSOFT SERIAL MOUSE",
+                                                L"*PNP0F01",
+                                                L"MICROSOFT BALLPOINT SERIAL MOUSE",
+                                                L"*PNP0F09",
+                                                L"LOGITECH SERIAL MOUSE",
+                                                L"*PNP0F08",
+                                                L"MICROSOFT BUS MOUSE",
+                                                L"*PNP0F00",
+                                                L"NEC PC-9800 BUS MOUSE",
+                                                L"*nEC1F00",
+                                                NULL,
+                                                NULL };
 
 //
 // the MapperValueSeed table is a NULL terminated table (i.e. the name
@@ -169,14 +197,30 @@ const FIRMWARE_IDENT_TO_PNP_ID PointerMap[] = {
 // for insertion in a newly created root enumerator key.
 //
 
-const MAPPER_SEED MapperValueSeed[] = {
-    REGSTR_VALUE_HARDWAREID,       REG_MULTI_SZ, 0, OPTIONS_INSERT_PNP_ID,
-    REGSTR_VALUE_COMPATIBLEIDS,    REG_MULTI_SZ, 0, OPTIONS_INSERT_COMPATIBLE_IDS,
-    REGSTR_VAL_FIRMWAREIDENTIFIED, REG_DWORD,    1, OPTIONS_NONE,
-    REGSTR_VAL_DEVDESC,            REG_SZ,       0, OPTIONS_INSERT_DEVICEDESC,
-    REGSTR_VAL_PHANTOM,            REG_DWORD,    1, OPTIONS_INSERT_PHANTOM_MARKER,
-    NULL, 0, 0, 0
-};
+const MAPPER_SEED MapperValueSeed[] = { REGSTR_VALUE_HARDWAREID,
+                                        REG_MULTI_SZ,
+                                        0,
+                                        OPTIONS_INSERT_PNP_ID,
+                                        REGSTR_VALUE_COMPATIBLEIDS,
+                                        REG_MULTI_SZ,
+                                        0,
+                                        OPTIONS_INSERT_COMPATIBLE_IDS,
+                                        REGSTR_VAL_FIRMWAREIDENTIFIED,
+                                        REG_DWORD,
+                                        1,
+                                        OPTIONS_NONE,
+                                        REGSTR_VAL_DEVDESC,
+                                        REG_SZ,
+                                        0,
+                                        OPTIONS_INSERT_DEVICEDESC,
+                                        REGSTR_VAL_PHANTOM,
+                                        REG_DWORD,
+                                        1,
+                                        OPTIONS_INSERT_PHANTOM_MARKER,
+                                        NULL,
+                                        0,
+                                        0,
+                                        0 };
 
 //
 // the MapperKeySeed table is a NULL terminated table (i.e. the name
@@ -187,12 +231,18 @@ const MAPPER_SEED MapperValueSeed[] = {
 // The preceeding backslash is required on all entries in this table.
 //
 
-const KEY_SEED MapperKeySeed[] = {
-    L"\\Control",           REG_OPTION_VOLATILE,     KEY_SEED_REQUIRED,
-    L"\\LogConf",           REG_OPTION_NON_VOLATILE, KEY_SEED_REQUIRED,
-    L"",                    REG_OPTION_NON_VOLATILE, KEY_SEED_DEVICE_PARAMETERS,
-    NULL, 0, 0
-};
+const KEY_SEED MapperKeySeed[] = { L"\\Control",
+                                   REG_OPTION_VOLATILE,
+                                   KEY_SEED_REQUIRED,
+                                   L"\\LogConf",
+                                   REG_OPTION_NON_VOLATILE,
+                                   KEY_SEED_REQUIRED,
+                                   L"",
+                                   REG_OPTION_NON_VOLATILE,
+                                   KEY_SEED_DEVICE_PARAMETERS,
+                                   NULL,
+                                   0,
+                                   0 };
 
 //
 // SerialId is used as the PNP id for all serial controllers.
@@ -225,75 +275,34 @@ const WCHAR ATAId[] = L"*PNP0600";
 // Proto type declarations
 //
 
-FIRMWARE_IDENT_TO_PNP_ID const*
-MapperFindIdentMatch(
-    FIRMWARE_IDENT_TO_PNP_ID const* IdentTable,
-    PWCHAR String
-    );
+FIRMWARE_IDENT_TO_PNP_ID const *MapperFindIdentMatch(FIRMWARE_IDENT_TO_PNP_ID const *IdentTable, PWCHAR String);
 
-WCHAR const*
-MapperTranslatePnPId(
-    CONFIGURATION_TYPE PeripheralType,
-    PKEY_VALUE_FULL_INFORMATION Identifier
-    );
+WCHAR const *MapperTranslatePnPId(CONFIGURATION_TYPE PeripheralType, PKEY_VALUE_FULL_INFORMATION Identifier);
 
 NTSTATUS
-MapperPeripheralCallback(
-    IN PVOID                        Context,
-    IN PUNICODE_STRING              PathName,
-    IN INTERFACE_TYPE               BusType,
-    IN ULONG                        BusNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *BusInformation,
-    IN CONFIGURATION_TYPE           ControllerType,
-    IN ULONG                        ControllerNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
-    IN CONFIGURATION_TYPE           PeripheralType,
-    IN ULONG                        PeripheralNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation
-    );
+MapperPeripheralCallback(IN PVOID Context, IN PUNICODE_STRING PathName, IN INTERFACE_TYPE BusType, IN ULONG BusNumber,
+                         IN PKEY_VALUE_FULL_INFORMATION *BusInformation, IN CONFIGURATION_TYPE ControllerType,
+                         IN ULONG ControllerNumber, IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
+                         IN CONFIGURATION_TYPE PeripheralType, IN ULONG PeripheralNumber,
+                         IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation);
 
 NTSTATUS
-MapperCallback(
-    IN PVOID                        Context,
-    IN PUNICODE_STRING              PathName,
-    IN INTERFACE_TYPE               BusType,
-    IN ULONG                        BusNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *BusInformation,
-    IN CONFIGURATION_TYPE           ControllerType,
-    IN ULONG                        ControllerNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
-    IN CONFIGURATION_TYPE           PeripheralType,
-    IN ULONG                        PeripheralNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation
-    );
+MapperCallback(IN PVOID Context, IN PUNICODE_STRING PathName, IN INTERFACE_TYPE BusType, IN ULONG BusNumber,
+               IN PKEY_VALUE_FULL_INFORMATION *BusInformation, IN CONFIGURATION_TYPE ControllerType,
+               IN ULONG ControllerNumber, IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
+               IN CONFIGURATION_TYPE PeripheralType, IN ULONG PeripheralNumber,
+               IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation);
 
-VOID
-MapperMarkKey(
-    IN HANDLE Handle,
-    IN PUNICODE_STRING  PathName,
-    IN PFIRMWARE_CONFIGURATION FirmwareEntry
-    );
+VOID MapperMarkKey(IN HANDLE Handle, IN PUNICODE_STRING PathName, IN PFIRMWARE_CONFIGURATION FirmwareEntry);
 
-VOID
-MapperSeedKey(
-    IN HANDLE                  Handle,
-    IN PUNICODE_STRING         PathName,
-    IN PFIRMWARE_CONFIGURATION FirmwareEntry,
-    IN BOOLEAN                 DeviceIsPhantom
-    );
+VOID MapperSeedKey(IN HANDLE Handle, IN PUNICODE_STRING PathName, IN PFIRMWARE_CONFIGURATION FirmwareEntry,
+                   IN BOOLEAN DeviceIsPhantom);
 
 PCM_RESOURCE_LIST
-MapperAdjustResourceList (
-    IN     PCM_RESOURCE_LIST ResourceList,
-    IN     WCHAR const*      PnPId,
-    IN OUT PULONG            Size
-    );
+MapperAdjustResourceList(IN PCM_RESOURCE_LIST ResourceList, IN WCHAR const *PnPId, IN OUT PULONG Size);
 
 NTSTATUS
-ComPortDBAdd(
-    IN  HANDLE  DeviceParamKey,
-    IN  PWSTR   PortName
-    );
+ComPortDBAdd(IN HANDLE DeviceParamKey, IN PWSTR PortName);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, MapperFindIdentMatch)
@@ -309,12 +318,8 @@ ComPortDBAdd(
 #pragma alloc_text(INIT, ComPortDBAdd)
 #pragma alloc_text(INIT, MapperPhantomizeDetectedComPorts)
 #endif
-
-FIRMWARE_IDENT_TO_PNP_ID const*
-MapperFindIdentMatch(
-    FIRMWARE_IDENT_TO_PNP_ID const* IdentTable,
-    PWCHAR                    String
-    )
+
+FIRMWARE_IDENT_TO_PNP_ID const *MapperFindIdentMatch(FIRMWARE_IDENT_TO_PNP_ID const *IdentTable, PWCHAR String)
 
 /*++
 
@@ -333,23 +338,21 @@ Return Value:
 --*/
 
 {
-    FIRMWARE_IDENT_TO_PNP_ID const* entry;
+    FIRMWARE_IDENT_TO_PNP_ID const *entry;
 
     entry = IdentTable;
-    while (entry->FirmwareName) {
-        if (!wcscmp(String, entry->FirmwareName)) {
+    while (entry->FirmwareName)
+    {
+        if (!wcscmp(String, entry->FirmwareName))
+        {
             return entry;
         }
         entry++;
     }
     return NULL;
 }
-
-WCHAR const*
-MapperTranslatePnPId(
-    CONFIGURATION_TYPE          PeripheralType,
-    PKEY_VALUE_FULL_INFORMATION Identifier
-    )
+
+WCHAR const *MapperTranslatePnPId(CONFIGURATION_TYPE PeripheralType, PKEY_VALUE_FULL_INFORMATION Identifier)
 
 /*++
 
@@ -372,135 +375,108 @@ Return Value:
 --*/
 
 {
-    FIRMWARE_IDENT_TO_PNP_ID const* identMap;
+    FIRMWARE_IDENT_TO_PNP_ID const *identMap;
     PWSTR identifierString = NULL;
-    WCHAR const* idStr;
+    WCHAR const *idStr;
 
-    if (Identifier) {
+    if (Identifier)
+    {
         identifierString = (PWSTR)((PUCHAR)Identifier + Identifier->DataOffset);
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "Mapper: identifier = %ws\n\tType = ",
-                    identifierString));
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: identifier = %ws\n\tType = ", identifierString));
     }
 
     idStr = NULL;
-    switch (PeripheralType) {
+    switch (PeripheralType)
+    {
     case DiskController:
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "%s (%d)\n",
-                    "DiskController",
-                    PeripheralType));
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%s (%d)\n", "DiskController", PeripheralType));
         idStr = FloppyId;
         break;
 
     case SerialController:
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "%s (%d)\n",
-                    "SerialController",
-                    PeripheralType));
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%s (%d)\n", "SerialController", PeripheralType));
         idStr = SerialId;
         break;
 
     case ParallelController:
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "%s (%d)\n",
-                    "ParallelController",
-                    PeripheralType));
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%s (%d)\n", "ParallelController", PeripheralType));
         idStr = ParallelId;
         break;
 
     case PointerController:
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "%s (%d)\n",
-                    "PointerController",
-                    PeripheralType));
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%s (%d)\n", "PointerController", PeripheralType));
         idStr = PointerMap[0].PnPId;
         break;
 
     case KeyboardController:
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "%s (%d)\n",
-                    "KeyboardController",
-                    PeripheralType));
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%s (%d)\n", "KeyboardController", PeripheralType));
         idStr = KeyboardMap[0].PnPId;
         break;
 
     case DiskPeripheral:
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "%s (%d)\n",
-                    "DiskPeripheral",
-                    PeripheralType));
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%s (%d)\n", "DiskPeripheral", PeripheralType));
         break;
 
     case FloppyDiskPeripheral:
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "%s (%d)\n",
-                    "FloppyDiskPeripheral",
-                    PeripheralType));
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%s (%d)\n", "FloppyDiskPeripheral", PeripheralType));
         idStr = FloppyId;
         break;
 
     case PointerPeripheral:
-        if (identifierString) {
+        if (identifierString)
+        {
             identMap = MapperFindIdentMatch(PointerMap, identifierString);
-            if (identMap) {
-                IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                            "%ws\n",
-                            identMap->PnPId));
+            if (identMap)
+            {
+                IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%ws\n", identMap->PnPId));
                 idStr = identMap->PnPId;
-            } else {
-                IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                            "Mapper: No pointer match found\n"));
             }
-        } else {
-            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                        "Mapper: No identifier specified\n"));
+            else
+            {
+                IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: No pointer match found\n"));
+            }
+        }
+        else
+        {
+            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: No identifier specified\n"));
         }
         break;
 
     case KeyboardPeripheral:
-        if (identifierString) {
+        if (identifierString)
+        {
             identMap = MapperFindIdentMatch(KeyboardMap, identifierString);
 
-            if (identMap) {
-                IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                            "%ws\n",
-                            identMap->PnPId));
+            if (identMap)
+            {
+                IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "%ws\n", identMap->PnPId));
                 idStr = identMap->PnPId;
-            } else {
-                IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                            "Mapper: No keyboard match found\n"));
             }
-        } else {
-            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                        "Mapper: No identifier specified\n"));
+            else
+            {
+                IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: No keyboard match found\n"));
+            }
+        }
+        else
+        {
+            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: No identifier specified\n"));
         }
         break;
 
     default:
-        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                    "Mapper: Unknown device (%d)\n",
-                    PeripheralType));
+        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: Unknown device (%d)\n", PeripheralType));
         break;
     }
     return idStr;
 }
 
-
+
 NTSTATUS
-MapperPeripheralCallback(
-    IN PVOID                        Context,
-    IN PUNICODE_STRING              PathName,
-    IN INTERFACE_TYPE               BusType,
-    IN ULONG                        BusNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *BusInformation,
-    IN CONFIGURATION_TYPE           ControllerType,
-    IN ULONG                        ControllerNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
-    IN CONFIGURATION_TYPE           PeripheralType,
-    IN ULONG                        PeripheralNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation
-    )
+MapperPeripheralCallback(IN PVOID Context, IN PUNICODE_STRING PathName, IN INTERFACE_TYPE BusType, IN ULONG BusNumber,
+                         IN PKEY_VALUE_FULL_INFORMATION *BusInformation, IN CONFIGURATION_TYPE ControllerType,
+                         IN ULONG ControllerNumber, IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
+                         IN CONFIGURATION_TYPE PeripheralType, IN ULONG PeripheralNumber,
+                         IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation)
 
 /*++
 
@@ -534,29 +510,27 @@ Return Value:
 --*/
 
 {
-    PFIRMWARE_CONFIGURATION     firmwareEntry = Context;
+    PFIRMWARE_CONFIGURATION firmwareEntry = Context;
     PKEY_VALUE_FULL_INFORMATION information;
-    ULONG                       dataLength;
-    PWCHAR                      ptr;
-    PVOID                       temp;
+    ULONG dataLength;
+    PWCHAR ptr;
+    PVOID temp;
 
-    UNREFERENCED_PARAMETER( BusType );
-    UNREFERENCED_PARAMETER( BusNumber );
-    UNREFERENCED_PARAMETER( BusInformation );
-    UNREFERENCED_PARAMETER( ControllerType );
-    UNREFERENCED_PARAMETER( ControllerNumber );
+    UNREFERENCED_PARAMETER(BusType);
+    UNREFERENCED_PARAMETER(BusNumber);
+    UNREFERENCED_PARAMETER(BusInformation);
+    UNREFERENCED_PARAMETER(ControllerType);
+    UNREFERENCED_PARAMETER(ControllerNumber);
 
-    IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                "Mapper: peripheral registry location is\n %ws\n",
-                PathName->Buffer));
+    IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: peripheral registry location is\n %ws\n", PathName->Buffer));
 
-    if (!ControllerInformation) {
-        IopDbgPrint((IOP_MAPPER_VERBOSE_LEVEL,
-                    "Mapper: No component information\n"));
+    if (!ControllerInformation)
+    {
+        IopDbgPrint((IOP_MAPPER_VERBOSE_LEVEL, "Mapper: No component information\n"));
     }
-    if (!PeripheralInformation) {
-        IopDbgPrint((IOP_MAPPER_VERBOSE_LEVEL,
-                    "Mapper: No peripheral information\n"));
+    if (!PeripheralInformation)
+    {
+        IopDbgPrint((IOP_MAPPER_VERBOSE_LEVEL, "Mapper: No peripheral information\n"));
         return STATUS_SUCCESS;
     }
 
@@ -564,31 +538,36 @@ Return Value:
     // Map the PnP Id for this device.
     //
 
-    if (PeripheralInformation[IoQueryDeviceIdentifier]) {
+    if (PeripheralInformation[IoQueryDeviceIdentifier])
+    {
         information = PeripheralInformation[IoQueryDeviceIdentifier];
         firmwareEntry->PnPId = MapperTranslatePnPId(PeripheralType, information);
 
-        if (firmwareEntry->PnPId) {
+        if (firmwareEntry->PnPId)
+        {
             //
             // Remember the peripheral's identifier (if it has one, and it's a REG_SZ value)
             // for use as the default PnP device description.
             //
 
-            if (((dataLength = information->DataLength) > sizeof(WCHAR)) &&
-                (information->Type == REG_SZ)) {
+            if (((dataLength = information->DataLength) > sizeof(WCHAR)) && (information->Type == REG_SZ))
+            {
 
-                ptr = (PWCHAR) ((PUCHAR)information + information->DataOffset);
+                ptr = (PWCHAR)((PUCHAR)information + information->DataOffset);
 
-                if (*ptr) {
+                if (*ptr)
+                {
                     temp = ExAllocatePool(NonPagedPool, dataLength);
-                    if (temp) {
+                    if (temp)
+                    {
 
                         //
                         // If there's already an identifier here (from the peripheral's
                         // controller) then wipe it out.
                         //
 
-                        if(firmwareEntry->Identifier) {
+                        if (firmwareEntry->Identifier)
+                        {
                             ExFreePool(firmwareEntry->Identifier);
                         }
 
@@ -615,21 +594,13 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-MapperCallback(
-    IN PVOID                        Context,
-    IN PUNICODE_STRING              PathName,
-    IN INTERFACE_TYPE               BusType,
-    IN ULONG                        BusNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *BusInformation,
-    IN CONFIGURATION_TYPE           ControllerType,
-    IN ULONG                        ControllerNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
-    IN CONFIGURATION_TYPE           PeripheralType,
-    IN ULONG                        PeripheralNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation
-    )
+MapperCallback(IN PVOID Context, IN PUNICODE_STRING PathName, IN INTERFACE_TYPE BusType, IN ULONG BusNumber,
+               IN PKEY_VALUE_FULL_INFORMATION *BusInformation, IN CONFIGURATION_TYPE ControllerType,
+               IN ULONG ControllerNumber, IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
+               IN CONFIGURATION_TYPE PeripheralType, IN ULONG PeripheralNumber,
+               IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation)
 
 /*++
 
@@ -663,31 +634,33 @@ Return Value:
 --*/
 
 {
-    PDEVICE_EXTENSION               deviceExtension = Context;
-    PCM_FULL_RESOURCE_DESCRIPTOR    controllerData;
-    PKEY_VALUE_FULL_INFORMATION     information;
-    PFIRMWARE_CONFIGURATION         firmwareEntry;
-    CONFIGURATION_TYPE              peripheralType;
-    PUCHAR                          buffer;
-    ULONG                           dataLength;
+    PDEVICE_EXTENSION deviceExtension = Context;
+    PCM_FULL_RESOURCE_DESCRIPTOR controllerData;
+    PKEY_VALUE_FULL_INFORMATION information;
+    PFIRMWARE_CONFIGURATION firmwareEntry;
+    CONFIGURATION_TYPE peripheralType;
+    PUCHAR buffer;
+    ULONG dataLength;
 
-    UNREFERENCED_PARAMETER( BusInformation );
-    UNREFERENCED_PARAMETER( PeripheralType );
-    UNREFERENCED_PARAMETER( PeripheralNumber );
-    UNREFERENCED_PARAMETER( PeripheralInformation );
+    UNREFERENCED_PARAMETER(BusInformation);
+    UNREFERENCED_PARAMETER(PeripheralType);
+    UNREFERENCED_PARAMETER(PeripheralNumber);
+    UNREFERENCED_PARAMETER(PeripheralInformation);
 
     //
     // If entry is found, but there is no information just return
     //
 
     information = ControllerInformation[IoQueryDeviceConfigurationData];
-    if (information == NULL) {
+    if (information == NULL)
+    {
 
         return STATUS_SUCCESS;
     }
 
     dataLength = information->DataLength;
-    if (dataLength == 0) {
+    if (dataLength == 0)
+    {
 
         return STATUS_SUCCESS;
     }
@@ -697,7 +670,8 @@ Return Value:
     //
 
     firmwareEntry = ExAllocatePool(NonPagedPool, sizeof(FIRMWARE_CONFIGURATION));
-    if (!firmwareEntry) {
+    if (!firmwareEntry)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -707,19 +681,19 @@ Return Value:
     // Save information concerning the controller
     //
 
-    firmwareEntry->ControllerType   = ControllerType;
+    firmwareEntry->ControllerType = ControllerType;
     firmwareEntry->ControllerNumber = ControllerNumber;
     firmwareEntry->BusNumber = BusNumber;
-    firmwareEntry->BusType   = BusType;
+    firmwareEntry->BusType = BusType;
 
     //
     // Save the resource descriptor
     //
 
-    buffer = firmwareEntry->ResourceDescriptor = ExAllocatePool(NonPagedPool,
-                                                                dataLength);
+    buffer = firmwareEntry->ResourceDescriptor = ExAllocatePool(NonPagedPool, dataLength);
 
-    if (!buffer) {
+    if (!buffer)
+    {
         ExFreePool(firmwareEntry);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -728,8 +702,7 @@ Return Value:
     // Save the configuration information on this controller.
     //
 
-    controllerData = (PCM_FULL_RESOURCE_DESCRIPTOR)
-        ((PUCHAR)information + information->DataOffset);
+    controllerData = (PCM_FULL_RESOURCE_DESCRIPTOR)((PUCHAR)information + information->DataOffset);
     RtlCopyMemory(buffer, controllerData, dataLength);
     firmwareEntry->ResourceDescriptorSize = dataLength;
 
@@ -738,14 +711,17 @@ Return Value:
     //
 
     information = ControllerInformation[IoQueryDeviceIdentifier];
-    if (information != NULL) {
+    if (information != NULL)
+    {
         PWCHAR ptr;
 
         dataLength = information->DataLength;
-        if (dataLength != 0) {
+        if (dataLength != 0)
+        {
 
-            ptr = (PWCHAR) ((PUCHAR)information + information->DataOffset);
-            if (ControllerType == ParallelController) {
+            ptr = (PWCHAR)((PUCHAR)information + information->DataOffset);
+            if (ControllerType == ParallelController)
+            {
                 PWCHAR tmpChar;
 
                 //
@@ -753,47 +729,52 @@ Return Value:
                 // translate the firmware names to LPT names.
                 //
 
-                *ptr++ = (WCHAR) 'L';
-                *ptr++ = (WCHAR) 'P';
-                *ptr++ = (WCHAR) 'T';
+                *ptr++ = (WCHAR)'L';
+                *ptr++ = (WCHAR)'P';
+                *ptr++ = (WCHAR)'T';
 
                 //
                 // Find the number.
                 //
 
                 tmpChar = ptr;
-                while (*tmpChar) {
-                    if ((*tmpChar >= (WCHAR) '0') &&
-                        (*tmpChar <= (WCHAR) '9')) {
+                while (*tmpChar)
+                {
+                    if ((*tmpChar >= (WCHAR)'0') && (*tmpChar <= (WCHAR)'9'))
+                    {
                         break;
                     }
                     tmpChar++;
                 }
 
-                if (*tmpChar) {
-                    while (*tmpChar) {
+                if (*tmpChar)
+                {
+                    while (*tmpChar)
+                    {
                         *ptr++ = *tmpChar++;
                     }
-                    *ptr = (WCHAR) 0;
+                    *ptr = (WCHAR)0;
 
                     //
                     // Update the datalength to be 4 wchars and eos and
                     // restore the pointer.
                     //
 
-                    ptr = (PWCHAR) ((PUCHAR)information + information->DataOffset);
+                    ptr = (PWCHAR)((PUCHAR)information + information->DataOffset);
                     dataLength = 10;
-                } else {
+                }
+                else
+                {
                     dataLength = 0;
-                    IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                                "Mapper: no parallel port number!\n"));
+                    IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: no parallel port number!\n"));
                 }
             }
 
-            if (dataLength) {
-                firmwareEntry->Identifier = ExAllocatePool(NonPagedPool,
-                                                           dataLength);
-                if (firmwareEntry->Identifier) {
+            if (dataLength)
+            {
+                firmwareEntry->Identifier = ExAllocatePool(NonPagedPool, dataLength);
+                if (firmwareEntry->Identifier)
+                {
 
                     //
                     // Move the data
@@ -811,13 +792,14 @@ Return Value:
     // For some controllers, search the peripheral information
     //
 
-    switch (ControllerType) {
+    switch (ControllerType)
+    {
     case SerialController:
     case ParallelController:
         //
         // Don't look for a peripheral.
         //
-        peripheralType = (CONFIGURATION_TYPE) 0;
+        peripheralType = (CONFIGURATION_TYPE)0;
         break;
     case DiskController:
         peripheralType = FloppyDiskPeripheral;
@@ -829,33 +811,22 @@ Return Value:
         peripheralType = PointerPeripheral;
         break;
     default:
-        peripheralType = (CONFIGURATION_TYPE) 0;
+        peripheralType = (CONFIGURATION_TYPE)0;
         break;
     }
 
-    IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                "Mapper: registry location is\n %ws\n",
-                PathName->Buffer));
+    IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: registry location is\n %ws\n", PathName->Buffer));
 
     IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                "Mapper: ControllerInformation[] -\n\tIdent: %x -\n\tData: %x -\n\tInformation: %x\n",
-                ControllerInformation[0],
-                ControllerInformation[1],
-                ControllerInformation[2]));
+                 "Mapper: ControllerInformation[] -\n\tIdent: %x -\n\tData: %x -\n\tInformation: %x\n",
+                 ControllerInformation[0], ControllerInformation[1], ControllerInformation[2]));
 
-    if (peripheralType) {
-        IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                    "Mapper: searching for peripheral type %d\n",
-                    peripheralType));
+    if (peripheralType)
+    {
+        IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: searching for peripheral type %d\n", peripheralType));
 
-        IoQueryDeviceDescription(&BusType,
-                                 &BusNumber,
-                                 &ControllerType,
-                                 &ControllerNumber,
-                                 &peripheralType,
-                                 NULL,
-                                 MapperPeripheralCallback,
-                                 firmwareEntry);
+        IoQueryDeviceDescription(&BusType, &BusNumber, &ControllerType, &ControllerNumber, &peripheralType, NULL,
+                                 MapperPeripheralCallback, firmwareEntry);
     }
 
     //
@@ -874,7 +845,8 @@ Return Value:
     // the SGI x86 ARC machines.
     //
 
-    if (!firmwareEntry->PnPId && firmwareEntry->PeripheralType == 0) {
+    if (!firmwareEntry->PnPId && firmwareEntry->PeripheralType == 0)
+    {
 
         //
         // Attempt to get PnPId from the controller type.
@@ -882,23 +854,18 @@ Return Value:
 
         firmwareEntry->PnPId = MapperTranslatePnPId(ControllerType, NULL);
 
-        if (!firmwareEntry->PnPId) {
-            IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                        "Mapper: NO PnP Id for\n ==> %ws\n",
-                        PathName->Buffer));
+        if (!firmwareEntry->PnPId)
+        {
+            IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: NO PnP Id for\n ==> %ws\n", PathName->Buffer));
         }
     }
 
-    IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                "Mapper: constructed name %d_%d_%d_%d_%d_%d\n",
-                firmwareEntry->BusType,
-                firmwareEntry->BusNumber,
-                firmwareEntry->ControllerType,
-                firmwareEntry->ControllerNumber,
-                firmwareEntry->PeripheralType,
-                firmwareEntry->PeripheralNumber));
+    IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: constructed name %d_%d_%d_%d_%d_%d\n", firmwareEntry->BusType,
+                 firmwareEntry->BusNumber, firmwareEntry->ControllerType, firmwareEntry->ControllerNumber,
+                 firmwareEntry->PeripheralType, firmwareEntry->PeripheralNumber));
 
-    if (firmwareEntry->PnPId) {
+    if (firmwareEntry->PnPId)
+    {
 
         //
         // Link into chain of entries.
@@ -906,14 +873,17 @@ Return Value:
 
         firmwareEntry->Next = deviceExtension->FirmwareList;
         deviceExtension->FirmwareList = firmwareEntry;
-    } else {
+    }
+    else
+    {
 
         //
         // No map found - don't remember this entry.
         //
 
         ExFreePool(buffer);
-        if(firmwareEntry->Identifier) {
+        if (firmwareEntry->Identifier)
+        {
             ExFreePool(firmwareEntry->Identifier);
         }
         ExFreePool(firmwareEntry);
@@ -921,11 +891,8 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
-VOID
-MapperProcessFirmwareTree(
-    IN BOOLEAN OnlyProcessSerialPorts
-    )
+
+VOID MapperProcessFirmwareTree(IN BOOLEAN OnlyProcessSerialPorts)
 
 /*++
 
@@ -950,16 +917,13 @@ Return Value:
 --*/
 
 {
-    INTERFACE_TYPE     interfaceType;
-    ULONG              index;
+    INTERFACE_TYPE interfaceType;
+    ULONG index;
     CONFIGURATION_TYPE sc;
-    CONFIGURATION_TYPE controllerTypes[] = { PointerController,
-                                             KeyboardController,
-                                             ParallelController,
-                                             DiskController,
-                                             FloppyDiskPeripheral,
-                                             SerialController   // must be last
-                                           };
+    CONFIGURATION_TYPE controllerTypes[] = {
+        PointerController, KeyboardController, ParallelController, DiskController, FloppyDiskPeripheral,
+        SerialController // must be last
+    };
 #define CONTROLLER_TYPES_COUNT (sizeof(controllerTypes) / sizeof(controllerTypes[0]))
 
     PAGED_CODE();
@@ -972,13 +936,13 @@ Return Value:
     // EISA, maybe Internal).
     //
 
-    for (interfaceType = 0; interfaceType < MaximumInterfaceType; interfaceType++) {
+    for (interfaceType = 0; interfaceType < MaximumInterfaceType; interfaceType++)
+    {
 
-        IopDbgPrint((IOP_MAPPER_VERBOSE_LEVEL,
-                    "Mapper: searching on interface ===> %d\n",
-                    interfaceType));
+        IopDbgPrint((IOP_MAPPER_VERBOSE_LEVEL, "Mapper: searching on interface ===> %d\n", interfaceType));
 
-        if(OnlyProcessSerialPorts) {
+        if (OnlyProcessSerialPorts)
+        {
 
             //
             // Start out at the last element of the array, so we only process
@@ -986,32 +950,24 @@ Return Value:
             //
 
             index = CONTROLLER_TYPES_COUNT - 1;
-        } else {
+        }
+        else
+        {
             index = 0;
         }
 
-        for ( ; index < CONTROLLER_TYPES_COUNT; index++) {
+        for (; index < CONTROLLER_TYPES_COUNT; index++)
+        {
             sc = controllerTypes[index];
 
-            IoQueryDeviceDescription(&interfaceType,
-                                     NULL,
-                                     &sc,
-                                     NULL,
-                                     NULL,
-                                     NULL,
-                                     MapperCallback,
+            IoQueryDeviceDescription(&interfaceType, NULL, &sc, NULL, NULL, NULL, MapperCallback,
                                      &MapperDeviceExtension);
         }
     }
 }
 
-
-VOID
-MapperMarkKey(
-    IN HANDLE           Handle,
-    IN PUNICODE_STRING  PathName,
-    IN PFIRMWARE_CONFIGURATION FirmwareEntry
-    )
+
+VOID MapperMarkKey(IN HANDLE Handle, IN PUNICODE_STRING PathName, IN PFIRMWARE_CONFIGURATION FirmwareEntry)
 
 /*++
 
@@ -1035,13 +991,13 @@ Return Value:
 {
     OBJECT_ATTRIBUTES objectAttributes;
     PCM_RESOURCE_LIST resourceList;
-    UNICODE_STRING    unicodeName;
-    NTSTATUS          status;
-    HANDLE            subKeyHandle;
-    PWCHAR            wcptr;
-    ULONG             disposition;
-    ULONG             buffer;
-    USHORT            originalLength;
+    UNICODE_STRING unicodeName;
+    NTSTATUS status;
+    HANDLE subKeyHandle;
+    PWCHAR wcptr;
+    ULONG disposition;
+    ULONG buffer;
+    USHORT originalLength;
 
     //
     // Mark that this entry was in the firmware tree.
@@ -1050,42 +1006,28 @@ Return Value:
     buffer = 1;
     PiWstrToUnicodeString(&unicodeName, REGSTR_VAL_FIRMWAREIDENTIFIED);
 
-    ZwSetValueKey(Handle,
-                  &unicodeName,
-                  0,
-                  REG_DWORD,
-                  &buffer,
-                  sizeof(ULONG));
+    ZwSetValueKey(Handle, &unicodeName, 0, REG_DWORD, &buffer, sizeof(ULONG));
 
     //
     // Create the control subkey
     //
 
-    IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                "Mapper: marking existing key\n"));
+    IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: marking existing key\n"));
     originalLength = PathName->Length;
-    wcptr = (PWCHAR) ((PUCHAR)PathName->Buffer + PathName->Length);
+    wcptr = (PWCHAR)((PUCHAR)PathName->Buffer + PathName->Length);
     wcptr++; // locate eos
 
     //
     // Build the volatile control key
     //
 
-    InitializeObjectAttributes(&objectAttributes,
-                               PathName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&objectAttributes, PathName, OBJ_CASE_INSENSITIVE, NULL, NULL);
     RtlAppendUnicodeToString(PathName, L"\\Control");
-    status = ZwCreateKey(&subKeyHandle,
-                         KEY_READ | KEY_WRITE,
-                         &objectAttributes,
-                         0,
-                         NULL,
-                         REG_OPTION_VOLATILE,
-                         &disposition);
+    status =
+        ZwCreateKey(&subKeyHandle, KEY_READ | KEY_WRITE, &objectAttributes, 0, NULL, REG_OPTION_VOLATILE, &disposition);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Create the found by firmware volatile.
@@ -1094,48 +1036,35 @@ Return Value:
         buffer = 1;
         PiWstrToUnicodeString(&unicodeName, REGSTR_VAL_FIRMWAREMEMBER);
 
-        ZwSetValueKey(subKeyHandle,
-                      &unicodeName,
-                      0,
-                      REG_DWORD,
-                      &buffer,
-                      sizeof(ULONG));
+        ZwSetValueKey(subKeyHandle, &unicodeName, 0, REG_DWORD, &buffer, sizeof(ULONG));
         ZwClose(subKeyHandle);
-
-    } else {
+    }
+    else
+    {
 
         //
         // ignore failures
         //
 
-        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                    "Mapper: failed to mark control key %x\n",
-                    status));
+        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: failed to mark control key %x\n", status));
     }
 
     //
     // if there is a resource descriptor, restore path and open LogConf key.
     //
 
-    if (FirmwareEntry->ResourceDescriptor) {
+    if (FirmwareEntry->ResourceDescriptor)
+    {
         PathName->Length = originalLength;
-        *wcptr = (WCHAR) 0;
+        *wcptr = (WCHAR)0;
 
-        InitializeObjectAttributes(&objectAttributes,
-                                   PathName,
-                                   OBJ_CASE_INSENSITIVE,
-                                   NULL,
-                                   NULL);
+        InitializeObjectAttributes(&objectAttributes, PathName, OBJ_CASE_INSENSITIVE, NULL, NULL);
         RtlAppendUnicodeToString(PathName, L"\\LogConf");
-        status = ZwCreateKey(&subKeyHandle,
-                             KEY_READ | KEY_WRITE,
-                             &objectAttributes,
-                             0,
-                             NULL,
-                             REG_OPTION_VOLATILE,
+        status = ZwCreateKey(&subKeyHandle, KEY_READ | KEY_WRITE, &objectAttributes, 0, NULL, REG_OPTION_VOLATILE,
                              &disposition);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             ULONG size;
 
             //
@@ -1144,33 +1073,22 @@ Return Value:
             // BasicConfigVector:REG_RESOURCE_REQUIREMENTS_LIST
             //
 
-            size = sizeof(CM_RESOURCE_LIST) -
-                   sizeof(CM_FULL_RESOURCE_DESCRIPTOR) +
-                   FirmwareEntry->ResourceDescriptorSize;
+            size =
+                sizeof(CM_RESOURCE_LIST) - sizeof(CM_FULL_RESOURCE_DESCRIPTOR) + FirmwareEntry->ResourceDescriptorSize;
 
             resourceList = ExAllocatePool(NonPagedPool, size);
 
-            if (resourceList) {
+            if (resourceList)
+            {
 
                 resourceList->Count = 1;
-                RtlCopyMemory(&resourceList->List[0],
-                              FirmwareEntry->ResourceDescriptor,
+                RtlCopyMemory(&resourceList->List[0], FirmwareEntry->ResourceDescriptor,
                               FirmwareEntry->ResourceDescriptorSize);
 
-                resourceList = MapperAdjustResourceList (
-                                   resourceList,
-                                   FirmwareEntry->PnPId,
-                                   &size
-                                   );
+                resourceList = MapperAdjustResourceList(resourceList, FirmwareEntry->PnPId, &size);
 
-                PiWstrToUnicodeString(&unicodeName,
-                                     L"BootConfig");
-                ZwSetValueKey(subKeyHandle,
-                              &unicodeName,
-                              0,
-                              REG_RESOURCE_LIST,
-                              resourceList,
-                              size);
+                PiWstrToUnicodeString(&unicodeName, L"BootConfig");
+                ZwSetValueKey(subKeyHandle, &unicodeName, 0, REG_RESOURCE_LIST, resourceList, size);
 #if 0
                 //
                 // Now do the resource requirements list.
@@ -1194,16 +1112,15 @@ Return Value:
             }
 
             ZwClose(subKeyHandle);
-
-        } else {
+        }
+        else
+        {
 
             //
             // ignore errors
             //
 
-            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                        "Mapper: failed to update logconf key %x\n",
-                        status));
+            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: failed to update logconf key %x\n", status));
         }
     }
 
@@ -1212,16 +1129,11 @@ Return Value:
     //
 
     PathName->Length = originalLength;
-    *wcptr = (WCHAR) 0;
+    *wcptr = (WCHAR)0;
 }
-
-VOID
-MapperSeedKey(
-    IN HANDLE                  Handle,
-    IN PUNICODE_STRING         PathName,
-    IN PFIRMWARE_CONFIGURATION FirmwareEntry,
-    IN BOOLEAN                 DeviceIsPhantom
-    )
+
+VOID MapperSeedKey(IN HANDLE Handle, IN PUNICODE_STRING PathName, IN PFIRMWARE_CONFIGURATION FirmwareEntry,
+                   IN BOOLEAN DeviceIsPhantom)
 
 /*++
 
@@ -1250,21 +1162,22 @@ Return Value:
 
 {
 #define SEED_BUFFER_SIZE (512 * sizeof(WCHAR))
-    UNICODE_STRING    unicodeName;
+    UNICODE_STRING unicodeName;
     OBJECT_ATTRIBUTES objectAttributes;
-    MAPPER_SEED const* valueSeed;
-    KEY_SEED const*   keySeed;
-    NTSTATUS          status;
-    HANDLE            subKeyHandle;
-    WCHAR const*      pnpid;
-    PWCHAR            buffer;
-    PWCHAR            wcptr;
-    ULONG             disposition;
-    ULONG             size;
-    USHORT            originalLength;
+    MAPPER_SEED const *valueSeed;
+    KEY_SEED const *keySeed;
+    NTSTATUS status;
+    HANDLE subKeyHandle;
+    WCHAR const *pnpid;
+    PWCHAR buffer;
+    PWCHAR wcptr;
+    ULONG disposition;
+    ULONG size;
+    USHORT originalLength;
 
     buffer = ExAllocatePool(NonPagedPool, SEED_BUFFER_SIZE);
-    if (!buffer) {
+    if (!buffer)
+    {
         return;
     }
     RtlZeroMemory(buffer, SEED_BUFFER_SIZE);
@@ -1274,15 +1187,16 @@ Return Value:
     //
 
     originalLength = PathName->Length;
-    wcptr = (PWCHAR) ((PUCHAR)PathName->Buffer + PathName->Length);
+    wcptr = (PWCHAR)((PUCHAR)PathName->Buffer + PathName->Length);
 
-    for (keySeed = MapperKeySeed; keySeed->KeyName; keySeed++) {
+    for (keySeed = MapperKeySeed; keySeed->KeyName; keySeed++)
+    {
 
         //
         // Reset the base path for the next key to seed.
         //
 
-        *wcptr = (WCHAR) 0;
+        *wcptr = (WCHAR)0;
         PathName->Length = originalLength;
         RtlAppendUnicodeToString(PathName, keySeed->KeyName);
 
@@ -1291,55 +1205,55 @@ Return Value:
         // to put in the key (i.e., this is a serial or parallel port).
         //
 
-        if (keySeed->Options & KEY_SEED_DEVICE_PARAMETERS) {
-            if (((FirmwareEntry->ControllerType != SerialController) && (FirmwareEntry->ControllerType != ParallelController)) ||
-                !FirmwareEntry->Identifier) {
+        if (keySeed->Options & KEY_SEED_DEVICE_PARAMETERS)
+        {
+            if (((FirmwareEntry->ControllerType != SerialController) &&
+                 (FirmwareEntry->ControllerType != ParallelController)) ||
+                !FirmwareEntry->Identifier)
+            {
                 continue;
             }
 
-            status = IopOpenDeviceParametersSubkey( &subKeyHandle,
-                                                    NULL,
-                                                    PathName,
-                                                    KEY_READ | KEY_WRITE
-                                                    );
-            if (NT_SUCCESS(status)) {
+            status = IopOpenDeviceParametersSubkey(&subKeyHandle, NULL, PathName, KEY_READ | KEY_WRITE);
+            if (NT_SUCCESS(status))
+            {
                 status = STATUS_SUCCESS;
-            } else {
+            }
+            else
+            {
                 status = STATUS_UNSUCCESSFUL;
             }
-        } else {
+        }
+        else
+        {
 
             //
             // need to construct this key.
             //
 
-            InitializeObjectAttributes(&objectAttributes,
-                                       PathName,
-                                       OBJ_CASE_INSENSITIVE,
-                                       NULL,
-                                       NULL);
-            status = ZwCreateKey(&subKeyHandle,
-                                 KEY_READ | KEY_WRITE,
-                                 &objectAttributes,
-                                 0,
-                                 NULL,
-                                 keySeed->Attribute,
+            InitializeObjectAttributes(&objectAttributes, PathName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+            status = ZwCreateKey(&subKeyHandle, KEY_READ | KEY_WRITE, &objectAttributes, 0, NULL, keySeed->Attribute,
                                  &disposition);
         }
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Check to see if this is the parameters key and
             // migrate the parameter information.
             //
 
-            if (keySeed->Options & KEY_SEED_DEVICE_PARAMETERS) {
+            if (keySeed->Options & KEY_SEED_DEVICE_PARAMETERS)
+            {
 
-                if (FirmwareEntry->ControllerType == SerialController)  {
+                if (FirmwareEntry->ControllerType == SerialController)
+                {
 
                     ComPortDBAdd(subKeyHandle, (PWSTR)FirmwareEntry->Identifier);
-                } else {
+                }
+                else
+                {
                     //
                     // to get here there must be identifier information
                     // in the FirmwareEntry, so that check is not performed.
@@ -1349,26 +1263,21 @@ Return Value:
                     // boot.
                     //
 
-                    PiWstrToUnicodeString(&unicodeName,
-                                        L"DosDeviceName");
-                    ZwSetValueKey(subKeyHandle,
-                                &unicodeName,
-                                0,
-                                FirmwareEntry->IdentifierType,
-                                FirmwareEntry->Identifier,
-                                FirmwareEntry->IdentifierLength);
+                    PiWstrToUnicodeString(&unicodeName, L"DosDeviceName");
+                    ZwSetValueKey(subKeyHandle, &unicodeName, 0, FirmwareEntry->IdentifierType,
+                                  FirmwareEntry->Identifier, FirmwareEntry->IdentifierLength);
                 }
             }
             ZwClose(subKeyHandle);
-        } else {
+        }
+        else
+        {
 
             //
             // ignore failures
             //
 
-            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                        "Mapper: failed to build control key %x\n",
-                        status));
+            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: failed to build control key %x\n", status));
         }
     }
 
@@ -1376,7 +1285,7 @@ Return Value:
     // Undo the mangling of the path name performed in the loop above.
     //
 
-    *wcptr = (WCHAR) 0;
+    *wcptr = (WCHAR)0;
     PathName->Length = originalLength;
 
     //
@@ -1384,12 +1293,14 @@ Return Value:
     //
 
     pnpid = FirmwareEntry->PnPId;
-    for (valueSeed = MapperValueSeed; valueSeed->ValueName; valueSeed++) {
+    for (valueSeed = MapperValueSeed; valueSeed->ValueName; valueSeed++)
+    {
 
-        if (valueSeed->ValueType == REG_DWORD) {
+        if (valueSeed->ValueType == REG_DWORD)
+        {
 
-            if ((valueSeed->Options == OPTIONS_INSERT_PHANTOM_MARKER) &&
-                !DeviceIsPhantom) {
+            if ((valueSeed->Options == OPTIONS_INSERT_PHANTOM_MARKER) && !DeviceIsPhantom)
+            {
 
                 //
                 // Device isn't a phantom--we don't want to mark it as such.
@@ -1400,11 +1311,13 @@ Return Value:
 
             size = sizeof(ULONG);
             RtlCopyMemory(buffer, &valueSeed->DwordValueContent, size);
-
-        } else if (valueSeed->Options == OPTIONS_INSERT_PNP_ID) {
+        }
+        else if (valueSeed->Options == OPTIONS_INSERT_PNP_ID)
+        {
 
             size = (ULONG)((wcslen(pnpid) + 2) * sizeof(WCHAR)); // eos multi_sz
-            if (FirmwareEntry->BusType == Eisa) {
+            if (FirmwareEntry->BusType == Eisa)
+            {
 
                 //
                 // need a mult_sz of EISA\PNPblah *PNPblah
@@ -1416,7 +1329,8 @@ Return Value:
                 swprintf(buffer, L"EISA\\%s", wcptr);
 
                 wcptr = buffer;
-                while (*wcptr) {
+                while (*wcptr)
+                {
                     wcptr++;
                 }
                 wcptr++; // step past eos for 1st string
@@ -1424,51 +1338,54 @@ Return Value:
                 RtlCopyMemory(wcptr, pnpid, size);
 
                 size += (ULONG)((PUCHAR)wcptr - (PUCHAR)buffer);
-            } else {
+            }
+            else
+            {
                 RtlCopyMemory(buffer, pnpid, size - sizeof(WCHAR));
                 buffer[size / sizeof(WCHAR) - 1] = L'\0';
             }
-        } else if (valueSeed->Options == OPTIONS_INSERT_COMPATIBLE_IDS) {
-            if (FirmwareEntry->PeripheralType == KeyboardPeripheral)  {
+        }
+        else if (valueSeed->Options == OPTIONS_INSERT_COMPATIBLE_IDS)
+        {
+            if (FirmwareEntry->PeripheralType == KeyboardPeripheral)
+            {
                 size = sizeof(PS2_KEYBOARD_COMPATIBLE_ID);
                 RtlCopyMemory(buffer, PS2_KEYBOARD_COMPATIBLE_ID, size);
-            } else if (FirmwareEntry->PeripheralType == PointerPeripheral &&
-                       (wcscmp(pnpid, L"*PNP0F0E") == 0 ||
-                        wcscmp(pnpid, L"*PNP0F03") == 0 ||
-                        wcscmp(pnpid, L"*PNP0F12") == 0)) {
+            }
+            else if (FirmwareEntry->PeripheralType == PointerPeripheral &&
+                     (wcscmp(pnpid, L"*PNP0F0E") == 0 || wcscmp(pnpid, L"*PNP0F03") == 0 ||
+                      wcscmp(pnpid, L"*PNP0F12") == 0))
+            {
                 size = sizeof(PS2_MOUSE_COMPATIBLE_ID);
                 RtlCopyMemory(buffer, PS2_MOUSE_COMPATIBLE_ID, size);
-            } else {
+            }
+            else
+            {
                 continue;
             }
-            buffer[size / 2] = L'\0';  // 2nd NUL for MULTI_SZ
+            buffer[size / 2] = L'\0'; // 2nd NUL for MULTI_SZ
             size += sizeof(L'\0');
-        } else if (valueSeed->Options == OPTIONS_INSERT_DEVICEDESC) {
+        }
+        else if (valueSeed->Options == OPTIONS_INSERT_DEVICEDESC)
+        {
             size = FirmwareEntry->IdentifierLength;
             RtlCopyMemory(buffer, FirmwareEntry->Identifier, size);
-        } else {
+        }
+        else
+        {
             IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: NO VALUE TYPE!\n"));
             ASSERT(FALSE);
             continue;
         }
 
-        RtlInitUnicodeString(&unicodeName,
-                             valueSeed->ValueName);
-        ZwSetValueKey(Handle,
-                      &unicodeName,
-                      0,
-                      valueSeed->ValueType,
-                      buffer,
-                      size);
+        RtlInitUnicodeString(&unicodeName, valueSeed->ValueName);
+        ZwSetValueKey(Handle, &unicodeName, 0, valueSeed->ValueType, buffer, size);
     }
     ExFreePool(buffer);
 }
 
-
-VOID
-MapperFreeList(
-    VOID
-    )
+
+VOID MapperFreeList(VOID)
 
 /*++
 
@@ -1488,21 +1405,24 @@ Return Value:
 --*/
 
 {
-    PDEVICE_EXTENSION       deviceExtension = &MapperDeviceExtension;
+    PDEVICE_EXTENSION deviceExtension = &MapperDeviceExtension;
     PFIRMWARE_CONFIGURATION tempEntry;
     PFIRMWARE_CONFIGURATION firmwareEntry;
 
     firmwareEntry = deviceExtension->FirmwareList;
-    while (firmwareEntry) {
+    while (firmwareEntry)
+    {
 
         //
         // free allocated structures associated with the firmware entry
         //
 
-        if (firmwareEntry->ResourceDescriptor) {
+        if (firmwareEntry->ResourceDescriptor)
+        {
             ExFreePool(firmwareEntry->ResourceDescriptor);
         }
-        if (firmwareEntry->Identifier) {
+        if (firmwareEntry->Identifier)
+        {
             ExFreePool(firmwareEntry->Identifier);
         }
 
@@ -1515,11 +1435,8 @@ Return Value:
         firmwareEntry = tempEntry;
     }
 }
-
-VOID
-MapperConstructRootEnumTree(
-    IN BOOLEAN CreatePhantomDevices
-    )
+
+VOID MapperConstructRootEnumTree(IN BOOLEAN CreatePhantomDevices)
 
 /*++
 
@@ -1548,17 +1465,17 @@ Return Value:
 {
 #define ENUM_KEY_BUFFER_SIZE (1024 * sizeof(WCHAR))
 #define INSTANCE_BUFFER_SIZE (256 * sizeof(WCHAR))
-    UNICODE_STRING          enumKey;
+    UNICODE_STRING enumKey;
     PFIRMWARE_CONFIGURATION firmwareEntry;
-    OBJECT_ATTRIBUTES       objectAttributes;
-    NTSTATUS                status;
-    BOOLEAN                 keyPresent;
-    PWCHAR                  registryBase;
-    PWCHAR                  instanceBuffer;
-    HANDLE                  handle;
-    ULONG                   disposition;
-    PVOID                   buffer;
-    PDEVICE_EXTENSION       DeviceExtension = &MapperDeviceExtension;
+    OBJECT_ATTRIBUTES objectAttributes;
+    NTSTATUS status;
+    BOOLEAN keyPresent;
+    PWCHAR registryBase;
+    PWCHAR instanceBuffer;
+    HANDLE handle;
+    ULONG disposition;
+    PVOID buffer;
+    PDEVICE_EXTENSION DeviceExtension = &MapperDeviceExtension;
 
     PAGED_CODE();
 
@@ -1569,27 +1486,23 @@ Return Value:
 
     buffer = ExAllocatePool(NonPagedPool, ENUM_KEY_BUFFER_SIZE);
 
-    if (!buffer) {
+    if (!buffer)
+    {
         MapperFreeList();
-        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                    "Mapper: could not allocate memory for registry update\n"));
+        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: could not allocate memory for registry update\n"));
         return;
     }
 
     instanceBuffer = ExAllocatePool(NonPagedPool, INSTANCE_BUFFER_SIZE);
-    if (!instanceBuffer) {
+    if (!instanceBuffer)
+    {
         MapperFreeList();
         ExFreePool(buffer);
-        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                    "Mapper: could not allocate memory for instance buffer\n"));
+        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: could not allocate memory for instance buffer\n"));
         return;
     }
 
-    InitializeObjectAttributes(&objectAttributes,
-                               &enumKey,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&objectAttributes, &enumKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
 #if UMODETEST
     registryBase = L"\\Registry\\Machine\\System\\TestControlSet\\Enum\\Root\\";
@@ -1598,7 +1511,8 @@ Return Value:
 #endif
 
     firmwareEntry = DeviceExtension->FirmwareList;
-    while (firmwareEntry) {
+    while (firmwareEntry)
+    {
 
         //
         // Construct the base for the path for this entry.
@@ -1616,15 +1530,11 @@ Return Value:
         // Build the pnp Key.
         //
 
-        status = ZwCreateKey(&handle,
-                             KEY_READ | KEY_WRITE,
-                             &objectAttributes,
-                             0,
-                             NULL,
-                             REG_OPTION_NON_VOLATILE,
+        status = ZwCreateKey(&handle, KEY_READ | KEY_WRITE, &objectAttributes, 0, NULL, REG_OPTION_NON_VOLATILE,
                              &disposition);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Do not need the handle, so close it
@@ -1633,63 +1543,53 @@ Return Value:
 
             ZwClose(handle);
             keyPresent = (disposition == REG_OPENED_EXISTING_KEY) ? TRUE : FALSE;
-            IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                        "Mapper: Key was %s\n",
-                        keyPresent ? "Present" : "Created"));
+            IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: Key was %s\n", keyPresent ? "Present" : "Created"));
 
             //
             // Construct the instance name.
             //
 
             RtlZeroMemory(instanceBuffer, INSTANCE_BUFFER_SIZE);
-            swprintf(instanceBuffer,
-                     L"\\%d_%d_%d_%d_%d_%d",
-                     firmwareEntry->BusType,
-                     firmwareEntry->BusNumber,
-                     firmwareEntry->ControllerType,
-                     firmwareEntry->ControllerNumber,
-                     firmwareEntry->PeripheralType,
+            swprintf(instanceBuffer, L"\\%d_%d_%d_%d_%d_%d", firmwareEntry->BusType, firmwareEntry->BusNumber,
+                     firmwareEntry->ControllerType, firmwareEntry->ControllerNumber, firmwareEntry->PeripheralType,
                      firmwareEntry->PeripheralNumber);
             RtlAppendUnicodeToString(&enumKey, instanceBuffer);
 
-            status = ZwCreateKey(&handle,
-                                 KEY_READ | KEY_WRITE,
-                                 &objectAttributes,
-                                 0,
-                                 NULL,
-                                 REG_OPTION_NON_VOLATILE,
+            status = ZwCreateKey(&handle, KEY_READ | KEY_WRITE, &objectAttributes, 0, NULL, REG_OPTION_NON_VOLATILE,
                                  &disposition);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
-                if (firmwareEntry->ResourceDescriptor) {
-                    IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                                "Mapper: firmware entry has resources %x\n",
-                                firmwareEntry->ResourceDescriptor));
+                if (firmwareEntry->ResourceDescriptor)
+                {
+                    IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: firmware entry has resources %x\n",
+                                 firmwareEntry->ResourceDescriptor));
                 }
 
-                if (firmwareEntry->Identifier) {
-                    IopDbgPrint((IOP_MAPPER_INFO_LEVEL,
-                                "Mapper: firmware entry has identifier %x\n",
-                                firmwareEntry->Identifier));
+                if (firmwareEntry->Identifier)
+                {
+                    IopDbgPrint((IOP_MAPPER_INFO_LEVEL, "Mapper: firmware entry has identifier %x\n",
+                                 firmwareEntry->Identifier));
                 }
 
                 //
                 // If the key already exists because it was explicitly migrated
                 // during textmode setup, we should still consider it a "new key".
                 //
-                if (disposition != REG_CREATED_NEW_KEY) {
+                if (disposition != REG_CREATED_NEW_KEY)
+                {
                     PKEY_VALUE_FULL_INFORMATION keyValueInformation;
                     UNICODE_STRING unicodeString;
 
-                    status = IopGetRegistryValue(handle,
-                                                 REGSTR_VALUE_MIGRATED,
-                                                 &keyValueInformation);
-                    if (NT_SUCCESS(status)) {
+                    status = IopGetRegistryValue(handle, REGSTR_VALUE_MIGRATED, &keyValueInformation);
+                    if (NT_SUCCESS(status))
+                    {
 
                         if ((keyValueInformation->Type == REG_DWORD) &&
                             (keyValueInformation->DataLength == sizeof(ULONG)) &&
-                            ((*(PULONG)KEY_VALUE_DATA(keyValueInformation)) != 0)) {
+                            ((*(PULONG)KEY_VALUE_DATA(keyValueInformation)) != 0))
+                        {
                             disposition = REG_CREATED_NEW_KEY;
                         }
 
@@ -1704,7 +1604,8 @@ Return Value:
                 // Only if this is a new entry do we see the key.
                 //
 
-                if (disposition == REG_CREATED_NEW_KEY) {
+                if (disposition == REG_CREATED_NEW_KEY)
+                {
 
                     //
                     // Remember the fact that the key was newly-created for the
@@ -1719,27 +1620,19 @@ Return Value:
                     // install drivers
                     //
 
-                    MapperSeedKey(handle,
-                                  &enumKey,
-                                  firmwareEntry,
-                                  CreatePhantomDevices
-                                 );
+                    MapperSeedKey(handle, &enumKey, firmwareEntry, CreatePhantomDevices);
                 }
-                MapperMarkKey(handle,
-                              &enumKey,
-                              firmwareEntry);
+                MapperMarkKey(handle, &enumKey, firmwareEntry);
                 ZwClose(handle);
-
-            } else {
-                IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                            "Mapper: create of instance key failed %x\n",
-                            status));
             }
-
-        } else {
-            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                        "Mapper: create pnp key failed %x\n",
-                        status));
+            else
+            {
+                IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: create of instance key failed %x\n", status));
+            }
+        }
+        else
+        {
+            IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: create pnp key failed %x\n", status));
         }
 
         firmwareEntry = firmwareEntry->Next;
@@ -1748,41 +1641,42 @@ Return Value:
 }
 
 PCM_RESOURCE_LIST
-MapperAdjustResourceList (
-    IN     PCM_RESOURCE_LIST ResourceList,
-    IN     WCHAR const*      PnPId,
-    IN OUT PULONG            Size
-    )
+MapperAdjustResourceList(IN PCM_RESOURCE_LIST ResourceList, IN WCHAR const *PnPId, IN OUT PULONG Size)
 {
-    PCM_PARTIAL_RESOURCE_LIST       partialResourceList;
+    PCM_PARTIAL_RESOURCE_LIST partialResourceList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR problemPartialDescriptors;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR partialDescriptors;
-    PCM_RESOURCE_LIST               newResourceList;
-    ULONG                           i;
+    PCM_RESOURCE_LIST newResourceList;
+    ULONG i;
 
     newResourceList = ResourceList;
 
 #if _X86_
-    if (KeI386MachineType == MACHINE_TYPE_EISA) {
+    if (KeI386MachineType == MACHINE_TYPE_EISA)
+    {
 
-        PCM_FULL_RESOURCE_DESCRIPTOR    fullDescriptor;
+        PCM_FULL_RESOURCE_DESCRIPTOR fullDescriptor;
         PCM_PARTIAL_RESOURCE_DESCRIPTOR partialDescriptor;
-        PUCHAR                          nextDescriptor;
-        ULONG                           j;
-        ULONG                           lastResourceIndex;
+        PUCHAR nextDescriptor;
+        ULONG j;
+        ULONG lastResourceIndex;
 
         fullDescriptor = &ResourceList->List[0];
 
-        for (i = 0; i < ResourceList->Count; i++) {
+        for (i = 0; i < ResourceList->Count; i++)
+        {
 
             partialResourceList = &fullDescriptor->PartialResourceList;
 
-            for (j = 0; j < partialResourceList->Count; j++) {
+            for (j = 0; j < partialResourceList->Count; j++)
+            {
                 partialDescriptor = &partialResourceList->PartialDescriptors[j];
 
-                if (partialDescriptor->Type == CmResourceTypePort) {
+                if (partialDescriptor->Type == CmResourceTypePort)
+                {
                     if (partialDescriptor->u.Port.Start.HighPart == 0 &&
-                        (partialDescriptor->u.Port.Start.LowPart & 0x00000300) == 0) {
+                        (partialDescriptor->u.Port.Start.LowPart & 0x00000300) == 0)
+                    {
                         partialDescriptor->Flags |= CM_RESOURCE_PORT_16_BIT_DECODE;
                     }
                 }
@@ -1800,18 +1694,18 @@ MapperAdjustResourceList (
             // finally, account for any extra device specific data at the end of
             // the last partial resource descriptor (if any)
             //
-            if (partialResourceList->Count > 0) {
+            if (partialResourceList->Count > 0)
+            {
 
-                nextDescriptor += (partialResourceList->Count - 1) *
-                     sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
+                nextDescriptor += (partialResourceList->Count - 1) * sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
 
                 lastResourceIndex = partialResourceList->Count - 1;
 
-                if (partialResourceList->PartialDescriptors[lastResourceIndex].Type ==
-                          CmResourceTypeDeviceSpecific) {
+                if (partialResourceList->PartialDescriptors[lastResourceIndex].Type == CmResourceTypeDeviceSpecific)
+                {
 
-                    nextDescriptor += partialResourceList->PartialDescriptors[lastResourceIndex].
-                               u.DeviceSpecificData.DataSize;
+                    nextDescriptor +=
+                        partialResourceList->PartialDescriptors[lastResourceIndex].u.DeviceSpecificData.DataSize;
                 }
             }
 
@@ -1820,9 +1714,11 @@ MapperAdjustResourceList (
     }
 #endif
 
-    if (wcscmp(PnPId, FloppyId) == 0) {
+    if (wcscmp(PnPId, FloppyId) == 0)
+    {
 
-        if (ResourceList->Count == 1) {
+        if (ResourceList->Count == 1)
+        {
 
             partialResourceList = &ResourceList->List->PartialResourceList;
 
@@ -1832,15 +1728,19 @@ MapperAdjustResourceList (
             // Look for the one and only one 8 byte port resource
             //
             problemPartialDescriptors = NULL;
-            for (i=0; i<partialResourceList->Count; i++) {
+            for (i = 0; i < partialResourceList->Count; i++)
+            {
 
-                if ((partialDescriptors[i].Type == CmResourceTypePort) &&
-                    (partialDescriptors[i].u.Port.Length == 8)) {
+                if ((partialDescriptors[i].Type == CmResourceTypePort) && (partialDescriptors[i].u.Port.Length == 8))
+                {
 
-                    if (problemPartialDescriptors == NULL) {
+                    if (problemPartialDescriptors == NULL)
+                    {
 
                         problemPartialDescriptors = partialDescriptors + i;
-                    } else {
+                    }
+                    else
+                    {
 
                         problemPartialDescriptors = NULL;
                         break;
@@ -1848,34 +1748,24 @@ MapperAdjustResourceList (
                 }
             }
 
-            if (problemPartialDescriptors) {
+            if (problemPartialDescriptors)
+            {
 
                 problemPartialDescriptors->u.Port.Length = 6;
 
-                newResourceList = ExAllocatePool (
-                                      NonPagedPool,
-                                      *Size + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR)
-                                      );
-                if (newResourceList) {
+                newResourceList = ExAllocatePool(NonPagedPool, *Size + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR));
+                if (newResourceList)
+                {
 
-                    RtlCopyMemory (
-                        newResourceList,
-                        ResourceList,
-                        *Size
-                        );
+                    RtlCopyMemory(newResourceList, ResourceList, *Size);
 
                     //
                     // pick out the new partial resource descriptor
                     //
-                    partialDescriptors = newResourceList->List->
-                                             PartialResourceList.PartialDescriptors;
+                    partialDescriptors = newResourceList->List->PartialResourceList.PartialDescriptors;
                     partialDescriptors += newResourceList->List->PartialResourceList.Count;
 
-                    RtlCopyMemory (
-                        partialDescriptors,
-                        problemPartialDescriptors,
-                        sizeof(*partialDescriptors)
-                        );
+                    RtlCopyMemory(partialDescriptors, problemPartialDescriptors, sizeof(*partialDescriptors));
 
                     partialDescriptors->u.Port.Start.QuadPart += 7;
                     partialDescriptors->u.Port.Length = 1;
@@ -1886,9 +1776,10 @@ MapperAdjustResourceList (
                     newResourceList->List->PartialResourceList.Count++;
                     *Size += sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
 
-                    ExFreePool (ResourceList);
-
-                } else {
+                    ExFreePool(ResourceList);
+                }
+                else
+                {
 
                     newResourceList = ResourceList;
                 }
@@ -1900,68 +1791,63 @@ MapperAdjustResourceList (
 }
 
 NTSTATUS
-ComPortDBAdd(
-    IN  HANDLE  DeviceParamKey,
-    IN  PWSTR   PortName
-    )
+ComPortDBAdd(IN HANDLE DeviceParamKey, IN PWSTR PortName)
 {
-    UNICODE_STRING                  portNameString;
-    UNICODE_STRING                  portPrefixString;
-    UNICODE_STRING                  comDBName;
-    UNICODE_STRING                  valueName;
-    PKEY_VALUE_PARTIAL_INFORMATION  valueInfo;
-    ULONG                           valueInfoLength;
-    ULONG                           returnedLength;
-    HANDLE                          comDBKey;
-    ULONG                           portNo;
-    NTSTATUS                        status;
+    UNICODE_STRING portNameString;
+    UNICODE_STRING portPrefixString;
+    UNICODE_STRING comDBName;
+    UNICODE_STRING valueName;
+    PKEY_VALUE_PARTIAL_INFORMATION valueInfo;
+    ULONG valueInfoLength;
+    ULONG returnedLength;
+    HANDLE comDBKey;
+    ULONG portNo;
+    NTSTATUS status;
 
     RtlInitUnicodeString(&portNameString, PortName);
 
-    if (portNameString.Length > 3 * sizeof(WCHAR)) {
+    if (portNameString.Length > 3 * sizeof(WCHAR))
+    {
         portNameString.Length = 3 * sizeof(WCHAR);
     }
 
     PiWstrToUnicodeString(&portPrefixString, L"COM");
 
-    if (RtlCompareUnicodeString(&portNameString, &portPrefixString, TRUE) == 0) {
+    if (RtlCompareUnicodeString(&portNameString, &portPrefixString, TRUE) == 0)
+    {
         portNo = _wtol(&PortName[3]);
 
-        if (portNo > 0 && portNo <= 256) {
+        if (portNo > 0 && portNo <= 256)
+        {
 
 #if UMODETEST
-            PiWstrToUnicodeString(&comDBName, L"\\Registry\\Machine\\System\\TestControlSet\\Control\\COM Name Arbiter");
+            PiWstrToUnicodeString(&comDBName,
+                                  L"\\Registry\\Machine\\System\\TestControlSet\\Control\\COM Name Arbiter");
 #else
-            PiWstrToUnicodeString(&comDBName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\COM Name Arbiter");
+            PiWstrToUnicodeString(&comDBName,
+                                  L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\COM Name Arbiter");
 #endif
 
-            status = IopCreateRegistryKeyEx( &comDBKey,
-                                             NULL,
-                                             &comDBName,
-                                             KEY_ALL_ACCESS,
-                                             REG_OPTION_NON_VOLATILE,
-                                             NULL
-                                             );
+            status = IopCreateRegistryKeyEx(&comDBKey, NULL, &comDBName, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE, NULL);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 PiWstrToUnicodeString(&valueName, L"ComDB Merge");
 
-#define COMPORT_DB_MERGE_SIZE    32           //  256 / 8
+#define COMPORT_DB_MERGE_SIZE 32 //  256 / 8
 
                 valueInfoLength = sizeof(KEY_VALUE_PARTIAL_INFORMATION) + COMPORT_DB_MERGE_SIZE;
                 valueInfo = ExAllocatePool(PagedPool, valueInfoLength);
 
-                if (valueInfo != NULL) {
+                if (valueInfo != NULL)
+                {
 
-                    status = ZwQueryValueKey( comDBKey,
-                                              &valueName,
-                                              KeyValuePartialInformation,
-                                              valueInfo,
-                                              valueInfoLength,
-                                              &returnedLength);
+                    status = ZwQueryValueKey(comDBKey, &valueName, KeyValuePartialInformation, valueInfo,
+                                             valueInfoLength, &returnedLength);
 
-                    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+                    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+                    {
 
                         valueInfo->Type = REG_BINARY;
                         valueInfo->DataLength = COMPORT_DB_MERGE_SIZE;
@@ -1969,16 +1855,13 @@ ComPortDBAdd(
                         status = STATUS_SUCCESS;
                     }
 
-                    if (NT_SUCCESS(status)) {
+                    if (NT_SUCCESS(status))
+                    {
                         portNo--;
-                        valueInfo->Data[ portNo / 8 ] |= 1 << (portNo % 8);
+                        valueInfo->Data[portNo / 8] |= 1 << (portNo % 8);
 
-                        status = ZwSetValueKey( comDBKey,
-                                                &valueName,
-                                                0,
-                                                valueInfo->Type,
-                                                valueInfo->Data,
-                                                valueInfo->DataLength );
+                        status = ZwSetValueKey(comDBKey, &valueName, 0, valueInfo->Type, valueInfo->Data,
+                                               valueInfo->DataLength);
 
                         ASSERT(NT_SUCCESS(status));
                     }
@@ -1991,23 +1874,16 @@ ComPortDBAdd(
         }
     }
 
-    PiWstrToUnicodeString( &valueName, L"DosDeviceName" );
+    PiWstrToUnicodeString(&valueName, L"DosDeviceName");
 
-    status = ZwSetValueKey( DeviceParamKey,
-                            &valueName,
-                            0,
-                            REG_SZ,
-                            PortName,
-                            (ULONG)((wcslen(PortName) + 1) * sizeof(WCHAR)) );
+    status =
+        ZwSetValueKey(DeviceParamKey, &valueName, 0, REG_SZ, PortName, (ULONG)((wcslen(PortName) + 1) * sizeof(WCHAR)));
 
     return status;
 }
 
 
-VOID
-MapperPhantomizeDetectedComPorts (
-    VOID
-    )
+VOID MapperPhantomizeDetectedComPorts(VOID)
 /*++
 
 Routine Description:
@@ -2026,16 +1902,16 @@ Return Value:
 --*/
 {
     PFIRMWARE_CONFIGURATION firmwareEntry;
-    NTSTATUS                status;
-    PWCHAR                  registryBase;
-    PWCHAR                  instanceBuffer;
-    HANDLE                  handle;
-    PWCHAR                  buffer;
-    PDEVICE_EXTENSION       DeviceExtension = &MapperDeviceExtension;
-    UNICODE_STRING          enumKey;
-    OBJECT_ATTRIBUTES       objectAttributes;
-    UNICODE_STRING          unicodeName;
-    ULONG                   regValue;
+    NTSTATUS status;
+    PWCHAR registryBase;
+    PWCHAR instanceBuffer;
+    HANDLE handle;
+    PWCHAR buffer;
+    PDEVICE_EXTENSION DeviceExtension = &MapperDeviceExtension;
+    UNICODE_STRING enumKey;
+    OBJECT_ATTRIBUTES objectAttributes;
+    UNICODE_STRING unicodeName;
+    ULONG regValue;
 
     //
     // allocate space needed for the registry path into the root
@@ -2044,25 +1920,21 @@ Return Value:
 
     buffer = ExAllocatePool(NonPagedPool, ENUM_KEY_BUFFER_SIZE);
 
-    if (!buffer) {
-        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                    "Mapper: could not allocate memory for registry update\n"));
+    if (!buffer)
+    {
+        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: could not allocate memory for registry update\n"));
         return;
     }
 
     instanceBuffer = ExAllocatePool(NonPagedPool, INSTANCE_BUFFER_SIZE);
-    if (!instanceBuffer) {
+    if (!instanceBuffer)
+    {
         ExFreePool(buffer);
-        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL,
-                    "Mapper: could not allocate memory for instance buffer\n"));
+        IopDbgPrint((IOP_MAPPER_ERROR_LEVEL, "Mapper: could not allocate memory for instance buffer\n"));
         return;
     }
 
-    InitializeObjectAttributes(&objectAttributes,
-                               &enumKey,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&objectAttributes, &enumKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
 #if UMODETEST
     registryBase = L"\\Registry\\Machine\\System\\TestControlSet\\Enum\\Root\\";
@@ -2071,15 +1943,16 @@ Return Value:
 #endif
 
     firmwareEntry = DeviceExtension->FirmwareList;
-    while (firmwareEntry) {
+    while (firmwareEntry)
+    {
 
         //
         // Construct the base for the path for this entry.
         //
 
 
-        if ((firmwareEntry->ControllerType == SerialController) &&
-            firmwareEntry->NewlyCreated) {
+        if ((firmwareEntry->ControllerType == SerialController) && firmwareEntry->NewlyCreated)
+        {
 
             PiWstrToUnicodeString(&enumKey, NULL);
             enumKey.MaximumLength = ENUM_KEY_BUFFER_SIZE;
@@ -2093,32 +1966,19 @@ Return Value:
             //
 
             RtlZeroMemory(instanceBuffer, INSTANCE_BUFFER_SIZE);
-            swprintf(instanceBuffer,
-                     L"\\%d_%d_%d_%d_%d_%d",
-                     firmwareEntry->BusType,
-                     firmwareEntry->BusNumber,
-                     firmwareEntry->ControllerType,
-                     firmwareEntry->ControllerNumber,
-                     firmwareEntry->PeripheralType,
+            swprintf(instanceBuffer, L"\\%d_%d_%d_%d_%d_%d", firmwareEntry->BusType, firmwareEntry->BusNumber,
+                     firmwareEntry->ControllerType, firmwareEntry->ControllerNumber, firmwareEntry->PeripheralType,
                      firmwareEntry->PeripheralNumber);
             RtlAppendUnicodeToString(&enumKey, instanceBuffer);
 
-            status = ZwOpenKey(&handle,
-                               KEY_READ | KEY_WRITE,
-                               &objectAttributes
-                              );
+            status = ZwOpenKey(&handle, KEY_READ | KEY_WRITE, &objectAttributes);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 PiWstrToUnicodeString(&unicodeName, REGSTR_VAL_PHANTOM);
                 regValue = 1;
-                ZwSetValueKey(handle,
-                              &unicodeName,
-                              0,
-                              REG_DWORD,
-                              &regValue,
-                              sizeof(regValue)
-                             );
+                ZwSetValueKey(handle, &unicodeName, 0, REG_DWORD, &regValue, sizeof(regValue));
 
                 ZwClose(handle);
             }
@@ -2127,6 +1987,6 @@ Return Value:
         firmwareEntry = firmwareEntry->Next;
     }
 
-    ExFreePool (buffer);
-    ExFreePool (instanceBuffer);
+    ExFreePool(buffer);
+    ExFreePool(instanceBuffer);
 }

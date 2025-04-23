@@ -25,13 +25,9 @@ Revision History:
 #pragma alloc_text(PAGE, RawInitializeVcb)
 #endif
 
-
+
 NTSTATUS
-RawInitializeVcb (
-    IN OUT PVCB Vcb,
-    IN PDEVICE_OBJECT TargetDeviceObject,
-    IN PVPB Vpb
-    )
+RawInitializeVcb(IN OUT PVCB Vcb, IN PDEVICE_OBJECT TargetDeviceObject, IN PVPB Vpb)
 
 /*++
 
@@ -66,7 +62,7 @@ Return Value:
     //  that any stale data is wiped clean
     //
 
-    RtlZeroMemory( Vcb, sizeof(VCB) );
+    RtlZeroMemory(Vcb, sizeof(VCB));
 
     //
     //  Set the proper node type code and node byte size
@@ -91,14 +87,15 @@ Return Value:
     //  Initialize the Mutex.
     //
 
-    KeInitializeMutex( &Vcb->Mutex, MUTEX_LEVEL_FILESYSTEM_RAW_VCB );
+    KeInitializeMutex(&Vcb->Mutex, MUTEX_LEVEL_FILESYSTEM_RAW_VCB);
 
     //
     //  allocate the spare vpb for forced dismount
     //
 
-    Vcb->SpareVpb = ExAllocatePoolWithTag( NonPagedPool, sizeof( VPB ), 'Raw ');
-    if (Vcb->SpareVpb == NULL) {
+    Vcb->SpareVpb = ExAllocatePoolWithTag(NonPagedPool, sizeof(VPB), 'Raw ');
+    if (Vcb->SpareVpb == NULL)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -108,12 +105,9 @@ Return Value:
 
     return Status;
 }
-
+
 BOOLEAN
-RawCheckForDismount (
-    PVCB Vcb,
-    BOOLEAN CalledFromCreate
-    )
+RawCheckForDismount(PVCB Vcb, BOOLEAN CalledFromCreate)
 
 /*++
 
@@ -142,11 +136,11 @@ Return Value:
 
     //
     //  We must enter with the vcb mutex acquired
-    //  
+    //
 
-    ASSERT( KeReadStateMutant( &Vcb->Mutex ) == 0 );
+    ASSERT(KeReadStateMutant(&Vcb->Mutex) == 0);
 
-    IoAcquireVpbSpinLock( &SavedIrql );
+    IoAcquireVpbSpinLock(&SavedIrql);
     {
         PVPB Vpb;
 
@@ -157,46 +151,48 @@ Return Value:
         //  delete it.
         //
 
-        if ( Vcb->Vpb->ReferenceCount != (ULONG)(CalledFromCreate ? 1 : 0) ) {
+        if (Vcb->Vpb->ReferenceCount != (ULONG)(CalledFromCreate ? 1 : 0))
+        {
 
             //
             //  Cleanup the vpb on a forced dismount even if we can't delete the vcb if
             //  we haven't already done so
-            //   
+            //
 
-            if ((Vcb->SpareVpb != NULL) && 
-                FlagOn( Vcb->VcbState,  VCB_STATE_FLAG_DISMOUNTED )) {
+            if ((Vcb->SpareVpb != NULL) && FlagOn(Vcb->VcbState, VCB_STATE_FLAG_DISMOUNTED))
+            {
 
                 //
                 //  Setup the spare vpb and put it on the real device
-                //  
+                //
 
-                RtlZeroMemory( Vcb->SpareVpb, sizeof( VPB ) );
+                RtlZeroMemory(Vcb->SpareVpb, sizeof(VPB));
 
                 Vcb->SpareVpb->Type = IO_TYPE_VPB;
-                Vcb->SpareVpb->Size = sizeof( VPB );
+                Vcb->SpareVpb->Size = sizeof(VPB);
                 Vcb->SpareVpb->RealDevice = Vcb->Vpb->RealDevice;
                 Vcb->SpareVpb->DeviceObject = NULL;
-                Vcb->SpareVpb->Flags = FlagOn( Vcb->Vpb->Flags, VPB_REMOVE_PENDING );
+                Vcb->SpareVpb->Flags = FlagOn(Vcb->Vpb->Flags, VPB_REMOVE_PENDING);
 
                 Vcb->Vpb->RealDevice->Vpb = Vcb->SpareVpb;
 
                 //
                 //  The spare vpb now belongs to the iosubsys and we own the original one
-                //  
+                //
 
                 Vcb->SpareVpb = NULL;
-                Vcb->Vpb->Flags |=  VPB_PERSISTENT;
-
+                Vcb->Vpb->Flags |= VPB_PERSISTENT;
             }
 
             DeleteVolume = FALSE;
-
-        } else {
+        }
+        else
+        {
 
             DeleteVolume = TRUE;
 
-            if ( Vpb->RealDevice->Vpb == Vpb ) {
+            if (Vpb->RealDevice->Vpb == Vpb)
+            {
 
                 Vpb->DeviceObject = NULL;
 
@@ -204,28 +200,29 @@ Return Value:
             }
         }
     }
-    IoReleaseVpbSpinLock( SavedIrql );
+    IoReleaseVpbSpinLock(SavedIrql);
 
-    if (DeleteVolume) {
+    if (DeleteVolume)
+    {
 
-        (VOID)KeReleaseMutex( &Vcb->Mutex, FALSE );
+        (VOID) KeReleaseMutex(&Vcb->Mutex, FALSE);
 
         //
         //  Free the spare vpb if we didn't use it or the original one if we did use it
-        // 
+        //
 
-        if (Vcb->SpareVpb) {
-            ExFreePool( Vcb->SpareVpb );
-        } else {
-            ExFreePool( Vcb->Vpb );
+        if (Vcb->SpareVpb)
+        {
+            ExFreePool(Vcb->SpareVpb);
         }
-        
-        ObDereferenceObject( Vcb->TargetDeviceObject );
-        IoDeleteDevice( (PDEVICE_OBJECT)CONTAINING_RECORD( Vcb,
-                                                           VOLUME_DEVICE_OBJECT,
-                                                           Vcb));
+        else
+        {
+            ExFreePool(Vcb->Vpb);
+        }
+
+        ObDereferenceObject(Vcb->TargetDeviceObject);
+        IoDeleteDevice((PDEVICE_OBJECT)CONTAINING_RECORD(Vcb, VOLUME_DEVICE_OBJECT, Vcb));
     }
-    
+
     return DeleteVolume;
 }
-

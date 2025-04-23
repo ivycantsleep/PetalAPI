@@ -27,13 +27,9 @@ Revision History:
 #endif //ALLOC_PRAGMA
 #endif // !NTPERF
 
-
+
 NTSTATUS
-PerfInfoReserveBytes(
-    PPERFINFO_HOOK_HANDLE Hook,
-    USHORT HookId,
-    ULONG BytesToReserve
-    )
+PerfInfoReserveBytes(PPERFINFO_HOOK_HANDLE Hook, USHORT HookId, ULONG BytesToReserve)
 /*++
 
 Routine Description:
@@ -61,26 +57,25 @@ Return Value:
 
     PPerfTraceHeader = WmiReserveWithPerfHeader(BytesToReserve, &PWmiBufferHeader);
 
-    if (PPerfTraceHeader != NULL) {
+    if (PPerfTraceHeader != NULL)
+    {
         PPerfTraceHeader->Packet.HookId = HookId;
         Hook->PerfTraceHeader = PPerfTraceHeader;
         Hook->WmiBufferHeader = PWmiBufferHeader;
 
         Status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         *Hook = PERF_NULL_HOOK_HANDLE;
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-PerfInfoLogBytes(
-    USHORT HookId,
-    PVOID Data,
-    ULONG BytesToLog
-    )
+PerfInfoLogBytes(USHORT HookId, PVOID Data, ULONG BytesToLog)
 /*++
 
 Routine Description:
@@ -102,7 +97,8 @@ Return Value:
     NTSTATUS Status;
 
     Status = PerfInfoReserveBytes(&Hook, HookId, BytesToLog);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -113,12 +109,10 @@ Return Value:
 }
 
 #ifdef NTPERF
-
+
 PVOID
 FASTCALL
-PerfInfoReserveBytesFromPerfMem(
-    ULONG BytesToReserve
-    )
+PerfInfoReserveBytesFromPerfMem(ULONG BytesToReserve)
 /*++
 
 Routine Description:
@@ -150,9 +144,11 @@ Return Value:
     AlignedTotBytes = ALIGN_TO_POWER2(BytesToReserve, DEFAULT_TRACE_ALIGNMENT);
 
     OriginalPtr = pPerfBufHdr->Current.Ptr;
-    while (!Done) {
+    while (!Done)
+    {
         NewPtr = OriginalPtr + AlignedTotBytes;
-        if (NewPtr <= pPerfBufHdr->Max.Ptr) {
+        if (NewPtr <= pPerfBufHdr->Max.Ptr)
+        {
             //
             // If the buffer pointer has not changed, returned value will be == to the comparand,
             // OriginalPointer, and the Destenation will be updated with the new end of buffer.
@@ -161,17 +157,19 @@ Return Value:
             // be returned.  We loop until we get it in or the buffer is full.
             //
 
-            CurrentPtr = (PPERF_BYTE) InterlockedCompareExchangePointer(
-                                                    (PVOID *)&(pPerfBufHdr->Current.Ptr),
-                                                    (PVOID)NewPtr,
-                                                    (PVOID)OriginalPtr
-                                                    );
-            if (OriginalPtr == CurrentPtr) {
+            CurrentPtr = (PPERF_BYTE)InterlockedCompareExchangePointer((PVOID *)&(pPerfBufHdr->Current.Ptr),
+                                                                       (PVOID)NewPtr, (PVOID)OriginalPtr);
+            if (OriginalPtr == CurrentPtr)
+            {
                 Done = TRUE;
-            } else {
+            }
+            else
+            {
                 OriginalPtr = CurrentPtr;
             }
-        } else {
+        }
+        else
+        {
             //
             // Buffer overflow
             //

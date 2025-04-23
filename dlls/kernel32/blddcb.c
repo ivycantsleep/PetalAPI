@@ -24,108 +24,41 @@ Revision History:
 
 #include <basedll.h>
 
-typedef struct _PARSE_CONTEXT {
+typedef struct _PARSE_CONTEXT
+{
     PSTR CharIndex;
     PSTR AdvanceIndex;
     PSTR MatchBegin;
     PSTR MatchEnd;
-    } PARSE_CONTEXT,*PPARSE_CONTEXT;
+} PARSE_CONTEXT, *PPARSE_CONTEXT;
 
-static
-BOOL
-BuildDcb (
-    LPCSTR L,
-    LPDCB Dcb,
-    LPCOMMTIMEOUTS To
-    );
+static BOOL BuildDcb(LPCSTR L, LPDCB Dcb, LPCOMMTIMEOUTS To);
 
-static
-BOOL
-Match(
-    PPARSE_CONTEXT C,
-    PSTR Pattern
-    );
+static BOOL Match(PPARSE_CONTEXT C, PSTR Pattern);
 
-static
-VOID
-Advance(
-    PPARSE_CONTEXT C
-    );
+static VOID Advance(PPARSE_CONTEXT C);
 
-static
-DWORD
-GetNumber(
-    PPARSE_CONTEXT C
-    );
+static DWORD GetNumber(PPARSE_CONTEXT C);
 
-static
-BOOL
-ConvertBaudRate (
-    DWORD BaudIn,
-    PDWORD BaudRate
-    );
+static BOOL ConvertBaudRate(DWORD BaudIn, PDWORD BaudRate);
 
-static
-BOOL
-ConvertDataBits (
-    DWORD DataBitsIn,
-    PBYTE DataBitsOut
-    );
+static BOOL ConvertDataBits(DWORD DataBitsIn, PBYTE DataBitsOut);
 
-static
-BOOL
-ConvertStopBits (
-    DWORD StopBitsIn,
-    PBYTE StopBits
-    );
+static BOOL ConvertStopBits(DWORD StopBitsIn, PBYTE StopBits);
 
-static
-BOOL
-ConvertParity (
-    CHAR ParityIn,
-    PBYTE Parity
-    );
+static BOOL ConvertParity(CHAR ParityIn, PBYTE Parity);
 
-static
-BOOL
-ConvertDtrControl (
-    PSTR IdxBegin,
-    PSTR IdxEnd,
-    PBYTE DtrControl
-    );
+static BOOL ConvertDtrControl(PSTR IdxBegin, PSTR IdxEnd, PBYTE DtrControl);
 
-static
-BOOL
-ConvertRtsControl (
-    PSTR IdxBegin,
-    PSTR IdxEnd,
-    PBYTE RtsControl
-    );
+static BOOL ConvertRtsControl(PSTR IdxBegin, PSTR IdxEnd, PBYTE RtsControl);
 
-static
-VOID
-IgnoreDeviceName(
-    IN PPARSE_CONTEXT C
-    );
+static VOID IgnoreDeviceName(IN PPARSE_CONTEXT C);
 
-static
-NTSTATUS
-DeviceNameCompare(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    );
+static NTSTATUS DeviceNameCompare(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                                  IN PVOID Context, IN PVOID EntryContext);
 
-
-BOOL
-BuildCommDCBAndTimeoutsW(
-    LPCWSTR lpDef,
-    LPDCB lpDCB,
-    LPCOMMTIMEOUTS lpCommTimeouts
-    )
+
+BOOL BuildCommDCBAndTimeoutsW(LPCWSTR lpDef, LPDCB lpDCB, LPCOMMTIMEOUTS lpCommTimeouts)
 
 /*++
 
@@ -161,41 +94,24 @@ Return Value:
     NTSTATUS Status;
     BOOL AnsiBool;
 
-    RtlInitUnicodeString(
-        &Unicode,
-        lpDef
-        );
+    RtlInitUnicodeString(&Unicode, lpDef);
 
-    Status = RtlUnicodeStringToAnsiString(
-                 &Ansi,
-                 &Unicode,
-                 TRUE
-                 );
+    Status = RtlUnicodeStringToAnsiString(&Ansi, &Unicode, TRUE);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
-
     }
 
-    AnsiBool = BuildCommDCBAndTimeoutsA(
-                   (LPCSTR)Ansi.Buffer,
-                   lpDCB,
-                   lpCommTimeouts
-                   );
+    AnsiBool = BuildCommDCBAndTimeoutsA((LPCSTR)Ansi.Buffer, lpDCB, lpCommTimeouts);
 
     RtlFreeAnsiString(&Ansi);
     return AnsiBool;
-
 }
-
-BOOL
-BuildCommDCBAndTimeoutsA(
-    LPCSTR lpDef,
-    LPDCB lpDCB,
-    LPCOMMTIMEOUTS lpCommTimeouts
-    )
+
+BOOL BuildCommDCBAndTimeoutsA(LPCSTR lpDef, LPDCB lpDCB, LPCOMMTIMEOUTS lpCommTimeouts)
 
 /*++
 
@@ -226,28 +142,20 @@ Return Value:
 
 {
 
-    if (!BuildDcb(
-             lpDef,
-             lpDCB,
-             lpCommTimeouts
-             )) {
+    if (!BuildDcb(lpDef, lpDCB, lpCommTimeouts))
+    {
 
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         return TRUE;
-
     }
-
 }
-
-BOOL
-BuildCommDCBW(
-    LPCWSTR lpDef,
-    LPDCB lpDCB
-    )
+
+BOOL BuildCommDCBW(LPCWSTR lpDef, LPDCB lpDCB)
 
 /*++
 
@@ -280,39 +188,24 @@ Return Value:
     NTSTATUS Status;
     BOOL AnsiBool;
 
-    RtlInitUnicodeString(
-        &Unicode,
-        lpDef
-        );
+    RtlInitUnicodeString(&Unicode, lpDef);
 
-    Status = RtlUnicodeStringToAnsiString(
-                 &Ansi,
-                 &Unicode,
-                 TRUE
-                 );
+    Status = RtlUnicodeStringToAnsiString(&Ansi, &Unicode, TRUE);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
-
     }
 
-    AnsiBool = BuildCommDCBA(
-                   (LPCSTR)Ansi.Buffer,
-                   lpDCB
-                   );
+    AnsiBool = BuildCommDCBA((LPCSTR)Ansi.Buffer, lpDCB);
 
     RtlFreeAnsiString(&Ansi);
     return AnsiBool;
-
 }
-
-BOOL
-BuildCommDCBA(
-    LPCSTR lpDef,
-    LPDCB lpDCB
-    )
+
+BOOL BuildCommDCBA(LPCSTR lpDef, LPDCB lpDCB)
 
 /*++
 
@@ -342,30 +235,20 @@ Return Value:
 
     COMMTIMEOUTS JunkTimeouts;
 
-    if (!BuildDcb(
-             lpDef,
-             lpDCB,
-             &JunkTimeouts
-             )) {
+    if (!BuildDcb(lpDef, lpDCB, &JunkTimeouts))
+    {
 
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         return TRUE;
-
     }
-
 }
-
-static
-BOOL
-BuildDcb (
-    LPCSTR L,
-    LPDCB Dcb,
-    LPCOMMTIMEOUTS To
-    )
+
+static BOOL BuildDcb(LPCSTR L, LPDCB Dcb, LPCOMMTIMEOUTS To)
 
 /*++
 
@@ -385,31 +268,31 @@ Return Value:
 
 {
 
-    BOOL        SetBaud         =   FALSE;
-    BOOL        SetDataBits     =   FALSE;
-    BOOL        SetStopBits     =   FALSE;
-    BOOL        SetParity       =   FALSE;
-    BOOL        SetRetry        =   FALSE;
-    BOOL        SetTimeOut      =   FALSE;
-    BOOL        SetXon          =   FALSE;
-    BOOL        SetOdsr         =   FALSE;
-    BOOL        SetIdsr         =   FALSE;
-    BOOL        SetOcts         =   FALSE;
-    BOOL        SetDtrControl   =   FALSE;
-    BOOL        SetRtsControl   =   FALSE;
+    BOOL SetBaud = FALSE;
+    BOOL SetDataBits = FALSE;
+    BOOL SetStopBits = FALSE;
+    BOOL SetParity = FALSE;
+    BOOL SetRetry = FALSE;
+    BOOL SetTimeOut = FALSE;
+    BOOL SetXon = FALSE;
+    BOOL SetOdsr = FALSE;
+    BOOL SetIdsr = FALSE;
+    BOOL SetOcts = FALSE;
+    BOOL SetDtrControl = FALSE;
+    BOOL SetRtsControl = FALSE;
 
-    DWORD       Baud;
-    BYTE        DataBits;
-    BYTE        StopBits;
-    BYTE        Parity;
-    BOOL        TimeOut;
-    BOOL        Xon;
-    BOOL        Odsr;
-    BOOL        Idsr;
-    BOOL        Octs;
-    BYTE        DtrControl;
-    BYTE        RtsControl;
-    PARSE_CONTEXT C = {0};
+    DWORD Baud;
+    BYTE DataBits;
+    BYTE StopBits;
+    BYTE Parity;
+    BOOL TimeOut;
+    BOOL Xon;
+    BOOL Odsr;
+    BOOL Idsr;
+    BOOL Octs;
+    BYTE DtrControl;
+    BYTE RtsControl;
+    PARSE_CONTEXT C = { 0 };
 
     C.CharIndex = C.AdvanceIndex = (PSTR)L;
 
@@ -422,7 +305,8 @@ Return Value:
 
     IgnoreDeviceName(&C);
 
-    if ( Match(&C, "#" ) ) {
+    if (Match(&C, "#"))
+    {
 
         //
         //   Old syntax, where parameter are positional and comma-delimited.
@@ -466,18 +350,19 @@ Return Value:
         // Assume xon=off
         //
 
-        SetXon      = TRUE;
-        SetOdsr     = TRUE;
-        SetOcts     = TRUE;
+        SetXon = TRUE;
+        SetOdsr = TRUE;
+        SetOcts = TRUE;
         SetDtrControl = TRUE;
         SetRtsControl = TRUE;
-        Xon         = FALSE;
-        Odsr        = FALSE;
-        Octs        = FALSE;
+        Xon = FALSE;
+        Odsr = FALSE;
+        Octs = FALSE;
         DtrControl = DTR_CONTROL_ENABLE;
         RtsControl = RTS_CONTROL_ENABLE;
 
-        if (!ConvertBaudRate( GetNumber(&C), &Baud )) {
+        if (!ConvertBaudRate(GetNumber(&C), &Baud))
+        {
             return FALSE;
         }
         SetBaud = TRUE;
@@ -486,17 +371,20 @@ Return Value:
         //
         //    A:
         //
-        if ( !Match(&C, "," ) ) {
+        if (!Match(&C, ","))
+        {
             goto Eoi;
         }
         Advance(&C);
 
-        if ( !Match(&C, "," ) && Match(&C, "@" ) ) {
+        if (!Match(&C, ",") && Match(&C, "@"))
+        {
 
             //
             //    Parity
             //
-            if (!ConvertParity( *C.MatchBegin,&Parity )) {
+            if (!ConvertParity(*C.MatchBegin, &Parity))
+            {
                 return FALSE;
             }
             SetParity = TRUE;
@@ -506,17 +394,20 @@ Return Value:
         //
         //    B:
         //
-        if ( !Match(&C, "," )) {
+        if (!Match(&C, ","))
+        {
             goto Eoi;
         }
         Advance(&C);
 
-        if ( Match(&C, "#" )) {
+        if (Match(&C, "#"))
+        {
 
             //
             //    Data bits
             //
-            if (!ConvertDataBits( GetNumber(&C),&DataBits )) {
+            if (!ConvertDataBits(GetNumber(&C), &DataBits))
+            {
                 return FALSE;
             }
             SetDataBits = TRUE;
@@ -526,327 +417,391 @@ Return Value:
         //
         //    C:
         //
-        if ( !Match(&C, "," )) {
+        if (!Match(&C, ","))
+        {
             goto Eoi;
         }
         Advance(&C);
 
-        if ( Match(&C, "1.5" ) ) {
+        if (Match(&C, "1.5"))
+        {
             StopBits = ONE5STOPBITS;
             SetStopBits = TRUE;
             Advance(&C);
-        } else if ( Match(&C, "#" ) ) {
-            if (!ConvertStopBits( GetNumber(&C),&StopBits)) {
+        }
+        else if (Match(&C, "#"))
+        {
+            if (!ConvertStopBits(GetNumber(&C), &StopBits))
+            {
                 return FALSE;
             }
             SetStopBits = TRUE;
             Advance(&C);
         }
 
-        if ( !Match(&C, "," )) {
+        if (!Match(&C, ","))
+        {
             goto Eoi;
         }
 
         Advance(&C);
 
-        if ( Match(&C, "x" ) ) {
+        if (Match(&C, "x"))
+        {
 
             //
             //  XON=ON
             //
-            SetXon      = TRUE;
-            SetOdsr     = TRUE;
-            SetOcts     = TRUE;
+            SetXon = TRUE;
+            SetOdsr = TRUE;
+            SetOcts = TRUE;
             SetDtrControl = TRUE;
             SetRtsControl = TRUE;
-            Xon         = TRUE;
-            Odsr        = FALSE;
-            Octs        = FALSE;
+            Xon = TRUE;
+            Odsr = FALSE;
+            Octs = FALSE;
             DtrControl = DTR_CONTROL_ENABLE;
             RtsControl = RTS_CONTROL_ENABLE;
             Advance(&C);
-
-        } else if ( Match(&C, "p" ) ) {
+        }
+        else if (Match(&C, "p"))
+        {
 
             //
             //  Permanent retry - Hardware handshaking
             //
 
-            SetXon      = TRUE;
-            SetOdsr     = TRUE;
-            SetOcts     = TRUE;
+            SetXon = TRUE;
+            SetOdsr = TRUE;
+            SetOcts = TRUE;
             SetDtrControl = TRUE;
             SetRtsControl = TRUE;
-            Xon         = FALSE;
-            Odsr        = TRUE;
-            Octs        = TRUE;
+            Xon = FALSE;
+            Odsr = TRUE;
+            Octs = TRUE;
             DtrControl = DTR_CONTROL_HANDSHAKE;
             RtsControl = RTS_CONTROL_HANDSHAKE;
             Advance(&C);
-
-        } else {
+        }
+        else
+        {
 
             //
             //  XON=OFF
             //
-            SetXon      = TRUE;
-            SetOdsr     = TRUE;
-            SetOcts     = TRUE;
+            SetXon = TRUE;
+            SetOdsr = TRUE;
+            SetOcts = TRUE;
             SetDtrControl = TRUE;
             SetRtsControl = TRUE;
-            Xon         = FALSE;
-            Odsr        = FALSE;
-            Octs        = FALSE;
+            Xon = FALSE;
+            Odsr = FALSE;
+            Octs = FALSE;
             DtrControl = DTR_CONTROL_ENABLE;
             RtsControl = RTS_CONTROL_ENABLE;
         }
 
-Eoi:
-        if ( *C.CharIndex != '\0' ) {
+    Eoi:
+        if (*C.CharIndex != '\0')
+        {
 
             //
             //    Error
             //
             return FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // New Form
         //
 
-        while ( *C.CharIndex != '\0' ) {
+        while (*C.CharIndex != '\0')
+        {
 
-            if ( Match(&C, "BAUD=#" ) ) {
+            if (Match(&C, "BAUD=#"))
+            {
                 //
                 //  BAUD=
                 //
-                if ( !ConvertBaudRate(GetNumber(&C), &Baud ) ) {
+                if (!ConvertBaudRate(GetNumber(&C), &Baud))
+                {
                     return FALSE;
                 }
-                SetBaud     = TRUE;
+                SetBaud = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "PARITY=@"   ) ) {
+            }
+            else if (Match(&C, "PARITY=@"))
+            {
                 //
                 //  PARITY=
                 //
-                if ( !ConvertParity( *C.MatchBegin, &Parity ) ) {
+                if (!ConvertParity(*C.MatchBegin, &Parity))
+                {
                     return FALSE;
                 }
-                SetParity   = TRUE;
+                SetParity = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "DATA=#" ) ) {
+            }
+            else if (Match(&C, "DATA=#"))
+            {
                 //
                 //  DATA=
                 //
-                if ( !ConvertDataBits(GetNumber(&C), &DataBits ) ) {
+                if (!ConvertDataBits(GetNumber(&C), &DataBits))
+                {
                     return FALSE;
                 }
                 SetDataBits = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "STOP=1.5" ) ) {
+            }
+            else if (Match(&C, "STOP=1.5"))
+            {
                 //
                 //  STOP=1.5
                 //
-                StopBits    =  ONE5STOPBITS;
+                StopBits = ONE5STOPBITS;
                 SetStopBits = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "STOP=#" ) ) {
+            }
+            else if (Match(&C, "STOP=#"))
+            {
                 //
                 //  STOP=
                 //
-                if ( !ConvertStopBits(GetNumber(&C), &StopBits ) ) {
+                if (!ConvertStopBits(GetNumber(&C), &StopBits))
+                {
                     return FALSE;
                 }
                 SetStopBits = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "TO=ON" ) ) {
+            }
+            else if (Match(&C, "TO=ON"))
+            {
                 //
                 //  TO=ON
                 //
-                SetTimeOut  =   TRUE;
-                TimeOut     =   TRUE;
+                SetTimeOut = TRUE;
+                TimeOut = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "TO=OFF" ) ) {
+            }
+            else if (Match(&C, "TO=OFF"))
+            {
                 //
                 //  TO=ON
                 //
-                SetTimeOut  =   TRUE;
-                TimeOut     =   FALSE;
+                SetTimeOut = TRUE;
+                TimeOut = FALSE;
                 Advance(&C);
-
-            } else if ( Match(&C, "XON=ON" ) ) {
+            }
+            else if (Match(&C, "XON=ON"))
+            {
                 //
                 //  XON=ON
                 //
-                SetXon      = TRUE;
-                Xon         = TRUE;
+                SetXon = TRUE;
+                Xon = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "XON=OFF" ) ) {
+            }
+            else if (Match(&C, "XON=OFF"))
+            {
                 //
                 //  XON=OFF
                 //
-                SetXon      = TRUE;
-                Xon         = FALSE;
+                SetXon = TRUE;
+                Xon = FALSE;
                 Advance(&C);
-
-            } else if ( Match(&C, "ODSR=ON" ) ) {
+            }
+            else if (Match(&C, "ODSR=ON"))
+            {
                 //
                 //  ODSR=ON
                 //
-                SetOdsr     = TRUE;
-                Odsr        = TRUE;
+                SetOdsr = TRUE;
+                Odsr = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "ODSR=OFF" ) ) {
+            }
+            else if (Match(&C, "ODSR=OFF"))
+            {
                 //
                 //  ODSR=OFF
                 //
-                SetOdsr     = TRUE;
-                Odsr        = FALSE;
+                SetOdsr = TRUE;
+                Odsr = FALSE;
                 Advance(&C);
-
-            } else if ( Match(&C, "IDSR=ON" ) ) {
+            }
+            else if (Match(&C, "IDSR=ON"))
+            {
                 //
                 //  IDSR=ON
                 //
                 SetIdsr = TRUE;
-                Idsr    = TRUE;
+                Idsr = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "IDSR=OFF" ) ) {
+            }
+            else if (Match(&C, "IDSR=OFF"))
+            {
                 //
                 //  IDSR=OFF
                 //
                 SetIdsr = TRUE;
-                Idsr    = FALSE;
+                Idsr = FALSE;
                 Advance(&C);
-
-            } else if ( Match(&C, "OCTS=ON" ) ) {
+            }
+            else if (Match(&C, "OCTS=ON"))
+            {
                 //
                 //  OCS=ON
                 //
-                SetOcts     = TRUE;
-                Octs        = TRUE;
+                SetOcts = TRUE;
+                Octs = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "OCTS=OFF" ) ) {
+            }
+            else if (Match(&C, "OCTS=OFF"))
+            {
                 //
                 //  OCS=OFF
                 //
-                SetOcts     = TRUE;
-                Octs        = FALSE;
+                SetOcts = TRUE;
+                Octs = FALSE;
                 Advance(&C);
-
-            } else if ( Match(&C, "DTR=*"   ) ) {
+            }
+            else if (Match(&C, "DTR=*"))
+            {
                 //
                 //  DTR=
                 //
-                if ( !ConvertDtrControl(C.MatchBegin, C.MatchEnd, &DtrControl ) ) {
+                if (!ConvertDtrControl(C.MatchBegin, C.MatchEnd, &DtrControl))
+                {
                     return FALSE;
                 }
-                SetDtrControl   = TRUE;
+                SetDtrControl = TRUE;
                 Advance(&C);
-
-            } else if ( Match(&C, "RTS=*"   ) ) {
+            }
+            else if (Match(&C, "RTS=*"))
+            {
                 //
                 //  RTS=
                 //
-                if ( !ConvertRtsControl(C.MatchBegin, C.MatchEnd, &RtsControl ) ) {
+                if (!ConvertRtsControl(C.MatchBegin, C.MatchEnd, &RtsControl))
+                {
                     return FALSE;
                 }
-                SetRtsControl   = TRUE;
+                SetRtsControl = TRUE;
                 Advance(&C);
-
-            } else {
+            }
+            else
+            {
 
                 return FALSE;
             }
         }
-
     }
 
-    if ( SetBaud ) {
+    if (SetBaud)
+    {
         Dcb->BaudRate = Baud;
     }
 
-    if ( SetDataBits ) {
+    if (SetDataBits)
+    {
         Dcb->ByteSize = DataBits;
     }
 
-    if ( SetStopBits ) {
+    if (SetStopBits)
+    {
         Dcb->StopBits = StopBits;
-    } else if ( SetBaud && (Baud == 110) ) {
+    }
+    else if (SetBaud && (Baud == 110))
+    {
         Dcb->StopBits = TWOSTOPBITS;
-    } else {
+    }
+    else
+    {
         Dcb->StopBits = ONESTOPBIT;
     }
 
-    if ( SetParity ) {
+    if (SetParity)
+    {
         Dcb->Parity = Parity;
     }
 
-    if ( SetXon ) {
-        if ( Xon ) {
-            Dcb->fInX   = TRUE;
-            Dcb->fOutX  = TRUE;
-        } else {
-            Dcb->fInX   = FALSE;
-            Dcb->fOutX  = FALSE;
+    if (SetXon)
+    {
+        if (Xon)
+        {
+            Dcb->fInX = TRUE;
+            Dcb->fOutX = TRUE;
+        }
+        else
+        {
+            Dcb->fInX = FALSE;
+            Dcb->fOutX = FALSE;
         }
     }
 
-    if ( SetOcts ) {
+    if (SetOcts)
+    {
 
-        if ( Octs ) {
+        if (Octs)
+        {
             Dcb->fOutxCtsFlow = TRUE;
-        } else {
+        }
+        else
+        {
             Dcb->fOutxCtsFlow = FALSE;
         }
     }
 
 
-    if ( SetOdsr ) {
-        if ( Odsr ) {
+    if (SetOdsr)
+    {
+        if (Odsr)
+        {
             Dcb->fOutxDsrFlow = TRUE;
-        } else {
+        }
+        else
+        {
             Dcb->fOutxDsrFlow = FALSE;
         }
     }
 
-    if ( SetIdsr ) {
-        if ( Idsr ) {
+    if (SetIdsr)
+    {
+        if (Idsr)
+        {
             Dcb->fDsrSensitivity = TRUE;
-        } else {
+        }
+        else
+        {
             Dcb->fDsrSensitivity = FALSE;
         }
     }
 
-    if ( SetDtrControl ) {
+    if (SetDtrControl)
+    {
         Dcb->fDtrControl = DtrControl;
     }
 
-    if ( SetRtsControl ) {
+    if (SetRtsControl)
+    {
         Dcb->fRtsControl = RtsControl;
     }
 
-    if ( SetTimeOut ) {
-        if (TimeOut) {
+    if (SetTimeOut)
+    {
+        if (TimeOut)
+        {
             To->ReadIntervalTimeout = 0;
             To->ReadTotalTimeoutMultiplier = 0;
             To->ReadTotalTimeoutConstant = 0;
             To->WriteTotalTimeoutMultiplier = 0;
             To->WriteTotalTimeoutConstant = 60000;
-        } else {
+        }
+        else
+        {
             To->ReadIntervalTimeout = 0;
             To->ReadTotalTimeoutMultiplier = 0;
             To->ReadTotalTimeoutConstant = 0;
@@ -856,16 +811,10 @@ Eoi:
     }
 
 
-
     return TRUE;
 }
-
-static
-BOOL
-Match(
-    PPARSE_CONTEXT C,
-    PSTR Pattern
-    )
+
+static BOOL Match(PPARSE_CONTEXT C, PSTR Pattern)
 
 /*++
 
@@ -897,17 +846,19 @@ Notes:
 
 {
 
-    PSTR    CmdIndex;       //  Index within command line
-    PSTR    PatternIndex;   //  Index within pattern
-    CHAR    PatternChar;    //  Character in pattern
-    CHAR    CmdChar;        //  Character in command line;
+    PSTR CmdIndex;     //  Index within command line
+    PSTR PatternIndex; //  Index within pattern
+    CHAR PatternChar;  //  Character in pattern
+    CHAR CmdChar;      //  Character in command line;
 
-    CmdIndex        = C->CharIndex;
-    PatternIndex    = Pattern;
+    CmdIndex = C->CharIndex;
+    PatternIndex = Pattern;
 
-    while ( (PatternChar = *PatternIndex) != '\0' ) {
+    while ((PatternChar = *PatternIndex) != '\0')
+    {
 
-        switch ( PatternChar ) {
+        switch (PatternChar)
+        {
 
         case '#':
 
@@ -915,18 +866,19 @@ Notes:
             //    Match a number
             //
             C->MatchBegin = CmdIndex;
-            C->MatchEnd   = C->MatchBegin;
+            C->MatchEnd = C->MatchBegin;
 
             //
             //    Get all consecutive digits
             //
-            while ( ((CmdChar = *C->MatchEnd) != '\0') &&
-                    isdigit( (char)CmdChar ) ) {
+            while (((CmdChar = *C->MatchEnd) != '\0') && isdigit((char)CmdChar))
+            {
                 C->MatchEnd++;
             }
             C->MatchEnd--;
 
-            if ( C->MatchBegin > C->MatchEnd ) {
+            if (C->MatchBegin > C->MatchEnd)
+            {
                 //
                 //    No number
                 //
@@ -944,7 +896,8 @@ Notes:
             //
             //    Match one character
             //
-            if ( *CmdIndex == '\0' ) {
+            if (*CmdIndex == '\0')
+            {
                 return FALSE;
             }
 
@@ -960,17 +913,17 @@ Notes:
             //
             //    Match everything up to next blank (or end of input)
             //
-            C->MatchBegin    = CmdIndex;
-            C->MatchEnd    = C->MatchBegin;
+            C->MatchBegin = CmdIndex;
+            C->MatchEnd = C->MatchBegin;
 
-            while ( ( (CmdChar = *C->MatchEnd ) != '\0' )  &&
-                    ( CmdChar !=  ' ' ) ) {
+            while (((CmdChar = *C->MatchEnd) != '\0') && (CmdChar != ' '))
+            {
 
                 C->MatchEnd++;
             }
             C->MatchEnd--;
 
-            CmdIndex = C->MatchEnd+1;
+            CmdIndex = C->MatchEnd + 1;
             PatternIndex++;
 
             break;
@@ -983,32 +936,35 @@ Notes:
             PatternIndex++;
 
             PatternChar = *PatternIndex;
-            CmdChar     = *CmdIndex;
+            CmdChar = *CmdIndex;
 
             //
             //    If the first charcter in the input does not match the
             //    first character in the optional sequence, we just
             //    skip the optional sequence.
             //
-            if ( ( CmdChar == '\0' ) ||
-                 ( CmdChar == ' ')             ||
-                 ( toupper(CmdChar) != toupper(PatternChar) ) ) {
+            if ((CmdChar == '\0') || (CmdChar == ' ') || (toupper(CmdChar) != toupper(PatternChar)))
+            {
 
-                while ( PatternChar != ']' ) {
+                while (PatternChar != ']')
+                {
                     PatternIndex++;
                     PatternChar = *PatternIndex;
                 }
                 PatternIndex++;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //    Since the first character in the sequence matched, now
                 //    everything must match.
                 //
-                while ( PatternChar != ']' ) {
+                while (PatternChar != ']')
+                {
 
-                    if ( toupper(PatternChar) != toupper(CmdChar) ) {
+                    if (toupper(PatternChar) != toupper(CmdChar))
+                    {
                         return FALSE;
                     }
                     CmdIndex++;
@@ -1029,32 +985,25 @@ Notes:
             //
             CmdChar = *CmdIndex;
 
-            if ( ( CmdChar == '\0' ) ||
-                 ( toupper(CmdChar) != toupper(PatternChar) ) ) {
+            if ((CmdChar == '\0') || (toupper(CmdChar) != toupper(PatternChar)))
+            {
 
                 return FALSE;
-
             }
 
             CmdIndex++;
             PatternIndex++;
 
             break;
-
         }
     }
 
     C->AdvanceIndex = CmdIndex;
 
     return TRUE;
-
 }
-
-static
-VOID
-Advance(
-    PPARSE_CONTEXT C
-    )
+
+static VOID Advance(PPARSE_CONTEXT C)
 
 /*++
 
@@ -1080,21 +1029,18 @@ Return Value:
     //
     //    Skip blank space
     //
-    if ( *C->CharIndex  == ' ' ) {
+    if (*C->CharIndex == ' ')
+    {
 
-        while ( *C->CharIndex  == ' ' ) {
+        while (*C->CharIndex == ' ')
+        {
 
             C->CharIndex++;
         }
-
     }
 }
-
-static
-DWORD
-GetNumber(
-    PPARSE_CONTEXT C
-    )
+
+static DWORD GetNumber(PPARSE_CONTEXT C)
 
 /*++
 
@@ -1115,26 +1061,20 @@ Return Value:
 --*/
 
 {
-    DWORD   Number;
-    CHAR    c;
-    PSTR    p = C->MatchEnd+1;
+    DWORD Number;
+    CHAR c;
+    PSTR p = C->MatchEnd + 1;
 
     c = *p;
-//    *p = '\0';
+    //    *p = '\0';
     //intf( "Making number: %s\n", C->MatchBegin );
-    Number = atol( C->MatchBegin );
-//    *p  = c;
+    Number = atol(C->MatchBegin);
+    //    *p  = c;
 
     return Number;
-
 }
-
-static
-BOOL
-ConvertBaudRate (
-    DWORD BaudIn,
-    PDWORD BaudRate
-    )
+
+static BOOL ConvertBaudRate(DWORD BaudIn, PDWORD BaudRate)
 
 /*++
 
@@ -1155,7 +1095,8 @@ Return Value:
 --*/
 
 {
-    switch ( BaudIn ) {
+    switch (BaudIn)
+    {
 
     case 11:
     case 110:
@@ -1205,18 +1146,12 @@ Return Value:
     default:
 
         *BaudRate = BaudIn;
-
     }
 
     return TRUE;
 }
-
-static
-BOOL
-ConvertDataBits (
-    DWORD DataBitsIn,
-    PBYTE DataBitsOut
-    )
+
+static BOOL ConvertDataBits(DWORD DataBitsIn, PBYTE DataBitsOut)
 
 /*++
 
@@ -1238,27 +1173,18 @@ Return Value:
 
 {
 
-    if ( ( DataBitsIn != 5 ) &&
-         ( DataBitsIn != 6 ) &&
-         ( DataBitsIn != 7 ) &&
-         ( DataBitsIn != 8 ) ) {
+    if ((DataBitsIn != 5) && (DataBitsIn != 6) && (DataBitsIn != 7) && (DataBitsIn != 8))
+    {
 
         return FALSE;
-
     }
 
     *DataBitsOut = (BYTE)DataBitsIn;
 
     return TRUE;
-
 }
-
-static
-BOOL
-ConvertStopBits (
-    DWORD StopBitsIn,
-    PBYTE StopBits
-    )
+
+static BOOL ConvertStopBits(DWORD StopBitsIn, PBYTE StopBits)
 
 /*++
 
@@ -1280,7 +1206,8 @@ Return Value:
 
 {
 
-    switch ( StopBitsIn ) {
+    switch (StopBitsIn)
+    {
 
     case 1:
         *StopBits = ONESTOPBIT;
@@ -1292,19 +1219,12 @@ Return Value:
 
     default:
         return FALSE;
-
     }
 
     return TRUE;
-
 }
-
-static
-BOOL
-ConvertParity (
-    CHAR ParityIn,
-    PBYTE Parity
-    )
+
+static BOOL ConvertParity(CHAR ParityIn, PBYTE Parity)
 
 /*++
 
@@ -1329,7 +1249,8 @@ Return Value:
     //
     //    Set the correct parity value depending on the character.
     //
-    switch ( tolower(ParityIn) ) {
+    switch (tolower(ParityIn))
+    {
 
     case 'n':
         *Parity = NOPARITY;
@@ -1353,19 +1274,12 @@ Return Value:
 
     default:
         return FALSE;
-
     }
 
     return TRUE;
 }
-
-static
-BOOL
-ConvertDtrControl (
-    PSTR IdxBegin,
-    PSTR IdxEnd,
-    PBYTE DtrControl
-    )
+
+static BOOL ConvertDtrControl(PSTR IdxBegin, PSTR IdxEnd, PBYTE DtrControl)
 
 /*++
 
@@ -1390,52 +1304,37 @@ Return Value:
 
 {
 
-    PSTR    p;
+    PSTR p;
 
     p = IdxBegin;
-    if ( (tolower(*p)  == 'o' ) &&
-         p++                    &&
-         (tolower(*p)  == 'n' ) &&
-         (IdxEnd == p)) {
+    if ((tolower(*p) == 'o') && p++ && (tolower(*p) == 'n') && (IdxEnd == p))
+    {
 
 
         *DtrControl = DTR_CONTROL_ENABLE;
         return TRUE;
-
     }
 
     p = IdxBegin;
-    if ( (tolower(*p) == 'o')   &&
-         p++                    &&
-         (tolower(*p) == 'f')   &&
-         p++                    &&
-         (tolower(*p) == 'f')   &&
-         (IdxEnd == p ) ) {
+    if ((tolower(*p) == 'o') && p++ && (tolower(*p) == 'f') && p++ && (tolower(*p) == 'f') && (IdxEnd == p))
+    {
 
-        *DtrControl =  DTR_CONTROL_DISABLE;
+        *DtrControl = DTR_CONTROL_DISABLE;
         return TRUE;
     }
 
     p = IdxBegin;
-    if ( (tolower(*p) == 'h')   &&
-         p++                    &&
-         (tolower(*p++) == 's') &&
-         (IdxEnd == p ) ) {
+    if ((tolower(*p) == 'h') && p++ && (tolower(*p++) == 's') && (IdxEnd == p))
+    {
 
-        *DtrControl =  DTR_CONTROL_HANDSHAKE;
+        *DtrControl = DTR_CONTROL_HANDSHAKE;
         return TRUE;
     }
 
     return FALSE;
 }
-
-static
-BOOL
-ConvertRtsControl (
-    PSTR IdxBegin,
-    PSTR IdxEnd,
-    PBYTE RtsControl
-    )
+
+static BOOL ConvertRtsControl(PSTR IdxBegin, PSTR IdxEnd, PBYTE RtsControl)
 
 /*++
 
@@ -1459,65 +1358,45 @@ Return Value:
 
 {
 
-    PSTR    p;
+    PSTR p;
     p = IdxBegin;
-    if ( (tolower(*p)  == 'o' ) &&
-         p++                    &&
-         (tolower(*p)  == 'n' ) &&
-         (IdxEnd == p)) {
+    if ((tolower(*p) == 'o') && p++ && (tolower(*p) == 'n') && (IdxEnd == p))
+    {
 
 
         *RtsControl = RTS_CONTROL_ENABLE;
         return TRUE;
-
     }
 
     p = IdxBegin;
-    if ( (tolower(*p) == 'o')   &&
-         p++                    &&
-         (tolower(*p) == 'f')   &&
-         p++                    &&
-         (tolower(*p) == 'f')   &&
-         (IdxEnd == p ) ) {
+    if ((tolower(*p) == 'o') && p++ && (tolower(*p) == 'f') && p++ && (tolower(*p) == 'f') && (IdxEnd == p))
+    {
 
-        *RtsControl =  RTS_CONTROL_DISABLE;
+        *RtsControl = RTS_CONTROL_DISABLE;
         return TRUE;
     }
 
     p = IdxBegin;
-    if ( (tolower(*p) == 'h')   &&
-         p++                    &&
-         (tolower(*p++) == 's') &&
-         (IdxEnd == p ) ) {
+    if ((tolower(*p) == 'h') && p++ && (tolower(*p++) == 's') && (IdxEnd == p))
+    {
 
-        *RtsControl =  RTS_CONTROL_HANDSHAKE;
+        *RtsControl = RTS_CONTROL_HANDSHAKE;
         return TRUE;
     }
 
     p = IdxBegin;
-    if ( (tolower(*p) == 't')   &&
-         p++                    &&
-         (tolower(*p++) == 'g') &&
-         (IdxEnd == p ) ) {
+    if ((tolower(*p) == 't') && p++ && (tolower(*p++) == 'g') && (IdxEnd == p))
+    {
 
-        *RtsControl =  RTS_CONTROL_TOGGLE;
+        *RtsControl = RTS_CONTROL_TOGGLE;
         return TRUE;
     }
 
     return FALSE;
-
 }
-
-static
-NTSTATUS
-DeviceNameCompare(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    )
+
+static NTSTATUS DeviceNameCompare(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                                  IN PVOID Context, IN PVOID EntryContext)
 
 {
 
@@ -1525,29 +1404,23 @@ DeviceNameCompare(
     UNICODE_STRING uniName;
     ANSI_STRING ansiName;
 
-    RtlInitUnicodeString(
-        &uniName,
-        ValueData
-        );
+    RtlInitUnicodeString(&uniName, ValueData);
 
-    if (!NT_SUCCESS(RtlUnicodeStringToAnsiString(
-                        &ansiName,
-                        &uniName,
-                        TRUE
-                        ))) {
+    if (!NT_SUCCESS(RtlUnicodeStringToAnsiString(&ansiName, &uniName, TRUE)))
+    {
 
         //
         // Oh well, couldn't form the name.  Just get out.
         //
         return STATUS_SUCCESS;
-
     }
 
     //
     // See if we got a name match.
     //
 
-    if (Match(C,ansiName.Buffer)) {
+    if (Match(C, ansiName.Buffer))
+    {
 
         //
         // Ok, got a name match, advance past it.
@@ -1560,31 +1433,25 @@ DeviceNameCompare(
         // device name.
         //
 
-        if (Match(C,":")) {
+        if (Match(C, ":"))
+        {
 
             //
             // Go past it.
             //
 
             Advance(C);
-
         }
-
     }
     RtlFreeAnsiString(&ansiName);
     return STATUS_SUCCESS;
-
 }
-
-static
-VOID
-IgnoreDeviceName(
-    IN PPARSE_CONTEXT C
-    )
+
+static VOID IgnoreDeviceName(IN PPARSE_CONTEXT C)
 
 {
 
-    RTL_QUERY_REGISTRY_TABLE qTable[2] = {0};
+    RTL_QUERY_REGISTRY_TABLE qTable[2] = { 0 };
 
     //
     // Build the query table.
@@ -1593,12 +1460,5 @@ IgnoreDeviceName(
     qTable[0].QueryRoutine = DeviceNameCompare;
     qTable[0].EntryContext = C;
 
-    RtlQueryRegistryValues(
-        RTL_REGISTRY_DEVICEMAP,
-        L"SERIALCOMM",
-        &qTable[0],
-        NULL,
-        NULL
-        );
-
+    RtlQueryRegistryValues(RTL_REGISTRY_DEVICEMAP, L"SERIALCOMM", &qTable[0], NULL, NULL);
 }

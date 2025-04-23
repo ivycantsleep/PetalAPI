@@ -12,7 +12,7 @@ Abstract:
 
 --*/
 
-#if !defined( RPC_NO_WINDOWS_H ) && !defined( MAC ) && !defined( _MAC )
+#if !defined(RPC_NO_WINDOWS_H) && !defined(MAC) && !defined(_MAC)
 #include <windows.h>
 #endif // RPC_NO_WINDOWS_H
 
@@ -24,7 +24,8 @@ Abstract:
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 //-------------------------------------------------------------
@@ -32,10 +33,10 @@ extern "C" {
 //-------------------------------------------------------------
 
 //-------------------  MAC ---------------------------
-#if defined( MAC ) || defined( _MAC )
+#if defined(MAC) || defined(_MAC)
 
 #define __RPC_MAC__
-// Set the packing level for RPC structures.
+    // Set the packing level for RPC structures.
 
 #include <pshpack2.h>
 
@@ -58,27 +59,27 @@ extern "C" {
 
 #ifndef __MIDL_USER_DEFINED
 #define midl_user_allocate MIDL_user_allocate
-#define midl_user_free     MIDL_user_free
+#define midl_user_free MIDL_user_free
 #define __MIDL_USER_DEFINED
 #endif
 
-typedef void * I_RPC_HANDLE;
-typedef long RPC_STATUS;
+    typedef void *I_RPC_HANDLE;
+    typedef long RPC_STATUS;
 
 #if defined(__RPC_WIN32__) || defined(__RPC_WIN64__)
 #define RPC_UNICODE_SUPPORTED
 #endif
 
-#if !defined(_M_AMD64) && !defined(__RPC_MAC__) && ( (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) )
-#	define __RPC_API  __stdcall
-#	define __RPC_USER __stdcall
-#	define __RPC_STUB __stdcall
-#	define  RPC_ENTRY __stdcall
+#if !defined(_M_AMD64) && !defined(__RPC_MAC__) && ((_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED))
+#define __RPC_API __stdcall
+#define __RPC_USER __stdcall
+#define __RPC_STUB __stdcall
+#define RPC_ENTRY __stdcall
 #else // Not Win32/Win64
-#	define __RPC_API
-#	define __RPC_USER
-#	define __RPC_STUB
-#	define RPC_ENTRY
+#define __RPC_API
+#define __RPC_USER
+#define __RPC_STUB
+#define RPC_ENTRY
 #endif
 
 #define __RPC_FAR
@@ -108,12 +109,12 @@ typedef long RPC_STATUS;
 
 #include <setjmp.h>
 
-#define RPCXCWORD (sizeof(jmp_buf)/sizeof(int))
+#define RPCXCWORD (sizeof(jmp_buf) / sizeof(int))
 
 #if _MSC_VER >= 1200
 #pragma warning(push)
 #endif
-#pragma warning( disable: 4005 )
+#pragma warning(disable : 4005)
 #include <rpcdce.h>
 #include <rpcnsi.h>
 #include <rpcerr.h>
@@ -121,13 +122,11 @@ typedef long RPC_STATUS;
 #if _MSC_VER >= 1200
 #pragma warning(pop)
 #else
-#pragma warning( default :  4005 )
+#pragma warning(default : 4005)
 #endif
 
-typedef void  (RPC_ENTRY *MACYIELDCALLBACK)(/*OSErr*/ short *) ;
-RPC_STATUS RPC_ENTRY
-RpcMacSetYieldInfo(
-	MACYIELDCALLBACK pfnCallback) ;
+    typedef void(RPC_ENTRY *MACYIELDCALLBACK)(/*OSErr*/ short *);
+    RPC_STATUS RPC_ENTRY RpcMacSetYieldInfo(MACYIELDCALLBACK pfnCallback);
 
 #if !defined(UNALIGNED)
 #define UNALIGNED
@@ -144,36 +143,34 @@ RpcMacSetYieldInfo(
 #include <winerror.h>
 
 #define RpcTryExcept \
-    __try \
-        {
+    __try            \
+    {
 
 // trystmts
 
 #define RpcExcept(expr) \
-        } \
-    __except (expr) \
-        {
+    }                   \
+    __except (expr)     \
+    {
 
 // exceptstmts
 
-#define RpcEndExcept \
-        }
+#define RpcEndExcept }
 
 #define RpcTryFinally \
-    __try \
-        {
+    __try             \
+    {
 
 // trystmts
 
 #define RpcFinally \
-        } \
-    __finally \
-        {
+    }              \
+    __finally      \
+    {
 
 // finallystmts
 
-#define RpcEndFinally \
-        }
+#define RpcEndFinally }
 
 #define RpcExceptionCode() GetExceptionCode()
 #define RpcAbnormalTermination() AbnormalTermination()
@@ -181,7 +178,7 @@ RpcMacSetYieldInfo(
 #endif // __RPC_MAC__
 
 // Definitions which depend on windows.h
-#if !defined( RPC_NO_WINDOWS_H ) && !defined(__RPC_MAC__)
+#if !defined(RPC_NO_WINDOWS_H) && !defined(__RPC_MAC__)
 
 #include <rpcasync.h>
 
@@ -196,4 +193,3 @@ RpcMacSetYieldInfo(
 #endif
 
 #endif // __RPC_H__
-

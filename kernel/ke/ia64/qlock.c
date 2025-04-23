@@ -35,12 +35,8 @@ Revision History:
 #undef KeReleaseQueuedSpinLockFromDpcLevel
 #endif
 
-
-VOID
-FASTCALL
-KeAcquireQueuedSpinLockAtDpcLevel (
-    IN PKSPIN_LOCK_QUEUE LockQueue
-    )
+
+VOID FASTCALL KeAcquireQueuedSpinLockAtDpcLevel(IN PKSPIN_LOCK_QUEUE LockQueue)
 
 /*++
 
@@ -63,12 +59,8 @@ Return Value:
     KiAcquireSpinLock(LockQueue->Lock);
     return;
 }
-
-VOID
-FASTCALL
-KeReleaseQueuedSpinLockFromDpcLevel (
-    IN PKSPIN_LOCK_QUEUE LockQueue
-    )
+
+VOID FASTCALL KeReleaseQueuedSpinLockFromDpcLevel(IN PKSPIN_LOCK_QUEUE LockQueue)
 
 /*++
 
@@ -91,12 +83,10 @@ Return Value:
     KiReleaseSpinLock(LockQueue->Lock);
     return;
 }
-
+
 KIRQL
 FASTCALL
-KeAcquireQueuedSpinLock (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number
-    )
+KeAcquireQueuedSpinLock(IN KSPIN_LOCK_QUEUE_NUMBER Number)
 
 /*++
 
@@ -129,13 +119,8 @@ Return Value:
     KeAcquireSpinLock(Lock, &OldIrql);
     return OldIrql;
 }
-
-VOID
-FASTCALL
-KeReleaseQueuedSpinLock (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number,
-    IN KIRQL OldIrql
-    )
+
+VOID FASTCALL KeReleaseQueuedSpinLock(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN KIRQL OldIrql)
 
 /*++
 
@@ -169,13 +154,10 @@ Return Value:
     KeReleaseSpinLock(Lock, OldIrql);
     return;
 }
-
+
 LOGICAL
 FASTCALL
-KeTryToAcquireQueuedSpinLock(
-    IN KSPIN_LOCK_QUEUE_NUMBER Number,
-    IN PKIRQL OldIrql
-    )
+KeTryToAcquireQueuedSpinLock(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN PKIRQL OldIrql)
 
 /*++
 
@@ -210,12 +192,10 @@ Return Value:
     Lock = KeGetCurrentPrcb()->LockQueue[Number].Lock;
     return KeTryToAcquireSpinLock(Lock, OldIrql);
 }
-
+
 KIRQL
 FASTCALL
-KeAcquireQueuedSpinLockRaiseToSynch (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number
-    )
+KeAcquireQueuedSpinLockRaiseToSynch(IN KSPIN_LOCK_QUEUE_NUMBER Number)
 
 /*++
 
@@ -246,13 +226,10 @@ Return Value:
     Lock = KeGetCurrentPrcb()->LockQueue[Number].Lock;
     return KeAcquireSpinLockRaiseToSynch(Lock);
 }
-
+
 LOGICAL
 FASTCALL
-KeTryToAcquireQueuedSpinLockRaiseToSynch(
-    IN KSPIN_LOCK_QUEUE_NUMBER Number,
-    IN PKIRQL OldIrql
-    )
+KeTryToAcquireQueuedSpinLockRaiseToSynch(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN PKIRQL OldIrql)
 
 /*++
 
@@ -288,12 +265,8 @@ Return Value:
     *OldIrql = KeAcquireSpinLockRaiseToSynch(Lock);
     return TRUE;
 }
-
-VOID
-KeAcquireInStackQueuedSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    IN PKLOCK_QUEUE_HANDLE LockHandle
-    )
+
+VOID KeAcquireInStackQueuedSpinLock(IN PKSPIN_LOCK SpinLock, IN PKLOCK_QUEUE_HANDLE LockHandle)
 
 {
 
@@ -314,12 +287,8 @@ KeAcquireInStackQueuedSpinLock (
 
     return;
 }
-
-VOID
-KeAcquireInStackQueuedSpinLockRaiseToSynch (
-    IN PKSPIN_LOCK SpinLock,
-    IN PKLOCK_QUEUE_HANDLE LockHandle
-    )
+
+VOID KeAcquireInStackQueuedSpinLockRaiseToSynch(IN PKSPIN_LOCK SpinLock, IN PKLOCK_QUEUE_HANDLE LockHandle)
 
 {
 
@@ -340,11 +309,8 @@ KeAcquireInStackQueuedSpinLockRaiseToSynch (
 
     return;
 }
-
-VOID
-KeReleaseInStackQueuedSpinLock (
-    IN PKLOCK_QUEUE_HANDLE LockHandle
-    )
+
+VOID KeReleaseInStackQueuedSpinLock(IN PKLOCK_QUEUE_HANDLE LockHandle)
 
 {
 
@@ -357,12 +323,8 @@ KeReleaseInStackQueuedSpinLock (
     KeLowerIrql(LockHandle->OldIrql);
     return;
 }
-
-VOID
-KeAcquireInStackQueuedSpinLockAtDpcLevel (
-    IN PKSPIN_LOCK SpinLock,
-    IN PKLOCK_QUEUE_HANDLE LockHandle
-    )
+
+VOID KeAcquireInStackQueuedSpinLockAtDpcLevel(IN PKSPIN_LOCK SpinLock, IN PKLOCK_QUEUE_HANDLE LockHandle)
 
 {
 
@@ -376,11 +338,8 @@ KeAcquireInStackQueuedSpinLockAtDpcLevel (
 
     return;
 }
-
-VOID
-KeReleaseInStackQueuedSpinLockFromDpcLevel (
-    IN PKLOCK_QUEUE_HANDLE LockHandle
-    )
+
+VOID KeReleaseInStackQueuedSpinLockFromDpcLevel(IN PKLOCK_QUEUE_HANDLE LockHandle)
 
 {
 

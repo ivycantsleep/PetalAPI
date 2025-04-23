@@ -26,30 +26,32 @@ Revision History:
 // RTL_TRACE_SEGMENT
 //
 
-typedef struct _RTL_TRACE_SEGMENT {
+typedef struct _RTL_TRACE_SEGMENT
+{
 
     ULONG Magic;
 
-    struct _RTL_TRACE_DATABASE * Database;
-    struct _RTL_TRACE_SEGMENT * NextSegment;
+    struct _RTL_TRACE_DATABASE *Database;
+    struct _RTL_TRACE_SEGMENT *NextSegment;
     SIZE_T TotalSize;
     PCHAR SegmentStart;
     PCHAR SegmentEnd;
     PCHAR SegmentFree;
 
-} RTL_TRACE_SEGMENT, * PRTL_TRACE_SEGMENT;
+} RTL_TRACE_SEGMENT, *PRTL_TRACE_SEGMENT;
 
 //
 // RTL_TRACE_DATABASE
 //
 
-typedef struct _RTL_TRACE_DATABASE {
+typedef struct _RTL_TRACE_DATABASE
+{
 
     ULONG Magic;
     ULONG Flags;
     ULONG Tag;
 
-    struct _RTL_TRACE_SEGMENT * SegmentList;
+    struct _RTL_TRACE_SEGMENT *SegmentList;
 
     SIZE_T MaximumSize;
     SIZE_T CurrentSize;
@@ -59,7 +61,8 @@ typedef struct _RTL_TRACE_DATABASE {
     KIRQL SavedIrql;
     PVOID Owner;
 
-    union {
+    union
+    {
         KSPIN_LOCK SpinLock;
         FAST_MUTEX FastMutex;
     } u;
@@ -71,7 +74,7 @@ typedef struct _RTL_TRACE_DATABASE {
 #endif // #ifdef NTOS_KERNEL_RUNTIME
 
     ULONG NoOfBuckets;
-    struct _RTL_TRACE_BLOCK * * Buckets;
+    struct _RTL_TRACE_BLOCK **Buckets;
     RTL_TRACE_HASH_FUNCTION HashFunction;
 
     SIZE_T NoOfTraces;
@@ -79,7 +82,7 @@ typedef struct _RTL_TRACE_DATABASE {
 
     ULONG HashCounter[16];
 
-} RTL_TRACE_DATABASE, * PRTL_TRACE_DATABASE;
+} RTL_TRACE_DATABASE, *PRTL_TRACE_DATABASE;
 
 
 #endif // #ifndef _TRACEDBP_H

@@ -21,8 +21,7 @@ Revision History:
 --*/
 
 
-
-#define _TST_KERNEL_    //Kernel mode test
+#define _TST_KERNEL_ //Kernel mode test
 
 #include <stdio.h>
 
@@ -30,12 +29,11 @@ Revision History:
 
 #include <zwapi.h>
 
-#include "tsevars.c"    // Common test variables
+#include "tsevars.c" // Common test variables
 
-#include "ctseacc.c"    // Common accessibility test routines
+#include "ctseacc.c" // Common accessibility test routines
 
 
-
 BOOLEAN
 Test()
 {
@@ -49,16 +47,12 @@ Test()
 
     return Result;
 }
-
-int
-main(
-    int argc,
-    char *argv[]
-    )
+
+int main(int argc, char *argv[])
 {
     VOID KiSystemStartup();
 
     TestFunction = Test;
     KiSystemStartup();
-    return( 0 );
+    return (0);
 }

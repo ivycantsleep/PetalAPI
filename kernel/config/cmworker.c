@@ -22,14 +22,11 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
-extern  LIST_ENTRY  CmpHiveListHead;
+extern LIST_ENTRY CmpHiveListHead;
 
-VOID
-CmpInitializeHiveList(
-    VOID
-    );
+VOID CmpInitializeHiveList(VOID);
 
 //
 // ----- LAZY FLUSH CONTROL -----
@@ -38,7 +35,7 @@ CmpInitializeHiveList(
 // between when the hive is marked dirty and when the lazy flush worker
 // thread is queued to write the data to disk.
 //
-#define LAZY_FLUSH_INTERVAL_IN_SECONDS  5
+#define LAZY_FLUSH_INTERVAL_IN_SECONDS 5
 
 //
 // LAZY_FLUSH_TIMEOUT_IN_SECONDS controls how long the lazy flush worker
@@ -47,11 +44,11 @@ CmpInitializeHiveList(
 //
 #define LAZY_FLUSH_TIMEOUT_IN_SECONDS 1
 
-#define SECOND_MULT 10*1000*1000        // 10->mic, 1000->mil, 1000->second
+#define SECOND_MULT 10 * 1000 * 1000 // 10->mic, 1000->mil, 1000->second
 
-PKPROCESS   CmpSystemProcess;
-KTIMER      CmpLazyFlushTimer;
-KDPC        CmpLazyFlushDpc;
+PKPROCESS CmpSystemProcess;
+KTIMER CmpLazyFlushTimer;
+KDPC CmpLazyFlushDpc;
 WORK_QUEUE_ITEM CmpLazyWorkItem;
 
 BOOLEAN CmpLazyFlushPending = FALSE;
@@ -75,131 +72,109 @@ extern BOOLEAN CmpDiskFullWorkerPopupDisplayed;
 extern BOOLEAN CmpCannotWriteConfiguration;
 extern UNICODE_STRING SystemHiveFullPathName;
 extern HIVE_LIST_ENTRY CmpMachineHiveList[];
-extern BOOLEAN  CmpTrackHiveClose;
+extern BOOLEAN CmpTrackHiveClose;
 
 #if DBG
-PKTHREAD    CmpCallerThread = NULL;
+PKTHREAD CmpCallerThread = NULL;
 #endif
 
 
 #ifdef CMP_STATS
 
-#define KCB_STAT_INTERVAL_IN_SECONDS  120   // 2 min.
+#define KCB_STAT_INTERVAL_IN_SECONDS 120 // 2 min.
 
-extern struct {
-    ULONG       CmpMaxKcbNo;
-    ULONG       CmpKcbNo;
-    ULONG       CmpStatNo;
-    ULONG       CmpNtCreateKeyNo;
-    ULONG       CmpNtDeleteKeyNo;
-    ULONG       CmpNtDeleteValueKeyNo;
-    ULONG       CmpNtEnumerateKeyNo;
-    ULONG       CmpNtEnumerateValueKeyNo;
-    ULONG       CmpNtFlushKeyNo;
-    ULONG       CmpNtNotifyChangeMultipleKeysNo;
-    ULONG       CmpNtOpenKeyNo;
-    ULONG       CmpNtQueryKeyNo;
-    ULONG       CmpNtQueryValueKeyNo;
-    ULONG       CmpNtQueryMultipleValueKeyNo;
-    ULONG       CmpNtRestoreKeyNo;
-    ULONG       CmpNtSaveKeyNo;
-    ULONG       CmpNtSaveMergedKeysNo;
-    ULONG       CmpNtSetValueKeyNo;
-    ULONG       CmpNtLoadKeyNo;
-    ULONG       CmpNtUnloadKeyNo;
-    ULONG       CmpNtSetInformationKeyNo;
-    ULONG       CmpNtReplaceKeyNo;
-    ULONG       CmpNtQueryOpenSubKeysNo;
+extern struct
+{
+    ULONG CmpMaxKcbNo;
+    ULONG CmpKcbNo;
+    ULONG CmpStatNo;
+    ULONG CmpNtCreateKeyNo;
+    ULONG CmpNtDeleteKeyNo;
+    ULONG CmpNtDeleteValueKeyNo;
+    ULONG CmpNtEnumerateKeyNo;
+    ULONG CmpNtEnumerateValueKeyNo;
+    ULONG CmpNtFlushKeyNo;
+    ULONG CmpNtNotifyChangeMultipleKeysNo;
+    ULONG CmpNtOpenKeyNo;
+    ULONG CmpNtQueryKeyNo;
+    ULONG CmpNtQueryValueKeyNo;
+    ULONG CmpNtQueryMultipleValueKeyNo;
+    ULONG CmpNtRestoreKeyNo;
+    ULONG CmpNtSaveKeyNo;
+    ULONG CmpNtSaveMergedKeysNo;
+    ULONG CmpNtSetValueKeyNo;
+    ULONG CmpNtLoadKeyNo;
+    ULONG CmpNtUnloadKeyNo;
+    ULONG CmpNtSetInformationKeyNo;
+    ULONG CmpNtReplaceKeyNo;
+    ULONG CmpNtQueryOpenSubKeysNo;
 } CmpStatsDebug;
 
-KTIMER      CmpKcbStatTimer;
-KDPC        CmpKcbStatDpc;
-KSPIN_LOCK  CmpKcbStatLock;
-BOOLEAN     CmpKcbStatShutdown;
+KTIMER CmpKcbStatTimer;
+KDPC CmpKcbStatDpc;
+KSPIN_LOCK CmpKcbStatLock;
+BOOLEAN CmpKcbStatShutdown;
 
-VOID
-CmpKcbStatDpcRoutine(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID CmpKcbStatDpcRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
 extern ULONG CmpNtFakeCreate;
 
-struct {
-    ULONG   BasicInformation;
-    UINT64  BasicInformationTimeCounter;
-    UINT64  BasicInformationTimeElapsed;
+struct
+{
+    ULONG BasicInformation;
+    UINT64 BasicInformationTimeCounter;
+    UINT64 BasicInformationTimeElapsed;
 
-    ULONG   NodeInformation;
-    UINT64  NodeInformationTimeCounter;
-    UINT64  NodeInformationTimeElapsed;
+    ULONG NodeInformation;
+    UINT64 NodeInformationTimeCounter;
+    UINT64 NodeInformationTimeElapsed;
 
-    ULONG   FullInformation;
-    UINT64  FullInformationTimeCounter;
-    UINT64  FullInformationTimeElapsed;
+    ULONG FullInformation;
+    UINT64 FullInformationTimeCounter;
+    UINT64 FullInformationTimeElapsed;
 
-    ULONG   EnumerateKeyBasicInformation;
-    UINT64  EnumerateKeyBasicInformationTimeCounter;
-    UINT64  EnumerateKeyBasicInformationTimeElapsed;
+    ULONG EnumerateKeyBasicInformation;
+    UINT64 EnumerateKeyBasicInformationTimeCounter;
+    UINT64 EnumerateKeyBasicInformationTimeElapsed;
 
-    ULONG   EnumerateKeyNodeInformation;
-    UINT64  EnumerateKeyNodeInformationTimeCounter;
-    UINT64  EnumerateKeyNodeInformationTimeElapsed;
+    ULONG EnumerateKeyNodeInformation;
+    UINT64 EnumerateKeyNodeInformationTimeCounter;
+    UINT64 EnumerateKeyNodeInformationTimeElapsed;
 
-    ULONG   EnumerateKeyFullInformation;
-    UINT64  EnumerateKeyFullInformationTimeCounter;
-    UINT64  EnumerateKeyFullInformationTimeElapsed;
-} CmpQueryKeyDataDebug = {0};
+    ULONG EnumerateKeyFullInformation;
+    UINT64 EnumerateKeyFullInformationTimeCounter;
+    UINT64 EnumerateKeyFullInformationTimeElapsed;
+} CmpQueryKeyDataDebug = { 0 };
 
 #endif
 
 
-VOID
-CmpLazyFlushWorker(
-    IN PVOID Parameter
-    );
+VOID CmpLazyFlushWorker(IN PVOID Parameter);
 
-VOID
-CmpLazyFlushDpcRoutine(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID CmpLazyFlushDpcRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
-VOID
-CmpDiskFullWarningWorker(
-    IN PVOID WorkItem
-    );
+VOID CmpDiskFullWarningWorker(IN PVOID WorkItem);
 
-VOID
-CmpDiskFullWarning(
-    VOID
-    );
+VOID CmpDiskFullWarning(VOID);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpLazyFlush)
-#pragma alloc_text(PAGE,CmpLazyFlushWorker)
-#pragma alloc_text(PAGE,CmpDiskFullWarningWorker)
-#pragma alloc_text(PAGE,CmpDiskFullWarning)
-#pragma alloc_text(PAGE,CmpCmdHiveClose)
-#pragma alloc_text(PAGE,CmpCmdInit)
-#pragma alloc_text(PAGE,CmpCmdRenameHive)
-#pragma alloc_text(PAGE,CmpCmdHiveOpen)
-#pragma alloc_text(PAGE,CmSetLazyFlushState)
+#pragma alloc_text(PAGE, CmpLazyFlush)
+#pragma alloc_text(PAGE, CmpLazyFlushWorker)
+#pragma alloc_text(PAGE, CmpDiskFullWarningWorker)
+#pragma alloc_text(PAGE, CmpDiskFullWarning)
+#pragma alloc_text(PAGE, CmpCmdHiveClose)
+#pragma alloc_text(PAGE, CmpCmdInit)
+#pragma alloc_text(PAGE, CmpCmdRenameHive)
+#pragma alloc_text(PAGE, CmpCmdHiveOpen)
+#pragma alloc_text(PAGE, CmSetLazyFlushState)
 
 #ifndef CMP_STATS
-#pragma alloc_text(PAGE,CmpShutdownWorkers)
+#pragma alloc_text(PAGE, CmpShutdownWorkers)
 #endif
 
 #endif
 
-VOID 
-CmpCmdHiveClose(
-                     PCMHIVE    CmHive
-                     )
+VOID CmpCmdHiveClose(PCMHIVE CmHive)
 /*++
 
 Routine Description:
@@ -213,16 +188,16 @@ Return Value:
     none
 --*/
 {
-    ULONG                   i;
-    IO_STATUS_BLOCK         IoStatusBlock;
-    FILE_BASIC_INFORMATION  BasicInfo;
-    LARGE_INTEGER           systemtime;
-    BOOLEAN                 oldFlag;
+    ULONG i;
+    IO_STATUS_BLOCK IoStatusBlock;
+    FILE_BASIC_INFORMATION BasicInfo;
+    LARGE_INTEGER systemtime;
+    BOOLEAN oldFlag;
 
     PAGED_CODE();
 
     //
-    // disable hard error popups, to workaround ObAttachProcessStack 
+    // disable hard error popups, to workaround ObAttachProcessStack
     //
     oldFlag = IoSetThreadHardErrorMode(FALSE);
 
@@ -231,41 +206,37 @@ Return Value:
     //
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
-    for (i=0; i<HFILE_TYPE_MAX; i++) {
-        if (CmHive->FileHandles[i] != NULL) {
+    for (i = 0; i < HFILE_TYPE_MAX; i++)
+    {
+        if (CmHive->FileHandles[i] != NULL)
+        {
             //
             // attempt to set change the last write time (profile guys are relying on it!)
             //
-            if( i == HFILE_TYPE_PRIMARY ) {
-                if( NT_SUCCESS(ZwQueryInformationFile(
-                                        CmHive->FileHandles[i],
-                                        &IoStatusBlock,
-                                        &BasicInfo,
-                                        sizeof(BasicInfo),
-                                        FileBasicInformation) ) ) {
+            if (i == HFILE_TYPE_PRIMARY)
+            {
+                if (NT_SUCCESS(ZwQueryInformationFile(CmHive->FileHandles[i], &IoStatusBlock, &BasicInfo,
+                                                      sizeof(BasicInfo), FileBasicInformation)))
+                {
 
                     KeQuerySystemTime(&systemtime);
 
-                    BasicInfo.LastWriteTime  = systemtime;
+                    BasicInfo.LastWriteTime = systemtime;
                     BasicInfo.LastAccessTime = systemtime;
 
-                    ZwSetInformationFile(
-                        CmHive->FileHandles[i],
-                        &IoStatusBlock,
-                        &BasicInfo,
-                        sizeof(BasicInfo),
-                        FileBasicInformation
-                        );
+                    ZwSetInformationFile(CmHive->FileHandles[i], &IoStatusBlock, &BasicInfo, sizeof(BasicInfo),
+                                         FileBasicInformation);
                 }
 
                 CmpTrackHiveClose = TRUE;
                 CmCloseHandle(CmHive->FileHandles[i]);
                 CmpTrackHiveClose = FALSE;
-                
-            } else {
+            }
+            else
+            {
                 CmCloseHandle(CmHive->FileHandles[i]);
             }
-            
+
             CmHive->FileHandles[i] = NULL;
         }
     }
@@ -275,10 +246,7 @@ Return Value:
     IoSetThreadHardErrorMode(oldFlag);
 }
 
-VOID 
-CmpCmdInit(
-           BOOLEAN SetupBoot
-            )
+VOID CmpCmdInit(BOOLEAN SetupBoot)
 /*++
 
 Routine Description:
@@ -299,18 +267,14 @@ Return Value:
     //
     // Initialize lazy flush timer and DPC
     //
-    KeInitializeDpc(&CmpLazyFlushDpc,
-                    CmpLazyFlushDpcRoutine,
-                    NULL);
+    KeInitializeDpc(&CmpLazyFlushDpc, CmpLazyFlushDpcRoutine, NULL);
 
     KeInitializeTimer(&CmpLazyFlushTimer);
 
     ExInitializeWorkItem(&CmpLazyWorkItem, CmpLazyFlushWorker, NULL);
 
 #ifdef CMP_STATS
-    KeInitializeDpc(&CmpKcbStatDpc,
-                    CmpKcbStatDpcRoutine,
-                    NULL);
+    KeInitializeDpc(&CmpKcbStatDpc, CmpKcbStatDpcRoutine, NULL);
 
     KeInitializeTimer(&CmpKcbStatTimer);
 
@@ -321,32 +285,29 @@ Return Value:
     CmpNoWrite = CmpMiniNTBoot;
 
     CmpWasSetupBoot = SetupBoot;
-    
-    if (SetupBoot == FALSE) {
+
+    if (SetupBoot == FALSE)
+    {
         CmpInitializeHiveList();
-    } 
-   
+    }
+
     //
-    // Since we are done with initialization, 
+    // Since we are done with initialization,
     // disable the hive sharing
-    // 
-    if (CmpMiniNTBoot && CmpShareSystemHives) {
+    //
+    if (CmpMiniNTBoot && CmpShareSystemHives)
+    {
         CmpShareSystemHives = FALSE;
-    }    
-    
+    }
+
 #ifdef CMP_STATS
     CmpKcbStat();
 #endif
 }
 
 
-NTSTATUS 
-CmpCmdRenameHive(
-            PCMHIVE                     CmHive,
-            POBJECT_NAME_INFORMATION    OldName,
-            PUNICODE_STRING             NewName,
-            ULONG                       NameInfoLength
-            )
+NTSTATUS
+CmpCmdRenameHive(PCMHIVE CmHive, POBJECT_NAME_INFORMATION OldName, PUNICODE_STRING NewName, ULONG NameInfoLength)
 /*++
 
 Routine Description:
@@ -370,9 +331,9 @@ Return Value:
     <TBD>
 --*/
 {
-    NTSTATUS                    Status;
-    HANDLE                      Handle;
-    PFILE_RENAME_INFORMATION    RenameInfo;
+    NTSTATUS Status;
+    HANDLE Handle;
+    PFILE_RENAME_INFORMATION RenameInfo;
     IO_STATUS_BLOCK IoStatusBlock;
 
     PAGED_CODE();
@@ -382,51 +343,39 @@ Return Value:
     // Rename a CmHive's primary handle
     //
     Handle = CmHive->FileHandles[HFILE_TYPE_PRIMARY];
-    if (OldName != NULL) {
+    if (OldName != NULL)
+    {
         ASSERT_PASSIVE_LEVEL();
-        Status = ZwQueryObject(Handle,
-                               ObjectNameInformation,
-                               OldName,
-                               NameInfoLength,
-                               &NameInfoLength);
-        if (!NT_SUCCESS(Status)) {
+        Status = ZwQueryObject(Handle, ObjectNameInformation, OldName, NameInfoLength, &NameInfoLength);
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
 
-    RenameInfo = ExAllocatePool(PagedPool,
-                                sizeof(FILE_RENAME_INFORMATION) + NewName->Length);
-    if (RenameInfo == NULL) {
+    RenameInfo = ExAllocatePool(PagedPool, sizeof(FILE_RENAME_INFORMATION) + NewName->Length);
+    if (RenameInfo == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     RenameInfo->ReplaceIfExists = FALSE;
     RenameInfo->RootDirectory = NULL;
     RenameInfo->FileNameLength = NewName->Length;
-    RtlCopyMemory(RenameInfo->FileName,
-                  NewName->Buffer,
-                  NewName->Length);
+    RtlCopyMemory(RenameInfo->FileName, NewName->Buffer, NewName->Length);
 
-    Status = ZwSetInformationFile(Handle,
-                                  &IoStatusBlock,
-                                  (PVOID)RenameInfo,
-                                  sizeof(FILE_RENAME_INFORMATION) +
-                                  NewName->Length,
-                                  FileRenameInformation);
+    Status = ZwSetInformationFile(Handle, &IoStatusBlock, (PVOID)RenameInfo,
+                                  sizeof(FILE_RENAME_INFORMATION) + NewName->Length, FileRenameInformation);
     ExFreePool(RenameInfo);
 
     return Status;
 }
 
-NTSTATUS 
+NTSTATUS
 CmpCmdHiveOpen(
-            POBJECT_ATTRIBUTES          FileAttributes,
-            PSECURITY_CLIENT_CONTEXT    ImpersonationContext,
-            PBOOLEAN                    Allocate,
-            PBOOLEAN                    RegistryLockAquired,    // needed to avoid recursivity deadlock with ZwCreate calls calling back into registry
-            PCMHIVE                     *NewHive,
-		    ULONG						CheckFlags
-            )
+    POBJECT_ATTRIBUTES FileAttributes, PSECURITY_CLIENT_CONTEXT ImpersonationContext, PBOOLEAN Allocate,
+    PBOOLEAN RegistryLockAquired, // needed to avoid recursivity deadlock with ZwCreate calls calling back into registry
+    PCMHIVE *NewHive, ULONG CheckFlags)
 /*++
 
 Routine Description:
@@ -443,8 +392,8 @@ Return Value:
 --*/
 {
     PUNICODE_STRING FileName;
-    NTSTATUS        Status;
-    HANDLE          NullHandle;
+    NTSTATUS Status;
+    HANDLE NullHandle;
 
     PAGED_CODE();
 
@@ -453,54 +402,38 @@ Return Value:
     //
     FileName = FileAttributes->ObjectName;
 
-    Status = CmpInitHiveFromFile(FileName,
-                                 0,
-                                 NewHive,
-                                 Allocate,
-                                 RegistryLockAquired,
-								 CheckFlags);
+    Status = CmpInitHiveFromFile(FileName, 0, NewHive, Allocate, RegistryLockAquired, CheckFlags);
     //
     // NT Servers will return STATUS_ACCESS_DENIED. Netware 3.1x
     // servers could return any of the other error codes if the GUEST
     // account is disabled.
     //
-    if (((Status == STATUS_ACCESS_DENIED) ||
-         (Status == STATUS_NO_SUCH_USER) ||
-         (Status == STATUS_WRONG_PASSWORD) ||
-         (Status == STATUS_ACCOUNT_EXPIRED) ||
-         (Status == STATUS_ACCOUNT_DISABLED) ||
+    if (((Status == STATUS_ACCESS_DENIED) || (Status == STATUS_NO_SUCH_USER) || (Status == STATUS_WRONG_PASSWORD) ||
+         (Status == STATUS_ACCOUNT_EXPIRED) || (Status == STATUS_ACCOUNT_DISABLED) ||
          (Status == STATUS_ACCOUNT_RESTRICTION)) &&
-        (ImpersonationContext != NULL)) {
+        (ImpersonationContext != NULL))
+    {
         //
         // Impersonate the caller and try it again.  This
         // lets us open hives on a remote machine.
         //
-        Status = SeImpersonateClientEx(
-                        ImpersonationContext,
-                        NULL);
+        Status = SeImpersonateClientEx(ImpersonationContext, NULL);
 
-        if ( NT_SUCCESS( Status ) ) {
+        if (NT_SUCCESS(Status))
+        {
 
-            Status = CmpInitHiveFromFile(FileName,
-                                         0,
-                                         NewHive,
-                                         Allocate,
-                                         RegistryLockAquired,
-										 CheckFlags);
+            Status = CmpInitHiveFromFile(FileName, 0, NewHive, Allocate, RegistryLockAquired, CheckFlags);
             NullHandle = NULL;
 
             PsRevertToSelf();
         }
     }
-    
+
     return Status;
 }
 
 
-VOID
-CmpLazyFlush(
-    VOID
-    )
+VOID CmpLazyFlush(VOID)
 
 /*++
 
@@ -523,33 +456,22 @@ Return Value:
     LARGE_INTEGER DueTime;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"CmpLazyFlush: setting lazy flush timer\n"));
-    if ((!CmpNoWrite) && (!CmpHoldLazyFlush)) {
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "CmpLazyFlush: setting lazy flush timer\n"));
+    if ((!CmpNoWrite) && (!CmpHoldLazyFlush))
+    {
 
-        DueTime.QuadPart = Int32x32To64(LAZY_FLUSH_INTERVAL_IN_SECONDS,
-                                        - SECOND_MULT);
+        DueTime.QuadPart = Int32x32To64(LAZY_FLUSH_INTERVAL_IN_SECONDS, -SECOND_MULT);
 
         //
         // Indicate relative time
         //
 
-        KeSetTimer(&CmpLazyFlushTimer,
-                   DueTime,
-                   &CmpLazyFlushDpc);
-
+        KeSetTimer(&CmpLazyFlushTimer, DueTime, &CmpLazyFlushDpc);
     }
-
-
 }
 
-
-VOID
-CmpLazyFlushDpcRoutine(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID CmpLazyFlushDpcRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -576,20 +498,17 @@ Return Value:
 --*/
 
 {
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"CmpLazyFlushDpc: queuing lazy flush work item\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "CmpLazyFlushDpc: queuing lazy flush work item\n"));
 
-    if ((!CmpLazyFlushPending) && (!CmpHoldLazyFlush)) {
+    if ((!CmpLazyFlushPending) && (!CmpHoldLazyFlush))
+    {
         CmpLazyFlushPending = TRUE;
         ExQueueWorkItem(&CmpLazyWorkItem, DelayedWorkQueue);
     }
-
 }
 
-
-VOID
-CmpLazyFlushWorker(
-    IN PVOID Parameter
-    )
+
+VOID CmpLazyFlushWorker(IN PVOID Parameter)
 
 /*++
 
@@ -614,52 +533,65 @@ Return Value:
 
     PAGED_CODE();
 
-    if( CmpHoldLazyFlush ) {
+    if (CmpHoldLazyFlush)
+    {
         //
         // lazy flush mode is disabled
         //
         return;
     }
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"CmpLazyFlushWorker: flushing hives\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "CmpLazyFlushWorker: flushing hives\n"));
 
     ForceFlush = CmpForceForceFlush;
-    if(ForceFlush == TRUE) {
+    if (ForceFlush == TRUE)
+    {
         //
         // something bad happened and we may need to fix hive's use count
         //
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CmpLazyFlushWorker: Force Flush - getting the reglock exclusive\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+                     "CmpLazyFlushWorker: Force Flush - getting the reglock exclusive\n"));
         CmpLockRegistryExclusive();
-    } else {
+    }
+    else
+    {
         CmpLockRegistry();
         ENTER_FLUSH_MODE();
     }
-    if (!HvShutdownComplete) {
+    if (!HvShutdownComplete)
+    {
         //
         // this call will set CmpForceForceFlush to the right value
         //
         Result = CmpDoFlushAll(ForceFlush);
-    } else {
+    }
+    else
+    {
         CmpForceForceFlush = FALSE;
     }
 
-    if( ForceFlush == FALSE ) {
+    if (ForceFlush == FALSE)
+    {
         EXIT_FLUSH_MODE();
     }
 
     CmpLazyFlushPending = FALSE;
     CmpUnlockRegistry();
 
-    if( CmpCannotWriteConfiguration ) {
+    if (CmpCannotWriteConfiguration)
+    {
         //
         // Disk full; system hive has not been saved at initialization
         //
-        if(Result) {
+        if (Result)
+        {
             //
             // All hives were saved; No need for disk full warning anymore
             //
             CmpCannotWriteConfiguration = FALSE;
-        } else {
+        }
+        else
+        {
             //
             // Issue another hard error (if not already displayed) and postpone a lazy flush operation
             //
@@ -669,10 +601,7 @@ Return Value:
     }
 }
 
-VOID
-CmpDiskFullWarningWorker(
-    IN PVOID WorkItem
-    )
+VOID CmpDiskFullWarningWorker(IN PVOID WorkItem)
 
 /*++
 
@@ -697,20 +626,11 @@ Return Value:
 
     ExFreePool(WorkItem);
 
-    Status = ExRaiseHardError(STATUS_DISK_FULL,
-                              0,
-                              0,
-                              NULL,
-                              OptionOk,
-                              &Response);
+    Status = ExRaiseHardError(STATUS_DISK_FULL, 0, 0, NULL, OptionOk, &Response);
 }
 
 
-
-VOID
-CmpDiskFullWarning(
-    VOID
-    )
+VOID CmpDiskFullWarning(VOID)
 /*++
 
 Routine Description:
@@ -729,27 +649,24 @@ Return Value:
 {
     PWORK_QUEUE_ITEM WorkItem;
 
-    if( (!CmpDiskFullWorkerPopupDisplayed) && (CmpCannotWriteConfiguration) && (ExReadyForErrors) && (CmpProfileLoaded) ) {
+    if ((!CmpDiskFullWorkerPopupDisplayed) && (CmpCannotWriteConfiguration) && (ExReadyForErrors) && (CmpProfileLoaded))
+    {
 
         //
         // Queue work item to display popup
         //
         WorkItem = ExAllocatePool(NonPagedPool, sizeof(WORK_QUEUE_ITEM));
-        if (WorkItem != NULL) {
+        if (WorkItem != NULL)
+        {
 
             CmpDiskFullWorkerPopupDisplayed = TRUE;
-            ExInitializeWorkItem(WorkItem,
-                                 CmpDiskFullWarningWorker,
-                                 WorkItem);
+            ExInitializeWorkItem(WorkItem, CmpDiskFullWarningWorker, WorkItem);
             ExQueueWorkItem(WorkItem, DelayedWorkQueue);
         }
     }
 }
 
-VOID
-CmpShutdownWorkers(
-    VOID
-    )
+VOID CmpShutdownWorkers(VOID)
 /*++
 
 Routine Description:
@@ -773,7 +690,7 @@ Return Value:
 #ifdef CMP_STATS
     {
         KIRQL OldIrql;
-        
+
         KeAcquireSpinLock(&CmpKcbStatLock, &OldIrql);
         CmpKcbStatShutdown = TRUE;
         KeCancelTimer(&CmpKcbStatTimer);
@@ -782,8 +699,7 @@ Return Value:
 #endif
 }
 
-VOID
-CmSetLazyFlushState(BOOLEAN Enable)
+VOID CmSetLazyFlushState(BOOLEAN Enable)
 /*++
 
 Routine Description:
@@ -810,10 +726,7 @@ Return Value:
 
 #ifdef CMP_STATS
 
-VOID
-CmpKcbStat(
-    VOID
-    )
+VOID CmpKcbStat(VOID)
 
 /*++
 
@@ -836,29 +749,21 @@ Return Value:
     LARGE_INTEGER DueTime;
     KIRQL OldIrql;
 
-    DueTime.QuadPart = Int32x32To64(KCB_STAT_INTERVAL_IN_SECONDS,
-                                    - SECOND_MULT);
+    DueTime.QuadPart = Int32x32To64(KCB_STAT_INTERVAL_IN_SECONDS, -SECOND_MULT);
 
     //
     // Indicate relative time
     //
 
     KeAcquireSpinLock(&CmpKcbStatLock, &OldIrql);
-    if (! CmpKcbStatShutdown) {
-        KeSetTimer(&CmpKcbStatTimer,
-                   DueTime,
-                   &CmpKcbStatDpc);
+    if (!CmpKcbStatShutdown)
+    {
+        KeSetTimer(&CmpKcbStatTimer, DueTime, &CmpKcbStatDpc);
     }
     KeReleaseSpinLock(&CmpKcbStatLock, OldIrql);
 }
 
-VOID
-CmpKcbStatDpcRoutine(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID CmpKcbStatDpcRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -885,76 +790,136 @@ Return Value:
 
 {
 #ifndef _CM_LDR_
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"\n*********************************************************************\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  Stat No %8lu KcbNo = %8lu [MaxKcbNo = %8lu]          *\n",++CmpStatsDebug.CmpStatNo,CmpStatsDebug.CmpKcbNo,CmpStatsDebug.CmpMaxKcbNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*********************************************************************\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*                                                                   *\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  [Nt]API               [No. Of]Calls                              *\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*-------------------------------------------------------------------*\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtCreateKey              %8lu      Opens = %8lu          *\n",CmpStatsDebug.CmpNtCreateKeyNo,CmpNtFakeCreate);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtOpenKey                %8lu                                *\n",CmpStatsDebug.CmpNtOpenKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtEnumerateKey           %8lu                                *\n",CmpStatsDebug.CmpNtEnumerateKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtQueryKey               %8lu                                *\n",CmpStatsDebug.CmpNtQueryKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtDeleteKey              %8lu                                *\n",CmpStatsDebug.CmpNtDeleteKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtSetInformationKey      %8lu                                *\n",CmpStatsDebug.CmpNtSetInformationKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*-------------------------------------------------------------------*\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtSetValueKey            %8lu                                *\n",CmpStatsDebug.CmpNtSetValueKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtEnumerateValueKey      %8lu                                *\n",CmpStatsDebug.CmpNtEnumerateValueKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtQueryValueKey          %8lu                                *\n",CmpStatsDebug.CmpNtQueryValueKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtQueryMultipleValueKey  %8lu                                *\n",CmpStatsDebug.CmpNtQueryMultipleValueKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtDeleteValueKey         %8lu                                *\n",CmpStatsDebug.CmpNtDeleteValueKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*-------------------------------------------------------------------*\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtFlushKey               %8lu                                *\n",CmpStatsDebug.CmpNtFlushKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtLoadKey                %8lu                                *\n",CmpStatsDebug.CmpNtLoadKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtUnloadKey              %8lu                                *\n",CmpStatsDebug.CmpNtUnloadKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtSaveKey                %8lu                                *\n",CmpStatsDebug.CmpNtSaveKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtSaveMergedKeys         %8lu                                *\n",CmpStatsDebug.CmpNtSaveMergedKeysNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtRestoreKey             %8lu                                *\n",CmpStatsDebug.CmpNtRestoreKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtReplaceKey             %8lu                                *\n",CmpStatsDebug.CmpNtReplaceKeyNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*-------------------------------------------------------------------*\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtNotifyChgMultplKeys    %8lu                                *\n",CmpStatsDebug.CmpNtNotifyChangeMultipleKeysNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtQueryOpenSubKeys       %8lu                                *\n",CmpStatsDebug.CmpNtQueryOpenSubKeysNo);
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*-------------------------------------------------------------------*\n");
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*                                    [No.Of]Calls     [Time]        *\n");
-    
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*-------------------------------------------------------------------*\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "\n*********************************************************************\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "*  Stat No %8lu KcbNo = %8lu [MaxKcbNo = %8lu]          *\n",
+               ++CmpStatsDebug.CmpStatNo, CmpStatsDebug.CmpKcbNo, CmpStatsDebug.CmpMaxKcbNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*********************************************************************\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*                                                                   *\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  [Nt]API               [No. Of]Calls                              *\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*-------------------------------------------------------------------*\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "*  NtCreateKey              %8lu      Opens = %8lu          *\n",
+               CmpStatsDebug.CmpNtCreateKeyNo, CmpNtFakeCreate);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtOpenKey                %8lu                                *\n", CmpStatsDebug.CmpNtOpenKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtEnumerateKey           %8lu                                *\n",
+               CmpStatsDebug.CmpNtEnumerateKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtQueryKey               %8lu                                *\n", CmpStatsDebug.CmpNtQueryKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtDeleteKey              %8lu                                *\n", CmpStatsDebug.CmpNtDeleteKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtSetInformationKey      %8lu                                *\n",
+               CmpStatsDebug.CmpNtSetInformationKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*-------------------------------------------------------------------*\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtSetValueKey            %8lu                                *\n", CmpStatsDebug.CmpNtSetValueKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtEnumerateValueKey      %8lu                                *\n",
+               CmpStatsDebug.CmpNtEnumerateValueKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtQueryValueKey          %8lu                                *\n",
+               CmpStatsDebug.CmpNtQueryValueKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtQueryMultipleValueKey  %8lu                                *\n",
+               CmpStatsDebug.CmpNtQueryMultipleValueKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtDeleteValueKey         %8lu                                *\n",
+               CmpStatsDebug.CmpNtDeleteValueKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*-------------------------------------------------------------------*\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtFlushKey               %8lu                                *\n", CmpStatsDebug.CmpNtFlushKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtLoadKey                %8lu                                *\n", CmpStatsDebug.CmpNtLoadKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtUnloadKey              %8lu                                *\n", CmpStatsDebug.CmpNtUnloadKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtSaveKey                %8lu                                *\n", CmpStatsDebug.CmpNtSaveKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtSaveMergedKeys         %8lu                                *\n",
+               CmpStatsDebug.CmpNtSaveMergedKeysNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtRestoreKey             %8lu                                *\n", CmpStatsDebug.CmpNtRestoreKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtReplaceKey             %8lu                                *\n", CmpStatsDebug.CmpNtReplaceKeyNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*-------------------------------------------------------------------*\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtNotifyChgMultplKeys    %8lu                                *\n",
+               CmpStatsDebug.CmpNtNotifyChangeMultipleKeysNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*  NtQueryOpenSubKeys       %8lu                                *\n",
+               CmpStatsDebug.CmpNtQueryOpenSubKeysNo);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*-------------------------------------------------------------------*\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*                                    [No.Of]Calls     [Time]        *\n");
 
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtQueryKey(KeyBasicInformation)     %8lu    %8lu         *\n",
-        CmpQueryKeyDataDebug.BasicInformation,
-        (ULONG)(CmpQueryKeyDataDebug.BasicInformationTimeCounter?CmpQueryKeyDataDebug.BasicInformationTimeElapsed/CmpQueryKeyDataDebug.BasicInformationTimeCounter:0));
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*-------------------------------------------------------------------*\n");
+
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "*  NtQueryKey(KeyBasicInformation)     %8lu    %8lu         *\n",
+               CmpQueryKeyDataDebug.BasicInformation,
+               (ULONG)(CmpQueryKeyDataDebug.BasicInformationTimeCounter
+                           ? CmpQueryKeyDataDebug.BasicInformationTimeElapsed /
+                                 CmpQueryKeyDataDebug.BasicInformationTimeCounter
+                           : 0));
     CmpQueryKeyDataDebug.BasicInformationTimeCounter = 0;
     CmpQueryKeyDataDebug.BasicInformationTimeElapsed = 0;
 
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtQueryKey(KeyNodeInformation )     %8lu    %8lu         *\n",
+    DbgPrintEx(
+        DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "*  NtQueryKey(KeyNodeInformation )     %8lu    %8lu         *\n",
         CmpQueryKeyDataDebug.NodeInformation,
-        (ULONG)(CmpQueryKeyDataDebug.NodeInformationTimeCounter?CmpQueryKeyDataDebug.NodeInformationTimeElapsed/CmpQueryKeyDataDebug.NodeInformationTimeCounter:0));
+        (ULONG)(CmpQueryKeyDataDebug.NodeInformationTimeCounter
+                    ? CmpQueryKeyDataDebug.NodeInformationTimeElapsed / CmpQueryKeyDataDebug.NodeInformationTimeCounter
+                    : 0));
     CmpQueryKeyDataDebug.NodeInformationTimeCounter = 0;
     CmpQueryKeyDataDebug.NodeInformationTimeElapsed = 0;
 
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtQueryKey(KeyFullInformation )     %8lu    %8lu         *\n",
+    DbgPrintEx(
+        DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "*  NtQueryKey(KeyFullInformation )     %8lu    %8lu         *\n",
         CmpQueryKeyDataDebug.FullInformation,
-        (ULONG)(CmpQueryKeyDataDebug.FullInformationTimeCounter?CmpQueryKeyDataDebug.FullInformationTimeElapsed/CmpQueryKeyDataDebug.FullInformationTimeCounter:0));
+        (ULONG)(CmpQueryKeyDataDebug.FullInformationTimeCounter
+                    ? CmpQueryKeyDataDebug.FullInformationTimeElapsed / CmpQueryKeyDataDebug.FullInformationTimeCounter
+                    : 0));
     CmpQueryKeyDataDebug.FullInformationTimeCounter = 0;
     CmpQueryKeyDataDebug.FullInformationTimeElapsed = 0;
 
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtEnumerateKey(KeyBasicInformation) %8lu    %8lu         *\n",
-        CmpQueryKeyDataDebug.EnumerateKeyBasicInformation,
-        (ULONG)(CmpQueryKeyDataDebug.EnumerateKeyBasicInformationTimeCounter?CmpQueryKeyDataDebug.EnumerateKeyBasicInformationTimeElapsed/CmpQueryKeyDataDebug.EnumerateKeyBasicInformationTimeCounter:0));
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "*  NtEnumerateKey(KeyBasicInformation) %8lu    %8lu         *\n",
+               CmpQueryKeyDataDebug.EnumerateKeyBasicInformation,
+               (ULONG)(CmpQueryKeyDataDebug.EnumerateKeyBasicInformationTimeCounter
+                           ? CmpQueryKeyDataDebug.EnumerateKeyBasicInformationTimeElapsed /
+                                 CmpQueryKeyDataDebug.EnumerateKeyBasicInformationTimeCounter
+                           : 0));
     CmpQueryKeyDataDebug.EnumerateKeyBasicInformationTimeCounter = 0;
     CmpQueryKeyDataDebug.EnumerateKeyBasicInformationTimeElapsed = 0;
 
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtEnumerateKey(KeyNodeInformation ) %8lu    %8lu         *\n",
-        CmpQueryKeyDataDebug.EnumerateKeyNodeInformation,
-        (ULONG)(CmpQueryKeyDataDebug.EnumerateKeyNodeInformationTimeCounter?CmpQueryKeyDataDebug.EnumerateKeyNodeInformationTimeElapsed/CmpQueryKeyDataDebug.EnumerateKeyNodeInformationTimeCounter:0));
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "*  NtEnumerateKey(KeyNodeInformation ) %8lu    %8lu         *\n",
+               CmpQueryKeyDataDebug.EnumerateKeyNodeInformation,
+               (ULONG)(CmpQueryKeyDataDebug.EnumerateKeyNodeInformationTimeCounter
+                           ? CmpQueryKeyDataDebug.EnumerateKeyNodeInformationTimeElapsed /
+                                 CmpQueryKeyDataDebug.EnumerateKeyNodeInformationTimeCounter
+                           : 0));
     CmpQueryKeyDataDebug.EnumerateKeyNodeInformationTimeCounter = 0;
     CmpQueryKeyDataDebug.EnumerateKeyNodeInformationTimeElapsed = 0;
 
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*  NtEnumerateKey(KeyFullInformation ) %8lu    %8lu         *\n",
-        CmpQueryKeyDataDebug.EnumerateKeyFullInformation,
-        (ULONG)(CmpQueryKeyDataDebug.EnumerateKeyFullInformationTimeCounter?CmpQueryKeyDataDebug.EnumerateKeyFullInformationTimeElapsed/CmpQueryKeyDataDebug.EnumerateKeyFullInformationTimeCounter:0));
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "*  NtEnumerateKey(KeyFullInformation ) %8lu    %8lu         *\n",
+               CmpQueryKeyDataDebug.EnumerateKeyFullInformation,
+               (ULONG)(CmpQueryKeyDataDebug.EnumerateKeyFullInformationTimeCounter
+                           ? CmpQueryKeyDataDebug.EnumerateKeyFullInformationTimeElapsed /
+                                 CmpQueryKeyDataDebug.EnumerateKeyFullInformationTimeCounter
+                           : 0));
     CmpQueryKeyDataDebug.EnumerateKeyFullInformationTimeCounter = 0;
     CmpQueryKeyDataDebug.EnumerateKeyFullInformationTimeElapsed = 0;
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,  "*********************************************************************\n\n");
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+               "*********************************************************************\n\n");
 
     //
     // reschedule
@@ -963,6 +928,3 @@ Return Value:
     CmpKcbStat();
 }
 #endif
-
-
-

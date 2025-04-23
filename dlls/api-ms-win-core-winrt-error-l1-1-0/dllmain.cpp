@@ -1,61 +1,64 @@
 ﻿//[80_PA] ELF, cracklab/exelab, 2023-2024
-//FLAG 
+//FLAG
 //#define DEBUG_OUT 1
 
-//FLAG 
+//FLAG
 //#define DEBUG_OUT 1
 
 //https://learn.microsoft.com/en-us/windows/win32/api/roerrorapi
-#define E_STRING_NOT_NULL_TERMINATED     _HRESULT_TYPEDEF_(0x80000017L)
-typedef struct HSTRING__ {
+#define E_STRING_NOT_NULL_TERMINATED _HRESULT_TYPEDEF_(0x80000017L)
+typedef struct HSTRING__
+{
     int unused;
 } HSTRING__;
-typedef HSTRING__* HSTRING;
+typedef HSTRING__ *HSTRING;
 
-typedef struct HSTRING_HEADER {
-    union {
+typedef struct HSTRING_HEADER
+{
+    union
+    {
         PVOID Reserved1;
 #if _WIN64
-        char  Reserved2[24];
+        char Reserved2[24];
 #else
-        char  Reserved2[20];
+        char Reserved2[20];
 #endif
     } Reserved;
 } HSTRING_HEADER;
 
 
-typedef struct {}*RO_REGISTRATION_COOKIE;
+typedef struct
+{
+} *RO_REGISTRATION_COOKIE;
 
-// ------ globals ------ 
+// ------ globals ------
 BOOL isdp = false;
 extern "C"
 {
 
-    BOOL APIENTRY DllMain(HMODULE hModule,
-        DWORD  ul_reason_for_call,
-        LPVOID lpReserved
-    )
+    BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
     {
         switch (ul_reason_for_call)
         {
-        case DLL_PROCESS_ATTACH: {
+        case DLL_PROCESS_ATTACH:
+        {
 #ifdef DEBUG_OUT
             //for OUTPUT DEBUG STRINGS (if needed)
             isdp = ::IsDebuggerPresent();
 #endif // DEBUG_OUT
-            break; }
-        case DLL_THREAD_ATTACH: {
+            break;
+        }
+        case DLL_THREAD_ATTACH:
+        {
         case DLL_THREAD_DETACH:
         case DLL_PROCESS_DETACH:
-            break; }
+            break;
+        }
         }
         return TRUE;
     }
 
-    __declspec(dllexport) BOOL RoOriginateError(
-        HRESULT error,
-        HSTRING message
-    )
+    __declspec(dllexport) BOOL RoOriginateError(HRESULT error, HSTRING message)
     {
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
@@ -65,11 +68,7 @@ extern "C"
         return TRUE;
     }
 
-    __declspec(dllexport) BOOL APIENTRY RoTransformError(
-        HRESULT oldError,
-        HRESULT newError,
-        HSTRING message
-    )
+    __declspec(dllexport) BOOL APIENTRY RoTransformError(HRESULT oldError, HRESULT newError, HSTRING message)
     {
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
@@ -79,11 +78,7 @@ extern "C"
         return FALSE;
     }
 
-    __declspec(dllexport) BOOL APIENTRY RoOriginateErrorW(
-        HRESULT error,
-        UINT    cchMax,
-        PCWSTR  message
-    )
+    __declspec(dllexport) BOOL APIENTRY RoOriginateErrorW(HRESULT error, UINT cchMax, PCWSTR message)
     {
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
@@ -91,7 +86,6 @@ extern "C"
             ::OutputDebugString(L"APIENTRY RoOriginateErrorW()");
 #endif // DEBUG_OUT
         return TRUE;
-
     }
 
     __declspec(dllexport) void APIENTRY RoClearError()
@@ -120,8 +114,7 @@ extern "C"
         return TRUE;
     }
 
-    __declspec(dllexport) HRESULT APIENTRY RoCaptureErrorContext(
-        HRESULT hr)
+    __declspec(dllexport) HRESULT APIENTRY RoCaptureErrorContext(HRESULT hr)
     {
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
@@ -131,8 +124,7 @@ extern "C"
         return hr;
     }
 
-    __declspec(dllexport) void APIENTRY RoFailFastWithErrorContext(
-        HRESULT hrError)
+    __declspec(dllexport) void APIENTRY RoFailFastWithErrorContext(HRESULT hrError)
     {
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
@@ -142,8 +134,7 @@ extern "C"
         return;
     }
 
-    __declspec(dllexport) HRESULT APIENTRY SetRestrictedErrorInfo(
-        IRestrictedErrorInfo* pRestrictedErrorInfo)
+    __declspec(dllexport) HRESULT APIENTRY SetRestrictedErrorInfo(IRestrictedErrorInfo *pRestrictedErrorInfo)
     {
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
@@ -153,8 +144,7 @@ extern "C"
         return S_OK;
     }
 
-    __declspec(dllexport) HRESULT APIENTRY GetRestrictedErrorInfo(
-        IRestrictedErrorInfo** ppRestrictedErrorInfo)
+    __declspec(dllexport) HRESULT APIENTRY GetRestrictedErrorInfo(IRestrictedErrorInfo **ppRestrictedErrorInfo)
     {
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
@@ -163,5 +153,4 @@ extern "C"
 #endif // DEBUG_OUT
         return CO_E_NOT_SUPPORTED;
     }
-
 }

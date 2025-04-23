@@ -30,7 +30,8 @@ Revision History:
 
 struct _NPAGED_LOOKASIDE_LIST;
 
-typedef struct _PP_LOOKASIDE_LIST {
+typedef struct _PP_LOOKASIDE_LIST
+{
     struct _GENERAL_LOOKASIDE *P;
     struct _GENERAL_LOOKASIDE *L;
 } PP_LOOKASIDE_LIST, *PPP_LOOKASIDE_LIST;
@@ -49,17 +50,13 @@ typedef struct _PP_LOOKASIDE_LIST {
 // Define alignment macros to align structure sizes and pointers up and down.
 //
 
-#define ALIGN_DOWN(length, type) \
-    ((ULONG)(length) & ~(sizeof(type) - 1))
+#define ALIGN_DOWN(length, type) ((ULONG)(length) & ~(sizeof(type) - 1))
 
-#define ALIGN_UP(length, type) \
-    (ALIGN_DOWN(((ULONG)(length) + sizeof(type) - 1), type))
+#define ALIGN_UP(length, type) (ALIGN_DOWN(((ULONG)(length) + sizeof(type) - 1), type))
 
-#define ALIGN_DOWN_POINTER(address, type) \
-    ((PVOID)((ULONG_PTR)(address) & ~((ULONG_PTR)sizeof(type) - 1)))
+#define ALIGN_DOWN_POINTER(address, type) ((PVOID)((ULONG_PTR)(address) & ~((ULONG_PTR)sizeof(type) - 1)))
 
-#define ALIGN_UP_POINTER(address, type) \
-    (ALIGN_DOWN_POINTER(((ULONG_PTR)(address) + sizeof(type) - 1), type))
+#define ALIGN_UP_POINTER(address, type) (ALIGN_DOWN_POINTER(((ULONG_PTR)(address) + sizeof(type) - 1), type))
 
 #define POOL_TAGGING 1
 
@@ -84,11 +81,10 @@ typedef struct _PP_LOOKASIDE_LIST {
 
 extern ULONG NtGlobalFlag;
 
-#define IF_NTOS_DEBUG( FlagName ) \
-    if (NtGlobalFlag & (FLG_ ## FlagName))
+#define IF_NTOS_DEBUG(FlagName) if (NtGlobalFlag & (FLG_##FlagName))
 
 #else
-#define IF_NTOS_DEBUG( FlagName ) if (FALSE)
+#define IF_NTOS_DEBUG(FlagName) if (FALSE)
 #endif
 
 //
@@ -102,7 +98,8 @@ extern ULONG NtGlobalFlag;
 
 typedef CCHAR KPROCESSOR_MODE;
 
-typedef enum _MODE {
+typedef enum _MODE
+{
     KernelMode,
     UserMode,
     MaximumMode
@@ -120,41 +117,17 @@ typedef enum _MODE {
 
 struct _KAPC;
 
-typedef
-VOID
-(*PKNORMAL_ROUTINE) (
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+typedef VOID (*PKNORMAL_ROUTINE)(IN PVOID NormalContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
-typedef
-VOID
-(*PKKERNEL_ROUTINE) (
-    IN struct _KAPC *Apc,
-    IN OUT PKNORMAL_ROUTINE *NormalRoutine,
-    IN OUT PVOID *NormalContext,
-    IN OUT PVOID *SystemArgument1,
-    IN OUT PVOID *SystemArgument2
-    );
+typedef VOID (*PKKERNEL_ROUTINE)(IN struct _KAPC *Apc, IN OUT PKNORMAL_ROUTINE *NormalRoutine,
+                                 IN OUT PVOID *NormalContext, IN OUT PVOID *SystemArgument1,
+                                 IN OUT PVOID *SystemArgument2);
 
-typedef
-VOID
-(*PKRUNDOWN_ROUTINE) (
-    IN struct _KAPC *Apc
-    );
+typedef VOID (*PKRUNDOWN_ROUTINE)(IN struct _KAPC *Apc);
 
-typedef
-BOOLEAN
-(*PKSYNCHRONIZE_ROUTINE) (
-    IN PVOID SynchronizeContext
-    );
+typedef BOOLEAN (*PKSYNCHRONIZE_ROUTINE)(IN PVOID SynchronizeContext);
 
-typedef
-BOOLEAN
-(*PKTRANSFER_ROUTINE) (
-    VOID
-    );
+typedef BOOLEAN (*PKTRANSFER_ROUTINE)(VOID);
 
 //
 //
@@ -162,7 +135,8 @@ BOOLEAN
 //
 //
 
-typedef struct _KAPC {
+typedef struct _KAPC
+{
     CSHORT Type;
     CSHORT Size;
     ULONG Spare0;
@@ -191,14 +165,8 @@ typedef struct _KAPC {
 
 struct _KDPC;
 
-typedef
-VOID
-(*PKDEFERRED_ROUTINE) (
-    IN struct _KDPC *Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+typedef VOID (*PKDEFERRED_ROUTINE)(IN struct _KDPC *Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                                   IN PVOID SystemArgument2);
 
 //
 // Define DPC importance.
@@ -248,7 +216,8 @@ VOID
 // target rate.
 //
 
-typedef enum _KDPC_IMPORTANCE {
+typedef enum _KDPC_IMPORTANCE
+{
     LowImportance,
     MediumImportance,
     HighImportance
@@ -258,7 +227,8 @@ typedef enum _KDPC_IMPORTANCE {
 // Deferred Procedure Call (DPC) object
 //
 
-typedef struct _KDPC {
+typedef struct _KDPC
+{
     CSHORT Type;
     UCHAR Number;
     UCHAR Importance;
@@ -277,20 +247,15 @@ typedef struct _KDPC {
 
 typedef PVOID PKIPI_CONTEXT;
 
-typedef
-VOID
-(*PKIPI_WORKER)(
-    IN PKIPI_CONTEXT PacketContext,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+typedef VOID (*PKIPI_WORKER)(IN PKIPI_CONTEXT PacketContext, IN PVOID Parameter1, IN PVOID Parameter2,
+                             IN PVOID Parameter3);
 
 //
 // Define interprocessor interrupt performance counters.
 //
 
-typedef struct _KIPI_COUNTS {
+typedef struct _KIPI_COUNTS
+{
     ULONG Freeze;
     ULONG Packet;
     ULONG DPC;
@@ -341,7 +306,8 @@ typedef struct _KIPI_COUNTS {
 //
 
 
-typedef struct _MDL {
+typedef struct _MDL
+{
     struct _MDL *Next;
     CSHORT Size;
     CSHORT MdlFlags;
@@ -352,29 +318,25 @@ typedef struct _MDL {
     ULONG ByteOffset;
 } MDL, *PMDL;
 
-#define MDL_MAPPED_TO_SYSTEM_VA     0x0001
-#define MDL_PAGES_LOCKED            0x0002
+#define MDL_MAPPED_TO_SYSTEM_VA 0x0001
+#define MDL_PAGES_LOCKED 0x0002
 #define MDL_SOURCE_IS_NONPAGED_POOL 0x0004
-#define MDL_ALLOCATED_FIXED_SIZE    0x0008
-#define MDL_PARTIAL                 0x0010
+#define MDL_ALLOCATED_FIXED_SIZE 0x0008
+#define MDL_PARTIAL 0x0010
 #define MDL_PARTIAL_HAS_BEEN_MAPPED 0x0020
-#define MDL_IO_PAGE_READ            0x0040
-#define MDL_WRITE_OPERATION         0x0080
+#define MDL_IO_PAGE_READ 0x0040
+#define MDL_WRITE_OPERATION 0x0080
 #define MDL_PARENT_MAPPED_SYSTEM_VA 0x0100
-#define MDL_FREE_EXTRA_PTES         0x0200
-#define MDL_IO_SPACE                0x0800
-#define MDL_NETWORK_HEADER          0x1000
-#define MDL_MAPPING_CAN_FAIL        0x2000
-#define MDL_ALLOCATED_MUST_SUCCEED  0x4000
+#define MDL_FREE_EXTRA_PTES 0x0200
+#define MDL_IO_SPACE 0x0800
+#define MDL_NETWORK_HEADER 0x1000
+#define MDL_MAPPING_CAN_FAIL 0x2000
+#define MDL_ALLOCATED_MUST_SUCCEED 0x4000
 
 
-#define MDL_MAPPING_FLAGS (MDL_MAPPED_TO_SYSTEM_VA     | \
-                           MDL_PAGES_LOCKED            | \
-                           MDL_SOURCE_IS_NONPAGED_POOL | \
-                           MDL_PARTIAL_HAS_BEEN_MAPPED | \
-                           MDL_PARENT_MAPPED_SYSTEM_VA | \
-                           MDL_SYSTEM_VA               | \
-                           MDL_IO_SPACE )
+#define MDL_MAPPING_FLAGS                                                                                     \
+    (MDL_MAPPED_TO_SYSTEM_VA | MDL_PAGES_LOCKED | MDL_SOURCE_IS_NONPAGED_POOL | MDL_PARTIAL_HAS_BEEN_MAPPED | \
+     MDL_PARENT_MAPPED_SYSTEM_VA | MDL_SYSTEM_VA | MDL_IO_SPACE)
 
 // end_ntndis
 //
@@ -382,18 +344,20 @@ typedef struct _MDL {
 //
 
 #if DBG
-#define PAGED_CODE() \
-    { if (KeGetCurrentIrql() > APC_LEVEL) { \
-          KdPrint(( "EX: Pageable code called at IRQL %d\n", KeGetCurrentIrql() )); \
-          ASSERT(FALSE); \
-       } \
+#define PAGED_CODE()                                                                \
+    {                                                                               \
+        if (KeGetCurrentIrql() > APC_LEVEL)                                         \
+        {                                                                           \
+            KdPrint(("EX: Pageable code called at IRQL %d\n", KeGetCurrentIrql())); \
+            ASSERT(FALSE);                                                          \
+        }                                                                           \
     }
 #else
 #define PAGED_CODE() NOP_FUNCTION;
 #endif
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
-
+
 
 // begin_ntifs begin_ntosp
 //
@@ -404,14 +368,15 @@ typedef struct _MDL {
 //  BY ALL EXCEPT THE SECURITY ROUTINES.
 //
 
-typedef struct _SECURITY_CLIENT_CONTEXT {
+typedef struct _SECURITY_CLIENT_CONTEXT
+{
     SECURITY_QUALITY_OF_SERVICE SecurityQos;
     PACCESS_TOKEN ClientToken;
     BOOLEAN DirectlyAccessClientToken;
     BOOLEAN DirectAccessEffectiveOnly;
     BOOLEAN ServerIsRemote;
     TOKEN_CONTROL ClientTokenControl;
-    } SECURITY_CLIENT_CONTEXT, *PSECURITY_CLIENT_CONTEXT;
+} SECURITY_CLIENT_CONTEXT, *PSECURITY_CLIENT_CONTEXT;
 
 //
 // where
@@ -477,7 +442,8 @@ typedef struct _SECURITY_CLIENT_CONTEXT {
 // or a kernel component is being built.
 //
 
-#if (defined(_NTDRIVER_) || defined(_NTDDK_) || defined(_NTIFS_) || defined(_NTHAL_) || defined(_NTOSP_)) && !defined(_BLDR_)
+#if (defined(_NTDRIVER_) || defined(_NTDDK_) || defined(_NTIFS_) || defined(_NTHAL_) || defined(_NTOSP_)) && \
+    !defined(_BLDR_)
 // begin_ntosp
 #if defined(_NTSYSTEM_)
 
@@ -485,7 +451,7 @@ typedef struct _SECURITY_CLIENT_CONTEXT {
 
 #else
 
-#define NTKERNELAPI DECLSPEC_IMPORT     // wdm ntddk nthal ntndis ntifs
+#define NTKERNELAPI DECLSPEC_IMPORT // wdm ntddk nthal ntndis ntifs
 
 #endif
 // end_ntosp
@@ -502,11 +468,11 @@ typedef struct _SECURITY_CLIENT_CONTEXT {
 // begin_ntddk
 #if !defined(_NTHAL_) && !defined(_BLDR_)
 
-#define NTHALAPI DECLSPEC_IMPORT            // wdm ntndis ntifs ntosp
+#define NTHALAPI DECLSPEC_IMPORT // wdm ntndis ntifs ntosp
 
 #else
 
-#define NTHALAPI                            // nthal
+#define NTHALAPI // nthal
 
 #endif
 // end_ntddk
@@ -518,7 +484,8 @@ typedef struct _SECURITY_CLIENT_CONTEXT {
 // N.B. The size field contains the number of dwords in the structure.
 //
 
-typedef struct _DISPATCHER_HEADER {
+typedef struct _DISPATCHER_HEADER
+{
     UCHAR Type;
     UCHAR Absolute;
     UCHAR Size;
@@ -531,7 +498,8 @@ typedef struct _DISPATCHER_HEADER {
 // Event object
 //
 
-typedef struct _KEVENT {
+typedef struct _KEVENT
+{
     DISPATCHER_HEADER Header;
 } KEVENT, *PKEVENT, *RESTRICTED_POINTER PRKEVENT;
 
@@ -539,7 +507,8 @@ typedef struct _KEVENT {
 // Timer object
 //
 
-typedef struct _KTIMER {
+typedef struct _KTIMER
+{
     DISPATCHER_HEADER Header;
     ULARGE_INTEGER DueTime;
     LIST_ENTRY TimerListEntry;

@@ -19,13 +19,10 @@ Revision History:
 --*/
 
 #include "mi.h"
-
+
 LOGICAL
 FASTCALL
-MiCopyOnWrite (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte
-    )
+MiCopyOnWrite(IN PVOID FaultingAddress, IN PMMPTE PointerPte)
 
 /*++
 
@@ -70,7 +67,7 @@ Environment:
 
     FakeCopyOnWrite = FALSE;
 
-    CurrentProcess = PsGetCurrentProcess ();
+    CurrentProcess = PsGetCurrentProcess();
 
     //
     // This is called from MmAccessFault, the PointerPte is valid
@@ -86,7 +83,8 @@ Environment:
     // enabled.
     //
 
-    if (TempPte.u.Hard.CopyOnWrite == 0) {
+    if (TempPte.u.Hard.CopyOnWrite == 0)
+    {
 
         //
         // This is a fork page which is being made private in order
@@ -97,12 +95,11 @@ Environment:
         FakeCopyOnWrite = TRUE;
     }
 
-    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (&TempPte);
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(&TempPte);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    VirtualAddress = MiGetVirtualAddressMappedByPte (PointerPte);
-    WorkingSetIndex = MiLocateWsle (VirtualAddress, MmWorkingSetList,
-                        Pfn1->u1.WsIndex);
+    VirtualAddress = MiGetVirtualAddressMappedByPte(PointerPte);
+    WorkingSetIndex = MiLocateWsle(VirtualAddress, MmWorkingSetList, Pfn1->u1.WsIndex);
 
     //
     // The page must be copied into a new page.
@@ -114,15 +111,18 @@ Environment:
     // changed between when the mutexes were released and reacquired.
     //
 
-    if (CurrentProcess->ForkInProgress != NULL) {
-        if (MiWaitForForkToComplete (CurrentProcess, FALSE) == TRUE) {
+    if (CurrentProcess->ForkInProgress != NULL)
+    {
+        if (MiWaitForForkToComplete(CurrentProcess, FALSE) == TRUE)
+        {
             return FALSE;
         }
     }
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (MiEnsureAvailablePageOrWait (CurrentProcess, NULL)) {
+    if (MiEnsureAvailablePageOrWait(CurrentProcess, NULL))
+    {
 
         //
         // A wait operation was performed to obtain an available
@@ -133,7 +133,7 @@ Environment:
         // be taken again.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return FALSE;
     }
 
@@ -152,14 +152,15 @@ Environment:
     // the PFN element.
     //
 
-    MI_CAPTURE_DIRTY_BIT_TO_PFN (PointerPte, Pfn1);
+    MI_CAPTURE_DIRTY_BIT_TO_PFN(PointerPte, Pfn1);
 
     //
     // This must be a prototype PTE.  Perform the copy on write.
     //
 
 #if DBG
-    if (Pfn1->u3.e1.PrototypePte == 0) {
+    if (Pfn1->u3.e1.PrototypePte == 0)
+    {
         DbgPrint("writefault - PTE indicates cow but not protopte\n");
         MiFormatPte(PointerPte);
         MiFormatPfn(Pfn1);
@@ -172,35 +173,34 @@ Environment:
     // Get a new page with the same color as this page.
     //
 
-    NewPageIndex = MiRemoveAnyPage (
-                    MI_PAGE_COLOR_PTE_PROCESS(PageFrameIndex,
-                                              &CurrentProcess->NextPageColor));
-    MiInitializeCopyOnWritePfn (NewPageIndex, PointerPte, WorkingSetIndex, NULL);
+    NewPageIndex = MiRemoveAnyPage(MI_PAGE_COLOR_PTE_PROCESS(PageFrameIndex, &CurrentProcess->NextPageColor));
+    MiInitializeCopyOnWritePfn(NewPageIndex, PointerPte, WorkingSetIndex, NULL);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    CopyTo = (PULONG)MiMapPageInHyperSpace (CurrentProcess, NewPageIndex, &OldIrql);
+    CopyTo = (PULONG)MiMapPageInHyperSpace(CurrentProcess, NewPageIndex, &OldIrql);
 
 #if defined(_MIALT4K_)
 
     //
-    // Avoid accessing user space as it may potentially 
-    // cause a page fault on the alternate table.   
+    // Avoid accessing user space as it may potentially
+    // cause a page fault on the alternate table.
     //
 
     CopyFrom = KSEG_ADDRESS(PointerPte->u.Hard.PageFrameNumber);
 
 #else
-    CopyFrom = (PULONG)MiGetVirtualAddressMappedByPte (PointerPte);
+    CopyFrom = (PULONG)MiGetVirtualAddressMappedByPte(PointerPte);
 #endif
 
-    RtlCopyMemory ( CopyTo, CopyFrom, PAGE_SIZE);
+    RtlCopyMemory(CopyTo, CopyFrom, PAGE_SIZE);
 
     PERFINFO_PRIVATE_COPY_ON_WRITE(CopyFrom, PAGE_SIZE);
 
-    MiUnmapPageInHyperSpace (CurrentProcess, CopyTo, OldIrql);
+    MiUnmapPageInHyperSpace(CurrentProcess, CopyTo, OldIrql);
 
-    if (!FakeCopyOnWrite) {
+    if (!FakeCopyOnWrite)
+    {
 
         //
         // If the page was really a copy on write page, make it
@@ -208,13 +208,14 @@ Environment:
         // bit in the PTE.
         //
 
-        MI_SET_PTE_DIRTY (TempPte);
+        MI_SET_PTE_DIRTY(TempPte);
         TempPte.u.Hard.Write = 1;
-        MI_SET_ACCESSED_IN_PTE (&TempPte, 1);
+        MI_SET_ACCESSED_IN_PTE(&TempPte, 1);
         TempPte.u.Hard.CopyOnWrite = 0;
         TempPte.u.Hard.PageFrameNumber = NewPageIndex;
     }
-    else {
+    else
+    {
 
         //
         // The page was not really a copy on write, just change
@@ -232,54 +233,44 @@ Environment:
     // going to remove.
     //
 
-    ASSERT (TempPte.u.Hard.Valid == 1);
+    ASSERT(TempPte.u.Hard.Valid == 1);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Flush the TB entry for this page.
     //
 
-    KeFlushSingleTb (FaultingAddress,
-                     TRUE,
-                     FALSE,
-                     (PHARDWARE_PTE)PointerPte,
-                     TempPte.u.Flush);
+    KeFlushSingleTb(FaultingAddress, TRUE, FALSE, (PHARDWARE_PTE)PointerPte, TempPte.u.Flush);
 
     //
     // Decrement the share count for the page which was copied
     // as this PTE no longer refers to it.
     //
 
-    MiDecrementShareCount (PageFrameIndex);
+    MiDecrementShareCount(PageFrameIndex);
 
-    CloneDescriptor = MiLocateCloneAddress (CurrentProcess, (PVOID)CloneBlock);
+    CloneDescriptor = MiLocateCloneAddress(CurrentProcess, (PVOID)CloneBlock);
 
-    if (CloneDescriptor != NULL) {
+    if (CloneDescriptor != NULL)
+    {
 
         //
         // Decrement the reference count for the clone block,
         // note that this could release and reacquire the mutexes.
         //
 
-        MiDecrementCloneBlockReference (CloneDescriptor,
-                                        CloneBlock,
-                                        CurrentProcess);
+        MiDecrementCloneBlockReference(CloneDescriptor, CloneBlock, CurrentProcess);
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return TRUE;
 }
-
 
-#if !defined(NT_UP) || defined (_IA64_)
 
-VOID
-MiSetDirtyBit (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte,
-    IN ULONG PfnHeld
-    )
+#if !defined(NT_UP) || defined(_IA64_)
+
+VOID MiSetDirtyBit(IN PVOID FaultingAddress, IN PMMPTE PointerPte, IN ULONG PfnHeld)
 
 /*++
 
@@ -319,18 +310,19 @@ Environment:
     //
 
     TempPte = *PointerPte;
-    MI_SET_PTE_DIRTY (TempPte);
-    MI_SET_ACCESSED_IN_PTE (&TempPte, 1);
+    MI_SET_PTE_DIRTY(TempPte);
+    MI_SET_ACCESSED_IN_PTE(&TempPte, 1);
     MI_WRITE_VALID_PTE_NEW_PROTECTION(PointerPte, TempPte);
 
     //
     // Check state of PFN lock and if not held, don't update PFN database.
     //
 
-    if (PfnHeld) {
+    if (PfnHeld)
+    {
 
         PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
         //
         // Set the modified field in the PFN database, also, if the physical
@@ -338,14 +330,14 @@ Environment:
         // as the contents are now worthless.
         //
 
-        if ((Pfn1->OriginalPte.u.Soft.Prototype == 0) &&
-                             (Pfn1->u3.e1.WriteInProgress == 0)) {
+        if ((Pfn1->OriginalPte.u.Soft.Prototype == 0) && (Pfn1->u3.e1.WriteInProgress == 0))
+        {
 
             //
             // This page is in page file format, deallocate the page file space.
             //
 
-            MiReleasePageFileSpace (Pfn1->OriginalPte);
+            MiReleasePageFileSpace(Pfn1->OriginalPte);
 
             //
             // Change original PTE to indicate no page file space is reserved,
@@ -356,7 +348,7 @@ Environment:
             Pfn1->OriginalPte.u.Soft.PageFileHigh = 0;
         }
 
-        MI_SET_MODIFIED (Pfn1, 1, 0x17);
+        MI_SET_MODIFIED(Pfn1, 1, 0x17);
     }
 
     //
@@ -365,7 +357,7 @@ Environment:
     // is generated as the dirty bit is not set in the cached TB entry.
     //
 
-    KeFillEntryTb ((PHARDWARE_PTE)PointerPte, FaultingAddress, TRUE);
+    KeFillEntryTb((PHARDWARE_PTE)PointerPte, FaultingAddress, TRUE);
     return;
 }
 #endif

@@ -19,10 +19,10 @@ Revision History:
 
 --*/
 
-#pragma warning(disable:4214)
-#pragma warning(disable:4115)
-#pragma warning(disable:4201)
-#pragma warning(disable:4127)
+#pragma warning(disable : 4214)
+#pragma warning(disable : 4115)
+#pragma warning(disable : 4201)
+#pragma warning(disable : 4127)
 #include <stdio.h>
 #include <ntos.h>
 #include <zwapi.h>
@@ -32,80 +32,45 @@ Revision History:
 #include <evntrace.h>
 #include "wmikmp.h"
 #include "tracep.h"
-#pragma warning(default:4214)
-#pragma warning(default:4115)
-#pragma warning(default:4201)
-#pragma warning(default:4127)
+#pragma warning(default : 4214)
+#pragma warning(default : 4115)
+#pragma warning(default : 4201)
+#pragma warning(default : 4127)
 
 #ifndef _WMIKM_
 #define _WMIKM_
 #endif
 
-VOID
-FASTCALL
-WmipTracePageFault(
-    IN NTSTATUS Status,
-    IN PVOID VirtualAddress,
-    IN PVOID TrapFrame
-    );
+VOID FASTCALL WmipTracePageFault(IN NTSTATUS Status, IN PVOID VirtualAddress, IN PVOID TrapFrame);
 
-VOID
-WmipTraceNetwork(
-    IN ULONG GroupType,
-    IN PVOID EventInfo,
-    IN ULONG EventInfoLen,
-    IN PVOID Reserved 
-    );
+VOID WmipTraceNetwork(IN ULONG GroupType, IN PVOID EventInfo, IN ULONG EventInfoLen, IN PVOID Reserved);
 
-VOID
-WmipTraceIo(
-    IN ULONG DiskNumber,
-    IN PIRP Irp,
-    IN PVOID Counters
-    );
+VOID WmipTraceIo(IN ULONG DiskNumber, IN PIRP Irp, IN PVOID Counters);
 
-VOID
-WmipTraceFile(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    );
+VOID WmipTraceFile(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext, IN PVOID *SystemArgument1,
+                   IN PVOID *SystemArgument2);
 
-VOID
-WmipTraceLoadImage(
-    IN PUNICODE_STRING ImageName,
-    IN HANDLE ProcessId,
-    IN PIMAGE_INFO ImageInfo
-    );
+VOID WmipTraceLoadImage(IN PUNICODE_STRING ImageName, IN HANDLE ProcessId, IN PIMAGE_INFO ImageInfo);
 
-VOID
-WmipTraceRegistry(
-    IN NTSTATUS         Status,
-    IN PVOID            Kcb,
-    IN LONGLONG         ElapsedTime,
-    IN ULONG            Index,
-    IN PUNICODE_STRING  KeyName,
-    IN UCHAR            Type
-    );
+VOID WmipTraceRegistry(IN NTSTATUS Status, IN PVOID Kcb, IN LONGLONG ElapsedTime, IN ULONG Index,
+                       IN PUNICODE_STRING KeyName, IN UCHAR Type);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGEWMI, WmipIsLoggerOn)
-#pragma alloc_text(PAGE,    WmipEnableKernelTrace)
-#pragma alloc_text(PAGE,    WmipDisableKernelTrace)
-#pragma alloc_text(PAGE,    WmipSetTraceNotify)
-#pragma alloc_text(PAGE,    WmiTraceProcess)
-#pragma alloc_text(PAGE,    WmiTraceThread)
-#pragma alloc_text(PAGE,    WmipTraceFile)
-#pragma alloc_text(PAGE,    WmipTraceLoadImage)
-#pragma alloc_text(PAGE,    WmipTraceRegistry)
+#pragma alloc_text(PAGE, WmipEnableKernelTrace)
+#pragma alloc_text(PAGE, WmipDisableKernelTrace)
+#pragma alloc_text(PAGE, WmipSetTraceNotify)
+#pragma alloc_text(PAGE, WmiTraceProcess)
+#pragma alloc_text(PAGE, WmiTraceThread)
+#pragma alloc_text(PAGE, WmipTraceFile)
+#pragma alloc_text(PAGE, WmipTraceLoadImage)
+#pragma alloc_text(PAGE, WmipTraceRegistry)
 #pragma alloc_text(PAGEWMI, WmipTracePageFault)
 #pragma alloc_text(PAGEWMI, WmipTraceNetwork)
 #pragma alloc_text(PAGEWMI, WmipTraceIo)
 #pragma alloc_text(PAGEWMI, WmiTraceContextSwap)
-#pragma alloc_text(PAGE,    WmiStartContextSwapTrace)
-#pragma alloc_text(PAGE,    WmiStopContextSwapTrace)
+#pragma alloc_text(PAGE, WmiStartContextSwapTrace)
+#pragma alloc_text(PAGE, WmiStopContextSwapTrace)
 #endif
 
 ULONG WmipTraceFileFlag = FALSE;
@@ -116,23 +81,20 @@ PFILE_OBJECT *WmipFileTable = NULL;
 #pragma data_seg("PAGEDATA")
 #endif
 ULONG WmipKernelLoggerStartedOnce = 0;
-LONG WmipTraceProcessRef  = 0;
-PVOID WmipDiskIoNotify    = NULL;
-PVOID WmipTdiIoNotify     = NULL;
+LONG WmipTraceProcessRef = 0;
+PVOID WmipDiskIoNotify = NULL;
+PVOID WmipTdiIoNotify = NULL;
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg()
 #endif
 
-typedef struct _TRACE_DEVICE {
-    PDEVICE_OBJECT      DeviceObject;
-    ULONG               TraceClass;
+typedef struct _TRACE_DEVICE
+{
+    PDEVICE_OBJECT DeviceObject;
+    ULONG TraceClass;
 } TRACE_DEVICE, *PTRACE_DEVICE;
 
-VOID
-FASTCALL
-WmipEnableKernelTrace(
-    IN ULONG EnableFlags
-    )
+VOID FASTCALL WmipEnableKernelTrace(IN ULONG EnableFlags)
 /*++
 
 Routine Description:
@@ -176,26 +138,26 @@ Return Value:
     enableDisk = (EnableFlags & EVENT_TRACE_FLAG_DISK_IO);
     enableNetwork = (EnableFlags & EVENT_TRACE_FLAG_NETWORK_TCPIP);
 
-    if ( enableDisk || enableNetwork ) {
+    if (enableDisk || enableNetwork)
+    {
 
         //
         // Setting the callouts will cause new PDO registration to be enabled
         // from here on.
         //
-        if (enableDisk) {
-            WmipDiskIoNotify = (PVOID) &WmipTraceIo;
+        if (enableDisk)
+        {
+            WmipDiskIoNotify = (PVOID)&WmipTraceIo;
         }
-        if (enableNetwork) {
-            WmipTdiIoNotify = (PVOID) &WmipTraceNetwork;
+        if (enableNetwork)
+        {
+            WmipTdiIoNotify = (PVOID)&WmipTraceNetwork;
         }
 
         DevicesFound = WmipInUseRegEntryCount;
 
-        deviceList = (PTRACE_DEVICE*)
-                        ExAllocatePoolWithTag(
-                            PagedPool,
-                            (DevicesFound) * sizeof(TRACE_DEVICE),
-                            TRACEPOOLTAG);
+        deviceList =
+            (PTRACE_DEVICE *)ExAllocatePoolWithTag(PagedPool, (DevicesFound) * sizeof(TRACE_DEVICE), TRACEPOOLTAG);
         if (deviceList == NULL)
             return;
 
@@ -207,19 +169,21 @@ Return Value:
         // the callout will get another Irp to enable, but that's alright
         //
 
-        device = (PTRACE_DEVICE) deviceList;        // start from first element
+        device = (PTRACE_DEVICE)deviceList; // start from first element
 
         Index = 0;
 
         WmipEnterSMCritSection();
         RegEntryList = WmipInUseRegEntryHead.Flink;
-        while (RegEntryList != &WmipInUseRegEntryHead) {
-            RegEntry = CONTAINING_RECORD(RegEntryList,REGENTRY,InUseEntryList);
+        while (RegEntryList != &WmipInUseRegEntryHead)
+        {
+            RegEntry = CONTAINING_RECORD(RegEntryList, REGENTRY, InUseEntryList);
 
-            if (RegEntry->Flags & REGENTRY_FLAG_TRACED) {
-                if ((ULONG) Index < DevicesFound) {
-                    device->TraceClass
-                        = RegEntry->Flags & WMIREG_FLAG_TRACE_NOTIFY_MASK;
+            if (RegEntry->Flags & REGENTRY_FLAG_TRACED)
+            {
+                if ((ULONG)Index < DevicesFound)
+                {
+                    device->TraceClass = RegEntry->Flags & WMIREG_FLAG_TRACE_NOTIFY_MASK;
                     if (device->TraceClass == WMIREG_NOTIFY_DISK_IO)
                         DiskFound++;
                     device->DeviceObject = RegEntry->DeviceObject;
@@ -237,45 +201,46 @@ Return Value:
         stackSize = WmipServiceDeviceObject->StackSize;
         irp = IoAllocateIrp(stackSize, FALSE);
 
-        device = (PTRACE_DEVICE) deviceList;
-        while (--Index >= 0 && irp != NULL) {
-            if (device->DeviceObject != NULL) {
+        device = (PTRACE_DEVICE)deviceList;
+        while (--Index >= 0 && irp != NULL)
+        {
+            if (device->DeviceObject != NULL)
+            {
 
-                if ( (device->TraceClass == WMIREG_NOTIFY_TDI_IO) &&
-                      enableNetwork ) {
-                    notifyRoutine = (PVOID) &WmipTraceNetwork;
+                if ((device->TraceClass == WMIREG_NOTIFY_TDI_IO) && enableNetwork)
+                {
+                    notifyRoutine = (PVOID)&WmipTraceNetwork;
                 }
-                else if ( (device->TraceClass == WMIREG_NOTIFY_DISK_IO) &&
-                           enableDisk ) {
-                    notifyRoutine = (PVOID) &WmipTraceIo;
+                else if ((device->TraceClass == WMIREG_NOTIFY_DISK_IO) && enableDisk)
+                {
+                    notifyRoutine = (PVOID)&WmipTraceIo;
                 }
-                else {  // consider supporting generic callout for other devices
+                else
+                { // consider supporting generic callout for other devices
                     notifyRoutine = NULL;
-                    device ++;
+                    device++;
                     continue;
                 }
 
-                do {
+                do
+                {
                     IoInitializeIrp(irp, IoSizeOfIrp(stackSize), stackSize);
                     IoSetNextIrpStackLocation(irp);
                     irpStack = IoGetCurrentIrpStackLocation(irp);
                     irpStack->DeviceObject = WmipServiceDeviceObject;
                     irp->Tail.Overlay.Thread = PsGetCurrentThread();
 
-                    status = WmipForwardWmiIrp(
-                                irp,
-                                IRP_MN_SET_TRACE_NOTIFY,
-                                IoWMIDeviceObjectToProviderId(device->DeviceObject),
-                                NULL,
-                                sizeof(notifyRoutine),
-                                &notifyRoutine
-                                );
+                    status = WmipForwardWmiIrp(irp, IRP_MN_SET_TRACE_NOTIFY,
+                                               IoWMIDeviceObjectToProviderId(device->DeviceObject), NULL,
+                                               sizeof(notifyRoutine), &notifyRoutine);
 
-                    if (status == STATUS_WMI_TRY_AGAIN) {
+                    if (status == STATUS_WMI_TRY_AGAIN)
+                    {
                         IoFreeIrp(irp);
                         stackSize = WmipServiceDeviceObject->StackSize;
                         irp = IoAllocateIrp(stackSize, FALSE);
-                        if (!irp) {
+                        if (!irp)
+                        {
                             break;
                         }
                     }
@@ -283,7 +248,8 @@ Return Value:
             }
             device++;
         }
-        if (irp) {
+        if (irp)
+        {
             IoFreeIrp(irp);
         }
         ExFreePoolWithTag(deviceList, TRACEPOOLTAG);
@@ -291,11 +257,12 @@ Return Value:
         //
     }
 
-    if (EnableFlags & EVENT_TRACE_FLAG_MEMORY_PAGE_FAULTS) {
-        MmSetPageFaultNotifyRoutine(
-            (PPAGE_FAULT_NOTIFY_ROUTINE) &WmipTracePageFault);
+    if (EnableFlags & EVENT_TRACE_FLAG_MEMORY_PAGE_FAULTS)
+    {
+        MmSetPageFaultNotifyRoutine((PPAGE_FAULT_NOTIFY_ROUTINE)&WmipTracePageFault);
     }
-    if (EnableFlags & EVENT_TRACE_FLAG_DISK_FILE_IO) {
+    if (EnableFlags & EVENT_TRACE_FLAG_DISK_FILE_IO)
+    {
         //
         // NOTE: We assume StartLogger will always reserve space for
         // FileTable already
@@ -303,29 +270,23 @@ Return Value:
         WmipTraceFileFlag = TRUE;
     }
 
-    if (EnableFlags & EVENT_TRACE_FLAG_IMAGE_LOAD) {
-        if (!(WmipKernelLoggerStartedOnce & EVENT_TRACE_FLAG_IMAGE_LOAD)) {
-            PsSetLoadImageNotifyRoutine(
-                (PLOAD_IMAGE_NOTIFY_ROUTINE) &WmipTraceLoadImage
-                );
+    if (EnableFlags & EVENT_TRACE_FLAG_IMAGE_LOAD)
+    {
+        if (!(WmipKernelLoggerStartedOnce & EVENT_TRACE_FLAG_IMAGE_LOAD))
+        {
+            PsSetLoadImageNotifyRoutine((PLOAD_IMAGE_NOTIFY_ROUTINE)&WmipTraceLoadImage);
             WmipKernelLoggerStartedOnce |= EVENT_TRACE_FLAG_IMAGE_LOAD;
         }
     }
 
-    if (EnableFlags & EVENT_TRACE_FLAG_REGISTRY) {
-        CmSetTraceNotifyRoutine(
-            (PCM_TRACE_NOTIFY_ROUTINE) &WmipTraceRegistry,
-            FALSE
-            );
+    if (EnableFlags & EVENT_TRACE_FLAG_REGISTRY)
+    {
+        CmSetTraceNotifyRoutine((PCM_TRACE_NOTIFY_ROUTINE)&WmipTraceRegistry, FALSE);
     }
 }
 
 
-VOID
-FASTCALL
-WmipDisableKernelTrace(
-    IN ULONG EnableFlags
-    )
+VOID FASTCALL WmipDisableKernelTrace(IN ULONG EnableFlags)
 /*++
 
 Routine Description:
@@ -350,7 +311,7 @@ Return Value:
     PLIST_ENTRY RegEntryList;
     ULONG DevicesFound;
     long Index;
-    PTRACE_DEVICE* deviceList, device;
+    PTRACE_DEVICE *deviceList, device;
     CCHAR stackSize;
     PIRP irp;
     PIO_STACK_LOCATION irpStack;
@@ -363,28 +324,30 @@ Return Value:
     // first, disable partition change notification
     //
 
-    if (EnableFlags & EVENT_TRACE_FLAG_DISK_FILE_IO) {
+    if (EnableFlags & EVENT_TRACE_FLAG_DISK_FILE_IO)
+    {
         WmipTraceFileFlag = FALSE;
-        if (WmipFileTable != NULL) {
-            RtlZeroMemory(
-                WmipFileTable,
-                MAX_FILE_TABLE_SIZE * sizeof(PFILE_OBJECT));
+        if (WmipFileTable != NULL)
+        {
+            RtlZeroMemory(WmipFileTable, MAX_FILE_TABLE_SIZE * sizeof(PFILE_OBJECT));
         }
     }
 
-    if (EnableFlags & EVENT_TRACE_FLAG_MEMORY_PAGE_FAULTS) {
+    if (EnableFlags & EVENT_TRACE_FLAG_MEMORY_PAGE_FAULTS)
+    {
         MmSetPageFaultNotifyRoutine(NULL);
     }
 
-    if (EnableFlags & EVENT_TRACE_FLAG_REGISTRY) {
-        CmSetTraceNotifyRoutine(NULL,TRUE);
+    if (EnableFlags & EVENT_TRACE_FLAG_REGISTRY)
+    {
+        CmSetTraceNotifyRoutine(NULL, TRUE);
     }
 
     enableDisk = (EnableFlags & EVENT_TRACE_FLAG_DISK_IO);
     enableNetwork = (EnableFlags & EVENT_TRACE_FLAG_NETWORK_TCPIP);
 
     if (!enableDisk && !enableNetwork)
-        return;     // NOTE: assumes all flags are already checked
+        return; // NOTE: assumes all flags are already checked
 
     //
     // Note. Since this is in the middle is StopLogger, it is not possible
@@ -397,17 +360,13 @@ Return Value:
 
     DevicesFound = WmipInUseRegEntryCount;
 
-    deviceList = (PTRACE_DEVICE*)
-                ExAllocatePoolWithTag(
-                    PagedPool,
-                    (DevicesFound) * sizeof(TRACE_DEVICE),
-                    TRACEPOOLTAG);
+    deviceList = (PTRACE_DEVICE *)ExAllocatePoolWithTag(PagedPool, (DevicesFound) * sizeof(TRACE_DEVICE), TRACEPOOLTAG);
     if (deviceList == NULL)
         return;
 
     RtlZeroMemory(deviceList, sizeof(TRACE_DEVICE) * DevicesFound);
     Index = 0;
-    device = (PTRACE_DEVICE) deviceList;        // start from first element
+    device = (PTRACE_DEVICE)deviceList; // start from first element
 
     //
     // To disable we do not need to worry about TraceClass, since we simply
@@ -415,14 +374,16 @@ Return Value:
     //
     WmipEnterSMCritSection();
     RegEntryList = WmipInUseRegEntryHead.Flink;
-    while (RegEntryList != &WmipInUseRegEntryHead) {
+    while (RegEntryList != &WmipInUseRegEntryHead)
+    {
         RegEntry = CONTAINING_RECORD(RegEntryList, REGENTRY, InUseEntryList);
-        if (RegEntry->Flags & REGENTRY_FLAG_TRACED) {
+        if (RegEntry->Flags & REGENTRY_FLAG_TRACED)
+        {
             if ((ULONG)Index < DevicesFound)
-                device->TraceClass
-                    = RegEntry->Flags & WMIREG_FLAG_TRACE_NOTIFY_MASK;
-                device->DeviceObject = RegEntry->DeviceObject;
-                device++; Index++;
+                device->TraceClass = RegEntry->Flags & WMIREG_FLAG_TRACE_NOTIFY_MASK;
+            device->DeviceObject = RegEntry->DeviceObject;
+            device++;
+            Index++;
         }
         RegEntryList = RegEntryList->Flink;
     }
@@ -431,11 +392,14 @@ Return Value:
     stackSize = WmipServiceDeviceObject->StackSize;
     irp = IoAllocateIrp(stackSize, FALSE);
 
-    device = (PTRACE_DEVICE) deviceList;        // start from first element
-    while (--Index >= 0 && irp != NULL) {
-        if (device->DeviceObject != NULL) {
+    device = (PTRACE_DEVICE)deviceList; // start from first element
+    while (--Index >= 0 && irp != NULL)
+    {
+        if (device->DeviceObject != NULL)
+        {
 
-            do {
+            do
+            {
                 IoInitializeIrp(irp, IoSizeOfIrp(stackSize), stackSize);
                 IoSetNextIrpStackLocation(irp);
                 irpStack = IoGetCurrentIrpStackLocation(irp);
@@ -443,27 +407,23 @@ Return Value:
                 irp->Tail.Overlay.Thread = PsGetCurrentThread();
 
 
-                if ( !( (device->TraceClass == WMIREG_NOTIFY_TDI_IO) &&
-                            enableNetwork ) &&
-                     !( (device->TraceClass == WMIREG_NOTIFY_DISK_IO) &&
-                           enableDisk ) ) {
+                if (!((device->TraceClass == WMIREG_NOTIFY_TDI_IO) && enableNetwork) &&
+                    !((device->TraceClass == WMIREG_NOTIFY_DISK_IO) && enableDisk))
+                {
                     continue;
                 }
 
-                status = WmipForwardWmiIrp(
-                            irp,
-                            IRP_MN_SET_TRACE_NOTIFY,
-                            IoWMIDeviceObjectToProviderId(device->DeviceObject),
-                            NULL,
-                            sizeof(NullPtr),
-                            &NullPtr
-                            );
+                status =
+                    WmipForwardWmiIrp(irp, IRP_MN_SET_TRACE_NOTIFY, IoWMIDeviceObjectToProviderId(device->DeviceObject),
+                                      NULL, sizeof(NullPtr), &NullPtr);
 
-                if (status == STATUS_WMI_TRY_AGAIN) {
+                if (status == STATUS_WMI_TRY_AGAIN)
+                {
                     IoFreeIrp(irp);
                     stackSize = WmipServiceDeviceObject->StackSize;
                     irp = IoAllocateIrp(stackSize, FALSE);
-                    if (!irp) {
+                    if (!irp)
+                    {
                         break;
                     }
                 }
@@ -472,18 +432,14 @@ Return Value:
         device++;
     }
 
-    if (irp) {
+    if (irp)
+    {
         IoFreeIrp(irp);
     }
     ExFreePoolWithTag(deviceList, TRACEPOOLTAG);
 }
 
-VOID
-WmipSetTraceNotify(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG TraceClass,
-    IN ULONG Enable
-    )
+VOID WmipSetTraceNotify(IN PDEVICE_OBJECT DeviceObject, IN ULONG TraceClass, IN ULONG Enable)
 {
     PIRP irp;
     PVOID NotifyRoutine = NULL;
@@ -491,22 +447,25 @@ WmipSetTraceNotify(
     CCHAR stackSize;
     PIO_STACK_LOCATION irpStack;
 
-    if (Enable) {
-        switch (TraceClass) {
-            case WMIREG_NOTIFY_DISK_IO  :
-                NotifyRoutine = WmipDiskIoNotify;
-                break;
-            case WMIREG_NOTIFY_TDI_IO   :
-                NotifyRoutine = WmipTdiIoNotify;
-                break;
-            default :
-                return;
+    if (Enable)
+    {
+        switch (TraceClass)
+        {
+        case WMIREG_NOTIFY_DISK_IO:
+            NotifyRoutine = WmipDiskIoNotify;
+            break;
+        case WMIREG_NOTIFY_TDI_IO:
+            NotifyRoutine = WmipTdiIoNotify;
+            break;
+        default:
+            return;
         }
-        if (NotifyRoutine == NULL)  // trace not enabled, so do not
-            return;                 // send any Irp to enable
+        if (NotifyRoutine == NULL) // trace not enabled, so do not
+            return;                // send any Irp to enable
     }
 
-    do {
+    do
+    {
         stackSize = WmipServiceDeviceObject->StackSize;
         irp = IoAllocateIrp(stackSize, FALSE);
 
@@ -516,14 +475,8 @@ WmipSetTraceNotify(
         IoSetNextIrpStackLocation(irp);
         irpStack = IoGetCurrentIrpStackLocation(irp);
         irpStack->DeviceObject = WmipServiceDeviceObject;
-        status = WmipForwardWmiIrp(
-                     irp,
-                     IRP_MN_SET_TRACE_NOTIFY,
-                     IoWMIDeviceObjectToProviderId(DeviceObject),
-                     NULL,
-                     sizeof(NotifyRoutine),
-                     &NotifyRoutine
-                     );
+        status = WmipForwardWmiIrp(irp, IRP_MN_SET_TRACE_NOTIFY, IoWMIDeviceObjectToProviderId(DeviceObject), NULL,
+                                   sizeof(NotifyRoutine), &NotifyRoutine);
         IoFreeIrp(irp);
     } while (status == STATUS_WMI_TRY_AGAIN);
 }
@@ -533,14 +486,9 @@ WmipSetTraceNotify(
 // generating kernel event traces
 //
 
-
+
 NTKERNELAPI
-VOID
-FASTCALL
-WmiTraceProcess(
-    IN PEPROCESS Process,
-    IN BOOLEAN Create
-    )
+VOID FASTCALL WmiTraceProcess(IN PEPROCESS Process, IN BOOLEAN Create)
 /*++
 
 Routine Description:
@@ -572,90 +520,93 @@ Return Value:
 
     PAGED_CODE();
 
-    if ((WmipIsLoggerOn(WmipKernelLogger) == NULL) &&
-        (WmipIsLoggerOn(WmipEventLogger) == NULL))
+    if ((WmipIsLoggerOn(WmipKernelLogger) == NULL) && (WmipIsLoggerOn(WmipEventLogger) == NULL))
         return;
 
     Token = PsReferencePrimaryToken(Process);
-    if (Token != NULL) {
-        Status = SeQueryInformationToken(
-            Token,
-            TokenUser,
-            &LocalUser);
-        PsDereferencePrimaryTokenEx (Process, Token);
-    } else {
+    if (Token != NULL)
+    {
+        Status = SeQueryInformationToken(Token, TokenUser, &LocalUser);
+        PsDereferencePrimaryTokenEx(Process, Token);
+    }
+    else
+    {
         Status = STATUS_SEVERITY_ERROR;
     }
 
-    if (NT_SUCCESS(Status)) {
-        WmipAssert(LocalUser != NULL);  // temporary for SE folks
-        if (LocalUser != NULL) {
+    if (NT_SUCCESS(Status))
+    {
+        WmipAssert(LocalUser != NULL); // temporary for SE folks
+        if (LocalUser != NULL)
+        {
             SidLength = SeLengthSid(LocalUser->User.Sid) + sizeof(TOKEN_USER);
         }
-    } else {
+    }
+    else
+    {
         SidLength = sizeof(ULONG);
         LocalUser = NULL;
     }
 
     Size = SidLength + FIELD_OFFSET(WMI_PROCESS_INFORMATION, Sid) + sizeof(Process->ImageFileName);
 
-    for (LoggerId = WmipKernelLogger;;LoggerId = WmipEventLogger) {
+    for (LoggerId = WmipKernelLogger;; LoggerId = WmipEventLogger)
+    {
         LoggerContext = WmipIsLoggerOn(LoggerId);
-        if (LoggerContext != NULL) {
-            if (LoggerContext->EnableFlags & EVENT_TRACE_FLAG_PROCESS) {
-                Header = WmiReserveWithSystemHeader( LoggerId,
-                                                     Size,
-                                                     NULL,
-                                                     &BufferResource);
-                if (Header) {
-                    if(Create) {
+        if (LoggerContext != NULL)
+        {
+            if (LoggerContext->EnableFlags & EVENT_TRACE_FLAG_PROCESS)
+            {
+                Header = WmiReserveWithSystemHeader(LoggerId, Size, NULL, &BufferResource);
+                if (Header)
+                {
+                    if (Create)
+                    {
                         Header->Packet.HookId = WMI_LOG_TYPE_PROCESS_CREATE;
-                    } else {
+                    }
+                    else
+                    {
                         Header->Packet.HookId = WMI_LOG_TYPE_PROCESS_DELETE;
                     }
-                    ProcessInfo = (PWMI_PROCESS_INFORMATION) (Header + 1);
+                    ProcessInfo = (PWMI_PROCESS_INFORMATION)(Header + 1);
 
                     ProcessInfo->PageDirectoryBase = MmGetDirectoryFrameFromProcess(Process);
                     ProcessInfo->ProcessId = HandleToUlong(Process->UniqueProcessId);
                     ProcessInfo->ParentId = HandleToUlong(Process->InheritedFromUniqueProcessId);
-                    ProcessInfo->SessionId = MmGetSessionId (Process);
+                    ProcessInfo->SessionId = MmGetSessionId(Process);
                     ProcessInfo->ExitStatus = (Create ? STATUS_SUCCESS : Process->ExitStatus);
 
-                    AuxPtr = (PCHAR) (&ProcessInfo->Sid);
+                    AuxPtr = (PCHAR)(&ProcessInfo->Sid);
 
-                    if (LocalUser != NULL) {
+                    if (LocalUser != NULL)
+                    {
                         RtlCopyMemory(AuxPtr, LocalUser, SidLength);
-                    } else {
-                        *((PULONG) AuxPtr) = 0;
+                    }
+                    else
+                    {
+                        *((PULONG)AuxPtr) = 0;
                     }
 
                     AuxPtr += SidLength;
 
-                    RtlCopyMemory( AuxPtr,
-                                   &Process->ImageFileName[0],
-                                   sizeof(Process->ImageFileName));
+                    RtlCopyMemory(AuxPtr, &Process->ImageFileName[0], sizeof(Process->ImageFileName));
 
                     WmipReleaseTraceBuffer(BufferResource, LoggerContext);
                 }
-
             }
         }
         if (LoggerId == WmipEventLogger)
             break;
     }
-    if (LocalUser != NULL) {
+    if (LocalUser != NULL)
+    {
         ExFreePool(LocalUser);
     }
 }
 
-
+
 NTKERNELAPI
-VOID
-WmiTraceThread(
-    IN PETHREAD Thread,
-        IN PINITIAL_TEB InitialTeb OPTIONAL,
-    IN BOOLEAN Create
-    )
+VOID WmiTraceThread(IN PETHREAD Thread, IN PINITIAL_TEB InitialTeb OPTIONAL, IN BOOLEAN Create)
 /*++
 
 Routine Description:
@@ -683,84 +634,87 @@ Return Value:
 
     PAGED_CODE();
 
-    if ((WmipIsLoggerOn(WmipKernelLogger) == NULL) &&
-        (WmipIsLoggerOn(WmipEventLogger) == NULL)) {
+    if ((WmipIsLoggerOn(WmipKernelLogger) == NULL) && (WmipIsLoggerOn(WmipEventLogger) == NULL))
+    {
         return;
     }
 
-    for (LoggerId = WmipKernelLogger;;LoggerId = WmipEventLogger) {
+    for (LoggerId = WmipKernelLogger;; LoggerId = WmipEventLogger)
+    {
         LoggerContext = WmipIsLoggerOn(LoggerId);
-        if (LoggerContext != NULL) {
-            if (LoggerContext->EnableFlags & EVENT_TRACE_FLAG_THREAD) {
-                if (Create) {
-                        PWMI_EXTENDED_THREAD_INFORMATION ThreadInfo;
-                    Header = (PSYSTEM_TRACE_HEADER)
-                              WmiReserveWithSystemHeader( LoggerId,
-                                                          sizeof(WMI_EXTENDED_THREAD_INFORMATION),
-                                                          NULL,
-                                                          &BufferResource);
+        if (LoggerContext != NULL)
+        {
+            if (LoggerContext->EnableFlags & EVENT_TRACE_FLAG_THREAD)
+            {
+                if (Create)
+                {
+                    PWMI_EXTENDED_THREAD_INFORMATION ThreadInfo;
+                    Header = (PSYSTEM_TRACE_HEADER)WmiReserveWithSystemHeader(
+                        LoggerId, sizeof(WMI_EXTENDED_THREAD_INFORMATION), NULL, &BufferResource);
 
-                    if (Header) {
+                    if (Header)
+                    {
                         Header->Packet.HookId = WMI_LOG_TYPE_THREAD_CREATE;
-                        ThreadInfo = (PWMI_EXTENDED_THREAD_INFORMATION) (Header + 1);
+                        ThreadInfo = (PWMI_EXTENDED_THREAD_INFORMATION)(Header + 1);
 
-                            ThreadInfo->ProcessId = HandleToUlong(Thread->Cid.UniqueProcess);
-                            ThreadInfo->ThreadId = HandleToUlong(Thread->Cid.UniqueThread);
-                            ThreadInfo->StackBase = Thread->Tcb.StackBase;
-                            ThreadInfo->StackLimit = Thread->Tcb.StackLimit;
+                        ThreadInfo->ProcessId = HandleToUlong(Thread->Cid.UniqueProcess);
+                        ThreadInfo->ThreadId = HandleToUlong(Thread->Cid.UniqueThread);
+                        ThreadInfo->StackBase = Thread->Tcb.StackBase;
+                        ThreadInfo->StackLimit = Thread->Tcb.StackLimit;
 
-                            if (InitialTeb != NULL) {
-                                    if ((InitialTeb->OldInitialTeb.OldStackBase == NULL) &&
-                                        (InitialTeb->OldInitialTeb.OldStackLimit == NULL)) {
-                                            ThreadInfo->UserStackBase = InitialTeb->StackBase;
-                                            ThreadInfo->UserStackLimit = InitialTeb->StackLimit;
-                                    } else {
-                                            ThreadInfo->UserStackBase = InitialTeb->OldInitialTeb.OldStackBase;
-                                            ThreadInfo->UserStackLimit = InitialTeb->OldInitialTeb.OldStackLimit;
-                                    }
-                            } else {
-                                    ThreadInfo->UserStackBase = NULL;
-                                    ThreadInfo->UserStackLimit = NULL;
+                        if (InitialTeb != NULL)
+                        {
+                            if ((InitialTeb->OldInitialTeb.OldStackBase == NULL) &&
+                                (InitialTeb->OldInitialTeb.OldStackLimit == NULL))
+                            {
+                                ThreadInfo->UserStackBase = InitialTeb->StackBase;
+                                ThreadInfo->UserStackLimit = InitialTeb->StackLimit;
                             }
+                            else
+                            {
+                                ThreadInfo->UserStackBase = InitialTeb->OldInitialTeb.OldStackBase;
+                                ThreadInfo->UserStackLimit = InitialTeb->OldInitialTeb.OldStackLimit;
+                            }
+                        }
+                        else
+                        {
+                            ThreadInfo->UserStackBase = NULL;
+                            ThreadInfo->UserStackLimit = NULL;
+                        }
 
-                            ThreadInfo->StartAddr = (Thread)->StartAddress;
-                            ThreadInfo->Win32StartAddr = (Thread)->Win32StartAddress;
-                            ThreadInfo->WaitMode = -1;
+                        ThreadInfo->StartAddr = (Thread)->StartAddress;
+                        ThreadInfo->Win32StartAddr = (Thread)->Win32StartAddress;
+                        ThreadInfo->WaitMode = -1;
 
                         WmipReleaseTraceBuffer(BufferResource, LoggerContext);
                     }
-                } else {
-                        PWMI_THREAD_INFORMATION ThreadInfo;
-                    Header = (PSYSTEM_TRACE_HEADER)
-                              WmiReserveWithSystemHeader( LoggerId,
-                                                          sizeof(WMI_THREAD_INFORMATION),
-                                                          NULL,
-                                                          &BufferResource);
+                }
+                else
+                {
+                    PWMI_THREAD_INFORMATION ThreadInfo;
+                    Header = (PSYSTEM_TRACE_HEADER)WmiReserveWithSystemHeader(LoggerId, sizeof(WMI_THREAD_INFORMATION),
+                                                                              NULL, &BufferResource);
 
-                    if (Header) {
+                    if (Header)
+                    {
                         Header->Packet.HookId = WMI_LOG_TYPE_THREAD_DELETE;
-                        ThreadInfo = (PWMI_THREAD_INFORMATION) (Header + 1);
-                            ThreadInfo->ProcessId = HandleToUlong((Thread)->Cid.UniqueProcess);
-                            ThreadInfo->ThreadId = HandleToUlong((Thread)->Cid.UniqueThread);
+                        ThreadInfo = (PWMI_THREAD_INFORMATION)(Header + 1);
+                        ThreadInfo->ProcessId = HandleToUlong((Thread)->Cid.UniqueProcess);
+                        ThreadInfo->ThreadId = HandleToUlong((Thread)->Cid.UniqueThread);
                         WmipReleaseTraceBuffer(BufferResource, LoggerContext);
                     }
                 }
             }
         }
-        if (LoggerId == WmipEventLogger) {
+        if (LoggerId == WmipEventLogger)
+        {
             break;
         }
     }
 }
 
-
-VOID
-FASTCALL
-WmipTracePageFault(
-    IN NTSTATUS Status,
-    IN PVOID VirtualAddress,
-    IN PVOID TrapFrame
-    )
+
+VOID FASTCALL WmipTracePageFault(IN NTSTATUS Status, IN PVOID VirtualAddress, IN PVOID TrapFrame)
 /*++
 
 Routine Description:
@@ -797,68 +751,61 @@ Return Value:
         Type = EVENT_TRACE_TYPE_MM_HPF;
     else if (Status == STATUS_PAGE_FAULT_GUARD_PAGE)
         Type = EVENT_TRACE_TYPE_MM_GPF;
-    else {
+    else
+    {
 #if DBG
-        DbgPrintEx(DPFLTR_WMILIB_ID,
-                   DPFLTR_INFO_LEVEL,
-                   "WmipTracePageFault: Skipping fault %X\n",
-                   Status);
+        DbgPrintEx(DPFLTR_WMILIB_ID, DPFLTR_INFO_LEVEL, "WmipTracePageFault: Skipping fault %X\n", Status);
 #endif
         return;
     }
 
     LoggerContext = WmipIsLoggerOn(WmipKernelLogger);
-    if (LoggerContext == NULL) {
+    if (LoggerContext == NULL)
+    {
         return;
     }
 
-    Header = (PSYSTEM_TRACE_HEADER)
-             WmiReserveWithSystemHeader(
-                WmipKernelLogger,
-                2 * sizeof(PVOID),
-                NULL,
-                &BufferResource);
+    Header =
+        (PSYSTEM_TRACE_HEADER)WmiReserveWithSystemHeader(WmipKernelLogger, 2 * sizeof(PVOID), NULL, &BufferResource);
 
     if (Header == NULL)
         return;
-    Header->Packet.Group = (UCHAR) (EVENT_TRACE_GROUP_MEMORY >> 8);
-    Header->Packet.Type  = Type;
+    Header->Packet.Group = (UCHAR)(EVENT_TRACE_GROUP_MEMORY >> 8);
+    Header->Packet.Type = Type;
 
-    AuxInfo = (PVOID*) ((PCHAR)Header + sizeof(SYSTEM_TRACE_HEADER));
+    AuxInfo = (PVOID *)((PCHAR)Header + sizeof(SYSTEM_TRACE_HEADER));
 
     AuxInfo[0] = VirtualAddress;
     AuxInfo[1] = 0;
-    if (TrapFrame != NULL) {
+    if (TrapFrame != NULL)
+    {
 
 #ifdef _X86_
 
-        AuxInfo[1] = (PVOID) ((PKTRAP_FRAME)TrapFrame)->Eip;
+        AuxInfo[1] = (PVOID)((PKTRAP_FRAME)TrapFrame)->Eip;
 
 #endif
 
 #ifdef _IA64_
 
-        AuxInfo[1] = (PVOID) ((PKTRAP_FRAME)TrapFrame)->StIIP;
+        AuxInfo[1] = (PVOID)((PKTRAP_FRAME)TrapFrame)->StIIP;
 #endif
 
 #ifdef _AMD64_
 
-        AuxInfo[1] = (PVOID) ((PKTRAP_FRAME)TrapFrame)->Rip;
+        AuxInfo[1] = (PVOID)((PKTRAP_FRAME)TrapFrame)->Rip;
 
 #endif
-
     }
     WmipReleaseTraceBuffer(BufferResource, LoggerContext);
     return;
 }
 
-VOID
-WmipTraceNetwork(
-    IN ULONG GroupType,         // Group/type for the event
-    IN PVOID EventInfo,         // Event data as defined in MOF
-    IN ULONG EventInfoLen,      // Length of the event data
-    IN PVOID Reserved           // not used
-    )
+VOID WmipTraceNetwork(IN ULONG GroupType,    // Group/type for the event
+                      IN PVOID EventInfo,    // Event data as defined in MOF
+                      IN ULONG EventInfoLen, // Length of the event data
+                      IN PVOID Reserved      // not used
+)
 /*++
 
 Routine Description:
@@ -885,28 +832,24 @@ Return Value:
     PPERFINFO_TRACE_HEADER Header;
     PWMI_BUFFER_HEADER BufferResource;
     PWMI_LOGGER_CONTEXT LoggerContext;
-    
+
     LoggerContext = WmipLoggerContext[WmipKernelLogger];
     Header = WmiReserveWithPerfHeader(EventInfoLen, &BufferResource);
-    if (Header == NULL) {
+    if (Header == NULL)
+    {
         return;
     }
 
-    Header->Packet.HookId = (USHORT) GroupType;
-    RtlCopyMemory((PUCHAR)Header + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data),
-                  EventInfo, 
-                  EventInfoLen);
+    Header->Packet.HookId = (USHORT)GroupType;
+    RtlCopyMemory((PUCHAR)Header + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data), EventInfo, EventInfoLen);
 
     WmipReleaseTraceBuffer(BufferResource, LoggerContext);
     return;
 }
 
-VOID
-WmipTraceIo(
-    IN ULONG DiskNumber,
-    IN PIRP Irp,
-    IN PVOID Counters   // use PDISK_PERFORMANCE if we need it
-    )
+VOID WmipTraceIo(IN ULONG DiskNumber, IN PIRP Irp,
+                 IN PVOID Counters // use PDISK_PERFORMANCE if we need it
+)
 /*++
 
 Routine Description:
@@ -929,11 +872,11 @@ Return Value:
 {
     PIO_STACK_LOCATION CurrentIrpStack = IoGetCurrentIrpStackLocation(Irp);
 
-    WMI_DISKIO_READWRITE   *IoTrace;
+    WMI_DISKIO_READWRITE *IoTrace;
     ULONG Size;
-    PLARGE_INTEGER      IoResponse;
+    PLARGE_INTEGER IoResponse;
     PSYSTEM_TRACE_HEADER Header;
-    PVOID               BufferResource;
+    PVOID BufferResource;
     PWMI_LOGGER_CONTEXT LoggerContext;
 
     UNREFERENCED_PARAMETER(Counters);
@@ -941,69 +884,76 @@ Return Value:
     Size = sizeof(struct _WMI_DISKIO_READWRITE);
 
     LoggerContext = WmipIsLoggerOn(WmipKernelLogger);
-    if (LoggerContext == NULL) {
+    if (LoggerContext == NULL)
+    {
         return;
     }
-    Header = (PSYSTEM_TRACE_HEADER)
-             WmiReserveWithSystemHeader(
-                WmipKernelLogger,
-                Size,
-                Irp->Tail.Overlay.Thread,
-                &BufferResource);
+    Header = (PSYSTEM_TRACE_HEADER)WmiReserveWithSystemHeader(WmipKernelLogger, Size, Irp->Tail.Overlay.Thread,
+                                                              &BufferResource);
 
     if (Header == NULL)
         return;
 
-    Header->Packet.Group = (UCHAR) (EVENT_TRACE_GROUP_IO >> 8);
+    Header->Packet.Group = (UCHAR)(EVENT_TRACE_GROUP_IO >> 8);
     if (CurrentIrpStack->MajorFunction == IRP_MJ_READ)
         Header->Packet.Type = EVENT_TRACE_TYPE_IO_READ;
     else
         Header->Packet.Type = EVENT_TRACE_TYPE_IO_WRITE;
 
-    IoTrace = (struct _WMI_DISKIO_READWRITE *)
-                ((PCHAR) Header + sizeof(SYSTEM_TRACE_HEADER));
-    IoResponse          = (PLARGE_INTEGER) &CurrentIrpStack->Parameters.Read;
+    IoTrace = (struct _WMI_DISKIO_READWRITE *)((PCHAR)Header + sizeof(SYSTEM_TRACE_HEADER));
+    IoResponse = (PLARGE_INTEGER)&CurrentIrpStack->Parameters.Read;
 
     IoTrace->DiskNumber = DiskNumber;
-    IoTrace->IrpFlags   = Irp->Flags;
-    IoTrace->Size       = (ULONG) Irp->IoStatus.Information;
+    IoTrace->IrpFlags = Irp->Flags;
+    IoTrace->Size = (ULONG)Irp->IoStatus.Information;
     IoTrace->ByteOffset = CurrentIrpStack->Parameters.Read.ByteOffset.QuadPart;
 
-    if (IoResponse->HighPart == 0) {
+    if (IoResponse->HighPart == 0)
+    {
         IoTrace->ResponseTime = IoResponse->LowPart;
-    } else {
+    }
+    else
+    {
         IoTrace->ResponseTime = 0xFFFFFFFF;
     }
     IoTrace->HighResResponseTime = IoResponse->QuadPart;
 
-    if (WmipTraceFileFlag) {
-        if (Irp->Flags & IRP_ASSOCIATED_IRP) {
+    if (WmipTraceFileFlag)
+    {
+        if (Irp->Flags & IRP_ASSOCIATED_IRP)
+        {
             IoTrace->FileObject = Irp->AssociatedIrp.MasterIrp->Tail.Overlay.OriginalFileObject;
-        } else {
+        }
+        else
+        {
             IoTrace->FileObject = Irp->Tail.Overlay.OriginalFileObject;
         }
     }
     WmipReleaseTraceBuffer(BufferResource, LoggerContext);
 
-    if (WmipTraceFileFlag) {    // File tracing required
+    if (WmipTraceFileFlag)
+    { // File tracing required
         PKAPC apc;
         PFILE_OBJECT fileObject = IoTrace->FileObject;
         PFILE_OBJECT *fileTable;
         ULONG i, fileIndex;
         PFILE_OBJECT lastFile = NULL;
 
-        if (!fileObject) {
+        if (!fileObject)
+        {
             return;
         }
-        if (fileObject->FileName.Length == 0) {
+        if (fileObject->FileName.Length == 0)
+        {
             return;
         }
 
-        if (!Irp->Tail.Overlay.Thread) {
+        if (!Irp->Tail.Overlay.Thread)
+        {
             return;
         }
 
-        fileTable = (PFILE_OBJECT *) WmipFileTable;
+        fileTable = (PFILE_OBJECT *)WmipFileTable;
         if (fileTable == NULL)
             return;
 
@@ -1014,23 +964,27 @@ Return Value:
         // can run into collision but can afford to have some entries
         // thrown away
         //
-//        if (fileObject == fileTable[WmipFileIndex]) {
-//            return;   // just saw it, so return
-//        }
+        //        if (fileObject == fileTable[WmipFileIndex]) {
+        //            return;   // just saw it, so return
+        //        }
         fileIndex = WmipFileIndex;
-        for (i=0; i<MAX_FILE_TABLE_SIZE; i++) {
-            if (fileTable[i] == NULL) {
+        for (i = 0; i < MAX_FILE_TABLE_SIZE; i++)
+        {
+            if (fileTable[i] == NULL)
+            {
                 fileTable[i] = fileObject;
                 goto TraceFileName;
             }
-            else if (fileTable[i] == fileObject) {
-                if (i <= MAX_FILE_TABLE_SIZE/2)
+            else if (fileTable[i] == fileObject)
+            {
+                if (i <= MAX_FILE_TABLE_SIZE / 2)
                     return;
 
                 lastFile = fileTable[fileIndex];
                 fileTable[fileIndex] = fileObject;
                 fileTable[i] = lastFile;
-                if (++WmipFileIndex >= MAX_FILE_TABLE_SIZE/2) {
+                if (++WmipFileIndex >= MAX_FILE_TABLE_SIZE / 2)
+                {
                     WmipFileIndex = 0;
                 }
                 return;
@@ -1038,62 +992,52 @@ Return Value:
         }
 
         fileTable[fileIndex] = fileObject;
-        if (++WmipFileIndex >= MAX_FILE_TABLE_SIZE/2) {
+        if (++WmipFileIndex >= MAX_FILE_TABLE_SIZE / 2)
+        {
             WmipFileIndex = 0;
         }
 
-      TraceFileName:
+    TraceFileName:
         // could not find it. Have to pay the price to get it
         //
         apc = ExAllocatePoolWithTag(NonPagedPool, sizeof(KAPC), TRACEPOOLTAG);
         if (!apc)
             return;
 
-        ObReferenceObjectByPointer (
-            fileObject,
-            0L,
-            NULL,
-            KernelMode
-            );
+        ObReferenceObjectByPointer(fileObject, 0L, NULL, KernelMode);
 
-        KeInitializeApc (apc,
-            &Irp->Tail.Overlay.Thread->Tcb, Irp->ApcEnvironment,
-            (PKKERNEL_ROUTINE) WmipTraceFile,
-            NULL,   // rundown routine for thread termination
-            NULL,  // normal routine at IRQL0
-            KernelMode,
-            NULL);
-        if (!KeInsertQueueApc (apc, fileObject, NULL, 0)) {
-            ExFreePool (apc);
+        KeInitializeApc(apc, &Irp->Tail.Overlay.Thread->Tcb, Irp->ApcEnvironment, (PKKERNEL_ROUTINE)WmipTraceFile,
+                        NULL, // rundown routine for thread termination
+                        NULL, // normal routine at IRQL0
+                        KernelMode, NULL);
+        if (!KeInsertQueueApc(apc, fileObject, NULL, 0))
+        {
+            ExFreePool(apc);
             ObDereferenceObject(fileObject);
         }
     }
     return;
 }
 
-VOID WmipTraceFile(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+VOID WmipTraceFile(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext, IN PVOID *SystemArgument1,
+                   IN PVOID *SystemArgument2)
 {
     ULONG len;
-    PFILE_OBJECT fileObject = (PFILE_OBJECT) *SystemArgument1;
+    PFILE_OBJECT fileObject = (PFILE_OBJECT)*SystemArgument1;
     PUNICODE_STRING fileName;
     PPERFINFO_TRACE_HEADER Header;
     PWMI_BUFFER_HEADER BufferResource;
     PUCHAR AuxPtr;
     PWMI_LOGGER_CONTEXT LoggerContext;
 
-    UNREFERENCED_PARAMETER( NormalRoutine );
-    UNREFERENCED_PARAMETER( NormalContext );
-    UNREFERENCED_PARAMETER( SystemArgument2 );
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     PAGED_CODE();
 
-    if (!fileObject) {  // should not happen
+    if (!fileObject)
+    { // should not happen
         ExFreePool(Apc);
         return;
     }
@@ -1105,24 +1049,23 @@ VOID WmipTraceFile(
 
     if (len > (0XFFFF - sizeof(PFILE_OBJECT) - sizeof(WCHAR)))
         len = 0; // allow only 64K max
-    if (len > 0 && fileName->Buffer != NULL) {
+    if (len > 0 && fileName->Buffer != NULL)
+    {
 
         LoggerContext = WmipLoggerContext[WmipKernelLogger];
-        Header = WmiReserveWithPerfHeader(
-                        sizeof(PFILE_OBJECT) + len + sizeof(WCHAR),
-                        &BufferResource);
+        Header = WmiReserveWithPerfHeader(sizeof(PFILE_OBJECT) + len + sizeof(WCHAR), &BufferResource);
         if (Header == NULL)
             return;
-        Header->Packet.Group = (UCHAR) (EVENT_TRACE_GROUP_FILE >> 8);
+        Header->Packet.Group = (UCHAR)(EVENT_TRACE_GROUP_FILE >> 8);
         Header->Packet.Type = EVENT_TRACE_TYPE_INFO;
         AuxPtr = (PUCHAR)Header + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-        *((PFILE_OBJECT*)AuxPtr) = fileObject;
+        *((PFILE_OBJECT *)AuxPtr) = fileObject;
         AuxPtr += sizeof(PFILE_OBJECT);
 
         RtlCopyMemory(AuxPtr, fileName->Buffer, len);
         AuxPtr += len;
-        *((PWCHAR) AuxPtr) = UNICODE_NULL;      // always put a NULL
+        *((PWCHAR)AuxPtr) = UNICODE_NULL; // always put a NULL
 
         WmipReleaseTraceBuffer(BufferResource, LoggerContext);
     }
@@ -1131,12 +1074,7 @@ VOID WmipTraceFile(
     ExFreePool(Apc);
 }
 
-VOID
-WmipTraceLoadImage(
-    IN PUNICODE_STRING ImageName,
-    IN HANDLE ProcessId,
-    IN PIMAGE_INFO ImageInfo
-    )
+VOID WmipTraceLoadImage(IN PUNICODE_STRING ImageName, IN HANDLE ProcessId, IN PIMAGE_INFO ImageInfo)
 {
     PSYSTEM_TRACE_HEADER Header;
     PUCHAR AuxInfo;
@@ -1147,44 +1085,46 @@ WmipTraceLoadImage(
     PAGED_CODE();
     UNREFERENCED_PARAMETER(ProcessId);
 
-    if ((WmipIsLoggerOn(WmipKernelLogger) == NULL) &&
-        (WmipIsLoggerOn(WmipEventLogger) == NULL))
+    if ((WmipIsLoggerOn(WmipKernelLogger) == NULL) && (WmipIsLoggerOn(WmipEventLogger) == NULL))
         return;
     if (ImageName == NULL)
         return;
     Length = ImageName->Length;
-    if ((Length == 0) || (ImageName->Buffer == NULL)) {
+    if ((Length == 0) || (ImageName->Buffer == NULL))
+    {
         return;
     }
 
     if (Length > (0XFFFF - sizeof(PVOID) - sizeof(SIZE_T) - sizeof(WCHAR)))
         return;
 
-    for (LoggerId = WmipKernelLogger;; LoggerId = WmipEventLogger) {
+    for (LoggerId = WmipKernelLogger;; LoggerId = WmipEventLogger)
+    {
         LoggerContext = WmipIsLoggerOn(LoggerId);
-        if (LoggerContext != NULL) {
-            if (LoggerContext->EnableFlags & EVENT_TRACE_FLAG_IMAGE_LOAD) {
+        if (LoggerContext != NULL)
+        {
+            if (LoggerContext->EnableFlags & EVENT_TRACE_FLAG_IMAGE_LOAD)
+            {
                 PWMI_IMAGELOAD_INFORMATION ImageLoadInfo;
 
                 Header = WmiReserveWithSystemHeader(
-                            LoggerId,
-                            FIELD_OFFSET (WMI_IMAGELOAD_INFORMATION, FileName) + Length + sizeof(WCHAR),
-                            NULL,
-                            &BufferResource);
+                    LoggerId, FIELD_OFFSET(WMI_IMAGELOAD_INFORMATION, FileName) + Length + sizeof(WCHAR), NULL,
+                    &BufferResource);
 
-                if (Header != NULL) {
+                if (Header != NULL)
+                {
                     Header->Packet.HookId = WMI_LOG_TYPE_PROCESS_LOAD_IMAGE;
 
-                    ImageLoadInfo = (PWMI_IMAGELOAD_INFORMATION) (Header + 1);
+                    ImageLoadInfo = (PWMI_IMAGELOAD_INFORMATION)(Header + 1);
 
                     ImageLoadInfo->ImageBase = ImageInfo->ImageBase;
                     ImageLoadInfo->ImageSize = ImageInfo->ImageSize;
                     ImageLoadInfo->ProcessId = HandleToUlong(ProcessId);
 
-                    AuxInfo = (PUCHAR) &(ImageLoadInfo->FileName[0]);
+                    AuxInfo = (PUCHAR) & (ImageLoadInfo->FileName[0]);
                     RtlCopyMemory(AuxInfo, ImageName->Buffer, Length);
                     AuxInfo += Length;
-                    *((PWCHAR) AuxInfo) = UNICODE_NULL; // put a trailing NULL
+                    *((PWCHAR)AuxInfo) = UNICODE_NULL; // put a trailing NULL
 
                     WmipReleaseTraceBuffer(BufferResource, LoggerContext);
                 }
@@ -1196,15 +1136,8 @@ WmipTraceLoadImage(
     PerfInfoFlushProfileCache();
 }
 
-VOID
-WmipTraceRegistry(
-    IN NTSTATUS         Status,
-    IN PVOID            Kcb,
-    IN LONGLONG         ElapsedTime,
-    IN ULONG            Index,
-    IN PUNICODE_STRING  KeyName,
-    IN UCHAR            Type
-    )
+VOID WmipTraceRegistry(IN NTSTATUS Status, IN PVOID Kcb, IN LONGLONG ElapsedTime, IN ULONG Index,
+                       IN PUNICODE_STRING KeyName, IN UCHAR Type)
 /*++
 
 Routine Description:
@@ -1220,7 +1153,7 @@ Return Value:
 --*/
 
 {
-    PCHAR   EventInfo;
+    PCHAR EventInfo;
     PSYSTEM_TRACE_HEADER Header;
     PVOID BufferResource;
     ULONG len = 0;
@@ -1229,20 +1162,25 @@ Return Value:
     PAGED_CODE();
 
     LoggerContext = WmipIsLoggerOn(WmipKernelLogger);
-    if (LoggerContext == NULL) {
+    if (LoggerContext == NULL)
+    {
         return;
     }
 
-    if( KeyName && KeyName->Buffer ) {
+    if (KeyName && KeyName->Buffer)
+    {
         len += KeyName->Length;
 
-        if ((len ==0 ) || (KeyName->Buffer[len/sizeof(WCHAR) -1] != 0) ) {
+        if ((len == 0) || (KeyName->Buffer[len / sizeof(WCHAR) - 1] != 0))
+        {
             //
             // make room for NULL terminator
             //
             len += sizeof(WCHAR);
         }
-    } else {
+    }
+    else
+    {
         len += sizeof(WCHAR);
     }
 
@@ -1253,22 +1191,18 @@ Return Value:
     len += sizeof(NTSTATUS);
 #endif
 
-    if (len > 0xFFFF)   // 64K bytes max
+    if (len > 0xFFFF) // 64K bytes max
         Header = NULL;
-    else {
-        Header = (PSYSTEM_TRACE_HEADER)
-                 WmiReserveWithSystemHeader(
-                            WmipKernelLogger,
-                            len,
-                            NULL,
-                            &BufferResource);
+    else
+    {
+        Header = (PSYSTEM_TRACE_HEADER)WmiReserveWithSystemHeader(WmipKernelLogger, len, NULL, &BufferResource);
     }
     if (Header == NULL)
         return;
-    Header->Packet.Group = (UCHAR) (EVENT_TRACE_GROUP_REGISTRY >> 8);
+    Header->Packet.Group = (UCHAR)(EVENT_TRACE_GROUP_REGISTRY >> 8);
     Header->Packet.Type = Type;
 
-    EventInfo = (PCHAR) ((PCHAR) Header + sizeof(SYSTEM_TRACE_HEADER));
+    EventInfo = (PCHAR)((PCHAR)Header + sizeof(SYSTEM_TRACE_HEADER));
 #if defined(_WIN64)
     *((LONG64 *)EventInfo) = (LONG64)Status;
     EventInfo += sizeof(LONG64);
@@ -1283,27 +1217,24 @@ Return Value:
     *((ULONG *)EventInfo) = Index;
     EventInfo += sizeof(ULONG);
 
-    len -= (sizeof(HANDLE) + sizeof(LONGLONG) + sizeof(ULONG) );
+    len -= (sizeof(HANDLE) + sizeof(LONGLONG) + sizeof(ULONG));
 #if defined(_WIN64)
     len -= sizeof(LONG64);
 #else
     len -= sizeof(NTSTATUS);
 #endif
 
-    if( KeyName && KeyName->Buffer ) {
+    if (KeyName && KeyName->Buffer)
+    {
         RtlCopyMemory(EventInfo, KeyName->Buffer, len - sizeof(WCHAR));
     }
 
-    ((PWCHAR)EventInfo)[len/sizeof(WCHAR) -1] = UNICODE_NULL;
+    ((PWCHAR)EventInfo)[len / sizeof(WCHAR) - 1] = UNICODE_NULL;
 
     WmipReleaseTraceBuffer(BufferResource, LoggerContext);
 }
 
-VOID
-FASTCALL
-WmiTraceContextSwap (
-    IN PETHREAD OldEThread,
-    IN PETHREAD NewEThread )
+VOID FASTCALL WmiTraceContextSwap(IN PETHREAD OldEThread, IN PETHREAD NewEThread)
 /*++
 
 Routine Description:
@@ -1342,11 +1273,11 @@ Return Value:
 
 --*/
 {
-    UCHAR                       CurrentProcessor;
-    PWMI_BUFFER_HEADER          Buffer;
-    PPERFINFO_TRACE_HEADER      EventHeader;
-    SIZE_T                      EventSize;
-    PWMI_CONTEXTSWAP            ContextSwapData;
+    UCHAR CurrentProcessor;
+    PWMI_BUFFER_HEADER Buffer;
+    PPERFINFO_TRACE_HEADER EventHeader;
+    SIZE_T EventSize;
+    PWMI_CONTEXTSWAP ContextSwapData;
 
     //
     // Figure out which processor we are running on
@@ -1359,12 +1290,13 @@ Return Value:
     //
     Buffer = WmipContextSwapProcessorBuffers[CurrentProcessor];
 
-    if (Buffer == NULL) {
+    if (Buffer == NULL)
+    {
 
-        Buffer = WmipPopFreeContextSwapBuffer(
-            CurrentProcessor);
+        Buffer = WmipPopFreeContextSwapBuffer(CurrentProcessor);
 
-        if( Buffer == NULL ) {
+        if (Buffer == NULL)
+        {
             return;
         }
 
@@ -1380,58 +1312,55 @@ Return Value:
     // At this point, we will always have enough space in the buffer for
     // this event.  We check for a full buffer after we fill out the event
     //
-    EventHeader     = (PPERFINFO_TRACE_HEADER)( (SIZE_T)Buffer
-                    + (SIZE_T)Buffer->CurrentOffset);
-    
-    ContextSwapData = (PWMI_CONTEXTSWAP)( (SIZE_T)EventHeader
-                    + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+    EventHeader = (PPERFINFO_TRACE_HEADER)((SIZE_T)Buffer + (SIZE_T)Buffer->CurrentOffset);
 
-    EventSize       = sizeof(WMI_CONTEXTSWAP)
-                    + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
+    ContextSwapData = (PWMI_CONTEXTSWAP)((SIZE_T)EventHeader + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
+
+    EventSize = sizeof(WMI_CONTEXTSWAP) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
 
     //
     // Fill out the event header
     //
     EventHeader->Marker = PERFINFO_TRACE_MARKER;
-    EventHeader->Packet.Size = (USHORT) EventSize;
+    EventHeader->Packet.Size = (USHORT)EventSize;
     EventHeader->Packet.HookId = PERFINFO_LOG_TYPE_CONTEXTSWAP;
     PerfTimeStamp(EventHeader->SystemTime);
 
     //
     // Assert that the event size is at alligned correctly
     //
-    ASSERT( EventSize % WMI_CTXSWAP_EVENTSIZE_ALIGNMENT == 0);
+    ASSERT(EventSize % WMI_CTXSWAP_EVENTSIZE_ALIGNMENT == 0);
 
     //
     // Fill out the event data struct for context swap
     //
     ContextSwapData->NewThreadId = HandleToUlong(NewEThread->Cid.UniqueThread);
     ContextSwapData->OldThreadId = HandleToUlong(OldEThread->Cid.UniqueThread);
-    
-    ContextSwapData->NewThreadPriority  = NewEThread->Tcb.Priority;
-    ContextSwapData->OldThreadPriority  = OldEThread->Tcb.Priority;
-    ContextSwapData->NewThreadQuantum   = NewEThread->Tcb.Quantum;
-    ContextSwapData->OldThreadQuantum   = OldEThread->Tcb.Quantum;
-    
-    ContextSwapData->OldThreadWaitReason= OldEThread->Tcb.WaitReason;
-    ContextSwapData->OldThreadWaitMode  = OldEThread->Tcb.WaitMode;
-    ContextSwapData->OldThreadState     = OldEThread->Tcb.State;
-    
-    ContextSwapData->OldThreadIdealProcessor = 
-        OldEThread->Tcb.IdealProcessor;
-    
+
+    ContextSwapData->NewThreadPriority = NewEThread->Tcb.Priority;
+    ContextSwapData->OldThreadPriority = OldEThread->Tcb.Priority;
+    ContextSwapData->NewThreadQuantum = NewEThread->Tcb.Quantum;
+    ContextSwapData->OldThreadQuantum = OldEThread->Tcb.Quantum;
+
+    ContextSwapData->OldThreadWaitReason = OldEThread->Tcb.WaitReason;
+    ContextSwapData->OldThreadWaitMode = OldEThread->Tcb.WaitMode;
+    ContextSwapData->OldThreadState = OldEThread->Tcb.State;
+
+    ContextSwapData->OldThreadIdealProcessor = OldEThread->Tcb.IdealProcessor;
+
     //
     // Increment the offset.  Don't need synchronization here because
     // IRQL >= DISPATCH_LEVEL.
     //
     Buffer->CurrentOffset += (ULONG)EventSize;
-    
+
     //
     // Check if the buffer is full by taking the difference between
     // the buffer's maximum offset and the current offset.
     //
-    if ((Buffer->Offset - Buffer->CurrentOffset) <= EventSize) {
+    if ((Buffer->Offset - Buffer->CurrentOffset) <= EventSize)
+    {
 
         //
         // Push the full buffer onto the FlushList.
@@ -1448,11 +1377,7 @@ Return Value:
     return;
 }
 
-VOID
-FASTCALL
-WmiStartContextSwapTrace
-    (
-    )
+VOID FASTCALL WmiStartContextSwapTrace()
 /*++
 
 Routine Description:
@@ -1496,16 +1421,10 @@ Return Value:
     // Set the pointers to our buffers to NULL, indicating to the trace event
     // code that a buffer needs to be acquired.
     //
-    RtlZeroMemory(
-        WmipContextSwapProcessorBuffers,
-        sizeof(PWMI_BUFFER_HEADER)*MAXIMUM_PROCESSORS);
+    RtlZeroMemory(WmipContextSwapProcessorBuffers, sizeof(PWMI_BUFFER_HEADER) * MAXIMUM_PROCESSORS);
 }
 
-VOID
-FASTCALL
-WmiStopContextSwapTrace
-    (
-    )
+VOID FASTCALL WmiStopContextSwapTrace()
 /*++
 
 Routine Description:
@@ -1534,9 +1453,9 @@ Return Value:
 
 --*/
 {
-    PKTHREAD            ThisThread;
-    KAFFINITY           OriginalAffinity;
-    UCHAR               i;
+    PKTHREAD ThisThread;
+    KAFFINITY OriginalAffinity;
+    UCHAR i;
     PWMI_LOGGER_CONTEXT LoggerContext;
 
     //
@@ -1557,8 +1476,9 @@ Return Value:
     // to flush buffers and we might as well stop here.
     //
     LoggerContext = WmipLoggerContext[WmipKernelLogger];
-    
-    if( !WmipIsValidLogger( LoggerContext ) ) {
+
+    if (!WmipIsValidLogger(LoggerContext))
+    {
         return;
     }
 
@@ -1567,19 +1487,21 @@ Return Value:
     // This would probably break if the number of processors were decreased in
     // the middle of the trace.
     //
-    for(i=0; i<KeNumberProcessors; i++) {
-    
+    for (i = 0; i < KeNumberProcessors; i++)
+    {
+
         //
         // Set the hard processor affinity to 1 << i
         // This effectively jumps onto the processor
         //
-        KeSetAffinityThread ( ThisThread, AFFINITY_MASK(i) );
+        KeSetAffinityThread(ThisThread, AFFINITY_MASK(i));
 
         //
-        // Check to make sure this processor even has a buffer, 
+        // Check to make sure this processor even has a buffer,
         // if it doesn't, then next loop
         //
-        if(WmipContextSwapProcessorBuffers[i] == NULL) {
+        if (WmipContextSwapProcessorBuffers[i] == NULL)
+        {
             continue;
         }
 
@@ -1600,16 +1522,14 @@ Return Value:
     //
     // Set our Affinity back to normal
     //
-    KeSetAffinityThread( ThisThread, OriginalAffinity);
+    KeSetAffinityThread(ThisThread, OriginalAffinity);
 
     return;
 }
 
 PWMI_LOGGER_CONTEXT
 FASTCALL
-WmipIsLoggerOn(
-    IN ULONG LoggerId
-    )
+WmipIsLoggerOn(IN ULONG LoggerId)
 {
     PWMI_LOGGER_CONTEXT LoggerContext;
 

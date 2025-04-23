@@ -8,7 +8,7 @@ Module Name:
 Abstract:
     contains functions used to report errors to Microsoft
 
-******************************************************************************/	
+******************************************************************************/
 
 #ifndef __ERRORREP_H__
 #define __ERRORREP_H__
@@ -27,13 +27,13 @@ typedef enum tagEFaultRepRetVal
 
 EFaultRepRetVal APIENTRY ReportFault(LPEXCEPTION_POINTERS pep, DWORD dwOpt);
 
-BOOL            APIENTRY AddERExcludedApplicationA(LPCSTR szApplication);
-BOOL            APIENTRY AddERExcludedApplicationW(LPCWSTR wszApplication);
+BOOL APIENTRY AddERExcludedApplicationA(LPCSTR szApplication);
+BOOL APIENTRY AddERExcludedApplicationW(LPCWSTR wszApplication);
 
 
-typedef EFaultRepRetVal (APIENTRY *pfn_REPORTFAULT)(LPEXCEPTION_POINTERS, DWORD);
-typedef EFaultRepRetVal (APIENTRY *pfn_ADDEREXCLUDEDAPPLICATIONA)(LPCSTR);
-typedef EFaultRepRetVal (APIENTRY *pfn_ADDEREXCLUDEDAPPLICATIONW)(LPCWSTR);
+typedef EFaultRepRetVal(APIENTRY *pfn_REPORTFAULT)(LPEXCEPTION_POINTERS, DWORD);
+typedef EFaultRepRetVal(APIENTRY *pfn_ADDEREXCLUDEDAPPLICATIONA)(LPCSTR);
+typedef EFaultRepRetVal(APIENTRY *pfn_ADDEREXCLUDEDAPPLICATIONW)(LPCWSTR);
 
 #ifdef UNICODE
 #define AddERExcludedApplication AddERExcludedApplicationA

@@ -28,36 +28,39 @@ Revision History:
 //
 // ===== Arbitrary Limits Imposed For Sanity =====
 //
-#define HSANE_CELL_MAX      (1024*1024)     // 1 megabyte max size for
-                                            // a single cell
+#define HSANE_CELL_MAX                       \
+    (1024 * 1024) // 1 megabyte max size for \
+                  // a single cell
 
 
 //
 // ===== Tuning =====
 
-#define HBIN_THRESHOLD      (HBLOCK_SIZE-512)   // If less than threshold
-                                                // bytes would be left in
-                                                // bin, add another page
+#define HBIN_THRESHOLD                            \
+    (HBLOCK_SIZE - 512) // If less than threshold \
+                        // bytes would be left in \
+                        // bin, add another page
 
-#define HLOG_GROW           HBLOCK_SIZE         // Minimum size to grow log
-                                                // by.  Can set this up
-                                                // if we think it thrashes.
+#define HLOG_GROW                           \
+    HBLOCK_SIZE // Minimum size to grow log \
+                // by.  Can set this up     \
+                // if we think it thrashes.
 
-#define HCELL_BIG_ROUND     (HBLOCK_SIZE*3)     //
-                                                // If someone tries to
-                                                // allocate a very large
-                                                // cell, round it up to
-                                                // HBLOCK_SIZE.  This is
-                                                // the rather arbitrary
-                                                // define for "very large"
-                                                //
+#define HCELL_BIG_ROUND                          \
+    (HBLOCK_SIZE * 3) //                         \
+                      // If someone tries to     \
+                      // allocate a very large   \
+                      // cell, round it up to    \
+                      // HBLOCK_SIZE.  This is   \
+                      // the rather arbitrary    \
+                      // define for "very large" \
+                      //
 //
 // Never shrink the log files smaller than this, this prevents people
 // from taking up all the disk space and then being unable to do
 // critical registry operations (like logging on to delete some files)
 //
-#define HLOG_MINSIZE(Hive)  \
-    ((Hive)->Cluster * HSECTOR_SIZE * 2)
+#define HLOG_MINSIZE(Hive) ((Hive)->Cluster * HSECTOR_SIZE * 2)
 
 //
 // ===== Basic Structures and Definitions =====
@@ -69,7 +72,8 @@ Revision History:
 // NOTE:    Volatile == storage goes away at reboot
 //          Stable == Persistent == Not Volatile
 //
-typedef enum {
+typedef enum
+{
     Stable = 0,
     Volatile = 1
 } HSTORAGE_TYPE;
@@ -112,33 +116,34 @@ typedef HCELL_INDEX *PHCELL_INDEX;
 //#define PAGE_SIZE 0x2000
 #endif //DRAGOSS_PRIVATE_DEBUG
 
-#define HCELL_NIL   ((HCELL_INDEX)(-1))
+#define HCELL_NIL ((HCELL_INDEX)(-1))
 
-#define HCELL_TYPE_MASK         0x80000000
-#define HCELL_TYPE_SHIFT        31
+#define HCELL_TYPE_MASK 0x80000000
+#define HCELL_TYPE_SHIFT 31
 
-#define HCELL_TABLE_MASK        0x7fe00000
-#define HCELL_TABLE_SHIFT       21
+#define HCELL_TABLE_MASK 0x7fe00000
+#define HCELL_TABLE_SHIFT 21
 
-#define HCELL_BLOCK_MASK        0x001ff000
-#define HCELL_BLOCK_SHIFT       12
+#define HCELL_BLOCK_MASK 0x001ff000
+#define HCELL_BLOCK_SHIFT 12
 
-#define HCELL_OFFSET_MASK       0x00000fff
+#define HCELL_OFFSET_MASK 0x00000fff
 
-#define HBLOCK_SIZE             0x1000                      // LOGICAL block size
-                                                            // This is the size of one of
-                                                            // the registry's logical/virtual
-                                                            // pages.  It has no particular
-                                                            // relationship to page size
-                                                            // of the machine.
+#define HBLOCK_SIZE                          \
+    0x1000 // LOGICAL block size             \
+           // This is the size of one of     \
+           // the registry's logical/virtual \
+           // pages.  It has no particular   \
+           // relationship to page size      \
+           // of the machine.
 
-#define HSECTOR_SIZE            0x200                       // LOGICAL sector size
-#define HSECTOR_COUNT           8                           // LOGICAL sectors / LOGICAL Block
+#define HSECTOR_SIZE 0x200 // LOGICAL sector size
+#define HSECTOR_COUNT 8    // LOGICAL sectors / LOGICAL Block
 
-#define HSECTOR_PER_PAGE_COUNT  (PAGE_SIZE / HSECTOR_SIZE)  // LOGICAL sectors / Physical page
+#define HSECTOR_PER_PAGE_COUNT (PAGE_SIZE / HSECTOR_SIZE) // LOGICAL sectors / Physical page
 
-#define HTABLE_SLOTS        512         // 9 bits of address
-#define HDIRECTORY_SLOTS    1024        // 10 bits of address
+#define HTABLE_SLOTS 512      // 9 bits of address
+#define HDIRECTORY_SLOTS 1024 // 10 bits of address
 
 #define HvGetCellType(Cell) ((ULONG)((Cell & HCELL_TYPE_MASK) >> HCELL_TYPE_SHIFT))
 
@@ -148,15 +153,16 @@ typedef HCELL_INDEX *PHCELL_INDEX;
 // Any given item of user data must fit within a single HCELL.
 // HCELLs cannot span Bins.
 //
-#define HCELL_PAD(Hive)         ((Hive->Version>=2) ? 8 : 16)
-                                // All cells must be at least this large,
-                                // All allocations on this boundary
+#define HCELL_PAD(Hive) ((Hive->Version >= 2) ? 8 : 16)
+// All cells must be at least this large,
+// All allocations on this boundary
 
-#define HCELL_ALLOCATE_FILL 0xb2    // bz -> buzz buzz (yeah, it's a stretch)
-                                    // must fill all newly allocated
-                                    // cells for security reasons
+#define HCELL_ALLOCATE_FILL                        \
+    0xb2 // bz -> buzz buzz (yeah, it's a stretch) \
+         // must fill all newly allocated          \
+         // cells for security reasons
 
-#define HCELL_FREE_FILL     0xfc    // fc = HvFreeCell...
+#define HCELL_FREE_FILL 0xfc // fc = HvFreeCell...
 
 //
 // Currently we support two cell formats, one with a Last backpointer (old version),
@@ -166,23 +172,29 @@ typedef HCELL_INDEX *PHCELL_INDEX;
 // Version 2 or greater use the new version.
 //
 
-#define USE_OLD_CELL(Hive) (Hive->Version==1)
+#define USE_OLD_CELL(Hive) (Hive->Version == 1)
 
-typedef struct _HCELL {
-    LONG    Size;
-    union {
-        struct {
+typedef struct _HCELL
+{
+    LONG Size;
+    union
+    {
+        struct
+        {
             ULONG Last;
-            union {
+            union
+            {
                 ULONG UserData;
-                HCELL_INDEX Next;   // offset of next element in freelist (not a FLink)
+                HCELL_INDEX Next; // offset of next element in freelist (not a FLink)
             } u;
         } OldCell;
 
-        struct {
-            union {
+        struct
+        {
+            union
+            {
                 ULONG UserData;
-                HCELL_INDEX Next;    // offset of next element in freelist (not a FLink)
+                HCELL_INDEX Next; // offset of next element in freelist (not a FLink)
             } u;
         } NewCell;
     } u;
@@ -192,23 +204,24 @@ typedef struct _HCELL {
 //
 // --- HBIN ---  is a contiguous set of HBLOCKs, filled with HCELLs.
 //
-#define HBIN_SIGNATURE          0x6e696268      // "hbin"
-#define HBIN_NIL                (-1)
+#define HBIN_SIGNATURE 0x6e696268 // "hbin"
+#define HBIN_NIL (-1)
 
 #pragma pack(4)
-typedef struct  _HBIN {
-    ULONG       Signature;
-    ULONG       FileOffset;     // Own file offset (used in checking)
-    ULONG       Size;           // Size of bin in bytes, all inclusive
-    ULONG       Reserved1[2];   // Old FreeSpace and FreeList (from 1.0)
-    LARGE_INTEGER   TimeStamp;  // Old Link (from 1.0).  Usually trash, but
-                                // first bin has valid value used for .log
-                                // correspondence testing, only meaningful
-                                // on disk.
-    ULONG       Spare;          // this used to be MemAlloc. We don't use it anymore as we
-                                // can't afford to touch the bin (it's not residing in paged-pool
-                                // anymore, so touching it means modifying mnw pages).
-                                // Spare is used for the ShiftFreeBins Stuff - in memory only!
+typedef struct _HBIN
+{
+    ULONG Signature;
+    ULONG FileOffset;        // Own file offset (used in checking)
+    ULONG Size;              // Size of bin in bytes, all inclusive
+    ULONG Reserved1[2];      // Old FreeSpace and FreeList (from 1.0)
+    LARGE_INTEGER TimeStamp; // Old Link (from 1.0).  Usually trash, but
+                             // first bin has valid value used for .log
+                             // correspondence testing, only meaningful
+                             // on disk.
+    ULONG Spare;             // this used to be MemAlloc. We don't use it anymore as we
+                             // can't afford to touch the bin (it's not residing in paged-pool
+                             // anymore, so touching it means modifying mnw pages).
+                             // Spare is used for the ShiftFreeBins Stuff - in memory only!
 
     //
     // Cell data goes here
@@ -328,57 +341,58 @@ typedef struct  _HBIN {
 //          or integrity assumptions will be violated, and crash
 //          recovery may not work.
 //
-#define HBASE_BLOCK_SIGNATURE   0x66676572  // "regf"
+#define HBASE_BLOCK_SIGNATURE 0x66676572 // "regf"
 
-#define HSYS_MAJOR              1               // Must match to read at all
-#define HSYS_MINOR              3
+#define HSYS_MAJOR 1 // Must match to read at all
+#define HSYS_MINOR 3
 
-#define HSYS_WHISTLER_BETA1     4               // Whistler Beta1 hives
+#define HSYS_WHISTLER_BETA1 4 // Whistler Beta1 hives
 
-#define HSYS_WHISTLER           5               // normal Whistler hives
+#define HSYS_WHISTLER 5 // normal Whistler hives
 
-#define HSYS_MINOR_SUPPORTED    HSYS_WHISTLER   // Must be <= to write, always
-                                                // set up to writer's version.
+#define HSYS_MINOR_SUPPORTED                     \
+    HSYS_WHISTLER // Must be <= to write, always \
+                  // set up to writer's version.
 
 
+#define HBASE_FORMAT_MEMORY 1 // Direct memory load case
 
-#define HBASE_FORMAT_MEMORY 1               // Direct memory load case
-
-#define HBASE_NAME_ALLOC    64              // 32 unicode chars
+#define HBASE_NAME_ALLOC 64 // 32 unicode chars
 
 //
 // Boot Type Loader <-> Kernel communication
 //
-#define HBOOT_NORMAL            0
-#define HBOOT_REPAIR            1
-#define HBOOT_BACKUP            2
-#define HBOOT_SELFHEAL          4
+#define HBOOT_NORMAL 0
+#define HBOOT_REPAIR 1
+#define HBOOT_BACKUP 2
+#define HBOOT_SELFHEAL 4
 
 #pragma pack(4)
-typedef struct _HBASE_BLOCK {
-    ULONG           Signature;
-    ULONG           Sequence1;
-    ULONG           Sequence2;
-    LARGE_INTEGER   TimeStamp;
-    ULONG           Major;
-    ULONG           Minor;
-    ULONG           Type;                   // HFILE_TYPE_[PRIMARY|LOG]
-    ULONG           Format;
-    HCELL_INDEX     RootCell;
-    ULONG           Length;                 // Includes all but header
-    ULONG           Cluster;                // for logs only
-    UCHAR           FileName[HBASE_NAME_ALLOC];  // filename tail
-    ULONG           Reserved1[99];
-    ULONG           CheckSum;
-    ULONG           Reserved2[128*7-2];       // subtract 2 for the volatile info
-    ULONG           BootType;				// set by bootloader 
-    ULONG           BootRecover;            // set to 1 by bootloader if it did hive recovery
-                                            // nobody else is using this
+typedef struct _HBASE_BLOCK
+{
+    ULONG Signature;
+    ULONG Sequence1;
+    ULONG Sequence2;
+    LARGE_INTEGER TimeStamp;
+    ULONG Major;
+    ULONG Minor;
+    ULONG Type; // HFILE_TYPE_[PRIMARY|LOG]
+    ULONG Format;
+    HCELL_INDEX RootCell;
+    ULONG Length;                     // Includes all but header
+    ULONG Cluster;                    // for logs only
+    UCHAR FileName[HBASE_NAME_ALLOC]; // filename tail
+    ULONG Reserved1[99];
+    ULONG CheckSum;
+    ULONG Reserved2[128 * 7 - 2]; // subtract 2 for the volatile info
+    ULONG BootType;               // set by bootloader
+    ULONG BootRecover;            // set to 1 by bootloader if it did hive recovery
+                                  // nobody else is using this
 } HBASE_BLOCK, *PHBASE_BLOCK;
 #pragma pack()
 
-#define HLOG_HEADER_SIZE  (FIELD_OFFSET(HBASE_BLOCK, Reserved2))
-#define HLOG_DV_SIGNATURE   0x54524944      // "DIRT"
+#define HLOG_HEADER_SIZE (FIELD_OFFSET(HBASE_BLOCK, Reserved2))
+#define HLOG_DV_SIGNATURE 0x54524944 // "DIRT"
 
 //
 // ===== In Memory Structures =====
@@ -435,54 +449,57 @@ typedef struct _HBASE_BLOCK {
 //
 // --- HMAP_ENTRY --- Holds memory location of HCELL
 //
-#define HMAP_FLAGS          (0xf)
-#define HMAP_BASE           (~(HMAP_FLAGS))
+#define HMAP_FLAGS (0xf)
+#define HMAP_BASE (~(HMAP_FLAGS))
 
-#define HBIN_BASE(BinAddress)   (BinAddress & HMAP_BASE)
-#define HBIN_FLAGS(BinAddress)  (BinAddress & HMAP_FLAGS)
+#define HBIN_BASE(BinAddress) (BinAddress & HMAP_BASE)
+#define HBIN_FLAGS(BinAddress) (BinAddress & HMAP_FLAGS)
 
-#define HMAP_NEWALLOC       1               // the bin is the beginning of a new
-                                            // allocation. When bin is in view this
-                                            // doesn't really matter
+#define HMAP_NEWALLOC                           \
+    1   // the bin is the beginning of a new    \
+        // allocation. When bin is in view this \
+        // doesn't really matter
 
-#define HMAP_DISCARDABLE    2               // bin is discardable (i.e. is all free)
-                                            // first time when we get the chance we'll
-                                            // free it (if it is in paged pool)
+#define HMAP_DISCARDABLE                           \
+    2   // bin is discardable (i.e. is all free)   \
+        // first time when we get the chance we'll \
+        // free it (if it is in paged pool)
 
-#define HMAP_INVIEW         4               // bin is mapped in system cache
+#define HMAP_INVIEW 4 // bin is mapped in system cache
 
-#define HMAP_INPAGEDPOOL    8               // bin is allocated from paged pool
+#define HMAP_INPAGEDPOOL 8 // bin is allocated from paged pool
 
 
-#define BIN_MAP_ALLOCATION_TYPE(Me) (((Me)->BinAddress)&(HMAP_INPAGEDPOOL|HMAP_INVIEW))
+#define BIN_MAP_ALLOCATION_TYPE(Me) (((Me)->BinAddress) & (HMAP_INPAGEDPOOL | HMAP_INVIEW))
 
-#define ASSERT_BIN_INVIEW(Me)       ASSERT( ((Me)->BinAddress & HMAP_INVIEW) != 0 )
-#define ASSERT_BIN_INPAGEDPOOL(Me)  ASSERT( ((Me)->BinAddress & HMAP_INPAGEDPOOL) != 0 )
-#define ASSERT_BIN_INVALID(Me)      ASSERT( ((Me)->BinAddress & (HMAP_INPAGEDPOOL|HMAP_INVIEW)) == 0 )
-#define ASSERT_BIN_VALID(Me)        ASSERT( ((Me)->BinAddress & (HMAP_INPAGEDPOOL|HMAP_INVIEW)) != 0 )
+#define ASSERT_BIN_INVIEW(Me) ASSERT(((Me)->BinAddress & HMAP_INVIEW) != 0)
+#define ASSERT_BIN_INPAGEDPOOL(Me) ASSERT(((Me)->BinAddress & HMAP_INPAGEDPOOL) != 0)
+#define ASSERT_BIN_INVALID(Me) ASSERT(((Me)->BinAddress & (HMAP_INPAGEDPOOL | HMAP_INVIEW)) == 0)
+#define ASSERT_BIN_VALID(Me) ASSERT(((Me)->BinAddress & (HMAP_INPAGEDPOOL | HMAP_INVIEW)) != 0)
 
 struct _CM_VIEW_OF_FILE; //forward
-typedef struct _HMAP_ENTRY {
-    ULONG_PTR    BlockAddress;       // Low 2 bits always 0.  High bits
-                                    // are memory address of HBLOCK that
-                                    // HCELL starts in, add Offset to this.
-                                    // (An HCELL can span several HBLOCKs)
-                                    //
+typedef struct _HMAP_ENTRY
+{
+    ULONG_PTR BlockAddress; // Low 2 bits always 0.  High bits
+                            // are memory address of HBLOCK that
+                            // HCELL starts in, add Offset to this.
+                            // (An HCELL can span several HBLOCKs)
+                            //
 
-    ULONG_PTR    BinAddress;         // Low bit set TRUE to mark beginning
-                                    // of a new allocation.
-                                    // High bits are memory address of
-                                    // first HBLOCK in same bin.
-                                    // (A given HCELL is always contained
-                                    //  in a single bin.)
+    ULONG_PTR BinAddress; // Low bit set TRUE to mark beginning
+                          // of a new allocation.
+                          // High bits are memory address of
+                          // first HBLOCK in same bin.
+                          // (A given HCELL is always contained
+                          //  in a single bin.)
 
-// Dragos: From here start the changes!!!
-    struct _CM_VIEW_OF_FILE    *CmView;    // pointer to the view; NULL when bin is not mapped
+    // Dragos: From here start the changes!!!
+    struct _CM_VIEW_OF_FILE *CmView; // pointer to the view; NULL when bin is not mapped
 
-    ULONG       MemAlloc;           // we needed to move this from the bin header to the map, in
-                                    // order to prevent the bin from being touched
+    ULONG MemAlloc; // we needed to move this from the bin header to the map, in
+                    // order to prevent the bin from being touched
 
-/*
+    /*
 We don't really need this. Left just as a comment
 
 
@@ -504,16 +521,18 @@ We don't really need this. Left just as a comment
 // Each HBLOCK worth of space in the Hive image has an entry in
 // an HMAP_TABLE.
 //
-typedef struct _HMAP_TABLE {
-    HMAP_ENTRY  Table[ HTABLE_SLOTS ];
+typedef struct _HMAP_TABLE
+{
+    HMAP_ENTRY Table[HTABLE_SLOTS];
 } HMAP_TABLE, *PHMAP_TABLE;
 
 
 //
 // --- HMAP_DIRECTORY --- Array of pointers to HMAP_TABLEs
 //
-typedef struct _HMAP_DIRECTORY {
-    PHMAP_TABLE Directory[  HDIRECTORY_SLOTS ];
+typedef struct _HMAP_DIRECTORY
+{
+    PHMAP_TABLE Directory[HDIRECTORY_SLOTS];
 } HMAP_DIRECTORY, *PHMAP_DIRECTORY;
 
 
@@ -522,78 +541,32 @@ typedef struct _HMAP_DIRECTORY {
 //
 struct _HHIVE; // forward
 
-typedef
-PVOID
-(*PALLOCATE_ROUTINE) (
-    ULONG       Length,             // Size of new block wanted
-    BOOLEAN     UseForIo,            // TRUE if yes, FALSE if no
-    ULONG       Tag
-    );
+typedef PVOID (*PALLOCATE_ROUTINE)(ULONG Length,     // Size of new block wanted
+                                   BOOLEAN UseForIo, // TRUE if yes, FALSE if no
+                                   ULONG Tag);
 
-typedef
-VOID
-(*PFREE_ROUTINE) (
-    PVOID       MemoryBlock,
-    ULONG       GlobalQuotaSize
-    );
+typedef VOID (*PFREE_ROUTINE)(PVOID MemoryBlock, ULONG GlobalQuotaSize);
 
-typedef
-BOOLEAN
-(*PFILE_SET_SIZE_ROUTINE) (
-    struct _HHIVE  *Hive,
-    ULONG          FileType,
-    ULONG          FileSize,
-    ULONG          OldFileSize
-    );
+typedef BOOLEAN (*PFILE_SET_SIZE_ROUTINE)(struct _HHIVE *Hive, ULONG FileType, ULONG FileSize, ULONG OldFileSize);
 
-typedef struct {
-    ULONG  FileOffset;
-    PVOID  DataBuffer;
-    ULONG  DataLength;
-} CMP_OFFSET_ARRAY, * PCMP_OFFSET_ARRAY;
+typedef struct
+{
+    ULONG FileOffset;
+    PVOID DataBuffer;
+    ULONG DataLength;
+} CMP_OFFSET_ARRAY, *PCMP_OFFSET_ARRAY;
 
-typedef
-BOOLEAN
-(*PFILE_WRITE_ROUTINE) (
-    struct _HHIVE  *Hive,
-    ULONG       FileType,
-    PCMP_OFFSET_ARRAY offsetArray,
-    ULONG offsetArrayCount,
-    PULONG FileOffset
-    );
+typedef BOOLEAN (*PFILE_WRITE_ROUTINE)(struct _HHIVE *Hive, ULONG FileType, PCMP_OFFSET_ARRAY offsetArray,
+                                       ULONG offsetArrayCount, PULONG FileOffset);
 
-typedef
-BOOLEAN
-(*PFILE_READ_ROUTINE) (
-    struct _HHIVE  *Hive,
-    ULONG       FileType,
-    PULONG      FileOffset,
-    PVOID       DataBuffer,
-    ULONG       DataLength
-    );
+typedef BOOLEAN (*PFILE_READ_ROUTINE)(struct _HHIVE *Hive, ULONG FileType, PULONG FileOffset, PVOID DataBuffer,
+                                      ULONG DataLength);
 
-typedef
-BOOLEAN
-(*PFILE_FLUSH_ROUTINE) (
-    struct _HHIVE  *Hive,
-    ULONG           FileType,
-    PLARGE_INTEGER  FileOffset,
-    ULONG           Length
-    );
+typedef BOOLEAN (*PFILE_FLUSH_ROUTINE)(struct _HHIVE *Hive, ULONG FileType, PLARGE_INTEGER FileOffset, ULONG Length);
 
-typedef
-struct _CELL_DATA *
-(*PGET_CELL_ROUTINE)(
-    struct _HHIVE   *Hive,
-    HCELL_INDEX Cell
-    );
+typedef struct _CELL_DATA *(*PGET_CELL_ROUTINE)(struct _HHIVE *Hive, HCELL_INDEX Cell);
 
-typedef
-VOID
-(*PRELEASE_CELL_ROUTINE)(
-    struct _HHIVE   *Hive,
-    HCELL_INDEX Cell
-    );
+typedef VOID (*PRELEASE_CELL_ROUTINE)(struct _HHIVE *Hive, HCELL_INDEX Cell);
 
 //
 // --- HHIVE --- In memory descriptor for a hive.
@@ -645,91 +618,95 @@ VOID
 
 #define HHIVE_SIGNATURE 0xBEE0BEE0
 
-#define HFILE_TYPE_PRIMARY      0   // Base hive file
-#define HFILE_TYPE_LOG          1   // Log (security.log)
-#define HFILE_TYPE_EXTERNAL     2   // Target of savekey, etc.
-#define HFILE_TYPE_MAX          3
+#define HFILE_TYPE_PRIMARY 0  // Base hive file
+#define HFILE_TYPE_LOG 1      // Log (security.log)
+#define HFILE_TYPE_EXTERNAL 2 // Target of savekey, etc.
+#define HFILE_TYPE_MAX 3
 
-#define HHIVE_LINEAR_INDEX      16  // All computed linear indices < HHIVE_LINEAR_INDEX are valid
-#define HHIVE_EXPONENTIAL_INDEX 23  // All computed exponential indices < HHIVE_EXPONENTIAL_INDEX
-                                    // and >= HHIVE_LINEAR_INDEX are valid.
+#define HHIVE_LINEAR_INDEX 16 // All computed linear indices < HHIVE_LINEAR_INDEX are valid
+#define HHIVE_EXPONENTIAL_INDEX                                       \
+    23  // All computed exponential indices < HHIVE_EXPONENTIAL_INDEX \
+        // and >= HHIVE_LINEAR_INDEX are valid.
 #define HHIVE_FREE_DISPLAY_SIZE 24
 
-#define HHIVE_FREE_DISPLAY_SHIFT 3  // This must be log2 of HCELL_PAD!
-#define HHIVE_FREE_DISPLAY_BIAS  7  // Add to first set bit left of cell size to get exponential index
+#define HHIVE_FREE_DISPLAY_SHIFT 3 // This must be log2 of HCELL_PAD!
+#define HHIVE_FREE_DISPLAY_BIAS 7  // Add to first set bit left of cell size to get exponential index
 
 
-#define FREE_HBIN_DISCARDABLE   1   // the BlockAddress in HBIN points to the real bin
+#define FREE_HBIN_DISCARDABLE 1 // the BlockAddress in HBIN points to the real bin
 
-typedef struct _FREE_HBIN {
-    LIST_ENTRY  ListEntry;
-    ULONG       Size;
-    ULONG       FileOffset;
-    ULONG       Flags;
+typedef struct _FREE_HBIN
+{
+    LIST_ENTRY ListEntry;
+    ULONG Size;
+    ULONG FileOffset;
+    ULONG Flags;
 } FREE_HBIN, *PFREE_HBIN;
 
-typedef struct _HHIVE {
-    ULONG                   Signature;
+typedef struct _HHIVE
+{
+    ULONG Signature;
 
-    PGET_CELL_ROUTINE       GetCellRoutine;
-    PRELEASE_CELL_ROUTINE   ReleaseCellRoutine;
+    PGET_CELL_ROUTINE GetCellRoutine;
+    PRELEASE_CELL_ROUTINE ReleaseCellRoutine;
 
-    PALLOCATE_ROUTINE       Allocate;
-    PFREE_ROUTINE           Free;
+    PALLOCATE_ROUTINE Allocate;
+    PFREE_ROUTINE Free;
 
-    PFILE_SET_SIZE_ROUTINE  FileSetSize;
-    PFILE_WRITE_ROUTINE     FileWrite;
-    PFILE_READ_ROUTINE      FileRead;
-    PFILE_FLUSH_ROUTINE     FileFlush;
+    PFILE_SET_SIZE_ROUTINE FileSetSize;
+    PFILE_WRITE_ROUTINE FileWrite;
+    PFILE_READ_ROUTINE FileRead;
+    PFILE_FLUSH_ROUTINE FileFlush;
 
-    struct _HBASE_BLOCK     *BaseBlock;
+    struct _HBASE_BLOCK *BaseBlock;
 
-    RTL_BITMAP              DirtyVector;    // only for Stable bins
-    ULONG                   DirtyCount;
-    ULONG                   DirtyAlloc;     // allocated bytges for dirty vect
-    ULONG                   Cluster;        // Usually 1 512 byte sector.
-                                            // Set up force writes to be
-                                            // done in larger units on
-                                            // machines with larger sectors.
-                                            // Is number of logical 512 sectors.
+    RTL_BITMAP DirtyVector; // only for Stable bins
+    ULONG DirtyCount;
+    ULONG DirtyAlloc; // allocated bytges for dirty vect
+    ULONG Cluster;    // Usually 1 512 byte sector.
+                      // Set up force writes to be
+                      // done in larger units on
+                      // machines with larger sectors.
+                      // Is number of logical 512 sectors.
 
-    BOOLEAN                 Flat;               // TRUE if FLAT
-    BOOLEAN                 ReadOnly;           // TRUE if READONLY
+    BOOLEAN Flat;     // TRUE if FLAT
+    BOOLEAN ReadOnly; // TRUE if READONLY
 
-    BOOLEAN                 Log;
+    BOOLEAN Log;
 
-    ULONG                   HiveFlags;
+    ULONG HiveFlags;
 
-    ULONG                   LogSize;
+    ULONG LogSize;
 
-    ULONG                   RefreshCount;       // debugging aid
+    ULONG RefreshCount; // debugging aid
 
 
-    ULONG                   StorageTypeCount;   // 1 > Number of largest valid
-                                                // type. (1 for Stable only,
-                                                // 2 for stable & volatile)
+    ULONG StorageTypeCount; // 1 > Number of largest valid
+                            // type. (1 for Stable only,
+                            // 2 for stable & volatile)
 
-    ULONG                   Version;            // hive version, to allow supporting multiple
-                                                // formats simultaneously.
+    ULONG Version; // hive version, to allow supporting multiple
+                   // formats simultaneously.
 
-    struct _DUAL {
-        ULONG               Length;
-#ifdef  HV_TRACK_FREE_SPACE
-        ULONG				FreeStorage;		// how many free space.
+    struct _DUAL
+    {
+        ULONG Length;
+#ifdef HV_TRACK_FREE_SPACE
+        ULONG FreeStorage; // how many free space.
 #endif
-        PHMAP_DIRECTORY     Map;
-        PHMAP_TABLE         SmallDir;
-        ULONG               Guard;				// Always == -1
+        PHMAP_DIRECTORY Map;
+        PHMAP_TABLE SmallDir;
+        ULONG Guard; // Always == -1
 
-        RTL_BITMAP          FreeDisplay[HHIVE_FREE_DISPLAY_SIZE];   // bitmap of freecells of the corresponding size
-                                                                    // for every HBLOCK_SIZE - bin in the hive, a bit
-                                                                    // is set here if a free cell of the desired size
-                                                                    // lies in this block
+        RTL_BITMAP FreeDisplay[HHIVE_FREE_DISPLAY_SIZE]; // bitmap of freecells of the corresponding size
+                                                         // for every HBLOCK_SIZE - bin in the hive, a bit
+                                                         // is set here if a free cell of the desired size
+                                                         // lies in this block
 
-        ULONG               FreeSummary;
-        LIST_ENTRY          FreeBins;           // list of freed HBINs (FREE_HBIN)
+        ULONG FreeSummary;
+        LIST_ENTRY FreeBins; // list of freed HBINs (FREE_HBIN)
 
-    }                       Storage[ HTYPE_COUNT ];
+    } Storage[HTYPE_COUNT];
 
     //
     // Caller defined data goes here
@@ -739,5 +716,3 @@ typedef struct _HHIVE {
 
 
 #endif // __HIVE_DATA__
-
-

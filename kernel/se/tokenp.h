@@ -36,13 +36,11 @@ Revision History:
 #include "seopaque.h"
 
 
-
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
 //                Token Diagnostics                                    //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
-
 
 
 #if DBG
@@ -60,20 +58,18 @@ Revision History:
 // Test for enabled diagnostic
 //
 
-#define IF_TOKEN_GLOBAL( FlagName ) \
-    if (TokenGlobalFlag & (TOKEN_DIAG_##FlagName))
+#define IF_TOKEN_GLOBAL(FlagName) if (TokenGlobalFlag & (TOKEN_DIAG_##FlagName))
 
 //
 // Diagnostics print statement
 //
 
-#define TokenDiagPrint( FlagName, _Text_ )                               \
-    IF_TOKEN_GLOBAL( FlagName )                                          \
-        DbgPrint _Text_
+#define TokenDiagPrint(FlagName, _Text_) \
+    IF_TOKEN_GLOBAL(FlagName)            \
+    DbgPrint _Text_
 
 
-
-#else  // !TOKEN_DIAGNOSTICS_ENABLED
+#else // !TOKEN_DIAGNOSTICS_ENABLED
 
 //
 // No diagnostics included in build
@@ -84,13 +80,13 @@ Revision History:
 // Test for diagnostics enabled
 //
 
-#define IF_TOKEN_GLOBAL( FlagName ) if (FALSE)
+#define IF_TOKEN_GLOBAL(FlagName) if (FALSE)
 
 //
 // Diagnostics print statement (expands to no-op)
 //
 
-#define TokenDiagPrint( FlagName, _Text_ )     ;
+#define TokenDiagPrint(FlagName, _Text_) ;
 
 #endif // TOKEN_DIAGNOSTICS_ENABLED
 
@@ -105,9 +101,9 @@ Revision History:
 //          of token locks.
 //
 
-#define TOKEN_DIAG_TOKEN_LOCKS          ((ULONG) 0x00000001L)
+#define TOKEN_DIAG_TOKEN_LOCKS ((ULONG)0x00000001L)
 
-
+
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
 //                Token Related Constants                              //
@@ -124,7 +120,6 @@ Revision History:
 #define TOKEN_DEFAULT_DYNAMIC_CHARGE 500
 
 
-
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
 //                Token Object Body                                    //
@@ -205,8 +200,8 @@ Revision History:
 //                   ! ! ! ! ! ! ! ! ! ! !
 
 
-
-typedef struct _TOKEN {
+typedef struct _TOKEN
+{
 
     //
     // Fields arranged by size to preserve alignment.
@@ -227,14 +222,14 @@ typedef struct _TOKEN {
     //  ReadWrite fields are marked Wr: in their comment.
     //
 
-    TOKEN_SOURCE TokenSource;                           // Ro: 16-Bytes
+    TOKEN_SOURCE TokenSource; // Ro: 16-Bytes
 
-    LUID TokenId;                                       // Ro: 8-Bytes
-    LUID AuthenticationId;                              // Ro: 8-Bytes
-    LUID ParentTokenId;                                 // Ro: 8-Bytes
-    LARGE_INTEGER ExpirationTime;                       // Ro: 8-Bytes
+    LUID TokenId;                 // Ro: 8-Bytes
+    LUID AuthenticationId;        // Ro: 8-Bytes
+    LUID ParentTokenId;           // Ro: 8-Bytes
+    LARGE_INTEGER ExpirationTime; // Ro: 8-Bytes
 
-    PERESOURCE TokenLock;                               // Ro:
+    PERESOURCE TokenLock; // Ro:
 
 #if DBG || TOKEN_LEAK_MONITOR
 #define TRACE_SIZE 30
@@ -243,14 +238,15 @@ typedef struct _TOKEN {
     // This code is for tracking token leaks, in conjunction with !obtrace.
     //
 
-    HANDLE ProcessCid;                                  // Cid of creator process
-    HANDLE ThreadCid;                                   // Cid of creator thread
-    UCHAR  ImageFileName[16];                           // Image name of creator process
-    ULONG  CreateMethod;                                // Either 0xC (SepCreateToken) 0xD (SepDuplicateToken) or 0xF (SepFilterToken)
-    ULONG_PTR  CreateTrace[TRACE_SIZE];                 // Stack backtrace that created this token (usermode part is first 20 nonzero stack entries)
+    HANDLE ProcessCid;       // Cid of creator process
+    HANDLE ThreadCid;        // Cid of creator thread
+    UCHAR ImageFileName[16]; // Image name of creator process
+    ULONG CreateMethod;      // Either 0xC (SepCreateToken) 0xD (SepDuplicateToken) or 0xF (SepFilterToken)
+    ULONG_PTR CreateTrace
+        [TRACE_SIZE]; // Stack backtrace that created this token (usermode part is first 20 nonzero stack entries)
 
 #endif
-    
+
 
     //
     // Each time the security information in a token is changed, the
@@ -258,41 +254,41 @@ typedef struct _TOKEN {
     // updated are marked as (Mod) in their comment field.
     //
 
-    LUID ModifiedId;                                    // Wr: 8-Bytes
+    LUID ModifiedId; // Wr: 8-Bytes
 
-    ULONG SessionId;                                    // Wr: 4-bytes
-    ULONG UserAndGroupCount;                            // Ro: 4-Bytes
-    ULONG RestrictedSidCount;                           // Ro: 4-Bytes
-    ULONG PrivilegeCount;                               // Ro: 4-Bytes
-    ULONG VariableLength;                               // Ro: 4-Bytes
-    ULONG DynamicCharged;                               // Ro: 4-Bytes
+    ULONG SessionId;          // Wr: 4-bytes
+    ULONG UserAndGroupCount;  // Ro: 4-Bytes
+    ULONG RestrictedSidCount; // Ro: 4-Bytes
+    ULONG PrivilegeCount;     // Ro: 4-Bytes
+    ULONG VariableLength;     // Ro: 4-Bytes
+    ULONG DynamicCharged;     // Ro: 4-Bytes
 
-    ULONG DynamicAvailable;                             // Wr: 4-Bytes (Mod)
-    ULONG DefaultOwnerIndex;                            // Wr: 4-Bytes (Mod)
-    PSID_AND_ATTRIBUTES UserAndGroups;                  // Wr: 4-Bytes (Mod)
-    PSID_AND_ATTRIBUTES RestrictedSids;                 // Ro: 4-Bytes
-    PSID PrimaryGroup;                                  // Wr: 4-Bytes (Mod)
-    PLUID_AND_ATTRIBUTES Privileges;                    // Wr: 4-Bytes (Mod)
-    PULONG DynamicPart;                                 // Wr: 4-Bytes (Mod)
-    PACL DefaultDacl;                                   // Wr: 4-Bytes (Mod)
+    ULONG DynamicAvailable;             // Wr: 4-Bytes (Mod)
+    ULONG DefaultOwnerIndex;            // Wr: 4-Bytes (Mod)
+    PSID_AND_ATTRIBUTES UserAndGroups;  // Wr: 4-Bytes (Mod)
+    PSID_AND_ATTRIBUTES RestrictedSids; // Ro: 4-Bytes
+    PSID PrimaryGroup;                  // Wr: 4-Bytes (Mod)
+    PLUID_AND_ATTRIBUTES Privileges;    // Wr: 4-Bytes (Mod)
+    PULONG DynamicPart;                 // Wr: 4-Bytes (Mod)
+    PACL DefaultDacl;                   // Wr: 4-Bytes (Mod)
 
-    TOKEN_TYPE TokenType;                               // Ro: 1-Byte
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;    // Ro: 1-Byte
+    TOKEN_TYPE TokenType;                            // Ro: 1-Byte
+    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel; // Ro: 1-Byte
 
-    UCHAR TokenFlags;                                   // Ro: 4-Bytes
-    BOOLEAN TokenInUse;                                 // Wr: 1-Byte
+    UCHAR TokenFlags;   // Ro: 4-Bytes
+    BOOLEAN TokenInUse; // Wr: 1-Byte
 
-    PSECURITY_TOKEN_PROXY_DATA ProxyData;               // Ro: 4-Bytes
-    PSECURITY_TOKEN_AUDIT_DATA AuditData;               // Ro: 4-Bytes
+    PSECURITY_TOKEN_PROXY_DATA ProxyData; // Ro: 4-Bytes
+    PSECURITY_TOKEN_AUDIT_DATA AuditData; // Ro: 4-Bytes
 
     //
     // This marks the beginning of the variable part of the token.
     // It must follow all other fields in the token.
     //
 
-    ULONG VariablePart;                                 // Wr: 4-Bytes (Mod)
+    ULONG VariablePart; // Wr: 4-Bytes (Mod)
 
-    } TOKEN, * PTOKEN;
+} TOKEN, *PTOKEN;
 
 //
 // Where:
@@ -386,7 +382,8 @@ typedef struct _TOKEN {
 //
 ////////////////////////////////////////////////////////////////////////
 
-typedef struct _IOBJECT_TYPE_LIST {
+typedef struct _IOBJECT_TYPE_LIST
+{
     USHORT Level;
     USHORT Flags;
 #define OBJECT_SUCCESS_AUDIT 0x1
@@ -399,19 +396,12 @@ typedef struct _IOBJECT_TYPE_LIST {
 } IOBJECT_TYPE_LIST, *PIOBJECT_TYPE_LIST;
 
 NTSTATUS
-SeCaptureObjectTypeList (
-    IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN KPROCESSOR_MODE RequestorMode,
-    OUT PIOBJECT_TYPE_LIST *CapturedObjectTypeList
-    );
+SeCaptureObjectTypeList(IN POBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+                        IN KPROCESSOR_MODE RequestorMode, OUT PIOBJECT_TYPE_LIST *CapturedObjectTypeList);
 
-VOID
-SeFreeCapturedObjectTypeList(
-    IN PVOID ObjectTypeList
-    );
+VOID SeFreeCapturedObjectTypeList(IN PVOID ObjectTypeList);
 
-
+
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
 //                Token Specific Macros                                //
@@ -419,50 +409,57 @@ SeFreeCapturedObjectTypeList(
 /////////////////////////////////////////////////////////////////////////
 
 
-
-
-
-
-
 #ifndef TOKEN_DIAGNOSTICS_ENABLED
 
-#define SepAcquireTokenReadLock(T)  KeEnterCriticalRegion();          \
-                                    ExAcquireResourceSharedLite((T)->TokenLock, TRUE)
+#define SepAcquireTokenReadLock(T) \
+    KeEnterCriticalRegion();       \
+    ExAcquireResourceSharedLite((T)->TokenLock, TRUE)
 
-#define SepAcquireTokenWriteLock(T) KeEnterCriticalRegion();          \
-                                    ExAcquireResourceExclusiveLite((T)->TokenLock, TRUE)
+#define SepAcquireTokenWriteLock(T) \
+    KeEnterCriticalRegion();        \
+    ExAcquireResourceExclusiveLite((T)->TokenLock, TRUE)
 
-#define SepReleaseTokenReadLock(T)  ExReleaseResourceLite((T)->TokenLock);  \
-                                    KeLeaveCriticalRegion()
+#define SepReleaseTokenReadLock(T)         \
+    ExReleaseResourceLite((T)->TokenLock); \
+    KeLeaveCriticalRegion()
 
-#else  // TOKEN_DIAGNOSTICS_ENABLED
+#else // TOKEN_DIAGNOSTICS_ENABLED
 
-#define SepAcquireTokenReadLock(T)  if (TokenGlobalFlag & TOKEN_DIAG_TOKEN_LOCKS) { \
-                                        DbgPrint("SE (Token):  Acquiring Token READ Lock for access to token 0x%lx\n", (T)); \
-                                    }                                 \
-                                    KeEnterCriticalRegion();          \
-                                    ExAcquireResourceSharedLite((T)->TokenLock, TRUE)
+#define SepAcquireTokenReadLock(T)                                                           \
+    if (TokenGlobalFlag & TOKEN_DIAG_TOKEN_LOCKS)                                            \
+    {                                                                                        \
+        DbgPrint("SE (Token):  Acquiring Token READ Lock for access to token 0x%lx\n", (T)); \
+    }                                                                                        \
+    KeEnterCriticalRegion();                                                                 \
+    ExAcquireResourceSharedLite((T)->TokenLock, TRUE)
 
-#define SepAcquireTokenWriteLock(T) if (TokenGlobalFlag & TOKEN_DIAG_TOKEN_LOCKS) { \
-                                        DbgPrint("SE (Token):  Acquiring Token WRITE Lock for access to token 0x%lx    ********************* EXCLUSIVE *****\n", (T)); \
-                                    }                                 \
-                                    KeEnterCriticalRegion();          \
-                                    ExAcquireResourceExclusiveLite((T)->TokenLock, TRUE)
+#define SepAcquireTokenWriteLock(T)                                                                            \
+    if (TokenGlobalFlag & TOKEN_DIAG_TOKEN_LOCKS)                                                              \
+    {                                                                                                          \
+        DbgPrint("SE (Token):  Acquiring Token WRITE Lock for access to token 0x%lx    ********************* " \
+                 "EXCLUSIVE *****\n",                                                                          \
+                 (T));                                                                                         \
+    }                                                                                                          \
+    KeEnterCriticalRegion();                                                                                   \
+    ExAcquireResourceExclusiveLite((T)->TokenLock, TRUE)
 
-#define SepReleaseTokenReadLock(T)  if (TokenGlobalFlag & TOKEN_DIAG_TOKEN_LOCKS) { \
-                                        DbgPrint("SE (Token):  Releasing Token Lock for access to token 0x%lx\n", (T)); \
-                                    }                                 \
-                                    ExReleaseResourceLite((T)->TokenLock); \
-                                    KeLeaveCriticalRegion()
+#define SepReleaseTokenReadLock(T)                                                      \
+    if (TokenGlobalFlag & TOKEN_DIAG_TOKEN_LOCKS)                                       \
+    {                                                                                   \
+        DbgPrint("SE (Token):  Releasing Token Lock for access to token 0x%lx\n", (T)); \
+    }                                                                                   \
+    ExReleaseResourceLite((T)->TokenLock);                                              \
+    KeLeaveCriticalRegion()
 
 #endif // TOKEN_DIAGNOSTICS_ENABLED
 
-#define SepReleaseTokenWriteLock(T,M)                                    \
-    {                                                                    \
-      if ((M)) {                                                         \
-          ExAllocateLocallyUniqueId( &((PTOKEN)(T))->ModifiedId  );      \
-      }                                                                  \
-      SepReleaseTokenReadLock( T );                                      \
+#define SepReleaseTokenWriteLock(T, M)                             \
+    {                                                              \
+        if ((M))                                                   \
+        {                                                          \
+            ExAllocateLocallyUniqueId(&((PTOKEN)(T))->ModifiedId); \
+        }                                                          \
+        SepReleaseTokenReadLock(T);                                \
     }
 
 //
@@ -473,7 +470,7 @@ SeFreeCapturedObjectTypeList(
 //  A - is the name of the attribute desired (e.g., Enabled, EnabledByDefault, etc. )
 //
 
-#define SepArrayPrivilegeAttributes(P,I) ( (P)[I].Attributes )
+#define SepArrayPrivilegeAttributes(P, I) ((P)[I].Attributes)
 
 //
 // Reference individual privilege attribute flags of token privileges
@@ -483,7 +480,7 @@ SeFreeCapturedObjectTypeList(
 //  A - is the name of the attribute desired (e.g., Enabled, EnabledByDefault, etc. )
 //
 
-#define SepTokenPrivilegeAttributes(T,I) ( (T)->Privileges[I].Attributes )
+#define SepTokenPrivilegeAttributes(T, I) ((T)->Privileges[I].Attributes)
 
 //
 // Reference individual group attribute flags of any group array
@@ -492,7 +489,7 @@ SeFreeCapturedObjectTypeList(
 //  I - is the index of the group
 //
 
-#define SepArrayGroupAttributes(G,I)   ( (G)[I].Attributes )
+#define SepArrayGroupAttributes(G, I) ((G)[I].Attributes)
 
 
 //
@@ -502,11 +499,9 @@ SeFreeCapturedObjectTypeList(
 //  I - is the index of the group
 //
 
-#define SepTokenGroupAttributes(T,I) ( (T)->UserAndGroups[I].Attributes )
+#define SepTokenGroupAttributes(T, I) ((T)->UserAndGroups[I].Attributes)
 
 
-
-
 ////////////////////////////////////////////////////////////////////////
 //                                                                    //
 //           Private Routine Declarations                             //
@@ -514,124 +509,57 @@ SeFreeCapturedObjectTypeList(
 ////////////////////////////////////////////////////////////////////////
 
 NTSTATUS
-SepAdjustGroups(
-    IN PTOKEN Token,
-    IN BOOLEAN MakeChanges,
-    IN BOOLEAN ResetToDefault,
-    IN ULONG GroupCount OPTIONAL,
-    IN PSID_AND_ATTRIBUTES NewState OPTIONAL,
-    OUT PTOKEN_GROUPS PreviousState OPTIONAL,
-    OUT PSID SidBuffer OPTIONAL,
-    OUT PULONG ReturnLength,
-    OUT PULONG ChangeCount,
-    OUT PBOOLEAN ChangesMade
-    );
+SepAdjustGroups(IN PTOKEN Token, IN BOOLEAN MakeChanges, IN BOOLEAN ResetToDefault, IN ULONG GroupCount OPTIONAL,
+                IN PSID_AND_ATTRIBUTES NewState OPTIONAL, OUT PTOKEN_GROUPS PreviousState OPTIONAL,
+                OUT PSID SidBuffer OPTIONAL, OUT PULONG ReturnLength, OUT PULONG ChangeCount, OUT PBOOLEAN ChangesMade);
 
 NTSTATUS
-SepAdjustPrivileges(
-    IN PTOKEN Token,
-    IN BOOLEAN MakeChanges,
-    IN BOOLEAN DisableAllPrivileges,
-    IN ULONG PrivilegeCount OPTIONAL,
-    IN PLUID_AND_ATTRIBUTES NewState OPTIONAL,
-    OUT PTOKEN_PRIVILEGES PreviousState OPTIONAL,
-    OUT PULONG ReturnLength,
-    OUT PULONG ChangeCount,
-    OUT PBOOLEAN ChangesMade
-    );
+SepAdjustPrivileges(IN PTOKEN Token, IN BOOLEAN MakeChanges, IN BOOLEAN DisableAllPrivileges,
+                    IN ULONG PrivilegeCount OPTIONAL, IN PLUID_AND_ATTRIBUTES NewState OPTIONAL,
+                    OUT PTOKEN_PRIVILEGES PreviousState OPTIONAL, OUT PULONG ReturnLength, OUT PULONG ChangeCount,
+                    OUT PBOOLEAN ChangesMade);
 
-VOID
-SepAppendDefaultDacl(
-    IN PTOKEN Token,
-    IN PACL PAcl
-    );
+VOID SepAppendDefaultDacl(IN PTOKEN Token, IN PACL PAcl);
 
-VOID
-SepAppendPrimaryGroup(
-    IN PTOKEN Token,
-    IN PSID PSid
-    );
+VOID SepAppendPrimaryGroup(IN PTOKEN Token, IN PSID PSid);
 
 NTSTATUS
-SepDuplicateToken(
-    IN PTOKEN ExistingToken,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN BOOLEAN EffectiveOnly,
-    IN TOKEN_TYPE TokenType,
-    IN SECURITY_IMPERSONATION_LEVEL ImpersonationLevel OPTIONAL,
-    IN KPROCESSOR_MODE RequestorMode,
-    OUT PTOKEN *DuplicateToken
-    );
+SepDuplicateToken(IN PTOKEN ExistingToken, IN POBJECT_ATTRIBUTES ObjectAttributes, IN BOOLEAN EffectiveOnly,
+                  IN TOKEN_TYPE TokenType, IN SECURITY_IMPERSONATION_LEVEL ImpersonationLevel OPTIONAL,
+                  IN KPROCESSOR_MODE RequestorMode, OUT PTOKEN *DuplicateToken);
 
 NTSTATUS
-SepFilterToken(
-    IN PTOKEN ExistingToken,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN ULONG Flags,
-    IN ULONG GroupCount,
-    IN PSID_AND_ATTRIBUTES GroupsToDisable OPTIONAL,
-    IN ULONG PrivilegeCount,
-    IN PLUID_AND_ATTRIBUTES PrivilegesToDelete OPTIONAL,
-    IN ULONG SidCount,
-    IN PSID_AND_ATTRIBUTES RestrictedSids OPTIONAL,
-    IN ULONG SidLength,
-    OUT PTOKEN * FilteredToken
-    );
+SepFilterToken(IN PTOKEN ExistingToken, IN KPROCESSOR_MODE RequestorMode, IN ULONG Flags, IN ULONG GroupCount,
+               IN PSID_AND_ATTRIBUTES GroupsToDisable OPTIONAL, IN ULONG PrivilegeCount,
+               IN PLUID_AND_ATTRIBUTES PrivilegesToDelete OPTIONAL, IN ULONG SidCount,
+               IN PSID_AND_ATTRIBUTES RestrictedSids OPTIONAL, IN ULONG SidLength, OUT PTOKEN *FilteredToken);
 
 BOOLEAN
-SepSidInSidAndAttributes (
-    IN PSID_AND_ATTRIBUTES SidAndAttributes,
-    IN ULONG SidCount,
-    IN PSID PrincipalSelfSid,
-    IN PSID Sid
-    );
+SepSidInSidAndAttributes(IN PSID_AND_ATTRIBUTES SidAndAttributes, IN ULONG SidCount, IN PSID PrincipalSelfSid,
+                         IN PSID Sid);
 
-VOID
-SepRemoveDisabledGroupsAndPrivileges(
-    IN PTOKEN Token,
-    IN ULONG Flags,
-    IN ULONG GroupCount,
-    IN PSID_AND_ATTRIBUTES GroupsToDisable,
-    IN ULONG PrivilegeCount,
-    IN PLUID_AND_ATTRIBUTES PrivilegesToDelete
-    );
+VOID SepRemoveDisabledGroupsAndPrivileges(IN PTOKEN Token, IN ULONG Flags, IN ULONG GroupCount,
+                                          IN PSID_AND_ATTRIBUTES GroupsToDisable, IN ULONG PrivilegeCount,
+                                          IN PLUID_AND_ATTRIBUTES PrivilegesToDelete);
 
 
-VOID
-SepFreeDefaultDacl(
-    IN PTOKEN Token
-    );
+VOID SepFreeDefaultDacl(IN PTOKEN Token);
 
-VOID
-SepFreePrimaryGroup(
-    IN PTOKEN Token
-    );
+VOID SepFreePrimaryGroup(IN PTOKEN Token);
 
 NTSTATUS
-SepExpandDynamic(
-    IN PTOKEN Token,
-    IN ULONG NewLength
-    );
+SepExpandDynamic(IN PTOKEN Token, IN ULONG NewLength);
 
 BOOLEAN
-SepIdAssignableAsOwner(
-    IN PTOKEN Token,
-    IN ULONG Index
-    );
+SepIdAssignableAsOwner(IN PTOKEN Token, IN ULONG Index);
 
-VOID
-SepMakeTokenEffectiveOnly(
-    IN PTOKEN Token
-    );
+VOID SepMakeTokenEffectiveOnly(IN PTOKEN Token);
 
 BOOLEAN
-SepTokenInitialization( VOID );
+SepTokenInitialization(VOID);
 
 
-VOID
-SepTokenDeleteMethod (
-    IN  PVOID   Token
-    );
+VOID SepTokenDeleteMethod(IN PVOID Token);
 
 //
 // These are here because if they are placed in sep.h, we don't
@@ -639,49 +567,26 @@ SepTokenDeleteMethod (
 //
 
 BOOLEAN
-SepPrivilegeCheck(
-    IN PTOKEN Token,
-    IN OUT PLUID_AND_ATTRIBUTES RequiredPrivileges,
-    IN ULONG RequiredPrivilegeCount,
-    IN ULONG PrivilegeSetControl,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+SepPrivilegeCheck(IN PTOKEN Token, IN OUT PLUID_AND_ATTRIBUTES RequiredPrivileges, IN ULONG RequiredPrivilegeCount,
+                  IN ULONG PrivilegeSetControl, IN KPROCESSOR_MODE PreviousMode);
 
 BOOLEAN
-SepAccessCheck (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSID PrincipalSelfSid,
-    IN PTOKEN PrimaryToken,
-    IN PTOKEN ClientToken OPTIONAL,
-    IN ACCESS_MASK DesiredAccess,
-    IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN ACCESS_MASK PreviouslyGrantedAccess,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT PACCESS_MASK GrantedAccess,
-    OUT PPRIVILEGE_SET *Privileges OPTIONAL,
-    OUT PNTSTATUS AccessStatus,
-    IN BOOLEAN ReturnResultList,
-    OUT PBOOLEAN ReturnSomeAccessGranted,
-    OUT PBOOLEAN ReturnSomeAccessDenied
-    );
+SepAccessCheck(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSID PrincipalSelfSid, IN PTOKEN PrimaryToken,
+               IN PTOKEN ClientToken OPTIONAL, IN ACCESS_MASK DesiredAccess,
+               IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL, IN ULONG ObjectTypeListLength,
+               IN PGENERIC_MAPPING GenericMapping, IN ACCESS_MASK PreviouslyGrantedAccess,
+               IN KPROCESSOR_MODE PreviousMode, OUT PACCESS_MASK GrantedAccess, OUT PPRIVILEGE_SET *Privileges OPTIONAL,
+               OUT PNTSTATUS AccessStatus, IN BOOLEAN ReturnResultList, OUT PBOOLEAN ReturnSomeAccessGranted,
+               OUT PBOOLEAN ReturnSomeAccessDenied);
 
 BOOLEAN
-SepObjectInTypeList (
-    IN GUID *ObjectType,
-    IN PIOBJECT_TYPE_LIST ObjectTypeList,
-    IN ULONG ObjectTypeListLength,
-    OUT PULONG ReturnedIndex
-    );
+SepObjectInTypeList(IN GUID *ObjectType, IN PIOBJECT_TYPE_LIST ObjectTypeList, IN ULONG ObjectTypeListLength,
+                    OUT PULONG ReturnedIndex);
 
 #ifdef TOKEN_DEBUG
-VOID
-SepDumpToken(
-    IN PTOKEN T
-    );
+VOID SepDumpToken(IN PTOKEN T);
 #endif //TOKEN_DEBUG
-
+
 ////////////////////////////////////////////////////////////////////////
 //                                                                    //
 //           Global Variables                                         //
@@ -689,14 +594,14 @@ SepDumpToken(
 ////////////////////////////////////////////////////////////////////////
 
 
-extern const GENERIC_MAPPING  SepTokenMapping;
-extern POBJECT_TYPE     SeTokenObjectType;
+extern const GENERIC_MAPPING SepTokenMapping;
+extern POBJECT_TYPE SeTokenObjectType;
 
 //extern ERESOURCE        SepTokenLock;
 
 
-#ifdef    TOKEN_DIAGNOSTICS_ENABLED
-extern ULONG            TokenGlobalFlag;
+#ifdef TOKEN_DIAGNOSTICS_ENABLED
+extern ULONG TokenGlobalFlag;
 #endif // TOKEN_DIAGNOSTICS_ENABLED
 
 

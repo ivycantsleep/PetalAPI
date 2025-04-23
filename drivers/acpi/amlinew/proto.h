@@ -16,14 +16,12 @@ NTSTATUS LOCAL ParseCall(PCTXT pctxt, PCALL pcall, NTSTATUS rc);
 NTSTATUS LOCAL ParseNestedContext(PCTXT pctxt, PNESTEDCTXT pnctxt, NTSTATUS rc);
 NTSTATUS LOCAL ParseTerm(PCTXT pctxt, PTERM pterm, NTSTATUS rc);
 NTSTATUS LOCAL ParseAcquire(PCTXT pctxt, PACQUIRE pacq, NTSTATUS rc);
-NTSTATUS LOCAL ParseOpcode(PCTXT pctxt, PUCHAR pbScopeEnd,
-                           POBJDATA pdataResult);
+NTSTATUS LOCAL ParseOpcode(PCTXT pctxt, PUCHAR pbScopeEnd, POBJDATA pdataResult);
 NTSTATUS LOCAL ParseArgObj(PCTXT pctxt, POBJDATA pdataResult);
 NTSTATUS LOCAL ParseLocalObj(PCTXT pctxt, POBJDATA pdataResult);
 NTSTATUS LOCAL ParseNameObj(PCTXT pctxt, POBJDATA pdataResult);
 NTSTATUS LOCAL ParseArg(PCTXT pctxt, char chArgType, POBJDATA pdataArg);
-NTSTATUS LOCAL ParseAndGetNameSpaceObject(PUCHAR *ppbOp, PNSOBJ pnsScope,
-                                          PPNSOBJ ppns, BOOLEAN fAbsentOK);
+NTSTATUS LOCAL ParseAndGetNameSpaceObject(PUCHAR *ppbOp, PNSOBJ pnsScope, PPNSOBJ ppns, BOOLEAN fAbsentOK);
 NTSTATUS LOCAL ParseSuperName(PCTXT pctxt, POBJDATA pdata, BOOLEAN fAbsentOK);
 NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdata, BOOLEAN fErrOK);
 NTSTATUS LOCAL ParseString(PUCHAR *ppbOp, POBJDATA pdata, BOOLEAN fErrOK);
@@ -31,10 +29,8 @@ NTSTATUS LOCAL ParseObjName(PUCHAR *ppbOp, POBJDATA pdata, BOOLEAN fErrOK);
 NTSTATUS LOCAL ParseName(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen);
 NTSTATUS LOCAL ParseNameTail(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen);
 NTSTATUS LOCAL ParseInteger(PUCHAR *ppbOp, POBJDATA pdata, ULONG dwDataLen);
-NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
-                          PULONG pdwBitPos);
-NTSTATUS LOCAL ParseFieldList(PCTXT pctxt, PUCHAR pbOpEnd, PNSOBJ pnsParent,
-                              ULONG dwFieldFlags, ULONG dwRegionLen);
+NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags, PULONG pdwBitPos);
+NTSTATUS LOCAL ParseFieldList(PCTXT pctxt, PUCHAR pbOpEnd, PNSOBJ pnsParent, ULONG dwFieldFlags, ULONG dwRegionLen);
 ULONG LOCAL ParsePackageLen(PUCHAR *ppbOp, PUCHAR *ppbOpNext);
 
 //ctxt.c
@@ -42,17 +38,13 @@ NTSTATUS LOCAL NewContext(PPCTXT ppctxt);
 VOID LOCAL FreeContext(PCTXT pctxt);
 VOID LOCAL InitContext(PCTXT pctxt, ULONG dwLen);
 BOOLEAN LOCAL IsStackEmpty(PCTXT pctxt);
-NTSTATUS LOCAL PushFrame(PCTXT pctxt, ULONG dwSig, ULONG dwLen,
-                         PFNPARSE pfnParse, PVOID *ppvFrame);
+NTSTATUS LOCAL PushFrame(PCTXT pctxt, ULONG dwSig, ULONG dwLen, PFNPARSE pfnParse, PVOID *ppvFrame);
 VOID LOCAL PopFrame(PCTXT pctxt);
-NTSTATUS LOCAL PushPost(PCTXT pctxt, PFNPARSE pfnPost, ULONG_PTR uipData1,
-                        ULONG_PTR uipData2, POBJDATA pdataResult);
-NTSTATUS LOCAL PushScope(PCTXT pctxt, PUCHAR pbOpBegin, PUCHAR pbOpEnd,
-                         PUCHAR pbOpRet, PNSOBJ pnsScope, POBJOWNER powner,
-                         PHEAP pheap, POBJDATA pdataResult);
+NTSTATUS LOCAL PushPost(PCTXT pctxt, PFNPARSE pfnPost, ULONG_PTR uipData1, ULONG_PTR uipData2, POBJDATA pdataResult);
+NTSTATUS LOCAL PushScope(PCTXT pctxt, PUCHAR pbOpBegin, PUCHAR pbOpEnd, PUCHAR pbOpRet, PNSOBJ pnsScope,
+                         POBJOWNER powner, PHEAP pheap, POBJDATA pdataResult);
 NTSTATUS LOCAL PushCall(PCTXT pctxt, PNSOBJ pnsMethod, POBJDATA pdataResult);
-NTSTATUS LOCAL PushTerm(PCTXT pctxt, PUCHAR pbOpTerm, PUCHAR pbScopeEnd,
-                        PAMLTERM pamlterm, POBJDATA pdataResult);
+NTSTATUS LOCAL PushTerm(PCTXT pctxt, PUCHAR pbOpTerm, PUCHAR pbScopeEnd, PAMLTERM pamlterm, POBJDATA pdataResult);
 NTSTATUS LOCAL RunContext(PCTXT pctxt);
 
 //heap.c
@@ -65,20 +57,15 @@ PHEAPOBJHDR LOCAL HeapFindFirstFit(PHEAP pheap, ULONG dwLen);
 VOID LOCAL HeapInsertFreeList(PHEAP pheap, PHEAPOBJHDR phobj);
 
 //acpins.c
-NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns,
-                                  ULONG dwfNS);
-NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope,
-                                     POBJOWNER powner, PPNSOBJ ppns,
+NTSTATUS LOCAL GetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns, ULONG dwfNS);
+NTSTATUS LOCAL CreateNameSpaceObject(PHEAP pheap, PSZ pszName, PNSOBJ pnsScope, POBJOWNER powner, PPNSOBJ ppns,
                                      ULONG dwfNS);
 VOID LOCAL FreeNameSpaceObjects(PNSOBJ pnsObj);
-NTSTATUS LOCAL LoadDDB(PCTXT pctxt, PDSDT pdsdt, PNSOBJ pnsScope,
-                       POBJOWNER *ppowner);
+NTSTATUS LOCAL LoadDDB(PCTXT pctxt, PDSDT pdsdt, PNSOBJ pnsScope, POBJOWNER *ppowner);
 NTSTATUS LOCAL LoadMemDDB(PCTXT pctxt, PDSDT pDDB, POBJOWNER *ppowner);
-NTSTATUS LOCAL LoadFieldUnitDDB(PCTXT pctxt, POBJDATA pdataObj,
-                                POBJOWNER *ppowner);
+NTSTATUS LOCAL LoadFieldUnitDDB(PCTXT pctxt, POBJDATA pdataObj, POBJOWNER *ppowner);
 VOID LOCAL UnloadDDB(POBJOWNER powner);
-NTSTATUS LOCAL EvalPackageElement(PPACKAGEOBJ ppkg, int iPkgIndex,
-                                  POBJDATA pdataResult);
+NTSTATUS LOCAL EvalPackageElement(PPACKAGEOBJ ppkg, int iPkgIndex, POBJDATA pdataResult);
 #ifdef DEBUGGER
 LONG LOCAL DumpNameSpaceObject(PSZ pszPath, BOOLEAN fRecursive);
 VOID LOCAL DumpNameSpaceTree(PNSOBJ pnsObj, ULONG dwLevel);
@@ -91,8 +78,7 @@ NTSTATUS LOCAL Scope(PCTXT pctxt, PTERM pterm);
 
 //namedobj.c
 NTSTATUS LOCAL BankField(PCTXT pctxt, PTERM pterm);
-NTSTATUS LOCAL CreateXField(PCTXT pctxt, PTERM pterm, POBJDATA pdataTarget,
-                            PBUFFFIELDOBJ *ppbf);
+NTSTATUS LOCAL CreateXField(PCTXT pctxt, PTERM pterm, POBJDATA pdataTarget, PBUFFFIELDOBJ *ppbf);
 NTSTATUS LOCAL CreateBitField(PCTXT pctxt, PTERM pterm);
 NTSTATUS LOCAL CreateByteField(PCTXT pctxt, PTERM pterm);
 NTSTATUS LOCAL CreateWordField(PCTXT pctxt, PTERM pterm);
@@ -168,41 +154,32 @@ NTSTATUS LOCAL Timer(PCTXT pctxt, PTERM pterm);
 NTSTATUS LOCAL ReadObject(PCTXT pctxt, POBJDATA pdataObj, POBJDATA pdataResult);
 NTSTATUS LOCAL WriteObject(PCTXT pctxt, POBJDATA pdataObj, POBJDATA pdataSrc);
 NTSTATUS LOCAL AccFieldUnit(PCTXT pctxt, PACCFIELDUNIT pafu, NTSTATUS rc);
-NTSTATUS LOCAL ReadField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
-                         POBJDATA pdataResult);
-NTSTATUS LOCAL WriteField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
-                          POBJDATA pdataSrc);
+NTSTATUS LOCAL ReadField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd, POBJDATA pdataResult);
+NTSTATUS LOCAL WriteField(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd, POBJDATA pdataSrc);
 NTSTATUS LOCAL WriteFieldLoop(PCTXT pctxt, PWRFIELDLOOP pwfl, NTSTATUS rc);
-NTSTATUS LOCAL PushAccFieldObj(PCTXT pctxt, PFNPARSE pfnAcc, POBJDATA pdataObj,
-                               PFIELDDESC pfd, PUCHAR pb, ULONG dwcb);
+NTSTATUS LOCAL PushAccFieldObj(PCTXT pctxt, PFNPARSE pfnAcc, POBJDATA pdataObj, PFIELDDESC pfd, PUCHAR pb, ULONG dwcb);
 NTSTATUS LOCAL ReadFieldObj(PCTXT pctxt, PVOID pafo, NTSTATUS rc);
 NTSTATUS LOCAL WriteFieldObj(PCTXT pctxt, PVOID pafo, NTSTATUS rc);
-NTSTATUS LOCAL RawFieldAccess(PCTXT pctxt, ULONG dwAccType, POBJDATA pdataObj,
-                              POBJDATA pdataResult);
-NTSTATUS LOCAL AccessFieldData(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd,
-                               PULONG pdwData, BOOLEAN fRead);
-NTSTATUS LOCAL PushPreserveWriteObj(PCTXT pctxt, POBJDATA pdataObj,
-                                    ULONG dwData, ULONG dwPreserveMask);
+NTSTATUS LOCAL RawFieldAccess(PCTXT pctxt, ULONG dwAccType, POBJDATA pdataObj, POBJDATA pdataResult);
+NTSTATUS LOCAL AccessFieldData(PCTXT pctxt, POBJDATA pdataObj, PFIELDDESC pfd, PULONG pdwData, BOOLEAN fRead);
+NTSTATUS LOCAL PushPreserveWriteObj(PCTXT pctxt, POBJDATA pdataObj, ULONG dwData, ULONG dwPreserveMask);
 NTSTATUS LOCAL PreserveWriteObj(PCTXT pctxt, PPRESERVEWROBJ ppwro, NTSTATUS rc);
-NTSTATUS LOCAL AccessBaseField(PCTXT pctxt, PNSOBJ pnsBase, PFIELDDESC pfd,
-                               PULONG pdwData, BOOLEAN fRead);
+NTSTATUS LOCAL AccessBaseField(PCTXT pctxt, PNSOBJ pnsBase, PFIELDDESC pfd, PULONG pdwData, BOOLEAN fRead);
 NTSTATUS LOCAL WriteCookAccess(PCTXT pctxt, PWRCOOKACC pwca, NTSTATUS rc);
-NTSTATUS LOCAL ReadBuffField(PBUFFFIELDOBJ pbf, PFIELDDESC pfd,
-                             PULONG pdwData);
+NTSTATUS LOCAL ReadBuffField(PBUFFFIELDOBJ pbf, PFIELDDESC pfd, PULONG pdwData);
 NTSTATUS LOCAL WriteBuffField(PBUFFFIELDOBJ pbf, PFIELDDESC pfd, ULONG dwData);
 ULONG LOCAL ReadSystemMem(ULONG_PTR uipAddr, ULONG dwSize, ULONG dwMask);
-VOID LOCAL WriteSystemMem(ULONG_PTR uipAddr, ULONG dwSize, ULONG dwData,
-                          ULONG dwMask);
+VOID LOCAL WriteSystemMem(ULONG_PTR uipAddr, ULONG dwSize, ULONG dwData, ULONG dwMask);
 ULONG LOCAL ReadSystemIO(ULONG dwAddr, ULONG dwSize, ULONG dwMask);
 VOID LOCAL WriteSystemIO(ULONG dwAddr, ULONG dwSize, ULONG dwData);
 #ifdef DEBUGGER
 VOID LOCAL DumpObject(POBJDATA pdata, PSZ pszName, int iLevel);
 #endif
 BOOLEAN LOCAL NeedGlobalLock(PFIELDUNITOBJ pfu);
-NTSTATUS LOCAL QueueCookAccess(PCTXT pctxt, PRSACCESS prsa, ULONG dwAccType,
-                               PNSOBJ pnsBase, ULONG dwAddr, ULONG dwSize);
-BOOLEAN LOCAL CheckSystemIOAddressValidity( BOOLEAN fRead, ULONG dwAddr, ULONG dwSize, PULONG pdwData);
-VOID DelayedLogInErrorLog( IN PDEVICE_OBJECT DeviceObject, IN PVOID Context);
+NTSTATUS LOCAL QueueCookAccess(PCTXT pctxt, PRSACCESS prsa, ULONG dwAccType, PNSOBJ pnsBase, ULONG dwAddr,
+                               ULONG dwSize);
+BOOLEAN LOCAL CheckSystemIOAddressValidity(BOOLEAN fRead, ULONG dwAddr, ULONG dwSize, PULONG pdwData);
+VOID DelayedLogInErrorLog(IN PDEVICE_OBJECT DeviceObject, IN PVOID Context);
 VOID LOCAL LogInErrorLog(BOOLEAN fRead, ULONG dwAddr, ULONG ArrayIndex);
 VOID LOCAL InitIllegalIOAddressListFromHAL(VOID);
 VOID LOCAL FreellegalIOAddressList(VOID);
@@ -215,15 +192,11 @@ NTSTATUS LOCAL ProcessSleep(PCTXT pctxt, PSLEEP psleep, NTSTATUS rc);
 //sync.c
 VOID LOCAL AsyncCallBack(PCTXT pctxt, NTSTATUS rcCtxt);
 VOID EXPORT EvalMethodComplete(PCTXT pctxt, NTSTATUS rc, PSYNCEVENT pse);
-NTSTATUS LOCAL SyncEvalObject(PNSOBJ pns, POBJDATA pResult, int icArgs,
-                              POBJDATA pArgs);
-NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pResult, int icArgs,
-                               POBJDATA pArgs, PFNACB pfnAsyncCallBack,
+NTSTATUS LOCAL SyncEvalObject(PNSOBJ pns, POBJDATA pResult, int icArgs, POBJDATA pArgs);
+NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pResult, int icArgs, POBJDATA pArgs, PFNACB pfnAsyncCallBack,
                                PVOID pvContext, BOOLEAN fAsync);
-NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
-                                   int icArgs, POBJDATA pdataArgs,
-                                   PFNACB pfnAsyncCallBack, PVOID pvContext,
-                                   BOOLEAN fAsync);
+NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs, POBJDATA pdataArgs,
+                                   PFNACB pfnAsyncCallBack, PVOID pvContext, BOOLEAN fAsync);
 NTSTATUS LOCAL ProcessEvalObj(PCTXT pctxt, PPOST ppost, NTSTATUS rc);
 VOID TimeoutCallback(PKDPC pkdpc, PVOID pctxt, PVOID SysArg1, PVOID SysArg2);
 VOID LOCAL QueueContext(PCTXT pctxt, USHORT wTimeout, PPLIST pplist);
@@ -266,20 +239,15 @@ NTSTATUS LOCAL DupObjData(PHEAP pheap, POBJDATA pdataDst, POBJDATA pdataSrc);
 NTSTATUS LOCAL CopyObjBuffer(PUCHAR pbBuff, ULONG dwLen, POBJDATA pdata);
 NTSTATUS LOCAL AcquireGL(PCTXT pctxt);
 NTSTATUS LOCAL ReleaseGL(PCTXT pctxt);
-NTSTATUS LOCAL MapUnmapPhysMem(PCTXT pctxt, ULONG_PTR uipAddr, ULONG dwLen,
-                               PULONG_PTR puipMappedAddr);
+NTSTATUS LOCAL MapUnmapPhysMem(PCTXT pctxt, ULONG_PTR uipAddr, ULONG dwLen, PULONG_PTR puipMappedAddr);
 ULONG_PTR LOCAL MapPhysMem(ULONG_PTR uipAddr, ULONG dwLen);
 VOID MapUnmapCallBack(PPASSIVEHOOK pph);
 BOOLEAN LOCAL MatchObjType(ULONG dwObjType, ULONG dwExpectedType);
-NTSTATUS LOCAL ValidateTarget(POBJDATA pdataTarget, ULONG dwExpectedType,
-                              POBJDATA *ppdata);
+NTSTATUS LOCAL ValidateTarget(POBJDATA pdataTarget, ULONG dwExpectedType, POBJDATA *ppdata);
 NTSTATUS LOCAL ValidateArgTypes(POBJDATA pArgs, PSZ pszExpectedTypes);
-NTSTATUS LOCAL RegEventHandler(PEVHANDLE peh, PFNHND pfnHandler,
-                               ULONG_PTR uipParam);
-NTSTATUS LOCAL RegOpcodeHandler(ULONG dwOpcode, PFNOH pfnHandler,
-                                ULONG_PTR uipParam, ULONG dwfOpcode);
-NTSTATUS LOCAL RegRSAccess(ULONG dwRegionSpace, PFNHND pfnHandler,
-                           ULONG_PTR uipParam, BOOLEAN fRaw);
+NTSTATUS LOCAL RegEventHandler(PEVHANDLE peh, PFNHND pfnHandler, ULONG_PTR uipParam);
+NTSTATUS LOCAL RegOpcodeHandler(ULONG dwOpcode, PFNOH pfnHandler, ULONG_PTR uipParam, ULONG dwfOpcode);
+NTSTATUS LOCAL RegRSAccess(ULONG dwRegionSpace, PFNHND pfnHandler, ULONG_PTR uipParam, BOOLEAN fRaw);
 PRSACCESS LOCAL FindRSAccess(ULONG dwRegionSpace);
 VOID LOCAL FreeRSAccessList(PRSACCESS prsa);
 PSZ LOCAL GetObjectPath(PNSOBJ pns);
@@ -300,4 +268,4 @@ VOID LOCAL FreeMem(PVOID pv, PULONG pdwcObjs);
 VOID LOCAL CheckGlobalHeap();
 #endif
 
-#endif  //ifndef _PROTO_H
+#endif //ifndef _PROTO_H

@@ -33,38 +33,28 @@ Revision History:
 #pragma hdrstop
 
 
-
 //
 //  Local macros and procedures
 //
 
 
 NTSTATUS
-SepInheritAcl (
-    IN PACL Acl,
-    IN BOOLEAN IsDirectoryObject,
-    IN PSID OwnerSid,
-    IN PSID GroupSid,
-    IN PSID ServerSid OPTIONAL,
-    IN PSID ClientSid OPTIONAL,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN POOL_TYPE PoolType,
-    OUT PACL *NewAcl
-    );
+SepInheritAcl(IN PACL Acl, IN BOOLEAN IsDirectoryObject, IN PSID OwnerSid, IN PSID GroupSid, IN PSID ServerSid OPTIONAL,
+              IN PSID ClientSid OPTIONAL, IN PGENERIC_MAPPING GenericMapping, IN POOL_TYPE PoolType, OUT PACL *NewAcl);
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SeAssignSecurity)
-#pragma alloc_text(PAGE,SeAssignSecurityEx)
-#pragma alloc_text(PAGE,SeDeassignSecurity)
-#pragma alloc_text(PAGE,SepInheritAcl)
-#pragma alloc_text(PAGE,SeAssignWorldSecurityDescriptor)
+#pragma alloc_text(PAGE, SeAssignSecurity)
+#pragma alloc_text(PAGE, SeAssignSecurityEx)
+#pragma alloc_text(PAGE, SeDeassignSecurity)
+#pragma alloc_text(PAGE, SepInheritAcl)
+#pragma alloc_text(PAGE, SeAssignWorldSecurityDescriptor)
 #if DBG
-#pragma alloc_text(PAGE,SepDumpSecurityDescriptor)
-#pragma alloc_text(PAGE,SepPrintAcl)
-#pragma alloc_text(PAGE,SepPrintSid)
-#pragma alloc_text(PAGE,SepDumpTokenInfo)
-#pragma alloc_text(PAGE,SepSidTranslation)
+#pragma alloc_text(PAGE, SepDumpSecurityDescriptor)
+#pragma alloc_text(PAGE, SepPrintAcl)
+#pragma alloc_text(PAGE, SepPrintSid)
+#pragma alloc_text(PAGE, SepDumpTokenInfo)
+#pragma alloc_text(PAGE, SepSidTranslation)
 #endif //DBG
 #endif
 
@@ -84,18 +74,10 @@ BOOLEAN SepDumpToken = FALSE;
 #endif
 
 
-
-
 NTSTATUS
-SeAssignSecurity (
-    IN PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
-    IN PSECURITY_DESCRIPTOR ExplicitDescriptor OPTIONAL,
-    OUT PSECURITY_DESCRIPTOR *NewDescriptor,
-    IN BOOLEAN IsDirectoryObject,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectContext,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN POOL_TYPE PoolType
-    )
+SeAssignSecurity(IN PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL, IN PSECURITY_DESCRIPTOR ExplicitDescriptor OPTIONAL,
+                 OUT PSECURITY_DESCRIPTOR *NewDescriptor, IN BOOLEAN IsDirectoryObject,
+                 IN PSECURITY_SUBJECT_CONTEXT SubjectContext, IN PGENERIC_MAPPING GenericMapping, IN POOL_TYPE PoolType)
 
 /*++
 
@@ -162,16 +144,14 @@ Return Value:
     PAGED_CODE();
 
 #if DBG
-    if ( ARGUMENT_PRESENT( ExplicitDescriptor) ) {
-        SepDumpSecurityDescriptor( ExplicitDescriptor,
-                                   "\nSeAssignSecurity: Input security descriptor = \n"
-                                 );
+    if (ARGUMENT_PRESENT(ExplicitDescriptor))
+    {
+        SepDumpSecurityDescriptor(ExplicitDescriptor, "\nSeAssignSecurity: Input security descriptor = \n");
     }
 
-    if (ARGUMENT_PRESENT( ParentDescriptor )) {
-        SepDumpSecurityDescriptor( ParentDescriptor,
-                                   "\nSeAssignSecurity: Parent security descriptor = \n"
-                                 );
+    if (ARGUMENT_PRESENT(ParentDescriptor))
+    {
+        SepDumpSecurityDescriptor(ParentDescriptor, "\nSeAssignSecurity: Parent security descriptor = \n");
     }
 #endif // DBG
 
@@ -181,39 +161,33 @@ Return Value:
     //  then we can safely create this object as AutoInherit.
     //
 
-    if ( ParentDescriptor != NULL ) {
+    if (ParentDescriptor != NULL)
+    {
 
-        if ( (ExplicitDescriptor == NULL ||
-              (((PISECURITY_DESCRIPTOR)ExplicitDescriptor)->Control & SE_DACL_PRESENT) == 0 ) &&
-             (((PISECURITY_DESCRIPTOR)ParentDescriptor)->Control & SE_DACL_AUTO_INHERITED) != 0 ) {
+        if ((ExplicitDescriptor == NULL ||
+             (((PISECURITY_DESCRIPTOR)ExplicitDescriptor)->Control & SE_DACL_PRESENT) == 0) &&
+            (((PISECURITY_DESCRIPTOR)ParentDescriptor)->Control & SE_DACL_AUTO_INHERITED) != 0)
+        {
             AutoInherit |= SEF_DACL_AUTO_INHERIT;
         }
 
-        if ( (ExplicitDescriptor == NULL ||
-             (((PISECURITY_DESCRIPTOR)ExplicitDescriptor)->Control & SE_SACL_PRESENT) == 0 ) &&
-             (((PISECURITY_DESCRIPTOR)ParentDescriptor)->Control & SE_SACL_AUTO_INHERITED) != 0 ) {
+        if ((ExplicitDescriptor == NULL ||
+             (((PISECURITY_DESCRIPTOR)ExplicitDescriptor)->Control & SE_SACL_PRESENT) == 0) &&
+            (((PISECURITY_DESCRIPTOR)ParentDescriptor)->Control & SE_SACL_AUTO_INHERITED) != 0)
+        {
             AutoInherit |= SEF_SACL_AUTO_INHERIT;
         }
-
     }
 
 
-    Status = RtlpNewSecurityObject (
-                    ParentDescriptor OPTIONAL,
-                    ExplicitDescriptor OPTIONAL,
-                    NewDescriptor,
-                    NULL,   // No object type
-                    0,
-                    IsDirectoryObject,
-                    AutoInherit,
-                    (HANDLE) SubjectContext,
-                    GenericMapping );
+    Status = RtlpNewSecurityObject(ParentDescriptor OPTIONAL, ExplicitDescriptor OPTIONAL, NewDescriptor,
+                                   NULL, // No object type
+                                   0, IsDirectoryObject, AutoInherit, (HANDLE)SubjectContext, GenericMapping);
 
 #if DBG
-    if ( NT_SUCCESS(Status)) {
-        SepDumpSecurityDescriptor( *NewDescriptor,
-                                   "SeAssignSecurity: Final security descriptor = \n"
-                                 );
+    if (NT_SUCCESS(Status))
+    {
+        SepDumpSecurityDescriptor(*NewDescriptor, "SeAssignSecurity: Final security descriptor = \n");
     }
 #endif
 
@@ -221,23 +195,16 @@ Return Value:
 
 
     // RtlpNewSecurityObject always uses PagedPool.
-    UNREFERENCED_PARAMETER( PoolType );
-
+    UNREFERENCED_PARAMETER(PoolType);
 }
 
-
+
 NTSTATUS
-SeAssignSecurityEx (
-    IN PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
-    IN PSECURITY_DESCRIPTOR ExplicitDescriptor OPTIONAL,
-    OUT PSECURITY_DESCRIPTOR *NewDescriptor,
-    IN GUID *ObjectType OPTIONAL,
-    IN BOOLEAN IsDirectoryObject,
-    IN ULONG AutoInheritFlags,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectContext,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN POOL_TYPE PoolType
-    )
+SeAssignSecurityEx(IN PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
+                   IN PSECURITY_DESCRIPTOR ExplicitDescriptor OPTIONAL, OUT PSECURITY_DESCRIPTOR *NewDescriptor,
+                   IN GUID *ObjectType OPTIONAL, IN BOOLEAN IsDirectoryObject, IN ULONG AutoInheritFlags,
+                   IN PSECURITY_SUBJECT_CONTEXT SubjectContext, IN PGENERIC_MAPPING GenericMapping,
+                   IN POOL_TYPE PoolType)
 
 /*++
 
@@ -330,36 +297,26 @@ Return Value:
     PAGED_CODE();
 
 #if DBG
-    if ( ARGUMENT_PRESENT( ExplicitDescriptor) ) {
-        SepDumpSecurityDescriptor( ExplicitDescriptor,
-                                   "\nSeAssignSecurityEx: Input security descriptor = \n"
-                                 );
+    if (ARGUMENT_PRESENT(ExplicitDescriptor))
+    {
+        SepDumpSecurityDescriptor(ExplicitDescriptor, "\nSeAssignSecurityEx: Input security descriptor = \n");
     }
 
-    if (ARGUMENT_PRESENT( ParentDescriptor )) {
-        SepDumpSecurityDescriptor( ParentDescriptor,
-                                   "\nSeAssignSecurityEx: Parent security descriptor = \n"
-                                 );
+    if (ARGUMENT_PRESENT(ParentDescriptor))
+    {
+        SepDumpSecurityDescriptor(ParentDescriptor, "\nSeAssignSecurityEx: Parent security descriptor = \n");
     }
 #endif // DBG
 
 
-    Status = RtlpNewSecurityObject (
-                    ParentDescriptor OPTIONAL,
-                    ExplicitDescriptor OPTIONAL,
-                    NewDescriptor,
-                    ObjectType ? &ObjectType : NULL,
-                    ObjectType ? 1 : 0,
-                    IsDirectoryObject,
-                    AutoInheritFlags,
-                    (HANDLE) SubjectContext,
-                    GenericMapping );
+    Status = RtlpNewSecurityObject(ParentDescriptor OPTIONAL, ExplicitDescriptor OPTIONAL, NewDescriptor,
+                                   ObjectType ? &ObjectType : NULL, ObjectType ? 1 : 0, IsDirectoryObject,
+                                   AutoInheritFlags, (HANDLE)SubjectContext, GenericMapping);
 
 #if DBG
-    if ( NT_SUCCESS(Status)) {
-        SepDumpSecurityDescriptor( *NewDescriptor,
-                                   "SeAssignSecurityEx: Final security descriptor = \n"
-                                 );
+    if (NT_SUCCESS(Status))
+    {
+        SepDumpSecurityDescriptor(*NewDescriptor, "SeAssignSecurityEx: Final security descriptor = \n");
     }
 #endif
 
@@ -367,15 +324,12 @@ Return Value:
 
 
     // RtlpNewSecurityObject always uses PagedPool.
-    UNREFERENCED_PARAMETER( PoolType );
-
+    UNREFERENCED_PARAMETER(PoolType);
 }
 
-
+
 NTSTATUS
-SeDeassignSecurity (
-    IN OUT PSECURITY_DESCRIPTOR *SecurityDescriptor
-    )
+SeDeassignSecurity(IN OUT PSECURITY_DESCRIPTOR *SecurityDescriptor)
 
 /*++
 
@@ -399,8 +353,9 @@ Return Value:
 {
     PAGED_CODE();
 
-    if ((*SecurityDescriptor) != NULL) {
-        ExFreePool( (*SecurityDescriptor) );
+    if ((*SecurityDescriptor) != NULL)
+    {
+        ExFreePool((*SecurityDescriptor));
     }
 
     //
@@ -409,24 +364,14 @@ Return Value:
 
     (*SecurityDescriptor) = NULL;
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
 
-
 NTSTATUS
-SepInheritAcl (
-    IN PACL Acl,
-    IN BOOLEAN IsDirectoryObject,
-    IN PSID ClientOwnerSid,
-    IN PSID ClientGroupSid,
-    IN PSID ServerOwnerSid OPTIONAL,
-    IN PSID ServerGroupSid OPTIONAL,
-    IN PGENERIC_MAPPING GenericMapping,
-    IN POOL_TYPE PoolType,
-    OUT PACL *NewAcl
-    )
+SepInheritAcl(IN PACL Acl, IN BOOLEAN IsDirectoryObject, IN PSID ClientOwnerSid, IN PSID ClientGroupSid,
+              IN PSID ServerOwnerSid OPTIONAL, IN PSID ServerGroupSid OPTIONAL, IN PGENERIC_MAPPING GenericMapping,
+              IN POOL_TYPE PoolType, OUT PACL *NewAcl)
 
 /*++
 
@@ -473,13 +418,13 @@ Return Value:
 --*/
 
 {
-//////////////////////////////////////////////////////////////////////////////
-//                                                                          //
-//   The logic in the ACL inheritance code must mirror the code for         //
-//   inheritance in the user mode runtime (in sertl.c). Do not make changes //
-//   here without also making changes in that module.                       //
-//                                                                          //
-//////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+    //                                                                          //
+    //   The logic in the ACL inheritance code must mirror the code for         //
+    //   inheritance in the user mode runtime (in sertl.c). Do not make changes //
+    //   here without also making changes in that module.                       //
+    //                                                                          //
+    //////////////////////////////////////////////////////////////////////////////
 
 
     NTSTATUS Status;
@@ -488,13 +433,14 @@ Return Value:
     ULONG NewGenericControl;
 
     PAGED_CODE();
-    ASSERT( PoolType == PagedPool ); // RtlpInheritAcl assumes paged pool
+    ASSERT(PoolType == PagedPool); // RtlpInheritAcl assumes paged pool
 
     //
     //  First check if the acl is null
     //
 
-    if (Acl == NULL) {
+    if (Acl == NULL)
+    {
 
         return STATUS_NO_INHERITANCE;
     }
@@ -505,36 +451,24 @@ Return Value:
     // Pass all parameters as though there is no auto inheritance.
     //
 
-    Status = RtlpInheritAcl(
-                 Acl,
-                 NULL,  // No child ACL since no auto inheritance
-                 0,     // No child control since no auto inheritance
-                 IsDirectoryObject,
-                 FALSE, // Not AutoInherit since no auto inheritance
-                 FALSE, // Not DefaultDescriptor since no auto inheritance
-                 ClientOwnerSid,
-                 ClientGroupSid,
-                 ServerOwnerSid,
-                 ServerGroupSid,
-                 GenericMapping,
-                 FALSE, // Isn't a SACL
-                 NULL,  // No object GUID
-                 0,
-                 NewAcl,
-                 &NewAclExplicitlyAssigned,
-                 &NewGenericControl );
+    Status = RtlpInheritAcl(Acl,
+                            NULL, // No child ACL since no auto inheritance
+                            0,    // No child control since no auto inheritance
+                            IsDirectoryObject,
+                            FALSE, // Not AutoInherit since no auto inheritance
+                            FALSE, // Not DefaultDescriptor since no auto inheritance
+                            ClientOwnerSid, ClientGroupSid, ServerOwnerSid, ServerGroupSid, GenericMapping,
+                            FALSE, // Isn't a SACL
+                            NULL,  // No object GUID
+                            0, NewAcl, &NewAclExplicitlyAssigned, &NewGenericControl);
 
     return Status;
 }
 
 
-
 NTSTATUS
-SeAssignWorldSecurityDescriptor(
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG Length,
-    IN PSECURITY_INFORMATION SecurityInformation
-    )
+SeAssignWorldSecurityDescriptor(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN OUT PULONG Length,
+                                IN PSECURITY_INFORMATION SecurityInformation)
 
 /*++
 
@@ -579,71 +513,71 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( !ARGUMENT_PRESENT( SecurityInformation )) {
+    if (!ARGUMENT_PRESENT(SecurityInformation))
+    {
 
-        return( STATUS_ACCESS_DENIED );
+        return (STATUS_ACCESS_DENIED);
     }
 
-    WorldSidLength = SeLengthSid( SeWorldSid );
+    WorldSidLength = SeLengthSid(SeWorldSid);
 
-    MinSize = sizeof( SECURITY_DESCRIPTOR_RELATIVE ) + 2 * WorldSidLength;
+    MinSize = sizeof(SECURITY_DESCRIPTOR_RELATIVE) + 2 * WorldSidLength;
 
-    if ( *Length < MinSize ) {
+    if (*Length < MinSize)
+    {
 
         *Length = MinSize;
-        return( STATUS_BUFFER_TOO_SMALL );
+        return (STATUS_BUFFER_TOO_SMALL);
     }
 
     *Length = MinSize;
 
     ISecurityDescriptor = (SECURITY_DESCRIPTOR_RELATIVE *)SecurityDescriptor;
 
-    Status = RtlCreateSecurityDescriptorRelative( ISecurityDescriptor,
-                                          SECURITY_DESCRIPTOR_REVISION );
+    Status = RtlCreateSecurityDescriptorRelative(ISecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
-    if (!NT_SUCCESS( Status )) {
-        return( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     Base = (PCHAR)(ISecurityDescriptor);
-    Field =  Base + sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    Field = Base + sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
-    if ( *SecurityInformation & OWNER_SECURITY_INFORMATION ) {
+    if (*SecurityInformation & OWNER_SECURITY_INFORMATION)
+    {
 
-        RtlCopyMemory( Field, SeWorldSid, WorldSidLength );
-        ISecurityDescriptor->Owner = RtlPointerToOffset(Base,Field);
+        RtlCopyMemory(Field, SeWorldSid, WorldSidLength);
+        ISecurityDescriptor->Owner = RtlPointerToOffset(Base, Field);
         Field += WorldSidLength;
     }
 
-    if ( *SecurityInformation & GROUP_SECURITY_INFORMATION ) {
+    if (*SecurityInformation & GROUP_SECURITY_INFORMATION)
+    {
 
-        RtlCopyMemory( Field, SeWorldSid, WorldSidLength );
-        ISecurityDescriptor->Group = RtlPointerToOffset(Base,Field);
+        RtlCopyMemory(Field, SeWorldSid, WorldSidLength);
+        ISecurityDescriptor->Group = RtlPointerToOffset(Base, Field);
     }
 
-    if ( *SecurityInformation & DACL_SECURITY_INFORMATION ) {
-        RtlpSetControlBits( ISecurityDescriptor, SE_DACL_PRESENT );
+    if (*SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
+        RtlpSetControlBits(ISecurityDescriptor, SE_DACL_PRESENT);
     }
 
-    if ( *SecurityInformation & SACL_SECURITY_INFORMATION ) {
-        RtlpSetControlBits( ISecurityDescriptor, SE_SACL_PRESENT );
+    if (*SecurityInformation & SACL_SECURITY_INFORMATION)
+    {
+        RtlpSetControlBits(ISecurityDescriptor, SE_SACL_PRESENT);
     }
 
-    RtlpSetControlBits( ISecurityDescriptor, SE_SELF_RELATIVE );
+    RtlpSetControlBits(ISecurityDescriptor, SE_SELF_RELATIVE);
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
 
-
 #if DBG
-
-VOID
-SepDumpSecurityDescriptor(
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSZ TitleString
-    )
+
+VOID SepDumpSecurityDescriptor(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSZ TitleString)
 
 /*++
 
@@ -678,81 +612,88 @@ Return Value:
     PAGED_CODE();
 
 
-    if (!SepDumpSD) {
+    if (!SepDumpSD)
+    {
         return;
     }
 
-    if (!ARGUMENT_PRESENT( SecurityDescriptor )) {
+    if (!ARGUMENT_PRESENT(SecurityDescriptor))
+    {
         return;
     }
 
     DbgPrint(TitleString);
 
-    ISecurityDescriptor = ( PISECURITY_DESCRIPTOR )SecurityDescriptor;
+    ISecurityDescriptor = (PISECURITY_DESCRIPTOR)SecurityDescriptor;
 
     Revision = ISecurityDescriptor->Revision;
-    Control  = ISecurityDescriptor->Control;
+    Control = ISecurityDescriptor->Control;
 
-    Owner    = RtlpOwnerAddrSecurityDescriptor( ISecurityDescriptor );
-    Group    = RtlpGroupAddrSecurityDescriptor( ISecurityDescriptor );
-    Sacl     = RtlpSaclAddrSecurityDescriptor( ISecurityDescriptor );
-    Dacl     = RtlpDaclAddrSecurityDescriptor( ISecurityDescriptor );
+    Owner = RtlpOwnerAddrSecurityDescriptor(ISecurityDescriptor);
+    Group = RtlpGroupAddrSecurityDescriptor(ISecurityDescriptor);
+    Sacl = RtlpSaclAddrSecurityDescriptor(ISecurityDescriptor);
+    Dacl = RtlpDaclAddrSecurityDescriptor(ISecurityDescriptor);
 
     DbgPrint("\nSECURITY DESCRIPTOR\n");
 
-    DbgPrint("Revision = %d\n",Revision);
+    DbgPrint("Revision = %d\n", Revision);
 
     //
     // Print control info
     //
 
-    if (Control & SE_OWNER_DEFAULTED) {
+    if (Control & SE_OWNER_DEFAULTED)
+    {
         DbgPrint("Owner defaulted\n");
     }
-    if (Control & SE_GROUP_DEFAULTED) {
+    if (Control & SE_GROUP_DEFAULTED)
+    {
         DbgPrint("Group defaulted\n");
     }
-    if (Control & SE_DACL_PRESENT) {
+    if (Control & SE_DACL_PRESENT)
+    {
         DbgPrint("Dacl present\n");
     }
-    if (Control & SE_DACL_DEFAULTED) {
+    if (Control & SE_DACL_DEFAULTED)
+    {
         DbgPrint("Dacl defaulted\n");
     }
-    if (Control & SE_SACL_PRESENT) {
+    if (Control & SE_SACL_PRESENT)
+    {
         DbgPrint("Sacl present\n");
     }
-    if (Control & SE_SACL_DEFAULTED) {
+    if (Control & SE_SACL_DEFAULTED)
+    {
         DbgPrint("Sacl defaulted\n");
     }
-    if (Control & SE_SELF_RELATIVE) {
+    if (Control & SE_SELF_RELATIVE)
+    {
         DbgPrint("Self relative\n");
     }
-    if (Control & SE_DACL_UNTRUSTED) {
+    if (Control & SE_DACL_UNTRUSTED)
+    {
         DbgPrint("Dacl untrusted\n");
     }
-    if (Control & SE_SERVER_SECURITY) {
+    if (Control & SE_SERVER_SECURITY)
+    {
         DbgPrint("Server security\n");
     }
 
     DbgPrint("Owner ");
-    SepPrintSid( Owner );
+    SepPrintSid(Owner);
 
     DbgPrint("Group ");
-    SepPrintSid( Group );
+    SepPrintSid(Group);
 
     DbgPrint("Sacl");
-    SepPrintAcl( Sacl );
+    SepPrintAcl(Sacl);
 
     DbgPrint("Dacl");
-    SepPrintAcl( Dacl );
+    SepPrintAcl(Dacl);
 }
 
 
-
-VOID
-SepPrintAcl (
-    IN PACL Acl
-    )
+VOID SepPrintAcl(IN PACL Acl)
 
 /*++
 
@@ -785,10 +726,10 @@ Return Value:
     //  Check if the Acl is null
     //
 
-    if (Acl == NULL) {
+    if (Acl == NULL)
+    {
 
         return;
-
     }
 
     //
@@ -803,9 +744,8 @@ Return Value:
     //  Now for each Ace we want do dump it
     //
 
-    for (i = 0, Ace = FirstAce(Acl);
-         i < Acl->AceCount;
-         i++, Ace = NextAce(Ace) ) {
+    for (i = 0, Ace = FirstAce(Acl); i < Acl->AceCount; i++, Ace = NextAce(Ace))
+    {
 
         //
         //  print out the ace header
@@ -817,29 +757,26 @@ Return Value:
         //  special case on the standard ace types
         //
 
-        if ((Ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE) ||
-            (Ace->Header.AceType == ACCESS_DENIED_ACE_TYPE) ||
-            (Ace->Header.AceType == SYSTEM_AUDIT_ACE_TYPE) ||
-            (Ace->Header.AceType == SYSTEM_ALARM_ACE_TYPE) ||
-            (Ace->Header.AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE)) {
+        if ((Ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE) || (Ace->Header.AceType == ACCESS_DENIED_ACE_TYPE) ||
+            (Ace->Header.AceType == SYSTEM_AUDIT_ACE_TYPE) || (Ace->Header.AceType == SYSTEM_ALARM_ACE_TYPE) ||
+            (Ace->Header.AceType == ACCESS_ALLOWED_COMPOUND_ACE_TYPE))
+        {
 
             //
             //  The following array is indexed by ace types and must
             //  follow the allowed, denied, audit, alarm seqeuence
             //
 
-            PCHAR AceTypes[] = { "Access Allowed",
-                                 "Access Denied ",
-                                 "System Audit  ",
-                                 "System Alarm  ",
-                                 "Compound Grant",
-                               };
+            PCHAR AceTypes[] = {
+                "Access Allowed", "Access Denied ", "System Audit  ", "System Alarm  ", "Compound Grant",
+            };
 
             DbgPrint(AceTypes[Ace->Header.AceType]);
             DbgPrint("\n Access Mask: %08lx ", Ace->Mask);
             KnownType = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             DbgPrint(" Unknown Ace Type\n");
             KnownType = FALSE;
@@ -847,64 +784,70 @@ Return Value:
 
         DbgPrint("\n");
 
-        DbgPrint(" AceSize = %d\n",Ace->Header.AceSize);
+        DbgPrint(" AceSize = %d\n", Ace->Header.AceSize);
 
         DbgPrint(" Ace Flags = ");
-        if (Ace->Header.AceFlags & OBJECT_INHERIT_ACE) {
+        if (Ace->Header.AceFlags & OBJECT_INHERIT_ACE)
+        {
             DbgPrint("OBJECT_INHERIT_ACE\n");
             DbgPrint("                   ");
         }
 
-        if (Ace->Header.AceFlags & CONTAINER_INHERIT_ACE) {
+        if (Ace->Header.AceFlags & CONTAINER_INHERIT_ACE)
+        {
             DbgPrint("CONTAINER_INHERIT_ACE\n");
             DbgPrint("                   ");
         }
 
-        if (Ace->Header.AceFlags & NO_PROPAGATE_INHERIT_ACE) {
+        if (Ace->Header.AceFlags & NO_PROPAGATE_INHERIT_ACE)
+        {
             DbgPrint("NO_PROPAGATE_INHERIT_ACE\n");
             DbgPrint("                   ");
         }
 
-        if (Ace->Header.AceFlags & INHERIT_ONLY_ACE) {
+        if (Ace->Header.AceFlags & INHERIT_ONLY_ACE)
+        {
             DbgPrint("INHERIT_ONLY_ACE\n");
             DbgPrint("                   ");
         }
 
 
-        if (Ace->Header.AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG) {
+        if (Ace->Header.AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG)
+        {
             DbgPrint("SUCCESSFUL_ACCESS_ACE_FLAG\n");
             DbgPrint("            ");
         }
 
-        if (Ace->Header.AceFlags & FAILED_ACCESS_ACE_FLAG) {
+        if (Ace->Header.AceFlags & FAILED_ACCESS_ACE_FLAG)
+        {
             DbgPrint("FAILED_ACCESS_ACE_FLAG\n");
             DbgPrint("            ");
         }
 
         DbgPrint("\n");
 
-        if (KnownType != TRUE) {
+        if (KnownType != TRUE)
+        {
             continue;
         }
 
-        if (Ace->Header.AceType != ACCESS_ALLOWED_COMPOUND_ACE_TYPE) {
+        if (Ace->Header.AceType != ACCESS_ALLOWED_COMPOUND_ACE_TYPE)
+        {
             DbgPrint(" Sid = ");
             SepPrintSid(&Ace->SidStart);
-        } else {
+        }
+        else
+        {
             DbgPrint(" Server Sid = ");
             SepPrintSid(RtlCompoundAceServerSid(Ace));
             DbgPrint("\n Client Sid = ");
-            SepPrintSid(RtlCompoundAceClientSid( Ace ));
+            SepPrintSid(RtlCompoundAceClientSid(Ace));
         }
     }
 }
 
 
-
-VOID
-SepPrintSid(
-    IN PSID Sid
-    )
+VOID SepPrintSid(IN PSID Sid)
 
 /*++
 
@@ -932,7 +875,8 @@ Return Value:
 
     PAGED_CODE();
 
-    if (Sid == NULL) {
+    if (Sid == NULL)
+    {
         DbgPrint("Sid is NULL\n");
         return;
     }
@@ -943,45 +887,39 @@ Return Value:
     AccountName.Length = 0;
     AccountName.Buffer = (PVOID)&Buffer[0];
 
-    if (SepSidTranslation( Sid, &AccountName )) {
+    if (SepSidTranslation(Sid, &AccountName))
+    {
 
-        DbgPrint("%s   ", AccountName.Buffer );
+        DbgPrint("%s   ", AccountName.Buffer);
     }
 
     ISid = (PISID)Sid;
 
-    DbgPrint("S-%lu-", (USHORT)ISid->Revision );
-    if (  (ISid->IdentifierAuthority.Value[0] != 0)  ||
-          (ISid->IdentifierAuthority.Value[1] != 0)     ){
-        DbgPrint("0x%02hx%02hx%02hx%02hx%02hx%02hx",
-                    (USHORT)ISid->IdentifierAuthority.Value[0],
-                    (USHORT)ISid->IdentifierAuthority.Value[1],
-                    (USHORT)ISid->IdentifierAuthority.Value[2],
-                    (USHORT)ISid->IdentifierAuthority.Value[3],
-                    (USHORT)ISid->IdentifierAuthority.Value[4],
-                    (USHORT)ISid->IdentifierAuthority.Value[5] );
-    } else {
-        Tmp = (ULONG)ISid->IdentifierAuthority.Value[5]          +
-              (ULONG)(ISid->IdentifierAuthority.Value[4] <<  8)  +
-              (ULONG)(ISid->IdentifierAuthority.Value[3] << 16)  +
-              (ULONG)(ISid->IdentifierAuthority.Value[2] << 24);
+    DbgPrint("S-%lu-", (USHORT)ISid->Revision);
+    if ((ISid->IdentifierAuthority.Value[0] != 0) || (ISid->IdentifierAuthority.Value[1] != 0))
+    {
+        DbgPrint("0x%02hx%02hx%02hx%02hx%02hx%02hx", (USHORT)ISid->IdentifierAuthority.Value[0],
+                 (USHORT)ISid->IdentifierAuthority.Value[1], (USHORT)ISid->IdentifierAuthority.Value[2],
+                 (USHORT)ISid->IdentifierAuthority.Value[3], (USHORT)ISid->IdentifierAuthority.Value[4],
+                 (USHORT)ISid->IdentifierAuthority.Value[5]);
+    }
+    else
+    {
+        Tmp = (ULONG)ISid->IdentifierAuthority.Value[5] + (ULONG)(ISid->IdentifierAuthority.Value[4] << 8) +
+              (ULONG)(ISid->IdentifierAuthority.Value[3] << 16) + (ULONG)(ISid->IdentifierAuthority.Value[2] << 24);
         DbgPrint("%lu", Tmp);
     }
 
 
-    for (i=0;i<ISid->SubAuthorityCount ;i++ ) {
+    for (i = 0; i < ISid->SubAuthorityCount; i++)
+    {
         DbgPrint("-%lu", ISid->SubAuthority[i]);
     }
     DbgPrint("\n");
 }
 
 
-
-
-VOID
-SepDumpTokenInfo(
-    IN PACCESS_TOKEN Token
-    )
+VOID SepDumpTokenInfo(IN PACCESS_TOKEN Token)
 
 /*++
 
@@ -1008,7 +946,8 @@ Return Value:
 
     PAGED_CODE();
 
-    if (!SepDumpToken) {
+    if (!SepDumpToken)
+    {
         return;
     }
 
@@ -1016,41 +955,32 @@ Return Value:
 
     UserAndGroupCount = IToken->UserAndGroupCount;
 
-    DbgPrint("\n\nToken Address=%lx\n",IToken);
+    DbgPrint("\n\nToken Address=%lx\n", IToken);
     DbgPrint("Token User and Groups Array:\n\n");
 
-    for ( i = 0 , TokenSid = IToken->UserAndGroups;
-          i < UserAndGroupCount ;
-          i++, TokenSid++
-        ) {
+    for (i = 0, TokenSid = IToken->UserAndGroups; i < UserAndGroupCount; i++, TokenSid++)
+    {
 
-        SepPrintSid( TokenSid->Sid );
+        SepPrintSid(TokenSid->Sid);
+    }
 
-        }
-
-    if ( IToken->RestrictedSids ) {
+    if (IToken->RestrictedSids)
+    {
         UserAndGroupCount = IToken->RestrictedSidCount;
 
         DbgPrint("Restricted Sids Array:\n\n");
 
-        for ( i = 0 , TokenSid = IToken->RestrictedSids;
-              i < UserAndGroupCount ;
-              i++, TokenSid++
-            ) {
+        for (i = 0, TokenSid = IToken->RestrictedSids; i < UserAndGroupCount; i++, TokenSid++)
+        {
 
-            SepPrintSid( TokenSid->Sid );
-
-            }
+            SepPrintSid(TokenSid->Sid);
+        }
     }
 }
 
 
-
 BOOLEAN
-SepSidTranslation(
-    PSID Sid,
-    PSTRING AccountName
-    )
+SepSidTranslation(PSID Sid, PSTRING AccountName)
 
 /*++
 
@@ -1076,57 +1006,67 @@ Return Value:
 {
     PAGED_CODE();
 
-    if (RtlEqualSid(Sid, SeWorldSid)) {
-        RtlInitString( AccountName, "WORLD         ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeWorldSid))
+    {
+        RtlInitString(AccountName, "WORLD         ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeLocalSid)) {
-        RtlInitString( AccountName, "LOCAL         ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeLocalSid))
+    {
+        RtlInitString(AccountName, "LOCAL         ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeNetworkSid)) {
-        RtlInitString( AccountName, "NETWORK       ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeNetworkSid))
+    {
+        RtlInitString(AccountName, "NETWORK       ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeBatchSid)) {
-        RtlInitString( AccountName, "BATCH         ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeBatchSid))
+    {
+        RtlInitString(AccountName, "BATCH         ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeInteractiveSid)) {
-        RtlInitString( AccountName, "INTERACTIVE   ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeInteractiveSid))
+    {
+        RtlInitString(AccountName, "INTERACTIVE   ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeLocalSystemSid)) {
-        RtlInitString( AccountName, "SYSTEM        ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeLocalSystemSid))
+    {
+        RtlInitString(AccountName, "SYSTEM        ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeCreatorOwnerSid)) {
-        RtlInitString( AccountName, "CREATOR_OWNER ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeCreatorOwnerSid))
+    {
+        RtlInitString(AccountName, "CREATOR_OWNER ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeCreatorGroupSid)) {
-        RtlInitString( AccountName, "CREATOR_GROUP ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeCreatorGroupSid))
+    {
+        RtlInitString(AccountName, "CREATOR_GROUP ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeCreatorOwnerServerSid)) {
-        RtlInitString( AccountName, "CREATOR_OWNER_SERVER ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeCreatorOwnerServerSid))
+    {
+        RtlInitString(AccountName, "CREATOR_OWNER_SERVER ");
+        return (TRUE);
     }
 
-    if (RtlEqualSid(Sid, SeCreatorGroupServerSid)) {
-        RtlInitString( AccountName, "CREATOR_GROUP_SERVER ");
-        return(TRUE);
+    if (RtlEqualSid(Sid, SeCreatorGroupServerSid))
+    {
+        RtlInitString(AccountName, "CREATOR_GROUP_SERVER ");
+        return (TRUE);
     }
 
-    return(FALSE);
+    return (FALSE);
 }
 
 //

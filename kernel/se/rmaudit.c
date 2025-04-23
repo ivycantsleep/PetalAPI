@@ -28,25 +28,16 @@ Revision History:
 
 #pragma hdrstop
 
-VOID
-SepRmSetAuditLogWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    );
+VOID SepRmSetAuditLogWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage);
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SepRmSetAuditEventWrkr)
-#pragma alloc_text(PAGE,SepRmSetAuditLogWrkr)
+#pragma alloc_text(PAGE, SepRmSetAuditEventWrkr)
+#pragma alloc_text(PAGE, SepRmSetAuditLogWrkr)
 #endif
 
 
-
-VOID
-SepRmSetAuditEventWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    )
+VOID SepRmSetAuditEventWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage)
 
 /*++
 
@@ -90,37 +81,36 @@ Return Value:
     // Strict check that command is correct one for this worker.
     //
 
-    ASSERT( CommandMessage->CommandNumber == RmAuditSetCommand );
+    ASSERT(CommandMessage->CommandNumber == RmAuditSetCommand);
 
     //
     // Extract the AuditingMode flag and put it in the right place.
     //
 
-    SepAdtAuditingEnabled = (((PLSARM_POLICY_AUDIT_EVENTS_INFO) CommandMessage->CommandParams)->
-                                AuditingMode);
+    SepAdtAuditingEnabled = (((PLSARM_POLICY_AUDIT_EVENTS_INFO)CommandMessage->CommandParams)->AuditingMode);
 
     //
     // For each element in the passed array, process changes to audit
     // nothing, and then success or failure flags.
     //
 
-    EventAuditingOptions = ((PLSARM_POLICY_AUDIT_EVENTS_INFO) CommandMessage->CommandParams)->
-                           EventAuditingOptions;
+    EventAuditingOptions = ((PLSARM_POLICY_AUDIT_EVENTS_INFO)CommandMessage->CommandParams)->EventAuditingOptions;
 
 
-    for ( EventType=AuditEventMinType;
-          EventType <= AuditEventMaxType;
-          EventType++ ) {
+    for (EventType = AuditEventMinType; EventType <= AuditEventMaxType; EventType++)
+    {
 
         SeAuditingState[EventType].AuditOnSuccess = FALSE;
         SeAuditingState[EventType].AuditOnFailure = FALSE;
 
-        if ( EventAuditingOptions[EventType] & POLICY_AUDIT_EVENT_SUCCESS ) {
+        if (EventAuditingOptions[EventType] & POLICY_AUDIT_EVENT_SUCCESS)
+        {
 
             SeAuditingState[EventType].AuditOnSuccess = TRUE;
         }
 
-        if ( EventAuditingOptions[EventType] & POLICY_AUDIT_EVENT_FAILURE ) {
+        if (EventAuditingOptions[EventType] & POLICY_AUDIT_EVENT_FAILURE)
+        {
 
             SeAuditingState[EventType].AuditOnFailure = TRUE;
         }
@@ -141,11 +131,13 @@ Return Value:
     // We may have to revisit this someday.
     //
 
-    if ( SeAuditingState[AuditCategoryDetailedTracking].AuditOnSuccess && SepAdtAuditingEnabled ) {
+    if (SeAuditingState[AuditCategoryDetailedTracking].AuditOnSuccess && SepAdtAuditingEnabled)
+    {
 
         SeDetailedAuditing = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         SeDetailedAuditing = FALSE;
     }
@@ -154,12 +146,7 @@ Return Value:
 }
 
 
-
-VOID
-SepRmSetAuditLogWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    )
+VOID SepRmSetAuditLogWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage)
 
 /*++
 
@@ -197,10 +184,7 @@ Return Value:
     // Call private function in Auditing Sub-component to do the work.
     //
 
-    SepAdtSetAuditLogInformation(
-        (PPOLICY_AUDIT_LOG_INFO) CommandMessage->CommandParams
-        );
+    SepAdtSetAuditLogInformation((PPOLICY_AUDIT_LOG_INFO)CommandMessage->CommandParams);
 
     ReplyMessage->ReturnedStatus = STATUS_SUCCESS;
 }
-

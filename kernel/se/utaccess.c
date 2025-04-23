@@ -22,15 +22,14 @@ Revision History:
 #include <ntrtl.h>
 #include <nturtl.h>
 
-#define _TST_USER_  // User mode test
+#define _TST_USER_ // User mode test
 
 
-#include "tsevars.c"    // Common test variables
+#include "tsevars.c" // Common test variables
 
-#include "ctaccess.c"     // Common accessibility test routines
+#include "ctaccess.c" // Common accessibility test routines
 
 
-
 BOOLEAN
 Test()
 {
@@ -44,7 +43,7 @@ Test()
 
     return Result;
 }
-
+
 BOOLEAN
 main()
 {

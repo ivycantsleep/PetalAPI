@@ -23,24 +23,16 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 //
 // Define forward reference function prototypes.
 //
 
-VOID
-KiIpiGenericCallTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID BroadcastFunction,
-    IN PVOID Context,
-    IN PVOID Parameter3
-    );
-
+VOID KiIpiGenericCallTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID BroadcastFunction, IN PVOID Context,
+                            IN PVOID Parameter3);
+
 ULONG_PTR
-KiIpiGenericCall (
-    IN PKIPI_BROADCAST_WORKER BroadcastFunction,
-    IN ULONG_PTR Context
-    )
+KiIpiGenericCall(IN PKIPI_BROADCAST_WORKER BroadcastFunction, IN ULONG_PTR Context)
 
 /*++
 
@@ -87,12 +79,9 @@ Return Value:
 #if !defined(NT_UP)
 
     TargetProcessors = KeActiveProcessors & ~KeGetCurrentPrcb()->SetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiIpiGenericCallTarget,
-                        (PVOID)BroadcastFunction,
-                        (PVOID)Context,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiIpiGenericCallTarget, (PVOID)BroadcastFunction, (PVOID)Context, NULL);
     }
 
 #endif
@@ -110,7 +99,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -127,14 +117,9 @@ Return Value:
 
 #if !defined(NT_UP)
 
-
-VOID
-KiIpiGenericCallTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID BroadcastFunction,
-    IN PVOID Context,
-    IN PVOID Parameter3
-    )
+
+VOID KiIpiGenericCallTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID BroadcastFunction, IN PVOID Context,
+                            IN PVOID Parameter3)
 
 /*++
 
@@ -177,11 +162,7 @@ Return Value:
 }
 
 
-
-VOID
-KiIpiStallOnPacketTargets (
-    KAFFINITY TargetSet
-    )
+VOID KiIpiStallOnPacketTargets(KAFFINITY TargetSet)
 
 /*++
 
@@ -243,11 +224,13 @@ Return Value:
     //
 
     Barrier = (volatile ULONG *)&Prcb->TargetSet;
-    if ((TargetSet & (TargetSet - 1)) != 0) {
-       Barrier = &Prcb->PacketBarrier;
+    if ((TargetSet & (TargetSet - 1)) != 0)
+    {
+        Barrier = &Prcb->PacketBarrier;
     }
 
-    while (*Barrier != 0) {
+    while (*Barrier != 0)
+    {
         KeYieldProcessor();
     }
 

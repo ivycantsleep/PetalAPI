@@ -25,79 +25,34 @@ Revision History:
 
 --*/
 
-VOID
-VfGenericInit(
-    VOID
-    );
+VOID VfGenericInit(VOID);
 
-VOID
-FASTCALL
-VfGenericVerifyNewRequest(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PIO_STACK_LOCATION   IrpLastSp           OPTIONAL,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN PVOID                CallerAddress       OPTIONAL
-    );
+VOID FASTCALL VfGenericVerifyNewRequest(IN PIOV_REQUEST_PACKET IovPacket, IN PDEVICE_OBJECT DeviceObject,
+                                        IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN PIO_STACK_LOCATION IrpSp,
+                                        IN PIOV_STACK_LOCATION StackLocationData, IN PVOID CallerAddress OPTIONAL);
 
-VOID
-FASTCALL
-VfGenericVerifyIrpStackDownward(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PIO_STACK_LOCATION   IrpLastSp                   OPTIONAL,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  RequestHeadLocationData,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN PVOID                CallerAddress               OPTIONAL
-    );
+VOID FASTCALL VfGenericVerifyIrpStackDownward(IN PIOV_REQUEST_PACKET IovPacket, IN PDEVICE_OBJECT DeviceObject,
+                                              IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN PIO_STACK_LOCATION IrpSp,
+                                              IN PIOV_STACK_LOCATION RequestHeadLocationData,
+                                              IN PIOV_STACK_LOCATION StackLocationData,
+                                              IN PVOID CallerAddress OPTIONAL);
 
-VOID
-FASTCALL
-VfGenericVerifyIrpStackUpward(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  RequestHeadLocationData,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN BOOLEAN              IsNewlyCompleted,
-    IN BOOLEAN              RequestFinalized
-    );
+VOID FASTCALL VfGenericVerifyIrpStackUpward(IN PIOV_REQUEST_PACKET IovPacket, IN PIO_STACK_LOCATION IrpSp,
+                                            IN PIOV_STACK_LOCATION RequestHeadLocationData,
+                                            IN PIOV_STACK_LOCATION StackLocationData, IN BOOLEAN IsNewlyCompleted,
+                                            IN BOOLEAN RequestFinalized);
 
 BOOLEAN
 FASTCALL
-VfGenericIsValidIrpStatus(
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN NTSTATUS             Status
-    );
+VfGenericIsValidIrpStatus(IN PIO_STACK_LOCATION IrpSp, IN NTSTATUS Status);
 
-VOID
-FASTCALL
-VfGenericDumpIrpStack(
-    IN PIO_STACK_LOCATION IrpSp
-    );
+VOID FASTCALL VfGenericDumpIrpStack(IN PIO_STACK_LOCATION IrpSp);
 
 BOOLEAN
 FASTCALL
-VfGenericIsNewRequest(
-    IN PIO_STACK_LOCATION   IrpLastSp OPTIONAL,
-    IN PIO_STACK_LOCATION   IrpSp
-    );
+VfGenericIsNewRequest(IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN PIO_STACK_LOCATION IrpSp);
 
-VOID
-FASTCALL
-VfGenericVerifyNewIrp(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PIRP                 Irp,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN PVOID                CallerAddress       OPTIONAL
-    );
+VOID FASTCALL VfGenericVerifyNewIrp(IN PIOV_REQUEST_PACKET IovPacket, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp,
+                                    IN PIOV_STACK_LOCATION StackLocationData, IN PVOID CallerAddress OPTIONAL);
 
-VOID
-FASTCALL
-VfGenericVerifyFinalIrpStack(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PIO_STACK_LOCATION   IrpSp
-    );
-
+VOID FASTCALL VfGenericVerifyFinalIrpStack(IN PIOV_REQUEST_PACKET IovPacket, IN PIO_STACK_LOCATION IrpSp);

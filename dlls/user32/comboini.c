@@ -16,7 +16,7 @@
 
 extern LOOKASIDE ComboboxLookaside;
 
-#define RECALC_CYDROP   -1
+#define RECALC_CYDROP -1
 
 void xxxCBSetDroppedSize(PCBOX pcbox, LPRECT lprc);
 
@@ -28,9 +28,7 @@ void xxxCBSetDroppedSize(PCBOX pcbox, LPRECT lprc);
 * History:
 \***************************************************************************/
 
-LONG CBNcCreateHandler(
-    PCBOX pcbox,
-    PWND pwnd)
+LONG CBNcCreateHandler(PCBOX pcbox, PWND pwnd)
 {
     /*
      * Save the style bits so that we have them when we create the client area
@@ -67,9 +65,7 @@ LONG CBNcCreateHandler(
 * History:
 \***************************************************************************/
 
-LRESULT xxxCBCreateHandler(
-    PCBOX pcbox,
-    PWND pwnd)
+LRESULT xxxCBCreateHandler(PCBOX pcbox, PWND pwnd)
 {
     LONG lStyleT;
     RECT rcList;
@@ -92,16 +88,18 @@ LRESULT xxxCBCreateHandler(
      * and editcontrol windows.
      */
 
-    if (TestWF(pwnd, CBFDROPDOWNLIST) == LOBYTE(CBFDROPDOWNLIST)) {
+    if (TestWF(pwnd, CBFDROPDOWNLIST) == LOBYTE(CBFDROPDOWNLIST))
+    {
         pcbox->CBoxStyle = SDROPDOWNLIST;
         pcbox->fNoEdit = TRUE;
-    } else if (TestWF(pwnd, CBFDROPDOWN))
+    }
+    else if (TestWF(pwnd, CBFDROPDOWN))
         pcbox->CBoxStyle = SDROPDOWN;
     else
         pcbox->CBoxStyle = SSIMPLE;
 
     pcbox->fRtoLReading = (TestWF(pwnd, WEFRTLREADING) != 0);
-    pcbox->fRightAlign  = (TestWF(pwnd, WEFRIGHT) != 0);
+    pcbox->fRightAlign = (TestWF(pwnd, WEFRIGHT) != 0);
 
     if (TestWF(pwnd, CBFUPPERCASE))
         pcbox->fCase = UPPERCASE;
@@ -113,7 +111,8 @@ LRESULT xxxCBCreateHandler(
     // Listbox item flags.
     if (TestWF(pwnd, CBFOWNERDRAWVAR))
         pcbox->OwnerDraw = OWNERDRAWVAR;
-    if (TestWF(pwnd, CBFOWNERDRAWFIXED)) {
+    if (TestWF(pwnd, CBFOWNERDRAWFIXED))
+    {
         pcbox->OwnerDraw = OWNERDRAWFIXED;
     }
 
@@ -122,8 +121,8 @@ LRESULT xxxCBCreateHandler(
      */
     // Get control sizes.
     pcbox->cxCombo = pwnd->rcWindow.right - pwnd->rcWindow.left;
-    pcbox->cyDrop  = RECALC_CYDROP;
-    pcbox->cxDrop  = 0;
+    pcbox->cyDrop = RECALC_CYDROP;
+    pcbox->cxDrop = 0;
     xxxCBCalcControlRects(pcbox, &rcList);
 
     //
@@ -164,23 +163,22 @@ LRESULT xxxCBCreateHandler(
         lStyleT |= WS_BORDER;
 
     lExStyle = pwnd->ExStyle & (WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR);
-    hwndList = _CreateWindowEx(lExStyle |
-            ((pcbox->CBoxStyle & SDROPPABLE) ? WS_EX_TOOLWINDOW : WS_EX_CLIENTEDGE),
-            MAKEINTRESOURCE(gpsi->atomSysClass[ICLS_COMBOLISTBOX]), NULL, lStyleT,
-            rcList.left, rcList.top, rcList.right - rcList.left,
-            rcList.bottom - rcList.top,
-            HW(pwnd), (HMENU)CBLISTBOXID, KHANDLE_TO_HANDLE(pcbox->spwnd->hModule), NULL,
-            0);
+    hwndList = _CreateWindowEx(lExStyle | ((pcbox->CBoxStyle & SDROPPABLE) ? WS_EX_TOOLWINDOW : WS_EX_CLIENTEDGE),
+                               MAKEINTRESOURCE(gpsi->atomSysClass[ICLS_COMBOLISTBOX]), NULL, lStyleT, rcList.left,
+                               rcList.top, rcList.right - rcList.left, rcList.bottom - rcList.top, HW(pwnd),
+                               (HMENU)CBLISTBOXID, KHANDLE_TO_HANDLE(pcbox->spwnd->hModule), NULL, 0);
     Lock(&(pcbox->spwndList), ValidateHwnd(hwndList));
 
-    if (!pcbox->spwndList) {
+    if (!pcbox->spwndList)
+    {
         return -1;
     }
 
     /*
      * Create either the edit control or the static text rectangle.
      */
-    if (pcbox->fNoEdit) {
+    if (pcbox->fNoEdit)
+    {
 
         /*
          * No editcontrol so we will draw text directly into the combo box
@@ -193,7 +191,9 @@ LRESULT xxxCBCreateHandler(
          * Lock(&(pcbox->spwndEdit), pcbox->spwnd); - caused a 'catch-22'
          */
         pcbox->spwndEdit = pcbox->spwnd;
-    } else {
+    }
+    else
+    {
         DWORD dwCsFlags;
 
         lStyleT = WS_CHILD | WS_VISIBLE | ES_COMBOBOX | ES_NOHIDESEL;
@@ -214,19 +214,17 @@ LRESULT xxxCBCreateHandler(
         if (lExStyle & WS_EX_RIGHT)
             lStyleT |= ES_RIGHT;
 
-        hwndEdit = _CreateWindowEx(lExStyle,
-            MAKEINTRESOURCE(gpsi->atomSysClass[ICLS_EDIT]), NULL, lStyleT,
-            pcbox->editrc.left, pcbox->editrc.top,
-            pcbox->editrc.right - pcbox->editrc.left, pcbox->editrc.bottom -
-            pcbox->editrc.top, HW(pwnd), (HMENU)CBEDITID,
-            KHANDLE_TO_HANDLE(pcbox->spwnd->hModule), NULL,
-            dwCsFlags);
+        hwndEdit = _CreateWindowEx(lExStyle, MAKEINTRESOURCE(gpsi->atomSysClass[ICLS_EDIT]), NULL, lStyleT,
+                                   pcbox->editrc.left, pcbox->editrc.top, pcbox->editrc.right - pcbox->editrc.left,
+                                   pcbox->editrc.bottom - pcbox->editrc.top, HW(pwnd), (HMENU)CBEDITID,
+                                   KHANDLE_TO_HANDLE(pcbox->spwnd->hModule), NULL, dwCsFlags);
         Lock(&(pcbox->spwndEdit), ValidateHwnd(hwndEdit));
     }
     if (!pcbox->spwndEdit)
         return -1L;
 
-    if (pcbox->CBoxStyle & SDROPPABLE) {
+    if (pcbox->CBoxStyle & SDROPPABLE)
+    {
 
         NtUserShowWindow(hwndList, SW_HIDE);
         NtUserSetParent(hwndList, NULL);
@@ -254,7 +252,7 @@ void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList)
 {
     HDC hdc;
     HANDLE hOldFont = NULL;
-    int             dyEdit, dxEdit;
+    int dyEdit, dxEdit;
     MEASUREITEMSTRUCT mis;
     SIZE size;
     HWND hwnd = HWq(pcbox->spwnd);
@@ -268,7 +266,8 @@ void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList)
      * this will be useful if owner draw and this window is tall.
      */
     hdc = NtUserGetDC(hwnd);
-    if (pcbox->hFont) {
+    if (pcbox->hFont)
+    {
         hOldFont = SelectObject(hdc, pcbox->hFont);
     }
 
@@ -278,7 +277,8 @@ void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList)
     GetTextExtentPoint(hdc, szOneChar, 1, &size);
     dyEdit = size.cy + SYSMET(CYEDGE);
 
-    if (hOldFont) {
+    if (hOldFont)
+    {
         SelectObject(hdc, hOldFont);
     }
 
@@ -287,14 +287,18 @@ void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList)
      */
     NtUserReleaseDC(hwnd, hdc);
 
-    if (pcbox->OwnerDraw) {
+    if (pcbox->OwnerDraw)
+    {
         // This is an ownerdraw combo.  Have the owner tell us how tall this
         // item is.
         int iOwnerDrawHeight;
 
-        if (iOwnerDrawHeight = pcbox->editrc.bottom - pcbox->editrc.top) {
+        if (iOwnerDrawHeight = pcbox->editrc.bottom - pcbox->editrc.top)
+        {
             dyEdit = iOwnerDrawHeight;
-        } else {
+        }
+        else
+        {
             /*
              * No height has been defined yet for the static text window.  Send
              * a measure item message to the parent
@@ -316,7 +320,7 @@ void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList)
      * Set the initial width to be the combo box rect.  Later we will shorten it
      * if there is a dropdown button.
      */
-    pcbox->cyCombo = 2*SYSMET(CYFIXEDFRAME) + dyEdit;
+    pcbox->cyCombo = 2 * SYSMET(CYFIXEDFRAME) + dyEdit;
     dxEdit = pcbox->cxCombo - (2 * SYSMET(CXFIXEDFRAME));
 
     if (pcbox->cyDrop == RECALC_CYDROP)
@@ -339,22 +343,27 @@ void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList)
      */
 
     // Is there a button?
-    if (pcbox->CBoxStyle & SDROPPABLE) {
+    if (pcbox->CBoxStyle & SDROPPABLE)
+    {
         // Determine button's rectangle.
         pcbox->buttonrc.top = SYSMET(CYEDGE);
         pcbox->buttonrc.bottom = pcbox->cyCombo - SYSMET(CYEDGE);
-        if (pcbox->fRightAlign) {
-            pcbox->buttonrc.left  = SYSMET(CXFIXEDFRAME);
+        if (pcbox->fRightAlign)
+        {
+            pcbox->buttonrc.left = SYSMET(CXFIXEDFRAME);
             pcbox->buttonrc.right = pcbox->buttonrc.left + SYSMET(CXVSCROLL);
-        } else {
+        }
+        else
+        {
             pcbox->buttonrc.right = pcbox->cxCombo - SYSMET(CXEDGE);
-            pcbox->buttonrc.left  = pcbox->buttonrc.right - SYSMET(CXVSCROLL);
+            pcbox->buttonrc.left = pcbox->buttonrc.right - SYSMET(CXVSCROLL);
         }
 
         // Reduce the width of the edittext window to make room for the button.
         dxEdit = max(dxEdit - SYSMET(CXVSCROLL), 0);
-
-    } else {
+    }
+    else
+    {
 
         /*
          * No button so make the rectangle 0 so that a point in rect will always
@@ -366,21 +375,22 @@ void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList)
     /*
      * So now, the edit rect is really the item area.
      */
-    pcbox->editrc.left      = SYSMET(CXFIXEDFRAME);
-    pcbox->editrc.right     = pcbox->editrc.left + dxEdit;
-    pcbox->editrc.top       = SYSMET(CYFIXEDFRAME);
-    pcbox->editrc.bottom    = pcbox->editrc.top + dyEdit;
+    pcbox->editrc.left = SYSMET(CXFIXEDFRAME);
+    pcbox->editrc.right = pcbox->editrc.left + dxEdit;
+    pcbox->editrc.top = SYSMET(CYFIXEDFRAME);
+    pcbox->editrc.bottom = pcbox->editrc.top + dyEdit;
 
     // Is there a right-aligned button?
-    if ((pcbox->CBoxStyle & SDROPPABLE) && (pcbox->fRightAlign)) {
-        pcbox->editrc.right   = pcbox->cxCombo - SYSMET(CXEDGE);
-        pcbox->editrc.left    = pcbox->editrc.right - dxEdit;
+    if ((pcbox->CBoxStyle & SDROPPABLE) && (pcbox->fRightAlign))
+    {
+        pcbox->editrc.right = pcbox->cxCombo - SYSMET(CXEDGE);
+        pcbox->editrc.left = pcbox->editrc.right - dxEdit;
     }
 
-    lprcList->left          = 0;
-    lprcList->top           = pcbox->cyCombo;
-    lprcList->right         = max(pcbox->cxDrop, pcbox->cxCombo);
-    lprcList->bottom        = pcbox->cyCombo + pcbox->cyDrop;
+    lprcList->left = 0;
+    lprcList->top = pcbox->cyCombo;
+    lprcList->right = max(pcbox->cxDrop, pcbox->cxCombo);
+    lprcList->bottom = pcbox->cyCombo + pcbox->cyDrop;
 }
 
 /***************************************************************************\
@@ -391,30 +401,31 @@ void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList)
 * History:
 \***************************************************************************/
 
-void xxxCBNcDestroyHandler(
-    PWND pwnd,
-    PCBOX pcbox)
+void xxxCBNcDestroyHandler(PWND pwnd, PCBOX pcbox)
 {
     CheckLock(pwnd);
 
     /*
      * If there is no pcbox, there is nothing to clean up.
      */
-    if (pcbox != NULL) {
+    if (pcbox != NULL)
+    {
 
         /*
          * [msadek, 02/04/2001] fInDestroy is used to prevent oing through destruction code twice.
          * This code happen when apps like Delphi 5 tries to destroy the combobox again during processing of 
          * WM_PARENTNOTIFY in the NtUserDestroyWindow call (below). Thus, we end up freeing the same lookaside entry twice.
          * Windows Bugs bug# 266084
-         */ 
-        if (!pcbox->fInDestroy) {    
+         */
+        if (!pcbox->fInDestroy)
+        {
             pcbox->fInDestroy = TRUE;
             /*
              * Destroy the list box here so that it'll send WM_DELETEITEM messages
              * before the combo box turns into a zombie.
              */
-            if (pcbox->spwndList != NULL) {
+            if (pcbox->spwndList != NULL)
+            {
                 NtUserDestroyWindow(HWq(pcbox->spwndList));
                 Unlock(&pcbox->spwndList);
             }
@@ -426,7 +437,8 @@ void xxxCBNcDestroyHandler(
              * If there is no editcontrol, spwndEdit is the combobox window which
              * isn't locked (that would have caused a 'catch-22').
              */
-            if (pwnd != pcbox->spwndEdit) {
+            if (pwnd != pcbox->spwndEdit)
+            {
                 Unlock(&pcbox->spwndEdit);
             }
 
@@ -435,7 +447,8 @@ void xxxCBNcDestroyHandler(
              */
             FreeLookasideEntry(&ComboboxLookaside, KPVOID_TO_PVOID(pcbox));
         }
-        else {
+        else
+        {
             RIPMSG1(RIP_WARNING, "Trying to destroy the same combobox %x twice. Ignoring", pcbox);
         }
     }
@@ -452,10 +465,7 @@ void xxxCBNcDestroyHandler(
 * History:
 \***************************************************************************/
 
-void xxxCBSetFontHandler(
-    PCBOX pcbox,
-    HANDLE hFont,
-    BOOL fRedraw)
+void xxxCBSetFontHandler(PCBOX pcbox, HANDLE hFont, BOOL fRedraw)
 {
     TL tlpwndEdit;
     TL tlpwndList;
@@ -467,7 +477,8 @@ void xxxCBSetFontHandler(
 
     pcbox->hFont = hFont;
 
-    if (!pcbox->fNoEdit && pcbox->spwndEdit) {
+    if (!pcbox->fNoEdit && pcbox->spwndEdit)
+    {
         SendMessageWorker(pcbox->spwndEdit, WM_SETFONT, (WPARAM)hFont, FALSE, FALSE);
     }
 
@@ -476,9 +487,10 @@ void xxxCBSetFontHandler(
     // Recalculate the layout of controls.  This will hide the listbox also.
     xxxCBPosition(pcbox);
 
-    if (fRedraw) {
+    if (fRedraw)
+    {
         NtUserInvalidateRect(HWq(pcbox->spwnd), NULL, TRUE);
-// LATER UpdateWindow(HW(pcbox->spwnd));
+        // LATER UpdateWindow(HW(pcbox->spwnd));
     }
 
     ThreadUnlock(&tlpwndList);
@@ -494,16 +506,15 @@ void xxxCBSetFontHandler(
 * 06-27-91 DarrinM      Ported from Win 3.1.
 \***************************************************************************/
 
-LONG xxxCBSetEditItemHeight(
-    PCBOX pcbox,
-    int dyEdit)
+LONG xxxCBSetEditItemHeight(PCBOX pcbox, int dyEdit)
 {
     TL tlpwndEdit;
     TL tlpwndList;
 
     CheckLock(pcbox->spwnd);
 
-    if (dyEdit > 255) {
+    if (dyEdit > 255)
+    {
         RIPERR0(ERROR_INVALID_EDIT_HEIGHT, RIP_VERBOSE, "");
         return CB_ERR;
     }
@@ -511,7 +522,8 @@ LONG xxxCBSetEditItemHeight(
     pcbox->editrc.bottom = pcbox->editrc.top + dyEdit;
     pcbox->cyCombo = pcbox->editrc.bottom + SYSMET(CYFIXEDFRAME);
 
-    if (pcbox->CBoxStyle & SDROPPABLE) {
+    if (pcbox->CBoxStyle & SDROPPABLE)
+    {
         pcbox->buttonrc.bottom = pcbox->cyCombo - SYSMET(CYEDGE);
     }
 
@@ -525,34 +537,37 @@ LONG xxxCBSetEditItemHeight(
      * the height on a NCCREATE; same as not having
      * HW instead of HWq but we don't go to the kernel.
      */
-    if (!pcbox->fNoEdit && pcbox->spwndEdit) {
+    if (!pcbox->fNoEdit && pcbox->spwndEdit)
+    {
         NtUserMoveWindow(HWq(pcbox->spwndEdit), pcbox->editrc.left, pcbox->editrc.top,
-            pcbox->editrc.right-pcbox->editrc.left, dyEdit, TRUE);
+                         pcbox->editrc.right - pcbox->editrc.left, dyEdit, TRUE);
     }
 
     /*
      * Reposition the list and combobox windows.
      */
-    if (pcbox->CBoxStyle == SSIMPLE) {
-        if (pcbox->spwndList != 0) {
-            NtUserMoveWindow(HWq(pcbox->spwndList), 0, pcbox->cyCombo, pcbox->cxCombo,
-                pcbox->cyDrop, FALSE);
+    if (pcbox->CBoxStyle == SSIMPLE)
+    {
+        if (pcbox->spwndList != 0)
+        {
+            NtUserMoveWindow(HWq(pcbox->spwndList), 0, pcbox->cyCombo, pcbox->cxCombo, pcbox->cyDrop, FALSE);
 
-            NtUserSetWindowPos(HWq(pcbox->spwnd), HWND_TOP, 0, 0,
-                pcbox->cxCombo, pcbox->cyCombo +
-                pcbox->spwndList->rcWindow.bottom - pcbox->spwndList->rcWindow.top,
-                SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+            NtUserSetWindowPos(HWq(pcbox->spwnd), HWND_TOP, 0, 0, pcbox->cxCombo,
+                               pcbox->cyCombo + pcbox->spwndList->rcWindow.bottom - pcbox->spwndList->rcWindow.top,
+                               SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
-    } else {
-        if (pcbox->spwndList != NULL) {
+    }
+    else
+    {
+        if (pcbox->spwndList != NULL)
+        {
             NtUserMoveWindow(HWq(pcbox->spwndList), pcbox->spwnd->rcWindow.left,
-                pcbox->spwnd->rcWindow.top + pcbox->cyCombo,
-                max(pcbox->cxDrop, pcbox->cxCombo), pcbox->cyDrop, FALSE);
+                             pcbox->spwnd->rcWindow.top + pcbox->cyCombo, max(pcbox->cxDrop, pcbox->cxCombo),
+                             pcbox->cyDrop, FALSE);
         }
 
-        NtUserSetWindowPos(HWq(pcbox->spwnd), HWND_TOP, 0, 0,
-            pcbox->cxCombo, pcbox->cyCombo,
-            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+        NtUserSetWindowPos(HWq(pcbox->spwnd), HWND_TOP, 0, 0, pcbox->cxCombo, pcbox->cyCombo,
+                           SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     ThreadUnlock(&tlpwndList);
@@ -572,8 +587,7 @@ LONG xxxCBSetEditItemHeight(
 * History:
 \***************************************************************************/
 
-void xxxCBSizeHandler(
-    PCBOX pcbox)
+void xxxCBSizeHandler(PCBOX pcbox)
 {
     CheckLock(pcbox->spwnd);
 
@@ -605,13 +619,13 @@ void xxxCBPosition(PCBOX pcbox)
     // Calculate placement of components--button, item, list
     xxxCBCalcControlRects(pcbox, &rcList);
 
-    if (!pcbox->fNoEdit && pcbox->spwndEdit) {
+    if (!pcbox->fNoEdit && pcbox->spwndEdit)
+    {
         TL tlpwndEdit;
 
         ThreadLock(pcbox->spwndEdit, &tlpwndEdit);
         NtUserMoveWindow(HWq(pcbox->spwndEdit), pcbox->editrc.left, pcbox->editrc.top,
-            pcbox->editrc.right - pcbox->editrc.left,
-            pcbox->editrc.bottom - pcbox->editrc.top, TRUE);
+                         pcbox->editrc.right - pcbox->editrc.left, pcbox->editrc.bottom - pcbox->editrc.top, TRUE);
         ThreadUnlock(&tlpwndEdit);
     }
 
@@ -634,8 +648,7 @@ void xxxCBSetDroppedSize(PCBOX pcbox, LPRECT lprc)
     xxxCBHideListBoxWindow(pcbox, FALSE, FALSE);
 
     ThreadLock(pcbox->spwndList, &tlpwndList);
-    NtUserMoveWindow(HWq(pcbox->spwndList), lprc->left, lprc->top,
-        lprc->right - lprc->left, lprc->bottom - lprc->top, FALSE);
+    NtUserMoveWindow(HWq(pcbox->spwndList), lprc->left, lprc->top, lprc->right - lprc->left, lprc->bottom - lprc->top,
+                     FALSE);
     ThreadUnlock(&tlpwndList);
-
 }

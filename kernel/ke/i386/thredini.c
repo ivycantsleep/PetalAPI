@@ -28,51 +28,42 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 //
 // The following assert macros are used to check that an input object is
 // really the proper type.
 //
 
-#define ASSERT_PROCESS(E) {                    \
-    ASSERT((E)->Header.Type == ProcessObject); \
-}
+#define ASSERT_PROCESS(E)                          \
+    {                                              \
+        ASSERT((E)->Header.Type == ProcessObject); \
+    }
 
-#define ASSERT_THREAD(E) {                    \
-    ASSERT((E)->Header.Type == ThreadObject); \
-}
+#define ASSERT_THREAD(E)                          \
+    {                                             \
+        ASSERT((E)->Header.Type == ThreadObject); \
+    }
 
 //
 // Our notion of alignment is different, so force use of ours
 //
-#undef  ALIGN_UP
-#undef  ALIGN_DOWN
-#define ALIGN_DOWN(address,amt) ((ULONG)(address) & ~(( amt ) - 1))
-#define ALIGN_UP(address,amt) (ALIGN_DOWN( (address + (amt) - 1), (amt) ))
+#undef ALIGN_UP
+#undef ALIGN_DOWN
+#define ALIGN_DOWN(address, amt) ((ULONG)(address) & ~((amt) - 1))
+#define ALIGN_UP(address, amt) (ALIGN_DOWN((address + (amt) - 1), (amt)))
 
 //
 // The function prototype for the special APC we use to set the
 // hardware alignment state for a thread
 //
 
-VOID
-KepSetAlignmentSpecialApc(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    );
+VOID KepSetAlignmentSpecialApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                               IN PVOID *SystemArgument1, IN PVOID *SystemArgument2);
 
-
-VOID
-KiInitializeContextThread (
-    IN PKTHREAD Thread,
-    IN PKSYSTEM_ROUTINE SystemRoutine,
-    IN PKSTART_ROUTINE StartRoutine OPTIONAL,
-    IN PVOID StartContext OPTIONAL,
-    IN PCONTEXT ContextFrame OPTIONAL
-    )
+
+VOID KiInitializeContextThread(IN PKTHREAD Thread, IN PKSYSTEM_ROUTINE SystemRoutine,
+                               IN PKSTART_ROUTINE StartRoutine OPTIONAL, IN PVOID StartContext OPTIONAL,
+                               IN PCONTEXT ContextFrame OPTIONAL)
 
 /*++
 
@@ -121,17 +112,18 @@ Return Value:
     PULONG PStartRoutine;
     PULONG PStartContext;
     PULONG PUserContextFlag;
-    ULONG  ContextFlags;
+    ULONG ContextFlags;
     CONTEXT Context2;
     PCONTEXT ContextFrame2 = NULL;
-    PFXSAVE_FORMAT   PFxSaveArea;
+    PFXSAVE_FORMAT PFxSaveArea;
 
     //
     // If a context frame is specified, then initialize a trap frame and
     // and an exception frame with the specified user mode context.
     //
 
-    if (ARGUMENT_PRESENT(ContextFrame)) {
+    if (ARGUMENT_PRESENT(ContextFrame))
+    {
 
         RtlCopyMemory(&Context2, ContextFrame, sizeof(CONTEXT));
         ContextFrame2 = &Context2;
@@ -141,42 +133,48 @@ Return Value:
         // The 80387 save area is at the very base of the kernel stack.
         //
 
-        NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Thread->InitialStack) -
-                    sizeof(FX_SAVE_AREA)));
+        NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Thread->InitialStack) - sizeof(FX_SAVE_AREA)));
 
         //
         // Load up an initial NPX state.
         //
 
-        if (KeI386FxsrPresent == TRUE) {
+        if (KeI386FxsrPresent == TRUE)
+        {
             PFxSaveArea = (PFXSAVE_FORMAT)ContextFrame2->ExtendedRegisters;
-    
-            PFxSaveArea->ControlWord   = 0x27f;  // like fpinit but 64bit mode
-            PFxSaveArea->StatusWord    = 0;
-            PFxSaveArea->TagWord       = 0;
-            PFxSaveArea->ErrorOffset   = 0;
+
+            PFxSaveArea->ControlWord = 0x27f; // like fpinit but 64bit mode
+            PFxSaveArea->StatusWord = 0;
+            PFxSaveArea->TagWord = 0;
+            PFxSaveArea->ErrorOffset = 0;
             PFxSaveArea->ErrorSelector = 0;
-            PFxSaveArea->DataOffset    = 0;
-            PFxSaveArea->DataSelector  = 0;
-            PFxSaveArea->MXCsr         = 0x1f80; // mask all the exceptions
-        } else {
-            ContextFrame2->FloatSave.ControlWord   = 0x27f;  // like fpinit but 64bit mode
-            ContextFrame2->FloatSave.StatusWord    = 0;
-            ContextFrame2->FloatSave.TagWord       = 0xffff;
-            ContextFrame2->FloatSave.ErrorOffset   = 0;
+            PFxSaveArea->DataOffset = 0;
+            PFxSaveArea->DataSelector = 0;
+            PFxSaveArea->MXCsr = 0x1f80; // mask all the exceptions
+        }
+        else
+        {
+            ContextFrame2->FloatSave.ControlWord = 0x27f; // like fpinit but 64bit mode
+            ContextFrame2->FloatSave.StatusWord = 0;
+            ContextFrame2->FloatSave.TagWord = 0xffff;
+            ContextFrame2->FloatSave.ErrorOffset = 0;
             ContextFrame2->FloatSave.ErrorSelector = 0;
-            ContextFrame2->FloatSave.DataOffset    = 0;
-            ContextFrame2->FloatSave.DataSelector  = 0;
+            ContextFrame2->FloatSave.DataOffset = 0;
+            ContextFrame2->FloatSave.DataSelector = 0;
         }
 
 
-        if (KeI386NpxPresent) {
+        if (KeI386NpxPresent)
+        {
             ContextFrame2->FloatSave.Cr0NpxState = 0;
             NpxFrame->Cr0NpxState = 0;
             NpxFrame->NpxSavedCpu = 0;
-            if (KeI386FxsrPresent == TRUE) {
+            if (KeI386FxsrPresent == TRUE)
+            {
                 ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
-            } else {
+            }
+            else
+            {
                 ContextFlags |= CONTEXT_FLOATING_POINT;
             }
 
@@ -186,8 +184,9 @@ Return Value:
 
             Thread->NpxState = NPX_STATE_NOT_LOADED;
             Thread->NpxIrql = PASSIVE_LEVEL;
-
-        } else {
+        }
+        else
+        {
             NpxFrame->Cr0NpxState = CR0_EM;
 
             //
@@ -235,17 +234,14 @@ Return Value:
         PStartRoutine = PStartContext - 1;
         PSystemRoutine = PStartRoutine - 1;
 
-        SwitchFrame = (PKSWITCHFRAME)((PUCHAR)PSystemRoutine -
-                                    sizeof(KSWITCHFRAME));
+        SwitchFrame = (PKSWITCHFRAME)((PUCHAR)PSystemRoutine - sizeof(KSWITCHFRAME));
 
         //
         // Copy information from the specified context frame to the trap and
         // exception frames.
         //
 
-        KeContextToKframes(TrFrame, NULL, ContextFrame2,
-                           ContextFrame2->ContextFlags | ContextFlags,
-                           UserMode);
+        KeContextToKframes(TrFrame, NULL, ContextFrame2, ContextFrame2->ContextFlags | ContextFlags, UserMode);
 
         TrFrame->HardwareSegSs |= RPL_MASK;
         TrFrame->SegDs |= RPL_MASK;
@@ -279,9 +275,9 @@ Return Value:
         //
 
         Thread->PreviousMode = UserMode;
-
-
-    } else {
+    }
+    else
+    {
 
         //
         // Dummy floating save area.  Kernel threads don't have or use
@@ -289,20 +285,22 @@ Return Value:
         // consistent.
         //
 
-        NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Thread->InitialStack) -
-                    sizeof(FX_SAVE_AREA)));
+        NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Thread->InitialStack) - sizeof(FX_SAVE_AREA)));
 
         //
         // Load up an initial NPX state.
         //
         RtlZeroMemory((PVOID)NpxFrame, sizeof(FX_SAVE_AREA));
 
-        if (KeI386FxsrPresent == TRUE) {
-            NpxFrame->U.FxArea.ControlWord = 0x27f;//like fpinit but 64bit mode
-            NpxFrame->U.FxArea.MXCsr       = 0x1f80;// mask all the exceptions
-        } else {
-            NpxFrame->U.FnArea.ControlWord  = 0x27f;//like fpinit but 64bit mode
-            NpxFrame->U.FnArea.TagWord      = 0xffff;
+        if (KeI386FxsrPresent == TRUE)
+        {
+            NpxFrame->U.FxArea.ControlWord = 0x27f; //like fpinit but 64bit mode
+            NpxFrame->U.FxArea.MXCsr = 0x1f80;      // mask all the exceptions
+        }
+        else
+        {
+            NpxFrame->U.FnArea.ControlWord = 0x27f; //like fpinit but 64bit mode
+            NpxFrame->U.FnArea.TagWord = 0xffff;
         }
 
         //
@@ -324,8 +322,7 @@ Return Value:
         PStartRoutine = PStartContext - 1;
         PSystemRoutine = PStartRoutine - 1;
 
-        SwitchFrame = (PKSWITCHFRAME)((PUCHAR)PSystemRoutine -
-                                        sizeof(KSWITCHFRAME));
+        SwitchFrame = (PKSWITCHFRAME)((PUCHAR)PSystemRoutine - sizeof(KSWITCHFRAME));
 
 
         //
@@ -380,18 +377,15 @@ Return Value:
     // Set the initial kernel stack pointer.
     //
 
-//DbgPrint("KiInitializeContextThread Thread %08x  SwitchFrame %08x\n", Thread, SwitchFrame);
-//DbgPrint("PSystemRoutine %08x  PStartRoutine %08x  PStartContext %08x\n", *PSystemRoutine, *PStartRoutine, *PStartContext);
+    //DbgPrint("KiInitializeContextThread Thread %08x  SwitchFrame %08x\n", Thread, SwitchFrame);
+    //DbgPrint("PSystemRoutine %08x  PStartRoutine %08x  PStartContext %08x\n", *PSystemRoutine, *PStartRoutine, *PStartContext);
 
     Thread->KernelStack = (PVOID)SwitchFrame;
     return;
 }
-
+
 BOOLEAN
-KeSetAutoAlignmentProcess (
-    IN PKPROCESS Process,
-    IN BOOLEAN Enable
-    )
+KeSetAutoAlignmentProcess(IN PKPROCESS Process, IN BOOLEAN Enable)
 
 /*++
 
@@ -447,12 +441,9 @@ Return Value:
     KiUnlockDispatcherDatabase(OldIrql);
     return Previous;
 }
-
+
 BOOLEAN
-KeSetAutoAlignmentThread (
-    IN PKTHREAD Thread,
-    IN BOOLEAN Enable
-    )
+KeSetAutoAlignmentThread(IN PKTHREAD Thread, IN BOOLEAN Enable)
 
 /*++
 
@@ -560,7 +551,7 @@ Return Value:
     ExFreePool(Event);
 #endif
 
-    return(Previous);
+    return (Previous);
 }
 
 #if 0

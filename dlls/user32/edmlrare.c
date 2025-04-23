@@ -24,8 +24,7 @@
 * History:
 \***************************************************************************/
 
-BOOL MLInsertCrCrLf(
-    PED ped)
+BOOL MLInsertCrCrLf(PED ped)
 {
     ICH dch;
     ICH li;
@@ -33,7 +32,8 @@ BOOL MLInsertCrCrLf(
     unsigned char *pchText;
     unsigned char *pchTextNew;
 
-    if (!ped->fWrap || !ped->cch) {
+    if (!ped->fWrap || !ped->cch)
+    {
 
         /*
          * There are no soft line breaks if word-wrapping is off or if no chars
@@ -47,7 +47,8 @@ BOOL MLInsertCrCrLf(
      */
     dch = 3 * ped->cLines;
 
-    if (!LOCALREALLOC(ped->hText, (ped->cch + dch) * ped->cbChar, 0, ped->hInstance, NULL)) {
+    if (!LOCALREALLOC(ped->hText, (ped->cch + dch) * ped->cbChar, 0, ped->hInstance, NULL))
+    {
         ECNotifyParent(ped, EN_ERRSPACE);
         return FALSE;
     }
@@ -76,8 +77,10 @@ BOOL MLInsertCrCrLf(
      * Now copy chars from pchText down to pchTextNew and insert CRCRLF at soft
      * line breaks.
      */
-    if (ped->fAnsi) {
-        for (li = 0; li < ped->cLines - 1; li++) {
+    if (ped->fAnsi)
+    {
+        for (li = 0; li < ped->cLines - 1; li++)
+        {
             lineSize = ped->chLines[li + 1] - ped->chLines[li];
             memmove(pchTextNew, pchText, lineSize);
             pchTextNew += lineSize;
@@ -87,7 +90,8 @@ BOOL MLInsertCrCrLf(
              * If last character in newly copied line is not a line feed, then we
              * need to add the CR CR LF triple to the end
              */
-            if (*(pchTextNew - 1) != 0x0A) {
+            if (*(pchTextNew - 1) != 0x0A)
+            {
                 *pchTextNew++ = 0x0D;
                 *pchTextNew++ = 0x0D;
                 *pchTextNew++ = 0x0A;
@@ -99,10 +103,13 @@ BOOL MLInsertCrCrLf(
          * Now move the last line up. It won't have any line breaks in it...
          */
         memmove(pchTextNew, pchText, ped->cch - ped->chLines[ped->cLines - 1]);
-    } else { //!fAnsi
+    }
+    else
+    { //!fAnsi
         LPWSTR pwchTextNew = (LPWSTR)pchTextNew;
 
-        for (li = 0; li < ped->cLines - 1; li++) {
+        for (li = 0; li < ped->cLines - 1; li++)
+        {
             lineSize = ped->chLines[li + 1] - ped->chLines[li];
             memmove(pwchTextNew, pchText, lineSize * sizeof(WCHAR));
             pwchTextNew += lineSize;
@@ -112,7 +119,8 @@ BOOL MLInsertCrCrLf(
              * If last character in newly copied line is not a line feed, then we
              * need to add the CR CR LF triple to the end
              */
-            if (*(pwchTextNew - 1) != 0x0A) {
+            if (*(pwchTextNew - 1) != 0x0A)
+            {
                 *pwchTextNew++ = 0x0D;
                 *pwchTextNew++ = 0x0D;
                 *pwchTextNew++ = 0x0A;
@@ -123,13 +131,13 @@ BOOL MLInsertCrCrLf(
         /*
          * Now move the last line up. It won't have any line breaks in it...
          */
-        memmove(pwchTextNew, pchText,
-            (ped->cch - ped->chLines[ped->cLines - 1]) * sizeof(WCHAR));
+        memmove(pwchTextNew, pchText, (ped->cch - ped->chLines[ped->cLines - 1]) * sizeof(WCHAR));
     }
 
     ECUnlock(ped);
 
-    if (dch) {
+    if (dch)
+    {
         /*
          * Update number of characters in text handle
          */
@@ -156,43 +164,48 @@ BOOL MLInsertCrCrLf(
 * History:
 \***************************************************************************/
 
-void MLStripCrCrLf(
-    PED ped)
+void MLStripCrCrLf(PED ped)
 {
-    if (ped->cch) {
-        if (ped->fAnsi) {
+    if (ped->cch)
+    {
+        if (ped->fAnsi)
+        {
             unsigned char *pchSrc;
             unsigned char *pchDst;
             unsigned char *pchLast;
 
             pchSrc = pchDst = ECLock(ped);
             pchLast = pchSrc + ped->cch;
-            while (pchSrc < pchLast) {
-                if (   (pchSrc[0] == 0x0D)
-                    && (pchSrc[1] == 0x0D)
-                    && (pchSrc[2] == 0x0A)
-                ) {
+            while (pchSrc < pchLast)
+            {
+                if ((pchSrc[0] == 0x0D) && (pchSrc[1] == 0x0D) && (pchSrc[2] == 0x0A))
+                {
                     pchSrc += 3;
                     ped->cch -= 3;
-                } else {
+                }
+                else
+                {
                     *pchDst++ = *pchSrc++;
                 }
             }
-        } else { // !fAnsi
+        }
+        else
+        { // !fAnsi
             LPWSTR pwchSrc;
             LPWSTR pwchDst;
             LPWSTR pwchLast;
 
             pwchSrc = pwchDst = (LPWSTR)ECLock(ped);
             pwchLast = pwchSrc + ped->cch;
-            while (pwchSrc < pwchLast) {
-                if (   (pwchSrc[0] == 0x0D)
-                    && (pwchSrc[1] == 0x0D)
-                    && (pwchSrc[2] == 0x0A)
-                ) {
+            while (pwchSrc < pwchLast)
+            {
+                if ((pwchSrc[0] == 0x0D) && (pwchSrc[1] == 0x0D) && (pwchSrc[2] == 0x0A))
+                {
                     pwchSrc += 3;
                     ped->cch -= 3;
-                } else {
+                }
+                else
+                {
                     *pwchDst++ = *pwchSrc++;
                 }
             }
@@ -203,7 +216,7 @@ void MLStripCrCrLf(
          * Make sure we don't have any values past the last character
          */
         if (ped->ichCaret > ped->cch)
-            ped->ichCaret  = ped->cch;
+            ped->ichCaret = ped->cch;
         if (ped->ichMinSel > ped->cch)
             ped->ichMinSel = ped->cch;
         if (ped->ichMaxSel > ped->cch)
@@ -219,17 +232,15 @@ void MLStripCrCrLf(
 * History:
 \***************************************************************************/
 
-void MLSetHandle(
-    PED ped,
-    HANDLE hNewText)
+void MLSetHandle(PED ped, HANDLE hNewText)
 {
     ICH newCch;
 
-    ped->cch = ped->cchAlloc =
-            LOCALSIZE(ped->hText = hNewText, ped->hInstance) / ped->cbChar;
+    ped->cch = ped->cchAlloc = LOCALSIZE(ped->hText = hNewText, ped->hInstance) / ped->cbChar;
     ped->fEncoded = FALSE;
 
-    if (ped->cch) {
+    if (ped->cch)
+    {
 
         /*
          * We have to do it this way in case the app gives us a zero size handle
@@ -246,7 +257,7 @@ void MLSetHandle(
     /*
      * We do this LocalReAlloc in case the app changed the size of the handle
      */
-    if (LOCALREALLOC(ped->hText, newCch*ped->cbChar, 0, ped->hInstance, NULL))
+    if (LOCALREALLOC(ped->hText, newCch * ped->cbChar, 0, ped->hInstance, NULL))
         ped->cchAlloc = newCch;
 
     ECResetTextInfo(ped);
@@ -263,19 +274,16 @@ void MLSetHandle(
 * History:
 \***************************************************************************/
 
-LONG MLGetLine(
-    PED ped,
-    ICH lineNumber, //WASDWORD
-    ICH maxCchToCopy,
-    LPSTR lpBuffer)
+LONG MLGetLine(PED ped,
+               ICH lineNumber, //WASDWORD
+               ICH maxCchToCopy, LPSTR lpBuffer)
 {
     PSTR pText;
     ICH cchLen;
 
-    if (lineNumber > ped->cLines - 1) {
-        RIPERR1(ERROR_INVALID_PARAMETER,
-                RIP_WARNING,
-                "Invalid parameter \"lineNumber\" (%ld) to MLGetLine",
+    if (lineNumber > ped->cLines - 1)
+    {
+        RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "Invalid parameter \"lineNumber\" (%ld) to MLGetLine",
                 lineNumber);
 
         return 0L;
@@ -284,10 +292,10 @@ LONG MLGetLine(
     cchLen = MLLine(ped, lineNumber);
     maxCchToCopy = min(cchLen, maxCchToCopy);
 
-    if (maxCchToCopy) {
-        pText = ECLock(ped) +
-                ped->chLines[lineNumber] * ped->cbChar;
-        memmove(lpBuffer, pText, maxCchToCopy*ped->cbChar);
+    if (maxCchToCopy)
+    {
+        pText = ECLock(ped) + ped->chLines[lineNumber] * ped->cbChar;
+        memmove(lpBuffer, pText, maxCchToCopy * ped->cbChar);
         ECUnlock(ped);
     }
 
@@ -303,19 +311,18 @@ LONG MLGetLine(
 * History:
 \***************************************************************************/
 
-ICH MLLineIndex(
-    PED ped,
-    ICH iLine) //WASINT
+ICH MLLineIndex(PED ped,
+                ICH iLine) //WASINT
 {
     if (iLine == -1)
         iLine = ped->iCaretLine;
-    if (iLine < ped->cLines) {
+    if (iLine < ped->cLines)
+    {
         return ped->chLines[iLine];
-    } else {
-        RIPERR1(ERROR_INVALID_PARAMETER,
-                RIP_WARNING,
-                "Invalid parameter \"iLine\" (%ld) to MLLineIndex",
-                iLine);
+    }
+    else
+    {
+        RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "Invalid parameter \"iLine\" (%ld) to MLLineIndex", iLine);
 
         return (ICH)-1;
     }
@@ -331,9 +338,7 @@ ICH MLLineIndex(
 * History:
 \***************************************************************************/
 
-ICH MLLineLength(
-    PED ped,
-    ICH ich)
+ICH MLLineLength(PED ped, ICH ich)
 {
     ICH il1, il2;
     ICH temp;
@@ -365,15 +370,12 @@ ICH MLLineLength(
 * History:
 \***************************************************************************/
 
-void MLSetSelection(
-    PED  ped,
-    BOOL fDoNotScrollCaret,
-    ICH  ichMinSel,
-    ICH  ichMaxSel)
+void MLSetSelection(PED ped, BOOL fDoNotScrollCaret, ICH ichMinSel, ICH ichMaxSel)
 {
     HDC hdc;
 
-    if (ichMinSel == 0xFFFFFFFF) {
+    if (ichMinSel == 0xFFFFFFFF)
+    {
 
         /*
          * Set no selection if we specify -1
@@ -394,13 +396,14 @@ void MLSetSelection(
     // We check ped->fDBCS and ped->fAnsi though ECAdjustIch checks these bits
     // at first. We're worrying about the overhead of ECLock and ECUnlock.
     //
-    if ( ped->fDBCS && ped->fAnsi ) {
+    if (ped->fDBCS && ped->fAnsi)
+    {
 
         PSTR pText;
 
         pText = ECLock(ped);
-        ichMinSel = ECAdjustIch( ped, pText, ichMinSel );
-        ichMaxSel = ECAdjustIch( ped, pText, ichMaxSel );
+        ichMinSel = ECAdjustIch(ped, pText, ichMinSel);
+        ichMaxSel = ECAdjustIch(ped, pText, ichMaxSel);
         ECUnlock(ped);
     }
 #endif // FE_SB
@@ -428,7 +431,7 @@ void MLSetSelection(
     /*
      * Extra parameter specified interim character mode
      */
-    MLEnsureCaretVisible(ped,NULL);
+    MLEnsureCaretVisible(ped, NULL);
 #else
     if (!fDoNotScrollCaret)
         MLEnsureCaretVisible(ped);
@@ -455,60 +458,69 @@ void MLSetSelection(
 * History:
 \***************************************************************************/
 
-BOOL MLSetTabStops(
-    PED ped,
-    int nTabPos,
-    LPINT lpTabStops)
+BOOL MLSetTabStops(PED ped, int nTabPos, LPINT lpTabStops)
 {
     int *pTabStops;
 
     /*
      * Check if tab positions already exist
      */
-    if (!ped->pTabStops) {
+    if (!ped->pTabStops)
+    {
 
         /*
          * Check if the caller wants the new tab positions
          */
-        if (nTabPos) {
+        if (nTabPos)
+        {
 
             /*
              * Allocate the array of tab stops
              */
-            if (!(pTabStops = (LPINT)UserLocalAlloc(HEAP_ZERO_MEMORY, (nTabPos + 1) * sizeof(int)))) {
+            if (!(pTabStops = (LPINT)UserLocalAlloc(HEAP_ZERO_MEMORY, (nTabPos + 1) * sizeof(int))))
+            {
                 return FALSE;
             }
-        } else {
+        }
+        else
+        {
             return TRUE; /* No stops then and no stops now! */
         }
-    } else {
+    }
+    else
+    {
 
         /*
          * Check if the caller wants the new tab positions
          */
-        if (nTabPos) {
+        if (nTabPos)
+        {
 
             /*
              * Check if the number of tab positions is different
              */
-            if (ped->pTabStops[0] != nTabPos) {
+            if (ped->pTabStops[0] != nTabPos)
+            {
 
                 /*
                  * Yes! So ReAlloc to new size
                  */
-                if (!(pTabStops = (LPINT)UserLocalReAlloc(ped->pTabStops,
-                        (nTabPos + 1) * sizeof(int), 0)))
+                if (!(pTabStops = (LPINT)UserLocalReAlloc(ped->pTabStops, (nTabPos + 1) * sizeof(int), 0)))
                     return FALSE;
-            } else {
+            }
+            else
+            {
                 pTabStops = ped->pTabStops;
             }
-        } else {
+        }
+        else
+        {
 
             /*
              * Caller wants to remove all the tab stops; So, release
              */
             if (!UserLocalFree(ped->pTabStops))
-                return FALSE;  /* Failure */
+                return FALSE; /* Failure */
             ped->pTabStops = NULL;
             goto RedrawAndReturn;
         }
@@ -520,7 +532,8 @@ BOOL MLSetTabStops(
      */
     ped->pTabStops = pTabStops;
     *pTabStops++ = nTabPos; /* First element contains the count */
-    while (nTabPos--) {
+    while (nTabPos--)
+    {
 
         /*
          * aveCharWidth must be used instead of cxSysCharWidth.
@@ -553,15 +566,15 @@ RedrawAndReturn:
 * History:
 \***************************************************************************/
 
-BOOL MLUndo(
-    PED ped)
+BOOL MLUndo(PED ped)
 {
     HANDLE hDeletedText = ped->hDeletedText;
     BOOL fDelete = (BOOL)(ped->undoType & UNDO_DELETE);
     ICH cchDeleted = ped->cchDeleted;
     ICH ichDeleted = ped->ichDeleted;
 
-    if (ped->undoType == UNDO_NONE) {
+    if (ped->undoType == UNDO_NONE)
+    {
 
         /*
          * No undo...
@@ -574,7 +587,8 @@ BOOL MLUndo(
     ped->ichDeleted = (ICH)-1;
     ped->undoType &= ~UNDO_DELETE;
 
-    if (ped->undoType == UNDO_INSERT) {
+    if (ped->undoType == UNDO_INSERT)
+    {
         ped->undoType = UNDO_NONE;
 
         /*
@@ -589,7 +603,8 @@ BOOL MLUndo(
         SendMessage(ped->hwnd, WM_CHAR, (WPARAM)VK_BACK, 0L);
     }
 
-    if (fDelete) {
+    if (fDelete)
+    {
 
         /*
          * Insert deleted chars

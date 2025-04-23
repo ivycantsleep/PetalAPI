@@ -24,15 +24,15 @@
 * History:
 * 03-18-92 DarrinM      Created from pieces of misc server-side funcs.
 \***************************************************************************/
-PWND FASTCALL ValidateHwnd(
-    HWND hwnd)
+PWND FASTCALL ValidateHwnd(HWND hwnd)
 {
     PCLIENTINFO pci = GetClientInfo();
 
     /*
      * Attempt fast window validation.
      */
-    if (hwnd != NULL && hwnd == pci->CallbackWnd.hwnd) {
+    if (hwnd != NULL && hwnd == pci->CallbackWnd.hwnd)
+    {
         return pci->CallbackWnd.pwnd;
     }
 
@@ -43,15 +43,15 @@ PWND FASTCALL ValidateHwnd(
 }
 
 
-PWND FASTCALL ValidateHwndNoRip(
-    HWND hwnd)
+PWND FASTCALL ValidateHwndNoRip(HWND hwnd)
 {
     PCLIENTINFO pci = GetClientInfo();
 
     /*
      * Attempt fast window validation.
      */
-    if (hwnd != NULL && hwnd == pci->CallbackWnd.hwnd) {
+    if (hwnd != NULL && hwnd == pci->CallbackWnd.hwnd)
+    {
         return pci->CallbackWnd.pwnd;
     }
 
@@ -62,13 +62,8 @@ PWND FASTCALL ValidateHwndNoRip(
 }
 
 
-
-
 FUNCLOG3(LOG_GENERAL, int, WINAPI, GetClassNameA, HWND, hwnd, LPSTR, lpClassName, int, nMaxCount)
-int WINAPI GetClassNameA(
-    HWND hwnd,
-    LPSTR lpClassName,
-    int nMaxCount)
+int WINAPI GetClassNameA(HWND hwnd, LPSTR lpClassName, int nMaxCount)
 {
     PCLS pcls;
     LPSTR lpszClassNameSrc;
@@ -80,8 +75,10 @@ int WINAPI GetClassNameA(
     if (pwnd == NULL)
         return FALSE;
 
-    try {
-        if (nMaxCount != 0) {
+    try
+    {
+        if (nMaxCount != 0)
+        {
             pcls = (PCLS)REBASEALWAYS(pwnd, pcls);
             lpszClassNameSrc = REBASEPTR(pwnd, pcls->lpszAnsiClassName);
             cchSrc = lstrlenA(lpszClassNameSrc);
@@ -89,7 +86,9 @@ int WINAPI GetClassNameA(
             RtlCopyMemory(lpClassName, lpszClassNameSrc, nMaxCount);
             lpClassName[nMaxCount] = '\0';
         }
-    } except (W32ExceptionHandler(FALSE, RIP_WARNING)) {
+    }
+    except(W32ExceptionHandler(FALSE, RIP_WARNING))
+    {
         nMaxCount = 0;
     }
 
@@ -111,15 +110,13 @@ PWND _GetDesktopWindow(void)
     ConnectIfNecessary(0);
 
     pci = GetClientInfo();
-    return (PWND)((KERNEL_ULONG_PTR)pci->pDeskInfo->spwnd -
-            pci->ulClientDelta);
+    return (PWND)((KERNEL_ULONG_PTR)pci->pDeskInfo->spwnd - pci->ulClientDelta);
 }
-
 
 
 HWND GetDesktopWindow(void)
 {
-    PWND        pwnd;
+    PWND pwnd;
     PCLIENTINFO pci;
 
     pwnd = _GetDesktopWindow();
@@ -129,8 +126,10 @@ HWND GetDesktopWindow(void)
     /*
      * validate the parent window's handle if a restricted process
      */
-    if (pci && (pci->dwTIFlags & TIF_RESTRICTED)) {
-        if (ValidateHwnd(HW(pwnd)) == NULL) {
+    if (pci && (pci->dwTIFlags & TIF_RESTRICTED))
+    {
+        if (ValidateHwnd(HW(pwnd)) == NULL)
+        {
             return NULL;
         }
     }
@@ -138,13 +137,13 @@ HWND GetDesktopWindow(void)
 }
 
 
-PWND _GetDlgItem(
-    PWND pwnd,
-    int id)
+PWND _GetDlgItem(PWND pwnd, int id)
 {
-    if (pwnd != NULL) {
+    if (pwnd != NULL)
+    {
         pwnd = REBASEPWND(pwnd, spwndChild);
-        while (pwnd != NULL) {
+        while (pwnd != NULL)
+        {
             if (PtrToLong(pwnd->spmenu) == id)
                 break;
             pwnd = REBASEPWND(pwnd, spwndNext);
@@ -155,11 +154,8 @@ PWND _GetDlgItem(
 }
 
 
-
 FUNCLOG2(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, GetDlgItem, HWND, hwnd, int, id)
-HWND GetDlgItem(
-    HWND hwnd,
-    int id)
+HWND GetDlgItem(HWND hwnd, int id)
 {
     PWND pwnd;
     HWND hwndRet;
@@ -179,10 +175,8 @@ HWND GetDlgItem(
 }
 
 
-
 FUNCLOG1(LOG_GENERAL, HMENU, DUMMYCALLINGTYPE, GetMenu, HWND, hwnd)
-HMENU GetMenu(
-    HWND hwnd)
+HMENU GetMenu(HWND hwnd)
 {
     PWND pwnd;
     PMENU pmenu;
@@ -196,10 +190,13 @@ HMENU GetMenu(
      * Some ill-behaved apps use GetMenu to get the child id, so
      * only map to the handle for non-child windows.
      */
-    if (!TestwndChild(pwnd)) {
+    if (!TestwndChild(pwnd))
+    {
         pmenu = REBASE(pwnd, spmenu);
         return (HMENU)PtoH(pmenu);
-    } else {
+    }
+    else
+    {
         return (HMENU)KPVOID_TO_PVOID(pwnd->spmenu);
     }
 }
@@ -216,8 +213,7 @@ HMENU GetMenu(
 
 
 FUNCLOG1(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetMenuItemCount, HMENU, hMenu)
-int GetMenuItemCount(
-    HMENU hMenu)
+int GetMenuItemCount(HMENU hMenu)
 {
     PMENU pMenu;
 
@@ -239,9 +235,7 @@ int GetMenuItemCount(
 
 
 FUNCLOG2(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, GetMenuItemID, HMENU, hMenu, int, nPos)
-UINT GetMenuItemID(
-    HMENU hMenu,
-    int nPos)
+UINT GetMenuItemID(HMENU hMenu, int nPos)
 {
     PMENU pMenu;
     PITEM pItem;
@@ -255,7 +249,8 @@ UINT GetMenuItemID(
      * If the position is valid and the item is not a popup, get the ID
      * Don't allow negative indexes, because that'll cause an access violation.
      */
-    if (nPos < (int)pMenu->cItems && nPos >= 0) {
+    if (nPos < (int)pMenu->cItems && nPos >= 0)
+    {
         pItem = &((PITEM)REBASEALWAYS(pMenu, rgItems))[nPos];
         if (pItem->spSubMenu == NULL)
             return pItem->wID;
@@ -265,18 +260,15 @@ UINT GetMenuItemID(
 }
 
 
-
 FUNCLOG3(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, GetMenuState, HMENU, hMenu, UINT, uId, UINT, uFlags)
-UINT GetMenuState(
-    HMENU hMenu,
-    UINT uId,
-    UINT uFlags)
+UINT GetMenuState(HMENU hMenu, UINT uId, UINT uFlags)
 {
     PMENU pMenu;
 
     pMenu = VALIDATEHMENU(hMenu);
 
-    if (pMenu == NULL || (uFlags & ~MF_VALID) != 0) {
+    if (pMenu == NULL || (uFlags & ~MF_VALID) != 0)
+    {
         return (UINT)-1;
     }
 
@@ -284,10 +276,8 @@ UINT GetMenuState(
 }
 
 
-
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, IsWindow, HWND, hwnd)
-BOOL IsWindow(
-    HWND hwnd)
+BOOL IsWindow(HWND hwnd)
 {
     PWND pwnd;
 
@@ -299,14 +289,18 @@ BOOL IsWindow(
     /*
      * And validate this handle is valid for this desktop by trying to read it
      */
-    if (pwnd != NULL) {
-        try {
-            if (pwnd->fnid & FNID_DELETED_BIT) {
+    if (pwnd != NULL)
+    {
+        try
+        {
+            if (pwnd->fnid & FNID_DELETED_BIT)
+            {
                 pwnd = 0;
             }
-        } except (W32ExceptionHandler(FALSE, RIP_WARNING)) {
-            RIPMSG1(RIP_WARNING, "IsWindow: Window %#p not of this desktop",
-                    pwnd);
+        }
+        except(W32ExceptionHandler(FALSE, RIP_WARNING))
+        {
+            RIPMSG1(RIP_WARNING, "IsWindow: Window %#p not of this desktop", pwnd);
             pwnd = 0;
         }
     }
@@ -314,11 +308,8 @@ BOOL IsWindow(
 }
 
 
-
 FUNCLOG2(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, GetWindow, HWND, hwnd, UINT, wCmd)
-HWND GetWindow(
-    HWND hwnd,
-    UINT wCmd)
+HWND GetWindow(HWND hwnd, UINT wCmd)
 {
     PWND pwnd;
 
@@ -332,20 +323,22 @@ HWND GetWindow(
 
 
 FUNCLOG1(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, GetParent, HWND, hwnd)
-HWND GetParent(
-    HWND hwnd)
+HWND GetParent(HWND hwnd)
 {
-    PWND        pwnd;
+    PWND pwnd;
     PCLIENTINFO pci;
 
     pwnd = ValidateHwnd(hwnd);
     if (pwnd == NULL)
         return NULL;
 
-    try {
+    try
+    {
         pwnd = _GetParent(pwnd);
         hwnd = HW(pwnd);
-    } except (W32ExceptionHandler(FALSE, RIP_WARNING)) {
+    }
+    except(W32ExceptionHandler(FALSE, RIP_WARNING))
+    {
         hwnd = NULL;
     }
 
@@ -354,8 +347,10 @@ HWND GetParent(
     /*
      * validate the parent window's handle if a restricted process
      */
-    if (pci && (pci->dwTIFlags & TIF_RESTRICTED)) {
-        if (ValidateHwnd(hwnd) == NULL) {
+    if (pci && (pci->dwTIFlags & TIF_RESTRICTED))
+    {
+        if (ValidateHwnd(hwnd) == NULL)
+        {
             return NULL;
         }
     }
@@ -365,9 +360,7 @@ HWND GetParent(
 
 
 FUNCLOG2(LOG_GENERAL, HMENU, DUMMYCALLINGTYPE, GetSubMenu, HMENU, hMenu, int, nPos)
-HMENU GetSubMenu(
-    HMENU hMenu,
-    int nPos)
+HMENU GetSubMenu(HMENU hMenu, int nPos)
 {
     PMENU pMenu;
 
@@ -381,10 +374,8 @@ HMENU GetSubMenu(
 }
 
 
-
 FUNCLOG1(LOG_GENERAL, DWORD, DUMMYCALLINGTYPE, GetSysColor, int, nIndex)
-DWORD GetSysColor(
-    int nIndex)
+DWORD GetSysColor(int nIndex)
 {
 
     /*
@@ -397,7 +388,8 @@ DWORD GetSysColor(
     /*
      * Make sure we have access to the system colors.
      */
-    if (!(gamWinSta & WINSTA_READATTRIBUTES)) {
+    if (!(gamWinSta & WINSTA_READATTRIBUTES))
+    {
         return 0;
     }
 #endif
@@ -405,11 +397,9 @@ DWORD GetSysColor(
     /*
      * Return 0 if the index is out of range.
      */
-    if (nIndex < 0 || nIndex >= COLOR_MAX) {
-        RIPERR1(ERROR_INVALID_PARAMETER,
-                RIP_WARNING,
-                "Invalid parameter \"nIndex\" (%ld) to GetSysColor",
-                nIndex);
+    if (nIndex < 0 || nIndex >= COLOR_MAX)
+    {
+        RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "Invalid parameter \"nIndex\" (%ld) to GetSysColor", nIndex);
 
         return 0;
     }
@@ -418,30 +408,28 @@ DWORD GetSysColor(
 }
 
 
-
 FUNCLOG1(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetSystemMetrics, int, index)
-int GetSystemMetrics(
-    int index)
+int GetSystemMetrics(int index)
 {
     int ret;
 
     BEGIN_USERAPIHOOK()
-        ret = guah.pfnGetSystemMetrics(index);
+    ret = guah.pfnGetSystemMetrics(index);
     END_USERAPIHOOK()
 
     return ret;
 }
 
 
-int RealGetSystemMetrics(
-    int index)
+int RealGetSystemMetrics(int index)
 {
     ConnectIfNecessary(0);
 
     /*
      * First check for values that aren't in the aiSysMet array.
      */
-    switch (index) {
+    switch (index)
+    {
     case SM_REMOTESESSION:
         return ISREMOTESESSION();
     }
@@ -449,15 +437,18 @@ int RealGetSystemMetrics(
     /*
      * If it's in the BOOLEAN system metric range then do our magic.
      */
-    if (index >= SM_STARTBOOLRANGE && index <= SM_ENDBOOLRANGE) {
+    if (index >= SM_STARTBOOLRANGE && index <= SM_ENDBOOLRANGE)
+    {
         return SYSMETBOOL2(index);
     }
 
-    if ((index < 0) || (index >= SM_CMETRICS)) {
+    if ((index < 0) || (index >= SM_CMETRICS))
+    {
         return 0;
     }
 
-    switch (index) {
+    switch (index)
+    {
     case SM_DBCSENABLED:
 #ifdef FE_SB
         return TEST_BOOL_FLAG(gpsi->wSRVIFlags, SRVIF_DBCS);
@@ -475,7 +466,8 @@ int RealGetSystemMetrics(
         return TEST_BOOL_FLAG(gpsi->wSRVIFlags, SRVIF_MIDEAST);
     }
 
-    if (!Is400Compat(GetClientInfo()->dwExpWinVer)) {
+    if (!Is400Compat(GetClientInfo()->dwExpWinVer))
+    {
         /*
          * SCROLL BAR
          * before 4.0, the scroll bars and the border overlapped by a pixel.  Many apps
@@ -496,7 +488,8 @@ int RealGetSystemMetrics(
          * In Win4.0, SM_CYMENU is the menu height
          */
 
-        switch (index) {
+        switch (index)
+        {
 
         case SM_CXDLGFRAME:
         case SM_CYDLGFRAME:
@@ -526,17 +519,19 @@ int RealGetSystemMetrics(
 * 05-04-02 DarrinM      Removed enum access check and moved to USERRTL.DLL
 \***************************************************************************/
 FUNCLOG1(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, GetTopWindow, HWND, hwnd)
-HWND GetTopWindow(
-    HWND hwnd)
+HWND GetTopWindow(HWND hwnd)
 {
     PWND pwnd;
 
     /*
      * Allow a NULL hwnd to go through here.
      */
-    if (hwnd == NULL) {
+    if (hwnd == NULL)
+    {
         pwnd = _GetDesktopWindow();
-    } else {
+    }
+    else
+    {
         pwnd = ValidateHwnd(hwnd);
     }
     if (pwnd == NULL)
@@ -547,11 +542,8 @@ HWND GetTopWindow(
 }
 
 
-
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, IsChild, HWND, hwndParent, HWND, hwnd)
-BOOL IsChild(
-    HWND hwndParent,
-    HWND hwnd)
+BOOL IsChild(HWND hwndParent, HWND hwnd)
 {
     PWND pwnd, pwndParent;
 
@@ -568,8 +560,7 @@ BOOL IsChild(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, IsIconic, HWND, hwnd)
-BOOL IsIconic(
-    HWND hwnd)
+BOOL IsIconic(HWND hwnd)
 {
     PWND pwnd;
 
@@ -583,8 +574,7 @@ BOOL IsIconic(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, IsWindowEnabled, HWND, hwnd)
-BOOL IsWindowEnabled(
-    HWND hwnd)
+BOOL IsWindowEnabled(HWND hwnd)
 {
     PWND pwnd;
 
@@ -598,8 +588,7 @@ BOOL IsWindowEnabled(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, IsWindowVisible, HWND, hwnd)
-BOOL IsWindowVisible(
-    HWND hwnd)
+BOOL IsWindowVisible(HWND hwnd)
 {
     PWND pwnd;
     BOOL bRet;
@@ -614,13 +603,19 @@ BOOL IsWindowVisible(
      * visible.  As soon as this API returns there is no guarentee
      * the return is still valid in a muli-tasking environment.
      */
-    try {
-        if (pwnd == NULL) {
+    try
+    {
+        if (pwnd == NULL)
+        {
             bRet = FALSE;
-        } else {
+        }
+        else
+        {
             bRet = _IsWindowVisible(pwnd);
         }
-    } except (W32ExceptionHandler(FALSE, RIP_WARNING)) {
+    }
+    except(W32ExceptionHandler(FALSE, RIP_WARNING))
+    {
         bRet = FALSE;
     }
 
@@ -629,8 +624,7 @@ BOOL IsWindowVisible(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, IsZoomed, HWND, hwnd)
-BOOL IsZoomed(
-    HWND hwnd)
+BOOL IsZoomed(HWND hwnd)
 {
     PWND pwnd;
 
@@ -644,9 +638,7 @@ BOOL IsZoomed(
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, ClientToScreen, HWND, hwnd, LPPOINT, ppoint)
-BOOL ClientToScreen(
-    HWND hwnd,
-    LPPOINT ppoint)
+BOOL ClientToScreen(HWND hwnd, LPPOINT ppoint)
 {
     PWND pwnd;
 
@@ -661,9 +653,7 @@ BOOL ClientToScreen(
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, GetClientRect, HWND, hwnd, LPRECT, prect)
-BOOL GetClientRect(
-    HWND   hwnd,
-    LPRECT prect)
+BOOL GetClientRect(HWND hwnd, LPRECT prect)
 {
     PWND pwnd;
 
@@ -677,19 +667,15 @@ BOOL GetClientRect(
 }
 
 
-
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, GetCursorPos, LPPOINT, lpPoint)
-BOOL GetCursorPos(
-    LPPOINT lpPoint)
+BOOL GetCursorPos(LPPOINT lpPoint)
 {
-    return  (BOOL)NtUserCallOneParam((ULONG_PTR)lpPoint, SFI_XXXGETCURSORPOS);
+    return (BOOL)NtUserCallOneParam((ULONG_PTR)lpPoint, SFI_XXXGETCURSORPOS);
 }
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, GetWindowRect, HWND, hwnd, LPRECT, prect)
-BOOL GetWindowRect(
-    HWND hwnd,
-    LPRECT prect)
+BOOL GetWindowRect(HWND hwnd, LPRECT prect)
 {
     PWND pwnd;
 
@@ -704,9 +690,7 @@ BOOL GetWindowRect(
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, ScreenToClient, HWND, hwnd, LPPOINT, ppoint)
-BOOL ScreenToClient(
-    HWND hwnd,
-    LPPOINT ppoint)
+BOOL ScreenToClient(HWND hwnd, LPPOINT ppoint)
 {
     PWND pwnd;
 
@@ -721,31 +705,29 @@ BOOL ScreenToClient(
 
 
 FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnableMenuItem, HMENU, hMenu, UINT, uIDEnableItem, UINT, uEnable)
-BOOL EnableMenuItem(
-    HMENU hMenu,
-    UINT uIDEnableItem,
-    UINT uEnable)
+BOOL EnableMenuItem(HMENU hMenu, UINT uIDEnableItem, UINT uEnable)
 {
     PMENU pMenu;
     PITEM pItem;
 
     pMenu = VALIDATEHMENU(hMenu);
-    if (pMenu == NULL) {
+    if (pMenu == NULL)
+    {
         return (BOOL)-1;
     }
 
     /*
      * Get a pointer the the menu item
      */
-    if ((pItem = MNLookUpItem(pMenu, uIDEnableItem, (BOOL) (uEnable & MF_BYPOSITION), NULL)) == NULL)
+    if ((pItem = MNLookUpItem(pMenu, uIDEnableItem, (BOOL)(uEnable & MF_BYPOSITION), NULL)) == NULL)
         return (DWORD)-1;
 
     /*
      * If the item is already in the state we're
      * trying to set, just return.
      */
-    if ((pItem->fState & MFS_GRAYED) ==
-            (uEnable & MFS_GRAYED)) {
+    if ((pItem->fState & MFS_GRAYED) == (uEnable & MFS_GRAYED))
+    {
         return pItem->fState & MFS_GRAYED;
     }
 
@@ -760,14 +742,10 @@ BOOL EnableMenuItem(
 * 05-09-91 ScottLu Created.
 \***************************************************************************/
 FUNCLOG4(LOG_GENERAL, LRESULT, WINAPI, CallNextHookEx, HHOOK, hhk, int, nCode, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI CallNextHookEx(
-    HHOOK hhk,
-    int nCode,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI CallNextHookEx(HHOOK hhk, int nCode, WPARAM wParam, LPARAM lParam)
 {
     LRESULT nRet;
-    BOOL  bAnsi;
+    BOOL bAnsi;
     DWORD dwHookCurrent;
     PCLIENTINFO pci;
     ULONG_PTR dwHookData;
@@ -785,11 +763,13 @@ LRESULT WINAPI CallNextHookEx(
      * If this is the last hook in the hook chain then return 0; we're done
      */
     UserAssert(pci->phkCurrent);
-    if (PhkNextValid((PHOOK)((KERNEL_ULONG_PTR)pci->phkCurrent - pci->ulClientDelta)) == NULL) {
+    if (PhkNextValid((PHOOK)((KERNEL_ULONG_PTR)pci->phkCurrent - pci->ulClientDelta)) == NULL)
+    {
         return 0;
     }
 
-    switch ((INT)(SHORT)HIWORD(dwHookCurrent)) {
+    switch ((INT)(SHORT)HIWORD(dwHookCurrent))
+    {
     case WH_CALLWNDPROC:
     case WH_CALLWNDPROCRET:
         /*
@@ -807,27 +787,27 @@ LRESULT WINAPI CallNextHookEx(
          */
         dwFlags = KERNEL_ULONG_PTR_TO_ULONG_PTR(pci->CI_flags) & CI_INTERTHREAD_HOOK;
         dwHookData = KERNEL_ULONG_PTR_TO_ULONG_PTR(pci->dwHookData);
-        if (wParam) {
+        if (wParam)
+        {
             pci->CI_flags |= CI_INTERTHREAD_HOOK;
-        } else {
+        }
+        else
+        {
             pci->CI_flags &= ~CI_INTERTHREAD_HOOK;
         }
 
-        if ((INT)(SHORT)HIWORD(dwHookCurrent) == WH_CALLWNDPROC) {
-            nRet = CsSendMessage(
-                    ((LPCWPSTRUCT)lParam)->hwnd,
-                    ((LPCWPSTRUCT)lParam)->message,
-                    ((LPCWPSTRUCT)lParam)->wParam,
-                    ((LPCWPSTRUCT)lParam)->lParam,
-                    0, FNID_HKINLPCWPEXSTRUCT, bAnsi);
-        } else {
+        if ((INT)(SHORT)HIWORD(dwHookCurrent) == WH_CALLWNDPROC)
+        {
+            nRet = CsSendMessage(((LPCWPSTRUCT)lParam)->hwnd, ((LPCWPSTRUCT)lParam)->message,
+                                 ((LPCWPSTRUCT)lParam)->wParam, ((LPCWPSTRUCT)lParam)->lParam, 0,
+                                 FNID_HKINLPCWPEXSTRUCT, bAnsi);
+        }
+        else
+        {
             pci->dwHookData = ((LPCWPRETSTRUCT)lParam)->lResult;
-            nRet = CsSendMessage(
-                    ((LPCWPRETSTRUCT)lParam)->hwnd,
-                    ((LPCWPRETSTRUCT)lParam)->message,
-                    ((LPCWPRETSTRUCT)lParam)->wParam,
-                    ((LPCWPRETSTRUCT)lParam)->lParam,
-                    0, FNID_HKINLPCWPRETEXSTRUCT, bAnsi);
+            nRet = CsSendMessage(((LPCWPRETSTRUCT)lParam)->hwnd, ((LPCWPRETSTRUCT)lParam)->message,
+                                 ((LPCWPRETSTRUCT)lParam)->wParam, ((LPCWPRETSTRUCT)lParam)->lParam, 0,
+                                 FNID_HKINLPCWPRETEXSTRUCT, bAnsi);
         }
 
         /*
@@ -838,11 +818,7 @@ LRESULT WINAPI CallNextHookEx(
         break;
 
     default:
-        nRet = NtUserCallNextHookEx(
-                nCode,
-                wParam,
-                lParam,
-                bAnsi);
+        nRet = NtUserCallNextHookEx(nCode, wParam, lParam, bAnsi);
     }
 
     return nRet;

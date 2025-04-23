@@ -23,7 +23,7 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 //
 // External data.
 //
@@ -60,7 +60,7 @@ ULONG KeVerifyNumaPageMask;
 
 // End numa test support variables.
 
-
+
 //
 // Put all code for kernel initialization in the INIT section. It will be
 // deallocated by memory management when phase 1 initialization is completed.
@@ -77,9 +77,7 @@ ULONG KeVerifyNumaPageMask;
 #endif
 
 BOOLEAN
-KeInitSystem (
-    VOID
-    )
+KeInitSystem(VOID)
 
 /*++
 
@@ -110,11 +108,7 @@ Return Value:
     return KiInitMachineDependent();
 }
 
-VOID
-KiInitQueuedSpinLocks (
-    PKPRCB Prcb,
-    ULONG Number
-    )
+VOID KiInitQueuedSpinLocks(PKPRCB Prcb, ULONG Number)
 
 /*++
 
@@ -192,7 +186,8 @@ Return Value:
     // home address.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
         KeInitializeSpinLock(&KiContextSwapLock);
         KeInitializeSpinLock(&KiDispatcherLock);
         KeInitializeSpinLock(&MmPfnLock);
@@ -213,10 +208,7 @@ Return Value:
     return;
 }
 
-VOID
-KiInitSystem (
-    VOID
-    )
+VOID KiInitSystem(VOID)
 
 /*++
 
@@ -242,7 +234,8 @@ Return Value:
     // Initialize dispatcher ready queue listheads.
     //
 
-    for (Index = 0; Index < MAXIMUM_PRIORITY; Index += 1) {
+    for (Index = 0; Index < MAXIMUM_PRIORITY; Index += 1)
+    {
         InitializeListHead(&KiDispatcherReadyListHead[Index]);
     }
 
@@ -258,8 +251,7 @@ Return Value:
     // Initialize the timer expiration DPC object.
     //
 
-    KeInitializeDpc(&KiTimerExpireDpc,
-                    (PKDEFERRED_ROUTINE)KiTimerExpiration, NIL);
+    KeInitializeDpc(&KiTimerExpireDpc, (PKDEFERRED_ROUTINE)KiTimerExpiration, NIL);
 
     //
     // Initialize the profile listhead and profile locks
@@ -288,7 +280,8 @@ Return Value:
     // timer completion DPC.
     //
 
-    for (Index = 0; Index < TIMER_TABLE_SIZE; Index += 1) {
+    for (Index = 0; Index < TIMER_TABLE_SIZE; Index += 1)
+    {
         InitializeListHead(&KiTimerTableListHead[Index]);
     }
 
@@ -298,9 +291,7 @@ Return Value:
     // the wait in listhead, and the wait out listhead.
     //
 
-    KeInitializeEvent(&KiSwapEvent,
-                      SynchronizationEvent,
-                      FALSE);
+    KeInitializeEvent(&KiSwapEvent, SynchronizationEvent, FALSE);
 
     KiProcessInSwapListHead.Next = NULL;
     KiProcessOutSwapListHead.Next = NULL;
@@ -322,13 +313,13 @@ Return Value:
 
 #if defined(_IA64_)
 
-    KeServiceDescriptorTable[0].TableBaseGpOffset =
-                    (LONG)(*(KiServiceTable-1) - (ULONG_PTR)KiServiceTable);
+    KeServiceDescriptorTable[0].TableBaseGpOffset = (LONG)(*(KiServiceTable - 1) - (ULONG_PTR)KiServiceTable);
 
 #endif
 
     KeServiceDescriptorTable[0].Number = &KiArgumentTable[0];
-    for (Index = 1; Index < NUMBER_SERVICE_TABLES; Index += 1) {
+    for (Index = 1; Index < NUMBER_SERVICE_TABLES; Index += 1)
+    {
         KeServiceDescriptorTable[Index].Limit = 0;
     }
 
@@ -337,9 +328,7 @@ Return Value:
     // which is used to record the Win32 system services.
     //
 
-    RtlCopyMemory(KeServiceDescriptorTableShadow,
-                  KeServiceDescriptorTable,
-                  sizeof(KeServiceDescriptorTable));
+    RtlCopyMemory(KeServiceDescriptorTableShadow, KeServiceDescriptorTable, sizeof(KeServiceDescriptorTable));
 
     //
     // Initialize call performance data structures.
@@ -367,10 +356,7 @@ Return Value:
 }
 
 LARGE_INTEGER
-KiComputeReciprocal (
-    IN LONG Divisor,
-    OUT PCCHAR Shift
-    )
+KiComputeReciprocal(IN LONG Divisor, OUT PCCHAR Shift)
 
 /*++
 
@@ -407,29 +393,36 @@ Return Value:
     Remainder = 1;
     Fraction.LowPart = 0;
     Fraction.HighPart = 0;
-    while (Fraction.HighPart >= 0) {
+    while (Fraction.HighPart >= 0)
+    {
         NumberBits += 1;
         Fraction.HighPart = (Fraction.HighPart << 1) | (Fraction.LowPart >> 31);
         Fraction.LowPart <<= 1;
         Remainder <<= 1;
-        if (Remainder >= Divisor) {
+        if (Remainder >= Divisor)
+        {
             Remainder -= Divisor;
             Fraction.LowPart |= 1;
         }
     }
 
-    if (Remainder != 0) {
-        if ((Fraction.LowPart == 0xffffffff) && (Fraction.HighPart == 0xffffffff)) {
+    if (Remainder != 0)
+    {
+        if ((Fraction.LowPart == 0xffffffff) && (Fraction.HighPart == 0xffffffff))
+        {
             Fraction.LowPart = 0;
             Fraction.HighPart = 0x80000000;
             NumberBits -= 1;
-
-        } else {
-            if (Fraction.LowPart == 0xffffffff) {
+        }
+        else
+        {
+            if (Fraction.LowPart == 0xffffffff)
+            {
                 Fraction.LowPart = 0;
                 Fraction.HighPart += 1;
-
-            } else {
+            }
+            else
+            {
                 Fraction.LowPart += 1;
             }
         }
@@ -443,10 +436,7 @@ Return Value:
     return Fraction;
 }
 
-VOID
-KeNumaInitialize (
-    VOID
-    )
+VOID KeNumaInitialize(VOID)
 
 /*++
 
@@ -483,33 +473,29 @@ Return Value:
     // in the return info buffer.
     //
 
-    if (KeVerifyNumaNodeCount                         &&
-        (KeVerifyNumaNodeCount < 8)                   &&
-        KeVerifyNumaAffinity                          &&
-        KeVerifyNumaAffinityShift                     &&
-        (KeVerifyNumaAffinityShift < 32)              &&
-        KeVerifyNumaPageMask                          &&
-        (KeVerifyNumaPageMask < KeVerifyNumaNodeCount)&&
-        KeVerifyNumaPageShift                         &&
-        (KeVerifyNumaPageShift < 32)                      ) {
+    if (KeVerifyNumaNodeCount && (KeVerifyNumaNodeCount < 8) && KeVerifyNumaAffinity && KeVerifyNumaAffinityShift &&
+        (KeVerifyNumaAffinityShift < 32) && KeVerifyNumaPageMask && (KeVerifyNumaPageMask < KeVerifyNumaNodeCount) &&
+        KeVerifyNumaPageShift && (KeVerifyNumaPageShift < 32))
+    {
 
-        struct {
-            ULONG Nodes:3;
-            ULONG AffinityShift:6;
-            ULONG PageShift:6;
-            ULONG Signature:17;
+        struct
+        {
+            ULONG Nodes : 3;
+            ULONG AffinityShift : 6;
+            ULONG PageShift : 6;
+            ULONG Signature : 17;
             ULONG Affinity;
             ULONG Mask;
         } Fake;
 
         C_ASSERT(sizeof(Fake) <= sizeof(HalNumaInfo));
 
-        Fake.Signature     = 0x15a5a;
-        Fake.PageShift     = KeVerifyNumaPageShift;
+        Fake.Signature = 0x15a5a;
+        Fake.PageShift = KeVerifyNumaPageShift;
         Fake.AffinityShift = KeVerifyNumaAffinityShift;
-        Fake.Nodes         = KeVerifyNumaNodeCount;
-        Fake.Affinity      = KeVerifyNumaAffinity;
-        Fake.Mask          = KeVerifyNumaPageMask;
+        Fake.Nodes = KeVerifyNumaNodeCount;
+        Fake.Affinity = KeVerifyNumaAffinity;
+        Fake.Mask = KeVerifyNumaPageMask;
 
         RtlCopyMemory(&HalNumaInfo, &Fake, sizeof(Fake));
     }
@@ -518,19 +504,18 @@ Return Value:
     // End Mega Kludge.
     //
 
-    Status = HalQuerySystemInformation (HalNumaTopologyInterface,
-                                        sizeof(HalNumaInfo),
-                                        &HalNumaInfo,
-                                        &ReturnedLength);
+    Status = HalQuerySystemInformation(HalNumaTopologyInterface, sizeof(HalNumaInfo), &HalNumaInfo, &ReturnedLength);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        ASSERT (ReturnedLength == sizeof(HalNumaInfo));
-        ASSERT (HalNumaInfo.NumberOfNodes <= MAXIMUM_CCNUMA_NODES);
-        ASSERT (HalNumaInfo.QueryProcessorNode);
-        ASSERT (HalNumaInfo.PageToNode);
+        ASSERT(ReturnedLength == sizeof(HalNumaInfo));
+        ASSERT(HalNumaInfo.NumberOfNodes <= MAXIMUM_CCNUMA_NODES);
+        ASSERT(HalNumaInfo.QueryProcessorNode);
+        ASSERT(HalNumaInfo.PageToNode);
 
-        if (HalNumaInfo.NumberOfNodes > 1) {
+        if (HalNumaInfo.NumberOfNodes > 1)
+        {
             KeNumberNodes = (UCHAR)HalNumaInfo.NumberOfNodes;
             MmPageToNode = HalNumaInfo.PageToNode;
             KiQueryProcessorNode = HalNumaInfo.QueryProcessorNode;
@@ -539,5 +524,4 @@ Return Value:
 
 
 #endif
-
 }

@@ -21,15 +21,12 @@ Revision History:
 #include "lpcp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtListenPort)
+#pragma alloc_text(PAGE, NtListenPort)
 #endif
 
-
+
 NTSTATUS
-NtListenPort (
-    IN HANDLE PortHandle,
-    OUT PPORT_MESSAGE ConnectionRequest
-    )
+NtListenPort(IN HANDLE PortHandle, OUT PPORT_MESSAGE ConnectionRequest)
 
 /*++
 
@@ -65,12 +62,10 @@ Return Value:
     //  Keep on looping until we get a connection request on the lpc port
     //
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        Status = NtReplyWaitReceivePort( PortHandle,
-                                         NULL,
-                                         NULL,
-                                         ConnectionRequest );
+        Status = NtReplyWaitReceivePort(PortHandle, NULL, NULL, ConnectionRequest);
 
         //
         //  We'll return from this procedure if ever we get back non success
@@ -79,15 +74,18 @@ Return Value:
         //  buffer.
         //
 
-        try {
+        try
+        {
 
             if ((Status != STATUS_SUCCESS) ||
-                ((ConnectionRequest->u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) == LPC_CONNECTION_REQUEST)) {
+                ((ConnectionRequest->u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) == LPC_CONNECTION_REQUEST))
+            {
 
                 break;
             }
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
 

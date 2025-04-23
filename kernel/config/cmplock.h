@@ -28,20 +28,19 @@ Revision History:
 // Macros for kernel mode environment
 //
 
-extern  KMUTEX  CmpRegistryMutex;
+extern KMUTEX CmpRegistryMutex;
 #if DBG
-extern  LONG    CmpRegistryLockLocked;
+extern LONG CmpRegistryLockLocked;
 #endif
 
 //
 // Test macro
 //
 #if DBG
-#define ASSERT_CM_LOCK_OWNED() \
-    if ( (CmpRegistryMutex.OwnerThread != KeGetCurrentThread())  ||   \
-         (CmpRegistryMutex.Header.SignalState >= 1) )                 \
-    {                                                                 \
-        ASSERT(FALSE);                                                \
+#define ASSERT_CM_LOCK_OWNED()                                                                                \
+    if ((CmpRegistryMutex.OwnerThread != KeGetCurrentThread()) || (CmpRegistryMutex.Header.SignalState >= 1)) \
+    {                                                                                                         \
+        ASSERT(FALSE);                                                                                        \
     }
 #else
 #define ASSERT_CM_LOCK_OWNED()
@@ -71,28 +70,16 @@ extern  LONG    CmpRegistryLockLocked;
 //
 
 #if DBG
-#define CMP_LOCK_REGISTRY(status, timeout)                      \
-{                                                               \
-    status = KeWaitForSingleObject(                             \
-                &CmpRegistryMutex,                              \
-                Executive,                                      \
-                KernelMode,                                     \
-                FALSE,                                          \
-                timeout                                         \
-                );                                              \
-    CmpRegistryLockLocked++;                                    \
-}
+#define CMP_LOCK_REGISTRY(status, timeout)                                                        \
+    {                                                                                             \
+        status = KeWaitForSingleObject(&CmpRegistryMutex, Executive, KernelMode, FALSE, timeout); \
+        CmpRegistryLockLocked++;                                                                  \
+    }
 #else
-#define CMP_LOCK_REGISTRY(status, timeout)                      \
-{                                                               \
-    status = KeWaitForSingleObject(                             \
-                &CmpRegistryMutex,                              \
-                Executive,                                      \
-                KernelMode,                                     \
-                FALSE,                                          \
-                timeout                                         \
-                );                                              \
-}
+#define CMP_LOCK_REGISTRY(status, timeout)                                                        \
+    {                                                                                             \
+        status = KeWaitForSingleObject(&CmpRegistryMutex, Executive, KernelMode, FALSE, timeout); \
+    }
 #endif
 
 //
@@ -106,17 +93,17 @@ extern  LONG    CmpRegistryLockLocked;
 //
 
 #if DBG
-#define CMP_UNLOCK_REGISTRY()                               \
-{                                                           \
-    ASSERT(CmpRegistryLockLocked > 0);                      \
-    KeReleaseMutex(&CmpRegistryMutex, FALSE);               \
-    CmpRegistryLockLocked--;                                \
-}
+#define CMP_UNLOCK_REGISTRY()                     \
+    {                                             \
+        ASSERT(CmpRegistryLockLocked > 0);        \
+        KeReleaseMutex(&CmpRegistryMutex, FALSE); \
+        CmpRegistryLockLocked--;                  \
+    }
 #else
-#define CMP_UNLOCK_REGISTRY()                               \
-{                                                           \
-    KeReleaseMutex(&CmpRegistryMutex, FALSE);               \
-}
+#define CMP_UNLOCK_REGISTRY()                     \
+    {                                             \
+        KeReleaseMutex(&CmpRegistryMutex, FALSE); \
+    }
 #endif
 
 
@@ -125,7 +112,7 @@ extern  LONG    CmpRegistryLockLocked;
 //
 
 #if DBG
-#define ASSERT_REGISTRY_LOCKED()    ASSERT(CmpRegistryLockLocked > 0)
+#define ASSERT_REGISTRY_LOCKED() ASSERT(CmpRegistryLockLocked > 0)
 #else
 #define ASSERT_REGISTRY_LOCKED()
 #endif

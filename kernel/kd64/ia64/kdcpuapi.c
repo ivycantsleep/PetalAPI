@@ -21,24 +21,14 @@ Revision History:
 --*/
 
 #include "kdp.h"
-#define END_OF_CONTROL_SPACE    (sizeof(KPROCESSOR_STATE))
+#define END_OF_CONTROL_SPACE (sizeof(KPROCESSOR_STATE))
 
 ULONG64
-KiReadMsr(
-   IN ULONG Msr
-   );
+KiReadMsr(IN ULONG Msr);
 
-VOID
-KiWriteMsr(
-   IN ULONG Msr,
-   IN ULONG64 Value
-   );
+VOID KiWriteMsr(IN ULONG Msr, IN ULONG64 Value);
 
-VOID
-KdpSetContextState (
-    IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange,
-    IN PCONTEXT ContextRecord
-    )
+VOID KdpSetContextState(IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange, IN PCONTEXT ContextRecord)
 
 /*++
 
@@ -61,14 +51,9 @@ Return Value:
 {
     // No CPU specific work necessary.
 }
-
-VOID
-KdpSetStateChange (
-    IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN BOOLEAN SecondChance
-    )
+
+VOID KdpSetStateChange(IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange, IN PEXCEPTION_RECORD ExceptionRecord,
+                       IN PCONTEXT ContextRecord, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -96,12 +81,8 @@ Return Value:
 {
     // No CPU specific work necessary.
 }
-
-VOID
-KdpGetStateChange (
-    IN PDBGKD_MANIPULATE_STATE64 ManipulateState,
-    IN PCONTEXT ContextRecord
-    )
+
+VOID KdpGetStateChange(IN PDBGKD_MANIPULATE_STATE64 ManipulateState, IN PCONTEXT ContextRecord)
 
 /*++
 
@@ -124,7 +105,8 @@ Return Value:
 --*/
 
 {
-    if (NT_SUCCESS(ManipulateState->u.Continue2.ContinueStatus) == TRUE) {
+    if (NT_SUCCESS(ManipulateState->u.Continue2.ContinueStatus) == TRUE)
+    {
 
         //
         // If NT_SUCCESS returns TRUE, then the debugger is doing a
@@ -140,45 +122,34 @@ Return Value:
         {
             PPSR ContextIPSR = (PPSR)&ContextRecord->StIPSR;
 
-            ContextIPSR->sb.psr_ss =
-                ((ManipulateState->u.Continue2.ControlSet.Continue &
-                IA64_DBGKD_CONTROL_SET_CONTINUE_TRACE_INSTRUCTION) != 0);
+            ContextIPSR->sb.psr_ss = ((ManipulateState->u.Continue2.ControlSet.Continue &
+                                       IA64_DBGKD_CONTROL_SET_CONTINUE_TRACE_INSTRUCTION) != 0);
 
-            ContextIPSR->sb.psr_tb =
-                ((ManipulateState->u.Continue2.ControlSet.Continue &
-                IA64_DBGKD_CONTROL_SET_CONTINUE_TRACE_TAKEN_BRANCH) != 0);
+            ContextIPSR->sb.psr_tb = ((ManipulateState->u.Continue2.ControlSet.Continue &
+                                       IA64_DBGKD_CONTROL_SET_CONTINUE_TRACE_TAKEN_BRANCH) != 0);
         }
 
-    
+
         //
         // Set KernelDebugActive if hardware debug registers are in use
         //
         {
-            UCHAR KernelDebugActive = 
-                ContextRecord->DbI1 || ContextRecord->DbI3 || 
-                ContextRecord->DbI5 || ContextRecord->DbI7 ||
-                ContextRecord->DbD1 || ContextRecord->DbD3 || 
-                ContextRecord->DbD5 || ContextRecord->DbD7;
+            UCHAR KernelDebugActive = ContextRecord->DbI1 || ContextRecord->DbI3 || ContextRecord->DbI5 ||
+                                      ContextRecord->DbI7 || ContextRecord->DbD1 || ContextRecord->DbD3 ||
+                                      ContextRecord->DbD5 || ContextRecord->DbD7;
 
             USHORT Proc;
-            for (Proc = 0; Proc < KeNumberProcessors; ++Proc) {
-                PKPCR Pcr = (PKPCR)(KSEG3_BASE + 
-                                    (KiProcessorBlock[Proc]->PcrPage << 
-                                     PAGE_SHIFT));
+            for (Proc = 0; Proc < KeNumberProcessors; ++Proc)
+            {
+                PKPCR Pcr = (PKPCR)(KSEG3_BASE + (KiProcessorBlock[Proc]->PcrPage << PAGE_SHIFT));
                 Pcr->KernelDebugActive = KernelDebugActive;
             }
         }
     }
 }
-
+
 NTSTATUS
-KdpSysReadControlSpace(
-    ULONG Processor,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysReadControlSpace(ULONG Processor, ULONG64 Address, PVOID Buffer, ULONG Request, PULONG Actual)
 
 /*++
 
@@ -209,7 +180,8 @@ Return Value:
     PVOID Pointer;
     PVOID Data;
 
-    if (Processor >= (ULONG)KeNumberProcessors) {
+    if (Processor >= (ULONG)KeNumberProcessors)
+    {
         *Actual = 0;
         return STATUS_UNSUCCESSFUL;
     }
@@ -218,7 +190,8 @@ Return Value:
     // Case on address to determine what part of Control space is being read.
     //
 
-    switch ( Address ) {
+    switch (Address)
+    {
 
         //
         // Return the pcr address for the current processor.
@@ -257,30 +230,24 @@ Return Value:
     case DEBUG_CONTROL_SPACE_KSPECIAL:
 
         Data = &(KiProcessorBlock[Processor]->ProcessorState.SpecialRegisters);
-        Length = sizeof( KSPECIAL_REGISTERS );
+        Length = sizeof(KSPECIAL_REGISTERS);
         break;
 
     default:
 
         *Actual = 0;
         return STATUS_UNSUCCESSFUL;
-
     }
 
-    if (Length > Request) {
+    if (Length > Request)
+    {
         Length = Request;
     }
     return KdpCopyToPtr(Buffer, Data, Length, Actual);
 }
 
 NTSTATUS
-KdpSysWriteControlSpace(
-    ULONG Processor,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysWriteControlSpace(ULONG Processor, ULONG64 Address, PVOID Buffer, ULONG Request, PULONG Actual)
 
 /*++
 
@@ -309,24 +276,26 @@ Return Value:
 {
     ULONG Length;
 
-    if (Processor >= (ULONG)KeNumberProcessors) {
+    if (Processor >= (ULONG)KeNumberProcessors)
+    {
         *Actual = 0;
         return STATUS_UNSUCCESSFUL;
     }
 
-    switch ( Address ) {
+    switch (Address)
+    {
 
     case DEBUG_CONTROL_SPACE_KSPECIAL:
 
-        if (Request > sizeof(KSPECIAL_REGISTERS)) {
+        if (Request > sizeof(KSPECIAL_REGISTERS))
+        {
             Length = sizeof(KSPECIAL_REGISTERS);
-        } else {
+        }
+        else
+        {
             Length = Request;
         }
-        return KdpCopyFromPtr(&KiProcessorBlock[Processor]->ProcessorState.SpecialRegisters,
-                              Buffer,
-                              Length,
-                              Actual);
+        return KdpCopyFromPtr(&KiProcessorBlock[Processor]->ProcessorState.SpecialRegisters, Buffer, Length, Actual);
 
     default:
         *Actual = 0;
@@ -335,15 +304,8 @@ Return Value:
 }
 
 NTSTATUS
-KdpSysReadIoSpace(
-    INTERFACE_TYPE InterfaceType,
-    ULONG BusNumber,
-    ULONG AddressSpace,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysReadIoSpace(INTERFACE_TYPE InterfaceType, ULONG BusNumber, ULONG AddressSpace, ULONG64 Address, PVOID Buffer,
+                  ULONG Request, PULONG Actual)
 
 /*++
 
@@ -381,7 +343,8 @@ Return Value:
 
     *Actual = 0;
 
-    if (InterfaceType != Isa || BusNumber != 0 || AddressSpace != 1) {
+    if (InterfaceType != Isa || BusNumber != 0 || AddressSpace != 1)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -389,47 +352,45 @@ Return Value:
     // Check Size and Alignment
     //
 
-    switch ( Request ) {
-        case 1:
-            *(PUCHAR)Buffer = READ_PORT_UCHAR((PUCHAR)(ULONG_PTR)Address);
-            *Actual = 1;
-            break;
-        case 2:
-            if ( Address & 1 ) {
-                Status = STATUS_DATATYPE_MISALIGNMENT;
-            } else {
-                *(PUSHORT)Buffer =
-                    READ_PORT_USHORT((PUSHORT)(ULONG_PTR)Address);
-                *Actual = 2;
-            }
-            break;
-        case 4:
-            if ( Address & 3 ) {
-                Status = STATUS_DATATYPE_MISALIGNMENT;
-            } else {
-                *(PULONG)Buffer =
-                    READ_PORT_ULONG((PULONG)(ULONG_PTR)Address);
-                *Actual = 4;
-            }
-            break;
-        default:
-            Status = STATUS_INVALID_PARAMETER;
-            break;
+    switch (Request)
+    {
+    case 1:
+        *(PUCHAR)Buffer = READ_PORT_UCHAR((PUCHAR)(ULONG_PTR)Address);
+        *Actual = 1;
+        break;
+    case 2:
+        if (Address & 1)
+        {
+            Status = STATUS_DATATYPE_MISALIGNMENT;
+        }
+        else
+        {
+            *(PUSHORT)Buffer = READ_PORT_USHORT((PUSHORT)(ULONG_PTR)Address);
+            *Actual = 2;
+        }
+        break;
+    case 4:
+        if (Address & 3)
+        {
+            Status = STATUS_DATATYPE_MISALIGNMENT;
+        }
+        else
+        {
+            *(PULONG)Buffer = READ_PORT_ULONG((PULONG)(ULONG_PTR)Address);
+            *Actual = 4;
+        }
+        break;
+    default:
+        Status = STATUS_INVALID_PARAMETER;
+        break;
     }
 
     return Status;
 }
 
 NTSTATUS
-KdpSysWriteIoSpace(
-    INTERFACE_TYPE InterfaceType,
-    ULONG BusNumber,
-    ULONG AddressSpace,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysWriteIoSpace(INTERFACE_TYPE InterfaceType, ULONG BusNumber, ULONG AddressSpace, ULONG64 Address, PVOID Buffer,
+                   ULONG Request, PULONG Actual)
 
 /*++
 
@@ -469,7 +430,8 @@ Return Value:
 
     *Actual = 0;
 
-    if (InterfaceType != Isa || BusNumber != 0 || AddressSpace != 1) {
+    if (InterfaceType != Isa || BusNumber != 0 || AddressSpace != 1)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -477,43 +439,44 @@ Return Value:
     // Check Size and Alignment
     //
 
-    switch ( Request ) {
-        case 1:
-            WRITE_PORT_UCHAR((PUCHAR)(ULONG_PTR)Address,
-                             *(PUCHAR)Buffer);
-            *Actual = 1;
-            break;
-        case 2:
-            if ( Address & 1 ) {
-                Status = STATUS_DATATYPE_MISALIGNMENT;
-            } else {
-                WRITE_PORT_USHORT((PUSHORT)(ULONG_PTR)Address,
-                                  *(PUSHORT)Buffer);
-                *Actual = 2;
-            }
-            break;
-        case 4:
-            if ( Address & 3 ) {
-                Status = STATUS_DATATYPE_MISALIGNMENT;
-            } else {
-                WRITE_PORT_ULONG((PULONG)(ULONG_PTR)Address,
-                                 *(PULONG)Buffer);
-                *Actual = 4;
-            }
-            break;
-        default:
-            Status = STATUS_INVALID_PARAMETER;
-            break;
+    switch (Request)
+    {
+    case 1:
+        WRITE_PORT_UCHAR((PUCHAR)(ULONG_PTR)Address, *(PUCHAR)Buffer);
+        *Actual = 1;
+        break;
+    case 2:
+        if (Address & 1)
+        {
+            Status = STATUS_DATATYPE_MISALIGNMENT;
+        }
+        else
+        {
+            WRITE_PORT_USHORT((PUSHORT)(ULONG_PTR)Address, *(PUSHORT)Buffer);
+            *Actual = 2;
+        }
+        break;
+    case 4:
+        if (Address & 3)
+        {
+            Status = STATUS_DATATYPE_MISALIGNMENT;
+        }
+        else
+        {
+            WRITE_PORT_ULONG((PULONG)(ULONG_PTR)Address, *(PULONG)Buffer);
+            *Actual = 4;
+        }
+        break;
+    default:
+        Status = STATUS_INVALID_PARAMETER;
+        break;
     }
 
     return Status;
 }
 
 NTSTATUS
-KdpSysReadMsr(
-    ULONG Msr,
-    PULONG64 Data
-    )
+KdpSysReadMsr(ULONG Msr, PULONG64 Data)
 
 /*++
 
@@ -536,9 +499,12 @@ Return Value:
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
-    try {
+    try
+    {
         *Data = KiReadMsr(Msr);
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         *Data = 0;
         Status = STATUS_NO_SUCH_DEVICE;
     }
@@ -547,10 +513,7 @@ Return Value:
 }
 
 NTSTATUS
-KdpSysWriteMsr(
-    ULONG Msr,
-    PULONG64 Data
-    )
+KdpSysWriteMsr(ULONG Msr, PULONG64 Data)
 
 /*++
 
@@ -573,9 +536,12 @@ Return Value:
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
-    try {
+    try
+    {
         KiWriteMsr(Msr, *Data);
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = STATUS_NO_SUCH_DEVICE;
     }
 

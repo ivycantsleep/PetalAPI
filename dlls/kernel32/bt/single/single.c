@@ -41,7 +41,8 @@ Revision History:
 // Define structure that will be used in SLIST.
 //
 
-typedef struct _PROGRAM_ITEM {
+typedef struct _PROGRAM_ITEM
+{
 
     //
     // Normally a SINGLE_LIST_ENTRY is the first member of the program
@@ -65,13 +66,7 @@ typedef struct _PROGRAM_ITEM {
 // Main program.
 //
 
-int
-__cdecl
-main(
-    int argc,
-    char *argv[],
-    char *envp[]
-    )
+int __cdecl main(int argc, char *argv[], char *envp[])
 
 {
 
@@ -83,30 +78,34 @@ main(
 
     ListHead.Next = NULL;
     LastEntry = NULL;
-    for (Count = 1; Count < 100; Count += 1) {
+    for (Count = 1; Count < 100; Count += 1)
+    {
         ProgramItem = (PPROGRAM_ITEM)malloc(sizeof(*ProgramItem));
         ProgramItem->Signature = Count;
-        FirstEntry = InterlockedPushEntrySingleList(&ListHead,
-                                                    &ProgramItem->ItemEntry);
+        FirstEntry = InterlockedPushEntrySingleList(&ListHead, &ProgramItem->ItemEntry);
 
-        if (FirstEntry != LastEntry) {
+        if (FirstEntry != LastEntry)
+        {
             printf("wrong old first entry\n");
         }
 
         LastEntry = &ProgramItem->ItemEntry;
-//        Count = _byteswap_ulong(Count);
+        //        Count = _byteswap_ulong(Count);
         Count = __readgsdword(Count);
     }
 
-    for (Count = 99; Count > 0; Count -= 1) {
+    for (Count = 99; Count > 0; Count -= 1)
+    {
         FirstEntry = InterlockedPopEntrySingleList(&ListHead);
         ProgramItem = CONTAINING_RECORD(FirstEntry, PROGRAM_ITEM, ItemEntry);
-        if (ProgramItem->Signature != Count) {
+        if (ProgramItem->Signature != Count)
+        {
             printf("wring entry removed\n");
         }
     }
 
-    if (ListHead.Next != NULL) {
+    if (ListHead.Next != NULL)
+    {
         printf("list not empty\n");
     }
 

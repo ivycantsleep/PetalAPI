@@ -23,18 +23,13 @@ Revision History:
 #include "mi.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtLockVirtualMemory)
-#pragma alloc_text(PAGE,NtUnlockVirtualMemory)
+#pragma alloc_text(PAGE, NtLockVirtualMemory)
+#pragma alloc_text(PAGE, NtUnlockVirtualMemory)
 #endif
 
-
+
 NTSTATUS
-NtLockVirtualMemory (
-    IN HANDLE ProcessHandle,
-    IN OUT PVOID *BaseAddress,
-    IN OUT PSIZE_T RegionSize,
-    IN ULONG MapType
-     )
+NtLockVirtualMemory(IN HANDLE ProcessHandle, IN OUT PVOID *BaseAddress, IN OUT PSIZE_T RegionSize, IN ULONG MapType)
 
 /*++
 
@@ -111,24 +106,28 @@ Return Value:
     // Validate the flags in MapType.
     //
 
-    if ((MapType & ~(MAP_PROCESS | MAP_SYSTEM)) != 0) {
+    if ((MapType & ~(MAP_PROCESS | MAP_SYSTEM)) != 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if ((MapType & (MAP_PROCESS | MAP_SYSTEM)) == 0) {
+    if ((MapType & (MAP_PROCESS | MAP_SYSTEM)) == 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    Thread = PsGetCurrentThread ();
+    Thread = PsGetCurrentThread();
 
     PreviousMode = KeGetPreviousModeByThread(&Thread->Tcb);
 
-    try {
+    try
+    {
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
-            ProbeForWritePointer ((PULONG)BaseAddress);
-            ProbeForWriteUlong_ptr (RegionSize);
+            ProbeForWritePointer((PULONG)BaseAddress);
+            ProbeForWriteUlong_ptr(RegionSize);
         }
 
         //
@@ -142,8 +141,9 @@ Return Value:
         //
 
         CapturedRegionSize = *RegionSize;
-
-    } except (ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
 
         //
         // If an exception occurs during the probe or capture
@@ -159,7 +159,8 @@ Return Value:
     // within the user part of the virtual address space.
     //
 
-    if (CapturedBase > MM_HIGHEST_USER_ADDRESS) {
+    if (CapturedBase > MM_HIGHEST_USER_ADDRESS)
+    {
 
         //
         // Invalid base address.
@@ -168,18 +169,18 @@ Return Value:
         return STATUS_INVALID_PARAMETER;
     }
 
-    if ((ULONG_PTR)MM_HIGHEST_USER_ADDRESS - (ULONG_PTR)CapturedBase <
-                                                        CapturedRegionSize) {
+    if ((ULONG_PTR)MM_HIGHEST_USER_ADDRESS - (ULONG_PTR)CapturedBase < CapturedRegionSize)
+    {
 
         //
         // Invalid region size;
         //
 
         return STATUS_INVALID_PARAMETER;
-
     }
 
-    if (CapturedRegionSize == 0) {
+    if (CapturedRegionSize == 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -187,31 +188,27 @@ Return Value:
     // Reference the specified process.
     //
 
-    Status = ObReferenceObjectByHandle ( ProcessHandle,
-                                         PROCESS_VM_OPERATION,
-                                         PsProcessType,
-                                         PreviousMode,
-                                         (PVOID *)&TargetProcess,
-                                         NULL );
+    Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_OPERATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&TargetProcess, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    if ((MapType & MAP_SYSTEM) != 0) {
+    if ((MapType & MAP_SYSTEM) != 0)
+    {
 
         //
         // In addition to PROCESS_VM_OPERATION access to the target
         // process, the caller must have SE_LOCK_MEMORY_PRIVILEGE.
         //
 
-        if (!SeSinglePrivilegeCheck(
-                           SeLockMemoryPrivilege,
-                           PreviousMode
-                           )) {
+        if (!SeSinglePrivilegeCheck(SeLockMemoryPrivilege, PreviousMode))
+        {
 
-            ObDereferenceObject( TargetProcess );
-            return( STATUS_PRIVILEGE_NOT_HELD );
+            ObDereferenceObject(TargetProcess);
+            return (STATUS_PRIVILEGE_NOT_HELD);
         }
     }
 
@@ -219,11 +216,13 @@ Return Value:
     // Attach to the specified process.
     //
 
-    if (ProcessHandle != NtCurrentProcess()) {
-        KeStackAttachProcess (&TargetProcess->Pcb, &ApcState);
+    if (ProcessHandle != NtCurrentProcess())
+    {
+        KeStackAttachProcess(&TargetProcess->Pcb, &ApcState);
         Attached = TRUE;
     }
-    else {
+    else
+    {
         Attached = FALSE;
     }
 
@@ -246,23 +245,24 @@ Return Value:
     EndingAddress = PAGE_ALIGN((PCHAR)CapturedBase + CapturedRegionSize - 1);
 #endif
 
-    Va = PAGE_ALIGN (CapturedBase);
+    Va = PAGE_ALIGN(CapturedBase);
     NumberOfAlreadyLocked = 0;
     NumberToLock = ((ULONG_PTR)EndingAddress - (ULONG_PTR)Va) >> PAGE_SHIFT;
 
-    LOCK_ADDRESS_SPACE (TargetProcess);
+    LOCK_ADDRESS_SPACE(TargetProcess);
 
     //
     // Make sure the address space was not deleted, if so, return an error.
     //
 
-    if (TargetProcess->Flags & PS_PROCESS_FLAGS_VM_DELETED) {
+    if (TargetProcess->Flags & PS_PROCESS_FLAGS_VM_DELETED)
+    {
         Status = STATUS_PROCESS_IS_TERMINATING;
         goto ErrorReturn1;
     }
 
-    if (NumberToLock + MM_FLUID_WORKING_SET >
-                                    TargetProcess->Vm.MinimumWorkingSetSize) {
+    if (NumberToLock + MM_FLUID_WORKING_SET > TargetProcess->Vm.MinimumWorkingSetSize)
+    {
         Status = STATUS_WORKING_SET_QUOTA;
         goto ErrorReturn1;
     }
@@ -272,48 +272,51 @@ Return Value:
     // prevent other threads from locking or unlocking WSL entries.
     //
 
-    LOCK_WS_UNSAFE (TargetProcess);
+    LOCK_WS_UNSAFE(TargetProcess);
 
-    while (Va <= EndingAddress) {
+    while (Va <= EndingAddress)
+    {
 
-        if (Va > LastVa) {
+        if (Va > LastVa)
+        {
 
             //
             // Don't lock physically mapped views.
             //
 
-            Vad = MiLocateAddress (Va);
+            Vad = MiLocateAddress(Va);
 
-            if (Vad == NULL) {
+            if (Vad == NULL)
+            {
                 Status = STATUS_ACCESS_VIOLATION;
                 goto ErrorReturn;
             }
 
-            if ((Vad->u.VadFlags.PhysicalMapping == 1) ||
-                (Vad->u.VadFlags.UserPhysicalPages == 1)) {
+            if ((Vad->u.VadFlags.PhysicalMapping == 1) || (Vad->u.VadFlags.UserPhysicalPages == 1))
+            {
                 Status = STATUS_INCOMPATIBLE_FILE_MAP;
                 goto ErrorReturn;
             }
-            LastVa = MI_VPN_TO_VA (Vad->EndingVpn);
+            LastVa = MI_VPN_TO_VA(Vad->EndingVpn);
         }
 
-        if (MmIsAddressValid (Va)) {
+        if (MmIsAddressValid(Va))
+        {
 
             //
             // The page is valid, therefore it is in the working set.
             // Locate the WSLE for the page and see if it is locked.
             //
 
-            PointerPte1 = MiGetPteAddress (Va);
-            Pfn1 = MI_PFN_ELEMENT (PointerPte1->u.Hard.PageFrameNumber);
+            PointerPte1 = MiGetPteAddress(Va);
+            Pfn1 = MI_PFN_ELEMENT(PointerPte1->u.Hard.PageFrameNumber);
 
-            WorkingSetIndex = MiLocateWsle (Va,
-                                            MmWorkingSetList,
-                                            Pfn1->u1.WsIndex);
+            WorkingSetIndex = MiLocateWsle(Va, MmWorkingSetList, Pfn1->u1.WsIndex);
 
-            ASSERT (WorkingSetIndex != WSLE_NULL_INDEX);
+            ASSERT(WorkingSetIndex != WSLE_NULL_INDEX);
 
-            if (WorkingSetIndex < MmWorkingSetList->FirstDynamic) {
+            if (WorkingSetIndex < MmWorkingSetList->FirstDynamic)
+            {
 
                 //
                 // This page is locked in the working set.
@@ -325,13 +328,13 @@ Return Value:
                 // Check to see if the WAS_LOCKED status should be returned.
                 //
 
-                if ((MapType & MAP_PROCESS) &&
-                        (MmWsle[WorkingSetIndex].u1.e1.LockedInWs == 1)) {
+                if ((MapType & MAP_PROCESS) && (MmWsle[WorkingSetIndex].u1.e1.LockedInWs == 1))
+                {
                     WasLocked = TRUE;
                 }
 
-                if ((MapType & MAP_SYSTEM) &&
-                        (MmWsle[WorkingSetIndex].u1.e1.LockedInMemory == 1)) {
+                if ((MapType & MAP_SYSTEM) && (MmWsle[WorkingSetIndex].u1.e1.LockedInMemory == 1))
+                {
                     WasLocked = TRUE;
                 }
             }
@@ -339,7 +342,7 @@ Return Value:
         Va = (PVOID)((PCHAR)Va + PAGE_SIZE);
     }
 
-    UNLOCK_WS_UNSAFE (TargetProcess);
+    UNLOCK_WS_UNSAFE(TargetProcess);
 
     //
     // Check to ensure the working set list is still fluid after
@@ -347,21 +350,22 @@ Return Value:
     //
 
     if (TargetProcess->Vm.MinimumWorkingSetSize <
-          ((MmWorkingSetList->FirstDynamic + NumberToLock +
-                      MM_FLUID_WORKING_SET) - NumberOfAlreadyLocked)) {
+        ((MmWorkingSetList->FirstDynamic + NumberToLock + MM_FLUID_WORKING_SET) - NumberOfAlreadyLocked))
+    {
 
         Status = STATUS_WORKING_SET_QUOTA;
         goto ErrorReturn1;
     }
 
-    Va = PAGE_ALIGN (CapturedBase);
+    Va = PAGE_ALIGN(CapturedBase);
 
 #if defined(_MIALT4K_)
 
     Wow64Process = TargetProcess->Wow64Process;
 
-    if (Wow64Process != NULL) {
-        Va = PAGE_4K_ALIGN (CapturedBase);
+    if (Wow64Process != NULL)
+    {
+        Va = PAGE_4K_ALIGN(CapturedBase);
     }
 
 #endif
@@ -377,27 +381,30 @@ Return Value:
     // only happen in an APC and those are blocked right now anyway.
     //
 
-    ASSERT (KeGetCurrentIrql () == APC_LEVEL);
-    ASSERT (Thread->AddressSpaceOwner == 0);
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);
+    ASSERT(Thread->AddressSpaceOwner == 0);
     Thread->AddressSpaceOwner = 1;
 
-    try {
+    try
+    {
 
-        while (Va <= EndingAddress) {
+        while (Va <= EndingAddress)
+        {
             *(volatile ULONG *)Va;
             Va = (PVOID)((PCHAR)Va + PAGE_SIZE);
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        ASSERT (KeGetCurrentIrql () == APC_LEVEL);
-        ASSERT (Thread->AddressSpaceOwner == 1);
+        ASSERT(KeGetCurrentIrql() == APC_LEVEL);
+        ASSERT(Thread->AddressSpaceOwner == 1);
         Thread->AddressSpaceOwner = 0;
         goto ErrorReturn1;
     }
 
-    ASSERT (KeGetCurrentIrql () == APC_LEVEL);
-    ASSERT (Thread->AddressSpaceOwner == 1);
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);
+    ASSERT(Thread->AddressSpaceOwner == 1);
     Thread->AddressSpaceOwner = 0;
 
     //
@@ -405,13 +412,14 @@ Return Value:
     // the working set.
     //
 
-    PointerPte = MiGetPteAddress (CapturedBase);
-    Va = PAGE_ALIGN (CapturedBase);
+    PointerPte = MiGetPteAddress(CapturedBase);
+    Va = PAGE_ALIGN(CapturedBase);
 
 #if defined(_MIALT4K_)
 
-    if (Wow64Process != NULL) {
-        Va = PAGE_4K_ALIGN (CapturedBase);
+    if (Wow64Process != NULL)
+    {
+        Va = PAGE_4K_ALIGN(CapturedBase);
     }
 
 #endif
@@ -422,42 +430,35 @@ Return Value:
     // Acquire the working set mutex, no page faults are allowed.
     //
 
-    LOCK_WS_UNSAFE (TargetProcess);
+    LOCK_WS_UNSAFE(TargetProcess);
 
-    while (Va <= EndingAddress) {
+    while (Va <= EndingAddress)
+    {
 
         //
         // Make sure the PDE is valid.
         //
 
-        PointerPde = MiGetPdeAddress (Va);
-        PointerPpe = MiGetPpeAddress (Va);
-        PointerPxe = MiGetPxeAddress (Va);
+        PointerPde = MiGetPdeAddress(Va);
+        PointerPpe = MiGetPpeAddress(Va);
+        PointerPxe = MiGetPxeAddress(Va);
 
-        do {
+        do
+        {
 
-            MiDoesPxeExistAndMakeValid (PointerPxe,
-                                        TargetProcess,
-                                        FALSE,
-                                        &Waited);
+            MiDoesPxeExistAndMakeValid(PointerPxe, TargetProcess, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS >= 4)
             Waited = 0;
 #endif
 
-            MiDoesPpeExistAndMakeValid (PointerPpe,
-                                        TargetProcess,
-                                        FALSE,
-                                        &Waited);
+            MiDoesPpeExistAndMakeValid(PointerPpe, TargetProcess, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS < 4)
             Waited = 0;
 #endif
 
-            MiDoesPdeExistAndMakeValid (PointerPde,
-                                        TargetProcess,
-                                        FALSE,
-                                        &Waited);
+            MiDoesPdeExistAndMakeValid(PointerPde, TargetProcess, FALSE, &Waited);
 
         } while (Waited != 0);
 
@@ -465,21 +466,25 @@ Return Value:
         // Make sure the page is in the working set.
         //
 
-        while (PointerPte->u.Hard.Valid == 0) {
+        while (PointerPte->u.Hard.Valid == 0)
+        {
 
             //
             // Release the working set mutex and fault in the page.
             //
 
-            UNLOCK_WS_UNSAFE (TargetProcess);
+            UNLOCK_WS_UNSAFE(TargetProcess);
 
             //
             // Page in the PDE and make the PTE valid.
             //
 
-            try {
+            try
+            {
                 *(volatile ULONG *)Va;
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // Since all the pages were accessed above with the address
@@ -493,23 +498,26 @@ Return Value:
                 // page then return a failure status.
                 //
 
-                EndingAddress = PAGE_ALIGN (Va);
+                EndingAddress = PAGE_ALIGN(Va);
 
 #if defined(_MIALT4K_)
-                if (Wow64Process != NULL) {
-                    EndingAddress = PAGE_4K_ALIGN (Va);
+                if (Wow64Process != NULL)
+                {
+                    EndingAddress = PAGE_4K_ALIGN(Va);
                 }
 #endif
 
-                if (EndingAddress == StartingVa) {
-                    Status = GetExceptionCode ();
+                if (EndingAddress == StartingVa)
+                {
+                    Status = GetExceptionCode();
                     goto ErrorReturn1;
                 }
 
-                ASSERT (NT_SUCCESS (Status));
+                ASSERT(NT_SUCCESS(Status));
                 EndingAddress = (PVOID)((ULONG_PTR)EndingAddress - 1);
 #if defined(_MIALT4K_)
-                if (Wow64Process != NULL) {
+                if (Wow64Process != NULL)
+                {
                     CapturedRegionSize = (ULONG_PTR)EndingAddress - (ULONG_PTR)CapturedBase;
                 }
 #endif
@@ -520,7 +528,7 @@ Return Value:
             // Reacquire the working set mutex.
             //
 
-            LOCK_WS_UNSAFE (TargetProcess);
+            LOCK_WS_UNSAFE(TargetProcess);
 
             //
             // Make sure the page directory & table pages are still valid.
@@ -529,30 +537,22 @@ Return Value:
             // working set lock was acquired.
             //
 
-            do {
+            do
+            {
 
-                MiDoesPxeExistAndMakeValid (PointerPxe,
-                                            TargetProcess,
-                                            FALSE,
-                                            &Waited);
+                MiDoesPxeExistAndMakeValid(PointerPxe, TargetProcess, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS >= 4)
                 Waited = 0;
 #endif
 
-                MiDoesPpeExistAndMakeValid (PointerPpe,
-                                            TargetProcess,
-                                            FALSE,
-                                            &Waited);
+                MiDoesPpeExistAndMakeValid(PointerPpe, TargetProcess, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS < 4)
                 Waited = 0;
 #endif
 
-                MiDoesPdeExistAndMakeValid (PointerPde,
-                                            TargetProcess,
-                                            FALSE,
-                                            &Waited);
+                MiDoesPdeExistAndMakeValid(PointerPde, TargetProcess, FALSE, &Waited);
             } while (Waited != 0);
         }
 
@@ -561,26 +561,30 @@ Return Value:
         // the working set.
         //
 
-        PointerPte1 = MiGetPteAddress (Va);
-        Pfn1 = MI_PFN_ELEMENT (PointerPte1->u.Hard.PageFrameNumber);
+        PointerPte1 = MiGetPteAddress(Va);
+        Pfn1 = MI_PFN_ELEMENT(PointerPte1->u.Hard.PageFrameNumber);
 
-        Entry = MiLocateWsle (Va, MmWorkingSetList, Pfn1->u1.WsIndex);
+        Entry = MiLocateWsle(Va, MmWorkingSetList, Pfn1->u1.WsIndex);
 
-        if (Entry >= MmWorkingSetList->FirstDynamic) {
+        if (Entry >= MmWorkingSetList->FirstDynamic)
+        {
 
             SwapEntry = MmWorkingSetList->FirstDynamic;
 
-            if (Entry != MmWorkingSetList->FirstDynamic) {
+            if (Entry != MmWorkingSetList->FirstDynamic)
+            {
 
                 //
                 // Swap this entry with the one at first dynamic.
                 //
 
-                MiSwapWslEntries (Entry, SwapEntry, &TargetProcess->Vm);
+                MiSwapWslEntries(Entry, SwapEntry, &TargetProcess->Vm);
             }
 
             MmWorkingSetList->FirstDynamic += 1;
-        } else {
+        }
+        else
+        {
             SwapEntry = Entry;
         }
 
@@ -588,11 +592,13 @@ Return Value:
         // Indicate that the page is locked.
         //
 
-        if (MapType & MAP_PROCESS) {
+        if (MapType & MAP_PROCESS)
+        {
             MmWsle[SwapEntry].u1.e1.LockedInWs = 1;
         }
 
-        if (MapType & MAP_SYSTEM) {
+        if (MapType & MAP_SYSTEM)
+        {
             MmWsle[SwapEntry].u1.e1.LockedInMemory = 1;
         }
 
@@ -604,24 +610,26 @@ Return Value:
         Va = (PVOID)((PCHAR)Va + PAGE_SIZE);
     }
 
-    UNLOCK_WS_UNSAFE (TargetProcess);
+    UNLOCK_WS_UNSAFE(TargetProcess);
 
 SuccessReturn1:
 
 #if (defined(_MIALT4K_))
 
-    if (Wow64Process != NULL) {
-        MiLockFor4kPage (CapturedBase, CapturedRegionSize, TargetProcess);
+    if (Wow64Process != NULL)
+    {
+        MiLockFor4kPage(CapturedBase, CapturedRegionSize, TargetProcess);
     }
 
 #endif
 
-    UNLOCK_ADDRESS_SPACE (TargetProcess);
+    UNLOCK_ADDRESS_SPACE(TargetProcess);
 
-    if (Attached == TRUE) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
     }
-    ObDereferenceObject (TargetProcess);
+    ObDereferenceObject(TargetProcess);
 
     //
     // Update return arguments.
@@ -632,57 +640,55 @@ SuccessReturn1:
     // address.
     //
 
-    try {
+    try
+    {
 
 #if defined(_MIALT4K_)
 
-        if (Wow64Process != NULL) { 
+        if (Wow64Process != NULL)
+        {
 
-            *RegionSize = ((PCHAR)EndingAddress -
-                        (PCHAR)PAGE_4K_ALIGN(CapturedBase)) + PAGE_4K;
+            *RegionSize = ((PCHAR)EndingAddress - (PCHAR)PAGE_4K_ALIGN(CapturedBase)) + PAGE_4K;
 
             *BaseAddress = PAGE_4K_ALIGN(CapturedBase);
-
-
-        } else {    
+        }
+        else
+        {
 
 #endif
-        *RegionSize = ((PCHAR)EndingAddress - (PCHAR)PAGE_ALIGN(CapturedBase)) +
-                                                                    PAGE_SIZE;
-        *BaseAddress = PAGE_ALIGN(CapturedBase);
+            *RegionSize = ((PCHAR)EndingAddress - (PCHAR)PAGE_ALIGN(CapturedBase)) + PAGE_SIZE;
+            *BaseAddress = PAGE_ALIGN(CapturedBase);
 
 #if defined(_MIALT4K_)
         }
 #endif
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
-    if (WasLocked) {
+    if (WasLocked)
+    {
         return STATUS_WAS_LOCKED;
     }
 
     return STATUS_SUCCESS;
 
 ErrorReturn:
-        UNLOCK_WS_UNSAFE (TargetProcess);
+    UNLOCK_WS_UNSAFE(TargetProcess);
 ErrorReturn1:
-        UNLOCK_ADDRESS_SPACE (TargetProcess);
-        if (Attached == TRUE) {
-            KeUnstackDetachProcess (&ApcState);
-        }
-        ObDereferenceObject (TargetProcess);
-        return Status;
+    UNLOCK_ADDRESS_SPACE(TargetProcess);
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
+    }
+    ObDereferenceObject(TargetProcess);
+    return Status;
 }
-
+
 NTSTATUS
-NtUnlockVirtualMemory (
-    IN HANDLE ProcessHandle,
-    IN OUT PVOID *BaseAddress,
-    IN OUT PSIZE_T RegionSize,
-    IN ULONG MapType
-    )
+NtUnlockVirtualMemory(IN HANDLE ProcessHandle, IN OUT PVOID *BaseAddress, IN OUT PSIZE_T RegionSize, IN ULONG MapType)
 
 /*++
 
@@ -750,22 +756,26 @@ Return Value:
     // Validate the flags in MapType.
     //
 
-    if ((MapType & ~(MAP_PROCESS | MAP_SYSTEM)) != 0) {
+    if ((MapType & ~(MAP_PROCESS | MAP_SYSTEM)) != 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if ((MapType & (MAP_PROCESS | MAP_SYSTEM)) == 0) {
+    if ((MapType & (MAP_PROCESS | MAP_SYSTEM)) == 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
     PreviousMode = KeGetPreviousMode();
 
-    try {
+    try
+    {
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
-            ProbeForWritePointer (BaseAddress);
-            ProbeForWriteUlong_ptr (RegionSize);
+            ProbeForWritePointer(BaseAddress);
+            ProbeForWriteUlong_ptr(RegionSize);
         }
 
         //
@@ -779,8 +789,9 @@ Return Value:
         //
 
         CapturedRegionSize = *RegionSize;
-
-    } except (ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
 
         //
         // If an exception occurs during the probe or capture
@@ -796,7 +807,8 @@ Return Value:
     // within the user part of the virtual address space.
     //
 
-    if (CapturedBase > MM_HIGHEST_USER_ADDRESS) {
+    if (CapturedBase > MM_HIGHEST_USER_ADDRESS)
+    {
 
         //
         // Invalid base address.
@@ -805,29 +817,26 @@ Return Value:
         return STATUS_INVALID_PARAMETER;
     }
 
-    if ((ULONG_PTR)MM_HIGHEST_USER_ADDRESS - (ULONG_PTR)CapturedBase <
-                                                        CapturedRegionSize) {
+    if ((ULONG_PTR)MM_HIGHEST_USER_ADDRESS - (ULONG_PTR)CapturedBase < CapturedRegionSize)
+    {
 
         //
         // Invalid region size;
         //
 
         return STATUS_INVALID_PARAMETER;
-
     }
 
-    if (CapturedRegionSize == 0) {
+    if (CapturedRegionSize == 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    Status = ObReferenceObjectByHandle ( ProcessHandle,
-                                         PROCESS_VM_OPERATION,
-                                         PsProcessType,
-                                         PreviousMode,
-                                         (PVOID *)&TargetProcess,
-                                         NULL );
+    Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_OPERATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&TargetProcess, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -835,19 +844,18 @@ Return Value:
     Wow64Process = TargetProcess->Wow64Process;
 #endif
 
-    if ((MapType & MAP_SYSTEM) != 0) {
+    if ((MapType & MAP_SYSTEM) != 0)
+    {
 
         //
         // In addition to PROCESS_VM_OPERATION access to the target
         // process, the caller must have SE_LOCK_MEMORY_PRIVILEGE.
         //
 
-        if (!SeSinglePrivilegeCheck(
-                           SeLockMemoryPrivilege,
-                           PreviousMode
-                           )) {
+        if (!SeSinglePrivilegeCheck(SeLockMemoryPrivilege, PreviousMode))
+        {
 
-            ObDereferenceObject( TargetProcess );
+            ObDereferenceObject(TargetProcess);
             return STATUS_PRIVILEGE_NOT_HELD;
         }
     }
@@ -856,17 +864,19 @@ Return Value:
     // Attach to the specified process.
     //
 
-    if (ProcessHandle != NtCurrentProcess()) {
-        KeStackAttachProcess (&TargetProcess->Pcb, &ApcState);
+    if (ProcessHandle != NtCurrentProcess())
+    {
+        KeStackAttachProcess(&TargetProcess->Pcb, &ApcState);
         Attached = TRUE;
     }
-    else {
+    else
+    {
         Attached = FALSE;
     }
 
     EndingAddress = PAGE_ALIGN((PCHAR)CapturedBase + CapturedRegionSize - 1);
 
-    Va = PAGE_ALIGN (CapturedBase);
+    Va = PAGE_ALIGN(CapturedBase);
 
     //
     // Get address creation mutex, this prevents the
@@ -875,28 +885,32 @@ Return Value:
     // corrupt the working set list, etc.
     //
 
-    LOCK_ADDRESS_SPACE (TargetProcess);
+    LOCK_ADDRESS_SPACE(TargetProcess);
 
     //
     // Make sure the address space was not deleted, if so, return an error.
     //
 
-    if (TargetProcess->Flags & PS_PROCESS_FLAGS_VM_DELETED) {
+    if (TargetProcess->Flags & PS_PROCESS_FLAGS_VM_DELETED)
+    {
         Status = STATUS_PROCESS_IS_TERMINATING;
         goto ErrorReturn1;
     }
 
-    LOCK_WS_UNSAFE (TargetProcess);
+    LOCK_WS_UNSAFE(TargetProcess);
 
-    while (Va <= EndingAddress) {
+    while (Va <= EndingAddress)
+    {
 
         //
         // Check to ensure all the specified pages are locked.
         //
 
-        if (Va > LastVa) {
-            Vad = MiLocateAddress (Va);
-            if (Vad == NULL) {
+        if (Va > LastVa)
+        {
+            Vad = MiLocateAddress(Va);
+            if (Vad == NULL)
+            {
                 Va = (PVOID)((PCHAR)Va + PAGE_SIZE);
                 Status = STATUS_NOT_LOCKED;
                 break;
@@ -906,15 +920,16 @@ Return Value:
             // Don't unlock physically mapped views.
             //
 
-            if ((Vad->u.VadFlags.PhysicalMapping == 1) ||
-                (Vad->u.VadFlags.UserPhysicalPages == 1)) {
-                Va = MI_VPN_TO_VA (Vad->EndingVpn);
+            if ((Vad->u.VadFlags.PhysicalMapping == 1) || (Vad->u.VadFlags.UserPhysicalPages == 1))
+            {
+                Va = MI_VPN_TO_VA(Vad->EndingVpn);
                 break;
             }
-            LastVa = MI_VPN_TO_VA (Vad->EndingVpn);
+            LastVa = MI_VPN_TO_VA(Vad->EndingVpn);
         }
 
-        if (!MmIsAddressValid (Va)) {
+        if (!MmIsAddressValid(Va))
+        {
 
             //
             // This page is not valid, therefore not in working set.
@@ -922,16 +937,17 @@ Return Value:
 
             Status = STATUS_NOT_LOCKED;
         }
-        else {
+        else
+        {
 
-            PointerPte = MiGetPteAddress (Va);
-            ASSERT (PointerPte->u.Hard.Valid != 0);
-            Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
-            Entry = MiLocateWsle (Va, MmWorkingSetList, Pfn1->u1.WsIndex);
-            ASSERT (Entry != WSLE_NULL_INDEX);
+            PointerPte = MiGetPteAddress(Va);
+            ASSERT(PointerPte->u.Hard.Valid != 0);
+            Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
+            Entry = MiLocateWsle(Va, MmWorkingSetList, Pfn1->u1.WsIndex);
+            ASSERT(Entry != WSLE_NULL_INDEX);
 
-            if ((MmWsle[Entry].u1.e1.LockedInWs == 0) &&
-                (MmWsle[Entry].u1.e1.LockedInMemory == 0)) {
+            if ((MmWsle[Entry].u1.e1.LockedInWs == 0) && (MmWsle[Entry].u1.e1.LockedInMemory == 0))
+            {
 
                 //
                 // Not locked in memory or system, remove from working
@@ -942,14 +958,17 @@ Return Value:
 
                 PERFINFO_GET_PAGE_INFO(PointerPte);
 
-                if (MiFreeWsle (Entry, &TargetProcess->Vm, PointerPte)) {
+                if (MiFreeWsle(Entry, &TargetProcess->Vm, PointerPte))
+                {
                     PERFINFO_LOG_WS_REMOVAL(PERFINFO_LOG_TYPE_OUTWS_EMPTYQ, &TargetProcess->Vm);
                 }
 
                 Status = STATUS_NOT_LOCKED;
-
-            } else if (MapType & MAP_PROCESS) {
-                if (MmWsle[Entry].u1.e1.LockedInWs == 0)  {
+            }
+            else if (MapType & MAP_PROCESS)
+            {
+                if (MmWsle[Entry].u1.e1.LockedInWs == 0)
+                {
 
                     //
                     // This page is not locked.
@@ -957,8 +976,11 @@ Return Value:
 
                     Status = STATUS_NOT_LOCKED;
                 }
-            } else {
-                if (MmWsle[Entry].u1.e1.LockedInMemory == 0)  {
+            }
+            else
+            {
+                if (MmWsle[Entry].u1.e1.LockedInMemory == 0)
+                {
 
                     //
                     // This page is not locked.
@@ -973,7 +995,8 @@ Return Value:
 
 #if defined(_MIALT4K_)
 
-    if (Wow64Process != NULL) {
+    if (Wow64Process != NULL)
+    {
 
         //
         // This call may release and reacquire the working set mutex !!!
@@ -982,14 +1005,13 @@ Return Value:
         // trimmed during this window.
         //
 
-        Status = MiUnlockFor4kPage (CapturedBase,
-                                    CapturedRegionSize,
-                                    TargetProcess);
+        Status = MiUnlockFor4kPage(CapturedBase, CapturedRegionSize, TargetProcess);
     }
 
 #endif
 
-    if (Status == STATUS_NOT_LOCKED) {
+    if (Status == STATUS_NOT_LOCKED)
+    {
         goto ErrorReturn;
     }
 
@@ -997,14 +1019,16 @@ Return Value:
     // The complete address range is locked, unlock them.
     //
 
-    Va = PAGE_ALIGN (CapturedBase);
+    Va = PAGE_ALIGN(CapturedBase);
     LastVa = NULL;
 
-    while (Va <= EndingAddress) {
+    while (Va <= EndingAddress)
+    {
 
 #if defined(_MIALT4K_)
 
-        if (Wow64Process != NULL) {
+        if (Wow64Process != NULL)
+        {
 
             //
             // This call may release and reacquire the working set mutex !!!
@@ -1013,7 +1037,8 @@ Return Value:
             // trimmed during this window.
             //
 
-            if (!MiShouldBeUnlockedFor4kPage(Va, TargetProcess)) {
+            if (!MiShouldBeUnlockedFor4kPage(Va, TargetProcess))
+            {
 
                 //
                 // The other 4k pages in the native page still hold
@@ -1030,20 +1055,22 @@ Return Value:
         // Don't unlock physically mapped views.
         //
 
-        if (Va > LastVa) {
-            Vad = MiLocateAddress (Va);
-            ASSERT (Vad != NULL);
+        if (Va > LastVa)
+        {
+            Vad = MiLocateAddress(Va);
+            ASSERT(Vad != NULL);
 
-            if ((Vad->u.VadFlags.PhysicalMapping == 1) ||
-                (Vad->u.VadFlags.UserPhysicalPages == 1)) {
-                Va = MI_VPN_TO_VA (Vad->EndingVpn);
+            if ((Vad->u.VadFlags.PhysicalMapping == 1) || (Vad->u.VadFlags.UserPhysicalPages == 1))
+            {
+                Va = MI_VPN_TO_VA(Vad->EndingVpn);
                 break;
             }
-            LastVa = MI_VPN_TO_VA (Vad->EndingVpn);
+            LastVa = MI_VPN_TO_VA(Vad->EndingVpn);
         }
 
 #if defined(_MIALT4K_)
-        if (!MmIsAddressValid (Va)) {
+        if (!MmIsAddressValid(Va))
+        {
 
             //
             // The page or any mapping table page may have been trimmed when
@@ -1057,21 +1084,23 @@ Return Value:
         }
 #endif
 
-        PointerPte = MiGetPteAddress (Va);
-        ASSERT (PointerPte->u.Hard.Valid == 1);
-        Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
-        Entry = MiLocateWsle (Va, MmWorkingSetList, Pfn1->u1.WsIndex);
+        PointerPte = MiGetPteAddress(Va);
+        ASSERT(PointerPte->u.Hard.Valid == 1);
+        Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
+        Entry = MiLocateWsle(Va, MmWorkingSetList, Pfn1->u1.WsIndex);
 
-        if (MapType & MAP_PROCESS) {
+        if (MapType & MAP_PROCESS)
+        {
             MmWsle[Entry].u1.e1.LockedInWs = 0;
         }
 
-        if (MapType & MAP_SYSTEM) {
+        if (MapType & MAP_SYSTEM)
+        {
             MmWsle[Entry].u1.e1.LockedInMemory = 0;
         }
 
-        if ((MmWsle[Entry].u1.e1.LockedInMemory == 0) &&
-             MmWsle[Entry].u1.e1.LockedInWs == 0) {
+        if ((MmWsle[Entry].u1.e1.LockedInMemory == 0) && MmWsle[Entry].u1.e1.LockedInWs == 0)
+        {
 
             //
             // The page is no longer should be locked, move
@@ -1080,28 +1109,28 @@ Return Value:
 
             MmWorkingSetList->FirstDynamic -= 1;
 
-            if (Entry != MmWorkingSetList->FirstDynamic) {
+            if (Entry != MmWorkingSetList->FirstDynamic)
+            {
 
                 //
                 // Swap this element with the last locked page, making
                 // this element the new first dynamic entry.
                 //
 
-                MiSwapWslEntries (Entry,
-                                  MmWorkingSetList->FirstDynamic,
-                                  &TargetProcess->Vm);
+                MiSwapWslEntries(Entry, MmWorkingSetList->FirstDynamic, &TargetProcess->Vm);
             }
         }
 
         Va = (PVOID)((PCHAR)Va + PAGE_SIZE);
     }
 
-    UNLOCK_WS_AND_ADDRESS_SPACE (TargetProcess);
+    UNLOCK_WS_AND_ADDRESS_SPACE(TargetProcess);
 
-    if (Attached == TRUE) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
     }
-    ObDereferenceObject (TargetProcess);
+    ObDereferenceObject(TargetProcess);
 
     //
     // Update return arguments.
@@ -1110,31 +1139,32 @@ Return Value:
     // address.
     //
 
-    try {
+    try
+    {
 
 #if defined(_MIALT4K_)
 
-        if (Wow64Process != NULL) { 
+        if (Wow64Process != NULL)
+        {
 
-            *RegionSize = ((PCHAR)EndingAddress -
-                        (PCHAR)PAGE_4K_ALIGN(CapturedBase)) + PAGE_4K;
+            *RegionSize = ((PCHAR)EndingAddress - (PCHAR)PAGE_4K_ALIGN(CapturedBase)) + PAGE_4K;
 
             *BaseAddress = PAGE_4K_ALIGN(CapturedBase);
-
-
-        } else {    
+        }
+        else
+        {
 
 #endif
-        *RegionSize = ((PCHAR)EndingAddress -
-                        (PCHAR)PAGE_ALIGN(CapturedBase)) + PAGE_SIZE;
+            *RegionSize = ((PCHAR)EndingAddress - (PCHAR)PAGE_ALIGN(CapturedBase)) + PAGE_SIZE;
 
-        *BaseAddress = PAGE_ALIGN(CapturedBase);
+            *BaseAddress = PAGE_ALIGN(CapturedBase);
 
 #if defined(_MIALT4K_)
         }
 #endif
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -1142,15 +1172,16 @@ Return Value:
 
 ErrorReturn:
 
-    UNLOCK_WS_UNSAFE (TargetProcess);
+    UNLOCK_WS_UNSAFE(TargetProcess);
 
 ErrorReturn1:
 
-    UNLOCK_ADDRESS_SPACE (TargetProcess);
+    UNLOCK_ADDRESS_SPACE(TargetProcess);
 
-        if (Attached == TRUE) {
-            KeUnstackDetachProcess (&ApcState);
-        }
-        ObDereferenceObject (TargetProcess);
-        return Status;
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
+    }
+    ObDereferenceObject(TargetProcess);
+    return Status;
 }

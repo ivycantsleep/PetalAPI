@@ -31,17 +31,18 @@ Revision History:
 /***********************************************************************
 Format of KTrace record (144 bytes)
 ***********************************************************************/
-typedef struct _KTRACE_RECORD_ {
-    ULONG              ModuleID;
-    USHORT         MessageType;
-    USHORT         MessageIndex;
-    LARGE_INTEGER  SystemTime;
-    ULONGLONG      Arg1;
-    ULONGLONG      Arg2;
-    ULONGLONG      Arg3;
-    ULONGLONG      Arg4;
-    ULONGLONG      Arg5;
-    LARGE_INTEGER   HiResTimeStamp;
+typedef struct _KTRACE_RECORD_
+{
+    ULONG ModuleID;
+    USHORT MessageType;
+    USHORT MessageIndex;
+    LARGE_INTEGER SystemTime;
+    ULONGLONG Arg1;
+    ULONGLONG Arg2;
+    ULONGLONG Arg3;
+    ULONGLONG Arg4;
+    ULONGLONG Arg5;
+    LARGE_INTEGER HiResTimeStamp;
 } KTRACE_RECORD, *PKTRACE_RECORD;
 
 /* IF YOU MAKE ANY CHANGE TO THE ABOVE TYPEDEF YOU
@@ -70,11 +71,7 @@ static ULONG ModuleIDMask = 0xFFFFFFFF;
 /***********************************************************************
 KeEnableKTrace - selectively enable/disable client's rights to trace
 ***********************************************************************/
-VOID
-NTAPI
-KeEnableKTrace (
-        ULONG IDMask
-           )
+VOID NTAPI KeEnableKTrace(ULONG IDMask)
 /*++
 
 Routine Description:
@@ -113,8 +110,7 @@ PKTRACE_RECORD CurrentEntry = 0;
 
 PKTRACE_RECORD
 NTAPI
-KiCurrentKTraceEntry (
-    )
+KiCurrentKTraceEntry()
 /*++
 
 Routine Description:
@@ -131,19 +127,20 @@ Return Value:
     Pointer to next entry.
     
 --*/
-{   
-   ULONG          CurrentProcessor;
+{
+    ULONG CurrentProcessor;
 
-   CurrentProcessor = KeGetCurrentProcessorNumber();
-   if (CurrentProcessor > MAXIMUM_PROCESSORS) {
-      DbgPrint("KTrace:CurrentKTraceEntry:KeGetCurrentProcessorNumber invalid\n");
-      return NULL;
-   }
+    CurrentProcessor = KeGetCurrentProcessorNumber();
+    if (CurrentProcessor > MAXIMUM_PROCESSORS)
+    {
+        DbgPrint("KTrace:CurrentKTraceEntry:KeGetCurrentProcessorNumber invalid\n");
+        return NULL;
+    }
 
-   CurrentEntry = &KTrace[CurrentProcessor][KTraceQueueHead];
-   KTraceQueueHead = (KTraceQueueHead + 1) % KTRACE_LOG_SIZE;
+    CurrentEntry = &KTrace[CurrentProcessor][KTraceQueueHead];
+    KTraceQueueHead = (KTraceQueueHead + 1) % KTRACE_LOG_SIZE;
 
-   return CurrentEntry;
+    return CurrentEntry;
 
 } // CurrentKTraceEntry
 
@@ -153,15 +150,8 @@ AddTrace - add an entry into the trace.
 
 NTSTATUS
 NTAPI
-KeAddKTrace (
-    ULONG     ModuleID,
-    USHORT    MessageType,
-    USHORT    MessageIndex,
-    ULONGLONG Arg1,
-    ULONGLONG Arg2,
-    ULONGLONG Arg3,
-    ULONGLONG Arg4
-    )
+KeAddKTrace(ULONG ModuleID, USHORT MessageType, USHORT MessageIndex, ULONGLONG Arg1, ULONGLONG Arg2, ULONGLONG Arg3,
+            ULONGLONG Arg4)
 /*++
 
 Routine Description:
@@ -187,31 +177,32 @@ Return Value:
                STATUS_SUCCESS if successful.
                STATUS_UNSUCCESSFUL if failure.
 --*/
-{   
-   ULONG           CurrentProcessor;
-   LARGE_INTEGER  PerfCtr;
-   NTSTATUS       Status  = STATUS_SUCCESS;
-   LARGE_INTEGER  SystemTime;
+{
+    ULONG CurrentProcessor;
+    LARGE_INTEGER PerfCtr;
+    NTSTATUS Status = STATUS_SUCCESS;
+    LARGE_INTEGER SystemTime;
 
-   if (!(ModuleID & ModuleIDMask))
-    return STATUS_UNSUCCESSFUL;
+    if (!(ModuleID & ModuleIDMask))
+        return STATUS_UNSUCCESSFUL;
 
-   CurrentProcessor = KeGetCurrentProcessorNumber();
-   if (CurrentProcessor > MAXIMUM_PROCESSORS) {
-      DbgPrint("KTrace:AddTrace:KeGetCurrentProcessorNumber invalid\n");
-      return STATUS_UNSUCCESSFUL;
-   }
+    CurrentProcessor = KeGetCurrentProcessorNumber();
+    if (CurrentProcessor > MAXIMUM_PROCESSORS)
+    {
+        DbgPrint("KTrace:AddTrace:KeGetCurrentProcessorNumber invalid\n");
+        return STATUS_UNSUCCESSFUL;
+    }
 
-   KTrace[CurrentProcessor][KTraceQueueHead].ModuleID     = ModuleID;
-   KTrace[CurrentProcessor][KTraceQueueHead].MessageType  = MessageType;
-   KTrace[CurrentProcessor][KTraceQueueHead].MessageIndex = MessageIndex;
-   KTrace[CurrentProcessor][KTraceQueueHead].Arg1         = Arg1;
-   KTrace[CurrentProcessor][KTraceQueueHead].Arg2         = Arg2;
-   KTrace[CurrentProcessor][KTraceQueueHead].Arg3         = Arg3;
-   KTrace[CurrentProcessor][KTraceQueueHead].Arg4         = Arg4;
+    KTrace[CurrentProcessor][KTraceQueueHead].ModuleID = ModuleID;
+    KTrace[CurrentProcessor][KTraceQueueHead].MessageType = MessageType;
+    KTrace[CurrentProcessor][KTraceQueueHead].MessageIndex = MessageIndex;
+    KTrace[CurrentProcessor][KTraceQueueHead].Arg1 = Arg1;
+    KTrace[CurrentProcessor][KTraceQueueHead].Arg2 = Arg2;
+    KTrace[CurrentProcessor][KTraceQueueHead].Arg3 = Arg3;
+    KTrace[CurrentProcessor][KTraceQueueHead].Arg4 = Arg4;
 
-   KeQuerySystemTime(&SystemTime);
-   KTrace[CurrentProcessor][KTraceQueueHead].SystemTime = SystemTime;
+    KeQuerySystemTime(&SystemTime);
+    KTrace[CurrentProcessor][KTraceQueueHead].SystemTime = SystemTime;
 #if 0
    Status = NtQueryPerformanceCounter(&PerfCtr, NULL);
    if (!NT_SUCCESS(Status)) {
@@ -221,24 +212,17 @@ Return Value:
 
    KTrace[CurrentProcessor][KTraceQueueHead].HiResTimeStamp = PerfCtr;
 #endif
-   KTraceQueueHead = (KTraceQueueHead + 1) % KTRACE_LOG_SIZE;
+    KTraceQueueHead = (KTraceQueueHead + 1) % KTRACE_LOG_SIZE;
 
-   return Status;
+    return Status;
 
 } // AddTrace
 
 /***********************************************************************
 QueryDumpKTraceBuffer - API query: selectively dump trace
 ***********************************************************************/
-LONG
-NTAPI
-KeQueryDumpKTrace (
-    ULONG       Processor,
-    ULONG       StartEntry,
-    ULONG       NumberOfEntries,
-    ULONG       ModuleFilter,
-    ULONG       MessageFilter,
-    BOOLEAN     Sort)
+LONG NTAPI KeQueryDumpKTrace(ULONG Processor, ULONG StartEntry, ULONG NumberOfEntries, ULONG ModuleFilter,
+                             ULONG MessageFilter, BOOLEAN Sort)
 
 /*++
 
@@ -288,47 +272,50 @@ Return Value:
 --*/
 
 {
-   ULONG Index = StartEntry;
-   ULONG RecordCount = 0;
+    ULONG Index = StartEntry;
+    ULONG RecordCount = 0;
 
-   //
-   // Verify that we have a valid processor number:
-   //
+    //
+    // Verify that we have a valid processor number:
+    //
 #if !defined(NT_UP)
-   if (Processor > KeRegisteredProcessors) {
-      DbgPrint("KTrace error: attempt to access invalid processor"
-               "%d on a system with %d processors\n",
-               Processor,
-               KeRegisteredProcessors);
-      return 0L;
-   }
+    if (Processor > KeRegisteredProcessors)
+    {
+        DbgPrint("KTrace error: attempt to access invalid processor"
+                 "%d on a system with %d processors\n",
+                 Processor, KeRegisteredProcessors);
+        return 0L;
+    }
 #else
-   if (Processor > 0) {
-      DbgPrint("KTrace error: attempted to access invalid processor"
-               "%d on a uni-processor system\n",
-               Processor);
-   }
+    if (Processor > 0)
+    {
+        DbgPrint("KTrace error: attempted to access invalid processor"
+                 "%d on a uni-processor system\n",
+                 Processor);
+    }
 #endif
 
-   //
-   // Loop through the entire KTrace
-   //
-   while (NumberOfEntries > 0) {
+    //
+    // Loop through the entire KTrace
+    //
+    while (NumberOfEntries > 0)
+    {
 
-      //
-      // See if the current record matches the query criteria
-      //
-      if ((ModuleFilter  & KTrace[Processor][Index].ModuleID) &&
-          (MessageFilter & KTrace[Processor][Index].MessageType)) {
+        //
+        // See if the current record matches the query criteria
+        //
+        if ((ModuleFilter & KTrace[Processor][Index].ModuleID) &&
+            (MessageFilter & KTrace[Processor][Index].MessageType))
+        {
 
-         DumpRecord(Processor, Index);
-         RecordCount++;
-      }
+            DumpRecord(Processor, Index);
+            RecordCount++;
+        }
 
-      NumberOfEntries = NumberOfEntries - 1;
-      Index = Index > 0 ? Index - 1 : KTRACE_LOG_SIZE - 1;
-   }
-   return RecordCount;
+        NumberOfEntries = NumberOfEntries - 1;
+        Index = Index > 0 ? Index - 1 : KTRACE_LOG_SIZE - 1;
+    }
+    return RecordCount;
 
 } // QueryDumpKTraceBuffer
 
@@ -336,38 +323,34 @@ Return Value:
 KePurgeKTrace - delete all records from the trace.
 ***********************************************************************/
 
-VOID
-NTAPI
-KePurgeKTrace (
-            )
+VOID NTAPI KePurgeKTrace()
 {
 
-   ULONG Index1, Index2;
+    ULONG Index1, Index2;
 
-   for (Index1 = 0; Index1 < KTRACE_LOG_SIZE; Index1++) {
-      for (Index2 = 0; Index2 < MAXIMUM_PROCESSORS; Index2++) {
-         KTrace[Index2][Index1].ModuleID       = 0;
-     KTrace[Index2][Index1].MessageType    = 0;
-     KTrace[Index2][Index1].MessageIndex   = 0;
-         KTrace[Index2][Index1].SystemTime.HighPart = 0;
-         KTrace[Index2][Index1].SystemTime.LowPart  = 0;
-     KTrace[Index2][Index1].Arg1           = 0;
-     KTrace[Index2][Index1].Arg2           = 0;
-     KTrace[Index2][Index1].Arg3           = 0;
-     KTrace[Index2][Index1].Arg4           = 0;
-     KTrace[Index2][Index1].HiResTimeStamp.HighPart = 0;
-     KTrace[Index2][Index1].HiResTimeStamp.LowPart = 0;
-      }
-   }
+    for (Index1 = 0; Index1 < KTRACE_LOG_SIZE; Index1++)
+    {
+        for (Index2 = 0; Index2 < MAXIMUM_PROCESSORS; Index2++)
+        {
+            KTrace[Index2][Index1].ModuleID = 0;
+            KTrace[Index2][Index1].MessageType = 0;
+            KTrace[Index2][Index1].MessageIndex = 0;
+            KTrace[Index2][Index1].SystemTime.HighPart = 0;
+            KTrace[Index2][Index1].SystemTime.LowPart = 0;
+            KTrace[Index2][Index1].Arg1 = 0;
+            KTrace[Index2][Index1].Arg2 = 0;
+            KTrace[Index2][Index1].Arg3 = 0;
+            KTrace[Index2][Index1].Arg4 = 0;
+            KTrace[Index2][Index1].HiResTimeStamp.HighPart = 0;
+            KTrace[Index2][Index1].HiResTimeStamp.LowPart = 0;
+        }
+    }
 }
 
 /***********************************************************************
 DumpRecord - dump a single record specified by processor number & index.
 ***********************************************************************/
-VOID
-NTAPI
-DumpRecord (IN ULONG ProcessorNumber,
-            IN ULONG Index)
+VOID NTAPI DumpRecord(IN ULONG ProcessorNumber, IN ULONG Index)
 /*++
 
 Routine Description:
@@ -393,44 +376,33 @@ Return Value:
 {
 
 #if !defined(NT_UP)
-   if (ProcessorNumber > KeRegisteredProcessors) {
-      DbgPrint("KTrace:DumpRecord:"
-               "illegal processor number %x in a %x-processor system\n",
-               ProcessorNumber, KeRegisteredProcessors);
-      return;
-   }
+    if (ProcessorNumber > KeRegisteredProcessors)
+    {
+        DbgPrint("KTrace:DumpRecord:"
+                 "illegal processor number %x in a %x-processor system\n",
+                 ProcessorNumber, KeRegisteredProcessors);
+        return;
+    }
 #else
-   if (ProcessorNumber > 0) {
-      DbgPrint("KTrace:DumpRecord:"
-               "illegal processor %x in a uni-processor system\n",
-               ProcessorNumber);
-   }
+    if (ProcessorNumber > 0)
+    {
+        DbgPrint("KTrace:DumpRecord:"
+                 "illegal processor %x in a uni-processor system\n",
+                 ProcessorNumber);
+    }
 #endif
 
-   DbgPrint("Dumping Record Index [%ld], Processor = [%ld]\n",
-        Index);
-   DbgPrint("\tModuleID = [%lx]\n",
-        KTrace[ProcessorNumber][Index].ModuleID);
-   DbgPrint("\tMessageType = [%lx]\n",
-        KTrace[ProcessorNumber][Index].MessageType);
-   DbgPrint("\tMessageIndex = [%lx]\n",
-        KTrace[ProcessorNumber][Index].MessageIndex);
-   DbgPrint("\tArg1= [%lx%LX]\n",
-        KTrace[ProcessorNumber][Index].Arg1,
-        KTrace[ProcessorNumber][Index].Arg1);
-   DbgPrint("\tArg2= [%lx%LX]\n",
-        KTrace[ProcessorNumber][Index].Arg2,
-        KTrace[ProcessorNumber][Index].Arg2);
-   DbgPrint("\tArg3= [%lx%LX]\n",
-        KTrace[ProcessorNumber][Index].Arg3,
-        KTrace[ProcessorNumber][Index].Arg3);
-   DbgPrint("\tArg4= [%lx%LX]\n",
-        KTrace[ProcessorNumber][Index].Arg4,
-        KTrace[ProcessorNumber][Index].Arg4);
+    DbgPrint("Dumping Record Index [%ld], Processor = [%ld]\n", Index);
+    DbgPrint("\tModuleID = [%lx]\n", KTrace[ProcessorNumber][Index].ModuleID);
+    DbgPrint("\tMessageType = [%lx]\n", KTrace[ProcessorNumber][Index].MessageType);
+    DbgPrint("\tMessageIndex = [%lx]\n", KTrace[ProcessorNumber][Index].MessageIndex);
+    DbgPrint("\tArg1= [%lx%LX]\n", KTrace[ProcessorNumber][Index].Arg1, KTrace[ProcessorNumber][Index].Arg1);
+    DbgPrint("\tArg2= [%lx%LX]\n", KTrace[ProcessorNumber][Index].Arg2, KTrace[ProcessorNumber][Index].Arg2);
+    DbgPrint("\tArg3= [%lx%LX]\n", KTrace[ProcessorNumber][Index].Arg3, KTrace[ProcessorNumber][Index].Arg3);
+    DbgPrint("\tArg4= [%lx%LX]\n", KTrace[ProcessorNumber][Index].Arg4, KTrace[ProcessorNumber][Index].Arg4);
 } // DumpRecord
 
 
 #endif // DBG
 
 // end ktrace.c
-

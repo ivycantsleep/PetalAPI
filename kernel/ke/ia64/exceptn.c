@@ -32,24 +32,11 @@ Revision History:
 #include "floatem.h"
 #include "fpswa.h"
 
-LONG
-fp_emulate (
-    ULONG trap_type,
-    PVOID pbundle,
-    ULONGLONG *pipsr,
-    ULONGLONG *pfpsr,
-    ULONGLONG *pisr,
-    ULONGLONG *ppreds,
-    ULONGLONG *pifs,
-    PVOID fp_state
-    );
+LONG fp_emulate(ULONG trap_type, PVOID pbundle, ULONGLONG *pipsr, ULONGLONG *pfpsr, ULONGLONG *pisr, ULONGLONG *ppreds,
+                ULONGLONG *pifs, PVOID fp_state);
 
 BOOLEAN
-KiEmulateFloat (
-    PEXCEPTION_RECORD ExceptionRecord,
-    PKEXCEPTION_FRAME ExceptionFrame,
-    PKTRAP_FRAME TrapFrame
-    )
+KiEmulateFloat(PEXCEPTION_RECORD ExceptionRecord, PKEXCEPTION_FRAME ExceptionFrame, PKTRAP_FRAME TrapFrame)
 {
 
     FLOATING_POINT_STATE FpState;
@@ -63,156 +50,195 @@ KiEmulateFloat (
     FpState.ExceptionFrame = (PVOID)ExceptionFrame;
     FpState.TrapFrame = (PVOID)TrapFrame;
 
-    if (ExceptionRecord->ExceptionCode == STATUS_FLOAT_MULTIPLE_FAULTS) {
+    if (ExceptionRecord->ExceptionCode == STATUS_FLOAT_MULTIPLE_FAULTS)
+    {
         TrapType = 1;
         ExceptionAddress = (PVOID)TrapFrame->StIIP;
-    } else {
+    }
+    else
+    {
         TrapType = 0;
         ExceptionAddress = (PVOID)TrapFrame->StIIPA;
     }
 
-    try {
+    try
+    {
 
-        KeBundle.BundleLow =(ULONGLONG)(*(PULONGLONG)ExceptionAddress);
-        KeBundle.BundleHigh =(ULONGLONG)(*((PULONGLONG)ExceptionAddress + 1));
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        KeBundle.BundleLow = (ULONGLONG)(*(PULONGLONG)ExceptionAddress);
+        KeBundle.BundleHigh = (ULONGLONG)(*((PULONGLONG)ExceptionAddress + 1));
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         //
         // if an exception (memory fault) occurs, then let hardware handle it
         //
         return TRUE;
     }
 
-    if ((Status = fp_emulate(TrapType, &KeBundle,
-                      &TrapFrame->StIPSR, &TrapFrame->StFPSR, &TrapFrame->StISR,
-                      &TrapFrame->Preds, &TrapFrame->StIFS, (PVOID)&FpState)) == 0) {
+    if ((Status = fp_emulate(TrapType, &KeBundle, &TrapFrame->StIPSR, &TrapFrame->StFPSR, &TrapFrame->StISR,
+                             &TrapFrame->Preds, &TrapFrame->StIFS, (PVOID)&FpState)) == 0)
+    {
 
-       //
-       // Exception was handled and state modified.
-       // Therefore the context frame does not need to
-       // be transfered to the trap and exception frames.
-       //
-       // Since it was fault, PC should be advanced
-       //
+        //
+        // Exception was handled and state modified.
+        // Therefore the context frame does not need to
+        // be transfered to the trap and exception frames.
+        //
+        // Since it was fault, PC should be advanced
+        //
 
-       if (TrapType == 1) {
-           KiAdvanceInstPointer(TrapFrame);
-       }
+        if (TrapType == 1)
+        {
+            KiAdvanceInstPointer(TrapFrame);
+        }
 
-       if (TrapFrame->StIPSR & (1 << PSR_MFH)) {
+        if (TrapFrame->StIPSR & (1 << PSR_MFH))
+        {
 
-           //
-           // high fp set is modified; set the dfh and clear the mfh
-           // to force a reload on the first access to the high fp set
-           //
+            //
+            // high fp set is modified; set the dfh and clear the mfh
+            // to force a reload on the first access to the high fp set
+            //
 
-           TrapFrame->StIPSR &= ~(1i64 << PSR_MFH);
-           TrapFrame->StIPSR |= (1i64 << PSR_DFH);
-       }
+            TrapFrame->StIPSR &= ~(1i64 << PSR_MFH);
+            TrapFrame->StIPSR |= (1i64 << PSR_DFH);
+        }
 
-       return TRUE;
+        return TRUE;
     }
 
-    if (Status == -1) {
+    if (Status == -1)
+    {
         return FALSE;
     }
 
     ISRCode = (USHORT)TrapFrame->StISR;
 
-    if (Status & 0x1) {
+    if (Status & 0x1)
+    {
 
         ExceptionRecord->ExceptionInformation[4] = TrapFrame->StISR;
 
-        if (!(Status & 0x4)) {
-            if (TrapType == 1) {
+        if (!(Status & 0x4))
+        {
+            if (TrapType == 1)
+            {
 
                 //
                 // FP Fault
                 //
 
-                if (ISRCode & 0x11) {
+                if (ISRCode & 0x11)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
-                } else if (ISRCode & 0x22) {
+                }
+                else if (ISRCode & 0x22)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_DENORMAL_OPERAND;
-                } else if (ISRCode & 0x44) {
+                }
+                else if (ISRCode & 0x44)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_DIVIDE_BY_ZERO;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // FP Trap
                 //
 
                 ISRCode = ISRCode >> 7;
-                if (ISRCode & 0x11) {
+                if (ISRCode & 0x11)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_OVERFLOW;
-                } else if (ISRCode & 0x22) {
+                }
+                else if (ISRCode & 0x22)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_UNDERFLOW;
-                } else if (ISRCode & 0x44) {
+                }
+                else if (ISRCode & 0x44)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
                 }
-
             }
         }
 
-        if (Status & 0x2) {
+        if (Status & 0x2)
+        {
 
             //
             // FP Fault To Trap
             //
 
             KiAdvanceInstPointer(TrapFrame);
-            if (!(Status & 0x4)) {
+            if (!(Status & 0x4))
+            {
                 ISRCode = ISRCode >> 7;
-                if (ISRCode & 0x11) {
+                if (ISRCode & 0x11)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_OVERFLOW;
-                } else if (ISRCode & 0x22) {
+                }
+                else if (ISRCode & 0x22)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_UNDERFLOW;
-                } else if (ISRCode & 0x44) {
+                }
+                else if (ISRCode & 0x44)
+                {
                     ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
                 }
-            } else {
+            }
+            else
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_MULTIPLE_TRAPS;
             }
         }
-
     }
 
     return FALSE;
 }
 
-typedef struct _BRL_INST {
-    union {
-        struct {
-            ULONGLONG qp:    6;
-            ULONGLONG b1:    3;
-            ULONGLONG rsv0:  3;
-            ULONGLONG p:     1;
-            ULONGLONG imm20: 20;
-            ULONGLONG wh:    2;
-            ULONGLONG d:     1;
-            ULONGLONG i:     1;
-            ULONGLONG Op:    4;
-            ULONGLONG rsv1:  23;
+typedef struct _BRL_INST
+{
+    union
+    {
+        struct
+        {
+            ULONGLONG qp : 6;
+            ULONGLONG b1 : 3;
+            ULONGLONG rsv0 : 3;
+            ULONGLONG p : 1;
+            ULONGLONG imm20 : 20;
+            ULONGLONG wh : 2;
+            ULONGLONG d : 1;
+            ULONGLONG i : 1;
+            ULONGLONG Op : 4;
+            ULONGLONG rsv1 : 23;
         } i;
         ULONGLONG Ulong64;
     } u;
 } BRL_INST;
 
-typedef struct _BRL2_INST {
-    union {
-        struct {
-            ULONGLONG rsv0:  2;
-            ULONGLONG imm39: 39;
-            ULONGLONG rsv1:  23;
+typedef struct _BRL2_INST
+{
+    union
+    {
+        struct
+        {
+            ULONGLONG rsv0 : 2;
+            ULONGLONG imm39 : 39;
+            ULONGLONG rsv1 : 23;
         } i;
         ULONGLONG Ulong64;
     } u;
 } BRL0_INST;
 
-typedef struct _FRAME_MARKER {
-    union {
-        struct {
+typedef struct _FRAME_MARKER
+{
+    union
+    {
+        struct
+        {
             ULONGLONG sof : 7;
             ULONGLONG sol : 7;
             ULONGLONG sor : 4;
@@ -226,11 +252,8 @@ typedef struct _FRAME_MARKER {
 
 
 BOOLEAN
-KiEmulateBranchLongFault(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN OUT PKTRAP_FRAME TrapFrame
-    )
+KiEmulateBranchLongFault(IN PEXCEPTION_RECORD ExceptionRecord, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                         IN OUT PKTRAP_FRAME TrapFrame)
 /*++
 
 Routine Description:
@@ -265,19 +288,20 @@ Return Value:
     FRAME_MARKER Cfm;
 
     BundleAddress = (PULONGLONG)TrapFrame->StIIP;
-    ExceptionAddress = (PVOID) TrapFrame->StIIP;
+    ExceptionAddress = (PVOID)TrapFrame->StIIP;
 
-    try {
+    try
+    {
 
         //
         // get the instruction bundle
         //
 
         BundleLow = *BundleAddress;
-        BundleHigh = *(BundleAddress+1);
-
-    } except ((KiCopyInformation(ExceptionRecord,
-                               (GetExceptionInformation())->ExceptionRecord))) {
+        BundleHigh = *(BundleAddress + 1);
+    }
+    except((KiCopyInformation(ExceptionRecord, (GetExceptionInformation())->ExceptionRecord)))
+    {
         //
         // Preserve the original exception address.
         //
@@ -292,17 +316,18 @@ Return Value:
 
     Template = BundleLow & 0x1f;
 
-    if (!((Template == 4)||(Template == 5))) {
+    if (!((Template == 4) || (Template == 5)))
+    {
 
         //
         // if template does not indicate MLX, return FALSE
         //
 
         return FALSE;
-
     }
 
-    switch (BrlInst.u.i.Op) {
+    switch (BrlInst.u.i.Op)
+    {
 
     case 0xc: // brl.cond
 
@@ -313,24 +338,42 @@ Return Value:
 
         Taken = TrapFrame->Preds & (1i64 << BrlInst.u.i.qp);
 
-        if (Taken) {
+        if (Taken)
+        {
 
-            switch (BrlInst.u.i.b1) {
-            case 0: TrapFrame->BrRp = TrapFrame->StIIP + 16; break;
-            case 1: ExceptionFrame->BrS0 = TrapFrame->StIIP + 16; break;
-            case 2: ExceptionFrame->BrS1 = TrapFrame->StIIP + 16; break;
-            case 3: ExceptionFrame->BrS2 = TrapFrame->StIIP + 16; break;
-            case 4: ExceptionFrame->BrS3 = TrapFrame->StIIP + 16; break;
-            case 5: ExceptionFrame->BrS4 = TrapFrame->StIIP + 16; break;
-            case 6: TrapFrame->BrT0 = TrapFrame->StIIP + 16; break;
-            case 7: TrapFrame->BrT1 = TrapFrame->StIIP + 16; break;
+            switch (BrlInst.u.i.b1)
+            {
+            case 0:
+                TrapFrame->BrRp = TrapFrame->StIIP + 16;
+                break;
+            case 1:
+                ExceptionFrame->BrS0 = TrapFrame->StIIP + 16;
+                break;
+            case 2:
+                ExceptionFrame->BrS1 = TrapFrame->StIIP + 16;
+                break;
+            case 3:
+                ExceptionFrame->BrS2 = TrapFrame->StIIP + 16;
+                break;
+            case 4:
+                ExceptionFrame->BrS3 = TrapFrame->StIIP + 16;
+                break;
+            case 5:
+                ExceptionFrame->BrS4 = TrapFrame->StIIP + 16;
+                break;
+            case 6:
+                TrapFrame->BrT0 = TrapFrame->StIIP + 16;
+                break;
+            case 7:
+                TrapFrame->BrT1 = TrapFrame->StIIP + 16;
+                break;
             }
 
             TrapFrame->RsPFS = TrapFrame->StIFS & 0x3FFFFFFFFFi64;
             TrapFrame->RsPFS |= (ExceptionFrame->ApEC & (0x3fi64 << 52));
             TrapFrame->RsPFS |= (((TrapFrame->StIPSR >> PSR_CPL) & 0x3) << 62);
 
-            Cfm.u.Ulong64  = TrapFrame->StIFS;
+            Cfm.u.Ulong64 = TrapFrame->StIFS;
 
             Cfm.u.f.sof -= Cfm.u.f.sol;
             Cfm.u.f.sol = 0;
@@ -347,20 +390,19 @@ Return Value:
 
     default:
         return FALSE;
-
     }
 
-    if (Taken) {
+    if (Taken)
+    {
 
-        NewIP = TrapFrame->StIIP +
-            (((BrlInst.u.i.i<<59)|(BrlInst0.u.i.imm39<<20)|(BrlInst.u.i.imm20)) << 4);
+        NewIP = TrapFrame->StIIP + (((BrlInst.u.i.i << 59) | (BrlInst0.u.i.imm39 << 20) | (BrlInst.u.i.imm20)) << 4);
 
         TrapFrame->StIIP = NewIP;
-
-    } else {
+    }
+    else
+    {
 
         TrapFrame->StIIP += 16;
-
     }
 
     TrapFrame->StIPSR &= ~(3i64 << PSR_RI);
@@ -369,15 +411,9 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-KiDispatchException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN FirstChance
-    )
+
+VOID KiDispatchException(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                         IN PKTRAP_FRAME TrapFrame, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN FirstChance)
 
 /*++
 
@@ -442,16 +478,17 @@ Return Value:
     // instruction.
     //
 
-    if (ExceptionRecord->ExceptionCode == STATUS_ILLEGAL_INSTRUCTION) {
+    if (ExceptionRecord->ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
+    {
 
         Isr.ull = TrapFrame->StISR;
         Psr.ull = TrapFrame->StIPSR;
 
-        if ((Isr.sb.isr_code == ISR_ILLEGAL_OP) && (Isr.sb.isr_ei == 1)) {
+        if ((Isr.sb.isr_code == ISR_ILLEGAL_OP) && (Isr.sb.isr_ei == 1))
+        {
 
-            if (KiEmulateBranchLongFault(ExceptionRecord,
-                                         ExceptionFrame,
-                                         TrapFrame) == TRUE) {
+            if (KiEmulateBranchLongFault(ExceptionRecord, ExceptionFrame, TrapFrame) == TRUE)
+            {
 
                 //
                 // emulation was successful;
@@ -460,7 +497,6 @@ Return Value:
                 return;
             }
         }
-
     }
 
 
@@ -471,15 +507,13 @@ Return Value:
     // the unaligned reference.
     //
 
-    if (ExceptionRecord->ExceptionCode == STATUS_DATATYPE_MISALIGNMENT) {
+    if (ExceptionRecord->ExceptionCode == STATUS_DATATYPE_MISALIGNMENT)
+    {
 
-        AlignmentFaultHandled = KiHandleAlignmentFault( ExceptionRecord,
-                                                        ExceptionFrame,
-                                                        TrapFrame,
-                                                        PreviousMode,
-                                                        FirstChance,
-                                                        &ExceptionWasForwarded );
-        if (AlignmentFaultHandled != FALSE) {
+        AlignmentFaultHandled = KiHandleAlignmentFault(ExceptionRecord, ExceptionFrame, TrapFrame, PreviousMode,
+                                                       FirstChance, &ExceptionWasForwarded);
+        if (AlignmentFaultHandled != FALSE)
+        {
             goto Handled2;
         }
     }
@@ -495,9 +529,11 @@ Return Value:
     //
 
     if ((ExceptionRecord->ExceptionCode == STATUS_FLOAT_MULTIPLE_FAULTS) ||
-        (ExceptionRecord->ExceptionCode == STATUS_FLOAT_MULTIPLE_TRAPS)) {
+        (ExceptionRecord->ExceptionCode == STATUS_FLOAT_MULTIPLE_TRAPS))
+    {
 
-        if (KiEmulateFloat(ExceptionRecord, ExceptionFrame, TrapFrame)) {
+        if (KiEmulateFloat(ExceptionRecord, ExceptionFrame, TrapFrame))
+        {
 
             //
             // Emulation is successful; continue execution
@@ -520,7 +556,8 @@ Return Value:
     // Select the method of handling the exception based on the previous mode.
     //
 
-    if (PreviousMode == KernelMode) {
+    if (PreviousMode == KernelMode)
+    {
 
         //
         // Previous mode was kernel.
@@ -539,7 +576,8 @@ Return Value:
         // not handle the exception, then bug check.
         //
 
-        if (FirstChance != FALSE) {
+        if (FirstChance != FALSE)
+        {
 
             //
             // This is the first chance to handle the exception.
@@ -558,23 +596,19 @@ Return Value:
             // the kernel debugger a chance to handle the exception.
             //
 
-            if ((KiDebugRoutine != NULL) &&
-               (KdIsThisAKdTrap(ExceptionRecord,
-                                &ContextFrame,
-                                KernelMode) != FALSE)) {
+            if ((KiDebugRoutine != NULL) && (KdIsThisAKdTrap(ExceptionRecord, &ContextFrame, KernelMode) != FALSE))
+            {
 
-                if (((KiDebugRoutine) (TrapFrame,
-                                       ExceptionFrame,
-                                       ExceptionRecord,
-                                       &ContextFrame,
-                                       KernelMode,
-                                       FALSE)) != FALSE) {
+                if (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextFrame, KernelMode, FALSE)) !=
+                    FALSE)
+                {
 
                     goto Handled1;
                 }
             }
 
-            if (RtlDispatchException(ExceptionRecord, &ContextFrame) != FALSE) {
+            if (RtlDispatchException(ExceptionRecord, &ContextFrame) != FALSE)
+            {
                 goto Handled1;
             }
         }
@@ -583,24 +617,21 @@ Return Value:
         // This is the second chance to handle the exception.
         //
 
-        if (KiDebugRoutine != NULL) {
-            if (((KiDebugRoutine) (TrapFrame,
-                                   ExceptionFrame,
-                                   ExceptionRecord,
-                                   &ContextFrame,
-                                   PreviousMode,
-                                   TRUE)) != FALSE) {
+        if (KiDebugRoutine != NULL)
+        {
+            if (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextFrame, PreviousMode, TRUE)) !=
+                FALSE)
+            {
                 goto Handled1;
             }
         }
 
-        KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED,
-                     ExceptionRecord->ExceptionCode,
-                     (ULONG_PTR)ExceptionRecord->ExceptionAddress,
-                     ExceptionRecord->ExceptionInformation[0],
+        KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED, ExceptionRecord->ExceptionCode,
+                     (ULONG_PTR)ExceptionRecord->ExceptionAddress, ExceptionRecord->ExceptionInformation[0],
                      ExceptionRecord->ExceptionInformation[1]);
-
-    } else {
+    }
+    else
+    {
 
         //
         // Previous mode was user.
@@ -628,7 +659,8 @@ Return Value:
         // exception, then continue execution. Else terminate the thread.
         //
 
-        if (FirstChance != FALSE) {
+        if (FirstChance != FALSE)
+        {
 
             //
             // If the kernel debugger is active, the exception is a kernel
@@ -638,22 +670,16 @@ Return Value:
             // debugger a chance to handle the exception.
             //
 
-            if ((KiDebugRoutine != NULL) &&
-                (KdIsThisAKdTrap(ExceptionRecord,
-                                 &ContextFrame,
-                                 UserMode) != FALSE) &&
+            if ((KiDebugRoutine != NULL) && (KdIsThisAKdTrap(ExceptionRecord, &ContextFrame, UserMode) != FALSE) &&
                 ((PsGetCurrentProcess()->DebugPort == NULL) ||
-                ((PsGetCurrentProcess()->DebugPort != NULL) &&
-                ((ExceptionRecord->ExceptionInformation[0] !=
-                                            BREAKPOINT_STOP) &&
-                 (ExceptionRecord->ExceptionCode != STATUS_SINGLE_STEP))))) {
+                 ((PsGetCurrentProcess()->DebugPort != NULL) &&
+                  ((ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_STOP) &&
+                   (ExceptionRecord->ExceptionCode != STATUS_SINGLE_STEP)))))
+            {
 
-                if (((KiDebugRoutine) (TrapFrame,
-                                       ExceptionFrame,
-                                       ExceptionRecord,
-                                       &ContextFrame,
-                                       UserMode,
-                                       FALSE)) != FALSE) {
+                if (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextFrame, UserMode, FALSE)) !=
+                    FALSE)
+                {
 
                     goto Handled1;
                 }
@@ -663,8 +689,8 @@ Return Value:
             // This is the first chance to handle the exception.
             //
 
-            if (ExceptionWasForwarded == FALSE &&
-                DbgkForwardException(ExceptionRecord, TRUE, FALSE)) {
+            if (ExceptionWasForwarded == FALSE && DbgkForwardException(ExceptionRecord, TRUE, FALSE))
+            {
                 TrapFrame->StFPSR = SANITIZE_FSR(TrapFrame->StFPSR, UserMode);
                 goto Handled2;
             }
@@ -705,39 +731,37 @@ Return Value:
             //
 
         repeat:
-            try {
+            try
+            {
 
                 //
                 // Compute length of exception record and new aligned stack
                 // address.
                 //
 
-                ULONG Length = (STACK_SCRATCH_AREA + 15 +
-                                sizeof(EXCEPTION_RECORD) + sizeof(CONTEXT)) & ~(15);
+                ULONG Length = (STACK_SCRATCH_AREA + 15 + sizeof(EXCEPTION_RECORD) + sizeof(CONTEXT)) & ~(15);
                 ULONGLONG UserStack = (ContextFrame.IntSp & (~15)) - Length;
                 ULONGLONG ContextSlot = UserStack + STACK_SCRATCH_AREA;
                 ULONGLONG ExceptSlot = ContextSlot + sizeof(CONTEXT);
-                PULONGLONG PUserStack = (PULONGLONG) UserStack;
+                PULONGLONG PUserStack = (PULONGLONG)UserStack;
 
                 //
-                // When the exception gets dispatched to the user the 
-                // user BSP state will be loaded.  Clear the preload 
+                // When the exception gets dispatched to the user the
+                // user BSP state will be loaded.  Clear the preload
                 // count in the RSE so it is not reloaded after if the
                 // context is reused.
                 //
 
                 ContextFrame.RsRSC = ZERO_PRELOAD_SIZE(ContextFrame.RsRSC);
-               
+
                 //
                 // Probe user stack area for writeability and then transfer the
                 // exception record and conext record to the user stack area.
                 //
 
                 ProbeForWrite((PCHAR)UserStack, Length, sizeof(QUAD));
-                RtlCopyMemory((PVOID)ContextSlot, &ContextFrame,
-                              sizeof(CONTEXT));
-                RtlCopyMemory((PVOID)ExceptSlot, ExceptionRecord,
-                              sizeof(EXCEPTION_RECORD));
+                RtlCopyMemory((PVOID)ContextSlot, &ContextFrame, sizeof(CONTEXT));
+                RtlCopyMemory((PVOID)ExceptSlot, ExceptionRecord, sizeof(EXCEPTION_RECORD));
 
                 //
                 // Set address of exception record and context record in
@@ -779,13 +803,13 @@ Return Value:
 
                 return;
 
-            //
-            // If an exception occurs, then copy the new exception information
-            // to an exception record and handle the exception.
-            //
-
-            } except (KiCopyInformation(&ExceptionRecord1,
-                               (GetExceptionInformation())->ExceptionRecord)) {
+                //
+                // If an exception occurs, then copy the new exception information
+                // to an exception record and handle the exception.
+                //
+            }
+            except(KiCopyInformation(&ExceptionRecord1, (GetExceptionInformation())->ExceptionRecord))
+            {
 
                 //
                 // If the exception is a stack overflow, then attempt
@@ -794,10 +818,10 @@ Return Value:
                 // and second chance processing is performed.
                 //
 
-                if (ExceptionRecord1.ExceptionCode == STATUS_STACK_OVERFLOW) {
+                if (ExceptionRecord1.ExceptionCode == STATUS_STACK_OVERFLOW)
+                {
                     ExceptionRecord1.ExceptionAddress = ExceptionRecord->ExceptionAddress;
-                    RtlCopyMemory((PVOID)ExceptionRecord,
-                                  &ExceptionRecord1, sizeof(EXCEPTION_RECORD));
+                    RtlCopyMemory((PVOID)ExceptionRecord, &ExceptionRecord1, sizeof(EXCEPTION_RECORD));
                     goto repeat;
                 }
             }
@@ -808,20 +832,21 @@ Return Value:
         //
 
         UserApcPending = KeGetCurrentThread()->ApcState.UserApcPending;
-        if (DbgkForwardException(ExceptionRecord, TRUE, TRUE)) {
+        if (DbgkForwardException(ExceptionRecord, TRUE, TRUE))
+        {
             TrapFrame->StFPSR = SANITIZE_FSR(TrapFrame->StFPSR, UserMode);
             goto Handled2;
-
-        } else if (DbgkForwardException(ExceptionRecord, FALSE, TRUE)) {
+        }
+        else if (DbgkForwardException(ExceptionRecord, FALSE, TRUE))
+        {
             TrapFrame->StFPSR = SANITIZE_FSR(TrapFrame->StFPSR, UserMode);
             goto Handled2;
-
-        } else {
+        }
+        else
+        {
             ZwTerminateProcess(NtCurrentProcess(), ExceptionRecord->ExceptionCode);
-            KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED,
-                         ExceptionRecord->ExceptionCode,
-                         (ULONG_PTR)ExceptionRecord->ExceptionAddress,
-                         ExceptionRecord->ExceptionInformation[0],
+            KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED, ExceptionRecord->ExceptionCode,
+                         (ULONG_PTR)ExceptionRecord->ExceptionAddress, ExceptionRecord->ExceptionInformation[0],
                          ExceptionRecord->ExceptionInformation[1]);
         }
     }
@@ -832,8 +857,7 @@ Return Value:
     //
 
 Handled1:
-    KeContextToKframes(TrapFrame, ExceptionFrame, &ContextFrame,
-                       ContextFrame.ContextFlags, PreviousMode);
+    KeContextToKframes(TrapFrame, ExceptionFrame, &ContextFrame, ContextFrame.ContextFlags, PreviousMode);
 
     //
     // Exception was handled by the debugger or the associated subsystem
@@ -845,12 +869,9 @@ Handled1:
 Handled2:
     return;
 }
-
+
 ULONG
-KiCopyInformation (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord1,
-    IN PEXCEPTION_RECORD ExceptionRecord2
-    )
+KiCopyInformation(IN OUT PEXCEPTION_RECORD ExceptionRecord1, IN PEXCEPTION_RECORD ExceptionRecord2)
 
 /*++
 
@@ -877,17 +898,13 @@ Return Value:
     // an exception handler to be executed.
     //
 
-    RtlCopyMemory((PVOID)ExceptionRecord1,
-                  (PVOID)ExceptionRecord2,
-                  sizeof(EXCEPTION_RECORD));
+    RtlCopyMemory((PVOID)ExceptionRecord1, (PVOID)ExceptionRecord2, sizeof(EXCEPTION_RECORD));
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
-
+
 NTSTATUS
-KeRaiseUserException(
-    IN NTSTATUS ExceptionCode
-    )
+KeRaiseUserException(IN NTSTATUS ExceptionCode)
 
 /*++
 
@@ -910,29 +927,32 @@ Return Value:
 
 {
     PKTRAP_FRAME TrapFrame;
-    IA64_PFS  Ifs;
+    IA64_PFS Ifs;
 
     ASSERT(KeGetPreviousMode() == UserMode);
 
     TrapFrame = KeGetCurrentThread()->TrapFrame;
-    if (TrapFrame == NULL) {
+    if (TrapFrame == NULL)
+    {
         return ExceptionCode;
     }
 
-    try {
+    try
+    {
         PULONGLONG IntSp;
 
-        IntSp = (PULONGLONG) TrapFrame->IntSp;
-        ProbeForWriteSmallStructure (IntSp, sizeof (*IntSp)*2, sizeof(QUAD));
+        IntSp = (PULONGLONG)TrapFrame->IntSp;
+        ProbeForWriteSmallStructure(IntSp, sizeof(*IntSp) * 2, sizeof(QUAD));
         *IntSp++ = TrapFrame->BrRp;
-        *IntSp   = TrapFrame->RsPFS;
+        *IntSp = TrapFrame->RsPFS;
         TrapFrame->StIIP = ((PPLABEL_DESCRIPTOR)KeRaiseUserExceptionDispatcher)->EntryPoint;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return (ExceptionCode);
     }
 
 
- 
     //
     // Set IFS the size after the the system call.
     //
@@ -942,5 +962,5 @@ Return Value:
     Ifs.sb.pfs_sol = 0;
     TrapFrame->StIFS = Ifs.ull;
 
-    return(ExceptionCode);
+    return (ExceptionCode);
 }

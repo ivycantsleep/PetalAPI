@@ -21,11 +21,7 @@ Revision History:
 #include "basedll.h"
 
 
-BOOL
-WINAPI
-QueryPerformanceCounter(
-    LARGE_INTEGER *lpPerformanceCount
-    )
+BOOL WINAPI QueryPerformanceCounter(LARGE_INTEGER *lpPerformanceCount)
 
 /*++
 
@@ -60,13 +56,15 @@ QueryPerformanceCounter(
 
     Status = NtQueryPerformanceCounter(lpPerformanceCount, &PerfFreq);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         // Call failed, report error
         SetLastError(RtlNtStatusToDosError(Status));
         return FALSE;
     }
 
-    if (PerfFreq.LowPart == 0 && PerfFreq.HighPart == 0 ) {
+    if (PerfFreq.LowPart == 0 && PerfFreq.HighPart == 0)
+    {
         // Counter not supported
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
         return FALSE;
@@ -74,11 +72,7 @@ QueryPerformanceCounter(
     return TRUE;
 }
 
-BOOL
-WINAPI
-QueryPerformanceFrequency(
-    LARGE_INTEGER *lpFrequency
-    )
+BOOL WINAPI QueryPerformanceFrequency(LARGE_INTEGER *lpFrequency)
 
 /*++
 
@@ -110,13 +104,15 @@ QueryPerformanceFrequency(
 
     Status = NtQueryPerformanceCounter(&PerfCount, lpFrequency);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         // Call failed, report error
         SetLastError(RtlNtStatusToDosError(Status));
         return FALSE;
     }
 
-    if (lpFrequency->LowPart == 0 && lpFrequency->HighPart == 0 ) {
+    if (lpFrequency->LowPart == 0 && lpFrequency->HighPart == 0)
+    {
         // Counter not supported
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
         return FALSE;

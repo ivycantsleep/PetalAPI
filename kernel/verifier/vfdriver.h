@@ -24,19 +24,9 @@ Revision History:
 
 --*/
 
-VOID
-VfDriverInit(
-    VOID
-    );
+VOID VfDriverInit(VOID);
 
-VOID
-VfDriverAttachFilter(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject,
-    IN  VF_DEVOBJ_TYPE  DeviceObjectType
-    );
+VOID VfDriverAttachFilter(IN PDEVICE_OBJECT PhysicalDeviceObject, IN VF_DEVOBJ_TYPE DeviceObjectType);
 
 BOOLEAN
-VfDriverIsVerifierFilterObject(
-    IN  PDEVICE_OBJECT  DeviceObject
-    );
-
+VfDriverIsVerifierFilterObject(IN PDEVICE_OBJECT DeviceObject);

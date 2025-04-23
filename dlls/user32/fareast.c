@@ -12,8 +12,7 @@
 #include "precomp.h"
 #pragma hdrstop
 
-#define COMMON_RETURN_ZERO  \
-    return 0;
+#define COMMON_RETURN_ZERO return 0;
 
 ////////////////////////
 // Fake routines
@@ -145,75 +144,71 @@ DWORD WINAPI fakeImm_wd6(PVOID dummy1, PVOID dummy2, PVOID dummy3, PVOID dummy4,
 }
 
 ImmApiEntries gImmApiEntries = {
-    (BOOL (WINAPI* /*ImmWINNLSEnableIME*/)(HWND, BOOL))     fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmWINNLSGetEnableStatus*/)(HWND))     fakeImm_wd1,
-    (LRESULT (WINAPI* /*SendIMEMessageExW*/)(HWND, LPARAM)) fakeImm_wd2,
-    (LRESULT (WINAPI* /*SendIMEMessageExA*/)(HWND, LPARAM)) fakeImm_wd2,
-    (BOOL (WINAPI* /*IMPGetIMEW*/)(HWND, LPIMEPROW))        fakeImm_wd2,
-    (BOOL (WINAPI* /*IMPGetIMEA*/)(HWND, LPIMEPROA))        fakeImm_wd2,
-    (BOOL (WINAPI* /*IMPQueryIMEW*/)(LPIMEPROW))            fakeImm_wd1,
-    (BOOL (WINAPI* /*IMPQueryIMEA*/)(LPIMEPROA))            fakeImm_wd1,
-    (BOOL (WINAPI* /*IMPSetIMEW*/)(HWND, LPIMEPROW))        fakeImm_wd2,
-    (BOOL (WINAPI* /*IMPSetIMEA*/)(HWND, LPIMEPROA))        fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmWINNLSEnableIME*/)(HWND, BOOL))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmWINNLSGetEnableStatus*/)(HWND))fakeImm_wd1,
+    (LRESULT(WINAPI * /*SendIMEMessageExW*/)(HWND, LPARAM))fakeImm_wd2,
+    (LRESULT(WINAPI * /*SendIMEMessageExA*/)(HWND, LPARAM))fakeImm_wd2,
+    (BOOL(WINAPI * /*IMPGetIMEW*/)(HWND, LPIMEPROW))fakeImm_wd2,
+    (BOOL(WINAPI * /*IMPGetIMEA*/)(HWND, LPIMEPROA))fakeImm_wd2,
+    (BOOL(WINAPI * /*IMPQueryIMEW*/)(LPIMEPROW))fakeImm_wd1,
+    (BOOL(WINAPI * /*IMPQueryIMEA*/)(LPIMEPROA))fakeImm_wd1,
+    (BOOL(WINAPI * /*IMPSetIMEW*/)(HWND, LPIMEPROW))fakeImm_wd2,
+    (BOOL(WINAPI * /*IMPSetIMEA*/)(HWND, LPIMEPROA))fakeImm_wd2,
 
-    (HIMC (WINAPI* /*ImmAssociateContext*/)(HWND, HIMC))    fakeImm_wd2,
-    (LRESULT (WINAPI* /*ImmEscapeA*/)(HKL, HIMC, UINT, LPVOID)) fakeImm_wd4,
-    (LRESULT (WINAPI* /*ImmEscapeW*/)(HKL, HIMC, UINT, LPVOID)) fakeImm_wd4,
-    (LONG (WINAPI* /*ImmGetCompositionStringA*/)(HIMC, DWORD, LPVOID, DWORD)) fakeImm_wd4,
-    (LONG (WINAPI* /*ImmGetCompositionStringW*/)(HIMC, DWORD, LPVOID, DWORD)) fakeImm_wd4,
-    (BOOL (WINAPI* /*ImmGetCompositionWindow*/)(HIMC, LPCOMPOSITIONFORM)) fakeImm_wd2,
-    (HIMC (WINAPI* /*ImmGetContext*/)(HWND))                fakeImm_wd1,
-    (HWND (WINAPI* /*ImmGetDefaultIMEWnd*/)(HWND))          fakeImm_wd1,
-    (BOOL (WINAPI* /*ImmIsIME*/)(HKL))                      fakeImm_wd1,
-    (BOOL (WINAPI* /*ImmReleaseContext*/)(HWND, HIMC))      fakeImm_wd2,
-    (BOOL (* /*ImmRegisterClient*/)(PSHAREDINFO, HINSTANCE))           fakeImm_bd2,
+    (HIMC(WINAPI * /*ImmAssociateContext*/)(HWND, HIMC))fakeImm_wd2,
+    (LRESULT(WINAPI * /*ImmEscapeA*/)(HKL, HIMC, UINT, LPVOID))fakeImm_wd4,
+    (LRESULT(WINAPI * /*ImmEscapeW*/)(HKL, HIMC, UINT, LPVOID))fakeImm_wd4,
+    (LONG(WINAPI * /*ImmGetCompositionStringA*/)(HIMC, DWORD, LPVOID, DWORD))fakeImm_wd4,
+    (LONG(WINAPI * /*ImmGetCompositionStringW*/)(HIMC, DWORD, LPVOID, DWORD))fakeImm_wd4,
+    (BOOL(WINAPI * /*ImmGetCompositionWindow*/)(HIMC, LPCOMPOSITIONFORM))fakeImm_wd2,
+    (HIMC(WINAPI * /*ImmGetContext*/)(HWND))fakeImm_wd1,
+    (HWND(WINAPI * /*ImmGetDefaultIMEWnd*/)(HWND))fakeImm_wd1,
+    (BOOL(WINAPI * /*ImmIsIME*/)(HKL))fakeImm_wd1,
+    (BOOL(WINAPI * /*ImmReleaseContext*/)(HWND, HIMC))fakeImm_wd2,
+    (BOOL(* /*ImmRegisterClient*/)(PSHAREDINFO, HINSTANCE))fakeImm_bd2,
 
-    (BOOL (WINAPI* /*ImmGetCompositionFontW*/)(HIMC, LPLOGFONTW)) fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmGetCompositionFontA*/)(HIMC, LPLOGFONTA)) fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmSetCompositionFontW*/)(HIMC, LPLOGFONTW)) fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmSetCompositionFontA*/)(HIMC, LPLOGFONTA)) fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmGetCompositionFontW*/)(HIMC, LPLOGFONTW))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmGetCompositionFontA*/)(HIMC, LPLOGFONTA))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmSetCompositionFontW*/)(HIMC, LPLOGFONTW))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmSetCompositionFontA*/)(HIMC, LPLOGFONTA))fakeImm_wd2,
 
-    (BOOL (WINAPI* /*ImmSetCompositionWindow*/)(HIMC, LPCOMPOSITIONFORM)) fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmNotifyIME*/)(HIMC, DWORD, DWORD, DWORD)) fakeImm_wd4,
-    (PINPUTCONTEXT (WINAPI* /*ImmLockIMC*/)(HIMC))          fakeImm_wd1,
-    (BOOL (WINAPI* /*ImmUnlockIMC*/)(HIMC))                 fakeImm_wd1,
-    (BOOL (WINAPI* /*ImmLoadIME*/)(HKL))                    fakeImm_wd1,
-    (BOOL (WINAPI* /*ImmSetOpenStatus*/)(HIMC, BOOL))       fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmFreeLayout*/)(DWORD dwFlag))        fakeImm_wd1,
-    (BOOL (WINAPI* /*ImmActivateLayout*/)(HKL))             fakeImm_wd1,
-    (BOOL (WINAPI* /*ImmGetCandidateWindow*/)(HIMC, DWORD, LPCANDIDATEFORM)) fakeImm_wd3,
-    (BOOL (WINAPI* /*ImmSetCandidateWindow*/)(HIMC, LPCANDIDATEFORM))   fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmConfigureIMEW*/)(HKL, HWND, DWORD, LPVOID)) fakeImm_wd4,
-    (BOOL (WINAPI* /*ImmGetConversionStatus*/)(HIMC, LPDWORD, LPDWORD)) fakeImm_wd3,
-    (BOOL (WINAPI* /*ImmSetConversionStatus*/)(HIMC, DWORD, DWORD)) fakeImm_wd3,
-    (BOOL (WINAPI* /*ImmSetStatusWindowPos*/)(HIMC, LPPOINT))           fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmGetImeInfoEx*/)(PIMEINFOEX, IMEINFOEXCLASS, PVOID)) fakeImm_wd3,
-    (PIMEDPI (WINAPI* /*ImmLockImeDpi*/)(HKL))              fakeImm_wd1,
-    (VOID (WINAPI* /*ImmUnlockImeDpi*/)(PIMEDPI))           fakeImm_wv1,
-    (BOOL (WINAPI* /*ImmGetOpenStatus*/)(HIMC))             fakeImm_wd1,
-    (BOOL (* /*ImmSetActiveContext*/)(HWND, HIMC, BOOL))    fakeImm_d3,
-    (BOOL (* /*ImmTranslateMessage*/)(HWND, UINT, WPARAM, LPARAM)) fakeImm_bwuwl,
-    (BOOL (* /*ImmLoadLayout*/)(HKL, PIMEINFOEX))           fakeImm_d2,
-    (DWORD (WINAPI* /*ImmProcessKey*/)(HWND, HKL, UINT, LPARAM, DWORD)) fakeImm_wd5,
-    (LRESULT (* /*ImmPutImeMenuItemsIntoMappedFile*/)(HIMC)) fakeImm_d1,
-    (DWORD (WINAPI* /*ImmGetProperty*/)(HKL, DWORD))        fakeImm_wd2,
-    (BOOL (WINAPI* /*ImmSetCompositionStringA*/)(
-         HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen))
-                                                            fakeImm_wd6,
-    (BOOL (WINAPI* /*ImmSetCompositionStringW*/)(
-         HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen))
-                                                            fakeImm_wd6,
-    (BOOL (WINAPI* /*ImmEnumInputContext*/)(
-         DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam))  fakeImm_wd3,
+    (BOOL(WINAPI * /*ImmSetCompositionWindow*/)(HIMC, LPCOMPOSITIONFORM))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmNotifyIME*/)(HIMC, DWORD, DWORD, DWORD))fakeImm_wd4,
+    (PINPUTCONTEXT(WINAPI * /*ImmLockIMC*/)(HIMC))fakeImm_wd1,
+    (BOOL(WINAPI * /*ImmUnlockIMC*/)(HIMC))fakeImm_wd1,
+    (BOOL(WINAPI * /*ImmLoadIME*/)(HKL))fakeImm_wd1,
+    (BOOL(WINAPI * /*ImmSetOpenStatus*/)(HIMC, BOOL))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmFreeLayout*/)(DWORD dwFlag))fakeImm_wd1,
+    (BOOL(WINAPI * /*ImmActivateLayout*/)(HKL))fakeImm_wd1,
+    (BOOL(WINAPI * /*ImmGetCandidateWindow*/)(HIMC, DWORD, LPCANDIDATEFORM))fakeImm_wd3,
+    (BOOL(WINAPI * /*ImmSetCandidateWindow*/)(HIMC, LPCANDIDATEFORM))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmConfigureIMEW*/)(HKL, HWND, DWORD, LPVOID))fakeImm_wd4,
+    (BOOL(WINAPI * /*ImmGetConversionStatus*/)(HIMC, LPDWORD, LPDWORD))fakeImm_wd3,
+    (BOOL(WINAPI * /*ImmSetConversionStatus*/)(HIMC, DWORD, DWORD))fakeImm_wd3,
+    (BOOL(WINAPI * /*ImmSetStatusWindowPos*/)(HIMC, LPPOINT))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmGetImeInfoEx*/)(PIMEINFOEX, IMEINFOEXCLASS, PVOID))fakeImm_wd3,
+    (PIMEDPI(WINAPI * /*ImmLockImeDpi*/)(HKL))fakeImm_wd1,
+    (VOID(WINAPI * /*ImmUnlockImeDpi*/)(PIMEDPI))fakeImm_wv1,
+    (BOOL(WINAPI * /*ImmGetOpenStatus*/)(HIMC))fakeImm_wd1,
+    (BOOL(* /*ImmSetActiveContext*/)(HWND, HIMC, BOOL))fakeImm_d3,
+    (BOOL(* /*ImmTranslateMessage*/)(HWND, UINT, WPARAM, LPARAM))fakeImm_bwuwl,
+    (BOOL(* /*ImmLoadLayout*/)(HKL, PIMEINFOEX))fakeImm_d2,
+    (DWORD(WINAPI * /*ImmProcessKey*/)(HWND, HKL, UINT, LPARAM, DWORD))fakeImm_wd5,
+    (LRESULT(* /*ImmPutImeMenuItemsIntoMappedFile*/)(HIMC))fakeImm_d1,
+    (DWORD(WINAPI * /*ImmGetProperty*/)(HKL, DWORD))fakeImm_wd2,
+    (BOOL(WINAPI * /*ImmSetCompositionStringA*/)(HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
+                                                 LPCVOID lpRead, DWORD dwReadLen))fakeImm_wd6,
+    (BOOL(WINAPI * /*ImmSetCompositionStringW*/)(HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
+                                                 LPCVOID lpRead, DWORD dwReadLen))fakeImm_wd6,
+    (BOOL(WINAPI * /*ImmEnumInputContext*/)(DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam))fakeImm_wd3,
 
-    (LRESULT (WINAPI* /*ImmSystemHandler*/)(HIMC, WPARAM, LPARAM))
-                                                             fakeImm_wd3,
+    (LRESULT(WINAPI * /*ImmSystemHandler*/)(HIMC, WPARAM, LPARAM))fakeImm_wd3,
 #ifdef CUAS_ENABLE
     // Cicero
-    (HRESULT (WINAPI* /* CtfImmTIMActivate*/)(HKL))             fakeImm_wd1,
-    (VOID  (WINAPI* /* CtfImmRestoreToolbarWnd*/)(DWORD))       fakeImm_vd1,
-    (DWORD (WINAPI* /* CtfImmHideToolbarWnd*/)(VOID))           fakeImm_dv1,
-    (LRESULT (WINAPI* /* CtfImmDispatchDefImeMessage*/)(HWND, UINT, WPARAM, LPARAM))          fakeImm_bwuwl,
+    (HRESULT(WINAPI * /* CtfImmTIMActivate*/)(HKL))fakeImm_wd1,
+    (VOID(WINAPI * /* CtfImmRestoreToolbarWnd*/)(DWORD))fakeImm_vd1,
+    (DWORD(WINAPI * /* CtfImmHideToolbarWnd*/)(VOID))fakeImm_dv1,
+    (LRESULT(WINAPI * /* CtfImmDispatchDefImeMessage*/)(HWND, UINT, WPARAM, LPARAM))fakeImm_bwuwl,
 #endif // CUAS_ENABLE
 };
 
@@ -227,28 +222,32 @@ ImmApiEntries gImmApiEntries = {
 HMODULE ghImm32;
 
 #define IMMMODULENAME L"IMM32.DLL"
-#define PATHDLM     L'\\'
-#define IMMMODULENAMELEN    ((sizeof PATHDLM + sizeof IMMMODULENAME) / sizeof(WCHAR))
+#define PATHDLM L'\\'
+#define IMMMODULENAMELEN ((sizeof PATHDLM + sizeof IMMMODULENAME) / sizeof(WCHAR))
 
 VOID GetImmFileName(PWSTR wszImmFile)
 {
     UINT i = GetSystemDirectoryW(wszImmFile, MAX_PATH);
-    if (i > 0 && i < MAX_PATH - IMMMODULENAMELEN) {
+    if (i > 0 && i < MAX_PATH - IMMMODULENAMELEN)
+    {
         wszImmFile += i;
-        if (wszImmFile[-1] != PATHDLM) {
+        if (wszImmFile[-1] != PATHDLM)
+        {
             *wszImmFile++ = PATHDLM;
         }
     }
     wcscpy(wszImmFile, IMMMODULENAME);
 }
 
-#define REGISTER(name,cast) \
-    gImmApiEntries.name = (cast)GetProcAddress(hImm, #name); \
-    if (gImmApiEntries.name == NULL) { \
+#define REGISTER(name, cast)                                             \
+    gImmApiEntries.name = (cast)GetProcAddress(hImm, #name);             \
+    if (gImmApiEntries.name == NULL)                                     \
+    {                                                                    \
         RIPMSG1(RIP_WARNING, "gImmApiEntries.%s got to be NULL", #name); \
-        gImmApiEntries.name = (PVOID)fakeImm_v1; \
-        return; \
-    } else
+        gImmApiEntries.name = (PVOID)fakeImm_v1;                         \
+        return;                                                          \
+    }                                                                    \
+    else
 
 ///////////////////////////////////////////////////////
 // _InitializeImmEntryTable(HMODULE)
@@ -260,21 +259,25 @@ VOID _InitializeImmEntryTable(VOID)
     HMODULE hImm = ghImm32;
     WCHAR wszImmFile[MAX_PATH];
 
-    if (((PVOID)gImmApiEntries.ImmWINNLSEnableIME) != ((PVOID)fakeImm_wd2)) {
+    if (((PVOID)gImmApiEntries.ImmWINNLSEnableIME) != ((PVOID)fakeImm_wd2))
+    {
         // already initialized.
         return;
     }
 
     GetImmFileName(wszImmFile);
 
-    if (hImm == NULL) {
+    if (hImm == NULL)
+    {
         // check if IMM DLL is already attached to the process
         hImm = GetModuleHandleW(wszImmFile);
     }
 
-    if (hImm == NULL) {
+    if (hImm == NULL)
+    {
         hImm = ghImm32 = LoadLibraryW(wszImmFile);
-        if (hImm == NULL) {
+        if (hImm == NULL)
+        {
             RIPMSG1(RIP_WARNING, "_InitializeImmEntryTable: failed to load Imm32.Dll: err=%d\n", GetLastError());
             return;
         }
@@ -284,16 +287,17 @@ VOID _InitializeImmEntryTable(VOID)
         return;
     }
 
-    if (hImm == NULL) {
+    if (hImm == NULL)
+    {
         RIPMSG0(RIP_WARNING, "Failed to attach IMM32.DLL.\n");
         return;
     }
 
     // get the addresses of the procedures
-    REGISTER(ImmWINNLSEnableIME, BOOL (WINAPI*)(HWND, BOOL));
-    REGISTER(ImmWINNLSGetEnableStatus, BOOL (*)(HWND));
-    REGISTER(ImmSendIMEMessageExW, LRESULT (*)(HWND, LPARAM));
-    REGISTER(ImmSendIMEMessageExA, LRESULT (*)(HWND, LPARAM));
+    REGISTER(ImmWINNLSEnableIME, BOOL(WINAPI *)(HWND, BOOL));
+    REGISTER(ImmWINNLSGetEnableStatus, BOOL(*)(HWND));
+    REGISTER(ImmSendIMEMessageExW, LRESULT(*)(HWND, LPARAM));
+    REGISTER(ImmSendIMEMessageExA, LRESULT(*)(HWND, LPARAM));
     REGISTER(ImmIMPGetIMEW, BOOL(*)(HWND, LPIMEPROW));
     REGISTER(ImmIMPGetIMEA, BOOL(*)(HWND, LPIMEPROA))
     REGISTER(ImmIMPQueryIMEW, BOOL(*)(LPIMEPROW))
@@ -301,64 +305,60 @@ VOID _InitializeImmEntryTable(VOID)
     REGISTER(ImmIMPSetIMEW, BOOL(*)(HWND, LPIMEPROW));
     REGISTER(ImmIMPSetIMEA, BOOL(*)(HWND, LPIMEPROA));
 
-    REGISTER(ImmAssociateContext, HIMC (WINAPI*)(HWND, HIMC));
-    REGISTER(ImmEscapeA, LRESULT(WINAPI*)(HKL, HIMC, UINT, LPVOID));
-    REGISTER(ImmEscapeW, LRESULT(WINAPI*)(HKL, HIMC, UINT, LPVOID));
-    REGISTER(ImmGetCompositionStringA, LONG (WINAPI*)(HIMC, DWORD, LPVOID, DWORD));
-    REGISTER(ImmGetCompositionStringW, LONG (WINAPI*)(HIMC, DWORD, LPVOID, DWORD));
-    REGISTER(ImmGetCompositionWindow, BOOL (WINAPI*)(HIMC, LPCOMPOSITIONFORM));
-    REGISTER(ImmGetContext, HIMC (WINAPI*)(HWND));
-    REGISTER(ImmGetDefaultIMEWnd, HWND (WINAPI*)(HWND));
-    REGISTER(ImmIsIME, BOOL (WINAPI*)(HKL));
-    REGISTER(ImmReleaseContext, BOOL (WINAPI*)(HWND, HIMC));
+    REGISTER(ImmAssociateContext, HIMC(WINAPI *)(HWND, HIMC));
+    REGISTER(ImmEscapeA, LRESULT(WINAPI *)(HKL, HIMC, UINT, LPVOID));
+    REGISTER(ImmEscapeW, LRESULT(WINAPI *)(HKL, HIMC, UINT, LPVOID));
+    REGISTER(ImmGetCompositionStringA, LONG(WINAPI *)(HIMC, DWORD, LPVOID, DWORD));
+    REGISTER(ImmGetCompositionStringW, LONG(WINAPI *)(HIMC, DWORD, LPVOID, DWORD));
+    REGISTER(ImmGetCompositionWindow, BOOL(WINAPI *)(HIMC, LPCOMPOSITIONFORM));
+    REGISTER(ImmGetContext, HIMC(WINAPI *)(HWND));
+    REGISTER(ImmGetDefaultIMEWnd, HWND(WINAPI *)(HWND));
+    REGISTER(ImmIsIME, BOOL(WINAPI *)(HKL));
+    REGISTER(ImmReleaseContext, BOOL(WINAPI *)(HWND, HIMC));
     REGISTER(ImmRegisterClient, BOOL(*)(PSHAREDINFO, HINSTANCE));
 
-    REGISTER(ImmGetCompositionFontW, BOOL (WINAPI*)(HIMC, LPLOGFONTW));
-    REGISTER(ImmGetCompositionFontA, BOOL (WINAPI*)(HIMC, LPLOGFONTA));
-    REGISTER(ImmSetCompositionFontW, BOOL (WINAPI*)(HIMC, LPLOGFONTW));
-    REGISTER(ImmSetCompositionFontA, BOOL (WINAPI*)(HIMC, LPLOGFONTA));
+    REGISTER(ImmGetCompositionFontW, BOOL(WINAPI *)(HIMC, LPLOGFONTW));
+    REGISTER(ImmGetCompositionFontA, BOOL(WINAPI *)(HIMC, LPLOGFONTA));
+    REGISTER(ImmSetCompositionFontW, BOOL(WINAPI *)(HIMC, LPLOGFONTW));
+    REGISTER(ImmSetCompositionFontA, BOOL(WINAPI *)(HIMC, LPLOGFONTA));
 
-    REGISTER(ImmSetCompositionWindow, BOOL(WINAPI*)(HIMC, LPCOMPOSITIONFORM));
-    REGISTER(ImmNotifyIME, BOOL (WINAPI*)(HIMC, DWORD, DWORD, DWORD));
-    REGISTER(ImmLockIMC, PINPUTCONTEXT(WINAPI*)(HIMC));
-    REGISTER(ImmUnlockIMC, BOOL (WINAPI*)(HIMC));
-    REGISTER(ImmLoadIME, BOOL (WINAPI*)(HKL));
-    REGISTER(ImmSetOpenStatus, BOOL (WINAPI*)(HIMC, BOOL));
-    REGISTER(ImmFreeLayout, BOOL (WINAPI*)(DWORD));
-    REGISTER(ImmActivateLayout, BOOL (WINAPI*)(HKL));
-    REGISTER(ImmGetCandidateWindow, BOOL (WINAPI*)(HIMC, DWORD, LPCANDIDATEFORM));
-    REGISTER(ImmSetCandidateWindow, BOOL (WINAPI*)(HIMC, LPCANDIDATEFORM));
-    REGISTER(ImmConfigureIMEW, BOOL (WINAPI*)(HKL, HWND, DWORD, LPVOID));
-    REGISTER(ImmGetConversionStatus, BOOL (WINAPI*)(HIMC, LPDWORD, LPDWORD));
-    REGISTER(ImmSetConversionStatus, BOOL (WINAPI*)(HIMC, DWORD, DWORD));
-    REGISTER(ImmSetStatusWindowPos, BOOL (WINAPI*)(HIMC, LPPOINT));
-    REGISTER(ImmGetImeInfoEx, BOOL (WINAPI*)(PIMEINFOEX, IMEINFOEXCLASS, PVOID));
-    REGISTER(ImmLockImeDpi, PIMEDPI (WINAPI*)(HKL));
-    REGISTER(ImmUnlockImeDpi, VOID (WINAPI*)(PIMEDPI));
-    REGISTER(ImmGetOpenStatus, BOOL (WINAPI*)(HIMC));
-    REGISTER(ImmSetActiveContext, BOOL (*)(HWND, HIMC, BOOL));
-    REGISTER(ImmTranslateMessage, BOOL (*)(HWND, UINT, WPARAM, LPARAM));
-    REGISTER(ImmLoadLayout, BOOL (*)(HKL, PIMEINFOEX));
-    REGISTER(ImmProcessKey, DWORD (*)(HWND, HKL, UINT, LPARAM, DWORD));
+    REGISTER(ImmSetCompositionWindow, BOOL(WINAPI *)(HIMC, LPCOMPOSITIONFORM));
+    REGISTER(ImmNotifyIME, BOOL(WINAPI *)(HIMC, DWORD, DWORD, DWORD));
+    REGISTER(ImmLockIMC, PINPUTCONTEXT(WINAPI *)(HIMC));
+    REGISTER(ImmUnlockIMC, BOOL(WINAPI *)(HIMC));
+    REGISTER(ImmLoadIME, BOOL(WINAPI *)(HKL));
+    REGISTER(ImmSetOpenStatus, BOOL(WINAPI *)(HIMC, BOOL));
+    REGISTER(ImmFreeLayout, BOOL(WINAPI *)(DWORD));
+    REGISTER(ImmActivateLayout, BOOL(WINAPI *)(HKL));
+    REGISTER(ImmGetCandidateWindow, BOOL(WINAPI *)(HIMC, DWORD, LPCANDIDATEFORM));
+    REGISTER(ImmSetCandidateWindow, BOOL(WINAPI *)(HIMC, LPCANDIDATEFORM));
+    REGISTER(ImmConfigureIMEW, BOOL(WINAPI *)(HKL, HWND, DWORD, LPVOID));
+    REGISTER(ImmGetConversionStatus, BOOL(WINAPI *)(HIMC, LPDWORD, LPDWORD));
+    REGISTER(ImmSetConversionStatus, BOOL(WINAPI *)(HIMC, DWORD, DWORD));
+    REGISTER(ImmSetStatusWindowPos, BOOL(WINAPI *)(HIMC, LPPOINT));
+    REGISTER(ImmGetImeInfoEx, BOOL(WINAPI *)(PIMEINFOEX, IMEINFOEXCLASS, PVOID));
+    REGISTER(ImmLockImeDpi, PIMEDPI(WINAPI *)(HKL));
+    REGISTER(ImmUnlockImeDpi, VOID(WINAPI *)(PIMEDPI));
+    REGISTER(ImmGetOpenStatus, BOOL(WINAPI *)(HIMC));
+    REGISTER(ImmSetActiveContext, BOOL(*)(HWND, HIMC, BOOL));
+    REGISTER(ImmTranslateMessage, BOOL(*)(HWND, UINT, WPARAM, LPARAM));
+    REGISTER(ImmLoadLayout, BOOL(*)(HKL, PIMEINFOEX));
+    REGISTER(ImmProcessKey, DWORD(*)(HWND, HKL, UINT, LPARAM, DWORD));
     REGISTER(ImmPutImeMenuItemsIntoMappedFile, LRESULT(*)(HIMC));
-    REGISTER(ImmGetProperty, DWORD (WINAPI*)(HKL, DWORD));
+    REGISTER(ImmGetProperty, DWORD(WINAPI *)(HKL, DWORD));
     REGISTER(ImmSetCompositionStringA,
-             BOOL (WINAPI*)(HIMC hImc, DWORD dwIndex, LPCVOID lpComp,
-                   DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen))
-    REGISTER(ImmSetCompositionStringW,
-             BOOL (WINAPI*)(HIMC hImc, DWORD dwIndex, LPCVOID lpComp,
-                   DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen));
-    REGISTER(ImmEnumInputContext,
-             BOOL (WINAPI*)(DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam));
-    REGISTER(ImmSystemHandler,
-            LRESULT (WINAPI*)(HIMC, WPARAM, LPARAM));
+             BOOL(WINAPI *)(HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen))
+    REGISTER(ImmSetCompositionStringW, BOOL(WINAPI *)(HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
+                                                      LPCVOID lpRead, DWORD dwReadLen));
+    REGISTER(ImmEnumInputContext, BOOL(WINAPI *)(DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam));
+    REGISTER(ImmSystemHandler, LRESULT(WINAPI *)(HIMC, WPARAM, LPARAM));
 
 #ifdef CUAS_ENABLE
     // Cicero
-    REGISTER(CtfImmTIMActivate, HRESULT (WINAPI*)(HKL));
-    REGISTER(CtfImmRestoreToolbarWnd, VOID (WINAPI*)(DWORD));
-    REGISTER(CtfImmHideToolbarWnd, DWORD (WINAPI*)(VOID));
-    REGISTER(CtfImmDispatchDefImeMessage, LRESULT (WINAPI*)(HWND, UINT, WPARAM, LPARAM));
+    REGISTER(CtfImmTIMActivate, HRESULT(WINAPI *)(HKL));
+    REGISTER(CtfImmRestoreToolbarWnd, VOID(WINAPI *)(DWORD));
+    REGISTER(CtfImmHideToolbarWnd, DWORD(WINAPI *)(VOID));
+    REGISTER(CtfImmDispatchDefImeMessage, LRESULT(WINAPI *)(HWND, UINT, WPARAM, LPARAM));
 #endif // CUAS_ENABLE
 }
 
@@ -374,20 +374,24 @@ VOID InitializeImmEntryTable(VOID)
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, User32InitializeImmEntryTable, DWORD, magic)
 BOOL User32InitializeImmEntryTable(DWORD magic)
 {
-    if (magic != IMM_MAGIC_CALLER_ID) {
+    if (magic != IMM_MAGIC_CALLER_ID)
+    {
         RIPMSG1(RIP_WARNING, "User32InitializeImmEntryTable: magic # does not match: 0x%08x", magic);
         return FALSE;
     }
 
-    if (((PVOID)gImmApiEntries.ImmWINNLSEnableIME) != ((PVOID)fakeImm_wd2)) {
+    if (((PVOID)gImmApiEntries.ImmWINNLSEnableIME) != ((PVOID)fakeImm_wd2))
+    {
         // already initialized
         return TRUE;
     }
 
     _InitializeImmEntryTable();
 
-    if (ghImm32 == NULL) {
-        if (!bImmInitializing) {
+    if (ghImm32 == NULL)
+    {
+        if (!bImmInitializing)
+        {
             // increment the load counter of IMM32.DLL; application may call FreeLibrary later
             WCHAR wszImmFile[MAX_PATH];
             GetImmFileName(wszImmFile);
@@ -482,4 +486,3 @@ BOOL WINAPI IMPSetIMEA(HWND hwnd, LPIMEPROA lpImeProA)
 {
     return gImmApiEntries.ImmIMPSetIMEA(hwnd, lpImeProA);
 }
-

@@ -25,21 +25,22 @@ PCLDR_DATA_TABLE_ENTRY BasepExeLdrEntry = NULL;
 
 // N.B. These are the registry values we check for SafeDllSearchMode,
 //      and MUST match the entries in BasepDllSearchPaths
-typedef enum {
+typedef enum
+{
     BasepCurrentDirUninitialized = -1,
-    BasepCurrentDirAtStart       =  0,
-    BasepCurrentDirAfterSystem32 =  1,
+    BasepCurrentDirAtStart = 0,
+    BasepCurrentDirAfterSystem32 = 1,
     MaxBasepCurrentDir
 } BASEP_CURDIR_PLACEMENT;
 
 #define BASEP_DEFAULT_DLL_CURDIR_PLACEMENT (BasepCurrentDirAfterSystem32)
 
-#define BASEP_VALID_CURDIR_PLACEMENT_P(c) (BasepCurrentDirUninitialized < (c)  \
-                                           && (c) < MaxBasepCurrentDir)
+#define BASEP_VALID_CURDIR_PLACEMENT_P(c) (BasepCurrentDirUninitialized < (c) && (c) < MaxBasepCurrentDir)
 
 LONG BasepDllCurrentDirPlacement = BasepCurrentDirUninitialized;
 
-typedef enum {
+typedef enum
+{
     BasepSearchPathEnd,         // end of path
     BasepSearchPathDlldir,      // use the dll dir; fallback to nothing
     BasepSearchPathAppdir,      // use the exe dir; fallback to base exe dir
@@ -51,33 +52,19 @@ typedef enum {
 
 // N.B. The ordering of these must match the definitions for
 //      BASEP_CURDIR_PLACEMENT.
-static const BASEP_SEARCH_PATH_ELEMENT BasepDllSearchPaths[MaxBasepCurrentDir][7] = 
-{
-    {
-        // BasepCurrentDirAtStart
-        BasepSearchPathAppdir,
-        BasepSearchPathCurdir,
-        BasepSearchPathDefaultDirs,
-        BasepSearchPathEnvPath,
-        BasepSearchPathEnd
-    },
-    {
-        // BasepCurrentDirAfterSystem32
-        BasepSearchPathAppdir,
-        BasepSearchPathDefaultDirs,
-        BasepSearchPathCurdir,
-        BasepSearchPathEnvPath,
-        BasepSearchPathEnd
-    }
+static const BASEP_SEARCH_PATH_ELEMENT BasepDllSearchPaths[MaxBasepCurrentDir][7] = {
+    { // BasepCurrentDirAtStart
+      BasepSearchPathAppdir, BasepSearchPathCurdir, BasepSearchPathDefaultDirs, BasepSearchPathEnvPath,
+      BasepSearchPathEnd },
+    { // BasepCurrentDirAfterSystem32
+      BasepSearchPathAppdir, BasepSearchPathDefaultDirs, BasepSearchPathCurdir, BasepSearchPathEnvPath,
+      BasepSearchPathEnd }
 };
 
-
+
 POBJECT_ATTRIBUTES
-BaseFormatObjectAttributes(
-    OUT POBJECT_ATTRIBUTES ObjectAttributes,
-    IN PSECURITY_ATTRIBUTES SecurityAttributes,
-    IN PUNICODE_STRING ObjectName
-    )
+BaseFormatObjectAttributes(OUT POBJECT_ATTRIBUTES ObjectAttributes, IN PSECURITY_ATTRIBUTES SecurityAttributes,
+                           IN PUNICODE_STRING ObjectName)
 
 /*++
 
@@ -116,48 +103,45 @@ Return Value:
     ULONG Attributes;
     PVOID SecurityDescriptor;
 
-    if ( ARGUMENT_PRESENT(SecurityAttributes) ||
-         ARGUMENT_PRESENT(ObjectName) ) {
+    if (ARGUMENT_PRESENT(SecurityAttributes) || ARGUMENT_PRESENT(ObjectName))
+    {
 
-        if ( ARGUMENT_PRESENT(ObjectName) ) {
+        if (ARGUMENT_PRESENT(ObjectName))
+        {
             RootDirectory = BaseGetNamedObjectDirectory();
-            }
-        else {
+        }
+        else
+        {
             RootDirectory = NULL;
-            }
+        }
 
-        if ( SecurityAttributes ) {
+        if (SecurityAttributes)
+        {
             Attributes = (SecurityAttributes->bInheritHandle ? OBJ_INHERIT : 0);
             SecurityDescriptor = SecurityAttributes->lpSecurityDescriptor;
-            }
-        else {
+        }
+        else
+        {
             Attributes = 0;
             SecurityDescriptor = NULL;
-            }
+        }
 
-        if ( ARGUMENT_PRESENT(ObjectName) ) {
+        if (ARGUMENT_PRESENT(ObjectName))
+        {
             Attributes |= OBJ_OPENIF;
-            }
+        }
 
-        InitializeObjectAttributes(
-            ObjectAttributes,
-            ObjectName,
-            Attributes,
-            RootDirectory,
-            SecurityDescriptor
-            );
+        InitializeObjectAttributes(ObjectAttributes, ObjectName, Attributes, RootDirectory, SecurityDescriptor);
         return ObjectAttributes;
-        }
-    else {
+    }
+    else
+    {
         return NULL;
-        }
+    }
 }
 
 PLARGE_INTEGER
-BaseFormatTimeOut(
-    OUT PLARGE_INTEGER TimeOut,
-    IN DWORD Milliseconds
-    )
+BaseFormatTimeOut(OUT PLARGE_INTEGER TimeOut, IN DWORD Milliseconds)
 
 /*++
 
@@ -186,22 +170,18 @@ Return Value:
 --*/
 
 {
-    if ( (LONG) Milliseconds == -1 ) {
-        return( NULL );
-        }
-    TimeOut->QuadPart = UInt32x32To64( Milliseconds, 10000 );
+    if ((LONG)Milliseconds == -1)
+    {
+        return (NULL);
+    }
+    TimeOut->QuadPart = UInt32x32To64(Milliseconds, 10000);
     TimeOut->QuadPart *= -1;
     return TimeOut;
 }
 
 
 NTSTATUS
-BaseCreateStack(
-    IN HANDLE Process,
-    IN SIZE_T StackSize,
-    IN SIZE_T MaximumStackSize,
-    OUT PINITIAL_TEB InitialTeb
-    )
+BaseCreateStack(IN HANDLE Process, IN SIZE_T StackSize, IN SIZE_T MaximumStackSize, OUT PINITIAL_TEB InitialTeb)
 
 /*++
 
@@ -254,19 +234,23 @@ Return Value:
     //
 
     NtHeaders = RtlImageNtHeader(Peb->ImageBaseAddress);
-    if (!NtHeaders) {
+    if (!NtHeaders)
+    {
         return STATUS_INVALID_IMAGE_FORMAT;
     }
     ImageStackSize = NtHeaders->OptionalHeader.SizeOfStackReserve;
     ImageStackCommit = NtHeaders->OptionalHeader.SizeOfStackCommit;
 
-    if ( !MaximumStackSize ) {
+    if (!MaximumStackSize)
+    {
         MaximumStackSize = ImageStackSize;
     }
-    if (!StackSize) {
+    if (!StackSize)
+    {
         StackSize = ImageStackCommit;
     }
-    else {
+    else
+    {
 
         //
         // Now Compute how much additional stack space is to be
@@ -275,8 +259,9 @@ Return Value:
         // specifies.  Otherwise, round up to 1Mb.
         //
 
-        if ( StackSize >= MaximumStackSize ) {
-            MaximumStackSize = ROUND_UP(StackSize, (1024*1024));
+        if (StackSize >= MaximumStackSize)
+        {
+            MaximumStackSize = ROUND_UP(StackSize, (1024 * 1024));
         }
     }
 
@@ -285,12 +270,9 @@ Return Value:
     // to an allocation granularity boundry.
     //
 
-    StackSize = ROUND_UP( StackSize, PageSize );
+    StackSize = ROUND_UP(StackSize, PageSize);
 
-    MaximumStackSize = ROUND_UP(
-                        MaximumStackSize,
-                        BASE_SYSINFO.AllocationGranularity
-                        );
+    MaximumStackSize = ROUND_UP(MaximumStackSize, BASE_SYSINFO.AllocationGranularity);
 
     //
     // Enforce a minimal stack commit if there is a PEB setting
@@ -301,24 +283,26 @@ Return Value:
         SIZE_T MinimumStackCommit;
 
         MinimumStackCommit = NtCurrentPeb()->MinimumStackCommit;
-        
-        if (MinimumStackCommit != 0 && StackSize < MinimumStackCommit) {
+
+        if (MinimumStackCommit != 0 && StackSize < MinimumStackCommit)
+        {
             StackSize = MinimumStackCommit;
         }
 
         //
         // Recheck and realign reserve size
         //
-        
-        if ( StackSize >= MaximumStackSize ) {
-            MaximumStackSize = ROUND_UP (StackSize, (1024*1024));
+
+        if (StackSize >= MaximumStackSize)
+        {
+            MaximumStackSize = ROUND_UP(StackSize, (1024 * 1024));
         }
-    
-        StackSize = ROUND_UP (StackSize, PageSize);
-        MaximumStackSize = ROUND_UP (MaximumStackSize, BASE_SYSINFO.AllocationGranularity);
+
+        StackSize = ROUND_UP(StackSize, PageSize);
+        MaximumStackSize = ROUND_UP(MaximumStackSize, BASE_SYSINFO.AllocationGranularity);
     }
 
-#if !defined (_IA64_)
+#if !defined(_IA64_)
 
     //
     // Reserve address space for the stack
@@ -326,14 +310,7 @@ Return Value:
 
     Stack = NULL;
 
-    Status = NtAllocateVirtualMemory(
-                Process,
-                (PVOID *)&Stack,
-                0,
-                &MaximumStackSize,
-                MEM_RESERVE,
-                PAGE_READWRITE
-                );
+    Status = NtAllocateVirtualMemory(Process, (PVOID *)&Stack, 0, &MaximumStackSize, MEM_RESERVE, PAGE_READWRITE);
 #else
 
     //
@@ -351,39 +328,35 @@ Return Value:
 
         Stack = NULL;
 
-        Status = NtAllocateVirtualMemory(
-                    Process,
-                    (PVOID *)&Stack,
-                    0,
-                    &TotalStackSize,
-                    MEM_RESERVE,
-                    PAGE_READWRITE
-                    );
+        Status = NtAllocateVirtualMemory(Process, (PVOID *)&Stack, 0, &TotalStackSize, MEM_RESERVE, PAGE_READWRITE);
     }
 
 #endif // IA64
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
-        }
+    }
 
     InitialTeb->OldInitialTeb.OldStackBase = NULL;
     InitialTeb->OldInitialTeb.OldStackLimit = NULL;
     InitialTeb->StackAllocationBase = Stack;
     InitialTeb->StackBase = Stack + MaximumStackSize;
 
-#if defined (_IA64_)
+#if defined(_IA64_)
     InitialTeb->OldInitialTeb.OldBStoreLimit = NULL;
 #endif //IA64
 
     Stack += MaximumStackSize - StackSize;
-    if (MaximumStackSize > StackSize) {
+    if (MaximumStackSize > StackSize)
+    {
         Stack -= PageSize;
         StackSize += PageSize;
         GuardPage = TRUE;
-        }
-    else {
+    }
+    else
+    {
         GuardPage = FALSE;
-        }
+    }
 
     //
     // Commit the initially valid portion of the stack
@@ -391,50 +364,33 @@ Return Value:
 
 #if !defined(_IA64_)
 
-    Status = NtAllocateVirtualMemory(
-                Process,
-                (PVOID *)&Stack,
-                0,
-                &StackSize,
-                MEM_COMMIT,
-                PAGE_READWRITE
-                );
+    Status = NtAllocateVirtualMemory(Process, (PVOID *)&Stack, 0, &StackSize, MEM_COMMIT, PAGE_READWRITE);
 #else
     {
-	//
-	// memory and rse stacks are expected to be contiguous
-	// reserver virtual memory for both stack at once
-	//
+        //
+        // memory and rse stacks are expected to be contiguous
+        // reserver virtual memory for both stack at once
+        //
         SIZE_T NewCommittedStackSize = StackSize * 2;
 
-        Status = NtAllocateVirtualMemory(
-                    Process,
-                    (PVOID *)&Stack,
-                    0,
-                    &NewCommittedStackSize,
-                    MEM_COMMIT,
-                    PAGE_READWRITE
-                    );
+        Status =
+            NtAllocateVirtualMemory(Process, (PVOID *)&Stack, 0, &NewCommittedStackSize, MEM_COMMIT, PAGE_READWRITE);
     }
 
 #endif //IA64
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // If the commit fails, then delete the address space for the stack
         //
 
         RegionSize = 0;
-        NtFreeVirtualMemory(
-            Process,
-            (PVOID *)&Stack,
-            &RegionSize,
-            MEM_RELEASE
-            );
+        NtFreeVirtualMemory(Process, (PVOID *)&Stack, &RegionSize, MEM_RELEASE);
 
         return Status;
-        }
+    }
 
     InitialTeb->StackLimit = Stack;
 
@@ -446,50 +402,38 @@ Return Value:
     // if we have space, create a guard page.
     //
 
-    if (GuardPage) {
+    if (GuardPage)
+    {
         RegionSize = PageSize;
-        Status = NtProtectVirtualMemory(
-                    Process,
-                    (PVOID *)&Stack,
-                    &RegionSize,
-                    PAGE_GUARD | PAGE_READWRITE,
-                    &OldProtect
-                    );
-        if ( !NT_SUCCESS( Status ) ) {
+        Status =
+            NtProtectVirtualMemory(Process, (PVOID *)&Stack, &RegionSize, PAGE_GUARD | PAGE_READWRITE, &OldProtect);
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
-            }
+        }
         InitialTeb->StackLimit = (PVOID)((PUCHAR)InitialTeb->StackLimit + RegionSize);
 
 #if defined(_IA64_)
-	//
+        //
         // additional code to Create RSE stack guard page
         //
         Stack = ((PCH)InitialTeb->StackBase) + StackSize - PageSize;
         RegionSize = PageSize;
-        Status = NtProtectVirtualMemory(
-                    Process,
-                    (PVOID *)&Stack,
-                    &RegionSize,
-                    PAGE_GUARD | PAGE_READWRITE,
-                    &OldProtect
-                    );
-        if ( !NT_SUCCESS( Status ) ) {
+        Status =
+            NtProtectVirtualMemory(Process, (PVOID *)&Stack, &RegionSize, PAGE_GUARD | PAGE_READWRITE, &OldProtect);
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
-            }
+        }
         InitialTeb->BStoreLimit = (PVOID)Stack;
 
 #endif // IA64
-
-        }
+    }
 
     return STATUS_SUCCESS;
 }
 
-VOID
-BaseThreadStart(
-    IN LPTHREAD_START_ROUTINE lpStartAddress,
-    IN LPVOID lpParameter
-    )
+VOID BaseThreadStart(IN LPTHREAD_START_ROUTINE lpStartAddress, IN LPVOID lpParameter)
 
 /*++
 
@@ -514,7 +458,8 @@ Return Value:
 --*/
 
 {
-    try {
+    try
+    {
 
         //
         // test for fiber start or new thread
@@ -524,27 +469,29 @@ Return Value:
         // WARNING WARNING DO NOT CHANGE INIT OF NtTib.Version. There is
         // external code depending on this initialization !
         //
-        if ( NtCurrentTeb()->NtTib.Version == OS2_VERSION ) {
-            if ( !BaseRunningInServerProcess ) {
+        if (NtCurrentTeb()->NtTib.Version == OS2_VERSION)
+        {
+            if (!BaseRunningInServerProcess)
+            {
                 CsrNewThread();
-                }
             }
+        }
         ExitThread((lpStartAddress)(lpParameter));
-        }
-    except(UnhandledExceptionFilter( GetExceptionInformation() )) {
-        if ( !BaseRunningInServerProcess ) {
+    }
+    except(UnhandledExceptionFilter(GetExceptionInformation()))
+    {
+        if (!BaseRunningInServerProcess)
+        {
             ExitProcess(GetExceptionCode());
-            }
-        else {
-            ExitThread(GetExceptionCode());
-            }
         }
+        else
+        {
+            ExitThread(GetExceptionCode());
+        }
+    }
 }
 
-VOID
-BaseProcessStart(
-    PPROCESS_START_ROUTINE lpStartAddress
-    )
+VOID BaseProcessStart(PPROCESS_START_ROUTINE lpStartAddress)
 
 /*++
 
@@ -566,30 +513,27 @@ Return Value:
 --*/
 
 {
-    try {
+    try
+    {
 
-        NtSetInformationThread( NtCurrentThread(),
-                                ThreadQuerySetWin32StartAddress,
-                                &lpStartAddress,
-                                sizeof( lpStartAddress )
-                              );
+        NtSetInformationThread(NtCurrentThread(), ThreadQuerySetWin32StartAddress, &lpStartAddress,
+                               sizeof(lpStartAddress));
         ExitThread((lpStartAddress)());
-        }
-    except(UnhandledExceptionFilter( GetExceptionInformation() )) {
-        if ( !BaseRunningInServerProcess ) {
+    }
+    except(UnhandledExceptionFilter(GetExceptionInformation()))
+    {
+        if (!BaseRunningInServerProcess)
+        {
             ExitProcess(GetExceptionCode());
-            }
-        else {
-            ExitThread(GetExceptionCode());
-            }
         }
+        else
+        {
+            ExitThread(GetExceptionCode());
+        }
+    }
 }
 
-VOID
-BaseFreeStackAndTerminate(
-    IN PVOID OldStack,
-    IN DWORD ExitCode
-    )
+VOID BaseFreeStackAndTerminate(IN PVOID OldStack, IN DWORD ExitCode)
 
 /*++
 
@@ -616,7 +560,7 @@ Return Value:
     SIZE_T Zero;
     PVOID BaseAddress;
 
-#if defined (WX86)
+#if defined(WX86)
     PWX86TIB Wx86Tib;
     PTEB Teb;
 #endif
@@ -624,40 +568,26 @@ Return Value:
     Zero = 0;
     BaseAddress = OldStack;
 
-    Status = NtFreeVirtualMemory(
-                NtCurrentProcess(),
-                &BaseAddress,
-                &Zero,
-                MEM_RELEASE
-                );
+    Status = NtFreeVirtualMemory(NtCurrentProcess(), &BaseAddress, &Zero, MEM_RELEASE);
     ASSERT(NT_SUCCESS(Status));
 
-#if defined (WX86)
+#if defined(WX86)
     Teb = NtCurrentTeb();
-    if (Teb && (Wx86Tib = Wx86CurrentTib())) {
+    if (Teb && (Wx86Tib = Wx86CurrentTib()))
+    {
         BaseAddress = Wx86Tib->DeallocationStack;
         Zero = 0;
-        Status = NtFreeVirtualMemory(
-                    NtCurrentProcess(),
-                    &BaseAddress,
-                    &Zero,
-                    MEM_RELEASE
-                    );
+        Status = NtFreeVirtualMemory(NtCurrentProcess(), &BaseAddress, &Zero, MEM_RELEASE);
         ASSERT(NT_SUCCESS(Status));
 
-        if (Teb->Wx86Thread.DeallocationCpu) {
+        if (Teb->Wx86Thread.DeallocationCpu)
+        {
             BaseAddress = Teb->Wx86Thread.DeallocationCpu;
             Zero = 0;
-            Status = NtFreeVirtualMemory(
-                        NtCurrentProcess(),
-                        &BaseAddress,
-                        &Zero,
-                        MEM_RELEASE
-                        );
+            Status = NtFreeVirtualMemory(NtCurrentProcess(), &BaseAddress, &Zero, MEM_RELEASE);
             ASSERT(NT_SUCCESS(Status));
-            }
-
         }
+    }
 #endif
 
     //
@@ -669,23 +599,16 @@ Return Value:
     // case.
     //
 
-    NtTerminateThread(NULL,(NTSTATUS)ExitCode);
+    NtTerminateThread(NULL, (NTSTATUS)ExitCode);
     ExitProcess(ExitCode);
 }
-
 
 
 #if defined(WX86) || defined(_AXP64_)
 
 NTSTATUS
-BaseCreateWx86Tib(
-    HANDLE Process,
-    HANDLE Thread,
-    ULONG InitialPc,
-    ULONG CommittedStackSize,
-    ULONG MaximumStackSize,
-    BOOLEAN EmulateInitialPc
-    )
+BaseCreateWx86Tib(HANDLE Process, HANDLE Thread, ULONG InitialPc, ULONG CommittedStackSize, ULONG MaximumStackSize,
+                  BOOLEAN EmulateInitialPc)
 
 /*++
 
@@ -721,23 +644,18 @@ Return Value:
     NTSTATUS Status;
     PTEB Teb;
     ULONG Size, SizeWx86Tib;
-    PVOID   TargetWx86Tib;
+    PVOID TargetWx86Tib;
     PIMAGE_NT_HEADERS NtHeaders;
     WX86TIB Wx86Tib;
     INITIAL_TEB InitialTeb;
     THREAD_BASIC_INFORMATION ThreadInfo;
 
 
-    Status = NtQueryInformationThread(
-                Thread,
-                ThreadBasicInformation,
-                &ThreadInfo,
-                sizeof( ThreadInfo ),
-                NULL
-                );
-    if (!NT_SUCCESS(Status)) {
+    Status = NtQueryInformationThread(Thread, ThreadBasicInformation, &ThreadInfo, sizeof(ThreadInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
-        }
+    }
 
     Teb = ThreadInfo.TebBaseAddress;
 
@@ -746,16 +664,18 @@ Return Value:
     // if stack size not supplied, get from current image
     //
     NtHeaders = RtlImageNtHeader(NtCurrentPeb()->ImageBaseAddress);
-    if (!NtHeaders) {
+    if (!NtHeaders)
+    {
         return STATUS_INVALID_IMAGE_FORMAT;
     }
-    if (!MaximumStackSize) {
+    if (!MaximumStackSize)
+    {
         MaximumStackSize = (ULONG)NtHeaders->OptionalHeader.SizeOfStackReserve;
     }
-    if (!CommittedStackSize) {
+    if (!CommittedStackSize)
+    {
         CommittedStackSize = (ULONG)NtHeaders->OptionalHeader.SizeOfStackCommit;
     }
-
 
 
     //
@@ -771,43 +691,39 @@ Return Value:
 
     SizeWx86Tib = ROUND_UP(SizeWx86Tib, sizeof(ULONG));
     Size = (ULONG)ROUND_UP_TO_PAGES(SizeWx86Tib + 4096);
-    if (CommittedStackSize < 1024 * 1024) {  // 1 MB
+    if (CommittedStackSize < 1024 * 1024)
+    { // 1 MB
         CommittedStackSize += Size;
-        }
-    if (MaximumStackSize < 1024 * 1024 * 16) {  // 10 MB
+    }
+    if (MaximumStackSize < 1024 * 1024 * 16)
+    { // 10 MB
         MaximumStackSize += Size;
-        }
+    }
 
-    if (MaximumStackSize < 256 * 1024) {
+    if (MaximumStackSize < 256 * 1024)
+    {
         // Enforce a minimum stack size of 256k since the CPU emulator
         // grabs several pages of the x86 stack for itself
         MaximumStackSize = 256 * 1024;
     }
 
-    Status = BaseCreateStack( Process,
-                              CommittedStackSize,
-                              MaximumStackSize,
-                              &InitialTeb
-                              );
+    Status = BaseCreateStack(Process, CommittedStackSize, MaximumStackSize, &InitialTeb);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
-        }
+    }
 
 
     //
     //  Fill in the Teb->Vdm with pWx86Tib
     //
     TargetWx86Tib = (PVOID)((ULONG_PTR)InitialTeb.StackBase - SizeWx86Tib);
-    Status = NtWriteVirtualMemory(Process,
-                                  &Teb->Vdm,
-                                  &TargetWx86Tib,
-                                  sizeof(TargetWx86Tib),
-                                  NULL
-                                  );
+    Status = NtWriteVirtualMemory(Process, &Teb->Vdm, &TargetWx86Tib, sizeof(TargetWx86Tib), NULL);
 
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Write the initial Wx86Tib information
@@ -821,18 +737,14 @@ Return Value:
         Wx86Tib.DeallocationStack = (VOID * POINTER_32) InitialTeb.StackAllocationBase;
         Wx86Tib.EmulateInitialPc = EmulateInitialPc;
 
-        Status = NtWriteVirtualMemory(Process,
-                                      TargetWx86Tib,
-                                      &Wx86Tib,
-                                      sizeof(WX86TIB),
-                                      NULL
-                                      );
-        }
+        Status = NtWriteVirtualMemory(Process, TargetWx86Tib, &Wx86Tib, sizeof(WX86TIB), NULL);
+    }
 
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseFreeThreadStack(Process, NULL, &InitialTeb);
-        }
+    }
 
 
     return Status;
@@ -842,12 +754,7 @@ Return Value:
 #endif
 
 
-VOID
-BaseFreeThreadStack(
-     HANDLE hProcess,
-     HANDLE hThread,
-     PINITIAL_TEB InitialTeb
-     )
+VOID BaseFreeThreadStack(HANDLE hProcess, HANDLE hThread, PINITIAL_TEB InitialTeb)
 
 /*++
 
@@ -873,85 +780,56 @@ Return Value:
 
 
 {
-   NTSTATUS Status;
-   DWORD dwStackSize;
-   SIZE_T stStackSize;
-   PVOID BaseAddress;
+    NTSTATUS Status;
+    DWORD dwStackSize;
+    SIZE_T stStackSize;
+    PVOID BaseAddress;
 
-   stStackSize = 0;
-   dwStackSize = 0;
-   BaseAddress = InitialTeb->StackAllocationBase;
-   NtFreeVirtualMemory( hProcess,
-                        &BaseAddress,
-                        &stStackSize,
-                        MEM_RELEASE
-                        );
+    stStackSize = 0;
+    dwStackSize = 0;
+    BaseAddress = InitialTeb->StackAllocationBase;
+    NtFreeVirtualMemory(hProcess, &BaseAddress, &stStackSize, MEM_RELEASE);
 
-#if defined (WX86)
+#if defined(WX86)
 
-    if (hThread) {
+    if (hThread)
+    {
         PTEB Teb;
         PWX86TIB pWx86Tib;
         WX86TIB Wx86Tib;
         THREAD_BASIC_INFORMATION ThreadInfo;
 
-        Status = NtQueryInformationThread(
-                    hThread,
-                    ThreadBasicInformation,
-                    &ThreadInfo,
-                    sizeof( ThreadInfo ),
-                    NULL
-                    );
+        Status = NtQueryInformationThread(hThread, ThreadBasicInformation, &ThreadInfo, sizeof(ThreadInfo), NULL);
 
         Teb = ThreadInfo.TebBaseAddress;
-        if (!NT_SUCCESS(Status) || !Teb) {
-            return;
-            }
-
-        Status = NtReadVirtualMemory(
-                    hProcess,
-                    &Teb->Vdm,
-                    &pWx86Tib,
-                    sizeof(pWx86Tib),
-                    NULL
-                    );
-        if (!NT_SUCCESS(Status) || !pWx86Tib) {
+        if (!NT_SUCCESS(Status) || !Teb)
+        {
             return;
         }
 
-        Status = NtReadVirtualMemory(
-                    hProcess,
-                    pWx86Tib,
-                    &Wx86Tib,
-                    sizeof(Wx86Tib),
-                    NULL
-                    );
+        Status = NtReadVirtualMemory(hProcess, &Teb->Vdm, &pWx86Tib, sizeof(pWx86Tib), NULL);
+        if (!NT_SUCCESS(Status) || !pWx86Tib)
+        {
+            return;
+        }
 
-        if (NT_SUCCESS(Status) && Wx86Tib.Size == sizeof(WX86TIB)) {
+        Status = NtReadVirtualMemory(hProcess, pWx86Tib, &Wx86Tib, sizeof(Wx86Tib), NULL);
+
+        if (NT_SUCCESS(Status) && Wx86Tib.Size == sizeof(WX86TIB))
+        {
 
             // release the wx86tib stack
             dwStackSize = 0;
             stStackSize = 0;
             BaseAddress = Wx86Tib.DeallocationStack;
-            NtFreeVirtualMemory(hProcess,
-                                &BaseAddress,
-                                &stStackSize,
-                                MEM_RELEASE
-                                );
+            NtFreeVirtualMemory(hProcess, &BaseAddress, &stStackSize, MEM_RELEASE);
 
             // set Teb->Vdm = NULL;
             dwStackSize = 0;
-            Status = NtWriteVirtualMemory(
-                        hProcess,
-                        &Teb->Vdm,
-                        &dwStackSize,
-                        sizeof(pWx86Tib),
-                        NULL
-                        );
-            }
+            Status = NtWriteVirtualMemory(hProcess, &Teb->Vdm, &dwStackSize, sizeof(pWx86Tib), NULL);
         }
+    }
 #endif
-
 }
 
 #if defined(BUILD_WOW6432)
@@ -966,30 +844,15 @@ typedef struct _ENVIRONMENT_THUNK_TABLE
 
 } ENVIRONMENT_THUNK_TABLE, *PENVIRONMENT_THUNK_TABLE;
 
-ENVIRONMENT_THUNK_TABLE ProgramFilesEnvironment[] = 
-{
-    { 
-        L"ProgramFiles", 
-        L"ProgramFiles(x86)", 
-        L"ProgramW6432" 
-    },
-    { 
-        L"CommonProgramFiles", 
-        L"CommonProgramFiles(x86)", 
-        L"CommonProgramW6432" 
-    },
-    {
-        L"PROCESSOR_ARCHITECTURE",
-        L"PROCESSOR_ARCHITECTURE",
-        L"PROCESSOR_ARCHITEW6432"
-    }
+ENVIRONMENT_THUNK_TABLE ProgramFilesEnvironment[] = {
+    { L"ProgramFiles", L"ProgramFiles(x86)", L"ProgramW6432" },
+    { L"CommonProgramFiles", L"CommonProgramFiles(x86)", L"CommonProgramW6432" },
+    { L"PROCESSOR_ARCHITECTURE", L"PROCESSOR_ARCHITECTURE", L"PROCESSOR_ARCHITEW6432" }
 };
 
 
 NTSTATUS
-Wow64pThunkEnvironmentVariables (
-    IN OUT PVOID *Environment
-    )
+Wow64pThunkEnvironmentVariables(IN OUT PVOID *Environment)
 
 /*++
 
@@ -1013,39 +876,33 @@ Return Value:
 
 {
     UNICODE_STRING Name, Value;
-    WCHAR Buffer [ MAX_PATH ];
+    WCHAR Buffer[MAX_PATH];
     NTSTATUS NtStatus;
-    ULONG i=0;
-    
-    while (i < (sizeof(ProgramFilesEnvironment) / sizeof(ProgramFilesEnvironment[0]))) {
+    ULONG i = 0;
 
-        RtlInitUnicodeString (&Name, ProgramFilesEnvironment[i].FakeName);
+    while (i < (sizeof(ProgramFilesEnvironment) / sizeof(ProgramFilesEnvironment[0])))
+    {
+
+        RtlInitUnicodeString(&Name, ProgramFilesEnvironment[i].FakeName);
 
         Value.Length = 0;
-        Value.MaximumLength = sizeof (Buffer);
+        Value.MaximumLength = sizeof(Buffer);
         Value.Buffer = Buffer;
-        
-        NtStatus = RtlQueryEnvironmentVariable_U (*Environment,
-                                                  &Name,
-                                                  &Value                                                  
-                                                  );
 
-        if (NT_SUCCESS (NtStatus)) {
+        NtStatus = RtlQueryEnvironmentVariable_U(*Environment, &Name, &Value);
 
-            RtlSetEnvironmentVariable (Environment,
-                                       &Name,
-                                       NULL
-                                       );
+        if (NT_SUCCESS(NtStatus))
+        {
 
-            RtlInitUnicodeString (&Name, ProgramFilesEnvironment[i].Native);
-            
-            NtStatus = RtlSetEnvironmentVariable (Environment,
-                                                  &Name,
-                                                  &Value
-                                                  );
+            RtlSetEnvironmentVariable(Environment, &Name, NULL);
+
+            RtlInitUnicodeString(&Name, ProgramFilesEnvironment[i].Native);
+
+            NtStatus = RtlSetEnvironmentVariable(Environment, &Name, &Value);
         }
-        
-        if (!NT_SUCCESS (NtStatus)) {
+
+        if (!NT_SUCCESS(NtStatus))
+        {
             break;
         }
         i++;
@@ -1056,22 +913,10 @@ Return Value:
 #endif
 
 
-BOOL
-BasePushProcessParameters(
-    DWORD dwFlags,
-    HANDLE Process,
-    PPEB Peb,
-    LPCWSTR ApplicationPathName,
-    LPCWSTR CurrentDirectory,
-    LPCWSTR CommandLine,
-    LPVOID Environment,
-    LPSTARTUPINFOW lpStartupInfo,
-    DWORD dwCreationFlags,
-    BOOL bInheritHandles,
-    DWORD dwSubsystem,
-    PVOID pAppCompatData,
-    DWORD cbAppCompatData
-    )
+BOOL BasePushProcessParameters(DWORD dwFlags, HANDLE Process, PPEB Peb, LPCWSTR ApplicationPathName,
+                               LPCWSTR CurrentDirectory, LPCWSTR CommandLine, LPVOID Environment,
+                               LPSTARTUPINFOW lpStartupInfo, DWORD dwCreationFlags, BOOL bInheritHandles,
+                               DWORD dwSubsystem, PVOID pAppCompatData, DWORD cbAppCompatData)
 
 /*++
 
@@ -1146,7 +991,7 @@ Return Value:
     SIZE_T RegionSize;
     PWCHAR s;
     NTSTATUS Status;
-    WCHAR FullPathBuffer[MAX_PATH+5];
+    WCHAR FullPathBuffer[MAX_PATH + 5];
     WCHAR *fp;
     DWORD Rvalue;
     LPWSTR DllPathData;
@@ -1156,103 +1001,108 @@ Return Value:
     PVOID TempEnvironment = NULL;
 #endif
 
-    
-    Rvalue = GetFullPathNameW(ApplicationPathName,MAX_PATH+4,FullPathBuffer,&fp);
-    if ( Rvalue == 0 || Rvalue > MAX_PATH+4 ) {
-        DllPathData = BaseComputeProcessDllPath( ApplicationPathName, Environment);
-        if ( !DllPathData ) {
+
+    Rvalue = GetFullPathNameW(ApplicationPathName, MAX_PATH + 4, FullPathBuffer, &fp);
+    if (Rvalue == 0 || Rvalue > MAX_PATH + 4)
+    {
+        DllPathData = BaseComputeProcessDllPath(ApplicationPathName, Environment);
+        if (!DllPathData)
+        {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return FALSE;
-            }
-        RtlInitUnicodeString( &DllPath, DllPathData );
-        RtlInitUnicodeString( &ImagePathName, ApplicationPathName );
         }
-    else {
-        DllPathData = BaseComputeProcessDllPath( FullPathBuffer, Environment);
-        if ( !DllPathData ) {
+        RtlInitUnicodeString(&DllPath, DllPathData);
+        RtlInitUnicodeString(&ImagePathName, ApplicationPathName);
+    }
+    else
+    {
+        DllPathData = BaseComputeProcessDllPath(FullPathBuffer, Environment);
+        if (!DllPathData)
+        {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return FALSE;
-            }
-        RtlInitUnicodeString( &DllPath, DllPathData );
-        RtlInitUnicodeString( &ImagePathName, FullPathBuffer );
         }
+        RtlInitUnicodeString(&DllPath, DllPathData);
+        RtlInitUnicodeString(&ImagePathName, FullPathBuffer);
+    }
 
-    RtlInitUnicodeString( &CommandLineString, CommandLine );
+    RtlInitUnicodeString(&CommandLineString, CommandLine);
 
-    RtlInitUnicodeString( &CurrentDirString, CurrentDirectory );
+    RtlInitUnicodeString(&CurrentDirString, CurrentDirectory);
 
-    if ( lpStartupInfo->lpDesktop ) {
-        RtlInitUnicodeString( &DesktopInfo, lpStartupInfo->lpDesktop );
-        }
-    else {
-        RtlInitUnicodeString( &DesktopInfo, L"");
-        }
+    if (lpStartupInfo->lpDesktop)
+    {
+        RtlInitUnicodeString(&DesktopInfo, lpStartupInfo->lpDesktop);
+    }
+    else
+    {
+        RtlInitUnicodeString(&DesktopInfo, L"");
+    }
 
-    if ( lpStartupInfo->lpReserved ) {
-        RtlInitUnicodeString( &ShellInfo, lpStartupInfo->lpReserved );
-        }
-    else {
-        RtlInitUnicodeString( &ShellInfo, L"");
-        }
+    if (lpStartupInfo->lpReserved)
+    {
+        RtlInitUnicodeString(&ShellInfo, lpStartupInfo->lpReserved);
+    }
+    else
+    {
+        RtlInitUnicodeString(&ShellInfo, L"");
+    }
 
     RuntimeInfo.Buffer = (PWSTR)lpStartupInfo->lpReserved2;
     RuntimeInfo.Length = lpStartupInfo->cbReserved2;
     RuntimeInfo.MaximumLength = RuntimeInfo.Length;
 
-    if (NULL == pAppCompatData) {
+    if (NULL == pAppCompatData)
+    {
         cbAppCompatData = 0;
-    } 
+    }
 
-    if ( lpStartupInfo->lpTitle ) {
-        RtlInitUnicodeString( &WindowTitle, lpStartupInfo->lpTitle );
-        }
-    else {
-        RtlInitUnicodeString( &WindowTitle, ApplicationPathName );
-        }
+    if (lpStartupInfo->lpTitle)
+    {
+        RtlInitUnicodeString(&WindowTitle, lpStartupInfo->lpTitle);
+    }
+    else
+    {
+        RtlInitUnicodeString(&WindowTitle, ApplicationPathName);
+    }
 
-    Status = RtlCreateProcessParameters( &ProcessParameters,
-                                         &ImagePathName,
-                                         &DllPath,
-                                         (ARGUMENT_PRESENT(CurrentDirectory) ? &CurrentDirString : NULL),
-                                         &CommandLineString,
-                                         Environment,
-                                         &WindowTitle,
-                                         &DesktopInfo,
-                                         &ShellInfo,
-                                         &RuntimeInfo
-                                       );
+    Status = RtlCreateProcessParameters(
+        &ProcessParameters, &ImagePathName, &DllPath, (ARGUMENT_PRESENT(CurrentDirectory) ? &CurrentDirString : NULL),
+        &CommandLineString, Environment, &WindowTitle, &DesktopInfo, &ShellInfo, &RuntimeInfo);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
-    if ( !bInheritHandles ) {
+    if (!bInheritHandles)
+    {
         ProcessParameters->CurrentDirectory.Handle = NULL;
-        }
-    try {
-        if (s = ProcessParameters->Environment) {
-            while (*s) {
-                while (*s++) {
-                    }
+    }
+    try
+    {
+        if (s = ProcessParameters->Environment)
+        {
+            while (*s)
+            {
+                while (*s++)
+                {
                 }
+            }
             s++;
             Environment = ProcessParameters->Environment;
             EnvironmentLength = (ULONG)((PUCHAR)s - (PUCHAR)Environment);
 
             ProcessParameters->Environment = NULL;
             RegionSize = EnvironmentLength;
-            Status = NtAllocateVirtualMemory( Process,
-                                              (PVOID *)&ProcessParameters->Environment,
-                                              0,
-                                              &RegionSize,
-                                              MEM_COMMIT,
-                                              PAGE_READWRITE
-                                            );
-            if ( !NT_SUCCESS( Status ) ) {
+            Status = NtAllocateVirtualMemory(Process, (PVOID *)&ProcessParameters->Environment, 0, &RegionSize,
+                                             MEM_COMMIT, PAGE_READWRITE);
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
-                return( FALSE );
-                }
+                return (FALSE);
+            }
 
 #if defined(BUILD_WOW6432)
 
@@ -1261,47 +1111,41 @@ Return Value:
             // launch a 64-bit process
             //
 
-            Status = NtQueryInformationProcess (Process,
-                                                ProcessWow64Information,
-                                                &Peb32,
-                                                sizeof (Peb32),
-                                                NULL
-                                                );
-            
-            if (NT_SUCCESS (Status) && (Peb32 == 0)) {
+            Status = NtQueryInformationProcess(Process, ProcessWow64Information, &Peb32, sizeof(Peb32), NULL);
+
+            if (NT_SUCCESS(Status) && (Peb32 == 0))
+            {
 
                 RegionSize = EnvironmentLength;
-                
-                Status = NtAllocateVirtualMemory (NtCurrentProcess(),
-                                                  &TempEnvironment,
-                                                  0,
-                                                  &RegionSize,
-                                                  MEM_COMMIT,
-                                                  PAGE_READWRITE
-                                                  );
 
-                if (NT_SUCCESS (Status)) {
-                    
-                    try {
-                        
-                        RtlCopyMemory (TempEnvironment, 
-                                       Environment,
-                                       EnvironmentLength
-                                       );
-                    } except (EXCEPTION_EXECUTE_HANDLER) {
-                        Status = GetExceptionCode ();
+                Status = NtAllocateVirtualMemory(NtCurrentProcess(), &TempEnvironment, 0, &RegionSize, MEM_COMMIT,
+                                                 PAGE_READWRITE);
+
+                if (NT_SUCCESS(Status))
+                {
+
+                    try
+                    {
+
+                        RtlCopyMemory(TempEnvironment, Environment, EnvironmentLength);
+                    }
+                    except(EXCEPTION_EXECUTE_HANDLER)
+                    {
+                        Status = GetExceptionCode();
                     }
 
-                    if (NT_SUCCESS (Status)) {
-                        
+                    if (NT_SUCCESS(Status))
+                    {
+
                         //
-                        // Thunk back special environment variables so that they won't be inherited 
+                        // Thunk back special environment variables so that they won't be inherited
                         // for 64-bit processes
                         //
 
-                        Status = Wow64pThunkEnvironmentVariables (&TempEnvironment);
+                        Status = Wow64pThunkEnvironmentVariables(&TempEnvironment);
 
-                        if (NT_SUCCESS (Status)) {
+                        if (NT_SUCCESS(Status))
+                        {
                             Environment = TempEnvironment;
                         }
                     }
@@ -1309,89 +1153,85 @@ Return Value:
             }
 #endif
 
-            Status = NtWriteVirtualMemory( Process,
-                                           ProcessParameters->Environment,
-                                           Environment,
-                                           EnvironmentLength,
-                                           NULL
-                                         );
+            Status =
+                NtWriteVirtualMemory(Process, ProcessParameters->Environment, Environment, EnvironmentLength, NULL);
 
-#if defined(BUILD_WOW6432)            
-            
-            if (TempEnvironment != NULL) {
-                
+#if defined(BUILD_WOW6432)
+
+            if (TempEnvironment != NULL)
+            {
+
                 RegionSize = 0;
-                NtFreeVirtualMemory(Process,
-                                    &TempEnvironment,
-                                    &RegionSize,
-                                    MEM_RELEASE
-                                    );
+                NtFreeVirtualMemory(Process, &TempEnvironment, &RegionSize, MEM_RELEASE);
             }
 #endif
 
-            if ( !NT_SUCCESS( Status ) ) {
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
-                return( FALSE );
-                }
+                return (FALSE);
             }
+        }
 
         //
         // Push the parameters into the new process
         //
 
-        ProcessParameters->StartingX       = lpStartupInfo->dwX;
-        ProcessParameters->StartingY       = lpStartupInfo->dwY;
-        ProcessParameters->CountX          = lpStartupInfo->dwXSize;
-        ProcessParameters->CountY          = lpStartupInfo->dwYSize;
-        ProcessParameters->CountCharsX     = lpStartupInfo->dwXCountChars;
-        ProcessParameters->CountCharsY     = lpStartupInfo->dwYCountChars;
-        ProcessParameters->FillAttribute   = lpStartupInfo->dwFillAttribute;
-        ProcessParameters->WindowFlags     = lpStartupInfo->dwFlags;
+        ProcessParameters->StartingX = lpStartupInfo->dwX;
+        ProcessParameters->StartingY = lpStartupInfo->dwY;
+        ProcessParameters->CountX = lpStartupInfo->dwXSize;
+        ProcessParameters->CountY = lpStartupInfo->dwYSize;
+        ProcessParameters->CountCharsX = lpStartupInfo->dwXCountChars;
+        ProcessParameters->CountCharsY = lpStartupInfo->dwYCountChars;
+        ProcessParameters->FillAttribute = lpStartupInfo->dwFillAttribute;
+        ProcessParameters->WindowFlags = lpStartupInfo->dwFlags;
         ProcessParameters->ShowWindowFlags = lpStartupInfo->wShowWindow;
 
-        if (lpStartupInfo->dwFlags & (STARTF_USESTDHANDLES | STARTF_USEHOTKEY | STARTF_HASSHELLDATA)) {
+        if (lpStartupInfo->dwFlags & (STARTF_USESTDHANDLES | STARTF_USEHOTKEY | STARTF_HASSHELLDATA))
+        {
             ProcessParameters->StandardInput = lpStartupInfo->hStdInput;
             ProcessParameters->StandardOutput = lpStartupInfo->hStdOutput;
             ProcessParameters->StandardError = lpStartupInfo->hStdError;
         }
 
-        if (dwCreationFlags & DETACHED_PROCESS) {
+        if (dwCreationFlags & DETACHED_PROCESS)
+        {
             ProcessParameters->ConsoleHandle = (HANDLE)CONSOLE_DETACHED_PROCESS;
-        } else if (dwCreationFlags & CREATE_NEW_CONSOLE) {
+        }
+        else if (dwCreationFlags & CREATE_NEW_CONSOLE)
+        {
             ProcessParameters->ConsoleHandle = (HANDLE)CONSOLE_NEW_CONSOLE;
-        } else if (dwCreationFlags & CREATE_NO_WINDOW) {
+        }
+        else if (dwCreationFlags & CREATE_NO_WINDOW)
+        {
             ProcessParameters->ConsoleHandle = (HANDLE)CONSOLE_CREATE_NO_WINDOW;
-        } else {
-            ProcessParameters->ConsoleHandle =
-                NtCurrentPeb()->ProcessParameters->ConsoleHandle;
-            if (!(lpStartupInfo->dwFlags & (STARTF_USESTDHANDLES | STARTF_USEHOTKEY | STARTF_HASSHELLDATA))) {
-                if (bInheritHandles ||
-                    CONSOLE_HANDLE( NtCurrentPeb()->ProcessParameters->StandardInput )
-                   ) {
-                    ProcessParameters->StandardInput =
-                        NtCurrentPeb()->ProcessParameters->StandardInput;
+        }
+        else
+        {
+            ProcessParameters->ConsoleHandle = NtCurrentPeb()->ProcessParameters->ConsoleHandle;
+            if (!(lpStartupInfo->dwFlags & (STARTF_USESTDHANDLES | STARTF_USEHOTKEY | STARTF_HASSHELLDATA)))
+            {
+                if (bInheritHandles || CONSOLE_HANDLE(NtCurrentPeb()->ProcessParameters->StandardInput))
+                {
+                    ProcessParameters->StandardInput = NtCurrentPeb()->ProcessParameters->StandardInput;
                 }
-                if (bInheritHandles ||
-                    CONSOLE_HANDLE( NtCurrentPeb()->ProcessParameters->StandardOutput )
-                   ) {
-                    ProcessParameters->StandardOutput =
-                        NtCurrentPeb()->ProcessParameters->StandardOutput;
+                if (bInheritHandles || CONSOLE_HANDLE(NtCurrentPeb()->ProcessParameters->StandardOutput))
+                {
+                    ProcessParameters->StandardOutput = NtCurrentPeb()->ProcessParameters->StandardOutput;
                 }
-                if (bInheritHandles ||
-                    CONSOLE_HANDLE( NtCurrentPeb()->ProcessParameters->StandardError )
-                   ) {
-                    ProcessParameters->StandardError =
-                        NtCurrentPeb()->ProcessParameters->StandardError;
+                if (bInheritHandles || CONSOLE_HANDLE(NtCurrentPeb()->ProcessParameters->StandardError))
+                {
+                    ProcessParameters->StandardError = NtCurrentPeb()->ProcessParameters->StandardError;
                 }
             }
         }
 
-        if (dwCreationFlags & CREATE_NEW_PROCESS_GROUP) {
+        if (dwCreationFlags & CREATE_NEW_PROCESS_GROUP)
+        {
             ProcessParameters->ConsoleFlags = 1;
-            }
+        }
 
-        ProcessParameters->Flags |=
-            (NtCurrentPeb()->ProcessParameters->Flags & RTL_USER_PROC_DISABLE_HEAP_DECOMMIT);
+        ProcessParameters->Flags |= (NtCurrentPeb()->ProcessParameters->Flags & RTL_USER_PROC_DISABLE_HEAP_DECOMMIT);
         ParameterLength = ProcessParameters->Length;
 
         if (dwFlags & BASE_PUSH_PROCESS_PARAMETERS_FLAG_APP_MANIFEST_PRESENT)
@@ -1403,173 +1243,140 @@ Return Value:
 
         ParametersInNewProcess = NULL;
         RegionSize = ParameterLength;
-        Status = NtAllocateVirtualMemory(
-                    Process,
-                    (PVOID *)&ParametersInNewProcess,
-                    0,
-                    &RegionSize,
-                    MEM_COMMIT,
-                    PAGE_READWRITE
-                    );
+        Status = NtAllocateVirtualMemory(Process, (PVOID *)&ParametersInNewProcess, 0, &RegionSize, MEM_COMMIT,
+                                         PAGE_READWRITE);
         ParameterLength = (ULONG)RegionSize;
-        if ( !NT_SUCCESS( Status ) ) {
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
+        }
         ProcessParameters->MaximumLength = ParameterLength;
 
-        if ( dwCreationFlags & PROFILE_USER ) {
+        if (dwCreationFlags & PROFILE_USER)
+        {
             ProcessParameters->Flags |= RTL_USER_PROC_PROFILE_USER;
-            }
+        }
 
-        if ( dwCreationFlags & PROFILE_KERNEL ) {
+        if (dwCreationFlags & PROFILE_KERNEL)
+        {
             ProcessParameters->Flags |= RTL_USER_PROC_PROFILE_KERNEL;
-            }
+        }
 
-        if ( dwCreationFlags & PROFILE_SERVER ) {
+        if (dwCreationFlags & PROFILE_SERVER)
+        {
             ProcessParameters->Flags |= RTL_USER_PROC_PROFILE_SERVER;
-            }
+        }
 
         //
         // Push the parameters
         //
 
-        Status = NtWriteVirtualMemory(
-                    Process,
-                    ParametersInNewProcess,
-                    ProcessParameters,
-                    ProcessParameters->Length,
-                    NULL
-                    );
-        if ( !NT_SUCCESS( Status ) ) {
+        Status =
+            NtWriteVirtualMemory(Process, ParametersInNewProcess, ProcessParameters, ProcessParameters->Length, NULL);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
+        }
 
         //
         // Make the processes PEB point to the parameters.
         //
 
-        Status = NtWriteVirtualMemory(
-                    Process,
-                    &Peb->ProcessParameters,
-                    &ParametersInNewProcess,
-                    sizeof( ParametersInNewProcess ),
-                    NULL
-                    );
-        if ( !NT_SUCCESS( Status ) ) {
+        Status = NtWriteVirtualMemory(Process, &Peb->ProcessParameters, &ParametersInNewProcess,
+                                      sizeof(ParametersInNewProcess), NULL);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
+        }
 
-        
-        // 
+
+        //
         // allocate and write appcompat data for the new process
         //
-        
+
         pAppCompatDataInNewProcess = NULL;
-        if ( NULL != pAppCompatData ) {
+        if (NULL != pAppCompatData)
+        {
             RegionSize = cbAppCompatData;
-            Status = NtAllocateVirtualMemory(
-                        Process,
-                        (PVOID*)&pAppCompatDataInNewProcess,
-                        0,
-                        &RegionSize,
-                        MEM_COMMIT,
-                        PAGE_READWRITE
-                        );
-            if ( !NT_SUCCESS( Status ) ) {
+            Status = NtAllocateVirtualMemory(Process, (PVOID *)&pAppCompatDataInNewProcess, 0, &RegionSize, MEM_COMMIT,
+                                             PAGE_READWRITE);
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 return FALSE;
-                }
+            }
 
             //
             // write the data itself
             //
-            Status = NtWriteVirtualMemory(
-                        Process,
-                        pAppCompatDataInNewProcess,
-                        pAppCompatData,
-                        cbAppCompatData,
-                        NULL
-                        );
-                        
-            if ( !NT_SUCCESS( Status ) ) {
+            Status = NtWriteVirtualMemory(Process, pAppCompatDataInNewProcess, pAppCompatData, cbAppCompatData, NULL);
+
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 return FALSE;
-                }
             }
+        }
 
-        // 
-        // save the pointer to appcompat data in peb 
         //
-        Status = NtWriteVirtualMemory(
-                    Process,
-                    &Peb->pShimData,
-                    &pAppCompatDataInNewProcess,
-                    sizeof( pAppCompatDataInNewProcess ),
-                    NULL
-                    );
-        if ( !NT_SUCCESS( Status ) ) {
+        // save the pointer to appcompat data in peb
+        //
+        Status = NtWriteVirtualMemory(Process, &Peb->pShimData, &pAppCompatDataInNewProcess,
+                                      sizeof(pAppCompatDataInNewProcess), NULL);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
-                    
+        }
 
 
         //
         // Set subsystem type in PEB if requested by caller.  Ignore error
         //
 
-        if (dwSubsystem != 0) {
-            NtWriteVirtualMemory(
-               Process,
-               &Peb->ImageSubsystem,
-               &dwSubsystem,
-               sizeof( Peb->ImageSubsystem ),
-               NULL
-               );
-            }
+        if (dwSubsystem != 0)
+        {
+            NtWriteVirtualMemory(Process, &Peb->ImageSubsystem, &dwSubsystem, sizeof(Peb->ImageSubsystem), NULL);
         }
-    finally {
-        RtlFreeHeap(RtlProcessHeap(), 0,DllPath.Buffer);
-        if ( ProcessParameters ) {
+    }
+    finally
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, DllPath.Buffer);
+        if (ProcessParameters)
+        {
             RtlDestroyProcessParameters(ProcessParameters);
-            }
         }
+    }
 
     return TRUE;
 }
-
-LPCWSTR
-BasepEndOfDirName(
-    IN LPCWSTR FileName
-    )
-{
-    LPCWSTR FileNameEnd,
-            FileNameFirstWhack = wcschr(FileName, L'\\');
 
-    if (FileNameFirstWhack) {
+LPCWSTR
+BasepEndOfDirName(IN LPCWSTR FileName)
+{
+    LPCWSTR FileNameEnd, FileNameFirstWhack = wcschr(FileName, L'\\');
+
+    if (FileNameFirstWhack)
+    {
 
         FileNameEnd = wcsrchr(FileNameFirstWhack, L'\\');
         ASSERT(FileNameEnd);
 
         if (FileNameEnd == FileNameFirstWhack)
             FileNameEnd++;
-
-    } else {
+    }
+    else
+    {
         FileNameEnd = NULL;
     }
 
     return FileNameEnd;
 }
-
-VOID
-BasepLocateExeLdrEntry(
-    IN PCLDR_DATA_TABLE_ENTRY Entry,
-    IN PVOID Context,
-    IN OUT BOOLEAN *StopEnumeration
-    )
+
+VOID BasepLocateExeLdrEntry(IN PCLDR_DATA_TABLE_ENTRY Entry, IN PVOID Context, IN OUT BOOLEAN *StopEnumeration)
 
 /*++
 
@@ -1598,25 +1405,22 @@ Return Value:
     ASSERT(Context);
     ASSERT(StopEnumeration);
 
-    if (BasepExeLdrEntry) {
+    if (BasepExeLdrEntry)
+    {
 
         *StopEnumeration = TRUE;
-
-    } else if (Entry->DllBase == Context) {
+    }
+    else if (Entry->DllBase == Context)
+    {
 
         BasepExeLdrEntry = Entry;
         *StopEnumeration = TRUE;
-
     }
 }
 
-
+
 LPWSTR
-BasepComputeProcessPath(
-    IN const BASEP_SEARCH_PATH_ELEMENT *Elements,
-    IN LPCWSTR AppName,
-    IN LPVOID  Environment
-    )
+BasepComputeProcessPath(IN const BASEP_SEARCH_PATH_ELEMENT *Elements, IN LPCWSTR AppName, IN LPVOID Environment)
 
 /*++
 
@@ -1642,24 +1446,24 @@ Return Value:
 --*/
 
 {
-    LPCWSTR        AppNameEnd;
+    LPCWSTR AppNameEnd;
     const BASEP_SEARCH_PATH_ELEMENT *Element;
     UNICODE_STRING EnvPath;
-    LPWSTR         EnvPathBuffer = NULL;
-    LPWSTR         PathBuffer = NULL,
-                   PathCurrent;
-    ULONG          PathLengthInBytes;
-    NTSTATUS       Status = STATUS_SUCCESS;
+    LPWSTR EnvPathBuffer = NULL;
+    LPWSTR PathBuffer = NULL, PathCurrent;
+    ULONG PathLengthInBytes;
+    NTSTATUS Status = STATUS_SUCCESS;
 
-    __try {
+    __try
+    {
 
         // First, figure out how much space we'll need.
         PathLengthInBytes = 0;
-        for (Element = Elements;
-             *Element != BasepSearchPathEnd;
-             Element++) {
+        for (Element = Elements; *Element != BasepSearchPathEnd; Element++)
+        {
 
-            switch (*Element) {
+            switch (*Element)
+            {
 
             case BasepSearchPathCurdir:
                 PathLengthInBytes += 2 * sizeof(UNICODE_NULL); // .;
@@ -1670,7 +1474,8 @@ Return Value:
                 ASSERT(BaseDllDirectory.Buffer != NULL);
 
                 PathLengthInBytes += BaseDllDirectory.Length;
-                if (BaseDllDirectory.Length) {
+                if (BaseDllDirectory.Length)
+                {
                     PathLengthInBytes += sizeof(UNICODE_NULL);
                 }
 
@@ -1678,36 +1483,42 @@ Return Value:
 
             case BasepSearchPathAppdir:
 
-                if (AppName) {
+                if (AppName)
+                {
                     // Try to use the passed-in appname
                     AppNameEnd = BasepEndOfDirName(AppName);
                 }
 
-                if (!AppName || !AppNameEnd) {
+                if (!AppName || !AppNameEnd)
+                {
 
                     // We didn't have or were unable to use the passed-in
                     // appname -- so attempt to use the current exe's name
 
-                    if (RtlGetPerThreadCurdir()
-                        && RtlGetPerThreadCurdir()->ImageName) {
+                    if (RtlGetPerThreadCurdir() && RtlGetPerThreadCurdir()->ImageName)
+                    {
 
                         AppName = RtlGetPerThreadCurdir()->ImageName->Buffer;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         BasepCheckExeLdrEntry();
 
-                        if (BasepExeLdrEntry) {
+                        if (BasepExeLdrEntry)
+                        {
                             AppName = BasepExeLdrEntry->FullDllName.Buffer;
                         }
                     }
 
-                    if (AppName) {
+                    if (AppName)
+                    {
                         AppNameEnd = BasepEndOfDirName(AppName);
                     }
                 }
 
-                if (AppName && AppNameEnd) {
+                if (AppName && AppNameEnd)
+                {
 
                     // Either we had a passed-in appname which worked, or
                     // we found the current exe's name and that worked.
@@ -1717,14 +1528,13 @@ Return Value:
                     // characters in the base name, and we add one for the
                     // trailing semicolon / NULL.
 
-                    PathLengthInBytes += ((AppNameEnd - AppName + 1)
-                                          * sizeof(UNICODE_NULL));
+                    PathLengthInBytes += ((AppNameEnd - AppName + 1) * sizeof(UNICODE_NULL));
                 }
 
                 break;
 
             case BasepSearchPathDefaultDirs:
-                ASSERT(! (BaseDefaultPath.Length & 1));
+                ASSERT(!(BaseDefaultPath.Length & 1));
 
                 // We don't need an extra UNICODE_NULL here -- baseinit.c
                 // appends our trailing semicolon for us.
@@ -1734,75 +1544,80 @@ Return Value:
 
             case BasepSearchPathEnvPath:
 
-                if (! Environment) {
+                if (!Environment)
+                {
                     RtlAcquirePebLock();
                 }
 
-                __try {
+                __try
+                {
                     EnvPath.MaximumLength = 0;
-                
-                    Status = RtlQueryEnvironmentVariable_U(Environment,
-                                                           &BasePathVariableName,
-                                                           &EnvPath);
 
-                    if (Status == STATUS_BUFFER_TOO_SMALL) {
+                    Status = RtlQueryEnvironmentVariable_U(Environment, &BasePathVariableName, &EnvPath);
+
+                    if (Status == STATUS_BUFFER_TOO_SMALL)
+                    {
 
                         // Now that we know how much to allocate, attempt
                         // to alloc a buffer that's actually big enough.
 
                         EnvPath.MaximumLength = EnvPath.Length + sizeof(UNICODE_NULL);
 
-                        EnvPathBuffer = RtlAllocateHeap(RtlProcessHeap(),
-                                                        MAKE_TAG(TMP_TAG),
-                                                        EnvPath.MaximumLength);
-                        if (! EnvPathBuffer) {
+                        EnvPathBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), EnvPath.MaximumLength);
+                        if (!EnvPathBuffer)
+                        {
                             Status = STATUS_NO_MEMORY;
                             __leave;
                         }
 
                         EnvPath.Buffer = EnvPathBuffer;
 
-                        Status = RtlQueryEnvironmentVariable_U(Environment,
-                                                               &BasePathVariableName,
-                                                               &EnvPath);
+                        Status = RtlQueryEnvironmentVariable_U(Environment, &BasePathVariableName, &EnvPath);
                     }
-                } __finally {
-                    if (! Environment) {
+                }
+                __finally
+                {
+                    if (!Environment)
+                    {
                         RtlReleasePebLock();
                     }
                 }
 
-                if (Status == STATUS_VARIABLE_NOT_FOUND) {
+                if (Status == STATUS_VARIABLE_NOT_FOUND)
+                {
                     EnvPath.Length = 0;
                     Status = STATUS_SUCCESS;
-                } else if (! NT_SUCCESS(Status)) {
+                }
+                else if (!NT_SUCCESS(Status))
+                {
                     __leave;
-                } else {
+                }
+                else
+                {
                     // The final tally is the length, in bytes, of whatever
                     // we're using for our path, plus a character for the
                     // trailing whack or NULL.
-                    ASSERT(! (EnvPath.Length & 1));
+                    ASSERT(!(EnvPath.Length & 1));
                     PathLengthInBytes += EnvPath.Length + sizeof(UNICODE_NULL);
                 }
-                
+
                 break;
 
-            DEFAULT_UNREACHABLE;
+                DEFAULT_UNREACHABLE;
 
             } // switch (*Element)
         } // foreach Element (Elements) -- size loop
 
         ASSERT(PathLengthInBytes > 0);
-        ASSERT(! (PathLengthInBytes & 1));
+        ASSERT(!(PathLengthInBytes & 1));
 
         // Now we have the length, in bytes, of the buffer we'll need for
         // our path.  Time to allocate it...
 
-        PathBuffer = RtlAllocateHeap(RtlProcessHeap(),
-                                     MAKE_TAG(TMP_TAG),
-                                     PathLengthInBytes);
+        PathBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), PathLengthInBytes);
 
-        if (! PathBuffer) {
+        if (!PathBuffer)
+        {
             Status = STATUS_NO_MEMORY;
             __leave;
         }
@@ -1811,29 +1626,24 @@ Return Value:
         // PathBuffer.
 
         PathCurrent = PathBuffer;
-    
-        for (Element = Elements;
-             *Element != BasepSearchPathEnd;
-             Element++) {
 
-            switch (*Element) {
+        for (Element = Elements; *Element != BasepSearchPathEnd; Element++)
+        {
+
+            switch (*Element)
+            {
             case BasepSearchPathCurdir:
-                ASSERT(((PathCurrent - PathBuffer + 2)
-                        * sizeof(UNICODE_NULL))
-                       <= PathLengthInBytes);
+                ASSERT(((PathCurrent - PathBuffer + 2) * sizeof(UNICODE_NULL)) <= PathLengthInBytes);
                 *PathCurrent++ = L'.';
                 *PathCurrent++ = L';';
                 break;
 
             case BasepSearchPathDlldir:
-                if (BaseDllDirectory.Length) {
-                    ASSERT((((PathCurrent - PathBuffer + 1)
-                             * sizeof(UNICODE_NULL))
-                            + BaseDllDirectory.Length)
-                           <= PathLengthInBytes);
-                    RtlCopyMemory(PathCurrent,
-                                  BaseDllDirectory.Buffer,
-                                  BaseDllDirectory.Length);
+                if (BaseDllDirectory.Length)
+                {
+                    ASSERT((((PathCurrent - PathBuffer + 1) * sizeof(UNICODE_NULL)) + BaseDllDirectory.Length) <=
+                           PathLengthInBytes);
+                    RtlCopyMemory(PathCurrent, BaseDllDirectory.Buffer, BaseDllDirectory.Length);
 
                     PathCurrent += (BaseDllDirectory.Length >> 1);
                     *PathCurrent++ = L';';
@@ -1842,15 +1652,11 @@ Return Value:
                 break;
 
             case BasepSearchPathAppdir:
-                if (AppName && AppNameEnd) {
-                    ASSERT(((PathCurrent - PathBuffer + 1
-                             + (AppNameEnd - AppName))
-                            * sizeof(UNICODE_NULL))
-                           <= PathLengthInBytes);
-                    RtlCopyMemory(PathCurrent,
-                                  AppName,
-                                  ((AppNameEnd - AppName)
-                                   * sizeof(UNICODE_NULL)));
+                if (AppName && AppNameEnd)
+                {
+                    ASSERT(((PathCurrent - PathBuffer + 1 + (AppNameEnd - AppName)) * sizeof(UNICODE_NULL)) <=
+                           PathLengthInBytes);
+                    RtlCopyMemory(PathCurrent, AppName, ((AppNameEnd - AppName) * sizeof(UNICODE_NULL)));
                     PathCurrent += AppNameEnd - AppName;
                     *PathCurrent++ = L';';
                 }
@@ -1858,13 +1664,9 @@ Return Value:
                 break;
 
             case BasepSearchPathDefaultDirs:
-                ASSERT((((PathCurrent - PathBuffer)
-                         * sizeof(UNICODE_NULL))
-                        + BaseDefaultPath.Length)
-                       <= PathLengthInBytes);
-                RtlCopyMemory(PathCurrent,
-                              BaseDefaultPath.Buffer,
-                              BaseDefaultPath.Length);
+                ASSERT((((PathCurrent - PathBuffer) * sizeof(UNICODE_NULL)) + BaseDefaultPath.Length) <=
+                       PathLengthInBytes);
+                RtlCopyMemory(PathCurrent, BaseDefaultPath.Buffer, BaseDefaultPath.Length);
                 PathCurrent += (BaseDefaultPath.Length >> 1);
 
                 // We don't need to add a semicolon here -- baseinit.c
@@ -1873,46 +1675,39 @@ Return Value:
                 break;
 
             case BasepSearchPathEnvPath:
-                if (EnvPath.Length) {
-                    ASSERT((((PathCurrent - PathBuffer + 1)
-                             * sizeof(UNICODE_NULL))
-                            + EnvPath.Length)
-                           <= PathLengthInBytes);
-                    RtlCopyMemory(PathCurrent,
-                                  EnvPath.Buffer,
-                                  EnvPath.Length);
+                if (EnvPath.Length)
+                {
+                    ASSERT((((PathCurrent - PathBuffer + 1) * sizeof(UNICODE_NULL)) + EnvPath.Length) <=
+                           PathLengthInBytes);
+                    RtlCopyMemory(PathCurrent, EnvPath.Buffer, EnvPath.Length);
                     PathCurrent += (EnvPath.Length >> 1);
                     *PathCurrent++ = L';';
                 }
                 break;
 
-            DEFAULT_UNREACHABLE;
-            
+                DEFAULT_UNREACHABLE;
+
             } // switch (*Element)
         } // foreach Element (Elements) -- append loop
 
         // At this point, PathCurrent points just beyond PathBuffer.
         // Let's assert that...
-        ASSERT((PathCurrent - PathBuffer) * sizeof(UNICODE_NULL)
-               == PathLengthInBytes);
+        ASSERT((PathCurrent - PathBuffer) * sizeof(UNICODE_NULL) == PathLengthInBytes);
 
         // ... and turn the final ';' into the string terminator.
         ASSERT(PathCurrent > PathBuffer);
         PathCurrent[-1] = UNICODE_NULL;
-
-    } __finally {
-        if (EnvPathBuffer) {
-            RtlFreeHeap(RtlProcessHeap(),
-                        0,
-                        EnvPathBuffer);
+    }
+    __finally
+    {
+        if (EnvPathBuffer)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, EnvPathBuffer);
         }
 
-        if (PathBuffer
-            && (AbnormalTermination()
-                || ! NT_SUCCESS(Status))) {
-            RtlFreeHeap(RtlProcessHeap(),
-                        0,
-                        PathBuffer);
+        if (PathBuffer && (AbnormalTermination() || !NT_SUCCESS(Status)))
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, PathBuffer);
             PathBuffer = NULL;
         }
     }
@@ -1921,10 +1716,7 @@ Return Value:
 }
 
 LPWSTR
-BaseComputeProcessDllPath(
-    IN LPCWSTR AppName,
-    IN LPVOID  Environment
-    )
+BaseComputeProcessDllPath(IN LPCWSTR AppName, IN LPVOID Environment)
 
 /*++
 
@@ -1948,36 +1740,28 @@ Return Value:
 --*/
 
 {
-    NTSTATUS          Status;
-    HANDLE            Key;
-    static UNICODE_STRING
-        KeyName = RTL_CONSTANT_STRING(L"\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\Session Manager"),
-        ValueName = RTL_CONSTANT_STRING(L"SafeDllSearchMode");
+    NTSTATUS Status;
+    HANDLE Key;
+    static UNICODE_STRING KeyName = RTL_CONSTANT_STRING(
+                              L"\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\Session Manager"),
+                          ValueName = RTL_CONSTANT_STRING(L"SafeDllSearchMode");
 
-    static OBJECT_ATTRIBUTES
-        ObjA = RTL_CONSTANT_OBJECT_ATTRIBUTES(&KeyName, OBJ_CASE_INSENSITIVE);
+    static OBJECT_ATTRIBUTES ObjA = RTL_CONSTANT_OBJECT_ATTRIBUTES(&KeyName, OBJ_CASE_INSENSITIVE);
 
-    CHAR              Buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data)
-                            + sizeof(DWORD)];
+    CHAR Buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) + sizeof(DWORD)];
     PKEY_VALUE_PARTIAL_INFORMATION Info;
-    ULONG             ResultLength;
-    LONG              CurrentDirPlacement,
-                      PrevCurrentDirPlacement;
-    LPWSTR            Result;
+    ULONG ResultLength;
+    LONG CurrentDirPlacement, PrevCurrentDirPlacement;
+    LPWSTR Result;
 
-    static const BASEP_SEARCH_PATH_ELEMENT DllDirSearchPath[] = {
-        BasepSearchPathAppdir,
-        BasepSearchPathDlldir,
-        BasepSearchPathDefaultDirs,
-        BasepSearchPathEnvPath,
-        BasepSearchPathEnd
-    };
+    static const BASEP_SEARCH_PATH_ELEMENT DllDirSearchPath[] = { BasepSearchPathAppdir, BasepSearchPathDlldir,
+                                                                  BasepSearchPathDefaultDirs, BasepSearchPathEnvPath,
+                                                                  BasepSearchPathEnd };
 
     RtlEnterCriticalSection(&BaseDllDirectoryLock);
-    if (BaseDllDirectory.Buffer) {
-        Result = BasepComputeProcessPath(DllDirSearchPath,
-                                         AppName,
-                                         Environment);
+    if (BaseDllDirectory.Buffer)
+    {
+        Result = BasepComputeProcessPath(DllDirSearchPath, AppName, Environment);
         RtlLeaveCriticalSection(&BaseDllDirectoryLock);
         return Result;
     }
@@ -1985,65 +1769,58 @@ Return Value:
 
     CurrentDirPlacement = BasepDllCurrentDirPlacement;
 
-    if (CurrentDirPlacement == BasepCurrentDirUninitialized) {
+    if (CurrentDirPlacement == BasepCurrentDirUninitialized)
+    {
 
-        Status = NtOpenKey(&Key,
-                           KEY_QUERY_VALUE,
-                           &ObjA);
+        Status = NtOpenKey(&Key, KEY_QUERY_VALUE, &ObjA);
 
-        if (! NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto compute_path;
         }
-    
-        Info = (PKEY_VALUE_PARTIAL_INFORMATION) Buffer;
-        Status = NtQueryValueKey(Key,
-                                 &ValueName,
-                                 KeyValuePartialInformation,
-                                 Info,
-                                 sizeof(Buffer),
-                                 &ResultLength);
-        if (! NT_SUCCESS(Status)) {
+
+        Info = (PKEY_VALUE_PARTIAL_INFORMATION)Buffer;
+        Status = NtQueryValueKey(Key, &ValueName, KeyValuePartialInformation, Info, sizeof(Buffer), &ResultLength);
+        if (!NT_SUCCESS(Status))
+        {
             goto close_key;
         }
 
-        if (ResultLength != sizeof(Buffer)) {
+        if (ResultLength != sizeof(Buffer))
+        {
             goto close_key;
         }
 
-        RtlCopyMemory(&CurrentDirPlacement,
-                      Info->Data,
-                      sizeof(DWORD));
+        RtlCopyMemory(&CurrentDirPlacement, Info->Data, sizeof(DWORD));
 
-  close_key:
+    close_key:
         NtClose(Key);
 
-  compute_path:
-        if (! BASEP_VALID_CURDIR_PLACEMENT_P(CurrentDirPlacement)) {
+    compute_path:
+        if (!BASEP_VALID_CURDIR_PLACEMENT_P(CurrentDirPlacement))
+        {
             CurrentDirPlacement = BASEP_DEFAULT_DLL_CURDIR_PLACEMENT;
         }
 
-        PrevCurrentDirPlacement = InterlockedCompareExchange(&BasepDllCurrentDirPlacement,
-                                                             CurrentDirPlacement,
-                                                             BasepCurrentDirUninitialized);
-        
-        if (PrevCurrentDirPlacement != BasepCurrentDirUninitialized) {
+        PrevCurrentDirPlacement =
+            InterlockedCompareExchange(&BasepDllCurrentDirPlacement, CurrentDirPlacement, BasepCurrentDirUninitialized);
+
+        if (PrevCurrentDirPlacement != BasepCurrentDirUninitialized)
+        {
             CurrentDirPlacement = PrevCurrentDirPlacement;
         }
     }
 
-    if (! BASEP_VALID_CURDIR_PLACEMENT_P(CurrentDirPlacement)) {
+    if (!BASEP_VALID_CURDIR_PLACEMENT_P(CurrentDirPlacement))
+    {
         CurrentDirPlacement = BASEP_DEFAULT_DLL_CURDIR_PLACEMENT;
     }
 
-    return BasepComputeProcessPath(BasepDllSearchPaths[CurrentDirPlacement],
-                                   AppName,
-                                   Environment);
+    return BasepComputeProcessPath(BasepDllSearchPaths[CurrentDirPlacement], AppName, Environment);
 }
 
 LPWSTR
-BaseComputeProcessSearchPath(
-    VOID
-    )
+BaseComputeProcessSearchPath(VOID)
 
 /*++
 
@@ -2062,26 +1839,16 @@ Return Value:
 --*/
 
 {
-    static const BASEP_SEARCH_PATH_ELEMENT SearchPath[] = {
-        BasepSearchPathAppdir,
-        BasepSearchPathCurdir,
-        BasepSearchPathDefaultDirs,
-        BasepSearchPathEnvPath,
-        BasepSearchPathEnd
-    };
+    static const BASEP_SEARCH_PATH_ELEMENT SearchPath[] = { BasepSearchPathAppdir, BasepSearchPathCurdir,
+                                                            BasepSearchPathDefaultDirs, BasepSearchPathEnvPath,
+                                                            BasepSearchPathEnd };
 
-    return BasepComputeProcessPath(SearchPath,
-                                   NULL,
-                                   NULL);
+    return BasepComputeProcessPath(SearchPath, NULL, NULL);
 }
 
 
-
-
 PUNICODE_STRING
-Basep8BitStringToStaticUnicodeString(
-    IN LPCSTR lpSourceString
-    )
+Basep8BitStringToStaticUnicodeString(IN LPCSTR lpSourceString)
 
 /*++
 
@@ -2116,30 +1883,32 @@ Return Value:
     //  Convert input string into unicode string
     //
 
-    RtlInitAnsiString( &AnsiString, lpSourceString );
-    Status = Basep8BitStringToUnicodeString( StaticUnicode, &AnsiString, FALSE );
+    RtlInitAnsiString(&AnsiString, lpSourceString);
+    Status = Basep8BitStringToUnicodeString(StaticUnicode, &AnsiString, FALSE);
 
     //
     //  If we couldn't convert the string
     //
 
-    if ( !NT_SUCCESS( Status ) ) {
-        if ( Status == STATUS_BUFFER_OVERFLOW ) {
-            SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        } else {
-            BaseSetLastNTError( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_BUFFER_OVERFLOW)
+        {
+            SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        }
+        else
+        {
+            BaseSetLastNTError(Status);
         }
         return NULL;
-    } else {
+    }
+    else
+    {
         return StaticUnicode;
     }
 }
 
-BOOL
-Basep8BitStringToDynamicUnicodeString(
-    OUT PUNICODE_STRING UnicodeString,
-    IN LPCSTR lpSourceString
-    )
+BOOL Basep8BitStringToDynamicUnicodeString(OUT PUNICODE_STRING UnicodeString, IN LPCSTR lpSourceString)
 /*++
 
 Routine Description:
@@ -2168,34 +1937,36 @@ Return Value:
     //  Convert input into dynamic unicode string
     //
 
-    RtlInitString( &AnsiString, lpSourceString );
-    Status = Basep8BitStringToUnicodeString( UnicodeString, &AnsiString, TRUE );
+    RtlInitString(&AnsiString, lpSourceString);
+    Status = Basep8BitStringToUnicodeString(UnicodeString, &AnsiString, TRUE);
 
     //
     //  If we couldn't do this, fail
     //
 
-    if (!NT_SUCCESS( Status )){
-        if ( Status == STATUS_BUFFER_OVERFLOW ) {
-            SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        } else {
-            BaseSetLastNTError( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_BUFFER_OVERFLOW)
+        {
+            SetLastError(ERROR_FILENAME_EXCED_RANGE);
+        }
+        else
+        {
+            BaseSetLastNTError(Status);
         }
         return FALSE;
-        }
+    }
 
     return TRUE;
 }
 
-
+
 //
 //  Thunks for converting between ANSI/OEM and UNICODE
 //
 
 ULONG
-BasepAnsiStringToUnicodeSize(
-    PANSI_STRING AnsiString
-    )
+BasepAnsiStringToUnicodeSize(PANSI_STRING AnsiString)
 /*++
 
 Routine Description:
@@ -2212,15 +1983,12 @@ Return Value:
 
 --*/
 {
-    return RtlAnsiStringToUnicodeSize( AnsiString );
+    return RtlAnsiStringToUnicodeSize(AnsiString);
 }
 
 
-
 ULONG
-BasepOemStringToUnicodeSize(
-    PANSI_STRING OemString
-    )
+BasepOemStringToUnicodeSize(PANSI_STRING OemString)
 /*++
 
 Routine Description:
@@ -2237,15 +2005,12 @@ Return Value:
 
 --*/
 {
-    return RtlOemStringToUnicodeSize( OemString );
+    return RtlOemStringToUnicodeSize(OemString);
 }
 
 
-
 ULONG
-BasepUnicodeStringToOemSize(
-    PUNICODE_STRING UnicodeString
-    )
+BasepUnicodeStringToOemSize(PUNICODE_STRING UnicodeString)
 /*++
 
 Routine Description:
@@ -2262,15 +2027,12 @@ Return Value:
 
 --*/
 {
-    return RtlUnicodeStringToOemSize( UnicodeString );
+    return RtlUnicodeStringToOemSize(UnicodeString);
 }
 
 
-
 ULONG
-BasepUnicodeStringToAnsiSize(
-    PUNICODE_STRING UnicodeString
-    )
+BasepUnicodeStringToAnsiSize(PUNICODE_STRING UnicodeString)
 /*++
 
 Routine Description:
@@ -2287,18 +2049,18 @@ Return Value:
 
 --*/
 {
-    return RtlUnicodeStringToAnsiSize( UnicodeString );
+    return RtlUnicodeStringToAnsiSize(UnicodeString);
 }
 
 
-
-typedef struct _BASEP_ACQUIRE_STATE {
+typedef struct _BASEP_ACQUIRE_STATE
+{
     HANDLE Token;
     PTOKEN_PRIVILEGES OldPrivileges;
     PTOKEN_PRIVILEGES NewPrivileges;
     ULONG Revert;
     ULONG Spare;
-    BYTE OldPrivBuffer[ 1024 ];
+    BYTE OldPrivBuffer[1024];
 } BASEP_ACQUIRE_STATE, *PBASEP_ACQUIRE_STATE;
 
 
@@ -2309,10 +2071,7 @@ typedef struct _BASEP_ACQUIRE_STATE {
 
 
 NTSTATUS
-BasepAcquirePrivilegeEx(
-    ULONG Privilege,
-    PVOID *ReturnedState
-    )
+BasepAcquirePrivilegeEx(ULONG Privilege, PVOID *ReturnedState)
 {
     PBASEP_ACQUIRE_STATE State;
     ULONG cbNeeded;
@@ -2325,12 +2084,11 @@ BasepAcquirePrivilegeEx(
     //
 
     *ReturnedState = NULL;
-    State = RtlAllocateHeap (RtlProcessHeap(),
-                             MAKE_TAG( TMP_TAG ),
-                             sizeof(BASEP_ACQUIRE_STATE) +
-                             sizeof(TOKEN_PRIVILEGES) +
+    State = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG),
+                            sizeof(BASEP_ACQUIRE_STATE) + sizeof(TOKEN_PRIVILEGES) +
                                 (1 - ANYSIZE_ARRAY) * sizeof(LUID_AND_ATTRIBUTES));
-    if (State == NULL) {
+    if (State == NULL)
+    {
         return STATUS_NO_MEMORY;
     }
 
@@ -2339,37 +2097,32 @@ BasepAcquirePrivilegeEx(
     // Try opening the thread token first, in case we're impersonating.
     //
 
-    Status = NtOpenThreadToken (NtCurrentThread(),
-                                TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-                                FALSE,
-                                &State->Token);
+    Status = NtOpenThreadToken(NtCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &State->Token);
 
-    if ( !NT_SUCCESS( Status )) {
-        Status = RtlImpersonateSelf (SecurityDelegation);
-        if (!NT_SUCCESS (Status)) {
-            RtlFreeHeap (RtlProcessHeap(), 0, State);
+    if (!NT_SUCCESS(Status))
+    {
+        Status = RtlImpersonateSelf(SecurityDelegation);
+        if (!NT_SUCCESS(Status))
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, State);
             return Status;
         }
-        Status = NtOpenThreadToken (NtCurrentThread(),
-                                    TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-                                    FALSE,
-                                    &State->Token);
+        Status = NtOpenThreadToken(NtCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &State->Token);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             State->Token = NULL;
-            Status1 = NtSetInformationThread (NtCurrentThread(),
-                                              ThreadImpersonationToken,
-                                              &State->Token,
-                                              sizeof (State->Token));
-            ASSERT (NT_SUCCESS (Status1));
-            RtlFreeHeap( RtlProcessHeap(), 0, State );
+            Status1 = NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, &State->Token,
+                                             sizeof(State->Token));
+            ASSERT(NT_SUCCESS(Status1));
+            RtlFreeHeap(RtlProcessHeap(), 0, State);
             return Status;
         }
 
         State->Revert = 1;
     }
 
-    State->NewPrivileges = (PTOKEN_PRIVILEGES)(State+1);
+    State->NewPrivileges = (PTOKEN_PRIVILEGES)(State + 1);
     State->OldPrivileges = (PTOKEN_PRIVILEGES)(State->OldPrivBuffer);
 
     //
@@ -2385,27 +2138,22 @@ BasepAcquirePrivilegeEx(
     // Enable the privilege
     //
 
-    cbNeeded = sizeof( State->OldPrivBuffer );
-    Status = NtAdjustPrivilegesToken (State->Token,
-                                      FALSE,
-                                      State->NewPrivileges,
-                                      cbNeeded,
-                                      State->OldPrivileges,
-                                      &cbNeeded);
+    cbNeeded = sizeof(State->OldPrivBuffer);
+    Status =
+        NtAdjustPrivilegesToken(State->Token, FALSE, State->NewPrivileges, cbNeeded, State->OldPrivileges, &cbNeeded);
 
 
-
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
-        State->OldPrivileges = RtlAllocateHeap (RtlProcessHeap(), MAKE_TAG( TMP_TAG ), cbNeeded);
-        if (State->OldPrivileges  == NULL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
+        State->OldPrivileges = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), cbNeeded);
+        if (State->OldPrivileges == NULL)
+        {
             Status = STATUS_NO_MEMORY;
-        } else {
-            Status = NtAdjustPrivilegesToken (State->Token,
-                                              FALSE,
-                                              State->NewPrivileges,
-                                              cbNeeded,
-                                              State->OldPrivileges,
-                                              &cbNeeded);
+        }
+        else
+        {
+            Status = NtAdjustPrivilegesToken(State->Token, FALSE, State->NewPrivileges, cbNeeded, State->OldPrivileges,
+                                             &cbNeeded);
         }
     }
 
@@ -2416,27 +2164,29 @@ BasepAcquirePrivilegeEx(
     // This is a warning level status, so map it to an error status.
     //
 
-    if (Status == STATUS_NOT_ALL_ASSIGNED) {
+    if (Status == STATUS_NOT_ALL_ASSIGNED)
+    {
         Status = STATUS_PRIVILEGE_NOT_HELD;
     }
 
 
-    if (!NT_SUCCESS( Status )) {
-        if (State->OldPrivileges != (PTOKEN_PRIVILEGES)State->OldPrivBuffer) {
-            RtlFreeHeap( RtlProcessHeap(), 0, State->OldPrivileges );
+    if (!NT_SUCCESS(Status))
+    {
+        if (State->OldPrivileges != (PTOKEN_PRIVILEGES)State->OldPrivBuffer)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, State->OldPrivileges);
         }
 
-        St = CloseHandle (State->Token);
-        ASSERT (St);
+        St = CloseHandle(State->Token);
+        ASSERT(St);
         State->Token = NULL;
-        if (State->Revert) {
-            Status1 = NtSetInformationThread (NtCurrentThread(),
-                                              ThreadImpersonationToken,
-                                              &State->Token,
-                                              sizeof (State->Token));
-            ASSERT (NT_SUCCESS (Status1));
+        if (State->Revert)
+        {
+            Status1 = NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, &State->Token,
+                                             sizeof(State->Token));
+            ASSERT(NT_SUCCESS(Status1));
         }
-        RtlFreeHeap( RtlProcessHeap(), 0, State );
+        RtlFreeHeap(RtlProcessHeap(), 0, State);
         return Status;
     }
 
@@ -2445,39 +2195,32 @@ BasepAcquirePrivilegeEx(
 }
 
 
-VOID
-BasepReleasePrivilege(
-    PVOID StatePointer
-    )
+VOID BasepReleasePrivilege(PVOID StatePointer)
 {
     BOOL St;
     NTSTATUS Status;
     PBASEP_ACQUIRE_STATE State = (PBASEP_ACQUIRE_STATE)StatePointer;
 
-    if (!State->Revert) {
-        NtAdjustPrivilegesToken (State->Token,
-                                 FALSE,
-                                 State->OldPrivileges,
-                                 0,
-                                 NULL,
-                                 NULL);
+    if (!State->Revert)
+    {
+        NtAdjustPrivilegesToken(State->Token, FALSE, State->OldPrivileges, 0, NULL, NULL);
     }
 
-    if (State->OldPrivileges != (PTOKEN_PRIVILEGES)State->OldPrivBuffer) {
-        RtlFreeHeap( RtlProcessHeap(), 0, State->OldPrivileges );
+    if (State->OldPrivileges != (PTOKEN_PRIVILEGES)State->OldPrivBuffer)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, State->OldPrivileges);
     }
 
-    St = CloseHandle( State->Token );
-    ASSERT (St);
+    St = CloseHandle(State->Token);
+    ASSERT(St);
 
     State->Token = NULL;
-    if (State->Revert) {
-        Status = NtSetInformationThread (NtCurrentThread(),
-                                         ThreadImpersonationToken,
-                                         &State->Token,
-                                         sizeof (State->Token));
-        ASSERT (NT_SUCCESS (Status));
+    if (State->Revert)
+    {
+        Status =
+            NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, &State->Token, sizeof(State->Token));
+        ASSERT(NT_SUCCESS(Status));
     }
-    RtlFreeHeap( RtlProcessHeap(), 0, State );
+    RtlFreeHeap(RtlProcessHeap(), 0, State);
     return;
 }

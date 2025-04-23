@@ -56,8 +56,7 @@ Revision History:
 
 #include "FsRtlP.h"
 
-#define MySearchList(pHdr, Ptr) \
-    for ( Ptr = (pHdr)->Flink;  Ptr != (pHdr);  Ptr = Ptr->Flink )
+#define MySearchList(pHdr, Ptr) for (Ptr = (pHdr)->Flink; Ptr != (pHdr); Ptr = Ptr->Flink)
 
 
 //
@@ -66,10 +65,7 @@ Revision History:
 //
 
 NTKERNELAPI
-VOID
-FsRtlTeardownFilterContexts (
-  IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader
-  );
+VOID FsRtlTeardownFilterContexts(IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader);
 
 
 #ifdef ALLOC_PRAGMA
@@ -85,10 +81,7 @@ FsRtlTeardownFilterContexts (
 
 NTKERNELAPI
 NTSTATUS
-FsRtlInsertPerStreamContext (
-  IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader,
-  IN PFSRTL_PER_STREAM_CONTEXT Ptr
-  )
+FsRtlInsertPerStreamContext(IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader, IN PFSRTL_PER_STREAM_CONTEXT Ptr)
 /*++
 
 Routine Description:
@@ -113,8 +106,7 @@ Return Value:
 --*/
 
 {
-    if (!AdvFcbHeader || 
-        !FlagOn(AdvFcbHeader->Flags2,FSRTL_FLAG2_SUPPORTS_FILTER_CONTEXTS))
+    if (!AdvFcbHeader || !FlagOn(AdvFcbHeader->Flags2, FSRTL_FLAG2_SUPPORTS_FILTER_CONTEXTS))
     {
 
         return STATUS_INVALID_DEVICE_REQUEST;
@@ -131,11 +123,8 @@ Return Value:
 
 NTKERNELAPI
 PFSRTL_PER_STREAM_CONTEXT
-FsRtlLookupPerStreamContextInternal (
-  IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader,
-  IN PVOID         OwnerId     OPTIONAL,
-  IN PVOID         InstanceId  OPTIONAL
-  )
+FsRtlLookupPerStreamContextInternal(IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader, IN PVOID OwnerId OPTIONAL,
+                                    IN PVOID InstanceId OPTIONAL)
 /*++
 
 Routine Description:
@@ -172,7 +161,7 @@ Return Value:
     PLIST_ENTRY list;
 
     ASSERT(AdvFcbHeader);
-    ASSERT(FlagOn(AdvFcbHeader->Flags2,FSRTL_FLAG2_SUPPORTS_FILTER_CONTEXTS));
+    ASSERT(FlagOn(AdvFcbHeader->Flags2, FSRTL_FLAG2_SUPPORTS_FILTER_CONTEXTS));
 
     ExAcquireFastMutex(AdvFcbHeader->FastMutex);
     rtnCtx = NULL;
@@ -181,31 +170,38 @@ Return Value:
     // Use different loops depending on whether we are comparing both Ids or not.
     //
 
-    if ( ARGUMENT_PRESENT(InstanceId) ) {
+    if (ARGUMENT_PRESENT(InstanceId))
+    {
 
-        MySearchList (&AdvFcbHeader->FilterContexts, list) {
+        MySearchList(&AdvFcbHeader->FilterContexts, list)
+        {
 
-            ctx  = CONTAINING_RECORD(list, FSRTL_PER_STREAM_CONTEXT, Links);
-            if (ctx->OwnerId == OwnerId && ctx->InstanceId == InstanceId) {
-
-                rtnCtx = ctx;
-                break;
-            }
-        }
-
-    } else if ( ARGUMENT_PRESENT(OwnerId) ) {
-
-        MySearchList (&AdvFcbHeader->FilterContexts, list) {
-
-            ctx  = CONTAINING_RECORD(list, FSRTL_PER_STREAM_CONTEXT, Links);
-            if (ctx->OwnerId == OwnerId) {
+            ctx = CONTAINING_RECORD(list, FSRTL_PER_STREAM_CONTEXT, Links);
+            if (ctx->OwnerId == OwnerId && ctx->InstanceId == InstanceId)
+            {
 
                 rtnCtx = ctx;
                 break;
             }
         }
+    }
+    else if (ARGUMENT_PRESENT(OwnerId))
+    {
 
-    } else if (!IsListEmpty(&AdvFcbHeader->FilterContexts)) {
+        MySearchList(&AdvFcbHeader->FilterContexts, list)
+        {
+
+            ctx = CONTAINING_RECORD(list, FSRTL_PER_STREAM_CONTEXT, Links);
+            if (ctx->OwnerId == OwnerId)
+            {
+
+                rtnCtx = ctx;
+                break;
+            }
+        }
+    }
+    else if (!IsListEmpty(&AdvFcbHeader->FilterContexts))
+    {
 
         rtnCtx = (PFSRTL_PER_STREAM_CONTEXT)AdvFcbHeader->FilterContexts.Flink;
     }
@@ -217,11 +213,8 @@ Return Value:
 
 NTKERNELAPI
 PFSRTL_PER_STREAM_CONTEXT
-FsRtlRemovePerStreamContext (
-  IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader,
-  IN PVOID         OwnerId     OPTIONAL,
-  IN PVOID         InstanceId  OPTIONAL
-  )
+FsRtlRemovePerStreamContext(IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader, IN PVOID OwnerId OPTIONAL,
+                            IN PVOID InstanceId OPTIONAL)
 /*++
 
 Routine Description:
@@ -256,8 +249,7 @@ Return Value:
     PFSRTL_PER_STREAM_CONTEXT rtnCtx;
     PLIST_ENTRY list;
 
-    if (!AdvFcbHeader ||
-        !FlagOn(AdvFcbHeader->Flags2,FSRTL_FLAG2_SUPPORTS_FILTER_CONTEXTS))
+    if (!AdvFcbHeader || !FlagOn(AdvFcbHeader->Flags2, FSRTL_FLAG2_SUPPORTS_FILTER_CONTEXTS))
     {
 
         return NULL;
@@ -266,38 +258,46 @@ Return Value:
     ExAcquireFastMutex(AdvFcbHeader->FastMutex);
     rtnCtx = NULL;
 
-  // Use different loops depending on whether we are comparing both Ids or not.
-    if ( ARGUMENT_PRESENT(InstanceId) ) {
+    // Use different loops depending on whether we are comparing both Ids or not.
+    if (ARGUMENT_PRESENT(InstanceId))
+    {
 
-        MySearchList (&AdvFcbHeader->FilterContexts, list) {
+        MySearchList(&AdvFcbHeader->FilterContexts, list)
+        {
 
-            ctx  = CONTAINING_RECORD(list, FSRTL_PER_STREAM_CONTEXT, Links);
-            if (ctx->OwnerId == OwnerId && ctx->InstanceId == InstanceId) {
-
-                rtnCtx = ctx;
-                break;
-            }
-        }
-
-    } else if ( ARGUMENT_PRESENT(OwnerId) ) {
-
-        MySearchList (&AdvFcbHeader->FilterContexts, list) {
-
-            ctx  = CONTAINING_RECORD(list, FSRTL_PER_STREAM_CONTEXT, Links);
-            if (ctx->OwnerId == OwnerId) {
+            ctx = CONTAINING_RECORD(list, FSRTL_PER_STREAM_CONTEXT, Links);
+            if (ctx->OwnerId == OwnerId && ctx->InstanceId == InstanceId)
+            {
 
                 rtnCtx = ctx;
                 break;
             }
         }
+    }
+    else if (ARGUMENT_PRESENT(OwnerId))
+    {
 
-    } else if (!IsListEmpty(&AdvFcbHeader->FilterContexts)) {
+        MySearchList(&AdvFcbHeader->FilterContexts, list)
+        {
+
+            ctx = CONTAINING_RECORD(list, FSRTL_PER_STREAM_CONTEXT, Links);
+            if (ctx->OwnerId == OwnerId)
+            {
+
+                rtnCtx = ctx;
+                break;
+            }
+        }
+    }
+    else if (!IsListEmpty(&AdvFcbHeader->FilterContexts))
+    {
 
         rtnCtx = (PFSRTL_PER_STREAM_CONTEXT)AdvFcbHeader->FilterContexts.Flink;
     }
 
-    if (rtnCtx) {
-        RemoveEntryList(&rtnCtx->Links);   // remove the matched entry
+    if (rtnCtx)
+    {
+        RemoveEntryList(&rtnCtx->Links); // remove the matched entry
     }
 
     ExReleaseFastMutex(AdvFcbHeader->FastMutex);
@@ -306,10 +306,7 @@ Return Value:
 
 
 NTKERNELAPI
-VOID
-FsRtlTeardownPerStreamContexts (
-  IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader
-  )
+VOID FsRtlTeardownPerStreamContexts(IN PFSRTL_ADVANCED_FCB_HEADER AdvFcbHeader)
 /*++
 
 Routine Description:
@@ -340,12 +337,14 @@ Return Value:
     //  entry while we are trying to free it.
     //
 
-    ExAcquireFastMutex( AdvFcbHeader->FastMutex );
+    ExAcquireFastMutex(AdvFcbHeader->FastMutex);
     lockHeld = TRUE;
 
-    try {
+    try
+    {
 
-        while (!IsListEmpty( &AdvFcbHeader->FilterContexts )) {
+        while (!IsListEmpty(&AdvFcbHeader->FilterContexts))
+        {
 
             //
             //  Unlink the top entry then release the lock.  We must
@@ -353,7 +352,7 @@ Return Value:
             //  be potential locking order deadlocks.
             //
 
-            ptr = RemoveHeadList( &AdvFcbHeader->FilterContexts );
+            ptr = RemoveHeadList(&AdvFcbHeader->FilterContexts);
 
             ExReleaseFastMutex(AdvFcbHeader->FastMutex);
             lockHeld = FALSE;
@@ -362,24 +361,26 @@ Return Value:
             //  Call filter to free this entry
             //
 
-            ctx = CONTAINING_RECORD( ptr, FSRTL_PER_STREAM_CONTEXT, Links );
+            ctx = CONTAINING_RECORD(ptr, FSRTL_PER_STREAM_CONTEXT, Links);
             ASSERT(ctx->FreeCallback);
 
-            (*ctx->FreeCallback)( ctx );
+            (*ctx->FreeCallback)(ctx);
 
             //
             //  re-get the lock
             //
 
-            ExAcquireFastMutex( AdvFcbHeader->FastMutex );
+            ExAcquireFastMutex(AdvFcbHeader->FastMutex);
             lockHeld = TRUE;
         }
+    }
+    finally
+    {
 
-    } finally {
+        if (lockHeld)
+        {
 
-        if (lockHeld) {
-
-            ExReleaseFastMutex( AdvFcbHeader->FastMutex );
+            ExReleaseFastMutex(AdvFcbHeader->FastMutex);
         }
     }
 }
@@ -393,7 +394,8 @@ Return Value:
 //  Internal structure used to manage the Per FileObject Contexts.
 //
 
-typedef struct _PER_FILEOBJECT_CTXCTRL {
+typedef struct _PER_FILEOBJECT_CTXCTRL
+{
 
     //
     //  This is a pointer to a Fast Mutex which may be used to
@@ -416,10 +418,7 @@ typedef struct _PER_FILEOBJECT_CTXCTRL {
 
 NTKERNELAPI
 NTSTATUS
-FsRtlInsertPerFileObjectContext (
-  IN PFILE_OBJECT FileObject,
-  IN PFSRTL_PER_FILEOBJECT_CONTEXT Ptr
-  )
+FsRtlInsertPerFileObjectContext(IN PFILE_OBJECT FileObject, IN PFSRTL_PER_FILEOBJECT_CONTEXT Ptr)
 /*++
 
 Routine Description:
@@ -451,12 +450,14 @@ Return Value:
     //  Return if no file object
     //
 
-    if (NULL == FileObject) {
+    if (NULL == FileObject)
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (!FsRtlSupportsPerFileObjectContexts(FileObject)) {
+    if (!FsRtlSupportsPerFileObjectContexts(FileObject))
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
@@ -465,34 +466,33 @@ Return Value:
     //  Get the context control structure out of the file object extension
     //
 
-    ctxCtrl = IoGetFileObjectFilterContext( FileObject );
+    ctxCtrl = IoGetFileObjectFilterContext(FileObject);
 
-    if (NULL == ctxCtrl) {
+    if (NULL == ctxCtrl)
+    {
 
         //
         //  There is not a control structure, allocate and initialize one
         //
 
-        ctxCtrl = ExAllocatePoolWithTag( NonPagedPool,
-                                         sizeof(PER_FILEOBJECT_CTXCTRL),
-                                         'XCOF' );
-        if (NULL == ctxCtrl) {
+        ctxCtrl = ExAllocatePoolWithTag(NonPagedPool, sizeof(PER_FILEOBJECT_CTXCTRL), 'XCOF');
+        if (NULL == ctxCtrl)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        ExInitializeFastMutex( &ctxCtrl->FastMutex );
-        InitializeListHead( &ctxCtrl->FilterContexts );
+        ExInitializeFastMutex(&ctxCtrl->FastMutex);
+        InitializeListHead(&ctxCtrl->FilterContexts);
 
         //
         //  Insert into the file object extension
         //
 
-        status = IoChangeFileObjectFilterContext( FileObject,
-                                                  ctxCtrl,
-                                                  TRUE );
+        status = IoChangeFileObjectFilterContext(FileObject, ctxCtrl, TRUE);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             //  If this operation fails it is because someone else inserted the
@@ -500,11 +500,12 @@ Return Value:
             //  allocated and re-get the current value.
             //
 
-            ExFreePool( ctxCtrl );
+            ExFreePool(ctxCtrl);
 
-            ctxCtrl = IoGetFileObjectFilterContext( FileObject );
+            ctxCtrl = IoGetFileObjectFilterContext(FileObject);
 
-            if (NULL == ctxCtrl) {
+            if (NULL == ctxCtrl)
+            {
 
                 //
                 //  This should never actually happen.  If it does it means
@@ -517,11 +518,11 @@ Return Value:
         }
     }
 
-    ExAcquireFastMutex( &ctxCtrl->FastMutex );
+    ExAcquireFastMutex(&ctxCtrl->FastMutex);
 
-    InsertHeadList( &ctxCtrl->FilterContexts, &Ptr->Links );
+    InsertHeadList(&ctxCtrl->FilterContexts, &Ptr->Links);
 
-    ExReleaseFastMutex( &ctxCtrl->FastMutex );
+    ExReleaseFastMutex(&ctxCtrl->FastMutex);
 
     return STATUS_SUCCESS;
 }
@@ -529,11 +530,7 @@ Return Value:
 
 NTKERNELAPI
 PFSRTL_PER_FILEOBJECT_CONTEXT
-FsRtlLookupPerFileObjectContext (
-  IN PFILE_OBJECT FileObject,
-  IN PVOID OwnerId OPTIONAL,
-  IN PVOID InstanceId OPTIONAL
-  )
+FsRtlLookupPerFileObjectContext(IN PFILE_OBJECT FileObject, IN PVOID OwnerId OPTIONAL, IN PVOID InstanceId OPTIONAL)
 /*++
 
 Routine Description:
@@ -570,7 +567,8 @@ Return Value:
     //  Return if no FileObjecty
     //
 
-    if (NULL == FileObject) {
+    if (NULL == FileObject)
+    {
 
         return NULL;
     }
@@ -579,49 +577,57 @@ Return Value:
     //  Get the context control structure out of the file object extension
     //
 
-    ctxCtrl = IoGetFileObjectFilterContext( FileObject );
+    ctxCtrl = IoGetFileObjectFilterContext(FileObject);
 
-    if (NULL == ctxCtrl) {
+    if (NULL == ctxCtrl)
+    {
 
         return NULL;
     }
 
     rtnCtx = NULL;
-    ExAcquireFastMutex( &ctxCtrl->FastMutex );
+    ExAcquireFastMutex(&ctxCtrl->FastMutex);
 
     //
     //  Use different loops depending on whether we are comparing both Ids or not.
     //
 
-    if ( ARGUMENT_PRESENT(InstanceId) ) {
+    if (ARGUMENT_PRESENT(InstanceId))
+    {
 
-        MySearchList (&ctxCtrl->FilterContexts, list) {
+        MySearchList(&ctxCtrl->FilterContexts, list)
+        {
 
-            ctx  = CONTAINING_RECORD(list, FSRTL_PER_FILEOBJECT_CONTEXT, Links);
+            ctx = CONTAINING_RECORD(list, FSRTL_PER_FILEOBJECT_CONTEXT, Links);
 
-            if ((ctx->OwnerId == OwnerId) && (ctx->InstanceId == InstanceId)) {
-
-                rtnCtx = ctx;
-                break;
-            }
-        }
-
-    } else if ( ARGUMENT_PRESENT(OwnerId) ) {
-
-        MySearchList (&ctxCtrl->FilterContexts, list) {
-
-            ctx  = CONTAINING_RECORD(list, FSRTL_PER_FILEOBJECT_CONTEXT, Links);
-
-            if (ctx->OwnerId == OwnerId) {
+            if ((ctx->OwnerId == OwnerId) && (ctx->InstanceId == InstanceId))
+            {
 
                 rtnCtx = ctx;
                 break;
             }
         }
+    }
+    else if (ARGUMENT_PRESENT(OwnerId))
+    {
 
-    } else if (!IsListEmpty(&ctxCtrl->FilterContexts)) {
+        MySearchList(&ctxCtrl->FilterContexts, list)
+        {
 
-        rtnCtx = (PFSRTL_PER_FILEOBJECT_CONTEXT) ctxCtrl->FilterContexts.Flink;
+            ctx = CONTAINING_RECORD(list, FSRTL_PER_FILEOBJECT_CONTEXT, Links);
+
+            if (ctx->OwnerId == OwnerId)
+            {
+
+                rtnCtx = ctx;
+                break;
+            }
+        }
+    }
+    else if (!IsListEmpty(&ctxCtrl->FilterContexts))
+    {
+
+        rtnCtx = (PFSRTL_PER_FILEOBJECT_CONTEXT)ctxCtrl->FilterContexts.Flink;
     }
 
     ExReleaseFastMutex(&ctxCtrl->FastMutex);
@@ -632,11 +638,7 @@ Return Value:
 
 NTKERNELAPI
 PFSRTL_PER_FILEOBJECT_CONTEXT
-FsRtlRemovePerFileObjectContext (
-  IN PFILE_OBJECT FileObject,
-  IN PVOID OwnerId OPTIONAL,
-  IN PVOID InstanceId OPTIONAL
-  )
+FsRtlRemovePerFileObjectContext(IN PFILE_OBJECT FileObject, IN PVOID OwnerId OPTIONAL, IN PVOID InstanceId OPTIONAL)
 /*++
 
 Routine Description:
@@ -680,7 +682,8 @@ Return Value:
     //  Return if no file object
     //
 
-    if (NULL == FileObject) {
+    if (NULL == FileObject)
+    {
 
         return NULL;
     }
@@ -689,63 +692,69 @@ Return Value:
     //  Get the context control structure out of the file object extension
     //
 
-    ctxCtrl = IoGetFileObjectFilterContext( FileObject );
+    ctxCtrl = IoGetFileObjectFilterContext(FileObject);
 
-    if (NULL == ctxCtrl) {
+    if (NULL == ctxCtrl)
+    {
 
         return NULL;
     }
 
     rtnCtx = NULL;
 
-    ExAcquireFastMutex( &ctxCtrl->FastMutex );
+    ExAcquireFastMutex(&ctxCtrl->FastMutex);
 
-  // Use different loops depending on whether we are comparing both Ids or not.
-    if ( ARGUMENT_PRESENT(InstanceId) ) {
+    // Use different loops depending on whether we are comparing both Ids or not.
+    if (ARGUMENT_PRESENT(InstanceId))
+    {
 
-        MySearchList (&ctxCtrl->FilterContexts, list) {
+        MySearchList(&ctxCtrl->FilterContexts, list)
+        {
 
-            ctx  = CONTAINING_RECORD(list, FSRTL_PER_FILEOBJECT_CONTEXT, Links);
+            ctx = CONTAINING_RECORD(list, FSRTL_PER_FILEOBJECT_CONTEXT, Links);
 
-            if ((ctx->OwnerId == OwnerId) && (ctx->InstanceId == InstanceId)) {
-
-                rtnCtx = ctx;
-                break;
-            }
-        }
-
-    } else if ( ARGUMENT_PRESENT(OwnerId) ) {
-
-        MySearchList (&ctxCtrl->FilterContexts, list) {
-
-            ctx  = CONTAINING_RECORD(list, FSRTL_PER_FILEOBJECT_CONTEXT, Links);
-
-            if (ctx->OwnerId == OwnerId) {
+            if ((ctx->OwnerId == OwnerId) && (ctx->InstanceId == InstanceId))
+            {
 
                 rtnCtx = ctx;
                 break;
             }
         }
+    }
+    else if (ARGUMENT_PRESENT(OwnerId))
+    {
 
-    } else if (!IsListEmpty(&ctxCtrl->FilterContexts)) {
+        MySearchList(&ctxCtrl->FilterContexts, list)
+        {
+
+            ctx = CONTAINING_RECORD(list, FSRTL_PER_FILEOBJECT_CONTEXT, Links);
+
+            if (ctx->OwnerId == OwnerId)
+            {
+
+                rtnCtx = ctx;
+                break;
+            }
+        }
+    }
+    else if (!IsListEmpty(&ctxCtrl->FilterContexts))
+    {
 
         rtnCtx = (PFSRTL_PER_FILEOBJECT_CONTEXT)ctxCtrl->FilterContexts.Flink;
     }
 
-    if (rtnCtx) {
+    if (rtnCtx)
+    {
 
-        RemoveEntryList(&rtnCtx->Links);   // remove the matched entry
+        RemoveEntryList(&rtnCtx->Links); // remove the matched entry
     }
 
-    ExReleaseFastMutex( &ctxCtrl->FastMutex );
+    ExReleaseFastMutex(&ctxCtrl->FastMutex);
     return rtnCtx;
 }
 
 
-VOID
-FsRtlPTeardownPerFileObjectContexts (
-  IN PFILE_OBJECT FileObject
-  )
+VOID FsRtlPTeardownPerFileObjectContexts(IN PFILE_OBJECT FileObject)
 /*++
 
 Routine Description:
@@ -772,26 +781,23 @@ Return Value:
 
     ASSERT(FileObject != NULL);
 
-    ctxCtrl = IoGetFileObjectFilterContext( FileObject );
+    ctxCtrl = IoGetFileObjectFilterContext(FileObject);
 
-    if (NULL != ctxCtrl) {
+    if (NULL != ctxCtrl)
+    {
 
-        status = IoChangeFileObjectFilterContext( FileObject,
-                                                  ctxCtrl,
-                                                  FALSE );
+        status = IoChangeFileObjectFilterContext(FileObject, ctxCtrl, FALSE);
 
         ASSERT(STATUS_SUCCESS == status);
-        ASSERT(IsListEmpty( &ctxCtrl->FilterContexts));
+        ASSERT(IsListEmpty(&ctxCtrl->FilterContexts));
 
-        ExFreePool( ctxCtrl );
+        ExFreePool(ctxCtrl);
     }
 }
 
 
 LOGICAL
-FsRtlIsPagingFile (
-    IN PFILE_OBJECT FileObject
-    )
+FsRtlIsPagingFile(IN PFILE_OBJECT FileObject)
 /*++
 
 Routine Description:
@@ -811,5 +817,5 @@ Return Value:
 --*/
 
 {
-    return MmIsFileObjectAPagingFile( FileObject );
+    return MmIsFileObjectAPagingFile(FileObject);
 }

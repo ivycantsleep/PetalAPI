@@ -21,11 +21,7 @@ Revision History:
 #include "obp.h"
 
 BOOLEAN
-ObPerfDumpHandleEntry (
-    IN PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN HANDLE HandleId,
-    IN PVOID EnumParameter
-    );
+ObPerfDumpHandleEntry(IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE HandleId, IN PVOID EnumParameter);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGEWMI, ObPerfDumpHandleEntry)
@@ -33,11 +29,7 @@ ObPerfDumpHandleEntry (
 #endif
 
 BOOLEAN
-ObPerfDumpHandleEntry (
-    IN PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN HANDLE HandleId,
-    IN PVOID EnumParameter
-    )
+ObPerfDumpHandleEntry(IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE HandleId, IN PVOID EnumParameter)
 /*++
 
 Routine Description:
@@ -68,11 +60,12 @@ Return Value:
     ObjectHeader = (POBJECT_HEADER)(((ULONG_PTR)(ObjectTableEntry->Object)) & ~OBJ_HANDLE_ATTRIBUTES);
     Object = &ObjectHeader->Body;
 
-    if (ObjectHeader->Type == IoFileObjectType) {
+    if (ObjectHeader->Type == IoFileObjectType)
+    {
         //
         // File Object
         //
-        PFILE_OBJECT FileObject = (PFILE_OBJECT) Object;
+        PFILE_OBJECT FileObject = (PFILE_OBJECT)Object;
         PerfInfoAddToFileHash(HashTable, FileObject);
 
 #if 0
@@ -84,11 +77,7 @@ Return Value:
     return FALSE;
 }
 
-VOID
-ObPerfHandleTableWalk (
-    PEPROCESS Process,
-    PPERFINFO_ENTRY_TABLE HashTable
-    )
+VOID ObPerfHandleTableWalk(PEPROCESS Process, PPERFINFO_ENTRY_TABLE HashTable)
 
 /*++
 
@@ -111,26 +100,26 @@ Return Value:
 {
     PHANDLE_TABLE ObjectTable;
 
-    if (Process) {
-        ObjectTable = ObReferenceProcessHandleTable (Process);
-        if ( !ObjectTable ) {
-             return ;
+    if (Process)
+    {
+        ObjectTable = ObReferenceProcessHandleTable(Process);
+        if (!ObjectTable)
+        {
+            return;
         }
-    } else {
+    }
+    else
+    {
         //
         //
         //
         ObjectTable = ObpKernelHandleTable;
     }
 
-    ExEnumHandleTable( ObjectTable,
-                       ObPerfDumpHandleEntry,
-                       (PVOID) HashTable,
-                       (PHANDLE)NULL );
+    ExEnumHandleTable(ObjectTable, ObPerfDumpHandleEntry, (PVOID)HashTable, (PHANDLE)NULL);
 
-    if (Process) {
-        ObDereferenceProcessHandleTable( Process );
+    if (Process)
+    {
+        ObDereferenceProcessHandleTable(Process);
     }
 }
-
-

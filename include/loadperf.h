@@ -28,136 +28,91 @@ Revision History
 // provided in LOADPERF.DLL
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #ifdef __LOADPERF__
-#define LOADPERF_FUNCTION   DWORD __stdcall
+#define LOADPERF_FUNCTION DWORD __stdcall
 #else
-#define LOADPERF_FUNCTION   __declspec(dllimport) DWORD __stdcall
+#define LOADPERF_FUNCTION __declspec(dllimport) DWORD __stdcall
 #endif
 
-// flags for dwFlags Argument
+    // flags for dwFlags Argument
 
-#define LOADPERF_FLAGS_DELETE_MOF_ON_EXIT   ((ULONG_PTR)1)
-#define LOADPERF_FLAGS_LOAD_REGISTRY_ONLY   ((ULONG_PTR)2)
-#define LOADPERF_FLAGS_CREATE_MOF_ONLY      ((ULONG_PTR)4)
-#define LOADPERF_FLAGS_DISPLAY_USER_MSGS    ((ULONG_PTR)8)
+#define LOADPERF_FLAGS_DELETE_MOF_ON_EXIT ((ULONG_PTR)1)
+#define LOADPERF_FLAGS_LOAD_REGISTRY_ONLY ((ULONG_PTR)2)
+#define LOADPERF_FLAGS_CREATE_MOF_ONLY ((ULONG_PTR)4)
+#define LOADPERF_FLAGS_DISPLAY_USER_MSGS ((ULONG_PTR)8)
 
-// note: LOADPERF_FLAGS_LOAD_REGISTRY_ONLY is not a valid flag for
-// LoadMofFromInstalledServiceA/W as the service must already be installed
+    // note: LOADPERF_FLAGS_LOAD_REGISTRY_ONLY is not a valid flag for
+    // LoadMofFromInstalledServiceA/W as the service must already be installed
 
-LOADPERF_FUNCTION
-LoadMofFromInstalledServiceA (
-    IN  LPCSTR  szServiceName,  // service to create mof for
-    IN  LPCSTR  szMofFilename,  // name of file to create
-    IN  ULONG_PTR   dwFlags
-);
+    LOADPERF_FUNCTION
+    LoadMofFromInstalledServiceA(IN LPCSTR szServiceName, // service to create mof for
+                                 IN LPCSTR szMofFilename, // name of file to create
+                                 IN ULONG_PTR dwFlags);
 
-LOADPERF_FUNCTION
-LoadMofFromInstalledServiceW (
-    IN  LPCWSTR szServiceName,  // service to create mof for
-    IN  LPCWSTR szMofFilename,  // name of file to create
-    IN  ULONG_PTR   dwFlags
-);
+    LOADPERF_FUNCTION
+    LoadMofFromInstalledServiceW(IN LPCWSTR szServiceName, // service to create mof for
+                                 IN LPCWSTR szMofFilename, // name of file to create
+                                 IN ULONG_PTR dwFlags);
 
-LOADPERF_FUNCTION
-InstallPerfDllW (
-    IN  LPCWSTR szComputerName,
-    IN  LPCWSTR lpIniFile,
-    IN  ULONG_PTR   dwFlags         
-);
+    LOADPERF_FUNCTION
+    InstallPerfDllW(IN LPCWSTR szComputerName, IN LPCWSTR lpIniFile, IN ULONG_PTR dwFlags);
 
-LOADPERF_FUNCTION
-InstallPerfDllA (
-    IN  LPCSTR  szComputerName,
-    IN  LPCSTR  lpIniFile,
-    IN  ULONG_PTR   dwFlags         
-);
+    LOADPERF_FUNCTION
+    InstallPerfDllA(IN LPCSTR szComputerName, IN LPCSTR lpIniFile, IN ULONG_PTR dwFlags);
 
-LOADPERF_FUNCTION
-UnInstallPerfDllA (
-    IN  LPCSTR  szComputerName,
-    IN  LPCSTR  lpServiceName,
-    IN  ULONG_PTR   dwFlags         
-);
+    LOADPERF_FUNCTION
+    UnInstallPerfDllA(IN LPCSTR szComputerName, IN LPCSTR lpServiceName, IN ULONG_PTR dwFlags);
 
-LOADPERF_FUNCTION
-UnInstallPerfDllA (
-    IN  LPCSTR  szComputerName,
-    IN  LPCSTR  lpServiceName,
-    IN  ULONG_PTR   dwFlags         
-);
+    LOADPERF_FUNCTION
+    UnInstallPerfDllA(IN LPCSTR szComputerName, IN LPCSTR lpServiceName, IN ULONG_PTR dwFlags);
 
-LOADPERF_FUNCTION
-LoadPerfCounterTextStringsA (
-    IN  LPSTR   lpCommandLine,
-    IN  BOOL    bQuietModeArg
-);
+    LOADPERF_FUNCTION
+    LoadPerfCounterTextStringsA(IN LPSTR lpCommandLine, IN BOOL bQuietModeArg);
 
-LOADPERF_FUNCTION
-LoadPerfCounterTextStringsW (
-    IN  LPWSTR  lpCommandLine,
-    IN  BOOL    bQuietModeArg
-);
+    LOADPERF_FUNCTION
+    LoadPerfCounterTextStringsW(IN LPWSTR lpCommandLine, IN BOOL bQuietModeArg);
 
-LOADPERF_FUNCTION
-UnloadPerfCounterTextStringsW (
-    IN  LPWSTR  lpCommandLine,
-    IN  BOOL    bQuietModeArg
-);
+    LOADPERF_FUNCTION
+    UnloadPerfCounterTextStringsW(IN LPWSTR lpCommandLine, IN BOOL bQuietModeArg);
 
-LOADPERF_FUNCTION
-UnloadPerfCounterTextStringsA (
-    IN  LPSTR   lpCommandLine,
-    IN  BOOL    bQuietModeArg
-);
+    LOADPERF_FUNCTION
+    UnloadPerfCounterTextStringsA(IN LPSTR lpCommandLine, IN BOOL bQuietModeArg);
 
-LOADPERF_FUNCTION
-UpdatePerfNameFilesA (
-    IN  LPCSTR      szNewCtrFilePath,
-    IN  LPCSTR      szNewHlpFilePath,
-    IN  LPSTR       szLanguageID,
-    IN  ULONG_PTR   dwFlags
-);
+    LOADPERF_FUNCTION
+    UpdatePerfNameFilesA(IN LPCSTR szNewCtrFilePath, IN LPCSTR szNewHlpFilePath, IN LPSTR szLanguageID,
+                         IN ULONG_PTR dwFlags);
 
-LOADPERF_FUNCTION
-UpdatePerfNameFilesW (
-    IN  LPCWSTR     szNewCtrFilePath,
-    IN  LPCWSTR     szNewHlpFilePath,
-    IN  LPWSTR      szLanguageID,
-    IN  ULONG_PTR   dwFlags
-);
+    LOADPERF_FUNCTION
+    UpdatePerfNameFilesW(IN LPCWSTR szNewCtrFilePath, IN LPCWSTR szNewHlpFilePath, IN LPWSTR szLanguageID,
+                         IN ULONG_PTR dwFlags);
 
-LOADPERF_FUNCTION
-SetServiceAsTrustedA (
-    LPCSTR szReserved,
-    LPCSTR szServiceName
-);
+    LOADPERF_FUNCTION
+    SetServiceAsTrustedA(LPCSTR szReserved, LPCSTR szServiceName);
 
-LOADPERF_FUNCTION
-SetServiceAsTrustedW (
-    LPCWSTR szReserved,
-    LPCWSTR szServiceName
-);
+    LOADPERF_FUNCTION
+    SetServiceAsTrustedW(LPCWSTR szReserved, LPCWSTR szServiceName);
 
 
 #ifdef UNICODE
-#define InstallPerfDll                  InstallPerfDllW
-#define UnInstallPerfDll                UnInstallPerfDllW
-#define LoadPerfCounterTextStrings      LoadPerfCounterTextStringsW
-#define UnloadPerfCounterTextStrings    UnloadPerfCounterTextStringsW
-#define LoadMofFromInstalledService     LoadMofFromInstalledServiceW
-#define UpdatePerfNameFiles             UpdatePerfNameFilesW 
-#define SetServiceAsTrusted             SetServiceAsTrustedW
+#define InstallPerfDll InstallPerfDllW
+#define UnInstallPerfDll UnInstallPerfDllW
+#define LoadPerfCounterTextStrings LoadPerfCounterTextStringsW
+#define UnloadPerfCounterTextStrings UnloadPerfCounterTextStringsW
+#define LoadMofFromInstalledService LoadMofFromInstalledServiceW
+#define UpdatePerfNameFiles UpdatePerfNameFilesW
+#define SetServiceAsTrusted SetServiceAsTrustedW
 #else
-#define InstallPerfDll                  InstallPerfDllA
-#define UnInstallPerfDll                UnInstallPerfDllA
-#define LoadPerfCounterTextStrings      LoadPerfCounterTextStringsA
-#define UnloadPerfCounterTextStrings    UnloadPerfCounterTextStringsA
-#define LoadMofFromInstalledService     LoadMofFromInstalledServiceA
-#define UpdatePerfNameFiles             UpdatePerfNameFilesA
-#define SetServiceAsTrusted             SetServiceAsTrustedA
+#define InstallPerfDll InstallPerfDllA
+#define UnInstallPerfDll UnInstallPerfDllA
+#define LoadPerfCounterTextStrings LoadPerfCounterTextStringsA
+#define UnloadPerfCounterTextStrings UnloadPerfCounterTextStringsA
+#define LoadMofFromInstalledService LoadMofFromInstalledServiceA
+#define UpdatePerfNameFiles UpdatePerfNameFilesA
+#define SetServiceAsTrusted SetServiceAsTrustedA
 #endif
 
 

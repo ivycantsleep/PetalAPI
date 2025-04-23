@@ -21,14 +21,11 @@ Revision History:
 
 #include "basedll.h"
 
-VOID
-CsrBasepSoundSentryNotification(
-    ULONG VideoMode
-    )
+VOID CsrBasepSoundSentryNotification(ULONG VideoMode)
 {
 
 #if defined(BUILD_WOW6432)
-    
+
     NtWow64CsrBasepSoundSentryNotification(VideoMode);
 
 #else
@@ -38,14 +35,7 @@ CsrBasepSoundSentryNotification(
 
     e->VideoMode = VideoMode;
 
-    CsrClientCallServer((PCSR_API_MSG)&m,
-                        NULL,
-                        CSR_MAKE_API_NUMBER( BASESRV_SERVERDLL_INDEX,
-                                             BasepSoundSentryNotification ),
-                        sizeof( *e )
-                       );
+    CsrClientCallServer((PCSR_API_MSG)&m, NULL,
+                        CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepSoundSentryNotification), sizeof(*e));
 #endif
-
 }
-
-

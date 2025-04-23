@@ -33,7 +33,7 @@ Revision History:
 #include "exp.h"
 #pragma hdrstop
 #include "nturtl.h"
-
+
 //
 // Define local macros to test resource state.
 //
@@ -49,7 +49,7 @@ Revision History:
 
 #define DisablePriorityBoost 0x08
 
-LARGE_INTEGER ExShortTime = {(ULONG)(-10 * 1000 * 10), -1}; // 10 milliseconds
+LARGE_INTEGER ExShortTime = { (ULONG)(-10 * 1000 * 10), -1 }; // 10 milliseconds
 
 //
 // Define resource assertion macro.
@@ -57,10 +57,7 @@ LARGE_INTEGER ExShortTime = {(ULONG)(-10 * 1000 * 10), -1}; // 10 milliseconds
 
 #if DBG
 
-VOID
-ExpAssertResource(
-    IN PERESOURCE Resource
-    );
+VOID ExpAssertResource(IN PERESOURCE Resource);
 
 #define ASSERT_RESOURCE(_Resource) ExpAssertResource(_Resource)
 
@@ -71,44 +68,38 @@ ExpAssertResource(
 #endif
 
 //
-// Define locking primitives. 
+// Define locking primitives.
 // On UP systems, fastlocks are used.
 // On MP systems, a queued spinlock is used.
 //
 #if defined(NT_UP)
 #define EXP_LOCK_HANDLE KIRQL
 #define PEXP_LOCK_HANDLE PKIRQL
-#define EXP_LOCK_RESOURCE(_resource_, _plockhandle_)  UNREFERENCED_PARAMETER(_plockhandle_); ExAcquireFastLock(&(_resource_)->SpinLock, (_plockhandle_))
+#define EXP_LOCK_RESOURCE(_resource_, _plockhandle_) \
+    UNREFERENCED_PARAMETER(_plockhandle_);           \
+    ExAcquireFastLock(&(_resource_)->SpinLock, (_plockhandle_))
 #define EXP_UNLOCK_RESOURCE(_resource_, _plockhandle_) ExReleaseFastLock(&(_resource_)->SpinLock, *(_plockhandle_))
 #else
 #define EXP_LOCK_HANDLE KLOCK_QUEUE_HANDLE
 #define PEXP_LOCK_HANDLE PKLOCK_QUEUE_HANDLE
-#define EXP_LOCK_RESOURCE(_resource_, _plockhandle_) KeAcquireInStackQueuedSpinLock(&(_resource_)->SpinLock, (_plockhandle_))
+#define EXP_LOCK_RESOURCE(_resource_, _plockhandle_) \
+    KeAcquireInStackQueuedSpinLock(&(_resource_)->SpinLock, (_plockhandle_))
 #define EXP_UNLOCK_RESOURCE(_resource_, _plockhandle_) KeReleaseInStackQueuedSpinLock(_plockhandle_)
 #endif
-
 
 
 //
 // Define private function prototypes.
 //
 
-VOID
-FASTCALL
-ExpWaitForResource (
-    IN PERESOURCE Resource,
-    IN PVOID Object
-    );
+VOID FASTCALL ExpWaitForResource(IN PERESOURCE Resource, IN PVOID Object);
 
 POWNER_ENTRY
 FASTCALL
-ExpFindCurrentThread(
-    IN PERESOURCE Resource,
-    IN ERESOURCE_THREAD CurrentThread,
-    IN PEXP_LOCK_HANDLE LockHandle OPTIONAL
-    );
+ExpFindCurrentThread(IN PERESOURCE Resource, IN ERESOURCE_THREAD CurrentThread,
+                     IN PEXP_LOCK_HANDLE LockHandle OPTIONAL);
 
-
+
 //
 // Resource wait time out value.
 //
@@ -148,7 +139,7 @@ RESOURCE_PERFORMANCE_DATA ExpResourcePerformanceData;
 #define ExpIncrementCounter(Member)
 
 #endif
-
+
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, ExpResourceInitialization)
@@ -170,26 +161,20 @@ RESOURCE_PERFORMANCE_DATA ExpResourcePerformanceData;
 
 ULONG ExResourceStrict = 1;
 
-VOID
-ExCheckIfKernelApcsShouldBeDisabled (
-    IN KIRQL Irql,
-    IN PVOID Resource,
-    IN PKTHREAD Thread)
+VOID ExCheckIfKernelApcsShouldBeDisabled(IN KIRQL Irql, IN PVOID Resource, IN PKTHREAD Thread)
 {
-    if ((ExResourceStrict == 0) ||
-        (Irql >= APC_LEVEL) ||
-        (IS_SYSTEM_THREAD((PETHREAD)Thread)) ||
-        (Thread->KernelApcDisable != 0)) {
+    if ((ExResourceStrict == 0) || (Irql >= APC_LEVEL) || (IS_SYSTEM_THREAD((PETHREAD)Thread)) ||
+        (Thread->KernelApcDisable != 0))
+    {
 
         return;
     }
 
-    DbgPrint ("EX: resource: APCs still enabled before resource %p acquire !!!\n", Resource);
-    DbgBreakPoint ();
+    DbgPrint("EX: resource: APCs still enabled before resource %p acquire !!!\n", Resource);
+    DbgBreakPoint();
 }
 
-#define EX_ENSURE_APCS_DISABLED(Irql, Resource, Thread) \
-            ExCheckIfKernelApcsShouldBeDisabled (Irql, Resource, Thread);
+#define EX_ENSURE_APCS_DISABLED(Irql, Resource, Thread) ExCheckIfKernelApcsShouldBeDisabled(Irql, Resource, Thread);
 
 #else
 
@@ -197,11 +182,9 @@ ExCheckIfKernelApcsShouldBeDisabled (
 
 #endif // DBG
 
-
+
 BOOLEAN
-ExpResourceInitialization(
-    VOID
-    )
+ExpResourceInitialization(VOID)
 
 /*++
 
@@ -249,7 +232,8 @@ Return Value:
     ExpResourcePerformanceData.WaitForExclusive = 0;
     ExpResourcePerformanceData.OwnerTableExpands = 0;
     ExpResourcePerformanceData.MaximumTableExpand = 0;
-    for (Index = 0; Index < RESOURCE_HASH_TABLE_SIZE; Index += 1) {
+    for (Index = 0; Index < RESOURCE_HASH_TABLE_SIZE; Index += 1)
+    {
         InitializeListHead(&ExpResourcePerformanceData.HashTable[Index]);
     }
 
@@ -257,12 +241,8 @@ Return Value:
 
     return TRUE;
 }
-
-VOID
-ExpAllocateExclusiveWaiterEvent (
-    IN PERESOURCE Resource,
-    IN PEXP_LOCK_HANDLE LockHandle
-    )
+
+VOID ExpAllocateExclusiveWaiterEvent(IN PERESOURCE Resource, IN PEXP_LOCK_HANDLE LockHandle)
 
 /*++
 
@@ -294,16 +274,15 @@ Return Value:
     //
 
     EXP_UNLOCK_RESOURCE(Resource, LockHandle);
-    do {
-        Event = ExAllocatePoolWithTag(NonPagedPool,
-                                      sizeof(KEVENT),
-                                      'vEeR');
+    do
+    {
+        Event = ExAllocatePoolWithTag(NonPagedPool, sizeof(KEVENT), 'vEeR');
 
-        if (Event != NULL) {
+        if (Event != NULL)
+        {
             KeInitializeEvent(Event, SynchronizationEvent, FALSE);
-            if (InterlockedCompareExchangePointer(&Resource->ExclusiveWaiters,
-                                                  Event,
-                                                  NULL) != NULL) {
+            if (InterlockedCompareExchangePointer(&Resource->ExclusiveWaiters, Event, NULL) != NULL)
+            {
 
                 ExFreePool(Event);
             }
@@ -318,12 +297,8 @@ Return Value:
     EXP_LOCK_RESOURCE(Resource, LockHandle);
     return;
 }
-
-VOID
-ExpAllocateSharedWaiterSemaphore (
-    IN PERESOURCE Resource,
-    IN PEXP_LOCK_HANDLE LockHandle
-    )
+
+VOID ExpAllocateSharedWaiterSemaphore(IN PERESOURCE Resource, IN PEXP_LOCK_HANDLE LockHandle)
 
 /*++
 
@@ -356,16 +331,15 @@ Return Value:
     //
 
     EXP_UNLOCK_RESOURCE(Resource, LockHandle);
-    do {
-        Semaphore = ExAllocatePoolWithTag(NonPagedPool,
-                                          sizeof(KSEMAPHORE),
-                                          'eSeR');
+    do
+    {
+        Semaphore = ExAllocatePoolWithTag(NonPagedPool, sizeof(KSEMAPHORE), 'eSeR');
 
-        if (Semaphore != NULL) {
+        if (Semaphore != NULL)
+        {
             KeInitializeSemaphore(Semaphore, 0, MAXLONG);
-            if (InterlockedCompareExchangePointer(&Resource->SharedWaiters,
-                                                  Semaphore,
-                                                  NULL) != NULL) {
+            if (InterlockedCompareExchangePointer(&Resource->SharedWaiters, Semaphore, NULL) != NULL)
+            {
                 ExFreePool(Semaphore);
             }
 
@@ -379,11 +353,9 @@ Return Value:
     EXP_LOCK_RESOURCE(Resource, LockHandle);
     return;
 }
-
+
 NTSTATUS
-ExInitializeResourceLite(
-    IN PERESOURCE Resource
-    )
+ExInitializeResourceLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -418,16 +390,16 @@ Return Value:
     RtlZeroMemory(Resource, sizeof(ERESOURCE));
     KeInitializeSpinLock(&Resource->SpinLock);
 
-    if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB) {
+    if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB)
+    {
         Resource->CreatorBackTraceIndex = RtlLogStackBackTrace();
-        }
-    else {
+    }
+    else
+    {
         Resource->CreatorBackTraceIndex = 0;
-        }
-    
-    ExInterlockedInsertTailList(&ExpSystemResourcesList,
-                                &Resource->SystemResourcesList,
-                                &ExpResourceSpinLock);
+    }
+
+    ExInterlockedInsertTailList(&ExpSystemResourcesList, &Resource->SystemResourcesList, &ExpResourceSpinLock);
 
     //
     // Initialize performance data entry for the resource.
@@ -443,11 +415,9 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ExReinitializeResourceLite(
-    IN PERESOURCE Resource
-    )
+ExReinitializeResourceLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -480,9 +450,11 @@ Return Value:
     //
 
     OwnerTable = Resource->OwnerTable;
-    if (OwnerTable != NULL) {
+    if (OwnerTable != NULL)
+    {
         TableSize = OwnerTable->TableSize;
-        for (Index = 1; Index < TableSize; Index += 1) {
+        for (Index = 1; Index < TableSize; Index += 1)
+        {
             OwnerTable[Index].OwnerThread = 0;
             OwnerTable[Index].OwnerCount = 0;
         }
@@ -501,7 +473,8 @@ Return Value:
     //
 
     Semaphore = Resource->SharedWaiters;
-    if (Semaphore != NULL) {
+    if (Semaphore != NULL)
+    {
         KeInitializeSemaphore(Semaphore, 0, MAXLONG);
     }
 
@@ -511,7 +484,8 @@ Return Value:
     //
 
     Event = Resource->ExclusiveWaiters;
-    if (Event != NULL) {
+    if (Event != NULL)
+    {
         KeInitializeEvent(Event, SynchronizationEvent, FALSE);
     }
 
@@ -540,11 +514,8 @@ Return Value:
     KeInitializeSpinLock(&Resource->SpinLock);
     return STATUS_SUCCESS;
 }
-
-VOID
-ExDisableResourceBoostLite(
-    IN PERESOURCE Resource
-    )
+
+VOID ExDisableResourceBoostLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -580,12 +551,9 @@ Return Value:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return;
 }
-
+
 BOOLEAN
-ExAcquireResourceExclusiveLite(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    )
+ExAcquireResourceExclusiveLite(IN PERESOURCE Resource, IN BOOLEAN Wait)
 
 /*++
 
@@ -630,9 +598,7 @@ Return Value:
     // Resource acquisition must be protected from thread suspends.
     //
 
-    EX_ENSURE_APCS_DISABLED (LockHandle.OldIrql,
-                             Resource,
-                             KeGetCurrentThread());
+    EX_ENSURE_APCS_DISABLED(LockHandle.OldIrql, Resource, KeGetCurrentThread());
 
     ExpIncrementCounter(ExclusiveAcquire);
 
@@ -644,7 +610,8 @@ Return Value:
     //
 
 retry:
-    if (Resource->ActiveCount != 0) {
+    if (Resource->ActiveCount != 0)
+    {
 
         //
         // The resource is either owned exclusive or shared.
@@ -653,12 +620,13 @@ retry:
         // owner, then increment the recursion count.
         //
 
-        if (IsOwnedExclusive(Resource) &&
-            (Resource->OwnerThreads[0].OwnerThread == CurrentThread)) {
+        if (IsOwnedExclusive(Resource) && (Resource->OwnerThreads[0].OwnerThread == CurrentThread))
+        {
             Resource->OwnerThreads[0].OwnerCount += 1;
             Result = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             //
             // The resource is either owned exclusive by some other thread,
@@ -669,17 +637,20 @@ retry:
             // resource to be granted.
             //
 
-            if (Wait == FALSE) {
+            if (Wait == FALSE)
+            {
                 Result = FALSE;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // If the exclusive wait event has not yet been allocated,
                 // then the long path code must be taken.
                 //
 
-                if (Resource->ExclusiveWaiters == NULL) {
+                if (Resource->ExclusiveWaiters == NULL)
+                {
                     ExpAllocateExclusiveWaiterEvent(Resource, &LockHandle);
                     goto retry;
                 }
@@ -703,8 +674,9 @@ retry:
                 return TRUE;
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The resource is not owned.
@@ -720,11 +692,9 @@ retry:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return Result;
 }
-
+
 BOOLEAN
-ExTryToAcquireResourceExclusiveLite(
-    IN PERESOURCE Resource
-    )
+ExTryToAcquireResourceExclusiveLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -771,16 +741,17 @@ Return Value:
     //
 
     Result = FALSE;
-    if (Resource->ActiveCount == 0) {
+    if (Resource->ActiveCount == 0)
+    {
         ExpIncrementCounter(ExclusiveAcquire);
         Resource->Flag |= ResourceOwnedExclusive;
         Resource->OwnerThreads[0].OwnerThread = CurrentThread;
         Resource->OwnerThreads[0].OwnerCount = 1;
         Resource->ActiveCount = 1;
         Result = TRUE;
-
-    } else if (IsOwnedExclusive(Resource) &&
-        (Resource->OwnerThreads[0].OwnerThread == CurrentThread)) {
+    }
+    else if (IsOwnedExclusive(Resource) && (Resource->OwnerThreads[0].OwnerThread == CurrentThread))
+    {
         ExpIncrementCounter(ExclusiveAcquire);
         Resource->OwnerThreads[0].OwnerCount += 1;
         Result = TRUE;
@@ -789,12 +760,9 @@ Return Value:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return Result;
 }
-
+
 BOOLEAN
-ExAcquireResourceSharedLite(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    )
+ExAcquireResourceSharedLite(IN PERESOURCE Resource, IN BOOLEAN Wait)
 
 /*++
 
@@ -837,9 +805,7 @@ Return Value:
     // Resource acquisition must be protected from thread suspends.
     //
 
-    EX_ENSURE_APCS_DISABLED (LockHandle.OldIrql,
-                             Resource,
-                             KeGetCurrentThread());
+    EX_ENSURE_APCS_DISABLED(LockHandle.OldIrql, Resource, KeGetCurrentThread());
 
     ExpIncrementCounter(SharedFirstLevel);
 
@@ -850,7 +816,8 @@ Return Value:
     //
 
 retry:
-    if (Resource->ActiveCount == 0) {
+    if (Resource->ActiveCount == 0)
+    {
         Resource->OwnerThreads[1].OwnerThread = CurrentThread;
         Resource->OwnerThreads[1].OwnerCount = 1;
         Resource->ActiveCount = 1;
@@ -866,8 +833,10 @@ retry:
     // increment the recursion count. Otherwise, it is owned shared.
     //
 
-    if (IsOwnedExclusive(Resource)) {
-        if (Resource->OwnerThreads[0].OwnerThread == CurrentThread) {
+    if (IsOwnedExclusive(Resource))
+    {
+        if (Resource->OwnerThreads[0].OwnerThread == CurrentThread)
+        {
             Resource->OwnerThreads[0].OwnerCount += 1;
             EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
             return TRUE;
@@ -878,11 +847,13 @@ retry:
         //
 
         OwnerEntry = ExpFindCurrentThread(Resource, 0, &LockHandle);
-        if (OwnerEntry == NULL) {
+        if (OwnerEntry == NULL)
+        {
             goto retry;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The resource is owned shared.
@@ -893,11 +864,13 @@ retry:
         //
 
         OwnerEntry = ExpFindCurrentThread(Resource, CurrentThread, &LockHandle);
-        if (OwnerEntry == NULL) {
+        if (OwnerEntry == NULL)
+        {
             goto retry;
         }
 
-        if (OwnerEntry->OwnerThread == CurrentThread) {
+        if (OwnerEntry->OwnerThread == CurrentThread)
+        {
             OwnerEntry->OwnerCount += 1;
 
             ASSERT(OwnerEntry->OwnerCount != 0);
@@ -912,7 +885,8 @@ retry:
         // available.
         //
 
-        if (IsExclusiveWaiting(Resource) == FALSE) {
+        if (IsExclusiveWaiting(Resource) == FALSE)
+        {
             OwnerEntry->OwnerThread = CurrentThread;
             OwnerEntry->OwnerCount = 1;
             Resource->ActiveCount += 1;
@@ -931,7 +905,8 @@ retry:
     // not acquired.
     //
 
-    if (Wait == FALSE) {
+    if (Wait == FALSE)
+    {
         EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
         return FALSE;
     }
@@ -941,7 +916,8 @@ retry:
     // long path must be taken.
     //
 
-    if (Resource->SharedWaiters == NULL) {
+    if (Resource->SharedWaiters == NULL)
+    {
         ExpAllocateSharedWaiterSemaphore(Resource, &LockHandle);
         goto retry;
     }
@@ -958,12 +934,9 @@ retry:
     ExpWaitForResource(Resource, Resource->SharedWaiters);
     return TRUE;
 }
-
+
 BOOLEAN
-ExAcquireSharedStarveExclusive(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    )
+ExAcquireSharedStarveExclusive(IN PERESOURCE Resource, IN BOOLEAN Wait)
 /*++
 
 Routine Description:
@@ -1011,7 +984,8 @@ Return Value:
     //
 
 retry:
-    if (Resource->ActiveCount == 0) {
+    if (Resource->ActiveCount == 0)
+    {
         Resource->OwnerThreads[1].OwnerThread = CurrentThread;
         Resource->OwnerThreads[1].OwnerCount = 1;
         Resource->ActiveCount = 1;
@@ -1027,8 +1001,10 @@ retry:
     // increment the recursion count. Otherwise, it is owned shared.
     //
 
-    if (IsOwnedExclusive(Resource)) {
-        if (Resource->OwnerThreads[0].OwnerThread == CurrentThread) {
+    if (IsOwnedExclusive(Resource))
+    {
+        if (Resource->OwnerThreads[0].OwnerThread == CurrentThread)
+        {
             Resource->OwnerThreads[0].OwnerCount += 1;
             EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
             return TRUE;
@@ -1039,11 +1015,13 @@ retry:
         //
 
         OwnerEntry = ExpFindCurrentThread(Resource, 0, &LockHandle);
-        if (OwnerEntry == NULL) {
+        if (OwnerEntry == NULL)
+        {
             goto retry;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The resource is owned shared.
@@ -1054,11 +1032,13 @@ retry:
         //
 
         OwnerEntry = ExpFindCurrentThread(Resource, CurrentThread, &LockHandle);
-        if (OwnerEntry == NULL) {
+        if (OwnerEntry == NULL)
+        {
             goto retry;
         }
 
-        if (OwnerEntry->OwnerThread == CurrentThread) {
+        if (OwnerEntry->OwnerThread == CurrentThread)
+        {
             OwnerEntry->OwnerCount += 1;
 
             ASSERT(OwnerEntry->OwnerCount != 0);
@@ -1085,7 +1065,8 @@ retry:
     // not acquired.
     //
 
-    if (Wait == FALSE) {
+    if (Wait == FALSE)
+    {
         EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
         return FALSE;
     }
@@ -1095,7 +1076,8 @@ retry:
     // long path must be taken.
     //
 
-    if (Resource->SharedWaiters == NULL) {
+    if (Resource->SharedWaiters == NULL)
+    {
         ExpAllocateSharedWaiterSemaphore(Resource, &LockHandle);
         goto retry;
     }
@@ -1112,12 +1094,9 @@ retry:
     ExpWaitForResource(Resource, Resource->SharedWaiters);
     return TRUE;
 }
-
+
 BOOLEAN
-ExAcquireSharedWaitForExclusive(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    )
+ExAcquireSharedWaitForExclusive(IN PERESOURCE Resource, IN BOOLEAN Wait)
 /*++
 
 Routine Description:
@@ -1165,7 +1144,8 @@ Return Value:
     //
 
 retry:
-    if (Resource->ActiveCount == 0) {
+    if (Resource->ActiveCount == 0)
+    {
         Resource->OwnerThreads[1].OwnerThread = CurrentThread;
         Resource->OwnerThreads[1].OwnerCount = 1;
         Resource->ActiveCount = 1;
@@ -1181,8 +1161,10 @@ retry:
     // increment the recursion count. Otherwise, it is owned shared.
     //
 
-    if (IsOwnedExclusive(Resource)) {
-        if (Resource->OwnerThreads[0].OwnerThread == CurrentThread) {
+    if (IsOwnedExclusive(Resource))
+    {
+        if (Resource->OwnerThreads[0].OwnerThread == CurrentThread)
+        {
             Resource->OwnerThreads[0].OwnerCount += 1;
             EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
             return TRUE;
@@ -1193,11 +1175,13 @@ retry:
         //
 
         OwnerEntry = ExpFindCurrentThread(Resource, 0, &LockHandle);
-        if (OwnerEntry == NULL) {
+        if (OwnerEntry == NULL)
+        {
             goto retry;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The resource is owned shared.
@@ -1210,7 +1194,8 @@ retry:
         // to the current thread.
         //
 
-        if (IsExclusiveWaiting(Resource)) {
+        if (IsExclusiveWaiting(Resource))
+        {
 
             //
             // The resource is shared, but there is an exclusive waiter.
@@ -1242,7 +1227,8 @@ retry:
             // not acquired.
             //
 
-            if (Wait == FALSE) {
+            if (Wait == FALSE)
+            {
                 EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
                 return FALSE;
             }
@@ -1252,7 +1238,8 @@ retry:
             // allocate and initialize it.
             //
 
-            if (Resource->SharedWaiters == NULL) {
+            if (Resource->SharedWaiters == NULL)
+            {
                 ExpAllocateSharedWaiterSemaphore(Resource, &LockHandle);
                 goto retry;
             }
@@ -1283,10 +1270,9 @@ retry:
             //
 
             EXP_LOCK_RESOURCE(Resource, &LockHandle);
-            do {
-            } while ((OwnerEntry = ExpFindCurrentThread(Resource,
-                                                        CurrentThread,
-                                                        &LockHandle)) == NULL);
+            do
+            {
+            } while ((OwnerEntry = ExpFindCurrentThread(Resource, CurrentThread, &LockHandle)) == NULL);
 
             ASSERT(IsOwnedExclusive(Resource) == FALSE);
             ASSERT(Resource->ActiveCount > 0);
@@ -1296,14 +1282,17 @@ retry:
             OwnerEntry->OwnerCount = 1;
             EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
             return TRUE;
-
-        } else {
+        }
+        else
+        {
             OwnerEntry = ExpFindCurrentThread(Resource, CurrentThread, &LockHandle);
-            if (OwnerEntry == NULL) {
+            if (OwnerEntry == NULL)
+            {
                 goto retry;
             }
 
-            if (OwnerEntry->OwnerThread == CurrentThread) {
+            if (OwnerEntry->OwnerThread == CurrentThread)
+            {
                 OwnerEntry->OwnerCount += 1;
 
                 ASSERT(OwnerEntry->OwnerCount != 0);
@@ -1331,7 +1320,8 @@ retry:
     // not acquired.
     //
 
-    if (Wait == FALSE) {
+    if (Wait == FALSE)
+    {
         EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
         return FALSE;
     }
@@ -1341,7 +1331,8 @@ retry:
     // and initialize it.
     //
 
-    if (Resource->SharedWaiters == NULL) {
+    if (Resource->SharedWaiters == NULL)
+    {
         ExpAllocateSharedWaiterSemaphore(Resource, &LockHandle);
         goto retry;
     }
@@ -1358,12 +1349,8 @@ retry:
     ExpWaitForResource(Resource, Resource->SharedWaiters);
     return TRUE;
 }
-
-VOID
-FASTCALL
-ExReleaseResourceLite(
-    IN PERESOURCE Resource
-    )
+
+VOID FASTCALL ExReleaseResourceLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -1405,9 +1392,7 @@ Return Value:
     // Resource release must be protected from thread suspends.
     //
 
-    EX_ENSURE_APCS_DISABLED (LockHandle.OldIrql,
-                             Resource,
-                             KeGetCurrentThread());
+    EX_ENSURE_APCS_DISABLED(LockHandle.OldIrql, Resource, KeGetCurrentThread());
 
     //
     // If the resource is exclusively owned, then release exclusive
@@ -1417,7 +1402,8 @@ Return Value:
     //      frequency function.
     //
 
-    if (IsOwnedExclusive(Resource)) {
+    if (IsOwnedExclusive(Resource))
+    {
 
 #if DBG
         //
@@ -1427,12 +1413,10 @@ Return Value:
         // should convert to using ExReleaseResourceForThreadLite instead.
         //
 
-        if (Resource->OwnerThreads[0].OwnerThread != CurrentThread) {
-            KeBugCheckEx(RESOURCE_NOT_OWNED,
-                         (ULONG_PTR)Resource,
-                         (ULONG_PTR)CurrentThread,
-                         (ULONG_PTR)Resource->OwnerTable,
-                         0x1);
+        if (Resource->OwnerThreads[0].OwnerThread != CurrentThread)
+        {
+            KeBugCheckEx(RESOURCE_NOT_OWNED, (ULONG_PTR)Resource, (ULONG_PTR)CurrentThread,
+                         (ULONG_PTR)Resource->OwnerTable, 0x1);
         }
 #endif
 
@@ -1443,7 +1427,8 @@ Return Value:
 
         ASSERT(Resource->OwnerThreads[0].OwnerCount > 0);
 
-        if (--Resource->OwnerThreads[0].OwnerCount != 0) {
+        if (--Resource->OwnerThreads[0].OwnerCount != 0)
+        {
             EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
             return;
         }
@@ -1463,7 +1448,8 @@ Return Value:
 
         ASSERT(Resource->ActiveCount > 0);
 
-        if (--Resource->ActiveCount == 0) {
+        if (--Resource->ActiveCount == 0)
+        {
 
             //
             // If there are shared waiters, then grant shared access to the
@@ -1471,16 +1457,18 @@ Return Value:
             // exclusive waiters.
             //
 
-            if (IsSharedWaiting(Resource)) {
+            if (IsSharedWaiting(Resource))
+            {
                 Resource->Flag &= ~ResourceOwnedExclusive;
                 Number = Resource->NumberOfSharedWaiters;
-                Resource->ActiveCount =  (SHORT)Number;
+                Resource->ActiveCount = (SHORT)Number;
                 Resource->NumberOfSharedWaiters = 0;
                 EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
                 KeReleaseSemaphore(Resource->SharedWaiters, 0, Number, FALSE);
                 return;
-
-            } else if (IsExclusiveWaiting(Resource)) {
+            }
+            else if (IsExclusiveWaiting(Resource))
+            {
                 Resource->OwnerThreads[0].OwnerThread = 1;
                 Resource->OwnerThreads[0].OwnerCount = 1;
                 Resource->ActiveCount = 1;
@@ -1493,24 +1481,26 @@ Return Value:
 
             Resource->Flag &= ~ResourceOwnedExclusive;
         }
-
-    } else {
-        if (Resource->OwnerThreads[1].OwnerThread == CurrentThread) {
+    }
+    else
+    {
+        if (Resource->OwnerThreads[1].OwnerThread == CurrentThread)
+        {
             OwnerEntry = &Resource->OwnerThreads[1];
-
-        } else if (Resource->OwnerThreads[0].OwnerThread == CurrentThread) {
+        }
+        else if (Resource->OwnerThreads[0].OwnerThread == CurrentThread)
+        {
             OwnerEntry = &Resource->OwnerThreads[0];
-
-        } else {
+        }
+        else
+        {
             Index = ((PKTHREAD)(CurrentThread))->ResourceIndex;
             OwnerEntry = Resource->OwnerTable;
 
-            if (OwnerEntry == NULL) {
-                KeBugCheckEx(RESOURCE_NOT_OWNED,
-                             (ULONG_PTR)Resource,
-                             (ULONG_PTR)CurrentThread,
-                             (ULONG_PTR)Resource->OwnerTable,
-                             0x2);
+            if (OwnerEntry == NULL)
+            {
+                KeBugCheckEx(RESOURCE_NOT_OWNED, (ULONG_PTR)Resource, (ULONG_PTR)CurrentThread,
+                             (ULONG_PTR)Resource->OwnerTable, 0x2);
             }
 
             //
@@ -1519,24 +1509,25 @@ Return Value:
             // the owner table for a match.
             //
 
-            if ((Index >= OwnerEntry->TableSize) ||
-                (OwnerEntry[Index].OwnerThread != CurrentThread)) {
+            if ((Index >= OwnerEntry->TableSize) || (OwnerEntry[Index].OwnerThread != CurrentThread))
+            {
                 OwnerEnd = &OwnerEntry[OwnerEntry->TableSize];
-                while (1) {
+                while (1)
+                {
                     OwnerEntry += 1;
-                    if (OwnerEntry >= OwnerEnd) {
-                       KeBugCheckEx(RESOURCE_NOT_OWNED,
-                             (ULONG_PTR)Resource,
-                             (ULONG_PTR)CurrentThread,
-                             (ULONG_PTR)Resource->OwnerTable,
-                             0x3);
+                    if (OwnerEntry >= OwnerEnd)
+                    {
+                        KeBugCheckEx(RESOURCE_NOT_OWNED, (ULONG_PTR)Resource, (ULONG_PTR)CurrentThread,
+                                     (ULONG_PTR)Resource->OwnerTable, 0x3);
                     }
-                    if (OwnerEntry->OwnerThread == CurrentThread) {
+                    if (OwnerEntry->OwnerThread == CurrentThread)
+                    {
                         break;
                     }
                 }
-
-            } else {
+            }
+            else
+            {
                 OwnerEntry = &OwnerEntry[Index];
             }
         }
@@ -1549,7 +1540,8 @@ Return Value:
         ASSERT(OwnerEntry->OwnerThread == CurrentThread);
         ASSERT(OwnerEntry->OwnerCount > 0);
 
-        if (--OwnerEntry->OwnerCount != 0) {
+        if (--OwnerEntry->OwnerCount != 0)
+        {
             EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
             return;
         }
@@ -1569,14 +1561,16 @@ Return Value:
 
         ASSERT(Resource->ActiveCount > 0);
 
-        if (--Resource->ActiveCount == 0) {
+        if (--Resource->ActiveCount == 0)
+        {
 
             //
             // If there are exclusive waiters, then grant exclusive access
             // to the resource.
             //
 
-            if (IsExclusiveWaiting(Resource)) {
+            if (IsExclusiveWaiting(Resource))
+            {
                 Resource->Flag |= ResourceOwnedExclusive;
                 Resource->OwnerThreads[0].OwnerThread = 1;
                 Resource->OwnerThreads[0].OwnerCount = 1;
@@ -1594,12 +1588,8 @@ Return Value:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return;
 }
-
-VOID
-ExReleaseResourceForThreadLite(
-    IN PERESOURCE Resource,
-    IN ERESOURCE_THREAD CurrentThread
-    )
+
+VOID ExReleaseResourceForThreadLite(IN PERESOURCE Resource, IN ERESOURCE_THREAD CurrentThread)
 
 /*++
 
@@ -1642,9 +1632,7 @@ Return Value:
     // Resource release must be protected from thread suspends.
     //
 
-    EX_ENSURE_APCS_DISABLED (LockHandle.OldIrql,
-                             Resource,
-                             KeGetCurrentThread());
+    EX_ENSURE_APCS_DISABLED(LockHandle.OldIrql, Resource, KeGetCurrentThread());
 
     //
     // If the resource is exclusively owned, then release exclusive
@@ -1654,7 +1642,8 @@ Return Value:
     //      frequency function.
     //
 
-    if (IsOwnedExclusive(Resource)) {
+    if (IsOwnedExclusive(Resource))
+    {
 
         ASSERT(Resource->OwnerThreads[0].OwnerThread == CurrentThread);
 
@@ -1665,7 +1654,8 @@ Return Value:
 
         ASSERT(Resource->OwnerThreads[0].OwnerCount > 0);
 
-        if (--Resource->OwnerThreads[0].OwnerCount != 0) {
+        if (--Resource->OwnerThreads[0].OwnerCount != 0)
+        {
             EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
             return;
         }
@@ -1685,7 +1675,8 @@ Return Value:
 
         ASSERT(Resource->ActiveCount > 0);
 
-        if (--Resource->ActiveCount == 0) {
+        if (--Resource->ActiveCount == 0)
+        {
 
             //
             // If there are shared waiters, then grant shared access to the
@@ -1693,16 +1684,18 @@ Return Value:
             // exclusive waiters.
             //
 
-            if (IsSharedWaiting(Resource)) {
+            if (IsSharedWaiting(Resource))
+            {
                 Resource->Flag &= ~ResourceOwnedExclusive;
                 Number = Resource->NumberOfSharedWaiters;
-                Resource->ActiveCount =  (SHORT)Number;
+                Resource->ActiveCount = (SHORT)Number;
                 Resource->NumberOfSharedWaiters = 0;
                 EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
                 KeReleaseSemaphore(Resource->SharedWaiters, 0, Number, FALSE);
                 return;
-
-            } else if (IsExclusiveWaiting(Resource)) {
+            }
+            else if (IsExclusiveWaiting(Resource))
+            {
                 Resource->OwnerThreads[0].OwnerThread = 1;
                 Resource->OwnerThreads[0].OwnerCount = 1;
                 Resource->ActiveCount = 1;
@@ -1716,15 +1709,19 @@ Return Value:
 
             Resource->Flag &= ~ResourceOwnedExclusive;
         }
-
-    } else {
-        if (Resource->OwnerThreads[1].OwnerThread == CurrentThread) {
+    }
+    else
+    {
+        if (Resource->OwnerThreads[1].OwnerThread == CurrentThread)
+        {
             OwnerEntry = &Resource->OwnerThreads[1];
-
-        } else if (Resource->OwnerThreads[0].OwnerThread == CurrentThread) {
+        }
+        else if (Resource->OwnerThreads[0].OwnerThread == CurrentThread)
+        {
             OwnerEntry = &Resource->OwnerThreads[0];
-
-        } else {
+        }
+        else
+        {
 
             //
             // If the specified current thread is an owner address (low
@@ -1733,7 +1730,8 @@ Return Value:
             //
 
             Index = 1;
-            if (((ULONG)CurrentThread & 3) == 0) {
+            if (((ULONG)CurrentThread & 3) == 0)
+            {
                 Index = ((PKTHREAD)(CurrentThread))->ResourceIndex;
             }
 
@@ -1747,24 +1745,25 @@ Return Value:
             // the owner table for a match.
             //
 
-            if ((Index >= OwnerEntry->TableSize) ||
-                (OwnerEntry[Index].OwnerThread != CurrentThread)) {
+            if ((Index >= OwnerEntry->TableSize) || (OwnerEntry[Index].OwnerThread != CurrentThread))
+            {
                 OwnerEnd = &OwnerEntry[OwnerEntry->TableSize];
-                while (1) {
+                while (1)
+                {
                     OwnerEntry += 1;
-                    if (OwnerEntry >= OwnerEnd) {
-                       KeBugCheckEx(RESOURCE_NOT_OWNED,
-                             (ULONG_PTR)Resource,
-                             (ULONG_PTR)CurrentThread,
-                             (ULONG_PTR)Resource->OwnerTable,
-                             0x3);
+                    if (OwnerEntry >= OwnerEnd)
+                    {
+                        KeBugCheckEx(RESOURCE_NOT_OWNED, (ULONG_PTR)Resource, (ULONG_PTR)CurrentThread,
+                                     (ULONG_PTR)Resource->OwnerTable, 0x3);
                     }
-                    if (OwnerEntry->OwnerThread == CurrentThread) {
+                    if (OwnerEntry->OwnerThread == CurrentThread)
+                    {
                         break;
                     }
                 }
-
-            } else {
+            }
+            else
+            {
                 OwnerEntry = &OwnerEntry[Index];
             }
         }
@@ -1777,7 +1776,8 @@ Return Value:
         ASSERT(OwnerEntry->OwnerThread == CurrentThread);
         ASSERT(OwnerEntry->OwnerCount > 0);
 
-        if (--OwnerEntry->OwnerCount != 0) {
+        if (--OwnerEntry->OwnerCount != 0)
+        {
             EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
             return;
         }
@@ -1797,14 +1797,16 @@ Return Value:
 
         ASSERT(Resource->ActiveCount > 0);
 
-        if (--Resource->ActiveCount == 0) {
+        if (--Resource->ActiveCount == 0)
+        {
 
             //
             // If there are exclusive waiters, then grant exclusive access
             // to the resource.
             //
 
-            if (IsExclusiveWaiting(Resource)) {
+            if (IsExclusiveWaiting(Resource))
+            {
                 Resource->Flag |= ResourceOwnedExclusive;
                 Resource->OwnerThreads[0].OwnerThread = 1;
                 Resource->OwnerThreads[0].OwnerCount = 1;
@@ -1822,12 +1824,8 @@ Return Value:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return;
 }
-
-VOID
-ExSetResourceOwnerPointer(
-    IN PERESOURCE Resource,
-    IN PVOID OwnerPointer
-    )
+
+VOID ExSetResourceOwnerPointer(IN PERESOURCE Resource, IN PVOID OwnerPointer)
 
 /*++
 
@@ -1885,7 +1883,8 @@ Return Value:
     // If the resource is exclusively owned, then it is the first owner entry.
     //
 
-    if (IsOwnedExclusive(Resource)) {
+    if (IsOwnedExclusive(Resource))
+    {
 
         ASSERT(Resource->OwnerThreads[0].OwnerThread == CurrentThread);
 
@@ -1897,19 +1896,23 @@ Return Value:
 
         Resource->OwnerThreads[0].OwnerThread = (ULONG_PTR)OwnerPointer;
 
-    //
-    //  For shared access we have to search for the current thread to set
-    //  the owner address.
-    //
-
-    } else {
-        if (Resource->OwnerThreads[1].OwnerThread == CurrentThread) {
+        //
+        //  For shared access we have to search for the current thread to set
+        //  the owner address.
+        //
+    }
+    else
+    {
+        if (Resource->OwnerThreads[1].OwnerThread == CurrentThread)
+        {
             Resource->OwnerThreads[1].OwnerThread = (ULONG_PTR)OwnerPointer;
-
-        } else if (Resource->OwnerThreads[0].OwnerThread == CurrentThread) {
+        }
+        else if (Resource->OwnerThreads[0].OwnerThread == CurrentThread)
+        {
             Resource->OwnerThreads[0].OwnerThread = (ULONG_PTR)OwnerPointer;
-
-        } else {
+        }
+        else
+        {
             Index = ((PKTHREAD)(CurrentThread))->ResourceIndex;
             OwnerEntry = Resource->OwnerTable;
 
@@ -1921,24 +1924,25 @@ Return Value:
             // the owner table for a match.
             //
 
-            if ((Index >= OwnerEntry->TableSize) ||
-                (OwnerEntry[Index].OwnerThread != CurrentThread)) {
+            if ((Index >= OwnerEntry->TableSize) || (OwnerEntry[Index].OwnerThread != CurrentThread))
+            {
                 OwnerEnd = &OwnerEntry[OwnerEntry->TableSize];
-                while (1) {
+                while (1)
+                {
                     OwnerEntry += 1;
-                    if (OwnerEntry >= OwnerEnd) {
-                       KeBugCheckEx(RESOURCE_NOT_OWNED,
-                             (ULONG_PTR)Resource,
-                             (ULONG_PTR)CurrentThread,
-                             (ULONG_PTR)Resource->OwnerTable,
-                             0x3);
+                    if (OwnerEntry >= OwnerEnd)
+                    {
+                        KeBugCheckEx(RESOURCE_NOT_OWNED, (ULONG_PTR)Resource, (ULONG_PTR)CurrentThread,
+                                     (ULONG_PTR)Resource->OwnerTable, 0x3);
                     }
-                    if (OwnerEntry->OwnerThread == CurrentThread) {
+                    if (OwnerEntry->OwnerThread == CurrentThread)
+                    {
                         break;
                     }
                 }
-
-            } else {
+            }
+            else
+            {
                 OwnerEntry = &OwnerEntry[Index];
             }
 
@@ -1949,11 +1953,8 @@ Return Value:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return;
 }
-
-VOID
-ExConvertExclusiveToSharedLite(
-    IN PERESOURCE Resource
-    )
+
+VOID ExConvertExclusiveToSharedLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -1998,7 +1999,8 @@ Return Value:
     // If there are any shared waiters, then grant them shared access.
     //
 
-    if (IsSharedWaiting(Resource)) {
+    if (IsSharedWaiting(Resource))
+    {
         Number = Resource->NumberOfSharedWaiters;
         Resource->ActiveCount = (SHORT)(Resource->ActiveCount + Number);
         Resource->NumberOfSharedWaiters = 0;
@@ -2010,11 +2012,9 @@ Return Value:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return;
 }
-
+
 NTSTATUS
-ExDeleteResourceLite(
-    IN PERESOURCE Resource
-    )
+ExDeleteResourceLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -2074,12 +2074,12 @@ Return Value:
     Hash = ((Hash >> 24) ^ (Hash >> 16) ^ (Hash >> 8) ^ (Hash)) & (RESOURCE_HASH_TABLE_SIZE - 1);
     MatchEntry = NULL;
     NextEntry = ExpResourcePerformanceData.HashTable[Hash].Flink;
-    while (NextEntry != &ExpResourcePerformanceData.HashTable[Hash]) {
-        HashEntry = CONTAINING_RECORD(NextEntry,
-                                      RESOURCE_HASH_ENTRY,
-                                      ListEntry);
+    while (NextEntry != &ExpResourcePerformanceData.HashTable[Hash])
+    {
+        HashEntry = CONTAINING_RECORD(NextEntry, RESOURCE_HASH_ENTRY, ListEntry);
 
-        if (HashEntry->Address == Resource->Address) {
+        if (HashEntry->Address == Resource->Address)
+        {
             MatchEntry = HashEntry;
             break;
         }
@@ -2093,21 +2093,21 @@ Return Value:
     // call site statistics.
     //
 
-    if (MatchEntry != NULL) {
+    if (MatchEntry != NULL)
+    {
         MatchEntry->ContentionCount += Resource->ContentionCount;
         MatchEntry->Number += 1;
+    }
+    else
+    {
+        MatchEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(RESOURCE_HASH_ENTRY), 'vEpR');
 
-    } else {
-        MatchEntry = ExAllocatePoolWithTag(NonPagedPool,
-                                          sizeof(RESOURCE_HASH_ENTRY),
-                                          'vEpR');
-
-        if (MatchEntry != NULL) {
+        if (MatchEntry != NULL)
+        {
             MatchEntry->Address = Resource->Address;
             MatchEntry->ContentionCount = Resource->ContentionCount;
             MatchEntry->Number = 1;
-            InsertTailList(&ExpResourcePerformanceData.HashTable[Hash],
-                           &MatchEntry->ListEntry);
+            InsertTailList(&ExpResourcePerformanceData.HashTable[Hash], &MatchEntry->ListEntry);
         }
     }
 
@@ -2121,7 +2121,8 @@ Return Value:
     // If an owner table was allocated, then free it to pool.
     //
 
-    if (Resource->OwnerTable != NULL) {
+    if (Resource->OwnerTable != NULL)
+    {
         ExFreePool(Resource->OwnerTable);
     }
 
@@ -2129,7 +2130,8 @@ Return Value:
     // If a semaphore was allocated, then free it to pool.
     //
 
-    if (Resource->SharedWaiters) {
+    if (Resource->SharedWaiters)
+    {
         ExFreePool(Resource->SharedWaiters);
     }
 
@@ -2137,17 +2139,16 @@ Return Value:
     // If an event was allocated, then free it to pool.
     //
 
-    if (Resource->ExclusiveWaiters) {
+    if (Resource->ExclusiveWaiters)
+    {
         ExFreePool(Resource->ExclusiveWaiters);
     }
 
     return STATUS_SUCCESS;
 }
-
+
 ULONG
-ExGetExclusiveWaiterCount(
-    IN PERESOURCE Resource
-    )
+ExGetExclusiveWaiterCount(IN PERESOURCE Resource)
 
 /*++
 
@@ -2170,11 +2171,9 @@ Return Value:
 {
     return Resource->NumberOfExclusiveWaiters;
 }
-
+
 ULONG
-ExGetSharedWaiterCount(
-    IN PERESOURCE Resource
-    )
+ExGetSharedWaiterCount(IN PERESOURCE Resource)
 
 /*++
 
@@ -2197,11 +2196,9 @@ Return Value:
 {
     return Resource->NumberOfSharedWaiters;
 }
-
+
 BOOLEAN
-ExIsResourceAcquiredExclusiveLite(
-    IN PERESOURCE Resource
-    )
+ExIsResourceAcquiredExclusiveLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -2243,8 +2240,8 @@ Return Value:
     //
 
     Result = FALSE;
-    if ((IsOwnedExclusive(Resource)) &&
-        (Resource->OwnerThreads[0].OwnerThread == CurrentThread)) {
+    if ((IsOwnedExclusive(Resource)) && (Resource->OwnerThreads[0].OwnerThread == CurrentThread))
+    {
         Result = TRUE;
     }
 
@@ -2255,11 +2252,9 @@ Return Value:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return Result;
 }
-
+
 ULONG
-ExIsResourceAcquiredSharedLite(
-    IN PERESOURCE Resource
-    )
+ExIsResourceAcquiredSharedLite(IN PERESOURCE Resource)
 
 /*++
 
@@ -2303,13 +2298,16 @@ Return Value:
     // N.B. If the thread is not found a value of zero will be returned.
     //
 
-    if (Resource->OwnerThreads[0].OwnerThread == CurrentThread) {
+    if (Resource->OwnerThreads[0].OwnerThread == CurrentThread)
+    {
         Result = Resource->OwnerThreads[0].OwnerCount;
-
-    } else if (Resource->OwnerThreads[1].OwnerThread == CurrentThread) {
+    }
+    else if (Resource->OwnerThreads[1].OwnerThread == CurrentThread)
+    {
         Result = Resource->OwnerThreads[1].OwnerCount;
-
-    } else {
+    }
+    else
+    {
 
         //
         // If the resource hint is not within range or the resource table
@@ -2319,20 +2317,24 @@ Return Value:
 
         OwnerEntry = Resource->OwnerTable;
         Result = 0;
-        if (OwnerEntry != NULL) {
+        if (OwnerEntry != NULL)
+        {
             Index = ((PKTHREAD)(CurrentThread))->ResourceIndex;
             Number = OwnerEntry->TableSize;
-            if ((Index >= Number) ||
-                (OwnerEntry[Index].OwnerThread != CurrentThread)) {
-                for (Index = 1; Index < Number; Index += 1) {
+            if ((Index >= Number) || (OwnerEntry[Index].OwnerThread != CurrentThread))
+            {
+                for (Index = 1; Index < Number; Index += 1)
+                {
                     OwnerEntry += 1;
-                    if (OwnerEntry->OwnerThread == CurrentThread) {
+                    if (OwnerEntry->OwnerThread == CurrentThread)
+                    {
                         Result = OwnerEntry->OwnerCount;
                         break;
                     }
                 }
-
-            } else {
+            }
+            else
+            {
                 Result = OwnerEntry[Index].OwnerCount;
             }
         }
@@ -2345,13 +2347,10 @@ Return Value:
     EXP_UNLOCK_RESOURCE(Resource, &LockHandle);
     return Result;
 }
-
+
 NTSTATUS
-ExQuerySystemLockInformation(
-    OUT PRTL_PROCESS_LOCKS LockInformation,
-    IN ULONG LockInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+ExQuerySystemLockInformation(OUT PRTL_PROCESS_LOCKS LockInformation, IN ULONG LockInformationLength,
+                             OUT PULONG ReturnLength OPTIONAL)
 
 {
 
@@ -2364,29 +2363,33 @@ ExQuerySystemLockInformation(
     PETHREAD OwningThread;
 
     RequiredLength = FIELD_OFFSET(RTL_PROCESS_LOCKS, Locks);
-    if (LockInformationLength < RequiredLength) {
+    if (LockInformationLength < RequiredLength)
+    {
         Status = STATUS_INFO_LENGTH_MISMATCH;
-
-    } else {
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
         ExAcquireSpinLock(&ExpResourceSpinLock, &OldIrql);
-        try {
+        try
+        {
             LockInformation->NumberOfLocks = 0;
             LockInfo = &LockInformation->Locks[0];
             Head = &ExpSystemResourcesList;
             Next = Head->Flink;
-            while (Next != Head) {
-                Resource = CONTAINING_RECORD(Next,
-                                             ERESOURCE,
-                                             SystemResourcesList);
+            while (Next != Head)
+            {
+                Resource = CONTAINING_RECORD(Next, ERESOURCE, SystemResourcesList);
 
                 LockInformation->NumberOfLocks += 1;
                 RequiredLength += sizeof(RTL_PROCESS_LOCK_INFORMATION);
 
-                if (LockInformationLength < RequiredLength) {
+                if (LockInformationLength < RequiredLength)
+                {
                     Status = STATUS_INFO_LENGTH_MISMATCH;
-
-                } else {
+                }
+                else
+                {
                     LockInfo->Address = Resource;
                     LockInfo->Type = RTL_RESOURCE_TYPE;
                     LockInfo->CreatorBackTraceIndex = 0;
@@ -2395,11 +2398,13 @@ ExQuerySystemLockInformation(
 #endif // i386 && !FPO
 
                     if ((Resource->OwnerThreads[0].OwnerThread != 0) &&
-                        ((Resource->OwnerThreads[0].OwnerThread & 3) == 0)) {
+                        ((Resource->OwnerThreads[0].OwnerThread & 3) == 0))
+                    {
                         OwningThread = (PETHREAD)(Resource->OwnerThreads[0].OwnerThread);
                         LockInfo->OwningThread = OwningThread->Cid.UniqueThread;
-
-                    } else {
+                    }
+                    else
+                    {
                         LockInfo->OwningThread = 0;
                     }
 
@@ -2410,32 +2415,31 @@ ExQuerySystemLockInformation(
                     LockInfo += 1;
                 }
 
-                if (Next == Next->Flink) {
+                if (Next == Next->Flink)
+                {
                     Next = Head;
-
-                } else {
+                }
+                else
+                {
                     Next = Next->Flink;
                 }
             }
-
-        } finally {
+        }
+        finally
+        {
             ExReleaseSpinLock(&ExpResourceSpinLock, OldIrql);
         }
     }
 
-    if (ARGUMENT_PRESENT(ReturnLength)) {
+    if (ARGUMENT_PRESENT(ReturnLength))
+    {
         *ReturnLength = RequiredLength;
     }
 
     return Status;
 }
-
-VOID
-FASTCALL
-ExpBoostOwnerThread (
-    IN PKTHREAD CurrentThread,
-    IN PKTHREAD OwnerThread
-    )
+
+VOID FASTCALL ExpBoostOwnerThread(IN PKTHREAD CurrentThread, IN PKTHREAD OwnerThread)
 /*++
 
 Routine Description:
@@ -2470,9 +2474,10 @@ Return Value:
     //      the thread will return to its priority before any boosting.
     //
 
-    if (((ULONG_PTR)OwnerThread & 0x3) == 0) {
-        if ((OwnerThread->Priority < CurrentThread->Priority) &&
-            (OwnerThread->Priority < 14)) {
+    if (((ULONG_PTR)OwnerThread & 0x3) == 0)
+    {
+        if ((OwnerThread->Priority < CurrentThread->Priority) && (OwnerThread->Priority < 14))
+        {
             OwnerThread->PriorityDecrement += 14 - OwnerThread->Priority;
             OwnerThread->DecrementCount = ROUND_TRIP_DECREMENT_COUNT;
             KiSetPriorityThread(OwnerThread, 14);
@@ -2482,13 +2487,8 @@ Return Value:
 
     return;
 }
-
-VOID
-FASTCALL
-ExpWaitForResource (
-    IN PERESOURCE Resource,
-    IN PVOID Object
-    )
+
+VOID FASTCALL ExpWaitForResource(IN PERESOURCE Resource, IN PVOID Object)
 /*++
 
 Routine Description:
@@ -2533,15 +2533,12 @@ Return Value:
     Limit = 0;
     Resource->ContentionCount += 1;
     Timeout.QuadPart = 500 * -10000;
-    do {
-        Status = KeWaitForSingleObject (
-                        Object,
-                        Executive,
-                        KernelMode,
-                        FALSE,
-                        &Timeout );
+    do
+    {
+        Status = KeWaitForSingleObject(Object, Executive, KernelMode, FALSE, &Timeout);
 
-        if (Status != STATUS_TIMEOUT) {
+        if (Status != STATUS_TIMEOUT)
+        {
             break;
         }
 
@@ -2551,7 +2548,8 @@ Return Value:
 
         Limit += 1;
         Timeout = ExpTimeout;
-        if (Limit > ExResourceTimeoutCount) {
+        if (Limit > ExResourceTimeoutCount)
+        {
             Limit = 0;
 
 #if DBG
@@ -2561,30 +2559,27 @@ Return Value:
 
             EXP_LOCK_RESOURCE(Resource, &LockHandle);
             DbgPrint("Resource @ %p\n", Resource);
-            DbgPrint(" ActiveCount = %04lx  Flags = %s%s%s\n",
-                     Resource->ActiveCount,
+            DbgPrint(" ActiveCount = %04lx  Flags = %s%s%s\n", Resource->ActiveCount,
                      IsOwnedExclusive(Resource) ? "IsOwnedExclusive " : "",
-                     IsSharedWaiting(Resource) ? "SharedWaiter "     : "",
-                     IsExclusiveWaiting(Resource) ? "ExclusiveWaiter "  : "");
+                     IsSharedWaiting(Resource) ? "SharedWaiter " : "",
+                     IsExclusiveWaiting(Resource) ? "ExclusiveWaiter " : "");
 
             DbgPrint(" NumberOfExclusiveWaiters = %04lx\n", Resource->NumberOfExclusiveWaiters);
 
-            DbgPrint("  Thread = %p, Count = %02x\n",
-                     Resource->OwnerThreads[0].OwnerThread,
+            DbgPrint("  Thread = %p, Count = %02x\n", Resource->OwnerThreads[0].OwnerThread,
                      Resource->OwnerThreads[0].OwnerCount);
 
-            DbgPrint("  Thread = %p, Count = %02x\n",
-                     Resource->OwnerThreads[1].OwnerThread,
+            DbgPrint("  Thread = %p, Count = %02x\n", Resource->OwnerThreads[1].OwnerThread,
                      Resource->OwnerThreads[1].OwnerCount);
 
             OwnerEntry = Resource->OwnerTable;
-            if (OwnerEntry != NULL) {
+            if (OwnerEntry != NULL)
+            {
                 Number = OwnerEntry->TableSize;
-                for(Index = 1; Index < Number; Index += 1) {
+                for (Index = 1; Index < Number; Index += 1)
+                {
                     OwnerEntry += 1;
-                    DbgPrint("  Thread = %p, Count = %02x\n",
-                             OwnerEntry->OwnerThread,
-                             OwnerEntry->OwnerCount);
+                    DbgPrint("  Thread = %p, Count = %02x\n", OwnerEntry->OwnerThread, OwnerEntry->OwnerCount);
                 }
             }
 
@@ -2599,7 +2594,8 @@ Return Value:
         // of owner threads.
         //
 
-        if (IsBoostAllowed(Resource)) {
+        if (IsBoostAllowed(Resource))
+        {
 
             //
             // Get the current thread address, lock the dispatcher database,
@@ -2630,7 +2626,8 @@ Return Value:
             //
 
             OwnerThread = (PKTHREAD)Resource->OwnerThreads[0].OwnerThread;
-            if (OwnerThread != NULL) {
+            if (OwnerThread != NULL)
+            {
                 ExpBoostOwnerThread(CurrentThread, OwnerThread);
             }
 
@@ -2639,19 +2636,24 @@ Return Value:
             // to boost all the owning shared threads priority.
             //
 
-            if (!IsOwnedExclusive(Resource)) {
+            if (!IsOwnedExclusive(Resource))
+            {
                 OwnerThread = (PKTHREAD)Resource->OwnerThreads[1].OwnerThread;
-                if (OwnerThread != NULL) {
+                if (OwnerThread != NULL)
+                {
                     ExpBoostOwnerThread(CurrentThread, OwnerThread);
                 }
 
                 OwnerEntry = Resource->OwnerTable;
-                if (OwnerEntry != NULL) {
+                if (OwnerEntry != NULL)
+                {
                     Number = OwnerEntry->TableSize;
-                    for(Index = 1; Index < Number; Index += 1) {
+                    for (Index = 1; Index < Number; Index += 1)
+                    {
                         OwnerEntry += 1;
                         OwnerThread = (PKTHREAD)OwnerEntry->OwnerThread;
-                        if (OwnerThread != NULL) {
+                        if (OwnerThread != NULL)
+                        {
                             ExpBoostOwnerThread(CurrentThread, OwnerThread);
                         }
                     }
@@ -2663,14 +2665,10 @@ Return Value:
 
     return;
 }
-
+
 POWNER_ENTRY
 FASTCALL
-ExpFindCurrentThread(
-    IN PERESOURCE Resource,
-    IN ERESOURCE_THREAD CurrentThread,
-    IN PEXP_LOCK_HANDLE LockHandle OPTIONAL
-    )
+ExpFindCurrentThread(IN PERESOURCE Resource, IN ERESOURCE_THREAD CurrentThread, IN PEXP_LOCK_HANDLE LockHandle OPTIONAL)
 
 /*++
 
@@ -2726,34 +2724,42 @@ Return Value:
     // entry.
     //
 
-    if (Resource->OwnerThreads[0].OwnerThread == CurrentThread) {
+    if (Resource->OwnerThreads[0].OwnerThread == CurrentThread)
+    {
         return &Resource->OwnerThreads[0];
-
-    } else if (Resource->OwnerThreads[1].OwnerThread == CurrentThread) {
+    }
+    else if (Resource->OwnerThreads[1].OwnerThread == CurrentThread)
+    {
         return &Resource->OwnerThreads[1];
-
-    } else {
+    }
+    else
+    {
         FreeEntry = NULL;
-        if (Resource->OwnerThreads[1].OwnerThread == 0) {
+        if (Resource->OwnerThreads[1].OwnerThread == 0)
+        {
             FreeEntry = &Resource->OwnerThreads[1];
         }
 
         OwnerEntry = Resource->OwnerTable;
-        if (OwnerEntry == NULL) {
+        if (OwnerEntry == NULL)
+        {
             OldSize = 0;
-
-        } else {
+        }
+        else
+        {
             OldSize = OwnerEntry->TableSize;
             OwnerBound = &OwnerEntry[OldSize];
             OwnerEntry += 1;
-            do {
-                if (OwnerEntry->OwnerThread == CurrentThread) {
+            do
+            {
+                if (OwnerEntry->OwnerThread == CurrentThread)
+                {
                     KeGetCurrentThread()->ResourceIndex = (UCHAR)(OwnerEntry - Resource->OwnerTable);
                     return OwnerEntry;
                 }
 
-                if ((FreeEntry == NULL) &&
-                    (OwnerEntry->OwnerThread == 0)) {
+                if ((FreeEntry == NULL) && (OwnerEntry->OwnerThread == 0))
+                {
                     FreeEntry = OwnerEntry;
                 }
 
@@ -2762,7 +2768,8 @@ Return Value:
         }
     }
 
-    if (!ARGUMENT_PRESENT(LockHandle)) {
+    if (!ARGUMENT_PRESENT(LockHandle))
+    {
 
         //
         // No argument indicates the caller does not want a free entry or
@@ -2779,7 +2786,8 @@ Return Value:
     // free entry. Otherwise, expand the size of the owner thread table.
     //
 
-    if (FreeEntry != NULL) {
+    if (FreeEntry != NULL)
+    {
         KeGetCurrentThread()->ResourceIndex = (UCHAR)(FreeEntry - Resource->OwnerTable);
         return FreeEntry;
     }
@@ -2791,28 +2799,29 @@ Return Value:
     ExpIncrementCounter(OwnerTableExpands);
     OldTable = Resource->OwnerTable;
     EXP_UNLOCK_RESOURCE(Resource, LockHandle);
-    if (OldSize == 0 ) {
+    if (OldSize == 0)
+    {
         NewSize = 3;
-
-    } else {
+    }
+    else
+    {
         NewSize = OldSize + 4;
     }
 
-    OwnerTable = ExAllocatePoolWithTag(NonPagedPool,
-                                       NewSize * sizeof(OWNER_ENTRY),
-                                       'aTeR');
+    OwnerTable = ExAllocatePoolWithTag(NonPagedPool, NewSize * sizeof(OWNER_ENTRY), 'aTeR');
 
-    if (OwnerTable == NULL) {
+    if (OwnerTable == NULL)
+    {
         KeDelayExecutionThread(KernelMode, FALSE, &ExShortTime);
-
-    } else {
+    }
+    else
+    {
 
         //
         // Zero the expansion area of the new owner table.
         //
 
-        RtlZeroMemory(OwnerTable + OldSize,
-                      (NewSize - OldSize) * sizeof(OWNER_ENTRY));
+        RtlZeroMemory(OwnerTable + OldSize, (NewSize - OldSize) * sizeof(OWNER_ENTRY));
 
         //
         // Acquire the resource lock and determine if the owner table
@@ -2824,15 +2833,14 @@ Return Value:
         //
 
         EXP_LOCK_RESOURCE(Resource, LockHandle);
-        if ((OldTable != Resource->OwnerTable) ||
-            ((OldTable != NULL) && (OldSize != OldTable->TableSize))) {
+        if ((OldTable != Resource->OwnerTable) || ((OldTable != NULL) && (OldSize != OldTable->TableSize)))
+        {
             EXP_UNLOCK_RESOURCE(Resource, LockHandle);
             ExFreePool(OwnerTable);
-
-        } else {
-            RtlCopyMemory(OwnerTable,
-                          OldTable,
-                          OldSize * sizeof(OWNER_ENTRY));
+        }
+        else
+        {
+            RtlCopyMemory(OwnerTable, OldTable, OldSize * sizeof(OWNER_ENTRY));
 
             //
             // Swapping of the owner table must be done while owning the
@@ -2850,7 +2858,8 @@ Return Value:
 
 #if defined(_COLLECT_RESOURCE_DATA_)
 
-            if (NewSize > ExpResourcePerformanceData.MaximumTableExpand) {
+            if (NewSize > ExpResourcePerformanceData.MaximumTableExpand)
+            {
                 ExpResourcePerformanceData.MaximumTableExpand = NewSize;
             }
 
@@ -2861,11 +2870,13 @@ Return Value:
             //
 
             EXP_UNLOCK_RESOURCE(Resource, LockHandle);
-            if (OldTable != NULL) {
+            if (OldTable != NULL)
+            {
                 ExFreePool(OldTable);
             }
 
-            if (OldSize == 0) {
+            if (OldSize == 0)
+            {
                 OldSize = 1;
             }
         }
@@ -2881,13 +2892,10 @@ Return Value:
     EXP_LOCK_RESOURCE(Resource, LockHandle);
     return NULL;
 }
-
+
 #if DBG
 
-VOID
-ExpAssertResource (
-    IN PERESOURCE Resource
-    )
+VOID ExpAssertResource(IN PERESOURCE Resource)
 
 {
     //
@@ -2896,26 +2904,19 @@ ExpAssertResource (
     // N.B. This routine is called with the resource lock held.
     //
 
-    ASSERT(!Resource->SharedWaiters ||
-           Resource->SharedWaiters->Header.Type == SemaphoreObject);
+    ASSERT(!Resource->SharedWaiters || Resource->SharedWaiters->Header.Type == SemaphoreObject);
 
-    ASSERT(!Resource->SharedWaiters ||
-           Resource->SharedWaiters->Header.Size == (sizeof(KSEMAPHORE) / sizeof(ULONG)));
+    ASSERT(!Resource->SharedWaiters || Resource->SharedWaiters->Header.Size == (sizeof(KSEMAPHORE) / sizeof(ULONG)));
 
-    ASSERT(!Resource->ExclusiveWaiters ||
-           Resource->ExclusiveWaiters->Header.Type == SynchronizationEvent);
+    ASSERT(!Resource->ExclusiveWaiters || Resource->ExclusiveWaiters->Header.Type == SynchronizationEvent);
 
-    ASSERT(!Resource->ExclusiveWaiters ||
-           Resource->ExclusiveWaiters->Header.Size == (sizeof(KEVENT) / sizeof(ULONG)));
+    ASSERT(!Resource->ExclusiveWaiters || Resource->ExclusiveWaiters->Header.Size == (sizeof(KEVENT) / sizeof(ULONG)));
 }
 
 #endif
 
 PVOID
-ExpCheckForResource (
-    IN PVOID p,
-    IN SIZE_T Size
-    )
+ExpCheckForResource(IN PVOID p, IN SIZE_T Size)
 
 {
 
@@ -2930,35 +2931,35 @@ ExpCheckForResource (
     // This can cause a deadlock on MP machines.
     //
 
-    if (KeNumberProcessors > 1) {
+    if (KeNumberProcessors > 1)
+    {
         return NULL;
     }
 
     BeginBlock = (PCHAR)p;
     EndBlock = (PCHAR)p + Size;
 
-    ExAcquireSpinLock (&ExpResourceSpinLock, &OldIrql);
+    ExAcquireSpinLock(&ExpResourceSpinLock, &OldIrql);
     Head = &ExpSystemResourcesList;
     Next = Head->Flink;
-    while (Next != Head) {
-        Resource = CONTAINING_RECORD(Next,
-                                     ERESOURCE,
-                                     SystemResourcesList);
+    while (Next != Head)
+    {
+        Resource = CONTAINING_RECORD(Next, ERESOURCE, SystemResourcesList);
 
-        if ((PCHAR)Resource >= BeginBlock && (PCHAR)Resource < EndBlock) {
+        if ((PCHAR)Resource >= BeginBlock && (PCHAR)Resource < EndBlock)
+        {
             DbgPrint("EX: ExFreePool( %p, %lx ) contains an ERESOURCE structure that has not been ExDeleteResourced\n",
-                     p,
-                     Size);
+                     p, Size);
 
-            DbgBreakPoint ();
+            DbgBreakPoint();
 
-            ExReleaseSpinLock (&ExpResourceSpinLock, OldIrql);
+            ExReleaseSpinLock(&ExpResourceSpinLock, OldIrql);
             return (PVOID)Resource;
         }
 
         //
         //  Save the last ptr in a volatile variable for debugging when a flink is bad
-        //  
+        //
 
         Last = Next;
         Next = Next->Flink;

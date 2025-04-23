@@ -1,4 +1,4 @@
-
+
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //                Global Definitions                                        //
@@ -8,43 +8,46 @@
 #define DevPrint
 //#define DevPrint DbgPrint
 
-#define Error(N,S) { DbgPrint(#N); DbgPrint(" Error %08lx\n", S); }
+#define Error(N, S)                    \
+    {                                  \
+        DbgPrint(#N);                  \
+        DbgPrint(" Error %08lx\n", S); \
+    }
 
-#define Delay(SECONDS) {                                               \
-    LARGE_INTEGER Time;                                                \
-    Time.QuadPart = -10 * 1000 * 1000, ((LONGLONG)SECONDS);            \
-    NtDelayExecution(TRUE,(PLARGE_INTEGER)&Time);                               \
-}
+#define Delay(SECONDS)                                          \
+    {                                                           \
+        LARGE_INTEGER Time;                                     \
+        Time.QuadPart = -10 * 1000 * 1000, ((LONGLONG)SECONDS); \
+        NtDelayExecution(TRUE, (PLARGE_INTEGER) & Time);        \
+    }
 
-
+
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //                Global Variables                                          //
 //                                                                          //
 //////////////////////////////////////////////////////////////////////////////
 
-    NTSTATUS Status;
-    OBJECT_ATTRIBUTES ObjectAttributes;
-    STRING EventName;
-    UNICODE_STRING UnicodeEventName;
-    HANDLE EventHandle;
-    STRING PortName;
-    UNICODE_STRING UnicodePortName;
-    STRING RelativePortName;
-    UNICODE_STRING UnicodeRelativePortName;
-    HANDLE EarPort;
-    HANDLE TalkPort;
-    SECURITY_QUALITY_OF_SERVICE SecurityQos;
-    ULONG RequestCount;
-    HANDLE ClientToken;
-    TOKEN_STATISTICS ClientTokenStatistics;
-    ULONG IgnoreLength;
+NTSTATUS Status;
+OBJECT_ATTRIBUTES ObjectAttributes;
+STRING EventName;
+UNICODE_STRING UnicodeEventName;
+HANDLE EventHandle;
+STRING PortName;
+UNICODE_STRING UnicodePortName;
+STRING RelativePortName;
+UNICODE_STRING UnicodeRelativePortName;
+HANDLE EarPort;
+HANDLE TalkPort;
+SECURITY_QUALITY_OF_SERVICE SecurityQos;
+ULONG RequestCount;
+HANDLE ClientToken;
+TOKEN_STATISTICS ClientTokenStatistics;
+ULONG IgnoreLength;
 
-    HANDLE SepServerThread;
+HANDLE SepServerThread;
 
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //                Test Routine Definitions                                  //
@@ -57,56 +60,32 @@ BOOLEAN
 SepClientTestDynamic(VOID);
 
 BOOLEAN
-SepClientTestEffectiveOnly(
-    BOOLEAN StaticTest
-    );
+SepClientTestEffectiveOnly(BOOLEAN StaticTest);
 
 BOOLEAN
-SepClientTestNotEffectiveOnly(
-    BOOLEAN StaticTest
-    );
+SepClientTestNotEffectiveOnly(BOOLEAN StaticTest);
 
 BOOLEAN
-SepClientTestAnonymous(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    );
+SepClientTestAnonymous(BOOLEAN StaticTest, BOOLEAN EffectiveOnly);
 
 BOOLEAN
-SepClientTestIdentification(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    );
+SepClientTestIdentification(BOOLEAN StaticTest, BOOLEAN EffectiveOnly);
 
 BOOLEAN
-SepClientTestImpersonation(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    );
+SepClientTestImpersonation(BOOLEAN StaticTest, BOOLEAN EffectiveOnly);
 
-VOID
-SepClientConnect(
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-    SECURITY_CONTEXT_TRACKING_MODE TrackingMode,
-    BOOLEAN EffectiveOnly
-    );
+VOID SepClientConnect(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel, SECURITY_CONTEXT_TRACKING_MODE TrackingMode,
+                      BOOLEAN EffectiveOnly);
 
-VOID
-SepClientMakeRemoteCall( VOID );
+VOID SepClientMakeRemoteCall(VOID);
 
-VOID
-SepClientDropConnection( VOID );
+VOID SepClientDropConnection(VOID);
 
 BOOLEAN
 SepClientTest(VOID);
 
 NTSTATUS
-SepClientInitialize(
-  );
-
-
-
-
+SepClientInitialize();
 
 
 BOOLEAN
@@ -116,97 +95,63 @@ BOOLEAN
 SepServerTestDynamic(VOID);
 
 BOOLEAN
-SepServerTestEffectiveOnly(
-    BOOLEAN StaticTest
-    );
+SepServerTestEffectiveOnly(BOOLEAN StaticTest);
 
 BOOLEAN
-SepServerTestNotEffectiveOnly(
-    BOOLEAN StaticTest
-    );
+SepServerTestNotEffectiveOnly(BOOLEAN StaticTest);
 
 BOOLEAN
-SepServerTestAnonymous(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    );
+SepServerTestAnonymous(BOOLEAN StaticTest, BOOLEAN EffectiveOnly);
 
 BOOLEAN
-SepServerTestIdentification(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    );
+SepServerTestIdentification(BOOLEAN StaticTest, BOOLEAN EffectiveOnly);
 
 BOOLEAN
-SepServerTestImpersonation(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    );
+SepServerTestImpersonation(BOOLEAN StaticTest, BOOLEAN EffectiveOnly);
 
-VOID
-SepServerWaitForNextConnect( VOID );
+VOID SepServerWaitForNextConnect(VOID);
 
-VOID
-SepServerGetNextMessage( VOID );
+VOID SepServerGetNextMessage(VOID);
 
-VOID
-SepServerCompleteMessage( VOID );
+VOID SepServerCompleteMessage(VOID);
 
-VOID
-SepServerDropConnection( VOID );
-
+VOID SepServerDropConnection(VOID);
 
 
 BOOLEAN
 SepServerTest(VOID);
 
 NTSTATUS
-SepServerInitialize(
-  );
+SepServerInitialize();
 
-VOID
-SepServerSpawnClientProcess(VOID);
+VOID SepServerSpawnClientProcess(VOID);
 
 
+VOID SepWritePipe(PSZ String);
 
+VOID SepReadPipe(VOID);
 
-VOID
-SepWritePipe( PSZ String );
-
-VOID
-SepReadPipe(VOID);
-
-VOID
-SepTransceivePipe( PSZ String );
-
-
+VOID SepTransceivePipe(PSZ String);
 
 
 HANDLE
 SepServerCreatePipe(VOID);
 
-VOID
-SepServerListenPipe(VOID);
+VOID SepServerListenPipe(VOID);
 
-VOID
-SepServerImpersonatePipe(VOID);
+VOID SepServerImpersonatePipe(VOID);
 
-VOID
-SepServerDisconnectPipe(VOID);
-
-
+VOID SepServerDisconnectPipe(VOID);
 
 
 HANDLE
-SepClientOpenPipe( VOID );
-
-
+SepClientOpenPipe(VOID);
 
 
 BOOLEAN
-CtLnpQos (VOID);
+CtLnpQos(VOID);
 
-
+
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //                Client-Side Test Routines                                 //
@@ -214,12 +159,8 @@ CtLnpQos (VOID);
 //////////////////////////////////////////////////////////////////////////////
 
 
-VOID
-SepClientConnect(
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-    SECURITY_CONTEXT_TRACKING_MODE TrackingMode,
-    BOOLEAN EffectiveOnly
-    )
+VOID SepClientConnect(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel, SECURITY_CONTEXT_TRACKING_MODE TrackingMode,
+                      BOOLEAN EffectiveOnly)
 
 {
 
@@ -233,33 +174,31 @@ SepClientConnect(
     return;
 }
 
-
-VOID
-SepClientMakeRemoteCall( VOID )
+
+VOID SepClientMakeRemoteCall(VOID)
 
 {
 
     DevPrint("\nClient: ");
-    SepTransceivePipe( "Make Client Call\n" );
+    SepTransceivePipe("Make Client Call\n");
 
     RequestCount += 1;
 
     return;
 }
 
-
-VOID
-SepClientDropConnection( VOID )
+
+VOID SepClientDropConnection(VOID)
 
 {
 
-    Status = NtClose( TalkPort );  SEASSERT_SUCCESS(Status);
+    Status = NtClose(TalkPort);
+    SEASSERT_SUCCESS(Status);
 
     return;
-
 }
 
-
+
 BOOLEAN
 SepClientTestStatic(VOID)
 
@@ -271,19 +210,19 @@ SepClientTestStatic(VOID)
     //  Static Context Tracking ... Suite
     //
 
-    CompletionStatus = SepClientTestEffectiveOnly( TRUE );
+    CompletionStatus = SepClientTestEffectiveOnly(TRUE);
 
 
-    if (CompletionStatus == TRUE) {
+    if (CompletionStatus == TRUE)
+    {
 
-        CompletionStatus = SepClientTestNotEffectiveOnly( TRUE );
+        CompletionStatus = SepClientTestNotEffectiveOnly(TRUE);
     }
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
 SepClientTestDynamic(VOID)
 
@@ -294,23 +233,21 @@ SepClientTestDynamic(VOID)
     // Dynamic Context Tracking ... Suite
     //
 
-    CompletionStatus = SepClientTestEffectiveOnly( FALSE );
+    CompletionStatus = SepClientTestEffectiveOnly(FALSE);
 
 
-    if (CompletionStatus == TRUE) {
+    if (CompletionStatus == TRUE)
+    {
 
-        CompletionStatus = SepClientTestNotEffectiveOnly( FALSE );
+        CompletionStatus = SepClientTestNotEffectiveOnly(FALSE);
     }
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
-SepClientTestEffectiveOnly(
-    BOOLEAN StaticTest
-    )
+SepClientTestEffectiveOnly(BOOLEAN StaticTest)
 
 
 {
@@ -321,23 +258,22 @@ SepClientTestEffectiveOnly(
     // Effective Only ... Test
     //
 
-    CompletionStatus = SepClientTestAnonymous( StaticTest, TRUE );
-    if (CompletionStatus == TRUE) {
-        CompletionStatus = SepClientTestIdentification( StaticTest, TRUE );
+    CompletionStatus = SepClientTestAnonymous(StaticTest, TRUE);
+    if (CompletionStatus == TRUE)
+    {
+        CompletionStatus = SepClientTestIdentification(StaticTest, TRUE);
     }
-    if (CompletionStatus == TRUE) {
-        CompletionStatus = SepClientTestImpersonation( StaticTest, TRUE );
+    if (CompletionStatus == TRUE)
+    {
+        CompletionStatus = SepClientTestImpersonation(StaticTest, TRUE);
     }
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
-SepClientTestNotEffectiveOnly(
-    BOOLEAN StaticTest
-    )
+SepClientTestNotEffectiveOnly(BOOLEAN StaticTest)
 
 {
     BOOLEAN CompletionStatus;
@@ -346,24 +282,22 @@ SepClientTestNotEffectiveOnly(
     // Not Effective Only ... Test
     //
 
-    CompletionStatus = SepClientTestAnonymous( StaticTest, FALSE );
-    if (CompletionStatus == TRUE) {
-        CompletionStatus = SepClientTestIdentification( StaticTest, FALSE );
+    CompletionStatus = SepClientTestAnonymous(StaticTest, FALSE);
+    if (CompletionStatus == TRUE)
+    {
+        CompletionStatus = SepClientTestIdentification(StaticTest, FALSE);
     }
-    if (CompletionStatus == TRUE) {
-        CompletionStatus = SepClientTestImpersonation( StaticTest, FALSE );
+    if (CompletionStatus == TRUE)
+    {
+        CompletionStatus = SepClientTestImpersonation(StaticTest, FALSE);
     }
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
-SepClientTestAnonymous(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    )
+SepClientTestAnonymous(BOOLEAN StaticTest, BOOLEAN EffectiveOnly)
 
 {
 
@@ -375,13 +309,17 @@ SepClientTestAnonymous(
 
     SECURITY_CONTEXT_TRACKING_MODE TrackingMode;
 
-    if (StaticTest) {
+    if (StaticTest)
+    {
         TrackingMode = SECURITY_STATIC_TRACKING;
-    } else {
+    }
+    else
+    {
         TrackingMode = SECURITY_DYNAMIC_TRACKING;
     }
 
-    if (!StaticTest) {
+    if (!StaticTest)
+    {
         //
         // No action for dynamic test
         //
@@ -393,11 +331,7 @@ SepClientTestAnonymous(
     //
 
 
-    SepClientConnect(
-        SecurityAnonymous,
-        TrackingMode,
-        EffectiveOnly
-        );
+    SepClientConnect(SecurityAnonymous, TrackingMode, EffectiveOnly);
 
     SepClientMakeRemoteCall();
 
@@ -407,12 +341,9 @@ SepClientTestAnonymous(
     return TRUE;
 }
 
-
+
 BOOLEAN
-SepClientTestIdentification(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    )
+SepClientTestIdentification(BOOLEAN StaticTest, BOOLEAN EffectiveOnly)
 
 {
 
@@ -424,9 +355,12 @@ SepClientTestIdentification(
 
     SECURITY_CONTEXT_TRACKING_MODE TrackingMode;
 
-    if (StaticTest) {
+    if (StaticTest)
+    {
         TrackingMode = SECURITY_STATIC_TRACKING;
-    } else {
+    }
+    else
+    {
         TrackingMode = SECURITY_DYNAMIC_TRACKING;
     }
 
@@ -435,11 +369,7 @@ SepClientTestIdentification(
     //
 
 
-    SepClientConnect(
-        SecurityIdentification,
-        TrackingMode,
-        EffectiveOnly
-        );
+    SepClientConnect(SecurityIdentification, TrackingMode, EffectiveOnly);
 
     SepClientMakeRemoteCall();
 
@@ -447,15 +377,11 @@ SepClientTestIdentification(
 
 
     return TRUE;
-
 }
 
-
+
 BOOLEAN
-SepClientTestImpersonation(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    )
+SepClientTestImpersonation(BOOLEAN StaticTest, BOOLEAN EffectiveOnly)
 
 {
 
@@ -467,9 +393,12 @@ SepClientTestImpersonation(
 
     SECURITY_CONTEXT_TRACKING_MODE TrackingMode;
 
-    if (StaticTest) {
+    if (StaticTest)
+    {
         TrackingMode = SECURITY_STATIC_TRACKING;
-    } else {
+    }
+    else
+    {
         TrackingMode = SECURITY_DYNAMIC_TRACKING;
     }
 
@@ -479,25 +408,17 @@ SepClientTestImpersonation(
     //
 
 
-    SepClientConnect(
-        SecurityImpersonation,
-        TrackingMode,
-        EffectiveOnly
-        );
+    SepClientConnect(SecurityImpersonation, TrackingMode, EffectiveOnly);
 
     SepClientMakeRemoteCall();
 
     SepClientDropConnection();
 
 
-
     return TRUE;
-
 }
 
 
-
-
 BOOLEAN
 SepClientTest(VOID)
 //
@@ -526,8 +447,6 @@ SepClientTest(VOID)
     BOOLEAN CompletionStatus;
 
 
-
-
     //
     // Run the static test suite...
     //
@@ -538,7 +457,8 @@ SepClientTest(VOID)
     // Run the dynamic test suite...
     //
 
-    if (CompletionStatus == TRUE) {
+    if (CompletionStatus == TRUE)
+    {
         CompletionStatus = SepClientTestDynamic();
     }
 
@@ -548,13 +468,11 @@ SepClientTest(VOID)
     return CompletionStatus;
 }
 
-
+
 NTSTATUS
-SepClientInitialize(
-  )
+SepClientInitialize()
 
 {
-
 
 
     DbgPrint("Se: Client Initializing ...\n");
@@ -568,15 +486,17 @@ SepClientInitialize(
     //
 
     DbgPrint("Se: Client Starting Test ...\n");
-    Status = NtSetEvent( EventHandle, NULL ); SEASSERT_SUCCESS(Status);
+    Status = NtSetEvent(EventHandle, NULL);
+    SEASSERT_SUCCESS(Status);
 
-    Status = NtClose( EventHandle ); SEASSERT_SUCCESS(Status);
+    Status = NtClose(EventHandle);
+    SEASSERT_SUCCESS(Status);
 
 
     return STATUS_SUCCESS;
 }
 
-
+
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //                Server-Side Test Routines                                 //
@@ -584,34 +504,29 @@ SepClientInitialize(
 //////////////////////////////////////////////////////////////////////////////
 
 
-VOID
-SepServerWaitForNextConnect( VOID )
+VOID SepServerWaitForNextConnect(VOID)
 {
 
     DevPrint("\nServer: ");
     SepServerListenPipe();
 
-    Status = NtDuplicateObject(
-                 NtCurrentProcess(),     // SourceProcessHandle
-                 EarPort,                // SourceHandle
-                 NtCurrentProcess(),     // TargetProcessHandle
-                 &TalkPort,              // TargetHandle
-                 0,                      // DesiredAccess (over-ridden by option)
-                 0,                      // HandleAttributes
-                 DUPLICATE_SAME_ACCESS   // Options
-                 );
+    Status = NtDuplicateObject(NtCurrentProcess(),   // SourceProcessHandle
+                               EarPort,              // SourceHandle
+                               NtCurrentProcess(),   // TargetProcessHandle
+                               &TalkPort,            // TargetHandle
+                               0,                    // DesiredAccess (over-ridden by option)
+                               0,                    // HandleAttributes
+                               DUPLICATE_SAME_ACCESS // Options
+    );
     ASSERT(NT_SUCCESS(Status));
 
 
     return;
-
 }
-
-VOID
-SepServerGetNextMessage( VOID )
+
+VOID SepServerGetNextMessage(VOID)
 
 {
-
 
 
     DevPrint("\nServer: ");
@@ -621,9 +536,8 @@ SepServerGetNextMessage( VOID )
 
     return;
 }
-
-VOID
-SepServerCompleteMessage( VOID )
+
+VOID SepServerCompleteMessage(VOID)
 
 {
 
@@ -631,38 +545,30 @@ SepServerCompleteMessage( VOID )
     SepWritePipe("Return From Server\n");
     return;
 }
-
-VOID
-SepServerImpersonateClient( VOID )
+
+VOID SepServerImpersonateClient(VOID)
 
 {
 
     DevPrint("\nServer: ");
-    SepServerImpersonatePipe( );
-
+    SepServerImpersonatePipe();
 }
 
-
-VOID
-SepServerRevertToSelf( VOID )
+
+VOID SepServerRevertToSelf(VOID)
 
 {
     NTSTATUS TmpStatus;
     HANDLE NullHandle;
 
     NullHandle = NULL;
-    TmpStatus = NtSetInformationThread(
-                    SepServerThread,
-                    ThreadImpersonationToken,
-                    (PVOID)&NullHandle,
-                    (ULONG)sizeof(HANDLE)
-                    );   SEASSERT_SUCCESS(TmpStatus);
-
+    TmpStatus =
+        NtSetInformationThread(SepServerThread, ThreadImpersonationToken, (PVOID)&NullHandle, (ULONG)sizeof(HANDLE));
+    SEASSERT_SUCCESS(TmpStatus);
 }
 
-
-VOID
-SepServerDropConnection( VOID )
+
+VOID SepServerDropConnection(VOID)
 
 {
     DevPrint("\nServer: ");
@@ -670,7 +576,7 @@ SepServerDropConnection( VOID )
 
     return;
 }
-
+
 BOOLEAN
 SepServerTestStatic(VOID)
 
@@ -679,19 +585,19 @@ SepServerTestStatic(VOID)
 
     DbgPrint("Se:    Static Context Tracking ...                           Suite\n");
 
-    CompletionStatus = SepServerTestEffectiveOnly( TRUE );
+    CompletionStatus = SepServerTestEffectiveOnly(TRUE);
 
 
-    if (CompletionStatus == TRUE) {
+    if (CompletionStatus == TRUE)
+    {
 
-        CompletionStatus = SepServerTestNotEffectiveOnly( TRUE );
+        CompletionStatus = SepServerTestNotEffectiveOnly(TRUE);
     }
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
 SepServerTestDynamic(VOID)
 
@@ -700,23 +606,21 @@ SepServerTestDynamic(VOID)
 
     DbgPrint("Se:    Dynamic Context Tracking ...                          Suite\n");
 
-    CompletionStatus = SepServerTestEffectiveOnly( FALSE );
+    CompletionStatus = SepServerTestEffectiveOnly(FALSE);
 
 
-    if (CompletionStatus == TRUE) {
+    if (CompletionStatus == TRUE)
+    {
 
-        CompletionStatus = SepServerTestNotEffectiveOnly( FALSE );
+        CompletionStatus = SepServerTestNotEffectiveOnly(FALSE);
     }
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
-SepServerTestEffectiveOnly(
-    BOOLEAN StaticTest
-    )
+SepServerTestEffectiveOnly(BOOLEAN StaticTest)
 
 {
 
@@ -724,23 +628,22 @@ SepServerTestEffectiveOnly(
 
     DbgPrint("Se:      Effective Only ...                                    Test\n");
 
-    CompletionStatus = SepServerTestAnonymous( StaticTest, TRUE );
-    if (CompletionStatus == TRUE) {
-        CompletionStatus = SepServerTestIdentification( StaticTest, TRUE );
+    CompletionStatus = SepServerTestAnonymous(StaticTest, TRUE);
+    if (CompletionStatus == TRUE)
+    {
+        CompletionStatus = SepServerTestIdentification(StaticTest, TRUE);
     }
-    if (CompletionStatus == TRUE) {
-        CompletionStatus = SepServerTestImpersonation( StaticTest, TRUE );
+    if (CompletionStatus == TRUE)
+    {
+        CompletionStatus = SepServerTestImpersonation(StaticTest, TRUE);
     }
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
-SepServerTestNotEffectiveOnly(
-    BOOLEAN StaticTest
-    )
+SepServerTestNotEffectiveOnly(BOOLEAN StaticTest)
 
 {
 
@@ -748,24 +651,22 @@ SepServerTestNotEffectiveOnly(
 
     DbgPrint("Se:      Not Effective Only ...                                Test\n");
 
-    CompletionStatus = SepServerTestAnonymous( StaticTest, FALSE );
-    if (CompletionStatus == TRUE) {
-        CompletionStatus = SepServerTestIdentification( StaticTest, FALSE );
+    CompletionStatus = SepServerTestAnonymous(StaticTest, FALSE);
+    if (CompletionStatus == TRUE)
+    {
+        CompletionStatus = SepServerTestIdentification(StaticTest, FALSE);
     }
-    if (CompletionStatus == TRUE) {
-        CompletionStatus = SepServerTestImpersonation( StaticTest, FALSE );
+    if (CompletionStatus == TRUE)
+    {
+        CompletionStatus = SepServerTestImpersonation(StaticTest, FALSE);
     }
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
-SepServerTestAnonymous(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    )
+SepServerTestAnonymous(BOOLEAN StaticTest, BOOLEAN EffectiveOnly)
 
 {
     BOOLEAN CompletionStatus = TRUE;
@@ -777,7 +678,8 @@ SepServerTestAnonymous(
     //////////////////////////////////////////////////////////////////////////
 
 
-    if (!StaticTest) {
+    if (!StaticTest)
+    {
         //
         // No action for dynamic test
         //
@@ -793,20 +695,17 @@ SepServerTestAnonymous(
 
 
     SepServerImpersonateClient();
-    Status = NtOpenThreadToken(
-                 SepServerThread,
-                 TOKEN_ALL_ACCESS,
-                 TRUE,
-                 &ClientToken
-                 );
+    Status = NtOpenThreadToken(SepServerThread, TOKEN_ALL_ACCESS, TRUE, &ClientToken);
     SepServerRevertToSelf();
-    if (Status == STATUS_CANT_OPEN_ANONYMOUS) {
+    if (Status == STATUS_CANT_OPEN_ANONYMOUS)
+    {
 
         DbgPrint(" Succeeded\n");
-
-    } else {
+    }
+    else
+    {
         DbgPrint("* ! FAILED (srvr) ! *\n");
-        DbgPrint("Status is: 0x%lx \n", Status );
+        DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
@@ -819,19 +718,18 @@ SepServerTestAnonymous(
     // Appease the compiler Gods..
     //
 
-    if (EffectiveOnly) {;}
+    if (EffectiveOnly)
+    {
+        ;
+    }
 
 
     return CompletionStatus;
-
 }
 
-
+
 BOOLEAN
-SepServerTestIdentification(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    )
+SepServerTestIdentification(BOOLEAN StaticTest, BOOLEAN EffectiveOnly)
 
 {
 
@@ -849,27 +747,20 @@ SepServerTestIdentification(
     SepServerGetNextMessage();
 
     SepServerImpersonateClient();
-    Status = NtOpenThreadToken(
-                 SepServerThread,
-                 TOKEN_ALL_ACCESS,
-                 TRUE,
-                 &ClientToken
-                 );  SEASSERT_SUCCESS(Status);
+    Status = NtOpenThreadToken(SepServerThread, TOKEN_ALL_ACCESS, TRUE, &ClientToken);
+    SEASSERT_SUCCESS(Status);
     SepServerRevertToSelf();
-    Status = NtQueryInformationToken(
-                 ClientToken,
-                 TokenStatistics,
-                 &ClientTokenStatistics,
-                 (ULONG)sizeof(TOKEN_STATISTICS),
-                 &IgnoreLength
-                 );  SEASSERT_SUCCESS(Status);
+    Status = NtQueryInformationToken(ClientToken, TokenStatistics, &ClientTokenStatistics,
+                                     (ULONG)sizeof(TOKEN_STATISTICS), &IgnoreLength);
+    SEASSERT_SUCCESS(Status);
 
-    if ( (ClientTokenStatistics.TokenType == TokenImpersonation) &&
-         (ClientTokenStatistics.ImpersonationLevel == SecurityIdentification)
-       ) {
+    if ((ClientTokenStatistics.TokenType == TokenImpersonation) &&
+        (ClientTokenStatistics.ImpersonationLevel == SecurityIdentification))
+    {
         DbgPrint(" Succeeded\n");
-
-    } else {
+    }
+    else
+    {
         DbgPrint("* ! FAILED (srvr) ! *\n");
         CompletionStatus = FALSE;
     }
@@ -882,18 +773,21 @@ SepServerTestIdentification(
     //
     // Appease the compiler Gods..
     //
-    if (StaticTest) {;}
-    if (EffectiveOnly) {;}
+    if (StaticTest)
+    {
+        ;
+    }
+    if (EffectiveOnly)
+    {
+        ;
+    }
 
     return CompletionStatus;
 }
 
-
+
 BOOLEAN
-SepServerTestImpersonation(
-    BOOLEAN StaticTest,
-    BOOLEAN EffectiveOnly
-    )
+SepServerTestImpersonation(BOOLEAN StaticTest, BOOLEAN EffectiveOnly)
 
 {
     BOOLEAN CompletionStatus = TRUE;
@@ -912,34 +806,24 @@ SepServerTestImpersonation(
     SepServerGetNextMessage();
 
 
-
     SepServerImpersonateClient();
-    Status = NtOpenThreadToken(
-                 SepServerThread,
-                 TOKEN_ALL_ACCESS,
-                 TRUE,
-                 &ClientToken
-                 );  SEASSERT_SUCCESS(Status);
+    Status = NtOpenThreadToken(SepServerThread, TOKEN_ALL_ACCESS, TRUE, &ClientToken);
+    SEASSERT_SUCCESS(Status);
     SepServerRevertToSelf();
-    Status = NtQueryInformationToken(
-                 ClientToken,
-                 TokenStatistics,
-                 &ClientTokenStatistics,
-                 (ULONG)sizeof(TOKEN_STATISTICS),
-                 &IgnoreLength
-                 );  SEASSERT_SUCCESS(Status);
+    Status = NtQueryInformationToken(ClientToken, TokenStatistics, &ClientTokenStatistics,
+                                     (ULONG)sizeof(TOKEN_STATISTICS), &IgnoreLength);
+    SEASSERT_SUCCESS(Status);
 
-    if ( (ClientTokenStatistics.TokenType == TokenImpersonation) &&
-         (ClientTokenStatistics.ImpersonationLevel == SecurityImpersonation)
-       ) {
+    if ((ClientTokenStatistics.TokenType == TokenImpersonation) &&
+        (ClientTokenStatistics.ImpersonationLevel == SecurityImpersonation))
+    {
         DbgPrint(" Succeeded\n");
-
-    } else {
+    }
+    else
+    {
         DbgPrint("* ! FAILED (srvr) ! *\n");
         CompletionStatus = FALSE;
     }
-
-
 
 
     SepServerCompleteMessage();
@@ -949,13 +833,19 @@ SepServerTestImpersonation(
     //
     // Appease the compiler gods
     //
-    if (StaticTest) {;}
-    if (EffectiveOnly) {;}
+    if (StaticTest)
+    {
+        ;
+    }
+    if (EffectiveOnly)
+    {
+        ;
+    }
 
     return CompletionStatus;
 }
 
-
+
 BOOLEAN
 SepServerTest(VOID)
 //
@@ -996,7 +886,8 @@ SepServerTest(VOID)
     // Run the dynamic test suite...
     //
 
-    if (CompletionStatus == TRUE) {
+    if (CompletionStatus == TRUE)
+    {
         CompletionStatus = SepServerTestDynamic();
     }
 
@@ -1011,9 +902,12 @@ SepServerTest(VOID)
     DbgPrint("**********************\n");
     DbgPrint("**                  **\n");
 
-    if (CompletionStatus == TRUE) {
+    if (CompletionStatus == TRUE)
+    {
         DbgPrint("**  Test Succeeded  **\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("**  Test Failed !!  **\n");
     }
 
@@ -1021,12 +915,10 @@ SepServerTest(VOID)
     DbgPrint("**********************\n");
 
     return CompletionStatus;
-
 }
-
+
 NTSTATUS
-SepServerInitialize(
-  )
+SepServerInitialize()
 
 {
 
@@ -1050,13 +942,12 @@ SepServerInitialize(
 
     CurrentTeb = NtCurrentTeb();
     InitializeObjectAttributes(&ThreadAttributes, NULL, 0, NULL, NULL);
-    Status = NtOpenThread(
-                 &SepServerThread,           // TargetHandle
-                 THREAD_ALL_ACCESS,          // DesiredAccess
-                 &ThreadAttributes,          // ObjectAttributes
-                 &CurrentTeb->ClientId       // ClientId
-                 );
-    ASSERT( NT_SUCCESS(Status) );
+    Status = NtOpenThread(&SepServerThread,     // TargetHandle
+                          THREAD_ALL_ACCESS,    // DesiredAccess
+                          &ThreadAttributes,    // ObjectAttributes
+                          &CurrentTeb->ClientId // ClientId
+    );
+    ASSERT(NT_SUCCESS(Status));
 
 
     //
@@ -1064,7 +955,6 @@ SepServerInitialize(
     //
 
     EarPort = SepServerCreatePipe();
-
 
 
     //
@@ -1077,20 +967,17 @@ SepServerInitialize(
 
     DbgPrint("Se: Server waiting for start of test signal ...\n");
 
-    Status = NtWaitForSingleObject(
-                 EventHandle,
-                 TRUE,
-                 NULL
-                 ); SEASSERT_SUCCESS(Status);
+    Status = NtWaitForSingleObject(EventHandle, TRUE, NULL);
+    SEASSERT_SUCCESS(Status);
 
-    Status = NtClose( EventHandle );  SEASSERT_SUCCESS(Status);
+    Status = NtClose(EventHandle);
+    SEASSERT_SUCCESS(Status);
 
 
     return STATUS_SUCCESS;
 }
-
-VOID
-SepServerSpawnClientProcess(VOID)
+
+VOID SepServerSpawnClientProcess(VOID)
 
 {
 
@@ -1101,59 +988,41 @@ SepServerSpawnClientProcess(VOID)
     UNICODE_STRING UnicodeImagePathName;
     PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
 
-    RtlInitString( &ProgramName, "\\SystemRoot\\Bin\\utlnpqos.exe" );
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeProgramName,
-                 &ProgramName,
-                 TRUE );  SEASSERT_SUCCESS( NT_SUCCESS(Status) );
-    RtlInitString( &ImagePathName, "utlnpqos.exe");
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeImagePathName,
-                 &ImagePathName,
-                 TRUE );  SEASSERT_SUCCESS( NT_SUCCESS(Status) );
+    RtlInitString(&ProgramName, "\\SystemRoot\\Bin\\utlnpqos.exe");
+    Status = RtlAnsiStringToUnicodeString(&UnicodeProgramName, &ProgramName, TRUE);
+    SEASSERT_SUCCESS(NT_SUCCESS(Status));
+    RtlInitString(&ImagePathName, "utlnpqos.exe");
+    Status = RtlAnsiStringToUnicodeString(&UnicodeImagePathName, &ImagePathName, TRUE);
+    SEASSERT_SUCCESS(NT_SUCCESS(Status));
 
 
-    Status = RtlCreateProcessParameters(
-                 &ProcessParameters,
-                 &ImagePathName,        // FIX, FIX &UnicodeImagePathName, (when converted to unicode)
-                 NULL,
-                 NULL,
-                 NULL,
-                 NULL,
-                 NULL,
-                 NULL,
-                 NULL,
-                 NULL
-                 );
+    Status = RtlCreateProcessParameters(&ProcessParameters,
+                                        &ImagePathName, // FIX, FIX &UnicodeImagePathName, (when converted to unicode)
+                                        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
     SEASSERT_SUCCESS(Status);
-    RtlFreeUnicodeString( &UnicodeImagePathName );
+    RtlFreeUnicodeString(&UnicodeImagePathName);
 
 
-    Status = RtlCreateUserProcess(
-                 &ProgramName,                   // FIX, FIX &UnicodeProgramName (when converted to unicode)
-                 ProcessParameters,              // ProcessParameters
-                 NULL,                           // ProcessSecurityDescriptor
-                 NULL,                           // ThreadSecurityDescriptor
-                 NtCurrentProcess(),             // ParentProcess
-                 FALSE,                          // InheritHandles
-                 NULL,                           // DebugPort
-                 NULL,                           // ExceptionPort
-                 &ProcessInformation             // ProcessInformation
-                 ); SEASSERT_SUCCESS(Status);
-    RtlFreeUnicodeString( &UnicodeProgramName );
+    Status = RtlCreateUserProcess(&ProgramName,       // FIX, FIX &UnicodeProgramName (when converted to unicode)
+                                  ProcessParameters,  // ProcessParameters
+                                  NULL,               // ProcessSecurityDescriptor
+                                  NULL,               // ThreadSecurityDescriptor
+                                  NtCurrentProcess(), // ParentProcess
+                                  FALSE,              // InheritHandles
+                                  NULL,               // DebugPort
+                                  NULL,               // ExceptionPort
+                                  &ProcessInformation // ProcessInformation
+    );
+    SEASSERT_SUCCESS(Status);
+    RtlFreeUnicodeString(&UnicodeProgramName);
 
-    Status = NtResumeThread(
-                  ProcessInformation.Thread,
-                  NULL
-                  ); SEASSERT_SUCCESS(Status);
+    Status = NtResumeThread(ProcessInformation.Thread, NULL);
+    SEASSERT_SUCCESS(Status);
 
-    RtlDestroyProcessParameters( ProcessParameters );
-
+    RtlDestroyProcessParameters(ProcessParameters);
 }
 
-
-
 
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
@@ -1162,22 +1031,18 @@ SepServerSpawnClientProcess(VOID)
 //////////////////////////////////////////////////////////////////////////////
 
 BOOLEAN
-CtLnpQos (VOID)
+CtLnpQos(VOID)
 {
 
     BOOLEAN Result = TRUE;
 
-    RtlInitString( &PortName, "\\Device\\NamedPipe\\TestLnpQosServerPort" );
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodePortName,
-                 &PortName,
-                 TRUE );  SEASSERT_SUCCESS( NT_SUCCESS(Status) );
+    RtlInitString(&PortName, "\\Device\\NamedPipe\\TestLnpQosServerPort");
+    Status = RtlAnsiStringToUnicodeString(&UnicodePortName, &PortName, TRUE);
+    SEASSERT_SUCCESS(NT_SUCCESS(Status));
 
-    RtlInitString( &RelativePortName, "TestLnpQosServerPort" );
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeRelativePortName,
-                 &RelativePortName,
-                 TRUE );  SEASSERT_SUCCESS( NT_SUCCESS(Status) );
+    RtlInitString(&RelativePortName, "TestLnpQosServerPort");
+    Status = RtlAnsiStringToUnicodeString(&UnicodeRelativePortName, &RelativePortName, TRUE);
+    SEASSERT_SUCCESS(NT_SUCCESS(Status));
 
 
     //
@@ -1188,39 +1053,28 @@ CtLnpQos (VOID)
     // is waiting for us to signal the event.
     //
 
-    RtlInitString( &EventName, "\\TestLnpQosEvent" );
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeEventName,
-                 &EventName,
-                 TRUE );  SEASSERT_SUCCESS( NT_SUCCESS(Status) );
+    RtlInitString(&EventName, "\\TestLnpQosEvent");
+    Status = RtlAnsiStringToUnicodeString(&UnicodeEventName, &EventName, TRUE);
+    SEASSERT_SUCCESS(NT_SUCCESS(Status));
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &UnicodeEventName,
-        OBJ_OPENIF,
-        NULL,
-        NULL
-        );
-    Status = NtCreateEvent(
-                 &EventHandle,
-                 EVENT_ALL_ACCESS,
-                 &ObjectAttributes,
-                 SynchronizationEvent,
-                 FALSE
-                 );
-    RtlFreeUnicodeString( &UnicodeEventName );
+    InitializeObjectAttributes(&ObjectAttributes, &UnicodeEventName, OBJ_OPENIF, NULL, NULL);
+    Status = NtCreateEvent(&EventHandle, EVENT_ALL_ACCESS, &ObjectAttributes, SynchronizationEvent, FALSE);
+    RtlFreeUnicodeString(&UnicodeEventName);
 
-    if (Status == STATUS_OBJECT_NAME_EXISTS) {
+    if (Status == STATUS_OBJECT_NAME_EXISTS)
+    {
 
         //
         // Server is already running, therefore, this process gets to be
         // the client.
         //
 
-        Status = SepClientInitialize(); SEASSERT_SUCCESS(Status);
+        Status = SepClientInitialize();
+        SEASSERT_SUCCESS(Status);
         Result = SepClientTest();
-
-    } else {
+    }
+    else
+    {
 
         SEASSERT_SUCCESS(Status);
 
@@ -1228,25 +1082,23 @@ CtLnpQos (VOID)
         // Event wasn't yet there, so we must be the server.
         //
 
-    DbgPrint("Se: Starting Local Named Pipe Impersonation Test.\n");
+        DbgPrint("Se: Starting Local Named Pipe Impersonation Test.\n");
 
-        Status = SepServerInitialize(); SEASSERT_SUCCESS(Status);
+        Status = SepServerInitialize();
+        SEASSERT_SUCCESS(Status);
         Result = SepServerTest();
 
-    DbgPrint("Se: End Test.\n");
-
-        }
-
+        DbgPrint("Se: End Test.\n");
+    }
 
 
-    Status = NtTerminateThread( NtCurrentThread(), STATUS_SUCCESS);
+    Status = NtTerminateThread(NtCurrentThread(), STATUS_SUCCESS);
     SEASSERT_SUCCESS(Status);
 
     return Result;
-
 }
 
-
+
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //   Named Pipe Common Operations                                           //
@@ -1254,45 +1106,36 @@ CtLnpQos (VOID)
 //////////////////////////////////////////////////////////////////////////////
 
 
-VOID
-SepReadPipe(
-    )
+VOID SepReadPipe()
 {
     IO_STATUS_BLOCK Iosb;
     UCHAR Buffer[512];
 
     DevPrint("ReadPipe...\n", 0);
 
-    if (!NT_SUCCESS(Status = NtReadFile( TalkPort,
-                                      (HANDLE)NULL,
-                                      (PIO_APC_ROUTINE)NULL,
-                                      (PVOID)NULL,
-                                      &Iosb,
-                                      Buffer,
-                                      512,
-                                      (PLARGE_INTEGER)NULL,
-                                      (PULONG) NULL ))) {
-        Error( NtReadFile, Status );
+    if (!NT_SUCCESS(Status = NtReadFile(TalkPort, (HANDLE)NULL, (PIO_APC_ROUTINE)NULL, (PVOID)NULL, &Iosb, Buffer, 512,
+                                        (PLARGE_INTEGER)NULL, (PULONG)NULL)))
+    {
+        Error(NtReadFile, Status);
     }
 
-    if (!NT_SUCCESS(Status = NtWaitForSingleObject( TalkPort, TRUE, NULL ))) {
+    if (!NT_SUCCESS(Status = NtWaitForSingleObject(TalkPort, TRUE, NULL)))
+    {
 
-        Error( NtWaitForSingleObject, Status );
+        Error(NtWaitForSingleObject, Status);
     }
 
-    if (!NT_SUCCESS(Iosb.Status)) {
+    if (!NT_SUCCESS(Iosb.Status))
+    {
 
-        Error( NtReadFileFinalStatus, Iosb.Status );
+        Error(NtReadFileFinalStatus, Iosb.Status);
     }
 
     return;
 }
 
-
-VOID
-SepWritePipe(
-    PSZ String
-    )
+
+VOID SepWritePipe(PSZ String)
 {
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
@@ -1300,36 +1143,29 @@ SepWritePipe(
 
     DevPrint("WritePipe...\n", 0);
 
-    if (!NT_SUCCESS(Status = NtWriteFile( TalkPort,
-                                       (HANDLE)NULL,
-                                       (PIO_APC_ROUTINE)NULL,
-                                       (PVOID)NULL,
-                                       &Iosb,
-                                       String,
-                                       strlen( String ),
-                                       (PLARGE_INTEGER)NULL,
-                                       (PULONG)NULL ))) {
-        Error( NtWriteFile, Status );
+    if (!NT_SUCCESS(Status = NtWriteFile(TalkPort, (HANDLE)NULL, (PIO_APC_ROUTINE)NULL, (PVOID)NULL, &Iosb, String,
+                                         strlen(String), (PLARGE_INTEGER)NULL, (PULONG)NULL)))
+    {
+        Error(NtWriteFile, Status);
     }
 
-    if (!NT_SUCCESS(Status = NtWaitForSingleObject( TalkPort, TRUE, NULL ))) {
+    if (!NT_SUCCESS(Status = NtWaitForSingleObject(TalkPort, TRUE, NULL)))
+    {
 
-        Error( NtWaitForSingleObject, Status );
+        Error(NtWaitForSingleObject, Status);
     }
 
-    if (!NT_SUCCESS(Iosb.Status)) {
+    if (!NT_SUCCESS(Iosb.Status))
+    {
 
-        Error( NtWriteFileFinalStatus, Iosb.Status );
+        Error(NtWriteFileFinalStatus, Iosb.Status);
     }
 
     return;
 }
 
-
-VOID
-SepTransceivePipe(
-    PSZ String
-    )
+
+VOID SepTransceivePipe(PSZ String)
 {
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
@@ -1338,35 +1174,31 @@ SepTransceivePipe(
 
     DevPrint("TransceivePipe...\n", 0);
 
-    if (!NT_SUCCESS(Status = NtFsControlFile(
-                                TalkPort,
-                                NULL,   // Event
-                                NULL,   // ApcRoutine
-                                NULL,   // ApcContext
-                                &Iosb,
-                                FSCTL_PIPE_TRANSCEIVE,
-                                String,
-                                strlen( String ),
-                                Buffer,
-                                511
-                                ))) {
-        Error( NtTransceiveFile, Status );
+    if (!NT_SUCCESS(Status = NtFsControlFile(TalkPort,
+                                             NULL, // Event
+                                             NULL, // ApcRoutine
+                                             NULL, // ApcContext
+                                             &Iosb, FSCTL_PIPE_TRANSCEIVE, String, strlen(String), Buffer, 511)))
+    {
+        Error(NtTransceiveFile, Status);
     }
 
-    if (!NT_SUCCESS(Status = NtWaitForSingleObject( TalkPort, TRUE, NULL ))) {
+    if (!NT_SUCCESS(Status = NtWaitForSingleObject(TalkPort, TRUE, NULL)))
+    {
 
-        Error( NtWaitForSingleObject, Status );
+        Error(NtWaitForSingleObject, Status);
     }
 
-    if (!NT_SUCCESS(Iosb.Status)) {
+    if (!NT_SUCCESS(Iosb.Status))
+    {
 
-        Error( NtTransceiveFileFinalStatus, Iosb.Status );
+        Error(NtTransceiveFileFinalStatus, Iosb.Status);
     }
 
     return;
 }
 
-
+
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //   Named Pipe Server Operations                                           //
@@ -1374,9 +1206,7 @@ SepTransceivePipe(
 //////////////////////////////////////////////////////////////////////////////
 
 HANDLE
-SepServerCreatePipe(
-    VOID
-    )
+SepServerCreatePipe(VOID)
 {
     HANDLE PipeHandle;
     NTSTATUS Status;
@@ -1385,9 +1215,9 @@ SepServerCreatePipe(
     READ_MODE Mode;
     ULONG Share;
     NAMED_PIPE_CONFIGURATION Config = FILE_PIPE_FULL_DUPLEX;
-    NAMED_PIPE_TYPE PipeType        = FILE_PIPE_MESSAGE_TYPE;
-    COMPLETION_MODE CompletionMode  = FILE_PIPE_QUEUE_OPERATION;
-    ULONG MaximumInstances          = 4;
+    NAMED_PIPE_TYPE PipeType = FILE_PIPE_MESSAGE_TYPE;
+    COMPLETION_MODE CompletionMode = FILE_PIPE_QUEUE_OPERATION;
+    ULONG MaximumInstances = 4;
 
 
     //
@@ -1396,129 +1226,108 @@ SepServerCreatePipe(
 
     Timeout.QuadPart = -10 * 1000 * 1000 * 60;
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &UnicodePortName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &UnicodePortName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
     //  Calculate the readmode and share access
     //
 
-    Mode = (PipeType == FILE_PIPE_MESSAGE_TYPE ? FILE_PIPE_MESSAGE_MODE :
-                                                 FILE_PIPE_BYTE_STREAM_MODE);
+    Mode = (PipeType == FILE_PIPE_MESSAGE_TYPE ? FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE);
 
-    Share = (Config == FILE_PIPE_INBOUND  ? FILE_SHARE_WRITE :
-            (Config == FILE_PIPE_OUTBOUND ? FILE_SHARE_READ :
-                                            FILE_SHARE_READ | FILE_SHARE_WRITE));
+    Share = (Config == FILE_PIPE_INBOUND
+                 ? FILE_SHARE_WRITE
+                 : (Config == FILE_PIPE_OUTBOUND ? FILE_SHARE_READ : FILE_SHARE_READ | FILE_SHARE_WRITE));
 
-    if (!NT_SUCCESS(Status = NtCreateNamedPipeFile(
-                                &PipeHandle,
-                                GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE,
-                                &ObjectAttributes,
-                                &Iosb,
-                                Share,
-                                FILE_CREATE,
-                                0,
-                                PipeType,
-                                Mode,
-                                CompletionMode,
-                                MaximumInstances,
-                                1024,
-                                1024,
-                                (PLARGE_INTEGER)&Timeout ))) {
+    if (!NT_SUCCESS(Status =
+                        NtCreateNamedPipeFile(&PipeHandle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE,
+                                              &ObjectAttributes, &Iosb, Share, FILE_CREATE, 0, PipeType, Mode,
+                                              CompletionMode, MaximumInstances, 1024, 1024, (PLARGE_INTEGER)&Timeout)))
+    {
 
-        Error( CreatePipe, Status );
+        Error(CreatePipe, Status);
     }
-    RtlFreeUnicodeString( &UnicodePortName );
+    RtlFreeUnicodeString(&UnicodePortName);
 
     return PipeHandle;
 }
 
-
-VOID
-SepServerListenPipe(
-    )
+
+VOID SepServerListenPipe()
 {
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
 
     DevPrint("ListenPipe...\n", 0);
 
-    if (!NT_SUCCESS(Status = NtFsControlFile(
-                                EarPort,
-                                NULL,   // Event
-                                NULL,   // ApcRoutine
-                                NULL,   // ApcContext
-                                &Iosb,
-                                FSCTL_PIPE_LISTEN,
-                                NULL,   // InputBuffer
-                                0,      // InputBufferLength,
-                                NULL,   // OutputBuffer
-                                0       // OutputBufferLength
-                                ))) {
+    if (!NT_SUCCESS(Status = NtFsControlFile(EarPort,
+                                             NULL, // Event
+                                             NULL, // ApcRoutine
+                                             NULL, // ApcContext
+                                             &Iosb, FSCTL_PIPE_LISTEN,
+                                             NULL, // InputBuffer
+                                             0,    // InputBufferLength,
+                                             NULL, // OutputBuffer
+                                             0     // OutputBufferLength
+                                             )))
+    {
 
-        Error( ListenPipe, Status );
+        Error(ListenPipe, Status);
     }
-    if (!NT_SUCCESS(Status = NtWaitForSingleObject( EarPort, TRUE, NULL ))) {
+    if (!NT_SUCCESS(Status = NtWaitForSingleObject(EarPort, TRUE, NULL)))
+    {
 
-        Error( NtWaitForSingleObject, Status );
+        Error(NtWaitForSingleObject, Status);
     }
 
-    if (!NT_SUCCESS(Iosb.Status)) {
+    if (!NT_SUCCESS(Iosb.Status))
+    {
 
-        Error( ListenPipeFinalStatus, Iosb.Status );
+        Error(ListenPipeFinalStatus, Iosb.Status);
     }
 
 
     return;
 }
 
-
-VOID
-SepServerImpersonatePipe(
-    )
+
+VOID SepServerImpersonatePipe()
 {
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
 
     DevPrint("ImpersonatePipe...\n", 0);
 
-    if (!NT_SUCCESS(Status = NtFsControlFile(
-                                TalkPort,
-                                NULL,   // Event
-                                NULL,   // ApcRoutine
-                                NULL,   // ApcContext
-                                &Iosb,
-                                FSCTL_PIPE_IMPERSONATE,
-                                NULL,   // InputBuffer
-                                0,      // InputBufferLength,
-                                NULL,   // OutputBuffer
-                                0       // OutputBufferLength
-                                ))) {
+    if (!NT_SUCCESS(Status = NtFsControlFile(TalkPort,
+                                             NULL, // Event
+                                             NULL, // ApcRoutine
+                                             NULL, // ApcContext
+                                             &Iosb, FSCTL_PIPE_IMPERSONATE,
+                                             NULL, // InputBuffer
+                                             0,    // InputBufferLength,
+                                             NULL, // OutputBuffer
+                                             0     // OutputBufferLength
+                                             )))
+    {
 
-        Error( ImpersonatePipe, Status );
+        Error(ImpersonatePipe, Status);
     }
-    if (!NT_SUCCESS(Status = NtWaitForSingleObject( TalkPort, TRUE, NULL ))) {
+    if (!NT_SUCCESS(Status = NtWaitForSingleObject(TalkPort, TRUE, NULL)))
+    {
 
-        Error( NtWaitForSingleObject, Status );
+        Error(NtWaitForSingleObject, Status);
     }
 
-    if (!NT_SUCCESS(Iosb.Status)) {
+    if (!NT_SUCCESS(Iosb.Status))
+    {
 
-        Error( ImpersonatePipeFinalStatus, Iosb.Status );
+        Error(ImpersonatePipeFinalStatus, Iosb.Status);
     }
 
     return;
 }
 
-
-VOID
-SepServerDisconnectPipe(
-    )
+
+VOID SepServerDisconnectPipe()
 {
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
@@ -1526,52 +1335,53 @@ SepServerDisconnectPipe(
     DevPrint("DisconnectPipe...\n", 0);
     DevPrint("        (Flush)...\n", 0);
 
-    if (!NT_SUCCESS(Status = NtFlushBuffersFile(
-                                TalkPort,
-                                &Iosb
-                                ))) {
-        Error( DisconnectPipe, Status );
+    if (!NT_SUCCESS(Status = NtFlushBuffersFile(TalkPort, &Iosb)))
+    {
+        Error(DisconnectPipe, Status);
     }
 
-    if (!NT_SUCCESS(Iosb.Status)) {
+    if (!NT_SUCCESS(Iosb.Status))
+    {
 
-        Error( FlushPipeFinalStatus, Iosb.Status );
+        Error(FlushPipeFinalStatus, Iosb.Status);
     }
 
 
     DevPrint("        (Close Talk Port)...\n", 0);
-    Status = NtClose( TalkPort ); SEASSERT_SUCCESS(Status);
+    Status = NtClose(TalkPort);
+    SEASSERT_SUCCESS(Status);
 
     DevPrint("        (Disconnect)...\n", 0);
-    if (!NT_SUCCESS(Status = NtFsControlFile(
-                                EarPort,
-                                NULL,   // Event
-                                NULL,   // ApcRoutine
-                                NULL,   // ApcContext
-                                &Iosb,
-                                FSCTL_PIPE_DISCONNECT,
-                                NULL,   // InputBuffer
-                                0,      // InputBufferLength,
-                                NULL,   // OutputBuffer
-                                0       // OutputBufferLength
-                                ))) {
+    if (!NT_SUCCESS(Status = NtFsControlFile(EarPort,
+                                             NULL, // Event
+                                             NULL, // ApcRoutine
+                                             NULL, // ApcContext
+                                             &Iosb, FSCTL_PIPE_DISCONNECT,
+                                             NULL, // InputBuffer
+                                             0,    // InputBufferLength,
+                                             NULL, // OutputBuffer
+                                             0     // OutputBufferLength
+                                             )))
+    {
 
-        Error( DisconnectPipe, Status );
+        Error(DisconnectPipe, Status);
     }
-    if (!NT_SUCCESS(Status = NtWaitForSingleObject( EarPort, TRUE, NULL ))) {
+    if (!NT_SUCCESS(Status = NtWaitForSingleObject(EarPort, TRUE, NULL)))
+    {
 
-        Error( NtWaitForSingleObject, Status );
+        Error(NtWaitForSingleObject, Status);
     }
 
-    if (!NT_SUCCESS(Iosb.Status)) {
+    if (!NT_SUCCESS(Iosb.Status))
+    {
 
-        Error( DisconnectPipeFinalStatus, Iosb.Status );
+        Error(DisconnectPipeFinalStatus, Iosb.Status);
     }
 
     return;
 }
 
-
+
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
 //   Named Pipe Client Operations                                           //
@@ -1579,9 +1389,7 @@ SepServerDisconnectPipe(
 //////////////////////////////////////////////////////////////////////////////
 
 HANDLE
-SepClientOpenPipe(
-    VOID
-    )
+SepClientOpenPipe(VOID)
 {
     HANDLE PipeHandle, NpfsHandle;
     NTSTATUS Status;
@@ -1592,136 +1400,112 @@ SepClientOpenPipe(
     PFILE_PIPE_WAIT_FOR_BUFFER WaitPipe;
     ULONG WaitPipeLength;
     NAMED_PIPE_CONFIGURATION Config = FILE_PIPE_FULL_DUPLEX;
-    READ_MODE ReadMode              = FILE_PIPE_MESSAGE_MODE;
-    COMPLETION_MODE CompletionMode  = FILE_PIPE_QUEUE_OPERATION;
+    READ_MODE ReadMode = FILE_PIPE_MESSAGE_MODE;
+    COMPLETION_MODE CompletionMode = FILE_PIPE_QUEUE_OPERATION;
 
 
-//#ifdef NOT_YET_WORKING
+    //#ifdef NOT_YET_WORKING
     //
     // Wait for the server's pipe to reach a listen state...
     //
 
-    RtlInitString( &Npfs, "\\Device\\NamedPipe\\");
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeNpfs,
-                 &Npfs,
-                 TRUE );  SEASSERT_SUCCESS( NT_SUCCESS(Status) );
+    RtlInitString(&Npfs, "\\Device\\NamedPipe\\");
+    Status = RtlAnsiStringToUnicodeString(&UnicodeNpfs, &Npfs, TRUE);
+    SEASSERT_SUCCESS(NT_SUCCESS(Status));
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &UnicodeNpfs,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &UnicodeNpfs, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    if (!NT_SUCCESS(Status = NtOpenFile(
-                                &NpfsHandle,
-                                GENERIC_READ | SYNCHRONIZE,
-                                &ObjectAttributes,
-                                &Iosb,
-                                FILE_SHARE_READ,
-                                0 ))) {
+    if (!NT_SUCCESS(
+            Status = NtOpenFile(&NpfsHandle, GENERIC_READ | SYNCHRONIZE, &ObjectAttributes, &Iosb, FILE_SHARE_READ, 0)))
+    {
 
-        Error( OpenNpfs, Status );
+        Error(OpenNpfs, Status);
     }
-    RtlFreeUnicodeString( &UnicodeNpfs );
+    RtlFreeUnicodeString(&UnicodeNpfs);
 
-    WaitPipeLength =
-        FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[0]) +
-        RelativePortName.MaximumLength;                 //UNICODEFIX UnicodeRelativePortName.MaximumLength;
+    WaitPipeLength = FIELD_OFFSET(FILE_PIPE_WAIT_FOR_BUFFER, Name[0]) +
+                     RelativePortName.MaximumLength; //UNICODEFIX UnicodeRelativePortName.MaximumLength;
     WaitPipe = RtlAllocateHeap(RtlProcessHeap(), 0, WaitPipeLength);
     WaitPipe->TimeoutSpecified = FALSE;
 
-    WaitPipe->NameLength = RelativePortName.Length;     //UNICODEFIX UnicodeRelativePortName.Length;
-    strcpy(WaitPipe->Name, RelativePortName.Buffer);    //UNICODEFIX UnicodePortName.Buffer;
+    WaitPipe->NameLength = RelativePortName.Length;  //UNICODEFIX UnicodeRelativePortName.Length;
+    strcpy(WaitPipe->Name, RelativePortName.Buffer); //UNICODEFIX UnicodePortName.Buffer;
 
-    if (!NT_SUCCESS(Status = NtFsControlFile(
-                                NpfsHandle,
-                                NULL,        // Event
-                                NULL,        // ApcRoutine
-                                NULL,        // ApcContext
-                                &Iosb,
-                                FSCTL_PIPE_WAIT,
-                                WaitPipe,       // Buffer for data to the FS
-                                WaitPipeLength,
-                                NULL,        // OutputBuffer
-                                0            // OutputBufferLength
-                                ))) {
+    if (!NT_SUCCESS(Status = NtFsControlFile(NpfsHandle,
+                                             NULL, // Event
+                                             NULL, // ApcRoutine
+                                             NULL, // ApcContext
+                                             &Iosb, FSCTL_PIPE_WAIT,
+                                             WaitPipe, // Buffer for data to the FS
+                                             WaitPipeLength,
+                                             NULL, // OutputBuffer
+                                             0     // OutputBufferLength
+                                             )))
+    {
 
-        Error( ClientWaitPipe, Status );
+        Error(ClientWaitPipe, Status);
     }
-    if (Status == STATUS_PENDING) {
-        if (!NT_SUCCESS(Status = NtWaitForSingleObject( NpfsHandle, TRUE, NULL ))) {
+    if (Status == STATUS_PENDING)
+    {
+        if (!NT_SUCCESS(Status = NtWaitForSingleObject(NpfsHandle, TRUE, NULL)))
+        {
 
-            Error( NtWaitForSingleObject, Status );
+            Error(NtWaitForSingleObject, Status);
         }
     }
 
-    if (!NT_SUCCESS(Iosb.Status)) {
+    if (!NT_SUCCESS(Iosb.Status))
+    {
 
-        Error( ClientWaitPipeFinalStatus, Iosb.Status );
+        Error(ClientWaitPipeFinalStatus, Iosb.Status);
     }
 
-    Status = NtClose( NpfsHandle );
+    Status = NtClose(NpfsHandle);
     ASSERT(NT_SUCCESS(Status));
-//#endif  // NOT_YET_WORKING
-//    Delay(1);
+    //#endif  // NOT_YET_WORKING
+    //    Delay(1);
 
 
     //
     //  Initialize the attributes
     //
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &UnicodePortName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &UnicodePortName, OBJ_CASE_INSENSITIVE, NULL, NULL);
     ObjectAttributes.SecurityQualityOfService = (PVOID)(&SecurityQos);
 
     //
     //  Calculate the share access
     //
 
-    Share = (Config == FILE_PIPE_INBOUND  ? FILE_SHARE_WRITE :
-            (Config == FILE_PIPE_OUTBOUND ? FILE_SHARE_READ :
-                       FILE_SHARE_READ | FILE_SHARE_WRITE));
-
+    Share = (Config == FILE_PIPE_INBOUND
+                 ? FILE_SHARE_WRITE
+                 : (Config == FILE_PIPE_OUTBOUND ? FILE_SHARE_READ : FILE_SHARE_READ | FILE_SHARE_WRITE));
 
 
     //
     // And now open it...
     //
 
-    if (!NT_SUCCESS(Status = NtOpenFile(
-                                &PipeHandle,
-                                GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE,
-                                &ObjectAttributes,
-                                &Iosb,
-                                Share,
-                                0 ))) {
+    if (!NT_SUCCESS(Status = NtOpenFile(&PipeHandle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &ObjectAttributes,
+                                        &Iosb, Share, 0)))
+    {
 
-        Error( OpenPipe, Status );
+        Error(OpenPipe, Status);
     }
 
-    if ((ReadMode != FILE_PIPE_BYTE_STREAM_MODE) ||
-        (CompletionMode != FILE_PIPE_QUEUE_OPERATION)) {
+    if ((ReadMode != FILE_PIPE_BYTE_STREAM_MODE) || (CompletionMode != FILE_PIPE_QUEUE_OPERATION))
+    {
 
         FILE_PIPE_INFORMATION Buffer;
 
         Buffer.ReadMode = ReadMode;
         Buffer.CompletionMode = CompletionMode;
 
-        if (!NT_SUCCESS(Status = NtSetInformationFile(
-                                PipeHandle,
-                                &Iosb,
-                                &Buffer,
-                                sizeof(FILE_PIPE_INFORMATION),
-                                FilePipeInformation ))) {
+        if (!NT_SUCCESS(Status = NtSetInformationFile(PipeHandle, &Iosb, &Buffer, sizeof(FILE_PIPE_INFORMATION),
+                                                      FilePipeInformation)))
+        {
 
-            Error( NtSetInformationFile, Status );
+            Error(NtSetInformationFile, Status);
         }
     }
 

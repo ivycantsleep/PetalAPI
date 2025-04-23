@@ -29,16 +29,13 @@ Revision History:
 // Flags used in KTHREAD.AlignmentEmulationFlags
 //
 
-#define AFE_EMULATING_ALIGNMENT_FAULT   0x01
-#define AFE_TF_FLAG_WAS_SET             0x02
+#define AFE_EMULATING_ALIGNMENT_FAULT 0x01
+#define AFE_TF_FLAG_WAS_SET 0x02
 
-
+
 BOOLEAN
-KiEmulateReference (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN OUT PKTRAP_FRAME TrapFrame
-    )
+KiEmulateReference(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                   IN OUT PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -88,7 +85,8 @@ Return Value:
     // the fault.
     //
 
-    if ((TrapFrame->EFlags & EFLAGS_TF_MASK) != 0) {
+    if ((TrapFrame->EFlags & EFLAGS_TF_MASK) != 0)
+    {
         thread->AlignmentEmulationFlags |= AFE_TF_FLAG_WAS_SET;
     }
 
@@ -96,18 +94,14 @@ Return Value:
     // Turn off the AC flag and turn on the TF flag
     //
 
-    TrapFrame->EFlags =
-        (TrapFrame->EFlags & ~EFLAGS_AC_MASK) | EFLAGS_TF_MASK;
+    TrapFrame->EFlags = (TrapFrame->EFlags & ~EFLAGS_AC_MASK) | EFLAGS_TF_MASK;
 
     return TRUE;
 }
 
 
-
 BOOLEAN
-KiEmulateReferenceComplete (
-    IN OUT PKTRAP_FRAME TrapFrame
-    )
+KiEmulateReferenceComplete(IN OUT PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -140,7 +134,8 @@ Return Value:
     //
 
     emulationFlags = thread->AlignmentEmulationFlags;
-    if ((emulationFlags & AFE_EMULATING_ALIGNMENT_FAULT) == 0) {
+    if ((emulationFlags & AFE_EMULATING_ALIGNMENT_FAULT) == 0)
+    {
 
         //
         // This single-step wasn't the result of any alignment emulation that
@@ -153,7 +148,7 @@ Return Value:
 
     //
     // Clear the emulation flags in the thread, we've got a local copy.
-    // 
+    //
 
     thread->AlignmentEmulationFlags = 0;
 
@@ -162,7 +157,8 @@ Return Value:
     // just completed.  Restore the AC and TF flags.
     //
 
-    if ((emulationFlags & AFE_TF_FLAG_WAS_SET) == 0) {
+    if ((emulationFlags & AFE_TF_FLAG_WAS_SET) == 0)
+    {
 
         //
         // The TF flag was not set when the alignment fault was first
@@ -170,23 +166,20 @@ Return Value:
         // that this trap 01 need not be forwarded any further.
         //
 
-        TrapFrame->EFlags =
-            (TrapFrame->EFlags | EFLAGS_AC_MASK) & ~EFLAGS_TF_MASK;
+        TrapFrame->EFlags = (TrapFrame->EFlags | EFLAGS_AC_MASK) & ~EFLAGS_TF_MASK;
 
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // The TF flag was set when the alignment fault was first
         // encountered.  Leave it set, restore the AC flag, and indicate
         // that this trap 01 should be forwarded to the exception dispatcher.
-        // 
+        //
 
         TrapFrame->EFlags |= EFLAGS_AC_MASK;
         return TRUE;
     }
 }
-
-
-

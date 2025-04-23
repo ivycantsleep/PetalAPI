@@ -34,19 +34,11 @@ const KPRIORITY IopCacheHitIncrement = IO_NO_INCREMENT;
 #pragma alloc_text(PAGE, NtReadFile)
 #pragma alloc_text(PAGE, NtReadFileScatter)
 #endif
-
+
 NTSTATUS
-NtReadFile(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
-    IN ULONG Length,
-    IN PLARGE_INTEGER ByteOffset OPTIONAL,
-    IN PULONG Key OPTIONAL
-    )
+NtReadFile(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+           IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID Buffer, IN ULONG Length,
+           IN PLARGE_INTEGER ByteOffset OPTIONAL, IN PULONG Key OPTIONAL)
 
 /*++
 
@@ -105,9 +97,9 @@ Return Value:
     PIO_STACK_LOCATION irpSp;
     NTSTATUS exceptionCode;
     BOOLEAN synchronousIo;
-    PKEVENT eventObject = (PKEVENT) NULL;
+    PKEVENT eventObject = (PKEVENT)NULL;
     ULONG keyValue = 0;
-    LARGE_INTEGER fileOffset = {0,0};
+    LARGE_INTEGER fileOffset = { 0, 0 };
     PULONG majorFunction;
     PETHREAD CurrentThread;
 
@@ -117,7 +109,7 @@ Return Value:
     // Get the previous mode;  i.e., the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
     //
@@ -126,13 +118,10 @@ Return Value:
     // will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        FILE_READ_DATA,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        NULL );
-    if (!NT_SUCCESS( status )) {
+    status = ObReferenceObjectByHandle(FileHandle, FILE_READ_DATA, IoFileObjectType, requestorMode,
+                                       (PVOID *)&fileObject, NULL);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -140,9 +129,10 @@ Return Value:
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( fileObject );
+    deviceObject = IoGetRelatedDeviceObject(fileObject);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is not kernel so probe each of the arguments
@@ -152,13 +142,14 @@ Return Value:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatusEx(IoStatusBlock , ApcRoutine);
+            ProbeForWriteIoStatusEx(IoStatusBlock, ApcRoutine);
 
             //
             // The caller's data buffer must be writable from the caller's
@@ -169,7 +160,7 @@ Return Value:
             // buffer copy operations later.
             //
 
-            ProbeForWrite( Buffer, Length, sizeof( UCHAR ) );
+            ProbeForWrite(Buffer, Length, sizeof(UCHAR));
 
             //
             // If this file has an I/O completion port associated w/it, then
@@ -178,8 +169,9 @@ Return Value:
             // notification.
             //
 
-            if (fileObject->CompletionContext && IopApcRoutinePresent( ApcRoutine )) {
-                ObDereferenceObject( fileObject );
+            if (fileObject->CompletionContext && IopApcRoutinePresent(ApcRoutine))
+            {
+                ObDereferenceObject(fileObject);
                 return STATUS_INVALID_PARAMETER;
             }
 
@@ -188,10 +180,9 @@ Return Value:
             // the caller's mode and capture it if it is present.
             //
 
-            if (ARGUMENT_PRESENT( ByteOffset )) {
-                ProbeForReadSmallStructure( ByteOffset,
-                                            sizeof( LARGE_INTEGER ),
-                                            sizeof( ULONG ) );
+            if (ARGUMENT_PRESENT(ByteOffset))
+            {
+                ProbeForReadSmallStructure(ByteOffset, sizeof(LARGE_INTEGER), sizeof(ULONG));
                 fileOffset = *ByteOffset;
             }
 
@@ -201,7 +192,8 @@ Return Value:
             // and ByteOffset parameter checks differently.
             //
 
-            if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING) {
+            if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING)
+            {
 
                 //
                 // The file was opened without intermediate buffering enabled.
@@ -209,18 +201,18 @@ Return Value:
                 // length is an integral number of 512-byte blocks.
                 //
 
-                if ((deviceObject->SectorSize &&
-                    (Length & (deviceObject->SectorSize - 1))) ||
-                    (ULONG_PTR) Buffer & deviceObject->AlignmentRequirement) {
+                if ((deviceObject->SectorSize && (Length & (deviceObject->SectorSize - 1))) ||
+                    (ULONG_PTR)Buffer & deviceObject->AlignmentRequirement)
+                {
 
                     //
                     // Check for sector sizes that are not a power of two.
                     //
 
-                    if ((deviceObject->SectorSize &&
-                        Length % deviceObject->SectorSize) ||
-                        (ULONG_PTR) Buffer & deviceObject->AlignmentRequirement) {
-                        ObDereferenceObject( fileObject );
+                    if ((deviceObject->SectorSize && Length % deviceObject->SectorSize) ||
+                        (ULONG_PTR)Buffer & deviceObject->AlignmentRequirement)
+                    {
+                        ObDereferenceObject(fileObject);
                         return STATUS_INVALID_PARAMETER;
                     }
                 }
@@ -230,10 +222,11 @@ Return Value:
                 // is a valid argument.
                 //
 
-                if (ARGUMENT_PRESENT( ByteOffset )) {
-                    if (deviceObject->SectorSize &&
-                        (fileOffset.LowPart & (deviceObject->SectorSize - 1))) {
-                        ObDereferenceObject( fileObject );
+                if (ARGUMENT_PRESENT(ByteOffset))
+                {
+                    if (deviceObject->SectorSize && (fileOffset.LowPart & (deviceObject->SectorSize - 1)))
+                    {
+                        ObDereferenceObject(fileObject);
                         return STATUS_INVALID_PARAMETER;
                     }
                 }
@@ -244,11 +237,13 @@ Return Value:
             // is readable by the caller.
             //
 
-            if (ARGUMENT_PRESENT( Key )) {
-                keyValue = ProbeAndReadUlong( Key );
+            if (ARGUMENT_PRESENT(Key))
+            {
+                keyValue = ProbeAndReadUlong(Key);
             }
-
-        } except(IopExceptionFilter( GetExceptionInformation(), &exceptionCode )) {
+        }
+        except(IopExceptionFilter(GetExceptionInformation(), &exceptionCode))
+        {
 
             //
             // An exception was incurred while attempting to probe the
@@ -256,28 +251,31 @@ Return Value:
             // an appropriate error status code.
             //
 
-            ObDereferenceObject( fileObject );
+            ObDereferenceObject(fileObject);
             return exceptionCode;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The caller's mode is kernel.  Get the same parameters that are
         // required from any other mode.
         //
 
-        if (ARGUMENT_PRESENT( ByteOffset )) {
+        if (ARGUMENT_PRESENT(ByteOffset))
+        {
             fileOffset = *ByteOffset;
         }
 
-        if (ARGUMENT_PRESENT( Key )) {
+        if (ARGUMENT_PRESENT(Key))
+        {
             keyValue = *Key;
         }
 
 #if DBG
-        if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING) {
+        if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING)
+        {
 
             //
             // The file was opened without intermediate buffering enabled.
@@ -285,19 +283,19 @@ Return Value:
             // length is an integral number of the block size.
             //
 
-            if ((deviceObject->SectorSize &&
-                (Length & (deviceObject->SectorSize - 1))) ||
-                (ULONG_PTR) Buffer & deviceObject->AlignmentRequirement) {
+            if ((deviceObject->SectorSize && (Length & (deviceObject->SectorSize - 1))) ||
+                (ULONG_PTR)Buffer & deviceObject->AlignmentRequirement)
+            {
 
                 //
                 // Check for sector sizes that are not a power of two.
                 //
 
-                if ((deviceObject->SectorSize &&
-                    Length % deviceObject->SectorSize) ||
-                    (ULONG_PTR) Buffer & deviceObject->AlignmentRequirement) {
-                    ObDereferenceObject( fileObject );
-                    ASSERT( FALSE );
+                if ((deviceObject->SectorSize && Length % deviceObject->SectorSize) ||
+                    (ULONG_PTR)Buffer & deviceObject->AlignmentRequirement)
+                {
+                    ObDereferenceObject(fileObject);
+                    ASSERT(FALSE);
                     return STATUS_INVALID_PARAMETER;
                 }
             }
@@ -307,11 +305,12 @@ Return Value:
             // is a valid argument.
             //
 
-            if (ARGUMENT_PRESENT( ByteOffset )) {
-                if (deviceObject->SectorSize &&
-                    (fileOffset.LowPart & (deviceObject->SectorSize - 1))) {
-                    ObDereferenceObject( fileObject );
-                    ASSERT( FALSE );
+            if (ARGUMENT_PRESENT(ByteOffset))
+            {
+                if (deviceObject->SectorSize && (fileOffset.LowPart & (deviceObject->SectorSize - 1)))
+                {
+                    ObDereferenceObject(fileObject);
+                    ASSERT(FALSE);
                     return STATUS_INVALID_PARAMETER;
                 }
             }
@@ -325,18 +324,18 @@ Return Value:
     // the handle does not refer to an event, then the reference will fail.
     //
 
-    if (ARGUMENT_PRESENT( Event )) {
-        status = ObReferenceObjectByHandle( Event,
-                                            EVENT_MODIFY_STATE,
-                                            ExEventObjectType,
-                                            requestorMode,
-                                            (PVOID *) &eventObject,
-                                            NULL );
-        if (!NT_SUCCESS( status )) {
-            ObDereferenceObject( fileObject );
+    if (ARGUMENT_PRESENT(Event))
+    {
+        status = ObReferenceObjectByHandle(Event, EVENT_MODIFY_STATE, ExEventObjectType, requestorMode,
+                                           (PVOID *)&eventObject, NULL);
+        if (!NT_SUCCESS(status))
+        {
+            ObDereferenceObject(fileObject);
             return status;
-        } else {
-            KeClearEvent( eventObject );
+        }
+        else
+        {
+            KeClearEvent(eventObject);
         }
     }
 
@@ -352,27 +351,29 @@ Return Value:
     // the current thread.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                if (eventObject) {
-                    ObDereferenceObject( eventObject );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                if (eventObject)
+                {
+                    ObDereferenceObject(eventObject);
                 }
-                ObDereferenceObject( fileObject );
+                ObDereferenceObject(fileObject);
                 return status;
             }
         }
 
-        if (!ARGUMENT_PRESENT( ByteOffset ) ||
-            (fileOffset.LowPart == FILE_USE_FILE_POINTER_POSITION &&
-            fileOffset.HighPart == -1)) {
+        if (!ARGUMENT_PRESENT(ByteOffset) ||
+            (fileOffset.LowPart == FILE_USE_FILE_POINTER_POSITION && fileOffset.HighPart == -1))
+        {
             fileOffset = fileObject->CurrentByteOffset;
         }
 
@@ -384,7 +385,8 @@ Return Value:
         // fall through and go the "long way" and create an Irp.
         //
 
-        if (fileObject->PrivateCacheMap) {
+        if (fileObject->PrivateCacheMap)
+        {
 
             IO_STATUS_BLOCK localIoStatus;
 
@@ -394,29 +396,25 @@ Return Value:
             //  Negative file offsets are illegal.
             //
 
-            if (fileOffset.HighPart < 0) {
-                if (eventObject) {
-                    ObDereferenceObject( eventObject );
+            if (fileOffset.HighPart < 0)
+            {
+                if (eventObject)
+                {
+                    ObDereferenceObject(eventObject);
                 }
-                IopReleaseFileObjectLock( fileObject );
-                ObDereferenceObject( fileObject );
+                IopReleaseFileObjectLock(fileObject);
+                ObDereferenceObject(fileObject);
                 return STATUS_INVALID_PARAMETER;
             }
 
-            if (fastIoDispatch->FastIoRead( fileObject,
-                                            &fileOffset,
-                                            Length,
-                                            TRUE,
-                                            keyValue,
-                                            Buffer,
-                                            &localIoStatus,
-                                            deviceObject )
+            if (fastIoDispatch->FastIoRead(fileObject, &fileOffset, Length, TRUE, keyValue, Buffer, &localIoStatus,
+                                           deviceObject)
 
-                    &&
+                &&
 
-                ((localIoStatus.Status == STATUS_SUCCESS) ||
-                 (localIoStatus.Status == STATUS_BUFFER_OVERFLOW) ||
-                 (localIoStatus.Status == STATUS_END_OF_FILE))) {
+                ((localIoStatus.Status == STATUS_SUCCESS) || (localIoStatus.Status == STATUS_BUFFER_OVERFLOW) ||
+                 (localIoStatus.Status == STATUS_END_OF_FILE)))
+            {
 
                 //
                 // Boost the priority of the current thread so that it appears
@@ -425,21 +423,24 @@ Return Value:
                 // more CPU time.
                 //
 
-                if (IopCacheHitIncrement) {
-                    KeBoostPriorityThread( &CurrentThread->Tcb,
-                                           IopCacheHitIncrement );
+                if (IopCacheHitIncrement)
+                {
+                    KeBoostPriorityThread(&CurrentThread->Tcb, IopCacheHitIncrement);
                 }
 
                 //
                 // Carefully return the I/O status.
                 //
 
-                IopUpdateReadOperationCount( );
-                IopUpdateReadTransferCount( (ULONG)localIoStatus.Information );
+                IopUpdateReadOperationCount();
+                IopUpdateReadTransferCount((ULONG)localIoStatus.Information);
 
-                try {
+                try
+                {
                     *IoStatusBlock = localIoStatus;
-                } except( EXCEPTION_EXECUTE_HANDLER ) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     localIoStatus.Status = GetExceptionCode();
                     localIoStatus.Information = 0;
                 }
@@ -448,9 +449,10 @@ Return Value:
                 // If an event was specified, set it.
                 //
 
-                if (ARGUMENT_PRESENT( Event )) {
-                    KeSetEvent( eventObject, 0, FALSE );
-                    ObDereferenceObject( eventObject );
+                if (ARGUMENT_PRESENT(Event))
+                {
+                    KeSetEvent(eventObject, 0, FALSE);
+                    ObDereferenceObject(eventObject);
                 }
 
                 //
@@ -462,27 +464,31 @@ Return Value:
                 // Cleanup and return.
                 //
 
-                IopReleaseFileObjectLock( fileObject );
-                ObDereferenceObject( fileObject );
+                IopReleaseFileObjectLock(fileObject);
+                ObDereferenceObject(fileObject);
 
                 return localIoStatus.Status;
             }
         }
         synchronousIo = TRUE;
-
-    } else if (!ARGUMENT_PRESENT( ByteOffset ) && !(fileObject->Flags & (FO_NAMED_PIPE | FO_MAILSLOT))) {
+    }
+    else if (!ARGUMENT_PRESENT(ByteOffset) && !(fileObject->Flags & (FO_NAMED_PIPE | FO_MAILSLOT)))
+    {
 
         //
         // The file is not open for synchronous I/O operations, but the
         // caller did not specify a ByteOffset parameter.
         //
 
-        if (eventObject) {
-            ObDereferenceObject( eventObject );
+        if (eventObject)
+        {
+            ObDereferenceObject(eventObject);
         }
-        ObDereferenceObject( fileObject );
+        ObDereferenceObject(fileObject);
         return STATUS_INVALID_PARAMETER;
-    } else {
+    }
+    else
+    {
         synchronousIo = FALSE;
     }
 
@@ -490,14 +496,17 @@ Return Value:
     //  Negative file offsets are illegal.
     //
 
-    if (fileOffset.HighPart < 0) {
-        if (eventObject) {
-            ObDereferenceObject( eventObject );
+    if (fileOffset.HighPart < 0)
+    {
+        if (eventObject)
+        {
+            ObDereferenceObject(eventObject);
         }
-        if (synchronousIo) {
-            IopReleaseFileObjectLock( fileObject );
+        if (synchronousIo)
+        {
+            IopReleaseFileObjectLock(fileObject);
         }
-        ObDereferenceObject( fileObject );
+        ObDereferenceObject(fileObject);
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -505,32 +514,33 @@ Return Value:
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IopAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IopAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        IopAllocateIrpCleanup( fileObject, eventObject );
+        IopAllocateIrpCleanup(fileObject, eventObject);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     irp->Tail.Overlay.OriginalFileObject = fileObject;
     irp->Tail.Overlay.Thread = CurrentThread;
-    irp->Tail.Overlay.AuxiliaryBuffer = (PVOID) NULL;
+    irp->Tail.Overlay.AuxiliaryBuffer = (PVOID)NULL;
     irp->RequestorMode = requestorMode;
     irp->PendingReturned = FALSE;
     irp->Cancel = FALSE;
-    irp->CancelRoutine = (PDRIVER_CANCEL) NULL;
+    irp->CancelRoutine = (PDRIVER_CANCEL)NULL;
 
     //
     // Fill in the service independent parameters in the IRP.
@@ -551,8 +561,8 @@ Return Value:
     //      Control = 0;
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
-    majorFunction = (PULONG) (&irpSp->MajorFunction);
+    irpSp = IoGetNextIrpStackLocation(irp);
+    majorFunction = (PULONG)(&irpSp->MajorFunction);
     *majorFunction = IRP_MJ_READ;
     irpSp->FileObject = fileObject;
 
@@ -565,10 +575,11 @@ Return Value:
     // locked down using it.
     //
 
-    irp->AssociatedIrp.SystemBuffer = (PVOID) NULL;
-    irp->MdlAddress = (PMDL) NULL;
+    irp->AssociatedIrp.SystemBuffer = (PVOID)NULL;
+    irp->MdlAddress = (PMDL)NULL;
 
-    if (deviceObject->Flags & DO_BUFFERED_IO) {
+    if (deviceObject->Flags & DO_BUFFERED_IO)
+    {
 
         //
         // The device does not support direct I/O.  Allocate a system buffer
@@ -579,19 +590,21 @@ Return Value:
         // is only done if the operation has a non-zero length.
         //
 
-        if (Length) {
+        if (Length)
+        {
 
-            try {
+            try
+            {
 
                 //
                 // Allocate the intermediary system buffer from nonpaged pool
                 // and charge quota for it.
                 //
 
-                irp->AssociatedIrp.SystemBuffer =
-                    ExAllocatePoolWithQuota( NonPagedPoolCacheAligned, Length );
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                irp->AssociatedIrp.SystemBuffer = ExAllocatePoolWithQuota(NonPagedPoolCacheAligned, Length);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // An exception was incurred while either probing the caller's
@@ -600,13 +613,9 @@ Return Value:
                 // appropriate error status code.
                 //
 
-                IopExceptionCleanup( fileObject,
-                                     irp,
-                                     eventObject,
-                                     (PKEVENT) NULL );
+                IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
                 return GetExceptionCode();
-
             }
 
             //
@@ -616,11 +625,10 @@ Return Value:
             //
 
             irp->UserBuffer = Buffer;
-            irp->Flags = IRP_BUFFERED_IO |
-                         IRP_DEALLOCATE_BUFFER |
-                         IRP_INPUT_OPERATION;
-
-        } else {
+            irp->Flags = IRP_BUFFERED_IO | IRP_DEALLOCATE_BUFFER | IRP_INPUT_OPERATION;
+        }
+        else
+        {
 
             //
             // This is a zero-length read.  Simply indicate that this is
@@ -630,10 +638,10 @@ Return Value:
             //
 
             irp->Flags = IRP_BUFFERED_IO | IRP_INPUT_OPERATION;
-
         }
-
-    } else if (deviceObject->Flags & DO_DIRECT_IO) {
+    }
+    else if (deviceObject->Flags & DO_DIRECT_IO)
+    {
 
         //
         // This is a direct I/O operation.  Allocate an MDL and invoke the
@@ -647,9 +655,11 @@ Return Value:
 
         irp->Flags = 0;
 
-        if (Length) {
+        if (Length)
+        {
 
-            try {
+            try
+            {
 
                 //
                 // Allocate an MDL, charging quota for it, and hang it off of
@@ -658,13 +668,15 @@ Return Value:
                 // the PFNs of those pages.
                 //
 
-                mdl = IoAllocateMdl( Buffer, Length, FALSE, TRUE, irp );
-                if (mdl == NULL) {
-                    ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                mdl = IoAllocateMdl(Buffer, Length, FALSE, TRUE, irp);
+                if (mdl == NULL)
+                {
+                    ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
                 }
-                MmProbeAndLockPages( mdl, requestorMode, IoWriteAccess );
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                MmProbeAndLockPages(mdl, requestorMode, IoWriteAccess);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // An exception was incurred while either probing the caller's
@@ -673,18 +685,14 @@ Return Value:
                 // error status code.
                 //
 
-                IopExceptionCleanup( fileObject,
-                                     irp,
-                                     eventObject,
-                                     (PKEVENT) NULL );
+                IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
                 return GetExceptionCode();
-
             }
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Pass the address of the user's buffer so the driver has access to
@@ -700,9 +708,12 @@ Return Value:
     // set the disable flag in the IRP so no caching is performed.
     //
 
-    if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING) {
+    if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING)
+    {
         irp->Flags |= IRP_NOCACHE | IRP_READ_OPERATION | IRP_DEFER_IO_COMPLETION;
-    } else {
+    }
+    else
+    {
         irp->Flags |= IRP_READ_OPERATION | IRP_DEFER_IO_COMPLETION;
     }
 
@@ -720,29 +731,16 @@ Return Value:
     // I/O completion.
     //
 
-    status =  IopSynchronousServiceTail( deviceObject,
-                                         irp,
-                                         fileObject,
-                                         TRUE,
-                                         requestorMode,
-                                         synchronousIo,
-                                         ReadTransfer );
+    status = IopSynchronousServiceTail(deviceObject, irp, fileObject, TRUE, requestorMode, synchronousIo, ReadTransfer);
 
     return status;
 }
-
+
 NTSTATUS
-NtReadFileScatter(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PFILE_SEGMENT_ELEMENT SegmentArray,
-    IN ULONG Length,
-    IN PLARGE_INTEGER ByteOffset OPTIONAL,
-    IN PULONG Key OPTIONAL
-    )
+NtReadFileScatter(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                  IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock,
+                  IN PFILE_SEGMENT_ELEMENT SegmentArray, IN ULONG Length, IN PLARGE_INTEGER ByteOffset OPTIONAL,
+                  IN PULONG Key OPTIONAL)
 
 /*++
 
@@ -805,10 +803,10 @@ Notes:
     KPROCESSOR_MODE requestorMode;
     PIO_STACK_LOCATION irpSp;
     NTSTATUS exceptionCode;
-    PKEVENT eventObject = (PKEVENT) NULL;
+    PKEVENT eventObject = (PKEVENT)NULL;
     ULONG keyValue = 0;
     ULONG elementCount;
-    LARGE_INTEGER fileOffset = {0,0};
+    LARGE_INTEGER fileOffset = { 0, 0 };
     PULONG majorFunction;
     ULONG i;
     BOOLEAN synchronousIo;
@@ -819,7 +817,7 @@ Notes:
     //
     // Get the previous mode;  i.e., the mode of the caller.
     //
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
     //
@@ -828,13 +826,10 @@ Notes:
     // will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        FILE_READ_DATA,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        NULL );
-    if (!NT_SUCCESS( status )) {
+    status = ObReferenceObjectByHandle(FileHandle, FILE_READ_DATA, IoFileObjectType, requestorMode,
+                                       (PVOID *)&fileObject, NULL);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -842,7 +837,7 @@ Notes:
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( fileObject );
+    deviceObject = IoGetRelatedDeviceObject(fileObject);
 
     //
     // Verify this is a valid scatter read request.  In particular it must be
@@ -850,24 +845,23 @@ Notes:
     // and directed at a file system device.
     //
 
-    if (!(fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING) ||
-        (fileObject->Flags & FO_SYNCHRONOUS_IO) ||
+    if (!(fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING) || (fileObject->Flags & FO_SYNCHRONOUS_IO) ||
         deviceObject->Flags & DO_BUFFERED_IO ||
-        (deviceObject->DeviceType != FILE_DEVICE_DISK_FILE_SYSTEM &&
-         deviceObject->DeviceType != FILE_DEVICE_DFS &&
+        (deviceObject->DeviceType != FILE_DEVICE_DISK_FILE_SYSTEM && deviceObject->DeviceType != FILE_DEVICE_DFS &&
          deviceObject->DeviceType != FILE_DEVICE_TAPE_FILE_SYSTEM &&
          deviceObject->DeviceType != FILE_DEVICE_CD_ROM_FILE_SYSTEM &&
          deviceObject->DeviceType != FILE_DEVICE_NETWORK_FILE_SYSTEM &&
-         deviceObject->DeviceType != FILE_DEVICE_FILE_SYSTEM &&
-         deviceObject->DeviceType != FILE_DEVICE_DFS_VOLUME )) {
+         deviceObject->DeviceType != FILE_DEVICE_FILE_SYSTEM && deviceObject->DeviceType != FILE_DEVICE_DFS_VOLUME))
+    {
 
-        ObDereferenceObject( fileObject );
+        ObDereferenceObject(fileObject);
         return STATUS_INVALID_PARAMETER;
     }
 
     elementCount = BYTES_TO_PAGES(Length);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is not kernel so probe each of the arguments
@@ -877,13 +871,14 @@ Notes:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatusEx( IoStatusBlock , ApcRoutine);
+            ProbeForWriteIoStatusEx(IoStatusBlock, ApcRoutine);
 
             //
             // If this file has an I/O completion port associated w/it, then
@@ -892,8 +887,9 @@ Notes:
             // notification.
             //
 
-            if (fileObject->CompletionContext && IopApcRoutinePresent( ApcRoutine )) {
-                ObDereferenceObject( fileObject );
+            if (fileObject->CompletionContext && IopApcRoutinePresent(ApcRoutine))
+            {
+                ObDereferenceObject(fileObject);
                 return STATUS_INVALID_PARAMETER;
             }
 
@@ -902,10 +898,9 @@ Notes:
             // the caller's mode and capture it if it is present.
             //
 
-            if (ARGUMENT_PRESENT( ByteOffset )) {
-                ProbeForReadSmallStructure( ByteOffset,
-                                            sizeof( LARGE_INTEGER ),
-                                            sizeof( ULONG ) );
+            if (ARGUMENT_PRESENT(ByteOffset))
+            {
+                ProbeForReadSmallStructure(ByteOffset, sizeof(LARGE_INTEGER), sizeof(ULONG));
                 fileOffset = *ByteOffset;
             }
 
@@ -915,7 +910,8 @@ Notes:
             // parameter check differently.
             //
 
-            if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING) {
+            if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING)
+            {
 
                 //
                 // The file was opened without intermediate buffering enabled.
@@ -923,16 +919,16 @@ Notes:
                 // length is an integral number of 512-byte blocks.
                 //
 
-                if ((deviceObject->SectorSize &&
-                    (Length & (deviceObject->SectorSize - 1)))) {
+                if ((deviceObject->SectorSize && (Length & (deviceObject->SectorSize - 1))))
+                {
 
                     //
                     // Check for sector sizes that are not a power of two.
                     //
 
-                    if ((deviceObject->SectorSize &&
-                        Length % deviceObject->SectorSize)) {
-                        ObDereferenceObject( fileObject );
+                    if ((deviceObject->SectorSize && Length % deviceObject->SectorSize))
+                    {
+                        ObDereferenceObject(fileObject);
                         return STATUS_INVALID_PARAMETER;
                     }
                 }
@@ -942,10 +938,11 @@ Notes:
                 // is a valid argument.
                 //
 
-                if (ARGUMENT_PRESENT( ByteOffset )) {
-                    if (deviceObject->SectorSize &&
-                        (fileOffset.LowPart & (deviceObject->SectorSize - 1))) {
-                        ObDereferenceObject( fileObject );
+                if (ARGUMENT_PRESENT(ByteOffset))
+                {
+                    if (deviceObject->SectorSize && (fileOffset.LowPart & (deviceObject->SectorSize - 1)))
+                    {
+                        ObDereferenceObject(fileObject);
                         return STATUS_INVALID_PARAMETER;
                     }
                 }
@@ -956,49 +953,38 @@ Notes:
             //
 
 #ifdef _X86_
-            ProbeForRead( SegmentArray,
-                          elementCount * sizeof( FILE_SEGMENT_ELEMENT ),
-                          sizeof( ULONG )
-                          );
+            ProbeForRead(SegmentArray, elementCount * sizeof(FILE_SEGMENT_ELEMENT), sizeof(ULONG));
 #elif defined(_WIN64)
 
             //
             // If we are a wow64 process, follow the X86 rules
             //
 
-            if (PsGetCurrentProcess()->Wow64Process) {
-                ProbeForRead( SegmentArray,
-                              elementCount * sizeof( FILE_SEGMENT_ELEMENT ),
-                              sizeof( ULONG )
-                              );
-            } else {
-                ProbeForRead( SegmentArray,
-                              elementCount * sizeof( FILE_SEGMENT_ELEMENT ),
-                              TYPE_ALIGNMENT( FILE_SEGMENT_ELEMENT )
-                              );
+            if (PsGetCurrentProcess()->Wow64Process)
+            {
+                ProbeForRead(SegmentArray, elementCount * sizeof(FILE_SEGMENT_ELEMENT), sizeof(ULONG));
+            }
+            else
+            {
+                ProbeForRead(SegmentArray, elementCount * sizeof(FILE_SEGMENT_ELEMENT),
+                             TYPE_ALIGNMENT(FILE_SEGMENT_ELEMENT));
             }
 #else
-            ProbeForRead( SegmentArray,
-                          elementCount * sizeof( FILE_SEGMENT_ELEMENT ),
-                          TYPE_ALIGNMENT( FILE_SEGMENT_ELEMENT )
-                          );
+            ProbeForRead(SegmentArray, elementCount * sizeof(FILE_SEGMENT_ELEMENT),
+                         TYPE_ALIGNMENT(FILE_SEGMENT_ELEMENT));
 #endif
 
-            if (Length != 0) {
+            if (Length != 0)
+            {
 
                 //
                 // Capture the segment array so it cannot be changed after
                 // it has been looked at.
                 //
 
-                capturedArray = ExAllocatePoolWithQuota( PagedPool,
-                                                elementCount * sizeof( FILE_SEGMENT_ELEMENT )
-                                                );
+                capturedArray = ExAllocatePoolWithQuota(PagedPool, elementCount * sizeof(FILE_SEGMENT_ELEMENT));
 
-                RtlCopyMemory( capturedArray,
-                               SegmentArray,
-                               elementCount * sizeof( FILE_SEGMENT_ELEMENT )
-                               );
+                RtlCopyMemory(capturedArray, SegmentArray, elementCount * sizeof(FILE_SEGMENT_ELEMENT));
 
                 SegmentArray = capturedArray;
 
@@ -1006,10 +992,12 @@ Notes:
                 // Verify that all the addresses are page aligned.
                 //
 
-                for (i = 0; i < elementCount; i++) {
+                for (i = 0; i < elementCount; i++)
+                {
 
-                    if ( SegmentArray[i].Alignment & (PAGE_SIZE - 1)) {
-                        ExRaiseStatus( STATUS_INVALID_PARAMETER );
+                    if (SegmentArray[i].Alignment & (PAGE_SIZE - 1))
+                    {
+                        ExRaiseStatus(STATUS_INVALID_PARAMETER);
                     }
                 }
             }
@@ -1019,11 +1007,13 @@ Notes:
             // is readable by the caller.
             //
 
-            if (ARGUMENT_PRESENT( Key )) {
-                keyValue = ProbeAndReadUlong( Key );
+            if (ARGUMENT_PRESENT(Key))
+            {
+                keyValue = ProbeAndReadUlong(Key);
             }
-
-        } except(IopExceptionFilter( GetExceptionInformation(), &exceptionCode )) {
+        }
+        except(IopExceptionFilter(GetExceptionInformation(), &exceptionCode))
+        {
 
             //
             // An exception was incurred while attempting to probe the
@@ -1031,31 +1021,35 @@ Notes:
             // an appropriate error status code.
             //
 
-            ObDereferenceObject( fileObject );
-            if (capturedArray != NULL) {
-                ExFreePool( capturedArray );
+            ObDereferenceObject(fileObject);
+            if (capturedArray != NULL)
+            {
+                ExFreePool(capturedArray);
             }
             return exceptionCode;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The caller's mode is kernel.  Get the same parameters that are
         // required from any other mode.
         //
 
-        if (ARGUMENT_PRESENT( ByteOffset )) {
+        if (ARGUMENT_PRESENT(ByteOffset))
+        {
             fileOffset = *ByteOffset;
         }
 
-        if (ARGUMENT_PRESENT( Key )) {
+        if (ARGUMENT_PRESENT(Key))
+        {
             keyValue = *Key;
         }
 
 #if DBG
-        if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING) {
+        if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING)
+        {
 
             //
             // The file was opened without intermediate buffering enabled.
@@ -1063,17 +1057,17 @@ Notes:
             //  size.
             //
 
-            if ((deviceObject->SectorSize &&
-                (Length & (deviceObject->SectorSize - 1)))) {
+            if ((deviceObject->SectorSize && (Length & (deviceObject->SectorSize - 1))))
+            {
 
                 //
                 // Check for sector sizes that are not a power of two.
                 //
 
-                if ((deviceObject->SectorSize &&
-                    Length % deviceObject->SectorSize)) {
-                    ObDereferenceObject( fileObject );
-                    ASSERT( FALSE );
+                if ((deviceObject->SectorSize && Length % deviceObject->SectorSize))
+                {
+                    ObDereferenceObject(fileObject);
+                    ASSERT(FALSE);
                     return STATUS_INVALID_PARAMETER;
                 }
             }
@@ -1083,27 +1077,31 @@ Notes:
             // is a valid argument.
             //
 
-            if (ARGUMENT_PRESENT( ByteOffset )) {
-                if (deviceObject->SectorSize &&
-                    (fileOffset.LowPart & (deviceObject->SectorSize - 1))) {
-                    ObDereferenceObject( fileObject );
-                    ASSERT( FALSE );
+            if (ARGUMENT_PRESENT(ByteOffset))
+            {
+                if (deviceObject->SectorSize && (fileOffset.LowPart & (deviceObject->SectorSize - 1)))
+                {
+                    ObDereferenceObject(fileObject);
+                    ASSERT(FALSE);
                     return STATUS_INVALID_PARAMETER;
                 }
             }
         }
 
-        if (Length != 0) {
+        if (Length != 0)
+        {
 
             //
             // Verify that all the addresses are page aligned.
             //
 
-            for (i = 0; i < elementCount; i++) {
+            for (i = 0; i < elementCount; i++)
+            {
 
-                if ( SegmentArray[i].Alignment & (PAGE_SIZE - 1)) {
+                if (SegmentArray[i].Alignment & (PAGE_SIZE - 1))
+                {
 
-                    ObDereferenceObject( fileObject );
+                    ObDereferenceObject(fileObject);
                     ASSERT(FALSE);
                     return STATUS_INVALID_PARAMETER;
                 }
@@ -1118,21 +1116,22 @@ Notes:
     // the handle does not refer to an event, then the reference will fail.
     //
 
-    if (ARGUMENT_PRESENT( Event )) {
-        status = ObReferenceObjectByHandle( Event,
-                                            EVENT_MODIFY_STATE,
-                                            ExEventObjectType,
-                                            requestorMode,
-                                            (PVOID *) &eventObject,
-                                            NULL );
-        if (!NT_SUCCESS( status )) {
-            ObDereferenceObject( fileObject );
-            if (capturedArray != NULL) {
-                ExFreePool( capturedArray );
+    if (ARGUMENT_PRESENT(Event))
+    {
+        status = ObReferenceObjectByHandle(Event, EVENT_MODIFY_STATE, ExEventObjectType, requestorMode,
+                                           (PVOID *)&eventObject, NULL);
+        if (!NT_SUCCESS(status))
+        {
+            ObDereferenceObject(fileObject);
+            if (capturedArray != NULL)
+            {
+                ExFreePool(capturedArray);
             }
             return status;
-        } else {
-            KeClearEvent( eventObject );
+        }
+        else
+        {
+            KeClearEvent(eventObject);
         }
     }
 
@@ -1148,51 +1147,59 @@ Notes:
     // the current thread.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                if (eventObject) {
-                    ObDereferenceObject( eventObject );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                if (eventObject)
+                {
+                    ObDereferenceObject(eventObject);
                 }
-                ObDereferenceObject( fileObject );
-                if (capturedArray != NULL) {
-                    ExFreePool( capturedArray );
+                ObDereferenceObject(fileObject);
+                if (capturedArray != NULL)
+                {
+                    ExFreePool(capturedArray);
                 }
                 return status;
             }
         }
 
-        if (!ARGUMENT_PRESENT( ByteOffset ) ||
-            (fileOffset.LowPart == FILE_USE_FILE_POINTER_POSITION &&
-            fileOffset.HighPart == -1)) {
+        if (!ARGUMENT_PRESENT(ByteOffset) ||
+            (fileOffset.LowPart == FILE_USE_FILE_POINTER_POSITION && fileOffset.HighPart == -1))
+        {
             fileOffset = fileObject->CurrentByteOffset;
         }
 
         synchronousIo = TRUE;
-
-    } else if (!ARGUMENT_PRESENT( ByteOffset ) && !(fileObject->Flags & (FO_NAMED_PIPE | FO_MAILSLOT))) {
+    }
+    else if (!ARGUMENT_PRESENT(ByteOffset) && !(fileObject->Flags & (FO_NAMED_PIPE | FO_MAILSLOT)))
+    {
 
         //
         // The file is not open for synchronous I/O operations, but the
         // caller did not specify a ByteOffset parameter.
         //
 
-        if (eventObject) {
-            ObDereferenceObject( eventObject );
+        if (eventObject)
+        {
+            ObDereferenceObject(eventObject);
         }
-        ObDereferenceObject( fileObject );
-        if (capturedArray != NULL) {
-            ExFreePool( capturedArray );
+        ObDereferenceObject(fileObject);
+        if (capturedArray != NULL)
+        {
+            ExFreePool(capturedArray);
         }
         return STATUS_INVALID_PARAMETER;
-    } else {
+    }
+    else
+    {
         synchronousIo = FALSE;
     }
 
@@ -1200,16 +1207,20 @@ Notes:
     //  Negative file offsets are illegal.
     //
 
-    if (fileOffset.HighPart < 0) {
-        if (eventObject) {
-            ObDereferenceObject( eventObject );
+    if (fileOffset.HighPart < 0)
+    {
+        if (eventObject)
+        {
+            ObDereferenceObject(eventObject);
         }
-        if (synchronousIo) {
-            IopReleaseFileObjectLock( fileObject );
+        if (synchronousIo)
+        {
+            IopReleaseFileObjectLock(fileObject);
         }
-        ObDereferenceObject( fileObject );
-        if (capturedArray != NULL) {
-            ExFreePool( capturedArray );
+        ObDereferenceObject(fileObject);
+        if (capturedArray != NULL)
+        {
+            ExFreePool(capturedArray);
         }
         return STATUS_INVALID_PARAMETER;
     }
@@ -1218,35 +1229,37 @@ Notes:
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IopAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IopAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        IopAllocateIrpCleanup( fileObject, eventObject );
+        IopAllocateIrpCleanup(fileObject, eventObject);
 
-        if (capturedArray != NULL) {
-            ExFreePool( capturedArray );
+        if (capturedArray != NULL)
+        {
+            ExFreePool(capturedArray);
         }
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     irp->Tail.Overlay.OriginalFileObject = fileObject;
     irp->Tail.Overlay.Thread = CurrentThread;
-    irp->Tail.Overlay.AuxiliaryBuffer = (PVOID) NULL;
+    irp->Tail.Overlay.AuxiliaryBuffer = (PVOID)NULL;
     irp->RequestorMode = requestorMode;
     irp->PendingReturned = FALSE;
     irp->Cancel = FALSE;
-    irp->CancelRoutine = (PDRIVER_CANCEL) NULL;
+    irp->CancelRoutine = (PDRIVER_CANCEL)NULL;
 
     //
     // Fill in the service independent parameters in the IRP.
@@ -1267,8 +1280,8 @@ Notes:
     //      Control = 0;
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
-    majorFunction = (PULONG) (&irpSp->MajorFunction);
+    irpSp = IoGetNextIrpStackLocation(irp);
+    majorFunction = (PULONG)(&irpSp->MajorFunction);
     *majorFunction = IRP_MJ_READ;
     irpSp->FileObject = fileObject;
 
@@ -1279,8 +1292,8 @@ Notes:
     // routine.
     //
 
-    irp->AssociatedIrp.SystemBuffer = (PVOID) NULL;
-    irp->MdlAddress = (PMDL) NULL;
+    irp->AssociatedIrp.SystemBuffer = (PVOID)NULL;
+    irp->MdlAddress = (PMDL)NULL;
 
 
     //
@@ -1293,11 +1306,13 @@ Notes:
 
     irp->Flags = 0;
 
-    if (Length) {
+    if (Length)
+    {
 
         PMDL mdl;
 
-        try {
+        try
+        {
 
             //
             // Allocate an MDL, charging quota for it, and hang it off of
@@ -1306,9 +1321,10 @@ Notes:
             // the PFNs of those pages.
             //
 
-            mdl = IoAllocateMdl( (PVOID)(ULONG_PTR) SegmentArray[0].Buffer, Length, FALSE, TRUE, irp );
-            if (mdl == NULL) {
-                ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+            mdl = IoAllocateMdl((PVOID)(ULONG_PTR)SegmentArray[0].Buffer, Length, FALSE, TRUE, irp);
+            if (mdl == NULL)
+            {
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
 
             //
@@ -1316,14 +1332,12 @@ Notes:
             // address.
             //
 
-            MmProbeAndLockSelectedPages( mdl,
-                                         SegmentArray,
-                                         requestorMode,
-                                         IoWriteAccess );
+            MmProbeAndLockSelectedPages(mdl, SegmentArray, requestorMode, IoWriteAccess);
 
-            irp->UserBuffer = (PVOID)(ULONG_PTR) SegmentArray[0].Buffer;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            irp->UserBuffer = (PVOID)(ULONG_PTR)SegmentArray[0].Buffer;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while either probing the caller's
@@ -1332,26 +1346,23 @@ Notes:
             // error status code.
             //
 
-            IopExceptionCleanup( fileObject,
-                                 irp,
-                                 eventObject,
-                                 (PKEVENT) NULL );
+            IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
-            if (capturedArray != NULL) {
-                ExFreePool( capturedArray );
+            if (capturedArray != NULL)
+            {
+                ExFreePool(capturedArray);
             }
             return GetExceptionCode();
-
         }
-
     }
 
     //
     // We are done with the captured buffer.
     //
 
-    if (capturedArray != NULL) {
-        ExFreePool( capturedArray );
+    if (capturedArray != NULL)
+    {
+        ExFreePool(capturedArray);
     }
 
     //
@@ -1359,9 +1370,12 @@ Notes:
     // set the disable flag in the IRP so no caching is performed.
     //
 
-    if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING) {
+    if (fileObject->Flags & FO_NO_INTERMEDIATE_BUFFERING)
+    {
         irp->Flags |= IRP_NOCACHE | IRP_READ_OPERATION | IRP_DEFER_IO_COMPLETION;
-    } else {
+    }
+    else
+    {
         irp->Flags |= IRP_READ_OPERATION | IRP_DEFER_IO_COMPLETION;
     }
 
@@ -1379,14 +1393,7 @@ Notes:
     // I/O completion.
     //
 
-    status =  IopSynchronousServiceTail( deviceObject,
-                                         irp,
-                                         fileObject,
-                                         TRUE,
-                                         requestorMode,
-                                         synchronousIo,
-                                         ReadTransfer );
+    status = IopSynchronousServiceTail(deviceObject, irp, fileObject, TRUE, requestorMode, synchronousIo, ReadTransfer);
 
     return status;
-
 }

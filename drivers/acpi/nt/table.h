@@ -32,35 +32,19 @@ Revision History:
 #ifndef _TABLE_H_
 #define _TABLE_H_
 
-    NTSTATUS
-    ACPITableLoad(
-        VOID
-        );
+NTSTATUS
+ACPITableLoad(VOID);
 
-    VOID
-    ACPITableLoadCallBack(
-        IN  PVOID       BuildContext,
-        IN  PVOID       Context,
-        IN  NTSTATUS    Status
-        );
+VOID ACPITableLoadCallBack(IN PVOID BuildContext, IN PVOID Context, IN NTSTATUS Status);
 
-    NTSTATUS
-    EXPORT
-    ACPITableNotifyFreeObject(
-        IN  ULONG       Event,
-        IN  PVOID       Object,
-        IN  ULONG       ObjectType
-        );
+NTSTATUS
+EXPORT
+ACPITableNotifyFreeObject(IN ULONG Event, IN PVOID Object, IN ULONG ObjectType);
 
-    NTSTATUS
-    ACPITableUnload(
-        VOID
-        );
+NTSTATUS
+ACPITableUnload(VOID);
 
-    NTSTATUS
-    ACPITableUnloadInvalidateRelations(
-        IN  PDEVICE_EXTENSION   DeviceExtension
-        );
+NTSTATUS
+ACPITableUnloadInvalidateRelations(IN PDEVICE_EXTENSION DeviceExtension);
 
 #endif
-

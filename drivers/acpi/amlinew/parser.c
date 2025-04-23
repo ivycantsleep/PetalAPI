@@ -9,7 +9,7 @@
 
 #include "pch.h"
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
@@ -30,169 +30,161 @@
 NTSTATUS LOCAL ParseScope(PCTXT pctxt, PSCOPE pscope, NTSTATUS rc)
 {
     TRACENAME("PARSESCOPE")
-    ULONG dwStage = ((rc == STATUS_SUCCESS) ||
-                     (rc == AMLISTA_BREAK)  ||
-                     (rc == AMLISTA_CONTINUEOP))?
-                    (pscope->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK): 2;
+    ULONG dwStage = ((rc == STATUS_SUCCESS) || (rc == AMLISTA_BREAK) || (rc == AMLISTA_CONTINUEOP))
+                        ? (pscope->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK)
+                        : 2;
 
-    ENTER(2, ("ParseScope(Stage=%d,pctxt=%p,pbOp=%p,pscope=%p,rc=%x)\n",
-              dwStage, pctxt, pctxt->pbOp, pscope, rc));
+    ENTER(2, ("ParseScope(Stage=%d,pctxt=%p,pbOp=%p,pscope=%p,rc=%x)\n", dwStage, pctxt, pctxt->pbOp, pscope, rc));
 
     ASSERT(pscope->FrameHdr.dwSig == SIG_SCOPE);
 
     switch (dwStage)
     {
-        case 0:
-            //
-            // Stage 0: Do debug print if necessary.
-            //
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PrintIndent(pctxt);
-                PRINTF("{");
-                gDebugger.iPrintLevel++;
-                pscope->FrameHdr.dwfFrame |= SCOPEF_FIRST_TERM;
-            }
-          #endif
-            //
-            // There is nothing blockable, so continue to next stage.
-            //
-            pscope->FrameHdr.dwfFrame++;
+    case 0:
+        //
+        // Stage 0: Do debug print if necessary.
+        //
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PrintIndent(pctxt);
+            PRINTF("{");
+            gDebugger.iPrintLevel++;
+            pscope->FrameHdr.dwfFrame |= SCOPEF_FIRST_TERM;
+        }
+#endif
+        //
+        // There is nothing blockable, so continue to next stage.
+        //
+        pscope->FrameHdr.dwfFrame++;
 
-        case 1:
-        Stage1:
-            //
-            // Stage 1: Parse next opcode.
-            //
+    case 1:
+    Stage1:
+        //
+        // Stage 1: Parse next opcode.
+        //
+        if (rc == AMLISTA_BREAK)
+        {
+            pctxt->pbOp = pscope->pbOpEnd;
+
+            // SP3
+            pscope->pbOpRet = pscope->pbOpEnd;
+            if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX)
+            { // test byte ptr [esi+0Ah], 2
+                rc = STATUS_SUCCESS;
+            }
+            // SP3
+        }
+        else if (rc == AMLISTA_CONTINUEOP)
+        {
+            pctxt->pbOp = pscope->pbOpEnd;
+
+            // SP3
+            if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX)
+            { // test byte ptr [esi+0Ah], 2
+                rc = STATUS_SUCCESS;
+            }
+            // SP3
+        }
+        else
+        {
+            while (pctxt->pbOp < pscope->pbOpEnd)
+            {
+#ifdef DEBUGGER
+                gDebugger.pbUnAsm = pctxt->pbOp;
+                if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+                {
+                    if (pscope->FrameHdr.dwfFrame & SCOPEF_FIRST_TERM)
+                    {
+                        pscope->FrameHdr.dwfFrame &= ~SCOPEF_FIRST_TERM;
+                    }
+                    else if (gDebugger.dwfDebugger & DBGF_STEP_OVER)
+                    {
+                        gDebugger.dwfDebugger &= ~DBGF_STEP_OVER;
+                        AMLIDebugger(FALSE);
+                    }
+                }
+
+                if ((gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)) && (*pctxt->pbOp != OP_PACKAGE))
+                {
+                    PrintIndent(pctxt);
+                }
+#endif
+                //
+                // Discard result of previous term if any.
+                //
+                FreeDataBuffs(pscope->pdataResult, 1);
+                if (((rc = ParseOpcode(pctxt, pscope->pbOpEnd, pscope->pdataResult)) != STATUS_SUCCESS) ||
+                    (&pscope->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
+                {
+                    break;
+                }
+            }
+
             if (rc == AMLISTA_BREAK)
             {
                 pctxt->pbOp = pscope->pbOpEnd;
 
                 // SP3
                 pscope->pbOpRet = pscope->pbOpEnd;
-                if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX) {  // test byte ptr [esi+0Ah], 2
+                if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX)
+                { // test byte ptr [esi+0Ah], 2
                     rc = STATUS_SUCCESS;
                 }
                 // SP3
-            } else
-            if (rc == AMLISTA_CONTINUEOP)
+            }
+            else if (rc == AMLISTA_CONTINUEOP)
             {
                 pctxt->pbOp = pscope->pbOpEnd;
 
                 // SP3
-                if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX) {  // test byte ptr [esi+0Ah], 2
+                if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX)
+                { // test byte ptr [esi+0Ah], 2
                     rc = STATUS_SUCCESS;
                 }
                 // SP3
-            } else
-            {
-                while (pctxt->pbOp < pscope->pbOpEnd)
-                {
-                  #ifdef DEBUGGER
-                    gDebugger.pbUnAsm = pctxt->pbOp;
-                    if (gDebugger.dwfDebugger &
-                        (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-                    {
-                        if (pscope->FrameHdr.dwfFrame & SCOPEF_FIRST_TERM)
-                        {
-                            pscope->FrameHdr.dwfFrame &= ~SCOPEF_FIRST_TERM;
-                        }
-                        else if (gDebugger.dwfDebugger & DBGF_STEP_OVER)
-                        {
-                            gDebugger.dwfDebugger &= ~DBGF_STEP_OVER;
-                            AMLIDebugger(FALSE);
-                        }
-                    }
-
-                    if ((gDebugger.dwfDebugger &
-                         (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)) &&
-                        (*pctxt->pbOp != OP_PACKAGE))
-                    {
-                        PrintIndent(pctxt);
-                    }
-                  #endif
-                    //
-                    // Discard result of previous term if any.
-                    //
-                    FreeDataBuffs(pscope->pdataResult, 1);
-                    if (((rc = ParseOpcode(pctxt, pscope->pbOpEnd,
-                                           pscope->pdataResult)) !=
-                         STATUS_SUCCESS) ||
-                        (&pscope->FrameHdr !=
-                         (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
-                    {
-                        break;
-                    }
-                }
-
-                if (rc == AMLISTA_BREAK)
-                {
-                    pctxt->pbOp = pscope->pbOpEnd;
-
-                    // SP3
-                    pscope->pbOpRet = pscope->pbOpEnd;
-                    if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX) {  // test byte ptr [esi+0Ah], 2
-                        rc = STATUS_SUCCESS;
-                    }
-                    // SP3
-                }
-                else if (rc == AMLISTA_CONTINUEOP)
-                {
-                    pctxt->pbOp = pscope->pbOpEnd;
-
-                    // SP3
-                    if (pscope->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX) {  // test byte ptr [esi+0Ah], 2
-                        rc = STATUS_SUCCESS;
-                    }
-                    // SP3
-                }
-                else if ((rc == AMLISTA_PENDING) ||
-                         (&pscope->FrameHdr !=
-                          (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
-                {
-                    break;
-                }
-                else if ((rc == STATUS_SUCCESS) &&
-                         (pctxt->pbOp < pscope->pbOpEnd))
-                {
-                    goto Stage1;
-                }
             }
-            //
-            // If we come here, there was no more opcode in this scope, so
-            // continue to next stage.
-            //
-            pscope->FrameHdr.dwfFrame++;
-
-        case 2:
-            //
-            // Stage 2: clean up.
-            //
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+            else if ((rc == AMLISTA_PENDING) || (&pscope->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
             {
-                gDebugger.iPrintLevel--;
-                PrintIndent(pctxt);
-                PRINTF("}");
+                break;
             }
-          #endif
-
-            pctxt->pnsScope = pscope->pnsPrevScope;
-            pctxt->powner = pscope->pownerPrev;
-            pctxt->pheapCurrent = pscope->pheapPrev;
-            if (pscope->pbOpRet != NULL)
+            else if ((rc == STATUS_SUCCESS) && (pctxt->pbOp < pscope->pbOpEnd))
             {
-                pctxt->pbOp = pscope->pbOpRet;
+                goto Stage1;
             }
-            PopFrame(pctxt);
+        }
+        //
+        // If we come here, there was no more opcode in this scope, so
+        // continue to next stage.
+        //
+        pscope->FrameHdr.dwfFrame++;
+
+    case 2:
+        //
+        // Stage 2: clean up.
+        //
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            gDebugger.iPrintLevel--;
+            PrintIndent(pctxt);
+            PRINTF("}");
+        }
+#endif
+
+        pctxt->pnsScope = pscope->pnsPrevScope;
+        pctxt->powner = pscope->pownerPrev;
+        pctxt->pheapCurrent = pscope->pheapPrev;
+        if (pscope->pbOpRet != NULL)
+        {
+            pctxt->pbOp = pscope->pbOpRet;
+        }
+        PopFrame(pctxt);
     }
 
     EXIT(2, ("ParseScope=%x\n", rc));
     return rc;
-}       //ParseScope
+} //ParseScope
 
 /***LP  ParseNestedContext - Parse and evaluate a nested context
  *
@@ -210,8 +202,7 @@ NTSTATUS LOCAL ParseNestedContext(PCTXT pctxt, PNESTEDCTXT pnctxt, NTSTATUS rc)
 {
     TRACENAME("PARSENESTEDCONTEXT")
 
-    ENTER(2, ("ParseNestedContext(pctxt=%x,pnctxt=%x,rc=%x)\n",
-              pctxt, pnctxt, rc));
+    ENTER(2, ("ParseNestedContext(pctxt=%x,pnctxt=%x,rc=%x)\n", pctxt, pnctxt, rc));
 
     ASSERT(pctxt->dwfCtxt & CTXTF_NEST_EVAL);
 
@@ -231,7 +222,7 @@ NTSTATUS LOCAL ParseNestedContext(PCTXT pctxt, PNESTEDCTXT pnctxt, NTSTATUS rc)
 
     EXIT(2, ("ParseNestedContext=%x (rcEval=%x)\n", AMLISTA_DONE, rc));
     return AMLISTA_DONE;
-}       //ParseNestedContext
+} //ParseNestedContext
 
 /***LP  ParseCall - Parse and evaluate a method call
  *
@@ -249,210 +240,194 @@ NTSTATUS LOCAL ParseNestedContext(PCTXT pctxt, PNESTEDCTXT pnctxt, NTSTATUS rc)
 NTSTATUS LOCAL ParseCall(PCTXT pctxt, PCALL pcall, NTSTATUS rc)
 {
     TRACENAME("PARSECALL")
-    ULONG dwStage = (rc == STATUS_SUCCESS)?
-                    (pcall->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK): 4;
+    ULONG dwStage = (rc == STATUS_SUCCESS) ? (pcall->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK) : 4;
     PMETHODOBJ pm;
     POBJOWNER powner;
 
-    ENTER(2, ("ParseCall(Stage=%d,pctxt=%x,pbOp=%x,pcall=%x,rc=%x)\n",
-              dwStage, pctxt, pctxt->pbOp, pcall, rc));
+    ENTER(2, ("ParseCall(Stage=%d,pctxt=%x,pbOp=%x,pcall=%x,rc=%x)\n", dwStage, pctxt, pctxt->pbOp, pcall, rc));
 
     ASSERT(pcall->FrameHdr.dwSig == SIG_CALL);
-    pm = (pcall->pnsMethod != NULL)?
-         (PMETHODOBJ)pcall->pnsMethod->ObjData.pbDataBuff: NULL;
+    pm = (pcall->pnsMethod != NULL) ? (PMETHODOBJ)pcall->pnsMethod->ObjData.pbDataBuff : NULL;
 
     switch (dwStage)
     {
-        case 0:
+    case 0:
+        //
+        // Stage 0: Print debug stuff if necessary.
+        //
+        pcall->FrameHdr.dwfFrame++;
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("(");
+        }
+#endif
+
+    case 1:
+    Stage1:
+        //
+        // Stage 1: Parse arguments.
+        //
+        while (pcall->iArg < pcall->icArgs)
+        {
             //
-            // Stage 0: Print debug stuff if necessary.
+            // There are still arguments, parse it.
             //
-            pcall->FrameHdr.dwfFrame++;
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+            if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
             {
-                PRINTF("(");
-            }
-          #endif
-
-        case 1:
-        Stage1:
-            //
-            // Stage 1: Parse arguments.
-            //
-            while (pcall->iArg < pcall->icArgs)
-            {
-                //
-                // There are still arguments, parse it.
-                //
-              #ifdef DEBUGGER
-                if (gDebugger.dwfDebugger &
-                    (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+                if (pcall->iArg > 0)
                 {
-                    if (pcall->iArg > 0)
-                    {
-                        PRINTF(",");
-                    }
-                }
-              #endif
-
-                rc = ParseArg(pctxt, 'C', &pcall->pdataArgs[pcall->iArg++]);
-
-                if ((rc != STATUS_SUCCESS) ||
-                    (&pcall->FrameHdr !=
-                     (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
-                {
-                    break;
+                    PRINTF(",");
                 }
             }
+#endif
 
-            if ((rc != STATUS_SUCCESS) ||
-                (&pcall->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
+            rc = ParseArg(pctxt, 'C', &pcall->pdataArgs[pcall->iArg++]);
+
+            if ((rc != STATUS_SUCCESS) || (&pcall->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
             {
                 break;
             }
-            else if (pcall->iArg < pcall->icArgs)
-            {
-                goto Stage1;
-            }
-            //
-            // If we come here, there is no more argument, so we can fall
-            // through to the next stage.
-            //
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF(")");
-            }
-          #endif
+        }
 
-            pcall->FrameHdr.dwfFrame++;
+        if ((rc != STATUS_SUCCESS) || (&pcall->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
+        {
+            break;
+        }
+        else if (pcall->iArg < pcall->icArgs)
+        {
+            goto Stage1;
+        }
+        //
+        // If we come here, there is no more argument, so we can fall
+        // through to the next stage.
+        //
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF(")");
+        }
+#endif
 
-        case 2:
-            //
-            // Stage 2: Acquire mutex if necessary
-            //
-            pcall->FrameHdr.dwfFrame++;
+        pcall->FrameHdr.dwfFrame++;
 
-            if(pm)
+    case 2:
+        //
+        // Stage 2: Acquire mutex if necessary
+        //
+        pcall->FrameHdr.dwfFrame++;
+
+        if (pm)
+        {
+            if (pm->bMethodFlags & METHOD_SERIALIZED)
             {
-                if (pm->bMethodFlags & METHOD_SERIALIZED)
+                PACQUIRE pacq;
+
+                if ((rc = PushFrame(pctxt, SIG_ACQUIRE, sizeof(ACQUIRE), ParseAcquire, &pacq)) == STATUS_SUCCESS)
                 {
-                    PACQUIRE pacq;
-
-                    if ((rc = PushFrame(pctxt, SIG_ACQUIRE, sizeof(ACQUIRE),
-                                        ParseAcquire, &pacq)) == STATUS_SUCCESS)
-                    {
-                        pacq->pmutex = &pm->Mutex;
-                        pacq->wTimeout = 0xffff;
-                        pacq->pdataResult = pcall->pdataResult;
-                    }
-                    break;
+                    pacq->pmutex = &pm->Mutex;
+                    pacq->wTimeout = 0xffff;
+                    pacq->pdataResult = pcall->pdataResult;
                 }
-            }
-            else
-            {
-                rc = AMLI_LOGERR(AMLIERR_ASSERT_FAILED, ("ParseCall: pcall->pnsMethod == NULL"));
                 break;
             }
+        }
+        else
+        {
+            rc = AMLI_LOGERR(AMLIERR_ASSERT_FAILED, ("ParseCall: pcall->pnsMethod == NULL"));
+            break;
+        }
 
-            case 3:
+    case 3:
+        //
+        // Stage 3: Invoke the method.
+        //
+        pcall->FrameHdr.dwfFrame++;
+        //
+        // If we come here, we must have acquired the serialization mutex.
+        //
+        if (pcall->FrameHdr.dwfFrame & CALLF_NEED_MUTEX)
+        {
+            pcall->FrameHdr.dwfFrame |= CALLF_ACQ_MUTEX;
+        }
+
+        if ((rc = NewObjOwner(pctxt->pheapCurrent, &powner)) == STATUS_SUCCESS)
+        {
+            pcall->pownerPrev = pctxt->powner;
+            pctxt->powner = powner;
+            pcall->pcallPrev = pctxt->pcall;
+            pctxt->pcall = pcall;
+            pcall->FrameHdr.dwfFrame |= CALLF_INVOKE_CALL;
+            rc = PushScope(pctxt, pm->abCodeBuff,
+                           pcall->pnsMethod->ObjData.pbDataBuff + pcall->pnsMethod->ObjData.dwDataLen, pctxt->pbOp,
+                           pcall->pnsMethod, powner, pctxt->pheapCurrent, pcall->pdataResult);
+            break;
+        }
+
+    case 4:
+        //
+        // Stage 4: Clean up.
+        //
+        pcall->FrameHdr.dwfFrame++;
+        if (rc == AMLISTA_RETURN)
+        {
+            rc = STATUS_SUCCESS;
+        }
+
+        if (pcall->pdataResult->dwfData & DATAF_BUFF_ALIAS)
+        {
+            OBJDATA data;
             //
-            // Stage 3: Invoke the method.
+            // The result object is an alias.  It could be an alias of
+            // ArgX or LocalX.  We better dup it because we are going
+            // to blow ArgX and LocalX away.
             //
-            pcall->FrameHdr.dwfFrame++;
+            DupObjData(pctxt->pheapCurrent, &data, pcall->pdataResult);
+            FreeDataBuffs(pcall->pdataResult, 1);
+            MoveObjData(pcall->pdataResult, &data);
+        }
+
+        FreeDataBuffs(pcall->Locals, MAX_NUM_LOCALS);
+
+        if (pcall->FrameHdr.dwfFrame & CALLF_INVOKE_CALL)
+        {
+            FreeObjOwner(pctxt->powner, FALSE);
+            pctxt->powner = pcall->pownerPrev;
+            pctxt->pcall = pcall->pcallPrev;
+        }
+        else if (pcall->pnsMethod == NULL)
+        {
             //
-            // If we come here, we must have acquired the serialization mutex.
+            // This is the dummy call frame for LoadDDB.  All NameSpace
+            // objects created by LoadDDB are persistent (i.e. don't
+            // destroy them).
             //
-            if (pcall->FrameHdr.dwfFrame & CALLF_NEED_MUTEX)
-            {
-                pcall->FrameHdr.dwfFrame |= CALLF_ACQ_MUTEX;
-            }
+            pctxt->powner = pcall->pownerPrev;
+            pctxt->pcall = pcall->pcallPrev;
+        }
 
-            if ((rc = NewObjOwner(pctxt->pheapCurrent, &powner)) ==
-                STATUS_SUCCESS)
-            {
-                pcall->pownerPrev = pctxt->powner;
-                pctxt->powner = powner;
-                pcall->pcallPrev = pctxt->pcall;
-                pctxt->pcall = pcall;
-                pcall->FrameHdr.dwfFrame |= CALLF_INVOKE_CALL;
-                rc = PushScope(pctxt, pm->abCodeBuff,
-                               pcall->pnsMethod->ObjData.pbDataBuff +
-                               pcall->pnsMethod->ObjData.dwDataLen,
-                               pctxt->pbOp,
-                               pcall->pnsMethod,
-                               powner,
-                               pctxt->pheapCurrent,
-                               pcall->pdataResult);
-                break;
-            }
+        if (pcall->pdataArgs != NULL)
+        {
+            FreeDataBuffs(pcall->pdataArgs, pcall->icArgs);
+            FREEODOBJ(pcall->pdataArgs);
+        }
 
-        case 4:
-            //
-            // Stage 4: Clean up.
-            //
-            pcall->FrameHdr.dwfFrame++;
-            if (rc == AMLISTA_RETURN)
-            {
-                rc = STATUS_SUCCESS;
-            }
+        if (pcall->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX)
+        {
+            ReleaseASLMutex(pctxt, &pm->Mutex);
+        }
 
-            if (pcall->pdataResult->dwfData & DATAF_BUFF_ALIAS)
-            {
-                OBJDATA data;
-                //
-                // The result object is an alias.  It could be an alias of
-                // ArgX or LocalX.  We better dup it because we are going
-                // to blow ArgX and LocalX away.
-                //
-                DupObjData(pctxt->pheapCurrent, &data, pcall->pdataResult);
-                FreeDataBuffs(pcall->pdataResult, 1);
-                MoveObjData(pcall->pdataResult, &data);
-            }
-
-            FreeDataBuffs(pcall->Locals, MAX_NUM_LOCALS);
-
-            if (pcall->FrameHdr.dwfFrame & CALLF_INVOKE_CALL)
-            {
-                FreeObjOwner(pctxt->powner, FALSE);
-                pctxt->powner = pcall->pownerPrev;
-                pctxt->pcall = pcall->pcallPrev;
-            }
-            else if (pcall->pnsMethod == NULL)
-            {
-                //
-                // This is the dummy call frame for LoadDDB.  All NameSpace
-                // objects created by LoadDDB are persistent (i.e. don't
-                // destroy them).
-                //
-                pctxt->powner = pcall->pownerPrev;
-                pctxt->pcall = pcall->pcallPrev;
-            }
-
-            if (pcall->pdataArgs != NULL)
-            {
-                FreeDataBuffs(pcall->pdataArgs, pcall->icArgs);
-                FREEODOBJ(pcall->pdataArgs);
-            }
-
-            if (pcall->FrameHdr.dwfFrame & CALLF_ACQ_MUTEX)
-            {
-                ReleaseASLMutex(pctxt, &pm->Mutex);
-            }
-
-        case 5:
-            //
-            // Stage 5: This stage is for the dummy call frame to exit.
-            //
-            PopFrame(pctxt);
+    case 5:
+        //
+        // Stage 5: This stage is for the dummy call frame to exit.
+        //
+        PopFrame(pctxt);
     }
 
     EXIT(2, ("ParseCall=%x\n", rc));
     return rc;
-}       //ParseCall
+} //ParseCall
 
 /***LP  ParseTerm - Parse and evaluate an ASL term
  *
@@ -470,208 +445,184 @@ NTSTATUS LOCAL ParseCall(PCTXT pctxt, PCALL pcall, NTSTATUS rc)
 NTSTATUS LOCAL ParseTerm(PCTXT pctxt, PTERM pterm, NTSTATUS rc)
 {
     TRACENAME("PARSETERM")
-    ULONG dwStage = (rc == STATUS_SUCCESS)?
-                    (pterm->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK): 4;
+    ULONG dwStage = (rc == STATUS_SUCCESS) ? (pterm->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK) : 4;
     int i;
 
-    ENTER(2, ("ParseTerm(Term=%s,Stage=%d,pctxt=%x,pbOp=%x,pterm=%x,rc=%x)\n",
-              pterm->pamlterm->pszTermName, dwStage, pctxt, pctxt->pbOp, pterm,
-              rc));
+    ENTER(2, ("ParseTerm(Term=%s,Stage=%d,pctxt=%x,pbOp=%x,pterm=%x,rc=%x)\n", pterm->pamlterm->pszTermName, dwStage,
+              pctxt, pctxt->pbOp, pterm, rc));
 
     ASSERT(pterm->FrameHdr.dwSig == SIG_TERM);
     switch (dwStage)
     {
-        case 0:
-            //
-            // Stage 0: Parse package length if any.
-            //
-            pterm->FrameHdr.dwfFrame++;
+    case 0:
+        //
+        // Stage 0: Parse package length if any.
+        //
+        pterm->FrameHdr.dwfFrame++;
 
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            if (pterm->pamlterm->dwOpcode == OP_PACKAGE)
             {
-                if (pterm->pamlterm->dwOpcode == OP_PACKAGE)
+                gDebugger.iPrintLevel++;
+                PrintIndent(pctxt);
+            }
+            PRINTF("%s", pterm->pamlterm->pszTermName);
+            if (pterm->icArgs > 0)
+            {
+                PRINTF("(");
+            }
+        }
+#endif
+
+        if (pterm->pamlterm->dwfOpcode & OF_VARIABLE_LIST)
+        {
+            ParsePackageLen(&pctxt->pbOp, &pterm->pbOpEnd);
+        }
+
+    case 1:
+    Stage1:
+        //
+        // Stage 1: Parse arguments.
+        //
+        while (pterm->iArg < pterm->icArgs)
+        {
+            i = pterm->iArg++;
+#ifdef DEBUGGER
+            if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+            {
+                if (i > 0)
                 {
-                    gDebugger.iPrintLevel++;
-                    PrintIndent(pctxt);
-                }
-                PRINTF("%s", pterm->pamlterm->pszTermName);
-                if (pterm->icArgs > 0)
-                {
-                    PRINTF("(");
+                    PRINTF(",");
                 }
             }
-          #endif
+#endif
 
-            if (pterm->pamlterm->dwfOpcode & OF_VARIABLE_LIST)
+            rc = ParseArg(pctxt, pterm->pamlterm->pszArgTypes[i], &pterm->pdataArgs[i]);
+
+            if ((rc != STATUS_SUCCESS) || (&pterm->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
             {
-                ParsePackageLen(&pctxt->pbOp, &pterm->pbOpEnd);
+                break;
             }
+        }
 
-        case 1:
-        Stage1:
-            //
-            // Stage 1: Parse arguments.
-            //
-            while (pterm->iArg < pterm->icArgs)
+        if ((rc != STATUS_SUCCESS) || (&pterm->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
+        {
+            break;
+        }
+        else if (pterm->iArg < pterm->icArgs)
+        {
+            goto Stage1;
+        }
+        //
+        // If we come here, there is no more argument, so we can fall
+        // through to the next stage.
+        //
+        pterm->FrameHdr.dwfFrame++;
+
+    case 2:
+        //
+        // Stage 2: Execute the term and prepare to go to the next stage.
+        //
+        pterm->FrameHdr.dwfFrame++;
+
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            if (pterm->icArgs > 0)
             {
-                i = pterm->iArg++;
-              #ifdef DEBUGGER
-                if (gDebugger.dwfDebugger &
-                    (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-                {
-                    if (i > 0)
-                    {
-                        PRINTF(",");
-                    }
-                }
-              #endif
-
-                rc = ParseArg(pctxt, pterm->pamlterm->pszArgTypes[i],
-                              &pterm->pdataArgs[i]);
-
-                if ((rc != STATUS_SUCCESS) ||
-                    (&pterm->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
-                {
-                    break;
-                }
+                PRINTF(")");
             }
+        }
+#endif
 
-            if ((rc != STATUS_SUCCESS) ||
+        if ((pterm->pamlterm->dwfOpcode & OF_CALLBACK_EX) && (pterm->pamlterm->pfnCallBack != NULL))
+        {
+            ((PFNOPEX)pterm->pamlterm->pfnCallBack)(EVTYPE_OPCODE_EX, OPEXF_NOTIFY_PRE, pterm->pamlterm->dwOpcode,
+                                                    pterm->pnsObj, pterm->pamlterm->dwCBData);
+        }
+
+        if (pterm->pamlterm->pfnOpcode != NULL)
+        {
+            if (((rc = pterm->pamlterm->pfnOpcode(pctxt, pterm)) != STATUS_SUCCESS) ||
                 (&pterm->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
             {
                 break;
             }
-            else if (pterm->iArg < pterm->icArgs)
-            {
-                goto Stage1;
-            }
-            //
-            // If we come here, there is no more argument, so we can fall
-            // through to the next stage.
-            //
-            pterm->FrameHdr.dwfFrame++;
+        }
 
-        case 2:
-            //
-            // Stage 2: Execute the term and prepare to go to the next stage.
-            //
-            pterm->FrameHdr.dwfFrame++;
+    case 3:
+        //
+        // Stage 3: Do Opcode Callback if any
+        //
+        pterm->FrameHdr.dwfFrame++;
 
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            if ((pterm->pamlterm->dwOpcode != OP_BUFFER) && (pterm->pamlterm->dwOpcode != OP_PACKAGE))
             {
-                if (pterm->icArgs > 0)
+                if (pterm->pamlterm->dwTermClass == TC_OPCODE_TYPE2)
                 {
-                    PRINTF(")");
+                    PRINTF("=");
+                    PrintObject(pterm->pdataResult);
                 }
             }
-          #endif
+        }
 
-            if ((pterm->pamlterm->dwfOpcode & OF_CALLBACK_EX) &&
-                (pterm->pamlterm->pfnCallBack != NULL))
-            {
-                ((PFNOPEX)pterm->pamlterm->pfnCallBack)(
-                                EVTYPE_OPCODE_EX,
-                                OPEXF_NOTIFY_PRE,
-                                pterm->pamlterm->dwOpcode,
-                                pterm->pnsObj,
-                                pterm->pamlterm->dwCBData);
-            }
-
-            if (pterm->pamlterm->pfnOpcode != NULL)
-            {
-                if (((rc = pterm->pamlterm->pfnOpcode(pctxt, pterm)) !=
-                     STATUS_SUCCESS) ||
-                    (&pterm->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
-                {
-                    break;
-                }
-            }
-
-        case 3:
-            //
-            // Stage 3: Do Opcode Callback if any
-            //
-            pterm->FrameHdr.dwfFrame++;
-
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                if ((pterm->pamlterm->dwOpcode != OP_BUFFER) &&
-                    (pterm->pamlterm->dwOpcode != OP_PACKAGE))
-                {
-                    if (pterm->pamlterm->dwTermClass == TC_OPCODE_TYPE2)
-                    {
-                        PRINTF("=");
-                        PrintObject(pterm->pdataResult);
-                    }
-                }
-            }
-
-            if (gDebugger.dwfDebugger & DBGF_SINGLE_STEP)
-            {
-                gDebugger.dwfDebugger &= ~DBGF_SINGLE_STEP;
-                AMLIDebugger(FALSE);
-            }
-            else
-            {
-          #endif
+        if (gDebugger.dwfDebugger & DBGF_SINGLE_STEP)
+        {
+            gDebugger.dwfDebugger &= ~DBGF_SINGLE_STEP;
+            AMLIDebugger(FALSE);
+        }
+        else
+        {
+#endif
 
             if (pterm->pamlterm->pfnCallBack != NULL)
             {
                 if (pterm->pamlterm->dwfOpcode & OF_CALLBACK_EX)
                 {
-                    ((PFNOPEX)pterm->pamlterm->pfnCallBack)(
-                        EVTYPE_OPCODE_EX,
-                        OPEXF_NOTIFY_POST,
-                        pterm->pamlterm->dwOpcode,
-                        pterm->pnsObj,
-                        pterm->pamlterm->dwCBData);
+                    ((PFNOPEX)pterm->pamlterm->pfnCallBack)(EVTYPE_OPCODE_EX, OPEXF_NOTIFY_POST,
+                                                            pterm->pamlterm->dwOpcode, pterm->pnsObj,
+                                                            pterm->pamlterm->dwCBData);
                 }
                 else
                 {
-                    pterm->pamlterm->pfnCallBack(
-                        EVTYPE_OPCODE,
-                        pterm->pamlterm->dwOpcode,
-                        pterm->pnsObj,
-                        pterm->pamlterm->dwCBData
-                        );
+                    pterm->pamlterm->pfnCallBack(EVTYPE_OPCODE, pterm->pamlterm->dwOpcode, pterm->pnsObj,
+                                                 pterm->pamlterm->dwCBData);
                 }
             }
-          #ifdef DEBUGGER
-            }
-          #endif
+#ifdef DEBUGGER
+        }
+#endif
 
-        case 4:
-            //
-            // Stage 4: Clean up.
-            //
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+    case 4:
+        //
+        // Stage 4: Clean up.
+        //
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            if (pterm->pamlterm->dwOpcode == OP_PACKAGE)
             {
-                if (pterm->pamlterm->dwOpcode == OP_PACKAGE)
-                {
-                    gDebugger.iPrintLevel--;
-                }
+                gDebugger.iPrintLevel--;
             }
-          #endif
+        }
+#endif
 
-            if (pterm->pdataArgs != NULL)
-            {
-                FreeDataBuffs(pterm->pdataArgs, pterm->icArgs);
-                FREEODOBJ(pterm->pdataArgs);
-            }
-            PopFrame(pctxt);
+        if (pterm->pdataArgs != NULL)
+        {
+            FreeDataBuffs(pterm->pdataArgs, pterm->icArgs);
+            FREEODOBJ(pterm->pdataArgs);
+        }
+        PopFrame(pctxt);
     }
 
     EXIT(2, ("ParseTerm=%x\n", rc));
     return rc;
-}       //ParseTerm
+} //ParseTerm
 
 /***LP  ParseAcquire - Parse and evaluate an Acquire term
  *
@@ -689,94 +640,91 @@ NTSTATUS LOCAL ParseTerm(PCTXT pctxt, PTERM pterm, NTSTATUS rc)
 NTSTATUS LOCAL ParseAcquire(PCTXT pctxt, PACQUIRE pacq, NTSTATUS rc)
 {
     TRACENAME("PARSEACQUIRE")
-    ULONG dwStage = (rc == STATUS_SUCCESS)?
-                    (pacq->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK): 2;
+    ULONG dwStage = (rc == STATUS_SUCCESS) ? (pacq->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK) : 2;
 
-    ENTER(2, ("ParseAcquire(Stage=%d,pctxt=%x,pbOp=%x,pacq=%x,rc=%x)\n",
-              dwStage, pctxt, pctxt->pbOp, pacq, rc));
+    ENTER(2, ("ParseAcquire(Stage=%d,pctxt=%x,pbOp=%x,pacq=%x,rc=%x)\n", dwStage, pctxt, pctxt->pbOp, pacq, rc));
 
     ASSERT(pacq->FrameHdr.dwSig == SIG_ACQUIRE);
 
     switch (dwStage)
     {
-        case 0:
-            //
-            // Stage 0: Acquire GlobalLock if necessary.
-            //
-            pacq->FrameHdr.dwfFrame++;
-            if (pacq->FrameHdr.dwfFrame & ACQF_NEED_GLOBALLOCK)
+    case 0:
+        //
+        // Stage 0: Acquire GlobalLock if necessary.
+        //
+        pacq->FrameHdr.dwfFrame++;
+        if (pacq->FrameHdr.dwfFrame & ACQF_NEED_GLOBALLOCK)
+        {
+            if ((rc = AcquireGL(pctxt)) != STATUS_SUCCESS)
             {
-                if ((rc = AcquireGL(pctxt)) != STATUS_SUCCESS)
-                {
-                    break;
-                }
-            }
-
-        case 1:
-            //
-            // Stage 1: Acquire the mutex.
-            //
-            if (pacq->FrameHdr.dwfFrame & ACQF_NEED_GLOBALLOCK)
-            {
-                //
-                // If we come here, we must have acquired the global lock.
-                //
-                pacq->FrameHdr.dwfFrame |= ACQF_HAVE_GLOBALLOCK;
-            }
-
-            rc = AcquireASLMutex(pctxt, pacq->pmutex, pacq->wTimeout);
-
-            if (rc == AMLISTA_PENDING)
-            {
-                //
-                // If it is pending, we must release the global lock and
-                // retry the whole operation.
-                //
-                if (pacq->FrameHdr.dwfFrame & ACQF_HAVE_GLOBALLOCK)
-                {
-                    pacq->FrameHdr.dwfFrame &= ~ACQF_HAVE_GLOBALLOCK;
-                    if ((rc = ReleaseGL(pctxt)) == STATUS_SUCCESS)
-                    {
-                        pacq->FrameHdr.dwfFrame--;
-                    }
-                    else
-                    {
-                        pacq->FrameHdr.dwfFrame++;
-                        rc = AMLI_LOGERR(AMLIERR_ASSERT_FAILED,
-                                         ("ParseAcquire: failed to release global lock (rc=%x)",
-                                          rc));
-                    }
-                }
                 break;
             }
-            else
+        }
+
+    case 1:
+        //
+        // Stage 1: Acquire the mutex.
+        //
+        if (pacq->FrameHdr.dwfFrame & ACQF_NEED_GLOBALLOCK)
+        {
+            //
+            // If we come here, we must have acquired the global lock.
+            //
+            pacq->FrameHdr.dwfFrame |= ACQF_HAVE_GLOBALLOCK;
+        }
+
+        rc = AcquireASLMutex(pctxt, pacq->pmutex, pacq->wTimeout);
+
+        if (rc == AMLISTA_PENDING)
+        {
+            //
+            // If it is pending, we must release the global lock and
+            // retry the whole operation.
+            //
+            if (pacq->FrameHdr.dwfFrame & ACQF_HAVE_GLOBALLOCK)
             {
-                if (pacq->FrameHdr.dwfFrame & ACQF_SET_RESULT)
+                pacq->FrameHdr.dwfFrame &= ~ACQF_HAVE_GLOBALLOCK;
+                if ((rc = ReleaseGL(pctxt)) == STATUS_SUCCESS)
                 {
-                    pacq->pdataResult->dwDataType = OBJTYPE_INTDATA;
-                    if (rc == AMLISTA_TIMEOUT)
-                    {
-                        pacq->pdataResult->uipDataValue = DATAVALUE_ONES;
-                        rc = STATUS_SUCCESS;
-                    }
-                    else
-                    {
-                        pacq->pdataResult->uipDataValue = DATAVALUE_ZERO;
-                    }
+                    pacq->FrameHdr.dwfFrame--;
+                }
+                else
+                {
+                    pacq->FrameHdr.dwfFrame++;
+                    rc =
+                        AMLI_LOGERR(AMLIERR_ASSERT_FAILED, ("ParseAcquire: failed to release global lock (rc=%x)", rc));
                 }
             }
-            pacq->FrameHdr.dwfFrame++;
+            break;
+        }
+        else
+        {
+            if (pacq->FrameHdr.dwfFrame & ACQF_SET_RESULT)
+            {
+                pacq->pdataResult->dwDataType = OBJTYPE_INTDATA;
+                if (rc == AMLISTA_TIMEOUT)
+                {
+                    pacq->pdataResult->uipDataValue = DATAVALUE_ONES;
+                    rc = STATUS_SUCCESS;
+                }
+                else
+                {
+                    pacq->pdataResult->uipDataValue = DATAVALUE_ZERO;
+                }
+            }
+        }
+        pacq->FrameHdr.dwfFrame++;
 
-        case 2:
-            //
-            // Stage 2: Clean up.
-            //
-            PopFrame(pctxt);
+    case 2:
+        //
+        // Stage 2: Clean up.
+        //
+        PopFrame(pctxt);
     }
 
     EXIT(2, ("ParseAcquire=%x\n", rc));
     return rc;
-}       //ParseAcquire
+} //ParseAcquire
 
 /***LP  ParseOpcode - Parse AML opcode
  *
@@ -797,21 +745,21 @@ NTSTATUS LOCAL ParseOpcode(PCTXT pctxt, PUCHAR pbScopeEnd, POBJDATA pdataResult)
     NTSTATUS rc = STATUS_SUCCESS;
     PUCHAR pbOpTerm;
     PAMLTERM pamlterm;
-  #ifdef DEBUGGER
+#ifdef DEBUGGER
     int iBrkPt;
-  #endif
+#endif
 
-    ENTER(2, ("ParseOpcode(pctxt=%x,pbOp=%x,pbScopeEnd=%x,pdataResult=%x)\n",
-              pctxt, pctxt->pbOp, pbScopeEnd, pdataResult));
+    ENTER(2, ("ParseOpcode(pctxt=%x,pbOp=%x,pbScopeEnd=%x,pdataResult=%x)\n", pctxt, pctxt->pbOp, pbScopeEnd,
+              pdataResult));
 
     ASSERT(pdataResult != NULL);
-  #ifdef DEBUGGER
+#ifdef DEBUGGER
     if ((iBrkPt = CheckBP(pctxt->pbOp)) != -1)
     {
         PRINTF("\nHit Breakpoint %d.\n", iBrkPt);
         AMLIDebugger(FALSE);
     }
-  #endif
+#endif
     pbOpTerm = pctxt->pbOp;
     if (*pctxt->pbOp == OP_EXT_PREFIX)
     {
@@ -826,8 +774,7 @@ NTSTATUS LOCAL ParseOpcode(PCTXT pctxt, PUCHAR pbScopeEnd, POBJDATA pdataResult)
     if (pamlterm == NULL)
     {
         rc = AMLI_LOGERR(AMLIERR_INVALID_OPCODE,
-                         ("ParseOpcode: invalid opcode 0x%02x at 0x%08x",
-                         *pctxt->pbOp, pctxt->pbOp));
+                         ("ParseOpcode: invalid opcode 0x%02x at 0x%08x", *pctxt->pbOp, pctxt->pbOp));
     }
     else if (pamlterm->dwfOpcode & OF_DATA_OBJECT)
     {
@@ -851,8 +798,7 @@ NTSTATUS LOCAL ParseOpcode(PCTXT pctxt, PUCHAR pbScopeEnd, POBJDATA pdataResult)
     }
     else if (pamlterm->dwfOpcode & OF_DEBUG_OBJECT)
     {
-        rc = AMLI_LOGERR(AMLIERR_FATAL,
-                         ("ParseOpcode: debug object cannot be evaluated"));
+        rc = AMLI_LOGERR(AMLIERR_FATAL, ("ParseOpcode: debug object cannot be evaluated"));
     }
     else
     {
@@ -863,10 +809,9 @@ NTSTATUS LOCAL ParseOpcode(PCTXT pctxt, PUCHAR pbScopeEnd, POBJDATA pdataResult)
         rc = PushTerm(pctxt, pbOpTerm, pbScopeEnd, pamlterm, pdataResult);
     }
 
-    EXIT(2, ("ParseOpcode=%x (pbOp=%x,pamlterm=%x)\n",
-             rc, pctxt->pbOp, pamlterm));
+    EXIT(2, ("ParseOpcode=%x (pbOp=%x,pamlterm=%x)\n", rc, pctxt->pbOp, pamlterm));
     return rc;
-}       //ParseOpcode
+} //ParseOpcode
 
 /***LP  ParseArgObj - Parse and execute the ArgX instruction
  *
@@ -886,33 +831,31 @@ NTSTATUS LOCAL ParseArgObj(PCTXT pctxt, POBJDATA pdataResult)
     NTSTATUS rc = STATUS_SUCCESS;
     int i;
 
-    ENTER(2, ("ParseArgObj(pctxt=%x,pbOp=%x,pdataResult=%x)\n",
-              pctxt, pctxt->pbOp, pdataResult));
+    ENTER(2, ("ParseArgObj(pctxt=%x,pbOp=%x,pdataResult=%x)\n", pctxt, pctxt->pbOp, pdataResult));
 
     ASSERT(pdataResult != NULL);
     i = *pctxt->pbOp - OP_ARG0;
 
     if (i >= pctxt->pcall->icArgs)
     {
-        rc = AMLI_LOGERR(AMLIERR_ARG_NOT_EXIST,
-                         ("ParseArgObj: Arg%d does not exist", i));
+        rc = AMLI_LOGERR(AMLIERR_ARG_NOT_EXIST, ("ParseArgObj: Arg%d does not exist", i));
     }
     else
     {
         CopyObjData(pdataResult, &pctxt->pcall->pdataArgs[i]);
         pctxt->pbOp++;
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
         {
             PRINTF("Arg%d=", i);
             PrintObject(pdataResult);
         }
-      #endif
+#endif
     }
 
     EXIT(2, ("ParseArgObj=%x (pbOp=%x)\n", rc, pctxt->pbOp));
     return rc;
-}       //ParseArgObj
+} //ParseArgObj
 
 /***LP  ParseLocalObj - Parse and execute the LocalX instruction
  *
@@ -932,26 +875,25 @@ NTSTATUS LOCAL ParseLocalObj(PCTXT pctxt, POBJDATA pdataResult)
     NTSTATUS rc = STATUS_SUCCESS;
     int i;
 
-    ENTER(2, ("ParseLocalObj(pctxt=%x,pbOp=%x,pdataResult=%x)\n",
-              pctxt, pctxt->pbOp, pdataResult));
+    ENTER(2, ("ParseLocalObj(pctxt=%x,pbOp=%x,pdataResult=%x)\n", pctxt, pctxt->pbOp, pdataResult));
 
     ASSERT(pdataResult != NULL);
     i = *pctxt->pbOp - OP_LOCAL0;
     CopyObjData(pdataResult, &pctxt->pcall->Locals[i]);
 
-  #ifdef DEBUGGER
+#ifdef DEBUGGER
     if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
     {
         PRINTF("Local%d=", i);
         PrintObject(pdataResult);
     }
-  #endif
+#endif
 
     pctxt->pbOp++;
 
     EXIT(2, ("ParseLocalObj=%x (pbOp=%x)\n", rc, pctxt->pbOp));
     return rc;
-}       //ParseLocalObj
+} //ParseLocalObj
 
 /***LP  ParseNameObj - Parse and evaluate an AML name object
  *
@@ -971,8 +913,7 @@ NTSTATUS LOCAL ParseNameObj(PCTXT pctxt, POBJDATA pdataResult)
     NTSTATUS rc = STATUS_SUCCESS;
     PNSOBJ pns = NULL;
 
-    ENTER(2, ("ParseNameObj(pctxt=%x,pbOp=%x,pdataResult=%x)\n",
-              pctxt, pctxt->pbOp, pdataResult));
+    ENTER(2, ("ParseNameObj(pctxt=%x,pbOp=%x,pdataResult=%x)\n", pctxt, pctxt->pbOp, pdataResult));
 
     ASSERT(pdataResult != NULL);
 
@@ -993,7 +934,7 @@ NTSTATUS LOCAL ParseNameObj(PCTXT pctxt, POBJDATA pdataResult)
 
     EXIT(2, ("ParseNameObj=%x\n", rc));
     return rc;
-}       //ParseNameObj
+} //ParseNameObj
 
 /***LP  ParseAndGetNameSpaceObject - Parse NameSpace path and get the object
  *
@@ -1010,18 +951,16 @@ NTSTATUS LOCAL ParseNameObj(PCTXT pctxt, POBJDATA pdataResult)
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL ParseAndGetNameSpaceObject(PUCHAR *ppbOp, PNSOBJ pnsScope,
-                                          PPNSOBJ ppns, BOOLEAN fAbsentOK)
+NTSTATUS LOCAL ParseAndGetNameSpaceObject(PUCHAR *ppbOp, PNSOBJ pnsScope, PPNSOBJ ppns, BOOLEAN fAbsentOK)
 {
     TRACENAME("PARSEANDGETNAMESPACEOBJECT")
     NTSTATUS rc;
     char szNameBuff[MAX_NAME_LEN + 1];
 
-    ENTER(2, ("ParseAndGetNameSpaceObject(pbOp=%x,Scope=%s,ppns=%x,fAbsentOK=%x)\n",
-              *ppbOp, GetObjectPath(pnsScope), ppns, fAbsentOK));
+    ENTER(2, ("ParseAndGetNameSpaceObject(pbOp=%x,Scope=%s,ppns=%x,fAbsentOK=%x)\n", *ppbOp, GetObjectPath(pnsScope),
+              ppns, fAbsentOK));
 
-    if ((rc = ParseName(ppbOp, szNameBuff, sizeof(szNameBuff))) ==
-        STATUS_SUCCESS)
+    if ((rc = ParseName(ppbOp, szNameBuff, sizeof(szNameBuff))) == STATUS_SUCCESS)
     {
         rc = GetNameSpaceObject(szNameBuff, pnsScope, ppns, 0);
         if (rc == AMLIERR_OBJ_NOT_FOUND)
@@ -1033,16 +972,14 @@ NTSTATUS LOCAL ParseAndGetNameSpaceObject(PUCHAR *ppbOp, PNSOBJ pnsScope,
             }
             else
             {
-                rc = AMLI_LOGERR(rc,
-                                 ("ParseAndGetNameSpaceObject: object %s not found",
-                                  szNameBuff));
+                rc = AMLI_LOGERR(rc, ("ParseAndGetNameSpaceObject: object %s not found", szNameBuff));
             }
         }
     }
 
     EXIT(2, ("ParseAndGetNameSpaceObject=%x (Name=%s)\n", rc, szNameBuff));
     return rc;
-}       //ParseAndGetNameSpaceObject
+} //ParseAndGetNameSpaceObject
 
 /***LP  ParseArg - Parse and evaluate an argument
  *
@@ -1062,62 +999,56 @@ NTSTATUS LOCAL ParseArg(PCTXT pctxt, char chArgType, POBJDATA pdataArg)
     TRACENAME("PARSEARG")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("ParseArg(pctxt=%x,pbOp=%x,ArgType=%c,pdataArg=%x)\n",
-              pctxt, pctxt->pbOp, chArgType, pdataArg));
+    ENTER(2, ("ParseArg(pctxt=%x,pbOp=%x,ArgType=%c,pdataArg=%x)\n", pctxt, pctxt->pbOp, chArgType, pdataArg));
 
     ASSERT(pdataArg != NULL);
     switch (chArgType)
     {
-        case ARGTYPE_NAME:
-            rc = ParseObjName(&pctxt->pbOp, pdataArg, FALSE);
-            break;
+    case ARGTYPE_NAME:
+        rc = ParseObjName(&pctxt->pbOp, pdataArg, FALSE);
+        break;
 
-        case ARGTYPE_DATAOBJ:
-            if (((rc = ParseIntObj(&pctxt->pbOp, pdataArg, TRUE)) ==
-                 AMLIERR_INVALID_OPCODE) &&
-                ((rc = ParseString(&pctxt->pbOp, pdataArg, TRUE)) ==
-                 AMLIERR_INVALID_OPCODE) &&
-                ((*pctxt->pbOp == OP_BUFFER) || (*pctxt->pbOp == OP_PACKAGE)))
-            {
-                rc = PushTerm(pctxt, pctxt->pbOp, NULL,
-                              OpcodeTable[*pctxt->pbOp], pdataArg);
-                pctxt->pbOp++;
-            }
-            break;
+    case ARGTYPE_DATAOBJ:
+        if (((rc = ParseIntObj(&pctxt->pbOp, pdataArg, TRUE)) == AMLIERR_INVALID_OPCODE) &&
+            ((rc = ParseString(&pctxt->pbOp, pdataArg, TRUE)) == AMLIERR_INVALID_OPCODE) &&
+            ((*pctxt->pbOp == OP_BUFFER) || (*pctxt->pbOp == OP_PACKAGE)))
+        {
+            rc = PushTerm(pctxt, pctxt->pbOp, NULL, OpcodeTable[*pctxt->pbOp], pdataArg);
+            pctxt->pbOp++;
+        }
+        break;
 
-        case ARGTYPE_BYTE:
-            rc = ParseInteger(&pctxt->pbOp, pdataArg, sizeof(UCHAR));
-            break;
+    case ARGTYPE_BYTE:
+        rc = ParseInteger(&pctxt->pbOp, pdataArg, sizeof(UCHAR));
+        break;
 
-        case ARGTYPE_WORD:
-            rc = ParseInteger(&pctxt->pbOp, pdataArg, sizeof(USHORT));
-            break;
+    case ARGTYPE_WORD:
+        rc = ParseInteger(&pctxt->pbOp, pdataArg, sizeof(USHORT));
+        break;
 
-        case ARGTYPE_DWORD:
-            rc = ParseInteger(&pctxt->pbOp, pdataArg, sizeof(ULONG));
-            break;
+    case ARGTYPE_DWORD:
+        rc = ParseInteger(&pctxt->pbOp, pdataArg, sizeof(ULONG));
+        break;
 
-        case ARGTYPE_SNAME:
-            rc = ParseSuperName(pctxt, pdataArg, FALSE);
-            break;
+    case ARGTYPE_SNAME:
+        rc = ParseSuperName(pctxt, pdataArg, FALSE);
+        break;
 
-        case ARGTYPE_SNAME2:
-            rc = ParseSuperName(pctxt, pdataArg, TRUE);
-            break;
+    case ARGTYPE_SNAME2:
+        rc = ParseSuperName(pctxt, pdataArg, TRUE);
+        break;
 
-        case ARGTYPE_OPCODE:
-            rc = ParseOpcode(pctxt, NULL, pdataArg);
-            break;
+    case ARGTYPE_OPCODE:
+        rc = ParseOpcode(pctxt, NULL, pdataArg);
+        break;
 
-        default:
-            rc = AMLI_LOGERR(AMLIERR_ASSERT_FAILED,
-                             ("ParseArg: unexpected arguemnt type (%c)",
-                              chArgType));
+    default:
+        rc = AMLI_LOGERR(AMLIERR_ASSERT_FAILED, ("ParseArg: unexpected arguemnt type (%c)", chArgType));
     }
 
     EXIT(2, ("ParseArg=%x\n", rc));
     return rc;
-}       //ParseArg
+} //ParseArg
 
 /***LP  ParseSuperName - Parse AML SuperName
  *
@@ -1140,8 +1071,7 @@ NTSTATUS LOCAL ParseSuperName(PCTXT pctxt, POBJDATA pdata, BOOLEAN fAbsentOK)
     PNSOBJ pns = NULL;
     int i;
 
-    ENTER(2, ("ParseSuperName(pctxt=%x,pbOp=%x,pdata=%x,fAbsentOK=%x)\n",
-              pctxt, pctxt->pbOp, pdata, fAbsentOK));
+    ENTER(2, ("ParseSuperName(pctxt=%x,pbOp=%x,pdata=%x,fAbsentOK=%x)\n", pctxt, pctxt->pbOp, pdata, fAbsentOK));
 
     ASSERT(pdata != NULL);
     if (*pctxt->pbOp == 0)
@@ -1149,29 +1079,25 @@ NTSTATUS LOCAL ParseSuperName(PCTXT pctxt, POBJDATA pdata, BOOLEAN fAbsentOK)
         ASSERT(pdata->dwDataType == OBJTYPE_UNKNOWN);
         pctxt->pbOp++;
     }
-    else if ((*pctxt->pbOp == OP_EXT_PREFIX) &&
-             (*(pctxt->pbOp + 1) == EXOP_DEBUG))
+    else if ((*pctxt->pbOp == OP_EXT_PREFIX) && (*(pctxt->pbOp + 1) == EXOP_DEBUG))
     {
         pctxt->pbOp += 2;
         pdata->dwDataType = OBJTYPE_DEBUG;
-      #ifdef DEBUGGER
-        if (gDebugger.dwfDebugger &
-            (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
         {
             PRINTF("Debug");
         }
-      #endif
+#endif
     }
     else if ((pamlterm = OpcodeTable[*pctxt->pbOp]) == NULL)
     {
         rc = AMLI_LOGERR(AMLIERR_INVALID_SUPERNAME,
-                         ("ParseSuperName: invalid SuperName - 0x%02x at 0x%08x",
-                          *pctxt->pbOp, pctxt->pbOp));
+                         ("ParseSuperName: invalid SuperName - 0x%02x at 0x%08x", *pctxt->pbOp, pctxt->pbOp));
     }
     else if (pamlterm->dwfOpcode & OF_NAME_OBJECT)
     {
-        rc = ParseAndGetNameSpaceObject(&pctxt->pbOp, pctxt->pnsScope, &pns,
-                                        fAbsentOK);
+        rc = ParseAndGetNameSpaceObject(&pctxt->pbOp, pctxt->pnsScope, &pns, fAbsentOK);
 
         if (rc == STATUS_SUCCESS)
         {
@@ -1193,20 +1119,18 @@ NTSTATUS LOCAL ParseSuperName(PCTXT pctxt, POBJDATA pdata, BOOLEAN fAbsentOK)
 
         if (i < pctxt->pcall->icArgs)
         {
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+            if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
             {
                 PRINTF("Arg%d", i);
             }
-          #endif
+#endif
             pdata->dwDataType = OBJTYPE_DATAALIAS;
             pdata->pdataAlias = GetBaseData(&pctxt->pcall->pdataArgs[i]);
         }
         else
         {
-            rc = AMLI_LOGERR(AMLIERR_ARG_NOT_EXIST,
-                             ("ParseSuperName: Arg%d does not exist", i));
+            rc = AMLI_LOGERR(AMLIERR_ARG_NOT_EXIST, ("ParseSuperName: Arg%d does not exist", i));
         }
     }
     else if (pamlterm->dwfOpcode & OF_LOCAL_OBJECT)
@@ -1214,13 +1138,12 @@ NTSTATUS LOCAL ParseSuperName(PCTXT pctxt, POBJDATA pdata, BOOLEAN fAbsentOK)
         i = *pctxt->pbOp - OP_LOCAL0;
         pctxt->pbOp++;
 
-      #ifdef DEBUGGER
-        if (gDebugger.dwfDebugger &
-            (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
         {
             PRINTF("Local%d", i);
         }
-      #endif
+#endif
         pdata->dwDataType = OBJTYPE_DATAALIAS;
         pdata->pdataAlias = &pctxt->pcall->Locals[i];
     }
@@ -1232,13 +1155,12 @@ NTSTATUS LOCAL ParseSuperName(PCTXT pctxt, POBJDATA pdata, BOOLEAN fAbsentOK)
     else
     {
         rc = AMLI_LOGERR(AMLIERR_INVALID_SUPERNAME,
-                         ("ParseSuperName: invalid SuperName %x at %x",
-                          *pctxt->pbOp, pctxt->pbOp));
+                         ("ParseSuperName: invalid SuperName %x at %x", *pctxt->pbOp, pctxt->pbOp));
     }
 
     EXIT(2, ("ParseSuperName=%x\n", rc));
     return rc;
-}       //ParseSuperName
+} //ParseSuperName
 
 /***LP  ParseIntObj - Parse AML integer object
  *
@@ -1259,8 +1181,7 @@ NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
     NTSTATUS rc = STATUS_SUCCESS;
     UCHAR bOp;
 
-    ENTER(2, ("ParseIntObj(pbOp=%x,pdataResult=%x,fErrOK=%x)\n",
-              *ppbOp, pdataResult, fErrOK));
+    ENTER(2, ("ParseIntObj(pbOp=%x,pdataResult=%x,fErrOK=%x)\n", *ppbOp, pdataResult, fErrOK));
 
     ASSERT(pdataResult != NULL);
     bOp = **ppbOp;
@@ -1270,116 +1191,105 @@ NTSTATUS LOCAL ParseIntObj(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
 
     switch (bOp)
     {
-        case OP_ZERO:
-            pdataResult->uipDataValue = DATAVALUE_ZERO;
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF("Zero");
-            }
-          #endif
-            break;
+    case OP_ZERO:
+        pdataResult->uipDataValue = DATAVALUE_ZERO;
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("Zero");
+        }
+#endif
+        break;
 
-        case OP_ONE:
-            pdataResult->uipDataValue = DATAVALUE_ONE;
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF("One");
-            }
-          #endif
-            break;
+    case OP_ONE:
+        pdataResult->uipDataValue = DATAVALUE_ONE;
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("One");
+        }
+#endif
+        break;
 
-        case OP_ONES:
-            pdataResult->uipDataValue = DATAVALUE_ONES;
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF("Ones");
-            }
-          #endif
-            break;
+    case OP_ONES:
+        pdataResult->uipDataValue = DATAVALUE_ONES;
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("Ones");
+        }
+#endif
+        break;
 
-        case OP_REVISION:
-            pdataResult->uipDataValue = AMLI_REVISION;
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF("Revision");
-            }
-          #endif
-            break;
+    case OP_REVISION:
+        pdataResult->uipDataValue = AMLI_REVISION;
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("Revision");
+        }
+#endif
+        break;
 
-        case OP_BYTE:
-            MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(UCHAR));
-            (*ppbOp) += sizeof(UCHAR);
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF("0x%x", pdataResult->uipDataValue);
-            }
-          #endif
-            break;
+    case OP_BYTE:
+        MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(UCHAR));
+        (*ppbOp) += sizeof(UCHAR);
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("0x%x", pdataResult->uipDataValue);
+        }
+#endif
+        break;
 
-        case OP_WORD:
-            MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(USHORT));
-            (*ppbOp) += sizeof(USHORT);
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF("0x%x", pdataResult->uipDataValue);
-            }
-          #endif
-            break;
+    case OP_WORD:
+        MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(USHORT));
+        (*ppbOp) += sizeof(USHORT);
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("0x%x", pdataResult->uipDataValue);
+        }
+#endif
+        break;
 
-        case OP_DWORD:
-            MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(ULONG));
-            (*ppbOp) += sizeof(ULONG);
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF("0x%x", pdataResult->uipDataValue);
-            }
-          #endif
-            break;
+    case OP_DWORD:
+        MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(ULONG));
+        (*ppbOp) += sizeof(ULONG);
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("0x%x", pdataResult->uipDataValue);
+        }
+#endif
+        break;
 
-        case OP_QWORD:
-            MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(ULONG));  // ignores high 4 bytes
-            (*ppbOp) += sizeof(ULONG64);
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                PRINTF("0x%x", pdataResult->uipDataValue);
-            }
-          #endif
-            break;
+    case OP_QWORD:
+        MEMCPY(&pdataResult->uipDataValue, *ppbOp, sizeof(ULONG)); // ignores high 4 bytes
+        (*ppbOp) += sizeof(ULONG64);
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PRINTF("0x%x", pdataResult->uipDataValue);
+        }
+#endif
+        break;
 
-        default:
-            (*ppbOp)--;
-            if (fErrOK)
-            {
-                rc = AMLIERR_INVALID_OPCODE;
-            }
-            else
-            {
-                rc = AMLI_LOGERR(AMLIERR_INVALID_OPCODE,
-                                 ("ParseIntObj: invalid opcode 0x%02x at 0x%08x",
-                                  **ppbOp, *ppbOp));
-            }
+    default:
+        (*ppbOp)--;
+        if (fErrOK)
+        {
+            rc = AMLIERR_INVALID_OPCODE;
+        }
+        else
+        {
+            rc = AMLI_LOGERR(AMLIERR_INVALID_OPCODE, ("ParseIntObj: invalid opcode 0x%02x at 0x%08x", **ppbOp, *ppbOp));
+        }
     }
 
-    EXIT(2, ("ParseIntObj=%x (pbOp=%x,Value=%x)\n",
-             rc, *ppbOp, pdataResult->uipDataValue));
+    EXIT(2, ("ParseIntObj=%x (pbOp=%x,Value=%x)\n", rc, *ppbOp, pdataResult->uipDataValue));
     return rc;
-}       //ParseIntObj
+} //ParseIntObj
 
 /***LP  ParseString - Parse AML string object
  *
@@ -1399,8 +1309,7 @@ NTSTATUS LOCAL ParseString(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
     TRACENAME("PARSESTRING")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("ParseString(pbOp=%x,pdataResult=%x,fErrOK=%x)\n",
-              *ppbOp, pdataResult, fErrOK));
+    ENTER(2, ("ParseString(pbOp=%x,pdataResult=%x,fErrOK=%x)\n", *ppbOp, pdataResult, fErrOK));
 
     ASSERT(pdataResult != NULL);
     if (**ppbOp == OP_STRING)
@@ -1409,20 +1318,16 @@ NTSTATUS LOCAL ParseString(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
         pdataResult->dwDataType = OBJTYPE_STRDATA;
         pdataResult->dwDataLen = STRLEN((PSZ)*ppbOp) + 1;
 
-      #ifdef DEBUGGER
-        if (gDebugger.dwfDebugger &
-            (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
         {
             PRINTF("\"%s\"", *ppbOp);
         }
-      #endif
+#endif
 
-        if ((pdataResult->pbDataBuff = NEWSDOBJ(gpheapGlobal,
-                                                pdataResult->dwDataLen)) ==
-            NULL)
+        if ((pdataResult->pbDataBuff = NEWSDOBJ(gpheapGlobal, pdataResult->dwDataLen)) == NULL)
         {
-            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                             ("ParseString: failed to allocate string buffer"));
+            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ParseString: failed to allocate string buffer"));
         }
         else
         {
@@ -1437,16 +1342,12 @@ NTSTATUS LOCAL ParseString(PUCHAR *ppbOp, POBJDATA pdataResult, BOOLEAN fErrOK)
     }
     else
     {
-        rc = AMLI_LOGERR(AMLIERR_INVALID_OPCODE,
-                         ("ParseStrObj: invalid opcode 0x%02x at 0x%08x",
-                          **ppbOp, *ppbOp));
+        rc = AMLI_LOGERR(AMLIERR_INVALID_OPCODE, ("ParseStrObj: invalid opcode 0x%02x at 0x%08x", **ppbOp, *ppbOp));
     }
 
-    EXIT(2, ("ParseString=%x (Value=%s)\n",
-             rc, pdataResult->pbDataBuff? (PSZ)pdataResult->pbDataBuff:
-                                          "<null>"));
+    EXIT(2, ("ParseString=%x (Value=%s)\n", rc, pdataResult->pbDataBuff ? (PSZ)pdataResult->pbDataBuff : "<null>"));
     return rc;
-}       //ParseString
+} //ParseString
 
 /***LP  ParseObjName - Parse AML object name
  *
@@ -1466,10 +1367,9 @@ NTSTATUS LOCAL ParseObjName(PUCHAR *ppbOp, POBJDATA pdata, BOOLEAN fErrOK)
     TRACENAME("PARSEOBJNAME")
     NTSTATUS rc = STATUS_SUCCESS;
     PAMLTERM pamlterm = OpcodeTable[**ppbOp];
-    char szNameBuff[MAX_NAME_LEN+1];
+    char szNameBuff[MAX_NAME_LEN + 1];
 
-    ENTER(2, ("ParseObjName(pbOp=%x,pdata=%x,fErrOK=%x)\n",
-              *ppbOp, pdata, fErrOK));
+    ENTER(2, ("ParseObjName(pbOp=%x,pdata=%x,fErrOK=%x)\n", *ppbOp, pdata, fErrOK));
 
     ASSERT(pdata != NULL);
 
@@ -1481,22 +1381,17 @@ NTSTATUS LOCAL ParseObjName(PUCHAR *ppbOp, POBJDATA pdata, BOOLEAN fErrOK)
         }
         else
         {
-            rc = AMLI_LOGERR(AMLIERR_INVALID_OPCODE,
-                             ("ParseObjName: invalid opcode 0x%02x at 0x%08x",
-                              **ppbOp, *ppbOp));
+            rc =
+                AMLI_LOGERR(AMLIERR_INVALID_OPCODE, ("ParseObjName: invalid opcode 0x%02x at 0x%08x", **ppbOp, *ppbOp));
         }
     }
-    else if ((rc = ParseName(ppbOp, szNameBuff, sizeof(szNameBuff))) ==
-             STATUS_SUCCESS)
+    else if ((rc = ParseName(ppbOp, szNameBuff, sizeof(szNameBuff))) == STATUS_SUCCESS)
     {
         pdata->dwDataType = OBJTYPE_STRDATA;
         pdata->dwDataLen = STRLEN(szNameBuff) + 1;
-        if ((pdata->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal,
-                                                  pdata->dwDataLen)) == NULL)
+        if ((pdata->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, pdata->dwDataLen)) == NULL)
         {
-            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                             ("ParseObjName: failed to allocate name buffer - %s",
-                              szNameBuff));
+            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ParseObjName: failed to allocate name buffer - %s", szNameBuff));
         }
         else
         {
@@ -1506,7 +1401,7 @@ NTSTATUS LOCAL ParseObjName(PUCHAR *ppbOp, POBJDATA pdata, BOOLEAN fErrOK)
 
     EXIT(2, ("ParseObjName=%x (Name=%s)\n", rc, szNameBuff));
     return rc;
-}       //ParseObjName
+} //ParseObjName
 
 /***LP  ParseName - Parse AML name
  *
@@ -1526,8 +1421,7 @@ NTSTATUS LOCAL ParseName(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen)
     TRACENAME("PARSENAME")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("ParseName(pbOp=%x,pszBuff=%x,Len=%d)\n",
-              *ppbOp, pszBuff, dwLen));
+    ENTER(2, ("ParseName(pbOp=%x,pszBuff=%x,Len=%d)\n", *ppbOp, pszBuff, dwLen));
 
     if (**ppbOp == OP_ROOT_PREFIX)
     {
@@ -1539,8 +1433,7 @@ NTSTATUS LOCAL ParseName(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen)
         }
         else
         {
-            rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG,
-                             ("ParseName: name too long - \"%s\"", pszBuff));
+            rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG, ("ParseName: name too long - \"%s\"", pszBuff));
         }
     }
     else if (**ppbOp == OP_PARENT_PREFIX)
@@ -1550,9 +1443,7 @@ NTSTATUS LOCAL ParseName(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen)
             int i;
 
             STRCPY(pszBuff, "^");
-            for ((*ppbOp)++, i = 1;
-                 (i < (int)dwLen) && (**ppbOp == OP_PARENT_PREFIX);
-                 (*ppbOp)++, i++)
+            for ((*ppbOp)++, i = 1; (i < (int)dwLen) && (**ppbOp == OP_PARENT_PREFIX); (*ppbOp)++, i++)
             {
                 pszBuff[i] = '^';
             }
@@ -1560,9 +1451,7 @@ NTSTATUS LOCAL ParseName(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen)
 
             if (**ppbOp == OP_PARENT_PREFIX)
             {
-                rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG,
-                                 ("ParseName: name too long - \"%s\"",
-                                  pszBuff));
+                rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG, ("ParseName: name too long - \"%s\"", pszBuff));
             }
             else
             {
@@ -1571,8 +1460,7 @@ NTSTATUS LOCAL ParseName(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen)
         }
         else
         {
-            rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG,
-                             ("ParseName: name too long - \"%s\"", pszBuff));
+            rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG, ("ParseName: name too long - \"%s\"", pszBuff));
         }
     }
     else if (dwLen > 0)
@@ -1582,22 +1470,19 @@ NTSTATUS LOCAL ParseName(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen)
     }
     else
     {
-        rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG,
-                         ("ParseName: name too long - \"%s\"", pszBuff));
+        rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG, ("ParseName: name too long - \"%s\"", pszBuff));
     }
 
-  #ifdef DEBUGGER
-    if ((rc == STATUS_SUCCESS) &&
-        (gDebugger.dwfDebugger &
-         (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)))
+#ifdef DEBUGGER
+    if ((rc == STATUS_SUCCESS) && (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)))
     {
         PRINTF("%s", pszBuff);
     }
-  #endif
+#endif
 
     EXIT(2, ("ParseName=%x (Name=%s)\n", rc, pszBuff));
     return rc;
-}       //ParseName
+} //ParseName
 
 /***LP  ParseNameTail - Parse AML name tail
  *
@@ -1619,8 +1504,7 @@ NTSTATUS LOCAL ParseNameTail(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen)
     int iLen;
     int icNameSegs = 0;
 
-    ENTER(2, ("ParseNameTail(pbOp=%x,Name=%s,Len=%d)\n",
-              *ppbOp, pszBuff, dwLen));
+    ENTER(2, ("ParseNameTail(pbOp=%x,Name=%s,Len=%d)\n", *ppbOp, pszBuff, dwLen));
 
     //
     // We do not check for invalid NameSeg characters here and assume that
@@ -1664,13 +1548,12 @@ NTSTATUS LOCAL ParseNameTail(PUCHAR *ppbOp, PSZ pszBuff, ULONG dwLen)
 
     if (icNameSegs > 0)
     {
-        rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG,
-                         ("ParseNameTail: name too long - %s", pszBuff));
+        rc = AMLI_LOGERR(AMLIERR_NAME_TOO_LONG, ("ParseNameTail: name too long - %s", pszBuff));
     }
 
     EXIT(2, ("ParseNameTail=%x (Name=%s)\n", rc, pszBuff));
     return rc;
-}       //ParseNameTail
+} //ParseNameTail
 
 /***LP  ParseInteger - Parse AML integer object
  *
@@ -1690,8 +1573,7 @@ NTSTATUS LOCAL ParseInteger(PUCHAR *ppbOp, POBJDATA pdata, ULONG dwDataLen)
     TRACENAME("PARSEINTEGER")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("ParseInteger(pbOp=%x,pdata=%x,DataLen=%d)\n",
-              *ppbOp, pdata, dwDataLen));
+    ENTER(2, ("ParseInteger(pbOp=%x,pdata=%x,DataLen=%d)\n", *ppbOp, pdata, dwDataLen));
 
     ASSERT(pdata != NULL);
     pdata->dwDataType = OBJTYPE_INTDATA;
@@ -1699,20 +1581,17 @@ NTSTATUS LOCAL ParseInteger(PUCHAR *ppbOp, POBJDATA pdata, ULONG dwDataLen)
     MEMCPY(&pdata->uipDataValue, *ppbOp, dwDataLen);
     (*ppbOp) += dwDataLen;
 
-  #ifdef DEBUGGER
-    if ((rc == STATUS_SUCCESS) &&
-        (gDebugger.dwfDebugger &
-         (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)))
+#ifdef DEBUGGER
+    if ((rc == STATUS_SUCCESS) && (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)))
 
     {
         PRINTF("0x%x", pdata->uipDataValue);
     }
-  #endif
+#endif
 
-    EXIT(2, ("ParseInteger=%x (Value=%x,pbOp=%x)\n",
-             rc, pdata->uipDataValue, *ppbOp));
+    EXIT(2, ("ParseInteger=%x (Value=%x,pbOp=%x)\n", rc, pdata->uipDataValue, *ppbOp));
     return rc;
-}       //ParseInteger
+} //ParseInteger
 
 /***LP  ParseField - Parse AML field data
  *
@@ -1728,29 +1607,32 @@ NTSTATUS LOCAL ParseInteger(PUCHAR *ppbOp, POBJDATA pdata, ULONG dwDataLen)
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
-                          PULONG pdwBitPos)
+NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags, PULONG pdwBitPos)
 {
     TRACENAME("PARSEFIELD")
     NTSTATUS rc = STATUS_SUCCESS;
     char szName[sizeof(NAMESEG) + 1];
 
-    ENTER(2, ("ParseField(pctxt=%x,pbOp=%x,pnsParent=%x,FieldFlags=%x,BitPos=%x)\n",
-              pctxt, pctxt->pbOp, pnsParent, *pdwFieldFlags, *pdwBitPos));
+    ENTER(2, ("ParseField(pctxt=%x,pbOp=%x,pnsParent=%x,FieldFlags=%x,BitPos=%x)\n", pctxt, pctxt->pbOp, pnsParent,
+              *pdwFieldFlags, *pdwBitPos));
 
     // Connection Field, skip Connection() and jump to field definition
-    if (*pctxt->pbOp == 0x02) {
+    if (*pctxt->pbOp == 0x02)
+    {
         PUCHAR pbOp = pctxt->pbOp + 1;
 
-        if (*pbOp == 0x11) {                            // BufferOp()
+        if (*pbOp == 0x11)
+        { // BufferOp()
             ULONG dwcbBits;
             pbOp++;
             dwcbBits = ParsePackageLen(&pbOp, NULL);
-            pctxt->pbOp += 2;           // 0x02, 0x11, [Buffer]
-            pctxt->pbOp += dwcbBits;    // Buffer len
-        } else {                                        // NAMESEG
-            pctxt->pbOp += 1;           // 0x02, NAMESEG
-            pctxt->pbOp += 4;           // sizeof(NAMESEG)
+            pctxt->pbOp += 2;        // 0x02, 0x11, [Buffer]
+            pctxt->pbOp += dwcbBits; // Buffer len
+        }
+        else
+        {                     // NAMESEG
+            pctxt->pbOp += 1; // 0x02, NAMESEG
+            pctxt->pbOp += 4; // sizeof(NAMESEG)
         }
     }
 
@@ -1763,15 +1645,13 @@ NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
         *pdwFieldFlags &= ~ACCATTRIB_MASK;
         *pdwFieldFlags |= (ULONG)*pctxt->pbOp << 8;
         pctxt->pbOp++;
-      #ifdef DEBUGGER
-        if (gDebugger.dwfDebugger &
-            (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
         {
             PrintIndent(pctxt);
-            PRINTF("AccessAs(0x%x,0x%x)",
-                   *pdwFieldFlags & 0xff, (*pdwFieldFlags >> 8) & 0xff);
+            PRINTF("AccessAs(0x%x,0x%x)", *pdwFieldFlags & 0xff, (*pdwFieldFlags >> 8) & 0xff);
         }
-      #endif
+#endif
     }
     else
     {
@@ -1790,16 +1670,15 @@ NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
         }
 
         dwcbBits = ParsePackageLen(&pctxt->pbOp, NULL);
-      #ifdef DEBUGGER
-        if (gDebugger.dwfDebugger &
-            (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
         {
             PrintIndent(pctxt);
             if (szName[0] == '\0')
             {
                 if ((dwcbBits > 32) && (((*pdwBitPos + dwcbBits) % 8) == 0))
                 {
-                    PRINTF("Offset(0x%x)", (*pdwBitPos + dwcbBits)/8);
+                    PRINTF("Offset(0x%x)", (*pdwBitPos + dwcbBits) / 8);
                 }
                 else
                 {
@@ -1811,21 +1690,17 @@ NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
                 PRINTF("%s,%d", szName, dwcbBits);
             }
         }
-      #endif
+#endif
 
-        if ((rc = CreateNameSpaceObject(pctxt->pheapCurrent, szName,
-                                        pctxt->pnsScope, pctxt->powner, &pns,
-                                        0)) == STATUS_SUCCESS)
+        if ((rc = CreateNameSpaceObject(pctxt->pheapCurrent, szName, pctxt->pnsScope, pctxt->powner, &pns, 0)) ==
+            STATUS_SUCCESS)
         {
             pns->ObjData.dwDataType = OBJTYPE_FIELDUNIT;
             pns->ObjData.dwDataLen = sizeof(FIELDUNITOBJ);
 
-            if ((pns->ObjData.pbDataBuff = NEWFUOBJ(pctxt->pheapCurrent,
-                                                    pns->ObjData.dwDataLen)) ==
-                NULL)
+            if ((pns->ObjData.pbDataBuff = NEWFUOBJ(pctxt->pheapCurrent, pns->ObjData.dwDataLen)) == NULL)
             {
-                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("ParseField: failed to allocate FieldUnit object"));
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ParseField: failed to allocate FieldUnit object"));
             }
             else
             {
@@ -1835,10 +1710,8 @@ NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
                 pfu = (PFIELDUNITOBJ)pns->ObjData.pbDataBuff;
                 pfu->pnsFieldParent = pnsParent;
                 pfu->FieldDesc.dwFieldFlags = *pdwFieldFlags;
-                pfu->FieldDesc.dwByteOffset = (*pdwBitPos / (dwAccSize*8))*
-                                              dwAccSize;
-                pfu->FieldDesc.dwStartBitPos = *pdwBitPos -
-                                               pfu->FieldDesc.dwByteOffset*8;
+                pfu->FieldDesc.dwByteOffset = (*pdwBitPos / (dwAccSize * 8)) * dwAccSize;
+                pfu->FieldDesc.dwStartBitPos = *pdwBitPos - pfu->FieldDesc.dwByteOffset * 8;
                 pfu->FieldDesc.dwNumBits = dwcbBits;
                 (*pdwBitPos) += dwcbBits;
             }
@@ -1847,7 +1720,7 @@ NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
 
     EXIT(2, ("ParseField=%x (Field=%s,BitPos=%x)\n", rc, szName, *pdwBitPos));
     return rc;
-}       //ParseField
+} //ParseField
 
 /***LP  ParseFieldList - Parse the FieldUnit list
  *
@@ -1864,62 +1737,56 @@ NTSTATUS LOCAL ParseField(PCTXT pctxt, PNSOBJ pnsParent, PULONG pdwFieldFlags,
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL ParseFieldList(PCTXT pctxt, PUCHAR pbOpEnd, PNSOBJ pnsParent,
-                              ULONG dwFieldFlags, ULONG dwRegionLen)
+NTSTATUS LOCAL ParseFieldList(PCTXT pctxt, PUCHAR pbOpEnd, PNSOBJ pnsParent, ULONG dwFieldFlags, ULONG dwRegionLen)
 {
     TRACENAME("PARSESFIELDLIST")
     NTSTATUS rc = STATUS_SUCCESS;
     ULONG dwBitPos = 0;
 
-    ENTER(2, ("ParseFieldList(pctxt=%x,pbOp=%x,pnsParent=%x,FieldFlags=%x,RegionLen=%x)\n",
-              pctxt, pctxt->pbOp, pnsParent, dwFieldFlags, dwRegionLen));
+    ENTER(2, ("ParseFieldList(pctxt=%x,pbOp=%x,pnsParent=%x,FieldFlags=%x,RegionLen=%x)\n", pctxt, pctxt->pbOp,
+              pnsParent, dwFieldFlags, dwRegionLen));
 
-  #ifdef DEBUGGER
-    if (gDebugger.dwfDebugger &
-        (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+    if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
     {
         PrintIndent(pctxt);
         PRINTF("{");
         gDebugger.iPrintLevel++;
     }
-  #endif
+#endif
 
     while ((rc == STATUS_SUCCESS) && (pctxt->pbOp < pbOpEnd))
     {
-        if ((rc = ParseField(pctxt, pnsParent, &dwFieldFlags, &dwBitPos)) ==
-            STATUS_SUCCESS)
+        if ((rc = ParseField(pctxt, pnsParent, &dwFieldFlags, &dwBitPos)) == STATUS_SUCCESS)
         {
-          #ifdef DEBUGGER
-            if ((gDebugger.dwfDebugger &
-                 (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)) &&
-                (rc == STATUS_SUCCESS) &&
+#ifdef DEBUGGER
+            if ((gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)) && (rc == STATUS_SUCCESS) &&
                 (pctxt->pbOp < pbOpEnd))
             {
                 PRINTF(",");
             }
-          #endif
+#endif
 
-            if ((dwRegionLen != 0xffffffff) && ((dwBitPos + 7)/8 > dwRegionLen))
+            if ((dwRegionLen != 0xffffffff) && ((dwBitPos + 7) / 8 > dwRegionLen))
             {
                 rc = AMLI_LOGERR(AMLIERR_INDEX_TOO_BIG,
                                  ("ParseFieldList: offset exceeds OpRegion range (Offset=0x%x, RegionLen=0x%x)",
-                                  (dwBitPos + 7)/8, dwRegionLen));
+                                  (dwBitPos + 7) / 8, dwRegionLen));
             }
         }
     }
-  #ifdef DEBUGGER
-    if (gDebugger.dwfDebugger &
-        (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+    if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
     {
         gDebugger.iPrintLevel--;
         PrintIndent(pctxt);
         PRINTF("}");
     }
-  #endif
+#endif
 
     EXIT(2, ("ParseFieldList=%x\n", rc));
     return rc;
-}       //ParseFieldList
+} //ParseFieldList
 
 /***LP  ParsePackageLen - parse package length
  *
@@ -1950,7 +1817,7 @@ ULONG LOCAL ParsePackageLen(PUCHAR *ppbOp, PUCHAR *ppbOpNext)
         dwLen &= 0x0000000f;
         for (i = 0; i < bFollowCnt; ++i)
         {
-            dwLen |= (ULONG)(**ppbOp) << (i*8 + 4);
+            dwLen |= (ULONG)(**ppbOp) << (i * 8 + 4);
             (*ppbOp)++;
         }
     }
@@ -1958,7 +1825,6 @@ ULONG LOCAL ParsePackageLen(PUCHAR *ppbOp, PUCHAR *ppbOpNext)
     if (ppbOpNext != NULL)
         *ppbOpNext += dwLen;
 
-    EXIT(2, ("ParsePackageLen=%x (pbOp=%x,pbOpNext=%x)\n",
-             dwLen, *ppbOp, ppbOpNext? *ppbOpNext: 0));
+    EXIT(2, ("ParsePackageLen=%x (pbOp=%x,pbOpNext=%x)\n", dwLen, *ppbOp, ppbOpNext ? *ppbOpNext : 0));
     return dwLen;
-}       //ParsePackageLen
+} //ParsePackageLen

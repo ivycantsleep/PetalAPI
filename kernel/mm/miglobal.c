@@ -90,7 +90,7 @@ PFN_NUMBER MmHighestPossiblePhysicalPage;
 // is the sum of the pages on the zeroed, free and standby lists.
 //
 
-PFN_COUNT  MmAvailablePages;
+PFN_COUNT MmAvailablePages;
 PFN_NUMBER MmThrottleTop;
 PFN_NUMBER MmThrottleBottom;
 
@@ -198,46 +198,46 @@ ULONG MmLargePageMinimum;
 PMMPFN MmPfnDatabase;
 
 MMPFNLIST MmZeroedPageListHead = {
-                    0, // Total
-                    ZeroedPageList, // ListName
-                    MM_EMPTY_LIST, //Flink
-                    MM_EMPTY_LIST  // Blink
-                    };
+    0,              // Total
+    ZeroedPageList, // ListName
+    MM_EMPTY_LIST,  //Flink
+    MM_EMPTY_LIST   // Blink
+};
 
 MMPFNLIST MmFreePageListHead = {
-                    0, // Total
-                    FreePageList, // ListName
-                    MM_EMPTY_LIST, //Flink
-                    MM_EMPTY_LIST  // Blink
-                    };
+    0,             // Total
+    FreePageList,  // ListName
+    MM_EMPTY_LIST, //Flink
+    MM_EMPTY_LIST  // Blink
+};
 
 MMPFNLIST MmStandbyPageListHead = {
-                    0, // Total
-                    StandbyPageList, // ListName
-                    MM_EMPTY_LIST, //Flink
-                    MM_EMPTY_LIST  // Blink
-                    };
+    0,               // Total
+    StandbyPageList, // ListName
+    MM_EMPTY_LIST,   //Flink
+    MM_EMPTY_LIST    // Blink
+};
 
 MMPFNLIST MmModifiedPageListHead = {
-                    0, // Total
-                    ModifiedPageList, // ListName
-                    MM_EMPTY_LIST, //Flink
-                    MM_EMPTY_LIST  // Blink
-                    };
+    0,                // Total
+    ModifiedPageList, // ListName
+    MM_EMPTY_LIST,    //Flink
+    MM_EMPTY_LIST     // Blink
+};
 
 MMPFNLIST MmModifiedNoWritePageListHead = {
-                    0, // Total
-                    ModifiedNoWritePageList, // ListName
-                    MM_EMPTY_LIST, //Flink
-                    MM_EMPTY_LIST  // Blink
-                    };
+    0,                       // Total
+    ModifiedNoWritePageList, // ListName
+    MM_EMPTY_LIST,           //Flink
+    MM_EMPTY_LIST            // Blink
+};
 
 MMPFNLIST MmBadPageListHead = {
-                    0, // Total
-                    BadPageList, // ListName
-                    MM_EMPTY_LIST, //Flink
-                    MM_EMPTY_LIST  // Blink
-                    };
+    0,             // Total
+    BadPageList,   // ListName
+    MM_EMPTY_LIST, //Flink
+    MM_EMPTY_LIST  // Blink
+};
 
 //
 // Note the ROM page listhead is deliberately not in the set
@@ -245,22 +245,21 @@ MMPFNLIST MmBadPageListHead = {
 //
 
 MMPFNLIST MmRomPageListHead = {
-                    0, // Total
-                    StandbyPageList, // ListName
-                    MM_EMPTY_LIST, //Flink
-                    MM_EMPTY_LIST  // Blink
-                    };
+    0,               // Total
+    StandbyPageList, // ListName
+    MM_EMPTY_LIST,   //Flink
+    MM_EMPTY_LIST    // Blink
+};
 
 
-PMMPFNLIST MmPageLocationList[NUMBER_OF_PAGE_LISTS] = {
-                                      &MmZeroedPageListHead,
-                                      &MmFreePageListHead,
-                                      &MmStandbyPageListHead,
-                                      &MmModifiedPageListHead,
-                                      &MmModifiedNoWritePageListHead,
-                                      &MmBadPageListHead,
-                                      NULL,
-                                      NULL };
+PMMPFNLIST MmPageLocationList[NUMBER_OF_PAGE_LISTS] = { &MmZeroedPageListHead,
+                                                        &MmFreePageListHead,
+                                                        &MmStandbyPageListHead,
+                                                        &MmModifiedPageListHead,
+                                                        &MmModifiedNoWritePageListHead,
+                                                        &MmBadPageListHead,
+                                                        NULL,
+                                                        NULL };
 
 PMMPTE MiHighestUserPte;
 PMMPTE MiHighestUserPde;
@@ -339,7 +338,7 @@ SIZE_T MmTrackCommit[MM_COMMIT_COUNTER_MAX];
 // Set via the registry to identify which drivers are leaking locked pages.
 //
 
-LOGICAL  MmTrackLockedPages;
+LOGICAL MmTrackLockedPages;
 
 KSPIN_LOCK MiTrackLockedPagesLock;
 
@@ -368,9 +367,9 @@ SIZE_T MmMinimumNonPagedPoolSize = 256 * 1024; // 256k
 
 ULONG MmMinAdditionNonPagedPoolPerMb = 32 * 1024; // 32k
 
-SIZE_T MmDefaultMaximumNonPagedPool = 1024 * 1024;  // 1mb
+SIZE_T MmDefaultMaximumNonPagedPool = 1024 * 1024; // 1mb
 
-ULONG MmMaxAdditionNonPagedPoolPerMb = 400 * 1024;  //400k
+ULONG MmMaxAdditionNonPagedPoolPerMb = 400 * 1024; //400k
 
 SIZE_T MmSizeOfPagedPoolInBytes = 32 * 1024 * 1024; // 32 MB.
 
@@ -615,7 +614,7 @@ ULONG MmPageFileExtension = 256;
 // Size to reduce the paging file by.
 //
 
-ULONG MmMinimumPageFileReduction = 256;  //256 pages (1mb)
+ULONG MmMinimumPageFileReduction = 256; //256 pages (1mb)
 
 //
 // Number of pages to write in a single I/O.
@@ -629,7 +628,7 @@ ULONG MmModifiedWriteClusterSize = MM_MAXIMUM_WRITE_CLUSTER;
 
 ULONG MmReadClusterSize = 7;
 
-const ULONG MMSECT = 'tSmM';              // This is exported to special pool.
+const ULONG MMSECT = 'tSmM'; // This is exported to special pool.
 
 //
 // This resource guards the working set list for the system shared
@@ -669,26 +668,26 @@ ULONG MmSystemPageColor;
 // Time constants
 //
 
-const LARGE_INTEGER MmSevenMinutes = {0, -1};
+const LARGE_INTEGER MmSevenMinutes = { 0, -1 };
 
 //
 // Note that the following constant is initialized to five seconds,
 // but is set to 3 on very small workstations.
 //
 
-LARGE_INTEGER MmWorkingSetProtectionTime = {5 * 1000 * 1000 * 10, 0};
+LARGE_INTEGER MmWorkingSetProtectionTime = { 5 * 1000 * 1000 * 10, 0 };
 
-const LARGE_INTEGER MmOneSecond = {(ULONG)(-1 * 1000 * 1000 * 10), -1};
-const LARGE_INTEGER MmTwentySeconds = {(ULONG)(-20 * 1000 * 1000 * 10), -1};
-const LARGE_INTEGER MmShortTime = {(ULONG)(-10 * 1000 * 10), -1}; // 10 milliseconds
-const LARGE_INTEGER MmHalfSecond = {(ULONG)(-5 * 100 * 1000 * 10), -1};
-const LARGE_INTEGER Mm30Milliseconds = {(ULONG)(-30 * 1000 * 10), -1};
+const LARGE_INTEGER MmOneSecond = { (ULONG)(-1 * 1000 * 1000 * 10), -1 };
+const LARGE_INTEGER MmTwentySeconds = { (ULONG)(-20 * 1000 * 1000 * 10), -1 };
+const LARGE_INTEGER MmShortTime = { (ULONG)(-10 * 1000 * 10), -1 }; // 10 milliseconds
+const LARGE_INTEGER MmHalfSecond = { (ULONG)(-5 * 100 * 1000 * 10), -1 };
+const LARGE_INTEGER Mm30Milliseconds = { (ULONG)(-30 * 1000 * 10), -1 };
 
 //
 // Parameters for user mode passed up via PEB in MmCreatePeb.
 //
 
-LARGE_INTEGER MmCriticalSectionTimeout;     // Filled in by mminit.c
+LARGE_INTEGER MmCriticalSectionTimeout; // Filled in by mminit.c
 SIZE_T MmHeapSegmentReserve = 1024 * 1024;
 SIZE_T MmHeapSegmentCommit = PAGE_SIZE * 2;
 SIZE_T MmHeapDeCommitTotalFreeThreshold = 64 * 1024;
@@ -712,120 +711,114 @@ ULONG MmDebug;
 // Map a page protection from the Pte.Protect field into a protection mask.
 //
 
-ULONG MmProtectToValue[32] = {
-                            PAGE_NOACCESS,
-                            PAGE_READONLY,
-                            PAGE_EXECUTE,
-                            PAGE_EXECUTE_READ,
-                            PAGE_READWRITE,
-                            PAGE_WRITECOPY,
-                            PAGE_EXECUTE_READWRITE,
-                            PAGE_EXECUTE_WRITECOPY,
-                            PAGE_NOACCESS,
-                            PAGE_NOCACHE | PAGE_READONLY,
-                            PAGE_NOCACHE | PAGE_EXECUTE,
-                            PAGE_NOCACHE | PAGE_EXECUTE_READ,
-                            PAGE_NOCACHE | PAGE_READWRITE,
-                            PAGE_NOCACHE | PAGE_WRITECOPY,
-                            PAGE_NOCACHE | PAGE_EXECUTE_READWRITE,
-                            PAGE_NOCACHE | PAGE_EXECUTE_WRITECOPY,
-                            PAGE_NOACCESS,
-                            PAGE_GUARD | PAGE_READONLY,
-                            PAGE_GUARD | PAGE_EXECUTE,
-                            PAGE_GUARD | PAGE_EXECUTE_READ,
-                            PAGE_GUARD | PAGE_READWRITE,
-                            PAGE_GUARD | PAGE_WRITECOPY,
-                            PAGE_GUARD | PAGE_EXECUTE_READWRITE,
-                            PAGE_GUARD | PAGE_EXECUTE_WRITECOPY,
-                            PAGE_NOACCESS,
-                            PAGE_NOCACHE | PAGE_GUARD | PAGE_READONLY,
-                            PAGE_NOCACHE | PAGE_GUARD | PAGE_EXECUTE,
-                            PAGE_NOCACHE | PAGE_GUARD | PAGE_EXECUTE_READ,
-                            PAGE_NOCACHE | PAGE_GUARD | PAGE_READWRITE,
-                            PAGE_NOCACHE | PAGE_GUARD | PAGE_WRITECOPY,
-                            PAGE_NOCACHE | PAGE_GUARD | PAGE_EXECUTE_READWRITE,
-                            PAGE_NOCACHE | PAGE_GUARD | PAGE_EXECUTE_WRITECOPY
-                          };
+ULONG MmProtectToValue[32] = { PAGE_NOACCESS,
+                               PAGE_READONLY,
+                               PAGE_EXECUTE,
+                               PAGE_EXECUTE_READ,
+                               PAGE_READWRITE,
+                               PAGE_WRITECOPY,
+                               PAGE_EXECUTE_READWRITE,
+                               PAGE_EXECUTE_WRITECOPY,
+                               PAGE_NOACCESS,
+                               PAGE_NOCACHE | PAGE_READONLY,
+                               PAGE_NOCACHE | PAGE_EXECUTE,
+                               PAGE_NOCACHE | PAGE_EXECUTE_READ,
+                               PAGE_NOCACHE | PAGE_READWRITE,
+                               PAGE_NOCACHE | PAGE_WRITECOPY,
+                               PAGE_NOCACHE | PAGE_EXECUTE_READWRITE,
+                               PAGE_NOCACHE | PAGE_EXECUTE_WRITECOPY,
+                               PAGE_NOACCESS,
+                               PAGE_GUARD | PAGE_READONLY,
+                               PAGE_GUARD | PAGE_EXECUTE,
+                               PAGE_GUARD | PAGE_EXECUTE_READ,
+                               PAGE_GUARD | PAGE_READWRITE,
+                               PAGE_GUARD | PAGE_WRITECOPY,
+                               PAGE_GUARD | PAGE_EXECUTE_READWRITE,
+                               PAGE_GUARD | PAGE_EXECUTE_WRITECOPY,
+                               PAGE_NOACCESS,
+                               PAGE_NOCACHE | PAGE_GUARD | PAGE_READONLY,
+                               PAGE_NOCACHE | PAGE_GUARD | PAGE_EXECUTE,
+                               PAGE_NOCACHE | PAGE_GUARD | PAGE_EXECUTE_READ,
+                               PAGE_NOCACHE | PAGE_GUARD | PAGE_READWRITE,
+                               PAGE_NOCACHE | PAGE_GUARD | PAGE_WRITECOPY,
+                               PAGE_NOCACHE | PAGE_GUARD | PAGE_EXECUTE_READWRITE,
+                               PAGE_NOCACHE | PAGE_GUARD | PAGE_EXECUTE_WRITECOPY };
 
 #if (defined(_WIN64) || defined(_X86PAE_))
 ULONGLONG
 #else
 ULONG
 #endif
-MmProtectToPteMask[32] = {
-                       MM_PTE_NOACCESS,
-                       MM_PTE_READONLY | MM_PTE_CACHE,
-                       MM_PTE_EXECUTE | MM_PTE_CACHE,
-                       MM_PTE_EXECUTE_READ | MM_PTE_CACHE,
-                       MM_PTE_READWRITE | MM_PTE_CACHE,
-                       MM_PTE_WRITECOPY | MM_PTE_CACHE,
-                       MM_PTE_EXECUTE_READWRITE | MM_PTE_CACHE,
-                       MM_PTE_EXECUTE_WRITECOPY | MM_PTE_CACHE,
-                       MM_PTE_NOACCESS,
-                       MM_PTE_NOCACHE | MM_PTE_READONLY,
-                       MM_PTE_NOCACHE | MM_PTE_EXECUTE,
-                       MM_PTE_NOCACHE | MM_PTE_EXECUTE_READ,
-                       MM_PTE_NOCACHE | MM_PTE_READWRITE,
-                       MM_PTE_NOCACHE | MM_PTE_WRITECOPY,
-                       MM_PTE_NOCACHE | MM_PTE_EXECUTE_READWRITE,
-                       MM_PTE_NOCACHE | MM_PTE_EXECUTE_WRITECOPY,
-                       MM_PTE_NOACCESS,
-                       MM_PTE_GUARD | MM_PTE_READONLY | MM_PTE_CACHE,
-                       MM_PTE_GUARD | MM_PTE_EXECUTE | MM_PTE_CACHE,
-                       MM_PTE_GUARD | MM_PTE_EXECUTE_READ | MM_PTE_CACHE,
-                       MM_PTE_GUARD | MM_PTE_READWRITE | MM_PTE_CACHE,
-                       MM_PTE_GUARD | MM_PTE_WRITECOPY | MM_PTE_CACHE,
-                       MM_PTE_GUARD | MM_PTE_EXECUTE_READWRITE | MM_PTE_CACHE,
-                       MM_PTE_GUARD | MM_PTE_EXECUTE_WRITECOPY | MM_PTE_CACHE,
-                       MM_PTE_NOACCESS,
-                       MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_READONLY,
-                       MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_EXECUTE,
-                       MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_EXECUTE_READ,
-                       MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_READWRITE,
-                       MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_WRITECOPY,
-                       MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_EXECUTE_READWRITE,
-                       MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_EXECUTE_WRITECOPY
-                    };
+MmProtectToPteMask[32] = { MM_PTE_NOACCESS,
+                           MM_PTE_READONLY | MM_PTE_CACHE,
+                           MM_PTE_EXECUTE | MM_PTE_CACHE,
+                           MM_PTE_EXECUTE_READ | MM_PTE_CACHE,
+                           MM_PTE_READWRITE | MM_PTE_CACHE,
+                           MM_PTE_WRITECOPY | MM_PTE_CACHE,
+                           MM_PTE_EXECUTE_READWRITE | MM_PTE_CACHE,
+                           MM_PTE_EXECUTE_WRITECOPY | MM_PTE_CACHE,
+                           MM_PTE_NOACCESS,
+                           MM_PTE_NOCACHE | MM_PTE_READONLY,
+                           MM_PTE_NOCACHE | MM_PTE_EXECUTE,
+                           MM_PTE_NOCACHE | MM_PTE_EXECUTE_READ,
+                           MM_PTE_NOCACHE | MM_PTE_READWRITE,
+                           MM_PTE_NOCACHE | MM_PTE_WRITECOPY,
+                           MM_PTE_NOCACHE | MM_PTE_EXECUTE_READWRITE,
+                           MM_PTE_NOCACHE | MM_PTE_EXECUTE_WRITECOPY,
+                           MM_PTE_NOACCESS,
+                           MM_PTE_GUARD | MM_PTE_READONLY | MM_PTE_CACHE,
+                           MM_PTE_GUARD | MM_PTE_EXECUTE | MM_PTE_CACHE,
+                           MM_PTE_GUARD | MM_PTE_EXECUTE_READ | MM_PTE_CACHE,
+                           MM_PTE_GUARD | MM_PTE_READWRITE | MM_PTE_CACHE,
+                           MM_PTE_GUARD | MM_PTE_WRITECOPY | MM_PTE_CACHE,
+                           MM_PTE_GUARD | MM_PTE_EXECUTE_READWRITE | MM_PTE_CACHE,
+                           MM_PTE_GUARD | MM_PTE_EXECUTE_WRITECOPY | MM_PTE_CACHE,
+                           MM_PTE_NOACCESS,
+                           MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_READONLY,
+                           MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_EXECUTE,
+                           MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_EXECUTE_READ,
+                           MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_READWRITE,
+                           MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_WRITECOPY,
+                           MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_EXECUTE_READWRITE,
+                           MM_PTE_NOCACHE | MM_PTE_GUARD | MM_PTE_EXECUTE_WRITECOPY };
 
 //
 // Conversion which takes a Pte.Protect and builds a new Pte.Protect which
 // is not copy-on-write.
 //
 
-ULONG MmMakeProtectNotWriteCopy[32] = {
-                       MM_NOACCESS,
-                       MM_READONLY,
-                       MM_EXECUTE,
-                       MM_EXECUTE_READ,
-                       MM_READWRITE,
-                       MM_READWRITE,        //not copy
-                       MM_EXECUTE_READWRITE,
-                       MM_EXECUTE_READWRITE,
-                       MM_NOACCESS,
-                       MM_NOCACHE | MM_READONLY,
-                       MM_NOCACHE | MM_EXECUTE,
-                       MM_NOCACHE | MM_EXECUTE_READ,
-                       MM_NOCACHE | MM_READWRITE,
-                       MM_NOCACHE | MM_READWRITE,
-                       MM_NOCACHE | MM_EXECUTE_READWRITE,
-                       MM_NOCACHE | MM_EXECUTE_READWRITE,
-                       MM_NOACCESS,
-                       MM_GUARD_PAGE | MM_READONLY,
-                       MM_GUARD_PAGE | MM_EXECUTE,
-                       MM_GUARD_PAGE | MM_EXECUTE_READ,
-                       MM_GUARD_PAGE | MM_READWRITE,
-                       MM_GUARD_PAGE | MM_READWRITE,
-                       MM_GUARD_PAGE | MM_EXECUTE_READWRITE,
-                       MM_GUARD_PAGE | MM_EXECUTE_READWRITE,
-                       MM_NOACCESS,
-                       MM_NOCACHE | MM_GUARD_PAGE | MM_READONLY,
-                       MM_NOCACHE | MM_GUARD_PAGE | MM_EXECUTE,
-                       MM_NOCACHE | MM_GUARD_PAGE | MM_EXECUTE_READ,
-                       MM_NOCACHE | MM_GUARD_PAGE | MM_READWRITE,
-                       MM_NOCACHE | MM_GUARD_PAGE | MM_READWRITE,
-                       MM_NOCACHE | MM_GUARD_PAGE | MM_EXECUTE_READWRITE,
-                       MM_NOCACHE | MM_GUARD_PAGE | MM_EXECUTE_READWRITE
-                       };
+ULONG MmMakeProtectNotWriteCopy[32] = { MM_NOACCESS,
+                                        MM_READONLY,
+                                        MM_EXECUTE,
+                                        MM_EXECUTE_READ,
+                                        MM_READWRITE,
+                                        MM_READWRITE, //not copy
+                                        MM_EXECUTE_READWRITE,
+                                        MM_EXECUTE_READWRITE,
+                                        MM_NOACCESS,
+                                        MM_NOCACHE | MM_READONLY,
+                                        MM_NOCACHE | MM_EXECUTE,
+                                        MM_NOCACHE | MM_EXECUTE_READ,
+                                        MM_NOCACHE | MM_READWRITE,
+                                        MM_NOCACHE | MM_READWRITE,
+                                        MM_NOCACHE | MM_EXECUTE_READWRITE,
+                                        MM_NOCACHE | MM_EXECUTE_READWRITE,
+                                        MM_NOACCESS,
+                                        MM_GUARD_PAGE | MM_READONLY,
+                                        MM_GUARD_PAGE | MM_EXECUTE,
+                                        MM_GUARD_PAGE | MM_EXECUTE_READ,
+                                        MM_GUARD_PAGE | MM_READWRITE,
+                                        MM_GUARD_PAGE | MM_READWRITE,
+                                        MM_GUARD_PAGE | MM_EXECUTE_READWRITE,
+                                        MM_GUARD_PAGE | MM_EXECUTE_READWRITE,
+                                        MM_NOACCESS,
+                                        MM_NOCACHE | MM_GUARD_PAGE | MM_READONLY,
+                                        MM_NOCACHE | MM_GUARD_PAGE | MM_EXECUTE,
+                                        MM_NOCACHE | MM_GUARD_PAGE | MM_EXECUTE_READ,
+                                        MM_NOCACHE | MM_GUARD_PAGE | MM_READWRITE,
+                                        MM_NOCACHE | MM_GUARD_PAGE | MM_READWRITE,
+                                        MM_NOCACHE | MM_GUARD_PAGE | MM_EXECUTE_READWRITE,
+                                        MM_NOCACHE | MM_GUARD_PAGE | MM_EXECUTE_READWRITE };
 
 //
 // Converts a protection code to an access right for section access.
@@ -847,13 +840,13 @@ ACCESS_MASK MmMakeSectionAccess[8] = { SECTION_MAP_READ,
 //
 
 ACCESS_MASK MmMakeFileAccess[8] = { FILE_READ_DATA,
-                                FILE_READ_DATA,
-                                FILE_EXECUTE,
-                                FILE_EXECUTE | FILE_READ_DATA,
-                                FILE_WRITE_DATA | FILE_READ_DATA,
-                                FILE_READ_DATA,
-                                FILE_EXECUTE | FILE_WRITE_DATA | FILE_READ_DATA,
-                                FILE_EXECUTE | FILE_READ_DATA };
+                                    FILE_READ_DATA,
+                                    FILE_EXECUTE,
+                                    FILE_EXECUTE | FILE_READ_DATA,
+                                    FILE_WRITE_DATA | FILE_READ_DATA,
+                                    FILE_READ_DATA,
+                                    FILE_EXECUTE | FILE_WRITE_DATA | FILE_READ_DATA,
+                                    FILE_EXECUTE | FILE_READ_DATA };
 
 MM_PAGED_POOL_INFO MmPagedPoolInfo;
 
@@ -904,29 +897,18 @@ SIZE_T MmSessionImageSize;
 // platforms at startup.
 //
 
-MI_PFN_CACHE_ATTRIBUTE MiPlatformCacheAttributes[2 * MmMaximumCacheType] =
-{
+MI_PFN_CACHE_ATTRIBUTE MiPlatformCacheAttributes[2 * MmMaximumCacheType] = {
     //
     // Memory space
     //
 
-    MiNonCached,
-    MiCached,
-    MiWriteCombined,
-    MiCached,
-    MiNonCached,
-    MiWriteCombined,
+    MiNonCached, MiCached, MiWriteCombined, MiCached, MiNonCached, MiWriteCombined,
 
     //
     // I/O space
     //
 
-    MiNonCached,
-    MiCached,
-    MiWriteCombined,
-    MiCached,
-    MiNonCached,
-    MiWriteCombined
+    MiNonCached, MiCached, MiWriteCombined, MiCached, MiNonCached, MiWriteCombined
 };
 
 //
@@ -937,7 +919,7 @@ ULONG MiIoRetryMask = 0x1f;
 ULONG MiFaultRetryMask = 0x1f;
 ULONG MiUserFaultRetryMask = 0xF;
 
-#if defined (_MI_INSTRUMENT_PFN)
+#if defined(_MI_INSTRUMENT_PFN)
 
 //
 // Instrumentation code to track PFN lock duration.
@@ -952,9 +934,7 @@ MMPFNTIMINGS MiPfnSorted[MI_MAX_PFN_CALLERS];
 ULONG MiMaxPfnTimings = MI_MAX_PFN_CALLERS;
 
 ULONG_PTR
-MiGetExecutionAddress(
-    VOID
-    )
+MiGetExecutionAddress(VOID)
 {
 #if defined(_X86_)
     _asm {
@@ -965,8 +945,8 @@ MiGetExecutionAddress(
     PVOID CallingAddress;
     PVOID CallersCaller;
 
-    RtlGetCallersAddress (&CallingAddress, &CallersCaller);
-    return (ULONG_PTR) CallingAddress;
+    RtlGetCallersAddress(&CallingAddress, &CallersCaller);
+    return (ULONG_PTR)CallingAddress;
 #endif
 }
 #endif
@@ -975,7 +955,7 @@ MiGetExecutionAddress(
 #pragma data_seg("INIT")
 #endif
 
-WCHAR MmVerifyDriverBuffer[MI_SUSPECT_DRIVER_BUFFER_LENGTH] = {0};
+WCHAR MmVerifyDriverBuffer[MI_SUSPECT_DRIVER_BUFFER_LENGTH] = { 0 };
 ULONG MmVerifyDriverBufferType = REG_NONE;
 ULONG MmVerifyDriverLevel = (ULONG)-1;
 ULONG MmCritsectTimeoutSeconds = 2592000;
@@ -985,5 +965,3 @@ ULONG MmCritsectTimeoutSeconds = 2592000;
 #endif
 
 ULONG MmVerifyDriverBufferLength = sizeof(MmVerifyDriverBuffer);
-
-

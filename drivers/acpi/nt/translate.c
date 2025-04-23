@@ -40,47 +40,25 @@ Environment:
 #include "pch.h"
 
 NTSTATUS
-FindTranslationRange(
-    IN  PHYSICAL_ADDRESS    Start,
-    IN  LONGLONG            Length,
-    IN  PBRIDGE_TRANSLATOR  Translator,
-    IN  RESOURCE_TRANSLATION_DIRECTION  Direction,
-    IN  UCHAR               ResType,
-    OUT PBRIDGE_WINDOW      *Window
-    );
+FindTranslationRange(IN PHYSICAL_ADDRESS Start, IN LONGLONG Length, IN PBRIDGE_TRANSLATOR Translator,
+                     IN RESOURCE_TRANSLATION_DIRECTION Direction, IN UCHAR ResType, OUT PBRIDGE_WINDOW *Window);
 
 NTSTATUS
-TranslateBridgeResources(
-    IN PVOID Context,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
-    IN RESOURCE_TRANSLATION_DIRECTION Direction,
-    IN ULONG AlternativesCount, OPTIONAL
-    IN IO_RESOURCE_DESCRIPTOR Alternatives[], OPTIONAL
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target
-    );
+TranslateBridgeResources(IN PVOID Context, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
+                         IN RESOURCE_TRANSLATION_DIRECTION Direction, IN ULONG AlternativesCount,
+                         OPTIONAL IN IO_RESOURCE_DESCRIPTOR Alternatives[],
+                         OPTIONAL IN PDEVICE_OBJECT PhysicalDeviceObject, OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target);
 
 NTSTATUS
-TranslateBridgeRequirements(
-    IN PVOID Context,
-    IN PIO_RESOURCE_DESCRIPTOR Source,
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PULONG TargetCount,
-    OUT PIO_RESOURCE_DESCRIPTOR *Target
-    );
+TranslateBridgeRequirements(IN PVOID Context, IN PIO_RESOURCE_DESCRIPTOR Source, IN PDEVICE_OBJECT PhysicalDeviceObject,
+                            OUT PULONG TargetCount, OUT PIO_RESOURCE_DESCRIPTOR *Target);
 
 NTSTATUS
-BuildTranslatorRanges(
-    IN  PBRIDGE_TRANSLATOR Translator,
-    OUT ULONG *BridgeWindowCount,
-    OUT PBRIDGE_WINDOW *Window
-    );
+BuildTranslatorRanges(IN PBRIDGE_TRANSLATOR Translator, OUT ULONG *BridgeWindowCount, OUT PBRIDGE_WINDOW *Window);
 
-#define MAX(a, b)       \
-    ((a) > (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-#define MIN(a, b)       \
-    ((a) < (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 HAL_PORT_RANGE_INTERFACE HalPortRangeInterface;
 
@@ -92,29 +70,26 @@ HAL_PORT_RANGE_INTERFACE HalPortRangeInterface;
 #pragma alloc_text(PAGE, AcpiNullReference)
 #pragma alloc_text(PAGE, BuildTranslatorRanges)
 #endif
-
+
 NTSTATUS
-TranslateEjectInterface(
-    PDEVICE_OBJECT  DeviceObject,
-    PIRP            Irp
-    )
+TranslateEjectInterface(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 {
-    PIO_RESOURCE_REQUIREMENTS_LIST  ioList = NULL;
-    PIO_RESOURCE_DESCRIPTOR         transDesc;
-    PIO_RESOURCE_DESCRIPTOR         parentDesc;
-    PTRANSLATOR_INTERFACE           transInterface;
-    PBRIDGE_TRANSLATOR              bridgeTrans;
-    PIO_STACK_LOCATION              irpSp;
-    PDEVICE_EXTENSION               devExtension;
-    BOOLEAN                         foundTranslations = FALSE;
-    NTSTATUS                        status;
-    PUCHAR                          crsBuf;
-    ULONG                           descCount;
-    ULONG                           parentResType;
-    ULONG                           childResType;
-    ULONG                           crsBufSize;
-    PHYSICAL_ADDRESS                parentStart;
-    PHYSICAL_ADDRESS                childStart;
+    PIO_RESOURCE_REQUIREMENTS_LIST ioList = NULL;
+    PIO_RESOURCE_DESCRIPTOR transDesc;
+    PIO_RESOURCE_DESCRIPTOR parentDesc;
+    PTRANSLATOR_INTERFACE transInterface;
+    PBRIDGE_TRANSLATOR bridgeTrans;
+    PIO_STACK_LOCATION irpSp;
+    PDEVICE_EXTENSION devExtension;
+    BOOLEAN foundTranslations = FALSE;
+    NTSTATUS status;
+    PUCHAR crsBuf;
+    ULONG descCount;
+    ULONG parentResType;
+    ULONG childResType;
+    ULONG crsBufSize;
+    PHYSICAL_ADDRESS parentStart;
+    PHYSICAL_ADDRESS childStart;
 
     PAGED_CODE();
 
@@ -132,30 +107,22 @@ TranslateEjectInterface(
     //
     // Get the resources for this bus.
     //
-    status = ACPIGetBufferSync(
-        devExtension,
-        PACKED_CRS,
-        &crsBuf,
-        &crsBufSize
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIGetBufferSync(devExtension, PACKED_CRS, &crsBuf, &crsBufSize);
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // This bus has no _CRS.  So it doesn't need a translator.
         //
         return Irp->IoStatus.Status;
-
     }
 
     //
     // Turn it into something meaningful.
     //
-    status = PnpBiosResourcesToNtResources(
-        crsBuf,
-        PNP_BIOS_TO_IO_NO_CONSUMED_RESOURCES,
-        &ioList
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PnpBiosResourcesToNtResources(crsBuf, PNP_BIOS_TO_IO_NO_CONSUMED_RESOURCES, &ioList);
+    if (!NT_SUCCESS(status))
+    {
         goto TranslateEjectInterfaceExit;
     }
 
@@ -164,11 +131,13 @@ TranslateEjectInterface(
     // that contains translation information.
     //
 
-    for (descCount = 0; descCount < ioList->List[0].Count; descCount++) {
+    for (descCount = 0; descCount < ioList->List[0].Count; descCount++)
+    {
 
         transDesc = &ioList->List[0].Descriptors[descCount];
 
-        if (transDesc->Type == CmResourceTypeDevicePrivate) {
+        if (transDesc->Type == CmResourceTypeDevicePrivate)
+        {
 
             //
             // Translation information is contained in
@@ -176,7 +145,8 @@ TranslateEjectInterface(
             // TRANSLATION_DATA_PARENT_ADDRESS in the
             // flags field.
             //
-            if (transDesc->Flags & TRANSLATION_DATA_PARENT_ADDRESS) {
+            if (transDesc->Flags & TRANSLATION_DATA_PARENT_ADDRESS)
+            {
 
                 // The first descriptor cannot be a translation descriptor
                 ASSERT(descCount != 0);
@@ -190,15 +160,15 @@ TranslateEjectInterface(
                 // resources.
                 //
 
-                parentResType        = transDesc->u.DevicePrivate.Data[0];
-                parentStart.LowPart  = transDesc->u.DevicePrivate.Data[1];
+                parentResType = transDesc->u.DevicePrivate.Data[0];
+                parentStart.LowPart = transDesc->u.DevicePrivate.Data[1];
                 parentStart.HighPart = transDesc->u.DevicePrivate.Data[2];
 
                 childResType = ioList->List[0].Descriptors[descCount - 1].Type;
                 childStart.QuadPart = (transDesc - 1)->u.Generic.MinimumAddress.QuadPart;
-                
-                if ((parentResType != childResType) ||
-                    (parentStart.QuadPart != childStart.QuadPart)) {
+
+                if ((parentResType != childResType) || (parentStart.QuadPart != childStart.QuadPart))
+                {
 
                     foundTranslations = TRUE;
                     break;
@@ -207,7 +177,8 @@ TranslateEjectInterface(
         }
     }
 
-    if (!foundTranslations) {
+    if (!foundTranslations)
+    {
 
         //
         // Didn't find any translation information for this bus.
@@ -220,16 +191,12 @@ TranslateEjectInterface(
     //
     // Build a translator interface.
     //
-    bridgeTrans = ExAllocatePoolWithTag(
-        PagedPool,
-        sizeof (BRIDGE_TRANSLATOR),
-        ACPI_TRANSLATE_POOLTAG
-        );
-    if (!bridgeTrans) {
+    bridgeTrans = ExAllocatePoolWithTag(PagedPool, sizeof(BRIDGE_TRANSLATOR), ACPI_TRANSLATE_POOLTAG);
+    if (!bridgeTrans)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto TranslateEjectInterfaceExit;
-
     }
 
     bridgeTrans->AcpiObject = devExtension->AcpiObject;
@@ -238,15 +205,11 @@ TranslateEjectInterface(
     //
     // Build the array of bridge windows.
     //
-    status = BuildTranslatorRanges(
-        bridgeTrans,
-        &bridgeTrans->RangeCount,
-        &bridgeTrans->Ranges
-        );
-    if (!NT_SUCCESS(status)) {
+    status = BuildTranslatorRanges(bridgeTrans, &bridgeTrans->RangeCount, &bridgeTrans->Ranges);
+    if (!NT_SUCCESS(status))
+    {
 
         goto TranslateEjectInterfaceExit;
-
     }
     transInterface->Size = sizeof(TRANSLATOR_INTERFACE);
     transInterface->Version = 1;
@@ -259,37 +222,32 @@ TranslateEjectInterface(
     status = STATUS_SUCCESS;
 
 TranslateEjectInterfaceExit:
-    
+
     return status;
 }
-
 
 
-
 NTSTATUS
-FindTranslationRange(
-    IN  PHYSICAL_ADDRESS    Start,
-    IN  LONGLONG            Length,
-    IN  PBRIDGE_TRANSLATOR  Translator,
-    IN  RESOURCE_TRANSLATION_DIRECTION  Direction,
-    IN  UCHAR               ResType,
-    OUT PBRIDGE_WINDOW      *Window
-    )
+FindTranslationRange(IN PHYSICAL_ADDRESS Start, IN LONGLONG Length, IN PBRIDGE_TRANSLATOR Translator,
+                     IN RESOURCE_TRANSLATION_DIRECTION Direction, IN UCHAR ResType, OUT PBRIDGE_WINDOW *Window)
 {
-    LONGLONG    beginning, end;
-    ULONG       i;
-    UCHAR       rangeType;
+    LONGLONG beginning, end;
+    ULONG i;
+    UCHAR rangeType;
 
     PAGED_CODE();
 
-    for (i = 0; i < Translator->RangeCount; i++) {
+    for (i = 0; i < Translator->RangeCount; i++)
+    {
 
-        if (Direction == TranslateParentToChild) {
+        if (Direction == TranslateParentToChild)
+        {
 
             beginning = Translator->Ranges[i].ParentAddress.QuadPart;
             rangeType = Translator->Ranges[i].ParentType;
-
-        } else {
+        }
+        else
+        {
 
             beginning = Translator->Ranges[i].ChildAddress.QuadPart;
             rangeType = Translator->Ranges[i].ChildType;
@@ -297,9 +255,8 @@ FindTranslationRange(
 
         end = beginning + Translator->Ranges[i].Length;
 
-        if ((rangeType == ResType) &&
-            (!((Start.QuadPart < beginning) ||
-               (Start.QuadPart + Length > end)))) {
+        if ((rangeType == ResType) && (!((Start.QuadPart < beginning) || (Start.QuadPart + Length > end))))
+        {
 
             //
             // The range lies within this bridge window
@@ -314,17 +271,12 @@ FindTranslationRange(
 
     return STATUS_NOT_FOUND;
 }
-
+
 NTSTATUS
-TranslateBridgeResources(
-    IN PVOID Context,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
-    IN RESOURCE_TRANSLATION_DIRECTION Direction,
-    IN ULONG AlternativesCount, OPTIONAL
-    IN IO_RESOURCE_DESCRIPTOR Alternatives[], OPTIONAL
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target
-    )
+TranslateBridgeResources(IN PVOID Context, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
+                         IN RESOURCE_TRANSLATION_DIRECTION Direction, IN ULONG AlternativesCount,
+                         OPTIONAL IN IO_RESOURCE_DESCRIPTOR Alternatives[],
+                         OPTIONAL IN PDEVICE_OBJECT PhysicalDeviceObject, OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target)
 /*++
 
 Routine Description:
@@ -367,14 +319,13 @@ Return Value:
 
 --*/
 {
-    PBRIDGE_TRANSLATOR  translator;
-    PBRIDGE_WINDOW      window;
-    NTSTATUS            status;
+    PBRIDGE_TRANSLATOR translator;
+    PBRIDGE_WINDOW window;
+    NTSTATUS status;
 
     PAGED_CODE();
     ASSERT(Context);
-    ASSERT((Source->Type == CmResourceTypePort) ||
-           (Source->Type == CmResourceTypeMemory));
+    ASSERT((Source->Type == CmResourceTypePort) || (Source->Type == CmResourceTypeMemory));
 
     translator = (PBRIDGE_TRANSLATOR)Context;
 
@@ -384,14 +335,11 @@ Return Value:
     // Find the window that this translation occurs
     // within.
     //
-    status = FindTranslationRange(Source->u.Generic.Start,
-                                  Source->u.Generic.Length,
-                                  translator,
-                                  Direction,
-                                  Source->Type,
-                                  &window);
+    status = FindTranslationRange(Source->u.Generic.Start, Source->u.Generic.Length, translator, Direction,
+                                  Source->Type, &window);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // We should never get here.  This fucntion
@@ -407,7 +355,8 @@ Return Value:
     //
     *Target = *Source;
 
-    switch (Direction) {
+    switch (Direction)
+    {
     case TranslateChildToParent:
 
         //
@@ -420,16 +369,13 @@ Return Value:
         // address.
         //
         Target->u.Generic.Start.QuadPart =
-            Source->u.Generic.Start.QuadPart +
-                window->ParentAddress.QuadPart -
-                window->ChildAddress.QuadPart;
+            Source->u.Generic.Start.QuadPart + window->ParentAddress.QuadPart - window->ChildAddress.QuadPart;
 
         //
         // Make sure the length is still in bounds.
         //
-        ASSERT(Target->u.Generic.Length <= (ULONG)(window->Length -
-               (Target->u.Generic.Start.QuadPart -
-                    window->ParentAddress.QuadPart)));
+        ASSERT(Target->u.Generic.Length <=
+               (ULONG)(window->Length - (Target->u.Generic.Start.QuadPart - window->ParentAddress.QuadPart)));
 
         status = STATUS_TRANSLATION_COMPLETE;
 
@@ -447,16 +393,13 @@ Return Value:
         // address.
         //
         Target->u.Generic.Start.QuadPart =
-            Source->u.Generic.Start.QuadPart +
-                window->ChildAddress.QuadPart -
-                window->ParentAddress.QuadPart;
+            Source->u.Generic.Start.QuadPart + window->ChildAddress.QuadPart - window->ParentAddress.QuadPart;
 
         //
         // Make sure the length is still in bounds.
         //
-        ASSERT(Target->u.Generic.Length <= (ULONG)(window->Length -
-               (Target->u.Generic.Start.QuadPart -
-                    window->ChildAddress.QuadPart)));
+        ASSERT(Target->u.Generic.Length <=
+               (ULONG)(window->Length - (Target->u.Generic.Start.QuadPart - window->ChildAddress.QuadPart)));
 
         status = STATUS_SUCCESS;
         break;
@@ -476,18 +419,13 @@ Return Value:
                  Target->u.Generic.Start.QuadPart);
     }
 #endif
-    
+
     return status;
 }
-
+
 NTSTATUS
-TranslateBridgeRequirements(
-    IN PVOID Context,
-    IN PIO_RESOURCE_DESCRIPTOR Source,
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PULONG TargetCount,
-    OUT PIO_RESOURCE_DESCRIPTOR *Target
-    )
+TranslateBridgeRequirements(IN PVOID Context, IN PIO_RESOURCE_DESCRIPTOR Source, IN PDEVICE_OBJECT PhysicalDeviceObject,
+                            OUT PULONG TargetCount, OUT PIO_RESOURCE_DESCRIPTOR *Target)
 /*++
 
 Routine Description:
@@ -516,16 +454,15 @@ Return Value:
 
 --*/
 {
-    PBRIDGE_TRANSLATOR  translator;
-    PBRIDGE_WINDOW      window;
-    NTSTATUS            status;
-    LONGLONG            rangeStart, rangeEnd, windowStart, windowEnd;
-    ULONG               i;
+    PBRIDGE_TRANSLATOR translator;
+    PBRIDGE_WINDOW window;
+    NTSTATUS status;
+    LONGLONG rangeStart, rangeEnd, windowStart, windowEnd;
+    ULONG i;
 
     PAGED_CODE();
     ASSERT(Context);
-    ASSERT((Source->Type == CmResourceTypePort) ||
-           (Source->Type == CmResourceTypeMemory));
+    ASSERT((Source->Type == CmResourceTypePort) || (Source->Type == CmResourceTypeMemory));
 
     translator = (PBRIDGE_TRANSLATOR)Context;
 
@@ -533,11 +470,10 @@ Return Value:
     // Allocate memory for the target range.
     //
 
-    *Target = ExAllocatePoolWithTag(PagedPool,
-                                    sizeof(IO_RESOURCE_DESCRIPTOR),
-                                    ACPI_RESOURCE_POOLTAG);
+    *Target = ExAllocatePoolWithTag(PagedPool, sizeof(IO_RESOURCE_DESCRIPTOR), ACPI_RESOURCE_POOLTAG);
 
-    if (!*Target) {
+    if (!*Target)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -549,13 +485,15 @@ Return Value:
     //
 
     rangeStart = Source->u.Generic.MinimumAddress.QuadPart;
-    rangeEnd   = Source->u.Generic.MaximumAddress.QuadPart;
+    rangeEnd = Source->u.Generic.MaximumAddress.QuadPart;
 
-    for (i = 0; i < translator->RangeCount; i++) {
+    for (i = 0; i < translator->RangeCount; i++)
+    {
 
         window = &translator->Ranges[i];
 
-        if (window->ChildType != Source->Type) {
+        if (window->ChildType != Source->Type)
+        {
 
             //
             // This window describes the wrong
@@ -564,7 +502,8 @@ Return Value:
             continue;
         }
 
-        if (Source->u.Generic.Length > window->Length) {
+        if (Source->u.Generic.Length > window->Length)
+        {
 
             //
             // This resource won't fit in this aperature.
@@ -576,7 +515,8 @@ Return Value:
         windowEnd = window->ChildAddress.QuadPart + (LONGLONG)window->Length;
 
         if (!(((rangeStart < windowStart) && (rangeEnd < windowStart)) ||
-              ((rangeStart > windowEnd) && (rangeEnd > windowEnd)))) {
+              ((rangeStart > windowEnd) && (rangeEnd > windowEnd))))
+        {
 
             //
             // The range and the window do intersect.  So create
@@ -588,21 +528,21 @@ Return Value:
 
             (*Target)->Type = window->ParentType;
 
-            (*Target)->u.Generic.MinimumAddress.QuadPart =
-                rangeStart + (window->ParentAddress.QuadPart - windowStart);
+            (*Target)->u.Generic.MinimumAddress.QuadPart = rangeStart + (window->ParentAddress.QuadPart - windowStart);
 
-            (*Target)->u.Generic.MaximumAddress.QuadPart =
-                rangeEnd + (window->ParentAddress.QuadPart - windowStart);
+            (*Target)->u.Generic.MaximumAddress.QuadPart = rangeEnd + (window->ParentAddress.QuadPart - windowStart);
 
             break;
         }
     }
 
-    if (i < translator->RangeCount) {
+    if (i < translator->RangeCount)
+    {
 
         return STATUS_TRANSLATION_COMPLETE;
-
-    } else {
+    }
+    else
+    {
 
         *TargetCount = 0;
         status = STATUS_PNP_TRANSLATION_FAILED;
@@ -610,23 +550,20 @@ Return Value:
 
 cleanup:
 
-    if (*Target) {
+    if (*Target)
+    {
         ExFreePool(*Target);
     }
 
     return status;
 }
-
+
 NTSTATUS
-BuildTranslatorRanges(
-    IN  PBRIDGE_TRANSLATOR Translator,
-    OUT ULONG *BridgeWindowCount,
-    OUT PBRIDGE_WINDOW *Window
-    )
+BuildTranslatorRanges(IN PBRIDGE_TRANSLATOR Translator, OUT ULONG *BridgeWindowCount, OUT PBRIDGE_WINDOW *Window)
 {
     PIO_RESOURCE_REQUIREMENTS_LIST ioList;
     PIO_RESOURCE_DESCRIPTOR transDesc, resDesc;
-    ULONG   descCount, windowCount, maxWindows;
+    ULONG descCount, windowCount, maxWindows;
 
     PAGED_CODE();
 
@@ -638,11 +575,10 @@ BuildTranslatorRanges(
 
     maxWindows = ioList->List[0].Count / 2;
 
-    *Window = ExAllocatePoolWithTag(PagedPool,
-                                    maxWindows *  sizeof(BRIDGE_WINDOW),
-                                    ACPI_TRANSLATE_POOLTAG);
+    *Window = ExAllocatePoolWithTag(PagedPool, maxWindows * sizeof(BRIDGE_WINDOW), ACPI_TRANSLATE_POOLTAG);
 
-    if (!*Window) {
+    if (!*Window)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -652,11 +588,13 @@ BuildTranslatorRanges(
 
     windowCount = 0;
 
-    for (descCount = 0; descCount < ioList->List[0].Count; descCount++) {
+    for (descCount = 0; descCount < ioList->List[0].Count; descCount++)
+    {
 
         transDesc = &ioList->List[0].Descriptors[descCount];
 
-        if (transDesc->Type == CmResourceTypeDevicePrivate) {
+        if (transDesc->Type == CmResourceTypeDevicePrivate)
+        {
 
             //
             // Translation information is contained in
@@ -664,11 +602,11 @@ BuildTranslatorRanges(
             // TRANSLATION_DATA_PARENT_ADDRESS in the
             // flags field.
             //
-            if (transDesc->Flags & TRANSLATION_DATA_PARENT_ADDRESS) {
+            if (transDesc->Flags & TRANSLATION_DATA_PARENT_ADDRESS)
+            {
 
                 ASSERT(windowCount <= maxWindows);
 
-                         
 
                 //
                 // The translation descriptor is supposed to follow
@@ -678,35 +616,29 @@ BuildTranslatorRanges(
                 resDesc = &ioList->List[0].Descriptors[descCount - 1];
 
 
-
-                (*Window)[windowCount].ParentType =
-                    (UCHAR)transDesc->u.DevicePrivate.Data[0];
+                (*Window)[windowCount].ParentType = (UCHAR)transDesc->u.DevicePrivate.Data[0];
 
                 (*Window)[windowCount].ChildType = resDesc->Type;
 
-                (*Window)[windowCount].ParentAddress.LowPart =
-                    transDesc->u.DevicePrivate.Data[1];
+                (*Window)[windowCount].ParentAddress.LowPart = transDesc->u.DevicePrivate.Data[1];
 
-                (*Window)[windowCount].ParentAddress.HighPart =
-                    transDesc->u.DevicePrivate.Data[2];
+                (*Window)[windowCount].ParentAddress.HighPart = transDesc->u.DevicePrivate.Data[2];
 
-                (*Window)[windowCount].ChildAddress.QuadPart =
-                    resDesc->u.Generic.MinimumAddress.QuadPart;
+                (*Window)[windowCount].ChildAddress.QuadPart = resDesc->u.Generic.MinimumAddress.QuadPart;
 
-                (*Window)[windowCount].Length =
-                    resDesc->u.Generic.Length;
+                (*Window)[windowCount].Length = resDesc->u.Generic.Length;
 
                 //
                 // If the HAL has provided underlying sparse port translation
                 // services, allow for that.
                 //
 
-                if ((HalPortRangeInterface.QueryAllocateRange != NULL) &&
-                    (resDesc->Type == CmResourceTypePort)) {
-                    
+                if ((HalPortRangeInterface.QueryAllocateRange != NULL) && (resDesc->Type == CmResourceTypePort))
+                {
+
                     USHORT rangeId;
                     UCHAR parentType = (UCHAR)transDesc->u.DevicePrivate.Data[0];
-                    
+
                     BOOLEAN isSparse = transDesc->Flags & TRANSLATION_RANGE_SPARSE;
                     ULONG parentLength = resDesc->u.Generic.Length;
                     PHYSICAL_ADDRESS parentAddress;
@@ -714,30 +646,25 @@ BuildTranslatorRanges(
 
                     PHYSICAL_ADDRESS rangeZeroBase;
 
-                    parentAddress.LowPart  = transDesc->u.DevicePrivate.Data[1];
+                    parentAddress.LowPart = transDesc->u.DevicePrivate.Data[1];
                     parentAddress.HighPart = transDesc->u.DevicePrivate.Data[2];
 
-                    rangeZeroBase.QuadPart = parentAddress.QuadPart - resDesc->u.Generic.MinimumAddress.QuadPart;                    
+                    rangeZeroBase.QuadPart = parentAddress.QuadPart - resDesc->u.Generic.MinimumAddress.QuadPart;
 
-                    if (isSparse) {
+                    if (isSparse)
+                    {
                         parentLength = (parentLength + resDesc->u.Generic.MinimumAddress.LowPart) << 10;
                     }
 
-                    status = HalPortRangeInterface.QueryAllocateRange(
-                        isSparse,
-                        parentType == CmResourceTypeMemory,
-                        NULL,
-                        rangeZeroBase,
-                        parentLength,
-                        &rangeId
-                        );
+                    status = HalPortRangeInterface.QueryAllocateRange(isSparse, parentType == CmResourceTypeMemory,
+                                                                      NULL, rangeZeroBase, parentLength, &rangeId);
 
-                    if (NT_SUCCESS(status)) {
+                    if (NT_SUCCESS(status))
+                    {
                         (*Window)[windowCount].ParentType = CmResourceTypePort;
-                        
+
                         (*Window)[windowCount].ParentAddress.QuadPart =
-                            (rangeId << 16) |
-                            ((*Window)[windowCount].ChildAddress.QuadPart & 0xffff);
+                            (rangeId << 16) | ((*Window)[windowCount].ChildAddress.QuadPart & 0xffff);
                     }
                 }
 
@@ -750,5 +677,3 @@ BuildTranslatorRanges(
 
     return STATUS_SUCCESS;
 }
-
-

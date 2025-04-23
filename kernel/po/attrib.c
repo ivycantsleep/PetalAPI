@@ -21,27 +21,22 @@ Revision History:
 
 #include "pop.h"
 
-VOID
-PopUserPresentSetWorker(
-    PVOID Context
-    );
+VOID PopUserPresentSetWorker(PVOID Context);
 
 //
 // System state structure to track registered settings
 //
 
-typedef struct {
-    ULONG                   State;
+typedef struct
+{
+    ULONG State;
 } POP_SYSTEM_STATE, *PPOP_SYSTEM_STATE;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PopUserPresentSetWorker)
 #endif
 
-VOID
-PoSetSystemState (
-    IN ULONG Flags
-    )
+VOID PoSetSystemState(IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -62,31 +57,27 @@ Return Value:
     // Verify reserved bits are clear and continous is not set
     //
 
-    if (Flags & ~(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED | POP_LOW_LATENCY | ES_USER_PRESENT)) {
-        PopInternalError (POP_ATTRIB);
+    if (Flags & ~(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED | POP_LOW_LATENCY | ES_USER_PRESENT))
+    {
+        PopInternalError(POP_ATTRIB);
     }
 
     //
     // Apply the attributes
     //
 
-    PopApplyAttributeState (Flags, 0);
+    PopApplyAttributeState(Flags, 0);
 
     //
     // Check for work
     //
 
-    PopCheckForWork (TRUE);
+    PopCheckForWork(TRUE);
 }
 
 
-
-
 PVOID
-PoRegisterSystemState (
-    IN PVOID        StateHandle,
-    IN ULONG        NewFlags
-    )
+PoRegisterSystemState(IN PVOID StateHandle, IN ULONG NewFlags)
 /*++
 
 Routine Description:
@@ -107,31 +98,29 @@ Return Value:
 
 --*/
 {
-    ULONG               OldFlags;
-    PPOP_SYSTEM_STATE   SystemState;
+    ULONG OldFlags;
+    PPOP_SYSTEM_STATE SystemState;
 
     //
     // Verify reserved bits are clear
     //
 
-    if (NewFlags & ~(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED |
-                    POP_LOW_LATENCY | ES_USER_PRESENT)) {
+    if (NewFlags & ~(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | POP_LOW_LATENCY | ES_USER_PRESENT))
+    {
 
-        PopInternalError (POP_ATTRIB);
+        PopInternalError(POP_ATTRIB);
     }
 
     //
     // If there's no state handle allocated, do it now
     //
 
-    if (!StateHandle) {
-        StateHandle = ExAllocatePoolWithTag (
-                            NonPagedPool,
-                            sizeof (POP_SYSTEM_STATE),
-                            POP_PSTA_TAG
-                            );
+    if (!StateHandle)
+    {
+        StateHandle = ExAllocatePoolWithTag(NonPagedPool, sizeof(POP_SYSTEM_STATE), POP_PSTA_TAG);
 
-        if (!StateHandle) {
+        if (!StateHandle)
+        {
             return NULL;
         }
         RtlZeroMemory(StateHandle, sizeof(POP_SYSTEM_STATE));
@@ -141,23 +130,24 @@ Return Value:
     // If the continous bit is set, modify current flags
     //
 
-    SystemState = (PPOP_SYSTEM_STATE) StateHandle;
+    SystemState = (PPOP_SYSTEM_STATE)StateHandle;
     OldFlags = SystemState->State | ES_CONTINUOUS;
-    if (NewFlags & ES_CONTINUOUS) {
-        OldFlags = InterlockedExchange (&SystemState->State, NewFlags);
+    if (NewFlags & ES_CONTINUOUS)
+    {
+        OldFlags = InterlockedExchange(&SystemState->State, NewFlags);
     }
 
     //
     // Apply the changes
     //
 
-    PopApplyAttributeState (NewFlags, OldFlags);
+    PopApplyAttributeState(NewFlags, OldFlags);
 
     //
     // Check for any outstanding work
     //
 
-    PopCheckForWork (FALSE);
+    PopCheckForWork(FALSE);
 
     //
     // Done
@@ -167,10 +157,7 @@ Return Value:
 }
 
 
-VOID
-PoUnregisterSystemState (
-    IN PVOID    StateHandle
-    )
+VOID PoUnregisterSystemState(IN PVOID StateHandle)
 /*++
 
 Routine Description:
@@ -193,21 +180,17 @@ Return Value:
     // Make sure current attribute settings are clear
     //
 
-    PoRegisterSystemState (StateHandle, ES_CONTINUOUS);
+    PoRegisterSystemState(StateHandle, ES_CONTINUOUS);
 
     //
     // Free state structure
     //
 
-    ExFreePool (StateHandle);
+    ExFreePool(StateHandle);
 }
 
 
-VOID
-PopApplyAttributeState (
-    IN ULONG NewFlags,
-    IN ULONG OldFlags
-    )
+VOID PopApplyAttributeState(IN ULONG NewFlags, IN ULONG OldFlags)
 /*++
 
 Routine Description:
@@ -228,10 +211,10 @@ Return Value:
 
 --*/
 {
-    ULONG                i;
-    ULONG                Count;
-    ULONG                Changes;
-    ULONG                Mask;
+    ULONG i;
+    ULONG Count;
+    ULONG Changes;
+    ULONG Mask;
     PPOP_STATE_ATTRIBUTE Attribute;
 
     //
@@ -244,7 +227,8 @@ Return Value:
     // Check each flag
     //
 
-    while (Changes) {
+    while (Changes)
+    {
         //
         // Get change
         //
@@ -258,77 +242,77 @@ Return Value:
         // If this is a continous change, update the flags
         //
 
-        if (NewFlags & ES_CONTINUOUS) {
+        if (NewFlags & ES_CONTINUOUS)
+        {
 
             //
             // Count the times the attribite is set or cleared
             //
 
-            if (NewFlags & Mask) {
+            if (NewFlags & Mask)
+            {
 
                 //
                 // Being set
                 //
 
-                Count = InterlockedIncrement (&Attribute->Count);
+                Count = InterlockedIncrement(&Attribute->Count);
 
                 //
                 // If attributes count is moved from zero, set it
                 //
 
-                if (Count == 1) {
-                    Attribute->Set (Attribute->Arg);
+                if (Count == 1)
+                {
+                    Attribute->Set(Attribute->Arg);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Being cleared
                 //
 
-                Count = InterlockedDecrement (&Attribute->Count);
-                ASSERT (Count != -1);
+                Count = InterlockedDecrement(&Attribute->Count);
+                ASSERT(Count != -1);
 
                 //
                 // If attributes count is now zero, clear it
                 //
 
-                if (Count == 0  &&  Attribute->NotifyOnClear) {
-                    Attribute->Set (Attribute->Arg);
+                if (Count == 0 && Attribute->NotifyOnClear)
+                {
+                    Attribute->Set(Attribute->Arg);
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // If count is 0, pulse it
             //
 
 
-            if (Attribute->Count == 0) {
+            if (Attribute->Count == 0)
+            {
 
                 //
                 // Pulse the attribute
                 //
 
-                Attribute->Set (Attribute->Arg);
+                Attribute->Set(Attribute->Arg);
             }
-
         }
     }
 }
 
-VOID
-PopAttribNop (
-    IN ULONG Arg
-    )
+VOID PopAttribNop(IN ULONG Arg)
 {
 }
 
-VOID
-PopSystemRequiredSet (
-    IN ULONG Arg
-    )
+VOID PopSystemRequiredSet(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -349,17 +333,15 @@ Return Value:
     // System is not idle
     //
 
-    if (PopSIdle.Time) {
+    if (PopSIdle.Time)
+    {
         PopSIdle.Time = 0;
     }
 }
 
-#define AllBitsSet(a,b)    ( ((a) & (b)) == (b) )
+#define AllBitsSet(a, b) (((a) & (b)) == (b))
 
-VOID
-PopDisplayRequired (
-    IN ULONG Arg
-    )
+VOID PopDisplayRequired(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -380,24 +362,20 @@ Return Value:
     // If gdi isn't on, do it now
     //
 
-    if ( !AnyBitsSet (PopFullWake, PO_GDI_STATUS | PO_GDI_ON_PENDING)) {
-        InterlockedOr (&PopFullWake, PO_GDI_ON_PENDING);
+    if (!AnyBitsSet(PopFullWake, PO_GDI_STATUS | PO_GDI_ON_PENDING))
+    {
+        InterlockedOr(&PopFullWake, PO_GDI_ON_PENDING);
     }
 
     //
     // Inform GDI of the display needed change
     //
 
-    PopSetNotificationWork (PO_NOTIFY_DISPLAY_REQUIRED);
+    PopSetNotificationWork(PO_NOTIFY_DISPLAY_REQUIRED);
 }
 
 
-
-
-VOID
-PopUserPresentSet (
-    IN ULONG Arg
-    )
+VOID PopUserPresentSet(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -420,7 +398,8 @@ Return Value:
     // System is not idle
     //
 
-    if (PopSIdle.Time) {
+    if (PopSIdle.Time)
+    {
         PopSIdle.Time = 0;
     }
 
@@ -429,43 +408,37 @@ Return Value:
     // are not set, set them
     //
 
-    if (!AllBitsSet (PopFullWake, PO_FULL_WAKE_STATUS | PO_GDI_STATUS)) {
+    if (!AllBitsSet(PopFullWake, PO_FULL_WAKE_STATUS | PO_GDI_STATUS))
+    {
 
-        if (!AllBitsSet (PopFullWake, PO_FULL_WAKE_PENDING | PO_GDI_ON_PENDING)) {
+        if (!AllBitsSet(PopFullWake, PO_FULL_WAKE_PENDING | PO_GDI_ON_PENDING))
+        {
 
-            InterlockedOr (&PopFullWake, (PO_FULL_WAKE_PENDING | PO_GDI_ON_PENDING));
-            PopSetNotificationWork (PO_NOTIFY_FULL_WAKE);
+            InterlockedOr(&PopFullWake, (PO_FULL_WAKE_PENDING | PO_GDI_ON_PENDING));
+            PopSetNotificationWork(PO_NOTIFY_FULL_WAKE);
         }
     }
 
     //
     // Go to passive level to look for lid switches.
     //
-    
-    runningWorker = InterlockedExchangePointer(&PopUserPresentWorkItem.Parameter,
-                                               (PVOID)TRUE);
-    
-    if (runningWorker) {
+
+    runningWorker = InterlockedExchangePointer(&PopUserPresentWorkItem.Parameter, (PVOID)TRUE);
+
+    if (runningWorker)
+    {
         return;
     }
 
-    ExInitializeWorkItem(&PopUserPresentWorkItem,
-                         PopUserPresentSetWorker,
-                         PopUserPresentWorkItem.Parameter);
+    ExInitializeWorkItem(&PopUserPresentWorkItem, PopUserPresentSetWorker, PopUserPresentWorkItem.Parameter);
 
-    ExQueueWorkItem(
-      &PopUserPresentWorkItem,
-      DelayedWorkQueue
-      );
+    ExQueueWorkItem(&PopUserPresentWorkItem, DelayedWorkQueue);
 }
 
-VOID
-PopUserPresentSetWorker(
-    PVOID Context
-    )
+VOID PopUserPresentSetWorker(PVOID Context)
 {
-    PPOP_SWITCH_DEVICE switchDev; 
-    
+    PPOP_SWITCH_DEVICE switchDev;
+
     PAGED_CODE();
 
     //
@@ -476,31 +449,27 @@ PopUserPresentSetWorker(
 
     switchDev = (PPOP_SWITCH_DEVICE)PopSwitches.Flink;
 
-    while (switchDev != (PPOP_SWITCH_DEVICE)&PopSwitches) {
+    while (switchDev != (PPOP_SWITCH_DEVICE)&PopSwitches)
+    {
 
-        if ((switchDev->Caps & SYS_BUTTON_LID) &&
-            (switchDev->Opened == FALSE)) {
+        if ((switchDev->Caps & SYS_BUTTON_LID) && (switchDev->Opened == FALSE))
+        {
 
             //
             // We currently believe that the lid is closed.  Set
             // it to "opened."
             //
-            
+
             switchDev->Opened = TRUE;
             //
             // Notify the PowerState callback.
             //
 
-            ExNotifyCallback (
-                ExCbPowerState,
-                UIntToPtr(PO_CB_LID_SWITCH_STATE),
-                UIntToPtr(switchDev->Opened)
-                );
+            ExNotifyCallback(ExCbPowerState, UIntToPtr(PO_CB_LID_SWITCH_STATE), UIntToPtr(switchDev->Opened));
         }
 
         switchDev = (PPOP_SWITCH_DEVICE)switchDev->Link.Flink;
     }
 
-    InterlockedExchangePointer(&PopUserPresentWorkItem.Parameter,
-                               (PVOID)FALSE);
+    InterlockedExchangePointer(&PopUserPresentWorkItem.Parameter, (PVOID)FALSE);
 }

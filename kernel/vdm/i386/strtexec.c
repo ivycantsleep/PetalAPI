@@ -37,9 +37,7 @@ Revision History:
 #endif
 
 NTSTATUS
-VdmpStartExecution(
-    VOID
-    )
+VdmpStartExecution(VOID)
 /*++
 
 Routine Description:
@@ -65,8 +63,8 @@ Return Value:
     PVDM_TIB VdmTib;
     PKTRAP_FRAME TrapFrame;
     PETHREAD Thread;
-    KIRQL    OldIrql;
-    BOOLEAN  IntsEnabled;
+    KIRQL OldIrql;
+    BOOLEAN IntsEnabled;
     NTSTATUS Status;
     CONTEXT VdmContext;
 
@@ -76,29 +74,30 @@ Return Value:
     // Form a pointer to the trap frame for the current thread
     //
 
-    Thread = PsGetCurrentThread ();
-    TrapFrame = VdmGetTrapFrame (&Thread->Tcb);
+    Thread = PsGetCurrentThread();
+    TrapFrame = VdmGetTrapFrame(&Thread->Tcb);
 
     //
     // Get the VdmTib
     //
 
-    Status = VdmpGetVdmTib (&VdmTib);
+    Status = VdmpGetVdmTib(&VdmTib);
 
-    if (!NT_SUCCESS(Status)) {
-       return STATUS_INVALID_SYSTEM_SERVICE;
+    if (!NT_SUCCESS(Status))
+    {
+        return STATUS_INVALID_SYSTEM_SERVICE;
     }
 
-    KeRaiseIrql (APC_LEVEL, &OldIrql);
+    KeRaiseIrql(APC_LEVEL, &OldIrql);
 
-    try {
+    try
+    {
 
         //
         // Determine if interrupts are on or off
         //
 
-        IntsEnabled = VdmTib->VdmContext.EFlags & EFLAGS_INTERRUPT_MASK
-                   ? TRUE : FALSE;
+        IntsEnabled = VdmTib->VdmContext.EFlags & EFLAGS_INTERRUPT_MASK ? TRUE : FALSE;
 
         //
         // Check for timer ints to dispatch, However if interrupts are disabled
@@ -106,9 +105,9 @@ Return Value:
         // interrupt until interrupts are enabled.
         //
 
-        if ((*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_INT_TIMER) &&
-            IntsEnabled &&
-            !(*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_INT_HARDWARE)) {
+        if ((*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_INT_TIMER) && IntsEnabled &&
+            !(*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_INT_HARDWARE))
+        {
 
             VdmTib->EventInfo.Event = VdmIntAck;
             VdmTib->EventInfo.InstructionSize = 0;
@@ -123,17 +122,21 @@ Return Value:
         //
 
         if (((KeI386VirtualIntExtensions & V86_VIRTUAL_INT_EXTENSIONS) &&
-            (VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK)) ||
+             (VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK)) ||
             ((KeI386VirtualIntExtensions & PM_VIRTUAL_INT_EXTENSIONS) &&
-            !(VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK))) {
+             !(VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK)))
+        {
 
             //
             // Translate IF to VIF
             //
 
-            if (IntsEnabled) {
+            if (IntsEnabled)
+            {
                 VdmTib->VdmContext.EFlags |= EFLAGS_VIF;
-            } else {
+            }
+            else
+            {
                 VdmTib->VdmContext.EFlags &= ~EFLAGS_VIF;
                 VdmTib->VdmContext.EFlags |= EFLAGS_INTERRUPT_MASK;
             }
@@ -147,9 +150,9 @@ Return Value:
             // Else if we are not running in v86 mode, or not using IOPL in
             // v86 mode
             //
-
-        } else if (!(KeI386VdmIoplAllowed) ||
-            !(VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK)) {
+        }
+        else if (!(KeI386VdmIoplAllowed) || !(VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK))
+        {
 
             //
             // Translate the real interrupt flag in the VdmContext to the
@@ -159,10 +162,13 @@ Return Value:
 
             ASSERT(VDM_VIRTUAL_INTERRUPTS == EFLAGS_INTERRUPT_MASK);
 
-            if (VdmTib->VdmContext.EFlags & EFLAGS_INTERRUPT_MASK) {
-                InterlockedOr (FIXED_NTVDMSTATE_LINEAR_PC_AT, VDM_VIRTUAL_INTERRUPTS);
-            } else {
-                InterlockedAnd (FIXED_NTVDMSTATE_LINEAR_PC_AT, ~VDM_VIRTUAL_INTERRUPTS);
+            if (VdmTib->VdmContext.EFlags & EFLAGS_INTERRUPT_MASK)
+            {
+                InterlockedOr(FIXED_NTVDMSTATE_LINEAR_PC_AT, VDM_VIRTUAL_INTERRUPTS);
+            }
+            else
+            {
+                InterlockedAnd(FIXED_NTVDMSTATE_LINEAR_PC_AT, ~VDM_VIRTUAL_INTERRUPTS);
             }
 
             //
@@ -177,48 +183,45 @@ Return Value:
 
         VdmContext = VdmTib->VdmContext;
 
-        if (!(VdmContext.SegCs & FRAME_EDITED)) {
+        if (!(VdmContext.SegCs & FRAME_EDITED))
+        {
 
             //
             // We will crash in KiServiceExit
             //
 
             KeLowerIrql(OldIrql);
-            return(STATUS_INVALID_SYSTEM_SERVICE);
+            return (STATUS_INVALID_SYSTEM_SERVICE);
         }
 
         //
         // Switch from MonitorContext to VdmContext
         //
 
-        VdmSwapContexts (TrapFrame,
-                         &VdmTib->MonitorContext,
-                         &VdmContext);
+        VdmSwapContexts(TrapFrame, &VdmTib->MonitorContext, &VdmContext);
 
         //
         // Check for pending interrupts
         //
 
-        if (IntsEnabled && (*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_INT_HARDWARE)) {
+        if (IntsEnabled && (*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_INT_HARDWARE))
+        {
             VdmDispatchInterrupts(TrapFrame, VdmTib);
         }
     }
-    except(EXCEPTION_EXECUTE_HANDLER) {
-       KeLowerIrql (OldIrql);
-       Status = GetExceptionCode();
-       return Status;
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        KeLowerIrql(OldIrql);
+        Status = GetExceptionCode();
+        return Status;
     }
 
     KeLowerIrql(OldIrql);
 
-    return (NTSTATUS) TrapFrame->Eax;
+    return (NTSTATUS)TrapFrame->Eax;
 }
 
-VOID
-VdmEndExecution(
-    PKTRAP_FRAME TrapFrame,
-    PVDM_TIB VdmTib
-    )
+VOID VdmEndExecution(PKTRAP_FRAME TrapFrame, PVDM_TIB VdmTib)
 /*++
 
 Routine Description:
@@ -237,8 +240,7 @@ Return Value:
 {
     PAGED_CODE();
 
-    ASSERT((TrapFrame->EFlags & EFLAGS_V86_MASK) ||
-           (TrapFrame->SegCs != (KGDT_R3_CODE | RPL_MASK)) );
+    ASSERT((TrapFrame->EFlags & EFLAGS_V86_MASK) || (TrapFrame->SegCs != (KGDT_R3_CODE | RPL_MASK)));
 
     //
     // The return value must be put into the Monitorcontext, and set,
@@ -251,11 +253,7 @@ Return Value:
     //
     // Switch from MonitorContext to VdmContext
     //
-    VdmSwapContexts(
-        TrapFrame,
-        &(VdmTib->VdmContext),
-        &(VdmTib->MonitorContext)
-        );
+    VdmSwapContexts(TrapFrame, &(VdmTib->VdmContext), &(VdmTib->MonitorContext));
 
     //
     // Perform IF to VIF translation
@@ -264,17 +262,19 @@ Return Value:
     //
     // If the processor supports IF virtualization
     //
-    if (((KeI386VirtualIntExtensions & V86_VIRTUAL_INT_EXTENSIONS) &&
-        (VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK)) ||
-        ((KeI386VirtualIntExtensions & PM_VIRTUAL_INT_EXTENSIONS) &&
-        !(VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK))) {
+    if (((KeI386VirtualIntExtensions & V86_VIRTUAL_INT_EXTENSIONS) && (VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK)) ||
+        ((KeI386VirtualIntExtensions & PM_VIRTUAL_INT_EXTENSIONS) && !(VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK)))
+    {
 
         //
         // Translate VIF to IF
         //
-        if (VdmTib->VdmContext.EFlags & EFLAGS_VIF) {
+        if (VdmTib->VdmContext.EFlags & EFLAGS_VIF)
+        {
             VdmTib->VdmContext.EFlags |= EFLAGS_INTERRUPT_MASK;
-        } else {
+        }
+        else
+        {
             VdmTib->VdmContext.EFlags &= ~EFLAGS_INTERRUPT_MASK;
         }
         //
@@ -283,21 +283,20 @@ Return Value:
         TrapFrame->EFlags &= ~(EFLAGS_VIP | EFLAGS_VIF);
         VdmTib->VdmContext.EFlags &= ~(EFLAGS_VIP | EFLAGS_VIF);
 
-    //
-    // Else if we are not running in v86 mode, or not using IOPL in
-    // v86 mode
-    //
-    } else if (!(KeI386VdmIoplAllowed) ||
-        !(VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK))
+        //
+        // Else if we are not running in v86 mode, or not using IOPL in
+        // v86 mode
+        //
+    }
+    else if (!(KeI386VdmIoplAllowed) || !(VdmTib->VdmContext.EFlags & EFLAGS_V86_MASK))
     {
         //
         // Translate the virtual interrupt flag from the VdmTib back to the
         // real interrupt flag in the VdmContext
         //
 
-        VdmTib->VdmContext.EFlags =
-            (VdmTib->VdmContext.EFlags & ~EFLAGS_INTERRUPT_MASK)
-                | (*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_VIRTUAL_INTERRUPTS);
+        VdmTib->VdmContext.EFlags = (VdmTib->VdmContext.EFlags & ~EFLAGS_INTERRUPT_MASK) |
+                                    (*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_VIRTUAL_INTERRUPTS);
     }
     return;
 }

@@ -34,28 +34,24 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-#define WORK_SIZE   1024
+#define WORK_SIZE 1024
 
 void __cdecl main(int, char *);
 void processargs();
 
-UNICODE_STRING  KeyPath;
-WCHAR           KeyPathBuffer[WORK_SIZE];
+UNICODE_STRING KeyPath;
+WCHAR KeyPathBuffer[WORK_SIZE];
 
-UNICODE_STRING  FileName;
-WCHAR           FileNameBuffer[WORK_SIZE];
+UNICODE_STRING FileName;
+WCHAR FileNameBuffer[WORK_SIZE];
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    IO_STATUS_BLOCK  IoStatus;
-    HANDLE  FileHandle;
-    HANDLE  KeyHandle;
+    IO_STATUS_BLOCK IoStatus;
+    HANDLE FileHandle;
+    HANDLE KeyHandle;
 
     //
     // Process args
@@ -78,56 +74,38 @@ __cdecl main(
 
     printf("rtrestor: starting\n");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &FileName,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &FileName, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    status = NtCreateFile(
-                &FileHandle,
-                GENERIC_READ | SYNCHRONIZE,
-                &ObjectAttributes,
-                &IoStatus,
-                0,                                      // AllocationSize
-                FILE_ATTRIBUTE_NORMAL,
-                0,                                      // ShareAccess
-                FILE_OPEN_IF,
-                FILE_SYNCHRONOUS_IO_NONALERT,
-                NULL,                                   // EaBuffer
-                0                                       // EaLength
-                );
+    status = NtCreateFile(&FileHandle, GENERIC_READ | SYNCHRONIZE, &ObjectAttributes, &IoStatus,
+                          0, // AllocationSize
+                          FILE_ATTRIBUTE_NORMAL,
+                          0, // ShareAccess
+                          FILE_OPEN_IF, FILE_SYNCHRONOUS_IO_NONALERT,
+                          NULL, // EaBuffer
+                          0     // EaLength
+    );
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("rtsave: file open failed status = %08lx\n", status);
         exit(1);
     }
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &KeyPath,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyPath, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    status = NtOpenKey(
-                &KeyHandle,
-                MAXIMUM_ALLOWED,
-                &ObjectAttributes
-                );
-    if (!NT_SUCCESS(status)) {
+    status = NtOpenKey(&KeyHandle, MAXIMUM_ALLOWED, &ObjectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         printf("rtsave: key open failed status = %08lx\n", status);
         exit(1);
     }
 
     status = NtRestoreKey(KeyHandle, FileHandle);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("rtrestor: NtRestorKey failed status = %08lx\n", status);
         exit(1);
     }
@@ -135,43 +113,24 @@ __cdecl main(
     printf("rtsave: success\n");
     exit(0);
 }
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
 
-    if ( (argc != 3) )
+    if ((argc != 3))
     {
-        printf("Usage: %s <KeyName> <FileName>\n",
-                argv[0]);
+        printf("Usage: %s <KeyName> <FileName>\n", argv[0]);
         exit(1);
     }
 
-    RtlInitAnsiString(
-        &temp,
-        argv[1]
-        );
+    RtlInitAnsiString(&temp, argv[1]);
 
-    RtlAnsiStringToUnicodeString(
-        &KeyPath,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&KeyPath, &temp, TRUE);
 
-    RtlInitAnsiString(
-        &temp,
-        argv[2]
-        );
+    RtlInitAnsiString(&temp, argv[2]);
 
-    RtlAnsiStringToUnicodeString(
-        &FileName,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&FileName, &temp, TRUE);
 
     return;
 }

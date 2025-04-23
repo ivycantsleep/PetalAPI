@@ -28,12 +28,9 @@ Revision History:
 #pragma alloc_text(PAGE, NtDelayExecution)
 #endif
 
-
+
 NTSTATUS
-NtDelayExecution (
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER DelayInterval
-    )
+NtDelayExecution(IN BOOLEAN Alertable, IN PLARGE_INTEGER DelayInterval)
 
 /*++
 
@@ -73,15 +70,20 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
-        try {
-            ProbeForReadSmallStructure (DelayInterval, sizeof(LARGE_INTEGER), sizeof(ULONG));
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
+            ProbeForReadSmallStructure(DelayInterval, sizeof(LARGE_INTEGER), sizeof(ULONG));
             Interval = *DelayInterval;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
-    else {
+    else
+    {
         Interval = *DelayInterval;
     }
 

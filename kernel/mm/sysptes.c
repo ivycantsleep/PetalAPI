@@ -24,29 +24,21 @@ Revision History:
 
 #include "mi.h"
 
-VOID
-MiFeedSysPtePool (
-    IN ULONG Index
-    );
+VOID MiFeedSysPtePool(IN ULONG Index);
 
 ULONG
-MiGetSystemPteListCount (
-    IN ULONG ListSize
-    );
+MiGetSystemPteListCount(IN ULONG ListSize);
 
-VOID
-MiPteSListExpansionWorker (
-    IN PVOID Context
-    );
+VOID MiPteSListExpansionWorker(IN PVOID Context);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,MiInitializeSystemPtes)
-#pragma alloc_text(PAGE,MiPteSListExpansionWorker)
-#pragma alloc_text(MISYSPTE,MiReserveAlignedSystemPtes)
-#pragma alloc_text(MISYSPTE,MiReserveSystemPtes)
-#pragma alloc_text(MISYSPTE,MiFeedSysPtePool)
-#pragma alloc_text(MISYSPTE,MiReleaseSystemPtes)
-#pragma alloc_text(MISYSPTE,MiGetSystemPteListCount)
+#pragma alloc_text(INIT, MiInitializeSystemPtes)
+#pragma alloc_text(PAGE, MiPteSListExpansionWorker)
+#pragma alloc_text(MISYSPTE, MiReserveAlignedSystemPtes)
+#pragma alloc_text(MISYSPTE, MiReserveSystemPtes)
+#pragma alloc_text(MISYSPTE, MiFeedSysPtePool)
+#pragma alloc_text(MISYSPTE, MiReleaseSystemPtes)
+#pragma alloc_text(MISYSPTE, MiGetSystemPteListCount)
 #endif
 
 ULONG MmTotalSystemPtes;
@@ -83,13 +75,15 @@ ULONG MiSystemPteAllocationFailed;
 
 #define MM_PTE_TABLE_LIMIT 23
 
-ULONG MmSysPteIndex[MM_SYS_PTE_TABLES_MAX] = {1,2,4,8,9,MM_PTE_TABLE_LIMIT};
+ULONG MmSysPteIndex[MM_SYS_PTE_TABLES_MAX] = { 1, 2, 4, 8, 9, MM_PTE_TABLE_LIMIT };
 
-UCHAR MmSysPteTables[MM_PTE_TABLE_LIMIT+1] = {0,0,1,2,2,3,3,3,3,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5};
+UCHAR MmSysPteTables[MM_PTE_TABLE_LIMIT + 1] = {
+    0, 0, 1, 2, 2, 3, 3, 3, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+};
 
-ULONG MmSysPteMinimumFree [MM_SYS_PTE_TABLES_MAX] = {100,50,30,20,20,20};
+ULONG MmSysPteMinimumFree[MM_SYS_PTE_TABLES_MAX] = { 100, 50, 30, 20, 20, 20 };
 
-#elif defined (_AMD64_)
+#elif defined(_AMD64_)
 
 //
 // AMD64 has a 4k page size.
@@ -103,11 +97,11 @@ ULONG MmSysPteMinimumFree [MM_SYS_PTE_TABLES_MAX] = {100,50,30,20,20,20};
 
 #define MM_PTE_TABLE_LIMIT 16
 
-ULONG MmSysPteIndex[MM_SYS_PTE_TABLES_MAX] = {1,2,4,6,8,MM_PTE_TABLE_LIMIT};
+ULONG MmSysPteIndex[MM_SYS_PTE_TABLES_MAX] = { 1, 2, 4, 6, 8, MM_PTE_TABLE_LIMIT };
 
-UCHAR MmSysPteTables[MM_PTE_TABLE_LIMIT+1] = {0,0,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5};
+UCHAR MmSysPteTables[MM_PTE_TABLE_LIMIT + 1] = { 0, 0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5 };
 
-ULONG MmSysPteMinimumFree [MM_SYS_PTE_TABLES_MAX] = {100,50,30,100,20,20};
+ULONG MmSysPteMinimumFree[MM_SYS_PTE_TABLES_MAX] = { 100, 50, 30, 100, 20, 20 };
 
 #else
 
@@ -123,11 +117,11 @@ ULONG MmSysPteMinimumFree [MM_SYS_PTE_TABLES_MAX] = {100,50,30,100,20,20};
 
 #define MM_PTE_TABLE_LIMIT 16
 
-ULONG MmSysPteIndex[MM_SYS_PTE_TABLES_MAX] = {1,2,4,8,MM_PTE_TABLE_LIMIT};
+ULONG MmSysPteIndex[MM_SYS_PTE_TABLES_MAX] = { 1, 2, 4, 8, MM_PTE_TABLE_LIMIT };
 
-UCHAR MmSysPteTables[MM_PTE_TABLE_LIMIT+1] = {0,0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4};
+UCHAR MmSysPteTables[MM_PTE_TABLE_LIMIT + 1] = { 0, 0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4 };
 
-ULONG MmSysPteMinimumFree [MM_SYS_PTE_TABLES_MAX] = {100,50,30,20,20};
+ULONG MmSysPteMinimumFree[MM_SYS_PTE_TABLES_MAX] = { 100, 50, 30, 20, 20 };
 
 #endif
 
@@ -137,20 +131,20 @@ SLIST_HEADER MiSystemPteSListHead;
 #define MM_MIN_SYSPTE_FREE 500
 #define MM_MAX_SYSPTE_FREE 3000
 
-ULONG MmSysPteListBySizeCount [MM_SYS_PTE_TABLES_MAX];
+ULONG MmSysPteListBySizeCount[MM_SYS_PTE_TABLES_MAX];
 
 //
 // Initial sizes for PTE lists.
 //
 
-#define MM_PTE_LIST_1  400
-#define MM_PTE_LIST_2  100
-#define MM_PTE_LIST_4   60
-#define MM_PTE_LIST_6  100
-#define MM_PTE_LIST_8   50
-#define MM_PTE_LIST_9   50
-#define MM_PTE_LIST_16  40
-#define MM_PTE_LIST_18  40
+#define MM_PTE_LIST_1 400
+#define MM_PTE_LIST_2 100
+#define MM_PTE_LIST_4 60
+#define MM_PTE_LIST_6 100
+#define MM_PTE_LIST_8 50
+#define MM_PTE_LIST_9 50
+#define MM_PTE_LIST_16 40
+#define MM_PTE_LIST_18 40
 
 PVOID MiSystemPteNBHead[MM_SYS_PTE_TABLES_MAX];
 LONG MiSystemPteFreeCount[MM_SYS_PTE_TABLES_MAX];
@@ -161,7 +155,8 @@ LONG MiSystemPteFreeCount[MM_SYS_PTE_TABLES_MAX];
 #define MI_MAXIMUM_SLIST_PTE_PAGES 8
 #endif
 
-typedef struct _MM_PTE_SLIST_EXPANSION_WORK_CONTEXT {
+typedef struct _MM_PTE_SLIST_EXPANSION_WORK_CONTEXT
+{
     WORK_QUEUE_ITEM WorkItem;
     LONG Active;
     ULONG SListPages;
@@ -169,56 +164,43 @@ typedef struct _MM_PTE_SLIST_EXPANSION_WORK_CONTEXT {
 
 MM_PTE_SLIST_EXPANSION_WORK_CONTEXT MiPteSListExpand;
 
-VOID
-MiFeedSysPtePool (
-    IN ULONG Index
-    );
+VOID MiFeedSysPtePool(IN ULONG Index);
 
-VOID
-MiDumpSystemPtes (
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    );
+VOID MiDumpSystemPtes(IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType);
 
 ULONG
-MiCountFreeSystemPtes (
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    );
+MiCountFreeSystemPtes(IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType);
 
 PVOID
-MiGetHighestPteConsumer (
-    OUT PULONG_PTR NumberOfPtes
-    );
+MiGetHighestPteConsumer(OUT PULONG_PTR NumberOfPtes);
 
-VOID
-MiCheckPteReserve (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes
-    );
+VOID MiCheckPteReserve(IN PMMPTE StartingPte, IN ULONG NumberOfPtes);
 
-VOID
-MiCheckPteRelease (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes
-    );
+VOID MiCheckPteRelease(IN PMMPTE StartingPte, IN ULONG NumberOfPtes);
 
 //
 // Define inline functions to pack and unpack pointers in the platform
 // specific non-blocking queue pointer structure.
 //
 
-typedef struct _PTE_SLIST {
-    union {
-        struct {
+typedef struct _PTE_SLIST
+{
+    union
+    {
+        struct
+        {
             SINGLE_LIST_ENTRY ListEntry;
         } Slist;
         NBQUEUE_BLOCK QueueBlock;
     } u1;
 } PTE_SLIST, *PPTE_SLIST;
 
-#if defined (_AMD64_)
+#if defined(_AMD64_)
 
-typedef union _PTE_QUEUE_POINTER {
-    struct {
+typedef union _PTE_QUEUE_POINTER
+{
+    struct
+    {
         LONG64 PointerPte : 48;
         LONG64 TimeStamp : 16;
     };
@@ -228,8 +210,10 @@ typedef union _PTE_QUEUE_POINTER {
 
 #elif defined(_X86_)
 
-typedef union _PTE_QUEUE_POINTER {
-    struct {
+typedef union _PTE_QUEUE_POINTER
+{
+    struct
+    {
         LONG PointerPte;
         LONG TimeStamp;
     };
@@ -239,8 +223,10 @@ typedef union _PTE_QUEUE_POINTER {
 
 #elif defined(_IA64_)
 
-typedef union _PTE_QUEUE_POINTER {
-    struct {
+typedef union _PTE_QUEUE_POINTER
+{
+    struct
+    {
         ULONG64 PointerPte : 45;
         ULONG64 Region : 3;
         ULONG64 TimeStamp : 16;
@@ -257,82 +243,47 @@ typedef union _PTE_QUEUE_POINTER {
 #endif
 
 
-
 #if defined(_AMD64_)
 
-__inline
-VOID
-PackPTEValue (
-    IN PPTE_QUEUE_POINTER Entry,
-    IN PMMPTE PointerPte,
-    IN ULONG TimeStamp
-    )
+__inline VOID PackPTEValue(IN PPTE_QUEUE_POINTER Entry, IN PMMPTE PointerPte, IN ULONG TimeStamp)
 {
     Entry->PointerPte = (LONG64)PointerPte;
     Entry->TimeStamp = (LONG64)TimeStamp;
     return;
 }
 
-__inline
-PMMPTE
-UnpackPTEPointer (
-    IN PPTE_QUEUE_POINTER Entry
-    )
+__inline PMMPTE UnpackPTEPointer(IN PPTE_QUEUE_POINTER Entry)
 {
     return (PMMPTE)(Entry->PointerPte);
 }
 
-__inline
-ULONG
-MiReadTbFlushTimeStamp (
-    VOID
-    )
+__inline ULONG MiReadTbFlushTimeStamp(VOID)
 {
     return (KeReadTbFlushTimeStamp() & (ULONG)0xFFFF);
 }
 
 #elif defined(_X86_)
 
-__inline
-VOID
-PackPTEValue (
-    IN PPTE_QUEUE_POINTER Entry,
-    IN PMMPTE PointerPte,
-    IN ULONG TimeStamp
-    )
+__inline VOID PackPTEValue(IN PPTE_QUEUE_POINTER Entry, IN PMMPTE PointerPte, IN ULONG TimeStamp)
 {
     Entry->PointerPte = (LONG)PointerPte;
     Entry->TimeStamp = (LONG)TimeStamp;
     return;
 }
 
-__inline
-PMMPTE
-UnpackPTEPointer (
-    IN PPTE_QUEUE_POINTER Entry
-    )
+__inline PMMPTE UnpackPTEPointer(IN PPTE_QUEUE_POINTER Entry)
 {
     return (PMMPTE)(Entry->PointerPte);
 }
 
-__inline
-ULONG
-MiReadTbFlushTimeStamp (
-    VOID
-    )
+__inline ULONG MiReadTbFlushTimeStamp(VOID)
 {
     return (KeReadTbFlushTimeStamp());
 }
 
 #elif defined(_IA64_)
 
-__inline
-VOID
-PackPTEValue (
-    IN PPTE_QUEUE_POINTER Entry,
-    IN PMMPTE PointerPte,
-    IN ULONG TimeStamp
-    )
+__inline VOID PackPTEValue(IN PPTE_QUEUE_POINTER Entry, IN PMMPTE PointerPte, IN ULONG TimeStamp)
 {
     Entry->PointerPte = (ULONG64)PointerPte - PTE_BASE;
     Entry->TimeStamp = (ULONG64)TimeStamp;
@@ -340,11 +291,7 @@ PackPTEValue (
     return;
 }
 
-__inline
-PMMPTE
-UnpackPTEPointer (
-    IN PPTE_QUEUE_POINTER Entry
-    )
+__inline PMMPTE UnpackPTEPointer(IN PPTE_QUEUE_POINTER Entry)
 {
     LONG64 Value;
     Value = (ULONG64)Entry->PointerPte + PTE_BASE;
@@ -352,11 +299,7 @@ UnpackPTEPointer (
     return (PMMPTE)(Value);
 }
 
-__inline
-ULONG
-MiReadTbFlushTimeStamp (
-    VOID
-    )
+__inline ULONG MiReadTbFlushTimeStamp(VOID)
 {
     return (KeReadTbFlushTimeStamp() & (ULONG)0xFFFF);
 }
@@ -367,21 +310,14 @@ MiReadTbFlushTimeStamp (
 
 #endif
 
-__inline
-ULONG
-UnpackPTETimeStamp (
-    IN PPTE_QUEUE_POINTER Entry
-    )
+__inline ULONG UnpackPTETimeStamp(IN PPTE_QUEUE_POINTER Entry)
 {
     return (ULONG)(Entry->TimeStamp);
 }
 
-
+
 PMMPTE
-MiReserveSystemPtes (
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    )
+MiReserveSystemPtes(IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType)
 
 /*++
 
@@ -418,47 +354,55 @@ Environment:
     PMMPTE PointerFreedPte;
 #endif
 
-    if (SystemPtePoolType == SystemPteSpace) {
+    if (SystemPtePoolType == SystemPteSpace)
+    {
 
-        if (NumberOfPtes <= MM_PTE_TABLE_LIMIT) {
-            Index = MmSysPteTables [NumberOfPtes];
-            ASSERT (NumberOfPtes <= MmSysPteIndex[Index]);
+        if (NumberOfPtes <= MM_PTE_TABLE_LIMIT)
+        {
+            Index = MmSysPteTables[NumberOfPtes];
+            ASSERT(NumberOfPtes <= MmSysPteIndex[Index]);
 
-            if (ExRemoveHeadNBQueue (MiSystemPteNBHead[Index], (PULONG64)&Value) == TRUE) {
-                InterlockedDecrement ((PLONG)&MmSysPteListBySizeCount[Index]);
+            if (ExRemoveHeadNBQueue(MiSystemPteNBHead[Index], (PULONG64)&Value) == TRUE)
+            {
+                InterlockedDecrement((PLONG)&MmSysPteListBySizeCount[Index]);
 
-                PointerPte = UnpackPTEPointer (&Value);
+                PointerPte = UnpackPTEPointer(&Value);
 
-                TimeStamp = UnpackPTETimeStamp (&Value);
+                TimeStamp = UnpackPTETimeStamp(&Value);
 
 #if DBG
                 PointerPte->u.List.NextEntry = 0xABCDE;
-                if (MmDebug & MM_DBG_SYS_PTES) {
+                if (MmDebug & MM_DBG_SYS_PTES)
+                {
                     PointerFreedPte = PointerPte;
-                    for (j = 0; j < MmSysPteIndex[Index]; j += 1) {
-                        ASSERT (PointerFreedPte->u.Hard.Valid == 0);
+                    for (j = 0; j < MmSysPteIndex[Index]; j += 1)
+                    {
+                        ASSERT(PointerFreedPte->u.Hard.Valid == 0);
                         PointerFreedPte += 1;
                     }
                 }
 #endif
 
-                ASSERT (PointerPte >= MmSystemPtesStart[SystemPtePoolType]);
-                ASSERT (PointerPte <= MmSystemPtesEnd[SystemPtePoolType]);
+                ASSERT(PointerPte >= MmSystemPtesStart[SystemPtePoolType]);
+                ASSERT(PointerPte <= MmSystemPtesEnd[SystemPtePoolType]);
 
-                if (MmSysPteListBySizeCount[Index] < MmSysPteMinimumFree[Index]) {
-                    MiFeedSysPtePool (Index);
+                if (MmSysPteListBySizeCount[Index] < MmSysPteMinimumFree[Index])
+                {
+                    MiFeedSysPtePool(Index);
                 }
 
                 //
                 // The last thing is to check whether the TB needs flushing.
                 //
 
-                if (TimeStamp == MiReadTbFlushTimeStamp()) {
-                    KeFlushEntireTb (TRUE, TRUE);
+                if (TimeStamp == MiReadTbFlushTimeStamp())
+                {
+                    KeFlushEntireTb(TRUE, TRUE);
                 }
 
-                if (MmTrackPtes & 0x2) {
-                    MiCheckPteReserve (PointerPte, MmSysPteIndex[Index]);
+                if (MmTrackPtes & 0x2)
+                {
+                    MiCheckPteReserve(PointerPte, MmSysPteIndex[Index]);
                 }
 
                 return PointerPte;
@@ -468,7 +412,7 @@ Environment:
             // Fall through and go the long way to satisfy the PTE request.
             //
 
-            NumberOfPtes = MmSysPteIndex [Index];
+            NumberOfPtes = MmSysPteIndex[Index];
         }
     }
 
@@ -477,33 +421,32 @@ Environment:
     // routine.
     //
 
-    PointerPte = MiReserveAlignedSystemPtes (NumberOfPtes,
-                                             SystemPtePoolType,
-                                             0);
+    PointerPte = MiReserveAlignedSystemPtes(NumberOfPtes, SystemPtePoolType, 0);
 
 #if DBG
-    if (MmDebug & MM_DBG_SYS_PTES) {
-        if (PointerPte != NULL) {
+    if (MmDebug & MM_DBG_SYS_PTES)
+    {
+        if (PointerPte != NULL)
+        {
             PointerFreedPte = PointerPte;
-            for (j = 0; j < NumberOfPtes; j += 1) {
-                ASSERT (PointerFreedPte->u.Hard.Valid == 0);
+            for (j = 0; j < NumberOfPtes; j += 1)
+            {
+                ASSERT(PointerFreedPte->u.Hard.Valid == 0);
                 PointerFreedPte += 1;
             }
         }
     }
 #endif
 
-    if (PointerPte == NULL) {
+    if (PointerPte == NULL)
+    {
         MiSystemPteAllocationFailed += 1;
     }
 
     return PointerPte;
 }
-
-VOID
-MiFeedSysPtePool (
-    IN ULONG Index
-    )
+
+VOID MiFeedSysPtePool(IN ULONG Index)
 
 /*++
 
@@ -529,38 +472,34 @@ Environment:
     ULONG i;
     PMMPTE PointerPte;
 
-    if (MmTotalFreeSystemPtes[SystemPteSpace] < MM_MIN_SYSPTE_FREE) {
-#if defined (_X86_)
-        if (MiRecoverExtraPtes () == FALSE) {
-            MiRecoverSpecialPtes (PTE_PER_PAGE);
+    if (MmTotalFreeSystemPtes[SystemPteSpace] < MM_MIN_SYSPTE_FREE)
+    {
+#if defined(_X86_)
+        if (MiRecoverExtraPtes() == FALSE)
+        {
+            MiRecoverSpecialPtes(PTE_PER_PAGE);
         }
 #endif
         return;
     }
 
-    for (i = 0; i < 10 ; i += 1) {
-        PointerPte = MiReserveAlignedSystemPtes (MmSysPteIndex [Index],
-                                                 SystemPteSpace,
-                                                 0);
-        if (PointerPte == NULL) {
+    for (i = 0; i < 10; i += 1)
+    {
+        PointerPte = MiReserveAlignedSystemPtes(MmSysPteIndex[Index], SystemPteSpace, 0);
+        if (PointerPte == NULL)
+        {
             return;
         }
 
-        MiReleaseSystemPtes (PointerPte,
-                             MmSysPteIndex [Index],
-                             SystemPteSpace);
+        MiReleaseSystemPtes(PointerPte, MmSysPteIndex[Index], SystemPteSpace);
     }
 
     return;
 }
 
-
+
 PMMPTE
-MiReserveAlignedSystemPtes (
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType,
-    IN ULONG Alignment
-    )
+MiReserveAlignedSystemPtes(IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType, IN ULONG Alignment)
 
 /*++
 
@@ -611,7 +550,7 @@ Environment:
 
     OffsetSum = (Alignment >> (PAGE_SHIFT - PTE_SHIFT));
 
-#if defined (_X86_)
+#if defined(_X86_)
 restart:
 #endif
 
@@ -664,18 +603,21 @@ restart:
     PointerPte = &MmFirstFreeSystemPte[SystemPtePoolType];
     Previous = PointerPte;
 
-    if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST) {
+    if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST)
+    {
 
         //
         // End of list and none found.
         //
 
         MiUnlockSystemSpace(OldIrql);
-#if defined (_X86_)
-        if (MiRecoverExtraPtes () == TRUE) {
+#if defined(_X86_)
+        if (MiRecoverExtraPtes() == TRUE)
+        {
             goto restart;
         }
-        if (MiRecoverSpecialPtes (NumberOfPtes) == TRUE) {
+        if (MiRecoverSpecialPtes(NumberOfPtes) == TRUE)
+        {
             goto restart;
         }
 #endif
@@ -685,41 +627,46 @@ restart:
 
     PointerPte = MmSystemPteBase + PointerPte->u.List.NextEntry;
 
-    if (Alignment <= PAGE_SIZE) {
+    if (Alignment <= PAGE_SIZE)
+    {
 
         //
         // Don't deal with alignment issues.
         //
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
-            if (PointerPte->u.List.OneEntry) {
+            if (PointerPte->u.List.OneEntry)
+            {
                 SizeInSet = 1;
-
             }
-            else {
+            else
+            {
 
                 PointerFollowingPte = PointerPte + 1;
-                SizeInSet = (ULONG_PTR) PointerFollowingPte->u.List.NextEntry;
+                SizeInSet = (ULONG_PTR)PointerFollowingPte->u.List.NextEntry;
             }
 
-            if (NumberOfPtes < SizeInSet) {
+            if (NumberOfPtes < SizeInSet)
+            {
 
                 //
                 // Get the PTEs from this set and reduce the size of the
                 // set.  Note that the size of the current set cannot be 1.
                 //
 
-                if ((SizeInSet - NumberOfPtes) == 1) {
+                if ((SizeInSet - NumberOfPtes) == 1)
+                {
 
                     //
                     // Collapse to the single PTE format.
                     //
 
                     PointerPte->u.List.OneEntry = 1;
-
                 }
-                else {
+                else
+                {
 
                     PointerFollowingPte->u.List.NextEntry = SizeInSet - NumberOfPtes;
 
@@ -738,19 +685,20 @@ restart:
 
                 MmTotalFreeSystemPtes[SystemPtePoolType] -= NumberOfPtes;
 #if DBG
-                if (MmDebug & MM_DBG_SYS_PTES) {
-                    ASSERT (MmTotalFreeSystemPtes[SystemPtePoolType] ==
-                             MiCountFreeSystemPtes (SystemPtePoolType));
+                if (MmDebug & MM_DBG_SYS_PTES)
+                {
+                    ASSERT(MmTotalFreeSystemPtes[SystemPtePoolType] == MiCountFreeSystemPtes(SystemPtePoolType));
                 }
 #endif
 
                 MiUnlockSystemSpace(OldIrql);
 
-                PointerPte =  PointerPte + (SizeInSet - NumberOfPtes);
+                PointerPte = PointerPte + (SizeInSet - NumberOfPtes);
                 goto Flush;
             }
 
-            if (NumberOfPtes == SizeInSet) {
+            if (NumberOfPtes == SizeInSet)
+            {
 
                 //
                 // Satisfy the request with this complete set and change
@@ -773,9 +721,9 @@ restart:
 
                 MmTotalFreeSystemPtes[SystemPtePoolType] -= NumberOfPtes;
 #if DBG
-                if (MmDebug & MM_DBG_SYS_PTES) {
-                    ASSERT (MmTotalFreeSystemPtes[SystemPtePoolType] ==
-                             MiCountFreeSystemPtes (SystemPtePoolType));
+                if (MmDebug & MM_DBG_SYS_PTES)
+                {
+                    ASSERT(MmTotalFreeSystemPtes[SystemPtePoolType] == MiCountFreeSystemPtes(SystemPtePoolType));
                 }
 #endif
 
@@ -787,18 +735,21 @@ restart:
             // Point to the next set and try again
             //
 
-            if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST) {
+            if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST)
+            {
 
                 //
                 // End of list and none found.
                 //
 
                 MiUnlockSystemSpace(OldIrql);
-#if defined (_X86_)
-                if (MiRecoverExtraPtes () == TRUE) {
+#if defined(_X86_)
+                if (MiRecoverExtraPtes() == TRUE)
+                {
                     goto restart;
                 }
-                if (MiRecoverSpecialPtes (NumberOfPtes) == TRUE) {
+                if (MiRecoverSpecialPtes(NumberOfPtes) == TRUE)
+                {
                     goto restart;
                 }
 #endif
@@ -807,35 +758,36 @@ restart:
             }
             Previous = PointerPte;
             PointerPte = MmSystemPteBase + PointerPte->u.List.NextEntry;
-            ASSERT (PointerPte > Previous);
+            ASSERT(PointerPte > Previous);
         }
-
     }
-    else {
+    else
+    {
 
         //
         // Deal with the alignment issues.
         //
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
-            if (PointerPte->u.List.OneEntry) {
+            if (PointerPte->u.List.OneEntry)
+            {
                 SizeInSet = 1;
-
             }
-            else {
+            else
+            {
 
                 PointerFollowingPte = PointerPte + 1;
-                SizeInSet = (ULONG_PTR) PointerFollowingPte->u.List.NextEntry;
+                SizeInSet = (ULONG_PTR)PointerFollowingPte->u.List.NextEntry;
             }
 
-            PtesToObtainAlignment = (ULONG)
-                (((OffsetSum - ((ULONG_PTR)PointerPte & MaskSize)) & MaskSize) >>
-                    PTE_SHIFT);
+            PtesToObtainAlignment = (ULONG)(((OffsetSum - ((ULONG_PTR)PointerPte & MaskSize)) & MaskSize) >> PTE_SHIFT);
 
             NumberOfRequiredPtes = NumberOfPtes + PtesToObtainAlignment;
 
-            if (NumberOfRequiredPtes < SizeInSet) {
+            if (NumberOfRequiredPtes < SizeInSet)
+            {
 
                 //
                 // Get the PTEs from this set and reduce the size of the
@@ -857,17 +809,17 @@ restart:
                 //
 
                 NextSetPointer = PointerPte + NumberOfRequiredPtes;
-                NextSetPointer->u.List.NextEntry =
-                                       PointerPte->u.List.NextEntry;
+                NextSetPointer->u.List.NextEntry = PointerPte->u.List.NextEntry;
 
                 PteOffset = (ULONG_PTR)(NextSetPointer - MmSystemPteBase);
 
-                if (PtesToObtainAlignment == 0) {
+                if (PtesToObtainAlignment == 0)
+                {
 
                     Previous->u.List.NextEntry += NumberOfRequiredPtes;
-
                 }
-                else {
+                else
+                {
 
                     //
                     // Point to the new set at the end of the block
@@ -880,23 +832,23 @@ restart:
                     // Update the size of the current set.
                     //
 
-                    if (PtesToObtainAlignment == 1) {
+                    if (PtesToObtainAlignment == 1)
+                    {
 
                         //
                         // Collapse to the single PTE format.
                         //
 
                         PointerPte->u.List.OneEntry = 1;
-
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // Set the set size in the next PTE.
                         //
 
-                        PointerFollowingPte->u.List.NextEntry =
-                                                        PtesToObtainAlignment;
+                        PointerFollowingPte->u.List.NextEntry = PtesToObtainAlignment;
                     }
                 }
 
@@ -904,19 +856,21 @@ restart:
                 // Set up the new set at the end of the block.
                 //
 
-                if (LeftInSet == 1) {
+                if (LeftInSet == 1)
+                {
                     NextSetPointer->u.List.OneEntry = 1;
                 }
-                else {
+                else
+                {
                     NextSetPointer->u.List.OneEntry = 0;
                     NextSetPointer += 1;
                     NextSetPointer->u.List.NextEntry = LeftInSet;
                 }
                 MmTotalFreeSystemPtes[SystemPtePoolType] -= NumberOfPtes;
 #if DBG
-                if (MmDebug & MM_DBG_SYS_PTES) {
-                    ASSERT (MmTotalFreeSystemPtes[SystemPtePoolType] ==
-                             MiCountFreeSystemPtes (SystemPtePoolType));
+                if (MmDebug & MM_DBG_SYS_PTES)
+                {
+                    ASSERT(MmTotalFreeSystemPtes[SystemPtePoolType] == MiCountFreeSystemPtes(SystemPtePoolType));
                 }
 #endif
 
@@ -926,50 +880,50 @@ restart:
                 goto Flush;
             }
 
-            if (NumberOfRequiredPtes == SizeInSet) {
+            if (NumberOfRequiredPtes == SizeInSet)
+            {
 
                 //
                 // Satisfy the request with this complete set and change
                 // the list to reflect the fact that this set is gone.
                 //
 
-                if (PtesToObtainAlignment == 0) {
+                if (PtesToObtainAlignment == 0)
+                {
 
                     //
                     // This block exactly satisfies the request.
                     //
 
-                    Previous->u.List.NextEntry =
-                                            PointerPte->u.List.NextEntry;
-
+                    Previous->u.List.NextEntry = PointerPte->u.List.NextEntry;
                 }
-                else {
+                else
+                {
 
                     //
                     // A portion at the start of this block remains.
                     //
 
-                    if (PtesToObtainAlignment == 1) {
+                    if (PtesToObtainAlignment == 1)
+                    {
 
                         //
                         // Collapse to the single PTE format.
                         //
 
                         PointerPte->u.List.OneEntry = 1;
-
                     }
-                    else {
-                      PointerFollowingPte->u.List.NextEntry =
-                                                        PtesToObtainAlignment;
-
+                    else
+                    {
+                        PointerFollowingPte->u.List.NextEntry = PtesToObtainAlignment;
                     }
                 }
 
                 MmTotalFreeSystemPtes[SystemPtePoolType] -= NumberOfPtes;
 #if DBG
-                if (MmDebug & MM_DBG_SYS_PTES) {
-                    ASSERT (MmTotalFreeSystemPtes[SystemPtePoolType] ==
-                             MiCountFreeSystemPtes (SystemPtePoolType));
+                if (MmDebug & MM_DBG_SYS_PTES)
+                {
+                    ASSERT(MmTotalFreeSystemPtes[SystemPtePoolType] == MiCountFreeSystemPtes(SystemPtePoolType));
                 }
 #endif
 
@@ -983,18 +937,21 @@ restart:
             // Point to the next set and try again.
             //
 
-            if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST) {
+            if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST)
+            {
 
                 //
                 // End of list and none found.
                 //
 
                 MiUnlockSystemSpace(OldIrql);
-#if defined (_X86_)
-                if (MiRecoverExtraPtes () == TRUE) {
+#if defined(_X86_)
+                if (MiRecoverExtraPtes() == TRUE)
+                {
                     goto restart;
                 }
-                if (MiRecoverSpecialPtes (NumberOfPtes) == TRUE) {
+                if (MiRecoverSpecialPtes(NumberOfPtes) == TRUE)
+                {
                     goto restart;
                 }
 #endif
@@ -1003,21 +960,24 @@ restart:
             }
             Previous = PointerPte;
             PointerPte = MmSystemPteBase + PointerPte->u.List.NextEntry;
-            ASSERT (PointerPte > Previous);
+            ASSERT(PointerPte > Previous);
         }
     }
 Flush:
 
-    if (SystemPtePoolType == SystemPteSpace) {
+    if (SystemPtePoolType == SystemPteSpace)
+    {
         PVOID BaseAddress;
         ULONG j;
 
         PteFlushList.Count = 0;
         Previous = PointerPte;
-        BaseAddress = MiGetVirtualAddressMappedByPte (Previous);
+        BaseAddress = MiGetVirtualAddressMappedByPte(Previous);
 
-        for (j = 0; j < NumberOfPtes; j += 1) {
-            if (PteFlushList.Count != MM_MAXIMUM_FLUSH_COUNT) {
+        for (j = 0; j < NumberOfPtes; j += 1)
+        {
+            if (PteFlushList.Count != MM_MAXIMUM_FLUSH_COUNT)
+            {
                 PteFlushList.FlushPte[PteFlushList.Count] = Previous;
                 PteFlushList.FlushVa[PteFlushList.Count] = BaseAddress;
                 PteFlushList.Count += 1;
@@ -1026,27 +986,24 @@ Flush:
             //
             // PTEs being freed better be invalid.
             //
-            ASSERT (Previous->u.Hard.Valid == 0);
+            ASSERT(Previous->u.Hard.Valid == 0);
 
             *Previous = ZeroKernelPte;
             BaseAddress = (PVOID)((PCHAR)BaseAddress + PAGE_SIZE);
             Previous += 1;
         }
 
-        MiFlushPteList (&PteFlushList, TRUE, ZeroKernelPte);
+        MiFlushPteList(&PteFlushList, TRUE, ZeroKernelPte);
 
-        if (MmTrackPtes & 0x2) {
-            MiCheckPteReserve (PointerPte, NumberOfPtes);
+        if (MmTrackPtes & 0x2)
+        {
+            MiCheckPteReserve(PointerPte, NumberOfPtes);
         }
     }
     return PointerPte;
 }
 
-VOID
-MiIssueNoPtesBugcheck (
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    )
+VOID MiIssueNoPtesBugcheck(IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType)
 
 /*++
 
@@ -1074,30 +1031,23 @@ Environment:
     PVOID HighConsumer;
     ULONG_PTR HighPteUse;
 
-    if (SystemPtePoolType == SystemPteSpace) {
+    if (SystemPtePoolType == SystemPteSpace)
+    {
 
-        HighConsumer = MiGetHighestPteConsumer (&HighPteUse);
+        HighConsumer = MiGetHighestPteConsumer(&HighPteUse);
 
-        if (HighConsumer != NULL) {
-            KeBugCheckEx (DRIVER_USED_EXCESSIVE_PTES,
-                          (ULONG_PTR)HighConsumer,
-                          HighPteUse,
-                          MmTotalFreeSystemPtes[SystemPtePoolType],
-                          MmNumberOfSystemPtes);
+        if (HighConsumer != NULL)
+        {
+            KeBugCheckEx(DRIVER_USED_EXCESSIVE_PTES, (ULONG_PTR)HighConsumer, HighPteUse,
+                         MmTotalFreeSystemPtes[SystemPtePoolType], MmNumberOfSystemPtes);
         }
     }
 
-    KeBugCheckEx (NO_MORE_SYSTEM_PTES,
-                  (ULONG_PTR)SystemPtePoolType,
-                  NumberOfPtes,
-                  MmTotalFreeSystemPtes[SystemPtePoolType],
-                  MmNumberOfSystemPtes);
+    KeBugCheckEx(NO_MORE_SYSTEM_PTES, (ULONG_PTR)SystemPtePoolType, NumberOfPtes,
+                 MmTotalFreeSystemPtes[SystemPtePoolType], MmNumberOfSystemPtes);
 }
-
-VOID
-MiPteSListExpansionWorker (
-    IN PVOID Context
-    )
+
+VOID MiPteSListExpansionWorker(IN PVOID Context)
 
 /*++
 
@@ -1126,24 +1076,24 @@ Environment:
     PPTE_SLIST SListChunks;
     PMM_PTE_SLIST_EXPANSION_WORK_CONTEXT Expansion;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    Expansion = (PMM_PTE_SLIST_EXPANSION_WORK_CONTEXT) Context;
+    Expansion = (PMM_PTE_SLIST_EXPANSION_WORK_CONTEXT)Context;
 
-    ASSERT (Expansion->Active == 1);
+    ASSERT(Expansion->Active == 1);
 
-    if (Expansion->SListPages < MI_MAXIMUM_SLIST_PTE_PAGES) {
+    if (Expansion->SListPages < MI_MAXIMUM_SLIST_PTE_PAGES)
+    {
 
         //
         // Allocate another page of SLIST entries for the
         // nonblocking PTE queues.
         //
 
-        SListChunks = (PPTE_SLIST) ExAllocatePoolWithTag (NonPagedPool,
-                                                          PAGE_SIZE,
-                                                          'PSmM');
+        SListChunks = (PPTE_SLIST)ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, 'PSmM');
 
-        if (SListChunks != NULL) {
+        if (SListChunks != NULL)
+        {
 
             //
             // Carve up the pages into SLIST entries (with no pool headers).
@@ -1151,27 +1101,22 @@ Environment:
 
             Expansion->SListPages += 1;
 
-            SListEntries = PAGE_SIZE / sizeof (PTE_SLIST);
+            SListEntries = PAGE_SIZE / sizeof(PTE_SLIST);
 
-            for (i = 0; i < SListEntries; i += 1) {
-                InterlockedPushEntrySList (&MiSystemPteSListHead,
-                                           (PSINGLE_LIST_ENTRY)SListChunks);
+            for (i = 0; i < SListEntries; i += 1)
+            {
+                InterlockedPushEntrySList(&MiSystemPteSListHead, (PSINGLE_LIST_ENTRY)SListChunks);
                 SListChunks += 1;
             }
         }
     }
 
-    ASSERT (Expansion->Active == 1);
-    InterlockedExchange (&Expansion->Active, 0);
+    ASSERT(Expansion->Active == 1);
+    InterlockedExchange(&Expansion->Active, 0);
 }
 
-
-VOID
-MiReleaseSystemPtes (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    )
+
+VOID MiReleaseSystemPtes(IN PMMPTE StartingPte, IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType)
 
 /*++
 
@@ -1219,22 +1164,25 @@ Environment:
     // Check to make sure the PTE address is within bounds.
     //
 
-    ASSERT (NumberOfPtes != 0);
-    ASSERT (StartingPte >= MmSystemPtesStart[SystemPtePoolType]);
-    ASSERT (StartingPte <= MmSystemPtesEnd[SystemPtePoolType]);
+    ASSERT(NumberOfPtes != 0);
+    ASSERT(StartingPte >= MmSystemPtesStart[SystemPtePoolType]);
+    ASSERT(StartingPte <= MmSystemPtesEnd[SystemPtePoolType]);
 
-    if ((MmTrackPtes & 0x2) && (SystemPtePoolType == SystemPteSpace)) {
+    if ((MmTrackPtes & 0x2) && (SystemPtePoolType == SystemPteSpace))
+    {
 
         //
         // If the low bit is set, this range was never reserved and therefore
         // should not be validated during the release.
         //
 
-        if ((ULONG_PTR)StartingPte & 0x1) {
-            StartingPte = (PMMPTE) ((ULONG_PTR)StartingPte & ~0x1);
+        if ((ULONG_PTR)StartingPte & 0x1)
+        {
+            StartingPte = (PMMPTE)((ULONG_PTR)StartingPte & ~0x1);
         }
-        else {
-            MiCheckPteRelease (StartingPte, NumberOfPtes);
+        else
+        {
+            MiCheckPteRelease(StartingPte, NumberOfPtes);
         }
     }
 
@@ -1242,12 +1190,10 @@ Environment:
     // Zero PTEs.
     //
 
-    MiFillMemoryPte (StartingPte,
-                     NumberOfPtes * sizeof (MMPTE),
-                     ZeroKernelPte.u.Long);
+    MiFillMemoryPte(StartingPte, NumberOfPtes * sizeof(MMPTE), ZeroKernelPte.u.Long);
 
-    if ((SystemPtePoolType == SystemPteSpace) &&
-        (NumberOfPtes <= MM_PTE_TABLE_LIMIT)) {
+    if ((SystemPtePoolType == SystemPteSpace) && (NumberOfPtes <= MM_PTE_TABLE_LIMIT))
+    {
 
         //
         // Encode the PTE pointer and the TB flush counter into Value.
@@ -1255,11 +1201,11 @@ Environment:
 
         TimeStamp = KeReadTbFlushTimeStamp();
 
-        PackPTEValue (&Value, StartingPte, TimeStamp);
+        PackPTEValue(&Value, StartingPte, TimeStamp);
 
-        Index = MmSysPteTables [NumberOfPtes];
+        Index = MmSysPteTables[NumberOfPtes];
 
-        ASSERT (NumberOfPtes <= MmSysPteIndex [Index]);
+        ASSERT(NumberOfPtes <= MmSysPteIndex[Index]);
 
         //
         // N.B.  NumberOfPtes must be set here regardless so if this entry
@@ -1267,16 +1213,18 @@ Environment:
         // be right when we go the long way.
         //
 
-        NumberOfPtes = MmSysPteIndex [Index];
+        NumberOfPtes = MmSysPteIndex[Index];
 
-        if (MmTotalFreeSystemPtes[SystemPteSpace] >= MM_MIN_SYSPTE_FREE) {
+        if (MmTotalFreeSystemPtes[SystemPteSpace] >= MM_MIN_SYSPTE_FREE)
+        {
 
             //
             // Add to the pool if the size is less than 15 + the minimum.
             //
 
             i = MmSysPteMinimumFree[Index];
-            if (MmTotalFreeSystemPtes[SystemPteSpace] >= MM_MAX_SYSPTE_FREE) {
+            if (MmTotalFreeSystemPtes[SystemPteSpace] >= MM_MAX_SYSPTE_FREE)
+            {
 
                 //
                 // Lots of free PTEs, quadruple the limit.
@@ -1285,10 +1233,12 @@ Environment:
                 i = i * 4;
             }
             i += 15;
-            if (MmSysPteListBySizeCount[Index] <= i) {
+            if (MmSysPteListBySizeCount[Index] <= i)
+            {
 
-                if (ExInsertTailNBQueue (MiSystemPteNBHead[Index], Value.Data) == TRUE) {
-                    InterlockedIncrement ((PLONG)&MmSysPteListBySizeCount[Index]);
+                if (ExInsertTailNBQueue(MiSystemPteNBHead[Index], Value.Data) == TRUE)
+                {
+                    InterlockedIncrement((PLONG)&MmSysPteListBySizeCount[Index]);
                     return;
                 }
 
@@ -1299,23 +1249,23 @@ Environment:
                 // manner.
                 //
 
-                if (MiPteSListExpand.SListPages < MI_MAXIMUM_SLIST_PTE_PAGES) {
+                if (MiPteSListExpand.SListPages < MI_MAXIMUM_SLIST_PTE_PAGES)
+                {
 
                     //
                     // If an extension is not in progress then queue one now.
                     //
 
-                    ExtensionInProgress = InterlockedCompareExchange (&MiPteSListExpand.Active, 1, 0);
+                    ExtensionInProgress = InterlockedCompareExchange(&MiPteSListExpand.Active, 1, 0);
 
-                    if (ExtensionInProgress == 0) {
+                    if (ExtensionInProgress == 0)
+                    {
 
-                        ExInitializeWorkItem (&MiPteSListExpand.WorkItem,
-                                              MiPteSListExpansionWorker,
-                                              (PVOID)&MiPteSListExpand);
+                        ExInitializeWorkItem(&MiPteSListExpand.WorkItem, MiPteSListExpansionWorker,
+                                             (PVOID)&MiPteSListExpand);
 
-                        ExQueueWorkItem (&MiPteSListExpand.WorkItem, CriticalWorkQueue);
+                        ExQueueWorkItem(&MiPteSListExpand.WorkItem, CriticalWorkQueue);
                     }
-
                 }
             }
         }
@@ -1339,9 +1289,11 @@ Environment:
 
     PointerPte = &MmFirstFreeSystemPte[SystemPtePoolType];
 
-    while (TRUE) {
+    while (TRUE)
+    {
         NextPte = MmSystemPteBase + PointerPte->u.List.NextEntry;
-        if (PteOffset < PointerPte->u.List.NextEntry) {
+        if (PteOffset < PointerPte->u.List.NextEntry)
+        {
 
             //
             // Insert in the list at this point.  The
@@ -1355,17 +1307,19 @@ Environment:
             // Locate the end of the current structure.
             //
 
-            ASSERT (((StartingPte + NumberOfPtes) <= NextPte) ||
-                    (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST));
+            ASSERT(((StartingPte + NumberOfPtes) <= NextPte) || (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST));
 
             PointerFollowingPte = PointerPte + 1;
-            if (PointerPte->u.List.OneEntry) {
+            if (PointerPte->u.List.OneEntry)
+            {
                 Size = 1;
             }
-            else {
-                Size = (ULONG_PTR) PointerFollowingPte->u.List.NextEntry;
+            else
+            {
+                Size = (ULONG_PTR)PointerFollowingPte->u.List.NextEntry;
             }
-            if ((PointerPte + Size) == StartingPte) {
+            if ((PointerPte + Size) == StartingPte)
+            {
 
                 //
                 // We can combine the clusters.
@@ -1382,9 +1336,9 @@ Environment:
                 //
 
                 StartingPte = PointerPte;
-
             }
-            else {
+            else
+            {
 
                 //
                 // Can't combine with previous. Make this Pte the
@@ -1407,11 +1361,12 @@ Environment:
                 // Set the size of this cluster.
                 //
 
-                if (NumberOfPtes == 1) {
+                if (NumberOfPtes == 1)
+                {
                     StartingPte->u.List.OneEntry = 1;
-
                 }
-                else {
+                else
+                {
                     StartingPte->u.List.OneEntry = 0;
                     PointerFollowingPte = StartingPte + 1;
                     PointerFollowingPte->u.List.NextEntry = NumberOfPtes;
@@ -1423,7 +1378,8 @@ Environment:
             // the following cluster.
             //
 
-            if ((StartingPte + NumberOfPtes) == NextPte) {
+            if ((StartingPte + NumberOfPtes) == NextPte)
+            {
 
                 //
                 // Combine with following cluster.
@@ -1438,13 +1394,14 @@ Environment:
                 StartingPte->u.List.OneEntry = 0;
                 PointerFollowingPte = StartingPte + 1;
 
-                if (NextPte->u.List.OneEntry) {
+                if (NextPte->u.List.OneEntry)
+                {
                     Size = 1;
-
                 }
-                else {
+                else
+                {
                     NextPte++;
-                    Size = (ULONG_PTR) NextPte->u.List.NextEntry;
+                    Size = (ULONG_PTR)NextPte->u.List.NextEntry;
                 }
                 PointerFollowingPte->u.List.NextEntry = NumberOfPtes + Size;
             }
@@ -1455,9 +1412,9 @@ Environment:
 #endif
 
 #if DBG
-            if (MmDebug & MM_DBG_SYS_PTES) {
-                ASSERT (MmTotalFreeSystemPtes[SystemPtePoolType] ==
-                         MiCountFreeSystemPtes (SystemPtePoolType));
+            if (MmDebug & MM_DBG_SYS_PTES)
+            {
+                ASSERT(MmTotalFreeSystemPtes[SystemPtePoolType] == MiCountFreeSystemPtes(SystemPtePoolType));
             }
 #endif
             MiUnlockSystemSpace(OldIrql);
@@ -1471,13 +1428,8 @@ Environment:
         PointerPte = NextPte;
     }
 }
-
-VOID
-MiReleaseSplitSystemPtes (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    )
+
+VOID MiReleaseSplitSystemPtes(IN PMMPTE StartingPte, IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType)
 
 /*++
 
@@ -1518,24 +1470,25 @@ Environment:
     PULONG StartBitMapBuffer;
     PULONG EndBitMapBuffer;
     PVOID VirtualAddress;
-                
+
     //
     // Check to make sure the PTE address is within bounds.
     //
 
-    ASSERT (NumberOfPtes != 0);
-    ASSERT (StartingPte >= MmSystemPtesStart[SystemPtePoolType]);
-    ASSERT (StartingPte <= MmSystemPtesEnd[SystemPtePoolType]);
+    ASSERT(NumberOfPtes != 0);
+    ASSERT(StartingPte >= MmSystemPtesStart[SystemPtePoolType]);
+    ASSERT(StartingPte <= MmSystemPtesEnd[SystemPtePoolType]);
 
-    if ((MmTrackPtes & 0x2) && (SystemPtePoolType == SystemPteSpace)) {
+    if ((MmTrackPtes & 0x2) && (SystemPtePoolType == SystemPteSpace))
+    {
 
-        ASSERT (MmTrackPtes & 0x2);
+        ASSERT(MmTrackPtes & 0x2);
 
-        VirtualAddress = MiGetVirtualAddressMappedByPte (StartingPte);
+        VirtualAddress = MiGetVirtualAddressMappedByPte(StartingPte);
 
-        StartBit = (ULONG) (StartingPte - MiPteStart);
+        StartBit = (ULONG)(StartingPte - MiPteStart);
 
-        ExAcquireSpinLock (&MiPteTrackerLock, &OldIrql);
+        ExAcquireSpinLock(&MiPteTrackerLock, &OldIrql);
 
         //
         // Verify start and size of allocation using the tracking bitmaps.
@@ -1548,24 +1501,29 @@ Environment:
         // All the start bits better be set.
         //
 
-        for (i = StartBit; i < StartBit + NumberOfPtes; i += 1) {
-            ASSERT (MI_CHECK_BIT (StartBitMapBuffer, i) == 1);
+        for (i = StartBit; i < StartBit + NumberOfPtes; i += 1)
+        {
+            ASSERT(MI_CHECK_BIT(StartBitMapBuffer, i) == 1);
         }
 
-        if (StartBit != 0) {
+        if (StartBit != 0)
+        {
 
-            if (RtlCheckBit (MiPteStartBitmap, StartBit - 1)) {
+            if (RtlCheckBit(MiPteStartBitmap, StartBit - 1))
+            {
 
-                if (!RtlCheckBit (MiPteEndBitmap, StartBit - 1)) {
+                if (!RtlCheckBit(MiPteEndBitmap, StartBit - 1))
+                {
 
                     //
                     // In the middle of an allocation - update the previous
                     // so it ends here.
                     //
 
-                    MI_SET_BIT (EndBitMapBuffer, StartBit - 1);
+                    MI_SET_BIT(EndBitMapBuffer, StartBit - 1);
                 }
-                else {
+                else
+                {
 
                     //
                     // The range being freed is the start of an allocation.
@@ -1579,21 +1537,16 @@ Environment:
         // split chunk crosses multiple allocations.
         //
 
-        MI_SET_BIT (EndBitMapBuffer, StartBit + NumberOfPtes - 1);
+        MI_SET_BIT(EndBitMapBuffer, StartBit + NumberOfPtes - 1);
 
-        ExReleaseSpinLock (&MiPteTrackerLock, OldIrql);
+        ExReleaseSpinLock(&MiPteTrackerLock, OldIrql);
     }
 
-    MiReleaseSystemPtes (StartingPte, NumberOfPtes, SystemPteSpace);
+    MiReleaseSystemPtes(StartingPte, NumberOfPtes, SystemPteSpace);
 }
 
-
-VOID
-MiInitializeSystemPtes (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    )
+
+VOID MiInitializeSystemPtes(IN PMMPTE StartingPte, IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType)
 
 /*++
 
@@ -1645,10 +1598,10 @@ Environment:
     // that the list is empty.
     //
 
-    if (NumberOfPtes == 0) {
+    if (NumberOfPtes == 0)
+    {
         MmFirstFreeSystemPte[SystemPtePoolType] = ZeroKernelPte;
-        MmFirstFreeSystemPte[SystemPtePoolType].u.List.NextEntry =
-                                                                MM_EMPTY_LIST;
+        MmFirstFreeSystemPte[SystemPtePoolType].u.List.NextEntry = MM_EMPTY_LIST;
         return;
     }
 
@@ -1656,9 +1609,7 @@ Environment:
     // Initialize the specified system PTE pool.
     //
 
-    MiFillMemoryPte (StartingPte,
-                     NumberOfPtes * sizeof (MMPTE),
-                     ZeroKernelPte.u.Long);
+    MiFillMemoryPte(StartingPte, NumberOfPtes * sizeof(MMPTE), ZeroKernelPte.u.Long);
 
     //
     // The page frame field points to the next cluster.  As we only
@@ -1669,21 +1620,21 @@ Environment:
     StartingPte->u.List.NextEntry = MM_EMPTY_LIST;
 
     MmFirstFreeSystemPte[SystemPtePoolType] = ZeroKernelPte;
-    MmFirstFreeSystemPte[SystemPtePoolType].u.List.NextEntry =
-                                                StartingPte - MmSystemPteBase;
+    MmFirstFreeSystemPte[SystemPtePoolType].u.List.NextEntry = StartingPte - MmSystemPteBase;
 
     //
     // If there is only one PTE in the pool, then mark it as a one entry
     // PTE. Otherwise, store the cluster size in the following PTE.
     //
 
-    if (NumberOfPtes == 1) {
+    if (NumberOfPtes == 1)
+    {
         StartingPte->u.List.OneEntry = TRUE;
-
     }
-    else {
+    else
+    {
         StartingPte += 1;
-        MI_WRITE_INVALID_PTE (StartingPte, ZeroKernelPte);
+        MI_WRITE_INVALID_PTE(StartingPte, ZeroKernelPte);
         StartingPte->u.List.NextEntry = NumberOfPtes;
     }
 
@@ -1693,32 +1644,18 @@ Environment:
 
     MmTotalFreeSystemPtes[SystemPtePoolType] = NumberOfPtes;
 
-    ASSERT (MmTotalFreeSystemPtes[SystemPtePoolType] ==
-                         MiCountFreeSystemPtes (SystemPtePoolType));
+    ASSERT(MmTotalFreeSystemPtes[SystemPtePoolType] == MiCountFreeSystemPtes(SystemPtePoolType));
 
-    if (SystemPtePoolType == SystemPteSpace) {
+    if (SystemPtePoolType == SystemPteSpace)
+    {
 
         ULONG Lists[MM_SYS_PTE_TABLES_MAX] = {
 #if defined(_IA64_)
-                MM_PTE_LIST_1,
-                MM_PTE_LIST_2,
-                MM_PTE_LIST_4,
-                MM_PTE_LIST_8,
-                MM_PTE_LIST_9,
-                MM_PTE_LIST_18
+            MM_PTE_LIST_1, MM_PTE_LIST_2, MM_PTE_LIST_4, MM_PTE_LIST_8, MM_PTE_LIST_9, MM_PTE_LIST_18
 #elif defined(_AMD64_)
-                MM_PTE_LIST_1,
-                MM_PTE_LIST_2,
-                MM_PTE_LIST_4,
-                MM_PTE_LIST_6,
-                MM_PTE_LIST_8,
-                MM_PTE_LIST_16
+            MM_PTE_LIST_1, MM_PTE_LIST_2, MM_PTE_LIST_4, MM_PTE_LIST_6, MM_PTE_LIST_8, MM_PTE_LIST_16
 #else
-                MM_PTE_LIST_1,
-                MM_PTE_LIST_2,
-                MM_PTE_LIST_4,
-                MM_PTE_LIST_8,
-                MM_PTE_LIST_16
+            MM_PTE_LIST_1, MM_PTE_LIST_2, MM_PTE_LIST_4, MM_PTE_LIST_8, MM_PTE_LIST_16
 #endif
         };
 
@@ -1727,41 +1664,41 @@ Environment:
         TotalPtes = 0;
         TotalChunks = 0;
 
-        KeInitializeSpinLock (&MiSystemPteSListHeadLock);
-        InitializeSListHead (&MiSystemPteSListHead);
+        KeInitializeSpinLock(&MiSystemPteSListHeadLock);
+        InitializeSListHead(&MiSystemPteSListHead);
 
-        for (i = 0; i < MM_SYS_PTE_TABLES_MAX ; i += 1) {
+        for (i = 0; i < MM_SYS_PTE_TABLES_MAX; i += 1)
+        {
             TotalPtes += (Lists[i] * MmSysPteIndex[i]);
             TotalChunks += Lists[i];
         }
 
-        SListBytes = TotalChunks * sizeof (PTE_SLIST);
-        SListBytes = MI_ROUND_TO_SIZE (SListBytes, PAGE_SIZE);
-        SListEntries = (ULONG)(SListBytes / sizeof (PTE_SLIST));
+        SListBytes = TotalChunks * sizeof(PTE_SLIST);
+        SListBytes = MI_ROUND_TO_SIZE(SListBytes, PAGE_SIZE);
+        SListEntries = (ULONG)(SListBytes / sizeof(PTE_SLIST));
 
-        SListChunks = (PPTE_SLIST) ExAllocatePoolWithTag (NonPagedPool,
-                                                          SListBytes,
-                                                          'PSmM');
+        SListChunks = (PPTE_SLIST)ExAllocatePoolWithTag(NonPagedPool, SListBytes, 'PSmM');
 
-        if (SListChunks == NULL) {
-            MiIssueNoPtesBugcheck (TotalPtes, SystemPteSpace);
+        if (SListChunks == NULL)
+        {
+            MiIssueNoPtesBugcheck(TotalPtes, SystemPteSpace);
         }
 
-        ASSERT (MiPteSListExpand.Active == FALSE);
-        ASSERT (MiPteSListExpand.SListPages == 0);
+        ASSERT(MiPteSListExpand.Active == FALSE);
+        ASSERT(MiPteSListExpand.SListPages == 0);
 
         MiPteSListExpand.SListPages = (ULONG)(SListBytes / PAGE_SIZE);
 
-        ASSERT (MiPteSListExpand.SListPages != 0);
+        ASSERT(MiPteSListExpand.SListPages != 0);
 
         //
         // Carve up the pages into SLIST entries (with no pool headers).
         //
 
         Chunk = SListChunks;
-        for (i = 0; i < SListEntries; i += 1) {
-            InterlockedPushEntrySList (&MiSystemPteSListHead,
-                                       (PSINGLE_LIST_ENTRY)Chunk);
+        for (i = 0; i < SListEntries; i += 1)
+        {
+            InterlockedPushEntrySList(&MiSystemPteSListHead, (PSINGLE_LIST_ENTRY)Chunk);
             Chunk += 1;
         }
 
@@ -1769,15 +1706,18 @@ Environment:
         // Now that the SLIST is populated, initialize the nonblocking heads.
         //
 
-        for (i = 0; i < MM_SYS_PTE_TABLES_MAX ; i += 1) {
-            MiSystemPteNBHead[i] = ExInitializeNBQueueHead (&MiSystemPteSListHead);
+        for (i = 0; i < MM_SYS_PTE_TABLES_MAX; i += 1)
+        {
+            MiSystemPteNBHead[i] = ExInitializeNBQueueHead(&MiSystemPteSListHead);
 
-            if (MiSystemPteNBHead[i] == NULL) {
-                MiIssueNoPtesBugcheck (TotalPtes, SystemPteSpace);
+            if (MiSystemPteNBHead[i] == NULL)
+            {
+                MiIssueNoPtesBugcheck(TotalPtes, SystemPteSpace);
             }
         }
 
-        if (MmTrackPtes & 0x2) {
+        if (MmTrackPtes & 0x2)
+        {
 
             //
             // Allocate PTE mapping verification bitmaps.
@@ -1789,26 +1729,29 @@ Environment:
             BitmapSize = MmNumberOfSystemPtes;
             MiPteStart = MmSystemPtesStart[SystemPteSpace];
 #else
-	    MiPteStart = MiGetPteAddress (MmSystemRangeStart);
-            BitmapSize = ((ULONG_PTR)PTE_TOP + 1) - (ULONG_PTR) MiPteStart;
-            BitmapSize /= sizeof (MMPTE);
+            MiPteStart = MiGetPteAddress(MmSystemRangeStart);
+            BitmapSize = ((ULONG_PTR)PTE_TOP + 1) - (ULONG_PTR)MiPteStart;
+            BitmapSize /= sizeof(MMPTE);
 #endif
 
-            MiCreateBitMap (&MiPteStartBitmap, BitmapSize, NonPagedPool);
+            MiCreateBitMap(&MiPteStartBitmap, BitmapSize, NonPagedPool);
 
-            if (MiPteStartBitmap != NULL) {
+            if (MiPteStartBitmap != NULL)
+            {
 
-                MiCreateBitMap (&MiPteEndBitmap, BitmapSize, NonPagedPool);
+                MiCreateBitMap(&MiPteEndBitmap, BitmapSize, NonPagedPool);
 
-                if (MiPteEndBitmap == NULL) {
-                    ExFreePool (MiPteStartBitmap);
+                if (MiPteEndBitmap == NULL)
+                {
+                    ExFreePool(MiPteStartBitmap);
                     MiPteStartBitmap = NULL;
                 }
             }
 
-            if ((MiPteStartBitmap != NULL) && (MiPteEndBitmap != NULL)) {
-                RtlClearAllBits (MiPteStartBitmap);
-                RtlClearAllBits (MiPteEndBitmap);
+            if ((MiPteStartBitmap != NULL) && (MiPteEndBitmap != NULL))
+            {
+                RtlClearAllBits(MiPteStartBitmap);
+                RtlClearAllBits(MiPteEndBitmap);
             }
             MmTrackPtes &= ~0x2;
         }
@@ -1817,20 +1760,21 @@ Environment:
         // Initialize the by size lists.
         //
 
-        PointerPte = MiReserveSystemPtes (TotalPtes, SystemPteSpace);
+        PointerPte = MiReserveSystemPtes(TotalPtes, SystemPteSpace);
 
-        if (PointerPte == NULL) {
-            MiIssueNoPtesBugcheck (TotalPtes, SystemPteSpace);
+        if (PointerPte == NULL)
+        {
+            MiIssueNoPtesBugcheck(TotalPtes, SystemPteSpace);
         }
 
         i = MM_SYS_PTE_TABLES_MAX;
-        do {
+        do
+        {
             i -= 1;
-            do {
+            do
+            {
                 Lists[i] -= 1;
-                MiReleaseSystemPtes (PointerPte,
-                                     MmSysPteIndex[i],
-                                     SystemPteSpace);
+                MiReleaseSystemPtes(PointerPte, MmSysPteIndex[i], SystemPteSpace);
                 PointerPte += MmSysPteIndex[i];
             } while (Lists[i] != 0);
         } while (i != 0);
@@ -1840,7 +1784,8 @@ Environment:
         // came from a single reservation) above.
         //
 
-        if (MiPteStartBitmap != NULL) {
+        if (MiPteStartBitmap != NULL)
+        {
             MmTrackPtes |= 0x2;
         }
     }
@@ -1848,10 +1793,7 @@ Environment:
     return;
 }
 
-VOID
-MiIncrementSystemPtes (
-    IN ULONG  NumberOfPtes
-    )
+VOID MiIncrementSystemPtes(IN ULONG NumberOfPtes)
 
 /*++
 
@@ -1879,12 +1821,7 @@ Environment:
 {
     MmTotalSystemPtes += NumberOfPtes;
 }
-VOID
-MiAddSystemPtes (
-    IN PMMPTE StartingPte,
-    IN ULONG  NumberOfPtes,
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    )
+VOID MiAddSystemPtes(IN PMMPTE StartingPte, IN ULONG NumberOfPtes, IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType)
 
 /*++
 
@@ -1914,15 +1851,17 @@ Environment:
 {
     PMMPTE EndingPte;
 
-    ASSERT (SystemPtePoolType == SystemPteSpace);
+    ASSERT(SystemPtePoolType == SystemPteSpace);
 
     EndingPte = StartingPte + NumberOfPtes - 1;
 
-    if (StartingPte < MmSystemPtesStart[SystemPtePoolType]) {
+    if (StartingPte < MmSystemPtesStart[SystemPtePoolType])
+    {
         MmSystemPtesStart[SystemPtePoolType] = StartingPte;
     }
 
-    if (EndingPte > MmSystemPtesEnd[SystemPtePoolType]) {
+    if (EndingPte > MmSystemPtesEnd[SystemPtePoolType])
+    {
         MmSystemPtesEnd[SystemPtePoolType] = EndingPte;
     }
 
@@ -1931,18 +1870,17 @@ Environment:
     // should not be validated during the release.
     //
 
-    if (MmTrackPtes & 0x2) {
-        StartingPte = (PMMPTE) ((ULONG_PTR)StartingPte | 0x1);
+    if (MmTrackPtes & 0x2)
+    {
+        StartingPte = (PMMPTE)((ULONG_PTR)StartingPte | 0x1);
     }
 
-    MiReleaseSystemPtes (StartingPte, NumberOfPtes, SystemPtePoolType);
+    MiReleaseSystemPtes(StartingPte, NumberOfPtes, SystemPtePoolType);
 }
 
-
+
 ULONG
-MiGetSystemPteListCount (
-    IN ULONG ListSize
-    )
+MiGetSystemPteListCount(IN ULONG ListSize)
 
 /*++
 
@@ -1969,19 +1907,16 @@ Environment:
 {
     ULONG Index;
 
-    ASSERT (ListSize <= MM_PTE_TABLE_LIMIT);
+    ASSERT(ListSize <= MM_PTE_TABLE_LIMIT);
 
-    Index = MmSysPteTables [ListSize];
+    Index = MmSysPteTables[ListSize];
 
     return MmSysPteListBySizeCount[Index];
 }
 
-
+
 LOGICAL
-MiGetSystemPteAvailability (
-    IN ULONG NumberOfPtes,
-    IN MM_PAGE_PRIORITY Priority
-    )
+MiGetSystemPteAvailability(IN ULONG NumberOfPtes, IN MM_PAGE_PRIORITY Priority)
 
 /*++
 
@@ -2013,41 +1948,51 @@ Environment:
     ULONG FreePtes;
     ULONG FreeBinnedPtes;
 
-    ASSERT (Priority != HighPagePriority);
+    ASSERT(Priority != HighPagePriority);
 
     FreePtes = MmTotalFreeSystemPtes[SystemPteSpace];
 
-    if (NumberOfPtes <= MM_PTE_TABLE_LIMIT) {
-        Index = MmSysPteTables [NumberOfPtes];
+    if (NumberOfPtes <= MM_PTE_TABLE_LIMIT)
+    {
+        Index = MmSysPteTables[NumberOfPtes];
         FreeBinnedPtes = MmSysPteListBySizeCount[Index];
 
-        if (FreeBinnedPtes > MmSysPteMinimumFree[Index]) {
+        if (FreeBinnedPtes > MmSysPteMinimumFree[Index])
+        {
             return TRUE;
         }
-        if (FreeBinnedPtes != 0) {
-            if (Priority == NormalPagePriority) {
-                if (FreeBinnedPtes > 1 || FreePtes > 512) {
+        if (FreeBinnedPtes != 0)
+        {
+            if (Priority == NormalPagePriority)
+            {
+                if (FreeBinnedPtes > 1 || FreePtes > 512)
+                {
                     return TRUE;
                 }
-#if defined (_X86_)
-                if (MiRecoverExtraPtes () == TRUE) {
+#if defined(_X86_)
+                if (MiRecoverExtraPtes() == TRUE)
+                {
                     return TRUE;
                 }
-                if (MiRecoverSpecialPtes (NumberOfPtes) == TRUE) {
+                if (MiRecoverSpecialPtes(NumberOfPtes) == TRUE)
+                {
                     return TRUE;
                 }
 #endif
                 MmPteFailures[SystemPteSpace] += 1;
                 return FALSE;
             }
-            if (FreePtes > 2048) {
+            if (FreePtes > 2048)
+            {
                 return TRUE;
             }
-#if defined (_X86_)
-            if (MiRecoverExtraPtes () == TRUE) {
+#if defined(_X86_)
+            if (MiRecoverExtraPtes() == TRUE)
+            {
                 return TRUE;
             }
-            if (MiRecoverSpecialPtes (NumberOfPtes) == TRUE) {
+            if (MiRecoverSpecialPtes(NumberOfPtes) == TRUE)
+            {
                 return TRUE;
             }
 #endif
@@ -2056,15 +2001,19 @@ Environment:
         }
     }
 
-    if (Priority == NormalPagePriority) {
-        if ((LONG)NumberOfPtes < (LONG)FreePtes - 512) {
+    if (Priority == NormalPagePriority)
+    {
+        if ((LONG)NumberOfPtes < (LONG)FreePtes - 512)
+        {
             return TRUE;
         }
-#if defined (_X86_)
-        if (MiRecoverExtraPtes () == TRUE) {
+#if defined(_X86_)
+        if (MiRecoverExtraPtes() == TRUE)
+        {
             return TRUE;
         }
-        if (MiRecoverSpecialPtes (NumberOfPtes) == TRUE) {
+        if (MiRecoverSpecialPtes(NumberOfPtes) == TRUE)
+        {
             return TRUE;
         }
 #endif
@@ -2072,14 +2021,17 @@ Environment:
         return FALSE;
     }
 
-    if ((LONG)NumberOfPtes < (LONG)FreePtes - 2048) {
+    if ((LONG)NumberOfPtes < (LONG)FreePtes - 2048)
+    {
         return TRUE;
     }
-#if defined (_X86_)
-    if (MiRecoverExtraPtes () == TRUE) {
+#if defined(_X86_)
+    if (MiRecoverExtraPtes() == TRUE)
+    {
         return TRUE;
     }
-    if (MiRecoverSpecialPtes (NumberOfPtes) == TRUE) {
+    if (MiRecoverSpecialPtes(NumberOfPtes) == TRUE)
+    {
         return TRUE;
     }
 #endif
@@ -2087,11 +2039,7 @@ Environment:
     return FALSE;
 }
 
-VOID
-MiCheckPteReserve (
-    IN PMMPTE PointerPte,
-    IN ULONG NumberOfPtes
-    )
+VOID MiCheckPteReserve(IN PMMPTE PointerPte, IN ULONG NumberOfPtes)
 
 /*++
 
@@ -2123,20 +2071,17 @@ Environment:
     PULONG StartBitMapBuffer;
     PULONG EndBitMapBuffer;
     PVOID VirtualAddress;
-        
-    ASSERT (MmTrackPtes & 0x2);
 
-    VirtualAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+    ASSERT(MmTrackPtes & 0x2);
 
-    if (NumberOfPtes == 0) {
-        KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                      0x200,
-                      (ULONG_PTR) VirtualAddress,
-                      0,
-                      0);
+    VirtualAddress = MiGetVirtualAddressMappedByPte(PointerPte);
+
+    if (NumberOfPtes == 0)
+    {
+        KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x200, (ULONG_PTR)VirtualAddress, 0, 0);
     }
 
-    StartBit = (ULONG) (PointerPte - MiPteStart);
+    StartBit = (ULONG)(PointerPte - MiPteStart);
 
     i = StartBit;
 
@@ -2144,40 +2089,34 @@ Environment:
 
     EndBitMapBuffer = MiPteEndBitmap->Buffer;
 
-    ExAcquireSpinLock (&MiPteTrackerLock, &OldIrql);
+    ExAcquireSpinLock(&MiPteTrackerLock, &OldIrql);
 
-    for ( ; i < StartBit + NumberOfPtes; i += 1) {
-        if (MI_CHECK_BIT (StartBitMapBuffer, i)) {
-            KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                          0x201,
-                          (ULONG_PTR) VirtualAddress,
-                          (ULONG_PTR) VirtualAddress + ((i - StartBit) << PAGE_SHIFT),
-                          NumberOfPtes);
+    for (; i < StartBit + NumberOfPtes; i += 1)
+    {
+        if (MI_CHECK_BIT(StartBitMapBuffer, i))
+        {
+            KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x201, (ULONG_PTR)VirtualAddress,
+                         (ULONG_PTR)VirtualAddress + ((i - StartBit) << PAGE_SHIFT), NumberOfPtes);
         }
     }
 
-    RtlSetBits (MiPteStartBitmap, StartBit, NumberOfPtes);
+    RtlSetBits(MiPteStartBitmap, StartBit, NumberOfPtes);
 
-    for (i = StartBit; i < StartBit + NumberOfPtes; i += 1) {
-        if (MI_CHECK_BIT (EndBitMapBuffer, i)) {
-            KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                          0x202,
-                          (ULONG_PTR) VirtualAddress,
-                          (ULONG_PTR) VirtualAddress + ((i - StartBit) << PAGE_SHIFT),
-                          NumberOfPtes);
+    for (i = StartBit; i < StartBit + NumberOfPtes; i += 1)
+    {
+        if (MI_CHECK_BIT(EndBitMapBuffer, i))
+        {
+            KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x202, (ULONG_PTR)VirtualAddress,
+                         (ULONG_PTR)VirtualAddress + ((i - StartBit) << PAGE_SHIFT), NumberOfPtes);
         }
     }
 
-    MI_SET_BIT (EndBitMapBuffer, i - 1);
+    MI_SET_BIT(EndBitMapBuffer, i - 1);
 
-    ExReleaseSpinLock (&MiPteTrackerLock, OldIrql);
+    ExReleaseSpinLock(&MiPteTrackerLock, OldIrql);
 }
 
-VOID
-MiCheckPteRelease (
-    IN PMMPTE StartingPte,
-    IN ULONG NumberOfPtes
-    )
+VOID MiCheckPteRelease(IN PMMPTE StartingPte, IN ULONG NumberOfPtes)
 
 /*++
 
@@ -2214,70 +2153,60 @@ Environment:
     PVOID VirtualAddress;
     PVOID LowestVirtualAddress;
     PVOID HighestVirtualAddress;
-            
-    ASSERT (MmTrackPtes & 0x2);
 
-    VirtualAddress = MiGetVirtualAddressMappedByPte (StartingPte);
+    ASSERT(MmTrackPtes & 0x2);
 
-    LowestVirtualAddress = MiGetVirtualAddressMappedByPte (MmSystemPtesStart[SystemPteSpace]);
+    VirtualAddress = MiGetVirtualAddressMappedByPte(StartingPte);
 
-    HighestVirtualAddress = MiGetVirtualAddressMappedByPte (MmSystemPtesEnd[SystemPteSpace]);
+    LowestVirtualAddress = MiGetVirtualAddressMappedByPte(MmSystemPtesStart[SystemPteSpace]);
 
-    if (NumberOfPtes == 0) {
-        KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                      0x300,
-                      (ULONG_PTR) VirtualAddress,
-                      (ULONG_PTR) LowestVirtualAddress,
-                      (ULONG_PTR) HighestVirtualAddress);
+    HighestVirtualAddress = MiGetVirtualAddressMappedByPte(MmSystemPtesEnd[SystemPteSpace]);
+
+    if (NumberOfPtes == 0)
+    {
+        KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x300, (ULONG_PTR)VirtualAddress, (ULONG_PTR)LowestVirtualAddress,
+                     (ULONG_PTR)HighestVirtualAddress);
     }
 
-    if (StartingPte < MmSystemPtesStart[SystemPteSpace]) {
-        KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                      0x301,
-                      (ULONG_PTR) VirtualAddress,
-                      (ULONG_PTR) LowestVirtualAddress,
-                      (ULONG_PTR) HighestVirtualAddress);
+    if (StartingPte < MmSystemPtesStart[SystemPteSpace])
+    {
+        KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x301, (ULONG_PTR)VirtualAddress, (ULONG_PTR)LowestVirtualAddress,
+                     (ULONG_PTR)HighestVirtualAddress);
     }
 
-    if (StartingPte > MmSystemPtesEnd[SystemPteSpace]) {
-        KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                      0x302,
-                      (ULONG_PTR) VirtualAddress,
-                      (ULONG_PTR) LowestVirtualAddress,
-                      (ULONG_PTR) HighestVirtualAddress);
+    if (StartingPte > MmSystemPtesEnd[SystemPteSpace])
+    {
+        KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x302, (ULONG_PTR)VirtualAddress, (ULONG_PTR)LowestVirtualAddress,
+                     (ULONG_PTR)HighestVirtualAddress);
     }
 
-    StartBit = (ULONG) (StartingPte - MiPteStart);
+    StartBit = (ULONG)(StartingPte - MiPteStart);
 
-    ExAcquireSpinLock (&MiPteTrackerLock, &OldIrql);
+    ExAcquireSpinLock(&MiPteTrackerLock, &OldIrql);
 
     //
     // Verify start and size of allocation using the tracking bitmaps.
     //
 
-    if (!RtlCheckBit (MiPteStartBitmap, StartBit)) {
-        KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                      0x303,
-                      (ULONG_PTR) VirtualAddress,
-                      NumberOfPtes,
-                      0);
+    if (!RtlCheckBit(MiPteStartBitmap, StartBit))
+    {
+        KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x303, (ULONG_PTR)VirtualAddress, NumberOfPtes, 0);
     }
 
-    if (StartBit != 0) {
+    if (StartBit != 0)
+    {
 
-        if (RtlCheckBit (MiPteStartBitmap, StartBit - 1)) {
+        if (RtlCheckBit(MiPteStartBitmap, StartBit - 1))
+        {
 
-            if (!RtlCheckBit (MiPteEndBitmap, StartBit - 1)) {
+            if (!RtlCheckBit(MiPteEndBitmap, StartBit - 1))
+            {
 
                 //
                 // In the middle of an allocation... bugcheck.
                 //
 
-                KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                              0x304,
-                              (ULONG_PTR) VirtualAddress,
-                              NumberOfPtes,
-                              0);
+                KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x304, (ULONG_PTR)VirtualAddress, NumberOfPtes, 0);
             }
         }
     }
@@ -2289,53 +2218,47 @@ Environment:
     EndBitMapBuffer = MiPteEndBitmap->Buffer;
 
     i = StartBit;
-    while (!MI_CHECK_BIT (EndBitMapBuffer, i)) {
+    while (!MI_CHECK_BIT(EndBitMapBuffer, i))
+    {
         i += 1;
     }
 
     CalculatedPtes = i - StartBit + 1;
     NumberOfPtesRoundedUp = NumberOfPtes;
 
-    if (CalculatedPtes <= MM_PTE_TABLE_LIMIT) {
-        Index = MmSysPteTables [NumberOfPtes];
-        NumberOfPtesRoundedUp = MmSysPteIndex [Index];
+    if (CalculatedPtes <= MM_PTE_TABLE_LIMIT)
+    {
+        Index = MmSysPteTables[NumberOfPtes];
+        NumberOfPtesRoundedUp = MmSysPteIndex[Index];
     }
 
-    if (CalculatedPtes != NumberOfPtesRoundedUp) {
-        KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                      0x305,
-                      (ULONG_PTR) VirtualAddress,
-                      NumberOfPtes,
-                      CalculatedPtes);
+    if (CalculatedPtes != NumberOfPtesRoundedUp)
+    {
+        KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x305, (ULONG_PTR)VirtualAddress, NumberOfPtes, CalculatedPtes);
     }
 
     StartBitMapBuffer = MiPteStartBitmap->Buffer;
 
-    for (i = StartBit; i < StartBit + CalculatedPtes; i += 1) {
-        if (MI_CHECK_BIT (StartBitMapBuffer, i) == 0) {
-            KeBugCheckEx (SYSTEM_PTE_MISUSE,
-                          0x306,
-                          (ULONG_PTR) VirtualAddress,
-                          (ULONG_PTR) VirtualAddress + ((i - StartBit) << PAGE_SHIFT),
-                          CalculatedPtes);
+    for (i = StartBit; i < StartBit + CalculatedPtes; i += 1)
+    {
+        if (MI_CHECK_BIT(StartBitMapBuffer, i) == 0)
+        {
+            KeBugCheckEx(SYSTEM_PTE_MISUSE, 0x306, (ULONG_PTR)VirtualAddress,
+                         (ULONG_PTR)VirtualAddress + ((i - StartBit) << PAGE_SHIFT), CalculatedPtes);
         }
     }
 
-    RtlClearBits (MiPteStartBitmap, StartBit, CalculatedPtes);
+    RtlClearBits(MiPteStartBitmap, StartBit, CalculatedPtes);
 
-    MI_CLEAR_BIT (EndBitMapBuffer, i - 1);
+    MI_CLEAR_BIT(EndBitMapBuffer, i - 1);
 
-    ExReleaseSpinLock (&MiPteTrackerLock, OldIrql);
+    ExReleaseSpinLock(&MiPteTrackerLock, OldIrql);
 }
 
 
-
 #if DBG
 
-VOID
-MiDumpSystemPtes (
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    )
+VOID MiDumpSystemPtes(IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType)
 {
     PMMPTE PointerPte;
     PMMPTE PointerNextPte;
@@ -2343,27 +2266,31 @@ MiDumpSystemPtes (
     PMMPTE EndOfCluster;
 
     PointerPte = &MmFirstFreeSystemPte[SystemPtePoolType];
-    if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST) {
+    if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST)
+    {
         return;
     }
 
     PointerPte = MmSystemPteBase + PointerPte->u.List.NextEntry;
 
-    for (;;) {
-        if (PointerPte->u.List.OneEntry) {
+    for (;;)
+    {
+        if (PointerPte->u.List.OneEntry)
+        {
             ClusterSize = 1;
         }
-        else {
+        else
+        {
             PointerNextPte = PointerPte + 1;
-            ClusterSize = (ULONG_PTR) PointerNextPte->u.List.NextEntry;
+            ClusterSize = (ULONG_PTR)PointerNextPte->u.List.NextEntry;
         }
 
         EndOfCluster = PointerPte + (ClusterSize - 1);
 
-        DbgPrint("System Pte at %p for %p entries (%p)\n",
-                PointerPte, ClusterSize, EndOfCluster);
+        DbgPrint("System Pte at %p for %p entries (%p)\n", PointerPte, ClusterSize, EndOfCluster);
 
-        if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST) {
+        if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST)
+        {
             break;
         }
 
@@ -2373,9 +2300,7 @@ MiDumpSystemPtes (
 }
 
 ULONG
-MiCountFreeSystemPtes (
-    IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType
-    )
+MiCountFreeSystemPtes(IN MMSYSTEM_PTE_POOL_TYPE SystemPtePoolType)
 {
     PMMPTE PointerPte;
     PMMPTE PointerNextPte;
@@ -2383,7 +2308,8 @@ MiCountFreeSystemPtes (
     ULONG_PTR FreeCount;
 
     PointerPte = &MmFirstFreeSystemPte[SystemPtePoolType];
-    if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST) {
+    if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST)
+    {
         return 0;
     }
 
@@ -2391,18 +2317,21 @@ MiCountFreeSystemPtes (
 
     PointerPte = MmSystemPteBase + PointerPte->u.List.NextEntry;
 
-    for (;;) {
-        if (PointerPte->u.List.OneEntry) {
+    for (;;)
+    {
+        if (PointerPte->u.List.OneEntry)
+        {
             ClusterSize = 1;
-
         }
-        else {
+        else
+        {
             PointerNextPte = PointerPte + 1;
-            ClusterSize = (ULONG_PTR) PointerNextPte->u.List.NextEntry;
+            ClusterSize = (ULONG_PTR)PointerNextPte->u.List.NextEntry;
         }
 
         FreeCount += ClusterSize;
-        if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST) {
+        if (PointerPte->u.List.NextEntry == MM_EMPTY_PTE_LIST)
+        {
             break;
         }
 

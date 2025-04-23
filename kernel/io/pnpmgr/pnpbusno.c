@@ -27,44 +27,27 @@ Revision History:
 //
 
 
-#define MAX_ULONGLONG           ((ULONGLONG) -1)
+#define MAX_ULONGLONG ((ULONGLONG) - 1)
 
 //
 // Prototypes
 //
 
 NTSTATUS
-IopBusNumberInitialize(
-    VOID
-    );
+IopBusNumberInitialize(VOID);
 
 NTSTATUS
-IopBusNumberUnpackRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Minimum,
-    OUT PULONGLONG Maximum,
-    OUT PULONG Length,
-    OUT PULONG Alignment
-    );
+IopBusNumberUnpackRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Minimum, OUT PULONGLONG Maximum,
+                              OUT PULONG Length, OUT PULONG Alignment);
 
 NTSTATUS
-IopBusNumberPackResource(
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    IN ULONGLONG Start,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor
-    );
+IopBusNumberPackResource(IN PIO_RESOURCE_DESCRIPTOR Requirement, IN ULONGLONG Start,
+                         OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor);
 
-LONG
-IopBusNumberScoreRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor
-    );
+LONG IopBusNumberScoreRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor);
 
 NTSTATUS
-IopBusNumberUnpackResource(
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Start,
-    OUT PULONG Length
-    );
+IopBusNumberUnpackResource(IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Start, OUT PULONG Length);
 
 
 //
@@ -86,9 +69,7 @@ IopBusNumberUnpackResource(
 //
 
 NTSTATUS
-IopBusNumberInitialize(
-    VOID
-    )
+IopBusNumberInitialize(VOID)
 
 /*++
 
@@ -107,7 +88,7 @@ Return Value:
 --*/
 
 {
-    NTSTATUS    status;
+    NTSTATUS status;
 
     IopRootBusNumberArbiter.UnpackRequirement = IopBusNumberUnpackRequirement;
     IopRootBusNumberArbiter.PackResource = IopBusNumberPackResource;
@@ -115,26 +96,20 @@ Return Value:
     IopRootBusNumberArbiter.ScoreRequirement = IopBusNumberScoreRequirement;
 
     status = ArbInitializeArbiterInstance(&IopRootBusNumberArbiter,
-                                          NULL,  // Indicates a root arbiter
-                                          CmResourceTypeBusNumber,
-                                          L"RootBusNumber",
-                                          L"Root",
-                                          NULL    // no translation of BusNumber
-                                          );
-    if (NT_SUCCESS(status)) {
+                                          NULL, // Indicates a root arbiter
+                                          CmResourceTypeBusNumber, L"RootBusNumber", L"Root",
+                                          NULL // no translation of BusNumber
+    );
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Add the invalid range 100 - ffffffff ffffffff
         //
-        RtlAddRange( IopRootBusNumberArbiter.Allocation,
-                     (ULONGLONG) 0x100,
-                     (ULONGLONG) -1,
-                     0, // UserFlags
-                     0, // Flag
-                     NULL,
-                     NULL
-                   );
-
+        RtlAddRange(IopRootBusNumberArbiter.Allocation, (ULONGLONG)0x100, (ULONGLONG)-1,
+                    0, // UserFlags
+                    0, // Flag
+                    NULL, NULL);
     }
 
     return status;
@@ -145,13 +120,8 @@ Return Value:
 //
 
 NTSTATUS
-IopBusNumberUnpackRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Minimum,
-    OUT PULONGLONG Maximum,
-    OUT PULONG Length,
-    OUT PULONG Alignment
-    )
+IopBusNumberUnpackRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Minimum, OUT PULONGLONG Maximum,
+                              OUT PULONG Length, OUT PULONG Alignment)
 
 /*++
 
@@ -183,26 +153,18 @@ Return Value:
     ASSERT(Descriptor);
     ASSERT(Descriptor->Type == CmResourceTypeBusNumber);
 
-    ARB_PRINT(2,
-                ("Unpacking BusNumber requirement %p => 0x%I64x-0x%I64x\n",
-                Descriptor,
-                (ULONGLONG) Descriptor->u.BusNumber.MinBusNumber,
-                (ULONGLONG) Descriptor->u.BusNumber.MaxBusNumber
-                ));
+    ARB_PRINT(2, ("Unpacking BusNumber requirement %p => 0x%I64x-0x%I64x\n", Descriptor,
+                  (ULONGLONG)Descriptor->u.BusNumber.MinBusNumber, (ULONGLONG)Descriptor->u.BusNumber.MaxBusNumber));
 
-    *Minimum = (ULONGLONG) Descriptor->u.BusNumber.MinBusNumber;
-    *Maximum = (ULONGLONG) Descriptor->u.BusNumber.MaxBusNumber;
+    *Minimum = (ULONGLONG)Descriptor->u.BusNumber.MinBusNumber;
+    *Maximum = (ULONGLONG)Descriptor->u.BusNumber.MaxBusNumber;
     *Length = Descriptor->u.BusNumber.Length;
     *Alignment = 1;
 
     return STATUS_SUCCESS;
-
 }
 
-LONG
-IopBusNumberScoreRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor
-    )
+LONG IopBusNumberScoreRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor)
 
 /*++
 
@@ -229,25 +191,17 @@ Return Value:
     ASSERT(Descriptor);
     ASSERT(Descriptor->Type == CmResourceTypeBusNumber);
 
-    score = (Descriptor->u.BusNumber.MaxBusNumber -
-                Descriptor->u.BusNumber.MinBusNumber) /
-                Descriptor->u.BusNumber.Length;
+    score =
+        (Descriptor->u.BusNumber.MaxBusNumber - Descriptor->u.BusNumber.MinBusNumber) / Descriptor->u.BusNumber.Length;
 
-    ARB_PRINT(2,
-                ("Scoring BusNumber resource %p => %i\n",
-                Descriptor,
-                score
-                ));
+    ARB_PRINT(2, ("Scoring BusNumber resource %p => %i\n", Descriptor, score));
 
     return score;
 }
 
 NTSTATUS
-IopBusNumberPackResource(
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    IN ULONGLONG Start,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor
-    )
+IopBusNumberPackResource(IN PIO_RESOURCE_DESCRIPTOR Requirement, IN ULONGLONG Start,
+                         OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor)
 
 /*++
 
@@ -275,27 +229,19 @@ Return Value:
     ASSERT(Requirement);
     ASSERT(Requirement->Type == CmResourceTypeBusNumber);
 
-    ARB_PRINT(2,
-                ("Packing BusNumber resource %p => 0x%I64x\n",
-                Descriptor,
-                Start
-                ));
+    ARB_PRINT(2, ("Packing BusNumber resource %p => 0x%I64x\n", Descriptor, Start));
 
     Descriptor->Type = CmResourceTypeBusNumber;
     Descriptor->ShareDisposition = Requirement->ShareDisposition;
     Descriptor->Flags = Requirement->Flags;
-    Descriptor->u.BusNumber.Start = (ULONG) Start;
+    Descriptor->u.BusNumber.Start = (ULONG)Start;
     Descriptor->u.BusNumber.Length = Requirement->u.BusNumber.Length;
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-IopBusNumberUnpackResource(
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Start,
-    OUT PULONG Length
-    )
+IopBusNumberUnpackResource(IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Start, OUT PULONG Length)
 
 /*++
 
@@ -323,16 +269,10 @@ Return Value:
     ASSERT(Length);
     ASSERT(Descriptor->Type == CmResourceTypeBusNumber);
 
-    *Start = (ULONGLONG) Descriptor->u.BusNumber.Start;
+    *Start = (ULONGLONG)Descriptor->u.BusNumber.Start;
     *Length = Descriptor->u.BusNumber.Length;
 
-    ARB_PRINT(2,
-                ("Unpacking BusNumber resource %p => 0x%I64x\n",
-                Descriptor,
-                *Start
-                ));
+    ARB_PRINT(2, ("Unpacking BusNumber resource %p => 0x%I64x\n", Descriptor, *Start));
 
     return STATUS_SUCCESS;
-
 }
-

@@ -34,82 +34,52 @@ Revision History:
 #include <profiles.h>
 
 #define LOAD_LAST 0xffffffff
-#define LOAD_NEXT_TO_LAST (LOAD_LAST-1)
+#define LOAD_NEXT_TO_LAST (LOAD_LAST - 1)
 
 //
 // Private function prototypes.
 //
 BOOLEAN
-CmpAddDriverToList(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX DriverCell,
-    IN HCELL_INDEX GroupOrderCell,
-    IN PUNICODE_STRING RegistryPath,
-    IN PLIST_ENTRY BootDriverListHead
-    );
+CmpAddDriverToList(IN PHHIVE Hive, IN HCELL_INDEX DriverCell, IN HCELL_INDEX GroupOrderCell,
+                   IN PUNICODE_STRING RegistryPath, IN PLIST_ENTRY BootDriverListHead);
 
 BOOLEAN
-CmpDoSort(
-    IN PLIST_ENTRY DriverListHead,
-    IN PUNICODE_STRING OrderList
-    );
+CmpDoSort(IN PLIST_ENTRY DriverListHead, IN PUNICODE_STRING OrderList);
 
 ULONG
-CmpFindTagIndex(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX TagCell,
-    IN HCELL_INDEX GroupOrderCell,
-    IN PUNICODE_STRING GroupName
-    );
+CmpFindTagIndex(IN PHHIVE Hive, IN HCELL_INDEX TagCell, IN HCELL_INDEX GroupOrderCell, IN PUNICODE_STRING GroupName);
 
 BOOLEAN
-CmpIsLoadType(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN SERVICE_LOAD_TYPE LoadType
-    );
+CmpIsLoadType(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN SERVICE_LOAD_TYPE LoadType);
 
 BOOLEAN
-CmpOrderGroup(
-    IN PBOOT_DRIVER_NODE GroupStart,
-    IN PBOOT_DRIVER_NODE GroupEnd
-    );
+CmpOrderGroup(IN PBOOT_DRIVER_NODE GroupStart, IN PBOOT_DRIVER_NODE GroupEnd);
 
-VOID
-BlPrint(
-    PCHAR cp,
-    ...
-    );
+VOID BlPrint(PCHAR cp, ...);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CmpFindNLSData)
-#pragma alloc_text(INIT,CmpFindDrivers)
-#pragma alloc_text(INIT,CmpIsLoadType)
-#pragma alloc_text(INIT,CmpAddDriverToList)
-#pragma alloc_text(INIT,CmpSortDriverList)
-#pragma alloc_text(INIT,CmpDoSort)
-#pragma alloc_text(INIT,CmpResolveDriverDependencies)
-#pragma alloc_text(INIT,CmpSetCurrentProfile)
-#pragma alloc_text(INIT,CmpOrderGroup)
-#pragma alloc_text(PAGE,CmpFindControlSet)
-#pragma alloc_text(INIT,CmpFindTagIndex)
-#pragma alloc_text(INIT,CmpFindProfileOption)
-#pragma alloc_text(INIT,CmpValidateSelect)
+#pragma alloc_text(INIT, CmpFindNLSData)
+#pragma alloc_text(INIT, CmpFindDrivers)
+#pragma alloc_text(INIT, CmpIsLoadType)
+#pragma alloc_text(INIT, CmpAddDriverToList)
+#pragma alloc_text(INIT, CmpSortDriverList)
+#pragma alloc_text(INIT, CmpDoSort)
+#pragma alloc_text(INIT, CmpResolveDriverDependencies)
+#pragma alloc_text(INIT, CmpSetCurrentProfile)
+#pragma alloc_text(INIT, CmpOrderGroup)
+#pragma alloc_text(PAGE, CmpFindControlSet)
+#pragma alloc_text(INIT, CmpFindTagIndex)
+#pragma alloc_text(INIT, CmpFindProfileOption)
+#pragma alloc_text(INIT, CmpValidateSelect)
 #ifdef _WANT_MACHINE_IDENTIFICATION
-#pragma alloc_text(INIT,CmpGetBiosDateFromRegistry)
+#pragma alloc_text(INIT, CmpGetBiosDateFromRegistry)
 #endif
 #endif
 
-
+
 BOOLEAN
-CmpFindNLSData(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    OUT PUNICODE_STRING AnsiFilename,
-    OUT PUNICODE_STRING OemFilename,
-    OUT PUNICODE_STRING CaseTableFilename,
-    OUT PUNICODE_STRING OemHalFont
-    )
+CmpFindNLSData(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, OUT PUNICODE_STRING AnsiFilename,
+               OUT PUNICODE_STRING OemFilename, OUT PUNICODE_STRING CaseTableFilename, OUT PUNICODE_STRING OemHalFont)
 
 /*++
 
@@ -157,12 +127,13 @@ Return Value:
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
     //
     // Find CONTROL node
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,ControlSet);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, ControlSet);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -170,18 +141,18 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"Control");
-    Control = CmpFindSubKeyByName(Hive,
-                                 Node,
-                                 &Name);
-    if (Control == HCELL_NIL) {
-        return(FALSE);
+    Control = CmpFindSubKeyByName(Hive, Node, &Name);
+    if (Control == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     //
     // Find NLS node
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Control);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Control);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -189,18 +160,18 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"NLS");
-    Nls = CmpFindSubKeyByName(Hive,
-                             Node,
-                             &Name);
-    if (Nls == HCELL_NIL) {
-        return(FALSE);
+    Nls = CmpFindSubKeyByName(Hive, Node, &Name);
+    if (Nls == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     //
     // Find CodePage node
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Nls);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Nls);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -208,18 +179,18 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"CodePage");
-    CodePage = CmpFindSubKeyByName(Hive,
-                                  Node,
-                                  &Name);
-    if (CodePage == HCELL_NIL) {
-        return(FALSE);
+    CodePage = CmpFindSubKeyByName(Hive, Node, &Name);
+    if (CodePage == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     //
     // Find ACP value
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,CodePage);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, CodePage);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -227,63 +198,66 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"ACP");
-    ValueCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   &Name);
-    if (ValueCell == HCELL_NIL) {
-        return(FALSE);
+    ValueCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ValueCell == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    Name.Buffer = (PWSTR)CmpValueToData(Hive,Value,&realsize);
-    if( Name.Buffer == NULL ) {
+    Name.Buffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+    if (Name.Buffer == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
         return FALSE;
     }
-    Name.MaximumLength=(USHORT)realsize;
+    Name.MaximumLength = (USHORT)realsize;
     Name.Length = 0;
-    while ((Name.Length<Name.MaximumLength) &&
-           (Name.Buffer[Name.Length/sizeof(WCHAR)] != UNICODE_NULL)) {
+    while ((Name.Length < Name.MaximumLength) && (Name.Buffer[Name.Length / sizeof(WCHAR)] != UNICODE_NULL))
+    {
         Name.Length += sizeof(WCHAR);
     }
 
     //
     // Find ACP filename
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,CodePage);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, CodePage);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    ValueCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   &Name);
-    if (ValueCell == HCELL_NIL) {
-        return(FALSE);
+    ValueCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ValueCell == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    AnsiFilename->Buffer = (PWSTR)CmpValueToData(Hive,Value,&realsize);
-    if( AnsiFilename->Buffer == NULL ) {
+    AnsiFilename->Buffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+    if (AnsiFilename->Buffer == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
@@ -294,8 +268,9 @@ Return Value:
     //
     // Find OEMCP node
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,CodePage);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, CodePage);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -303,23 +278,24 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"OEMCP");
-    ValueCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   &Name);
-    if (ValueCell == HCELL_NIL) {
-        return(FALSE);
+    ValueCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ValueCell == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    Name.Buffer = (PWSTR)CmpValueToData(Hive,Value,&realsize);
-    if( Name.Buffer == NULL ) {
+    Name.Buffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+    if (Name.Buffer == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
@@ -327,39 +303,41 @@ Return Value:
     }
     Name.MaximumLength = (USHORT)realsize;
     Name.Length = 0;
-    while ((Name.Length<Name.MaximumLength) &&
-           (Name.Buffer[Name.Length/sizeof(WCHAR)] != UNICODE_NULL)) {
+    while ((Name.Length < Name.MaximumLength) && (Name.Buffer[Name.Length / sizeof(WCHAR)] != UNICODE_NULL))
+    {
         Name.Length += sizeof(WCHAR);
     }
 
     //
     // Find OEMCP filename
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,CodePage);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, CodePage);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    ValueCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   &Name);
-    if (ValueCell == HCELL_NIL) {
-        return(FALSE);
+    ValueCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ValueCell == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    OemFilename->Buffer = (PWSTR)CmpValueToData(Hive, Value,&realsize);
-    if( OemFilename->Buffer == NULL ) {
+    OemFilename->Buffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+    if (OemFilename->Buffer == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
@@ -370,8 +348,9 @@ Return Value:
     //
     // Find Language node
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Nls);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Nls);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -379,18 +358,18 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"Language");
-    Language = CmpFindSubKeyByName(Hive,
-                                   Node,
-                                   &Name);
-    if (Language == HCELL_NIL) {
-        return(FALSE);
+    Language = CmpFindSubKeyByName(Hive, Node, &Name);
+    if (Language == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     //
     // Find Default value
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Language);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Language);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -398,23 +377,24 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"Default");
-    ValueCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   &Name);
-    if (ValueCell == HCELL_NIL) {
-            return(FALSE);
+    ValueCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ValueCell == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    Name.Buffer = (PWSTR)CmpValueToData(Hive, Value,&realsize);
-    if( Name.Buffer == NULL ) {
+    Name.Buffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+    if (Name.Buffer == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
@@ -423,39 +403,41 @@ Return Value:
     Name.MaximumLength = (USHORT)realsize;
     Name.Length = 0;
 
-    while ((Name.Length<Name.MaximumLength) &&
-           (Name.Buffer[Name.Length/sizeof(WCHAR)] != UNICODE_NULL)) {
-        Name.Length+=sizeof(WCHAR);
+    while ((Name.Length < Name.MaximumLength) && (Name.Buffer[Name.Length / sizeof(WCHAR)] != UNICODE_NULL))
+    {
+        Name.Length += sizeof(WCHAR);
     }
 
     //
     // Find default filename
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Language);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Language);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    ValueCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   &Name);
-    if (ValueCell == HCELL_NIL) {
-        return(FALSE);
+    ValueCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ValueCell == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    CaseTableFilename->Buffer = (PWSTR)CmpValueToData(Hive, Value,&realsize);
-    if( CaseTableFilename->Buffer == NULL ) {
+    CaseTableFilename->Buffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+    if (CaseTableFilename->Buffer == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
@@ -466,8 +448,9 @@ Return Value:
     //
     // Find OEMHAL filename
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,CodePage);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, CodePage);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -475,29 +458,30 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"OEMHAL");
-    ValueCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   &Name);
-    if (ValueCell == HCELL_NIL) {
+    ValueCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ValueCell == HCELL_NIL)
+    {
 #ifdef i386
         OemHalFont->Buffer = NULL;
         OemHalFont->Length = 0;
         OemHalFont->MaximumLength = 0;
         return TRUE;
 #endif
-        return(FALSE);
+        return (FALSE);
     }
 
     Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    OemHalFont->Buffer = (PWSTR)CmpValueToData(Hive,Value,&realsize);
-    if( OemHalFont->Buffer == NULL ) {
+    OemHalFont->Buffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+    if (OemHalFont->Buffer == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
@@ -506,18 +490,13 @@ Return Value:
     OemHalFont->Length = (USHORT)realsize;
     OemHalFont->MaximumLength = (USHORT)realsize;
 
-    return(TRUE);
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-CmpFindDrivers(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    IN SERVICE_LOAD_TYPE LoadType,
-    IN PWSTR BootFileSystem OPTIONAL,
-    IN PLIST_ENTRY DriverListHead
-    )
+CmpFindDrivers(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, IN SERVICE_LOAD_TYPE LoadType,
+               IN PWSTR BootFileSystem OPTIONAL, IN PLIST_ENTRY DriverListHead)
 
 /*++
 
@@ -568,12 +547,13 @@ Return Value:
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
     //
     // Find SERVICES node.
     //
-    ControlNode = (PCM_KEY_NODE)HvGetCell(Hive,ControlSet);
-    if( ControlNode == NULL ) {
+    ControlNode = (PCM_KEY_NODE)HvGetCell(Hive, ControlSet);
+    if (ControlNode == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -581,14 +561,14 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"Services");
-    Services = CmpFindSubKeyByName(Hive,
-                                   ControlNode,
-                                   &Name);
-    if (Services == HCELL_NIL) {
-        return(FALSE);
+    Services = CmpFindSubKeyByName(Hive, ControlNode, &Name);
+    if (Services == HCELL_NIL)
+    {
+        return (FALSE);
     }
-    ServicesNode = (PCM_KEY_NODE)HvGetCell(Hive,Services);
-    if( ServicesNode == NULL ) {
+    ServicesNode = (PCM_KEY_NODE)HvGetCell(Hive, Services);
+    if (ServicesNode == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -600,30 +580,29 @@ Return Value:
     // Find CONTROL node.
     //
     RtlInitUnicodeString(&Name, L"Control");
-    Control = CmpFindSubKeyByName(Hive,
-                                  ControlNode,
-                                  &Name);
-    if (Control == HCELL_NIL) {
-        return(FALSE);
+    Control = CmpFindSubKeyByName(Hive, ControlNode, &Name);
+    if (Control == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     //
     // Find GroupOrderList node.
     //
     RtlInitUnicodeString(&Name, L"GroupOrderList");
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Control);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Control);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    GroupOrder = CmpFindSubKeyByName(Hive,
-                                     Node,
-                                     &Name);
-    if (GroupOrder == HCELL_NIL) {
-        return(FALSE);
+    GroupOrder = CmpFindSubKeyByName(Hive, Node, &Name);
+    if (GroupOrder == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     BasePath.Length = 0;
@@ -632,57 +611,44 @@ Return Value:
     RtlAppendUnicodeToString(&BasePath, L"\\Registry\\Machine\\System\\");
     RtlAppendUnicodeToString(&BasePath, L"CurrentControlSet\\Services\\");
 
-    i=0;
-    do {
-        DriverCell = CmpFindSubKeyByNumber(Hive,ServicesNode,i++);
-        if (DriverCell != HCELL_NIL) {
-            if (CmpIsLoadType(Hive, DriverCell, LoadType)) {
-                CmpAddDriverToList(Hive,
-                                   DriverCell,
-                                   GroupOrder,
-                                   &BasePath,
-                                   DriverListHead);
-
+    i = 0;
+    do
+    {
+        DriverCell = CmpFindSubKeyByNumber(Hive, ServicesNode, i++);
+        if (DriverCell != HCELL_NIL)
+        {
+            if (CmpIsLoadType(Hive, DriverCell, LoadType))
+            {
+                CmpAddDriverToList(Hive, DriverCell, GroupOrder, &BasePath, DriverListHead);
             }
         }
-    } while ( DriverCell != HCELL_NIL );
+    } while (DriverCell != HCELL_NIL);
 
-    if (ARGUMENT_PRESENT(BootFileSystem)) {
+    if (ARGUMENT_PRESENT(BootFileSystem))
+    {
         //
         // Add boot filesystem to boot driver list
         //
 
         RtlInitUnicodeString(&UnicodeString, BootFileSystem);
-        DriverCell = CmpFindSubKeyByName(Hive,
-                                         ServicesNode,
-                                         &UnicodeString);
-        if (DriverCell != HCELL_NIL) {
-            CmpAddDriverToList(Hive,
-                               DriverCell,
-                               GroupOrder,
-                               &BasePath,
-                               DriverListHead);
+        DriverCell = CmpFindSubKeyByName(Hive, ServicesNode, &UnicodeString);
+        if (DriverCell != HCELL_NIL)
+        {
+            CmpAddDriverToList(Hive, DriverCell, GroupOrder, &BasePath, DriverListHead);
 
             //
             // mark the Boot Filesystem critical
             //
-            BootFileSystemNode = CONTAINING_RECORD(DriverListHead->Flink,
-                                                   BOOT_DRIVER_NODE,
-                                                   ListEntry.Link);
+            BootFileSystemNode = CONTAINING_RECORD(DriverListHead->Flink, BOOT_DRIVER_NODE, ListEntry.Link);
             BootFileSystemNode->ErrorControl = SERVICE_ERROR_CRITICAL;
         }
     }
-    return(TRUE);
-
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-CmpIsLoadType(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN SERVICE_LOAD_TYPE LoadType
-    )
+CmpIsLoadType(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN SERVICE_LOAD_TYPE LoadType)
 
 /*++
 
@@ -722,13 +688,14 @@ Return Value:
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
     //
     // Must have a Start=BootLoad value in order to be a boot driver, so
     // look for that first.
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Cell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -736,15 +703,15 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"Start");
-    ValueCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   &Name);
-    if (ValueCell == HCELL_NIL) {
-        return(FALSE);
+    ValueCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ValueCell == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -752,30 +719,27 @@ Return Value:
         return FALSE;
     }
 
-    Data = (PLONG)CmpValueToData(Hive,Value,&realsize);
-    if( Data == NULL ) {
+    Data = (PLONG)CmpValueToData(Hive, Value, &realsize);
+    if (Data == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
         return FALSE;
     }
 
-    if (*Data != LoadType) {
-        return(FALSE);
+    if (*Data != LoadType)
+    {
+        return (FALSE);
     }
 
-    return(TRUE);
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-CmpAddDriverToList(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX DriverCell,
-    IN HCELL_INDEX GroupOrderCell,
-    IN PUNICODE_STRING RegistryPath,
-    IN PLIST_ENTRY BootDriverListHead
-    )
+CmpAddDriverToList(IN PHHIVE Hive, IN HCELL_INDEX DriverCell, IN HCELL_INDEX GroupOrderCell,
+                   IN PUNICODE_STRING RegistryPath, IN PLIST_ENTRY BootDriverListHead)
 
 /*++
 
@@ -812,60 +776,63 @@ Return Value:
 --*/
 
 {
-    PCM_KEY_NODE            Driver;
-    USHORT                  DriverNameLength;
-    PCM_KEY_VALUE           Value;
-    PBOOT_DRIVER_NODE       DriverNode;
+    PCM_KEY_NODE Driver;
+    USHORT DriverNameLength;
+    PCM_KEY_VALUE Value;
+    PBOOT_DRIVER_NODE DriverNode;
     PBOOT_DRIVER_LIST_ENTRY DriverEntry;
-    HCELL_INDEX             ValueCell;
-    HCELL_INDEX             Tag;
-    UNICODE_STRING          UnicodeString;
-    PUNICODE_STRING         FileName;
-    NTSTATUS                Status;
-    ULONG                   Length;
-    PHCELL_INDEX            Index;
-    ULONG                   realsize;
-    PULONG                  TempULong;
-    PWSTR                   TempBuffer;
+    HCELL_INDEX ValueCell;
+    HCELL_INDEX Tag;
+    UNICODE_STRING UnicodeString;
+    PUNICODE_STRING FileName;
+    NTSTATUS Status;
+    ULONG Length;
+    PHCELL_INDEX Index;
+    ULONG realsize;
+    PULONG TempULong;
+    PWSTR TempBuffer;
 
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
 
     Driver = (PCM_KEY_NODE)HvGetCell(Hive, DriverCell);
-    if( Driver == NULL ) {
+    if (Driver == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    DriverNode = (Hive->Allocate)(sizeof(BOOT_DRIVER_NODE),FALSE,CM_FIND_LEAK_TAG1);
-    if (DriverNode == NULL) {
-        return(FALSE);
+    DriverNode = (Hive->Allocate)(sizeof(BOOT_DRIVER_NODE), FALSE, CM_FIND_LEAK_TAG1);
+    if (DriverNode == NULL)
+    {
+        return (FALSE);
     }
     DriverEntry = &DriverNode->ListEntry;
 
     DriverEntry->RegistryPath.Buffer = NULL;
     DriverEntry->FilePath.Buffer = NULL;
 
-    if (Driver->Flags & KEY_COMP_NAME) {
-        DriverNode->Name.Length = CmpCompressedNameSize(Driver->Name,Driver->NameLength);
-        DriverNode->Name.Buffer = (Hive->Allocate)(DriverNode->Name.Length, FALSE,CM_FIND_LEAK_TAG2);
-        if (DriverNode->Name.Buffer == NULL) {
-            return(FALSE);
+    if (Driver->Flags & KEY_COMP_NAME)
+    {
+        DriverNode->Name.Length = CmpCompressedNameSize(Driver->Name, Driver->NameLength);
+        DriverNode->Name.Buffer = (Hive->Allocate)(DriverNode->Name.Length, FALSE, CM_FIND_LEAK_TAG2);
+        if (DriverNode->Name.Buffer == NULL)
+        {
+            return (FALSE);
         }
-        CmpCopyCompressedName(DriverNode->Name.Buffer,
-                              DriverNode->Name.Length,
-                              Driver->Name,
-                              Driver->NameLength);
-
-    } else {
+        CmpCopyCompressedName(DriverNode->Name.Buffer, DriverNode->Name.Length, Driver->Name, Driver->NameLength);
+    }
+    else
+    {
         DriverNode->Name.Length = Driver->NameLength;
-        DriverNode->Name.Buffer = (Hive->Allocate)(DriverNode->Name.Length, FALSE,CM_FIND_LEAK_TAG2);
-        if (DriverNode->Name.Buffer == NULL) {
-            return(FALSE);
+        DriverNode->Name.Buffer = (Hive->Allocate)(DriverNode->Name.Length, FALSE, CM_FIND_LEAK_TAG2);
+        if (DriverNode->Name.Buffer == NULL)
+        {
+            return (FALSE);
         }
         RtlCopyMemory((PVOID)(DriverNode->Name.Buffer), (PVOID)(Driver->Name), Driver->NameLength);
     }
@@ -877,45 +844,47 @@ Return Value:
     // if it is present.
     //
     RtlInitUnicodeString(&UnicodeString, L"ImagePath");
-    ValueCell = CmpFindValueByName(Hive,
-                                   Driver,
-                                   &UnicodeString);
-    if (ValueCell == HCELL_NIL) {
+    ValueCell = CmpFindValueByName(Hive, Driver, &UnicodeString);
+    if (ValueCell == HCELL_NIL)
+    {
 
         //
         // No ImagePath, so generate default filename.
         // Build up Unicode filename  ("system32\drivers\<nodename>.sys");
         //
 
-        Length = sizeof(L"System32\\Drivers\\") +
-                 DriverNameLength  +
-                 sizeof(L".sys");
+        Length = sizeof(L"System32\\Drivers\\") + DriverNameLength + sizeof(L".sys");
 
         FileName = &DriverEntry->FilePath;
         FileName->Length = 0;
         FileName->MaximumLength = (USHORT)Length;
-        FileName->Buffer = (PWSTR)(Hive->Allocate)(Length, FALSE,CM_FIND_LEAK_TAG3);
-        if (FileName->Buffer == NULL) {
-            return(FALSE);
+        FileName->Buffer = (PWSTR)(Hive->Allocate)(Length, FALSE, CM_FIND_LEAK_TAG3);
+        if (FileName->Buffer == NULL)
+        {
+            return (FALSE);
         }
-        if (!NT_SUCCESS(RtlAppendUnicodeToString(FileName, L"System32\\"))) {
-            return(FALSE);
+        if (!NT_SUCCESS(RtlAppendUnicodeToString(FileName, L"System32\\")))
+        {
+            return (FALSE);
         }
-        if (!NT_SUCCESS(RtlAppendUnicodeToString(FileName, L"Drivers\\"))) {
-            return(FALSE);
+        if (!NT_SUCCESS(RtlAppendUnicodeToString(FileName, L"Drivers\\")))
+        {
+            return (FALSE);
         }
-        if (!NT_SUCCESS(
-                RtlAppendUnicodeStringToString(FileName,
-                                               &DriverNode->Name))) {
-            return(FALSE);
+        if (!NT_SUCCESS(RtlAppendUnicodeStringToString(FileName, &DriverNode->Name)))
+        {
+            return (FALSE);
         }
-        if (!NT_SUCCESS(RtlAppendUnicodeToString(FileName, L".sys"))) {
-            return(FALSE);
+        if (!NT_SUCCESS(RtlAppendUnicodeToString(FileName, L".sys")))
+        {
+            return (FALSE);
         }
-
-    } else {
-        Value = (PCM_KEY_VALUE)HvGetCell(Hive,ValueCell);
-        if( Value == NULL ) {
+    }
+    else
+    {
+        Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
+        if (Value == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
@@ -923,9 +892,10 @@ Return Value:
             return FALSE;
         }
         FileName = &DriverEntry->FilePath;
-        TempBuffer = (PWSTR)CmpValueToData(Hive,Value,&realsize);
-        FileName->Buffer = (PWSTR)(Hive->Allocate)(realsize, FALSE,CM_FIND_LEAK_TAG3);
-        if( (FileName->Buffer == NULL) || (TempBuffer == NULL) ) {
+        TempBuffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+        FileName->Buffer = (PWSTR)(Hive->Allocate)(realsize, FALSE, CM_FIND_LEAK_TAG3);
+        if ((FileName->Buffer == NULL) || (TempBuffer == NULL))
+        {
             //
             // HvGetCell inside CmpValueToData failed; bail out safely
             //
@@ -938,9 +908,10 @@ Return Value:
     FileName = &DriverEntry->RegistryPath;
     FileName->Length = 0;
     FileName->MaximumLength = RegistryPath->Length + DriverNameLength;
-    FileName->Buffer = (Hive->Allocate)(FileName->MaximumLength,FALSE,CM_FIND_LEAK_TAG4);
-    if (FileName->Buffer == NULL) {
-        return(FALSE);
+    FileName->Buffer = (Hive->Allocate)(FileName->MaximumLength, FALSE, CM_FIND_LEAK_TAG4);
+    if (FileName->Buffer == NULL)
+    {
+        return (FALSE);
     }
     RtlAppendUnicodeStringToString(FileName, RegistryPath);
     RtlAppendUnicodeStringToString(FileName, &DriverNode->Name);
@@ -952,14 +923,16 @@ Return Value:
     //
 
     RtlInitUnicodeString(&UnicodeString, L"ErrorControl");
-    ValueCell = CmpFindValueByName(Hive,
-                                   Driver,
-                                   &UnicodeString);
-    if (ValueCell == HCELL_NIL) {
+    ValueCell = CmpFindValueByName(Hive, Driver, &UnicodeString);
+    if (ValueCell == HCELL_NIL)
+    {
         DriverNode->ErrorControl = NormalError;
-    } else {
+    }
+    else
+    {
         Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-        if( Value == NULL ) {
+        if (Value == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
@@ -967,8 +940,9 @@ Return Value:
             return FALSE;
         }
 
-        TempULong = (PULONG)CmpValueToData(Hive,Value,&realsize);
-        if( TempULong == NULL ) {
+        TempULong = (PULONG)CmpValueToData(Hive, Value, &realsize);
+        if (TempULong == NULL)
+        {
             //
             // HvGetCell inside CmpValueToData failed; bail out safely
             //
@@ -981,16 +955,18 @@ Return Value:
     // Find "Group" value
     //
     RtlInitUnicodeString(&UnicodeString, L"group");
-    ValueCell = CmpFindValueByName(Hive,
-                                   Driver,
-                                   &UnicodeString);
-    if (ValueCell == HCELL_NIL) {
+    ValueCell = CmpFindValueByName(Hive, Driver, &UnicodeString);
+    if (ValueCell == HCELL_NIL)
+    {
         DriverNode->Group.Length = 0;
         DriverNode->Group.MaximumLength = 0;
         DriverNode->Group.Buffer = NULL;
-    } else {
+    }
+    else
+    {
         Value = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-        if( Value == NULL ) {
+        if (Value == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
@@ -998,8 +974,9 @@ Return Value:
             return FALSE;
         }
 
-        DriverNode->Group.Buffer = (PWSTR)CmpValueToData(Hive,Value,&realsize);
-        if( DriverNode->Group.Buffer == NULL ) {
+        DriverNode->Group.Buffer = (PWSTR)CmpValueToData(Hive, Value, &realsize);
+        if (DriverNode->Group.Buffer == NULL)
+        {
             //
             // HvGetCell inside CmpValueToData failed; bail out safely
             //
@@ -1015,12 +992,13 @@ Return Value:
     // group.
     //
     RtlInitUnicodeString(&UnicodeString, L"Tag");
-    Tag = CmpFindValueByName(Hive,
-                             Driver,
-                             &UnicodeString);
-    if (Tag == HCELL_NIL) {
+    Tag = CmpFindValueByName(Hive, Driver, &UnicodeString);
+    if (Tag == HCELL_NIL)
+    {
         DriverNode->Tag = LOAD_LAST;
-    } else {
+    }
+    else
+    {
         //
         // Now we have to find this tag in the tag list for the group.
         // If the tag is not in the tag list, then it defaults to 0xfffffffe,
@@ -1028,23 +1006,15 @@ Return Value:
         // all the drivers without tags at all.
         //
 
-        DriverNode->Tag = CmpFindTagIndex(Hive,
-                                          Tag,
-                                          GroupOrderCell,
-                                          &DriverNode->Group);
+        DriverNode->Tag = CmpFindTagIndex(Hive, Tag, GroupOrderCell, &DriverNode->Group);
     }
 
-    return(TRUE);
-
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-CmpSortDriverList(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    IN PLIST_ENTRY DriverListHead
-    )
+CmpSortDriverList(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, IN PLIST_ENTRY DriverListHead)
 
 /*++
 
@@ -1087,12 +1057,13 @@ Return Value:
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
     //
     // Find "CONTROL" node.
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,ControlSet);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, ControlSet);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1100,18 +1071,18 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"Control");
-    Controls = CmpFindSubKeyByName(Hive,
-                                   Node,
-                                   &Name);
-    if (Controls == HCELL_NIL) {
-        return(FALSE);
+    Controls = CmpFindSubKeyByName(Hive, Node, &Name);
+    if (Controls == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     //
     // Find "SERVICE_GROUP_ORDER" subkey
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Controls);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Controls);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1119,18 +1090,18 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"ServiceGroupOrder");
-    GroupOrder = CmpFindSubKeyByName(Hive,
-                                     Node,
-                                     &Name);
-    if (GroupOrder == HCELL_NIL) {
-        return(FALSE);
+    GroupOrder = CmpFindSubKeyByName(Hive, Node, &Name);
+    if (GroupOrder == HCELL_NIL)
+    {
+        return (FALSE);
     }
 
     //
     // Find "list" value
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,GroupOrder);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, GroupOrder);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1138,26 +1109,28 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"list");
-    ListCell = CmpFindValueByName(Hive,
-                                  Node,
-                                  &Name);
-    if (ListCell == HCELL_NIL) {
-        return(FALSE);
+    ListCell = CmpFindValueByName(Hive, Node, &Name);
+    if (ListCell == HCELL_NIL)
+    {
+        return (FALSE);
     }
     ListNode = (PCM_KEY_VALUE)HvGetCell(Hive, ListCell);
-    if( ListNode == NULL ) {
+    if (ListNode == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    if (ListNode->Type != REG_MULTI_SZ) {
-        return(FALSE);
+    if (ListNode->Type != REG_MULTI_SZ)
+    {
+        return (FALSE);
     }
 
-    DependList.Buffer = (PWSTR)CmpValueToData(Hive,ListNode,&realsize);
-    if( DependList.Buffer == NULL ) {
+    DependList.Buffer = (PWSTR)CmpValueToData(Hive, ListNode, &realsize);
+    if (DependList.Buffer == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
@@ -1171,14 +1144,10 @@ Return Value:
     //
 
     return (CmpDoSort(DriverListHead, &DependList));
-
 }
-
+
 BOOLEAN
-CmpDoSort(
-    IN PLIST_ENTRY DriverListHead,
-    IN PUNICODE_STRING OrderList
-    )
+CmpDoSort(IN PLIST_ENTRY DriverListHead, IN PUNICODE_STRING OrderList)
 
 /*++
 
@@ -1215,52 +1184,50 @@ Return Value:
     UNICODE_STRING CurrentGroup;
 
 
-    Current = (PWSTR) ((PUCHAR)(OrderList->Buffer)+OrderList->Length);
+    Current = (PWSTR)((PUCHAR)(OrderList->Buffer) + OrderList->Length);
 
-    while (Current > OrderList->Buffer) {
-        do {
-            if (*(Current) == UNICODE_NULL) {
+    while (Current > OrderList->Buffer)
+    {
+        do
+        {
+            if (*(Current) == UNICODE_NULL)
+            {
                 End = Current;
             }
             --Current;
-        } while ((*(Current-1) != UNICODE_NULL) &&
-                 ( Current != OrderList->Buffer));
+        } while ((*(Current - 1) != UNICODE_NULL) && (Current != OrderList->Buffer));
 
         //
         // Current now points to the beginning of the NULL-terminated
         // Unicode string.
         // End now points to the end of the string
         //
-        CurrentGroup.Length = (USHORT) ((PCHAR)End - (PCHAR)Current);
+        CurrentGroup.Length = (USHORT)((PCHAR)End - (PCHAR)Current);
         CurrentGroup.MaximumLength = CurrentGroup.Length;
         CurrentGroup.Buffer = Current;
         Next = DriverListHead->Flink;
-        while (Next != DriverListHead) {
-            CurrentNode = CONTAINING_RECORD(Next,
-                                            BOOT_DRIVER_NODE,
-                                            ListEntry.Link);
+        while (Next != DriverListHead)
+        {
+            CurrentNode = CONTAINING_RECORD(Next, BOOT_DRIVER_NODE, ListEntry.Link);
             Next = CurrentNode->ListEntry.Link.Flink;
-            if (CurrentNode->Group.Buffer != NULL) {
-                if (RtlEqualUnicodeString(&CurrentGroup, &CurrentNode->Group,TRUE)) {
+            if (CurrentNode->Group.Buffer != NULL)
+            {
+                if (RtlEqualUnicodeString(&CurrentGroup, &CurrentNode->Group, TRUE))
+                {
                     RemoveEntryList(&CurrentNode->ListEntry.Link);
-                    InsertHeadList(DriverListHead,
-                                   &CurrentNode->ListEntry.Link);
+                    InsertHeadList(DriverListHead, &CurrentNode->ListEntry.Link);
                 }
             }
         }
         --Current;
-
     }
 
-    return(TRUE);
-
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-CmpResolveDriverDependencies(
-    IN PLIST_ENTRY DriverListHead
-    )
+CmpResolveDriverDependencies(IN PLIST_ENTRY DriverListHead)
 
 /*++
 
@@ -1291,54 +1258,46 @@ Return Value:
 
     CurrentEntry = DriverListHead->Flink;
 
-    while (CurrentEntry != DriverListHead) {
+    while (CurrentEntry != DriverListHead)
+    {
         //
         // The list is already ordered by groups.  Find the first and
         // last entry in each group, and order each of these sub-lists
         // based on their dependencies.
         //
 
-        GroupStart = CONTAINING_RECORD(CurrentEntry,
-                                       BOOT_DRIVER_NODE,
-                                       ListEntry.Link);
-        do {
-            GroupEnd = CONTAINING_RECORD(CurrentEntry,
-                                         BOOT_DRIVER_NODE,
-                                         ListEntry.Link);
+        GroupStart = CONTAINING_RECORD(CurrentEntry, BOOT_DRIVER_NODE, ListEntry.Link);
+        do
+        {
+            GroupEnd = CONTAINING_RECORD(CurrentEntry, BOOT_DRIVER_NODE, ListEntry.Link);
 
             CurrentEntry = CurrentEntry->Flink;
-            CurrentNode = CONTAINING_RECORD(CurrentEntry,
-                                            BOOT_DRIVER_NODE,
-                                            ListEntry.Link);
+            CurrentNode = CONTAINING_RECORD(CurrentEntry, BOOT_DRIVER_NODE, ListEntry.Link);
 
-            if (CurrentEntry == DriverListHead) {
+            if (CurrentEntry == DriverListHead)
+            {
                 break;
             }
 
-            if (!RtlEqualUnicodeString(&GroupStart->Group,
-                                       &CurrentNode->Group,
-                                       TRUE)) {
+            if (!RtlEqualUnicodeString(&GroupStart->Group, &CurrentNode->Group, TRUE))
+            {
                 break;
             }
 
-        } while ( CurrentEntry != DriverListHead );
+        } while (CurrentEntry != DriverListHead);
 
         //
         // GroupStart now points to the first driver node in the group,
         // and GroupEnd points to the last driver node in the group.
         //
         CmpOrderGroup(GroupStart, GroupEnd);
-
     }
-    return(TRUE);
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-CmpOrderGroup(
-    IN PBOOT_DRIVER_NODE GroupStart,
-    IN PBOOT_DRIVER_NODE GroupEnd
-    )
+CmpOrderGroup(IN PBOOT_DRIVER_NODE GroupStart, IN PBOOT_DRIVER_NODE GroupEnd)
 
 /*++
 
@@ -1364,15 +1323,17 @@ Return Value:
     PBOOT_DRIVER_NODE Current;
     PBOOT_DRIVER_NODE Previous;
     PLIST_ENTRY ListEntry;
-    BOOLEAN StartOver=FALSE;
+    BOOLEAN StartOver = FALSE;
 
-    if (GroupStart == GroupEnd) {
-        return(TRUE);
+    if (GroupStart == GroupEnd)
+    {
+        return (TRUE);
     }
 
     Current = GroupStart;
 
-    do {
+    do
+    {
         //
         // If the driver before the current one has a lower tag, then
         // we do not need to move it.  If not, then remove the driver
@@ -1382,47 +1343,40 @@ Return Value:
         //
         Previous = Current;
         ListEntry = Current->ListEntry.Link.Flink;
-        Current = CONTAINING_RECORD(ListEntry,
-                                    BOOT_DRIVER_NODE,
-                                    ListEntry.Link);
+        Current = CONTAINING_RECORD(ListEntry, BOOT_DRIVER_NODE, ListEntry.Link);
 
-        if (Previous->Tag > Current->Tag) {
+        if (Previous->Tag > Current->Tag)
+        {
             //
             // Remove the Current driver from the list, and search
             // backwards until we find a tag that is <= the current
             // driver's tag.  Reinsert the current driver there.
             //
-            if (Current == GroupEnd) {
+            if (Current == GroupEnd)
+            {
                 ListEntry = Current->ListEntry.Link.Blink;
-                GroupEnd = CONTAINING_RECORD(ListEntry,
-                                             BOOT_DRIVER_NODE,
-                                             ListEntry.Link);
+                GroupEnd = CONTAINING_RECORD(ListEntry, BOOT_DRIVER_NODE, ListEntry.Link);
             }
             RemoveEntryList(&Current->ListEntry.Link);
-            while ( (Previous->Tag > Current->Tag) &&
-                    (Previous != GroupStart) ) {
+            while ((Previous->Tag > Current->Tag) && (Previous != GroupStart))
+            {
                 ListEntry = Previous->ListEntry.Link.Blink;
-                Previous = CONTAINING_RECORD(ListEntry,
-                                             BOOT_DRIVER_NODE,
-                                             ListEntry.Link);
+                Previous = CONTAINING_RECORD(ListEntry, BOOT_DRIVER_NODE, ListEntry.Link);
             }
-            InsertTailList(&Previous->ListEntry.Link,
-                           &Current->ListEntry.Link);
-            if (Previous == GroupStart) {
+            InsertTailList(&Previous->ListEntry.Link, &Current->ListEntry.Link);
+            if (Previous == GroupStart)
+            {
                 GroupStart = Current;
             }
         }
 
-    } while ( Current != GroupEnd );
+    } while (Current != GroupEnd);
 
-    return(TRUE);
+    return (TRUE);
 }
 
 BOOLEAN
-CmpValidateSelect(
-     IN PHHIVE SystemHive,
-     IN HCELL_INDEX RootCell
-     )
+CmpValidateSelect(IN PHHIVE SystemHive, IN HCELL_INDEX RootCell)
 /*++
 
 Routine Description:
@@ -1457,20 +1411,21 @@ Return Value:
 
 --*/
 {
-    HCELL_INDEX     Select;
-    PCM_KEY_NODE    Node;
-    UNICODE_STRING  Name;
+    HCELL_INDEX Select;
+    PCM_KEY_NODE Node;
+    UNICODE_STRING Name;
 
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( SystemHive->ReleaseCellRoutine == NULL );
+    ASSERT(SystemHive->ReleaseCellRoutine == NULL);
 
     //
     // Find \SYSTEM\SELECT node.
     //
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,RootCell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, RootCell);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1478,18 +1433,18 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&Name, L"select");
-    Select = CmpFindSubKeyByName(SystemHive,
-                                Node,
-                                &Name);
-    if (Select == HCELL_NIL) {
+    Select = CmpFindSubKeyByName(SystemHive, Node, &Name);
+    if (Select == HCELL_NIL)
+    {
         return FALSE;
     }
 
     //
     // Find AutoSelect value
     //
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,Select);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, Select);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1499,37 +1454,33 @@ Return Value:
 
     // search for current
     RtlInitUnicodeString(&Name, L"current");
-    Select = CmpFindValueByName(SystemHive,
-                                Node,
-                                &Name);
-    if (Select == HCELL_NIL) {
+    Select = CmpFindValueByName(SystemHive, Node, &Name);
+    if (Select == HCELL_NIL)
+    {
         return FALSE;
     }
 
     // search for default
     RtlInitUnicodeString(&Name, L"default");
-    Select = CmpFindValueByName(SystemHive,
-                                Node,
-                                &Name);
-    if (Select == HCELL_NIL) {
+    Select = CmpFindValueByName(SystemHive, Node, &Name);
+    if (Select == HCELL_NIL)
+    {
         return FALSE;
     }
 
     // search for failed
     RtlInitUnicodeString(&Name, L"failed");
-    Select = CmpFindValueByName(SystemHive,
-                                Node,
-                                &Name);
-    if (Select == HCELL_NIL) {
+    Select = CmpFindValueByName(SystemHive, Node, &Name);
+    if (Select == HCELL_NIL)
+    {
         return FALSE;
     }
 
     // search for LKG
     RtlInitUnicodeString(&Name, L"LastKnownGood");
-    Select = CmpFindValueByName(SystemHive,
-                                Node,
-                                &Name);
-    if (Select == HCELL_NIL) {
+    Select = CmpFindValueByName(SystemHive, Node, &Name);
+    if (Select == HCELL_NIL)
+    {
         return FALSE;
     }
 
@@ -1537,12 +1488,7 @@ Return Value:
 }
 
 HCELL_INDEX
-CmpFindControlSet(
-     IN PHHIVE SystemHive,
-     IN HCELL_INDEX RootCell,
-     IN PUNICODE_STRING SelectName,
-     OUT PBOOLEAN AutoSelect
-     )
+CmpFindControlSet(IN PHHIVE SystemHive, IN HCELL_INDEX RootCell, IN PUNICODE_STRING SelectName, OUT PBOOLEAN AutoSelect)
 
 /*++
 
@@ -1577,32 +1523,33 @@ Return Value:
 --*/
 
 {
-    HCELL_INDEX     Select;
-    HCELL_INDEX     ValueCell;
-    HCELL_INDEX     ControlSet;
-    HCELL_INDEX     AutoSelectCell;
-    NTSTATUS        Status;
-    UNICODE_STRING  Name;
-    ANSI_STRING     AnsiString;
-    PHCELL_INDEX    Index;
-    PCM_KEY_VALUE   Value;
-    PULONG          ControlSetIndex;
-    PULONG          CurrentControl;
-    CHAR            AsciiBuffer[128];
-    WCHAR           UnicodeBuffer[128];
-    ULONG           realsize;
-    PCM_KEY_NODE    Node;
-    PBOOLEAN        TempBoolean;
+    HCELL_INDEX Select;
+    HCELL_INDEX ValueCell;
+    HCELL_INDEX ControlSet;
+    HCELL_INDEX AutoSelectCell;
+    NTSTATUS Status;
+    UNICODE_STRING Name;
+    ANSI_STRING AnsiString;
+    PHCELL_INDEX Index;
+    PCM_KEY_VALUE Value;
+    PULONG ControlSetIndex;
+    PULONG CurrentControl;
+    CHAR AsciiBuffer[128];
+    WCHAR UnicodeBuffer[128];
+    ULONG realsize;
+    PCM_KEY_NODE Node;
+    PBOOLEAN TempBoolean;
 
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( SystemHive->ReleaseCellRoutine == NULL );
+    ASSERT(SystemHive->ReleaseCellRoutine == NULL);
     //
     // Find \SYSTEM\SELECT node.
     //
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,RootCell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, RootCell);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1610,18 +1557,18 @@ Return Value:
         return HCELL_NIL;
     }
     RtlInitUnicodeString(&Name, L"select");
-    Select = CmpFindSubKeyByName(SystemHive,
-                                Node,
-                                &Name);
-    if (Select == HCELL_NIL) {
-        return(HCELL_NIL);
+    Select = CmpFindSubKeyByName(SystemHive, Node, &Name);
+    if (Select == HCELL_NIL)
+    {
+        return (HCELL_NIL);
     }
 
     //
     // Find AutoSelect value
     //
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,Select);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, Select);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1629,17 +1576,19 @@ Return Value:
         return HCELL_NIL;
     }
     RtlInitUnicodeString(&Name, L"AutoSelect");
-    AutoSelectCell = CmpFindValueByName(SystemHive,
-                                        Node,
-                                        &Name);
-    if (AutoSelectCell == HCELL_NIL) {
+    AutoSelectCell = CmpFindValueByName(SystemHive, Node, &Name);
+    if (AutoSelectCell == HCELL_NIL)
+    {
         //
         // It's not there, we don't care.  Set autoselect to TRUE
         //
         *AutoSelect = TRUE;
-    } else {
+    }
+    else
+    {
         Value = (PCM_KEY_VALUE)HvGetCell(SystemHive, AutoSelectCell);
-        if( Value == NULL ) {
+        if (Value == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
@@ -1647,8 +1596,9 @@ Return Value:
             return HCELL_NIL;
         }
 
-        TempBoolean = (PBOOLEAN)(CmpValueToData(SystemHive,Value,&realsize));
-        if( TempBoolean == NULL ) {
+        TempBoolean = (PBOOLEAN)(CmpValueToData(SystemHive, Value, &realsize));
+        if (TempBoolean == NULL)
+        {
             //
             // HvGetCell inside CmpValueToData failed; bail out safely
             //
@@ -1658,34 +1608,37 @@ Return Value:
         *AutoSelect = *TempBoolean;
     }
 
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,Select);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, Select);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return HCELL_NIL;
     }
-    ValueCell = CmpFindValueByName(SystemHive,
-                                   Node,
-                                   SelectName);
-    if (ValueCell == HCELL_NIL) {
-        return(HCELL_NIL);
+    ValueCell = CmpFindValueByName(SystemHive, Node, SelectName);
+    if (ValueCell == HCELL_NIL)
+    {
+        return (HCELL_NIL);
     }
     Value = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-    if( Value == NULL ) {
+    if (Value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return HCELL_NIL;
     }
-    if (Value->Type != REG_DWORD) {
-        return(HCELL_NIL);
+    if (Value->Type != REG_DWORD)
+    {
+        return (HCELL_NIL);
     }
 
-    ControlSetIndex = (PULONG)CmpValueToData(SystemHive, Value,&realsize);
-    if( ControlSetIndex == NULL ) {
+    ControlSetIndex = (PULONG)CmpValueToData(SystemHive, Value, &realsize);
+    if (ControlSetIndex == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
@@ -1697,38 +1650,38 @@ Return Value:
     //
 
     sprintf(AsciiBuffer, "ControlSet%03d", *ControlSetIndex);
-    AnsiString.Length = AnsiString.MaximumLength = (USHORT) strlen(&(AsciiBuffer[0]));
+    AnsiString.Length = AnsiString.MaximumLength = (USHORT)strlen(&(AsciiBuffer[0]));
     AnsiString.Buffer = AsciiBuffer;
-    Name.MaximumLength = 128*sizeof(WCHAR);
+    Name.MaximumLength = 128 * sizeof(WCHAR);
     Name.Buffer = UnicodeBuffer;
-    Status = RtlAnsiStringToUnicodeString(&Name,
-                                          &AnsiString,
-                                          FALSE);
-    if (!NT_SUCCESS(Status)) {
-        return(HCELL_NIL);
+    Status = RtlAnsiStringToUnicodeString(&Name, &AnsiString, FALSE);
+    if (!NT_SUCCESS(Status))
+    {
+        return (HCELL_NIL);
     }
 
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,RootCell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, RootCell);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return HCELL_NIL;
     }
-    ControlSet = CmpFindSubKeyByName(SystemHive,
-                                     Node,
-                                     &Name);
-    if (ControlSet == HCELL_NIL) {
-        return(HCELL_NIL);
+    ControlSet = CmpFindSubKeyByName(SystemHive, Node, &Name);
+    if (ControlSet == HCELL_NIL)
+    {
+        return (HCELL_NIL);
     }
 
     //
     // Control set was successfully found, so update the value in "Current"
     // to reflect the control set we are going to use.
     //
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,Select);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, Select);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1736,21 +1689,23 @@ Return Value:
         return HCELL_NIL;
     }
     RtlInitUnicodeString(&Name, L"Current");
-    ValueCell = CmpFindValueByName(SystemHive,
-                                   Node,
-                                   &Name);
-    if (ValueCell != HCELL_NIL) {
+    ValueCell = CmpFindValueByName(SystemHive, Node, &Name);
+    if (ValueCell != HCELL_NIL)
+    {
         Value = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-        if( Value == NULL ) {
+        if (Value == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
 
             return HCELL_NIL;
         }
-        if (Value->Type == REG_DWORD) {
-            CurrentControl = (PULONG)CmpValueToData(SystemHive, Value,&realsize);
-            if( CurrentControl == NULL ) {
+        if (Value->Type == REG_DWORD)
+        {
+            CurrentControl = (PULONG)CmpValueToData(SystemHive, Value, &realsize);
+            if (CurrentControl == NULL)
+            {
                 //
                 // HvGetCell inside CmpValueToData failed; bail out safely
                 //
@@ -1759,17 +1714,11 @@ Return Value:
             *CurrentControl = *ControlSetIndex;
         }
     }
-    return(ControlSet);
-
+    return (ControlSet);
 }
 
-
-VOID
-CmpSetCurrentProfile(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    IN PCM_HARDWARE_PROFILE Profile
-    )
+
+VOID CmpSetCurrentProfile(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, IN PCM_HARDWARE_PROFILE Profile)
 
 /*++
 
@@ -1804,16 +1753,14 @@ Return Value:
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
 
-    IDConfigDB = CmpFindProfileOption(Hive,
-                                      ControlSet,
-                                      NULL,
-                                      NULL,
-                                      NULL);
-    if (IDConfigDB != HCELL_NIL) {
+    IDConfigDB = CmpFindProfileOption(Hive, ControlSet, NULL, NULL, NULL);
+    if (IDConfigDB != HCELL_NIL)
+    {
         IDConfigNode = (PCM_KEY_NODE)HvGetCell(Hive, IDConfigDB);
-        if( IDConfigNode == NULL ) {
+        if (IDConfigNode == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
@@ -1821,22 +1768,22 @@ Return Value:
         }
 
         RtlInitUnicodeString(&Name, L"CurrentConfig");
-        CurrentConfigCell = CmpFindValueByName(Hive,
-                                               IDConfigNode,
-                                               &Name);
-        if (CurrentConfigCell != HCELL_NIL) {
+        CurrentConfigCell = CmpFindValueByName(Hive, IDConfigNode, &Name);
+        if (CurrentConfigCell != HCELL_NIL)
+        {
             CurrentConfigValue = (PCM_KEY_VALUE)HvGetCell(Hive, CurrentConfigCell);
-            if( CurrentConfigValue == NULL ) {
+            if (CurrentConfigValue == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
                 return;
             }
-            if (CurrentConfigValue->Type == REG_DWORD) {
-                CurrentConfig = (PULONG)CmpValueToData(Hive,
-                                                       CurrentConfigValue,
-                                                       &realsize);
-                if( CurrentConfig == NULL ) {
+            if (CurrentConfigValue->Type == REG_DWORD)
+            {
+                CurrentConfig = (PULONG)CmpValueToData(Hive, CurrentConfigValue, &realsize);
+                if (CurrentConfig == NULL)
+                {
                     //
                     // HvGetCell inside CmpValueToData failed; bail out safely
                     //
@@ -1846,19 +1793,14 @@ Return Value:
             }
         }
     }
-
-
 }
 
-
+
 HCELL_INDEX
-CmpFindProfileOption(
-     IN PHHIVE SystemHive,
-     IN HCELL_INDEX ControlSet,
-     OUT OPTIONAL PCM_HARDWARE_PROFILE_LIST *ReturnedProfileList,
-     OUT OPTIONAL PCM_HARDWARE_PROFILE_ALIAS_LIST *ReturnedAliasList,
-     OUT OPTIONAL PULONG ProfileTimeout
-     )
+CmpFindProfileOption(IN PHHIVE SystemHive, IN HCELL_INDEX ControlSet,
+                     OUT OPTIONAL PCM_HARDWARE_PROFILE_LIST *ReturnedProfileList,
+                     OUT OPTIONAL PCM_HARDWARE_PROFILE_ALIAS_LIST *ReturnedAliasList,
+                     OUT OPTIONAL PULONG ProfileTimeout)
 
 /*++
 
@@ -1888,39 +1830,40 @@ Return Value:
 
 --*/
 {
-    HCELL_INDEX                     ControlCell;
-    HCELL_INDEX                     IDConfigDB;
-    HCELL_INDEX                     DefaultCell;
-    HCELL_INDEX                     TimeoutCell;
-    HCELL_INDEX                     ProfileCell;
-    HCELL_INDEX                     AliasCell;
-    HCELL_INDEX                     HWCell;
-    PCM_KEY_NODE                    HWNode;
-    PCM_KEY_NODE                    ProfileNode;
-    PCM_KEY_NODE                    AliasNode;
-    PCM_KEY_NODE                    ConfigDBNode;
-    PCM_KEY_NODE                    Control;
-    PCM_KEY_VALUE                   TimeoutValue;
-    UNICODE_STRING                  Name;
-    ULONG                           realsize;
-    PCM_HARDWARE_PROFILE_LIST       ProfileList;
+    HCELL_INDEX ControlCell;
+    HCELL_INDEX IDConfigDB;
+    HCELL_INDEX DefaultCell;
+    HCELL_INDEX TimeoutCell;
+    HCELL_INDEX ProfileCell;
+    HCELL_INDEX AliasCell;
+    HCELL_INDEX HWCell;
+    PCM_KEY_NODE HWNode;
+    PCM_KEY_NODE ProfileNode;
+    PCM_KEY_NODE AliasNode;
+    PCM_KEY_NODE ConfigDBNode;
+    PCM_KEY_NODE Control;
+    PCM_KEY_VALUE TimeoutValue;
+    UNICODE_STRING Name;
+    ULONG realsize;
+    PCM_HARDWARE_PROFILE_LIST ProfileList;
     PCM_HARDWARE_PROFILE_ALIAS_LIST AliasList;
-    ULONG                           ProfileCount;
-    ULONG                           AliasCount;
-    ULONG                           i,j;
-    WCHAR                           NameBuf[20];
-    PCM_KEY_NODE                    Node;
-    PULONG                          TempULong;
+    ULONG ProfileCount;
+    ULONG AliasCount;
+    ULONG i, j;
+    WCHAR NameBuf[20];
+    PCM_KEY_NODE Node;
+    PULONG TempULong;
 
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( SystemHive->ReleaseCellRoutine == NULL );
+    ASSERT(SystemHive->ReleaseCellRoutine == NULL);
     //
     // Find Control node
     //
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,ControlSet);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, ControlSet);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1928,14 +1871,14 @@ Return Value:
         return HCELL_NIL;
     }
     RtlInitUnicodeString(&Name, L"Control");
-    ControlCell = CmpFindSubKeyByName(SystemHive,
-                                      Node,
-                                      &Name);
-    if (ControlCell == HCELL_NIL) {
-        return(HCELL_NIL);
+    ControlCell = CmpFindSubKeyByName(SystemHive, Node, &Name);
+    if (ControlCell == HCELL_NIL)
+    {
+        return (HCELL_NIL);
     }
     Control = (PCM_KEY_NODE)HvGetCell(SystemHive, ControlCell);
-    if( Control == NULL ) {
+    if (Control == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1947,14 +1890,14 @@ Return Value:
     // Find IDConfigDB node
     //
     RtlInitUnicodeString(&Name, L"IDConfigDB");
-    IDConfigDB = CmpFindSubKeyByName(SystemHive,
-                                     Control,
-                                     &Name);
-    if (IDConfigDB == HCELL_NIL) {
-        return(HCELL_NIL);
+    IDConfigDB = CmpFindSubKeyByName(SystemHive, Control, &Name);
+    if (IDConfigDB == HCELL_NIL)
+    {
+        return (HCELL_NIL);
     }
     ConfigDBNode = (PCM_KEY_NODE)HvGetCell(SystemHive, IDConfigDB);
-    if( ConfigDBNode == NULL ) {
+    if (ConfigDBNode == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1962,30 +1905,37 @@ Return Value:
         return HCELL_NIL;
     }
 
-    if (ARGUMENT_PRESENT(ProfileTimeout)) {
+    if (ARGUMENT_PRESENT(ProfileTimeout))
+    {
         //
         // Find UserWaitInterval value. This is the timeout
         //
         RtlInitUnicodeString(&Name, L"UserWaitInterval");
-        TimeoutCell = CmpFindValueByName(SystemHive,
-                                         ConfigDBNode,
-                                         &Name);
-        if (TimeoutCell == HCELL_NIL) {
+        TimeoutCell = CmpFindValueByName(SystemHive, ConfigDBNode, &Name);
+        if (TimeoutCell == HCELL_NIL)
+        {
             *ProfileTimeout = 0;
-        } else {
+        }
+        else
+        {
             TimeoutValue = (PCM_KEY_VALUE)HvGetCell(SystemHive, TimeoutCell);
-            if( TimeoutValue == NULL ) {
+            if (TimeoutValue == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
 
                 return HCELL_NIL;
             }
-            if (TimeoutValue->Type != REG_DWORD) {
+            if (TimeoutValue->Type != REG_DWORD)
+            {
                 *ProfileTimeout = 0;
-            } else {
+            }
+            else
+            {
                 TempULong = (PULONG)CmpValueToData(SystemHive, TimeoutValue, &realsize);
-                if( TempULong == NULL ) {
+                if (TempULong == NULL)
+                {
                     //
                     // HvGetCell inside CmpValueToData failed; bail out safely
                     //
@@ -1996,7 +1946,8 @@ Return Value:
         }
     }
 
-    if (ARGUMENT_PRESENT(ReturnedProfileList)) {
+    if (ARGUMENT_PRESENT(ReturnedProfileList))
+    {
         ProfileList = *ReturnedProfileList;
         //
         // Enumerate the keys under IDConfigDB\Hardware Profiles
@@ -2006,17 +1957,20 @@ Return Value:
         // head of the list.
         //
         RtlInitUnicodeString(&Name, L"Hardware Profiles");
-        ProfileCell = CmpFindSubKeyByName(SystemHive,
-                                          ConfigDBNode,
-                                          &Name);
-        if (ProfileCell == HCELL_NIL) {
+        ProfileCell = CmpFindSubKeyByName(SystemHive, ConfigDBNode, &Name);
+        if (ProfileCell == HCELL_NIL)
+        {
             ProfileCount = 0;
-            if (ProfileList != NULL) {
+            if (ProfileList != NULL)
+            {
                 ProfileList->CurrentProfileCount = 0;
             }
-        } else {
+        }
+        else
+        {
             ProfileNode = (PCM_KEY_NODE)HvGetCell(SystemHive, ProfileCell);
-            if( ProfileNode == NULL ) {
+            if (ProfileNode == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
@@ -2024,16 +1978,17 @@ Return Value:
                 return HCELL_NIL;
             }
             ProfileCount = ProfileNode->SubKeyCounts[Stable];
-            if ((ProfileList == NULL) || (ProfileList->MaxProfileCount < ProfileCount)) {
+            if ((ProfileList == NULL) || (ProfileList->MaxProfileCount < ProfileCount))
+            {
                 //
                 // Allocate a larger ProfileList
                 //
-                ProfileList = (SystemHive->Allocate)(sizeof(CM_HARDWARE_PROFILE_LIST)
-                                                     + (ProfileCount-1) * sizeof(CM_HARDWARE_PROFILE),
-                                                     FALSE
-                                                     ,CM_FIND_LEAK_TAG5);
-                if (ProfileList == NULL) {
-                    return(HCELL_NIL);
+                ProfileList = (SystemHive->Allocate)(sizeof(CM_HARDWARE_PROFILE_LIST) +
+                                                         (ProfileCount - 1) * sizeof(CM_HARDWARE_PROFILE),
+                                                     FALSE, CM_FIND_LEAK_TAG5);
+                if (ProfileList == NULL)
+                {
+                    return (HCELL_NIL);
                 }
                 ProfileList->MaxProfileCount = ProfileCount;
             }
@@ -2042,7 +1997,8 @@ Return Value:
             //
             // Enumerate the keys and fill in the profile list.
             //
-            for (i=0; i<ProfileCount; i++) {
+            for (i = 0; i < ProfileCount; i++)
+            {
                 CM_HARDWARE_PROFILE TempProfile;
                 HCELL_INDEX ValueCell;
                 PCM_KEY_VALUE ValueNode;
@@ -2050,7 +2006,8 @@ Return Value:
                 ULONG realsize;
 
                 HWCell = CmpFindSubKeyByNumber(SystemHive, ProfileNode, i);
-                if (HWCell == HCELL_NIL) {
+                if (HWCell == HCELL_NIL)
+                {
                     //
                     // This should never happen.
                     //
@@ -2058,26 +2015,27 @@ Return Value:
                     break;
                 }
                 HWNode = (PCM_KEY_NODE)HvGetCell(SystemHive, HWCell);
-                if( HWNode == NULL ) {
+                if (HWNode == NULL)
+                {
                     //
                     // we couldn't map a view for the bin containing this cell
                     //
 
                     return HCELL_NIL;
                 }
-                if (HWNode->Flags & KEY_COMP_NAME) {
-                    KeyName.Length = CmpCompressedNameSize(HWNode->Name,
-                                                           HWNode->NameLength);
+                if (HWNode->Flags & KEY_COMP_NAME)
+                {
+                    KeyName.Length = CmpCompressedNameSize(HWNode->Name, HWNode->NameLength);
                     KeyName.MaximumLength = sizeof(NameBuf);
-                    if (KeyName.MaximumLength < KeyName.Length) {
+                    if (KeyName.MaximumLength < KeyName.Length)
+                    {
                         KeyName.Length = KeyName.MaximumLength;
                     }
                     KeyName.Buffer = NameBuf;
-                    CmpCopyCompressedName(KeyName.Buffer,
-                                          KeyName.Length,
-                                          HWNode->Name,
-                                          HWNode->NameLength);
-                } else {
+                    CmpCopyCompressedName(KeyName.Buffer, KeyName.Length, HWNode->Name, HWNode->NameLength);
+                }
+                else
+                {
                     KeyName.Length = KeyName.MaximumLength = HWNode->NameLength;
                     KeyName.Buffer = HWNode->Name;
                 }
@@ -2088,14 +2046,16 @@ Return Value:
                 //
                 RtlUnicodeStringToInteger(&KeyName, 0, &TempProfile.Id);
                 RtlInitUnicodeString(&Name, CM_HARDWARE_PROFILE_STR_PREFERENCE_ORDER);
-                ValueCell = CmpFindValueByName(SystemHive,
-                                               HWNode,
-                                               &Name);
-                if (ValueCell == HCELL_NIL) {
+                ValueCell = CmpFindValueByName(SystemHive, HWNode, &Name);
+                if (ValueCell == HCELL_NIL)
+                {
                     TempProfile.PreferenceOrder = (ULONG)-1;
-                } else {
+                }
+                else
+                {
                     ValueNode = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                    if( ValueNode == NULL ) {
+                    if (ValueNode == NULL)
+                    {
                         //
                         // we couldn't map a view for the bin containing this cell
                         //
@@ -2103,10 +2063,9 @@ Return Value:
                         return HCELL_NIL;
                     }
 
-                    TempULong = (PULONG)CmpValueToData(SystemHive,
-                                                      ValueNode,
-                                                      &realsize);
-                    if( TempULong == NULL ) {
+                    TempULong = (PULONG)CmpValueToData(SystemHive, ValueNode, &realsize);
+                    if (TempULong == NULL)
+                    {
                         //
                         // HvGetCell inside CmpValueToData failed; bail out safely
                         //
@@ -2115,25 +2074,26 @@ Return Value:
                     TempProfile.PreferenceOrder = *TempULong;
                 }
                 RtlInitUnicodeString(&Name, CM_HARDWARE_PROFILE_STR_FRIENDLY_NAME);
-                ValueCell = CmpFindValueByName(SystemHive,
-                                               HWNode,
-                                               &Name);
-                if (ValueCell == HCELL_NIL) {
+                ValueCell = CmpFindValueByName(SystemHive, HWNode, &Name);
+                if (ValueCell == HCELL_NIL)
+                {
                     TempProfile.FriendlyName = L"-------";
                     TempProfile.NameLength = wcslen(TempProfile.FriendlyName) * sizeof(WCHAR);
-                } else {
+                }
+                else
+                {
                     ValueNode = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                    if( ValueNode == NULL ) {
+                    if (ValueNode == NULL)
+                    {
                         //
                         // we couldn't map a view for the bin containing this cell
                         //
 
                         return HCELL_NIL;
                     }
-                    TempProfile.FriendlyName = (PWSTR)CmpValueToData(SystemHive,
-                                                                     ValueNode,
-                                                                     &realsize);
-                    if( TempProfile.FriendlyName == NULL ) {
+                    TempProfile.FriendlyName = (PWSTR)CmpValueToData(SystemHive, ValueNode, &realsize);
+                    if (TempProfile.FriendlyName == NULL)
+                    {
                         //
                         // HvGetCell inside CmpValueToData failed; bail out safely
                         //
@@ -2145,14 +2105,16 @@ Return Value:
                 TempProfile.Flags = 0;
 
                 RtlInitUnicodeString(&Name, CM_HARDWARE_PROFILE_STR_ALIASABLE);
-                ValueCell = CmpFindValueByName(SystemHive,
-                                               HWNode,
-                                               &Name);
-                if (ValueCell == HCELL_NIL) {
+                ValueCell = CmpFindValueByName(SystemHive, HWNode, &Name);
+                if (ValueCell == HCELL_NIL)
+                {
                     TempProfile.Flags = CM_HP_FLAGS_ALIASABLE;
-                } else {
+                }
+                else
+                {
                     ValueNode = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                    if( ValueNode == NULL ) {
+                    if (ValueNode == NULL)
+                    {
                         //
                         // we couldn't map a view for the bin containing this cell
                         //
@@ -2160,27 +2122,29 @@ Return Value:
                         return HCELL_NIL;
                     }
 
-                    TempULong = (PULONG)CmpValueToData (SystemHive,ValueNode,&realsize);
-                    if( TempULong == NULL ) {
+                    TempULong = (PULONG)CmpValueToData(SystemHive, ValueNode, &realsize);
+                    if (TempULong == NULL)
+                    {
                         //
                         // HvGetCell inside CmpValueToData failed; bail out safely
                         //
                         return HCELL_NIL;
                     }
-                    if (*TempULong) {
+                    if (*TempULong)
+                    {
                         TempProfile.Flags = CM_HP_FLAGS_ALIASABLE;
                         // NO other flags set.
                     }
                 }
 
                 RtlInitUnicodeString(&Name, CM_HARDWARE_PROFILE_STR_PRISTINE);
-                ValueCell = CmpFindValueByName(SystemHive,
-                                               HWNode,
-                                               &Name);
-                if (ValueCell != HCELL_NIL) {
+                ValueCell = CmpFindValueByName(SystemHive, HWNode, &Name);
+                if (ValueCell != HCELL_NIL)
+                {
 
                     ValueNode = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                    if( ValueNode == NULL ) {
+                    if (ValueNode == NULL)
+                    {
                         //
                         // we couldn't map a view for the bin containing this cell
                         //
@@ -2188,14 +2152,16 @@ Return Value:
                         return HCELL_NIL;
                     }
 
-                    TempULong = (PULONG)CmpValueToData (SystemHive,ValueNode,&realsize);
-                    if( TempULong == NULL ) {
+                    TempULong = (PULONG)CmpValueToData(SystemHive, ValueNode, &realsize);
+                    if (TempULong == NULL)
+                    {
                         //
                         // HvGetCell inside CmpValueToData failed; bail out safely
                         //
                         return HCELL_NIL;
                     }
-                    if (*TempULong) {
+                    if (*TempULong)
+                    {
                         TempProfile.Flags = CM_HP_FLAGS_PRISTINE;
                         // NO other flags set.
                     }
@@ -2206,7 +2172,8 @@ Return Value:
                 // ID for a hardware profile to possess, then we know that this
                 // must be a pristine profile.
                 //
-                if (0 == TempProfile.Id) {
+                if (0 == TempProfile.Id)
+                {
                     TempProfile.Flags = CM_HP_FLAGS_PRISTINE;
                     // NO other flags set.
 
@@ -2218,14 +2185,15 @@ Return Value:
                 // Insert this new profile into the appropriate spot in the
                 // profile array. Entries are sorted by preference order.
                 //
-                for (j=0; j<ProfileList->CurrentProfileCount; j++) {
-                    if (ProfileList->Profile[j].PreferenceOrder >= TempProfile.PreferenceOrder) {
+                for (j = 0; j < ProfileList->CurrentProfileCount; j++)
+                {
+                    if (ProfileList->Profile[j].PreferenceOrder >= TempProfile.PreferenceOrder)
+                    {
                         //
                         // Insert at position j.
                         //
-                        RtlMoveMemory(&ProfileList->Profile[j+1],
-                                      &ProfileList->Profile[j],
-                                      sizeof(CM_HARDWARE_PROFILE)*(ProfileList->MaxProfileCount-j-1));
+                        RtlMoveMemory(&ProfileList->Profile[j + 1], &ProfileList->Profile[j],
+                                      sizeof(CM_HARDWARE_PROFILE) * (ProfileList->MaxProfileCount - j - 1));
                         break;
                     }
                 }
@@ -2236,7 +2204,8 @@ Return Value:
         *ReturnedProfileList = ProfileList;
     }
 
-    if (ARGUMENT_PRESENT(ReturnedAliasList)) {
+    if (ARGUMENT_PRESENT(ReturnedAliasList))
+    {
         AliasList = *ReturnedAliasList;
         //
         // Enumerate the keys under IDConfigDB\Alias
@@ -2245,17 +2214,20 @@ Return Value:
         // table.
         //
         RtlInitUnicodeString(&Name, L"Alias");
-        AliasCell = CmpFindSubKeyByName(SystemHive,
-                                        ConfigDBNode,
-                                        &Name);
-        if (AliasCell == HCELL_NIL) {
+        AliasCell = CmpFindSubKeyByName(SystemHive, ConfigDBNode, &Name);
+        if (AliasCell == HCELL_NIL)
+        {
             AliasCount = 0;
-            if (AliasList != NULL) {
+            if (AliasList != NULL)
+            {
                 AliasList->CurrentAliasCount = 0;
             }
-        } else {
+        }
+        else
+        {
             AliasNode = (PCM_KEY_NODE)HvGetCell(SystemHive, AliasCell);
-            if( AliasNode == NULL ) {
+            if (AliasNode == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
@@ -2263,16 +2235,17 @@ Return Value:
                 return HCELL_NIL;
             }
             AliasCount = AliasNode->SubKeyCounts[Stable];
-            if ((AliasList == NULL) || (AliasList->MaxAliasCount < AliasCount)) {
+            if ((AliasList == NULL) || (AliasList->MaxAliasCount < AliasCount))
+            {
                 //
                 // Allocate a larger AliasList
                 //
-                AliasList = (SystemHive->Allocate)(sizeof(CM_HARDWARE_PROFILE_LIST)
-                                                   + (AliasCount-1) * sizeof(CM_HARDWARE_PROFILE),
-                                                   FALSE
-                                                   ,CM_FIND_LEAK_TAG6);
-                if (AliasList == NULL) {
-                    return(HCELL_NIL);
+                AliasList = (SystemHive->Allocate)(sizeof(CM_HARDWARE_PROFILE_LIST) +
+                                                       (AliasCount - 1) * sizeof(CM_HARDWARE_PROFILE),
+                                                   FALSE, CM_FIND_LEAK_TAG6);
+                if (AliasList == NULL)
+                {
+                    return (HCELL_NIL);
                 }
                 AliasList->MaxAliasCount = AliasCount;
             }
@@ -2281,7 +2254,8 @@ Return Value:
             //
             // Enumerate the keys and fill in the profile list.
             //
-            for (i=0; i<AliasCount; i++) {
+            for (i = 0; i < AliasCount; i++)
+            {
 #define TempAlias AliasList->Alias[i]
                 HCELL_INDEX ValueCell;
                 PCM_KEY_VALUE ValueNode;
@@ -2289,7 +2263,8 @@ Return Value:
                 ULONG realsize;
 
                 HWCell = CmpFindSubKeyByNumber(SystemHive, AliasNode, i);
-                if (HWCell == HCELL_NIL) {
+                if (HWCell == HCELL_NIL)
+                {
                     //
                     // This should never happen.
                     //
@@ -2297,26 +2272,27 @@ Return Value:
                     break;
                 }
                 HWNode = (PCM_KEY_NODE)HvGetCell(SystemHive, HWCell);
-                if( HWNode == NULL ) {
+                if (HWNode == NULL)
+                {
                     //
                     // we couldn't map a view for the bin containing this cell
                     //
 
                     return HCELL_NIL;
                 }
-                if (HWNode->Flags & KEY_COMP_NAME) {
-                    KeyName.Length = CmpCompressedNameSize(HWNode->Name,
-                                                           HWNode->NameLength);
+                if (HWNode->Flags & KEY_COMP_NAME)
+                {
+                    KeyName.Length = CmpCompressedNameSize(HWNode->Name, HWNode->NameLength);
                     KeyName.MaximumLength = sizeof(NameBuf);
-                    if (KeyName.MaximumLength < KeyName.Length) {
+                    if (KeyName.MaximumLength < KeyName.Length)
+                    {
                         KeyName.Length = KeyName.MaximumLength;
                     }
                     KeyName.Buffer = NameBuf;
-                    CmpCopyCompressedName(KeyName.Buffer,
-                                          KeyName.Length,
-                                          HWNode->Name,
-                                          HWNode->NameLength);
-                } else {
+                    CmpCopyCompressedName(KeyName.Buffer, KeyName.Length, HWNode->Name, HWNode->NameLength);
+                }
+                else
+                {
                     KeyName.Length = KeyName.MaximumLength = HWNode->NameLength;
                     KeyName.Buffer = HWNode->Name;
                 }
@@ -2326,14 +2302,16 @@ Return Value:
                 // profile's data.
                 //
                 RtlInitUnicodeString(&Name, L"ProfileNumber");
-                ValueCell = CmpFindValueByName(SystemHive,
-                                               HWNode,
-                                               &Name);
-                if (ValueCell == HCELL_NIL) {
+                ValueCell = CmpFindValueByName(SystemHive, HWNode, &Name);
+                if (ValueCell == HCELL_NIL)
+                {
                     TempAlias.ProfileNumber = 0;
-                } else {
+                }
+                else
+                {
                     ValueNode = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                    if( ValueNode == NULL ) {
+                    if (ValueNode == NULL)
+                    {
                         //
                         // we couldn't map a view for the bin containing this cell
                         //
@@ -2341,8 +2319,9 @@ Return Value:
                         return HCELL_NIL;
                     }
 
-                    TempULong = (PULONG)CmpValueToData(SystemHive,ValueNode,&realsize);
-                    if( TempULong == NULL ) {
+                    TempULong = (PULONG)CmpValueToData(SystemHive, ValueNode, &realsize);
+                    if (TempULong == NULL)
+                    {
                         //
                         // HvGetCell inside CmpValueToData failed; bail out safely
                         //
@@ -2351,14 +2330,16 @@ Return Value:
                     TempAlias.ProfileNumber = *TempULong;
                 }
                 RtlInitUnicodeString(&Name, L"DockState");
-                ValueCell = CmpFindValueByName(SystemHive,
-                                               HWNode,
-                                               &Name);
-                if (ValueCell == HCELL_NIL) {
+                ValueCell = CmpFindValueByName(SystemHive, HWNode, &Name);
+                if (ValueCell == HCELL_NIL)
+                {
                     TempAlias.DockState = 0;
-                } else {
+                }
+                else
+                {
                     ValueNode = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                    if( ValueNode == NULL ) {
+                    if (ValueNode == NULL)
+                    {
                         //
                         // we couldn't map a view for the bin containing this cell
                         //
@@ -2366,8 +2347,9 @@ Return Value:
                         return HCELL_NIL;
                     }
 
-                    TempULong = (PULONG)CmpValueToData(SystemHive,ValueNode,&realsize);
-                    if( TempULong == NULL ) {
+                    TempULong = (PULONG)CmpValueToData(SystemHive, ValueNode, &realsize);
+                    if (TempULong == NULL)
+                    {
                         //
                         // HvGetCell inside CmpValueToData failed; bail out safely
                         //
@@ -2376,14 +2358,16 @@ Return Value:
                     TempAlias.DockState = *TempULong;
                 }
                 RtlInitUnicodeString(&Name, L"DockID");
-                ValueCell = CmpFindValueByName(SystemHive,
-                                               HWNode,
-                                               &Name);
-                if (ValueCell == HCELL_NIL) {
+                ValueCell = CmpFindValueByName(SystemHive, HWNode, &Name);
+                if (ValueCell == HCELL_NIL)
+                {
                     TempAlias.DockID = 0;
-                } else {
+                }
+                else
+                {
                     ValueNode = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                    if( ValueNode == NULL ) {
+                    if (ValueNode == NULL)
+                    {
                         //
                         // we couldn't map a view for the bin containing this cell
                         //
@@ -2391,8 +2375,9 @@ Return Value:
                         return HCELL_NIL;
                     }
 
-                    TempULong = (PULONG)CmpValueToData(SystemHive,ValueNode,&realsize);
-                    if( TempULong == NULL ) {
+                    TempULong = (PULONG)CmpValueToData(SystemHive, ValueNode, &realsize);
+                    if (TempULong == NULL)
+                    {
                         //
                         // HvGetCell inside CmpValueToData failed; bail out safely
                         //
@@ -2401,14 +2386,16 @@ Return Value:
                     TempAlias.DockID = *TempULong;
                 }
                 RtlInitUnicodeString(&Name, L"SerialNumber");
-                ValueCell = CmpFindValueByName(SystemHive,
-                                               HWNode,
-                                               &Name);
-                if (ValueCell == HCELL_NIL) {
+                ValueCell = CmpFindValueByName(SystemHive, HWNode, &Name);
+                if (ValueCell == HCELL_NIL)
+                {
                     TempAlias.SerialNumber = 0;
-                } else {
+                }
+                else
+                {
                     ValueNode = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                    if( ValueNode == NULL ) {
+                    if (ValueNode == NULL)
+                    {
                         //
                         // we couldn't map a view for the bin containing this cell
                         //
@@ -2416,8 +2403,9 @@ Return Value:
                         return HCELL_NIL;
                     }
 
-                    TempULong = (PULONG)CmpValueToData(SystemHive,ValueNode,&realsize);
-                    if( TempULong == NULL ) {
+                    TempULong = (PULONG)CmpValueToData(SystemHive, ValueNode, &realsize);
+                    if (TempULong == NULL)
+                    {
                         //
                         // HvGetCell inside CmpValueToData failed; bail out safely
                         //
@@ -2432,17 +2420,12 @@ Return Value:
         *ReturnedAliasList = AliasList;
     }
 
-    return(IDConfigDB);
+    return (IDConfigDB);
 }
 
-
+
 ULONG
-CmpFindTagIndex(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX TagCell,
-    IN HCELL_INDEX GroupOrderCell,
-    IN PUNICODE_STRING GroupName
-    )
+CmpFindTagIndex(IN PHHIVE Hive, IN HCELL_INDEX TagCell, IN HCELL_INDEX GroupOrderCell, IN PUNICODE_STRING GroupName)
 
 /*++
 
@@ -2484,15 +2467,16 @@ Return Value:
     ULONG CurrentTag;
     ULONG realsize;
     PCM_KEY_NODE Node;
-    BOOLEAN     BufferAllocated;
+    BOOLEAN BufferAllocated;
 
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
 
     DriverTagValue = (PCM_KEY_VALUE)HvGetCell(Hive, TagCell);
-    if( DriverTagValue == NULL ) {
+    if (DriverTagValue == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2501,80 +2485,82 @@ Return Value:
     }
 
     DriverTag = (PULONG)CmpValueToData(Hive, DriverTagValue, &realsize);
-    if( DriverTag == NULL ) {
+    if (DriverTag == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
         return LOAD_NEXT_TO_LAST;
     }
 
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,GroupOrderCell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, GroupOrderCell);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return LOAD_NEXT_TO_LAST;
     }
-    OrderCell = CmpFindValueByName(Hive,
-                                   Node,
-                                   GroupName);
-    if (OrderCell == HCELL_NIL) {
-        return(LOAD_NEXT_TO_LAST);
+    OrderCell = CmpFindValueByName(Hive, Node, GroupName);
+    if (OrderCell == HCELL_NIL)
+    {
+        return (LOAD_NEXT_TO_LAST);
     }
 
     TagValue = (PCM_KEY_VALUE)HvGetCell(Hive, OrderCell);
-    if( TagValue == NULL ) {
+    if (TagValue == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return LOAD_NEXT_TO_LAST;
     }
-    CmpGetValueData(Hive,TagValue,&realsize,&OrderVector,&BufferAllocated,&OrderCell);
+    CmpGetValueData(Hive, TagValue, &realsize, &OrderVector, &BufferAllocated, &OrderCell);
     //OrderVector = (PULONG)CmpValueToData(Hive, TagValue,&realsize);
-    if( OrderVector == NULL ) {
+    if (OrderVector == NULL)
+    {
         //
         // HvGetCell inside CmpValueToData failed; bail out safely
         //
         return LOAD_NEXT_TO_LAST;
     }
 
-    for (CurrentTag=1; CurrentTag <= OrderVector[0]; CurrentTag++) {
-        if (OrderVector[CurrentTag] == *DriverTag) {
+    for (CurrentTag = 1; CurrentTag <= OrderVector[0]; CurrentTag++)
+    {
+        if (OrderVector[CurrentTag] == *DriverTag)
+        {
             //
             // We have found a matching tag in the OrderVector, so return
             // its index.
             //
 #ifndef _CM_LDR_
-            if( BufferAllocated ) {
-                ExFreePool( OrderVector );
+            if (BufferAllocated)
+            {
+                ExFreePool(OrderVector);
             }
 #endif //_CM_LDR_
-            return(CurrentTag);
+            return (CurrentTag);
         }
     }
 
 #ifndef _CM_LDR_
-    if( BufferAllocated ) {
-        ExFreePool( OrderVector );
+    if (BufferAllocated)
+    {
+        ExFreePool(OrderVector);
     }
 #endif //_CM_LDR_
     //
     // There was no matching tag in the OrderVector.
     //
-    return(LOAD_NEXT_TO_LAST);
-
+    return (LOAD_NEXT_TO_LAST);
 }
 
 #ifdef _WANT_MACHINE_IDENTIFICATION
 
 BOOLEAN
-CmpGetBiosDateFromRegistry(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    OUT PUNICODE_STRING Date
-    )
+CmpGetBiosDateFromRegistry(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, OUT PUNICODE_STRING Date)
 
 /*++
 
@@ -2597,23 +2583,24 @@ Return Value:
 --*/
 
 {
-    UNICODE_STRING  name;
-    HCELL_INDEX     control;
-    HCELL_INDEX     biosInfo;
-    HCELL_INDEX     valueCell;
-    PCM_KEY_VALUE   value;
-    ULONG           realSize;
-    PCM_KEY_NODE    Node;
+    UNICODE_STRING name;
+    HCELL_INDEX control;
+    HCELL_INDEX biosInfo;
+    HCELL_INDEX valueCell;
+    PCM_KEY_VALUE value;
+    ULONG realSize;
+    PCM_KEY_NODE Node;
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
 
     //
     // Find CONTROL node
     //
     Node = (PCM_KEY_NODE)HvGetCell(Hive, ControlSet);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2621,19 +2608,19 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&name, L"Control");
-    control = CmpFindSubKeyByName(  Hive,
-                                    Node,
-                                    &name);
-    if (control == HCELL_NIL) {
+    control = CmpFindSubKeyByName(Hive, Node, &name);
+    if (control == HCELL_NIL)
+    {
 
-        return(FALSE);
+        return (FALSE);
     }
 
     //
     // Find BIOSINFO node
     //
     Node = (PCM_KEY_NODE)HvGetCell(Hive, control);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2641,19 +2628,19 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&name, L"BIOSINFO");
-    biosInfo = CmpFindSubKeyByName( Hive,
-                                    Node,
-                                    &name);
-    if (biosInfo == HCELL_NIL) {
+    biosInfo = CmpFindSubKeyByName(Hive, Node, &name);
+    if (biosInfo == HCELL_NIL)
+    {
 
-        return(FALSE);
+        return (FALSE);
     }
 
     //
     // Find SystemBiosDate value
     //
     Node = (PCM_KEY_NODE)HvGetCell(Hive, biosInfo);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2661,16 +2648,16 @@ Return Value:
         return FALSE;
     }
     RtlInitUnicodeString(&name, L"SystemBiosDate");
-    valueCell = CmpFindValueByName( Hive,
-                                    Node,
-                                    &name);
-    if (valueCell == HCELL_NIL) {
+    valueCell = CmpFindValueByName(Hive, Node, &name);
+    if (valueCell == HCELL_NIL)
+    {
 
-        return(FALSE);
+        return (FALSE);
     }
 
     value = (PCM_KEY_VALUE)HvGetCell(Hive, valueCell);
-    if( value == NULL ) {
+    if (value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2678,17 +2665,18 @@ Return Value:
         return FALSE;
     }
     Date->Buffer = (PWSTR)CmpValueToData(Hive, value, &realSize);
-    if( Date->Buffer == NULL ) {
+    if (Date->Buffer == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    Date->MaximumLength=(USHORT)realSize;
+    Date->MaximumLength = (USHORT)realSize;
     Date->Length = 0;
-    while ( (Date->Length < Date->MaximumLength) &&
-            (Date->Buffer[Date->Length/sizeof(WCHAR)] != UNICODE_NULL)) {
+    while ((Date->Length < Date->MaximumLength) && (Date->Buffer[Date->Length / sizeof(WCHAR)] != UNICODE_NULL))
+    {
 
         Date->Length += sizeof(WCHAR);
     }
@@ -2697,29 +2685,26 @@ Return Value:
 }
 
 BOOLEAN
-CmpGetBiosinfoFileNameFromRegistry(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    OUT PUNICODE_STRING InfName
-    )
+CmpGetBiosinfoFileNameFromRegistry(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, OUT PUNICODE_STRING InfName)
 {
-    UNICODE_STRING  name;
-    HCELL_INDEX     control;
-    HCELL_INDEX     biosInfo;
-    HCELL_INDEX     valueCell;
-    PCM_KEY_VALUE   value;
-    ULONG           realSize;
-    PCM_KEY_NODE    Node;
+    UNICODE_STRING name;
+    HCELL_INDEX control;
+    HCELL_INDEX biosInfo;
+    HCELL_INDEX valueCell;
+    PCM_KEY_VALUE value;
+    ULONG realSize;
+    PCM_KEY_NODE Node;
 
     //
     // no mapped hives at this point. don't bother releasing cells
     //
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
     //
     // Find CONTROL node
     //
     Node = (PCM_KEY_NODE)HvGetCell(Hive, ControlSet);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2727,19 +2712,19 @@ CmpGetBiosinfoFileNameFromRegistry(
         return FALSE;
     }
     RtlInitUnicodeString(&name, L"Control");
-    control = CmpFindSubKeyByName(  Hive,
-                                    Node,
-                                    &name);
-    if (control == HCELL_NIL) {
+    control = CmpFindSubKeyByName(Hive, Node, &name);
+    if (control == HCELL_NIL)
+    {
 
-        return(FALSE);
+        return (FALSE);
     }
 
     //
     // Find BIOSINFO node
     //
     Node = (PCM_KEY_NODE)HvGetCell(Hive, control);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2747,19 +2732,19 @@ CmpGetBiosinfoFileNameFromRegistry(
         return FALSE;
     }
     RtlInitUnicodeString(&name, L"BIOSINFO");
-    biosInfo = CmpFindSubKeyByName( Hive,
-                                    Node,
-                                    &name);
-    if (biosInfo == HCELL_NIL) {
+    biosInfo = CmpFindSubKeyByName(Hive, Node, &name);
+    if (biosInfo == HCELL_NIL)
+    {
 
-        return(FALSE);
+        return (FALSE);
     }
 
     //
     // Find InfName value
     //
     Node = (PCM_KEY_NODE)HvGetCell(Hive, biosInfo);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2767,16 +2752,16 @@ CmpGetBiosinfoFileNameFromRegistry(
         return FALSE;
     }
     RtlInitUnicodeString(&name, L"InfName");
-    valueCell = CmpFindValueByName( Hive,
-                                    Node,
-                                    &name);
-    if (valueCell == HCELL_NIL) {
+    valueCell = CmpFindValueByName(Hive, Node, &name);
+    if (valueCell == HCELL_NIL)
+    {
 
-        return(FALSE);
+        return (FALSE);
     }
 
     value = (PCM_KEY_VALUE)HvGetCell(Hive, valueCell);
-    if( value == NULL ) {
+    if (value == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2784,17 +2769,19 @@ CmpGetBiosinfoFileNameFromRegistry(
         return FALSE;
     }
     InfName->Buffer = (PWSTR)CmpValueToData(Hive, value, &realSize);
-    if( InfName->Buffer == NULL ) {
+    if (InfName->Buffer == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return FALSE;
     }
-    InfName->MaximumLength=(USHORT)realSize;
+    InfName->MaximumLength = (USHORT)realSize;
     InfName->Length = 0;
-    while ( (InfName->Length < InfName->MaximumLength) &&
-            (InfName->Buffer[InfName->Length/sizeof(WCHAR)] != UNICODE_NULL)) {
+    while ((InfName->Length < InfName->MaximumLength) &&
+           (InfName->Buffer[InfName->Length / sizeof(WCHAR)] != UNICODE_NULL))
+    {
 
         InfName->Length += sizeof(WCHAR);
     }

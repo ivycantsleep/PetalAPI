@@ -25,18 +25,13 @@ Revision History:
 #include "ki.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, KeUserModeCallback)
+#pragma alloc_text(PAGE, KeUserModeCallback)
 #endif
 
-
+
 NTSTATUS
-KeUserModeCallback (
-    IN ULONG ApiNumber,
-    IN PVOID InputBuffer,
-    IN ULONG InputLength,
-    OUT PVOID *OutputBuffer,
-    IN PULONG OutputLength
-    )
+KeUserModeCallback(IN ULONG ApiNumber, IN PVOID InputBuffer, IN ULONG InputLength, OUT PVOID *OutputBuffer,
+                   IN PULONG OutputLength)
 
 /*++
 
@@ -90,14 +85,15 @@ Return Value:
 
     UserStack = KiGetUserModeStackAddress();
     OldStack = *UserStack;
-    try {
+    try
+    {
 
         //
         // Compute new user mode stack address, probe for writability,
         // and copy the input buffer to the user stack.
         //
 
-        Length =  (InputLength + sizeof(CHAR) - 1) & ~(sizeof(CHAR) - 1);
+        Length = (InputLength + sizeof(CHAR) - 1) & ~(sizeof(CHAR) - 1);
         NewStack = OldStack - Length;
         ProbeForWrite((PCHAR)(NewStack - 16), Length + 16, sizeof(CHAR));
         RtlCopyMemory((PVOID)NewStack, InputBuffer, Length);
@@ -133,13 +129,14 @@ Return Value:
 
         Teb->NtTib.ExceptionList = ExceptionList;
 
-    //
-    // If an exception occurs during the probe of the user stack, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the user stack, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -151,13 +148,17 @@ Return Value:
 
     GdiBatchCount = 1;
 
-    try {
+    try
+    {
         GdiBatchCount = Teb->GdiBatchCount;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         NOTHING;
     }
 
-    if (GdiBatchCount > 0) {
+    if (GdiBatchCount > 0)
+    {
 
         //
         // call GDI batch flush routine

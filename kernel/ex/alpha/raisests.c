@@ -28,25 +28,16 @@ Revision History:
 --*/
 
 #include "exp.h"
-
+
 //
 // Define private function prototypes.
 //
 
-VOID
-ExpRaiseException (
-    IN PEXCEPTION_RECORD ExceptionRecord
-    );
+VOID ExpRaiseException(IN PEXCEPTION_RECORD ExceptionRecord);
 
-VOID
-ExpRaiseStatus (
-    IN NTSTATUS ExceptionCode
-    );
-
-VOID
-ExRaiseException (
-    IN PEXCEPTION_RECORD ExceptionRecord
-    )
+VOID ExpRaiseStatus(IN NTSTATUS ExceptionCode);
+
+VOID ExRaiseException(IN PEXCEPTION_RECORD ExceptionRecord)
 
 /*++
 
@@ -73,18 +64,14 @@ Return Value:
 {
 
 #ifdef DBGtvb
-    DbgPrint("ExRaiseException(ExceptionRecord = %lx) Status = %lx\n",
-             ExceptionRecord, ExceptionRecord->ExceptionCode);
+    DbgPrint("ExRaiseException(ExceptionRecord = %lx) Status = %lx\n", ExceptionRecord, ExceptionRecord->ExceptionCode);
 );
 #endif
-    ExpRaiseException(ExceptionRecord);
-    return;
+ExpRaiseException(ExceptionRecord);
+return;
 }
-
-VOID
-ExpRaiseException (
-    IN PEXCEPTION_RECORD ExceptionRecord
-    )
+
+VOID ExpRaiseException(IN PEXCEPTION_RECORD ExceptionRecord)
 
 /*++
 
@@ -122,12 +109,7 @@ Return Value:
     RtlCaptureContext(&ContextRecord);
     ControlPc = (ULONG_PTR)ContextRecord.IntRa - 4;
     FunctionEntry = RtlLookupFunctionEntry(ControlPc);
-    NextPc = RtlVirtualUnwind(ControlPc,
-                              FunctionEntry,
-                              &ContextRecord,
-                              &InFunction,
-                              &EstablisherFrame,
-                              NULL);
+    NextPc = RtlVirtualUnwind(ControlPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame, NULL);
 
     ContextRecord.Fir = (ULONGLONG)(LONG_PTR)NextPc + 4;
     ExceptionRecord->ExceptionAddress = (PVOID)ContextRecord.Fir;
@@ -137,10 +119,12 @@ Return Value:
     // Otherwise, give the kernel debugger a chance to handle the exception.
     //
 
-    if (RtlDispatchException(ExceptionRecord, &ContextRecord)) {
+    if (RtlDispatchException(ExceptionRecord, &ContextRecord))
+    {
         Status = ZwContinue(&ContextRecord, FALSE);
-
-    } else {
+    }
+    else
+    {
         Status = ZwRaiseException(ExceptionRecord, &ContextRecord, FALSE);
     }
 
@@ -152,11 +136,8 @@ Return Value:
 
     ExRaiseStatus(Status);
 }
-
-VOID
-ExRaiseStatus (
-    IN NTSTATUS ExceptionCode
-    )
+
+VOID ExRaiseStatus(IN NTSTATUS ExceptionCode)
 
 /*++
 
@@ -191,11 +172,8 @@ Return Value:
     ExpRaiseStatus(ExceptionCode);
     return;
 }
-
-VOID
-ExpRaiseStatus (
-    IN NTSTATUS ExceptionCode
-    )
+
+VOID ExpRaiseStatus(IN NTSTATUS ExceptionCode)
 
 /*++
 
@@ -246,12 +224,7 @@ Return Value:
     RtlCaptureContext(&ContextRecord);
     ControlPc = (ULONG_PTR)ContextRecord.IntRa - 4;
     FunctionEntry = RtlLookupFunctionEntry(ControlPc);
-    NextPc = RtlVirtualUnwind(ControlPc,
-                              FunctionEntry,
-                              &ContextRecord,
-                              &InFunction,
-                              &EstablisherFrame,
-                              NULL);
+    NextPc = RtlVirtualUnwind(ControlPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame, NULL);
 
     ContextRecord.Fir = (ULONGLONG)(LONG_PTR)NextPc + 4;
     ExceptionRecord.ExceptionAddress = (PVOID)ContextRecord.Fir;

@@ -33,17 +33,9 @@ Revision History:
 // Forward declarations.
 //
 
-VOID
-MemPrintWriteCompleteApc (
-    IN PVOID ApcContext,
-    IN PIO_STATUS_BLOCK IoStatusBlock,
-    IN ULONG Reserved
-    );
+VOID MemPrintWriteCompleteApc(IN PVOID ApcContext, IN PIO_STATUS_BLOCK IoStatusBlock, IN ULONG Reserved);
 
-VOID
-MemPrintWriteThread (
-    IN PVOID Dummy
-    );
+VOID MemPrintWriteThread(IN PVOID Dummy);
 
 
 //
@@ -59,14 +51,15 @@ MemPrintWriteThread (
 
 #define MEM_PRINT_SUBBUFFER_SIZE (MemPrintBufferSize / MemPrintSubbufferCount)
 
-#define GET_MEM_PRINT_SUBBUFFER(i) ((CSHORT)( (i) / MEM_PRINT_SUBBUFFER_SIZE ))
+#define GET_MEM_PRINT_SUBBUFFER(i) ((CSHORT)((i) / MEM_PRINT_SUBBUFFER_SIZE))
 
 //
 // The definition of the header put before each message if the
 // MEM_PRINT_FLAG_HEADER bit of MemPrintFlags is turned on.
 //
 
-typedef struct _MEM_PRINT_MESSAGE_HEADER {
+typedef struct _MEM_PRINT_MESSAGE_HEADER
+{
     USHORT Size;
     USHORT Type;
 } MEM_PRINT_MESSAGE_HEADER, *PMEM_PRINT_MESSAGE_HEADER;
@@ -119,11 +112,8 @@ BOOLEAN MemPrintSubbufferWriting[MEM_PRINT_MAX_SUBBUFFER_COUNT];
 
 KEVENT MemPrintSubbufferFullEvent[MEM_PRINT_MAX_SUBBUFFER_COUNT];
 
-
-VOID
-MemPrintInitialize (
-    VOID
-    )
+
+VOID MemPrintInitialize(VOID)
 
 /*++
 
@@ -148,7 +138,8 @@ Return Value:
     NTSTATUS status;
     HANDLE threadHandle;
 
-    if ( MemPrintInitialized ) {
+    if (MemPrintInitialized)
+    {
         return;
     }
 
@@ -158,24 +149,28 @@ Return Value:
     // half as large.  If that fails, quit trying.
     //
 
-    MemPrintBuffer = ExAllocatePoolWithTag( NonPagedPool, MemPrintBufferSize, 'rPeM' );
+    MemPrintBuffer = ExAllocatePoolWithTag(NonPagedPool, MemPrintBufferSize, 'rPeM');
 
-    if ( MemPrintBuffer == NULL ) {
+    if (MemPrintBuffer == NULL)
+    {
 
         MemPrintBufferSize /= 2;
-        DbgPrint( "Unable to allocate DbgPrint buffer--trying size = %ld\n",
-                      MemPrintBufferSize );
-        MemPrintBuffer = ExAllocatePoolWithTag( NonPagedPool, MemPrintBufferSize, 'rPeM' );
+        DbgPrint("Unable to allocate DbgPrint buffer--trying size = %ld\n", MemPrintBufferSize);
+        MemPrintBuffer = ExAllocatePoolWithTag(NonPagedPool, MemPrintBufferSize, 'rPeM');
 
-        if ( MemPrintBuffer == NULL ) {
-            DbgPrint( "Couldn't allocate DbgPrint buffer.\n" );
+        if (MemPrintBuffer == NULL)
+        {
+            DbgPrint("Couldn't allocate DbgPrint buffer.\n");
             return;
-        } else {
+        }
+        else
+        {
             //DbgPrint( "MemPrint buffer from %lx to %lx\n",
             //            MemPrintBuffer, MemPrintBuffer + MemPrintBufferSize );
         }
-
-    } else {
+    }
+    else
+    {
         //DbgPrint( "MemPrint buffer from %lx to %lx\n",
         //              MemPrintBuffer, MemPrintBuffer + MemPrintBufferSize );
     }
@@ -186,16 +181,19 @@ Return Value:
     // buffer.
     //
 
-    KeInitializeSpinLock( &MemPrintSpinLock );
+    KeInitializeSpinLock(&MemPrintSpinLock);
 
     //
     // Make sure that the subbuffer count is in range.  (We assume that
     // the number is a power of 2.)
     //
 
-    if ( MemPrintSubbufferCount < 2 ) {
+    if (MemPrintSubbufferCount < 2)
+    {
         MemPrintSubbufferCount = 2;
-    } else if ( MemPrintSubbufferCount > MEM_PRINT_MAX_SUBBUFFER_COUNT ) {
+    }
+    else if (MemPrintSubbufferCount > MEM_PRINT_MAX_SUBBUFFER_COUNT)
+    {
         MemPrintSubbufferCount = MEM_PRINT_MAX_SUBBUFFER_COUNT;
     }
 
@@ -208,13 +206,10 @@ Return Value:
     // ready to be written to disk.
     //
 
-    for ( i = 0; i < MemPrintSubbufferCount; i++ ) {
+    for (i = 0; i < MemPrintSubbufferCount; i++)
+    {
         MemPrintSubbufferWriting[i] = FALSE;
-        KeInitializeEvent(
-            &MemPrintSubbufferFullEvent[i],
-            SynchronizationEvent,
-            FALSE
-            );
+        KeInitializeEvent(&MemPrintSubbufferFullEvent[i], SynchronizationEvent, FALSE);
     }
 
     //
@@ -222,34 +217,24 @@ Return Value:
     // buffer to disk.
     //
 
-    status = PsCreateSystemThread(
-                &threadHandle,
-                PROCESS_ALL_ACCESS,
-                NULL,
-                NtCurrentProcess(),
-                NULL,
-                MemPrintWriteThread,
-                NULL
-                );
+    status = PsCreateSystemThread(&threadHandle, PROCESS_ALL_ACCESS, NULL, NtCurrentProcess(), NULL,
+                                  MemPrintWriteThread, NULL);
 
-    if ( !NT_SUCCESS(status) ) {
-        DbgPrint( "MemPrintInitialize: PsCreateSystemThread failed: %X\n",
-                      status );
+    if (!NT_SUCCESS(status))
+    {
+        DbgPrint("MemPrintInitialize: PsCreateSystemThread failed: %X\n", status);
         return;
     }
 
     MemPrintInitialized = TRUE;
-    ZwClose( threadHandle );
+    ZwClose(threadHandle);
 
     return;
 
 } // MemPrintInitialize
 
-
-VOID
-MemPrint (
-    CHAR *Format, ...
-    )
+
+VOID MemPrint(CHAR *Format, ...)
 
 /*++
 
@@ -278,7 +263,7 @@ Return Value:
     CHAR tempBuffer[MEM_PRINT_MAX_MESSAGE_SIZE];
 
     va_start(arglist, Format);
-    _vsnprintf( tempBuffer, sizeof( tempBuffer ), Format, arglist );
+    _vsnprintf(tempBuffer, sizeof(tempBuffer), Format, arglist);
     va_end(arglist);
 
     //
@@ -286,9 +271,10 @@ Return Value:
     // console.
     //
 
-    if ( !MemPrintInitialized ) {
+    if (!MemPrintInitialized)
+    {
 
-        DbgPrint( "%s", tempBuffer );
+        DbgPrint("%s", tempBuffer);
         return;
     }
 
@@ -297,7 +283,7 @@ Return Value:
     // and circular buffer.
     //
 
-    KeAcquireSpinLock( &MemPrintSpinLock, &oldIrql );
+    KeAcquireSpinLock(&MemPrintSpinLock, &oldIrql);
 
     //
     // Make sure that the request will fit.  xx_sprintf will just dump
@@ -306,10 +292,10 @@ Return Value:
     // the request.
     //
 
-    nextSubbuffer =
-        GET_MEM_PRINT_SUBBUFFER( MemPrintIndex + MEM_PRINT_MAX_MESSAGE_SIZE );
+    nextSubbuffer = GET_MEM_PRINT_SUBBUFFER(MemPrintIndex + MEM_PRINT_MAX_MESSAGE_SIZE);
 
-    if (  nextSubbuffer != MemPrintCurrentSubbuffer ) {
+    if (nextSubbuffer != MemPrintCurrentSubbuffer)
+    {
 
         //
         // The request will go to a new subbuffer.  Check if we should
@@ -317,7 +303,8 @@ Return Value:
         // buffer).
         //
 
-        if ( nextSubbuffer == MemPrintSubbufferCount ) {
+        if (nextSubbuffer == MemPrintSubbufferCount)
+        {
             nextSubbuffer = 0;
         }
 
@@ -325,15 +312,16 @@ Return Value:
         // Is that subbuffer available for use?
         //
 
-        if ( MemPrintSubbufferWriting[nextSubbuffer] ) {
+        if (MemPrintSubbufferWriting[nextSubbuffer])
+        {
 
             //
             // It is in use.  Print to the console.  Oh well.
             //
 
-            KeReleaseSpinLock( &MemPrintSpinLock, oldIrql );
+            KeReleaseSpinLock(&MemPrintSpinLock, oldIrql);
 
-            DbgPrint( "%s", tempBuffer );
+            DbgPrint("%s", tempBuffer);
 
             return;
         }
@@ -350,31 +338,24 @@ Return Value:
         // enhancing write performance.
         //
 
-        if ( nextSubbuffer == 0 ) {
+        if (nextSubbuffer == 0)
+        {
 
             //
             // Set up the message header.  This always gets done at the
             // end of the circular buffer, regardless of the flags bit.
             //
 
-            messageHeader =
-                (PMEM_PRINT_MESSAGE_HEADER)&MemPrintBuffer[MemPrintIndex];
-            RtlStoreUshort(
-                &messageHeader->Size,
-                (USHORT)(MemPrintBufferSize - MemPrintIndex - 1)
-                );
-            RtlStoreUshort(
-                &messageHeader->Type,
-                (USHORT)0xffff
-                );
+            messageHeader = (PMEM_PRINT_MESSAGE_HEADER)&MemPrintBuffer[MemPrintIndex];
+            RtlStoreUshort(&messageHeader->Size, (USHORT)(MemPrintBufferSize - MemPrintIndex - 1));
+            RtlStoreUshort(&messageHeader->Type, (USHORT)0xffff);
 
             //
             // Zero out the rest of the subbuffer.
             //
 
-            for ( MemPrintIndex += sizeof(MEM_PRINT_MESSAGE_HEADER);
-                  MemPrintIndex < MemPrintBufferSize;
-                  MemPrintIndex++ ) {
+            for (MemPrintIndex += sizeof(MEM_PRINT_MESSAGE_HEADER); MemPrintIndex < MemPrintBufferSize; MemPrintIndex++)
+            {
 
                 MemPrintBuffer[MemPrintIndex] = 0;
             }
@@ -395,7 +376,8 @@ Return Value:
 
     messageHeader = (PMEM_PRINT_MESSAGE_HEADER)&MemPrintBuffer[MemPrintIndex];
 
-    if ( MemPrintFlags & MEM_PRINT_FLAG_HEADER ) {
+    if (MemPrintFlags & MEM_PRINT_FLAG_HEADER)
+    {
         MemPrintIndex += sizeof(MEM_PRINT_MESSAGE_HEADER);
     }
 
@@ -404,11 +386,10 @@ Return Value:
     // version of sprintf that takes a variable argument list.
     //
 
-    ASSERT( MemPrintIndex + MEM_PRINT_MAX_MESSAGE_SIZE -
-                sizeof(MEM_PRINT_MESSAGE_HEADER) <= MemPrintBufferSize );
+    ASSERT(MemPrintIndex + MEM_PRINT_MAX_MESSAGE_SIZE - sizeof(MEM_PRINT_MESSAGE_HEADER) <= MemPrintBufferSize);
 
 
-    RtlCopyMemory( &MemPrintBuffer[MemPrintIndex], tempBuffer, strlen(tempBuffer)+1 );
+    RtlCopyMemory(&MemPrintBuffer[MemPrintIndex], tempBuffer, strlen(tempBuffer) + 1);
 
     MemPrintIndex += strlen(tempBuffer);
 
@@ -416,9 +397,9 @@ Return Value:
     // Write the total message size to the message header.
     //
 
-    if ( MemPrintFlags & MEM_PRINT_FLAG_HEADER ) {
-        messageHeader->Size =
-            (USHORT)( &MemPrintBuffer[MemPrintIndex] - (PCHAR)messageHeader );
+    if (MemPrintFlags & MEM_PRINT_FLAG_HEADER)
+    {
+        messageHeader->Size = (USHORT)(&MemPrintBuffer[MemPrintIndex] - (PCHAR)messageHeader);
         messageHeader->Type = (USHORT)0xdead;
         messageHeader++;
     }
@@ -429,28 +410,30 @@ Return Value:
     // the console and breakpoint.
     //
 
-    if ( &MemPrintBuffer[MemPrintIndex] - (PCHAR)messageHeader >
-                                                MEM_PRINT_MAX_MESSAGE_SIZE ) {
-        DbgPrint( "Message too long!! :\n" );
-        DbgPrint( "%s", messageHeader );
-        DbgBreakPoint( );
+    if (&MemPrintBuffer[MemPrintIndex] - (PCHAR)messageHeader > MEM_PRINT_MAX_MESSAGE_SIZE)
+    {
+        DbgPrint("Message too long!! :\n");
+        DbgPrint("%s", messageHeader);
+        DbgBreakPoint();
     }
 
     //
     // Print to the console if the appropriate flag is on.
     //
 
-    if ( MemPrintFlags & MEM_PRINT_FLAG_CONSOLE ) {
-        DbgPrint( "%s", messageHeader );
+    if (MemPrintFlags & MEM_PRINT_FLAG_CONSOLE)
+    {
+        DbgPrint("%s", messageHeader);
     }
 
     //
     // Calculate whether we have stepped into a new subbuffer.
     //
 
-    nextSubbuffer = GET_MEM_PRINT_SUBBUFFER( MemPrintIndex );
+    nextSubbuffer = GET_MEM_PRINT_SUBBUFFER(MemPrintIndex);
 
-    if ( nextSubbuffer != MemPrintCurrentSubbuffer ) {
+    if (nextSubbuffer != MemPrintCurrentSubbuffer)
+    {
 
         //DbgPrint( "Subbuffer %ld complete.\n", MemPrintCurrentSubbuffer );
 
@@ -468,11 +451,7 @@ Return Value:
         // to disk.
         //
 
-        KeSetEvent(
-            &MemPrintSubbufferFullEvent[MemPrintCurrentSubbuffer],
-            2,
-            FALSE
-            );
+        KeSetEvent(&MemPrintSubbufferFullEvent[MemPrintCurrentSubbuffer], 2, FALSE);
 
         //
         // Update the current subbuffer.
@@ -481,17 +460,14 @@ Return Value:
         MemPrintCurrentSubbuffer = nextSubbuffer;
     }
 
-    KeReleaseSpinLock( &MemPrintSpinLock, oldIrql );
+    KeReleaseSpinLock(&MemPrintSpinLock, oldIrql);
 
     return;
 
 } // MemPrint
 
-
-VOID
-MemPrintFlush (
-    VOID
-    )
+
+VOID MemPrintFlush(VOID)
 
 /*++
 
@@ -521,34 +497,30 @@ Return Value:
     // Acquire the spin lock that protects memory DbgPrint variables.
     //
 
-    KeAcquireSpinLock( &MemPrintSpinLock, &oldIrql );
+    KeAcquireSpinLock(&MemPrintSpinLock, &oldIrql);
 
-    DbgPrint( "Flushing subbuffer %ld\n", MemPrintCurrentSubbuffer );
+    DbgPrint("Flushing subbuffer %ld\n", MemPrintCurrentSubbuffer);
 
     //
     // Set up the header that indicates that unused space follows.
     //
 
-    messageHeader =
-        (PMEM_PRINT_MESSAGE_HEADER)&MemPrintBuffer[MemPrintIndex];
-    messageHeader->Size =
-        (USHORT)(MemPrintBufferSize - MemPrintIndex - 1);
+    messageHeader = (PMEM_PRINT_MESSAGE_HEADER)&MemPrintBuffer[MemPrintIndex];
+    messageHeader->Size = (USHORT)(MemPrintBufferSize - MemPrintIndex - 1);
     messageHeader->Type = (USHORT)0xffff;
 
     //
     // Determine where the next subbuffer starts.
     //
 
-    nextSubbufferIndex =
-        (MemPrintCurrentSubbuffer + 1) * MEM_PRINT_SUBBUFFER_SIZE;
+    nextSubbufferIndex = (MemPrintCurrentSubbuffer + 1) * MEM_PRINT_SUBBUFFER_SIZE;
 
     //
     // Zero out the rest of the subbuffer.
     //
 
-    for ( MemPrintIndex += sizeof(MEM_PRINT_MESSAGE_HEADER);
-          MemPrintIndex < nextSubbufferIndex;
-          MemPrintIndex++ ) {
+    for (MemPrintIndex += sizeof(MEM_PRINT_MESSAGE_HEADER); MemPrintIndex < nextSubbufferIndex; MemPrintIndex++)
+    {
 
         MemPrintBuffer[MemPrintIndex] = 0;
     }
@@ -559,11 +531,7 @@ Return Value:
 
     MemPrintSubbufferWriting[MemPrintCurrentSubbuffer] = TRUE;
 
-    KeSetEvent(
-        &MemPrintSubbufferFullEvent[MemPrintCurrentSubbuffer],
-        8,
-        FALSE
-        );
+    KeSetEvent(&MemPrintSubbufferFullEvent[MemPrintCurrentSubbuffer], 8, FALSE);
 
     //
     // Increment the current subbuffer so that it corresponds with the
@@ -572,7 +540,7 @@ Return Value:
 
     MemPrintCurrentSubbuffer++;
 
-    KeReleaseSpinLock( &MemPrintSpinLock, oldIrql );
+    KeReleaseSpinLock(&MemPrintSpinLock, oldIrql);
 
     //
     // Delay so that the memory print write thread wakes up and performs
@@ -583,21 +551,18 @@ Return Value:
     //     is really done.
     //
 
-    delayInterval.QuadPart = -10*10*1000*1000;
+    delayInterval.QuadPart = -10 * 10 * 1000 * 1000;
 
-    DbgPrint( "Delaying...\n" );
-    KeDelayExecutionThread( KernelMode, TRUE, &delayInterval );
-    DbgPrint( "Woke up.\n" );
+    DbgPrint("Delaying...\n");
+    KeDelayExecutionThread(KernelMode, TRUE, &delayInterval);
+    DbgPrint("Woke up.\n");
 
     return;
 
 } // MemPrintFlush
 
-
-VOID
-MemPrintWriteThread (
-    IN PVOID Dummy
-    )
+
+VOID MemPrintWriteThread(IN PVOID Dummy)
 
 /*++
 
@@ -652,19 +617,14 @@ Return Value:
     // attributes structure that will describe the log file to open.
     //
 
-    RtlInitAnsiString( &fileNameString, fileName );
-    status = RtlAnsiStringToUnicodeString(&UnicodeFileName,&fileNameString,TRUE);
-    if ( !NT_SUCCESS(status) ) {
-        NtTerminateThread( NtCurrentThread(), status );
+    RtlInitAnsiString(&fileNameString, fileName);
+    status = RtlAnsiStringToUnicodeString(&UnicodeFileName, &fileNameString, TRUE);
+    if (!NT_SUCCESS(status))
+    {
+        NtTerminateThread(NtCurrentThread(), status);
     }
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &UnicodeFileName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &UnicodeFileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
     // Set the allocation size of the log file to be three times the
@@ -684,35 +644,27 @@ Return Value:
     //     fixed.
     //
 
-    while ( TRUE ) {
+    while (TRUE)
+    {
 
-        status = NtCreateFile(
-                     &fileHandle,
-                     FILE_WRITE_DATA,
-                     &objectAttributes,
-                     &localIoStatusBlock,
-                     &fileAllocation,
-                     FILE_ATTRIBUTE_NORMAL,
-                     FILE_SHARE_READ,
-                     FILE_OVERWRITE_IF,
-                     FILE_SEQUENTIAL_ONLY,
-                     NULL,
-                     0L
-                     );
+        status =
+            NtCreateFile(&fileHandle, FILE_WRITE_DATA, &objectAttributes, &localIoStatusBlock, &fileAllocation,
+                         FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_OVERWRITE_IF, FILE_SEQUENTIAL_ONLY, NULL, 0L);
 
-        if ( (status != STATUS_OBJECT_PATH_NOT_FOUND) || (++attempts >= 3) ) {
+        if ((status != STATUS_OBJECT_PATH_NOT_FOUND) || (++attempts >= 3))
+        {
             RtlFreeUnicodeString(&UnicodeFileName);
             break;
         }
 
-        delayInterval.QuadPart = -5*10*1000*1000;    // five second delay
-        KeDelayExecutionThread( KernelMode, FALSE, &delayInterval );
-
+        delayInterval.QuadPart = -5 * 10 * 1000 * 1000; // five second delay
+        KeDelayExecutionThread(KernelMode, FALSE, &delayInterval);
     }
 
-    if ( !NT_SUCCESS(status) ) {
-        DbgPrint( "NtCreateFile for log file failed: %X\n", status );
-        NtTerminateThread( NtCurrentThread(), status );
+    if (!NT_SUCCESS(status))
+    {
+        DbgPrint("NtCreateFile for log file failed: %X\n", status);
+        NtTerminateThread(NtCurrentThread(), status);
     }
 
     //
@@ -728,7 +680,8 @@ Return Value:
     // Set up the wait objects array for a call to KeWaitForMultipleObjects.
     //
 
-    for ( i = 0; i < MemPrintSubbufferCount; i++ ) {
+    for (i = 0; i < MemPrintSubbufferCount; i++)
+    {
         waitObjects[i] = &MemPrintSubbufferFullEvent[i];
     }
 
@@ -738,15 +691,12 @@ Return Value:
 
     threadPriorityLevel = LOW_REALTIME_PRIORITY + 1;
 
-    status = NtSetInformationThread(
-                NtCurrentThread(),
-                ThreadPriority,
-                &threadPriorityLevel,
-                sizeof(threadPriorityLevel)
-                );
+    status =
+        NtSetInformationThread(NtCurrentThread(), ThreadPriority, &threadPriorityLevel, sizeof(threadPriorityLevel));
 
-    if ( !NT_SUCCESS(status) ) {
-        DbgPrint( "Unable to set error log thread priority: %X\n", status );
+    if (!NT_SUCCESS(status))
+    {
+        DbgPrint("Unable to set error log thread priority: %X\n", status);
     }
 
     //
@@ -755,40 +705,35 @@ Return Value:
     // file.
     //
 
-    while ( TRUE ) {
+    while (TRUE)
+    {
 
-        waitStatus = KeWaitForMultipleObjects(
-                         (CCHAR)MemPrintSubbufferCount,
-                         waitObjects,
-                         WaitAny,
-                         Executive,
-                         KernelMode,
-                         TRUE,
-                         NULL,
-                         waitBlockArray
-                         );
+        waitStatus = KeWaitForMultipleObjects((CCHAR)MemPrintSubbufferCount, waitObjects, WaitAny, Executive,
+                                              KernelMode, TRUE, NULL, waitBlockArray);
 
-        if ( !NT_SUCCESS(waitStatus) ) {
-            DbgPrint( "KeWaitForMultipleObjects failed: %X\n", waitStatus );
-            NtTerminateThread( NtCurrentThread(), waitStatus );
+        if (!NT_SUCCESS(waitStatus))
+        {
+            DbgPrint("KeWaitForMultipleObjects failed: %X\n", waitStatus);
+            NtTerminateThread(NtCurrentThread(), waitStatus);
         } //else {
-            //DbgPrint( "Writing subbuffer %ld...\n", waitStatus );
+        //DbgPrint( "Writing subbuffer %ld...\n", waitStatus );
         //}
 
-        ASSERT( (CCHAR)waitStatus < (CCHAR)MemPrintSubbufferCount );
+        ASSERT((CCHAR)waitStatus < (CCHAR)MemPrintSubbufferCount);
 
         //
         // Check the DbgPrint flags to see if we really want to write
         // this.
         //
 
-        if ( (MemPrintFlags & MEM_PRINT_FLAG_FILE) == 0 ) {
+        if ((MemPrintFlags & MEM_PRINT_FLAG_FILE) == 0)
+        {
 
             KIRQL oldIrql;
 
-            KeAcquireSpinLock( &MemPrintSpinLock, &oldIrql );
-            MemPrintSubbufferWriting[ waitStatus ] = FALSE;
-            KeReleaseSpinLock( &MemPrintSpinLock, oldIrql );
+            KeAcquireSpinLock(&MemPrintSpinLock, &oldIrql);
+            MemPrintSubbufferWriting[waitStatus] = FALSE;
+            KeReleaseSpinLock(&MemPrintSpinLock, oldIrql);
 
             continue;
         }
@@ -799,20 +744,13 @@ Return Value:
         // the MemPrintSubbufferWriting boolean.
         //
 
-        status = NtWriteFile(
-                     fileHandle,
-                     NULL,
-                     MemPrintWriteCompleteApc,
-                     (PVOID)waitStatus,
-                     &ioStatusBlock[waitStatus],
-                     &MemPrintBuffer[waitStatus * MEM_PRINT_SUBBUFFER_SIZE],
-                     MEM_PRINT_SUBBUFFER_SIZE,
-                     &totalBytesWritten,
-                     NULL
-                     );
+        status = NtWriteFile(fileHandle, NULL, MemPrintWriteCompleteApc, (PVOID)waitStatus, &ioStatusBlock[waitStatus],
+                             &MemPrintBuffer[waitStatus * MEM_PRINT_SUBBUFFER_SIZE], MEM_PRINT_SUBBUFFER_SIZE,
+                             &totalBytesWritten, NULL);
 
-        if ( !NT_SUCCESS(status) ) {
-            DbgPrint( "NtWriteFile for log file failed: %X\n", status );
+        if (!NT_SUCCESS(status))
+        {
+            DbgPrint("NtWriteFile for log file failed: %X\n", status);
         }
 
         //
@@ -829,26 +767,20 @@ Return Value:
         // file comes in.
         //
 
-        if ( totalBytesWritten.QuadPart >= fileAllocation.QuadPart ) {
+        if (totalBytesWritten.QuadPart >= fileAllocation.QuadPart)
+        {
 
-            fileAllocation.QuadPart =
-                        fileAllocation.QuadPart + fileAllocationIncrement.QuadPart;
+            fileAllocation.QuadPart = fileAllocation.QuadPart + fileAllocationIncrement.QuadPart;
 
-            DbgPrint( "Enlarging log file to %ld bytes.\n",
-                          fileAllocation.LowPart );
+            DbgPrint("Enlarging log file to %ld bytes.\n", fileAllocation.LowPart);
 
-            status = NtSetInformationFile(
-                         fileHandle,
-                         &localIoStatusBlock,
-                         &fileAllocation,
-                         sizeof(fileAllocation),
-                         FileAllocationInformation
-                         );
+            status = NtSetInformationFile(fileHandle, &localIoStatusBlock, &fileAllocation, sizeof(fileAllocation),
+                                          FileAllocationInformation);
 
-            if ( !NT_SUCCESS(status) ) {
-                DbgPrint( "Attempt to extend log file failed: %X\n", status );
-                fileAllocation.QuadPart =
-                        fileAllocation.QuadPart - fileAllocationIncrement.QuadPart;
+            if (!NT_SUCCESS(status))
+            {
+                DbgPrint("Attempt to extend log file failed: %X\n", status);
+                fileAllocation.QuadPart = fileAllocation.QuadPart - fileAllocationIncrement.QuadPart;
             }
         }
     }
@@ -857,13 +789,8 @@ Return Value:
 
 } // MemPrintWriteThread
 
-
-VOID
-MemPrintWriteCompleteApc (
-    IN PVOID ApcContext,
-    IN PIO_STATUS_BLOCK IoStatusBlock,
-    IN ULONG Reserved
-    )
+
+VOID MemPrintWriteCompleteApc(IN PVOID ApcContext, IN PIO_STATUS_BLOCK IoStatusBlock, IN ULONG Reserved)
 
 /*++
 
@@ -891,14 +818,14 @@ Return Value:
 {
     KIRQL oldIrql;
 
-    if ( !NT_SUCCESS(IoStatusBlock->Status) ) {
-        DbgPrint( "NtWriteFile for subbuffer %ld failed: %X\n",
-                      ApcContext, IoStatusBlock->Status );
+    if (!NT_SUCCESS(IoStatusBlock->Status))
+    {
+        DbgPrint("NtWriteFile for subbuffer %ld failed: %X\n", ApcContext, IoStatusBlock->Status);
         return;
     }
 
     //DbgPrint( "Write complete for subbuffer %ld.\n", ApcContext );
-    DbgPrint( "." );
+    DbgPrint(".");
 
     //
     // Acquire the spin lock that protects memory print global variables
@@ -906,9 +833,9 @@ Return Value:
     // threads can write to the subbuffer if necessary.
     //
 
-    KeAcquireSpinLock( &MemPrintSpinLock, &oldIrql );
-    MemPrintSubbufferWriting[ (ULONG_PTR)ApcContext ] = FALSE;
-    KeReleaseSpinLock( &MemPrintSpinLock, oldIrql );
+    KeAcquireSpinLock(&MemPrintSpinLock, &oldIrql);
+    MemPrintSubbufferWriting[(ULONG_PTR)ApcContext] = FALSE;
+    KeReleaseSpinLock(&MemPrintSpinLock, oldIrql);
 
     return;
 

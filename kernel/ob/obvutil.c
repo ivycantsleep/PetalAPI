@@ -35,10 +35,7 @@ Revision History:
 #pragma alloc_text(PAGEVRFY, ObvUtilStopObRefMonitoring)
 #endif
 
-LONG
-ObvUtilStartObRefMonitoring(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+LONG ObvUtilStartObRefMonitoring(IN PDEVICE_OBJECT DeviceObject)
 /*++
 
   Description:
@@ -62,37 +59,34 @@ ObvUtilStartObRefMonitoring(
 #if DBG
     POBJECT_HEADER ObjectHeader;
     POBJECT_HEADER_NAME_INFO NameInfo;
-    LONG startSkew, pointerCount ;
+    LONG startSkew, pointerCount;
 
-    ObReferenceObject(DeviceObject) ;
+    ObReferenceObject(DeviceObject);
 
     ObjectHeader = OBJECT_TO_OBJECT_HEADER(DeviceObject);
-    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-    ASSERT(NameInfo) ;
+    ASSERT(NameInfo);
     //
     // We will always decrement DbgDereferenceCount prior to PointerCount,
     // so any race conditions will look like an increment occured, which
     // is an allowable misread...
     //
-    do {
-        pointerCount = ObjectHeader->PointerCount ;
-        startSkew = pointerCount - NameInfo->DbgDereferenceCount ;
+    do
+    {
+        pointerCount = ObjectHeader->PointerCount;
+        startSkew = pointerCount - NameInfo->DbgDereferenceCount;
 
-    } while(pointerCount != ObjectHeader->PointerCount) ;
+    } while (pointerCount != ObjectHeader->PointerCount);
 
-    return startSkew ;
+    return startSkew;
 #else
     return 1;
 #endif
 }
 
 
-LONG
-ObvUtilStopObRefMonitoring(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN LONG             StartSkew
-    )
+LONG ObvUtilStopObRefMonitoring(IN PDEVICE_OBJECT DeviceObject, IN LONG StartSkew)
 /*++
 
   Description:
@@ -119,34 +113,32 @@ ObvUtilStopObRefMonitoring(
 #if DBG
     POBJECT_HEADER ObjectHeader;
     POBJECT_HEADER_NAME_INFO NameInfo;
-    LONG currentSkew, refDelta, pointerCount ;
+    LONG currentSkew, refDelta, pointerCount;
 
     ObjectHeader = OBJECT_TO_OBJECT_HEADER(DeviceObject);
-    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-    ASSERT(NameInfo) ;
+    ASSERT(NameInfo);
 
     //
     // We will always decrement DbgDereferenceCount prior to PointerCount,
     // so any race conditions will look like an increment occured, which
     // is an allowable misread...
     //
-    do {
-        pointerCount = ObjectHeader->PointerCount ;
-        currentSkew = pointerCount - NameInfo->DbgDereferenceCount ;
+    do
+    {
+        pointerCount = ObjectHeader->PointerCount;
+        currentSkew = pointerCount - NameInfo->DbgDereferenceCount;
 
-    } while(pointerCount != ObjectHeader->PointerCount) ;
+    } while (pointerCount != ObjectHeader->PointerCount);
 
-    refDelta = currentSkew - StartSkew ;
-    ASSERT(refDelta>=0) ;
+    refDelta = currentSkew - StartSkew;
+    ASSERT(refDelta >= 0);
 
-    ObDereferenceObject(DeviceObject) ;
+    ObDereferenceObject(DeviceObject);
 
-    return refDelta ;
+    return refDelta;
 #else
     return 1;
 #endif
 }
-
-
-

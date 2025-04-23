@@ -25,9 +25,4 @@ Revision History:
 
 --*/
 
-VOID
-FASTCALL
-VfStackSeedStack(
-    IN  ULONG   Seed
-    );
-
+VOID FASTCALL VfStackSeedStack(IN ULONG Seed);

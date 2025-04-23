@@ -24,13 +24,7 @@ Environment:
 
 #include "pch.h"
 
-VOID
-SleepQueueDpc(
-    PKDPC   Dpc,
-    PVOID   Context,
-    PVOID   Argument1,
-    PVOID   Argument2
-    )
+VOID SleepQueueDpc(PKDPC Dpc, PVOID Context, PVOID Argument1, PVOID Argument2)
 /*++
 
 Routine Description:
@@ -49,16 +43,16 @@ Return Value:
     VOID
 --*/
 {
-    LARGE_INTEGER   currentTime;
-    LARGE_INTEGER   dueTime;
-    LIST_ENTRY      localList;
-    PLIST_ENTRY     listEntry;
-    PSLEEP          sleepItem;
+    LARGE_INTEGER currentTime;
+    LARGE_INTEGER dueTime;
+    LIST_ENTRY localList;
+    PLIST_ENTRY listEntry;
+    PSLEEP sleepItem;
 
-    UNREFERENCED_PARAMETER( Dpc );
-    UNREFERENCED_PARAMETER( Context );
-    UNREFERENCED_PARAMETER( Argument1 );
-    UNREFERENCED_PARAMETER( Argument2 );
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(Context);
+    UNREFERENCED_PARAMETER(Argument1);
+    UNREFERENCED_PARAMETER(Argument2);
 
     //
     // Initialize the local list. Contrary to what the docs say, this code
@@ -82,7 +76,8 @@ Return Value:
     //
     // Loop until we are done
     //
-    while (!IsListEmpty(&SleepQueue)) {
+    while (!IsListEmpty(&SleepQueue))
+    {
 
         //
         // Obtain the first element in the global list again
@@ -92,20 +87,15 @@ Return Value:
         //
         // Should the current item be removed?
         //
-        if (sleepItem->SleepTime.QuadPart > currentTime.QuadPart) {
+        if (sleepItem->SleepTime.QuadPart > currentTime.QuadPart)
+        {
 
             //
             // No, so we need to set the timer to take care of this request
             //
-            dueTime.QuadPart = currentTime.QuadPart -
-                               sleepItem->SleepTime.QuadPart;
-            KeSetTimer(
-                &SleepTimer,
-                dueTime,
-                &SleepDpc
-                );
+            dueTime.QuadPart = currentTime.QuadPart - sleepItem->SleepTime.QuadPart;
+            KeSetTimer(&SleepTimer, dueTime, &SleepDpc);
             break;
-
         }
 
         //
@@ -117,7 +107,6 @@ Return Value:
         // Now, add the entry to the next queue
         //
         InsertTailList(&localList, listEntry);
-
     }
 
     //
@@ -129,7 +118,8 @@ Return Value:
     // At this point, we are free to remove items from the local list and
     // try to do work on them.
     //
-    while (!IsListEmpty(&localList)) {
+    while (!IsListEmpty(&localList))
+    {
 
         //
         // Remove the first element from the local list
@@ -141,24 +131,19 @@ Return Value:
         // Force the interpreter to run
         //
 
-        RestartContext(sleepItem->Context,
-                       (BOOLEAN)((sleepItem->Context->dwfCtxt & CTXTF_ASYNC_EVAL)
-                                 == 0));
+        RestartContext(sleepItem->Context, (BOOLEAN)((sleepItem->Context->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
     }
 }
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
 
-
+
 NTSTATUS
 LOCAL
-SleepQueueRequest(
-    IN  PCTXT   Context,
-    IN  ULONG   SleepTime
-    )
+SleepQueueRequest(IN PCTXT Context, IN ULONG SleepTime)
 /*++
 
 Routine Description:
@@ -178,24 +163,20 @@ Rreturn Value:
 --*/
 {
     TRACENAME("SLEEPQUEUEREQUEST")
-    BOOLEAN         timerSet = FALSE;
-    NTSTATUS        status;
-    PLIST_ENTRY     listEntry;
-    PSLEEP          currentSleep;
-    PSLEEP          listSleep;
-    ULONGLONG       currentTime;
-    LARGE_INTEGER   dueTime;
+    BOOLEAN timerSet = FALSE;
+    NTSTATUS status;
+    PLIST_ENTRY listEntry;
+    PSLEEP currentSleep;
+    PSLEEP listSleep;
+    ULONGLONG currentTime;
+    LARGE_INTEGER dueTime;
 
-    ENTER(2, ("SleepQueueRequest(Context=%x,SleepTime=%d)\n",
-        Context, SleepTime) );
+    ENTER(2, ("SleepQueueRequest(Context=%x,SleepTime=%d)\n", Context, SleepTime));
 
-    status = PushFrame(Context,
-                       SIG_SLEEP,
-                       sizeof(SLEEP),
-                       ProcessSleep,
-                       &currentSleep);
+    status = PushFrame(Context, SIG_SLEEP, sizeof(SLEEP), ProcessSleep, &currentSleep);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // The first step is acquire the timer lock, since we must protect it
         //
@@ -206,31 +187,28 @@ Rreturn Value:
         // context
         //
         currentTime = KeQueryInterruptTime();
-        currentSleep->SleepTime.QuadPart = currentTime +
-                                           ((ULONGLONG)SleepTime*10000);
+        currentSleep->SleepTime.QuadPart = currentTime + ((ULONGLONG)SleepTime * 10000);
         currentSleep->Context = Context;
 
         //
         // At this point, it becomes easier to walk the list backwards
         //
         listEntry = &SleepQueue;
-        while (listEntry->Blink != &SleepQueue) {
+        while (listEntry->Blink != &SleepQueue)
+        {
 
             listSleep = CONTAINING_RECORD(listEntry->Blink, SLEEP, ListEntry);
 
             //
             // Do we have to add the new element after the current one?
             //
-            if (currentSleep->SleepTime.QuadPart >=
-                listSleep->SleepTime.QuadPart) {
+            if (currentSleep->SleepTime.QuadPart >= listSleep->SleepTime.QuadPart)
+            {
 
                 //
                 // Yes
                 //
-                InsertHeadList(
-                    &(listSleep->ListEntry),
-                    &(currentSleep->ListEntry)
-                    );
+                InsertHeadList(&(listSleep->ListEntry), &(currentSleep->ListEntry));
 
                 break;
             }
@@ -244,7 +222,8 @@ Rreturn Value:
         //
         // Look to see if we got to the head
         //
-        if (listEntry->Blink == &SleepQueue) {
+        if (listEntry->Blink == &SleepQueue)
+        {
 
             //
             // If we get to this point, it is because we have
@@ -253,11 +232,7 @@ Rreturn Value:
             //
             InsertHeadList(&SleepQueue, &currentSleep->ListEntry);
             dueTime.QuadPart = currentTime - currentSleep->SleepTime.QuadPart;
-            timerSet = KeSetTimer(
-                &SleepTimer,
-                dueTime,
-                &SleepDpc
-                );
+            timerSet = KeSetTimer(&SleepTimer, dueTime, &SleepDpc);
         }
         //
         // Done with the lock
@@ -265,12 +240,10 @@ Rreturn Value:
         ReleaseMutex(&gmutSleep);
     }
 
-    EXIT(2, ("SleepQueueReqest=%x (currentSleep=%x timerSet=%x)\n",
-        status, currentSleep, timerSet) );
+    EXIT(2, ("SleepQueueReqest=%x (currentSleep=%x timerSet=%x)\n", status, currentSleep, timerSet));
     return status;
-
 }
-
+
 /***LP  ProcessSleep - post processing of sleep
  *
  *  ENTRY
@@ -288,8 +261,7 @@ NTSTATUS LOCAL ProcessSleep(PCTXT pctxt, PSLEEP psleep, NTSTATUS rc)
 {
     TRACENAME("PROCESSSLEEP")
 
-    ENTER(2, ("ProcessSleep(pctxt=%x,pbOp=%x,psleep=%x,rc=%x)\n",
-              pctxt, pctxt->pbOp, psleep, rc));
+    ENTER(2, ("ProcessSleep(pctxt=%x,pbOp=%x,psleep=%x,rc=%x)\n", pctxt, pctxt->pbOp, psleep, rc));
 
     ASSERT(psleep->FrameHdr.dwSig == SIG_SLEEP);
 
@@ -297,4 +269,4 @@ NTSTATUS LOCAL ProcessSleep(PCTXT pctxt, PSLEEP psleep, NTSTATUS rc)
 
     EXIT(2, ("ProcessSleep=%x\n", rc));
     return rc;
-}       //ProcessSleep
+} //ProcessSleep

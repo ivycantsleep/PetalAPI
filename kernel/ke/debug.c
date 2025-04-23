@@ -24,21 +24,21 @@ Revision History:
 
 #include "ki.h"
 
-#define IDBG    1
+#define IDBG 1
 
 
-#define FrozenState(a)  (a & 0xF)
+#define FrozenState(a) (a & 0xF)
 
 // state
-#define RUNNING                 0x00
-#define TARGET_FROZEN           0x02
-#define TARGET_THAW             0x03
-#define FREEZE_OWNER            0x04
+#define RUNNING 0x00
+#define TARGET_FROZEN 0x02
+#define TARGET_THAW 0x03
+#define FREEZE_OWNER 0x04
 
 // flags (bits)
-#define FREEZE_ACTIVE           0x20
+#define FREEZE_ACTIVE 0x20
 
-
+
 //
 // Define local storage to save the old IRQL.
 //
@@ -50,12 +50,8 @@ PKPRCB KiFreezeOwner;
 #endif
 
 
-
 BOOLEAN
-KeFreezeExecution (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+KeFreezeExecution(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -111,7 +107,8 @@ Return Value:
 
     KeRaiseIrql(HIGH_LEVEL, &OldIrql);
 
-    if (FrozenState(KeGetCurrentPrcb()->IpiFrozen) == FREEZE_OWNER) {
+    if (FrozenState(KeGetCurrentPrcb()->IpiFrozen) == FREEZE_OWNER)
+    {
         //
         // This processor already owns the freeze lock.
         // Return without trying to re-acquire lock or without
@@ -129,7 +126,8 @@ Return Value:
     // the FreezeExecutionFlag.
     //
 
-    while (KeTryToAcquireSpinLockAtDpcLevel(&KiFreezeExecutionLock) == FALSE) {
+    while (KeTryToAcquireSpinLockAtDpcLevel(&KiFreezeExecutionLock) == FALSE)
+    {
 
         //
         // FreezeExecutionLock is busy.  Another processor may be trying
@@ -142,22 +140,24 @@ Return Value:
 
 #if IDBG
 
-        if (Flag != FALSE) {
+        if (Flag != FALSE)
+        {
             Count = 30000;
             continue;
         }
 
-        KeStallExecutionProcessor (100);
-        if (!Count--) {
+        KeStallExecutionProcessor(100);
+        if (!Count--)
+        {
             Count = 30000;
-            if (KeTryToAcquireSpinLockAtDpcLevel(&KiFreezeLockBackup) == TRUE) {
+            if (KeTryToAcquireSpinLockAtDpcLevel(&KiFreezeLockBackup) == TRUE)
+            {
                 KiFreezeFlag |= FREEZE_BACKUP;
                 break;
             }
         }
 
 #endif
-
     }
 
     //
@@ -165,9 +165,10 @@ Return Value:
     // in the system (other than us) and wait for it to become frozen.
     //
 
-    Prcb = KeGetCurrentPrcb();  // Do this after spinlock is acquired.
+    Prcb = KeGetCurrentPrcb(); // Do this after spinlock is acquired.
     TargetSet = KeActiveProcessors & ~(AFFINITY_MASK(Prcb->Number));
-    if (TargetSet) {
+    if (TargetSet)
+    {
 
 #if IDBG
         Count = 400;
@@ -175,32 +176,35 @@ Return Value:
 
         KiFreezeOwner = Prcb;
         Prcb->IpiFrozen = FREEZE_OWNER | FREEZE_ACTIVE;
-        Prcb->SkipTick  = TRUE;
-        KiIpiSend((KAFFINITY) TargetSet, IPI_FREEZE);
-        while (TargetSet != 0) {
+        Prcb->SkipTick = TRUE;
+        KiIpiSend((KAFFINITY)TargetSet, IPI_FREEZE);
+        while (TargetSet != 0)
+        {
             KeFindFirstSetLeftAffinity(TargetSet, &BitNumber);
             ClearMember(BitNumber, TargetSet);
             Prcb = KiProcessorBlock[BitNumber];
 
 #if IDBG
 
-            while (Prcb->IpiFrozen != TARGET_FROZEN) {
-                if (Count == 0) {
+            while (Prcb->IpiFrozen != TARGET_FROZEN)
+            {
+                if (Count == 0)
+                {
                     KiFreezeFlag |= FREEZE_SKIPPED_PROCESSOR;
                     break;
                 }
 
-                KeStallExecutionProcessor (10000);
+                KeStallExecutionProcessor(10000);
                 Count--;
             }
 
 #else
 
-            while (Prcb->IpiFrozen != TARGET_FROZEN) {
+            while (Prcb->IpiFrozen != TARGET_FROZEN)
+            {
                 KeYieldProcessor();
             }
 #endif
-
         }
     }
 
@@ -210,16 +214,12 @@ Return Value:
 
     KiOldIrql = OldIrql;
 
-#endif      // !defined(NT_UP)
+#endif // !defined(NT_UP)
 
     return Enable;
 }
-
-VOID
-KiFreezeTargetExecution (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+
+VOID KiFreezeTargetExecution(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -258,8 +258,9 @@ Return Value:
 
     Prcb = KeGetCurrentPrcb();
     Prcb->IpiFrozen = TARGET_FROZEN;
-    Prcb->SkipTick  = TRUE;
-    if (TrapFrame != NULL) {
+    Prcb->SkipTick = TRUE;
+    if (TrapFrame != NULL)
+    {
         KiSaveProcessorState(TrapFrame, ExceptionFrame);
     }
 
@@ -275,26 +276,26 @@ Return Value:
     //  clear our frozen flag
     //
 
-    while (FrozenState(Prcb->IpiFrozen) == TARGET_FROZEN) {
-        if (Prcb->IpiFrozen & FREEZE_ACTIVE) {
+    while (FrozenState(Prcb->IpiFrozen) == TARGET_FROZEN)
+    {
+        if (Prcb->IpiFrozen & FREEZE_ACTIVE)
+        {
 
             //
             // This processor has been made the active processor
             //
-            if (TrapFrame) {
-                RtlZeroMemory (&ExceptionRecord, sizeof ExceptionRecord);
+            if (TrapFrame)
+            {
+                RtlZeroMemory(&ExceptionRecord, sizeof ExceptionRecord);
                 ExceptionRecord.ExceptionCode = STATUS_WAKE_SYSTEM_DEBUGGER;
-                ExceptionRecord.ExceptionRecord  = &ExceptionRecord;
+                ExceptionRecord.ExceptionRecord = &ExceptionRecord;
                 ExceptionRecord.ExceptionAddress =
-                    (PVOID)CONTEXT_TO_PROGRAM_COUNTER (&Prcb->ProcessorState.ContextFrame);
+                    (PVOID)CONTEXT_TO_PROGRAM_COUNTER(&Prcb->ProcessorState.ContextFrame);
 
-                Status = (KiDebugSwitchRoutine) (
-                            &ExceptionRecord,
-                            &Prcb->ProcessorState.ContextFrame,
-                            FALSE
-                            );
-
-            } else {
+                Status = (KiDebugSwitchRoutine)(&ExceptionRecord, &Prcb->ProcessorState.ContextFrame, FALSE);
+            }
+            else
+            {
                 Status = ContinueError;
             }
 
@@ -303,7 +304,8 @@ Return Value:
             // processor then reselect master
             //
 
-            if (Status != ContinueNextProcessor) {
+            if (Status != ContinueNextProcessor)
+            {
                 Prcb->IpiFrozen &= ~FREEZE_ACTIVE;
                 KiFreezeOwner->IpiFrozen |= FREEZE_ACTIVE;
             }
@@ -311,7 +313,8 @@ Return Value:
         KeYieldProcessor();
     }
 
-    if (TrapFrame != NULL) {
+    if (TrapFrame != NULL)
+    {
         KiRestoreProcessorState(TrapFrame, ExceptionFrame);
     }
 
@@ -322,16 +325,14 @@ Return Value:
 
     KeLowerIrql(OldIrql);
     KeEnableInterrupts(Enable);
-#endif      // !define(NT_UP)
+#endif // !define(NT_UP)
 
     return;
 }
-
+
 
 KCONTINUE_STATUS
-KeSwitchFrozenProcessor (
-    IN ULONG ProcessorNumber
-    )
+KeSwitchFrozenProcessor(IN ULONG ProcessorNumber)
 {
 #if !defined(NT_UP)
     PKPRCB TargetPrcb, CurrentPrcb;
@@ -340,7 +341,8 @@ KeSwitchFrozenProcessor (
     // If Processor number is out of range, reselect current processor
     //
 
-    if (ProcessorNumber >= (ULONG) KeNumberProcessors) {
+    if (ProcessorNumber >= (ULONG)KeNumberProcessors)
+    {
         return ContinueProcessorReselected;
     }
 
@@ -352,13 +354,14 @@ KeSwitchFrozenProcessor (
     //
 
     CurrentPrcb->IpiFrozen &= ~FREEZE_ACTIVE;
-    TargetPrcb->IpiFrozen  |= FREEZE_ACTIVE;
+    TargetPrcb->IpiFrozen |= FREEZE_ACTIVE;
 
     //
     // If this processor is frozen in KiFreezeTargetExecution, return to it
     //
 
-    if (FrozenState(CurrentPrcb->IpiFrozen) == TARGET_FROZEN) {
+    if (FrozenState(CurrentPrcb->IpiFrozen) == TARGET_FROZEN)
+    {
         return ContinueNextProcessor;
     }
 
@@ -367,15 +370,17 @@ KeSwitchFrozenProcessor (
     // active processor
     //
 
-    if (FrozenState(CurrentPrcb->IpiFrozen) != FREEZE_OWNER) {
+    if (FrozenState(CurrentPrcb->IpiFrozen) != FREEZE_OWNER)
+    {
         return ContinueError;
     }
 
-    while (!(CurrentPrcb->IpiFrozen & FREEZE_ACTIVE)) {
+    while (!(CurrentPrcb->IpiFrozen & FREEZE_ACTIVE))
+    {
         KeYieldProcessor();
     }
 
-#endif  // !defined(NT_UP)
+#endif // !defined(NT_UP)
 
     //
     // Reselect this processor
@@ -384,11 +389,8 @@ KeSwitchFrozenProcessor (
     return ContinueProcessorReselected;
 }
 
-
-VOID
-KeThawExecution (
-    IN BOOLEAN Enable
-    )
+
+VOID KeThawExecution(IN BOOLEAN Enable)
 
 /*++
 
@@ -426,7 +428,8 @@ Return Value:
     KeGetCurrentPrcb()->IpiFrozen = RUNNING;
 
     TargetSet = KeActiveProcessors & ~(AFFINITY_MASK(KeGetCurrentPrcb()->Number));
-    while (TargetSet != 0) {
+    while (TargetSet != 0)
+    {
         KeFindFirstSetLeftAffinity(TargetSet, &BitNumber);
         ClearMember(BitNumber, TargetSet);
         Prcb = KiProcessorBlock[BitNumber];
@@ -436,14 +439,16 @@ Return Value:
         // for target to unfreeze.
         //
 
-        if (FrozenState(Prcb->IpiFrozen) != TARGET_FROZEN) {
+        if (FrozenState(Prcb->IpiFrozen) != TARGET_FROZEN)
+        {
             Prcb->IpiFrozen = RUNNING;
             continue;
         }
 #endif
 
         Prcb->IpiFrozen = TARGET_THAW;
-        while (Prcb->IpiFrozen == TARGET_THAW) {
+        while (Prcb->IpiFrozen == TARGET_THAW)
+        {
             KeYieldProcessor();
         }
     }
@@ -459,9 +464,12 @@ Return Value:
     Flag = KiFreezeFlag;
     KiFreezeFlag = 0;
 
-    if ((Flag & FREEZE_BACKUP) != 0) {
+    if ((Flag & FREEZE_BACKUP) != 0)
+    {
         KiReleaseSpinLock(&KiFreezeLockBackup);
-    } else {
+    }
+    else
+    {
         KiReleaseSpinLock(&KiFreezeExecutionLock);
     }
 
@@ -471,7 +479,7 @@ Return Value:
     KiReleaseSpinLock(&KiFreezeExecutionLock);
 
 #endif
-#endif  // !defined (NT_UP)
+#endif // !defined (NT_UP)
 
 
     //
@@ -492,11 +500,8 @@ Return Value:
     KeEnableInterrupts(Enable);
     return;
 }
-
-VOID
-KiPollFreezeExecution(
-    VOID
-    )
+
+VOID KiPollFreezeExecution(VOID)
 
 /*++
 
@@ -526,7 +531,8 @@ Return Value:
 
     PKPRCB Prcb = KeGetCurrentPrcb();
 
-    if ((Prcb->RequestSummary & IPI_FREEZE) != 0) {
+    if ((Prcb->RequestSummary & IPI_FREEZE) != 0)
+    {
 
         //
         // Clear the freeze request and freeze this processor.
@@ -534,8 +540,9 @@ Return Value:
 
         InterlockedExchangeAdd((PLONG)&Prcb->RequestSummary, -(IPI_FREEZE));
         KiFreezeTargetExecution(NULL, NULL);
-
-    } else {
+    }
+    else
+    {
 
         //
         // No freeze pending, assume this processor is spinning.

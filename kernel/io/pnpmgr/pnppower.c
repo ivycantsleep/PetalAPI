@@ -19,7 +19,7 @@ Revision History:
     Modified for nt kernel.
 
 --*/
-
+
 #include "pnpmgrp.h"
 
 //
@@ -27,14 +27,9 @@ Revision History:
 //
 
 PWCHAR
-IopCaptureObjectName (
-    IN PVOID    Object
-    );
+IopCaptureObjectName(IN PVOID Object);
 
-VOID
-IopFreePoDeviceNotifyListHead (
-    PLIST_ENTRY ListHead
-    );
+VOID IopFreePoDeviceNotifyListHead(PLIST_ENTRY ListHead);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, IopWarmEjectDevice)
@@ -47,22 +42,20 @@ IopFreePoDeviceNotifyListHead (
 #endif
 
 NTSTATUS
-IoBuildPoDeviceNotifyList (
-    IN OUT PPO_DEVICE_NOTIFY_ORDER  Order
-    )
+IoBuildPoDeviceNotifyList(IN OUT PPO_DEVICE_NOTIFY_ORDER Order)
 {
-    PLIST_ENTRY             link;
-    PPO_DEVICE_NOTIFY       notify, parentnotify;
-    PDEVICE_NODE            node;
-    PDEVICE_NODE            parent;
-    ULONG                   noLists, listIndex;
-    PLIST_ENTRY             notifyLists;
-    LONG                    maxLevel, level;
-    UCHAR                   orderLevel;
-    PDEVICE_OBJECT          nonPaged;
-    PDEVICE_OBJECT          current;
-    PDEVICE_OBJECT          next;
-    LIST_ENTRY              RebaseList;
+    PLIST_ENTRY link;
+    PPO_DEVICE_NOTIFY notify, parentnotify;
+    PDEVICE_NODE node;
+    PDEVICE_NODE parent;
+    ULONG noLists, listIndex;
+    PLIST_ENTRY notifyLists;
+    LONG maxLevel, level;
+    UCHAR orderLevel;
+    PDEVICE_OBJECT nonPaged;
+    PDEVICE_OBJECT current;
+    PDEVICE_OBJECT next;
+    LIST_ENTRY RebaseList;
     ULONG i;
 
     //
@@ -70,12 +63,11 @@ IoBuildPoDeviceNotifyList (
     //
     PiLockDeviceActionQueue();
 
-    RtlZeroMemory(Order, sizeof (*Order));
+    RtlZeroMemory(Order, sizeof(*Order));
     Order->DevNodeSequence = IoDeviceNodeTreeSequence;
-    for (i=0; i <= PO_ORDER_MAXIMUM; i++) {
-        KeInitializeEvent(&Order->OrderLevel[i].LevelReady,
-                          NotificationEvent,
-                          FALSE);
+    for (i = 0; i <= PO_ORDER_MAXIMUM; i++)
+    {
+        KeInitializeEvent(&Order->OrderLevel[i].LevelReady, NotificationEvent, FALSE);
         InitializeListHead(&Order->OrderLevel[i].WaitSleep);
         InitializeListHead(&Order->OrderLevel[i].ReadySleep);
         InitializeListHead(&Order->OrderLevel[i].Pending);
@@ -92,7 +84,8 @@ IoBuildPoDeviceNotifyList (
     //
     level = -1;
     node = IopRootDeviceNode;
-    while (node->Child) {
+    while (node->Child)
+    {
         node = node->Child;
         level += 1;
     }
@@ -112,38 +105,38 @@ IoBuildPoDeviceNotifyList (
     //
 
     maxLevel = level;
-    while (node != IopRootDeviceNode) {
-        notify = ExAllocatePoolWithTag (
-                      NonPagedPool,
-                      sizeof(PO_DEVICE_NOTIFY),
-                      IOP_DPWR_TAG
-                      );
+    while (node != IopRootDeviceNode)
+    {
+        notify = ExAllocatePoolWithTag(NonPagedPool, sizeof(PO_DEVICE_NOTIFY), IOP_DPWR_TAG);
 
-        if (!notify) {
+        if (!notify)
+        {
 
             PiUnlockDeviceActionQueue();
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        RtlZeroMemory (notify, sizeof(PO_DEVICE_NOTIFY));
-        ASSERT(node->Notify == NULL) ;
+        RtlZeroMemory(notify, sizeof(PO_DEVICE_NOTIFY));
+        ASSERT(node->Notify == NULL);
         node->Notify = notify;
         notify->Node = node;
         notify->DeviceObject = node->PhysicalDeviceObject;
         notify->TargetDevice = IoGetAttachedDevice(node->PhysicalDeviceObject);
-        notify->DriverName   = IopCaptureObjectName(notify->TargetDevice->DriverObject);
-        notify->DeviceName   = IopCaptureObjectName(notify->TargetDevice);
-        ObReferenceObject (notify->DeviceObject);
-        ObReferenceObject (notify->TargetDevice);
+        notify->DriverName = IopCaptureObjectName(notify->TargetDevice->DriverObject);
+        notify->DeviceName = IopCaptureObjectName(notify->TargetDevice);
+        ObReferenceObject(notify->DeviceObject);
+        ObReferenceObject(notify->TargetDevice);
 
-        orderLevel   = 0;
+        orderLevel = 0;
 
         if (notify->TargetDevice->DeviceType != FILE_DEVICE_SCREEN &&
-            notify->TargetDevice->DeviceType != FILE_DEVICE_VIDEO) {
+            notify->TargetDevice->DeviceType != FILE_DEVICE_VIDEO)
+        {
             orderLevel |= PO_ORDER_NOT_VIDEO;
         }
 
-        if (notify->TargetDevice->Flags & DO_POWER_PAGABLE) {
+        if (notify->TargetDevice->Flags & DO_POWER_PAGABLE)
+        {
             orderLevel |= PO_ORDER_PAGABLE;
         }
 
@@ -163,15 +156,19 @@ IoBuildPoDeviceNotifyList (
         // If it has children, it must wait for its children to complete their Sx irps.
         //
         //
-        if ((level == 0)  &&
-            (node->InterfaceType != Internal) &&
-            !(node->Flags & DNF_HAL_NODE)) {
+        if ((level == 0) && (node->InterfaceType != Internal) && !(node->Flags & DNF_HAL_NODE))
+        {
             InsertHeadList(&RebaseList, &notify->Link);
-        } else {
+        }
+        else
+        {
             ++Order->OrderLevel[orderLevel].DeviceCount;
-            if (node->Child == NULL) {
+            if (node->Child == NULL)
+            {
                 InsertHeadList(&Order->OrderLevel[orderLevel].ReadySleep, &notify->Link);
-            } else {
+            }
+            else
+            {
                 InsertHeadList(&Order->OrderLevel[orderLevel].WaitSleep, &notify->Link);
             }
         }
@@ -179,17 +176,21 @@ IoBuildPoDeviceNotifyList (
         // Next node
         //
 
-        if (node->Sibling) {
+        if (node->Sibling)
+        {
             node = node->Sibling;
-            while (node->Child) {
+            while (node->Child)
+            {
                 node = node->Child;
                 level += 1;
-                if (level > maxLevel) {
+                if (level > maxLevel)
+                {
                     maxLevel = level;
                 }
             }
-
-        } else {
+        }
+        else
+        {
             node = node->Parent;
             level -= 1;
         }
@@ -199,9 +200,10 @@ IoBuildPoDeviceNotifyList (
     // Rebase anything on the rebase list to be after the normal pnp stuff
     //
 
-    while (!IsListEmpty(&RebaseList)) {
+    while (!IsListEmpty(&RebaseList))
+    {
         link = RemoveHeadList(&RebaseList);
-        notify = CONTAINING_RECORD (link, PO_DEVICE_NOTIFY, Link);
+        notify = CONTAINING_RECORD(link, PO_DEVICE_NOTIFY, Link);
 
         //
         // Rebase this node
@@ -211,9 +213,12 @@ IoBuildPoDeviceNotifyList (
         notify->OrderLevel |= PO_ORDER_ROOT_ENUM;
 
         ++Order->OrderLevel[notify->OrderLevel].DeviceCount;
-        if (node->Child == NULL) {
+        if (node->Child == NULL)
+        {
             InsertHeadList(&Order->OrderLevel[notify->OrderLevel].ReadySleep, &notify->Link);
-        } else {
+        }
+        else
+        {
             InsertHeadList(&Order->OrderLevel[notify->OrderLevel].WaitSleep, &notify->Link);
         }
         //
@@ -221,31 +226,41 @@ IoBuildPoDeviceNotifyList (
         //
 
         parent = node;
-        while (node->Child) {
+        while (node->Child)
+        {
             node = node->Child;
         }
 
-        while (node != parent) {
+        while (node != parent)
+        {
             notify = node->Notify;
-            if (notify) {
+            if (notify)
+            {
                 RemoveEntryList(&notify->Link);
                 --Order->OrderLevel[notify->OrderLevel].DeviceCount;
                 notify->OrderLevel |= PO_ORDER_ROOT_ENUM;
                 ++Order->OrderLevel[notify->OrderLevel].DeviceCount;
-                if (node->Child == NULL) {
+                if (node->Child == NULL)
+                {
                     InsertHeadList(&Order->OrderLevel[notify->OrderLevel].ReadySleep, &notify->Link);
-                } else {
+                }
+                else
+                {
                     InsertHeadList(&Order->OrderLevel[notify->OrderLevel].WaitSleep, &notify->Link);
                 }
             }
 
             // next node
-            if (node->Sibling) {
+            if (node->Sibling)
+            {
                 node = node->Sibling;
-                while (node->Child) {
+                while (node->Child)
+                {
                     node = node->Child;
                 }
-            } else {
+            }
+            else
+            {
                 node = node->Parent;
             }
         }
@@ -260,15 +275,19 @@ IoBuildPoDeviceNotifyList (
     // Also make sure that each node's parent is an order level >= its children.
     //
     node = IopRootDeviceNode;
-    while (node->Child) {
+    while (node->Child)
+    {
         node = node->Child;
     }
-    while (node != IopRootDeviceNode) {
-        if (node->Parent != IopRootDeviceNode) {
+    while (node != IopRootDeviceNode)
+    {
+        if (node->Parent != IopRootDeviceNode)
+        {
             parentnotify = node->Parent->Notify;
             parentnotify->ChildCount++;
             parentnotify->ActiveChild++;
-            if (parentnotify->OrderLevel > node->Notify->OrderLevel) {
+            if (parentnotify->OrderLevel > node->Notify->OrderLevel)
+            {
 
                 //
                 // The parent is a higher order level than its child. Move the
@@ -286,12 +305,16 @@ IoBuildPoDeviceNotifyList (
         // Next node
         //
 
-        if (node->Sibling) {
+        if (node->Sibling)
+        {
             node = node->Sibling;
-            while (node->Child) {
+            while (node->Child)
+            {
                 node = node->Child;
             }
-        } else {
+        }
+        else
+        {
             node = node->Parent;
         }
     }
@@ -305,11 +328,9 @@ IoBuildPoDeviceNotifyList (
     return STATUS_SUCCESS;
 }
 
-
+
 PVOID
-IoGetPoNotifyParent(
-    IN PPO_DEVICE_NOTIFY Notify
-    )
+IoGetPoNotifyParent(IN PPO_DEVICE_NOTIFY Notify)
 /*++
 
 Routine Description:
@@ -331,19 +352,18 @@ Return Value:
     PDEVICE_NODE Node;
 
     Node = Notify->Node;
-    if (Node->Parent != IopRootDeviceNode) {
-        return(Node->Parent->Notify);
-    } else {
-        return(NULL);
+    if (Node->Parent != IopRootDeviceNode)
+    {
+        return (Node->Parent->Notify);
+    }
+    else
+    {
+        return (NULL);
     }
 }
 
-
-VOID
-IoMovePoNotifyChildren(
-    IN PPO_DEVICE_NOTIFY Notify,
-    IN PPO_DEVICE_NOTIFY_ORDER Order
-    )
+
+VOID IoMovePoNotifyChildren(IN PPO_DEVICE_NOTIFY Notify, IN PPO_DEVICE_NOTIFY_ORDER Order)
 /*++
 
 Routine Description:
@@ -372,58 +392,56 @@ Return Value:
 
     Node = Notify->Node;
     Child = Node->Child;
-    while (Child) {
+    while (Child)
+    {
         ChildNotify = Child->Notify;
-        if (ChildNotify->OrderLevel == Notify->OrderLevel) {
+        if (ChildNotify->OrderLevel == Notify->OrderLevel)
+        {
             RemoveEntryList(&ChildNotify->Link);
             Level = &Order->OrderLevel[ChildNotify->OrderLevel];
             InsertTailList(&Level->ReadyS0, &ChildNotify->Link);
         }
         Child = Child->Sibling;
     }
-
-
 }
 
-VOID
-IopFreePoDeviceNotifyListHead (
-    PLIST_ENTRY ListHead
-    )
+VOID IopFreePoDeviceNotifyListHead(PLIST_ENTRY ListHead)
 {
-    PLIST_ENTRY             Link;
-    PPO_DEVICE_NOTIFY       Notify;
-    PDEVICE_NODE            Node;
+    PLIST_ENTRY Link;
+    PPO_DEVICE_NOTIFY Notify;
+    PDEVICE_NODE Node;
 
-    while (!IsListEmpty(ListHead)) {
+    while (!IsListEmpty(ListHead))
+    {
         Link = RemoveHeadList(ListHead);
-        Notify = CONTAINING_RECORD (Link, PO_DEVICE_NOTIFY, Link);
+        Notify = CONTAINING_RECORD(Link, PO_DEVICE_NOTIFY, Link);
 
-        Node = (PDEVICE_NODE) Notify->Node;
+        Node = (PDEVICE_NODE)Notify->Node;
         Node->Notify = NULL;
 
-        ObDereferenceObject (Notify->DeviceObject);
-        ObDereferenceObject (Notify->TargetDevice);
-        if (Notify->DeviceName) {
-            ExFreePool (Notify->DeviceName);
+        ObDereferenceObject(Notify->DeviceObject);
+        ObDereferenceObject(Notify->TargetDevice);
+        if (Notify->DeviceName)
+        {
+            ExFreePool(Notify->DeviceName);
         }
-        if (Notify->DriverName) {
-            ExFreePool (Notify->DriverName);
+        if (Notify->DriverName)
+        {
+            ExFreePool(Notify->DriverName);
         }
         ExFreePool(Notify);
     }
 }
 
-VOID
-IoFreePoDeviceNotifyList (
-    IN OUT PPO_DEVICE_NOTIFY_ORDER  Order
-    )
+VOID IoFreePoDeviceNotifyList(IN OUT PPO_DEVICE_NOTIFY_ORDER Order)
 {
-    ULONG                   i;
+    ULONG i;
     PLIST_ENTRY ListHead;
     PLIST_ENTRY Link;
     PPO_DEVICE_NOTIFY Notify;
 
-    if (Order->DevNodeSequence) {
+    if (Order->DevNodeSequence)
+    {
 
         Order->DevNodeSequence = 0;
 
@@ -433,7 +451,8 @@ IoFreePoDeviceNotifyList (
     //
     // Free the resources from the notify list
     //
-    for (i=0; i <= PO_ORDER_MAXIMUM; i++) {
+    for (i = 0; i <= PO_ORDER_MAXIMUM; i++)
+    {
         IopFreePoDeviceNotifyListHead(&Order->OrderLevel[i].WaitSleep);
         IopFreePoDeviceNotifyListHead(&Order->OrderLevel[i].ReadySleep);
         IopFreePoDeviceNotifyListHead(&Order->OrderLevel[i].Pending);
@@ -441,40 +460,30 @@ IoFreePoDeviceNotifyList (
         IopFreePoDeviceNotifyListHead(&Order->OrderLevel[i].ReadyS0);
         IopFreePoDeviceNotifyListHead(&Order->OrderLevel[i].WaitS0);
     }
-
 }
 
 
 PWCHAR
-IopCaptureObjectName (
-    IN PVOID    Object
-    )
+IopCaptureObjectName(IN PVOID Object)
 {
-    NTSTATUS                    Status;
-    UCHAR                       Buffer[512];
-    POBJECT_NAME_INFORMATION    ObName;
-    ULONG                       len;
-    PWCHAR                      Name;
+    NTSTATUS Status;
+    UCHAR Buffer[512];
+    POBJECT_NAME_INFORMATION ObName;
+    ULONG len;
+    PWCHAR Name;
 
-    ObName = (POBJECT_NAME_INFORMATION) Buffer;
-    Status = ObQueryNameString (
-                Object,
-                ObName,
-                sizeof (Buffer),
-                &len
-                );
+    ObName = (POBJECT_NAME_INFORMATION)Buffer;
+    Status = ObQueryNameString(Object, ObName, sizeof(Buffer), &len);
 
     Name = NULL;
-    if (NT_SUCCESS(Status) && ObName->Name.Buffer) {
-        Name = ExAllocatePoolWithTag (
-                    NonPagedPool,
-                    ObName->Name.Length + sizeof(WCHAR),
-                    IOP_DPWR_TAG
-                    );
+    if (NT_SUCCESS(Status) && ObName->Name.Buffer)
+    {
+        Name = ExAllocatePoolWithTag(NonPagedPool, ObName->Name.Length + sizeof(WCHAR), IOP_DPWR_TAG);
 
-        if (Name) {
-            memcpy (Name, ObName->Name.Buffer, ObName->Name.Length);
-            Name[ObName->Name.Length/sizeof(WCHAR)] = 0;
+        if (Name)
+        {
+            memcpy(Name, ObName->Name.Buffer, ObName->Name.Length);
+            Name[ObName->Name.Length / sizeof(WCHAR)] = 0;
         }
     }
 
@@ -482,10 +491,7 @@ IopCaptureObjectName (
 }
 
 NTSTATUS
-IopWarmEjectDevice(
-   IN PDEVICE_OBJECT       DeviceToEject,
-   IN SYSTEM_POWER_STATE   LightestSleepState
-   )
+IopWarmEjectDevice(IN PDEVICE_OBJECT DeviceToEject, IN SYSTEM_POWER_STATE LightestSleepState)
 /*++
 
 Routine Description:
@@ -507,7 +513,7 @@ Return Value:
 
 --*/
 {
-    NTSTATUS       status;
+    NTSTATUS status;
 
     PAGED_CODE();
 
@@ -516,15 +522,9 @@ Return Value:
     // specific S-state, and two different devices may have conflicting options.
     // Therefore only one is allowed to occur at once.
     //
-    status = KeWaitForSingleObject(
-        &IopWarmEjectLock,
-        Executive,
-        KernelMode,
-        FALSE,
-        NULL
-        );
+    status = KeWaitForSingleObject(&IopWarmEjectLock, Executive, KernelMode, FALSE, NULL);
 
-    ASSERT(status == STATUS_SUCCESS) ;
+    ASSERT(status == STATUS_SUCCESS);
 
     //
     // Acquire engine lock. We are not allowed to set or clear this field
@@ -558,13 +558,10 @@ Return Value:
     //
     // Sleep...
     //
-    status = NtInitiatePowerAction(
-        PowerActionWarmEject,
-        LightestSleepState,
-        POWER_ACTION_QUERY_ALLOWED |
-        POWER_ACTION_UI_ALLOWED,
-        FALSE // Asynchronous == FALSE
-        );
+    status = NtInitiatePowerAction(PowerActionWarmEject, LightestSleepState,
+                                   POWER_ACTION_QUERY_ALLOWED | POWER_ACTION_UI_ALLOWED,
+                                   FALSE // Asynchronous == FALSE
+    );
 
     //
     // Acquire the engine lock. We are not allowed to set or clear this field
@@ -576,9 +573,11 @@ Return Value:
     // Clear the current PDO to eject, and see if the Pdo was actually picked
     // up.
     //
-    if (IopWarmEjectPdo) {
+    if (IopWarmEjectPdo)
+    {
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             //
             // If our device wasn't picked up, the return of
@@ -599,11 +598,7 @@ Return Value:
     //
     // Release the warm eject device lock
     //
-    KeSetEvent(
-        &IopWarmEjectLock,
-        IO_NO_INCREMENT,
-        FALSE
-        );
+    KeSetEvent(&IopWarmEjectLock, IO_NO_INCREMENT, FALSE);
 
     return status;
 }

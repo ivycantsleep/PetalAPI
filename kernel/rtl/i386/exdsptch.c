@@ -33,43 +33,32 @@ Revision History:
 // Dispatcher context structure definition.
 //
 
-typedef struct _DISPATCHER_CONTEXT {
+typedef struct _DISPATCHER_CONTEXT
+{
     PEXCEPTION_REGISTRATION_RECORD RegistrationPointer;
-    } DISPATCHER_CONTEXT;
+} DISPATCHER_CONTEXT;
 
 //
 // Execute handler for exception function prototype.
 //
 
 EXCEPTION_DISPOSITION
-RtlpExecuteHandlerForException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PVOID EstablisherFrame,
-    IN OUT PCONTEXT ContextRecord,
-    IN OUT PVOID DispatcherContext,
-    IN PEXCEPTION_ROUTINE ExceptionRoutine
-    );
+RtlpExecuteHandlerForException(IN PEXCEPTION_RECORD ExceptionRecord, IN PVOID EstablisherFrame,
+                               IN OUT PCONTEXT ContextRecord, IN OUT PVOID DispatcherContext,
+                               IN PEXCEPTION_ROUTINE ExceptionRoutine);
 
 //
 // Execute handler for unwind function prototype.
 //
 
 EXCEPTION_DISPOSITION
-RtlpExecuteHandlerForUnwind (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PVOID EstablisherFrame,
-    IN OUT PCONTEXT ContextRecord,
-    IN OUT PVOID DispatcherContext,
-    IN PEXCEPTION_ROUTINE ExceptionRoutine
-    );
+RtlpExecuteHandlerForUnwind(IN PEXCEPTION_RECORD ExceptionRecord, IN PVOID EstablisherFrame,
+                            IN OUT PCONTEXT ContextRecord, IN OUT PVOID DispatcherContext,
+                            IN PEXCEPTION_ROUTINE ExceptionRoutine);
 
 
-
 BOOLEAN
-RtlDispatchException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord
-    )
+RtlDispatchException(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord)
 
 /*++
 
@@ -113,7 +102,8 @@ Return Value:
 #endif
 
 #ifndef NTOS_KERNEL_RUNTIME
-    if (RtlCallVectoredExceptionHandlers(ExceptionRecord,ContextRecord)) {
+    if (RtlCallVectoredExceptionHandlers(ExceptionRecord, ContextRecord))
+    {
         return TRUE;
     }
 #endif // NTOS_KERNEL_RUNTIME
@@ -127,21 +117,25 @@ Return Value:
 
     {
         extern ULONG RtlpDebugPageHeap;
-        
-        if (RtlpDebugPageHeap) {
 
-            if (ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION) {
+        if (RtlpDebugPageHeap)
+        {
 
-                if (NtCurrentPeb()->BeingDebugged) {
+            if (ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION)
+            {
 
-                    if (ExceptionRecord->NumberParameters > 1) {
+                if (NtCurrentPeb()->BeingDebugged)
+                {
 
-                        if (ExceptionRecord->ExceptionInformation[1] > 0x10000) {
+                    if (ExceptionRecord->NumberParameters > 1)
+                    {
 
-                            DbgPrint ("Page heap: first chance access violation (.exr %p, .cxr %p)\n",
-                                      ExceptionRecord,
-                                      ContextRecord);
-                            DbgBreakPoint ();
+                        if (ExceptionRecord->ExceptionInformation[1] > 0x10000)
+                        {
+
+                            DbgPrint("Page heap: first chance access violation (.exr %p, .cxr %p)\n", ExceptionRecord,
+                                     ContextRecord);
+                            DbgBreakPoint();
                         }
                     }
                 }
@@ -165,7 +159,8 @@ Return Value:
     RegistrationPointer = RtlpGetRegistrationHead();
     NestedRegistration = 0;
 
-    while (RegistrationPointer != EXCEPTION_CHAIN_END) {
+    while (RegistrationPointer != EXCEPTION_CHAIN_END)
+    {
 
         //
         // If the call frame is not within the specified stack limits or the
@@ -174,17 +169,15 @@ Return Value:
         // frame has an exception handler.
         //
 
-        HighAddress = (ULONG)RegistrationPointer +
-            sizeof(EXCEPTION_REGISTRATION_RECORD);
+        HighAddress = (ULONG)RegistrationPointer + sizeof(EXCEPTION_REGISTRATION_RECORD);
 
-        if ( ((ULONG)RegistrationPointer < LowLimit) ||
-             (HighAddress > HighLimit) ||
-             (((ULONG)RegistrationPointer & 0x3) != 0) 
+        if (((ULONG)RegistrationPointer < LowLimit) || (HighAddress > HighLimit) ||
+            (((ULONG)RegistrationPointer & 0x3) != 0)
 #if !defined(NTOS_KERNEL_RUNTIME)
-                ||
-             (((ULONG)RegistrationPointer->Handler >= LowLimit) && ((ULONG)RegistrationPointer->Handler < HighLimit))
+            || (((ULONG)RegistrationPointer->Handler >= LowLimit) && ((ULONG)RegistrationPointer->Handler < HighLimit))
 #endif
-           ) {
+        )
+        {
 
 #if defined(NTOS_KERNEL_RUNTIME)
 
@@ -195,15 +188,15 @@ Return Value:
 
             ULONG TestAddress = (ULONG)RegistrationPointer;
 
-            if (((TestAddress & 0x3) == 0) &&
-                KeGetCurrentIrql() >= DISPATCH_LEVEL) {
+            if (((TestAddress & 0x3) == 0) && KeGetCurrentIrql() >= DISPATCH_LEVEL)
+            {
 
                 PKPRCB Prcb = KeGetCurrentPrcb();
                 ULONG DpcStack = (ULONG)Prcb->DpcStack;
 
-                if ((Prcb->DpcRoutineActive) &&
-                    (HighAddress <= DpcStack) &&
-                    (TestAddress >= DpcStack - KERNEL_STACK_SIZE)) {
+                if ((Prcb->DpcRoutineActive) && (HighAddress <= DpcStack) &&
+                    (TestAddress >= DpcStack - KERNEL_STACK_SIZE))
+                {
 
                     //
                     // This error occured on the DPC stack, switch
@@ -232,27 +225,22 @@ Return Value:
         // when a nested exception is encountered.
         //
 
-        if (NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING) {
-            Index = RtlpLogExceptionHandler(
-                            ExceptionRecord,
-                            ContextRecord,
-                            0,
-                            (PULONG)RegistrationPointer,
-                            4 * sizeof(ULONG));
-                    // can't use sizeof(EXCEPTION_REGISTRATION_RECORD
-                    // because we need the 2 dwords above it.
+        if (NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING)
+        {
+            Index = RtlpLogExceptionHandler(ExceptionRecord, ContextRecord, 0, (PULONG)RegistrationPointer,
+                                            4 * sizeof(ULONG));
+            // can't use sizeof(EXCEPTION_REGISTRATION_RECORD
+            // because we need the 2 dwords above it.
         }
 #endif
 
-        Disposition = RtlpExecuteHandlerForException(
-            ExceptionRecord,
-            (PVOID)RegistrationPointer,
-            ContextRecord,
-            (PVOID)&DispatcherContext,
-            (PEXCEPTION_ROUTINE)RegistrationPointer->Handler);
+        Disposition =
+            RtlpExecuteHandlerForException(ExceptionRecord, (PVOID)RegistrationPointer, ContextRecord,
+                                           (PVOID)&DispatcherContext, (PEXCEPTION_ROUTINE)RegistrationPointer->Handler);
 
 #if !defined(WX86_i386)
-        if (NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING) {
+        if (NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING)
+        {
             RtlpLogLastExceptionDisposition(Index, Disposition);
         }
 #endif
@@ -265,7 +253,8 @@ Return Value:
         // exception flags.
         //
 
-        if (NestedRegistration == RegistrationPointer) {
+        if (NestedRegistration == RegistrationPointer)
+        {
             ExceptionRecord->ExceptionFlags &= (~EXCEPTION_NESTED_CALL);
             NestedRegistration = 0;
         }
@@ -274,7 +263,8 @@ Return Value:
         // Case on the handler disposition.
         //
 
-        switch (Disposition) {
+        switch (Disposition)
+        {
 
             //
             // The disposition is to continue execution. If the
@@ -283,16 +273,17 @@ Return Value:
             // TRUE.
             //
 
-        case ExceptionContinueExecution :
-            if ((ExceptionRecord->ExceptionFlags &
-               EXCEPTION_NONCONTINUABLE) != 0) {
-                ExceptionRecord1.ExceptionCode =
-                                        STATUS_NONCONTINUABLE_EXCEPTION;
+        case ExceptionContinueExecution:
+            if ((ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE) != 0)
+            {
+                ExceptionRecord1.ExceptionCode = STATUS_NONCONTINUABLE_EXCEPTION;
                 ExceptionRecord1.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
                 ExceptionRecord1.ExceptionRecord = ExceptionRecord;
                 ExceptionRecord1.NumberParameters = 0;
                 RtlRaiseException(&ExceptionRecord1);
-            } else {
+            }
+            else
+            {
                 return TRUE;
             }
 
@@ -301,7 +292,7 @@ Return Value:
             // frame address and continue the search.
             //
 
-        case ExceptionContinueSearch :
+        case ExceptionContinueSearch:
             break;
 
             //
@@ -310,9 +301,10 @@ Return Value:
             // nested exception in the exception flags.
             //
 
-        case ExceptionNestedException :
+        case ExceptionNestedException:
             ExceptionRecord->ExceptionFlags |= EXCEPTION_NESTED_CALL;
-            if (DispatcherContext.RegistrationPointer > NestedRegistration) {
+            if (DispatcherContext.RegistrationPointer > NestedRegistration)
+            {
                 NestedRegistration = DispatcherContext.RegistrationPointer;
             }
             break;
@@ -322,7 +314,7 @@ Return Value:
             // invalid disposition exception.
             //
 
-        default :
+        default:
             ExceptionRecord1.ExceptionCode = STATUS_INVALID_DISPOSITION;
             ExceptionRecord1.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
             ExceptionRecord1.ExceptionRecord = ExceptionRecord;
@@ -340,18 +332,13 @@ Return Value:
     }
     return FALSE;
 }
-
+
 #ifdef _X86_
-#pragma optimize("y", off)      // RtlCaptureContext needs EBP to be correct
+#pragma optimize("y", off) // RtlCaptureContext needs EBP to be correct
 #endif
 
-VOID
-RtlUnwind (
-    IN PVOID TargetFrame OPTIONAL,
-    IN PVOID TargetIp OPTIONAL,
-    IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
-    IN PVOID ReturnValue
-    )
+VOID RtlUnwind(IN PVOID TargetFrame OPTIONAL, IN PVOID TargetIp OPTIONAL, IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
+               IN PVOID ReturnValue)
 
 /*++
 
@@ -422,7 +409,8 @@ Return Value:
     // record for use in calling exception handlers during the unwind operation.
     //
 
-    if (ARGUMENT_PRESENT(ExceptionRecord) == FALSE) {
+    if (ARGUMENT_PRESENT(ExceptionRecord) == FALSE)
+    {
         ExceptionRecord = &ExceptionRecord1;
         ExceptionRecord1.ExceptionCode = STATUS_UNWIND;
         ExceptionRecord1.ExceptionFlags = 0;
@@ -437,11 +425,13 @@ Return Value:
     // EXCEPTION_UNWINDING flags in the exception flags.
     //
 
-    if (ARGUMENT_PRESENT(TargetFrame) == TRUE) {
+    if (ARGUMENT_PRESENT(TargetFrame) == TRUE)
+    {
         ExceptionRecord->ExceptionFlags |= EXCEPTION_UNWINDING;
-    } else {
-        ExceptionRecord->ExceptionFlags |= (EXCEPTION_UNWINDING |
-                                                        EXCEPTION_EXIT_UNWIND);
+    }
+    else
+    {
+        ExceptionRecord->ExceptionFlags |= (EXCEPTION_UNWINDING | EXCEPTION_EXIT_UNWIND);
     }
 
     //
@@ -456,10 +446,7 @@ Return Value:
     //
     // Adjust captured context to pop our arguments off the stack
     //
-    ContextRecord->Esp += sizeof(TargetFrame) +
-                          sizeof(TargetIp)    +
-                          sizeof(ExceptionRecord) +
-                          sizeof(ReturnValue);
+    ContextRecord->Esp += sizeof(TargetFrame) + sizeof(TargetIp) + sizeof(ExceptionRecord) + sizeof(ReturnValue);
 #endif
     ContextRecord->Eax = (ULONG)ReturnValue;
 
@@ -470,23 +457,25 @@ Return Value:
     //
 
     RegistrationPointer = RtlpGetRegistrationHead();
-    while (RegistrationPointer != EXCEPTION_CHAIN_END) {
+    while (RegistrationPointer != EXCEPTION_CHAIN_END)
+    {
 
         //
         // If this is the target of the unwind, then continue execution
         // by calling the continue system service.
         //
 
-        if ((ULONG)RegistrationPointer == (ULONG)TargetFrame) {
+        if ((ULONG)RegistrationPointer == (ULONG)TargetFrame)
+        {
             ZwContinue(ContextRecord, FALSE);
 
-        //
-        // If the target frame is lower in the stack than the current frame,
-        // then raise STATUS_INVALID_UNWIND exception.
-        //
-
-        } else if ( (ARGUMENT_PRESENT(TargetFrame) == TRUE) &&
-                    ((ULONG)TargetFrame < (ULONG)RegistrationPointer) ) {
+            //
+            // If the target frame is lower in the stack than the current frame,
+            // then raise STATUS_INVALID_UNWIND exception.
+            //
+        }
+        else if ((ARGUMENT_PRESENT(TargetFrame) == TRUE) && ((ULONG)TargetFrame < (ULONG)RegistrationPointer))
+        {
             ExceptionRecord2.ExceptionCode = STATUS_INVALID_UNWIND_TARGET;
             ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
             ExceptionRecord2.ExceptionRecord = ExceptionRecord;
@@ -501,17 +490,15 @@ Return Value:
         // record.
         //
 
-        HighAddress = (ULONG)RegistrationPointer +
-            sizeof(EXCEPTION_REGISTRATION_RECORD);
+        HighAddress = (ULONG)RegistrationPointer + sizeof(EXCEPTION_REGISTRATION_RECORD);
 
-        if ( ((ULONG)RegistrationPointer < LowLimit) ||
-             (HighAddress > HighLimit) ||
-             (((ULONG)RegistrationPointer & 0x3) != 0) 
+        if (((ULONG)RegistrationPointer < LowLimit) || (HighAddress > HighLimit) ||
+            (((ULONG)RegistrationPointer & 0x3) != 0)
 #if !defined(NTOS_KERNEL_RUNTIME)
-                ||
-             (((ULONG)RegistrationPointer->Handler >= LowLimit) && ((ULONG)RegistrationPointer->Handler < HighLimit))
+            || (((ULONG)RegistrationPointer->Handler >= LowLimit) && ((ULONG)RegistrationPointer->Handler < HighLimit))
 #endif
-           ) {
+        )
+        {
 
 #if defined(NTOS_KERNEL_RUNTIME)
 
@@ -522,15 +509,15 @@ Return Value:
 
             ULONG TestAddress = (ULONG)RegistrationPointer;
 
-            if (((TestAddress & 0x3) == 0) &&
-                KeGetCurrentIrql() >= DISPATCH_LEVEL) {
+            if (((TestAddress & 0x3) == 0) && KeGetCurrentIrql() >= DISPATCH_LEVEL)
+            {
 
                 PKPRCB Prcb = KeGetCurrentPrcb();
                 ULONG DpcStack = (ULONG)Prcb->DpcStack;
 
-                if ((Prcb->DpcRoutineActive) &&
-                    (HighAddress <= DpcStack) &&
-                    (TestAddress >= DpcStack - KERNEL_STACK_SIZE)) {
+                if ((Prcb->DpcRoutineActive) && (HighAddress <= DpcStack) &&
+                    (TestAddress >= DpcStack - KERNEL_STACK_SIZE))
+                {
 
                     //
                     // This error occured on the DPC stack, switch
@@ -551,7 +538,9 @@ Return Value:
             ExceptionRecord2.ExceptionRecord = ExceptionRecord;
             ExceptionRecord2.NumberParameters = 0;
             RtlRaiseException(&ExceptionRecord2);
-        } else {
+        }
+        else
+        {
 
             //
             // The handler must be executed by calling another routine
@@ -560,25 +549,22 @@ Return Value:
             // when a collided unwind is encountered.
             //
 
-            Disposition = RtlpExecuteHandlerForUnwind(
-                ExceptionRecord,
-                (PVOID)RegistrationPointer,
-                ContextRecord,
-                (PVOID)&DispatcherContext,
-                RegistrationPointer->Handler);
+            Disposition = RtlpExecuteHandlerForUnwind(ExceptionRecord, (PVOID)RegistrationPointer, ContextRecord,
+                                                      (PVOID)&DispatcherContext, RegistrationPointer->Handler);
 
             //
             // Case on the handler disposition.
             //
 
-            switch (Disposition) {
+            switch (Disposition)
+            {
 
                 //
                 // The disposition is to continue the search. Get next
                 // frame address and continue the search.
                 //
 
-            case ExceptionContinueSearch :
+            case ExceptionContinueSearch:
                 break;
 
                 //
@@ -586,7 +572,7 @@ Return Value:
                 // of the unwind and change the context record pointer.
                 //
 
-            case ExceptionCollidedUnwind :
+            case ExceptionCollidedUnwind:
 
                 //
                 // Pick up the registration pointer that was active at
@@ -602,7 +588,7 @@ Return Value:
                 // invalid disposition exception.
                 //
 
-            default :
+            default:
                 ExceptionRecord2.ExceptionCode = STATUS_INVALID_DISPOSITION;
                 ExceptionRecord2.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
                 ExceptionRecord2.ExceptionRecord = ExceptionRecord;
@@ -628,11 +614,11 @@ Return Value:
             // If chain goes in wrong direction or loops, raise an
             // exception.
             //
-
         }
     }
 
-    if (TargetFrame == EXCEPTION_CHAIN_END) {
+    if (TargetFrame == EXCEPTION_CHAIN_END)
+    {
 
         //
         //  Caller simply wants to unwind all exception records.
@@ -642,8 +628,9 @@ Return Value:
         //
 
         ZwContinue(ContextRecord, FALSE);
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Either (1) a real exit unwind was performed, or (2) the
@@ -653,7 +640,6 @@ Return Value:
         //
 
         ZwRaiseException(ExceptionRecord, ContextRecord, FALSE);
-
     }
     return;
 }

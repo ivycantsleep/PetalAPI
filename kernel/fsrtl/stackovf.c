@@ -35,40 +35,30 @@ KQUEUE FsRtlWorkerQueues[2];
 //
 
 #undef MODULE_POOL_TAG
-#define MODULE_POOL_TAG                  ('srSF')
+#define MODULE_POOL_TAG ('srSF')
 
-
+
 //
 //  Local Support Routine
 //
 
-VOID
-FsRtlStackOverflowRead (
-    IN PVOID Context
-    );
+VOID FsRtlStackOverflowRead(IN PVOID Context);
 
-VOID
-FsRtlpPostStackOverflow (
-    IN PVOID Context,
-    IN PKEVENT Event,
-    IN PFSRTL_STACK_OVERFLOW_ROUTINE StackOverflowRoutine,
-    IN BOOLEAN PagingFile
-    );
+VOID FsRtlpPostStackOverflow(IN PVOID Context, IN PKEVENT Event, IN PFSRTL_STACK_OVERFLOW_ROUTINE StackOverflowRoutine,
+                             IN BOOLEAN PagingFile);
 
 //
 // Procedure prototype for the worker thread.
 //
 
-VOID
-FsRtlWorkerThread(
-    IN PVOID StartContext
-    );
+VOID FsRtlWorkerThread(IN PVOID StartContext);
 
 //
 //  The following type is used to store an enqueue work item
 //
 
-typedef struct _STACK_OVERFLOW_ITEM {
+typedef struct _STACK_OVERFLOW_ITEM
+{
 
     WORK_QUEUE_ITEM Item;
 
@@ -95,11 +85,9 @@ STACK_OVERFLOW_ITEM StackOverflowFallback;
 #pragma alloc_text(INIT, FsRtlInitializeWorkerThread)
 #endif
 
-
+
 NTSTATUS
-FsRtlInitializeWorkerThread (
-    VOID
-    )
+FsRtlInitializeWorkerThread(VOID)
 {
     OBJECT_ATTRIBUTES ObjectAttributes;
     HANDLE Thread;
@@ -111,7 +99,8 @@ FsRtlInitializeWorkerThread (
 
     InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-    for (i=0; i < 2; i++) {
+    for (i = 0; i < 2; i++)
+    {
 
         //
         // Initialize the FsRtl stack overflow work Queue objects.
@@ -119,18 +108,14 @@ FsRtlInitializeWorkerThread (
 
         KeInitializeQueue(&FsRtlWorkerQueues[i], 0);
 
-        if (!NT_SUCCESS(PsCreateSystemThread(&Thread,
-                                             THREAD_ALL_ACCESS,
-                                             &ObjectAttributes,
-                                             0L,
-                                             NULL,
-                                             FsRtlWorkerThread,
-                                             ULongToPtr( i )))) {
+        if (!NT_SUCCESS(PsCreateSystemThread(&Thread, THREAD_ALL_ACCESS, &ObjectAttributes, 0L, NULL, FsRtlWorkerThread,
+                                             ULongToPtr(i))))
+        {
 
             return FALSE;
         }
 
-        ZwClose( Thread );
+        ZwClose(Thread);
     }
 
     //
@@ -138,17 +123,12 @@ FsRtlInitializeWorkerThread (
     //  for paging files to the worker threads.
     //
 
-    KeInitializeEvent( &StackOverflowFallbackSerialEvent, SynchronizationEvent, TRUE );
+    KeInitializeEvent(&StackOverflowFallbackSerialEvent, SynchronizationEvent, TRUE);
 
     return TRUE;
 }
-
-VOID
-FsRtlPostStackOverflow (
-    IN PVOID Context,
-    IN PKEVENT Event,
-    IN PFSRTL_STACK_OVERFLOW_ROUTINE StackOverflowRoutine
-    )
+
+VOID FsRtlPostStackOverflow(IN PVOID Context, IN PKEVENT Event, IN PFSRTL_STACK_OVERFLOW_ROUTINE StackOverflowRoutine)
 
 /*++
 
@@ -176,17 +156,13 @@ Return Value:
 --*/
 
 {
-    FsRtlpPostStackOverflow( Context, Event, StackOverflowRoutine, FALSE );
+    FsRtlpPostStackOverflow(Context, Event, StackOverflowRoutine, FALSE);
     return;
 }
 
-
-VOID
-FsRtlPostPagingFileStackOverflow (
-    IN PVOID Context,
-    IN PKEVENT Event,
-    IN PFSRTL_STACK_OVERFLOW_ROUTINE StackOverflowRoutine
-    )
+
+VOID FsRtlPostPagingFileStackOverflow(IN PVOID Context, IN PKEVENT Event,
+                                      IN PFSRTL_STACK_OVERFLOW_ROUTINE StackOverflowRoutine)
 
 /*++
 
@@ -214,18 +190,13 @@ Return Value:
 --*/
 
 {
-    FsRtlpPostStackOverflow( Context, Event, StackOverflowRoutine, TRUE );
+    FsRtlpPostStackOverflow(Context, Event, StackOverflowRoutine, TRUE);
     return;
 }
 
-
-VOID
-FsRtlpPostStackOverflow (
-    IN PVOID Context,
-    IN PKEVENT Event,
-    IN PFSRTL_STACK_OVERFLOW_ROUTINE StackOverflowRoutine,
-    IN BOOLEAN PagingFile
-    )
+
+VOID FsRtlpPostStackOverflow(IN PVOID Context, IN PKEVENT Event, IN PFSRTL_STACK_OVERFLOW_ROUTINE StackOverflowRoutine,
+                             IN BOOLEAN PagingFile)
 
 /*++
 
@@ -262,9 +233,7 @@ Return Value:
     //  the stack overflow thread.  Conserve stack by raising here.
     //
 
-    StackOverflowItem = ExAllocatePoolWithTag( NonPagedPool,
-                                               sizeof(STACK_OVERFLOW_ITEM),
-                                               MODULE_POOL_TAG );
+    StackOverflowItem = ExAllocatePoolWithTag(NonPagedPool, sizeof(STACK_OVERFLOW_ITEM), MODULE_POOL_TAG);
 
     //
     //  If this fails, go to the fallback item for the paging file overflows.
@@ -272,41 +241,36 @@ Return Value:
     //  could lead to deadlocks if it waits on a thread that itself needs
     //  the fallback item.
     //
-    
-    if (StackOverflowItem == NULL) {
-        
-        if (!PagingFile) {
-        
-            ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+
+    if (StackOverflowItem == NULL)
+    {
+
+        if (!PagingFile)
+        {
+
+            ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
         }
 
-        KeWaitForSingleObject( &StackOverflowFallbackSerialEvent,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               NULL );
+        KeWaitForSingleObject(&StackOverflowFallbackSerialEvent, Executive, KernelMode, FALSE, NULL);
 
         StackOverflowItem = &StackOverflowFallback;
     }
-    
+
     //
     //  Fill in the fields in the new item
     //
 
-    StackOverflowItem->Context              = Context;
-    StackOverflowItem->Event                = Event;
+    StackOverflowItem->Context = Context;
+    StackOverflowItem->Event = Event;
     StackOverflowItem->StackOverflowRoutine = StackOverflowRoutine;
 
-    ExInitializeWorkItem( &StackOverflowItem->Item,
-                          &FsRtlStackOverflowRead,
-                          StackOverflowItem );
+    ExInitializeWorkItem(&StackOverflowItem->Item, &FsRtlStackOverflowRead, StackOverflowItem);
 
     //
     //  Safely add it to the overflow queue
     //
 
-    KeInsertQueue( &FsRtlWorkerQueues[PagingFile],
-                   &StackOverflowItem->Item.List );
+    KeInsertQueue(&FsRtlWorkerQueues[PagingFile], &StackOverflowItem->Item.List);
 
     //
     //  And return to our caller
@@ -315,15 +279,12 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
-VOID
-FsRtlStackOverflowRead (
-    IN PVOID Context
-    )
+VOID FsRtlStackOverflowRead(IN PVOID Context)
 
 /*++
 
@@ -358,29 +319,27 @@ Return Value:
 
     StackOverflowItem = (PSTACK_OVERFLOW_ITEM)Context;
 
-    (StackOverflowItem->StackOverflowRoutine)(StackOverflowItem->Context,
-                                              StackOverflowItem->Event);
+    (StackOverflowItem->StackOverflowRoutine)(StackOverflowItem->Context, StackOverflowItem->Event);
 
     //
     //  Deallocate the work item, or simply return the serial item.
     //
-    
-    if (StackOverflowItem == &StackOverflowFallback) {
 
-        KeSetEvent( &StackOverflowFallbackSerialEvent, 0, FALSE );
-    
-    } else {
-        
-        ExFreePool( StackOverflowItem );
+    if (StackOverflowItem == &StackOverflowFallback)
+    {
+
+        KeSetEvent(&StackOverflowFallbackSerialEvent, 0, FALSE);
+    }
+    else
+    {
+
+        ExFreePool(StackOverflowItem);
     }
 
     PsGetCurrentThread()->TopLevelIrp = (ULONG_PTR)NULL;
 }
 
-VOID
-FsRtlWorkerThread(
-    IN PVOID StartContext
-    )
+VOID FsRtlWorkerThread(IN PVOID StartContext)
 
 {
     PLIST_ENTRY Entry;
@@ -391,15 +350,15 @@ FsRtlWorkerThread(
     //  Set our priority to low realtime, or +1 for PagingFile.
     //
 
-    (VOID)KeSetPriorityThread( &PsGetCurrentThread()->Tcb,
-                               LOW_REALTIME_PRIORITY + PagingFile );
+    (VOID) KeSetPriorityThread(&PsGetCurrentThread()->Tcb, LOW_REALTIME_PRIORITY + PagingFile);
 
     //
     // Loop forever waiting for a work queue item, calling the processing
     // routine, and then waiting for another work queue item.
     //
 
-    do {
+    do
+    {
 
         //
         // Wait until something is put in the queue.
@@ -416,15 +375,11 @@ FsRtlWorkerThread(
         //
 
         (WorkItem->WorkerRoutine)(WorkItem->Parameter);
-        if (KeGetCurrentIrql() != 0) {
-            KeBugCheckEx(
-                IRQL_NOT_LESS_OR_EQUAL,
-                (ULONG_PTR)WorkItem->WorkerRoutine,
-                (ULONG_PTR)KeGetCurrentIrql(),
-                (ULONG_PTR)WorkItem->WorkerRoutine,
-                (ULONG_PTR)WorkItem
-                );
+        if (KeGetCurrentIrql() != 0)
+        {
+            KeBugCheckEx(IRQL_NOT_LESS_OR_EQUAL, (ULONG_PTR)WorkItem->WorkerRoutine, (ULONG_PTR)KeGetCurrentIrql(),
+                         (ULONG_PTR)WorkItem->WorkerRoutine, (ULONG_PTR)WorkItem);
         }
 
-    } while(TRUE);
+    } while (TRUE);
 }

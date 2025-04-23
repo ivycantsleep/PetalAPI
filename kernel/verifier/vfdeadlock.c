@@ -106,7 +106,7 @@ Revision History:
 // Enable/disable the deadlock detection package. This can be used
 // to disable temporarily the deadlock detection package.
 //
-                
+
 BOOLEAN ViDeadlockDetectionEnabled;
 
 //
@@ -122,7 +122,7 @@ BOOLEAN ViDeadlockStrict;
 
 //
 // If true we will complain about uninitialized and double initialized
-// resources. If false we resolve quitely these issues on the fly by 
+// resources. If false we resolve quitely these issues on the fly by
 // simulating an initialize ourselves during the acquire() operation.
 // This can happen legitimately if the resource is initialized in an
 // unverified driver and passed to a verified one to be used. Therefore
@@ -142,7 +142,7 @@ ULONG ViDeadlockResets;
 
 //
 // If this is true only spinlocks are verified. All other resources
-// are just ignored. 
+// are just ignored.
 //
 
 BOOLEAN ViDeadlockVerifyOnlySpinlocks;
@@ -154,9 +154,9 @@ ULONG ViVerifyOnlySpinlocksFromRegistry;
 // been accessed in a while. If the global age minus the age of the node
 // is bigger than the age window then the node is a candidate for trimming.
 //
-// The TrimThreshold variable controls if the trimming will start for a 
+// The TrimThreshold variable controls if the trimming will start for a
 // resource. As long as a resource has less than TrimThreshold nodes we will
-// not apply the ageing algorithm to trim nodes for that resource. 
+// not apply the ageing algorithm to trim nodes for that resource.
 //
 
 ULONG ViDeadlockAgeWindow = 2000;
@@ -184,10 +184,10 @@ ULONG ViDeadlockTrimThreshold = 128;
 // silviuc: based on this maybe we should drop the whole not initialized thing?
 //
 
-#define VI_DEADLOCK_FLAG_RECURSIVE_ACQUISITION_OK       0x0001 
-#define VI_DEADLOCK_FLAG_NO_INITIALIZATION_FUNCTION     0x0002
-#define VI_DEADLOCK_FLAG_REVERSE_RELEASE_OK             0x0004
-#define VI_DEADLOCK_FLAG_REINITIALIZE_OK                0x0008
+#define VI_DEADLOCK_FLAG_RECURSIVE_ACQUISITION_OK 0x0001
+#define VI_DEADLOCK_FLAG_NO_INITIALIZATION_FUNCTION 0x0002
+#define VI_DEADLOCK_FLAG_REVERSE_RELEASE_OK 0x0004
+#define VI_DEADLOCK_FLAG_REINITIALIZE_OK 0x0008
 
 //
 // Specific verification flags for each resource type. The
@@ -195,44 +195,32 @@ ULONG ViDeadlockTrimThreshold = 128;
 // type VI_DEADLOCK_RESOURCE_TYPE from ntos\inc\verifier.h.
 //
 
-ULONG ViDeadlockResourceTypeInfo[VfDeadlockTypeMaximum] =
-{
+ULONG ViDeadlockResourceTypeInfo[VfDeadlockTypeMaximum] = {
     // ViDeadlockUnknown //
     0,
 
     // ViDeadlockMutex//
-    VI_DEADLOCK_FLAG_RECURSIVE_ACQUISITION_OK |
-    0,
+    VI_DEADLOCK_FLAG_RECURSIVE_ACQUISITION_OK | 0,
 
     // ViDeadlockFastMutex //
-    VI_DEADLOCK_FLAG_NO_INITIALIZATION_FUNCTION |
-    0,
+    VI_DEADLOCK_FLAG_NO_INITIALIZATION_FUNCTION | 0,
 
     // ViDeadlockFastMutexUnsafe //
-    VI_DEADLOCK_FLAG_NO_INITIALIZATION_FUNCTION | 
-    VI_DEADLOCK_FLAG_REVERSE_RELEASE_OK |
-    0,
+    VI_DEADLOCK_FLAG_NO_INITIALIZATION_FUNCTION | VI_DEADLOCK_FLAG_REVERSE_RELEASE_OK | 0,
 
     // ViDeadlockSpinLock //
-    VI_DEADLOCK_FLAG_REVERSE_RELEASE_OK | 
-    VI_DEADLOCK_FLAG_REINITIALIZE_OK |
-    0,
+    VI_DEADLOCK_FLAG_REVERSE_RELEASE_OK | VI_DEADLOCK_FLAG_REINITIALIZE_OK | 0,
 
     // ViDeadlockQueuedSpinLock //
-    VI_DEADLOCK_FLAG_NO_INITIALIZATION_FUNCTION |
-    0,
+    VI_DEADLOCK_FLAG_NO_INITIALIZATION_FUNCTION | 0,
 };
 
 
 NTSYSAPI
 USHORT
 NTAPI
-RtlCaptureStackBackTrace(
-   IN ULONG FramesToSkip,
-   IN ULONG FramesToCapture,
-   OUT PVOID *BackTrace,
-   OUT PULONG BackTraceHash
-   );
+RtlCaptureStackBackTrace(IN ULONG FramesToSkip, IN ULONG FramesToCapture, OUT PVOID *BackTrace,
+                         OUT PULONG BackTraceHash);
 
 //
 // Control debugging behavior. A zero value means bugcheck for every failure.
@@ -244,7 +232,8 @@ ULONG ViDeadlockDebug;
 // Various health indicators
 //
 
-struct {
+struct
+{
 
     ULONG AllocationFailures : 1;
     ULONG KernelVerifierEnabled : 1;
@@ -300,14 +289,14 @@ ULONG ViDeadlockSimultaneousLocksLimit = 10;
 //      deleted while holding resources.
 //
 
-#define VI_DEADLOCK_ISSUE_SELF_DEADLOCK           0x1000
-#define VI_DEADLOCK_ISSUE_DEADLOCK_DETECTED       0x1001
-#define VI_DEADLOCK_ISSUE_UNINITIALIZED_RESOURCE  0x1002
-#define VI_DEADLOCK_ISSUE_UNEXPECTED_RELEASE      0x1003
-#define VI_DEADLOCK_ISSUE_UNEXPECTED_THREAD       0x1004
+#define VI_DEADLOCK_ISSUE_SELF_DEADLOCK 0x1000
+#define VI_DEADLOCK_ISSUE_DEADLOCK_DETECTED 0x1001
+#define VI_DEADLOCK_ISSUE_UNINITIALIZED_RESOURCE 0x1002
+#define VI_DEADLOCK_ISSUE_UNEXPECTED_RELEASE 0x1003
+#define VI_DEADLOCK_ISSUE_UNEXPECTED_THREAD 0x1004
 #define VI_DEADLOCK_ISSUE_MULTIPLE_INITIALIZATION 0x1005
-#define VI_DEADLOCK_ISSUE_THREAD_HOLDS_RESOURCES  0x1006
-#define VI_DEADLOCK_ISSUE_UNACQUIRED_RESOURCE     0x1007
+#define VI_DEADLOCK_ISSUE_THREAD_HOLDS_RESOURCES 0x1006
+#define VI_DEADLOCK_ISSUE_UNACQUIRED_RESOURCE 0x1007
 
 //
 // Performance counters read from registry.
@@ -320,9 +309,9 @@ ULONG ViRecursionDepthLimitFromRegistry;
 // Water marks for the cache of freed structures.
 //
 
-#define VI_DEADLOCK_MAX_FREE_THREAD    0x10
-#define VI_DEADLOCK_MAX_FREE_NODE      0x40
-#define VI_DEADLOCK_MAX_FREE_RESOURCE  0x20
+#define VI_DEADLOCK_MAX_FREE_THREAD 0x10
+#define VI_DEADLOCK_MAX_FREE_NODE 0x40
+#define VI_DEADLOCK_MAX_FREE_RESOURCE 0x20
 
 WORK_QUEUE_ITEM ViTrimDeadlockPoolWorkItem;
 
@@ -341,7 +330,8 @@ ULONG ViDeadlockReservedResources = 0x2000;
 // Block types that can be allocated.
 //
 
-typedef enum {
+typedef enum
+{
 
     ViDeadlockUnknown = 0,
     ViDeadlockResource,
@@ -359,14 +349,14 @@ typedef enum {
 PVI_DEADLOCK_GLOBALS ViDeadlockGlobals;
 
 //
-// Default maximum recursion depth for the deadlock 
+// Default maximum recursion depth for the deadlock
 // detection algorithm. This can be overridden by registry.
 //
 
 #define VI_DEADLOCK_MAXIMUM_DEGREE 4
 
 //
-// Default maximum number of searched nodes for the deadlock 
+// Default maximum number of searched nodes for the deadlock
 // detection algorithm. This can be overridden by registry.
 //
 
@@ -382,233 +372,103 @@ PVI_DEADLOCK_GLOBALS ViDeadlockGlobals;
 /////////////////////////////// Internal deadlock detection functions
 /////////////////////////////////////////////////////////////////////
 
-VOID
-VfDeadlockDetectionInitialize (
-    );
+VOID VfDeadlockDetectionInitialize();
 
-VOID
-VfDeadlockDetectionCleanup (
-    );
+VOID VfDeadlockDetectionCleanup();
 
-VOID
-ViDeadlockDetectionReset (
-    );
+VOID ViDeadlockDetectionReset();
 
 PLIST_ENTRY
-ViDeadlockDatabaseHash(
-    IN PLIST_ENTRY Database,
-    IN PVOID Address
-    );
+ViDeadlockDatabaseHash(IN PLIST_ENTRY Database, IN PVOID Address);
 
 BOOLEAN
-ViDeadlockIsDriverInList (
-    PUNICODE_STRING BigString,
-    PUNICODE_STRING Match
-    );
+ViDeadlockIsDriverInList(PUNICODE_STRING BigString, PUNICODE_STRING Match);
 
 PVI_DEADLOCK_RESOURCE
-ViDeadlockSearchResource(
-    IN PVOID ResourceAddress
-    );
+ViDeadlockSearchResource(IN PVOID ResourceAddress);
 
 BOOLEAN
-ViDeadlockSimilarNode (
-    IN PVOID Resource,
-    IN BOOLEAN TryNode,
-    IN PVI_DEADLOCK_NODE Node
-    );
+ViDeadlockSimilarNode(IN PVOID Resource, IN BOOLEAN TryNode, IN PVI_DEADLOCK_NODE Node);
 
 BOOLEAN
-ViDeadlockCanProceed (
-    IN PVOID Resource, OPTIONAL
-    IN PVOID CallAddress, OPTIONAL
-    IN VI_DEADLOCK_RESOURCE_TYPE Type OPTIONAL
-    );
+ViDeadlockCanProceed(IN PVOID Resource, OPTIONAL IN PVOID CallAddress,
+                     OPTIONAL IN VI_DEADLOCK_RESOURCE_TYPE Type OPTIONAL);
 
 BOOLEAN
-ViDeadlockAnalyze(
-    IN PVOID ResourceAddress,
-    IN PVI_DEADLOCK_NODE CurrentNode,
-    IN BOOLEAN FirstCall,
-    IN ULONG Degree
-    );
+ViDeadlockAnalyze(IN PVOID ResourceAddress, IN PVI_DEADLOCK_NODE CurrentNode, IN BOOLEAN FirstCall, IN ULONG Degree);
 
 PVI_DEADLOCK_THREAD
-ViDeadlockSearchThread (
-    PKTHREAD Thread
-    );
+ViDeadlockSearchThread(PKTHREAD Thread);
 
 PVI_DEADLOCK_THREAD
-ViDeadlockAddThread (
-    PKTHREAD Thread,
-    PVOID ReservedThread
-    );
+ViDeadlockAddThread(PKTHREAD Thread, PVOID ReservedThread);
 
-VOID
-ViDeadlockDeleteThread (
-    PVI_DEADLOCK_THREAD Thread,
-    BOOLEAN Cleanup
-    );
+VOID ViDeadlockDeleteThread(PVI_DEADLOCK_THREAD Thread, BOOLEAN Cleanup);
 
 BOOLEAN
-ViDeadlockAddResource(
-    IN PVOID Resource,
-    IN VI_DEADLOCK_RESOURCE_TYPE Type,
-    IN PVOID Caller,
-    IN PVOID ReservedResource
-    );
+ViDeadlockAddResource(IN PVOID Resource, IN VI_DEADLOCK_RESOURCE_TYPE Type, IN PVOID Caller, IN PVOID ReservedResource);
 
 PVOID
-ViDeadlockAllocate (
-    VI_DEADLOCK_ALLOC_TYPE Type
-    );
+ViDeadlockAllocate(VI_DEADLOCK_ALLOC_TYPE Type);
 
-VOID
-ViDeadlockFree (
-    PVOID Object,
-    VI_DEADLOCK_ALLOC_TYPE Type
-    );
+VOID ViDeadlockFree(PVOID Object, VI_DEADLOCK_ALLOC_TYPE Type);
 
-VOID
-ViDeadlockTrimPoolCache (
-    VOID
-    );
+VOID ViDeadlockTrimPoolCache(VOID);
 
-VOID
-ViDeadlockTrimPoolCacheWorker (
-    PVOID
-    );
+VOID ViDeadlockTrimPoolCacheWorker(PVOID);
 
 PVOID
-ViDeadlockAllocateFromPoolCache (
-    PULONG Count,
-    ULONG MaximumCount,
-    PLIST_ENTRY List,
-    SIZE_T Offset
-    );
+ViDeadlockAllocateFromPoolCache(PULONG Count, ULONG MaximumCount, PLIST_ENTRY List, SIZE_T Offset);
 
-VOID
-ViDeadlockFreeIntoPoolCache (
-    PVOID Object,
-    PULONG Count,
-    PLIST_ENTRY List,
-    SIZE_T Offset
-    );
+VOID ViDeadlockFreeIntoPoolCache(PVOID Object, PULONG Count, PLIST_ENTRY List, SIZE_T Offset);
 
-VOID
-ViDeadlockReportIssue (
-    ULONG_PTR Param1,
-    ULONG_PTR Param2,
-    ULONG_PTR Param3,
-    ULONG_PTR Param4
-    );
+VOID ViDeadlockReportIssue(ULONG_PTR Param1, ULONG_PTR Param2, ULONG_PTR Param3, ULONG_PTR Param4);
 
-VOID
-ViDeadlockAddParticipant(
-    PVI_DEADLOCK_NODE Node
-    );
+VOID ViDeadlockAddParticipant(PVI_DEADLOCK_NODE Node);
 
-VOID
-ViDeadlockDeleteResource (
-    PVI_DEADLOCK_RESOURCE Resource,
-    BOOLEAN Cleanup
-    );
+VOID ViDeadlockDeleteResource(PVI_DEADLOCK_RESOURCE Resource, BOOLEAN Cleanup);
 
-VOID
-ViDeadlockDeleteNode (
-    PVI_DEADLOCK_NODE Node,
-    BOOLEAN Cleanup
-    );
+VOID ViDeadlockDeleteNode(PVI_DEADLOCK_NODE Node, BOOLEAN Cleanup);
 
 ULONG
-ViDeadlockNodeLevel (
-    PVI_DEADLOCK_NODE Node
-    );
+ViDeadlockNodeLevel(PVI_DEADLOCK_NODE Node);
 
 BOOLEAN
-ViDeadlockCertify(
-    VOID
-    );
+ViDeadlockCertify(VOID);
 
 BOOLEAN
-ViDeadlockDetectionIsLockedAlready (
-    );
+ViDeadlockDetectionIsLockedAlready();
 
-VOID
-ViDeadlockDetectionLock (
-    PKIRQL OldIrql
-    );
+VOID ViDeadlockDetectionLock(PKIRQL OldIrql);
 
-VOID
-ViDeadlockDetectionUnlock (
-    KIRQL OldIrql
-    );
+VOID ViDeadlockDetectionUnlock(KIRQL OldIrql);
 
-VOID
-ViDeadlockCheckThreadConsistency (
-    PVI_DEADLOCK_THREAD Thread,
-    BOOLEAN Recursion
-    );
+VOID ViDeadlockCheckThreadConsistency(PVI_DEADLOCK_THREAD Thread, BOOLEAN Recursion);
 
-VOID
-ViDeadlockCheckNodeConsistency (
-    PVI_DEADLOCK_NODE Node,
-    BOOLEAN Recursion
-    );
+VOID ViDeadlockCheckNodeConsistency(PVI_DEADLOCK_NODE Node, BOOLEAN Recursion);
 
-VOID
-ViDeadlockCheckResourceConsistency (
-    PVI_DEADLOCK_RESOURCE Resource,
-    BOOLEAN Recursion
-    );
+VOID ViDeadlockCheckResourceConsistency(PVI_DEADLOCK_RESOURCE Resource, BOOLEAN Recursion);
 
 PVI_DEADLOCK_THREAD
-ViDeadlockCheckThreadReferences (
-    PVI_DEADLOCK_NODE Node
-    );
+ViDeadlockCheckThreadReferences(PVI_DEADLOCK_NODE Node);
 
 BOOLEAN
-ViIsThreadInsidePagingCodePaths (
-    );
+ViIsThreadInsidePagingCodePaths();
 
-VOID 
-ViDeadlockCheckDuplicatesAmongChildren (
-    PVI_DEADLOCK_NODE Parent,
-    PVI_DEADLOCK_NODE Child
-    );
+VOID ViDeadlockCheckDuplicatesAmongChildren(PVI_DEADLOCK_NODE Parent, PVI_DEADLOCK_NODE Child);
 
-VOID 
-ViDeadlockCheckDuplicatesAmongRoots (
-    PVI_DEADLOCK_NODE Root
-    );
+VOID ViDeadlockCheckDuplicatesAmongRoots(PVI_DEADLOCK_NODE Root);
 
 LOGICAL
-ViDeadlockSimilarNodes (
-    PVI_DEADLOCK_NODE NodeA,
-    PVI_DEADLOCK_NODE NodeB
-    );
+ViDeadlockSimilarNodes(PVI_DEADLOCK_NODE NodeA, PVI_DEADLOCK_NODE NodeB);
 
-VOID
-ViDeadlockMergeNodes (
-    PVI_DEADLOCK_NODE NodeTo,
-    PVI_DEADLOCK_NODE NodeFrom
-    );
+VOID ViDeadlockMergeNodes(PVI_DEADLOCK_NODE NodeTo, PVI_DEADLOCK_NODE NodeFrom);
 
-VOID
-ViDeadlockTrimResources (
-    PLIST_ENTRY HashList
-    );
+VOID ViDeadlockTrimResources(PLIST_ENTRY HashList);
 
-VOID
-ViDeadlockForgetResourceHistory (
-    PVI_DEADLOCK_RESOURCE Resource,
-    ULONG TrimThreshold,
-    ULONG AgeThreshold
-    );
+VOID ViDeadlockForgetResourceHistory(PVI_DEADLOCK_RESOURCE Resource, ULONG TrimThreshold, ULONG AgeThreshold);
 
-VOID
-ViDeadlockCheckStackLimits (
-    );
+VOID ViDeadlockCheckStackLimits();
 
 #ifdef ALLOC_PRAGMA
 
@@ -676,7 +536,7 @@ ViDeadlockCheckStackLimits (
 #endif
 
 /////////////////////////////////////////////////////////////////////
-/////////////////////////////////////// Lock/unlock deadlock verifier 
+/////////////////////////////////////// Lock/unlock deadlock verifier
 /////////////////////////////////////////////////////////////////////
 
 //
@@ -687,36 +547,29 @@ KSPIN_LOCK ViDeadlockDatabaseLock;
 PKTHREAD ViDeadlockDatabaseOwner;
 
 
-VOID
-ViDeadlockDetectionLock (
-    PKIRQL OldIrql
-    )
+VOID ViDeadlockDetectionLock(PKIRQL OldIrql)
 {
-    KeAcquireSpinLock(&ViDeadlockDatabaseLock, (OldIrql));               
-    ViDeadlockDatabaseOwner = KeGetCurrentThread ();                     
+    KeAcquireSpinLock(&ViDeadlockDatabaseLock, (OldIrql));
+    ViDeadlockDatabaseOwner = KeGetCurrentThread();
 }
 
 
-VOID
-ViDeadlockDetectionUnlock (
-    KIRQL OldIrql
-    )
+VOID ViDeadlockDetectionUnlock(KIRQL OldIrql)
 {
-    ViDeadlockDatabaseOwner = NULL;                                      
-    KeReleaseSpinLock(&ViDeadlockDatabaseLock, OldIrql);                 
+    ViDeadlockDatabaseOwner = NULL;
+    KeReleaseSpinLock(&ViDeadlockDatabaseLock, OldIrql);
 }
 
 
 BOOLEAN
-ViDeadlockDetectionIsLockedAlready (
-    )
+ViDeadlockDetectionIsLockedAlready()
 {
     PVOID CurrentThread;
     PVOID CurrentOwner;
 
-    ASSERT (ViDeadlockGlobals);
-    ASSERT (ViDeadlockDetectionEnabled);
-    
+    ASSERT(ViDeadlockGlobals);
+    ASSERT(ViDeadlockDetectionEnabled);
+
     //
     // Figure out if are in a recursive call into the deadlock verifier.
     // This can happen if we try to allocate/free pool while we execute
@@ -725,18 +578,18 @@ ViDeadlockDetectionIsLockedAlready (
     // silviuc: can this be done instead with a simple read ?
     //
 
-    CurrentThread = (PVOID) KeGetCurrentThread();
-    
-    CurrentOwner = InterlockedCompareExchangePointer (&ViDeadlockDatabaseOwner,
-                                                      CurrentThread,
-                                                      CurrentThread);
+    CurrentThread = (PVOID)KeGetCurrentThread();
 
-    if (CurrentOwner == CurrentThread) {
-        
-        return TRUE;    
+    CurrentOwner = InterlockedCompareExchangePointer(&ViDeadlockDatabaseOwner, CurrentThread, CurrentThread);
+
+    if (CurrentOwner == CurrentThread)
+    {
+
+        return TRUE;
     }
-    else {
-        
+    else
+    {
+
         return FALSE;
     }
 }
@@ -747,10 +600,7 @@ ViDeadlockDetectionIsLockedAlready (
 /////////////////////////////////////////////////////////////////////
 
 PLIST_ENTRY
-ViDeadlockDatabaseHash(
-    IN PLIST_ENTRY Database,
-    IN PVOID Address
-    )
+ViDeadlockDatabaseHash(IN PLIST_ENTRY Database, IN PVOID Address)
 /*++
 
 Routine Description:
@@ -778,15 +628,11 @@ Return Value:
 
 --*/
 {
-    return Database + ((((ULONG_PTR)Address)>> PAGE_SHIFT) % VI_DEADLOCK_HASH_BINS);
+    return Database + ((((ULONG_PTR)Address) >> PAGE_SHIFT) % VI_DEADLOCK_HASH_BINS);
 }
 
 
-VOID
-VfDeadlockDetectionInitialize(
-    IN LOGICAL VerifyAllDrivers,
-    IN LOGICAL VerifyKernel
-    )
+VOID VfDeadlockDetectionInitialize(IN LOGICAL VerifyAllDrivers, IN LOGICAL VerifyKernel)
 /*++
 
 Routine Description:
@@ -822,39 +668,34 @@ Environment:
     // or not.
     //
 
-    ViDeadlockGlobals = ExAllocatePoolWithTag (NonPagedPool, 
-                                               sizeof (VI_DEADLOCK_GLOBALS),
-                                               VI_DEADLOCK_TAG);
+    ViDeadlockGlobals = ExAllocatePoolWithTag(NonPagedPool, sizeof(VI_DEADLOCK_GLOBALS), VI_DEADLOCK_TAG);
 
-    if (ViDeadlockGlobals == NULL) {
+    if (ViDeadlockGlobals == NULL)
+    {
         goto Failed;
     }
 
-    RtlZeroMemory (ViDeadlockGlobals, sizeof (VI_DEADLOCK_GLOBALS));
+    RtlZeroMemory(ViDeadlockGlobals, sizeof(VI_DEADLOCK_GLOBALS));
 
-    ExInitializeWorkItem (&ViTrimDeadlockPoolWorkItem,
-                          ViDeadlockTrimPoolCacheWorker,
-                          NULL);
+    ExInitializeWorkItem(&ViTrimDeadlockPoolWorkItem, ViDeadlockTrimPoolCacheWorker, NULL);
 
     //
     // Allocate hash tables for resources and threads.
     //
 
-    TableSize = sizeof (LIST_ENTRY) * VI_DEADLOCK_HASH_BINS;
+    TableSize = sizeof(LIST_ENTRY) * VI_DEADLOCK_HASH_BINS;
 
-    ViDeadlockGlobals->ResourceDatabase = ExAllocatePoolWithTag (NonPagedPool, 
-                                                                 TableSize,
-                                                                 VI_DEADLOCK_TAG);
+    ViDeadlockGlobals->ResourceDatabase = ExAllocatePoolWithTag(NonPagedPool, TableSize, VI_DEADLOCK_TAG);
 
-    if (!ViDeadlockGlobals->ResourceDatabase) {
+    if (!ViDeadlockGlobals->ResourceDatabase)
+    {
         return;
     }
 
-    ViDeadlockGlobals->ThreadDatabase = ExAllocatePoolWithTag (NonPagedPool, 
-                                                               TableSize,
-                                                               VI_DEADLOCK_TAG);
+    ViDeadlockGlobals->ThreadDatabase = ExAllocatePoolWithTag(NonPagedPool, TableSize, VI_DEADLOCK_TAG);
 
-    if (!ViDeadlockGlobals->ThreadDatabase) {
+    if (!ViDeadlockGlobals->ThreadDatabase)
+    {
         goto Failed;
     }
 
@@ -868,88 +709,89 @@ Environment:
 
     //
     // Initialize hash bins and database lock.
-    //    
+    //
 
-    for (I = 0; I < VI_DEADLOCK_HASH_BINS; I += 1) {
+    for (I = 0; I < VI_DEADLOCK_HASH_BINS; I += 1)
+    {
 
-        InitializeListHead(&(ViDeadlockGlobals->ResourceDatabase[I]));        
-        InitializeListHead(&ViDeadlockGlobals->ThreadDatabase[I]);    
+        InitializeListHead(&(ViDeadlockGlobals->ResourceDatabase[I]));
+        InitializeListHead(&ViDeadlockGlobals->ThreadDatabase[I]);
     }
 
-    KeInitializeSpinLock (&ViDeadlockDatabaseLock);    
+    KeInitializeSpinLock(&ViDeadlockDatabaseLock);
 
     //
     // Did user request only spin locks? This relieves the
     // memory consumption.
     //
 
-    if (ViVerifyOnlySpinlocksFromRegistry) {
+    if (ViVerifyOnlySpinlocksFromRegistry)
+    {
         ViDeadlockVerifyOnlySpinlocks = TRUE;
     }
-    
+
     //
     // Initialize deadlock analysis parameters
     //
 
-    ViDeadlockGlobals->RecursionDepthLimit = (ViRecursionDepthLimitFromRegistry) ?
-                                            ViRecursionDepthLimitFromRegistry : 
-                                            VI_DEADLOCK_MAXIMUM_DEGREE;
+    ViDeadlockGlobals->RecursionDepthLimit =
+        (ViRecursionDepthLimitFromRegistry) ? ViRecursionDepthLimitFromRegistry : VI_DEADLOCK_MAXIMUM_DEGREE;
 
-    ViDeadlockGlobals->SearchedNodesLimit = (ViSearchedNodesLimitFromRegistry) ?
-                                            ViSearchedNodesLimitFromRegistry :
-                                            VI_DEADLOCK_MAXIMUM_SEARCH;
+    ViDeadlockGlobals->SearchedNodesLimit =
+        (ViSearchedNodesLimitFromRegistry) ? ViSearchedNodesLimitFromRegistry : VI_DEADLOCK_MAXIMUM_SEARCH;
 
     //
     // Preallocate all resources if kernel verifier is enabled.
     //
 
-    if (VerifyKernel) {
+    if (VerifyKernel)
+    {
 
         PVOID Block;
 
-        for (I = 0; I < ViDeadlockReservedThreads; I += 1) {
-            
-            Block = ExAllocatePoolWithTag( NonPagedPool, 
-                                           sizeof (VI_DEADLOCK_THREAD),
-                                           VI_DEADLOCK_TAG);
+        for (I = 0; I < ViDeadlockReservedThreads; I += 1)
+        {
 
-            if (Block == NULL) {
+            Block = ExAllocatePoolWithTag(NonPagedPool, sizeof(VI_DEADLOCK_THREAD), VI_DEADLOCK_TAG);
+
+            if (Block == NULL)
+            {
                 goto Failed;
             }
 
-            ViDeadlockGlobals->BytesAllocated += sizeof (VI_DEADLOCK_THREAD);
+            ViDeadlockGlobals->BytesAllocated += sizeof(VI_DEADLOCK_THREAD);
             ViDeadlockGlobals->Threads[0] += 1;
-            ViDeadlockFree (Block, ViDeadlockThread);
+            ViDeadlockFree(Block, ViDeadlockThread);
         }
-        
-        for (I = 0; I < ViDeadlockReservedNodes; I += 1) {
-            
-            Block = ExAllocatePoolWithTag( NonPagedPool, 
-                                           sizeof (VI_DEADLOCK_NODE),
-                                           VI_DEADLOCK_TAG);
 
-            if (Block == NULL) {
+        for (I = 0; I < ViDeadlockReservedNodes; I += 1)
+        {
+
+            Block = ExAllocatePoolWithTag(NonPagedPool, sizeof(VI_DEADLOCK_NODE), VI_DEADLOCK_TAG);
+
+            if (Block == NULL)
+            {
                 goto Failed;
             }
 
-            ViDeadlockGlobals->BytesAllocated += sizeof (VI_DEADLOCK_NODE);
+            ViDeadlockGlobals->BytesAllocated += sizeof(VI_DEADLOCK_NODE);
             ViDeadlockGlobals->Nodes[0] += 1;
-            ViDeadlockFree (Block, ViDeadlockNode);
+            ViDeadlockFree(Block, ViDeadlockNode);
         }
-        
-        for (I = 0; I < ViDeadlockReservedResources; I += 1) {
-            
-            Block = ExAllocatePoolWithTag( NonPagedPool, 
-                                           sizeof (VI_DEADLOCK_RESOURCE),
-                                           VI_DEADLOCK_TAG);
 
-            if (Block == NULL) {
+        for (I = 0; I < ViDeadlockReservedResources; I += 1)
+        {
+
+            Block = ExAllocatePoolWithTag(NonPagedPool, sizeof(VI_DEADLOCK_RESOURCE), VI_DEADLOCK_TAG);
+
+            if (Block == NULL)
+            {
                 goto Failed;
             }
 
-            ViDeadlockGlobals->BytesAllocated += sizeof (VI_DEADLOCK_RESOURCE);
+            ViDeadlockGlobals->BytesAllocated += sizeof(VI_DEADLOCK_RESOURCE);
             ViDeadlockGlobals->Resources[0] += 1;
-            ViDeadlockFree (Block, ViDeadlockResource);
+            ViDeadlockFree(Block, ViDeadlockResource);
         }
     }
 
@@ -957,22 +799,25 @@ Environment:
     // Mark that everything went fine and return
     //
 
-    if (VerifyKernel) {
+    if (VerifyKernel)
+    {
         ViDeadlockState.KernelVerifierEnabled = 1;
     }
 
-    if (VerifyAllDrivers) {
+    if (VerifyAllDrivers)
+    {
 
         ViDeadlockState.DriverVerifierForAllEnabled = 1;
 
         ViDeadlockStrict = TRUE;
-        
-        if (ViDeadlockState.KernelVerifierEnabled == 1) {
+
+        if (ViDeadlockState.KernelVerifierEnabled == 1)
+        {
 
             //
             // silviuc: The VeryStrict option is unfunctional right now because
             // KeInitializeSpinLock is a kernel routine and therefore
-            // cannot be hooked for kernel locks. 
+            // cannot be hooked for kernel locks.
             //
 
             // ViDeadlockVeryStrict = TRUE;
@@ -990,49 +835,49 @@ Failed:
 
     Current = ViDeadlockGlobals->FreeNodeList.Flink;
 
-    while (Current != &(ViDeadlockGlobals->FreeNodeList)) {
+    while (Current != &(ViDeadlockGlobals->FreeNodeList))
+    {
 
-        Block = (PVOID) CONTAINING_RECORD (Current,
-                                           VI_DEADLOCK_NODE,
-                                           FreeListEntry);
+        Block = (PVOID)CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, FreeListEntry);
 
         Current = Current->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
     Current = ViDeadlockGlobals->FreeNodeList.Flink;
 
-    while (Current != &(ViDeadlockGlobals->FreeResourceList)) {
+    while (Current != &(ViDeadlockGlobals->FreeResourceList))
+    {
 
-        Block = (PVOID) CONTAINING_RECORD (Current,
-                                           VI_DEADLOCK_RESOURCE,
-                                           FreeListEntry);
+        Block = (PVOID)CONTAINING_RECORD(Current, VI_DEADLOCK_RESOURCE, FreeListEntry);
 
         Current = Current->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
     Current = ViDeadlockGlobals->FreeNodeList.Flink;
 
-    while (Current != &(ViDeadlockGlobals->FreeThreadList)) {
+    while (Current != &(ViDeadlockGlobals->FreeThreadList))
+    {
 
-        Block = (PVOID) CONTAINING_RECORD (Current,
-                                           VI_DEADLOCK_THREAD,
-                                           FreeListEntry);
+        Block = (PVOID)CONTAINING_RECORD(Current, VI_DEADLOCK_THREAD, FreeListEntry);
 
         Current = Current->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
-    if (NULL != ViDeadlockGlobals->ResourceDatabase) {
+    if (NULL != ViDeadlockGlobals->ResourceDatabase)
+    {
         ExFreePool(ViDeadlockGlobals->ResourceDatabase);
     }
 
-    if (NULL != ViDeadlockGlobals->ThreadDatabase) {
+    if (NULL != ViDeadlockGlobals->ThreadDatabase)
+    {
         ExFreePool(ViDeadlockGlobals->ThreadDatabase);
     }
 
-    if (NULL != ViDeadlockGlobals) {
+    if (NULL != ViDeadlockGlobals)
+    {
         ExFreePool(ViDeadlockGlobals);
 
         //
@@ -1041,15 +886,13 @@ Failed:
         //
 
         ViDeadlockGlobals = NULL;
-    }        
-    
+    }
+
     return;
 }
 
 
-VOID
-VfDeadlockDetectionCleanup (
-    )
+VOID VfDeadlockDetectionCleanup()
 /*++
 
 Routine Description:
@@ -1075,8 +918,9 @@ Return Value:
     //
     // If we are not initialized then nothing to do.
     //
-    
-    if (ViDeadlockGlobals == NULL) {
+
+    if (ViDeadlockGlobals == NULL)
+    {
         return;
     }
 
@@ -1085,39 +929,39 @@ Return Value:
     // all nodes associated with resources.
     //
 
-    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1) {
+    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1)
+    {
 
         Current = ViDeadlockGlobals->ResourceDatabase[Index].Flink;
 
-        while (Current != &(ViDeadlockGlobals->ResourceDatabase[Index])) {
+        while (Current != &(ViDeadlockGlobals->ResourceDatabase[Index]))
+        {
 
 
-            Resource = CONTAINING_RECORD (Current,
-                                          VI_DEADLOCK_RESOURCE,
-                                          HashChainList);
+            Resource = CONTAINING_RECORD(Current, VI_DEADLOCK_RESOURCE, HashChainList);
 
             Current = Current->Flink;
 
-            ViDeadlockDeleteResource (Resource, TRUE);
+            ViDeadlockDeleteResource(Resource, TRUE);
         }
     }
 
     //
     // Iterate all threads and delete them.
     //
- 
-    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1) {
+
+    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1)
+    {
         Current = ViDeadlockGlobals->ThreadDatabase[Index].Flink;
 
-        while (Current != &(ViDeadlockGlobals->ThreadDatabase[Index])) {
+        while (Current != &(ViDeadlockGlobals->ThreadDatabase[Index]))
+        {
 
-            Thread = CONTAINING_RECORD (Current,
-                                        VI_DEADLOCK_THREAD,
-                                        ListEntry);
+            Thread = CONTAINING_RECORD(Current, VI_DEADLOCK_THREAD, ListEntry);
 
             Current = Current->Flink;
 
-            ViDeadlockDeleteThread (Thread, TRUE);
+            ViDeadlockDeleteThread(Thread, TRUE);
         }
     }
 
@@ -1125,7 +969,7 @@ Return Value:
     // Everything should be in the pool caches by now.
     //
 
-    ASSERT (ViDeadlockGlobals->BytesAllocated == 0);
+    ASSERT(ViDeadlockGlobals->BytesAllocated == 0);
 
     //
     // Free pool caches.
@@ -1133,57 +977,52 @@ Return Value:
 
     Current = ViDeadlockGlobals->FreeNodeList.Flink;
 
-    while (Current != &(ViDeadlockGlobals->FreeNodeList)) {
+    while (Current != &(ViDeadlockGlobals->FreeNodeList))
+    {
 
-        Block = (PVOID) CONTAINING_RECORD (Current,
-                                           VI_DEADLOCK_NODE,
-                                           FreeListEntry);
+        Block = (PVOID)CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, FreeListEntry);
 
         Current = Current->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
     Current = ViDeadlockGlobals->FreeNodeList.Flink;
 
-    while (Current != &(ViDeadlockGlobals->FreeResourceList)) {
+    while (Current != &(ViDeadlockGlobals->FreeResourceList))
+    {
 
-        Block = (PVOID) CONTAINING_RECORD (Current,
-                                           VI_DEADLOCK_RESOURCE,
-                                           FreeListEntry);
+        Block = (PVOID)CONTAINING_RECORD(Current, VI_DEADLOCK_RESOURCE, FreeListEntry);
 
         Current = Current->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
     Current = ViDeadlockGlobals->FreeNodeList.Flink;
 
-    while (Current != &(ViDeadlockGlobals->FreeThreadList)) {
+    while (Current != &(ViDeadlockGlobals->FreeThreadList))
+    {
 
-        Block = (PVOID) CONTAINING_RECORD (Current,
-                                           VI_DEADLOCK_THREAD,
-                                           FreeListEntry);
+        Block = (PVOID)CONTAINING_RECORD(Current, VI_DEADLOCK_THREAD, FreeListEntry);
 
         Current = Current->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
     //
     // Free databases and global structure
     //
 
-    ExFreePool (ViDeadlockGlobals->ResourceDatabase);    
-    ExFreePool (ViDeadlockGlobals->ThreadDatabase);    
+    ExFreePool(ViDeadlockGlobals->ResourceDatabase);
+    ExFreePool(ViDeadlockGlobals->ThreadDatabase);
 
-    ExFreePool(ViDeadlockGlobals);    
+    ExFreePool(ViDeadlockGlobals);
 
     ViDeadlockGlobals = NULL;
     ViDeadlockDetectionEnabled = FALSE;
 }
 
 
-VOID
-ViDeadlockDetectionReset (
-    )
+VOID ViDeadlockDetectionReset()
 /*++
 
 Routine Description:
@@ -1214,51 +1053,52 @@ Return Value:
     //
     // If we are not initialized or not enabled then nothing to do.
     //
-    
-    if (ViDeadlockGlobals == NULL || ViDeadlockDetectionEnabled == FALSE) {
+
+    if (ViDeadlockGlobals == NULL || ViDeadlockDetectionEnabled == FALSE)
+    {
         return;
     }
 
-    ASSERT (ViDeadlockDatabaseOwner == KeGetCurrentThread());
+    ASSERT(ViDeadlockDatabaseOwner == KeGetCurrentThread());
 
     //
     // Iterate all resources and delete them. This will also delete
     // all nodes associated with resources.
     //
 
-    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1) {
+    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1)
+    {
 
         Current = ViDeadlockGlobals->ResourceDatabase[Index].Flink;
 
-        while (Current != &(ViDeadlockGlobals->ResourceDatabase[Index])) {
+        while (Current != &(ViDeadlockGlobals->ResourceDatabase[Index]))
+        {
 
 
-            Resource = CONTAINING_RECORD (Current,
-                                          VI_DEADLOCK_RESOURCE,
-                                          HashChainList);
+            Resource = CONTAINING_RECORD(Current, VI_DEADLOCK_RESOURCE, HashChainList);
 
             Current = Current->Flink;
 
-            ViDeadlockDeleteResource (Resource, TRUE);
+            ViDeadlockDeleteResource(Resource, TRUE);
         }
     }
 
     //
     // Iterate all threads and delete them.
     //
- 
-    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1) {
+
+    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1)
+    {
         Current = ViDeadlockGlobals->ThreadDatabase[Index].Flink;
 
-        while (Current != &(ViDeadlockGlobals->ThreadDatabase[Index])) {
+        while (Current != &(ViDeadlockGlobals->ThreadDatabase[Index]))
+        {
 
-            Thread = CONTAINING_RECORD (Current,
-                                        VI_DEADLOCK_THREAD,
-                                        ListEntry);
+            Thread = CONTAINING_RECORD(Current, VI_DEADLOCK_THREAD, ListEntry);
 
             Current = Current->Flink;
 
-            ViDeadlockDeleteThread (Thread, TRUE);
+            ViDeadlockDeleteThread(Thread, TRUE);
         }
     }
 
@@ -1266,7 +1106,7 @@ Return Value:
     // Everything should be in the pool caches by now.
     //
 
-    ASSERT (ViDeadlockGlobals->BytesAllocated == 0);
+    ASSERT(ViDeadlockGlobals->BytesAllocated == 0);
 
     //
     // Update counters and forget past failures.
@@ -1278,11 +1118,8 @@ Return Value:
 
 
 BOOLEAN
-ViDeadlockCanProceed (
-    IN PVOID Resource, OPTIONAL
-    IN PVOID CallAddress, OPTIONAL
-    IN VI_DEADLOCK_RESOURCE_TYPE Type OPTIONAL
-    )
+ViDeadlockCanProceed(IN PVOID Resource, OPTIONAL IN PVOID CallAddress,
+                     OPTIONAL IN VI_DEADLOCK_RESOURCE_TYPE Type OPTIONAL)
 /*++
 
 Routine Description:
@@ -1319,13 +1156,14 @@ Environment:
 
     extern KSPIN_LOCK MmExpansionLock;
 
-    UNREFERENCED_PARAMETER (CallAddress);
+    UNREFERENCED_PARAMETER(CallAddress);
 
     //
     // Skip if package not initialized
     //
 
-    if (ViDeadlockGlobals == NULL) {
+    if (ViDeadlockGlobals == NULL)
+    {
         return FALSE;
     }
 
@@ -1333,13 +1171,14 @@ Environment:
     // Skip is package is disabled
     //
 
-    if (! ViDeadlockDetectionEnabled) {
+    if (!ViDeadlockDetectionEnabled)
+    {
         return FALSE;
     }
-        
+
     //
     // Skip if operation happens above DPC level. This avoids a case
-    // where KeAcquireSpinlockRaiseToSynch is used to acquire a spinlock. 
+    // where KeAcquireSpinlockRaiseToSynch is used to acquire a spinlock.
     // During lock release when we need to acquire the deadlock verifier lock
     // driver verifier will complain about lowering the IRQL. Since this is a
     // very uncommon interface it is not worth for now to add the code to
@@ -1348,7 +1187,8 @@ Environment:
     // interface.
     //
 
-    if (KeGetCurrentIrql() > DISPATCH_LEVEL) {
+    if (KeGetCurrentIrql() > DISPATCH_LEVEL)
+    {
         return FALSE;
     }
 
@@ -1356,15 +1196,17 @@ Environment:
     // Check if anybody switched the stack.
     //
 
-    ViDeadlockCheckStackLimits ();
+    ViDeadlockCheckStackLimits();
 
     //
     // If it is only as spinlock affair then skip.
     //
 
-    if (Type != VfDeadlockUnknown) {
+    if (Type != VfDeadlockUnknown)
+    {
 
-        if (ViDeadlockVerifyOnlySpinlocks && Type != VfDeadlockSpinLock) {
+        if (ViDeadlockVerifyOnlySpinlocks && Type != VfDeadlockSpinLock)
+        {
             return FALSE;
         }
     }
@@ -1373,7 +1215,8 @@ Environment:
     // We do not check the deadlock verifier lock
     //
 
-    if (Resource == &ViDeadlockDatabaseLock) {
+    if (Resource == &ViDeadlockDatabaseLock)
+    {
         return FALSE;
     }
 
@@ -1381,7 +1224,8 @@ Environment:
     // Skip kernel locks acquired with KeTryAcquireSpinLock
     //
 
-    if (Resource == &MmExpansionLock) {
+    if (Resource == &MmExpansionLock)
+    {
         return FALSE;
     }
 
@@ -1391,7 +1235,8 @@ Environment:
     // code in the deadlock verifier.
     //
 
-    if (ViDeadlockDetectionIsLockedAlready ()) {
+    if (ViDeadlockDetectionIsLockedAlready())
+    {
         return FALSE;
     }
 
@@ -1399,7 +1244,8 @@ Environment:
     // Skip if we ever encountered an allocation failure
     //
 
-    if (ViDeadlockGlobals->AllocationFailures > 0) {
+    if (ViDeadlockGlobals->AllocationFailures > 0)
+    {
         return FALSE;
     }
 
@@ -1413,12 +1259,7 @@ Environment:
 
 
 BOOLEAN
-ViDeadlockAnalyze(
-    IN PVOID ResourceAddress,
-    IN PVI_DEADLOCK_NODE AcquiredNode,
-    IN BOOLEAN FirstCall,
-    IN ULONG Degree
-    )
+ViDeadlockAnalyze(IN PVOID ResourceAddress, IN PVI_DEADLOCK_NODE AcquiredNode, IN BOOLEAN FirstCall, IN ULONG Degree)
 /*++
 
 Routine Description:
@@ -1452,20 +1293,22 @@ Return Value:
     BOOLEAN FoundDeadlock;
     PLIST_ENTRY Current;
 
-    ASSERT (AcquiredNode);
+    ASSERT(AcquiredNode);
 
     //
     // Setup global counters.
     //
 
-    if (FirstCall) {
-        
+    if (FirstCall)
+    {
+
         ViDeadlockGlobals->NodesSearched = 0;
         ViDeadlockGlobals->SequenceNumber += 1;
-        ViDeadlockGlobals->NumberOfParticipants = 0;                
+        ViDeadlockGlobals->NumberOfParticipants = 0;
         ViDeadlockGlobals->Instigator = NULL;
 
-        if (ViDeadlockGlobals->SequenceNumber == ((1 << 30) - 2)) {
+        if (ViDeadlockGlobals->SequenceNumber == ((1 << 30) - 2))
+        {
             ViDeadlockState.SequenceNumberOverflow = 1;
         }
     }
@@ -1478,7 +1321,8 @@ Return Value:
     // overwrapped but we can live with this.
     //
 
-    if (AcquiredNode->SequenceNumber == ViDeadlockGlobals->SequenceNumber) {
+    if (AcquiredNode->SequenceNumber == ViDeadlockGlobals->SequenceNumber)
+    {
         return FALSE;
     }
 
@@ -1487,7 +1331,7 @@ Return Value:
     //
 
     ViDeadlockGlobals->NodesSearched += 1;
-    
+
     //
     // Stamp node with current sequence number.
     //
@@ -1497,8 +1341,9 @@ Return Value:
     //
     // Stop recursion if it gets too deep.
     //
-    
-    if (Degree > ViDeadlockGlobals->RecursionDepthLimit) {
+
+    if (Degree > ViDeadlockGlobals->RecursionDepthLimit)
+    {
 
         ViDeadlockGlobals->DepthLimitHits += 1;
         return FALSE;
@@ -1508,7 +1353,8 @@ Return Value:
     // Stop recursion if it gets too lengthy
     //
 
-    if (ViDeadlockGlobals->NodesSearched >= ViDeadlockGlobals->SearchedNodesLimit) {
+    if (ViDeadlockGlobals->NodesSearched >= ViDeadlockGlobals->SearchedNodesLimit)
+    {
 
         ViDeadlockGlobals->SearchLimitHits += 1;
         return FALSE;
@@ -1523,15 +1369,16 @@ Return Value:
     // deadlock proof along the way.
     //
 
-    ASSERT (AcquiredNode->Root);
+    ASSERT(AcquiredNode->Root);
 
-    if (ResourceAddress == AcquiredNode->Root->ResourceAddress) {
+    if (ResourceAddress == AcquiredNode->Root->ResourceAddress)
+    {
 
-        ASSERT (FALSE == FirstCall);
+        ASSERT(FALSE == FirstCall);
 
         FoundDeadlock = TRUE;
 
-        ViDeadlockAddParticipant (AcquiredNode);
+        ViDeadlockAddParticipant(AcquiredNode);
 
         goto Exit;
     }
@@ -1546,14 +1393,13 @@ Return Value:
 
     Current = CurrentResource->ResourceList.Flink;
 
-    while (Current != &(CurrentResource->ResourceList)) {
+    while (Current != &(CurrentResource->ResourceList))
+    {
 
-        CurrentNode = CONTAINING_RECORD (Current,
-                                         VI_DEADLOCK_NODE,
-                                         ResourceList);
+        CurrentNode = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, ResourceList);
 
-        ASSERT (CurrentNode->Root);
-        ASSERT (CurrentNode->Root == CurrentResource);
+        ASSERT(CurrentNode->Root);
+        ASSERT(CurrentNode->Root == CurrentResource);
 
         //
         // Mark node as visited
@@ -1562,13 +1408,14 @@ Return Value:
         CurrentNode->SequenceNumber = ViDeadlockGlobals->SequenceNumber;
 
         //
-        // Check recursively the parent of the CurrentNode. This will check the 
+        // Check recursively the parent of the CurrentNode. This will check the
         // whole parent chain eventually through recursive calls.
         //
 
         CurrentParent = CurrentNode->Parent;
 
-        if (CurrentParent != NULL) {
+        if (CurrentParent != NULL)
+        {
 
             //
             // If we are traversing the Parent chain of AcquiredNode we do not
@@ -1577,39 +1424,34 @@ Return Value:
             // too much recursion (time consuming).
             //
 
-            if (CurrentNode != AcquiredNode) {
+            if (CurrentNode != AcquiredNode)
+            {
 
                 //
                 // Recurse across the graph
                 //
 
-                FoundDeadlock = ViDeadlockAnalyze (ResourceAddress,
-                                                   CurrentParent,
-                                                   FALSE,
-                                                   Degree + 1);
-
+                FoundDeadlock = ViDeadlockAnalyze(ResourceAddress, CurrentParent, FALSE, Degree + 1);
             }
-            else {
+            else
+            {
 
                 //
                 // Recurse down the graph
                 //
-                
-                FoundDeadlock = ViDeadlockAnalyze (ResourceAddress,
-                                                   CurrentParent,
-                                                   FALSE,
-                                                   Degree);
-                                
+
+                FoundDeadlock = ViDeadlockAnalyze(ResourceAddress, CurrentParent, FALSE, Degree);
             }
 
-            if (FoundDeadlock) {
+            if (FoundDeadlock)
+            {
 
                 ViDeadlockAddParticipant(CurrentNode);
 
-                if (CurrentNode != AcquiredNode) {
+                if (CurrentNode != AcquiredNode)
+                {
 
                     ViDeadlockAddParticipant(AcquiredNode);
-
                 }
 
                 goto Exit;
@@ -1620,9 +1462,10 @@ Return Value:
     }
 
 
-    Exit:
+Exit:
 
-    if (FoundDeadlock && FirstCall) {
+    if (FoundDeadlock && FirstCall)
+    {
 
         //
         // Make sure that the deadlock does not look like ABC - ACB.
@@ -1630,33 +1473,33 @@ Return Value:
         // this is not a real deadlock.
         //
 
-        if (ViDeadlockCertify ()) {
+        if (ViDeadlockCertify())
+        {
 
             //
-            // Print deadlock information and save the address so the 
+            // Print deadlock information and save the address so the
             // debugger knows who caused the deadlock.
             //
 
             ViDeadlockGlobals->Instigator = ResourceAddress;
-            
+
             DbgPrint("****************************************************************************\n");
             DbgPrint("**                                                                        **\n");
             DbgPrint("** Deadlock detected! Type !deadlock in the debugger for more information **\n");
             DbgPrint("**                                                                        **\n");
             DbgPrint("****************************************************************************\n");
 
-            ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_DEADLOCK_DETECTED,
-                                   (ULONG_PTR)ResourceAddress,
-                                   (ULONG_PTR)AcquiredNode,
-                                   0);
+            ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_DEADLOCK_DETECTED, (ULONG_PTR)ResourceAddress,
+                                  (ULONG_PTR)AcquiredNode, 0);
 
             //
             // It is impossible to continue at this point.
             //
 
             return FALSE;
-
-        } else {
+        }
+        else
+        {
 
             //
             // If we decided that this was not a deadlock after all, set the return value
@@ -1667,9 +1510,11 @@ Return Value:
         }
     }
 
-    if (FirstCall) {
+    if (FirstCall)
+    {
 
-        if (ViDeadlockGlobals->NodesSearched > ViDeadlockGlobals->MaxNodesSearched) {
+        if (ViDeadlockGlobals->NodesSearched > ViDeadlockGlobals->MaxNodesSearched)
+        {
 
             ViDeadlockGlobals->MaxNodesSearched = ViDeadlockGlobals->NodesSearched;
         }
@@ -1680,8 +1525,7 @@ Return Value:
 
 
 BOOLEAN
-ViDeadlockCertify(
-    )
+ViDeadlockCertify()
 /*++
 
 Routine Description:
@@ -1708,14 +1552,14 @@ Return Value:
 
 --*/
 {
-    PVI_DEADLOCK_NODE innerNode,outerNode;
-    ULONG innerParticipant,outerParticipant;
+    PVI_DEADLOCK_NODE innerNode, outerNode;
+    ULONG innerParticipant, outerParticipant;
     ULONG numberOfParticipants;
 
     ULONG currentParticipant;
-        
+
     numberOfParticipants = ViDeadlockGlobals->NumberOfParticipants;
-    
+
     //
     // Note -- this isn't a particularly efficient way to do this. However,
     // it is a particularly easy way to do it. This function should be called
@@ -1726,58 +1570,59 @@ Return Value:
     // Outer loop
     //
     outerParticipant = numberOfParticipants;
-    while(outerParticipant > 1) {
+    while (outerParticipant > 1)
+    {
         outerParticipant--;
-        
-        for (outerNode = ViDeadlockGlobals->Participant[outerParticipant]->Parent;
-            outerNode != NULL;
-            outerNode = outerNode->Parent ) {
+
+        for (outerNode = ViDeadlockGlobals->Participant[outerParticipant]->Parent; outerNode != NULL;
+             outerNode = outerNode->Parent)
+        {
 
             //
             // Inner loop
             //
-            innerParticipant = outerParticipant-1;
-            while (innerParticipant) {
+            innerParticipant = outerParticipant - 1;
+            while (innerParticipant)
+            {
                 innerParticipant--;
-                
-                for(innerNode = ViDeadlockGlobals->Participant[innerParticipant]->Parent;
-                    innerNode != NULL;
-                    innerNode = innerNode->Parent) {
 
-                    if (innerNode->Root->ResourceAddress == outerNode->Root->ResourceAddress) {
+                for (innerNode = ViDeadlockGlobals->Participant[innerParticipant]->Parent; innerNode != NULL;
+                     innerNode = innerNode->Parent)
+                {
+
+                    if (innerNode->Root->ResourceAddress == outerNode->Root->ResourceAddress)
+                    {
                         //
                         // The twain shall meet -- this is not a deadlock
                         //
-                        ViDeadlockGlobals->ABC_ACB_Skipped++;											
+                        ViDeadlockGlobals->ABC_ACB_Skipped++;
                         return FALSE;
                     }
                 }
-
             }
         }
     }
 
-    for (currentParticipant = 1; currentParticipant < numberOfParticipants; currentParticipant += 1) {
-        if (ViDeadlockGlobals->Participant[currentParticipant]->Root->ResourceAddress == 
-            ViDeadlockGlobals->Participant[currentParticipant-1]->Root->ResourceAddress) {
+    for (currentParticipant = 1; currentParticipant < numberOfParticipants; currentParticipant += 1)
+    {
+        if (ViDeadlockGlobals->Participant[currentParticipant]->Root->ResourceAddress ==
+            ViDeadlockGlobals->Participant[currentParticipant - 1]->Root->ResourceAddress)
+        {
             //
             // This is the head of a chain...
             //
-            if (ViDeadlockGlobals->Participant[currentParticipant-1]->OnlyTryAcquireUsed == TRUE) {
+            if (ViDeadlockGlobals->Participant[currentParticipant - 1]->OnlyTryAcquireUsed == TRUE)
+            {
                 //
                 // Head of a chain used only try acquire. This can never cause a deadlock.
                 //
                 return FALSE;
-
             }
         }
-
     }
 
-    
 
     return TRUE;
-
 }
 
 
@@ -1786,9 +1631,7 @@ Return Value:
 /////////////////////////////////////////////////////////////////////
 
 PVI_DEADLOCK_RESOURCE
-ViDeadlockSearchResource(
-    IN PVOID ResourceAddress
-    )
+ViDeadlockSearchResource(IN PVOID ResourceAddress)
 /*++
 
 Routine Description:
@@ -1814,10 +1657,10 @@ Return Value:
     PLIST_ENTRY Current;
     PVI_DEADLOCK_RESOURCE Resource;
 
-    ListHead = ViDeadlockDatabaseHash (ViDeadlockGlobals->ResourceDatabase, 
-                                       ResourceAddress);    
+    ListHead = ViDeadlockDatabaseHash(ViDeadlockGlobals->ResourceDatabase, ResourceAddress);
 
-    if (IsListEmpty (ListHead)) {
+    if (IsListEmpty(ListHead))
+    {
         return NULL;
     }
 
@@ -1826,7 +1669,7 @@ Return Value:
     // but it is a good place to do this operation.
     //
 
-    ViDeadlockTrimResources (ListHead);
+    ViDeadlockTrimResources(ListHead);
 
     //
     // Now search the bucket for our resource.
@@ -1834,14 +1677,14 @@ Return Value:
 
     Current = ListHead->Flink;
 
-    while (Current != ListHead) {
+    while (Current != ListHead)
+    {
 
-        Resource = CONTAINING_RECORD(Current,
-                                     VI_DEADLOCK_RESOURCE,
-                                     HashChainList);
+        Resource = CONTAINING_RECORD(Current, VI_DEADLOCK_RESOURCE, HashChainList);
 
-        if (Resource->ResourceAddress == ResourceAddress) {          
-                        
+        if (Resource->ResourceAddress == ResourceAddress)
+        {
+
             return Resource;
         }
 
@@ -1853,12 +1696,8 @@ Return Value:
 
 
 BOOLEAN
-VfDeadlockInitializeResource(
-    IN PVOID Resource,
-    IN VI_DEADLOCK_RESOURCE_TYPE Type,
-    IN PVOID Caller,
-    IN BOOLEAN DoNotAcquireLock
-    )
+VfDeadlockInitializeResource(IN PVOID Resource, IN VI_DEADLOCK_RESOURCE_TYPE Type, IN PVOID Caller,
+                             IN BOOLEAN DoNotAcquireLock)
 /*++
 
 Routine Description:
@@ -1887,38 +1726,31 @@ Return Value:
     BOOLEAN Result;
     KIRQL OldIrql;
 
-    UNREFERENCED_PARAMETER (DoNotAcquireLock);
+    UNREFERENCED_PARAMETER(DoNotAcquireLock);
 
     //
     // If we are not initialized or package is not enabled
     // we return immediately.
     //
 
-    if (! ViDeadlockCanProceed(Resource, Caller, Type)) {
+    if (!ViDeadlockCanProceed(Resource, Caller, Type))
+    {
         return FALSE;
     }
 
-    ReservedResource = ViDeadlockAllocate (ViDeadlockResource);
+    ReservedResource = ViDeadlockAllocate(ViDeadlockResource);
 
-    ViDeadlockDetectionLock (&OldIrql);
+    ViDeadlockDetectionLock(&OldIrql);
 
-    Result = ViDeadlockAddResource (Resource,
-                                    Type,
-                                    Caller,
-                                    ReservedResource);
+    Result = ViDeadlockAddResource(Resource, Type, Caller, ReservedResource);
 
-    ViDeadlockDetectionUnlock (OldIrql);
+    ViDeadlockDetectionUnlock(OldIrql);
     return Result;
 }
 
- 
+
 BOOLEAN
-ViDeadlockAddResource(
-    IN PVOID Resource,
-    IN VI_DEADLOCK_RESOURCE_TYPE Type,
-    IN PVOID Caller,
-    IN PVOID ReservedResource
-    )
+ViDeadlockAddResource(IN PVOID Resource, IN VI_DEADLOCK_RESOURCE_TYPE Type, IN PVOID Caller, IN PVOID ReservedResource)
 /*++
 
 Routine Description:
@@ -1954,40 +1786,39 @@ Return Value:
     // This would be a bug in most of the cases.
     //
 
-    ResourceRoot = ViDeadlockSearchResource (Resource);
+    ResourceRoot = ViDeadlockSearchResource(Resource);
 
-    if (ResourceRoot) {        
+    if (ResourceRoot)
+    {
 
         DeadlockFlags = ViDeadlockResourceTypeInfo[Type];
-        
+
         //
-        // Check if we are reinitializing a good resource. This is a valid 
+        // Check if we are reinitializing a good resource. This is a valid
         // operation (although weird) only for spinlocks. Some drivers do that.
         //
         // silviuc: should we enforce here for the resource to be released first?
         //
-        
-        if(! (DeadlockFlags & VI_DEADLOCK_FLAG_REINITIALIZE_OK)) {            
 
-            ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_MULTIPLE_INITIALIZATION,
-                                   (ULONG_PTR)Resource,
-                                   (ULONG_PTR)ResourceRoot,
-                                   0);
+        if (!(DeadlockFlags & VI_DEADLOCK_FLAG_REINITIALIZE_OK))
+        {
+
+            ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_MULTIPLE_INITIALIZATION, (ULONG_PTR)Resource,
+                                  (ULONG_PTR)ResourceRoot, 0);
         }
 
         //
-        // Well, the resource has just been reinitialized. We will live with 
+        // Well, the resource has just been reinitialized. We will live with
         // that. We will break though if we reinitialize a resource that is
-        // acquired. In principle this state might be bogus if we missed 
+        // acquired. In principle this state might be bogus if we missed
         // a release() operation.
         //
 
-        if (ResourceRoot->ThreadOwner != NULL) {
-            
-            ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_MULTIPLE_INITIALIZATION,
-                                   (ULONG_PTR)Resource,
-                                   (ULONG_PTR)ResourceRoot,
-                                   1);
+        if (ResourceRoot->ThreadOwner != NULL)
+        {
+
+            ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_MULTIPLE_INITIALIZATION, (ULONG_PTR)Resource,
+                                  (ULONG_PTR)ResourceRoot, 1);
         }
 
         ReturnValue = TRUE;
@@ -1999,19 +1830,19 @@ Return Value:
     // deadlock verifier database.
     //
 
-    ASSERT (ViDeadlockSearchResource (Resource) == NULL);
+    ASSERT(ViDeadlockSearchResource(Resource) == NULL);
 
     Thread = KeGetCurrentThread();
 
     //
-    // Check to see if the resource is on the stack. 
+    // Check to see if the resource is on the stack.
     // If it is we will not verify it.
     //
     // SilviuC: what about the DPC stack ? We will ignore this issue for now.
     //
 
-    if ((ULONG_PTR) Resource < (ULONG_PTR) Thread->InitialStack &&
-        (ULONG_PTR) Resource > (ULONG_PTR) Thread->StackLimit ) {
+    if ((ULONG_PTR)Resource < (ULONG_PTR)Thread->InitialStack && (ULONG_PTR)Resource > (ULONG_PTR)Thread->StackLimit)
+    {
 
         ReturnValue = FALSE;
         goto Exit;
@@ -2019,49 +1850,47 @@ Return Value:
 
     //
     // Use reserved memory for the new resource.
-    // Set ReservedResource to null to signal that memory has 
+    // Set ReservedResource to null to signal that memory has
     // been used. This will prevent freeing it at the end.
     //
 
     ResourceRoot = ReservedResource;
     ReservedResource = NULL;
 
-    if (ResourceRoot == NULL) {
-        
+    if (ResourceRoot == NULL)
+    {
+
         ReturnValue = FALSE;
         goto Exit;
     }
-    
+
     //
     // Fill information about resource.
     //
 
-    RtlZeroMemory (ResourceRoot, sizeof(VI_DEADLOCK_RESOURCE));
+    RtlZeroMemory(ResourceRoot, sizeof(VI_DEADLOCK_RESOURCE));
 
     ResourceRoot->Type = Type;
     ResourceRoot->ResourceAddress = Resource;
 
-    InitializeListHead (&ResourceRoot->ResourceList);
+    InitializeListHead(&ResourceRoot->ResourceList);
 
     //
     // Capture the stack trace of the guy that creates the resource first.
     // This should happen when resource gets initialized or during the first
     // acquire.
-    //    
+    //
 
-    RtlCaptureStackBackTrace (2,
-                              VI_MAX_STACK_DEPTH,
-                              ResourceRoot->StackTrace,
-                              &HashValue);    
+    RtlCaptureStackBackTrace(2, VI_MAX_STACK_DEPTH, ResourceRoot->StackTrace, &HashValue);
 
     ResourceRoot->StackTrace[0] = Caller;
-    
+
     //
     // Figure out which hash bin this resource corresponds to.
     //
 
-    HashBin = ViDeadlockDatabaseHash (ViDeadlockGlobals->ResourceDatabase, Resource);
-    
+    HashBin = ViDeadlockDatabaseHash(ViDeadlockGlobals->ResourceDatabase, Resource);
+
     //
     // Now add to the corrsponding hash bin
     //
@@ -2070,22 +1899,19 @@ Return Value:
 
     ReturnValue = TRUE;
 
-    Exit:
+Exit:
 
-    if (ReservedResource) {
-        ViDeadlockFree (ReservedResource, ViDeadlockResource);
+    if (ReservedResource)
+    {
+        ViDeadlockFree(ReservedResource, ViDeadlockResource);
     }
-    
+
     return ReturnValue;
 }
 
 
 BOOLEAN
-ViDeadlockSimilarNode (
-    IN PVOID Resource,
-    IN BOOLEAN TryNode,
-    IN PVI_DEADLOCK_NODE Node
-    )
+ViDeadlockSimilarNode(IN PVOID Resource, IN BOOLEAN TryNode, IN PVI_DEADLOCK_NODE Node)
 /*++
 
 Routine description:
@@ -2104,11 +1930,11 @@ Return value:
     
  --*/
 {
-    ASSERT (Node);
-    ASSERT (Node->Root);
+    ASSERT(Node);
+    ASSERT(Node->Root);
 
-    if (Resource == Node->Root->ResourceAddress 
-        && TryNode == Node->OnlyTryAcquireUsed) {
+    if (Resource == Node->Root->ResourceAddress && TryNode == Node->OnlyTryAcquireUsed)
+    {
 
         //
         // Second condition is important to keep nodes for TryAcquire operations
@@ -2118,21 +1944,16 @@ Return value:
 
         return TRUE;
     }
-    else {
+    else
+    {
 
         return FALSE;
     }
 }
 
 
-VOID
-VfDeadlockAcquireResource( 
-    IN PVOID Resource,
-    IN VI_DEADLOCK_RESOURCE_TYPE Type,
-    IN PKTHREAD Thread,
-    IN BOOLEAN TryAcquire,
-    IN PVOID Caller
-    )
+VOID VfDeadlockAcquireResource(IN PVOID Resource, IN VI_DEADLOCK_RESOURCE_TYPE Type, IN PKTHREAD Thread,
+                               IN BOOLEAN TryAcquire, IN PVOID Caller)
 /*++
 
 Routine Description:
@@ -2187,7 +2008,8 @@ Return Value:
     // we return immediately.
     //
 
-    if (! ViDeadlockCanProceed(Resource, Caller, Type)) {
+    if (!ViDeadlockCanProceed(Resource, Caller, Type))
+    {
         return;
     }
 
@@ -2195,7 +2017,8 @@ Return Value:
     // Skip if the current thread is inside paging code paths.
     //
 
-    if (ViIsThreadInsidePagingCodePaths ()) {
+    if (ViIsThreadInsidePagingCodePaths())
+    {
         return;
     }
 
@@ -2208,7 +2031,7 @@ Return Value:
     // This needs to happen out of any locks.
     //
 
-    ViDeadlockTrimPoolCache ();
+    ViDeadlockTrimPoolCache();
 
     //
     // Reserve resources that might be needed. If upon exit these
@@ -2216,28 +2039,29 @@ Return Value:
     // In both cases we do not need to free anything.
     //
 
-    ReservedThread = ViDeadlockAllocate (ViDeadlockThread);
-    ReservedNode = ViDeadlockAllocate (ViDeadlockNode);
-    ReservedResource = ViDeadlockAllocate (ViDeadlockResource);
+    ReservedThread = ViDeadlockAllocate(ViDeadlockThread);
+    ReservedNode = ViDeadlockAllocate(ViDeadlockNode);
+    ReservedResource = ViDeadlockAllocate(ViDeadlockResource);
 
     //
     // Lock the deadlock database.
     //
 
-    ViDeadlockDetectionLock( &OldIrql );
+    ViDeadlockDetectionLock(&OldIrql);
 
-    KeQueryTickCount (&StartTime);
+    KeQueryTickCount(&StartTime);
 
     //
     // Allocate a node that might be needed. If we will not use it
     // we will deallocate it at the end. If we fail to allocate
     // we will return immediately.
     //
-    
+
     NewNode = ReservedNode;
     ReservedNode = NULL;
 
-    if (NewNode == NULL) {
+    if (NewNode == NULL)
+    {
         goto Exit;
     }
 
@@ -2245,14 +2069,16 @@ Return Value:
     // Find the thread descriptor. If there is none we will create one.
     //
 
-    ThreadEntry = ViDeadlockSearchThread (CurrentThread);        
+    ThreadEntry = ViDeadlockSearchThread(CurrentThread);
 
-    if (ThreadEntry == NULL) {
+    if (ThreadEntry == NULL)
+    {
 
-        ThreadEntry = ViDeadlockAddThread (CurrentThread, ReservedThread);
+        ThreadEntry = ViDeadlockAddThread(CurrentThread, ReservedThread);
         ReservedThread = NULL;
 
-        if (ThreadEntry == NULL) {
+        if (ThreadEntry == NULL)
+        {
 
             //
             // If we cannot allocate a new thread entry then
@@ -2266,29 +2092,31 @@ Return Value:
     }
 
 #if DBG
-    if (Type == VfDeadlockSpinLock) {
-        
-        if (ThreadEntry->CurrentSpinNode != NULL) {
+    if (Type == VfDeadlockSpinLock)
+    {
+
+        if (ThreadEntry->CurrentSpinNode != NULL)
+        {
 
             ASSERT(ThreadEntry->CurrentSpinNode->Root->ThreadOwner == ThreadEntry);
             ASSERT(ThreadEntry->CurrentSpinNode->ThreadEntry == ThreadEntry);
             ASSERT(ThreadEntry->NodeCount != 0);
             ASSERT(ThreadEntry->CurrentSpinNode->Active != 0);
             ASSERT(ThreadEntry->CurrentSpinNode->Root->NodeCount != 0);
-
-        } 
+        }
     }
-    else {
+    else
+    {
 
-        if (ThreadEntry->CurrentOtherNode != NULL) {
+        if (ThreadEntry->CurrentOtherNode != NULL)
+        {
 
             ASSERT(ThreadEntry->CurrentOtherNode->Root->ThreadOwner == ThreadEntry);
             ASSERT(ThreadEntry->CurrentOtherNode->ThreadEntry == ThreadEntry);
             ASSERT(ThreadEntry->NodeCount != 0);
             ASSERT(ThreadEntry->CurrentOtherNode->Active != 0);
             ASSERT(ThreadEntry->CurrentOtherNode->Root->NodeCount != 0);
-
-        } 
+        }
     }
 #endif
 
@@ -2297,41 +2125,40 @@ Return Value:
     // we will create one on the fly.
     //
 
-    ResourceRoot = ViDeadlockSearchResource (Resource);
+    ResourceRoot = ViDeadlockSearchResource(Resource);
 
-    if (ResourceRoot == NULL) {
+    if (ResourceRoot == NULL)
+    {
 
         //
         // Could not find the resource descriptor therefore we need to create one.
         // Note that we will not complain about the resource not being initialized
-        // before because there are legitimate reasons for this to happen. For 
+        // before because there are legitimate reasons for this to happen. For
         // example the resource was initialized in an unverified driver and then
         // passed to a verified driver that caled acquire().
         //
 
-        if (ViDeadlockVeryStrict) {
+        if (ViDeadlockVeryStrict)
+        {
 
-            ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_UNINITIALIZED_RESOURCE,
-                                   (ULONG_PTR) Resource,
-                                   (ULONG_PTR) NULL,
-                                   (ULONG_PTR) NULL);
+            ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_UNINITIALIZED_RESOURCE, (ULONG_PTR)Resource, (ULONG_PTR)NULL,
+                                  (ULONG_PTR)NULL);
         }
 
-        AddResult = ViDeadlockAddResource (Resource, 
-                                           Type, 
-                                           Caller, 
-                                           ReservedResource);
+        AddResult = ViDeadlockAddResource(Resource, Type, Caller, ReservedResource);
 
         ReservedResource = NULL;
 
-        if (AddResult == FALSE) {
+        if (AddResult == FALSE)
+        {
 
             //
             // If we failed to add the resource then no deadlock detection.
             //
 
-            if (ThreadCreated) {                    
-                ViDeadlockDeleteThread (ThreadEntry, FALSE);
+            if (ThreadCreated)
+            {
+                ViDeadlockDeleteThread(ThreadEntry, FALSE);
             }
 
             goto Exit;
@@ -2341,9 +2168,9 @@ Return Value:
         // Search again the resource. This time we should find it.
         //
 
-        ResourceRoot = ViDeadlockSearchResource (Resource);
+        ResourceRoot = ViDeadlockSearchResource(Resource);
     }
-    
+
     //
     // At this point we have a THREAD and a RESOURCE to play with.
     // In addition we are just about to acquire the resource which means
@@ -2351,13 +2178,15 @@ Return Value:
     // acquisition.
     //
 
-    ASSERT (ResourceRoot);
-    ASSERT (ThreadEntry); 
+    ASSERT(ResourceRoot);
+    ASSERT(ThreadEntry);
 
-    if (Type == VfDeadlockSpinLock) {
+    if (Type == VfDeadlockSpinLock)
+    {
         ThreadCurrentNode = ThreadEntry->CurrentSpinNode;
     }
-    else {
+    else
+    {
         ThreadCurrentNode = ThreadEntry->CurrentOtherNode;
     }
 
@@ -2367,21 +2196,25 @@ Return Value:
     // true if we missed a release() from an unverified driver. So we will
     // not complain about it. We will just put the resource in a consistent
     // state and continue;
-    //    
+    //
 
-    if (ResourceRoot->ThreadOwner) {
-        if (ResourceRoot->ThreadOwner != ThreadEntry) {
+    if (ResourceRoot->ThreadOwner)
+    {
+        if (ResourceRoot->ThreadOwner != ThreadEntry)
+        {
             ResourceRoot->RecursionCount = 0;
         }
-        else {
-            ASSERT (ResourceRoot->RecursionCount > 0);
+        else
+        {
+            ASSERT(ResourceRoot->RecursionCount > 0);
         }
     }
-    else {
-        ASSERT (ResourceRoot->RecursionCount == 0);
+    else
+    {
+        ASSERT(ResourceRoot->RecursionCount == 0);
     }
 
-    ResourceRoot->ThreadOwner = ThreadEntry;    
+    ResourceRoot->ThreadOwner = ThreadEntry;
     ResourceRoot->RecursionCount += 1;
 
     //
@@ -2389,31 +2222,35 @@ Return Value:
     // at that local point in the dependency graph if we need to create a
     // new node. If this is the first resource acquired by the thread we need
     // to create a new root node or reuse one created in the past.
-    //    
+    //
 
-    if (ThreadCurrentNode != NULL) {
+    if (ThreadCurrentNode != NULL)
+    {
 
         //
-        // If we get here, the current thread had already acquired resources.        
+        // If we get here, the current thread had already acquired resources.
         // Check to see if this resource has already been acquired.
-        // 
+        //
 
-        if (ResourceRoot->RecursionCount > 1) {
+        if (ResourceRoot->RecursionCount > 1)
+        {
 
             //
             // Recursive acquisition is OK for some resources...
             //
-            
-            if ((DeadlockFlags & VI_DEADLOCK_FLAG_RECURSIVE_ACQUISITION_OK) != 0) {            
+
+            if ((DeadlockFlags & VI_DEADLOCK_FLAG_RECURSIVE_ACQUISITION_OK) != 0)
+            {
 
                 //
-                // Recursion can't cause a deadlock. Don't set CurrentNode 
+                // Recursion can't cause a deadlock. Don't set CurrentNode
                 // since we don't want to move any pointers.
                 //
 
                 goto Exit;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // This is a recursive acquire for a resource type that is not allowed
@@ -2421,10 +2258,8 @@ Return Value:
                 // count of two which will come in handy when the resources are released.
                 //
 
-                ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_SELF_DEADLOCK,
-                                       (ULONG_PTR)Resource,
-                                       (ULONG_PTR)ResourceRoot,
-                                       (ULONG_PTR)ThreadEntry);
+                ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_SELF_DEADLOCK, (ULONG_PTR)Resource, (ULONG_PTR)ResourceRoot,
+                                      (ULONG_PTR)ThreadEntry);
 
                 goto Exit;
             }
@@ -2432,32 +2267,31 @@ Return Value:
 
         //
         // If link already exists, update pointers and exit.
-        // otherwise check for deadlocks and create a new node        
+        // otherwise check for deadlocks and create a new node
         //
 
         Current = ThreadCurrentNode->ChildrenList.Flink;
 
-        while (Current != &(ThreadCurrentNode->ChildrenList)) {
+        while (Current != &(ThreadCurrentNode->ChildrenList))
+        {
 
-            CurrentNode = CONTAINING_RECORD (Current,
-                                             VI_DEADLOCK_NODE,
-                                             SiblingsList);
+            CurrentNode = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, SiblingsList);
 
             Current = Current->Flink;
 
-            if (ViDeadlockSimilarNode (Resource, TryAcquire, CurrentNode)) {
+            if (ViDeadlockSimilarNode(Resource, TryAcquire, CurrentNode))
+            {
 
                 //
-                // We have found a link. A link that already exists doesn't have 
-                // to be checked for a deadlock because it would have been caught 
-                // when the link was created in the first place. We can just update 
+                // We have found a link. A link that already exists doesn't have
+                // to be checked for a deadlock because it would have been caught
+                // when the link was created in the first place. We can just update
                 // the pointers to reflect the new resource acquired and exit.
                 //
                 // We apply our graph compression function to minimize duplicates.
-                //                
-                
-                ViDeadlockCheckDuplicatesAmongChildren (ThreadCurrentNode,
-                                                        CurrentNode);
+                //
+
+                ViDeadlockCheckDuplicatesAmongChildren(ThreadCurrentNode, CurrentNode);
 
                 goto Exit;
             }
@@ -2465,7 +2299,7 @@ Return Value:
 
         //
         // Now we know that we're in it for the long haul. We must create a new
-        // link and make sure that it doesn't cause a deadlock. Later in the 
+        // link and make sure that it doesn't cause a deadlock. Later in the
         // function CurrentNode being null will signify that we need to create
         // a new node.
         //
@@ -2475,18 +2309,20 @@ Return Value:
         //
         // We will analyze deadlock if the resource just about to be acquired
         // was acquired before and there are nodes in the graph for the
-        // resource. Try acquire can not be the cause of a deadlock. 
+        // resource. Try acquire can not be the cause of a deadlock.
         // Don't analyze on try acquires.
         //
 
-        if (ResourceRoot->NodeCount > 0 && TryAcquire == FALSE) {
+        if (ResourceRoot->NodeCount > 0 && TryAcquire == FALSE)
+        {
 
-            if (ViDeadlockAnalyze (Resource,  ThreadCurrentNode, TRUE, 0)) {
+            if (ViDeadlockAnalyze(Resource, ThreadCurrentNode, TRUE, 0))
+            {
 
                 //
                 // If we are here we detected deadlock. The analyze() function
-                // does all the reporting. Being here means we hit `g' in the 
-                // debugger. We will just exit and do not add this resource 
+                // does all the reporting. Being here means we hit `g' in the
+                // debugger. We will just exit and do not add this resource
                 // to the graph.
                 //
 
@@ -2494,7 +2330,8 @@ Return Value:
             }
         }
     }
-    else {
+    else
+    {
 
         //
         // Thread does not have any resources acquired. We have to figure out
@@ -2510,23 +2347,24 @@ Return Value:
 
         Current = ResourceRoot->ResourceList.Flink;
 
-        while (Current != &(ResourceRoot->ResourceList)) {
+        while (Current != &(ResourceRoot->ResourceList))
+        {
 
-            Node = CONTAINING_RECORD (Current,
-                                      VI_DEADLOCK_NODE,
-                                      ResourceList);
+            Node = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, ResourceList);
 
             Current = Node->ResourceList.Flink;
 
-            if (Node->Parent == NULL) {
+            if (Node->Parent == NULL)
+            {
 
-                if (ViDeadlockSimilarNode (Resource, TryAcquire, Node)) {
+                if (ViDeadlockSimilarNode(Resource, TryAcquire, Node))
+                {
 
                     //
                     // We apply our graph compression function to minimize duplicates.
                     //
 
-                    ViDeadlockCheckDuplicatesAmongRoots (Node);
+                    ViDeadlockCheckDuplicatesAmongRoots(Node);
 
                     FoundNode = TRUE;
                     break;
@@ -2534,13 +2372,15 @@ Return Value:
             }
         }
 
-        if (FoundNode) {
+        if (FoundNode)
+        {
 
             CurrentNode = Node;
 
             goto Exit;
         }
-        else {
+        else
+        {
 
             CreatingRootNode = TRUE;
         }
@@ -2550,32 +2390,33 @@ Return Value:
     // At this moment we know for sure the new link will not cause
     // a deadlock. We will create the new resource node.
     //
-    
-    if (NewNode != NULL) {
+
+    if (NewNode != NULL)
+    {
 
         CurrentNode = NewNode;
 
         //
-        // Set newnode to NULL to signify it has been used -- otherwise it 
+        // Set newnode to NULL to signify it has been used -- otherwise it
         // will get freed at the end of this function.
         //
-        
+
         NewNode = NULL;
 
         //
         // Initialize the new resource node
         //
 
-        RtlZeroMemory (CurrentNode, sizeof *CurrentNode);
-        
+        RtlZeroMemory(CurrentNode, sizeof *CurrentNode);
+
         CurrentNode->Active = 0;
         CurrentNode->Parent = ThreadCurrentNode;
         CurrentNode->Root = ResourceRoot;
 
-        InitializeListHead (&(CurrentNode->ChildrenList));
+        InitializeListHead(&(CurrentNode->ChildrenList));
 
         //
-        // Mark the TryAcquire type of the node. 
+        // Mark the TryAcquire type of the node.
         //
 
         CurrentNode->OnlyTryAcquireUsed = TryAcquire;
@@ -2584,10 +2425,10 @@ Return Value:
         // Add to the children list of the parent.
         //
 
-        if (! CreatingRootNode) {
+        if (!CreatingRootNode)
+        {
 
-            InsertHeadList(&(ThreadCurrentNode->ChildrenList),
-                           &(CurrentNode->SiblingsList));
+            InsertHeadList(&(ThreadCurrentNode->ChildrenList), &(CurrentNode->SiblingsList));
         }
 
         //
@@ -2595,12 +2436,12 @@ Return Value:
         // for this resource.
         //
 
-        InsertHeadList(&(ResourceRoot->ResourceList),
-                       &(CurrentNode->ResourceList));
+        InsertHeadList(&(ResourceRoot->ResourceList), &(CurrentNode->ResourceList));
 
         ResourceRoot->NodeCount += 1;
 
-        if (ResourceRoot->NodeCount > 0xFFF0) {
+        if (ResourceRoot->NodeCount > 0xFFF0)
+        {
             ViDeadlockState.ResourceNodeCountOverflow = 1;
         }
 
@@ -2611,9 +2452,10 @@ Return Value:
         {
             ULONG Level;
 
-            Level = ViDeadlockNodeLevel (CurrentNode);
+            Level = ViDeadlockNodeLevel(CurrentNode);
 
-            if (Level < 8) {
+            if (Level < 8)
+            {
                 ViDeadlockGlobals->GraphNodes[Level] += 1;
             }
         }
@@ -2624,17 +2466,18 @@ Return Value:
     //  Exit point.
     //
 
-    Exit:
+Exit:
 
     //
     // Add information we use to identify the culprit should
     // a deadlock occur
     //
 
-    if (CurrentNode) {
+    if (CurrentNode)
+    {
 
-        ASSERT (ThreadEntry);
-        ASSERT (ThreadCurrentNode == CurrentNode->Parent);
+        ASSERT(ThreadEntry);
+        ASSERT(ThreadCurrentNode == CurrentNode->Parent);
 
         CurrentNode->Active = 1;
 
@@ -2646,49 +2489,51 @@ Return Value:
         // silviuc: true? What about if we miss release() operations.
         //
 
-        ASSERT (CurrentNode->ThreadEntry == NULL);
+        ASSERT(CurrentNode->ThreadEntry == NULL);
 
         CurrentNode->ThreadEntry = ThreadEntry;
 
-        if (Type == VfDeadlockSpinLock) {
+        if (Type == VfDeadlockSpinLock)
+        {
             ThreadEntry->CurrentSpinNode = CurrentNode;
         }
-        else {
+        else
+        {
             ThreadEntry->CurrentOtherNode = CurrentNode;
         }
-        
+
         ThreadEntry->NodeCount += 1;
 
 #if DBG
-        if (ThreadEntry->NodeCount <= 8) {
+        if (ThreadEntry->NodeCount <= 8)
+        {
             ViDeadlockGlobals->NodeLevelCounter[ThreadEntry->NodeCount - 1] += 1;
         }
-        else {
+        else
+        {
             ViDeadlockGlobals->NodeLevelCounter[7] += 1;
         }
 #endif
 
         //
         // If we have a parent, save the parent's stack trace
-        //             
-        
-        if (CurrentNode->Parent) {
+        //
 
-            RtlCopyMemory(CurrentNode->ParentStackTrace, 
-                          CurrentNode->Parent->StackTrace, 
-                          sizeof (CurrentNode->ParentStackTrace));
+        if (CurrentNode->Parent)
+        {
+
+            RtlCopyMemory(CurrentNode->ParentStackTrace, CurrentNode->Parent->StackTrace,
+                          sizeof(CurrentNode->ParentStackTrace));
         }
 
         //
-        // Capture stack trace for the current acquire. 
+        // Capture stack trace for the current acquire.
         //
 
-        RtlCaptureStackBackTrace (2,
-                                  VI_MAX_STACK_DEPTH,
-                                  CurrentNode->StackTrace,
-                                  &HashValue);
+        RtlCaptureStackBackTrace(2, VI_MAX_STACK_DEPTH, CurrentNode->StackTrace, &HashValue);
 
-        if (CurrentNode->Parent) {
+        if (CurrentNode->Parent)
+        {
             CurrentNode->ParentStackTrace[0] = CurrentNode->Parent->StackTrace[0];
         }
 
@@ -2698,29 +2543,30 @@ Return Value:
         // Copy the trace for the last acquire in the resource object.
         //
 
-        RtlCopyMemory (CurrentNode->Root->LastAcquireTrace,
-                       CurrentNode->StackTrace,
-                       sizeof (CurrentNode->Root->LastAcquireTrace));
+        RtlCopyMemory(CurrentNode->Root->LastAcquireTrace, CurrentNode->StackTrace,
+                      sizeof(CurrentNode->Root->LastAcquireTrace));
     }
 
     //
-    // We allocated space for a new node but it didn't get used -- put it back 
-    // in the list (don't worry this doesn't do a real 'free' it just puts it 
+    // We allocated space for a new node but it didn't get used -- put it back
+    // in the list (don't worry this doesn't do a real 'free' it just puts it
     // in a free list).
     //
 
-    if (NewNode != NULL) {
+    if (NewNode != NULL)
+    {
 
-        ViDeadlockFree (NewNode, ViDeadlockNode);
+        ViDeadlockFree(NewNode, ViDeadlockNode);
     }
-    
+
     //
     // Release deadlock database and return.
     //
 
-    KeQueryTickCount (&EndTime);
+    KeQueryTickCount(&EndTime);
 
-    if (EndTime.QuadPart - StartTime.QuadPart > ViDeadlockGlobals->TimeAcquire) {
+    if (EndTime.QuadPart - StartTime.QuadPart > ViDeadlockGlobals->TimeAcquire)
+    {
         ViDeadlockGlobals->TimeAcquire = EndTime.QuadPart - StartTime.QuadPart;
     }
 
@@ -2728,31 +2574,29 @@ Return Value:
     // Free up unused reserved resources
     //
 
-    if (ReservedResource) {
-        ViDeadlockFree (ReservedResource, ViDeadlockResource);
+    if (ReservedResource)
+    {
+        ViDeadlockFree(ReservedResource, ViDeadlockResource);
     }
 
-    if (ReservedNode) {
-        ViDeadlockFree (ReservedNode, ViDeadlockNode);
+    if (ReservedNode)
+    {
+        ViDeadlockFree(ReservedNode, ViDeadlockNode);
     }
 
-    if (ReservedThread) {
-        ViDeadlockFree (ReservedThread, ViDeadlockThread);
+    if (ReservedThread)
+    {
+        ViDeadlockFree(ReservedThread, ViDeadlockThread);
     }
 
-    ViDeadlockDetectionUnlock( OldIrql );
+    ViDeadlockDetectionUnlock(OldIrql);
 
     return;
 }
 
 
-VOID
-VfDeadlockReleaseResource( 
-    IN PVOID Resource,
-    IN VI_DEADLOCK_RESOURCE_TYPE Type,
-    IN PKTHREAD Thread,
-    IN PVOID Caller
-    )
+VOID VfDeadlockReleaseResource(IN PVOID Resource, IN VI_DEADLOCK_RESOURCE_TYPE Type, IN PKTHREAD Thread,
+                               IN PVOID Caller)
 /*++
 
 Routine Description:
@@ -2786,14 +2630,15 @@ Return Value:
     ULONG HashValue;
     PVI_DEADLOCK_NODE ThreadCurrentNode;
 
-    UNREFERENCED_PARAMETER (Caller);
+    UNREFERENCED_PARAMETER(Caller);
 
     //
     // If we aren't initialized or package is not enabled
     // we return immediately.
     //
 
-    if (! ViDeadlockCanProceed(Resource, Caller, Type)) {
+    if (!ViDeadlockCanProceed(Resource, Caller, Type))
+    {
         return;
     }
 
@@ -2801,7 +2646,8 @@ Return Value:
     // Skip if the current thread is inside paging code paths.
     //
 
-    if (ViIsThreadInsidePagingCodePaths ()) {
+    if (ViIsThreadInsidePagingCodePaths())
+    {
         return;
     }
 
@@ -2809,20 +2655,21 @@ Return Value:
     CurrentThread = Thread;
     ThreadEntry = NULL;
 
-    ViDeadlockDetectionLock( &OldIrql );
+    ViDeadlockDetectionLock(&OldIrql);
 
-    KeQueryTickCount (&StartTime);
+    KeQueryTickCount(&StartTime);
 
-    ResourceRoot = ViDeadlockSearchResource (Resource);
+    ResourceRoot = ViDeadlockSearchResource(Resource);
 
-    if (ResourceRoot == NULL) {
+    if (ResourceRoot == NULL)
+    {
 
         //
         // Release called with a resource address that was never
         // stored in our resource database. This can happen in
         // the following circumstances:
         //
-        // (a) resource is released but we never seen it before 
+        // (a) resource is released but we never seen it before
         //     because it was acquired in an unverified driver.
         //
         // (b) we have encountered allocation failures that prevented
@@ -2840,28 +2687,28 @@ Return Value:
     // acquired.
     //
 
-    if (ResourceRoot->RecursionCount == 0) {
-    
-        ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_UNACQUIRED_RESOURCE,
-                               (ULONG_PTR)Resource,
-                               (ULONG_PTR)ResourceRoot,
-                               (ULONG_PTR)ViDeadlockSearchThread(CurrentThread));
+    if (ResourceRoot->RecursionCount == 0)
+    {
+
+        ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_UNACQUIRED_RESOURCE, (ULONG_PTR)Resource, (ULONG_PTR)ResourceRoot,
+                              (ULONG_PTR)ViDeadlockSearchThread(CurrentThread));
         goto Exit;
-    }    
+    }
 
     //
-    // Look for this thread in our thread list. Note we are looking actually 
+    // Look for this thread in our thread list. Note we are looking actually
     // for the thread that acquired the resource -- not the current one
-    // It should, in fact be the current one, but if the resource is being released 
+    // It should, in fact be the current one, but if the resource is being released
     // in a different thread from the one it was acquired in, we need the original.
     //
 
-    ASSERT (ResourceRoot->RecursionCount > 0);
-    ASSERT (ResourceRoot->ThreadOwner);
+    ASSERT(ResourceRoot->RecursionCount > 0);
+    ASSERT(ResourceRoot->ThreadOwner);
 
     ThreadEntry = ResourceRoot->ThreadOwner;
 
-    if (ThreadEntry->Thread != CurrentThread) {
+    if (ThreadEntry->Thread != CurrentThread)
+    {
 
         //
         // Someone acquired a resource that is released in another thread.
@@ -2874,14 +2721,11 @@ Return Value:
         //
 
 #if DBG
-        DbgPrint("Thread %p acquired resource %p but thread %p released it\n",
-            ThreadEntry->Thread, Resource, CurrentThread );
+        DbgPrint("Thread %p acquired resource %p but thread %p released it\n", ThreadEntry->Thread, Resource,
+                 CurrentThread);
 
-        ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_UNEXPECTED_THREAD,
-                               (ULONG_PTR)Resource,
-                               (ULONG_PTR)ThreadEntry->Thread,
-                               (ULONG_PTR)CurrentThread
-                               );
+        ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_UNEXPECTED_THREAD, (ULONG_PTR)Resource, (ULONG_PTR)ThreadEntry->Thread,
+                              (ULONG_PTR)CurrentThread);
 #endif
 
         //
@@ -2889,35 +2733,38 @@ Return Value:
         // continue we must pretend that the current
         // thread is the resource's owner.
         //
-        
+
         CurrentThread = ThreadEntry->Thread;
     }
-    
+
     //
     // In this moment we have a resource (ResourceRoot) and a
     // thread (ThreadEntry) to play with.
     //
 
-    ASSERT (ResourceRoot && ThreadEntry);
+    ASSERT(ResourceRoot && ThreadEntry);
 
-    if (ResourceRoot->Type == VfDeadlockSpinLock) {
+    if (ResourceRoot->Type == VfDeadlockSpinLock)
+    {
         ThreadCurrentNode = ThreadEntry->CurrentSpinNode;
     }
-    else {
+    else
+    {
         ThreadCurrentNode = ThreadEntry->CurrentOtherNode;
     }
 
-    ASSERT (ThreadCurrentNode);
-    ASSERT (ThreadCurrentNode->Root);
-    ASSERT (ThreadEntry->NodeCount > 0);
+    ASSERT(ThreadCurrentNode);
+    ASSERT(ThreadCurrentNode->Root);
+    ASSERT(ThreadEntry->NodeCount > 0);
 
     ResourceRoot->RecursionCount -= 1;
-    
-    if (ResourceRoot->RecursionCount > 0) {
+
+    if (ResourceRoot->RecursionCount > 0)
+    {
 
         //
         // Just decrement the recursion count and do not change any state
-        //        
+        //
 
         goto Exit;
     }
@@ -2925,43 +2772,40 @@ Return Value:
     //
     // Wipe out the resource owner.
     //
-    
+
     ResourceRoot->ThreadOwner = NULL;
-  
+
 #if DBG
     ViDeadlockGlobals->TotalReleases += 1;
 #endif
-        
+
     //
     // Check for out of order releases
     //
 
-    if (ThreadCurrentNode->Root != ResourceRoot) {
+    if (ThreadCurrentNode->Root != ResourceRoot)
+    {
 
 #if DBG
         ViDeadlockGlobals->OutOfOrderReleases += 1;
 #endif
-        
+
         //
         // Getting here means that somebody acquires a then b then tries
         // to release a before b. This is bad for certain kinds of resources,
         // and for others we have to look the other way.
         //
 
-        if ((ViDeadlockResourceTypeInfo[ThreadCurrentNode->Root->Type] &
-            VI_DEADLOCK_FLAG_REVERSE_RELEASE_OK) == 0) {
-            
+        if ((ViDeadlockResourceTypeInfo[ThreadCurrentNode->Root->Type] & VI_DEADLOCK_FLAG_REVERSE_RELEASE_OK) == 0)
+        {
+
             DbgPrint("Deadlock detection: Must release resources in reverse-order\n");
             DbgPrint("Resource %p acquired before resource %p -- \n"
                      "Current thread (%p) is trying to release it first\n",
-                     Resource,
-                     ThreadCurrentNode->Root->ResourceAddress,
-                     ThreadEntry);
+                     Resource, ThreadCurrentNode->Root->ResourceAddress, ThreadEntry);
 
-            ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_UNEXPECTED_RELEASE,
-                                   (ULONG_PTR)Resource,
-                                   (ULONG_PTR)ThreadCurrentNode->Root->ResourceAddress,
-                                   (ULONG_PTR)ThreadEntry);
+            ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_UNEXPECTED_RELEASE, (ULONG_PTR)Resource,
+                                  (ULONG_PTR)ThreadCurrentNode->Root->ResourceAddress, (ULONG_PTR)ThreadEntry);
         }
 
         //
@@ -2972,47 +2816,51 @@ Return Value:
         {
             PVI_DEADLOCK_NODE Current;
 
-            ASSERT (ThreadCurrentNode->Active == 1);
-            ASSERT (ThreadCurrentNode->ThreadEntry == ThreadEntry);
+            ASSERT(ThreadCurrentNode->Active == 1);
+            ASSERT(ThreadCurrentNode->ThreadEntry == ThreadEntry);
 
             Current = ThreadCurrentNode;
 
-            while (Current != NULL) {
+            while (Current != NULL)
+            {
 
-                if (Current->Root == ResourceRoot) {
+                if (Current->Root == ResourceRoot)
+                {
 
-                    ASSERT (Current->Active == 1);
-                    ASSERT (Current->Root->RecursionCount == 0);
-                    ASSERT (Current->ThreadEntry == ThreadEntry);
+                    ASSERT(Current->Active == 1);
+                    ASSERT(Current->Root->RecursionCount == 0);
+                    ASSERT(Current->ThreadEntry == ThreadEntry);
 
                     Current->Active = 0;
                     ReleasedNode = Current;
-                    
+
                     break;
                 }
 
                 Current = Current->Parent;
             }
-            
-            if (Current == NULL) {
-                
+
+            if (Current == NULL)
+            {
+
                 //
                 // If we do not manage to find an active node we must be in an
-                // weird state. The resource must be here or else we would have 
+                // weird state. The resource must be here or else we would have
                 // gotten an `unxpected release' bugcheck.
                 //
 
-                ASSERT (0);
+                ASSERT(0);
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // We need to release the top node held by the thread.
         //
 
-        ASSERT (ThreadCurrentNode->Active);
+        ASSERT(ThreadCurrentNode->Active);
 
         ReleasedNode = ThreadCurrentNode;
         ReleasedNode->Active = 0;
@@ -3023,12 +2871,16 @@ Return Value:
     // It should point to the most recent active node that it owns.
     //
 
-    if (ResourceRoot->Type == VfDeadlockSpinLock) {
-        
-        while (ThreadEntry->CurrentSpinNode) {
+    if (ResourceRoot->Type == VfDeadlockSpinLock)
+    {
 
-            if (ThreadEntry->CurrentSpinNode->Active == 1) {
-                if (ThreadEntry->CurrentSpinNode->ThreadEntry == ThreadEntry) {
+        while (ThreadEntry->CurrentSpinNode)
+        {
+
+            if (ThreadEntry->CurrentSpinNode->Active == 1)
+            {
+                if (ThreadEntry->CurrentSpinNode->ThreadEntry == ThreadEntry)
+                {
                     break;
                 }
             }
@@ -3036,12 +2888,16 @@ Return Value:
             ThreadEntry->CurrentSpinNode = ThreadEntry->CurrentSpinNode->Parent;
         }
     }
-    else {
-        
-        while (ThreadEntry->CurrentOtherNode) {
+    else
+    {
 
-            if (ThreadEntry->CurrentOtherNode->Active == 1) {
-                if (ThreadEntry->CurrentOtherNode->ThreadEntry == ThreadEntry) {
+        while (ThreadEntry->CurrentOtherNode)
+        {
+
+            if (ThreadEntry->CurrentOtherNode->Active == 1)
+            {
+                if (ThreadEntry->CurrentOtherNode->ThreadEntry == ThreadEntry)
+                {
                     break;
                 }
             }
@@ -3050,25 +2906,28 @@ Return Value:
         }
     }
 
-    Exit:
+Exit:
 
     //
     // Properly release the node if there is one to be released.
     //
 
-    if (ReleasedNode) {
+    if (ReleasedNode)
+    {
 
-        ASSERT (ReleasedNode->Active == 0);
-        ASSERT (ReleasedNode->Root->ThreadOwner == 0);
-        ASSERT (ReleasedNode->Root->RecursionCount == 0);
-        ASSERT (ReleasedNode->ThreadEntry == ThreadEntry);
-        ASSERT (ThreadEntry->NodeCount > 0);
-        
-        if (ResourceRoot->Type == VfDeadlockSpinLock) {
-            ASSERT (ThreadEntry->CurrentSpinNode != ReleasedNode);
+        ASSERT(ReleasedNode->Active == 0);
+        ASSERT(ReleasedNode->Root->ThreadOwner == 0);
+        ASSERT(ReleasedNode->Root->RecursionCount == 0);
+        ASSERT(ReleasedNode->ThreadEntry == ThreadEntry);
+        ASSERT(ThreadEntry->NodeCount > 0);
+
+        if (ResourceRoot->Type == VfDeadlockSpinLock)
+        {
+            ASSERT(ThreadEntry->CurrentSpinNode != ReleasedNode);
         }
-        else {
-            ASSERT (ThreadEntry->CurrentOtherNode != ReleasedNode);
+        else
+        {
+            ASSERT(ThreadEntry->CurrentOtherNode != ReleasedNode);
         }
 
         ReleasedNode->ThreadEntry = NULL;
@@ -3076,13 +2935,14 @@ Return Value:
 
 #if DBG
 
-        ViDeadlockCheckNodeConsistency (ReleasedNode, FALSE);
-        ViDeadlockCheckResourceConsistency (ReleasedNode->Root, FALSE);
-        ViDeadlockCheckThreadConsistency (ThreadEntry, FALSE);
+        ViDeadlockCheckNodeConsistency(ReleasedNode, FALSE);
+        ViDeadlockCheckResourceConsistency(ReleasedNode->Root, FALSE);
+        ViDeadlockCheckThreadConsistency(ThreadEntry, FALSE);
 #endif
 
-        if (ThreadEntry && ThreadEntry->NodeCount == 0) {
-            ViDeadlockDeleteThread (ThreadEntry, FALSE);
+        if (ThreadEntry && ThreadEntry->NodeCount == 0)
+        {
+            ViDeadlockDeleteThread(ThreadEntry, FALSE);
         }
 
         //
@@ -3091,8 +2951,9 @@ Return Value:
         // can never be the cause of a deadlock.
         //
 
-        if (ReleasedNode->Parent == NULL && IsListEmpty(&(ReleasedNode->ChildrenList))) {
-            ViDeadlockDeleteNode (ReleasedNode, FALSE);
+        if (ReleasedNode->Parent == NULL && IsListEmpty(&(ReleasedNode->ChildrenList)))
+        {
+            ViDeadlockDeleteNode(ReleasedNode, FALSE);
 #if DBG
             ViDeadlockGlobals->RootNodesDeleted += 1;
 #endif
@@ -3103,21 +2964,20 @@ Return Value:
     // Capture the trace for the last release in the resource object.
     //
 
-    if (ResourceRoot) {
-        
-        RtlCaptureStackBackTrace (2,
-                                  VI_MAX_STACK_DEPTH,
-                                  ResourceRoot->LastReleaseTrace,
-                                  &HashValue);    
+    if (ResourceRoot)
+    {
+
+        RtlCaptureStackBackTrace(2, VI_MAX_STACK_DEPTH, ResourceRoot->LastReleaseTrace, &HashValue);
     }
 
-    KeQueryTickCount (&EndTime);
+    KeQueryTickCount(&EndTime);
 
-    if (EndTime.QuadPart - StartTime.QuadPart > ViDeadlockGlobals->TimeRelease) {
+    if (EndTime.QuadPart - StartTime.QuadPart > ViDeadlockGlobals->TimeRelease)
+    {
         ViDeadlockGlobals->TimeRelease = EndTime.QuadPart - StartTime.QuadPart;
     }
 
-    ViDeadlockDetectionUnlock (OldIrql);
+    ViDeadlockDetectionUnlock(OldIrql);
 }
 
 
@@ -3126,9 +2986,7 @@ Return Value:
 /////////////////////////////////////////////////////////////////////
 
 PVI_DEADLOCK_THREAD
-ViDeadlockSearchThread (
-    PKTHREAD Thread
-    )
+ViDeadlockSearchThread(PKTHREAD Thread)
 /*++
 
 Routine Description:
@@ -3153,22 +3011,23 @@ Return Value:
     PVI_DEADLOCK_THREAD ThreadInfo;
 
     ThreadInfo = NULL;
-        
-    ListHead = ViDeadlockDatabaseHash (ViDeadlockGlobals->ThreadDatabase, Thread);
 
-    if (IsListEmpty(ListHead)) {
+    ListHead = ViDeadlockDatabaseHash(ViDeadlockGlobals->ThreadDatabase, Thread);
+
+    if (IsListEmpty(ListHead))
+    {
         return NULL;
     }
-    
+
     Current = ListHead->Flink;
-    
-    while (Current != ListHead) {
 
-        ThreadInfo = CONTAINING_RECORD (Current,
-                                        VI_DEADLOCK_THREAD,
-                                        ListEntry);
+    while (Current != ListHead)
+    {
 
-        if (ThreadInfo->Thread == Thread) {            
+        ThreadInfo = CONTAINING_RECORD(Current, VI_DEADLOCK_THREAD, ListEntry);
+
+        if (ThreadInfo->Thread == Thread)
+        {
             return ThreadInfo;
         }
 
@@ -3180,10 +3039,7 @@ Return Value:
 
 
 PVI_DEADLOCK_THREAD
-ViDeadlockAddThread (
-    PKTHREAD Thread,
-    PVOID ReservedThread
-    )
+ViDeadlockAddThread(PKTHREAD Thread, PVOID ReservedThread)
 /*++
 
 Routine Description:
@@ -3202,40 +3058,37 @@ Return Value:
     Null if allocation failed.
 --*/
 {
-    PVI_DEADLOCK_THREAD ThreadInfo;    
+    PVI_DEADLOCK_THREAD ThreadInfo;
     PLIST_ENTRY HashBin;
 
-    ASSERT (ViDeadlockDatabaseOwner == KeGetCurrentThread());
-    
+    ASSERT(ViDeadlockDatabaseOwner == KeGetCurrentThread());
+
     //
     // Use reserved block for the new thread. Set ReservedThread
-    // to null to signal that block was used. 
+    // to null to signal that block was used.
     //
 
     ThreadInfo = ReservedThread;
     ReservedThread = NULL;
 
-    if (ThreadInfo == NULL) {
+    if (ThreadInfo == NULL)
+    {
         return NULL;
     }
 
-    RtlZeroMemory (ThreadInfo, sizeof *ThreadInfo);
+    RtlZeroMemory(ThreadInfo, sizeof *ThreadInfo);
 
-    ThreadInfo->Thread = Thread;   
-            
-    HashBin = ViDeadlockDatabaseHash (ViDeadlockGlobals->ThreadDatabase, Thread);
-    
+    ThreadInfo->Thread = Thread;
+
+    HashBin = ViDeadlockDatabaseHash(ViDeadlockGlobals->ThreadDatabase, Thread);
+
     InsertHeadList(HashBin, &ThreadInfo->ListEntry);
 
     return ThreadInfo;
 }
 
 
-VOID
-ViDeadlockDeleteThread (
-    PVI_DEADLOCK_THREAD Thread,
-    BOOLEAN Cleanup
-    )
+VOID ViDeadlockDeleteThread(PVI_DEADLOCK_THREAD Thread, BOOLEAN Cleanup)
 /*++
 
 Routine Description:
@@ -3253,32 +3106,31 @@ Return Value:
     None.
 --*/
 {
-    if (Cleanup == FALSE) {
-        
-        ASSERT (ViDeadlockDatabaseOwner == KeGetCurrentThread());
+    if (Cleanup == FALSE)
+    {
 
-        if (Thread->NodeCount != 0 
-            || Thread->CurrentSpinNode != NULL
-            || Thread->CurrentOtherNode != NULL) {
-            
+        ASSERT(ViDeadlockDatabaseOwner == KeGetCurrentThread());
+
+        if (Thread->NodeCount != 0 || Thread->CurrentSpinNode != NULL || Thread->CurrentOtherNode != NULL)
+        {
+
             //
             // A thread should not be deleted while it has resources acquired.
             //
 
-            ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_THREAD_HOLDS_RESOURCES,
-                                   (ULONG_PTR)(Thread->Thread),
-                                   (ULONG_PTR)(Thread),
-                                   (ULONG_PTR)0);    
-        } else {
-            
-            ASSERT (Thread->NodeCount == 0);
+            ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_THREAD_HOLDS_RESOURCES, (ULONG_PTR)(Thread->Thread),
+                                  (ULONG_PTR)(Thread), (ULONG_PTR)0);
         }
-        
+        else
+        {
+
+            ASSERT(Thread->NodeCount == 0);
+        }
     }
 
-    RemoveEntryList (&(Thread->ListEntry));
+    RemoveEntryList(&(Thread->ListEntry));
 
-    ViDeadlockFree (Thread, ViDeadlockThread);
+    ViDeadlockFree(Thread, ViDeadlockThread);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -3287,22 +3139,18 @@ Return Value:
 
 
 PVOID
-ViDeadlockAllocateFromPoolCache (
-    PULONG Count,
-    ULONG MaximumCount,
-    PLIST_ENTRY List,
-    SIZE_T Offset
-    )
+ViDeadlockAllocateFromPoolCache(PULONG Count, ULONG MaximumCount, PLIST_ENTRY List, SIZE_T Offset)
 {
     PVOID Address = NULL;
     PLIST_ENTRY Entry;
 
-    UNREFERENCED_PARAMETER (MaximumCount);
-    
-    if (*Count > 0) {
-        
+    UNREFERENCED_PARAMETER(MaximumCount);
+
+    if (*Count > 0)
+    {
+
         *Count -= 1;
-        Entry = RemoveHeadList (List);
+        Entry = RemoveHeadList(List);
         Address = (PVOID)((SIZE_T)Entry - Offset);
     }
 
@@ -3310,27 +3158,19 @@ ViDeadlockAllocateFromPoolCache (
 }
 
 
-VOID
-ViDeadlockFreeIntoPoolCache (
-    PVOID Object,
-    PULONG Count,
-    PLIST_ENTRY List,
-    SIZE_T Offset
-    )
+VOID ViDeadlockFreeIntoPoolCache(PVOID Object, PULONG Count, PLIST_ENTRY List, SIZE_T Offset)
 {
     PLIST_ENTRY Entry;
 
     Entry = (PLIST_ENTRY)((SIZE_T)Object + Offset);
-    
+
     *Count += 1;
     InsertHeadList(List, Entry);
 }
 
 
 PVOID
-ViDeadlockAllocate (
-    VI_DEADLOCK_ALLOC_TYPE Type
-    )
+ViDeadlockAllocate(VI_DEADLOCK_ALLOC_TYPE Type)
 /*++
 
 Routine Description:
@@ -3363,100 +3203,103 @@ Side effects:
     // if we have a pre-allocated one on the free list.
     //
 
-    ViDeadlockDetectionLock (&OldIrql);
+    ViDeadlockDetectionLock(&OldIrql);
 
-    switch (Type) {
+    switch (Type)
+    {
 
-        case ViDeadlockThread:
+    case ViDeadlockThread:
 
-            Offset = (SIZE_T)(&(((PVI_DEADLOCK_THREAD)0)->FreeListEntry));
-            Size = sizeof (VI_DEADLOCK_THREAD);
+        Offset = (SIZE_T)(&(((PVI_DEADLOCK_THREAD)0)->FreeListEntry));
+        Size = sizeof(VI_DEADLOCK_THREAD);
 
-            Address = ViDeadlockAllocateFromPoolCache (&(ViDeadlockGlobals->FreeThreadCount),
-                                                       VI_DEADLOCK_MAX_FREE_THREAD,
-                                                       &(ViDeadlockGlobals->FreeThreadList),
-                                                       Offset);
+        Address = ViDeadlockAllocateFromPoolCache(&(ViDeadlockGlobals->FreeThreadCount), VI_DEADLOCK_MAX_FREE_THREAD,
+                                                  &(ViDeadlockGlobals->FreeThreadList), Offset);
 
-            break;
+        break;
 
-        case ViDeadlockResource:
+    case ViDeadlockResource:
 
-            Offset = (SIZE_T)(&(((PVI_DEADLOCK_RESOURCE)0)->FreeListEntry));
-            Size = sizeof (VI_DEADLOCK_RESOURCE);
+        Offset = (SIZE_T)(&(((PVI_DEADLOCK_RESOURCE)0)->FreeListEntry));
+        Size = sizeof(VI_DEADLOCK_RESOURCE);
 
-            Address = ViDeadlockAllocateFromPoolCache (&(ViDeadlockGlobals->FreeResourceCount),
-                                                       VI_DEADLOCK_MAX_FREE_RESOURCE,
-                                                       &(ViDeadlockGlobals->FreeResourceList),
-                                                       Offset);
+        Address =
+            ViDeadlockAllocateFromPoolCache(&(ViDeadlockGlobals->FreeResourceCount), VI_DEADLOCK_MAX_FREE_RESOURCE,
+                                            &(ViDeadlockGlobals->FreeResourceList), Offset);
 
-            break;
+        break;
 
-        case ViDeadlockNode:
+    case ViDeadlockNode:
 
-            Offset = (SIZE_T)(&(((PVI_DEADLOCK_NODE)0)->FreeListEntry));
-            Size = sizeof (VI_DEADLOCK_NODE);
+        Offset = (SIZE_T)(&(((PVI_DEADLOCK_NODE)0)->FreeListEntry));
+        Size = sizeof(VI_DEADLOCK_NODE);
 
-            Address = ViDeadlockAllocateFromPoolCache (&(ViDeadlockGlobals->FreeNodeCount),
-                                                       VI_DEADLOCK_MAX_FREE_NODE,
-                                                       &(ViDeadlockGlobals->FreeNodeList),
-                                                       Offset);
+        Address = ViDeadlockAllocateFromPoolCache(&(ViDeadlockGlobals->FreeNodeCount), VI_DEADLOCK_MAX_FREE_NODE,
+                                                  &(ViDeadlockGlobals->FreeNodeList), Offset);
 
-            break;
+        break;
 
-        default:
+    default:
 
-            ASSERT (0);
-            break;
-    }        
+        ASSERT(0);
+        break;
+    }
 
     //
-    // If we did not find anything and kernel verifier is not active 
+    // If we did not find anything and kernel verifier is not active
     // then go to the kernel pool for a direct allocation. If kernel
     // verifier is enabled everything is preallocated and we never
     // call into the kernel pool.
     //
 
-    if (Address == NULL && ViDeadlockState.KernelVerifierEnabled == 0) {
+    if (Address == NULL && ViDeadlockState.KernelVerifierEnabled == 0)
+    {
 
-        ViDeadlockDetectionUnlock (OldIrql);
-        Address = ExAllocatePoolWithTag(NonPagedPool, Size, VI_DEADLOCK_TAG);  
-        ViDeadlockDetectionLock (&OldIrql);
+        ViDeadlockDetectionUnlock(OldIrql);
+        Address = ExAllocatePoolWithTag(NonPagedPool, Size, VI_DEADLOCK_TAG);
+        ViDeadlockDetectionLock(&OldIrql);
     }
 
-    if (Address) {
+    if (Address)
+    {
 
-        switch (Type) {
+        switch (Type)
+        {
 
-            case ViDeadlockThread:
-                ViDeadlockGlobals->Threads[0] += 1;
+        case ViDeadlockThread:
+            ViDeadlockGlobals->Threads[0] += 1;
 
-                if (ViDeadlockGlobals->Threads[0] > ViDeadlockGlobals->Threads[1]) {
-                    ViDeadlockGlobals->Threads[1] = ViDeadlockGlobals->Threads[0];
-                }
-                break;
+            if (ViDeadlockGlobals->Threads[0] > ViDeadlockGlobals->Threads[1])
+            {
+                ViDeadlockGlobals->Threads[1] = ViDeadlockGlobals->Threads[0];
+            }
+            break;
 
-            case ViDeadlockResource:
-                ViDeadlockGlobals->Resources[0] += 1;
-                
-                if (ViDeadlockGlobals->Resources[0] > ViDeadlockGlobals->Resources[1]) {
-                    ViDeadlockGlobals->Resources[1] = ViDeadlockGlobals->Resources[0];
-                }
-                break;
-        
-            case ViDeadlockNode:
-                ViDeadlockGlobals->Nodes[0] += 1;
+        case ViDeadlockResource:
+            ViDeadlockGlobals->Resources[0] += 1;
 
-                if (ViDeadlockGlobals->Nodes[0] > ViDeadlockGlobals->Nodes[1]) {
-                    ViDeadlockGlobals->Nodes[1] = ViDeadlockGlobals->Nodes[0];
-                }
-                break;
-        
-            default:
-                ASSERT (0);
-                break;
+            if (ViDeadlockGlobals->Resources[0] > ViDeadlockGlobals->Resources[1])
+            {
+                ViDeadlockGlobals->Resources[1] = ViDeadlockGlobals->Resources[0];
+            }
+            break;
+
+        case ViDeadlockNode:
+            ViDeadlockGlobals->Nodes[0] += 1;
+
+            if (ViDeadlockGlobals->Nodes[0] > ViDeadlockGlobals->Nodes[1])
+            {
+                ViDeadlockGlobals->Nodes[1] = ViDeadlockGlobals->Nodes[0];
+            }
+            break;
+
+        default:
+            ASSERT(0);
+            break;
         }
     }
-    else {
+    else
+    {
 
         ViDeadlockState.AllocationFailures = 1;
         ViDeadlockGlobals->AllocationFailures += 1;
@@ -3473,25 +3316,22 @@ Side effects:
     // call site takes care of this.
     //
 
-    if (Address) {
+    if (Address)
+    {
 
 #if DBG
-        RtlFillMemory (Address, Size, 0xFF);
+        RtlFillMemory(Address, Size, 0xFF);
 #endif
         ViDeadlockGlobals->BytesAllocated += Size;
     }
 
-    ViDeadlockDetectionUnlock (OldIrql);
-    
+    ViDeadlockDetectionUnlock(OldIrql);
+
     return Address;
 }
 
 
-VOID
-ViDeadlockFree (
-    PVOID Object,
-    VI_DEADLOCK_ALLOC_TYPE Type
-    )
+VOID ViDeadlockFree(PVOID Object, VI_DEADLOCK_ALLOC_TYPE Type)
 /*++
 
 Routine Description:
@@ -3526,61 +3366,53 @@ Return Value:
     SIZE_T Offset;
     SIZE_T Size = 0;
 
-    switch (Type) {
+    switch (Type)
+    {
 
-        case ViDeadlockThread:
+    case ViDeadlockThread:
 
-            ViDeadlockGlobals->Threads[0] -= 1;
-            Size = sizeof (VI_DEADLOCK_THREAD);
-            
-            Offset = (SIZE_T)(&(((PVI_DEADLOCK_THREAD)0)->FreeListEntry));
+        ViDeadlockGlobals->Threads[0] -= 1;
+        Size = sizeof(VI_DEADLOCK_THREAD);
 
-            ViDeadlockFreeIntoPoolCache (Object,
-                                         &(ViDeadlockGlobals->FreeThreadCount),
-                                         &(ViDeadlockGlobals->FreeThreadList),
-                                         Offset);
-            break;
+        Offset = (SIZE_T)(&(((PVI_DEADLOCK_THREAD)0)->FreeListEntry));
 
-        case ViDeadlockResource:
+        ViDeadlockFreeIntoPoolCache(Object, &(ViDeadlockGlobals->FreeThreadCount), &(ViDeadlockGlobals->FreeThreadList),
+                                    Offset);
+        break;
 
-            ViDeadlockGlobals->Resources[0] -= 1;
-            Size = sizeof (VI_DEADLOCK_RESOURCE);
-            
-            Offset = (SIZE_T)(&(((PVI_DEADLOCK_RESOURCE)0)->FreeListEntry));
+    case ViDeadlockResource:
 
-            ViDeadlockFreeIntoPoolCache (Object,
-                                         &(ViDeadlockGlobals->FreeResourceCount),
-                                         &(ViDeadlockGlobals->FreeResourceList),
-                                         Offset);
-            break;
+        ViDeadlockGlobals->Resources[0] -= 1;
+        Size = sizeof(VI_DEADLOCK_RESOURCE);
 
-        case ViDeadlockNode:
+        Offset = (SIZE_T)(&(((PVI_DEADLOCK_RESOURCE)0)->FreeListEntry));
 
-            ViDeadlockGlobals->Nodes[0] -= 1;
-            Size = sizeof (VI_DEADLOCK_NODE);
-            
-            Offset = (SIZE_T)(&(((PVI_DEADLOCK_NODE)0)->FreeListEntry));
+        ViDeadlockFreeIntoPoolCache(Object, &(ViDeadlockGlobals->FreeResourceCount),
+                                    &(ViDeadlockGlobals->FreeResourceList), Offset);
+        break;
 
-            ViDeadlockFreeIntoPoolCache (Object,
-                                         &(ViDeadlockGlobals->FreeNodeCount),
-                                         &(ViDeadlockGlobals->FreeNodeList),
-                                         Offset);
-            break;
+    case ViDeadlockNode:
 
-        default:
+        ViDeadlockGlobals->Nodes[0] -= 1;
+        Size = sizeof(VI_DEADLOCK_NODE);
 
-            ASSERT (0);
-            break;
-    }        
-    
+        Offset = (SIZE_T)(&(((PVI_DEADLOCK_NODE)0)->FreeListEntry));
+
+        ViDeadlockFreeIntoPoolCache(Object, &(ViDeadlockGlobals->FreeNodeCount), &(ViDeadlockGlobals->FreeNodeList),
+                                    Offset);
+        break;
+
+    default:
+
+        ASSERT(0);
+        break;
+    }
+
     ViDeadlockGlobals->BytesAllocated -= Size;
 }
 
 
-VOID
-ViDeadlockTrimPoolCache (
-    VOID
-    )
+VOID ViDeadlockTrimPoolCache(VOID)
 /*++
 
 Routine Description:
@@ -3601,33 +3433,33 @@ Return Value:
 {
     KIRQL OldIrql;
 
-    if (ViDeadlockState.KernelVerifierEnabled == 1) {
+    if (ViDeadlockState.KernelVerifierEnabled == 1)
+    {
         return;
     }
 
-    ViDeadlockDetectionLock (&OldIrql);
+    ViDeadlockDetectionLock(&OldIrql);
 
-    if (ViDeadlockGlobals->CacheReductionInProgress == TRUE) {
-        ViDeadlockDetectionUnlock (OldIrql);
+    if (ViDeadlockGlobals->CacheReductionInProgress == TRUE)
+    {
+        ViDeadlockDetectionUnlock(OldIrql);
         return;
     }
 
     if ((ViDeadlockGlobals->FreeThreadCount > VI_DEADLOCK_MAX_FREE_THREAD) ||
         (ViDeadlockGlobals->FreeNodeCount > VI_DEADLOCK_MAX_FREE_NODE) ||
-        (ViDeadlockGlobals->FreeResourceCount > VI_DEADLOCK_MAX_FREE_RESOURCE)){
+        (ViDeadlockGlobals->FreeResourceCount > VI_DEADLOCK_MAX_FREE_RESOURCE))
+    {
 
-        ExQueueWorkItem (&ViTrimDeadlockPoolWorkItem, DelayedWorkQueue);
+        ExQueueWorkItem(&ViTrimDeadlockPoolWorkItem, DelayedWorkQueue);
         ViDeadlockGlobals->CacheReductionInProgress = TRUE;
     }
 
-    ViDeadlockDetectionUnlock (OldIrql);
+    ViDeadlockDetectionUnlock(OldIrql);
     return;
 }
 
-VOID
-ViDeadlockTrimPoolCacheWorker (
-    PVOID Parameter
-    )
+VOID ViDeadlockTrimPoolCacheWorker(PVOID Parameter)
 /*++
 
 Routine Description:
@@ -3657,38 +3489,41 @@ Environment:
     PLIST_ENTRY Entry;
     LOGICAL CacheReductionNeeded;
 
-    UNREFERENCED_PARAMETER (Parameter);
+    UNREFERENCED_PARAMETER(Parameter);
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     CacheReductionNeeded = FALSE;
 
-    InitializeListHead (&ListOfThreads);
-    InitializeListHead (&ListOfNodes);
-    InitializeListHead (&ListOfResources);
+    InitializeListHead(&ListOfThreads);
+    InitializeListHead(&ListOfNodes);
+    InitializeListHead(&ListOfResources);
 
-    ViDeadlockDetectionLock (&OldIrql);
+    ViDeadlockDetectionLock(&OldIrql);
 
-    while (ViDeadlockGlobals->FreeThreadCount > VI_DEADLOCK_MAX_FREE_THREAD) {
+    while (ViDeadlockGlobals->FreeThreadCount > VI_DEADLOCK_MAX_FREE_THREAD)
+    {
 
-        Entry = RemoveHeadList (&(ViDeadlockGlobals->FreeThreadList));
-        InsertTailList (&ListOfThreads, Entry);
+        Entry = RemoveHeadList(&(ViDeadlockGlobals->FreeThreadList));
+        InsertTailList(&ListOfThreads, Entry);
         ViDeadlockGlobals->FreeThreadCount -= 1;
         CacheReductionNeeded = TRUE;
     }
 
-    while (ViDeadlockGlobals->FreeNodeCount > VI_DEADLOCK_MAX_FREE_NODE) {
+    while (ViDeadlockGlobals->FreeNodeCount > VI_DEADLOCK_MAX_FREE_NODE)
+    {
 
-        Entry = RemoveHeadList (&(ViDeadlockGlobals->FreeNodeList));
-        InsertTailList (&ListOfNodes, Entry);
+        Entry = RemoveHeadList(&(ViDeadlockGlobals->FreeNodeList));
+        InsertTailList(&ListOfNodes, Entry);
         ViDeadlockGlobals->FreeNodeCount -= 1;
         CacheReductionNeeded = TRUE;
     }
 
-    while (ViDeadlockGlobals->FreeResourceCount > VI_DEADLOCK_MAX_FREE_RESOURCE) {
+    while (ViDeadlockGlobals->FreeResourceCount > VI_DEADLOCK_MAX_FREE_RESOURCE)
+    {
 
-        Entry = RemoveHeadList (&(ViDeadlockGlobals->FreeResourceList));
-        InsertTailList (&ListOfResources, Entry);
+        Entry = RemoveHeadList(&(ViDeadlockGlobals->FreeResourceList));
+        InsertTailList(&ListOfResources, Entry);
         ViDeadlockGlobals->FreeResourceCount -= 1;
         CacheReductionNeeded = TRUE;
     }
@@ -3698,59 +3533,57 @@ Environment:
     // freed to prevent needless recursion.
     //
 
-    if (CacheReductionNeeded == FALSE) {
+    if (CacheReductionNeeded == FALSE)
+    {
         ViDeadlockGlobals->CacheReductionInProgress = FALSE;
-        ViDeadlockDetectionUnlock (OldIrql);
+        ViDeadlockDetectionUnlock(OldIrql);
         return;
     }
 
-    ViDeadlockDetectionUnlock (OldIrql);
+    ViDeadlockDetectionUnlock(OldIrql);
 
     //
-    // Now, out of the deadlock verifier lock we can deallocate the 
+    // Now, out of the deadlock verifier lock we can deallocate the
     // blocks trimmed.
     //
 
     Entry = ListOfThreads.Flink;
 
-    while (Entry != &ListOfThreads) {
+    while (Entry != &ListOfThreads)
+    {
 
         PVI_DEADLOCK_THREAD Block;
 
-        Block = CONTAINING_RECORD (Entry,
-                                   VI_DEADLOCK_THREAD,
-                                   FreeListEntry);
+        Block = CONTAINING_RECORD(Entry, VI_DEADLOCK_THREAD, FreeListEntry);
 
         Entry = Entry->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
     Entry = ListOfNodes.Flink;
 
-    while (Entry != &ListOfNodes) {
+    while (Entry != &ListOfNodes)
+    {
 
         PVI_DEADLOCK_NODE Block;
 
-        Block = CONTAINING_RECORD (Entry,
-                                   VI_DEADLOCK_NODE,
-                                   FreeListEntry);
+        Block = CONTAINING_RECORD(Entry, VI_DEADLOCK_NODE, FreeListEntry);
 
         Entry = Entry->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
     Entry = ListOfResources.Flink;
 
-    while (Entry != &ListOfResources) {
+    while (Entry != &ListOfResources)
+    {
 
         PVI_DEADLOCK_RESOURCE Block;
 
-        Block = CONTAINING_RECORD (Entry,
-                                   VI_DEADLOCK_RESOURCE,
-                                   FreeListEntry);
+        Block = CONTAINING_RECORD(Entry, VI_DEADLOCK_RESOURCE, FreeListEntry);
 
         Entry = Entry->Flink;
-        ExFreePool (Block);
+        ExFreePool(Block);
     }
 
     //
@@ -3758,9 +3591,9 @@ Environment:
     // allocations are freed.
     //
 
-    ViDeadlockDetectionLock (&OldIrql);
+    ViDeadlockDetectionLock(&OldIrql);
     ViDeadlockGlobals->CacheReductionInProgress = FALSE;
-    ViDeadlockDetectionUnlock (OldIrql);
+    ViDeadlockDetectionUnlock(OldIrql);
 }
 
 
@@ -3776,13 +3609,7 @@ Environment:
 ULONG_PTR ViDeadlockIssue[4];
 
 
-VOID
-ViDeadlockReportIssue (
-    ULONG_PTR Param1,
-    ULONG_PTR Param2,
-    ULONG_PTR Param3,
-    ULONG_PTR Param4
-    )
+VOID ViDeadlockReportIssue(ULONG_PTR Param1, ULONG_PTR Param2, ULONG_PTR Param3, ULONG_PTR Param4)
 /*++
 
 Routine Description:
@@ -3807,33 +3634,23 @@ Return Value:
     ViDeadlockIssue[3] = Param4;
 
 
-    if (ViDeadlockDebug) {
+    if (ViDeadlockDebug)
+    {
 
-        DbgPrint ("Verifier: deadlock: stop: %p %p %p %p %p \n",
-                  DRIVER_VERIFIER_DETECTED_VIOLATION,
-                  Param1,
-                  Param2,
-                  Param3,
-                  Param4);
+        DbgPrint("Verifier: deadlock: stop: %p %p %p %p %p \n", DRIVER_VERIFIER_DETECTED_VIOLATION, Param1, Param2,
+                 Param3, Param4);
 
-        DbgBreakPoint ();
+        DbgBreakPoint();
     }
-    else {
+    else
+    {
 
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      Param1,
-                      Param2,
-                      Param3,
-                      Param4);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, Param1, Param2, Param3, Param4);
     }
-
 }
 
 
-VOID
-ViDeadlockAddParticipant(
-    PVI_DEADLOCK_NODE Node
-    )
+VOID ViDeadlockAddParticipant(PVI_DEADLOCK_NODE Node)
 /*++
 
 Routine Description:
@@ -3855,7 +3672,8 @@ Return Value:
 
     Index = ViDeadlockGlobals->NumberOfParticipants;
 
-    if (Index >= NO_OF_DEADLOCK_PARTICIPANTS) {
+    if (Index >= NO_OF_DEADLOCK_PARTICIPANTS)
+    {
 
         ViDeadlockState.DeadlockParticipantsOverflow = 1;
         return;
@@ -3870,11 +3688,7 @@ Return Value:
 //////////////////////////////////////////////////// Resource cleanup
 /////////////////////////////////////////////////////////////////////
 
-VOID
-VfDeadlockDeleteMemoryRange(
-    IN PVOID Address,
-    IN SIZE_T Size
-    )
+VOID VfDeadlockDeleteMemoryRange(IN PVOID Address, IN SIZE_T Size)
 /*++
 
 Routine Description:
@@ -3929,20 +3743,21 @@ Return Value:
     // we return immediately.
     //
 
-    if (! ViDeadlockCanProceed(NULL, NULL, VfDeadlockUnknown)) {
+    if (!ViDeadlockCanProceed(NULL, NULL, VfDeadlockUnknown))
+    {
         return;
     }
 
-    SpanningPages = (ULONG) ADDRESS_AND_SIZE_TO_SPAN_PAGES (Address, Size);
+    SpanningPages = (ULONG)ADDRESS_AND_SIZE_TO_SPAN_PAGES(Address, Size);
 
-   
-    if (SpanningPages > VI_DEADLOCK_HASH_BINS ) {
-        SpanningPages = VI_DEADLOCK_HASH_BINS;        
 
+    if (SpanningPages > VI_DEADLOCK_HASH_BINS)
+    {
+        SpanningPages = VI_DEADLOCK_HASH_BINS;
     }
 
-    Start = (ULONG_PTR) Address;    
-    End = Start + (ULONG_PTR) Size;
+    Start = (ULONG_PTR)Address;
+    End = Start + (ULONG_PTR)Size;
 
     ViDeadlockDetectionLock(&OldIrql);
 
@@ -3950,79 +3765,74 @@ Return Value:
     // Iterate all resources and delete the ones contained in the
     // memory range.
     //
-    
-    for (Index = 0; Index < SpanningPages; Index += 1) {
-        
+
+    for (Index = 0; Index < SpanningPages; Index += 1)
+    {
+
         //
         // See optimization note above for description of why we only look
         // in a single hash bin.
         //
-        
-        ListHead = ViDeadlockDatabaseHash (ViDeadlockGlobals->ResourceDatabase,
-                                           (PVOID) (Start + Index * PAGE_SIZE));
-        
+
+        ListHead = ViDeadlockDatabaseHash(ViDeadlockGlobals->ResourceDatabase, (PVOID)(Start + Index * PAGE_SIZE));
+
         CurrentEntry = ListHead->Flink;
 
-        while (CurrentEntry != ListHead) {
+        while (CurrentEntry != ListHead)
+        {
 
-            Resource = CONTAINING_RECORD (CurrentEntry,
-                                          VI_DEADLOCK_RESOURCE,
-                                          HashChainList);
+            Resource = CONTAINING_RECORD(CurrentEntry, VI_DEADLOCK_RESOURCE, HashChainList);
 
             CurrentEntry = CurrentEntry->Flink;
 
-            if ((ULONG_PTR)(Resource->ResourceAddress) >= Start &&
-                (ULONG_PTR)(Resource->ResourceAddress) < End) {
+            if ((ULONG_PTR)(Resource->ResourceAddress) >= Start && (ULONG_PTR)(Resource->ResourceAddress) < End)
+            {
 
-                ViDeadlockDeleteResource (Resource, FALSE);
+                ViDeadlockDeleteResource(Resource, FALSE);
             }
         }
-    }    
+    }
 
     //
     // Iterate all threads and delete the ones contained in the
     // memory range.
     //
-    
-    for (Index = 0; Index < SpanningPages; Index += 1) {
-        
-        ListHead = ViDeadlockDatabaseHash (ViDeadlockGlobals->ThreadDatabase,
-                                           (PVOID) (Start + Index * PAGE_SIZE));
-        
+
+    for (Index = 0; Index < SpanningPages; Index += 1)
+    {
+
+        ListHead = ViDeadlockDatabaseHash(ViDeadlockGlobals->ThreadDatabase, (PVOID)(Start + Index * PAGE_SIZE));
+
         CurrentEntry = ListHead->Flink;
 
-        while (CurrentEntry != ListHead) {
+        while (CurrentEntry != ListHead)
+        {
 
-            Thread = CONTAINING_RECORD (CurrentEntry,
-                                        VI_DEADLOCK_THREAD,
-                                        ListEntry);
+            Thread = CONTAINING_RECORD(CurrentEntry, VI_DEADLOCK_THREAD, ListEntry);
 
             CurrentEntry = CurrentEntry->Flink;
 
-            if ((ULONG_PTR)(Thread->Thread) >= Start &&
-                (ULONG_PTR)(Thread->Thread) < End) {
+            if ((ULONG_PTR)(Thread->Thread) >= Start && (ULONG_PTR)(Thread->Thread) < End)
+            {
 
 #if DBG
-                if (Thread->NodeCount > 0) {
-                    DbgPrint ("Deadlock verifier: deleting thread %p while holding resources %p \n");
-                    DbgBreakPoint ();
+                if (Thread->NodeCount > 0)
+                {
+                    DbgPrint("Deadlock verifier: deleting thread %p while holding resources %p \n");
+                    DbgBreakPoint();
                 }
 #endif
 
-                ViDeadlockDeleteThread (Thread, FALSE);
+                ViDeadlockDeleteThread(Thread, FALSE);
             }
         }
-    }    
+    }
 
     ViDeadlockDetectionUnlock(OldIrql);
 }
 
 
-VOID
-ViDeadlockDeleteResource (
-    PVI_DEADLOCK_RESOURCE Resource,
-    BOOLEAN Cleanup
-    )
+VOID ViDeadlockDeleteResource(PVI_DEADLOCK_RESOURCE Resource, BOOLEAN Cleanup)
 /*++
 
 Routine Description:
@@ -4045,22 +3855,21 @@ Return Value:
     PLIST_ENTRY Current;
     PVI_DEADLOCK_NODE Node;
 
-    ASSERT (Resource != NULL);
-    ASSERT (Cleanup || ViDeadlockDatabaseOwner == KeGetCurrentThread());
-    
+    ASSERT(Resource != NULL);
+    ASSERT(Cleanup || ViDeadlockDatabaseOwner == KeGetCurrentThread());
+
 
     //
-    // Check if the resource being deleted is still acquired. 
+    // Check if the resource being deleted is still acquired.
     // Note that this might fire if we loose release() operations
     // performed by an unverified driver.
     //
 
-    if (Cleanup == FALSE && Resource->ThreadOwner != NULL) {
-        
-        ViDeadlockReportIssue (VI_DEADLOCK_ISSUE_THREAD_HOLDS_RESOURCES, 
-                              (ULONG_PTR) (Resource->ResourceAddress),
-                              (ULONG_PTR) (Resource->ThreadOwner->Thread),
-                              (ULONG_PTR) (Resource));
+    if (Cleanup == FALSE && Resource->ThreadOwner != NULL)
+    {
+
+        ViDeadlockReportIssue(VI_DEADLOCK_ISSUE_THREAD_HOLDS_RESOURCES, (ULONG_PTR)(Resource->ResourceAddress),
+                              (ULONG_PTR)(Resource->ThreadOwner->Thread), (ULONG_PTR)(Resource));
     }
 
     //
@@ -4071,66 +3880,54 @@ Return Value:
 
     Current = Resource->ResourceList.Flink;
 
-    while (Current != &(Resource->ResourceList)) {
+    while (Current != &(Resource->ResourceList))
+    {
 
-        Node = CONTAINING_RECORD (Current,
-                                  VI_DEADLOCK_NODE,
-                                  ResourceList);
+        Node = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, ResourceList);
 
 
         Current = Current->Flink;
 
-        ASSERT (Node->Root == Resource);
+        ASSERT(Node->Root == Resource);
 
-        ViDeadlockDeleteNode (Node, Cleanup);
+        ViDeadlockDeleteNode(Node, Cleanup);
     }
 
     //
     // There should not be any NODEs for the resource at this moment.
     //
 
-    ASSERT (&(Resource->ResourceList) == Resource->ResourceList.Flink);
-    ASSERT (&(Resource->ResourceList) == Resource->ResourceList.Blink);
+    ASSERT(&(Resource->ResourceList) == Resource->ResourceList.Flink);
+    ASSERT(&(Resource->ResourceList) == Resource->ResourceList.Blink);
 
     //
     // Remote the resource from the hash table and
     // delete the resource structure.
     //
 
-    RemoveEntryList (&(Resource->HashChainList));   
-    ViDeadlockFree (Resource, ViDeadlockResource);
+    RemoveEntryList(&(Resource->HashChainList));
+    ViDeadlockFree(Resource, ViDeadlockResource);
 }
 
 
-VOID
-ViDeadlockTrimResources (
-    PLIST_ENTRY HashList
-    )
+VOID ViDeadlockTrimResources(PLIST_ENTRY HashList)
 {
     PLIST_ENTRY Current;
     PVI_DEADLOCK_RESOURCE Resource;
 
     Current = HashList->Flink;
 
-    while (Current != HashList) {
+    while (Current != HashList)
+    {
 
-        Resource = CONTAINING_RECORD (Current,
-                                      VI_DEADLOCK_RESOURCE,
-                                      HashChainList);
+        Resource = CONTAINING_RECORD(Current, VI_DEADLOCK_RESOURCE, HashChainList);
         Current = Current->Flink;
 
-        ViDeadlockForgetResourceHistory (Resource, 
-                                         ViDeadlockTrimThreshold, 
-                                         ViDeadlockAgeWindow);
+        ViDeadlockForgetResourceHistory(Resource, ViDeadlockTrimThreshold, ViDeadlockAgeWindow);
     }
 }
 
-VOID
-ViDeadlockForgetResourceHistory (
-    PVI_DEADLOCK_RESOURCE Resource,
-    ULONG TrimThreshold,
-    ULONG AgeThreshold
-    )
+VOID ViDeadlockForgetResourceHistory(PVI_DEADLOCK_RESOURCE Resource, ULONG TrimThreshold, ULONG AgeThreshold)
 /*++
 
 Routine Description:
@@ -4158,14 +3955,15 @@ Return Value:
     ULONG NodesTrimmed = 0;
     ULONG SequenceNumber;
 
-    ASSERT (Resource != NULL);
-    ASSERT (ViDeadlockDatabaseOwner == KeGetCurrentThread());
+    ASSERT(Resource != NULL);
+    ASSERT(ViDeadlockDatabaseOwner == KeGetCurrentThread());
 
     //
     // If resource is owned we cannot do anything,
     //
 
-    if (Resource->ThreadOwner) {
+    if (Resource->ThreadOwner)
+    {
         return;
     }
 
@@ -4173,7 +3971,8 @@ Return Value:
     // If resource has less than TrimThreshold nodes it is still fine.
     //
 
-    if (Resource->NodeCount < TrimThreshold) {
+    if (Resource->NodeCount < TrimThreshold)
+    {
         return;
     }
 
@@ -4185,16 +3984,15 @@ Return Value:
 
     Current = Resource->ResourceList.Flink;
 
-    while (Current != &(Resource->ResourceList)) {
+    while (Current != &(Resource->ResourceList))
+    {
 
-        Node = CONTAINING_RECORD (Current,
-                                  VI_DEADLOCK_NODE,
-                                  ResourceList);
+        Node = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, ResourceList);
 
 
         Current = Current->Flink;
 
-        ASSERT (Node->Root == Resource);
+        ASSERT(Node->Root == Resource);
 
         //
         // Special care here because the sequence numbers are 32bits
@@ -4203,31 +4001,36 @@ Return Value:
         // overwrapped it can be the other way around.
         //
 
-        if (SequenceNumber > Node->SequenceNumber) {
-            
-            if (SequenceNumber - Node->SequenceNumber > AgeThreshold) {
+        if (SequenceNumber > Node->SequenceNumber)
+        {
 
-                ViDeadlockDeleteNode (Node, FALSE);
+            if (SequenceNumber - Node->SequenceNumber > AgeThreshold)
+            {
+
+                ViDeadlockDeleteNode(Node, FALSE);
                 NodesTrimmed += 1;
             }
         }
-        else {
+        else
+        {
 
-            if (SequenceNumber + Node->SequenceNumber > AgeThreshold) {
+            if (SequenceNumber + Node->SequenceNumber > AgeThreshold)
+            {
 
-                ViDeadlockDeleteNode (Node, FALSE);
+                ViDeadlockDeleteNode(Node, FALSE);
                 NodesTrimmed += 1;
             }
         }
     }
 
     ViDeadlockGlobals->NodesTrimmedBasedOnAge += NodesTrimmed;
-    
+
     //
     // If resource has less than TrimThreshold nodes it is fine.
     //
 
-    if (Resource->NodeCount < TrimThreshold) {
+    if (Resource->NodeCount < TrimThreshold)
+    {
         return;
     }
 
@@ -4240,22 +4043,22 @@ Return Value:
 
     Current = Resource->ResourceList.Flink;
 
-    while (Current != &(Resource->ResourceList)) {
+    while (Current != &(Resource->ResourceList))
+    {
 
-        if (Resource->NodeCount < TrimThreshold) {
+        if (Resource->NodeCount < TrimThreshold)
+        {
             break;
         }
 
-        Node = CONTAINING_RECORD (Current,
-                                  VI_DEADLOCK_NODE,
-                                  ResourceList);
+        Node = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, ResourceList);
 
 
         Current = Current->Flink;
 
-        ASSERT (Node->Root == Resource);
+        ASSERT(Node->Root == Resource);
 
-        ViDeadlockDeleteNode (Node, FALSE);
+        ViDeadlockDeleteNode(Node, FALSE);
         NodesTrimmed += 1;
     }
 
@@ -4263,11 +4066,7 @@ Return Value:
 }
 
 
-VOID 
-ViDeadlockDeleteNode (
-    PVI_DEADLOCK_NODE Node,
-    BOOLEAN Cleanup
-    )
+VOID ViDeadlockDeleteNode(PVI_DEADLOCK_NODE Node, BOOLEAN Cleanup)
 /*++
 
 Routine Description:
@@ -4294,52 +4093,53 @@ Return Value:
     PVI_DEADLOCK_NODE Child;
     ULONG Children;
 
-    ASSERT (Node);
+    ASSERT(Node);
 
     //
     // If are during a cleanup just delete the node and return.
     //
 
-    if (Cleanup) {
-        
-        RemoveEntryList (&(Node->ResourceList));
-        ViDeadlockFree (Node, ViDeadlockNode);
+    if (Cleanup)
+    {
+
+        RemoveEntryList(&(Node->ResourceList));
+        ViDeadlockFree(Node, ViDeadlockNode);
         return;
     }
-    
+
     //
     // If we are here we need to collapse the tree
     //
 
-    ASSERT (ViDeadlockDatabaseOwner == KeGetCurrentThread());
+    ASSERT(ViDeadlockDatabaseOwner == KeGetCurrentThread());
 
-    if (Node->Parent) {
+    if (Node->Parent)
+    {
 
         //
         // All Node's children must become Parent's children
         //
-        
+
         Current = Node->ChildrenList.Flink;
 
-        while (Current != &(Node->ChildrenList)) {
-            
-            Child = CONTAINING_RECORD (Current,
-                                      VI_DEADLOCK_NODE,
-                                      SiblingsList);
+        while (Current != &(Node->ChildrenList))
+        {
+
+            Child = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, SiblingsList);
 
             Current = Current->Flink;
 
-            RemoveEntryList (&(Child->SiblingsList));
+            RemoveEntryList(&(Child->SiblingsList));
 
             Child->Parent = Node->Parent;
 
-            InsertTailList (&(Node->Parent->ChildrenList), 
-                            &(Child->SiblingsList));
+            InsertTailList(&(Node->Parent->ChildrenList), &(Child->SiblingsList));
         }
 
-        RemoveEntryList (&(Node->SiblingsList));
+        RemoveEntryList(&(Node->SiblingsList));
     }
-    else {
+    else
+    {
 
         //
         // All Node's children must become roots of the graph
@@ -4349,17 +4149,16 @@ Return Value:
         Children = 0;
         Child = NULL;
 
-        while (Current != &(Node->ChildrenList)) {
-            
+        while (Current != &(Node->ChildrenList))
+        {
+
             Children += 1;
 
-            Child = CONTAINING_RECORD (Current,
-                                      VI_DEADLOCK_NODE,
-                                      SiblingsList);
+            Child = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, SiblingsList);
 
             Current = Current->Flink;
 
-            RemoveEntryList (&(Child->SiblingsList));
+            RemoveEntryList(&(Child->SiblingsList));
 
             Child->Parent = NULL;
             Child->SiblingsList.Flink = NULL;
@@ -4367,20 +4166,18 @@ Return Value:
         }
     }
 
-    ASSERT (Node->Root);
-    ASSERT (Node->Root->NodeCount > 0);
+    ASSERT(Node->Root);
+    ASSERT(Node->Root->NodeCount > 0);
 
     Node->Root->NodeCount -= 1;
-    
-    RemoveEntryList (&(Node->ResourceList));
-    ViDeadlockFree (Node, ViDeadlockNode);
+
+    RemoveEntryList(&(Node->ResourceList));
+    ViDeadlockFree(Node, ViDeadlockNode);
 }
 
 
 ULONG
-ViDeadlockNodeLevel (
-    PVI_DEADLOCK_NODE Node
-    )
+ViDeadlockNodeLevel(PVI_DEADLOCK_NODE Node)
 /*++
 
 Routine Description:
@@ -4394,15 +4191,16 @@ Arguments:
 Return Value:
 
     Level of the node. A root node has level zero.
---*/    
+--*/
 {
     PVI_DEADLOCK_NODE Current;
     ULONG Level = 0;
 
     Current = Node->Parent;
 
-    while (Current) {
-        
+    while (Current)
+    {
+
         Level += 1;
         Current = Current->Parent;
     }
@@ -4419,11 +4217,7 @@ Return Value:
 // This is a very smart and tricky algorithm :-)
 //
 
-VOID 
-ViDeadlockCheckDuplicatesAmongChildren (
-    PVI_DEADLOCK_NODE Parent,
-    PVI_DEADLOCK_NODE Child
-    )
+VOID ViDeadlockCheckDuplicatesAmongChildren(PVI_DEADLOCK_NODE Parent, PVI_DEADLOCK_NODE Child)
 {
     PLIST_ENTRY Current;
     PVI_DEADLOCK_NODE Node;
@@ -4432,34 +4226,33 @@ ViDeadlockCheckDuplicatesAmongChildren (
     FoundOne = FALSE;
     Current = Parent->ChildrenList.Flink;
 
-    while (Current != &(Parent->ChildrenList)) {
+    while (Current != &(Parent->ChildrenList))
+    {
 
-        Node = CONTAINING_RECORD (Current,
-                                  VI_DEADLOCK_NODE,
-                                  SiblingsList);
+        Node = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, SiblingsList);
 
-        ASSERT (Current->Flink);
+        ASSERT(Current->Flink);
         Current = Current->Flink;
 
-        if (ViDeadlockSimilarNodes (Node, Child)) {
-            
-            if (FoundOne == FALSE) {
-                ASSERT (Node == Child);
+        if (ViDeadlockSimilarNodes(Node, Child))
+        {
+
+            if (FoundOne == FALSE)
+            {
+                ASSERT(Node == Child);
                 FoundOne = TRUE;
             }
-            else {
-                
-                ViDeadlockMergeNodes (Child, Node);
+            else
+            {
+
+                ViDeadlockMergeNodes(Child, Node);
             }
         }
     }
 }
 
 
-VOID 
-ViDeadlockCheckDuplicatesAmongRoots (
-    PVI_DEADLOCK_NODE Root
-    )
+VOID ViDeadlockCheckDuplicatesAmongRoots(PVI_DEADLOCK_NODE Root)
 {
     PLIST_ENTRY Current;
     PVI_DEADLOCK_NODE Node;
@@ -4470,24 +4263,26 @@ ViDeadlockCheckDuplicatesAmongRoots (
     Resource = Root->Root;
     Current = Resource->ResourceList.Flink;
 
-    while (Current != &(Resource->ResourceList)) {
+    while (Current != &(Resource->ResourceList))
+    {
 
-        Node = CONTAINING_RECORD (Current,
-                                  VI_DEADLOCK_NODE,
-                                  ResourceList);
+        Node = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, ResourceList);
 
-        ASSERT (Current->Flink);
+        ASSERT(Current->Flink);
         Current = Current->Flink;
 
-        if (Node->Parent == NULL && ViDeadlockSimilarNodes (Node, Root)) {
-            
-            if (FoundOne == FALSE) {
-                ASSERT (Node == Root);
+        if (Node->Parent == NULL && ViDeadlockSimilarNodes(Node, Root))
+        {
+
+            if (FoundOne == FALSE)
+            {
+                ASSERT(Node == Root);
                 FoundOne = TRUE;
             }
-            else {
-                
-                ViDeadlockMergeNodes (Root, Node);
+            else
+            {
+
+                ViDeadlockMergeNodes(Root, Node);
             }
         }
     }
@@ -4495,54 +4290,46 @@ ViDeadlockCheckDuplicatesAmongRoots (
 
 
 LOGICAL
-ViDeadlockSimilarNodes (
-    PVI_DEADLOCK_NODE NodeA,
-    PVI_DEADLOCK_NODE NodeB
-    )
+ViDeadlockSimilarNodes(PVI_DEADLOCK_NODE NodeA, PVI_DEADLOCK_NODE NodeB)
 {
-    if (NodeA->Root == NodeB->Root
-        && NodeA->OnlyTryAcquireUsed == NodeB->OnlyTryAcquireUsed) {
-        
+    if (NodeA->Root == NodeB->Root && NodeA->OnlyTryAcquireUsed == NodeB->OnlyTryAcquireUsed)
+    {
+
         return TRUE;
     }
-    else {
+    else
+    {
 
         return FALSE;
     }
 }
 
 
-VOID
-ViDeadlockMergeNodes (
-    PVI_DEADLOCK_NODE NodeTo,
-    PVI_DEADLOCK_NODE NodeFrom
-    )
+VOID ViDeadlockMergeNodes(PVI_DEADLOCK_NODE NodeTo, PVI_DEADLOCK_NODE NodeFrom)
 {
     PLIST_ENTRY Current;
     PVI_DEADLOCK_NODE Node;
 
     //
-    // If NodeFrom is currently acquired then copy the same 
+    // If NodeFrom is currently acquired then copy the same
     // characteristics to NodeTo. Since the locks are exclusive
     // it is impossible to have NodeTo also acquired.
     //
 
-    if (NodeFrom->ThreadEntry) {
-        ASSERT (NodeTo->ThreadEntry == NULL);
-        NodeTo->ThreadEntry = NodeFrom->ThreadEntry;        
+    if (NodeFrom->ThreadEntry)
+    {
+        ASSERT(NodeTo->ThreadEntry == NULL);
+        NodeTo->ThreadEntry = NodeFrom->ThreadEntry;
 
-        RtlCopyMemory (NodeTo->StackTrace,
-                       NodeFrom->StackTrace,
-                       sizeof (NodeTo->StackTrace));
+        RtlCopyMemory(NodeTo->StackTrace, NodeFrom->StackTrace, sizeof(NodeTo->StackTrace));
 
-        RtlCopyMemory (NodeTo->ParentStackTrace,
-                       NodeFrom->ParentStackTrace,
-                       sizeof (NodeTo->ParentStackTrace));
+        RtlCopyMemory(NodeTo->ParentStackTrace, NodeFrom->ParentStackTrace, sizeof(NodeTo->ParentStackTrace));
     }
-    
-    if (NodeFrom->Active) {
-        ASSERT (NodeTo->Active == 0);
-        NodeTo->Active = NodeFrom->Active;        
+
+    if (NodeFrom->Active)
+    {
+        ASSERT(NodeTo->Active == 0);
+        NodeTo->Active = NodeFrom->Active;
     }
 
     //
@@ -4551,37 +4338,36 @@ ViDeadlockMergeNodes (
 
     Current = NodeFrom->ChildrenList.Flink;
 
-    while (Current != &(NodeFrom->ChildrenList)) {
+    while (Current != &(NodeFrom->ChildrenList))
+    {
 
-        Node = CONTAINING_RECORD (Current,
-                                  VI_DEADLOCK_NODE,
-                                  SiblingsList);
+        Node = CONTAINING_RECORD(Current, VI_DEADLOCK_NODE, SiblingsList);
 
-        ASSERT (Current->Flink);
+        ASSERT(Current->Flink);
         Current = Current->Flink;
 
-        RemoveEntryList (&(Node->SiblingsList));
+        RemoveEntryList(&(Node->SiblingsList));
 
-        ASSERT (Node->Parent == NodeFrom);
+        ASSERT(Node->Parent == NodeFrom);
         Node->Parent = NodeTo;
 
-        InsertTailList (&(NodeTo->ChildrenList),
-                        &(Node->SiblingsList));
+        InsertTailList(&(NodeTo->ChildrenList), &(Node->SiblingsList));
     }
 
     //
     // NodeFrom is empty. Delete it.
     //
 
-    ASSERT (IsListEmpty(&(NodeFrom->ChildrenList)));
+    ASSERT(IsListEmpty(&(NodeFrom->ChildrenList)));
 
-    if (NodeFrom->Parent) {
-        RemoveEntryList (&(NodeFrom->SiblingsList));
+    if (NodeFrom->Parent)
+    {
+        RemoveEntryList(&(NodeFrom->SiblingsList));
     }
-    
+
     NodeFrom->Root->NodeCount -= 1;
-    RemoveEntryList (&(NodeFrom->ResourceList));
-    ViDeadlockFree (NodeFrom, ViDeadlockNode);
+    RemoveEntryList(&(NodeFrom->ResourceList));
+    ViDeadlockFree(NodeFrom, ViDeadlockNode);
 }
 
 
@@ -4589,11 +4375,7 @@ ViDeadlockMergeNodes (
 /////////////////////////////////////////////////// ExFreePool() hook
 /////////////////////////////////////////////////////////////////////
 
-VOID
-VerifierDeadlockFreePool(
-    IN PVOID Address,
-    IN SIZE_T NumberOfBytes
-    )
+VOID VerifierDeadlockFreePool(IN PVOID Address, IN SIZE_T NumberOfBytes)
 /*++
 
 Routine Description:
@@ -4627,7 +4409,7 @@ Environment:
 --*/
 
 {
-    VfDeadlockDeleteMemoryRange (Address, NumberOfBytes);
+    VfDeadlockDeleteMemoryRange(Address, NumberOfBytes);
 }
 
 
@@ -4643,99 +4425,99 @@ Environment:
 //  Active           ResourceAddress     Thread
 //
 //
-// 
+//
 //
 
-VOID
-ViDeadlockCheckThreadConsistency (
-    PVI_DEADLOCK_THREAD Thread,
-    BOOLEAN Recursion
-    )
+VOID ViDeadlockCheckThreadConsistency(PVI_DEADLOCK_THREAD Thread, BOOLEAN Recursion)
 {
-    if (Thread->CurrentSpinNode == NULL && Thread->CurrentOtherNode == NULL) {
-        ASSERT (Thread->NodeCount == 0);
+    if (Thread->CurrentSpinNode == NULL && Thread->CurrentOtherNode == NULL)
+    {
+        ASSERT(Thread->NodeCount == 0);
         return;
     }
 
-    if (Thread->CurrentSpinNode) {
-        
-        ASSERT (Thread->NodeCount > 0);
-        ASSERT (Thread->CurrentSpinNode->Active);    
+    if (Thread->CurrentSpinNode)
+    {
 
-        if (Recursion == FALSE) {
-            ViDeadlockCheckNodeConsistency (Thread->CurrentSpinNode, TRUE);
-            ViDeadlockCheckResourceConsistency (Thread->CurrentSpinNode->Root, TRUE);
+        ASSERT(Thread->NodeCount > 0);
+        ASSERT(Thread->CurrentSpinNode->Active);
+
+        if (Recursion == FALSE)
+        {
+            ViDeadlockCheckNodeConsistency(Thread->CurrentSpinNode, TRUE);
+            ViDeadlockCheckResourceConsistency(Thread->CurrentSpinNode->Root, TRUE);
         }
     }
-    
-    if (Thread->CurrentOtherNode) {
-        
-        ASSERT (Thread->NodeCount > 0);
-        ASSERT (Thread->CurrentOtherNode->Active);    
 
-        if (Recursion == FALSE) {
-            ViDeadlockCheckNodeConsistency (Thread->CurrentOtherNode, TRUE);
-            ViDeadlockCheckResourceConsistency (Thread->CurrentOtherNode->Root, TRUE);
-        }
-    }
-}
+    if (Thread->CurrentOtherNode)
+    {
 
-VOID
-ViDeadlockCheckNodeConsistency (
-    PVI_DEADLOCK_NODE Node,
-    BOOLEAN Recursion
-    )
-{
-    if (Node->ThreadEntry) {
-        
-        ASSERT (Node->Active == 1);
+        ASSERT(Thread->NodeCount > 0);
+        ASSERT(Thread->CurrentOtherNode->Active);
 
-        if (Recursion == FALSE) {
-            ViDeadlockCheckThreadConsistency (Node->ThreadEntry, TRUE);
-            ViDeadlockCheckResourceConsistency (Node->Root, TRUE);
-        }
-    }
-    else {
-
-        ASSERT (Node->Active == 0);
-        
-        if (Recursion == FALSE) {
-            ViDeadlockCheckResourceConsistency (Node->Root, TRUE);
+        if (Recursion == FALSE)
+        {
+            ViDeadlockCheckNodeConsistency(Thread->CurrentOtherNode, TRUE);
+            ViDeadlockCheckResourceConsistency(Thread->CurrentOtherNode->Root, TRUE);
         }
     }
 }
 
-VOID
-ViDeadlockCheckResourceConsistency (
-    PVI_DEADLOCK_RESOURCE Resource,
-    BOOLEAN Recursion
-    )
+VOID ViDeadlockCheckNodeConsistency(PVI_DEADLOCK_NODE Node, BOOLEAN Recursion)
 {
-    if (Resource->ThreadOwner) {
-        
-        ASSERT (Resource->RecursionCount > 0);
+    if (Node->ThreadEntry)
+    {
 
-        if (Recursion == FALSE) {
-            ViDeadlockCheckThreadConsistency (Resource->ThreadOwner, TRUE);
+        ASSERT(Node->Active == 1);
 
-            if (Resource->Type == VfDeadlockSpinLock) {
-                ViDeadlockCheckNodeConsistency (Resource->ThreadOwner->CurrentSpinNode, TRUE);
+        if (Recursion == FALSE)
+        {
+            ViDeadlockCheckThreadConsistency(Node->ThreadEntry, TRUE);
+            ViDeadlockCheckResourceConsistency(Node->Root, TRUE);
+        }
+    }
+    else
+    {
+
+        ASSERT(Node->Active == 0);
+
+        if (Recursion == FALSE)
+        {
+            ViDeadlockCheckResourceConsistency(Node->Root, TRUE);
+        }
+    }
+}
+
+VOID ViDeadlockCheckResourceConsistency(PVI_DEADLOCK_RESOURCE Resource, BOOLEAN Recursion)
+{
+    if (Resource->ThreadOwner)
+    {
+
+        ASSERT(Resource->RecursionCount > 0);
+
+        if (Recursion == FALSE)
+        {
+            ViDeadlockCheckThreadConsistency(Resource->ThreadOwner, TRUE);
+
+            if (Resource->Type == VfDeadlockSpinLock)
+            {
+                ViDeadlockCheckNodeConsistency(Resource->ThreadOwner->CurrentSpinNode, TRUE);
             }
-            else {
-                ViDeadlockCheckNodeConsistency (Resource->ThreadOwner->CurrentOtherNode, TRUE);
+            else
+            {
+                ViDeadlockCheckNodeConsistency(Resource->ThreadOwner->CurrentOtherNode, TRUE);
             }
         }
     }
-    else {
+    else
+    {
 
-        ASSERT (Resource->RecursionCount == 0);
+        ASSERT(Resource->RecursionCount == 0);
     }
 }
 
 PVI_DEADLOCK_THREAD
-ViDeadlockCheckThreadReferences (
-    PVI_DEADLOCK_NODE Node
-    )
+ViDeadlockCheckThreadReferences(PVI_DEADLOCK_NODE Node)
 /*++
 
 Routine Description:
@@ -4758,21 +4540,23 @@ Return Value:
     PLIST_ENTRY Current;
     PVI_DEADLOCK_THREAD Thread;
 
-    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1) {
+    for (Index = 0; Index < VI_DEADLOCK_HASH_BINS; Index += 1)
+    {
         Current = ViDeadlockGlobals->ThreadDatabase[Index].Flink;
 
-        while (Current != &(ViDeadlockGlobals->ThreadDatabase[Index])) {
+        while (Current != &(ViDeadlockGlobals->ThreadDatabase[Index]))
+        {
 
-            Thread = CONTAINING_RECORD (Current,
-                                        VI_DEADLOCK_THREAD,
-                                        ListEntry);
+            Thread = CONTAINING_RECORD(Current, VI_DEADLOCK_THREAD, ListEntry);
 
-            if (Thread->CurrentSpinNode == Node) {
-                return Thread;                    
+            if (Thread->CurrentSpinNode == Node)
+            {
+                return Thread;
             }
 
-            if (Thread->CurrentOtherNode == Node) {
-                return Thread;                    
+            if (Thread->CurrentOtherNode == Node)
+            {
+                return Thread;
             }
 
             Current = Current->Flink;
@@ -4788,10 +4572,7 @@ Return Value:
 /////////////////////////////////////////////////////////////////////
 
 BOOLEAN
-VfDeadlockBeforeCallDriver (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PIRP Irp
-    )
+VfDeadlockBeforeCallDriver(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp)
 /*++
 
 Routine Description:
@@ -4822,13 +4603,14 @@ Return Value:
     BOOLEAN PagingIrp = FALSE;
     PVOID ReservedThread = NULL;
 
-    UNREFERENCED_PARAMETER (DeviceObject);
+    UNREFERENCED_PARAMETER(DeviceObject);
 
     //
     // Skip if package not initialized
     //
 
-    if (ViDeadlockGlobals == NULL) {
+    if (ViDeadlockGlobals == NULL)
+    {
         return FALSE;
     }
 
@@ -4836,22 +4618,24 @@ Return Value:
     // Skip if package is disabled
     //
 
-    if (! ViDeadlockDetectionEnabled) {
+    if (!ViDeadlockDetectionEnabled)
+    {
         return FALSE;
     }
-        
+
     //
     // If it is not a paging I/O IRP or a mounting IRP we do not care.
     //
 
-    if ((Irp->Flags & (IRP_PAGING_IO | IRP_MOUNT_COMPLETION)) == 0) {
+    if ((Irp->Flags & (IRP_PAGING_IO | IRP_MOUNT_COMPLETION)) == 0)
+    {
         return FALSE;
     }
-    
+
     //
     // Find the deadlock verifier structure maintained for the current
     // thread. If we do not find one then we will create one. On top of
-    // this mount/page IRP there might be locks acquired and we want to 
+    // this mount/page IRP there might be locks acquired and we want to
     // skip them too. The only situations where we observed that lock
     // hierarchies are not respected is when at least one lock was acquired
     // before the IoCallDriver() with a paging IRP or no lock acquired before
@@ -4859,34 +4643,35 @@ Return Value:
     // in which to increase the PageCount counter.
     //
 
-    SystemThread = KeGetCurrentThread ();
+    SystemThread = KeGetCurrentThread();
 
-    ReservedThread = ViDeadlockAllocate (ViDeadlockThread);
+    ReservedThread = ViDeadlockAllocate(ViDeadlockThread);
 
-    if (ReservedThread == NULL) {
+    if (ReservedThread == NULL)
+    {
         return FALSE;
     }
 
-    ViDeadlockDetectionLock (&OldIrql);
+    ViDeadlockDetectionLock(&OldIrql);
 
-    VerifierThread = ViDeadlockSearchThread (SystemThread);
+    VerifierThread = ViDeadlockSearchThread(SystemThread);
 
-    if (VerifierThread == NULL) {
+    if (VerifierThread == NULL)
+    {
 
-        VerifierThread = ViDeadlockAddThread (SystemThread, 
-                                              ReservedThread);
+        VerifierThread = ViDeadlockAddThread(SystemThread, ReservedThread);
 
         ReservedThread = NULL;
 
-        ASSERT (VerifierThread);
+        ASSERT(VerifierThread);
     }
 
     //
     // At this point VerifierThread points to a deadlock verifier
-    // thread structure. We need to bump the paging recursion count 
+    // thread structure. We need to bump the paging recursion count
     // to mark that one more level of paging I/O is active.
     //
-        
+
     VerifierThread->PagingCount += 1;
 
     PagingIrp = TRUE;
@@ -4895,22 +4680,18 @@ Return Value:
     // Unlock the deadlock verifier lock and exit.
     //
 
-    if (ReservedThread) {
-        ViDeadlockFree (ReservedThread, ViDeadlockThread);
+    if (ReservedThread)
+    {
+        ViDeadlockFree(ReservedThread, ViDeadlockThread);
     }
 
-    ViDeadlockDetectionUnlock (OldIrql);
+    ViDeadlockDetectionUnlock(OldIrql);
 
     return PagingIrp;
 }
 
 
-VOID
-VfDeadlockAfterCallDriver (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PIRP Irp,
-    IN BOOLEAN PagingIrp
-    )
+VOID VfDeadlockAfterCallDriver(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp, IN BOOLEAN PagingIrp)
 /*++
 
 Routine Description:
@@ -4937,14 +4718,15 @@ Return Value:
     PKTHREAD SystemThread;
     PVI_DEADLOCK_THREAD VerifierThread;
 
-    UNREFERENCED_PARAMETER (DeviceObject);
-    UNREFERENCED_PARAMETER (Irp);
+    UNREFERENCED_PARAMETER(DeviceObject);
+    UNREFERENCED_PARAMETER(Irp);
 
     //
     // Skip if package not initialized
     //
 
-    if (ViDeadlockGlobals == NULL) {
+    if (ViDeadlockGlobals == NULL)
+    {
         return;
     }
 
@@ -4952,15 +4734,17 @@ Return Value:
     // Skip if package is disabled
     //
 
-    if (! ViDeadlockDetectionEnabled) {
+    if (!ViDeadlockDetectionEnabled)
+    {
         return;
     }
-        
+
     //
     // If it is not a paging I/O IRP we do not care.
     //
 
-    if (! PagingIrp) {
+    if (!PagingIrp)
+    {
         return;
     }
 
@@ -4972,23 +4756,24 @@ Return Value:
     // before the IoCallDriver() with a paging IRP.
     //
 
-    SystemThread = KeGetCurrentThread ();
+    SystemThread = KeGetCurrentThread();
 
-    ViDeadlockDetectionLock (&OldIrql);
+    ViDeadlockDetectionLock(&OldIrql);
 
-    VerifierThread = ViDeadlockSearchThread (SystemThread);
+    VerifierThread = ViDeadlockSearchThread(SystemThread);
 
-    if (VerifierThread == NULL) {
+    if (VerifierThread == NULL)
+    {
         goto Exit;
     }
 
     //
     // At this point VerifierThread points to a deadlock verifier
-    // thread structure. We need to bump the paging recursion count 
+    // thread structure. We need to bump the paging recursion count
     // to mark that one more level of paging I/O is active.
     //
-        
-    ASSERT (VerifierThread->PagingCount > 0);
+
+    ASSERT(VerifierThread->PagingCount > 0);
 
     VerifierThread->PagingCount -= 1;
 
@@ -4996,15 +4781,14 @@ Return Value:
     // Unlock the deadlock verifier lock and exit.
     //
 
-    Exit:
+Exit:
 
-    ViDeadlockDetectionUnlock (OldIrql);
+    ViDeadlockDetectionUnlock(OldIrql);
 }
 
 
 BOOLEAN
-ViIsThreadInsidePagingCodePaths (
-    )
+ViIsThreadInsidePagingCodePaths()
 /*++
 
 Routine Description:
@@ -5026,25 +4810,24 @@ Return Value:
     PVI_DEADLOCK_THREAD VerifierThread;
     BOOLEAN Paging = FALSE;
 
-    SystemThread = KeGetCurrentThread ();
+    SystemThread = KeGetCurrentThread();
 
-    ViDeadlockDetectionLock (&OldIrql);
+    ViDeadlockDetectionLock(&OldIrql);
 
-    VerifierThread = ViDeadlockSearchThread (SystemThread);
+    VerifierThread = ViDeadlockSearchThread(SystemThread);
 
-    if (VerifierThread && VerifierThread->PagingCount > 0) {
+    if (VerifierThread && VerifierThread->PagingCount > 0)
+    {
         Paging = TRUE;
     }
 
-    ViDeadlockDetectionUnlock (OldIrql);
+    ViDeadlockDetectionUnlock(OldIrql);
 
     return Paging;
 }
 
 
-VOID
-ViDeadlockCheckStackLimits (
-    )
+VOID ViDeadlockCheckStackLimits()
 /*++
 
 Routine Description:
@@ -5062,39 +4845,30 @@ Routine Description:
 
     _asm mov HintAddress, EBP;
 
-    if (KeGetCurrentIrql() > DISPATCH_LEVEL) {
+    if (KeGetCurrentIrql() > DISPATCH_LEVEL)
+    {
         return;
     }
-    
+
     StartStack = (ULONG_PTR)(KeGetCurrentThread()->StackLimit);
     EndStack = (ULONG_PTR)(KeGetCurrentThread()->StackBase);
 
-    if (StartStack <= HintAddress && HintAddress <= EndStack) {
+    if (StartStack <= HintAddress && HintAddress <= EndStack)
+    {
         return;
     }
 
     EndStack = (ULONG_PTR)(KeGetPcr()->Prcb->DpcStack);
     StartStack = EndStack - KERNEL_STACK_SIZE;
-    
-    if (EndStack && StartStack <= HintAddress && HintAddress <= EndStack) {
+
+    if (EndStack && StartStack <= HintAddress && HintAddress <= EndStack)
+    {
         return;
     }
 
-    KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                  0x90, 
-                  (ULONG_PTR)(KeGetPcr()->Prcb), 
-                  0, 
-                  0);
+    KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x90, (ULONG_PTR)(KeGetPcr()->Prcb), 0, 0);
 
 #else
     return;
 #endif
-
 }
-
-
-
-
-
-
-

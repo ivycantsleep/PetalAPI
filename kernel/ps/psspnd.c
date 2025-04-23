@@ -36,10 +36,7 @@ Revision History:
 #endif
 
 NTSTATUS
-PsSuspendThread (
-    IN PETHREAD Thread,
-    OUT PULONG PreviousSuspendCount OPTIONAL
-    )
+PsSuspendThread(IN PETHREAD Thread, OUT PULONG PreviousSuspendCount OPTIONAL)
 /*++
 
 Routine Description:
@@ -64,55 +61,70 @@ Return Value:
     NTSTATUS Status;
     ULONG LocalPreviousSuspendCount = 0;
 
-    if ( Thread == PsGetCurrentThread() ) {
-        try {
-            LocalPreviousSuspendCount = (ULONG) KeSuspendThread(&Thread->Tcb);
+    if (Thread == PsGetCurrentThread())
+    {
+        try
+        {
+            LocalPreviousSuspendCount = (ULONG)KeSuspendThread(&Thread->Tcb);
             Status = STATUS_SUCCESS;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             Status = GetExceptionCode();
         }
-    } else {
+    }
+    else
+    {
         //
         // Protect the remote thread from being rundown.
         //
-        if (ExAcquireRundownProtection (&Thread->RundownProtect)) {
+        if (ExAcquireRundownProtection(&Thread->RundownProtect))
+        {
 
             //
             // Don't allow suspend if we are being deleted
             //
-            if (Thread->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_TERMINATED) {
+            if (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_TERMINATED)
+            {
                 Status = STATUS_THREAD_IS_TERMINATING;
-            } else {
-                try {
-                    LocalPreviousSuspendCount = (ULONG) KeSuspendThread (&Thread->Tcb);
+            }
+            else
+            {
+                try
+                {
+                    LocalPreviousSuspendCount = (ULONG)KeSuspendThread(&Thread->Tcb);
                     Status = STATUS_SUCCESS;
-                } except (EXCEPTION_EXECUTE_HANDLER) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     Status = GetExceptionCode();
                 }
                 //
                 // If deletion was started after we suspended then wake up the thread
                 //
-                if (Thread->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_TERMINATED) {
-                    KeForceResumeThread (&Thread->Tcb);
+                if (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_TERMINATED)
+                {
+                    KeForceResumeThread(&Thread->Tcb);
                     LocalPreviousSuspendCount = 0;
                     Status = STATUS_THREAD_IS_TERMINATING;
                 }
             }
-            ExReleaseRundownProtection (&Thread->RundownProtect);
-        } else {
+            ExReleaseRundownProtection(&Thread->RundownProtect);
+        }
+        else
+        {
             Status = STATUS_THREAD_IS_TERMINATING;
         }
     }
-    if (ARGUMENT_PRESENT (PreviousSuspendCount)) {
+    if (ARGUMENT_PRESENT(PreviousSuspendCount))
+    {
         *PreviousSuspendCount = LocalPreviousSuspendCount;
     }
     return Status;
 }
 
 NTSTATUS
-PsSuspendProcess (
-    PEPROCESS Process
-    )
+PsSuspendProcess(PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -132,22 +144,25 @@ Return Value:
     NTSTATUS Status;
     PETHREAD Thread;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
 
-    if (ExAcquireRundownProtection (&Process->RundownProtect)) {
+    if (ExAcquireRundownProtection(&Process->RundownProtect))
+    {
 
-        for (Thread = PsGetNextProcessThread (Process, NULL);
-             Thread != NULL;
-             Thread = PsGetNextProcessThread (Process, Thread)) {
+        for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+             Thread = PsGetNextProcessThread(Process, Thread))
+        {
 
-            PsSuspendThread (Thread, NULL);
+            PsSuspendThread(Thread, NULL);
         }
 
-        ExReleaseRundownProtection (&Process->RundownProtect);
+        ExReleaseRundownProtection(&Process->RundownProtect);
 
         Status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         Status = STATUS_PROCESS_IS_TERMINATING;
     }
 
@@ -155,9 +170,7 @@ Return Value:
 }
 
 NTSTATUS
-PsResumeProcess (
-    PEPROCESS Process
-    )
+PsResumeProcess(PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -177,20 +190,23 @@ Return Value:
     NTSTATUS Status;
     PETHREAD Thread;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    if (ExAcquireRundownProtection (&Process->RundownProtect)) {
+    if (ExAcquireRundownProtection(&Process->RundownProtect))
+    {
 
-        for (Thread = PsGetNextProcessThread (Process, NULL);
-             Thread != NULL;
-             Thread = PsGetNextProcessThread (Process, Thread)) {
+        for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+             Thread = PsGetNextProcessThread(Process, Thread))
+        {
 
-            KeResumeThread (&Thread->Tcb);
+            KeResumeThread(&Thread->Tcb);
         }
 
-        ExReleaseRundownProtection (&Process->RundownProtect);
+        ExReleaseRundownProtection(&Process->RundownProtect);
         Status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         Status = STATUS_PROCESS_IS_TERMINATING;
     }
 
@@ -198,10 +214,7 @@ Return Value:
 }
 
 NTSTATUS
-NtSuspendThread(
-    IN HANDLE ThreadHandle,
-    OUT PULONG PreviousSuspendCount OPTIONAL
-    )
+NtSuspendThread(IN HANDLE ThreadHandle, OUT PULONG PreviousSuspendCount OPTIONAL)
 
 /*++
 
@@ -233,58 +246,55 @@ Return Value:
 
     PAGED_CODE();
 
-    try {
+    try
+    {
 
         Mode = KeGetPreviousMode();
 
-        if ( Mode != KernelMode ) {
-            if (ARGUMENT_PRESENT(PreviousSuspendCount)) {
+        if (Mode != KernelMode)
+        {
+            if (ARGUMENT_PRESENT(PreviousSuspendCount))
+            {
                 ProbeForWriteUlong(PreviousSuspendCount);
             }
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         return GetExceptionCode();
     }
 
-    st = ObReferenceObjectByHandle(
-            ThreadHandle,
-            THREAD_SUSPEND_RESUME,
-            PsThreadType,
-            Mode,
-            (PVOID *)&Thread,
-            NULL
-            );
+    st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SUSPEND_RESUME, PsThreadType, Mode, (PVOID *)&Thread, NULL);
 
-    if ( !NT_SUCCESS(st) ) {
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
-    st = PsSuspendThread (Thread, &LocalPreviousSuspendCount);
+    st = PsSuspendThread(Thread, &LocalPreviousSuspendCount);
 
     ObDereferenceObject(Thread);
 
-    try {
+    try
+    {
 
-        if (ARGUMENT_PRESENT(PreviousSuspendCount)) {
+        if (ARGUMENT_PRESENT(PreviousSuspendCount))
+        {
             *PreviousSuspendCount = LocalPreviousSuspendCount;
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         st = GetExceptionCode();
-
     }
 
     return st;
-
 }
 
 NTSTATUS
-PsResumeThread (
-    IN PETHREAD Thread,
-    OUT PULONG PreviousSuspendCount OPTIONAL
-    )
+PsResumeThread(IN PETHREAD Thread, OUT PULONG PreviousSuspendCount OPTIONAL)
 /*++
 
 Routine Description:
@@ -305,21 +315,19 @@ Return Value:
 {
     ULONG LocalPreviousSuspendCount;
 
-    LocalPreviousSuspendCount = (ULONG) KeResumeThread(&Thread->Tcb);
+    LocalPreviousSuspendCount = (ULONG)KeResumeThread(&Thread->Tcb);
 
-    if (ARGUMENT_PRESENT (PreviousSuspendCount)) {
+    if (ARGUMENT_PRESENT(PreviousSuspendCount))
+    {
         *PreviousSuspendCount = LocalPreviousSuspendCount;
     }
-    
+
     return STATUS_SUCCESS;
 }
 
 
 NTSTATUS
-NtResumeThread(
-    IN HANDLE ThreadHandle,
-    OUT PULONG PreviousSuspendCount OPTIONAL
-    )
+NtResumeThread(IN HANDLE ThreadHandle, OUT PULONG PreviousSuspendCount OPTIONAL)
 
 /*++
 
@@ -347,54 +355,52 @@ Return Value:
 
     PAGED_CODE();
 
-    try {
+    try
+    {
 
         Mode = KeGetPreviousMode();
 
-        if ( Mode != KernelMode ) {
+        if (Mode != KernelMode)
+        {
             if (ARGUMENT_PRESENT(PreviousSuspendCount))
                 ProbeForWriteUlong(PreviousSuspendCount);
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         return GetExceptionCode();
     }
 
-    st = ObReferenceObjectByHandle(
-            ThreadHandle,
-            THREAD_SUSPEND_RESUME,
-            PsThreadType,
-            Mode,
-            (PVOID *)&Thread,
-            NULL
-            );
+    st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SUSPEND_RESUME, PsThreadType, Mode, (PVOID *)&Thread, NULL);
 
-    if ( !NT_SUCCESS(st) ) {
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
-    PsResumeThread (Thread, &LocalPreviousSuspendCount);
+    PsResumeThread(Thread, &LocalPreviousSuspendCount);
 
-    ObDereferenceObject (Thread);
+    ObDereferenceObject(Thread);
 
-    try {
-        if (ARGUMENT_PRESENT (PreviousSuspendCount)) {
+    try
+    {
+        if (ARGUMENT_PRESENT(PreviousSuspendCount))
+        {
             *PreviousSuspendCount = LocalPreviousSuspendCount;
         }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-
-        return GetExceptionCode ();
+        return GetExceptionCode();
     }
 
     return STATUS_SUCCESS;
-
 }
 
 NTSTATUS
-NtSuspendProcess (
-    IN HANDLE ProcessHandle
-    )
+NtSuspendProcess(IN HANDLE ProcessHandle)
 /*++
 
 Routine Description:
@@ -418,24 +424,18 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    Status = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_SET_PORT,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
-    if (NT_SUCCESS (Status)) {
-        Status = PsSuspendProcess (Process);
-        ObDereferenceObject (Process);
+    Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_PORT, PsProcessType, PreviousMode, &Process, NULL);
+    if (NT_SUCCESS(Status))
+    {
+        Status = PsSuspendProcess(Process);
+        ObDereferenceObject(Process);
     }
 
     return Status;
 }
 
 NTSTATUS
-NtResumeProcess (
-    IN HANDLE ProcessHandle
-    )
+NtResumeProcess(IN HANDLE ProcessHandle)
 /*++
 
 Routine Description:
@@ -458,24 +458,18 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    Status = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_SET_PORT,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
-    if (NT_SUCCESS (Status)) {
-        Status = PsResumeProcess (Process);
-        ObDereferenceObject (Process);
+    Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_SET_PORT, PsProcessType, PreviousMode, &Process, NULL);
+    if (NT_SUCCESS(Status))
+    {
+        Status = PsResumeProcess(Process);
+        ObDereferenceObject(Process);
     }
 
     return Status;
 }
 
 NTSTATUS
-NtAlertThread(
-    IN HANDLE ThreadHandle
-    )
+NtAlertThread(IN HANDLE ThreadHandle)
 
 /*++
 
@@ -503,33 +497,23 @@ Return Value:
 
     Mode = KeGetPreviousMode();
 
-    st = ObReferenceObjectByHandle(
-            ThreadHandle,
-            THREAD_ALERT,
-            PsThreadType,
-            Mode,
-            (PVOID *)&Thread,
-            NULL
-            );
+    st = ObReferenceObjectByHandle(ThreadHandle, THREAD_ALERT, PsThreadType, Mode, (PVOID *)&Thread, NULL);
 
-    if ( !NT_SUCCESS(st) ) {
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
-    (VOID) KeAlertThread(&Thread->Tcb,Mode);
+    (VOID) KeAlertThread(&Thread->Tcb, Mode);
 
     ObDereferenceObject(Thread);
 
     return STATUS_SUCCESS;
-
 }
 
 
 NTSTATUS
-NtAlertResumeThread(
-    IN HANDLE ThreadHandle,
-    OUT PULONG PreviousSuspendCount OPTIONAL
-    )
+NtAlertResumeThread(IN HANDLE ThreadHandle, OUT PULONG PreviousSuspendCount OPTIONAL)
 
 /*++
 
@@ -558,45 +542,46 @@ Return Value:
 
     PAGED_CODE();
 
-    try {
+    try
+    {
 
         Mode = KeGetPreviousMode();
 
-        if ( Mode != KernelMode ) {
-            if (ARGUMENT_PRESENT(PreviousSuspendCount)) {
+        if (Mode != KernelMode)
+        {
+            if (ARGUMENT_PRESENT(PreviousSuspendCount))
+            {
                 ProbeForWriteUlong(PreviousSuspendCount);
             }
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         return GetExceptionCode();
     }
 
-    st = ObReferenceObjectByHandle(
-            ThreadHandle,
-            THREAD_SUSPEND_RESUME,
-            PsThreadType,
-            Mode,
-            (PVOID *)&Thread,
-            NULL
-            );
+    st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SUSPEND_RESUME, PsThreadType, Mode, (PVOID *)&Thread, NULL);
 
-    if ( !NT_SUCCESS(st) ) {
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
-    LocalPreviousSuspendCount = (ULONG) KeAlertResumeThread(&Thread->Tcb);
+    LocalPreviousSuspendCount = (ULONG)KeAlertResumeThread(&Thread->Tcb);
 
     ObDereferenceObject(Thread);
 
-    try {
+    try
+    {
 
         if (ARGUMENT_PRESENT(PreviousSuspendCount))
             *PreviousSuspendCount = LocalPreviousSuspendCount;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-
-        return GetExceptionCode ();
+        return GetExceptionCode();
     }
 
     return STATUS_SUCCESS;
@@ -604,9 +589,7 @@ Return Value:
 
 
 NTSTATUS
-NtTestAlert(
-    VOID
-    )
+NtTestAlert(VOID)
 
 /*++
 
@@ -633,9 +616,12 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( KeTestAlertThread(KeGetPreviousMode()) ) {
+    if (KeTestAlertThread(KeGetPreviousMode()))
+    {
         return STATUS_ALERTED;
-    } else {
+    }
+    else
+    {
         return STATUS_SUCCESS;
     }
 }

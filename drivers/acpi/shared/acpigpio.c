@@ -14,9 +14,7 @@
 
 
 UCHAR
-ACPIReadGpeStatusRegister (
-    ULONG           Register
-    )
+ACPIReadGpeStatusRegister(ULONG Register)
 /*++
 
 Routine Description:
@@ -34,15 +32,11 @@ Return Value:
 
 --*/
 {
-    return (UCHAR) READ_ACPI_REGISTER(GP_STATUS, Register);
+    return (UCHAR)READ_ACPI_REGISTER(GP_STATUS, Register);
 }
 
 
-VOID
-ACPIWriteGpeStatusRegister (
-    ULONG           Register,
-    UCHAR           Value
-    )
+VOID ACPIWriteGpeStatusRegister(ULONG Register, UCHAR Value)
 /*++
 
 Routine Description:
@@ -62,15 +56,11 @@ Return Value:
 
 --*/
 {
-    WRITE_ACPI_REGISTER(GP_STATUS, Register, (USHORT) Value);
+    WRITE_ACPI_REGISTER(GP_STATUS, Register, (USHORT)Value);
 }
 
 
-VOID
-ACPIWriteGpeEnableRegister (
-    ULONG           Register,
-    UCHAR           Value
-    )
+VOID ACPIWriteGpeEnableRegister(ULONG Register, UCHAR Value)
 /*++
 
 Routine Description:
@@ -90,12 +80,7 @@ Return Value:
 
 --*/
 {
-    ACPIPrint( (
-        ACPI_PRINT_DPC,
-        "ACPIWriteGpeEnableRegister: Writing GPE Enable register %x = %x\n",
-        Register, Value
-        ) );
+    ACPIPrint((ACPI_PRINT_DPC, "ACPIWriteGpeEnableRegister: Writing GPE Enable register %x = %x\n", Register, Value));
 
-    WRITE_ACPI_REGISTER(GP_ENABLE, Register, (USHORT) Value);
+    WRITE_ACPI_REGISTER(GP_ENABLE, Register, (USHORT)Value);
 }
-

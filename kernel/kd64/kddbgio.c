@@ -28,9 +28,7 @@ Revision History:
 #endif
 
 BOOLEAN
-KdpPrintString (
-    IN PSTRING Output
-    )
+KdpPrintString(IN PSTRING Output)
 
 /*++
 
@@ -60,17 +58,15 @@ Return Value:
     // Move the output string to the message buffer.
     //
 
-    KdpCopyFromPtr(KdpMessageBuffer,
-                   Output->Buffer,
-                   Output->Length,
-                   &Length);
+    KdpCopyFromPtr(KdpMessageBuffer, Output->Buffer, Output->Length, &Length);
 
     //
     // If the total message length is greater than the maximum packet size,
     // then truncate the output string.
     //
 
-    if ((sizeof(DBGKD_DEBUG_IO) + Length) > PACKET_MAX_SIZE) {
+    if ((sizeof(DBGKD_DEBUG_IO) + Length) > PACKET_MAX_SIZE)
+    {
         Length = PACKET_MAX_SIZE - sizeof(DBGKD_DEBUG_IO);
     }
 
@@ -96,22 +92,14 @@ Return Value:
     // Send packet to the kernel debugger on the host machine.
     //
 
-    KdSendPacket(
-        PACKET_TYPE_KD_DEBUG_IO,
-        &MessageHeader,
-        &MessageData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_DEBUG_IO, &MessageHeader, &MessageData, &KdpContext);
 
     return KdpPollBreakInWithPortLock();
 }
 
-
+
 BOOLEAN
-KdpPromptString (
-    IN PSTRING Output,
-    IN OUT PSTRING Input
-    )
+KdpPromptString(IN PSTRING Output, IN OUT PSTRING Input)
 
 /*++
 
@@ -145,17 +133,15 @@ Return Value:
     // Move the output string to the message buffer.
     //
 
-    KdpCopyFromPtr(KdpMessageBuffer,
-                   Output->Buffer,
-                   Output->Length,
-                   &Length);
+    KdpCopyFromPtr(KdpMessageBuffer, Output->Buffer, Output->Length, &Length);
 
     //
     // If the total message length is greater than the maximum packet size,
     // then truncate the output string.
     //
 
-    if ((sizeof(DBGKD_DEBUG_IO) + Length) > PACKET_MAX_SIZE) {
+    if ((sizeof(DBGKD_DEBUG_IO) + Length) > PACKET_MAX_SIZE)
+    {
         Length = PACKET_MAX_SIZE - sizeof(DBGKD_DEBUG_IO);
     }
 
@@ -182,12 +168,7 @@ Return Value:
     // Send packet to the kernel debugger on the host machine.
     //
 
-    KdSendPacket(
-        PACKET_TYPE_KD_DEBUG_IO,
-        &MessageHeader,
-        &MessageData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_DEBUG_IO, &MessageHeader, &MessageData, &KdpContext);
 
 
     //
@@ -197,41 +178,30 @@ Return Value:
     MessageHeader.MaximumLength = sizeof(DBGKD_DEBUG_IO);
     MessageData.MaximumLength = KDP_MESSAGE_BUFFER_SIZE;
 
-    do {
-        ReturnCode = KdReceivePacket(
-            PACKET_TYPE_KD_DEBUG_IO,
-            &MessageHeader,
-            &MessageData,
-            &Length,
-            &KdpContext
-            );
-        if (ReturnCode == KDP_PACKET_RESEND) {
+    do
+    {
+        ReturnCode = KdReceivePacket(PACKET_TYPE_KD_DEBUG_IO, &MessageHeader, &MessageData, &Length, &KdpContext);
+        if (ReturnCode == KDP_PACKET_RESEND)
+        {
             return TRUE;
         }
     } while (ReturnCode != KDP_PACKET_RECEIVED);
 
 
-    if (Length > Input->MaximumLength) {
+    if (Length > Input->MaximumLength)
+    {
         Length = Input->MaximumLength;
     }
 
-    KdpCopyToPtr(Input->Buffer,
-                 KdpMessageBuffer,
-                 Length,
-                 &Length);
+    KdpCopyToPtr(Input->Buffer, KdpMessageBuffer, Length, &Length);
     Input->Length = (USHORT)Length;
 
     return FALSE;
 }
 
 
-
-
-
 BOOLEAN
-KdpAcquireBreakpoint(
-    IN ULONG Number
-    )
+KdpAcquireBreakpoint(IN ULONG Number)
 
 /*++
 
@@ -272,10 +242,7 @@ Return Value:
     // Send packet to the kernel debugger on the host machine.
     //
 
-    KdSendPacket(PACKET_TYPE_KD_CONTROL_REQUEST,
-                 &MessageHeader,
-                 NULL,
-                 &KdpContext);
+    KdSendPacket(PACKET_TYPE_KD_CONTROL_REQUEST, &MessageHeader, NULL, &KdpContext);
 
     //
     // Receive packet from the kernel debugger on the host machine.
@@ -289,11 +256,8 @@ Return Value:
 
     do
     {
-        ReturnCode = KdReceivePacket(PACKET_TYPE_KD_CONTROL_REQUEST,
-                                     &MessageHeader,
-                                     &MessageData,
-                                     &Length,
-                                     &KdpContext);
+        ReturnCode =
+            KdReceivePacket(PACKET_TYPE_KD_CONTROL_REQUEST, &MessageHeader, &MessageData, &Length, &KdpContext);
 
         if (ReturnCode == KDP_PACKET_RESEND)
         {

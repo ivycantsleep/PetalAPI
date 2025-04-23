@@ -29,9 +29,9 @@ Revision History:
 #include "tsappcmp.h"
 
 
-extern CRITICAL_SECTION    FeClientLoadCritical;
-extern CRITICAL_SECTION    SddlSidLookupCritical;
-extern CRITICAL_SECTION    MSChapChangePassword;
+extern CRITICAL_SECTION FeClientLoadCritical;
+extern CRITICAL_SECTION SddlSidLookupCritical;
+extern CRITICAL_SECTION MSChapChangePassword;
 
 extern BOOL gbDllHasThreadState;
 
@@ -40,52 +40,34 @@ extern BOOL gbDllHasThreadState;
 //
 
 BOOLEAN
-RegInitialize (
-    IN HANDLE Handle,
-    IN DWORD Reason,
-    IN PVOID Reserved
-    );
+RegInitialize(IN HANDLE Handle, IN DWORD Reason, IN PVOID Reserved);
 
 BOOLEAN
-Sys003Initialize (
-    IN HANDLE Handle,
-    IN DWORD Reason,
-    IN PVOID Reserved
-    );
+Sys003Initialize(IN HANDLE Handle, IN DWORD Reason, IN PVOID Reserved);
 
 BOOLEAN
-AppmgmtInitialize (
-    IN HANDLE Handle,
-    IN DWORD Reason,
-    IN PVOID Reserved
-    );
+AppmgmtInitialize(IN HANDLE Handle, IN DWORD Reason, IN PVOID Reserved);
 
 BOOLEAN
-WmiDllInitialize (
-    IN HANDLE Handle,
-    IN DWORD Reason,
-    IN PVOID Reserved
-    );
+WmiDllInitialize(IN HANDLE Handle, IN DWORD Reason, IN PVOID Reserved);
 
 BOOLEAN
-CodeAuthzInitialize (
-    IN HANDLE Handle,
-    IN DWORD Reason,
-    IN PVOID Reserved
-    );
+CodeAuthzInitialize(IN HANDLE Handle, IN DWORD Reason, IN PVOID Reserved);
 
-BOOLEAN AdvApi_InitializeTermsrvFpns( BOOLEAN *pIsInRelaxedSecurityMode ,  DWORD *pdwCompatFlags  );  // app server has two modes for app compat
+BOOLEAN AdvApi_InitializeTermsrvFpns(BOOLEAN *pIsInRelaxedSecurityMode,
+                                     DWORD *pdwCompatFlags); // app server has two modes for app compat
 
 
-#define ADVAPI_PROCESS_ATTACH   ( 1 << DLL_PROCESS_ATTACH )
-#define ADVAPI_PROCESS_DETACH   ( 1 << DLL_PROCESS_DETACH )
-#define ADVAPI_THREAD_ATTACH    ( 1 << DLL_THREAD_ATTACH )
-#define ADVAPI_THREAD_DETACH    ( 1 << DLL_THREAD_DETACH )
+#define ADVAPI_PROCESS_ATTACH (1 << DLL_PROCESS_ATTACH)
+#define ADVAPI_PROCESS_DETACH (1 << DLL_PROCESS_DETACH)
+#define ADVAPI_THREAD_ATTACH (1 << DLL_THREAD_ATTACH)
+#define ADVAPI_THREAD_DETACH (1 << DLL_THREAD_DETACH)
 
-typedef struct _ADVAPI_INIT_ROUTINE {
-    PDLL_INIT_ROUTINE InitRoutine ;
-    ULONG Flags ;
-} ADVAPI_INIT_ROUTINE, * PADVAPI_INIT_ROUTINE ;
+typedef struct _ADVAPI_INIT_ROUTINE
+{
+    PDLL_INIT_ROUTINE InitRoutine;
+    ULONG Flags;
+} ADVAPI_INIT_ROUTINE, *PADVAPI_INIT_ROUTINE;
 
 
 //
@@ -95,65 +77,44 @@ typedef struct _ADVAPI_INIT_ROUTINE {
 
 ADVAPI_INIT_ROUTINE AdvapiInitRoutines[] = {
 
-    { (PDLL_INIT_ROUTINE) RegInitialize,
-            ADVAPI_PROCESS_ATTACH |
-            ADVAPI_PROCESS_DETACH |
-            ADVAPI_THREAD_DETACH },
+    { (PDLL_INIT_ROUTINE)RegInitialize, ADVAPI_PROCESS_ATTACH | ADVAPI_PROCESS_DETACH | ADVAPI_THREAD_DETACH },
 
-    { (PDLL_INIT_ROUTINE) Sys003Initialize,
-            ADVAPI_PROCESS_ATTACH |
-            ADVAPI_PROCESS_DETACH },
+    { (PDLL_INIT_ROUTINE)Sys003Initialize, ADVAPI_PROCESS_ATTACH | ADVAPI_PROCESS_DETACH },
 
-    { (PDLL_INIT_ROUTINE) MartaDllInitialize,
-            ADVAPI_PROCESS_ATTACH |
-            ADVAPI_PROCESS_DETACH },
+    { (PDLL_INIT_ROUTINE)MartaDllInitialize, ADVAPI_PROCESS_ATTACH | ADVAPI_PROCESS_DETACH },
 
-    { (PDLL_INIT_ROUTINE) AppmgmtInitialize,
-            ADVAPI_PROCESS_ATTACH |
-            ADVAPI_PROCESS_DETACH },
+    { (PDLL_INIT_ROUTINE)AppmgmtInitialize, ADVAPI_PROCESS_ATTACH | ADVAPI_PROCESS_DETACH },
 
-    { (PDLL_INIT_ROUTINE) WmiDllInitialize,
-            ADVAPI_PROCESS_ATTACH |
-            ADVAPI_PROCESS_DETACH },
+    { (PDLL_INIT_ROUTINE)WmiDllInitialize, ADVAPI_PROCESS_ATTACH | ADVAPI_PROCESS_DETACH },
 
-    { (PDLL_INIT_ROUTINE) CodeAuthzInitialize,
-            ADVAPI_PROCESS_ATTACH |
-            ADVAPI_PROCESS_DETACH }
+    { (PDLL_INIT_ROUTINE)CodeAuthzInitialize, ADVAPI_PROCESS_ATTACH | ADVAPI_PROCESS_DETACH }
 
 };
-
 
 
 //
 // Place all critical sections used in advapi32 here:
 //
 
-PRTL_CRITICAL_SECTION AdvapiCriticalSections[] = {
-        &FeClientLoadCritical,
-        &SddlSidLookupCritical,
-        &Logon32Lock,
-        &MSChapChangePassword
-};
+PRTL_CRITICAL_SECTION AdvapiCriticalSections[] = { &FeClientLoadCritical, &SddlSidLookupCritical, &Logon32Lock,
+                                                   &MSChapChangePassword };
 
 
 BOOLEAN
-DllInitialize(
-    IN PVOID hmod,
-    IN ULONG Reason,
-    IN PCONTEXT Context
-    )
+DllInitialize(IN PVOID hmod, IN ULONG Reason, IN PCONTEXT Context)
 {
     BOOLEAN Result = TRUE;
-    int i ;
-    NTSTATUS Status ;
-    ULONG ReasonMask ;
+    int i;
+    NTSTATUS Status;
+    ULONG ReasonMask;
 
     //
     // First, handle all the critical sections
     //
 
 
-    if ( Reason == DLL_PROCESS_ATTACH ) {
+    if (Reason == DLL_PROCESS_ATTACH)
+    {
 
         //
         // Note -- we no longer call DisableThreadLibraryCalls
@@ -161,47 +122,44 @@ DllInitialize(
         // can clean up its state
         //
 
-        Result = TRUE ;
+        Result = TRUE;
 
-        for ( i = 0 ;
-              i < sizeof( AdvapiCriticalSections ) / sizeof ( PRTL_CRITICAL_SECTION ) ;
-              i++ )
+        for (i = 0; i < sizeof(AdvapiCriticalSections) / sizeof(PRTL_CRITICAL_SECTION); i++)
         {
-            Status = RtlInitializeCriticalSection( AdvapiCriticalSections[ i ] );
+            Status = RtlInitializeCriticalSection(AdvapiCriticalSections[i]);
 
-            if ( !NT_SUCCESS( Status ) )
+            if (!NT_SUCCESS(Status))
             {
 #if DBG
-                DbgPrint("ADVAPI:  Failed to initialize critical section %p\n",
-                            AdvapiCriticalSections[ i ] );
+                DbgPrint("ADVAPI:  Failed to initialize critical section %p\n", AdvapiCriticalSections[i]);
 #endif
 
-                Result = FALSE ;
+                Result = FALSE;
                 break;
             }
         }
 
-        if ( !Result )
+        if (!Result)
         {
-            i-- ;
+            i--;
 
-            while ( i )
+            while (i)
             {
-                RtlDeleteCriticalSection( AdvapiCriticalSections[ i ] );
-                i-- ;
-
+                RtlDeleteCriticalSection(AdvapiCriticalSections[i]);
+                i--;
             }
-            return FALSE ;
+            return FALSE;
         }
 
-        if (IsTerminalServer()) {
+        if (IsTerminalServer())
+        {
 
-            BOOLEAN isInRelaxedSecurityMode = FALSE ;       // app server is in standard or relaxed security mode
-            DWORD   dwCompatFlags=0;
+            BOOLEAN isInRelaxedSecurityMode = FALSE; // app server is in standard or relaxed security mode
+            DWORD dwCompatFlags = 0;
 
-            if( AdvApi_InitializeTermsrvFpns( & isInRelaxedSecurityMode , &dwCompatFlags) )
+            if (AdvApi_InitializeTermsrvFpns(&isInRelaxedSecurityMode, &dwCompatFlags))
             {
-                if ( isInRelaxedSecurityMode )
+                if (isInRelaxedSecurityMode)
                 {
                     // If TS reg key redirection is enabled, then get our special reg key extention flag for this app
                     // called "gdwRegistryExtensionFlags" which is used in screg\winreg\server\ files.
@@ -214,52 +172,47 @@ DllInitialize(
                     // Future work, add DISABLE mask support on per app basis, so that we can turn off this
                     // reg extenion feature on per app basis (just in case).
                     //
-                    GetRegistryExtensionFlags( dwCompatFlags );
+                    GetRegistryExtensionFlags(dwCompatFlags);
                 }
             }
         }
-
     }
 
     //
     // Now, run the subcomponents initialization routines
     //
 
-    ReasonMask = 1 << Reason ;
+    ReasonMask = 1 << Reason;
 
-    for ( i = 0 ;
-          i < sizeof( AdvapiInitRoutines ) / sizeof( ADVAPI_INIT_ROUTINE ) ;
-          i++ )
+    for (i = 0; i < sizeof(AdvapiInitRoutines) / sizeof(ADVAPI_INIT_ROUTINE); i++)
     {
-        if ( ( AdvapiInitRoutines[i].Flags & ReasonMask ) != 0 )
+        if ((AdvapiInitRoutines[i].Flags & ReasonMask) != 0)
         {
-            Result = AdvapiInitRoutines[i].InitRoutine( hmod, Reason, Context );
+            Result = AdvapiInitRoutines[i].InitRoutine(hmod, Reason, Context);
 
-            if ( !Result )
+            if (!Result)
             {
 #if DBG
-                DbgPrint( "ADVAPI:  sub init routine %p failed\n",
-                            AdvapiInitRoutines[ i ].InitRoutine );
+                DbgPrint("ADVAPI:  sub init routine %p failed\n", AdvapiInitRoutines[i].InitRoutine);
 #endif
                 break;
             }
         }
     }
 
-    if ( !Result )
+    if (!Result)
     {
-        if ( Reason == DLL_PROCESS_ATTACH )
+        if (Reason == DLL_PROCESS_ATTACH)
         {
-            i-- ;
+            i--;
 
-            while ( i )
+            while (i)
             {
-                RtlDeleteCriticalSection( AdvapiCriticalSections[ i ] );
-                i-- ;
-
+                RtlDeleteCriticalSection(AdvapiCriticalSections[i]);
+                i--;
             }
         }
-        return Result ;
+        return Result;
     }
 
 
@@ -268,30 +221,23 @@ DllInitialize(
     // after the hooks are run.
     //
 
-    if ( Reason == DLL_PROCESS_DETACH )
+    if (Reason == DLL_PROCESS_DETACH)
     {
-        for ( i = 0 ;
-              i < sizeof( AdvapiCriticalSections ) / sizeof ( PRTL_CRITICAL_SECTION ) ;
-              i++ )
+        for (i = 0; i < sizeof(AdvapiCriticalSections) / sizeof(PRTL_CRITICAL_SECTION); i++)
         {
-            Status = RtlDeleteCriticalSection( AdvapiCriticalSections[ i ] );
+            Status = RtlDeleteCriticalSection(AdvapiCriticalSections[i]);
 
-            if ( !NT_SUCCESS( Status ) )
+            if (!NT_SUCCESS(Status))
             {
-                Result = FALSE ;
+                Result = FALSE;
                 break;
             }
         }
     }
 
 #if DBG
-        SccInit(Reason);
+    SccInit(Reason);
 #endif // DBG
 
-    return( Result );
+    return (Result);
 }
-
-
-
-
-

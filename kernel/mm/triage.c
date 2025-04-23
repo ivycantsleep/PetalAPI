@@ -24,21 +24,18 @@ Revision History:
 #include "ntiodump.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,MiTriageSystem)
-#pragma alloc_text(INIT,MiTriageAddDrivers)
+#pragma alloc_text(INIT, MiTriageSystem)
+#pragma alloc_text(INIT, MiTriageAddDrivers)
 #endif
 
 //
 // Always update this macro when adding triage support for additional bugchecks.
 //
 
-#define MI_CAN_TRIAGE_BUGCHECK(BugCheckCode) \
-        ((BugCheckCode) == PROCESS_HAS_LOCKED_PAGES || \
-         (BugCheckCode) == NO_MORE_SYSTEM_PTES || \
-         (BugCheckCode) == BAD_POOL_HEADER || \
-         (BugCheckCode) == DRIVER_CORRUPTED_SYSPTES || \
-         (BugCheckCode) == DRIVER_CORRUPTED_EXPOOL || \
-         (BugCheckCode) == DRIVER_CORRUPTED_MMPOOL)
+#define MI_CAN_TRIAGE_BUGCHECK(BugCheckCode)                                                \
+    ((BugCheckCode) == PROCESS_HAS_LOCKED_PAGES || (BugCheckCode) == NO_MORE_SYSTEM_PTES || \
+     (BugCheckCode) == BAD_POOL_HEADER || (BugCheckCode) == DRIVER_CORRUPTED_SYSPTES ||     \
+     (BugCheckCode) == DRIVER_CORRUPTED_EXPOOL || (BugCheckCode) == DRIVER_CORRUPTED_MMPOOL)
 
 //
 // These are bugchecks that were presumably triggered by either autotriage or
@@ -46,33 +43,28 @@ Revision History:
 // keep the old ones unaltered so it can reproduce.
 //
 
-#define MI_HOLD_TRIAGE_BUGCHECK(BugCheckCode) \
-        ((BugCheckCode) == DRIVER_USED_EXCESSIVE_PTES || \
-         (BugCheckCode) == DRIVER_LEFT_LOCKED_PAGES_IN_PROCESS || \
-         (BugCheckCode) == PAGE_FAULT_IN_FREED_SPECIAL_POOL || \
-         (BugCheckCode) == DRIVER_PAGE_FAULT_IN_FREED_SPECIAL_POOL || \
-         (BugCheckCode) == PAGE_FAULT_BEYOND_END_OF_ALLOCATION || \
-         (BugCheckCode) == DRIVER_PAGE_FAULT_BEYOND_END_OF_ALLOCATION || \
-         (BugCheckCode) == DRIVER_CAUGHT_MODIFYING_FREED_POOL || \
-         (BugCheckCode) == SYSTEM_PTE_MISUSE)
+#define MI_HOLD_TRIAGE_BUGCHECK(BugCheckCode)                                                                 \
+    ((BugCheckCode) == DRIVER_USED_EXCESSIVE_PTES || (BugCheckCode) == DRIVER_LEFT_LOCKED_PAGES_IN_PROCESS || \
+     (BugCheckCode) == PAGE_FAULT_IN_FREED_SPECIAL_POOL ||                                                    \
+     (BugCheckCode) == DRIVER_PAGE_FAULT_IN_FREED_SPECIAL_POOL ||                                             \
+     (BugCheckCode) == PAGE_FAULT_BEYOND_END_OF_ALLOCATION ||                                                 \
+     (BugCheckCode) == DRIVER_PAGE_FAULT_BEYOND_END_OF_ALLOCATION ||                                          \
+     (BugCheckCode) == DRIVER_CAUGHT_MODIFYING_FREED_POOL || (BugCheckCode) == SYSTEM_PTE_MISUSE)
 
-#define MI_TRACKING_LOCKED_PAGES            0x00000001
-#define MI_TRACKING_PTES                    0x00000002
-#define MI_PROTECT_FREED_NONPAGED_POOL      0x00000004
-#define MI_VERIFYING_PRENT5_DRIVERS         0x00000008
-#define MI_KEEPING_PREVIOUS_SETTINGS        0x00000010
+#define MI_TRACKING_LOCKED_PAGES 0x00000001
+#define MI_TRACKING_PTES 0x00000002
+#define MI_PROTECT_FREED_NONPAGED_POOL 0x00000004
+#define MI_VERIFYING_PRENT5_DRIVERS 0x00000008
+#define MI_KEEPING_PREVIOUS_SETTINGS 0x00000010
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #pragma data_seg("INITDATA")
 #endif
-const PCHAR MiTriageActionStrings[] = {
-    "Locked pages tracking",
-    "System PTE usage tracking",
-    "Making accesses to freed nonpaged pool cause bugchecks",
-    "Driver Verifying Pre-Windows 2000 built drivers",
-    "Keeping previous autotriage settings"
-};
+const PCHAR MiTriageActionStrings[] = { "Locked pages tracking", "System PTE usage tracking",
+                                        "Making accesses to freed nonpaged pool cause bugchecks",
+                                        "Driver Verifying Pre-Windows 2000 built drivers",
+                                        "Keeping previous autotriage settings" };
 
 #if DBG
 ULONG MiTriageDebug = 0;
@@ -97,7 +89,8 @@ ULONG MmTriageActionTaken;
 // dump.
 //
 
-typedef struct _MI_TRIAGE_STORAGE {
+typedef struct _MI_TRIAGE_STORAGE
+{
     ULONG Version;
     ULONG Size;
     ULONG MmSpecialPoolTag;
@@ -118,26 +111,17 @@ typedef struct _MI_TRIAGE_STORAGE {
 } MI_TRIAGE_STORAGE, *PMI_TRIAGE_STORAGE;
 
 PKLDR_DATA_TABLE_ENTRY
-TriageGetLoaderEntry (
-    IN PVOID TriageDumpBlock,
-    IN ULONG ModuleIndex
-    );
+TriageGetLoaderEntry(IN PVOID TriageDumpBlock, IN ULONG ModuleIndex);
 
 LOGICAL
-TriageActUpon(
-    IN PVOID TriageDumpBlock
-    );
+TriageActUpon(IN PVOID TriageDumpBlock);
 
 PVOID
-TriageGetMmInformation (
-    IN PVOID TriageDumpBlock
-    );
+TriageGetMmInformation(IN PVOID TriageDumpBlock);
 
-
+
 LOGICAL
-MiTriageSystem (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+MiTriageSystem(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -170,25 +154,25 @@ Return Value:
     ULONG OldDrivers;
     ULONG OldDriversNotVerifying;
     PMI_TRIAGE_STORAGE TriageInformation;
-    
-    if (LoaderBlock->Extension == NULL) {
+
+    if (LoaderBlock->Extension == NULL)
+    {
         return FALSE;
     }
 
-    if (LoaderBlock->Extension->Size < sizeof (LOADER_PARAMETER_EXTENSION)) {
+    if (LoaderBlock->Extension->Size < sizeof(LOADER_PARAMETER_EXTENSION))
+    {
         return FALSE;
     }
 
     TriageDumpBlock = LoaderBlock->Extension->TriageDumpBlock;
 
-    Status = TriageGetBugcheckData (TriageDumpBlock,
-                                    (PULONG)&BugCheckData[0],
-                                    (PUINT_PTR) &BugCheckData[1],
-                                    (PUINT_PTR) &BugCheckData[2],
-                                    (PUINT_PTR) &BugCheckData[3],
-                                    (PUINT_PTR) &BugCheckData[4]);
+    Status =
+        TriageGetBugcheckData(TriageDumpBlock, (PULONG)&BugCheckData[0], (PUINT_PTR)&BugCheckData[1],
+                              (PUINT_PTR)&BugCheckData[2], (PUINT_PTR)&BugCheckData[3], (PUINT_PTR)&BugCheckData[4]);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
@@ -196,19 +180,16 @@ Return Value:
     // Always display at least the bugcheck data from the previous crash.
     //
 
-    DbgPrint ("MiTriageSystem: Previous bugcheck was %x %p %p %p %p\n",
-        BugCheckData[0],
-        BugCheckData[1],
-        BugCheckData[2],
-        BugCheckData[3],
-        BugCheckData[4]);
+    DbgPrint("MiTriageSystem: Previous bugcheck was %x %p %p %p %p\n", BugCheckData[0], BugCheckData[1],
+             BugCheckData[2], BugCheckData[3], BugCheckData[4]);
 
-    if (TriageActUpon (TriageDumpBlock) == FALSE) {
-        DbgPrint ("MiTriageSystem: Triage disabled in registry by administrator\n");
+    if (TriageActUpon(TriageDumpBlock) == FALSE)
+    {
+        DbgPrint("MiTriageSystem: Triage disabled in registry by administrator\n");
         return FALSE;
     }
 
-    DbgPrint ("MiTriageSystem: Triage ENABLED in registry by administrator\n");
+    DbgPrint("MiTriageSystem: Triage ENABLED in registry by administrator\n");
 
     //
     // See if the previous bugcheck was one where action can be taken.
@@ -216,19 +197,22 @@ Return Value:
     // module checksums before actually taking action on the bugcheck.
     //
 
-    if (!MI_CAN_TRIAGE_BUGCHECK(BugCheckData[0])) {
+    if (!MI_CAN_TRIAGE_BUGCHECK(BugCheckData[0]))
+    {
         return FALSE;
     }
 
-    TriageInformation = (PMI_TRIAGE_STORAGE) TriageGetMmInformation (TriageDumpBlock);
+    TriageInformation = (PMI_TRIAGE_STORAGE)TriageGetMmInformation(TriageDumpBlock);
 
-    if (TriageInformation == NULL) {
+    if (TriageInformation == NULL)
+    {
         return FALSE;
     }
 
-    Status = TriageGetDriverCount (TriageDumpBlock, &ModuleCount);
+    Status = TriageGetDriverCount(TriageDumpBlock, &ModuleCount);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
@@ -237,23 +221,28 @@ Return Value:
     //
 
 #if DBG
-    if (MiTriageDebug & 0x1) {
-        DbgPrint ("MiTriageSystem: printing active drivers from triage crash...\n");
+    if (MiTriageDebug & 0x1)
+    {
+        DbgPrint("MiTriageSystem: printing active drivers from triage crash...\n");
     }
 #endif
 
     OldDrivers = 0;
     OldDriversNotVerifying = 0;
 
-    for (i = 0; i < ModuleCount; i += 1) {
+    for (i = 0; i < ModuleCount; i += 1)
+    {
 
-        DumpTableEntry = TriageGetLoaderEntry (TriageDumpBlock, i);
+        DumpTableEntry = TriageGetLoaderEntry(TriageDumpBlock, i);
 
-        if (DumpTableEntry != NULL) {
+        if (DumpTableEntry != NULL)
+        {
 
-            if ((DumpTableEntry->Flags & LDRP_ENTRY_NATIVE) == 0) {
+            if ((DumpTableEntry->Flags & LDRP_ENTRY_NATIVE) == 0)
+            {
                 OldDrivers += 1;
-                if ((DumpTableEntry->Flags & LDRP_IMAGE_VERIFYING) == 0) {
+                if ((DumpTableEntry->Flags & LDRP_IMAGE_VERIFYING) == 0)
+                {
 
                     //
                     // An NT3 or NT4 driver is in the system and was not
@@ -264,13 +253,11 @@ Return Value:
                 }
             }
 #if DBG
-            if (MiTriageDebug & 0x1) {
+            if (MiTriageDebug & 0x1)
+            {
 
-                DbgPrint (" %wZ: base = %p, size = %lx, flags = %lx\n",
-                          &DumpTableEntry->BaseDllName,
-                          DumpTableEntry->DllBase,
-                          DumpTableEntry->SizeOfImage,
-                          DumpTableEntry->Flags);
+                DbgPrint(" %wZ: base = %p, size = %lx, flags = %lx\n", &DumpTableEntry->BaseDllName,
+                         DumpTableEntry->DllBase, DumpTableEntry->SizeOfImage, DumpTableEntry->Flags);
             }
 #endif
         }
@@ -283,45 +270,46 @@ Return Value:
 
     NextEntry = LoaderBlock->LoadOrderListHead.Flink;
 
-    while (NextEntry != &LoaderBlock->LoadOrderListHead) {
+    while (NextEntry != &LoaderBlock->LoadOrderListHead)
+    {
 
-        DataTableEntry = CONTAINING_RECORD(NextEntry,
-                                           KLDR_DATA_TABLE_ENTRY,
-                                           InLoadOrderLinks);
+        DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         Matched = FALSE;
 
-        for (i = 0; i < ModuleCount; i += 1) {
-    
-            DumpTableEntry = TriageGetLoaderEntry (TriageDumpBlock, i);
-    
-            if (DumpTableEntry != NULL) {
-    
-                if (DataTableEntry->CheckSum == DumpTableEntry->CheckSum) {
+        for (i = 0; i < ModuleCount; i += 1)
+        {
+
+            DumpTableEntry = TriageGetLoaderEntry(TriageDumpBlock, i);
+
+            if (DumpTableEntry != NULL)
+            {
+
+                if (DataTableEntry->CheckSum == DumpTableEntry->CheckSum)
+                {
                     Matched = TRUE;
                     break;
                 }
             }
         }
-    
-        if (Matched == FALSE) {
-            DbgPrint ("Matching checksum for module %wZ not found in triage dump\n",
-                &DataTableEntry->BaseDllName);
+
+        if (Matched == FALSE)
+        {
+            DbgPrint("Matching checksum for module %wZ not found in triage dump\n", &DataTableEntry->BaseDllName);
 
 #if DBG
             if (MiTriageRegardless == FALSE)
 #endif
-            return FALSE;
+                return FALSE;
         }
 
         NextEntry = NextEntry->Flink;
     }
 
 #if DBG
-    if (MiTriageDebug & 0x1) {
-        DbgPrint ("MiTriageSystem: OldDrivers = %u, without verification =%u\n",
-            OldDrivers,
-            OldDriversNotVerifying);
+    if (MiTriageDebug & 0x1)
+    {
+        DbgPrint("MiTriageSystem: OldDrivers = %u, without verification =%u\n", OldDrivers, OldDriversNotVerifying);
     }
 #endif
 
@@ -329,7 +317,8 @@ Return Value:
     // All boot loaded drivers matched, take action on the triage dump now.
     //
 
-    if (MI_HOLD_TRIAGE_BUGCHECK(BugCheckData[0])) {
+    if (MI_HOLD_TRIAGE_BUGCHECK(BugCheckData[0]))
+    {
 
         //
         // The last bugcheck was presumably triggered by either autotriage or
@@ -340,79 +329,85 @@ Return Value:
         MmTriageActionTaken = TriageInformation->MiTriageActionTaken;
         MmTriageActionTaken |= MI_KEEPING_PREVIOUS_SETTINGS;
     }
-    else {
-    
-        switch (BugCheckData[0]) {
-    
-            case PROCESS_HAS_LOCKED_PAGES:
-    
-                //
-                // Turn on locked pages tracking so this turns into bugcheck
-                // DRIVER_LEFT_LOCKED_PAGES_IN_PROCESS which shows the name
-                // of the driver.
-                //
-    
-                MmTriageActionTaken |= MI_TRACKING_LOCKED_PAGES;
-                break;
-    
-            case DRIVER_CORRUPTED_SYSPTES:
-    
-                //
-                // Turn on PTE tracking to trigger a SYSTEM_PTE_MISUSE bugcheck.
-                //
-    
+    else
+    {
+
+        switch (BugCheckData[0])
+        {
+
+        case PROCESS_HAS_LOCKED_PAGES:
+
+            //
+            // Turn on locked pages tracking so this turns into bugcheck
+            // DRIVER_LEFT_LOCKED_PAGES_IN_PROCESS which shows the name
+            // of the driver.
+            //
+
+            MmTriageActionTaken |= MI_TRACKING_LOCKED_PAGES;
+            break;
+
+        case DRIVER_CORRUPTED_SYSPTES:
+
+            //
+            // Turn on PTE tracking to trigger a SYSTEM_PTE_MISUSE bugcheck.
+            //
+
+            MmTriageActionTaken |= MI_TRACKING_PTES;
+            break;
+
+        case NO_MORE_SYSTEM_PTES:
+
+            //
+            // Turn on PTE tracking so the driver can be identified via a
+            // DRIVER_USED_EXCESSIVE_PTES bugcheck.
+            //
+
+            if (BugCheckData[1] == SystemPteSpace)
+            {
                 MmTriageActionTaken |= MI_TRACKING_PTES;
-                break;
-    
-            case NO_MORE_SYSTEM_PTES:
-    
-                //
-                // Turn on PTE tracking so the driver can be identified via a
-                // DRIVER_USED_EXCESSIVE_PTES bugcheck.
-                //
-    
-                if (BugCheckData[1] == SystemPteSpace) {
-                    MmTriageActionTaken |= MI_TRACKING_PTES;
+            }
+            break;
+
+        case BAD_POOL_HEADER:
+        case DRIVER_CORRUPTED_EXPOOL:
+
+            //
+            // Turn on the driver verifier and/or special pool.
+            // Start by enabling it for every driver that isn't built for NT5.
+            // Override any specified driver verifier options so that only
+            // special pool is enabled to minimize the performance hit.
+            //
+
+            if (OldDrivers != 0)
+            {
+                if (OldDriversNotVerifying != 0)
+                {
+                    MmTriageActionTaken |= MI_VERIFYING_PRENT5_DRIVERS;
                 }
-                break;
-    
-            case BAD_POOL_HEADER:
-            case DRIVER_CORRUPTED_EXPOOL:
-    
-                //
-                // Turn on the driver verifier and/or special pool.
-                // Start by enabling it for every driver that isn't built for NT5.
-                // Override any specified driver verifier options so that only
-                // special pool is enabled to minimize the performance hit.
-                //
-    
-                if (OldDrivers != 0) {
-                    if (OldDriversNotVerifying != 0) {
-                        MmTriageActionTaken |= MI_VERIFYING_PRENT5_DRIVERS;
-                    }
-                }
-    
-                break;
-    
-            case DRIVER_CORRUPTED_MMPOOL:
-    
-                //
-                // Protect freed nonpaged pool if the system had less than 128mb
-                // of nonpaged pool anyway.  This is to trigger a
-                // DRIVER_CAUGHT_MODIFYING_FREED_POOL bugcheck.
-                //
-    
+            }
+
+            break;
+
+        case DRIVER_CORRUPTED_MMPOOL:
+
+            //
+            // Protect freed nonpaged pool if the system had less than 128mb
+            // of nonpaged pool anyway.  This is to trigger a
+            // DRIVER_CAUGHT_MODIFYING_FREED_POOL bugcheck.
+            //
+
 #define MB128 ((ULONG_PTR)0x80000000 >> PAGE_SHIFT)
-    
-                if (TriageInformation->MmMaximumNonPagedPool < MB128) {
-                    MmTriageActionTaken |= MI_PROTECT_FREED_NONPAGED_POOL;
-                }
-                break;
-    
-            case IRQL_NOT_LESS_OR_EQUAL:
-            case DRIVER_IRQL_NOT_LESS_OR_EQUAL:
-            default:
-                break;
+
+            if (TriageInformation->MmMaximumNonPagedPool < MB128)
+            {
+                MmTriageActionTaken |= MI_PROTECT_FREED_NONPAGED_POOL;
+            }
+            break;
+
+        case IRQL_NOT_LESS_OR_EQUAL:
+        case DRIVER_IRQL_NOT_LESS_OR_EQUAL:
+        default:
+            break;
         }
     }
 
@@ -422,30 +417,37 @@ Return Value:
     // will be enabled for checked builds only prior to shipping.
     //
 
-    if (MmTriageActionTaken != 0) {
+    if (MmTriageActionTaken != 0)
+    {
 
-        if (MmTriageActionTaken & MI_TRACKING_LOCKED_PAGES) {
+        if (MmTriageActionTaken & MI_TRACKING_LOCKED_PAGES)
+        {
             MmTrackLockedPages = TRUE;
         }
-    
-        if (MmTriageActionTaken & MI_TRACKING_PTES) {
+
+        if (MmTriageActionTaken & MI_TRACKING_PTES)
+        {
             MmTrackPtes |= 0x1;
         }
-    
-        if (MmTriageActionTaken & MI_VERIFYING_PRENT5_DRIVERS) {
+
+        if (MmTriageActionTaken & MI_VERIFYING_PRENT5_DRIVERS)
+        {
             MmVerifyDriverLevel &= ~DRIVER_VERIFIER_FORCE_IRQL_CHECKING;
             MmVerifyDriverLevel |= DRIVER_VERIFIER_SPECIAL_POOLING;
         }
-    
-        if (MmTriageActionTaken & MI_PROTECT_FREED_NONPAGED_POOL) {
+
+        if (MmTriageActionTaken & MI_PROTECT_FREED_NONPAGED_POOL)
+        {
             MmProtectFreedNonPagedPool = TRUE;
         }
 
-        DbgPrint ("MiTriageSystem: enabling options below to find who caused the last crash\n");
+        DbgPrint("MiTriageSystem: enabling options below to find who caused the last crash\n");
 
-        for (i = 0; i < 32; i += 1) {
-            if (MmTriageActionTaken & (1 << i)) {
-                DbgPrint ("  %s\n", MiTriageActionStrings[i]);
+        for (i = 0; i < 32; i += 1)
+        {
+            if (MmTriageActionTaken & (1 << i))
+            {
+                DbgPrint("  %s\n", MiTriageActionStrings[i]);
             }
         }
     }
@@ -453,11 +455,9 @@ Return Value:
     return TRUE;
 }
 
-
+
 LOGICAL
-MiTriageAddDrivers (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+MiTriageAddDrivers(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -486,79 +486,78 @@ Return Value:
     LOGICAL Added;
     PMI_VERIFIER_DRIVER_ENTRY VerifierDriverEntry;
 
-    if ((MmTriageActionTaken & MI_VERIFYING_PRENT5_DRIVERS) == 0) {
+    if ((MmTriageActionTaken & MI_VERIFYING_PRENT5_DRIVERS) == 0)
+    {
         return FALSE;
     }
 
     TriageDumpBlock = LoaderBlock->Extension->TriageDumpBlock;
 
-    Status = TriageGetDriverCount (TriageDumpBlock, &ModuleCount);
+    Status = TriageGetDriverCount(TriageDumpBlock, &ModuleCount);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
     Added = FALSE;
 
-    for (i = 0; i < ModuleCount; i += 1) {
+    for (i = 0; i < ModuleCount; i += 1)
+    {
 
-        DumpTableEntry = TriageGetLoaderEntry (TriageDumpBlock, i);
+        DumpTableEntry = TriageGetLoaderEntry(TriageDumpBlock, i);
 
-        if (DumpTableEntry == NULL) {
+        if (DumpTableEntry == NULL)
+        {
             continue;
         }
 
-        if (DumpTableEntry->Flags & LDRP_ENTRY_NATIVE) {
+        if (DumpTableEntry->Flags & LDRP_ENTRY_NATIVE)
+        {
             continue;
         }
 
-        DbgPrint ("MiTriageAddDrivers: Marking %wZ for verification when it is loaded\n", &DumpTableEntry->BaseDllName);
+        DbgPrint("MiTriageAddDrivers: Marking %wZ for verification when it is loaded\n", &DumpTableEntry->BaseDllName);
 
         NameLength = DumpTableEntry->BaseDllName.Length;
 
-        VerifierDriverEntry = (PMI_VERIFIER_DRIVER_ENTRY)ExAllocatePoolWithTag (
-                                    NonPagedPool,
-                                    sizeof (MI_VERIFIER_DRIVER_ENTRY) +
-                                                        NameLength,
-                                    'dLmM');
+        VerifierDriverEntry = (PMI_VERIFIER_DRIVER_ENTRY)ExAllocatePoolWithTag(
+            NonPagedPool, sizeof(MI_VERIFIER_DRIVER_ENTRY) + NameLength, 'dLmM');
 
-        if (VerifierDriverEntry == NULL) {
+        if (VerifierDriverEntry == NULL)
+        {
             continue;
         }
 
         VerifierDriverEntry->Loads = 0;
         VerifierDriverEntry->Unloads = 0;
-        VerifierDriverEntry->BaseName.Buffer = (PWSTR)((PCHAR)VerifierDriverEntry +
-                            sizeof (MI_VERIFIER_DRIVER_ENTRY));
+        VerifierDriverEntry->BaseName.Buffer = (PWSTR)((PCHAR)VerifierDriverEntry + sizeof(MI_VERIFIER_DRIVER_ENTRY));
 
         VerifierDriverEntry->BaseName.Length = (USHORT)NameLength;
         VerifierDriverEntry->BaseName.MaximumLength = (USHORT)NameLength;
 
-        RtlCopyMemory (VerifierDriverEntry->BaseName.Buffer,
-                       DumpTableEntry->BaseDllName.Buffer,
-                       NameLength);
+        RtlCopyMemory(VerifierDriverEntry->BaseName.Buffer, DumpTableEntry->BaseDllName.Buffer, NameLength);
 
-        InsertHeadList (&MiSuspectDriverList, &VerifierDriverEntry->Links);
+        InsertHeadList(&MiSuspectDriverList, &VerifierDriverEntry->Links);
         Added = TRUE;
     }
 
     return Added;
 }
 
-#define MAX_UNLOADED_NAME_LENGTH    24
+#define MAX_UNLOADED_NAME_LENGTH 24
 
-typedef struct _DUMP_UNLOADED_DRIVERS {
+typedef struct _DUMP_UNLOADED_DRIVERS
+{
     UNICODE_STRING Name;
-    WCHAR DriverName[MAX_UNLOADED_NAME_LENGTH / sizeof (WCHAR)];
+    WCHAR DriverName[MAX_UNLOADED_NAME_LENGTH / sizeof(WCHAR)];
     PVOID StartAddress;
     PVOID EndAddress;
 } DUMP_UNLOADED_DRIVERS, *PDUMP_UNLOADED_DRIVERS;
 
-
+
 ULONG
-MmSizeOfUnloadedDriverInformation (
-    VOID
-    )
+MmSizeOfUnloadedDriverInformation(VOID)
 
 /*++
 
@@ -578,18 +577,16 @@ Return Value:
 --*/
 
 {
-    if (MmUnloadedDrivers == NULL) {
-        return sizeof (ULONG_PTR);
+    if (MmUnloadedDrivers == NULL)
+    {
+        return sizeof(ULONG_PTR);
     }
 
     return sizeof(ULONG_PTR) + MI_UNLOADED_DRIVERS * sizeof(DUMP_UNLOADED_DRIVERS);
 }
 
-
-VOID
-MmWriteUnloadedDriverInformation (
-    IN PVOID Destination
-    )
+
+VOID MmWriteUnloadedDriverInformation(IN PVOID Destination)
 
 /*++
 
@@ -614,10 +611,12 @@ Return Value:
     PUNLOADED_DRIVERS Unloaded;
     PDUMP_UNLOADED_DRIVERS DumpUnloaded;
 
-    if (MmUnloadedDrivers == NULL) {
+    if (MmUnloadedDrivers == NULL)
+    {
         *(PULONG)Destination = 0;
     }
-    else {
+    else
+    {
 
         DumpUnloaded = (PDUMP_UNLOADED_DRIVERS)((PULONG_PTR)Destination + 1);
         Unloaded = MmUnloadedDrivers;
@@ -629,9 +628,11 @@ Return Value:
 
         Index = MmLastUnloadedDriver - 1;
 
-        for (i = 0; i < MI_UNLOADED_DRIVERS; i += 1) {
+        for (i = 0; i < MI_UNLOADED_DRIVERS; i += 1)
+        {
 
-            if (Index >= MI_UNLOADED_DRIVERS) {
+            if (Index >= MI_UNLOADED_DRIVERS)
+            {
                 Index = MI_UNLOADED_DRIVERS - 1;
             }
 
@@ -639,26 +640,28 @@ Return Value:
 
             DumpUnloaded->Name = Unloaded->Name;
 
-            if (Unloaded->Name.Buffer == NULL) {
+            if (Unloaded->Name.Buffer == NULL)
+            {
                 break;
             }
 
             DumpUnloaded->StartAddress = Unloaded->StartAddress;
             DumpUnloaded->EndAddress = Unloaded->EndAddress;
 
-            if (DumpUnloaded->Name.Length > MAX_UNLOADED_NAME_LENGTH) {
+            if (DumpUnloaded->Name.Length > MAX_UNLOADED_NAME_LENGTH)
+            {
                 DumpUnloaded->Name.Length = MAX_UNLOADED_NAME_LENGTH;
             }
 
-            if (DumpUnloaded->Name.MaximumLength > MAX_UNLOADED_NAME_LENGTH) {
+            if (DumpUnloaded->Name.MaximumLength > MAX_UNLOADED_NAME_LENGTH)
+            {
                 DumpUnloaded->Name.MaximumLength = MAX_UNLOADED_NAME_LENGTH;
             }
 
             DumpUnloaded->Name.Buffer = DumpUnloaded->DriverName;
 
-            RtlCopyMemory ((PVOID)DumpUnloaded->Name.Buffer,
-                           (PVOID)Unloaded->Name.Buffer,
-                           DumpUnloaded->Name.MaximumLength);
+            RtlCopyMemory((PVOID)DumpUnloaded->Name.Buffer, (PVOID)Unloaded->Name.Buffer,
+                          DumpUnloaded->Name.MaximumLength);
 
             DumpUnloaded += 1;
             Index -= 1;
@@ -668,11 +671,9 @@ Return Value:
     }
 }
 
-
+
 ULONG
-MmSizeOfTriageInformation (
-    VOID
-    )
+MmSizeOfTriageInformation(VOID)
 
 /*++
 
@@ -692,14 +693,11 @@ Return Value:
 --*/
 
 {
-    return sizeof (MI_TRIAGE_STORAGE);
+    return sizeof(MI_TRIAGE_STORAGE);
 }
 
-
-VOID
-MmWriteTriageInformation (
-    IN PVOID Destination
-    )
+
+VOID MmWriteTriageInformation(IN PVOID Destination)
 
 /*++
 
@@ -721,7 +719,7 @@ Return Value:
     MI_TRIAGE_STORAGE TriageInformation;
 
     TriageInformation.Version = 1;
-    TriageInformation.Size = sizeof (MI_TRIAGE_STORAGE);
+    TriageInformation.Size = sizeof(MI_TRIAGE_STORAGE);
 
     TriageInformation.MmSpecialPoolTag = MmSpecialPoolTag;
     TriageInformation.MiTriageActionTaken = MmTriageActionTaken;
@@ -739,7 +737,5 @@ Return Value:
     TriageInformation.CommittedPagesPeak = MmPeakCommitment;
     TriageInformation.CommitLimitMaximum = MmTotalCommitLimitMaximum;
 
-    RtlCopyMemory (Destination,
-                   (PVOID)&TriageInformation,
-                   sizeof (MI_TRIAGE_STORAGE));
+    RtlCopyMemory(Destination, (PVOID)&TriageInformation, sizeof(MI_TRIAGE_STORAGE));
 }

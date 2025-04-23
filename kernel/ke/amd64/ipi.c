@@ -24,11 +24,7 @@ Environment:
 
 #include "ki.h"
 
-VOID
-KiRestoreProcessorState (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+VOID KiRestoreProcessorState(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -62,11 +58,7 @@ Return Value:
 #if !defined(NT_UP)
 
     Prcb = KeGetCurrentPrcb();
-    KeContextToKframes(TrapFrame,
-                       ExceptionFrame,
-                       &Prcb->ProcessorState.ContextFrame,
-                       CONTEXT_FULL,
-                       KernelMode);
+    KeContextToKframes(TrapFrame, ExceptionFrame, &Prcb->ProcessorState.ContextFrame, CONTEXT_FULL, KernelMode);
 
     KiRestoreProcessorControlState(&Prcb->ProcessorState);
 
@@ -75,11 +67,7 @@ Return Value:
     return;
 }
 
-VOID
-KiSaveProcessorState (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+VOID KiSaveProcessorState(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -114,9 +102,7 @@ Return Value:
 
     Prcb = KeGetCurrentPrcb();
     Prcb->ProcessorState.ContextFrame.ContextFlags = CONTEXT_FULL;
-    KeContextFromKframes(TrapFrame,
-                         ExceptionFrame,
-                         &Prcb->ProcessorState.ContextFrame);
+    KeContextFromKframes(TrapFrame, ExceptionFrame, &Prcb->ProcessorState.ContextFrame);
 
     KiSaveProcessorControlState(&Prcb->ProcessorState);
 
@@ -126,10 +112,7 @@ Return Value:
 }
 
 BOOLEAN
-KiIpiServiceRoutine (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+KiIpiServiceRoutine(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -168,7 +151,8 @@ Return Value:
     // If freeze is requested, then freeze target execution.
     //
 
-    if ((RequestMask & IPI_FREEZE) != 0) {
+    if ((RequestMask & IPI_FREEZE) != 0)
+    {
         KiFreezeTargetExecution(TrapFrame, ExceptionFrame);
     }
 
@@ -183,13 +167,10 @@ Return Value:
     return TRUE;
 
 #endif
-
 }
 
 ULONG
-KiIpiProcessRequests (
-    VOID
-    )
+KiIpiProcessRequests(VOID)
 
 /*++
 
@@ -235,12 +216,11 @@ Return Value:
     // If a packet request is ready, then process the packet request.
     //
 
-    if (RequestPacket != NULL) {
+    if (RequestPacket != NULL)
+    {
         RequestSource = (PKPRCB)((ULONG64)RequestPacket & ~1);
-        (RequestSource->WorkerRoutine)((PKIPI_CONTEXT)RequestPacket,
-                                       RequestSource->CurrentPacket[0],
-                                       RequestSource->CurrentPacket[1],
-                                       RequestSource->CurrentPacket[2]);
+        (RequestSource->WorkerRoutine)((PKIPI_CONTEXT)RequestPacket, RequestSource->CurrentPacket[0],
+                                       RequestSource->CurrentPacket[1], RequestSource->CurrentPacket[2]);
     }
 
     //
@@ -248,7 +228,8 @@ Return Value:
     // at APC level on the current processor.
     //
 
-    if ((RequestMask & IPI_APC) != 0) {
+    if ((RequestMask & IPI_APC) != 0)
+    {
         KiRequestSoftwareInterrupt(APC_LEVEL);
     }
 
@@ -257,7 +238,8 @@ Return Value:
     // at DPC level on the current processor.
     //
 
-    if ((RequestMask & IPI_DPC) != 0) {
+    if ((RequestMask & IPI_DPC) != 0)
+    {
         KiRequestSoftwareInterrupt(DISPATCH_LEVEL);
     }
 
@@ -268,14 +250,9 @@ Return Value:
     return 0;
 
 #endif
-
 }
 
-VOID
-KiIpiSend (
-    IN KAFFINITY TargetSet,
-    IN KIPI_REQUEST Request
-    )
+VOID KiIpiSend(IN KAFFINITY TargetSet, IN KIPI_REQUEST Request)
 
 /*++
 
@@ -315,10 +292,11 @@ Return Value:
 
     SummarySet = TargetSet;
     NextPrcb = &KiProcessorBlock[0];
-    do {
-        if ((SummarySet & 1) != 0) {
-            InterlockedOr64(&(*NextPrcb)->RequestSummary,
-                            Request);
+    do
+    {
+        if ((SummarySet & 1) != 0)
+        {
+            InterlockedOr64(&(*NextPrcb)->RequestSummary, Request);
         }
 
         NextPrcb += 1;
@@ -335,14 +313,8 @@ Return Value:
     return;
 }
 
-VOID
-KiIpiSendPacket (
-    IN KAFFINITY TargetSet,
-    IN PKIPI_WORKER WorkerFunction,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KiIpiSendPacket(IN KAFFINITY TargetSet, IN PKIPI_WORKER WorkerFunction, IN PVOID Parameter1, IN PVOID Parameter2,
+                     IN PVOID Parameter3)
 
 /*++
 
@@ -397,10 +369,12 @@ Return Value:
     // barrier for signal done synchronization.
     //
 
-    if ((TargetSet & (TargetSet - 1)) == 0) {
+    if ((TargetSet & (TargetSet - 1)) == 0)
+    {
         CurrentPrcb = (PKPRCB)((ULONG64)CurrentPrcb | 1);
-
-    } else {
+    }
+    else
+    {
         CurrentPrcb->PacketBarrier = 1;
     }
 
@@ -411,11 +385,15 @@ Return Value:
 
     SummarySet = TargetSet;
     NextPrcb = &KiProcessorBlock[0];
-    do {
-        if ((SummarySet & 1) != 0) {
+    do
+    {
+        if ((SummarySet & 1) != 0)
+        {
             TargetPrcb = *NextPrcb;
-            do {
-                do {
+            do
+            {
+                do
+                {
                     RequestSummary = TargetPrcb->RequestSummary;
                 } while ((RequestSummary >> IPI_PACKET_SHIFT) != 0);
 
@@ -438,10 +416,7 @@ Return Value:
     return;
 }
 
-VOID
-KiIpiSignalPacketDone (
-    IN PKIPI_CONTEXT SignalDone
-    )
+VOID KiIpiSignalPacketDone(IN PKIPI_CONTEXT SignalDone)
 
 /*++
 
@@ -475,21 +450,23 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (((ULONG64)SignalDone & 1) == 0) {
-       TargetPrcb = (PKPRCB)SignalDone;
-       TargetSet = InterlockedXor64((PLONG64)&TargetPrcb->TargetSet,
-                                    TargetPrcb->SetMember);
+    if (((ULONG64)SignalDone & 1) == 0)
+    {
+        TargetPrcb = (PKPRCB)SignalDone;
+        TargetSet = InterlockedXor64((PLONG64)&TargetPrcb->TargetSet, TargetPrcb->SetMember);
 
-       //
-       // If no more bits are set in the target set, then clear packet
-       // barrier.
-       //
+        //
+        // If no more bits are set in the target set, then clear packet
+        // barrier.
+        //
 
-       if ((TargetPrcb->TargetSet ^ TargetSet) == 0) {
-           TargetPrcb->PacketBarrier = 0;
-       }
-
-    } else {
+        if ((TargetPrcb->TargetSet ^ TargetSet) == 0)
+        {
+            TargetPrcb->PacketBarrier = 0;
+        }
+    }
+    else
+    {
         TargetPrcb = (PKPRCB)((ULONG64)SignalDone - 1);
         TargetPrcb->TargetSet = 0;
     }

@@ -26,25 +26,20 @@ Revision History:
 
 #include "mi.h"
 
-VOID
-VadTreeWalk (
-    VOID
-    );
+VOID VadTreeWalk(VOID);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,MiInsertVad)
-#pragma alloc_text(PAGE,MiRemoveVad)
-#pragma alloc_text(PAGE,MiFindEmptyAddressRange)
+#pragma alloc_text(PAGE, MiInsertVad)
+#pragma alloc_text(PAGE, MiRemoveVad)
+#pragma alloc_text(PAGE, MiFindEmptyAddressRange)
 #pragma alloc_text(PAGE, MmPerfVadTreeWalk)
 #if DBG
-#pragma alloc_text(PAGE,VadTreeWalk)
+#pragma alloc_text(PAGE, VadTreeWalk)
 #endif
 #endif
 
 NTSTATUS
-MiInsertVad (
-    IN PMMVAD Vad
-    )
+MiInsertVad(IN PMMVAD Vad)
 
 /*++
 
@@ -86,7 +81,7 @@ Return Value:
     ULONG LastPpPage;
 #endif
 
-    ASSERT (Vad->EndingVpn >= Vad->StartingVpn);
+    ASSERT(Vad->EndingVpn >= Vad->StartingVpn);
 
     CurrentProcess = PsGetCurrentProcess();
 
@@ -94,7 +89,8 @@ Return Value:
     // Commit charge of MAX_COMMIT means don't charge quota.
     //
 
-    if (Vad->u.VadFlags.CommitCharge != MM_MAX_COMMIT) {
+    if (Vad->u.VadFlags.CommitCharge != MM_MAX_COMMIT)
+    {
 
         PageCharge = 0;
         PagedPoolCharge = 0;
@@ -106,8 +102,9 @@ Return Value:
         // so the process object is not referenced by the quota charge.
         //
 
-        Status = PsChargeProcessNonPagedPoolQuota (CurrentProcess, sizeof(MMVAD));
-        if (!NT_SUCCESS(Status)) {
+        Status = PsChargeProcessNonPagedPoolQuota(CurrentProcess, sizeof(MMVAD));
+        if (!NT_SUCCESS(Status))
+        {
             return STATUS_COMMITMENT_LIMIT;
         }
 
@@ -115,16 +112,15 @@ Return Value:
         // Charge quota for the prototype PTEs if this is a mapped view.
         //
 
-        if ((Vad->u.VadFlags.PrivateMemory == 0) &&
-            (Vad->ControlArea != NULL)) {
+        if ((Vad->u.VadFlags.PrivateMemory == 0) && (Vad->ControlArea != NULL))
+        {
 
-            PagedPoolCharge =
-              (Vad->EndingVpn - Vad->StartingVpn + 1) << PTE_SHIFT;
+            PagedPoolCharge = (Vad->EndingVpn - Vad->StartingVpn + 1) << PTE_SHIFT;
 
-            Status = PsChargeProcessPagedPoolQuota (CurrentProcess,
-                                                    PagedPoolCharge);
+            Status = PsChargeProcessPagedPoolQuota(CurrentProcess, PagedPoolCharge);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 PagedPoolCharge = 0;
                 RealCharge = 0;
                 goto Failed;
@@ -135,13 +131,14 @@ Return Value:
         // Add in the charge for page table pages.
         //
 
-        FirstPage = MiGetPdeIndex (MI_VPN_TO_VA (Vad->StartingVpn));
-        LastPage = MiGetPdeIndex (MI_VPN_TO_VA (Vad->EndingVpn));
+        FirstPage = MiGetPdeIndex(MI_VPN_TO_VA(Vad->StartingVpn));
+        LastPage = MiGetPdeIndex(MI_VPN_TO_VA(Vad->EndingVpn));
 
-        while (FirstPage <= LastPage) {
+        while (FirstPage <= LastPage)
+        {
 
-            if (!MI_CHECK_BIT (MmWorkingSetList->CommittedPageTables,
-                               FirstPage)) {
+            if (!MI_CHECK_BIT(MmWorkingSetList->CommittedPageTables, FirstPage))
+            {
                 PageCharge += 1;
             }
             FirstPage += 1;
@@ -153,13 +150,14 @@ Return Value:
         // Add in the charge for page directory parent pages.
         //
 
-        FirstPpPage = MiGetPxeIndex (MI_VPN_TO_VA (Vad->StartingVpn));
-        LastPpPage = MiGetPxeIndex (MI_VPN_TO_VA (Vad->EndingVpn));
+        FirstPpPage = MiGetPxeIndex(MI_VPN_TO_VA(Vad->StartingVpn));
+        LastPpPage = MiGetPxeIndex(MI_VPN_TO_VA(Vad->EndingVpn));
 
-        while (FirstPpPage <= LastPpPage) {
+        while (FirstPpPage <= LastPpPage)
+        {
 
-            if (!MI_CHECK_BIT (MmWorkingSetList->CommittedPageDirectoryParents,
-                               FirstPpPage)) {
+            if (!MI_CHECK_BIT(MmWorkingSetList->CommittedPageDirectoryParents, FirstPpPage))
+            {
                 PageCharge += 1;
             }
             FirstPpPage += 1;
@@ -172,13 +170,14 @@ Return Value:
         // Add in the charge for page directory pages.
         //
 
-        FirstPdPage = MiGetPpeIndex (MI_VPN_TO_VA (Vad->StartingVpn));
-        LastPdPage = MiGetPpeIndex (MI_VPN_TO_VA (Vad->EndingVpn));
+        FirstPdPage = MiGetPpeIndex(MI_VPN_TO_VA(Vad->StartingVpn));
+        LastPdPage = MiGetPpeIndex(MI_VPN_TO_VA(Vad->EndingVpn));
 
-        while (FirstPdPage <= LastPdPage) {
+        while (FirstPdPage <= LastPdPage)
+        {
 
-            if (!MI_CHECK_BIT (MmWorkingSetList->CommittedPageDirectories,
-                               FirstPdPage)) {
+            if (!MI_CHECK_BIT(MmWorkingSetList->CommittedPageDirectories, FirstPdPage))
+            {
                 PageCharge += 1;
             }
             FirstPdPage += 1;
@@ -187,46 +186,56 @@ Return Value:
 
         RealCharge = Vad->u.VadFlags.CommitCharge + PageCharge;
 
-        if (RealCharge != 0) {
+        if (RealCharge != 0)
+        {
 
-            Status = PsChargeProcessPageFileQuota (CurrentProcess, RealCharge);
-            if (!NT_SUCCESS (Status)) {
+            Status = PsChargeProcessPageFileQuota(CurrentProcess, RealCharge);
+            if (!NT_SUCCESS(Status))
+            {
                 RealCharge = 0;
                 goto Failed;
             }
 
-            if (CurrentProcess->CommitChargeLimit) {
-                if (CurrentProcess->CommitCharge + RealCharge > CurrentProcess->CommitChargeLimit) {
-                    if (CurrentProcess->Job) {
-                        PsReportProcessMemoryLimitViolation ();
+            if (CurrentProcess->CommitChargeLimit)
+            {
+                if (CurrentProcess->CommitCharge + RealCharge > CurrentProcess->CommitChargeLimit)
+                {
+                    if (CurrentProcess->Job)
+                    {
+                        PsReportProcessMemoryLimitViolation();
                     }
                     goto Failed;
                 }
             }
-            if (CurrentProcess->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES) {
-                if (PsChangeJobMemoryUsage(RealCharge) == FALSE) {
+            if (CurrentProcess->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES)
+            {
+                if (PsChangeJobMemoryUsage(RealCharge) == FALSE)
+                {
                     goto Failed;
                 }
                 ChargedJobCommit = TRUE;
             }
 
-            if (MiChargeCommitment (RealCharge, CurrentProcess) == FALSE) {
+            if (MiChargeCommitment(RealCharge, CurrentProcess) == FALSE)
+            {
                 goto Failed;
             }
 
             CurrentProcess->CommitCharge += RealCharge;
-            if (CurrentProcess->CommitCharge > CurrentProcess->CommitChargePeak) {
+            if (CurrentProcess->CommitCharge > CurrentProcess->CommitChargePeak)
+            {
                 CurrentProcess->CommitChargePeak = CurrentProcess->CommitCharge;
             }
 
-            MI_INCREMENT_TOTAL_PROCESS_COMMIT (RealCharge);
+            MI_INCREMENT_TOTAL_PROCESS_COMMIT(RealCharge);
 
-            ASSERT (RealCharge == Vad->u.VadFlags.CommitCharge + PageCharge);
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_INSERT_VAD, Vad->u.VadFlags.CommitCharge);
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_INSERT_VAD_PT, PageCharge);
+            ASSERT(RealCharge == Vad->u.VadFlags.CommitCharge + PageCharge);
+            MM_TRACK_COMMIT(MM_DBG_COMMIT_INSERT_VAD, Vad->u.VadFlags.CommitCharge);
+            MM_TRACK_COMMIT(MM_DBG_COMMIT_INSERT_VAD_PT, PageCharge);
         }
 
-        if (PageCharge != 0) {
+        if (PageCharge != 0)
+        {
 
             //
             // Since the commitment was successful, charge the page
@@ -235,18 +244,17 @@ Return Value:
 
             PagesReallyCharged = 0;
 
-            FirstPage = MiGetPdeIndex (MI_VPN_TO_VA (Vad->StartingVpn));
+            FirstPage = MiGetPdeIndex(MI_VPN_TO_VA(Vad->StartingVpn));
 
-            while (FirstPage <= LastPage) {
+            while (FirstPage <= LastPage)
+            {
 
-                if (!MI_CHECK_BIT (MmWorkingSetList->CommittedPageTables,
-                                   FirstPage)) {
-                    MI_SET_BIT (MmWorkingSetList->CommittedPageTables,
-                                FirstPage);
+                if (!MI_CHECK_BIT(MmWorkingSetList->CommittedPageTables, FirstPage))
+                {
+                    MI_SET_BIT(MmWorkingSetList->CommittedPageTables, FirstPage);
                     MmWorkingSetList->NumberOfCommittedPageTables += 1;
 
-                    ASSERT32 (MmWorkingSetList->NumberOfCommittedPageTables <
-                                                 PD_PER_SYSTEM * PDE_PER_PAGE);
+                    ASSERT32(MmWorkingSetList->NumberOfCommittedPageTables < PD_PER_SYSTEM * PDE_PER_PAGE);
                     PagesReallyCharged += 1;
                 }
                 FirstPage += 1;
@@ -258,18 +266,17 @@ Return Value:
             // Charge the page directory pages.
             //
 
-            FirstPdPage = MiGetPpeIndex (MI_VPN_TO_VA (Vad->StartingVpn));
+            FirstPdPage = MiGetPpeIndex(MI_VPN_TO_VA(Vad->StartingVpn));
 
-            while (FirstPdPage <= LastPdPage) {
+            while (FirstPdPage <= LastPdPage)
+            {
 
-                if (!MI_CHECK_BIT (MmWorkingSetList->CommittedPageDirectories,
-                                   FirstPdPage)) {
+                if (!MI_CHECK_BIT(MmWorkingSetList->CommittedPageDirectories, FirstPdPage))
+                {
 
-                    MI_SET_BIT (MmWorkingSetList->CommittedPageDirectories,
-                                FirstPdPage);
+                    MI_SET_BIT(MmWorkingSetList->CommittedPageDirectories, FirstPdPage);
                     MmWorkingSetList->NumberOfCommittedPageDirectories += 1;
-                    ASSERT (MmWorkingSetList->NumberOfCommittedPageDirectories <
-                                                                 PDE_PER_PAGE);
+                    ASSERT(MmWorkingSetList->NumberOfCommittedPageDirectories < PDE_PER_PAGE);
                     PagesReallyCharged += 1;
                 }
                 FirstPdPage += 1;
@@ -282,25 +289,24 @@ Return Value:
             // Charge the page directory parent pages.
             //
 
-            FirstPpPage = MiGetPxeIndex (MI_VPN_TO_VA (Vad->StartingVpn));
+            FirstPpPage = MiGetPxeIndex(MI_VPN_TO_VA(Vad->StartingVpn));
 
-            while (FirstPpPage <= LastPpPage) {
+            while (FirstPpPage <= LastPpPage)
+            {
 
-                if (!MI_CHECK_BIT (MmWorkingSetList->CommittedPageDirectoryParents,
-                                   FirstPpPage)) {
+                if (!MI_CHECK_BIT(MmWorkingSetList->CommittedPageDirectoryParents, FirstPpPage))
+                {
 
-                    MI_SET_BIT (MmWorkingSetList->CommittedPageDirectoryParents,
-                                FirstPpPage);
+                    MI_SET_BIT(MmWorkingSetList->CommittedPageDirectoryParents, FirstPpPage);
                     MmWorkingSetList->NumberOfCommittedPageDirectoryParents += 1;
-                    ASSERT (MmWorkingSetList->NumberOfCommittedPageDirectoryParents <
-                                                                 PDE_PER_PAGE);
+                    ASSERT(MmWorkingSetList->NumberOfCommittedPageDirectoryParents < PDE_PER_PAGE);
                     PagesReallyCharged += 1;
                 }
                 FirstPpPage += 1;
             }
 #endif
 
-            ASSERT (PageCharge == PagesReallyCharged);
+            ASSERT(PageCharge == PagesReallyCharged);
         }
     }
 
@@ -310,8 +316,8 @@ Return Value:
     // Set the relevant fields in the Vad bitmap.
     //
 
-    StartBit = (ULONG)(((ULONG_PTR) MI_64K_ALIGN (MI_VPN_TO_VA (Vad->StartingVpn))) / X64K);
-    EndBit = (ULONG) (((ULONG_PTR) MI_64K_ALIGN (MI_VPN_TO_VA (Vad->EndingVpn))) / X64K);
+    StartBit = (ULONG)(((ULONG_PTR)MI_64K_ALIGN(MI_VPN_TO_VA(Vad->StartingVpn))) / X64K);
+    EndBit = (ULONG)(((ULONG_PTR)MI_64K_ALIGN(MI_VPN_TO_VA(Vad->EndingVpn))) / X64K);
 
     //
     // Initialize the bitmap inline for speed.
@@ -325,8 +331,9 @@ Return Value:
     // for these, the relevant bits may already be set.
     //
 
-#if defined (_WIN64) || defined (_X86PAE_)
-    if (EndBit > MiLastVadBit) {
+#if defined(_WIN64) || defined(_X86PAE_)
+    if (EndBit > MiLastVadBit)
+    {
         EndBit = MiLastVadBit;
     }
 
@@ -334,14 +341,16 @@ Return Value:
     // Only the first (PAGE_SIZE*8*64K) of VA space on NT64 is bitmapped.
     //
 
-    if (StartBit <= MiLastVadBit) {
-        RtlSetBits (&VadBitMap, StartBit, EndBit - StartBit + 1);
+    if (StartBit <= MiLastVadBit)
+    {
+        RtlSetBits(&VadBitMap, StartBit, EndBit - StartBit + 1);
     }
 #else
-    RtlSetBits (&VadBitMap, StartBit, EndBit - StartBit + 1);
+    RtlSetBits(&VadBitMap, StartBit, EndBit - StartBit + 1);
 #endif
 
-    if (MmWorkingSetList->VadBitMapHint == StartBit) {
+    if (MmWorkingSetList->VadBitMapHint == StartBit)
+    {
         MmWorkingSetList->VadBitMapHint = EndBit + 1;
     }
 
@@ -351,15 +360,15 @@ Return Value:
 
     CurrentProcess->VadHint = Vad;
 
-    if (CurrentProcess->VadFreeHint != NULL) {
-        if (((ULONG)((PMMVAD)CurrentProcess->VadFreeHint)->EndingVpn +
-                MI_VA_TO_VPN (X64K)) >=
-                Vad->StartingVpn) {
+    if (CurrentProcess->VadFreeHint != NULL)
+    {
+        if (((ULONG)((PMMVAD)CurrentProcess->VadFreeHint)->EndingVpn + MI_VA_TO_VPN(X64K)) >= Vad->StartingVpn)
+        {
             CurrentProcess->VadFreeHint = Vad;
         }
     }
 
-    MiInsertNode ((PMMADDRESS_NODE)Vad, Root);
+    MiInsertNode((PMMADDRESS_NODE)Vad, Root);
     CurrentProcess->NumberOfVads += 1;
     return STATUS_SUCCESS;
 
@@ -369,28 +378,28 @@ Failed:
     // Return any quotas charged thus far.
     //
 
-    PsReturnProcessNonPagedPoolQuota (CurrentProcess, sizeof(MMVAD));
+    PsReturnProcessNonPagedPoolQuota(CurrentProcess, sizeof(MMVAD));
 
-    if (PagedPoolCharge != 0) {
-        PsReturnProcessPagedPoolQuota (CurrentProcess, PagedPoolCharge);
+    if (PagedPoolCharge != 0)
+    {
+        PsReturnProcessPagedPoolQuota(CurrentProcess, PagedPoolCharge);
     }
 
-    if (RealCharge != 0) {
-        PsReturnProcessPageFileQuota (CurrentProcess, RealCharge);
+    if (RealCharge != 0)
+    {
+        PsReturnProcessPageFileQuota(CurrentProcess, RealCharge);
     }
 
-    if (ChargedJobCommit == TRUE) {
+    if (ChargedJobCommit == TRUE)
+    {
         PsChangeJobMemoryUsage(-(SSIZE_T)RealCharge);
     }
 
     return STATUS_COMMITMENT_LIMIT;
 }
 
-
-VOID
-MiRemoveVad (
-    IN PMMVAD Vad
-    )
+
+VOID MiRemoveVad(IN PMMVAD Vad)
 
 /*++
 
@@ -421,14 +430,14 @@ Return Value:
     CurrentProcess = PsGetCurrentProcess();
 
 #if defined(_MIALT4K_)
-    if (((Vad->u.VadFlags.PrivateMemory) && (Vad->u.VadFlags.NoChange == 0)) 
-        ||
-        (Vad->u2.VadFlags2.LongVad == 0)) {
+    if (((Vad->u.VadFlags.PrivateMemory) && (Vad->u.VadFlags.NoChange == 0)) || (Vad->u2.VadFlags2.LongVad == 0))
+    {
 
         NOTHING;
     }
-    else {
-        ASSERT ((((PMMVAD_LONG)Vad)->AliasInformation == NULL) || (CurrentProcess->Wow64Process != NULL));
+    else
+    {
+        ASSERT((((PMMVAD_LONG)Vad)->AliasInformation == NULL) || (CurrentProcess->Wow64Process != NULL));
     }
 #endif
 
@@ -436,28 +445,29 @@ Return Value:
     // Commit charge of MAX_COMMIT means don't charge quota.
     //
 
-    if (Vad->u.VadFlags.CommitCharge != MM_MAX_COMMIT) {
+    if (Vad->u.VadFlags.CommitCharge != MM_MAX_COMMIT)
+    {
 
         //
         // Return the quota charge to the process.
         //
 
-        PsReturnProcessNonPagedPoolQuota (CurrentProcess, sizeof(MMVAD));
+        PsReturnProcessNonPagedPoolQuota(CurrentProcess, sizeof(MMVAD));
 
-        if ((Vad->u.VadFlags.PrivateMemory == 0) &&
-            (Vad->ControlArea != NULL)) {
-            PsReturnProcessPagedPoolQuota (CurrentProcess,
-                                           (Vad->EndingVpn - Vad->StartingVpn + 1) << PTE_SHIFT);
+        if ((Vad->u.VadFlags.PrivateMemory == 0) && (Vad->ControlArea != NULL))
+        {
+            PsReturnProcessPagedPoolQuota(CurrentProcess, (Vad->EndingVpn - Vad->StartingVpn + 1) << PTE_SHIFT);
         }
 
         RealCharge = Vad->u.VadFlags.CommitCharge;
 
-        if (RealCharge != 0) {
+        if (RealCharge != 0)
+        {
 
-            PsReturnProcessPageFileQuota (CurrentProcess, RealCharge);
+            PsReturnProcessPageFileQuota(CurrentProcess, RealCharge);
 
-            if ((Vad->u.VadFlags.PrivateMemory == 0) &&
-                (Vad->ControlArea != NULL)) {
+            if ((Vad->u.VadFlags.PrivateMemory == 0) && (Vad->ControlArea != NULL))
+            {
 
 #if 0 //commented out so page file quota is meaningful.
                 if (Vad->ControlArea->FilePointer == NULL) {
@@ -474,43 +484,46 @@ Return Value:
 #endif
             }
 
-            MiReturnCommitment (RealCharge);
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_VAD, RealCharge);
-            if (CurrentProcess->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES) {
+            MiReturnCommitment(RealCharge);
+            MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_VAD, RealCharge);
+            if (CurrentProcess->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES)
+            {
                 PsChangeJobMemoryUsage(-(SSIZE_T)RealCharge);
             }
             CurrentProcess->CommitCharge -= RealCharge;
 
-            MI_INCREMENT_TOTAL_PROCESS_COMMIT (0 - RealCharge);
+            MI_INCREMENT_TOTAL_PROCESS_COMMIT(0 - RealCharge);
         }
     }
 
-    if (Vad == CurrentProcess->VadFreeHint) {
-        CurrentProcess->VadFreeHint = MiGetPreviousVad (Vad);
+    if (Vad == CurrentProcess->VadFreeHint)
+    {
+        CurrentProcess->VadFreeHint = MiGetPreviousVad(Vad);
     }
 
     Root = (PMMADDRESS_NODE *)&CurrentProcess->VadRoot;
 
-    MiRemoveNode ( (PMMADDRESS_NODE)Vad, Root);
+    MiRemoveNode((PMMADDRESS_NODE)Vad, Root);
 
-    ASSERT (CurrentProcess->NumberOfVads >= 1);
+    ASSERT(CurrentProcess->NumberOfVads >= 1);
     CurrentProcess->NumberOfVads -= 1;
 
-    if (Vad->u.VadFlags.NoChange) {
-        if (Vad->u2.VadFlags2.MultipleSecured) {
+    if (Vad->u.VadFlags.NoChange)
+    {
+        if (Vad->u2.VadFlags2.MultipleSecured)
+        {
 
-           //
-           // Free the oustanding pool allocations.
-           //
+            //
+            // Free the oustanding pool allocations.
+            //
 
-            Next = ((PMMVAD_LONG) Vad)->u3.List.Flink;
-            do {
-                Entry = CONTAINING_RECORD( Next,
-                                           MMSECURE_ENTRY,
-                                           List);
+            Next = ((PMMVAD_LONG)Vad)->u3.List.Flink;
+            do
+            {
+                Entry = CONTAINING_RECORD(Next, MMSECURE_ENTRY, List);
 
                 Next = Entry->List.Flink;
-                ExFreePool (Entry);
+                ExFreePool(Entry);
             } while (Next != &((PMMVAD_LONG)Vad)->u3.List);
         }
     }
@@ -518,18 +531,17 @@ Return Value:
     //
     // If the VadHint was the removed Vad, change the Hint.
 
-    if (CurrentProcess->VadHint == Vad) {
+    if (CurrentProcess->VadHint == Vad)
+    {
         CurrentProcess->VadHint = CurrentProcess->VadRoot;
     }
 
     return;
 }
-
+
 PMMVAD
 FASTCALL
-MiLocateAddress (
-    IN PVOID VirtualAddress
-    )
+MiLocateAddress(IN PVOID VirtualAddress)
 
 /*++
 
@@ -557,33 +569,30 @@ Return Value:
 
     CurrentProcess = PsGetCurrentProcess();
 
-    if (CurrentProcess->VadHint == NULL) {
+    if (CurrentProcess->VadHint == NULL)
+    {
         return NULL;
     }
 
-    Vpn = MI_VA_TO_VPN (VirtualAddress);
+    Vpn = MI_VA_TO_VPN(VirtualAddress);
     if ((Vpn >= ((PMMADDRESS_NODE)CurrentProcess->VadHint)->StartingVpn) &&
-        (Vpn <= ((PMMADDRESS_NODE)CurrentProcess->VadHint)->EndingVpn)) {
+        (Vpn <= ((PMMADDRESS_NODE)CurrentProcess->VadHint)->EndingVpn))
+    {
 
         return (PMMVAD)CurrentProcess->VadHint;
     }
 
-    FoundVad = (PMMVAD)MiLocateAddressInTree ( Vpn,
-                   (PMMADDRESS_NODE *)&(CurrentProcess->VadRoot));
+    FoundVad = (PMMVAD)MiLocateAddressInTree(Vpn, (PMMADDRESS_NODE *)&(CurrentProcess->VadRoot));
 
-    if (FoundVad != NULL) {
+    if (FoundVad != NULL)
+    {
         CurrentProcess->VadHint = (PVOID)FoundVad;
     }
     return FoundVad;
 }
-
+
 NTSTATUS
-MiFindEmptyAddressRange (
-    IN SIZE_T SizeOfRange,
-    IN ULONG_PTR Alignment,
-    IN ULONG QuickCheck,
-    IN PVOID *Base
-    )
+MiFindEmptyAddressRange(IN SIZE_T SizeOfRange, IN ULONG_PTR Alignment, IN ULONG QuickCheck, IN PVOID *Base)
 
 /*++
 
@@ -626,8 +635,9 @@ Return Value:
 
     CurrentProcess = PsGetCurrentProcess();
 
-    if (QuickCheck == 0) {
-                    
+    if (QuickCheck == 0)
+    {
+
         //
         // Initialize the bitmap inline for speed.
         //
@@ -644,27 +654,29 @@ Return Value:
 
         *((PULONG)VAD_BITMAP_SPACE) = (FirstBitValue | 0x1);
 
-        BitsNeeded = (ULONG) ((MI_ROUND_TO_64K (SizeOfRange)) / X64K);
+        BitsNeeded = (ULONG)((MI_ROUND_TO_64K(SizeOfRange)) / X64K);
 
-        StartPosition = RtlFindClearBits (&VadBitMap,
-                                          BitsNeeded,
-                                          MmWorkingSetList->VadBitMapHint);
+        StartPosition = RtlFindClearBits(&VadBitMap, BitsNeeded, MmWorkingSetList->VadBitMapHint);
 
-        if (FirstBitValue & 0x1) {
+        if (FirstBitValue & 0x1)
+        {
             FirstBitValue = (ULONG)-1;
         }
-        else {
+        else
+        {
             FirstBitValue = (ULONG)~0x1;
         }
 
         *((PULONG)VAD_BITMAP_SPACE) &= FirstBitValue;
 
-        if (StartPosition != NO_BITS_FOUND) {
-            *Base = (PVOID) (((ULONG_PTR)StartPosition) * X64K);
+        if (StartPosition != NO_BITS_FOUND)
+        {
+            *Base = (PVOID)(((ULONG_PTR)StartPosition) * X64K);
 #if DBG
-            if (MiCheckForConflictingVad (CurrentProcess, *Base, (ULONG_PTR)*Base + SizeOfRange - 1) != NULL) {
-                DbgPrint ("MiFindEmptyAddressRange: overlapping VAD %p %p\n", *Base, SizeOfRange);
-                DbgBreakPoint ();
+            if (MiCheckForConflictingVad(CurrentProcess, *Base, (ULONG_PTR)*Base + SizeOfRange - 1) != NULL)
+            {
+                DbgPrint("MiFindEmptyAddressRange: overlapping VAD %p %p\n", *Base, SizeOfRange);
+                DbgBreakPoint();
             }
 #endif
             return STATUS_SUCCESS;
@@ -672,38 +684,38 @@ Return Value:
 
         FreeHint = CurrentProcess->VadFreeHint;
 
-        if (FreeHint != NULL) {
+        if (FreeHint != NULL)
+        {
 
-            EndingVa = MI_VPN_TO_VA_ENDING (FreeHint->EndingVpn);
-            NextVad = MiGetNextVad (FreeHint);
+            EndingVa = MI_VPN_TO_VA_ENDING(FreeHint->EndingVpn);
+            NextVad = MiGetNextVad(FreeHint);
 
-            if (NextVad == NULL) {
+            if (NextVad == NULL)
+            {
 
                 if (SizeOfRange <
-                    (((ULONG_PTR)MM_HIGHEST_USER_ADDRESS + 1) -
-                         MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa, Alignment))) {
-                    *Base = (PVOID) MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa,
-                                                         Alignment);
+                    (((ULONG_PTR)MM_HIGHEST_USER_ADDRESS + 1) - MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa, Alignment)))
+                {
+                    *Base = (PVOID)MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa, Alignment);
                     return STATUS_SUCCESS;
                 }
             }
-            else {
-                StartingVa = MI_VPN_TO_VA (NextVad->StartingVpn);
+            else
+            {
+                StartingVa = MI_VPN_TO_VA(NextVad->StartingVpn);
 
-                if (SizeOfRange <
-                    ((ULONG_PTR)StartingVa -
-                         MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa, Alignment))) {
+                if (SizeOfRange < ((ULONG_PTR)StartingVa - MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa, Alignment)))
+                {
 
                     //
                     // Check to ensure that the ending address aligned upwards
                     // is not greater than the starting address.
                     //
 
-                    if ((ULONG_PTR)StartingVa >
-                         MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa,Alignment)) {
+                    if ((ULONG_PTR)StartingVa > MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa, Alignment))
+                    {
 
-                        *Base = (PVOID)MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa,
-                                                           Alignment);
+                        *Base = (PVOID)MI_ROUND_TO_SIZE((ULONG_PTR)EndingVa, Alignment);
                         return STATUS_SUCCESS;
                     }
                 }
@@ -711,35 +723,24 @@ Return Value:
         }
     }
 
-    Status = MiFindEmptyAddressRangeInTree (
-                   SizeOfRange,
-                   Alignment,
-                   (PMMADDRESS_NODE)(CurrentProcess->VadRoot),
-                   (PMMADDRESS_NODE *)&CurrentProcess->VadFreeHint,
-                   Base);
+    Status = MiFindEmptyAddressRangeInTree(SizeOfRange, Alignment, (PMMADDRESS_NODE)(CurrentProcess->VadRoot),
+                                           (PMMADDRESS_NODE *)&CurrentProcess->VadFreeHint, Base);
 
     return Status;
 }
-
+
 #if DBG
-VOID
-VadTreeWalk (
-    VOID
-    )
+VOID VadTreeWalk(VOID)
 
 {
-    NodeTreeWalk ( (PMMADDRESS_NODE)(PsGetCurrentProcess()->VadRoot));
+    NodeTreeWalk((PMMADDRESS_NODE)(PsGetCurrentProcess()->VadRoot));
 
     return;
 }
 #endif
-
+
 LOGICAL
-MiCheckForConflictingVadExistence (
-    IN PEPROCESS Process,
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress
-    )
+MiCheckForConflictingVadExistence(IN PEPROCESS Process, IN PVOID StartingAddress, IN PVOID EndingAddress)
 
 /*++
 
@@ -797,17 +798,15 @@ Environment:
     }
 #endif
 
-    if (MiCheckForConflictingVad (Process, StartingAddress, EndingAddress) != NULL) {
+    if (MiCheckForConflictingVad(Process, StartingAddress, EndingAddress) != NULL)
+    {
         return TRUE;
     }
 
     return FALSE;
 }
 
-PFILE_OBJECT *
-MmPerfVadTreeWalk (
-    IN PEPROCESS Process
-    )
+PFILE_OBJECT *MmPerfVadTreeWalk(IN PEPROCESS Process)
 
 /*++
 
@@ -842,19 +841,20 @@ Environment:
     PFILE_OBJECT *File;
     PFILE_OBJECT *FileObjects;
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
-    
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
+
     LOCK_ADDRESS_SPACE(Process);
 
     Vad = Process->VadRoot;
 
-    if (Vad == NULL) {
-        ASSERT (Process->NumberOfVads == 0);
-        UNLOCK_ADDRESS_SPACE (Process);
+    if (Vad == NULL)
+    {
+        ASSERT(Process->NumberOfVads == 0);
+        UNLOCK_ADDRESS_SPACE(Process);
         return NULL;
     }
 
-    ASSERT (Process->NumberOfVads != 0);
+    ASSERT(Process->NumberOfVads != 0);
 
     //
     // Allocate one additional entry for the NULL terminator.
@@ -862,53 +862,52 @@ Environment:
 
     VadCount = Process->NumberOfVads + 1;
 
-    FileObjects = (PFILE_OBJECT *) ExAllocatePoolWithTag (
-                                            PagedPool,
-                                            VadCount * sizeof(PFILE_OBJECT),
-                                            '01pM');
+    FileObjects = (PFILE_OBJECT *)ExAllocatePoolWithTag(PagedPool, VadCount * sizeof(PFILE_OBJECT), '01pM');
 
-    if (FileObjects == NULL) {
-        UNLOCK_ADDRESS_SPACE (Process);
+    if (FileObjects == NULL)
+    {
+        UNLOCK_ADDRESS_SPACE(Process);
         return NULL;
     }
 
     File = FileObjects;
 
-    while (Vad->LeftChild != NULL) {
+    while (Vad->LeftChild != NULL)
+    {
         Vad = Vad->LeftChild;
     }
 
-    if ((!Vad->u.VadFlags.PrivateMemory) &&
-        (Vad->ControlArea != NULL) &&
-        (Vad->ControlArea->FilePointer != NULL)) {
+    if ((!Vad->u.VadFlags.PrivateMemory) && (Vad->ControlArea != NULL) && (Vad->ControlArea->FilePointer != NULL))
+    {
 
         *File = Vad->ControlArea->FilePointer;
-        ObReferenceObject (*File);
+        ObReferenceObject(*File);
         File += 1;
     }
 
-    for (;;) {
-        NextVad = (PMMVAD) MiGetNextNode ((PMMADDRESS_NODE)Vad);
+    for (;;)
+    {
+        NextVad = (PMMVAD)MiGetNextNode((PMMADDRESS_NODE)Vad);
 
-        if (NextVad == NULL) {
+        if (NextVad == NULL)
+        {
             break;
         }
 
-        Vad = (PMMVAD) NextVad;
+        Vad = (PMMVAD)NextVad;
 
-        if ((!Vad->u.VadFlags.PrivateMemory) &&
-            (Vad->ControlArea != NULL) &&
-            (Vad->ControlArea->FilePointer != NULL)) {
+        if ((!Vad->u.VadFlags.PrivateMemory) && (Vad->ControlArea != NULL) && (Vad->ControlArea->FilePointer != NULL))
+        {
 
             *File = Vad->ControlArea->FilePointer;
-            ObReferenceObject (*File);
+            ObReferenceObject(*File);
             File += 1;
         }
 
         Vad = NextVad;
     }
 
-    ASSERT (File < FileObjects + VadCount);
+    ASSERT(File < FileObjects + VadCount);
 
     UNLOCK_ADDRESS_SPACE(Process);
 

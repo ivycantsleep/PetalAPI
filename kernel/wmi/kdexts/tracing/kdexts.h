@@ -38,13 +38,9 @@ Environment:
 #define KDEXTS_EXTERN extern
 #endif
 
-KDEXTS_EXTERN WINDBG_EXTENSION_APIS   ExtensionApis;
+KDEXTS_EXTERN WINDBG_EXTENSION_APIS ExtensionApis;
 
-KDEXTS_EXTERN DBGKD_GET_VERSION64     KernelVersionPacket;
+KDEXTS_EXTERN DBGKD_GET_VERSION64 KernelVersionPacket;
 
 
-BOOL
-HaveDebuggerData(
-    VOID
-    );
-
+BOOL HaveDebuggerData(VOID);

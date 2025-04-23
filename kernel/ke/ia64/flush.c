@@ -28,84 +28,42 @@ Revision History:
 
 #include "ki.h"
 #include "kxia64.h"
-
+
 //
 // PROBE_VISIBILITY_PAL_SUPPORT flag is one time write (RESET) only and multiple time read
 // only flag. It is used to check to see if the processor needs PAL_SUPPORT for VISIBILITY // in prefetches. Once the check is made, this flag optimizes such that further checks are // eliminated.
 //
- 
-ULONG ProbePalVisibilitySupport=1;
-ULONG NeedPalVisibilitySupport=1;
+
+ULONG ProbePalVisibilitySupport = 1;
+ULONG NeedPalVisibilitySupport = 1;
 extern KSPIN_LOCK KiCacheFlushLock;
 //
 // Define forward referenced prototyes.
 //
 
-VOID
-KiSweepDcacheTarget (
-    IN PULONG SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiSweepDcacheTarget(IN PULONG SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-KiSweepIcacheTarget (
-    IN PULONG SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiSweepIcacheTarget(IN PULONG SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-KiFlushIoBuffersTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Mdl,
-    IN PVOID ReadOperation,
-    IN PVOID DmaOperation
-    );
+VOID KiFlushIoBuffersTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Mdl, IN PVOID ReadOperation, IN PVOID DmaOperation);
 
-VOID
-KiSyncCacheTarget(
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiSyncCacheTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3);
 
 ULONG_PTR
-KiSyncMC_DrainTarget(
-    );
+KiSyncMC_DrainTarget();
 
 
 ULONG_PTR
-KiSyncMC_Drain(
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG Length
-    );
+KiSyncMC_Drain(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG Length);
 
 ULONG_PTR
-KiSyncPrefetchVisibleTarget(
-    );
+KiSyncPrefetchVisibleTarget();
 
 ULONG_PTR
-KiSyncPrefetchVisible (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG Length
-    );
-
-
+KiSyncPrefetchVisible(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG Length);
 
 
-VOID
-KiSyncCacheTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KiSyncCacheTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 Routine Description:
@@ -136,13 +94,9 @@ Return Value:
 
 #endif
     return;
-
 }
 
-VOID
-KeSweepIcache (
-    IN BOOLEAN AllProcessors
-    )
+VOID KeSweepIcache(IN BOOLEAN AllProcessors)
 
 /*++
 
@@ -175,7 +129,7 @@ Return Value:
     ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
 
 #if !defined(NT_UP)
-    // 
+    //
     // Acquire cache flush spinlock
     // Cache flush is not MP safe yet
     //
@@ -193,12 +147,9 @@ Return Value:
     //
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSweepIcacheTarget,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSweepIcacheTarget, NULL, NULL, NULL);
     }
 
 
@@ -208,7 +159,8 @@ Return Value:
     //
 
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -222,14 +174,8 @@ Return Value:
 
     return;
 }
-
-VOID
-KiSweepIcacheTarget (
-    IN PULONG SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiSweepIcacheTarget(IN PULONG SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -269,11 +215,8 @@ Return Value:
 
     return;
 }
-
-VOID
-KeSweepDcache (
-    IN BOOLEAN AllProcessors
-    )
+
+VOID KeSweepDcache(IN BOOLEAN AllProcessors)
 
 /*++
 
@@ -306,7 +249,7 @@ Return Value:
     ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
 
 #if !defined(NT_UP)
-    // 
+    //
     // Acquire cache flush spinlock
     // Cache flush is not MP safe yet
     //
@@ -324,12 +267,9 @@ Return Value:
     //
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSweepDcacheTarget,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSweepDcacheTarget, NULL, NULL, NULL);
     }
 
 
@@ -339,7 +279,8 @@ Return Value:
     //
 
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -353,14 +294,8 @@ Return Value:
 
     return;
 }
-
-VOID
-KiSweepDcacheTarget (
-    IN PULONG SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiSweepDcacheTarget(IN PULONG SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -398,12 +333,10 @@ Return Value:
 
     return;
 }
-
 
 
 ULONG_PTR
-KiSyncMC_DrainTarget(
-    )
+KiSyncMC_DrainTarget()
 
 /*++
 
@@ -431,28 +364,15 @@ Return Value:
     // Call HalCallPal to drain.
     //
 
-    Status = HalCallPal(PAL_MC_DRAIN,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0);
+    Status = HalCallPal(PAL_MC_DRAIN, 0, 0, 0, 0, 0, 0, 0);
 
     ASSERT(Status == PAL_STATUS_SUCCESS);
 
     return Status;
-
 }
 
 
-VOID
-KeSweepCacheRange (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG Length
-    )
+VOID KeSweepCacheRange(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG Length)
 
 /*++
 
@@ -485,8 +405,8 @@ Routine Description:
 --*/
 
 {
-     KIRQL OldIrql;
-     KAFFINITY TargetProcessors;
+    KIRQL OldIrql;
+    KAFFINITY TargetProcessors;
 
     //
     // We will not raise IRQL to synchronization level so that we can allow
@@ -495,7 +415,7 @@ Routine Description:
     //
     //
 
-    HalSweepCacheRange(BaseAddress,Length);
+    HalSweepCacheRange(BaseAddress, Length);
 
     ASSERT(KeGetCurrentIrql() <= KiSynchIrql);
 
@@ -513,12 +433,9 @@ Routine Description:
     //
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-    KiIpiSendPacket(TargetProcessors,
-                    KiSyncCacheTarget,
-                    NULL,
-                    NULL,
-                    NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSyncCacheTarget, NULL, NULL, NULL);
     }
 
 #endif
@@ -537,7 +454,8 @@ Routine Description:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -550,15 +468,9 @@ Routine Description:
 #endif
 
     return;
-
 }
 
-VOID
-KeSweepIcacheRange (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN SIZE_T Length
-    )
+VOID KeSweepIcacheRange(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN SIZE_T Length)
 
 /*++
 
@@ -607,7 +519,7 @@ Return Value:
     //
     //
 
-    HalSweepIcacheRange(BaseAddress,Length);
+    HalSweepIcacheRange(BaseAddress, Length);
 
     ASSERT(KeGetCurrentIrql() <= KiSynchIrql);
 
@@ -625,12 +537,9 @@ Return Value:
     //
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-            KiSyncCacheTarget,
-            NULL,
-            NULL,
-            NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSyncCacheTarget, NULL, NULL, NULL);
     }
 
 #endif
@@ -649,7 +558,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -662,15 +572,9 @@ Return Value:
 #endif
 
     return;
-
-
 }
 
-VOID
-KeSweepCurrentIcacheRange (
-    IN PVOID BaseAddress,
-    IN SIZE_T Length
-    )
+VOID KeSweepCurrentIcacheRange(IN PVOID BaseAddress, IN SIZE_T Length)
 
 /*++
 
@@ -703,8 +607,8 @@ Return Value:
 
     KeRaiseIrql(HIGH_LEVEL, &OldIrql);
 
-    HalSweepIcacheRange(BaseAddress,Length);
-    
+    HalSweepIcacheRange(BaseAddress, Length);
+
     //
     // Synchronize the Instruction Prefetch pipe in the local processor.
     //
@@ -718,13 +622,7 @@ Return Value:
 }
 
 
-
-VOID
-KeSweepDcacheRange (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG Length
-    )
+VOID KeSweepDcacheRange(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG Length)
 
 /*++
 
@@ -773,7 +671,7 @@ Return Value:
     //
     //
 
-    HalSweepDcacheRange(BaseAddress,Length);
+    HalSweepDcacheRange(BaseAddress, Length);
 
     ASSERT(KeGetCurrentIrql() <= KiSynchIrql);
 
@@ -791,12 +689,9 @@ Return Value:
     //
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-            KiSyncCacheTarget,
-            NULL,
-            NULL,
-            NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSyncCacheTarget, NULL, NULL, NULL);
     }
 
 #endif
@@ -815,7 +710,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -828,16 +724,10 @@ Return Value:
 #endif
 
     return;
-
-
 }
 
 ULONG_PTR
-KiSyncMC_Drain (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG Length
-    )
+KiSyncMC_Drain(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG Length)
 
 /*++
 
@@ -871,21 +761,15 @@ Return Value:
     // KiIpiGenericCall returns ULONG_PTR as the function value of the specified function
     //
 
-    Status = (KiIpiGenericCall (
-                (PKIPI_BROADCAST_WORKER)KiSyncMC_DrainTarget,
-                (ULONG_PTR)NULL)
-                );
+    Status = (KiIpiGenericCall((PKIPI_BROADCAST_WORKER)KiSyncMC_DrainTarget, (ULONG_PTR)NULL));
 
     ASSERT(Status == PAL_STATUS_SUCCESS);
 
     return Status;
-
-
 }
 
 ULONG_PTR
-KiSyncPrefetchVisibleTarget(
-    )
+KiSyncPrefetchVisibleTarget()
 
 /*++
 
@@ -912,30 +796,17 @@ Return Value:
     // Call HalCallPal to drain.
     //
 
-    Status = HalCallPal(PAL_PREFETCH_VISIBILITY,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0);
+    Status = HalCallPal(PAL_PREFETCH_VISIBILITY, 0, 0, 0, 0, 0, 0, 0);
 
 
     ASSERT(Status != PAL_STATUS_ERROR);
 
     return Status;
-
 }
 
 
-
 ULONG_PTR
-KiSyncPrefetchVisible (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG Length
-    )
+KiSyncPrefetchVisible(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG Length)
 
 /*++
 
@@ -974,55 +845,47 @@ Return Value:
 
 {
     ULONG_PTR Status;
-    
-    switch (ProbePalVisibilitySupport) {
-        case 0: 
-            if (NeedPalVisibilitySupport == 0)
-               Status = PAL_STATUS_SUPPORT_NOT_NEEDED;
-            else {
-               Status = (KiIpiGenericCall (
-                            (PKIPI_BROADCAST_WORKER)KiSyncPrefetchVisibleTarget,
-                            (ULONG_PTR)NULL)
-                            );
-            }
-            break;
 
-        case 1:
-            Status = KiSyncPrefetchVisibleTarget();
-   
-            ASSERT(Status != PAL_STATUS_ERROR);
-   
-            ProbePalVisibilitySupport = 0;
+    switch (ProbePalVisibilitySupport)
+    {
+    case 0:
+        if (NeedPalVisibilitySupport == 0)
+            Status = PAL_STATUS_SUPPORT_NOT_NEEDED;
+        else
+        {
+            Status = (KiIpiGenericCall((PKIPI_BROADCAST_WORKER)KiSyncPrefetchVisibleTarget, (ULONG_PTR)NULL));
+        }
+        break;
 
-            if (Status == PAL_STATUS_SUPPORT_NOT_NEEDED) {
-                NeedPalVisibilitySupport = 0;
-                Status = PAL_STATUS_SUPPORT_NOT_NEEDED;
-            } else {
-                Status = (KiIpiGenericCall (
-                            (PKIPI_BROADCAST_WORKER)KiSyncPrefetchVisibleTarget,
-                            (ULONG_PTR)NULL)
-                            );
-            }
-            break;
-        default:
-            Status = PAL_STATUS_ERROR;
-            break;
+    case 1:
+        Status = KiSyncPrefetchVisibleTarget();
+
+        ASSERT(Status != PAL_STATUS_ERROR);
+
+        ProbePalVisibilitySupport = 0;
+
+        if (Status == PAL_STATUS_SUPPORT_NOT_NEEDED)
+        {
+            NeedPalVisibilitySupport = 0;
+            Status = PAL_STATUS_SUPPORT_NOT_NEEDED;
+        }
+        else
+        {
+            Status = (KiIpiGenericCall((PKIPI_BROADCAST_WORKER)KiSyncPrefetchVisibleTarget, (ULONG_PTR)NULL));
+        }
+        break;
+    default:
+        Status = PAL_STATUS_ERROR;
+        break;
     }
-            
-    ASSERT(Status != PAL_STATUS_ERROR);
-            
-    return Status;
 
+    ASSERT(Status != PAL_STATUS_ERROR);
+
+    return Status;
 }
 
 
-
-VOID
-KeSweepCacheRangeWithDrain (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG Length
-    )
+VOID KeSweepCacheRangeWithDrain(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG Length)
 
 /*++
 
@@ -1053,30 +916,15 @@ Return Value:
 {
     ULONG_PTR Status;
 
-    Status = KiSyncPrefetchVisible(
-                 AllProcessors,
-                 BaseAddress,
-                 Length
-                 );
+    Status = KiSyncPrefetchVisible(AllProcessors, BaseAddress, Length);
 
     ASSERT(Status != PAL_STATUS_ERROR);
-    
-    KeSweepCacheRange (
-        AllProcessors,
-        BaseAddress,
-        Length
-        );
 
-    Status = KiSyncMC_Drain (
-                 AllProcessors,
-                 BaseAddress,
-                 Length
-                 );
+    KeSweepCacheRange(AllProcessors, BaseAddress, Length);
+
+    Status = KiSyncMC_Drain(AllProcessors, BaseAddress, Length);
 
     ASSERT(Status == PAL_STATUS_SUCCESS);
 
     return;
-
-
 }
-

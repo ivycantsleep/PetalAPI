@@ -198,7 +198,7 @@ FFFFFFFFFFF00000 | 8KB parent directory (1st level)   | PDE_KTBASE
 
 #define _MI_MORE_THAN_4GB_ 1
 
-#define IMAGE_FILE_MACHINE_NATIVE   IMAGE_FILE_MACHINE_IA64
+#define IMAGE_FILE_MACHINE_NATIVE IMAGE_FILE_MACHINE_IA64
 
 #define _MIALT4K_ 1
 
@@ -206,7 +206,7 @@ FFFFFFFFFFF00000 | 8KB parent directory (1st level)   | PDE_KTBASE
 // Define empty list markers.
 //
 
-#define MM_EMPTY_LIST ((ULONG_PTR)-1)              //
+#define MM_EMPTY_LIST ((ULONG_PTR) - 1)       //
 #define MM_EMPTY_PTE_LIST ((ULONG)0xFFFFFFFF) // N.B. tied to MMPTE definition
 
 #define MI_PTE_BASE_FOR_LOWEST_KERNEL_ADDRESS ((PMMPTE)PTE_KBASE)
@@ -221,7 +221,7 @@ FFFFFFFFFFF00000 | 8KB parent directory (1st level)   | PDE_KTBASE
 // 43-Bit virtual address mask.
 //
 
-#define MASK_43 0x7FFFFFFFFFFUI64       //
+#define MASK_43 0x7FFFFFFFFFFUI64 //
 
 //
 // 44-Bit Physical address mask.
@@ -235,7 +235,7 @@ extern ULONG_PTR MmKseg2Frame;
 extern ULONGLONG MmPageSizeInfo;
 
 #define MM_USER_ADDRESS_RANGE_LIMIT (0xFFFFFFFFFFFFFFFFUI64) // user address range limit
-#define MM_MAXIMUM_ZERO_BITS 53         // maximum number of zero bits
+#define MM_MAXIMUM_ZERO_BITS 53                              // maximum number of zero bits
 
 //
 // PAGE_SIZE for IA64 is 8k, virtual page is 20 bits with a PAGE_SHIFT
@@ -243,7 +243,7 @@ extern ULONGLONG MmPageSizeInfo;
 //
 
 #define MM_VIRTUAL_PAGE_FILLER (PAGE_SHIFT - 12)
-#define MM_VIRTUAL_PAGE_SIZE (64-PAGE_SHIFT)
+#define MM_VIRTUAL_PAGE_SIZE (64 - PAGE_SHIFT)
 
 //
 // Address space layout definitions.
@@ -251,7 +251,7 @@ extern ULONGLONG MmPageSizeInfo;
 
 #define CODE_START KSEG0_BASE
 
-#define CODE_END   KSEG2_BASE
+#define CODE_END KSEG2_BASE
 
 #define MM_SYSTEM_SPACE_START (KADDRESS_BASE + 0x400000000UI64)
 
@@ -267,7 +267,7 @@ extern ULONGLONG MmPageSizeInfo;
 
 #define ALT4KB_PERMISSION_TABLE_START ((PVOID)(UADDRESS_BASE + 0x6FC00000000))
 
-#define ALT4KB_PERMISSION_TABLE_END   ((PVOID)(UADDRESS_BASE + 0x6FC00400000))
+#define ALT4KB_PERMISSION_TABLE_END ((PVOID)(UADDRESS_BASE + 0x6FC00400000))
 
 //
 // Define hyper space.
@@ -281,14 +281,14 @@ extern ULONGLONG MmPageSizeInfo;
 // Define area for mapping views into system space.
 //
 
-#define MM_SYSTEM_VIEW_SIZE (104*1024*1024)
+#define MM_SYSTEM_VIEW_SIZE (104 * 1024 * 1024)
 
 //
 // Hydra lives in region 1.
 //
 
-#define MM_SESSION_SPACE_DEFAULT        (0x2000000000000000UI64)
-#define MM_SESSION_SPACE_DEFAULT_END    (0x2000000200000000UI64)
+#define MM_SESSION_SPACE_DEFAULT (0x2000000000000000UI64)
+#define MM_SESSION_SPACE_DEFAULT_END (0x2000000200000000UI64)
 
 //
 // Define the start and maximum size for the system cache.
@@ -300,8 +300,7 @@ extern ULONGLONG MmPageSizeInfo;
 
 #define MM_SYSTEM_CACHE_END (KADDRESS_BASE + 0x1005FFFFFFFFUI64)
 
-#define MM_MAXIMUM_SYSTEM_CACHE_SIZE     \
-   (((ULONG_PTR)MM_SYSTEM_CACHE_END - (ULONG_PTR)MM_SYSTEM_CACHE_START) >> PAGE_SHIFT)
+#define MM_MAXIMUM_SYSTEM_CACHE_SIZE (((ULONG_PTR)MM_SYSTEM_CACHE_END - (ULONG_PTR)MM_SYSTEM_CACHE_START) >> PAGE_SHIFT)
 
 #define MM_PAGED_POOL_START ((PVOID)(KADDRESS_BASE + 0x10600000000UI64))
 
@@ -315,9 +314,9 @@ extern ULONGLONG MmPageSizeInfo;
 
 // EPC VA at 0xFFA00000 (see ntia64.h)
 
-#define MM_DEBUG_VA  ((PVOID)(KADDRESS_BASE + 0xFF900000))
+#define MM_DEBUG_VA ((PVOID)(KADDRESS_BASE + 0xFF900000))
 
-#define NON_PAGED_SYSTEM_END   (KADDRESS_BASE + 0x16600000000UI64)  //quadword aligned.
+#define NON_PAGED_SYSTEM_END (KADDRESS_BASE + 0x16600000000UI64) //quadword aligned.
 
 #define MM_PFN_DATABASE_START (KADDRESS_BASE + 0x40000000000UI64)
 
@@ -331,7 +330,7 @@ extern ULONG MiMaximumSystemCacheSize;
 
 #define MM_MINIMUM_SYSTEM_PTES 7000
 
-#define MM_MAXIMUM_SYSTEM_PTES (16*1024*1024)
+#define MM_MAXIMUM_SYSTEM_PTES (16 * 1024 * 1024)
 
 #define MM_DEFAULT_SYSTEM_PTES 11000
 
@@ -377,7 +376,7 @@ extern ULONG MiMaximumSystemCacheSize;
 //
 
 #define PAGE_DIRECTORY1_MASK (((ULONG_PTR)1 << PDI1_SHIFT) - 1)
-#define PAGE_DIRECTORY2_MASK (((ULONG_PTR)1 << PDI_SHIFT) -1)
+#define PAGE_DIRECTORY2_MASK (((ULONG_PTR)1 << PDI_SHIFT) - 1)
 
 #define MM_VA_MAPPED_BY_PDE ((ULONG_PTR)1 << PDI_SHIFT)
 
@@ -437,21 +436,20 @@ extern ULONG MiMaximumSystemCacheSize;
 // Hyper space definitions.
 //
 
-#define FIRST_MAPPING_PTE   ((PMMPTE)HYPER_SPACE)
+#define FIRST_MAPPING_PTE ((PMMPTE)HYPER_SPACE)
 
 #define NUMBER_OF_MAPPING_PTES 253
-#define LAST_MAPPING_PTE   \
-     ((PVOID)((ULONG_PTR)FIRST_MAPPING_PTE + (NUMBER_OF_MAPPING_PTES * PAGE_SIZE)))
+#define LAST_MAPPING_PTE ((PVOID)((ULONG_PTR)FIRST_MAPPING_PTE + (NUMBER_OF_MAPPING_PTES * PAGE_SIZE)))
 
-#define COMPRESSION_MAPPING_PTE   ((PMMPTE)((ULONG_PTR)LAST_MAPPING_PTE + PAGE_SIZE))
+#define COMPRESSION_MAPPING_PTE ((PMMPTE)((ULONG_PTR)LAST_MAPPING_PTE + PAGE_SIZE))
 
-#define IMAGE_MAPPING_PTE   ((PMMPTE)((ULONG_PTR)COMPRESSION_MAPPING_PTE + PAGE_SIZE))
+#define IMAGE_MAPPING_PTE ((PMMPTE)((ULONG_PTR)COMPRESSION_MAPPING_PTE + PAGE_SIZE))
 
 #define NUMBER_OF_ZEROING_PTES 32
 
-#define VAD_BITMAP_SPACE    ((PVOID)((ULONG_PTR)IMAGE_MAPPING_PTE + PAGE_SIZE))
+#define VAD_BITMAP_SPACE ((PVOID)((ULONG_PTR)IMAGE_MAPPING_PTE + PAGE_SIZE))
 
-#define WORKING_SET_LIST   ((PVOID)((ULONG_PTR)VAD_BITMAP_SPACE + PAGE_SIZE))
+#define WORKING_SET_LIST ((PVOID)((ULONG_PTR)VAD_BITMAP_SPACE + PAGE_SIZE))
 
 #define MM_MAXIMUM_WORKING_SET (((ULONG_PTR)(HYPER_SPACE)) >> PAGE_SHIFT)
 
@@ -465,55 +463,55 @@ extern ULONG MiMaximumSystemCacheSize;
 // Define memory attributes fields within PTE.
 //
 
-#define MM_PTE_TB_MA_WB         (0x0 << 2) // cacheable, write-back
-#define MM_PTE_TB_MA_UC         (0x4 << 2) // uncacheable
-#define MM_PTE_TB_MA_UCE        (0x5 << 2) // uncacheable, exporting fetchadd
-#define MM_PTE_TB_MA_WC         (0x6 << 2) // uncacheable, coalescing
-#define MM_PTE_TB_MA_NATPAGE    (0x7 << 2) // Nat Page
+#define MM_PTE_TB_MA_WB (0x0 << 2)      // cacheable, write-back
+#define MM_PTE_TB_MA_UC (0x4 << 2)      // uncacheable
+#define MM_PTE_TB_MA_UCE (0x5 << 2)     // uncacheable, exporting fetchadd
+#define MM_PTE_TB_MA_WC (0x6 << 2)      // uncacheable, coalescing
+#define MM_PTE_TB_MA_NATPAGE (0x7 << 2) // Nat Page
 
 //
 // Define masks for the PTE cache attributes.
 //
 
-#define MM_PTE_CACHE_ENABLED     0     // WB
-#define MM_PTE_CACHE_DISABLED    4     // UC
-#define MM_PTE_CACHE_DISPLAY     6     // WC
-#define MM_PTE_CACHE_RESERVED    1     // special encoding to cause a TLB miss
+#define MM_PTE_CACHE_ENABLED 0  // WB
+#define MM_PTE_CACHE_DISABLED 4 // UC
+#define MM_PTE_CACHE_DISPLAY 6  // WC
+#define MM_PTE_CACHE_RESERVED 1 // special encoding to cause a TLB miss
 
 //
 // Define masks for fields within the PTE.
 //
 
-#define MM_PTE_OWNER_MASK         0x0180
-#define MM_PTE_VALID_MASK         1
+#define MM_PTE_OWNER_MASK 0x0180
+#define MM_PTE_VALID_MASK 1
 #define MM_PTE_CACHE_DISABLE_MASK MM_PTE_TB_MA_UC
-#define MM_PTE_ACCESS_MASK        0x0020
-#define MM_PTE_DIRTY_MASK         0x0040
-#define MM_PTE_EXECUTE_MASK       0x0200
-#define MM_PTE_WRITE_MASK         0x0400
-#define MM_PTE_LARGE_PAGE_MASK    0
-#define MM_PTE_COPY_ON_WRITE_MASK ((ULONG)1 << (PAGE_SHIFT-1))
+#define MM_PTE_ACCESS_MASK 0x0020
+#define MM_PTE_DIRTY_MASK 0x0040
+#define MM_PTE_EXECUTE_MASK 0x0200
+#define MM_PTE_WRITE_MASK 0x0400
+#define MM_PTE_LARGE_PAGE_MASK 0
+#define MM_PTE_COPY_ON_WRITE_MASK ((ULONG)1 << (PAGE_SHIFT - 1))
 
-#define MM_PTE_PROTOTYPE_MASK     0x0002
-#define MM_PTE_TRANSITION_MASK    0x0080
+#define MM_PTE_PROTOTYPE_MASK 0x0002
+#define MM_PTE_TRANSITION_MASK 0x0080
 
 //
 // Bit fields to or into PTE to make a PTE valid based on the
 // protection field of the invalid PTE.
 //
 
-#define MM_PTE_NOACCESS          0x0
-#define MM_PTE_READONLY          0x0
-#define MM_PTE_READWRITE         MM_PTE_WRITE_MASK
-#define MM_PTE_WRITECOPY         MM_PTE_COPY_ON_WRITE_MASK
-#define MM_PTE_EXECUTE           MM_PTE_EXECUTE_MASK
-#define MM_PTE_EXECUTE_READ      MM_PTE_EXECUTE_MASK
+#define MM_PTE_NOACCESS 0x0
+#define MM_PTE_READONLY 0x0
+#define MM_PTE_READWRITE MM_PTE_WRITE_MASK
+#define MM_PTE_WRITECOPY MM_PTE_COPY_ON_WRITE_MASK
+#define MM_PTE_EXECUTE MM_PTE_EXECUTE_MASK
+#define MM_PTE_EXECUTE_READ MM_PTE_EXECUTE_MASK
 #define MM_PTE_EXECUTE_READWRITE MM_PTE_EXECUTE_MASK | MM_PTE_WRITE_MASK
 #define MM_PTE_EXECUTE_WRITECOPY MM_PTE_EXECUTE_MASK | MM_PTE_COPY_ON_WRITE_MASK
-#define MM_PTE_GUARD             0x0
-#define MM_PTE_CACHE             MM_PTE_TB_MA_WB
-#define MM_PTE_NOCACHE           MM_PTE_CACHE     // PAGE_NOCACHE is cached
-#define MM_PTE_EXC_DEFER         0x10000000000000 // defer exception
+#define MM_PTE_GUARD 0x0
+#define MM_PTE_CACHE MM_PTE_TB_MA_WB
+#define MM_PTE_NOCACHE MM_PTE_CACHE       // PAGE_NOCACHE is cached
+#define MM_PTE_EXC_DEFER 0x10000000000000 // defer exception
 
 
 #define MM_PROTECT_FIELD_SHIFT 2
@@ -522,18 +520,18 @@ extern ULONG MiMaximumSystemCacheSize;
 // Define masks for fields within the IA64 TB entry.
 //
 
-#define MM_PTE_TB_VALID          0x0001
-#define MM_PTE_TB_ACCESSED       0x0020
-#define MM_PTE_TB_MODIFIED       0x0040
-#define MM_PTE_TB_WRITE          0x0400
-#define MM_PTE_TB_EXECUTE        0x0200             // read/execute
-#define MM_PTE_TB_EXC_DEFER      0x10000000000000   // defer exception
+#define MM_PTE_TB_VALID 0x0001
+#define MM_PTE_TB_ACCESSED 0x0020
+#define MM_PTE_TB_MODIFIED 0x0040
+#define MM_PTE_TB_WRITE 0x0400
+#define MM_PTE_TB_EXECUTE 0x0200             // read/execute
+#define MM_PTE_TB_EXC_DEFER 0x10000000000000 // defer exception
 
 //
 // Define the number of VHPT pages.
 //
 
-#define MM_VHPT_PAGES           32
+#define MM_VHPT_PAGES 32
 
 //
 // Bits available for the software working set index within the hardware PTE.
@@ -580,11 +578,11 @@ extern ULONG MiMaximumSystemCacheSize;
 
 #define MM_STACK_OFFSET 0x0
 
-#define PDE_PER_PAGE ((ULONG)(PAGE_SIZE/(1 << PTE_SHIFT)))
+#define PDE_PER_PAGE ((ULONG)(PAGE_SIZE / (1 << PTE_SHIFT)))
 
-#define PTE_PER_PAGE ((ULONG)(PAGE_SIZE/(1 << PTE_SHIFT)))
+#define PTE_PER_PAGE ((ULONG)(PAGE_SIZE / (1 << PTE_SHIFT)))
 
-#define PTE_PER_PAGE_BITS 11    // This handles the case where the page is full
+#define PTE_PER_PAGE_BITS 11 // This handles the case where the page is full
 
 #if PTE_PER_PAGE_BITS > 32
 error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
@@ -596,7 +594,8 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 
 #define MM_USER_PAGE_TABLE_PAGES ((ULONG_PTR)MI_SYSTEM_RANGE_START / (PTE_PER_PAGE * PAGE_SIZE))
 
-#define MM_USER_PAGE_DIRECTORY_PAGES ((ULONG_PTR)MI_SYSTEM_RANGE_START / ((ULONG_PTR)PDE_PER_PAGE * PTE_PER_PAGE * PAGE_SIZE))
+#define MM_USER_PAGE_DIRECTORY_PAGES \
+    ((ULONG_PTR)MI_SYSTEM_RANGE_START / ((ULONG_PTR)PDE_PER_PAGE * PTE_PER_PAGE * PAGE_SIZE))
 
 //++
 //VOID
@@ -634,50 +633,58 @@ error - too many bits to fit into MMPTE_SOFTWARE or MMPFN.u1
 
 #if defined(_MIALT4K_)
 
-extern PVOID MiMaxWow64Pte;
+                                                    extern PVOID MiMaxWow64Pte;
 
-#define MI_SET_VALID_PTE_BITS(OUTPTE,PMASK,PPTE) {                           \
-        PWOW64_PROCESS _Wow64Process;                                        \
-        if ((PPTE >= (PMMPTE)PTE_UBASE) && (PPTE < (PMMPTE)MiMaxWow64Pte)) { \
-            _Wow64Process = PsGetCurrentProcess()->Wow64Process;             \
-            if (_Wow64Process != NULL) {                                     \
-                if (MI_CHECK_BIT(_Wow64Process->AltPermBitmap,               \
-                ((ULONG_PTR)PPTE >> PTE_SHIFT) & _ALTPERM_BITMAP_MASK) != 0) { \
-                    (OUTPTE).u.Long |= (MmProtectToPteMaskForSplit[PMASK]);  \
-                }                                                            \
-                else {                                                       \
-                    (OUTPTE).u.Long |= (MmProtectToPteMaskForIA32[PMASK]);   \
-                    (OUTPTE).u.Hard.Accessed = 1;                            \
-                }                                                            \
-            }                                                                \
-            else {                                                           \
-                (OUTPTE).u.Hard.Accessed = 1;                                \
-                (OUTPTE).u.Long |= (MmProtectToPteMask[PMASK]);              \
-            }                                                                \
-        }                                                                    \
-        else {                                                               \
-            (OUTPTE).u.Hard.Accessed = 1;                                    \
-            (OUTPTE).u.Long |= (MmProtectToPteMask[PMASK]);                  \
-        }                                                                    \
-}
+#define MI_SET_VALID_PTE_BITS(OUTPTE, PMASK, PPTE)                                            \
+    {                                                                                         \
+        PWOW64_PROCESS _Wow64Process;                                                         \
+        if ((PPTE >= (PMMPTE)PTE_UBASE) && (PPTE < (PMMPTE)MiMaxWow64Pte))                    \
+        {                                                                                     \
+            _Wow64Process = PsGetCurrentProcess()->Wow64Process;                              \
+            if (_Wow64Process != NULL)                                                        \
+            {                                                                                 \
+                if (MI_CHECK_BIT(_Wow64Process->AltPermBitmap,                                \
+                                 ((ULONG_PTR)PPTE >> PTE_SHIFT) & _ALTPERM_BITMAP_MASK) != 0) \
+                {                                                                             \
+                    (OUTPTE).u.Long |= (MmProtectToPteMaskForSplit[PMASK]);                   \
+                }                                                                             \
+                else                                                                          \
+                {                                                                             \
+                    (OUTPTE).u.Long |= (MmProtectToPteMaskForIA32[PMASK]);                    \
+                    (OUTPTE).u.Hard.Accessed = 1;                                             \
+                }                                                                             \
+            }                                                                                 \
+            else                                                                              \
+            {                                                                                 \
+                (OUTPTE).u.Hard.Accessed = 1;                                                 \
+                (OUTPTE).u.Long |= (MmProtectToPteMask[PMASK]);                               \
+            }                                                                                 \
+        }                                                                                     \
+        else                                                                                  \
+        {                                                                                     \
+            (OUTPTE).u.Hard.Accessed = 1;                                                     \
+            (OUTPTE).u.Long |= (MmProtectToPteMask[PMASK]);                                   \
+        }                                                                                     \
+    }
 
 #else
 
-#define MI_SET_VALID_PTE_BITS(OUTPTE,PMASK,PPTE) {                           \
-       (OUTPTE).u.Hard.Accessed = 1;                                         \
-       (OUTPTE).u.Long |= (MmProtectToPteMask[PMASK]);
+#define MI_SET_VALID_PTE_BITS(OUTPTE, PMASK, PPTE) \
+    {                                              \
+        (OUTPTE).u.Hard.Accessed = 1;              \
+        (OUTPTE).u.Long |= (MmProtectToPteMask[PMASK]);
 }
 
 #endif
 
-#define MI_MAKE_VALID_PTE(OUTPTE,FRAME,PMASK,PPTE)                           \
-       (OUTPTE).u.Long = 0;                                                  \
-       (OUTPTE).u.Hard.Valid = 1;                                            \
-       (OUTPTE).u.Hard.Cache = MM_PTE_CACHE_ENABLED;                         \
-       (OUTPTE).u.Hard.Exception = 1;                                        \
-       (OUTPTE).u.Hard.PageFrameNumber = FRAME;                              \
-       (OUTPTE).u.Hard.Owner = MI_DETERMINE_OWNER(PPTE);                     \
-       MI_SET_VALID_PTE_BITS(OUTPTE,PMASK,PPTE)
+#define MI_MAKE_VALID_PTE(OUTPTE, FRAME, PMASK, PPTE) \
+    (OUTPTE).u.Long = 0;                              \
+    (OUTPTE).u.Hard.Valid = 1;                        \
+    (OUTPTE).u.Hard.Cache = MM_PTE_CACHE_ENABLED;     \
+    (OUTPTE).u.Hard.Exception = 1;                    \
+    (OUTPTE).u.Hard.PageFrameNumber = FRAME;          \
+    (OUTPTE).u.Hard.Owner = MI_DETERMINE_OWNER(PPTE); \
+    MI_SET_VALID_PTE_BITS(OUTPTE, PMASK, PPTE)
 
 //++
 //VOID
@@ -703,11 +710,11 @@ extern PVOID MiMaxWow64Pte;
 //
 //--
 
-#define MI_MAKE_VALID_PTE_TRANSITION(OUTPTE,PROTECT) \
-                (OUTPTE).u.Soft.Transition = 1;           \
-                (OUTPTE).u.Soft.Valid = 0;                \
-                (OUTPTE).u.Soft.Prototype = 0;            \
-                (OUTPTE).u.Soft.Protection = PROTECT;
+#define MI_MAKE_VALID_PTE_TRANSITION(OUTPTE, PROTECT) \
+    (OUTPTE).u.Soft.Transition = 1;                   \
+    (OUTPTE).u.Soft.Valid = 0;                        \
+    (OUTPTE).u.Soft.Prototype = 0;                    \
+    (OUTPTE).u.Soft.Protection = PROTECT;
 
 //++
 //VOID
@@ -739,12 +746,11 @@ extern PVOID MiMaxWow64Pte;
 //
 //--
 
-#define MI_MAKE_TRANSITION_PTE(OUTPTE,PAGE,PROTECT,PPTE)   \
-                (OUTPTE).u.Long = 0;                       \
-                (OUTPTE).u.Trans.PageFrameNumber = PAGE;   \
-                (OUTPTE).u.Trans.Transition = 1;           \
-                (OUTPTE).u.Trans.Protection = PROTECT;
-
+#define MI_MAKE_TRANSITION_PTE(OUTPTE, PAGE, PROTECT, PPTE) \
+    (OUTPTE).u.Long = 0;                                    \
+    (OUTPTE).u.Trans.PageFrameNumber = PAGE;                \
+    (OUTPTE).u.Trans.Transition = 1;                        \
+    (OUTPTE).u.Trans.Protection = PROTECT;
 
 
 //++
@@ -770,23 +776,22 @@ extern PVOID MiMaxWow64Pte;
 //
 //--
 
-#define MI_MAKE_TRANSITION_PTE_VALID(OUTPTE,PPTE) {                      \
-        ASSERT (((PPTE)->u.Hard.Valid == 0) &&                           \
-                ((PPTE)->u.Trans.Prototype == 0) &&                      \
-                ((PPTE)->u.Trans.Transition == 1));                      \
-       (OUTPTE).u.Long = (PPTE)->u.Long & 0x1FFFFFFFE000;                \
-       (OUTPTE).u.Hard.Valid = 1;                                        \
-       (OUTPTE).u.Hard.Cache = MM_PTE_CACHE_ENABLED;                     \
-       (OUTPTE).u.Hard.Exception = 1;                                    \
-       (OUTPTE).u.Hard.Owner = MI_DETERMINE_OWNER(PPTE);                 \
-       MI_SET_VALID_PTE_BITS(OUTPTE,(PPTE)->u.Trans.Protection,PPTE)     \
-}
+#define MI_MAKE_TRANSITION_PTE_VALID(OUTPTE, PPTE)                                                                    \
+    {                                                                                                                 \
+        ASSERT(((PPTE)->u.Hard.Valid == 0) && ((PPTE)->u.Trans.Prototype == 0) && ((PPTE)->u.Trans.Transition == 1)); \
+        (OUTPTE).u.Long = (PPTE)->u.Long & 0x1FFFFFFFE000;                                                            \
+        (OUTPTE).u.Hard.Valid = 1;                                                                                    \
+        (OUTPTE).u.Hard.Cache = MM_PTE_CACHE_ENABLED;                                                                 \
+        (OUTPTE).u.Hard.Exception = 1;                                                                                \
+        (OUTPTE).u.Hard.Owner = MI_DETERMINE_OWNER(PPTE);                                                             \
+        MI_SET_VALID_PTE_BITS(OUTPTE, (PPTE)->u.Trans.Protection, PPTE)                                               \
+    }
 
-#define MI_FAULT_STATUS_INDICATES_EXECUTION(_FaultStatus)   (_FaultStatus & 0x2)
+#define MI_FAULT_STATUS_INDICATES_EXECUTION(_FaultStatus) (_FaultStatus & 0x2)
 
-#define MI_FAULT_STATUS_INDICATES_WRITE(_FaultStatus)   (_FaultStatus & 0x1)
+#define MI_FAULT_STATUS_INDICATES_WRITE(_FaultStatus) (_FaultStatus & 0x1)
 
-#define MI_CLEAR_FAULT_STATUS(_FaultStatus)             (_FaultStatus = 0)
+#define MI_CLEAR_FAULT_STATUS(_FaultStatus) (_FaultStatus = 0)
 
 #define MI_IS_PTE_EXECUTABLE(_TempPte) ((_TempPte)->u.Hard.Execute != 0)
 
@@ -817,12 +822,13 @@ extern PVOID MiMaxWow64Pte;
 //
 //--
 
-#define MI_SET_PTE_IN_WORKING_SET(PTE, WSINDEX) {             \
-    MMPTE _TempPte;                                           \
-    _TempPte = *(PTE);                                        \
-    _TempPte.u.Hard.SoftwareWsIndex = (WSINDEX);              \
-    *(PTE) = _TempPte;                                        \
-}
+#define MI_SET_PTE_IN_WORKING_SET(PTE, WSINDEX)      \
+    {                                                \
+        MMPTE _TempPte;                              \
+        _TempPte = *(PTE);                           \
+        _TempPte.u.Hard.SoftwareWsIndex = (WSINDEX); \
+        *(PTE) = _TempPte;                           \
+    }
 
 //++
 //ULONG WsIndex
@@ -844,7 +850,7 @@ extern PVOID MiMaxWow64Pte;
 //
 //--
 
-#define MI_GET_WORKING_SET_FROM_PTE(PTE)  (ULONG)(PTE)->u.Hard.SoftwareWsIndex
+#define MI_GET_WORKING_SET_FROM_PTE(PTE) (ULONG)(PTE)->u.Hard.SoftwareWsIndex
 
 extern BOOLEAN MiWriteCombiningPtes;
 
@@ -868,16 +874,17 @@ extern BOOLEAN MiWriteCombiningPtes;
 //
 //--
 
-#define MI_SET_PTE_WRITE_COMBINE(PTE)  \
-    ((PTE).u.Hard.Cache = MM_PTE_CACHE_DISABLED)
+#define MI_SET_PTE_WRITE_COMBINE(PTE) ((PTE).u.Hard.Cache = MM_PTE_CACHE_DISABLED)
 
-#define MI_SET_PTE_WRITE_COMBINE2(PTE)                          \
-            if (MiWriteCombiningPtes == TRUE) {                 \
-                (PTE).u.Hard.Cache = MM_PTE_CACHE_DISPLAY;      \
-            }                                                   \
-            else {                                              \
-                (PTE).u.Hard.Cache = MM_PTE_CACHE_DISABLED;     \
-            }
+#define MI_SET_PTE_WRITE_COMBINE2(PTE)              \
+    if (MiWriteCombiningPtes == TRUE)               \
+    {                                               \
+        (PTE).u.Hard.Cache = MM_PTE_CACHE_DISPLAY;  \
+    }                                               \
+    else                                            \
+    {                                               \
+        (PTE).u.Hard.Cache = MM_PTE_CACHE_DISABLED; \
+    }
 
 //++
 //VOID
@@ -903,10 +910,11 @@ extern BOOLEAN MiWriteCombiningPtes;
 //     None.
 //
 //--
-#define MI_PREPARE_FOR_NONCACHED(_CacheAttribute)               \
-        if (_CacheAttribute != MiCached) {                      \
-            KeFlushEntireTb(FALSE, TRUE);                       \
-        }
+#define MI_PREPARE_FOR_NONCACHED(_CacheAttribute) \
+    if (_CacheAttribute != MiCached)              \
+    {                                             \
+        KeFlushEntireTb(FALSE, TRUE);             \
+    }
 
 //++
 //VOID
@@ -933,20 +941,16 @@ extern BOOLEAN MiWriteCombiningPtes;
 //     None.
 //
 //--
-#define MI_SWEEP_CACHE(_CacheAttribute,_StartVa,_NumberOfBytes)         \
-        if (_CacheAttribute != MiCached) {                              \
-            MiSweepCacheMachineDependent (_StartVa,                     \
-                                          _NumberOfBytes,               \
-                                          (ULONG)(_CacheAttribute));    \
-        }
+#define MI_SWEEP_CACHE(_CacheAttribute, _StartVa, _NumberOfBytes)                         \
+    if (_CacheAttribute != MiCached)                                                      \
+    {                                                                                     \
+        MiSweepCacheMachineDependent(_StartVa, _NumberOfBytes, (ULONG)(_CacheAttribute)); \
+    }
 
 LOGICAL
-MiPageFrameIndexMustBeCached (
-    IN PFN_NUMBER PageFrameIndex
-    );
+MiPageFrameIndexMustBeCached(IN PFN_NUMBER PageFrameIndex);
 
-#define MI_PAGE_FRAME_INDEX_MUST_BE_CACHED(PageFrameIndex)              \
-        MiPageFrameIndexMustBeCached(PageFrameIndex)
+#define MI_PAGE_FRAME_INDEX_MUST_BE_CACHED(PageFrameIndex) MiPageFrameIndexMustBeCached(PageFrameIndex)
 
 //++
 //VOID
@@ -994,7 +998,6 @@ MiPageFrameIndexMustBeCached (
 #define MI_SET_PTE_CLEAN(PTE) (PTE).u.Hard.Dirty = 0
 
 
-
 //++
 //VOID
 //MI_IS_PTE_DIRTY (
@@ -1016,7 +1019,6 @@ MiPageFrameIndexMustBeCached (
 //--
 
 #define MI_IS_PTE_DIRTY(PTE) ((PTE).u.Hard.Dirty != 0)
-
 
 
 //++
@@ -1043,8 +1045,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_SET_GLOBAL_BIT_IF_SYSTEM(OUTPTE,PPTE)
-
+#define MI_SET_GLOBAL_BIT_IF_SYSTEM(OUTPTE, PPTE)
 
 
 //++
@@ -1070,8 +1071,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_SET_GLOBAL_STATE(PTE,STATE)
-
+#define MI_SET_GLOBAL_STATE(PTE, STATE)
 
 
 //++
@@ -1098,7 +1098,6 @@ MiPageFrameIndexMustBeCached (
 #define MI_ENABLE_CACHING(PTE) ((PTE).u.Hard.Cache = MM_PTE_CACHE_ENABLED)
 
 
-
 //++
 //VOID
 //MI_DISABLE_CACHING (
@@ -1123,8 +1122,6 @@ MiPageFrameIndexMustBeCached (
 #define MI_DISABLE_CACHING(PTE) ((PTE).u.Hard.Cache = MM_PTE_CACHE_DISABLED)
 
 
-
-
 //++
 //BOOLEAN
 //MI_IS_CACHING_DISABLED (
@@ -1146,9 +1143,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_IS_CACHING_DISABLED(PPTE) \
-            ((PPTE)->u.Hard.Cache == MM_PTE_CACHE_DISABLED)
-
+#define MI_IS_CACHING_DISABLED(PPTE) ((PPTE)->u.Hard.Cache == MM_PTE_CACHE_DISABLED)
 
 
 //++
@@ -1172,8 +1167,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_SET_PFN_DELETED(PPFN) \
-    (PPFN)->PteAddress = (PMMPTE)((ULONG_PTR)PPFN->PteAddress | 0x1);
+#define MI_SET_PFN_DELETED(PPFN) (PPFN)->PteAddress = (PMMPTE)((ULONG_PTR)PPFN->PteAddress | 0x1);
 
 
 //++
@@ -1197,9 +1191,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_MARK_PFN_UNDELETED(PPFN) \
-    PPFN->PteAddress = (PMMPTE)((ULONG_PTR)PPFN->PteAddress & ~0x1);
-
+#define MI_MARK_PFN_UNDELETED(PPFN) PPFN->PteAddress = (PMMPTE)((ULONG_PTR)PPFN->PteAddress & ~0x1);
 
 
 //++
@@ -1223,8 +1215,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_IS_PFN_DELETED(PPFN)   \
-            ((ULONG_PTR)(PPFN)->PteAddress & 0x1)
+#define MI_IS_PFN_DELETED(PPFN) ((ULONG_PTR)(PPFN)->PteAddress & 0x1)
 
 
 //++
@@ -1254,9 +1245,7 @@ MiPageFrameIndexMustBeCached (
 
 // does nothing on IA64.
 
-#define MI_CHECK_PAGE_ALIGNMENT(PAGE,PPTE)
-
-
+#define MI_CHECK_PAGE_ALIGNMENT(PAGE, PPTE)
 
 
 //++
@@ -1306,9 +1295,8 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_GET_PAGE_COLOR_FROM_PTE(PTEADDRESS)  \
-         (((ULONG)((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask)) | MI_CURRENT_NODE_COLOR)
-
+#define MI_GET_PAGE_COLOR_FROM_PTE(PTEADDRESS) \
+    (((ULONG)((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask)) | MI_CURRENT_NODE_COLOR)
 
 
 //++
@@ -1333,8 +1321,8 @@ MiPageFrameIndexMustBeCached (
 //--
 
 
-#define MI_GET_PAGE_COLOR_FROM_VA(ADDRESS)  \
-         (((ULONG)((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask)) | MI_CURRENT_NODE_COLOR)
+#define MI_GET_PAGE_COLOR_FROM_VA(ADDRESS) \
+    (((ULONG)((MI_SYSTEM_PAGE_COLOR++) & MmSecondaryColorMask)) | MI_CURRENT_NODE_COLOR)
 
 
 //++
@@ -1359,8 +1347,8 @@ MiPageFrameIndexMustBeCached (
 //--
 
 
-#define MI_GET_PAGE_COLOR_FROM_SESSION(_SessionSpace)  \
-         (((ULONG)((_SessionSpace->Color++) & MmSecondaryColorMask)) | MI_CURRENT_NODE_COLOR)
+#define MI_GET_PAGE_COLOR_FROM_SESSION(_SessionSpace) \
+    (((ULONG)((_SessionSpace->Color++) & MmSecondaryColorMask)) | MI_CURRENT_NODE_COLOR)
 
 
 //++
@@ -1387,8 +1375,7 @@ MiPageFrameIndexMustBeCached (
 //--
 
 
-#define MI_PAGE_COLOR_PTE_PROCESS(PTE,COLOR)  \
-         (((ULONG)((*(COLOR))++) & MmSecondaryColorMask) | MI_CURRENT_NODE_COLOR)
+#define MI_PAGE_COLOR_PTE_PROCESS(PTE, COLOR) (((ULONG)((*(COLOR))++) & MmSecondaryColorMask) | MI_CURRENT_NODE_COLOR)
 
 
 //++
@@ -1413,9 +1400,8 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_PAGE_COLOR_VA_PROCESS(ADDRESS,COLOR) \
-         (((ULONG)((*(COLOR))++) & MmSecondaryColorMask) | MI_CURRENT_NODE_COLOR)
-
+#define MI_PAGE_COLOR_VA_PROCESS(ADDRESS, COLOR) \
+    (((ULONG)((*(COLOR))++) & MmSecondaryColorMask) | MI_CURRENT_NODE_COLOR)
 
 
 //++
@@ -1438,7 +1424,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_GET_NEXT_COLOR(COLOR)  ((COLOR + 1) & MM_COLOR_MASK)
+#define MI_GET_NEXT_COLOR(COLOR) ((COLOR + 1) & MM_COLOR_MASK)
 
 
 //++
@@ -1461,9 +1447,9 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_GET_PREVIOUS_COLOR(COLOR)  (0)
+#define MI_GET_PREVIOUS_COLOR(COLOR) (0)
 
-#define MI_GET_SECONDARY_COLOR(PAGE,PFN) (PAGE & MmSecondaryColorMask)
+#define MI_GET_SECONDARY_COLOR(PAGE, PFN) (PAGE & MmSecondaryColorMask)
 
 #define MI_GET_COLOR_FROM_SECONDARY(SECONDARY_COLOR) (0)
 
@@ -1494,8 +1480,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_GET_MODIFIED_PAGE_BY_COLOR(PAGE,COLOR) \
-            PAGE = MmModifiedPageListByColor[COLOR].Flink
+#define MI_GET_MODIFIED_PAGE_BY_COLOR(PAGE, COLOR) PAGE = MmModifiedPageListByColor[COLOR].Flink
 
 
 //++
@@ -1526,15 +1511,17 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_GET_MODIFIED_PAGE_ANY_COLOR(PAGE,COLOR) \
-            {                                                                \
-                if (MmTotalPagesForPagingFile == 0) {                        \
-                    PAGE = MM_EMPTY_LIST;                                    \
-                } else {                                                     \
-                    PAGE = MmModifiedPageListByColor[COLOR].Flink;           \
-                }                                                            \
-            }
-
+#define MI_GET_MODIFIED_PAGE_ANY_COLOR(PAGE, COLOR)        \
+    {                                                      \
+        if (MmTotalPagesForPagingFile == 0)                \
+        {                                                  \
+            PAGE = MM_EMPTY_LIST;                          \
+        }                                                  \
+        else                                               \
+        {                                                  \
+            PAGE = MmModifiedPageListByColor[COLOR].Flink; \
+        }                                                  \
+    }
 
 
 //++
@@ -1560,10 +1547,11 @@ MiPageFrameIndexMustBeCached (
 //--
 
 #define MI_MAKE_VALID_PTE_WRITE_COPY(PPTE) \
-                    if ((PPTE)->u.Hard.Write == 1) {    \
-                        (PPTE)->u.Hard.CopyOnWrite = 1; \
-                        (PPTE)->u.Hard.Write = 0;       \
-                    }
+    if ((PPTE)->u.Hard.Write == 1)         \
+    {                                      \
+        (PPTE)->u.Hard.CopyOnWrite = 1;    \
+        (PPTE)->u.Hard.Write = 0;          \
+    }
 
 
 //++
@@ -1589,15 +1577,13 @@ MiPageFrameIndexMustBeCached (
 
 #if defined(_MIALT4K_)
 
-#define MI_DETERMINE_OWNER(PPTE)   \
-     ((((((PPTE) >= (PMMPTE)PTE_UBASE) && ((PPTE) <= MiHighestUserPte))) || \
-       (MI_IS_ALT_PAGE_TABLE_ADDRESS(PPTE))) ? 3 : 0)
+#define MI_DETERMINE_OWNER(PPTE)                                                                                     \
+    ((((((PPTE) >= (PMMPTE)PTE_UBASE) && ((PPTE) <= MiHighestUserPte))) || (MI_IS_ALT_PAGE_TABLE_ADDRESS(PPTE))) ? 3 \
+                                                                                                                 : 0)
 
 #else
 
-#define MI_DETERMINE_OWNER(PPTE)   \
-    ((((PPTE) >= (PMMPTE)PTE_UBASE) && \
-      ((PPTE) <= MiHighestUserPte)) ? 3 : 0)
+#define MI_DETERMINE_OWNER(PPTE) ((((PPTE) >= (PMMPTE)PTE_UBASE) && ((PPTE) <= MiHighestUserPte)) ? 3 : 0)
 #endif
 
 
@@ -1624,33 +1610,41 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_SET_ACCESSED_IN_PTE(PPTE,ACCESSED) {                              \
-        PWOW64_PROCESS _Wow64Process;                                        \
-        if (ACCESSED == 0) {                                                 \
-            if (MI_IS_PTE_ADDRESS(PPTE)) {                                   \
-                (PPTE)->u.Hard.Accessed = 0;                                 \
-            }                                                                \
-        }                                                                    \
-        else if ((PPTE >= (PMMPTE)PTE_UBASE) && (PPTE < (PMMPTE)MiMaxWow64Pte)) {    \
-            _Wow64Process = PsGetCurrentProcess()->Wow64Process;             \
-            if (_Wow64Process != NULL) {                                     \
-                if (MI_CHECK_BIT(_Wow64Process->AltPermBitmap,               \
-                ((ULONG_PTR)PPTE >> PTE_SHIFT) & _ALTPERM_BITMAP_MASK) != 0) { \
-                    NOTHING;                                                 \
-                }                                                            \
-                else {                                                       \
-                    (PPTE)->u.Hard.Accessed = 1;                             \
-                }                                                            \
-            }                                                                \
-            else {                                                           \
-                (PPTE)->u.Hard.Accessed = 1;                                 \
-            }                                                                \
-        }                                                                    \
-        else {                                                               \
-            (PPTE)->u.Hard.Accessed = 1;                                     \
-        }                                                                    \
-}
-
+#define MI_SET_ACCESSED_IN_PTE(PPTE, ACCESSED)                                                \
+    {                                                                                         \
+        PWOW64_PROCESS _Wow64Process;                                                         \
+        if (ACCESSED == 0)                                                                    \
+        {                                                                                     \
+            if (MI_IS_PTE_ADDRESS(PPTE))                                                      \
+            {                                                                                 \
+                (PPTE)->u.Hard.Accessed = 0;                                                  \
+            }                                                                                 \
+        }                                                                                     \
+        else if ((PPTE >= (PMMPTE)PTE_UBASE) && (PPTE < (PMMPTE)MiMaxWow64Pte))               \
+        {                                                                                     \
+            _Wow64Process = PsGetCurrentProcess()->Wow64Process;                              \
+            if (_Wow64Process != NULL)                                                        \
+            {                                                                                 \
+                if (MI_CHECK_BIT(_Wow64Process->AltPermBitmap,                                \
+                                 ((ULONG_PTR)PPTE >> PTE_SHIFT) & _ALTPERM_BITMAP_MASK) != 0) \
+                {                                                                             \
+                    NOTHING;                                                                  \
+                }                                                                             \
+                else                                                                          \
+                {                                                                             \
+                    (PPTE)->u.Hard.Accessed = 1;                                              \
+                }                                                                             \
+            }                                                                                 \
+            else                                                                              \
+            {                                                                                 \
+                (PPTE)->u.Hard.Accessed = 1;                                                  \
+            }                                                                                 \
+        }                                                                                     \
+        else                                                                                  \
+        {                                                                                     \
+            (PPTE)->u.Hard.Accessed = 1;                                                      \
+        }                                                                                     \
+    }
 
 
 //++
@@ -1676,7 +1670,6 @@ MiPageFrameIndexMustBeCached (
 #define MI_GET_ACCESSED_IN_PTE(PPTE) ((PPTE)->u.Hard.Accessed)
 
 
-
 //++
 //VOID
 //MI_SET_OWNER_IN_PTE (
@@ -1698,9 +1691,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_SET_OWNER_IN_PTE(PPTE,OWNER)
-
-
+#define MI_SET_OWNER_IN_PTE(PPTE, OWNER)
 
 
 //++
@@ -1756,9 +1747,9 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_SET_PAGING_FILE_INFO(OUTPTE,PTE,FILEINFO,OFFSET) \
-        (OUTPTE).u.Long = (((PTE).u.Soft.Protection << MM_PROTECT_FIELD_SHIFT) | \
-         ((ULONGLONG)(FILEINFO) << _MM_PAGING_FILE_LOW_SHIFT) | \
+#define MI_SET_PAGING_FILE_INFO(OUTPTE, PTE, FILEINFO, OFFSET)                                                        \
+    (OUTPTE).u.Long =                                                                                                 \
+        (((PTE).u.Soft.Protection << MM_PROTECT_FIELD_SHIFT) | ((ULONGLONG)(FILEINFO) << _MM_PAGING_FILE_LOW_SHIFT) | \
          ((ULONGLONG)(OFFSET) << _MM_PAGING_FILE_HIGH_SHIFT));
 
 
@@ -1786,8 +1777,7 @@ MiPageFrameIndexMustBeCached (
 //--
 
 
-#define MiPteToProto(lpte) \
-            ((PMMPTE) ((ULONG_PTR)((lpte)->u.Proto.ProtoAddress) + MmProtopte_Base))
+#define MiPteToProto(lpte) ((PMMPTE)((ULONG_PTR)((lpte)->u.Proto.ProtoAddress) + MmProtopte_Base))
 
 //++
 //ULONG_PTR
@@ -1814,14 +1804,13 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiProtoAddressForPte(proto_va)  \
-        (( (ULONGLONG)((ULONG_PTR)proto_va - MmProtopte_Base) <<  \
-          (_MM_PROTO_ADDRESS_SHIFT)) | MM_PTE_PROTOTYPE_MASK)
+#define MiProtoAddressForPte(proto_va) \
+    (((ULONGLONG)((ULONG_PTR)proto_va - MmProtopte_Base) << (_MM_PROTO_ADDRESS_SHIFT)) | MM_PTE_PROTOTYPE_MASK)
 
 #define MISetProtoAddressForPte(PTE, proto_va) \
-        (PTE).u.Long = 0;                      \
-        (PTE).u.Proto.Prototype = 1;           \
-        (PTE).u.Proto.ProtoAddress = (ULONG_PTR)proto_va - MmProtopte_Base;
+    (PTE).u.Long = 0;                          \
+    (PTE).u.Proto.Prototype = 1;               \
+    (PTE).u.Proto.ProtoAddress = (ULONG_PTR)proto_va - MmProtopte_Base;
 
 
 //++
@@ -1853,10 +1842,10 @@ MiPageFrameIndexMustBeCached (
 
 //  not different on IA64.
 
-#define MiProtoAddressForKernelPte(proto_va)  MiProtoAddressForPte(proto_va)
+#define MiProtoAddressForKernelPte(proto_va) MiProtoAddressForPte(proto_va)
 
 
-#define MM_SUBSECTION_MAP (128*1024*1024)
+#define MM_SUBSECTION_MAP (128 * 1024 * 1024)
 
 //++
 //PSUBSECTION
@@ -1880,13 +1869,10 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetSubsectionAddress(lpte)                              \
-    (((lpte)->u.Subsect.WhichPool == 1) ?                              \
-     ((PSUBSECTION)((ULONG_PTR)MmSubsectionBase +    \
-                    ((ULONG_PTR)(lpte)->u.Subsect.SubsectionAddress))) \
-     : \
-     ((PSUBSECTION)((ULONG_PTR)MM_NONPAGED_POOL_END -    \
-                    ((ULONG_PTR)(lpte)->u.Subsect.SubsectionAddress))))
+#define MiGetSubsectionAddress(lpte)                                                                       \
+    (((lpte)->u.Subsect.WhichPool == 1)                                                                    \
+         ? ((PSUBSECTION)((ULONG_PTR)MmSubsectionBase + ((ULONG_PTR)(lpte)->u.Subsect.SubsectionAddress))) \
+         : ((PSUBSECTION)((ULONG_PTR)MM_NONPAGED_POOL_END - ((ULONG_PTR)(lpte)->u.Subsect.SubsectionAddress))))
 
 //++
 //ULONGLONG
@@ -1912,13 +1898,10 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetSubsectionAddressForPte(VA)                   \
-   ( ((ULONG_PTR)(VA) < (ULONG_PTR)KSEG2_BASE) ?                  \
-     ( ((ULONGLONG)((ULONG_PTR)VA - (ULONG_PTR)MmSubsectionBase) \
-          << (_MM_PTE_SUBSECTION_ADDRESS_SHIFT)) | 0x80) \
-     : \
-       ((ULONGLONG)((ULONG_PTR)MM_NONPAGED_POOL_END - (ULONG_PTR)VA) \
-          << (_MM_PTE_SUBSECTION_ADDRESS_SHIFT)) )
+#define MiGetSubsectionAddressForPte(VA)                                                                             \
+    (((ULONG_PTR)(VA) < (ULONG_PTR)KSEG2_BASE)                                                                       \
+         ? (((ULONGLONG)((ULONG_PTR)VA - (ULONG_PTR)MmSubsectionBase) << (_MM_PTE_SUBSECTION_ADDRESS_SHIFT)) | 0x80) \
+         : ((ULONGLONG)((ULONG_PTR)MM_NONPAGED_POOL_END - (ULONG_PTR)VA) << (_MM_PTE_SUBSECTION_ADDRESS_SHIFT)))
 
 //++
 //ULONG
@@ -1941,10 +1924,10 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetPpeOffset(va) \
-     ((((ULONG_PTR)(va) & PDE_TBASE) == PDE_TBASE) ? \
-      ((PDE_SELFMAP & ((sizeof(MMPTE)*PTE_PER_PAGE) - 1))/sizeof(MMPTE)) : \
-      ((ULONG)(((ULONG_PTR)(va) >> PDI1_SHIFT) & PDI_MASK)))
+#define MiGetPpeOffset(va)                                                        \
+    ((((ULONG_PTR)(va) & PDE_TBASE) == PDE_TBASE)                                 \
+         ? ((PDE_SELFMAP & ((sizeof(MMPTE) * PTE_PER_PAGE) - 1)) / sizeof(MMPTE)) \
+         : ((ULONG)(((ULONG_PTR)(va) >> PDI1_SHIFT) & PDI_MASK)))
 
 //++
 //ULONG
@@ -1996,7 +1979,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetPdeOffset(va) ((ULONG) (((ULONG_PTR)(va) >> PDI_SHIFT) & PDI_MASK))
+#define MiGetPdeOffset(va) ((ULONG)(((ULONG_PTR)(va) >> PDI_SHIFT) & PDI_MASK))
 
 //++
 //ULONG
@@ -2026,7 +2009,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetPdeIndex(va) ((ULONG) ((ULONG_PTR)(va) >> PDI_SHIFT))
+#define MiGetPdeIndex(va) ((ULONG)((ULONG_PTR)(va) >> PDI_SHIFT))
 
 //++
 //ULONG_PTR
@@ -2049,7 +2032,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetPteOffset(va) ((ULONG) (((ULONG_PTR)(va) >> PTI_SHIFT) & PDI_MASK))
+#define MiGetPteOffset(va) ((ULONG)(((ULONG_PTR)(va) >> PTI_SHIFT) & PDI_MASK))
 
 
 //++
@@ -2074,8 +2057,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetVirtualAddressMappedByPpe(PPE) \
-    MiGetVirtualAddressMappedByPte(MiGetVirtualAddressMappedByPde(PPE))
+#define MiGetVirtualAddressMappedByPpe(PPE) MiGetVirtualAddressMappedByPte(MiGetVirtualAddressMappedByPde(PPE))
 
 //++
 //PVOID
@@ -2098,8 +2080,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetVirtualAddressMappedByPde(Pde) \
-    MiGetVirtualAddressMappedByPte(MiGetVirtualAddressMappedByPte(Pde))
+#define MiGetVirtualAddressMappedByPde(Pde) MiGetVirtualAddressMappedByPte(MiGetVirtualAddressMappedByPte(Pde))
 
 //++
 //PVOID
@@ -2122,11 +2103,11 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MiGetVirtualAddressMappedByPte(PTE) \
-  (((ULONG_PTR)(PTE) & PTA_SIGN) ? \
-   (PVOID)(((ULONG_PTR)(PTE) & VRN_MASK) | VA_FILL | \
-           (((ULONG_PTR)(PTE)-PTE_BASE) << (PAGE_SHIFT - PTE_SHIFT))) : \
-   (PVOID)(((ULONG_PTR)(PTE) & VRN_MASK) | (((ULONG_PTR)(PTE)-PTE_BASE) << (PAGE_SHIFT - PTE_SHIFT))))
+#define MiGetVirtualAddressMappedByPte(PTE)                                     \
+    (((ULONG_PTR)(PTE) & PTA_SIGN)                                              \
+         ? (PVOID)(((ULONG_PTR)(PTE) & VRN_MASK) | VA_FILL |                    \
+                   (((ULONG_PTR)(PTE) - PTE_BASE) << (PAGE_SHIFT - PTE_SHIFT))) \
+         : (PVOID)(((ULONG_PTR)(PTE) & VRN_MASK) | (((ULONG_PTR)(PTE) - PTE_BASE) << (PAGE_SHIFT - PTE_SHIFT))))
 
 
 //++
@@ -2200,7 +2181,6 @@ MiPageFrameIndexMustBeCached (
 #define MiIsPteOnPpeBoundary(PTE) (((ULONG_PTR)(PTE) & (MM_VA_MAPPED_BY_PDE - 1)) == 0)
 
 
-
 //++
 //LOGICAL
 //MiIsPteOnPdeBoundary (
@@ -2245,8 +2225,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define GET_PAGING_FILE_NUMBER(PTE) ((ULONG) (PTE).u.Soft.PageFileLow)
-
+#define GET_PAGING_FILE_NUMBER(PTE) ((ULONG)(PTE).u.Soft.PageFileLow)
 
 
 //++
@@ -2269,9 +2248,7 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define GET_PAGING_FILE_OFFSET(PTE) ((ULONG) (PTE).u.Soft.PageFileHigh)
-
-
+#define GET_PAGING_FILE_OFFSET(PTE) ((ULONG)(PTE).u.Soft.PageFileHigh)
 
 
 //++
@@ -2295,10 +2272,8 @@ MiPageFrameIndexMustBeCached (
 //--
 
 #define IS_PTE_NOT_DEMAND_ZERO(PTE) \
-                 ((PTE).u.Long & ((ULONG_PTR)0xFFFFFFFFF0000000 |  \
-                                  MM_PTE_VALID_MASK |       \
-                                  MM_PTE_PROTOTYPE_MASK |   \
-                                  MM_PTE_TRANSITION_MASK))
+    ((PTE).u.Long &                 \
+     ((ULONG_PTR)0xFFFFFFFFF0000000 | MM_PTE_VALID_MASK | MM_PTE_PROTOTYPE_MASK | MM_PTE_TRANSITION_MASK))
 
 
 //++
@@ -2349,7 +2324,6 @@ MiPageFrameIndexMustBeCached (
 #define MI_MAKING_MULTIPLE_PTES_INVALID(SYSTEM_WIDE)
 
 
-
 //++
 //VOID
 //MI_MAKE_PROTECT_WRITE_COPY (
@@ -2370,10 +2344,11 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_MAKE_PROTECT_WRITE_COPY(PTE) \
-        if ((PTE).u.Soft.Protection & MM_PROTECTION_WRITE_MASK) {      \
-            (PTE).u.Long |= MM_PROTECTION_COPY_MASK << MM_PROTECT_FIELD_SHIFT;      \
-        }
+#define MI_MAKE_PROTECT_WRITE_COPY(PTE)                                    \
+    if ((PTE).u.Soft.Protection & MM_PROTECTION_WRITE_MASK)                \
+    {                                                                      \
+        (PTE).u.Long |= MM_PROTECTION_COPY_MASK << MM_PROTECT_FIELD_SHIFT; \
+    }
 
 
 //++
@@ -2404,10 +2379,11 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_SET_PAGE_DIRTY(PPTE,VA,PFNHELD)                          \
-            if ((PPTE)->u.Hard.Dirty == 1) {                        \
-                MiSetDirtyBit ((VA),(PPTE),(PFNHELD));              \
-            }
+#define MI_SET_PAGE_DIRTY(PPTE, VA, PFNHELD)    \
+    if ((PPTE)->u.Hard.Dirty == 1)              \
+    {                                           \
+        MiSetDirtyBit((VA), (PPTE), (PFNHELD)); \
+    }
 
 
 //++
@@ -2440,16 +2416,19 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_NO_FAULT_FOUND(FAULTSTATUS,PPTE,VA,PFNHELD)              \
-        if ((MI_FAULT_STATUS_INDICATES_WRITE(FAULTSTATUS)) && ((PPTE)->u.Hard.Dirty == 0)) {                                                        \
-            MiSetDirtyBit ((VA),(PPTE),(PFNHELD));                  \
-        } else {                                                    \
-            MMPTE TempPte;                                          \
-            TempPte = *(PPTE);                                      \
-            MI_SET_ACCESSED_IN_PTE (&TempPte, 1);                   \
-            MI_WRITE_VALID_PTE_NEW_PROTECTION((PPTE), TempPte);     \
-            KiFlushSingleTb(0, (VA));                               \
-        }
+#define MI_NO_FAULT_FOUND(FAULTSTATUS, PPTE, VA, PFNHELD)                              \
+    if ((MI_FAULT_STATUS_INDICATES_WRITE(FAULTSTATUS)) && ((PPTE)->u.Hard.Dirty == 0)) \
+    {                                                                                  \
+        MiSetDirtyBit((VA), (PPTE), (PFNHELD));                                        \
+    }                                                                                  \
+    else                                                                               \
+    {                                                                                  \
+        MMPTE TempPte;                                                                 \
+        TempPte = *(PPTE);                                                             \
+        MI_SET_ACCESSED_IN_PTE(&TempPte, 1);                                           \
+        MI_WRITE_VALID_PTE_NEW_PROTECTION((PPTE), TempPte);                            \
+        KiFlushSingleTb(0, (VA));                                                      \
+    }
 
 
 //++
@@ -2480,17 +2459,17 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-#define MI_CAPTURE_DIRTY_BIT_TO_PFN(PPTE,PPFN)                      \
-         ASSERT (KeGetCurrentIrql() > APC_LEVEL);                   \
-         if (((PPFN)->u3.e1.Modified == 0) &&                       \
-            ((PPTE)->u.Hard.Dirty != 0)) {                          \
-             MI_SET_MODIFIED (PPFN, 1, 0x18);                       \
-             if (((PPFN)->OriginalPte.u.Soft.Prototype == 0) &&     \
-                          ((PPFN)->u3.e1.WriteInProgress == 0)) {   \
-                 MiReleasePageFileSpace ((PPFN)->OriginalPte);      \
-                 (PPFN)->OriginalPte.u.Soft.PageFileHigh = 0;       \
-             }                                                      \
-         }
+#define MI_CAPTURE_DIRTY_BIT_TO_PFN(PPTE, PPFN)                                                  \
+    ASSERT(KeGetCurrentIrql() > APC_LEVEL);                                                      \
+    if (((PPFN)->u3.e1.Modified == 0) && ((PPTE)->u.Hard.Dirty != 0))                            \
+    {                                                                                            \
+        MI_SET_MODIFIED(PPFN, 1, 0x18);                                                          \
+        if (((PPFN)->OriginalPte.u.Soft.Prototype == 0) && ((PPFN)->u3.e1.WriteInProgress == 0)) \
+        {                                                                                        \
+            MiReleasePageFileSpace((PPFN)->OriginalPte);                                         \
+            (PPFN)->OriginalPte.u.Soft.PageFileHigh = 0;                                         \
+        }                                                                                        \
+    }
 
 
 //++
@@ -2515,10 +2494,10 @@ MiPageFrameIndexMustBeCached (
 //--
 
 
-#define MI_IS_PHYSICAL_ADDRESS(Va) \
-     ((((ULONG_PTR)(Va) >= KSEG3_BASE) && ((ULONG_PTR)(Va) < KSEG3_LIMIT)) || \
-      (((ULONG_PTR)(Va) >= KSEG4_BASE) && ((ULONG_PTR)(Va) < KSEG4_LIMIT)) || \
-      (((ULONG_PTR)Va >= KSEG0_BASE) && ((ULONG_PTR)Va < KSEG2_BASE)))
+#define MI_IS_PHYSICAL_ADDRESS(Va)                                           \
+    ((((ULONG_PTR)(Va) >= KSEG3_BASE) && ((ULONG_PTR)(Va) < KSEG3_LIMIT)) || \
+     (((ULONG_PTR)(Va) >= KSEG4_BASE) && ((ULONG_PTR)(Va) < KSEG4_LIMIT)) || \
+     (((ULONG_PTR)Va >= KSEG0_BASE) && ((ULONG_PTR)Va < KSEG2_BASE)))
 
 
 //++
@@ -2542,17 +2521,15 @@ MiPageFrameIndexMustBeCached (
 //
 //--
 
-PVOID KiGetPhysicalAddress(
-    IN PVOID VirtualAddress
-    );
+PVOID KiGetPhysicalAddress(IN PVOID VirtualAddress);
 
-#define MI_CONVERT_PHYSICAL_TO_PFN(Va)   \
-    (((ULONG_PTR)(Va) >= KSEG0_BASE) ?                             \
-     ((PFN_NUMBER)(((ULONG_PTR)KiGetPhysicalAddress(Va)) >> PAGE_SHIFT)) :\
-     ((PFN_NUMBER)(((ULONG_PTR)(Va) & ~VRN_MASK) >> PAGE_SHIFT))) 
+#define MI_CONVERT_PHYSICAL_TO_PFN(Va)                                                                     \
+    (((ULONG_PTR)(Va) >= KSEG0_BASE) ? ((PFN_NUMBER)(((ULONG_PTR)KiGetPhysicalAddress(Va)) >> PAGE_SHIFT)) \
+                                     : ((PFN_NUMBER)(((ULONG_PTR)(Va) & ~VRN_MASK) >> PAGE_SHIFT)))
 
 
-typedef struct _MMCOLOR_TABLES {
+typedef struct _MMCOLOR_TABLES
+{
     PFN_NUMBER Flink;
     PVOID Blink;
     PFN_NUMBER Count;
@@ -2566,7 +2543,7 @@ extern PMMCOLOR_TABLES MmFreePagesByColor[2];
 
 extern PFN_NUMBER MmTotalPagesForPagingFile;
 
-
+
 //
 // A VALID Page Table Entry on the IA64 has the following definition.
 //
@@ -2578,18 +2555,20 @@ extern PFN_NUMBER MmTotalPagesForPagingFile;
 
 #define MI_PTE_LOOKUP_NEEDED ((ULONG64)0xffffffff)
 
-typedef struct _MMPTE_SOFTWARE {
+typedef struct _MMPTE_SOFTWARE
+{
     ULONGLONG Valid : 1;
     ULONGLONG Prototype : 1;
     ULONGLONG Protection : 5;
     ULONGLONG Transition : 1;
     ULONGLONG UsedPageTableEntries : PTE_PER_PAGE_BITS;
     ULONGLONG Reserved : 20 - PTE_PER_PAGE_BITS;
-    ULONGLONG PageFileLow: 4;
+    ULONGLONG PageFileLow : 4;
     ULONGLONG PageFileHigh : 32;
 } MMPTE_SOFTWARE;
 
-typedef struct _MMPTE_TRANSITION {
+typedef struct _MMPTE_TRANSITION
+{
     ULONGLONG Valid : 1;
     ULONGLONG Prototype : 1;
     ULONGLONG Protection : 5;
@@ -2602,18 +2581,20 @@ typedef struct _MMPTE_TRANSITION {
 
 #define _MM_PROTO_ADDRESS_SHIFT 12
 
-typedef struct _MMPTE_PROTOTYPE {
+typedef struct _MMPTE_PROTOTYPE
+{
     ULONGLONG Valid : 1;
     ULONGLONG Prototype : 1;
-    ULONGLONG ReadOnly : 1;  // if set allow read only access.
+    ULONGLONG ReadOnly : 1; // if set allow read only access.
     ULONGLONG Rsvd : 9;
     ULONGLONG ProtoAddress : 52;
 } MMPTE_PROTOTYPE;
 
 
-#define _MM_PTE_SUBSECTION_ADDRESS_SHIFT  12
+#define _MM_PTE_SUBSECTION_ADDRESS_SHIFT 12
 
-typedef struct _MMPTE_SUBSECTION {
+typedef struct _MMPTE_SUBSECTION
+{
     ULONGLONG Valid : 1;
     ULONGLONG Prototype : 1;
     ULONGLONG Protection : 5;
@@ -2622,7 +2603,8 @@ typedef struct _MMPTE_SUBSECTION {
     ULONGLONG SubsectionAddress : 52;
 } MMPTE_SUBSECTION;
 
-typedef struct _MMPTE_LIST {
+typedef struct _MMPTE_LIST
+{
     ULONGLONG Valid : 1;
 
     //
@@ -2637,7 +2619,7 @@ typedef struct _MMPTE_LIST {
     // be misinterpreted if ever nonzero in the freed nonpaged pool chains.
     //
 
-    ULONGLONG Prototype : 1;            // MUST BE ZERO as per above comment.
+    ULONGLONG Prototype : 1; // MUST BE ZERO as per above comment.
     ULONGLONG Protection : 5;
     ULONGLONG Transition : 1;
     ULONGLONG OneEntry : 1;
@@ -2650,9 +2632,10 @@ typedef struct _MMPTE_LIST {
 // A Page Table Entry on the IA64 has the following definition.
 //
 
-#define _HARDWARE_PTE_WORKING_SET_BITS  11
+#define _HARDWARE_PTE_WORKING_SET_BITS 11
 
-typedef struct _MMPTE_HARDWARE {
+typedef struct _MMPTE_HARDWARE
+{
     ULONGLONG Valid : 1;
     ULONGLONG Rsvd0 : 1;
     ULONGLONG Cache : 3;
@@ -2669,7 +2652,8 @@ typedef struct _MMPTE_HARDWARE {
     ULONGLONG SoftwareWsIndex : _HARDWARE_PTE_WORKING_SET_BITS;
 } MMPTE_HARDWARE, *PMMPTE_HARDWARE;
 
-typedef struct _MMPTE_LARGEPAGE {
+typedef struct _MMPTE_LARGEPAGE
+{
     ULONGLONG Valid : 1;
     ULONGLONG Rsvd0 : 1;
     ULONGLONG Cache : 3;
@@ -2689,7 +2673,8 @@ typedef struct _MMPTE_LARGEPAGE {
     ULONGLONG Rsvd4 : 3;
 } MMPTE_LARGEPAGE, *PMMPTE_LARGEPAGE;
 
-typedef struct _ALT_4KPTE {
+typedef struct _ALT_4KPTE
+{
     ULONGLONG Commit : 1;
     ULONGLONG Rsvd0 : 1;
     ULONGLONG Cache : 3;
@@ -2717,8 +2702,10 @@ typedef struct _ALT_4KPTE {
 #define MI_GET_PROTECTION_FROM_TRANSITION_PTE(PTE) ((ULONG)((PTE)->u.Trans.Protection))
 
 
-typedef struct _MMPTE {
-    union  {
+typedef struct _MMPTE
+{
+    union
+    {
         ULONGLONG Long;
         MMPTE_HARDWARE Hard;
         MMPTE_LARGEPAGE Large;
@@ -2729,7 +2716,7 @@ typedef struct _MMPTE {
         MMPTE_SUBSECTION Subsect;
         MMPTE_LIST List;
         ALT_4KPTE Alt;
-        } u;
+    } u;
 } MMPTE;
 
 typedef MMPTE *PMMPTE;
@@ -2737,7 +2724,7 @@ typedef MMPTE *PMMPTE;
 extern PMMPTE MiFirstReservedZeroingPte;
 
 #define InterlockedCompareExchangePte(_PointerPte, _NewContents, _OldContents) \
-        InterlockedCompareExchange64 ((PLONGLONG)(_PointerPte), (LONGLONG)(_NewContents), (LONGLONG)(_OldContents))
+    InterlockedCompareExchange64((PLONGLONG)(_PointerPte), (LONGLONG)(_NewContents), (LONGLONG)(_OldContents))
 
 //++
 //VOID
@@ -2763,8 +2750,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_WRITE_VALID_PTE(_PointerPte, _PteContents)    \
-            (*((volatile MMPTE *)(_PointerPte)) = (_PteContents))
+#define MI_WRITE_VALID_PTE(_PointerPte, _PteContents) (*((volatile MMPTE *)(_PointerPte)) = (_PteContents))
 
 //++
 //VOID
@@ -2790,8 +2776,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_WRITE_INVALID_PTE(_PointerPte, _PteContents)  \
-            (*(_PointerPte) = (_PteContents))
+#define MI_WRITE_INVALID_PTE(_PointerPte, _PteContents) (*(_PointerPte) = (_PteContents))
 
 //++
 //VOID
@@ -2817,8 +2802,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_WRITE_VALID_PTE_NEW_PROTECTION(_PointerPte, _PteContents)    \
-            (*(_PointerPte) = (_PteContents))
+#define MI_WRITE_VALID_PTE_NEW_PROTECTION(_PointerPte, _PteContents) (*(_PointerPte) = (_PteContents))
 
 //++
 //VOID
@@ -2847,8 +2831,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MiFillMemoryPte(Destination, Length, Pattern) \
-             RtlFillMemoryUlonglong ((Destination), (Length), (Pattern))
+#define MiFillMemoryPte(Destination, Length, Pattern) RtlFillMemoryUlonglong((Destination), (Length), (Pattern))
 
 
 #define KiWbInvalidateCache
@@ -2876,14 +2859,14 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //--
 
 #if defined(_MIALT4K_)
-#define MI_IS_PAGE_TABLE_ADDRESS(VA) \
+#define MI_IS_PAGE_TABLE_ADDRESS(VA)                                                  \
     ((((ULONG_PTR)VA >= PTE_UBASE) && ((ULONG_PTR)VA <= (PDE_UTBASE + PAGE_SIZE))) || \
      (((ULONG_PTR)VA >= PTE_KBASE) && ((ULONG_PTR)VA <= (PDE_KTBASE + PAGE_SIZE))) || \
      (((ULONG_PTR)VA >= PTE_SBASE) && ((ULONG_PTR)VA <= (PDE_STBASE + PAGE_SIZE))) || \
-     (((ULONG_PTR)VA >= (ULONG_PTR)ALT4KB_PERMISSION_TABLE_START) && \
+     (((ULONG_PTR)VA >= (ULONG_PTR)ALT4KB_PERMISSION_TABLE_START) &&                  \
       ((ULONG_PTR)VA <= (ULONG_PTR)ALT4KB_PERMISSION_TABLE_END)))
 #else
-#define MI_IS_PAGE_TABLE_ADDRESS(VA) \
+#define MI_IS_PAGE_TABLE_ADDRESS(VA)                                                  \
     ((((ULONG_PTR)VA >= PTE_UBASE) && ((ULONG_PTR)VA <= (PDE_UTBASE + PAGE_SIZE))) || \
      (((ULONG_PTR)VA >= PTE_KBASE) && ((ULONG_PTR)VA <= (PDE_KTBASE + PAGE_SIZE))) || \
      (((ULONG_PTR)VA >= PTE_SBASE) && ((ULONG_PTR)VA <= (PDE_STBASE + PAGE_SIZE))))
@@ -2910,8 +2893,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_IS_HYPER_SPACE_ADDRESS(VA) \
-    (((PVOID)VA >= HYPER_SPACE) && ((PVOID)VA <= HYPER_SPACE_END))
+#define MI_IS_HYPER_SPACE_ADDRESS(VA) (((PVOID)VA >= HYPER_SPACE) && ((PVOID)VA <= HYPER_SPACE_END))
 
 //++
 //BOOLEAN
@@ -2934,13 +2916,13 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_IS_PTE_ADDRESS(PTE) \
+#define MI_IS_PTE_ADDRESS(PTE)                                    \
     (((PTE >= (PMMPTE)PTE_UBASE) && (PTE <= (PMMPTE)PTE_UTOP)) || \
      ((PTE >= (PMMPTE)PTE_KBASE) && (PTE <= (PMMPTE)PTE_KTOP)) || \
      ((PTE >= (PMMPTE)PTE_SBASE) && (PTE <= (PMMPTE)PTE_STOP)))
 
 
-#define MI_IS_PPE_ADDRESS(PTE) \
+#define MI_IS_PPE_ADDRESS(PTE)                                                     \
     (((PTE >= (PMMPTE)PDE_UTBASE) && (PTE <= (PMMPTE)(PDE_UTBASE + PAGE_SIZE))) || \
      ((PTE >= (PMMPTE)PDE_KTBASE) && (PTE <= (PMMPTE)(PDE_KTBASE + PAGE_SIZE))) || \
      ((PTE >= (PMMPTE)PDE_STBASE) && (PTE <= (PMMPTE)(PDE_STBASE + PAGE_SIZE))))
@@ -2966,8 +2948,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_IS_KERNEL_PTE_ADDRESS(PTE) \
-     (((PMMPTE)PTE >= (PMMPTE)PTE_KBASE) && ((PMMPTE)PTE <= (PMMPTE)PTE_KTOP))
+#define MI_IS_KERNEL_PTE_ADDRESS(PTE) (((PMMPTE)PTE >= (PMMPTE)PTE_KBASE) && ((PMMPTE)PTE <= (PMMPTE)PTE_KTOP))
 
 
 //++
@@ -2991,8 +2972,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_IS_USER_PTE_ADDRESS(PTE) \
-    ((PTE >= (PMMPTE)PTE_UBASE) && (PTE <= (PMMPTE)PTE_UTOP))
+#define MI_IS_USER_PTE_ADDRESS(PTE) ((PTE >= (PMMPTE)PTE_UBASE) && (PTE <= (PMMPTE)PTE_UTOP))
 
 
 //++
@@ -3016,7 +2996,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_IS_PAGE_DIRECTORY_ADDRESS(PDE) \
+#define MI_IS_PAGE_DIRECTORY_ADDRESS(PDE)                         \
     (((PDE >= (PMMPTE)PDE_UBASE) && (PDE <= (PMMPTE)PDE_UTOP)) || \
      ((PDE >= (PMMPTE)PDE_KBASE) && (PDE <= (PMMPTE)PDE_KTOP)) || \
      ((PDE >= (PMMPTE)PDE_SBASE) && (PDE <= (PMMPTE)PDE_STOP)))
@@ -3042,8 +3022,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_IS_USER_PDE_ADDRESS(PDE) \
-    ((PDE >= (PMMPTE)PDE_UBASE) && (PDE <= (PMMPTE)PDE_UTOP))
+#define MI_IS_USER_PDE_ADDRESS(PDE) ((PDE >= (PMMPTE)PDE_UBASE) && (PDE <= (PMMPTE)PDE_UTOP))
 
 
 //++
@@ -3067,8 +3046,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define MI_IS_KERNEL_PDE_ADDRESS(PDE) \
-    ((PDE >= (PMMPTE)PDE_KBASE) && (PDE <= (PMMPTE)PDE_KTOP))
+#define MI_IS_KERNEL_PDE_ADDRESS(PDE) ((PDE >= (PMMPTE)PDE_KBASE) && (PDE <= (PMMPTE)PDE_KTOP))
 
 
 //++
@@ -3139,8 +3117,7 @@ extern PMMPTE MiFirstReservedZeroingPte;
 //
 //--
 
-#define KSEG0_ADDRESS(PAGE) \
-     (PVOID)(KSEG0_BASE | ((PAGE) <<  PAGE_SHIFT))
+#define KSEG0_ADDRESS(PAGE) (PVOID)(KSEG0_BASE | ((PAGE) << PAGE_SHIFT))
 
 
 extern MMPTE ValidPpePte;
@@ -3167,36 +3144,30 @@ extern MMPTE ValidPpePte;
 //
 //--
 
-__forceinline
-PMMPTE
-MiGetPpeAddress(
-    IN PVOID Va
-    )
+__forceinline PMMPTE MiGetPpeAddress(IN PVOID Va)
 {
-    if ((((ULONG_PTR)(Va) & PTE_BASE) == PTE_BASE) &&
-        ((((ULONG_PTR)(Va)) & ~(VRN_MASK|PTE_BASE)) < (ULONG_PTR)PDE_PER_PAGE * PTE_PER_PAGE * PAGE_SIZE)) {
+    if ((((ULONG_PTR)(Va)&PTE_BASE) == PTE_BASE) &&
+        ((((ULONG_PTR)(Va)) & ~(VRN_MASK | PTE_BASE)) < (ULONG_PTR)PDE_PER_PAGE * PTE_PER_PAGE * PAGE_SIZE))
+    {
 
-        return (PMMPTE) (((ULONG_PTR)Va & VRN_MASK) |
-                         (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
+        return (PMMPTE)(((ULONG_PTR)Va & VRN_MASK) | (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
     }
 
     if (((((ULONG_PTR)(Va)) & PDE_BASE) == PDE_BASE) &&
-        ((((ULONG_PTR)(Va)) & ~(VRN_MASK|PDE_BASE)) < PDE_PER_PAGE * PAGE_SIZE)) {
+        ((((ULONG_PTR)(Va)) & ~(VRN_MASK | PDE_BASE)) < PDE_PER_PAGE * PAGE_SIZE))
+    {
 
-        return (PMMPTE) ((((ULONG_PTR)(Va)) & VRN_MASK) |
-                         (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
+        return (PMMPTE)((((ULONG_PTR)(Va)) & VRN_MASK) | (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
     }
 
-    if (((((ULONG_PTR)(Va)) & PDE_TBASE) == PDE_TBASE) &&
-        ((((ULONG_PTR)(Va)) & ~(VRN_MASK|PDE_TBASE)) < PAGE_SIZE)) {
+    if (((((ULONG_PTR)(Va)) & PDE_TBASE) == PDE_TBASE) && ((((ULONG_PTR)(Va)) & ~(VRN_MASK | PDE_TBASE)) < PAGE_SIZE))
+    {
 
-        return (PMMPTE) ((((ULONG_PTR)(Va)) & VRN_MASK) |
-                         (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
+        return (PMMPTE)((((ULONG_PTR)(Va)) & VRN_MASK) | (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
     }
 
-    return (PMMPTE) (((((ULONG_PTR)(Va)) & VRN_MASK)) |
-              ((((((ULONG_PTR)(Va)) >> PDI1_SHIFT) << PTE_SHIFT) &
-                (~(PDE_TBASE|VRN_MASK)) ) + PDE_TBASE));
+    return (PMMPTE)(((((ULONG_PTR)(Va)) & VRN_MASK)) |
+                    ((((((ULONG_PTR)(Va)) >> PDI1_SHIFT) << PTE_SHIFT) & (~(PDE_TBASE | VRN_MASK))) + PDE_TBASE));
 }
 
 //MiGetPdeAddress (
@@ -3218,28 +3189,23 @@ MiGetPpeAddress(
 //
 //--
 
-__forceinline
-PMMPTE
-MiGetPdeAddress(
-    IN PVOID Va
-    )
+__forceinline PMMPTE MiGetPdeAddress(IN PVOID Va)
 {
     if (((((ULONG_PTR)(Va)) & PDE_BASE) == PDE_BASE) &&
-        ((((ULONG_PTR)(Va)) & ~(VRN_MASK|PDE_BASE)) < PDE_PER_PAGE * PAGE_SIZE)) {
+        ((((ULONG_PTR)(Va)) & ~(VRN_MASK | PDE_BASE)) < PDE_PER_PAGE * PAGE_SIZE))
+    {
 
-        return (PMMPTE) ((((ULONG_PTR)(Va)) & VRN_MASK) |
-                         (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
+        return (PMMPTE)((((ULONG_PTR)(Va)) & VRN_MASK) | (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
     }
 
-    if (((((ULONG_PTR)(Va)) & PDE_TBASE) == PDE_TBASE) &&
-        ((((ULONG_PTR)(Va)) & ~(VRN_MASK|PDE_TBASE)) < PAGE_SIZE)) {
+    if (((((ULONG_PTR)(Va)) & PDE_TBASE) == PDE_TBASE) && ((((ULONG_PTR)(Va)) & ~(VRN_MASK | PDE_TBASE)) < PAGE_SIZE))
+    {
 
-        return (PMMPTE) ((((ULONG_PTR)(Va)) & VRN_MASK) |
-                         (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
+        return (PMMPTE)((((ULONG_PTR)(Va)) & VRN_MASK) | (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
     }
 
-    return (PMMPTE) (((((ULONG_PTR)(Va)) & VRN_MASK)) |
-             ((((((ULONG_PTR)(Va)) >> PDI_SHIFT) << PTE_SHIFT) & (~(PDE_BASE|VRN_MASK))) + PDE_BASE));
+    return (PMMPTE)(((((ULONG_PTR)(Va)) & VRN_MASK)) |
+                    ((((((ULONG_PTR)(Va)) >> PDI_SHIFT) << PTE_SHIFT) & (~(PDE_BASE | VRN_MASK))) + PDE_BASE));
 }
 
 //++
@@ -3263,24 +3229,19 @@ MiGetPdeAddress(
 //
 //--
 
-__forceinline
-PMMPTE
-MiGetPteAddress(
-    IN PVOID Va
-    )
+__forceinline PMMPTE MiGetPteAddress(IN PVOID Va)
 {
-    if (((((ULONG_PTR)(Va)) & PDE_TBASE) == PDE_TBASE) &&
-        ((((ULONG_PTR)(Va)) & ~(VRN_MASK|PDE_TBASE)) < PAGE_SIZE)) {
+    if (((((ULONG_PTR)(Va)) & PDE_TBASE) == PDE_TBASE) && ((((ULONG_PTR)(Va)) & ~(VRN_MASK | PDE_TBASE)) < PAGE_SIZE))
+    {
 
-        return (PMMPTE) ((((ULONG_PTR)(Va)) & VRN_MASK) |
-                         (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
+        return (PMMPTE)((((ULONG_PTR)(Va)) & VRN_MASK) | (PDE_TBASE + PAGE_SIZE - sizeof(MMPTE)));
     }
 
-    return (PMMPTE) (((((ULONG_PTR)(Va)) & VRN_MASK)) |
-             ((((((ULONG_PTR)(Va)) >> PTI_SHIFT) << PTE_SHIFT) & (~(PTE_BASE|VRN_MASK))) + PTE_BASE));
+    return (PMMPTE)(((((ULONG_PTR)(Va)) & VRN_MASK)) |
+                    ((((((ULONG_PTR)(Va)) >> PTI_SHIFT) << PTE_SHIFT) & (~(PTE_BASE | VRN_MASK))) + PTE_BASE));
 }
 
-#define MI_IS_PTE_PROTOTYPE(PointerPte)  (!MI_IS_USER_PTE_ADDRESS (PointerPte))
+#define MI_IS_PTE_PROTOTYPE(PointerPte) (!MI_IS_USER_PTE_ADDRESS(PointerPte))
 
 //++
 //BOOLEAN
@@ -3303,9 +3264,8 @@ MiGetPteAddress(
 //
 //--
 
-#define MI_IS_SYSTEM_CACHE_ADDRESS(VA)                      \
-         (((PVOID)(VA) >= (PVOID)MmSystemCacheStart &&      \
-		     (PVOID)(VA) <= (PVOID)MmSystemCacheEnd))
+#define MI_IS_SYSTEM_CACHE_ADDRESS(VA) \
+    (((PVOID)(VA) >= (PVOID)MmSystemCacheStart && (PVOID)(VA) <= (PVOID)MmSystemCacheEnd))
 
 
 #if defined(_MIALT4K_)
@@ -3317,16 +3277,15 @@ MiGetPteAddress(
 // hard coded to use 4K page values.
 //
 
-#define PAGE_4K         4096
-#define PAGE_4K_SHIFT   12
-#define PAGE_4K_MASK    (PAGE_4K - 1)
+#define PAGE_4K 4096
+#define PAGE_4K_SHIFT 12
+#define PAGE_4K_MASK (PAGE_4K - 1)
 #define PAGE_4K_ALIGN(Va) ((PVOID)((ULONG_PTR)(Va) & ~(PAGE_4K - 1)))
-#define ROUND_TO_4K_PAGES(Size)  (((ULONG_PTR)(Size) + PAGE_4K - 1) & ~(PAGE_4K - 1))
+#define ROUND_TO_4K_PAGES(Size) (((ULONG_PTR)(Size) + PAGE_4K - 1) & ~(PAGE_4K - 1))
 
 #define PAGE_NEXT_ALIGN(Va) ((PVOID)(PAGE_ALIGN((ULONG_PTR)Va + PAGE_SIZE - 1)))
 
-#define BYTES_TO_4K_PAGES(Size)  ((ULONG)((ULONG_PTR)(Size) >> PAGE_4K_SHIFT) + \
-                               (((ULONG)(Size) & (PAGE_4K - 1)) != 0))
+#define BYTES_TO_4K_PAGES(Size) ((ULONG)((ULONG_PTR)(Size) >> PAGE_4K_SHIFT) + (((ULONG)(Size) & (PAGE_4K - 1)) != 0))
 
 //
 // Relative constants between native pages and 4K pages.
@@ -3337,173 +3296,93 @@ MiGetPteAddress(
 
 #define ALT_PTE_SHIFT 3
 
-#define ALT_PROTECTION_MASK (MM_PTE_EXECUTE_MASK|MM_PTE_WRITE_MASK)
+#define ALT_PROTECTION_MASK (MM_PTE_EXECUTE_MASK | MM_PTE_WRITE_MASK)
 
 #define MiGetAltPteAddress(VA) \
-      ((PMMPTE) ((ULONG_PTR)ALT4KB_PERMISSION_TABLE_START + \
-                     ((((ULONG_PTR) (VA)) >> PAGE_4K_SHIFT) << ALT_PTE_SHIFT)))
+    ((PMMPTE)((ULONG_PTR)ALT4KB_PERMISSION_TABLE_START + ((((ULONG_PTR)(VA)) >> PAGE_4K_SHIFT) << ALT_PTE_SHIFT)))
 
 //
 // Alternate 4k table flags.
 //
 
-#define MI_ALTFLG_FLUSH2G         0x0000000000000001
+#define MI_ALTFLG_FLUSH2G 0x0000000000000001
 
 //
 // MiProtectFor4kPage flags.
 //
 
-#define ALT_ALLOCATE      1
-#define ALT_COMMIT        2
-#define ALT_CHANGE        4
+#define ALT_ALLOCATE 1
+#define ALT_COMMIT 2
+#define ALT_CHANGE 4
 
 //
 // ATE (Alternate PTE) protection bits.
 //
 
-#define MM_ATE_COMMIT             0x0000000000000001
-#define MM_ATE_ACCESS             0x0000000000000020
+#define MM_ATE_COMMIT 0x0000000000000001
+#define MM_ATE_ACCESS 0x0000000000000020
 
-#define MM_ATE_READONLY           0x0000000000000200
-#define MM_ATE_EXECUTE            0x0400000000000200
-#define MM_ATE_EXECUTE_READ       0x0400000000000200
-#define MM_ATE_READWRITE          0x0000000000000600
-#define MM_ATE_WRITECOPY          0x0020000000000200
-#define MM_ATE_EXECUTE_READWRITE  0x0400000000000600
-#define MM_ATE_EXECUTE_WRITECOPY  0x0420000000000400
+#define MM_ATE_READONLY 0x0000000000000200
+#define MM_ATE_EXECUTE 0x0400000000000200
+#define MM_ATE_EXECUTE_READ 0x0400000000000200
+#define MM_ATE_READWRITE 0x0000000000000600
+#define MM_ATE_WRITECOPY 0x0020000000000200
+#define MM_ATE_EXECUTE_READWRITE 0x0400000000000600
+#define MM_ATE_EXECUTE_WRITECOPY 0x0420000000000400
 
-#define MM_ATE_ZEROFILL           0x0800000000000000
-#define MM_ATE_NOACCESS           0x1000000000000000
-#define MM_ATE_COPY_ON_WRITE      0x2000000000000000
-#define MM_ATE_PRIVATE            0x8000000000000000
-#define MM_ATE_PROTO_MASK         0x0000000000000621
+#define MM_ATE_ZEROFILL 0x0800000000000000
+#define MM_ATE_NOACCESS 0x1000000000000000
+#define MM_ATE_COPY_ON_WRITE 0x2000000000000000
+#define MM_ATE_PRIVATE 0x8000000000000000
+#define MM_ATE_PROTO_MASK 0x0000000000000621
 
 
 NTSTATUS
-MmX86Fault (
-    IN ULONG_PTR FaultStatus,
-    IN PVOID VirtualAddress,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PVOID TrapInformation
-    );
+MmX86Fault(IN ULONG_PTR FaultStatus, IN PVOID VirtualAddress, IN KPROCESSOR_MODE PreviousMode,
+           IN PVOID TrapInformation);
 
-VOID
-MiProtectFor4kPage(
-    IN PVOID Base,
-    IN SIZE_T Size,
-    IN ULONG NewProtect,
-    IN ULONG Flags,
-    IN PEPROCESS Process
-    );
+VOID MiProtectFor4kPage(IN PVOID Base, IN SIZE_T Size, IN ULONG NewProtect, IN ULONG Flags, IN PEPROCESS Process);
 
-VOID
-MiProtectMapFileFor4kPage(
-    IN PVOID Base,
-    IN SIZE_T Size,
-    IN ULONG NewProtect,
-    IN SIZE_T CommitSize,
-    IN PMMPTE PointerPte,
-    IN PMMPTE LastPte,
-    IN PEPROCESS Process
-    );
+VOID MiProtectMapFileFor4kPage(IN PVOID Base, IN SIZE_T Size, IN ULONG NewProtect, IN SIZE_T CommitSize,
+                               IN PMMPTE PointerPte, IN PMMPTE LastPte, IN PEPROCESS Process);
 
-VOID
-MiProtectImageFileFor4kPage(
-    IN PVOID Base,
-    IN SIZE_T Size,
-    IN PMMPTE PointerPte,
-    IN PEPROCESS Process
-    );
+VOID MiProtectImageFileFor4kPage(IN PVOID Base, IN SIZE_T Size, IN PMMPTE PointerPte, IN PEPROCESS Process);
 
-VOID
-MiReleaseFor4kPage(
-    IN PVOID StartVirtual,
-    IN PVOID EndVirtual,
-    IN PEPROCESS Process
-    );
+VOID MiReleaseFor4kPage(IN PVOID StartVirtual, IN PVOID EndVirtual, IN PEPROCESS Process);
 
-VOID
-MiDecommitFor4kPage(
-    IN PVOID StartVirtual,
-    IN PVOID EndVirtual,
-    IN PEPROCESS Process
-    );
+VOID MiDecommitFor4kPage(IN PVOID StartVirtual, IN PVOID EndVirtual, IN PEPROCESS Process);
 
-VOID
-MiDeleteFor4kPage(
-    IN PVOID StartVirtual,
-    IN PVOID EndVirtual,
-    IN PEPROCESS Process
-    );
+VOID MiDeleteFor4kPage(IN PVOID StartVirtual, IN PVOID EndVirtual, IN PEPROCESS Process);
 
-VOID
-MiQueryRegionFor4kPage (
-    IN PVOID BaseAddress,
-    IN PVOID EndAddress,
-    IN OUT PSIZE_T RegionSize,
-    IN OUT PULONG RegionState,
-    IN OUT PULONG RegionProtect,
-    IN PEPROCESS Process
-    );
+VOID MiQueryRegionFor4kPage(IN PVOID BaseAddress, IN PVOID EndAddress, IN OUT PSIZE_T RegionSize,
+                            IN OUT PULONG RegionState, IN OUT PULONG RegionProtect, IN PEPROCESS Process);
 
 ULONG
-MiQueryProtectionFor4kPage (
-    IN PVOID BaseAddress,
-    IN PEPROCESS Process
-    );
+MiQueryProtectionFor4kPage(IN PVOID BaseAddress, IN PEPROCESS Process);
 
 NTSTATUS
-MiInitializeAlternateTable (
-    PEPROCESS Process
-    );
+MiInitializeAlternateTable(PEPROCESS Process);
 
-VOID
-MiDuplicateAlternateTable (
-    PEPROCESS CurrentProcess,
-    PEPROCESS ProcessToInitialize
-    );
+VOID MiDuplicateAlternateTable(PEPROCESS CurrentProcess, PEPROCESS ProcessToInitialize);
 
-VOID
-MiDeleteAlternateTable (
-    PEPROCESS Process
-    );
+VOID MiDeleteAlternateTable(PEPROCESS Process);
 
-VOID
-MiLockFor4kPage (
-    PVOID CapturedBase,
-    SIZE_T CapturedRegionSize,
-    PEPROCESS Process
-    );
+VOID MiLockFor4kPage(PVOID CapturedBase, SIZE_T CapturedRegionSize, PEPROCESS Process);
 
 NTSTATUS
-MiUnlockFor4kPage (
-    PVOID CapturedBase,
-    SIZE_T CapturedRegionSize,
-    PEPROCESS Process
-    );
+MiUnlockFor4kPage(PVOID CapturedBase, SIZE_T CapturedRegionSize, PEPROCESS Process);
 
 LOGICAL
-MiShouldBeUnlockedFor4kPage (
-    PVOID VirtualAddress,
-    PEPROCESS Process
-    );
+MiShouldBeUnlockedFor4kPage(PVOID VirtualAddress, PEPROCESS Process);
 
 ULONG
-MiMakeProtectForNativePage (
-    IN PVOID VirtualAddress,
-    IN ULONG NewProtect,
-    IN PEPROCESS Process
-    );
+MiMakeProtectForNativePage(IN PVOID VirtualAddress, IN ULONG NewProtect, IN PEPROCESS Process);
 
 LOGICAL
-MiArePreceding4kPagesAllocated (
-    IN PVOID VirtualAddress
-    );
+MiArePreceding4kPagesAllocated(IN PVOID VirtualAddress);
 
 LOGICAL
-MiAreFollowing4kPagesAllocated (
-    IN PVOID VirtualAddress
-    );
+MiAreFollowing4kPagesAllocated(IN PVOID VirtualAddress);
 
 extern ULONG MmProtectToPteMaskForIA32[32];
 extern ULONG MmProtectToPteMaskForSplit[32];
@@ -3512,31 +3391,27 @@ extern ULONGLONG MmProtectToAteMask[32];
 
 #define MiMakeProtectionAteMask(NewProtect) MmProtectToAteMask[NewProtect]
 
-#define LOCK_ALTERNATE_TABLE_UNSAFE(PWOW64) \
-        ASSERT (KeGetCurrentIrql() == APC_LEVEL);                           \
-        ExAcquireFastMutexUnsafe (&(PWOW64)->AlternateTableLock);           \
-        (PWOW64)->AlternateTableAcquiredUnsafe = MI_MUTEX_ACQUIRED_UNSAFE;
+#define LOCK_ALTERNATE_TABLE_UNSAFE(PWOW64)                  \
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);                 \
+    ExAcquireFastMutexUnsafe(&(PWOW64)->AlternateTableLock); \
+    (PWOW64)->AlternateTableAcquiredUnsafe = MI_MUTEX_ACQUIRED_UNSAFE;
 
-#define UNLOCK_ALTERNATE_TABLE_UNSAFE(PWOW64) \
-        ASSERT (KeGetCurrentIrql() == APC_LEVEL);                           \
-        ASSERT ((PWOW64)->AlternateTableAcquiredUnsafe == MI_MUTEX_ACQUIRED_UNSAFE); \
-        ExReleaseFastMutexUnsafe (&(PWOW64)->AlternateTableLock);           \
-        ASSERT (KeGetCurrentIrql() == APC_LEVEL);
+#define UNLOCK_ALTERNATE_TABLE_UNSAFE(PWOW64)                                   \
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);                                    \
+    ASSERT((PWOW64)->AlternateTableAcquiredUnsafe == MI_MUTEX_ACQUIRED_UNSAFE); \
+    ExReleaseFastMutexUnsafe(&(PWOW64)->AlternateTableLock);                    \
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);
 
-#define LOCK_ALTERNATE_TABLE(PWOW64) \
-        ExAcquireFastMutex( &(PWOW64)->AlternateTableLock)
+#define LOCK_ALTERNATE_TABLE(PWOW64) ExAcquireFastMutex(&(PWOW64)->AlternateTableLock)
 
-#define UNLOCK_ALTERNATE_TABLE(PWOW64) \
-        ExReleaseFastMutex(&(PWOW64)->AlternateTableLock)
+#define UNLOCK_ALTERNATE_TABLE(PWOW64) ExReleaseFastMutex(&(PWOW64)->AlternateTableLock)
 
 #define MI_IS_ALT_PAGE_TABLE_ADDRESS(PPTE) \
-            (((PPTE) >= (PMMPTE)ALT4KB_PERMISSION_TABLE_START) && \
-             ((PPTE) < (PMMPTE)ALT4KB_PERMISSION_TABLE_END))
+    (((PPTE) >= (PMMPTE)ALT4KB_PERMISSION_TABLE_START) && ((PPTE) < (PMMPTE)ALT4KB_PERMISSION_TABLE_END))
 
 #endif
 
-#define MI_ALT_PTE_IN_PAGE_IN_PROGRESS(AltPte) \
-            AltPte->u.Alt.InPageInProgress
+#define MI_ALT_PTE_IN_PAGE_IN_PROGRESS(AltPte) AltPte->u.Alt.InPageInProgress
 
 //++
 //VOID
@@ -3580,7 +3455,7 @@ extern ULONGLONG MmProtectToAteMask[32];
 //
 //--
 
-#define MI_BARRIER_SYNCHRONIZE(TimeStamp) NOTHING              
+#define MI_BARRIER_SYNCHRONIZE(TimeStamp) NOTHING
 
 //++
 //VOID
@@ -3648,9 +3523,9 @@ extern ULONGLONG MmProtectToAteMask[32];
 //--
 
 #define MI_FLUSH_SINGLE_SESSION_TB(Virtual, Invalid, AllProcessors, PtePointer, PteValue, PreviousPte) \
-    PreviousPte.u.Flush = *PtePointer;                  \
-    *PtePointer = PteValue;                             \
-    KeFlushEntireTb (TRUE, TRUE);
+    PreviousPte.u.Flush = *PtePointer;                                                                 \
+    *PtePointer = PteValue;                                                                            \
+    KeFlushEntireTb(TRUE, TRUE);
 
 
 //++
@@ -3676,15 +3551,9 @@ extern ULONGLONG MmProtectToAteMask[32];
 //    None.
 //
 
-#define MI_FLUSH_ENTIRE_SESSION_TB(Invalid, AllProcessors) \
-    KeFlushEntireTb (Invalid, AllProcessors);
+#define MI_FLUSH_ENTIRE_SESSION_TB(Invalid, AllProcessors) KeFlushEntireTb(Invalid, AllProcessors);
 
-VOID
-MiSweepCacheMachineDependent (
-    IN PVOID VirtualAddress,
-    IN SIZE_T Size,
-    IN ULONG CacheAttribute
-    );
+VOID MiSweepCacheMachineDependent(IN PVOID VirtualAddress, IN SIZE_T Size, IN ULONG CacheAttribute);
 
 extern LOGICAL MiMappingsInitialized;
 
@@ -3692,15 +3561,10 @@ extern BOOLEAN MiKseg0Mapping;
 extern PVOID MiKseg0Start;
 extern PVOID MiKseg0End;
 
-VOID
-MiEliminateDriverTrEntries (
-    VOID
-    );
+VOID MiEliminateDriverTrEntries(VOID);
 
 LOGICAL
-MiIsVirtualAddressMappedByTr (
-    IN PVOID VirtualAddress
-    );
+MiIsVirtualAddressMappedByTr(IN PVOID VirtualAddress);
 
 //++
 //LOGICAL
@@ -3727,10 +3591,7 @@ MiIsVirtualAddressMappedByTr (
 //
 
 LOGICAL
-__forceinline
-MI_RESERVED_BITS_CANONICAL (
-    IN PVOID VirtualAddress
-    )
+__forceinline MI_RESERVED_BITS_CANONICAL(IN PVOID VirtualAddress)
 {
     LONG_PTR ReservedBits;
     ULONG_PTR ImplVirtualMsb;
@@ -3751,38 +3612,42 @@ MI_RESERVED_BITS_CANONICAL (
     //
     // NT uses 43 bits of virtual address (not including VRN bits) and Merced
     // has 51 while McKinley has 61.  All valid Merced addresses can be
-    // validated via the 43 bit NT checking.  However, McKinley VHPT addresses 
+    // validated via the 43 bit NT checking.  However, McKinley VHPT addresses
     // begin at 0x1FF8.0000.0000.0000, so they need to be checked separately.
     //
 
     ImplVirtualMsb = 43;
     ReservedBitsOn = FALSE;
 
-    if ((ULONG_PTR)VirtualAddress & ((ULONG_PTR)1 << ImplVirtualMsb)) {
+    if ((ULONG_PTR)VirtualAddress & ((ULONG_PTR)1 << ImplVirtualMsb))
+    {
 
         //
         // All the reserved bits (not including the VRN) must also be set
         // unless this is a special memory management-internal address.
         //
 
-        ReservedBits = (LONG_PTR) VirtualAddress | VRN_MASK;
+        ReservedBits = (LONG_PTR)VirtualAddress | VRN_MASK;
         ReservedBits >>= (ImplVirtualMsb + 1);
 
-        if (ReservedBits != (LONG_PTR)-1) {
+        if (ReservedBits != (LONG_PTR)-1)
+        {
             ReservedBitsOn = TRUE;
         }
     }
-    else {
+    else
+    {
 
         //
         // All the reserved bits (not including the VRN) must also be clear
         // unless this is a special memory management-internal address.
         //
 
-        ReservedBits = (LONG_PTR) VirtualAddress & ~VRN_MASK;
+        ReservedBits = (LONG_PTR)VirtualAddress & ~VRN_MASK;
         ReservedBits >>= (ImplVirtualMsb + 1);
 
-        if (ReservedBits != 0) {
+        if (ReservedBits != 0)
+        {
             ReservedBitsOn = TRUE;
         }
     }
@@ -3793,18 +3658,20 @@ MI_RESERVED_BITS_CANONICAL (
     // be checked below).
     //
 
-    VirtualAddress = (PVOID) ((LONG_PTR) VirtualAddress & ~VRN_MASK);
+    VirtualAddress = (PVOID)((LONG_PTR)VirtualAddress & ~VRN_MASK);
 
-    if (ReservedBitsOn == FALSE) {
+    if (ReservedBitsOn == FALSE)
+    {
 
         //
         // No reserved bits were on, ensure that the virtual address is
         // okay by ensuring the PPE/PDE/PTE are within bounds.
         //
 
-        PointerPte = MiGetPteAddress (VirtualAddress);
+        PointerPte = MiGetPteAddress(VirtualAddress);
     }
-    else {
+    else
+    {
 
         //
         // Some reserved bits are on.  This better be an internal address
@@ -3815,7 +3682,7 @@ MI_RESERVED_BITS_CANONICAL (
         // Merced anyway so the slight overhead is not critical.
         //
 
-        PointerPte = (PMMPTE) VirtualAddress;
+        PointerPte = (PMMPTE)VirtualAddress;
     }
 
     //
@@ -3837,19 +3704,20 @@ MI_RESERVED_BITS_CANONICAL (
     //
 
     if ((PointerPte >= (PMMPTE)PTE_BASE) &&
-        (PointerPte < (PMMPTE)(PTE_BASE + (ULONG_PTR)PDE_PER_PAGE * PTE_PER_PAGE * PAGE_SIZE))) {
+        (PointerPte < (PMMPTE)(PTE_BASE + (ULONG_PTR)PDE_PER_PAGE * PTE_PER_PAGE * PAGE_SIZE)))
+    {
 
         return TRUE;
     }
 
-    if ((PointerPte >= (PMMPTE)PDE_BASE) &&
-        (PointerPte < (PMMPTE)(PDE_BASE + PDE_PER_PAGE * PAGE_SIZE))) {
+    if ((PointerPte >= (PMMPTE)PDE_BASE) && (PointerPte < (PMMPTE)(PDE_BASE + PDE_PER_PAGE * PAGE_SIZE)))
+    {
 
         return TRUE;
     }
 
-    if ((PointerPte >= (PMMPTE)PDE_TBASE) &&
-        (PointerPte < (PMMPTE)(PDE_TBASE + PAGE_SIZE))) {
+    if ((PointerPte >= (PMMPTE)PDE_TBASE) && (PointerPte < (PMMPTE)(PDE_TBASE + PAGE_SIZE)))
+    {
 
         return TRUE;
     }
@@ -3875,7 +3743,6 @@ MI_RESERVED_BITS_CANONICAL (
 //
 //    None.
 //
-#define MI_DISPLAY_TRAP_INFORMATION(TrapInformation)                    \
-            KdPrint(("MM:***IIP %p, IIPA %p\n",                         \
-                     ((PKTRAP_FRAME) (TrapInformation))->StIIP,         \
-                     ((PKTRAP_FRAME) (TrapInformation))->StIIPA));
+#define MI_DISPLAY_TRAP_INFORMATION(TrapInformation)                              \
+    KdPrint(("MM:***IIP %p, IIPA %p\n", ((PKTRAP_FRAME)(TrapInformation))->StIIP, \
+             ((PKTRAP_FRAME)(TrapInformation))->StIIPA));

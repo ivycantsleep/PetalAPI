@@ -29,37 +29,16 @@ Environment:
 // Define prototypes for forward referenced functions.
 //
 
-VOID
-KiFlushTargetEntireTb (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Invalid,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiFlushTargetEntireTb(IN PKIPI_CONTEXT SignalDone, IN PVOID Invalid, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-KiFlushTargetMultipleTb (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiFlushTargetMultipleTb(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                             IN PVOID Parameter3);
 
-VOID
-KiFlushTargetSingleTb (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiFlushTargetSingleTb(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3);
 
 #if !defined(NT_UP)
 
-VOID
-KeFlushEntireTb (
-    IN BOOLEAN Invalid,
-    IN BOOLEAN AllProcessors
-    )
+VOID KeFlushEntireTb(IN BOOLEAN Invalid, IN BOOLEAN AllProcessors)
 
 /*++
 
@@ -98,12 +77,14 @@ Return Value:
     // if any, for execution.
     //
 
-    if (AllProcessors != FALSE) {
+    if (AllProcessors != FALSE)
+    {
         OldIrql = KeRaiseIrqlToSynchLevel();
         Prcb = KeGetCurrentPrcb();
         TargetProcessors = KeActiveProcessors;
-
-    } else {
+    }
+    else
+    {
         KiLockContextSwap(&OldIrql);
         Prcb = KeGetCurrentPrcb();
         Process = Prcb->CurrentThread->ApcState.Process;
@@ -118,7 +99,8 @@ Return Value:
     // then set the TB flush time stamp busy.
     //
 
-    if (TargetProcessors == EntireSet) {
+    if (TargetProcessors == EntireSet)
+    {
         KiSetTbFlushTimeStampBusy();
     }
 
@@ -126,12 +108,9 @@ Return Value:
     // Send packet to target processors.
     //
 
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiFlushTargetEntireTb,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiFlushTargetEntireTb, NULL, NULL, NULL);
     }
 
     IPI_INSTRUMENT_COUNT(Prcb->Number, FlushEntireTb);
@@ -146,7 +125,8 @@ Return Value:
     // Wait until all target processors have finished and complete packet.
     //
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -155,7 +135,8 @@ Return Value:
     // then clear the TB flush time stamp busy.
     //
 
-    if (TargetProcessors == EntireSet) {
+    if (TargetProcessors == EntireSet)
+    {
         KiClearTbFlushTimeStampBusy();
     }
 
@@ -163,23 +144,19 @@ Return Value:
     // Lower IRQL and unlock as appropriate.
     //
 
-    if (AllProcessors != FALSE) {
+    if (AllProcessors != FALSE)
+    {
         KeLowerIrql(OldIrql);
-
-    } else {
+    }
+    else
+    {
         KiUnlockContextSwap(OldIrql);
     }
 
     return;
 }
 
-VOID
-KiFlushTargetEntireTb (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KiFlushTargetEntireTb(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -211,15 +188,8 @@ Return Value:
     return;
 }
 
-VOID
-KeFlushMultipleTb (
-    IN ULONG Number,
-    IN PVOID *Virtual,
-    IN BOOLEAN Invalid,
-    IN BOOLEAN AllProcessors,
-    IN PHARDWARE_PTE *PtePointer OPTIONAL,
-    IN HARDWARE_PTE PteValue
-    )
+VOID KeFlushMultipleTb(IN ULONG Number, IN PVOID *Virtual, IN BOOLEAN Invalid, IN BOOLEAN AllProcessors,
+                       IN PHARDWARE_PTE *PtePointer OPTIONAL, IN HARDWARE_PTE PteValue)
 
 /*++
 
@@ -269,12 +239,14 @@ Return Value:
     // Compute target set of processors.
     //
 
-    if (AllProcessors != FALSE) {
+    if (AllProcessors != FALSE)
+    {
         OldIrql = KeRaiseIrqlToSynchLevel();
         Prcb = KeGetCurrentPrcb();
         TargetProcessors = KeActiveProcessors;
-
-    } else {
+    }
+    else
+    {
         KiLockContextSwap(&OldIrql);
         Prcb = KeGetCurrentPrcb();
         Process = Prcb->CurrentThread->ApcState.Process;
@@ -286,8 +258,10 @@ Return Value:
     // specified page table entries to the specific value.
     //
 
-    if (ARGUMENT_PRESENT(PtePointer)) {
-        for (Index = 0; Index < Number; Index += 1) {
+    if (ARGUMENT_PRESENT(PtePointer))
+    {
+        for (Index = 0; Index < Number; Index += 1)
+        {
             *PtePointer[Index] = PteValue;
         }
     }
@@ -298,22 +272,20 @@ Return Value:
     //
 
     TargetProcessors &= Prcb->NotSetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiFlushTargetMultipleTb,
-                        (PVOID)Invalid,
-                        (PVOID)((ULONG64)Number),
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiFlushTargetMultipleTb, (PVOID)Invalid, (PVOID)((ULONG64)Number),
                         (PVOID)Virtual);
-
     }
 
-    IPI_INSTRUMENT_COUNT (Prcb->Number, FlushMultipleTb);
+    IPI_INSTRUMENT_COUNT(Prcb->Number, FlushMultipleTb);
 
     //
     // Flush the specified entries from the TB on the current processor.
     //
 
-    for (Index = 0; Index < Number; Index += 1) {
+    for (Index = 0; Index < Number; Index += 1)
+    {
         KiFlushSingleTb(Invalid, Virtual[Index]);
     }
 
@@ -321,7 +293,8 @@ Return Value:
     // Wait until all target processors have finished and complete packet.
     //
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -329,23 +302,19 @@ Return Value:
     // Release the context swap lock.
     //
 
-    if (AllProcessors != FALSE) {
+    if (AllProcessors != FALSE)
+    {
         KeLowerIrql(OldIrql);
-
-    } else {
+    }
+    else
+    {
         KiUnlockContextSwap(OldIrql);
     }
 
     return;
 }
 
-VOID
-KiFlushTargetMultipleTb (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Invalid,
-    IN PVOID Number,
-    IN PVOID Virtual
-    )
+VOID KiFlushTargetMultipleTb(IN PKIPI_CONTEXT SignalDone, IN PVOID Invalid, IN PVOID Number, IN PVOID Virtual)
 
 /*++
 
@@ -383,7 +352,8 @@ Return Value:
     // on the current processor and signal pack done.
     //
 
-    for (Index = 0; Index < (ULONG64)Number; Index += 1) {
+    for (Index = 0; Index < (ULONG64)Number; Index += 1)
+    {
         VirtualAddress[Index] = ((PVOID *)(Virtual))[Index];
     }
 
@@ -394,19 +364,15 @@ Return Value:
     // processor.
     //
 
-    for (Index = 0; Index < (ULONG64)Number; Index += 1) {
-        KiFlushSingleTb((BOOLEAN)Invalid, VirtualAddress [Index]);
+    for (Index = 0; Index < (ULONG64)Number; Index += 1)
+    {
+        KiFlushSingleTb((BOOLEAN)Invalid, VirtualAddress[Index]);
     }
 }
 
 HARDWARE_PTE
-KeFlushSingleTb (
-    IN PVOID Virtual,
-    IN BOOLEAN Invalid,
-    IN BOOLEAN AllProcessors,
-    IN PHARDWARE_PTE PtePointer,
-    IN HARDWARE_PTE PteValue
-    )
+KeFlushSingleTb(IN PVOID Virtual, IN BOOLEAN Invalid, IN BOOLEAN AllProcessors, IN PHARDWARE_PTE PtePointer,
+                IN HARDWARE_PTE PteValue)
 
 /*++
 
@@ -452,12 +418,14 @@ Return Value:
     // parameters to the target processors, if any, for execution.
     //
 
-    if (AllProcessors != FALSE) {
+    if (AllProcessors != FALSE)
+    {
         OldIrql = KeRaiseIrqlToSynchLevel();
         Prcb = KeGetCurrentPrcb();
         TargetProcessors = KeActiveProcessors;
-
-    } else {
+    }
+    else
+    {
         KiLockContextSwap(&OldIrql);
         Prcb = KeGetCurrentPrcb();
         Process = Prcb->CurrentThread->ApcState.Process;
@@ -478,12 +446,9 @@ Return Value:
     //
 
     TargetProcessors &= Prcb->NotSetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiFlushTargetSingleTb,
-                        (PVOID)Invalid,
-                        (PVOID)Virtual,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiFlushTargetSingleTb, (PVOID)Invalid, (PVOID)Virtual, NULL);
     }
 
     IPI_INSTRUMENT_COUNT(Prcb->Number, FlushSingleTb);
@@ -498,7 +463,8 @@ Return Value:
     // Wait until all target processors have finished and complete packet.
     //
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -506,23 +472,19 @@ Return Value:
     // Release the context swap lock.
     //
 
-    if (AllProcessors != FALSE) {
+    if (AllProcessors != FALSE)
+    {
         KeLowerIrql(OldIrql);
-
-    } else {
+    }
+    else
+    {
         KiUnlockContextSwap(OldIrql);
     }
 
     return OldPte;
 }
 
-VOID
-KiFlushTargetSingleTb (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Invalid,
-    IN PVOID VirtualAddress,
-    IN PVOID Parameter3
-    )
+VOID KiFlushTargetSingleTb(IN PKIPI_CONTEXT SignalDone, IN PVOID Invalid, IN PVOID VirtualAddress, IN PVOID Parameter3)
 
 /*++
 

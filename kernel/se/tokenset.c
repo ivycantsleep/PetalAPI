@@ -26,23 +26,19 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtSetInformationToken)
-#pragma alloc_text(PAGE,SepExpandDynamic)
-#pragma alloc_text(PAGE,SepFreePrimaryGroup)
-#pragma alloc_text(PAGE,SepFreeDefaultDacl)
-#pragma alloc_text(PAGE,SepAppendPrimaryGroup)
-#pragma alloc_text(PAGE,SepAppendDefaultDacl)
-#pragma alloc_text(PAGE,SeSetSessionIdToken)
+#pragma alloc_text(PAGE, NtSetInformationToken)
+#pragma alloc_text(PAGE, SepExpandDynamic)
+#pragma alloc_text(PAGE, SepFreePrimaryGroup)
+#pragma alloc_text(PAGE, SepFreeDefaultDacl)
+#pragma alloc_text(PAGE, SepAppendPrimaryGroup)
+#pragma alloc_text(PAGE, SepAppendDefaultDacl)
+#pragma alloc_text(PAGE, SeSetSessionIdToken)
 #endif
 
-
+
 NTSTATUS
-NtSetInformationToken (
-    IN HANDLE TokenHandle,
-    IN TOKEN_INFORMATION_CLASS TokenInformationClass,
-    IN PVOID TokenInformation,
-    IN ULONG TokenInformationLength
-    )
+NtSetInformationToken(IN HANDLE TokenHandle, IN TOKEN_INFORMATION_CLASS TokenInformationClass,
+                      IN PVOID TokenInformation, IN ULONG TokenInformationLength)
 
 /*++
 
@@ -151,8 +147,10 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
             //
             // This just probes the main part of the information buffer.
@@ -161,13 +159,10 @@ Return Value:
             // below.
             //
 
-            ProbeForRead(
-                TokenInformation,
-                TokenInformationLength,
-                sizeof(ULONG)
-                );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForRead(TokenInformation, TokenInformationLength, sizeof(ULONG));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
@@ -175,14 +170,12 @@ Return Value:
     //
     // Return error if not legal class
     //
-    if ( (TokenInformationClass != TokenOwner)  &&
-         (TokenInformationClass != TokenPrimaryGroup) &&
-         (TokenInformationClass != TokenSessionId) &&
-         (TokenInformationClass != TokenDefaultDacl) &&
-         (TokenInformationClass != TokenSessionReference) ) {
+    if ((TokenInformationClass != TokenOwner) && (TokenInformationClass != TokenPrimaryGroup) &&
+        (TokenInformationClass != TokenSessionId) && (TokenInformationClass != TokenDefaultDacl) &&
+        (TokenInformationClass != TokenSessionReference))
+    {
 
         return STATUS_INVALID_INFO_CLASS;
-
     }
 
     //
@@ -191,29 +184,31 @@ Return Value:
 
 
     DesiredAccess = TOKEN_ADJUST_DEFAULT;
-    if (TokenInformationClass == TokenSessionId) {
+    if (TokenInformationClass == TokenSessionId)
+    {
         DesiredAccess |= TOKEN_ADJUST_SESSIONID;
     }
 
-    Status = ObReferenceObjectByHandle(
-             TokenHandle,           // Handle
-             DesiredAccess,         // DesiredAccess
-             SeTokenObjectType,    // ObjectType
-             PreviousMode,          // AccessMode
-             (PVOID *)&Token,       // Object
-             NULL                   // GrantedAccess
-             );
+    Status = ObReferenceObjectByHandle(TokenHandle,       // Handle
+                                       DesiredAccess,     // DesiredAccess
+                                       SeTokenObjectType, // ObjectType
+                                       PreviousMode,      // AccessMode
+                                       (PVOID *)&Token,   // Object
+                                       NULL               // GrantedAccess
+    );
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-
+
     //
     // Case on information class.
     //
 
-    switch ( TokenInformationClass ) {
+    switch (TokenInformationClass)
+    {
 
     case TokenOwner:
 
@@ -222,39 +217,36 @@ Return Value:
         //  necessary information class data structure.
         //
 
-        if (TokenInformationLength < (ULONG)sizeof(TOKEN_OWNER)) {
+        if (TokenInformationLength < (ULONG)sizeof(TOKEN_OWNER))
+        {
 
-            ObDereferenceObject( Token );
+            ObDereferenceObject(Token);
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
         //
         //  Capture and copy
 
-        try {
+        try
+        {
 
             //
             //  Capture Owner SID
             //
 
             CapturedOwner = ((PTOKEN_OWNER)TokenInformation)->Owner;
-            Status = SeCaptureSid(
-                         CapturedOwner,
-                         PreviousMode,
-                         NULL, 0,
-                         PagedPool,
-                         TRUE,
-                         &CapturedOwner
-                         );
+            Status = SeCaptureSid(CapturedOwner, PreviousMode, NULL, 0, PagedPool, TRUE, &CapturedOwner);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-
-            ObDereferenceObject( Token );
+            ObDereferenceObject(Token);
             return GetExceptionCode();
         }
 
-        if (!NT_SUCCESS(Status)) {
-            ObDereferenceObject( Token );
+        if (!NT_SUCCESS(Status))
+        {
+            ObDereferenceObject(Token);
             return Status;
         }
 
@@ -264,7 +256,7 @@ Return Value:
         //  Gain write access to the token.
         //
 
-        SepAcquireTokenWriteLock( Token );
+        SepAcquireTokenWriteLock(Token);
 
         //
         //  Walk through the list of user and group IDs looking
@@ -274,54 +266,57 @@ Return Value:
         //  Otherwise, return invalid owner error.
         //
 
-        while (Index < Token->UserAndGroupCount) {
+        while (Index < Token->UserAndGroupCount)
+        {
 
-            try {
+            try
+            {
 
-                Found = RtlEqualSid(
-                            CapturedOwner,
-                            Token->UserAndGroups[Index].Sid
-                            );
+                Found = RtlEqualSid(CapturedOwner, Token->UserAndGroups[Index].Sid);
 
-                if ( Found ) {
+                if (Found)
+                {
 
-                    if ( SepIdAssignableAsOwner(Token,Index) ){
+                    if (SepIdAssignableAsOwner(Token, Index))
+                    {
 
                         Token->DefaultOwnerIndex = Index;
                         TokenModified = TRUE;
                         Status = STATUS_SUCCESS;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         Status = STATUS_INVALID_OWNER;
 
                     } //endif assignable
 
-                    SepReleaseTokenWriteLock( Token, TokenModified );
-                    ObDereferenceObject( Token );
-                    SeReleaseSid( CapturedOwner, PreviousMode, TRUE);
+                    SepReleaseTokenWriteLock(Token, TokenModified);
+                    ObDereferenceObject(Token);
+                    SeReleaseSid(CapturedOwner, PreviousMode, TRUE);
                     return Status;
 
-                }  //endif Found
+                } //endif Found
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
-            } except(EXCEPTION_EXECUTE_HANDLER) {
-
-                SepReleaseTokenWriteLock( Token, TokenModified );
-                ObDereferenceObject( Token );
-                SeReleaseSid( CapturedOwner, PreviousMode, TRUE);
+                SepReleaseTokenWriteLock(Token, TokenModified);
+                ObDereferenceObject(Token);
+                SeReleaseSid(CapturedOwner, PreviousMode, TRUE);
                 return GetExceptionCode();
 
-            }  //endtry
+            } //endtry
 
             Index += 1;
 
         } //endwhile
 
-        SepReleaseTokenWriteLock( Token, TokenModified );
-        ObDereferenceObject( Token );
-        SeReleaseSid( CapturedOwner, PreviousMode, TRUE);
+        SepReleaseTokenWriteLock(Token, TokenModified);
+        ObDereferenceObject(Token);
+        SeReleaseSid(CapturedOwner, PreviousMode, TRUE);
         return STATUS_INVALID_OWNER;
-
+
     case TokenPrimaryGroup:
 
         //
@@ -336,9 +331,10 @@ Return Value:
         //  necessary information class data structure.
         //
 
-        if (TokenInformationLength < (ULONG)sizeof(TOKEN_PRIMARY_GROUP)) {
+        if (TokenInformationLength < (ULONG)sizeof(TOKEN_PRIMARY_GROUP))
+        {
 
-            ObDereferenceObject( Token );
+            ObDereferenceObject(Token);
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
@@ -346,59 +342,57 @@ Return Value:
         // Capture And Validate TOKEN_PRIMARY_GROUP and corresponding SID.
         //
 
-        try {
+        try
+        {
 
-            CapturedPrimaryGroup =
-                ((PTOKEN_PRIMARY_GROUP)TokenInformation)->PrimaryGroup;
+            CapturedPrimaryGroup = ((PTOKEN_PRIMARY_GROUP)TokenInformation)->PrimaryGroup;
 
-            Status = SeCaptureSid(
-                         CapturedPrimaryGroup,
-                         PreviousMode,
-                         NULL, 0,
-                         PagedPool,
-                         TRUE,
-                         &CapturedPrimaryGroup
-                         );
+            Status = SeCaptureSid(CapturedPrimaryGroup, PreviousMode, NULL, 0, PagedPool, TRUE, &CapturedPrimaryGroup);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-
-            ObDereferenceObject( Token );
+            ObDereferenceObject(Token);
             return GetExceptionCode();
         }
 
-        if (!NT_SUCCESS(Status)) {
-            ObDereferenceObject( Token );
+        if (!NT_SUCCESS(Status))
+        {
+            ObDereferenceObject(Token);
             return Status;
         }
 
-        if (!SepIdAssignableAsGroup( Token, CapturedPrimaryGroup )) {
-            ObDereferenceObject( Token );
-            SeReleaseSid( CapturedPrimaryGroup, PreviousMode, TRUE);
+        if (!SepIdAssignableAsGroup(Token, CapturedPrimaryGroup))
+        {
+            ObDereferenceObject(Token);
+            SeReleaseSid(CapturedPrimaryGroup, PreviousMode, TRUE);
             return STATUS_INVALID_PRIMARY_GROUP;
         }
 
-        NewLength = SeLengthSid( CapturedPrimaryGroup );
+        NewLength = SeLengthSid(CapturedPrimaryGroup);
 
         //
         //  Gain write access to the token.
         //
 
-        SepAcquireTokenWriteLock( Token );
+        SepAcquireTokenWriteLock(Token);
 
         //
         // See if there is enough room in the dynamic part of the token
         // to replace the current Primary Group with the one specified.
         //
 
-        if (Token->DefaultDacl) {
+        if (Token->DefaultDacl)
+        {
             NewLength += Token->DefaultDacl->AclSize;
         }
 
-        if (NewLength > Token->DynamicCharged) {
+        if (NewLength > Token->DynamicCharged)
+        {
 
-            SepReleaseTokenWriteLock( Token, TokenModified );
-            ObDereferenceObject( Token );
-            SeReleaseSid( CapturedPrimaryGroup, PreviousMode, TRUE);
+            SepReleaseTokenWriteLock(Token, TokenModified);
+            ObDereferenceObject(Token);
+            SeReleaseSid(CapturedPrimaryGroup, PreviousMode, TRUE);
             return STATUS_ALLOTTED_SPACE_EXCEEDED;
         }
 
@@ -406,12 +400,13 @@ Return Value:
         // Expand the tokens dynamic buffer if we have to
         //
 
-        Status = SepExpandDynamic( Token, NewLength );
+        Status = SepExpandDynamic(Token, NewLength);
 
-        if (!NT_SUCCESS (Status)) {
-            SepReleaseTokenWriteLock( Token, TokenModified );
-            ObDereferenceObject( Token );
-            SeReleaseSid( CapturedPrimaryGroup, PreviousMode, TRUE);
+        if (!NT_SUCCESS(Status))
+        {
+            SepReleaseTokenWriteLock(Token, TokenModified);
+            ObDereferenceObject(Token);
+            SeReleaseSid(CapturedPrimaryGroup, PreviousMode, TRUE);
             return Status;
         }
 
@@ -420,13 +415,13 @@ Return Value:
         // Free up the existing primary group
         //
 
-        SepFreePrimaryGroup( Token );
+        SepFreePrimaryGroup(Token);
 
         //
         // And put the new SID in its place
         //
 
-        SepAppendPrimaryGroup( Token, CapturedPrimaryGroup );
+        SepAppendPrimaryGroup(Token, CapturedPrimaryGroup);
 
         TokenModified = TRUE;
 
@@ -434,12 +429,12 @@ Return Value:
         // All done.
         //
 
-        SepReleaseTokenWriteLock( Token, TokenModified );
-        ObDereferenceObject( Token );
-        SeReleaseSid( CapturedPrimaryGroup, PreviousMode, TRUE);
+        SepReleaseTokenWriteLock(Token, TokenModified);
+        ObDereferenceObject(Token);
+        SeReleaseSid(CapturedPrimaryGroup, PreviousMode, TRUE);
         return STATUS_SUCCESS;
 
-
+
     case TokenDefaultDacl:
 
         //
@@ -454,9 +449,10 @@ Return Value:
         //  necessary information class data structure.
         //
 
-        if (TokenInformationLength < (ULONG)sizeof(TOKEN_DEFAULT_DACL)) {
+        if (TokenInformationLength < (ULONG)sizeof(TOKEN_DEFAULT_DACL))
+        {
 
-            ObDereferenceObject( Token );
+            ObDereferenceObject(Token);
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
@@ -464,35 +460,32 @@ Return Value:
         // Capture And Validate TOKEN_DEFAULT_DACL and corresponding ACL.
         //
 
-        try {
+        try
+        {
 
-            CapturedDefaultDacl =
-                ((PTOKEN_DEFAULT_DACL)TokenInformation)->DefaultDacl;
+            CapturedDefaultDacl = ((PTOKEN_DEFAULT_DACL)TokenInformation)->DefaultDacl;
 
-            if (ARGUMENT_PRESENT(CapturedDefaultDacl)) {
-                Status = SeCaptureAcl(
-                             CapturedDefaultDacl,
-                             PreviousMode,
-                             NULL, 0,
-                             PagedPool,
-                             TRUE,
-                             &CapturedDefaultDacl,
-                             &NewLength
-                             );
-
-            } else {
+            if (ARGUMENT_PRESENT(CapturedDefaultDacl))
+            {
+                Status = SeCaptureAcl(CapturedDefaultDacl, PreviousMode, NULL, 0, PagedPool, TRUE, &CapturedDefaultDacl,
+                                      &NewLength);
+            }
+            else
+            {
                 NewLength = 0;
                 Status = STATUS_SUCCESS;
             }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-
-            ObDereferenceObject( Token );
+            ObDereferenceObject(Token);
             return GetExceptionCode();
         }
 
-        if (!NT_SUCCESS(Status)) {
-            ObDereferenceObject( Token );
+        if (!NT_SUCCESS(Status))
+        {
+            ObDereferenceObject(Token);
             return Status;
         }
 
@@ -500,20 +493,22 @@ Return Value:
         //  Gain write access to the token.
         //
 
-        SepAcquireTokenWriteLock( Token );
+        SepAcquireTokenWriteLock(Token);
 
         //
         // See if there is enough room in the dynamic part of the token
         // to replace the current Default Dacl with the one specified.
         //
-        NewLength += SeLengthSid( Token->PrimaryGroup );
+        NewLength += SeLengthSid(Token->PrimaryGroup);
 
-        if (NewLength > Token->DynamicCharged) {
+        if (NewLength > Token->DynamicCharged)
+        {
 
-            SepReleaseTokenWriteLock( Token, TokenModified );
-            ObDereferenceObject( Token );
-            if (ARGUMENT_PRESENT(CapturedDefaultDacl)) {
-                SeReleaseAcl( CapturedDefaultDacl, PreviousMode, TRUE);
+            SepReleaseTokenWriteLock(Token, TokenModified);
+            ObDereferenceObject(Token);
+            if (ARGUMENT_PRESENT(CapturedDefaultDacl))
+            {
+                SeReleaseAcl(CapturedDefaultDacl, PreviousMode, TRUE);
             }
             return STATUS_ALLOTTED_SPACE_EXCEEDED;
         }
@@ -521,13 +516,15 @@ Return Value:
         //
         // Expand the tokens dynamic buffer if we have to
         //
-        Status = SepExpandDynamic( Token, NewLength );
+        Status = SepExpandDynamic(Token, NewLength);
 
-        if (!NT_SUCCESS (Status)) {
-            SepReleaseTokenWriteLock( Token, TokenModified );
-            ObDereferenceObject( Token );
-            if (ARGUMENT_PRESENT(CapturedDefaultDacl)) {
-                SeReleaseAcl( CapturedDefaultDacl, PreviousMode, TRUE);
+        if (!NT_SUCCESS(Status))
+        {
+            SepReleaseTokenWriteLock(Token, TokenModified);
+            ObDereferenceObject(Token);
+            if (ARGUMENT_PRESENT(CapturedDefaultDacl))
+            {
+                SeReleaseAcl(CapturedDefaultDacl, PreviousMode, TRUE);
             }
             return Status;
         }
@@ -535,14 +532,15 @@ Return Value:
         // Free up the existing Default Dacl
         //
 
-        SepFreeDefaultDacl( Token );
+        SepFreeDefaultDacl(Token);
 
         //
         // And put the new ACL in its place
         //
 
-        if (ARGUMENT_PRESENT(CapturedDefaultDacl)) {
-            SepAppendDefaultDacl( Token, CapturedDefaultDacl );
+        if (ARGUMENT_PRESENT(CapturedDefaultDacl))
+        {
+            SepAppendDefaultDacl(Token, CapturedDefaultDacl);
         }
 
         TokenModified = TRUE;
@@ -551,47 +549,51 @@ Return Value:
         // All done.
         //
 
-        SepReleaseTokenWriteLock( Token, TokenModified );
-        ObDereferenceObject( Token );
-        if (ARGUMENT_PRESENT(CapturedDefaultDacl)) {
-            SeReleaseAcl( CapturedDefaultDacl, PreviousMode, TRUE);
+        SepReleaseTokenWriteLock(Token, TokenModified);
+        ObDereferenceObject(Token);
+        if (ARGUMENT_PRESENT(CapturedDefaultDacl))
+        {
+            SeReleaseAcl(CapturedDefaultDacl, PreviousMode, TRUE);
         }
         return STATUS_SUCCESS;
 
     case TokenSessionId:
     {
-       ULONG SessionId;
+        ULONG SessionId;
 
-        if ( TokenInformationLength != sizeof(ULONG) ) {
-            ObDereferenceObject( Token );
-            return( STATUS_INFO_LENGTH_MISMATCH );
+        if (TokenInformationLength != sizeof(ULONG))
+        {
+            ObDereferenceObject(Token);
+            return (STATUS_INFO_LENGTH_MISMATCH);
         }
 
-        try {
+        try
+        {
 
-           SessionId = *(PULONG)TokenInformation;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            ObDereferenceObject( Token );
+            SessionId = *(PULONG)TokenInformation;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            ObDereferenceObject(Token);
             return GetExceptionCode();
         }
 
         //
         // We only allow TCB to set SessionId's
         //
-        if ( !SeSinglePrivilegeCheck(SeTcbPrivilege,PreviousMode) ) {
-            ObDereferenceObject( Token );
-            return( STATUS_PRIVILEGE_NOT_HELD );
+        if (!SeSinglePrivilegeCheck(SeTcbPrivilege, PreviousMode))
+        {
+            ObDereferenceObject(Token);
+            return (STATUS_PRIVILEGE_NOT_HELD);
         }
 
         //
         // Set SessionId for the token
         //
-        SeSetSessionIdToken( (PACCESS_TOKEN)Token,
-                             SessionId );
+        SeSetSessionIdToken((PACCESS_TOKEN)Token, SessionId);
 
-        ObDereferenceObject( Token );
-        return( STATUS_SUCCESS );
+        ObDereferenceObject(Token);
+        return (STATUS_SUCCESS);
     }
 
     case TokenSessionReference:
@@ -599,33 +601,38 @@ Return Value:
         ULONG SessionReferenced;
         BOOLEAN DereferenceSession = FALSE;
 
-        if ( TokenInformationLength != sizeof(ULONG) ) {
-            ObDereferenceObject( Token );
-            return( STATUS_INFO_LENGTH_MISMATCH );
+        if (TokenInformationLength != sizeof(ULONG))
+        {
+            ObDereferenceObject(Token);
+            return (STATUS_INFO_LENGTH_MISMATCH);
         }
 
-        try {
+        try
+        {
 
             SessionReferenced = *(PULONG)TokenInformation;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            ObDereferenceObject( Token );
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            ObDereferenceObject(Token);
             return GetExceptionCode();
         }
 
         //
         // We only allow TCB to set Session referenced.
         //
-        if ( !SeSinglePrivilegeCheck(SeTcbPrivilege,PreviousMode) ) {
-            ObDereferenceObject( Token );
-            return( STATUS_PRIVILEGE_NOT_HELD );
+        if (!SeSinglePrivilegeCheck(SeTcbPrivilege, PreviousMode))
+        {
+            ObDereferenceObject(Token);
+            return (STATUS_PRIVILEGE_NOT_HELD);
         }
 
         //
         // We don't yet have use for this so don't implement it.
         //
-        if ( SessionReferenced ) {
-            ObDereferenceObject( Token );
+        if (SessionReferenced)
+        {
+            ObDereferenceObject(Token);
             return STATUS_INVALID_PARAMETER;
         }
 
@@ -633,42 +640,40 @@ Return Value:
         // Determine if we're changing the state and change it with the write lock held
         //
 
-        SepAcquireTokenWriteLock( Token );
-        if ( (Token->TokenFlags & TOKEN_SESSION_NOT_REFERENCED) == 0 ) {
+        SepAcquireTokenWriteLock(Token);
+        if ((Token->TokenFlags & TOKEN_SESSION_NOT_REFERENCED) == 0)
+        {
 
 #if DBG || TOKEN_LEAK_MONITOR
-            SepRemoveTokenLogonSession( Token );
+            SepRemoveTokenLogonSession(Token);
 #endif
             Token->TokenFlags |= TOKEN_SESSION_NOT_REFERENCED;
             DereferenceSession = TRUE;
         }
-        SepReleaseTokenWriteLock( Token, FALSE );
+        SepReleaseTokenWriteLock(Token, FALSE);
 
         //
         // Do the actual dereference without any locks held
         //
 
-        if ( DereferenceSession ) {
-            SepDeReferenceLogonSession( &Token->AuthenticationId );
+        if (DereferenceSession)
+        {
+            SepDeReferenceLogonSession(&Token->AuthenticationId);
         }
 
-        ObDereferenceObject( Token );
-        return( STATUS_SUCCESS );
+        ObDereferenceObject(Token);
+        return (STATUS_SUCCESS);
     }
 
     } //endswitch
 
-    ASSERT( TRUE == FALSE );  // Should never reach here.
-    return( STATUS_INVALID_PARAMETER );
-
+    ASSERT(TRUE == FALSE); // Should never reach here.
+    return (STATUS_INVALID_PARAMETER);
 }
 
-
+
 NTSTATUS
-SepExpandDynamic(
-    IN PTOKEN Token,
-    IN ULONG NewLength
-    )
+SepExpandDynamic(IN PTOKEN Token, IN ULONG NewLength)
 /*++
 
 
@@ -693,24 +698,25 @@ Return Value:
     //
     //  Work out how big it is now
     //
-    CurrentSize = SeLengthSid( Token->PrimaryGroup ) + Token->DynamicAvailable;
-    if (Token->DefaultDacl) {
+    CurrentSize = SeLengthSid(Token->PrimaryGroup) + Token->DynamicAvailable;
+    if (Token->DefaultDacl)
+    {
         CurrentSize += Token->DefaultDacl->AclSize;
     }
-    if (NewLength <= CurrentSize) {
+    if (NewLength <= CurrentSize)
+    {
         return STATUS_SUCCESS;
     }
 
-    NewDynamic = ExAllocatePoolWithTag (PagedPool,
-                                        NewLength,
-                                        'dTeS');
-    if (NewDynamic == NULL) {
+    NewDynamic = ExAllocatePoolWithTag(PagedPool, NewLength, 'dTeS');
+    if (NewDynamic == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     OldDynamic = Token->DynamicPart;
 
-    RtlCopyMemory (NewDynamic, OldDynamic, CurrentSize);
+    RtlCopyMemory(NewDynamic, OldDynamic, CurrentSize);
 
     Token->DynamicPart = NewDynamic;
     Token->DynamicAvailable += NewLength - CurrentSize;
@@ -718,21 +724,19 @@ Return Value:
     //
     //Relocate the pointers within the new buffer
     //
-    if (Token->DefaultDacl) {
-        Token->DefaultDacl = (PACL) ((PUCHAR) NewDynamic + ((PUCHAR) Token->DefaultDacl - (PUCHAR) OldDynamic));
+    if (Token->DefaultDacl)
+    {
+        Token->DefaultDacl = (PACL)((PUCHAR)NewDynamic + ((PUCHAR)Token->DefaultDacl - (PUCHAR)OldDynamic));
     }
-    Token->PrimaryGroup = (PSID) ((PUCHAR) NewDynamic + ((PUCHAR) Token->PrimaryGroup - (PUCHAR) OldDynamic));
+    Token->PrimaryGroup = (PSID)((PUCHAR)NewDynamic + ((PUCHAR)Token->PrimaryGroup - (PUCHAR)OldDynamic));
 
-    ExFreePool (OldDynamic);
+    ExFreePool(OldDynamic);
 
     return STATUS_SUCCESS;
 }
 
-
-VOID
-SepFreePrimaryGroup(
-    IN PTOKEN Token
-    )
+
+VOID SepFreePrimaryGroup(IN PTOKEN Token)
 
 /*++
 
@@ -761,7 +765,7 @@ Return Value:
     // Add the size of the primary group to the DynamicAvailable field.
     //
 
-    Token->DynamicAvailable += SeLengthSid( Token->PrimaryGroup );
+    Token->DynamicAvailable += SeLengthSid(Token->PrimaryGroup);
 
     //
     // If there is a default discretionary ACL, and it is not already at the
@@ -769,29 +773,22 @@ Return Value:
     // pointer to it).
     //
 
-    if (ARGUMENT_PRESENT(Token->DefaultDacl)) {
-        if (Token->DynamicPart != (PULONG)(Token->DefaultDacl)) {
+    if (ARGUMENT_PRESENT(Token->DefaultDacl))
+    {
+        if (Token->DynamicPart != (PULONG)(Token->DefaultDacl))
+        {
 
-            RtlMoveMemory(
-                (PVOID)(Token->DynamicPart),
-                (PVOID)(Token->DefaultDacl),
-                Token->DefaultDacl->AclSize
-                );
+            RtlMoveMemory((PVOID)(Token->DynamicPart), (PVOID)(Token->DefaultDacl), Token->DefaultDacl->AclSize);
 
             Token->DefaultDacl = (PACL)(Token->DynamicPart);
-
         }
     }
 
     return;
-
 }
 
-
-VOID
-SepFreeDefaultDacl(
-    IN PTOKEN Token
-    )
+
+VOID SepFreeDefaultDacl(IN PTOKEN Token)
 
 /*++
 
@@ -814,19 +811,19 @@ Return Value:
 
 --*/
 {
-   ULONG PrimaryGroupSize;
+    ULONG PrimaryGroupSize;
 
-   PAGED_CODE();
+    PAGED_CODE();
 
     //
     // Add the size of the Default Dacl (if there is one) to the
     // DynamicAvailable field.
     //
-    if (ARGUMENT_PRESENT(Token->DefaultDacl)) {
+    if (ARGUMENT_PRESENT(Token->DefaultDacl))
+    {
 
         Token->DynamicAvailable += Token->DefaultDacl->AclSize;
         Token->DefaultDacl = NULL;
-
     }
 
     //
@@ -834,15 +831,12 @@ Return Value:
     // the primary group there (remember to update the pointer to it).
     //
 
-    if (Token->DynamicPart != (PULONG)(Token->PrimaryGroup)) {
+    if (Token->DynamicPart != (PULONG)(Token->PrimaryGroup))
+    {
 
-        PrimaryGroupSize = SeLengthSid( Token->PrimaryGroup );
+        PrimaryGroupSize = SeLengthSid(Token->PrimaryGroup);
 
-        RtlMoveMemory(
-            (PVOID)(Token->DynamicPart),
-            (PVOID)(Token->PrimaryGroup),
-            PrimaryGroupSize
-            );
+        RtlMoveMemory((PVOID)(Token->DynamicPart), (PVOID)(Token->PrimaryGroup), PrimaryGroupSize);
 
         Token->PrimaryGroup = (PSID)(Token->DynamicPart);
     }
@@ -850,12 +844,8 @@ Return Value:
     return;
 }
 
-
-VOID
-SepAppendPrimaryGroup(
-    IN PTOKEN Token,
-    IN PSID PSid
-    )
+
+VOID SepAppendPrimaryGroup(IN PTOKEN Token, IN PSID PSid)
 
 /*++
 
@@ -882,10 +872,10 @@ Return Value:
 
 --*/
 {
-   ULONG_PTR NextFree;
-   ULONG SidSize;
+    ULONG_PTR NextFree;
+    ULONG SidSize;
 
-   PAGED_CODE();
+    PAGED_CODE();
 
     //
     // Add the size of the Default Dacl (if there is one) to the
@@ -893,17 +883,18 @@ Return Value:
     // where the primary group should be placed.
     //
 
-    if (ARGUMENT_PRESENT(Token->DefaultDacl)) {
+    if (ARGUMENT_PRESENT(Token->DefaultDacl))
+    {
 
-//        ASSERT( (ULONG)(Token->DefaultDacl->AclSize) ==
-//                (ULONG)LongAlignSize(Token->DefaultDacl->AclSize) );
+        //        ASSERT( (ULONG)(Token->DefaultDacl->AclSize) ==
+        //                (ULONG)LongAlignSize(Token->DefaultDacl->AclSize) );
 
         NextFree = (ULONG_PTR)(Token->DynamicPart) + Token->DefaultDacl->AclSize;
-
-    } else {
+    }
+    else
+    {
 
         NextFree = (ULONG_PTR)(Token->DynamicPart);
-
     }
 
     //
@@ -911,13 +902,9 @@ Return Value:
     //
 
 
-    SidSize = SeLengthSid( PSid );
+    SidSize = SeLengthSid(PSid);
 
-    RtlCopyMemory(
-        (PVOID)NextFree,
-        (PVOID)PSid,
-        SidSize
-        );
+    RtlCopyMemory((PVOID)NextFree, (PVOID)PSid, SidSize);
 
     Token->PrimaryGroup = (PSID)NextFree;
 
@@ -925,18 +912,13 @@ Return Value:
     // And decrement the amount of the dynamic part that is available.
     //
 
-    ASSERT( SidSize <= (Token->DynamicAvailable) );
+    ASSERT(SidSize <= (Token->DynamicAvailable));
     Token->DynamicAvailable -= SidSize;
 
     return;
-
 }
-
-VOID
-SepAppendDefaultDacl(
-    IN PTOKEN Token,
-    IN PACL PAcl
-    )
+
+VOID SepAppendDefaultDacl(IN PTOKEN Token, IN PACL PAcl)
 
 /*++
 
@@ -963,10 +945,10 @@ Return Value:
 
 --*/
 {
-   ULONG_PTR NextFree;
-   ULONG AclSize;
+    ULONG_PTR NextFree;
+    ULONG AclSize;
 
-   PAGED_CODE();
+    PAGED_CODE();
 
     //
     // Add the size of the primary group to the
@@ -983,13 +965,9 @@ Return Value:
     //
 
     AclSize = (ULONG)(PAcl->AclSize);
-//    ASSERT(AclSize == (ULONG)LongAlignSize(AclSize));
+    //    ASSERT(AclSize == (ULONG)LongAlignSize(AclSize));
 
-    RtlCopyMemory(
-        (PVOID)NextFree,
-        (PVOID)PAcl,
-        AclSize
-        );
+    RtlCopyMemory((PVOID)NextFree, (PVOID)PAcl, AclSize);
 
     Token->DefaultDacl = (PACL)NextFree;
 
@@ -997,19 +975,15 @@ Return Value:
     // And decrement the amount of the dynamic part that is available.
     //
 
-    ASSERT( AclSize <= (Token->DynamicAvailable) );
+    ASSERT(AclSize <= (Token->DynamicAvailable));
     Token->DynamicAvailable -= AclSize;
 
     return;
-
 }
 
 
 NTSTATUS
-SeSetSessionIdToken(
-    PACCESS_TOKEN Token,
-    ULONG SessionId
-    )
+SeSetSessionIdToken(PACCESS_TOKEN Token, ULONG SessionId)
 /*++
 
 
@@ -1032,17 +1006,17 @@ Return Value:
 --*/
 {
 
-   PAGED_CODE();
+    PAGED_CODE();
 
-   //
-   //  Gain write access to the token.
-   //
+    //
+    //  Gain write access to the token.
+    //
 
-   SepAcquireTokenWriteLock( ((PTOKEN)Token) );
+    SepAcquireTokenWriteLock(((PTOKEN)Token));
 
-   ((PTOKEN)Token)->SessionId = SessionId;
+    ((PTOKEN)Token)->SessionId = SessionId;
 
-   SepReleaseTokenWriteLock( ((PTOKEN)Token), TRUE );
+    SepReleaseTokenWriteLock(((PTOKEN)Token), TRUE);
 
-   return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }

@@ -28,7 +28,7 @@ Revision History:
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'lrpP')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'lrpP')
 #endif
 
 #ifdef ALLOC_PRAGMA
@@ -47,18 +47,14 @@ Revision History:
 #pragma alloc_text(PAGE, IopSetRelationsTag)
 #endif
 
-#define RELATION_FLAGS              0x00000003
+#define RELATION_FLAGS 0x00000003
 
-#define RELATION_FLAG_TAGGED        0x00000001
-#define RELATION_FLAG_DESCENDANT    0x00000002
+#define RELATION_FLAG_TAGGED 0x00000001
+#define RELATION_FLAG_DESCENDANT 0x00000002
 
 NTSTATUS
-IopAddRelationToList(
-    IN PRELATION_LIST List,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN DirectDescendant,
-    IN BOOLEAN Tagged
-    )
+IopAddRelationToList(IN PRELATION_LIST List, IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN DirectDescendant,
+                     IN BOOLEAN Tagged)
 
 /*++
 
@@ -112,26 +108,29 @@ Return Value:
 --*/
 
 {
-    PDEVICE_NODE            deviceNode;
-    PRELATION_LIST_ENTRY    entry;
-    ULONG                   level;
-    ULONG                   index;
-    ULONG                   flags;
+    PDEVICE_NODE deviceNode;
+    PRELATION_LIST_ENTRY entry;
+    ULONG level;
+    ULONG index;
+    ULONG flags;
 
     PAGED_CODE();
 
     flags = 0;
 
-    if (Tagged) {
+    if (Tagged)
+    {
         Tagged = 1;
         flags |= RELATION_FLAG_TAGGED;
     }
 
-    if (DirectDescendant) {
+    if (DirectDescendant)
+    {
         flags |= RELATION_FLAG_DESCENDANT;
     }
 
-    if ((deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode) != NULL) {
+    if ((deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode) != NULL)
+    {
         level = deviceNode->Level;
 
         //
@@ -142,19 +141,21 @@ Return Value:
         //
         ASSERT(List->FirstLevel <= level && level <= List->MaxLevel);
 
-        if (List->FirstLevel <= level && level <= List->MaxLevel) {
+        if (List->FirstLevel <= level && level <= List->MaxLevel)
+        {
 
-            if ((entry = List->Entries[ level - List->FirstLevel ]) == NULL) {
+            if ((entry = List->Entries[level - List->FirstLevel]) == NULL)
+            {
 
                 //
                 // This is the first DeviceObject of its level, allocate a new
                 // RELATION_LIST_ENTRY.
                 //
-                entry = ExAllocatePool( PagedPool,
-                                        sizeof(RELATION_LIST_ENTRY) +
-                                        IopNumberDeviceNodes * sizeof(PDEVICE_OBJECT));
+                entry = ExAllocatePool(PagedPool,
+                                       sizeof(RELATION_LIST_ENTRY) + IopNumberDeviceNodes * sizeof(PDEVICE_OBJECT));
 
-                if (entry == NULL) {
+                if (entry == NULL)
+                {
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
 
@@ -168,7 +169,7 @@ Return Value:
                 entry->Count = 0;
                 entry->MaxCount = IopNumberDeviceNodes;
 
-                List->Entries[ level - List->FirstLevel ] = entry;
+                List->Entries[level - List->FirstLevel] = entry;
             }
 
             //
@@ -178,13 +179,16 @@ Return Value:
             //
             ASSERT(entry->Count < entry->MaxCount);
 
-            if (entry->Count < entry->MaxCount) {
+            if (entry->Count < entry->MaxCount)
+            {
                 //
                 // Search the list to see if DeviceObject has already been
                 // added.
                 //
-                for (index = 0; index < entry->Count; index++) {
-                    if (((ULONG_PTR)entry->Devices[ index ] & ~RELATION_FLAGS) == (ULONG_PTR)DeviceObject) {
+                for (index = 0; index < entry->Count; index++)
+                {
+                    if (((ULONG_PTR)entry->Devices[index] & ~RELATION_FLAGS) == (ULONG_PTR)DeviceObject)
+                    {
 
                         //
                         // DeviceObject already exists in the list.  However
@@ -192,14 +196,18 @@ Return Value:
                         // override it if DirectDescendant is TRUE.  This could
                         // happen if we merged two relation lists.
 
-                        if (DirectDescendant) {
-                            entry->Devices[ index ] = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ index ] | RELATION_FLAG_DESCENDANT);
+                        if (DirectDescendant)
+                        {
+                            entry->Devices[index] =
+                                (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[index] | RELATION_FLAG_DESCENDANT);
                         }
 
                         return STATUS_OBJECT_NAME_COLLISION;
                     }
                 }
-            } else {
+            }
+            else
+            {
                 //
                 // There isn't room in the Entry for another DEVICE_OBJECT, the
                 // list has probably already been compressed.
@@ -211,16 +219,18 @@ Return Value:
             // Take out a reference on DeviceObject, we will release it when we
             // free the list or remove the DeviceObject from the list.
             //
-            ObReferenceObject( DeviceObject );
+            ObReferenceObject(DeviceObject);
 
-            entry->Devices[ index ] = (PDEVICE_OBJECT)((ULONG_PTR)DeviceObject | flags);
+            entry->Devices[index] = (PDEVICE_OBJECT)((ULONG_PTR)DeviceObject | flags);
             entry->Count++;
 
             List->Count++;
             List->TagCount += Tagged;
 
             return STATUS_SUCCESS;
-        } else {
+        }
+        else
+        {
             //
             // There isn't an Entry available for the level of this
             // DEVICE_OBJECT, the list has probably already been compressed.
@@ -228,18 +238,18 @@ Return Value:
 
             return STATUS_INVALID_PARAMETER;
         }
-    } else {
+    }
+    else
+    {
         //
         // DeviceObject is not a PhysicalDeviceObject (PDO).
         //
         return STATUS_NO_SUCH_DEVICE;
     }
 }
-
+
 PRELATION_LIST
-IopAllocateRelationList(
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode
-    )
+IopAllocateRelationList(IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode)
 
 /*++
 
@@ -259,9 +269,9 @@ Return Value:
 --*/
 
 {
-    PRELATION_LIST  list;
-    ULONG           maxLevel;
-    ULONG           listSize;
+    PRELATION_LIST list;
+    ULONG maxLevel;
+    ULONG listSize;
 
     PAGED_CODE();
 
@@ -272,14 +282,10 @@ Return Value:
     maxLevel = IopMaxDeviceNodeLevel;
     listSize = sizeof(RELATION_LIST) + maxLevel * sizeof(PRELATION_LIST_ENTRY);
 
-    list = (PRELATION_LIST) PiAllocateCriticalMemory(
-        OperationCode,
-        PagedPool,
-        listSize,
-        0
-        );
+    list = (PRELATION_LIST)PiAllocateCriticalMemory(OperationCode, PagedPool, listSize, 0);
 
-    if (list != NULL) {
+    if (list != NULL)
+    {
 
         RtlZeroMemory(list, listSize);
         // list->FirstLevel = 0;
@@ -290,11 +296,9 @@ Return Value:
 
     return list;
 }
-
+
 NTSTATUS
-IopCompressRelationList(
-    IN OUT PRELATION_LIST *List
-    )
+IopCompressRelationList(IN OUT PRELATION_LIST *List)
 
 /*++
 
@@ -322,11 +326,11 @@ Return Value:
 --*/
 
 {
-    PRELATION_LIST          oldList, newList;
-    PRELATION_LIST_ENTRY    oldEntry, newEntry;
-    ULONG                   lowestLevel;
-    ULONG                   highestLevel;
-    ULONG                   index;
+    PRELATION_LIST oldList, newList;
+    PRELATION_LIST_ENTRY oldEntry, newEntry;
+    ULONG lowestLevel;
+    ULONG highestLevel;
+    ULONG index;
 
     PAGED_CODE();
 
@@ -342,33 +346,38 @@ Return Value:
     //
     // Loop through the list looking for allocated entries.
     //
-    for (index = 0; index <= (oldList->MaxLevel - oldList->FirstLevel); index++) {
+    for (index = 0; index <= (oldList->MaxLevel - oldList->FirstLevel); index++)
+    {
 
-        if ((oldEntry = oldList->Entries[ index ]) != NULL) {
+        if ((oldEntry = oldList->Entries[index]) != NULL)
+        {
             //
             // This entry is allocated, update lowestLevel and highestLevel if
             // necessary.
             //
-            if (lowestLevel > index) {
+            if (lowestLevel > index)
+            {
                 lowestLevel = index;
             }
 
-            if (highestLevel < index) {
+            if (highestLevel < index)
+            {
                 highestLevel = index;
             }
 
-            if (oldEntry->Count < oldEntry->MaxCount) {
+            if (oldEntry->Count < oldEntry->MaxCount)
+            {
 
                 //
                 // This entry is only partially full.  Allocate a new entry
                 // which is just the right size to hold the current number of
                 // PDEVICE_OBJECTs.
                 //
-                newEntry = ExAllocatePool( PagedPool,
-                                           sizeof(RELATION_LIST_ENTRY) +
-                                           (oldEntry->Count - 1) * sizeof(PDEVICE_OBJECT));
+                newEntry = ExAllocatePool(PagedPool,
+                                          sizeof(RELATION_LIST_ENTRY) + (oldEntry->Count - 1) * sizeof(PDEVICE_OBJECT));
 
-                if (newEntry != NULL) {
+                if (newEntry != NULL)
+                {
 
                     //
                     // Initialize Count and MaxCount to the number of
@@ -381,16 +390,14 @@ Return Value:
                     // Copy the PDEVICE_OBJECTs from the old entry to the new
                     // one.
                     //
-                    RtlCopyMemory( newEntry->Devices,
-                                   oldEntry->Devices,
-                                   oldEntry->Count * sizeof(PDEVICE_OBJECT));
+                    RtlCopyMemory(newEntry->Devices, oldEntry->Devices, oldEntry->Count * sizeof(PDEVICE_OBJECT));
 
                     //
                     // Free the old entry and store the new entry in the list.
                     //
-                    ExFreePool( oldEntry );
+                    ExFreePool(oldEntry);
 
-                    oldList->Entries[ index ] = newEntry;
+                    oldList->Entries[index] = newEntry;
                 }
             }
         }
@@ -401,7 +408,8 @@ Return Value:
     //
     ASSERT(lowestLevel <= highestLevel);
 
-    if (lowestLevel > highestLevel) {
+    if (lowestLevel > highestLevel)
+    {
         //
         // The list is empty - we shouldn't get asked to compress an empty list
         // but lets do it anyways.
@@ -414,17 +422,18 @@ Return Value:
     // Check if the old list had unused entries at the beginning or the end of
     // the Entries array.
     //
-    if (lowestLevel != oldList->FirstLevel || highestLevel != oldList->MaxLevel) {
+    if (lowestLevel != oldList->FirstLevel || highestLevel != oldList->MaxLevel)
+    {
 
         //
         // Allocate a new List with just enough Entries to hold those between
         // FirstLevel and MaxLevel inclusive.
         //
-        newList = ExAllocatePool( PagedPool,
-                                  sizeof(RELATION_LIST) +
-                                  (highestLevel - lowestLevel) * sizeof(PRELATION_LIST_ENTRY));
+        newList = ExAllocatePool(PagedPool,
+                                 sizeof(RELATION_LIST) + (highestLevel - lowestLevel) * sizeof(PRELATION_LIST_ENTRY));
 
-        if (newList != NULL) {
+        if (newList != NULL)
+        {
             //
             // Copy the old list to the new list and return it to the caller.
             //
@@ -433,11 +442,10 @@ Return Value:
             newList->FirstLevel = lowestLevel;
             newList->MaxLevel = highestLevel;
 
-            RtlCopyMemory( newList->Entries,
-                           &oldList->Entries[ lowestLevel ],
-                           (highestLevel - lowestLevel + 1) * sizeof(PRELATION_LIST_ENTRY));
+            RtlCopyMemory(newList->Entries, &oldList->Entries[lowestLevel],
+                          (highestLevel - lowestLevel + 1) * sizeof(PRELATION_LIST_ENTRY));
 
-            ExFreePool( oldList );
+            ExFreePool(oldList);
 
             *List = newList;
         }
@@ -445,16 +453,10 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 BOOLEAN
-IopEnumerateRelations(
-    IN      PRELATION_LIST  List,
-    IN OUT  PULONG          Marker,
-    OUT     PDEVICE_OBJECT *DeviceObject,
-    OUT     BOOLEAN        *DirectDescendant    OPTIONAL,
-    OUT     BOOLEAN        *Tagged              OPTIONAL,
-    IN      BOOLEAN         Reverse
-    )
+IopEnumerateRelations(IN PRELATION_LIST List, IN OUT PULONG Marker, OUT PDEVICE_OBJECT *DeviceObject,
+                      OUT BOOLEAN *DirectDescendant OPTIONAL, OUT BOOLEAN *Tagged OPTIONAL, IN BOOLEAN Reverse)
 /*++
 
 Routine Description:
@@ -500,9 +502,9 @@ Return Value:
 
 --*/
 {
-    PRELATION_LIST_ENTRY    entry;
-    LONG                    levelIndex;
-    ULONG                   entryIndex;
+    PRELATION_LIST_ENTRY entry;
+    LONG levelIndex;
+    ULONG entryIndex;
 
     PAGED_CODE();
 
@@ -516,23 +518,28 @@ Return Value:
     //      Bit 30-24   = Current index into entries
     //      Bit 23-0    = Current index into devices, 0xFFFFFF means last
     //
-    if (*Marker == ~0U) {
+    if (*Marker == ~0U)
+    {
         //
         // We've reached the end.
         //
         return FALSE;
     }
 
-    if (*Marker == 0) {
+    if (*Marker == 0)
+    {
         //
         // This is the initial call to IopEnumerateRelations
         //
-        if (Reverse) {
+        if (Reverse)
+        {
             //
             // Initialize levelIndex to the last element of Entries
             //
             levelIndex = List->MaxLevel - List->FirstLevel;
-        } else {
+        }
+        else
+        {
             //
             // Initialize levelIndex to the first element of Entries
             //
@@ -546,7 +553,9 @@ Return Value:
         // it will become zero.
         //
         entryIndex = ~0U;
-    } else {
+    }
+    else
+    {
         //
         // Bit 31 is our valid bit, used to distinguish level 0, device 0 from
         // the first time call.
@@ -562,20 +571,24 @@ Return Value:
         entryIndex = *Marker & 0x00FFFFFF;
     }
 
-    if (Reverse) {
+    if (Reverse)
+    {
         //
         // We are traversing the list bottom up, from the deepest device towards
         // the root.
         //
-        for ( ; levelIndex >= 0; levelIndex--) {
+        for (; levelIndex >= 0; levelIndex--)
+        {
 
             //
             // Since the Entries array can be sparse find the next allocated
             // Entry.
             //
-            if ((entry = List->Entries[ levelIndex ]) != NULL) {
+            if ((entry = List->Entries[levelIndex]) != NULL)
+            {
 
-                if (entryIndex > entry->Count) {
+                if (entryIndex > entry->Count)
+                {
                     //
                     // entryIndex (the current one) is greater than Count, this
                     // will be the case where it is 0xFFFFFF, in other words
@@ -585,7 +598,8 @@ Return Value:
                     entryIndex = entry->Count;
                 }
 
-                if (entryIndex > 0) {
+                if (entryIndex > 0)
+                {
 
                     //
                     // The current entry is beyond the first entry so the next
@@ -597,20 +611,22 @@ Return Value:
                     //
                     // Get the device object and remove the tag.
                     //
-                    *DeviceObject = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ entryIndex ] & ~RELATION_FLAGS);
+                    *DeviceObject = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[entryIndex] & ~RELATION_FLAGS);
 
-                    if (Tagged != NULL) {
+                    if (Tagged != NULL)
+                    {
                         //
                         // The caller is interested in the tag value.
                         //
-                        *Tagged = (BOOLEAN)((ULONG_PTR)entry->Devices[ entryIndex ] & RELATION_FLAG_TAGGED);
+                        *Tagged = (BOOLEAN)((ULONG_PTR)entry->Devices[entryIndex] & RELATION_FLAG_TAGGED);
                     }
 
-                    if (DirectDescendant != NULL) {
+                    if (DirectDescendant != NULL)
+                    {
                         //
                         // The caller is interested in the DirectDescendant value.
                         //
-                        *DirectDescendant = (BOOLEAN)((ULONG_PTR)entry->Devices[ entryIndex ] & RELATION_FLAG_DESCENDANT);
+                        *DirectDescendant = (BOOLEAN)((ULONG_PTR)entry->Devices[entryIndex] & RELATION_FLAG_DESCENDANT);
                     }
 
                     //
@@ -630,14 +646,18 @@ Return Value:
             //
             entryIndex = ~0U;
         }
-    } else {
-        for ( ; levelIndex <= (LONG)(List->MaxLevel - List->FirstLevel); levelIndex++) {
+    }
+    else
+    {
+        for (; levelIndex <= (LONG)(List->MaxLevel - List->FirstLevel); levelIndex++)
+        {
 
             //
             // Since the Entries array can be sparse find the next allocated
             // Entry.
             //
-            if ((entry = List->Entries[ levelIndex ]) != NULL) {
+            if ((entry = List->Entries[levelIndex]) != NULL)
+            {
 
                 //
                 // entryIndex is the index of the current device or 0xFFFFFFFF
@@ -647,7 +667,8 @@ Return Value:
                 //
                 entryIndex++;
 
-                if (entryIndex < entry->Count) {
+                if (entryIndex < entry->Count)
+                {
 
                     //
                     // The next device is within this entry.
@@ -655,20 +676,22 @@ Return Value:
                     //
                     // Get the device object and remove the tag.
                     //
-                    *DeviceObject = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ entryIndex ] & ~RELATION_FLAGS);
+                    *DeviceObject = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[entryIndex] & ~RELATION_FLAGS);
 
-                    if (Tagged != NULL) {
+                    if (Tagged != NULL)
+                    {
                         //
                         // The caller is interested in the tag value.
                         //
-                        *Tagged = (BOOLEAN)((ULONG_PTR)entry->Devices[ entryIndex ] & RELATION_FLAG_TAGGED);
+                        *Tagged = (BOOLEAN)((ULONG_PTR)entry->Devices[entryIndex] & RELATION_FLAG_TAGGED);
                     }
 
-                    if (DirectDescendant != NULL) {
+                    if (DirectDescendant != NULL)
+                    {
                         //
                         // The caller is interested in the DirectDescendant value.
                         //
-                        *DirectDescendant = (BOOLEAN)((ULONG_PTR)entry->Devices[ entryIndex ] & RELATION_FLAG_DESCENDANT);
+                        *DirectDescendant = (BOOLEAN)((ULONG_PTR)entry->Devices[entryIndex] & RELATION_FLAG_DESCENDANT);
                     }
 
                     //
@@ -697,21 +720,20 @@ Return Value:
     *Marker = ~0U;
     *DeviceObject = NULL;
 
-    if (Tagged != NULL) {
+    if (Tagged != NULL)
+    {
         *Tagged = FALSE;
     }
 
-    if (DirectDescendant != NULL) {
+    if (DirectDescendant != NULL)
+    {
         *DirectDescendant = FALSE;
     }
 
     return FALSE;
 }
-
-VOID
-IopFreeRelationList(
-    IN PRELATION_LIST List
-    )
+
+VOID IopFreeRelationList(IN PRELATION_LIST List)
 /*++
 
 Routine Description:
@@ -728,31 +750,34 @@ Return Value:
 
 --*/
 {
-    PRELATION_LIST_ENTRY    entry;
-    ULONG                   levelIndex;
-    ULONG                   entryIndex;
+    PRELATION_LIST_ENTRY entry;
+    ULONG levelIndex;
+    ULONG entryIndex;
 
     PAGED_CODE();
 
     //
     // Search the list looking for allocated Entries.
     //
-    for (levelIndex = 0; levelIndex <= (List->MaxLevel - List->FirstLevel); levelIndex++) {
+    for (levelIndex = 0; levelIndex <= (List->MaxLevel - List->FirstLevel); levelIndex++)
+    {
 
-        if ((entry = List->Entries[ levelIndex ]) != NULL) {
+        if ((entry = List->Entries[levelIndex]) != NULL)
+        {
             //
             // This entry has been allocated.
             //
-            for (entryIndex = 0; entryIndex < entry->Count; entryIndex++) {
+            for (entryIndex = 0; entryIndex < entry->Count; entryIndex++)
+            {
                 //
                 // Dereference all the Devices in the entry.
                 //
-                ObDereferenceObject((PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ entryIndex ] & ~RELATION_FLAGS));
+                ObDereferenceObject((PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[entryIndex] & ~RELATION_FLAGS));
             }
             //
             // Free the Entry.
             //
-            ExFreePool( entry );
+            ExFreePool(entry);
         }
     }
 
@@ -762,13 +787,11 @@ Return Value:
     // DeviceObject is also in one of the Entries and its reference is taken
     // and released there.
     //
-    ExFreePool( List );
+    ExFreePool(List);
 }
-
+
 ULONG
-IopGetRelationsCount(
-    PRELATION_LIST List
-    )
+IopGetRelationsCount(PRELATION_LIST List)
 
 /*++
 
@@ -791,11 +814,9 @@ Return Value:
 
     return List->Count;
 }
-
+
 ULONG
-IopGetRelationsTaggedCount(
-    PRELATION_LIST List
-    )
+IopGetRelationsTaggedCount(PRELATION_LIST List)
 
 /*++
 
@@ -819,12 +840,9 @@ Return Value:
 
     return List->TagCount;
 }
-
+
 BOOLEAN
-IopIsRelationInList(
-    PRELATION_LIST List,
-    PDEVICE_OBJECT DeviceObject
-    )
+IopIsRelationInList(PRELATION_LIST List, PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -852,32 +870,37 @@ Return Value:
 --*/
 
 {
-    PDEVICE_NODE            deviceNode;
-    PRELATION_LIST_ENTRY    entry;
-    ULONG                   level;
-    ULONG                   index;
+    PDEVICE_NODE deviceNode;
+    PRELATION_LIST_ENTRY entry;
+    ULONG level;
+    ULONG index;
 
     PAGED_CODE();
 
-    if ((deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode) != NULL) {
+    if ((deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode) != NULL)
+    {
         //
         // The device object is a PDO.
         //
         level = deviceNode->Level;
 
-        if (List->FirstLevel <= level && level <= List->MaxLevel) {
+        if (List->FirstLevel <= level && level <= List->MaxLevel)
+        {
             //
             // The level is within the range of levels stored in this list.
             //
-            if ((entry = List->Entries[ level - List->FirstLevel ]) != NULL) {
+            if ((entry = List->Entries[level - List->FirstLevel]) != NULL)
+            {
                 //
                 // There is an Entry for this level.
                 //
-                for (index = 0; index < entry->Count; index++) {
+                for (index = 0; index < entry->Count; index++)
+                {
                     //
                     // For each Device in the entry, compare it to the given
                     // DeviceObject
-                    if (((ULONG_PTR)entry->Devices[ index ] & ~RELATION_FLAGS) == (ULONG_PTR)DeviceObject) {
+                    if (((ULONG_PTR)entry->Devices[index] & ~RELATION_FLAGS) == (ULONG_PTR)DeviceObject)
+                    {
                         //
                         // It matches
                         //
@@ -896,13 +919,9 @@ Return Value:
     //
     return FALSE;
 }
-
+
 NTSTATUS
-IopMergeRelationLists(
-    IN OUT PRELATION_LIST TargetList,
-    IN PRELATION_LIST SourceList,
-    IN BOOLEAN Tagged
-    )
+IopMergeRelationLists(IN OUT PRELATION_LIST TargetList, IN PRELATION_LIST SourceList, IN BOOLEAN Tagged)
 
 /*++
 
@@ -961,62 +980,70 @@ Return Value:
 --*/
 
 {
-    PRELATION_LIST_ENTRY    entry;
-    LONG                    levelIndex;
-    LONG                    entryIndex;
-    LONG                    change;
-    LONG                    maxIndex;
-    NTSTATUS                status;
-    NTSTATUS                finalStatus;
+    PRELATION_LIST_ENTRY entry;
+    LONG levelIndex;
+    LONG entryIndex;
+    LONG change;
+    LONG maxIndex;
+    NTSTATUS status;
+    NTSTATUS finalStatus;
 
     PAGED_CODE();
 
     finalStatus = STATUS_SUCCESS;
-    change      = 1;
+    change = 1;
     levelIndex = 0;
-    maxIndex    = SourceList->MaxLevel - SourceList->FirstLevel;
-    for ( ; ; ) {
+    maxIndex = SourceList->MaxLevel - SourceList->FirstLevel;
+    for (;;)
+    {
         //
         // Stop at maxIndex if moving forward or at 0 otherwise.
         //
-        if (    (change == 1 && levelIndex > maxIndex) ||
-                (change == -1 && levelIndex < 0)) {
+        if ((change == 1 && levelIndex > maxIndex) || (change == -1 && levelIndex < 0))
+        {
             break;
         }
         entry = SourceList->Entries[levelIndex];
-        if (entry) {
-            entryIndex = (change == 1)? 0 : entry->Count - 1;
-            for ( ; ; ) {
-                if (change == 1) {
+        if (entry)
+        {
+            entryIndex = (change == 1) ? 0 : entry->Count - 1;
+            for (;;)
+            {
+                if (change == 1)
+                {
                     //
                     // Stop if we added all DOs in this entry.
                     //
-                    if (entryIndex > (LONG)entry->Count) {
+                    if (entryIndex > (LONG)entry->Count)
+                    {
                         break;
                     }
                     //
                     // For each Device in the Entry, add it to the target List.
                     //
-                    status = IopAddRelationToList( TargetList,
-                                                   (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[entryIndex] & ~RELATION_FLAGS),
-                                                   FALSE,
-                                                   Tagged);
-                    if (!NT_SUCCESS(status)) {
+                    status = IopAddRelationToList(
+                        TargetList, (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[entryIndex] & ~RELATION_FLAGS), FALSE,
+                        Tagged);
+                    if (!NT_SUCCESS(status))
+                    {
                         //
                         // We need to undo the damage on failure by unwinding and removing DOs we added..
                         //
                         finalStatus = status;
                         change = -1;
                     }
-                } else {
+                }
+                else
+                {
                     //
                     // Stop at 0 if we are unwinding.
                     //
-                    if (entryIndex < 0) {
+                    if (entryIndex < 0)
+                    {
                         break;
                     }
-                    status = IopRemoveRelationFromList( TargetList,
-                                                        (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[entryIndex] & ~RELATION_FLAGS));
+                    status = IopRemoveRelationFromList(
+                        TargetList, (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[entryIndex] & ~RELATION_FLAGS));
                     ASSERT(NT_SUCCESS(status));
                 }
                 entryIndex += change;
@@ -1027,11 +1054,9 @@ Return Value:
 
     return finalStatus;
 }
-
+
 NTSTATUS
-IopRemoveIndirectRelationsFromList(
-    IN PRELATION_LIST List
-    )
+IopRemoveIndirectRelationsFromList(IN PRELATION_LIST List)
 
 /*++
 
@@ -1054,46 +1079,52 @@ Return Value:
 --*/
 
 {
-    PDEVICE_OBJECT          deviceObject;
-    PRELATION_LIST_ENTRY    entry;
-    ULONG                   level;
-    LONG                    index;
+    PDEVICE_OBJECT deviceObject;
+    PRELATION_LIST_ENTRY entry;
+    ULONG level;
+    LONG index;
 
     PAGED_CODE();
 
     //
     // For each Entry in the list.
     //
-    for (level = List->FirstLevel; level <= List->MaxLevel; level++) {
+    for (level = List->FirstLevel; level <= List->MaxLevel; level++)
+    {
 
         //
         // If the entry is allocated.
         //
-        if ((entry = List->Entries[ level - List->FirstLevel ]) != NULL) {
+        if ((entry = List->Entries[level - List->FirstLevel]) != NULL)
+        {
 
             //
             // For each Device in the list.
             //
-            for (index = entry->Count - 1; index >= 0; index--) {
-                if (!((ULONG_PTR)entry->Devices[ index ] & RELATION_FLAG_DESCENDANT)) {
+            for (index = entry->Count - 1; index >= 0; index--)
+            {
+                if (!((ULONG_PTR)entry->Devices[index] & RELATION_FLAG_DESCENDANT))
+                {
 
-                    deviceObject = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ index ] & ~RELATION_FLAGS);
+                    deviceObject = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[index] & ~RELATION_FLAGS);
 
-                    ObDereferenceObject( deviceObject );
+                    ObDereferenceObject(deviceObject);
 
-                    if ((ULONG_PTR)entry->Devices[ index ] & RELATION_FLAG_TAGGED) {
+                    if ((ULONG_PTR)entry->Devices[index] & RELATION_FLAG_TAGGED)
+                    {
                         List->TagCount--;
                     }
 
-                    if (index < ((LONG)entry->Count - 1)) {
+                    if (index < ((LONG)entry->Count - 1))
+                    {
 
-                        RtlMoveMemory( &entry->Devices[ index ],
-                                        &entry->Devices[ index + 1 ],
-                                        (entry->Count - index - 1) * sizeof(PDEVICE_OBJECT));
+                        RtlMoveMemory(&entry->Devices[index], &entry->Devices[index + 1],
+                                      (entry->Count - index - 1) * sizeof(PDEVICE_OBJECT));
                     }
 
-                    if (--entry->Count == 0) {
-                        List->Entries[ level - List->FirstLevel ] = NULL;
+                    if (--entry->Count == 0)
+                    {
+                        List->Entries[level - List->FirstLevel] = NULL;
                         ExFreePool(entry);
                     }
 
@@ -1104,12 +1135,9 @@ Return Value:
     }
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopRemoveRelationFromList(
-    PRELATION_LIST List,
-    PDEVICE_OBJECT DeviceObject
-    )
+IopRemoveRelationFromList(PRELATION_LIST List, PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -1136,37 +1164,44 @@ Return Value:
 --*/
 
 {
-    PDEVICE_NODE            deviceNode;
-    PRELATION_LIST_ENTRY    entry;
-    ULONG                   level;
-    LONG                    index;
+    PDEVICE_NODE deviceNode;
+    PRELATION_LIST_ENTRY entry;
+    ULONG level;
+    LONG index;
 
     PAGED_CODE();
 
-    if ((deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode) != NULL) {
+    if ((deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode) != NULL)
+    {
         level = deviceNode->Level;
 
         ASSERT(List->FirstLevel <= level && level <= List->MaxLevel);
 
-        if (List->FirstLevel <= level && level <= List->MaxLevel) {
-            if ((entry = List->Entries[ level - List->FirstLevel ]) != NULL) {
-                for (index = entry->Count - 1; index >= 0; index--) {
-                    if (((ULONG_PTR)entry->Devices[ index ] & ~RELATION_FLAGS) == (ULONG_PTR)DeviceObject) {
+        if (List->FirstLevel <= level && level <= List->MaxLevel)
+        {
+            if ((entry = List->Entries[level - List->FirstLevel]) != NULL)
+            {
+                for (index = entry->Count - 1; index >= 0; index--)
+                {
+                    if (((ULONG_PTR)entry->Devices[index] & ~RELATION_FLAGS) == (ULONG_PTR)DeviceObject)
+                    {
 
-                        ObDereferenceObject( DeviceObject );
+                        ObDereferenceObject(DeviceObject);
 
-                        if (((ULONG_PTR)entry->Devices[ index ] & RELATION_FLAG_TAGGED) != 0) {
+                        if (((ULONG_PTR)entry->Devices[index] & RELATION_FLAG_TAGGED) != 0)
+                        {
                             List->TagCount--;
                         }
-                        if (index < ((LONG)entry->Count - 1)) {
+                        if (index < ((LONG)entry->Count - 1))
+                        {
 
-                            RtlMoveMemory( &entry->Devices[ index ],
-                                           &entry->Devices[ index + 1 ],
-                                           (entry->Count - index - 1) * sizeof(PDEVICE_OBJECT));
+                            RtlMoveMemory(&entry->Devices[index], &entry->Devices[index + 1],
+                                          (entry->Count - index - 1) * sizeof(PDEVICE_OBJECT));
                         }
 
-                        if (--entry->Count == 0) {
-                            List->Entries[ level - List->FirstLevel ] = NULL;
+                        if (--entry->Count == 0)
+                        {
+                            List->Entries[level - List->FirstLevel] = NULL;
                             ExFreePool(entry);
                         }
 
@@ -1180,12 +1215,8 @@ Return Value:
     }
     return STATUS_NO_SUCH_DEVICE;
 }
-
-VOID
-IopSetAllRelationsTags(
-    PRELATION_LIST List,
-    BOOLEAN Tagged
-    )
+
+VOID IopSetAllRelationsTags(PRELATION_LIST List, BOOLEAN Tagged)
 
 /*++
 
@@ -1207,34 +1238,40 @@ Return Value:
 --*/
 
 {
-    PRELATION_LIST_ENTRY    entry;
-    ULONG                   level;
-    ULONG                   index;
+    PRELATION_LIST_ENTRY entry;
+    ULONG level;
+    ULONG index;
 
     PAGED_CODE();
 
     //
     // For each Entry in the list.
     //
-    for (level = List->FirstLevel; level <= List->MaxLevel; level++) {
+    for (level = List->FirstLevel; level <= List->MaxLevel; level++)
+    {
 
         //
         // If the entry is allocated.
         //
-        if ((entry = List->Entries[ level - List->FirstLevel ]) != NULL) {
+        if ((entry = List->Entries[level - List->FirstLevel]) != NULL)
+        {
 
             //
             // For each Device in the list.
             //
-            for (index = 0; index < entry->Count; index++) {
+            for (index = 0; index < entry->Count; index++)
+            {
 
                 //
                 // Set or clear the tag based on the argument Tagged.
                 //
-                if (Tagged) {
-                    entry->Devices[ index ] = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ index ] | RELATION_FLAG_TAGGED);
-                } else {
-                    entry->Devices[ index ] = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ index ] & ~RELATION_FLAG_TAGGED);
+                if (Tagged)
+                {
+                    entry->Devices[index] = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[index] | RELATION_FLAG_TAGGED);
+                }
+                else
+                {
+                    entry->Devices[index] = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[index] & ~RELATION_FLAG_TAGGED);
                 }
             }
         }
@@ -1246,13 +1283,9 @@ Return Value:
     //
     List->TagCount = Tagged ? List->Count : 0;
 }
-
+
 NTSTATUS
-IopSetRelationsTag(
-    IN PRELATION_LIST List,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN Tagged
-    )
+IopSetRelationsTag(IN PRELATION_LIST List, IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN Tagged)
 
 /*++
 
@@ -1284,36 +1317,42 @@ Return Value:
 --*/
 
 {
-    PDEVICE_NODE            deviceNode;
-    PRELATION_LIST_ENTRY    entry;
-    ULONG                   level;
-    LONG                    index;
+    PDEVICE_NODE deviceNode;
+    PRELATION_LIST_ENTRY entry;
+    ULONG level;
+    LONG index;
 
     PAGED_CODE();
 
-    if ((deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode) != NULL) {
+    if ((deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode) != NULL)
+    {
         //
         // DeviceObject is a PhysicalDeviceObject (PDO), get its level.
         //
         level = deviceNode->Level;
 
-        if (List->FirstLevel <= level && level <= List->MaxLevel) {
+        if (List->FirstLevel <= level && level <= List->MaxLevel)
+        {
             //
             // The level is within the range of levels in this List.
             //
-            if ((entry = List->Entries[ level - List->FirstLevel ]) != NULL) {
+            if ((entry = List->Entries[level - List->FirstLevel]) != NULL)
+            {
                 //
                 // The Entry for this level is allocated.  Search each device
                 // in the Entry looking for a match.
                 //
-                for (index = entry->Count - 1; index >= 0; index--) {
+                for (index = entry->Count - 1; index >= 0; index--)
+                {
 
-                    if (((ULONG_PTR)entry->Devices[ index ] & ~RELATION_FLAGS) == (ULONG_PTR)DeviceObject) {
+                    if (((ULONG_PTR)entry->Devices[index] & ~RELATION_FLAGS) == (ULONG_PTR)DeviceObject)
+                    {
 
                         //
                         // We found a match
                         //
-                        if ((ULONG_PTR)entry->Devices[ index ] & RELATION_FLAG_TAGGED) {
+                        if ((ULONG_PTR)entry->Devices[index] & RELATION_FLAG_TAGGED)
+                        {
                             //
                             // The relation is already tagged so to simplify the
                             // logic below decrement the TagCount.  We'll
@@ -1323,18 +1362,23 @@ Return Value:
                             List->TagCount--;
                         }
 
-                        if (Tagged) {
+                        if (Tagged)
+                        {
                             //
                             // Set the tag and increment the number of tagged
                             // relations.
                             //
-                            entry->Devices[ index ] = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ index ] | RELATION_FLAG_TAGGED);
+                            entry->Devices[index] =
+                                (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[index] | RELATION_FLAG_TAGGED);
                             List->TagCount++;
-                        } else {
+                        }
+                        else
+                        {
                             //
                             // Clear the tag.
                             //
-                            entry->Devices[ index ] = (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[ index ] & ~RELATION_FLAG_TAGGED);
+                            entry->Devices[index] =
+                                (PDEVICE_OBJECT)((ULONG_PTR)entry->Devices[index] & ~RELATION_FLAG_TAGGED);
                         }
 
                         return STATUS_SUCCESS;
@@ -1352,4 +1396,3 @@ Return Value:
     //
     return STATUS_NO_SUCH_DEVICE;
 }
-

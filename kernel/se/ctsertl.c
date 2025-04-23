@@ -29,25 +29,24 @@ Revision History:
 #include "tsecomm.c"
 
 
-
-
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Test routines                                              //
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-
+
 BOOLEAN
 TestSeSid()
 {
 
-#define TARGET_SID_ARRAY_LENGTH   1024
+#define TARGET_SID_ARRAY_LENGTH 1024
 
-typedef struct _TALT_SID1 {
-    ULONG Value[3];
-} TALT_SID1;
-typedef TALT_SID1 *PTALT_SID1;
+    typedef struct _TALT_SID1
+    {
+        ULONG Value[3];
+    } TALT_SID1;
+    typedef TALT_SID1 *PTALT_SID1;
 
     NTSTATUS Status;
 
@@ -74,43 +73,48 @@ typedef TALT_SID1 *PTALT_SID1;
     // End Temporary Hack...
 
 
-    TFredSid     = (PSID)TstAllocatePool( PagedPool, 256 );
-    TBarneySid   = (PSID)TstAllocatePool( PagedPool, 256 );
-    TWilmaSid    = (PSID)TstAllocatePool( PagedPool, 256 );
-    TWilmaSubSid = (PSID)TstAllocatePool( PagedPool, 256 );
-    TNoSubSid    = (PSID)TstAllocatePool( PagedPool, 256 );
-    TTempSid     = (PSID)TstAllocatePool( PagedPool, 256 );
+    TFredSid = (PSID)TstAllocatePool(PagedPool, 256);
+    TBarneySid = (PSID)TstAllocatePool(PagedPool, 256);
+    TWilmaSid = (PSID)TstAllocatePool(PagedPool, 256);
+    TWilmaSubSid = (PSID)TstAllocatePool(PagedPool, 256);
+    TNoSubSid = (PSID)TstAllocatePool(PagedPool, 256);
+    TTempSid = (PSID)TstAllocatePool(PagedPool, 256);
 
 
     //
     // Valid SID structure test
     //
 
-    if (!RtlValidSid( TFredSid )) {
+    if (!RtlValidSid(TFredSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, TFredSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( TBarneySid )) {
+    if (!RtlValidSid(TBarneySid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, TBarneySid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( TWilmaSid )) {
+    if (!RtlValidSid(TWilmaSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, TWilmaSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( TWilmaSubSid )) {
+    if (!RtlValidSid(TWilmaSubSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, TWilmaSubSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( TNoSubSid )) {
+    if (!RtlValidSid(TNoSubSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, TNoSubSid\n");
         return FALSE;
@@ -121,24 +125,28 @@ typedef TALT_SID1 *PTALT_SID1;
     // Equal SIDs Test
     //
 
-    if (RtlEqualSid( TFredSid, TBarneySid )) {
+    if (RtlEqualSid(TFredSid, TBarneySid))
+    {
         DbgPrint("*Se**     Failure: RtlEqualSid, TFredSid - TBarneySid\n");
         DbgPrint("**** Failed **** \n");
         return FALSE;
     }
 
-    if (!RtlEqualSid( TFredSid, TFredSid )) {
+    if (!RtlEqualSid(TFredSid, TFredSid))
+    {
         DbgPrint("*Se**     Failure: RtlEqualSid, TFredSid - TFredSid\n");
         return FALSE;
     }
 
-    if (RtlEqualSid( TWilmaSid, TWilmaSubSid )) {
+    if (RtlEqualSid(TWilmaSid, TWilmaSubSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlEqualSid, TWilmaSid - TWilmaSubSid\n");
         return FALSE;
     }
 
-    if (RtlEqualSid( TWilmaSid, TNoSubSid )) {
+    if (RtlEqualSid(TWilmaSid, TNoSubSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlEqualSid, TWilmaSid - TNoSubSid\n");
         return FALSE;
@@ -149,19 +157,22 @@ typedef TALT_SID1 *PTALT_SID1;
     // Length Required test
     //
 
-    if (RtlLengthRequiredSid( 0 ) != 8) {
+    if (RtlLengthRequiredSid(0) != 8)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlLengthRequiredSid, 0 SubAuthorities\n");
         return FALSE;
     }
 
-    if (RtlLengthRequiredSid( 1 ) != 12) {
+    if (RtlLengthRequiredSid(1) != 12)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlLengthRequiredSid, 1 SubAuthorities\n");
         return FALSE;
     }
 
-    if (RtlLengthRequiredSid( 2 ) != 16) {
+    if (RtlLengthRequiredSid(2) != 16)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlLengthRequiredSid, 2 SubAuthorities\n");
         return FALSE;
@@ -172,19 +183,22 @@ typedef TALT_SID1 *PTALT_SID1;
     // Length of SID test
     //
 
-    if (SeLengthSid( TNoSubSid ) != 8) {
+    if (SeLengthSid(TNoSubSid) != 8)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: SeLengthSid, TNoSubSid\n");
         return FALSE;
     }
 
-    if (SeLengthSid( TFredSid ) != 12) {
+    if (SeLengthSid(TFredSid) != 12)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: SeLengthSid, TFredSid\n");
         return FALSE;
     }
 
-    if (SeLengthSid( TWilmaSubSid ) != 16) {
+    if (SeLengthSid(TWilmaSubSid) != 16)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: SeLengthSid, TWilmaSubSid\n");
         return FALSE;
@@ -195,58 +209,67 @@ typedef TALT_SID1 *PTALT_SID1;
     // Copy SID Test
     //
 
-    if (NT_SUCCESS(RtlCopySid( 7, TTempSid, TNoSubSid ))) {
+    if (NT_SUCCESS(RtlCopySid(7, TTempSid, TNoSubSid)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid, insufficient TNoSubSid\n");
         return FALSE;
     }
 
 
-    if (!NT_SUCCESS(RtlCopySid( 256, TTempSid, TNoSubSid ))) {
+    if (!NT_SUCCESS(RtlCopySid(256, TTempSid, TNoSubSid)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid, TNoSubSid\n");
         return FALSE;
     }
 
-    if (!RtlEqualSid( TTempSid, TNoSubSid )) {
+    if (!RtlEqualSid(TTempSid, TNoSubSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid compare, TNoSubSid\n");
         return FALSE;
     }
 
 
-    if (NT_SUCCESS(RtlCopySid( 11, TTempSid, TBarneySid ))) {
+    if (NT_SUCCESS(RtlCopySid(11, TTempSid, TBarneySid)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid, insufficient TBarneySid\n");
         return FALSE;
     }
 
 
-    if (!NT_SUCCESS(RtlCopySid( 256, TTempSid, TBarneySid ))) {
+    if (!NT_SUCCESS(RtlCopySid(256, TTempSid, TBarneySid)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid, TBarneySid\n");
         return FALSE;
     }
 
-    if (!RtlEqualSid( TTempSid, TBarneySid )) {
+    if (!RtlEqualSid(TTempSid, TBarneySid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid compare, TBarneySid\n");
         return FALSE;
     }
 
-    if (NT_SUCCESS(RtlCopySid( 15, TTempSid, TWilmaSubSid ))) {
+    if (NT_SUCCESS(RtlCopySid(15, TTempSid, TWilmaSubSid)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid, insufficient TWilmaSubSid\n");
         return FALSE;
     }
 
-    if (!NT_SUCCESS(RtlCopySid( 256, TTempSid, TWilmaSubSid ))) {
+    if (!NT_SUCCESS(RtlCopySid(256, TTempSid, TWilmaSubSid)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid, TNoSubSid\n");
         return FALSE;
     }
 
-    if (!RtlEqualSid( TTempSid, TWilmaSubSid )) {
+    if (!RtlEqualSid(TTempSid, TWilmaSubSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCopySid compare, TWilmaSubSid\n");
         return FALSE;
@@ -262,79 +285,92 @@ typedef TALT_SID1 *PTALT_SID1;
     //
 
 
-    if (!RtlValidSid( BedrockDomainSid )) {
+    if (!RtlValidSid(BedrockDomainSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, BedrockDomainSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( FredSid )) {
+    if (!RtlValidSid(FredSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, FredSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( WilmaSid )) {
+    if (!RtlValidSid(WilmaSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, WilmaSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( PebblesSid )) {
+    if (!RtlValidSid(PebblesSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, PebblesSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( DinoSid )) {
+    if (!RtlValidSid(DinoSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, DinoSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( BarneySid )) {
+    if (!RtlValidSid(BarneySid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, BarneySid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( BettySid )) {
+    if (!RtlValidSid(BettySid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, BettySid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( BambamSid )) {
+    if (!RtlValidSid(BambamSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, BambamSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( FlintstoneSid )) {
+    if (!RtlValidSid(FlintstoneSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, FlintstoneSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( RubbleSid )) {
+    if (!RtlValidSid(RubbleSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, RubbleSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( AdultSid )) {
+    if (!RtlValidSid(AdultSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, AdultSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( ChildSid )) {
+    if (!RtlValidSid(ChildSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, ChildSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( NeandertholSid )) {
+    if (!RtlValidSid(NeandertholSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, NeandertholSid\n");
         return FALSE;
@@ -344,72 +380,77 @@ typedef TALT_SID1 *PTALT_SID1;
     //  Well known SIDs
     //
 
-    if (!RtlValidSid( NullSid )) {
+    if (!RtlValidSid(NullSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, NullSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( WorldSid )) {
+    if (!RtlValidSid(WorldSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, WorldSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( LocalSid )) {
+    if (!RtlValidSid(LocalSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, CreatorSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( NtAuthoritySid )) {
+    if (!RtlValidSid(NtAuthoritySid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, NtAuthoritySid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( DialupSid )) {
+    if (!RtlValidSid(DialupSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, DialupSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( NetworkSid )) {
+    if (!RtlValidSid(NetworkSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, NetworkSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( BatchSid )) {
+    if (!RtlValidSid(BatchSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, BatchSid\n");
         return FALSE;
     }
 
-    if (!RtlValidSid( InteractiveSid )) {
+    if (!RtlValidSid(InteractiveSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, InteractiveSid\n");
         return FALSE;
     }
 
 
-    if (!RtlValidSid( LocalSystemSid )) {
+    if (!RtlValidSid(LocalSystemSid))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSid, LocalSystemSid\n");
         return FALSE;
     }
 
 
-
-
     //
     //  Test SidAndAttributesArray copy routine
     //
 
-    SourceArray = (PSID_AND_ATTRIBUTES)TstAllocatePool( PagedPool, 100 );
-    TargetArray = (PSID_AND_ATTRIBUTES)TstAllocatePool( PagedPool,
-                                                        TARGET_SID_ARRAY_LENGTH
-                                                        );
+    SourceArray = (PSID_AND_ATTRIBUTES)TstAllocatePool(PagedPool, 100);
+    TargetArray = (PSID_AND_ATTRIBUTES)TstAllocatePool(PagedPool, TARGET_SID_ARRAY_LENGTH);
     TargetLength = TARGET_SID_ARRAY_LENGTH - (5 * sizeof(PSID_AND_ATTRIBUTES));
     OriginalTargetLength = TargetLength;
 
@@ -424,35 +465,23 @@ typedef TALT_SID1 *PTALT_SID1;
     SourceArray[4].Sid = &WorldSid;
     SourceArray[4].Attributes = NormalGroupAttributes;
 
-    Status = RtlCopySidAndAttributesArray(
-                 0,
-                 SourceArray,
-                 TargetLength,
-                 TargetArray,
-                 &(TargetArray[5]),
-                 &(PSID)Ignore,
-                 &TargetLength
-                 );
+    Status = RtlCopySidAndAttributesArray(0, SourceArray, TargetLength, TargetArray, &(TargetArray[5]), &(PSID)Ignore,
+                                          &TargetLength);
 
-    if (!NT_SUCCESS(Status) || TargetLength != OriginalTargetLength ) {
+    if (!NT_SUCCESS(Status) || TargetLength != OriginalTargetLength)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtLCopySidAndAttributesArray, Zero length.\n");
         return FALSE;
     }
 
 
+    Status = RtlCopySidAndAttributesArray(1, SourceArray,
+                                          1, // too short buffer
+                                          TargetArray, &(TargetArray[1]), &(PSID)Ignore, &TargetLength);
 
-    Status = RtlCopySidAndAttributesArray(
-                 1,
-                 SourceArray,
-                 1,                 // too short buffer
-                 TargetArray,
-                 &(TargetArray[1]),
-                 &(PSID)Ignore,
-                 &TargetLength
-                 );
-
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtLCopySidAndAttributesArray,\n");
         DbgPrint("*Se**              Buffer Too Short Test.\n");
@@ -463,27 +492,18 @@ typedef TALT_SID1 *PTALT_SID1;
     TargetLength = TARGET_SID_ARRAY_LENGTH - (5 * sizeof(PSID_AND_ATTRIBUTES));
     OriginalTargetLength = TargetLength;
 
-    Status = RtlCopySidAndAttributesArray(
-                 5,
-                 SourceArray,
-                 TargetLength,
-                 TargetArray,
-                 &(TargetArray[5]),
-                 &(PSID)Ignore,
-                 &TargetLength
-                 );
+    Status = RtlCopySidAndAttributesArray(5, SourceArray, TargetLength, TargetArray, &(TargetArray[5]), &(PSID)Ignore,
+                                          &TargetLength);
 
-    if (!NT_SUCCESS(Status) ||
-        !RtlEqualSid( SourceArray[0].Sid, TargetArray[0].Sid ) ||
-        !RtlEqualSid( SourceArray[1].Sid, TargetArray[1].Sid ) ||
-        !RtlEqualSid( SourceArray[2].Sid, TargetArray[2].Sid ) ||
-        !RtlEqualSid( SourceArray[3].Sid, TargetArray[3].Sid ) ||
-        !RtlEqualSid( SourceArray[4].Sid, TargetArray[4].Sid ) ||
-        ( SourceArray[0].Attributes != TargetArray[0].Attributes )  ||
-        ( SourceArray[1].Attributes != TargetArray[1].Attributes )  ||
-        ( SourceArray[2].Attributes != TargetArray[2].Attributes )  ||
-        ( SourceArray[3].Attributes != TargetArray[3].Attributes )  ||
-        ( SourceArray[4].Attributes != TargetArray[4].Attributes ) ) {
+    if (!NT_SUCCESS(Status) || !RtlEqualSid(SourceArray[0].Sid, TargetArray[0].Sid) ||
+        !RtlEqualSid(SourceArray[1].Sid, TargetArray[1].Sid) || !RtlEqualSid(SourceArray[2].Sid, TargetArray[2].Sid) ||
+        !RtlEqualSid(SourceArray[3].Sid, TargetArray[3].Sid) || !RtlEqualSid(SourceArray[4].Sid, TargetArray[4].Sid) ||
+        (SourceArray[0].Attributes != TargetArray[0].Attributes) ||
+        (SourceArray[1].Attributes != TargetArray[1].Attributes) ||
+        (SourceArray[2].Attributes != TargetArray[2].Attributes) ||
+        (SourceArray[3].Attributes != TargetArray[3].Attributes) ||
+        (SourceArray[4].Attributes != TargetArray[4].Attributes))
+    {
 
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtLCopySidAndAttributesArray,\n");
@@ -492,13 +512,10 @@ typedef TALT_SID1 *PTALT_SID1;
     }
 
 
-
     return TRUE;
-
-
 }
 
-
+
 BOOLEAN
 TestSeSecurityDescriptor()
 {
@@ -534,51 +551,54 @@ TestSeSecurityDescriptor()
     PSID TTempSid;
 
 
-    TFredDescriptor   = (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
-    TBarneyDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
-    TWilmaDescriptor  = (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
-    TTempDescriptor   = (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
+    TFredDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
+    TBarneyDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
+    TWilmaDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
+    TTempDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
 
-    TFredSid     = (PSID)TstAllocatePool( PagedPool, 256 );
-    TBarneySid   = (PSID)TstAllocatePool( PagedPool, 256 );
-    TWilmaSid    = (PSID)TstAllocatePool( PagedPool, 256 );
-    TWilmaSubSid = (PSID)TstAllocatePool( PagedPool, 256 );
-    TNoSubSid    = (PSID)TstAllocatePool( PagedPool, 256 );
-    TTempSid     = (PSID)TstAllocatePool( PagedPool, 256 );
+    TFredSid = (PSID)TstAllocatePool(PagedPool, 256);
+    TBarneySid = (PSID)TstAllocatePool(PagedPool, 256);
+    TWilmaSid = (PSID)TstAllocatePool(PagedPool, 256);
+    TWilmaSubSid = (PSID)TstAllocatePool(PagedPool, 256);
+    TNoSubSid = (PSID)TstAllocatePool(PagedPool, 256);
+    TTempSid = (PSID)TstAllocatePool(PagedPool, 256);
 
 
     //
     // Build an ACL or two for use.
 
-    TDacl        = (PACL)TstAllocatePool( PagedPool, 256 );
-    TSacl        = (PACL)TstAllocatePool( PagedPool, 256 );
+    TDacl = (PACL)TstAllocatePool(PagedPool, 256);
+    TSacl = (PACL)TstAllocatePool(PagedPool, 256);
 
-    TDacl->AclRevision=TSacl->AclRevision=ACL_REVISION;
-    TDacl->Sbz1=TSacl->Sbz1=0;
-    TDacl->Sbz2=TSacl->Sbz2=0;
-    TDacl->AclSize=256;
-    TSacl->AclSize=8;
-    TDacl->AceCount=TSacl->AceCount=0;
+    TDacl->AclRevision = TSacl->AclRevision = ACL_REVISION;
+    TDacl->Sbz1 = TSacl->Sbz1 = 0;
+    TDacl->Sbz2 = TSacl->Sbz2 = 0;
+    TDacl->AclSize = 256;
+    TSacl->AclSize = 8;
+    TDacl->AceCount = TSacl->AceCount = 0;
 
 
     //
     // Create Security Descriptor test
     //
 
-    if (NT_SUCCESS(RtlCreateSecurityDescriptor( TTempDescriptor, 0 ))) {
+    if (NT_SUCCESS(RtlCreateSecurityDescriptor(TTempDescriptor, 0)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCreateSecurityDescriptor, Rev=0\n");
         return FALSE;
     }
 
-    if (NT_SUCCESS(RtlCreateSecurityDescriptor( TTempDescriptor, 2 ))) {
+    if (NT_SUCCESS(RtlCreateSecurityDescriptor(TTempDescriptor, 2)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCreateSecurityDescriptor, Rev=2\n");
         return FALSE;
     }
 
-    if (!NT_SUCCESS(RtlCreateSecurityDescriptor( TTempDescriptor, 1 ))) {
+    if (!NT_SUCCESS(RtlCreateSecurityDescriptor(TTempDescriptor, 1)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlCreateSecurityDescriptor, Rev=1\n");
         return FALSE;
@@ -589,83 +609,81 @@ TestSeSecurityDescriptor()
     // Make sure fields have been set properly
     //
 
-    if (!NT_SUCCESS(RtlGetControlSecurityDescriptor( TTempDescriptor,
-                                               &Control,
-                                               &Revision))) {
+    if (!NT_SUCCESS(RtlGetControlSecurityDescriptor(TTempDescriptor, &Control, &Revision)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetControlSecurityDescriptor\n");
         DbgPrint("*Se**     Call failed.  Status = 0x%lx\n", Status);
         return FALSE;
     }
 
-    if ( (Control != 0) || (Revision != 1) ) {
+    if ((Control != 0) || (Revision != 1))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetControlSecurityDescriptor\n");
         DbgPrint("*Se**     Bad Control or Revision value. \n");
         DbgPrint("*Se**     Status = 0x%lx\n", Status);
-        DbgPrint("*Se**     Returned Revision = 0x%lx\n",Revision );
+        DbgPrint("*Se**     Returned Revision = 0x%lx\n", Revision);
         DbgPrint("*Se**     Returned Control  = 0x%lx\n", (ULONG)Control);
         return FALSE;
     }
 #else
-    DBG_UNREFERENCED_LOCAL_VARIABLE( Status );
-    DBG_UNREFERENCED_LOCAL_VARIABLE( Revision );
-    DBG_UNREFERENCED_LOCAL_VARIABLE( Control );
+    DBG_UNREFERENCED_LOCAL_VARIABLE(Status);
+    DBG_UNREFERENCED_LOCAL_VARIABLE(Revision);
+    DBG_UNREFERENCED_LOCAL_VARIABLE(Control);
 #endif //NOT_YET_DEFINED
 
-    if (!NT_SUCCESS(RtlGetDaclSecurityDescriptor( TTempDescriptor,
-                                               &TDaclPresent,
-                                               &TDacl,
-                                               &TDaclDefaulted))) {
+    if (!NT_SUCCESS(RtlGetDaclSecurityDescriptor(TTempDescriptor, &TDaclPresent, &TDacl, &TDaclDefaulted)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetDaclSecurityDescriptor, Empty\n");
         return FALSE;
     }
 
-    if (TDaclPresent) {
+    if (TDaclPresent)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetDaclSecurityDescriptor, Empty-TDaclPresent\n");
         return FALSE;
     }
 
-    if (!NT_SUCCESS(RtlGetSaclSecurityDescriptor( TTempDescriptor,
-                                               &TSaclPresent,
-                                               &TSacl,
-                                               &TSaclDefaulted))) {
+    if (!NT_SUCCESS(RtlGetSaclSecurityDescriptor(TTempDescriptor, &TSaclPresent, &TSacl, &TSaclDefaulted)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetSaclSecurityDescriptor, Empty\n");
         return FALSE;
     }
 
-    if (TSaclPresent) {
+    if (TSaclPresent)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetSaclSecurityDescriptor, Empty-TSaclPresent\n");
         return FALSE;
     }
 
-    if (!NT_SUCCESS(RtlGetOwnerSecurityDescriptor( TTempDescriptor,
-                                                &TOwner,
-                                                &TOwnerDefaulted))) {
+    if (!NT_SUCCESS(RtlGetOwnerSecurityDescriptor(TTempDescriptor, &TOwner, &TOwnerDefaulted)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetOwnerSecurityDescriptor, Empty\n");
         return FALSE;
     }
 
-    if (TOwner != NULL) {
+    if (TOwner != NULL)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetOwnerSecurityDescriptor, Empty-TOwner\n");
         return FALSE;
     }
 
-    if (!NT_SUCCESS(RtlGetGroupSecurityDescriptor( TTempDescriptor,
-                                                &TGroup,
-                                                &TGroupDefaulted))) {
+    if (!NT_SUCCESS(RtlGetGroupSecurityDescriptor(TTempDescriptor, &TGroup, &TGroupDefaulted)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetGroupSecurityDescriptor, Empty\n");
         return FALSE;
     }
 
-    if (TGroup != NULL) {
+    if (TGroup != NULL)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlGetGroupSecurityDescriptor, Empty-TGroup\n");
         return FALSE;
@@ -675,15 +693,17 @@ TestSeSecurityDescriptor()
     // Valid Security Descriptor test
     //
 
-    ((SECURITY_DESCRIPTOR *)TTempDescriptor)->Revision=0;
-    if (RtlValidSecurityDescriptor( TTempDescriptor )) {
+    ((SECURITY_DESCRIPTOR *)TTempDescriptor)->Revision = 0;
+    if (RtlValidSecurityDescriptor(TTempDescriptor))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSecurityDescriptor, Rev=0\n");
         return FALSE;
     }
-    ((SECURITY_DESCRIPTOR *)TTempDescriptor)->Revision=1;
+    ((SECURITY_DESCRIPTOR *)TTempDescriptor)->Revision = 1;
 
-    if (!RtlValidSecurityDescriptor( TTempDescriptor )) {
+    if (!RtlValidSecurityDescriptor(TTempDescriptor))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlValidSecurityDescriptor, Empty\n");
         return FALSE;
@@ -694,7 +714,8 @@ TestSeSecurityDescriptor()
     // Length test
     //
 
-    if (RtlLengthSecurityDescriptor( TTempDescriptor ) != 20) {
+    if (RtlLengthSecurityDescriptor(TTempDescriptor) != 20)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlLengthSecurityDescriptor, Empty\n");
         return FALSE;
@@ -704,12 +725,14 @@ TestSeSecurityDescriptor()
     // Add in an owner
     //
 
-    if (!NT_SUCCESS(RtlSetOwnerSecurityDescriptor( TTempDescriptor, TWilmaSid, FALSE ))) {
+    if (!NT_SUCCESS(RtlSetOwnerSecurityDescriptor(TTempDescriptor, TWilmaSid, FALSE)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlSetOwnerSecurityDescriptor, TWilmaSid\n");
         return FALSE;
     }
-    if (RtlLengthSecurityDescriptor( TTempDescriptor ) != 32) {
+    if (RtlLengthSecurityDescriptor(TTempDescriptor) != 32)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlLengthSecurityDescriptor, Wilma Owner\n");
         return FALSE;
@@ -719,13 +742,14 @@ TestSeSecurityDescriptor()
     // Add in a Dacl
     //
 
-    if (!NT_SUCCESS(RtlSetDaclSecurityDescriptor( TTempDescriptor, TRUE,
-                                              TDacl, FALSE ))) {
+    if (!NT_SUCCESS(RtlSetDaclSecurityDescriptor(TTempDescriptor, TRUE, TDacl, FALSE)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlSetDaclSecurityDescriptor, TDacl\n");
         return FALSE;
     }
-    if (RtlLengthSecurityDescriptor( TTempDescriptor ) != 40) {
+    if (RtlLengthSecurityDescriptor(TTempDescriptor) != 40)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlLengthSecurityDescriptor, TDacl Dacl\n");
         return FALSE;
@@ -735,13 +759,14 @@ TestSeSecurityDescriptor()
     // Add in a Sacl
     //
 
-    if (!NT_SUCCESS(RtlSetSaclSecurityDescriptor( TTempDescriptor, TRUE,
-                                              TSacl, FALSE ))) {
+    if (!NT_SUCCESS(RtlSetSaclSecurityDescriptor(TTempDescriptor, TRUE, TSacl, FALSE)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlSetSaclSecurityDescriptor, TSacl\n");
         return FALSE;
     }
-    if (RtlLengthSecurityDescriptor( TTempDescriptor ) != 48) {
+    if (RtlLengthSecurityDescriptor(TTempDescriptor) != 48)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlLengthSecurityDescriptor, TSacl Sacl\n");
         return FALSE;
@@ -751,12 +776,14 @@ TestSeSecurityDescriptor()
     // Add in a Group (with 2 sub-authorities)
     //
 
-    if (!NT_SUCCESS(RtlSetGroupSecurityDescriptor( TTempDescriptor, TWilmaSubSid, FALSE ))) {
+    if (!NT_SUCCESS(RtlSetGroupSecurityDescriptor(TTempDescriptor, TWilmaSubSid, FALSE)))
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlSetGroupSecurityDescriptor, TWilmaSubSid\n");
         return FALSE;
     }
-    if (RtlLengthSecurityDescriptor( TTempDescriptor ) != 64) {
+    if (RtlLengthSecurityDescriptor(TTempDescriptor) != 64)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("*Se**     Failure: RtlLengthSecurityDescriptor, WilmaSub Group\n");
         return FALSE;
@@ -764,10 +791,9 @@ TestSeSecurityDescriptor()
 
 
     return TRUE;
-
 }
 
-
+
 BOOLEAN
 TestSeAccessMask()
 {
@@ -775,33 +801,31 @@ TestSeAccessMask()
 }
 
 
-
-
-VOID
-DumpAclSizeInfo(PACL_SIZE_INFORMATION AclSizeInfo)
+VOID DumpAclSizeInfo(PACL_SIZE_INFORMATION AclSizeInfo)
 {
     DbgPrint("\n");
     DbgPrint("Acl size info:\n");
-    DbgPrint("AceCount = %d\n",AclSizeInfo->AceCount);
-    DbgPrint("AclBytesInUse = %d\n",AclSizeInfo->AclBytesInUse);
-    DbgPrint("AclBytesFree = %d\n",AclSizeInfo->AclBytesFree);
+    DbgPrint("AceCount = %d\n", AclSizeInfo->AceCount);
+    DbgPrint("AclBytesInUse = %d\n", AclSizeInfo->AclBytesInUse);
+    DbgPrint("AclBytesFree = %d\n", AclSizeInfo->AclBytesFree);
     return;
 }
 
 #define NUM_ACE 6
 
-typedef struct _SIMPLE_ACE {
+typedef struct _SIMPLE_ACE
+{
     ACE_HEADER Header;
     ACCESS_MASK Mask;
     SID Sid;
-    } SIMPLE_ACE, *PSIMPLE_ACE;
+} SIMPLE_ACE, *PSIMPLE_ACE;
 
 
 BOOLEAN
 TestSeAclRtl()
 {
 
-    PACL    TDacl;
+    PACL TDacl;
     NTSTATUS Status;
 
     ACL_REVISION_INFORMATION AclInformation;
@@ -814,29 +838,29 @@ TestSeAclRtl()
 
     ULONG AceSize;
 
-//
-// Define the Dead domain
-//
-//     Dead Domain         S-1-54399-23-18-02
-//     Bobby               S-1-54399-23-18-02-2
-//     Jerry               S-1-54399-23-18-02-3
-//     Phil                S-1-54399-23-18-02-4
-//     Kreutzman           S-1-54399-23-18-02-5
-//     Brent               S-1-54399-23-18-02-6
-//     Micky               S-1-54399-23-18-02-7
-//
+    //
+    // Define the Dead domain
+    //
+    //     Dead Domain         S-1-54399-23-18-02
+    //     Bobby               S-1-54399-23-18-02-2
+    //     Jerry               S-1-54399-23-18-02-3
+    //     Phil                S-1-54399-23-18-02-4
+    //     Kreutzman           S-1-54399-23-18-02-5
+    //     Brent               S-1-54399-23-18-02-6
+    //     Micky               S-1-54399-23-18-02-7
+    //
 
-#define DEAD_AUTHORITY               {0,0,0,0,212,127}
-#define DEAD_SUBAUTHORITY_0          0x00000017L
-#define DEAD_SUBAUTHORITY_1          0x00000012L
-#define DEAD_SUBAUTHORITY_2          0x00000002L
+#define DEAD_AUTHORITY { 0, 0, 0, 0, 212, 127 }
+#define DEAD_SUBAUTHORITY_0 0x00000017L
+#define DEAD_SUBAUTHORITY_1 0x00000012L
+#define DEAD_SUBAUTHORITY_2 0x00000002L
 
-#define BOBBY_RID               0x00000002
-#define JERRY_RID               0x00000003
-#define PHIL_RID                0x00000004
-#define KREUTZMAN_RID           0x00000005
-#define BRENT_RID               0x00000006
-#define MICKY_RID               0x00000007
+#define BOBBY_RID 0x00000002
+#define JERRY_RID 0x00000003
+#define PHIL_RID 0x00000004
+#define KREUTZMAN_RID 0x00000005
+#define BRENT_RID 0x00000006
+#define MICKY_RID 0x00000007
 
     PSID DeadDomainSid;
 
@@ -859,206 +883,215 @@ TestSeAclRtl()
     //  The following SID sizes need to be allocated
     //
 
-    SidWithZeroSubAuthorities  = RtlLengthRequiredSid( 0 );
-    SidWithOneSubAuthority     = RtlLengthRequiredSid( 1 );
-    SidWithThreeSubAuthorities = RtlLengthRequiredSid( 3 );
-    SidWithFourSubAuthorities  = RtlLengthRequiredSid( 4 );
+    SidWithZeroSubAuthorities = RtlLengthRequiredSid(0);
+    SidWithOneSubAuthority = RtlLengthRequiredSid(1);
+    SidWithThreeSubAuthorities = RtlLengthRequiredSid(3);
+    SidWithFourSubAuthorities = RtlLengthRequiredSid(4);
 
-    DeadDomainSid   = (PSID)TstAllocatePool(PagedPool,SidWithThreeSubAuthorities);
+    DeadDomainSid = (PSID)TstAllocatePool(PagedPool, SidWithThreeSubAuthorities);
 
-    BobbySid    = (PSID)TstAllocatePool(PagedPool,SidWithFourSubAuthorities);
-    JerrySid    = (PSID)TstAllocatePool(PagedPool,SidWithFourSubAuthorities);
-    PhilSid     = (PSID)TstAllocatePool(PagedPool,SidWithFourSubAuthorities);
-    KreutzmanSid    = (PSID)TstAllocatePool(PagedPool,SidWithFourSubAuthorities);
+    BobbySid = (PSID)TstAllocatePool(PagedPool, SidWithFourSubAuthorities);
+    JerrySid = (PSID)TstAllocatePool(PagedPool, SidWithFourSubAuthorities);
+    PhilSid = (PSID)TstAllocatePool(PagedPool, SidWithFourSubAuthorities);
+    KreutzmanSid = (PSID)TstAllocatePool(PagedPool, SidWithFourSubAuthorities);
 
-    BrentSid    = (PSID)TstAllocatePool(PagedPool,SidWithFourSubAuthorities);
-    MickySid    = (PSID)TstAllocatePool(PagedPool,SidWithFourSubAuthorities);
+    BrentSid = (PSID)TstAllocatePool(PagedPool, SidWithFourSubAuthorities);
+    MickySid = (PSID)TstAllocatePool(PagedPool, SidWithFourSubAuthorities);
 
-    RtlInitializeSid( DeadDomainSid,   &DeadAuthority, 3 );
-    *(RtlSubAuthoritySid( DeadDomainSid, 0)) = DEAD_SUBAUTHORITY_0;
-    *(RtlSubAuthoritySid( DeadDomainSid, 1)) = DEAD_SUBAUTHORITY_1;
-    *(RtlSubAuthoritySid( DeadDomainSid, 2)) = DEAD_SUBAUTHORITY_2;
+    RtlInitializeSid(DeadDomainSid, &DeadAuthority, 3);
+    *(RtlSubAuthoritySid(DeadDomainSid, 0)) = DEAD_SUBAUTHORITY_0;
+    *(RtlSubAuthoritySid(DeadDomainSid, 1)) = DEAD_SUBAUTHORITY_1;
+    *(RtlSubAuthoritySid(DeadDomainSid, 2)) = DEAD_SUBAUTHORITY_2;
 
-    RtlCopySid( SidWithFourSubAuthorities, BobbySid, DeadDomainSid);
-    *(RtlSubAuthorityCountSid( BobbySid )) += 1;
-    *(RtlSubAuthoritySid( BobbySid, 3)) = BOBBY_RID;
+    RtlCopySid(SidWithFourSubAuthorities, BobbySid, DeadDomainSid);
+    *(RtlSubAuthorityCountSid(BobbySid)) += 1;
+    *(RtlSubAuthoritySid(BobbySid, 3)) = BOBBY_RID;
 
-    RtlCopySid( SidWithFourSubAuthorities, JerrySid, DeadDomainSid);
-    *(RtlSubAuthorityCountSid( JerrySid )) += 1;
-    *(RtlSubAuthoritySid( JerrySid, 3)) = JERRY_RID;
+    RtlCopySid(SidWithFourSubAuthorities, JerrySid, DeadDomainSid);
+    *(RtlSubAuthorityCountSid(JerrySid)) += 1;
+    *(RtlSubAuthoritySid(JerrySid, 3)) = JERRY_RID;
 
-    RtlCopySid( SidWithFourSubAuthorities, PhilSid, DeadDomainSid);
-    *(RtlSubAuthorityCountSid( PhilSid )) += 1;
-    *(RtlSubAuthoritySid( PhilSid, 3)) = PHIL_RID;
+    RtlCopySid(SidWithFourSubAuthorities, PhilSid, DeadDomainSid);
+    *(RtlSubAuthorityCountSid(PhilSid)) += 1;
+    *(RtlSubAuthoritySid(PhilSid, 3)) = PHIL_RID;
 
-    RtlCopySid( SidWithFourSubAuthorities, KreutzmanSid, DeadDomainSid);
-    *(RtlSubAuthorityCountSid( KreutzmanSid )) += 1;
-    *(RtlSubAuthoritySid( KreutzmanSid, 3)) = KREUTZMAN_RID;
+    RtlCopySid(SidWithFourSubAuthorities, KreutzmanSid, DeadDomainSid);
+    *(RtlSubAuthorityCountSid(KreutzmanSid)) += 1;
+    *(RtlSubAuthoritySid(KreutzmanSid, 3)) = KREUTZMAN_RID;
 
-    RtlCopySid( SidWithFourSubAuthorities, BrentSid, DeadDomainSid);
-    *(RtlSubAuthorityCountSid( BrentSid )) += 1;
-    *(RtlSubAuthoritySid( BrentSid, 3)) = BRENT_RID;
+    RtlCopySid(SidWithFourSubAuthorities, BrentSid, DeadDomainSid);
+    *(RtlSubAuthorityCountSid(BrentSid)) += 1;
+    *(RtlSubAuthoritySid(BrentSid, 3)) = BRENT_RID;
 
-    RtlCopySid( SidWithFourSubAuthorities, MickySid, DeadDomainSid);
-    *(RtlSubAuthorityCountSid( MickySid )) += 1;
-    *(RtlSubAuthoritySid( MickySid, 3)) = MICKY_RID;
+    RtlCopySid(SidWithFourSubAuthorities, MickySid, DeadDomainSid);
+    *(RtlSubAuthorityCountSid(MickySid)) += 1;
+    *(RtlSubAuthoritySid(MickySid, 3)) = MICKY_RID;
 
-    TDacl = (PACL)TstAllocatePool( PagedPool, 256 );
+    TDacl = (PACL)TstAllocatePool(PagedPool, 256);
 
     //DbgBreakPoint();
 
-    if (!NT_SUCCESS(Status = RtlCreateAcl( TDacl, 256, ACL_REVISION ))) {
+    if (!NT_SUCCESS(Status = RtlCreateAcl(TDacl, 256, ACL_REVISION)))
+    {
         DbgPrint("**** Failed **** \n");
-        DbgPrint("RtlCreateAcl returned %X \n",Status);
-        return(FALSE);
+        DbgPrint("RtlCreateAcl returned %X \n", Status);
+        return (FALSE);
     }
 
     //DbgBreakPoint();
 
-    if (!NT_SUCCESS( Status = RtlValidAcl( TDacl ) )) {
+    if (!NT_SUCCESS(Status = RtlValidAcl(TDacl)))
+    {
         DbgPrint("**** Failed **** \n");
-        DbgPrint("RtlValidAcl returned %X \n",Status);
-        return(FALSE);
+        DbgPrint("RtlValidAcl returned %X \n", Status);
+        return (FALSE);
     }
 
     //DbgBreakPoint();
 
     AclInformation.AclRevision = ACL_REVISION;
 
-    if (!NT_SUCCESS( Status = RtlSetInformationAcl( TDacl, &AclInformation,
-                sizeof(AclInformation), AclRevisionInformation ) )) {
+    if (!NT_SUCCESS(Status =
+                        RtlSetInformationAcl(TDacl, &AclInformation, sizeof(AclInformation), AclRevisionInformation)))
+    {
         DbgPrint("**** Failed **** \n");
-        DbgPrint("RtlSetInformation returned %X \n",Status);
-        return(FALSE);
+        DbgPrint("RtlSetInformation returned %X \n", Status);
+        return (FALSE);
     }
 
-    if (!NT_SUCCESS( Status = RtlQueryInformationAcl( TDacl, (PVOID)&AclInformationOut,
-                sizeof(AclInformationOut), AclRevisionInformation ) )) {
+    if (!NT_SUCCESS(Status = RtlQueryInformationAcl(TDacl, (PVOID)&AclInformationOut, sizeof(AclInformationOut),
+                                                    AclRevisionInformation)))
+    {
         DbgPrint("**** Failed **** \n");
-        DbgPrint("RtlQueryInformation returned %X during revision query \n",Status);
-        return(FALSE);
+        DbgPrint("RtlQueryInformation returned %X during revision query \n", Status);
+        return (FALSE);
     }
 
-    if (AclInformationOut.AclRevision != ACL_REVISION) {
+    if (AclInformationOut.AclRevision != ACL_REVISION)
+    {
         DbgPrint("**** Failed **** \n");
         DbgPrint("RtlQueryInformation returned incorrect revision \n");
-        return(FALSE);
+        return (FALSE);
     }
 
-    if (!NT_SUCCESS( Status = RtlQueryInformationAcl( TDacl, (PVOID)&AclSizeInfo,
-                sizeof(AclSizeInfo), AclSizeInformation ) )) {
+    if (!NT_SUCCESS(Status =
+                        RtlQueryInformationAcl(TDacl, (PVOID)&AclSizeInfo, sizeof(AclSizeInfo), AclSizeInformation)))
+    {
         DbgPrint("**** Failed **** \n");
-        DbgPrint("RtlQueryInformation returned %X during size query \n",Status);
-        return(FALSE);
+        DbgPrint("RtlQueryInformation returned %X during size query \n", Status);
+        return (FALSE);
     }
 
     // DumpAclSizeInfo(&AclSizeInfo);
 
-    AceSize = 6 * SidWithFourSubAuthorities + 1 * SidWithThreeSubAuthorities
-                    + 7 * (sizeof( ACE_HEADER ) + sizeof( ACCESS_MASK ));
+    AceSize =
+        6 * SidWithFourSubAuthorities + 1 * SidWithThreeSubAuthorities + 7 * (sizeof(ACE_HEADER) + sizeof(ACCESS_MASK));
 
     AceList = (PVOID)TstAllocatePool(PagedPool, AceSize);
 
     Ace = AceList;
 
     ((PSIMPLE_ACE)Ace)->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    ((PSIMPLE_ACE)Ace)->Header.AceSize = (USHORT)SidWithThreeSubAuthorities +
-                  (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof( ACCESS_MASK );
+    ((PSIMPLE_ACE)Ace)->Header.AceSize =
+        (USHORT)SidWithThreeSubAuthorities + (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof(ACCESS_MASK);
     ((PSIMPLE_ACE)Ace)->Header.AceFlags = OBJECT_INHERIT_ACE;
     ((PSIMPLE_ACE)Ace)->Mask = DELETE;
-    RtlCopySid(SidWithThreeSubAuthorities,&((PSIMPLE_ACE)Ace)->Sid,DeadDomainSid);
+    RtlCopySid(SidWithThreeSubAuthorities, &((PSIMPLE_ACE)Ace)->Sid, DeadDomainSid);
 
-    (ULONG)Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
+    (ULONG) Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
 
     ((PSIMPLE_ACE)Ace)->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    ((PSIMPLE_ACE)Ace)->Header.AceSize = (USHORT)SidWithFourSubAuthorities +
-                  (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof( ACCESS_MASK );
+    ((PSIMPLE_ACE)Ace)->Header.AceSize =
+        (USHORT)SidWithFourSubAuthorities + (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof(ACCESS_MASK);
     ((PSIMPLE_ACE)Ace)->Header.AceFlags = OBJECT_INHERIT_ACE;
     ((PSIMPLE_ACE)Ace)->Mask = DELETE;
-    RtlCopySid(SidWithFourSubAuthorities,&((PSIMPLE_ACE)Ace)->Sid,BobbySid);
+    RtlCopySid(SidWithFourSubAuthorities, &((PSIMPLE_ACE)Ace)->Sid, BobbySid);
 
-    (ULONG)Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
+    (ULONG) Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
 
     ((PSIMPLE_ACE)Ace)->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    ((PSIMPLE_ACE)Ace)->Header.AceSize = (USHORT)SidWithFourSubAuthorities +
-                  (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof( ACCESS_MASK );
+    ((PSIMPLE_ACE)Ace)->Header.AceSize =
+        (USHORT)SidWithFourSubAuthorities + (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof(ACCESS_MASK);
     ((PSIMPLE_ACE)Ace)->Header.AceFlags = OBJECT_INHERIT_ACE;
     ((PSIMPLE_ACE)Ace)->Mask = DELETE;
-    RtlCopySid(SidWithFourSubAuthorities,&((PSIMPLE_ACE)Ace)->Sid,JerrySid);
+    RtlCopySid(SidWithFourSubAuthorities, &((PSIMPLE_ACE)Ace)->Sid, JerrySid);
 
-    (ULONG)Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
+    (ULONG) Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
 
     ((PSIMPLE_ACE)Ace)->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    ((PSIMPLE_ACE)Ace)->Header.AceSize = (USHORT)SidWithFourSubAuthorities +
-                  (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof( ACCESS_MASK );
+    ((PSIMPLE_ACE)Ace)->Header.AceSize =
+        (USHORT)SidWithFourSubAuthorities + (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof(ACCESS_MASK);
     ((PSIMPLE_ACE)Ace)->Header.AceFlags = OBJECT_INHERIT_ACE;
     ((PSIMPLE_ACE)Ace)->Mask = DELETE;
-    RtlCopySid(SidWithFourSubAuthorities,&((PSIMPLE_ACE)Ace)->Sid,PhilSid);
+    RtlCopySid(SidWithFourSubAuthorities, &((PSIMPLE_ACE)Ace)->Sid, PhilSid);
 
-    (ULONG)Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
+    (ULONG) Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
 
     ((PSIMPLE_ACE)Ace)->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    ((PSIMPLE_ACE)Ace)->Header.AceSize = (USHORT)SidWithFourSubAuthorities +
-                  (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof( ACCESS_MASK );
+    ((PSIMPLE_ACE)Ace)->Header.AceSize =
+        (USHORT)SidWithFourSubAuthorities + (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof(ACCESS_MASK);
     ((PSIMPLE_ACE)Ace)->Header.AceFlags = OBJECT_INHERIT_ACE;
     ((PSIMPLE_ACE)Ace)->Mask = DELETE;
-    RtlCopySid(SidWithFourSubAuthorities,&((PSIMPLE_ACE)Ace)->Sid,KreutzmanSid);
+    RtlCopySid(SidWithFourSubAuthorities, &((PSIMPLE_ACE)Ace)->Sid, KreutzmanSid);
 
-    (ULONG)Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
+    (ULONG) Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
 
     ((PSIMPLE_ACE)Ace)->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    ((PSIMPLE_ACE)Ace)->Header.AceSize = (USHORT)SidWithFourSubAuthorities +
-                  (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof( ACCESS_MASK );
+    ((PSIMPLE_ACE)Ace)->Header.AceSize =
+        (USHORT)SidWithFourSubAuthorities + (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof(ACCESS_MASK);
     ((PSIMPLE_ACE)Ace)->Header.AceFlags = OBJECT_INHERIT_ACE;
     ((PSIMPLE_ACE)Ace)->Mask = DELETE;
-    RtlCopySid(SidWithFourSubAuthorities,&((PSIMPLE_ACE)Ace)->Sid,BrentSid);
+    RtlCopySid(SidWithFourSubAuthorities, &((PSIMPLE_ACE)Ace)->Sid, BrentSid);
 
-    (ULONG)Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
+    (ULONG) Ace += ((PSIMPLE_ACE)Ace)->Header.AceSize;
 
     ((PSIMPLE_ACE)Ace)->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-    ((PSIMPLE_ACE)Ace)->Header.AceSize = (USHORT)SidWithFourSubAuthorities +
-                  (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof( ACCESS_MASK );
+    ((PSIMPLE_ACE)Ace)->Header.AceSize =
+        (USHORT)SidWithFourSubAuthorities + (USHORT)sizeof(ACE_HEADER) + (USHORT)sizeof(ACCESS_MASK);
     ((PSIMPLE_ACE)Ace)->Header.AceFlags = OBJECT_INHERIT_ACE;
     ((PSIMPLE_ACE)Ace)->Mask = DELETE;
-    RtlCopySid(SidWithFourSubAuthorities,&((PSIMPLE_ACE)Ace)->Sid,MickySid);
+    RtlCopySid(SidWithFourSubAuthorities, &((PSIMPLE_ACE)Ace)->Sid, MickySid);
 
     //DbgBreakPoint();
 
     RtlAddAce(TDacl, ACL_REVISION, 0, AceList, AceSize);
 
-    if (!NT_SUCCESS( Status = RtlQueryInformationAcl( TDacl, (PVOID)&AclSizeInfo,
-                sizeof(AclSizeInfo), AclSizeInformation ) )) {
+    if (!NT_SUCCESS(Status =
+                        RtlQueryInformationAcl(TDacl, (PVOID)&AclSizeInfo, sizeof(AclSizeInfo), AclSizeInformation)))
+    {
         DbgPrint("**** Failed **** \n");
-        DbgPrint("RtlQueryInformation returned %X during size query \n",Status);
-        return(FALSE);
+        DbgPrint("RtlQueryInformation returned %X during size query \n", Status);
+        return (FALSE);
     }
 
 #if 0
     RtlDumpAcl(TDacl);
 #endif
 
-    RtlGetAce( TDacl, 5, &Ace );
+    RtlGetAce(TDacl, 5, &Ace);
 
-    if ( !RtlEqualSid( &((PSIMPLE_ACE)Ace)->Sid, BrentSid) ) {
+    if (!RtlEqualSid(&((PSIMPLE_ACE)Ace)->Sid, BrentSid))
+    {
         DbgPrint("\n **** Failed **** \n");
         DbgPrint("RtlGetAce returned wrong Ace\n");
-        return(FALSE);
+        return (FALSE);
     }
 
-    if (!NT_SUCCESS(RtlDeleteAce (TDacl, 5))) {
+    if (!NT_SUCCESS(RtlDeleteAce(TDacl, 5)))
+    {
         DbgPrint("\n **** Failed **** \n");
         DbgPrint("RtlDeleteAce failed\n");
-        return(FALSE);
+        return (FALSE);
     }
 
 #if 0
     RtlDumpAcl(TDacl);
 #endif
 
-    return(TRUE);
+    return (TRUE);
 }
 
-
+
 BOOLEAN
 TestSeRtl()
 {
@@ -1066,37 +1099,52 @@ TestSeRtl()
     BOOLEAN Result = TRUE;
 
     DbgPrint("Se:   Global Variable Initialization...                        ");
-    if (TSeVariableInitialization()) {
+    if (TSeVariableInitialization())
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         Result = FALSE;
     }
 
     DbgPrint("Se:   SID test...                                              ");
-    if (TestSeSid()) {
+    if (TestSeSid())
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         Result = FALSE;
     }
 
     DbgPrint("Se:   SECURITY_DESCRIPTOR test...                              ");
-    if (TestSeSecurityDescriptor()) {
+    if (TestSeSecurityDescriptor())
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         Result = FALSE;
     }
 
     DbgPrint("Se:   ACCESS_MASK test...                                      ");
-    if (TestSeAccessMask()) {
+    if (TestSeAccessMask())
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         Result = FALSE;
     }
 
     DbgPrint("Se:   ACL test...                                              ");
-    if (TestSeAclRtl()) {
+    if (TestSeAclRtl())
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         Result = FALSE;
     }
 
@@ -1105,9 +1153,12 @@ TestSeRtl()
     DbgPrint("    ********************\n");
     DbgPrint("    **                **\n");
 
-    if (Result = TRUE) {
+    if (Result = TRUE)
+    {
         DbgPrint("    ** Test Succeeded **\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("    **  Test Failed   **\n");
     }
 

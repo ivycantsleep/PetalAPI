@@ -32,9 +32,8 @@ Revision History:
 
 --*/
 
-#include "tsecomm.c"    // Mode dependent macros and routines.
+#include "tsecomm.c" // Mode dependent macros and routines.
 
-
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -42,38 +41,36 @@ Revision History:
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-    NTSTATUS Status;
-    STRING  Event1Name, Process1Name;
-    UNICODE_STRING UnicodeEvent1Name, UnicodeProcess1Name;
+NTSTATUS Status;
+STRING Event1Name, Process1Name;
+UNICODE_STRING UnicodeEvent1Name, UnicodeProcess1Name;
 
-    OBJECT_ATTRIBUTES NullObjectAttributes;
+OBJECT_ATTRIBUTES NullObjectAttributes;
 
-    HANDLE Event1;
-    OBJECT_ATTRIBUTES Event1ObjectAttributes;
-    PSECURITY_DESCRIPTOR Event1SecurityDescriptor;
-    PSID Event1Owner;
-    PSID Event1Group;
-    PACL Event1Dacl;
-    PACL Event1Sacl;
+HANDLE Event1;
+OBJECT_ATTRIBUTES Event1ObjectAttributes;
+PSECURITY_DESCRIPTOR Event1SecurityDescriptor;
+PSID Event1Owner;
+PSID Event1Group;
+PACL Event1Dacl;
+PACL Event1Sacl;
 
-    PACL TDacl;
-    BOOLEAN TDaclPresent;
-    BOOLEAN TDaclDefaulted;
+PACL TDacl;
+BOOLEAN TDaclPresent;
+BOOLEAN TDaclDefaulted;
 
-    PACL TSacl;
-    BOOLEAN TSaclPresent;
-    BOOLEAN TSaclDefaulted;
+PACL TSacl;
+BOOLEAN TSaclPresent;
+BOOLEAN TSaclDefaulted;
 
-    PSID TOwner;
-    BOOLEAN TOwnerDefaulted;
-    PSID TGroup;
-    BOOLEAN TGroupDefaulted;
+PSID TOwner;
+BOOLEAN TOwnerDefaulted;
+PSID TGroup;
+BOOLEAN TGroupDefaulted;
 
 
 HANDLE Process1;
 OBJECT_ATTRIBUTES Process1ObjectAttributes;
-
-
 
 
 ////////////////////////////////////////////////////////////////
@@ -86,38 +83,33 @@ BOOLEAN
 TestSeInitialize()
 {
 
-    Event1SecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
+    Event1SecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
     RtlInitString(&Event1Name, "\\SecurityTestEvent1");
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeEvent1Name,
-                 &Event1Name,
-                 TRUE );  SEASSERT_SUCCESS( NT_SUCCESS(Status) );
+    Status = RtlAnsiStringToUnicodeString(&UnicodeEvent1Name, &Event1Name, TRUE);
+    SEASSERT_SUCCESS(NT_SUCCESS(Status));
     RtlInitString(&Process1Name, "\\SecurityTestProcess1");
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeProcess1Name,
-                 &Process1Name,
-                 TRUE );  SEASSERT_SUCCESS( NT_SUCCESS(Status) );
+    Status = RtlAnsiStringToUnicodeString(&UnicodeProcess1Name, &Process1Name, TRUE);
+    SEASSERT_SUCCESS(NT_SUCCESS(Status));
 
     InitializeObjectAttributes(&NullObjectAttributes, NULL, 0, NULL, NULL);
 
     //
     // Build an ACL or two for use.
 
-    TDacl        = (PACL)TstAllocatePool( PagedPool, 256 );
-    TSacl        = (PACL)TstAllocatePool( PagedPool, 256 );
+    TDacl = (PACL)TstAllocatePool(PagedPool, 256);
+    TSacl = (PACL)TstAllocatePool(PagedPool, 256);
 
-    TDacl->AclRevision=TSacl->AclRevision=ACL_REVISION;
-    TDacl->Sbz1=TSacl->Sbz1=0;
-    TDacl->Sbz2=TSacl->Sbz2=0;
-    TDacl->AclSize=256;
-    TSacl->AclSize=8;
-    TDacl->AceCount=TSacl->AceCount=0;
+    TDacl->AclRevision = TSacl->AclRevision = ACL_REVISION;
+    TDacl->Sbz1 = TSacl->Sbz1 = 0;
+    TDacl->Sbz2 = TSacl->Sbz2 = 0;
+    TDacl->AclSize = 256;
+    TSacl->AclSize = 8;
+    TDacl->AceCount = TSacl->AceCount = 0;
 
     return TRUE;
 }
 
-
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -172,23 +164,20 @@ TestSeUnnamedCreate()
 //
 {
 
-
+
     BOOLEAN CompletionStatus = TRUE;
 
     InitializeObjectAttributes(&Event1ObjectAttributes, NULL, 0, NULL, NULL);
     DbgPrint("Se:     No Security Descriptor...                            Test\n");
     DbgPrint("Se:         No Inheritence...                                  ");
 
-    Status = NtCreateEvent(
-                 &Event1,
-                 DELETE,
-                 &Event1ObjectAttributes,
-                 NotificationEvent,
-                 FALSE
-                 );
-    if (NT_SUCCESS(Status)) {
+    Status = NtCreateEvent(&Event1, DELETE, &Event1ObjectAttributes, NotificationEvent, FALSE);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint(" **** Failed ****\n");
         CompletionStatus = FALSE;
     }
@@ -206,9 +195,8 @@ TestSeUnnamedCreate()
     DbgPrint("  Not Implemented.\n");
 
     return CompletionStatus;
-
 }
-
+
 BOOLEAN
 TestSeNamedCreate()
 //
@@ -255,29 +243,21 @@ TestSeNamedCreate()
 //      Explicit Group Specified
 //
 {
-
+
     BOOLEAN CompletionStatus = TRUE;
 
 
-    InitializeObjectAttributes(
-        &Event1ObjectAttributes,
-        &UnicodeEvent1Name,
-        0,
-        NULL,
-        NULL);
+    InitializeObjectAttributes(&Event1ObjectAttributes, &UnicodeEvent1Name, 0, NULL, NULL);
 
     DbgPrint("Se:     No Security Specified...                             Test\n");
     DbgPrint("Se:         No Inheritence...                                  ");
-    Status = NtCreateEvent(
-                 &Event1,
-                 DELETE,
-                 &Event1ObjectAttributes,
-                 NotificationEvent,
-                 FALSE
-                 );
-    if (NT_SUCCESS(Status)) {
+    Status = NtCreateEvent(&Event1, DELETE, &Event1ObjectAttributes, NotificationEvent, FALSE);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint(" **** Failed ****\n");
         CompletionStatus = FALSE;
     }
@@ -297,30 +277,21 @@ TestSeNamedCreate()
     DbgPrint("Se:     Empty Security Descriptor Explicitly Specified...    Test\n");
     DbgPrint("Se:         No Inheritence...                                  ");
 
-    RtlCreateSecurityDescriptor( Event1SecurityDescriptor, 1 );
-    InitializeObjectAttributes(&Event1ObjectAttributes,
-                               &UnicodeEvent1Name,
-                               0,
-                               NULL,
-                               Event1SecurityDescriptor);
-    Status = NtCreateEvent(
-                 &Event1,
-                 DELETE,
-                 &Event1ObjectAttributes,
-                 NotificationEvent,
-                 FALSE
-                 );
-    if (NT_SUCCESS(Status)) {
+    RtlCreateSecurityDescriptor(Event1SecurityDescriptor, 1);
+    InitializeObjectAttributes(&Event1ObjectAttributes, &UnicodeEvent1Name, 0, NULL, Event1SecurityDescriptor);
+    Status = NtCreateEvent(&Event1, DELETE, &Event1ObjectAttributes, NotificationEvent, FALSE);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint(" **** Failed ****\n");
         CompletionStatus = FALSE;
     }
     ASSERT(NT_SUCCESS(Status));
     Status = NtClose(Event1);
     ASSERT(NT_SUCCESS(Status));
-
-
 
 
     DbgPrint("Se:         Dacl Inheritence...                                ");
@@ -333,24 +304,17 @@ TestSeNamedCreate()
     DbgPrint("Se:     Explicit Dacl Specified...                           Test\n");
     DbgPrint("Se:         No Inheritence...                                  ");
 
-    RtlCreateSecurityDescriptor( Event1SecurityDescriptor, 1 );
-    RtlSetDaclSecurityDescriptor( Event1SecurityDescriptor, TRUE, TDacl, FALSE );
+    RtlCreateSecurityDescriptor(Event1SecurityDescriptor, 1);
+    RtlSetDaclSecurityDescriptor(Event1SecurityDescriptor, TRUE, TDacl, FALSE);
 
-    InitializeObjectAttributes(&Event1ObjectAttributes,
-                               &UnicodeEvent1Name,
-                               0,
-                               NULL,
-                               Event1SecurityDescriptor);
-    Status = NtCreateEvent(
-                 &Event1,
-                 DELETE,
-                 &Event1ObjectAttributes,
-                 NotificationEvent,
-                 FALSE
-                 );
-    if (NT_SUCCESS(Status)) {
+    InitializeObjectAttributes(&Event1ObjectAttributes, &UnicodeEvent1Name, 0, NULL, Event1SecurityDescriptor);
+    Status = NtCreateEvent(&Event1, DELETE, &Event1ObjectAttributes, NotificationEvent, FALSE);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint(" **** Failed ****\n");
         CompletionStatus = FALSE;
     }
@@ -406,11 +370,9 @@ TestSeNamedCreate()
     DbgPrint("  Not Implemented.\n");
 
 
-
     return CompletionStatus;
-
 }
-
+
 BOOLEAN
 TestSeQuerySecurity()
 //
@@ -444,7 +406,7 @@ TestSeQuerySecurity()
 //          Query Sacl (Unprivileged - should be rejected)
 //
 {
-
+
     BOOLEAN CompletionStatus = TRUE;
 
     DbgPrint("                                                               ");
@@ -502,7 +464,7 @@ TestSeQuerySecurity()
 
     return CompletionStatus;
 }
-
+
 BOOLEAN
 TestSeSetSecurity()
 //
@@ -548,7 +510,7 @@ TestSeSetSecurity()
 //          Set Sacl (unprivileged - should be rejected)
 //
 {
-
+
     BOOLEAN CompletionStatus = TRUE;
 
     DbgPrint("                                                               ");
@@ -629,9 +591,8 @@ TestSeSetSecurity()
 #endif //0
 
     return CompletionStatus;
-
 }
-
+
 BOOLEAN
 TestSeAccess()
 //
@@ -875,7 +836,7 @@ TestSeAccess()
 
     return CompletionStatus;
 }
-
+
 BOOLEAN
 TSeAcc()
 {
@@ -886,23 +847,28 @@ TSeAcc()
     DbgPrint("Succeeded.\n");
 
     DbgPrint("Se:   Unnamed Object Creation Test...                      Suite\n");
-    if (!TestSeUnnamedCreate()) {
+    if (!TestSeUnnamedCreate())
+    {
         Result = FALSE;
     }
     DbgPrint("Se:   Named Object Creation Test...                        Suite\n");
-    if (!TestSeNamedCreate()) {
+    if (!TestSeNamedCreate())
+    {
         Result = FALSE;
     }
     DbgPrint("Se:   Query Object Security Descriptor Test...             Suite\n");
-    if (!TestSeQuerySecurity()) {
+    if (!TestSeQuerySecurity())
+    {
         Result = FALSE;
     }
     DbgPrint("Se:   Set Object Security Descriptor Test...               Suite\n");
-    if (!TestSeSetSecurity()) {
+    if (!TestSeSetSecurity())
+    {
         Result = FALSE;
     }
     DbgPrint("Se:   Access Test...                                       Suite\n");
-    if (!TestSeAccess()) {
+    if (!TestSeAccess())
+    {
         Result = FALSE;
     }
 
@@ -911,9 +877,12 @@ TSeAcc()
     DbgPrint("    ********************\n");
     DbgPrint("    **                **\n");
 
-    if (Result = TRUE) {
+    if (Result = TRUE)
+    {
         DbgPrint("    ** Test Succeeded **\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("    **  Test Failed   **\n");
     }
 
@@ -924,4 +893,3 @@ TSeAcc()
 
     return Result;
 }
-

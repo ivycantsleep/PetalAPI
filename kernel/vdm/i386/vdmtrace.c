@@ -21,25 +21,13 @@ Revision History:
 
 #include "vdmp.h"
 
-VOID
-VdmTraceEvent(
-    USHORT Type,
-    USHORT wData,
-    USHORT lData,
-    PKTRAP_FRAME TrapFrame
-    );
+VOID VdmTraceEvent(USHORT Type, USHORT wData, USHORT lData, PKTRAP_FRAME TrapFrame);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, VdmTraceEvent)
 #endif
 
-VOID
-VdmTraceEvent(
-    USHORT Type,
-    USHORT wData,
-    USHORT lData,
-    PKTRAP_FRAME TrapFrame
-    )
+VOID VdmTraceEvent(USHORT Type, USHORT wData, USHORT lData, PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -145,9 +133,9 @@ Return Value:
     KeLowerIrql(OldIrql);
 #endif
 #else
-    UNREFERENCED_PARAMETER (Type);
-    UNREFERENCED_PARAMETER (wData);
-    UNREFERENCED_PARAMETER (lData);
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(Type);
+    UNREFERENCED_PARAMETER(wData);
+    UNREFERENCED_PARAMETER(lData);
+    UNREFERENCED_PARAMETER(TrapFrame);
 #endif
 }

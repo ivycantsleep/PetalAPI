@@ -45,12 +45,7 @@ Revision History:
 #include "exp.h"
 
 NTSTATUS
-ExInitializeZone(
-    IN PZONE_HEADER Zone,
-    IN ULONG BlockSize,
-    IN PVOID InitialSegment,
-    IN ULONG InitialSegmentSize
-    )
+ExInitializeZone(IN PZONE_HEADER Zone, IN ULONG BlockSize, IN PVOID InitialSegment, IN ULONG InitialSegmentSize)
 
 /*++
 
@@ -93,12 +88,11 @@ Return Value:
     ULONG i;
     PCH p;
 
-    if ( (BlockSize & 7) || ((ULONG_PTR)InitialSegment & 7) ||
-         (BlockSize > InitialSegmentSize) ) {
+    if ((BlockSize & 7) || ((ULONG_PTR)InitialSegment & 7) || (BlockSize > InitialSegmentSize))
+    {
 #if DBG
-        DbgPrint( "EX: ExInitializeZone( %x, %x, %x, %x ) - Invalid parameters.\n",
-                  Zone, BlockSize, InitialSegment, InitialSegmentSize
-                );
+        DbgPrint("EX: ExInitializeZone( %x, %x, %x, %x ) - Invalid parameters.\n", Zone, BlockSize, InitialSegment,
+                 InitialSegmentSize);
         DbgBreakPoint();
 #endif
         return STATUS_INVALID_PARAMETER;
@@ -106,18 +100,16 @@ Return Value:
 
     Zone->BlockSize = BlockSize;
 
-    Zone->SegmentList.Next = &((PZONE_SEGMENT_HEADER) InitialSegment)->SegmentList;
-    ((PZONE_SEGMENT_HEADER) InitialSegment)->SegmentList.Next = NULL;
-    ((PZONE_SEGMENT_HEADER) InitialSegment)->Reserved = NULL;
+    Zone->SegmentList.Next = &((PZONE_SEGMENT_HEADER)InitialSegment)->SegmentList;
+    ((PZONE_SEGMENT_HEADER)InitialSegment)->SegmentList.Next = NULL;
+    ((PZONE_SEGMENT_HEADER)InitialSegment)->Reserved = NULL;
 
     Zone->FreeList.Next = NULL;
 
     p = (PCH)InitialSegment + sizeof(ZONE_SEGMENT_HEADER);
 
-    for (i = sizeof(ZONE_SEGMENT_HEADER);
-         i <= InitialSegmentSize - BlockSize;
-         i += BlockSize
-        ) {
+    for (i = sizeof(ZONE_SEGMENT_HEADER); i <= InitialSegmentSize - BlockSize; i += BlockSize)
+    {
         ((PSINGLE_LIST_ENTRY)p)->Next = Zone->FreeList.Next;
         Zone->FreeList.Next = (PSINGLE_LIST_ENTRY)p;
         p += BlockSize;
@@ -135,11 +127,7 @@ Return Value:
 }
 
 NTSTATUS
-ExExtendZone(
-    IN PZONE_HEADER Zone,
-    IN PVOID Segment,
-    IN ULONG SegmentSize
-    )
+ExExtendZone(IN PZONE_HEADER Zone, IN PVOID Segment, IN ULONG SegmentSize)
 
 /*++
 
@@ -175,21 +163,18 @@ Return Value:
     ULONG i;
     PCH p;
 
-    if ( ((ULONG_PTR)Segment & 7) ||
-         (SegmentSize & 7) ||
-         (Zone->BlockSize > SegmentSize) ) {
+    if (((ULONG_PTR)Segment & 7) || (SegmentSize & 7) || (Zone->BlockSize > SegmentSize))
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
-    ((PZONE_SEGMENT_HEADER) Segment)->SegmentList.Next = Zone->SegmentList.Next;
-    Zone->SegmentList.Next = &((PZONE_SEGMENT_HEADER) Segment)->SegmentList;
+    ((PZONE_SEGMENT_HEADER)Segment)->SegmentList.Next = Zone->SegmentList.Next;
+    Zone->SegmentList.Next = &((PZONE_SEGMENT_HEADER)Segment)->SegmentList;
 
     p = (PCH)Segment + sizeof(ZONE_SEGMENT_HEADER);
 
-    for (i = sizeof(ZONE_SEGMENT_HEADER);
-         i <= SegmentSize - Zone->BlockSize;
-         i += Zone->BlockSize
-        ) {
+    for (i = sizeof(ZONE_SEGMENT_HEADER); i <= SegmentSize - Zone->BlockSize; i += Zone->BlockSize)
+    {
 
         ((PSINGLE_LIST_ENTRY)p)->Next = Zone->FreeList.Next;
         Zone->FreeList.Next = (PSINGLE_LIST_ENTRY)p;
@@ -207,14 +192,8 @@ Return Value:
 }
 
 
-
 NTSTATUS
-ExInterlockedExtendZone(
-    IN PZONE_HEADER Zone,
-    IN PVOID Segment,
-    IN ULONG SegmentSize,
-    IN PKSPIN_LOCK Lock
-    )
+ExInterlockedExtendZone(IN PZONE_HEADER Zone, IN PVOID Segment, IN ULONG SegmentSize, IN PKSPIN_LOCK Lock)
 
 /*++
 
@@ -253,14 +232,14 @@ Return Value:
     KIRQL OldIrql;
 
 #ifdef NT_UP
-    UNREFERENCED_PARAMETER (Lock);
+    UNREFERENCED_PARAMETER(Lock);
 #endif
 
-    ExAcquireSpinLock( Lock, &OldIrql );
+    ExAcquireSpinLock(Lock, &OldIrql);
 
-    Status = ExExtendZone( Zone, Segment, SegmentSize );
+    Status = ExExtendZone(Zone, Segment, SegmentSize);
 
-    ExReleaseSpinLock( Lock, OldIrql );
+    ExReleaseSpinLock(Lock, OldIrql);
 
     return Status;
 }

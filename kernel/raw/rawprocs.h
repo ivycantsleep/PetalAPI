@@ -37,12 +37,9 @@ Revision History:
 //
 
 NTSTATUS
-RawDispatch (
-    IN PVOLUME_DEVICE_OBJECT VolumeDeviceObject,
-    IN PIRP Irp
-    );
+RawDispatch(IN PVOLUME_DEVICE_OBJECT VolumeDeviceObject, IN PIRP Irp);
 
-
+
 //
 //  MAJOR FUNCTIONS
 //
@@ -52,62 +49,38 @@ RawDispatch (
 //
 
 NTSTATUS
-RawCleanup (                         //  implemented in Cleanup.c
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    IN PIO_STACK_LOCATION IrpSp
-    );
+RawCleanup( //  implemented in Cleanup.c
+    IN PVCB Vcb, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp);
 
 NTSTATUS
-RawClose (                           //  implemented in Close.c
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    PIO_STACK_LOCATION IrpSp
-    );
+RawClose( //  implemented in Close.c
+    IN PVCB Vcb, IN PIRP Irp, PIO_STACK_LOCATION IrpSp);
 
 NTSTATUS
-RawCreate (                          //  implemented in Create.c
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    PIO_STACK_LOCATION IrpSp
-    );
+RawCreate( //  implemented in Create.c
+    IN PVCB Vcb, IN PIRP Irp, PIO_STACK_LOCATION IrpSp);
 
 NTSTATUS
-RawFileSystemControl (               //  implemented in FsCtrl.c
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    PIO_STACK_LOCATION IrpSp
-    );
+RawFileSystemControl( //  implemented in FsCtrl.c
+    IN PVCB Vcb, IN PIRP Irp, PIO_STACK_LOCATION IrpSp);
 
 NTSTATUS
-RawReadWriteDeviceControl (          //  implemented in ReadWrit.c
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    PIO_STACK_LOCATION IrpSp
-    );
+RawReadWriteDeviceControl( //  implemented in ReadWrit.c
+    IN PVCB Vcb, IN PIRP Irp, PIO_STACK_LOCATION IrpSp);
 
 NTSTATUS
-RawQueryInformation (                //  implemented in FileInfo.c
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    PIO_STACK_LOCATION IrpSp
-    );
+RawQueryInformation( //  implemented in FileInfo.c
+    IN PVCB Vcb, IN PIRP Irp, PIO_STACK_LOCATION IrpSp);
 
 NTSTATUS
-RawSetInformation (                  //  implemented in FileInfo.c
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    PIO_STACK_LOCATION IrpSp
-    );
+RawSetInformation( //  implemented in FileInfo.c
+    IN PVCB Vcb, IN PIRP Irp, PIO_STACK_LOCATION IrpSp);
 
 NTSTATUS
-RawQueryVolumeInformation (          //  implemented in VolInfo.c
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    PIO_STACK_LOCATION IrpSp
-    );
+RawQueryVolumeInformation( //  implemented in VolInfo.c
+    IN PVCB Vcb, IN PIRP Irp, PIO_STACK_LOCATION IrpSp);
 
-
+
 //
 //  Miscellaneous support routines
 //
@@ -118,47 +91,35 @@ RawQueryVolumeInformation (          //  implemented in VolInfo.c
 //
 
 NTSTATUS
-RawCompletionRoutine(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    );
+RawCompletionRoutine(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 //
 //  In-memory structure support routines, implemented in StrucSup.c
 //
 
 NTSTATUS
-RawInitializeVcb (
-    IN OUT PVCB Vcb,
-    IN PDEVICE_OBJECT TargetDeviceObject,
-    IN PVPB Vpb
-    );
+RawInitializeVcb(IN OUT PVCB Vcb, IN PDEVICE_OBJECT TargetDeviceObject, IN PVPB Vpb);
 
 BOOLEAN
-RawCheckForDismount (
-    PVCB Vcb,
-    BOOLEAN CalledFromCreate
-    );
+RawCheckForDismount(PVCB Vcb, BOOLEAN CalledFromCreate);
 
 //
 //  This macro returns TRUE if a flag in a set of flags is on and FALSE
 //  otherwise
 //
 
-#define FlagOn(Flags,SingleFlag) (                          \
-    (BOOLEAN)(((Flags) & (SingleFlag)) != 0 ? TRUE : FALSE) \
-    )
+#define FlagOn(Flags, SingleFlag) ((BOOLEAN)(((Flags) & (SingleFlag)) != 0 ? TRUE : FALSE))
 
 //
 //  This macro completes a request
 //
 
-#define RawCompleteRequest(IRP,STATUS) {           \
-                                                   \
-    (IRP)->IoStatus.Status = (STATUS);             \
-                                                   \
-    IoCompleteRequest( (IRP), IO_DISK_INCREMENT ); \
-}
+#define RawCompleteRequest(IRP, STATUS)              \
+    {                                                \
+                                                     \
+        (IRP)->IoStatus.Status = (STATUS);           \
+                                                     \
+        IoCompleteRequest((IRP), IO_DISK_INCREMENT); \
+    }
 
 #endif // _RAWPROCS_

@@ -70,7 +70,7 @@ Notes:
 #define _NSERROR_H
 
 
-#define STATUS_SEVERITY(hr)  (((hr) >> 30) & 0x3)
+#define STATUS_SEVERITY(hr) (((hr) >> 30) & 0x3)
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -108,17 +108,17 @@ Notes:
 //
 // Define the facility codes
 //
-#define FACILITY_NS_WIN32                0x7
-#define FACILITY_NS                      0xD
+#define FACILITY_NS_WIN32 0x7
+#define FACILITY_NS 0xD
 
 
 //
 // Define the severity codes
 //
-#define STATUS_SEVERITY_WARNING          0x2
-#define STATUS_SEVERITY_SUCCESS          0x0
-#define STATUS_SEVERITY_INFORMATIONAL    0x1
-#define STATUS_SEVERITY_ERROR            0x3
+#define STATUS_SEVERITY_WARNING 0x2
+#define STATUS_SEVERITY_SUCCESS 0x0
+#define STATUS_SEVERITY_INFORMATIONAL 0x1
+#define STATUS_SEVERITY_ERROR 0x3
 
 
 //
@@ -128,7 +128,7 @@ Notes:
 //
 //  The requested operation is pending completion.%0
 //
-#define NS_S_CALLPENDING                 0x000D0000L
+#define NS_S_CALLPENDING 0x000D0000L
 
 //
 // MessageId: NS_S_CALLABORTED
@@ -137,7 +137,7 @@ Notes:
 //
 //  The requested operation was aborted by the client.%0
 //
-#define NS_S_CALLABORTED                 0x000D0001L
+#define NS_S_CALLABORTED 0x000D0001L
 
 //
 // MessageId: NS_S_STREAM_TRUNCATED
@@ -146,7 +146,7 @@ Notes:
 //
 //  The stream was purposefully stopped before completion.%0
 //
-#define NS_S_STREAM_TRUNCATED            0x000D0002L
+#define NS_S_STREAM_TRUNCATED 0x000D0002L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -162,7 +162,7 @@ Notes:
 //
 //  The maximum file bitrate value specified is greater than the server's configured maximum bandwidth.%0
 //
-#define NS_W_SERVER_BANDWIDTH_LIMIT      0x800D0003L
+#define NS_W_SERVER_BANDWIDTH_LIMIT 0x800D0003L
 
 //
 // MessageId: NS_W_FILE_BANDWIDTH_LIMIT
@@ -171,7 +171,7 @@ Notes:
 //
 //  The maximum bandwidth value specified is less than the maximum filebitrate.%0
 //
-#define NS_W_FILE_BANDWIDTH_LIMIT        0x800D0004L
+#define NS_W_FILE_BANDWIDTH_LIMIT 0x800D0004L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -187,7 +187,7 @@ Notes:
 //
 //  There is no connection established with the Windows Media server. The operation failed.%0
 //
-#define NS_E_NOCONNECTION                0xC00D0005L
+#define NS_E_NOCONNECTION 0xC00D0005L
 
 //
 // MessageId: NS_E_CANNOTCONNECT
@@ -196,7 +196,7 @@ Notes:
 //
 //  Unable to establish a connection to the server.%0
 //
-#define NS_E_CANNOTCONNECT               0xC00D0006L
+#define NS_E_CANNOTCONNECT 0xC00D0006L
 
 //
 // MessageId: NS_E_CANNOTDESTROYTITLE
@@ -205,7 +205,7 @@ Notes:
 //
 //  Unable to destroy the title.%0
 //
-#define NS_E_CANNOTDESTROYTITLE          0xC00D0007L
+#define NS_E_CANNOTDESTROYTITLE 0xC00D0007L
 
 //
 // MessageId: NS_E_CANNOTRENAMETITLE
@@ -214,7 +214,7 @@ Notes:
 //
 //  Unable to rename the title.%0
 //
-#define NS_E_CANNOTRENAMETITLE           0xC00D0008L
+#define NS_E_CANNOTRENAMETITLE 0xC00D0008L
 
 //
 // MessageId: NS_E_CANNOTOFFLINEDISK
@@ -223,7 +223,7 @@ Notes:
 //
 //  Unable to offline disk.%0
 //
-#define NS_E_CANNOTOFFLINEDISK           0xC00D0009L
+#define NS_E_CANNOTOFFLINEDISK 0xC00D0009L
 
 //
 // MessageId: NS_E_CANNOTONLINEDISK
@@ -232,7 +232,7 @@ Notes:
 //
 //  Unable to online disk.%0
 //
-#define NS_E_CANNOTONLINEDISK            0xC00D000AL
+#define NS_E_CANNOTONLINEDISK 0xC00D000AL
 
 //
 // MessageId: NS_E_NOREGISTEREDWALKER
@@ -241,7 +241,7 @@ Notes:
 //
 //  There is no file parser registered for this type of file.%0
 //
-#define NS_E_NOREGISTEREDWALKER          0xC00D000BL
+#define NS_E_NOREGISTEREDWALKER 0xC00D000BL
 
 //
 // MessageId: NS_E_NOFUNNEL
@@ -250,7 +250,7 @@ Notes:
 //
 //  There is no data connection established.%0
 //
-#define NS_E_NOFUNNEL                    0xC00D000CL
+#define NS_E_NOFUNNEL 0xC00D000CL
 
 //
 // MessageId: NS_E_NO_LOCALPLAY
@@ -259,7 +259,7 @@ Notes:
 //
 //  Failed to load the local play DLL.%0
 //
-#define NS_E_NO_LOCALPLAY                0xC00D000DL
+#define NS_E_NO_LOCALPLAY 0xC00D000DL
 
 //
 // MessageId: NS_E_NETWORK_BUSY
@@ -268,7 +268,7 @@ Notes:
 //
 //  The network is busy.%0
 //
-#define NS_E_NETWORK_BUSY                0xC00D000EL
+#define NS_E_NETWORK_BUSY 0xC00D000EL
 
 //
 // MessageId: NS_E_TOO_MANY_SESS
@@ -277,7 +277,7 @@ Notes:
 //
 //  The server session limit was exceeded.%0
 //
-#define NS_E_TOO_MANY_SESS               0xC00D000FL
+#define NS_E_TOO_MANY_SESS 0xC00D000FL
 
 //
 // MessageId: NS_E_ALREADY_CONNECTED
@@ -286,7 +286,7 @@ Notes:
 //
 //  The network connection already exists.%0
 //
-#define NS_E_ALREADY_CONNECTED           0xC00D0010L
+#define NS_E_ALREADY_CONNECTED 0xC00D0010L
 
 //
 // MessageId: NS_E_INVALID_INDEX
@@ -295,7 +295,7 @@ Notes:
 //
 //  Index %1 is invalid.%0
 //
-#define NS_E_INVALID_INDEX               0xC00D0011L
+#define NS_E_INVALID_INDEX 0xC00D0011L
 
 //
 // MessageId: NS_E_PROTOCOL_MISMATCH
@@ -304,7 +304,7 @@ Notes:
 //
 //  There is no protocol or protocol version supported by both the client and the server.%0
 //
-#define NS_E_PROTOCOL_MISMATCH           0xC00D0012L
+#define NS_E_PROTOCOL_MISMATCH 0xC00D0012L
 
 //
 // MessageId: NS_E_TIMEOUT
@@ -313,7 +313,7 @@ Notes:
 //
 //  There was no timely response from the server.%0
 //
-#define NS_E_TIMEOUT                     0xC00D0013L
+#define NS_E_TIMEOUT 0xC00D0013L
 
 //
 // MessageId: NS_E_NET_WRITE
@@ -322,7 +322,7 @@ Notes:
 //
 //  Error writing to the network.%0
 //
-#define NS_E_NET_WRITE                   0xC00D0014L
+#define NS_E_NET_WRITE 0xC00D0014L
 
 //
 // MessageId: NS_E_NET_READ
@@ -331,7 +331,7 @@ Notes:
 //
 //  Error reading from the network.%0
 //
-#define NS_E_NET_READ                    0xC00D0015L
+#define NS_E_NET_READ 0xC00D0015L
 
 //
 // MessageId: NS_E_DISK_WRITE
@@ -340,7 +340,7 @@ Notes:
 //
 //  Error writing to a disk.%0
 //
-#define NS_E_DISK_WRITE                  0xC00D0016L
+#define NS_E_DISK_WRITE 0xC00D0016L
 
 //
 // MessageId: NS_E_DISK_READ
@@ -349,7 +349,7 @@ Notes:
 //
 //  Error reading from a disk.%0
 //
-#define NS_E_DISK_READ                   0xC00D0017L
+#define NS_E_DISK_READ 0xC00D0017L
 
 //
 // MessageId: NS_E_FILE_WRITE
@@ -358,7 +358,7 @@ Notes:
 //
 //  Error writing to a file.%0
 //
-#define NS_E_FILE_WRITE                  0xC00D0018L
+#define NS_E_FILE_WRITE 0xC00D0018L
 
 //
 // MessageId: NS_E_FILE_READ
@@ -367,7 +367,7 @@ Notes:
 //
 //  Error reading from a file.%0
 //
-#define NS_E_FILE_READ                   0xC00D0019L
+#define NS_E_FILE_READ 0xC00D0019L
 
 //
 // MessageId: NS_E_FILE_NOT_FOUND
@@ -376,7 +376,7 @@ Notes:
 //
 //  The system cannot find the file specified.%0
 //
-#define NS_E_FILE_NOT_FOUND              0xC00D001AL
+#define NS_E_FILE_NOT_FOUND 0xC00D001AL
 
 //
 // MessageId: NS_E_FILE_EXISTS
@@ -385,7 +385,7 @@ Notes:
 //
 //  The file already exists.%0
 //
-#define NS_E_FILE_EXISTS                 0xC00D001BL
+#define NS_E_FILE_EXISTS 0xC00D001BL
 
 //
 // MessageId: NS_E_INVALID_NAME
@@ -394,7 +394,7 @@ Notes:
 //
 //  The file name, directory name, or volume label syntax is incorrect.%0
 //
-#define NS_E_INVALID_NAME                0xC00D001CL
+#define NS_E_INVALID_NAME 0xC00D001CL
 
 //
 // MessageId: NS_E_FILE_OPEN_FAILED
@@ -403,7 +403,7 @@ Notes:
 //
 //  Failed to open a file.%0
 //
-#define NS_E_FILE_OPEN_FAILED            0xC00D001DL
+#define NS_E_FILE_OPEN_FAILED 0xC00D001DL
 
 //
 // MessageId: NS_E_FILE_ALLOCATION_FAILED
@@ -412,7 +412,7 @@ Notes:
 //
 //  Unable to allocate a file.%0
 //
-#define NS_E_FILE_ALLOCATION_FAILED      0xC00D001EL
+#define NS_E_FILE_ALLOCATION_FAILED 0xC00D001EL
 
 //
 // MessageId: NS_E_FILE_INIT_FAILED
@@ -421,7 +421,7 @@ Notes:
 //
 //  Unable to initialize a file.%0
 //
-#define NS_E_FILE_INIT_FAILED            0xC00D001FL
+#define NS_E_FILE_INIT_FAILED 0xC00D001FL
 
 //
 // MessageId: NS_E_FILE_PLAY_FAILED
@@ -430,7 +430,7 @@ Notes:
 //
 //  Unable to play a file.%0
 //
-#define NS_E_FILE_PLAY_FAILED            0xC00D0020L
+#define NS_E_FILE_PLAY_FAILED 0xC00D0020L
 
 //
 // MessageId: NS_E_SET_DISK_UID_FAILED
@@ -439,7 +439,7 @@ Notes:
 //
 //  Could not set the disk UID.%0
 //
-#define NS_E_SET_DISK_UID_FAILED         0xC00D0021L
+#define NS_E_SET_DISK_UID_FAILED 0xC00D0021L
 
 //
 // MessageId: NS_E_INDUCED
@@ -448,7 +448,7 @@ Notes:
 //
 //  An error was induced for testing purposes.%0
 //
-#define NS_E_INDUCED                     0xC00D0022L
+#define NS_E_INDUCED 0xC00D0022L
 
 //
 // MessageId: NS_E_CCLINK_DOWN
@@ -457,7 +457,7 @@ Notes:
 //
 //  Two Content Servers failed to communicate.%0
 //
-#define NS_E_CCLINK_DOWN                 0xC00D0023L
+#define NS_E_CCLINK_DOWN 0xC00D0023L
 
 //
 // MessageId: NS_E_INTERNAL
@@ -466,7 +466,7 @@ Notes:
 //
 //  An unknown error occurred.%0
 //
-#define NS_E_INTERNAL                    0xC00D0024L
+#define NS_E_INTERNAL 0xC00D0024L
 
 //
 // MessageId: NS_E_BUSY
@@ -475,7 +475,7 @@ Notes:
 //
 //  The requested resource is in use.%0
 //
-#define NS_E_BUSY                        0xC00D0025L
+#define NS_E_BUSY 0xC00D0025L
 
 //
 // MessageId: NS_E_UNRECOGNIZED_STREAM_TYPE
@@ -484,7 +484,7 @@ Notes:
 //
 //  The specified protocol is not recognized. Be sure that the file name and syntax, such as slashes, are correct for the protocol.%0
 //
-#define NS_E_UNRECOGNIZED_STREAM_TYPE    0xC00D0026L
+#define NS_E_UNRECOGNIZED_STREAM_TYPE 0xC00D0026L
 
 //
 // MessageId: NS_E_NETWORK_SERVICE_FAILURE
@@ -493,7 +493,7 @@ Notes:
 //
 //  The network service provider failed.%0
 //
-#define NS_E_NETWORK_SERVICE_FAILURE     0xC00D0027L
+#define NS_E_NETWORK_SERVICE_FAILURE 0xC00D0027L
 
 //
 // MessageId: NS_E_NETWORK_RESOURCE_FAILURE
@@ -502,7 +502,7 @@ Notes:
 //
 //  An attempt to acquire a network resource failed.%0
 //
-#define NS_E_NETWORK_RESOURCE_FAILURE    0xC00D0028L
+#define NS_E_NETWORK_RESOURCE_FAILURE 0xC00D0028L
 
 //
 // MessageId: NS_E_CONNECTION_FAILURE
@@ -511,7 +511,7 @@ Notes:
 //
 //  The network connection has failed.%0
 //
-#define NS_E_CONNECTION_FAILURE          0xC00D0029L
+#define NS_E_CONNECTION_FAILURE 0xC00D0029L
 
 //
 // MessageId: NS_E_SHUTDOWN
@@ -520,7 +520,7 @@ Notes:
 //
 //  The session is being terminated locally.%0
 //
-#define NS_E_SHUTDOWN                    0xC00D002AL
+#define NS_E_SHUTDOWN 0xC00D002AL
 
 //
 // MessageId: NS_E_INVALID_REQUEST
@@ -529,7 +529,7 @@ Notes:
 //
 //  The request is invalid in the current state.%0
 //
-#define NS_E_INVALID_REQUEST             0xC00D002BL
+#define NS_E_INVALID_REQUEST 0xC00D002BL
 
 //
 // MessageId: NS_E_INSUFFICIENT_BANDWIDTH
@@ -538,7 +538,7 @@ Notes:
 //
 //  There is insufficient bandwidth available to fulfill the request.%0
 //
-#define NS_E_INSUFFICIENT_BANDWIDTH      0xC00D002CL
+#define NS_E_INSUFFICIENT_BANDWIDTH 0xC00D002CL
 
 //
 // MessageId: NS_E_NOT_REBUILDING
@@ -547,7 +547,7 @@ Notes:
 //
 //  The disk is not rebuilding.%0
 //
-#define NS_E_NOT_REBUILDING              0xC00D002DL
+#define NS_E_NOT_REBUILDING 0xC00D002DL
 
 //
 // MessageId: NS_E_LATE_OPERATION
@@ -556,7 +556,7 @@ Notes:
 //
 //  An operation requested for a particular time could not be carried out on schedule.%0
 //
-#define NS_E_LATE_OPERATION              0xC00D002EL
+#define NS_E_LATE_OPERATION 0xC00D002EL
 
 //
 // MessageId: NS_E_INVALID_DATA
@@ -565,7 +565,7 @@ Notes:
 //
 //  Invalid or corrupt data was encountered.%0
 //
-#define NS_E_INVALID_DATA                0xC00D002FL
+#define NS_E_INVALID_DATA 0xC00D002FL
 
 //
 // MessageId: NS_E_FILE_BANDWIDTH_LIMIT
@@ -574,7 +574,7 @@ Notes:
 //
 //  The bandwidth required to stream a file is higher than the maximum file bandwidth allowed on the server.%0
 //
-#define NS_E_FILE_BANDWIDTH_LIMIT        0xC00D0030L
+#define NS_E_FILE_BANDWIDTH_LIMIT 0xC00D0030L
 
 //
 // MessageId: NS_E_OPEN_FILE_LIMIT
@@ -583,7 +583,7 @@ Notes:
 //
 //  The client cannot have any more files open simultaneously.%0
 //
-#define NS_E_OPEN_FILE_LIMIT             0xC00D0031L
+#define NS_E_OPEN_FILE_LIMIT 0xC00D0031L
 
 //
 // MessageId: NS_E_BAD_CONTROL_DATA
@@ -592,7 +592,7 @@ Notes:
 //
 //  The server received invalid data from the client on the control connection.%0
 //
-#define NS_E_BAD_CONTROL_DATA            0xC00D0032L
+#define NS_E_BAD_CONTROL_DATA 0xC00D0032L
 
 //
 // MessageId: NS_E_NO_STREAM
@@ -601,7 +601,7 @@ Notes:
 //
 //  There is no stream available.%0
 //
-#define NS_E_NO_STREAM                   0xC00D0033L
+#define NS_E_NO_STREAM 0xC00D0033L
 
 //
 // MessageId: NS_E_STREAM_END
@@ -610,7 +610,7 @@ Notes:
 //
 //  There is no more data in the stream.%0
 //
-#define NS_E_STREAM_END                  0xC00D0034L
+#define NS_E_STREAM_END 0xC00D0034L
 
 //
 // MessageId: NS_E_SERVER_NOT_FOUND
@@ -619,7 +619,7 @@ Notes:
 //
 //  The specified server could not be found.%0
 //
-#define NS_E_SERVER_NOT_FOUND            0xC00D0035L
+#define NS_E_SERVER_NOT_FOUND 0xC00D0035L
 
 //
 // MessageId: NS_E_DUPLICATE_NAME
@@ -628,7 +628,7 @@ Notes:
 //
 //  The specified name is already in use.
 //
-#define NS_E_DUPLICATE_NAME              0xC00D0036L
+#define NS_E_DUPLICATE_NAME 0xC00D0036L
 
 //
 // MessageId: NS_E_DUPLICATE_ADDRESS
@@ -637,7 +637,7 @@ Notes:
 //
 //  The specified address is already in use.
 //
-#define NS_E_DUPLICATE_ADDRESS           0xC00D0037L
+#define NS_E_DUPLICATE_ADDRESS 0xC00D0037L
 
 //
 // MessageId: NS_E_BAD_MULTICAST_ADDRESS
@@ -646,7 +646,7 @@ Notes:
 //
 //  The specified address is not a valid multicast address.
 //
-#define NS_E_BAD_MULTICAST_ADDRESS       0xC00D0038L
+#define NS_E_BAD_MULTICAST_ADDRESS 0xC00D0038L
 
 //
 // MessageId: NS_E_BAD_ADAPTER_ADDRESS
@@ -655,7 +655,7 @@ Notes:
 //
 //  The specified adapter address is invalid.
 //
-#define NS_E_BAD_ADAPTER_ADDRESS         0xC00D0039L
+#define NS_E_BAD_ADAPTER_ADDRESS 0xC00D0039L
 
 //
 // MessageId: NS_E_BAD_DELIVERY_MODE
@@ -664,7 +664,7 @@ Notes:
 //
 //  The specified delivery mode is invalid.
 //
-#define NS_E_BAD_DELIVERY_MODE           0xC00D003AL
+#define NS_E_BAD_DELIVERY_MODE 0xC00D003AL
 
 //
 // MessageId: NS_E_INVALID_CHANNEL
@@ -673,7 +673,7 @@ Notes:
 //
 //  The specified station does not exist.
 //
-#define NS_E_INVALID_CHANNEL             0xC00D003BL
+#define NS_E_INVALID_CHANNEL 0xC00D003BL
 
 //
 // MessageId: NS_E_INVALID_STREAM
@@ -682,7 +682,7 @@ Notes:
 //
 //  The specified stream does not exist.
 //
-#define NS_E_INVALID_STREAM              0xC00D003CL
+#define NS_E_INVALID_STREAM 0xC00D003CL
 
 //
 // MessageId: NS_E_INVALID_ARCHIVE
@@ -691,7 +691,7 @@ Notes:
 //
 //  The specified archive could not be opened.
 //
-#define NS_E_INVALID_ARCHIVE             0xC00D003DL
+#define NS_E_INVALID_ARCHIVE 0xC00D003DL
 
 //
 // MessageId: NS_E_NOTITLES
@@ -700,7 +700,7 @@ Notes:
 //
 //  The system cannot find any titles on the server.%0
 //
-#define NS_E_NOTITLES                    0xC00D003EL
+#define NS_E_NOTITLES 0xC00D003EL
 
 //
 // MessageId: NS_E_INVALID_CLIENT
@@ -709,7 +709,7 @@ Notes:
 //
 //  The system cannot find the client specified.%0
 //
-#define NS_E_INVALID_CLIENT              0xC00D003FL
+#define NS_E_INVALID_CLIENT 0xC00D003FL
 
 //
 // MessageId: NS_E_INVALID_BLACKHOLE_ADDRESS
@@ -718,7 +718,7 @@ Notes:
 //
 //  The Blackhole Address is not initialized.%0
 //
-#define NS_E_INVALID_BLACKHOLE_ADDRESS   0xC00D0040L
+#define NS_E_INVALID_BLACKHOLE_ADDRESS 0xC00D0040L
 
 //
 // MessageId: NS_E_INCOMPATIBLE_FORMAT
@@ -727,7 +727,7 @@ Notes:
 //
 //  The station does not support the stream format.
 //
-#define NS_E_INCOMPATIBLE_FORMAT         0xC00D0041L
+#define NS_E_INCOMPATIBLE_FORMAT 0xC00D0041L
 
 //
 // MessageId: NS_E_INVALID_KEY
@@ -736,7 +736,7 @@ Notes:
 //
 //  The specified key is not valid.
 //
-#define NS_E_INVALID_KEY                 0xC00D0042L
+#define NS_E_INVALID_KEY 0xC00D0042L
 
 //
 // MessageId: NS_E_INVALID_PORT
@@ -745,7 +745,7 @@ Notes:
 //
 //  The specified port is not valid.
 //
-#define NS_E_INVALID_PORT                0xC00D0043L
+#define NS_E_INVALID_PORT 0xC00D0043L
 
 //
 // MessageId: NS_E_INVALID_TTL
@@ -754,7 +754,7 @@ Notes:
 //
 //  The specified TTL is not valid.
 //
-#define NS_E_INVALID_TTL                 0xC00D0044L
+#define NS_E_INVALID_TTL 0xC00D0044L
 
 //
 // MessageId: NS_E_STRIDE_REFUSED
@@ -763,7 +763,7 @@ Notes:
 //
 //  The request to fast forward or rewind could not be fulfilled.
 //
-#define NS_E_STRIDE_REFUSED              0xC00D0045L
+#define NS_E_STRIDE_REFUSED 0xC00D0045L
 
 //
 // IMmsAutoServer Errors
@@ -784,7 +784,7 @@ Notes:
 //
 //  Cannot exceed the maximum bandwidth limit.%0
 //
-#define NS_E_MAX_BITRATE                 0xC00D0047L
+#define NS_E_MAX_BITRATE 0xC00D0047L
 
 //
 // MessageId: NS_E_LOGFILEPERIOD
@@ -793,7 +793,7 @@ Notes:
 //
 //  Invalid value for LogFilePeriod.%0
 //
-#define NS_E_LOGFILEPERIOD               0xC00D0048L
+#define NS_E_LOGFILEPERIOD 0xC00D0048L
 
 //
 // MessageId: NS_E_MAX_CLIENTS
@@ -801,9 +801,9 @@ Notes:
 // MessageText:
 //
 //  Cannot exceed the maximum client limit.%0
-//  
 //
-#define NS_E_MAX_CLIENTS                 0xC00D0049L
+//
+#define NS_E_MAX_CLIENTS 0xC00D0049L
 
 //
 // MessageId: NS_E_LOG_FILE_SIZE
@@ -811,9 +811,9 @@ Notes:
 // MessageText:
 //
 //  Log File Size too small.%0
-//  
 //
-#define NS_E_LOG_FILE_SIZE               0xC00D004AL
+//
+#define NS_E_LOG_FILE_SIZE 0xC00D004AL
 
 //
 // MessageId: NS_E_MAX_FILERATE
@@ -822,7 +822,7 @@ Notes:
 //
 //  Cannot exceed the maximum file rate.%0
 //
-#define NS_E_MAX_FILERATE                0xC00D004BL
+#define NS_E_MAX_FILERATE 0xC00D004BL
 
 //
 // File Walker Errors
@@ -834,7 +834,7 @@ Notes:
 //
 //  Unknown file type.%0
 //
-#define NS_E_WALKER_UNKNOWN              0xC00D004CL
+#define NS_E_WALKER_UNKNOWN 0xC00D004CL
 
 //
 // MessageId: NS_E_WALKER_SERVER
@@ -843,7 +843,7 @@ Notes:
 //
 //  The specified file, %1, cannot be loaded onto the specified server, %2.%0
 //
-#define NS_E_WALKER_SERVER               0xC00D004DL
+#define NS_E_WALKER_SERVER 0xC00D004DL
 
 //
 // MessageId: NS_E_WALKER_USAGE
@@ -852,7 +852,7 @@ Notes:
 //
 //  There was a usage error with file parser.%0
 //
-#define NS_E_WALKER_USAGE                0xC00D004EL
+#define NS_E_WALKER_USAGE 0xC00D004EL
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -862,9 +862,9 @@ Notes:
 /////////////////////////////////////////////////////////////////////////
 
 
- // Tiger Events
+// Tiger Events
 
- // %1 is the tiger name
+// %1 is the tiger name
 
 //
 // MessageId: NS_I_TIGER_START
@@ -873,7 +873,7 @@ Notes:
 //
 //  The Title Server %1 is running.%0
 //
-#define NS_I_TIGER_START                 0x400D004FL
+#define NS_I_TIGER_START 0x400D004FL
 
 //
 // MessageId: NS_E_TIGER_FAIL
@@ -882,13 +882,13 @@ Notes:
 //
 //  The Title Server %1 has failed.%0
 //
-#define NS_E_TIGER_FAIL                  0xC00D0050L
+#define NS_E_TIGER_FAIL 0xC00D0050L
 
 
- // Cub Events
+// Cub Events
 
- // %1 is the cub ID
- // %2 is the cub name
+// %1 is the cub ID
+// %2 is the cub name
 
 //
 // MessageId: NS_I_CUB_START
@@ -897,7 +897,7 @@ Notes:
 //
 //  Content Server %1 (%2) is starting.%0
 //
-#define NS_I_CUB_START                   0x400D0051L
+#define NS_I_CUB_START 0x400D0051L
 
 //
 // MessageId: NS_I_CUB_RUNNING
@@ -906,7 +906,7 @@ Notes:
 //
 //  Content Server %1 (%2) is running.%0
 //
-#define NS_I_CUB_RUNNING                 0x400D0052L
+#define NS_I_CUB_RUNNING 0x400D0052L
 
 //
 // MessageId: NS_E_CUB_FAIL
@@ -915,14 +915,14 @@ Notes:
 //
 //  Content Server %1 (%2) has failed.%0
 //
-#define NS_E_CUB_FAIL                    0xC00D0053L
+#define NS_E_CUB_FAIL 0xC00D0053L
 
 
- // Disk Events
+// Disk Events
 
- // %1 is the tiger disk ID
- // %2 is the device name
- // %3 is the cub ID
+// %1 is the tiger disk ID
+// %2 is the device name
+// %3 is the cub ID
 //
 // MessageId: NS_I_DISK_START
 //
@@ -930,7 +930,7 @@ Notes:
 //
 //  Disk %1 ( %2 ) on Content Server %3, is running.%0
 //
-#define NS_I_DISK_START                  0x400D0054L
+#define NS_I_DISK_START 0x400D0054L
 
 //
 // MessageId: NS_E_DISK_FAIL
@@ -939,7 +939,7 @@ Notes:
 //
 //  Disk %1 ( %2 ) on Content Server %3, has failed.%0
 //
-#define NS_E_DISK_FAIL                   0xC00D0055L
+#define NS_E_DISK_FAIL 0xC00D0055L
 
 //
 // MessageId: NS_I_DISK_REBUILD_STARTED
@@ -948,7 +948,7 @@ Notes:
 //
 //  Started rebuilding disk %1 ( %2 ) on Content Server %3.%0
 //
-#define NS_I_DISK_REBUILD_STARTED        0x400D0056L
+#define NS_I_DISK_REBUILD_STARTED 0x400D0056L
 
 //
 // MessageId: NS_I_DISK_REBUILD_FINISHED
@@ -957,7 +957,7 @@ Notes:
 //
 //  Finished rebuilding disk %1 ( %2 ) on Content Server %3.%0
 //
-#define NS_I_DISK_REBUILD_FINISHED       0x400D0057L
+#define NS_I_DISK_REBUILD_FINISHED 0x400D0057L
 
 //
 // MessageId: NS_I_DISK_REBUILD_ABORTED
@@ -966,10 +966,10 @@ Notes:
 //
 //  Aborted rebuilding disk %1 ( %2 ) on Content Server %3.%0
 //
-#define NS_I_DISK_REBUILD_ABORTED        0x400D0058L
+#define NS_I_DISK_REBUILD_ABORTED 0x400D0058L
 
 
- // Admin Events
+// Admin Events
 
 //
 // MessageId: NS_I_LIMIT_FUNNELS
@@ -978,7 +978,7 @@ Notes:
 //
 //  A NetShow administrator at network location %1 set the data stream limit to %2 streams.%0
 //
-#define NS_I_LIMIT_FUNNELS               0x400D0059L
+#define NS_I_LIMIT_FUNNELS 0x400D0059L
 
 //
 // MessageId: NS_I_START_DISK
@@ -987,7 +987,7 @@ Notes:
 //
 //  A NetShow administrator at network location %1 started disk %2.%0
 //
-#define NS_I_START_DISK                  0x400D005AL
+#define NS_I_START_DISK 0x400D005AL
 
 //
 // MessageId: NS_I_STOP_DISK
@@ -996,7 +996,7 @@ Notes:
 //
 //  A NetShow administrator at network location %1 stopped disk %2.%0
 //
-#define NS_I_STOP_DISK                   0x400D005BL
+#define NS_I_STOP_DISK 0x400D005BL
 
 //
 // MessageId: NS_I_STOP_CUB
@@ -1005,7 +1005,7 @@ Notes:
 //
 //  A NetShow administrator at network location %1 stopped Content Server %2.%0
 //
-#define NS_I_STOP_CUB                    0x400D005CL
+#define NS_I_STOP_CUB 0x400D005CL
 
 //
 // MessageId: NS_I_KILL_VIEWER
@@ -1014,7 +1014,7 @@ Notes:
 //
 //  A NetShow administrator at network location %1 disconnected viewer %2 from the system.%0
 //
-#define NS_I_KILL_VIEWER                 0x400D005DL
+#define NS_I_KILL_VIEWER 0x400D005DL
 
 //
 // MessageId: NS_I_REBUILD_DISK
@@ -1023,7 +1023,7 @@ Notes:
 //
 //  A NetShow administrator at network location %1 started rebuilding disk %2.%0
 //
-#define NS_I_REBUILD_DISK                0x400D005EL
+#define NS_I_REBUILD_DISK 0x400D005EL
 
 //
 // MessageId: NS_W_UNKNOWN_EVENT
@@ -1032,10 +1032,10 @@ Notes:
 //
 //  Unknown %1 event encountered.%0
 //
-#define NS_W_UNKNOWN_EVENT               0x800D005FL
+#define NS_W_UNKNOWN_EVENT 0x800D005FL
 
 
- // Alerts
+// Alerts
 
 //
 // MessageId: NS_E_MAX_FUNNELS_ALERT
@@ -1044,7 +1044,7 @@ Notes:
 //
 //  The NetShow data stream limit of %1 streams was reached.%0
 //
-#define NS_E_MAX_FUNNELS_ALERT           0xC00D0060L
+#define NS_E_MAX_FUNNELS_ALERT 0xC00D0060L
 
 //
 // MessageId: NS_E_ALLOCATE_FILE_FAIL
@@ -1053,7 +1053,7 @@ Notes:
 //
 //  The NetShow Video Server was unable to allocate a %1 block file named %2.%0
 //
-#define NS_E_ALLOCATE_FILE_FAIL          0xC00D0061L
+#define NS_E_ALLOCATE_FILE_FAIL 0xC00D0061L
 
 //
 // MessageId: NS_E_PAGING_ERROR
@@ -1062,7 +1062,7 @@ Notes:
 //
 //  A Content Server was unable to page a block.%0
 //
-#define NS_E_PAGING_ERROR                0xC00D0062L
+#define NS_E_PAGING_ERROR 0xC00D0062L
 
 //
 // MessageId: NS_E_BAD_BLOCK0_VERSION
@@ -1071,7 +1071,7 @@ Notes:
 //
 //  Disk %1 has unrecognized control block version %2.%0
 //
-#define NS_E_BAD_BLOCK0_VERSION          0xC00D0063L
+#define NS_E_BAD_BLOCK0_VERSION 0xC00D0063L
 
 //
 // MessageId: NS_E_BAD_DISK_UID
@@ -1080,7 +1080,7 @@ Notes:
 //
 //  Disk %1 has incorrect uid %2.%0
 //
-#define NS_E_BAD_DISK_UID                0xC00D0064L
+#define NS_E_BAD_DISK_UID 0xC00D0064L
 
 //
 // MessageId: NS_E_BAD_FSMAJOR_VERSION
@@ -1089,7 +1089,7 @@ Notes:
 //
 //  Disk %1 has unsupported file system major version %2.%0
 //
-#define NS_E_BAD_FSMAJOR_VERSION         0xC00D0065L
+#define NS_E_BAD_FSMAJOR_VERSION 0xC00D0065L
 
 //
 // MessageId: NS_E_BAD_STAMPNUMBER
@@ -1098,7 +1098,7 @@ Notes:
 //
 //  Disk %1 has bad stamp number in control block.%0
 //
-#define NS_E_BAD_STAMPNUMBER             0xC00D0066L
+#define NS_E_BAD_STAMPNUMBER 0xC00D0066L
 
 //
 // MessageId: NS_E_PARTIALLY_REBUILT_DISK
@@ -1107,7 +1107,7 @@ Notes:
 //
 //  Disk %1 is partially reconstructed.%0
 //
-#define NS_E_PARTIALLY_REBUILT_DISK      0xC00D0067L
+#define NS_E_PARTIALLY_REBUILT_DISK 0xC00D0067L
 
 //
 // MessageId: NS_E_ENACTPLAN_GIVEUP
@@ -1116,10 +1116,10 @@ Notes:
 //
 //  EnactPlan gives up.%0
 //
-#define NS_E_ENACTPLAN_GIVEUP            0xC00D0068L
+#define NS_E_ENACTPLAN_GIVEUP 0xC00D0068L
 
 
- // MCMADM warnings/errors
+// MCMADM warnings/errors
 
 //
 // MessageId: MCMADM_I_NO_EVENTS
@@ -1128,7 +1128,7 @@ Notes:
 //
 //  Event initialization failed, there will be no MCM events.%0
 //
-#define MCMADM_I_NO_EVENTS               0x400D0069L
+#define MCMADM_I_NO_EVENTS 0x400D0069L
 
 //
 // MessageId: MCMADM_E_REGKEY_NOT_FOUND
@@ -1137,7 +1137,7 @@ Notes:
 //
 //  The key was not found in the registry.%0
 //
-#define MCMADM_E_REGKEY_NOT_FOUND        0xC00D006AL
+#define MCMADM_E_REGKEY_NOT_FOUND 0xC00D006AL
 
 //
 // MessageId: NS_E_NO_FORMATS
@@ -1146,7 +1146,7 @@ Notes:
 //
 //  No stream formats were found in an NSC file.%0
 //
-#define NS_E_NO_FORMATS                  0xC00D006BL
+#define NS_E_NO_FORMATS 0xC00D006BL
 
 //
 // MessageId: NS_E_NO_REFERENCES
@@ -1155,7 +1155,7 @@ Notes:
 //
 //  No reference URLs were found in an ASX file.%0
 //
-#define NS_E_NO_REFERENCES               0xC00D006CL
+#define NS_E_NO_REFERENCES 0xC00D006CL
 
 //
 // MessageId: NS_E_WAVE_OPEN
@@ -1164,7 +1164,7 @@ Notes:
 //
 //  Error opening wave device, the device might be in use.%0
 //
-#define NS_E_WAVE_OPEN                   0xC00D006DL
+#define NS_E_WAVE_OPEN 0xC00D006DL
 
 //
 // MessageId: NS_I_LOGGING_FAILED
@@ -1173,7 +1173,7 @@ Notes:
 //
 //  The logging operation failed.
 //
-#define NS_I_LOGGING_FAILED              0x400D006EL
+#define NS_I_LOGGING_FAILED 0x400D006EL
 
 //
 // MessageId: NS_E_CANNOTCONNECTEVENTS
@@ -1182,7 +1182,7 @@ Notes:
 //
 //  Unable to establish a connection to the NetShow event monitor service.%0
 //
-#define NS_E_CANNOTCONNECTEVENTS         0xC00D006FL
+#define NS_E_CANNOTCONNECTEVENTS 0xC00D006FL
 
 //
 // MessageId: NS_I_LIMIT_BANDWIDTH
@@ -1191,7 +1191,7 @@ Notes:
 //
 //  A NetShow administrator at network location %1 set the maximum bandwidth limit to %2 bps.%0
 //
-#define NS_I_LIMIT_BANDWIDTH             0x400D0070L
+#define NS_I_LIMIT_BANDWIDTH 0x400D0070L
 
 //
 // MessageId: NS_E_NO_DEVICE
@@ -1200,7 +1200,7 @@ Notes:
 //
 //  No device driver is present on the system.%0
 //
-#define NS_E_NO_DEVICE                   0xC00D0071L
+#define NS_E_NO_DEVICE 0xC00D0071L
 
 //
 // MessageId: NS_E_NO_SPECIFIED_DEVICE
@@ -1209,7 +1209,7 @@ Notes:
 //
 //  No specified device driver is present.%0
 //
-#define NS_E_NO_SPECIFIED_DEVICE         0xC00D0072L
+#define NS_E_NO_SPECIFIED_DEVICE 0xC00D0072L
 
 
 // NOTENOTE!!!
@@ -1223,7 +1223,7 @@ Notes:
 //
 //  NS_E_NOTHING_TO_DO
 //
-#define NS_E_NOTHING_TO_DO               0xC00D07F1L
+#define NS_E_NOTHING_TO_DO 0xC00D07F1L
 
 //
 // MessageId: NS_E_NO_MULTICAST
@@ -1232,7 +1232,7 @@ Notes:
 //
 //  Not receiving data from the server.%0
 //
-#define NS_E_NO_MULTICAST                0xC00D07F2L
+#define NS_E_NO_MULTICAST 0xC00D07F2L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -1250,7 +1250,7 @@ Notes:
 //
 //  Netshow Events Monitor is not operational and has been disconnected.%0
 //
-#define NS_E_MONITOR_GIVEUP              0xC00D00C8L
+#define NS_E_MONITOR_GIVEUP 0xC00D00C8L
 
 //
 // MessageId: NS_E_REMIRRORED_DISK
@@ -1259,7 +1259,7 @@ Notes:
 //
 //  Disk %1 is remirrored.%0
 //
-#define NS_E_REMIRRORED_DISK             0xC00D00C9L
+#define NS_E_REMIRRORED_DISK 0xC00D00C9L
 
 //
 // MessageId: NS_E_INSUFFICIENT_DATA
@@ -1268,7 +1268,7 @@ Notes:
 //
 //  Insufficient data found.%0
 //
-#define NS_E_INSUFFICIENT_DATA           0xC00D00CAL
+#define NS_E_INSUFFICIENT_DATA 0xC00D00CAL
 
 //
 // MessageId: NS_E_ASSERT
@@ -1277,7 +1277,7 @@ Notes:
 //
 //  %1 failed in file %2 line %3.%0
 //
-#define NS_E_ASSERT                      0xC00D00CBL
+#define NS_E_ASSERT 0xC00D00CBL
 
 //
 // MessageId: NS_E_BAD_ADAPTER_NAME
@@ -1286,7 +1286,7 @@ Notes:
 //
 //  The specified adapter name is invalid.%0
 //
-#define NS_E_BAD_ADAPTER_NAME            0xC00D00CCL
+#define NS_E_BAD_ADAPTER_NAME 0xC00D00CCL
 
 //
 // MessageId: NS_E_NOT_LICENSED
@@ -1295,7 +1295,7 @@ Notes:
 //
 //  The application is not licensed for this feature.%0
 //
-#define NS_E_NOT_LICENSED                0xC00D00CDL
+#define NS_E_NOT_LICENSED 0xC00D00CDL
 
 //
 // MessageId: NS_E_NO_SERVER_CONTACT
@@ -1304,7 +1304,7 @@ Notes:
 //
 //  Unable to contact the server.%0
 //
-#define NS_E_NO_SERVER_CONTACT           0xC00D00CEL
+#define NS_E_NO_SERVER_CONTACT 0xC00D00CEL
 
 //
 // MessageId: NS_E_TOO_MANY_TITLES
@@ -1313,7 +1313,7 @@ Notes:
 //
 //  Maximum number of titles exceeded.%0
 //
-#define NS_E_TOO_MANY_TITLES             0xC00D00CFL
+#define NS_E_TOO_MANY_TITLES 0xC00D00CFL
 
 //
 // MessageId: NS_E_TITLE_SIZE_EXCEEDED
@@ -1322,7 +1322,7 @@ Notes:
 //
 //  Maximum size of a title exceeded.%0
 //
-#define NS_E_TITLE_SIZE_EXCEEDED         0xC00D00D0L
+#define NS_E_TITLE_SIZE_EXCEEDED 0xC00D00D0L
 
 //
 // MessageId: NS_E_UDP_DISABLED
@@ -1331,7 +1331,7 @@ Notes:
 //
 //  UDP protocol not enabled. Not trying %1!ls!.%0
 //
-#define NS_E_UDP_DISABLED                0xC00D00D1L
+#define NS_E_UDP_DISABLED 0xC00D00D1L
 
 //
 // MessageId: NS_E_TCP_DISABLED
@@ -1340,7 +1340,7 @@ Notes:
 //
 //  TCP protocol not enabled. Not trying %1!ls!.%0
 //
-#define NS_E_TCP_DISABLED                0xC00D00D2L
+#define NS_E_TCP_DISABLED 0xC00D00D2L
 
 //
 // MessageId: NS_E_HTTP_DISABLED
@@ -1349,7 +1349,7 @@ Notes:
 //
 //  HTTP protocol not enabled. Not trying %1!ls!.%0
 //
-#define NS_E_HTTP_DISABLED               0xC00D00D3L
+#define NS_E_HTTP_DISABLED 0xC00D00D3L
 
 //
 // MessageId: NS_E_LICENSE_EXPIRED
@@ -1358,7 +1358,7 @@ Notes:
 //
 //  The product license has expired.%0
 //
-#define NS_E_LICENSE_EXPIRED             0xC00D00D4L
+#define NS_E_LICENSE_EXPIRED 0xC00D00D4L
 
 //
 // MessageId: NS_E_TITLE_BITRATE
@@ -1367,7 +1367,7 @@ Notes:
 //
 //  Source file exceeds the per title maximum bitrate. See NetShow Theater documentation for more information.%0
 //
-#define NS_E_TITLE_BITRATE               0xC00D00D5L
+#define NS_E_TITLE_BITRATE 0xC00D00D5L
 
 //
 // MessageId: NS_E_EMPTY_PROGRAM_NAME
@@ -1376,7 +1376,7 @@ Notes:
 //
 //  The program name cannot be empty.%0
 //
-#define NS_E_EMPTY_PROGRAM_NAME          0xC00D00D6L
+#define NS_E_EMPTY_PROGRAM_NAME 0xC00D00D6L
 
 //
 // MessageId: NS_E_MISSING_CHANNEL
@@ -1385,7 +1385,7 @@ Notes:
 //
 //  Station %1 does not exist.%0
 //
-#define NS_E_MISSING_CHANNEL             0xC00D00D7L
+#define NS_E_MISSING_CHANNEL 0xC00D00D7L
 
 //
 // MessageId: NS_E_NO_CHANNELS
@@ -1394,11 +1394,11 @@ Notes:
 //
 //  You need to define at least one station before this operation can complete.%0
 //
-#define NS_E_NO_CHANNELS                 0xC00D00D8L
+#define NS_E_NO_CHANNELS 0xC00D00D8L
 
 
 /////////////////////////////////////////////////////////////////////
-// This error message is to replace previous NS_E_INVALID_INDEX which 
+// This error message is to replace previous NS_E_INVALID_INDEX which
 // takes an index value for the error message string.  For some application
 // obtain the index value at reporting error time is very difficult, so we
 // use this string to avoid the problem.
@@ -1411,7 +1411,7 @@ Notes:
 //
 //  The index specified is invalid.%0
 //
-#define NS_E_INVALID_INDEX2              0xC00D00D9L
+#define NS_E_INVALID_INDEX2 0xC00D00D9L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -1446,7 +1446,7 @@ Notes:
 //
 //  Content Server %1 (%2) has failed its link to Content Server %3.%0
 //
-#define NS_E_CUB_FAIL_LINK               0xC00D0190L
+#define NS_E_CUB_FAIL_LINK 0xC00D0190L
 
 //
 // MessageId: NS_I_CUB_UNFAIL_LINK
@@ -1455,7 +1455,7 @@ Notes:
 //
 //  Content Server %1 (%2) has established its link to Content Server %3.%0
 //
-#define NS_I_CUB_UNFAIL_LINK             0x400D0191L
+#define NS_I_CUB_UNFAIL_LINK 0x400D0191L
 
 //
 // MessageId: NS_E_BAD_CUB_UID
@@ -1464,7 +1464,7 @@ Notes:
 //
 //  Content Server %1 (%2) has incorrect uid %3.%0
 //
-#define NS_E_BAD_CUB_UID                 0xC00D0192L
+#define NS_E_BAD_CUB_UID 0xC00D0192L
 
 //
 // MessageId: NS_I_RESTRIPE_START
@@ -1473,7 +1473,7 @@ Notes:
 //
 //  Restripe operation has started.%0
 //
-#define NS_I_RESTRIPE_START              0x400D0193L
+#define NS_I_RESTRIPE_START 0x400D0193L
 
 //
 // MessageId: NS_I_RESTRIPE_DONE
@@ -1482,7 +1482,7 @@ Notes:
 //
 //  Restripe operation has completed.%0
 //
-#define NS_I_RESTRIPE_DONE               0x400D0194L
+#define NS_I_RESTRIPE_DONE 0x400D0194L
 
 //
 // MessageId: NS_E_GLITCH_MODE
@@ -1491,7 +1491,7 @@ Notes:
 //
 //  Server unreliable because multiple components failed.%0
 //
-#define NS_E_GLITCH_MODE                 0xC00D0195L
+#define NS_E_GLITCH_MODE 0xC00D0195L
 
 //
 // MessageId: NS_I_RESTRIPE_DISK_OUT
@@ -1500,7 +1500,7 @@ Notes:
 //
 //  Content disk %1 (%2) on Content Server %3 has been restriped out.%0
 //
-#define NS_I_RESTRIPE_DISK_OUT           0x400D0196L
+#define NS_I_RESTRIPE_DISK_OUT 0x400D0196L
 
 //
 // MessageId: NS_I_RESTRIPE_CUB_OUT
@@ -1509,7 +1509,7 @@ Notes:
 //
 //  Content server %1 (%2) has been restriped out.%0
 //
-#define NS_I_RESTRIPE_CUB_OUT            0x400D0197L
+#define NS_I_RESTRIPE_CUB_OUT 0x400D0197L
 
 //
 // MessageId: NS_I_DISK_STOP
@@ -1518,7 +1518,7 @@ Notes:
 //
 //  Disk %1 ( %2 ) on Content Server %3, has been offlined.%0
 //
-#define NS_I_DISK_STOP                   0x400D0198L
+#define NS_I_DISK_STOP 0x400D0198L
 
 //
 // MessageId: NS_I_CATATONIC_FAILURE
@@ -1527,7 +1527,7 @@ Notes:
 //
 //  Disk %1 ( %2 ) on Content Server %3, will be failed because it is catatonic.%0
 //
-#define NS_I_CATATONIC_FAILURE           0x800D0199L
+#define NS_I_CATATONIC_FAILURE 0x800D0199L
 
 //
 // MessageId: NS_I_CATATONIC_AUTO_UNFAIL
@@ -1536,7 +1536,7 @@ Notes:
 //
 //  Disk %1 ( %2 ) on Content Server %3, auto online from catatonic state.%0
 //
-#define NS_I_CATATONIC_AUTO_UNFAIL       0x800D019AL
+#define NS_I_CATATONIC_AUTO_UNFAIL 0x800D019AL
 
 //
 // MessageId: NS_E_NO_MEDIA_PROTOCOL
@@ -1545,7 +1545,7 @@ Notes:
 //
 //  Content Server %1 (%2) is unable to communicate with the Media System Network Protocol.%0
 //
-#define NS_E_NO_MEDIA_PROTOCOL           0xC00D019BL
+#define NS_E_NO_MEDIA_PROTOCOL 0xC00D019BL
 
 
 //
@@ -1571,7 +1571,7 @@ Notes:
 //
 //  The input media format is invalid.%0
 //
-#define NS_E_INVALID_INPUT_FORMAT        0xC00D0BB8L
+#define NS_E_INVALID_INPUT_FORMAT 0xC00D0BB8L
 
 //
 // MessageId: NS_E_MSAUDIO_NOT_INSTALLED
@@ -1580,7 +1580,7 @@ Notes:
 //
 //  The MSAudio codec is not installed on this system.%0
 //
-#define NS_E_MSAUDIO_NOT_INSTALLED       0xC00D0BB9L
+#define NS_E_MSAUDIO_NOT_INSTALLED 0xC00D0BB9L
 
 //
 // MessageId: NS_E_UNEXPECTED_MSAUDIO_ERROR
@@ -1589,7 +1589,7 @@ Notes:
 //
 //  An unexpected error occurred with the MSAudio codec.%0
 //
-#define NS_E_UNEXPECTED_MSAUDIO_ERROR    0xC00D0BBAL
+#define NS_E_UNEXPECTED_MSAUDIO_ERROR 0xC00D0BBAL
 
 //
 // MessageId: NS_E_INVALID_OUTPUT_FORMAT
@@ -1598,7 +1598,7 @@ Notes:
 //
 //  The output media format is invalid.%0
 //
-#define NS_E_INVALID_OUTPUT_FORMAT       0xC00D0BBBL
+#define NS_E_INVALID_OUTPUT_FORMAT 0xC00D0BBBL
 
 //
 // MessageId: NS_E_NOT_CONFIGURED
@@ -1607,7 +1607,7 @@ Notes:
 //
 //  The object must be fully configured before audio samples can be processed.%0
 //
-#define NS_E_NOT_CONFIGURED              0xC00D0BBCL
+#define NS_E_NOT_CONFIGURED 0xC00D0BBCL
 
 //
 // MessageId: NS_E_PROTECTED_CONTENT
@@ -1616,7 +1616,7 @@ Notes:
 //
 //  You need a license to perform the requested operation on this media file.%0
 //
-#define NS_E_PROTECTED_CONTENT           0xC00D0BBDL
+#define NS_E_PROTECTED_CONTENT 0xC00D0BBDL
 
 //
 // MessageId: NS_E_LICENSE_REQUIRED
@@ -1625,7 +1625,7 @@ Notes:
 //
 //  You need a license to perform the requested operation on this media file.%0
 //
-#define NS_E_LICENSE_REQUIRED            0xC00D0BBEL
+#define NS_E_LICENSE_REQUIRED 0xC00D0BBEL
 
 //
 // MessageId: NS_E_TAMPERED_CONTENT
@@ -1634,7 +1634,7 @@ Notes:
 //
 //  This media file is corrupted or invalid. Contact the content provider for a new file.%0
 //
-#define NS_E_TAMPERED_CONTENT            0xC00D0BBFL
+#define NS_E_TAMPERED_CONTENT 0xC00D0BBFL
 
 //
 // MessageId: NS_E_LICENSE_OUTOFDATE
@@ -1643,7 +1643,7 @@ Notes:
 //
 //  The license for this media file has expired. Get a new license or contact the content provider for further assistance.%0
 //
-#define NS_E_LICENSE_OUTOFDATE           0xC00D0BC0L
+#define NS_E_LICENSE_OUTOFDATE 0xC00D0BC0L
 
 //
 // MessageId: NS_E_LICENSE_INCORRECT_RIGHTS
@@ -1652,7 +1652,7 @@ Notes:
 //
 //  You are not allowed to open this file. Contact the content provider for further assistance.%0
 //
-#define NS_E_LICENSE_INCORRECT_RIGHTS    0xC00D0BC1L
+#define NS_E_LICENSE_INCORRECT_RIGHTS 0xC00D0BC1L
 
 //
 // MessageId: NS_E_AUDIO_CODEC_NOT_INSTALLED
@@ -1661,7 +1661,7 @@ Notes:
 //
 //  The requested audio codec is not installed on this system.%0
 //
-#define NS_E_AUDIO_CODEC_NOT_INSTALLED   0xC00D0BC2L
+#define NS_E_AUDIO_CODEC_NOT_INSTALLED 0xC00D0BC2L
 
 //
 // MessageId: NS_E_AUDIO_CODEC_ERROR
@@ -1670,7 +1670,7 @@ Notes:
 //
 //  An unexpected error occurred with the audio codec.%0
 //
-#define NS_E_AUDIO_CODEC_ERROR           0xC00D0BC3L
+#define NS_E_AUDIO_CODEC_ERROR 0xC00D0BC3L
 
 //
 // MessageId: NS_E_VIDEO_CODEC_NOT_INSTALLED
@@ -1679,7 +1679,7 @@ Notes:
 //
 //  The requested video codec is not installed on this system.%0
 //
-#define NS_E_VIDEO_CODEC_NOT_INSTALLED   0xC00D0BC4L
+#define NS_E_VIDEO_CODEC_NOT_INSTALLED 0xC00D0BC4L
 
 //
 // MessageId: NS_E_VIDEO_CODEC_ERROR
@@ -1688,7 +1688,7 @@ Notes:
 //
 //  An unexpected error occurred with the video codec.%0
 //
-#define NS_E_VIDEO_CODEC_ERROR           0xC00D0BC5L
+#define NS_E_VIDEO_CODEC_ERROR 0xC00D0BC5L
 
 //
 // MessageId: NS_E_INVALIDPROFILE
@@ -1697,7 +1697,7 @@ Notes:
 //
 //  The Profile is invalid.%0
 //
-#define NS_E_INVALIDPROFILE              0xC00D0BC6L
+#define NS_E_INVALIDPROFILE 0xC00D0BC6L
 
 //
 // MessageId: NS_E_INCOMPATIBLE_VERSION
@@ -1706,7 +1706,7 @@ Notes:
 //
 //  A new version of the SDK is needed to play the requested content.%0
 //
-#define NS_E_INCOMPATIBLE_VERSION        0xC00D0BC7L
+#define NS_E_INCOMPATIBLE_VERSION 0xC00D0BC7L
 
 //
 // MessageId: NS_S_REBUFFERING
@@ -1715,7 +1715,7 @@ Notes:
 //
 //  The requested operation has caused the source to rebuffer.%0
 //
-#define NS_S_REBUFFERING                 0x000D0BC8L
+#define NS_S_REBUFFERING 0x000D0BC8L
 
 //
 // MessageId: NS_S_DEGRADING_QUALITY
@@ -1724,7 +1724,7 @@ Notes:
 //
 //  The requested operation has caused the source to degrade codec quality.%0
 //
-#define NS_S_DEGRADING_QUALITY           0x000D0BC9L
+#define NS_S_DEGRADING_QUALITY 0x000D0BC9L
 
 //
 // MessageId: NS_E_OFFLINE_MODE
@@ -1733,7 +1733,7 @@ Notes:
 //
 //  The requested URL is not available in offline mode.%0
 //
-#define NS_E_OFFLINE_MODE                0xC00D0BCAL
+#define NS_E_OFFLINE_MODE 0xC00D0BCAL
 
 //
 // MessageId: NS_E_NOT_CONNECTED
@@ -1742,7 +1742,7 @@ Notes:
 //
 //  The requested URL cannot be accessed because there is no network connection.%0
 //
-#define NS_E_NOT_CONNECTED               0xC00D0BCBL
+#define NS_E_NOT_CONNECTED 0xC00D0BCBL
 
 //
 // MessageId: NS_E_TOO_MUCH_DATA
@@ -1751,7 +1751,7 @@ Notes:
 //
 //  The encoding process was unable to keep up with the amount of supplied data.%0
 //
-#define NS_E_TOO_MUCH_DATA               0xC00D0BCCL
+#define NS_E_TOO_MUCH_DATA 0xC00D0BCCL
 
 //
 // MessageId: NS_E_UNSUPPORTED_PROPERTY
@@ -1760,7 +1760,7 @@ Notes:
 //
 //  The given property is not supported.%0
 //
-#define NS_E_UNSUPPORTED_PROPERTY        0xC00D0BCDL
+#define NS_E_UNSUPPORTED_PROPERTY 0xC00D0BCDL
 
 //
 // MessageId: NS_E_8BIT_WAVE_UNSUPPORTED
@@ -1769,8 +1769,7 @@ Notes:
 //
 //  Windows Media Player cannot copy the files to the CD because they are 8-bit. Convert the files to 16-bit, 44-kHz stereo files by using Sound Recorder or another audio-processing program, and then try again.%0
 //
-#define NS_E_8BIT_WAVE_UNSUPPORTED       0xC00D0BCEL
-
+#define NS_E_8BIT_WAVE_UNSUPPORTED 0xC00D0BCEL
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -1791,7 +1790,7 @@ Notes:
 //
 //  There is no CD in the CD-ROM drive. Insert a CD, and try again.%0
 //
-#define NS_E_NO_CD                       0xC00D0FA0L
+#define NS_E_NO_CD 0xC00D0FA0L
 
 //
 // MessageId: NS_E_CANT_READ_DIGITAL
@@ -1800,7 +1799,7 @@ Notes:
 //
 //  Unable to perform digital reads on this compact disc drive.  Please try analog playback via the Tools Options menu.%0
 //
-#define NS_E_CANT_READ_DIGITAL           0xC00D0FA1L
+#define NS_E_CANT_READ_DIGITAL 0xC00D0FA1L
 
 //
 // MessageId: NS_E_DEVICE_DISCONNECTED
@@ -1809,7 +1808,7 @@ Notes:
 //
 //  Windows Media Player no longer detects a connected portable device. Reconnect your portable device, and then try downloading the file again.%0
 //
-#define NS_E_DEVICE_DISCONNECTED         0xC00D0FA2L
+#define NS_E_DEVICE_DISCONNECTED 0xC00D0FA2L
 
 //
 // MessageId: NS_E_DEVICE_NOT_SUPPORT_FORMAT
@@ -1818,7 +1817,7 @@ Notes:
 //
 //  Your Music Player does not support this song's format.%0
 //
-#define NS_E_DEVICE_NOT_SUPPORT_FORMAT   0xC00D0FA3L
+#define NS_E_DEVICE_NOT_SUPPORT_FORMAT 0xC00D0FA3L
 
 //
 // MessageId: NS_E_SLOW_READ_DIGITAL
@@ -1827,7 +1826,7 @@ Notes:
 //
 //  Digital reads on this compact disc drive are too slow.  Please try analog playback via the Tools Options menu.%0
 //
-#define NS_E_SLOW_READ_DIGITAL           0xC00D0FA4L
+#define NS_E_SLOW_READ_DIGITAL 0xC00D0FA4L
 
 //
 // MessageId: NS_E_MIXER_INVALID_LINE
@@ -1836,7 +1835,7 @@ Notes:
 //
 //  An invalid line error occurred in the mixer.%0
 //
-#define NS_E_MIXER_INVALID_LINE          0xC00D0FA5L
+#define NS_E_MIXER_INVALID_LINE 0xC00D0FA5L
 
 //
 // MessageId: NS_E_MIXER_INVALID_CONTROL
@@ -1845,7 +1844,7 @@ Notes:
 //
 //  An invalid control error occurred in the mixer.%0
 //
-#define NS_E_MIXER_INVALID_CONTROL       0xC00D0FA6L
+#define NS_E_MIXER_INVALID_CONTROL 0xC00D0FA6L
 
 //
 // MessageId: NS_E_MIXER_INVALID_VALUE
@@ -1854,7 +1853,7 @@ Notes:
 //
 //  An invalid value error occurred in the mixer.%0
 //
-#define NS_E_MIXER_INVALID_VALUE         0xC00D0FA7L
+#define NS_E_MIXER_INVALID_VALUE 0xC00D0FA7L
 
 //
 // MessageId: NS_E_MIXER_UNKNOWN_MMRESULT
@@ -1863,7 +1862,7 @@ Notes:
 //
 //  An unrecognized MMRESULT occurred in the mixer.%0
 //
-#define NS_E_MIXER_UNKNOWN_MMRESULT      0xC00D0FA8L
+#define NS_E_MIXER_UNKNOWN_MMRESULT 0xC00D0FA8L
 
 //
 // MessageId: NS_E_USER_STOP
@@ -1872,7 +1871,7 @@ Notes:
 //
 //  User has stopped the operation.%0
 //
-#define NS_E_USER_STOP                   0xC00D0FA9L
+#define NS_E_USER_STOP 0xC00D0FA9L
 
 //
 // MessageId: NS_E_MP3_FORMAT_NOT_FOUND
@@ -1881,7 +1880,7 @@ Notes:
 //
 //  Windows Media Player cannot play the file. One or more codecs required to play the file cannot be found.%0
 //
-#define NS_E_MP3_FORMAT_NOT_FOUND        0xC00D0FAAL
+#define NS_E_MP3_FORMAT_NOT_FOUND 0xC00D0FAAL
 
 //
 // MessageId: NS_E_CD_READ_ERROR_NO_CORRECTION
@@ -1899,7 +1898,7 @@ Notes:
 //
 //  Windows Media Player cannot read the CD. Be sure the CD is free of dirt and scratches and the CD-ROM drive is functioning properly.%0
 //
-#define NS_E_CD_READ_ERROR               0xC00D0FACL
+#define NS_E_CD_READ_ERROR 0xC00D0FACL
 
 //
 // MessageId: NS_E_CD_SLOW_COPY
@@ -1908,7 +1907,7 @@ Notes:
 //
 //  To speed up the copy process, do not play CD tracks while copying.%0
 //
-#define NS_E_CD_SLOW_COPY                0xC00D0FADL
+#define NS_E_CD_SLOW_COPY 0xC00D0FADL
 
 //
 // MessageId: NS_E_CD_COPYTO_CD
@@ -1917,7 +1916,7 @@ Notes:
 //
 //  Cannot copy directly from a CDROM to a CD drive.%0
 //
-#define NS_E_CD_COPYTO_CD                0xC00D0FAEL
+#define NS_E_CD_COPYTO_CD 0xC00D0FAEL
 
 //
 // MessageId: NS_E_MIXER_NODRIVER
@@ -1926,7 +1925,7 @@ Notes:
 //
 //  Could not open a sound mixer driver.%0
 //
-#define NS_E_MIXER_NODRIVER              0xC00D0FAFL
+#define NS_E_MIXER_NODRIVER 0xC00D0FAFL
 
 //
 // MessageId: NS_E_REDBOOK_ENABLED_WHILE_COPYING
@@ -1944,7 +1943,7 @@ Notes:
 //
 //  Trying to refresh the CD playlist.%0
 //
-#define NS_E_CD_REFRESH                  0xC00D0FB1L
+#define NS_E_CD_REFRESH 0xC00D0FB1L
 
 //
 // MessageId: NS_E_CD_DRIVER_PROBLEM
@@ -1953,7 +1952,7 @@ Notes:
 //
 //  Windows Media Player must switch to analog  mode  because there is a problem reading the CD-ROM drive in digital mode. Verify that the CD-ROM drive is installed correctly or try to update the drivers for the CD-ROM drive, and then try to use digital mode again.%0
 //
-#define NS_E_CD_DRIVER_PROBLEM           0xC00D0FB2L
+#define NS_E_CD_DRIVER_PROBLEM 0xC00D0FB2L
 
 //
 // MessageId: NS_E_WONT_DO_DIGITAL
@@ -1962,7 +1961,7 @@ Notes:
 //
 //  Windows Media Player must switch to analog mode because there is a problem reading the CD-ROM drive  in digital mode.%0
 //
-#define NS_E_WONT_DO_DIGITAL             0xC00D0FB3L
+#define NS_E_WONT_DO_DIGITAL 0xC00D0FB3L
 
 //
 // WMP IWMPXMLParser Error codes
@@ -1974,7 +1973,7 @@ Notes:
 //
 //  A call was made to GetParseError on the XML parser but there was no error to retrieve.%0
 //
-#define NS_E_WMPXML_NOERROR              0xC00D0FB4L
+#define NS_E_WMPXML_NOERROR 0xC00D0FB4L
 
 //
 // MessageId: NS_E_WMPXML_ENDOFDATA
@@ -1983,7 +1982,7 @@ Notes:
 //
 //  The XML Parser ran out of data while parsing.%0
 //
-#define NS_E_WMPXML_ENDOFDATA            0xC00D0FB5L
+#define NS_E_WMPXML_ENDOFDATA 0xC00D0FB5L
 
 //
 // MessageId: NS_E_WMPXML_PARSEERROR
@@ -1992,7 +1991,7 @@ Notes:
 //
 //  A generic parse error occurred in the XML parser but no information is available.%0
 //
-#define NS_E_WMPXML_PARSEERROR           0xC00D0FB6L
+#define NS_E_WMPXML_PARSEERROR 0xC00D0FB6L
 
 //
 // MessageId: NS_E_WMPXML_ATTRIBUTENOTFOUND
@@ -2001,7 +2000,7 @@ Notes:
 //
 //  A call get GetNamedAttribute or GetNamedAttributeIndex on the XML parser resulted in the index not being found.%0
 //
-#define NS_E_WMPXML_ATTRIBUTENOTFOUND    0xC00D0FB7L
+#define NS_E_WMPXML_ATTRIBUTENOTFOUND 0xC00D0FB7L
 
 //
 // MessageId: NS_E_WMPXML_PINOTFOUND
@@ -2010,7 +2009,7 @@ Notes:
 //
 //  A call was made go GetNamedPI on the XML parser, but the requested Processing Instruction was not found.%0
 //
-#define NS_E_WMPXML_PINOTFOUND           0xC00D0FB8L
+#define NS_E_WMPXML_PINOTFOUND 0xC00D0FB8L
 
 //
 // MessageId: NS_E_WMPXML_EMPTYDOC
@@ -2019,7 +2018,7 @@ Notes:
 //
 //  Persist was called on the XML parser, but the parser has no data to persist.%0
 //
-#define NS_E_WMPXML_EMPTYDOC             0xC00D0FB9L
+#define NS_E_WMPXML_EMPTYDOC 0xC00D0FB9L
 
 //
 // Miscellaneous Media Player Error codes
@@ -2031,7 +2030,7 @@ Notes:
 //
 //  A Windows API call failed but no error information was available.%0
 //
-#define NS_E_WMP_WINDOWSAPIFAILURE       0xC00D0FC8L
+#define NS_E_WMP_WINDOWSAPIFAILURE 0xC00D0FC8L
 
 //
 // MessageId: NS_E_WMP_RECORDING_NOT_ALLOWED
@@ -2040,7 +2039,7 @@ Notes:
 //
 //  Windows Media Player cannot copy the file. Either the license restricts copying, or you must obtain a license to copy the file.%0
 //
-#define NS_E_WMP_RECORDING_NOT_ALLOWED   0xC00D0FC9L
+#define NS_E_WMP_RECORDING_NOT_ALLOWED 0xC00D0FC9L
 
 //
 // MessageId: NS_E_DEVICE_NOT_READY
@@ -2049,7 +2048,7 @@ Notes:
 //
 //  Windows Media Player no longer detects a connected portable device. Reconnect your portable device, and try again.%0
 //
-#define NS_E_DEVICE_NOT_READY            0xC00D0FCAL
+#define NS_E_DEVICE_NOT_READY 0xC00D0FCAL
 
 //
 // MessageId: NS_E_DAMAGED_FILE
@@ -2058,7 +2057,7 @@ Notes:
 //
 //  Windows Media Player cannot play the file because it is either damaged or corrupt.%0
 //
-#define NS_E_DAMAGED_FILE                0xC00D0FCBL
+#define NS_E_DAMAGED_FILE 0xC00D0FCBL
 
 //
 // MessageId: NS_E_MPDB_GENERIC
@@ -2067,7 +2066,7 @@ Notes:
 //
 //  An error occurred when the Player was attempting to access information in your media library. Try closing and then reopening the Player.%0
 //
-#define NS_E_MPDB_GENERIC                0xC00D0FCCL
+#define NS_E_MPDB_GENERIC 0xC00D0FCCL
 
 //
 // MessageId: NS_E_FILE_FAILED_CHECKS
@@ -2076,7 +2075,7 @@ Notes:
 //
 //  The file cannot be added to Media Library because it is smaller than the minimum-size requirement. Adjust the size requirements, and then try again.%0
 //
-#define NS_E_FILE_FAILED_CHECKS          0xC00D0FCDL
+#define NS_E_FILE_FAILED_CHECKS 0xC00D0FCDL
 
 //
 // MessageId: NS_E_MEDIA_LIBRARY_FAILED
@@ -2085,7 +2084,7 @@ Notes:
 //
 //  Windows Media Player could not create Media Library. Check with your system administrator to get the necessary permissions to create Media Library on your computer, and then try installing the Player again.%0
 //
-#define NS_E_MEDIA_LIBRARY_FAILED        0xC00D0FCEL
+#define NS_E_MEDIA_LIBRARY_FAILED 0xC00D0FCEL
 
 //
 // MessageId: NS_E_SHARING_VIOLATION
@@ -2094,7 +2093,7 @@ Notes:
 //
 //  The file is already in use. Close other programs that may be using the file, or stop playing the file, and try again.%0
 //
-#define NS_E_SHARING_VIOLATION           0xC00D0FCFL
+#define NS_E_SHARING_VIOLATION 0xC00D0FCFL
 
 //
 // Generic Media PlayerUI error codes
@@ -2115,7 +2114,7 @@ Notes:
 //
 //  Version mismatch: (%.1f required, %.1f found).%0
 //
-#define NS_E_WMP_UI_VERSIONMISMATCH      0xC00D0FDFL
+#define NS_E_WMP_UI_VERSIONMISMATCH 0xC00D0FDFL
 
 //
 // MessageId: NS_E_WMP_UI_NOTATHEMEFILE
@@ -2124,7 +2123,7 @@ Notes:
 //
 //  The layout manager was given valid XML that wasn't a theme file.%0
 //
-#define NS_E_WMP_UI_NOTATHEMEFILE        0xC00D0FE0L
+#define NS_E_WMP_UI_NOTATHEMEFILE 0xC00D0FE0L
 
 //
 // MessageId: NS_E_WMP_UI_SUBELEMENTNOTFOUND
@@ -2133,7 +2132,7 @@ Notes:
 //
 //  The %s subelement could not be found on the %s object.%0
 //
-#define NS_E_WMP_UI_SUBELEMENTNOTFOUND   0xC00D0FE1L
+#define NS_E_WMP_UI_SUBELEMENTNOTFOUND 0xC00D0FE1L
 
 //
 // MessageId: NS_E_WMP_UI_VERSIONPARSE
@@ -2142,7 +2141,7 @@ Notes:
 //
 //  An error occurred parsing the version tag.\nValid version tags are of the form:\n\n\t<?wmp version='1.0'?>.%0
 //
-#define NS_E_WMP_UI_VERSIONPARSE         0xC00D0FE2L
+#define NS_E_WMP_UI_VERSIONPARSE 0xC00D0FE2L
 
 //
 // MessageId: NS_E_WMP_UI_VIEWIDNOTFOUND
@@ -2151,7 +2150,7 @@ Notes:
 //
 //  The view specified in for the 'currentViewID' property (%s) was not found in this theme file.%0
 //
-#define NS_E_WMP_UI_VIEWIDNOTFOUND       0xC00D0FE3L
+#define NS_E_WMP_UI_VIEWIDNOTFOUND 0xC00D0FE3L
 
 //
 // MessageId: NS_E_WMP_UI_PASSTHROUGH
@@ -2160,7 +2159,7 @@ Notes:
 //
 //  This error used internally for hit testing.%0
 //
-#define NS_E_WMP_UI_PASSTHROUGH          0xC00D0FE4L
+#define NS_E_WMP_UI_PASSTHROUGH 0xC00D0FE4L
 
 //
 // MessageId: NS_E_WMP_UI_OBJECTNOTFOUND
@@ -2169,7 +2168,7 @@ Notes:
 //
 //  Attributes were specified for the %s object, but the object was not available to send them to.%0
 //
-#define NS_E_WMP_UI_OBJECTNOTFOUND       0xC00D0FE5L
+#define NS_E_WMP_UI_OBJECTNOTFOUND 0xC00D0FE5L
 
 //
 // MessageId: NS_E_WMP_UI_SECONDHANDLER
@@ -2178,7 +2177,7 @@ Notes:
 //
 //  The %s event already has a handler, the second handler was ignored.%0
 //
-#define NS_E_WMP_UI_SECONDHANDLER        0xC00D0FE6L
+#define NS_E_WMP_UI_SECONDHANDLER 0xC00D0FE6L
 
 //
 // MessageId: NS_E_WMP_UI_NOSKININZIP
@@ -2187,7 +2186,7 @@ Notes:
 //
 //  No .wms file found in skin archive.%0
 //
-#define NS_E_WMP_UI_NOSKININZIP          0xC00D0FE7L
+#define NS_E_WMP_UI_NOSKININZIP 0xC00D0FE7L
 
 //
 // MessageId: NS_S_WMP_UI_VERSIONMISMATCH
@@ -2196,7 +2195,7 @@ Notes:
 //
 //  An upgrade may be needed for the theme manager to correctly show this skin. Skin reports version: %.1f.%0
 //
-#define NS_S_WMP_UI_VERSIONMISMATCH      0x000D0FE8L
+#define NS_S_WMP_UI_VERSIONMISMATCH 0x000D0FE8L
 
 //
 // MessageId: NS_S_WMP_EXCEPTION
@@ -2205,7 +2204,7 @@ Notes:
 //
 //  An error occurred in one of the UI components.%0
 //
-#define NS_S_WMP_EXCEPTION               0x000D0FE9L
+#define NS_S_WMP_EXCEPTION 0x000D0FE9L
 
 //
 // MessageId: NS_E_WMP_URLDOWNLOADFAILED
@@ -2214,7 +2213,7 @@ Notes:
 //
 //  Windows Media Player cannot download the file. Check the path to the server, and then try again. For example, if you specified "mms://" in the file name, and the file was actually located on a path beginning with "http://" the file cannot be downloaded, even though it can be played.%0
 //
-#define NS_E_WMP_URLDOWNLOADFAILED       0xC00D0FEAL
+#define NS_E_WMP_URLDOWNLOADFAILED 0xC00D0FEAL
 
 //
 // WMP Regional button control
@@ -2226,7 +2225,7 @@ Notes:
 //
 //  JPG Images are not recommended for use as a mappingImage.%0
 //
-#define NS_E_WMP_RBC_JPGMAPPINGIMAGE     0xC00D1004L
+#define NS_E_WMP_RBC_JPGMAPPINGIMAGE 0xC00D1004L
 
 //
 // MessageId: NS_E_WMP_JPGTRANSPARENCY
@@ -2235,7 +2234,7 @@ Notes:
 //
 //  JPG Images are not recommended when using a transparencyColor.%0
 //
-#define NS_E_WMP_JPGTRANSPARENCY         0xC00D1005L
+#define NS_E_WMP_JPGTRANSPARENCY 0xC00D1005L
 
 //
 // WMP Slider control
@@ -2247,7 +2246,7 @@ Notes:
 //
 //  The Max property cannot be less than Min property.%0
 //
-#define NS_E_WMP_INVALID_MAX_VAL         0xC00D1009L
+#define NS_E_WMP_INVALID_MAX_VAL 0xC00D1009L
 
 //
 // MessageId: NS_E_WMP_INVALID_MIN_VAL
@@ -2256,7 +2255,7 @@ Notes:
 //
 //  The Min property cannot be greater than Max property.%0
 //
-#define NS_E_WMP_INVALID_MIN_VAL         0xC00D100AL
+#define NS_E_WMP_INVALID_MIN_VAL 0xC00D100AL
 
 //
 // WMP CustomSlider control
@@ -2268,7 +2267,7 @@ Notes:
 //
 //  JPG Images are not recommended for use as a positionImage.%0
 //
-#define NS_E_WMP_CS_JPGPOSITIONIMAGE     0xC00D100EL
+#define NS_E_WMP_CS_JPGPOSITIONIMAGE 0xC00D100EL
 
 //
 // MessageId: NS_E_WMP_CS_NOTEVENLYDIVISIBLE
@@ -2277,7 +2276,7 @@ Notes:
 //
 //  The (%s) image's size is not evenly divisible by the positionImage's size.%0
 //
-#define NS_E_WMP_CS_NOTEVENLYDIVISIBLE   0xC00D100FL
+#define NS_E_WMP_CS_NOTEVENLYDIVISIBLE 0xC00D100FL
 
 //
 // WMP ZIP Decoder
@@ -2289,7 +2288,7 @@ Notes:
 //
 //  The ZIP reader opened a file and its signature didn't match that of ZIP files.%0
 //
-#define NS_E_WMPZIP_NOTAZIPFILE          0xC00D1018L
+#define NS_E_WMPZIP_NOTAZIPFILE 0xC00D1018L
 
 //
 // MessageId: NS_E_WMPZIP_CORRUPT
@@ -2298,7 +2297,7 @@ Notes:
 //
 //  The ZIP reader has detected that the file is corrupt.%0
 //
-#define NS_E_WMPZIP_CORRUPT              0xC00D1019L
+#define NS_E_WMPZIP_CORRUPT 0xC00D1019L
 
 //
 // MessageId: NS_E_WMPZIP_FILENOTFOUND
@@ -2307,7 +2306,7 @@ Notes:
 //
 //  GetFileStream, SaveToFile, or SaveTemp file was called on the ZIP reader with a filename that was not found in the zip file.%0
 //
-#define NS_E_WMPZIP_FILENOTFOUND         0xC00D101AL
+#define NS_E_WMPZIP_FILENOTFOUND 0xC00D101AL
 
 //
 // WMP Image Decoding Error codes
@@ -2328,7 +2327,7 @@ Notes:
 //
 //  Image file may be corrupt.%0
 //
-#define NS_E_WMP_IMAGE_INVALID_FORMAT    0xC00D1023L
+#define NS_E_WMP_IMAGE_INVALID_FORMAT 0xC00D1023L
 
 //
 // MessageId: NS_E_WMP_GIF_UNEXPECTED_ENDOFFILE
@@ -2346,7 +2345,7 @@ Notes:
 //
 //  Invalid GIF file.%0
 //
-#define NS_E_WMP_GIF_INVALID_FORMAT      0xC00D1025L
+#define NS_E_WMP_GIF_INVALID_FORMAT 0xC00D1025L
 
 //
 // MessageId: NS_E_WMP_GIF_BAD_VERSION_NUMBER
@@ -2355,7 +2354,7 @@ Notes:
 //
 //  Invalid GIF version. Only 87a or 89a supported.%0
 //
-#define NS_E_WMP_GIF_BAD_VERSION_NUMBER  0xC00D1026L
+#define NS_E_WMP_GIF_BAD_VERSION_NUMBER 0xC00D1026L
 
 //
 // MessageId: NS_E_WMP_GIF_NO_IMAGE_IN_FILE
@@ -2364,7 +2363,7 @@ Notes:
 //
 //  No images found in GIF file.%0
 //
-#define NS_E_WMP_GIF_NO_IMAGE_IN_FILE    0xC00D1027L
+#define NS_E_WMP_GIF_NO_IMAGE_IN_FILE 0xC00D1027L
 
 //
 // MessageId: NS_E_WMP_PNG_INVALIDFORMAT
@@ -2373,7 +2372,7 @@ Notes:
 //
 //  Invalid PNG image file format.%0
 //
-#define NS_E_WMP_PNG_INVALIDFORMAT       0xC00D1028L
+#define NS_E_WMP_PNG_INVALIDFORMAT 0xC00D1028L
 
 //
 // MessageId: NS_E_WMP_PNG_UNSUPPORTED_BITDEPTH
@@ -2400,7 +2399,7 @@ Notes:
 //
 //  Filter method defined in PNG file not supported.%0
 //
-#define NS_E_WMP_PNG_UNSUPPORTED_FILTER  0xC00D102BL
+#define NS_E_WMP_PNG_UNSUPPORTED_FILTER 0xC00D102BL
 
 //
 // MessageId: NS_E_WMP_PNG_UNSUPPORTED_INTERLACE
@@ -2427,7 +2426,7 @@ Notes:
 //
 //  Invalid bitmask in BMP file.%0
 //
-#define NS_E_WMP_BMP_INVALID_BITMASK     0xC00D102EL
+#define NS_E_WMP_BMP_INVALID_BITMASK 0xC00D102EL
 
 //
 // MessageId: NS_E_WMP_BMP_TOPDOWN_DIB_UNSUPPORTED
@@ -2445,7 +2444,7 @@ Notes:
 //
 //  Bitmap could not be created.%0
 //
-#define NS_E_WMP_BMP_BITMAP_NOT_CREATED  0xC00D1030L
+#define NS_E_WMP_BMP_BITMAP_NOT_CREATED 0xC00D1030L
 
 //
 // MessageId: NS_E_WMP_BMP_COMPRESSION_UNSUPPORTED
@@ -2463,7 +2462,7 @@ Notes:
 //
 //  Invalid Bitmap format.%0
 //
-#define NS_E_WMP_BMP_INVALID_FORMAT      0xC00D1032L
+#define NS_E_WMP_BMP_INVALID_FORMAT 0xC00D1032L
 
 //
 // MessageId: NS_E_WMP_JPG_JERR_ARITHCODING_NOTIMPL
@@ -2481,7 +2480,7 @@ Notes:
 //
 //  Invalid JPEG format.%0
 //
-#define NS_E_WMP_JPG_INVALID_FORMAT      0xC00D1034L
+#define NS_E_WMP_JPG_INVALID_FORMAT 0xC00D1034L
 
 //
 // MessageId: NS_E_WMP_JPG_BAD_DCTSIZE
@@ -2490,7 +2489,7 @@ Notes:
 //
 //  Invalid JPEG format.%0
 //
-#define NS_E_WMP_JPG_BAD_DCTSIZE         0xC00D1035L
+#define NS_E_WMP_JPG_BAD_DCTSIZE 0xC00D1035L
 
 //
 // MessageId: NS_E_WMP_JPG_BAD_VERSION_NUMBER
@@ -2499,7 +2498,7 @@ Notes:
 //
 //  Internal version error. Unexpected JPEG library version.%0
 //
-#define NS_E_WMP_JPG_BAD_VERSION_NUMBER  0xC00D1036L
+#define NS_E_WMP_JPG_BAD_VERSION_NUMBER 0xC00D1036L
 
 //
 // MessageId: NS_E_WMP_JPG_BAD_PRECISION
@@ -2508,7 +2507,7 @@ Notes:
 //
 //  Internal JPEG Library error. Unsupported JPEG data precision.%0
 //
-#define NS_E_WMP_JPG_BAD_PRECISION       0xC00D1037L
+#define NS_E_WMP_JPG_BAD_PRECISION 0xC00D1037L
 
 //
 // MessageId: NS_E_WMP_JPG_CCIR601_NOTIMPL
@@ -2517,7 +2516,7 @@ Notes:
 //
 //  JPEG CCIR601 not supported.%0
 //
-#define NS_E_WMP_JPG_CCIR601_NOTIMPL     0xC00D1038L
+#define NS_E_WMP_JPG_CCIR601_NOTIMPL 0xC00D1038L
 
 //
 // MessageId: NS_E_WMP_JPG_NO_IMAGE_IN_FILE
@@ -2526,7 +2525,7 @@ Notes:
 //
 //  No image found in JPEG file.%0
 //
-#define NS_E_WMP_JPG_NO_IMAGE_IN_FILE    0xC00D1039L
+#define NS_E_WMP_JPG_NO_IMAGE_IN_FILE 0xC00D1039L
 
 //
 // MessageId: NS_E_WMP_JPG_READ_ERROR
@@ -2535,7 +2534,7 @@ Notes:
 //
 //  Could not read JPEG file.%0
 //
-#define NS_E_WMP_JPG_READ_ERROR          0xC00D103AL
+#define NS_E_WMP_JPG_READ_ERROR 0xC00D103AL
 
 //
 // MessageId: NS_E_WMP_JPG_FRACT_SAMPLE_NOTIMPL
@@ -2553,7 +2552,7 @@ Notes:
 //
 //  JPEG image too large. Maximum image size supported is 65500 X 65500.%0
 //
-#define NS_E_WMP_JPG_IMAGE_TOO_BIG       0xC00D103CL
+#define NS_E_WMP_JPG_IMAGE_TOO_BIG 0xC00D103CL
 
 //
 // MessageId: NS_E_WMP_JPG_UNEXPECTED_ENDOFFILE
@@ -2571,7 +2570,7 @@ Notes:
 //
 //  Unsupported JPEG SOF marker found.%0
 //
-#define NS_E_WMP_JPG_SOF_UNSUPPORTED     0xC00D103EL
+#define NS_E_WMP_JPG_SOF_UNSUPPORTED 0xC00D103EL
 
 //
 // MessageId: NS_E_WMP_JPG_UNKNOWN_MARKER
@@ -2580,7 +2579,7 @@ Notes:
 //
 //  Unknown JPEG marker found.%0
 //
-#define NS_E_WMP_JPG_UNKNOWN_MARKER      0xC00D103FL
+#define NS_E_WMP_JPG_UNKNOWN_MARKER 0xC00D103FL
 
 //
 // MessageId: NS_S_WMP_LOADED_GIF_IMAGE
@@ -2589,7 +2588,7 @@ Notes:
 //
 //  Successfully loaded a GIF file.%0
 //
-#define NS_S_WMP_LOADED_GIF_IMAGE        0x000D1040L
+#define NS_S_WMP_LOADED_GIF_IMAGE 0x000D1040L
 
 //
 // MessageId: NS_S_WMP_LOADED_PNG_IMAGE
@@ -2598,7 +2597,7 @@ Notes:
 //
 //  Successfully loaded a PNG file.%0
 //
-#define NS_S_WMP_LOADED_PNG_IMAGE        0x000D1041L
+#define NS_S_WMP_LOADED_PNG_IMAGE 0x000D1041L
 
 //
 // MessageId: NS_S_WMP_LOADED_BMP_IMAGE
@@ -2607,7 +2606,7 @@ Notes:
 //
 //  Successfully loaded a BMP file.%0
 //
-#define NS_S_WMP_LOADED_BMP_IMAGE        0x000D1042L
+#define NS_S_WMP_LOADED_BMP_IMAGE 0x000D1042L
 
 //
 // MessageId: NS_S_WMP_LOADED_JPG_IMAGE
@@ -2616,7 +2615,7 @@ Notes:
 //
 //  Successfully loaded a JPG file.%0
 //
-#define NS_S_WMP_LOADED_JPG_IMAGE        0x000D1043L
+#define NS_S_WMP_LOADED_JPG_IMAGE 0x000D1043L
 
 //
 // WMP WM Runtime Error codes
@@ -2628,7 +2627,7 @@ Notes:
 //
 //  Operation attempted in an invalid graph state.%0
 //
-#define NS_E_WMG_INVALIDSTATE            0xC00D1054L
+#define NS_E_WMG_INVALIDSTATE 0xC00D1054L
 
 //
 // MessageId: NS_E_WMG_SINKALREADYEXISTS
@@ -2637,7 +2636,7 @@ Notes:
 //
 //  A renderer cannot be inserted in a stream while one already exists.%0
 //
-#define NS_E_WMG_SINKALREADYEXISTS       0xC00D1055L
+#define NS_E_WMG_SINKALREADYEXISTS 0xC00D1055L
 
 //
 // MessageId: NS_E_WMG_NOSDKINTERFACE
@@ -2646,7 +2645,7 @@ Notes:
 //
 //  A necessary WM SDK interface to complete the operation doesn't exist at this time.%0
 //
-#define NS_E_WMG_NOSDKINTERFACE          0xC00D1056L
+#define NS_E_WMG_NOSDKINTERFACE 0xC00D1056L
 
 //
 // MessageId: NS_E_WMG_NOTALLOUTPUTSRENDERED
@@ -2655,7 +2654,7 @@ Notes:
 //
 //  Windows Media Player cannot play the file. The file may be formatted with an unsupported codec, or the Player could not download the codec.%0
 //
-#define NS_E_WMG_NOTALLOUTPUTSRENDERED   0xC00D1057L
+#define NS_E_WMG_NOTALLOUTPUTSRENDERED 0xC00D1057L
 
 //
 // MessageId: NS_E_WMR_UNSUPPORTEDSTREAM
@@ -2664,7 +2663,7 @@ Notes:
 //
 //  Windows Media Player cannot play the file. The Player does not support the format you are trying to play.%0
 //
-#define NS_E_WMR_UNSUPPORTEDSTREAM       0xC00D1059L
+#define NS_E_WMR_UNSUPPORTEDSTREAM 0xC00D1059L
 
 //
 // MessageId: NS_E_WMR_PINNOTFOUND
@@ -2673,7 +2672,7 @@ Notes:
 //
 //  An operation was attempted on a pin that doesn't exist in the DirectShow filter graph.%0
 //
-#define NS_E_WMR_PINNOTFOUND             0xC00D105AL
+#define NS_E_WMR_PINNOTFOUND 0xC00D105AL
 
 //
 // MessageId: NS_E_WMR_WAITINGONFORMATSWITCH
@@ -2682,7 +2681,7 @@ Notes:
 //
 //  Specified operation cannot be completed while waiting for a media format change from the SDK.%0
 //
-#define NS_E_WMR_WAITINGONFORMATSWITCH   0xC00D105BL
+#define NS_E_WMR_WAITINGONFORMATSWITCH 0xC00D105BL
 
 //
 // WMP Playlist Error codes
@@ -2703,7 +2702,7 @@ Notes:
 //
 //  This file was believed to be an ASX playlist, but the format was not recognized.%0
 //
-#define NS_E_ASX_INVALIDFORMAT           0xC00D1069L
+#define NS_E_ASX_INVALIDFORMAT 0xC00D1069L
 
 //
 // MessageId: NS_E_ASX_INVALIDVERSION
@@ -2712,7 +2711,7 @@ Notes:
 //
 //  The version of this playlist is not supported. Click Details to go to the microsoft web site and see if there is a newer version of the player to install.%0
 //
-#define NS_E_ASX_INVALIDVERSION          0xC00D106AL
+#define NS_E_ASX_INVALIDVERSION 0xC00D106AL
 
 //
 // MessageId: NS_E_ASX_INVALID_REPEAT_BLOCK
@@ -2721,7 +2720,7 @@ Notes:
 //
 //  Format of a REPEAT loop within the current playlist file is invalid.%0
 //
-#define NS_E_ASX_INVALID_REPEAT_BLOCK    0xC00D106BL
+#define NS_E_ASX_INVALID_REPEAT_BLOCK 0xC00D106BL
 
 //
 // MessageId: NS_E_ASX_NOTHING_TO_WRITE
@@ -2730,7 +2729,7 @@ Notes:
 //
 //  Windows Media Player cannot export the playlist because it is empty.%0
 //
-#define NS_E_ASX_NOTHING_TO_WRITE        0xC00D106CL
+#define NS_E_ASX_NOTHING_TO_WRITE 0xC00D106CL
 
 //
 // MessageId: NS_E_URLLIST_INVALIDFORMAT
@@ -2739,7 +2738,7 @@ Notes:
 //
 //  Windows Media Player does not recognize this file as a supported playlist.%0
 //
-#define NS_E_URLLIST_INVALIDFORMAT       0xC00D106DL
+#define NS_E_URLLIST_INVALIDFORMAT 0xC00D106DL
 
 //
 // MessageId: NS_E_WMX_ATTRIBUTE_DOES_NOT_EXIST
@@ -2775,7 +2774,7 @@ Notes:
 //
 //  The specified item does not exist in the current playlist.%0
 //
-#define NS_E_WMX_ITEM_DOES_NOT_EXIST     0xC00D1071L
+#define NS_E_WMX_ITEM_DOES_NOT_EXIST 0xC00D1071L
 
 //
 // MessageId: NS_E_WMX_ITEM_TYPE_ILLEGAL
@@ -2784,7 +2783,7 @@ Notes:
 //
 //  Items of the specified type can not be created within the current playlist.%0
 //
-#define NS_E_WMX_ITEM_TYPE_ILLEGAL       0xC00D1072L
+#define NS_E_WMX_ITEM_TYPE_ILLEGAL 0xC00D1072L
 
 //
 // MessageId: NS_E_WMX_ITEM_UNSETTABLE
@@ -2793,7 +2792,7 @@ Notes:
 //
 //  The specified item can not be set in the current playlist.%0
 //
-#define NS_E_WMX_ITEM_UNSETTABLE         0xC00D1073L
+#define NS_E_WMX_ITEM_UNSETTABLE 0xC00D1073L
 
 //
 // WMP Core  Error codes
@@ -2805,7 +2804,7 @@ Notes:
 //
 //  Windows Media Player cannot find the file. Be sure the path is typed correctly. If it is, the file may not exist in the specified location, or the computer where the file is stored may be offline.%0
 //
-#define NS_E_WMPCORE_NOSOURCEURLSTRING   0xC00D107CL
+#define NS_E_WMPCORE_NOSOURCEURLSTRING 0xC00D107CL
 
 //
 // MessageId: NS_E_WMPCORE_COCREATEFAILEDFORGITOBJECT
@@ -2832,7 +2831,7 @@ Notes:
 //
 //  Buffer is too small for copying media type.%0
 //
-#define NS_E_WMPCORE_BUFFERTOOSMALL      0xC00D107FL
+#define NS_E_WMPCORE_BUFFERTOOSMALL 0xC00D107FL
 
 //
 // MessageId: NS_E_WMPCORE_UNAVAILABLE
@@ -2841,7 +2840,7 @@ Notes:
 //
 //  Current state of the player does not allow the operation.%0
 //
-#define NS_E_WMPCORE_UNAVAILABLE         0xC00D1080L
+#define NS_E_WMPCORE_UNAVAILABLE 0xC00D1080L
 
 //
 // MessageId: NS_E_WMPCORE_INVALIDPLAYLISTMODE
@@ -2859,7 +2858,7 @@ Notes:
 //
 //  The item is not in the playlist.%0
 //
-#define NS_E_WMPCORE_ITEMNOTINPLAYLIST   0xC00D1086L
+#define NS_E_WMPCORE_ITEMNOTINPLAYLIST 0xC00D1086L
 
 //
 // MessageId: NS_E_WMPCORE_PLAYLISTEMPTY
@@ -2868,7 +2867,7 @@ Notes:
 //
 //  There are no items in this playlist. Add items to the playlist, and try again.%0
 //
-#define NS_E_WMPCORE_PLAYLISTEMPTY       0xC00D1087L
+#define NS_E_WMPCORE_PLAYLISTEMPTY 0xC00D1087L
 
 //
 // MessageId: NS_E_WMPCORE_NOBROWSER
@@ -2877,7 +2876,7 @@ Notes:
 //
 //  The Web site cannot be accessed. A Web browser is not detected on your computer.%0
 //
-#define NS_E_WMPCORE_NOBROWSER           0xC00D1088L
+#define NS_E_WMPCORE_NOBROWSER 0xC00D1088L
 
 //
 // MessageId: NS_E_WMPCORE_UNRECOGNIZED_MEDIA_URL
@@ -2895,7 +2894,7 @@ Notes:
 //
 //  Graph with the specified URL was not found in the prerolled graph list.%0
 //
-#define NS_E_WMPCORE_GRAPH_NOT_IN_LIST   0xC00D108AL
+#define NS_E_WMPCORE_GRAPH_NOT_IN_LIST 0xC00D108AL
 
 //
 // MessageId: NS_E_WMPCORE_PLAYLIST_EMPTY_OR_SINGLE_MEDIA
@@ -2931,7 +2930,7 @@ Notes:
 //
 //  Failed launching WebHelp URL.%0
 //
-#define NS_E_WMPCORE_WEBHELPFAILED       0xC00D108EL
+#define NS_E_WMPCORE_WEBHELPFAILED 0xC00D108EL
 
 //
 // MessageId: NS_E_WMPCORE_MEDIA_ERROR_RESUME_FAILED
@@ -2949,7 +2948,7 @@ Notes:
 //
 //  No URL specified in the Ref attribute in playlist file.%0
 //
-#define NS_E_WMPCORE_NO_REF_IN_ENTRY     0xC00D1090L
+#define NS_E_WMPCORE_NO_REF_IN_ENTRY 0xC00D1090L
 
 //
 // MessageId: NS_E_WMPCORE_WMX_LIST_ATTRIBUTE_NAME_EMPTY
@@ -3021,7 +3020,7 @@ Notes:
 //
 //  No entries found in the playlist file.%0
 //
-#define NS_E_WMPCORE_LIST_ENTRY_NO_REF   0xC00D1098L
+#define NS_E_WMPCORE_LIST_ENTRY_NO_REF 0xC00D1098L
 
 //
 // MessageId: NS_E_WMPCORE_CODEC_NOT_TRUSTED
@@ -3030,7 +3029,7 @@ Notes:
 //
 //  The codec downloaded for this media does not appear to be properly signed. Installation is not possible.%0
 //
-#define NS_E_WMPCORE_CODEC_NOT_TRUSTED   0xC00D109AL
+#define NS_E_WMPCORE_CODEC_NOT_TRUSTED 0xC00D109AL
 
 //
 // MessageId: NS_E_WMPCORE_CODEC_NOT_FOUND
@@ -3039,7 +3038,7 @@ Notes:
 //
 //  Windows Media Player cannot play the file. One or more codecs required to play the file could not be found.%0
 //
-#define NS_E_WMPCORE_CODEC_NOT_FOUND     0xC00D109BL
+#define NS_E_WMPCORE_CODEC_NOT_FOUND 0xC00D109BL
 
 //
 // MessageId: NS_E_WMPCORE_CODEC_DOWNLOAD_NOT_ALLOWED
@@ -3174,7 +3173,7 @@ Notes:
 //
 //  Open was aborted by user.%0
 //
-#define NS_E_WMPCORE_USER_CANCEL         0xC00D10ABL
+#define NS_E_WMPCORE_USER_CANCEL 0xC00D10ABL
 
 //
 // MessageId: NS_E_WMPCORE_PLAYLIST_REPEAT_EMPTY
@@ -3219,7 +3218,7 @@ Notes:
 //
 //  Player is selecting a runtime that is not valid for this media file type.%0
 //
-#define NS_E_WMPCORE_MISMATCHED_RUNTIME  0xC00D10B0L
+#define NS_E_WMPCORE_MISMATCHED_RUNTIME 0xC00D10B0L
 
 //
 // MessageId: NS_E_WMPCORE_PLAYLIST_IMPORT_FAILED_NO_ITEMS
@@ -3246,7 +3245,7 @@ Notes:
 //
 //  Windows Media Player cannot play this file. Connect to the Internet or insert the removable media on which the file is located, and then try to play the file again.%0
 //
-#define NS_E_WMPCORE_MEDIA_UNAVAILABLE   0xC00D10B3L
+#define NS_E_WMPCORE_MEDIA_UNAVAILABLE 0xC00D10B3L
 
 //
 // MessageId: NS_E_WMPCORE_WMX_ENTRYREF_NO_REF
@@ -3282,7 +3281,7 @@ Notes:
 //
 //  Windows Media Player could not handle your request for digital media content in a timely manner. Try again later.%0
 //
-#define NS_E_WMPCORE_BUSY                0xC00D10B7L
+#define NS_E_WMPCORE_BUSY 0xC00D10B7L
 
 //
 // MessageId: NS_E_WMPCORE_MEDIA_CHILD_PLAYLIST_UNAVAILABLE
@@ -3309,7 +3308,7 @@ Notes:
 //
 //  Windows Media Player cannot play one or more files. Right-click the file, and then click Error Details to view information about the error.%0
 //
-#define NS_E_WMPCORE_FILE_NOT_FOUND      0xC00D10BAL
+#define NS_E_WMPCORE_FILE_NOT_FOUND 0xC00D10BAL
 
 //
 // MessageId: NS_E_WMPCORE_TEMP_FILE_NOT_FOUND
@@ -3327,7 +3326,7 @@ Notes:
 //
 //  Windows Media Player cannot transfer media to the portable device without an update.  Please click details to find out how to update your device.%0
 //
-#define NS_E_WMDM_REVOKED                0xC00D10BCL
+#define NS_E_WMDM_REVOKED 0xC00D10BCL
 
 //
 // MessageId: NS_E_DDRAW_GENERIC
@@ -3336,7 +3335,7 @@ Notes:
 //
 //  Windows Media Player cannot play the video stream because of a problem with your video card.%0
 //
-#define NS_E_DDRAW_GENERIC               0xC00D10BDL
+#define NS_E_DDRAW_GENERIC 0xC00D10BDL
 
 //
 // MessageId: NS_E_DISPLAY_MODE_CHANGE_FAILED
@@ -3345,7 +3344,7 @@ Notes:
 //
 //  Windows Media Player failed to change the screen mode for fullscreen video playback.%0
 //
-#define NS_E_DISPLAY_MODE_CHANGE_FAILED  0xC00D10BEL
+#define NS_E_DISPLAY_MODE_CHANGE_FAILED 0xC00D10BEL
 
 //
 // MessageId: NS_E_PLAYLIST_CONTAINS_ERRORS
@@ -3354,7 +3353,7 @@ Notes:
 //
 //  One or more items in the playlist cannot be played. For more details, right-click an item in the playlist, and then click Error Details.%0
 //
-#define NS_E_PLAYLIST_CONTAINS_ERRORS    0xC00D10BFL
+#define NS_E_PLAYLIST_CONTAINS_ERRORS 0xC00D10BFL
 
 //
 // WMP Core  Success codes
@@ -3366,7 +3365,7 @@ Notes:
 //
 //  Failed to clear playlist because it was aborted by user.%0
 //
-#define NS_S_WMPCORE_PLAYLISTCLEARABORT  0x000D10FEL
+#define NS_S_WMPCORE_PLAYLISTCLEARABORT 0x000D10FEL
 
 //
 // MessageId: NS_S_WMPCORE_PLAYLISTREMOVEITEMABORT
@@ -3459,7 +3458,7 @@ Notes:
 //
 //  Windows Media Player has detected that you are not connected to the Internet. Connect to the Internet, and then try again.%0
 //
-#define NS_E_WMPIM_USEROFFLINE           0xC00D1126L
+#define NS_E_WMPIM_USEROFFLINE 0xC00D1126L
 
 //
 // MessageId: NS_E_WMPIM_USERCANCELED
@@ -3468,7 +3467,7 @@ Notes:
 //
 //  User cancelled attempt to connect to the Internet.%0
 //
-#define NS_E_WMPIM_USERCANCELED          0xC00D1127L
+#define NS_E_WMPIM_USERCANCELED 0xC00D1127L
 
 //
 // MessageId: NS_E_WMPIM_DIALUPFAILED
@@ -3477,7 +3476,7 @@ Notes:
 //
 //  Attempt to dial connection to the Internet failed.%0
 //
-#define NS_E_WMPIM_DIALUPFAILED          0xC00D1128L
+#define NS_E_WMPIM_DIALUPFAILED 0xC00D1128L
 
 //
 // WMP Backup and restore error and success codes
@@ -3489,7 +3488,7 @@ Notes:
 //
 //  No window is currently listening to Backup and Restore events.%0
 //
-#define NS_E_WMPBR_NOLISTENER            0xC00D1130L
+#define NS_E_WMPBR_NOLISTENER 0xC00D1130L
 
 //
 // MessageId: NS_E_WMPBR_BACKUPCANCEL
@@ -3498,7 +3497,7 @@ Notes:
 //
 //  Backup of your licenses has been cancelled.  Please try again to ensure license backup.%0
 //
-#define NS_E_WMPBR_BACKUPCANCEL          0xC00D1131L
+#define NS_E_WMPBR_BACKUPCANCEL 0xC00D1131L
 
 //
 // MessageId: NS_E_WMPBR_RESTORECANCEL
@@ -3507,7 +3506,7 @@ Notes:
 //
 //  The licenses were not restored because the restoration was cancelled.%0
 //
-#define NS_E_WMPBR_RESTORECANCEL         0xC00D1132L
+#define NS_E_WMPBR_RESTORECANCEL 0xC00D1132L
 
 //
 // MessageId: NS_E_WMPBR_ERRORWITHURL
@@ -3516,7 +3515,7 @@ Notes:
 //
 //  An error occurred during the backup or restore operation that requires a web page be displayed to the user.%0
 //
-#define NS_E_WMPBR_ERRORWITHURL          0xC00D1133L
+#define NS_E_WMPBR_ERRORWITHURL 0xC00D1133L
 
 //
 // MessageId: NS_E_WMPBR_NAMECOLLISION
@@ -3525,7 +3524,7 @@ Notes:
 //
 //  The licenses were not backed up because the backup was cancelled.%0
 //
-#define NS_E_WMPBR_NAMECOLLISION         0xC00D1134L
+#define NS_E_WMPBR_NAMECOLLISION 0xC00D1134L
 
 //
 // MessageId: NS_S_WMPBR_SUCCESS
@@ -3534,7 +3533,7 @@ Notes:
 //
 //  Backup or Restore successful!.%0
 //
-#define NS_S_WMPBR_SUCCESS               0x000D1135L
+#define NS_S_WMPBR_SUCCESS 0x000D1135L
 
 //
 // MessageId: NS_S_WMPBR_PARTIALSUCCESS
@@ -3543,7 +3542,7 @@ Notes:
 //
 //  Transfer complete with limitations.%0
 //
-#define NS_S_WMPBR_PARTIALSUCCESS        0x000D1136L
+#define NS_S_WMPBR_PARTIALSUCCESS 0x000D1136L
 
 //
 // WMP Effects Success codes
@@ -3555,7 +3554,7 @@ Notes:
 //
 //  Request to the effects control to change transparency status to transparent.%0
 //
-#define NS_S_WMPEFFECT_TRANSPARENT       0x000D1144L
+#define NS_S_WMPEFFECT_TRANSPARENT 0x000D1144L
 
 //
 // MessageId: NS_S_WMPEFFECT_OPAQUE
@@ -3564,7 +3563,7 @@ Notes:
 //
 //  Request to the effects control to change transparency status to opaque.%0
 //
-#define NS_S_WMPEFFECT_OPAQUE            0x000D1145L
+#define NS_S_WMPEFFECT_OPAQUE 0x000D1145L
 
 //
 // WMP Application Success codes
@@ -3576,7 +3575,7 @@ Notes:
 //
 //  The requested application pane is performing an operation and will not be relased.%0
 //
-#define NS_S_OPERATION_PENDING           0x000D114EL
+#define NS_S_OPERATION_PENDING 0x000D114EL
 
 //
 // WMP DVD Error Codes
@@ -3588,7 +3587,7 @@ Notes:
 //
 //  Windows Media Player cannot display subtitles or highlights in menus. Reinstall the DVD decoder or contact your device manufacturer to obtain an updated decoder, and then try again.%0
 //
-#define NS_E_DVD_NO_SUBPICTURE_STREAM    0xC00D1162L
+#define NS_E_DVD_NO_SUBPICTURE_STREAM 0xC00D1162L
 
 //
 // MessageId: NS_E_DVD_COPY_PROTECT
@@ -3597,7 +3596,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because a problem occurred with digital copyright protection.%0
 //
-#define NS_E_DVD_COPY_PROTECT            0xC00D1163L
+#define NS_E_DVD_COPY_PROTECT 0xC00D1163L
 
 //
 // MessageId: NS_E_DVD_AUTHORING_PROBLEM
@@ -3606,7 +3605,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because the disc is incompatible with the Player.%0
 //
-#define NS_E_DVD_AUTHORING_PROBLEM       0xC00D1164L
+#define NS_E_DVD_AUTHORING_PROBLEM 0xC00D1164L
 
 //
 // MessageId: NS_E_DVD_INVALID_DISC_REGION
@@ -3615,7 +3614,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because the disc prohibits playback in your region of the world. You must obtain a disc that is intended for your geographic region.%0
 //
-#define NS_E_DVD_INVALID_DISC_REGION     0xC00D1165L
+#define NS_E_DVD_INVALID_DISC_REGION 0xC00D1165L
 
 //
 // MessageId: NS_E_DVD_COMPATIBLE_VIDEO_CARD
@@ -3624,7 +3623,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because your video card does not support DVD playback.%0
 //
-#define NS_E_DVD_COMPATIBLE_VIDEO_CARD   0xC00D1166L
+#define NS_E_DVD_COMPATIBLE_VIDEO_CARD 0xC00D1166L
 
 //
 // MessageId: NS_E_DVD_MACROVISION
@@ -3633,7 +3632,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because a problem occurred with analog copyright protection.%0
 //
-#define NS_E_DVD_MACROVISION             0xC00D1167L
+#define NS_E_DVD_MACROVISION 0xC00D1167L
 
 //
 // MessageId: NS_E_DVD_SYSTEM_DECODER_REGION
@@ -3642,7 +3641,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because the region assigned to your DVD drive does not match the region assigned to your DVD decoder.%0
 //
-#define NS_E_DVD_SYSTEM_DECODER_REGION   0xC00D1168L
+#define NS_E_DVD_SYSTEM_DECODER_REGION 0xC00D1168L
 
 //
 // MessageId: NS_E_DVD_DISC_DECODER_REGION
@@ -3651,7 +3650,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because the disc prohibits playback in your region of the world. To play the disc by using the Player, you must obtain a disc that is intended for your geographic region.%0
 //
-#define NS_E_DVD_DISC_DECODER_REGION     0xC00D1169L
+#define NS_E_DVD_DISC_DECODER_REGION 0xC00D1169L
 
 //
 // MessageId: NS_E_DVD_NO_VIDEO_STREAM
@@ -3660,7 +3659,7 @@ Notes:
 //
 //  Windows Media Player is currently unable to play DVD video. Click Details, and then click troubleshooter for information about configuring your computer to play DVDs.%0
 //
-#define NS_E_DVD_NO_VIDEO_STREAM         0xC00D116AL
+#define NS_E_DVD_NO_VIDEO_STREAM 0xC00D116AL
 
 //
 // MessageId: NS_E_DVD_NO_AUDIO_STREAM
@@ -3669,7 +3668,7 @@ Notes:
 //
 //  Windows Media Player cannot play DVD audio. Verify that your sound card is set up correctly, and then try again.%0
 //
-#define NS_E_DVD_NO_AUDIO_STREAM         0xC00D116BL
+#define NS_E_DVD_NO_AUDIO_STREAM 0xC00D116BL
 
 //
 // MessageId: NS_E_DVD_GRAPH_BUILDING
@@ -3678,7 +3677,7 @@ Notes:
 //
 //  Windows Media Player cannot play DVD video. Close any open files and quit any other running programs, and then try again. If the problem continues, restart your computer.%0
 //
-#define NS_E_DVD_GRAPH_BUILDING          0xC00D116CL
+#define NS_E_DVD_GRAPH_BUILDING 0xC00D116CL
 
 //
 // MessageId: NS_E_DVD_NO_DECODER
@@ -3687,7 +3686,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because a compatible DVD decoder is not installed on your computer.%0
 //
-#define NS_E_DVD_NO_DECODER              0xC00D116DL
+#define NS_E_DVD_NO_DECODER 0xC00D116DL
 
 //
 // MessageId: NS_E_DVD_PARENTAL
@@ -3696,7 +3695,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD segment because the segment has a parental rating higher than the rating you are authorized to view.%0
 //
-#define NS_E_DVD_PARENTAL                0xC00D116EL
+#define NS_E_DVD_PARENTAL 0xC00D116EL
 
 //
 // MessageId: NS_E_DVD_CANNOT_JUMP
@@ -3705,7 +3704,7 @@ Notes:
 //
 //  Windows Media Player cannot skip to the requested location in the DVD at this time.%0
 //
-#define NS_E_DVD_CANNOT_JUMP             0xC00D116FL
+#define NS_E_DVD_CANNOT_JUMP 0xC00D116FL
 
 //
 // MessageId: NS_E_DVD_DEVICE_CONTENTION
@@ -3714,7 +3713,7 @@ Notes:
 //
 //  Windows Media Player cannot play this DVD because it is currently in use by another program. Quit the other program that is using the DVD, and then try to play it again.%0
 //
-#define NS_E_DVD_DEVICE_CONTENTION       0xC00D1170L
+#define NS_E_DVD_DEVICE_CONTENTION 0xC00D1170L
 
 //
 // MessageId: NS_E_DVD_NO_VIDEO_MEMORY
@@ -3723,7 +3722,7 @@ Notes:
 //
 //  Windows Media Player cannot play DVD video. Double-click Display in Control Panel to lower your screen resolution and color quality settings.%0
 //
-#define NS_E_DVD_NO_VIDEO_MEMORY         0xC00D1171L
+#define NS_E_DVD_NO_VIDEO_MEMORY 0xC00D1171L
 
 //
 // WMP PDA Error codes
@@ -3735,7 +3734,7 @@ Notes:
 //
 //  A CD recorder (burner) was not detected. Connect a CD recorder, and try copying again.%0
 //
-#define NS_E_NO_CD_BURNER                0xC00D1176L
+#define NS_E_NO_CD_BURNER 0xC00D1176L
 
 //
 // MessageId: NS_E_DEVICE_IS_NOT_READY
@@ -3744,7 +3743,7 @@ Notes:
 //
 //  Windows Media Player does not detect any removable media in your portable device. Insert the media in the device or check the connection between the device and your computer, and then press F5 to refresh.%0
 //
-#define NS_E_DEVICE_IS_NOT_READY         0xC00D1177L
+#define NS_E_DEVICE_IS_NOT_READY 0xC00D1177L
 
 //
 // MessageId: NS_E_PDA_UNSUPPORTED_FORMAT
@@ -3753,7 +3752,7 @@ Notes:
 //
 //  Windows Media Player cannot play the specified file. Your portable device does not support the specified format.%0
 //
-#define NS_E_PDA_UNSUPPORTED_FORMAT      0xC00D1178L
+#define NS_E_PDA_UNSUPPORTED_FORMAT 0xC00D1178L
 
 //
 // MessageId: NS_E_NO_PDA
@@ -3762,7 +3761,7 @@ Notes:
 //
 //  Windows Media Player cannot detect a connected portable device. Connect your portable device, and try again.%0
 //
-#define NS_E_NO_PDA                      0xC00D1179L
+#define NS_E_NO_PDA 0xC00D1179L
 
 //
 // MessageId: NS_E_PDA_UNSPECIFIED_ERROR
@@ -3771,7 +3770,7 @@ Notes:
 //
 //  Windows Media Player has encountered an error on the portable device. Click the Details button for more information.%0
 //
-#define NS_E_PDA_UNSPECIFIED_ERROR       0xC00D117AL
+#define NS_E_PDA_UNSPECIFIED_ERROR 0xC00D117AL
 
 //
 // General Remapped Error codes in WMP
@@ -3783,7 +3782,7 @@ Notes:
 //
 //  Windows Media Player could not open the specified URL. Be sure Windows Media Player is configured to use all available protocols, and then try again.%0
 //
-#define NS_E_WMP_PROTOCOL_PROBLEM        0xC00D1194L
+#define NS_E_WMP_PROTOCOL_PROBLEM 0xC00D1194L
 
 //
 // MessageId: NS_E_WMP_NO_DISK_SPACE
@@ -3792,7 +3791,7 @@ Notes:
 //
 //  Windows Media Player cannot open the file because there is not enough disk space on your computer. Delete some unneeded files on your hard disk, and then try again.%0
 //
-#define NS_E_WMP_NO_DISK_SPACE           0xC00D1195L
+#define NS_E_WMP_NO_DISK_SPACE 0xC00D1195L
 
 //
 // MessageId: NS_E_WMP_LOGON_FAILURE
@@ -3801,7 +3800,7 @@ Notes:
 //
 //  The user name or password is incorrect. Type your user name or password again.%0
 //
-#define NS_E_WMP_LOGON_FAILURE           0xC00D1196L
+#define NS_E_WMP_LOGON_FAILURE 0xC00D1196L
 
 //
 // MessageId: NS_E_WMP_CANNOT_FIND_FILE
@@ -3810,7 +3809,7 @@ Notes:
 //
 //  Windows Media Player cannot find the specified file. Be sure the path is typed correctly. If it is, the file does not exist in the specified location, or the computer where the file is stored is offline.%0
 //
-#define NS_E_WMP_CANNOT_FIND_FILE        0xC00D1197L
+#define NS_E_WMP_CANNOT_FIND_FILE 0xC00D1197L
 
 //
 // MessageId: NS_E_WMP_SERVER_INACCESSIBLE
@@ -3819,7 +3818,7 @@ Notes:
 //
 //  Windows Media Player cannot connect to the server. The server name may be incorrect or the server is busy. Try again later.%0
 //
-#define NS_E_WMP_SERVER_INACCESSIBLE     0xC00D1198L
+#define NS_E_WMP_SERVER_INACCESSIBLE 0xC00D1198L
 
 //
 // MessageId: NS_E_WMP_UNSUPPORTED_FORMAT
@@ -3828,7 +3827,7 @@ Notes:
 //
 //  Windows Media Player cannot play the file. The file is either corrupt or the Player does not support the format you are trying to play.%0
 //
-#define NS_E_WMP_UNSUPPORTED_FORMAT      0xC00D1199L
+#define NS_E_WMP_UNSUPPORTED_FORMAT 0xC00D1199L
 
 //
 // MessageId: NS_E_WMP_DSHOW_UNSUPPORTED_FORMAT
@@ -3846,7 +3845,7 @@ Notes:
 //
 //  Windows Media Player cannot create the playlist because the name already exists. Type a different playlist name.%0
 //
-#define NS_E_WMP_PLAYLIST_EXISTS         0xC00D119BL
+#define NS_E_WMP_PLAYLIST_EXISTS 0xC00D119BL
 
 //
 // MessageId: NS_E_WMP_NONMEDIA_FILES
@@ -3855,7 +3854,7 @@ Notes:
 //
 //  Windows Media Player could not delete the playlist because it contains non-digital media files. Any digital media files in the playlist were deleted. Use Windows Explorer to delete non-digital media files, and then try deleting the playlist again.%0
 //
-#define NS_E_WMP_NONMEDIA_FILES          0xC00D119CL
+#define NS_E_WMP_NONMEDIA_FILES 0xC00D119CL
 
 //
 // MessageId: NS_E_WMP_INVALID_ASX
@@ -3864,7 +3863,7 @@ Notes:
 //
 //  Windows Media Player cannot play the selected playlist.  The format of the playlist is either invalid or is not recognized.%0
 //
-#define NS_E_WMP_INVALID_ASX             0xC00D119DL
+#define NS_E_WMP_INVALID_ASX 0xC00D119DL
 
 //
 // MessageId: NS_E_WMP_ALREADY_IN_USE
@@ -3873,7 +3872,7 @@ Notes:
 //
 //  Windows Media Player is already in use. Stop playing any content and close all Player dialog boxes and then try again.%0
 //
-#define NS_E_WMP_ALREADY_IN_USE          0xC00D119EL
+#define NS_E_WMP_ALREADY_IN_USE 0xC00D119EL
 
 //
 // WMP CD Filter Error codes extension
@@ -3885,8 +3884,7 @@ Notes:
 //
 //  Windows Media Player encountered an error when reading the CD-ROM drive in digital mode. You can try to use digital mode again, or you can switch the Player to analog mode.%0
 //
-#define NS_E_CD_NO_BUFFERS_READ          0xC00D11F8L
-
+#define NS_E_CD_NO_BUFFERS_READ 0xC00D11F8L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -3904,7 +3902,7 @@ Notes:
 //
 //  The client is redirected to another server.%0
 //
-#define NS_E_REDIRECT                    0xC00D1388L
+#define NS_E_REDIRECT 0xC00D1388L
 
 //
 // MessageId: NS_E_STALE_PRESENTATION
@@ -3913,10 +3911,10 @@ Notes:
 //
 //  The streaming media description is no longer current.%0
 //
-#define NS_E_STALE_PRESENTATION          0xC00D1389L
+#define NS_E_STALE_PRESENTATION 0xC00D1389L
 
 
- // Namespace Errors
+// Namespace Errors
 
 //
 // MessageId: NS_E_NAMESPACE_WRONG_PERSIST
@@ -3925,7 +3923,7 @@ Notes:
 //
 //  Attempt to create a persistent namespace node under a transient parent node.%0
 //
-#define NS_E_NAMESPACE_WRONG_PERSIST     0xC00D138AL
+#define NS_E_NAMESPACE_WRONG_PERSIST 0xC00D138AL
 
 //
 // MessageId: NS_E_NAMESPACE_WRONG_TYPE
@@ -3934,7 +3932,7 @@ Notes:
 //
 //  Unable to store a value in a namespace node of different value type.%0
 //
-#define NS_E_NAMESPACE_WRONG_TYPE        0xC00D138BL
+#define NS_E_NAMESPACE_WRONG_TYPE 0xC00D138BL
 
 //
 // MessageId: NS_E_NAMESPACE_NODE_CONFLICT
@@ -3943,7 +3941,7 @@ Notes:
 //
 //  Unable to remove the root namespace node.%0
 //
-#define NS_E_NAMESPACE_NODE_CONFLICT     0xC00D138CL
+#define NS_E_NAMESPACE_NODE_CONFLICT 0xC00D138CL
 
 //
 // MessageId: NS_E_NAMESPACE_NODE_NOT_FOUND
@@ -3952,7 +3950,7 @@ Notes:
 //
 //  Could not find the specified namespace node.%0
 //
-#define NS_E_NAMESPACE_NODE_NOT_FOUND    0xC00D138DL
+#define NS_E_NAMESPACE_NODE_NOT_FOUND 0xC00D138DL
 
 //
 // MessageId: NS_E_NAMESPACE_BUFFER_TOO_SMALL
@@ -3961,7 +3959,7 @@ Notes:
 //
 //  The buffer supplied to hold namespace node string is too small.%0
 //
-#define NS_E_NAMESPACE_BUFFER_TOO_SMALL  0xC00D138EL
+#define NS_E_NAMESPACE_BUFFER_TOO_SMALL 0xC00D138EL
 
 //
 // MessageId: NS_E_NAMESPACE_TOO_MANY_CALLBACKS
@@ -3997,7 +3995,7 @@ Notes:
 //
 //  The length of a namespace node name exceeds the allowed maximum length.%0
 //
-#define NS_E_NAMESPACE_NAME_TOO_LONG     0xC00D1392L
+#define NS_E_NAMESPACE_NAME_TOO_LONG 0xC00D1392L
 
 //
 // MessageId: NS_E_NAMESPACE_DUPLICATE_NAME
@@ -4006,7 +4004,7 @@ Notes:
 //
 //  Cannot create a namespace node which already exists.%0
 //
-#define NS_E_NAMESPACE_DUPLICATE_NAME    0xC00D1393L
+#define NS_E_NAMESPACE_DUPLICATE_NAME 0xC00D1393L
 
 //
 // MessageId: NS_E_NAMESPACE_EMPTY_NAME
@@ -4015,7 +4013,7 @@ Notes:
 //
 //  The name of a namespace node cannot be a null string.%0
 //
-#define NS_E_NAMESPACE_EMPTY_NAME        0xC00D1394L
+#define NS_E_NAMESPACE_EMPTY_NAME 0xC00D1394L
 
 //
 // MessageId: NS_E_NAMESPACE_INDEX_TOO_LARGE
@@ -4024,7 +4022,7 @@ Notes:
 //
 //  Finding a child namespace node by index failed because the index exceeded the number of children.%0
 //
-#define NS_E_NAMESPACE_INDEX_TOO_LARGE   0xC00D1395L
+#define NS_E_NAMESPACE_INDEX_TOO_LARGE 0xC00D1395L
 
 //
 // MessageId: NS_E_NAMESPACE_BAD_NAME
@@ -4033,10 +4031,10 @@ Notes:
 //
 //  The name supplied for a namespace node is not valid.%0
 //
-#define NS_E_NAMESPACE_BAD_NAME          0xC00D1396L
+#define NS_E_NAMESPACE_BAD_NAME 0xC00D1396L
 
 
- // Cache Errors
+// Cache Errors
 
 //
 // MessageId: NS_E_CACHE_ARCHIVE_CONFLICT
@@ -4045,7 +4043,7 @@ Notes:
 //
 //  Archive request conflicts with other requests in progress.%0
 //
-#define NS_E_CACHE_ARCHIVE_CONFLICT      0xC00D1397L
+#define NS_E_CACHE_ARCHIVE_CONFLICT 0xC00D1397L
 
 //
 // MessageId: NS_E_CACHE_ORIGIN_SERVER_NOT_FOUND
@@ -4072,7 +4070,7 @@ Notes:
 //
 //  The internal code for HTTP status code 412 Precondition Failed due to not broadcast type.%0
 //
-#define NS_E_CACHE_NOT_BROADCAST         0xC00D139AL
+#define NS_E_CACHE_NOT_BROADCAST 0xC00D139AL
 
 //
 // MessageId: NS_E_CACHE_CANNOT_BE_CACHED
@@ -4081,7 +4079,7 @@ Notes:
 //
 //  The internal code for HTTP status code 403 Forbidden due to not cacheable.%0
 //
-#define NS_E_CACHE_CANNOT_BE_CACHED      0xC00D139BL
+#define NS_E_CACHE_CANNOT_BE_CACHED 0xC00D139BL
 
 //
 // MessageId: NS_E_CACHE_NOT_MODIFIED
@@ -4090,7 +4088,7 @@ Notes:
 //
 //  The internal code for HTTP status code 304 Not Modified.%0
 //
-#define NS_E_CACHE_NOT_MODIFIED          0xC00D139CL
+#define NS_E_CACHE_NOT_MODIFIED 0xC00D139CL
 
 
 // Object Model Errors
@@ -4111,7 +4109,7 @@ Notes:
 //
 //  Cannot remove last instance of plugin.%0
 //
-#define NS_E_CANNOT_REMOVE_PLUGIN        0xC00D139EL
+#define NS_E_CANNOT_REMOVE_PLUGIN 0xC00D139EL
 
 //
 // MessageId: NS_E_WRONG_PUBLISHING_POINT_TYPE
@@ -4129,7 +4127,7 @@ Notes:
 //
 //  The Plugin does not support the specified Load Type.%0
 //
-#define NS_E_UNSUPPORTED_LOAD_TYPE       0xC00D13A0L
+#define NS_E_UNSUPPORTED_LOAD_TYPE 0xC00D13A0L
 
 //
 // MessageId: NS_E_INVALID_PLUGIN_LOAD_TYPE_CONFIGURATION
@@ -4162,8 +4160,7 @@ Notes:
 //
 //  The datapath does not have a sink.%0
 //
-#define NS_E_DATAPATH_NO_SINK            0xC00D1518L
-
+#define NS_E_DATAPATH_NO_SINK 0xC00D1518L
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -4181,7 +4178,7 @@ Notes:
 //
 //  The Mark In time should be greater than 0 and less than Mark Out time.%0
 //
-#define NS_E_BAD_MARKIN                  0xC00D1B58L
+#define NS_E_BAD_MARKIN 0xC00D1B58L
 
 //
 // MessageId: NS_E_BAD_MARKOUT
@@ -4190,7 +4187,7 @@ Notes:
 //
 //  The Mark Out time should be greater than Mark In time and less than file duration.%0
 //
-#define NS_E_BAD_MARKOUT                 0xC00D1B59L
+#define NS_E_BAD_MARKOUT 0xC00D1B59L
 
 //
 // MessageId: NS_E_NOMATCHING_MEDIASOURCE
@@ -4199,7 +4196,7 @@ Notes:
 //
 //  No matching media source is found in source group %1.%0
 //
-#define NS_E_NOMATCHING_MEDIASOURCE      0xC00D1B5AL
+#define NS_E_NOMATCHING_MEDIASOURCE 0xC00D1B5AL
 
 //
 // MessageId: NS_E_UNSUPPORTED_SOURCETYPE
@@ -4208,7 +4205,7 @@ Notes:
 //
 //  Unsupported source type.%0
 //
-#define NS_E_UNSUPPORTED_SOURCETYPE      0xC00D1B5BL
+#define NS_E_UNSUPPORTED_SOURCETYPE 0xC00D1B5BL
 
 //
 // MessageId: NS_E_TOO_MANY_AUDIO
@@ -4217,7 +4214,7 @@ Notes:
 //
 //  No more than 1 audio input is allowed.%0
 //
-#define NS_E_TOO_MANY_AUDIO              0xC00D1B5CL
+#define NS_E_TOO_MANY_AUDIO 0xC00D1B5CL
 
 //
 // MessageId: NS_E_TOO_MANY_VIDEO
@@ -4226,7 +4223,7 @@ Notes:
 //
 //  No more than 2 video inputs are allowed.%0
 //
-#define NS_E_TOO_MANY_VIDEO              0xC00D1B5DL
+#define NS_E_TOO_MANY_VIDEO 0xC00D1B5DL
 
 //
 // MessageId: NS_E_NOMATCHING_ELEMENT
@@ -4235,7 +4232,7 @@ Notes:
 //
 //  No matching element is found in the list.%0
 //
-#define NS_E_NOMATCHING_ELEMENT          0xC00D1B5EL
+#define NS_E_NOMATCHING_ELEMENT 0xC00D1B5EL
 
 //
 // MessageId: NS_E_MISMATCHED_MEDIACONTENT
@@ -4244,7 +4241,7 @@ Notes:
 //
 //  The profile's media content doesn't match the media content defined in the source group.%0
 //
-#define NS_E_MISMATCHED_MEDIACONTENT     0xC00D1B5FL
+#define NS_E_MISMATCHED_MEDIACONTENT 0xC00D1B5FL
 
 //
 // MessageId: NS_E_CANNOT_DELETE_ACTIVE_SOURCEGROUP
@@ -4262,7 +4259,7 @@ Notes:
 //
 //  Cannot open specified audio capture device because it is in use right now.%0
 //
-#define NS_E_AUDIODEVICE_BUSY            0xC00D1B61L
+#define NS_E_AUDIODEVICE_BUSY 0xC00D1B61L
 
 //
 // MessageId: NS_E_AUDIODEVICE_UNEXPECTED
@@ -4271,7 +4268,7 @@ Notes:
 //
 //  Cannot open specified audio capture device because unexpected error occurred.%0
 //
-#define NS_E_AUDIODEVICE_UNEXPECTED      0xC00D1B62L
+#define NS_E_AUDIODEVICE_UNEXPECTED 0xC00D1B62L
 
 //
 // MessageId: NS_E_AUDIODEVICE_BADFORMAT
@@ -4280,7 +4277,7 @@ Notes:
 //
 //  Audio capture device doesn't support specified audio format.%0
 //
-#define NS_E_AUDIODEVICE_BADFORMAT       0xC00D1B63L
+#define NS_E_AUDIODEVICE_BADFORMAT 0xC00D1B63L
 
 //
 // MessageId: NS_E_VIDEODEVICE_BUSY
@@ -4289,7 +4286,7 @@ Notes:
 //
 //  Cannot open specified video capture device because it is in use right now.%0
 //
-#define NS_E_VIDEODEVICE_BUSY            0xC00D1B64L
+#define NS_E_VIDEODEVICE_BUSY 0xC00D1B64L
 
 //
 // MessageId: NS_E_VIDEODEVICE_UNEXPECTED
@@ -4298,7 +4295,7 @@ Notes:
 //
 //  Cannot open specified video capture device because unexpected error occurred.%0
 //
-#define NS_E_VIDEODEVICE_UNEXPECTED      0xC00D1B65L
+#define NS_E_VIDEODEVICE_UNEXPECTED 0xC00D1B65L
 
 //
 // MessageId: NS_E_INVALIDCALL_WHILE_ENCODER_RUNNING
@@ -4316,7 +4313,7 @@ Notes:
 //
 //  No profile is set in source group.%0
 //
-#define NS_E_NO_PROFILE_IN_SOURCEGROUP   0xC00D1B67L
+#define NS_E_NO_PROFILE_IN_SOURCEGROUP 0xC00D1B67L
 
 //
 // MessageId: NS_E_VIDEODRIVER_UNSTABLE
@@ -4325,7 +4322,7 @@ Notes:
 //
 //  The video capture driver returned an unrecoverable error.  It is now in an unstable state.%0
 //
-#define NS_E_VIDEODRIVER_UNSTABLE        0xC00D1B68L
+#define NS_E_VIDEODRIVER_UNSTABLE 0xC00D1B68L
 
 //
 // MessageId: NS_E_VIDCAPSTARTFAILED
@@ -4334,7 +4331,7 @@ Notes:
 //
 //  The video input device could not be started.%0
 //
-#define NS_E_VIDCAPSTARTFAILED           0xC00D1B69L
+#define NS_E_VIDCAPSTARTFAILED 0xC00D1B69L
 
 //
 // MessageId: NS_E_VIDSOURCECOMPRESSION
@@ -4343,7 +4340,7 @@ Notes:
 //
 //  The video input source does not support the requested output format or color depth.%0
 //
-#define NS_E_VIDSOURCECOMPRESSION        0xC00D1B6AL
+#define NS_E_VIDSOURCECOMPRESSION 0xC00D1B6AL
 
 //
 // MessageId: NS_E_VIDSOURCESIZE
@@ -4352,7 +4349,7 @@ Notes:
 //
 //  The video input source does not support the request capture size.%0
 //
-#define NS_E_VIDSOURCESIZE               0xC00D1B6BL
+#define NS_E_VIDSOURCESIZE 0xC00D1B6BL
 
 //
 // MessageId: NS_E_ICMQUERYFORMAT
@@ -4361,7 +4358,7 @@ Notes:
 //
 //  Unable to obtain output information from video compressor.%0
 //
-#define NS_E_ICMQUERYFORMAT              0xC00D1B6CL
+#define NS_E_ICMQUERYFORMAT 0xC00D1B6CL
 
 //
 // MessageId: NS_E_VIDCAPCREATEWINDOW
@@ -4370,7 +4367,7 @@ Notes:
 //
 //  Unable to create video capture window.%0
 //
-#define NS_E_VIDCAPCREATEWINDOW          0xC00D1B6DL
+#define NS_E_VIDCAPCREATEWINDOW 0xC00D1B6DL
 
 //
 // MessageId: NS_E_VIDCAPDRVINUSE
@@ -4379,7 +4376,7 @@ Notes:
 //
 //  There already is a running stream active on this video input device.%0
 //
-#define NS_E_VIDCAPDRVINUSE              0xC00D1B6EL
+#define NS_E_VIDCAPDRVINUSE 0xC00D1B6EL
 
 //
 // MessageId: NS_E_NO_MEDIAFORMAT_IN_SOURCE
@@ -4388,7 +4385,7 @@ Notes:
 //
 //  No media format is set in source.%0
 //
-#define NS_E_NO_MEDIAFORMAT_IN_SOURCE    0xC00D1B6FL
+#define NS_E_NO_MEDIAFORMAT_IN_SOURCE 0xC00D1B6FL
 
 //
 // MessageId: NS_E_NO_VALID_OUTPUT_STREAM
@@ -4397,7 +4394,7 @@ Notes:
 //
 //  Cannot find valid output stream from source.%0
 //
-#define NS_E_NO_VALID_OUTPUT_STREAM      0xC00D1B70L
+#define NS_E_NO_VALID_OUTPUT_STREAM 0xC00D1B70L
 
 //
 // MessageId: NS_E_NO_VALID_SOURCE_PLUGIN
@@ -4406,7 +4403,7 @@ Notes:
 //
 //  Cannot find valid source plugin to support specified source.%0
 //
-#define NS_E_NO_VALID_SOURCE_PLUGIN      0xC00D1B71L
+#define NS_E_NO_VALID_SOURCE_PLUGIN 0xC00D1B71L
 
 //
 // MessageId: NS_E_NO_ACTIVE_SOURCEGROUP
@@ -4415,7 +4412,7 @@ Notes:
 //
 //  No source group is currently active.%0
 //
-#define NS_E_NO_ACTIVE_SOURCEGROUP       0xC00D1B72L
+#define NS_E_NO_ACTIVE_SOURCEGROUP 0xC00D1B72L
 
 //
 // MessageId: NS_E_NO_SCRIPT_STREAM
@@ -4424,7 +4421,7 @@ Notes:
 //
 //  No script stream is set in current active source group.%0
 //
-#define NS_E_NO_SCRIPT_STREAM            0xC00D1B73L
+#define NS_E_NO_SCRIPT_STREAM 0xC00D1B73L
 
 //
 // MessageId: NS_E_INVALIDCALL_WHILE_ARCHIVAL_RUNNING
@@ -4442,7 +4439,7 @@ Notes:
 //
 //  The MaxPacketSize value specified is invalid.%0
 //
-#define NS_E_INVALIDPACKETSIZE           0xC00D1B75L
+#define NS_E_INVALIDPACKETSIZE 0xC00D1B75L
 
 //
 // MessageId: NS_E_PLUGIN_CLSID_NOTINVALID
@@ -4451,7 +4448,7 @@ Notes:
 //
 //  The plugin CLSID specified is invalid.%0
 //
-#define NS_E_PLUGIN_CLSID_NOTINVALID     0xC00D1B76L
+#define NS_E_PLUGIN_CLSID_NOTINVALID 0xC00D1B76L
 
 //
 // MessageId: NS_E_UNSUPPORTED_ARCHIVETYPE
@@ -4460,7 +4457,7 @@ Notes:
 //
 //  This Archive type is not supported.%0
 //
-#define NS_E_UNSUPPORTED_ARCHIVETYPE     0xC00D1B77L
+#define NS_E_UNSUPPORTED_ARCHIVETYPE 0xC00D1B77L
 
 //
 // MessageId: NS_E_UNSUPPORTED_ARCHIVEOPERATION
@@ -4478,7 +4475,7 @@ Notes:
 //
 //  The local archive filename was not set.%0
 //
-#define NS_E_ARCHIVE_FILENAME_NOTSET     0xC00D1B79L
+#define NS_E_ARCHIVE_FILENAME_NOTSET 0xC00D1B79L
 
 //
 // MessageId: NS_E_SOURCEGROUP_NOTPREPARED
@@ -4487,7 +4484,7 @@ Notes:
 //
 //  The SourceGroup is not yet prepared.%0
 //
-#define NS_E_SOURCEGROUP_NOTPREPARED     0xC00D1B7AL
+#define NS_E_SOURCEGROUP_NOTPREPARED 0xC00D1B7AL
 
 //
 // MessageId: NS_E_PROFILE_MISMATCH
@@ -4496,7 +4493,7 @@ Notes:
 //
 //  Profiles on the sourcegroups do not match.%0
 //
-#define NS_E_PROFILE_MISMATCH            0xC00D1B7BL
+#define NS_E_PROFILE_MISMATCH 0xC00D1B7BL
 
 //
 // MessageId: NS_E_INCORRECTCLIPSETTINGS
@@ -4505,7 +4502,7 @@ Notes:
 //
 //  The clip settings specified on the source are incorrect.%0
 //
-#define NS_E_INCORRECTCLIPSETTINGS       0xC00D1B7CL
+#define NS_E_INCORRECTCLIPSETTINGS 0xC00D1B7CL
 
 //
 // MessageId: NS_E_NOSTATSAVAILABLE
@@ -4514,7 +4511,7 @@ Notes:
 //
 //  No statistics are available at this time.%0
 //
-#define NS_E_NOSTATSAVAILABLE            0xC00D1B7DL
+#define NS_E_NOSTATSAVAILABLE 0xC00D1B7DL
 
 //
 // MessageId: NS_E_NOTARCHIVING
@@ -4523,7 +4520,7 @@ Notes:
 //
 //  Encoder is not archiving.%0
 //
-#define NS_E_NOTARCHIVING                0xC00D1B7EL
+#define NS_E_NOTARCHIVING 0xC00D1B7EL
 
 //
 // MessageId: NS_E_INVALIDCALL_WHILE_ENCODER_STOPPED
@@ -4541,7 +4538,7 @@ Notes:
 //
 //  This SourceGroupCollection does not contain any SourceGroups.%0
 //
-#define NS_E_NOSOURCEGROUPS              0xC00D1B80L
+#define NS_E_NOSOURCEGROUPS 0xC00D1B80L
 
 //
 // MessageId: NS_E_INVALIDINPUTFPS
@@ -4550,7 +4547,7 @@ Notes:
 //
 //  Because this source group does not have a frame rate of 30 frames per second, you cannot use the inverse telecine feature.%0
 //
-#define NS_E_INVALIDINPUTFPS             0xC00D1B81L
+#define NS_E_INVALIDINPUTFPS 0xC00D1B81L
 
 //
 // MessageId: NS_E_NO_DATAVIEW_SUPPORT
@@ -4559,7 +4556,7 @@ Notes:
 //
 //  Internal problems are preventing the preview or postview of your content.%0
 //
-#define NS_E_NO_DATAVIEW_SUPPORT         0xC00D1B82L
+#define NS_E_NO_DATAVIEW_SUPPORT 0xC00D1B82L
 
 //
 // MessageId: NS_E_CODEC_UNAVAILABLE
@@ -4568,7 +4565,7 @@ Notes:
 //
 //  One or more codecs required to open this media could not be found.%0
 //
-#define NS_E_CODEC_UNAVAILABLE           0xC00D1B83L
+#define NS_E_CODEC_UNAVAILABLE 0xC00D1B83L
 
 //
 // MessageId: NS_E_ARCHIVE_SAME_AS_INPUT
@@ -4577,7 +4574,7 @@ Notes:
 //
 //  The output archive file specified is the same as an input source in one of the source groups.%0
 //
-#define NS_E_ARCHIVE_SAME_AS_INPUT       0xC00D1B84L
+#define NS_E_ARCHIVE_SAME_AS_INPUT 0xC00D1B84L
 
 //
 // MessageId: NS_E_SOURCE_NOTSPECIFIED
@@ -4586,7 +4583,7 @@ Notes:
 //
 //  The input source has not been setup completely.%0
 //
-#define NS_E_SOURCE_NOTSPECIFIED         0xC00D1B85L
+#define NS_E_SOURCE_NOTSPECIFIED 0xC00D1B85L
 
 //
 // MessageId: NS_E_NO_REALTIME_TIMECOMPRESSION
@@ -4604,7 +4601,7 @@ Notes:
 //
 //  The Encoder was unable to open this device. Please see the system requirements for more information.%0
 //
-#define NS_E_UNSUPPORTED_ENCODER_DEVICE  0xC00D1B87L
+#define NS_E_UNSUPPORTED_ENCODER_DEVICE 0xC00D1B87L
 
 //
 // MessageId: NS_E_UNEXPECTED_DISPLAY_SETTINGS
@@ -4622,7 +4619,7 @@ Notes:
 //
 //  No audio data has been received for multiple seconds.  Check the audio source and restart the encoder.%0
 //
-#define NS_E_NO_AUDIODATA                0xC00D1B89L
+#define NS_E_NO_AUDIODATA 0xC00D1B89L
 
 //
 // MessageId: NS_E_INPUTSOURCE_PROBLEM
@@ -4631,7 +4628,7 @@ Notes:
 //
 //  One or all of your specified input sources are not working properly. Make sure your input sources are configured correctly.%0
 //
-#define NS_E_INPUTSOURCE_PROBLEM         0xC00D1B8AL
+#define NS_E_INPUTSOURCE_PROBLEM 0xC00D1B8AL
 
 //
 // MessageId: NS_E_WME_VERSION_MISMATCH
@@ -4640,7 +4637,7 @@ Notes:
 //
 //  The supplied configuration file is not supported by this version of the encoder.%0
 //
-#define NS_E_WME_VERSION_MISMATCH        0xC00D1B8BL
+#define NS_E_WME_VERSION_MISMATCH 0xC00D1B8BL
 
 //
 // MessageId: NS_E_NO_REALTIME_PREPROCESS
@@ -4649,7 +4646,7 @@ Notes:
 //
 //  Image pre-process can not be used with real-time encoding.%0
 //
-#define NS_E_NO_REALTIME_PREPROCESS      0xC00D1B8CL
+#define NS_E_NO_REALTIME_PREPROCESS 0xC00D1B8CL
 
 //
 // MessageId: NS_E_NO_REPEAT_PREPROCESS
@@ -4658,7 +4655,7 @@ Notes:
 //
 //  Image pre-process can not be used when source is set to loop.%0
 //
-#define NS_E_NO_REPEAT_PREPROCESS        0xC00D1B8DL
+#define NS_E_NO_REPEAT_PREPROCESS 0xC00D1B8DL
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -4674,7 +4671,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact product support for this application.%0
 //
-#define NS_E_DRM_INVALID_APPLICATION     0xC00D2711L
+#define NS_E_DRM_INVALID_APPLICATION 0xC00D2711L
 
 //
 // MessageId: NS_E_DRM_LICENSE_STORE_ERROR
@@ -4683,7 +4680,7 @@ Notes:
 //
 //  License storage is not working. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_LICENSE_STORE_ERROR     0xC00D2712L
+#define NS_E_DRM_LICENSE_STORE_ERROR 0xC00D2712L
 
 //
 // MessageId: NS_E_DRM_SECURE_STORE_ERROR
@@ -4692,7 +4689,7 @@ Notes:
 //
 //  Secure storage is not working. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_SECURE_STORE_ERROR      0xC00D2713L
+#define NS_E_DRM_SECURE_STORE_ERROR 0xC00D2713L
 
 //
 // MessageId: NS_E_DRM_LICENSE_STORE_SAVE_ERROR
@@ -4719,7 +4716,7 @@ Notes:
 //
 //  The media file is corrupted. Contact the content provider to get a new file.%0
 //
-#define NS_E_DRM_INVALID_CONTENT         0xC00D2716L
+#define NS_E_DRM_INVALID_CONTENT 0xC00D2716L
 
 //
 // MessageId: NS_E_DRM_UNABLE_TO_OPEN_LICENSE
@@ -4728,7 +4725,7 @@ Notes:
 //
 //  The license is corrupted. Acquire a new license.%0
 //
-#define NS_E_DRM_UNABLE_TO_OPEN_LICENSE  0xC00D2717L
+#define NS_E_DRM_UNABLE_TO_OPEN_LICENSE 0xC00D2717L
 
 //
 // MessageId: NS_E_DRM_INVALID_LICENSE
@@ -4737,7 +4734,7 @@ Notes:
 //
 //  The license is corrupted or invalid. Acquire a new license%0
 //
-#define NS_E_DRM_INVALID_LICENSE         0xC00D2718L
+#define NS_E_DRM_INVALID_LICENSE 0xC00D2718L
 
 //
 // MessageId: NS_E_DRM_INVALID_MACHINE
@@ -4746,7 +4743,7 @@ Notes:
 //
 //  Licenses cannot be copied from one computer to another. Use License Management to transfer licenses, or get a new license for the media file.%0
 //
-#define NS_E_DRM_INVALID_MACHINE         0xC00D2719L
+#define NS_E_DRM_INVALID_MACHINE 0xC00D2719L
 
 //
 // MessageId: NS_E_DRM_ENUM_LICENSE_FAILED
@@ -4755,7 +4752,7 @@ Notes:
 //
 //  License storage is not working. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_ENUM_LICENSE_FAILED     0xC00D271BL
+#define NS_E_DRM_ENUM_LICENSE_FAILED 0xC00D271BL
 
 //
 // MessageId: NS_E_DRM_INVALID_LICENSE_REQUEST
@@ -4773,7 +4770,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_UNABLE_TO_INITIALIZE    0xC00D271DL
+#define NS_E_DRM_UNABLE_TO_INITIALIZE 0xC00D271DL
 
 //
 // MessageId: NS_E_DRM_UNABLE_TO_ACQUIRE_LICENSE
@@ -4800,7 +4797,7 @@ Notes:
 //
 //  The requested operation cannot be performed on this file.%0
 //
-#define NS_E_DRM_NO_RIGHTS               0xC00D2720L
+#define NS_E_DRM_NO_RIGHTS 0xC00D2720L
 
 //
 // MessageId: NS_E_DRM_KEY_ERROR
@@ -4809,7 +4806,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact Microsoft product support.%0.
 //
-#define NS_E_DRM_KEY_ERROR               0xC00D2721L
+#define NS_E_DRM_KEY_ERROR 0xC00D2721L
 
 //
 // MessageId: NS_E_DRM_ENCRYPT_ERROR
@@ -4818,7 +4815,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_ENCRYPT_ERROR           0xC00D2722L
+#define NS_E_DRM_ENCRYPT_ERROR 0xC00D2722L
 
 //
 // MessageId: NS_E_DRM_DECRYPT_ERROR
@@ -4827,7 +4824,7 @@ Notes:
 //
 //  The media file is corrupted. Contact the content provider to get a new file.%0
 //
-#define NS_E_DRM_DECRYPT_ERROR           0xC00D2723L
+#define NS_E_DRM_DECRYPT_ERROR 0xC00D2723L
 
 //
 // MessageId: NS_E_DRM_LICENSE_INVALID_XML
@@ -4836,7 +4833,7 @@ Notes:
 //
 //  The license is corrupted. Acquire a new license.%0
 //
-#define NS_E_DRM_LICENSE_INVALID_XML     0xC00D2725L
+#define NS_E_DRM_LICENSE_INVALID_XML 0xC00D2725L
 
 //
 // MessageId: NS_S_DRM_LICENSE_ACQUIRED
@@ -4845,7 +4842,7 @@ Notes:
 //
 //  Status message: The license was acquired.%0
 //
-#define NS_S_DRM_LICENSE_ACQUIRED        0x000D2726L
+#define NS_S_DRM_LICENSE_ACQUIRED 0x000D2726L
 
 //
 // MessageId: NS_S_DRM_INDIVIDUALIZED
@@ -4854,7 +4851,7 @@ Notes:
 //
 //  Status message: The security upgrade has been completed.%0
 //
-#define NS_S_DRM_INDIVIDUALIZED          0x000D2727L
+#define NS_S_DRM_INDIVIDUALIZED 0x000D2727L
 
 //
 // MessageId: NS_E_DRM_NEEDS_INDIVIDUALIZATION
@@ -4872,7 +4869,7 @@ Notes:
 //
 //  The application cannot perform this action. Contact product support for this application.%0
 //
-#define NS_E_DRM_ACTION_NOT_QUERIED      0xC00D272AL
+#define NS_E_DRM_ACTION_NOT_QUERIED 0xC00D272AL
 
 //
 // MessageId: NS_E_DRM_ACQUIRING_LICENSE
@@ -4881,7 +4878,7 @@ Notes:
 //
 //  You cannot begin a new license acquisition process until the current one has been completed.%0
 //
-#define NS_E_DRM_ACQUIRING_LICENSE       0xC00D272BL
+#define NS_E_DRM_ACQUIRING_LICENSE 0xC00D272BL
 
 //
 // MessageId: NS_E_DRM_INDIVIDUALIZING
@@ -4890,7 +4887,7 @@ Notes:
 //
 //  You cannot begin a new security upgrade until the current one has been completed.%0
 //
-#define NS_E_DRM_INDIVIDUALIZING         0xC00D272CL
+#define NS_E_DRM_INDIVIDUALIZING 0xC00D272CL
 
 //
 // MessageId: NS_E_DRM_PARAMETERS_MISMATCHED
@@ -4899,7 +4896,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact Microsoft product support.%0.
 //
-#define NS_E_DRM_PARAMETERS_MISMATCHED   0xC00D272FL
+#define NS_E_DRM_PARAMETERS_MISMATCHED 0xC00D272FL
 
 //
 // MessageId: NS_E_DRM_UNABLE_TO_CREATE_LICENSE_OBJECT
@@ -4962,7 +4959,7 @@ Notes:
 //
 //  The security upgrade failed. Try again later.%0
 //
-#define NS_E_DRM_INDIVIDUALIZE_ERROR     0xC00D2736L
+#define NS_E_DRM_INDIVIDUALIZE_ERROR 0xC00D2736L
 
 //
 // MessageId: NS_E_DRM_LICENSE_OPEN_ERROR
@@ -4971,7 +4968,7 @@ Notes:
 //
 //  License storage is not working. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_LICENSE_OPEN_ERROR      0xC00D2737L
+#define NS_E_DRM_LICENSE_OPEN_ERROR 0xC00D2737L
 
 //
 // MessageId: NS_E_DRM_LICENSE_CLOSE_ERROR
@@ -4980,7 +4977,7 @@ Notes:
 //
 //  License storage is not working. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_LICENSE_CLOSE_ERROR     0xC00D2738L
+#define NS_E_DRM_LICENSE_CLOSE_ERROR 0xC00D2738L
 
 //
 // MessageId: NS_E_DRM_GET_LICENSE_ERROR
@@ -4989,7 +4986,7 @@ Notes:
 //
 //  License storage is not working. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_GET_LICENSE_ERROR       0xC00D2739L
+#define NS_E_DRM_GET_LICENSE_ERROR 0xC00D2739L
 
 //
 // MessageId: NS_E_DRM_QUERY_ERROR
@@ -4998,7 +4995,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact Microsoft product support.%0.
 //
-#define NS_E_DRM_QUERY_ERROR             0xC00D273AL
+#define NS_E_DRM_QUERY_ERROR 0xC00D273AL
 
 //
 // MessageId: NS_E_DRM_REPORT_ERROR
@@ -5007,7 +5004,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact product support for this application.%0
 //
-#define NS_E_DRM_REPORT_ERROR            0xC00D273BL
+#define NS_E_DRM_REPORT_ERROR 0xC00D273BL
 
 //
 // MessageId: NS_E_DRM_GET_LICENSESTRING_ERROR
@@ -5034,7 +5031,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Try again later.%0
 //
-#define NS_E_DRM_MONITOR_ERROR           0xC00D273EL
+#define NS_E_DRM_MONITOR_ERROR 0xC00D273EL
 
 //
 // MessageId: NS_E_DRM_UNABLE_TO_SET_PARAMETER
@@ -5052,7 +5049,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact Microsoft product support.%0.
 //
-#define NS_E_DRM_INVALID_APPDATA         0xC00D2740L
+#define NS_E_DRM_INVALID_APPDATA 0xC00D2740L
 
 //
 // MessageId: NS_E_DRM_INVALID_APPDATA_VERSION
@@ -5070,7 +5067,7 @@ Notes:
 //
 //  Licenses are already backed up in this location.%0
 //
-#define NS_E_DRM_BACKUP_EXISTS           0xC00D2742L
+#define NS_E_DRM_BACKUP_EXISTS 0xC00D2742L
 
 //
 // MessageId: NS_E_DRM_BACKUP_CORRUPT
@@ -5079,7 +5076,7 @@ Notes:
 //
 //  One or more backed-up licenses are missing or corrupt.%0
 //
-#define NS_E_DRM_BACKUP_CORRUPT          0xC00D2743L
+#define NS_E_DRM_BACKUP_CORRUPT 0xC00D2743L
 
 //
 // MessageId: NS_E_DRM_BACKUPRESTORE_BUSY
@@ -5088,7 +5085,7 @@ Notes:
 //
 //  You cannot begin a new backup process until the current process has been completed.%0
 //
-#define NS_E_DRM_BACKUPRESTORE_BUSY      0xC00D2744L
+#define NS_E_DRM_BACKUPRESTORE_BUSY 0xC00D2744L
 
 //
 // MessageId: NS_S_DRM_MONITOR_CANCELLED
@@ -5097,7 +5094,7 @@ Notes:
 //
 //  Status message: License monitoring has been cancelled.%0
 //
-#define NS_S_DRM_MONITOR_CANCELLED       0x000D2746L
+#define NS_S_DRM_MONITOR_CANCELLED 0x000D2746L
 
 //
 // MessageId: NS_S_DRM_ACQUIRE_CANCELLED
@@ -5106,7 +5103,7 @@ Notes:
 //
 //  Status message: License acquisition has been cancelled.%0
 //
-#define NS_S_DRM_ACQUIRE_CANCELLED       0x000D2747L
+#define NS_S_DRM_ACQUIRE_CANCELLED 0x000D2747L
 
 //
 // MessageId: NS_E_DRM_LICENSE_UNUSABLE
@@ -5115,7 +5112,7 @@ Notes:
 //
 //  The license is invalid. Contact the content provider for further assistance.%0
 //
-#define NS_E_DRM_LICENSE_UNUSABLE        0xC00D2748L
+#define NS_E_DRM_LICENSE_UNUSABLE 0xC00D2748L
 
 //
 // MessageId: NS_E_DRM_INVALID_PROPERTY
@@ -5124,7 +5121,7 @@ Notes:
 //
 //  A required property was not set by the application. Contact product support for this application.%0.
 //
-#define NS_E_DRM_INVALID_PROPERTY        0xC00D2749L
+#define NS_E_DRM_INVALID_PROPERTY 0xC00D2749L
 
 //
 // MessageId: NS_E_DRM_SECURE_STORE_NOT_FOUND
@@ -5133,7 +5130,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component of this application. Try to acquire a license again.%0
 //
-#define NS_E_DRM_SECURE_STORE_NOT_FOUND  0xC00D274AL
+#define NS_E_DRM_SECURE_STORE_NOT_FOUND 0xC00D274AL
 
 //
 // MessageId: NS_E_DRM_CACHED_CONTENT_ERROR
@@ -5142,7 +5139,7 @@ Notes:
 //
 //  A license cannot be found for this media file. Use License Management to transfer a license for this file from the original computer, or acquire a new license.%0
 //
-#define NS_E_DRM_CACHED_CONTENT_ERROR    0xC00D274BL
+#define NS_E_DRM_CACHED_CONTENT_ERROR 0xC00D274BL
 
 //
 // MessageId: NS_E_DRM_INDIVIDUALIZATION_INCOMPLETE
@@ -5160,7 +5157,7 @@ Notes:
 //
 //  Certified driver components are required to play this media file. Contact Windows Update to see whether updated drivers are available for your hardware.%0
 //
-#define NS_E_DRM_DRIVER_AUTH_FAILURE     0xC00D274DL
+#define NS_E_DRM_DRIVER_AUTH_FAILURE 0xC00D274DL
 
 //
 // MessageId: NS_E_DRM_NEED_UPGRADE
@@ -5169,7 +5166,7 @@ Notes:
 //
 //  A new version of the Digital Rights Management component is required. Contact product support for this application to get the latest version.%0
 //
-#define NS_E_DRM_NEED_UPGRADE            0xC00D274EL
+#define NS_E_DRM_NEED_UPGRADE 0xC00D274EL
 
 //
 // MessageId: NS_E_DRM_REOPEN_CONTENT
@@ -5178,7 +5175,7 @@ Notes:
 //
 //  Status message: Reopen the file.%0
 //
-#define NS_E_DRM_REOPEN_CONTENT          0xC00D274FL
+#define NS_E_DRM_REOPEN_CONTENT 0xC00D274FL
 
 //
 // MessageId: NS_E_DRM_DRIVER_DIGIOUT_FAILURE
@@ -5187,7 +5184,7 @@ Notes:
 //
 //  Certain driver functionality is required to play this media file. Contact Windows Update to see whether updated drivers are available for your hardware.%0
 //
-#define NS_E_DRM_DRIVER_DIGIOUT_FAILURE  0xC00D2750L
+#define NS_E_DRM_DRIVER_DIGIOUT_FAILURE 0xC00D2750L
 
 //
 // MessageId: NS_E_DRM_INVALID_SECURESTORE_PASSWORD
@@ -5205,7 +5202,7 @@ Notes:
 //
 //  A problem has occurred in the Digital Rights Management component. Contact Microsoft product support.%0.
 //
-#define NS_E_DRM_APPCERT_REVOKED         0xC00D2752L
+#define NS_E_DRM_APPCERT_REVOKED 0xC00D2752L
 
 //
 // MessageId: NS_E_DRM_RESTORE_FRAUD
@@ -5214,7 +5211,7 @@ Notes:
 //
 //  You cannot restore your license(s).%0
 //
-#define NS_E_DRM_RESTORE_FRAUD           0xC00D2753L
+#define NS_E_DRM_RESTORE_FRAUD 0xC00D2753L
 
 //
 // MessageId: NS_E_DRM_HARDWARE_INCONSISTENT
@@ -5223,7 +5220,7 @@ Notes:
 //
 //  The licenses for your media files are corrupted. Contact Microsoft product support.%0
 //
-#define NS_E_DRM_HARDWARE_INCONSISTENT   0xC00D2754L
+#define NS_E_DRM_HARDWARE_INCONSISTENT 0xC00D2754L
 
 //
 // MessageId: NS_E_DRM_SDMI_TRIGGER
@@ -5232,7 +5229,7 @@ Notes:
 //
 //  To transfer this media file, you must upgrade the application.%0
 //
-#define NS_E_DRM_SDMI_TRIGGER            0xC00D2755L
+#define NS_E_DRM_SDMI_TRIGGER 0xC00D2755L
 
 //
 // MessageId: NS_E_DRM_SDMI_NOMORECOPIES
@@ -5241,7 +5238,7 @@ Notes:
 //
 //  You cannot make any more copies of this media file.%0
 //
-#define NS_E_DRM_SDMI_NOMORECOPIES       0xC00D2756L
+#define NS_E_DRM_SDMI_NOMORECOPIES 0xC00D2756L
 
 //
 // MessageId: NS_E_DRM_UNABLE_TO_CREATE_HEADER_OBJECT
@@ -5261,7 +5258,7 @@ Notes:
 //
 #define NS_E_DRM_UNABLE_TO_CREATE_KEYS_OBJECT 0xC00D2758L
 
-;// This error is never shown to user but needed for program logic.
+; // This error is never shown to user but needed for program logic.
 //
 // MessageId: NS_E_DRM_LICENSE_NOTACQUIRED
 //
@@ -5269,7 +5266,7 @@ Notes:
 //
 //  Unable to obtain license.%0
 //
-#define NS_E_DRM_LICENSE_NOTACQUIRED     0xC00D2759L
+#define NS_E_DRM_LICENSE_NOTACQUIRED 0xC00D2759L
 
 //
 // MessageId: NS_E_DRM_UNABLE_TO_CREATE_CODING_OBJECT
@@ -5296,7 +5293,7 @@ Notes:
 //
 //  The buffer supplied is not sufficient.%0.
 //
-#define NS_E_DRM_BUFFER_TOO_SMALL        0xC00D275CL
+#define NS_E_DRM_BUFFER_TOO_SMALL 0xC00D275CL
 
 //
 // MessageId: NS_E_DRM_UNSUPPORTED_PROPERTY
@@ -5305,7 +5302,7 @@ Notes:
 //
 //  The property requested is not supported.%0.
 //
-#define NS_E_DRM_UNSUPPORTED_PROPERTY    0xC00D275DL
+#define NS_E_DRM_UNSUPPORTED_PROPERTY 0xC00D275DL
 
 //
 // MessageId: NS_E_DRM_ERROR_BAD_NET_RESP
@@ -5314,7 +5311,7 @@ Notes:
 //
 //  The specified server cannot perform the requested operation.%0.
 //
-#define NS_E_DRM_ERROR_BAD_NET_RESP      0xC00D275EL
+#define NS_E_DRM_ERROR_BAD_NET_RESP 0xC00D275EL
 
 //
 // MessageId: NS_E_DRM_STORE_NOTALLSTORED
@@ -5323,7 +5320,7 @@ Notes:
 //
 //  Some of the licenses could not be stored.%0.
 //
-#define NS_E_DRM_STORE_NOTALLSTORED      0xC00D275FL
+#define NS_E_DRM_STORE_NOTALLSTORED 0xC00D275FL
 
 //
 // MessageId: NS_E_DRM_SECURITY_COMPONENT_SIGNATURE_INVALID
@@ -5341,7 +5338,7 @@ Notes:
 //
 //  Invalid or corrupt data was encountered.%0
 //
-#define NS_E_DRM_INVALID_DATA            0xC00D2761L
+#define NS_E_DRM_INVALID_DATA 0xC00D2761L
 
 //
 // MessageId: NS_E_DRM_UNABLE_TO_CONTACT_SERVER
@@ -5361,9 +5358,9 @@ Notes:
 //
 #define NS_E_DRM_UNABLE_TO_CREATE_AUTHENTICATION_OBJECT 0xC00D2763L
 
-;// License Reasons Section
-;// Error Codes why a license is not usable. Reserve 10200..10300 for this purpose.
-;// 10200..10249 is for license reported reasons. 10250..10300 is for client detected reasons.
+; // License Reasons Section
+; // Error Codes why a license is not usable. Reserve 10200..10300 for this purpose.
+; // 10200..10249 is for license reported reasons. 10250..10300 is for client detected reasons.
 //
 // MessageId: NS_E_DRM_LICENSE_EXPIRED
 //
@@ -5371,7 +5368,7 @@ Notes:
 //
 //  The license for this file has expired and is no longer valid. Contact your content provider for further assistance.%0
 //
-#define NS_E_DRM_LICENSE_EXPIRED         0xC00D27D8L
+#define NS_E_DRM_LICENSE_EXPIRED 0xC00D27D8L
 
 //
 // MessageId: NS_E_DRM_LICENSE_NOTENABLED
@@ -5380,7 +5377,7 @@ Notes:
 //
 //  The license for this file is not valid yet, but will be at a future date.%0
 //
-#define NS_E_DRM_LICENSE_NOTENABLED      0xC00D27D9L
+#define NS_E_DRM_LICENSE_NOTENABLED 0xC00D27D9L
 
 //
 // MessageId: NS_E_DRM_LICENSE_APPSECLOW
@@ -5389,7 +5386,7 @@ Notes:
 //
 //  The license for this file requires a higher level of security than the player you are currently using has. Try using a different player or download a newer version of your current player.%0
 //
-#define NS_E_DRM_LICENSE_APPSECLOW       0xC00D27DAL
+#define NS_E_DRM_LICENSE_APPSECLOW 0xC00D27DAL
 
 //
 // MessageId: NS_E_DRM_STORE_NEEDINDI
@@ -5398,7 +5395,7 @@ Notes:
 //
 //  The license cannot be stored as it requires security upgrade of Digital Rights Management component.%0.
 //
-#define NS_E_DRM_STORE_NEEDINDI          0xC00D27DBL
+#define NS_E_DRM_STORE_NEEDINDI 0xC00D27DBL
 
 //
 // MessageId: NS_E_DRM_STORE_NOTALLOWED
@@ -5407,7 +5404,7 @@ Notes:
 //
 //  Your machine does not meet the requirements for storing the license.%0.
 //
-#define NS_E_DRM_STORE_NOTALLOWED        0xC00D27DCL
+#define NS_E_DRM_STORE_NOTALLOWED 0xC00D27DCL
 
 //
 // MessageId: NS_E_DRM_LICENSE_APP_NOTALLOWED
@@ -5416,7 +5413,7 @@ Notes:
 //
 //  The license for this file requires an upgraded version of your player or a different player.%0.
 //
-#define NS_E_DRM_LICENSE_APP_NOTALLOWED  0xC00D27DDL
+#define NS_E_DRM_LICENSE_APP_NOTALLOWED 0xC00D27DDL
 
 //
 // MessageId: NS_S_DRM_NEEDS_INDIVIDUALIZATION
@@ -5434,7 +5431,7 @@ Notes:
 //
 //  The license server's certificate expired. Make sure your system clock is set correctly. Contact your content provider for further assistance. %0.
 //
-#define NS_E_DRM_LICENSE_CERT_EXPIRED    0xC00D27DFL
+#define NS_E_DRM_LICENSE_CERT_EXPIRED 0xC00D27DFL
 
 //
 // MessageId: NS_E_DRM_LICENSE_SECLOW
@@ -5443,7 +5440,7 @@ Notes:
 //
 //  The license for this file requires a higher level of security than the player you are currently using has. Try using a different player or download a newer version of your current player.%0
 //
-#define NS_E_DRM_LICENSE_SECLOW          0xC00D27E0L
+#define NS_E_DRM_LICENSE_SECLOW 0xC00D27E0L
 
 //
 // MessageId: NS_E_DRM_LICENSE_CONTENT_REVOKED
@@ -5461,7 +5458,7 @@ Notes:
 //
 //  The license for this file requires a feature that is not supported in your current player or operating system. You can try with newer version of your current player or contact your content provider for further assistance.%0
 //
-#define NS_E_DRM_LICENSE_NOSAP           0xC00D280AL
+#define NS_E_DRM_LICENSE_NOSAP 0xC00D280AL
 
 //
 // MessageId: NS_E_DRM_LICENSE_NOSVP
@@ -5470,7 +5467,7 @@ Notes:
 //
 //  The license for this file requires a feature that is not supported in your current player or operating system. You can try with newer version of your current player or contact your content provider for further assistance.%0
 //
-#define NS_E_DRM_LICENSE_NOSVP           0xC00D280BL
+#define NS_E_DRM_LICENSE_NOSVP 0xC00D280BL
 
 //
 // MessageId: NS_E_DRM_LICENSE_NOWDM
@@ -5479,7 +5476,7 @@ Notes:
 //
 //  The license for this file requires Windows Driver Model (WDM) audio drivers. Contact your sound card manufacturer for further assistance.%0
 //
-#define NS_E_DRM_LICENSE_NOWDM           0xC00D280CL
+#define NS_E_DRM_LICENSE_NOWDM 0xC00D280CL
 
 //
 // MessageId: NS_E_DRM_LICENSE_NOTRUSTEDCODEC
@@ -5488,9 +5485,9 @@ Notes:
 //
 //  The license for this file requires a higher level of security than the player you are currently using has. Try using a different player or download a newer version of your current player.%0
 //
-#define NS_E_DRM_LICENSE_NOTRUSTEDCODEC  0xC00D280DL
+#define NS_E_DRM_LICENSE_NOTRUSTEDCODEC 0xC00D280DL
 
-;// End of License Reasons Section
+; // End of License Reasons Section
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -5506,7 +5503,7 @@ Notes:
 //
 //  The requested operation is successful.  Some cleanup will not be complete until the system is rebooted.%0
 //
-#define NS_S_REBOOT_RECOMMENDED          0x000D2AF8L
+#define NS_S_REBOOT_RECOMMENDED 0x000D2AF8L
 
 //
 // MessageId: NS_S_REBOOT_REQUIRED
@@ -5515,7 +5512,7 @@ Notes:
 //
 //  The requested operation is successful.  The system will not function correctly until the system is rebooted.%0
 //
-#define NS_S_REBOOT_REQUIRED             0x000D2AF9L
+#define NS_S_REBOOT_REQUIRED 0x000D2AF9L
 
 //
 // MessageId: NS_E_REBOOT_RECOMMENDED
@@ -5524,7 +5521,7 @@ Notes:
 //
 //  The requested operation failed.  Some cleanup will not be complete until the system is rebooted.%0
 //
-#define NS_E_REBOOT_RECOMMENDED          0xC00D2AFAL
+#define NS_E_REBOOT_RECOMMENDED 0xC00D2AFAL
 
 //
 // MessageId: NS_E_REBOOT_REQUIRED
@@ -5533,7 +5530,7 @@ Notes:
 //
 //  The requested operation failed.  The system will not function correctly until the system is rebooted.%0
 //
-#define NS_E_REBOOT_REQUIRED             0xC00D2AFBL
+#define NS_E_REBOOT_REQUIRED 0xC00D2AFBL
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -5549,7 +5546,7 @@ Notes:
 //
 //  The specified protocol is not supported.%0
 //
-#define NS_E_UNKNOWN_PROTOCOL            0xC00D2EE0L
+#define NS_E_UNKNOWN_PROTOCOL 0xC00D2EE0L
 
 //
 // MessageId: NS_E_REDIRECT_TO_PROXY
@@ -5558,7 +5555,7 @@ Notes:
 //
 //  The client is redirected to a proxy server.%0
 //
-#define NS_E_REDIRECT_TO_PROXY           0xC00D2EE1L
+#define NS_E_REDIRECT_TO_PROXY 0xC00D2EE1L
 
 //
 // MessageId: NS_E_INTERNAL_SERVER_ERROR
@@ -5567,7 +5564,7 @@ Notes:
 //
 //  The server encountered an unexpected condition which prevented it from fulfilling the request.%0
 //
-#define NS_E_INTERNAL_SERVER_ERROR       0xC00D2EE2L
+#define NS_E_INTERNAL_SERVER_ERROR 0xC00D2EE2L
 
 //
 // MessageId: NS_E_BAD_REQUEST
@@ -5576,7 +5573,7 @@ Notes:
 //
 //  The request could not be understood by the server.%0
 //
-#define NS_E_BAD_REQUEST                 0xC00D2EE3L
+#define NS_E_BAD_REQUEST 0xC00D2EE3L
 
 //
 // MessageId: NS_E_ERROR_FROM_PROXY
@@ -5585,7 +5582,7 @@ Notes:
 //
 //  The proxy experienced an error while attempting to contact the media server.%0
 //
-#define NS_E_ERROR_FROM_PROXY            0xC00D2EE4L
+#define NS_E_ERROR_FROM_PROXY 0xC00D2EE4L
 
 //
 // MessageId: NS_E_PROXY_TIMEOUT
@@ -5594,7 +5591,7 @@ Notes:
 //
 //  The proxy did not receive a timely response while attempting to contact the media server.%0
 //
-#define NS_E_PROXY_TIMEOUT               0xC00D2EE5L
+#define NS_E_PROXY_TIMEOUT 0xC00D2EE5L
 
 //
 // MessageId: NS_E_SERVER_UNAVAILABLE
@@ -5603,7 +5600,7 @@ Notes:
 //
 //  The server is currently unable to handle the request due to a temporary overloading or maintenance of the server.%0
 //
-#define NS_E_SERVER_UNAVAILABLE          0xC00D2EE6L
+#define NS_E_SERVER_UNAVAILABLE 0xC00D2EE6L
 
 //
 // MessageId: NS_E_REFUSED_BY_SERVER
@@ -5612,7 +5609,7 @@ Notes:
 //
 //  The server is refusing to fulfill the requested operation.%0
 //
-#define NS_E_REFUSED_BY_SERVER           0xC00D2EE7L
+#define NS_E_REFUSED_BY_SERVER 0xC00D2EE7L
 
 //
 // MessageId: NS_E_INCOMPATIBLE_SERVER
@@ -5621,7 +5618,7 @@ Notes:
 //
 //  The server is not a compatible streaming media server.%0
 //
-#define NS_E_INCOMPATIBLE_SERVER         0xC00D2EE8L
+#define NS_E_INCOMPATIBLE_SERVER 0xC00D2EE8L
 
 //
 // MessageId: NS_E_MULTICAST_DISABLED
@@ -5630,7 +5627,7 @@ Notes:
 //
 //  The content cannot be streamed because the Multicast protocol has been disabled.%0
 //
-#define NS_E_MULTICAST_DISABLED          0xC00D2EE9L
+#define NS_E_MULTICAST_DISABLED 0xC00D2EE9L
 
 //
 // MessageId: NS_E_INVALID_REDIRECT
@@ -5639,7 +5636,7 @@ Notes:
 //
 //  The server redirected the player to an invalid location.%0
 //
-#define NS_E_INVALID_REDIRECT            0xC00D2EEAL
+#define NS_E_INVALID_REDIRECT 0xC00D2EEAL
 
 //
 // MessageId: NS_E_ALL_PROTOCOLS_DISABLED
@@ -5648,7 +5645,7 @@ Notes:
 //
 //  The content cannot be streamed because all protocols have been disabled.%0
 //
-#define NS_E_ALL_PROTOCOLS_DISABLED      0xC00D2EEBL
+#define NS_E_ALL_PROTOCOLS_DISABLED 0xC00D2EEBL
 
 //
 // MessageId: NS_E_MSBD_NO_LONGER_SUPPORTED
@@ -5657,7 +5654,7 @@ Notes:
 //
 //  The MSBD protocol is no longer supported. Please use HTTP to connect to the Windows Media stream.%0
 //
-#define NS_E_MSBD_NO_LONGER_SUPPORTED    0xC00D2EECL
+#define NS_E_MSBD_NO_LONGER_SUPPORTED 0xC00D2EECL
 
 //
 // MessageId: NS_E_PROXY_NOT_FOUND
@@ -5666,7 +5663,7 @@ Notes:
 //
 //  The proxy server could not be located. Please check your proxy server configuration.%0
 //
-#define NS_E_PROXY_NOT_FOUND             0xC00D2EEDL
+#define NS_E_PROXY_NOT_FOUND 0xC00D2EEDL
 
 //
 // MessageId: NS_E_CANNOT_CONNECT_TO_PROXY
@@ -5675,7 +5672,7 @@ Notes:
 //
 //  Unable to establish a connection to the proxy server. Please check your proxy server configuration.%0
 //
-#define NS_E_CANNOT_CONNECT_TO_PROXY     0xC00D2EEEL
+#define NS_E_CANNOT_CONNECT_TO_PROXY 0xC00D2EEEL
 
 //
 // MessageId: NS_E_SERVER_DNS_TIMEOUT
@@ -5684,7 +5681,7 @@ Notes:
 //
 //  Unable to locate the media server. The operation timed out.%0
 //
-#define NS_E_SERVER_DNS_TIMEOUT          0xC00D2EEFL
+#define NS_E_SERVER_DNS_TIMEOUT 0xC00D2EEFL
 
 //
 // MessageId: NS_E_PROXY_DNS_TIMEOUT
@@ -5693,7 +5690,7 @@ Notes:
 //
 //  Unable to locate the proxy server. The operation timed out.%0
 //
-#define NS_E_PROXY_DNS_TIMEOUT           0xC00D2EF0L
+#define NS_E_PROXY_DNS_TIMEOUT 0xC00D2EF0L
 
 //
 // MessageId: NS_E_CLOSED_ON_SUSPEND
@@ -5702,8 +5699,7 @@ Notes:
 //
 //  Media closed because Windows was shut down.%0
 //
-#define NS_E_CLOSED_ON_SUSPEND           0xC00D2EF1L
+#define NS_E_CLOSED_ON_SUSPEND 0xC00D2EF1L
 
 
 #endif // _NSERROR_H
-

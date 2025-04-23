@@ -26,10 +26,7 @@ Revision History:
 #include "ki.h"
 
 BOOLEAN
-KiSwapProcess (
-    IN PKPROCESS NewProcess,
-    IN PKPROCESS OldProcess
-    )
+KiSwapProcess(IN PKPROCESS NewProcess, IN PKPROCESS OldProcess)
 
 /*++
 

@@ -35,37 +35,29 @@ Revision History:
 #pragma alloc_text(PAGE, IoInitializeRemoveLockEx)
 #pragma alloc_text(PAGE, IoReleaseRemoveLockAndWaitEx)
 
-#define MinutesToTicks(x) \
-        (ULONGLONG) KeQueryTimeIncrement() * \
-        10 * \
-        1000 * \
-        1000 * \
-        60 * \
-        x
+#define MinutesToTicks(x) (ULONGLONG) KeQueryTimeIncrement() * 10 * 1000 * 1000 * 60 * x
 
 // 10 -> microseconds, 1000 -> miliseconds, 1000 -> seconds, 60 -> minutes
 
 
-typedef struct _IO_PRIVATE_REMOVE_LOCK {
+typedef struct _IO_PRIVATE_REMOVE_LOCK
+{
     IO_REMOVE_LOCK_COMMON_BLOCK Common;
     IO_REMOVE_LOCK_DBG_BLOCK Dbg;
 } IO_PRIVATE_REMOVE_LOCK, *PIO_PRIVATE_REMOVE_LOCK;
 
 
-#define FREESIZE sizeof (IO_REMOVE_LOCK_COMMON_BLOCK)
-#define CHECKEDSIZE sizeof (IO_PRIVATE_REMOVE_LOCK)
+#define FREESIZE sizeof(IO_REMOVE_LOCK_COMMON_BLOCK)
+#define CHECKEDSIZE sizeof(IO_PRIVATE_REMOVE_LOCK)
 
 
 NTSYSAPI
-VOID
-NTAPI
-IoInitializeRemoveLockEx(
-    IN  PIO_REMOVE_LOCK PublicLock,
-    IN  ULONG   AllocateTag, // Used only on checked kernels
-    IN  ULONG   MaxLockedMinutes, // Used only on checked kernels
-    IN  ULONG   HighWatermark, // Used only on checked kernels
-    IN  ULONG   RemlockSize // are we checked or free
-    )
+VOID NTAPI IoInitializeRemoveLockEx(IN PIO_REMOVE_LOCK PublicLock,
+                                    IN ULONG AllocateTag,      // Used only on checked kernels
+                                    IN ULONG MaxLockedMinutes, // Used only on checked kernels
+                                    IN ULONG HighWatermark,    // Used only on checked kernels
+                                    IN ULONG RemlockSize       // are we checked or free
+)
 /*++
 
 Routine Description:
@@ -74,20 +66,22 @@ Routine Description:
 
 --*/
 {
-    PIO_PRIVATE_REMOVE_LOCK Lock = (PIO_PRIVATE_REMOVE_LOCK) PublicLock;
+    PIO_PRIVATE_REMOVE_LOCK Lock = (PIO_PRIVATE_REMOVE_LOCK)PublicLock;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    if (Lock) {
+    if (Lock)
+    {
 
-        switch (RemlockSize) {
+        switch (RemlockSize)
+        {
 
         case CHECKEDSIZE:
             Lock->Dbg.Signature = IO_REMOVE_LOCK_SIG;
             Lock->Dbg.HighWatermark = HighWatermark;
-            Lock->Dbg.MaxLockedTicks = MinutesToTicks (MaxLockedMinutes);
+            Lock->Dbg.MaxLockedTicks = MinutesToTicks(MaxLockedMinutes);
             Lock->Dbg.AllocateTag = AllocateTag;
-            KeInitializeSpinLock (&Lock->Dbg.Spin);
+            KeInitializeSpinLock(&Lock->Dbg.Spin);
             Lock->Dbg.LowMemoryCount = 0;
             Lock->Dbg.Blocks = NULL;
 
@@ -97,9 +91,7 @@ Routine Description:
         case FREESIZE:
             Lock->Common.Removed = FALSE;
             Lock->Common.IoCount = 1;
-            KeInitializeEvent(&Lock->Common.RemoveEvent,
-                              SynchronizationEvent,
-                              FALSE);
+            KeInitializeEvent(&Lock->Common.RemoveEvent, SynchronizationEvent, FALSE);
             break;
 
         default:
@@ -108,17 +100,13 @@ Routine Description:
     }
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-IoAcquireRemoveLockEx(
-    IN PIO_REMOVE_LOCK PublicLock,
-    IN OPTIONAL PVOID   Tag,
-    IN PCSTR            File,
-    IN ULONG            Line,
-    IN ULONG            RemlockSize // are we checked or free
-    )
+IoAcquireRemoveLockEx(IN PIO_REMOVE_LOCK PublicLock, IN OPTIONAL PVOID Tag, IN PCSTR File, IN ULONG Line,
+                      IN ULONG RemlockSize // are we checked or free
+)
 
 /*++
 
@@ -157,9 +145,9 @@ Return Value:
 --*/
 
 {
-    PIO_PRIVATE_REMOVE_LOCK Lock = (PIO_PRIVATE_REMOVE_LOCK) PublicLock;
-    LONG        lockValue;
-    NTSTATUS    status;
+    PIO_PRIVATE_REMOVE_LOCK Lock = (PIO_PRIVATE_REMOVE_LOCK)PublicLock;
+    LONG lockValue;
+    NTSTATUS status;
 
     PIO_REMOVE_LOCK_TRACKING_BLOCK trackingBlock;
 
@@ -169,27 +157,26 @@ Return Value:
 
     lockValue = InterlockedIncrement(&Lock->Common.IoCount);
 
-    ASSERTMSG("IoAcquireRemoveLock - lock value was negative : ",
-              (lockValue > 0));
+    ASSERTMSG("IoAcquireRemoveLock - lock value was negative : ", (lockValue > 0));
 
-    if (! Lock->Common.Removed) {
+    if (!Lock->Common.Removed)
+    {
 
-        switch (RemlockSize) {
+        switch (RemlockSize)
+        {
         case CHECKEDSIZE:
 
             ASSERTMSG("RemoveLock increased to meet LockHighWatermark",
-                      ((0 == Lock->Dbg.HighWatermark) ||
-                       (lockValue <= Lock->Dbg.HighWatermark)));
+                      ((0 == Lock->Dbg.HighWatermark) || (lockValue <= Lock->Dbg.HighWatermark)));
 
-            trackingBlock = ExAllocatePoolWithTag(
-                                NonPagedPool,
-                                sizeof(IO_REMOVE_LOCK_TRACKING_BLOCK),
-                                Lock->Dbg.AllocateTag);
+            trackingBlock =
+                ExAllocatePoolWithTag(NonPagedPool, sizeof(IO_REMOVE_LOCK_TRACKING_BLOCK), Lock->Dbg.AllocateTag);
 
-            if (NULL == trackingBlock) {
+            if (NULL == trackingBlock)
+            {
 
                 // ASSERTMSG ("insufficient resources", FALSE);
-                InterlockedIncrement (& Lock->Dbg.LowMemoryCount);
+                InterlockedIncrement(&Lock->Dbg.LowMemoryCount);
                 //
                 // Let the acquire go through but without adding the
                 // tracking block.
@@ -197,13 +184,13 @@ Return Value:
                 // block does not exist, deduct from this value to see if the
                 // release was still valuable.
                 //
-
-            } else {
+            }
+            else
+            {
 
                 KIRQL oldIrql;
 
-                RtlZeroMemory (trackingBlock,
-                               sizeof (IO_REMOVE_LOCK_TRACKING_BLOCK));
+                RtlZeroMemory(trackingBlock, sizeof(IO_REMOVE_LOCK_TRACKING_BLOCK));
 
                 trackingBlock->Tag = Tag;
                 trackingBlock->File = File;
@@ -211,7 +198,7 @@ Return Value:
 
                 KeQueryTickCount(&trackingBlock->TimeLocked);
 
-                ExAcquireSpinLock (&Lock->Dbg.Spin, &oldIrql);
+                ExAcquireSpinLock(&Lock->Dbg.Spin, &oldIrql);
                 trackingBlock->Link = Lock->Dbg.Blocks;
                 Lock->Dbg.Blocks = trackingBlock;
                 ExReleaseSpinLock(&Lock->Dbg.Spin, oldIrql);
@@ -226,11 +213,13 @@ Return Value:
         }
 
         status = STATUS_SUCCESS;
+    }
+    else
+    {
 
-    } else {
-
-        if (0 == InterlockedDecrement (&Lock->Common.IoCount)) {
-            KeSetEvent (&Lock->Common.RemoveEvent, 0, FALSE);
+        if (0 == InterlockedDecrement(&Lock->Common.IoCount))
+        {
+            KeSetEvent(&Lock->Common.RemoveEvent, 0, FALSE);
         }
         status = STATUS_DELETE_PENDING;
     }
@@ -238,15 +227,11 @@ Return Value:
     return status;
 }
 
-
+
 NTSYSAPI
-VOID
-NTAPI
-IoReleaseRemoveLockEx(
-    IN PIO_REMOVE_LOCK PublicLock,
-    IN PVOID            Tag,
-    IN ULONG            RemlockSize // are we checked or free
-    )
+VOID NTAPI IoReleaseRemoveLockEx(IN PIO_REMOVE_LOCK PublicLock, IN PVOID Tag,
+                                 IN ULONG RemlockSize // are we checked or free
+)
 
 /*++
 
@@ -275,17 +260,18 @@ Return Value:
 --*/
 
 {
-    PIO_PRIVATE_REMOVE_LOCK Lock = (PIO_PRIVATE_REMOVE_LOCK) PublicLock;
-    LONG            lockValue;
-    KIRQL           oldIrql;
-    LARGE_INTEGER   ticks;
-    LONGLONG        difference;
-    BOOLEAN         found;
+    PIO_PRIVATE_REMOVE_LOCK Lock = (PIO_PRIVATE_REMOVE_LOCK)PublicLock;
+    LONG lockValue;
+    KIRQL oldIrql;
+    LARGE_INTEGER ticks;
+    LONGLONG difference;
+    BOOLEAN found;
 
     PIO_REMOVE_LOCK_TRACKING_BLOCK last;
     PIO_REMOVE_LOCK_TRACKING_BLOCK current;
 
-    switch (RemlockSize) {
+    switch (RemlockSize)
+    {
     case CHECKEDSIZE:
 
         //
@@ -300,38 +286,42 @@ Return Value:
 
         KeQueryTickCount((&ticks));
 
-        while (NULL != current) {
+        while (NULL != current)
+        {
 
-            if (Lock->Dbg.MaxLockedTicks) {
+            if (Lock->Dbg.MaxLockedTicks)
+            {
                 difference = ticks.QuadPart - current->TimeLocked.QuadPart;
 
-                if (Lock->Dbg.MaxLockedTicks < difference) {
+                if (Lock->Dbg.MaxLockedTicks < difference)
+                {
 
-                    IopDbgPrint((   IOP_ERROR_LEVEL,
-                                    "IoReleaseRemoveLock: Lock %#08lx (tag %#08lx) "
-                                    "locked for %I64d ticks - TOO LONG\n",
-                                    Lock,
-                                    current->Tag,
-                                    difference));
+                    IopDbgPrint((IOP_ERROR_LEVEL,
+                                 "IoReleaseRemoveLock: Lock %#08lx (tag %#08lx) "
+                                 "locked for %I64d ticks - TOO LONG\n",
+                                 Lock, current->Tag, difference));
 
-                    IopDbgPrint((   IOP_ERROR_LEVEL,
-                                    "IoReleaseRemoveLock: Lock acquired in file "
-                                    "%s on line %d\n",
-                                    current->File,
-                                    current->Line));
+                    IopDbgPrint((IOP_ERROR_LEVEL,
+                                 "IoReleaseRemoveLock: Lock acquired in file "
+                                 "%s on line %d\n",
+                                 current->File, current->Line));
                     ASSERT(FALSE);
                 }
             }
 
-            if ((!found) && (current->Tag == Tag)) {
+            if ((!found) && (current->Tag == Tag))
+            {
                 found = TRUE;
-                if (current == Lock->Dbg.Blocks) {
+                if (current == Lock->Dbg.Blocks)
+                {
                     Lock->Dbg.Blocks = current->Link;
-                    ExFreePool (current);
+                    ExFreePool(current);
                     current = Lock->Dbg.Blocks;
-                } else {
+                }
+                else
+                {
                     last->Link = current->Link;
-                    ExFreePool (current);
+                    ExFreePool(current);
                     current = last->Link;
                 }
                 continue;
@@ -343,22 +333,24 @@ Return Value:
 
         ExReleaseSpinLock(&Lock->Dbg.Spin, oldIrql);
 
-        if (!found) {
+        if (!found)
+        {
             //
             // Check to see if we have any credits in our Low Memory Count.
             // In this fassion we can tell if we have acquired any locks without
             // the memory for adding tracking blocks.
             //
-            if (InterlockedDecrement (& Lock->Dbg.LowMemoryCount) < 0) {
+            if (InterlockedDecrement(&Lock->Dbg.LowMemoryCount) < 0)
+            {
                 //
                 // We have just released a lock that neither had a corresponding
                 // tracking block, nor a credit in LowMemoryCount.
                 //
-                InterlockedIncrement (& Lock->Dbg.LowMemoryCount);
-                IopDbgPrint ((  IOP_ERROR_LEVEL,
-                                "IoReleaseRemoveLock: Couldn't find Tag %#08lx "
-                                "in the lock tracking list\n",
-                                Tag));
+                InterlockedIncrement(&Lock->Dbg.LowMemoryCount);
+                IopDbgPrint((IOP_ERROR_LEVEL,
+                             "IoReleaseRemoveLock: Couldn't find Tag %#08lx "
+                             "in the lock tracking list\n",
+                             Tag));
                 ASSERT(FALSE);
             }
         }
@@ -375,31 +367,26 @@ Return Value:
 
     ASSERT(0 <= lockValue);
 
-    if (0 == lockValue) {
+    if (0 == lockValue)
+    {
 
-        ASSERT (Lock->Common.Removed);
+        ASSERT(Lock->Common.Removed);
 
         //
         // The device needs to be removed.  Signal the remove event
         // that it's safe to go ahead.
         //
 
-        KeSetEvent(&Lock->Common.RemoveEvent,
-                   IO_NO_INCREMENT,
-                   FALSE);
+        KeSetEvent(&Lock->Common.RemoveEvent, IO_NO_INCREMENT, FALSE);
     }
     return;
 }
 
-
+
 NTSYSAPI
-VOID
-NTAPI
-IoReleaseRemoveLockAndWaitEx (
-    IN PIO_REMOVE_LOCK PublicLock,
-    IN PVOID            Tag,
-    IN ULONG            RemlockSize // are we checked or free
-    )
+VOID NTAPI IoReleaseRemoveLockAndWaitEx(IN PIO_REMOVE_LOCK PublicLock, IN PVOID Tag,
+                                        IN ULONG RemlockSize // are we checked or free
+)
 
 /*++
 
@@ -421,38 +408,35 @@ Return Value:
 
 --*/
 {
-    PIO_PRIVATE_REMOVE_LOCK Lock = (PIO_PRIVATE_REMOVE_LOCK) PublicLock;
-    LONG    ioCount;
+    PIO_PRIVATE_REMOVE_LOCK Lock = (PIO_PRIVATE_REMOVE_LOCK)PublicLock;
+    LONG ioCount;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     Lock->Common.Removed = TRUE;
 
-    ioCount = InterlockedDecrement (&Lock->Common.IoCount);
-    ASSERT (0 < ioCount);
+    ioCount = InterlockedDecrement(&Lock->Common.IoCount);
+    ASSERT(0 < ioCount);
 
-    if (0 < InterlockedDecrement (&Lock->Common.IoCount)) {
-        KeWaitForSingleObject (&Lock->Common.RemoveEvent,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               NULL);
+    if (0 < InterlockedDecrement(&Lock->Common.IoCount))
+    {
+        KeWaitForSingleObject(&Lock->Common.RemoveEvent, Executive, KernelMode, FALSE, NULL);
     }
 
-    switch (RemlockSize) {
+    switch (RemlockSize)
+    {
     case CHECKEDSIZE:
 
-        ASSERT (Lock->Dbg.Blocks);
-        if (Tag != Lock->Dbg.Blocks->Tag) {
-            IopDbgPrint ((  IOP_ERROR_LEVEL,
-                            "IoRelaseRemoveLockAndWait last tag invalid %x %x\n",
-                            Tag,
-                            Lock->Dbg.Blocks->Tag));
+        ASSERT(Lock->Dbg.Blocks);
+        if (Tag != Lock->Dbg.Blocks->Tag)
+        {
+            IopDbgPrint(
+                (IOP_ERROR_LEVEL, "IoRelaseRemoveLockAndWait last tag invalid %x %x\n", Tag, Lock->Dbg.Blocks->Tag));
 
-            ASSERT (Tag != Lock->Dbg.Blocks->Tag);
+            ASSERT(Tag != Lock->Dbg.Blocks->Tag);
         }
 
-        ExFreePool (Lock->Dbg.Blocks);
+        ExFreePool(Lock->Dbg.Blocks);
         break;
 
     case FREESIZE:
@@ -460,8 +444,5 @@ Return Value:
 
     default:
         break;
-
     }
 }
-
-

@@ -21,10 +21,10 @@
 #include <nturtl.h>
 #include "lpcsvr.h"
 
-#define RtlpLpcLockServer( s ) RtlEnterCriticalSection( &s->Lock );
-#define RtlpLpcUnlockServer( s ) RtlLeaveCriticalSection( &s->Lock );
+#define RtlpLpcLockServer(s) RtlEnterCriticalSection(&s->Lock);
+#define RtlpLpcUnlockServer(s) RtlLeaveCriticalSection(&s->Lock);
 
-#define RtlpLpcContextFromClient( p ) ( CONTAINING_RECORD( p, LPCSVR_CONTEXT, PrivateContext ) )
+#define RtlpLpcContextFromClient(p) (CONTAINING_RECORD(p, LPCSVR_CONTEXT, PrivateContext))
 
 //+---------------------------------------------------------------------------
 //
@@ -42,77 +42,64 @@
 //  Notes:
 //
 //----------------------------------------------------------------------------
-VOID
-RtlpLpcDerefContext(
-    PLPCSVR_CONTEXT Context,
-    PLPCSVR_MESSAGE Message
-    )
+VOID RtlpLpcDerefContext(PLPCSVR_CONTEXT Context, PLPCSVR_MESSAGE Message)
 {
-    PLPCSVR_SERVER Server ;
+    PLPCSVR_SERVER Server;
 
-    Server = Context->Server ;
+    Server = Context->Server;
 
-    if ( InterlockedDecrement( &Context->RefCount ) < 0 )
+    if (InterlockedDecrement(&Context->RefCount) < 0)
     {
         //
         // All gone, time to clean up:
         //
 
-        RtlpLpcLockServer( Server );
+        RtlpLpcLockServer(Server);
 
-        if ( Context->List.Flink )
+        if (Context->List.Flink)
         {
-            RemoveEntryList( &Context->List );
+            RemoveEntryList(&Context->List);
 
-            Server->ContextCount -- ;
-
+            Server->ContextCount--;
         }
         else
         {
-            if ( Message )
+            if (Message)
             {
-                RtlFreeHeap( RtlProcessHeap(),
-                             0,
-                             Message );
+                RtlFreeHeap(RtlProcessHeap(), 0, Message);
             }
         }
 
-        RtlpLpcUnlockServer( Server );
+        RtlpLpcUnlockServer(Server);
 
-        if ( Context->CommPort )
+        if (Context->CommPort)
         {
-            NtClose( Context->CommPort );
+            NtClose(Context->CommPort);
         }
 
-        RtlFreeHeap( RtlProcessHeap(),
-                     0,
-                     Context );
+        RtlFreeHeap(RtlProcessHeap(), 0, Context);
     }
     else
     {
-        RtlpLpcLockServer( Server );
+        RtlpLpcLockServer(Server);
 
-        Server->MessagePoolSize++ ;
+        Server->MessagePoolSize++;
 
-        if ( Server->MessagePoolSize < Server->MessagePoolLimit )
+        if (Server->MessagePoolSize < Server->MessagePoolLimit)
         {
-            Message->Header.Next = Server->MessagePool ;
+            Message->Header.Next = Server->MessagePool;
 
-            Server->MessagePool = Message ;
+            Server->MessagePool = Message;
         }
         else
         {
-            Server->MessagePoolSize-- ;
+            Server->MessagePoolSize--;
 
-            RtlFreeHeap( RtlProcessHeap(),
-                         0,
-                         Message );
-
+            RtlFreeHeap(RtlProcessHeap(), 0, Message);
         }
 
-        RtlpLpcUnlockServer( Server );
+        RtlpLpcUnlockServer(Server);
     }
-
 }
 
 //+---------------------------------------------------------------------------
@@ -130,244 +117,194 @@ RtlpLpcDerefContext(
 //----------------------------------------------------------------------------
 
 
-VOID
-RtlpLpcWorkerThread(
-    PVOID Parameter
-    )
+VOID RtlpLpcWorkerThread(PVOID Parameter)
 {
-    PLPCSVR_MESSAGE Message ;
-    PLPCSVR_CONTEXT Context ;
-    NTSTATUS Status ;
-    BOOLEAN Accept ;
+    PLPCSVR_MESSAGE Message;
+    PLPCSVR_CONTEXT Context;
+    NTSTATUS Status;
+    BOOLEAN Accept;
 
-    Message = (PLPCSVR_MESSAGE) Parameter ;
+    Message = (PLPCSVR_MESSAGE)Parameter;
 
-    Context = Message->Header.Context ;
+    Context = Message->Header.Context;
 
-    switch ( Message->Message.u2.s2.Type & 0xF )
+    switch (Message->Message.u2.s2.Type & 0xF)
     {
-        case LPC_REQUEST:
-        case LPC_DATAGRAM:
-            DbgPrint("Calling Server's Request function\n");
-            Status = Context->Server->Init.RequestFn(
-                                &Context->PrivateContext,
-                                &Message->Message,
-                                &Message->Message
-                                );
+    case LPC_REQUEST:
+    case LPC_DATAGRAM:
+        DbgPrint("Calling Server's Request function\n");
+        Status = Context->Server->Init.RequestFn(&Context->PrivateContext, &Message->Message, &Message->Message);
 
-            if ( NT_SUCCESS( Status ) )
-            {
-                Status = NtReplyPort( Context->CommPort,
-                                      &Message->Message );
-
-                if ( !NT_SUCCESS( Status ) )
-                {
-                    //
-                    // See what happened.  The client may have gone away already.
-                    //
-
-                    break;
-
-                }
-            }
-            break;
-
-        case LPC_CONNECTION_REQUEST:
-            DbgPrint("Calling Server's Connect function\n");
-            Status = Context->Server->Init.ConnectFn(
-                                &Context->PrivateContext,
-                                &Message->Message,
-                                &Accept
-                                );
-
-            //
-            // If the comm port is still null, then do the accept.  Otherwise, the
-            // server called RtlAcceptConnectPort() explicitly, to set up a view.
-            //
-
-            if ( NT_SUCCESS( Status ) )
-            {
-                if ( Context->CommPort == NULL )
-                {
-                    Status = NtAcceptConnectPort(
-                                    &Context->CommPort,
-                                    Context,
-                                    &Message->Message,
-                                    Accept,
-                                    NULL,
-                                    NULL );
-
-                    if ( !Accept )
-                    {
-                        //
-                        // Yank the context out of the list, since it is worthless
-                        //
-
-                        Context->RefCount = 0 ;
-
-                    }
-                    else
-                    {
-                        Status = NtCompleteConnectPort( Context->CommPort );
-                    }
-                }
-
-            }
-            else
-            {
-                Status = NtAcceptConnectPort(
-                            &Context->CommPort,
-                            NULL,
-                            &Message->Message,
-                            FALSE,
-                            NULL,
-                            NULL );
-
-                Context->RefCount = 0 ;
-
-            }
-
-            break;
-
-        case LPC_CLIENT_DIED:
-            DbgPrint( "Calling Server's Rundown function\n" );
-            Status = Context->Server->Init.RundownFn(
-                                    &Context->PrivateContext,
-                                    &Message->Message
-                                    );
-
-            InterlockedDecrement( &Context->RefCount );
-
-            break;
-
-        default:
-            //
-            // An unexpected message came through.  Normal LPC servers
-            // don't handle the other types of messages.  Drop it.
-            //
-
-            break;
-    }
-
-    RtlpLpcDerefContext( Context, Message );
-
-    return ;
-
-
-}
-
-VOID
-RtlpLpcServerCallback(
-    PVOID Parameter,
-    BOOLEAN TimedOut
-    )
-{
-    PLPCSVR_SERVER Server ;
-    NTSTATUS Status ;
-    PLPCSVR_MESSAGE Message ;
-    PLPCSVR_CONTEXT Context ;
-    PLARGE_INTEGER RealTimeout ;
-    LPCSVR_FILTER_RESULT FilterResult ;
-
-    Server = (PLPCSVR_SERVER) Parameter ;
-
-    if ( Server->WaitHandle )
-    {
-        Server->WaitHandle = NULL ;
-    }
-
-    while ( 1 )
-    {
-        DbgPrint("Entering LPC server\n" );
-
-        RtlpLpcLockServer( Server );
-
-        if ( Server->Flags & LPCSVR_SHUTDOWN_PENDING )
+        if (NT_SUCCESS(Status))
         {
-            break;
+            Status = NtReplyPort(Context->CommPort, &Message->Message);
+
+            if (!NT_SUCCESS(Status))
+            {
+                //
+                // See what happened.  The client may have gone away already.
+                //
+
+                break;
+            }
         }
+        break;
 
-        if ( Server->MessagePool )
+    case LPC_CONNECTION_REQUEST:
+        DbgPrint("Calling Server's Connect function\n");
+        Status = Context->Server->Init.ConnectFn(&Context->PrivateContext, &Message->Message, &Accept);
+
+        //
+        // If the comm port is still null, then do the accept.  Otherwise, the
+        // server called RtlAcceptConnectPort() explicitly, to set up a view.
+        //
+
+        if (NT_SUCCESS(Status))
         {
-            Message = Server->MessagePool ;
-            Server->MessagePool = Message->Header.Next ;
+            if (Context->CommPort == NULL)
+            {
+                Status = NtAcceptConnectPort(&Context->CommPort, Context, &Message->Message, Accept, NULL, NULL);
+
+                if (!Accept)
+                {
+                    //
+                    // Yank the context out of the list, since it is worthless
+                    //
+
+                    Context->RefCount = 0;
+                }
+                else
+                {
+                    Status = NtCompleteConnectPort(Context->CommPort);
+                }
+            }
         }
         else
         {
-            Message = RtlAllocateHeap( RtlProcessHeap(),
-                                       0,
-                                       Server->MessageSize );
+            Status = NtAcceptConnectPort(&Context->CommPort, NULL, &Message->Message, FALSE, NULL, NULL);
 
+            Context->RefCount = 0;
         }
 
-        RtlpLpcUnlockServer( Server );
+        break;
 
-        if ( !Message )
+    case LPC_CLIENT_DIED:
+        DbgPrint("Calling Server's Rundown function\n");
+        Status = Context->Server->Init.RundownFn(&Context->PrivateContext, &Message->Message);
+
+        InterlockedDecrement(&Context->RefCount);
+
+        break;
+
+    default:
+        //
+        // An unexpected message came through.  Normal LPC servers
+        // don't handle the other types of messages.  Drop it.
+        //
+
+        break;
+    }
+
+    RtlpLpcDerefContext(Context, Message);
+
+    return;
+}
+
+VOID RtlpLpcServerCallback(PVOID Parameter, BOOLEAN TimedOut)
+{
+    PLPCSVR_SERVER Server;
+    NTSTATUS Status;
+    PLPCSVR_MESSAGE Message;
+    PLPCSVR_CONTEXT Context;
+    PLARGE_INTEGER RealTimeout;
+    LPCSVR_FILTER_RESULT FilterResult;
+
+    Server = (PLPCSVR_SERVER)Parameter;
+
+    if (Server->WaitHandle)
+    {
+        Server->WaitHandle = NULL;
+    }
+
+    while (1)
+    {
+        DbgPrint("Entering LPC server\n");
+
+        RtlpLpcLockServer(Server);
+
+        if (Server->Flags & LPCSVR_SHUTDOWN_PENDING)
         {
-            LARGE_INTEGER SleepInterval ;
+            break;
+        }
 
-            SleepInterval.QuadPart = 125 * 10000 ;
+        if (Server->MessagePool)
+        {
+            Message = Server->MessagePool;
+            Server->MessagePool = Message->Header.Next;
+        }
+        else
+        {
+            Message = RtlAllocateHeap(RtlProcessHeap(), 0, Server->MessageSize);
+        }
 
-            NtDelayExecution( FALSE, &SleepInterval );
+        RtlpLpcUnlockServer(Server);
+
+        if (!Message)
+        {
+            LARGE_INTEGER SleepInterval;
+
+            SleepInterval.QuadPart = 125 * 10000;
+
+            NtDelayExecution(FALSE, &SleepInterval);
             continue;
         }
 
 
-        if ( Server->Timeout.QuadPart )
+        if (Server->Timeout.QuadPart)
         {
-            RealTimeout = &Server->Timeout ;
+            RealTimeout = &Server->Timeout;
         }
         else
         {
-            RealTimeout = NULL ;
+            RealTimeout = NULL;
         }
 
-        Status = NtReplyWaitReceivePortEx(
-                        Server->Port,
-                        &Context,
-                        NULL,
-                        &Message->Message,
-                        RealTimeout );
+        Status = NtReplyWaitReceivePortEx(Server->Port, &Context, NULL, &Message->Message, RealTimeout);
 
-        DbgPrint("Server: NtReplyWaitReceivePort completed with %x\n", Status );
+        DbgPrint("Server: NtReplyWaitReceivePort completed with %x\n", Status);
 
-        if ( NT_SUCCESS( Status ) )
+        if (NT_SUCCESS(Status))
         {
             //
             // If we timed out, nobody was waiting for us:
             //
 
-            if ( Status == STATUS_TIMEOUT )
+            if (Status == STATUS_TIMEOUT)
             {
                 //
                 // Set up a general wait that will call back to this function
                 // when ready.
                 //
 
-                RtlpLpcLockServer( Server );
+                RtlpLpcLockServer(Server);
 
-                if ( ( Server->Flags & LPCSVR_SHUTDOWN_PENDING ) == 0 )
+                if ((Server->Flags & LPCSVR_SHUTDOWN_PENDING) == 0)
                 {
 
-                    Status = RtlRegisterWait( &Server->WaitHandle,
-                                              Server->Port,
-                                              RtlpLpcServerCallback,
-                                              Server,
-                                              0xFFFFFFFF,
-                                              WT_EXECUTEONLYONCE );
+                    Status = RtlRegisterWait(&Server->WaitHandle, Server->Port, RtlpLpcServerCallback, Server,
+                                             0xFFFFFFFF, WT_EXECUTEONLYONCE);
                 }
 
-                RtlpLpcUnlockServer( Server );
+                RtlpLpcUnlockServer(Server);
 
                 break;
-
             }
 
-            if ( Status == STATUS_SUCCESS )
+            if (Status == STATUS_SUCCESS)
             {
-                if ( Context )
+                if (Context)
                 {
-                    InterlockedIncrement( &Context->RefCount );
+                    InterlockedIncrement(&Context->RefCount);
                 }
                 else
                 {
@@ -375,74 +312,60 @@ RtlpLpcServerCallback(
                     // New connection.  Create a new context record
                     //
 
-                    Context = RtlAllocateHeap( RtlProcessHeap(),
-                                               0,
-                                               sizeof( LPCSVR_CONTEXT ) +
-                                                    Server->Init.ContextSize );
+                    Context = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(LPCSVR_CONTEXT) + Server->Init.ContextSize);
 
-                    if ( !Context )
+                    if (!Context)
                     {
-                        HANDLE Bogus ;
+                        HANDLE Bogus;
 
-                        Status = NtAcceptConnectPort(
-                                    &Bogus,
-                                    NULL,
-                                    &Message->Message,
-                                    FALSE,
-                                    NULL,
-                                    NULL );
+                        Status = NtAcceptConnectPort(&Bogus, NULL, &Message->Message, FALSE, NULL, NULL);
 
-                        RtlpLpcLockServer( Server );
+                        RtlpLpcLockServer(Server);
 
-                        Message->Header.Next = Server->MessagePool ;
-                        Server->MessagePool = Message ;
+                        Message->Header.Next = Server->MessagePool;
+                        Server->MessagePool = Message;
 
-                        RtlpLpcUnlockServer( Server );
+                        RtlpLpcUnlockServer(Server);
 
                         continue;
                     }
 
-                    Context->Server = Server ;
-                    Context->RefCount = 1 ;
-                    Context->CommPort = NULL ;
+                    Context->Server = Server;
+                    Context->RefCount = 1;
+                    Context->CommPort = NULL;
 
-                    RtlpLpcLockServer( Server );
+                    RtlpLpcLockServer(Server);
 
-                    InsertTailList( &Server->ContextList, &Context->List );
-                    Server->ContextCount++ ;
+                    InsertTailList(&Server->ContextList, &Context->List);
+                    Server->ContextCount++;
 
-                    RtlpLpcUnlockServer( Server );
+                    RtlpLpcUnlockServer(Server);
                 }
 
 
-                Message->Header.Context = Context ;
+                Message->Header.Context = Context;
 
-                FilterResult = LpcFilterAsync ;
+                FilterResult = LpcFilterAsync;
 
-                if ( Server->Init.FilterFn )
+                if (Server->Init.FilterFn)
                 {
-                    FilterResult = Server->Init.FilterFn( Context, &Message->Message );
+                    FilterResult = Server->Init.FilterFn(Context, &Message->Message);
 
-                    if (FilterResult == LpcFilterDrop )
+                    if (FilterResult == LpcFilterDrop)
                     {
-                        RtlpLpcDerefContext( Context, Message );
+                        RtlpLpcDerefContext(Context, Message);
 
                         continue;
-
                     }
                 }
 
-                if ( (Server->Flags & LPCSVR_SYNCHRONOUS) ||
-                     (FilterResult == LpcFilterSync) )
+                if ((Server->Flags & LPCSVR_SYNCHRONOUS) || (FilterResult == LpcFilterSync))
                 {
-                    RtlpLpcWorkerThread( Message );
+                    RtlpLpcWorkerThread(Message);
                 }
                 else
                 {
-                    RtlQueueWorkItem( RtlpLpcWorkerThread,
-                                      Message,
-                                      0 );
-
+                    RtlQueueWorkItem(RtlpLpcWorkerThread, Message, 0);
                 }
             }
         }
@@ -454,55 +377,48 @@ RtlpLpcServerCallback(
 
             break;
         }
-
     }
-
 }
 
 NTSTATUS
-RtlCreateLpcServer(
-    POBJECT_ATTRIBUTES PortName,
-    PLPCSVR_INITIALIZE Init,
-    PLARGE_INTEGER IdleTimeout,
-    ULONG MessageSize,
-    ULONG Options,
-    PVOID * LpcServer
-    )
+RtlCreateLpcServer(POBJECT_ATTRIBUTES PortName, PLPCSVR_INITIALIZE Init, PLARGE_INTEGER IdleTimeout, ULONG MessageSize,
+                   ULONG Options, PVOID *LpcServer)
 {
-    PLPCSVR_SERVER Server ;
-    NTSTATUS Status ;
-    HANDLE Thread ;
-    CLIENT_ID Id ;
+    PLPCSVR_SERVER Server;
+    NTSTATUS Status;
+    HANDLE Thread;
+    CLIENT_ID Id;
 
-    *LpcServer = NULL ;
+    *LpcServer = NULL;
 
-    Server = RtlAllocateHeap( RtlProcessHeap(),
-                              0,
-                              sizeof( LPCSVR_SERVER ) );
+    Server = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(LPCSVR_SERVER));
 
-    if ( !Server ) {
+    if (!Server)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Status = RtlInitializeCriticalSectionAndSpinCount (&Server->Lock,
-                                                       1000);
-    if (!NT_SUCCESS (Status)) {
-        RtlFreeHeap( RtlProcessHeap(), 0, Server );
+    Status = RtlInitializeCriticalSectionAndSpinCount(&Server->Lock, 1000);
+    if (!NT_SUCCESS(Status))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, Server);
         return Status;
     }
 
-    InitializeListHead( &Server->ContextList );
+    InitializeListHead(&Server->ContextList);
     Server->ContextCount = 0;
 
     Server->Init = *Init;
-    if ( !IdleTimeout ) {
+    if (!IdleTimeout)
+    {
         Server->Timeout.QuadPart = 0;
-    } else {
+    }
+    else
+    {
         Server->Timeout = *IdleTimeout;
     }
 
-    Server->MessageSize = MessageSize + sizeof( LPCSVR_MESSAGE ) -
-                            sizeof( PORT_MESSAGE );
+    Server->MessageSize = MessageSize + sizeof(LPCSVR_MESSAGE) - sizeof(PORT_MESSAGE);
 
     Server->MessagePool = 0;
     Server->MessagePoolSize = 0;
@@ -514,18 +430,12 @@ RtlCreateLpcServer(
     // Create the LPC port:
     //
 
-    Status = NtCreateWaitablePort(
-                            &Server->Port,
-                            PortName,
-                            MessageSize,
-                            MessageSize,
-                            MessageSize * 4
-                            );
+    Status = NtCreateWaitablePort(&Server->Port, PortName, MessageSize, MessageSize, MessageSize * 4);
 
-    if ( !NT_SUCCESS( Status ) )
+    if (!NT_SUCCESS(Status))
     {
-        RtlDeleteCriticalSection( &Server->Lock );
-        RtlFreeHeap( RtlProcessHeap(), 0, Server );
+        RtlDeleteCriticalSection(&Server->Lock);
+        RtlFreeHeap(RtlProcessHeap(), 0, Server);
         return Status;
     }
 
@@ -533,19 +443,14 @@ RtlCreateLpcServer(
     //
     // Now, post the handle over to a wait queue
     //
-    Status = RtlRegisterWait(
-                        &Server->WaitHandle,
-                        Server->Port,
-                        RtlpLpcServerCallback,
-                        Server,
-                        0xFFFFFFFF,
-                        WT_EXECUTEONLYONCE
-                        );
+    Status = RtlRegisterWait(&Server->WaitHandle, Server->Port, RtlpLpcServerCallback, Server, 0xFFFFFFFF,
+                             WT_EXECUTEONLYONCE);
 
-    if (!NT_SUCCESS (Status)) {
-        NtClose (Server->Port);
-        RtlDeleteCriticalSection( &Server->Lock );
-        RtlFreeHeap( RtlProcessHeap(), 0, Server );
+    if (!NT_SUCCESS(Status))
+    {
+        NtClose(Server->Port);
+        RtlDeleteCriticalSection(&Server->Lock);
+        RtlFreeHeap(RtlProcessHeap(), 0, Server);
         return Status;
     }
 
@@ -555,40 +460,38 @@ RtlCreateLpcServer(
 
 
 NTSTATUS
-RtlShutdownLpcServer(
-    PVOID LpcServer
-    )
+RtlShutdownLpcServer(PVOID LpcServer)
 {
-    PLPCSVR_SERVER Server ;
-    OBJECT_ATTRIBUTES ObjA ;
-    PLIST_ENTRY Scan ;
-    PLPCSVR_CONTEXT Context ;
-    PLPCSVR_MESSAGE Message ;
-    NTSTATUS Status ;
+    PLPCSVR_SERVER Server;
+    OBJECT_ATTRIBUTES ObjA;
+    PLIST_ENTRY Scan;
+    PLPCSVR_CONTEXT Context;
+    PLPCSVR_MESSAGE Message;
+    NTSTATUS Status;
 
-    Server = (PLPCSVR_SERVER) LpcServer ;
+    Server = (PLPCSVR_SERVER)LpcServer;
 
-    RtlpLpcLockServer( Server );
+    RtlpLpcLockServer(Server);
 
-    if ( Server->Flags & LPCSVR_SHUTDOWN_PENDING )
+    if (Server->Flags & LPCSVR_SHUTDOWN_PENDING)
     {
-        RtlpLpcUnlockServer( Server );
+        RtlpLpcUnlockServer(Server);
 
-        return STATUS_PENDING ;
+        return STATUS_PENDING;
     }
 
-    if ( Server->WaitHandle )
+    if (Server->WaitHandle)
     {
-        RtlDeregisterWait( Server->WaitHandle );
+        RtlDeregisterWait(Server->WaitHandle);
 
-        Server->WaitHandle = NULL ;
+        Server->WaitHandle = NULL;
     }
 
-    if ( Server->Timeout.QuadPart == 0 )
+    if (Server->Timeout.QuadPart == 0)
     {
-        RtlpLpcUnlockServer( Server );
+        RtlpLpcUnlockServer(Server);
 
-        return STATUS_NOT_IMPLEMENTED ;
+        return STATUS_NOT_IMPLEMENTED;
     }
 
     //
@@ -597,39 +500,27 @@ RtlShutdownLpcServer(
     // flag, and then wait the timeout amount.
     //
 
-    if ( Server->ReceiveThreads != 0 )
+    if (Server->ReceiveThreads != 0)
     {
 
-        InitializeObjectAttributes( &ObjA,
-                                    NULL,
-                                    0,
-                                    0,
-                                    0 );
+        InitializeObjectAttributes(&ObjA, NULL, 0, 0, 0);
 
-        Status = NtCreateEvent( &Server->ShutdownEvent,
-                                EVENT_ALL_ACCESS,
-                                &ObjA,
-                                NotificationEvent,
-                                FALSE );
+        Status = NtCreateEvent(&Server->ShutdownEvent, EVENT_ALL_ACCESS, &ObjA, NotificationEvent, FALSE);
 
-        if ( !NT_SUCCESS( Status ) )
+        if (!NT_SUCCESS(Status))
         {
-            RtlpLpcUnlockServer( Server );
+            RtlpLpcUnlockServer(Server);
 
-            return Status ;
-
+            return Status;
         }
 
-        Server->Flags |= LPCSVR_SHUTDOWN_PENDING ;
+        Server->Flags |= LPCSVR_SHUTDOWN_PENDING;
 
-        RtlpLpcUnlockServer( Server );
+        RtlpLpcUnlockServer(Server);
 
-        Status = NtWaitForSingleObject(
-                            Server->ShutdownEvent,
-                            FALSE,
-                            &Server->Timeout );
+        Status = NtWaitForSingleObject(Server->ShutdownEvent, FALSE, &Server->Timeout);
 
-        if ( Status == STATUS_TIMEOUT )
+        if (Status == STATUS_TIMEOUT)
         {
             //
             // Hmm, the LPC server thread is hung somewhere,
@@ -637,16 +528,15 @@ RtlShutdownLpcServer(
             //
         }
 
-        RtlpLpcLockServer( Server );
+        RtlpLpcLockServer(Server);
 
-        NtClose( Server->ShutdownEvent );
+        NtClose(Server->ShutdownEvent);
 
-        Server->ShutdownEvent = NULL ;
-
+        Server->ShutdownEvent = NULL;
     }
     else
     {
-        Server->Flags |= LPCSVR_SHUTDOWN_PENDING ;
+        Server->Flags |= LPCSVR_SHUTDOWN_PENDING;
     }
 
     //
@@ -658,35 +548,30 @@ RtlShutdownLpcServer(
     //
 
 
-    while ( ! IsListEmpty( &Server->ContextList ) )
+    while (!IsListEmpty(&Server->ContextList))
     {
-        Scan = RemoveHeadList( &Server->ContextList );
+        Scan = RemoveHeadList(&Server->ContextList);
 
-        Context = CONTAINING_RECORD( Scan, LPCSVR_CONTEXT, List );
+        Context = CONTAINING_RECORD(Scan, LPCSVR_CONTEXT, List);
 
-        Status = Server->Init.RundownFn(
-                                Context->PrivateContext,
-                                NULL );
+        Status = Server->Init.RundownFn(Context->PrivateContext, NULL);
 
-        Context->List.Flink = NULL ;
+        Context->List.Flink = NULL;
 
-        RtlpLpcDerefContext( Context, NULL );
-
+        RtlpLpcDerefContext(Context, NULL);
     }
 
     //
     // All contexts have been deleted:  clean up the messages
     //
 
-    while ( Server->MessagePool )
+    while (Server->MessagePool)
     {
-        Message = Server->MessagePool ;
+        Message = Server->MessagePool;
 
-        Server->MessagePool = Message ;
+        Server->MessagePool = Message;
 
-        RtlFreeHeap( RtlProcessHeap(),
-                     0,
-                     Message );
+        RtlFreeHeap(RtlProcessHeap(), 0, Message);
     }
 
 
@@ -694,50 +579,34 @@ RtlShutdownLpcServer(
     // Clean up server objects
     //
 
-    return(STATUS_SUCCESS);
-
+    return (STATUS_SUCCESS);
 }
 
 NTSTATUS
-RtlImpersonateLpcClient(
-    PVOID Context,
-    PPORT_MESSAGE Message
-    )
+RtlImpersonateLpcClient(PVOID Context, PPORT_MESSAGE Message)
 {
-    PLPCSVR_CONTEXT LpcContext ;
+    PLPCSVR_CONTEXT LpcContext;
 
-    LpcContext = RtlpLpcContextFromClient( Context );
+    LpcContext = RtlpLpcContextFromClient(Context);
 
-    return NtImpersonateClientOfPort(
-                    LpcContext->CommPort,
-                    Message );
-
+    return NtImpersonateClientOfPort(LpcContext->CommPort, Message);
 }
 
 NTSTATUS
-RtlCallbackLpcClient(
-    PVOID Context,
-    PPORT_MESSAGE Request,
-    PPORT_MESSAGE Callback
-    )
+RtlCallbackLpcClient(PVOID Context, PPORT_MESSAGE Request, PPORT_MESSAGE Callback)
 {
-    NTSTATUS Status ;
-    PLPCSVR_CONTEXT LpcContext ;
+    NTSTATUS Status;
+    PLPCSVR_CONTEXT LpcContext;
 
-    if ( Request != Callback )
+    if (Request != Callback)
     {
-        Callback->ClientId = Request->ClientId ;
-        Callback->MessageId = Request->MessageId ;
+        Callback->ClientId = Request->ClientId;
+        Callback->MessageId = Request->MessageId;
     }
 
-    LpcContext = RtlpLpcContextFromClient( Context );
+    LpcContext = RtlpLpcContextFromClient(Context);
 
-    Status = NtRequestWaitReplyPort(
-                    LpcContext->CommPort,
-                    Callback,
-                    Callback
-                    );
+    Status = NtRequestWaitReplyPort(LpcContext->CommPort, Callback, Callback);
 
-    return Status ;
-
+    return Status;
 }

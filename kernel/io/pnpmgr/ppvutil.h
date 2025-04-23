@@ -27,63 +27,42 @@ Revision History:
 #ifndef _PPVUTIL_H_
 #define _PPVUTIL_H_
 
-typedef enum {
+typedef enum
+{
 
-    PPVERROR_DUPLICATE_PDO_ENUMERATED           = 0,
+    PPVERROR_DUPLICATE_PDO_ENUMERATED = 0,
     PPVERROR_MISHANDLED_TARGET_DEVICE_RELATIONS,
     PPVERROR_DDI_REQUIRES_PDO
 
 } PPVFAILURE_TYPE;
 
-typedef enum {
+typedef enum
+{
 
-    PPVREMOVAL_SHOULD_DELETE           = 0,
+    PPVREMOVAL_SHOULD_DELETE = 0,
     PPVREMOVAL_SHOULDNT_DELETE,
     PPVREMOVAL_MAY_DEFER_DELETION
 
 } PPVREMOVAL_OPTION;
 
-VOID
-FASTCALL
-PpvUtilInit(
-    VOID
-    );
+VOID FASTCALL PpvUtilInit(VOID);
 
 NTSTATUS
 FASTCALL
-PpvUtilCallAddDevice(
-    IN  PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN  PDRIVER_OBJECT      DriverObject,
-    IN  PDRIVER_ADD_DEVICE  AddDeviceFunction,
-    IN  VF_DEVOBJ_TYPE      DevObjType
-    );
+PpvUtilCallAddDevice(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDRIVER_OBJECT DriverObject,
+                     IN PDRIVER_ADD_DEVICE AddDeviceFunction, IN VF_DEVOBJ_TYPE DevObjType);
 
-VOID
-FASTCALL
-PpvUtilTestStartedPdoStack(
-    IN  PDEVICE_OBJECT  DeviceObject
-    );
+VOID FASTCALL PpvUtilTestStartedPdoStack(IN PDEVICE_OBJECT DeviceObject);
 
 PPVREMOVAL_OPTION
 FASTCALL
-PpvUtilGetDevnodeRemovalOption(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject
-    );
+PpvUtilGetDevnodeRemovalOption(IN PDEVICE_OBJECT PhysicalDeviceObject);
 
-VOID
-FASTCALL
-PpvUtilFailDriver(
-    IN  PPVFAILURE_TYPE FailureType,
-    IN  PVOID           CulpritAddress,
-    IN  PDEVICE_OBJECT  DeviceObject    OPTIONAL,
-    IN  PVOID           ExtraneousInfo  OPTIONAL
-    );
+VOID FASTCALL PpvUtilFailDriver(IN PPVFAILURE_TYPE FailureType, IN PVOID CulpritAddress,
+                                IN PDEVICE_OBJECT DeviceObject OPTIONAL, IN PVOID ExtraneousInfo OPTIONAL);
 
 BOOLEAN
 FASTCALL
-PpvUtilIsHardwareBeingVerified(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject
-    );
+PpvUtilIsHardwareBeingVerified(IN PDEVICE_OBJECT PhysicalDeviceObject);
 
 #endif // _PPVUTIL_H_
-

@@ -37,7 +37,8 @@ Revision History:
 #define MEMORY_PRIORITY_WASFOREGROUND 1
 #define MEMORY_PRIORITY_FOREGROUND 2
 
-typedef struct _MMSUPPORT_FLAGS {
+typedef struct _MMSUPPORT_FLAGS
+{
     unsigned SessionSpace : 1;
     unsigned BeingTrimmed : 1;
     unsigned SessionLeader : 1;
@@ -51,7 +52,8 @@ typedef struct _MMSUPPORT_FLAGS {
 
 typedef ULONG WSLE_NUMBER, *PWSLE_NUMBER;
 
-typedef struct _MMSUPPORT {
+typedef struct _MMSUPPORT
+{
     LARGE_INTEGER LastTrimTime;
     MMSUPPORT_FLAGS Flags;
     ULONG PageFaultCount;
@@ -77,7 +79,8 @@ typedef MMSUPPORT *PMMSUPPORT;
 // Client impersonation information.
 //
 
-typedef struct _PS_IMPERSONATION_INFORMATION {
+typedef struct _PS_IMPERSONATION_INFORMATION
+{
     PACCESS_TOKEN Token;
     BOOLEAN CopyOnOpen;
     BOOLEAN EffectiveOnly;
@@ -89,18 +92,21 @@ typedef struct _PS_IMPERSONATION_INFORMATION {
 // and currently contains only the name of the exec'ed image file.
 //
 
-typedef struct _SE_AUDIT_PROCESS_CREATION_INFO {
+typedef struct _SE_AUDIT_PROCESS_CREATION_INFO
+{
     POBJECT_NAME_INFORMATION ImageFileName;
 } SE_AUDIT_PROCESS_CREATION_INFO, *PSE_AUDIT_PROCESS_CREATION_INFO;
 
-typedef enum _PS_QUOTA_TYPE {
+typedef enum _PS_QUOTA_TYPE
+{
     PsNonPagedPool = 0,
-    PsPagedPool    = 1,
-    PsPageFile     = 2,
-    PsQuotaTypes   = 3
+    PsPagedPool = 1,
+    PsPageFile = 2,
+    PsQuotaTypes = 3
 } PS_QUOTA_TYPE, *PPS_QUOTA_TYPE;
 
-typedef struct _EPROCESS_QUOTA_ENTRY {
+typedef struct _EPROCESS_QUOTA_ENTRY
+{
     SIZE_T Usage;  // Current usage count
     SIZE_T Limit;  // Unhidered progress may be made to this point
     SIZE_T Peak;   // Peak quota usage
@@ -111,19 +117,21 @@ typedef struct _EPROCESS_QUOTA_ENTRY {
 
 #define EPROCESS_QUOTA_TRACK_MAX 10000
 
-typedef struct _EPROCESS_QUOTA_TRACK {
+typedef struct _EPROCESS_QUOTA_TRACK
+{
     SIZE_T Charge;
     PVOID Caller;
     PVOID FreeCaller;
     PVOID Process;
 } EPROCESS_QUOTA_TRACK, *PEPROCESS_QUOTA_TRACK;
 
-typedef struct _EPROCESS_QUOTA_BLOCK {
+typedef struct _EPROCESS_QUOTA_BLOCK
+{
     EPROCESS_QUOTA_ENTRY QuotaEntry[PsQuotaTypes];
     LIST_ENTRY QuotaList; // All additional quota blocks are chained through here
     ULONG ReferenceCount;
     ULONG ProcessCount; // Total number of processes still referencing this block
-#if defined (PS_TRACK_QUOTA)
+#if defined(PS_TRACK_QUOTA)
     EPROCESS_QUOTA_TRACK Tracker[2][EPROCESS_QUOTA_TRACK_MAX];
 #endif
 } EPROCESS_QUOTA_BLOCK, *PEPROCESS_QUOTA_BLOCK;
@@ -132,7 +140,8 @@ typedef struct _EPROCESS_QUOTA_BLOCK {
 // Pagefault monitoring.
 //
 
-typedef struct _PAGEFAULT_HISTORY {
+typedef struct _PAGEFAULT_HISTORY
+{
     ULONG CurrentIndex;
     ULONG MaxIndex;
     KSPIN_LOCK SpinLock;
@@ -140,16 +149,16 @@ typedef struct _PAGEFAULT_HISTORY {
     PROCESS_WS_WATCH_INFORMATION WatchInfo[1];
 } PAGEFAULT_HISTORY, *PPAGEFAULT_HISTORY;
 
-#define PS_WS_TRIM_FROM_EXE_HEADER        1
-#define PS_WS_TRIM_BACKGROUND_ONLY_APP    2
+#define PS_WS_TRIM_FROM_EXE_HEADER 1
+#define PS_WS_TRIM_BACKGROUND_ONLY_APP 2
 
 //
 // Wow64 process stucture.
 //
 
 
-
-typedef struct _WOW64_PROCESS {
+typedef struct _WOW64_PROCESS
+{
     PVOID Wow64;
 #if defined(_IA64_)
     FAST_MUTEX AlternateTableLock;
@@ -158,29 +167,23 @@ typedef struct _WOW64_PROCESS {
 #endif
 } WOW64_PROCESS, *PWOW64_PROCESS;
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 #define PS_GET_WOW64_PROCESS(Process) ((Process)->Wow64Process)
 #else
 #define PS_GET_WOW64_PROCESS(Process) ((Process), ((PWOW64_PROCESS)NULL))
 #endif
 
-#define PS_SET_BITS(Flags, Flag) \
-    RtlInterlockedSetBitsDiscardReturn (Flags, Flag)
+#define PS_SET_BITS(Flags, Flag) RtlInterlockedSetBitsDiscardReturn(Flags, Flag)
 
-#define PS_TEST_SET_BITS(Flags, Flag) \
-    RtlInterlockedSetBits (Flags, Flag)
+#define PS_TEST_SET_BITS(Flags, Flag) RtlInterlockedSetBits(Flags, Flag)
 
-#define PS_CLEAR_BITS(Flags, Flag) \
-    RtlInterlockedClearBitsDiscardReturn (Flags, Flag)
+#define PS_CLEAR_BITS(Flags, Flag) RtlInterlockedClearBitsDiscardReturn(Flags, Flag)
 
-#define PS_TEST_CLEAR_BITS(Flags, Flag) \
-    RtlInterlockedClearBits (Flags, Flag)
+#define PS_TEST_CLEAR_BITS(Flags, Flag) RtlInterlockedClearBits(Flags, Flag)
 
-#define PS_SET_CLEAR_BITS(Flags, sFlag, cFlag) \
-    RtlInterlockedSetClearBits (Flags, sFlag, cFlag)
+#define PS_SET_CLEAR_BITS(Flags, sFlag, cFlag) RtlInterlockedSetClearBits(Flags, sFlag, cFlag)
 
-#define PS_TEST_ALL_BITS_SET(Flags, Bits) \
-    ((Flags&(Bits)) == (Bits))
+#define PS_TEST_ALL_BITS_SET(Flags, Bits) ((Flags & (Bits)) == (Bits))
 
 // Process structure.
 //
@@ -189,7 +192,8 @@ typedef struct _WOW64_PROCESS {
 // (nt\private\sdktools\ntsd\ntkext.c)
 //
 
-typedef struct _EPROCESS {
+typedef struct _EPROCESS
+{
     KPROCESS Pcb;
 
     //
@@ -283,12 +287,13 @@ typedef struct _EPROCESS {
     PVOID DeviceMap;
 
     LIST_ENTRY PhysicalVadList;
-    union {
+    union
+    {
         HARDWARE_PTE PageDirectoryPte;
         ULONGLONG Filler;
     };
     PVOID Session;
-    UCHAR ImageFileName[ 16 ];
+    UCHAR ImageFileName[16];
 
     LIST_ENTRY JobLinks;
     PVOID LockedPagesList;
@@ -352,12 +357,12 @@ typedef struct _EPROCESS {
 
     ULONG NumberOfVads;
 
-    #define PS_JOB_STATUS_NOT_REALLY_ACTIVE      0x00000001UL
-    #define PS_JOB_STATUS_ACCOUNTING_FOLDED      0x00000002UL
-    #define PS_JOB_STATUS_NEW_PROCESS_REPORTED   0x00000004UL
-    #define PS_JOB_STATUS_EXIT_PROCESS_REPORTED  0x00000008UL
-    #define PS_JOB_STATUS_REPORT_COMMIT_CHANGES  0x00000010UL
-    #define PS_JOB_STATUS_LAST_REPORT_MEMORY     0x00000020UL
+#define PS_JOB_STATUS_NOT_REALLY_ACTIVE 0x00000001UL
+#define PS_JOB_STATUS_ACCOUNTING_FOLDED 0x00000002UL
+#define PS_JOB_STATUS_NEW_PROCESS_REPORTED 0x00000004UL
+#define PS_JOB_STATUS_EXIT_PROCESS_REPORTED 0x00000008UL
+#define PS_JOB_STATUS_REPORT_COMMIT_CHANGES 0x00000010UL
+#define PS_JOB_STATUS_LAST_REPORT_MEMORY 0x00000020UL
 
     ULONG JobStatus;
 
@@ -367,29 +372,31 @@ typedef struct _EPROCESS {
     // to modify these.
     //
 
-    #define PS_PROCESS_FLAGS_CREATE_REPORTED        0x00000001UL // Create process debug call has occurred
-    #define PS_PROCESS_FLAGS_NO_DEBUG_INHERIT       0x00000002UL // Don't inherit debug port
-    #define PS_PROCESS_FLAGS_PROCESS_EXITING        0x00000004UL // PspExitProcess entered
-    #define PS_PROCESS_FLAGS_PROCESS_DELETE         0x00000008UL // Delete process has been issued
-    #define PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES      0x00000010UL // Wow64 split pages
-    #define PS_PROCESS_FLAGS_VM_DELETED             0x00000020UL // VM is deleted
-    #define PS_PROCESS_FLAGS_OUTSWAP_ENABLED        0x00000040UL // Outswap enabled
-    #define PS_PROCESS_FLAGS_OUTSWAPPED             0x00000080UL // Outswapped
-    #define PS_PROCESS_FLAGS_FORK_FAILED            0x00000100UL // Fork status
-    #define PS_PROCESS_FLAGS_HAS_PHYSICAL_VAD       0x00000200UL // Has physical VAD
-    #define PS_PROCESS_FLAGS_ADDRESS_SPACE1         0x00000400UL // Addr space state1
-    #define PS_PROCESS_FLAGS_ADDRESS_SPACE2         0x00000800UL // Addr space state2
-    #define PS_PROCESS_FLAGS_SET_TIMER_RESOLUTION   0x00001000UL // SetTimerResolution has been called
-    #define PS_PROCESS_FLAGS_BREAK_ON_TERMINATION   0x00002000UL // Break on process termination
-    #define PS_PROCESS_FLAGS_CREATING_SESSION       0x00004000UL // Process is creating a session
-    #define PS_PROCESS_FLAGS_USING_WRITE_WATCH      0x00008000UL // Process is using the write watch APIs
-    #define PS_PROCESS_FLAGS_IN_SESSION             0x00010000UL // Process is in a session
-    #define PS_PROCESS_FLAGS_OVERRIDE_ADDRESS_SPACE 0x00020000UL // Process must use native address space (Win64 only)
-    #define PS_PROCESS_FLAGS_HAS_ADDRESS_SPACE      0x00040000UL // This process has an address space
-    #define PS_PROCESS_FLAGS_LAUNCH_PREFETCHED      0x00080000UL // Process launch was prefetched
-    #define PS_PROCESS_INJECT_INPAGE_ERRORS         0x00100000UL // Process should be given inpage errors - hardcoded in trap.asm too
+#define PS_PROCESS_FLAGS_CREATE_REPORTED 0x00000001UL        // Create process debug call has occurred
+#define PS_PROCESS_FLAGS_NO_DEBUG_INHERIT 0x00000002UL       // Don't inherit debug port
+#define PS_PROCESS_FLAGS_PROCESS_EXITING 0x00000004UL        // PspExitProcess entered
+#define PS_PROCESS_FLAGS_PROCESS_DELETE 0x00000008UL         // Delete process has been issued
+#define PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES 0x00000010UL      // Wow64 split pages
+#define PS_PROCESS_FLAGS_VM_DELETED 0x00000020UL             // VM is deleted
+#define PS_PROCESS_FLAGS_OUTSWAP_ENABLED 0x00000040UL        // Outswap enabled
+#define PS_PROCESS_FLAGS_OUTSWAPPED 0x00000080UL             // Outswapped
+#define PS_PROCESS_FLAGS_FORK_FAILED 0x00000100UL            // Fork status
+#define PS_PROCESS_FLAGS_HAS_PHYSICAL_VAD 0x00000200UL       // Has physical VAD
+#define PS_PROCESS_FLAGS_ADDRESS_SPACE1 0x00000400UL         // Addr space state1
+#define PS_PROCESS_FLAGS_ADDRESS_SPACE2 0x00000800UL         // Addr space state2
+#define PS_PROCESS_FLAGS_SET_TIMER_RESOLUTION 0x00001000UL   // SetTimerResolution has been called
+#define PS_PROCESS_FLAGS_BREAK_ON_TERMINATION 0x00002000UL   // Break on process termination
+#define PS_PROCESS_FLAGS_CREATING_SESSION 0x00004000UL       // Process is creating a session
+#define PS_PROCESS_FLAGS_USING_WRITE_WATCH 0x00008000UL      // Process is using the write watch APIs
+#define PS_PROCESS_FLAGS_IN_SESSION 0x00010000UL             // Process is in a session
+#define PS_PROCESS_FLAGS_OVERRIDE_ADDRESS_SPACE 0x00020000UL // Process must use native address space (Win64 only)
+#define PS_PROCESS_FLAGS_HAS_ADDRESS_SPACE 0x00040000UL      // This process has an address space
+#define PS_PROCESS_FLAGS_LAUNCH_PREFETCHED 0x00080000UL      // Process launch was prefetched
+#define PS_PROCESS_INJECT_INPAGE_ERRORS \
+    0x00100000UL // Process should be given inpage errors - hardcoded in trap.asm too
 
-    union {
+    union
+    {
 
         ULONG Flags;
 
@@ -399,36 +406,39 @@ typedef struct _EPROCESS {
         // references are easy to locate.
         //
 
-        struct {
-            ULONG CreateReported            : 1;
-            ULONG NoDebugInherit            : 1;
-            ULONG ProcessExiting            : 1;
-            ULONG ProcessDelete             : 1;
-            ULONG Wow64SplitPages           : 1;
-            ULONG VmDeleted                 : 1;
-            ULONG OutswapEnabled            : 1;
-            ULONG Outswapped                : 1;
-            ULONG ForkFailed                : 1;
-            ULONG HasPhysicalVad            : 1;
-            ULONG AddressSpaceInitialized   : 2;
-            ULONG SetTimerResolution        : 1;
-            ULONG BreakOnTermination        : 1;
-            ULONG SessionCreationUnderway   : 1;
-            ULONG WriteWatch                : 1;
-            ULONG ProcessInSession          : 1;
-            ULONG OverrideAddressSpace      : 1;
-            ULONG HasAddressSpace           : 1;
-            ULONG LaunchPrefetched          : 1;
-            ULONG InjectInpageErrors        : 1;
-            ULONG Unused                    :11;
+        struct
+        {
+            ULONG CreateReported : 1;
+            ULONG NoDebugInherit : 1;
+            ULONG ProcessExiting : 1;
+            ULONG ProcessDelete : 1;
+            ULONG Wow64SplitPages : 1;
+            ULONG VmDeleted : 1;
+            ULONG OutswapEnabled : 1;
+            ULONG Outswapped : 1;
+            ULONG ForkFailed : 1;
+            ULONG HasPhysicalVad : 1;
+            ULONG AddressSpaceInitialized : 2;
+            ULONG SetTimerResolution : 1;
+            ULONG BreakOnTermination : 1;
+            ULONG SessionCreationUnderway : 1;
+            ULONG WriteWatch : 1;
+            ULONG ProcessInSession : 1;
+            ULONG OverrideAddressSpace : 1;
+            ULONG HasAddressSpace : 1;
+            ULONG LaunchPrefetched : 1;
+            ULONG InjectInpageErrors : 1;
+            ULONG Unused : 11;
         };
     };
 
     NTSTATUS ExitStatus;
 
     USHORT NextPageColor;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             UCHAR SubSystemMinorVersion;
             UCHAR SubSystemMajorVersion;
         };
@@ -446,7 +456,8 @@ typedef EPROCESS *PEPROCESS;
 // Thread termination port
 //
 
-typedef struct _TERMINATION_PORT {
+typedef struct _TERMINATION_PORT
+{
     struct _TERMINATION_PORT *Next;
     PVOID Port;
 } TERMINATION_PORT, *PTERMINATION_PORT;
@@ -467,17 +478,19 @@ typedef struct _TERMINATION_PORT {
 #define PS_GET_THREAD_CREATE_TIME(Thread) ((Thread)->CreateTime.QuadPart >> 3)
 
 #define PS_SET_THREAD_CREATE_TIME(Thread, InputCreateTime) \
-            ((Thread)->CreateTime.QuadPart = (InputCreateTime.QuadPart << 3))
+    ((Thread)->CreateTime.QuadPart = (InputCreateTime.QuadPart << 3))
 
 //
 // Macro to return TRUE if the specified thread is impersonating.
 //
 
-#define PS_IS_THREAD_IMPERSONATING(Thread) (((Thread)->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_IMPERSONATING) != 0)
+#define PS_IS_THREAD_IMPERSONATING(Thread) (((Thread)->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_IMPERSONATING) != 0)
 
-typedef struct _ETHREAD {
+typedef struct _ETHREAD
+{
     KTHREAD Tcb;
-    union {
+    union
+    {
 
         //
         // The fact that this is a union means that all accesses to CreateTime
@@ -492,18 +505,21 @@ typedef struct _ETHREAD {
         // be applied.
         //
 
-        struct {
+        struct
+        {
             unsigned NestedFaultCount : 2;
             unsigned ApcNeeded : 1;
         };
     };
 
-    union {
+    union
+    {
         LARGE_INTEGER ExitTime;
         LIST_ENTRY LpcReplyChain;
         LIST_ENTRY KeyedWaitChain;
     };
-    union {
+    union
+    {
         NTSTATUS ExitStatus;
         PVOID OfsChain;
     };
@@ -518,7 +534,8 @@ typedef struct _ETHREAD {
     // Single linked list of termination blocks
     //
 
-    union {
+    union
+    {
         //
         // List of termination ports
         //
@@ -535,7 +552,6 @@ typedef struct _ETHREAD {
         // Keyvalue being waited for
         //
         PVOID KeyedWaitValue;
-
     };
 
     KSPIN_LOCK ActiveTimerListLock;
@@ -547,13 +563,15 @@ typedef struct _ETHREAD {
     // Lpc
     //
 
-    union {
+    union
+    {
         KSEMAPHORE LpcReplySemaphore;
         KSEMAPHORE KeyedWaitSemaphore;
     };
 
-    union {
-        PVOID LpcReplyMessage;          // -> Message that contains the reply
+    union
+    {
+        PVOID LpcReplyMessage; // -> Message that contains the reply
         PVOID LpcWaitingOnPort;
     };
 
@@ -577,12 +595,13 @@ typedef struct _ETHREAD {
     //  File Systems
     //
 
-    ULONG_PTR TopLevelIrp;  // either NULL, an Irp or a flag defined in FsRtl.h
+    ULONG_PTR TopLevelIrp; // either NULL, an Irp or a flag defined in FsRtl.h
     struct _DEVICE_OBJECT *DeviceToVerify;
 
     PEPROCESS ThreadsProcess;
     PVOID StartAddress;
-    union {
+    union
+    {
         PVOID Win32StartAddress;
         ULONG LpcReceivedMessageId;
     };
@@ -604,7 +623,7 @@ typedef struct _ETHREAD {
     //
     EX_PUSH_LOCK ThreadLock;
 
-    ULONG LpcReplyMessageId;    // MessageId this thread is waiting for reply to
+    ULONG LpcReplyMessageId; // MessageId this thread is waiting for reply to
 
     ULONG ReadClusterSize;
 
@@ -624,55 +643,56 @@ typedef struct _ETHREAD {
     // thread has called PspExitThread itself.
     //
 
-    #define PS_CROSS_THREAD_FLAGS_TERMINATED           0x00000001UL
+#define PS_CROSS_THREAD_FLAGS_TERMINATED 0x00000001UL
 
     //
     // Thread create failed
     //
 
-    #define PS_CROSS_THREAD_FLAGS_DEADTHREAD           0x00000002UL
+#define PS_CROSS_THREAD_FLAGS_DEADTHREAD 0x00000002UL
 
     //
     // Debugger isn't shown this thread
     //
 
-    #define PS_CROSS_THREAD_FLAGS_HIDEFROMDBG          0x00000004UL
+#define PS_CROSS_THREAD_FLAGS_HIDEFROMDBG 0x00000004UL
 
     //
     // Thread is impersonating
     //
 
-    #define PS_CROSS_THREAD_FLAGS_IMPERSONATING        0x00000008UL
+#define PS_CROSS_THREAD_FLAGS_IMPERSONATING 0x00000008UL
 
     //
     // This is a system thread
     //
 
-    #define PS_CROSS_THREAD_FLAGS_SYSTEM               0x00000010UL
+#define PS_CROSS_THREAD_FLAGS_SYSTEM 0x00000010UL
 
     //
     // Hard errors are disabled for this thread
     //
 
-    #define PS_CROSS_THREAD_FLAGS_HARD_ERRORS_DISABLED 0x00000020UL
+#define PS_CROSS_THREAD_FLAGS_HARD_ERRORS_DISABLED 0x00000020UL
 
     //
     // We should break in when this thread is terminated
     //
 
-    #define PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION 0x00000040UL
+#define PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION 0x00000040UL
 
-    //
-    // This thread should skip sending its create thread message
-    //
-    #define PS_CROSS_THREAD_FLAGS_SKIP_CREATION_MSG    0x00000080UL
+//
+// This thread should skip sending its create thread message
+//
+#define PS_CROSS_THREAD_FLAGS_SKIP_CREATION_MSG 0x00000080UL
 
-    //
-    // This thread should skip sending its final thread termination message
-    //
-    #define PS_CROSS_THREAD_FLAGS_SKIP_TERMINATION_MSG 0x00000100UL
+//
+// This thread should skip sending its final thread termination message
+//
+#define PS_CROSS_THREAD_FLAGS_SKIP_TERMINATION_MSG 0x00000100UL
 
-    union {
+    union
+    {
 
         ULONG CrossThreadFlags;
 
@@ -681,16 +701,17 @@ typedef struct _ETHREAD {
         // Use the bit definitions instead.
         //
 
-        struct {
-            ULONG Terminated              : 1;
-            ULONG DeadThread              : 1;
-            ULONG HideFromDebugger        : 1;
+        struct
+        {
+            ULONG Terminated : 1;
+            ULONG DeadThread : 1;
+            ULONG HideFromDebugger : 1;
             ULONG ActiveImpersonationInfo : 1;
-            ULONG SystemThread            : 1;
-            ULONG HardErrorsAreDisabled   : 1;
-            ULONG BreakOnTermination      : 1;
-            ULONG SkipCreationMsg         : 1;
-            ULONG SkipTerminationMsg      : 1;
+            ULONG SystemThread : 1;
+            ULONG HardErrorsAreDisabled : 1;
+            ULONG BreakOnTermination : 1;
+            ULONG SkipCreationMsg : 1;
+            ULONG SkipTerminationMsg : 1;
         };
     };
 
@@ -699,10 +720,12 @@ typedef struct _ETHREAD {
     // level -- no need to use interlocked operations.
     //
 
-    union {
+    union
+    {
         ULONG SameThreadPassiveFlags;
 
-        struct {
+        struct
+        {
 
             //
             // This thread is an active Ex worker thread; it should
@@ -720,9 +743,11 @@ typedef struct _ETHREAD {
     // No need to use interlocked operations.
     //
 
-    union {
+    union
+    {
         ULONG SameThreadApcFlags;
-        struct {
+        struct
+        {
 
             //
             // The stored thread's MSGID is valid. This is only accessed
@@ -730,15 +755,15 @@ typedef struct _ETHREAD {
             //
 
             BOOLEAN LpcReceivedMsgIdValid : 1;
-            BOOLEAN LpcExitThreadCalled   : 1;
-            BOOLEAN AddressSpaceOwner     : 1;
+            BOOLEAN LpcExitThreadCalled : 1;
+            BOOLEAN AddressSpaceOwner : 1;
         };
     };
 
     BOOLEAN ForwardClusterOnly;
     BOOLEAN DisablePageFaultClustering;
 
-#if defined (PERF_DATA)
+#if defined(PERF_DATA)
     ULONG PerformanceCountLow;
     LONG PerformanceCountHigh;
 #endif
@@ -763,71 +788,62 @@ typedef ETHREAD *PETHREAD;
 
 PKTHREAD
 FORCEINLINE
-PsGetKernelThread(
-    IN PETHREAD ThreadObject
-    )
+PsGetKernelThread(IN PETHREAD ThreadObject)
 {
     return (PKTHREAD)ThreadObject;
 }
 
 PKPROCESS
 FORCEINLINE
-PsGetKernelProcess(
-    IN PEPROCESS ProcessObject
-    )
+PsGetKernelProcess(IN PEPROCESS ProcessObject)
 {
     return (PKPROCESS)ProcessObject;
 }
 
 NTSTATUS
-PsGetContextThread(
-    IN PETHREAD Thread,
-    IN OUT PCONTEXT ThreadContext,
-    IN KPROCESSOR_MODE Mode
-    );
+PsGetContextThread(IN PETHREAD Thread, IN OUT PCONTEXT ThreadContext, IN KPROCESSOR_MODE Mode);
 
 NTSTATUS
-PsSetContextThread(
-    IN PETHREAD Thread,
-    IN PCONTEXT ThreadContext,
-    IN KPROCESSOR_MODE Mode
-    );
+PsSetContextThread(IN PETHREAD Thread, IN PCONTEXT ThreadContext, IN KPROCESSOR_MODE Mode);
 
 // end_ntosp
 
-C_ASSERT( FIELD_OFFSET(ETHREAD,Tcb) == 0 );
-C_ASSERT( FIELD_OFFSET(EPROCESS,Pcb) == 0 );
+C_ASSERT(FIELD_OFFSET(ETHREAD, Tcb) == 0);
+C_ASSERT(FIELD_OFFSET(EPROCESS, Pcb) == 0);
 
 //
 // Initial PEB
 //
 
-typedef struct _INITIAL_PEB {
-    BOOLEAN InheritedAddressSpace;      // These four fields cannot change unless the
-    BOOLEAN ReadImageFileExecOptions;   //
-    BOOLEAN BeingDebugged;              //
-    BOOLEAN SpareBool;                  //
-    HANDLE Mutant;                      // PEB structure is also updated.
+typedef struct _INITIAL_PEB
+{
+    BOOLEAN InheritedAddressSpace;    // These four fields cannot change unless the
+    BOOLEAN ReadImageFileExecOptions; //
+    BOOLEAN BeingDebugged;            //
+    BOOLEAN SpareBool;                //
+    HANDLE Mutant;                    // PEB structure is also updated.
 } INITIAL_PEB, *PINITIAL_PEB;
 
-typedef struct _PS_JOB_TOKEN_FILTER {
-    ULONG CapturedSidCount ;
-    PSID_AND_ATTRIBUTES CapturedSids ;
-    ULONG CapturedSidsLength ;
+typedef struct _PS_JOB_TOKEN_FILTER
+{
+    ULONG CapturedSidCount;
+    PSID_AND_ATTRIBUTES CapturedSids;
+    ULONG CapturedSidsLength;
 
-    ULONG CapturedGroupCount ;
-    PSID_AND_ATTRIBUTES CapturedGroups ;
-    ULONG CapturedGroupsLength ;
+    ULONG CapturedGroupCount;
+    PSID_AND_ATTRIBUTES CapturedGroups;
+    ULONG CapturedGroupsLength;
 
-    ULONG CapturedPrivilegeCount ;
-    PLUID_AND_ATTRIBUTES CapturedPrivileges ;
-    ULONG CapturedPrivilegesLength ;
-} PS_JOB_TOKEN_FILTER, * PPS_JOB_TOKEN_FILTER ;
+    ULONG CapturedPrivilegeCount;
+    PLUID_AND_ATTRIBUTES CapturedPrivileges;
+    ULONG CapturedPrivilegesLength;
+} PS_JOB_TOKEN_FILTER, *PPS_JOB_TOKEN_FILTER;
 
 //
 // Job Object
 //
-typedef struct _EJOB {
+typedef struct _EJOB
+{
     KEVENT Event;
 
     //
@@ -909,7 +925,7 @@ typedef struct _EJOB {
     // Extended Limits
     //
 
-    IO_COUNTERS IoInfo;         // not used yet
+    IO_COUNTERS IoInfo; // not used yet
     SIZE_T ProcessMemoryLimit;
     SIZE_T JobMemoryLimit;
     SIZE_T PeakProcessMemoryUsed;
@@ -980,89 +996,60 @@ extern WORK_QUEUE_ITEM PsReaperWorkItem;
 extern ULONG PsEmbeddedNTMask;
 
 BOOLEAN
-PsChangeJobMemoryUsage(
-    SSIZE_T Amount
-    );
+PsChangeJobMemoryUsage(SSIZE_T Amount);
 
-VOID
-PsReportProcessMemoryLimitViolation(
-    VOID
-    );
+VOID PsReportProcessMemoryLimitViolation(VOID);
 
 #define THREAD_HIT_SLOTS 750
 
 extern ULONG PsThreadHits[THREAD_HIT_SLOTS];
 
-VOID
-PsThreadHit(
-    IN PETHREAD Thread
-    );
+VOID PsThreadHit(IN PETHREAD Thread);
 
-VOID
-PsEnforceExecutionTimeLimits(
-    VOID
-    );
+VOID PsEnforceExecutionTimeLimits(VOID);
 
 BOOLEAN
-PsInitSystem (
-    IN ULONG Phase,
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+PsInitSystem(IN ULONG Phase, IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
-VOID
-PsInitializeQuotaSystem (
-    VOID
-    );
+VOID PsInitializeQuotaSystem(VOID);
 
 LOGICAL
-PsShutdownSystem (
-    VOID
-    );
+PsShutdownSystem(VOID);
 
 BOOLEAN
-PsWaitForAllProcesses (
-    VOID);
+PsWaitForAllProcesses(VOID);
 
 NTSTATUS
-PsLocateSystemDll (
-    VOID
-    );
+PsLocateSystemDll(VOID);
 
-VOID
-PsChangeQuantumTable(
-    BOOLEAN ModifyActiveProcesses,
-    ULONG PrioritySeparation
-    );
+VOID PsChangeQuantumTable(BOOLEAN ModifyActiveProcesses, ULONG PrioritySeparation);
 
 //
 // Get Gurrent Prototypes
 //
 #define THREAD_TO_PROCESS(Thread) ((Thread)->ThreadsProcess)
-#define IS_SYSTEM_THREAD(Thread)  (((Thread)->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_SYSTEM) != 0)
+#define IS_SYSTEM_THREAD(Thread) (((Thread)->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_SYSTEM) != 0)
 
 
-#define _PsGetCurrentProcess() (CONTAINING_RECORD(((KeGetCurrentThread())->ApcState.Process),EPROCESS,Pcb))
-#define PsGetCurrentProcessByThread(xCurrentThread) (CONTAINING_RECORD(((xCurrentThread)->Tcb.ApcState.Process),EPROCESS,Pcb))
+#define _PsGetCurrentProcess() (CONTAINING_RECORD(((KeGetCurrentThread())->ApcState.Process), EPROCESS, Pcb))
+#define PsGetCurrentProcessByThread(xCurrentThread) \
+    (CONTAINING_RECORD(((xCurrentThread)->Tcb.ApcState.Process), EPROCESS, Pcb))
 
-#define _PsGetCurrentThread() (CONTAINING_RECORD((KeGetCurrentThread()),ETHREAD,Tcb))
+#define _PsGetCurrentThread() (CONTAINING_RECORD((KeGetCurrentThread()), ETHREAD, Tcb))
 
 #if defined(_NTOSP_)
 
 // begin_ntosp
 NTKERNELAPI
 PEPROCESS
-PsGetCurrentProcess(
-    VOID
-    );
+PsGetCurrentProcess(VOID);
 
 NTKERNELAPI
 PETHREAD
-PsGetCurrentThread(
-    VOID
-    );
+PsGetCurrentThread(VOID);
 // end_ntosp
 
- #else
+#else
 
 #define PsGetCurrentProcess() _PsGetCurrentProcess()
 
@@ -1071,19 +1058,12 @@ PsGetCurrentThread(
 #endif
 
 
-
 //
 // Exit kernel mode APC routine.
 //
 
-VOID
-PsExitSpecialApc(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    );
+VOID PsExitSpecialApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                      IN PVOID *SystemArgument1, IN PVOID *SystemArgument2);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 //
@@ -1092,114 +1072,74 @@ PsExitSpecialApc(
 
 NTKERNELAPI
 NTSTATUS
-PsCreateSystemThread(
-    OUT PHANDLE ThreadHandle,
-    IN ULONG DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN HANDLE ProcessHandle OPTIONAL,
-    OUT PCLIENT_ID ClientId OPTIONAL,
-    IN PKSTART_ROUTINE StartRoutine,
-    IN PVOID StartContext
-    );
+PsCreateSystemThread(OUT PHANDLE ThreadHandle, IN ULONG DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+                     IN HANDLE ProcessHandle OPTIONAL, OUT PCLIENT_ID ClientId OPTIONAL,
+                     IN PKSTART_ROUTINE StartRoutine, IN PVOID StartContext);
 
 NTKERNELAPI
 NTSTATUS
-PsTerminateSystemThread(
-    IN NTSTATUS ExitStatus
-    );
+PsTerminateSystemThread(IN NTSTATUS ExitStatus);
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
 NTSTATUS
-PsCreateSystemProcess(
-    OUT PHANDLE ProcessHandle,
-    IN ULONG DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL
-    );
+PsCreateSystemProcess(OUT PHANDLE ProcessHandle, IN ULONG DesiredAccess,
+                      IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL);
 
-typedef
-VOID (*PLEGO_NOTIFY_ROUTINE)(
-    PKTHREAD Thread
-    );
+typedef VOID (*PLEGO_NOTIFY_ROUTINE)(PKTHREAD Thread);
 
 ULONG
-PsSetLegoNotifyRoutine(
-    PLEGO_NOTIFY_ROUTINE LegoNotifyRoutine
-    );
+PsSetLegoNotifyRoutine(PLEGO_NOTIFY_ROUTINE LegoNotifyRoutine);
 
 // begin_ntifs begin_ntddk
 
-typedef
-VOID
-(*PCREATE_PROCESS_NOTIFY_ROUTINE)(
-    IN HANDLE ParentId,
-    IN HANDLE ProcessId,
-    IN BOOLEAN Create
-    );
+typedef VOID (*PCREATE_PROCESS_NOTIFY_ROUTINE)(IN HANDLE ParentId, IN HANDLE ProcessId, IN BOOLEAN Create);
 
 NTSTATUS
-PsSetCreateProcessNotifyRoutine(
-    IN PCREATE_PROCESS_NOTIFY_ROUTINE NotifyRoutine,
-    IN BOOLEAN Remove
-    );
+PsSetCreateProcessNotifyRoutine(IN PCREATE_PROCESS_NOTIFY_ROUTINE NotifyRoutine, IN BOOLEAN Remove);
 
-typedef
-VOID
-(*PCREATE_THREAD_NOTIFY_ROUTINE)(
-    IN HANDLE ProcessId,
-    IN HANDLE ThreadId,
-    IN BOOLEAN Create
-    );
+typedef VOID (*PCREATE_THREAD_NOTIFY_ROUTINE)(IN HANDLE ProcessId, IN HANDLE ThreadId, IN BOOLEAN Create);
 
 NTSTATUS
-PsSetCreateThreadNotifyRoutine(
-    IN PCREATE_THREAD_NOTIFY_ROUTINE NotifyRoutine
-    );
+PsSetCreateThreadNotifyRoutine(IN PCREATE_THREAD_NOTIFY_ROUTINE NotifyRoutine);
 
 NTSTATUS
-PsRemoveCreateThreadNotifyRoutine (
-    IN PCREATE_THREAD_NOTIFY_ROUTINE NotifyRoutine
-    );
+PsRemoveCreateThreadNotifyRoutine(IN PCREATE_THREAD_NOTIFY_ROUTINE NotifyRoutine);
 
 //
 // Structures for Load Image Notify
 //
 
-typedef struct _IMAGE_INFO {
-    union {
+typedef struct _IMAGE_INFO
+{
+    union
+    {
         ULONG Properties;
-        struct {
-            ULONG ImageAddressingMode  : 8;  // code addressing mode
-            ULONG SystemModeImage      : 1;  // system mode image
-            ULONG ImageMappedToAllPids : 1;  // image mapped into all processes
-            ULONG Reserved             : 22;
+        struct
+        {
+            ULONG ImageAddressingMode : 8;  // code addressing mode
+            ULONG SystemModeImage : 1;      // system mode image
+            ULONG ImageMappedToAllPids : 1; // image mapped into all processes
+            ULONG Reserved : 22;
         };
     };
-    PVOID       ImageBase;
-    ULONG       ImageSelector;
-    SIZE_T      ImageSize;
-    ULONG       ImageSectionNumber;
+    PVOID ImageBase;
+    ULONG ImageSelector;
+    SIZE_T ImageSize;
+    ULONG ImageSectionNumber;
 } IMAGE_INFO, *PIMAGE_INFO;
 
-#define IMAGE_ADDRESSING_MODE_32BIT     3
+#define IMAGE_ADDRESSING_MODE_32BIT 3
 
-typedef
-VOID
-(*PLOAD_IMAGE_NOTIFY_ROUTINE)(
-    IN PUNICODE_STRING FullImageName,
-    IN HANDLE ProcessId,                // pid into which image is being mapped
-    IN PIMAGE_INFO ImageInfo
-    );
+typedef VOID (*PLOAD_IMAGE_NOTIFY_ROUTINE)(IN PUNICODE_STRING FullImageName,
+                                           IN HANDLE ProcessId, // pid into which image is being mapped
+                                           IN PIMAGE_INFO ImageInfo);
 
 NTSTATUS
-PsSetLoadImageNotifyRoutine(
-    IN PLOAD_IMAGE_NOTIFY_ROUTINE NotifyRoutine
-    );
+PsSetLoadImageNotifyRoutine(IN PLOAD_IMAGE_NOTIFY_ROUTINE NotifyRoutine);
 
 NTSTATUS
-PsRemoveLoadImageNotifyRoutine(
-    IN PLOAD_IMAGE_NOTIFY_ROUTINE NotifyRoutine
-    );
+PsRemoveLoadImageNotifyRoutine(IN PLOAD_IMAGE_NOTIFY_ROUTINE NotifyRoutine);
 
 // end_ntddk
 
@@ -1208,78 +1148,60 @@ PsRemoveLoadImageNotifyRoutine(
 //
 
 NTSTATUS
-PsAssignImpersonationToken(
-    IN PETHREAD Thread,
-    IN HANDLE Token
-    );
+PsAssignImpersonationToken(IN PETHREAD Thread, IN HANDLE Token);
 
 // begin_ntosp
 
 NTKERNELAPI
 PACCESS_TOKEN
-PsReferencePrimaryToken(
-    IN PEPROCESS Process
-    );
+PsReferencePrimaryToken(IN PEPROCESS Process);
 
-VOID
-PsDereferencePrimaryToken(
-    IN PACCESS_TOKEN PrimaryToken
-    );
+VOID PsDereferencePrimaryToken(IN PACCESS_TOKEN PrimaryToken);
 
-VOID
-PsDereferenceImpersonationToken(
-    IN PACCESS_TOKEN ImpersonationToken
-    );
+VOID PsDereferenceImpersonationToken(IN PACCESS_TOKEN ImpersonationToken);
 
 // end_ntifs
 // end_ntosp
 
 
-#define PsDereferencePrimaryTokenEx(P,T) (ObFastDereferenceObject (&P->Token,(T)))
+#define PsDereferencePrimaryTokenEx(P, T) (ObFastDereferenceObject(&P->Token, (T)))
 
 #define PsDereferencePrimaryToken(T) (ObDereferenceObject((T)))
 
-#define PsDereferenceImpersonationToken(T)                                    \
-            {if (ARGUMENT_PRESENT((T))) {                                     \
-                (ObDereferenceObject((T)));                                   \
-             } else {                                                         \
-                ;                                                             \
-             }                                                                \
-            }
+#define PsDereferenceImpersonationToken(T) \
+    {                                      \
+        if (ARGUMENT_PRESENT((T)))         \
+        {                                  \
+            (ObDereferenceObject((T)));    \
+        }                                  \
+        else                               \
+        {                                  \
+            ;                              \
+        }                                  \
+    }
 
 
-#define PsProcessAuditId(Process)    ((Process)->UniqueProcessId)
+#define PsProcessAuditId(Process) ((Process)->UniqueProcessId)
 
 // begin_ntosp
 // begin_ntifs
 
 NTKERNELAPI
 PACCESS_TOKEN
-PsReferenceImpersonationToken(
-    IN PETHREAD Thread,
-    OUT PBOOLEAN CopyOnOpen,
-    OUT PBOOLEAN EffectiveOnly,
-    OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel
-    );
+PsReferenceImpersonationToken(IN PETHREAD Thread, OUT PBOOLEAN CopyOnOpen, OUT PBOOLEAN EffectiveOnly,
+                              OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel);
 
 // end_ntifs
 
 PACCESS_TOKEN
-PsReferenceEffectiveToken(
-    IN PETHREAD Thread,
-    OUT PTOKEN_TYPE TokenType,
-    OUT PBOOLEAN EffectiveOnly,
-    OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel
-    );
+PsReferenceEffectiveToken(IN PETHREAD Thread, OUT PTOKEN_TYPE TokenType, OUT PBOOLEAN EffectiveOnly,
+                          OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel);
 
 // begin_ntifs
 
 
-
 LARGE_INTEGER
-PsGetProcessExitTime(
-    VOID
-    );
+PsGetProcessExitTime(VOID);
 
 // end_ntifs
 // end_ntosp
@@ -1288,9 +1210,7 @@ PsGetProcessExitTime(
 
 // begin_ntifs begin_ntosp
 BOOLEAN
-PsIsThreadTerminating(
-    IN PETHREAD Thread
-    );
+PsIsThreadTerminating(IN PETHREAD Thread);
 
 // end_ntifs end_ntosp
 
@@ -1305,224 +1225,118 @@ PsIsThreadTerminating(
 //  Returns TRUE if thread is in the process of terminating.
 //
 
-#define PsIsThreadTerminating(T)                                            \
-    (((T)->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_TERMINATED) != 0)
+#define PsIsThreadTerminating(T) (((T)->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_TERMINATED) != 0)
 
 #endif
 
 extern BOOLEAN PsImageNotifyEnabled;
 
-VOID
-PsCallImageNotifyRoutines(
-    IN PUNICODE_STRING FullImageName,
-    IN HANDLE ProcessId,                // pid into which image is being mapped
-    IN PIMAGE_INFO ImageInfo
-    );
+VOID PsCallImageNotifyRoutines(IN PUNICODE_STRING FullImageName,
+                               IN HANDLE ProcessId, // pid into which image is being mapped
+                               IN PIMAGE_INFO ImageInfo);
 
 // begin_ntifs
 // begin_ntosp
 
 NTSTATUS
-PsImpersonateClient(
-    IN PETHREAD Thread,
-    IN PACCESS_TOKEN Token,
-    IN BOOLEAN CopyOnOpen,
-    IN BOOLEAN EffectiveOnly,
-    IN SECURITY_IMPERSONATION_LEVEL ImpersonationLevel
-    );
+PsImpersonateClient(IN PETHREAD Thread, IN PACCESS_TOKEN Token, IN BOOLEAN CopyOnOpen, IN BOOLEAN EffectiveOnly,
+                    IN SECURITY_IMPERSONATION_LEVEL ImpersonationLevel);
 
 // end_ntosp
 
 BOOLEAN
-PsDisableImpersonation(
-    IN PETHREAD Thread,
-    IN PSE_IMPERSONATION_STATE ImpersonationState
-    );
+PsDisableImpersonation(IN PETHREAD Thread, IN PSE_IMPERSONATION_STATE ImpersonationState);
 
-VOID
-PsRestoreImpersonation(
-    IN PETHREAD Thread,
-    IN PSE_IMPERSONATION_STATE ImpersonationState
-    );
+VOID PsRestoreImpersonation(IN PETHREAD Thread, IN PSE_IMPERSONATION_STATE ImpersonationState);
 
 // end_ntifs
 
 //  begin_ntosp
 
 NTKERNELAPI
-VOID
-PsRevertToSelf(
-    VOID
-    );
+VOID PsRevertToSelf(VOID);
 
 NTKERNELAPI
-VOID
-PsRevertThreadToSelf(
-    PETHREAD Thread
-    );
+VOID PsRevertThreadToSelf(PETHREAD Thread);
 
 // end_ntosp
 
 
 NTSTATUS
-PsOpenTokenOfThread(
-    IN HANDLE ThreadHandle,
-    IN BOOLEAN OpenAsSelf,
-    OUT PACCESS_TOKEN *Token,
-    OUT PBOOLEAN CopyOnOpen,
-    OUT PBOOLEAN EffectiveOnly,
-    OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel
-    );
+PsOpenTokenOfThread(IN HANDLE ThreadHandle, IN BOOLEAN OpenAsSelf, OUT PACCESS_TOKEN *Token, OUT PBOOLEAN CopyOnOpen,
+                    OUT PBOOLEAN EffectiveOnly, OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel);
 
 NTSTATUS
-PsOpenTokenOfProcess(
-    IN HANDLE ProcessHandle,
-    OUT PACCESS_TOKEN *Token
-    );
+PsOpenTokenOfProcess(IN HANDLE ProcessHandle, OUT PACCESS_TOKEN *Token);
 
 NTSTATUS
-PsOpenTokenOfJob(
-    IN HANDLE JobHandle,
-    OUT PACCESS_TOKEN * Token
-    );
+PsOpenTokenOfJob(IN HANDLE JobHandle, OUT PACCESS_TOKEN *Token);
 
 //
 // Cid
 //
 
 NTSTATUS
-PsLookupProcessThreadByCid(
-    IN PCLIENT_ID Cid,
-    OUT PEPROCESS *Process OPTIONAL,
-    OUT PETHREAD *Thread
-    );
+PsLookupProcessThreadByCid(IN PCLIENT_ID Cid, OUT PEPROCESS *Process OPTIONAL, OUT PETHREAD *Thread);
 
 // begin_ntosp
 NTKERNELAPI
 NTSTATUS
-PsLookupProcessByProcessId(
-    IN HANDLE ProcessId,
-    OUT PEPROCESS *Process
-    );
+PsLookupProcessByProcessId(IN HANDLE ProcessId, OUT PEPROCESS *Process);
 
 NTKERNELAPI
 NTSTATUS
-PsLookupThreadByThreadId(
-    IN HANDLE ThreadId,
-    OUT PETHREAD *Thread
-    );
+PsLookupThreadByThreadId(IN HANDLE ThreadId, OUT PETHREAD *Thread);
 
 // begin_ntifs
 //
 // Quota Operations
 //
 
-VOID
-PsChargePoolQuota(
-    IN PEPROCESS Process,
-    IN POOL_TYPE PoolType,
-    IN ULONG_PTR Amount
-    );
+VOID PsChargePoolQuota(IN PEPROCESS Process, IN POOL_TYPE PoolType, IN ULONG_PTR Amount);
 
 NTSTATUS
-PsChargeProcessPoolQuota(
-    IN PEPROCESS Process,
-    IN POOL_TYPE PoolType,
-    IN ULONG_PTR Amount
-    );
+PsChargeProcessPoolQuota(IN PEPROCESS Process, IN POOL_TYPE PoolType, IN ULONG_PTR Amount);
 
-VOID
-PsReturnPoolQuota(
-    IN PEPROCESS Process,
-    IN POOL_TYPE PoolType,
-    IN ULONG_PTR Amount
-    );
+VOID PsReturnPoolQuota(IN PEPROCESS Process, IN POOL_TYPE PoolType, IN ULONG_PTR Amount);
 
 // end_ntifs
 // end_ntosp
 
 NTSTATUS
-PsChargeProcessQuota (
-    IN PEPROCESS Process,
-    IN PS_QUOTA_TYPE QuotaType,
-    IN SIZE_T Amount
-    );
+PsChargeProcessQuota(IN PEPROCESS Process, IN PS_QUOTA_TYPE QuotaType, IN SIZE_T Amount);
 
-VOID
-PsReturnProcessQuota (
-    IN PEPROCESS Process,
-    IN PS_QUOTA_TYPE QuotaType,
-    IN SIZE_T Amount
-    );
+VOID PsReturnProcessQuota(IN PEPROCESS Process, IN PS_QUOTA_TYPE QuotaType, IN SIZE_T Amount);
 
 NTSTATUS
-PsChargeProcessNonPagedPoolQuota(
-    IN PEPROCESS Process,
-    IN SIZE_T Amount
-    );
+PsChargeProcessNonPagedPoolQuota(IN PEPROCESS Process, IN SIZE_T Amount);
 
-VOID
-PsReturnProcessNonPagedPoolQuota(
-    IN PEPROCESS Process,
-    IN SIZE_T Amount
-    );
+VOID PsReturnProcessNonPagedPoolQuota(IN PEPROCESS Process, IN SIZE_T Amount);
 
 NTSTATUS
-PsChargeProcessPagedPoolQuota(
-    IN PEPROCESS Process,
-    IN SIZE_T Amount
-    );
+PsChargeProcessPagedPoolQuota(IN PEPROCESS Process, IN SIZE_T Amount);
 
-VOID
-PsReturnProcessPagedPoolQuota(
-    IN PEPROCESS Process,
-    IN SIZE_T Amount
-    );
+VOID PsReturnProcessPagedPoolQuota(IN PEPROCESS Process, IN SIZE_T Amount);
 
 NTSTATUS
-PsChargeProcessPageFileQuota(
-    IN PEPROCESS Process,
-    IN SIZE_T Amount
-    );
+PsChargeProcessPageFileQuota(IN PEPROCESS Process, IN SIZE_T Amount);
 
-VOID
-PsReturnProcessPageFileQuota(
-    IN PEPROCESS Process,
-    IN SIZE_T Amount
-    );
+VOID PsReturnProcessPageFileQuota(IN PEPROCESS Process, IN SIZE_T Amount);
 
 
 //
 // Context Management
 //
 
-VOID
-PspContextToKframes(
-    OUT PKTRAP_FRAME TrapFrame,
-    OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN PCONTEXT Context
-    );
+VOID PspContextToKframes(OUT PKTRAP_FRAME TrapFrame, OUT PKEXCEPTION_FRAME ExceptionFrame, IN PCONTEXT Context);
 
-VOID
-PspContextFromKframes(
-    OUT PKTRAP_FRAME TrapFrame,
-    OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN PCONTEXT Context
-    );
+VOID PspContextFromKframes(OUT PKTRAP_FRAME TrapFrame, OUT PKEXCEPTION_FRAME ExceptionFrame, IN PCONTEXT Context);
 
-VOID
-PsReturnSharedPoolQuota(
-    IN PEPROCESS_QUOTA_BLOCK QuotaBlock,
-    IN ULONG_PTR PagedAmount,
-    IN ULONG_PTR NonPagedAmount
-    );
+VOID PsReturnSharedPoolQuota(IN PEPROCESS_QUOTA_BLOCK QuotaBlock, IN ULONG_PTR PagedAmount,
+                             IN ULONG_PTR NonPagedAmount);
 
 PEPROCESS_QUOTA_BLOCK
-PsChargeSharedPoolQuota(
-    IN PEPROCESS Process,
-    IN ULONG_PTR PagedAmount,
-    IN ULONG_PTR NonPagedAmount
-    );
+PsChargeSharedPoolQuota(IN PEPROCESS Process, IN ULONG_PTR PagedAmount, IN ULONG_PTR NonPagedAmount);
 
 
 //
@@ -1530,55 +1344,41 @@ PsChargeSharedPoolQuota(
 //
 
 BOOLEAN
-PsForwardException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN BOOLEAN DebugException,
-    IN BOOLEAN SecondChance
-    );
+PsForwardException(IN PEXCEPTION_RECORD ExceptionRecord, IN BOOLEAN DebugException, IN BOOLEAN SecondChance);
 
 // begin_ntosp
 
-typedef
-NTSTATUS
-(*PKWIN32_PROCESS_CALLOUT) (
-    IN PEPROCESS Process,
-    IN BOOLEAN Initialize
-    );
+typedef NTSTATUS (*PKWIN32_PROCESS_CALLOUT)(IN PEPROCESS Process, IN BOOLEAN Initialize);
 
 
-typedef enum _PSW32JOBCALLOUTTYPE {
+typedef enum _PSW32JOBCALLOUTTYPE
+{
     PsW32JobCalloutSetInformation,
     PsW32JobCalloutAddProcess,
     PsW32JobCalloutTerminate
 } PSW32JOBCALLOUTTYPE;
 
-typedef struct _WIN32_JOBCALLOUT_PARAMETERS {
+typedef struct _WIN32_JOBCALLOUT_PARAMETERS
+{
     PVOID Job;
     PSW32JOBCALLOUTTYPE CalloutType;
     IN PVOID Data;
 } WIN32_JOBCALLOUT_PARAMETERS, *PKWIN32_JOBCALLOUT_PARAMETERS;
 
 
-typedef
-NTSTATUS
-(*PKWIN32_JOB_CALLOUT) (
-    IN PKWIN32_JOBCALLOUT_PARAMETERS Parm
-     );
+typedef NTSTATUS (*PKWIN32_JOB_CALLOUT)(IN PKWIN32_JOBCALLOUT_PARAMETERS Parm);
 
 
-typedef enum _PSW32THREADCALLOUTTYPE {
+typedef enum _PSW32THREADCALLOUTTYPE
+{
     PsW32ThreadCalloutInitialize,
     PsW32ThreadCalloutExit
 } PSW32THREADCALLOUTTYPE;
 
-typedef
-NTSTATUS
-(*PKWIN32_THREAD_CALLOUT) (
-    IN PETHREAD Thread,
-    IN PSW32THREADCALLOUTTYPE CalloutType
-    );
+typedef NTSTATUS (*PKWIN32_THREAD_CALLOUT)(IN PETHREAD Thread, IN PSW32THREADCALLOUTTYPE CalloutType);
 
-typedef enum _PSPOWEREVENTTYPE {
+typedef enum _PSPOWEREVENTTYPE
+{
     PsW32FullWake,
     PsW32EventCode,
     PsW32PowerPolicyChanged,
@@ -1591,14 +1391,15 @@ typedef enum _PSPOWEREVENTTYPE {
     PsW32GdiOn
 } PSPOWEREVENTTYPE;
 
-typedef struct _WIN32_POWEREVENT_PARAMETERS {
+typedef struct _WIN32_POWEREVENT_PARAMETERS
+{
     PSPOWEREVENTTYPE EventNumber;
     ULONG_PTR Code;
 } WIN32_POWEREVENT_PARAMETERS, *PKWIN32_POWEREVENT_PARAMETERS;
 
 
-
-typedef enum _POWERSTATETASK {
+typedef enum _POWERSTATETASK
+{
     PowerState_BlockSessionSwitch,
     PowerState_Init,
     PowerState_QueryApps,
@@ -1611,7 +1412,8 @@ typedef enum _POWERSTATETASK {
 
 } POWERSTATETASK;
 
-typedef struct _WIN32_POWERSTATE_PARAMETERS {
+typedef struct _WIN32_POWERSTATE_PARAMETERS
+{
     BOOLEAN Promotion;
     POWER_ACTION SystemAction;
     SYSTEM_POWER_STATE MinSystemState;
@@ -1620,27 +1422,15 @@ typedef struct _WIN32_POWERSTATE_PARAMETERS {
     POWERSTATETASK PowerStateTask;
 } WIN32_POWERSTATE_PARAMETERS, *PKWIN32_POWERSTATE_PARAMETERS;
 
-typedef
-NTSTATUS
-(*PKWIN32_POWEREVENT_CALLOUT) (
-    IN PKWIN32_POWEREVENT_PARAMETERS Parm
-    );
+typedef NTSTATUS (*PKWIN32_POWEREVENT_CALLOUT)(IN PKWIN32_POWEREVENT_PARAMETERS Parm);
 
-typedef
-NTSTATUS
-(*PKWIN32_POWERSTATE_CALLOUT) (
-    IN PKWIN32_POWERSTATE_PARAMETERS Parm
-    );
+typedef NTSTATUS (*PKWIN32_POWERSTATE_CALLOUT)(IN PKWIN32_POWERSTATE_PARAMETERS Parm);
 
-typedef
-NTSTATUS
-(*PKWIN32_OBJECT_CALLOUT) (
-    IN PVOID Parm
-    );
+typedef NTSTATUS (*PKWIN32_OBJECT_CALLOUT)(IN PVOID Parm);
 
 
-
-typedef struct _WIN32_CALLOUTS_FPNS {
+typedef struct _WIN32_CALLOUTS_FPNS
+{
     PKWIN32_PROCESS_CALLOUT ProcessCallout;
     PKWIN32_THREAD_CALLOUT ThreadCallout;
     PKWIN32_GLOBALATOMTABLE_CALLOUT GlobalAtomTableCallout;
@@ -1660,435 +1450,269 @@ typedef struct _WIN32_CALLOUTS_FPNS {
 } WIN32_CALLOUTS_FPNS, *PKWIN32_CALLOUTS_FPNS;
 
 NTKERNELAPI
-VOID
-PsEstablishWin32Callouts(
-    IN PKWIN32_CALLOUTS_FPNS pWin32Callouts
-    );
+VOID PsEstablishWin32Callouts(IN PKWIN32_CALLOUTS_FPNS pWin32Callouts);
 
-typedef enum _PSPROCESSPRIORITYMODE {
+typedef enum _PSPROCESSPRIORITYMODE
+{
     PsProcessPriorityBackground,
     PsProcessPriorityForeground,
     PsProcessPrioritySpinning
 } PSPROCESSPRIORITYMODE;
 
 NTKERNELAPI
-VOID
-PsSetProcessPriorityByClass(
-    IN PEPROCESS Process,
-    IN PSPROCESSPRIORITYMODE PriorityMode
-    );
+VOID PsSetProcessPriorityByClass(IN PEPROCESS Process, IN PSPROCESSPRIORITYMODE PriorityMode);
 
 // end_ntosp
 
-VOID
-PsWatchWorkingSet(
-    IN NTSTATUS Status,
-    IN PVOID PcValue,
-    IN PVOID Va
-    );
+VOID PsWatchWorkingSet(IN NTSTATUS Status, IN PVOID PcValue, IN PVOID Va);
 
 // begin_ntddk begin_nthal begin_ntifs begin_ntosp
 
 
 HANDLE
-PsGetCurrentProcessId( VOID );
+PsGetCurrentProcessId(VOID);
 
 HANDLE
-PsGetCurrentThreadId( VOID );
+PsGetCurrentThreadId(VOID);
 
 
 // end_ntosp
 
 BOOLEAN
-PsGetVersion(
-    PULONG MajorVersion OPTIONAL,
-    PULONG MinorVersion OPTIONAL,
-    PULONG BuildNumber OPTIONAL,
-    PUNICODE_STRING CSDVersion OPTIONAL
-    );
+PsGetVersion(PULONG MajorVersion OPTIONAL, PULONG MinorVersion OPTIONAL, PULONG BuildNumber OPTIONAL,
+             PUNICODE_STRING CSDVersion OPTIONAL);
 
 // end_ntddk end_nthal end_ntifs
 
 // begin_ntosp
 NTKERNELAPI
 ULONG
-PsGetCurrentProcessSessionId(
-    VOID
-    );
+PsGetCurrentProcessSessionId(VOID);
 
 NTKERNELAPI
 PVOID
-PsGetCurrentThreadStackLimit(
-    VOID
-    );
+PsGetCurrentThreadStackLimit(VOID);
 
 NTKERNELAPI
 PVOID
-PsGetCurrentThreadStackBase(
-    VOID
-    );
+PsGetCurrentThreadStackBase(VOID);
 
 NTKERNELAPI
 CCHAR
-PsGetCurrentThreadPreviousMode(
-    VOID
-    );
+PsGetCurrentThreadPreviousMode(VOID);
 
 NTKERNELAPI
 PERESOURCE
-PsGetJobLock(
-    PEJOB Job
-    );
+PsGetJobLock(PEJOB Job);
 
 NTKERNELAPI
 ULONG
-PsGetJobSessionId(
-    PEJOB Job
-    );
+PsGetJobSessionId(PEJOB Job);
 
 NTKERNELAPI
 ULONG
-PsGetJobUIRestrictionsClass(
-    PEJOB Job
-    );
+PsGetJobUIRestrictionsClass(PEJOB Job);
 
 NTKERNELAPI
 LONGLONG
-PsGetProcessCreateTimeQuadPart(
-    PEPROCESS Process
-    );
+PsGetProcessCreateTimeQuadPart(PEPROCESS Process);
 
 NTKERNELAPI
 PVOID
-PsGetProcessDebugPort(
-    PEPROCESS Process
-    );
+PsGetProcessDebugPort(PEPROCESS Process);
 
 BOOLEAN
-PsIsProcessBeingDebugged(
-    PEPROCESS Process
-    );
+PsIsProcessBeingDebugged(PEPROCESS Process);
 
 NTKERNELAPI
 BOOLEAN
-PsGetProcessExitProcessCalled(
-    PEPROCESS Process
-    );
+PsGetProcessExitProcessCalled(PEPROCESS Process);
 
 NTKERNELAPI
 NTSTATUS
-PsGetProcessExitStatus(
-    PEPROCESS Process
-    );
+PsGetProcessExitStatus(PEPROCESS Process);
 
 NTKERNELAPI
 HANDLE
-PsGetProcessId(
-    PEPROCESS Process
-    );
+PsGetProcessId(PEPROCESS Process);
 
 NTKERNELAPI
-UCHAR *
-PsGetProcessImageFileName(
-    PEPROCESS Process
-    );
+UCHAR *PsGetProcessImageFileName(PEPROCESS Process);
 
 #define PsGetCurrentProcessImageFileName() PsGetProcessImageFileName(PsGetCurrentProcess())
 
 NTKERNELAPI
 HANDLE
-PsGetProcessInheritedFromUniqueProcessId(
-    PEPROCESS Process
-    );
+PsGetProcessInheritedFromUniqueProcessId(PEPROCESS Process);
 
 NTKERNELAPI
 PEJOB
-PsGetProcessJob(
-    PEPROCESS Process
-    );
+PsGetProcessJob(PEPROCESS Process);
 
 NTKERNELAPI
 ULONG
-PsGetProcessSessionId(
-    PEPROCESS Process
-    );
+PsGetProcessSessionId(PEPROCESS Process);
 
 NTKERNELAPI
 PVOID
-PsGetProcessSectionBaseAddress(
-    PEPROCESS Process
-    );
+PsGetProcessSectionBaseAddress(PEPROCESS Process);
 
 
 #define PsGetProcessPcb(Process) ((PKPROCESS)(Process))
 
 NTKERNELAPI
-PPEB
-PsGetProcessPeb(
-    PEPROCESS Process
-    );
+PPEB PsGetProcessPeb(PEPROCESS Process);
 
 NTKERNELAPI
 UCHAR
-PsGetProcessPriorityClass(
-    PEPROCESS Process
-    );
+PsGetProcessPriorityClass(PEPROCESS Process);
 
 NTKERNELAPI
 HANDLE
-PsGetProcessWin32WindowStation(
-    PEPROCESS Process
-    );
+PsGetProcessWin32WindowStation(PEPROCESS Process);
 
 #define PsGetCurrentProcessWin32WindowStation() PsGetProcessWin32WindowStation(PsGetCurrentProcess())
 
 NTKERNELAPI
 PVOID
-PsGetProcessWin32Process(
-    PEPROCESS Process
-    );
+PsGetProcessWin32Process(PEPROCESS Process);
 
 #define PsGetCurrentProcessWin32Process() PsGetProcessWin32Process(PsGetCurrentProcess())
 
 #if defined(_WIN64)
 NTKERNELAPI
 PVOID
-PsGetProcessWow64Process(
-    PEPROCESS Process
-    );
+PsGetProcessWow64Process(PEPROCESS Process);
 #endif
 
 NTKERNELAPI
 HANDLE
-PsGetThreadId(
-    PETHREAD Thread
-     );
+PsGetThreadId(PETHREAD Thread);
 
 NTKERNELAPI
 CCHAR
-PsGetThreadFreezeCount(
-    PETHREAD Thread
-    );
+PsGetThreadFreezeCount(PETHREAD Thread);
 
 NTKERNELAPI
 BOOLEAN
-PsGetThreadHardErrorsAreDisabled(
-    PETHREAD Thread);
+PsGetThreadHardErrorsAreDisabled(PETHREAD Thread);
 
 NTKERNELAPI
 PEPROCESS
-PsGetThreadProcess(
-    PETHREAD Thread
-     );
+PsGetThreadProcess(PETHREAD Thread);
 
 #define PsGetCurrentThreadProcess() PsGetThreadProcess(PsGetCurrentThread())
 
 NTKERNELAPI
 HANDLE
-PsGetThreadProcessId(
-    PETHREAD Thread
-     );
+PsGetThreadProcessId(PETHREAD Thread);
 #define PsGetCurrentThreadProcessId() PsGetThreadProcessId(PsGetCurrentThread())
 
 NTKERNELAPI
 ULONG
-PsGetThreadSessionId(
-    PETHREAD Thread
-     );
+PsGetThreadSessionId(PETHREAD Thread);
 
-#define  PsGetThreadTcb(Thread) ((PKTHREAD)(Thread))
+#define PsGetThreadTcb(Thread) ((PKTHREAD)(Thread))
 
 NTKERNELAPI
 PVOID
-PsGetThreadTeb(
-    PETHREAD Thread
-     );
+PsGetThreadTeb(PETHREAD Thread);
 
 #define PsGetCurrentThreadTeb() PsGetThreadTeb(PsGetCurrentThread())
 
 NTKERNELAPI
 PVOID
-PsGetThreadWin32Thread(
-    PETHREAD Thread
-     );
+PsGetThreadWin32Thread(PETHREAD Thread);
 
 #define PsGetCurrentThreadWin32Thread() PsGetThreadWin32Thread(PsGetCurrentThread())
 
 
-NTKERNELAPI                         //ntifs
-BOOLEAN                             //ntifs
-PsIsSystemThread(                   //ntifs
-    PETHREAD Thread                 //ntifs
-     );                             //ntifs
+NTKERNELAPI             //ntifs
+    BOOLEAN             //ntifs
+    PsIsSystemThread(   //ntifs
+        PETHREAD Thread //ntifs
+    );                  //ntifs
 
 NTKERNELAPI
 BOOLEAN
-PsIsThreadImpersonating (
-    IN PETHREAD Thread
-    );
+PsIsThreadImpersonating(IN PETHREAD Thread);
 
 NTSTATUS
-PsReferenceProcessFilePointer (
-    IN PEPROCESS Process,
-    OUT PVOID *pFilePointer
-    );
+PsReferenceProcessFilePointer(IN PEPROCESS Process, OUT PVOID *pFilePointer);
 
 NTKERNELAPI
-VOID
-PsSetJobUIRestrictionsClass(
-    PEJOB Job,
-    ULONG UIRestrictionsClass
-    );
+VOID PsSetJobUIRestrictionsClass(PEJOB Job, ULONG UIRestrictionsClass);
 
 NTKERNELAPI
-VOID
-PsSetProcessPriorityClass(
-    PEPROCESS Process,
-    UCHAR PriorityClass
-    );
+VOID PsSetProcessPriorityClass(PEPROCESS Process, UCHAR PriorityClass);
 
 NTKERNELAPI
 NTSTATUS
-PsSetProcessWin32Process(
-    PEPROCESS Process,
-    PVOID Win32Process,
-    PVOID PrevWin32Proces
-    );
+PsSetProcessWin32Process(PEPROCESS Process, PVOID Win32Process, PVOID PrevWin32Proces);
 
 NTKERNELAPI
-VOID
-PsSetProcessWindowStation(
-    PEPROCESS Process,
-    HANDLE Win32WindowStation
-    );
+VOID PsSetProcessWindowStation(PEPROCESS Process, HANDLE Win32WindowStation);
 
 
 NTKERNELAPI
-VOID
-PsSetThreadHardErrorsAreDisabled(
-    PETHREAD Thread,
-    BOOLEAN HardErrorsAreDisabled
-    );
+VOID PsSetThreadHardErrorsAreDisabled(PETHREAD Thread, BOOLEAN HardErrorsAreDisabled);
 
 NTKERNELAPI
-VOID
-PsSetThreadWin32Thread(
-    PETHREAD Thread,
-    PVOID Win32Thread,
-    PVOID PrevWin32Thread
-    );
+VOID PsSetThreadWin32Thread(PETHREAD Thread, PVOID Win32Thread, PVOID PrevWin32Thread);
 
 NTKERNELAPI
 PVOID
-PsGetProcessSecurityPort(
-    PEPROCESS Process
-    );
+PsGetProcessSecurityPort(PEPROCESS Process);
 
 NTKERNELAPI
 NTSTATUS
-PsSetProcessSecurityPort(
-    PEPROCESS Process,
-    PVOID Port
-    );
+PsSetProcessSecurityPort(PEPROCESS Process, PVOID Port);
 
-typedef
-NTSTATUS
-(*PROCESS_ENUM_ROUTINE)(
-    IN PEPROCESS Process,
-    IN PVOID Context
-    );
+typedef NTSTATUS (*PROCESS_ENUM_ROUTINE)(IN PEPROCESS Process, IN PVOID Context);
 
-typedef
-NTSTATUS
-(*THREAD_ENUM_ROUTINE)(
-    IN PEPROCESS Process,
-    IN PETHREAD Thread,
-    IN PVOID Context
-    );
+typedef NTSTATUS (*THREAD_ENUM_ROUTINE)(IN PEPROCESS Process, IN PETHREAD Thread, IN PVOID Context);
 
 NTSTATUS
-PsEnumProcesses (
-    IN PROCESS_ENUM_ROUTINE CallBack,
-    IN PVOID Context
-    );
+PsEnumProcesses(IN PROCESS_ENUM_ROUTINE CallBack, IN PVOID Context);
 
 
 NTSTATUS
-PsEnumProcessThreads (
-    IN PEPROCESS Process,
-    IN THREAD_ENUM_ROUTINE CallBack,
-    IN PVOID Context
-    );
+PsEnumProcessThreads(IN PEPROCESS Process, IN THREAD_ENUM_ROUTINE CallBack, IN PVOID Context);
 
 PEPROCESS
-PsGetNextProcess (
-    IN PEPROCESS Process
-    );
+PsGetNextProcess(IN PEPROCESS Process);
 
 PETHREAD
-PsGetNextProcessThread (
-    IN PEPROCESS Process,
-    IN PETHREAD Thread
-    );
+PsGetNextProcessThread(IN PEPROCESS Process, IN PETHREAD Thread);
 
-VOID
-PsQuitNextProcess (
-    IN PEPROCESS Process
-    );
+VOID PsQuitNextProcess(IN PEPROCESS Process);
 
-VOID
-PsQuitNextProcessThread (
-    IN PETHREAD Thread
-    );
+VOID PsQuitNextProcessThread(IN PETHREAD Thread);
 
 PEJOB
-PsGetNextJob (
-    IN PEJOB Job
-    );
+PsGetNextJob(IN PEJOB Job);
 
 PEPROCESS
-PsGetNextJobProcess (
-    IN PEJOB Job,
-    IN PEPROCESS Process
-    );
+PsGetNextJobProcess(IN PEJOB Job, IN PEPROCESS Process);
 
-VOID
-PsQuitNextJob (
-    IN PEJOB Job
-    );
+VOID PsQuitNextJob(IN PEJOB Job);
 
-VOID
-PsQuitNextJobProcess (
-    IN PEPROCESS Process
-    );
+VOID PsQuitNextJobProcess(IN PEPROCESS Process);
 
 NTSTATUS
-PsSuspendProcess (
-    IN PEPROCESS Process
-    );
+PsSuspendProcess(IN PEPROCESS Process);
 
 NTSTATUS
-PsResumeProcess (
-    IN PEPROCESS Process
-    );
+PsResumeProcess(IN PEPROCESS Process);
 
 NTSTATUS
-PsTerminateProcess(
-    IN PEPROCESS Process,
-    IN NTSTATUS Status
-    );
+PsTerminateProcess(IN PEPROCESS Process, IN NTSTATUS Status);
 
 NTSTATUS
-PsSuspendThread (
-    IN PETHREAD Thread,
-    OUT PULONG PreviousSuspendCount OPTIONAL
-    );
+PsSuspendThread(IN PETHREAD Thread, OUT PULONG PreviousSuspendCount OPTIONAL);
 
 NTSTATUS
-PsResumeThread (
-    IN PETHREAD Thread,
-    OUT PULONG PreviousSuspendCount OPTIONAL
-    );
+PsResumeThread(IN PETHREAD Thread, OUT PULONG PreviousSuspendCount OPTIONAL);
 
 // end_ntosp
 

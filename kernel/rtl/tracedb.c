@@ -34,12 +34,14 @@ Revision History:
 //
 
 #if DBG
-#define TRACE_ASSERT(Expr) {                                              \
-    if (!(Expr)) {                                                        \
-        DbgPrint ("Page heap: (%s, %d): \" %s \" -- assertion failed \n", \
-          __FILE__, __LINE__, #Expr);                                     \
-        DbgBreakPoint ();                                                 \
-    }}
+#define TRACE_ASSERT(Expr)                                                                               \
+    {                                                                                                    \
+        if (!(Expr))                                                                                     \
+        {                                                                                                \
+            DbgPrint("Page heap: (%s, %d): \" %s \" -- assertion failed \n", __FILE__, __LINE__, #Expr); \
+            DbgBreakPoint();                                                                             \
+        }                                                                                                \
+    }
 #else
 #define TRACE_ASSERT(Expr)
 #endif // #if DBG
@@ -49,9 +51,9 @@ Revision History:
 // early detection of corruptions.
 //
 
-#define RTL_TRACE_BLOCK_MAGIC       0xABCDAAAA
-#define RTL_TRACE_SEGMENT_MAGIC     0xABCDBBBB
-#define RTL_TRACE_DATABASE_MAGIC    0xABCDCCCC
+#define RTL_TRACE_BLOCK_MAGIC 0xABCDAAAA
+#define RTL_TRACE_SEGMENT_MAGIC 0xABCDBBBB
+#define RTL_TRACE_DATABASE_MAGIC 0xABCDCCCC
 
 //
 // Amount of memory with each a trace database will be
@@ -69,79 +71,54 @@ Revision History:
 //
 
 BOOLEAN
-RtlpTraceDatabaseInternalAdd (
-    IN PRTL_TRACE_DATABASE Database,
-    IN ULONG Count,
-    IN PVOID * Trace,
-    OUT PRTL_TRACE_BLOCK * TraceBlock OPTIONAL
-    );
+RtlpTraceDatabaseInternalAdd(IN PRTL_TRACE_DATABASE Database, IN ULONG Count, IN PVOID *Trace,
+                             OUT PRTL_TRACE_BLOCK *TraceBlock OPTIONAL);
 
 BOOLEAN
-RtlpTraceDatabaseInternalFind (
-    PRTL_TRACE_DATABASE Database,
-    IN ULONG Count,
-    IN PVOID * Trace,
-    OUT PRTL_TRACE_BLOCK * TraceBlock OPTIONAL
-    );
+RtlpTraceDatabaseInternalFind(PRTL_TRACE_DATABASE Database, IN ULONG Count, IN PVOID *Trace,
+                              OUT PRTL_TRACE_BLOCK *TraceBlock OPTIONAL);
 
-ULONG 
-RtlpTraceStandardHashFunction (
-    IN ULONG Count,
-    IN PVOID * Trace
-    );
+ULONG
+RtlpTraceStandardHashFunction(IN ULONG Count, IN PVOID *Trace);
 
-PVOID 
-RtlpTraceDatabaseAllocate (
-    IN SIZE_T Size,
-    IN ULONG Flags, // OPTIONAL in User mode
-    IN ULONG Tag    // OPTIONAL in User mode
-    );
+PVOID
+RtlpTraceDatabaseAllocate(IN SIZE_T Size,
+                          IN ULONG Flags, // OPTIONAL in User mode
+                          IN ULONG Tag    // OPTIONAL in User mode
+);
 
-BOOLEAN 
-RtlpTraceDatabaseFree (
-    PVOID Block,
-    IN ULONG Tag    // OPTIONAL in User mode
-    );
+BOOLEAN
+RtlpTraceDatabaseFree(PVOID Block,
+                      IN ULONG Tag // OPTIONAL in User mode
+);
 
-BOOLEAN 
-RtlpTraceDatabaseInitializeLock (
-    IN PRTL_TRACE_DATABASE Database
-    );
+BOOLEAN
+RtlpTraceDatabaseInitializeLock(IN PRTL_TRACE_DATABASE Database);
 
-BOOLEAN 
-RtlpTraceDatabaseUninitializeLock (
-    IN PRTL_TRACE_DATABASE Database
-    );
+BOOLEAN
+RtlpTraceDatabaseUninitializeLock(IN PRTL_TRACE_DATABASE Database);
 
-BOOLEAN 
-RtlpTraceDatabaseAcquireLock (
-    IN PRTL_TRACE_DATABASE Database
-    );
+BOOLEAN
+RtlpTraceDatabaseAcquireLock(IN PRTL_TRACE_DATABASE Database);
 
-BOOLEAN 
-RtlpTraceDatabaseReleaseLock (
-    IN PRTL_TRACE_DATABASE Database
-    );
+BOOLEAN
+RtlpTraceDatabaseReleaseLock(IN PRTL_TRACE_DATABASE Database);
 
 PRTL_TRACE_SEGMENT
-RtlpTraceSegmentCreate (
-    IN SIZE_T Size,
-    IN ULONG Flags, // OPTIONAL in User mode
-    IN ULONG Tag    // OPTIONAL in User mode
-    );
+RtlpTraceSegmentCreate(IN SIZE_T Size,
+                       IN ULONG Flags, // OPTIONAL in User mode
+                       IN ULONG Tag    // OPTIONAL in User mode
+);
 
 //
 // Trace database implementation
 //
 
 PRTL_TRACE_DATABASE
-RtlTraceDatabaseCreate (
-    IN ULONG Buckets,
-    IN SIZE_T MaximumSize OPTIONAL,
-    IN ULONG Flags, // OPTIONAL in User mode
-    IN ULONG Tag,   // OPTIONAL in User mode
-    IN RTL_TRACE_HASH_FUNCTION HashFunction OPTIONAL
-    )
+RtlTraceDatabaseCreate(IN ULONG Buckets, IN SIZE_T MaximumSize OPTIONAL,
+                       IN ULONG Flags, // OPTIONAL in User mode
+                       IN ULONG Tag,   // OPTIONAL in User mode
+                       IN RTL_TRACE_HASH_FUNCTION HashFunction OPTIONAL)
 /*++
 
 Routine Description:
@@ -188,7 +165,7 @@ Environment:
     // the database will be allocated in nonpaged pool
     // no matter what flags are used because it contains
     // kernel synchronization objects that need to be in
-    // that pool. 
+    // that pool.
     //
 
 #ifdef NTOS_KERNEL_RUNTIME
@@ -204,19 +181,15 @@ Environment:
     // DATABASE, SEGMENT, buckets of the hash table and later traces.
     //
 
-    RawSize = sizeof (RTL_TRACE_DATABASE) +
-        sizeof (RTL_TRACE_SEGMENT) +
-        Buckets * sizeof (PRTL_TRACE_BLOCK);
+    RawSize = sizeof(RTL_TRACE_DATABASE) + sizeof(RTL_TRACE_SEGMENT) + Buckets * sizeof(PRTL_TRACE_BLOCK);
 
     RawSize += RTL_TRACE_SIZE_INCREMENT;
     RawSize &= ~(RTL_TRACE_SIZE_INCREMENT - 1);
 
-    RawArea = RtlpTraceDatabaseAllocate (
-        RawSize, 
-        FirstFlags,
-        Tag);
+    RawArea = RtlpTraceDatabaseAllocate(RawSize, FirstFlags, Tag);
 
-    if (RawArea == NULL) {
+    if (RawArea == NULL)
+    {
         return NULL;
     }
 
@@ -237,19 +210,22 @@ Environment:
 
     Database->NoOfHits = 0;
     Database->NoOfTraces = 0;
-    RtlZeroMemory (Database->HashCounter, sizeof (Database->HashCounter));
+    RtlZeroMemory(Database->HashCounter, sizeof(Database->HashCounter));
 
-    if (! RtlpTraceDatabaseInitializeLock (Database)) {
-        RtlpTraceDatabaseFree (RawArea, Tag);
+    if (!RtlpTraceDatabaseInitializeLock(Database))
+    {
+        RtlpTraceDatabaseFree(RawArea, Tag);
         return NULL;
     }
 
-    Database->NoOfBuckets = Buckets;      
+    Database->NoOfBuckets = Buckets;
 
-    if (HashFunction == NULL) {
+    if (HashFunction == NULL)
+    {
         Database->HashFunction = RtlpTraceStandardHashFunction;
     }
-    else {
+    else
+    {
         Database->HashFunction = HashFunction;
     }
 
@@ -269,7 +245,7 @@ Environment:
     //
 
     Database->Buckets = (PRTL_TRACE_BLOCK *)(Segment + 1);
-    RtlZeroMemory (Database->Buckets, Database->NoOfBuckets * sizeof(PRTL_TRACE_BLOCK));
+    RtlZeroMemory(Database->Buckets, Database->NoOfBuckets * sizeof(PRTL_TRACE_BLOCK));
 
     //
     // Initialize free pointer for segment
@@ -283,9 +259,7 @@ Environment:
 }
 
 BOOLEAN
-RtlTraceDatabaseDestroy (
-    IN PRTL_TRACE_DATABASE Database
-    )
+RtlTraceDatabaseDestroy(IN PRTL_TRACE_DATABASE Database)
 /*++
 
 Routine Description:
@@ -317,21 +291,22 @@ Environment:
     // Sanity checks.
     //
 
-    TRACE_ASSERT (Database && Database->Magic == RTL_TRACE_DATABASE_MAGIC);
-    TRACE_ASSERT (RtlTraceDatabaseValidate (Database));
+    TRACE_ASSERT(Database && Database->Magic == RTL_TRACE_DATABASE_MAGIC);
+    TRACE_ASSERT(RtlTraceDatabaseValidate(Database));
 
     //
     // Uninitialize the database lock. Even if we fail
     // we will continue to release memory for all segments.
     //
     // N.B. We cannot acquire the lock here for the last time because this
-    // has as a side effect elevating the irql (in K mode) and then the 
+    // has as a side effect elevating the irql (in K mode) and then the
     // function will return with raised irql.
     //
 
-    Success = RtlpTraceDatabaseUninitializeLock (Database);
+    Success = RtlpTraceDatabaseUninitializeLock(Database);
 
-    if (! Success) {
+    if (!Success)
+    {
         SomethingFailed = TRUE;
     }
 
@@ -342,9 +317,8 @@ Environment:
     // ourselves in the foot.
     //
 
-    for (Current = Database->SegmentList;
-         Current != NULL;
-         Current = NextSegment) {
+    for (Current = Database->SegmentList; Current != NULL; Current = NextSegment)
+    {
 
         //
         // We save the next segment before freeing the structure.
@@ -357,32 +331,34 @@ Environment:
         // by the size of the database structure.
         //
 
-        if (NextSegment == NULL) {
-            
-            Current = (PRTL_TRACE_SEGMENT) ((PRTL_TRACE_DATABASE)Current - 1);
+        if (NextSegment == NULL)
+        {
+
+            Current = (PRTL_TRACE_SEGMENT)((PRTL_TRACE_DATABASE)Current - 1);
         }
 
-        Success = RtlpTraceDatabaseFree (Current, Database->Tag);
+        Success = RtlpTraceDatabaseFree(Current, Database->Tag);
 
-        if (! Success) {
+        if (!Success)
+        {
 
-            DbgPrint ("Trace database: failed to release segment %p \n", Current);
+            DbgPrint("Trace database: failed to release segment %p \n", Current);
             SomethingFailed = TRUE;
         }
     }
 
-    if (SomethingFailed) {
+    if (SomethingFailed)
+    {
         return FALSE;
     }
-    else {
+    else
+    {
         return TRUE;
     }
 }
 
 BOOLEAN
-RtlTraceDatabaseValidate (
-    IN PRTL_TRACE_DATABASE Database
-    )
+RtlTraceDatabaseValidate(IN PRTL_TRACE_DATABASE Database)
 /*++
 
 Routine Description:
@@ -409,47 +385,42 @@ Environment:
     PRTL_TRACE_BLOCK Block;
     ULONG Index;
 
-    TRACE_ASSERT (Database != NULL);
-    TRACE_ASSERT (Database->Magic == RTL_TRACE_DATABASE_MAGIC);
+    TRACE_ASSERT(Database != NULL);
+    TRACE_ASSERT(Database->Magic == RTL_TRACE_DATABASE_MAGIC);
 
-    RtlpTraceDatabaseAcquireLock (Database);
+    RtlpTraceDatabaseAcquireLock(Database);
 
     //
     // Check all segments.
     //
 
-    for (Segment = Database->SegmentList;
-         Segment != NULL;
-         Segment = Segment->NextSegment) {
+    for (Segment = Database->SegmentList; Segment != NULL; Segment = Segment->NextSegment)
+    {
 
-        TRACE_ASSERT (Segment->Magic == RTL_TRACE_SEGMENT_MAGIC);
+        TRACE_ASSERT(Segment->Magic == RTL_TRACE_SEGMENT_MAGIC);
     }
 
     //
     // Check all blocks.
     //
-    
-    for (Index = 0; Index < Database->NoOfBuckets; Index++) {
 
-        for (Block = Database->Buckets[Index];
-             Block != NULL;
-             Block = Block->Next) {
+    for (Index = 0; Index < Database->NoOfBuckets; Index++)
+    {
 
-            TRACE_ASSERT (Block->Magic == RTL_TRACE_BLOCK_MAGIC);
+        for (Block = Database->Buckets[Index]; Block != NULL; Block = Block->Next)
+        {
+
+            TRACE_ASSERT(Block->Magic == RTL_TRACE_BLOCK_MAGIC);
         }
     }
 
-    RtlpTraceDatabaseReleaseLock (Database);
+    RtlpTraceDatabaseReleaseLock(Database);
     return TRUE;
 }
 
 BOOLEAN
-RtlTraceDatabaseAdd (
-    IN PRTL_TRACE_DATABASE Database,
-    IN ULONG Count,
-    IN PVOID * Trace,
-    OUT PRTL_TRACE_BLOCK * TraceBlock OPTIONAL
-    )
+RtlTraceDatabaseAdd(IN PRTL_TRACE_DATABASE Database, IN ULONG Count, IN PVOID *Trace,
+                    OUT PRTL_TRACE_BLOCK *TraceBlock OPTIONAL)
 /*++
 
 Routine Description:
@@ -487,28 +458,20 @@ Environment:
     // Sanity checks.
     //
 
-    TRACE_ASSERT (Database && Database->Magic == RTL_TRACE_DATABASE_MAGIC);
+    TRACE_ASSERT(Database && Database->Magic == RTL_TRACE_DATABASE_MAGIC);
 
-    RtlpTraceDatabaseAcquireLock (Database);
+    RtlpTraceDatabaseAcquireLock(Database);
 
-    Result = RtlpTraceDatabaseInternalAdd (
-        Database,
-        Count,
-        Trace,
-        TraceBlock);
+    Result = RtlpTraceDatabaseInternalAdd(Database, Count, Trace, TraceBlock);
 
-    RtlpTraceDatabaseReleaseLock (Database);
+    RtlpTraceDatabaseReleaseLock(Database);
 
     return Result;
 }
 
 BOOLEAN
-RtlTraceDatabaseFind (
-    PRTL_TRACE_DATABASE Database,
-    IN ULONG Count,
-    IN PVOID * Trace,
-    OUT PRTL_TRACE_BLOCK * TraceBlock OPTIONAL
-    )
+RtlTraceDatabaseFind(PRTL_TRACE_DATABASE Database, IN ULONG Count, IN PVOID *Trace,
+                     OUT PRTL_TRACE_BLOCK *TraceBlock OPTIONAL)
 /*++
 
 Routine Description:
@@ -545,32 +508,25 @@ Environment:
     // Sanity checks.
     //
 
-    TRACE_ASSERT (Database && Database->Magic == RTL_TRACE_DATABASE_MAGIC);
+    TRACE_ASSERT(Database && Database->Magic == RTL_TRACE_DATABASE_MAGIC);
 
-    RtlpTraceDatabaseAcquireLock (Database);
+    RtlpTraceDatabaseAcquireLock(Database);
 
-    Result = RtlpTraceDatabaseInternalFind (
-        Database,
-        Count,
-        Trace,
-        TraceBlock);
+    Result = RtlpTraceDatabaseInternalFind(Database, Count, Trace, TraceBlock);
 
-    if (Result) {
+    if (Result)
+    {
         Database->NoOfHits += 1;
     }
 
-    RtlpTraceDatabaseReleaseLock (Database);
+    RtlpTraceDatabaseReleaseLock(Database);
 
     return Result;
 }
 
 BOOLEAN
-RtlpTraceDatabaseInternalAdd (
-    IN PRTL_TRACE_DATABASE Database,
-    IN ULONG Count,
-    IN PVOID * Trace,
-    OUT PRTL_TRACE_BLOCK * TraceBlock OPTIONAL
-    )
+RtlpTraceDatabaseInternalAdd(IN PRTL_TRACE_DATABASE Database, IN ULONG Count, IN PVOID *Trace,
+                             OUT PRTL_TRACE_BLOCK *TraceBlock OPTIONAL)
 /*++
 
 Routine Description:
@@ -610,11 +566,13 @@ Environment:
     // If it is increase the number of hits and return.
     //
 
-    if (RtlpTraceDatabaseInternalFind (Database, Count, Trace, &Block)) {
+    if (RtlpTraceDatabaseInternalFind(Database, Count, Trace, &Block))
+    {
 
         Block->Count += 1;
 
-        if (TraceBlock) {
+        if (TraceBlock)
+        {
             *TraceBlock = Block;
         }
 
@@ -625,22 +583,26 @@ Environment:
     //
     //  We need to create a new block. First we need to figure out
     // if the current segment can accomodate the new block.
-    // 
+    //
 
     RequestSize = sizeof(*Block) + Count * sizeof(PVOID);
 
     TopSegment = Database->SegmentList;
-    if (RequestSize > (SIZE_T)(TopSegment->SegmentEnd - TopSegment->SegmentFree)) {
+    if (RequestSize > (SIZE_T)(TopSegment->SegmentEnd - TopSegment->SegmentFree))
+    {
 
         //
         // If the database has a maximum size and that limit
         // has been reached then fail the call.
         //
 
-        if (Database->MaximumSize > 0) {
-            if (Database->CurrentSize > Database->MaximumSize) {
-                
-                if (TraceBlock) {
+        if (Database->MaximumSize > 0)
+        {
+            if (Database->CurrentSize > Database->MaximumSize)
+            {
+
+                if (TraceBlock)
+                {
                     *TraceBlock = NULL;
                 }
 
@@ -653,16 +615,16 @@ Environment:
         // allocate.
         //
 
-        Segment = RtlpTraceSegmentCreate (RTL_TRACE_SIZE_INCREMENT, 
-                                          Database->Flags,
-                                          Database->Tag);
+        Segment = RtlpTraceSegmentCreate(RTL_TRACE_SIZE_INCREMENT, Database->Flags, Database->Tag);
 
-        if (Segment == NULL) {
-            
-            if (TraceBlock) {
+        if (Segment == NULL)
+        {
+
+            if (TraceBlock)
+            {
                 *TraceBlock = NULL;
             }
-            
+
             return FALSE;
         }
 
@@ -684,12 +646,13 @@ Environment:
         Database->CurrentSize += RTL_TRACE_SIZE_INCREMENT;
     }
 
-    if (RequestSize > (SIZE_T)(TopSegment->SegmentEnd - TopSegment->SegmentFree)) {
+    if (RequestSize > (SIZE_T)(TopSegment->SegmentEnd - TopSegment->SegmentFree))
+    {
 
-        DbgPrint ("Trace database: failing attempt to save biiiiig trace (size %u) \n", 
-                  Count);
-        
-        if (TraceBlock) {
+        DbgPrint("Trace database: failing attempt to save biiiiig trace (size %u) \n", Count);
+
+        if (TraceBlock)
+        {
             *TraceBlock = NULL;
         }
 
@@ -719,13 +682,13 @@ Environment:
     // Copy the trace
     //
 
-    RtlMoveMemory (Block->Trace, Trace, Count * sizeof(PVOID));
+    RtlMoveMemory(Block->Trace, Trace, Count * sizeof(PVOID));
 
     //
     // Add the block to corresponding bucket.
     //
 
-    HashValue = (Database->HashFunction) (Count, Trace);
+    HashValue = (Database->HashFunction)(Count, Trace);
     HashValue %= Database->NoOfBuckets;
     Database->HashCounter[HashValue / (Database->NoOfBuckets / 16)] += 1;
 
@@ -736,7 +699,8 @@ Environment:
     // Loooong function. Finally return succes.
     //
 
-    if (TraceBlock) {
+    if (TraceBlock)
+    {
         *TraceBlock = Block;
     }
 
@@ -745,12 +709,8 @@ Environment:
 }
 
 BOOLEAN
-RtlpTraceDatabaseInternalFind (
-    PRTL_TRACE_DATABASE Database,
-    IN ULONG Count,
-    IN PVOID * Trace,
-    OUT PRTL_TRACE_BLOCK * TraceBlock OPTIONAL
-    )
+RtlpTraceDatabaseInternalFind(PRTL_TRACE_DATABASE Database, IN ULONG Count, IN PVOID *Trace,
+                              OUT PRTL_TRACE_BLOCK *TraceBlock OPTIONAL)
 /*++
 
 Routine Description:
@@ -786,7 +746,7 @@ Environment:
     // Find the bucket to search into.
     //
 
-    HashValue = (Database->HashFunction) (Count, Trace);
+    HashValue = (Database->HashFunction)(Count, Trace);
     Database->HashCounter[HashValue % 16] += 1;
     HashValue %= Database->NoOfBuckets;
 
@@ -794,23 +754,25 @@ Environment:
     // Traverse the list of blocks for the found bucket
     //
 
-    for (Current = Database->Buckets[HashValue];
-         Current != NULL;
-         Current = Current->Next) {
+    for (Current = Database->Buckets[HashValue]; Current != NULL; Current = Current->Next)
+    {
 
         //
         // If the size of the trace matches we might have a chance
         // to find an equal trace.
         //
 
-        if (Count == Current->Size) {
+        if (Count == Current->Size)
+        {
 
             //
             // Figure out if the whole trace matches.
             //
 
-            for (Index = 0; Index < Count; Index++) {
-                if (Current->Trace[Index] != Trace[Index]) {
+            for (Index = 0; Index < Count; Index++)
+            {
+                if (Current->Trace[Index] != Trace[Index])
+                {
                     break;
                 }
             }
@@ -819,8 +781,10 @@ Environment:
             // If the trace matched completely we have found an entry.
             //
 
-            if (Index == Count) {
-                if (TraceBlock) {
+            if (Index == Count)
+            {
+                if (TraceBlock)
+                {
                     *TraceBlock = Current;
                 }
 
@@ -834,18 +798,16 @@ Environment:
     // find anything we will fail the call.
     //
 
-    if (TraceBlock) {
+    if (TraceBlock)
+    {
         *TraceBlock = NULL;
     }
-    
+
     return FALSE;
 }
 
-ULONG 
-RtlpTraceStandardHashFunction (
-    IN ULONG Count,
-    IN PVOID * Trace
-    )
+ULONG
+RtlpTraceStandardHashFunction(IN ULONG Count, IN PVOID *Trace)
 /*++
 
 Routine Description:
@@ -874,23 +836,23 @@ Environment:
 {
     ULONG_PTR Value = 0;
     ULONG Index;
-    unsigned short * Key; 
+    unsigned short *Key;
 
     Key = (unsigned short *)Trace;
-    for (Index = 0; Index < Count * (sizeof (PVOID) / sizeof(*Key)); Index += 2) {
+    for (Index = 0; Index < Count * (sizeof(PVOID) / sizeof(*Key)); Index += 2)
+    {
 
         Value += Key[Index] ^ Key[Index + 1];
     }
 
-    return PtrToUlong ((PVOID)Value);
+    return PtrToUlong((PVOID)Value);
 }
 
-PVOID 
-RtlpTraceDatabaseAllocate (
-    IN SIZE_T Size,
-    IN ULONG Flags, // OPTIONAL in User mode
-    IN ULONG Tag    // OPTIONAL in User mode
-    )
+PVOID
+RtlpTraceDatabaseAllocate(IN SIZE_T Size,
+                          IN ULONG Flags, // OPTIONAL in User mode
+                          IN ULONG Tag    // OPTIONAL in User mode
+)
 /*++
 
 Routine Description:
@@ -918,17 +880,19 @@ Environment:
 --*/
 {
 #ifdef NTOS_KERNEL_RUNTIME
-                                                     
+
     //
     // SilviuC: should take a look if I can allocate with low
     // priority here (allocate with priority in pool).
     //
 
-    if ((Flags & RTL_TRACE_USE_NONPAGED_POOL)) {
-        return ExAllocatePoolWithTag (NonPagedPool, Size, Tag);
+    if ((Flags & RTL_TRACE_USE_NONPAGED_POOL))
+    {
+        return ExAllocatePoolWithTag(NonPagedPool, Size, Tag);
     }
-    else {
-        return ExAllocatePoolWithTag (PagedPool, Size, Tag);
+    else
+    {
+        return ExAllocatePoolWithTag(PagedPool, Size, Tag);
     }
 
 #else
@@ -940,29 +904,25 @@ Environment:
     RequestAddress = NULL;
     RequestSize = Size;
 
-    Status = NtAllocateVirtualMemory (
-        NtCurrentProcess (),
-        &RequestAddress,
-        0,
-        &RequestSize,
-        MEM_RESERVE | MEM_COMMIT,
-        PAGE_READWRITE);
+    Status = NtAllocateVirtualMemory(NtCurrentProcess(), &RequestAddress, 0, &RequestSize, MEM_RESERVE | MEM_COMMIT,
+                                     PAGE_READWRITE);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         return RequestAddress;
     }
-    else {
+    else
+    {
         return NULL;
     }
 
 #endif // #ifdef NTOS_KERNEL_RUNTIME
 }
 
-BOOLEAN 
-RtlpTraceDatabaseFree (
-    PVOID Block,
-    IN ULONG Tag    // OPTIONAL in User mode
-    )
+BOOLEAN
+RtlpTraceDatabaseFree(PVOID Block,
+                      IN ULONG Tag // OPTIONAL in User mode
+)
 /*++
 
 Routine Description:
@@ -988,8 +948,8 @@ Environment:
 --*/
 {
 #ifdef NTOS_KERNEL_RUNTIME
-                                                     
-    ExFreePoolWithTag (Block, Tag);
+
+    ExFreePoolWithTag(Block, Tag);
     return TRUE;
 
 #else
@@ -1001,26 +961,22 @@ Environment:
     Address = Block;
     Size = 0;
 
-    Status = NtFreeVirtualMemory (
-        NtCurrentProcess (),
-        &Address,
-        &Size,
-        MEM_RELEASE);
+    Status = NtFreeVirtualMemory(NtCurrentProcess(), &Address, &Size, MEM_RELEASE);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
     }
-    else {
+    else
+    {
         return FALSE;
     }
 
 #endif // #ifdef NTOS_KERNEL_RUNTIME
 }
 
-BOOLEAN 
-RtlpTraceDatabaseInitializeLock (
-    IN PRTL_TRACE_DATABASE Database
-    )
+BOOLEAN
+RtlpTraceDatabaseInitializeLock(IN PRTL_TRACE_DATABASE Database)
 /*++
 
 Routine Description:
@@ -1043,14 +999,16 @@ Environment:
 --*/
 {
 #ifdef NTOS_KERNEL_RUNTIME
-                                                     
+
     ASSERT((Database->Flags & RTL_TRACE_IN_KERNEL_MODE));
 
-    if ((Database->Flags & RTL_TRACE_USE_NONPAGED_POOL)) {
-        KeInitializeSpinLock (&(Database->u.SpinLock));
+    if ((Database->Flags & RTL_TRACE_USE_NONPAGED_POOL))
+    {
+        KeInitializeSpinLock(&(Database->u.SpinLock));
     }
-    else {
-        ExInitializeFastMutex (&(Database->u.FastMutex));
+    else
+    {
+        ExInitializeFastMutex(&(Database->u.FastMutex));
     }
 
     return TRUE;
@@ -1059,7 +1017,7 @@ Environment:
 
     ASSERT((Database->Flags & RTL_TRACE_IN_USER_MODE));
 
-    RtlInitializeCriticalSection (&(Database->Lock));
+    RtlInitializeCriticalSection(&(Database->Lock));
 
     return TRUE;
 
@@ -1067,10 +1025,8 @@ Environment:
 }
 
 
-BOOLEAN 
-RtlpTraceDatabaseUninitializeLock (
-    IN PRTL_TRACE_DATABASE Database
-    )
+BOOLEAN
+RtlpTraceDatabaseUninitializeLock(IN PRTL_TRACE_DATABASE Database)
 /*++
 
 Routine Description:
@@ -1094,17 +1050,19 @@ Environment:
 --*/
 {
 #ifdef NTOS_KERNEL_RUNTIME
-                                                     
+
     ASSERT((Database->Flags & RTL_TRACE_IN_KERNEL_MODE));
 
-    if ((Database->Flags & RTL_TRACE_USE_NONPAGED_POOL)) {
+    if ((Database->Flags & RTL_TRACE_USE_NONPAGED_POOL))
+    {
 
         //
         // No "uninitialize" required for spinlocks.
         //
     }
-    else {
-        
+    else
+    {
+
         //
         // No "uninitialize" required for fast mutexes.
         //
@@ -1116,7 +1074,7 @@ Environment:
 
     ASSERT((Database->Flags & RTL_TRACE_IN_USER_MODE));
 
-    RtlDeleteCriticalSection (&(Database->Lock));
+    RtlDeleteCriticalSection(&(Database->Lock));
 
     return TRUE;
 
@@ -1124,10 +1082,7 @@ Environment:
 }
 
 
-VOID 
-RtlTraceDatabaseLock (
-    IN PRTL_TRACE_DATABASE Database
-    )
+VOID RtlTraceDatabaseLock(IN PRTL_TRACE_DATABASE Database)
 /*++
 
 Routine Description:
@@ -1157,10 +1112,7 @@ Environment:
 }
 
 
-VOID 
-RtlTraceDatabaseUnlock (
-    IN PRTL_TRACE_DATABASE Database
-    )
+VOID RtlTraceDatabaseUnlock(IN PRTL_TRACE_DATABASE Database)
 /*++
 
 Routine Description:
@@ -1190,10 +1142,8 @@ Environment:
 }
 
 
-BOOLEAN 
-RtlpTraceDatabaseAcquireLock (
-    IN PRTL_TRACE_DATABASE Database
-    )
+BOOLEAN
+RtlpTraceDatabaseAcquireLock(IN PRTL_TRACE_DATABASE Database)
 /*++
 
 Routine Description:
@@ -1216,14 +1166,16 @@ Environment:
 --*/
 {
 #ifdef NTOS_KERNEL_RUNTIME
-                                                     
+
     ASSERT((Database->Flags & RTL_TRACE_IN_KERNEL_MODE));
 
-    if ((Database->Flags & RTL_TRACE_USE_NONPAGED_POOL)) {
-        KeAcquireSpinLock (&(Database->u.SpinLock), &(Database->SavedIrql));
+    if ((Database->Flags & RTL_TRACE_USE_NONPAGED_POOL))
+    {
+        KeAcquireSpinLock(&(Database->u.SpinLock), &(Database->SavedIrql));
     }
-    else {
-        ExAcquireFastMutex (&(Database->u.FastMutex));
+    else
+    {
+        ExAcquireFastMutex(&(Database->u.FastMutex));
     }
 
     Database->Owner = KeGetCurrentThread();
@@ -1233,23 +1185,21 @@ Environment:
 
     ASSERT((Database->Flags & RTL_TRACE_IN_USER_MODE));
 
-    RtlEnterCriticalSection (&(Database->Lock));
-    
+    RtlEnterCriticalSection(&(Database->Lock));
+
     //
     // SilviuC: it might be useful to get thread address here
     // although not really important.
     //
 
-    Database->Owner = NULL; 
+    Database->Owner = NULL;
     return TRUE;
 
 #endif // #ifdef NTOS_KERNEL_RUNTIME
 }
 
-BOOLEAN 
-RtlpTraceDatabaseReleaseLock (
-    IN PRTL_TRACE_DATABASE Database
-    )
+BOOLEAN
+RtlpTraceDatabaseReleaseLock(IN PRTL_TRACE_DATABASE Database)
 /*++
 
 Routine Description:
@@ -1272,15 +1222,17 @@ Environment:
 --*/
 {
 #ifdef NTOS_KERNEL_RUNTIME
-                                                     
+
     ASSERT((Database->Flags & RTL_TRACE_IN_KERNEL_MODE));
     Database->Owner = NULL;
 
-    if ((Database->Flags & RTL_TRACE_USE_NONPAGED_POOL)) {
-        KeReleaseSpinLock (&(Database->u.SpinLock), Database->SavedIrql);
+    if ((Database->Flags & RTL_TRACE_USE_NONPAGED_POOL))
+    {
+        KeReleaseSpinLock(&(Database->u.SpinLock), Database->SavedIrql);
     }
-    else {
-        ExReleaseFastMutex (&(Database->u.FastMutex));
+    else
+    {
+        ExReleaseFastMutex(&(Database->u.FastMutex));
     }
 
     return TRUE;
@@ -1290,18 +1242,17 @@ Environment:
     ASSERT((Database->Flags & RTL_TRACE_IN_USER_MODE));
     Database->Owner = NULL;
 
-    RtlLeaveCriticalSection (&(Database->Lock));
+    RtlLeaveCriticalSection(&(Database->Lock));
     return TRUE;
 
 #endif // #ifdef NTOS_KERNEL_RUNTIME
 }
 
 PRTL_TRACE_SEGMENT
-RtlpTraceSegmentCreate (
-    IN SIZE_T Size,
-    IN ULONG Flags, // OPTIONAL in User mode
-    IN ULONG Tag    // OPTIONAL in User mode
-    )
+RtlpTraceSegmentCreate(IN SIZE_T Size,
+                       IN ULONG Flags, // OPTIONAL in User mode
+                       IN ULONG Tag    // OPTIONAL in User mode
+)
 /*++
 
 Routine Description:
@@ -1330,17 +1281,14 @@ Environment:
 {
     PRTL_TRACE_SEGMENT Segment;
 
-    Segment = RtlpTraceDatabaseAllocate (Size, Flags, Tag);
+    Segment = RtlpTraceDatabaseAllocate(Size, Flags, Tag);
     return Segment;
 }
 
 
 BOOLEAN
-RtlTraceDatabaseEnumerate (
-    PRTL_TRACE_DATABASE Database,
-    OUT PRTL_TRACE_ENUMERATE Enumerate,
-    OUT PRTL_TRACE_BLOCK * TraceBlock
-    )
+RtlTraceDatabaseEnumerate(PRTL_TRACE_DATABASE Database, OUT PRTL_TRACE_ENUMERATE Enumerate,
+                          OUT PRTL_TRACE_BLOCK *TraceBlock)
 /*++
 
 Routine Description:
@@ -1374,10 +1322,10 @@ Environment:
 
 {
     BOOLEAN Result;
-    
-    TRACE_ASSERT (Database != NULL);
-    TRACE_ASSERT (Database->Magic == RTL_TRACE_DATABASE_MAGIC);
-    
+
+    TRACE_ASSERT(Database != NULL);
+    TRACE_ASSERT(Database->Magic == RTL_TRACE_DATABASE_MAGIC);
+
     //
     // (SilviuC): If we ever add support for deleting stack traces
     // then it will not be enough to acquire the lock inside the
@@ -1385,28 +1333,32 @@ Environment:
     // calls.
     //
 
-    RtlpTraceDatabaseAcquireLock (Database);
-    
+    RtlpTraceDatabaseAcquireLock(Database);
+
     //
     // Start the search process if this is the first call.
     // If this is not the first call try to validate what
     // we have inside the enumerator.
     //
 
-    if (Enumerate->Database == NULL) {
+    if (Enumerate->Database == NULL)
+    {
 
         Enumerate->Database = Database;
         Enumerate->Index = 0;
         Enumerate->Block = Database->Buckets[0];
     }
-    else {
+    else
+    {
 
-        if (Enumerate->Database != Database) {
+        if (Enumerate->Database != Database)
+        {
             Result = FALSE;
             goto Exit;
         }
 
-        if (Enumerate->Index >= Database->NoOfBuckets) {
+        if (Enumerate->Index >= Database->NoOfBuckets)
+        {
             Result = FALSE;
             goto Exit;
         }
@@ -1417,22 +1369,25 @@ Environment:
     // of a bucket or the bucket was empty.
     //
 
-    while (Enumerate->Block == NULL) {
-        
+    while (Enumerate->Block == NULL)
+    {
+
         Enumerate->Index += 1;
-        
-        if (Enumerate->Index >= Database->NoOfBuckets) {
+
+        if (Enumerate->Index >= Database->NoOfBuckets)
+        {
             break;
         }
-        
+
         Enumerate->Block = Database->Buckets[Enumerate->Index];
     }
-    
+
     //
     // Figure out if we have finished the enumeration.
     //
 
-    if (Enumerate->Index >= Database->NoOfBuckets && Enumerate->Block == NULL) {
+    if (Enumerate->Index >= Database->NoOfBuckets && Enumerate->Block == NULL)
+    {
 
         *TraceBlock = NULL;
         Result = FALSE;
@@ -1451,13 +1406,12 @@ Environment:
     // Clean up and exit
     //
 
-    Exit:
+Exit:
 
-    RtlpTraceDatabaseReleaseLock (Database);
+    RtlpTraceDatabaseReleaseLock(Database);
     return Result;
 }
 
 //
 // End of module: tracedb.c
 //
-

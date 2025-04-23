@@ -19,8 +19,8 @@ Revision History:
 --*/
 
 // needed for data pointer to function pointer conversions
-#pragma warning(disable:4054)   // type cast from function pointer to PVOID (data pointer)
-#pragma warning(disable:4055)   // type cast from PVOID (data pointer) to function pointer
+#pragma warning(disable : 4054) // type cast from function pointer to PVOID (data pointer)
+#pragma warning(disable : 4055) // type cast from PVOID (data pointer) to function pointer
 
 #include "vfdef.h"
 #include "vihal.h"
@@ -52,7 +52,7 @@ extern LARGE_INTEGER KdTimerStart;
 // nonzero.
 //
 
-ULONG   ViVerifyDma = FALSE;
+ULONG ViVerifyDma = FALSE;
 LOGICAL ViVerifyPerformanceCounter = FALSE;
 //
 // Specify whether we want to double buffer all dma transfers for hooked
@@ -62,13 +62,13 @@ LOGICAL ViVerifyPerformanceCounter = FALSE;
 // page. Benefits of this is that it can catch hardware that over (or under)
 // writes its allocation.
 //
-LOGICAL ViDoubleBufferDma    = TRUE;
+LOGICAL ViDoubleBufferDma = TRUE;
 
 //
 // Specifies whether we want to use a physical guard page on either side
 // of common buffer allocations.
 //
-LOGICAL ViProtectBuffers     = TRUE;
+LOGICAL ViProtectBuffers = TRUE;
 
 //
 // Whether or not we can inject failures into DMA api calls.
@@ -86,7 +86,7 @@ LOGICAL ViSuperDebug = FALSE;
 // Internal globals are set automatically
 // ======================================
 
-LOGICAL ViSufficientlyBootedForPcControl =  FALSE;
+LOGICAL ViSufficientlyBootedForPcControl = FALSE;
 LOGICAL ViSufficientlyBootedForDmaFailure = FALSE;
 
 ULONG ViMaxMapRegistersPerAdapter = 0x20;
@@ -100,116 +100,98 @@ ULONG ViAllocationsFailedDeliberately = 0;
 // This one number is used for both Performance counter control
 // and dma failure injection.
 //
-LARGE_INTEGER ViRequiredTimeSinceBoot = {(LONG) 30 * 1000 * 1000, 0};
+LARGE_INTEGER ViRequiredTimeSinceBoot = { (LONG)30 * 1000 * 1000, 0 };
 
 //
 // When doing double buffering, we write this guy at the beginning and end
 // of every buffer to make sure that nobody overwrites their allocation
 //
-CHAR ViDmaVerifierTag[] = {'D','m','a','V','r','f','y','0'};
+CHAR ViDmaVerifierTag[] = { 'D', 'm', 'a', 'V', 'r', 'f', 'y', '0' };
 
 
-BOOLEAN ViPenalties[] =
-{
-    HVC_ASSERT,             // HV_MISCELLANEOUS_ERROR
-    HVC_ASSERT,             // HV_PERFORMANCE_COUNTER_DECREASED
-    HVC_WARN,               // HV_PERFORMANCE_COUNTER_SKIPPED
-    HVC_BUGCHECK,           // HV_FREED_TOO_MANY_COMMON_BUFFERS
-    HVC_BUGCHECK,           // HV_FREED_TOO_MANY_ADAPTER_CHANNELS
-    HVC_BUGCHECK,           // HV_FREED_TOO_MANY_MAP_REGISTERS
-    HVC_BUGCHECK,           // HV_FREED_TOO_MANY_SCATTER_GATHER_LISTS
-    HVC_ASSERT,             // HV_LEFTOVER_COMMON_BUFFERS
-    HVC_ASSERT,             // HV_LEFTOVER_ADAPTER_CHANNELS
-    HVC_ASSERT,             // HV_LEFTOVER_MAP_REGISTERS
-    HVC_ASSERT,             // HV_LEFTOVER_SCATTER_GATHER_LISTS
-    HVC_ASSERT,             // HV_TOO_MANY_ADAPTER_CHANNELS
-    HVC_ASSERT,             // HV_TOO_MANY_MAP_REGISTERS
-    HVC_ASSERT,             // HV_DID_NOT_FLUSH_ADAPTER_BUFFERS
-    HVC_BUGCHECK,           // HV_DMA_BUFFER_NOT_LOCKED
-    HVC_BUGCHECK,           // HV_BOUNDARY_OVERRUN
-    HVC_ASSERT,             // HV_CANNOT_FREE_MAP_REGISTERS
-    HVC_ASSERT,             // HV_DID_NOT_PUT_ADAPTER
-    HVC_WARN | HVC_ONCE,    // HV_MDL_FLAGS_NOT_SET
-    HVC_ASSERT,             // HV_BAD_IRQL
+BOOLEAN ViPenalties[] = {
+    HVC_ASSERT,          // HV_MISCELLANEOUS_ERROR
+    HVC_ASSERT,          // HV_PERFORMANCE_COUNTER_DECREASED
+    HVC_WARN,            // HV_PERFORMANCE_COUNTER_SKIPPED
+    HVC_BUGCHECK,        // HV_FREED_TOO_MANY_COMMON_BUFFERS
+    HVC_BUGCHECK,        // HV_FREED_TOO_MANY_ADAPTER_CHANNELS
+    HVC_BUGCHECK,        // HV_FREED_TOO_MANY_MAP_REGISTERS
+    HVC_BUGCHECK,        // HV_FREED_TOO_MANY_SCATTER_GATHER_LISTS
+    HVC_ASSERT,          // HV_LEFTOVER_COMMON_BUFFERS
+    HVC_ASSERT,          // HV_LEFTOVER_ADAPTER_CHANNELS
+    HVC_ASSERT,          // HV_LEFTOVER_MAP_REGISTERS
+    HVC_ASSERT,          // HV_LEFTOVER_SCATTER_GATHER_LISTS
+    HVC_ASSERT,          // HV_TOO_MANY_ADAPTER_CHANNELS
+    HVC_ASSERT,          // HV_TOO_MANY_MAP_REGISTERS
+    HVC_ASSERT,          // HV_DID_NOT_FLUSH_ADAPTER_BUFFERS
+    HVC_BUGCHECK,        // HV_DMA_BUFFER_NOT_LOCKED
+    HVC_BUGCHECK,        // HV_BOUNDARY_OVERRUN
+    HVC_ASSERT,          // HV_CANNOT_FREE_MAP_REGISTERS
+    HVC_ASSERT,          // HV_DID_NOT_PUT_ADAPTER
+    HVC_WARN | HVC_ONCE, // HV_MDL_FLAGS_NOT_SET
+    HVC_ASSERT,          // HV_BAD_IRQL
     //
     // This is a hack that is in because almost nobody calls
     // PutDmaAdapter at the right Irql... so until it gets fixed, just
     // print out a warning so we don't have to assert on known situations.
     //
-    HVC_ASSERT,             // HV_BAD_IRQL_JUST_WARN
-    HVC_WARN | HVC_ONCE,    // HV_OUT_OF_MAP_REGISTERS
-    HVC_ASSERT | HVC_ONCE,  // HV_FLUSH_EMPTY_BUFFERS
-    HVC_ASSERT,             // HV_MISMATCHED_MAP_FLUSH
-    HVC_BUGCHECK,           // HV_ADAPTER_ALREADY_RELEASED
-    HVC_BUGCHECK,           // HV_NULL_DMA_ADAPTER
-    HVC_IGNORE,             // HV_MAP_FLUSH_NO_TRANSFER
-    HVC_BUGCHECK,           // HV_ADDRESS_NOT_IN_MDL
-    HVC_BUGCHECK,           // HV_DATA_LOSS
-    HVC_BUGCHECK,           // HV_DOUBLE_MAP_REGISTER
-    HVC_ASSERT,             // HV_OBSOLETE_API
-    HVC_ASSERT,             // HV_BAD_MDL
-    HVC_ASSERT,             // HV_FLUSH_NOT_MAPPED
-    HVC_ASSERT | HVC_ONCE   // HV_MAP_ZERO_LENGTH_BUFFER
+    HVC_ASSERT,            // HV_BAD_IRQL_JUST_WARN
+    HVC_WARN | HVC_ONCE,   // HV_OUT_OF_MAP_REGISTERS
+    HVC_ASSERT | HVC_ONCE, // HV_FLUSH_EMPTY_BUFFERS
+    HVC_ASSERT,            // HV_MISMATCHED_MAP_FLUSH
+    HVC_BUGCHECK,          // HV_ADAPTER_ALREADY_RELEASED
+    HVC_BUGCHECK,          // HV_NULL_DMA_ADAPTER
+    HVC_IGNORE,            // HV_MAP_FLUSH_NO_TRANSFER
+    HVC_BUGCHECK,          // HV_ADDRESS_NOT_IN_MDL
+    HVC_BUGCHECK,          // HV_DATA_LOSS
+    HVC_BUGCHECK,          // HV_DOUBLE_MAP_REGISTER
+    HVC_ASSERT,            // HV_OBSOLETE_API
+    HVC_ASSERT,            // HV_BAD_MDL
+    HVC_ASSERT,            // HV_FLUSH_NOT_MAPPED
+    HVC_ASSERT | HVC_ONCE  // HV_MAP_ZERO_LENGTH_BUFFER
 
 };
 
 
-HAL_VERIFIER_LOCKED_LIST ViAdapterList = {NULL,NULL,0};
-PVF_TIMER_INFORMATION    ViTimerInformation;
+HAL_VERIFIER_LOCKED_LIST ViAdapterList = { NULL, NULL, 0 };
+PVF_TIMER_INFORMATION ViTimerInformation;
 
 
-DMA_OPERATIONS ViDmaOperations =
-{
-    sizeof(DMA_OPERATIONS),
-    (PPUT_DMA_ADAPTER)          VfPutDmaAdapter,
-    (PALLOCATE_COMMON_BUFFER)   VfAllocateCommonBuffer,
-    (PFREE_COMMON_BUFFER)       VfFreeCommonBuffer,
-    (PALLOCATE_ADAPTER_CHANNEL) VfAllocateAdapterChannel,
-    (PFLUSH_ADAPTER_BUFFERS)    VfFlushAdapterBuffers,
-    (PFREE_ADAPTER_CHANNEL)     VfFreeAdapterChannel,
-    (PFREE_MAP_REGISTERS)       VfFreeMapRegisters,
-    (PMAP_TRANSFER)             VfMapTransfer,
-    (PGET_DMA_ALIGNMENT)        VfGetDmaAlignment,
-    (PREAD_DMA_COUNTER)         VfReadDmaCounter,
-    (PGET_SCATTER_GATHER_LIST)  VfGetScatterGatherList,
-    (PPUT_SCATTER_GATHER_LIST)  VfPutScatterGatherList,
+DMA_OPERATIONS ViDmaOperations = {
+    sizeof(DMA_OPERATIONS), (PPUT_DMA_ADAPTER)VfPutDmaAdapter, (PALLOCATE_COMMON_BUFFER)VfAllocateCommonBuffer,
+    (PFREE_COMMON_BUFFER)VfFreeCommonBuffer, (PALLOCATE_ADAPTER_CHANNEL)VfAllocateAdapterChannel,
+    (PFLUSH_ADAPTER_BUFFERS)VfFlushAdapterBuffers, (PFREE_ADAPTER_CHANNEL)VfFreeAdapterChannel,
+    (PFREE_MAP_REGISTERS)VfFreeMapRegisters, (PMAP_TRANSFER)VfMapTransfer, (PGET_DMA_ALIGNMENT)VfGetDmaAlignment,
+    (PREAD_DMA_COUNTER)VfReadDmaCounter, (PGET_SCATTER_GATHER_LIST)VfGetScatterGatherList,
+    (PPUT_SCATTER_GATHER_LIST)VfPutScatterGatherList,
 
     //
     // New DMA APIs
     //
-    (PCALCULATE_SCATTER_GATHER_LIST_SIZE)   VfCalculateScatterGatherListSize,
-    (PBUILD_SCATTER_GATHER_LIST)            VfBuildScatterGatherList,
-    (PBUILD_MDL_FROM_SCATTER_GATHER_LIST)   VfBuildMdlFromScatterGatherList
+    (PCALCULATE_SCATTER_GATHER_LIST_SIZE)VfCalculateScatterGatherListSize,
+    (PBUILD_SCATTER_GATHER_LIST)VfBuildScatterGatherList,
+    (PBUILD_MDL_FROM_SCATTER_GATHER_LIST)VfBuildMdlFromScatterGatherList
 };
 
-#if !defined (NO_LEGACY_DRIVERS)
-DMA_OPERATIONS ViLegacyDmaOperations =
-{
+#if !defined(NO_LEGACY_DRIVERS)
+DMA_OPERATIONS ViLegacyDmaOperations = {
     sizeof(DMA_OPERATIONS),
     //
     // PutDmaAdapter cannot be called by name
     //
-    (PPUT_DMA_ADAPTER)          NULL,
-    (PALLOCATE_COMMON_BUFFER)   HalAllocateCommonBuffer,
-    (PFREE_COMMON_BUFFER)       HalFreeCommonBuffer,
-    (PALLOCATE_ADAPTER_CHANNEL) IoAllocateAdapterChannel,
-    (PFLUSH_ADAPTER_BUFFERS)    IoFlushAdapterBuffers,
-    (PFREE_ADAPTER_CHANNEL)     IoFreeAdapterChannel,
-    (PFREE_MAP_REGISTERS)       IoFreeMapRegisters,
-    (PMAP_TRANSFER)             IoMapTransfer,
+    (PPUT_DMA_ADAPTER)NULL, (PALLOCATE_COMMON_BUFFER)HalAllocateCommonBuffer, (PFREE_COMMON_BUFFER)HalFreeCommonBuffer,
+    (PALLOCATE_ADAPTER_CHANNEL)IoAllocateAdapterChannel, (PFLUSH_ADAPTER_BUFFERS)IoFlushAdapterBuffers,
+    (PFREE_ADAPTER_CHANNEL)IoFreeAdapterChannel, (PFREE_MAP_REGISTERS)IoFreeMapRegisters, (PMAP_TRANSFER)IoMapTransfer,
     //
     // HalGetDmaAlignmentRequirement isn't exported by legacy hals
     //
-    (PGET_DMA_ALIGNMENT)        NULL,
-    (PREAD_DMA_COUNTER)         HalReadDmaCounter,
+    (PGET_DMA_ALIGNMENT)NULL, (PREAD_DMA_COUNTER)HalReadDmaCounter,
     //
     // Scatter gather functions can never get called by name
     //
-                                NULL,
-                                NULL
+    NULL, NULL
 };
 #endif
-
 
 
 #ifdef ALLOC_PRAGMA
@@ -217,7 +199,7 @@ DMA_OPERATIONS ViLegacyDmaOperations =
 
 #pragma alloc_text(PAGEVRFY, VfGetDmaAdapter)
 
-#if !defined (NO_LEGACY_DRIVERS)
+#if !defined(NO_LEGACY_DRIVERS)
 #pragma alloc_text(PAGEVRFY, VfLegacyGetAdapter)
 #endif
 
@@ -278,7 +260,7 @@ DMA_OPERATIONS ViLegacyDmaOperations =
 #pragma alloc_text(PAGEVRFY, VfScatterGatherCallback)
 #pragma alloc_text(PAGEVRFY, ViAllocateContiguousMemory)
 
-#if defined  (_X86_)
+#if defined(_X86_)
 #pragma alloc_text(PAGEVRFY, ViRdtscX86)
 #elif defined(_IA64_)
 #pragma alloc_text(PAGEVRFY, ViRdtscIA64)
@@ -289,21 +271,9 @@ DMA_OPERATIONS ViLegacyDmaOperations =
 #endif
 
 
+typedef LARGE_INTEGER (*PKE_QUERY_PERFORMANCE_COUNTER)(IN PLARGE_INTEGER PerformanceFrequency OPTIONAL);
 
-
-typedef
-LARGE_INTEGER
-(*PKE_QUERY_PERFORMANCE_COUNTER) (
-   IN PLARGE_INTEGER PerformanceFrequency OPTIONAL
-    );
-
-VOID
-ViRefreshCallback(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID ViRefreshCallback(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 {
     UNREFERENCED_PARAMETER(Dpc);
     UNREFERENCED_PARAMETER(DeferredContext);
@@ -314,9 +284,8 @@ ViRefreshCallback(
 
 } // ViRefreshCallback //
 
-
-VOID
-VfInitializeTimerInformation()
+
+VOID VfInitializeTimerInformation()
 /*++
 
 Routine Description:
@@ -340,26 +309,21 @@ Return Value:
     PAGED_CODE();
 
     ViTimerInformation = ExAllocatePoolWithTag(NonPagedPool, sizeof(VF_TIMER_INFORMATION), HAL_VERIFIER_POOL_TAG);
-    if (! ViTimerInformation )
+    if (!ViTimerInformation)
         return;
 
     RtlZeroMemory(ViTimerInformation, sizeof(VF_TIMER_INFORMATION));
 
     KeInitializeTimer(&ViTimerInformation->RefreshTimer);
 
-    KeInitializeDpc(&ViTimerInformation->RefreshDpc,
-        ViRefreshCallback,
-        NULL
-        );
+    KeInitializeDpc(&ViTimerInformation->RefreshDpc, ViRefreshCallback, NULL);
 
     //
     // Find out the performance counter frequency
     //
-    performanceCounter = KeQueryPerformanceCounter(
-        (PLARGE_INTEGER) &ViTimerInformation->PerformanceFrequency);
+    performanceCounter = KeQueryPerformanceCounter((PLARGE_INTEGER)&ViTimerInformation->PerformanceFrequency);
 
-    SAFE_WRITE_TIMER64(ViTimerInformation->UpperBound,
-        RtlConvertLongToLargeInteger(-1));
+    SAFE_WRITE_TIMER64(ViTimerInformation->UpperBound, RtlConvertLongToLargeInteger(-1));
 
     SAFE_WRITE_TIMER64(ViTimerInformation->LastKdStartTime, KdTimerStart);
     //
@@ -384,9 +348,8 @@ Return Value:
     //            =  --------------------  *   ------  *  ---------------
     //                10^7 100 nanoSeconds     Second           Tick
 
-    ViTimerInformation->CountsPerTick = (ULONG)
-        (ViTimerInformation->PerformanceFrequency.QuadPart *
-        KeQueryTimeIncrement() / ( 10 * 1000 * 1000));
+    ViTimerInformation->CountsPerTick =
+        (ULONG)(ViTimerInformation->PerformanceFrequency.QuadPart * KeQueryTimeIncrement() / (10 * 1000 * 1000));
 
 
     //
@@ -396,20 +359,14 @@ Return Value:
     // 100 nanosecond units to milliseconds
     //
     timerPeriod = (KeQueryTimeIncrement() + 400 * 10) / (1000 * 10);
-    KeSetTimerEx(
-        &ViTimerInformation->RefreshTimer,
-        RtlConvertLongToLargeInteger(-1 * 1000 * 1000), // start in a second
-        timerPeriod,
-        &ViTimerInformation->RefreshDpc
-        );
+    KeSetTimerEx(&ViTimerInformation->RefreshTimer,
+                 RtlConvertLongToLargeInteger(-1 * 1000 * 1000), // start in a second
+                 timerPeriod, &ViTimerInformation->RefreshDpc);
 
 } // ViInitializeTimerInformation //
 
-
-VOID
-VfHalVerifierInitialize(
-    VOID
-    )
+
+VOID VfHalVerifierInitialize(VOID)
 /*++
 
 Routine Description:
@@ -427,28 +384,27 @@ Return Value:
 {
     VF_INITIALIZE_LOCKED_LIST(&ViAdapterList);
 
-   if ( VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_VERIFY_DMA)) {
+    if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_VERIFY_DMA))
+    {
         ViVerifyDma = TRUE;
     }
 
-   if ( VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_DOUBLE_BUFFER_DMA)) {
+    if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_DOUBLE_BUFFER_DMA))
+    {
         ViDoubleBufferDma = TRUE;
     }
 
-   if ( VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_VERIFY_PERFORMANCE_COUNTER)) {
-       ViVerifyPerformanceCounter = TRUE;
+    if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_VERIFY_PERFORMANCE_COUNTER))
+    {
+        ViVerifyPerformanceCounter = TRUE;
     }
 
 } // VfHalVerifierInitialize //
 
 
-
-
 THUNKED_API
 LARGE_INTEGER
-VfQueryPerformanceCounter (
-   IN PLARGE_INTEGER PerformanceFrequency OPTIONAL
-    )
+VfQueryPerformanceCounter(IN PLARGE_INTEGER PerformanceFrequency OPTIONAL)
 /*++
 
 Routine Description:
@@ -483,12 +439,12 @@ Return Value:
     LARGE_INTEGER nextUpperBound;
     ULONG currentCounter;
 
-    if (! ViVerifyPerformanceCounter)
+    if (!ViVerifyPerformanceCounter)
     {
-        return  KeQueryPerformanceCounter(PerformanceFrequency);
+        return KeQueryPerformanceCounter(PerformanceFrequency);
     }
 
-    if (! ViSufficientlyBootedForPcControl)
+    if (!ViSufficientlyBootedForPcControl)
     //
     // If we're not worrying about performance counters yet
     // call the real function
@@ -508,15 +464,14 @@ Return Value:
         // less than dispatch level
         //
         if (currentIrql < DISPATCH_LEVEL &&
-            currentTime.QuadPart > KeBootTime.QuadPart +
-            ViRequiredTimeSinceBoot.QuadPart )
+            currentTime.QuadPart > KeBootTime.QuadPart + ViRequiredTimeSinceBoot.QuadPart)
         {
 
             ViSufficientlyBootedForPcControl = TRUE;
 
             VfInitializeTimerInformation();
 
-            if (! ViTimerInformation )
+            if (!ViTimerInformation)
             {
                 //
                 // If we failed initialization, we're out of luck.
@@ -544,8 +499,7 @@ Return Value:
     // (bottom 32 bits may rollover while we are in the middle of reading so
     // we have to do a bit of extra work).
     //
-    SAFE_READ_TIMER64( lastPerformanceCounter,
-        ViTimerInformation->LastPerformanceCounter );
+    SAFE_READ_TIMER64(lastPerformanceCounter, ViTimerInformation->LastPerformanceCounter);
 
     performanceCounter = KeQueryPerformanceCounter(PerformanceFrequency);
 
@@ -553,23 +507,19 @@ Return Value:
     //
     // Make sure that PC hasn't gone backwards
     //
-    VF_ASSERT(
-        performanceCounter.QuadPart >= lastPerformanceCounter.QuadPart,
+    VF_ASSERT(performanceCounter.QuadPart >= lastPerformanceCounter.QuadPart,
 
-        HV_PERFORMANCE_COUNTER_DECREASED,
+              HV_PERFORMANCE_COUNTER_DECREASED,
 
-        ( "Performance counter has decreased-- PC1: %I64x, PC0: %I64x",
-            performanceCounter.QuadPart,
-            lastPerformanceCounter.QuadPart )
-        );
+              ("Performance counter has decreased-- PC1: %I64x, PC0: %I64x", performanceCounter.QuadPart,
+               lastPerformanceCounter.QuadPart));
 
 
     //
     // We're not only checking that the performance counter increased,
     // we're making sure that it didn't increase too much
     //
-    SAFE_READ_TIMER64( lastTickCount,
-        ViTimerInformation->LastTickCount );
+    SAFE_READ_TIMER64(lastTickCount, ViTimerInformation->LastTickCount);
 
     //
     // The hal takes care of synchronization for this.
@@ -585,11 +535,9 @@ Return Value:
     // recent ones from the debugger (find the index into our saved
     // counter list)
     //
-    currentCounter = InterlockedIncrement(
-        (PLONG)(&ViTimerInformation->CurrentCounter) ) % MAX_COUNTERS;
+    currentCounter = InterlockedIncrement((PLONG)(&ViTimerInformation->CurrentCounter)) % MAX_COUNTERS;
 
-    currentTickInformation =
-        &ViTimerInformation->SavedTicks[currentCounter];
+    currentTickInformation = &ViTimerInformation->SavedTicks[currentCounter];
 
     currentTickInformation->PerformanceCounter = performanceCounter;
     currentTickInformation->TimerTick = tickCount;
@@ -602,8 +550,7 @@ Return Value:
     // Tentatively set the next upper bound too... set a whole second
     // ahead.
     //
-    nextUpperBound.QuadPart = performanceCounter.QuadPart +
-        ViTimerInformation->PerformanceFrequency.QuadPart;
+    nextUpperBound.QuadPart = performanceCounter.QuadPart + ViTimerInformation->PerformanceFrequency.QuadPart;
 
     //
     // If it has been too long since we last called
@@ -618,21 +565,17 @@ Return Value:
         SAFE_READ_TIMER64(upperBound, ViTimerInformation->UpperBound);
 
 
-
         //
         // Make sure the PC hasn't gone too far forwards.
         //
-        if ((ULONGLONG) performanceCounter.QuadPart >
-            (ULONGLONG) upperBound.QuadPart )
+        if ((ULONGLONG)performanceCounter.QuadPart > (ULONGLONG)upperBound.QuadPart)
         {
             LARGE_INTEGER lastKdStartTime;
             //
             // Microseconds = 10^6  * ticks / ticks per second
             //
-            ULONG miliseconds = (ULONG) ( 1000 *
-                ( performanceCounter.QuadPart -
-                lastPerformanceCounter.QuadPart ) /
-                ViTimerInformation->PerformanceFrequency.QuadPart );
+            ULONG miliseconds = (ULONG)(1000 * (performanceCounter.QuadPart - lastPerformanceCounter.QuadPart) /
+                                        ViTimerInformation->PerformanceFrequency.QuadPart);
 
             //
             // Check if the skip was caused by entering the debugger
@@ -645,16 +588,12 @@ Return Value:
                 // skip was not caused by entering the debugger
                 //
 
-                VF_ASSERT(
-                    (ULONGLONG) performanceCounter.QuadPart <=
-                    (ULONGLONG) upperBound.QuadPart,
+                VF_ASSERT((ULONGLONG)performanceCounter.QuadPart <= (ULONGLONG)upperBound.QuadPart,
 
-                    HV_PERFORMANCE_COUNTER_SKIPPED,
+                          HV_PERFORMANCE_COUNTER_SKIPPED,
 
-                    ( "Performance counter skipped too far -- %I64x (%d milliseconds)",
-                    performanceCounter.QuadPart,
-                    miliseconds )
-                    );
+                          ("Performance counter skipped too far -- %I64x (%d milliseconds)",
+                           performanceCounter.QuadPart, miliseconds));
             }
             else
             {
@@ -690,21 +629,20 @@ Return Value:
     // (must do so in a safe way).
     //
 
-    SAFE_WRITE_TIMER64( ViTimerInformation->LastPerformanceCounter,
-        performanceCounter );
+    SAFE_WRITE_TIMER64(ViTimerInformation->LastPerformanceCounter, performanceCounter);
 
     return performanceCounter;
 
 } // VfQueryPerformanceCounter //
 
 
-#if defined (_X86_)
+#if defined(_X86_)
 
 //
 // For some annoying reason, a naked function call will cause
 // a warning since we don't have a "return" statement
 //
-#pragma warning(disable: 4035)
+#pragma warning(disable : 4035)
 //
 // RDTSC is a non-standard instruction -- so build it from
 // the opcode (0x0F31)
@@ -713,12 +651,10 @@ Return Value:
 #define RDTSC __asm _emit 0x0F __asm _emit 0x31
 #endif
 
-
-_declspec(naked)
-LARGE_INTEGER
-ViRdtscX86()
+
+_declspec(naked) LARGE_INTEGER ViRdtscX86()
 {
-    __asm{
+    __asm {
         RDTSC
         ret
     }
@@ -736,7 +672,7 @@ ViRdtscIA64()
 
 #else // !X86 && !_IA64_ //
 
-
+
 LARGE_INTEGER
 ViRdtscNull()
 {
@@ -748,13 +684,9 @@ ViRdtscNull()
 
 #endif
 
-
+
 PADAPTER_INFORMATION
-ViHookDmaAdapter(
-    IN PDMA_ADAPTER DmaAdapter,
-    IN PDEVICE_DESCRIPTION DeviceDescription,
-    IN ULONG NumberOfMapRegisters
-    )
+ViHookDmaAdapter(IN PDMA_ADAPTER DmaAdapter, IN PDEVICE_DESCRIPTION DeviceDescription, IN ULONG NumberOfMapRegisters)
 
 /*++
 
@@ -802,7 +734,7 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( VfInjectDmaFailure() == TRUE)
+    if (VfInjectDmaFailure() == TRUE)
     {
         return NULL;
     }
@@ -827,12 +759,9 @@ Return Value:
     //
     // Allocate space to store the real dma operations for this new adapter
     //
-    newAdapterInformation = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(ADAPTER_INFORMATION),
-        HAL_VERIFIER_POOL_TAG );
+    newAdapterInformation = ExAllocatePoolWithTag(NonPagedPool, sizeof(ADAPTER_INFORMATION), HAL_VERIFIER_POOL_TAG);
 
-    if (! newAdapterInformation )
+    if (!newAdapterInformation)
     {
         //
         // If we can't allocate space for the new adapter, we're not going to
@@ -842,7 +771,7 @@ Return Value:
         return NULL;
     }
 
-    RtlZeroMemory(newAdapterInformation, sizeof(ADAPTER_INFORMATION) );
+    RtlZeroMemory(newAdapterInformation, sizeof(ADAPTER_INFORMATION));
 
     newAdapterInformation->DmaAdapter = DmaAdapter;
 
@@ -864,8 +793,7 @@ Return Value:
     //
     // Save the device description in case we want to look at it later.
     //
-    RtlCopyMemory(&newAdapterInformation->DeviceDescription,
-        DeviceDescription, sizeof(DEVICE_DESCRIPTION) );
+    RtlCopyMemory(&newAdapterInformation->DeviceDescription, DeviceDescription, sizeof(DEVICE_DESCRIPTION));
 
     newAdapterInformation->MaximumMapRegisters = NumberOfMapRegisters;
 
@@ -884,13 +812,16 @@ Return Value:
     // buffering game, unless we come up with a better way to do double
     // buffering.
     //
-    if (VF_DOES_DEVICE_REQUIRE_CONTIGUOUS_BUFFERS(DeviceDescription)) {
-       newAdapterInformation->UseContiguousBuffers = TRUE;
-    } else if (ViDoubleBufferDma) {
-       //
-       // Pre-allocate contiguous memory
-       //
-       ViAllocateContiguousMemory(newAdapterInformation);
+    if (VF_DOES_DEVICE_REQUIRE_CONTIGUOUS_BUFFERS(DeviceDescription))
+    {
+        newAdapterInformation->UseContiguousBuffers = TRUE;
+    }
+    else if (ViDoubleBufferDma)
+    {
+        //
+        // Pre-allocate contiguous memory
+        //
+        ViAllocateContiguousMemory(newAdapterInformation);
     }
     //
     // Ok we've added the real dma operations structure to our adapter list--
@@ -904,11 +835,8 @@ Return Value:
     return newAdapterInformation;
 } // ViHookDmaAdapter //
 
-
-VOID
-ViReleaseDmaAdapter(
-    IN PADAPTER_INFORMATION AdapterInformation
-    )
+
+VOID ViReleaseDmaAdapter(IN PADAPTER_INFORMATION AdapterInformation)
 /*++
 
 Routine Description:
@@ -957,13 +885,16 @@ Return Value:
     AdapterInformation->ContiguousBuffers = NULL;
     KeReleaseSpinLock(&AdapterInformation->AllocationLock, oldIrql);
 
-    if (contiguousBuffers) {
-       for (i = 0; i < MAX_CONTIGUOUS_MAP_REGISTERS; i++) {
-          if (contiguousBuffers[i]) {
-             MmFreeContiguousMemory(contiguousBuffers[i]);
-          }
-       }
-       ExFreePool(contiguousBuffers);
+    if (contiguousBuffers)
+    {
+        for (i = 0; i < MAX_CONTIGUOUS_MAP_REGISTERS; i++)
+        {
+            if (contiguousBuffers[i])
+            {
+                MmFreeContiguousMemory(contiguousBuffers[i]);
+            }
+        }
+        ExFreePool(contiguousBuffers);
     }
 
     //
@@ -977,17 +908,11 @@ Return Value:
     //
     referenceCount = ObDereferenceObject(dmaAdapter);
 
-    VF_ASSERT(
-        referenceCount == 0 ||
-        (referenceCount == 1 &&
-            AdapterInformation->UseDmaChannel ),
+    VF_ASSERT(referenceCount == 0 || (referenceCount == 1 && AdapterInformation->UseDmaChannel),
 
-        HV_DID_NOT_PUT_ADAPTER,
+              HV_DID_NOT_PUT_ADAPTER,
 
-        ( "Too many outstanding reference counts (%x) for adapter %p",
-            referenceCount,
-            dmaAdapter )
-        );
+              ("Too many outstanding reference counts (%x) for adapter %p", referenceCount, dmaAdapter));
 
 
     VF_REMOVE_FROM_LOCKED_LIST(&ViAdapterList, AdapterInformation);
@@ -998,11 +923,8 @@ Return Value:
 } // ViReleaseDmaAdapter //
 
 
-
 PADAPTER_INFORMATION
-ViGetAdapterInformation(
-    IN PDMA_ADAPTER DmaAdapter
-    )
+ViGetAdapterInformation(IN PDMA_ADAPTER DmaAdapter)
 /*++
 
 Routine Description:
@@ -1049,7 +971,6 @@ Return Value:
     }
 
 
-
     VF_LOCK_LIST(&ViAdapterList, OldIrql);
     FOR_ALL_IN_LIST(ADAPTER_INFORMATION, &ViAdapterList.ListEntry, adapterInformation)
     {
@@ -1057,11 +978,8 @@ Return Value:
         {
             VF_UNLOCK_LIST(&ViAdapterList, OldIrql);
 
-            VF_ASSERT( ! adapterInformation->Inactive,
-                HV_ADAPTER_ALREADY_RELEASED,
-                ("Driver has attempted to access an adapter (%p) that has already been released",
-                DmaAdapter),
-                );
+            VF_ASSERT(!adapterInformation->Inactive, HV_ADAPTER_ALREADY_RELEASED,
+                      ("Driver has attempted to access an adapter (%p) that has already been released", DmaAdapter), );
 
             return adapterInformation;
         }
@@ -1074,12 +992,9 @@ Return Value:
     return NULL;
 } // ViGetAdapterInformation //
 
-
+
 PVOID
-ViGetRealDmaOperation(
-    IN PDMA_ADAPTER DmaAdapter,
-    IN ULONG AdapterInformationOffset
-    )
+ViGetRealDmaOperation(IN PDMA_ADAPTER DmaAdapter, IN ULONG AdapterInformationOffset)
 /*++
 
 Routine Description:
@@ -1113,63 +1028,58 @@ Return Value:
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    
-    VF_ASSERT(
-        ! (ViVerifyDma && DmaAdapter == NULL)   ,
-        HV_NULL_DMA_ADAPTER,
-        ("DMA adapters aren't supposed to be NULL anymore")
-        );
 
-#if !defined (NO_LEGACY_DRIVERS)
+    VF_ASSERT(!(ViVerifyDma && DmaAdapter == NULL), HV_NULL_DMA_ADAPTER,
+              ("DMA adapters aren't supposed to be NULL anymore"));
+
+#if !defined(NO_LEGACY_DRIVERS)
     //
     // Prevent against recursion when Hal.dll is being verified
     //
     //
-    // This is a hack that will break when 
+    // This is a hack that will break when
     // dma is done in a filter driver -- but
     // this should only happen when NO_LEGACY_DRIVERs is set.
     //
     dmaOperation = DMA_INDEX(&ViLegacyDmaOperations, AdapterInformationOffset);
-    if (NULL != dmaOperation) 
+    if (NULL != dmaOperation)
     {
         return dmaOperation;
     }
     //
     // If we fall though here we must have hooked the adapter
     //
-                    
-#endif
-    
-    if (! adapterInformation) {
-         //
-         // If we can't find the adapter information, we must not have
-         // hooked it.
-         //
 
-        dmaOperation = DMA_INDEX( DmaAdapter->DmaOperations, AdapterInformationOffset );
-    }    
-    else {
+#endif
+
+    if (!adapterInformation)
+    {
+        //
+        // If we can't find the adapter information, we must not have
+        // hooked it.
+        //
+
+        dmaOperation = DMA_INDEX(DmaAdapter->DmaOperations, AdapterInformationOffset);
+    }
+    else
+    {
         //
         // Dma adapter is hooked. Whether we are still verifying it or not,
         // we have to call the real dma operations structure.
         //
 
         dmaOperation = DMA_INDEX(adapterInformation->RealDmaOperations, AdapterInformationOffset);
-
     }
 
     return dmaOperation;
 
 } // ViGetRealDmaOperation //
 
-
+
 THUNKED_API
 PDMA_ADAPTER
-VfGetDmaAdapter(
-    IN PDEVICE_OBJECT  PhysicalDeviceObject,
-    IN PDEVICE_DESCRIPTION DeviceDescription,
-    IN OUT PULONG  NumberOfMapRegisters
-    )
+VfGetDmaAdapter(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDEVICE_DESCRIPTION DeviceDescription,
+                IN OUT PULONG NumberOfMapRegisters)
 /*++
 
 Routine Description:
@@ -1200,33 +1110,31 @@ Return Value:
     PADAPTER_INFORMATION newAdapterInformation;
     PADAPTER_INFORMATION inactiveAdapter;
     PDMA_ADAPTER dmaAdapter;
-    
+
     PAGED_CODE();
 
     GET_CALLING_ADDRESS(callingAddress);
 
     //
     // Give the option of not hooking dma adapters at all.
-    // Also, if we're a PCI bus driver, we will be called on 
+    // Also, if we're a PCI bus driver, we will be called on
     // behalf of a PCI device. We don't want to hook up this call
     // because we may end up hooking up the function table for the PCI device
     // (not the PCI bus) and they may not want this...
     //
-    if (! ViVerifyDma ||
-          VfIsPCIBus(PhysicalDeviceObject)) {
-        return IoGetDmaAdapter(
-            PhysicalDeviceObject,
-            DeviceDescription,
-            NumberOfMapRegisters );
+    if (!ViVerifyDma || VfIsPCIBus(PhysicalDeviceObject))
+    {
+        return IoGetDmaAdapter(PhysicalDeviceObject, DeviceDescription, NumberOfMapRegisters);
     }
 
-    if (VfInjectDmaFailure() == TRUE) {
+    if (VfInjectDmaFailure() == TRUE)
+    {
         return NULL;
     }
 
     VF_ASSERT_IRQL(PASSIVE_LEVEL);
 
-    // 
+    //
     // Use the PDO, cause it's the only way to uniquely identify a stack...
     //
     if (PhysicalDeviceObject)
@@ -1235,21 +1143,21 @@ Return Value:
         // Clean up inactive adapters with the same device object
         //
         inactiveAdapter = VF_FIND_INACTIVE_ADAPTER(PhysicalDeviceObject);
-    
+
         ///
         // A device may have more than one adapter. Release each of them.
         ///
-        while (inactiveAdapter) {
-    
+        while (inactiveAdapter)
+        {
+
             ViReleaseDmaAdapter(inactiveAdapter);
             inactiveAdapter = VF_FIND_INACTIVE_ADAPTER(PhysicalDeviceObject);
         }
-     
     }
-    
 
-    if ( ViDoubleBufferDma &&
-        *NumberOfMapRegisters > ViMaxMapRegistersPerAdapter )  {
+
+    if (ViDoubleBufferDma && *NumberOfMapRegisters > ViMaxMapRegistersPerAdapter)
+    {
         //
         //  Harumph -- don't let drivers try to get too many adapters
         //  Otherwise NDIS tries to allocate thousands. Since we allocate
@@ -1257,16 +1165,12 @@ Return Value:
         //  gets expensive unless we put our foot down here
         //
         *NumberOfMapRegisters = ViMaxMapRegistersPerAdapter;
-
     }
 
-    dmaAdapter = IoGetDmaAdapter(
-        PhysicalDeviceObject,
-        DeviceDescription,
-        NumberOfMapRegisters
-        );
+    dmaAdapter = IoGetDmaAdapter(PhysicalDeviceObject, DeviceDescription, NumberOfMapRegisters);
 
-    if (! dmaAdapter ) {
+    if (!dmaAdapter)
+    {
         //
         // early opt-out here -- the hal couldn't allocate the adapter
         //
@@ -1277,12 +1181,9 @@ Return Value:
     // Replace all of the dma operations that live in the adapter with our
     // dma operations..  If we can't do it, fail.
     //
-    newAdapterInformation = ViHookDmaAdapter(
-        dmaAdapter,
-        DeviceDescription,
-        *NumberOfMapRegisters
-        );
-    if (! newAdapterInformation) {
+    newAdapterInformation = ViHookDmaAdapter(dmaAdapter, DeviceDescription, *NumberOfMapRegisters);
+    if (!newAdapterInformation)
+    {
         dmaAdapter->DmaOperations->PutDmaAdapter(dmaAdapter);
         return NULL;
     }
@@ -1290,15 +1191,12 @@ Return Value:
     newAdapterInformation->DeviceObject = PhysicalDeviceObject;
     newAdapterInformation->CallingAddress = callingAddress;
 
-    return dmaAdapter ;
+    return dmaAdapter;
 } // VfGetDmaAdapter //
 
-
+
 THUNKED_API
-VOID
-VfPutDmaAdapter(
-    PDMA_ADAPTER DmaAdapter
-    )
+VOID VfPutDmaAdapter(PDMA_ADAPTER DmaAdapter)
 /*++
 
 Routine Description:
@@ -1323,11 +1221,11 @@ Return Value:
 
     VF_ASSERT_MAX_IRQL(DISPATCH_LEVEL);
 
-    putDmaAdapter = (PPUT_DMA_ADAPTER)
-        ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(PutDmaAdapter));
+    putDmaAdapter = (PPUT_DMA_ADAPTER)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(PutDmaAdapter));
 
 
-    if (! putDmaAdapter) {
+    if (!putDmaAdapter)
+    {
         //
         // This is bad but no other choice.
         // -- note there is not default put adapter function
@@ -1340,62 +1238,45 @@ Return Value:
     //
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if ( adapterInformation ) {
+    if (adapterInformation)
+    {
 
         adapterInformation->Inactive = TRUE;
 
-        VF_ASSERT(
-            adapterInformation->AllocatedAdapterChannels ==
-            adapterInformation->FreedAdapterChannels,
+        VF_ASSERT(adapterInformation->AllocatedAdapterChannels == adapterInformation->FreedAdapterChannels,
 
-            HV_LEFTOVER_ADAPTER_CHANNELS,
+                  HV_LEFTOVER_ADAPTER_CHANNELS,
 
-            ( "Cannot put adapter %p until all adapter channels are freed (%x left)",
-            DmaAdapter,
-            adapterInformation->AllocatedAdapterChannels -
-            adapterInformation->FreedAdapterChannels )
-            );
+                  ("Cannot put adapter %p until all adapter channels are freed (%x left)", DmaAdapter,
+                   adapterInformation->AllocatedAdapterChannels - adapterInformation->FreedAdapterChannels));
 
-        VF_ASSERT(
-            adapterInformation->AllocatedCommonBuffers ==
-            adapterInformation->FreedCommonBuffers,
+        VF_ASSERT(adapterInformation->AllocatedCommonBuffers == adapterInformation->FreedCommonBuffers,
 
-            HV_LEFTOVER_ADAPTER_CHANNELS,
+                  HV_LEFTOVER_ADAPTER_CHANNELS,
 
-            ( "Cannot put adapter %p until all common buffers are freed (%x left)",
-            DmaAdapter,
-            adapterInformation->AllocatedCommonBuffers -
-            adapterInformation->FreedCommonBuffers )
-            );
+                  ("Cannot put adapter %p until all common buffers are freed (%x left)", DmaAdapter,
+                   adapterInformation->AllocatedCommonBuffers - adapterInformation->FreedCommonBuffers));
 
-        VF_ASSERT(
-            adapterInformation->ActiveMapRegisters == 0,
-            
-            HV_LEFTOVER_MAP_REGISTERS,
+        VF_ASSERT(adapterInformation->ActiveMapRegisters == 0,
 
-            ( "Cannot put adapter %p until all map registers are freed (%x left)",
-            DmaAdapter,
-            adapterInformation->ActiveMapRegisters )
-            );
+                  HV_LEFTOVER_MAP_REGISTERS,
 
-        VF_ASSERT(
-            adapterInformation->ActiveScatterGatherLists == 0,
+                  ("Cannot put adapter %p until all map registers are freed (%x left)", DmaAdapter,
+                   adapterInformation->ActiveMapRegisters));
 
-            HV_LEFTOVER_ADAPTER_CHANNELS,
+        VF_ASSERT(adapterInformation->ActiveScatterGatherLists == 0,
 
-            ( "Cannot put adapter %p until all scatter gather lists are freed (%x left)",
-            DmaAdapter,
-            adapterInformation->ActiveScatterGatherLists)
-            );
+                  HV_LEFTOVER_ADAPTER_CHANNELS,
+
+                  ("Cannot put adapter %p until all scatter gather lists are freed (%x left)", DmaAdapter,
+                   adapterInformation->ActiveScatterGatherLists));
 
         //
         // These are just to assure the verifier has done everything right.
         //
 #if DBG
-        ASSERT( VF_IS_LOCKED_LIST_EMPTY(
-            &adapterInformation->ScatterGatherLists ));
-        ASSERT( VF_IS_LOCKED_LIST_EMPTY(
-            &adapterInformation->CommonBuffers ));
+        ASSERT(VF_IS_LOCKED_LIST_EMPTY(&adapterInformation->ScatterGatherLists));
+        ASSERT(VF_IS_LOCKED_LIST_EMPTY(&adapterInformation->CommonBuffers));
 #endif
         //
         // Ideally, we wouldn't do this here. It's a bit of a hack. However,
@@ -1404,7 +1285,7 @@ Return Value:
         // we only have a device object, if we don't have a device
         // object in our adapter information struct, we won't be able to do it.
         //
-        if (! adapterInformation->DeviceObject)
+        if (!adapterInformation->DeviceObject)
             ViReleaseDmaAdapter(adapterInformation);
 
         //
@@ -1419,15 +1300,11 @@ Return Value:
 
 } // VfPutDmaAdapter //
 
-
+
 THUNKED_API
 PVOID
-VfAllocateCommonBuffer(
-    IN PDMA_ADAPTER DmaAdapter,
-    IN ULONG Length,
-    OUT PPHYSICAL_ADDRESS LogicalAddress,
-    IN BOOLEAN CacheEnabled
-    )
+VfAllocateCommonBuffer(IN PDMA_ADAPTER DmaAdapter, IN ULONG Length, OUT PPHYSICAL_ADDRESS LogicalAddress,
+                       IN BOOLEAN CacheEnabled)
 /*++
 
 Routine Description:
@@ -1458,49 +1335,40 @@ Return Value:
     PADAPTER_INFORMATION adapterInformation;
 
 
-    allocateCommonBuffer = (PALLOCATE_COMMON_BUFFER)
-        ViGetRealDmaOperation( DmaAdapter,
-            DMA_OFFSET(AllocateCommonBuffer) );
+    allocateCommonBuffer = (PALLOCATE_COMMON_BUFFER)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(AllocateCommonBuffer));
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
 
         GET_CALLING_ADDRESS(callingAddress);
 
         VF_ASSERT_IRQL(PASSIVE_LEVEL);
 
-        if (VfInjectDmaFailure() == TRUE ) {
+        if (VfInjectDmaFailure() == TRUE)
+        {
             return NULL;
         }
 
-        if (ViProtectBuffers) {
+        if (ViProtectBuffers)
+        {
             //
             // Try to allocate an extra big common buffer so we can check for
             // buffer overrun
             //
-            commonBuffer = ViSpecialAllocateCommonBuffer(
-                allocateCommonBuffer,
-                adapterInformation,
-                callingAddress,
-                Length,
-                LogicalAddress,
-                CacheEnabled
-                );
+            commonBuffer = ViSpecialAllocateCommonBuffer(allocateCommonBuffer, adapterInformation, callingAddress,
+                                                         Length, LogicalAddress, CacheEnabled);
 
             if (commonBuffer)
                 return commonBuffer;
         }
-
     }
-    commonBuffer = (allocateCommonBuffer)(
-        DmaAdapter,
-        Length,
-        LogicalAddress,
-        CacheEnabled );
+    commonBuffer = (allocateCommonBuffer)(DmaAdapter, Length, LogicalAddress, CacheEnabled);
 
 
-    if(commonBuffer && adapterInformation) {
+    if (commonBuffer && adapterInformation)
+    {
         //
         // Increment the number of known common buffers for this adapter
         // (the dma adapter  better be in our list because otherwise we
@@ -1514,16 +1382,10 @@ Return Value:
     return commonBuffer;
 } // VfAllocateCommonBuffer //
 
-
+
 THUNKED_API
-VOID
-VfFreeCommonBuffer(
-    IN PDMA_ADAPTER DmaAdapter,
-    IN ULONG Length,
-    IN PHYSICAL_ADDRESS LogicalAddress,
-    IN PVOID VirtualAddress,
-    IN BOOLEAN CacheEnabled
-    )
+VOID VfFreeCommonBuffer(IN PDMA_ADAPTER DmaAdapter, IN ULONG Length, IN PHYSICAL_ADDRESS LogicalAddress,
+                        IN PVOID VirtualAddress, IN BOOLEAN CacheEnabled)
 /*++
 
 Routine Description:
@@ -1549,14 +1411,14 @@ Return Value:
     PFREE_COMMON_BUFFER freeCommonBuffer;
     PADAPTER_INFORMATION adapterInformation;
 
-    freeCommonBuffer = (PFREE_COMMON_BUFFER)
-        ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(FreeCommonBuffer));
+    freeCommonBuffer = (PFREE_COMMON_BUFFER)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(FreeCommonBuffer));
 
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         VF_ASSERT_IRQL(PASSIVE_LEVEL);
         //
         // We want to call this even if we're not doing common buffer
@@ -1564,48 +1426,32 @@ Return Value:
         // (on the fly) and we don't want to try to free the wrong kind of
         // buffer.
         //
-        if (ViSpecialFreeCommonBuffer(
-            freeCommonBuffer,
-            adapterInformation,
-            VirtualAddress,
-            CacheEnabled
-            )) {
+        if (ViSpecialFreeCommonBuffer(freeCommonBuffer, adapterInformation, VirtualAddress, CacheEnabled))
+        {
             return;
         }
-
     }
 
     //
     // Call the real free common buffer routine.
     //
-    (freeCommonBuffer)(
-        DmaAdapter,
-        Length,
-        LogicalAddress,
-        VirtualAddress,
-        CacheEnabled );
+    (freeCommonBuffer)(DmaAdapter, Length, LogicalAddress, VirtualAddress, CacheEnabled);
 
     //
     // Decrement the number of known common buffers for this adapter
     //
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         DECREMENT_COMMON_BUFFERS(adapterInformation);
     }
 
 } // VfFreeCommonBuffer //
 
 
-
-
 THUNKED_API
 NTSTATUS
-VfAllocateAdapterChannel(
-    IN PDMA_ADAPTER DmaAdapter,
-    IN PDEVICE_OBJECT  DeviceObject,
-    IN ULONG  NumberOfMapRegisters,
-    IN PDRIVER_CONTROL  ExecutionRoutine,
-    IN PVOID  Context
-    )
+VfAllocateAdapterChannel(IN PDMA_ADAPTER DmaAdapter, IN PDEVICE_OBJECT DeviceObject, IN ULONG NumberOfMapRegisters,
+                         IN PDRIVER_CONTROL ExecutionRoutine, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1635,12 +1481,13 @@ Return Value:
     PVF_WAIT_CONTEXT_BLOCK waitBlock;
     NTSTATUS status;
 
-    allocateAdapterChannel = (PALLOCATE_ADAPTER_CHANNEL)
-        ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(AllocateAdapterChannel));
+    allocateAdapterChannel =
+        (PALLOCATE_ADAPTER_CHANNEL)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(AllocateAdapterChannel));
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         VF_ASSERT_IRQL(DISPATCH_LEVEL);
         //
         // Fill in the wait context block so that the execution routine will
@@ -1648,7 +1495,7 @@ Return Value:
         //
 
         waitBlock = &adapterInformation->AdapterChannelContextBlock;
-            RtlZeroMemory(waitBlock, sizeof(VF_WAIT_CONTEXT_BLOCK));
+        RtlZeroMemory(waitBlock, sizeof(VF_WAIT_CONTEXT_BLOCK));
 
         waitBlock->RealContext = Context;
         waitBlock->RealCallback = (PVOID)ExecutionRoutine;
@@ -1656,21 +1503,20 @@ Return Value:
         waitBlock->NumberOfMapRegisters = NumberOfMapRegisters;
 
 
-        if (ViDoubleBufferDma && ! adapterInformation->UseContiguousBuffers) {
+        if (ViDoubleBufferDma && !adapterInformation->UseContiguousBuffers)
+        {
             //
             // Note if this fails, we simply won't have double buffer
             //
-            waitBlock->MapRegisterFile = ViAllocateMapRegisterFile(
-                adapterInformation,
-                NumberOfMapRegisters
-                );
+            waitBlock->MapRegisterFile = ViAllocateMapRegisterFile(adapterInformation, NumberOfMapRegisters);
         }
 
         //
         // We are going to save the device object if the adapter was created without
         // a real PDO (there is an option to pass in NULL).
         //
-        if (! adapterInformation->DeviceObject) {
+        if (!adapterInformation->DeviceObject)
+        {
             adapterInformation->DeviceObject = DeviceObject;
         }
 
@@ -1679,21 +1525,16 @@ Return Value:
         //
         ExecutionRoutine = VfAdapterCallback;
         Context = waitBlock;
-        
+
         INCREMENT_ADAPTER_CHANNELS(adapterInformation);
         ADD_MAP_REGISTERS(adapterInformation, NumberOfMapRegisters, FALSE);
-        
+
     } // if (adapterInformation)
 
-    status = (allocateAdapterChannel)(
-        DmaAdapter,
-        DeviceObject,
-        NumberOfMapRegisters,
-        ExecutionRoutine,
-        Context
-        );
+    status = (allocateAdapterChannel)(DmaAdapter, DeviceObject, NumberOfMapRegisters, ExecutionRoutine, Context);
 
-    if ( status != STATUS_SUCCESS && adapterInformation) {
+    if (status != STATUS_SUCCESS && adapterInformation)
+    {
         DECREMENT_ADAPTER_CHANNELS(adapterInformation);
         SUBTRACT_MAP_REGISTERS(adapterInformation, NumberOfMapRegisters);
     }
@@ -1702,17 +1543,11 @@ Return Value:
     return status;
 } // VfAllocateAdapterChannel //
 
-
+
 THUNKED_API
 BOOLEAN
-VfFlushAdapterBuffers(
-    IN PDMA_ADAPTER DmaAdapter,
-    IN PMDL Mdl,
-    IN PVOID MapRegisterBase,
-    IN PVOID CurrentVa,
-    IN ULONG Length,
-    IN BOOLEAN WriteToDevice
-    )
+VfFlushAdapterBuffers(IN PDMA_ADAPTER DmaAdapter, IN PMDL Mdl, IN PVOID MapRegisterBase, IN PVOID CurrentVa,
+                      IN ULONG Length, IN BOOLEAN WriteToDevice)
 /*++
 
 Routine Description:
@@ -1744,21 +1579,21 @@ Return Value:
     PADAPTER_INFORMATION adapterInformation;
     BOOLEAN buffersFlushed;
 
-    flushAdapterBuffers = (PFLUSH_ADAPTER_BUFFERS)
-        ViGetRealDmaOperation( DmaAdapter,
-        DMA_OFFSET(FlushAdapterBuffers) );
+    flushAdapterBuffers = (PFLUSH_ADAPTER_BUFFERS)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(FlushAdapterBuffers));
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         VF_ASSERT_MAX_IRQL(DISPATCH_LEVEL);
 
         //
         // It doesn't make any sense to flush adapter buffers with a length
         // of zero.
         //
-        if (MapRegisterBase == MRF_NULL_PLACEHOLDER) {
-                    
+        if (MapRegisterBase == MRF_NULL_PLACEHOLDER)
+        {
+
             //
             // Some drivers (scsiport for one) don't call
             // HalFlushAdapterBuffers unless MapRegisterBase is non-null.
@@ -1772,27 +1607,27 @@ Return Value:
 
             MapRegisterBase = NULL;
         }
-        else if (  VALIDATE_MAP_REGISTER_FILE_SIGNATURE(
-            (PMAP_REGISTER_FILE) MapRegisterBase )  ) {
-            PMDL  alternateMdl;
+        else if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE((PMAP_REGISTER_FILE)MapRegisterBase))
+        {
+            PMDL alternateMdl;
             PVOID alternateVa;
             PVOID alternateMapRegisterBase;
 
             alternateMdl = Mdl;
-            alternateVa  = CurrentVa;
+            alternateVa = CurrentVa;
             alternateMapRegisterBase = MapRegisterBase;
 
             //
             // Find the mdl * va we used to map the transfer
             // (i.e. the location of the double buffer)
             //
-            if (!ViSwap(&alternateMapRegisterBase, &alternateMdl, &alternateVa)) {
+            if (!ViSwap(&alternateMapRegisterBase, &alternateMdl, &alternateVa))
+            {
                 //
                 // Assert only when the length is not zero, if they
                 // map and flush a zero length buffer
                 //
-                VF_ASSERT(Length == 0, 
-                          HV_FLUSH_NOT_MAPPED, 
+                VF_ASSERT(Length == 0, HV_FLUSH_NOT_MAPPED,
                           ("Cannot flush map register that isn't mapped!"
                            " (Map register base %p, flushing address %p, MDL %p)",
                            MapRegisterBase, CurrentVa, Mdl));
@@ -1802,64 +1637,42 @@ Return Value:
                 // of using its own  map register base.
                 //
                 return FALSE;
-
             }
 
 
-            buffersFlushed = (flushAdapterBuffers)(
-                DmaAdapter,
-                alternateMdl,
-                alternateMapRegisterBase,
-                alternateVa,
-                Length,
-                WriteToDevice
-                );
+            buffersFlushed = (flushAdapterBuffers)(DmaAdapter, alternateMdl, alternateMapRegisterBase, alternateVa,
+                                                   Length, WriteToDevice);
 
             ///
             // Double buffer away!!!
             // (remember we must use the original mdl and va).
             ///
-            ViFlushDoubleBuffer(
-                (PMAP_REGISTER_FILE) MapRegisterBase,
-                Mdl,
-                CurrentVa,
-                Length,
-                WriteToDevice
-                );
+            ViFlushDoubleBuffer((PMAP_REGISTER_FILE)MapRegisterBase, Mdl, CurrentVa, Length, WriteToDevice);
 
-             if (buffersFlushed) {
-                DECREASE_MAPPED_TRANSFER_BYTE_COUNT( adapterInformation, Length);
-             }
-             return buffersFlushed;
+            if (buffersFlushed)
+            {
+                DECREASE_MAPPED_TRANSFER_BYTE_COUNT(adapterInformation, Length);
+            }
+            return buffersFlushed;
 
         } /// End double buffering //
 
     } /// end we have adapter information //
 
-    buffersFlushed = (flushAdapterBuffers)(
-        DmaAdapter,
-        Mdl,
-        MapRegisterBase,
-        CurrentVa,
-        Length,
-        WriteToDevice
-        );
+    buffersFlushed = (flushAdapterBuffers)(DmaAdapter, Mdl, MapRegisterBase, CurrentVa, Length, WriteToDevice);
 
 
-
-    if (adapterInformation && buffersFlushed) {
-        DECREASE_MAPPED_TRANSFER_BYTE_COUNT( adapterInformation, Length);
+    if (adapterInformation && buffersFlushed)
+    {
+        DECREASE_MAPPED_TRANSFER_BYTE_COUNT(adapterInformation, Length);
     }
 
     return buffersFlushed;
 
 } // VfFlushAdapterBuffers //
 
-
-VOID
-VfFreeAdapterChannel(
-    IN PDMA_ADAPTER DmaAdapter
-    )
+
+VOID VfFreeAdapterChannel(IN PDMA_ADAPTER DmaAdapter)
 /*++
 
 Routine Description:
@@ -1879,23 +1692,23 @@ Return Value:
 --*/
 {
     PFREE_ADAPTER_CHANNEL freeAdapterChannel;
-    PADAPTER_INFORMATION  adapterInformation;
+    PADAPTER_INFORMATION adapterInformation;
 
     VF_ASSERT_IRQL(DISPATCH_LEVEL);
 
-    freeAdapterChannel = (PFREE_ADAPTER_CHANNEL)
-        ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(FreeAdapterChannel));
+    freeAdapterChannel = (PFREE_ADAPTER_CHANNEL)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(FreeAdapterChannel));
 
     (freeAdapterChannel)(DmaAdapter);
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (! adapterInformation) {
+    if (!adapterInformation)
+    {
         return;
     }
 
 
-    DECREASE_MAPPED_TRANSFER_BYTE_COUNT( adapterInformation, 0);
+    DECREASE_MAPPED_TRANSFER_BYTE_COUNT(adapterInformation, 0);
     //
     // Keep track of the adapter channel being freed
     //
@@ -1903,32 +1716,24 @@ Return Value:
     //
     // This also frees the map registers allocated this time.
     //
-    SUBTRACT_MAP_REGISTERS( adapterInformation,
-        adapterInformation->AdapterChannelMapRegisters );
+    SUBTRACT_MAP_REGISTERS(adapterInformation, adapterInformation->AdapterChannelMapRegisters);
 
     adapterInformation->AdapterChannelMapRegisters = 0;
 
     //
     // In this case, we can tell when we have double mapped the buffer
     //
-    if(adapterInformation->AdapterChannelContextBlock.MapRegisterFile) {
+    if (adapterInformation->AdapterChannelContextBlock.MapRegisterFile)
+    {
 
-        ViFreeMapRegisterFile(
-            adapterInformation,
-            adapterInformation->AdapterChannelContextBlock.MapRegisterFile
-            );
+        ViFreeMapRegisterFile(adapterInformation, adapterInformation->AdapterChannelContextBlock.MapRegisterFile);
     }
 
 } // VfFreeAdapterChannel //
 
-
+
 THUNKED_API
-VOID
-VfFreeMapRegisters(
-    IN PDMA_ADAPTER DmaAdapter,
-    PVOID MapRegisterBase,
-    ULONG NumberOfMapRegisters
-    )
+VOID VfFreeMapRegisters(IN PDMA_ADAPTER DmaAdapter, PVOID MapRegisterBase, ULONG NumberOfMapRegisters)
 /*++
 
 Routine Description:
@@ -1955,18 +1760,19 @@ Return Value:
     PMAP_REGISTER_FILE mapRegisterFile = NULL;
     PADAPTER_INFORMATION adapterInformation;
 
-    freeMapRegisters = (PFREE_MAP_REGISTERS)
-        ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(FreeMapRegisters));
+    freeMapRegisters = (PFREE_MAP_REGISTERS)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(FreeMapRegisters));
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
 
         VF_ASSERT_IRQL(DISPATCH_LEVEL);
 
         mapRegisterFile = MapRegisterBase;
 
-        if (MapRegisterBase == MRF_NULL_PLACEHOLDER) {
+        if (MapRegisterBase == MRF_NULL_PLACEHOLDER)
+        {
             //
             // Some drivers (scsiport for one) don't call
             // HalFlushAdapterBuffers unless MapRegisterBase is non-null.
@@ -1981,7 +1787,8 @@ Return Value:
             MapRegisterBase = NULL;
             mapRegisterFile = NULL;
         }
-        else if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE(mapRegisterFile)) {
+        else if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE(mapRegisterFile))
+        {
             MapRegisterBase = mapRegisterFile->MapRegisterBaseFromHal;
         }
     }
@@ -1989,8 +1796,8 @@ Return Value:
     (freeMapRegisters)(DmaAdapter, MapRegisterBase, NumberOfMapRegisters);
 
 
-
-    if (! adapterInformation) {
+    if (!adapterInformation)
+    {
         return;
     }
 
@@ -2004,24 +1811,15 @@ Return Value:
     // will just return. Otherwise if we clear the double-buffering flag
     // on the fly, we won't ever free our allocation.
     //
-    ViFreeMapRegisterFile(
-        adapterInformation,
-        mapRegisterFile
-        );
+    ViFreeMapRegisterFile(adapterInformation, mapRegisterFile);
 
 } // VfFreeMapregisters //
 
-
+
 THUNKED_API
 PHYSICAL_ADDRESS
-VfMapTransfer(
-    IN PDMA_ADAPTER  DmaAdapter,
-    IN PMDL  Mdl,
-    IN PVOID  MapRegisterBase,
-    IN PVOID  CurrentVa,
-    IN OUT PULONG  Length,
-    IN BOOLEAN  WriteToDevice
-    )
+VfMapTransfer(IN PDMA_ADAPTER DmaAdapter, IN PMDL Mdl, IN PVOID MapRegisterBase, IN PVOID CurrentVa,
+              IN OUT PULONG Length, IN BOOLEAN WriteToDevice)
 /*++
 
 Routine Description:
@@ -2052,13 +1850,13 @@ Return Value:
     PADAPTER_INFORMATION adapterInformation;
 
 
-    mapTransfer = (PMAP_TRANSFER)
-        ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(MapTransfer));
+    mapTransfer = (PMAP_TRANSFER)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(MapTransfer));
 
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
 
         VF_ASSERT_MAX_IRQL(DISPATCH_LEVEL);
         //
@@ -2069,7 +1867,8 @@ Return Value:
         VERIFY_BUFFER_LOCKED(Mdl);
 
 
-        if (MapRegisterBase == MRF_NULL_PLACEHOLDER) {
+        if (MapRegisterBase == MRF_NULL_PLACEHOLDER)
+        {
             //
             // Some drivers (scsiport for one) don't call
             // HalFlushAdapterBuffers unless MapRegisterBase is non-null.
@@ -2080,12 +1879,12 @@ Return Value:
             // So now, if we find that placeholder, we must exchange it
             // for NULL in order not to confuse the hal.
             //
-        
+
             MapRegisterBase = NULL;
         }
-        else if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE(
-                 (PMAP_REGISTER_FILE) MapRegisterBase)) {
-        
+        else if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE((PMAP_REGISTER_FILE)MapRegisterBase))
+        {
+
             ULONG bytesMapped;
 
             ///
@@ -2095,18 +1894,15 @@ Return Value:
             //
             // Note -- we only have to double buffer as much as we want....
             //
-            bytesMapped = ViMapDoubleBuffer(
-                (PMAP_REGISTER_FILE) MapRegisterBase,
-                Mdl,
-                CurrentVa,
-                *Length,
-                WriteToDevice);
-             //
-             // If we fail to map,  bytesMapped will be 0 and we will
-             // still use the real mdl & Va -- so we don't need any
-             // kind of special cases.
-             //
-            if (bytesMapped) {
+            bytesMapped =
+                ViMapDoubleBuffer((PMAP_REGISTER_FILE)MapRegisterBase, Mdl, CurrentVa, *Length, WriteToDevice);
+            //
+            // If we fail to map,  bytesMapped will be 0 and we will
+            // still use the real mdl & Va -- so we don't need any
+            // kind of special cases.
+            //
+            if (bytesMapped)
+            {
 
                 *Length = bytesMapped;
 
@@ -2117,10 +1913,10 @@ Return Value:
                 //     mdl and virtual address for double buffering.
                 //
                 ViSwap(&MapRegisterBase, &Mdl, &CurrentVa);
-
             }
-            else {
-                MapRegisterBase = ((PMAP_REGISTER_FILE) MapRegisterBase)->MapRegisterBaseFromHal;
+            else
+            {
+                MapRegisterBase = ((PMAP_REGISTER_FILE)MapRegisterBase)->MapRegisterBaseFromHal;
             }
         } // IF double buffering //
 
@@ -2131,28 +1927,20 @@ Return Value:
 
     } // if we are verifying this adapter //
 
-    mappedAddress = (mapTransfer)(
-        DmaAdapter,
-        Mdl,
-        MapRegisterBase,
-        CurrentVa,
-        Length,
-        WriteToDevice
-        );
+    mappedAddress = (mapTransfer)(DmaAdapter, Mdl, MapRegisterBase, CurrentVa, Length, WriteToDevice);
 
-    if (adapterInformation) {
-        INCREASE_MAPPED_TRANSFER_BYTE_COUNT( adapterInformation, *Length );
+    if (adapterInformation)
+    {
+        INCREASE_MAPPED_TRANSFER_BYTE_COUNT(adapterInformation, *Length);
     }
 
     return mappedAddress;
 } // VfMapTransfer //
 
-
+
 THUNKED_API
 ULONG
-VfGetDmaAlignment(
-    IN PDMA_ADAPTER DmaAdapter
-    )
+VfGetDmaAlignment(IN PDMA_ADAPTER DmaAdapter)
 /*++
 
 Routine Description:
@@ -2178,10 +1966,10 @@ Return Value:
 
     VF_ASSERT_IRQL(PASSIVE_LEVEL);
 
-    getDmaAlignment = (PGET_DMA_ALIGNMENT)
-        ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(GetDmaAlignment));
+    getDmaAlignment = (PGET_DMA_ALIGNMENT)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(GetDmaAlignment));
 
-    if (! getDmaAlignment) {
+    if (!getDmaAlignment)
+    {
         //
         // This should never happen but ..
         //
@@ -2194,11 +1982,9 @@ Return Value:
 
 } // GetDmaAlignment //
 
-
+
 ULONG
-VfReadDmaCounter(
-    IN PDMA_ADAPTER  DmaAdapter
-    )
+VfReadDmaCounter(IN PDMA_ADAPTER DmaAdapter)
 /*++
 
 Routine Description:
@@ -2221,8 +2007,7 @@ Return Value:
 
     VF_ASSERT_MAX_IRQL(DISPATCH_LEVEL);
 
-    readDmaCounter = (PREAD_DMA_COUNTER)
-        ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(ReadDmaCounter));
+    readDmaCounter = (PREAD_DMA_COUNTER)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(ReadDmaCounter));
 
 
     dmaCounter = (readDmaCounter)(DmaAdapter);
@@ -2230,19 +2015,12 @@ Return Value:
     return dmaCounter;
 } // VfReadDmaCounter //
 
-
+
 THUNKED_API
 NTSTATUS
-VfGetScatterGatherList (
-    IN PDMA_ADAPTER DmaAdapter,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PMDL Mdl,
-    IN PVOID CurrentVa,
-    IN ULONG Length,
-    IN PDRIVER_LIST_CONTROL ExecutionRoutine,
-    IN PVOID Context,
-    IN BOOLEAN WriteToDevice
-    )
+VfGetScatterGatherList(IN PDMA_ADAPTER DmaAdapter, IN PDEVICE_OBJECT DeviceObject, IN PMDL Mdl, IN PVOID CurrentVa,
+                       IN ULONG Length, IN PDRIVER_LIST_CONTROL ExecutionRoutine, IN PVOID Context,
+                       IN BOOLEAN WriteToDevice)
 /*++
 
 Routine Description:
@@ -2277,21 +2055,20 @@ Return Value:
     PMDL tempMdl;
     NTSTATUS status;
 
-    getScatterGatherList =  (PGET_SCATTER_GATHER_LIST)
-        ViGetRealDmaOperation(
-            DmaAdapter,
-            DMA_OFFSET(GetScatterGatherList) );
+    getScatterGatherList =
+        (PGET_SCATTER_GATHER_LIST)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(GetScatterGatherList));
 
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         VF_ASSERT_IRQL(DISPATCH_LEVEL);
 
-        if (VfInjectDmaFailure() == TRUE) {
+        if (VfInjectDmaFailure() == TRUE)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
 
         INCREMENT_SCATTER_GATHER_LISTS(adapterInformation);
@@ -2303,31 +2080,31 @@ Return Value:
         //
         VERIFY_BUFFER_LOCKED(Mdl);
 
-        if (ViDoubleBufferDma) {
+        if (ViDoubleBufferDma)
+        {
 
             PVF_WAIT_CONTEXT_BLOCK waitBlock;
             PMAP_REGISTER_FILE mapRegisterFile;
             ULONG bytesMapped;
 
-            waitBlock = ExAllocatePoolWithTag(
-                NonPagedPool,
-                sizeof(VF_WAIT_CONTEXT_BLOCK),
-                HAL_VERIFIER_POOL_TAG);
+            waitBlock = ExAllocatePoolWithTag(NonPagedPool, sizeof(VF_WAIT_CONTEXT_BLOCK), HAL_VERIFIER_POOL_TAG);
 
 
             //
             // If exalloc... failed we can't to double buffering
             //
-            if (! waitBlock) {
+            if (!waitBlock)
+            {
                 goto __NoDoubleBuffer;
             }
 
-            if(ViSuperDebug) {
-                DbgPrint("    %p Allocated Wait Block\n",waitBlock );
+            if (ViSuperDebug)
+            {
+                DbgPrint("    %p Allocated Wait Block\n", waitBlock);
             }
 
             RtlZeroMemory(waitBlock, sizeof(VF_WAIT_CONTEXT_BLOCK));
-            waitBlock->RealContext  = Context;
+            waitBlock->RealContext = Context;
             waitBlock->RealCallback = (PVOID)ExecutionRoutine;
 
             mdlVa = MmGetMdlVirtualAddress(Mdl);
@@ -2337,7 +2114,7 @@ Return Value:
             //
 
             tempMdl = Mdl;
-            transferLength = (ULONG) ((ULONG_PTR) tempMdl->ByteCount - (ULONG_PTR) ((PUCHAR) CurrentVa - mdlVa));
+            transferLength = (ULONG)((ULONG_PTR)tempMdl->ByteCount - (ULONG_PTR)((PUCHAR)CurrentVa - mdlVa));
             mdlLength = transferLength;
 
             pageOffset = BYTE_OFFSET(CurrentVa);
@@ -2354,10 +2131,10 @@ Return Value:
             // number of map registers.
             //
 
-            while (transferLength < Length && tempMdl->Next != NULL) {
+            while (transferLength < Length && tempMdl->Next != NULL)
+            {
 
-                numberOfMapRegisters += (pageOffset + mdlLength + PAGE_SIZE - 1) >>
-                    PAGE_SHIFT;
+                numberOfMapRegisters += (pageOffset + mdlLength + PAGE_SIZE - 1) >> PAGE_SHIFT;
 
                 tempMdl = tempMdl->Next;
                 pageOffset = tempMdl->ByteOffset;
@@ -2365,12 +2142,13 @@ Return Value:
                 transferLength += mdlLength;
             }
 
-            if ((transferLength + PAGE_SIZE) < (Length + pageOffset )) {
+            if ((transferLength + PAGE_SIZE) < (Length + pageOffset))
+            {
 
                 ASSERT(transferLength >= Length);
                 DECREMENT_SCATTER_GATHER_LISTS(adapterInformation);
 
-                return(STATUS_BUFFER_TOO_SMALL);
+                return (STATUS_BUFFER_TOO_SMALL);
             }
 
             //
@@ -2378,26 +2156,23 @@ Return Value:
             // length not the length of the last MDL.
             //
 
-            ASSERT( transferLength <= mdlLength + Length );
+            ASSERT(transferLength <= mdlLength + Length);
 
-            numberOfMapRegisters += (pageOffset + Length + mdlLength - transferLength +
-                PAGE_SIZE - 1) >> PAGE_SHIFT;
+            numberOfMapRegisters += (pageOffset + Length + mdlLength - transferLength + PAGE_SIZE - 1) >> PAGE_SHIFT;
 
 
             waitBlock->NumberOfMapRegisters = numberOfMapRegisters;
             waitBlock->AdapterInformation = adapterInformation;
 
-            mapRegisterFile = ViAllocateMapRegisterFile(
-                adapterInformation,
-                waitBlock->NumberOfMapRegisters
-                );
+            mapRegisterFile = ViAllocateMapRegisterFile(adapterInformation, waitBlock->NumberOfMapRegisters);
 
-            if (! mapRegisterFile ) {
+            if (!mapRegisterFile)
+            {
 
-                if(ViSuperDebug) {
+                if (ViSuperDebug)
+                {
 
-                    DbgPrint("%p Freeing Wait Block\n",waitBlock);
-
+                    DbgPrint("%p Freeing Wait Block\n", waitBlock);
                 }
 
                 ExFreePool(waitBlock);
@@ -2411,24 +2186,20 @@ Return Value:
             //
             mapRegisterFile->ScatterGather = TRUE;
             waitBlock->MapRegisterFile = mapRegisterFile;
-            waitBlock->RealMdl         = Mdl;
-            waitBlock->RealStartVa     = CurrentVa;
-            waitBlock->RealLength      = Length;
+            waitBlock->RealMdl = Mdl;
+            waitBlock->RealStartVa = CurrentVa;
+            waitBlock->RealLength = Length;
 
 
-            bytesMapped = ViMapDoubleBuffer(
-                mapRegisterFile,
-                Mdl,
-                CurrentVa,
-                Length,
-                WriteToDevice );
+            bytesMapped = ViMapDoubleBuffer(mapRegisterFile, Mdl, CurrentVa, Length, WriteToDevice);
 
-            if (bytesMapped) {
+            if (bytesMapped)
+            {
                 //
                 // Since we mapped the buffer, we can hook the callback
                 // routine & send out wait block as the parameter
                 //
-            
+
 
                 Context = waitBlock;
                 ExecutionRoutine = VfScatterGatherCallback;
@@ -2439,15 +2210,15 @@ Return Value:
                 //
 
                 ViSwap(&mapRegisterFile, &Mdl, &CurrentVa);
-
             }
-            else {
+            else
+            {
                 //
                 // If for some strange reason we couldn't map the whole buffer
                 // (that is bad because we just created the double- buffer to be exactly
                 // the size we wanted)
                 //
-            
+
                 ASSERT(FALSE);
                 ViFreeMapRegisterFile(adapterInformation, mapRegisterFile);
                 ExFreePool(waitBlock);
@@ -2458,18 +2229,11 @@ Return Value:
 
 __NoDoubleBuffer:
 
-    status = (getScatterGatherList)(
-        DmaAdapter,
-        DeviceObject,
-        Mdl,
-        CurrentVa,
-        Length,
-        ExecutionRoutine,
-        Context,
-        WriteToDevice
-        );
+    status = (getScatterGatherList)(DmaAdapter, DeviceObject, Mdl, CurrentVa, Length, ExecutionRoutine, Context,
+                                    WriteToDevice);
 
-    if (adapterInformation && ! NT_SUCCESS(status)) {
+    if (adapterInformation && !NT_SUCCESS(status))
+    {
         DECREMENT_SCATTER_GATHER_LISTS(adapterInformation);
     }
 
@@ -2477,14 +2241,9 @@ __NoDoubleBuffer:
 
 } // VfGetScatterGatherList //
 
-
+
 THUNKED_API
-VOID
-VfPutScatterGatherList(
-    IN PDMA_ADAPTER DmaAdapter,
-    IN PSCATTER_GATHER_LIST ScatterGather,
-    IN BOOLEAN WriteToDevice
-    )
+VOID VfPutScatterGatherList(IN PDMA_ADAPTER DmaAdapter, IN PSCATTER_GATHER_LIST ScatterGather, IN BOOLEAN WriteToDevice)
 /*++
 
 Routine Description:
@@ -2507,18 +2266,17 @@ Return Value:
     PADAPTER_INFORMATION adapterInformation;
 
 
-
-    putScatterGatherList = (PPUT_SCATTER_GATHER_LIST)
-        ViGetRealDmaOperation(
-            DmaAdapter,
-            DMA_OFFSET(PutScatterGatherList) );
+    putScatterGatherList =
+        (PPUT_SCATTER_GATHER_LIST)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(PutScatterGatherList));
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         VF_ASSERT_IRQL(DISPATCH_LEVEL);
 
-        if ( ! VF_IS_LOCKED_LIST_EMPTY(&adapterInformation->ScatterGatherLists) ) {
+        if (!VF_IS_LOCKED_LIST_EMPTY(&adapterInformation->ScatterGatherLists))
+        {
             //
             // We've got some double bufferin candidates.
             // Note we don't just check for whether doublebuffering is
@@ -2526,19 +2284,21 @@ Return Value:
             // we may have failed to allocate the overhead structures and
             // not double buffered this particular list
             //
-        
+
             PVF_WAIT_CONTEXT_BLOCK waitBlock;
             KIRQL Irql;
 
             VF_LOCK_LIST(&adapterInformation->ScatterGatherLists, Irql);
 
-            FOR_ALL_IN_LIST(VF_WAIT_CONTEXT_BLOCK, &adapterInformation->ScatterGatherLists.ListEntry, waitBlock) {
-            
-                if (waitBlock->ScatterGatherList == ScatterGather) {
-                //
-                // We found what we're looking for.
-                //
-                
+            FOR_ALL_IN_LIST(VF_WAIT_CONTEXT_BLOCK, &adapterInformation->ScatterGatherLists.ListEntry, waitBlock)
+            {
+
+                if (waitBlock->ScatterGatherList == ScatterGather)
+                {
+                    //
+                    // We found what we're looking for.
+                    //
+
                     ULONG elements = ScatterGather->NumberOfElements;
 
                     VF_REMOVE_FROM_LOCKED_LIST_DONT_LOCK(&adapterInformation->ScatterGatherLists, waitBlock);
@@ -2547,11 +2307,7 @@ Return Value:
                     //
                     // Call the real scatter gather function
                     //
-                    (putScatterGatherList)(
-                        DmaAdapter,
-                        ScatterGather,
-                        WriteToDevice
-                        );
+                    (putScatterGatherList)(DmaAdapter, ScatterGather, WriteToDevice);
 
                     SUBTRACT_MAP_REGISTERS(adapterInformation, elements);
                     DECREMENT_SCATTER_GATHER_LISTS(adapterInformation);
@@ -2560,30 +2316,25 @@ Return Value:
                     // Un double buffer us
                     // (copy out the double buffer)
                     //
-                    if (! ViFlushDoubleBuffer(
-                        waitBlock->MapRegisterFile,
-                        waitBlock->RealMdl,
-                        waitBlock->RealStartVa,
-                        waitBlock->RealLength,
-                        WriteToDevice )) {
-                    
-                        ASSERT(0 && "HAL Verifier error -- could not flush scatter gather double buffer");
+                    if (!ViFlushDoubleBuffer(waitBlock->MapRegisterFile, waitBlock->RealMdl, waitBlock->RealStartVa,
+                                             waitBlock->RealLength, WriteToDevice))
+                    {
 
+                        ASSERT(0 && "HAL Verifier error -- could not flush scatter gather double buffer");
                     }
                     //
                     // free the map register file
                     //
-                    if (!ViFreeMapRegisterFile(
-                        adapterInformation,
-                        waitBlock->MapRegisterFile)) {
+                    if (!ViFreeMapRegisterFile(adapterInformation, waitBlock->MapRegisterFile))
+                    {
 
                         ASSERT(0 && "HAL Verifier error -- could not free map register file for scatter gather");
-
                     }
 
 
-                    if(ViSuperDebug) {
-                        DbgPrint("%p Freeing Wait Block\n",waitBlock);
+                    if (ViSuperDebug)
+                    {
+                        DbgPrint("%p Freeing Wait Block\n", waitBlock);
                     }
 
                     ExFreePool(waitBlock);
@@ -2593,32 +2344,21 @@ Return Value:
             } // For each scatter gather list allocated for this adapter //
 
             VF_UNLOCK_LIST(&adapterInformation->ScatterGatherLists, Irql);
-
         }
-
     }
 
-    (putScatterGatherList)(
-        DmaAdapter,
-        ScatterGather,
-        WriteToDevice
-        );
+    (putScatterGatherList)(DmaAdapter, ScatterGather, WriteToDevice);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         DECREMENT_SCATTER_GATHER_LISTS(adapterInformation);
     }
 
 } // VfPutScatterGatherList //
 
 NTSTATUS
-VfCalculateScatterGatherListSize(
-     IN PDMA_ADAPTER DmaAdapter,
-     IN OPTIONAL PMDL Mdl,
-     IN PVOID CurrentVa,
-     IN ULONG Length,
-     OUT PULONG  ScatterGatherListSize,
-     OUT OPTIONAL PULONG pNumberOfMapRegisters
-     )
+VfCalculateScatterGatherListSize(IN PDMA_ADAPTER DmaAdapter, IN OPTIONAL PMDL Mdl, IN PVOID CurrentVa, IN ULONG Length,
+                                 OUT PULONG ScatterGatherListSize, OUT OPTIONAL PULONG pNumberOfMapRegisters)
 /*++
 
 Routine Description:
@@ -2639,36 +2379,17 @@ Return Value:
 {
     PCALCULATE_SCATTER_GATHER_LIST_SIZE calculateSgListSize;
 
-    calculateSgListSize = (PCALCULATE_SCATTER_GATHER_LIST_SIZE )
-        ViGetRealDmaOperation(
-            DmaAdapter,
-            DMA_OFFSET(CalculateScatterGatherList)
-            );
+    calculateSgListSize =
+        (PCALCULATE_SCATTER_GATHER_LIST_SIZE)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(CalculateScatterGatherList));
 
-    return (calculateSgListSize) (
-        DmaAdapter,
-        Mdl,
-        CurrentVa,
-        Length,
-        ScatterGatherListSize,
-        pNumberOfMapRegisters
-        );
+    return (calculateSgListSize)(DmaAdapter, Mdl, CurrentVa, Length, ScatterGatherListSize, pNumberOfMapRegisters);
 
 } // VfCalculateScatterGatherListSize //
 
 NTSTATUS
-VfBuildScatterGatherList(
-     IN PDMA_ADAPTER DmaAdapter,
-     IN PDEVICE_OBJECT DeviceObject,
-     IN PMDL Mdl,
-     IN PVOID CurrentVa,
-     IN ULONG Length,
-     IN PDRIVER_LIST_CONTROL ExecutionRoutine,
-     IN PVOID Context,
-     IN BOOLEAN WriteToDevice,
-     IN PVOID   ScatterGatherBuffer,
-     IN ULONG   ScatterGatherLength
-     )
+VfBuildScatterGatherList(IN PDMA_ADAPTER DmaAdapter, IN PDEVICE_OBJECT DeviceObject, IN PMDL Mdl, IN PVOID CurrentVa,
+                         IN ULONG Length, IN PDRIVER_LIST_CONTROL ExecutionRoutine, IN PVOID Context,
+                         IN BOOLEAN WriteToDevice, IN PVOID ScatterGatherBuffer, IN ULONG ScatterGatherLength)
 /*++
 
 Routine Description:
@@ -2690,21 +2411,20 @@ Return Value:
     PADAPTER_INFORMATION adapterInformation;
     NTSTATUS status;
 
-    buildScatterGatherList =  (PBUILD_SCATTER_GATHER_LIST)
-        ViGetRealDmaOperation(
-            DmaAdapter,
-            DMA_OFFSET(BuildScatterGatherList) );
+    buildScatterGatherList =
+        (PBUILD_SCATTER_GATHER_LIST)ViGetRealDmaOperation(DmaAdapter, DMA_OFFSET(BuildScatterGatherList));
 
 
     adapterInformation = ViGetAdapterInformation(DmaAdapter);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         VF_ASSERT_IRQL(DISPATCH_LEVEL);
 
-        if (VfInjectDmaFailure() == TRUE) {
+        if (VfInjectDmaFailure() == TRUE)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
 
         INCREMENT_SCATTER_GATHER_LISTS(adapterInformation);
@@ -2716,54 +2436,50 @@ Return Value:
         //
         VERIFY_BUFFER_LOCKED(Mdl);
 
-        if (ViDoubleBufferDma) {
+        if (ViDoubleBufferDma)
+        {
 
             PVF_WAIT_CONTEXT_BLOCK waitBlock;
             PMAP_REGISTER_FILE mapRegisterFile;
             ULONG bytesMapped;
 
-            waitBlock = ExAllocatePoolWithTag(
-                NonPagedPool,
-                sizeof(VF_WAIT_CONTEXT_BLOCK),
-                HAL_VERIFIER_POOL_TAG);
+            waitBlock = ExAllocatePoolWithTag(NonPagedPool, sizeof(VF_WAIT_CONTEXT_BLOCK), HAL_VERIFIER_POOL_TAG);
 
 
             //
             // If exalloc... failed we can't to double buffering
             //
-            if (! waitBlock) {
+            if (!waitBlock)
+            {
 
                 goto __NoDoubleBuffer;
-
             }
 
-            if(ViSuperDebug) {
-                DbgPrint("    %p Allocated Wait Block\n",waitBlock );
+            if (ViSuperDebug)
+            {
+                DbgPrint("    %p Allocated Wait Block\n", waitBlock);
             }
 
             RtlZeroMemory(waitBlock, sizeof(VF_WAIT_CONTEXT_BLOCK));
-            waitBlock->RealContext  = Context;
+            waitBlock->RealContext = Context;
             waitBlock->RealCallback = (PVOID)ExecutionRoutine;
             waitBlock->NumberOfMapRegisters = ADDRESS_AND_SIZE_TO_SPAN_PAGES(CurrentVa, Length);
             waitBlock->AdapterInformation = adapterInformation;
 
-            mapRegisterFile = ViAllocateMapRegisterFile(
-                adapterInformation,
-                waitBlock->NumberOfMapRegisters
-                );
+            mapRegisterFile = ViAllocateMapRegisterFile(adapterInformation, waitBlock->NumberOfMapRegisters);
 
-            if (! mapRegisterFile ) {
+            if (!mapRegisterFile)
+            {
 
-                if(ViSuperDebug) {
+                if (ViSuperDebug)
+                {
 
-                    DbgPrint("%p Freeing Wait Block\n",waitBlock);
-
+                    DbgPrint("%p Freeing Wait Block\n", waitBlock);
                 }
 
                 ExFreePool(waitBlock);
 
                 goto __NoDoubleBuffer;
-
             }
 
             //
@@ -2772,23 +2488,19 @@ Return Value:
             //
             mapRegisterFile->ScatterGather = TRUE;
             waitBlock->MapRegisterFile = mapRegisterFile;
-            waitBlock->RealMdl         = Mdl;
-            waitBlock->RealStartVa     = CurrentVa;
-            waitBlock->RealLength      = Length;
+            waitBlock->RealMdl = Mdl;
+            waitBlock->RealStartVa = CurrentVa;
+            waitBlock->RealLength = Length;
 
 
-            bytesMapped = ViMapDoubleBuffer(
-                mapRegisterFile,
-                Mdl,
-                CurrentVa,
-                Length,
-                WriteToDevice );
+            bytesMapped = ViMapDoubleBuffer(mapRegisterFile, Mdl, CurrentVa, Length, WriteToDevice);
 
-            if (bytesMapped) {
-            //
-            // Since we mapped the buffer, we can hook the callback
-            // routine & send out wait block as the parameter
-            //            
+            if (bytesMapped)
+            {
+                //
+                // Since we mapped the buffer, we can hook the callback
+                // routine & send out wait block as the parameter
+                //
 
                 Context = waitBlock;
                 ExecutionRoutine = VfScatterGatherCallback;
@@ -2799,15 +2511,15 @@ Return Value:
                 //
 
                 ViSwap(&mapRegisterFile, &Mdl, &CurrentVa);
-
             }
-            else {
+            else
+            {
                 //
                 // If for some strange reason we couldn't map the whole buffer
                 // (that is bad because we just created the double- buffer to be exactly
                 // the size we wanted)
                 //
-                
+
                 ASSERT(FALSE);
                 ViFreeMapRegisterFile(adapterInformation, mapRegisterFile);
                 ExFreePool(waitBlock);
@@ -2819,24 +2531,13 @@ Return Value:
 __NoDoubleBuffer:
 
 
+    status = (buildScatterGatherList)(DmaAdapter, DeviceObject, Mdl, CurrentVa, Length, ExecutionRoutine, Context,
+                                      WriteToDevice, ScatterGatherBuffer, ScatterGatherLength);
 
-    status = (buildScatterGatherList)(
-        DmaAdapter,
-        DeviceObject,
-        Mdl,
-        CurrentVa,
-        Length,
-        ExecutionRoutine,
-        Context,
-        WriteToDevice,
-        ScatterGatherBuffer,
-        ScatterGatherLength
-        );
-
-    if (adapterInformation && ! NT_SUCCESS(status)) {
+    if (adapterInformation && !NT_SUCCESS(status))
+    {
 
         DECREMENT_SCATTER_GATHER_LISTS(adapterInformation);
-
     }
 
     return status;
@@ -2846,12 +2547,8 @@ __NoDoubleBuffer:
 
 
 NTSTATUS
-VfBuildMdlFromScatterGatherList(
-    IN PDMA_ADAPTER DmaAdapter,
-    IN PSCATTER_GATHER_LIST ScatterGather,
-    IN PMDL OriginalMdl,
-    OUT PMDL *TargetMdl
-    )
+VfBuildMdlFromScatterGatherList(IN PDMA_ADAPTER DmaAdapter, IN PSCATTER_GATHER_LIST ScatterGather, IN PMDL OriginalMdl,
+                                OUT PMDL *TargetMdl)
 /*++
 
 Routine Description:
@@ -2871,29 +2568,16 @@ Return Value:
 {
     PBUILD_MDL_FROM_SCATTER_GATHER_LIST buildMdlFromScatterGatherList;
 
-    buildMdlFromScatterGatherList = (PBUILD_MDL_FROM_SCATTER_GATHER_LIST)
-        ViGetRealDmaOperation(
-            DmaAdapter,
-            DMA_OFFSET(BuildMdlFromScatterGatherList) );
+    buildMdlFromScatterGatherList = (PBUILD_MDL_FROM_SCATTER_GATHER_LIST)ViGetRealDmaOperation(
+        DmaAdapter, DMA_OFFSET(BuildMdlFromScatterGatherList));
 
-    return (buildMdlFromScatterGatherList) (
-            DmaAdapter,
-            ScatterGather,
-            OriginalMdl,
-            TargetMdl
-            );
+    return (buildMdlFromScatterGatherList)(DmaAdapter, ScatterGather, OriginalMdl, TargetMdl);
 
 } // VfBuildMdlFromScatterGatherList //
 
 
-
 IO_ALLOCATION_ACTION
-VfAdapterCallback(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID MapRegisterBase,
-    IN PVOID Context
-    )
+VfAdapterCallback(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID MapRegisterBase, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -2914,13 +2598,13 @@ Return Value:
 
 --*/
 {
-    PVF_WAIT_CONTEXT_BLOCK contextBlock =
-        (PVF_WAIT_CONTEXT_BLOCK) Context;
+    PVF_WAIT_CONTEXT_BLOCK contextBlock = (PVF_WAIT_CONTEXT_BLOCK)Context;
     IO_ALLOCATION_ACTION allocationAction;
     PADAPTER_INFORMATION adapterInformation;
 
 
-    if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE(contextBlock->MapRegisterFile)) {
+    if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE(contextBlock->MapRegisterFile))
+    {
 
         //
         // Do the old switcheroo -- we are now substituting *our* map
@@ -2928,12 +2612,11 @@ Return Value:
         // in *ours*)
         //
 
-        contextBlock->MapRegisterFile->MapRegisterBaseFromHal =
-            MapRegisterBase;
+        contextBlock->MapRegisterFile->MapRegisterBaseFromHal = MapRegisterBase;
         MapRegisterBase = contextBlock->MapRegisterFile;
-
     }
-    else {
+    else
+    {
         //
         // Some drivers (scsiport for one) don't call
         // HalFlushAdapterBuffers unless MapRegisterBase is non-null.
@@ -2941,15 +2624,16 @@ Return Value:
         // to flush, we exchange the NULL MapRegisterBase (if in fact
         // the hal uses a null map register base) for our
         /// MRF_NULL_PLACEHOLDER.
-        //  
+        //
 
         //
-        // 12/15/2000 - Use the non-NULL placeholder 
-        // only if the original MapRegisterBase is NULL, 
+        // 12/15/2000 - Use the non-NULL placeholder
+        // only if the original MapRegisterBase is NULL,
         // otherwise leave it alone...
         //
-        if (NULL == MapRegisterBase) {
-          MapRegisterBase = MRF_NULL_PLACEHOLDER;
+        if (NULL == MapRegisterBase)
+        {
+            MapRegisterBase = MRF_NULL_PLACEHOLDER;
         }
     }
 
@@ -2962,55 +2646,51 @@ Return Value:
     //   to prevent ndis from calling another AllocateAdapterChannel before
     //   we can make it to the DECREMENT_ADAPTER_CHANNEL call
     //
-    if (adapterInformation &&
-        adapterInformation->DeviceDescription.Master) {
+    if (adapterInformation && adapterInformation->DeviceDescription.Master)
+    {
         //
         // Master devices are the ones that return
-        // DeallocateObjectKeepRegisters. 
+        // DeallocateObjectKeepRegisters.
         //
         DECREMENT_ADAPTER_CHANNELS(adapterInformation);
-       
     }
 
     //
     // Call the *real* callback routine
     //
-    allocationAction =  ((PDRIVER_CONTROL) contextBlock->RealCallback)(
-        DeviceObject,
-        Irp,
-        MapRegisterBase,
-        contextBlock->RealContext
-        );
+    allocationAction =
+        ((PDRIVER_CONTROL)contextBlock->RealCallback)(DeviceObject, Irp, MapRegisterBase, contextBlock->RealContext);
 
-    if (! adapterInformation) {
+    if (!adapterInformation)
+    {
 
         return allocationAction;
-
     }
 
     //
     // Ok if we keep everything, just return
     //
-    if (allocationAction == KeepObject) {
+    if (allocationAction == KeepObject)
+    {
         //
         // Only slave devices should get here
         //
-        if (adapterInformation->DeviceDescription.Master) {
+        if (adapterInformation->DeviceDescription.Master)
+        {
             //
             // We should not get here. But if we do, compensate for the
-            // DECREMENT_ADAPTER_CHANNELS we did before just in case. 
-            // We do a InterlockedDecrement instead of a 
+            // DECREMENT_ADAPTER_CHANNELS we did before just in case.
+            // We do a InterlockedDecrement instead of a
             // INCREMENT_ADAPTER_CHANNELS so our allocated and freed
             // count reflect the number of real alloc/free operations performed.
             //
             InterlockedDecrement((PLONG)(&adapterInformation->FreedAdapterChannels));
-            DbgPrint("Driver at address %p has a problem\n", adapterInformation->CallingAddress );
+            DbgPrint("Driver at address %p has a problem\n", adapterInformation->CallingAddress);
             DbgPrint("Master devices should return DeallocateObjectKeepRegisters\n");
             ASSERT(0);
         }
 
-        adapterInformation->AdapterChannelMapRegisters =
-            contextBlock->NumberOfMapRegisters;
+        adapterInformation->AdapterChannelMapRegisters = contextBlock->NumberOfMapRegisters;
         return allocationAction;
     }
 
@@ -3020,34 +2700,32 @@ Return Value:
     // Keep in mind that we have done this for Master devices,
     // do it just for Slave devices.
     //
-    if (!adapterInformation->DeviceDescription.Master) {
+    if (!adapterInformation->DeviceDescription.Master)
+    {
         DECREMENT_ADAPTER_CHANNELS(adapterInformation);
     }
-    
 
-    if (allocationAction == DeallocateObjectKeepRegisters) {
+
+    if (allocationAction == DeallocateObjectKeepRegisters)
+    {
 
         return allocationAction;
-
     }
 
     //
     // Ok now we know we're getting rid of map registers too...
     //
-    SUBTRACT_MAP_REGISTERS( adapterInformation,
-        contextBlock->NumberOfMapRegisters );
+    SUBTRACT_MAP_REGISTERS(adapterInformation, contextBlock->NumberOfMapRegisters);
 
     //
     // False alarm ... we went through all the trouble of allocating the
     // double map buffer registers and they don't even want them. We should
     // bugcheck out of spite.
     //
-    if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE(contextBlock->MapRegisterFile)) {
+    if (VALIDATE_MAP_REGISTER_FILE_SIGNATURE(contextBlock->MapRegisterFile))
+    {
 
-        ViFreeMapRegisterFile(
-            adapterInformation,
-            contextBlock->MapRegisterFile);
-
+        ViFreeMapRegisterFile(adapterInformation, contextBlock->MapRegisterFile);
     }
 
 
@@ -3055,13 +2733,10 @@ Return Value:
 
 } // VfAdapterCallback //
 
-
-#if !defined (NO_LEGACY_DRIVERS)
+
+#if !defined(NO_LEGACY_DRIVERS)
 PADAPTER_OBJECT
-VfLegacyGetAdapter(
-    IN PDEVICE_DESCRIPTION  DeviceDescription,
-    IN OUT PULONG  NumberOfMapRegisters
-    )
+VfLegacyGetAdapter(IN PDEVICE_DESCRIPTION DeviceDescription, IN OUT PULONG NumberOfMapRegisters)
 /*++
 
 Routine Description:
@@ -3101,61 +2776,50 @@ Return Value:
     //
     // Give the option of not verifying at all
     //
-    if (! ViVerifyDma ) {
+    if (!ViVerifyDma)
+    {
 
         return HalGetAdapter(DeviceDescription, NumberOfMapRegisters);
-
     }
-    if (VfInjectDmaFailure()) {
+    if (VfInjectDmaFailure())
+    {
         return NULL;
-
     }
 
     VF_ASSERT_IRQL(PASSIVE_LEVEL);
 
     GET_CALLING_ADDRESS(callingAddress);
 
-    VF_ASSERT(
-        0,
-        HV_OBSOLETE_API,
-        ("HalGetAdapter API obsolete -- use IoGetDmaAdapter instead")
-        );
+    VF_ASSERT(0, HV_OBSOLETE_API, ("HalGetAdapter API obsolete -- use IoGetDmaAdapter instead"));
 
 
-    if ( ViDoubleBufferDma &&
-        *NumberOfMapRegisters > ViMaxMapRegistersPerAdapter ) {
+    if (ViDoubleBufferDma && *NumberOfMapRegisters > ViMaxMapRegistersPerAdapter)
+    {
 
         //
         //  Harumph -- don't let drivers try to get too many map registers
         //
         *NumberOfMapRegisters = ViMaxMapRegistersPerAdapter;
-
     }
 
-    dmaAdapter = (PDMA_ADAPTER) HalGetAdapter(
-        DeviceDescription,
-        NumberOfMapRegisters
-        );
+    dmaAdapter = (PDMA_ADAPTER)HalGetAdapter(DeviceDescription, NumberOfMapRegisters);
 
-    if (! dmaAdapter ) {
+    if (!dmaAdapter)
+    {
 
         //
         // early opt-out here -- the hal couldn't allocate the adapter
         //
         return NULL;
-
     }
 
     //
     // Replace all of the dma operations that live in the adapter with our
     // dma operations.. If we can't do it, fail.
     //
-    newAdapterInformation = ViHookDmaAdapter(
-        dmaAdapter,
-        DeviceDescription,
-        *NumberOfMapRegisters
-        );
-    if (! newAdapterInformation) {
+    newAdapterInformation = ViHookDmaAdapter(dmaAdapter, DeviceDescription, *NumberOfMapRegisters);
+    if (!newAdapterInformation)
+    {
         //
         // remember to put away our toys -- even though we've been called
         // with legacy apis, we can still do the right thing here.
@@ -3165,23 +2829,18 @@ Return Value:
     }
 
     newAdapterInformation->DeviceObject = NULL;
-    newAdapterInformation->CallingAddress      = callingAddress;
+    newAdapterInformation->CallingAddress = callingAddress;
 
-    return (PADAPTER_OBJECT) dmaAdapter;
+    return (PADAPTER_OBJECT)dmaAdapter;
 
 
 } // VfLegacyGetAdapter //
 #endif
-
+
 PVOID
-ViSpecialAllocateCommonBuffer(
-    IN PALLOCATE_COMMON_BUFFER AllocateCommonBuffer,
-    IN PADAPTER_INFORMATION AdapterInformation,
-    IN PVOID CallingAddress,
-    IN ULONG Length,
-    IN OUT PPHYSICAL_ADDRESS LogicalAddress,
-    IN LOGICAL CacheEnabled
-    )
+ViSpecialAllocateCommonBuffer(IN PALLOCATE_COMMON_BUFFER AllocateCommonBuffer,
+                              IN PADAPTER_INFORMATION AdapterInformation, IN PVOID CallingAddress, IN ULONG Length,
+                              IN OUT PPHYSICAL_ADDRESS LogicalAddress, IN LOGICAL CacheEnabled)
 
 /*++
 
@@ -3217,12 +2876,9 @@ Return Value:
     PHYSICAL_ADDRESS realLogicalAddress;
 
 
-    verifierBuffer = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(HAL_VERIFIER_BUFFER),
-        HAL_VERIFIER_POOL_TAG
-        );
-    if (!verifierBuffer) {
+    verifierBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(HAL_VERIFIER_BUFFER), HAL_VERIFIER_POOL_TAG);
+    if (!verifierBuffer)
+    {
         DbgPrint("Couldn't track common buffer allocation\n");
         return NULL;
     }
@@ -3232,37 +2888,34 @@ Return Value:
     paddingLength = prePadding + postPadding;
     desiredLength = paddingLength + Length;
 
-    if (ViSuperDebug) {
+    if (ViSuperDebug)
+    {
 
-        DbgPrint("Common buffer req len:%x alloc len %x, padding %x / %x\n",
-            Length, desiredLength, prePadding, postPadding);
+        DbgPrint("Common buffer req len:%x alloc len %x, padding %x / %x\n", Length, desiredLength, prePadding,
+                 postPadding);
     }
 
-    if (ViProtectBuffers) {
+    if (ViProtectBuffers)
+    {
 
-        ASSERT( !BYTE_OFFSET(desiredLength) );
+        ASSERT(!BYTE_OFFSET(desiredLength));
         // ASSERT( paddingLength >= 2 * sizeof(ViDmaVerifierTag));
     }
 
     //
     // Call into the hal to try to get us a common buffer
     //
-    commonBuffer = (AllocateCommonBuffer)(
-        AdapterInformation->DmaAdapter,
-        desiredLength,
-        &realLogicalAddress,
-        (BOOLEAN) CacheEnabled
-        );
+    commonBuffer = (AllocateCommonBuffer)(AdapterInformation->DmaAdapter, desiredLength, &realLogicalAddress,
+                                          (BOOLEAN)CacheEnabled);
 
-    if (! commonBuffer) {
+    if (!commonBuffer)
+    {
 
 #if DBG
-        DbgPrint("Could not allocate 'special' common buffer size %x\n",
-            desiredLength);
+        DbgPrint("Could not allocate 'special' common buffer size %x\n", desiredLength);
 #endif
         ExFreePool(verifierBuffer);
         return NULL;
-
     }
 
 
@@ -3274,29 +2927,25 @@ Return Value:
     //
     // Save off all of the data we have
     //
-    verifierBuffer->PrePadBytes      = (USHORT) prePadding;
-    verifierBuffer->PostPadBytes     = (USHORT) postPadding;
+    verifierBuffer->PrePadBytes = (USHORT)prePadding;
+    verifierBuffer->PostPadBytes = (USHORT)postPadding;
 
     verifierBuffer->AdvertisedLength = Length;
-    verifierBuffer->RealLength       = desiredLength;
+    verifierBuffer->RealLength = desiredLength;
 
-    verifierBuffer->RealStartAddress        = commonBuffer;
-    verifierBuffer->AdvertisedStartAddress  = commonBuffer + prePadding;
+    verifierBuffer->RealStartAddress = commonBuffer;
+    verifierBuffer->AdvertisedStartAddress = commonBuffer + prePadding;
     verifierBuffer->RealLogicalStartAddress = realLogicalAddress;
 
-    verifierBuffer->AllocatorAddress        = CallingAddress;
+    verifierBuffer->AllocatorAddress = CallingAddress;
 
 
     //
     // Fill the common buffer with junk to a. mark it and b. so no one uses
     // it without initializing it.
     //
-    ViInitializePadding(
-        verifierBuffer->RealStartAddress,
-        verifierBuffer->RealLength,
-        verifierBuffer->AdvertisedStartAddress,
-        verifierBuffer->AdvertisedLength
-        );
+    ViInitializePadding(verifierBuffer->RealStartAddress, verifierBuffer->RealLength,
+                        verifierBuffer->AdvertisedStartAddress, verifierBuffer->AdvertisedLength);
 
 
     //
@@ -3305,22 +2954,17 @@ Return Value:
     //
     LogicalAddress->QuadPart = realLogicalAddress.QuadPart + prePadding;
 
-    VF_ADD_TO_LOCKED_LIST( &AdapterInformation->CommonBuffers,
-        verifierBuffer );
+    VF_ADD_TO_LOCKED_LIST(&AdapterInformation->CommonBuffers, verifierBuffer);
 
     INCREMENT_COMMON_BUFFERS(AdapterInformation);
 
-    return (commonBuffer+prePadding);
+    return (commonBuffer + prePadding);
 } // ViSpecialAllocateCommonBuffer //
 
-
+
 LOGICAL
-ViSpecialFreeCommonBuffer(
-    IN PFREE_COMMON_BUFFER FreeCommonBuffer,
-    IN PADAPTER_INFORMATION AdapterInformation,
-    IN PVOID CommonBuffer,
-    LOGICAL CacheEnabled
-    )
+ViSpecialFreeCommonBuffer(IN PFREE_COMMON_BUFFER FreeCommonBuffer, IN PADAPTER_INFORMATION AdapterInformation,
+                          IN PVOID CommonBuffer, LOGICAL CacheEnabled)
 
 /*++
 
@@ -3344,44 +2988,40 @@ Return Value:
 {
     PHAL_VERIFIER_BUFFER verifierBuffer;
 
-    verifierBuffer = VF_FIND_BUFFER(&AdapterInformation->CommonBuffers,
-        CommonBuffer);
+    verifierBuffer = VF_FIND_BUFFER(&AdapterInformation->CommonBuffers, CommonBuffer);
 
-    if (! verifierBuffer) {
+    if (!verifierBuffer)
+    {
 
         //
         // We couldn't find this buffer in the list
         //
 
-        if (ViProtectBuffers) {
-            
-            DbgPrint("HV: Couldn't find buffer %p\n",CommonBuffer);
+        if (ViProtectBuffers)
+        {
+
+            DbgPrint("HV: Couldn't find buffer %p\n", CommonBuffer);
         }
 
         return FALSE;
     }
 
-    if (ViProtectBuffers) {
+    if (ViProtectBuffers)
+    {
         //
         // When we created the buffer we built in a bit of padding at the
         // beginning and end of the  allocation -- make sure that nobody has
         // touched it.
         //
 
-        ViCheckPadding(
-            verifierBuffer->RealStartAddress,
-            verifierBuffer->RealLength,
-            verifierBuffer->AdvertisedStartAddress,
-            verifierBuffer->AdvertisedLength
-            );
+        ViCheckPadding(verifierBuffer->RealStartAddress, verifierBuffer->RealLength,
+                       verifierBuffer->AdvertisedStartAddress, verifierBuffer->AdvertisedLength);
     }
 
     //
     // Take this buffer out of circulation.
     //
-    VF_REMOVE_FROM_LOCKED_LIST( &AdapterInformation->CommonBuffers,
-        verifierBuffer);
-
+    VF_REMOVE_FROM_LOCKED_LIST(&AdapterInformation->CommonBuffers, verifierBuffer);
 
 
     //
@@ -3391,13 +3031,9 @@ Return Value:
     RtlZeroMemory(CommonBuffer, verifierBuffer->AdvertisedLength);
 
 
-    (FreeCommonBuffer)(
-        AdapterInformation->DmaAdapter,
-        verifierBuffer->RealLength,
-        verifierBuffer->RealLogicalStartAddress,
-        verifierBuffer->RealStartAddress,
-        (BOOLEAN) CacheEnabled
-        );
+    (FreeCommonBuffer)(AdapterInformation->DmaAdapter, verifierBuffer->RealLength,
+                       verifierBuffer->RealLogicalStartAddress, verifierBuffer->RealStartAddress,
+                       (BOOLEAN)CacheEnabled);
 
 
     DECREMENT_COMMON_BUFFERS(AdapterInformation);
@@ -3407,12 +3043,8 @@ Return Value:
 } // ViSpecialFreeCommonBuffer //
 
 
-
 PMAP_REGISTER_FILE
-ViAllocateMapRegisterFile(
-    IN PADAPTER_INFORMATION AdapterInformation,
-    IN ULONG NumberOfMapRegisters
-    )
+ViAllocateMapRegisterFile(IN PADAPTER_INFORMATION AdapterInformation, IN ULONG NumberOfMapRegisters)
 /*++
 
 Routine Description:
@@ -3493,7 +3125,7 @@ Return Value:
     PMDL mapRegisterMdl;
 
     PPFN_NUMBER registerFilePfnArray;
-    PFN_NUMBER  registerPfn;
+    PFN_NUMBER registerPfn;
 
     PMAP_REGISTER tempMapRegister;
 
@@ -3505,7 +3137,8 @@ Return Value:
     //
     mapRegistersLeft = AdapterInformation->ActiveMapRegisters;
 
-    if ( mapRegistersLeft + NumberOfMapRegisters > ViMaxMapRegistersPerAdapter ) {
+    if (mapRegistersLeft + NumberOfMapRegisters > ViMaxMapRegistersPerAdapter)
+    {
         //
         // Don't have enough room in this adpter's quota to allocate the
         // map registers. Why do we need a quota at all? Because annoying
@@ -3519,33 +3152,28 @@ Return Value:
         return NULL;
     }
 
-    if (0 == NumberOfMapRegisters) {
-       //
-       // This is weird but still legal, just don't double 
-       // buffer in this case.
-       //
-       return NULL;
+    if (0 == NumberOfMapRegisters)
+    {
+        //
+        // This is weird but still legal, just don't double
+        // buffer in this case.
+        //
+        return NULL;
     }
     //
     // Allocate space for the register file
     //
-    mapRegisterBufferSize =
-        sizeof(MAP_REGISTER_FILE) +
-        sizeof(MAP_REGISTER) * (NumberOfMapRegisters-1);
+    mapRegisterBufferSize = sizeof(MAP_REGISTER_FILE) + sizeof(MAP_REGISTER) * (NumberOfMapRegisters - 1);
 
-    mapRegisterFile = ExAllocatePoolWithTag(
-        NonPagedPool,
-        mapRegisterBufferSize,
-        HAL_VERIFIER_POOL_TAG
-        );
+    mapRegisterFile = ExAllocatePoolWithTag(NonPagedPool, mapRegisterBufferSize, HAL_VERIFIER_POOL_TAG);
 
-    if (! mapRegisterFile)
+    if (!mapRegisterFile)
         return NULL;
 
-    if (ViSuperDebug) {
-        DbgPrint("%p Allocated Map register file\n",mapRegisterFile);
+    if (ViSuperDebug)
+    {
+        DbgPrint("%p Allocated Map register file\n", mapRegisterFile);
     }
-
 
 
     RtlZeroMemory(mapRegisterFile, mapRegisterBufferSize);
@@ -3556,32 +3184,27 @@ Return Value:
     //
     mapRegisterFile->NumberOfMapRegisters = NumberOfMapRegisters;
 
-    mapRegisterMdl = IoAllocateMdl(
-        NULL,
-        NumberOfMapRegisters << PAGE_SHIFT,
-        FALSE,
-        FALSE,
-        NULL
-        );
+    mapRegisterMdl = IoAllocateMdl(NULL, NumberOfMapRegisters << PAGE_SHIFT, FALSE, FALSE, NULL);
 
-    if (! mapRegisterMdl) {
+    if (!mapRegisterMdl)
+    {
 
         goto CleanupFailure;
     }
 
 
-    if (ViSuperDebug) {
+    if (ViSuperDebug)
+    {
 
-        DbgPrint("    %p Allocated MDL\n",mapRegisterMdl);
+        DbgPrint("    %p Allocated MDL\n", mapRegisterMdl);
     }
 
     registerFilePfnArray = MmGetMdlPfnArray(mapRegisterMdl);
 
     tempMapRegister = &mapRegisterFile->MapRegisters[0];
 
-    for(NOP;
-        NumberOfMapRegisters;
-        NumberOfMapRegisters--, tempMapRegister++, registerFilePfnArray++ ) {
+    for (NOP; NumberOfMapRegisters; NumberOfMapRegisters--, tempMapRegister++, registerFilePfnArray++)
+    {
 
         PHYSICAL_ADDRESS registerPhysical;
 
@@ -3601,23 +3224,24 @@ Return Value:
         // Allocate the map register, its index will be the hint
         //
         tempMapRegister->MapRegisterStart = ViAllocateFromContiguousMemory(
-            AdapterInformation,
-            mapRegisterFile->NumberOfMapRegisters - NumberOfMapRegisters
-            );
-        if (tempMapRegister->MapRegisterStart) {
-           InterlockedIncrement((PLONG)&AdapterInformation->ContiguousMapRegisters);
-        }  else {
-           tempMapRegister->MapRegisterStart = ExAllocatePoolWithTag(
-              NonPagedPoolCacheAligned,
-              3 * PAGE_SIZE,
-              HAL_VERIFIER_POOL_TAG
-              );
-           if (tempMapRegister->MapRegisterStart) {
-              InterlockedIncrement((PLONG)&AdapterInformation->NonContiguousMapRegisters);
-           } else {
+            AdapterInformation, mapRegisterFile->NumberOfMapRegisters - NumberOfMapRegisters);
+        if (tempMapRegister->MapRegisterStart)
+        {
+            InterlockedIncrement((PLONG)&AdapterInformation->ContiguousMapRegisters);
+        }
+        else
+        {
+            tempMapRegister->MapRegisterStart =
+                ExAllocatePoolWithTag(NonPagedPoolCacheAligned, 3 * PAGE_SIZE, HAL_VERIFIER_POOL_TAG);
+            if (tempMapRegister->MapRegisterStart)
+            {
+                InterlockedIncrement((PLONG)&AdapterInformation->NonContiguousMapRegisters);
+            }
+            else
+            {
 
-              goto CleanupFailure;
-           }
+                goto CleanupFailure;
+            }
         }
         //
         // Fill the map register padding area
@@ -3627,18 +3251,13 @@ Return Value:
         // This essentially just zeroes
         // out the whole buffer.
         //
-        ViInitializePadding(
-            tempMapRegister->MapRegisterStart,
-            3 * PAGE_SIZE,
-            NULL,
-            0
-            );
+        ViInitializePadding(tempMapRegister->MapRegisterStart, 3 * PAGE_SIZE, NULL, 0);
 
 
-        if (ViSuperDebug) {
-            DbgPrint("    %p Allocated Map Register (%x)\n",
-                tempMapRegister->MapRegisterStart,
-                mapRegisterFile->NumberOfMapRegisters - NumberOfMapRegisters);
+        if (ViSuperDebug)
+        {
+            DbgPrint("    %p Allocated Map Register (%x)\n", tempMapRegister->MapRegisterStart,
+                     mapRegisterFile->NumberOfMapRegisters - NumberOfMapRegisters);
         }
 
 
@@ -3646,17 +3265,13 @@ Return Value:
         // Add the middle page of the allocation to our register
         // file mdl
         //
-        registerPhysical = MmGetPhysicalAddress(
-            (PUCHAR) tempMapRegister->MapRegisterStart + PAGE_SIZE );
+        registerPhysical = MmGetPhysicalAddress((PUCHAR)tempMapRegister->MapRegisterStart + PAGE_SIZE);
 
-        registerPfn = (PFN_NUMBER) (registerPhysical.QuadPart >> PAGE_SHIFT);
+        registerPfn = (PFN_NUMBER)(registerPhysical.QuadPart >> PAGE_SHIFT);
 
-        RtlCopyMemory(
-            (PVOID) registerFilePfnArray,
-            (PVOID) &registerPfn,
-            sizeof(PFN_NUMBER) ) ;
+        RtlCopyMemory((PVOID)registerFilePfnArray, (PVOID)&registerPfn, sizeof(PFN_NUMBER));
 
-    }    // For each map register //
+    } // For each map register //
 
     //
     // Now we have a mdl with all of our map registers physical pages entered
@@ -3664,16 +3279,11 @@ Return Value:
     //
     mapRegisterMdl->MdlFlags |= MDL_PAGES_LOCKED;
 
-    mapRegisterFile->MapRegisterBuffer = MmMapLockedPagesSpecifyCache (
-        mapRegisterMdl,
-        KernelMode,
-        MmCached,
-        NULL,
-        FALSE,
-        NormalPagePriority
-        );
+    mapRegisterFile->MapRegisterBuffer =
+        MmMapLockedPagesSpecifyCache(mapRegisterMdl, KernelMode, MmCached, NULL, FALSE, NormalPagePriority);
 
-    if (! mapRegisterFile->MapRegisterBuffer) {
+    if (!mapRegisterFile->MapRegisterBuffer)
+    {
 
         goto CleanupFailure;
     }
@@ -3690,9 +3300,7 @@ Return Value:
 
     KeInitializeSpinLock(&mapRegisterFile->AllocationLock);
 
-    VF_ADD_TO_LOCKED_LIST(
-        &AdapterInformation->MapRegisterFiles,
-        mapRegisterFile );
+    VF_ADD_TO_LOCKED_LIST(&AdapterInformation->MapRegisterFiles, mapRegisterFile);
 
     return mapRegisterFile;
 
@@ -3708,23 +3316,23 @@ CleanupFailure:
     tempMapRegister = &mapRegisterFile->MapRegisters[0];
 
     for (NumberOfMapRegisters = mapRegisterFile->NumberOfMapRegisters;
-        NumberOfMapRegisters && tempMapRegister->MapRegisterStart;
-        NumberOfMapRegisters--, tempMapRegister++) {
-        
-        if (!ViFreeToContiguousMemory(AdapterInformation,
-                tempMapRegister->MapRegisterStart,
-                mapRegisterFile->NumberOfMapRegisters - NumberOfMapRegisters)) {
+         NumberOfMapRegisters && tempMapRegister->MapRegisterStart; NumberOfMapRegisters--, tempMapRegister++)
+    {
 
-                //
-                // Could not find the address in the contiguous buffers pool
-                // it must be from non-paged pool.
-                //
-                ExFreePool(tempMapRegister->MapRegisterStart);
+        if (!ViFreeToContiguousMemory(AdapterInformation, tempMapRegister->MapRegisterStart,
+                                      mapRegisterFile->NumberOfMapRegisters - NumberOfMapRegisters))
+        {
+
+            //
+            // Could not find the address in the contiguous buffers pool
+            // it must be from non-paged pool.
+            //
+            ExFreePool(tempMapRegister->MapRegisterStart);
         }
-        
     }
 
-    if (mapRegisterMdl) {
+    if (mapRegisterMdl)
+    {
         IoFreeMdl(mapRegisterMdl);
     }
 
@@ -3733,10 +3341,7 @@ CleanupFailure:
 } // ViAllocateMapRegisterFile//
 
 LOGICAL
-ViFreeMapRegisterFile(
-    IN PADAPTER_INFORMATION AdapterInformation,
-    IN PMAP_REGISTER_FILE MapRegisterFile
-    )
+ViFreeMapRegisterFile(IN PADAPTER_INFORMATION AdapterInformation, IN PMAP_REGISTER_FILE MapRegisterFile)
 /*++
 
 Routine Description:
@@ -3763,7 +3368,8 @@ Return Value:
     PMAP_REGISTER tempMapRegister;
     ULONG mapRegisterNumber;
 
-    if (! VALIDATE_MAP_REGISTER_FILE_SIGNATURE(MapRegisterFile)) {
+    if (!VALIDATE_MAP_REGISTER_FILE_SIGNATURE(MapRegisterFile))
+    {
         //
         // This could be a real MapRegisterBase that the hal returned
         // But it's not one of ours.
@@ -3771,74 +3377,60 @@ Return Value:
         return FALSE;
     }
 
-    VF_REMOVE_FROM_LOCKED_LIST(&AdapterInformation->MapRegisterFiles,
-        MapRegisterFile );
+    VF_REMOVE_FROM_LOCKED_LIST(&AdapterInformation->MapRegisterFiles, MapRegisterFile);
     //
     // Clear the signature from memory so we don't find it after it's freed
     // and think that it's real.
     //
     MapRegisterFile->Signature = 0;
 
-    MmUnmapLockedPages(
-        MapRegisterFile->MapRegisterBuffer,
-        MapRegisterFile->MapRegisterMdl );
+    MmUnmapLockedPages(MapRegisterFile->MapRegisterBuffer, MapRegisterFile->MapRegisterMdl);
 
     tempMapRegister = &MapRegisterFile->MapRegisters[0];
 
-    for ( mapRegisterNumber = 0  ;
-        mapRegisterNumber < MapRegisterFile->NumberOfMapRegisters;
-        mapRegisterNumber++, tempMapRegister++ ) {
+    for (mapRegisterNumber = 0; mapRegisterNumber < MapRegisterFile->NumberOfMapRegisters;
+         mapRegisterNumber++, tempMapRegister++)
+    {
 
         ASSERT(tempMapRegister->MapRegisterStart);
 
-        if(ViSuperDebug) {
+        if (ViSuperDebug)
+        {
 
-            DbgPrint("    %p Freeing Map Register (%x)\n",
-                tempMapRegister->MapRegisterStart,
-                mapRegisterNumber);
+            DbgPrint("    %p Freeing Map Register (%x)\n", tempMapRegister->MapRegisterStart, mapRegisterNumber);
         }
 
         //
         // Make sure that the driver or hw hasn't done anything funny in
         // and around the area of the map register
         //
-        if (tempMapRegister->MappedToSa) {
-        //
-        /// Map register is still mapped ...there better
-        //  not be any data in the buffer
-        //        
+        if (tempMapRegister->MappedToSa)
+        {
+            //
+            /// Map register is still mapped ...there better
+            //  not be any data in the buffer
+            //
             PUCHAR mappedSa =
-                (PUCHAR) tempMapRegister->MapRegisterStart +
-                    PAGE_SIZE + BYTE_OFFSET(tempMapRegister->MappedToSa);
+                (PUCHAR)tempMapRegister->MapRegisterStart + PAGE_SIZE + BYTE_OFFSET(tempMapRegister->MappedToSa);
 
             //
             // Assert only for a transfer from the device,
             // in this case the hardware transferred some data,
             // but we didn't flush it.
             //
-            if (tempMapRegister->Flags & MAP_REGISTER_READ) {
-            
-               VF_ASSERT(
-                   ! ViHasBufferBeenTouched(
-                       mappedSa,
-                       tempMapRegister->BytesMapped,
-                       MAP_REGISTER_FILL_CHAR
-                     ),
-                   HV_DID_NOT_FLUSH_ADAPTER_BUFFERS,
-                   ("Freeing map register (%p) that has data and was not flushed."
-                       "    This means that there was a data loss.",
-                       tempMapRegister->MappedToSa)
-                   );
+            if (tempMapRegister->Flags & MAP_REGISTER_READ)
+            {
+
+                VF_ASSERT(!ViHasBufferBeenTouched(mappedSa, tempMapRegister->BytesMapped, MAP_REGISTER_FILL_CHAR),
+                          HV_DID_NOT_FLUSH_ADAPTER_BUFFERS,
+                          ("Freeing map register (%p) that has data and was not flushed."
+                           "    This means that there was a data loss.",
+                           tempMapRegister->MappedToSa));
             }
             //
             // Make sure that the outside looks good
             //
-            ViCheckPadding(
-                tempMapRegister->MapRegisterStart,
-                3* PAGE_SIZE,
-                mappedSa,
-                tempMapRegister->BytesMapped
-                );
+            ViCheckPadding(tempMapRegister->MapRegisterStart, 3 * PAGE_SIZE, mappedSa, tempMapRegister->BytesMapped);
         }
         else
         {
@@ -3848,23 +3440,20 @@ Return Value:
         //
         // Bye bye map register ...
         //
-        if (!ViFreeToContiguousMemory(AdapterInformation,
-                                   tempMapRegister->MapRegisterStart,
-                                   mapRegisterNumber)) {
-           //
-           // Could not find the address in the contiguous buffers pool
-           // it must be from non-paged pool.
-           //
-           ExFreePool(tempMapRegister->MapRegisterStart);
+        if (!ViFreeToContiguousMemory(AdapterInformation, tempMapRegister->MapRegisterStart, mapRegisterNumber))
+        {
+            //
+            // Could not find the address in the contiguous buffers pool
+            // it must be from non-paged pool.
+            //
+            ExFreePool(tempMapRegister->MapRegisterStart);
         }
-        
     }
 
-    if(ViSuperDebug)
+    if (ViSuperDebug)
     {
-        DbgPrint("    %p Freeing MDL\n",MapRegisterFile->MapRegisterMdl);
-   }
-
+        DbgPrint("    %p Freeing MDL\n", MapRegisterFile->MapRegisterMdl);
+    }
 
 
     IoFreeMdl(MapRegisterFile->MapRegisterMdl);
@@ -3876,22 +3465,18 @@ Return Value:
     RtlZeroMemory(MapRegisterFile, sizeof(MapRegisterFile));
 
 
-    if(ViSuperDebug) {
-        DbgPrint("%p Freeing Map Register File\n",MapRegisterFile);
+    if (ViSuperDebug)
+    {
+        DbgPrint("%p Freeing Map Register File\n", MapRegisterFile);
     }
     ExFreePool(MapRegisterFile);
     return TRUE;
 } // ViFreeMapRegisterFile //
 
-
+
 ULONG
-ViMapDoubleBuffer(
-    IN PMAP_REGISTER_FILE MapRegisterFile,
-    IN PMDL  Mdl,
-    IN PVOID CurrentVa,
-    IN ULONG Length,
-    IN BOOLEAN  WriteToDevice
-    )
+ViMapDoubleBuffer(IN PMAP_REGISTER_FILE MapRegisterFile, IN PMDL Mdl, IN PVOID CurrentVa, IN ULONG Length,
+                  IN BOOLEAN WriteToDevice)
 /*++
 
 Routine Description:
@@ -3932,10 +3517,9 @@ Return Value:
     //
     // Assert that the length cannot be 0
     //
-    if (Length == 0) {
-        VF_ASSERT(Length != 0, 
-                  HV_MAP_ZERO_LENGTH_BUFFER, 
-                  ("Driver is attempting to map a 0-length transfer"));
+    if (Length == 0)
+    {
+        VF_ASSERT(Length != 0, HV_MAP_ZERO_LENGTH_BUFFER, ("Driver is attempting to map a 0-length transfer"));
         return Length;
     }
 
@@ -3945,8 +3529,9 @@ Return Value:
     // as is contiguous. The hal had already done these calculations, so I
     // just copied the code to determine the contiguous length of transfer.
     //
-    if ( ! MapRegisterFile->ScatterGather) {
-        Length = MIN(Length, PAGE_SIZE- BYTE_OFFSET(CurrentVa));
+    if (!MapRegisterFile->ScatterGather)
+    {
+        Length = MIN(Length, PAGE_SIZE - BYTE_OFFSET(CurrentVa));
     }
 
     //
@@ -3954,29 +3539,26 @@ Return Value:
     //
 
 
+    if ((PUCHAR)CurrentVa < (PUCHAR)MmGetMdlVirtualAddress(Mdl))
+    {
+        //
+        // System address before the beginning of the first MDL. This is bad.
+        //
 
-    if ((PUCHAR) CurrentVa < (PUCHAR) MmGetMdlVirtualAddress(Mdl)) {
-    //
-    // System address before the beginning of the first MDL. This is bad.
-    //
-    
-        VF_ASSERT((PUCHAR) CurrentVa >= (PUCHAR) MmGetMdlVirtualAddress(Mdl),
-            HV_BAD_MDL,
-            ("Virtual address %p is before the first MDL %p",CurrentVa, Mdl));
+        VF_ASSERT((PUCHAR)CurrentVa >= (PUCHAR)MmGetMdlVirtualAddress(Mdl), HV_BAD_MDL,
+                  ("Virtual address %p is before the first MDL %p", CurrentVa, Mdl));
         return FALSE;
-
     }
-    
-    if ((ULONG)((PUCHAR) CurrentVa - (PUCHAR) MmGetMdlVirtualAddress(Mdl)) >= MmGetMdlByteCount(Mdl)) {
-    //
-    // System address is after the end of the first MDL. This is also bad.
-    //
-    
-        VF_ASSERT((ULONG)((PUCHAR) CurrentVa - (PUCHAR) MmGetMdlVirtualAddress(Mdl)) < MmGetMdlByteCount(Mdl),
-            HV_BAD_MDL,
-            ("Virtual address %p is after the first MDL %p",CurrentVa, Mdl));
-        return FALSE;
 
+    if ((ULONG)((PUCHAR)CurrentVa - (PUCHAR)MmGetMdlVirtualAddress(Mdl)) >= MmGetMdlByteCount(Mdl))
+    {
+        //
+        // System address is after the end of the first MDL. This is also bad.
+        //
+
+        VF_ASSERT((ULONG)((PUCHAR)CurrentVa - (PUCHAR)MmGetMdlVirtualAddress(Mdl)) < MmGetMdlByteCount(Mdl), HV_BAD_MDL,
+                  ("Virtual address %p is after the first MDL %p", CurrentVa, Mdl));
+        return FALSE;
     }
 
 
@@ -3985,21 +3567,14 @@ Return Value:
     // N.B. this may bugcheck if the mdl isn't mapped but that's a bug
     // in the first place.
     //
-    driverCurrentSa = (PUCHAR) MmGetSystemAddressForMdl(Mdl) +
-        ((PUCHAR) CurrentVa -
-        (PUCHAR) MmGetMdlVirtualAddress(Mdl)) ;
+    driverCurrentSa = (PUCHAR)MmGetSystemAddressForMdl(Mdl) + ((PUCHAR)CurrentVa - (PUCHAR)MmGetMdlVirtualAddress(Mdl));
 
 
     //
     // Allocate contiguous map registers from our map register file
     //
-    if ( ! ViAllocateMapRegistersFromFile(
-        MapRegisterFile,
-        driverCurrentSa,
-        Length,
-        WriteToDevice,
-        &mapRegisterNumber
-        ) ) {
+    if (!ViAllocateMapRegistersFromFile(MapRegisterFile, driverCurrentSa, Length, WriteToDevice, &mapRegisterNumber))
+    {
 
         return FALSE;
     }
@@ -4008,17 +3583,14 @@ Return Value:
     // Get a pointer to the base of the map registers for
     // double buffering.
     //
-    mapRegisterCurrentSa =
-        MAP_REGISTER_SYSTEM_ADDRESS(
-        MapRegisterFile,
-        driverCurrentSa,
-        mapRegisterNumber );
+    mapRegisterCurrentSa = MAP_REGISTER_SYSTEM_ADDRESS(MapRegisterFile, driverCurrentSa, mapRegisterNumber);
 
 
     //
     // Note on a read, we don't have to double buffer at this end
     //
-    if (WriteToDevice) {
+    if (WriteToDevice)
+    {
         //
         // Copy chained mdls to a single buffer at mapRegisterCurrentSa
         //
@@ -4026,51 +3598,53 @@ Return Value:
         bytesLeft = Length;
 
 
-        while(bytesLeft) {
+        while (bytesLeft)
+        {
 
-            if (NULL == currentMdl) {
+            if (NULL == currentMdl)
+            {
 
                 //
                 // 12/21/2000 - This should never happen
                 //
                 ASSERT(NULL != currentMdl);
                 return FALSE;
-
             }
 
-            if (currentMdl->Next == NULL && bytesLeft > MmGetMdlByteCount(currentMdl)) {
-               //
-               // 12/21/2000 - There are some rare cases where the buffer described
-               // in the MDL is less than the transfer Length. This happens for instance
-               // when the file system rounds up the file size to a multiple of sector
-               // size but MM uses the exact file size in the MDL. The HAL compensates for
-               // this.
-               // If this is the case, use the size based on Length (bytesLeft)
-               // instead of the size in the MDL (ByteCount). Also check that 
-               // this extra does not cross a page boundary.
-               //
-               if ((Length - 1) >> PAGE_SHIFT != (Length - (bytesLeft - MmGetMdlByteCount(currentMdl))) >> PAGE_SHIFT) {
-                  
-                  VF_ASSERT((Length - 1) >> PAGE_SHIFT == (Length - (bytesLeft - MmGetMdlByteCount(currentMdl))) >> PAGE_SHIFT,
-                    HV_BAD_MDL,
-                    ("Extra transfer length crosses a page boundary: Mdl %p, Length %x", Mdl, Length));
-                  return FALSE;
+            if (currentMdl->Next == NULL && bytesLeft > MmGetMdlByteCount(currentMdl))
+            {
+                //
+                // 12/21/2000 - There are some rare cases where the buffer described
+                // in the MDL is less than the transfer Length. This happens for instance
+                // when the file system rounds up the file size to a multiple of sector
+                // size but MM uses the exact file size in the MDL. The HAL compensates for
+                // this.
+                // If this is the case, use the size based on Length (bytesLeft)
+                // instead of the size in the MDL (ByteCount). Also check that
+                // this extra does not cross a page boundary.
+                //
+                if ((Length - 1) >> PAGE_SHIFT != (Length - (bytesLeft - MmGetMdlByteCount(currentMdl))) >> PAGE_SHIFT)
+                {
 
-
-               }
-               currentTransferLength = bytesLeft;
-
-            }  else {
-               currentTransferLength = MIN(bytesLeft, MmGetMdlByteCount(currentMdl));
+                    VF_ASSERT((Length - 1) >> PAGE_SHIFT ==
+                                  (Length - (bytesLeft - MmGetMdlByteCount(currentMdl))) >> PAGE_SHIFT,
+                              HV_BAD_MDL,
+                              ("Extra transfer length crosses a page boundary: Mdl %p, Length %x", Mdl, Length));
+                    return FALSE;
+                }
+                currentTransferLength = bytesLeft;
+            }
+            else
+            {
+                currentTransferLength = MIN(bytesLeft, MmGetMdlByteCount(currentMdl));
             }
 
 
-            if (ViSuperDebug) {
+            if (ViSuperDebug)
+            {
 
-                DbgPrint("Dbl buffer: %x bytes, %p src, %p dest\n",
-                    currentTransferLength,
-                    driverCurrentSa,
-                    mapRegisterCurrentSa);
+                DbgPrint("Dbl buffer: %x bytes, %p src, %p dest\n", currentTransferLength, driverCurrentSa,
+                         mapRegisterCurrentSa);
             }
 
             //
@@ -4078,12 +3652,9 @@ Return Value:
             // buffer to  our buffer.
             //
 
-            RtlCopyMemory(
-                mapRegisterCurrentSa ,
-                driverCurrentSa,
-                currentTransferLength);
+            RtlCopyMemory(mapRegisterCurrentSa, driverCurrentSa, currentTransferLength);
 
-            mapRegisterCurrentSa+= currentTransferLength;
+            mapRegisterCurrentSa += currentTransferLength;
 
             currentMdl = currentMdl->Next;
 
@@ -4091,9 +3662,10 @@ Return Value:
             // The system address for other mdls must start at the
             // beginning of the MDL.
             //
-            if (currentMdl) {
+            if (currentMdl)
+            {
 
-                driverCurrentSa = (PUCHAR) MmGetSystemAddressForMdl(currentMdl);
+                driverCurrentSa = (PUCHAR)MmGetSystemAddressForMdl(currentMdl);
             }
 
             bytesLeft -= currentTransferLength;
@@ -4110,21 +3682,17 @@ Return Value:
     //
     // Flush the buffers for our MDL
     //
-    if (MapRegisterFile->MapRegisterMdl) {
+    if (MapRegisterFile->MapRegisterMdl)
+    {
         KeFlushIoBuffers(MapRegisterFile->MapRegisterMdl, !WriteToDevice, TRUE);
     }
     return Length;
 } // ViMapDoubleBuffer //
 
-
+
 LOGICAL
-ViFlushDoubleBuffer(
-    IN PMAP_REGISTER_FILE MapRegisterFile,
-    IN PMDL   Mdl,
-    IN PVOID CurrentVa,
-    IN ULONG Length,
-    IN BOOLEAN  WriteToDevice
-    )
+ViFlushDoubleBuffer(IN PMAP_REGISTER_FILE MapRegisterFile, IN PMDL Mdl, IN PVOID CurrentVa, IN ULONG Length,
+                    IN BOOLEAN WriteToDevice)
 /*++
 
 Routine Description:
@@ -4164,53 +3732,38 @@ Return Value:
     // N.B. this may bugcheck if the mdl isn't mapped but that's a bug
     // in the first place.
     //
-    driverCurrentSa = (PUCHAR) MmGetSystemAddressForMdl(Mdl) +
-        ((PUCHAR) CurrentVa -
-        (PUCHAR) MmGetMdlVirtualAddress(Mdl)) ;
+    driverCurrentSa = (PUCHAR)MmGetSystemAddressForMdl(Mdl) + ((PUCHAR)CurrentVa - (PUCHAR)MmGetMdlVirtualAddress(Mdl));
 
     //
     // Find the map register number of the start of the flush
     // so that we can find out where to double buffer from
     //
 
-    if (! ViFindMappedRegisterInFile(
-        MapRegisterFile,
-        driverCurrentSa,
-        &mapRegisterNumber) ) {
-        VF_ASSERT(
-            0,
-            HV_FLUSH_EMPTY_BUFFERS,
-            ("Cannot flush buffers that aren't mapped (Addr %p)",
-                driverCurrentSa )
-        );
+    if (!ViFindMappedRegisterInFile(MapRegisterFile, driverCurrentSa, &mapRegisterNumber))
+    {
+        VF_ASSERT(0, HV_FLUSH_EMPTY_BUFFERS, ("Cannot flush buffers that aren't mapped (Addr %p)", driverCurrentSa));
         return FALSE;
     }
 
-    mapRegisterCurrentSa =
-        MAP_REGISTER_SYSTEM_ADDRESS(
-            MapRegisterFile,
-            driverCurrentSa,
-            mapRegisterNumber );
+    mapRegisterCurrentSa = MAP_REGISTER_SYSTEM_ADDRESS(MapRegisterFile, driverCurrentSa, mapRegisterNumber);
 
 
     //
     // Check to make sure that the flush is being done with a reasonable
     // length.(mdl byte count - mdl offset)
     //
-    bytesLeftInMdl = MmGetMdlByteCount(MapRegisterFile->MapRegisterMdl) -
-        (ULONG) ( (PUCHAR) mapRegisterCurrentSa -
-        (PUCHAR) MmGetSystemAddressForMdl(MapRegisterFile->MapRegisterMdl) ) ;
+    bytesLeftInMdl =
+        MmGetMdlByteCount(MapRegisterFile->MapRegisterMdl) -
+        (ULONG)((PUCHAR)mapRegisterCurrentSa - (PUCHAR)MmGetSystemAddressForMdl(MapRegisterFile->MapRegisterMdl));
 
-    VF_ASSERT(
-        Length <= bytesLeftInMdl,
+    VF_ASSERT(Length <= bytesLeftInMdl,
 
-        HV_MISCELLANEOUS_ERROR,
+              HV_MISCELLANEOUS_ERROR,
 
-        ("FLUSH: Can only flush %x bytes to end of map register file (%x attempted)",
-            bytesLeftInMdl, Length)
-        );
+              ("FLUSH: Can only flush %x bytes to end of map register file (%x attempted)", bytesLeftInMdl, Length));
 
-    if (Length > bytesLeftInMdl) {
+    if (Length > bytesLeftInMdl)
+    {
         //
         // Salvage the situation by truncating the flush
         //
@@ -4221,11 +3774,12 @@ Return Value:
     //
     // Note on a write, we don't have to double buffer at this end
     //
-    if (!WriteToDevice) {
-        //        
+    if (!WriteToDevice)
+    {
+        //
         // Since certain scsi miniports write to the mapped buffer and expect
         // that data to be there when we flush, we have to check for this
-        // case ... and if it happens DON'T double buffer. 
+        // case ... and if it happens DON'T double buffer.
         //
         RTL_BITMAP bitmap;
         bitmap.SizeOfBitMap = Length << 3;
@@ -4235,41 +3789,35 @@ Return Value:
         // Only really flush the double buffer if the hardware has
         // written to it.
         //
-        if ( ViHasBufferBeenTouched(
-                mapRegisterCurrentSa,
-                Length,
-                MAP_REGISTER_FILL_CHAR )
-                ) {
+        if (ViHasBufferBeenTouched(mapRegisterCurrentSa, Length, MAP_REGISTER_FILL_CHAR))
+        {
 
             //
             // The hardware must have written some thing here ...
             // so flush it.
-            //        
+            //
 
             //
             // Since we are reading from the device, we must copy from our buffer to
             // the driver's buffer .
             //
 
-            if (ViSuperDebug) {
-                DbgPrint("Flush buffer: %x bytes, %p src, %p dest\n",Length, mapRegisterCurrentSa, driverCurrentSa );
+            if (ViSuperDebug)
+            {
+                DbgPrint("Flush buffer: %x bytes, %p src, %p dest\n", Length, mapRegisterCurrentSa, driverCurrentSa);
             }
 
-            RtlCopyMemory(
-                driverCurrentSa,
-                mapRegisterCurrentSa ,
-                Length );
-        } 
-        else { // Map register buffer has not been changed //
-            if (Length) {
-              //
-              // If Length is 0, it's expected we have nothing to transfer...
-              //
-              VF_ASSERT(
-                  FALSE,
-                  HV_MAP_FLUSH_NO_TRANSFER,
-                  ("Mapped and flushed transfer but hardware did not touch buffer %p", driverCurrentSa)
-                  );
+            RtlCopyMemory(driverCurrentSa, mapRegisterCurrentSa, Length);
+        }
+        else
+        { // Map register buffer has not been changed //
+            if (Length)
+            {
+                //
+                // If Length is 0, it's expected we have nothing to transfer...
+                //
+                VF_ASSERT(FALSE, HV_MAP_FLUSH_NO_TRANSFER,
+                          ("Mapped and flushed transfer but hardware did not touch buffer %p", driverCurrentSa));
             }
         } // Map register buffer has not been changed //
 
@@ -4278,10 +3826,8 @@ Return Value:
     //
     // Free map registers to our map register file
     //
-    if (! ViFreeMapRegistersToFile(
-        MapRegisterFile,
-        driverCurrentSa,
-        Length) ) {
+    if (!ViFreeMapRegistersToFile(MapRegisterFile, driverCurrentSa, Length))
+    {
 
         DbgPrint("Flushing too many map registers\n");
     }
@@ -4291,16 +3837,9 @@ Return Value:
 } // ViFlushDoubleBuffer //
 
 
-
-
 LOGICAL
-ViAllocateMapRegistersFromFile(
-    IN PMAP_REGISTER_FILE MapRegisterFile,
-    IN PVOID CurrentSa,
-    IN ULONG Length,
-    IN BOOLEAN WriteToDevice,
-    OUT PULONG MapRegisterNumber
-    )
+ViAllocateMapRegistersFromFile(IN PMAP_REGISTER_FILE MapRegisterFile, IN PVOID CurrentSa, IN ULONG Length,
+                               IN BOOLEAN WriteToDevice, OUT PULONG MapRegisterNumber)
 /*++
 
 Routine Description:
@@ -4336,12 +3875,12 @@ Return Value:
 
     ULONG numberOfContiguousMapRegisters;
 
-    mapRegistersNeeded   = ADDRESS_AND_SIZE_TO_SPAN_PAGES(CurrentSa, Length);
+    mapRegistersNeeded = ADDRESS_AND_SIZE_TO_SPAN_PAGES(CurrentSa, Length);
 
     //
     // find n available contiguous map registers
     //
-    mapRegister       = &MapRegisterFile->MapRegisters[0];
+    mapRegister = &MapRegisterFile->MapRegisters[0];
     mapRegisterNumber = 0;
     numberOfContiguousMapRegisters = 0;
 
@@ -4354,35 +3893,32 @@ Return Value:
     //
     // Make sure that this address isn't already mapped
     //
-    if (MapRegisterFile->NumberOfRegistersMapped) {
+    if (MapRegisterFile->NumberOfRegistersMapped)
+    {
         PUCHAR windowStart = CurrentSa;
-        PUCHAR windowEnd   = windowStart + Length;
+        PUCHAR windowEnd = windowStart + Length;
         PMAP_REGISTER currentReg;
         PMAP_REGISTER lastReg;
 
         currentReg = &MapRegisterFile->MapRegisters[0];
-        lastReg    = currentReg + MapRegisterFile->NumberOfMapRegisters;
+        lastReg = currentReg + MapRegisterFile->NumberOfMapRegisters;
 
-        while(currentReg < lastReg) {
+        while (currentReg < lastReg)
+        {
 
-            if (currentReg->MappedToSa &&
-                (PUCHAR) currentReg->MappedToSa >= windowStart &&
-                (PUCHAR) currentReg->MappedToSa <  windowEnd ) {
+            if (currentReg->MappedToSa && (PUCHAR)currentReg->MappedToSa >= windowStart &&
+                (PUCHAR)currentReg->MappedToSa < windowEnd)
+            {
 
                 //
                 // This is bad. We're trying to map an address
                 // that is already mapped
                 //
-            
-                VF_ASSERT(
-                    FALSE,
-                    HV_DOUBLE_MAP_REGISTER,
-                    ("Driver is trying to map an address range(%p-%p) that is already mapped"
-                    "    at %p",
-                    windowStart,
-                    windowEnd,
-                    currentReg->MappedToSa
-                    ));
+
+                VF_ASSERT(FALSE, HV_DOUBLE_MAP_REGISTER,
+                          ("Driver is trying to map an address range(%p-%p) that is already mapped"
+                           "    at %p",
+                           windowStart, windowEnd, currentReg->MappedToSa));
             }
 
             currentReg++;
@@ -4393,8 +3929,10 @@ Return Value:
     //
     // Find contiguous free map registers
     //
-    while(numberOfContiguousMapRegisters < mapRegistersNeeded) {
-        if (mapRegisterNumber == MapRegisterFile->NumberOfMapRegisters) {
+    while (numberOfContiguousMapRegisters < mapRegistersNeeded)
+    {
+        if (mapRegisterNumber == MapRegisterFile->NumberOfMapRegisters)
+        {
 
             //
             // We've gotten to the end without finding enough map registers.
@@ -4403,30 +3941,28 @@ Return Value:
             // This is a pretty pathological case and I doubt it would ever
             // happen.
             //
-            VF_ASSERT(
-                FALSE,
+            VF_ASSERT(FALSE,
 
-                HV_MISCELLANEOUS_ERROR,
+                      HV_MISCELLANEOUS_ERROR,
 
-                ("Map registers needed: %x available: %x",
-                mapRegistersNeeded,
-                numberOfContiguousMapRegisters)
-                );
+                      ("Map registers needed: %x available: %x", mapRegistersNeeded, numberOfContiguousMapRegisters));
             KeReleaseSpinLock(&MapRegisterFile->AllocationLock, OldIrql);
             return FALSE;
         }
 
-        if (mapRegister->MappedToSa) {
-        //
-        // This one's being used...must reset our contiguous count...
-        //        
-            numberOfContiguousMapRegisters=0;
+        if (mapRegister->MappedToSa)
+        {
+            //
+            // This one's being used...must reset our contiguous count...
+            //
+            numberOfContiguousMapRegisters = 0;
         }
-        else {
-        //
-        // A free map register
-        //
-        
+        else
+        {
+            //
+            // A free map register
+            //
+
             numberOfContiguousMapRegisters++;
         }
 
@@ -4438,7 +3974,7 @@ Return Value:
     // got 'em ... we're now at the end of our area to be allocated
     // go back to the beginning.
     //
-    mapRegister       -= mapRegistersNeeded;
+    mapRegister -= mapRegistersNeeded;
     mapRegisterNumber -= mapRegistersNeeded;
 
     //
@@ -4448,10 +3984,11 @@ Return Value:
     //
     // Go through and mark the map registers as used...
     //
-    while(mapRegistersNeeded--) {
+    while (mapRegistersNeeded--)
+    {
 
         mapRegister->MappedToSa = CurrentSa;
-        mapRegister->BytesMapped = MIN( PAGE_SIZE - BYTE_OFFSET(CurrentSa), Length );
+        mapRegister->BytesMapped = MIN(PAGE_SIZE - BYTE_OFFSET(CurrentSa), Length);
         mapRegister->Flags = WriteToDevice ? MAP_REGISTER_WRITE : MAP_REGISTER_READ;
 
         InterlockedIncrement((PLONG)(&MapRegisterFile->NumberOfRegistersMapped));
@@ -4460,13 +3997,10 @@ Return Value:
         // Write some known quantities into the buffer so that we know
         // if the device overwrites
         //
-        ViTagBuffer(
-            (PUCHAR) mapRegister->MapRegisterStart + PAGE_SIZE + BYTE_OFFSET(CurrentSa),
-            mapRegister->BytesMapped,
-            TAG_BUFFER_START | TAG_BUFFER_END
-            );
+        ViTagBuffer((PUCHAR)mapRegister->MapRegisterStart + PAGE_SIZE + BYTE_OFFSET(CurrentSa),
+                    mapRegister->BytesMapped, TAG_BUFFER_START | TAG_BUFFER_END);
 
-        CurrentSa = PAGE_ALIGN( (PUCHAR) CurrentSa + PAGE_SIZE);
+        CurrentSa = PAGE_ALIGN((PUCHAR)CurrentSa + PAGE_SIZE);
         Length -= mapRegister->BytesMapped;
         mapRegister++;
     }
@@ -4478,13 +4012,10 @@ Return Value:
 
 } // ViAllocateMapRegistersFromFile //
 
-
+
 PMAP_REGISTER
-ViFindMappedRegisterInFile(
-    IN PMAP_REGISTER_FILE MapRegisterFile,
-    IN PVOID CurrentSa,
-    OUT PULONG MapRegisterNumber OPTIONAL
-    )
+ViFindMappedRegisterInFile(IN PMAP_REGISTER_FILE MapRegisterFile, IN PVOID CurrentSa,
+                           OUT PULONG MapRegisterNumber OPTIONAL)
 /*++
 
 Routine Description:
@@ -4511,16 +4042,19 @@ Return Value:
     ULONG tempMapRegisterNumber;
     PMAP_REGISTER mapRegister;
 
-    tempMapRegisterNumber   = 0;
-    mapRegister             = &MapRegisterFile->MapRegisters[0];
+    tempMapRegisterNumber = 0;
+    mapRegister = &MapRegisterFile->MapRegisters[0];
 
-    while(tempMapRegisterNumber < MapRegisterFile->NumberOfMapRegisters) {
+    while (tempMapRegisterNumber < MapRegisterFile->NumberOfMapRegisters)
+    {
 
-        if (CurrentSa == mapRegister->MappedToSa) {
-            if (MapRegisterNumber) {
-            //
-            // return the optional map register index
-            //            
+        if (CurrentSa == mapRegister->MappedToSa)
+        {
+            if (MapRegisterNumber)
+            {
+                //
+                // return the optional map register index
+                //
                 *MapRegisterNumber = tempMapRegisterNumber;
             }
 
@@ -4533,13 +4067,9 @@ Return Value:
     return NULL;
 } // ViFindMappedRegisterInFile //
 
-
+
 LOGICAL
-ViFreeMapRegistersToFile(
-    IN PMAP_REGISTER_FILE MapRegisterFile,
-    IN PVOID CurrentSa,
-    IN ULONG Length
-    )
+ViFreeMapRegistersToFile(IN PMAP_REGISTER_FILE MapRegisterFile, IN PVOID CurrentSa, IN ULONG Length)
 /*++
 
 Routine Description:
@@ -4571,31 +4101,30 @@ Return Value:
     PMAP_REGISTER mapRegister;
     ULONG numberOfRegistersToUnmap;
 
-    if (Length) {
-       numberOfRegistersToUnmap = MIN (
-           ADDRESS_AND_SIZE_TO_SPAN_PAGES(CurrentSa, Length),
-           MapRegisterFile->NumberOfRegistersMapped
-           );
-    } else {
-       //
-       // Zero length usually signals an error condition, it may
-       // be possible that the hardware still transferred something, so
-       // let's (arbitrarily) unmap one register 
-       // (otherwise we may find some partly transferred 
-       // data and assert that it was lost)
-       //
-       numberOfRegistersToUnmap = MIN(1, MapRegisterFile->NumberOfRegistersMapped);
+    if (Length)
+    {
+        numberOfRegistersToUnmap =
+            MIN(ADDRESS_AND_SIZE_TO_SPAN_PAGES(CurrentSa, Length), MapRegisterFile->NumberOfRegistersMapped);
+    }
+    else
+    {
+        //
+        // Zero length usually signals an error condition, it may
+        // be possible that the hardware still transferred something, so
+        // let's (arbitrarily) unmap one register
+        // (otherwise we may find some partly transferred
+        // data and assert that it was lost)
+        //
+        numberOfRegistersToUnmap = MIN(1, MapRegisterFile->NumberOfRegistersMapped);
     }
 
     //
     // Find the first map register
     //
-    mapRegister = ViFindMappedRegisterInFile(
-        MapRegisterFile,
-        CurrentSa,
-        NULL);
+    mapRegister = ViFindMappedRegisterInFile(MapRegisterFile, CurrentSa, NULL);
 
-    if (! mapRegister ) {
+    if (!mapRegister)
+    {
         return FALSE;
     }
 
@@ -4612,7 +4141,8 @@ Return Value:
     //
     // NOTE -- the order of these does matter!!!
     //
-    while(numberOfRegistersToUnmap && mapRegister->MappedToSa ) {
+    while (numberOfRegistersToUnmap && mapRegister->MappedToSa)
+    {
 
         //
         // Check the bits that we scribbled right before and after the map register
@@ -4625,13 +4155,8 @@ Return Value:
         //
         // This way we can tell if someone is using this buffer after the flush
         //
-        ViCheckTag(
-            (PUCHAR) mapRegister->MapRegisterStart +
-            PAGE_SIZE + BYTE_OFFSET(mapRegister->MappedToSa),
-            mapRegister->BytesMapped,
-            TRUE,
-            TAG_BUFFER_START | TAG_BUFFER_END
-            );
+        ViCheckTag((PUCHAR)mapRegister->MapRegisterStart + PAGE_SIZE + BYTE_OFFSET(mapRegister->MappedToSa),
+                   mapRegister->BytesMapped, TRUE, TAG_BUFFER_START | TAG_BUFFER_END);
 
         //
         // Clear the RW flags
@@ -4664,12 +4189,9 @@ Return Value:
     return TRUE;
 } // ViFreeMapRegistersToFile //
 
-
+
 THUNKED_API
-VOID
-VfHalDeleteDevice(
-    IN PDEVICE_OBJECT  DeviceObject
-    )
+VOID VfHalDeleteDevice(IN PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -4700,42 +4222,44 @@ Return Value:
     PDEVICE_OBJECT pdo;
 
     pdo = VfGetPDO(DeviceObject);
-    
+
     ASSERT(pdo);
 
-    if (pdo == DeviceObject) {
-       //
-       // The PDO goes away, do the clean up.
-       // Find adapter info for this device.
-       //
-       adapterInformation = VF_FIND_DEVICE_INFORMATION(DeviceObject);
+    if (pdo == DeviceObject)
+    {
+        //
+        // The PDO goes away, do the clean up.
+        // Find adapter info for this device.
+        //
+        adapterInformation = VF_FIND_DEVICE_INFORMATION(DeviceObject);
 
-       ///
-       // A device may have more than one adapter. Release each of them.
-       ///
-       while (adapterInformation) {
+        ///
+        // A device may have more than one adapter. Release each of them.
+        ///
+        while (adapterInformation)
+        {
 
-           ViReleaseDmaAdapter(adapterInformation);
-           adapterInformation = VF_FIND_DEVICE_INFORMATION(DeviceObject);
-       }
-    } else {
-       //
-       // A device in the stack is removed. Since we cannot be sure that the
-       // device object that is verified is DeviceObject (it may be a filter on
-       // top of it), we need to just mark the adapter for removal
-       //
-       VF_MARK_FOR_DEFERRED_REMOVE(pdo);
+            ViReleaseDmaAdapter(adapterInformation);
+            adapterInformation = VF_FIND_DEVICE_INFORMATION(DeviceObject);
+        }
     }
-    
+    else
+    {
+        //
+        // A device in the stack is removed. Since we cannot be sure that the
+        // device object that is verified is DeviceObject (it may be a filter on
+        // top of it), we need to just mark the adapter for removal
+        //
+        VF_MARK_FOR_DEFERRED_REMOVE(pdo);
+    }
+
     return;
-    
+
 } // VfHalDeletedevice //
 
-
+
 LOGICAL
-VfInjectDmaFailure (
-    VOID
-    )
+VfInjectDmaFailure(VOID)
 
 /*++
 
@@ -4761,28 +4285,32 @@ Environment:
 {
     LARGE_INTEGER currentTime;
 
-    if ( ViInjectDmaFailures == FALSE) {
+    if (ViInjectDmaFailures == FALSE)
+    {
         return FALSE;
     }
 
 
-   //
-   // Don't fail during the beginning of boot.
     //
-   if (ViSufficientlyBootedForDmaFailure == FALSE) {
-        KeQuerySystemTime (&currentTime);
+    // Don't fail during the beginning of boot.
+    //
+    if (ViSufficientlyBootedForDmaFailure == FALSE)
+    {
+        KeQuerySystemTime(&currentTime);
 
-        if ( currentTime.QuadPart > KeBootTime.QuadPart +
-            ViRequiredTimeSinceBoot.QuadPart ) {
+        if (currentTime.QuadPart > KeBootTime.QuadPart + ViRequiredTimeSinceBoot.QuadPart)
+        {
             ViSufficientlyBootedForDmaFailure = TRUE;
         }
     }
 
-    if (ViSufficientlyBootedForDmaFailure == TRUE) {
+    if (ViSufficientlyBootedForDmaFailure == TRUE)
+    {
 
         KeQueryTickCount(&currentTime);
 
-        if ((currentTime.LowPart & 0x1F) == 0) {
+        if ((currentTime.LowPart & 0x1F) == 0)
+        {
 
             ViAllocationsFailedDeliberately += 1;
 
@@ -4798,13 +4326,8 @@ Environment:
 } // VfInjectDmaFailure //
 
 
-VOID
-VfScatterGatherCallback(
-    IN struct _DEVICE_OBJECT *DeviceObject,
-    IN struct _IRP *Irp,
-    IN PSCATTER_GATHER_LIST ScatterGather,
-    IN PVOID Context
-    )
+VOID VfScatterGatherCallback(IN struct _DEVICE_OBJECT *DeviceObject, IN struct _IRP *Irp,
+                             IN PSCATTER_GATHER_LIST ScatterGather, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -4828,7 +4351,7 @@ Environment:
 
 --*/
 {
-    PVF_WAIT_CONTEXT_BLOCK waitBlock = (PVF_WAIT_CONTEXT_BLOCK) Context;
+    PVF_WAIT_CONTEXT_BLOCK waitBlock = (PVF_WAIT_CONTEXT_BLOCK)Context;
     PADAPTER_INFORMATION adapterInformation = waitBlock->AdapterInformation;
 
 
@@ -4842,15 +4365,12 @@ Environment:
 
     VF_ADD_TO_LOCKED_LIST(&adapterInformation->ScatterGatherLists, waitBlock);
 
-    ((PDRIVER_LIST_CONTROL) waitBlock->RealCallback)(DeviceObject,Irp, ScatterGather, waitBlock->RealContext);
+    ((PDRIVER_LIST_CONTROL)waitBlock->RealCallback)(DeviceObject, Irp, ScatterGather, waitBlock->RealContext);
 
 } // VfScatterGatherCallback //
 
 LOGICAL
-ViSwap(IN OUT PVOID * MapRegisterBase,
-        IN OUT PMDL  * Mdl,
-        IN OUT PVOID * CurrentVa
-        )
+ViSwap(IN OUT PVOID *MapRegisterBase, IN OUT PMDL *Mdl, IN OUT PVOID *CurrentVa)
 /*++
 
 Routine Description:
@@ -4880,27 +4400,26 @@ Return Value:
 
 --*/
 {
-    PMAP_REGISTER_FILE mapRegisterFile  = (PMAP_REGISTER_FILE) *MapRegisterBase;
+    PMAP_REGISTER_FILE mapRegisterFile = (PMAP_REGISTER_FILE)*MapRegisterBase;
     ULONG mapRegisterNumber;
     PUCHAR currentSa;
     PUCHAR driverCurrentSa;
 
 
-    driverCurrentSa = (PUCHAR) MmGetSystemAddressForMdl(*Mdl) +
-        ((PUCHAR) *CurrentVa - (PUCHAR) MmGetMdlVirtualAddress(*Mdl));
+    driverCurrentSa =
+        (PUCHAR)MmGetSystemAddressForMdl(*Mdl) + ((PUCHAR)*CurrentVa - (PUCHAR)MmGetMdlVirtualAddress(*Mdl));
 
     //
     // Make sure that the VA is actually in the mdl they gave us
     //
-    if (MmGetMdlByteCount(*Mdl)) {
-    
-       VF_ASSERT(
-           MmGetMdlByteCount(*Mdl) > (ULONG_PTR) ((PUCHAR) *CurrentVa - (PUCHAR) MmGetMdlVirtualAddress(*Mdl)),
-           HV_ADDRESS_NOT_IN_MDL,
-           ("Virtual address %p out of bounds of MDL %p", *CurrentVa, *Mdl)
-           );
+    if (MmGetMdlByteCount(*Mdl))
+    {
+
+        VF_ASSERT(MmGetMdlByteCount(*Mdl) > (ULONG_PTR)((PUCHAR)*CurrentVa - (PUCHAR)MmGetMdlVirtualAddress(*Mdl)),
+                  HV_ADDRESS_NOT_IN_MDL, ("Virtual address %p out of bounds of MDL %p", *CurrentVa, *Mdl));
     }
-    if (!ViFindMappedRegisterInFile(mapRegisterFile, driverCurrentSa, &mapRegisterNumber)) {
+    if (!ViFindMappedRegisterInFile(mapRegisterFile, driverCurrentSa, &mapRegisterNumber))
+    {
 
         return FALSE;
     }
@@ -4917,10 +4436,7 @@ Return Value:
     return TRUE;
 } // ViSwap //
 
-VOID
-ViCheckAdapterBuffers(
-    IN PADAPTER_INFORMATION AdapterInformation
-    )
+VOID ViCheckAdapterBuffers(IN PADAPTER_INFORMATION AdapterInformation)
 /*++
 
 Routine Description:
@@ -4942,7 +4458,7 @@ Return Value:
     KIRQL oldIrql;
     PHAL_VERIFIER_BUFFER verifierBuffer;
     const SIZE_T tagSize = sizeof(ViDmaVerifierTag);
-    USHORT  whereToCheck = 0;
+    USHORT whereToCheck = 0;
 
     //
     // This is expensive so if either:
@@ -4950,8 +4466,8 @@ Return Value:
     // we're not checking the padding except when stuff is being destroyed,
     // or this adapter doesn't have any common buffers, quit right here.
     //
-    if (! ViProtectBuffers ||
-        VF_IS_LOCKED_LIST_EMPTY(&AdapterInformation->CommonBuffers) ) {
+    if (!ViProtectBuffers || VF_IS_LOCKED_LIST_EMPTY(&AdapterInformation->CommonBuffers))
+    {
 
         return;
     }
@@ -4961,27 +4477,24 @@ Return Value:
     //
     // Make sure each darn common buffer's paddin' looks good
     //
-    FOR_ALL_IN_LIST(
-        HAL_VERIFIER_BUFFER,
-        &AdapterInformation->CommonBuffers.ListEntry,
-        verifierBuffer ) {
-        
+    FOR_ALL_IN_LIST(HAL_VERIFIER_BUFFER, &AdapterInformation->CommonBuffers.ListEntry, verifierBuffer)
+    {
+
         SIZE_T startPadSize = (PUCHAR)verifierBuffer->AdvertisedStartAddress - (PUCHAR)verifierBuffer->RealStartAddress;
 
-        if (startPadSize>= tagSize) {
-           whereToCheck |= TAG_BUFFER_START;
+        if (startPadSize >= tagSize)
+        {
+            whereToCheck |= TAG_BUFFER_START;
         }
-        
-        if (startPadSize + verifierBuffer->AdvertisedLength + tagSize <= verifierBuffer->RealLength) {
-           whereToCheck |= TAG_BUFFER_END;
+
+        if (startPadSize + verifierBuffer->AdvertisedLength + tagSize <= verifierBuffer->RealLength)
+        {
+            whereToCheck |= TAG_BUFFER_END;
         }
-        
-        ViCheckTag(
-            verifierBuffer->AdvertisedStartAddress,
-            verifierBuffer->AdvertisedLength,
-            FALSE, // DO NOT REMOVE TAG //
-            whereToCheck
-            );
+
+        ViCheckTag(verifierBuffer->AdvertisedStartAddress, verifierBuffer->AdvertisedLength,
+                   FALSE, // DO NOT REMOVE TAG //
+                   whereToCheck);
 
     } // FOR each buffer in list //
 
@@ -4990,12 +4503,7 @@ Return Value:
 } // ViCheckAdapterBuffers //
 
 
-VOID
-ViTagBuffer(
-    IN PVOID  AdvertisedBuffer,
-    IN ULONG  AdvertisedLength,
-    IN USHORT WhereToTag
-    )
+VOID ViTagBuffer(IN PVOID AdvertisedBuffer, IN ULONG AdvertisedLength, IN USHORT WhereToTag)
 /*++
 
 Routine Description:
@@ -5020,27 +4528,23 @@ Return Value:
 --*/
 {
     const SIZE_T tagSize = sizeof(ViDmaVerifierTag);
-    
-    if (WhereToTag & TAG_BUFFER_START) {
-       RtlCopyMemory( (PUCHAR) AdvertisedBuffer - tagSize ,         ViDmaVerifierTag, tagSize);
+
+    if (WhereToTag & TAG_BUFFER_START)
+    {
+        RtlCopyMemory((PUCHAR)AdvertisedBuffer - tagSize, ViDmaVerifierTag, tagSize);
     }
-    if (WhereToTag & TAG_BUFFER_END) {
-       RtlCopyMemory( (PUCHAR) AdvertisedBuffer + AdvertisedLength, ViDmaVerifierTag, tagSize);
+    if (WhereToTag & TAG_BUFFER_END)
+    {
+        RtlCopyMemory((PUCHAR)AdvertisedBuffer + AdvertisedLength, ViDmaVerifierTag, tagSize);
     }
     //
     // Initialize the buffer
     //
-    RtlFillMemory( AdvertisedBuffer, (SIZE_T) AdvertisedLength, MAP_REGISTER_FILL_CHAR);
+    RtlFillMemory(AdvertisedBuffer, (SIZE_T)AdvertisedLength, MAP_REGISTER_FILL_CHAR);
 
 } // ViTagBuffer //
 
-VOID
-ViCheckTag(
-    IN PVOID AdvertisedBuffer,
-    IN ULONG AdvertisedLength,
-    IN BOOLEAN RemoveTag,
-    IN USHORT  WhereToCheck
-    )
+VOID ViCheckTag(IN PVOID AdvertisedBuffer, IN ULONG AdvertisedLength, IN BOOLEAN RemoveTag, IN USHORT WhereToCheck)
 /*++
 
 Routine Description:
@@ -5064,56 +4568,42 @@ Return Value:
 --*/
 {
     const SIZE_T tagSize = sizeof(ViDmaVerifierTag);
-    PVOID endOfBuffer = (PUCHAR) AdvertisedBuffer + AdvertisedLength;
-    
-    PUCHAR startOfRemoval  = (PUCHAR)AdvertisedBuffer;
+    PVOID endOfBuffer = (PUCHAR)AdvertisedBuffer + AdvertisedLength;
+
+    PUCHAR startOfRemoval = (PUCHAR)AdvertisedBuffer;
     SIZE_T lengthOfRemoval = AdvertisedLength;
 
-    if (WhereToCheck & TAG_BUFFER_START) {
-      VF_ASSERT(
-          RtlCompareMemory((PUCHAR) AdvertisedBuffer - tagSize , ViDmaVerifierTag, tagSize) == tagSize,
+    if (WhereToCheck & TAG_BUFFER_START)
+    {
+        VF_ASSERT(RtlCompareMemory((PUCHAR)AdvertisedBuffer - tagSize, ViDmaVerifierTag, tagSize) == tagSize,
 
-          HV_BOUNDARY_OVERRUN,
+                  HV_BOUNDARY_OVERRUN,
 
-          ( "Area before %x byte allocation at %p has been modified",
-              AdvertisedLength,
-              AdvertisedBuffer )
-          );
-      startOfRemoval  -= tagSize;
-      lengthOfRemoval += tagSize;
+                  ("Area before %x byte allocation at %p has been modified", AdvertisedLength, AdvertisedBuffer));
+        startOfRemoval -= tagSize;
+        lengthOfRemoval += tagSize;
     }
-    if (WhereToCheck & TAG_BUFFER_END) {
-      VF_ASSERT(
-          RtlCompareMemory(endOfBuffer, ViDmaVerifierTag, tagSize) == tagSize,
-          
-          HV_BOUNDARY_OVERRUN,
-            
-          ( "Area after %x byte allocation at %p has been modified",
-              AdvertisedLength,
-              AdvertisedBuffer
-              ));
-      lengthOfRemoval += tagSize;
+    if (WhereToCheck & TAG_BUFFER_END)
+    {
+        VF_ASSERT(RtlCompareMemory(endOfBuffer, ViDmaVerifierTag, tagSize) == tagSize,
+
+                  HV_BOUNDARY_OVERRUN,
+
+                  ("Area after %x byte allocation at %p has been modified", AdvertisedLength, AdvertisedBuffer));
+        lengthOfRemoval += tagSize;
     }
-    if (RemoveTag) {
-    //
-    // If we're getting rid of the tags, get rid of the data in the buffer too.
-    //    
-        RtlFillMemory(
-            startOfRemoval,
-            lengthOfRemoval,
-            PADDING_FILL_CHAR
-            );
+    if (RemoveTag)
+    {
+        //
+        // If we're getting rid of the tags, get rid of the data in the buffer too.
+        //
+        RtlFillMemory(startOfRemoval, lengthOfRemoval, PADDING_FILL_CHAR);
     }
 } // ViCheckTag //
 
 
-VOID
-ViInitializePadding(
-    IN PVOID RealBufferStart,
-    IN ULONG RealBufferLength,
-    IN PVOID AdvertisedBufferStart, OPTIONAL
-    IN ULONG AdvertisedBufferLength OPTIONAL
-    )
+VOID ViInitializePadding(IN PVOID RealBufferStart, IN ULONG RealBufferLength, IN PVOID AdvertisedBufferStart,
+                         OPTIONAL IN ULONG AdvertisedBufferLength OPTIONAL)
 /*++
 
 Routine Description:
@@ -5142,10 +4632,11 @@ Return Value:
 
 {
     PUCHAR postPadStart;
-    USHORT whereToTag = 0; 
+    USHORT whereToTag = 0;
     const SIZE_T tagSize = sizeof(ViDmaVerifierTag);
 
-    if (!AdvertisedBufferLength) {
+    if (!AdvertisedBufferLength)
+    {
 
         RtlFillMemory(RealBufferStart, RealBufferLength, PADDING_FILL_CHAR);
         return;
@@ -5154,28 +4645,22 @@ Return Value:
     //
     // Fill out the pre-padding
     //
-    RtlFillMemory(
-        RealBufferStart,
-        (PUCHAR) AdvertisedBufferStart - (PUCHAR) RealBufferStart,
-        PADDING_FILL_CHAR
-        );
+    RtlFillMemory(RealBufferStart, (PUCHAR)AdvertisedBufferStart - (PUCHAR)RealBufferStart, PADDING_FILL_CHAR);
 
     //
     // Fill out the post padding
     //
-    postPadStart = (PUCHAR) AdvertisedBufferStart + AdvertisedBufferLength;
+    postPadStart = (PUCHAR)AdvertisedBufferStart + AdvertisedBufferLength;
 
-    RtlFillMemory(
-        postPadStart,
-        RealBufferLength - (postPadStart - (PUCHAR) RealBufferStart),
-        PADDING_FILL_CHAR
-        );
+    RtlFillMemory(postPadStart, RealBufferLength - (postPadStart - (PUCHAR)RealBufferStart), PADDING_FILL_CHAR);
 
-    if ((PUCHAR)RealBufferStart + tagSize <= (PUCHAR)AdvertisedBufferStart) {
-       whereToTag |= TAG_BUFFER_START;
+    if ((PUCHAR)RealBufferStart + tagSize <= (PUCHAR)AdvertisedBufferStart)
+    {
+        whereToTag |= TAG_BUFFER_START;
     }
-    if ((postPadStart - (PUCHAR) RealBufferStart) + tagSize <= RealBufferLength) {
-       whereToTag |= TAG_BUFFER_END;
+    if ((postPadStart - (PUCHAR)RealBufferStart) + tagSize <= RealBufferLength)
+    {
+        whereToTag |= TAG_BUFFER_END;
     }
     //
     // And write our little tag ...
@@ -5184,13 +4669,8 @@ Return Value:
 
 } // ViInitializePadding //
 
-VOID
-ViCheckPadding(
-    IN PVOID RealBufferStart,
-    IN ULONG RealBufferLength,
-    IN PVOID AdvertisedBufferStart, OPTIONAL
-    IN ULONG AdvertisedBufferLength OPTIONAL
-    )
+VOID ViCheckPadding(IN PVOID RealBufferStart, IN ULONG RealBufferLength, IN PVOID AdvertisedBufferStart,
+                    OPTIONAL IN ULONG AdvertisedBufferLength OPTIONAL)
 /*++
 
 Routine Description:
@@ -5219,7 +4699,8 @@ Return Value:
     const ULONG tagSize = sizeof(ViDmaVerifierTag);
     PULONG_PTR corruptedAddress;
 
-    if (AdvertisedBufferLength == RealBufferLength) {
+    if (AdvertisedBufferLength == RealBufferLength)
+    {
         //
         // No padding to check.
         //
@@ -5227,107 +4708,82 @@ Return Value:
         return;
     }
 
-    if (! AdvertisedBufferLength) {
+    if (!AdvertisedBufferLength)
+    {
         //
         // There is no intervening buffer to worry about --
         // so the *whole* thing has to be the padding fill char
-        //   
+        //
 
-        corruptedAddress = ViHasBufferBeenTouched(
-            RealBufferStart,
-            RealBufferLength,
-            PADDING_FILL_CHAR
-            );
+        corruptedAddress = ViHasBufferBeenTouched(RealBufferStart, RealBufferLength, PADDING_FILL_CHAR);
 
-        VF_ASSERT(
-            NULL == corruptedAddress,
+        VF_ASSERT(NULL == corruptedAddress,
 
-            HV_BOUNDARY_OVERRUN,
+                  HV_BOUNDARY_OVERRUN,
 
-            ( "Verified driver or hardware has corrupted memory at %p",
-               corruptedAddress )
-            );
+                  ("Verified driver or hardware has corrupted memory at %p", corruptedAddress));
 
 
     } // ! AdvertisedBufferLength //
 
-    else {
+    else
+    {
         PUCHAR prePadStart;
         PUCHAR postPadStart;
         ULONG_PTR prePadBytes;
         ULONG_PTR postPadBytes;
-        USHORT    whereToCheck = 0;
-        
-        prePadStart  = (PUCHAR) RealBufferStart;
-        prePadBytes  = (PUCHAR) AdvertisedBufferStart - prePadStart;
+        USHORT whereToCheck = 0;
 
-        postPadStart = (PUCHAR) AdvertisedBufferStart + AdvertisedBufferLength;
-        postPadBytes = RealBufferLength - (postPadStart - (PUCHAR) RealBufferStart);
+        prePadStart = (PUCHAR)RealBufferStart;
+        prePadBytes = (PUCHAR)AdvertisedBufferStart - prePadStart;
+
+        postPadStart = (PUCHAR)AdvertisedBufferStart + AdvertisedBufferLength;
+        postPadBytes = RealBufferLength - (postPadStart - (PUCHAR)RealBufferStart);
 
         //
         // Now factor in the tag... it's the only thing in the padding that is allowed to be
         // non-zero.
         //
-        if (prePadBytes >= tagSize) {
-           prePadBytes  -= tagSize;
-           whereToCheck |= TAG_BUFFER_START;
+        if (prePadBytes >= tagSize)
+        {
+            prePadBytes -= tagSize;
+            whereToCheck |= TAG_BUFFER_START;
         }
-        if (postPadBytes >= tagSize) {
-           postPadBytes -= tagSize;
-           postPadStart += tagSize;
-           whereToCheck |= TAG_BUFFER_END;
-
-
+        if (postPadBytes >= tagSize)
+        {
+            postPadBytes -= tagSize;
+            postPadStart += tagSize;
+            whereToCheck |= TAG_BUFFER_END;
         }
         //
         // Make sure the tag is in place.
         //
-        ViCheckTag(AdvertisedBufferStart, AdvertisedBufferLength , FALSE, whereToCheck);
+        ViCheckTag(AdvertisedBufferStart, AdvertisedBufferLength, FALSE, whereToCheck);
 
-        
-        corruptedAddress = ViHasBufferBeenTouched(
-            prePadStart,
-            prePadBytes,
-            PADDING_FILL_CHAR
-            );
 
-        VF_ASSERT(
-            NULL == corruptedAddress,
+        corruptedAddress = ViHasBufferBeenTouched(prePadStart, prePadBytes, PADDING_FILL_CHAR);
 
-            HV_BOUNDARY_OVERRUN,
+        VF_ASSERT(NULL == corruptedAddress,
 
-            ( "Padding before allocation at %p has been illegally modified at %p",
-                AdvertisedBufferStart,
-                corruptedAddress
-                )
-            );
+                  HV_BOUNDARY_OVERRUN,
 
-         corruptedAddress = ViHasBufferBeenTouched(
-            postPadStart,
-            postPadBytes,
-            PADDING_FILL_CHAR
-            );
+                  ("Padding before allocation at %p has been illegally modified at %p", AdvertisedBufferStart,
+                   corruptedAddress));
 
-        VF_ASSERT(
-            NULL == corruptedAddress,
+        corruptedAddress = ViHasBufferBeenTouched(postPadStart, postPadBytes, PADDING_FILL_CHAR);
 
-            HV_BOUNDARY_OVERRUN,
+        VF_ASSERT(NULL == corruptedAddress,
 
-            ( "Padding after allocation at %p has been illegally modified at %p",
-                AdvertisedBufferStart,
-                corruptedAddress
-                )
-            );
+                  HV_BOUNDARY_OVERRUN,
+
+                  ("Padding after allocation at %p has been illegally modified at %p", AdvertisedBufferStart,
+                   corruptedAddress));
     } // if AdvertisedLength //
 
 } // ViCheckPadding //
 
 PULONG_PTR
-ViHasBufferBeenTouched(
-    IN PVOID Address,
-    IN ULONG_PTR Length,
-    IN UCHAR ExpectedFillChar
-    )
+ViHasBufferBeenTouched(IN PVOID Address, IN ULONG_PTR Length, IN UCHAR ExpectedFillChar)
 /*++
 
 Routine Description:
@@ -5348,12 +4804,12 @@ Return Value:
 --*/
 {
     PULONG_PTR currentChunk;
-    PUCHAR     currentByte;
+    PUCHAR currentByte;
     ULONG_PTR expectedFillChunk;
 
     ULONG counter;
 
-    expectedFillChunk = (ULONG_PTR) ExpectedFillChar;
+    expectedFillChunk = (ULONG_PTR)ExpectedFillChar;
     counter = 1;
 
     //
@@ -5361,51 +4817,58 @@ Return Value:
     // What it does is fills in a ULONG_PTR with
     // the character
     //
-    while( counter < sizeof(ULONG_PTR) ) {
+    while (counter < sizeof(ULONG_PTR))
+    {
         expectedFillChunk |= expectedFillChunk << (counter << 3);
-        counter <<=1;
+        counter <<= 1;
     }
 
     //
     // Get aligned natively
     //
-    currentByte =  Address;
-    while((ULONG_PTR) currentByte % sizeof(ULONG_PTR) && Length) {
+    currentByte = Address;
+    while ((ULONG_PTR)currentByte % sizeof(ULONG_PTR) && Length)
+    {
 
-        if(*currentByte != ExpectedFillChar) {
+        if (*currentByte != ExpectedFillChar)
+        {
 
-            return (PULONG_PTR) currentByte;
+            return (PULONG_PTR)currentByte;
         }
 
         currentByte++;
         Length--;
     }
 
-    currentChunk = (PULONG_PTR) currentByte;
+    currentChunk = (PULONG_PTR)currentByte;
 
     //
     // Check 4 (or 8 depending on architecture) bytes at a time
     //
-    while(Length >= sizeof(ULONG_PTR)) {
+    while (Length >= sizeof(ULONG_PTR))
+    {
 
-        if (*currentChunk != expectedFillChunk) {
-            
+        if (*currentChunk != expectedFillChunk)
+        {
+
             return currentChunk;
         }
 
         currentChunk++;
-        Length-=sizeof(ULONG_PTR);
+        Length -= sizeof(ULONG_PTR);
     }
 
-    currentByte = (PUCHAR) currentChunk;
+    currentByte = (PUCHAR)currentChunk;
 
     //
     // Check the remaining few bytes
     //
-    while(Length) {
+    while (Length)
+    {
 
-        if(*currentByte != ExpectedFillChar) {
-            return (PULONG_PTR) currentByte;
+        if (*currentByte != ExpectedFillChar)
+        {
+            return (PULONG_PTR)currentByte;
         }
 
         currentByte++;
@@ -5417,13 +4880,7 @@ Return Value:
 } // ViHasMapRegisterBeenTouched //
 
 
-
-VOID
-VfAssert(
-    IN LOGICAL     Condition,
-    IN ULONG Code,
-    IN OUT PULONG  Enable
-    )
+VOID VfAssert(IN LOGICAL Condition, IN ULONG Code, IN OUT PULONG Enable)
 /*++
 
 Routine Description:
@@ -5444,48 +4901,46 @@ Return Value:
 
 {
     ULONG enableCode = *Enable;
-    if (Condition) {
+    if (Condition)
+    {
         return;
     }
 
-    if (enableCode & HVC_ONCE) {
+    if (enableCode & HVC_ONCE)
+    {
         //
         // HVC_ONCE does a self-zap
         //
-    
+
         *Enable = HVC_IGNORE;
     }
 
-    if (enableCode & HVC_WARN) {
-    //
-    // Already warned
-    //
-    
+    if (enableCode & HVC_WARN)
+    {
+        //
+        // Already warned
+        //
+
         return;
     }
 
-    if(enableCode  & HVC_BUGCHECK || ! KdDebuggerEnabled ) {
-        KeBugCheckEx (
-            HAL_VERIFIER_DETECTED_VIOLATION,
-            Code,
-            0,
-            0,
-            0
-            );
+    if (enableCode & HVC_BUGCHECK || !KdDebuggerEnabled)
+    {
+        KeBugCheckEx(HAL_VERIFIER_DETECTED_VIOLATION, Code, 0, 0, 0);
         return;
     }
 
-    if (enableCode & HVC_ASSERT) {
+    if (enableCode & HVC_ASSERT)
+    {
         char response[2];
 
-        while (TRUE) {
-            DbgPrint( "\n*** Verifier assertion failed ***\n");
+        while (TRUE)
+        {
+            DbgPrint("\n*** Verifier assertion failed ***\n");
 
-            DbgPrompt( "(B)reak, (I)gnore, (W)arn only, (R)emove assert? ",
-                response,
-                sizeof( response )
-                );
-            switch (response[0]) {
+            DbgPrompt("(B)reak, (I)gnore, (W)arn only, (R)emove assert? ", response, sizeof(response));
+            switch (response[0])
+            {
             case 'B':
             case 'b':
                 DbgBreakPoint();
@@ -5511,17 +4966,13 @@ Return Value:
                 *Enable = HVC_IGNORE;
                 return;
             } // end of switch //
-        }  // while true //
+        } // while true //
     } // if we want to assert //
 } // VfAssert //
 
 
-
 PVOID
-VfAllocateCrashDumpRegisters(
-    IN PADAPTER_OBJECT AdapterObject,
-    IN PULONG NumberOfMapRegisters
-    )
+VfAllocateCrashDumpRegisters(IN PADAPTER_OBJECT AdapterObject, IN PULONG NumberOfMapRegisters)
 /*++
 
 Routine Description:
@@ -5549,11 +5000,11 @@ Return Value:
     // memory, and all of the other stuff that we do.
     //
 
-    if (KeGetCurrentIrql() > DISPATCH_LEVEL &&
-        ViVerifyDma) {
+    if (KeGetCurrentIrql() > DISPATCH_LEVEL && ViVerifyDma)
+    {
         ViVerifyDma = FALSE;
         //
-        // Reset the DMA operations table to the real one for all adapters 
+        // Reset the DMA operations table to the real one for all adapters
         // we have. Otherwise, because ViVerifyDma is not set, we'll believe
         // he have never hooked the operations and we'll recursively call
         // the verifier routines. Do not worry about synchronization now.
@@ -5561,21 +5012,19 @@ Return Value:
 
         FOR_ALL_IN_LIST(ADAPTER_INFORMATION, &ViAdapterList.ListEntry, adapterInformation)
         {
-            if (adapterInformation->DmaAdapter) {
-               adapterInformation->DmaAdapter->DmaOperations = adapterInformation->RealDmaOperations;
+            if (adapterInformation->DmaAdapter)
+            {
+                adapterInformation->DmaAdapter->DmaOperations = adapterInformation->RealDmaOperations;
             }
         }
-
     }
 
     adapterInformation = ViGetAdapterInformation((DMA_ADAPTER *)AdapterObject);
 
-    mapRegisterBase = HalAllocateCrashDumpRegisters(
-        AdapterObject,
-        NumberOfMapRegisters
-        );
+    mapRegisterBase = HalAllocateCrashDumpRegisters(AdapterObject, NumberOfMapRegisters);
 
-    if (adapterInformation) {
+    if (adapterInformation)
+    {
         //
         // Note we only get here if this is a hibernate, not a crash dump
         //
@@ -5604,23 +5053,16 @@ Return Value:
     // in our wrappers before passing it to the HAL.
     // Also, make sure not to mess with the crash dump case.
     //
-    
-    if (ViVerifyDma && 
-        NULL == mapRegisterBase) {
+
+    if (ViVerifyDma && NULL == mapRegisterBase)
+    {
         mapRegisterBase = MRF_NULL_PLACEHOLDER;
     }
     return mapRegisterBase;
 } // VfAllocateCrashDumpRegisters //
 
 
-
-
-VOID
-ViCommonBufferCalculatePadding(
-                              IN  ULONG  Length,
-                              OUT PULONG PrePadding,
-                              OUT PULONG PostPadding
-                              )
+VOID ViCommonBufferCalculatePadding(IN ULONG Length, OUT PULONG PrePadding, OUT PULONG PostPadding)
 /*++
 
 Routine Description:
@@ -5646,51 +5088,50 @@ Return Value:
 --*/
 {
 
-    if (!ViProtectBuffers) {
-       //
-       // Don't add any padding if we're not padding buffers
-       //    
-       *PrePadding = *PostPadding = 0;
-       return;
+    if (!ViProtectBuffers)
+    {
+        //
+        // Don't add any padding if we're not padding buffers
+        //
+        *PrePadding = *PostPadding = 0;
+        return;
     }
     //
-    // Use one full guard page, so the buffer returned to the caller 
+    // Use one full guard page, so the buffer returned to the caller
     // will be page-aligned
     //
     *PrePadding = PAGE_SIZE;
 
-    if (Length + sizeof(ViDmaVerifierTag) <= PAGE_SIZE) {
-       //
-       // For small buffers, just allocate a page
-       //
-       *PostPadding = PAGE_SIZE - Length;
+    if (Length + sizeof(ViDmaVerifierTag) <= PAGE_SIZE)
+    {
+        //
+        // For small buffers, just allocate a page
+        //
+        *PostPadding = PAGE_SIZE - Length;
     }
-    else if ( BYTE_OFFSET(Length)) {
-      //
-      // For longer buffers that aren't an even number of pages,
-      // just round up the number of pages necessary
-      // (we need space at least for our tag)
-      //
-      *PostPadding =  (BYTES_TO_PAGES( Length + sizeof(ViDmaVerifierTag) )
-                       << PAGE_SHIFT ) - Length;
-    } 
-    else { // PAGE ALIGNED LENGTH //
+    else if (BYTE_OFFSET(Length))
+    {
+        //
+        // For longer buffers that aren't an even number of pages,
+        // just round up the number of pages necessary
+        // (we need space at least for our tag)
+        //
+        *PostPadding = (BYTES_TO_PAGES(Length + sizeof(ViDmaVerifierTag)) << PAGE_SHIFT) - Length;
+    }
+    else
+    { // PAGE ALIGNED LENGTH //
 
-      //
-      // Since if the length is an even number of pages the driver might expect
-      // a page aligned buffer, we allocate the page before and after the allocation
-      //    
-      *PostPadding  = PAGE_SIZE;
-
+        //
+        // Since if the length is an even number of pages the driver might expect
+        // a page aligned buffer, we allocate the page before and after the allocation
+        //
+        *PostPadding = PAGE_SIZE;
     }
     return;
 } //ViCommonBufferCalculatePadding
 
 
-VOID
-ViAllocateContiguousMemory (
-    IN OUT PADAPTER_INFORMATION AdapterInformation
-    )
+VOID ViAllocateContiguousMemory(IN OUT PADAPTER_INFORMATION AdapterInformation)
 
 /*++
 
@@ -5714,80 +5155,84 @@ Return Value:
 --*/
 
 {
-   PHYSICAL_ADDRESS highestAddress;
-   ULONG            i;
+    PHYSICAL_ADDRESS highestAddress;
+    ULONG i;
 
-   PAGED_CODE();
+    PAGED_CODE();
 
-   //
-   // Default to a less than 1 MB visible
-   //
-   highestAddress.HighPart = 0;
-   highestAddress.LowPart =  0x000FFFF;
-   //
-   // Determine the highest acceptable physical address to be used
-   // in calls to MmAllocateContiguousMemory
-   //
-   if (AdapterInformation->DeviceDescription.Dma64BitAddresses) {
-      //
-      // Can use any address in the 64 bit address space
-      //
-      highestAddress.QuadPart = (ULONGLONG)-1;
-   }  else if (AdapterInformation->DeviceDescription.Dma32BitAddresses) {
-      //
-      // Can use any address in the 32 bit (<4GB) address space
-      //
-      highestAddress.LowPart = 0xFFFFFFFF;
-   }  else if (AdapterInformation->DeviceDescription.InterfaceType == Isa) {
-      //
-      // Can see 16MB (24-bit addresses)
-      //
-      highestAddress.LowPart = 0x00FFFFFF;
-   }  
-   //
-   // Initialize the allocator bitmap
-   //
-   RtlInitializeBitMap(&AdapterInformation->AllocationMap,
-                       (PULONG)&AdapterInformation->AllocationStorage,
-                       MAX_CONTIGUOUS_MAP_REGISTERS);
-   //
-   // Initially no blocks are allocated
-   //
-   RtlClearAllBits(&AdapterInformation->AllocationMap);
+    //
+    // Default to a less than 1 MB visible
+    //
+    highestAddress.HighPart = 0;
+    highestAddress.LowPart = 0x000FFFF;
+    //
+    // Determine the highest acceptable physical address to be used
+    // in calls to MmAllocateContiguousMemory
+    //
+    if (AdapterInformation->DeviceDescription.Dma64BitAddresses)
+    {
+        //
+        // Can use any address in the 64 bit address space
+        //
+        highestAddress.QuadPart = (ULONGLONG)-1;
+    }
+    else if (AdapterInformation->DeviceDescription.Dma32BitAddresses)
+    {
+        //
+        // Can use any address in the 32 bit (<4GB) address space
+        //
+        highestAddress.LowPart = 0xFFFFFFFF;
+    }
+    else if (AdapterInformation->DeviceDescription.InterfaceType == Isa)
+    {
+        //
+        // Can see 16MB (24-bit addresses)
+        //
+        highestAddress.LowPart = 0x00FFFFFF;
+    }
+    //
+    // Initialize the allocator bitmap
+    //
+    RtlInitializeBitMap(&AdapterInformation->AllocationMap, (PULONG)&AdapterInformation->AllocationStorage,
+                        MAX_CONTIGUOUS_MAP_REGISTERS);
+    //
+    // Initially no blocks are allocated
+    //
+    RtlClearAllBits(&AdapterInformation->AllocationMap);
 
 
-   AdapterInformation->ContiguousBuffers = ExAllocatePoolWithTag(NonPagedPool, 
-       MAX_CONTIGUOUS_MAP_REGISTERS * sizeof(PVOID),
-       HAL_VERIFIER_POOL_TAG);
+    AdapterInformation->ContiguousBuffers =
+        ExAllocatePoolWithTag(NonPagedPool, MAX_CONTIGUOUS_MAP_REGISTERS * sizeof(PVOID), HAL_VERIFIER_POOL_TAG);
 
-   if (AdapterInformation->ContiguousBuffers) {
-       //
-       // Allocate contiguous buffers
-       //
-       for (i = 0; i < MAX_CONTIGUOUS_MAP_REGISTERS; i++) {
-          AdapterInformation->ContiguousBuffers[i] = MmAllocateContiguousMemory(3 * PAGE_SIZE,
-             highestAddress);
-          if (NULL == AdapterInformation->ContiguousBuffers[i]) {
-             //
-             // Mark as in use, so we don't hand it over
-             //
-             RtlSetBits(&AdapterInformation->AllocationMap, i, 1);
-             InterlockedIncrement((PLONG)&AdapterInformation->FailedContiguousAllocations);
-          } else {
-             InterlockedIncrement((PLONG)&AdapterInformation->SuccessfulContiguousAllocations);
-          }
-       }
-   }
-   
-   return;
+    if (AdapterInformation->ContiguousBuffers)
+    {
+        //
+        // Allocate contiguous buffers
+        //
+        for (i = 0; i < MAX_CONTIGUOUS_MAP_REGISTERS; i++)
+        {
+            AdapterInformation->ContiguousBuffers[i] = MmAllocateContiguousMemory(3 * PAGE_SIZE, highestAddress);
+            if (NULL == AdapterInformation->ContiguousBuffers[i])
+            {
+                //
+                // Mark as in use, so we don't hand it over
+                //
+                RtlSetBits(&AdapterInformation->AllocationMap, i, 1);
+                InterlockedIncrement((PLONG)&AdapterInformation->FailedContiguousAllocations);
+            }
+            else
+            {
+                InterlockedIncrement((PLONG)&AdapterInformation->SuccessfulContiguousAllocations);
+            }
+        }
+    }
+
+    return;
 
 } // ViAllocateContiguousMemory
 
 PVOID
-ViAllocateFromContiguousMemory (
-    IN OUT PADAPTER_INFORMATION AdapterInformation,
-    IN     ULONG                HintIndex
-    )
+ViAllocateFromContiguousMemory(IN OUT PADAPTER_INFORMATION AdapterInformation, IN ULONG HintIndex)
 /*++
 
 Routine Description:
@@ -5808,13 +5253,13 @@ Return Value:
 --*/
 
 {
-    PVOID  address = NULL;
-    ULONG  index;   
-    KIRQL  oldIrql;
-    
+    PVOID address = NULL;
+    ULONG index;
+    KIRQL oldIrql;
 
-    if (NULL == AdapterInformation ||
-        NULL == AdapterInformation->ContiguousBuffers) {
+
+    if (NULL == AdapterInformation || NULL == AdapterInformation->ContiguousBuffers)
+    {
         return NULL;
     }
 
@@ -5823,20 +5268,17 @@ Return Value:
     //
     KeAcquireSpinLock(&AdapterInformation->AllocationLock, &oldIrql);
     index = RtlFindClearBitsAndSet(&AdapterInformation->AllocationMap, 1, HintIndex);
-    if (index != 0xFFFFFFFF) {
-       address = AdapterInformation->ContiguousBuffers[index];
+    if (index != 0xFFFFFFFF)
+    {
+        address = AdapterInformation->ContiguousBuffers[index];
     }
     KeReleaseSpinLock(&AdapterInformation->AllocationLock, oldIrql);
-    
+
     return address;
 } // ViAllocateFromContiguousMemory
 
 LOGICAL
-ViFreeToContiguousMemory (
-    IN OUT PADAPTER_INFORMATION AdapterInformation,
-    IN     PVOID Address,
-    IN     ULONG HintIndex
-    )
+ViFreeToContiguousMemory(IN OUT PADAPTER_INFORMATION AdapterInformation, IN PVOID Address, IN ULONG HintIndex)
 /*++
 Routine Description:
 
@@ -5856,49 +5298,53 @@ Return Value:
     TRUE is the address is from the contiguous buffer pool, FALSE if not.
 
 --*/
-{   
-    ULONG  index = 0xFFFFFFFF;
-    KIRQL  oldIrql;
-    ULONG  i;
+{
+    ULONG index = 0xFFFFFFFF;
+    KIRQL oldIrql;
+    ULONG i;
 
-    
 
-    if (NULL == AdapterInformation->ContiguousBuffers) {
-       return FALSE;
+    if (NULL == AdapterInformation->ContiguousBuffers)
+    {
+        return FALSE;
     }
 
     ASSERT(BYTE_OFFSET(Address) == 0);
 
-    
-    if (HintIndex < MAX_CONTIGUOUS_MAP_REGISTERS && 
-       AdapterInformation->ContiguousBuffers[HintIndex] == Address) {
-       index = HintIndex;
-    }  else  {
-       for (i = 0; i < MAX_CONTIGUOUS_MAP_REGISTERS; i++) {
-          if (AdapterInformation->ContiguousBuffers[i] == Address) {
-             index = i;
-             break;
-          }
-       }
+
+    if (HintIndex < MAX_CONTIGUOUS_MAP_REGISTERS && AdapterInformation->ContiguousBuffers[HintIndex] == Address)
+    {
+        index = HintIndex;
     }
-    if (index < MAX_CONTIGUOUS_MAP_REGISTERS) {
-       KeAcquireSpinLock(&AdapterInformation->AllocationLock, &oldIrql);
-       ASSERT(RtlAreBitsSet(&AdapterInformation->AllocationMap, index, 1));
-       RtlClearBits(&AdapterInformation->AllocationMap, index, 1);
-       KeReleaseSpinLock(&AdapterInformation->AllocationLock, oldIrql);
+    else
+    {
+        for (i = 0; i < MAX_CONTIGUOUS_MAP_REGISTERS; i++)
+        {
+            if (AdapterInformation->ContiguousBuffers[i] == Address)
+            {
+                index = i;
+                break;
+            }
+        }
+    }
+    if (index < MAX_CONTIGUOUS_MAP_REGISTERS)
+    {
+        KeAcquireSpinLock(&AdapterInformation->AllocationLock, &oldIrql);
+        ASSERT(RtlAreBitsSet(&AdapterInformation->AllocationMap, index, 1));
+        RtlClearBits(&AdapterInformation->AllocationMap, index, 1);
+        KeReleaseSpinLock(&AdapterInformation->AllocationLock, oldIrql);
 
-       return TRUE;
-
-    } else {
-      return FALSE;
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
     }
 } // ViFreeToContiguousMemory
 
 
 LOGICAL
-VfIsPCIBus (
-     IN PDEVICE_OBJECT  PhysicalDeviceObject
-     )
+VfIsPCIBus(IN PDEVICE_OBJECT PhysicalDeviceObject)
 
 /*++
 Routine Description:
@@ -5917,37 +5363,33 @@ Return Value:
 
 --*/
 {
-   LOGICAL      result = FALSE;
-   NTSTATUS     status;
-   WCHAR        deviceDesc[40];
-   ULONG        length = 0;
+    LOGICAL result = FALSE;
+    NTSTATUS status;
+    WCHAR deviceDesc[40];
+    ULONG length = 0;
 
-   if (NULL == PhysicalDeviceObject) {
-      //
-      // If the PDO is NULL, assume it is not
-      // a PCI bus...
-      //
-      return FALSE;
-   }
+    if (NULL == PhysicalDeviceObject)
+    {
+        //
+        // If the PDO is NULL, assume it is not
+        // a PCI bus...
+        //
+        return FALSE;
+    }
 
-   status = IoGetDeviceProperty(PhysicalDeviceObject,
-                                DevicePropertyDeviceDescription,
-                                sizeof(WCHAR) * 40,
-                                deviceDesc,
-                                &length);
-   if (status == STATUS_SUCCESS && 
-       0 == _wcsicmp(deviceDesc, L"PCI bus")) {
-      result = TRUE;
-   }
+    status = IoGetDeviceProperty(PhysicalDeviceObject, DevicePropertyDeviceDescription, sizeof(WCHAR) * 40, deviceDesc,
+                                 &length);
+    if (status == STATUS_SUCCESS && 0 == _wcsicmp(deviceDesc, L"PCI bus"))
+    {
+        result = TRUE;
+    }
 
-   return result;
+    return result;
 } // VfIsPCIBus
 
 
 PDEVICE_OBJECT
-VfGetPDO (
-          IN PDEVICE_OBJECT  DeviceObject
-     )
+VfGetPDO(IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 Routine Description:
@@ -5963,24 +5405,21 @@ Return Value:
     A pointer to a physical device object.
 --*/
 {
-   PDEVICE_OBJECT   pdo;
+    PDEVICE_OBJECT pdo;
 
 
-   pdo = DeviceObject;
-   while (pdo->DeviceObjectExtension &&
-          pdo->DeviceObjectExtension->AttachedTo) {
-      pdo = pdo->DeviceObjectExtension->AttachedTo;
-   }
+    pdo = DeviceObject;
+    while (pdo->DeviceObjectExtension && pdo->DeviceObjectExtension->AttachedTo)
+    {
+        pdo = pdo->DeviceObjectExtension->AttachedTo;
+    }
 
-   return pdo;
+    return pdo;
 
 } // VfGetPDO
 
 
-VOID
-VfDisableHalVerifier (
-                      VOID
-                     ) 
+VOID VfDisableHalVerifier(VOID)
 
 /*++
 Routine Description:
@@ -5997,27 +5436,29 @@ Return Value:
 --*/
 {
 
-   PADAPTER_INFORMATION adapterInformation;
+    PADAPTER_INFORMATION adapterInformation;
 
 
-   if (ViVerifyDma) {
+    if (ViVerifyDma)
+    {
 
-      ViVerifyDma = FALSE;
-      //
-      // Reset the DMA operations table to the real one for all adapters 
-      // we have. Otherwise, because ViVerifyDma is not set, we'll believe
-      // he have never hooked the operations and we'll recursively call
-      // the verifier routines. Do not worry about synchronization now.
-      //
+        ViVerifyDma = FALSE;
+        //
+        // Reset the DMA operations table to the real one for all adapters
+        // we have. Otherwise, because ViVerifyDma is not set, we'll believe
+        // he have never hooked the operations and we'll recursively call
+        // the verifier routines. Do not worry about synchronization now.
+        //
 
-      FOR_ALL_IN_LIST(ADAPTER_INFORMATION, &ViAdapterList.ListEntry, adapterInformation)
-      {
-         if (adapterInformation->DmaAdapter) {
-            adapterInformation->DmaAdapter->DmaOperations = adapterInformation->RealDmaOperations;
-         }
-      }
-   }
+        FOR_ALL_IN_LIST(ADAPTER_INFORMATION, &ViAdapterList.ListEntry, adapterInformation)
+        {
+            if (adapterInformation->DmaAdapter)
+            {
+                adapterInformation->DmaAdapter->DmaOperations = adapterInformation->RealDmaOperations;
+            }
+        }
+    }
 
-   return;
+    return;
 
 } // VfDisableHalVerifier

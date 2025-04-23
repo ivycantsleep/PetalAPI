@@ -68,38 +68,24 @@ C_ASSERT((MINIMUM_HEAP_COMMIT % PAGE_SIZE) == 0);
 //  to the slow do-everything allocator.
 //
 
-#define HEAP_SLOW_FLAGS (HEAP_DEBUG_FLAGS           | \
-                         HEAP_SETTABLE_USER_FLAGS   | \
-                         HEAP_NEED_EXTRA_FLAGS      | \
-                         HEAP_CREATE_ALIGN_16       | \
-                         HEAP_FREE_CHECKING_ENABLED | \
-                         HEAP_TAIL_CHECKING_ENABLED)
+#define HEAP_SLOW_FLAGS                                                                           \
+    (HEAP_DEBUG_FLAGS | HEAP_SETTABLE_USER_FLAGS | HEAP_NEED_EXTRA_FLAGS | HEAP_CREATE_ALIGN_16 | \
+     HEAP_FREE_CHECKING_ENABLED | HEAP_TAIL_CHECKING_ENABLED)
 
 #if defined(ALLOC_DATA_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
 #pragma const_seg("PAGECONST")
 #endif
-const UCHAR CheckHeapFillPattern[ CHECK_HEAP_TAIL_SIZE ] = {
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
+const UCHAR CheckHeapFillPattern[CHECK_HEAP_TAIL_SIZE] = {
+    CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL,
+    CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL,
 #ifdef _WIN64
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
-    CHECK_HEAP_TAIL_FILL,
+    CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL,
+    CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL, CHECK_HEAP_TAIL_FILL,
 #endif
     CHECK_HEAP_TAIL_FILL
 };
 
-
+
 //
 //  These are procedure prototypes exported by heapdbg.c
 //
@@ -107,89 +93,46 @@ const UCHAR CheckHeapFillPattern[ CHECK_HEAP_TAIL_SIZE ] = {
 #ifndef NTOS_KERNEL_RUNTIME
 
 PVOID
-RtlDebugCreateHeap (
-    IN ULONG Flags,
-    IN PVOID HeapBase OPTIONAL,
-    IN SIZE_T ReserveSize OPTIONAL,
-    IN SIZE_T CommitSize OPTIONAL,
-    IN PVOID Lock OPTIONAL,
-    IN PRTL_HEAP_PARAMETERS Parameters OPTIONAL
-    );
+RtlDebugCreateHeap(IN ULONG Flags, IN PVOID HeapBase OPTIONAL, IN SIZE_T ReserveSize OPTIONAL,
+                   IN SIZE_T CommitSize OPTIONAL, IN PVOID Lock OPTIONAL, IN PRTL_HEAP_PARAMETERS Parameters OPTIONAL);
 
 BOOLEAN
-RtlDebugDestroyHeap (
-    IN PVOID HeapHandle
-    );
+RtlDebugDestroyHeap(IN PVOID HeapHandle);
 
 PVOID
-RtlDebugAllocateHeap (
-    IN PVOID HeapHandle,
-    IN ULONG Flags,            
-    IN SIZE_T Size
-    );
+RtlDebugAllocateHeap(IN PVOID HeapHandle, IN ULONG Flags, IN SIZE_T Size);
 
 BOOLEAN
-RtlDebugFreeHeap (
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID BaseAddress
-    );
+RtlDebugFreeHeap(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID BaseAddress);
 
 ULONG
-RtlDebugSizeHeap (
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID BaseAddress
-    );
+RtlDebugSizeHeap(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID BaseAddress);
 
 NTSTATUS
-RtlDebugZeroHeap (
-    IN PVOID HeapHandle,
-    IN ULONG Flags
-    );
+RtlDebugZeroHeap(IN PVOID HeapHandle, IN ULONG Flags);
 
 SIZE_T
-GetUCBytes (
-    IN PHEAP Heap, 
-    IN OUT SIZE_T *ReservedSpace, 
-    IN OUT PULONG NoOfUCRs
-    );
+GetUCBytes(IN PHEAP Heap, IN OUT SIZE_T *ReservedSpace, IN OUT PULONG NoOfUCRs);
 
 #endif // NTOS_KERNEL_RUNTIME
 
-
+
 //
 //  Local procedure prototypes
 //
 
 PHEAP_UNCOMMMTTED_RANGE
-RtlpCreateUnCommittedRange (
-    IN PHEAP_SEGMENT Segment
-    );
+RtlpCreateUnCommittedRange(IN PHEAP_SEGMENT Segment);
 
-VOID
-RtlpDestroyUnCommittedRange (
-    IN PHEAP_SEGMENT Segment,
-    IN PHEAP_UNCOMMMTTED_RANGE UnCommittedRange
-    );
+VOID RtlpDestroyUnCommittedRange(IN PHEAP_SEGMENT Segment, IN PHEAP_UNCOMMMTTED_RANGE UnCommittedRange);
 
-VOID
-RtlpInsertUnCommittedPages (
-    IN PHEAP_SEGMENT Segment,
-    IN ULONG_PTR Address,
-    IN SIZE_T Size
-    );
+VOID RtlpInsertUnCommittedPages(IN PHEAP_SEGMENT Segment, IN ULONG_PTR Address, IN SIZE_T Size);
 
 NTSTATUS
-RtlpDestroyHeapSegment (
-    IN PHEAP_SEGMENT Segment
-    );
+RtlpDestroyHeapSegment(IN PHEAP_SEGMENT Segment);
 
 PHEAP_FREE_ENTRY
-RtlpExtendHeap (
-    IN PHEAP Heap,
-    IN SIZE_T AllocationSize
-    );
+RtlpExtendHeap(IN PHEAP Heap, IN SIZE_T AllocationSize);
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
 
@@ -219,16 +162,10 @@ RtlpExtendHeap (
 
 #endif // ALLOC_PRAGMA
 
-
+
 PVOID
-RtlCreateHeap (
-    IN ULONG Flags,
-    IN PVOID HeapBase OPTIONAL,
-    IN SIZE_T ReserveSize OPTIONAL,
-    IN SIZE_T CommitSize OPTIONAL,
-    IN PVOID Lock OPTIONAL,
-    IN PRTL_HEAP_PARAMETERS Parameters OPTIONAL
-    )
+RtlCreateHeap(IN ULONG Flags, IN PVOID HeapBase OPTIONAL, IN SIZE_T ReserveSize OPTIONAL, IN SIZE_T CommitSize OPTIONAL,
+              IN PVOID Lock OPTIONAL, IN PRTL_HEAP_PARAMETERS Parameters OPTIONAL)
 
 /*++
 
@@ -308,11 +245,13 @@ Return Value:
 #ifndef NTOS_KERNEL_RUNTIME
 #ifdef NTHEAP_ENABLED
     {
-        if (Flags & NTHEAP_ENABLED_FLAG) {
+        if (Flags & NTHEAP_ENABLED_FLAG)
+        {
 
-            Heap = RtlCreateNtHeap( Flags, NULL );
+            Heap = RtlCreateNtHeap(Flags, NULL);
 
-            if (Heap != NULL) {
+            if (Heap != NULL)
+            {
 
                 return Heap;
             }
@@ -330,20 +269,17 @@ Return Value:
 
 #ifdef DEBUG_PAGE_HEAP
 
-    if ( RtlpDebugPageHeap && ( HeapBase == NULL ) && ( Lock == NULL )) {
+    if (RtlpDebugPageHeap && (HeapBase == NULL) && (Lock == NULL))
+    {
 
         PVOID PageHeap;
 
         PageHeap = RtlpDebugPageHeapCreate(
 
-            Flags,
-            HeapBase,
-            ReserveSize,
-            CommitSize,
-            Lock,
-            Parameters );
+            Flags, HeapBase, ReserveSize, CommitSize, Lock, Parameters);
 
-        if (PageHeap != NULL) {
+        if (PageHeap != NULL)
+        {
             return PageHeap;
         }
 
@@ -355,15 +291,14 @@ Return Value:
         // heap manager.
         //
 
-        if ((SIZE_T)Parameters == (SIZE_T)-1) {
+        if ((SIZE_T)Parameters == (SIZE_T)-1)
+        {
 
             Parameters = NULL;
         }
     }
 
-    Flags &= ~( HEAP_PROTECTION_ENABLED |
-        HEAP_BREAK_WHEN_OUT_OF_VM |
-        HEAP_NO_ALIGNMENT );
+    Flags &= ~(HEAP_PROTECTION_ENABLED | HEAP_BREAK_WHEN_OUT_OF_VM | HEAP_NO_ALIGNMENT);
 
 #endif // DEBUG_PAGE_HEAP
 
@@ -373,12 +308,14 @@ Return Value:
     //  those flags that want on a create heap call
     //
 
-    if (!(Flags & HEAP_SKIP_VALIDATION_CHECKS)) {
+    if (!(Flags & HEAP_SKIP_VALIDATION_CHECKS))
+    {
 
-        if (Flags & ~HEAP_CREATE_VALID_MASK) {
+        if (Flags & ~HEAP_CREATE_VALID_MASK)
+        {
 
-            HeapDebugPrint(( "Invalid flags (%08x) specified to RtlCreateHeap\n", Flags ));
-            HeapDebugBreak( NULL );
+            HeapDebugPrint(("Invalid flags (%08x) specified to RtlCreateHeap\n", Flags));
+            HeapDebugBreak(NULL);
 
             Flags &= HEAP_CREATE_VALID_MASK;
         }
@@ -403,7 +340,7 @@ Return Value:
     //  it out.
     //
 
-    RtlZeroMemory( &TempParameters, sizeof( TempParameters ) );
+    RtlZeroMemory(&TempParameters, sizeof(TempParameters));
 
     //
     //  If our caller supplied the optional heap parameters then we'll
@@ -411,21 +348,26 @@ Return Value:
     //  local copy
     //
 
-    if (ARGUMENT_PRESENT( Parameters )) {
+    if (ARGUMENT_PRESENT(Parameters))
+    {
 
-        try {
+        try
+        {
 
-            if (Parameters->Length == sizeof( *Parameters )) {
+            if (Parameters->Length == sizeof(*Parameters))
+            {
 
-                RtlCopyMemory( &TempParameters, Parameters, sizeof( *Parameters ) );
+                RtlCopyMemory(&TempParameters, Parameters, sizeof(*Parameters));
             }
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return NULL;
         }
@@ -443,17 +385,20 @@ Return Value:
     //  specified flags
     //
 
-    if (NtGlobalFlag & FLG_HEAP_ENABLE_TAIL_CHECK) {
+    if (NtGlobalFlag & FLG_HEAP_ENABLE_TAIL_CHECK)
+    {
 
         Flags |= HEAP_TAIL_CHECKING_ENABLED;
     }
 
-    if (NtGlobalFlag & FLG_HEAP_ENABLE_FREE_CHECK) {
+    if (NtGlobalFlag & FLG_HEAP_ENABLE_FREE_CHECK)
+    {
 
         Flags |= HEAP_FREE_CHECKING_ENABLED;
     }
 
-    if (NtGlobalFlag & FLG_HEAP_DISABLE_COALESCING) {
+    if (NtGlobalFlag & FLG_HEAP_DISABLE_COALESCING)
+    {
 
         Flags |= HEAP_DISABLE_COALESCE_ON_FREE;
     }
@@ -467,17 +412,20 @@ Return Value:
 
     Peb = NtCurrentPeb();
 
-    if (NtGlobalFlag & FLG_HEAP_VALIDATE_PARAMETERS) {
+    if (NtGlobalFlag & FLG_HEAP_VALIDATE_PARAMETERS)
+    {
 
         Flags |= HEAP_VALIDATE_PARAMETERS_ENABLED;
     }
 
-    if (NtGlobalFlag & FLG_HEAP_VALIDATE_ALL) {
+    if (NtGlobalFlag & FLG_HEAP_VALIDATE_ALL)
+    {
 
         Flags |= HEAP_VALIDATE_ALL_ENABLED;
     }
 
-    if (NtGlobalFlag & FLG_USER_STACK_TRACE_DB) {
+    if (NtGlobalFlag & FLG_USER_STACK_TRACE_DB)
+    {
 
         Flags |= HEAP_CAPTURE_STACK_BACKTRACES;
     }
@@ -488,48 +436,56 @@ Return Value:
     //  otherwise
     //
 
-    if (Parameters->SegmentReserve == 0) {
+    if (Parameters->SegmentReserve == 0)
+    {
 
         Parameters->SegmentReserve = Peb->HeapSegmentReserve;
     }
 
-    if (Parameters->SegmentCommit == 0) {
+    if (Parameters->SegmentCommit == 0)
+    {
 
         Parameters->SegmentCommit = Peb->HeapSegmentCommit;
     }
 
-    if (Parameters->DeCommitFreeBlockThreshold == 0) {
+    if (Parameters->DeCommitFreeBlockThreshold == 0)
+    {
 
         Parameters->DeCommitFreeBlockThreshold = Peb->HeapDeCommitFreeBlockThreshold;
     }
 
-    if (Parameters->DeCommitTotalFreeThreshold == 0) {
+    if (Parameters->DeCommitTotalFreeThreshold == 0)
+    {
 
         Parameters->DeCommitTotalFreeThreshold = Peb->HeapDeCommitTotalFreeThreshold;
     }
-#else // NTOS_KERNEL_RUNTIME
+#else  // NTOS_KERNEL_RUNTIME
 
     //
     //  In the kernel case Mm has some global variables that we set
     //  into the paramters if the user hasn't specified otherwise
     //
 
-    if (Parameters->SegmentReserve == 0) {
+    if (Parameters->SegmentReserve == 0)
+    {
 
         Parameters->SegmentReserve = MmHeapSegmentReserve;
     }
 
-    if (Parameters->SegmentCommit == 0) {
+    if (Parameters->SegmentCommit == 0)
+    {
 
         Parameters->SegmentCommit = MmHeapSegmentCommit;
     }
 
-    if (Parameters->DeCommitFreeBlockThreshold == 0) {
+    if (Parameters->DeCommitFreeBlockThreshold == 0)
+    {
 
         Parameters->DeCommitFreeBlockThreshold = MmHeapDeCommitFreeBlockThreshold;
     }
 
-    if (Parameters->DeCommitTotalFreeThreshold == 0) {
+    if (Parameters->DeCommitTotalFreeThreshold == 0)
+    {
 
         Parameters->DeCommitTotalFreeThreshold = MmHeapDeCommitTotalFreeThreshold;
     }
@@ -539,10 +495,9 @@ Return Value:
     //  Get the highest user address
     //
 
-    if (!NT_SUCCESS(ZwQuerySystemInformation(SystemBasicInformation,
-                                             &SystemInformation,
-                                             sizeof(SystemInformation),
-                                             NULL))) {
+    if (!NT_SUCCESS(
+            ZwQuerySystemInformation(SystemBasicInformation, &SystemInformation, sizeof(SystemInformation), NULL)))
+    {
         return NULL;
     }
     HighestUserAddress = SystemInformation.MaximumUserModeAddress;
@@ -553,11 +508,10 @@ Return Value:
     //  address less one page
     //
 
-    if (Parameters->MaximumAllocationSize == 0) {
+    if (Parameters->MaximumAllocationSize == 0)
+    {
 
-        Parameters->MaximumAllocationSize = (HighestUserAddress -
-                                             (ULONG_PTR)MM_LOWEST_USER_ADDRESS -
-                                             PAGE_SIZE );
+        Parameters->MaximumAllocationSize = (HighestUserAddress - (ULONG_PTR)MM_LOWEST_USER_ADDRESS - PAGE_SIZE);
     }
 
     //
@@ -566,8 +520,8 @@ Return Value:
     //  too large we automatically and silently drop it down.
     //
 
-    if ((Parameters->VirtualMemoryThreshold == 0) ||
-        (Parameters->VirtualMemoryThreshold > MaximumHeapBlockSize)) {
+    if ((Parameters->VirtualMemoryThreshold == 0) || (Parameters->VirtualMemoryThreshold > MaximumHeapBlockSize))
+    {
 
         Parameters->VirtualMemoryThreshold = MaximumHeapBlockSize;
     }
@@ -577,21 +531,24 @@ Return Value:
     //  reserve size is 64 pages.
     //
 
-    if (!ARGUMENT_PRESENT( CommitSize )) {
+    if (!ARGUMENT_PRESENT(CommitSize))
+    {
 
         CommitSize = MINIMUM_HEAP_COMMIT;
 
-        if (!ARGUMENT_PRESENT( ReserveSize )) {
+        if (!ARGUMENT_PRESENT(ReserveSize))
+        {
 
             ReserveSize = 64 * CommitSize;
-
-        } else {
-
-            ReserveSize = ROUND_UP_TO_POWER2( ReserveSize,
-                                              MINIMUM_HEAP_COMMIT );
         }
+        else
+        {
 
-    } else {
+            ReserveSize = ROUND_UP_TO_POWER2(ReserveSize, MINIMUM_HEAP_COMMIT);
+        }
+    }
+    else
+    {
 
         //
         //  The heap actually uses space that is reserved and commited
@@ -603,22 +560,24 @@ Return Value:
 
         CommitSize = ROUND_UP_TO_POWER2(CommitSize, MINIMUM_HEAP_COMMIT);
 
-        if (!ARGUMENT_PRESENT( ReserveSize )) {
+        if (!ARGUMENT_PRESENT(ReserveSize))
+        {
 
-            ReserveSize = ROUND_UP_TO_POWER2( CommitSize, 16 * PAGE_SIZE );
+            ReserveSize = ROUND_UP_TO_POWER2(CommitSize, 16 * PAGE_SIZE);
+        }
+        else
+        {
 
-        } else {
-
-            ReserveSize = ROUND_UP_TO_POWER2( ReserveSize,
-                                              MINIMUM_HEAP_COMMIT );
+            ReserveSize = ROUND_UP_TO_POWER2(ReserveSize, MINIMUM_HEAP_COMMIT);
 
             //
-            //  If the CommitSize is larger than the ReservedSize, adjust 
+            //  If the CommitSize is larger than the ReservedSize, adjust
             //  it to the ReserveSize. Reserved size is already rounded up to
             //  MINIMUM_HEAP_COMMIT.
             //
 
-            if ( CommitSize > ReserveSize ) {
+            if (CommitSize > ReserveSize)
+            {
 
                 CommitSize = ReserveSize;
             }
@@ -632,14 +591,10 @@ Return Value:
     //  the test checks that skip validation checks is false.
     //
 
-    if (DEBUG_HEAP( Flags )) {
+    if (DEBUG_HEAP(Flags))
+    {
 
-        return RtlDebugCreateHeap( Flags,
-                                   HeapBase,
-                                   ReserveSize,
-                                   CommitSize,
-                                   Lock,
-                                   Parameters );
+        return RtlDebugCreateHeap(Flags, HeapBase, ReserveSize, CommitSize, Lock, Parameters);
     }
 
 #endif // NTOS_KERNEL_RUNTIME
@@ -652,21 +607,25 @@ Return Value:
     //  variable to -1.
     //
 
-    SizeOfHeapHeader = sizeof( HEAP );
+    SizeOfHeapHeader = sizeof(HEAP);
 
-    if (!(Flags & HEAP_NO_SERIALIZE)) {
+    if (!(Flags & HEAP_NO_SERIALIZE))
+    {
 
-        if (ARGUMENT_PRESENT( Lock )) {
+        if (ARGUMENT_PRESENT(Lock))
+        {
 
             Flags |= HEAP_LOCK_USER_ALLOCATED;
+        }
+        else
+        {
 
-        } else {
-
-            SizeOfHeapHeader += sizeof( HEAP_LOCK );
+            SizeOfHeapHeader += sizeof(HEAP_LOCK);
             Lock = (PHEAP_LOCK)-1;
         }
-
-    } else if (ARGUMENT_PRESENT( Lock )) {
+    }
+    else if (ARGUMENT_PRESENT(Lock))
+    {
 
         //
         //  In this error case the call said not to serialize but also fed us
@@ -680,14 +639,16 @@ Return Value:
     //  See if caller allocate the space for the heap.
     //
 
-    if (ARGUMENT_PRESENT( HeapBase )) {
+    if (ARGUMENT_PRESENT(HeapBase))
+    {
 
         //
         //  The call specified a heap base now check if there is
         //  a caller supplied commit routine
         //
 
-        if (Parameters->CommitRoutine != NULL) {
+        if (Parameters->CommitRoutine != NULL)
+        {
 
             //
             //  The caller specified a commit routine so the caller
@@ -695,10 +656,9 @@ Return Value:
             //  sure the heap is not growable.  Otherwise it is an error
             //
 
-            if ((Parameters->InitialCommit == 0) ||
-                (Parameters->InitialReserve == 0) ||
-                (Parameters->InitialCommit > Parameters->InitialReserve) ||
-                (Flags & HEAP_GROWABLE)) {
+            if ((Parameters->InitialCommit == 0) || (Parameters->InitialReserve == 0) ||
+                (Parameters->InitialCommit > Parameters->InitialReserve) || (Flags & HEAP_GROWABLE))
+            {
 
                 return NULL;
             }
@@ -716,23 +676,21 @@ Return Value:
             //  Zero out a page of the heap where our first part goes
             //
 
-            RtlZeroMemory( CommittedBase, Parameters->InitialCommit );
-
-        } else {
+            RtlZeroMemory(CommittedBase, Parameters->InitialCommit);
+        }
+        else
+        {
 
             //
             //  The user gave us space but not commit routine
             //  So query the base to get its size
             //
 
-            Status = ZwQueryVirtualMemory( NtCurrentProcess(),
-                                           HeapBase,
-                                           MemoryBasicInformation,
-                                           &MemoryInformation,
-                                           sizeof( MemoryInformation ),
-                                           NULL );
+            Status = ZwQueryVirtualMemory(NtCurrentProcess(), HeapBase, MemoryBasicInformation, &MemoryInformation,
+                                          sizeof(MemoryInformation), NULL);
 
-            if (!NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 return NULL;
             }
@@ -742,12 +700,14 @@ Return Value:
             //  and that the memory is not free
             //
 
-            if (MemoryInformation.BaseAddress != HeapBase) {
+            if (MemoryInformation.BaseAddress != HeapBase)
+            {
 
                 return NULL;
             }
 
-            if (MemoryInformation.State == MEM_FREE) {
+            if (MemoryInformation.State == MEM_FREE)
+            {
 
                 return NULL;
             }
@@ -763,9 +723,10 @@ Return Value:
             //  we can zero out a page worth
             //
 
-            if (MemoryInformation.State == MEM_COMMIT) {
+            if (MemoryInformation.State == MEM_COMMIT)
+            {
 
-                RtlZeroMemory( CommittedBase, PAGE_SIZE );
+                RtlZeroMemory(CommittedBase, PAGE_SIZE);
 
                 //
                 //  Set the commit size and uncommitted base according
@@ -780,22 +741,19 @@ Return Value:
                 //  the update the reserve size accordingly.
                 //
 
-                Status = ZwQueryVirtualMemory( NtCurrentProcess(),
-                                               UnCommittedBase,
-                                               MemoryBasicInformation,
-                                               &MemoryInformation,
-                                               sizeof( MemoryInformation ),
-                                               NULL );
+                Status = ZwQueryVirtualMemory(NtCurrentProcess(), UnCommittedBase, MemoryBasicInformation,
+                                              &MemoryInformation, sizeof(MemoryInformation), NULL);
 
                 ReserveSize = CommitSize;
 
-                if ((NT_SUCCESS( Status )) &&
-                    (MemoryInformation.State == MEM_RESERVE)) {
+                if ((NT_SUCCESS(Status)) && (MemoryInformation.State == MEM_RESERVE))
+                {
 
                     ReserveSize += MemoryInformation.RegionSize;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  The memory the user gave us is not committed so dummy
@@ -815,15 +773,17 @@ Return Value:
 
         SegmentFlags = HEAP_SEGMENT_USER_ALLOCATED;
         Heap = (PHEAP)HeapBase;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  The user did not specify a heap base so we have to allocate the
         //  vm here.  First make sure the user did not give us a commit routine
         //
 
-        if (Parameters->CommitRoutine != NULL) {
+        if (Parameters->CommitRoutine != NULL)
+        {
 
             return NULL;
         }
@@ -832,14 +792,11 @@ Return Value:
         //  Reserve the amount of virtual address space requested.
         //
 
-        Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                          (PVOID *)&Heap,
-                                          0,
-                                          &ReserveSize,
-                                          MEM_RESERVE,
-                                          PAGE_READWRITE );
+        Status =
+            ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&Heap, 0, &ReserveSize, MEM_RESERVE, PAGE_READWRITE);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return NULL;
         }
@@ -854,7 +811,8 @@ Return Value:
         //  Set the default commit size to one page
         //
 
-        if (!ARGUMENT_PRESENT( CommitSize )) {
+        if (!ARGUMENT_PRESENT(CommitSize))
+        {
 
             CommitSize = MINIMUM_HEAP_COMMIT;
         }
@@ -875,33 +833,28 @@ Return Value:
     //  specified by the commit size
     //
 
-    if (CommittedBase == UnCommittedBase) {
+    if (CommittedBase == UnCommittedBase)
+    {
 
-        Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                          (PVOID *)&CommittedBase,
-                                          0,
-                                          &CommitSize,
-                                          MEM_COMMIT,
-                                          PAGE_READWRITE );
+        Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&CommittedBase, 0, &CommitSize, MEM_COMMIT,
+                                         PAGE_READWRITE);
 
         //
         //  In the non successful case we need to back out any vm reservation
         //  we did earlier
         //
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            if (!ARGUMENT_PRESENT(HeapBase)) {
+            if (!ARGUMENT_PRESENT(HeapBase))
+            {
 
                 //
                 //  Return the reserved virtual address space.
                 //
 
-                RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                           (PVOID *)&Heap,
-                                           &ReserveSize,
-                                           MEM_RELEASE );
-
+                RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&Heap, &ReserveSize, MEM_RELEASE);
             }
 
             return NULL;
@@ -928,12 +881,11 @@ Return Value:
 
     NextHeapHeaderAddress = Heap + 1;
 
-    UnCommittedRange = (PHEAP_UNCOMMMTTED_RANGE)ROUND_UP_TO_POWER2( NextHeapHeaderAddress,
-                                                                    sizeof( QUAD ) );
+    UnCommittedRange = (PHEAP_UNCOMMMTTED_RANGE)ROUND_UP_TO_POWER2(NextHeapHeaderAddress, sizeof(QUAD));
 
     InitialCountOfUnusedUnCommittedRanges = 8;
 
-    SizeOfHeapHeader += InitialCountOfUnusedUnCommittedRanges * sizeof( *UnCommittedRange );
+    SizeOfHeapHeader += InitialCountOfUnusedUnCommittedRanges * sizeof(*UnCommittedRange);
 
     //
     //  What a hack Pp is really a pointer to the next field of the
@@ -942,7 +894,8 @@ Return Value:
 
     pp = &Heap->UnusedUnCommittedRanges;
 
-    while (InitialCountOfUnusedUnCommittedRanges--) {
+    while (InitialCountOfUnusedUnCommittedRanges--)
+    {
 
         *pp = UnCommittedRange;
         pp = &UnCommittedRange->Next;
@@ -962,12 +915,12 @@ Return Value:
     //  header to this array of pseudo tags entries.
     //
 
-    if (IS_HEAP_TAGGING_ENABLED()) {
+    if (IS_HEAP_TAGGING_ENABLED())
+    {
 
-        Heap->PseudoTagEntries = (PHEAP_PSEUDO_TAG_ENTRY)ROUND_UP_TO_POWER2( NextHeapHeaderAddress,
-                                                                             sizeof( QUAD ) );
+        Heap->PseudoTagEntries = (PHEAP_PSEUDO_TAG_ENTRY)ROUND_UP_TO_POWER2(NextHeapHeaderAddress, sizeof(QUAD));
 
-        SizeOfHeapHeader += HEAP_NUMBER_OF_PSEUDO_TAG * sizeof( HEAP_PSEUDO_TAG_ENTRY );
+        SizeOfHeapHeader += HEAP_NUMBER_OF_PSEUDO_TAG * sizeof(HEAP_PSEUDO_TAG_ENTRY);
 
         //
         //  Update the next address with the number of pseudotags
@@ -982,8 +935,7 @@ Return Value:
     //  Round the size of the heap header to the next 8 byte boundary
     //
 
-    SizeOfHeapHeader = (ULONG) ROUND_UP_TO_POWER2( SizeOfHeapHeader,
-                                                   HEAP_GRANULARITY );
+    SizeOfHeapHeader = (ULONG)ROUND_UP_TO_POWER2(SizeOfHeapHeader, HEAP_GRANULARITY);
 
     //
     //  If the sizeof the heap header is larger than the native
@@ -1005,17 +957,12 @@ Return Value:
 
     Heap->Signature = HEAP_SIGNATURE;
     Heap->Flags = Flags;
-    Heap->ForceFlags = (Flags & (HEAP_NO_SERIALIZE |
-                                 HEAP_GENERATE_EXCEPTIONS |
-                                 HEAP_ZERO_MEMORY |
-                                 HEAP_REALLOC_IN_PLACE_ONLY |
-                                 HEAP_VALIDATE_PARAMETERS_ENABLED |
-                                 HEAP_VALIDATE_ALL_ENABLED |
-                                 HEAP_TAIL_CHECKING_ENABLED |
-                                 HEAP_CREATE_ALIGN_16 |
-                                 HEAP_FREE_CHECKING_ENABLED));
+    Heap->ForceFlags =
+        (Flags & (HEAP_NO_SERIALIZE | HEAP_GENERATE_EXCEPTIONS | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY |
+                  HEAP_VALIDATE_PARAMETERS_ENABLED | HEAP_VALIDATE_ALL_ENABLED | HEAP_TAIL_CHECKING_ENABLED |
+                  HEAP_CREATE_ALIGN_16 | HEAP_FREE_CHECKING_ENABLED));
 
-//    Heap->FreeListsInUseTerminate = 0xFFFF;
+    //    Heap->FreeListsInUseTerminate = 0xFFFF;
     Heap->u2.DecommitCount = 0;
     Heap->HeaderValidateLength = (USHORT)((PCHAR)NextHeapHeaderAddress - (PCHAR)Heap);
     Heap->HeaderValidateCopy = NULL;
@@ -1024,12 +971,13 @@ Return Value:
     //  Initialize the free list to be all empty
     //
 
-    FreeListHead = &Heap->FreeLists[ 0 ];
+    FreeListHead = &Heap->FreeLists[0];
     n = HEAP_MAXIMUM_FREELISTS;
 
-    while (n--) {
+    while (n--)
+    {
 
-        InitializeListHead( FreeListHead );
+        InitializeListHead(FreeListHead);
         FreeListHead++;
     }
 
@@ -1037,7 +985,7 @@ Return Value:
     //  Make it so that there a no big block allocations
     //
 
-    InitializeListHead( &Heap->VirtualAllocdBlocks );
+    InitializeListHead(&Heap->VirtualAllocdBlocks);
 
     //
     //  Initialize the critical section that controls access to
@@ -1046,22 +994,22 @@ Return Value:
     //  and initialize it.
     //
 
-    if (Lock == (PHEAP_LOCK)-1) {
+    if (Lock == (PHEAP_LOCK)-1)
+    {
 
         Lock = (PHEAP_LOCK)NextHeapHeaderAddress;
 
-        Status = RtlInitializeLockRoutine( Lock );
+        Status = RtlInitializeLockRoutine(Lock);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            if (!ARGUMENT_PRESENT(HeapBase)) {
-                
-                RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                           (PVOID *)&Heap,
-                                           &ReserveSize,
-                                           MEM_RELEASE );
+            if (!ARGUMENT_PRESENT(HeapBase))
+            {
+
+                RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&Heap, &ReserveSize, MEM_RELEASE);
             }
-            
+
             return NULL;
         }
 
@@ -1075,22 +1023,16 @@ Return Value:
     //  Initialize the first segment for the heap
     //
 
-    if (!RtlpInitializeHeapSegment( Heap,
-                                    (PHEAP_SEGMENT)((PCHAR)Heap + SizeOfHeapHeader),
-                                    0,
-                                    SegmentFlags,
-                                    CommittedBase,
-                                    UnCommittedBase,
-                                    (PCHAR)CommittedBase + ReserveSize )) {
+    if (!RtlpInitializeHeapSegment(Heap, (PHEAP_SEGMENT)((PCHAR)Heap + SizeOfHeapHeader), 0, SegmentFlags,
+                                   CommittedBase, UnCommittedBase, (PCHAR)CommittedBase + ReserveSize))
+    {
 
-        if (!ARGUMENT_PRESENT(HeapBase)) {
-            
-            RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                       (PVOID *)&Heap,
-                                       &ReserveSize,
-                                       MEM_RELEASE );
+        if (!ARGUMENT_PRESENT(HeapBase))
+        {
+
+            RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&Heap, &ReserveSize, MEM_RELEASE);
         }
-        
+
         return NULL;
     }
 
@@ -1105,8 +1047,8 @@ Return Value:
     Heap->DeCommitTotalFreeThreshold = Parameters->DeCommitTotalFreeThreshold >> HEAP_GRANULARITY_SHIFT;
     Heap->MaximumAllocationSize = Parameters->MaximumAllocationSize;
 
-    Heap->VirtualMemoryThreshold = (ULONG) (ROUND_UP_TO_POWER2( Parameters->VirtualMemoryThreshold,
-                                                       HEAP_GRANULARITY ) >> HEAP_GRANULARITY_SHIFT);
+    Heap->VirtualMemoryThreshold =
+        (ULONG)(ROUND_UP_TO_POWER2(Parameters->VirtualMemoryThreshold, HEAP_GRANULARITY) >> HEAP_GRANULARITY_SHIFT);
 
     Heap->CommitRoutine = Parameters->CommitRoutine;
 
@@ -1117,18 +1059,21 @@ Return Value:
     //  check tail size
     //
 
-    if (Flags & HEAP_CREATE_ALIGN_16) {
+    if (Flags & HEAP_CREATE_ALIGN_16)
+    {
 
-        Heap->AlignRound = 15 + sizeof( HEAP_ENTRY );
+        Heap->AlignRound = 15 + sizeof(HEAP_ENTRY);
         Heap->AlignMask = ~((ULONG_PTR)15);
+    }
+    else
+    {
 
-    } else {
-
-        Heap->AlignRound = HEAP_GRANULARITY - 1 + sizeof( HEAP_ENTRY );
+        Heap->AlignRound = HEAP_GRANULARITY - 1 + sizeof(HEAP_ENTRY);
         Heap->AlignMask = ~((ULONG_PTR)HEAP_GRANULARITY - 1);
     }
 
-    if (Heap->Flags & HEAP_TAIL_CHECKING_ENABLED) {
+    if (Heap->Flags & HEAP_TAIL_CHECKING_ENABLED)
+    {
 
         Heap->AlignRound += CHECK_HEAP_TAIL_SIZE;
     }
@@ -1140,7 +1085,7 @@ Return Value:
     //  list
     //
 
-    RtlpAddHeapToProcessList( Heap );
+    RtlpAddHeapToProcessList(Heap);
 
     //
     //  Initialize the heap lookaside lists.  This is only for the user mode
@@ -1157,36 +1102,38 @@ Return Value:
     Heap->FrontHeapLockCount = 0;
     Heap->FrontEndHeapType = 0;
 
-    if ((!(Flags & HEAP_NO_SERIALIZE)) &&
-        ( (Flags & HEAP_GROWABLE)) &&
-        (!(RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LOOKASIDES))) {
+    if ((!(Flags & HEAP_NO_SERIALIZE)) && ((Flags & HEAP_GROWABLE)) &&
+        (!(RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LOOKASIDES)))
+    {
 
         //
         //  We do not allow creation of the cache heap if the tags are enabled.
         //  We use the tag field to sign our private blocks
         //
 
-        if (RtlpIsLowFragHeapEnabled() &&
-            !IS_HEAP_TAGGING_ENABLED()) {
+        if (RtlpIsLowFragHeapEnabled() && !IS_HEAP_TAGGING_ENABLED())
+        {
 
             RtlpActivateLowFragmentationHeap(Heap);
-
-        } else {
+        }
+        else
+        {
 
             ULONG i;
 
-            Heap->FrontEndHeap = RtlAllocateHeap( Heap,
-                                               HEAP_ZERO_MEMORY,
-                                               sizeof(HEAP_LOOKASIDE) * HEAP_MAXIMUM_FREELISTS );
+            Heap->FrontEndHeap =
+                RtlAllocateHeap(Heap, HEAP_ZERO_MEMORY, sizeof(HEAP_LOOKASIDE) * HEAP_MAXIMUM_FREELISTS);
 
-            if (Heap->FrontEndHeap != NULL) {
+            if (Heap->FrontEndHeap != NULL)
+            {
 
                 Heap->FrontEndHeapType = HEAP_FRONT_LOOKASIDE;
 
-                for (i = 0; i < HEAP_MAXIMUM_FREELISTS; i += 1) {
+                for (i = 0; i < HEAP_MAXIMUM_FREELISTS; i += 1)
+                {
 
-                    //  
-                    //  N.B. we should call here the function: 
+                    //
+                    //  N.B. we should call here the function:
                     //
                     //  RtlpInitializeHeapLookaside( &(((PHEAP_LOOKASIDE)(Heap->Lookaside))[i]), 32 );
                     //
@@ -1196,7 +1143,7 @@ Return Value:
                     //  IceCap data showed that RtlHeapCreate spends ~30% of the time within
                     //  these calls.
                     //
-                    //  N.B. This works based on assumption that 
+                    //  N.B. This works based on assumption that
                     //  RtlInitializeSListHead zeroed the SLIST_HEADER structure
                     //
 
@@ -1209,7 +1156,8 @@ Return Value:
         }
     }
 
-    if( IsHeapLogging( Heap )) {
+    if (IsHeapLogging(Heap))
+    {
 
         PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
         PPERFINFO_TRACE_HEADER pEventHeader = NULL;
@@ -1218,20 +1166,21 @@ Return Value:
 
         AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-        if(pEventHeader && pThreadLocalData) {
+        if (pEventHeader && pThreadLocalData)
+        {
 
-            PHEAP_EVENT_CREATE pHeapEvent = (PHEAP_EVENT_CREATE)((SIZE_T)pEventHeader
-                                            +(SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+            PHEAP_EVENT_CREATE pHeapEvent =
+                (PHEAP_EVENT_CREATE)((SIZE_T)pEventHeader + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-            pEventHeader->Packet.Size = (USHORT) ReqSize;
+            pEventHeader->Packet.Size = (USHORT)ReqSize;
             pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_CREATE;
 
-            pHeapEvent->HeapHandle	= (PVOID)Heap;
-            pHeapEvent->Flags       = Flags;
+            pHeapEvent->HeapHandle = (PVOID)Heap;
+            pHeapEvent->Flags = Flags;
 
             ReleaseBufferLocation(pThreadLocalData);
         }
-    } 
+    }
 
 #endif // NTOS_KERNEL_RUNTIME
 
@@ -1242,11 +1191,9 @@ Return Value:
     return (PVOID)Heap;
 }
 
-
+
 PVOID
-RtlDestroyHeap (
-    IN PVOID HeapHandle
-    )
+RtlDestroyHeap(IN PVOID HeapHandle)
 
 /*++
 
@@ -1283,9 +1230,10 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    if (HeapHandle == NULL) {
+    if (HeapHandle == NULL)
+    {
 
-        HeapDebugPrint(( "Ignoring RtlDestroyHeap( NULL )\n" ));
+        HeapDebugPrint(("Ignoring RtlDestroyHeap( NULL )\n"));
 
         return NULL;
     }
@@ -1293,9 +1241,10 @@ Return Value:
 #ifndef NTOS_KERNEL_RUNTIME
 #ifdef NTHEAP_ENABLED
     {
-        if (Heap->Flags & NTHEAP_ENABLED_FLAG) {
+        if (Heap->Flags & NTHEAP_ENABLED_FLAG)
+        {
 
-            return RtlDestroyNtHeap( HeapHandle );
+            return RtlDestroyNtHeap(HeapHandle);
         }
     }
 #endif // NTHEAP_ENABLED
@@ -1306,8 +1255,7 @@ Return Value:
     //  with guard pages
     //
 
-    IF_DEBUG_PAGE_HEAP_THEN_RETURN( HeapHandle,
-                                    RtlpDebugPageHeapDestroy( HeapHandle ));
+    IF_DEBUG_PAGE_HEAP_THEN_RETURN(HeapHandle, RtlpDebugPageHeapDestroy(HeapHandle));
 
 #ifndef NTOS_KERNEL_RUNTIME
 
@@ -1316,9 +1264,11 @@ Return Value:
     //  and of so then call the debug version to do the teardown
     //
 
-    if (DEBUG_HEAP( Heap->Flags )) {
+    if (DEBUG_HEAP(Heap->Flags))
+    {
 
-        if (!RtlDebugDestroyHeap( HeapHandle )) {
+        if (!RtlDebugDestroyHeap(HeapHandle))
+        {
 
             return HeapHandle;
         }
@@ -1328,12 +1278,14 @@ Return Value:
     //  We are not allowed to destroy the process heap
     //
 
-    if (HeapHandle == NtCurrentPeb()->ProcessHeap) {
+    if (HeapHandle == NtCurrentPeb()->ProcessHeap)
+    {
 
         return HeapHandle;
     }
 
-    if (LowFragmentationHeap = RtlpGetLowFragHeap(Heap)) {
+    if (LowFragmentationHeap = RtlpGetLowFragHeap(Heap))
+    {
 
         RtlpDestroyLowFragHeap(LowFragmentationHeap);
     }
@@ -1348,17 +1300,15 @@ Return Value:
     Head = &Heap->VirtualAllocdBlocks;
     Next = Head->Flink;
 
-    while (Head != Next) {
+    while (Head != Next)
+    {
 
-        BaseAddress = CONTAINING_RECORD( Next, HEAP_VIRTUAL_ALLOC_ENTRY, Entry );
+        BaseAddress = CONTAINING_RECORD(Next, HEAP_VIRTUAL_ALLOC_ENTRY, Entry);
 
         Next = Next->Flink;
         RegionSize = 0;
 
-        RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                   (PVOID *)&BaseAddress,
-                                   &RegionSize,
-                                   MEM_RELEASE );
+        RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&BaseAddress, &RegionSize, MEM_RELEASE);
     }
 
 #ifndef NTOS_KERNEL_RUNTIME
@@ -1368,8 +1318,8 @@ Return Value:
     //  and remove this heap from the process heap list
     //
 
-    RtlpDestroyTags( Heap );
-    RtlpRemoveHeapFromProcessList( Heap );
+    RtlpDestroyTags(Heap);
+    RtlpRemoveHeapFromProcessList(Heap);
 
 #endif // NTOS_KERNEL_RUNTIME
 
@@ -1377,11 +1327,13 @@ Return Value:
     //  If the heap is serialized, delete the critical section created
     //  by RtlCreateHeap.
     //
-    if (!(Heap->Flags & HEAP_NO_SERIALIZE)) {
+    if (!(Heap->Flags & HEAP_NO_SERIALIZE))
+    {
 
-        if (!(Heap->Flags & HEAP_LOCK_USER_ALLOCATED)) {
+        if (!(Heap->Flags & HEAP_LOCK_USER_ALLOCATED))
+        {
 
-            (VOID)RtlDeleteLockRoutine( Heap->LockVariable );
+            (VOID) RtlDeleteLockRoutine(Heap->LockVariable);
         }
 
         Heap->LockVariable = NULL;
@@ -1394,26 +1346,25 @@ Return Value:
     UCRSegments = Heap->UCRSegments;
     Heap->UCRSegments = NULL;
 
-    while (UCRSegments) {
+    while (UCRSegments)
+    {
 
         BaseAddress = UCRSegments;
         UCRSegments = UCRSegments->Next;
         RegionSize = 0;
 
-        RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                   &BaseAddress,
-                                   &RegionSize,
-                                   MEM_RELEASE );
+        RtlpHeapFreeVirtualMemory(NtCurrentProcess(), &BaseAddress, &RegionSize, MEM_RELEASE);
     }
 
 #ifndef NTOS_KERNEL_RUNTIME
-    
+
     //
     //  Free the large block index, if we have one
     //
 
-    if (Heap->LargeBlocksIndex) {
-        
+    if (Heap->LargeBlocksIndex)
+    {
+
         PHEAP_INDEX HeapIndex = (PHEAP_INDEX)Heap->LargeBlocksIndex;
 
         //
@@ -1423,10 +1374,7 @@ Return Value:
         RegionSize = HeapIndex->VirtualMemorySize;
         Heap->LargeBlocksIndex = NULL;
 
-        RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                   &HeapIndex,
-                                   &RegionSize,
-                                   MEM_RELEASE );
+        RtlpHeapFreeVirtualMemory(NtCurrentProcess(), &HeapIndex, &RegionSize, MEM_RELEASE);
     }
 
 #endif // NTOS_KERNEL_RUNTIME
@@ -1438,41 +1386,45 @@ Return Value:
 
     SegmentIndex = HEAP_MAXIMUM_SEGMENTS;
 
-    while (SegmentIndex--) {
+    while (SegmentIndex--)
+    {
 
-        Segment = Heap->Segments[ SegmentIndex ];
+        Segment = Heap->Segments[SegmentIndex];
 
-        if (Segment) {
+        if (Segment)
+        {
 
-            RtlpDestroyHeapSegment( Segment );
+            RtlpDestroyHeapSegment(Segment);
         }
     }
 
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-    if( IsHeapLogging( HeapHandle ) ) {
+    if (IsHeapLogging(HeapHandle))
+    {
 
         PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
         PPERFINFO_TRACE_HEADER pEventHeader = NULL;
         USHORT ReqSize = sizeof(NTDLL_EVENT_COMMON) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-        AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize );
+        AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-        if(pEventHeader && pThreadLocalData) {
+        if (pEventHeader && pThreadLocalData)
+        {
 
-            PNTDLL_EVENT_COMMON pHeapEvent = (PNTDLL_EVENT_COMMON)( (SIZE_T)pEventHeader
-                                            + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+            PNTDLL_EVENT_COMMON pHeapEvent =
+                (PNTDLL_EVENT_COMMON)((SIZE_T)pEventHeader + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-            pEventHeader->Packet.Size = (USHORT) ReqSize;
-            pEventHeader->Packet.HookId= PERFINFO_LOG_TYPE_HEAP_DESTROY;
+            pEventHeader->Packet.Size = (USHORT)ReqSize;
+            pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_DESTROY;
 
             pHeapEvent->Handle = (PVOID)HeapHandle;
 
             ReleaseBufferLocation(pThreadLocalData);
         }
-    } 
+    }
 
-    #endif // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
 
     //
@@ -1482,13 +1434,9 @@ Return Value:
     return NULL;
 }
 
-
+
 PVOID
-RtlAllocateHeap (
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN SIZE_T Size
-    )
+RtlAllocateHeap(IN PVOID HeapHandle, IN ULONG Flags, IN SIZE_T Size)
 
 /*++
 
@@ -1528,7 +1476,7 @@ Return Value:
     BOOLEAN LockAcquired = FALSE;
     SIZE_T BlockSize = 0;
     PVOID FrontEndHeap = NULL;
-    
+
     HEAP_PERF_DECLARE_TIMER();
 
     RTL_PAGED_CODE();
@@ -1537,11 +1485,10 @@ Return Value:
 #ifndef NTOS_KERNEL_RUNTIME
 #ifdef NTHEAP_ENABLED
     {
-        if (Heap->Flags & NTHEAP_ENABLED_FLAG) {
+        if (Heap->Flags & NTHEAP_ENABLED_FLAG)
+        {
 
-            return RtlAllocateNtHeap( HeapHandle,
-                                      Flags,
-                                      Size);
+            return RtlAllocateNtHeap(HeapHandle, Flags, Size);
         }
     }
 #endif // NTHEAP_ENABLED
@@ -1586,12 +1533,13 @@ Return Value:
     //  We also do everything slow if the size is greater than max long
     //
 
-    if ((Flags & HEAP_SLOW_FLAGS) || (Size >= 0x80000000)) {
+    if ((Flags & HEAP_SLOW_FLAGS) || (Size >= 0x80000000))
+    {
 
-        ReturnValue = RtlAllocateHeapSlowly( HeapHandle, Flags, Size );
+        ReturnValue = RtlAllocateHeapSlowly(HeapHandle, Flags, Size);
 
-        if ( (ReturnValue == NULL) && 
-             (Flags & HEAP_GENERATE_EXCEPTIONS) ) {
+        if ((ReturnValue == NULL) && (Flags & HEAP_GENERATE_EXCEPTIONS))
+        {
 
             //
             //  Construct an exception record.
@@ -1601,9 +1549,9 @@ Return Value:
             ExceptionRecord.ExceptionRecord = (PEXCEPTION_RECORD)NULL;
             ExceptionRecord.NumberParameters = 1;
             ExceptionRecord.ExceptionFlags = 0;
-            ExceptionRecord.ExceptionInformation[ 0 ] = Size;
+            ExceptionRecord.ExceptionInformation[0] = Size;
 
-            RtlRaiseException( &ExceptionRecord );
+            RtlRaiseException(&ExceptionRecord);
         }
 
         return ReturnValue;
@@ -1611,22 +1559,23 @@ Return Value:
 
 #ifndef NTOS_KERNEL_RUNTIME
 
-    if ((FrontEndHeap = RtlpGetLowFragHeap(Heap))
-            &&
-        RtlpIsFrontHeapUnlocked(Heap)
-            &&
-        !(Flags & (HEAP_NO_CACHE_BLOCK | HEAP_NO_SERIALIZE))) {
+    if ((FrontEndHeap = RtlpGetLowFragHeap(Heap)) && RtlpIsFrontHeapUnlocked(Heap) &&
+        !(Flags & (HEAP_NO_CACHE_BLOCK | HEAP_NO_SERIALIZE)))
+    {
 
-        ReturnValue = RtlpLowFragHeapAlloc( FrontEndHeap, (Size ? Size : 1) );
-        
-        if (ReturnValue != NULL) {
+        ReturnValue = RtlpLowFragHeapAlloc(FrontEndHeap, (Size ? Size : 1));
 
-            if (Flags & HEAP_ZERO_MEMORY) {
+        if (ReturnValue != NULL)
+        {
 
-                RtlZeroMemory( ReturnValue, Size );
+            if (Flags & HEAP_ZERO_MEMORY)
+            {
+
+                RtlZeroMemory(ReturnValue, Size);
             }
 
-            if( IsHeapLogging( HeapHandle ) ) {
+            if (IsHeapLogging(HeapHandle))
+            {
 
                 PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
                 PPERFINFO_TRACE_HEADER pEventHeader = NULL;
@@ -1634,22 +1583,23 @@ Return Value:
 
                 AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                if(pEventHeader && pThreadLocalData) {
+                if (pEventHeader && pThreadLocalData)
+                {
 
-                    PHEAP_EVENT_ALLOC pHeapEvent = (PHEAP_EVENT_ALLOC)((SIZE_T)pEventHeader
-                                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                    PHEAP_EVENT_ALLOC pHeapEvent =
+                        (PHEAP_EVENT_ALLOC)((SIZE_T)pEventHeader + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                    pEventHeader->Packet.Size = (USHORT) ReqSize;
+                    pEventHeader->Packet.Size = (USHORT)ReqSize;
                     pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_ALLOC;
 
-                    pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-                    pHeapEvent->Size		= Size;
-                    pHeapEvent->Address		= (PVOID)ReturnValue;
-                    pHeapEvent->Source		= MEMORY_FROM_LOWFRAG;
+                    pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+                    pHeapEvent->Size = Size;
+                    pHeapEvent->Address = (PVOID)ReturnValue;
+                    pHeapEvent->Source = MEMORY_FROM_LOWFRAG;
 
                     ReleaseBufferLocation(pThreadLocalData);
                 }
-            } 
+            }
 
             return ReturnValue;
         }
@@ -1671,25 +1621,23 @@ Return Value:
     //  Note that allocation size 8 is skipped and are indices 0 and 1
     //
 
-    AllocationSize = ((Size ? Size : 1) + HEAP_GRANULARITY - 1 + sizeof( HEAP_ENTRY ))
-        & ~(HEAP_GRANULARITY -1);
-    
+    AllocationSize = ((Size ? Size : 1) + HEAP_GRANULARITY - 1 + sizeof(HEAP_ENTRY)) & ~(HEAP_GRANULARITY - 1);
+
 #ifndef NTOS_KERNEL_RUNTIME
 
     //
     //  Adjust the size to page boundary to reduce the virtual address fragmentation
     //
 
-    if (FrontEndHeap 
-            &&
-        (AllocationSize > HEAP_LARGEST_LFH_BLOCK)) {
+    if (FrontEndHeap && (AllocationSize > HEAP_LARGEST_LFH_BLOCK))
+    {
 
         AllocationSize = ROUND_UP_TO_POWER2(AllocationSize, PAGE_SIZE);
     }
 
 #endif //  NTOS_KERNEL_RUNTIME
 
-    AllocationIndex = AllocationSize >>  HEAP_GRANULARITY_SHIFT;
+    AllocationIndex = AllocationSize >> HEAP_GRANULARITY_SHIFT;
 
     //
     //  If there is a lookaside list and the index is within limits then
@@ -1707,9 +1655,8 @@ Return Value:
     {
         PHEAP_LOOKASIDE Lookaside = (PHEAP_LOOKASIDE)RtlpGetLookasideHeap(Heap);
 
-        if ((Lookaside != NULL) &&
-            RtlpIsFrontHeapUnlocked(Heap) &&
-            (AllocationIndex < HEAP_MAXIMUM_FREELISTS)) {
+        if ((Lookaside != NULL) && RtlpIsFrontHeapUnlocked(Heap) && (AllocationIndex < HEAP_MAXIMUM_FREELISTS))
+        {
 
             //
             //  If the number of operation elapsed operations is 128 times the
@@ -1717,14 +1664,16 @@ Return Value:
             //
 
             if ((LONG)(Lookaside[AllocationIndex].TotalAllocates - Lookaside[AllocationIndex].LastTotalAllocates) >=
-                      (Lookaside[AllocationIndex].Depth * 128)) {
+                (Lookaside[AllocationIndex].Depth * 128))
+            {
 
                 RtlpAdjustHeapLookasideDepth(&(Lookaside[AllocationIndex]));
             }
 
             ReturnValue = RtlpAllocateFromHeapLookaside(&(Lookaside[AllocationIndex]));
-            
-            if (ReturnValue != NULL) {
+
+            if (ReturnValue != NULL)
+            {
 
                 PHEAP_ENTRY BusyBlock;
 
@@ -1732,39 +1681,43 @@ Return Value:
                 BusyBlock->UnusedBytes = (UCHAR)(AllocationSize - Size);
                 BusyBlock->SmallTagIndex = 0;
 
-                if (Flags & HEAP_ZERO_MEMORY) {
+                if (Flags & HEAP_ZERO_MEMORY)
+                {
 
-                    RtlZeroMemory( ReturnValue, Size );
+                    RtlZeroMemory(ReturnValue, Size);
                 }
-                #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-                if( IsHeapLogging( HeapHandle ) && (TraceLevel & LOG_LOOKASIDE)) {
+                if (IsHeapLogging(HeapHandle) && (TraceLevel & LOG_LOOKASIDE))
+                {
 
                     PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
                     PPERFINFO_TRACE_HEADER pEventHeader = NULL;
 
                     USHORT ReqSize = sizeof(HEAP_EVENT_ALLOC) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-                    AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+                    AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                    if(pEventHeader && pThreadLocalData) {
+                    if (pEventHeader && pThreadLocalData)
+                    {
 
-                        PHEAP_EVENT_ALLOC pHeapEvent = (PHEAP_EVENT_ALLOC)( (SIZE_T)pEventHeader
-                                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                        PHEAP_EVENT_ALLOC pHeapEvent =
+                            (PHEAP_EVENT_ALLOC)((SIZE_T)pEventHeader +
+                                                (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                        pEventHeader->Packet.Size = (USHORT) ReqSize;
+                        pEventHeader->Packet.Size = (USHORT)ReqSize;
                         pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_ALLOC;
 
-                        pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-                        pHeapEvent->Size		= Size;
-                        pHeapEvent->Address		= (PVOID)ReturnValue;
-                        pHeapEvent->Source		= MEMORY_FROM_LOOKASIDE;
+                        pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+                        pHeapEvent->Size = Size;
+                        pHeapEvent->Address = (PVOID)ReturnValue;
+                        pHeapEvent->Source = MEMORY_FROM_LOOKASIDE;
 
                         ReleaseBufferLocation(pThreadLocalData);
                     }
-                } 
+                }
 
-                #endif //NTOS_KERNEL_RUNTIME
+#endif //NTOS_KERNEL_RUNTIME
 
                 return ReturnValue;
             }
@@ -1774,21 +1727,23 @@ Return Value:
 
 #endif // NTOS_KERNEL_RUNTIME
 
-    try {
+    try
+    {
 
         HEAP_PERF_START_TIMER(Heap);
-        
+
         //
         //  Check if we need to serialize our access to the heap
         //
 
-        if (!(Flags & HEAP_NO_SERIALIZE)) {
+        if (!(Flags & HEAP_NO_SERIALIZE))
+        {
 
             //
             //  Lock the free list.
             //
 
-            RtlAcquireLockRoutine( Heap->LockVariable );
+            RtlAcquireLockRoutine(Heap->LockVariable);
 
             LockAcquired = TRUE;
         }
@@ -1800,29 +1755,29 @@ Return Value:
         //  memory directly for this request.
         //
 
-        if (AllocationIndex < HEAP_MAXIMUM_FREELISTS) {
+        if (AllocationIndex < HEAP_MAXIMUM_FREELISTS)
+        {
 
             //
             //  With a size that matches a free list size grab the head
             //  of the list and check if there is an available entry
             //
 
-            FreeListHead = &Heap->FreeLists[ AllocationIndex ];
+            FreeListHead = &Heap->FreeLists[AllocationIndex];
 
-            if ( !IsListEmpty( FreeListHead ))  {
+            if (!IsListEmpty(FreeListHead))
+            {
 
                 //
                 //  We're in luck the list has an entry so now get the free
                 //  entry,  copy its flags, remove it from the free list
                 //
 
-                FreeBlock = CONTAINING_RECORD( FreeListHead->Blink,
-                                               HEAP_FREE_ENTRY,
-                                               FreeList );
+                FreeBlock = CONTAINING_RECORD(FreeListHead->Blink, HEAP_FREE_ENTRY, FreeList);
 
                 FreeFlags = FreeBlock->Flags;
 
-                RtlpFastRemoveDedicatedFreeBlock( Heap, FreeBlock );
+                RtlpFastRemoveDedicatedFreeBlock(Heap, FreeBlock);
 
                 //
                 //  Adjust the total number of bytes free in the heap
@@ -1842,8 +1797,9 @@ Return Value:
                 RtlpSetUnusedBytes(Heap, BusyBlock, AllocationSize - Size);
 
                 BusyBlock->SmallTagIndex = 0;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  The free list that matches our request is empty
@@ -1856,7 +1812,7 @@ Return Value:
                 //  Compute the index of the ULONG where the scan should begin
                 //
 
-                InUseIndex = (ULONG) (AllocationIndex >> 5);
+                InUseIndex = (ULONG)(AllocationIndex >> 5);
                 FreeListsInUse = &Heap->u.FreeListsInUseUlong[InUseIndex];
 
                 //
@@ -1864,17 +1820,19 @@ Return Value:
                 //  smaller than we need.
                 //
 
-                FreeListsInUseUlong = *FreeListsInUse++ & ~((1 << ((ULONG) AllocationIndex & 0x1f)) - 1);
+                FreeListsInUseUlong = *FreeListsInUse++ & ~((1 << ((ULONG)AllocationIndex & 0x1f)) - 1);
 
                 //
                 //  Begin unrolled loop to scan bit vector.
                 //
 
-                switch (InUseIndex) {
+                switch (InUseIndex)
+                {
 
                 case 0:
 
-                    if (FreeListsInUseUlong) {
+                    if (FreeListsInUseUlong)
+                    {
 
                         FreeListHead = &Heap->FreeLists[0];
                         break;
@@ -1888,7 +1846,8 @@ Return Value:
 
                 case 1:
 
-                    if (FreeListsInUseUlong) {
+                    if (FreeListsInUseUlong)
+                    {
 
                         FreeListHead = &Heap->FreeLists[32];
                         break;
@@ -1902,7 +1861,8 @@ Return Value:
 
                 case 2:
 
-                    if (FreeListsInUseUlong) {
+                    if (FreeListsInUseUlong)
+                    {
 
                         FreeListHead = &Heap->FreeLists[64];
                         break;
@@ -1916,7 +1876,8 @@ Return Value:
 
                 case 3:
 
-                    if (FreeListsInUseUlong) {
+                    if (FreeListsInUseUlong)
+                    {
 
                         FreeListHead = &Heap->FreeLists[96];
                         break;
@@ -1941,19 +1902,17 @@ Return Value:
                 //  FreeListsInUseUlong contains the vector.
                 //
 
-                FreeListHead += RtlFindFirstSetRightMember( FreeListsInUseUlong );
+                FreeListHead += RtlFindFirstSetRightMember(FreeListsInUseUlong);
 
                 //
                 //  Grab the free block and remove it from the free list
                 //
 
-                FreeBlock = CONTAINING_RECORD( FreeListHead->Blink,
-                                               HEAP_FREE_ENTRY,
-                                               FreeList );
+                FreeBlock = CONTAINING_RECORD(FreeListHead->Blink, HEAP_FREE_ENTRY, FreeList);
 
-                RtlpFastRemoveDedicatedFreeBlock( Heap, FreeBlock );
+                RtlpFastRemoveDedicatedFreeBlock(Heap, FreeBlock);
 
-    SplitFreeBlock:
+            SplitFreeBlock:
 
                 //
                 //  Save the blocks flags and decrement the amount of
@@ -1990,7 +1949,8 @@ Return Value:
                 //  then lets get to work and to the split.
                 //
 
-                if (FreeSize != 0) {
+                if (FreeSize != 0)
+                {
 
                     //
                     //  But first we won't ever bother doing a split that only
@@ -1998,12 +1958,14 @@ Return Value:
                     //  bump up the size of the new busy block
                     //
 
-                    if (FreeSize == 1) {
+                    if (FreeSize == 1)
+                    {
 
                         BusyBlock->Size += 1;
-                        RtlpSetUnusedBytes(Heap, BusyBlock, AllocationSize + sizeof( HEAP_ENTRY ) - Size );
-
-                    } else {
+                        RtlpSetUnusedBytes(Heap, BusyBlock, AllocationSize + sizeof(HEAP_ENTRY) - Size);
+                    }
+                    else
+                    {
 
                         //
                         //  Get a pointer to where the new free block will be.
@@ -2030,12 +1992,14 @@ Return Value:
                         //  Segment->LastEntryInSegment)
                         //
 
-                        if (FreeFlags & HEAP_ENTRY_LAST_ENTRY) {
+                        if (FreeFlags & HEAP_ENTRY_LAST_ENTRY)
+                        {
 
-                            RtlpFastInsertFreeBlockDirect( Heap, SplitBlock, (USHORT)FreeSize);
+                            RtlpFastInsertFreeBlockDirect(Heap, SplitBlock, (USHORT)FreeSize);
                             Heap->TotalFreeSize += FreeSize;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             //
                             //  Otherwise we need to check the following block
@@ -2046,14 +2010,16 @@ Return Value:
 
                             SplitBlock2 = (PHEAP_FREE_ENTRY)((PHEAP_ENTRY)SplitBlock + FreeSize);
 
-                            if (SplitBlock2->Flags & HEAP_ENTRY_BUSY) {
+                            if (SplitBlock2->Flags & HEAP_ENTRY_BUSY)
+                            {
 
                                 SplitBlock2->PreviousSize = (USHORT)FreeSize;
 
-                                RtlpFastInsertFreeBlockDirect( Heap, SplitBlock, (USHORT)FreeSize );
+                                RtlpFastInsertFreeBlockDirect(Heap, SplitBlock, (USHORT)FreeSize);
                                 Heap->TotalFreeSize += FreeSize;
-
-                            } else {
+                            }
+                            else
+                            {
 
                                 //
                                 //  The following block is free so we'll merge
@@ -2066,7 +2032,7 @@ Return Value:
                                 //  Removing the second block from its free list
                                 //
 
-                                RtlpFastRemoveFreeBlock( Heap, SplitBlock2 );
+                                RtlpFastRemoveFreeBlock(Heap, SplitBlock2);
 
                                 //
                                 //  Updating the free total number of free bytes
@@ -2083,7 +2049,8 @@ Return Value:
                                 //  insert it back in the free list
                                 //
 
-                                if (FreeSize <= HEAP_MAXIMUM_BLOCK_SIZE) {
+                                if (FreeSize <= HEAP_MAXIMUM_BLOCK_SIZE)
+                                {
 
                                     SplitBlock->Size = (USHORT)FreeSize;
 
@@ -2093,9 +2060,11 @@ Return Value:
                                     //  size
                                     //
 
-                                    if (!(SplitBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+                                    if (!(SplitBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+                                    {
 
-                                        ((PHEAP_FREE_ENTRY)((PHEAP_ENTRY)SplitBlock + FreeSize))->PreviousSize = (USHORT)FreeSize;
+                                        ((PHEAP_FREE_ENTRY)((PHEAP_ENTRY)SplitBlock + FreeSize))->PreviousSize =
+                                            (USHORT)FreeSize;
                                     }
 
                                     //
@@ -2103,10 +2072,11 @@ Return Value:
                                     //  list and update the free heap size
                                     //
 
-                                    RtlpFastInsertFreeBlockDirect( Heap, SplitBlock, (USHORT)FreeSize );
+                                    RtlpFastInsertFreeBlockDirect(Heap, SplitBlock, (USHORT)FreeSize);
                                     Heap->TotalFreeSize += FreeSize;
-
-                                } else {
+                                }
+                                else
+                                {
 
                                     //
                                     //  The new free block is pretty large so we
@@ -2114,7 +2084,7 @@ Return Value:
                                     //  insert
                                     //
 
-                                    RtlpInsertFreeBlock( Heap, SplitBlock, FreeSize );
+                                    RtlpInsertFreeBlock(Heap, SplitBlock, FreeSize);
                                 }
                             }
                         }
@@ -2130,7 +2100,8 @@ Return Value:
                         //  If splitblock now last, update LastEntryInSegment
                         //
 
-                        if (SplitBlock->Flags & HEAP_ENTRY_LAST_ENTRY) {
+                        if (SplitBlock->Flags & HEAP_ENTRY_LAST_ENTRY)
+                        {
 
                             PHEAP_SEGMENT Segment;
 
@@ -2145,7 +2116,8 @@ Return Value:
                 //  such
                 //
 
-                if (FreeFlags & HEAP_ENTRY_LAST_ENTRY) {
+                if (FreeFlags & HEAP_ENTRY_LAST_ENTRY)
+                {
 
                     BusyBlock->Flags |= HEAP_ENTRY_LAST_ENTRY;
                 }
@@ -2163,20 +2135,22 @@ Return Value:
             //  Release the lock before the zero memory call
             //
 
-            if (LockAcquired) {
+            if (LockAcquired)
+            {
 
-                RtlReleaseLockRoutine( Heap->LockVariable );
+                RtlReleaseLockRoutine(Heap->LockVariable);
 
                 LockAcquired = FALSE;
             }
-            
+
             //
             //  If the flags indicate that we should zero memory then do it now
             //
 
-            if (Flags & HEAP_ZERO_MEMORY) {
+            if (Flags & HEAP_ZERO_MEMORY)
+            {
 
-                RtlZeroMemory( ReturnValue, Size );
+                RtlZeroMemory(ReturnValue, Size);
             }
 
             //
@@ -2185,15 +2159,16 @@ Return Value:
 
             leave;
 
-        //
-        //  Otherwise the allocation request is bigger than the last dedicated
-        //  free list size.  Now check if the size is within our threshold.
-        //  Meaning that it could be in the [0] free list
-        //
+            //
+            //  Otherwise the allocation request is bigger than the last dedicated
+            //  free list size.  Now check if the size is within our threshold.
+            //  Meaning that it could be in the [0] free list
+            //
+        }
+        else if (AllocationIndex <= Heap->VirtualMemoryThreshold)
+        {
 
-        } else if (AllocationIndex <= Heap->VirtualMemoryThreshold) {
-
-    LookInNonDedicatedList:
+        LookInNonDedicatedList:
 
             //
             //  The following code cycles through the [0] free list until
@@ -2202,20 +2177,23 @@ Return Value:
             //
 
             FreeListHead = &Heap->FreeLists[0];
-        
-            if (Heap->LargeBlocksIndex) {
+
+            if (Heap->LargeBlocksIndex)
+            {
 
                 //
                 //  We can use the index to find the block very quick
                 //
 
-                Next = RtlpFindEntry( Heap, (ULONG)AllocationIndex );
+                Next = RtlpFindEntry(Heap, (ULONG)AllocationIndex);
 
-                if ( FreeListHead != Next ) {
+                if (FreeListHead != Next)
+                {
 
-                    FreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+                    FreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
-                    if ( FreeBlock->Size >= AllocationIndex ) {
+                    if (FreeBlock->Size >= AllocationIndex)
+                    {
 
                         //
                         //  We've found something that we can use so now remove
@@ -2227,42 +2205,45 @@ Return Value:
                         //
 #ifndef NTOS_KERNEL_RUNTIME
 
-                        if ((((PHEAP_INDEX)Heap->LargeBlocksIndex)->LargeBlocksCacheSequence)
-                                &&
-                            (AllocationIndex > Heap->DeCommitFreeBlockThreshold) 
-                                &&
-                            (FreeBlock->Size > (AllocationIndex * HEAP_REUSAGE_FACTOR))) {
+                        if ((((PHEAP_INDEX)Heap->LargeBlocksIndex)->LargeBlocksCacheSequence) &&
+                            (AllocationIndex > Heap->DeCommitFreeBlockThreshold) &&
+                            (FreeBlock->Size > (AllocationIndex * HEAP_REUSAGE_FACTOR)))
+                        {
 
                             RtlpFlushLargestCacheBlock(Heap);
+                        }
+                        else
+                        {
 
-                        } else {
-                            
-                            RtlpFastRemoveNonDedicatedFreeBlock( Heap, FreeBlock );
+                            RtlpFastRemoveNonDedicatedFreeBlock(Heap, FreeBlock);
 
                             goto SplitFreeBlock;
                         }
-#else // NTOS_KERNEL_RUNTIME
-                        
-                        RtlpFastRemoveNonDedicatedFreeBlock( Heap, FreeBlock );
+#else  // NTOS_KERNEL_RUNTIME
+
+                        RtlpFastRemoveNonDedicatedFreeBlock(Heap, FreeBlock);
 
                         goto SplitFreeBlock;
 #endif // NTOS_KERNEL_RUNTIME
                     }
                 }
+            }
+            else
+            {
 
-            } else {
-                
                 //
                 //  Check if the largest block in the list is smaller than the request
                 //
 
                 Next = FreeListHead->Blink;
 
-                if (FreeListHead != Next) {
+                if (FreeListHead != Next)
+                {
 
-                    FreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+                    FreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
-                    if (FreeBlock->Size >= AllocationIndex) {
+                    if (FreeBlock->Size >= AllocationIndex)
+                    {
 
                         //
                         //  Here we are sure there is at least a block here larger than
@@ -2271,11 +2252,13 @@ Return Value:
 
                         Next = FreeListHead->Flink;
 
-                        while (FreeListHead != Next) {
+                        while (FreeListHead != Next)
+                        {
 
-                            FreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+                            FreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
-                            if (FreeBlock->Size >= AllocationIndex) {
+                            if (FreeBlock->Size >= AllocationIndex)
+                            {
 
                                 //
                                 //  We've found something that we can use so now remove
@@ -2286,7 +2269,7 @@ Return Value:
                                 //  nothing free after the split
                                 //
 
-                                RtlpFastRemoveNonDedicatedFreeBlock( Heap, FreeBlock );
+                                RtlpFastRemoveNonDedicatedFreeBlock(Heap, FreeBlock);
 
                                 goto SplitFreeBlock;
                             }
@@ -2296,23 +2279,24 @@ Return Value:
                     }
                 }
             }
-            
+
             //
             //  The [0] list is either empty or everything is too small
             //  so now extend the heap which should get us something less
             //  than or equal to the virtual memory threshold
             //
 
-            FreeBlock = RtlpExtendHeap( Heap, AllocationSize );
+            FreeBlock = RtlpExtendHeap(Heap, AllocationSize);
 
             //
             //  And provided we got something we'll treat it just like the previous
             //  split free block cases
             //
 
-            if (FreeBlock != NULL) {
+            if (FreeBlock != NULL)
+            {
 
-                RtlpFastRemoveNonDedicatedFreeBlock( Heap, FreeBlock );
+                RtlpFastRemoveNonDedicatedFreeBlock(Heap, FreeBlock);
 
                 goto SplitFreeBlock;
             }
@@ -2323,12 +2307,13 @@ Return Value:
 
             Status = STATUS_NO_MEMORY;
 
-        //
-        //  At this point the allocation is way too big for any of the free lists
-        //  and we can only satisfy this request if the heap is growable
-        //
-
-        } else if (Heap->Flags & HEAP_GROWABLE) {
+            //
+            //  At this point the allocation is way too big for any of the free lists
+            //  and we can only satisfy this request if the heap is growable
+            //
+        }
+        else if (Heap->Flags & HEAP_GROWABLE)
+        {
 
             PHEAP_VIRTUAL_ALLOC_ENTRY VirtualAllocBlock;
 
@@ -2340,16 +2325,13 @@ Return Value:
             //  get the committed memory
             //
 
-            AllocationSize += FIELD_OFFSET( HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock );
+            AllocationSize += FIELD_OFFSET(HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock);
 
-            Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                              (PVOID *)&VirtualAllocBlock,
-                                              0,
-                                              &AllocationSize,
-                                              MEM_COMMIT,
-                                              PAGE_READWRITE );
+            Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&VirtualAllocBlock, 0, &AllocationSize,
+                                             MEM_COMMIT, PAGE_READWRITE);
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
                 //
                 //  Just committed, already zero.  Fill in the new block
@@ -2357,11 +2339,12 @@ Return Value:
                 //
 
                 VirtualAllocBlock->BusyBlock.Size = (USHORT)(AllocationSize - Size);
-                VirtualAllocBlock->BusyBlock.Flags = HEAP_ENTRY_VIRTUAL_ALLOC | HEAP_ENTRY_EXTRA_PRESENT | HEAP_ENTRY_BUSY;
+                VirtualAllocBlock->BusyBlock.Flags =
+                    HEAP_ENTRY_VIRTUAL_ALLOC | HEAP_ENTRY_EXTRA_PRESENT | HEAP_ENTRY_BUSY;
                 VirtualAllocBlock->CommitSize = AllocationSize;
                 VirtualAllocBlock->ReserveSize = AllocationSize;
 
-                InsertTailList( &Heap->VirtualAllocdBlocks, (PLIST_ENTRY)VirtualAllocBlock );
+                InsertTailList(&Heap->VirtualAllocdBlocks, (PLIST_ENTRY)VirtualAllocBlock);
 
                 //
                 //  Return the address of the user portion of the allocated block.
@@ -2373,8 +2356,9 @@ Return Value:
 
                 leave;
             }
-
-        } else {
+        }
+        else
+        {
 
             Status = STATUS_BUFFER_TOO_SMALL;
         }
@@ -2383,7 +2367,8 @@ Return Value:
         //  This is the error return.
         //
 
-        if (Flags & HEAP_GENERATE_EXCEPTIONS) {
+        if (Flags & HEAP_GENERATE_EXCEPTIONS)
+        {
 
             //
             //  Construct an exception record.
@@ -2393,64 +2378,64 @@ Return Value:
             ExceptionRecord.ExceptionRecord = (PEXCEPTION_RECORD)NULL;
             ExceptionRecord.NumberParameters = 1;
             ExceptionRecord.ExceptionFlags = 0;
-            ExceptionRecord.ExceptionInformation[ 0 ] = AllocationSize;
+            ExceptionRecord.ExceptionInformation[0] = AllocationSize;
 
-            RtlRaiseException( &ExceptionRecord );
+            RtlRaiseException(&ExceptionRecord);
         }
 
         SET_LAST_STATUS(Status);
 
         ReturnValue = NULL;
+    }
+    finally
+    {
 
-    } finally {
+        if (LockAcquired)
+        {
 
-        if (LockAcquired) {
-
-            RtlReleaseLockRoutine( Heap->LockVariable );
+            RtlReleaseLockRoutine(Heap->LockVariable);
         }
     }
-    
+
     RtlpRegisterOperation(Heap, BlockSize, HEAP_OP_ALLOC);
     HEAP_PERF_STOP_TIMER(Heap, HEAP_OP_ALLOC);
 
-    #ifndef NTOS_KERNEL_RUNTIME
-    if( IsHeapLogging( HeapHandle ) ) {
+#ifndef NTOS_KERNEL_RUNTIME
+    if (IsHeapLogging(HeapHandle))
+    {
 
         PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
         PPERFINFO_TRACE_HEADER pEventHeader = NULL;
         USHORT ReqSize = sizeof(HEAP_EVENT_ALLOC) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-        AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+        AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-        if(pEventHeader && pThreadLocalData) {
+        if (pEventHeader && pThreadLocalData)
+        {
 
-            PHEAP_EVENT_ALLOC pHeapEvent = (PHEAP_EVENT_ALLOC)( (SIZE_T)pEventHeader
-                                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+            PHEAP_EVENT_ALLOC pHeapEvent =
+                (PHEAP_EVENT_ALLOC)((SIZE_T)pEventHeader + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-            pEventHeader->Packet.Size = (USHORT) ReqSize;
+            pEventHeader->Packet.Size = (USHORT)ReqSize;
             pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_ALLOC;
 
-            pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-            pHeapEvent->Size		= Size;
-            pHeapEvent->Address		= (PVOID)ReturnValue;
-            pHeapEvent->Source		= MEMORY_FROM_MAINPATH;
+            pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+            pHeapEvent->Size = Size;
+            pHeapEvent->Address = (PVOID)ReturnValue;
+            pHeapEvent->Source = MEMORY_FROM_MAINPATH;
 
             ReleaseBufferLocation(pThreadLocalData);
         }
-    } 
-    #endif //NTOS_KERNEL_RUNTIME
+    }
+#endif //NTOS_KERNEL_RUNTIME
 
 
     return ReturnValue;
 }
 
-
+
 PVOID
-RtlAllocateHeapSlowly (
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN SIZE_T Size
-    )
+RtlAllocateHeapSlowly(IN PVOID HeapHandle, IN ULONG Flags, IN SIZE_T Size)
 
 /*++
 
@@ -2490,11 +2475,11 @@ Return Value:
     EXCEPTION_RECORD ExceptionRecord;
     SIZE_T ZeroSize = 0;
     SIZE_T BlockSize = 0;
-    
+
     HEAP_PERF_DECLARE_TIMER();
 
     RTL_PAGED_CODE();
-    
+
     //
     //  Note that Flags has already been OR'd with Heap->ForceFlags.
     //
@@ -2506,9 +2491,10 @@ Return Value:
     //  of heap allocation
     //
 
-    if (DEBUG_HEAP( Flags )) {
+    if (DEBUG_HEAP(Flags))
+    {
 
-        return RtlDebugAllocateHeap( HeapHandle, Flags, Size );
+        return RtlDebugAllocateHeap(HeapHandle, Flags, Size);
     }
 
 #endif // NTOS_KERNEL_RUNTIME
@@ -2518,9 +2504,10 @@ Return Value:
     //  much and return the error to our caller
     //
 
-    if (Size > MAXINT_PTR) {
+    if (Size > MAXINT_PTR)
+    {
 
-        SET_LAST_STATUS( STATUS_NO_MEMORY );
+        SET_LAST_STATUS(STATUS_NO_MEMORY);
 
         return NULL;
     }
@@ -2544,25 +2531,28 @@ Return Value:
 
     EntryFlags = (UCHAR)(HEAP_ENTRY_BUSY | ((Flags & HEAP_SETTABLE_USER_FLAGS) >> 4));
 
-    if ((Flags & HEAP_NEED_EXTRA_FLAGS) || (Heap->PseudoTagEntries != NULL)) {
+    if ((Flags & HEAP_NEED_EXTRA_FLAGS) || (Heap->PseudoTagEntries != NULL))
+    {
 
         EntryFlags |= HEAP_ENTRY_EXTRA_PRESENT;
-        AllocationSize += sizeof( HEAP_ENTRY_EXTRA );
+        AllocationSize += sizeof(HEAP_ENTRY_EXTRA);
     }
 
     AllocationIndex = AllocationSize >> HEAP_GRANULARITY_SHIFT;
 
-    try {
+    try
+    {
 
         HEAP_PERF_START_TIMER(Heap);
-        
+
         //
         //  Lock the free list.
         //
 
-        if (!(Flags & HEAP_NO_SERIALIZE)) {
+        if (!(Flags & HEAP_NO_SERIALIZE))
+        {
 
-            RtlAcquireLockRoutine( Heap->LockVariable );
+            RtlAcquireLockRoutine(Heap->LockVariable);
 
             LockAcquired = TRUE;
         }
@@ -2572,7 +2562,8 @@ Return Value:
         //  to protect us from corruption
         //
 
-        try {
+        try
+        {
 
             //
             //  If the allocation index is less than the maximum free list size
@@ -2581,29 +2572,29 @@ Return Value:
             //  memory directly for this request.
             //
 
-            if (AllocationIndex < HEAP_MAXIMUM_FREELISTS) {
+            if (AllocationIndex < HEAP_MAXIMUM_FREELISTS)
+            {
 
                 //
                 //  With a size that matches a free list size grab the head
                 //  of the list and check if there is an available entry
                 //
 
-                FreeListHead = &Heap->FreeLists[ AllocationIndex ];
+                FreeListHead = &Heap->FreeLists[AllocationIndex];
 
-                if ( !IsListEmpty( FreeListHead ))  {
+                if (!IsListEmpty(FreeListHead))
+                {
 
                     //
                     //  We're in luck the list has an entry so now get the free
                     //  entry,  copy its flags, remove it from the free list
                     //
 
-                    FreeBlock = CONTAINING_RECORD( FreeListHead->Flink,
-                                                   HEAP_FREE_ENTRY,
-                                                   FreeList );
+                    FreeBlock = CONTAINING_RECORD(FreeListHead->Flink, HEAP_FREE_ENTRY, FreeList);
 
                     FreeFlags = FreeBlock->Flags;
 
-                    RtlpRemoveFreeBlock( Heap, FreeBlock );
+                    RtlpRemoveFreeBlock(Heap, FreeBlock);
 
                     //
                     //  Adjust the total number of bytes free in the heap
@@ -2620,8 +2611,9 @@ Return Value:
                     BusyBlock = (PHEAP_ENTRY)FreeBlock;
                     BusyBlock->Flags = EntryFlags | (FreeFlags & HEAP_ENTRY_LAST_ENTRY);
                     RtlpSetUnusedBytes(Heap, BusyBlock, (AllocationSize - Size));
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  The free list that matches our request is empty.  We know
@@ -2633,7 +2625,8 @@ Return Value:
                     //  quarter of the free lists.
                     //
 
-                    if (AllocationIndex < (HEAP_MAXIMUM_FREELISTS * 1) / 4) {
+                    if (AllocationIndex < (HEAP_MAXIMUM_FREELISTS * 1) / 4)
+                    {
 
                         //
                         //  Grab a pointer to the corresponding bitmap ULONG, and
@@ -2641,8 +2634,8 @@ Return Value:
                         //  first bit of the ULONG.
                         //
 
-                        FreeListsInUse = &Heap->u.FreeListsInUseUlong[ 0 ];
-                        FreeListsInUseUlong = *FreeListsInUse++ >> ((ULONG) AllocationIndex & 0x1F);
+                        FreeListsInUse = &Heap->u.FreeListsInUseUlong[0];
+                        FreeListsInUseUlong = *FreeListsInUse++ >> ((ULONG)AllocationIndex & 0x1F);
 
                         //
                         //  If the remaining bitmap has any bits set then we know
@@ -2651,11 +2644,13 @@ Return Value:
                         //  head of the next non empty list
                         //
 
-                        if (FreeListsInUseUlong) {
+                        if (FreeListsInUseUlong)
+                        {
 
-                            FreeListHead += RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                        } else {
+                            FreeListHead += RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                        }
+                        else
+                        {
 
                             //
                             //  The rest of the first ULONG is all zeros so we need
@@ -2670,13 +2665,14 @@ Return Value:
                             //  list
                             //
 
-                            if (FreeListsInUseUlong) {
+                            if (FreeListsInUseUlong)
+                            {
 
-                                FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 1) / 4) -
-                                    (AllocationIndex & 0x1F)  +
-                                    RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                            } else {
+                                FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 1) / 4) - (AllocationIndex & 0x1F) +
+                                                RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                            }
+                            else
+                            {
 
                                 //
                                 //  Do the same test for the third ULONG
@@ -2684,13 +2680,14 @@ Return Value:
 
                                 FreeListsInUseUlong = *FreeListsInUse++;
 
-                                if (FreeListsInUseUlong) {
+                                if (FreeListsInUseUlong)
+                                {
 
-                                    FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 2) / 4) -
-                                        (AllocationIndex & 0x1F) +
-                                        RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                                } else {
+                                    FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 2) / 4) - (AllocationIndex & 0x1F) +
+                                                    RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                                }
+                                else
+                                {
 
                                     //
                                     //  Repeat the test for the forth ULONG, and if
@@ -2700,13 +2697,14 @@ Return Value:
 
                                     FreeListsInUseUlong = *FreeListsInUse++;
 
-                                    if (FreeListsInUseUlong) {
+                                    if (FreeListsInUseUlong)
+                                    {
 
-                                        FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 3) / 4) -
-                                            (AllocationIndex & 0x1F)  +
-                                            RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                                    } else {
+                                        FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 3) / 4) - (AllocationIndex & 0x1F) +
+                                                        RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                                    }
+                                    else
+                                    {
 
                                         goto LookInNonDedicatedList;
                                     }
@@ -2714,97 +2712,109 @@ Return Value:
                             }
                         }
 
-                    //
-                    //  Otherwise check if the requested allocation index lies
-                    //  within the second quarter of the free lists.  We repeat the
-                    //  test just like we did above on the second, third, and forth
-                    //  bitmap ulongs.
-                    //
+                        //
+                        //  Otherwise check if the requested allocation index lies
+                        //  within the second quarter of the free lists.  We repeat the
+                        //  test just like we did above on the second, third, and forth
+                        //  bitmap ulongs.
+                        //
+                    }
+                    else if (AllocationIndex < (HEAP_MAXIMUM_FREELISTS * 2) / 4)
+                    {
 
-                    } else if (AllocationIndex < (HEAP_MAXIMUM_FREELISTS * 2) / 4) {
+                        FreeListsInUse = &Heap->u.FreeListsInUseUlong[1];
+                        FreeListsInUseUlong = *FreeListsInUse++ >> ((ULONG)AllocationIndex & 0x1F);
 
-                        FreeListsInUse = &Heap->u.FreeListsInUseUlong[ 1 ];
-                        FreeListsInUseUlong = *FreeListsInUse++ >> ((ULONG) AllocationIndex & 0x1F);
+                        if (FreeListsInUseUlong)
+                        {
 
-                        if (FreeListsInUseUlong) {
-
-                            FreeListHead += RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                        } else {
+                            FreeListHead += RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                        }
+                        else
+                        {
 
                             FreeListsInUseUlong = *FreeListsInUse++;
 
-                            if (FreeListsInUseUlong) {
+                            if (FreeListsInUseUlong)
+                            {
 
-                                FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 1) / 4) -
-                                    (AllocationIndex & 0x1F)  +
-                                    RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                            } else {
+                                FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 1) / 4) - (AllocationIndex & 0x1F) +
+                                                RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                            }
+                            else
+                            {
 
                                 FreeListsInUseUlong = *FreeListsInUse++;
 
-                                if (FreeListsInUseUlong) {
+                                if (FreeListsInUseUlong)
+                                {
 
-                                    FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 2) / 4) -
-                                        (AllocationIndex & 0x1F)  +
-                                        RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                                } else {
+                                    FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 2) / 4) - (AllocationIndex & 0x1F) +
+                                                    RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                                }
+                                else
+                                {
 
                                     goto LookInNonDedicatedList;
                                 }
                             }
                         }
 
-                    //
-                    //  Otherwise check if the requested allocation index lies
-                    //  within the third quarter of the free lists. We repeat the
-                    //  test just like we did above on the third and forth bitmap
-                    //  ulongs
-                    //
+                        //
+                        //  Otherwise check if the requested allocation index lies
+                        //  within the third quarter of the free lists. We repeat the
+                        //  test just like we did above on the third and forth bitmap
+                        //  ulongs
+                        //
+                    }
+                    else if (AllocationIndex < (HEAP_MAXIMUM_FREELISTS * 3) / 4)
+                    {
 
-                    } else if (AllocationIndex < (HEAP_MAXIMUM_FREELISTS * 3) / 4) {
+                        FreeListsInUse = &Heap->u.FreeListsInUseUlong[2];
+                        FreeListsInUseUlong = *FreeListsInUse++ >> ((ULONG)AllocationIndex & 0x1F);
 
-                        FreeListsInUse = &Heap->u.FreeListsInUseUlong[ 2 ];
-                        FreeListsInUseUlong = *FreeListsInUse++ >> ((ULONG) AllocationIndex & 0x1F);
+                        if (FreeListsInUseUlong)
+                        {
 
-                        if (FreeListsInUseUlong) {
-
-                            FreeListHead += RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                        } else {
+                            FreeListHead += RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                        }
+                        else
+                        {
 
                             FreeListsInUseUlong = *FreeListsInUse++;
 
-                            if (FreeListsInUseUlong) {
+                            if (FreeListsInUseUlong)
+                            {
 
-                                FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 1) / 4) -
-                                    (AllocationIndex & 0x1F)  +
-                                    RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                            } else {
+                                FreeListHead += ((HEAP_MAXIMUM_FREELISTS * 1) / 4) - (AllocationIndex & 0x1F) +
+                                                RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                            }
+                            else
+                            {
 
                                 goto LookInNonDedicatedList;
                             }
                         }
 
-                    //
-                    //  Lastly the requested allocation index must lie within the
-                    //  last quarter of the free lists.  We repeat the test just
-                    //  like we did above on the forth ulong
-                    //
+                        //
+                        //  Lastly the requested allocation index must lie within the
+                        //  last quarter of the free lists.  We repeat the test just
+                        //  like we did above on the forth ulong
+                        //
+                    }
+                    else
+                    {
 
-                    } else {
+                        FreeListsInUse = &Heap->u.FreeListsInUseUlong[3];
+                        FreeListsInUseUlong = *FreeListsInUse++ >> ((ULONG)AllocationIndex & 0x1F);
 
-                        FreeListsInUse = &Heap->u.FreeListsInUseUlong[ 3 ];
-                        FreeListsInUseUlong = *FreeListsInUse++ >> ((ULONG) AllocationIndex & 0x1F);
+                        if (FreeListsInUseUlong)
+                        {
 
-                        if (FreeListsInUseUlong) {
-
-                            FreeListHead += RtlFindFirstSetRightMember( FreeListsInUseUlong );
-
-                        } else {
+                            FreeListHead += RtlFindFirstSetRightMember(FreeListsInUseUlong);
+                        }
+                        else
+                        {
 
                             goto LookInNonDedicatedList;
                         }
@@ -2815,11 +2825,9 @@ Return Value:
                     //  list that is of greater size than we need.
                     //
 
-                    FreeBlock = CONTAINING_RECORD( FreeListHead->Flink,
-                                                   HEAP_FREE_ENTRY,
-                                                   FreeList );
+                    FreeBlock = CONTAINING_RECORD(FreeListHead->Flink, HEAP_FREE_ENTRY, FreeList);
 
-    SplitFreeBlock:
+                SplitFreeBlock:
 
                     //
                     //  Remember the flags that go with this block and remove it
@@ -2828,7 +2836,7 @@ Return Value:
 
                     FreeFlags = FreeBlock->Flags;
 
-                    RtlpRemoveFreeBlock( Heap, FreeBlock );
+                    RtlpRemoveFreeBlock(Heap, FreeBlock);
 
                     //
                     //  Adjust the amount free in the heap
@@ -2862,7 +2870,8 @@ Return Value:
                     //  then lets get to work and to the split.
                     //
 
-                    if (FreeSize != 0) {
+                    if (FreeSize != 0)
+                    {
 
                         //
                         //  But first we won't ever bother doing a split that only
@@ -2870,12 +2879,14 @@ Return Value:
                         //  just bump up the size of the new busy block
                         //
 
-                        if (FreeSize == 1) {
+                        if (FreeSize == 1)
+                        {
 
                             BusyBlock->Size += 1;
-                            RtlpSetUnusedBytes(Heap, BusyBlock, AllocationSize + sizeof( HEAP_ENTRY ) - Size);
-
-                        } else {
+                            RtlpSetUnusedBytes(Heap, BusyBlock, AllocationSize + sizeof(HEAP_ENTRY) - Size);
+                        }
+                        else
+                        {
 
                             //
                             //  Get a pointer to where the new free block will be.
@@ -2901,13 +2912,15 @@ Return Value:
                             //  insert this into the corresponding free list
                             //
 
-                            if (FreeFlags & HEAP_ENTRY_LAST_ENTRY) {
+                            if (FreeFlags & HEAP_ENTRY_LAST_ENTRY)
+                            {
 
-                                RtlpInsertFreeBlockDirect( Heap, SplitBlock, (USHORT)FreeSize );
+                                RtlpInsertFreeBlockDirect(Heap, SplitBlock, (USHORT)FreeSize);
 
                                 Heap->TotalFreeSize += FreeSize;
-
-                            } else {
+                            }
+                            else
+                            {
 
                                 //
                                 //  Otherwise we need to check the following block
@@ -2918,15 +2931,17 @@ Return Value:
 
                                 SplitBlock2 = (PHEAP_FREE_ENTRY)((PHEAP_ENTRY)SplitBlock + FreeSize);
 
-                                if (SplitBlock2->Flags & HEAP_ENTRY_BUSY) {
+                                if (SplitBlock2->Flags & HEAP_ENTRY_BUSY)
+                                {
 
                                     SplitBlock2->PreviousSize = (USHORT)FreeSize;
 
-                                    RtlpInsertFreeBlockDirect( Heap, SplitBlock, (USHORT)FreeSize );
+                                    RtlpInsertFreeBlockDirect(Heap, SplitBlock, (USHORT)FreeSize);
 
                                     Heap->TotalFreeSize += FreeSize;
-
-                                } else {
+                                }
+                                else
+                                {
 
                                     //
                                     //  The following block is free so we'll merge
@@ -2940,7 +2955,7 @@ Return Value:
                                     //  list
                                     //
 
-                                    RtlpRemoveFreeBlock( Heap, SplitBlock2 );
+                                    RtlpRemoveFreeBlock(Heap, SplitBlock2);
 
                                     //
                                     //  Updating the free total number of free
@@ -2957,7 +2972,8 @@ Return Value:
                                     //  simply insert it back in the free list
                                     //
 
-                                    if (FreeSize <= HEAP_MAXIMUM_BLOCK_SIZE) {
+                                    if (FreeSize <= HEAP_MAXIMUM_BLOCK_SIZE)
+                                    {
 
                                         SplitBlock->Size = (USHORT)FreeSize;
 
@@ -2967,9 +2983,11 @@ Return Value:
                                         //  previous size
                                         //
 
-                                        if (!(SplitBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+                                        if (!(SplitBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+                                        {
 
-                                            ((PHEAP_FREE_ENTRY)((PHEAP_ENTRY)SplitBlock + FreeSize))->PreviousSize = (USHORT)FreeSize;
+                                            ((PHEAP_FREE_ENTRY)((PHEAP_ENTRY)SplitBlock + FreeSize))->PreviousSize =
+                                                (USHORT)FreeSize;
                                         }
 
                                         //
@@ -2977,11 +2995,12 @@ Return Value:
                                         //  list and update the free heap size
                                         //
 
-                                        RtlpInsertFreeBlockDirect( Heap, SplitBlock, (USHORT)FreeSize );
+                                        RtlpInsertFreeBlockDirect(Heap, SplitBlock, (USHORT)FreeSize);
 
                                         Heap->TotalFreeSize += FreeSize;
-
-                                    } else {
+                                    }
+                                    else
+                                    {
 
                                         //
                                         //  The new free block is pretty large so
@@ -2989,7 +3008,7 @@ Return Value:
                                         //  the insert
                                         //
 
-                                        RtlpInsertFreeBlock( Heap, SplitBlock, FreeSize );
+                                        RtlpInsertFreeBlock(Heap, SplitBlock, FreeSize);
                                     }
                                 }
                             }
@@ -3005,14 +3024,14 @@ Return Value:
                             //  If splitblock now last, update LastEntryInSegment
                             //
 
-                            if (SplitBlock->Flags & HEAP_ENTRY_LAST_ENTRY) {
+                            if (SplitBlock->Flags & HEAP_ENTRY_LAST_ENTRY)
+                            {
 
                                 PHEAP_SEGMENT Segment;
 
                                 Segment = Heap->Segments[SplitBlock->SegmentIndex];
                                 Segment->LastEntryInSegment = (PHEAP_ENTRY)SplitBlock;
                             }
-
                         }
                     }
 
@@ -3021,7 +3040,8 @@ Return Value:
                     //  as such
                     //
 
-                    if (FreeFlags & HEAP_ENTRY_LAST_ENTRY) {
+                    if (FreeFlags & HEAP_ENTRY_LAST_ENTRY)
+                    {
 
                         BusyBlock->Flags |= HEAP_ENTRY_LAST_ENTRY;
                     }
@@ -3040,18 +3060,20 @@ Return Value:
                 //  remember how much to zero.  We'll do the zeroing later
                 //
 
-                if (Flags & HEAP_ZERO_MEMORY) {
+                if (Flags & HEAP_ZERO_MEMORY)
+                {
 
                     ZeroSize = Size;
 
-                //
-                //  Otherwise if the flags indicate that we should fill heap then
-                //  it it now.
-                //
+                    //
+                    //  Otherwise if the flags indicate that we should fill heap then
+                    //  it it now.
+                    //
+                }
+                else if (Heap->Flags & HEAP_FREE_CHECKING_ENABLED)
+                {
 
-                } else if (Heap->Flags & HEAP_FREE_CHECKING_ENABLED) {
-
-                    RtlFillMemoryUlong( (PCHAR)(BusyBlock + 1), Size & ~0x3, ALLOC_HEAP_FILL );
+                    RtlFillMemoryUlong((PCHAR)(BusyBlock + 1), Size & ~0x3, ALLOC_HEAP_FILL);
                 }
 
                 //
@@ -3059,11 +3081,10 @@ Return Value:
                 //  the fill pattern right after the heap block.
                 //
 
-                if (Heap->Flags & HEAP_TAIL_CHECKING_ENABLED) {
+                if (Heap->Flags & HEAP_TAIL_CHECKING_ENABLED)
+                {
 
-                    RtlFillMemory( (PCHAR)ReturnValue + Size,
-                                   CHECK_HEAP_TAIL_SIZE,
-                                   CHECK_HEAP_TAIL_FILL );
+                    RtlFillMemory((PCHAR)ReturnValue + Size, CHECK_HEAP_TAIL_SIZE, CHECK_HEAP_TAIL_FILL);
 
                     BusyBlock->Flags |= HEAP_ENTRY_FILL_PATTERN;
                 }
@@ -3075,38 +3096,36 @@ Return Value:
                 //  we'll fill it in
                 //
 
-                if (BusyBlock->Flags & HEAP_ENTRY_EXTRA_PRESENT) {
+                if (BusyBlock->Flags & HEAP_ENTRY_EXTRA_PRESENT)
+                {
 
-                    ExtraStuff = RtlpGetExtraStuffPointer( BusyBlock );
+                    ExtraStuff = RtlpGetExtraStuffPointer(BusyBlock);
 
-                    RtlZeroMemory( ExtraStuff, sizeof( *ExtraStuff ));
+                    RtlZeroMemory(ExtraStuff, sizeof(*ExtraStuff));
 
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-                //
-                //  In the non kernel case the tagging goes in either the extra
-                //  stuff of the busy block small tag index
-                //
+                    //
+                    //  In the non kernel case the tagging goes in either the extra
+                    //  stuff of the busy block small tag index
+                    //
 
-                    if (IS_HEAP_TAGGING_ENABLED()) {
+                    if (IS_HEAP_TAGGING_ENABLED())
+                    {
 
-                        ExtraStuff->TagIndex = RtlpUpdateTagEntry( Heap,
-                                                                   (USHORT)((Flags & HEAP_TAG_MASK) >> HEAP_TAG_SHIFT),
-                                                                   0,
-                                                                   BusyBlock->Size,
-                                                                   AllocationAction );
+                        ExtraStuff->TagIndex =
+                            RtlpUpdateTagEntry(Heap, (USHORT)((Flags & HEAP_TAG_MASK) >> HEAP_TAG_SHIFT), 0,
+                                               BusyBlock->Size, AllocationAction);
                     }
+                }
+                else if (IS_HEAP_TAGGING_ENABLED())
+                {
 
-                } else if (IS_HEAP_TAGGING_ENABLED()) {
+                    BusyBlock->SmallTagIndex =
+                        (UCHAR)RtlpUpdateTagEntry(Heap, (USHORT)((Flags & HEAP_SMALL_TAG_MASK) >> HEAP_TAG_SHIFT), 0,
+                                                  BusyBlock->Size, AllocationAction);
 
-                    BusyBlock->SmallTagIndex = (UCHAR)RtlpUpdateTagEntry( Heap,
-                                                                          (USHORT)((Flags & HEAP_SMALL_TAG_MASK) >> HEAP_TAG_SHIFT),
-                                                                          0,
-                                                                          BusyBlock->Size,
-                                                                          AllocationAction );
-
-    #endif // NTOS_KERNEL_RUNTIME
-
+#endif // NTOS_KERNEL_RUNTIME
                 }
 
                 //
@@ -3116,15 +3135,16 @@ Return Value:
 
                 leave;
 
-            //
-            //  Otherwise the allocation request is bigger than the last dedicated
-            //  free list size.  Now check if the size is within our threshold.
-            //  Meaning that it could be in the [0] free list
-            //
+                //
+                //  Otherwise the allocation request is bigger than the last dedicated
+                //  free list size.  Now check if the size is within our threshold.
+                //  Meaning that it could be in the [0] free list
+                //
+            }
+            else if (AllocationIndex <= Heap->VirtualMemoryThreshold)
+            {
 
-            } else if (AllocationIndex <= Heap->VirtualMemoryThreshold) {
-
-    LookInNonDedicatedList:
+            LookInNonDedicatedList:
 
                 //
                 //  The following code cycles through the [0] free list until
@@ -3132,17 +3152,20 @@ Return Value:
                 //  is sorted so the search is can be terminated early on success
                 //
 
-                FreeListHead = &Heap->FreeLists[ 0 ];
+                FreeListHead = &Heap->FreeLists[0];
 
-                if (Heap->LargeBlocksIndex) {
+                if (Heap->LargeBlocksIndex)
+                {
 
                     Next = RtlpFindEntry(Heap, (ULONG)AllocationIndex);
 
-                    if (FreeListHead != Next) {
+                    if (FreeListHead != Next)
+                    {
 
-                        FreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+                        FreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
-                        if (FreeBlock->Size >= AllocationIndex) {
+                        if (FreeBlock->Size >= AllocationIndex)
+                        {
 
                             //
                             //  We've found something that we can use so now remove
@@ -3155,34 +3178,37 @@ Return Value:
 
 #ifndef NTOS_KERNEL_RUNTIME
 
-                            if  ((((PHEAP_INDEX)Heap->LargeBlocksIndex)->LargeBlocksCacheSequence)
-                                    &&
-                                (AllocationIndex > Heap->DeCommitFreeBlockThreshold) 
-                                    &&
-                                (FreeBlock->Size > (AllocationIndex * HEAP_REUSAGE_FACTOR))) {
+                            if ((((PHEAP_INDEX)Heap->LargeBlocksIndex)->LargeBlocksCacheSequence) &&
+                                (AllocationIndex > Heap->DeCommitFreeBlockThreshold) &&
+                                (FreeBlock->Size > (AllocationIndex * HEAP_REUSAGE_FACTOR)))
+                            {
 
                                 RtlpFlushLargestCacheBlock(Heap);
+                            }
+                            else
+                            {
 
-                            } else {
-                                
                                 goto SplitFreeBlock;
                             }
-#else // NTOS_KERNEL_RUNTIME
-                            
+#else  // NTOS_KERNEL_RUNTIME
+
                             goto SplitFreeBlock;
 #endif // NTOS_KERNEL_RUNTIME
                         }
                     }
+                }
+                else
+                {
 
-                } else {
-                    
                     Next = FreeListHead->Flink;
 
-                    while (FreeListHead != Next) {
+                    while (FreeListHead != Next)
+                    {
 
-                        FreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+                        FreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
-                        if (FreeBlock->Size >= AllocationIndex) {
+                        if (FreeBlock->Size >= AllocationIndex)
+                        {
 
                             //
                             //  We've found something that we can use so now go to
@@ -3194,8 +3220,9 @@ Return Value:
                             //
 
                             goto SplitFreeBlock;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             Next = Next->Flink;
                         }
@@ -3208,14 +3235,15 @@ Return Value:
                 //  than or equal to the virtual memory threshold
                 //
 
-                FreeBlock = RtlpExtendHeap( Heap, AllocationSize );
+                FreeBlock = RtlpExtendHeap(Heap, AllocationSize);
 
                 //
                 //  And provided we got something we'll treat it just like the
                 //  previous split free block cases
                 //
 
-                if (FreeBlock != NULL) {
+                if (FreeBlock != NULL)
+                {
 
                     goto SplitFreeBlock;
                 }
@@ -3226,12 +3254,13 @@ Return Value:
 
                 Status = STATUS_NO_MEMORY;
 
-            //
-            //  At this point the allocation is way too big for any of the free
-            //  lists and we can only satisfy this request if the heap is growable
-            //
-
-            } else if (Heap->Flags & HEAP_GROWABLE) {
+                //
+                //  At this point the allocation is way too big for any of the free
+                //  lists and we can only satisfy this request if the heap is growable
+                //
+            }
+            else if (Heap->Flags & HEAP_GROWABLE)
+            {
 
                 PHEAP_VIRTUAL_ALLOC_ENTRY VirtualAllocBlock;
 
@@ -3243,16 +3272,13 @@ Return Value:
                 //  get the committed memory
                 //
 
-                AllocationSize += FIELD_OFFSET( HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock );
+                AllocationSize += FIELD_OFFSET(HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock);
 
-                Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                                  (PVOID *)&VirtualAllocBlock,
-                                                  0,
-                                                  &AllocationSize,
-                                                  MEM_COMMIT,
-                                                  PAGE_READWRITE );
+                Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&VirtualAllocBlock, 0, &AllocationSize,
+                                                 MEM_COMMIT, PAGE_READWRITE);
 
-                if (NT_SUCCESS( Status )) {
+                if (NT_SUCCESS(Status))
+                {
 
                     //
                     //  Just committed, already zero.  Fill in the new block
@@ -3260,29 +3286,28 @@ Return Value:
                     //
 
                     VirtualAllocBlock->BusyBlock.Size = (USHORT)(AllocationSize - Size);
-                    VirtualAllocBlock->BusyBlock.Flags = EntryFlags | HEAP_ENTRY_VIRTUAL_ALLOC | HEAP_ENTRY_EXTRA_PRESENT;
+                    VirtualAllocBlock->BusyBlock.Flags =
+                        EntryFlags | HEAP_ENTRY_VIRTUAL_ALLOC | HEAP_ENTRY_EXTRA_PRESENT;
                     VirtualAllocBlock->CommitSize = AllocationSize;
                     VirtualAllocBlock->ReserveSize = AllocationSize;
 
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
                     //
                     //  In the non kernel case see if we need to add heap tagging
                     //
 
-                    if (IS_HEAP_TAGGING_ENABLED()) {
+                    if (IS_HEAP_TAGGING_ENABLED())
+                    {
 
-                        VirtualAllocBlock->ExtraStuff.TagIndex =
-                            RtlpUpdateTagEntry( Heap,
-                                                (USHORT)((Flags & HEAP_SMALL_TAG_MASK) >> HEAP_TAG_SHIFT),
-                                                0,
-                                                VirtualAllocBlock->CommitSize >> HEAP_GRANULARITY_SHIFT,
-                                                VirtualAllocationAction );
+                        VirtualAllocBlock->ExtraStuff.TagIndex = RtlpUpdateTagEntry(
+                            Heap, (USHORT)((Flags & HEAP_SMALL_TAG_MASK) >> HEAP_TAG_SHIFT), 0,
+                            VirtualAllocBlock->CommitSize >> HEAP_GRANULARITY_SHIFT, VirtualAllocationAction);
                     }
 
-    #endif // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
-                    InsertTailList( &Heap->VirtualAllocdBlocks, (PLIST_ENTRY)VirtualAllocBlock );
+                    InsertTailList(&Heap->VirtualAllocdBlocks, (PLIST_ENTRY)VirtualAllocBlock);
 
                     //
                     //  Return the address of the user portion of the allocated
@@ -3295,18 +3320,20 @@ Return Value:
                     leave;
                 }
 
-            //
-            //  Otherwise we have an error condition
-            //
-
-            } else {
+                //
+                //  Otherwise we have an error condition
+                //
+            }
+            else
+            {
 
                 Status = STATUS_BUFFER_TOO_SMALL;
             }
 
-            SET_LAST_STATUS( Status );
+            SET_LAST_STATUS(Status);
 
-            if (Flags & HEAP_GENERATE_EXCEPTIONS) {
+            if (Flags & HEAP_GENERATE_EXCEPTIONS)
+            {
 
                 //
                 //  Construct an exception record.
@@ -3316,46 +3343,51 @@ Return Value:
                 ExceptionRecord.ExceptionRecord = (PEXCEPTION_RECORD)NULL;
                 ExceptionRecord.NumberParameters = 1;
                 ExceptionRecord.ExceptionFlags = 0;
-                ExceptionRecord.ExceptionInformation[ 0 ] = AllocationSize;
+                ExceptionRecord.ExceptionInformation[0] = AllocationSize;
 
-                RtlRaiseException( &ExceptionRecord );
+                RtlRaiseException(&ExceptionRecord);
             }
+        }
+        except(GetExceptionCode() == STATUS_NO_MEMORY ? EXCEPTION_CONTINUE_SEARCH : EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( GetExceptionCode() == STATUS_NO_MEMORY ? EXCEPTION_CONTINUE_SEARCH :
-                                                           EXCEPTION_EXECUTE_HANDLER ) {
-
-            SET_LAST_STATUS( GetExceptionCode() );
+            SET_LAST_STATUS(GetExceptionCode());
         }
 
         //
         //  Check if there is anything to zero out
         //
 
-        if ( ZeroSize ) {
+        if (ZeroSize)
+        {
 
-            RtlZeroMemory( ReturnValue, ZeroSize );
+            RtlZeroMemory(ReturnValue, ZeroSize);
         }
+    }
+    finally
+    {
 
-    } finally {
+        if (LockAcquired)
+        {
 
-        if (LockAcquired) {
-
-            RtlReleaseLockRoutine( Heap->LockVariable );
+            RtlReleaseLockRoutine(Heap->LockVariable);
         }
     }
 
     //
     //  And return to our caller
     //
-    
+
     RtlpRegisterOperation(Heap, BlockSize, HEAP_OP_ALLOC);
     HEAP_PERF_STOP_TIMER(Heap, HEAP_OP_ALLOC);
 
-    if(ReturnValue) {
+    if (ReturnValue)
+    {
 
-        #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-        if( IsHeapLogging( HeapHandle ) ) {
+        if (IsHeapLogging(HeapHandle))
+        {
 
             PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
             PPERFINFO_TRACE_HEADER pEventHeader = NULL;
@@ -3363,36 +3395,33 @@ Return Value:
 
             AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-            if(pEventHeader && pThreadLocalData) {
+            if (pEventHeader && pThreadLocalData)
+            {
 
-                PHEAP_EVENT_ALLOC pHeapEvent = (PHEAP_EVENT_ALLOC)( (SIZE_T)pEventHeader
-                                            + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                PHEAP_EVENT_ALLOC pHeapEvent =
+                    (PHEAP_EVENT_ALLOC)((SIZE_T)pEventHeader + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                pEventHeader->Packet.Size = (USHORT) ReqSize;
+                pEventHeader->Packet.Size = (USHORT)ReqSize;
                 pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_ALLOC;
 
-                pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-                pHeapEvent->Size		= Size;
-                pHeapEvent->Address		= (PVOID)ReturnValue;
-                pHeapEvent->Source		= MEMORY_FROM_SLOWPATH;
+                pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+                pHeapEvent->Size = Size;
+                pHeapEvent->Address = (PVOID)ReturnValue;
+                pHeapEvent->Source = MEMORY_FROM_SLOWPATH;
 
                 ReleaseBufferLocation(pThreadLocalData);
             }
-        } 
+        }
 
-        #endif // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
     }
 
     return ReturnValue;
 }
 
-
+
 BOOLEAN
-RtlFreeHeap (
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID BaseAddress
-    )
+RtlFreeHeap(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID BaseAddress)
 
 /*++
 
@@ -3428,20 +3457,22 @@ Return Value:
     HEAP_PERF_DECLARE_TIMER();
 
     RTL_PAGED_CODE();
-    
+
     //
     //  First check if the address we're given is null and if so then
     //  there is really nothing to do so just return success
     //
 
-    if (BaseAddress == NULL) {
+    if (BaseAddress == NULL)
+    {
 
         return TRUE;
     }
 
 #ifndef NTOS_KERNEL_RUNTIME
 
-    if (FrontHeap = RtlpGetLowFragHeap(Heap)) {
+    if (FrontHeap = RtlpGetLowFragHeap(Heap))
+    {
 
         //
         //  We can do everything in this routine. So now backup to get
@@ -3449,50 +3480,54 @@ Return Value:
         //
 
         BusyBlock = (PHEAP_ENTRY)BaseAddress - 1;
-        
-        if (BusyBlock->SegmentIndex >= HEAP_LFH_IN_CONVERSION) {
 
-            if (RtlpLowFragHeapFree( FrontHeap, BaseAddress)) {
+        if (BusyBlock->SegmentIndex >= HEAP_LFH_IN_CONVERSION)
+        {
 
-                #ifndef NTOS_KERNEL_RUNTIME
-                if( IsHeapLogging( HeapHandle ) ) {
+            if (RtlpLowFragHeapFree(FrontHeap, BaseAddress))
+            {
+
+#ifndef NTOS_KERNEL_RUNTIME
+                if (IsHeapLogging(HeapHandle))
+                {
 
                     PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
                     PPERFINFO_TRACE_HEADER pEventHeader = NULL;
                     USHORT ReqSize = sizeof(HEAP_EVENT_FREE) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-                    AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+                    AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                    if(pEventHeader && pThreadLocalData) {
+                    if (pEventHeader && pThreadLocalData)
+                    {
 
-                        PHEAP_EVENT_FREE pHeapEvent = (PHEAP_EVENT_FREE)( (SIZE_T)pEventHeader
-                                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                        PHEAP_EVENT_FREE pHeapEvent =
+                            (PHEAP_EVENT_FREE)((SIZE_T)pEventHeader +
+                                               (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                        pEventHeader->Packet.Size = (USHORT) ReqSize;
+                        pEventHeader->Packet.Size = (USHORT)ReqSize;
                         pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_FREE;
 
-                        pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-                        pHeapEvent->Address		= (PVOID)BaseAddress;
-                        pHeapEvent->Source		= MEMORY_FROM_LOWFRAG;
+                        pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+                        pHeapEvent->Address = (PVOID)BaseAddress;
+                        pHeapEvent->Source = MEMORY_FROM_LOWFRAG;
 
                         ReleaseBufferLocation(pThreadLocalData);
                     }
                 }
-                #endif //NTOS_KERNEL_RUNTIME
+#endif //NTOS_KERNEL_RUNTIME
 
                 return TRUE;
             }
         }
-    } 
-    
+    }
+
 
 #ifdef NTHEAP_ENABLED
     {
-        if (Heap->Flags & NTHEAP_ENABLED_FLAG) {
+        if (Heap->Flags & NTHEAP_ENABLED_FLAG)
+        {
 
-            return RtlFreeNtHeap( HeapHandle,
-                                  Flags,
-                                  BaseAddress);
+            return RtlFreeNtHeap(HeapHandle, Flags, BaseAddress);
         }
     }
 #endif // NTHEAP_ENABLED
@@ -3509,7 +3544,8 @@ Return Value:
     //  Now check if we should go the slow route
     //
 
-    if (Flags & HEAP_SLOW_FLAGS) {
+    if (Flags & HEAP_SLOW_FLAGS)
+    {
 
         return RtlFreeHeapSlowly(HeapHandle, Flags, BaseAddress);
     }
@@ -3536,23 +3572,26 @@ Return Value:
     //  heap header is supposed to be.
     //
 
-    try {
-        if ((((ULONG_PTR)BaseAddress & 0x7) != 0) ||
-            (!(BusyBlock->Flags & HEAP_ENTRY_BUSY)) ||
-            (BusyBlock->SegmentIndex >= HEAP_MAXIMUM_SEGMENTS)) {
+    try
+    {
+        if ((((ULONG_PTR)BaseAddress & 0x7) != 0) || (!(BusyBlock->Flags & HEAP_ENTRY_BUSY)) ||
+            (BusyBlock->SegmentIndex >= HEAP_MAXIMUM_SEGMENTS))
+        {
 
             //
             //  Not a busy block, or it's not aligned or the segment is
             //  to big, meaning it's corrupt
             //
 
-            SET_LAST_STATUS( STATUS_INVALID_PARAMETER );
+            SET_LAST_STATUS(STATUS_INVALID_PARAMETER);
 
             return FALSE;
         }
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-        SET_LAST_STATUS( STATUS_INVALID_PARAMETER );
+        SET_LAST_STATUS(STATUS_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -3572,40 +3611,44 @@ Return Value:
 
 #ifndef NTOS_KERNEL_RUNTIME
 
-    if ( !(BusyBlock->Flags & HEAP_ENTRY_SETTABLE_FLAGS) ) {
+    if (!(BusyBlock->Flags & HEAP_ENTRY_SETTABLE_FLAGS))
+    {
 
         PHEAP_LOOKASIDE Lookaside = (PHEAP_LOOKASIDE)RtlpGetLookasideHeap(Heap);
 
-        if ((Lookaside != NULL) &&
-            RtlpIsFrontHeapUnlocked(Heap) &&
-            (!(BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC)) &&
-            ((FreeSize = BusyBlock->Size) < HEAP_MAXIMUM_FREELISTS)) {
+        if ((Lookaside != NULL) && RtlpIsFrontHeapUnlocked(Heap) && (!(BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC)) &&
+            ((FreeSize = BusyBlock->Size) < HEAP_MAXIMUM_FREELISTS))
+        {
 
-            if (RtlpFreeToHeapLookaside( &Lookaside[FreeSize], BaseAddress)) {
+            if (RtlpFreeToHeapLookaside(&Lookaside[FreeSize], BaseAddress))
+            {
 
-            if( IsHeapLogging( HeapHandle ) && (TraceLevel & LOG_LOOKASIDE)) {
+                if (IsHeapLogging(HeapHandle) && (TraceLevel & LOG_LOOKASIDE))
+                {
 
-                PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
-                PPERFINFO_TRACE_HEADER pEventHeader = NULL;
-                USHORT ReqSize = sizeof(HEAP_EVENT_FREE) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
+                    PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
+                    PPERFINFO_TRACE_HEADER pEventHeader = NULL;
+                    USHORT ReqSize = sizeof(HEAP_EVENT_FREE) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-                AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+                    AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                if(pEventHeader && pThreadLocalData) {
+                    if (pEventHeader && pThreadLocalData)
+                    {
 
-                    PHEAP_EVENT_FREE pHeapEvent = (PHEAP_EVENT_FREE)( (SIZE_T)pEventHeader
-                                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                        PHEAP_EVENT_FREE pHeapEvent =
+                            (PHEAP_EVENT_FREE)((SIZE_T)pEventHeader +
+                                               (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                    pEventHeader->Packet.Size = (USHORT) ReqSize;
-                    pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_FREE;
+                        pEventHeader->Packet.Size = (USHORT)ReqSize;
+                        pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_FREE;
 
-                    pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-                    pHeapEvent->Address		= (PVOID)BaseAddress;
-                    pHeapEvent->Source		= MEMORY_FROM_LOOKASIDE;
+                        pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+                        pHeapEvent->Address = (PVOID)BaseAddress;
+                        pHeapEvent->Source = MEMORY_FROM_LOOKASIDE;
 
-                    ReleaseBufferLocation(pThreadLocalData);
+                        ReleaseBufferLocation(pThreadLocalData);
+                    }
                 }
-            }
 
                 return TRUE;
             }
@@ -3614,17 +3657,19 @@ Return Value:
 
 #endif // NTOS_KERNEL_RUNTIME
 
-    try {
-        
+    try
+    {
+
         HEAP_PERF_START_TIMER(Heap);
-        
+
         //
         //  Check if we need to lock the heap
         //
 
-        if (!(Flags & HEAP_NO_SERIALIZE)) {
+        if (!(Flags & HEAP_NO_SERIALIZE))
+        {
 
-            RtlAcquireLockRoutine( Heap->LockVariable );
+            RtlAcquireLockRoutine(Heap->LockVariable);
 
             LockAcquired = TRUE;
         }
@@ -3635,7 +3680,8 @@ Return Value:
         //  one huge allocation that we got from vm
         //
 
-        if (!(BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC)) {
+        if (!(BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC))
+        {
 
             //
             //  This block is not a big allocation so we need to
@@ -3647,24 +3693,19 @@ Return Value:
 
             FreeSize = BusyBlock->Size;
 
-    #ifdef NTOS_KERNEL_RUNTIME
+#ifdef NTOS_KERNEL_RUNTIME
 
-            BusyBlock = (PHEAP_ENTRY)RtlpCoalesceFreeBlocks( Heap,
-                                                             (PHEAP_FREE_ENTRY)BusyBlock,
-                                                             &FreeSize,
-                                                             FALSE );
+            BusyBlock = (PHEAP_ENTRY)RtlpCoalesceFreeBlocks(Heap, (PHEAP_FREE_ENTRY)BusyBlock, &FreeSize, FALSE);
 
-    #else // NTOS_KERNEL_RUNTIME
+#else // NTOS_KERNEL_RUNTIME
 
-            if (!(Heap->Flags & HEAP_DISABLE_COALESCE_ON_FREE)) {
+            if (!(Heap->Flags & HEAP_DISABLE_COALESCE_ON_FREE))
+            {
 
-                BusyBlock = (PHEAP_ENTRY)RtlpCoalesceFreeBlocks( Heap,
-                                                                 (PHEAP_FREE_ENTRY)BusyBlock,
-                                                                 &FreeSize,
-                                                                 FALSE );
+                BusyBlock = (PHEAP_ENTRY)RtlpCoalesceFreeBlocks(Heap, (PHEAP_FREE_ENTRY)BusyBlock, &FreeSize, FALSE);
             }
 
-    #endif // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
             //
             //  Check for a small allocation that can go on a freelist
@@ -3680,100 +3721,102 @@ Return Value:
             //  size, and update the heap free space counter.
             //
 
-            if (FreeSize < HEAP_MAXIMUM_FREELISTS) {
+            if (FreeSize < HEAP_MAXIMUM_FREELISTS)
+            {
 
-                RtlpFastInsertDedicatedFreeBlockDirect( Heap,
-                                                        (PHEAP_FREE_ENTRY)BusyBlock,
-                                                        (USHORT)FreeSize );
+                RtlpFastInsertDedicatedFreeBlockDirect(Heap, (PHEAP_FREE_ENTRY)BusyBlock, (USHORT)FreeSize);
 
-                if (!(BusyBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+                if (!(BusyBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+                {
 
                     HEAPASSERT((BusyBlock + FreeSize)->PreviousSize == (USHORT)FreeSize);
                 }
 
                 Heap->TotalFreeSize += FreeSize;
 
-            //
-            //  Otherwise the block is to big for one of the dedicated free list so
-            //  see if the free size is under the decommit threshold by itself
-            //  or the total free in the heap is under the decomit threshold then
-            //  we'll put this into a free list
-            //
+                //
+                //  Otherwise the block is to big for one of the dedicated free list so
+                //  see if the free size is under the decommit threshold by itself
+                //  or the total free in the heap is under the decomit threshold then
+                //  we'll put this into a free list
+                //
+            }
+            else if ((FreeSize < Heap->DeCommitFreeBlockThreshold) ||
+                     ((Heap->TotalFreeSize + FreeSize) < Heap->DeCommitTotalFreeThreshold))
+            {
 
-            } else if ((FreeSize < Heap->DeCommitFreeBlockThreshold) ||
-                       ((Heap->TotalFreeSize + FreeSize) < Heap->DeCommitTotalFreeThreshold)) {
-
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
                 //
                 //  If the block is larger than 1 page, and has uncommited ranges around
                 //  force the decommit to reduce the VA fragmentation
                 //
 
-                if (((Heap->TotalFreeSize + FreeSize) > Heap->DeCommitTotalFreeThreshold)
-                        &&
-                    !(RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LARGECACHE)
-                        &&
-                    (FreeSize >= (PAGE_SIZE >> HEAP_GRANULARITY_SHIFT))
-                        &&
-                    ((BusyBlock->PreviousSize == 0) || (BusyBlock->Flags & HEAP_ENTRY_LAST_ENTRY))) {
+                if (((Heap->TotalFreeSize + FreeSize) > Heap->DeCommitTotalFreeThreshold) &&
+                    !(RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LARGECACHE) &&
+                    (FreeSize >= (PAGE_SIZE >> HEAP_GRANULARITY_SHIFT)) &&
+                    ((BusyBlock->PreviousSize == 0) || (BusyBlock->Flags & HEAP_ENTRY_LAST_ENTRY)))
+                {
 
-                //
-                //  Check if the block can go into the [0] index free list, and if
-                //  so then do the insert and make sure the following block is
-                //  needed knows our correct size, and update the heaps free space
-                //  counter
-                //
+                    //
+                    //  Check if the block can go into the [0] index free list, and if
+                    //  so then do the insert and make sure the following block is
+                    //  needed knows our correct size, and update the heaps free space
+                    //  counter
+                    //
 
-                    RtlpDeCommitFreeBlock( Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize );
+                    RtlpDeCommitFreeBlock(Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize);
+                }
+                else
 
-                } else 
+#endif //NTOS_KERNEL_RUNTIME
 
-    #endif  //NTOS_KERNEL_RUNTIME
-    
-                //
-                //  Check if the block can go into the [0] index free list, and if
-                //  so then do the insert and make sure the following block is
-                //  needed knows our correct size, and update the heaps free space
-                //  counter
-                //
+                    //
+                    //  Check if the block can go into the [0] index free list, and if
+                    //  so then do the insert and make sure the following block is
+                    //  needed knows our correct size, and update the heaps free space
+                    //  counter
+                    //
 
-                if (FreeSize <= (ULONG)HEAP_MAXIMUM_BLOCK_SIZE) {
+                    if (FreeSize <= (ULONG)HEAP_MAXIMUM_BLOCK_SIZE)
+                    {
 
-                    RtlpFastInsertNonDedicatedFreeBlockDirect( Heap,
-                                                               (PHEAP_FREE_ENTRY)BusyBlock,
-                                                               (USHORT)FreeSize );
+                        RtlpFastInsertNonDedicatedFreeBlockDirect(Heap, (PHEAP_FREE_ENTRY)BusyBlock, (USHORT)FreeSize);
 
-                    if (!(BusyBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+                        if (!(BusyBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+                        {
 
-                        HEAPASSERT((BusyBlock + FreeSize)->PreviousSize == (USHORT)FreeSize);
+                            HEAPASSERT((BusyBlock + FreeSize)->PreviousSize == (USHORT)FreeSize);
+                        }
+
+                        Heap->TotalFreeSize += FreeSize;
+                    }
+                    else
+                    {
+
+                        //
+                        //  The block is too big to go on a free list in its
+                        //  entirety but we don't want to decommit anything so
+                        //  simply call a worker routine to hack up the block
+                        //  into pieces that will fit on the free lists.
+                        //
+
+                        RtlpInsertFreeBlock(Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize);
                     }
 
-                    Heap->TotalFreeSize += FreeSize;
-
-                } else {
-
-                    //
-                    //  The block is too big to go on a free list in its
-                    //  entirety but we don't want to decommit anything so
-                    //  simply call a worker routine to hack up the block
-                    //  into pieces that will fit on the free lists.
-                    //
-
-                    RtlpInsertFreeBlock( Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize );
-                }
-
-            //
-            //  Otherwise the block is to big for any lists and we should decommit
-            //  the block
-            //
-
-            } else {
-
-                RtlpDeCommitFreeBlock( Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize );
+                //
+                //  Otherwise the block is to big for any lists and we should decommit
+                //  the block
+                //
             }
+            else
+            {
 
-        } else {
+                RtlpDeCommitFreeBlock(Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize);
+            }
+        }
+        else
+        {
 
             //
             //  This is a big virtual block allocation.  To free it we only have to
@@ -3783,46 +3826,47 @@ Return Value:
 
             PHEAP_VIRTUAL_ALLOC_ENTRY VirtualAllocBlock;
 
-            VirtualAllocBlock = CONTAINING_RECORD( BusyBlock, HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock );
+            VirtualAllocBlock = CONTAINING_RECORD(BusyBlock, HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock);
 
-            RemoveEntryList( &VirtualAllocBlock->Entry );
+            RemoveEntryList(&VirtualAllocBlock->Entry);
 
             //
             //  Release lock here as there is no reason to hold it across
             //  the system call.
             //
 
-            if (LockAcquired) {
+            if (LockAcquired)
+            {
 
-                RtlReleaseLockRoutine( Heap->LockVariable );
+                RtlReleaseLockRoutine(Heap->LockVariable);
                 LockAcquired = FALSE;
             }
 
             FreeSize = 0;
 
-            Status = RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                                (PVOID *)&VirtualAllocBlock,
-                                                &FreeSize,
-                                                MEM_RELEASE );
+            Status = RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&VirtualAllocBlock, &FreeSize, MEM_RELEASE);
 
             //
             //  Check if we had trouble freeing the block back to vm
             //  and return an error if necessary
             //
 
-            if (!NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
-                SET_LAST_STATUS( Status );
+                SET_LAST_STATUS(Status);
 
                 ReturnValue = FALSE;
             }
         }
+    }
+    finally
+    {
 
-    } finally {
+        if (LockAcquired)
+        {
 
-        if (LockAcquired) {
-
-            RtlReleaseLockRoutine( Heap->LockVariable );
+            RtlReleaseLockRoutine(Heap->LockVariable);
         }
     }
 
@@ -3830,48 +3874,46 @@ Return Value:
     //  The block was freed successfully so return success to our
     //  caller
     //
-    
+
     RtlpRegisterOperation(Heap, BlockSize, HEAP_OP_FREE);
     HEAP_PERF_STOP_TIMER(Heap, HEAP_OP_FREE);
 
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-    if( IsHeapLogging( HeapHandle ) ) {
+    if (IsHeapLogging(HeapHandle))
+    {
 
         PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
         PPERFINFO_TRACE_HEADER pEventHeader = NULL;
         USHORT ReqSize = sizeof(HEAP_EVENT_FREE) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-        AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+        AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-        if(pEventHeader && pThreadLocalData) {
+        if (pEventHeader && pThreadLocalData)
+        {
 
-            PHEAP_EVENT_FREE pHeapEvent = (PHEAP_EVENT_FREE)( (SIZE_T)pEventHeader
-                                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+            PHEAP_EVENT_FREE pHeapEvent =
+                (PHEAP_EVENT_FREE)((SIZE_T)pEventHeader + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-            pEventHeader->Packet.Size = (USHORT) ReqSize;
+            pEventHeader->Packet.Size = (USHORT)ReqSize;
             pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_FREE;
 
-            pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-            pHeapEvent->Address		= (PVOID)BaseAddress;
-            pHeapEvent->Source		= MEMORY_FROM_MAINPATH;
+            pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+            pHeapEvent->Address = (PVOID)BaseAddress;
+            pHeapEvent->Source = MEMORY_FROM_MAINPATH;
 
             ReleaseBufferLocation(pThreadLocalData);
         }
     }
-    #endif //NTOS_KERNEL_RUNTIME
+#endif //NTOS_KERNEL_RUNTIME
 
 
     return ReturnValue;
 }
 
-
+
 BOOLEAN
-RtlFreeHeapSlowly (
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID BaseAddress
-    )
+RtlFreeHeapSlowly(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID BaseAddress)
 
 /*++
 
@@ -3910,7 +3952,7 @@ Return Value:
     USHORT TagIndex;
 
 #endif // NTOS_KERNEL_RUNTIME
-    
+
     HEAP_PERF_DECLARE_TIMER();
 
     RTL_PAGED_CODE();
@@ -3926,9 +3968,10 @@ Return Value:
     //  free the heap
     //
 
-    if (DEBUG_HEAP( Flags )) {
+    if (DEBUG_HEAP(Flags))
+    {
 
-        return RtlDebugFreeHeap( HeapHandle, Flags, BaseAddress );
+        return RtlDebugFreeHeap(HeapHandle, Flags, BaseAddress);
     }
 
 #endif // NTOS_KERNEL_RUNTIME
@@ -3939,22 +3982,25 @@ Return Value:
 
     Result = FALSE;
 
-    try {
+    try
+    {
 
         HEAP_PERF_START_TIMER(Heap);
-        
+
         //
         //  Lock the heap
         //
 
-        if (!(Flags & HEAP_NO_SERIALIZE)) {
+        if (!(Flags & HEAP_NO_SERIALIZE))
+        {
 
-            RtlAcquireLockRoutine( Heap->LockVariable );
+            RtlAcquireLockRoutine(Heap->LockVariable);
 
             LockAcquired = TRUE;
         }
-        
-        try {
+
+        try
+        {
 
             //
             //  Backup to get a pointer to the start of the block
@@ -3981,15 +4027,16 @@ Return Value:
             //  Rtl Free Heap
             //
 
-            if ((BusyBlock->Flags & HEAP_ENTRY_BUSY) &&
-                (((ULONG_PTR)BaseAddress & 0x7) == 0) &&
-                (BusyBlock->SegmentIndex < HEAP_MAXIMUM_SEGMENTS)) {
+            if ((BusyBlock->Flags & HEAP_ENTRY_BUSY) && (((ULONG_PTR)BaseAddress & 0x7) == 0) &&
+                (BusyBlock->SegmentIndex < HEAP_MAXIMUM_SEGMENTS))
+            {
 
                 //
                 //  Check if this is a virtual block allocation
                 //
 
-                if (BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC) {
+                if (BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC)
+                {
 
                     PHEAP_VIRTUAL_ALLOC_ENTRY VirtualAllocBlock;
 
@@ -4000,76 +4047,79 @@ Return Value:
                     //  the block to vm
                     //
 
-                    VirtualAllocBlock = CONTAINING_RECORD( BusyBlock, HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock );
+                    VirtualAllocBlock = CONTAINING_RECORD(BusyBlock, HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock);
 
-                    RemoveEntryList( &VirtualAllocBlock->Entry );
+                    RemoveEntryList(&VirtualAllocBlock->Entry);
 
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
                     //
                     //  In the non kernel case see if we need to free the tag
                     //
 
-                    if (IS_HEAP_TAGGING_ENABLED()) {
+                    if (IS_HEAP_TAGGING_ENABLED())
+                    {
 
-                        RtlpUpdateTagEntry( Heap,
-                                            VirtualAllocBlock->ExtraStuff.TagIndex,
-                                            VirtualAllocBlock->CommitSize >> HEAP_GRANULARITY_SHIFT,
-                                            0,
-                                            VirtualFreeAction );
+                        RtlpUpdateTagEntry(Heap, VirtualAllocBlock->ExtraStuff.TagIndex,
+                                           VirtualAllocBlock->CommitSize >> HEAP_GRANULARITY_SHIFT, 0,
+                                           VirtualFreeAction);
                     }
 
-    #endif // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
                     FreeSize = 0;
 
-                    Status = RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                                        (PVOID *)&VirtualAllocBlock,
-                                                        &FreeSize,
-                                                        MEM_RELEASE );
+                    Status = RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&VirtualAllocBlock, &FreeSize,
+                                                       MEM_RELEASE);
 
                     //
                     //  Check if everything worked okay, if we had trouble freeing
                     //  the block back to vm return an error if necessary,
                     //
 
-                    if (NT_SUCCESS( Status )) {
+                    if (NT_SUCCESS(Status))
+                    {
 
-                        #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-                        if( IsHeapLogging( HeapHandle ) ) {
+                        if (IsHeapLogging(HeapHandle))
+                        {
 
                             PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
                             PPERFINFO_TRACE_HEADER pEventHeader = NULL;
                             USHORT ReqSize = sizeof(HEAP_EVENT_FREE) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-                            AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+                            AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                            if(pEventHeader && pThreadLocalData) {
+                            if (pEventHeader && pThreadLocalData)
+                            {
 
-                                PHEAP_EVENT_FREE pHeapEvent = (PHEAP_EVENT_FREE)( (SIZE_T)pEventHeader
-                                                              +(SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                                PHEAP_EVENT_FREE pHeapEvent =
+                                    (PHEAP_EVENT_FREE)((SIZE_T)pEventHeader +
+                                                       (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                                pEventHeader->Packet.Size = (USHORT) ReqSize;
+                                pEventHeader->Packet.Size = (USHORT)ReqSize;
                                 pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_FREE;
 
-                                pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-                                pHeapEvent->Address		= (PVOID)BaseAddress;
-                                pHeapEvent->Source		= MEMORY_FROM_SLOWPATH;
+                                pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+                                pHeapEvent->Address = (PVOID)BaseAddress;
+                                pHeapEvent->Source = MEMORY_FROM_SLOWPATH;
 
                                 ReleaseBufferLocation(pThreadLocalData);
                             }
                         }
-                        #endif //NTOS_KERNEL_RUNTIME
+#endif //NTOS_KERNEL_RUNTIME
 
                         Result = TRUE;
-
-                    } else {
-
-                        SET_LAST_STATUS( Status );
                     }
+                    else
+                    {
 
-                } else {
+                        SET_LAST_STATUS(Status);
+                    }
+                }
+                else
+                {
 
                     //
                     //  This block is not a big allocation so we need to
@@ -4079,7 +4129,7 @@ Return Value:
                     //  free block and the new size.
                     //
 
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
                     //
                     //  First in the non kernel case remove any tagging we might
@@ -4087,33 +4137,30 @@ Return Value:
                     //  the heap header, or in the extra block if present
                     //
 
-                    if (IS_HEAP_TAGGING_ENABLED()) {
+                    if (IS_HEAP_TAGGING_ENABLED())
+                    {
 
-                        if (BusyBlock->Flags & HEAP_ENTRY_EXTRA_PRESENT) {
+                        if (BusyBlock->Flags & HEAP_ENTRY_EXTRA_PRESENT)
+                        {
 
                             ExtraStuff = (PHEAP_ENTRY_EXTRA)(BusyBlock + BusyBlock->Size - 1);
 
-                            TagIndex = RtlpUpdateTagEntry( Heap,
-                                                           ExtraStuff->TagIndex,
-                                                           BusyBlock->Size,
-                                                           0,
-                                                           FreeAction );
-
-                        } else {
-
-                            TagIndex = RtlpUpdateTagEntry( Heap,
-                                                           BusyBlock->SmallTagIndex,
-                                                           BusyBlock->Size,
-                                                           0,
-                                                           FreeAction );
+                            TagIndex = RtlpUpdateTagEntry(Heap, ExtraStuff->TagIndex, BusyBlock->Size, 0, FreeAction);
                         }
+                        else
+                        {
 
-                    } else {
+                            TagIndex =
+                                RtlpUpdateTagEntry(Heap, BusyBlock->SmallTagIndex, BusyBlock->Size, 0, FreeAction);
+                        }
+                    }
+                    else
+                    {
 
                         TagIndex = 0;
                     }
 
-    #endif // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
                     //
                     //  This is the size of the block we are freeing
@@ -4121,28 +4168,29 @@ Return Value:
 
                     FreeSize = BusyBlock->Size;
 
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
                     //
                     //  In the non kernel case see if we should coalesce on free
                     //
 
-                    if (!(Heap->Flags & HEAP_DISABLE_COALESCE_ON_FREE)) {
+                    if (!(Heap->Flags & HEAP_DISABLE_COALESCE_ON_FREE))
+                    {
 
-    #endif // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
                         //
                         //  In kernel case and in the tested user mode case we
                         //  now coalesce free blocks
                         //
 
-                        BusyBlock = (PHEAP_ENTRY)RtlpCoalesceFreeBlocks( Heap, (PHEAP_FREE_ENTRY)BusyBlock, &FreeSize, FALSE );
+                        BusyBlock =
+                            (PHEAP_ENTRY)RtlpCoalesceFreeBlocks(Heap, (PHEAP_FREE_ENTRY)BusyBlock, &FreeSize, FALSE);
 
-    #ifndef NTOS_KERNEL_RUNTIME
-
+#ifndef NTOS_KERNEL_RUNTIME
                     }
 
-    #endif // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
                     //
                     //  If the block should not be decommit then try and put it
@@ -4150,27 +4198,30 @@ Return Value:
                     //
 
                     if ((FreeSize < Heap->DeCommitFreeBlockThreshold) ||
-                        ((Heap->TotalFreeSize + FreeSize) < Heap->DeCommitTotalFreeThreshold)) {
+                        ((Heap->TotalFreeSize + FreeSize) < Heap->DeCommitTotalFreeThreshold))
+                    {
 
                         //
                         //  Check if the block can fit on one of the dedicated free
                         //  lists
                         //
 
-                        if (FreeSize <= (ULONG)HEAP_MAXIMUM_BLOCK_SIZE) {
+                        if (FreeSize <= (ULONG)HEAP_MAXIMUM_BLOCK_SIZE)
+                        {
 
                             //
                             //  It can fit on a dedicated free list so insert it on
                             //
 
-                            RtlpInsertFreeBlockDirect( Heap, (PHEAP_FREE_ENTRY)BusyBlock, (USHORT)FreeSize );
+                            RtlpInsertFreeBlockDirect(Heap, (PHEAP_FREE_ENTRY)BusyBlock, (USHORT)FreeSize);
 
                             //
                             //  If there is a following entry then make sure the
                             //  sizes agree
                             //
 
-                            if (!(BusyBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+                            if (!(BusyBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+                            {
 
                                 HEAPASSERT((BusyBlock + FreeSize)->PreviousSize == (USHORT)FreeSize);
                             }
@@ -4181,24 +4232,26 @@ Return Value:
                             //
 
                             Heap->TotalFreeSize += FreeSize;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             //
                             //  The block goes on the non dedicated free list
                             //
 
-                            RtlpInsertFreeBlock( Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize );
+                            RtlpInsertFreeBlock(Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize);
                         }
 
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
                         //
                         //  In the non kernel case see if the there was tag and if
                         //  so then update the entry to show that it's been freed
                         //
 
-                        if (TagIndex != 0) {
+                        if (TagIndex != 0)
+                        {
 
                             PHEAP_FREE_ENTRY_EXTRA FreeExtra;
 
@@ -4209,51 +4262,56 @@ Return Value:
                             FreeExtra->TagIndex = TagIndex;
                             FreeExtra->FreeBackTraceIndex = 0;
 
-                            if (Heap->Flags & HEAP_CAPTURE_STACK_BACKTRACES) {
+                            if (Heap->Flags & HEAP_CAPTURE_STACK_BACKTRACES)
+                            {
 
                                 FreeExtra->FreeBackTraceIndex = (USHORT)RtlLogStackBackTrace();
                             }
                         }
 
-    #endif // NTOS_KERNEL_RUNTIME
-
-                    } else {
+#endif // NTOS_KERNEL_RUNTIME
+                    }
+                    else
+                    {
 
                         //
                         //  Otherwise the block is big enough to decommit so have a
                         //  worker routine to do the decommit
                         //
 
-                        RtlpDeCommitFreeBlock( Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize );
+                        RtlpDeCommitFreeBlock(Heap, (PHEAP_FREE_ENTRY)BusyBlock, FreeSize);
                     }
 
-                    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-                    if( IsHeapLogging( HeapHandle ) ) {
+                    if (IsHeapLogging(HeapHandle))
+                    {
 
                         PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
                         PPERFINFO_TRACE_HEADER pEventHeader = NULL;
                         USHORT ReqSize = sizeof(HEAP_EVENT_FREE) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-                        AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+                        AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                        if(pEventHeader && pThreadLocalData) {
+                        if (pEventHeader && pThreadLocalData)
+                        {
 
-                            PHEAP_EVENT_FREE pHeapEvent = (PHEAP_EVENT_FREE)( (SIZE_T)pEventHeader
-                                                          +(SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                            PHEAP_EVENT_FREE pHeapEvent =
+                                (PHEAP_EVENT_FREE)((SIZE_T)pEventHeader +
+                                                   (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                            pEventHeader->Packet.Size = (USHORT) ReqSize;
+                            pEventHeader->Packet.Size = (USHORT)ReqSize;
                             pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_FREE;
 
-                            pHeapEvent->HeapHandle	= (PVOID)HeapHandle;
-                            pHeapEvent->Address		= (PVOID)BaseAddress;
-                            pHeapEvent->Source		= MEMORY_FROM_SLOWPATH;
+                            pHeapEvent->HeapHandle = (PVOID)HeapHandle;
+                            pHeapEvent->Address = (PVOID)BaseAddress;
+                            pHeapEvent->Source = MEMORY_FROM_SLOWPATH;
 
                             ReleaseBufferLocation(pThreadLocalData);
                         }
                     }
 
-                    #endif //NTOS_KERNEL_RUNTIME
+#endif //NTOS_KERNEL_RUNTIME
 
                     //
                     //  And say the free worked fine
@@ -4261,33 +4319,37 @@ Return Value:
 
                     Result = TRUE;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Not a busy block, or it's not aligned or the segment is
                 //  to big, meaning it's corrupt
                 //
 
-                SET_LAST_STATUS( STATUS_INVALID_PARAMETER );
+                SET_LAST_STATUS(STATUS_INVALID_PARAMETER);
             }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            SET_LAST_STATUS( GetExceptionCode() );
+            SET_LAST_STATUS(GetExceptionCode());
 
             Result = FALSE;
         }
-
-    } finally {
+    }
+    finally
+    {
 
         //
         //  Unlock the heap
         //
 
-        if (LockAcquired) {
+        if (LockAcquired)
+        {
 
-            RtlReleaseLockRoutine( Heap->LockVariable );
+            RtlReleaseLockRoutine(Heap->LockVariable);
         }
     }
 
@@ -4301,13 +4363,9 @@ Return Value:
     return Result;
 }
 
-
+
 SIZE_T
-RtlSizeHeap (
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID BaseAddress
-    )
+RtlSizeHeap(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID BaseAddress)
 
 /*++
 
@@ -4351,9 +4409,10 @@ Return Value:
 
 #ifndef NTOS_KERNEL_RUNTIME
 
-    if (DEBUG_HEAP( Flags )) {
+    if (DEBUG_HEAP(Flags))
+    {
 
-        return RtlDebugSizeHeap( HeapHandle, Flags, BaseAddress );
+        return RtlDebugSizeHeap(HeapHandle, Flags, BaseAddress);
     }
 
 #endif // NTOS_KERNEL_RUNTIME
@@ -4371,33 +4430,36 @@ Return Value:
     //  we'll set the error status for the user mode thread
     //
 
-    if (!(BusyBlock->Flags & HEAP_ENTRY_BUSY)) {
+    if (!(BusyBlock->Flags & HEAP_ENTRY_BUSY))
+    {
 
         BusySize = -1;
 
-        SET_LAST_STATUS( STATUS_INVALID_PARAMETER );
+        SET_LAST_STATUS(STATUS_INVALID_PARAMETER);
 
-    //
-    //  Otherwise if the block is from our large allocation then
-    //  we'll get the result from that routine
-    //
+        //
+        //  Otherwise if the block is from our large allocation then
+        //  we'll get the result from that routine
+        //
+    }
+    else if (BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC)
+    {
 
-    } else if (BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC) {
+        BusySize = RtlpGetSizeOfBigBlock(BusyBlock);
 
-        BusySize = RtlpGetSizeOfBigBlock( BusyBlock );
-
-    //
-    //  Otherwise the block must be one that we can handle so
-    //  calculate its block size and then subtract what's not being
-    //  used by the caller.
-    //
-    //  Note: This includes the heap entry header in its calculation.  
-    //
-
-    } else {
+        //
+        //  Otherwise the block must be one that we can handle so
+        //  calculate its block size and then subtract what's not being
+        //  used by the caller.
+        //
+        //  Note: This includes the heap entry header in its calculation.
+        //
+    }
+    else
+    {
 
         BusySize = (((SIZE_T)RtlpGetAllocationUnits(Heap, BusyBlock)) << HEAP_GRANULARITY_SHIFT) -
-                    RtlpGetUnusedBytes(Heap, BusyBlock);
+                   RtlpGetUnusedBytes(Heap, BusyBlock);
     }
 
     //
@@ -4407,12 +4469,9 @@ Return Value:
     return BusySize;
 }
 
-
+
 NTSTATUS
-RtlZeroHeap (
-    IN PVOID HeapHandle,
-    IN ULONG Flags
-    )
+RtlZeroHeap(IN PVOID HeapHandle, IN ULONG Flags)
 
 /*++
 
@@ -4459,9 +4518,10 @@ Return Value:
 
 #ifndef NTOS_KERNEL_RUNTIME
 
-    if (DEBUG_HEAP( Flags )) {
+    if (DEBUG_HEAP(Flags))
+    {
 
-        return RtlDebugZeroHeap( HeapHandle, Flags );
+        return RtlDebugZeroHeap(HeapHandle, Flags);
     }
 
 #endif // NTOS_KERNEL_RUNTIME
@@ -4473,30 +4533,35 @@ Return Value:
 
     Status = STATUS_SUCCESS;
 
-    try {
+    try
+    {
 
         //
         //  Lock the heap
         //
 
-        if (!(Flags & HEAP_NO_SERIALIZE)) {
+        if (!(Flags & HEAP_NO_SERIALIZE))
+        {
 
-            RtlAcquireLockRoutine( Heap->LockVariable );
+            RtlAcquireLockRoutine(Heap->LockVariable);
 
             LockAcquired = TRUE;
         }
 
-        try {
+        try
+        {
 
             //
             //  Zero fill all the free blocks in all the segements
             //
 
-            for (SegmentIndex=0; SegmentIndex<HEAP_MAXIMUM_SEGMENTS; SegmentIndex++) {
+            for (SegmentIndex = 0; SegmentIndex < HEAP_MAXIMUM_SEGMENTS; SegmentIndex++)
+            {
 
-                Segment = Heap->Segments[ SegmentIndex ];
+                Segment = Heap->Segments[SegmentIndex];
 
-                if (!Segment) {
+                if (!Segment)
+                {
 
                     continue;
                 }
@@ -4509,7 +4574,8 @@ Return Value:
                 //  blocks until we reach the end
                 //
 
-                while (CurrentBlock < Segment->LastValidEntry) {
+                while (CurrentBlock < Segment->LastValidEntry)
+                {
 
                     Size = CurrentBlock->Size << HEAP_GRANULARITY_SHIFT;
 
@@ -4518,22 +4584,21 @@ Return Value:
                     //  it or fill it.
                     //
 
-                    if (!(CurrentBlock->Flags & HEAP_ENTRY_BUSY)) {
+                    if (!(CurrentBlock->Flags & HEAP_ENTRY_BUSY))
+                    {
 
                         FreeBlock = (PHEAP_FREE_ENTRY)CurrentBlock;
 
                         if ((Heap->Flags & HEAP_FREE_CHECKING_ENABLED) &&
-                            (CurrentBlock->Flags & HEAP_ENTRY_FILL_PATTERN)) {
+                            (CurrentBlock->Flags & HEAP_ENTRY_FILL_PATTERN))
+                        {
 
-                            RtlFillMemoryUlong( FreeBlock + 1,
-                                                Size - sizeof( *FreeBlock ),
-                                                FREE_HEAP_FILL );
+                            RtlFillMemoryUlong(FreeBlock + 1, Size - sizeof(*FreeBlock), FREE_HEAP_FILL);
+                        }
+                        else
+                        {
 
-                        } else {
-
-                            RtlFillMemoryUlong( FreeBlock + 1,
-                                                Size - sizeof( *FreeBlock ),
-                                                0 );
+                            RtlFillMemoryUlong(FreeBlock + 1, Size - sizeof(*FreeBlock), 0);
                         }
                     }
 
@@ -4544,7 +4609,8 @@ Return Value:
                     //  blocks in the segement
                     //
 
-                    if (CurrentBlock->Flags & HEAP_ENTRY_LAST_ENTRY) {
+                    if (CurrentBlock->Flags & HEAP_ENTRY_LAST_ENTRY)
+                    {
 
                         CurrentBlock += CurrentBlock->Size;
 
@@ -4555,62 +4621,65 @@ Return Value:
                         //  "break;" would probably be more clear here
                         //
 
-                        if (UnCommittedRange == NULL) {
+                        if (UnCommittedRange == NULL)
+                        {
 
                             CurrentBlock = Segment->LastValidEntry;
 
-                        //
-                        //  Otherwise skip over the uncommitted range
-                        //
+                            //
+                            //  Otherwise skip over the uncommitted range
+                            //
+                        }
+                        else
+                        {
 
-                        } else {
-
-                            CurrentBlock = (PHEAP_ENTRY)
-                                ((PCHAR)UnCommittedRange->Address + UnCommittedRange->Size);
+                            CurrentBlock = (PHEAP_ENTRY)((PCHAR)UnCommittedRange->Address + UnCommittedRange->Size);
 
                             UnCommittedRange = UnCommittedRange->Next;
                         }
 
-                    //
-                    //  Otherwise the next block exists so advance to it
-                    //
-
-                    } else {
+                        //
+                        //  Otherwise the next block exists so advance to it
+                        //
+                    }
+                    else
+                    {
 
                         CurrentBlock += CurrentBlock->Size;
                     }
                 }
             }
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
-
-    } finally {
+    }
+    finally
+    {
 
         //
         //  Unlock the heap
         //
 
-        if (LockAcquired) {
+        if (LockAcquired)
+        {
 
-            RtlReleaseLockRoutine( Heap->LockVariable );
+            RtlReleaseLockRoutine(Heap->LockVariable);
         }
     }
 
     return Status;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
 PHEAP_UNCOMMMTTED_RANGE
-RtlpCreateUnCommittedRange (
-    IN PHEAP_SEGMENT Segment
-    )
+RtlpCreateUnCommittedRange(IN PHEAP_SEGMENT Segment)
 
 /*++
 
@@ -4653,7 +4722,8 @@ Return Value:
     //  put on the list
     //
 
-    if (*pp == NULL) {
+    if (*pp == NULL)
+    {
 
         //
         //  Get the next uncommitted range segment from the heap
@@ -4668,8 +4738,8 @@ Return Value:
         //  range segment
         //
 
-        if ((UCRSegment == NULL) ||
-            (UCRSegment->CommittedSize == UCRSegment->ReservedSize)) {
+        if ((UCRSegment == NULL) || (UCRSegment->CommittedSize == UCRSegment->ReservedSize))
+        {
 
             //
             //  We'll reserve 16 pages of memory and commit at this
@@ -4679,33 +4749,24 @@ Return Value:
             ReserveSize = PAGE_SIZE * 16;
             UCRSegment = NULL;
 
-            Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                              &UCRSegment,
-                                              0,
-                                              &ReserveSize,
-                                              MEM_RESERVE,
-                                              PAGE_READWRITE );
+            Status =
+                ZwAllocateVirtualMemory(NtCurrentProcess(), &UCRSegment, 0, &ReserveSize, MEM_RESERVE, PAGE_READWRITE);
 
-            if (!NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 return NULL;
             }
 
             CommitSize = PAGE_SIZE;
 
-            Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                              &UCRSegment,
-                                              0,
-                                              &CommitSize,
-                                              MEM_COMMIT,
-                                              PAGE_READWRITE );
+            Status =
+                ZwAllocateVirtualMemory(NtCurrentProcess(), &UCRSegment, 0, &CommitSize, MEM_COMMIT, PAGE_READWRITE);
 
-            if (!NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
-                RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                           &UCRSegment,
-                                           &ReserveSize,
-                                           MEM_RELEASE );
+                RtlpHeapFreeVirtualMemory(NtCurrentProcess(), &UCRSegment, &ReserveSize, MEM_RELEASE);
 
                 return NULL;
             }
@@ -4729,8 +4790,9 @@ Return Value:
             //
 
             FirstEntry = (PCHAR)(UCRSegment + 1);
-
-        } else {
+        }
+        else
+        {
 
             //
             //  We have an existing UCR segment with available space
@@ -4741,14 +4803,11 @@ Return Value:
             CommitSize = PAGE_SIZE;
             FirstEntry = (PCHAR)UCRSegment + UCRSegment->CommittedSize;
 
-            Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                              &FirstEntry,
-                                              0,
-                                              &CommitSize,
-                                              MEM_COMMIT,
-                                              PAGE_READWRITE );
+            Status =
+                ZwAllocateVirtualMemory(NtCurrentProcess(), &FirstEntry, 0, &CommitSize, MEM_COMMIT, PAGE_READWRITE);
 
-            if (!NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 return NULL;
             }
@@ -4778,7 +4837,8 @@ Return Value:
 
         pp = &Segment->Heap->UnusedUnCommittedRanges;
 
-        while ((PCHAR)UnCommittedRange < (PCHAR)LastEntry) {
+        while ((PCHAR)UnCommittedRange < (PCHAR)LastEntry)
+        {
 
             *pp = UnCommittedRange;
             pp = &UnCommittedRange->Next;
@@ -4809,16 +4869,12 @@ Return Value:
     return UnCommittedRange;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
-VOID
-RtlpDestroyUnCommittedRange (
-    IN PHEAP_SEGMENT Segment,
-    IN PHEAP_UNCOMMMTTED_RANGE UnCommittedRange
-    )
+VOID RtlpDestroyUnCommittedRange(IN PHEAP_SEGMENT Segment, IN PHEAP_UNCOMMMTTED_RANGE UnCommittedRange)
 
 /*++
 
@@ -4867,17 +4923,12 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
-VOID
-RtlpInsertUnCommittedPages (
-    IN PHEAP_SEGMENT Segment,
-    IN ULONG_PTR Address,
-    IN SIZE_T Size
-    )
+VOID RtlpInsertUnCommittedPages(IN PHEAP_SEGMENT Segment, IN ULONG_PTR Address, IN SIZE_T Size)
 
 /*++
 
@@ -4918,14 +4969,16 @@ Return Value:
     //  trying to find a fit
     //
 
-    while (UnCommittedRange = *pp) {
+    while (UnCommittedRange = *pp)
+    {
 
         //
         //  If address we want is less than what we're pointing at then
         //  we've found where this new entry goes
         //
 
-        if (UnCommittedRange->Address > Address) {
+        if (UnCommittedRange->Address > Address)
+        {
 
             //
             //  If the new block matches right up to the existing block
@@ -4933,7 +4986,8 @@ Return Value:
             //  to its size
             //
 
-            if ((Address + Size) == UnCommittedRange->Address) {
+            if ((Address + Size) == UnCommittedRange->Address)
+            {
 
                 UnCommittedRange->Address = Address;
                 UnCommittedRange->Size += Size;
@@ -4943,7 +4997,8 @@ Return Value:
                 //  largest uncommitted range is
                 //
 
-                if (UnCommittedRange->Size > Segment->LargestUnCommittedRange) {
+                if (UnCommittedRange->Size > Segment->LargestUnCommittedRange)
+                {
 
                     Segment->LargestUnCommittedRange = UnCommittedRange->Size;
                 }
@@ -4963,12 +5018,13 @@ Return Value:
 
             break;
 
-        //
-        //  Otherwise if this existing block stops right where the new block
-        //  starts then we get to modify this entry.
-        //
-
-        } else if ((UnCommittedRange->Address + UnCommittedRange->Size) == Address) {
+            //
+            //  Otherwise if this existing block stops right where the new block
+            //  starts then we get to modify this entry.
+            //
+        }
+        else if ((UnCommittedRange->Address + UnCommittedRange->Size) == Address)
+        {
 
             //
             //  Remember the starting address and compute the new larger size
@@ -4984,7 +5040,7 @@ Return Value:
 
             *pp = UnCommittedRange->Next;
 
-            RtlpDestroyUnCommittedRange( Segment, UnCommittedRange );
+            RtlpDestroyUnCommittedRange(Segment, UnCommittedRange);
 
             //
             //  Modify the segment counters and largest size state.  The next
@@ -4995,16 +5051,18 @@ Return Value:
 
             Segment->NumberOfUnCommittedRanges -= 1;
 
-            if (Size > Segment->LargestUnCommittedRange) {
+            if (Size > Segment->LargestUnCommittedRange)
+            {
 
                 Segment->LargestUnCommittedRange = Size;
             }
 
-        //
-        //  Otherwise we'll continue search down the list
-        //
-
-        } else {
+            //
+            //  Otherwise we'll continue search down the list
+            //
+        }
+        else
+        {
 
             pp = &UnCommittedRange->Next;
         }
@@ -5020,11 +5078,12 @@ Return Value:
     //  block right after us
     //
 
-    UnCommittedRange = RtlpCreateUnCommittedRange( Segment );
+    UnCommittedRange = RtlpCreateUnCommittedRange(Segment);
 
-    if (UnCommittedRange == NULL) {
+    if (UnCommittedRange == NULL)
+    {
 
-        HeapDebugPrint(( "Abandoning uncommitted range (%x for %x)\n", Address, Size ));
+        HeapDebugPrint(("Abandoning uncommitted range (%x for %x)\n", Address, Size));
         // HeapDebugBreak( NULL );
 
         return;
@@ -5050,7 +5109,8 @@ Return Value:
 
     Segment->NumberOfUnCommittedRanges += 1;
 
-    if (Size >= Segment->LargestUnCommittedRange) {
+    if (Size >= Segment->LargestUnCommittedRange)
+    {
 
         Segment->LargestUnCommittedRange = Size;
     }
@@ -5062,18 +5122,13 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Declared in heappriv.h
 //
 
 PHEAP_FREE_ENTRY
-RtlpFindAndCommitPages (
-    IN PHEAP Heap,
-    IN PHEAP_SEGMENT Segment,
-    IN OUT PSIZE_T Size,
-    IN PVOID AddressWanted OPTIONAL
-    )
+RtlpFindAndCommitPages(IN PHEAP Heap, IN PHEAP_SEGMENT Segment, IN OUT PSIZE_T Size, IN PVOID AddressWanted OPTIONAL)
 
 /*++
 
@@ -5120,7 +5175,8 @@ Return Value:
     PreviousUnCommittedRange = NULL;
     pp = &Segment->UnCommittedRanges;
 
-    while (UnCommittedRange = *pp) {
+    while (UnCommittedRange = *pp)
+    {
 
         //
         //  Check for the best of worlds, where the size of this current
@@ -5129,7 +5185,8 @@ Return Value:
         //
 
         if ((UnCommittedRange->Size >= *Size) &&
-            (!ARGUMENT_PRESENT( AddressWanted ) || (UnCommittedRange->Address == (ULONG_PTR)AddressWanted ))) {
+            (!ARGUMENT_PRESENT(AddressWanted) || (UnCommittedRange->Address == (ULONG_PTR)AddressWanted)))
+        {
 
             //
             //  Calculate an address
@@ -5142,50 +5199,46 @@ Return Value:
             //  routine then use the default mm supplied routine.
             //
 
-            if (Heap->CommitRoutine != NULL) {
+            if (Heap->CommitRoutine != NULL)
+            {
 
-                Status = (Heap->CommitRoutine)( Heap,
-                                                (PVOID *)&Address,
-                                                Size );
+                Status = (Heap->CommitRoutine)(Heap, (PVOID *)&Address, Size);
+            }
+            else
+            {
 
-            } else {
-
-    #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
                 //
-                //  If we have a small uncommited range left, Adjust the size to 
+                //  If we have a small uncommited range left, Adjust the size to
                 //  take that block too
                 //
 
-                if (!(RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LARGECACHE)
-                        &&
-                    ( (UnCommittedRange->Size - (*Size)) <= (((SIZE_T)Heap->DeCommitFreeBlockThreshold) << HEAP_GRANULARITY_SHIFT) )
-                        &&
-                    (UnCommittedRange->Size < (((SIZE_T)Heap->VirtualMemoryThreshold) << HEAP_GRANULARITY_SHIFT)) ) {
+                if (!(RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LARGECACHE) &&
+                    ((UnCommittedRange->Size - (*Size)) <=
+                     (((SIZE_T)Heap->DeCommitFreeBlockThreshold) << HEAP_GRANULARITY_SHIFT)) &&
+                    (UnCommittedRange->Size < (((SIZE_T)Heap->VirtualMemoryThreshold) << HEAP_GRANULARITY_SHIFT)))
+                {
 
                     *Size = UnCommittedRange->Size;
                 }
-    #endif //  NTOS_KERNEL_RUNTIME
-    
+#endif //  NTOS_KERNEL_RUNTIME
+
 #ifdef _WIN64
                 //
                 // This is for Wow64 processes. This is needed to return PAGE_SIZE aligned
                 // aligned sizes.
                 //
 
-                *Size = ROUND_UP_TO_POWER2 (*Size, PAGE_SIZE);
+                *Size = ROUND_UP_TO_POWER2(*Size, PAGE_SIZE);
 #endif
 
-                Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                                  (PVOID *)&Address,
-                                                  0,
-                                                  Size,
-                                                  MEM_COMMIT,
-                                                  PAGE_READWRITE );
-
+                Status =
+                    ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&Address, 0, Size, MEM_COMMIT, PAGE_READWRITE);
             }
 
-            if (!NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 return NULL;
             }
@@ -5198,9 +5251,10 @@ Return Value:
             //  mark down the largest uncommitted range
             //
 
-            Segment->NumberOfUnCommittedPages -= (ULONG) (*Size / PAGE_SIZE);
+            Segment->NumberOfUnCommittedPages -= (ULONG)(*Size / PAGE_SIZE);
 
-            if (Segment->LargestUnCommittedRange == UnCommittedRange->Size) {
+            if (Segment->LargestUnCommittedRange == UnCommittedRange->Size)
+            {
 
                 Segment->LargestUnCommittedRange = 0;
             }
@@ -5221,20 +5275,24 @@ Return Value:
             //
 
             if ((Segment->LastEntryInSegment->Flags & HEAP_ENTRY_LAST_ENTRY) &&
-                (ULONG_PTR)(Segment->LastEntryInSegment + Segment->LastEntryInSegment->Size) == UnCommittedRange->Address) {
+                (ULONG_PTR)(Segment->LastEntryInSegment + Segment->LastEntryInSegment->Size) ==
+                    UnCommittedRange->Address)
+            {
 
                 LastEntry = Segment->LastEntryInSegment;
+            }
+            else
+            {
 
-            } else {
-
-                if (PreviousUnCommittedRange == NULL) {
+                if (PreviousUnCommittedRange == NULL)
+                {
 
                     LastEntry = Segment->FirstEntry;
+                }
+                else
+                {
 
-                } else {
-
-                    LastEntry = (PHEAP_ENTRY)(PreviousUnCommittedRange->Address +
-                                              PreviousUnCommittedRange->Size);
+                    LastEntry = (PHEAP_ENTRY)(PreviousUnCommittedRange->Address + PreviousUnCommittedRange->Size);
                 }
 
                 //
@@ -5242,12 +5300,14 @@ Return Value:
                 //  marked last
                 //
 
-                while (!(LastEntry->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+                while (!(LastEntry->Flags & HEAP_ENTRY_LAST_ENTRY))
+                {
 
                     PreviousLastEntry = LastEntry;
                     LastEntry += LastEntry->Size;
 
-                    if (((PCHAR)LastEntry >= (PCHAR)Segment->LastValidEntry) || (LastEntry->Size == 0)) {
+                    if (((PCHAR)LastEntry >= (PCHAR)Segment->LastValidEntry) || (LastEntry->Size == 0))
+                    {
 
                         //
                         //  Check for the situation where the last entry in the
@@ -5255,15 +5315,16 @@ Return Value:
                         //  us right where the have a new committed range
                         //
 
-                        if (LastEntry == (PHEAP_ENTRY)Address) {
+                        if (LastEntry == (PHEAP_ENTRY)Address)
+                        {
 
                             LastEntry = PreviousLastEntry;
 
                             break;
                         }
 
-                        HeapDebugPrint(( "Heap missing last entry in committed range near %x\n", PreviousLastEntry ));
-                        HeapDebugBreak( PreviousLastEntry );
+                        HeapDebugPrint(("Heap missing last entry in committed range near %x\n", PreviousLastEntry));
+                        HeapDebugBreak(PreviousLastEntry);
 
                         return NULL;
                     }
@@ -5290,7 +5351,8 @@ Return Value:
             //  we've just committed knows that an uncommitted range follows.
             //
 
-            if (UnCommittedRange->Size == 0) {
+            if (UnCommittedRange->Size == 0)
+            {
 
                 //
                 //  This uncommitted range is about to vanish.  Base on if the
@@ -5298,13 +5360,15 @@ Return Value:
                 //  mark the committed range as being last or not.
                 //
 
-                if (UnCommittedRange->Address == (ULONG_PTR)Segment->LastValidEntry) {
+                if (UnCommittedRange->Address == (ULONG_PTR)Segment->LastValidEntry)
+                {
 
                     FirstEntry->Flags = HEAP_ENTRY_LAST_ENTRY;
 
                     Segment->LastEntryInSegment = FirstEntry;
-
-                } else {
+                }
+                else
+                {
 
                     FirstEntry->Flags = 0;
 
@@ -5318,11 +5382,12 @@ Return Value:
 
                 *pp = UnCommittedRange->Next;
 
-                RtlpDestroyUnCommittedRange( Segment, UnCommittedRange );
+                RtlpDestroyUnCommittedRange(Segment, UnCommittedRange);
 
                 Segment->NumberOfUnCommittedRanges -= 1;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Otherwise the range is not empty so we know what we committed
@@ -5343,7 +5408,8 @@ Return Value:
             FirstEntry->Size = (USHORT)(*Size >> HEAP_GRANULARITY_SHIFT);
             FirstEntry->PreviousSize = LastEntry->Size;
 
-            if (!(FirstEntry->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+            if (!(FirstEntry->Flags & HEAP_ENTRY_LAST_ENTRY))
+            {
 
                 (FirstEntry + FirstEntry->Size)->PreviousSize = FirstEntry->Size;
             }
@@ -5355,13 +5421,16 @@ Return Value:
             //  remembering the largest one
             //
 
-            if (Segment->LargestUnCommittedRange == 0) {
+            if (Segment->LargestUnCommittedRange == 0)
+            {
 
                 UnCommittedRange = Segment->UnCommittedRanges;
 
-                while (UnCommittedRange != NULL) {
+                while (UnCommittedRange != NULL)
+                {
 
-                    if (UnCommittedRange->Size >= Segment->LargestUnCommittedRange) {
+                    if (UnCommittedRange->Size >= Segment->LargestUnCommittedRange)
+                    {
 
                         Segment->LargestUnCommittedRange = UnCommittedRange->Size;
                     }
@@ -5370,52 +5439,55 @@ Return Value:
                 }
             }
 
-            #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-            if(IsHeapLogging( Heap ) ) {
+            if (IsHeapLogging(Heap))
+            {
 
                 PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
                 PPERFINFO_TRACE_HEADER pEventHeader = NULL;
                 USHORT ReqSize = sizeof(HEAP_EVENT_EXPANSION) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-                AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+                AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                if(pEventHeader && pThreadLocalData) {
+                if (pEventHeader && pThreadLocalData)
+                {
 
 
                     SIZE_T UCBytes = 0;
-                    PHEAP_EVENT_EXPANSION pHeapEvent = (PHEAP_EVENT_EXPANSION)( (SIZE_T)pEventHeader
-                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                    PHEAP_EVENT_EXPANSION pHeapEvent =
+                        (PHEAP_EVENT_EXPANSION)((SIZE_T)pEventHeader +
+                                                (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                    pEventHeader->Packet.Size = (USHORT) ReqSize;
+                    pEventHeader->Packet.Size = (USHORT)ReqSize;
                     pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_EXTEND;
 
-                    pHeapEvent->HeapHandle		= (PVOID)Heap;
-                    pHeapEvent->CommittedSize	= *Size;
-                    pHeapEvent->Address			= (PVOID)FirstEntry;
-                    pHeapEvent->FreeSpace		= Heap->TotalFreeSize;
-                    pHeapEvent->ReservedSpace	= 0;
-                    pHeapEvent->CommittedSpace  = 0;
-                    pHeapEvent->NoOfUCRs		= 0;
+                    pHeapEvent->HeapHandle = (PVOID)Heap;
+                    pHeapEvent->CommittedSize = *Size;
+                    pHeapEvent->Address = (PVOID)FirstEntry;
+                    pHeapEvent->FreeSpace = Heap->TotalFreeSize;
+                    pHeapEvent->ReservedSpace = 0;
+                    pHeapEvent->CommittedSpace = 0;
+                    pHeapEvent->NoOfUCRs = 0;
 
                     UCBytes = GetUCBytes(Heap, &pHeapEvent->ReservedSpace, &pHeapEvent->NoOfUCRs);
 
-                    pHeapEvent->ReservedSpace *= PAGE_SIZE; 
-                    pHeapEvent->CommittedSpace =  pHeapEvent->ReservedSpace - UCBytes;
+                    pHeapEvent->ReservedSpace *= PAGE_SIZE;
+                    pHeapEvent->CommittedSpace = pHeapEvent->ReservedSpace - UCBytes;
 
                     ReleaseBufferLocation(pThreadLocalData);
-
-                } 
+                }
             }
-            #endif //NTOS_KERNEL_RUNTIME
+#endif //NTOS_KERNEL_RUNTIME
 
             //
             //  And return the heap entry to our caller
             //
 
             return (PHEAP_FREE_ENTRY)FirstEntry;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Otherwise the current uncommited range is too small or
@@ -5437,21 +5509,14 @@ Return Value:
     return NULL;
 }
 
-
+
 //
 //  Declared in heappriv.h
 //
 
 BOOLEAN
-RtlpInitializeHeapSegment (
-    IN PHEAP Heap,
-    IN PHEAP_SEGMENT Segment,
-    IN UCHAR SegmentIndex,
-    IN ULONG Flags,
-    IN PVOID BaseAddress,
-    IN PVOID UnCommittedAddress,
-    IN PVOID CommitLimitAddress
-    )
+RtlpInitializeHeapSegment(IN PHEAP Heap, IN PHEAP_SEGMENT Segment, IN UCHAR SegmentIndex, IN ULONG Flags,
+                          IN PVOID BaseAddress, IN PVOID UnCommittedAddress, IN PVOID CommitLimitAddress)
 
 /*++
 
@@ -5503,15 +5568,14 @@ Return Value:
     //  Compute the total number of pages possible in this segment
     //
 
-    NumberOfPages = (ULONG) (((PCHAR)CommitLimitAddress - (PCHAR)BaseAddress) / PAGE_SIZE);
+    NumberOfPages = (ULONG)(((PCHAR)CommitLimitAddress - (PCHAR)BaseAddress) / PAGE_SIZE);
 
     //
     //  First entry points to the first possible segment entry after
     //  the segment header
     //
 
-    FirstEntry = (PHEAP_ENTRY)ROUND_UP_TO_POWER2( Segment + 1,
-                                                  HEAP_GRANULARITY );
+    FirstEntry = (PHEAP_ENTRY)ROUND_UP_TO_POWER2(Segment + 1, HEAP_GRANULARITY);
 
     //
     //  Now if the heap is equal to the base address for the segment which
@@ -5519,11 +5583,13 @@ Return Value:
     //  heap header.  Otherwise there isn't a previous entry
     //
 
-    if ((PVOID)Heap == BaseAddress) {
+    if ((PVOID)Heap == BaseAddress)
+    {
 
         PreviousSize = Heap->Entry.Size;
-
-    } else {
+    }
+    else
+    {
 
         PreviousSize = 0;
     }
@@ -5539,9 +5605,11 @@ Return Value:
     //  it is beyond the heap limit then we cannot initialize
     //
 
-    if ((PCHAR)(FirstEntry + 1) >= (PCHAR)UnCommittedAddress) {
+    if ((PCHAR)(FirstEntry + 1) >= (PCHAR)UnCommittedAddress)
+    {
 
-        if ((PCHAR)(FirstEntry + 1) >= (PCHAR)CommitLimitAddress) {
+        if ((PCHAR)(FirstEntry + 1) >= (PCHAR)CommitLimitAddress)
+        {
 
             return FALSE;
         }
@@ -5559,18 +5627,15 @@ Return Value:
         // aligned sizes.
         //
 
-        CommitSize = ROUND_UP_TO_POWER2 (CommitSize, PAGE_SIZE);
+        CommitSize = ROUND_UP_TO_POWER2(CommitSize, PAGE_SIZE);
 #endif
 
 
-        Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                          (PVOID *)&UnCommittedAddress,
-                                          0,
-                                          &CommitSize,
-                                          MEM_COMMIT,
-                                          PAGE_READWRITE );
+        Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&UnCommittedAddress, 0, &CommitSize, MEM_COMMIT,
+                                         PAGE_READWRITE);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return FALSE;
         }
@@ -5611,7 +5676,8 @@ Return Value:
     //  backtrace
     //
 
-    if (NtGlobalFlag & FLG_USER_STACK_TRACE_DB) {
+    if (NtGlobalFlag & FLG_USER_STACK_TRACE_DB)
+    {
 
         Segment->AllocatorBackTraceIndex = (USHORT)RtlLogStackBackTrace();
     }
@@ -5636,19 +5702,19 @@ Return Value:
     //  into the uncommitted ranges list
     //
 
-    if (NumberOfUnCommittedPages) {
+    if (NumberOfUnCommittedPages)
+    {
 
-        RtlpInsertUnCommittedPages( Segment,
-                                    (ULONG_PTR)UnCommittedAddress,
-                                    NumberOfUnCommittedPages * PAGE_SIZE );
+        RtlpInsertUnCommittedPages(Segment, (ULONG_PTR)UnCommittedAddress, NumberOfUnCommittedPages * PAGE_SIZE);
 
         //
         //  Test if we successfully created the uncommitted range within the segment
         //
 
-        if (Segment->NumberOfUnCommittedRanges == 0) {
-            
-            HeapDebugPrint(( "Failed to initialize a new segment (%x)\n", Segment ));
+        if (Segment->NumberOfUnCommittedRanges == 0)
+        {
+
+            HeapDebugPrint(("Failed to initialize a new segment (%x)\n", Segment));
 
             //
             //  We don't need to decommitt the extra memory commited before because
@@ -5663,10 +5729,11 @@ Return Value:
     //  Have the containing heap point to this segment via the specified index
     //
 
-    Heap->Segments[ SegmentIndex ] = Segment;
-    
-    if (Heap->LastSegmentIndex < SegmentIndex) {
-        
+    Heap->Segments[SegmentIndex] = Segment;
+
+    if (Heap->LastSegmentIndex < SegmentIndex)
+    {
+
         Heap->LastSegmentIndex = SegmentIndex;
     }
 
@@ -5684,9 +5751,7 @@ Return Value:
     FirstEntry->PreviousSize = PreviousSize;
     FirstEntry->SegmentIndex = SegmentIndex;
 
-    RtlpInsertFreeBlock( Heap,
-                         (PHEAP_FREE_ENTRY)FirstEntry,
-                         (PHEAP_ENTRY)UnCommittedAddress - FirstEntry);
+    RtlpInsertFreeBlock(Heap, (PHEAP_FREE_ENTRY)FirstEntry, (PHEAP_ENTRY)UnCommittedAddress - FirstEntry);
 
     //
     //  And return to our caller
@@ -5695,15 +5760,13 @@ Return Value:
     return TRUE;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
 NTSTATUS
-RtlpDestroyHeapSegment (
-    IN PHEAP_SEGMENT Segment
-    )
+RtlpDestroyHeapSegment(IN PHEAP_SEGMENT Segment)
 
 /*++
 
@@ -5734,7 +5797,8 @@ Return Value:
     //  we'll assume knows how to get rid of the memory
     //
 
-    if (!(Segment->Flags & HEAP_SEGMENT_USER_ALLOCATED)) {
+    if (!(Segment->Flags & HEAP_SEGMENT_USER_ALLOCATED))
+    {
 
         BaseAddress = Segment->BaseAddress;
         BytesToFree = 0;
@@ -5744,12 +5808,10 @@ Return Value:
         //  to our caller.
         //
 
-        return RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                          (PVOID *)&BaseAddress,
-                                          &BytesToFree,
-                                          MEM_RELEASE );
-
-    } else {
+        return RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&BaseAddress, &BytesToFree, MEM_RELEASE);
+    }
+    else
+    {
 
         //
         //  User allocated segments are a noop
@@ -5760,16 +5822,12 @@ Return Value:
 }
 
 
-
 //
 //  Local Support Routine
 //
 
 PHEAP_FREE_ENTRY
-RtlpExtendHeap (
-    IN PHEAP Heap,
-    IN SIZE_T AllocationSize
-    )
+RtlpExtendHeap(IN PHEAP Heap, IN SIZE_T AllocationSize)
 
 /*++
 
@@ -5804,17 +5862,19 @@ Return Value:
     RTL_PAGED_CODE();
 
 #ifndef NTOS_KERNEL_RUNTIME
-    
-    if (Heap->LargeBlocksIndex) {
+
+    if (Heap->LargeBlocksIndex)
+    {
 
         PHEAP_INDEX HeapIndex = (PHEAP_INDEX)Heap->LargeBlocksIndex;
 
-        if (HeapIndex->LargeBlocksCacheMaxDepth < RtlpLargeListDepthLimit) {
+        if (HeapIndex->LargeBlocksCacheMaxDepth < RtlpLargeListDepthLimit)
+        {
 
             HeapIndex->LargeBlocksCacheMaxDepth += 1;
         }
-    
-        HeapIndex->CacheStats.Committs += 1;    
+
+        HeapIndex->CacheStats.Committs += 1;
     }
 
 #endif // NTOS_KERNEL_RUNTIME
@@ -5825,7 +5885,7 @@ Return Value:
     //  the page count
     //
 
-    NumberOfPages = (ULONG) ((AllocationSize + PAGE_SIZE - 1) / PAGE_SIZE);
+    NumberOfPages = (ULONG)((AllocationSize + PAGE_SIZE - 1) / PAGE_SIZE);
     FreeSize = NumberOfPages * PAGE_SIZE;
 
     //
@@ -5836,52 +5896,50 @@ Return Value:
     //
 
     EmptySegmentIndex = (UCHAR)(Heap->LastSegmentIndex + 1);
-    for (SegmentIndex=0; SegmentIndex <= Heap->LastSegmentIndex; SegmentIndex++) {
+    for (SegmentIndex = 0; SegmentIndex <= Heap->LastSegmentIndex; SegmentIndex++)
+    {
 
 #ifndef NTOS_KERNEL_RUNTIME
-        if ((RtlpGetLowFragHeap(Heap) != NULL) 
-                &&
-            (AllocationSize > HEAP_LARGEST_LFH_BLOCK)) {
+        if ((RtlpGetLowFragHeap(Heap) != NULL) && (AllocationSize > HEAP_LARGEST_LFH_BLOCK))
+        {
 
             //
             //  Search backward for large blocks. This will group the
-            //  large allocations into upper segments, and small allocations 
+            //  large allocations into upper segments, and small allocations
             //  into lower index segments. It helps the fragmentation
             //
 
-            Segment = Heap->Segments[ Heap->LastSegmentIndex - SegmentIndex ];
-        
-        } else {
-
-            Segment = Heap->Segments[ SegmentIndex ];
+            Segment = Heap->Segments[Heap->LastSegmentIndex - SegmentIndex];
         }
-#else  //  NTOS_KERNEL_RUNTIME
+        else
+        {
 
-        Segment = Heap->Segments[ SegmentIndex ];
+            Segment = Heap->Segments[SegmentIndex];
+        }
+#else //  NTOS_KERNEL_RUNTIME
 
-#endif //  NTOS_KERNEL_RUNTIME
-        //
-        //  If the segment exists and number of uncommitted pages will
-        //  satisfy our request and the largest uncommitted range will
-        //  also satisfy our request then we'll try and segment
-        //
-        //  Note that this second test seems unnecessary given that
-        //  the largest uncommitted range is also being tested
-        //
+        Segment = Heap->Segments[SegmentIndex];
 
-        if ((Segment) &&
-            (NumberOfPages <= Segment->NumberOfUnCommittedPages) &&
-            (FreeSize <= Segment->LargestUnCommittedRange)) {
+#endif //  NTOS_KERNEL_RUNTIME                                     \
+    //                                                             \
+    //  If the segment exists and number of uncommitted pages will \
+    //  satisfy our request and the largest uncommitted range will \
+    //  also satisfy our request then we'll try and segment        \
+    //                                                             \
+    //  Note that this second test seems unnecessary given that    \
+    //  the largest uncommitted range is also being tested         \
+    //
+
+        if ((Segment) && (NumberOfPages <= Segment->NumberOfUnCommittedPages) &&
+            (FreeSize <= Segment->LargestUnCommittedRange))
+        {
 
             //
             //  Looks like a good segment so try and commit the
             //  amount we need
             //
 
-            FreeBlock = RtlpFindAndCommitPages( Heap,
-                                                Segment,
-                                                &FreeSize,
-                                                NULL );
+            FreeBlock = RtlpFindAndCommitPages(Heap, Segment, &FreeSize, NULL);
 
             //
             //  If we were successful the we will coalesce it with adjacent
@@ -5889,7 +5947,8 @@ Return Value:
             //  the free block
             //
 
-            if (FreeBlock != NULL) {
+            if (FreeBlock != NULL)
+            {
 
                 //
                 //  RtlpCoalesceFreeBlocks needs the free size in heap units.
@@ -5898,9 +5957,9 @@ Return Value:
 
                 FreeSize = FreeSize >> HEAP_GRANULARITY_SHIFT;
 
-                FreeBlock = RtlpCoalesceFreeBlocks( Heap, FreeBlock, &FreeSize, FALSE );
+                FreeBlock = RtlpCoalesceFreeBlocks(Heap, FreeBlock, &FreeSize, FALSE);
 
-                RtlpInsertFreeBlock( Heap, FreeBlock, FreeSize );
+                RtlpInsertFreeBlock(Heap, FreeBlock, FreeSize);
 
                 return FreeBlock;
             }
@@ -5913,8 +5972,8 @@ Return Value:
     //  and if we're allowed to grow the heap.
     //
 
-    if ((EmptySegmentIndex != HEAP_MAXIMUM_SEGMENTS) &&
-        (Heap->Flags & HEAP_GROWABLE)) {
+    if ((EmptySegmentIndex != HEAP_MAXIMUM_SEGMENTS) && (Heap->Flags & HEAP_GROWABLE))
+    {
 
         Segment = NULL;
 
@@ -5924,11 +5983,13 @@ Return Value:
         //  right now is already beyond the default reserve size
         //
 
-        if ((AllocationSize + PAGE_SIZE) > Heap->SegmentReserve) {
+        if ((AllocationSize + PAGE_SIZE) > Heap->SegmentReserve)
+        {
 
             ReserveSize = AllocationSize + PAGE_SIZE;
-
-        } else {
+        }
+        else
+        {
 
             ReserveSize = Heap->SegmentReserve;
         }
@@ -5939,25 +6000,22 @@ Return Value:
         //  Limit the size of the segments to 2 GBytes
         //
 
-        #define HEAP_MAX_SEGMENT_SIZE 0x80000000
+#define HEAP_MAX_SEGMENT_SIZE 0x80000000
 
-        if (ReserveSize >= HEAP_MAX_SEGMENT_SIZE) {
+        if (ReserveSize >= HEAP_MAX_SEGMENT_SIZE)
+        {
 
             ReserveSize = HEAP_MAX_SEGMENT_SIZE;
         }
 
 #endif
-        
+
         //
         //  Try and reserve some vm
         //
 
-        Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                          (PVOID *)&Segment,
-                                          0,
-                                          &ReserveSize,
-                                          MEM_RESERVE,
-                                          PAGE_READWRITE );
+        Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&Segment, 0, &ReserveSize, MEM_RESERVE,
+                                         PAGE_READWRITE);
 
         //
         //  If we get back status no memory then we should trim back the
@@ -5967,24 +6025,23 @@ Return Value:
         //  out of memory.
         //
 
-        while ((!NT_SUCCESS( Status )) && (ReserveSize != (AllocationSize + PAGE_SIZE))) {
+        while ((!NT_SUCCESS(Status)) && (ReserveSize != (AllocationSize + PAGE_SIZE)))
+        {
 
             ReserveSize = ReserveSize / 2;
 
-            if( ReserveSize < (AllocationSize + PAGE_SIZE) ) {
+            if (ReserveSize < (AllocationSize + PAGE_SIZE))
+            {
 
                 ReserveSize = (AllocationSize + PAGE_SIZE);
             }
 
-            Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                              (PVOID *)&Segment,
-                                              0,
-                                              &ReserveSize,
-                                              MEM_RESERVE,
-                                              PAGE_READWRITE );
+            Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&Segment, 0, &ReserveSize, MEM_RESERVE,
+                                             PAGE_READWRITE);
         }
 
-        if (NT_SUCCESS( Status )) {
+        if (NT_SUCCESS(Status))
+        {
 
             //
             //  Adjust the heap state information
@@ -5998,11 +6055,13 @@ Return Value:
             //  this current request
             //
 
-            if ((AllocationSize + PAGE_SIZE) > Heap->SegmentCommit) {
+            if ((AllocationSize + PAGE_SIZE) > Heap->SegmentCommit)
+            {
 
                 CommitSize = AllocationSize + PAGE_SIZE;
-
-            } else {
+            }
+            else
+            {
 
                 CommitSize = Heap->SegmentCommit;
             }
@@ -6013,19 +6072,15 @@ Return Value:
             // aligned sizes.
             //
 
-            CommitSize = ROUND_UP_TO_POWER2 (CommitSize, PAGE_SIZE);
+            CommitSize = ROUND_UP_TO_POWER2(CommitSize, PAGE_SIZE);
 #endif
 
             //
             //  Try and commit the memory
             //
 
-            Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                              (PVOID *)&Segment,
-                                              0,
-                                              &CommitSize,
-                                              MEM_COMMIT,
-                                              PAGE_READWRITE );
+            Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&Segment, 0, &CommitSize, MEM_COMMIT,
+                                             PAGE_READWRITE);
 
             //
             //  If the commit is successful but we were not able to
@@ -6033,14 +6088,10 @@ Return Value:
             //  and error value
             //
 
-            if (NT_SUCCESS( Status ) &&
-                !RtlpInitializeHeapSegment( Heap,
-                                            Segment,
-                                            EmptySegmentIndex,
-                                            0,
-                                            Segment,
-                                            (PCHAR)Segment + CommitSize,
-                                            (PCHAR)Segment + ReserveSize)) {
+            if (NT_SUCCESS(Status) &&
+                !RtlpInitializeHeapSegment(Heap, Segment, EmptySegmentIndex, 0, Segment, (PCHAR)Segment + CommitSize,
+                                           (PCHAR)Segment + ReserveSize))
+            {
 
                 Status = STATUS_NO_MEMORY;
             }
@@ -6050,44 +6101,47 @@ Return Value:
             //  can return the first entry in the segment to our caller
             //
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
-                #ifndef NTOS_KERNEL_RUNTIME
-                if(IsHeapLogging( Heap ) ) {
+#ifndef NTOS_KERNEL_RUNTIME
+                if (IsHeapLogging(Heap))
+                {
 
                     PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
                     PPERFINFO_TRACE_HEADER pEventHeader = NULL;
                     USHORT ReqSize = sizeof(HEAP_EVENT_EXPANSION) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-                    AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+                    AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                    if(pEventHeader && pThreadLocalData) {
+                    if (pEventHeader && pThreadLocalData)
+                    {
 
                         SIZE_T UCBytes = 0;
-                        PHEAP_EVENT_EXPANSION pHeapEvent = (PHEAP_EVENT_EXPANSION)( (SIZE_T)pEventHeader
-                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                        PHEAP_EVENT_EXPANSION pHeapEvent =
+                            (PHEAP_EVENT_EXPANSION)((SIZE_T)pEventHeader +
+                                                    (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                        pEventHeader->Packet.Size = (USHORT) ReqSize;
+                        pEventHeader->Packet.Size = (USHORT)ReqSize;
                         pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_EXTEND;
 
-                        pHeapEvent->HeapHandle		= (PVOID)Heap;
-                        pHeapEvent->CommittedSize	= CommitSize;
-                        pHeapEvent->Address			= (PVOID)Segment->FirstEntry;
-                        pHeapEvent->FreeSpace		= Heap->TotalFreeSize;
-                        pHeapEvent->ReservedSpace	= 0;
-                        pHeapEvent->CommittedSpace  = 0;
-                        pHeapEvent->NoOfUCRs		= 0;
+                        pHeapEvent->HeapHandle = (PVOID)Heap;
+                        pHeapEvent->CommittedSize = CommitSize;
+                        pHeapEvent->Address = (PVOID)Segment->FirstEntry;
+                        pHeapEvent->FreeSpace = Heap->TotalFreeSize;
+                        pHeapEvent->ReservedSpace = 0;
+                        pHeapEvent->CommittedSpace = 0;
+                        pHeapEvent->NoOfUCRs = 0;
 
                         UCBytes = GetUCBytes(Heap, &pHeapEvent->ReservedSpace, &pHeapEvent->NoOfUCRs);
 
-                        pHeapEvent->ReservedSpace *= PAGE_SIZE; 
-                        pHeapEvent->CommittedSpace =  pHeapEvent->ReservedSpace - UCBytes;
+                        pHeapEvent->ReservedSpace *= PAGE_SIZE;
+                        pHeapEvent->CommittedSpace = pHeapEvent->ReservedSpace - UCBytes;
 
                         ReleaseBufferLocation(pThreadLocalData);
-
-                    } 
+                    }
                 }
-                #endif //NTOS_KERNEL_RUNTIME
+#endif //NTOS_KERNEL_RUNTIME
 
 
                 return (PHEAP_FREE_ENTRY)Segment->FirstEntry;
@@ -6098,10 +6152,7 @@ Return Value:
             //  so we'll release the memory which will also decommit it if necessary
             //
 
-            RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                       (PVOID *)&Segment,
-                                       &ReserveSize,
-                                       MEM_RELEASE );
+            RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&Segment, &ReserveSize, MEM_RELEASE);
         }
     }
 
@@ -6113,11 +6164,13 @@ Return Value:
     //  that we can use
     //
 
-    if (Heap->Flags & HEAP_DISABLE_COALESCE_ON_FREE) {
+    if (Heap->Flags & HEAP_DISABLE_COALESCE_ON_FREE)
+    {
 
-        FreeBlock = RtlpCoalesceHeap( Heap );
+        FreeBlock = RtlpCoalesceHeap(Heap);
 
-        if ((FreeBlock != NULL) && (FreeBlock->Size >= AllocationSize)) {
+        if ((FreeBlock != NULL) && (FreeBlock->Size >= AllocationSize))
+        {
 
             return FreeBlock;
         }
@@ -6133,18 +6186,14 @@ Return Value:
     return NULL;
 }
 
-
+
 //
 //  Declared in heappriv.h
 //
 
 PHEAP_FREE_ENTRY
-RtlpCoalesceFreeBlocks (
-    IN PHEAP Heap,
-    IN PHEAP_FREE_ENTRY FreeBlock,
-    IN OUT PSIZE_T FreeSize,
-    IN BOOLEAN RemoveFromFreeList
-    )
+RtlpCoalesceFreeBlocks(IN PHEAP Heap, IN PHEAP_FREE_ENTRY FreeBlock, IN OUT PSIZE_T FreeSize,
+                       IN BOOLEAN RemoveFromFreeList)
 
 /*++
 
@@ -6186,9 +6235,9 @@ Return Value:
     //  put together will still fit on a free lists.
     //
 
-    if ((FreeBlock1 != FreeBlock) &&
-        !(FreeBlock1->Flags & HEAP_ENTRY_BUSY) &&
-        ((*FreeSize + FreeBlock1->Size) <= HEAP_MAXIMUM_BLOCK_SIZE)) {
+    if ((FreeBlock1 != FreeBlock) && !(FreeBlock1->Flags & HEAP_ENTRY_BUSY) &&
+        ((*FreeSize + FreeBlock1->Size) <= HEAP_MAXIMUM_BLOCK_SIZE))
+    {
 
         //
         //  We are going to merge ourselves with the preceding block
@@ -6200,9 +6249,10 @@ Return Value:
         //  Check if we need to remove the input block from the free list
         //
 
-        if (RemoveFromFreeList) {
+        if (RemoveFromFreeList)
+        {
 
-            RtlpRemoveFreeBlock( Heap, FreeBlock );
+            RtlpRemoveFreeBlock(Heap, FreeBlock);
 
             Heap->TotalFreeSize -= FreeBlock->Size;
 
@@ -6217,7 +6267,7 @@ Return Value:
         //  Remove the preceding block from its free list
         //
 
-        RtlpRemoveFreeBlock( Heap, FreeBlock1 );
+        RtlpRemoveFreeBlock(Heap, FreeBlock1);
 
         //
         //  Copy over the last entry flag if necessary from what we're freeing
@@ -6226,7 +6276,8 @@ Return Value:
 
         FreeBlock1->Flags = FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY;
 
-        if( FreeBlock1->Flags & HEAP_ENTRY_LAST_ENTRY ) {
+        if (FreeBlock1->Flags & HEAP_ENTRY_LAST_ENTRY)
+        {
 
             PHEAP_SEGMENT Segment;
 
@@ -6252,7 +6303,8 @@ Return Value:
         //  entry
         //
 
-        if (!(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+        if (!(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+        {
 
             ((PHEAP_ENTRY)FreeBlock + *FreeSize)->PreviousSize = (USHORT)*FreeSize;
         }
@@ -6262,7 +6314,8 @@ Return Value:
     //  Check if there is a following block.
     //
 
-    if (!(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+    if (!(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+    {
 
         //
         //  There is a following block so now get a pointer to it
@@ -6272,8 +6325,8 @@ Return Value:
 
         NextFreeBlock = (PHEAP_FREE_ENTRY)((PHEAP_ENTRY)FreeBlock + *FreeSize);
 
-        if (!(NextFreeBlock->Flags & HEAP_ENTRY_BUSY) &&
-            ((*FreeSize + NextFreeBlock->Size) <= HEAP_MAXIMUM_BLOCK_SIZE)) {
+        if (!(NextFreeBlock->Flags & HEAP_ENTRY_BUSY) && ((*FreeSize + NextFreeBlock->Size) <= HEAP_MAXIMUM_BLOCK_SIZE))
+        {
 
             //
             //  We are going to merge ourselves with the following block
@@ -6285,9 +6338,10 @@ Return Value:
             //  Check if we need to remove the input block from the free list
             //
 
-            if (RemoveFromFreeList) {
+            if (RemoveFromFreeList)
+            {
 
-                RtlpRemoveFreeBlock( Heap, FreeBlock );
+                RtlpRemoveFreeBlock(Heap, FreeBlock);
 
                 Heap->TotalFreeSize -= FreeBlock->Size;
             }
@@ -6299,7 +6353,8 @@ Return Value:
 
             FreeBlock->Flags = NextFreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY;
 
-            if( FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY ) {
+            if (FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY)
+            {
 
                 PHEAP_SEGMENT Segment;
 
@@ -6311,7 +6366,7 @@ Return Value:
             //  Remove the following block from its free list
             //
 
-            RtlpRemoveFreeBlock( Heap, NextFreeBlock );
+            RtlpRemoveFreeBlock(Heap, NextFreeBlock);
 
             //
             //  Adjust the size for the newly combined block
@@ -6327,7 +6382,8 @@ Return Value:
             //  Check if we need to update the previous size of the next block
             //
 
-            if (!(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+            if (!(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+            {
 
                 ((PHEAP_ENTRY)FreeBlock + *FreeSize)->PreviousSize = (USHORT)*FreeSize;
             }
@@ -6341,17 +6397,12 @@ Return Value:
     return FreeBlock;
 }
 
-
+
 //
 //  Declared in heappriv.h
 //
 
-VOID
-RtlpDeCommitFreeBlock (
-    IN PHEAP Heap,
-    IN PHEAP_FREE_ENTRY FreeBlock,
-    IN SIZE_T FreeSize
-    )
+VOID RtlpDeCommitFreeBlock(IN PHEAP Heap, IN PHEAP_FREE_ENTRY FreeBlock, IN SIZE_T FreeSize)
 
 /*++
 
@@ -6393,9 +6444,10 @@ Return Value:
     //  into pieces that will fit on the free lists
     //
 
-    if (Heap->CommitRoutine != NULL) {
+    if (Heap->CommitRoutine != NULL)
+    {
 
-        RtlpInsertFreeBlock( Heap, FreeBlock, FreeSize );      
+        RtlpInsertFreeBlock(Heap, FreeBlock, FreeSize);
 
         return;
     }
@@ -6404,7 +6456,7 @@ Return Value:
     //  Get a pointer to the owning segment
     //
 
-    Segment = Heap->Segments[ FreeBlock->SegmentIndex ];
+    Segment = Heap->Segments[FreeBlock->SegmentIndex];
 
     //
     //  The leading busy block identifies the preceding in use block before
@@ -6428,7 +6480,7 @@ Return Value:
     //  heap entries.
     //
 
-    DeCommitAddress = ROUND_UP_TO_POWER2( LeadingFreeBlock, PAGE_SIZE );
+    DeCommitAddress = ROUND_UP_TO_POWER2(LeadingFreeBlock, PAGE_SIZE);
     LeadingFreeSize = (USHORT)((PHEAP_ENTRY)DeCommitAddress - (PHEAP_ENTRY)LeadingFreeBlock);
 
     //
@@ -6439,14 +6491,17 @@ Return Value:
     //  block as the leading busy block
     //
 
-    if (LeadingFreeSize == 1) {
+    if (LeadingFreeSize == 1)
+    {
 
         DeCommitAddress += PAGE_SIZE;
         LeadingFreeSize += PAGE_SIZE >> HEAP_GRANULARITY_SHIFT;
+    }
+    else if (LeadingFreeBlock->PreviousSize != 0)
+    {
 
-    } else if (LeadingFreeBlock->PreviousSize != 0) {
-
-        if (DeCommitAddress == (ULONG_PTR)LeadingFreeBlock) {
+        if (DeCommitAddress == (ULONG_PTR)LeadingFreeBlock)
+        {
 
             LeadingBusyBlock = (PHEAP_ENTRY)LeadingFreeBlock - LeadingFreeBlock->PreviousSize;
         }
@@ -6469,7 +6524,7 @@ Return Value:
     //  page boundary.
     //
 
-    DeCommitSize = ROUND_DOWN_TO_POWER2( (ULONG_PTR)TrailingFreeBlock, PAGE_SIZE );
+    DeCommitSize = ROUND_DOWN_TO_POWER2((ULONG_PTR)TrailingFreeBlock, PAGE_SIZE);
     TrailingFreeSize = (USHORT)((PHEAP_ENTRY)TrailingFreeBlock - (PHEAP_ENTRY)DeCommitSize);
 
     //
@@ -6480,12 +6535,14 @@ Return Value:
     //  that we have a trailing busy block
     //
 
-    if (TrailingFreeSize == (sizeof( HEAP_ENTRY ) >> HEAP_GRANULARITY_SHIFT)) {
+    if (TrailingFreeSize == (sizeof(HEAP_ENTRY) >> HEAP_GRANULARITY_SHIFT))
+    {
 
         DeCommitSize -= PAGE_SIZE;
         TrailingFreeSize += PAGE_SIZE >> HEAP_GRANULARITY_SHIFT;
-
-    } else if ((TrailingFreeSize == 0) && !(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+    }
+    else if ((TrailingFreeSize == 0) && !(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+    {
 
         TrailingBusyBlock = (PHEAP_ENTRY)TrailingFreeBlock;
     }
@@ -6503,11 +6560,13 @@ Return Value:
     //  to decommit.  Otherwise the decommit size is zero.
     //
 
-    if (DeCommitSize > DeCommitAddress) {
+    if (DeCommitSize > DeCommitAddress)
+    {
 
         DeCommitSize -= DeCommitAddress;
-
-    } else {
+    }
+    else
+    {
 
         DeCommitSize = 0;
     }
@@ -6516,31 +6575,33 @@ Return Value:
     //  Now check if we still have something to decommit
     //
 
-    if (DeCommitSize != 0) {
+    if (DeCommitSize != 0)
+    {
 
 #ifndef NTOS_KERNEL_RUNTIME
 
         //
-        //  We do not try to push the large block to the 
+        //  We do not try to push the large block to the
         //  cache if it already has uncommited ranges arround
         //
 
-        if ( (FreeBlock->PreviousSize != 0) 
-                && 
-             !(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY) ) {
-            
-            if (Heap->LargeBlocksIndex == NULL) {
+        if ((FreeBlock->PreviousSize != 0) && !(FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY))
+        {
+
+            if (Heap->LargeBlocksIndex == NULL)
+            {
 
                 Heap->u2.DecommitCount += 1;
 
-                if ( (Heap->u2.DecommitCount == HEAP_ACTIVATE_CACHE_THRESHOLD) &&
-                     (Heap->Flags & HEAP_GROWABLE) &&
-                     !(RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LARGECACHE) ) {
+                if ((Heap->u2.DecommitCount == HEAP_ACTIVATE_CACHE_THRESHOLD) && (Heap->Flags & HEAP_GROWABLE) &&
+                    !(RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LARGECACHE))
+                {
 
-                    RtlpInitializeListIndex( Heap );
+                    RtlpInitializeListIndex(Heap);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 PHEAP_INDEX HeapIndex = (PHEAP_INDEX)Heap->LargeBlocksIndex;
 
@@ -6548,30 +6609,30 @@ Return Value:
                 //  Check if the cache is locked for flushing
                 //
 
-                if ((HeapIndex->LargeBlocksCacheSequence != 0)
-                        &&
-                    ( (LeadingFreeBlock->PreviousSize != 0)
-                            ||
-                      (TrailingFreeSize != 0) ) ) {
+                if ((HeapIndex->LargeBlocksCacheSequence != 0) &&
+                    ((LeadingFreeBlock->PreviousSize != 0) || (TrailingFreeSize != 0)))
+                {
 
-                    if (HeapIndex->LargeBlocksCacheDepth < HeapIndex->LargeBlocksCacheMaxDepth) {
+                    if (HeapIndex->LargeBlocksCacheDepth < HeapIndex->LargeBlocksCacheMaxDepth)
+                    {
 
                         //
                         //  There is nothing left to decommit to take our leading free block
                         //  and put it on a free list
                         //
 
-                        RtlpInsertFreeBlock( Heap, LeadingFreeBlock, FreeSize );
+                        RtlpInsertFreeBlock(Heap, LeadingFreeBlock, FreeSize);
                         RtlpCheckLargeCache(Heap);
 
                         return;
 
                         //
-                        //  Check whether the block being deleted is the only one 
+                        //  Check whether the block being deleted is the only one
                         //  between two uncommitted ranges. If no, we'll decommit the largest block from the list
                         //
-
-                    } else {
+                    }
+                    else
+                    {
 
                         PLIST_ENTRY Head, Next;
                         PHEAP_FREE_ENTRY LargestFreeBlock;
@@ -6582,16 +6643,17 @@ Return Value:
                         //  largest block available
                         //
 
-                        Head = &Heap->FreeLists[ 0 ];                         
+                        Head = &Heap->FreeLists[0];
                         Next = Head->Blink;
 
-                        if (Head != Next) {
+                        if (Head != Next)
+                        {
 
                             //
                             //  Lock the cache operations
                             //
 
-                            LargestFreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+                            LargestFreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
                             //
                             //  Even if the we found a larger block in the list, because of a wrong
@@ -6599,7 +6661,8 @@ Return Value:
                             //  the current block only if the size is significant bigger (+ one page)
                             //
 
-                            if (LargestFreeBlock->Size > (FreeSize + (PAGE_SIZE >> HEAP_GRANULARITY_SHIFT))) {
+                            if (LargestFreeBlock->Size > (FreeSize + (PAGE_SIZE >> HEAP_GRANULARITY_SHIFT)))
+                            {
 
                                 //
                                 //  If we have a larger block into the list
@@ -6607,7 +6670,7 @@ Return Value:
                                 //  the largest one
                                 //
 
-                                RtlpInsertFreeBlock( Heap, LeadingFreeBlock, FreeSize );
+                                RtlpInsertFreeBlock(Heap, LeadingFreeBlock, FreeSize);
                                 RtlpFlushLargestCacheBlock(Heap);
                                 RtlpCheckLargeCache(Heap);
 
@@ -6617,29 +6680,30 @@ Return Value:
                     }
                 }
 
-                HeapIndex->CacheStats.Decommitts += 1;    
-//            HeapDebugPrint(("Decommitting size %ld\n", DeCommitSize));
+                HeapIndex->CacheStats.Decommitts += 1;
+                //            HeapDebugPrint(("Decommitting size %ld\n", DeCommitSize));
             }
         }
 #endif //  NTOS_KERNEL_RUNTIME
 
         //
-        //  Before freeing the memory to MM we have to be sure we can create 
+        //  Before freeing the memory to MM we have to be sure we can create
         //  a PHEAP_UNCOMMMTTED_RANGE later. So we do it right now
         //
 
         UnCommittedRange = RtlpCreateUnCommittedRange(Segment);
 
-        if (UnCommittedRange == NULL) {
-            
-            HeapDebugPrint(( "Failing creating uncommitted range (%x for %x)\n", DeCommitAddress, DeCommitSize ));
+        if (UnCommittedRange == NULL)
+        {
+
+            HeapDebugPrint(("Failing creating uncommitted range (%x for %x)\n", DeCommitAddress, DeCommitSize));
 
             //
             //  We weren't successful in the decommit so now simply
             //  add the leading free block to the free list
             //
 
-            RtlpInsertFreeBlock( Heap, LeadingFreeBlock, FreeSize );
+            RtlpInsertFreeBlock(Heap, LeadingFreeBlock, FreeSize);
 
             return;
         }
@@ -6647,28 +6711,24 @@ Return Value:
         //
         //  Decommit the memory
         //
-        
-        Status = RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-                                            (PVOID *)&DeCommitAddress,
-                                            &DeCommitSize,
-                                            MEM_DECOMMIT );
+
+        Status = RtlpHeapFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&DeCommitAddress, &DeCommitSize, MEM_DECOMMIT);
 
         //
         //  Push back the UnCommittedRange structure. Now the insert cannot fail
         //
 
-        RtlpDestroyUnCommittedRange( Segment, UnCommittedRange );
+        RtlpDestroyUnCommittedRange(Segment, UnCommittedRange);
 
-        if (NT_SUCCESS( Status )) {
+        if (NT_SUCCESS(Status))
+        {
 
             //
             //  Insert information regarding the pages we just decommitted
             //  to the lsit of uncommited pages in the segment
             //
 
-            RtlpInsertUnCommittedPages( Segment,
-                                        DeCommitAddress,
-                                        DeCommitSize );
+            RtlpInsertUnCommittedPages(Segment, DeCommitAddress, DeCommitSize);
             //
             //  Adjust the segments count of uncommitted pages
             //
@@ -6680,7 +6740,8 @@ Return Value:
             //  update the heap, and put it on the free list
             //
 
-            if (LeadingFreeSize != 0) {
+            if (LeadingFreeSize != 0)
+            {
 
                 SIZE_T TempSize;
 
@@ -6689,37 +6750,37 @@ Return Value:
 
                 Segment->LastEntryInSegment = (PHEAP_ENTRY)LeadingFreeBlock;
 
-                LeadingFreeBlock = RtlpCoalesceFreeBlocks( Heap, 
-                                                           LeadingFreeBlock, 
-                                                           &TempSize,
-                                                           FALSE );
+                LeadingFreeBlock = RtlpCoalesceFreeBlocks(Heap, LeadingFreeBlock, &TempSize, FALSE);
 
-                if (LeadingFreeBlock->Size < Heap->DeCommitFreeBlockThreshold) {
+                if (LeadingFreeBlock->Size < Heap->DeCommitFreeBlockThreshold)
+                {
 
                     Heap->TotalFreeSize += LeadingFreeBlock->Size;
-                    RtlpInsertFreeBlockDirect( Heap, LeadingFreeBlock, LeadingFreeBlock->Size );
-
-                } else {
+                    RtlpInsertFreeBlockDirect(Heap, LeadingFreeBlock, LeadingFreeBlock->Size);
+                }
+                else
+                {
 
                     LeadingBlockToDecommit = LeadingFreeBlock;
                 }
 
-            //
-            //  Otherwise if we actually have a leading busy block then
-            //  make sure the busy block knows we're uncommitted
-            //
-
-            } else if (LeadingBusyBlock != NULL) {
+                //
+                //  Otherwise if we actually have a leading busy block then
+                //  make sure the busy block knows we're uncommitted
+                //
+            }
+            else if (LeadingBusyBlock != NULL)
+            {
 
                 LeadingBusyBlock->Flags |= HEAP_ENTRY_LAST_ENTRY;
 
                 Segment->LastEntryInSegment = LeadingBusyBlock;
+            }
+            else if ((Segment->LastEntryInSegment >= (PHEAP_ENTRY)DeCommitAddress) &&
+                     ((PCHAR)Segment->LastEntryInSegment < ((PCHAR)DeCommitAddress + DeCommitSize)))
+            {
 
-            } else if ((Segment->LastEntryInSegment >= (PHEAP_ENTRY)DeCommitAddress)
-                            &&
-                       ((PCHAR)Segment->LastEntryInSegment < ((PCHAR)DeCommitAddress + DeCommitSize))) {
-
-                     Segment->LastEntryInSegment = Segment->FirstEntry;
+                Segment->LastEntryInSegment = Segment->FirstEntry;
             }
 
             //
@@ -6727,112 +6788,117 @@ Return Value:
             //  update the heap, and insert it on a free list
             //
 
-            if (TrailingFreeSize != 0) {
+            if (TrailingFreeSize != 0)
+            {
 
                 SIZE_T TempSize;
-                
+
                 TrailingFreeBlock->PreviousSize = 0;
                 TrailingFreeBlock->SegmentIndex = Segment->Entry.SegmentIndex;
                 TrailingFreeBlock->Flags = 0;
                 TempSize = TrailingFreeBlock->Size = TrailingFreeSize;
 
-                ((PHEAP_FREE_ENTRY)((PHEAP_ENTRY)TrailingFreeBlock + TrailingFreeSize))->PreviousSize = (USHORT)TrailingFreeSize;
+                ((PHEAP_FREE_ENTRY)((PHEAP_ENTRY)TrailingFreeBlock + TrailingFreeSize))->PreviousSize =
+                    (USHORT)TrailingFreeSize;
 
-                TrailingFreeBlock = RtlpCoalesceFreeBlocks( Heap, 
-                                                            TrailingFreeBlock, 
-                                                            &TempSize,
-                                                            FALSE );
-                
-                if (TrailingFreeBlock->Size < Heap->DeCommitFreeBlockThreshold) {
+                TrailingFreeBlock = RtlpCoalesceFreeBlocks(Heap, TrailingFreeBlock, &TempSize, FALSE);
 
-                    RtlpInsertFreeBlockDirect( Heap, TrailingFreeBlock, TrailingFreeBlock->Size );
+                if (TrailingFreeBlock->Size < Heap->DeCommitFreeBlockThreshold)
+                {
+
+                    RtlpInsertFreeBlockDirect(Heap, TrailingFreeBlock, TrailingFreeBlock->Size);
                     Heap->TotalFreeSize += TrailingFreeBlock->Size;
-
-                } else {
+                }
+                else
+                {
 
                     TrailingBlockToDecommit = TrailingFreeBlock;
                 }
 
-            //
-            //  Otherwise if we actually have a succeeding block then
-            //  make it know we are uncommitted
-            //
-
-            } else if (TrailingBusyBlock != NULL) {
+                //
+                //  Otherwise if we actually have a succeeding block then
+                //  make it know we are uncommitted
+                //
+            }
+            else if (TrailingBusyBlock != NULL)
+            {
 
                 TrailingBusyBlock->PreviousSize = 0;
             }
 
-            #ifndef NTOS_KERNEL_RUNTIME
+#ifndef NTOS_KERNEL_RUNTIME
 
-            if( IsHeapLogging( Heap ) ) {
+            if (IsHeapLogging(Heap))
+            {
 
                 PPERFINFO_TRACE_HEADER pEventHeader = NULL;
                 PTHREAD_LOCAL_DATA pThreadLocalData = NULL;
                 USHORT ReqSize = sizeof(HEAP_EVENT_CONTRACTION) + FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data);
 
-                AcquireBufferLocation(&pEventHeader, &pThreadLocalData,&ReqSize);
+                AcquireBufferLocation(&pEventHeader, &pThreadLocalData, &ReqSize);
 
-                if(pEventHeader && pThreadLocalData) {
+                if (pEventHeader && pThreadLocalData)
+                {
 
                     SIZE_T UCBytes = 0;
-                    PHEAP_EVENT_CONTRACTION pHeapEvent = (PHEAP_EVENT_CONTRACTION)( (SIZE_T)pEventHeader
-                                + (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data ));
+                    PHEAP_EVENT_CONTRACTION pHeapEvent =
+                        (PHEAP_EVENT_CONTRACTION)((SIZE_T)pEventHeader +
+                                                  (SIZE_T)FIELD_OFFSET(PERFINFO_TRACE_HEADER, Data));
 
-                    pEventHeader->Packet.Size = (USHORT) ReqSize;
+                    pEventHeader->Packet.Size = (USHORT)ReqSize;
                     pEventHeader->Packet.HookId = PERFINFO_LOG_TYPE_HEAP_CONTRACT;
 
-                    pHeapEvent->HeapHandle			= (PVOID)Heap;
-                    pHeapEvent->DeCommitAddress		= (PVOID)DeCommitAddress;
-                    pHeapEvent->DeCommitSize		= DeCommitSize;
-                    pHeapEvent->FreeSpace			= Heap->TotalFreeSize;
-                    pHeapEvent->ReservedSpace		= 0;
-                    pHeapEvent->CommittedSpace		= 0;
-                    pHeapEvent->NoOfUCRs			= 0;
+                    pHeapEvent->HeapHandle = (PVOID)Heap;
+                    pHeapEvent->DeCommitAddress = (PVOID)DeCommitAddress;
+                    pHeapEvent->DeCommitSize = DeCommitSize;
+                    pHeapEvent->FreeSpace = Heap->TotalFreeSize;
+                    pHeapEvent->ReservedSpace = 0;
+                    pHeapEvent->CommittedSpace = 0;
+                    pHeapEvent->NoOfUCRs = 0;
 
                     UCBytes = GetUCBytes(Heap, &pHeapEvent->ReservedSpace, &pHeapEvent->NoOfUCRs);
 
-                    pHeapEvent->ReservedSpace *= PAGE_SIZE; 
-                    pHeapEvent->CommittedSpace =  pHeapEvent->ReservedSpace - UCBytes;
+                    pHeapEvent->ReservedSpace *= PAGE_SIZE;
+                    pHeapEvent->CommittedSpace = pHeapEvent->ReservedSpace - UCBytes;
 
                     ReleaseBufferLocation(pThreadLocalData);
-
                 }
             }
-            #endif // NTOS_KERNEL_RUNTIME
-
-
-        } else {
+#endif // NTOS_KERNEL_RUNTIME
+        }
+        else
+        {
 
             //
             //  We weren't successful in the decommit so now simply
             //  add the leading free block to the free list
             //
 
-            RtlpInsertFreeBlock( Heap, LeadingFreeBlock, FreeSize );
+            RtlpInsertFreeBlock(Heap, LeadingFreeBlock, FreeSize);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  There is nothing left to decommit to take our leading free block
         //  and put it on a free list
         //
 
-        RtlpInsertFreeBlock( Heap, LeadingFreeBlock, FreeSize );
+        RtlpInsertFreeBlock(Heap, LeadingFreeBlock, FreeSize);
     }
 
 #ifndef NTOS_KERNEL_RUNTIME
 
-    if ( (LeadingBlockToDecommit != NULL)
-            || 
-         (TrailingBlockToDecommit != NULL)){
+    if ((LeadingBlockToDecommit != NULL) || (TrailingBlockToDecommit != NULL))
+    {
 
         PHEAP_INDEX HeapIndex = (PHEAP_INDEX)Heap->LargeBlocksIndex;
         LONG PreviousSequence = 0;
 
-        if (HeapIndex) {
-            
+        if (HeapIndex)
+        {
+
             PreviousSequence = HeapIndex->LargeBlocksCacheSequence;
 
             //
@@ -6844,25 +6910,22 @@ Return Value:
 
 #endif // NTOS_KERNEL_RUNTIME
 
-        if (LeadingBlockToDecommit) {
+        if (LeadingBlockToDecommit)
+        {
 
-            RtlpDeCommitFreeBlock( Heap,
-                                   LeadingBlockToDecommit,
-                                   LeadingBlockToDecommit->Size
-                                 );
+            RtlpDeCommitFreeBlock(Heap, LeadingBlockToDecommit, LeadingBlockToDecommit->Size);
         }
 
-        if (TrailingBlockToDecommit) {
+        if (TrailingBlockToDecommit)
+        {
 
-            RtlpDeCommitFreeBlock( Heap,
-                                    TrailingBlockToDecommit,
-                                    TrailingBlockToDecommit->Size
-                                 );
+            RtlpDeCommitFreeBlock(Heap, TrailingBlockToDecommit, TrailingBlockToDecommit->Size);
         }
 
 #ifndef NTOS_KERNEL_RUNTIME
 
-        if (HeapIndex) {
+        if (HeapIndex)
+        {
 
             //
             //  Unlock the large block cache
@@ -6871,14 +6934,14 @@ Return Value:
             HeapIndex->LargeBlocksCacheSequence = PreviousSequence;
         }
     }
-    
+
 
     //
-    //  At this point the free block to decommit is inserted 
+    //  At this point the free block to decommit is inserted
     //  into the free lists. So it's safe now to check the large
     //  block list and flush what is not longer necessary.
     //
-    
+
     RtlpCheckLargeCache(Heap);
 
 #endif // NTOS_KERNEL_RUNTIME
@@ -6890,17 +6953,12 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Declared in heappriv.h
 //
 
-VOID
-RtlpInsertFreeBlock (
-    IN PHEAP Heap,
-    IN PHEAP_FREE_ENTRY FreeBlock,
-    IN SIZE_T FreeSize
-    )
+VOID RtlpInsertFreeBlock(IN PHEAP Heap, IN PHEAP_FREE_ENTRY FreeBlock, IN SIZE_T FreeSize)
 
 /*++
 
@@ -6942,7 +7000,7 @@ Return Value:
     PreviousSize = FreeBlock->PreviousSize;
 
     SegmentIndex = FreeBlock->SegmentIndex;
-    Segment = Heap->Segments[ SegmentIndex ];
+    Segment = Heap->Segments[SegmentIndex];
 
     Flags = FreeBlock->Flags;
 
@@ -6957,14 +7015,16 @@ Return Value:
     //  we'll process the information
     //
 
-    while (FreeSize != 0) {
+    while (FreeSize != 0)
+    {
 
         //
         //  If the size is too big for our free lists then we'll
         //  chop it down.
         //
 
-        if (FreeSize > (ULONG)HEAP_MAXIMUM_BLOCK_SIZE) {
+        if (FreeSize > (ULONG)HEAP_MAXIMUM_BLOCK_SIZE)
+        {
 
             Size = HEAP_MAXIMUM_BLOCK_SIZE;
 
@@ -6974,7 +7034,8 @@ Return Value:
             //  through the loop
             //
 
-            if (FreeSize == ((ULONG)HEAP_MAXIMUM_BLOCK_SIZE + 1)) {
+            if (FreeSize == ((ULONG)HEAP_MAXIMUM_BLOCK_SIZE + 1))
+            {
 
                 Size -= 16;
             }
@@ -6985,8 +7046,9 @@ Return Value:
             //
 
             FreeBlock->Flags = 0;
-
-        } else {
+        }
+        else
+        {
 
             Size = (USHORT)FreeSize;
 
@@ -7006,7 +7068,7 @@ Return Value:
         FreeBlock->SegmentIndex = SegmentIndex;
         FreeBlock->Size = Size;
 
-        RtlpInsertFreeBlockDirect( Heap, FreeBlock, Size );
+        RtlpInsertFreeBlockDirect(Heap, FreeBlock, Size);
 
         //
         //  Note the size of what we just freed, and then update
@@ -7022,14 +7084,15 @@ Return Value:
         //  Update the last entry in segment, if necessary
         //
 
-        if (FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY) {
+        if (FreeBlock->Flags & HEAP_ENTRY_LAST_ENTRY)
+        {
 
             PHEAP_SEGMENT Segment;
 
-            Segment = Heap->Segments[ FreeBlock->SegmentIndex ];
+            Segment = Heap->Segments[FreeBlock->SegmentIndex];
             Segment->LastEntryInSegment = (PHEAP_ENTRY)FreeBlock;
         }
-        
+
         FreeBlock = (PHEAP_FREE_ENTRY)((PHEAP_ENTRY)FreeBlock + Size);
 
         //
@@ -7039,7 +7102,8 @@ Return Value:
         //  large size and still work.
         //
 
-        if ((PHEAP_ENTRY)FreeBlock >= Segment->LastValidEntry) {
+        if ((PHEAP_ENTRY)FreeBlock >= Segment->LastValidEntry)
+        {
 
             return;
         }
@@ -7050,7 +7114,8 @@ Return Value:
     //  then tell the next block our real size.
     //
 
-    if (!(Flags & HEAP_ENTRY_LAST_ENTRY)) {
+    if (!(Flags & HEAP_ENTRY_LAST_ENTRY))
+    {
 
         FreeBlock->PreviousSize = PreviousSize;
     }
@@ -7062,15 +7127,13 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Declared in heappriv.h
 //
 
 PHEAP_ENTRY_EXTRA
-RtlpGetExtraStuffPointer (
-    PHEAP_ENTRY BusyBlock
-    )
+RtlpGetExtraStuffPointer(PHEAP_ENTRY BusyBlock)
 
 /*++
 
@@ -7100,15 +7163,17 @@ Return Value:
     //  block
     //
 
-    if (BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC) {
+    if (BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC)
+    {
 
         PHEAP_VIRTUAL_ALLOC_ENTRY VirtualAllocBlock;
 
-        VirtualAllocBlock = CONTAINING_RECORD( BusyBlock, HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock );
+        VirtualAllocBlock = CONTAINING_RECORD(BusyBlock, HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock);
 
         return &VirtualAllocBlock->ExtraStuff;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  On non big blocks the extra stuff follows immediately after
@@ -7125,15 +7190,13 @@ Return Value:
     }
 }
 
-
+
 //
 //  Declared in heappriv.h
 //
 
 SIZE_T
-RtlpGetSizeOfBigBlock (
-    IN PHEAP_ENTRY BusyBlock
-    )
+RtlpGetSizeOfBigBlock(IN PHEAP_ENTRY BusyBlock)
 
 /*++
 
@@ -7161,7 +7224,7 @@ Return Value:
     //  Get a pointer to the block header itself
     //
 
-    VirtualAllocBlock = CONTAINING_RECORD( BusyBlock, HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock );
+    VirtualAllocBlock = CONTAINING_RECORD(BusyBlock, HEAP_VIRTUAL_ALLOC_ENTRY, BusyBlock);
 
     //
     //  The size allocated to the block is actually the difference between the
@@ -7172,15 +7235,13 @@ Return Value:
     return VirtualAllocBlock->CommitSize - BusyBlock->Size;
 }
 
-
+
 //
 //  Declared in heappriv.h
 //
 
 BOOLEAN
-RtlpCheckBusyBlockTail (
-    IN PHEAP_ENTRY BusyBlock
-    )
+RtlpCheckBusyBlockTail(IN PHEAP_ENTRY BusyBlock)
 
 /*++
 
@@ -7210,11 +7271,13 @@ Return Value:
     //  Compute the user allocated size of the input heap block
     //
 
-    if (BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC) {
+    if (BusyBlock->Flags & HEAP_ENTRY_VIRTUAL_ALLOC)
+    {
 
-        Size = RtlpGetSizeOfBigBlock( BusyBlock );
-
-    } else {
+        Size = RtlpGetSizeOfBigBlock(BusyBlock);
+    }
+    else
+    {
 
         Size = (BusyBlock->Size << HEAP_GRANULARITY_SHIFT) - BusyBlock->UnusedBytes;
     }
@@ -7230,9 +7293,7 @@ Return Value:
     //  Check if the tail fill pattern is still there
     //
 
-    cbEqual = RtlCompareMemory( Tail,
-                                CheckHeapFillPattern,
-                                CHECK_HEAP_TAIL_SIZE );
+    cbEqual = RtlCompareMemory(Tail, CheckHeapFillPattern, CHECK_HEAP_TAIL_SIZE);
 
     //
     //  If the number we get back isn't equal to the tail size then
@@ -7240,26 +7301,26 @@ Return Value:
     //  size
     //
 
-    if (cbEqual != CHECK_HEAP_TAIL_SIZE) {
+    if (cbEqual != CHECK_HEAP_TAIL_SIZE)
+    {
 
         //
         //  Do some debug printing
         //
 
-        HeapDebugPrint(( "Heap block at %p modified at %p past requested size of %lx\n",
-                         BusyBlock,
-                         Tail + cbEqual,
-                         Size ));
+        HeapDebugPrint(
+            ("Heap block at %p modified at %p past requested size of %lx\n", BusyBlock, Tail + cbEqual, Size));
 
-        HeapDebugBreak( BusyBlock );
+        HeapDebugBreak(BusyBlock);
 
         //
         //  And tell our caller there was an error
         //
 
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  And return to our caller that the tail is fine
@@ -7275,21 +7336,18 @@ Return Value:
 //
 
 #ifndef NTOS_KERNEL_RUNTIME
-    
+
 //
 //  RtlpSizeToAllocIndex is used to convert from a size (in heap allocation units)
 //  to an index into the array
 //
 
-#define RtlpSizeToAllocIndex(HI,S)     \
-    (( (ULONG)((S) - HEAP_MAXIMUM_FREELISTS) >= (HI)->ArraySize) ? ((HI)->ArraySize - 1) :   \
-        ((S) - HEAP_MAXIMUM_FREELISTS))
+#define RtlpSizeToAllocIndex(HI, S)                                                     \
+    (((ULONG)((S) - HEAP_MAXIMUM_FREELISTS) >= (HI)->ArraySize) ? ((HI)->ArraySize - 1) \
+                                                                : ((S) - HEAP_MAXIMUM_FREELISTS))
 
-
-VOID 
-RtlpInitializeListIndex(
-    IN PHEAP Heap
-    )
+
+VOID RtlpInitializeListIndex(IN PHEAP Heap)
 
 /*++
 
@@ -7314,21 +7372,22 @@ Return Value:
     SIZE_T CommitSize;
     NTSTATUS Status;
     ULONG_PTR ArraySize;
-    UINT64 _HeapPerfStartTimer;                         
-    
+    UINT64 _HeapPerfStartTimer;
+
     //
-    //  Check if we already have an index 
+    //  Check if we already have an index
     //
 
-    if ( Heap->LargeBlocksIndex == NULL) {
+    if (Heap->LargeBlocksIndex == NULL)
+    {
 
         //
         //  Determine the number of entries into the index.
-        //  For a heap with high usage, the most of blocks into the 
-        //  non-dedicated list should be smaller than block 
+        //  For a heap with high usage, the most of blocks into the
+        //  non-dedicated list should be smaller than block
         //  decommit threshold + one page
         //
-        
+
         ArraySize = Heap->DeCommitFreeBlockThreshold + (PAGE_SIZE >> HEAP_GRANULARITY_SHIFT) - HEAP_MAXIMUM_FREELISTS;
 
         //
@@ -7339,28 +7398,22 @@ Return Value:
         //          So the ArraySize == 1024 is 32 aligned
         //
 
-        ArraySize = ROUND_UP_TO_POWER2( ArraySize, 32 );
+        ArraySize = ROUND_UP_TO_POWER2(ArraySize, 32);
 
         //
         //  Determine the amount of memory we need from OS
         //
 
-        CommitSize = sizeof(HEAP_INDEX) +  
-                     ArraySize * sizeof(PHEAP_FREE_ENTRY) + 
-                     ArraySize / 8;
+        CommitSize = sizeof(HEAP_INDEX) + ArraySize * sizeof(PHEAP_FREE_ENTRY) + ArraySize / 8;
 
 
-        CommitSize = ROUND_UP_TO_POWER2( CommitSize, PAGE_SIZE );
-        
-        Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                          (PVOID *)&HeapIndex,
-                                          0,
-                                          &CommitSize,
-                                          MEM_RESERVE | MEM_COMMIT,
-                                          PAGE_READWRITE 
-                                        );
-        
-        if ( NT_SUCCESS(Status) ) {
+        CommitSize = ROUND_UP_TO_POWER2(CommitSize, PAGE_SIZE);
+
+        Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&HeapIndex, 0, &CommitSize,
+                                         MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+
+        if (NT_SUCCESS(Status))
+        {
 
             //
             //  Here the allocation succeed. We need to
@@ -7368,14 +7421,14 @@ Return Value:
             //
 
             PLIST_ENTRY Head, Next;
-            
+
             //
             //  Initialize the array fields
             //
 
             HeapIndex->ArraySize = (ULONG)ArraySize;
             HeapIndex->VirtualMemorySize = (ULONG)CommitSize;
-            
+
             //
             //  The FreeListHints will be immediately after the index structure
             //
@@ -7388,42 +7441,45 @@ Return Value:
             //
 
             HeapIndex->u.FreeListsInUseBytes = (PUCHAR)(HeapIndex->FreeListHints + ArraySize);
-            
+
             HeapIndex->LargeBlocksCacheDepth = 0;
-            if (RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LARGECACHE) {
+            if (RtlpDisableHeapLookaside & HEAP_COMPAT_DISABLE_LARGECACHE)
+            {
 
                 HeapIndex->LargeBlocksCacheSequence = 0;
-            
-            } else {
+            }
+            else
+            {
 
                 HeapIndex->LargeBlocksCacheSequence = 1;
             }
-            
+
             //
             //  Save the original non-dedicated list from the heap
             //
 
-            Head = &Heap->FreeLists[ 0 ];                  
-            Next = Head->Flink;                     
-            
+            Head = &Heap->FreeLists[0];
+            Next = Head->Flink;
+
             //
             //  Walk the non-dedicated list and insert each block found
             //  there into the new structures
             //
 
-            while (Head != Next) {
-                
-                PHEAP_FREE_ENTRY FreeEntry;                                               
+            while (Head != Next)
+            {
+
+                PHEAP_FREE_ENTRY FreeEntry;
                 ULONG AllocIndex;
 
                 //
                 //  Get the free block from the old list
                 //
 
-                FreeEntry = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+                FreeEntry = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
                 //
-                //  Save the next link. The insertion into the new 
+                //  Save the next link. The insertion into the new
                 //  structure will destroy it
                 //
 
@@ -7432,30 +7488,33 @@ Return Value:
                 //
                 //  Insert the block into the large blocks array
                 //
-                
-                AllocIndex = RtlpSizeToAllocIndex( HeapIndex, FreeEntry->Size );
 
-                if ( !HeapIndex->FreeListHints[ AllocIndex ] ) {
+                AllocIndex = RtlpSizeToAllocIndex(HeapIndex, FreeEntry->Size);
 
-                    HeapIndex->FreeListHints[ AllocIndex ] = FreeEntry;
-                    SET_INDEX_BIT( HeapIndex, AllocIndex );
+                if (!HeapIndex->FreeListHints[AllocIndex])
+                {
+
+                    HeapIndex->FreeListHints[AllocIndex] = FreeEntry;
+                    SET_INDEX_BIT(HeapIndex, AllocIndex);
                 }
 
-                if (AllocIndex == (HeapIndex->ArraySize - 1)) {
+                if (AllocIndex == (HeapIndex->ArraySize - 1))
+                {
 
                     HeapIndex->LargeBlocksCacheDepth += 1;
                 }
             }
-            
+
             HeapIndex->LargeBlocksCacheMaxDepth = HeapIndex->LargeBlocksCacheDepth;
             HeapIndex->LargeBlocksCacheMinDepth = HeapIndex->LargeBlocksCacheDepth;
-            
+
             HeapIndex->CacheStats.Committs = 0;
             HeapIndex->CacheStats.Decommitts = 0;
             HeapIndex->CacheStats.LargestDepth = HeapIndex->LargeBlocksCacheDepth;
             HeapIndex->CacheStats.LargestRequiredDepth = 0;
-            
-            NtQueryPerformanceCounter( (PLARGE_INTEGER)&_HeapPerfStartTimer , (PLARGE_INTEGER)&HeapIndex->PerfData.CountFrequence);
+
+            NtQueryPerformanceCounter((PLARGE_INTEGER)&_HeapPerfStartTimer,
+                                      (PLARGE_INTEGER)&HeapIndex->PerfData.CountFrequence);
 
             //
             //  Initialize the LargeBlocksIndex with the new created structure
@@ -7467,18 +7526,15 @@ Return Value:
             //  validate the index if HEAP_VALIDATE_INDEX is defined
             //  (Debug - test only)
             //
-            
-            RtlpValidateNonDedicatedList( Heap );
+
+            RtlpValidateNonDedicatedList(Heap);
         }
     }
 }
 
-
+
 PLIST_ENTRY
-RtlpFindEntry (
-    IN PHEAP Heap,
-    IN ULONG Size
-    )
+RtlpFindEntry(IN PHEAP Heap, IN ULONG Size)
 
 /*++
 
@@ -7518,19 +7574,21 @@ Return Value:
     //  Check if the list is empty. Return the list head if it is.
     //
 
-    if (Head == Next) {
+    if (Head == Next)
+    {
 
         return Head;
     }
-    
+
     //
     //  Compare if the largest block into the free list is smaller
-    //  than the requested size. 
+    //  than the requested size.
     //
 
-    LastBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+    LastBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
-    if (LastBlock->Size < Size) {
+    if (LastBlock->Size < Size)
+    {
 
         //
         //  we don't have a block available for our request
@@ -7544,9 +7602,10 @@ Return Value:
     //  return the first block into the list w/o searching the index
     //
 
-    FirstBlock = CONTAINING_RECORD( Head->Flink, HEAP_FREE_ENTRY, FreeList );
+    FirstBlock = CONTAINING_RECORD(Head->Flink, HEAP_FREE_ENTRY, FreeList);
 
-    if (Size <= FirstBlock->Size) {
+    if (Size <= FirstBlock->Size)
+    {
 
         //
         //  Return the first block then.
@@ -7568,17 +7627,20 @@ Return Value:
     //  We'll try first into the last sublist
     //
 
-    if ( AllocIndex == (HeapIndex->ArraySize - 1) ) {
+    if (AllocIndex == (HeapIndex->ArraySize - 1))
+    {
 
-        FreeEntry = HeapIndex->FreeListHints[ AllocIndex ];
+        FreeEntry = HeapIndex->FreeListHints[AllocIndex];
 
         Next = &FreeEntry->FreeList;
 
-        while ( Head != Next ) {
+        while (Head != Next)
+        {
 
-            FreeEntry = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
-            
-            if (FreeEntry->Size >= Size) {
+            FreeEntry = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
+
+            if (FreeEntry->Size >= Size)
+            {
 
                 return &FreeEntry->FreeList;
             }
@@ -7603,36 +7665,37 @@ Return Value:
     UlongArray = HeapIndex->u.FreeListsInUseUlong + LookupBitmapUlongIndex;
 
     CrtBitmapUlong = *UlongArray;
-    
+
     //
     //  Mask off the bits in the first ULONG that represent allocations
     //  smaller than we need.
     //
 
-    CrtBitmapUlong = CrtBitmapUlong & ~((1 << ((ULONG) Size & 0x1f)) - 1);
+    CrtBitmapUlong = CrtBitmapUlong & ~((1 << ((ULONG)Size & 0x1f)) - 1);
 
-    // 
+    //
     //  Loop through the ULONG bitmap until we'll find something
     //  not empty
     //
 
-    while ( !CrtBitmapUlong &&
-            (LookupBitmapUlongIndex <= LastValidIndex) ) {
-        
+    while (!CrtBitmapUlong && (LookupBitmapUlongIndex <= LastValidIndex))
+    {
+
         CrtBitmapUlong = *(++UlongArray);
         LookupBitmapUlongIndex++;
     }
 
     //
     //  Sanity checking if we found something.
-    //  The test for smaller block and larger block should 
+    //  The test for smaller block and larger block should
     //  guarantee we found something in the loop above
     //
 
-    if ( !CrtBitmapUlong ) {
+    if (!CrtBitmapUlong)
+    {
 
-        HeapDebugPrint(( "Index not found into the bitmap %08lx\n", Size ));
-//        DbgBreakPoint();
+        HeapDebugPrint(("Index not found into the bitmap %08lx\n", Size));
+        //        DbgBreakPoint();
 
         return Head;
     }
@@ -7642,38 +7705,35 @@ Return Value:
     //  This is the index into the hints array
     //
 
-    LookupBitmapUlongIndex = (LookupBitmapUlongIndex << 5) + 
-        RtlFindFirstSetRightMember( CrtBitmapUlong );
+    LookupBitmapUlongIndex = (LookupBitmapUlongIndex << 5) + RtlFindFirstSetRightMember(CrtBitmapUlong);
 
     //
     //  Return the list entry for the block we found
     //
 
-    FreeEntry = HeapIndex->FreeListHints[ LookupBitmapUlongIndex ];
+    FreeEntry = HeapIndex->FreeListHints[LookupBitmapUlongIndex];
 
     return &FreeEntry->FreeList;
 }
 
-
-VOID 
-RtlpFlushLargestCacheBlock (
-    IN PHEAP Heap
-    )
+
+VOID RtlpFlushLargestCacheBlock(IN PHEAP Heap)
 {
 
     PHEAP_INDEX HeapIndex = (PHEAP_INDEX)Heap->LargeBlocksIndex;
 
-    if ((HeapIndex != NULL) &&
-        (HeapIndex->LargeBlocksCacheSequence != 0) ) {
+    if ((HeapIndex != NULL) && (HeapIndex->LargeBlocksCacheSequence != 0))
+    {
 
         PLIST_ENTRY Head, Next;
         PHEAP_FREE_ENTRY FreeBlock;
 
-        Head = &Heap->FreeLists[ 0 ];                         
+        Head = &Heap->FreeLists[0];
         Next = Head->Blink;
 
-        if (Head != Next) {
-            
+        if (Head != Next)
+        {
+
             ULONG PrevSeq = HeapIndex->LargeBlocksCacheSequence;
 
             //
@@ -7682,55 +7742,54 @@ RtlpFlushLargestCacheBlock (
 
             HeapIndex->LargeBlocksCacheSequence = 0;
 
-            FreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+            FreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
-            RtlpFastRemoveNonDedicatedFreeBlock( Heap, FreeBlock );
+            RtlpFastRemoveNonDedicatedFreeBlock(Heap, FreeBlock);
 
             FreeBlock->Flags |= HEAP_ENTRY_BUSY;
             Heap->TotalFreeSize -= FreeBlock->Size;
-            
-            RtlpDeCommitFreeBlock( Heap, (PHEAP_FREE_ENTRY)FreeBlock, FreeBlock->Size );
-            
+
+            RtlpDeCommitFreeBlock(Heap, (PHEAP_FREE_ENTRY)FreeBlock, FreeBlock->Size);
+
             //
             //  Unlock the cache
             //
 
             HeapIndex->LargeBlocksCacheSequence = PrevSeq;
 
-            RtlpValidateNonDedicatedList(Heap);                 
+            RtlpValidateNonDedicatedList(Heap);
         }
     }
 }
 
 
-
-VOID 
-RtlpFlushCacheContents (
-    IN PHEAP Heap
-    )
+VOID RtlpFlushCacheContents(IN PHEAP Heap)
 {
 
     PHEAP_INDEX HeapIndex = (PHEAP_INDEX)Heap->LargeBlocksIndex;
 
-    if ((HeapIndex != NULL) &&
-        (HeapIndex->LargeBlocksCacheSequence != 0) ) {
-        
+    if ((HeapIndex != NULL) && (HeapIndex->LargeBlocksCacheSequence != 0))
+    {
+
         LONG NewDepth = HeapIndex->LargeBlocksCacheMaxDepth - HeapIndex->LargeBlocksCacheMinDepth;
 
-        if ( (HeapIndex->LargeBlocksCacheDepth > NewDepth) ) { 
+        if ((HeapIndex->LargeBlocksCacheDepth > NewDepth))
+        {
 
             PLIST_ENTRY Head, Next;
             LIST_ENTRY ListToFree;
             PHEAP_FREE_ENTRY FreeBlock;
             LONG BlocksToFree = HeapIndex->LargeBlocksCacheDepth - NewDepth;
             LONG RemainingBlocks = HeapIndex->LargeBlocksCacheDepth;
-            
-            if (HeapIndex->LargeBlocksCacheMaxDepth > HeapIndex->CacheStats.LargestDepth) {
+
+            if (HeapIndex->LargeBlocksCacheMaxDepth > HeapIndex->CacheStats.LargestDepth)
+            {
 
                 HeapIndex->CacheStats.LargestDepth = HeapIndex->LargeBlocksCacheMaxDepth;
             }
 
-            if (NewDepth > HeapIndex->CacheStats.LargestRequiredDepth) {
+            if (NewDepth > HeapIndex->CacheStats.LargestRequiredDepth)
+            {
                 HeapIndex->CacheStats.LargestRequiredDepth = NewDepth;
             }
 
@@ -7738,13 +7797,13 @@ RtlpFlushCacheContents (
             //  Get the last hint for this specific size from the index
             //
 
-            FreeBlock = HeapIndex->FreeListHints[ HeapIndex->ArraySize - 1 ];
+            FreeBlock = HeapIndex->FreeListHints[HeapIndex->ArraySize - 1];
 
-            if (FreeBlock == NULL) {
+            if (FreeBlock == NULL)
+            {
 
-                DbgPrint("No free blocks in the cache but the depth is not 0 %ld\n",
-                         HeapIndex->LargeBlocksCacheDepth);
-                
+                DbgPrint("No free blocks in the cache but the depth is not 0 %ld\n", HeapIndex->LargeBlocksCacheDepth);
+
                 return;
             }
 
@@ -7754,68 +7813,66 @@ RtlpFlushCacheContents (
 
             HeapIndex->LargeBlocksCacheSequence = 0;
 
-            Head = &Heap->FreeLists[ 0 ];                  
-            Next = &FreeBlock->FreeList;                     
+            Head = &Heap->FreeLists[0];
+            Next = &FreeBlock->FreeList;
 
             InitializeListHead(&ListToFree);
-            
-            while (Head != Next) {
 
-                FreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
-                
+            while (Head != Next)
+            {
+
+                FreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
+
                 Next = Next->Flink;
-                
-                if ( (((SIZE_T)FreeBlock->Size) << HEAP_GRANULARITY_SHIFT) > Heap->DeCommitFreeBlockThreshold) {
 
-                    if ((FreeBlock->Flags & HEAP_ENTRY_SETTABLE_FLAG3)
-                          ||
-                        (BlocksToFree >= RemainingBlocks) ) {
-                        
-                        RtlpFastRemoveNonDedicatedFreeBlock( Heap, FreeBlock );
+                if ((((SIZE_T)FreeBlock->Size) << HEAP_GRANULARITY_SHIFT) > Heap->DeCommitFreeBlockThreshold)
+                {
+
+                    if ((FreeBlock->Flags & HEAP_ENTRY_SETTABLE_FLAG3) || (BlocksToFree >= RemainingBlocks))
+                    {
+
+                        RtlpFastRemoveNonDedicatedFreeBlock(Heap, FreeBlock);
                         InsertTailList(&ListToFree, &FreeBlock->FreeList);
                         FreeBlock->Flags |= HEAP_ENTRY_BUSY;
                         Heap->TotalFreeSize -= FreeBlock->Size;
 
                         BlocksToFree -= 1;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         FreeBlock->Flags |= HEAP_ENTRY_SETTABLE_FLAG3;
                     }
                 }
-                
+
                 RemainingBlocks -= 1;
             }
 
-            Head = &ListToFree;                  
-            Next = ListToFree.Flink;                     
+            Head = &ListToFree;
+            Next = ListToFree.Flink;
 
-            while (Head != Next) {
+            while (Head != Next)
+            {
 
-                FreeBlock = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+                FreeBlock = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
                 RemoveEntryList(&FreeBlock->FreeList);
 
-                Next = ListToFree.Flink;                     
-                RtlpDeCommitFreeBlock( Heap, (PHEAP_FREE_ENTRY)FreeBlock, FreeBlock->Size );
+                Next = ListToFree.Flink;
+                RtlpDeCommitFreeBlock(Heap, (PHEAP_FREE_ENTRY)FreeBlock, FreeBlock->Size);
             }
         }
-        
+
         HeapIndex->LargeBlocksCacheMaxDepth = HeapIndex->LargeBlocksCacheDepth;
         HeapIndex->LargeBlocksCacheMinDepth = HeapIndex->LargeBlocksCacheDepth;
 
         HeapIndex->LargeBlocksCacheSequence = 1;
-        RtlpValidateNonDedicatedList(Heap);                 
+        RtlpValidateNonDedicatedList(Heap);
     }
 }
 
 
-
-VOID 
-RtlpUpdateIndexRemoveBlock (
-    IN PHEAP Heap,
-    IN PHEAP_FREE_ENTRY FreeEntry
-    )
+VOID RtlpUpdateIndexRemoveBlock(IN PHEAP Heap, IN PHEAP_FREE_ENTRY FreeEntry)
 
 /*++
 
@@ -7843,11 +7900,12 @@ Return Value:
     ULONG Size = FreeEntry->Size;
 
     //
-    //  It updates the index only for large sizes 
+    //  It updates the index only for large sizes
     //  (over 1024 bytes)
     //
 
-    if (Size >= HEAP_MAXIMUM_FREELISTS) {
+    if (Size >= HEAP_MAXIMUM_FREELISTS)
+    {
 
         //
         //  Update the length of the nondedicated list
@@ -7855,15 +7913,16 @@ Return Value:
         //
 
         Heap->NonDedicatedListLength -= 1;
-        
+
         //
         //  If we have an index, we need to update the index structures
         //
 
-        if (HeapIndex) {
+        if (HeapIndex)
+        {
 
             PHEAP_FREE_ENTRY PrevBlock;
-            ULONG AllocIndex = RtlpSizeToAllocIndex( HeapIndex, Size );
+            ULONG AllocIndex = RtlpSizeToAllocIndex(HeapIndex, Size);
             PLIST_ENTRY Flink = FreeEntry->FreeList.Flink;
 
             //
@@ -7871,89 +7930,98 @@ Return Value:
             //  if this is the last element here
             //
 
-            PHEAP_FREE_ENTRY NextFreeBlock = (Flink == &Heap->FreeLists[ 0 ]) ? 
-                NULL :
-                CONTAINING_RECORD( Flink, HEAP_FREE_ENTRY, FreeList );
+            PHEAP_FREE_ENTRY NextFreeBlock =
+                (Flink == &Heap->FreeLists[0]) ? NULL : CONTAINING_RECORD(Flink, HEAP_FREE_ENTRY, FreeList);
 
             //
             //  Get the last hint for this specific size from the index
             //
 
-            PrevBlock = HeapIndex->FreeListHints[ AllocIndex ];
-            
-            if ( PrevBlock ==  FreeEntry) {
+            PrevBlock = HeapIndex->FreeListHints[AllocIndex];
+
+            if (PrevBlock == FreeEntry)
+            {
 
                 //
-                //  The free block being removed is actually the hint for that 
+                //  The free block being removed is actually the hint for that
                 //  specific size. We need then to update
                 //
 
-                if (AllocIndex < (HeapIndex->ArraySize - 1)) {
+                if (AllocIndex < (HeapIndex->ArraySize - 1))
+                {
 
                     //
                     //  If the next block has the same size with the current one
                     //  we need to update only the hint pointer
                     //
 
-                    if ( NextFreeBlock && 
-                        (NextFreeBlock->Size == Size) ) {
+                    if (NextFreeBlock && (NextFreeBlock->Size == Size))
+                    {
 
-                        HeapIndex->FreeListHints[ AllocIndex ] = NextFreeBlock;
-
-                    } else {
+                        HeapIndex->FreeListHints[AllocIndex] = NextFreeBlock;
+                    }
+                    else
+                    {
 
                         //
-                        //  There is no other block with this size, so we need 
+                        //  There is no other block with this size, so we need
                         //  set the hint to NULL and clear the appropriate bit
                         //
 
-                        HeapIndex->FreeListHints[ AllocIndex ] = NULL;
-                        CLEAR_INDEX_BIT( HeapIndex, AllocIndex );
+                        HeapIndex->FreeListHints[AllocIndex] = NULL;
+                        CLEAR_INDEX_BIT(HeapIndex, AllocIndex);
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  We are here because this is the last hint from the array
                     //  This list may contain free blocks with different sizes.
                     //
 
-                    if (NextFreeBlock) {
+                    if (NextFreeBlock)
+                    {
 
                         //
                         //  We have an other block larger than this one
                         //  We move the hint to that pointer
                         //
 
-                        HeapIndex->FreeListHints[ AllocIndex ] = NextFreeBlock;
-
-                    } else {
+                        HeapIndex->FreeListHints[AllocIndex] = NextFreeBlock;
+                    }
+                    else
+                    {
 
                         //
                         //  This was the last block within the non-dedicated list
                         //  Clear the hint pointer and the appropriate bit.
                         //
 
-                        HeapIndex->FreeListHints[ AllocIndex ] = NULL;
-                        CLEAR_INDEX_BIT( HeapIndex, AllocIndex );
+                        HeapIndex->FreeListHints[AllocIndex] = NULL;
+                        CLEAR_INDEX_BIT(HeapIndex, AllocIndex);
                     }
                 }
             }
-            
-            if (AllocIndex == (HeapIndex->ArraySize - 1)) {
+
+            if (AllocIndex == (HeapIndex->ArraySize - 1))
+            {
 
                 HeapIndex->LargeBlocksCacheDepth -= 1;
-                
-                if (HeapIndex->LargeBlocksCacheDepth < 0) {
+
+                if (HeapIndex->LargeBlocksCacheDepth < 0)
+                {
 
                     DbgPrint(("Invalid Cache depth\n"));
                 }
 
-                if (HeapIndex->LargeBlocksCacheSequence != 0) {
+                if (HeapIndex->LargeBlocksCacheSequence != 0)
+                {
 
                     HeapIndex->LargeBlocksCacheSequence += 1;
 
-                    if (HeapIndex->LargeBlocksCacheDepth < HeapIndex->LargeBlocksCacheMinDepth) {
+                    if (HeapIndex->LargeBlocksCacheDepth < HeapIndex->LargeBlocksCacheMinDepth)
+                    {
 
                         HeapIndex->LargeBlocksCacheMinDepth = HeapIndex->LargeBlocksCacheDepth;
                     }
@@ -7963,12 +8031,8 @@ Return Value:
     }
 }
 
-
-VOID 
-RtlpUpdateIndexInsertBlock (
-    IN PHEAP Heap,
-    IN PHEAP_FREE_ENTRY FreeEntry
-    )
+
+VOID RtlpUpdateIndexInsertBlock(IN PHEAP Heap, IN PHEAP_FREE_ENTRY FreeEntry)
 
 /*++
 
@@ -7995,19 +8059,21 @@ Return Value:
     PHEAP_INDEX HeapIndex = (PHEAP_INDEX)Heap->LargeBlocksIndex;
 
     //
-    //  we only have something to do if the size is over the dedicated list 
+    //  we only have something to do if the size is over the dedicated list
     //  range
     //
 
-    if ( FreeEntry->Size >= HEAP_MAXIMUM_FREELISTS ) {
+    if (FreeEntry->Size >= HEAP_MAXIMUM_FREELISTS)
+    {
 
         //
         //  Update the non-dedicated list length
         //
-        
+
         Heap->NonDedicatedListLength += 1;
 
-        if ( HeapIndex ) {
+        if (HeapIndex)
+        {
 
             //
             //  We have an index for this list. we need to to some
@@ -8016,24 +8082,24 @@ Return Value:
 
             PHEAP_FREE_ENTRY PrevBlock;
 
-            ULONG AllocIndex = RtlpSizeToAllocIndex( HeapIndex, FreeEntry->Size );
-            
+            ULONG AllocIndex = RtlpSizeToAllocIndex(HeapIndex, FreeEntry->Size);
+
             //
             //  Get the original hint stored into the index
             //
 
-            PrevBlock = HeapIndex->FreeListHints[ AllocIndex ];
+            PrevBlock = HeapIndex->FreeListHints[AllocIndex];
 
             //
-            //  If the hint before was NULL, or we are adding a new 
+            //  If the hint before was NULL, or we are adding a new
             //  block smaller or equal with the previous one, we need
             //  to update the hint pointer
             //
 
-            if ( (!PrevBlock) ||
-                 (FreeEntry->Size <= PrevBlock->Size) ) {
+            if ((!PrevBlock) || (FreeEntry->Size <= PrevBlock->Size))
+            {
 
-                HeapIndex->FreeListHints[ AllocIndex ] = FreeEntry;
+                HeapIndex->FreeListHints[AllocIndex] = FreeEntry;
             }
 
             //
@@ -8041,35 +8107,40 @@ Return Value:
             //  we need to set the busy bit into the bitmap
             //
 
-            if ( !PrevBlock ) {
+            if (!PrevBlock)
+            {
 
-                SET_INDEX_BIT( HeapIndex, AllocIndex );
+                SET_INDEX_BIT(HeapIndex, AllocIndex);
             }
 
-            if ( AllocIndex == (HeapIndex->ArraySize - 1) ) {
-                
+            if (AllocIndex == (HeapIndex->ArraySize - 1))
+            {
+
                 HeapIndex->LargeBlocksCacheDepth += 1;
-                
-                if (HeapIndex->LargeBlocksCacheSequence != 0) {
+
+                if (HeapIndex->LargeBlocksCacheSequence != 0)
+                {
 
                     HeapIndex->LargeBlocksCacheSequence += 1;
 
-                    if (HeapIndex->LargeBlocksCacheDepth > HeapIndex->LargeBlocksCacheMaxDepth) {
+                    if (HeapIndex->LargeBlocksCacheDepth > HeapIndex->LargeBlocksCacheMaxDepth)
+                    {
 
                         HeapIndex->LargeBlocksCacheMaxDepth = HeapIndex->LargeBlocksCacheDepth;
                     }
                 }
             }
-
-        } else if ( Heap->NonDedicatedListLength >= HEAP_INDEX_THRESHOLD ) {
+        }
+        else if (Heap->NonDedicatedListLength >= HEAP_INDEX_THRESHOLD)
+        {
 
             //
-            //  We don't have an index, but we have enough blocks into the 
+            //  We don't have an index, but we have enough blocks into the
             //  non-dedicated list. We need to create an index right now,
             //  to help us in search further
             //
-            
-            RtlpInitializeListIndex( Heap );
+
+            RtlpInitializeListIndex(Heap);
         }
     }
 }
@@ -8080,12 +8151,9 @@ Return Value:
 
 #ifdef HEAP_VALIDATE_INDEX
 
-
+
 BOOLEAN
-RtlpGetBitState( 
-    IN PHEAP_INDEX HeapIndex, 
-    IN ULONG Bit
-    )                                     
+RtlpGetBitState(IN PHEAP_INDEX HeapIndex, IN ULONG Bit)
 
 /*++
 
@@ -8105,21 +8173,19 @@ Return Value:
     
 --*/
 
-{                                                                     
-    ULONG _Index_;                                                    
-    ULONG _Bit_;                                                      
-                                                                      
-    _Index_ = Bit >> 3;                                        
+{
+    ULONG _Index_;
+    ULONG _Bit_;
+
+    _Index_ = Bit >> 3;
     _Bit_ = (1 << (Bit & 7));
 
-    return (((HeapIndex)->u.FreeListsInUseBytes[ _Index_ ] & _Bit_)) != 0;
+    return (((HeapIndex)->u.FreeListsInUseBytes[_Index_] & _Bit_)) != 0;
 }
 
-
+
 BOOLEAN
-RtlpValidateNonDedicatedList (
-    IN PHEAP Heap
-    )
+RtlpValidateNonDedicatedList(IN PHEAP Heap)
 
 /*++
 
@@ -8144,43 +8210,44 @@ Return Value:
     ULONG PreviousSize = 0;
     ULONG PreviousIndex = 0;
     LONG LargeBlocksCount = 0;
-    
+
     HeapIndex = (PHEAP_INDEX)Heap->LargeBlocksIndex;
 
     //
     //  we only do validation if we have a heap index created
     //
 
-    if (HeapIndex) {
+    if (HeapIndex)
+    {
 
-        Head = &Heap->FreeLists[ 0 ];                  
-        Next = Head->Flink;                     
+        Head = &Heap->FreeLists[0];
+        Next = Head->Flink;
 
         //
         //  Loop through the free blocks placed into the non-dedicated list
         //
 
-        while (Head != Next) {
+        while (Head != Next)
+        {
 
-            PHEAP_FREE_ENTRY FreeEntry;                                               
+            PHEAP_FREE_ENTRY FreeEntry;
             ULONG AllocIndex;
 
             //
             //  Get the free block from the old list
             //
 
-            FreeEntry = CONTAINING_RECORD( Next, HEAP_FREE_ENTRY, FreeList );
+            FreeEntry = CONTAINING_RECORD(Next, HEAP_FREE_ENTRY, FreeList);
 
             //
             //  Test if the blocks are in the proper order (ascending)
             //
 
-            if (PreviousSize > FreeEntry->Size) {
+            if (PreviousSize > FreeEntry->Size)
+            {
 
-                HeapDebugPrint(( "Invalid Block order %08lx - %08lx, %08lx\n",
-                          FreeEntry,
-                          FreeEntry->Size,
-                          PreviousSize ));
+                HeapDebugPrint(
+                    ("Invalid Block order %08lx - %08lx, %08lx\n", FreeEntry, FreeEntry->Size, PreviousSize));
                 DbgBreakPoint();
             }
 
@@ -8188,17 +8255,19 @@ Return Value:
             //  Get the appropriate index for the current block
             //
 
-            AllocIndex = RtlpSizeToAllocIndex( HeapIndex, FreeEntry->Size );
+            AllocIndex = RtlpSizeToAllocIndex(HeapIndex, FreeEntry->Size);
 
-            if (AllocIndex == (HeapIndex->ArraySize - 1)) {
+            if (AllocIndex == (HeapIndex->ArraySize - 1))
+            {
 
                 LargeBlocksCount += 1;
             }
 
-            if (PreviousSize != FreeEntry->Size) {
+            if (PreviousSize != FreeEntry->Size)
+            {
 
                 ULONG i;
-                
+
                 //
                 //  We are here only for the first block of a given size
                 //
@@ -8208,19 +8277,18 @@ Return Value:
                 //  free blocks of different sizes
                 //
 
-                for (i = PreviousIndex + 1; i < AllocIndex; i++) {
+                for (i = PreviousIndex + 1; i < AllocIndex; i++)
+                {
 
                     //
                     //  Report an error if there is a hint, but that block doesn't
                     //  exists into the non-dedicated list
                     //
 
-                    if (HeapIndex->FreeListHints[i]) {
+                    if (HeapIndex->FreeListHints[i])
+                    {
 
-                        DbgPrint( "Free block missing %lx, %08lx\n", 
-                                  i, 
-                                  HeapIndex->FreeListHints[i]
-                                  );
+                        DbgPrint("Free block missing %lx, %08lx\n", i, HeapIndex->FreeListHints[i]);
 
                         DbgBreakPoint();
                     }
@@ -8230,7 +8298,8 @@ Return Value:
                     //  not inserted into the non-dedicated list
                     //
 
-                    if ( RtlpGetBitState(HeapIndex, i) ) {
+                    if (RtlpGetBitState(HeapIndex, i))
+                    {
 
                         DbgPrint("Invalid bit state. Must be 0 %lx\n", i);
                         DbgBreakPoint();
@@ -8242,13 +8311,11 @@ Return Value:
                 //  should point to this block
                 //
 
-                if ( (AllocIndex < HeapIndex->ArraySize - 1) &&
-                     (HeapIndex->FreeListHints[ AllocIndex ] != FreeEntry)) {
+                if ((AllocIndex < HeapIndex->ArraySize - 1) && (HeapIndex->FreeListHints[AllocIndex] != FreeEntry))
+                {
 
-                    DbgPrint( "Invalid index %lx for block %08lx (%08lx)\n", 
-                              AllocIndex, 
-                              HeapIndex->FreeListHints[AllocIndex], 
-                              FreeEntry);
+                    DbgPrint("Invalid index %lx for block %08lx (%08lx)\n", AllocIndex,
+                             HeapIndex->FreeListHints[AllocIndex], FreeEntry);
 
                     DbgBreakPoint();
                 }
@@ -8258,7 +8325,8 @@ Return Value:
                 //  the appropriate bit set
                 //
 
-                if ( !RtlpGetBitState( HeapIndex, AllocIndex ) ) {
+                if (!RtlpGetBitState(HeapIndex, AllocIndex))
+                {
 
                     DbgPrint("Invalid bit state. Must be 1 %lx\n", i);
 
@@ -8267,7 +8335,7 @@ Return Value:
             }
 
             //
-            //  Save the next link. The insertion into the new 
+            //  Save the next link. The insertion into the new
             //  structure will destroy it
             //
 
@@ -8277,11 +8345,10 @@ Return Value:
             PreviousIndex = AllocIndex;
         }
 
-        if (LargeBlocksCount != HeapIndex->LargeBlocksCacheDepth) {
-            
-            DbgPrint("Invalid Cache depth %ld. Should be %ld\n", 
-                     HeapIndex->LargeBlocksCacheDepth,
-                     LargeBlocksCount);
+        if (LargeBlocksCount != HeapIndex->LargeBlocksCacheDepth)
+        {
+
+            DbgPrint("Invalid Cache depth %ld. Should be %ld\n", HeapIndex->LargeBlocksCacheDepth, LargeBlocksCount);
         }
     }
 
@@ -8290,17 +8357,13 @@ Return Value:
 
 #endif // HEAP_VALIDATE_INDEX
 
-#endif  // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
 
 #ifndef NTOS_KERNEL_RUNTIME
 
 SIZE_T
-GetUCBytes(
-    IN PHEAP Heap,
-    IN OUT SIZE_T *ReservedSpace, 
-    IN OUT PULONG NoOfUCRs
-    )
+GetUCBytes(IN PHEAP Heap, IN OUT SIZE_T *ReservedSpace, IN OUT PULONG NoOfUCRs)
 /*++
 
 Routine Description:
@@ -8327,11 +8390,13 @@ Return Value:
     PHEAP_SEGMENT pSegment;
     LONG SegmentIndex;
 
-    for (SegmentIndex=0; SegmentIndex<HEAP_MAXIMUM_SEGMENTS; SegmentIndex++) {
+    for (SegmentIndex = 0; SegmentIndex < HEAP_MAXIMUM_SEGMENTS; SegmentIndex++)
+    {
 
-        pSegment = Heap->Segments[ SegmentIndex ];
+        pSegment = Heap->Segments[SegmentIndex];
 
-        if (pSegment) {
+        if (pSegment)
+        {
 
             PHEAP_UNCOMMMTTED_RANGE UnCommittedRange;
 
@@ -8339,9 +8404,9 @@ Return Value:
             (*ReservedSpace) += pSegment->NumberOfPages;
             (*NoOfUCRs) += pSegment->NumberOfUnCommittedRanges;
 
-            for( UnCommittedRange = pSegment->UnCommittedRanges;
-                UnCommittedRange;
-                UnCommittedRange = UnCommittedRange->Next ) {
+            for (UnCommittedRange = pSegment->UnCommittedRanges; UnCommittedRange;
+                 UnCommittedRange = UnCommittedRange->Next)
+            {
 
                 UCBytes += UnCommittedRange->Size;
             }
@@ -8351,4 +8416,4 @@ Return Value:
     return UCBytes;
 }
 
-#endif  // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME

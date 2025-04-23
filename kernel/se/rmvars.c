@@ -29,10 +29,10 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,SepRmDbInitialization)
+#pragma alloc_text(INIT, SepRmDbInitialization)
 #endif
 
-
+
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //  Read/Write Reference Monitor Variables                                    //
@@ -47,14 +47,14 @@ Revision History:
 //                   the reference monitor database
 //
 
-ERESOURCE SepRmDbLock = {0};
+ERESOURCE SepRmDbLock = { 0 };
 
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg("PAGEDATA")
 #endif
 
-
+
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //  Read Only Reference Monitor Variables                                     //
@@ -74,8 +74,7 @@ PEPROCESS SepRmLsaCallProcess = NULL;
 // State of the reference monitor
 //
 
-SEP_RM_STATE SepRmState = {0};
-
+SEP_RM_STATE SepRmState = { 0 };
 
 
 //
@@ -88,9 +87,6 @@ SEP_RM_STATE SepRmState = {0};
 PSEP_LOGON_SESSION_REFERENCES *SepLogonSessions = NULL;
 
 
-
-
-
 ////////////////////////////////////////////////////////////////////////
 //                                                                    //
 //           Variable Initialization Routines                         //
@@ -98,9 +94,7 @@ PSEP_LOGON_SESSION_REFERENCES *SepLogonSessions = NULL;
 ////////////////////////////////////////////////////////////////////////
 
 BOOLEAN
-SepRmDbInitialization(
-    VOID
-    )
+SepRmDbInitialization(VOID)
 /*++
 
 Routine Description:
@@ -139,27 +133,28 @@ Return Value:
     // Initialize the Logon Session tracking array.
     //
 
-    SepLogonSessions = ExAllocatePoolWithTag( PagedPool,
-                                              sizeof( PSEP_LOGON_SESSION_REFERENCES ) * SEP_LOGON_TRACK_ARRAY_SIZE,
-                                              'SLeS'
-                                              );
+    SepLogonSessions =
+        ExAllocatePoolWithTag(PagedPool, sizeof(PSEP_LOGON_SESSION_REFERENCES) * SEP_LOGON_TRACK_ARRAY_SIZE, 'SLeS');
 
-    if (SepLogonSessions == NULL) {
-        return( FALSE );
+    if (SepLogonSessions == NULL)
+    {
+        return (FALSE);
     }
 
-    for (i=0;i<SEP_LOGON_TRACK_ARRAY_SIZE;i++) {
+    for (i = 0; i < SEP_LOGON_TRACK_ARRAY_SIZE; i++)
+    {
 
-        SepLogonSessions[ i ] = NULL;
+        SepLogonSessions[i] = NULL;
     }
 
     //
     // Now add in a record representing the system logon session.
     //
 
-    Status = SepCreateLogonSessionTrack( (PLUID)&SeSystemAuthenticationId );
-    ASSERT( NT_SUCCESS(Status) );
-    if ( !NT_SUCCESS(Status)) {
+    Status = SepCreateLogonSessionTrack((PLUID)&SeSystemAuthenticationId);
+    ASSERT(NT_SUCCESS(Status));
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
@@ -167,13 +162,12 @@ Return Value:
     // Add one for the null session logon session
     //
 
-    Status = SepCreateLogonSessionTrack( (PLUID)&SeAnonymousAuthenticationId );
-    ASSERT( NT_SUCCESS(Status) );
-    if ( !NT_SUCCESS(Status)) {
+    Status = SepCreateLogonSessionTrack((PLUID)&SeAnonymousAuthenticationId);
+    ASSERT(NT_SUCCESS(Status));
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
-
-
 
 
     //
@@ -184,12 +178,9 @@ Return Value:
     // system initialization.
     //
 
-    SepRmState.AuditingEnabled = 0;    // auditing state disabled.
+    SepRmState.AuditingEnabled = 0; // auditing state disabled.
     SepRmState.OperationalMode = LSA_MODE_PASSWORD_PROTECTED;
 
 
-
     return TRUE;
-
-
 }

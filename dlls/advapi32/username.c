@@ -27,18 +27,13 @@ Revision History:
 #include <stdlib.h>
 #include <ntlsa.h>
 
-
+
 //
 // UNICODE APIs
 //
 
 
-BOOL
-WINAPI
-GetUserNameW (
-    LPWSTR pBuffer,
-    LPDWORD pcbBuffer
-    )
+BOOL WINAPI GetUserNameW(LPWSTR pBuffer, LPDWORD pcbBuffer)
 
 /*++
 
@@ -61,24 +56,15 @@ Return Value:
 
 --*/
 {
-    return GetUserNameExW(
-                NameSamCompatible | 0x00010000,
-                pBuffer,
-                pcbBuffer );
+    return GetUserNameExW(NameSamCompatible | 0x00010000, pBuffer, pcbBuffer);
 }
 
 
-
 //
 // ANSI APIs
 //
 
-BOOL
-WINAPI
-GetUserNameA (
-    LPSTR pBuffer,
-    LPDWORD pcbBuffer
-    )
+BOOL WINAPI GetUserNameA(LPSTR pBuffer, LPDWORD pcbBuffer)
 
 /*++
 
@@ -101,9 +87,5 @@ Return Value:
 
 --*/
 {
-    return GetUserNameExA(
-                NameSamCompatible | 0x00010000,
-                pBuffer,
-                pcbBuffer );
-
+    return GetUserNameExA(NameSamCompatible | 0x00010000, pBuffer, pcbBuffer);
 }

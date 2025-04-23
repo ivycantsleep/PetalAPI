@@ -23,9 +23,7 @@ Revision History:
 extern PUCHAR Base;
 
 BOOLEAN
-IsCellAllocated(
-    HCELL_INDEX Cell
-)
+IsCellAllocated(HCELL_INDEX Cell)
 /*
 Routine Description:
 
@@ -41,17 +39,14 @@ Return Value:
 
 */
 {
-    PHCELL  pcell;
+    PHCELL pcell;
 
     pcell = (PHCELL)(Base + Cell);
-    
+
     return (pcell->Size < 0) ? TRUE : FALSE;
 }
 
-LONG
-GetCellSize(
-    HCELL_INDEX Cell
-) 
+LONG GetCellSize(HCELL_INDEX Cell)
 /*
 Routine Description:
 
@@ -68,20 +63,17 @@ Return Value:
 */
 {
 
-    LONG    size;
-    PHCELL  pcell;
+    LONG size;
+    PHCELL pcell;
 
     pcell = (PHCELL)(Base + Cell);
-    
+
     size = pcell->Size * -1;
 
     return size;
 }
 
-VOID
-FreeCell(
-    HCELL_INDEX Cell
-) 
+VOID FreeCell(HCELL_INDEX Cell)
 /*
 Routine Description:
 
@@ -97,19 +89,16 @@ Return Value:
 
 */
 {
-    PHCELL  pcell;
+    PHCELL pcell;
 
     pcell = (PHCELL)(Base + Cell);
-    
+
     pcell->Size *= -1;
 
-    ASSERT(pcell->Size >= 0 );
+    ASSERT(pcell->Size >= 0);
 }
 
-VOID
-AllocateCell(
-    HCELL_INDEX Cell
-) 
+VOID AllocateCell(HCELL_INDEX Cell)
 /*
 Routine Description:
 
@@ -125,21 +114,18 @@ Return Value:
 
 */
 {
-    PHCELL  pcell;
+    PHCELL pcell;
 
     pcell = (PHCELL)(Base + Cell);
-    
+
     pcell->Size *= -1;
 
 
-
-    ASSERT(pcell->Size < 0 );
+    ASSERT(pcell->Size < 0);
 }
 
 PCELL_DATA
-GetCell(
-    HCELL_INDEX Cell
-)
+GetCell(HCELL_INDEX Cell)
 /*
 Routine Description:
 
@@ -155,10 +141,9 @@ Return Value:
 
 */
 {
-    PHCELL          pcell;
-    
+    PHCELL pcell;
+
     pcell = (PHCELL)(Base + Cell);
 
     return (struct _CELL_DATA *)&(pcell->u.NewCell.u.UserData);
 }
-

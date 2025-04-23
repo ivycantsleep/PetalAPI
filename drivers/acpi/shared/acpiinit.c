@@ -26,11 +26,11 @@ Revision History:
 #include "pch.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,ACPIInitialize)
-#pragma alloc_text(PAGE,ACPIInitializeAMLI)
-#pragma alloc_text(PAGE,ACPIInitializeDDB)
-#pragma alloc_text(PAGE,ACPIInitializeDDBs)
-#pragma alloc_text(PAGE,GetPBlkAddress)
+#pragma alloc_text(PAGE, ACPIInitialize)
+#pragma alloc_text(PAGE, ACPIInitializeAMLI)
+#pragma alloc_text(PAGE, ACPIInitializeDDB)
+#pragma alloc_text(PAGE, ACPIInitializeDDBs)
+#pragma alloc_text(PAGE, GetPBlkAddress)
 #endif
 
 #ifdef DBG
@@ -40,25 +40,23 @@ Revision History:
 //
 // Pointer to global ACPIInformation structure.
 //
-PACPIInformation        AcpiInformation = NULL;
+PACPIInformation AcpiInformation = NULL;
 
 //
 // Global structure for Pnp/QUERY_INTERFACE
 //
 ACPI_INTERFACE_STANDARD ACPIInterfaceTable;
-PNSOBJ                  ProcessorList[ACPI_SUPPORTED_PROCESSORS];
-PRSDTINFORMATION        RsdtInformation;
+PNSOBJ ProcessorList[ACPI_SUPPORTED_PROCESSORS];
+PRSDTINFORMATION RsdtInformation;
 
 //
 // Remember how many contexts we have reserved for the interpreter
 //
-ULONG                   AMLIMaxCTObjs;
+ULONG AMLIMaxCTObjs;
 
-
+
 BOOLEAN
-ACPIInitialize(
-    PVOID Context
-    )
+ACPIInitialize(PVOID Context)
 /*++
 
 Routine Description:
@@ -80,9 +78,9 @@ Return Value:
 
 --*/
 {
-    BOOLEAN     bool;
-    NTSTATUS    status;
-    PRSDT       rootSystemDescTable;
+    BOOLEAN bool;
+    NTSTATUS status;
+    PRSDT rootSystemDescTable;
 
     PAGED_CODE();
 
@@ -90,25 +88,12 @@ Return Value:
     // Initialize the interpreter
     //
     status = ACPIInitializeAMLI();
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPIInitialize: AMLI failed initialization 0x%08lx\n",
-            status
-            ) );
-        ASSERTMSG(
-            "ACPIInitialize: AMLI failed initialization\n",
-            NT_SUCCESS(status)
-            );
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_SYSTEM_CANNOT_START_ACPI,
-            0,
-            0,
-            0
-            );
-
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIInitialize: AMLI failed initialization 0x%08lx\n", status));
+        ASSERTMSG("ACPIInitialize: AMLI failed initialization\n", NT_SUCCESS(status));
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 0, 0, 0);
     }
 
     //
@@ -116,88 +101,57 @@ Return Value:
     // the System
     //
     rootSystemDescTable = ACPILoadFindRSDT();
-    if ( rootSystemDescTable == NULL ) {
+    if (rootSystemDescTable == NULL)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPIInitialize: ACPI RSDT Not Found\n"
-            ) );
-        ASSERTMSG(
-            "ACPIInitialize: ACPI RSDT Not Found\n",
-            rootSystemDescTable
-            );
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_SYSTEM_CANNOT_START_ACPI,
-            1,
-            0,
-            0
-            );
-
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIInitialize: ACPI RSDT Not Found\n"));
+        ASSERTMSG("ACPIInitialize: ACPI RSDT Not Found\n", rootSystemDescTable);
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 1, 0, 0);
     }
 
     //
     // ACPI is alive and well on this machine.
     //
-    ACPIPrint( (
-        ACPI_PRINT_LOADING,
-        "ACPIInitalize: ACPI RSDT found at 0x%08lx\n",
-        rootSystemDescTable
-        ) );
+    ACPIPrint((ACPI_PRINT_LOADING, "ACPIInitalize: ACPI RSDT found at 0x%08lx\n", rootSystemDescTable));
 
     //
     // Initialize table used for MJ_PNP/MN_QUERY_INTERFACE requests
     //
-    ACPIInterfaceTable.Size                             = sizeof (ACPIInterfaceTable);
-    ACPIInterfaceTable.GpeConnectVector                 = ACPIVectorConnect;
-    ACPIInterfaceTable.GpeDisconnectVector              = ACPIVectorDisconnect;
-    ACPIInterfaceTable.GpeEnableEvent                   = ACPIVectorEnable;
-    ACPIInterfaceTable.GpeDisableEvent                  = ACPIVectorDisable;
-    ACPIInterfaceTable.GpeClearStatus                   = ACPIVectorClear;
-    ACPIInterfaceTable.RegisterForDeviceNotifications   = ACPIRegisterForDeviceNotifications;
+    ACPIInterfaceTable.Size = sizeof(ACPIInterfaceTable);
+    ACPIInterfaceTable.GpeConnectVector = ACPIVectorConnect;
+    ACPIInterfaceTable.GpeDisconnectVector = ACPIVectorDisconnect;
+    ACPIInterfaceTable.GpeEnableEvent = ACPIVectorEnable;
+    ACPIInterfaceTable.GpeDisableEvent = ACPIVectorDisable;
+    ACPIInterfaceTable.GpeClearStatus = ACPIVectorClear;
+    ACPIInterfaceTable.RegisterForDeviceNotifications = ACPIRegisterForDeviceNotifications;
     ACPIInterfaceTable.UnregisterForDeviceNotifications = ACPIUnregisterForDeviceNotifications;
-    ACPIInterfaceTable.InterfaceReference               = AcpiNullReference;
-    ACPIInterfaceTable.InterfaceDereference             = AcpiNullReference;
-    ACPIInterfaceTable.Context                          = Context;
-    ACPIInterfaceTable.Version                          = 1;
+    ACPIInterfaceTable.InterfaceReference = AcpiNullReference;
+    ACPIInterfaceTable.InterfaceDereference = AcpiNullReference;
+    ACPIInterfaceTable.Context = Context;
+    ACPIInterfaceTable.Version = 1;
 
     //
     // Initialize global data structures
     //
-    KeInitializeSpinLock (&GpeTableLock);
-    KeInitializeSpinLock (&NotifyHandlerLock);
+    KeInitializeSpinLock(&GpeTableLock);
+    KeInitializeSpinLock(&NotifyHandlerLock);
     ProcessorList[0] = 0;
-    RtlZeroMemory( ProcessorList, ACPI_SUPPORTED_PROCESSORS * sizeof(PNSOBJ) );
+    RtlZeroMemory(ProcessorList, ACPI_SUPPORTED_PROCESSORS * sizeof(PNSOBJ));
 
     //
     // Allocate some memory to hold the ACPI Information structure.
     //
-    AcpiInformation = (PACPIInformation) ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(ACPIInformation),
-        ACPI_SHARED_INFORMATION_POOLTAG
-        );
-    if ( AcpiInformation == NULL ) {
+    AcpiInformation =
+        (PACPIInformation)ExAllocatePoolWithTag(NonPagedPool, sizeof(ACPIInformation), ACPI_SHARED_INFORMATION_POOLTAG);
+    if (AcpiInformation == NULL)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPIInitialize: Could not allocate AcpiInformation (x%x bytes)\n",
-            sizeof(ACPIInformation)
-            ) );
-        ASSERTMSG(
-            "ACPIInitialize: Could not allocate AcpiInformation\n",
-            AcpiInformation
-            );
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_SYSTEM_CANNOT_START_ACPI,
-            2,
-            0,
-            0
-            );
-
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIInitialize: Could not allocate AcpiInformation (x%x bytes)\n",
+                   sizeof(ACPIInformation)));
+        ASSERTMSG("ACPIInitialize: Could not allocate AcpiInformation\n", AcpiInformation);
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 2, 0, 0);
     }
-    RtlZeroMemory( AcpiInformation, sizeof(ACPIInformation) );
+    RtlZeroMemory(AcpiInformation, sizeof(ACPIInformation));
     AcpiInformation->ACPIOnly = TRUE;
     AcpiInformation->RootSystemDescTable = rootSystemDescTable;
 
@@ -205,8 +159,8 @@ Return Value:
     // Initialize queue, lock, and owner info for the Global Lock.
     // This must be done before we ever call the interpreter!
     //
-    KeInitializeSpinLock( &AcpiInformation->GlobalLockQueueLock );
-    InitializeListHead( &AcpiInformation->GlobalLockQueue );
+    KeInitializeSpinLock(&AcpiInformation->GlobalLockQueueLock);
+    InitializeListHead(&AcpiInformation->GlobalLockQueue);
     AcpiInformation->GlobalLockOwnerContext = NULL;
     AcpiInformation->GlobalLockOwnerDepth = 0;
 
@@ -216,96 +170,54 @@ Return Value:
     //  tables
     //
     status = ACPILoadProcessRSDT();
-    if ( !NT_SUCCESS(status) ) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPIInitialize: ACPILoadProcessRSDT = 0x%08lx\n",
-            status
-            ) );
-        ASSERTMSG(
-            "ACPIInitialize: ACPILoadProcessRSDT Failed\n",
-            NT_SUCCESS(status)
-            );
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_SYSTEM_CANNOT_START_ACPI,
-            3,
-            0,
-            0
-            );
-
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIInitialize: ACPILoadProcessRSDT = 0x%08lx\n", status));
+        ASSERTMSG("ACPIInitialize: ACPILoadProcessRSDT Failed\n", NT_SUCCESS(status));
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 3, 0, 0);
     }
 
     //
     // Now switch the machine into ACPI mode and initialize
     // the ACPI registers.
     //
-    ACPIEnableInitializeACPI( FALSE );
+    ACPIEnableInitializeACPI(FALSE);
 
     //
     // At this point, we can load all of the DDBs. We need to load all of
     // these tables *before* we try to enable any GPEs or Interrupt Vectors
     //
     status = ACPIInitializeDDBs();
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPIInitialize: ACPIInitializeLoadDDBs = 0x%08lx\n",
-            status
-            ) );
-        ASSERTMSG(
-            "ACPIInitialize: ACPIInitializeLoadDDBs Failed\n",
-            NT_SUCCESS(status)
-            );
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_SYSTEM_CANNOT_START_ACPI,
-            4,
-            0,
-            0
-            );
-
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIInitialize: ACPIInitializeLoadDDBs = 0x%08lx\n", status));
+        ASSERTMSG("ACPIInitialize: ACPIInitializeLoadDDBs Failed\n", NT_SUCCESS(status));
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 4, 0, 0);
     }
 
     //
     // Hook the SCI Vector
     //
-    bool = OSInterruptVector(
-        Context
-        );
-    if ( !bool ) {
+    bool = OSInterruptVector(Context);
+    if (!bool)
+    {
 
         //
         // Ooops... We were unable to hook the SCI vector.  Clean Up and
         // fail to load.
         //
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPIInitialize: OSInterruptVector Failed!!\n"
-            ) );
-        ASSERTMSG(
-            "ACPIInitialize: OSInterruptVector Failed!!\n",
-            bool
-            );
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_SYSTEM_CANNOT_START_ACPI,
-            5,
-            0,
-            0
-            );
-
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIInitialize: OSInterruptVector Failed!!\n"));
+        ASSERTMSG("ACPIInitialize: OSInterruptVector Failed!!\n", bool);
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 5, 0, 0);
     }
 
     return (TRUE);
 }
-
+
 NTSTATUS
-ACPIInitializeAMLI(
-    VOID
-    )
+ACPIInitializeAMLI(VOID)
 /*++
 
 Routine Description:
@@ -324,13 +236,13 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    ULONG       amliInitFlags;
-    ULONG       contextBlockSize;
-    ULONG       globalHeapBlockSize;
-    ULONG       timeSliceLength;
-    ULONG       timeSliceInterval;
-    ULONG       argSize;
+    NTSTATUS status;
+    ULONG amliInitFlags;
+    ULONG contextBlockSize;
+    ULONG globalHeapBlockSize;
+    ULONG timeSliceLength;
+    ULONG timeSliceInterval;
+    ULONG argSize;
 
     PAGED_CODE();
 
@@ -338,81 +250,51 @@ Return Value:
     // Initialize AMLI
     //
     argSize = sizeof(amliInitFlags);
-    status = OSReadRegValue(
-        "AMLIInitFlags",
-        (HANDLE) NULL,
-        &amliInitFlags,
-        &argSize
-        );
-    if (!NT_SUCCESS(status) ) {
+    status = OSReadRegValue("AMLIInitFlags", (HANDLE)NULL, &amliInitFlags, &argSize);
+    if (!NT_SUCCESS(status))
+    {
 
         amliInitFlags = 0;
-
     }
 
     argSize = sizeof(contextBlockSize);
-    status = OSReadRegValue(
-        "AMLICtxtBlkSize",
-        (HANDLE) NULL,
-        &contextBlockSize,
-        &argSize
-        );
-    if (!NT_SUCCESS(status) ) {
+    status = OSReadRegValue("AMLICtxtBlkSize", (HANDLE)NULL, &contextBlockSize, &argSize);
+    if (!NT_SUCCESS(status))
+    {
 
         contextBlockSize = 0;
-
     }
 
     argSize = sizeof(globalHeapBlockSize);
-    status = OSReadRegValue(
-        "AMLIGlobalHeapBlkSize",
-        (HANDLE) NULL,
-        &globalHeapBlockSize,
-        &argSize
-        );
-    if (!NT_SUCCESS(status) ) {
+    status = OSReadRegValue("AMLIGlobalHeapBlkSize", (HANDLE)NULL, &globalHeapBlockSize, &argSize);
+    if (!NT_SUCCESS(status))
+    {
 
         globalHeapBlockSize = 0;
-
     }
 
     argSize = sizeof(timeSliceLength);
-    status = OSReadRegValue(
-        "AMLITimeSliceLength",
-        (HANDLE) NULL,
-        &timeSliceLength,
-        &argSize
-        );
-    if (!NT_SUCCESS(status) ) {
+    status = OSReadRegValue("AMLITimeSliceLength", (HANDLE)NULL, &timeSliceLength, &argSize);
+    if (!NT_SUCCESS(status))
+    {
 
         timeSliceLength = 0;
-
     }
 
     argSize = sizeof(timeSliceInterval);
-    status = OSReadRegValue(
-        "AMLITimeSliceInterval",
-        (HANDLE) NULL,
-        &timeSliceInterval,
-        &argSize
-        );
-    if (!NT_SUCCESS(status) ) {
+    status = OSReadRegValue("AMLITimeSliceInterval", (HANDLE)NULL, &timeSliceInterval, &argSize);
+    if (!NT_SUCCESS(status))
+    {
 
         timeSliceInterval = 0;
-
     }
 
     argSize = sizeof(AMLIMaxCTObjs);
-    status = OSReadRegValue(
-        "AMLIMaxCTObjs",
-        (HANDLE) NULL,
-        &AMLIMaxCTObjs,
-        &argSize
-        );
-    if (!NT_SUCCESS(status)) {
+    status = OSReadRegValue("AMLIMaxCTObjs", (HANDLE)NULL, &AMLIMaxCTObjs, &argSize);
+    if (!NT_SUCCESS(status))
+    {
 
         AMLIMaxCTObjs = 0;
-
     }
 
     //
@@ -423,20 +305,12 @@ Return Value:
     //
     // Initialize the interpreter
     //
-    return AMLIInitialize(
-        contextBlockSize,
-        globalHeapBlockSize,
-        amliInitFlags,
-        timeSliceLength,
-        timeSliceInterval,
-        AMLIMaxCTObjs
-        );
+    return AMLIInitialize(contextBlockSize, globalHeapBlockSize, amliInitFlags, timeSliceLength, timeSliceInterval,
+                          AMLIMaxCTObjs);
 }
-
+
 NTSTATUS
-ACPIInitializeDDB(
-    IN  ULONG   Index
-    )
+ACPIInitializeDDB(IN ULONG Index)
 /*++
 
 Routine Description:
@@ -453,41 +327,35 @@ Return Value:
 
 --*/
 {
-    BOOLEAN     success;
-    HANDLE      diffDataBlock = NULL;
-    NTSTATUS    status;
-    PDSDT       table;
+    BOOLEAN success;
+    HANDLE diffDataBlock = NULL;
+    NTSTATUS status;
+    PDSDT table;
 
     PAGED_CODE();
 
     //
     // Convert the index into a table entry
     //
-    table = (PDSDT) (RsdtInformation->Tables[Index].Address);
+    table = (PDSDT)(RsdtInformation->Tables[Index].Address);
 
     //
     // Make sure that the checksum of the table is correct
     //
-    success = ACPILoadTableCheckSum( table, table->Header.Length );
-    if (success == FALSE) {
+    success = ACPILoadTableCheckSum(table, table->Header.Length);
+    if (success == FALSE)
+    {
 
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_SYSTEM_CANNOT_START_ACPI,
-            7,
-            (ULONG_PTR) table,
-            table->Header.CreatorRev
-            );
-
-
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 7, (ULONG_PTR)table, table->Header.CreatorRev);
     }
 
     //
     // Now call the Interpreter to read the Differentiated System
     // Description Block and build the ACPI Name Space.
     //
-    status = AMLILoadDDB( table, &diffDataBlock );
-    if (NT_SUCCESS(status) ) {
+    status = AMLILoadDDB(table, &diffDataBlock);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Remember that we have loaded this table and that we have a
@@ -495,35 +363,20 @@ Return Value:
         //
         RsdtInformation->Tables[Index].Flags |= RSDTELEMENT_LOADED;
         RsdtInformation->Tables[Index].Handle = diffDataBlock;
+    }
+    else
+    {
 
-    } else {
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIInitializeDDB: AMLILoadDDB failed 0x%8x\n", status));
+        ASSERTMSG("ACPIInitializeDDB: AMLILoadDDB failed to load DDB\n", 0);
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPIInitializeDDB: AMLILoadDDB failed 0x%8x\n",
-            status
-            ) );
-        ASSERTMSG(
-            "ACPIInitializeDDB: AMLILoadDDB failed to load DDB\n",
-            0
-            );
-
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_SYSTEM_CANNOT_START_ACPI,
-            8,
-            (ULONG_PTR) table,
-            table->Header.CreatorRev
-            );
-
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 8, (ULONG_PTR)table, table->Header.CreatorRev);
     }
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIInitializeDDBs(
-    VOID
-    )
+ACPIInitializeDDBs(VOID)
 /*++
 
 Routine Description:
@@ -541,9 +394,9 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    ULONG       index;
-    ULONG       numElements;
+    NTSTATUS status;
+    ULONG index;
+    ULONG numElements;
 
     PAGED_CODE();
 
@@ -551,18 +404,12 @@ Return Value:
     // Get the number of elements to process
     //
     numElements = RsdtInformation->NumElements;
-    if (numElements == 0) {
+    if (numElements == 0)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPInitializeDDBs: No tables found in RSDT\n"
-            ) );
-        ASSERTMSG(
-            "ACPIInitializeDDBs: No tables found in RSDT\n",
-            numElements != 0
-            );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPInitializeDDBs: No tables found in RSDT\n"));
+        ASSERTMSG("ACPIInitializeDDBs: No tables found in RSDT\n", numElements != 0);
         return STATUS_ACPI_INVALID_TABLE;
-
     }
 
     //
@@ -571,29 +418,21 @@ Return Value:
     // sure that we can in fact load it, and then do so
     //
     index = numElements - 1;
-    if ( !(RsdtInformation->Tables[index].Flags & RSDTELEMENT_MAPPED) ||
-         !(RsdtInformation->Tables[index].Flags & RSDTELEMENT_LOADABLE) ) {
+    if (!(RsdtInformation->Tables[index].Flags & RSDTELEMENT_MAPPED) ||
+        !(RsdtInformation->Tables[index].Flags & RSDTELEMENT_LOADABLE))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPInitializeDDB: DSDT not mapped or loadable\n"
-            ) );
-        ASSERTMSG(
-            "ACPIInitializeDDB: DSDT not mapped\n",
-            (RsdtInformation->Tables[index].Flags & RSDTELEMENT_MAPPED)
-            );
-        ASSERTMSG(
-            "ACPIInitializeDDB: DSDT not loadable\n",
-            (RsdtInformation->Tables[index].Flags & RSDTELEMENT_LOADABLE)
-            );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPInitializeDDB: DSDT not mapped or loadable\n"));
+        ASSERTMSG("ACPIInitializeDDB: DSDT not mapped\n", (RsdtInformation->Tables[index].Flags & RSDTELEMENT_MAPPED));
+        ASSERTMSG("ACPIInitializeDDB: DSDT not loadable\n",
+                  (RsdtInformation->Tables[index].Flags & RSDTELEMENT_LOADABLE));
         return STATUS_ACPI_INVALID_TABLE;
-
     }
-    status = ACPIInitializeDDB( index );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIInitializeDDB(index);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
-
     }
 
     //
@@ -604,26 +443,26 @@ Return Value:
     //
     // Loop for all elements in the table
     //
-    for (index = 0; index < numElements; index++) {
+    for (index = 0; index < numElements; index++)
+    {
 
         //
         // Is the entry mapped and loadable?
         //
-        if ( (RsdtInformation->Tables[index].Flags & RSDTELEMENT_MAPPED) &&
-             (RsdtInformation->Tables[index].Flags & RSDTELEMENT_LOADABLE) ) {
+        if ((RsdtInformation->Tables[index].Flags & RSDTELEMENT_MAPPED) &&
+            (RsdtInformation->Tables[index].Flags & RSDTELEMENT_LOADABLE))
+        {
 
             //
             // Load the table
             //
-            status = ACPIInitializeDDB( index );
-            if (!NT_SUCCESS(status)) {
+            status = ACPIInitializeDDB(index);
+            if (!NT_SUCCESS(status))
+            {
 
                 return status;
-
             }
-
         }
-
     }
 
     //
@@ -631,50 +470,42 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 ULONG
-GetPBlkAddress(
-    IN  UCHAR   Processor
-    )
+GetPBlkAddress(IN UCHAR Processor)
 {
-    ULONG           pblk;
-    NTSTATUS        status;
-    OBJDATA         data;
-    PNSOBJ          pnsobj = NULL;
-    PPROCESSOROBJ   pobj = NULL;
+    ULONG pblk;
+    NTSTATUS status;
+    OBJDATA data;
+    PNSOBJ pnsobj = NULL;
+    PPROCESSOROBJ pobj = NULL;
 
-    if (Processor >= ACPI_SUPPORTED_PROCESSORS) {
-
-        return 0;
-
-    }
-
-    if (!ProcessorList[Processor])  {
+    if (Processor >= ACPI_SUPPORTED_PROCESSORS)
+    {
 
         return 0;
-
     }
 
-    status = AMLIEvalNameSpaceObject(
-        ProcessorList[Processor],
-        &data,
-        0,
-        NULL
-        );
+    if (!ProcessorList[Processor])
+    {
 
-    if ( !NT_SUCCESS(status) ) {
+        return 0;
+    }
 
-        ACPIBreakPoint ();
+    status = AMLIEvalNameSpaceObject(ProcessorList[Processor], &data, 0, NULL);
+
+    if (!NT_SUCCESS(status))
+    {
+
+        ACPIBreakPoint();
         return (0);
-
     }
 
-    ASSERT (data.dwDataType == OBJTYPE_PROCESSOR);
-    ASSERT (data.pbDataBuff != NULL);
+    ASSERT(data.dwDataType == OBJTYPE_PROCESSOR);
+    ASSERT(data.pbDataBuff != NULL);
 
     pblk = ((PROCESSOROBJ *)data.pbDataBuff)->dwPBlk;
     AMLIFreeDataBuffs(&data, 1);
 
     return (pblk);
 }
-

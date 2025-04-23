@@ -25,32 +25,32 @@ Revision History:
 
 #include "arbp.h"
 
-#define REGSTR_KEY_ROOTENUM             L"ROOT"
+#define REGSTR_KEY_ROOTENUM L"ROOT"
 //
 // Conditional compilation constants
 //
 
-#define ALLOW_BOOT_ALLOC_CONFLICTS      1
-#define PLUG_FEST_HACKS                 0
+#define ALLOW_BOOT_ALLOC_CONFLICTS 1
+#define PLUG_FEST_HACKS 0
 
 //
 // Pool Tags
 //
 
-#define ARBITER_ALLOCATION_STATE_TAG    'AbrA'
-#define ARBITER_ORDERING_LIST_TAG       'LbrA'
-#define ARBITER_MISC_TAG                'MbrA'
-#define ARBITER_RANGE_LIST_TAG          'RbrA'
-#define ARBITER_CONFLICT_INFO_TAG       'CbrA'
+#define ARBITER_ALLOCATION_STATE_TAG 'AbrA'
+#define ARBITER_ORDERING_LIST_TAG 'LbrA'
+#define ARBITER_MISC_TAG 'MbrA'
+#define ARBITER_RANGE_LIST_TAG 'RbrA'
+#define ARBITER_CONFLICT_INFO_TAG 'CbrA'
 
 //
 // Constants
 //
 
-#define PATH_ARBITERS            L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Arbiters"
-#define KEY_ALLOCATIONORDER      L"AllocationOrder"
-#define KEY_RESERVEDRESOURCES    L"ReservedResources"
-#define ARBITER_ORDERING_GROW_SIZE  8
+#define PATH_ARBITERS L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Arbiters"
+#define KEY_ALLOCATIONORDER L"AllocationOrder"
+#define KEY_RESERVEDRESOURCES L"ReservedResources"
+#define ARBITER_ORDERING_GROW_SIZE 8
 
 
 //
@@ -78,9 +78,7 @@ Revision History:
 //      IN ULONGLONG e2
 //      );
 //
-#define DISJOINT(s1,e1,s2,e2)                                           \
-    ( ((s1) < (s2) && (e1) < (s2))                                      \
-    ||((s2) < (s1) && (e2) < (s1)) )
+#define DISJOINT(s1, e1, s2, e2) (((s1) < (s2) && (e1) < (s2)) || ((s2) < (s1) && (e2) < (s1)))
 
 //
 // VOID
@@ -90,9 +88,8 @@ Revision History:
 //      );
 //
 
-#define ArbpWstrToUnicodeString(u, p)                                   \
-    (u)->Length = ((u)->MaximumLength =                                 \
-        (USHORT) (sizeof((p))) - sizeof(WCHAR));                        \
+#define ArbpWstrToUnicodeString(u, p)                                           \
+    (u)->Length = ((u)->MaximumLength = (USHORT)(sizeof((p))) - sizeof(WCHAR)); \
     (u)->Buffer = (p)
 
 //
@@ -102,51 +99,29 @@ Revision History:
 // );
 //
 
-#define ORDERING_INDEX_FROM_PRIORITY(P)                                 \
-    ( (ULONG) ( (P) > 0 ? (P) - 1 : ((P) * -1) - 1) )
+#define ORDERING_INDEX_FROM_PRIORITY(P) ((ULONG)((P) > 0 ? (P) - 1 : ((P) * -1) - 1))
 
 //
 // Prototypes
 //
 
 NTSTATUS
-ArbpBuildAllocationStack(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PLIST_ENTRY ArbitrationList,
-    IN ULONG ArbitrationListCount
-    );
+ArbpBuildAllocationStack(IN PARBITER_INSTANCE Arbiter, IN PLIST_ENTRY ArbitrationList, IN ULONG ArbitrationListCount);
 
 NTSTATUS
-ArbpGetRegistryValue(
-    IN HANDLE KeyHandle,
-    IN PWSTR  ValueName,
-    OUT PKEY_VALUE_FULL_INFORMATION *Information
-    );
+ArbpGetRegistryValue(IN HANDLE KeyHandle, IN PWSTR ValueName, OUT PKEY_VALUE_FULL_INFORMATION *Information);
 
 NTSTATUS
-ArbpBuildAlternative(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    OUT PARBITER_ALTERNATIVE Alternative
-    );
+ArbpBuildAlternative(IN PARBITER_INSTANCE Arbiter, IN PIO_RESOURCE_DESCRIPTOR Requirement,
+                     OUT PARBITER_ALTERNATIVE Alternative);
 
-VOID
-ArbpUpdatePriority(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALTERNATIVE Alternative
-    );
+VOID ArbpUpdatePriority(PARBITER_INSTANCE Arbiter, PARBITER_ALTERNATIVE Alternative);
 
 BOOLEAN
-ArbpQueryConflictCallback(
-    IN PVOID Context,
-    IN PRTL_RANGE Range
-    );
+ArbpQueryConflictCallback(IN PVOID Context, IN PRTL_RANGE Range);
 
 BOOLEAN
-ArbShareDriverExclusive(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    );
+ArbShareDriverExclusive(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State);
 
 //
 // Make everything pageable
@@ -154,10 +129,7 @@ ArbShareDriverExclusive(
 
 #ifdef ALLOC_PRAGMA
 
-VOID
-ArbDereferenceArbiterInstance(
-    IN PARBITER_INSTANCE Arbiter
-    );
+VOID ArbDereferenceArbiterInstance(IN PARBITER_INSTANCE Arbiter);
 
 #pragma alloc_text(PAGE, ArbInitializeArbiterInstance)
 #pragma alloc_text(PAGE, ArbDereferenceArbiterInstance)
@@ -200,14 +172,9 @@ ArbDereferenceArbiterInstance(
 
 
 NTSTATUS
-ArbInitializeArbiterInstance(
-    OUT PARBITER_INSTANCE Arbiter,
-    IN PDEVICE_OBJECT BusDeviceObject,
-    IN CM_RESOURCE_TYPE ResourceType,
-    IN PWSTR Name,
-    IN PWSTR OrderingName,
-    IN PARBITER_TRANSLATE_ALLOCATION_ORDER TranslateOrdering OPTIONAL
-    )
+ArbInitializeArbiterInstance(OUT PARBITER_INSTANCE Arbiter, IN PDEVICE_OBJECT BusDeviceObject,
+                             IN CM_RESOURCE_TYPE ResourceType, IN PWSTR Name, IN PWSTR OrderingName,
+                             IN PARBITER_TRANSLATE_ALLOCATION_ORDER TranslateOrdering OPTIONAL)
 
 /*++
 
@@ -256,17 +223,14 @@ Notes:
     ASSERT(Arbiter->PackResource);
     ASSERT(Arbiter->UnpackResource);
 
-    ARB_PRINT(2,("Initializing %S Arbiter...\n", Name));
+    ARB_PRINT(2, ("Initializing %S Arbiter...\n", Name));
 
     //
     // Initialize all pool allocation pointers to NULL so we can cleanup
     //
 
-    ASSERT(Arbiter->MutexEvent == NULL
-           && Arbiter->Allocation == NULL
-           && Arbiter->PossibleAllocation == NULL
-           && Arbiter->AllocationStack == NULL
-           );
+    ASSERT(Arbiter->MutexEvent == NULL && Arbiter->Allocation == NULL && Arbiter->PossibleAllocation == NULL &&
+           Arbiter->AllocationStack == NULL);
 
     //
     // We are an arbiter
@@ -284,12 +248,10 @@ Notes:
     // Initialize state lock (KEVENT must be non-paged)
     //
 
-    Arbiter->MutexEvent = ExAllocatePoolWithTag(NonPagedPool,
-                                                sizeof(KEVENT),
-                                                ARBITER_MISC_TAG
-                                                );
+    Arbiter->MutexEvent = ExAllocatePoolWithTag(NonPagedPool, sizeof(KEVENT), ARBITER_MISC_TAG);
 
-    if (!Arbiter->MutexEvent) {
+    if (!Arbiter->MutexEvent)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -300,12 +262,11 @@ Notes:
     // Initialize the allocation stack to a reasonable size
     //
 
-    Arbiter->AllocationStack = ExAllocatePoolWithTag(PagedPool,
-                                                     INITIAL_ALLOCATION_STATE_SIZE,
-                                                     ARBITER_ALLOCATION_STATE_TAG
-                                                     );
+    Arbiter->AllocationStack =
+        ExAllocatePoolWithTag(PagedPool, INITIAL_ALLOCATION_STATE_SIZE, ARBITER_ALLOCATION_STATE_TAG);
 
-    if (!Arbiter->AllocationStack) {
+    if (!Arbiter->AllocationStack)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -317,22 +278,18 @@ Notes:
     // Allocate buffers to hold the range lists
     //
 
-    Arbiter->Allocation = ExAllocatePoolWithTag(PagedPool,
-                                                sizeof(RTL_RANGE_LIST),
-                                                ARBITER_RANGE_LIST_TAG
-                                                );
+    Arbiter->Allocation = ExAllocatePoolWithTag(PagedPool, sizeof(RTL_RANGE_LIST), ARBITER_RANGE_LIST_TAG);
 
-    if (!Arbiter->Allocation) {
+    if (!Arbiter->Allocation)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
 
-    Arbiter->PossibleAllocation = ExAllocatePoolWithTag(PagedPool,
-                                                        sizeof(RTL_RANGE_LIST),
-                                                        ARBITER_RANGE_LIST_TAG
-                                                        );
+    Arbiter->PossibleAllocation = ExAllocatePoolWithTag(PagedPool, sizeof(RTL_RANGE_LIST), ARBITER_RANGE_LIST_TAG);
 
-    if (!Arbiter->PossibleAllocation) {
+    if (!Arbiter->PossibleAllocation)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -357,63 +314,78 @@ Notes:
     // not we'll do it the old fashioned way...)
     //
 
-    if (!Arbiter->TestAllocation) {
+    if (!Arbiter->TestAllocation)
+    {
         Arbiter->TestAllocation = ArbTestAllocation;
     }
 
-    if (!Arbiter->RetestAllocation) {
+    if (!Arbiter->RetestAllocation)
+    {
         Arbiter->RetestAllocation = ArbRetestAllocation;
     }
 
-    if (!Arbiter->CommitAllocation) {
+    if (!Arbiter->CommitAllocation)
+    {
         Arbiter->CommitAllocation = ArbCommitAllocation;
     }
 
-    if (!Arbiter->RollbackAllocation) {
+    if (!Arbiter->RollbackAllocation)
+    {
         Arbiter->RollbackAllocation = ArbRollbackAllocation;
     }
 
-    if (!Arbiter->AddReserved) {
+    if (!Arbiter->AddReserved)
+    {
         Arbiter->AddReserved = ArbAddReserved;
     }
 
-    if (!Arbiter->PreprocessEntry) {
+    if (!Arbiter->PreprocessEntry)
+    {
         Arbiter->PreprocessEntry = ArbPreprocessEntry;
     }
 
-    if (!Arbiter->AllocateEntry) {
+    if (!Arbiter->AllocateEntry)
+    {
         Arbiter->AllocateEntry = ArbAllocateEntry;
     }
 
-    if (!Arbiter->GetNextAllocationRange) {
+    if (!Arbiter->GetNextAllocationRange)
+    {
         Arbiter->GetNextAllocationRange = ArbGetNextAllocationRange;
     }
 
-    if (!Arbiter->FindSuitableRange) {
+    if (!Arbiter->FindSuitableRange)
+    {
         Arbiter->FindSuitableRange = ArbFindSuitableRange;
     }
 
-    if (!Arbiter->AddAllocation) {
+    if (!Arbiter->AddAllocation)
+    {
         Arbiter->AddAllocation = ArbAddAllocation;
     }
 
-    if (!Arbiter->BacktrackAllocation) {
+    if (!Arbiter->BacktrackAllocation)
+    {
         Arbiter->BacktrackAllocation = ArbBacktrackAllocation;
     }
 
-    if (!Arbiter->OverrideConflict) {
+    if (!Arbiter->OverrideConflict)
+    {
         Arbiter->OverrideConflict = ArbOverrideConflict;
     }
 
-    if (!Arbiter->BootAllocation) {
+    if (!Arbiter->BootAllocation)
+    {
         Arbiter->BootAllocation = ArbBootAllocation;
     }
 
-    if (!Arbiter->QueryConflict) {
+    if (!Arbiter->QueryConflict)
+    {
         Arbiter->QueryConflict = ArbQueryConflict;
     }
 
-    if (!Arbiter->StartArbiter) {
+    if (!Arbiter->StartArbiter)
+    {
         Arbiter->StartArbiter = ArbStartArbiter;
     }
 
@@ -422,13 +394,10 @@ Notes:
     // ranges have the same name as the assignment ordering
     //
 
-    status = ArbBuildAssignmentOrdering(Arbiter,
-                                        OrderingName,
-                                        OrderingName,
-                                        TranslateOrdering
-                                        );
+    status = ArbBuildAssignmentOrdering(Arbiter, OrderingName, OrderingName, TranslateOrdering);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -436,71 +405,70 @@ Notes:
 
 cleanup:
 
-    if (Arbiter->MutexEvent) {
+    if (Arbiter->MutexEvent)
+    {
         ExFreePool(Arbiter->MutexEvent);
     }
 
-    if (Arbiter->Allocation) {
+    if (Arbiter->Allocation)
+    {
         ExFreePool(Arbiter->Allocation);
     }
 
-    if (Arbiter->PossibleAllocation) {
+    if (Arbiter->PossibleAllocation)
+    {
         ExFreePool(Arbiter->PossibleAllocation);
     }
 
-    if (Arbiter->AllocationStack) {
+    if (Arbiter->AllocationStack)
+    {
         ExFreePool(Arbiter->AllocationStack);
     }
 
     return status;
-
 }
 
-VOID
-ArbReferenceArbiterInstance(
-    IN PARBITER_INSTANCE Arbiter
-    )
+VOID ArbReferenceArbiterInstance(IN PARBITER_INSTANCE Arbiter)
 {
     InterlockedIncrement(&Arbiter->ReferenceCount);
 }
 
-VOID
-ArbDereferenceArbiterInstance(
-    IN PARBITER_INSTANCE Arbiter
-    )
+VOID ArbDereferenceArbiterInstance(IN PARBITER_INSTANCE Arbiter)
 {
     PAGED_CODE();
 
     InterlockedDecrement(&Arbiter->ReferenceCount);
 
-    if (Arbiter->ReferenceCount == 0) {
+    if (Arbiter->ReferenceCount == 0)
+    {
         ArbDeleteArbiterInstance(Arbiter);
     }
 }
 
-VOID
-ArbDeleteArbiterInstance(
-    IN PARBITER_INSTANCE Arbiter
-    )
+VOID ArbDeleteArbiterInstance(IN PARBITER_INSTANCE Arbiter)
 {
 
     PAGED_CODE();
 
-    if (Arbiter->MutexEvent) {
+    if (Arbiter->MutexEvent)
+    {
         ExFreePool(Arbiter->MutexEvent);
     }
 
-    if (Arbiter->Allocation) {
+    if (Arbiter->Allocation)
+    {
         RtlFreeRangeList(Arbiter->Allocation);
         ExFreePool(Arbiter->Allocation);
     }
 
-    if (Arbiter->PossibleAllocation) {
+    if (Arbiter->PossibleAllocation)
+    {
         RtlFreeRangeList(Arbiter->PossibleAllocation);
         ExFreePool(Arbiter->PossibleAllocation);
     }
 
-    if (Arbiter->AllocationStack) {
+    if (Arbiter->AllocationStack)
+    {
         ExFreePool(Arbiter->AllocationStack);
     }
 
@@ -512,14 +480,10 @@ ArbDeleteArbiterInstance(
     RtlFillMemory(Arbiter, sizeof(ARBITER_INSTANCE), 'A');
 
 #endif
-
 }
 
 NTSTATUS
-ArbTestAllocation(
-    IN PARBITER_INSTANCE Arbiter,
-    IN OUT PLIST_ENTRY ArbitrationList
-    )
+ArbTestAllocation(IN PARBITER_INSTANCE Arbiter, IN OUT PLIST_ENTRY ArbitrationList)
 
 /*++
 
@@ -576,7 +540,8 @@ Return Value:
     ARB_PRINT(3, ("Copy current allocation\n"));
     status = RtlCopyRangeList(Arbiter->PossibleAllocation, Arbiter->Allocation);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -588,26 +553,24 @@ Return Value:
     count = 0;
     previousOwner = NULL;
 
-    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current) {
+    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current)
+    {
 
         count++;
 
         currentOwner = current->PhysicalDeviceObject;
 
-        if (previousOwner != currentOwner) {
+        if (previousOwner != currentOwner)
+        {
 
             previousOwner = currentOwner;
 
-            ARB_PRINT(3,
-                        ("Delete 0x%08x's resources\n",
-                        currentOwner
-                        ));
+            ARB_PRINT(3, ("Delete 0x%08x's resources\n", currentOwner));
 
-            status = RtlDeleteOwnersRanges(Arbiter->PossibleAllocation,
-                                           (PVOID)currentOwner
-                                           );
+            status = RtlDeleteOwnersRanges(Arbiter->PossibleAllocation, (PVOID)currentOwner);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto cleanup;
             }
         }
@@ -627,17 +590,13 @@ Return Value:
         //
         current->WorkSpace = 0;
 
-        if (performScoring) {
+        if (performScoring)
+        {
 
-            FOR_ALL_IN_ARRAY(current->Alternatives,
-                             current->AlternativeCount,
-                             alternative) {
+            FOR_ALL_IN_ARRAY(current->Alternatives, current->AlternativeCount, alternative)
+            {
 
-                ARB_PRINT(3,
-                            ("Scoring entry %p\n",
-                            currentOwner
-                            ));
-
+                ARB_PRINT(3, ("Scoring entry %p\n", currentOwner));
 
 
                 score = Arbiter->ScoreRequirement(alternative);
@@ -646,7 +605,8 @@ Return Value:
                 // Ensure the score is valid
                 //
 
-                if (score < 0) {
+                if (score < 0)
+                {
                     status = STATUS_DEVICE_CONFIGURATION_ERROR;
                     goto cleanup;
                 }
@@ -658,7 +618,8 @@ Return Value:
 
     status = ArbSortArbitrationList(ArbitrationList);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -666,12 +627,10 @@ Return Value:
     // Build the arbitration stack
     //
 
-    status = ArbpBuildAllocationStack(Arbiter,
-                                     ArbitrationList,
-                                     count
-                                     );
+    status = ArbpBuildAllocationStack(Arbiter, ArbitrationList, count);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -681,7 +640,8 @@ Return Value:
 
     status = Arbiter->AllocateEntry(Arbiter, Arbiter->AllocationStack);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Success.
@@ -703,11 +663,8 @@ cleanup:
 
 
 NTSTATUS
-ArbpBuildAlternative(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    OUT PARBITER_ALTERNATIVE Alternative
-    )
+ArbpBuildAlternative(IN PARBITER_INSTANCE Arbiter, IN PIO_RESOURCE_DESCRIPTOR Requirement,
+                     OUT PARBITER_ALTERNATIVE Alternative)
 
 /*++
 
@@ -744,14 +701,11 @@ Return Value:
     // Unpack the requirement into the alternatives table
     //
 
-    status = Arbiter->UnpackRequirement(Requirement,
-                                        &Alternative->Minimum,
-                                        &Alternative->Maximum,
-                                        &Alternative->Length,
-                                        &Alternative->Alignment
-                                        );
+    status = Arbiter->UnpackRequirement(Requirement, &Alternative->Minimum, &Alternative->Maximum, &Alternative->Length,
+                                        &Alternative->Alignment);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -759,10 +713,9 @@ Return Value:
     // Align the minimum if necessary
     //
 
-    if (Alternative->Minimum % Alternative->Alignment != 0) {
-        ALIGN_ADDRESS_UP(Alternative->Minimum,
-                         Alternative->Alignment
-                         );
+    if (Alternative->Minimum % Alternative->Alignment != 0)
+    {
+        ALIGN_ADDRESS_UP(Alternative->Minimum, Alternative->Alignment);
     }
 
     Alternative->Flags = 0;
@@ -771,7 +724,8 @@ Return Value:
     // Check if this alternative is shared
     //
 
-    if(Requirement->ShareDisposition == CmResourceShareShared) {
+    if (Requirement->ShareDisposition == CmResourceShareShared)
+    {
         Alternative->Flags |= ARBITER_ALTERNATIVE_FLAG_SHARED;
     }
 
@@ -779,7 +733,8 @@ Return Value:
     // Check if this alternative is fixed
     //
 
-    if (Alternative->Maximum - Alternative->Minimum + 1 == Alternative->Length) {
+    if (Alternative->Maximum - Alternative->Minimum + 1 == Alternative->Length)
+    {
         Alternative->Flags |= ARBITER_ALTERNATIVE_FLAG_FIXED;
     }
 
@@ -787,7 +742,8 @@ Return Value:
     // Check for validity
     //
 
-    if (Alternative->Maximum < Alternative->Minimum) {
+    if (Alternative->Maximum < Alternative->Minimum)
+    {
         Alternative->Flags |= ARBITER_ALTERNATIVE_FLAG_INVALID;
     }
 
@@ -800,11 +756,7 @@ cleanup:
 
 
 NTSTATUS
-ArbpBuildAllocationStack(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PLIST_ENTRY ArbitrationList,
-    IN ULONG ArbitrationListCount
-    )
+ArbpBuildAllocationStack(IN PARBITER_INSTANCE Arbiter, IN PLIST_ENTRY ArbitrationList, IN ULONG ArbitrationListCount)
 
 /*++
 
@@ -845,12 +797,15 @@ Return Value:
     // Calculate the size the stack needs to be and the
     //
 
-    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, currentEntry) {
+    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, currentEntry)
+    {
 
-        if (currentEntry->AlternativeCount > 0) {
-            stackSize += currentEntry->AlternativeCount
-                            * sizeof(ARBITER_ALTERNATIVE);
-        } else {
+        if (currentEntry->AlternativeCount > 0)
+        {
+            stackSize += currentEntry->AlternativeCount * sizeof(ARBITER_ALTERNATIVE);
+        }
+        else
+        {
             allocationCount--;
         }
     }
@@ -861,7 +816,8 @@ Return Value:
     // Make sure the allocation stack is large enough
     //
 
-    if (Arbiter->AllocationStackMaxSize < stackSize) {
+    if (Arbiter->AllocationStackMaxSize < stackSize)
+    {
 
         PARBITER_ALLOCATION_STATE temp;
 
@@ -869,11 +825,9 @@ Return Value:
         // Enlarge the allocation stack
         //
 
-        temp = ExAllocatePoolWithTag(PagedPool,
-                                     stackSize,
-                                     ARBITER_ALLOCATION_STATE_TAG
-                                     );
-        if (!temp) {
+        temp = ExAllocatePoolWithTag(PagedPool, stackSize, ARBITER_ALLOCATION_STATE_TAG);
+        if (!temp)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
@@ -888,16 +842,17 @@ Return Value:
     //
 
     currentState = Arbiter->AllocationStack;
-    currentAlternative = (PARBITER_ALTERNATIVE) (Arbiter->AllocationStack
-        + ArbitrationListCount + 1);
+    currentAlternative = (PARBITER_ALTERNATIVE)(Arbiter->AllocationStack + ArbitrationListCount + 1);
 
-    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, currentEntry) {
+    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, currentEntry)
+    {
 
         //
         // Do we need to allocate anything for this entry?
         //
 
-        if (currentEntry->AlternativeCount > 0) {
+        if (currentEntry->AlternativeCount > 0)
+        {
 
             //
             // Initialize the stack location
@@ -913,23 +868,20 @@ Return Value:
             //
 
             currentState->Start = 1;
-            ASSERT(currentState->End == 0);  // From RtlZeroMemory
+            ASSERT(currentState->End == 0); // From RtlZeroMemory
 
             //
             // Initialize the alternatives table
             //
 
-            FOR_ALL_IN_ARRAY(currentEntry->Alternatives,
-                             currentEntry->AlternativeCount,
-                             currentDescriptor) {
+            FOR_ALL_IN_ARRAY(currentEntry->Alternatives, currentEntry->AlternativeCount, currentDescriptor)
+            {
 
 
-                status = ArbpBuildAlternative(Arbiter,
-                                            currentDescriptor,
-                                            currentAlternative
-                                            );
+                status = ArbpBuildAlternative(Arbiter, currentDescriptor, currentAlternative);
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     goto cleanup;
                 }
 
@@ -944,7 +896,6 @@ Return Value:
                 //
 
                 currentAlternative++;
-
             }
         }
         currentState++;
@@ -969,9 +920,7 @@ cleanup:
 }
 
 NTSTATUS
-ArbSortArbitrationList(
-    IN OUT PLIST_ENTRY ArbitrationList
-    )
+ArbSortArbitrationList(IN OUT PLIST_ENTRY ArbitrationList)
 
 /*++
 
@@ -998,21 +947,23 @@ Return Value:
 
     ARB_PRINT(3, ("IoSortArbiterList(%p)\n", ArbitrationList));
 
-    while (!sorted) {
+    while (!sorted)
+    {
 
         sorted = TRUE;
 
-        for (current=(PARBITER_LIST_ENTRY) ArbitrationList->Flink,
-               next=(PARBITER_LIST_ENTRY) current->ListEntry.Flink;
+        for (current = (PARBITER_LIST_ENTRY)ArbitrationList->Flink,
+            next = (PARBITER_LIST_ENTRY)current->ListEntry.Flink;
 
-            (PLIST_ENTRY) current != ArbitrationList
-               && (PLIST_ENTRY) next != ArbitrationList;
+             (PLIST_ENTRY)current != ArbitrationList && (PLIST_ENTRY)next != ArbitrationList;
 
-            current = (PARBITER_LIST_ENTRY) current->ListEntry.Flink,
-                next = (PARBITER_LIST_ENTRY)current->ListEntry.Flink) {
+             current = (PARBITER_LIST_ENTRY)current->ListEntry.Flink,
+            next = (PARBITER_LIST_ENTRY)current->ListEntry.Flink)
+        {
 
 
-            if (current->WorkSpace > next->WorkSpace) {
+            if (current->WorkSpace > next->WorkSpace)
+            {
 
                 PLIST_ENTRY before = current->ListEntry.Blink;
                 PLIST_ENTRY after = next->ListEntry.Flink;
@@ -1021,11 +972,11 @@ Return Value:
                 // Swap the locations of current and next
                 //
 
-                before->Flink = (PLIST_ENTRY) next;
-                after->Blink = (PLIST_ENTRY) current;
+                before->Flink = (PLIST_ENTRY)next;
+                after->Blink = (PLIST_ENTRY)current;
                 current->ListEntry.Flink = after;
-                current->ListEntry.Blink = (PLIST_ENTRY) next;
-                next->ListEntry.Flink = (PLIST_ENTRY) current;
+                current->ListEntry.Blink = (PLIST_ENTRY)next;
+                next->ListEntry.Flink = (PLIST_ENTRY)current;
                 next->ListEntry.Blink = before;
 
                 sorted = FALSE;
@@ -1037,9 +988,7 @@ Return Value:
 }
 
 NTSTATUS
-ArbCommitAllocation(
-    PARBITER_INSTANCE Arbiter
-    )
+ArbCommitAllocation(PARBITER_INSTANCE Arbiter)
 
 /*++
 
@@ -1081,9 +1030,7 @@ Return Value:
 }
 
 NTSTATUS
-ArbRollbackAllocation(
-    IN PARBITER_INSTANCE Arbiter
-    )
+ArbRollbackAllocation(IN PARBITER_INSTANCE Arbiter)
 
 /*++
 
@@ -1116,10 +1063,7 @@ Return Value:
 }
 
 NTSTATUS
-ArbRetestAllocation(
-    IN PARBITER_INSTANCE Arbiter,
-    IN OUT PLIST_ENTRY ArbitrationList
-    )
+ArbRetestAllocation(IN PARBITER_INSTANCE Arbiter, IN OUT PLIST_ENTRY ArbitrationList)
 
 /*++
 
@@ -1171,7 +1115,8 @@ Return Value:
     ARB_PRINT(2, ("Retest: Copy current allocation\n"));
     status = RtlCopyRangeList(Arbiter->PossibleAllocation, Arbiter->Allocation);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1180,18 +1125,15 @@ Return Value:
     // are arbitrating for
     //
 
-    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current) {
+    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current)
+    {
 
-        ARB_PRINT(3,
-                    ("Retest: Delete 0x%08x's resources\n",
-                    current->PhysicalDeviceObject
-                    ));
+        ARB_PRINT(3, ("Retest: Delete 0x%08x's resources\n", current->PhysicalDeviceObject));
 
-        status = RtlDeleteOwnersRanges(Arbiter->PossibleAllocation,
-                                       (PVOID) current->PhysicalDeviceObject
-                                       );
+        status = RtlDeleteOwnersRanges(Arbiter->PossibleAllocation, (PVOID)current->PhysicalDeviceObject);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto cleanup;
         }
     }
@@ -1201,7 +1143,8 @@ Return Value:
     // update the range lists accordingly
     //
 
-    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current) {
+    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current)
+    {
 
         ASSERT(current->Assignment && current->SelectedAlternative);
 
@@ -1212,10 +1155,7 @@ Return Value:
         // Initialize the alternative
         //
 
-        status = ArbpBuildAlternative(Arbiter,
-                                    current->SelectedAlternative,
-                                    &alternative
-                                    );
+        status = ArbpBuildAlternative(Arbiter, current->SelectedAlternative, &alternative);
 
         ASSERT(NT_SUCCESS(status));
 
@@ -1223,10 +1163,7 @@ Return Value:
         // Update it with our allocation
         //
 
-        status = Arbiter->UnpackResource(current->Assignment,
-                                         &state.Start,
-                                         &length
-                                         );
+        status = Arbiter->UnpackResource(current->Assignment, &state.Start, &length);
 
         ASSERT(NT_SUCCESS(status));
 
@@ -1236,9 +1173,10 @@ Return Value:
         // Do any preprocessing that is required
         //
 
-        status = Arbiter->PreprocessEntry(Arbiter,&state);
+        status = Arbiter->PreprocessEntry(Arbiter, &state);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto cleanup;
         }
 
@@ -1247,10 +1185,10 @@ Return Value:
         // range - it will fail!
         //
 
-        if (length != 0) {
+        if (length != 0)
+        {
 
             Arbiter->AddAllocation(Arbiter, &state);
-
         }
     }
 
@@ -1263,10 +1201,7 @@ cleanup:
 }
 
 NTSTATUS
-ArbBootAllocation(
-    IN PARBITER_INSTANCE Arbiter,
-    IN OUT PLIST_ENTRY ArbitrationList
-    )
+ArbBootAllocation(IN PARBITER_INSTANCE Arbiter, IN OUT PLIST_ENTRY ArbitrationList)
 /*++
 
 Routine Description:
@@ -1317,7 +1252,8 @@ Return Value:
 
     status = RtlCopyRangeList(Arbiter->PossibleAllocation, Arbiter->Allocation);
 
-    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current) {
+    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current)
+    {
 
         ASSERT(current->AlternativeCount == 1);
         ASSERT(current->PhysicalDeviceObject);
@@ -1333,15 +1269,10 @@ Return Value:
         // Initialize the alternative
         //
 
-        status = ArbpBuildAlternative(Arbiter,
-                                    &current->Alternatives[0],
-                                    &alternative
-                                    );
+        status = ArbpBuildAlternative(Arbiter, &current->Alternatives[0], &alternative);
 
         ASSERT(NT_SUCCESS(status));
-        ASSERT(alternative.Flags &
-               (ARBITER_ALTERNATIVE_FLAG_FIXED | ARBITER_ALTERNATIVE_FLAG_INVALID)
-               );
+        ASSERT(alternative.Flags & (ARBITER_ALTERNATIVE_FLAG_FIXED | ARBITER_ALTERNATIVE_FLAG_INVALID));
 
         state.Start = alternative.Minimum;
         state.End = alternative.Maximum;
@@ -1357,36 +1288,23 @@ Return Value:
         // Validate the requirement
         //
 
-        if (alternative.Length == 0
-        || alternative.Alignment == 0
-        || state.End < state.Start
-        || state.Start % alternative.Alignment != 0
-        || LENGTH_OF(state.Start, state.End) != alternative.Length) {
+        if (alternative.Length == 0 || alternative.Alignment == 0 || state.End < state.Start ||
+            state.Start % alternative.Alignment != 0 || LENGTH_OF(state.Start, state.End) != alternative.Length)
+        {
 
-            ARB_PRINT(1,
-                        ("Skipping invalid boot allocation 0x%I64x-0x%I64x L 0x%x A 0x%x for 0x%08x\n",
-                         state.Start,
-                         state.End,
-                         alternative.Length,
-                         alternative.Alignment,
-                         current->PhysicalDeviceObject
-                         ));
+            ARB_PRINT(1, ("Skipping invalid boot allocation 0x%I64x-0x%I64x L 0x%x A 0x%x for 0x%08x\n", state.Start,
+                          state.End, alternative.Length, alternative.Alignment, current->PhysicalDeviceObject));
 
             continue;
         }
 
 #if PLUG_FEST_HACKS
 
-        if (alternative.Flags & ARBITER_ALTERNATIVE_FLAG_SHARED) {
+        if (alternative.Flags & ARBITER_ALTERNATIVE_FLAG_SHARED)
+        {
 
-            ARB_PRINT(1,
-                         ("Skipping shared boot allocation 0x%I64x-0x%I64x L 0x%x A 0x%x for 0x%08x\n",
-                          state.Start,
-                          state.End,
-                          alternative.Length,
-                          alternative.Alignment,
-                          current->PhysicalDeviceObject
-                          ));
+            ARB_PRINT(1, ("Skipping shared boot allocation 0x%I64x-0x%I64x L 0x%x A 0x%x for 0x%08x\n", state.Start,
+                          state.End, alternative.Length, alternative.Alignment, current->PhysicalDeviceObject));
 
             continue;
         }
@@ -1397,14 +1315,15 @@ Return Value:
         // Do any preprocessing that is required
         //
 
-        status = Arbiter->PreprocessEntry(Arbiter,&state);
+        status = Arbiter->PreprocessEntry(Arbiter, &state);
 
-        if (!NT_SUCCESS(status)) {
-            goto cleanup;;
+        if (!NT_SUCCESS(status))
+        {
+            goto cleanup;
+            ;
         }
 
         Arbiter->AddAllocation(Arbiter, &state);
-
     }
 
     //
@@ -1422,16 +1341,11 @@ cleanup:
 
     RtlFreeRangeList(Arbiter->PossibleAllocation);
     return status;
-
 }
 
 
 NTSTATUS
-ArbArbiterHandler(
-    IN PVOID Context,
-    IN ARBITER_ACTION Action,
-    IN OUT PARBITER_PARAMETERS Params
-    )
+ArbArbiterHandler(IN PVOID Context, IN ARBITER_ACTION Action, IN OUT PARBITER_PARAMETERS Params)
 
 /*++
 
@@ -1480,24 +1394,20 @@ Note:
     // Announce ourselves
     //
 
-    ARB_PRINT(2,
-                ("%s %S\n",
-                ArbpActionStrings[Action],
-                arbiter->Name
-                ));
+    ARB_PRINT(2, ("%s %S\n", ArbpActionStrings[Action], arbiter->Name));
 
     //
     // Check the transaction flag
     //
 
-    if (Action == ArbiterActionTestAllocation
-    ||  Action == ArbiterActionRetestAllocation
-    ||  Action == ArbiterActionBootAllocation) {
+    if (Action == ArbiterActionTestAllocation || Action == ArbiterActionRetestAllocation ||
+        Action == ArbiterActionBootAllocation)
+    {
 
         ASSERT(!arbiter->TransactionInProgress);
-
-    } else if (Action == ArbiterActionCommitAllocation
-           ||  Action == ArbiterActionRollbackAllocation) {
+    }
+    else if (Action == ArbiterActionCommitAllocation || Action == ArbiterActionRollbackAllocation)
+    {
 
         ASSERT(arbiter->TransactionInProgress);
     }
@@ -1512,7 +1422,8 @@ replay:
     // Do the appropriate thing
     //
 
-    switch (Action) {
+    switch (Action)
+    {
 
     case ArbiterActionTestAllocation:
 
@@ -1524,10 +1435,7 @@ replay:
         ASSERT(Params->Parameters.TestAllocation.AllocateFromCount == 0);
         ASSERT(Params->Parameters.TestAllocation.AllocateFrom == NULL);
 
-        status = arbiter->TestAllocation(
-                     arbiter,
-                     Params->Parameters.TestAllocation.ArbitrationList
-                     );
+        status = arbiter->TestAllocation(arbiter, Params->Parameters.TestAllocation.ArbitrationList);
         break;
 
     case ArbiterActionRetestAllocation:
@@ -1535,10 +1443,7 @@ replay:
         ASSERT(Params->Parameters.TestAllocation.AllocateFromCount == 0);
         ASSERT(Params->Parameters.TestAllocation.AllocateFrom == NULL);
 
-        status = arbiter->RetestAllocation(
-                     arbiter,
-                     Params->Parameters.TestAllocation.ArbitrationList
-                     );
+        status = arbiter->RetestAllocation(arbiter, Params->Parameters.TestAllocation.ArbitrationList);
         break;
 
     case ArbiterActionCommitAllocation:
@@ -1555,21 +1460,15 @@ replay:
 
     case ArbiterActionBootAllocation:
 
-        status = arbiter->BootAllocation(
-                    arbiter,
-                    Params->Parameters.BootAllocation.ArbitrationList
-                    );
+        status = arbiter->BootAllocation(arbiter, Params->Parameters.BootAllocation.ArbitrationList);
         break;
 
     case ArbiterActionQueryConflict:
 
-        status = arbiter->QueryConflict(
-                    arbiter,
-                    Params->Parameters.QueryConflict.PhysicalDeviceObject,
-                    Params->Parameters.QueryConflict.ConflictingResource,
-                    Params->Parameters.QueryConflict.ConflictCount,
-                    Params->Parameters.QueryConflict.Conflicts
-                    );
+        status = arbiter->QueryConflict(arbiter, Params->Parameters.QueryConflict.PhysicalDeviceObject,
+                                        Params->Parameters.QueryConflict.ConflictingResource,
+                                        Params->Parameters.QueryConflict.ConflictCount,
+                                        Params->Parameters.QueryConflict.Conflicts);
         break;
 
     case ArbiterActionQueryArbitrate:
@@ -1591,35 +1490,34 @@ replay:
     // Check if we failed and want to stop or replay on errors
     //
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ARB_PRINT(1,
-                 ("*** %s for %S FAILED status = %08x\n",
-                  ArbpActionStrings[Action],
-                  arbiter->Name,
-                  status
-                 ));
+        ARB_PRINT(1, ("*** %s for %S FAILED status = %08x\n", ArbpActionStrings[Action], arbiter->Name, status));
 
-        if (ArbStopOnError) {
+        if (ArbStopOnError)
+        {
             DbgBreakPoint();
         }
 
-        if (ArbReplayOnError) {
+        if (ArbReplayOnError)
+        {
             goto replay;
         }
     }
 
 #endif // ARB_DBG
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if (Action == ArbiterActionTestAllocation
-        ||  Action == ArbiterActionRetestAllocation) {
+        if (Action == ArbiterActionTestAllocation || Action == ArbiterActionRetestAllocation)
+        {
 
             arbiter->TransactionInProgress = TRUE;
-
-        } else if (Action == ArbiterActionCommitAllocation
-               ||  Action == ArbiterActionRollbackAllocation) {
+        }
+        else if (Action == ArbiterActionCommitAllocation || Action == ArbiterActionRollbackAllocation)
+        {
 
             arbiter->TransactionInProgress = FALSE;
         }
@@ -1628,16 +1526,11 @@ replay:
     ArbReleaseArbiterLock(arbiter);
 
     return status;
-
 }
 
 NTSTATUS
-ArbBuildAssignmentOrdering(
-    IN OUT PARBITER_INSTANCE Arbiter,
-    IN PWSTR AllocationOrderName,
-    IN PWSTR ReservedResourcesName,
-    IN PARBITER_TRANSLATE_ALLOCATION_ORDER Translate OPTIONAL
-    )
+ArbBuildAssignmentOrdering(IN OUT PARBITER_INSTANCE Arbiter, IN PWSTR AllocationOrderName,
+                           IN PWSTR ReservedResourcesName, IN PARBITER_TRANSLATE_ALLOCATION_ORDER Translate OPTIONAL)
 
 /*++
 
@@ -1698,13 +1591,15 @@ Return Value:
 
     status = ArbInitializeOrderingList(&Arbiter->OrderingList);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
     status = ArbInitializeOrderingList(&Arbiter->ReservedList);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1713,20 +1608,13 @@ Return Value:
     //
 
     ArbpWstrToUnicodeString(&unicodeString, PATH_ARBITERS);
-    InitializeObjectAttributes(&attributes,
-                               &unicodeString,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               (PSECURITY_DESCRIPTOR) NULL
-                               );
+    InitializeObjectAttributes(&attributes, &unicodeString, OBJ_CASE_INSENSITIVE, NULL, (PSECURITY_DESCRIPTOR)NULL);
 
 
-    status = ZwOpenKey(&arbitersHandle,
-                       KEY_READ,
-                       &attributes
-                       );
+    status = ZwOpenKey(&arbitersHandle, KEY_READ, &attributes);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1735,20 +1623,14 @@ Return Value:
     //
 
     ArbpWstrToUnicodeString(&unicodeString, KEY_ALLOCATIONORDER);
-    InitializeObjectAttributes(&attributes,
-                               &unicodeString,
-                               OBJ_CASE_INSENSITIVE,
-                               arbitersHandle,
-                               (PSECURITY_DESCRIPTOR) NULL
-                               );
+    InitializeObjectAttributes(&attributes, &unicodeString, OBJ_CASE_INSENSITIVE, arbitersHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
 
-    status = ZwOpenKey(&tempHandle,
-                       KEY_READ,
-                       &attributes
-                       );
+    status = ZwOpenKey(&tempHandle, KEY_READ, &attributes);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1756,12 +1638,10 @@ Return Value:
     // Extract the value the user asked for
     //
 
-    status = ArbpGetRegistryValue(tempHandle,
-                                  AllocationOrderName,
-                                  &info
-                                  );
+    status = ArbpGetRegistryValue(tempHandle, AllocationOrderName, &info);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1770,32 +1650,31 @@ Return Value:
     // short cut to a value of that name - open it.
     //
 
-    if (info->Type == REG_SZ) {
+    if (info->Type == REG_SZ)
+    {
 
         PKEY_VALUE_FULL_INFORMATION tempInfo;
-        PWSTR shortcut = (PWSTR) FULL_INFO_DATA(info);
+        PWSTR shortcut = (PWSTR)FULL_INFO_DATA(info);
 
         //
         // Check its NUL terminated
-        // 
-        
-        if (shortcut[(info->DataLength/sizeof(WCHAR))-1] != UNICODE_NULL) {
+        //
+
+        if (shortcut[(info->DataLength / sizeof(WCHAR)) - 1] != UNICODE_NULL)
+        {
             status = STATUS_INVALID_PARAMETER;
             goto cleanup;
         }
-                
-        status = ArbpGetRegistryValue(tempHandle,
-                                      shortcut,
-                                      &tempInfo
-                                      );
 
-        if (!NT_SUCCESS(status)) {
+        status = ArbpGetRegistryValue(tempHandle, shortcut, &tempInfo);
+
+        if (!NT_SUCCESS(status))
+        {
             goto cleanup;
         }
 
         ExFreePool(info);
         info = tempInfo;
-
     }
 
     ZwClose(tempHandle);
@@ -1805,7 +1684,8 @@ Return Value:
     // REG_RESOURCE_REQUIREMENTS_LIST
     //
 
-    if (info->Type != REG_RESOURCE_REQUIREMENTS_LIST) {
+    if (info->Type != REG_RESOURCE_REQUIREMENTS_LIST)
+    {
         status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
@@ -1814,55 +1694,54 @@ Return Value:
     // Extract the resource list
     //
 
-    ASSERT(((PIO_RESOURCE_REQUIREMENTS_LIST) FULL_INFO_DATA(info))
-             ->AlternativeLists == 1);
+    ASSERT(((PIO_RESOURCE_REQUIREMENTS_LIST)FULL_INFO_DATA(info))->AlternativeLists == 1);
 
-    resourceList = (PIO_RESOURCE_LIST) &((PIO_RESOURCE_REQUIREMENTS_LIST)
-                       FULL_INFO_DATA(info))->List[0];
+    resourceList = (PIO_RESOURCE_LIST) & ((PIO_RESOURCE_REQUIREMENTS_LIST)FULL_INFO_DATA(info))->List[0];
 
     //
     // Convert the resource list into an ordering list
     //
 
-    FOR_ALL_IN_ARRAY(resourceList->Descriptors,
-                     resourceList->Count,
-                     current) {
+    FOR_ALL_IN_ARRAY(resourceList->Descriptors, resourceList->Count, current)
+    {
 
         //
         // Perform any translation that is necessary on the resources
         //
 
-        if (ARGUMENT_PRESENT(Translate)) {
+        if (ARGUMENT_PRESENT(Translate))
+        {
 
             status = (Translate)(&translated, current);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto cleanup;
             }
-        } else {
+        }
+        else
+        {
             translated = *current;
         }
 
-        if (translated.Type == Arbiter->ResourceType) {
+        if (translated.Type == Arbiter->ResourceType)
+        {
 
-            status = Arbiter->UnpackRequirement(&translated,
-                                                &start,
-                                                &end,
-                                                &dummy,  //length
-                                                &dummy   //alignment
-                                               );
+            status = Arbiter->UnpackRequirement(&translated, &start, &end,
+                                                &dummy, //length
+                                                &dummy  //alignment
+            );
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto cleanup;
             }
 
-            status = ArbAddOrdering(&Arbiter->OrderingList,
-                                    start,
-                                    end
-                                    );
+            status = ArbAddOrdering(&Arbiter->OrderingList, start, end);
 
-            if (!NT_SUCCESS(status)) {
-                    goto cleanup;
+            if (!NT_SUCCESS(status))
+            {
+                goto cleanup;
             }
         }
     }
@@ -1879,24 +1758,14 @@ Return Value:
     //
 
     ArbpWstrToUnicodeString(&unicodeString, KEY_RESERVEDRESOURCES);
-    InitializeObjectAttributes(&attributes,
-                               &unicodeString,
-                               OBJ_CASE_INSENSITIVE,
-                               arbitersHandle,
-                               (PSECURITY_DESCRIPTOR) NULL
-                               );
+    InitializeObjectAttributes(&attributes, &unicodeString, OBJ_CASE_INSENSITIVE, arbitersHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
 
-    status = ZwCreateKey(&tempHandle,
-                         KEY_READ,
-                         &attributes,
-                         0,
-                         (PUNICODE_STRING) NULL,
-                         REG_OPTION_NON_VOLATILE,
-                         NULL
-                         );
+    status = ZwCreateKey(&tempHandle, KEY_READ, &attributes, 0, (PUNICODE_STRING)NULL, REG_OPTION_NON_VOLATILE, NULL);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1904,12 +1773,10 @@ Return Value:
     // Extract the arbiter's reserved resources
     //
 
-    status = ArbpGetRegistryValue(tempHandle,
-                                  ReservedResourcesName,
-                                  &info
-                                  );
+    status = ArbpGetRegistryValue(tempHandle, ReservedResourcesName, &info);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -1918,77 +1785,78 @@ Return Value:
     // short cut to a value of that name - open it.
     //
 
-    if (info->Type == REG_SZ) {
+    if (info->Type == REG_SZ)
+    {
 
         PKEY_VALUE_FULL_INFORMATION tempInfo;
-        PWSTR shortcut = (PWSTR) FULL_INFO_DATA(info);
+        PWSTR shortcut = (PWSTR)FULL_INFO_DATA(info);
 
         //
         // Check its NUL terminated
-        // 
-        
-        if (shortcut[(info->DataLength/sizeof(WCHAR))-1] != UNICODE_NULL) {
+        //
+
+        if (shortcut[(info->DataLength / sizeof(WCHAR)) - 1] != UNICODE_NULL)
+        {
             status = STATUS_INVALID_PARAMETER;
             goto cleanup;
         }
-                
-        status = ArbpGetRegistryValue(tempHandle,
-                                      shortcut,
-                                      &tempInfo
-                                      );
 
-        if (!NT_SUCCESS(status)) {
+        status = ArbpGetRegistryValue(tempHandle, shortcut, &tempInfo);
+
+        if (!NT_SUCCESS(status))
+        {
             goto cleanup;
         }
 
         ExFreePool(info);
         info = tempInfo;
-
     }
 
     ZwClose(tempHandle);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        ASSERT(((PIO_RESOURCE_REQUIREMENTS_LIST) FULL_INFO_DATA(info))
-             ->AlternativeLists == 1);
+        ASSERT(((PIO_RESOURCE_REQUIREMENTS_LIST)FULL_INFO_DATA(info))->AlternativeLists == 1);
 
-        resourceList = (PIO_RESOURCE_LIST) &((PIO_RESOURCE_REQUIREMENTS_LIST)
-                       FULL_INFO_DATA(info))->List[0];
+        resourceList = (PIO_RESOURCE_LIST) & ((PIO_RESOURCE_REQUIREMENTS_LIST)FULL_INFO_DATA(info))->List[0];
 
         //
         // Apply the reserved ranges to the ordering
         //
 
-        FOR_ALL_IN_ARRAY(resourceList->Descriptors,
-                         resourceList->Count,
-                         current) {
+        FOR_ALL_IN_ARRAY(resourceList->Descriptors, resourceList->Count, current)
+        {
 
             //
             // Perform any translation that is necessary on the resources
             //
 
-            if (ARGUMENT_PRESENT(Translate)) {
+            if (ARGUMENT_PRESENT(Translate))
+            {
 
                 status = (Translate)(&translated, current);
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     goto cleanup;
                 }
-            } else {
+            }
+            else
+            {
                 translated = *current;
             }
 
-            if (translated.Type == Arbiter->ResourceType) {
+            if (translated.Type == Arbiter->ResourceType)
+            {
 
-                status = Arbiter->UnpackRequirement(&translated,
-                                                    &start,
-                                                    &end,
-                                                    &dummy,  //length
-                                                    &dummy   //alignment
-                                                   );
+                status = Arbiter->UnpackRequirement(&translated, &start, &end,
+                                                    &dummy, //length
+                                                    &dummy  //alignment
+                );
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     goto cleanup;
                 }
 
@@ -1998,7 +1866,8 @@ Return Value:
 
                 status = ArbAddOrdering(&Arbiter->ReservedList, start, end);
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     goto cleanup;
                 }
 
@@ -2008,10 +1877,10 @@ Return Value:
 
                 status = ArbPruneOrdering(&Arbiter->OrderingList, start, end);
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     goto cleanup;
                 }
-
             }
         }
 
@@ -2029,28 +1898,17 @@ Return Value:
     {
         PARBITER_ORDERING current;
 
-        FOR_ALL_IN_ARRAY(Arbiter->OrderingList.Orderings,
-                         Arbiter->OrderingList.Count,
-                         current) {
-            ARB_PRINT(2,
-                        ("Ordering: 0x%I64x-0x%I64x\n",
-                         current->Start,
-                         current->End
-                        ));
+        FOR_ALL_IN_ARRAY(Arbiter->OrderingList.Orderings, Arbiter->OrderingList.Count, current)
+        {
+            ARB_PRINT(2, ("Ordering: 0x%I64x-0x%I64x\n", current->Start, current->End));
         }
 
         ARB_PRINT(2, ("\n"));
 
-        FOR_ALL_IN_ARRAY(Arbiter->ReservedList.Orderings,
-                     Arbiter->ReservedList.Count,
-                     current) {
-            ARB_PRINT(2,
-                        ("Reserved: 0x%I64x-0x%I64x\n",
-                         current->Start,
-                         current->End
-                        ));
+        FOR_ALL_IN_ARRAY(Arbiter->ReservedList.Orderings, Arbiter->ReservedList.Count, current)
+        {
+            ARB_PRINT(2, ("Reserved: 0x%I64x-0x%I64x\n", current->Start, current->End));
         }
-
     }
 
 #endif
@@ -2061,25 +1919,30 @@ Return Value:
 
 cleanup:
 
-    if (arbitersHandle) {
+    if (arbitersHandle)
+    {
         ZwClose(arbitersHandle);
     }
 
-    if (tempHandle) {
+    if (tempHandle)
+    {
         ZwClose(tempHandle);
     }
 
-    if (info) {
+    if (info)
+    {
         ExFreePool(info);
     }
 
-    if (Arbiter->OrderingList.Orderings) {
+    if (Arbiter->OrderingList.Orderings)
+    {
         ExFreePool(Arbiter->OrderingList.Orderings);
         Arbiter->OrderingList.Count = 0;
         Arbiter->OrderingList.Maximum = 0;
     }
 
-    if (Arbiter->ReservedList.Orderings) {
+    if (Arbiter->ReservedList.Orderings)
+    {
         ExFreePool(Arbiter->ReservedList.Orderings);
         Arbiter->ReservedList.Count = 0;
         Arbiter->ReservedList.Maximum = 0;
@@ -2091,10 +1954,7 @@ cleanup:
 }
 
 BOOLEAN
-ArbFindSuitableRange(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALLOCATION_STATE State
-    )
+ArbFindSuitableRange(PARBITER_INSTANCE Arbiter, PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -2131,7 +1991,8 @@ Return Value:
     // Catch the case where we backtrack and advance past the maximum
     //
 
-    if (State->CurrentMinimum > State->CurrentMaximum) {
+    if (State->CurrentMinimum > State->CurrentMaximum)
+    {
         return FALSE;
     }
 
@@ -2140,7 +2001,8 @@ Return Value:
     // value and remember that backtracking this is a recipe for infinite loops
     //
 
-    if (State->CurrentAlternative->Length == 0) {
+    if (State->CurrentAlternative->Length == 0)
+    {
         State->End = State->Start = State->CurrentMinimum;
         return TRUE;
     }
@@ -2154,8 +2016,9 @@ Return Value:
     // boot configs to be available.
     //
 
-    if (State->Entry->RequestSource == ArbiterRequestLegacyReported
-        || State->Entry->RequestSource == ArbiterRequestLegacyAssigned) {
+    if (State->Entry->RequestSource == ArbiterRequestLegacyReported ||
+        State->Entry->RequestSource == ArbiterRequestLegacyAssigned)
+    {
 
         State->RangeAvailableAttributes |= ARBITER_RANGE_BOOT_ALLOCATED;
     }
@@ -2164,7 +2027,8 @@ Return Value:
     // Check if null conflicts are OK...
     //
 
-    if (State->Flags & ARBITER_STATE_FLAG_NULL_CONFLICT_OK) {
+    if (State->Flags & ARBITER_STATE_FLAG_NULL_CONFLICT_OK)
+    {
         findRangeFlags |= RTL_RANGE_LIST_NULL_CONFLICT_OK;
     }
 
@@ -2172,7 +2036,8 @@ Return Value:
     // ...or we are shareable...
     //
 
-    if (State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED) {
+    if (State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED)
+    {
         findRangeFlags |= RTL_RANGE_LIST_SHARED_OK;
     }
 
@@ -2180,21 +2045,14 @@ Return Value:
     // Select the first free alternative from the current alternative
     //
 
-    status = RtlFindRange(
-                 Arbiter->PossibleAllocation,
-                 State->CurrentMinimum,
-                 State->CurrentMaximum,
-                 State->CurrentAlternative->Length,
-                 State->CurrentAlternative->Alignment,
-                 findRangeFlags,
-                 State->RangeAvailableAttributes,
-                 Arbiter->ConflictCallbackContext,
-                 Arbiter->ConflictCallback,
-                 &State->Start
-                 );
+    status = RtlFindRange(Arbiter->PossibleAllocation, State->CurrentMinimum, State->CurrentMaximum,
+                          State->CurrentAlternative->Length, State->CurrentAlternative->Alignment, findRangeFlags,
+                          State->RangeAvailableAttributes, Arbiter->ConflictCallbackContext, Arbiter->ConflictCallback,
+                          &State->Start);
 
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // We found a suitable range
@@ -2202,10 +2060,12 @@ Return Value:
         State->End = State->Start + State->CurrentAlternative->Length - 1;
 
         return TRUE;
+    }
+    else
+    {
 
-    } else {
-
-        if (ArbShareDriverExclusive(Arbiter, State) == FALSE) {
+        if (ArbShareDriverExclusive(Arbiter, State) == FALSE)
+        {
 
             //
             // We couldn't find any range so check if we will allow this conflict
@@ -2218,11 +2078,7 @@ Return Value:
     }
 }
 
-VOID
-ArbAddAllocation(
-     IN PARBITER_INSTANCE Arbiter,
-     IN PARBITER_ALLOCATION_STATE State
-     )
+VOID ArbAddAllocation(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -2251,27 +2107,16 @@ Return Value:
     PAGED_CODE();
 
     status = RtlAddRange(
-                 Arbiter->PossibleAllocation,
-                 State->Start,
-                 State->End,
-                 State->RangeAttributes,
-                 RTL_RANGE_LIST_ADD_IF_CONFLICT +
-                    (State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED
-                        ? RTL_RANGE_LIST_ADD_SHARED : 0),
-                 NULL,
-                 State->Entry->PhysicalDeviceObject
-                 );
+        Arbiter->PossibleAllocation, State->Start, State->End, State->RangeAttributes,
+        RTL_RANGE_LIST_ADD_IF_CONFLICT +
+            (State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ? RTL_RANGE_LIST_ADD_SHARED : 0),
+        NULL, State->Entry->PhysicalDeviceObject);
 
     ASSERT(NT_SUCCESS(status));
-
 }
 
 
-VOID
-ArbBacktrackAllocation(
-     IN PARBITER_INSTANCE Arbiter,
-     IN PARBITER_ALLOCATION_STATE State
-     )
+VOID ArbBacktrackAllocation(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -2305,30 +2150,17 @@ Return Value:
     // backtrack
     //
 
-    status = RtlDeleteRange(
-                 Arbiter->PossibleAllocation,
-                 State->Start,
-                 State->End,
-                 State->Entry->PhysicalDeviceObject
-                 );
+    status = RtlDeleteRange(Arbiter->PossibleAllocation, State->Start, State->End, State->Entry->PhysicalDeviceObject);
 
     ASSERT(NT_SUCCESS(status));
 
-    ARB_PRINT(2,
-                ("\t\tBacktracking on 0x%I64x-0x%I64x for %p\n",
-                State->Start,
-                State->End,
-                State->Entry->PhysicalDeviceObject
-                ));
-
+    ARB_PRINT(2, ("\t\tBacktracking on 0x%I64x-0x%I64x for %p\n", State->Start, State->End,
+                  State->Entry->PhysicalDeviceObject));
 }
 
 
 NTSTATUS
-ArbPreprocessEntry(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    )
+ArbPreprocessEntry(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 /*++
 
 Routine Description:
@@ -2355,10 +2187,7 @@ Return Value:
 }
 
 NTSTATUS
-ArbAllocateEntry(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    )
+ArbAllocateEntry(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 /*++
 
 Routine Description:
@@ -2381,7 +2210,6 @@ Return Value:
 --*/
 
 
-
 {
 
     NTSTATUS status;
@@ -2397,15 +2225,17 @@ Return Value:
 
 tryAllocation:
 
-    while(currentState >= State && currentState->Entry != NULL) {
+    while (currentState >= State && currentState->Entry != NULL)
+    {
 
         //
         // Do any preprocessing that is required
         //
 
-        status = Arbiter->PreprocessEntry(Arbiter,currentState);
+        status = Arbiter->PreprocessEntry(Arbiter, currentState);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
 
@@ -2413,7 +2243,8 @@ tryAllocation:
         // If we need to backtrack do so!
         //
 
-        if (backtracking) {
+        if (backtracking)
+        {
 
             ULONGLONG possibleCurrentMinimum;
 
@@ -2435,7 +2266,8 @@ tryAllocation:
             // backtrack so we would get stuck in an inifinite loop...
             //
 
-            if (currentState->CurrentAlternative->Length == 0) {
+            if (currentState->CurrentAlternative->Length == 0)
+            {
                 goto failAllocation;
             }
 
@@ -2453,15 +2285,17 @@ tryAllocation:
             possibleCurrentMinimum = currentState->Start - 1;
 
             if (possibleCurrentMinimum > currentState->CurrentMinimum // wrapped
-            ||  possibleCurrentMinimum < currentState->CurrentAlternative->Minimum) {
+                || possibleCurrentMinimum < currentState->CurrentAlternative->Minimum)
+            {
 
                 //
                 // We have run out space in this alternative move on to the next
                 //
 
                 goto continueWithNextAllocationRange;
-
-            } else {
+            }
+            else
+            {
 
                 currentState->CurrentMaximum = possibleCurrentMinimum;
 
@@ -2477,23 +2311,21 @@ tryAllocation:
         // Try to allocate for this entry
         //
 
-continueWithNextAllocationRange:
+    continueWithNextAllocationRange:
 
-        while (Arbiter->GetNextAllocationRange(Arbiter, currentState)) {
+        while (Arbiter->GetNextAllocationRange(Arbiter, currentState))
+        {
 
             ARB_INDENT(2, (ULONG)(currentState - State));
 
-            ARB_PRINT(2,
-                        ("Testing 0x%I64x-0x%I64x %s\n",
-                        currentState->CurrentMinimum,
-                        currentState->CurrentMaximum,
-                        currentState->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ?
-                            "shared" : "non-shared"
-                        ));
+            ARB_PRINT(2, ("Testing 0x%I64x-0x%I64x %s\n", currentState->CurrentMinimum, currentState->CurrentMaximum,
+                          currentState->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ? "shared"
+                                                                                                    : "non-shared"));
 
-continueWithNextSuitableRange:
+        continueWithNextSuitableRange:
 
-            while (Arbiter->FindSuitableRange(Arbiter, currentState)) {
+            while (Arbiter->FindSuitableRange(Arbiter, currentState))
+            {
 
                 //
                 // We found a possible solution
@@ -2501,33 +2333,29 @@ continueWithNextSuitableRange:
 
                 ARB_INDENT(2, (ULONG)(currentState - State));
 
-                if (currentState->CurrentAlternative->Length != 0) {
+                if (currentState->CurrentAlternative->Length != 0)
+                {
 
-                    ARB_PRINT(2,
-                        ("Possible solution for %p = 0x%I64x-0x%I64x, %s\n",
-                        currentState->Entry->PhysicalDeviceObject,
-                        currentState->Start,
-                        currentState->End,
-                        currentState->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ?
-                            "shared" : "non-shared"
-                        ));
+                    ARB_PRINT(2, ("Possible solution for %p = 0x%I64x-0x%I64x, %s\n",
+                                  currentState->Entry->PhysicalDeviceObject, currentState->Start, currentState->End,
+                                  currentState->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED
+                                      ? "shared"
+                                      : "non-shared"));
 
                     //
                     // Update the arbiter with the possible allocation
                     //
 
                     Arbiter->AddAllocation(Arbiter, currentState);
+                }
+                else
+                {
 
-                } else {
-
-                    ARB_PRINT(2,
-                        ("Zero length solution solution for %p = 0x%I64x-0x%I64x, %s\n",
-                        currentState->Entry->PhysicalDeviceObject,
-                        currentState->Start,
-                        currentState->End,
-                        currentState->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ?
-                            "shared" : "non-shared"
-                        ));
+                    ARB_PRINT(2, ("Zero length solution solution for %p = 0x%I64x-0x%I64x, %s\n",
+                                  currentState->Entry->PhysicalDeviceObject, currentState->Start, currentState->End,
+                                  currentState->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED
+                                      ? "shared"
+                                      : "non-shared"));
 
                     //
                     // Set the result in the arbiter appropriatley so that we
@@ -2546,13 +2374,14 @@ continueWithNextSuitableRange:
             }
         }
 
-failAllocation:
+    failAllocation:
 
         //
         // We couldn't allocate for this device
         //
 
-        if (currentState == State) {
+        if (currentState == State)
+        {
 
             //
             // We are at the top of the allocation stack to we can't backtrack -
@@ -2560,8 +2389,9 @@ failAllocation:
             //
 
             return STATUS_UNSUCCESSFUL;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Backtrack and try again
@@ -2569,10 +2399,7 @@ failAllocation:
 
             ARB_INDENT(2, (ULONG)(currentState - State));
 
-            ARB_PRINT(2,
-                ("Allocation failed for %p - backtracking\n",
-                currentState->Entry->PhysicalDeviceObject
-                ));
+            ARB_PRINT(2, ("Allocation failed for %p - backtracking\n", currentState->Entry->PhysicalDeviceObject));
 
             backtracking = TRUE;
 
@@ -2591,13 +2418,11 @@ failAllocation:
 
     currentState = State;
 
-    while (currentState->Entry != NULL) {
+    while (currentState->Entry != NULL)
+    {
 
-        status = Arbiter->PackResource(
-                    currentState->CurrentAlternative->Descriptor,
-                    currentState->Start,
-                    currentState->Entry->Assignment
-                    );
+        status = Arbiter->PackResource(currentState->CurrentAlternative->Descriptor, currentState->Start,
+                                       currentState->Entry->Assignment);
 
         ASSERT(NT_SUCCESS(status));
 
@@ -2605,27 +2430,18 @@ failAllocation:
         // Remember the alternative we chose from so we can retrieve it during retest
         //
 
-        currentState->Entry->SelectedAlternative
-            = currentState->CurrentAlternative->Descriptor;
+        currentState->Entry->SelectedAlternative = currentState->CurrentAlternative->Descriptor;
 
-        ARB_PRINT(2,
-                    ("Assigned - 0x%I64x-0x%I64x\n",
-                    currentState->Start,
-                    currentState->End
-                    ));
+        ARB_PRINT(2, ("Assigned - 0x%I64x-0x%I64x\n", currentState->Start, currentState->End));
 
         currentState++;
     }
 
     return STATUS_SUCCESS;
-
 }
 
 BOOLEAN
-ArbGetNextAllocationRange(
-    IN PARBITER_INSTANCE Arbiter,
-    IN OUT PARBITER_ALLOCATION_STATE State
-    )
+ArbGetNextAllocationRange(IN PARBITER_INSTANCE Arbiter, IN OUT PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -2654,30 +2470,31 @@ Return Value:
     PARBITER_ORDERING ordering;
 
 
-    for (;;) {
+    for (;;)
+    {
 
-        if (State->CurrentAlternative) {
+        if (State->CurrentAlternative)
+        {
 
             //
             // Update the priority of the alternative we selected last time
             //
 
             ArbpUpdatePriority(Arbiter, State->CurrentAlternative);
-
-        } else {
+        }
+        else
+        {
 
             //
             // This is the first time we are looking at this alternative or a
             // backtrack - either way we need to update all the priorities
             //
 
-            FOR_ALL_IN_ARRAY(State->Alternatives,
-                             State->AlternativeCount,
-                             current) {
+            FOR_ALL_IN_ARRAY(State->Alternatives, State->AlternativeCount, current)
+            {
 
                 current->Priority = ARBITER_PRIORITY_NULL;
                 ArbpUpdatePriority(Arbiter, current);
-
             }
         }
 
@@ -2687,11 +2504,11 @@ Return Value:
 
         lowestAlternative = State->Alternatives;
 
-        FOR_ALL_IN_ARRAY(State->Alternatives + 1,
-                         State->AlternativeCount - 1,
-                         current) {
+        FOR_ALL_IN_ARRAY(State->Alternatives + 1, State->AlternativeCount - 1, current)
+        {
 
-            if (current->Priority < lowestAlternative->Priority) {
+            if (current->Priority < lowestAlternative->Priority)
+            {
                 lowestAlternative = current;
             }
         }
@@ -2702,38 +2519,37 @@ Return Value:
         // Check if we have run out of allocation ranges
         //
 
-        if (lowestAlternative->Priority == ARBITER_PRIORITY_EXHAUSTED) {
+        if (lowestAlternative->Priority == ARBITER_PRIORITY_EXHAUSTED)
+        {
 
-            if (lowestAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_FIXED) {
+            if (lowestAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_FIXED)
+            {
 
-                ARB_PRINT(2,("Fixed alternative exhausted\n"));
+                ARB_PRINT(2, ("Fixed alternative exhausted\n"));
+            }
+            else
+            {
 
-            } else {
-
-                ARB_PRINT(2,("Alternative exhausted\n"));
+                ARB_PRINT(2, ("Alternative exhausted\n"));
             }
 
             return FALSE;
+        }
+        else
+        {
 
-        } else {
-
-            ARB_PRINT(2,(
-                "LowestAlternative: [%i] 0x%I64x-0x%I64x L=0x%08x A=0x%08x\n",
-                lowestAlternative->Priority,
-                lowestAlternative->Minimum,
-                lowestAlternative->Maximum,
-                lowestAlternative->Length,
-                lowestAlternative->Alignment
-                ));
-
+            ARB_PRINT(2, ("LowestAlternative: [%i] 0x%I64x-0x%I64x L=0x%08x A=0x%08x\n", lowestAlternative->Priority,
+                          lowestAlternative->Minimum, lowestAlternative->Maximum, lowestAlternative->Length,
+                          lowestAlternative->Alignment));
         }
 
         //
         // Check if we are now allowing reserved ranges
         //
 
-        if (lowestAlternative->Priority == ARBITER_PRIORITY_RESERVED
-        ||  lowestAlternative->Priority == ARBITER_PRIORITY_PREFERRED_RESERVED) {
+        if (lowestAlternative->Priority == ARBITER_PRIORITY_RESERVED ||
+            lowestAlternative->Priority == ARBITER_PRIORITY_PREFERRED_RESERVED)
+        {
 
             //
             // Set min and max to be the Minimum and Maximum that the descriptor
@@ -2746,31 +2562,25 @@ Return Value:
 
             ARB_INDENT(2, (ULONG)(State - Arbiter->AllocationStack));
 
-            ARB_PRINT(2,("Allowing reserved ranges\n"));
+            ARB_PRINT(2, ("Allowing reserved ranges\n"));
+        }
+        else
+        {
 
-        } else {
-
-            ASSERT(ORDERING_INDEX_FROM_PRIORITY(lowestAlternative->Priority) <
-                     Arbiter->OrderingList.Count);
+            ASSERT(ORDERING_INDEX_FROM_PRIORITY(lowestAlternative->Priority) < Arbiter->OrderingList.Count);
 
             //
             // Locate the ordering we match
             //
 
-            ordering = &Arbiter->OrderingList.Orderings
-                [ORDERING_INDEX_FROM_PRIORITY(lowestAlternative->Priority)];
+            ordering = &Arbiter->OrderingList.Orderings[ORDERING_INDEX_FROM_PRIORITY(lowestAlternative->Priority)];
 
             //
             // Make sure they overlap and are big enough - this is just paranoia
             //
 
-            ASSERT(INTERSECT(lowestAlternative->Minimum,
-                             lowestAlternative->Maximum,
-                             ordering->Start,
-                             ordering->End)
-                && INTERSECT_SIZE(lowestAlternative->Minimum,
-                                  lowestAlternative->Maximum,
-                                  ordering->Start,
+            ASSERT(INTERSECT(lowestAlternative->Minimum, lowestAlternative->Maximum, ordering->Start, ordering->End) &&
+                   INTERSECT_SIZE(lowestAlternative->Minimum, lowestAlternative->Maximum, ordering->Start,
                                   ordering->End) >= lowestAlternative->Length);
 
             //
@@ -2780,7 +2590,6 @@ Return Value:
             min = __max(lowestAlternative->Minimum, ordering->Start);
 
             max = __min(lowestAlternative->Maximum, ordering->End);
-
         }
 
         //
@@ -2788,12 +2597,14 @@ Return Value:
         // trauma later
         //
 
-        if (lowestAlternative->Length == 0) {
+        if (lowestAlternative->Length == 0)
+        {
 
             min = lowestAlternative->Minimum;
             max = lowestAlternative->Maximum;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Trim range to match alignment.
@@ -2802,7 +2613,8 @@ Return Value:
             min += lowestAlternative->Alignment - 1;
             min -= min % lowestAlternative->Alignment;
 
-            if ((lowestAlternative->Length - 1) > (max - min)) {
+            if ((lowestAlternative->Length - 1) > (max - min))
+            {
 
                 ARB_INDENT(3, (ULONG)(State - Arbiter->AllocationStack));
                 ARB_PRINT(3, ("Range cannot be aligned ... Skipping\n"));
@@ -2819,7 +2631,6 @@ Return Value:
             max -= lowestAlternative->Length - 1;
             max -= max % lowestAlternative->Alignment;
             max += lowestAlternative->Length - 1;
-
         }
 
         //
@@ -2827,15 +2638,13 @@ Return Value:
         // alternative, if so try to find another range
         //
 
-        if (min == State->CurrentMinimum
-        && max == State->CurrentMaximum
-        && State->CurrentAlternative == lowestAlternative) {
+        if (min == State->CurrentMinimum && max == State->CurrentMaximum &&
+            State->CurrentAlternative == lowestAlternative)
+        {
 
             ARB_INDENT(2, (ULONG)(State - Arbiter->AllocationStack));
 
-            ARB_PRINT(2,
-                  ("Skipping identical allocation range\n"
-            ));
+            ARB_PRINT(2, ("Skipping identical allocation range\n"));
 
             continue;
         }
@@ -2848,16 +2657,11 @@ Return Value:
         ARB_PRINT(1, ("AllocationRange: 0x%I64x-0x%I64x\n", min, max));
 
         return TRUE;
-
     }
 }
-
+
 NTSTATUS
-ArbpGetRegistryValue(
-    IN HANDLE KeyHandle,
-    IN PWSTR  ValueName,
-    OUT PKEY_VALUE_FULL_INFORMATION *Information
-    )
+ArbpGetRegistryValue(IN HANDLE KeyHandle, IN PWSTR ValueName, OUT PKEY_VALUE_FULL_INFORMATION *Information)
 
 /*++
 
@@ -2897,21 +2701,17 @@ Note:
 
     PAGED_CODE();
 
-    RtlInitUnicodeString( &unicodeString, ValueName );
+    RtlInitUnicodeString(&unicodeString, ValueName);
 
     //
     // Figure out how big the data value is so that a buffer of the
     // appropriate size can be allocated.
     //
 
-    status = ZwQueryValueKey( KeyHandle,
-                              &unicodeString,
-                              KeyValueFullInformationAlign64,
-                              (PVOID) NULL,
-                              0,
-                              &keyValueLength );
-    if (status != STATUS_BUFFER_OVERFLOW &&
-        status != STATUS_BUFFER_TOO_SMALL) {
+    status =
+        ZwQueryValueKey(KeyHandle, &unicodeString, KeyValueFullInformationAlign64, (PVOID)NULL, 0, &keyValueLength);
+    if (status != STATUS_BUFFER_OVERFLOW && status != STATUS_BUFFER_TOO_SMALL)
+    {
         return status;
     }
 
@@ -2919,12 +2719,10 @@ Note:
     // Allocate a buffer large enough to contain the entire key data value.
     //
 
-    infoBuffer = ExAllocatePoolWithTag( PagedPool,
-                                        keyValueLength,
-                                        ARBITER_MISC_TAG
-                                        );
+    infoBuffer = ExAllocatePoolWithTag(PagedPool, keyValueLength, ARBITER_MISC_TAG);
 
-    if (!infoBuffer) {
+    if (!infoBuffer)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2932,14 +2730,11 @@ Note:
     // Query the data for the key value.
     //
 
-    status = ZwQueryValueKey( KeyHandle,
-                              &unicodeString,
-                              KeyValueFullInformationAlign64,
-                              infoBuffer,
-                              keyValueLength,
-                              &keyValueLength );
-    if (!NT_SUCCESS( status )) {
-        ExFreePool( infoBuffer );
+    status = ZwQueryValueKey(KeyHandle, &unicodeString, KeyValueFullInformationAlign64, infoBuffer, keyValueLength,
+                             &keyValueLength);
+    if (!NT_SUCCESS(status))
+    {
+        ExFreePool(infoBuffer);
         return status;
     }
 
@@ -2953,12 +2748,10 @@ Note:
 }
 
 
-#define ARBITER_ORDERING_LIST_INITIAL_SIZE      16
+#define ARBITER_ORDERING_LIST_INITIAL_SIZE 16
 
 NTSTATUS
-ArbInitializeOrderingList(
-    IN OUT PARBITER_ORDERING_LIST List
-    )
+ArbInitializeOrderingList(IN OUT PARBITER_ORDERING_LIST List)
 
 /*++
 
@@ -2981,13 +2774,11 @@ Return Value:
 
     ASSERT(List);
 
-    List->Orderings = ExAllocatePoolWithTag(PagedPool,
-                                            ARBITER_ORDERING_LIST_INITIAL_SIZE *
-                                                sizeof(ARBITER_ORDERING),
-                                            ARBITER_ORDERING_LIST_TAG
-                                            );
+    List->Orderings = ExAllocatePoolWithTag(PagedPool, ARBITER_ORDERING_LIST_INITIAL_SIZE * sizeof(ARBITER_ORDERING),
+                                            ARBITER_ORDERING_LIST_TAG);
 
-    if (!List->Orderings) {
+    if (!List->Orderings)
+    {
         List->Maximum = 0;
         List->Count = 0;
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -3000,10 +2791,7 @@ Return Value:
 }
 
 NTSTATUS
-ArbCopyOrderingList(
-    OUT PARBITER_ORDERING_LIST Destination,
-    IN PARBITER_ORDERING_LIST Source
-    )
+ArbCopyOrderingList(OUT PARBITER_ORDERING_LIST Destination, IN PARBITER_ORDERING_LIST Source)
 
 /*++
 
@@ -3032,24 +2820,20 @@ Return Value:
     ASSERT(Source->Maximum > 0);
 
     Destination->Orderings =
-        ExAllocatePoolWithTag(PagedPool,
-                              Source->Maximum * sizeof(ARBITER_ORDERING),
-                              ARBITER_ORDERING_LIST_TAG
-                              );
+        ExAllocatePoolWithTag(PagedPool, Source->Maximum * sizeof(ARBITER_ORDERING), ARBITER_ORDERING_LIST_TAG);
 
-    if (Destination->Orderings == NULL) {
+    if (Destination->Orderings == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     Destination->Count = Source->Count;
     Destination->Maximum = Source->Maximum;
 
-    if (Source->Count > 0) {
+    if (Source->Count > 0)
+    {
 
-        RtlCopyMemory(Destination->Orderings,
-                      Source->Orderings,
-                      Source->Count * sizeof(ARBITER_ORDERING)
-                      );
+        RtlCopyMemory(Destination->Orderings, Source->Orderings, Source->Count * sizeof(ARBITER_ORDERING));
     }
 
     return STATUS_SUCCESS;
@@ -3057,11 +2841,7 @@ Return Value:
 
 
 NTSTATUS
-ArbAddOrdering(
-    OUT PARBITER_ORDERING_LIST List,
-    IN ULONGLONG Start,
-    IN ULONGLONG End
-    )
+ArbAddOrdering(OUT PARBITER_ORDERING_LIST List, IN ULONGLONG Start, IN ULONGLONG End)
 
 /*++
 
@@ -3092,7 +2872,8 @@ Return Value:
     // Validate parameters
     //
 
-    if (End < Start) {
+    if (End < Start)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -3100,7 +2881,8 @@ Return Value:
     // Check if the buffer is full
     //
 
-    if (List->Count == List->Maximum) {
+    if (List->Count == List->Maximum)
+    {
 
         PARBITER_ORDERING temp;
 
@@ -3108,13 +2890,11 @@ Return Value:
         // Out of space - grow the buffer
         //
 
-        temp = ExAllocatePoolWithTag(PagedPool,
-                              (List->Count + ARBITER_ORDERING_GROW_SIZE) *
-                                  sizeof(ARBITER_ORDERING),
-                              ARBITER_ORDERING_LIST_TAG
-                              );
+        temp = ExAllocatePoolWithTag(PagedPool, (List->Count + ARBITER_ORDERING_GROW_SIZE) * sizeof(ARBITER_ORDERING),
+                                     ARBITER_ORDERING_LIST_TAG);
 
-        if (!temp) {
+        if (!temp)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
@@ -3122,19 +2902,16 @@ Return Value:
         // If we had any orderings copy them
         //
 
-        if (List->Orderings) {
+        if (List->Orderings)
+        {
 
-            RtlCopyMemory(temp,
-                          List->Orderings,
-                          List->Count * sizeof(ARBITER_ORDERING)
-                          );
+            RtlCopyMemory(temp, List->Orderings, List->Count * sizeof(ARBITER_ORDERING));
 
             ExFreePool(List->Orderings);
         }
 
         List->Maximum += ARBITER_ORDERING_GROW_SIZE;
         List->Orderings = temp;
-
     }
 
     //
@@ -3151,11 +2928,7 @@ Return Value:
 }
 
 NTSTATUS
-ArbPruneOrdering(
-    IN OUT PARBITER_ORDERING_LIST OrderingList,
-    IN ULONGLONG Start,
-    IN ULONGLONG End
-    )
+ArbPruneOrdering(IN OUT PARBITER_ORDERING_LIST OrderingList, IN ULONGLONG Start, IN ULONGLONG End)
 
 /*++
 
@@ -3198,7 +2971,8 @@ Note:
     // Validate parameters
     //
 
-    if (End < Start) {
+    if (End < Start)
+    {
         status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
@@ -3207,13 +2981,11 @@ Note:
     // Allocate a buffer big enough for all eventualities
     //
 
-    newOrdering = ExAllocatePoolWithTag(PagedPool,
-                                        (OrderingList->Count * 2 + 1) *
-                                            sizeof(ARBITER_ORDERING),
-                                        ARBITER_ORDERING_LIST_TAG
-                                        );
+    newOrdering = ExAllocatePoolWithTag(PagedPool, (OrderingList->Count * 2 + 1) * sizeof(ARBITER_ORDERING),
+                                        ARBITER_ORDERING_LIST_TAG);
 
-    if (!newOrdering) {
+    if (!newOrdering)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -3224,15 +2996,18 @@ Note:
     // Do we have a current ordering?
     //
 
-    if (OrderingList->Count > 0) {
+    if (OrderingList->Count > 0)
+    {
 
         //
         // Iterate through the current ordering and prune accordingly
         //
 
-        FOR_ALL_IN_ARRAY(OrderingList->Orderings, OrderingList->Count, current) {
+        FOR_ALL_IN_ARRAY(OrderingList->Orderings, OrderingList->Count, current)
+        {
 
-            if (End < current->Start || Start > current->End) {
+            if (End < current->Start || Start > current->End)
+            {
 
                 //
                 // ****      or      ****
@@ -3242,10 +3017,12 @@ Note:
                 //
 
                 *currentInsert++ = *current;
+            }
+            else if (Start > current->Start)
+            {
 
-            } else if (Start > current->Start) {
-
-                if (End < current->End) {
+                if (End < current->End)
+                {
 
                     //
                     //   ****
@@ -3261,9 +3038,9 @@ Note:
                     currentInsert->Start = current->Start;
                     currentInsert->End = Start - 1;
                     currentInsert++;
-
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //       **** or     ****
@@ -3278,11 +3055,14 @@ Note:
                     currentInsert->End = Start - 1;
                     currentInsert++;
                 }
-            } else {
+            }
+            else
+            {
 
                 ASSERT(Start <= current->Start);
 
-                if (End < current->End) {
+                if (End < current->End)
+                {
 
                     //
                     // ****       or ****
@@ -3294,8 +3074,9 @@ Note:
                     currentInsert->Start = End + 1;
                     currentInsert->End = current->End;
                     currentInsert++;
-
-                } else {
+                }
+                else
+                {
 
                     ASSERT(End >= current->End);
 
@@ -3305,7 +3086,6 @@ Note:
                     //
                     // Don't copy the range (ie. Delete it)
                     //
-
                 }
             }
         }
@@ -3320,32 +3100,31 @@ Note:
     // Check if we have any orderings left
     //
 
-    if (count > 0) {
+    if (count > 0)
+    {
 
-        if (count > OrderingList->Maximum) {
+        if (count > OrderingList->Maximum)
+        {
 
             //
             // There isn't enough space so allocate a new buffer
             //
 
-            temp =
-                ExAllocatePoolWithTag(PagedPool,
-                                      count * sizeof(ARBITER_ORDERING),
-                                      ARBITER_ORDERING_LIST_TAG
-                                      );
+            temp = ExAllocatePoolWithTag(PagedPool, count * sizeof(ARBITER_ORDERING), ARBITER_ORDERING_LIST_TAG);
 
-            if (!temp) {
+            if (!temp)
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto cleanup;
             }
 
-            if (OrderingList->Orderings) {
+            if (OrderingList->Orderings)
+            {
                 ExFreePool(OrderingList->Orderings);
             }
 
             OrderingList->Orderings = temp;
             OrderingList->Maximum = count;
-
         }
 
 
@@ -3353,10 +3132,7 @@ Note:
         // Copy the new ordering
         //
 
-        RtlCopyMemory(OrderingList->Orderings,
-                      newOrdering,
-                      count * sizeof(ARBITER_ORDERING)
-                      );
+        RtlCopyMemory(OrderingList->Orderings, newOrdering, count * sizeof(ARBITER_ORDERING));
     }
 
     //
@@ -3371,21 +3147,19 @@ Note:
 
 cleanup:
 
-    if (newOrdering) {
+    if (newOrdering)
+    {
         ExFreePool(newOrdering);
     }
 
-    if (temp) {
+    if (temp)
+    {
         ExFreePool(temp);
     }
 
     return status;
-
 }
-VOID
-ArbFreeOrderingList(
-    IN PARBITER_ORDERING_LIST List
-    )
+VOID ArbFreeOrderingList(IN PARBITER_ORDERING_LIST List)
 /*++
 
 Routine Description:
@@ -3405,7 +3179,8 @@ Return Value:
 {
     PAGED_CODE();
 
-    if (List->Orderings) {
+    if (List->Orderings)
+    {
         ASSERT(List->Maximum);
         ExFreePool(List->Orderings);
     }
@@ -3416,12 +3191,8 @@ Return Value:
 }
 
 
-
 BOOLEAN
-ArbOverrideConflict(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    )
+ArbOverrideConflict(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -3449,24 +3220,28 @@ Return Value:
 
     PAGED_CODE();
 
-    if (!(State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_FIXED)) {
+    if (!(State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_FIXED))
+    {
         return FALSE;
     }
 
-    FOR_ALL_RANGES(Arbiter->PossibleAllocation, &iterator, current) {
+    FOR_ALL_RANGES(Arbiter->PossibleAllocation, &iterator, current)
+    {
 
         //
         // Only test the overlapping ones
         //
 
-        if (INTERSECT(current->Start, current->End, State->CurrentMinimum, State->CurrentMaximum)) {
+        if (INTERSECT(current->Start, current->End, State->CurrentMinimum, State->CurrentMaximum))
+        {
 
 
             //
             // Check if we should ignore the range because of its attributes
             //
 
-            if (current->Attributes & State->RangeAvailableAttributes) {
+            if (current->Attributes & State->RangeAvailableAttributes)
+            {
 
                 //
                 // We DON'T set ok to true because we are just ignoring the range,
@@ -3482,11 +3257,12 @@ Return Value:
             // is a fixed requirement
             //
 
-            if (current->Owner == State->Entry->PhysicalDeviceObject
-            && State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_FIXED) {
+            if (current->Owner == State->Entry->PhysicalDeviceObject &&
+                State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_FIXED)
+            {
 
-                State->Start=State->CurrentMinimum;
-                State->End=State->CurrentMaximum;
+                State->Start = State->CurrentMinimum;
+                State->End = State->CurrentMaximum;
 
                 ok = TRUE;
                 continue;
@@ -3502,11 +3278,7 @@ Return Value:
     return ok;
 }
 
-VOID
-ArbpUpdatePriority(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALTERNATIVE Alternative
-    )
+VOID ArbpUpdatePriority(PARBITER_INSTANCE Arbiter, PARBITER_ALTERNATIVE Alternative)
 
 /*++
 
@@ -3569,8 +3341,8 @@ Note:
     // If we have already tried the reserved resources then we are out of luck!
     //
 
-    if (priority == ARBITER_PRIORITY_RESERVED
-    ||  priority == ARBITER_PRIORITY_PREFERRED_RESERVED) {
+    if (priority == ARBITER_PRIORITY_RESERVED || priority == ARBITER_PRIORITY_PREFERRED_RESERVED)
+    {
 
         Alternative->Priority = ARBITER_PRIORITY_EXHAUSTED;
         return;
@@ -3587,11 +3359,13 @@ Note:
     // should start the search from the initial ordering
     //
 
-    if (priority == ARBITER_PRIORITY_NULL) {
+    if (priority == ARBITER_PRIORITY_NULL)
+    {
 
         ordering = Arbiter->OrderingList.Orderings;
-
-    } else {
+    }
+    else
+    {
 
         //
         // If we are a fixed resource then there is no point
@@ -3600,19 +3374,17 @@ Note:
         // exhausted
         //
 
-        if (Alternative->Flags & ARBITER_ALTERNATIVE_FLAG_FIXED) {
+        if (Alternative->Flags & ARBITER_ALTERNATIVE_FLAG_FIXED)
+        {
 
             Alternative->Priority = ARBITER_PRIORITY_EXHAUSTED;
 
             return;
         }
 
-        ASSERT(ORDERING_INDEX_FROM_PRIORITY(Alternative->Priority) <
-                 Arbiter->OrderingList.Count);
+        ASSERT(ORDERING_INDEX_FROM_PRIORITY(Alternative->Priority) < Arbiter->OrderingList.Count);
 
-        ordering = &Arbiter->OrderingList.Orderings
-            [ORDERING_INDEX_FROM_PRIORITY(Alternative->Priority) + 1];
-
+        ordering = &Arbiter->OrderingList.Orderings[ORDERING_INDEX_FROM_PRIORITY(Alternative->Priority) + 1];
     }
 
     //
@@ -3620,18 +3392,17 @@ Note:
     // where we have an overlap big enough
     //
 
-    FOR_REST_IN_ARRAY(Arbiter->OrderingList.Orderings,
-                      Arbiter->OrderingList.Count,
-                      ordering) {
+    FOR_REST_IN_ARRAY(Arbiter->OrderingList.Orderings, Arbiter->OrderingList.Count, ordering)
+    {
 
         //
         // Is the ordering applicable?
         //
 
-        if (INTERSECT(Alternative->Minimum, Alternative->Maximum,
-                      ordering->Start, ordering->End)
-        && INTERSECT_SIZE(Alternative->Minimum, Alternative->Maximum,
-                          ordering->Start,ordering->End) >= Alternative->Length) {
+        if (INTERSECT(Alternative->Minimum, Alternative->Maximum, ordering->Start, ordering->End) &&
+            INTERSECT_SIZE(Alternative->Minimum, Alternative->Maximum, ordering->Start, ordering->End) >=
+                Alternative->Length)
+        {
 
             //
             // This is out guy, calculate his priority
@@ -3643,7 +3414,8 @@ Note:
             // Preferred priorities are -ve
             //
 
-            if (preferred) {
+            if (preferred)
+            {
                 Alternative->Priority *= -1;
             }
 
@@ -3655,20 +3427,19 @@ Note:
     // We have runout of non-reserved resources so try the reserved ones
     //
 
-    if (preferred) {
+    if (preferred)
+    {
         Alternative->Priority = ARBITER_PRIORITY_PREFERRED_RESERVED;
-    } else {
+    }
+    else
+    {
         Alternative->Priority = ARBITER_PRIORITY_RESERVED;
     }
-
 }
 
 NTSTATUS
-ArbAddReserved(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PIO_RESOURCE_DESCRIPTOR Requirement      OPTIONAL,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Resource OPTIONAL
-    )
+ArbAddReserved(IN PARBITER_INSTANCE Arbiter, IN PIO_RESOURCE_DESCRIPTOR Requirement OPTIONAL,
+               IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Resource OPTIONAL)
 {
     PAGED_CODE();
 
@@ -3676,10 +3447,7 @@ ArbAddReserved(
 }
 
 BOOLEAN
-ArbpQueryConflictCallback(
-    IN PVOID Context,
-    IN PRTL_RANGE Range
-    )
+ArbpQueryConflictCallback(IN PVOID Context, IN PRTL_RANGE Range)
 
 /*++
 
@@ -3702,16 +3470,11 @@ Return Value:
 --*/
 
 {
-    PRTL_RANGE *conflictingRange = (PRTL_RANGE*)Context;
+    PRTL_RANGE *conflictingRange = (PRTL_RANGE *)Context;
 
     PAGED_CODE();
 
-    ARB_PRINT(2,("Possible conflict: (%p) 0x%I64x-0x%I64x Owner: %p",
-                   Range,
-                   Range->Start,
-                   Range->End,
-                   Range->Owner
-                ));
+    ARB_PRINT(2, ("Possible conflict: (%p) 0x%I64x-0x%I64x Owner: %p", Range, Range->Start, Range->End, Range->Owner));
 
     //
     // Remember the conflicting range
@@ -3729,13 +3492,9 @@ Return Value:
 
 
 NTSTATUS
-ArbQueryConflict(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN PIO_RESOURCE_DESCRIPTOR ConflictingResource,
-    OUT PULONG ConflictCount,
-    OUT PARBITER_CONFLICT_INFO *Conflicts
-    )
+ArbQueryConflict(IN PARBITER_INSTANCE Arbiter, IN PDEVICE_OBJECT PhysicalDeviceObject,
+                 IN PIO_RESOURCE_DESCRIPTOR ConflictingResource, OUT PULONG ConflictCount,
+                 OUT PARBITER_CONFLICT_INFO *Conflicts)
 
 /*++
 
@@ -3765,7 +3524,7 @@ Return Value:
     // NTRAID #98568 - 2000/03/31 - andrewth
     // ArbQueryConflict needs to be redesigned
     //
-    
+
     NTSTATUS status;
     RTL_RANGE_LIST backupAllocation;
     BOOLEAN backedUp = FALSE;
@@ -3798,13 +3557,15 @@ Return Value:
     // the possible allocation so we can restore it when we are done.
     //
 
-    if (Arbiter->TransactionInProgress) {
+    if (Arbiter->TransactionInProgress)
+    {
 
         RtlInitializeRangeList(&backupAllocation);
 
         status = RtlCopyRangeList(&backupAllocation, Arbiter->PossibleAllocation);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto cleanup;
         }
 
@@ -3820,13 +3581,15 @@ Return Value:
 
     status = RtlCopyRangeList(Arbiter->PossibleAllocation, Arbiter->Allocation);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
     status = ArbpBuildAlternative(Arbiter, ConflictingResource, &alternative);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -3845,24 +3608,28 @@ Return Value:
     RtlZeroMemory(&entry, sizeof(ARBITER_LIST_ENTRY));
     entry.RequestSource = ArbiterRequestPnpEnumerated;
     entry.PhysicalDeviceObject = PhysicalDeviceObject;
-    
-    if (!NT_SUCCESS(IoGetDeviceProperty(PhysicalDeviceObject,DevicePropertyLegacyBusType,sizeof(entry.InterfaceType),&entry.InterfaceType,&sz))) {
-        entry.InterfaceType = Isa; // not what I want to do! However this has the right effect - good enough for conflict detection
+
+    if (!NT_SUCCESS(IoGetDeviceProperty(PhysicalDeviceObject, DevicePropertyLegacyBusType, sizeof(entry.InterfaceType),
+                                        &entry.InterfaceType, &sz)))
+    {
+        entry.InterfaceType =
+            Isa; // not what I want to do! However this has the right effect - good enough for conflict detection
     }
-    if (!NT_SUCCESS(IoGetDeviceProperty(PhysicalDeviceObject,DevicePropertyBusNumber,sizeof(entry.InterfaceType),&entry.BusNumber,&sz))) {
-        entry.BusNumber = 0; // not what I want to do! However this has the right effect - good enough for conflict detection
+    if (!NT_SUCCESS(IoGetDeviceProperty(PhysicalDeviceObject, DevicePropertyBusNumber, sizeof(entry.InterfaceType),
+                                        &entry.BusNumber, &sz)))
+    {
+        entry.BusNumber =
+            0; // not what I want to do! However this has the right effect - good enough for conflict detection
     }
 
     //
     // Initialize the return buffers
     //
 
-    conflictInfo = ExAllocatePoolWithTag(PagedPool,
-                                         size * sizeof(ARBITER_CONFLICT_INFO),
-                                         ARBITER_CONFLICT_INFO_TAG
-                                         );
+    conflictInfo = ExAllocatePoolWithTag(PagedPool, size * sizeof(ARBITER_CONFLICT_INFO), ARBITER_CONFLICT_INFO_TAG);
 
-    if (!conflictInfo) {
+    if (!conflictInfo)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -3873,7 +3640,8 @@ Return Value:
 
     status = Arbiter->PreprocessEntry(Arbiter, &state);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -3886,9 +3654,7 @@ Return Value:
     // make sure we do it for every alias formed in PreprocessEntry
     //
 
-    status = RtlDeleteOwnersRanges(Arbiter->PossibleAllocation,
-                            state.Entry->PhysicalDeviceObject
-                            );
+    status = RtlDeleteOwnersRanges(Arbiter->PossibleAllocation, state.Entry->PhysicalDeviceObject);
 
     //
     // Keep trying to find a suitable range and each time we fail remember why.
@@ -3897,9 +3663,11 @@ Return Value:
     state.CurrentMinimum = state.Start;
     state.CurrentMaximum = state.End;
 
-    while (!Arbiter->FindSuitableRange(Arbiter, &state)) {
+    while (!Arbiter->FindSuitableRange(Arbiter, &state))
+    {
 
-        if (count == size) {
+        if (count == size)
+        {
 
             //
             // We need to resize the return buffer
@@ -3910,27 +3678,22 @@ Return Value:
             size += 5;
 
             conflictInfo =
-                ExAllocatePoolWithTag(PagedPool,
-                                      size * sizeof(ARBITER_CONFLICT_INFO),
-                                      ARBITER_CONFLICT_INFO_TAG
-                                      );
+                ExAllocatePoolWithTag(PagedPool, size * sizeof(ARBITER_CONFLICT_INFO), ARBITER_CONFLICT_INFO_TAG);
 
-            if (!conflictInfo) {
+            if (!conflictInfo)
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 conflictInfo = temp;
                 goto cleanup;
             }
 
-            RtlCopyMemory(conflictInfo,
-                          temp,
-                          count * sizeof(ARBITER_CONFLICT_INFO)
-                          );
+            RtlCopyMemory(conflictInfo, temp, count * sizeof(ARBITER_CONFLICT_INFO));
 
             ExFreePool(temp);
-
         }
 
-        if (conflictingRange != NULL) {
+        if (conflictingRange != NULL)
+        {
             conflictInfo[count].OwningObject = conflictingRange->Owner;
             conflictInfo[count].Start = conflictingRange->Start;
             conflictInfo[count].End = conflictingRange->End;
@@ -3946,19 +3709,19 @@ Return Value:
                                     conflictingRange->Owner
                                     );
 #endif
-            status = RtlDeleteOwnersRanges(Arbiter->PossibleAllocation,
-                                    conflictingRange->Owner
-                                    );
+            status = RtlDeleteOwnersRanges(Arbiter->PossibleAllocation, conflictingRange->Owner);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto cleanup;
             }
-
-        } else {
+        }
+        else
+        {
             //
             // someone isn't playing by the rules (such as ACPI!)
             //
-            ARB_PRINT(0,("Conflict detected - but someone hasn't set conflicting info\n"));
+            ARB_PRINT(0, ("Conflict detected - but someone hasn't set conflicting info\n"));
 
             conflictInfo[count].OwningObject = NULL;
             conflictInfo[count].Start = (ULONGLONG)0;
@@ -3981,11 +3744,13 @@ Return Value:
 
     RtlFreeRangeList(Arbiter->PossibleAllocation);
 
-    if (Arbiter->TransactionInProgress) {
+    if (Arbiter->TransactionInProgress)
+    {
 
         status = RtlCopyRangeList(Arbiter->PossibleAllocation, &backupAllocation);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto cleanup;
         }
 
@@ -4002,13 +3767,15 @@ Return Value:
 
 cleanup:
 
-    if (conflictInfo) {
+    if (conflictInfo)
+    {
         ExFreePool(conflictInfo);
     }
 
     RtlFreeRangeList(Arbiter->PossibleAllocation);
 
-    if (Arbiter->TransactionInProgress && backedUp) {
+    if (Arbiter->TransactionInProgress && backedUp)
+    {
         status = RtlCopyRangeList(Arbiter->PossibleAllocation, &backupAllocation);
         RtlFreeRangeList(&backupAllocation);
     }
@@ -4023,10 +3790,7 @@ cleanup:
 
 
 NTSTATUS
-ArbStartArbiter(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PCM_RESOURCE_LIST StartResources
-    )
+ArbStartArbiter(IN PARBITER_INSTANCE Arbiter, IN PCM_RESOURCE_LIST StartResources)
 
 /*++
 
@@ -4057,10 +3821,7 @@ Return Value:
 }
 
 BOOLEAN
-ArbShareDriverExclusive(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    )
+ArbShareDriverExclusive(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -4095,28 +3856,29 @@ Return Value:
     PAGED_CODE();
 
     isRootEnumerated = FALSE;
-    status = IoGetDeviceProperty(
-        State->Entry->PhysicalDeviceObject, 
-        DevicePropertyEnumeratorName,
-        sizeof(enumeratorName),
-        enumeratorName,
-        &enumeratorNameLength);
-    if (NT_SUCCESS(status)) {
+    status = IoGetDeviceProperty(State->Entry->PhysicalDeviceObject, DevicePropertyEnumeratorName,
+                                 sizeof(enumeratorName), enumeratorName, &enumeratorNameLength);
+    if (NT_SUCCESS(status))
+    {
 
-        if (_wcsicmp(enumeratorName, REGSTR_KEY_ROOTENUM) == 0) {
+        if (_wcsicmp(enumeratorName, REGSTR_KEY_ROOTENUM) == 0)
+        {
 
             isRootEnumerated = TRUE;
-        }                
+        }
     }
-    FOR_ALL_RANGES(Arbiter->PossibleAllocation, &iterator, current) {
+    FOR_ALL_RANGES(Arbiter->PossibleAllocation, &iterator, current)
+    {
         //
         // Only test the overlapping ones
         //
-        if (INTERSECT(current->Start, current->End, State->CurrentMinimum, State->CurrentMaximum)) {
+        if (INTERSECT(current->Start, current->End, State->CurrentMinimum, State->CurrentMaximum))
+        {
             //
             // Check if we should ignore the range because of its attributes
             //
-            if (current->Attributes & State->RangeAvailableAttributes) {
+            if (current->Attributes & State->RangeAvailableAttributes)
+            {
                 //
                 // We DON'T set ok to true because we are just ignoring the range,
                 // as RtlFindRange would have and thus it can't be the cause of
@@ -4125,71 +3887,72 @@ Return Value:
                 continue;
             }
             if (State->CurrentAlternative->Descriptor->ShareDisposition != CmResourceShareDriverExclusive &&
-                !(current->Attributes & ARBITER_RANGE_SHARE_DRIVER_EXCLUSIVE)) {
+                !(current->Attributes & ARBITER_RANGE_SHARE_DRIVER_EXCLUSIVE))
+            {
 
                 continue;
             }
-            if (!current->Owner) {
+            if (!current->Owner)
+            {
 
                 continue;
             }
             //
             // Special case ROOT enumerated devices.
             //
-            if (isRootEnumerated) {
+            if (isRootEnumerated)
+            {
 
-                status = IoGetDeviceProperty(
-                    current->Owner, 
-                    DevicePropertyEnumeratorName,
-                    sizeof(enumeratorName),
-                    enumeratorName,
-                    &enumeratorNameLength);
-                if (NT_SUCCESS(status)) {
+                status = IoGetDeviceProperty(current->Owner, DevicePropertyEnumeratorName, sizeof(enumeratorName),
+                                             enumeratorName, &enumeratorNameLength);
+                if (NT_SUCCESS(status))
+                {
 
-                    if (_wcsicmp(enumeratorName, REGSTR_KEY_ROOTENUM) != 0) {
+                    if (_wcsicmp(enumeratorName, REGSTR_KEY_ROOTENUM) != 0)
+                    {
 
                         isRootEnumerated = FALSE;
-                    }                
+                    }
                 }
             }
             //
             // If both devices are ROOT enumerated, override the conflict.
             //
-            if (isRootEnumerated) {
+            if (isRootEnumerated)
+            {
 
-                ARB_PRINT(2,
-                            ("Overriding conflict on IRQ %04x for driver %wZ\n",
-                            (ULONG)State->Start,
-                            &owner->DriverObject->DriverName
-                            ));
-                State->Start=State->CurrentMinimum;
-                State->End=State->CurrentMaximum;
-                if (State->CurrentAlternative->Descriptor->ShareDisposition == CmResourceShareDriverExclusive) {
+                ARB_PRINT(2, ("Overriding conflict on IRQ %04x for driver %wZ\n", (ULONG)State->Start,
+                              &owner->DriverObject->DriverName));
+                State->Start = State->CurrentMinimum;
+                State->End = State->CurrentMaximum;
+                if (State->CurrentAlternative->Descriptor->ShareDisposition == CmResourceShareDriverExclusive)
+                {
 
                     State->RangeAttributes |= ARBITER_RANGE_SHARE_DRIVER_EXCLUSIVE;
                 }
                 return TRUE;
             }
             //
-            // Check if there is a common driver in the two stacks ignoring the 
+            // Check if there is a common driver in the two stacks ignoring the
             // one for the PDO.
             //
             owner = ((PDEVICE_OBJECT)(current->Owner))->AttachedDevice;
-            while (owner) {
+            while (owner)
+            {
 
                 other = (PDEVICE_OBJECT)(State->Entry->PhysicalDeviceObject)->AttachedDevice;
-                while (other) {
+                while (other)
+                {
 
-                    if (owner->DriverObject == other->DriverObject) {
+                    if (owner->DriverObject == other->DriverObject)
+                    {
 
-                        ARB_PRINT(2,
-                                    ("Overriding conflict on IRQ %04x for driver %wZ\n",
-                                    (ULONG)State->Start,
-                                    &owner->DriverObject->DriverName
-                                    ));
-                        State->Start=State->CurrentMinimum;
-                        State->End=State->CurrentMaximum;
-                        if (State->CurrentAlternative->Descriptor->ShareDisposition == CmResourceShareDriverExclusive) {
+                        ARB_PRINT(2, ("Overriding conflict on IRQ %04x for driver %wZ\n", (ULONG)State->Start,
+                                      &owner->DriverObject->DriverName));
+                        State->Start = State->CurrentMinimum;
+                        State->End = State->CurrentMaximum;
+                        if (State->CurrentAlternative->Descriptor->ShareDisposition == CmResourceShareDriverExclusive)
+                        {
 
                             State->RangeAttributes |= ARBITER_RANGE_SHARE_DRIVER_EXCLUSIVE;
                         }
@@ -4208,10 +3971,7 @@ Return Value:
 }
 
 #if DBG
-VOID
-ArbpIndent(
-    IN ULONG Count
-    )
+VOID ArbpIndent(IN ULONG Count)
 {
     UCHAR spaces[80];
 
@@ -4222,6 +3982,5 @@ ArbpIndent(
     spaces[Count] = 0;
 
     DbgPrint("%s", spaces);
-
 }
 #endif

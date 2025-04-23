@@ -32,11 +32,7 @@ Revision History:
 
 #define ASSERT_QUEUE(Q) ASSERT((Q)->Header.Type == QueueObject);
 
-VOID
-KeInitializeQueue (
-    IN PRKQUEUE Queue,
-    IN ULONG Count OPTIONAL
-    )
+VOID KeInitializeQueue(IN PRKQUEUE Queue, IN ULONG Count OPTIONAL)
 
 /*++
 
@@ -78,20 +74,19 @@ Return Value:
     InitializeListHead(&Queue->EntryListHead);
     InitializeListHead(&Queue->ThreadListHead);
     Queue->CurrentCount = 0;
-    if (ARGUMENT_PRESENT((PVOID)(ULONG_PTR)Count)) {
+    if (ARGUMENT_PRESENT((PVOID)(ULONG_PTR)Count))
+    {
         Queue->MaximumCount = Count;
-
-    } else {
+    }
+    else
+    {
         Queue->MaximumCount = KeNumberProcessors;
     }
 
     return;
 }
 
-LONG
-KeReadStateQueue (
-    IN PRKQUEUE Queue
-    )
+LONG KeReadStateQueue(IN PRKQUEUE Queue)
 
 /*++
 
@@ -120,11 +115,7 @@ Return Value:
     return Queue->Header.SignalState;
 }
 
-LONG
-KeInsertQueue (
-    IN PRKQUEUE Queue,
-    IN PLIST_ENTRY Entry
-    )
+LONG KeInsertQueue(IN PRKQUEUE Queue, IN PLIST_ENTRY Entry)
 
 /*++
 
@@ -177,11 +168,7 @@ Return Value:
     return OldState;
 }
 
-LONG
-KeInsertHeadQueue (
-    IN PRKQUEUE Queue,
-    IN PLIST_ENTRY Entry
-    )
+LONG KeInsertHeadQueue(IN PRKQUEUE Queue, IN PLIST_ENTRY Entry)
 
 /*++
 
@@ -245,34 +232,33 @@ Return Value:
 //      executed inside the dispatcher lock.
 //
 
-#define InitializeRemoveQueue()                                             \
-    Thread->WaitBlockList = WaitBlock;                                      \
-    WaitBlock->Object = (PVOID)Queue;                                       \
-    WaitBlock->WaitKey = (CSHORT)(STATUS_SUCCESS);                          \
-    WaitBlock->WaitType = WaitAny;                                          \
-    WaitBlock->Thread = Thread;                                             \
-    Thread->WaitStatus = 0;                                                 \
-    if (ARGUMENT_PRESENT(Timeout)) {                                        \
-        WaitBlock->NextWaitBlock = WaitTimer;                               \
-        WaitTimer->NextWaitBlock = WaitBlock;                               \
-        Timer->Header.WaitListHead.Flink = &WaitTimer->WaitListEntry;       \
-        Timer->Header.WaitListHead.Blink = &WaitTimer->WaitListEntry;       \
-    } else {                                                                \
-        WaitBlock->NextWaitBlock = WaitBlock;                               \
-    }                                                                       \
-    Thread->Alertable = FALSE;                                              \
-    Thread->WaitMode = WaitMode;                                            \
-    Thread->WaitReason = WrQueue;                                           \
-    Thread->WaitListEntry.Flink = NULL;                                     \
-    StackSwappable = KiIsKernelStackSwappable(WaitMode, Thread);            \
-    Thread->WaitTime= KiQueryLowTickCount()
+#define InitializeRemoveQueue()                                       \
+    Thread->WaitBlockList = WaitBlock;                                \
+    WaitBlock->Object = (PVOID)Queue;                                 \
+    WaitBlock->WaitKey = (CSHORT)(STATUS_SUCCESS);                    \
+    WaitBlock->WaitType = WaitAny;                                    \
+    WaitBlock->Thread = Thread;                                       \
+    Thread->WaitStatus = 0;                                           \
+    if (ARGUMENT_PRESENT(Timeout))                                    \
+    {                                                                 \
+        WaitBlock->NextWaitBlock = WaitTimer;                         \
+        WaitTimer->NextWaitBlock = WaitBlock;                         \
+        Timer->Header.WaitListHead.Flink = &WaitTimer->WaitListEntry; \
+        Timer->Header.WaitListHead.Blink = &WaitTimer->WaitListEntry; \
+    }                                                                 \
+    else                                                              \
+    {                                                                 \
+        WaitBlock->NextWaitBlock = WaitBlock;                         \
+    }                                                                 \
+    Thread->Alertable = FALSE;                                        \
+    Thread->WaitMode = WaitMode;                                      \
+    Thread->WaitReason = WrQueue;                                     \
+    Thread->WaitListEntry.Flink = NULL;                               \
+    StackSwappable = KiIsKernelStackSwappable(WaitMode, Thread);      \
+    Thread->WaitTime = KiQueryLowTickCount()
 
 PLIST_ENTRY
-KeRemoveQueue (
-    IN PRKQUEUE Queue,
-    IN KPROCESSOR_MODE WaitMode,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+KeRemoveQueue(IN PRKQUEUE Queue, IN KPROCESSOR_MODE WaitMode, IN PLARGE_INTEGER Timeout OPTIONAL)
 
 /*++
 
@@ -336,11 +322,13 @@ Return Value:
     // thread local variables, and lock the dispatcher database.
     //
 
-    if (Thread->WaitNext) {
+    if (Thread->WaitNext)
+    {
         Thread->WaitNext = FALSE;
         InitializeRemoveQueue();
-
-    } else {
+    }
+    else
+    {
 
 #if defined(NT_UP)
 
@@ -363,7 +351,8 @@ Return Value:
 
     OldQueue = Thread->Queue;
     Thread->Queue = Queue;
-    if (Queue != OldQueue) {
+    if (Queue != OldQueue)
+    {
 
         //
         // If the thread was previously associated with a queue, then remove
@@ -372,7 +361,8 @@ Return Value:
         //
 
         Entry = &Thread->QueueListEntry;
-        if (OldQueue != NULL) {
+        if (OldQueue != NULL)
+        {
             RemoveEntryList(Entry);
             KiActivateWaiterQueue(OldQueue);
         }
@@ -383,8 +373,9 @@ Return Value:
         //
 
         InsertTailList(&Queue->ThreadListHead, Entry);
-
-    } else {
+    }
+    else
+    {
 
         //
         // The previous and current queue are the same queue - decrement the
@@ -408,7 +399,8 @@ Return Value:
     // to be inserted in the queue.
     //
 
-    do {
+    do
+    {
 
         //
         // Check if there is a queue entry available and the current
@@ -417,8 +409,8 @@ Return Value:
         //
 
         Entry = Queue->EntryListHead.Flink;
-        if ((Entry != &Queue->EntryListHead) &&
-            (Queue->CurrentCount < Queue->MaximumCount)) {
+        if ((Entry != &Queue->EntryListHead) && (Queue->CurrentCount < Queue->MaximumCount))
+        {
 
             //
             // Decrement the number of entires in the Queue object entry list,
@@ -428,19 +420,18 @@ Return Value:
 
             Queue->Header.SignalState -= 1;
             Queue->CurrentCount += 1;
-            if ((Entry->Flink == NULL) || (Entry->Blink == NULL)) {
-                KeBugCheckEx(INVALID_WORK_QUEUE_ITEM,
-                             (ULONG_PTR)Entry,
-                             (ULONG_PTR)Queue,
-                             (ULONG_PTR)&ExWorkerQueue[0],
+            if ((Entry->Flink == NULL) || (Entry->Blink == NULL))
+            {
+                KeBugCheckEx(INVALID_WORK_QUEUE_ITEM, (ULONG_PTR)Entry, (ULONG_PTR)Queue, (ULONG_PTR)&ExWorkerQueue[0],
                              (ULONG_PTR)((PWORK_QUEUE_ITEM)Entry)->WorkerRoutine);
             }
 
             RemoveEntryList(Entry);
             Entry->Flink = NULL;
             break;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Test to determine if a kernel APC is pending.
@@ -453,7 +444,8 @@ Return Value:
             // N.B. that this can only happen in a multiprocessor system.
             //
 
-            if (Thread->ApcState.KernelApcPending && (Thread->WaitIrql < APC_LEVEL)) {
+            if (Thread->ApcState.KernelApcPending && (Thread->WaitIrql < APC_LEVEL))
+            {
 
                 //
                 // Increment the current thread count, unlock the dispatcher
@@ -464,14 +456,16 @@ Return Value:
 
                 Queue->CurrentCount += 1;
                 KiUnlockDispatcherDatabase(Thread->WaitIrql);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Test if a user APC is pending.
                 //
 
-                if ((WaitMode != KernelMode) && (Thread->ApcState.UserApcPending)) {
+                if ((WaitMode != KernelMode) && (Thread->ApcState.UserApcPending))
+                {
                     Entry = (PLIST_ENTRY)ULongToPtr(STATUS_USER_APC);
                     Queue->CurrentCount += 1;
                     break;
@@ -481,14 +475,16 @@ Return Value:
                 // Check to determine if a timeout value is specified.
                 //
 
-                if (ARGUMENT_PRESENT(Timeout)) {
+                if (ARGUMENT_PRESENT(Timeout))
+                {
 
                     //
                     // If the timeout value is zero, then return immediately
                     // without waiting.
                     //
 
-                    if (!(Timeout->LowPart | Timeout->HighPart)) {
+                    if (!(Timeout->LowPart | Timeout->HighPart))
+                    {
                         Entry = (PLIST_ENTRY)ULongToPtr(STATUS_TIMEOUT);
                         Queue->CurrentCount += 1;
                         break;
@@ -503,7 +499,8 @@ Return Value:
                     //      wait type, and the wait list entry link pointers.
                     //
 
-                    if (KiInsertTreeTimer(Timer, *Timeout) == FALSE) {
+                    if (KiInsertTreeTimer(Timer, *Timeout) == FALSE)
+                    {
                         Entry = (PLIST_ENTRY)ULongToPtr(STATUS_TIMEOUT);
                         Queue->CurrentCount += 1;
                         break;
@@ -524,7 +521,8 @@ Return Value:
                 //
 
                 Thread->State = Waiting;
-                if (StackSwappable != FALSE) {
+                if (StackSwappable != FALSE)
+                {
                     InsertTailList(&KiWaitListHead, &Thread->WaitListEntry);
                 }
 
@@ -544,19 +542,19 @@ Return Value:
                 //
 
                 Thread->WaitReason = 0;
-                if (WaitStatus != STATUS_KERNEL_APC) {
+                if (WaitStatus != STATUS_KERNEL_APC)
+                {
                     return (PLIST_ENTRY)WaitStatus;
                 }
 
-                if (ARGUMENT_PRESENT(Timeout)) {
+                if (ARGUMENT_PRESENT(Timeout))
+                {
 
                     //
                     // Reduce the amount of time remaining before timeout occurs.
                     //
 
-                    Timeout = KiComputeWaitInterval(OriginalTime,
-                                                    &DueTime,
-                                                    &NewTime);
+                    Timeout = KiComputeWaitInterval(OriginalTime, &DueTime, &NewTime);
                 }
             }
 
@@ -593,9 +591,7 @@ Return Value:
 }
 
 PLIST_ENTRY
-KeRundownQueue (
-    IN PRKQUEUE Queue
-    )
+KeRundownQueue(IN PRKQUEUE Queue)
 
 /*++
 
@@ -643,10 +639,12 @@ Return Value:
     //
 
     FirstEntry = Queue->EntryListHead.Flink;
-    if (FirstEntry == &Queue->EntryListHead) {
+    if (FirstEntry == &Queue->EntryListHead)
+    {
         FirstEntry = NULL;
-
-    } else {
+    }
+    else
+    {
         RemoveEntryList(&Queue->EntryListHead);
     }
 
@@ -654,7 +652,8 @@ Return Value:
     // Remove all associated threads from the thread list of the queue.
     //
 
-    while (Queue->ThreadListHead.Flink != &Queue->ThreadListHead) {
+    while (Queue->ThreadListHead.Flink != &Queue->ThreadListHead)
+    {
         Entry = Queue->ThreadListHead.Flink;
         Thread = CONTAINING_RECORD(Entry, KTHREAD, QueueListEntry);
         Thread->Queue = NULL;
@@ -670,11 +669,7 @@ Return Value:
     return FirstEntry;
 }
 
-VOID
-FASTCALL
-KiActivateWaiterQueue (
-    IN PRKQUEUE Queue
-    )
+VOID FASTCALL KiActivateWaiterQueue(IN PRKQUEUE Queue)
 
 /*++
 
@@ -714,11 +709,12 @@ Return Value:
     //
 
     Queue->CurrentCount -= 1;
-    if (Queue->CurrentCount < Queue->MaximumCount) {
+    if (Queue->CurrentCount < Queue->MaximumCount)
+    {
         Entry = Queue->EntryListHead.Flink;
         WaitEntry = Queue->Header.WaitListHead.Blink;
-        if ((Entry != &Queue->EntryListHead) &&
-            (WaitEntry != &Queue->Header.WaitListHead)) {
+        if ((Entry != &Queue->EntryListHead) && (WaitEntry != &Queue->Header.WaitListHead))
+        {
             RemoveEntryList(Entry);
             Entry->Flink = NULL;
             Queue->Header.SignalState -= 1;
@@ -731,13 +727,7 @@ Return Value:
     return;
 }
 
-LONG
-FASTCALL
-KiInsertQueue (
-    IN PRKQUEUE Queue,
-    IN PLIST_ENTRY Entry,
-    IN BOOLEAN Head
-    )
+LONG FASTCALL KiInsertQueue(IN PRKQUEUE Queue, IN PLIST_ENTRY Entry, IN BOOLEAN Head)
 
 /*++
 
@@ -790,10 +780,9 @@ Return Value:
     OldState = Queue->Header.SignalState;
     Thread = KeGetCurrentThread();
     WaitEntry = Queue->Header.WaitListHead.Blink;
-    if ((WaitEntry != &Queue->Header.WaitListHead) &&
-        (Queue->CurrentCount < Queue->MaximumCount) &&
-        ((Thread->Queue != Queue) ||
-        (Thread->WaitReason != WrQueue))) {
+    if ((WaitEntry != &Queue->Header.WaitListHead) && (Queue->CurrentCount < Queue->MaximumCount) &&
+        ((Thread->Queue != Queue) || (Thread->WaitReason != WrQueue)))
+    {
 
         //
         // Remove the last wait block from the wait list and get the address
@@ -811,7 +800,8 @@ Return Value:
         //
 
         Thread->WaitStatus = (LONG_PTR)Entry;
-        if (Thread->WaitListEntry.Flink != NULL) {
+        if (Thread->WaitListEntry.Flink != NULL)
+        {
             RemoveEntryList(&Thread->WaitListEntry);
         }
 
@@ -823,7 +813,8 @@ Return Value:
         //
 
         Timer = &Thread->Timer;
-        if (Timer->Header.Inserted == TRUE) {
+        if (Timer->Header.Inserted == TRUE)
+        {
             KiRemoveTreeTimer(Timer);
         }
 
@@ -832,13 +823,16 @@ Return Value:
         //
 
         KiReadyThread(Thread);
-
-    } else {
+    }
+    else
+    {
         Queue->Header.SignalState += 1;
-        if (Head != FALSE) {
+        if (Head != FALSE)
+        {
             InsertHeadList(&Queue->EntryListHead, Entry);
-
-        } else {
+        }
+        else
+        {
             InsertTailList(&Queue->EntryListHead, Entry);
         }
     }

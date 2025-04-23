@@ -28,22 +28,17 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtPrivilegeCheck)
-#pragma alloc_text(PAGE,SeCheckPrivilegedObject)
-#pragma alloc_text(PAGE,SepPrivilegeCheck)
-#pragma alloc_text(PAGE,SePrivilegeCheck)
-#pragma alloc_text(PAGE,SeSinglePrivilegeCheck)
+#pragma alloc_text(PAGE, NtPrivilegeCheck)
+#pragma alloc_text(PAGE, SeCheckPrivilegedObject)
+#pragma alloc_text(PAGE, SepPrivilegeCheck)
+#pragma alloc_text(PAGE, SePrivilegeCheck)
+#pragma alloc_text(PAGE, SeSinglePrivilegeCheck)
 #endif
 
-
+
 BOOLEAN
-SepPrivilegeCheck(
-    IN PTOKEN Token,
-    IN OUT PLUID_AND_ATTRIBUTES RequiredPrivileges,
-    IN ULONG RequiredPrivilegeCount,
-    IN ULONG PrivilegeSetControl,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+SepPrivilegeCheck(IN PTOKEN Token, IN OUT PLUID_AND_ATTRIBUTES RequiredPrivileges, IN ULONG RequiredPrivilegeCount,
+                  IN ULONG PrivilegeSetControl, IN KPROCESSOR_MODE PreviousMode)
 /*++
 
 Routine Description:
@@ -89,10 +84,10 @@ Return Value:
     //   Take care of kernel callers first
     //
 
-    if (PreviousMode == KernelMode) {
+    if (PreviousMode == KernelMode)
+    {
 
-         return(TRUE);
-
+        return (TRUE);
     }
 
     TokenPrivilegeCount = Token->PrivilegeCount;
@@ -103,66 +98,56 @@ Return Value:
 
     RequiredAll = (BOOLEAN)(PrivilegeSetControl & PRIVILEGE_SET_ALL_NECESSARY);
 
-    SepAcquireTokenReadLock( Token );
+    SepAcquireTokenReadLock(Token);
 
 
-    for ( i = 0 , CurrentRequiredPrivilege = RequiredPrivileges ;
-          i < RequiredPrivilegeCount ;
-          i++, CurrentRequiredPrivilege++ ) {
+    for (i = 0, CurrentRequiredPrivilege = RequiredPrivileges; i < RequiredPrivilegeCount;
+         i++, CurrentRequiredPrivilege++)
+    {
 
-         for ( j = 0, CurrentTokenPrivilege = Token->Privileges;
-               j < TokenPrivilegeCount ;
-               j++, CurrentTokenPrivilege++ ) {
+        for (j = 0, CurrentTokenPrivilege = Token->Privileges; j < TokenPrivilegeCount; j++, CurrentTokenPrivilege++)
+        {
 
-              if ((CurrentTokenPrivilege->Attributes & SE_PRIVILEGE_ENABLED) &&
-                   (RtlEqualLuid(&CurrentTokenPrivilege->Luid,
-                                 &CurrentRequiredPrivilege->Luid))
-                 ) {
+            if ((CurrentTokenPrivilege->Attributes & SE_PRIVILEGE_ENABLED) &&
+                (RtlEqualLuid(&CurrentTokenPrivilege->Luid, &CurrentRequiredPrivilege->Luid)))
+            {
 
-                       CurrentRequiredPrivilege->Attributes |=
-                                                SE_PRIVILEGE_USED_FOR_ACCESS;
-                       MatchCount++;
-                       break;     // start looking for next one
-              }
-
-         }
-
+                CurrentRequiredPrivilege->Attributes |= SE_PRIVILEGE_USED_FOR_ACCESS;
+                MatchCount++;
+                break; // start looking for next one
+            }
+        }
     }
 
-    SepReleaseTokenReadLock( Token );
+    SepReleaseTokenReadLock(Token);
 
     //
     //   If we wanted ANY and didn't get any, return failure.
     //
 
-    if (!RequiredAll && (MatchCount == 0)) {
+    if (!RequiredAll && (MatchCount == 0))
+    {
 
-         return (FALSE);
-
+        return (FALSE);
     }
 
     //
     // If we wanted ALL and didn't get all, return failure.
     //
 
-    if (RequiredAll && (MatchCount != RequiredPrivilegeCount)) {
+    if (RequiredAll && (MatchCount != RequiredPrivilegeCount))
+    {
 
-         return(FALSE);
+        return (FALSE);
     }
 
-    return(TRUE);
-
+    return (TRUE);
 }
 
 
-
-
 BOOLEAN
-SePrivilegeCheck(
-    IN OUT PPRIVILEGE_SET RequiredPrivileges,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
-    IN KPROCESSOR_MODE AccessMode
-    )
+SePrivilegeCheck(IN OUT PPRIVILEGE_SET RequiredPrivileges, IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
+                 IN KPROCESSOR_MODE AccessMode)
 /*++
 
 Routine Description:
@@ -206,36 +191,26 @@ Return Value:
     // of SecurityImpersonation or above.
     //
 
-    if ( (SubjectSecurityContext->ClientToken != NULL) &&
-         (SubjectSecurityContext->ImpersonationLevel < SecurityImpersonation)
-       ) {
+    if ((SubjectSecurityContext->ClientToken != NULL) &&
+        (SubjectSecurityContext->ImpersonationLevel < SecurityImpersonation))
+    {
 
-           return(FALSE);
+        return (FALSE);
     }
 
     //
     // SepPrivilegeCheck locks the passed token for read access
     //
 
-    Status = SepPrivilegeCheck(
-                 EffectiveToken( SubjectSecurityContext ),
-                 RequiredPrivileges->Privilege,
-                 RequiredPrivileges->PrivilegeCount,
-                 RequiredPrivileges->Control,
-                 AccessMode
-                 );
+    Status = SepPrivilegeCheck(EffectiveToken(SubjectSecurityContext), RequiredPrivileges->Privilege,
+                               RequiredPrivileges->PrivilegeCount, RequiredPrivileges->Control, AccessMode);
 
-    return(Status);
+    return (Status);
 }
 
 
-
 NTSTATUS
-NtPrivilegeCheck(
-    IN HANDLE ClientToken,
-    IN OUT PPRIVILEGE_SET RequiredPrivileges,
-    OUT PBOOLEAN Result
-    )
+NtPrivilegeCheck(IN HANDLE ClientToken, IN OUT PPRIVILEGE_SET RequiredPrivileges, OUT PBOOLEAN Result)
 
 /*++
 
@@ -280,7 +255,6 @@ Return Value:
 --*/
 
 
-
 {
     BOOLEAN BStatus;
     KPROCESSOR_MODE PreviousMode;
@@ -296,18 +270,17 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    Status = ObReferenceObjectByHandle(
-         ClientToken,             // Handle
-         TOKEN_QUERY,             // DesiredAccess
-         SeTokenObjectType,      // ObjectType
-         PreviousMode,            // AccessMode
-         (PVOID *)&Token,         // Object
-         NULL                     // GrantedAccess
-         );
+    Status = ObReferenceObjectByHandle(ClientToken,       // Handle
+                                       TOKEN_QUERY,       // DesiredAccess
+                                       SeTokenObjectType, // ObjectType
+                                       PreviousMode,      // AccessMode
+                                       (PVOID *)&Token,   // Object
+                                       NULL               // GrantedAccess
+    );
 
-    if ( !NT_SUCCESS(Status) ) {
-         return Status;
-
+    if (!NT_SUCCESS(Status))
+    {
+        return Status;
     }
 
     //
@@ -315,131 +288,102 @@ Return Value:
     // it is at SecurityIdentification or above.
     //
 
-    if (Token->TokenType == TokenImpersonation) {
+    if (Token->TokenType == TokenImpersonation)
+    {
 
-        if (Token->ImpersonationLevel < SecurityIdentification) {
+        if (Token->ImpersonationLevel < SecurityIdentification)
+        {
 
-            ObDereferenceObject( (PVOID)Token );
+            ObDereferenceObject((PVOID)Token);
 
-            return( STATUS_BAD_IMPERSONATION_LEVEL );
-
+            return (STATUS_BAD_IMPERSONATION_LEVEL);
         }
     }
 
-    try  {
+    try
+    {
 
-         //
-         // Capture passed Privilege Set
-         //
+        //
+        // Capture passed Privilege Set
+        //
 
-         ProbeForWriteSmallStructure(
-             RequiredPrivileges,
-             sizeof(PRIVILEGE_SET),
-             sizeof(ULONG)
-             );
+        ProbeForWriteSmallStructure(RequiredPrivileges, sizeof(PRIVILEGE_SET), sizeof(ULONG));
 
-         CapturedPrivilegeCount = RequiredPrivileges->PrivilegeCount;
+        CapturedPrivilegeCount = RequiredPrivileges->PrivilegeCount;
 
-         if (!IsValidElementCount(CapturedPrivilegeCount, LUID_AND_ATTRIBUTES)) {
-             Status = STATUS_INVALID_PARAMETER;
-             leave;
-         }
-         ParameterLength = (ULONG)sizeof(PRIVILEGE_SET) +
-                           ((CapturedPrivilegeCount - ANYSIZE_ARRAY) *
-                             (ULONG)sizeof(LUID_AND_ATTRIBUTES)  );
+        if (!IsValidElementCount(CapturedPrivilegeCount, LUID_AND_ATTRIBUTES))
+        {
+            Status = STATUS_INVALID_PARAMETER;
+            leave;
+        }
+        ParameterLength = (ULONG)sizeof(PRIVILEGE_SET) +
+                          ((CapturedPrivilegeCount - ANYSIZE_ARRAY) * (ULONG)sizeof(LUID_AND_ATTRIBUTES));
 
-         ProbeForWrite(
-             RequiredPrivileges,
-             ParameterLength,
-             sizeof(ULONG)
-             );
+        ProbeForWrite(RequiredPrivileges, ParameterLength, sizeof(ULONG));
 
 
-         ProbeForWriteBoolean(Result);
+        ProbeForWriteBoolean(Result);
 
-         PrivilegeSetControl = RequiredPrivileges->Control;
-
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        PrivilegeSetControl = RequiredPrivileges->Control;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
-    if (!NT_SUCCESS(Status)) {
-        ObDereferenceObject( (PVOID)Token );
-        return Status;
-
-    }
-
-    Status = SeCaptureLuidAndAttributesArray(
-                    (RequiredPrivileges->Privilege),
-                    CapturedPrivilegeCount,
-                    UserMode,
-                    NULL, 0,
-                    PagedPool,
-                    TRUE,
-                    &CapturedPrivileges,
-                    &CapturedPrivilegesLength
-                    );
-
-    if (!NT_SUCCESS(Status)) {
-
-        ObDereferenceObject( (PVOID)Token );
+    if (!NT_SUCCESS(Status))
+    {
+        ObDereferenceObject((PVOID)Token);
         return Status;
     }
 
-    BStatus = SepPrivilegeCheck(
-                  Token,                   // Token,
-                  CapturedPrivileges,      // RequiredPrivileges,
-                  CapturedPrivilegeCount,  // RequiredPrivilegeCount,
-                  PrivilegeSetControl,     // PrivilegeSetControl
-                  PreviousMode             // PreviousMode
-                  );
+    Status = SeCaptureLuidAndAttributesArray((RequiredPrivileges->Privilege), CapturedPrivilegeCount, UserMode, NULL, 0,
+                                             PagedPool, TRUE, &CapturedPrivileges, &CapturedPrivilegesLength);
 
-    ObDereferenceObject( Token );
+    if (!NT_SUCCESS(Status))
+    {
+
+        ObDereferenceObject((PVOID)Token);
+        return Status;
+    }
+
+    BStatus = SepPrivilegeCheck(Token,                  // Token,
+                                CapturedPrivileges,     // RequiredPrivileges,
+                                CapturedPrivilegeCount, // RequiredPrivilegeCount,
+                                PrivilegeSetControl,    // PrivilegeSetControl
+                                PreviousMode            // PreviousMode
+    );
+
+    ObDereferenceObject(Token);
 
 
-    try {
+    try
+    {
 
         //
         // copy the modified privileges buffer back to user
         //
 
-        RtlCopyMemory(
-            RequiredPrivileges->Privilege,
-            CapturedPrivileges,
-            CapturedPrivilegesLength
-            );
+        RtlCopyMemory(RequiredPrivileges->Privilege, CapturedPrivileges, CapturedPrivilegesLength);
 
         *Result = BStatus;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        SeReleaseLuidAndAttributesArray(CapturedPrivileges, PreviousMode, TRUE);
 
-            SeReleaseLuidAndAttributesArray(
-               CapturedPrivileges,
-               PreviousMode,
-               TRUE
-               );
+        return (GetExceptionCode());
+    }
 
-            return(GetExceptionCode());
+    SeReleaseLuidAndAttributesArray(CapturedPrivileges, PreviousMode, TRUE);
 
-        }
-
-    SeReleaseLuidAndAttributesArray(
-        CapturedPrivileges,
-        PreviousMode,
-        TRUE
-        );
-
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
 
-
 BOOLEAN
-SeSinglePrivilegeCheck(
-    LUID PrivilegeValue,
-    KPROCESSOR_MODE PreviousMode
-    )
+SeSinglePrivilegeCheck(LUID PrivilegeValue, KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -477,39 +421,26 @@ Return Value:
     RequiredPrivileges.Privilege[0].Luid = PrivilegeValue;
     RequiredPrivileges.Privilege[0].Attributes = 0;
 
-    SeCaptureSubjectContext( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    AccessGranted = SePrivilegeCheck(
-                        &RequiredPrivileges,
-                        &SubjectSecurityContext,
-                        PreviousMode
-                        );
+    AccessGranted = SePrivilegeCheck(&RequiredPrivileges, &SubjectSecurityContext, PreviousMode);
 
-    if ( PreviousMode != KernelMode ) {
+    if (PreviousMode != KernelMode)
+    {
 
-        SePrivilegedServiceAuditAlarm (
-            NULL,
-            &SubjectSecurityContext,
-            &RequiredPrivileges,
-            AccessGranted
-            );
+        SePrivilegedServiceAuditAlarm(NULL, &SubjectSecurityContext, &RequiredPrivileges, AccessGranted);
     }
 
 
-    SeReleaseSubjectContext( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
-    return( AccessGranted );
-
+    return (AccessGranted);
 }
 
-
+
 BOOLEAN
-SeCheckPrivilegedObject(
-    LUID PrivilegeValue,
-    HANDLE ObjectHandle,
-    ACCESS_MASK DesiredAccess,
-    KPROCESSOR_MODE PreviousMode
-    )
+SeCheckPrivilegedObject(LUID PrivilegeValue, HANDLE ObjectHandle, ACCESS_MASK DesiredAccess,
+                        KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -555,30 +486,19 @@ Return Value:
     RequiredPrivileges.Privilege[0].Luid = PrivilegeValue;
     RequiredPrivileges.Privilege[0].Attributes = 0;
 
-    SeCaptureSubjectContext( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    AccessGranted = SePrivilegeCheck(
-                        &RequiredPrivileges,
-                        &SubjectSecurityContext,
-                        PreviousMode
-                        );
+    AccessGranted = SePrivilegeCheck(&RequiredPrivileges, &SubjectSecurityContext, PreviousMode);
 
-    if ( PreviousMode != KernelMode ) {
+    if (PreviousMode != KernelMode)
+    {
 
-        SePrivilegeObjectAuditAlarm(
-            ObjectHandle,
-            &SubjectSecurityContext,
-            DesiredAccess,
-            &RequiredPrivileges,
-            AccessGranted,
-            PreviousMode
-            );
-
+        SePrivilegeObjectAuditAlarm(ObjectHandle, &SubjectSecurityContext, DesiredAccess, &RequiredPrivileges,
+                                    AccessGranted, PreviousMode);
     }
 
 
-    SeReleaseSubjectContext( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
-    return( AccessGranted );
-
+    return (AccessGranted);
 }

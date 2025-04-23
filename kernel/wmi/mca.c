@@ -38,113 +38,65 @@ Revision History:
 #define MCA_EVENT_INSTANCE_NAME L"McaEvent"
 #define MCA_UNDEFINED_CPU 0xffffffff
 
-#define HalpGetFwMceLogProcessorNumber( /* PERROR_RECORD_HEADER */ _Log ) \
-    ((UCHAR) (_Log)->TimeStamp.Reserved )
+#define HalpGetFwMceLogProcessorNumber(/* PERROR_RECORD_HEADER */ _Log) ((UCHAR)(_Log)->TimeStamp.Reserved)
 
-BOOLEAN WmipMceDelivery(
-    IN PVOID Reserved,
-    IN PVOID Argument2
-    );
+BOOLEAN WmipMceDelivery(IN PVOID Reserved, IN PVOID Argument2);
 
-BOOLEAN WmipCmcDelivery(
-    IN PVOID Reserved,
-    IN PVOID Argument2
-    );
+BOOLEAN WmipCmcDelivery(IN PVOID Reserved, IN PVOID Argument2);
 
-BOOLEAN WmipMcaDelivery(
-    IN PVOID Reserved,
-    IN PVOID Argument2
-    );
+BOOLEAN WmipMcaDelivery(IN PVOID Reserved, IN PVOID Argument2);
 
-BOOLEAN WmipCpeDelivery(
-    IN PVOID Reserved,
-    IN PVOID Argument2
-    );
+BOOLEAN WmipCpeDelivery(IN PVOID Reserved, IN PVOID Argument2);
 
-void WmipMceWorkerRoutine(    
-    IN PVOID Context             // Not Used
-    );
+void WmipMceWorkerRoutine(IN PVOID Context // Not Used
+);
 
-NTSTATUS WmipGetLogFromHal(
-    HAL_QUERY_INFORMATION_CLASS InfoClass,
-    PVOID Token,
-    PWNODE_SINGLE_INSTANCE *Wnode,
-    PERROR_LOGRECORD *Mca,
-    PULONG McaSize,
-    ULONG MaxSize,
-    LPGUID Guid
-    );
+NTSTATUS WmipGetLogFromHal(HAL_QUERY_INFORMATION_CLASS InfoClass, PVOID Token, PWNODE_SINGLE_INSTANCE *Wnode,
+                           PERROR_LOGRECORD *Mca, PULONG McaSize, ULONG MaxSize, LPGUID Guid);
 
-NTSTATUS WmipRegisterMcaHandler(
-    ULONG Phase
-    );
+NTSTATUS WmipRegisterMcaHandler(ULONG Phase);
 
-NTSTATUS WmipBuildMcaCmcEvent(
-    OUT PWNODE_SINGLE_INSTANCE Wnode,
-    IN LPGUID EventGuid,
-    IN PERROR_LOGRECORD McaCmcEvent,
-    IN ULONG McaCmcSize
-    );
+NTSTATUS WmipBuildMcaCmcEvent(OUT PWNODE_SINGLE_INSTANCE Wnode, IN LPGUID EventGuid, IN PERROR_LOGRECORD McaCmcEvent,
+                              IN ULONG McaCmcSize);
 
-NTSTATUS WmipGetRawMCAInfo(
-    OUT PUCHAR Buffer,
-    IN OUT PULONG BufferSize
-    );
+NTSTATUS WmipGetRawMCAInfo(OUT PUCHAR Buffer, IN OUT PULONG BufferSize);
 
-NTSTATUS WmipSetCPEPolling(
-    IN BOOLEAN Enabled,
-    IN ULONG Interval
-    );
+NTSTATUS WmipSetCPEPolling(IN BOOLEAN Enabled, IN ULONG Interval);
 
-NTSTATUS WmipWriteMCAEventLogEvent(
-    PUCHAR Event
-    );
+NTSTATUS WmipWriteMCAEventLogEvent(PUCHAR Event);
 
-NTSTATUS WmipSetupWaitForWbem(
-    void
-    );
+NTSTATUS WmipSetupWaitForWbem(void);
 
-void WmipIsWbemRunningDispatch(    
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,     // Not Used
-    IN PVOID SystemArgument1,     // Not Used
-    IN PVOID SystemArgument2      // Not Used
-    );
+void WmipIsWbemRunningDispatch(IN PKDPC Dpc,
+                               IN PVOID DeferredContext, // Not Used
+                               IN PVOID SystemArgument1, // Not Used
+                               IN PVOID SystemArgument2  // Not Used
+);
 
-void WmipIsWbemRunningWorker(
-    PVOID Context
-    );
+void WmipIsWbemRunningWorker(PVOID Context);
 
-BOOLEAN WmipCheckIsWbemRunning(
-    void
-    );
+BOOLEAN WmipCheckIsWbemRunning(void);
 
-void WmipProcessPrevMcaLogs(
-    void
-    );
+void WmipProcessPrevMcaLogs(void);
 
 #ifdef MCE_INSERTION
-NTSTATUS WmipQuerySystemInformation(
-    IN HAL_QUERY_INFORMATION_CLASS  InformationClass,
-    IN ULONG     BufferSize,
-    IN OUT PVOID Buffer,
-    OUT PULONG   ReturnedLength
-    );
+NTSTATUS WmipQuerySystemInformation(IN HAL_QUERY_INFORMATION_CLASS InformationClass, IN ULONG BufferSize,
+                                    IN OUT PVOID Buffer, OUT PULONG ReturnedLength);
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,WmipSetCPEPolling)
-#pragma alloc_text(PAGE,WmipRegisterMcaHandler)
-#pragma alloc_text(PAGE,WmipMceWorkerRoutine)
-#pragma alloc_text(PAGE,WmipGetLogFromHal)
-#pragma alloc_text(PAGE,WmipBuildMcaCmcEvent)
-#pragma alloc_text(PAGE,WmipGetRawMCAInfo)
-#pragma alloc_text(PAGE,WmipWriteMCAEventLogEvent)
-#pragma alloc_text(PAGE,WmipGenerateMCAEventlog)
-#pragma alloc_text(PAGE,WmipIsWbemRunningWorker)
-#pragma alloc_text(PAGE,WmipCheckIsWbemRunning)
-#pragma alloc_text(PAGE,WmipSetupWaitForWbem)
-#pragma alloc_text(PAGE,WmipProcessPrevMcaLogs)
+#pragma alloc_text(PAGE, WmipSetCPEPolling)
+#pragma alloc_text(PAGE, WmipRegisterMcaHandler)
+#pragma alloc_text(PAGE, WmipMceWorkerRoutine)
+#pragma alloc_text(PAGE, WmipGetLogFromHal)
+#pragma alloc_text(PAGE, WmipBuildMcaCmcEvent)
+#pragma alloc_text(PAGE, WmipGetRawMCAInfo)
+#pragma alloc_text(PAGE, WmipWriteMCAEventLogEvent)
+#pragma alloc_text(PAGE, WmipGenerateMCAEventlog)
+#pragma alloc_text(PAGE, WmipIsWbemRunningWorker)
+#pragma alloc_text(PAGE, WmipCheckIsWbemRunning)
+#pragma alloc_text(PAGE, WmipSetupWaitForWbem)
+#pragma alloc_text(PAGE, WmipProcessPrevMcaLogs)
 #endif
 
 
@@ -209,52 +161,33 @@ GUID WmipErrorSpecificGuid = ERROR_PLATFORM_SPECIFIC_GUID;
 
 typedef struct
 {
-    ULONG PollCounter;                      // Countdown in seconds
-    HAL_QUERY_INFORMATION_CLASS InfoClass;  // HAL Info class to use in MCE query
-    PVOID Token;                            // HAL Token to use in MCE Queries
-    ULONG ItemsOutstanding;                 // Number of interrupts or poll requests to process
-    ULONG PollFrequency;                    // Frequency (in sec) to poll for CMC
-    ULONG MaxSize;                          // Max size for log (as reported by HAL)
-    GUID WnodeGuid;                         // GUID to use for the raw data event
-    KDPC Dpc;                               // DPC to handle delivery
-    WORK_QUEUE_ITEM WorkItem;               // Work item used to query for log
+    ULONG PollCounter;                     // Countdown in seconds
+    HAL_QUERY_INFORMATION_CLASS InfoClass; // HAL Info class to use in MCE query
+    PVOID Token;                           // HAL Token to use in MCE Queries
+    ULONG ItemsOutstanding;                // Number of interrupts or poll requests to process
+    ULONG PollFrequency;                   // Frequency (in sec) to poll for CMC
+    ULONG MaxSize;                         // Max size for log (as reported by HAL)
+    GUID WnodeGuid;                        // GUID to use for the raw data event
+    KDPC Dpc;                              // DPC to handle delivery
+    WORK_QUEUE_ITEM WorkItem;              // Work item used to query for log
 #ifdef MCE_INSERTION
     LIST_ENTRY LogHead;
 #endif
 } MCEQUERYINFO, *PMCEQUERYINFO;
 
-MCEQUERYINFO WmipMcaQueryInfo =
-{
-    HAL_MCA_DISABLED,
-    HalMcaLogInformation,
-    0,
-    0,
-    HAL_MCA_DISABLED,
-    DEFAULT_MAX_MCA_SIZE,
-    MSMCAInfo_RawMCAEventGuid
-};
+MCEQUERYINFO WmipMcaQueryInfo = { HAL_MCA_DISABLED,     HalMcaLogInformation,     0, 0, HAL_MCA_DISABLED,
+                                  DEFAULT_MAX_MCA_SIZE, MSMCAInfo_RawMCAEventGuid };
 
-MCEQUERYINFO WmipCmcQueryInfo =
-{
-    HAL_CMC_DISABLED,
-    HalCmcLogInformation,
-    0,
-    0,
-    HAL_CMC_DISABLED,
-    DEFAULT_MAX_CMC_SIZE,
-    MSMCAInfo_RawCMCEventGuid
-};
-                               
-MCEQUERYINFO WmipCpeQueryInfo =
-{
-    HAL_CPE_DISABLED,
-    HalCpeLogInformation,
-    0,
-    0,
-    HAL_CPE_DISABLED,
-    DEFAULT_MAX_CPE_SIZE,
-    MSMCAInfo_RawCorrectedPlatformEventGuid
-};
+MCEQUERYINFO WmipCmcQueryInfo = { HAL_CMC_DISABLED,     HalCmcLogInformation,     0, 0, HAL_CMC_DISABLED,
+                                  DEFAULT_MAX_CMC_SIZE, MSMCAInfo_RawCMCEventGuid };
+
+MCEQUERYINFO WmipCpeQueryInfo = { HAL_CPE_DISABLED,
+                                  HalCpeLogInformation,
+                                  0,
+                                  0,
+                                  HAL_CPE_DISABLED,
+                                  DEFAULT_MAX_CPE_SIZE,
+                                  MSMCAInfo_RawCorrectedPlatformEventGuid };
 
 
 //
@@ -268,12 +201,10 @@ MCEQUERYINFO WmipCpeQueryInfo =
 // synchronous, however if we need to do this then we need to reset the
 // PollCounter first, then the PollFrequency and then the PollCounter
 // again.
-// 
-#define WmipSetQueryPollOrInt( /* PMCEQUERYINFO */ QueryInfo, \
-                               /* ULONG         */ PollValue) \
-    InterlockedExchange(&((QueryInfo)->PollFrequency), PollValue); \
+//
+#define WmipSetQueryPollOrInt(/* PMCEQUERYINFO */ QueryInfo, /* ULONG         */ PollValue) \
+    InterlockedExchange(&((QueryInfo)->PollFrequency), PollValue);                          \
     InterlockedExchange(&((QueryInfo)->PollCounter), PollValue);
-
 
 
 //
@@ -282,13 +213,12 @@ MCEQUERYINFO WmipCpeQueryInfo =
 KTIMER WmipIsWbemRunningTimer;
 KDPC WmipIsWbemRunningDpc;
 WORK_QUEUE_ITEM WmipIsWbemRunningWorkItem;
-LIST_ENTRY WmipWaitingMCAEvents = {&WmipWaitingMCAEvents, &WmipWaitingMCAEvents};
+LIST_ENTRY WmipWaitingMCAEvents = { &WmipWaitingMCAEvents, &WmipWaitingMCAEvents };
 
-#define WBEM_STATUS_UNKNOWN 0   // Polling process for waiting is not started
-#define WBEM_IS_RUNNING 1       // WBEM is currently running
-#define WAITING_FOR_WBEM  2     // Polling process for waiting is started
+#define WBEM_STATUS_UNKNOWN 0 // Polling process for waiting is not started
+#define WBEM_IS_RUNNING 1     // WBEM is currently running
+#define WAITING_FOR_WBEM 2    // Polling process for waiting is started
 UCHAR WmipIsWbemRunningFlag;
-
 
 
 #ifdef ALLOC_DATA_PRAGMA
@@ -305,18 +235,14 @@ PMCA_EXCEPTION WmipRawMCA;
 //
 // Status of the MCE registration process
 //
-#define MCE_STATE_UNINIT     0
+#define MCE_STATE_UNINIT 0
 #define MCE_STATE_REGISTERED 1
-#define MCE_STATE_RUNNING    2
-#define MCE_STATE_ERROR      -1
+#define MCE_STATE_RUNNING 2
+#define MCE_STATE_ERROR -1
 ULONG WmipMCEState;
 
-NTSTATUS WmipBuildMcaCmcEvent(
-    OUT PWNODE_SINGLE_INSTANCE Wnode,
-    IN LPGUID EventGuid,
-    IN PERROR_LOGRECORD McaCmcEvent,
-    IN ULONG McaCmcSize
-    )
+NTSTATUS WmipBuildMcaCmcEvent(OUT PWNODE_SINGLE_INSTANCE Wnode, IN LPGUID EventGuid, IN PERROR_LOGRECORD McaCmcEvent,
+                              IN ULONG McaCmcSize)
 /*++
 
 Routine Description:
@@ -348,32 +274,27 @@ Return Value:
     PULONG Ptr;
 
     PAGED_CODE();
-    
+
     RtlZeroMemory(Wnode, sizeof(WNODE_SINGLE_INSTANCE));
     Wnode->WnodeHeader.BufferSize = McaCmcSize + sizeof(WNODE_SINGLE_INSTANCE);
     Wnode->WnodeHeader.ProviderId = IoWMIDeviceObjectToProviderId(WmipServiceDeviceObject);
-    KeQuerySystemTime(&Wnode->WnodeHeader.TimeStamp);       
+    KeQuerySystemTime(&Wnode->WnodeHeader.TimeStamp);
     Wnode->WnodeHeader.Guid = *EventGuid;
-    Wnode->WnodeHeader.Flags = WNODE_FLAG_SINGLE_INSTANCE |
-                               WNODE_FLAG_EVENT_ITEM |
-                               WNODE_FLAG_STATIC_INSTANCE_NAMES;
-    Wnode->DataBlockOffset = FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                          VariableData);
+    Wnode->WnodeHeader.Flags = WNODE_FLAG_SINGLE_INSTANCE | WNODE_FLAG_EVENT_ITEM | WNODE_FLAG_STATIC_INSTANCE_NAMES;
+    Wnode->DataBlockOffset = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData);
     Wnode->SizeDataBlock = McaCmcSize;
     Ptr = (PULONG)&Wnode->VariableData;
-    *Ptr++ = 1;                               // 1 Record in this event
-    *Ptr++ = McaCmcSize;                      // Size of log record in bytes
+    *Ptr++ = 1;          // 1 Record in this event
+    *Ptr++ = McaCmcSize; // Size of log record in bytes
     if (McaCmcEvent != NULL)
     {
         RtlCopyMemory(Ptr, McaCmcEvent, McaCmcSize);
     }
-    
-    return(STATUS_SUCCESS);
+
+    return (STATUS_SUCCESS);
 }
 
-NTSTATUS WmipQueryLogAndFireEvent(
-    PMCEQUERYINFO QueryInfo
-    )
+NTSTATUS WmipQueryLogAndFireEvent(PMCEQUERYINFO QueryInfo)
 /*++
 
 Routine Description:
@@ -393,19 +314,14 @@ Return Value:
     PWNODE_SINGLE_INSTANCE Wnode;
     NTSTATUS Status, Status2;
     ULONG Size;
-    PERROR_LOGRECORD Log;   
-    
+    PERROR_LOGRECORD Log;
+
     PAGED_CODE();
 
     //
     // Call HAL to get the log
     //
-    Status = WmipGetLogFromHal(QueryInfo->InfoClass,
-                               QueryInfo->Token,
-                               &Wnode,
-                               &Log,
-                               &Size,
-                               QueryInfo->MaxSize,
+    Status = WmipGetLogFromHal(QueryInfo->InfoClass, QueryInfo->Token, &Wnode, &Log, &Size, QueryInfo->MaxSize,
                                &QueryInfo->WnodeGuid);
 
     if (NT_SUCCESS(Status))
@@ -414,15 +330,13 @@ Return Value:
         // Look at the event and fire it off as WMI events that
         // will generate eventlog events
         //
-        WmipGenerateMCAEventlog((PUCHAR)Log,
-                                Size,
-                                FALSE);
+        WmipGenerateMCAEventlog((PUCHAR)Log, Size, FALSE);
 
         //
         // Fire the log off as a WMI event
         //
         Status2 = IoWMIWriteEvent(Wnode);
-        if (! NT_SUCCESS(Status2))
+        if (!NT_SUCCESS(Status2))
         {
             //
             // IoWMIWriteEvent will free the wnode back to pool,
@@ -430,24 +344,19 @@ Return Value:
             //
             ExFreePool(Wnode);
         }
-        
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID,
-                          DPFLTR_MCA_LEVEL,
-                          "WMI: MCE Event fired to WMI -> %x\n",
-                          Status));
-        
-    } else {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID,
-                          DPFLTR_MCA_LEVEL,
-                          "WMI: MCE Event for %p not available %x\n",
-                          QueryInfo, Status));
+
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: MCE Event fired to WMI -> %x\n", Status));
     }
-    return(Status);
+    else
+    {
+        WmipDebugPrintEx(
+            (DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: MCE Event for %p not available %x\n", QueryInfo, Status));
+    }
+    return (Status);
 }
 
-void WmipMceWorkerRoutine(    
-    IN PVOID Context             // MCEQUERYINFO
-    )
+void WmipMceWorkerRoutine(IN PVOID Context // MCEQUERYINFO
+)
 /*++
 
 Routine Description:
@@ -470,9 +379,7 @@ Return Value:
 
     PAGED_CODE();
 
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: WmipMceWorkerRoutine %p enter\n",
-                     QueryInfo));
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: WmipMceWorkerRoutine %p enter\n", QueryInfo));
 
     WmipAssert(QueryInfo->ItemsOutstanding > 0);
 
@@ -491,11 +398,12 @@ Return Value:
             {
                 Status = WmipQueryLogAndFireEvent(QueryInfo);
                 x = InterlockedDecrement(&QueryInfo->ItemsOutstanding);
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: %p transitions back to %d\n",
-                     QueryInfo, x));
+                WmipDebugPrintEx(
+                    (DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: %p transitions back to %d\n", QueryInfo, x));
             } while (x != 0);
-        } else {
+        }
+        else
+        {
             //
             // We accomplish polling by calling into the hal and querying
             // for the logs until the hal returns an error
@@ -511,18 +419,15 @@ Return Value:
             // since if a polling interval elasped while we were processing we
             // just ignore it as there is no point in polling again right now.
             //
-            InterlockedExchange(&QueryInfo->ItemsOutstanding,
-                                    0);
+            InterlockedExchange(&QueryInfo->ItemsOutstanding, 0);
         }
     }
 }
 
-void WmipMceDispatchRoutine(
-    PMCEQUERYINFO QueryInfo
-    )
+void WmipMceDispatchRoutine(PMCEQUERYINFO QueryInfo)
 {
     ULONG x;
-    
+
     //
     // Increment the number of items that are outstanding for this info
     // class. If the number of items outstanding transitions from 0 to
@@ -530,38 +435,28 @@ void WmipMceDispatchRoutine(
     // to be queued
     //
     x = InterlockedIncrement(&QueryInfo->ItemsOutstanding);
-    
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: WmipMceDispatchRoutine %p transition to %d\n",
-                     QueryInfo,
-                     x));
-    
+
+    WmipDebugPrintEx(
+        (DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: WmipMceDispatchRoutine %p transition to %d\n", QueryInfo, x));
+
     if (x == 1)
     {
-        ExQueueWorkItem(&QueryInfo->WorkItem,
-                        DelayedWorkQueue);
+        ExQueueWorkItem(&QueryInfo->WorkItem, DelayedWorkQueue);
     }
 }
 
-void WmipMceDpcRoutine(    
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,     // Not Used
-    IN PVOID SystemArgument1,     // MCEQUERYINFO
-    IN PVOID SystemArgument2      // Not Used
-    )
+void WmipMceDpcRoutine(IN PKDPC Dpc,
+                       IN PVOID DeferredContext, // Not Used
+                       IN PVOID SystemArgument1, // MCEQUERYINFO
+                       IN PVOID SystemArgument2  // Not Used
+)
 {
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: WmipMceDpcRoutine %p Enter\n",
-                     SystemArgument1));
-    
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: WmipMceDpcRoutine %p Enter\n", SystemArgument1));
+
     WmipMceDispatchRoutine((PMCEQUERYINFO)SystemArgument1);
 }
 
-VOID
-WmipMceTimerRoutine(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PVOID Context
-    )
+VOID WmipMceTimerRoutine(IN PDEVICE_OBJECT DeviceObject, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -589,9 +484,8 @@ Return Value:
         (WmipCpeQueryInfo.PollCounter != HAL_CPE_INTERRUPTS_BASED) &&
         (InterlockedDecrement(&WmipCpeQueryInfo.PollCounter) == 0))
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: CpeTimer expired\n"));
-    
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: CpeTimer expired\n"));
+
         WmipMceDispatchRoutine(&WmipCpeQueryInfo);
         WmipCpeQueryInfo.PollCounter = WmipCpeQueryInfo.PollFrequency;
     }
@@ -600,19 +494,14 @@ Return Value:
         (WmipCmcQueryInfo.PollCounter != HAL_CMC_INTERRUPTS_BASED) &&
         (InterlockedDecrement(&WmipCmcQueryInfo.PollCounter) == 0))
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: CmcTimer expired\n"));
-    
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: CmcTimer expired\n"));
+
         WmipMceDispatchRoutine(&WmipCmcQueryInfo);
         WmipCmcQueryInfo.PollCounter = WmipCmcQueryInfo.PollFrequency;
     }
-
 }
 
-BOOLEAN WmipCommonMceDelivery(
-    IN PMCEQUERYINFO QueryInfo,
-    IN PVOID Token
-    )
+BOOLEAN WmipCommonMceDelivery(IN PMCEQUERYINFO QueryInfo, IN PVOID Token)
 /*++
 
 Routine Description:
@@ -633,41 +522,35 @@ Return Value:
 --*/
 {
     BOOLEAN ret;
-    
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: MceDelivery %p\n",
-                     QueryInfo));
+
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: MceDelivery %p\n", QueryInfo));
 
     //
     // Store the HAL token which is needed to retrieve the logs from
     // the hal
     //
     QueryInfo->Token = Token;
-    
+
     //
     // If we are ready to handle the logs and we are dealing with thse
     // logs  on an interrupt basis, then go ahead and queue a DPC to handle
     // processing the log
     //
-    if ((WmipMCEState == MCE_STATE_RUNNING) &&
-        (QueryInfo->PollCounter == HAL_CMC_INTERRUPTS_BASED))
-          
+    if ((WmipMCEState == MCE_STATE_RUNNING) && (QueryInfo->PollCounter == HAL_CMC_INTERRUPTS_BASED))
+
     {
-        KeInsertQueueDpc(&QueryInfo->Dpc,
-                         QueryInfo,
-                         NULL);
+        KeInsertQueueDpc(&QueryInfo->Dpc, QueryInfo, NULL);
         ret = TRUE;
-    } else {
+    }
+    else
+    {
         ret = FALSE;
     }
 
-    return(ret);
+    return (ret);
 }
 
-BOOLEAN WmipMcaDelivery(
-    IN PVOID Reserved,
-    IN PVOID Argument2
-    )
+BOOLEAN WmipMcaDelivery(IN PVOID Reserved, IN PVOID Argument2)
 /*++
 
 Routine Description:
@@ -688,16 +571,12 @@ Return Value:
 --*/
 {
     BOOLEAN ret;
-    
-    ret = WmipCommonMceDelivery(&WmipMcaQueryInfo,
-                                Reserved);
-    return(ret);
+
+    ret = WmipCommonMceDelivery(&WmipMcaQueryInfo, Reserved);
+    return (ret);
 }
 
-BOOLEAN WmipCmcDelivery(
-    IN PVOID Reserved,
-    IN PVOID Argument2
-    )
+BOOLEAN WmipCmcDelivery(IN PVOID Reserved, IN PVOID Argument2)
 /*++
 
 Routine Description:
@@ -720,16 +599,12 @@ Return Value:
 --*/
 {
     BOOLEAN ret;
-    
-    ret = WmipCommonMceDelivery(&WmipCmcQueryInfo,
-                                Reserved);
-    return(ret);
+
+    ret = WmipCommonMceDelivery(&WmipCmcQueryInfo, Reserved);
+    return (ret);
 }
 
-BOOLEAN WmipCpeDelivery(
-    IN PVOID Reserved,
-    IN PVOID Argument2
-    )
+BOOLEAN WmipCpeDelivery(IN PVOID Reserved, IN PVOID Argument2)
 /*++
 
 Routine Description:
@@ -752,16 +627,12 @@ Return Value:
 --*/
 {
     BOOLEAN ret;
-    
-    ret = WmipCommonMceDelivery(&WmipCpeQueryInfo,
-                                Reserved);
-    return(ret);
+
+    ret = WmipCommonMceDelivery(&WmipCpeQueryInfo, Reserved);
+    return (ret);
 }
 
-BOOLEAN WmipMceDelivery(
-    IN PVOID Reserved,
-    IN PVOID Argument2
-    )
+BOOLEAN WmipMceDelivery(IN PVOID Reserved, IN PVOID Argument2)
 /*++
 
 Routine Description:
@@ -781,15 +652,11 @@ Return Value:
 
 --*/
 {
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: MCEDelivery\n"));
-    return(FALSE);
-    
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: MCEDelivery\n"));
+    return (FALSE);
 }
 
-void WmipProcessPrevMcaLogs(
-    void
-    )
+void WmipProcessPrevMcaLogs(void)
 /*++
 
 Routine Description:
@@ -814,11 +681,11 @@ Return Value:
     ULONG prevLogCount;
     PULONG ptr;
     ULONG sizeNeeded;
-    
+
     PAGED_CODE();
 
     InitializeListHead(&list);
-    
+
     sizeNeeded = sizeof(ULONG);
     prevLogCount = 0;
     do
@@ -826,13 +693,8 @@ Return Value:
         //
         // Read a log out of the HAL
         //
-        status = WmipGetLogFromHal(HalMcaLogInformation,
-                                   WmipMcaQueryInfo.Token,
-                                   &wnode,
-                                   &log,
-                                   &size,
-                                   WmipMcaQueryInfo.MaxSize,
-                                   &WmipMcaQueryInfo.WnodeGuid);
+        status = WmipGetLogFromHal(HalMcaLogInformation, WmipMcaQueryInfo.Token, &wnode, &log, &size,
+                                   WmipMcaQueryInfo.MaxSize, &WmipMcaQueryInfo.WnodeGuid);
 
         if (NT_SUCCESS(status))
         {
@@ -846,25 +708,21 @@ Return Value:
             // track of how much memory we will need
             //
             prevLogCount++;
-            sizeNeeded += sizeof(ULONG) + ((size +3)&~3);
+            sizeNeeded += sizeof(ULONG) + ((size + 3) & ~3);
             InsertTailList(&list, (PLIST_ENTRY)wnode);
 
-            WmipGenerateMCAEventlog((PUCHAR)log,
-                                    size,
-                                    TRUE);                
+            WmipGenerateMCAEventlog((PUCHAR)log, size, TRUE);
         }
-        
+
     } while (NT_SUCCESS(status));
 
-    if (! IsListEmpty(&list))
+    if (!IsListEmpty(&list))
     {
         //
         // We have collected a set of previous logs, so we need to
         // build the buffer containing the aggregation of those logs
         //
-        WmipRawMCA = ExAllocatePoolWithTag(PagedPool,
-                                    sizeNeeded,
-                                    WmipMCAPoolTag);
+        WmipRawMCA = ExAllocatePoolWithTag(PagedPool, sizeNeeded, WmipMCAPoolTag);
         WmipRawMCASize = sizeNeeded;
 
         //
@@ -876,8 +734,8 @@ Return Value:
         //
         // Loop over all previous logs
         //
-        while (! IsListEmpty(&list))
-        {           
+        while (!IsListEmpty(&list))
+        {
             wnode = (PWNODE_SINGLE_INSTANCE)RemoveHeadList(&list);
             if (ptr != NULL)
             {
@@ -896,18 +754,16 @@ Return Value:
                 // Copy the log data into our buffer
                 //
                 RtlCopyMemory(ptr, log, size);
-                size = (size +3)&~3;
-                ptr = (PULONG)( ((PUCHAR)ptr) + size );
+                size = (size + 3) & ~3;
+                ptr = (PULONG)(((PUCHAR)ptr) + size);
             }
-            
+
             ExFreePool(wnode);
         }
     }
 }
 
-NTSTATUS WmipRegisterMcaHandler(
-    ULONG Phase
-    )
+NTSTATUS WmipRegisterMcaHandler(ULONG Phase)
 /*++
 
 Routine Description:
@@ -939,19 +795,15 @@ Return Value:
         // loaded so that the kernel can register its kernel error
         // handler before any driver gets a chance to do so.
         //
-        
+
         //
         // Get the size of the logs and any polling/interrupt policies
         //
         HalErrorInfo.Version = HAL_ERROR_INFO_VERSION;
 
-        Status = HalQuerySystemInformation(HalErrorInformation,
-                                           sizeof(HAL_ERROR_INFO),
-                                           &HalErrorInfo,
-                                           &ReturnSize);
+        Status = HalQuerySystemInformation(HalErrorInformation, sizeof(HAL_ERROR_INFO), &HalErrorInfo, &ReturnSize);
 
-        if ((NT_SUCCESS(Status)) &&
-            (ReturnSize >= sizeof(HAL_ERROR_INFO)))
+        if ((NT_SUCCESS(Status)) && (ReturnSize >= sizeof(HAL_ERROR_INFO)))
         {
             //
             // Initialize MCA QueryInfo structure
@@ -965,84 +817,68 @@ Return Value:
             // Corrected MCA are always delivered by interrupts
             //
             WmipSetQueryPollOrInt(&WmipMcaQueryInfo, HAL_MCA_INTERRUPTS_BASED);
-            
-            WmipMcaQueryInfo.Token = (PVOID)(ULONG_PTR) HalErrorInfo.McaKernelToken;
+
+            WmipMcaQueryInfo.Token = (PVOID)(ULONG_PTR)HalErrorInfo.McaKernelToken;
 
             //
             // Initialize DPC and Workitem for processing
             //
-            KeInitializeDpc(&WmipMcaQueryInfo.Dpc,
-                            WmipMceDpcRoutine,
-                            NULL);
+            KeInitializeDpc(&WmipMcaQueryInfo.Dpc, WmipMceDpcRoutine, NULL);
 
-            ExInitializeWorkItem(&WmipMcaQueryInfo.WorkItem,
-                                 WmipMceWorkerRoutine,
-                                 &WmipMcaQueryInfo);
+            ExInitializeWorkItem(&WmipMcaQueryInfo.WorkItem, WmipMceWorkerRoutine, &WmipMcaQueryInfo);
 
 
             //
             // Initialize CMC QueryInfo structure
-            //          
+            //
             if (HalErrorInfo.CmcMaxSize != 0)
             {
                 WmipCmcQueryInfo.MaxSize = HalErrorInfo.CmcMaxSize;
             }
 
 #ifdef MCE_INSERTION
-            WmipSetQueryPollOrInt(&WmipCmcQueryInfo,
-                                  HAL_CMC_INTERRUPTS_BASED);
+            WmipSetQueryPollOrInt(&WmipCmcQueryInfo, HAL_CMC_INTERRUPTS_BASED);
             WmipCmcQueryInfo.LogHead.Flink = &WmipCmcQueryInfo.LogHead;
             WmipCmcQueryInfo.LogHead.Blink = &WmipCmcQueryInfo.LogHead;
 #else
-            WmipSetQueryPollOrInt(&WmipCmcQueryInfo,
-                                  HalErrorInfo.CmcPollingInterval);
+            WmipSetQueryPollOrInt(&WmipCmcQueryInfo, HalErrorInfo.CmcPollingInterval);
 #endif
-            
-            WmipCmcQueryInfo.Token = (PVOID)(ULONG_PTR) HalErrorInfo.CmcKernelToken;
+
+            WmipCmcQueryInfo.Token = (PVOID)(ULONG_PTR)HalErrorInfo.CmcKernelToken;
 
             //
             // Initialize DPC and Workitem for processing
             //
-            KeInitializeDpc(&WmipCmcQueryInfo.Dpc,
-                            WmipMceDpcRoutine,
-                            NULL);
+            KeInitializeDpc(&WmipCmcQueryInfo.Dpc, WmipMceDpcRoutine, NULL);
 
-            ExInitializeWorkItem(&WmipCmcQueryInfo.WorkItem,
-                                 WmipMceWorkerRoutine,
-                                 &WmipCmcQueryInfo);
+            ExInitializeWorkItem(&WmipCmcQueryInfo.WorkItem, WmipMceWorkerRoutine, &WmipCmcQueryInfo);
 
 
             //
             // Initialize CPE QueryInfo structure
-            //          
+            //
             if (HalErrorInfo.CpeMaxSize != 0)
             {
                 WmipCpeQueryInfo.MaxSize = HalErrorInfo.CpeMaxSize;
             }
 
 #ifdef MCE_INSERTION
-            WmipSetQueryPollOrInt(&WmipCpeQueryInfo,
-                                  60);
+            WmipSetQueryPollOrInt(&WmipCpeQueryInfo, 60);
             WmipCpeQueryInfo.LogHead.Flink = &WmipCpeQueryInfo.LogHead;
             WmipCpeQueryInfo.LogHead.Blink = &WmipCpeQueryInfo.LogHead;
 #else
-            WmipSetQueryPollOrInt(&WmipCpeQueryInfo,
-                                  HalErrorInfo.CpePollingInterval);
+            WmipSetQueryPollOrInt(&WmipCpeQueryInfo, HalErrorInfo.CpePollingInterval);
 #endif
-            
-            WmipCpeQueryInfo.Token = (PVOID)(ULONG_PTR) HalErrorInfo.CpeKernelToken;
+
+            WmipCpeQueryInfo.Token = (PVOID)(ULONG_PTR)HalErrorInfo.CpeKernelToken;
 
             //
             // Initialize DPC and Workitem for processing
             //
-            KeInitializeDpc(&WmipCpeQueryInfo.Dpc,
-                            WmipMceDpcRoutine,
-                            NULL);
+            KeInitializeDpc(&WmipCpeQueryInfo.Dpc, WmipMceDpcRoutine, NULL);
 
-            ExInitializeWorkItem(&WmipCpeQueryInfo.WorkItem,
-                                 WmipMceWorkerRoutine,
-                                 &WmipCpeQueryInfo);
-            
+            ExInitializeWorkItem(&WmipCpeQueryInfo.WorkItem, WmipMceWorkerRoutine, &WmipCpeQueryInfo);
+
 
             //
             // Register our CMC and MCA callbacks. And if interrupt driven CPE
@@ -1054,23 +890,23 @@ Return Value:
             KernelMcaHandlerInfo.KernelCpeDelivery = WmipCpeDelivery;
             KernelMcaHandlerInfo.KernelMceDelivery = WmipMceDelivery;
 
-            Status = HalSetSystemInformation(HalKernelErrorHandler,
-                                             sizeof(KERNEL_ERROR_HANDLER_INFO),
+            Status = HalSetSystemInformation(HalKernelErrorHandler, sizeof(KERNEL_ERROR_HANDLER_INFO),
                                              &KernelMcaHandlerInfo);
 
             if (NT_SUCCESS(Status))
             {
                 WmipMCEState = MCE_STATE_REGISTERED;
-            } else {
+            }
+            else
+            {
                 WmipMCEState = MCE_STATE_ERROR;
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID,
-                                  DPFLTR_MCA_LEVEL | DPFLTR_ERROR_LEVEL,
-                                  "WMI: Error %x registering MCA error handlers\n",
-                                  Status));
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL | DPFLTR_ERROR_LEVEL,
+                                  "WMI: Error %x registering MCA error handlers\n", Status));
             }
         }
-
-    } else if (WmipMCEState != MCE_STATE_ERROR) {
+    }
+    else if (WmipMCEState != MCE_STATE_ERROR)
+    {
         //
         // Phase 1 initialization is done after all of the boot drivers
         // have loaded and have had a chance to register for WMI event
@@ -1097,8 +933,7 @@ Return Value:
                     UCHAR Buffer[0x400];
                     PERROR_RECORD_HEADER rh;
                     PERROR_SECTION_HEADER sh;
-#define ERROR_SMBIOS_GUID \
-    { 0xe429faf5, 0x3cb7, 0x11d4, { 0xbc, 0xa7, 0x0, 0x80, 0xc7, 0x3c, 0x88, 0x81 }}
+#define ERROR_SMBIOS_GUID { 0xe429faf5, 0x3cb7, 0x11d4, { 0xbc, 0xa7, 0x0, 0x80, 0xc7, 0x3c, 0x88, 0x81 } }
 
                     ERROR_DEVICE_GUID ErrorSmbiosGuid = ERROR_SMBIOS_GUID;
 
@@ -1131,16 +966,12 @@ Return Value:
 // DEBUG
 #endif
 
-        
+
         HalErrorInfo.Version = HAL_ERROR_INFO_VERSION;
 
-        Status = HalQuerySystemInformation(HalErrorInformation,
-                                           sizeof(HAL_ERROR_INFO),
-                                           &HalErrorInfo,
-                                           &ReturnSize);
+        Status = HalQuerySystemInformation(HalErrorInformation, sizeof(HAL_ERROR_INFO), &HalErrorInfo, &ReturnSize);
 
-        if ((NT_SUCCESS(Status)) &&
-            (ReturnSize >= sizeof(HAL_ERROR_INFO)))
+        if ((NT_SUCCESS(Status)) && (ReturnSize >= sizeof(HAL_ERROR_INFO)))
         {
             if (HalErrorInfo.McaPreviousEventsCount != 0)
             {
@@ -1149,19 +980,15 @@ Return Value:
                 // make them available via WMI
                 //
                 WmipProcessPrevMcaLogs();
-
-                
             }
-        }        
+        }
 
         if (((WmipCmcQueryInfo.PollCounter != HAL_CMC_DISABLED) &&
              (WmipCmcQueryInfo.PollCounter != HAL_CMC_INTERRUPTS_BASED)) ||
             ((WmipCpeQueryInfo.PollCounter != HAL_CPE_DISABLED) &&
              (WmipCpeQueryInfo.PollCounter != HAL_CPE_INTERRUPTS_BASED)))
         {
-            Status2 = IoInitializeTimer(WmipServiceDeviceObject,
-                                        WmipMceTimerRoutine,
-                                        NULL);
+            Status2 = IoInitializeTimer(WmipServiceDeviceObject, WmipMceTimerRoutine, NULL);
             if (NT_SUCCESS(Status2))
             {
                 //
@@ -1169,13 +996,13 @@ Return Value:
                 // there are any CMC/CPE that were generated before now
                 //
                 IoStartTimer(WmipServiceDeviceObject);
-            } else {
+            }
+            else
+            {
                 //
                 // CONSIDER: Figure out another way to poll
                 //
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                  "WMI: Cant start IoTimer %x\n",
-                                  Status2));
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: Cant start IoTimer %x\n", Status2));
             }
         }
 
@@ -1183,17 +1010,14 @@ Return Value:
         // Flag that we are now able to start firing events
         //
         WmipMCEState = MCE_STATE_RUNNING;
-        
+
         Status = STATUS_SUCCESS;
     }
-    
-    return(Status);
+
+    return (Status);
 }
 
-NTSTATUS WmipGetRawMCAInfo(
-    OUT PUCHAR Buffer,
-    IN OUT PULONG BufferSize
-    )
+NTSTATUS WmipGetRawMCAInfo(OUT PUCHAR Buffer, IN OUT PULONG BufferSize)
 /*++
 
 Routine Description:
@@ -1213,28 +1037,24 @@ Return Value:
     NTSTATUS Status;
 
     PAGED_CODE();
-    
+
     *BufferSize = WmipRawMCASize;
     if (InBufferSize >= WmipRawMCASize)
     {
         RtlCopyMemory(Buffer, WmipRawMCA, WmipRawMCASize);
         Status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         Status = STATUS_BUFFER_TOO_SMALL;
     }
-    return(Status);
+    return (Status);
 }
 
 
-NTSTATUS WmipGetLogFromHal(
-    IN HAL_QUERY_INFORMATION_CLASS InfoClass,
-    IN PVOID Token,                        
-    IN OUT PWNODE_SINGLE_INSTANCE *Wnode,
-    OUT PERROR_LOGRECORD *Mca,
-    OUT PULONG McaSize,
-    IN ULONG MaxSize,
-    IN LPGUID Guid                         
-    )
+NTSTATUS WmipGetLogFromHal(IN HAL_QUERY_INFORMATION_CLASS InfoClass, IN PVOID Token,
+                           IN OUT PWNODE_SINGLE_INSTANCE *Wnode, OUT PERROR_LOGRECORD *Mca, OUT PULONG McaSize,
+                           IN ULONG MaxSize, IN LPGUID Guid)
 /*++
 
 Routine Description:
@@ -1280,9 +1100,10 @@ Return Value:
     //
     if (Wnode != NULL)
     {
-        WnodeSize = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) +
-                    2 * sizeof(ULONG);
-    } else {
+        WnodeSize = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) + 2 * sizeof(ULONG);
+    }
+    else
+    {
         WnodeSize = 0;
     }
 
@@ -1291,27 +1112,19 @@ Return Value:
     // that this must be in non paged pool as per the HAL.
     //
     Size = MaxSize + WnodeSize;
-                                    
-    Ptr = ExAllocatePoolWithTag(NonPagedPool,
-                                Size,
-                                WmipMCAPoolTag);
+
+    Ptr = ExAllocatePoolWithTag(NonPagedPool, Size, WmipMCAPoolTag);
     if (Ptr != NULL)
     {
         Log = (PERROR_LOGRECORD)((PUCHAR)Ptr + WnodeSize);
         LogSize = Size - WnodeSize;
 
         *(PVOID *)Log = Token;
-        
+
 #ifdef MCE_INSERTION
-        Status = WmipQuerySystemInformation(InfoClass,
-                                           LogSize,
-                                           Log,
-                                           &LogSize);
+        Status = WmipQuerySystemInformation(InfoClass, LogSize, Log, &LogSize);
 #else
-        Status = HalQuerySystemInformation(InfoClass,
-                                           LogSize,
-                                           Log,
-                                           &LogSize);
+        Status = HalQuerySystemInformation(InfoClass, LogSize, Log, &LogSize);
 #endif
 
         if (Status == STATUS_BUFFER_TOO_SMALL)
@@ -1327,26 +1140,23 @@ Return Value:
             // Reallocate the buffer and call the hal to get the log
             //
             Size = LogSize + WnodeSize;
-            Ptr = ExAllocatePoolWithTag(NonPagedPool,
-                                        Size,
-                                        WmipMCAPoolTag);
+            Ptr = ExAllocatePoolWithTag(NonPagedPool, Size, WmipMCAPoolTag);
             if (Ptr != NULL)
             {
                 Log = (PERROR_LOGRECORD)((PUCHAR)Ptr + WnodeSize);
                 LogSize = Size - WnodeSize;
 
                 *(PVOID *)Log = Token;
-                Status = HalQuerySystemInformation(InfoClass,
-                                                    LogSize,
-                                                    Log,
-                                                    &LogSize);
+                Status = HalQuerySystemInformation(InfoClass, LogSize, Log, &LogSize);
 
                 //
                 // The hal gave us a buffer size needed that was too
                 // small, so lets stop right here and let him know]
                 //
                 WmipAssert(Status != STATUS_BUFFER_TOO_SMALL);
-            } else {
+            }
+            else
+            {
                 Status = STATUS_INSUFFICIENT_RESOURCES;
             }
         }
@@ -1363,20 +1173,17 @@ Return Value:
                 // Caller requested buffer returned within a WNODE, so
                 // build up the wnode around the log data
                 //
-                
+
                 WnodeSI = (PWNODE_SINGLE_INSTANCE)Ptr;
-                Status = WmipBuildMcaCmcEvent(WnodeSI,
-                                              Guid,
-                                              NULL,
-                                              LogSize);
+                Status = WmipBuildMcaCmcEvent(WnodeSI, Guid, NULL, LogSize);
                 *Wnode = WnodeSI;
             }
-            
+
             *Mca = Log;
             *McaSize = LogSize;
         }
 
-        if ((! NT_SUCCESS(Status)) && (Ptr != NULL))
+        if ((!NT_SUCCESS(Status)) && (Ptr != NULL))
         {
             //
             // If the function failed, but we have an allocated buffer
@@ -1384,12 +1191,13 @@ Return Value:
             //
             ExFreePool(Ptr);
         }
-        
-    } else {
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    return(Status);
+    return (Status);
 }
 
 typedef enum
@@ -1401,11 +1209,7 @@ typedef enum
     CpuStateCheckMS = 4
 };
 
-void WmipGenerateMCAEventlog(
-    PUCHAR ErrorLog,
-    ULONG ErrorLogSize,
-    BOOLEAN IsFatal
-    )
+void WmipGenerateMCAEventlog(PUCHAR ErrorLog, ULONG ErrorLogSize, BOOLEAN IsFatal)
 {
 
     PERROR_RECORD_HEADER RecordHeader;
@@ -1423,26 +1227,22 @@ void WmipGenerateMCAEventlog(
     BOOLEAN FirstError;
 
     PAGED_CODE();
-    
+
     RecordHeader = (PERROR_RECORD_HEADER)ErrorLog;
-    
+
     //
     // Allocate a buffer large enough to accomodate any type of MCA.
     // Right now the largest is MSMCAEvent_MemoryError. If this changes
     // then this code should be updated
-    //  
-    BufferSize = ((sizeof(WNODE_SINGLE_INSTANCE) +
-                   (sizeof(USHORT) + sizeof(MCA_EVENT_INSTANCE_NAME)) +7) & ~7) +
-                 sizeof(MSMCAEvent_MemoryError) +
-                 ErrorLogSize;
+    //
+    BufferSize = ((sizeof(WNODE_SINGLE_INSTANCE) + (sizeof(USHORT) + sizeof(MCA_EVENT_INSTANCE_NAME)) + 7) & ~7) +
+                 sizeof(MSMCAEvent_MemoryError) + ErrorLogSize;
 
     //
     // Allocate a buffer to build the event
     //
-    Buffer = ExAllocatePoolWithTag(PagedPool,
-                                   BufferSize,
-                                   WmipMCAPoolTag);
-    
+    Buffer = ExAllocatePoolWithTag(PagedPool, BufferSize, WmipMCAPoolTag);
+
     if (Buffer != NULL)
     {
         //
@@ -1452,11 +1252,10 @@ void WmipGenerateMCAEventlog(
         Wnode->WnodeHeader.BufferSize = BufferSize;
         Wnode->WnodeHeader.Linkage = 0;
         WmiInsertTimestamp(&Wnode->WnodeHeader);
-        Wnode->WnodeHeader.Flags = WNODE_FLAG_SINGLE_INSTANCE |
-                                   WNODE_FLAG_EVENT_ITEM;
+        Wnode->WnodeHeader.Flags = WNODE_FLAG_SINGLE_INSTANCE | WNODE_FLAG_EVENT_ITEM;
         Wnode->OffsetInstanceName = sizeof(WNODE_SINGLE_INSTANCE);
-        Wnode->DataBlockOffset = ((sizeof(WNODE_SINGLE_INSTANCE) +
-                       (sizeof(USHORT) + sizeof(MCA_EVENT_INSTANCE_NAME)) +7) & ~7);
+        Wnode->DataBlockOffset =
+            ((sizeof(WNODE_SINGLE_INSTANCE) + (sizeof(USHORT) + sizeof(MCA_EVENT_INSTANCE_NAME)) + 7) & ~7);
 
         w = (PWCHAR)OffsetToPtr(Wnode, Wnode->OffsetInstanceName);
         *w++ = sizeof(MCA_EVENT_INSTANCE_NAME);
@@ -1466,26 +1265,24 @@ void WmipGenerateMCAEventlog(
         // Fill in the common fields of the event data
         //
         Header = (PMSMCAEvent_Header)OffsetToPtr(Wnode, Wnode->DataBlockOffset);
-        Header->Cpu = MCA_UNDEFINED_CPU;   // assume CPU will be undefined
+        Header->Cpu = MCA_UNDEFINED_CPU; // assume CPU will be undefined
         Header->AdditionalErrors = 0;
-            
+
         if ((ErrorLogSize < sizeof(ERROR_RECORD_HEADER)) ||
-            (RecordHeader->Revision.Revision != SAL_30_ERROR_REVISION) ||
-            (RecordHeader->Length > ErrorLogSize))
+            (RecordHeader->Revision.Revision != SAL_30_ERROR_REVISION) || (RecordHeader->Length > ErrorLogSize))
         {
             //
             // Record header is not SAL 3.0 compliant so we do not try
             // to interpert the record
             //
             WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                  "WMI: Invalid MCA Record revision %x or size %d at %p\n"
-                                  "do !mca %p to dump MCA record\n",
-                                  RecordHeader->Revision,
-                                  RecordHeader->Length,
-                                  RecordHeader,
-                                  RecordHeader));
+                              "WMI: Invalid MCA Record revision %x or size %d at %p\n"
+                              "do !mca %p to dump MCA record\n",
+                              RecordHeader->Revision, RecordHeader->Length, RecordHeader, RecordHeader));
             Status = STATUS_INVALID_PARAMETER;
-        } else {
+        }
+        else
+        {
             //
             // Valid 3.0 record, gather the record id and severity from
             // the header
@@ -1501,7 +1298,7 @@ void WmipGenerateMCAEventlog(
             // since the HAL will change this value to ErrorCorrected
             //
             IsFatal = (RecordHeader->ErrorSeverity != ErrorCorrected);
-            
+
             //
             // Loop over all sections within the record.
             //
@@ -1511,7 +1308,7 @@ void WmipGenerateMCAEventlog(
             SizeUsed = sizeof(ERROR_RECORD_HEADER);
             ModInfo = NULL;
             FirstError = TRUE;
-            
+
             while (SizeUsed < ErrorLogSize)
             {
                 //
@@ -1519,7 +1316,7 @@ void WmipGenerateMCAEventlog(
                 //
                 SectionHeader = (PERROR_SECTION_HEADER)(ErrorLog + SizeUsed);
                 AdvanceSection = TRUE;
-                
+
                 Header->AdditionalErrors++;
 
                 //
@@ -1532,14 +1329,11 @@ void WmipGenerateMCAEventlog(
                     //
                     // Not 3.0 section header so we'll give up on
                     // the whole record
-                    //                              
+                    //
                     WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                          "WMI: Invalid MCA SectionHeader revision %d or length %d at %p\n"
-                                          "do !mca %p to dump MCA record\n",
-                                          SectionHeader->Revision,
-                                          SectionHeader->Length,
-                                          SectionHeader,
-                                          RecordHeader));
+                                      "WMI: Invalid MCA SectionHeader revision %d or length %d at %p\n"
+                                      "do !mca %p to dump MCA record\n",
+                                      SectionHeader->Revision, SectionHeader->Length, SectionHeader, RecordHeader));
 
                     //
                     // We'll break out of the loop since we don't know how to
@@ -1548,7 +1342,9 @@ void WmipGenerateMCAEventlog(
                     //
                     Status = STATUS_INVALID_PARAMETER;
                     break;
-                } else {
+                }
+                else
+                {
                     //
                     // Now determine what type of section we have got. This is
                     // determined by looking at the guid in the section header.
@@ -1561,262 +1357,258 @@ void WmipGenerateMCAEventlog(
                         //
                         PMSMCAEvent_CPUError Event;
                         PERROR_PROCESSOR Processor;
-						ULONG TotalSectionSize;
+                        ULONG TotalSectionSize;
 
-                        WmipAssert( sizeof(MSMCAEvent_MemoryError) >=
-                                    sizeof(MSMCAEvent_CPUError) );
+                        WmipAssert(sizeof(MSMCAEvent_MemoryError) >= sizeof(MSMCAEvent_CPUError));
 
                         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                          "WMI: MCA Section %p indicates processor error\n",
-                                          SectionHeader));
+                                          "WMI: MCA Section %p indicates processor error\n", SectionHeader));
 
-						//
-						// Validate that the section length is large
-						// enough to accomodate all of the information
-						// that it declares
-						//
-						if (SectionHeader->Length >= sizeof(ERROR_PROCESSOR))                            
-						{
-							Event = (PMSMCAEvent_CPUError)Header;
-							Processor = (PERROR_PROCESSOR)SectionHeader;
+                        //
+                        // Validate that the section length is large
+                        // enough to accomodate all of the information
+                        // that it declares
+                        //
+                        if (SectionHeader->Length >= sizeof(ERROR_PROCESSOR))
+                        {
+                            Event = (PMSMCAEvent_CPUError)Header;
+                            Processor = (PERROR_PROCESSOR)SectionHeader;
 
-							//
-							// Validate that section is large enough to
-							// handle all specified ERROR_MODINFO
-							// structs
-							//
-							TotalSectionSize = sizeof(ERROR_PROCESSOR) +
-											 ((Processor->Valid.CacheCheckNum +
-												Processor->Valid.TlbCheckNum +
-												Processor->Valid.BusCheckNum +
-												Processor->Valid.RegFileCheckNum +
-												Processor->Valid.MsCheckNum) *
-											   sizeof(ERROR_MODINFO));
-										   
+                            //
+                            // Validate that section is large enough to
+                            // handle all specified ERROR_MODINFO
+                            // structs
+                            //
+                            TotalSectionSize = sizeof(ERROR_PROCESSOR) +
+                                               ((Processor->Valid.CacheCheckNum + Processor->Valid.TlbCheckNum +
+                                                 Processor->Valid.BusCheckNum + Processor->Valid.RegFileCheckNum +
+                                                 Processor->Valid.MsCheckNum) *
+                                                sizeof(ERROR_MODINFO));
 
-							if (SectionHeader->Length >= TotalSectionSize)
-							{
-								//
-								// Initialize pointer to the current ERROR_MOFINFO
-								//
-								if (ModInfo == NULL)
-								{
-									ModInfo = (PERROR_MODINFO)((PUCHAR)Processor +
-																sizeof(ERROR_PROCESSOR));
-								} else {
-									ModInfo++;
-								}
 
-								switch (CpuErrorState)
-								{
-									case CpuStateCheckCache:
-									{
-										ERROR_CACHE_CHECK Check;
+                            if (SectionHeader->Length >= TotalSectionSize)
+                            {
+                                //
+                                // Initialize pointer to the current ERROR_MOFINFO
+                                //
+                                if (ModInfo == NULL)
+                                {
+                                    ModInfo = (PERROR_MODINFO)((PUCHAR)Processor + sizeof(ERROR_PROCESSOR));
+                                }
+                                else
+                                {
+                                    ModInfo++;
+                                }
 
-										if (Processor->Valid.CacheCheckNum > CpuErrorIndex)
-										{
-											//
-											// We have a cache error that we need to
-											// handle.
-											// Advance to next error in the section,
-											// but don't advance the section
-											//
+                                switch (CpuErrorState)
+                                {
+                                case CpuStateCheckCache:
+                                {
+                                    ERROR_CACHE_CHECK Check;
 
-											WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-															  "WMI: MCA ModInfo %p indicates cache error index %d\n",
-															  ModInfo,
-															  CpuErrorIndex));
+                                    if (Processor->Valid.CacheCheckNum > CpuErrorIndex)
+                                    {
+                                        //
+                                        // We have a cache error that we need to
+                                        // handle.
+                                        // Advance to next error in the section,
+                                        // but don't advance the section
+                                        //
 
-											CpuErrorIndex++;
-											AdvanceSection = FALSE;
+                                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
+                                                          "WMI: MCA ModInfo %p indicates cache error index %d\n",
+                                                          ModInfo, CpuErrorIndex));
 
-											if (FirstError)
-											{
-												Event->Type = IsFatal ? MCA_ERROR_CACHE :
-																		MCA_WARNING_CACHE;
+                                        CpuErrorIndex++;
+                                        AdvanceSection = FALSE;
 
-												Check.CacheCheck = ModInfo->CheckInfo.CheckInfo;
-												Event->Level = (ULONG)Check.Level;
-											}
+                                        if (FirstError)
+                                        {
+                                            Event->Type = IsFatal ? MCA_ERROR_CACHE : MCA_WARNING_CACHE;
 
-											break;
-										} else {
-											CpuErrorState = CpuStateCheckTLB;
-											CpuErrorIndex = 0;
-											// Fall through and see if there are any
-											// TLB errors
-										}                       
-									}
+                                            Check.CacheCheck = ModInfo->CheckInfo.CheckInfo;
+                                            Event->Level = (ULONG)Check.Level;
+                                        }
 
-									case CpuStateCheckTLB:
-									{
-										ERROR_TLB_CHECK Check;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        CpuErrorState = CpuStateCheckTLB;
+                                        CpuErrorIndex = 0;
+                                        // Fall through and see if there are any
+                                        // TLB errors
+                                    }
+                                }
 
-										if (Processor->Valid.TlbCheckNum > CpuErrorIndex)
-										{
-											//
-											// We have a cache error that we need to
-											// handle.
-											// Advance to next error in the section,
-											// but don't advance the section
-											//
-											WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-															  "WMI: MCA ModInfo %p indicates TLB error index %d\n",
-															  ModInfo,
-															  CpuErrorIndex));
-											CpuErrorIndex++;
-											AdvanceSection = FALSE;
+                                case CpuStateCheckTLB:
+                                {
+                                    ERROR_TLB_CHECK Check;
 
-											if (FirstError)
-											{
-												Event->Type = IsFatal ? MCA_ERROR_TLB :
-																		MCA_WARNING_TLB;
+                                    if (Processor->Valid.TlbCheckNum > CpuErrorIndex)
+                                    {
+                                        //
+                                        // We have a cache error that we need to
+                                        // handle.
+                                        // Advance to next error in the section,
+                                        // but don't advance the section
+                                        //
+                                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
+                                                          "WMI: MCA ModInfo %p indicates TLB error index %d\n", ModInfo,
+                                                          CpuErrorIndex));
+                                        CpuErrorIndex++;
+                                        AdvanceSection = FALSE;
 
-												Check.TlbCheck = ModInfo->CheckInfo.CheckInfo;
-												Event->Level = (ULONG)Check.Level;
-											}
+                                        if (FirstError)
+                                        {
+                                            Event->Type = IsFatal ? MCA_ERROR_TLB : MCA_WARNING_TLB;
 
-											break;
-										} else {
-											CpuErrorState = CpuStateCheckBus;
-											CpuErrorIndex = 0;
+                                            Check.TlbCheck = ModInfo->CheckInfo.CheckInfo;
+                                            Event->Level = (ULONG)Check.Level;
+                                        }
 
-											// Fall through and see if there are any
-											// CPU Bus errors
-										}
-									}
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        CpuErrorState = CpuStateCheckBus;
+                                        CpuErrorIndex = 0;
 
-									case CpuStateCheckBus:
-									{
-										if (Processor->Valid.BusCheckNum > CpuErrorIndex)
-										{
-											//
-											// We have a cache error that we need to
-											// handle.
-											// Advance to next error in the section,
-											// but don't advance the section
-											//
-											WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-															  "WMI: MCA ModInfo %p indicates bus error index %d\n",
-															  ModInfo,
-															  CpuErrorIndex));
-											CpuErrorIndex++;
-											AdvanceSection = FALSE;
+                                        // Fall through and see if there are any
+                                        // CPU Bus errors
+                                    }
+                                }
 
-											if (FirstError)
-											{
-												Event->Type = IsFatal ? MCA_ERROR_CPU_BUS :
-																		MCA_WARNING_CPU_BUS;
-											}
+                                case CpuStateCheckBus:
+                                {
+                                    if (Processor->Valid.BusCheckNum > CpuErrorIndex)
+                                    {
+                                        //
+                                        // We have a cache error that we need to
+                                        // handle.
+                                        // Advance to next error in the section,
+                                        // but don't advance the section
+                                        //
+                                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
+                                                          "WMI: MCA ModInfo %p indicates bus error index %d\n", ModInfo,
+                                                          CpuErrorIndex));
+                                        CpuErrorIndex++;
+                                        AdvanceSection = FALSE;
 
-											break;
-										} else {
-											CpuErrorState = CpuStateCheckRegFile;
-											CpuErrorIndex = 0;
+                                        if (FirstError)
+                                        {
+                                            Event->Type = IsFatal ? MCA_ERROR_CPU_BUS : MCA_WARNING_CPU_BUS;
+                                        }
 
-											// Fall through and see if there are any
-											// REG FILE errors
-										}                       
-									}
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        CpuErrorState = CpuStateCheckRegFile;
+                                        CpuErrorIndex = 0;
 
-									case CpuStateCheckRegFile:
-									{
-										if (Processor->Valid.RegFileCheckNum > CpuErrorIndex)
-										{
-											//
-											// We have a cache error that we need to
-											// handle.
-											// Advance to next error in the section,
-											// but don't advance the section
-											//
-											WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-															  "WMI: MCA ModInfo %p indicates reg file error index %d\n",
-															  ModInfo,
-															  CpuErrorIndex));
+                                        // Fall through and see if there are any
+                                        // REG FILE errors
+                                    }
+                                }
 
-											CpuErrorIndex++;
-											AdvanceSection = FALSE;
+                                case CpuStateCheckRegFile:
+                                {
+                                    if (Processor->Valid.RegFileCheckNum > CpuErrorIndex)
+                                    {
+                                        //
+                                        // We have a cache error that we need to
+                                        // handle.
+                                        // Advance to next error in the section,
+                                        // but don't advance the section
+                                        //
+                                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
+                                                          "WMI: MCA ModInfo %p indicates reg file error index %d\n",
+                                                          ModInfo, CpuErrorIndex));
 
-											if (FirstError)
-											{
-												Event->Type = IsFatal ? MCA_ERROR_REGISTER_FILE :
-																		MCA_WARNING_REGISTER_FILE;
-											}
+                                        CpuErrorIndex++;
+                                        AdvanceSection = FALSE;
 
-											break;
-										} else {
-											CpuErrorState = CpuStateCheckMS;
-											CpuErrorIndex = 0;
+                                        if (FirstError)
+                                        {
+                                            Event->Type = IsFatal ? MCA_ERROR_REGISTER_FILE : MCA_WARNING_REGISTER_FILE;
+                                        }
 
-											// Fall through and see if there are any
-											// Micro Architecture errors
-										}                       
-									}
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        CpuErrorState = CpuStateCheckMS;
+                                        CpuErrorIndex = 0;
 
-									case CpuStateCheckMS:
-									{
-										if (Processor->Valid.MsCheckNum > CpuErrorIndex)
-										{
-											//
-											// We have a cache error that we need to
-											// handle.
-											// Advance to next error in the section,
-											// but don't advance the section
-											//
-											WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-															  "WMI: MCA ModInfo %p indicates MAS error index %d\n",
-															  ModInfo,
-															  CpuErrorIndex));
-											CpuErrorIndex++;
-											AdvanceSection = FALSE;
+                                        // Fall through and see if there are any
+                                        // Micro Architecture errors
+                                    }
+                                }
 
-											if (FirstError)
-											{
-												Event->Type = IsFatal ? MCA_ERROR_MAS :
-																		MCA_WARNING_MAS;
-											}
+                                case CpuStateCheckMS:
+                                {
+                                    if (Processor->Valid.MsCheckNum > CpuErrorIndex)
+                                    {
+                                        //
+                                        // We have a cache error that we need to
+                                        // handle.
+                                        // Advance to next error in the section,
+                                        // but don't advance the section
+                                        //
+                                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
+                                                          "WMI: MCA ModInfo %p indicates MAS error index %d\n", ModInfo,
+                                                          CpuErrorIndex));
+                                        CpuErrorIndex++;
+                                        AdvanceSection = FALSE;
 
-											break;
-										} else {
-											//
-											// There are no more errors left in the
-											// error section so we don't want to
-											// generate anything.
-											WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-															  "WMI: MCA ModInfo %p indicates no error index %d\n",
-															  ModInfo,
-															  CpuErrorIndex));
-											Header->AdditionalErrors--;
-											goto DontGenerate;
-										}                                               
-									}                   
-								}
+                                        if (FirstError)
+                                        {
+                                            Event->Type = IsFatal ? MCA_ERROR_MAS : MCA_WARNING_MAS;
+                                        }
 
-								if (FirstError)
-								{
-									Event->Size = ErrorLogSize;
-									RawPtr = Event->RawRecord;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        //
+                                        // There are no more errors left in the
+                                        // error section so we don't want to
+                                        // generate anything.
+                                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
+                                                          "WMI: MCA ModInfo %p indicates no error index %d\n", ModInfo,
+                                                          CpuErrorIndex));
+                                        Header->AdditionalErrors--;
+                                        goto DontGenerate;
+                                    }
+                                }
+                                }
 
-									//
-									// Finish filling in WNODE fields
-									//
-									Wnode->WnodeHeader.Guid = WmipMSMCAEvent_CPUErrorGuid;
-									Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_CPUError,
-																	   RawRecord) +
-														   ErrorLogSize;
-								}
-								Status = STATUS_SUCCESS;
-							}
-						} else {
-							WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-											  "WMI: MCA Processor Error Section %p has invalid size %d\n",
-											  SectionHeader,
-											  SectionHeader->Length));
-							Status = STATUS_INVALID_PARAMETER;
-							break;
-							
-						}
-                    } else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorMemoryGuid)) {
+                                if (FirstError)
+                                {
+                                    Event->Size = ErrorLogSize;
+                                    RawPtr = Event->RawRecord;
+
+                                    //
+                                    // Finish filling in WNODE fields
+                                    //
+                                    Wnode->WnodeHeader.Guid = WmipMSMCAEvent_CPUErrorGuid;
+                                    Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_CPUError, RawRecord) + ErrorLogSize;
+                                }
+                                Status = STATUS_SUCCESS;
+                            }
+                        }
+                        else
+                        {
+                            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
+                                              "WMI: MCA Processor Error Section %p has invalid size %d\n",
+                                              SectionHeader, SectionHeader->Length));
+                            Status = STATUS_INVALID_PARAMETER;
+                            break;
+                        }
+                    }
+                    else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorMemoryGuid))
+                    {
                         //
                         // Build event for MEMORY error eventlog MCA
                         //
@@ -1825,9 +1617,8 @@ void WmipGenerateMCAEventlog(
                         ERROR_MEMORY_VALID Base, Mask;
 
                         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                          "WMI: MCA Section %p indicates memory error\n",
-                                          SectionHeader));
-                        
+                                          "WMI: MCA Section %p indicates memory error\n", SectionHeader));
+
                         Status = STATUS_SUCCESS;
                         if (FirstError)
                         {
@@ -1843,28 +1634,24 @@ void WmipGenerateMCAEventlog(
                                 //
                                 // Fill in the data from the MCA within the WMI event
                                 //
-                                if ((Memory->Valid.PhysicalAddress == 1) &&
-                                    (Memory->Valid.AddressMask == 1) &&
-                                    (Memory->Valid.Card == 1) &&
-                                    (Memory->Valid.Module == 1))
+                                if ((Memory->Valid.PhysicalAddress == 1) && (Memory->Valid.AddressMask == 1) &&
+                                    (Memory->Valid.Card == 1) && (Memory->Valid.Module == 1))
                                 {
-                                    Event->Type = IsFatal ? MCA_ERROR_MEM_1_2_5_4 :
-                                                            MCA_WARNING_MEM_1_2_5_4;
-                                } else if ((Memory->Valid.PhysicalAddress == 1) &&
-                                           (Memory->Valid.AddressMask == 1) &&
-                                           (Memory->Valid.Module == 1))
+                                    Event->Type = IsFatal ? MCA_ERROR_MEM_1_2_5_4 : MCA_WARNING_MEM_1_2_5_4;
+                                }
+                                else if ((Memory->Valid.PhysicalAddress == 1) && (Memory->Valid.AddressMask == 1) &&
+                                         (Memory->Valid.Module == 1))
 
                                 {
-                                    Event->Type = IsFatal ? MCA_ERROR_MEM_1_2_5 :
-                                                            MCA_WARNING_MEM_1_2_5;
-                                } else if ((Memory->Valid.PhysicalAddress == 1) &&
-                                           (Memory->Valid.AddressMask == 1))
+                                    Event->Type = IsFatal ? MCA_ERROR_MEM_1_2_5 : MCA_WARNING_MEM_1_2_5;
+                                }
+                                else if ((Memory->Valid.PhysicalAddress == 1) && (Memory->Valid.AddressMask == 1))
                                 {
-                                    Event->Type = IsFatal ? MCA_ERROR_MEM_1_2:
-                                                            MCA_WARNING_MEM_1_2;
-                                } else {
-                                    Event->Type = IsFatal ? MCA_ERROR_MEM_UNKNOWN:
-                                                            MCA_WARNING_MEM_UNKNOWN;
+                                    Event->Type = IsFatal ? MCA_ERROR_MEM_1_2 : MCA_WARNING_MEM_1_2;
+                                }
+                                else
+                                {
+                                    Event->Type = IsFatal ? MCA_ERROR_MEM_UNKNOWN : MCA_WARNING_MEM_UNKNOWN;
                                 }
 
                                 Event->VALIDATION_BITS = Memory->Valid.Valid;
@@ -1891,65 +1678,48 @@ void WmipGenerateMCAEventlog(
                                 // Finish filling in WNODE fields
                                 //
                                 Wnode->WnodeHeader.Guid = WmipMSMCAEvent_MemoryErrorGuid;
-                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_MemoryError,
-                                                                   RawRecord) +
-                                                       ErrorLogSize;
-                            } else {
+                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_MemoryError, RawRecord) + ErrorLogSize;
+                            }
+                            else
+                            {
                                 WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
                                                   "WMI: MCA Memory Error Section %p has invalid size %d\n",
-                                                  SectionHeader,
-                                                  SectionHeader->Length));
+                                                  SectionHeader, SectionHeader->Length));
                                 Status = STATUS_INVALID_PARAMETER;
                                 break;
                             }
                         }
-                    } else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorPCIBusGuid)) {
+                    }
+                    else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorPCIBusGuid))
+                    {
                         //
                         // Build event for PCI Component MCA
                         //
                         PMSMCAEvent_PCIBusError Event;
                         PERROR_PCI_BUS PciBus;
-                        ULONG PCIBusErrorTypes[] = {
-                            MCA_WARNING_PCI_BUS_PARITY,
-                            MCA_ERROR_PCI_BUS_PARITY,
-                            MCA_WARNING_PCI_BUS_SERR,
-                            MCA_ERROR_PCI_BUS_SERR,
-                            MCA_WARNING_PCI_BUS_MASTER_ABORT,
-                            MCA_ERROR_PCI_BUS_MASTER_ABORT,
-                            MCA_WARNING_PCI_BUS_TIMEOUT,
-                            MCA_ERROR_PCI_BUS_TIMEOUT,
-                            MCA_WARNING_PCI_BUS_PARITY,
-                            MCA_ERROR_PCI_BUS_PARITY,
-                            MCA_WARNING_PCI_BUS_PARITY,
-                            MCA_ERROR_PCI_BUS_PARITY,
-                            MCA_WARNING_PCI_BUS_PARITY,
-                            MCA_ERROR_PCI_BUS_PARITY
-                        };
+                        ULONG PCIBusErrorTypes[] = { MCA_WARNING_PCI_BUS_PARITY,       MCA_ERROR_PCI_BUS_PARITY,
+                                                     MCA_WARNING_PCI_BUS_SERR,         MCA_ERROR_PCI_BUS_SERR,
+                                                     MCA_WARNING_PCI_BUS_MASTER_ABORT, MCA_ERROR_PCI_BUS_MASTER_ABORT,
+                                                     MCA_WARNING_PCI_BUS_TIMEOUT,      MCA_ERROR_PCI_BUS_TIMEOUT,
+                                                     MCA_WARNING_PCI_BUS_PARITY,       MCA_ERROR_PCI_BUS_PARITY,
+                                                     MCA_WARNING_PCI_BUS_PARITY,       MCA_ERROR_PCI_BUS_PARITY,
+                                                     MCA_WARNING_PCI_BUS_PARITY,       MCA_ERROR_PCI_BUS_PARITY };
 
                         ULONG PCIBusErrorTypesNoInfo[] = {
-                            MCA_WARNING_PCI_BUS_PARITY_NO_INFO,
-                            MCA_ERROR_PCI_BUS_PARITY_NO_INFO,
-                            MCA_WARNING_PCI_BUS_SERR_NO_INFO,
-                            MCA_ERROR_PCI_BUS_SERR_NO_INFO,
-                            MCA_WARNING_PCI_BUS_MASTER_ABORT_NO_INFO,
-                            MCA_ERROR_PCI_BUS_MASTER_ABORT_NO_INFO,
-                            MCA_WARNING_PCI_BUS_TIMEOUT_NO_INFO,
-                            MCA_ERROR_PCI_BUS_TIMEOUT_NO_INFO,
-                            MCA_WARNING_PCI_BUS_PARITY_NO_INFO,
-                            MCA_ERROR_PCI_BUS_PARITY_NO_INFO,
-                            MCA_WARNING_PCI_BUS_PARITY_NO_INFO,
-                            MCA_ERROR_PCI_BUS_PARITY_NO_INFO,
-                            MCA_WARNING_PCI_BUS_PARITY_NO_INFO,
-                            MCA_ERROR_PCI_BUS_PARITY_NO_INFO
+                            MCA_WARNING_PCI_BUS_PARITY_NO_INFO,       MCA_ERROR_PCI_BUS_PARITY_NO_INFO,
+                            MCA_WARNING_PCI_BUS_SERR_NO_INFO,         MCA_ERROR_PCI_BUS_SERR_NO_INFO,
+                            MCA_WARNING_PCI_BUS_MASTER_ABORT_NO_INFO, MCA_ERROR_PCI_BUS_MASTER_ABORT_NO_INFO,
+                            MCA_WARNING_PCI_BUS_TIMEOUT_NO_INFO,      MCA_ERROR_PCI_BUS_TIMEOUT_NO_INFO,
+                            MCA_WARNING_PCI_BUS_PARITY_NO_INFO,       MCA_ERROR_PCI_BUS_PARITY_NO_INFO,
+                            MCA_WARNING_PCI_BUS_PARITY_NO_INFO,       MCA_ERROR_PCI_BUS_PARITY_NO_INFO,
+                            MCA_WARNING_PCI_BUS_PARITY_NO_INFO,       MCA_ERROR_PCI_BUS_PARITY_NO_INFO
                         };
-                        
 
-                        WmipAssert( sizeof(MSMCAEvent_MemoryError) >=
-                                    sizeof(MSMCAEvent_PCIBusError) );
+
+                        WmipAssert(sizeof(MSMCAEvent_MemoryError) >= sizeof(MSMCAEvent_PCIBusError));
 
                         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                          "WMI: MCA Section %p indicates PCI Bus error\n",
-                                          SectionHeader));
+                                          "WMI: MCA Section %p indicates PCI Bus error\n", SectionHeader));
                         Status = STATUS_SUCCESS;
                         if (FirstError)
                         {
@@ -1964,19 +1734,21 @@ void WmipGenerateMCAEventlog(
                                 if ((PciBus->Type.Type >= PciBusDataParityError) &&
                                     (PciBus->Type.Type <= PciCommandParityError))
                                 {
-                                    if ((PciBus->Valid.CmdType == 1) &&
-                                        (PciBus->Valid.Address == 1) &&
+                                    if ((PciBus->Valid.CmdType == 1) && (PciBus->Valid.Address == 1) &&
                                         (PciBus->Valid.Id == 1))
                                     {
-                                        Event->Type = PCIBusErrorTypes[(2 * (PciBus->Type.Type-1)) +
-                                                                       (IsFatal ? 1 : 0)];
-                                    } else {
-                                        Event->Type = PCIBusErrorTypesNoInfo[(2 * (PciBus->Type.Type-1)) +
-                                                                             (IsFatal ? 1 : 0)];
+                                        Event->Type =
+                                            PCIBusErrorTypes[(2 * (PciBus->Type.Type - 1)) + (IsFatal ? 1 : 0)];
                                     }
-                                } else {
-                                    Event->Type = IsFatal ? MCA_ERROR_PCI_BUS_UNKNOWN : 
-                                                            MCA_WARNING_PCI_BUS_UNKNOWN;
+                                    else
+                                    {
+                                        Event->Type =
+                                            PCIBusErrorTypesNoInfo[(2 * (PciBus->Type.Type - 1)) + (IsFatal ? 1 : 0)];
+                                    }
+                                }
+                                else
+                                {
+                                    Event->Type = IsFatal ? MCA_ERROR_PCI_BUS_UNKNOWN : MCA_WARNING_PCI_BUS_UNKNOWN;
                                 }
 
                                 Event->VALIDATION_BITS = PciBus->Valid.Valid;
@@ -1998,19 +1770,20 @@ void WmipGenerateMCAEventlog(
                                 // Finish filling in WNODE fields
                                 //
                                 Wnode->WnodeHeader.Guid = WmipMSMCAEvent_PCIBusErrorGuid;
-                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_PCIBusError,
-                                                                   RawRecord) +
-                                                       ErrorLogSize;
-                            } else {
+                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_PCIBusError, RawRecord) + ErrorLogSize;
+                            }
+                            else
+                            {
                                 WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                                  "WMI: PCI Bus Error Section %p has invalid size %d\n",
-                                                  SectionHeader,
+                                                  "WMI: PCI Bus Error Section %p has invalid size %d\n", SectionHeader,
                                                   SectionHeader->Length));
                                 Status = STATUS_INVALID_PARAMETER;
                                 break;
                             }
                         }
-                    } else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorPCIComponentGuid)) {
+                    }
+                    else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorPCIComponentGuid))
+                    {
                         //
                         // Build event for PCI Component MCA
                         //
@@ -2018,11 +1791,9 @@ void WmipGenerateMCAEventlog(
                         PERROR_PCI_COMPONENT PciComp;
 
                         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                          "WMI: MCA Section %p indicates PCI Component error\n",
-                                          SectionHeader));
-                        
-                        WmipAssert( sizeof(MSMCAEvent_MemoryError) >=
-                                    sizeof(MSMCAEvent_PCIComponentError) );
+                                          "WMI: MCA Section %p indicates PCI Component error\n", SectionHeader));
+
+                        WmipAssert(sizeof(MSMCAEvent_MemoryError) >= sizeof(MSMCAEvent_PCIComponentError));
 
                         Status = STATUS_SUCCESS;
                         if (FirstError)
@@ -2035,8 +1806,7 @@ void WmipGenerateMCAEventlog(
                                 //
                                 // Fill in the data from the MCA within the WMI event
                                 //
-                                Event->Type = IsFatal ? MCA_ERROR_PCI_DEVICE :
-                                                        MCA_WARNING_PCI_DEVICE;
+                                Event->Type = IsFatal ? MCA_ERROR_PCI_DEVICE : MCA_WARNING_PCI_DEVICE;
 
                                 Event->VALIDATION_BITS = PciComp->Valid.Valid;
                                 Event->PCI_COMP_ERROR_STATUS = PciComp->ErrorStatus.Status;
@@ -2057,31 +1827,31 @@ void WmipGenerateMCAEventlog(
                                 // Finish filling in WNODE fields
                                 //
                                 Wnode->WnodeHeader.Guid = WmipMSMCAEvent_PCIComponentErrorGuid;
-                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_PCIComponentError,
-                                                                   RawRecord) +
-                                                       ErrorLogSize;
-                            } else {
+                                Wnode->SizeDataBlock =
+                                    FIELD_OFFSET(MSMCAEvent_PCIComponentError, RawRecord) + ErrorLogSize;
+                            }
+                            else
+                            {
                                 WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
                                                   "WMI: PCI Component Error Section %p has invalid size %d\n",
-                                                  SectionHeader,
-                                                  SectionHeader->Length));
+                                                  SectionHeader, SectionHeader->Length));
                                 Status = STATUS_INVALID_PARAMETER;
                                 break;
                             }
                         }
-                    } else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorSELGuid)) {
+                    }
+                    else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorSELGuid))
+                    {
                         //
                         // Build event for System Eventlog MCA
                         //
                         PMSMCAEvent_SystemEventError Event;
                         PERROR_SYSTEM_EVENT_LOG Sel;
 
-                        WmipAssert( sizeof(MSMCAEvent_MemoryError) >=
-                                    sizeof(MSMCAEvent_SystemEventError) );
+                        WmipAssert(sizeof(MSMCAEvent_MemoryError) >= sizeof(MSMCAEvent_SystemEventError));
 
                         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                          "WMI: MCA Section %p indicates SEL error\n",
-                                          SectionHeader));
+                                          "WMI: MCA Section %p indicates SEL error\n", SectionHeader));
                         Status = STATUS_SUCCESS;
                         if (FirstError)
                         {
@@ -2093,11 +1863,10 @@ void WmipGenerateMCAEventlog(
                                 //
                                 // Fill in the data from the MCA within the WMI event
                                 //
-                                Event->Type = IsFatal ? MCA_ERROR_SYSTEM_EVENT :
-                                                        MCA_WARNING_SYSTEM_EVENT;
+                                Event->Type = IsFatal ? MCA_ERROR_SYSTEM_EVENT : MCA_WARNING_SYSTEM_EVENT;
 
                                 Event->VALIDATION_BITS = Sel->Valid.Valid;
-                                Event->SEL_RECORD_ID = Sel->RecordId;       
+                                Event->SEL_RECORD_ID = Sel->RecordId;
                                 Event->SEL_RECORD_TYPE = Sel->RecordType;
                                 Event->SEL_TIME_STAMP = Sel->TimeStamp;
                                 Event->SEL_GENERATOR_ID = Sel->GeneratorId;
@@ -2116,32 +1885,32 @@ void WmipGenerateMCAEventlog(
                                 // Finish filling in WNODE fields
                                 //
                                 Wnode->WnodeHeader.Guid = WmipMSMCAEvent_SystemEventErrorGuid;
-                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_SystemEventError,
-                                                                   RawRecord) +
-                                                       ErrorLogSize;
-                            } else {
+                                Wnode->SizeDataBlock =
+                                    FIELD_OFFSET(MSMCAEvent_SystemEventError, RawRecord) + ErrorLogSize;
+                            }
+                            else
+                            {
                                 WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
                                                   "WMI: System Eventlog Error Section %p has invalid size %d\n",
-                                                  SectionHeader,
-                                                  SectionHeader->Length));
+                                                  SectionHeader, SectionHeader->Length));
                                 Status = STATUS_INVALID_PARAMETER;
                                 break;
                             }
                         }
-                    } else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorSMBIOSGuid)) {
+                    }
+                    else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorSMBIOSGuid))
+                    {
                         //
                         // Build event for SMBIOS MCA
                         //
                         PMSMCAEvent_SMBIOSError Event;
                         PERROR_SMBIOS Smbios;
 
-                        WmipAssert( sizeof(MSMCAEvent_MemoryError) >=
-                                    sizeof(MSMCAEvent_SMBIOSError) );
+                        WmipAssert(sizeof(MSMCAEvent_MemoryError) >= sizeof(MSMCAEvent_SMBIOSError));
 
 
                         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                          "WMI: MCA Section %p indicates smbios error\n",
-                                          SectionHeader));
+                                          "WMI: MCA Section %p indicates smbios error\n", SectionHeader));
                         Status = STATUS_SUCCESS;
                         if (FirstError)
                         {
@@ -2153,8 +1922,7 @@ void WmipGenerateMCAEventlog(
                                 //
                                 // Fill in the data from the MCA within the WMI event
                                 //
-                                Event->Type = IsFatal ? MCA_ERROR_SMBIOS :
-                                                        MCA_WARNING_SMBIOS;
+                                Event->Type = IsFatal ? MCA_ERROR_SMBIOS : MCA_WARNING_SMBIOS;
 
                                 Event->VALIDATION_BITS = Smbios->Valid.Valid;
                                 Event->SMBIOS_EVENT_TYPE = Smbios->EventType;
@@ -2166,31 +1934,30 @@ void WmipGenerateMCAEventlog(
                                 // Finish filling in WNODE fields
                                 //
                                 Wnode->WnodeHeader.Guid = WmipMSMCAEvent_SMBIOSErrorGuid;
-                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_SMBIOSError,
-                                                                   RawRecord) +
-                                                       ErrorLogSize;
-                            } else {
+                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_SMBIOSError, RawRecord) + ErrorLogSize;
+                            }
+                            else
+                            {
                                 WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                                  "WMI: SMBIOS Error Section %p has invalid size %d\n",
-                                                  SectionHeader,
+                                                  "WMI: SMBIOS Error Section %p has invalid size %d\n", SectionHeader,
                                                   SectionHeader->Length));
                                 Status = STATUS_INVALID_PARAMETER;
                                 break;
                             }
                         }
-                    } else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorSpecificGuid)) {
+                    }
+                    else if (IsEqualGUID(&SectionHeader->Guid, &WmipErrorSpecificGuid))
+                    {
                         //
                         // Build event for Platform Specific MCA
                         //
                         PMSMCAEvent_PlatformSpecificError Event;
                         PERROR_PLATFORM_SPECIFIC Specific;
 
-                        WmipAssert( sizeof(MSMCAEvent_MemoryError) >=
-                                    sizeof(MSMCAEvent_PlatformSpecificError) );
+                        WmipAssert(sizeof(MSMCAEvent_MemoryError) >= sizeof(MSMCAEvent_PlatformSpecificError));
 
                         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                          "WMI: MCA Section %p indicates platform specific error\n",
-                                          SectionHeader));
+                                          "WMI: MCA Section %p indicates platform specific error\n", SectionHeader));
                         Status = STATUS_SUCCESS;
                         if (FirstError)
                         {
@@ -2202,19 +1969,18 @@ void WmipGenerateMCAEventlog(
                                 //
                                 // Fill in the data from the MCA within the WMI event
                                 //
-                                Event->Type = IsFatal ? MCA_ERROR_PLATFORM_SPECIFIC :
-                                                        MCA_WARNING_PLATFORM_SPECIFIC;
+                                Event->Type = IsFatal ? MCA_ERROR_PLATFORM_SPECIFIC : MCA_WARNING_PLATFORM_SPECIFIC;
 
                                 Event->VALIDATION_BITS = Specific->Valid.Valid;
                                 Event->PLATFORM_ERROR_STATUS = Specific->ErrorStatus.Status;
-                #if 0
+#if 0
                 // TODO: Wait until we figure this out              
                                 Event->PLATFORM_REQUESTOR_ID = Specific->;
                                 Event->PLATFORM_RESPONDER_ID = Specific->;
                                 Event->PLATFORM_TARGET_ID = Specific->;
                                 Event->PLATFORM_BUS_SPECIFIC_DATA = Specific->;
                                 Event->OEM_COMPONENT_ID = Specific->[16];
-                #endif              
+#endif
                                 Event->Size = ErrorLogSize;
                                 RawPtr = Event->RawRecord;
 
@@ -2222,26 +1988,27 @@ void WmipGenerateMCAEventlog(
                                 // Finish filling in WNODE fields
                                 //
                                 Wnode->WnodeHeader.Guid = WmipMSMCAEvent_PlatformSpecificErrorGuid;
-                                Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_PlatformSpecificError,
-                                                                   RawRecord) +
-                                                       ErrorLogSize;
-                            } else {
+                                Wnode->SizeDataBlock =
+                                    FIELD_OFFSET(MSMCAEvent_PlatformSpecificError, RawRecord) + ErrorLogSize;
+                            }
+                            else
+                            {
                                 WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
                                                   "WMI: Platform specific Error Section %p has invalid size %d\n",
-                                                  SectionHeader,
-                                                  SectionHeader->Length));
+                                                  SectionHeader, SectionHeader->Length));
                                 Status = STATUS_INVALID_PARAMETER;
                                 break;
-                            }                           
+                            }
                         }
-                    } else {
+                    }
+                    else
+                    {
                         //
                         // We don't recognize the guid, so we use a very generic
                         // eventlog message for it
                         //
-                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                              "WMI: Unknown Error GUID at %p\n",
-                                              &SectionHeader->Guid));
+                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: Unknown Error GUID at %p\n",
+                                          &SectionHeader->Guid));
 
                         //
                         // If we've already analyzed an error then we
@@ -2254,11 +2021,11 @@ void WmipGenerateMCAEventlog(
                         }
                     }
                 }
-                
+
                 //
                 // Advance to the next section within the Error record
                 //
-DontGenerate:               
+            DontGenerate:
                 if (AdvanceSection)
                 {
                     SizeUsed += SectionHeader->Length;
@@ -2282,15 +2049,14 @@ DontGenerate:
         // If we were not able to build a specific event type then
         // we fallback and fire a generic one
         //
-        if (! NT_SUCCESS(Status))
+        if (!NT_SUCCESS(Status))
         {
             //
             // Build event for Unknown MCA
             //
             PMSMCAEvent_InvalidError Event;
 
-            WmipAssert( sizeof(MSMCAEvent_MemoryError) >=
-                        sizeof(MSMCAEvent_InvalidError) );
+            WmipAssert(sizeof(MSMCAEvent_MemoryError) >= sizeof(MSMCAEvent_InvalidError));
 
             Event = (PMSMCAEvent_InvalidError)Header;
 
@@ -2299,11 +2065,11 @@ DontGenerate:
             //
             if (Header->Cpu == MCA_UNDEFINED_CPU)
             {
-                Event->Type = IsFatal ? MCA_ERROR_UNKNOWN_NO_CPU :
-                                        MCA_WARNING_UNKNOWN_NO_CPU;
-            } else {
-                Event->Type = IsFatal ? MCA_ERROR_UNKNOWN :
-                                        MCA_WARNING_UNKNOWN;
+                Event->Type = IsFatal ? MCA_ERROR_UNKNOWN_NO_CPU : MCA_WARNING_UNKNOWN_NO_CPU;
+            }
+            else
+            {
+                Event->Type = IsFatal ? MCA_ERROR_UNKNOWN : MCA_WARNING_UNKNOWN;
             }
 
             Event->Size = ErrorLogSize;
@@ -2313,10 +2079,7 @@ DontGenerate:
             // Finish filling in WNODE fields
             //
             Wnode->WnodeHeader.Guid = WmipMSMCAEvent_InvalidErrorGuid;
-            Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_InvalidError,
-                                               RawRecord) +
-                                   ErrorLogSize;
-
+            Wnode->SizeDataBlock = FIELD_OFFSET(MSMCAEvent_InvalidError, RawRecord) + ErrorLogSize;
         }
 
         //
@@ -2326,46 +2089,43 @@ DontGenerate:
         {
             Header->AdditionalErrors--;
         }
-        
+
         //
         // Put the entire MCA record into the event
         //
-        RtlCopyMemory(RawPtr,
-                      RecordHeader,
-                      ErrorLogSize);
+        RtlCopyMemory(RawPtr, RecordHeader, ErrorLogSize);
 
         //
         // Now go and fire off the event
         Status = WmipWriteMCAEventLogEvent((PUCHAR)Wnode);
-            
-        if (! NT_SUCCESS(Status))
+
+        if (!NT_SUCCESS(Status))
         {
             ExFreePool(Wnode);
         }
 
         if (WmipDisableMCAPopups == 0)
         {
-            IoRaiseInformationalHardError(STATUS_MCA_OCCURED,
-                                          NULL,
-                                          NULL);
+            IoRaiseInformationalHardError(STATUS_MCA_OCCURED, NULL, NULL);
         }
-    } else {
+    }
+    else
+    {
         //
         // Not enough memory to do a full MCA event so lets just do a
         // generic one
         //
         PIO_ERROR_LOG_PACKET ErrLog;
 
-        ErrLog = IoAllocateErrorLogEntry(WmipServiceDeviceObject,
-                                         sizeof(IO_ERROR_LOG_PACKET));
+        ErrLog = IoAllocateErrorLogEntry(WmipServiceDeviceObject, sizeof(IO_ERROR_LOG_PACKET));
 
-        if (ErrLog != NULL) {
+        if (ErrLog != NULL)
+        {
 
             //
             // Fill it in and write it out as a single string.
             //
-            ErrLog->ErrorCode = IsFatal ? MCA_WARNING_UNKNOWN_NO_CPU :
-                                          MCA_ERROR_UNKNOWN_NO_CPU;
+            ErrLog->ErrorCode = IsFatal ? MCA_WARNING_UNKNOWN_NO_CPU : MCA_ERROR_UNKNOWN_NO_CPU;
             ErrLog->FinalStatus = STATUS_INSUFFICIENT_RESOURCES;
 
             ErrLog->StringOffset = 0;
@@ -2381,31 +2141,28 @@ DontGenerate:
 // Check if WBEM is already running and if not check if we've already
 // kicked off the timer that will wait for wbem to start
 //
-#define WmipIsWbemRunning() ((WmipIsWbemRunningFlag == WBEM_IS_RUNNING) ? \
-                                                       TRUE : \
-                                                       FALSE)
+#define WmipIsWbemRunning() ((WmipIsWbemRunningFlag == WBEM_IS_RUNNING) ? TRUE : FALSE)
 
 
-NTSTATUS WmipWriteMCAEventLogEvent(
-    PUCHAR Event
-    )
+NTSTATUS WmipWriteMCAEventLogEvent(PUCHAR Event)
 {
     PWNODE_HEADER Wnode = (PWNODE_HEADER)Event;
     NTSTATUS Status;
 
     PAGED_CODE();
-    
+
     WmipEnterSMCritSection();
-    
-    if (WmipIsWbemRunning() ||
-        WmipCheckIsWbemRunning())
+
+    if (WmipIsWbemRunning() || WmipCheckIsWbemRunning())
     {
         //
         // We know WBEM is running so we can just fire off our event
         //
         WmipLeaveSMCritSection();
         Status = IoWMIWriteEvent(Event);
-    } else {
+    }
+    else
+    {
         //
         // WBEM is not currently running and so startup a timer that
         // will keep polling it
@@ -2427,29 +2184,25 @@ NTSTATUS WmipWriteMCAEventLogEvent(
                 WmipIsWbemRunningFlag = WAITING_FOR_WBEM;
             }
         }
-        
+
         Wnode->ClientContext = Wnode->BufferSize;
-        InsertTailList(&WmipWaitingMCAEvents,
-                       (PLIST_ENTRY)Event);
+        InsertTailList(&WmipWaitingMCAEvents, (PLIST_ENTRY)Event);
         WmipLeaveSMCritSection();
         Status = STATUS_SUCCESS;
     }
-    return(Status);
+    return (Status);
 }
 
 ULONG WmipWbemMinuteWait = 1;
 
-NTSTATUS WmipSetupWaitForWbem(
-    void
-    )
+NTSTATUS WmipSetupWaitForWbem(void)
 {
     LARGE_INTEGER TimeOut;
     NTSTATUS Status;
-    
+
     PAGED_CODE();
 
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: SetupWaitForWbem starting\n"));
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: SetupWaitForWbem starting\n"));
 
     //
     // Initialize a kernel time to fire periodically so we can
@@ -2457,69 +2210,54 @@ NTSTATUS WmipSetupWaitForWbem(
     //
     KeInitializeTimer(&WmipIsWbemRunningTimer);
 
-    KeInitializeDpc(&WmipIsWbemRunningDpc,
-                    WmipIsWbemRunningDispatch,
-                    NULL);
+    KeInitializeDpc(&WmipIsWbemRunningDpc, WmipIsWbemRunningDispatch, NULL);
 
-    ExInitializeWorkItem(&WmipIsWbemRunningWorkItem,
-                         WmipIsWbemRunningWorker,
-                         NULL);
+    ExInitializeWorkItem(&WmipIsWbemRunningWorkItem, WmipIsWbemRunningWorker, NULL);
 
     TimeOut.HighPart = -1;
-    TimeOut.LowPart = -1 * (WmipWbemMinuteWait * 60 * 1000 * 10000);    // 1 minutes
-    KeSetTimer(&WmipIsWbemRunningTimer,
-               TimeOut,
-               &WmipIsWbemRunningDpc);
+    TimeOut.LowPart = -1 * (WmipWbemMinuteWait * 60 * 1000 * 10000); // 1 minutes
+    KeSetTimer(&WmipIsWbemRunningTimer, TimeOut, &WmipIsWbemRunningDpc);
 
     Status = STATUS_SUCCESS;
 
-    return(Status);
+    return (Status);
 }
 
-void WmipIsWbemRunningDispatch(    
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,     // Not Used
-    IN PVOID SystemArgument1,     // Not Used
-    IN PVOID SystemArgument2      // Not Used
-    )
+void WmipIsWbemRunningDispatch(IN PKDPC Dpc,
+                               IN PVOID DeferredContext, // Not Used
+                               IN PVOID SystemArgument1, // Not Used
+                               IN PVOID SystemArgument2  // Not Used
+)
 {
-    ExQueueWorkItem(&WmipIsWbemRunningWorkItem,
-                    DelayedWorkQueue);
+    ExQueueWorkItem(&WmipIsWbemRunningWorkItem, DelayedWorkQueue);
 }
 
-void WmipIsWbemRunningWorker(
-    PVOID Context
-    )
+void WmipIsWbemRunningWorker(PVOID Context)
 {
     LARGE_INTEGER TimeOut;
-    
+
     PAGED_CODE();
-    
-    if (! WmipCheckIsWbemRunning())
+
+    if (!WmipCheckIsWbemRunning())
     {
         //
         // WBEM is not yet started, so timeout in another minute to
         // check again
         //
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                          "WMI: IsWbemRunningWorker starting -> WBEM not started\n"));
+        WmipDebugPrintEx(
+            (DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: IsWbemRunningWorker starting -> WBEM not started\n"));
 
         TimeOut.HighPart = -1;
-        TimeOut.LowPart = -1 * (1 *60 *1000 *10000);   // 1 minutes
-        KeSetTimer(&WmipIsWbemRunningTimer,
-                   TimeOut,
-                   &WmipIsWbemRunningDpc);
-        
-    } else {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                          "WMI: WbemRunningWorker found wbem started\n"));
-
+        TimeOut.LowPart = -1 * (1 * 60 * 1000 * 10000); // 1 minutes
+        KeSetTimer(&WmipIsWbemRunningTimer, TimeOut, &WmipIsWbemRunningDpc);
+    }
+    else
+    {
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: WbemRunningWorker found wbem started\n"));
     }
 }
 
-BOOLEAN WmipCheckIsWbemRunning(
-    void
-    )
+BOOLEAN WmipCheckIsWbemRunning(void)
 {
     OBJECT_ATTRIBUTES Obj;
     UNICODE_STRING Name;
@@ -2531,30 +2269,17 @@ BOOLEAN WmipCheckIsWbemRunning(
 
     PAGED_CODE();
 
-    RtlInitUnicodeString(&Name,
-                         L"\\BaseNamedObjects\\WBEM_ESS_OPEN_FOR_BUSINESS");
+    RtlInitUnicodeString(&Name, L"\\BaseNamedObjects\\WBEM_ESS_OPEN_FOR_BUSINESS");
 
-    
-    InitializeObjectAttributes(
-        &Obj,
-        &Name,
-        FALSE,
-        NULL,
-        NULL
-        );
 
-    Status = ZwOpenEvent(
-                &Handle,
-                SYNCHRONIZE,
-                &Obj
-                );
+    InitializeObjectAttributes(&Obj, &Name, FALSE, NULL, NULL);
+
+    Status = ZwOpenEvent(&Handle, SYNCHRONIZE, &Obj);
 
     if (NT_SUCCESS(Status))
     {
         TimeOut.QuadPart = 0;
-        Status = ZwWaitForSingleObject(Handle,
-                                       FALSE,
-                                       &TimeOut);
+        Status = ZwWaitForSingleObject(Handle, FALSE, &TimeOut);
         if (Status == STATUS_SUCCESS)
         {
             IsWbemRunning = TRUE;
@@ -2571,36 +2296,33 @@ BOOLEAN WmipCheckIsWbemRunning(
                 //
                 // Flush the list of all MCA events waiting to be fired
                 //
-                while (! IsListEmpty(&WmipWaitingMCAEvents))
+                while (!IsListEmpty(&WmipWaitingMCAEvents))
                 {
                     Wnode = (PWNODE_HEADER)RemoveHeadList(&WmipWaitingMCAEvents);
                     WmipLeaveSMCritSection();
                     Wnode->BufferSize = Wnode->ClientContext;
                     Wnode->Linkage = 0;
                     Status = IoWMIWriteEvent(Wnode);
-                    if (! NT_SUCCESS(Status))
+                    if (!NT_SUCCESS(Status))
                     {
                         ExFreePool(Wnode);
                     }
                     WmipEnterSMCritSection();
                 }
-                
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                                  "WMI: WBEM is Running and queus flushed\n"));
-                
+
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: WBEM is Running and queus flushed\n"));
+
                 WmipIsWbemRunningFlag = WBEM_IS_RUNNING;
             }
             WmipLeaveSMCritSection();
         }
         ZwClose(Handle);
     }
-    return(IsWbemRunning);
+    return (IsWbemRunning);
 }
 
 #ifdef GENERATE_MCA
-NTSTATUS WmipGenerateMCE(
-    IN ULONG Id
-    )
+NTSTATUS WmipGenerateMCE(IN ULONG Id)
 {
     UCHAR buffer[sizeof(KERNEL_ERROR_HANDLER_INFO) + sizeof(GUID)];
     PKERNEL_ERROR_HANDLER_INFO kernelInfo;
@@ -2615,13 +2337,10 @@ NTSTATUS WmipGenerateMCE(
     kernelInfo->Padding = Id;
     *guid = WmipGenerateMCEGuid;
 
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL,
-                      "WMI: Generating MCE type %x\n", Id));
-    status = HalSetSystemInformation(HalKernelErrorHandler, 
-                                     sizeof(buffer),
-                                     buffer);
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_MCA_LEVEL, "WMI: Generating MCE type %x\n", Id));
+    status = HalSetSystemInformation(HalKernelErrorHandler, sizeof(buffer), buffer);
 
-    return(status);
+    return (status);
 }
 
 #ifdef MCE_INSERTION
@@ -2633,11 +2352,7 @@ typedef struct
     UCHAR Log[1];
 } BUFFERED_LOG, *PBUFFERED_LOG;
 
-NTSTATUS WmipInsertMce(
-    PMCEQUERYINFO QueryInfo,
-    ULONG LogSize,
-    PUCHAR Log
-    )
+NTSTATUS WmipInsertMce(PMCEQUERYINFO QueryInfo, ULONG LogSize, PUCHAR Log)
 {
     PBUFFERED_LOG BufferedLog;
     PLIST_ENTRY LogList;
@@ -2646,9 +2361,7 @@ NTSTATUS WmipInsertMce(
     ULONG SizeNeeded;
 
     SizeNeeded = FIELD_OFFSET(BUFFERED_LOG, Log) + LogSize;
-    BufferedLog = ExAllocatePoolWithTag(PagedPool,
-                                        SizeNeeded,
-                                        'zimW');
+    BufferedLog = ExAllocatePoolWithTag(PagedPool, SizeNeeded, 'zimW');
     if (BufferedLog != NULL)
     {
         RtlCopyMemory(BufferedLog->Log, Log, LogSize);
@@ -2660,122 +2373,115 @@ NTSTATUS WmipInsertMce(
         if (QueryInfo->PollCounter == HAL_CPE_INTERRUPTS_BASED)
         {
             KeRaiseIrql(CLOCK_LEVEL, &OldIrql);
-            switch(QueryInfo->InfoClass)
+            switch (QueryInfo->InfoClass)
             {
-                case HalMcaLogInformation:
-                {
-                    WmipMcaDelivery(0, 0);
-                    break;
-                }
-
-                case HalCmcLogInformation:
-                {
-                    WmipCmcDelivery(0, 0);
-                    break;
-                }
-
-                case HalCpeLogInformation:
-                {
-                    WmipCpeDelivery(0, 0);
-                    break;
-                }
+            case HalMcaLogInformation:
+            {
+                WmipMcaDelivery(0, 0);
+                break;
             }
-            
+
+            case HalCmcLogInformation:
+            {
+                WmipCmcDelivery(0, 0);
+                break;
+            }
+
+            case HalCpeLogInformation:
+            {
+                WmipCpeDelivery(0, 0);
+                break;
+            }
+            }
+
             KeLowerIrql(OldIrql);
         }
         Status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipRemoveMce(
-    PMCEQUERYINFO QueryInfo,
-    PUCHAR Log,
-    PULONG LogSize
-    )
+NTSTATUS WmipRemoveMce(PMCEQUERYINFO QueryInfo, PUCHAR Log, PULONG LogSize)
 {
     NTSTATUS Status;
     PBUFFERED_LOG BufferedLog;
     PLIST_ENTRY LogList;
-    
+
     WmipEnterSMCritSection();
-    if (! IsListEmpty(&QueryInfo->LogHead))
+    if (!IsListEmpty(&QueryInfo->LogHead))
     {
         LogList = RemoveHeadList(&QueryInfo->LogHead);
-        BufferedLog = (PBUFFERED_LOG)CONTAINING_RECORD(LogList,
-                                        BUFFERED_LOG,
-                                        List);
+        BufferedLog = (PBUFFERED_LOG)CONTAINING_RECORD(LogList, BUFFERED_LOG, List);
         if (*LogSize < BufferedLog->LogSize)
         {
-            InsertHeadList(&QueryInfo->LogHead,
-                           LogList);
+            InsertHeadList(&QueryInfo->LogHead, LogList);
             *LogSize = BufferedLog->LogSize;
             WmipLeaveSMCritSection();
             Status = STATUS_BUFFER_TOO_SMALL;
-        } else {
+        }
+        else
+        {
             WmipLeaveSMCritSection();
             RtlCopyMemory(Log, BufferedLog->Log, BufferedLog->LogSize);
             *LogSize = BufferedLog->LogSize;
             ExFreePool(BufferedLog);
             Status = STATUS_SUCCESS;
         }
-    } else {
+    }
+    else
+    {
         WmipLeaveSMCritSection();
         Status = STATUS_UNSUCCESSFUL;
     }
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipQuerySystemInformation(
-    IN HAL_QUERY_INFORMATION_CLASS  InformationClass,
-    IN ULONG     BufferSize,
-    IN OUT PVOID Buffer,
-    OUT PULONG   ReturnedLength
-    )
+NTSTATUS WmipQuerySystemInformation(IN HAL_QUERY_INFORMATION_CLASS InformationClass, IN ULONG BufferSize,
+                                    IN OUT PVOID Buffer, OUT PULONG ReturnedLength)
 {
     PMCEQUERYINFO QueryInfo;
     NTSTATUS Status;
     ULONG Size;
-    
-    switch(InformationClass)
+
+    switch (InformationClass)
     {
-        case HalMcaLogInformation:
-        {
-            QueryInfo = &WmipMcaQueryInfo;
-            break;
-        }
+    case HalMcaLogInformation:
+    {
+        QueryInfo = &WmipMcaQueryInfo;
+        break;
+    }
 
-        case HalCmcLogInformation:
-        {
-            QueryInfo = &WmipCmcQueryInfo;
-            break;
-        }
+    case HalCmcLogInformation:
+    {
+        QueryInfo = &WmipCmcQueryInfo;
+        break;
+    }
 
-        case HalCpeLogInformation:
-        {
-            QueryInfo = &WmipCpeQueryInfo;
-            break;
-        }
+    case HalCpeLogInformation:
+    {
+        QueryInfo = &WmipCpeQueryInfo;
+        break;
+    }
 
-        default:
-        {
-            WmipAssert(FALSE);
-            return(STATUS_INVALID_PARAMETER);
-        }
+    default:
+    {
+        WmipAssert(FALSE);
+        return (STATUS_INVALID_PARAMETER);
+    }
     }
 
     Size = BufferSize;
-    Status = WmipRemoveMce(QueryInfo,
-                           Buffer,
-                           &Size);
+    Status = WmipRemoveMce(QueryInfo, Buffer, &Size);
 
     *ReturnedLength = Size;
-    return(Status);
+    return (Status);
 }
 
 #endif
 #endif
 
-#endif          
+#endif

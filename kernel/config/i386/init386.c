@@ -41,7 +41,8 @@ Revision History:
 #endif
 
 
-typedef struct _ACPI_BIOS_INFORMATION {
+typedef struct _ACPI_BIOS_INFORMATION
+{
     ULONG BootArchitecture;
     ULONG PreferredProfile;
     ULONG Capabilities;
@@ -90,9 +91,9 @@ extern const UCHAR CmpAmdID[];
 // Extended CPUID function definitions
 //
 
-#define CPUID_PROCESSOR_NAME_STRING_SZ  49
-#define CPUID_EXTFN_BASE                0x80000000
-#define CPUID_EXTFN_PROCESSOR_NAME      0x80000002
+#define CPUID_PROCESSOR_NAME_STRING_SZ 49
+#define CPUID_EXTFN_BASE 0x80000000
+#define CPUID_EXTFN_PROCESSOR_NAME 0x80000002
 
 //
 // CPU Stepping mismatch.
@@ -100,9 +101,9 @@ extern const UCHAR CmpAmdID[];
 
 UCHAR CmProcessorMismatch;
 
-#define CM_PROCESSOR_MISMATCH_VENDOR    0x01
-#define CM_PROCESSOR_MISMATCH_STEPPING  0x02
-#define CM_PROCESSOR_MISMATCH_L2        0x04
+#define CM_PROCESSOR_MISMATCH_VENDOR 0x01
+#define CM_PROCESSOR_MISMATCH_STEPPING 0x02
+#define CM_PROCESSOR_MISMATCH_L2 0x04
 
 
 extern ULONG CmpConfigurationAreaSize;
@@ -110,53 +111,35 @@ extern PCM_FULL_RESOURCE_DESCRIPTOR CmpConfigurationData;
 
 
 BOOLEAN
-CmpGetBiosVersion (
-    PCHAR SearchArea,
-    ULONG SearchLength,
-    PCHAR VersionString
-    );
+CmpGetBiosVersion(PCHAR SearchArea, ULONG SearchLength, PCHAR VersionString);
 
 BOOLEAN
-CmpGetAcpiBiosVersion(
-    PCHAR VersionString
-    );
+CmpGetAcpiBiosVersion(PCHAR VersionString);
 
 BOOLEAN
-CmpGetBiosDate (
-    PCHAR SearchArea,
-    ULONG SearchLength,
-    PCHAR DateString,
-    BOOLEAN SystemBiosDate
-    );
+CmpGetBiosDate(PCHAR SearchArea, ULONG SearchLength, PCHAR DateString, BOOLEAN SystemBiosDate);
 
 BOOLEAN
-CmpGetAcpiBiosInformation(
-    PACPI_BIOS_INFORMATION AcpiBiosInformation
-    );
+CmpGetAcpiBiosInformation(PACPI_BIOS_INFORMATION AcpiBiosInformation);
 
 ULONG
-Ke386CyrixId (
-    VOID
-    );
+Ke386CyrixId(VOID);
 
 #ifdef _WANT_MACHINE_IDENTIFICATION
 
-VOID
-CmpPerformMachineIdentification(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+VOID CmpPerformMachineIdentification(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CmpGetBiosDate)
-#pragma alloc_text(INIT,CmpGetBiosVersion)
-#pragma alloc_text(INIT,CmpGetAcpiBiosVersion)
-#pragma alloc_text(INIT,CmpGetAcpiBiosInformation)
-#pragma alloc_text(INIT,CmpInitializeMachineDependentConfiguration)
+#pragma alloc_text(INIT, CmpGetBiosDate)
+#pragma alloc_text(INIT, CmpGetBiosVersion)
+#pragma alloc_text(INIT, CmpGetAcpiBiosVersion)
+#pragma alloc_text(INIT, CmpGetAcpiBiosInformation)
+#pragma alloc_text(INIT, CmpInitializeMachineDependentConfiguration)
 
 #ifdef _WANT_MACHINE_IDENTIFICATION
-#pragma alloc_text(INIT,CmpPerformMachineIdentification)
+#pragma alloc_text(INIT, CmpPerformMachineIdentification)
 #endif
 
 #endif
@@ -165,19 +148,11 @@ CmpPerformMachineIdentification(
 
 #define KeI386NpxPresent TRUE
 
-VOID
-__inline
-CPUID (
-    ULONG InEax,
-    PULONG OutEax,
-    PULONG OutEbx,
-    PULONG OutEcx,
-    PULONG OutEdx
-    )
+VOID __inline CPUID(ULONG InEax, PULONG OutEax, PULONG OutEbx, PULONG OutEcx, PULONG OutEdx)
 {
     CPU_INFO cpuInfo;
 
-    KiCpuId (InEax, &cpuInfo);
+    KiCpuId(InEax, &cpuInfo);
 
     *OutEax = cpuInfo.Eax;
     *OutEbx = cpuInfo.Ebx;
@@ -187,14 +162,9 @@ CPUID (
 
 #endif
 
-
+
 BOOLEAN
-CmpGetBiosDate (
-    PCHAR SearchArea,
-    ULONG SearchLength,
-    PCHAR DateString,
-    BOOLEAN SystemBiosDate
-    )
+CmpGetBiosDate(PCHAR SearchArea, ULONG SearchLength, PCHAR DateString, BOOLEAN SystemBiosDate)
 
 /*++
 
@@ -220,14 +190,14 @@ Return Value:
 --*/
 
 {
-    CHAR    prevDate[BIOS_DATE_LENGTH]; // Newest date found so far (CCYY/MM/DD)
-    CHAR    currDate[BIOS_DATE_LENGTH]; // Date currently being examined (CCYY/MM/DD)
-    PCHAR   start;                      // Start of the current search area.
-    PCHAR   end;                        // End of the search area.
-    ULONG   year;                       // YY
-    ULONG   month;                      // MM
-    ULONG   day;                        // DD
-    ULONG   count;
+    CHAR prevDate[BIOS_DATE_LENGTH]; // Newest date found so far (CCYY/MM/DD)
+    CHAR currDate[BIOS_DATE_LENGTH]; // Date currently being examined (CCYY/MM/DD)
+    PCHAR start;                     // Start of the current search area.
+    PCHAR end;                       // End of the search area.
+    ULONG year;                      // YY
+    ULONG month;                     // MM
+    ULONG day;                       // DD
+    ULONG count;
 
 #define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 
@@ -249,7 +219,8 @@ Return Value:
     // Process the entire search area.
     //
 
-    while (start < end) {
+    while (start < end)
+    {
 
         //
         // We consider the following byte pattern as a potential date.
@@ -258,10 +229,9 @@ Return Value:
         // digit only.
         //
 
-        if (    start[0] == '/' && start[3] == '/' &&
-                IS_DIGIT(*(start - 1)) &&
-                IS_DIGIT(start[1]) && IS_DIGIT(start[2]) &&
-                IS_DIGIT(start[4]) && IS_DIGIT(start[5])) {
+        if (start[0] == '/' && start[3] == '/' && IS_DIGIT(*(start - 1)) && IS_DIGIT(start[1]) && IS_DIGIT(start[2]) &&
+            IS_DIGIT(start[4]) && IS_DIGIT(start[5]))
+        {
 
             //
             // Copy MM/DD part into the currDate.
@@ -273,7 +243,8 @@ Return Value:
             // Handle single digit month correctly.
             //
 
-            if (!IS_DIGIT(currDate[5])) {
+            if (!IS_DIGIT(currDate[5]))
+            {
                 currDate[5] = '0';
             }
 
@@ -300,15 +271,17 @@ Return Value:
             // Count the number of fields that are 0.
             //
 
-            count = ((day == 0)? 1 : 0) + ((month == 0)? 1 : 0) + ((year == 0)? 1 : 0);
-            if (count <= 1) {
+            count = ((day == 0) ? 1 : 0) + ((month == 0) ? 1 : 0) + ((year == 0) ? 1 : 0);
+            if (count <= 1)
+            {
 
                 //
                 // Count number of field that are greater than 31.
                 //
 
-                count = ((day > 0x31)? 1 : 0) + ((month > 0x31)? 1 : 0) + ((year > 0x31)? 1 : 0);
-                if (count <= 1) {
+                count = ((day > 0x31) ? 1 : 0) + ((month > 0x31) ? 1 : 0) + ((year > 0x31) ? 1 : 0);
+                if (count <= 1)
+                {
 
                     //
                     // See if the ROM already has a 4 digit date. We do this only for System ROM
@@ -316,14 +289,16 @@ Return Value:
                     //
 
                     if (SystemBiosDate && IS_DIGIT(start[6]) && IS_DIGIT(start[7]) &&
-                        (memcmp(&start[4], "19", 2) == 0 || memcmp(&start[4], "20", 2) == 0)) {
+                        (memcmp(&start[4], "19", 2) == 0 || memcmp(&start[4], "20", 2) == 0))
+                    {
 
                         currDate[0] = start[4];
                         currDate[1] = start[5];
                         currDate[2] = start[6];
                         currDate[3] = start[7];
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // Internally, we treat year as a 4 digit quantity
@@ -331,10 +306,13 @@ Return Value:
                         // We treat year YY < 80 as 20YY, otherwise 19YY.
                         //
 
-                        if (year < 0x80) {
+                        if (year < 0x80)
+                        {
                             currDate[0] = '2';
                             currDate[1] = '0';
-                        } else {
+                        }
+                        else
+                        {
                             currDate[0] = '1';
                             currDate[1] = '9';
                         }
@@ -350,7 +328,8 @@ Return Value:
                     // Compare the dates, and save the newer one.
                     //
 
-                    if (memcmp (prevDate, currDate, BIOS_DATE_LENGTH - 1) < 0) {
+                    if (memcmp(prevDate, currDate, BIOS_DATE_LENGTH - 1) < 0)
+                    {
                         RtlMoveMemory(prevDate, currDate, BIOS_DATE_LENGTH - 1);
                     }
 
@@ -365,7 +344,8 @@ Return Value:
         start++;
     }
 
-    if (prevDate[0] != '\0') {
+    if (prevDate[0] != '\0')
+    {
 
         //
         // Convert from the internal CCYY/MM/DD format to
@@ -388,13 +368,9 @@ Return Value:
     DateString[0] = '\0';
     return (FALSE);
 }
-
+
 BOOLEAN
-CmpGetBiosVersion (
-    PCHAR SearchArea,
-    ULONG SearchLength,
-    PCHAR VersionString
-    )
+CmpGetBiosVersion(PCHAR SearchArea, ULONG SearchLength, PCHAR VersionString)
 
 /*++
 
@@ -423,7 +399,8 @@ Return Value:
     CHAR Buffer[MAXIMUM_BIOS_VERSION_LENGTH];
     PCHAR BufferPointer;
 
-        if (SearchArea != NULL) {
+    if (SearchArea != NULL)
+    {
 
         //
         // If caller does not specify the search area, we will search
@@ -435,57 +412,66 @@ Return Value:
         End = SearchArea + SearchLength - 2;
     }
 
-    while (1) {
+    while (1)
+    {
 
-         //
-         // Search for a period with a digit on either side
-         //
+        //
+        // Search for a period with a digit on either side
+        //
 
-         String = NULL;
-         while (Start <= End) {
-             if (*Start == '.' && *(Start+1) >= '0' && *(Start+1) <= '9' &&
-                 *(Start-1) >= '0' && *(Start-1) <= '9') {
-                 String = Start;
-                 break;
-             } else {
-                 Start++;
-             }
-         }
+        String = NULL;
+        while (Start <= End)
+        {
+            if (*Start == '.' && *(Start + 1) >= '0' && *(Start + 1) <= '9' && *(Start - 1) >= '0' &&
+                *(Start - 1) <= '9')
+            {
+                String = Start;
+                break;
+            }
+            else
+            {
+                Start++;
+            }
+        }
 
-         if (Start > End) {
-             return(FALSE);
-         } else {
-             Start += 2;
-         }
+        if (Start > End)
+        {
+            return (FALSE);
+        }
+        else
+        {
+            Start += 2;
+        }
 
-         Length = 0;
-         Buffer[MAXIMUM_BIOS_VERSION_LENGTH - 1] = '\0';
-         BufferPointer = &Buffer[MAXIMUM_BIOS_VERSION_LENGTH - 1];
+        Length = 0;
+        Buffer[MAXIMUM_BIOS_VERSION_LENGTH - 1] = '\0';
+        BufferPointer = &Buffer[MAXIMUM_BIOS_VERSION_LENGTH - 1];
 
-         //
-         // Search for the beginning of the string
-         //
+        //
+        // Search for the beginning of the string
+        //
 
-         String--;
-         while (Length < MAXIMUM_BIOS_VERSION_LENGTH - 8 &&
-                String >= BiosBegin &&
-                *String >= ' ' && *String <= 127 &&
-                *String != '$') {
-             --BufferPointer;
-             *BufferPointer = *String;
-             --String, ++Length;
-         }
-         ++String;
+        String--;
+        while (Length < MAXIMUM_BIOS_VERSION_LENGTH - 8 && String >= BiosBegin && *String >= ' ' && *String <= 127 &&
+               *String != '$')
+        {
+            --BufferPointer;
+            *BufferPointer = *String;
+            --String, ++Length;
+        }
+        ++String;
 
-         //
-         // Can one of the search strings be found
-         //
+        //
+        // Can one of the search strings be found
+        //
 
-         for (i = 0; SearchStrings[i]; i++) {
-             if (strstr(BufferPointer, SearchStrings[i])) {
-                 goto Found;
-             }
-         }
+        for (i = 0; SearchStrings[i]; i++)
+        {
+            if (strstr(BufferPointer, SearchStrings[i]))
+            {
+                goto Found;
+            }
+        }
     }
 
 Found:
@@ -495,35 +481,35 @@ Found:
     //
 
     for (; *String == ' '; ++String)
-      ;
+        ;
 
     //
     // Copy the string to user supplied buffer
     //
 
-    for (i = 0; i < MAXIMUM_BIOS_VERSION_LENGTH - 1 &&
-         String <= (End + 1) &&
-         *String >= ' ' && *String <= 127 && *String != '$';
-         ++i, ++String) {
-         VersionString[i] = *String;
+    for (i = 0; i < MAXIMUM_BIOS_VERSION_LENGTH - 1 && String <= (End + 1) && *String >= ' ' && *String <= 127 &&
+                *String != '$';
+         ++i, ++String)
+    {
+        VersionString[i] = *String;
     }
     VersionString[i] = '\0';
     return (TRUE);
 }
 
 BOOLEAN
-CmpGetAcpiBiosVersion(
-    PCHAR VersionString
-    )
+CmpGetAcpiBiosVersion(PCHAR VersionString)
 {
-    ULONG               length;
+    ULONG length;
     PDESCRIPTION_HEADER header;
-    ULONG               i;
+    ULONG i;
 
     header = CmpFindACPITable(RSDT_SIGNATURE, &length);
-    if (header) {
+    if (header)
+    {
 
-        for (i = 0; i < 6 && header->OEMID[i]; i++) {
+        for (i = 0; i < 6 && header->OEMID[i]; i++)
+        {
 
             *VersionString++ = header->OEMID[i];
         }
@@ -532,7 +518,7 @@ CmpGetAcpiBiosVersion(
         //
         // Unmap the table
         //
-        MmUnmapIoSpace(header, length );
+        MmUnmapIoSpace(header, length);
 
         return TRUE;
     }
@@ -541,32 +527,32 @@ CmpGetAcpiBiosVersion(
 }
 
 BOOLEAN
-CmpGetAcpiBiosInformation(
-    PACPI_BIOS_INFORMATION AcpiBiosInformation
-    )
+CmpGetAcpiBiosInformation(PACPI_BIOS_INFORMATION AcpiBiosInformation)
 {
-    ULONG               length;
-    PFADT               fadt;
-    BOOLEAN             result;
+    ULONG length;
+    PFADT fadt;
+    BOOLEAN result;
 
     AcpiBiosInformation->BootArchitecture = 0;
     AcpiBiosInformation->Capabilities = 0;
     AcpiBiosInformation->PreferredProfile = 0;
     fadt = (PFADT)CmpFindACPITable(FADT_SIGNATURE, &length);
-    if (fadt) {
+    if (fadt)
+    {
 
         //
         // Information is valid only for ACPI version > 1.0
         //
 
-        if (fadt->Header.Revision > 1) {
+        if (fadt->Header.Revision > 1)
+        {
 
             AcpiBiosInformation->BootArchitecture = fadt->boot_arch;
             AcpiBiosInformation->Capabilities = fadt->flags;
             AcpiBiosInformation->PreferredProfile = fadt->pm_profile;
         }
 
-        result = (fadt->Header.Revision > 1)? TRUE : FALSE;
+        result = (fadt->Header.Revision > 1) ? TRUE : FALSE;
 
         //
         // Unmap the table
@@ -579,11 +565,9 @@ CmpGetAcpiBiosInformation(
 
     return FALSE;
 }
-
+
 NTSTATUS
-CmpInitializeMachineDependentConfiguration(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+CmpInitializeMachineDependentConfiguration(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -613,10 +597,10 @@ Returns:
     HANDLE BaseHandle, NpxHandle;
     HANDLE CurrentControlSet;
     CONFIGURATION_COMPONENT_DATA CurrentEntry;
-    UCHAR const* VendorID;
-    UCHAR  Buffer[MAXIMUM_BIOS_VERSION_LENGTH];
+    UCHAR const *VendorID;
+    UCHAR Buffer[MAXIMUM_BIOS_VERSION_LENGTH];
     PKPRCB Prcb;
-    ULONG  i, Junk;
+    ULONG i, Junk;
     ULONG VersionsLength = 0, Length;
     PCHAR VersionStrings, VersionPointer;
     UNICODE_STRING SectionName;
@@ -628,105 +612,78 @@ Returns:
     ULONG CpuIdFunction;
     ULONG MaxExtFn;
     PULONG NameString = NULL;
-    ULONG   P0L2Size = 0;
-    ULONG   ThisProcessorL2Size;
-    struct {
-        union {
-            UCHAR   Bytes[CPUID_PROCESSOR_NAME_STRING_SZ];
-            ULONG   DWords[1];
+    ULONG P0L2Size = 0;
+    ULONG ThisProcessorL2Size;
+    struct
+    {
+        union
+        {
+            UCHAR Bytes[CPUID_PROCESSOR_NAME_STRING_SZ];
+            ULONG DWords[1];
         } u;
     } ProcessorNameString;
     ULONG VersionPass;
     ACPI_BIOS_INFORMATION AcpiBiosInformation;
 
 #ifdef _WANT_MACHINE_IDENTIFICATION
-    HANDLE  BiosInfo;
+    HANDLE BiosInfo;
 #endif
 
 
-    for (i = 0; i < NUMBER_TYPES; i++) {
+    for (i = 0; i < NUMBER_TYPES; i++)
+    {
         DeviceIndexTable[i] = 0;
     }
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &CmRegistryMachineSystemCurrentControlSetControlSessionManagerMemoryManagement,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                               );
+    InitializeObjectAttributes(&ObjectAttributes,
+                               &CmRegistryMachineSystemCurrentControlSetControlSessionManagerMemoryManagement,
+                               OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = NtOpenKey( &BaseHandle,
-                        KEY_READ | KEY_WRITE,
-                        &ObjectAttributes
-                      );
+    Status = NtOpenKey(&BaseHandle, KEY_READ | KEY_WRITE, &ObjectAttributes);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         ULONG paeEnabled;
 
-        if (SharedUserData->ProcessorFeatures[PF_PAE_ENABLED] == FALSE) {
+        if (SharedUserData->ProcessorFeatures[PF_PAE_ENABLED] == FALSE)
+        {
             paeEnabled = 0;
-        } else {
+        }
+        else
+        {
             paeEnabled = 1;
         }
 
-        RtlInitUnicodeString( &ValueName,
-                              CmPhysicalAddressExtension );
+        RtlInitUnicodeString(&ValueName, CmPhysicalAddressExtension);
 
 
-        NtSetValueKey( BaseHandle,
-                       &ValueName,
-                       TITLE_INDEX_VALUE,
-                       REG_DWORD,
-                       &paeEnabled,
-                       sizeof(paeEnabled) );
+        NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_DWORD, &paeEnabled, sizeof(paeEnabled));
 
-        NtClose( BaseHandle );
-   }
+        NtClose(BaseHandle);
+    }
 
 
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineHardwareDescriptionSystemName, OBJ_CASE_INSENSITIVE,
+                               NULL, NULL);
 
+    Status = NtCreateKey(&ParentHandle, KEY_READ, &ObjectAttributes, 0, NULL, 0, NULL);
 
-
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &CmRegistryMachineHardwareDescriptionSystemName,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                              );
-
-    Status = NtCreateKey( &ParentHandle,
-                          KEY_READ,
-                          &ObjectAttributes,
-                          0,
-                          NULL,
-                          0,
-                          NULL);
-
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         // Something is really wrong...
         return Status;
     }
 
 #ifdef _WANT_MACHINE_IDENTIFICATION
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &CmRegistryMachineSystemCurrentControlSetControlBiosInfo,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                              );
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineSystemCurrentControlSetControlBiosInfo,
+                               OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = NtCreateKey(   &BiosInfo,
-                            KEY_ALL_ACCESS,
-                            &ObjectAttributes,
-                            0,
-                            NULL,
-                            REG_OPTION_NON_VOLATILE,
-                            &Disposition
-                        );
+    Status = NtCreateKey(&BiosInfo, KEY_ALL_ACCESS, &ObjectAttributes, 0, NULL, REG_OPTION_NON_VOLATILE, &Disposition);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         // Something is really wrong...
         return Status;
     }
@@ -741,43 +698,25 @@ Returns:
     // not already present).
     //
 
-    RtlInitUnicodeString( &KeyName,
-                          L"CentralProcessor"
-                        );
+    RtlInitUnicodeString(&KeyName, L"CentralProcessor");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &KeyName,
-        0,
-        ParentHandle,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyName, 0, ParentHandle, NULL);
 
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    Status = NtCreateKey(
-                &BaseHandle,
-                KEY_READ | KEY_WRITE,
-                &ObjectAttributes,
-                0,
-                NULL,
-                0,
-                &Disposition
-                );
+    Status = NtCreateKey(&BaseHandle, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, NULL, 0, &Disposition);
 
-    NtClose (BaseHandle);
+    NtClose(BaseHandle);
 
-    if (Disposition == REG_CREATED_NEW_KEY) {
+    if (Disposition == REG_CREATED_NEW_KEY)
+    {
 
         //
         // The ARC rom didn't add the processor(s) into the registry.
         // Do it now.
         //
 
-        CmpConfigurationData = (PCM_FULL_RESOURCE_DESCRIPTOR)ExAllocatePool(
-                                            PagedPool,
-                                            CmpConfigurationAreaSize
-                                            );
+        CmpConfigurationData = (PCM_FULL_RESOURCE_DESCRIPTOR)ExAllocatePool(PagedPool, CmpConfigurationAreaSize);
 
         //
         // if (CmpConfigurationData == 0) {
@@ -787,60 +726,50 @@ Returns:
         // }
         //
 
-        for (i=0; i < (ULONG)KeNumberProcessors; i++) {
+        for (i = 0; i < (ULONG)KeNumberProcessors; i++)
+        {
             Prcb = KiProcessorBlock[i];
 
-            RtlZeroMemory (&CurrentEntry, sizeof CurrentEntry);
+            RtlZeroMemory(&CurrentEntry, sizeof CurrentEntry);
             CurrentEntry.ComponentEntry.Class = ProcessorClass;
             CurrentEntry.ComponentEntry.Type = CentralProcessor;
             CurrentEntry.ComponentEntry.Key = i;
             CurrentEntry.ComponentEntry.AffinityMask = AFFINITY_MASK(i);
 
             CurrentEntry.ComponentEntry.Identifier = Buffer;
-            if (Prcb->CpuID == 0) {
+            if (Prcb->CpuID == 0)
+            {
 
                 //
                 // Old style stepping format
                 //
 
-                sprintf (Buffer, CmpID1,
-                    Prcb->CpuType,
-                    (Prcb->CpuStep >> 8) + 'A',
-                    Prcb->CpuStep & 0xff
-                    );
-
-            } else {
+                sprintf(Buffer, CmpID1, Prcb->CpuType, (Prcb->CpuStep >> 8) + 'A', Prcb->CpuStep & 0xff);
+            }
+            else
+            {
 
                 //
                 // New style stepping format
                 //
 
-                sprintf (Buffer, CmpID2,
-                    Prcb->CpuType,
-                    (Prcb->CpuStep >> 8),
-                    Prcb->CpuStep & 0xff
-                    );
+                sprintf(Buffer, CmpID2, Prcb->CpuType, (Prcb->CpuStep >> 8), Prcb->CpuStep & 0xff);
             }
 
-            CurrentEntry.ComponentEntry.IdentifierLength =
-                strlen (Buffer) + 1;
+            CurrentEntry.ComponentEntry.IdentifierLength = strlen(Buffer) + 1;
 
-            Status = CmpInitializeRegistryNode(
-                &CurrentEntry,
-                ParentHandle,
-                &BaseHandle,
-                -1,
-                (ULONG)-1,
-                DeviceIndexTable
-                );
+            Status =
+                CmpInitializeRegistryNode(&CurrentEntry, ParentHandle, &BaseHandle, -1, (ULONG)-1, DeviceIndexTable);
 
-            if (!NT_SUCCESS(Status)) {
-                return(Status);
+            if (!NT_SUCCESS(Status))
+            {
+                return (Status);
             }
 
 
-            if (KeI386NpxPresent) {
-                RtlZeroMemory (&CurrentEntry, sizeof CurrentEntry);
+            if (KeI386NpxPresent)
+            {
+                RtlZeroMemory(&CurrentEntry, sizeof CurrentEntry);
                 CurrentEntry.ComponentEntry.Class = ProcessorClass;
                 CurrentEntry.ComponentEntry.Type = FloatingPointProcessor;
                 CurrentEntry.ComponentEntry.Key = i;
@@ -848,31 +777,26 @@ Returns:
 
                 CurrentEntry.ComponentEntry.Identifier = Buffer;
 
-                if (Prcb->CpuType == 3) {
+                if (Prcb->CpuType == 3)
+                {
 
                     //
                     // 386 processors have 387's installed, else
                     // use processor identifier as the NPX identifier
                     //
 
-                    strcpy (Buffer, "80387");
+                    strcpy(Buffer, "80387");
                 }
 
-                CurrentEntry.ComponentEntry.IdentifierLength =
-                    strlen (Buffer) + 1;
+                CurrentEntry.ComponentEntry.IdentifierLength = strlen(Buffer) + 1;
 
-                Status = CmpInitializeRegistryNode(
-                    &CurrentEntry,
-                    ParentHandle,
-                    &NpxHandle,
-                    -1,
-                    (ULONG)-1,
-                    DeviceIndexTable
-                    );
+                Status =
+                    CmpInitializeRegistryNode(&CurrentEntry, ParentHandle, &NpxHandle, -1, (ULONG)-1, DeviceIndexTable);
 
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
                     NtClose(BaseHandle);
-                    return(Status);
+                    return (Status);
                 }
 
                 NtClose(NpxHandle);
@@ -893,16 +817,19 @@ Returns:
             KeSetSystemAffinityThread(Prcb->SetMember);
 
 #if !defined(_AMD64_)
-            if (!Prcb->CpuID) {
+            if (!Prcb->CpuID)
+            {
 
                 //
                 // Test for Cyrix processor
                 //
 
-                if (Ke386CyrixId ()) {
+                if (Ke386CyrixId())
+                {
                     VendorID = CmpCyrixID;
                 }
-            } else
+            }
+            else
 #endif
             {
 
@@ -924,7 +851,8 @@ Returns:
 
                 CPUID(CPUID_EXTFN_BASE, &MaxExtFn, &Junk, &Junk, &Junk);
 
-                if (MaxExtFn >= (CPUID_EXTFN_PROCESSOR_NAME + 2)) {
+                if (MaxExtFn >= (CPUID_EXTFN_PROCESSOR_NAME + 2))
+                {
 
                     //
                     // This processor supports extended CPUID functions
@@ -936,15 +864,11 @@ Returns:
 
                     NameString = &ProcessorNameString.u.DWords[0];
 
-                    for (CpuIdFunction = CPUID_EXTFN_PROCESSOR_NAME;
-                         CpuIdFunction <= (CPUID_EXTFN_PROCESSOR_NAME+2);
-                         CpuIdFunction++) {
+                    for (CpuIdFunction = CPUID_EXTFN_PROCESSOR_NAME; CpuIdFunction <= (CPUID_EXTFN_PROCESSOR_NAME + 2);
+                         CpuIdFunction++)
+                    {
 
-                        CPUID(CpuIdFunction,
-                              NameString,
-                              NameString + 1,
-                              NameString + 2,
-                              NameString + 3);
+                        CPUID(CpuIdFunction, NameString, NameString + 1, NameString + 2, NameString + 3);
                         NameString += 4;
                     }
 
@@ -952,7 +876,7 @@ Returns:
                     // Enforce 0 byte terminator.
                     //
 
-                    ProcessorNameString.u.Bytes[CPUID_PROCESSOR_NAME_STRING_SZ-1] = 0;
+                    ProcessorNameString.u.Bytes[CPUID_PROCESSOR_NAME_STRING_SZ - 1] = 0;
                 }
             }
 
@@ -964,132 +888,78 @@ Returns:
 
             KeRevertToUserAffinityThread();
 
-            if (NameString) {
+            if (NameString)
+            {
 
                 //
                 // Add Processor Name String to the registery
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpProcessorNameString
-                    );
+                RtlInitUnicodeString(&ValueName, CmpProcessorNameString);
 
-                RtlInitAnsiString(
-                    &AnsiString,
-                    ProcessorNameString.u.Bytes
-                    );
+                RtlInitAnsiString(&AnsiString, ProcessorNameString.u.Bytes);
 
-                RtlAnsiStringToUnicodeString(
-                    &ValueData,
-                    &AnsiString,
-                    TRUE
-                    );
+                RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_SZ,
-                            ValueData.Buffer,
-                            ValueData.Length + sizeof( UNICODE_NULL )
-                            );
+                Status = NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                                       ValueData.Length + sizeof(UNICODE_NULL));
 
                 RtlFreeUnicodeString(&ValueData);
             }
 
-            if (VendorID) {
+            if (VendorID)
+            {
 
                 //
                 // Add Vendor Indentifier to the registery
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpVendorID
-                    );
+                RtlInitUnicodeString(&ValueName, CmpVendorID);
 
-                RtlInitAnsiString(
-                    &AnsiString,
-                    VendorID
-                    );
+                RtlInitAnsiString(&AnsiString, VendorID);
 
-                RtlAnsiStringToUnicodeString(
-                    &ValueData,
-                    &AnsiString,
-                    TRUE
-                    );
+                RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_SZ,
-                            ValueData.Buffer,
-                            ValueData.Length + sizeof( UNICODE_NULL )
-                            );
+                Status = NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                                       ValueData.Length + sizeof(UNICODE_NULL));
 
                 RtlFreeUnicodeString(&ValueData);
             }
 
-            if (Prcb->FeatureBits) {
+            if (Prcb->FeatureBits)
+            {
                 //
                 // Add processor feature bits to the registery
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpFeatureBits
-                    );
+                RtlInitUnicodeString(&ValueName, CmpFeatureBits);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_DWORD,
-                            &Prcb->FeatureBits,
-                            sizeof (Prcb->FeatureBits)
-                            );
+                Status = NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_DWORD, &Prcb->FeatureBits,
+                                       sizeof(Prcb->FeatureBits));
             }
 
-            if (Prcb->MHz) {
+            if (Prcb->MHz)
+            {
                 //
                 // Add processor MHz to the registery
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpMHz
-                    );
+                RtlInitUnicodeString(&ValueName, CmpMHz);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_DWORD,
-                            &Prcb->MHz,
-                            sizeof (Prcb->MHz)
-                            );
+                Status =
+                    NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_DWORD, &Prcb->MHz, sizeof(Prcb->MHz));
             }
 
-            if (Prcb->UpdateSignature.QuadPart) {
+            if (Prcb->UpdateSignature.QuadPart)
+            {
                 //
                 // Add processor MHz to the registery
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpUpdateSignature
-                    );
+                RtlInitUnicodeString(&ValueName, CmpUpdateSignature);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_BINARY,
-                            &Prcb->UpdateSignature,
-                            sizeof (Prcb->UpdateSignature)
-                            );
+                Status = NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_BINARY, &Prcb->UpdateSignature,
+                                       sizeof(Prcb->UpdateSignature));
             }
 
             NtClose(BaseHandle);
@@ -1098,11 +968,13 @@ Returns:
             // Check processor steppings.
             //
 
-            if (i == 0) {
+            if (i == 0)
+            {
 
                 P0L2Size = ThisProcessorL2Size;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Check all processors against processor 0. Compare
@@ -1112,33 +984,40 @@ Returns:
                 //     L2 cache size.
                 //
 
-                if (Prcb->CpuID) {
-                    if (strcmp(Prcb->VendorString,
-                               KiProcessorBlock[0]->VendorString)) {
+                if (Prcb->CpuID)
+                {
+                    if (strcmp(Prcb->VendorString, KiProcessorBlock[0]->VendorString))
+                    {
                         CmProcessorMismatch |= CM_PROCESSOR_MISMATCH_VENDOR;
                     }
-                    if (ThisProcessorL2Size != P0L2Size) {
+                    if (ThisProcessorL2Size != P0L2Size)
+                    {
                         CmProcessorMismatch |= CM_PROCESSOR_MISMATCH_L2;
                     }
                     if ((Prcb->CpuType != KiProcessorBlock[0]->CpuType) ||
-                        (Prcb->CpuStep != KiProcessorBlock[0]->CpuStep)) {
+                        (Prcb->CpuStep != KiProcessorBlock[0]->CpuStep))
+                    {
                         CmProcessorMismatch |= CM_PROCESSOR_MISMATCH_STEPPING;
                     }
-                } else {
+                }
+                else
+                {
 
                     //
                     // If this processor doesn't support CPUID, P0
                     // shouldn't support it either.
                     //
 
-                    if (KiProcessorBlock[0]->CpuID) {
+                    if (KiProcessorBlock[0]->CpuID)
+                    {
                         CmProcessorMismatch |= CM_PROCESSOR_MISMATCH_STEPPING;
                     }
                 }
             }
         }
 
-        if (0 != CmpConfigurationData) {
+        if (0 != CmpConfigurationData)
+        {
             ExFreePool((PVOID)CmpConfigurationData);
         }
     }
@@ -1151,26 +1030,15 @@ Returns:
     // Open a physical memory section to map in physical memory.
     //
 
-    RtlInitUnicodeString(
-        &SectionName,
-        L"\\Device\\PhysicalMemory"
-        );
+    RtlInitUnicodeString(&SectionName, L"\\Device\\PhysicalMemory");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &SectionName,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE) NULL,
-        (PSECURITY_DESCRIPTOR) NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &SectionName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
-    Status = ZwOpenSection(
-        &SectionHandle,
-        SECTION_ALL_ACCESS,
-        &ObjectAttributes
-        );
+    Status = ZwOpenSection(&SectionHandle, SECTION_ALL_ACCESS, &ObjectAttributes);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // If fail, forget the bios data and version
@@ -1189,32 +1057,23 @@ Returns:
     ViewBase.LowPart = 0;
     ViewBase.HighPart = 0;
 
-    Status =ZwMapViewOfSection(
-        SectionHandle,
-        NtCurrentProcess(),
-        &BaseAddress,
-        0,
-        ViewSize,
-        &ViewBase,
-        &ViewSize,
-        ViewUnmap,
-        MEM_DOS_LIM,
-        PAGE_READWRITE
-        );
+    Status = ZwMapViewOfSection(SectionHandle, NtCurrentProcess(), &BaseAddress, 0, ViewSize, &ViewBase, &ViewSize,
+                                ViewUnmap, MEM_DOS_LIM, PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         VideoBiosStart = VIDEO_BIOS_START;
-    } else {
+    }
+    else
+    {
         VideoBiosStart = (*((PULONG)BaseAddress + INT10_VECTOR) & 0xFFFF0000) >> 12;
         VideoBiosStart += (*((PULONG)BaseAddress + INT10_VECTOR) & 0x0000FFFF);
         VideoBiosStart &= 0xffff8000;
-        if (VideoBiosStart < VIDEO_BIOS_START) {
+        if (VideoBiosStart < VIDEO_BIOS_START)
+        {
             VideoBiosStart = VIDEO_BIOS_START;
         }
-        Status = ZwUnmapViewOfSection(
-            NtCurrentProcess(),
-            BaseAddress
-            );
+        Status = ZwUnmapViewOfSection(NtCurrentProcess(), BaseAddress);
     }
 
     VersionStrings = ExAllocatePool(PagedPool, VERSION_DATA_LENGTH);
@@ -1223,51 +1082,27 @@ Returns:
     ViewBase.LowPart = SYSTEM_BIOS_START;
     ViewBase.HighPart = 0;
 
-    Status =ZwMapViewOfSection(
-        SectionHandle,
-        NtCurrentProcess(),
-        &BaseAddress,
-        0,
-        ViewSize,
-        &ViewBase,
-        &ViewSize,
-        ViewUnmap,
-        MEM_DOS_LIM,
-        PAGE_READWRITE
-        );
+    Status = ZwMapViewOfSection(SectionHandle, NtCurrentProcess(), &BaseAddress, 0, ViewSize, &ViewBase, &ViewSize,
+                                ViewUnmap, MEM_DOS_LIM, PAGE_READWRITE);
 
-    if (NT_SUCCESS(Status)) {
-        if (CmpGetBiosDate(BaseAddress, SYSTEM_BIOS_LENGTH, Buffer, TRUE)) {
+    if (NT_SUCCESS(Status))
+    {
+        if (CmpGetBiosDate(BaseAddress, SYSTEM_BIOS_LENGTH, Buffer, TRUE))
+        {
 
             //
             // Convert ascii date string to unicode string and
             // store it in registry.
             //
 
-            RtlInitUnicodeString(
-                &ValueName,
-                L"SystemBiosDate"
-                );
+            RtlInitUnicodeString(&ValueName, L"SystemBiosDate");
 
-            RtlInitAnsiString(
-                &AnsiString,
-                Buffer
-                );
+            RtlInitAnsiString(&AnsiString, Buffer);
 
-            RtlAnsiStringToUnicodeString(
-                &ValueData,
-                &AnsiString,
-                TRUE
-                );
+            RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-            Status = NtSetValueKey(
-                        ParentHandle,
-                        &ValueName,
-                        TITLE_INDEX_VALUE,
-                        REG_SZ,
-                        ValueData.Buffer,
-                        ValueData.Length + sizeof( UNICODE_NULL )
-                        );
+            Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                                   ValueData.Length + sizeof(UNICODE_NULL));
 
             RtlFreeUnicodeString(&ValueData);
 
@@ -1276,61 +1111,56 @@ Returns:
             memcpy(Buffer, (PCHAR)BaseAddress + 0xFFF5, 8);
             Buffer[8] = '\0';
 
-            RtlInitAnsiString(
-                &AnsiString,
-                Buffer
-                );
+            RtlInitAnsiString(&AnsiString, Buffer);
 
-            Status = RtlAnsiStringToUnicodeString(
-                        &ValueData,
-                        &AnsiString,
-                        TRUE
-                        );
+            Status = RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
-                Status = NtSetValueKey(
-                            BiosInfo,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_SZ,
-                            ValueData.Buffer,
-                            ValueData.Length + sizeof( UNICODE_NULL )
-                            );
+                Status = NtSetValueKey(BiosInfo, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                                       ValueData.Length + sizeof(UNICODE_NULL));
 
                 RtlFreeUnicodeString(&ValueData);
             }
 
-            NtClose (BiosInfo);
+            NtClose(BiosInfo);
 
 #endif
-
         }
 
-        if ((VersionPointer = VersionStrings) != NULL) {
+        if ((VersionPointer = VersionStrings) != NULL)
+        {
 
             //
             // Try to detect ALL the possible BIOS version strings.
             //
 
-            for (VersionPass = 0; ; VersionPass++) {
+            for (VersionPass = 0;; VersionPass++)
+            {
 
-                if (VersionPass == 0) {
+                if (VersionPass == 0)
+                {
 
                     //
                     // First try to get the version from ACPI tables.
                     //
 
-                    if (!CmpGetAcpiBiosVersion(Buffer)) {
+                    if (!CmpGetAcpiBiosVersion(Buffer))
+                    {
 
                         //
                         // This is a non-ACPI system.
                         //
                         continue;
                     }
-                } else {
+                }
+                else
+                {
 
-                    if (!CmpGetBiosVersion((VersionPass == 1)?  BaseAddress : NULL, (VersionPass == 1)? SYSTEM_BIOS_LENGTH : 0, Buffer)) {
+                    if (!CmpGetBiosVersion((VersionPass == 1) ? BaseAddress : NULL,
+                                           (VersionPass == 1) ? SYSTEM_BIOS_LENGTH : 0, Buffer))
+                    {
 
                         break;
                     }
@@ -1341,26 +1171,16 @@ Returns:
                 // VersionStrings buffer.
                 //
 
-                RtlInitAnsiString(
-                    &AnsiString,
-                    Buffer
-                    );
+                RtlInitAnsiString(&AnsiString, Buffer);
 
-                RtlAnsiStringToUnicodeString(
-                    &ValueData,
-                    &AnsiString,
-                    TRUE
-                    );
+                RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
                 Length = ValueData.Length + sizeof(UNICODE_NULL);
-                RtlCopyMemory(VersionPointer,
-                              ValueData.Buffer,
-                              Length
-                              );
+                RtlCopyMemory(VersionPointer, ValueData.Buffer, Length);
                 VersionsLength += Length;
                 RtlFreeUnicodeString(&ValueData);
-                if (VersionsLength + (MAXIMUM_BIOS_VERSION_LENGTH +
-                    sizeof(UNICODE_NULL)) * 2 > PAGE_SIZE) {
+                if (VersionsLength + (MAXIMUM_BIOS_VERSION_LENGTH + sizeof(UNICODE_NULL)) * 2 > PAGE_SIZE)
+                {
                     break;
                 }
                 VersionPointer += Length;
@@ -1370,7 +1190,8 @@ Returns:
             // If we found any version string, write it to the registry.
             //
 
-            if (VersionsLength != 0) {
+            if (VersionsLength != 0)
+            {
 
                 //
                 // Append a UNICODE_NULL to the end of VersionStrings
@@ -1384,19 +1205,10 @@ Returns:
                 // initialize its value to the string(s) we found.
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    L"SystemBiosVersion"
-                    );
+                RtlInitUnicodeString(&ValueName, L"SystemBiosVersion");
 
-                Status = NtSetValueKey(
-                            ParentHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_MULTI_SZ,
-                            VersionStrings,
-                            VersionsLength
-                            );
+                Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_MULTI_SZ, VersionStrings,
+                                       VersionsLength);
             }
         }
         ZwUnmapViewOfSection(NtCurrentProcess(), BaseAddress);
@@ -1406,49 +1218,23 @@ Returns:
     // Get system information like SealedCaseSystem, LegacyFreeSystem etc from
     // the BIOS.
     //
-    if (CmpGetAcpiBiosInformation(&AcpiBiosInformation)) {
+    if (CmpGetAcpiBiosInformation(&AcpiBiosInformation))
+    {
 
-        RtlInitUnicodeString(
-            &ValueName,
-            L"BootArchitecture"
-            );
+        RtlInitUnicodeString(&ValueName, L"BootArchitecture");
 
-        NtSetValueKey(
-            ParentHandle,
-            &ValueName,
-            TITLE_INDEX_VALUE,
-            REG_DWORD,
-            &AcpiBiosInformation.BootArchitecture,
-            sizeof(ULONG)
-            );
+        NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_DWORD, &AcpiBiosInformation.BootArchitecture,
+                      sizeof(ULONG));
 
-        RtlInitUnicodeString(
-            &ValueName,
-            L"PreferredProfile"
-            );
+        RtlInitUnicodeString(&ValueName, L"PreferredProfile");
 
-        NtSetValueKey(
-            ParentHandle,
-            &ValueName,
-            TITLE_INDEX_VALUE,
-            REG_DWORD,
-            &AcpiBiosInformation.PreferredProfile,
-            sizeof(ULONG)
-            );
+        NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_DWORD, &AcpiBiosInformation.PreferredProfile,
+                      sizeof(ULONG));
 
-        RtlInitUnicodeString(
-            &ValueName,
-            L"Capabilities"
-            );
+        RtlInitUnicodeString(&ValueName, L"Capabilities");
 
-        NtSetValueKey(
-            ParentHandle,
-            &ValueName,
-            TITLE_INDEX_VALUE,
-            REG_DWORD,
-            &AcpiBiosInformation.Capabilities,
-            sizeof(ULONG)
-            );
+        NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_DWORD, &AcpiBiosInformation.Capabilities,
+                      sizeof(ULONG));
     }
 
     //
@@ -1460,53 +1246,31 @@ Returns:
     ViewBase.LowPart = VideoBiosStart;
     ViewBase.HighPart = 0;
 
-    Status =ZwMapViewOfSection(
-        SectionHandle,
-        NtCurrentProcess(),
-        &BaseAddress,
-        0,
-        ViewSize,
-        &ViewBase,
-        &ViewSize,
-        ViewUnmap,
-        MEM_DOS_LIM,
-        PAGE_READWRITE
-        );
+    Status = ZwMapViewOfSection(SectionHandle, NtCurrentProcess(), &BaseAddress, 0, ViewSize, &ViewBase, &ViewSize,
+                                ViewUnmap, MEM_DOS_LIM, PAGE_READWRITE);
 
-    if (NT_SUCCESS(Status)) {
-        if (CmpGetBiosDate(BaseAddress, VIDEO_BIOS_LENGTH, Buffer, FALSE)) {
+    if (NT_SUCCESS(Status))
+    {
+        if (CmpGetBiosDate(BaseAddress, VIDEO_BIOS_LENGTH, Buffer, FALSE))
+        {
 
-            RtlInitUnicodeString(
-                &ValueName,
-                L"VideoBiosDate"
-                );
+            RtlInitUnicodeString(&ValueName, L"VideoBiosDate");
 
-            RtlInitAnsiString(
-                &AnsiString,
-                Buffer
-                );
+            RtlInitAnsiString(&AnsiString, Buffer);
 
-            RtlAnsiStringToUnicodeString(
-                &ValueData,
-                &AnsiString,
-                TRUE
-                );
+            RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-            Status = NtSetValueKey(
-                        ParentHandle,
-                        &ValueName,
-                        TITLE_INDEX_VALUE,
-                        REG_SZ,
-                        ValueData.Buffer,
-                        ValueData.Length + sizeof( UNICODE_NULL )
-                        );
+            Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                                   ValueData.Length + sizeof(UNICODE_NULL));
 
             RtlFreeUnicodeString(&ValueData);
         }
 
-        if (VersionStrings && CmpGetBiosVersion(BaseAddress, VIDEO_BIOS_LENGTH, Buffer)) {
+        if (VersionStrings && CmpGetBiosVersion(BaseAddress, VIDEO_BIOS_LENGTH, Buffer))
+        {
             VersionPointer = VersionStrings;
-            do {
+            do
+            {
 
                 //
                 // Try to detect ALL the possible BIOS version strings.
@@ -1514,32 +1278,23 @@ Returns:
                 // VersionStrings buffer.
                 //
 
-                RtlInitAnsiString(
-                    &AnsiString,
-                    Buffer
-                    );
+                RtlInitAnsiString(&AnsiString, Buffer);
 
-                RtlAnsiStringToUnicodeString(
-                    &ValueData,
-                    &AnsiString,
-                    TRUE
-                    );
+                RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
                 Length = ValueData.Length + sizeof(UNICODE_NULL);
-                RtlCopyMemory(VersionPointer,
-                              ValueData.Buffer,
-                              Length
-                              );
+                RtlCopyMemory(VersionPointer, ValueData.Buffer, Length);
                 VersionsLength += Length;
                 RtlFreeUnicodeString(&ValueData);
-                if (VersionsLength + (MAXIMUM_BIOS_VERSION_LENGTH +
-                    sizeof(UNICODE_NULL)) * 2 > PAGE_SIZE) {
+                if (VersionsLength + (MAXIMUM_BIOS_VERSION_LENGTH + sizeof(UNICODE_NULL)) * 2 > PAGE_SIZE)
+                {
                     break;
                 }
                 VersionPointer += Length;
             } while (CmpGetBiosVersion(NULL, 0, Buffer));
 
-            if (VersionsLength != 0) {
+            if (VersionsLength != 0)
+            {
 
                 //
                 // Append a UNICODE_NULL to the end of VersionStrings
@@ -1548,31 +1303,23 @@ Returns:
                 *(PWSTR)VersionPointer = UNICODE_NULL;
                 VersionsLength += sizeof(UNICODE_NULL);
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    L"VideoBiosVersion"
-                    );
+                RtlInitUnicodeString(&ValueName, L"VideoBiosVersion");
 
-                Status = NtSetValueKey(
-                            ParentHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_MULTI_SZ,
-                            VersionStrings,
-                            VersionsLength
-                            );
+                Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_MULTI_SZ, VersionStrings,
+                                       VersionsLength);
             }
         }
         ZwUnmapViewOfSection(NtCurrentProcess(), BaseAddress);
     }
     ZwClose(SectionHandle);
-    if (VersionStrings) {
+    if (VersionStrings)
+    {
         ExFreePool((PVOID)VersionStrings);
     }
 
 AllDone:
 
-    NtClose (ParentHandle);
+    NtClose(ParentHandle);
 
     //
     // Add any other x86 specific code here...
@@ -1593,41 +1340,40 @@ AllDone:
 
 #ifdef _WANT_MACHINE_IDENTIFICATION
 
-VOID
-CmpPerformMachineIdentification(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+VOID CmpPerformMachineIdentification(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 {
-    ULONG   majorVersion;
-    ULONG   minorVersion;
-    CHAR    versionBuffer[64];
-    PCHAR   major;
-    PCHAR   minor;
-    ULONG   minSize;
+    ULONG majorVersion;
+    ULONG minorVersion;
+    CHAR versionBuffer[64];
+    PCHAR major;
+    PCHAR minor;
+    ULONG minSize;
 
     major = strcpy(versionBuffer, VER_PRODUCTVERSION_STR);
     minor = strchr(major, '.');
     majorVersion = atoi(major);
-    if( minor != NULL ) {
+    if (minor != NULL)
+    {
         *minor++ = '\0';
         minorVersion = atoi(minor);
-    } else {
+    }
+    else
+    {
         minorVersion = 0;
     }
-    if (    LoaderBlock->Extension->MajorVersion > majorVersion ||
-            (LoaderBlock->Extension->MajorVersion == majorVersion &&
-                LoaderBlock->Extension->MinorVersion >= minorVersion)) {
+    if (LoaderBlock->Extension->MajorVersion > majorVersion ||
+        (LoaderBlock->Extension->MajorVersion == majorVersion && LoaderBlock->Extension->MinorVersion >= minorVersion))
+    {
 
         minSize = FIELD_OFFSET(LOADER_PARAMETER_EXTENSION, InfFileSize) + sizeof(ULONG);
-        if (LoaderBlock->Extension && LoaderBlock->Extension->Size >= minSize) {
+        if (LoaderBlock->Extension && LoaderBlock->Extension->Size >= minSize)
+        {
 
-            if (LoaderBlock->Extension->InfFileImage && LoaderBlock->Extension->InfFileSize) {
+            if (LoaderBlock->Extension->InfFileImage && LoaderBlock->Extension->InfFileSize)
+            {
 
-                CmpMatchInfList(
-                    LoaderBlock->Extension->InfFileImage,
-                    LoaderBlock->Extension->InfFileSize,
-                    "MachineDescription"
-                    );
+                CmpMatchInfList(LoaderBlock->Extension->InfFileImage, LoaderBlock->Extension->InfFileSize,
+                                "MachineDescription");
             }
         }
     }

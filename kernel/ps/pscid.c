@@ -22,19 +22,15 @@ Revision History:
 --*/
 
 #include "psp.h"
-
+
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PsLookupProcessThreadByCid)
 #pragma alloc_text(PAGE, PsLookupProcessByProcessId)
 #pragma alloc_text(PAGE, PsLookupThreadByThreadId)
 #endif //ALLOC_PRAGMA
-
+
 NTSTATUS
-PsLookupProcessThreadByCid(
-    IN PCLIENT_ID Cid,
-    OUT PEPROCESS *Process OPTIONAL,
-    OUT PETHREAD *Thread
-    )
+PsLookupProcessThreadByCid(IN PCLIENT_ID Cid, OUT PEPROCESS *Process OPTIONAL, OUT PETHREAD *Thread)
 
 /*++
 
@@ -76,54 +72,56 @@ Return Value:
 
     lThread = NULL;
 
-    CurrentThread = PsGetCurrentThread ();
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+    CurrentThread = PsGetCurrentThread();
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
 
     CidEntry = ExMapHandleToPointer(PspCidTable, Cid->UniqueThread);
-    if (CidEntry != NULL) {
+    if (CidEntry != NULL)
+    {
         lThread = (PETHREAD)CidEntry->Object;
-        if (!ObReferenceObjectSafe (lThread)) {
+        if (!ObReferenceObjectSafe(lThread))
+        {
             lThread = NULL;
         }
         ExUnlockHandleTableEntry(PspCidTable, CidEntry);
     }
 
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
     Status = STATUS_INVALID_CID;
-    if (lThread != NULL) {
+    if (lThread != NULL)
+    {
         //
         // This could be a thread or a process. Check its a thread.
         //
-        if (lThread->Tcb.Header.Type != ThreadObject ||
-            lThread->Cid.UniqueProcess != Cid->UniqueProcess ||
-            lThread->GrantedAccess == 0) {
-            ObDereferenceObject (lThread);
-        } else {
+        if (lThread->Tcb.Header.Type != ThreadObject || lThread->Cid.UniqueProcess != Cid->UniqueProcess ||
+            lThread->GrantedAccess == 0)
+        {
+            ObDereferenceObject(lThread);
+        }
+        else
+        {
             *Thread = lThread;
-            if (ARGUMENT_PRESENT (Process)) {
-                lProcess = THREAD_TO_PROCESS (lThread);
+            if (ARGUMENT_PRESENT(Process))
+            {
+                lProcess = THREAD_TO_PROCESS(lThread);
                 *Process = lProcess;
                 //
                 // Since the thread holds a reference to the process this reference does not have to
                 // be protected.
                 //
-                ObReferenceObject (lProcess);
+                ObReferenceObject(lProcess);
             }
             Status = STATUS_SUCCESS;
         }
-
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-PsLookupProcessByProcessId(
-    IN HANDLE ProcessId,
-    OUT PEPROCESS *Process
-    )
+PsLookupProcessByProcessId(IN HANDLE ProcessId, OUT PEPROCESS *Process)
 
 /*++
 
@@ -157,17 +155,19 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+    CurrentThread = PsGetCurrentThread();
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
 
     CidEntry = ExMapHandleToPointer(PspCidTable, ProcessId);
     Status = STATUS_INVALID_PARAMETER;
-    if (CidEntry != NULL) {
+    if (CidEntry != NULL)
+    {
         lProcess = (PEPROCESS)CidEntry->Object;
-        if (lProcess->Pcb.Header.Type == ProcessObject &&
-            lProcess->GrantedAccess != 0) {
-            if (ObReferenceObjectSafe(lProcess)) {
-               *Process = lProcess;
+        if (lProcess->Pcb.Header.Type == ProcessObject && lProcess->GrantedAccess != 0)
+        {
+            if (ObReferenceObjectSafe(lProcess))
+            {
+                *Process = lProcess;
                 Status = STATUS_SUCCESS;
             }
         }
@@ -175,16 +175,13 @@ Return Value:
         ExUnlockHandleTableEntry(PspCidTable, CidEntry);
     }
 
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
     return Status;
 }
 
-
+
 NTSTATUS
-PsLookupThreadByThreadId(
-    IN HANDLE ThreadId,
-    OUT PETHREAD *Thread
-    )
+PsLookupThreadByThreadId(IN HANDLE ThreadId, OUT PETHREAD *Thread)
 
 /*++
 
@@ -218,16 +215,19 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+    CurrentThread = PsGetCurrentThread();
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
 
     CidEntry = ExMapHandleToPointer(PspCidTable, ThreadId);
     Status = STATUS_INVALID_PARAMETER;
-    if (CidEntry != NULL) {
+    if (CidEntry != NULL)
+    {
         lThread = (PETHREAD)CidEntry->Object;
-        if (lThread->Tcb.Header.Type == ThreadObject && lThread->GrantedAccess) {
+        if (lThread->Tcb.Header.Type == ThreadObject && lThread->GrantedAccess)
+        {
 
-            if (ObReferenceObjectSafe(lThread)) {
+            if (ObReferenceObjectSafe(lThread))
+            {
                 *Thread = lThread;
                 Status = STATUS_SUCCESS;
             }
@@ -236,7 +236,7 @@ Return Value:
         ExUnlockHandleTableEntry(PspCidTable, CidEntry);
     }
 
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
     return Status;
 }

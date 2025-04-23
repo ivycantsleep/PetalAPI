@@ -31,45 +31,25 @@ Environment:
 // This table is used to initialize the global history table.
 //
 
-VOID
-KiDispatchException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN FirstChance
-    );
+VOID KiDispatchException(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                         IN PKTRAP_FRAME TrapFrame, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN FirstChance);
 
-VOID
-KiExceptionDispatch (
-    VOID
-    );
+VOID KiExceptionDispatch(VOID);
 
-PVOID RtlpFunctionAddressTable[] = {
-    &KiExceptionDispatch,
-    &KiDispatchException,
-    &RtlDispatchException,
-    &RtlpExecuteHandlerForException,
-    &__C_specific_handler,
-    &RtlUnwindEx,
-    NULL
-    };
+PVOID RtlpFunctionAddressTable[] = { &KiExceptionDispatch,
+                                     &KiDispatchException,
+                                     &RtlDispatchException,
+                                     &RtlpExecuteHandlerForException,
+                                     &__C_specific_handler,
+                                     &RtlUnwindEx,
+                                     NULL };
 
 #else
 
-VOID
-KiUserExceptionDispatch (
-    VOID
-    );
+VOID KiUserExceptionDispatch(VOID);
 
-PVOID RtlpFunctionAddressTable[] = {
-    &KiUserExceptionDispatch,
-    &RtlDispatchException,
-    &RtlpExecuteHandlerForException,
-    &__C_specific_handler,
-    &RtlUnwindEx,
-    NULL
-    };
+PVOID RtlpFunctionAddressTable[] = { &KiUserExceptionDispatch, &RtlDispatchException, &RtlpExecuteHandlerForException,
+                                     &__C_specific_handler,    &RtlUnwindEx,          NULL };
 
 #endif
 
@@ -87,37 +67,30 @@ PVOID RtlpFunctionAddressTable[] = {
 //
 // Define lookup table for providing the number of slots used by each unwind
 // code.
-// 
+//
 
 UCHAR RtlpUnwindOpSlotTable[] = {
-    1,          // UWOP_PUSH_NONVOL
-    2,          // UWOP_ALLOC_LARGE (or 3, special cased in lookup code)
-    1,          // UWOP_ALLOC_SMALL
-    1,          // UWOP_SET_FPREG
-    2,          // UWOP_SAVE_NONVOL
-    3,          // UWOP_SAVE_NONVOL_FAR
-    2,          // UWOP_SAVE_XMM
-    3,          // UWOP_SAVE_XMM_FAR
-    2,          // UWOP_SAVE_XMM128
-    3,          // UWOP_SAVE_XMM128_FAR
-    1           // UWOP_PUSH_MACHFRAME
+    1, // UWOP_PUSH_NONVOL
+    2, // UWOP_ALLOC_LARGE (or 3, special cased in lookup code)
+    1, // UWOP_ALLOC_SMALL
+    1, // UWOP_SET_FPREG
+    2, // UWOP_SAVE_NONVOL
+    3, // UWOP_SAVE_NONVOL_FAR
+    2, // UWOP_SAVE_XMM
+    3, // UWOP_SAVE_XMM_FAR
+    2, // UWOP_SAVE_XMM128
+    3, // UWOP_SAVE_XMM128_FAR
+    1  // UWOP_PUSH_MACHFRAME
 };
 
 //
 // Define forward referenced function prototypes.
 //
 
-VOID
-RtlpCopyContext (
-    OUT PCONTEXT Destination,
-    IN PCONTEXT Source
-    );
+VOID RtlpCopyContext(OUT PCONTEXT Destination, IN PCONTEXT Source);
 
 BOOLEAN
-RtlDispatchException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord
-    )
+RtlDispatchException(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord)
 
 /*++
 
@@ -176,7 +149,8 @@ Return Value:
 
 #if !defined(NTOS_KERNEL_RUNTIME)
 
-    if (RtlCallVectoredExceptionHandlers(ExceptionRecord, ContextRecord) != FALSE) {
+    if (RtlCallVectoredExceptionHandlers(ExceptionRecord, ContextRecord) != FALSE)
+    {
         return TRUE;
     }
 
@@ -201,7 +175,7 @@ Return Value:
     HistoryTable = &UnwindTable;
     HistoryTable->Count = 0;
     HistoryTable->Search = UNWIND_HISTORY_TABLE_NONE;
-    HistoryTable->LowAddress = - 1;
+    HistoryTable->LowAddress = -1;
     HistoryTable->HighAddress = 0;
 
     //
@@ -210,16 +184,15 @@ Return Value:
     // exception handler that will handle the exception.
     //
 
-    do {
+    do
+    {
 
         //
         // Lookup the function table entry using the point at which control
         // left the procedure.
         //
 
-        FunctionEntry = RtlLookupFunctionEntry(ControlPc,
-                                               &ImageBase,
-                                               HistoryTable);
+        FunctionEntry = RtlLookupFunctionEntry(ControlPc, &ImageBase, HistoryTable);
 
         //
         // If there is a function table entry for the routine, then virtually
@@ -228,15 +201,10 @@ Return Value:
         // handler for the frame.
         //
 
-        if (FunctionEntry != NULL) {
-            ExceptionRoutine = RtlVirtualUnwind(UNW_FLAG_EHANDLER,
-                                                ImageBase,
-                                                ControlPc,
-                                                FunctionEntry,
-                                                &ContextRecord1,
-                                                &HandlerData,
-                                                &EstablisherFrame,
-                                                NULL);
+        if (FunctionEntry != NULL)
+        {
+            ExceptionRoutine = RtlVirtualUnwind(UNW_FLAG_EHANDLER, ImageBase, ControlPc, FunctionEntry, &ContextRecord1,
+                                                &HandlerData, &EstablisherFrame, NULL);
 
             //
             // If the establisher frame pointer is not within the specified
@@ -246,14 +214,14 @@ Return Value:
             // routine has an exception handler.
             //
 
-            if ((EstablisherFrame < LowLimit) ||
-                (EstablisherFrame > HighLimit) ||
-                ((EstablisherFrame & 0xf) != 0)) {
+            if ((EstablisherFrame < LowLimit) || (EstablisherFrame > HighLimit) || ((EstablisherFrame & 0xf) != 0))
+            {
 
                 ExceptionFlags |= EXCEPTION_STACK_INVALID;
                 break;
-
-            } else if (ExceptionRoutine != NULL) {
+            }
+            else if (ExceptionRoutine != NULL)
+            {
 
                 //
                 // The frame has an exception handler.
@@ -265,18 +233,17 @@ Return Value:
                 // context when it is called.
                 //
 
-                do {
+                do
+                {
 
                     //
                     // Log the exception if exception logging is enabled.
                     //
-    
+
                     ExceptionRecord->ExceptionFlags = ExceptionFlags;
-                    if ((NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING) != 0) {
-                        Index = RtlpLogExceptionHandler(ExceptionRecord,
-                                                        &ContextRecord1,
-                                                        ControlPc,
-                                                        FunctionEntry,
+                    if ((NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING) != 0)
+                    {
+                        Index = RtlpLogExceptionHandler(ExceptionRecord, &ContextRecord1, ControlPc, FunctionEntry,
                                                         sizeof(RUNTIME_FUNCTION));
                     }
 
@@ -294,22 +261,19 @@ Return Value:
                     DispatcherContext.LanguageHandler = ExceptionRoutine;
                     DispatcherContext.HandlerData = HandlerData;
                     DispatcherContext.HistoryTable = HistoryTable;
-                    Disposition =
-                        RtlpExecuteHandlerForException(ExceptionRecord,
-                                                       EstablisherFrame,
-                                                       ContextRecord,
-                                                       &DispatcherContext);
-    
-                    if ((NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING) != 0) {
+                    Disposition = RtlpExecuteHandlerForException(ExceptionRecord, EstablisherFrame, ContextRecord,
+                                                                 &DispatcherContext);
+
+                    if ((NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING) != 0)
+                    {
                         RtlpLogLastExceptionDisposition(Index, Disposition);
                     }
-    
+
                     //
                     // Propagate noncontinuable exception flag.
                     //
-    
-                    ExceptionFlags |=
-                        (ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE);
+
+                    ExceptionFlags |= (ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE);
 
                     //
                     // If the current scan is within a nested context and the
@@ -317,18 +281,20 @@ Return Value:
                     // then clear the nested context frame and the nested
                     // exception flag in the exception flags.
                     //
-    
-                    if (NestedFrame == EstablisherFrame) {
+
+                    if (NestedFrame == EstablisherFrame)
+                    {
                         ExceptionFlags &= (~EXCEPTION_NESTED_CALL);
                         NestedFrame = 0;
                     }
-    
+
                     //
                     // Case on the handler disposition.
                     //
-    
-                    switch (Disposition) {
-    
+
+                    switch (Disposition)
+                    {
+
                         //
                         // The disposition is to continue execution.
                         //
@@ -336,24 +302,26 @@ Return Value:
                         // the exception STATUS_NONCONTINUABLE_EXCEPTION.
                         // Otherwise return exception handled.
                         //
-    
-                    case ExceptionContinueExecution :
-                        if ((ExceptionFlags & EXCEPTION_NONCONTINUABLE) != 0) {
+
+                    case ExceptionContinueExecution:
+                        if ((ExceptionFlags & EXCEPTION_NONCONTINUABLE) != 0)
+                        {
                             RtlRaiseStatus(STATUS_NONCONTINUABLE_EXCEPTION);
-    
-                        } else {
+                        }
+                        else
+                        {
                             return TRUE;
                         }
-    
+
                         //
                         // The disposition is to continue the search.
                         //
                         // Get next frame address and continue the search.
                         //
-    
-                    case ExceptionContinueSearch :
+
+                    case ExceptionContinueSearch:
                         break;
-    
+
                         //
                         // The disposition is nested exception.
                         //
@@ -361,13 +329,14 @@ Return Value:
                         // address and set the nested exception flag in the
                         // exception flags.
                         //
-    
-                    case ExceptionNestedException :
+
+                    case ExceptionNestedException:
                         ExceptionFlags |= EXCEPTION_NESTED_CALL;
-                        if (DispatcherContext.EstablisherFrame > NestedFrame) {
+                        if (DispatcherContext.EstablisherFrame > NestedFrame)
+                        {
                             NestedFrame = DispatcherContext.EstablisherFrame;
                         }
-    
+
                         break;
 
                         //
@@ -383,8 +352,7 @@ Return Value:
                         ImageBase = DispatcherContext.ImageBase;
                         FunctionEntry = DispatcherContext.FunctionEntry;
                         EstablisherFrame = DispatcherContext.EstablisherFrame;
-                        RtlpCopyContext(&ContextRecord1,
-                                        DispatcherContext.ContextRecord);
+                        RtlpCopyContext(&ContextRecord1, DispatcherContext.ContextRecord);
 
                         ExceptionRoutine = DispatcherContext.LanguageHandler;
                         HandlerData = DispatcherContext.HandlerData;
@@ -397,15 +365,16 @@ Return Value:
                         //
                         // Raise invalid disposition exception.
                         //
-    
-                    default :
+
+                    default:
                         RtlRaiseStatus(STATUS_INVALID_DISPOSITION);
                     }
 
                 } while ((ExceptionFlags & EXCEPTION_COLLIDED_UNWIND) != 0);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // Set the point where control left the current function by
@@ -422,7 +391,8 @@ Return Value:
         // malformed.
         //
 
-        if (ControlPc == ContextRecord1.Rip) {
+        if (ControlPc == ContextRecord1.Rip)
+        {
             break;
         }
 
@@ -441,13 +411,8 @@ Return Value:
     return FALSE;
 }
 
-VOID
-RtlUnwind (
-    IN PVOID TargetFrame OPTIONAL,
-    IN PVOID TargetIp OPTIONAL,
-    IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
-    IN PVOID ReturnValue
-    )
+VOID RtlUnwind(IN PVOID TargetFrame OPTIONAL, IN PVOID TargetIp OPTIONAL, IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
+               IN PVOID ReturnValue)
 
 /*++
 
@@ -496,25 +461,14 @@ Return Value:
     // table address as extra arguments.
     //
 
-    RtlUnwindEx(TargetFrame,
-                TargetIp,
-                ExceptionRecord,
-                ReturnValue,
-                &ContextRecord,
-                NULL);
+    RtlUnwindEx(TargetFrame, TargetIp, ExceptionRecord, ReturnValue, &ContextRecord, NULL);
 
     return;
 }
 
-VOID
-RtlUnwindEx (
-    IN PVOID TargetFrame OPTIONAL,
-    IN PVOID TargetIp OPTIONAL,
-    IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
-    IN PVOID ReturnValue,
-    IN PCONTEXT OriginalContext,
-    IN PUNWIND_HISTORY_TABLE HistoryTable OPTIONAL
-    )
+VOID RtlUnwindEx(IN PVOID TargetFrame OPTIONAL, IN PVOID TargetIp OPTIONAL,
+                 IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL, IN PVOID ReturnValue, IN PCONTEXT OriginalContext,
+                 IN PUNWIND_HISTORY_TABLE HistoryTable OPTIONAL)
 
 /*++
 
@@ -593,7 +547,8 @@ Return Value:
     // If a history table is specified, then set to search history table.
     //
 
-    if (ARGUMENT_PRESENT(HistoryTable)) {
+    if (ARGUMENT_PRESENT(HistoryTable))
+    {
         HistoryTable->Search = UNWIND_HISTORY_TABLE_GLOBAL;
     }
 
@@ -602,7 +557,8 @@ Return Value:
     // record for use in calling exception handlers during the unwind operation.
     //
 
-    if (ARGUMENT_PRESENT(ExceptionRecord) == FALSE) {
+    if (ARGUMENT_PRESENT(ExceptionRecord) == FALSE)
+    {
         ExceptionRecord = &ExceptionRecord1;
         ExceptionRecord1.ExceptionCode = STATUS_UNWIND;
         ExceptionRecord1.ExceptionRecord = NULL;
@@ -616,7 +572,8 @@ Return Value:
     //
 
     ExceptionFlags = EXCEPTION_UNWINDING;
-    if (ARGUMENT_PRESENT(TargetFrame) == FALSE) {
+    if (ARGUMENT_PRESENT(TargetFrame) == FALSE)
+    {
         ExceptionFlags |= EXCEPTION_EXIT_UNWIND;
     }
 
@@ -625,7 +582,8 @@ Return Value:
     // handlers until the target frame of the unwind is reached.
     //
 
-    do {
+    do
+    {
 
         //
         // Lookup the function table entry using the point at which control
@@ -633,9 +591,7 @@ Return Value:
         //
 
         ControlPc = CurrentContext->Rip;
-        FunctionEntry = RtlLookupFunctionEntry(ControlPc,
-                                               &ImageBase,
-                                               HistoryTable);
+        FunctionEntry = RtlLookupFunctionEntry(ControlPc, &ImageBase, HistoryTable);
 
         //
         // If there is a function table entry for the routine, then virtually
@@ -643,16 +599,11 @@ Return Value:
         // pointer of the establisher, but don't update the context record.
         //
 
-        if (FunctionEntry != NULL) {
+        if (FunctionEntry != NULL)
+        {
             RtlpCopyContext(PreviousContext, CurrentContext);
-            ExceptionRoutine = RtlVirtualUnwind(UNW_FLAG_UHANDLER,
-                                                ImageBase,
-                                                ControlPc,
-                                                FunctionEntry,
-                                                PreviousContext,
-                                                &HandlerData,
-                                                &EstablisherFrame,
-                                                NULL);
+            ExceptionRoutine = RtlVirtualUnwind(UNW_FLAG_UHANDLER, ImageBase, ControlPc, FunctionEntry, PreviousContext,
+                                                &HandlerData, &EstablisherFrame, NULL);
 
             //
             // If the establisher frame pointer is not within the specified
@@ -663,15 +614,15 @@ Return Value:
             // exception handler.
             //
 
-            if ((EstablisherFrame < LowLimit) ||
-                (EstablisherFrame > HighLimit) ||
-                ((ARGUMENT_PRESENT(TargetFrame) != FALSE) &&
-                 ((ULONG64)TargetFrame < EstablisherFrame)) ||
-                ((EstablisherFrame & 0xf) != 0)) {
+            if ((EstablisherFrame < LowLimit) || (EstablisherFrame > HighLimit) ||
+                ((ARGUMENT_PRESENT(TargetFrame) != FALSE) && ((ULONG64)TargetFrame < EstablisherFrame)) ||
+                ((EstablisherFrame & 0xf) != 0))
+            {
 
                 RtlRaiseStatus(STATUS_BAD_STACK);
-
-            } else if (ExceptionRoutine != NULL) {
+            }
+            else if (ExceptionRoutine != NULL)
+            {
 
                 //
                 // The frame has a exception handler.
@@ -684,14 +635,16 @@ Return Value:
                 //
 
                 DispatcherContext.TargetIp = (ULONG64)TargetIp;
-                do {
+                do
+                {
 
                     //
                     // If the establisher frame is the target of the unwind
                     // operation, then set the target unwind flag.
                     //
 
-                    if ((ULONG64)TargetFrame == EstablisherFrame) {
+                    if ((ULONG64)TargetFrame == EstablisherFrame)
+                    {
                         ExceptionFlags |= EXCEPTION_TARGET_UNWIND;
                     }
 
@@ -717,24 +670,21 @@ Return Value:
                     DispatcherContext.LanguageHandler = ExceptionRoutine;
                     DispatcherContext.HandlerData = HandlerData;
                     DispatcherContext.HistoryTable = HistoryTable;
-                    Disposition =
-                        RtlpExecuteHandlerForUnwind(ExceptionRecord,
-                                                    EstablisherFrame,
-                                                    CurrentContext,
-                                                    &DispatcherContext);
+                    Disposition = RtlpExecuteHandlerForUnwind(ExceptionRecord, EstablisherFrame, CurrentContext,
+                                                              &DispatcherContext);
 
                     //
                     // Clear target unwind and collided unwind flags.
                     //
 
-                    ExceptionFlags &=
-                        ~(EXCEPTION_COLLIDED_UNWIND | EXCEPTION_TARGET_UNWIND);
+                    ExceptionFlags &= ~(EXCEPTION_COLLIDED_UNWIND | EXCEPTION_TARGET_UNWIND);
 
                     //
                     // Case on the handler disposition.
                     //
 
-                    switch (Disposition) {
+                    switch (Disposition)
+                    {
 
                         //
                         // The disposition is to continue the search.
@@ -743,8 +693,9 @@ Return Value:
                         // swap context pointers.
                         //
 
-                    case ExceptionContinueSearch :
-                        if (EstablisherFrame != (ULONG64)TargetFrame) {
+                    case ExceptionContinueSearch:
+                        if (EstablisherFrame != (ULONG64)TargetFrame)
+                        {
                             TempContext = CurrentContext;
                             CurrentContext = PreviousContext;
                             PreviousContext = TempContext;
@@ -764,24 +715,17 @@ Return Value:
                         // exception record.
                         //
 
-                    case ExceptionCollidedUnwind :
+                    case ExceptionCollidedUnwind:
                         ControlPc = DispatcherContext.ControlPc;
                         ImageBase = DispatcherContext.ImageBase;
                         FunctionEntry = DispatcherContext.FunctionEntry;
-                        RtlpCopyContext(OriginalContext,
-                                        DispatcherContext.ContextRecord);
+                        RtlpCopyContext(OriginalContext, DispatcherContext.ContextRecord);
 
                         CurrentContext = OriginalContext;
                         PreviousContext = &LocalContext;
                         RtlpCopyContext(PreviousContext, CurrentContext);
-                        RtlVirtualUnwind(UNW_FLAG_NHANDLER,
-                                         ImageBase,
-                                         ControlPc,
-                                         FunctionEntry,
-                                         PreviousContext,
-                                         &HandlerData,
-                                         &EstablisherFrame,
-                                         NULL);
+                        RtlVirtualUnwind(UNW_FLAG_NHANDLER, ImageBase, ControlPc, FunctionEntry, PreviousContext,
+                                         &HandlerData, &EstablisherFrame, NULL);
 
                         EstablisherFrame = DispatcherContext.EstablisherFrame;
                         ExceptionRoutine = DispatcherContext.LanguageHandler;
@@ -796,27 +740,30 @@ Return Value:
                         // Raise invalid disposition exception.
                         //
 
-                    default :
+                    default:
                         RtlRaiseStatus(STATUS_INVALID_DISPOSITION);
                     }
 
                 } while ((ExceptionFlags & EXCEPTION_COLLIDED_UNWIND) != 0);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // If the target frame has not been reached, then swap
                 // context pointers.
                 //
 
-                if (EstablisherFrame != (ULONG64)TargetFrame) {
+                if (EstablisherFrame != (ULONG64)TargetFrame)
+                {
                     TempContext = CurrentContext;
                     CurrentContext = PreviousContext;
                     PreviousContext = TempContext;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // Set the point where control left the current function by
@@ -827,9 +774,8 @@ Return Value:
             CurrentContext->Rsp += 8;
         }
 
-    } while ((EstablisherFrame < HighLimit) &&
-            (EstablisherFrame != (ULONG64)TargetFrame) &&
-            (ControlPc != CurrentContext->Rip));
+    } while ((EstablisherFrame < HighLimit) && (EstablisherFrame != (ULONG64)TargetFrame) &&
+             (ControlPc != CurrentContext->Rip));
 
     //
     // If the establisher stack pointer is equal to the target frame pointer,
@@ -838,17 +784,19 @@ Return Value:
     // given a second chance to handle the unwind.
     //
 
-    if (EstablisherFrame == (ULONG64)TargetFrame) {
+    if (EstablisherFrame == (ULONG64)TargetFrame)
+    {
         CurrentContext->Rax = (ULONG64)ReturnValue;
-        if (!ARGUMENT_PRESENT(ExceptionRecord) ||
-            (ExceptionRecord->ExceptionCode != STATUS_UNWIND_CONSOLIDATE)) {
+        if (!ARGUMENT_PRESENT(ExceptionRecord) || (ExceptionRecord->ExceptionCode != STATUS_UNWIND_CONSOLIDATE))
+        {
 
             CurrentContext->Rip = (ULONG64)TargetIp;
         }
 
         RtlRestoreContext(CurrentContext, ExceptionRecord);
-
-    } else {
+    }
+    else
+    {
 
         //
         // If the old control PC is the same as the new control PC, then
@@ -856,24 +804,20 @@ Return Value:
         // malformed. Otherwise, give the debugger and subsystem a second
         // chance to handle the exception.
 
-        if (ControlPc == CurrentContext->Rip) {
+        if (ControlPc == CurrentContext->Rip)
+        {
             RtlRaiseStatus(STATUS_BAD_FUNCTION_TABLE);
-
-        } else {
+        }
+        else
+        {
             ZwRaiseException(ExceptionRecord, CurrentContext, FALSE);
         }
     }
 }
 
 PRUNTIME_FUNCTION
-RtlpUnwindPrologue (
-    IN ULONG64 ImageBase,
-    IN ULONG64 ControlPc,
-    IN ULONG64 FrameBase,
-    IN PRUNTIME_FUNCTION FunctionEntry,
-    IN OUT PCONTEXT ContextRecord,
-    IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL
-    )
+RtlpUnwindPrologue(IN ULONG64 ImageBase, IN ULONG64 ControlPc, IN ULONG64 FrameBase, IN PRUNTIME_FUNCTION FunctionEntry,
+                   IN OUT PCONTEXT ContextRecord, IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL)
 
 /*++
 
@@ -937,7 +881,8 @@ Return Value:
     MachineFrame = FALSE;
     PrologOffset = (ULONG)(ControlPc - (FunctionEntry->BeginAddress + ImageBase));
     UnwindInfo = (PUNWIND_INFO)(FunctionEntry->UnwindData + ImageBase);
-    while (Index < UnwindInfo->CountOfCodes) {
+    while (Index < UnwindInfo->CountOfCodes)
+    {
 
         //
         // If the prologue offset is greater than the next unwind code offset,
@@ -946,8 +891,10 @@ Return Value:
 
         UnwindOp = UnwindInfo->UnwindCode[Index].UnwindOp;
         OpInfo = UnwindInfo->UnwindCode[Index].OpInfo;
-        if (PrologOffset >= UnwindInfo->UnwindCode[Index].CodeOffset) {
-            switch (UnwindOp) {
+        if (PrologOffset >= UnwindInfo->UnwindCode[Index].CodeOffset)
+        {
+            switch (UnwindOp)
+            {
 
                 //
                 // Push nonvolatile integer register.
@@ -959,7 +906,8 @@ Return Value:
             case UWOP_PUSH_NONVOL:
                 IntegerAddress = (PULONG64)(ContextRecord->Rsp);
                 IntegerRegister[OpInfo] = *IntegerAddress;
-                if (ARGUMENT_PRESENT(ContextPointers)) {
+                if (ARGUMENT_PRESENT(ContextPointers))
+                {
                     ContextPointers->IntegerContext[OpInfo] = IntegerAddress;
                 }
 
@@ -976,11 +924,13 @@ Return Value:
             case UWOP_ALLOC_LARGE:
                 Index += 1;
                 FrameOffset = UnwindInfo->UnwindCode[Index].FrameOffset;
-                if (OpInfo != 0) {
+                if (OpInfo != 0)
+                {
                     Index += 1;
                     FrameOffset += (UnwindInfo->UnwindCode[Index].FrameOffset << 16);
-
-                } else {
+                }
+                else
+                {
                     FrameOffset *= 8;
                 }
 
@@ -1021,7 +971,8 @@ Return Value:
                 FrameOffset = UnwindInfo->UnwindCode[Index].FrameOffset * 8;
                 IntegerAddress = (PULONG64)(FrameBase + FrameOffset);
                 IntegerRegister[OpInfo] = *IntegerAddress;
-                if (ARGUMENT_PRESENT(ContextPointers)) {
+                if (ARGUMENT_PRESENT(ContextPointers))
+                {
                     ContextPointers->IntegerContext[OpInfo] = IntegerAddress;
                 }
 
@@ -1040,7 +991,8 @@ Return Value:
                 FrameOffset += (UnwindInfo->UnwindCode[Index].FrameOffset << 16);
                 IntegerAddress = (PULONG64)(FrameBase + FrameOffset);
                 IntegerRegister[OpInfo] = *IntegerAddress;
-                if (ARGUMENT_PRESENT(ContextPointers)) {
+                if (ARGUMENT_PRESENT(ContextPointers))
+                {
                     ContextPointers->IntegerContext[OpInfo] = IntegerAddress;
                 }
 
@@ -1059,7 +1011,8 @@ Return Value:
                 FloatingAddress = (PM128)(FrameBase + FrameOffset);
                 FloatingRegister[OpInfo].Low = FloatingAddress->Low;
                 FloatingRegister[OpInfo].High = 0;
-                if (ARGUMENT_PRESENT(ContextPointers)) {
+                if (ARGUMENT_PRESENT(ContextPointers))
+                {
                     ContextPointers->FloatingContext[OpInfo] = FloatingAddress;
                 }
 
@@ -1079,7 +1032,8 @@ Return Value:
                 FloatingAddress = (PM128)(FrameBase + FrameOffset);
                 FloatingRegister[OpInfo].Low = FloatingAddress->Low;
                 FloatingRegister[OpInfo].High = 0;
-                if (ARGUMENT_PRESENT(ContextPointers)) {
+                if (ARGUMENT_PRESENT(ContextPointers))
+                {
                     ContextPointers->FloatingContext[OpInfo] = FloatingAddress;
                 }
 
@@ -1098,7 +1052,8 @@ Return Value:
                 FloatingAddress = (PM128)(FrameBase + FrameOffset);
                 FloatingRegister[OpInfo].Low = FloatingAddress->Low;
                 FloatingRegister[OpInfo].High = FloatingAddress->High;
-                if (ARGUMENT_PRESENT(ContextPointers)) {
+                if (ARGUMENT_PRESENT(ContextPointers))
+                {
                     ContextPointers->FloatingContext[OpInfo] = FloatingAddress;
                 }
 
@@ -1118,7 +1073,8 @@ Return Value:
                 FloatingAddress = (PM128)(FrameBase + FrameOffset);
                 FloatingRegister[OpInfo].Low = FloatingAddress->Low;
                 FloatingRegister[OpInfo].High = FloatingAddress->High;
-                if (ARGUMENT_PRESENT(ContextPointers)) {
+                if (ARGUMENT_PRESENT(ContextPointers))
+                {
                     ContextPointers->FloatingContext[OpInfo] = FloatingAddress;
                 }
 
@@ -1135,9 +1091,10 @@ Return Value:
                 MachineFrame = TRUE;
                 ReturnAddress = (PULONG64)(ContextRecord->Rsp);
                 StackAddress = (PULONG64)(ContextRecord->Rsp + (3 * 8));
-                if (OpInfo != 0) {
+                if (OpInfo != 0)
+                {
                     ReturnAddress += 1;
-                    StackAddress +=  1;
+                    StackAddress += 1;
                 }
 
                 ContextRecord->Rip = *ReturnAddress;
@@ -1153,8 +1110,9 @@ Return Value:
             }
 
             Index += 1;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Skip this unwind operation by advancing the slot index by the
@@ -1166,9 +1124,10 @@ Return Value:
             //
             // Special case any unwind operations that can consume a variable
             // number of slots.
-            // 
+            //
 
-            switch (UnwindOp) {
+            switch (UnwindOp)
+            {
 
                 //
                 // A non-zero operation information indicates that an
@@ -1176,7 +1135,8 @@ Return Value:
                 //
 
             case UWOP_ALLOC_LARGE:
-                if (OpInfo != 0) {
+                if (OpInfo != 0)
+                {
                     Index += 1;
                 }
 
@@ -1199,22 +1159,21 @@ Return Value:
     // codes.
     //
 
-    if ((UnwindInfo->Flags & UNW_FLAG_CHAININFO) != 0) {
+    if ((UnwindInfo->Flags & UNW_FLAG_CHAININFO) != 0)
+    {
         Index = UnwindInfo->CountOfCodes;
-        if ((Index & 1) != 0) {
+        if ((Index & 1) != 0)
+        {
             Index += 1;
         }
 
         FunctionEntry = (PRUNTIME_FUNCTION)(*(PULONG *)(&UnwindInfo->UnwindCode[Index]) + ImageBase);
-        return RtlpUnwindPrologue(ImageBase,
-                                  ControlPc,
-                                  FrameBase,
-                                  FunctionEntry,
-                                  ContextRecord,
-                                  ContextPointers);
-
-    } else {
-        if (MachineFrame == FALSE) {
+        return RtlpUnwindPrologue(ImageBase, ControlPc, FrameBase, FunctionEntry, ContextRecord, ContextPointers);
+    }
+    else
+    {
+        if (MachineFrame == FALSE)
+        {
             ContextRecord->Rip = *(PULONG64)(ContextRecord->Rsp);
             ContextRecord->Rsp += 8;
         }
@@ -1224,16 +1183,9 @@ Return Value:
 }
 
 PEXCEPTION_ROUTINE
-RtlVirtualUnwind (
-    IN ULONG HandlerType,
-    IN ULONG64 ImageBase,
-    IN ULONG64 ControlPc,
-    IN PRUNTIME_FUNCTION FunctionEntry,
-    IN OUT PCONTEXT ContextRecord,
-    OUT PVOID *HandlerData,
-    OUT PULONG64 EstablisherFrame,
-    IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL
-    )
+RtlVirtualUnwind(IN ULONG HandlerType, IN ULONG64 ImageBase, IN ULONG64 ControlPc, IN PRUNTIME_FUNCTION FunctionEntry,
+                 IN OUT PCONTEXT ContextRecord, OUT PVOID *HandlerData, OUT PULONG64 EstablisherFrame,
+                 IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL)
 
 /*++
 
@@ -1324,29 +1276,35 @@ Return Value:
 
     UnwindInfo = (PUNWIND_INFO)(FunctionEntry->UnwindData + ImageBase);
     PrologOffset = (ULONG)(ControlPc - (FunctionEntry->BeginAddress + ImageBase));
-    if (UnwindInfo->FrameRegister == 0) {
+    if (UnwindInfo->FrameRegister == 0)
+    {
         *EstablisherFrame = ContextRecord->Rsp;
-
-    } else if ((PrologOffset >= UnwindInfo->SizeOfProlog) ||
-               ((UnwindInfo->Flags &  UNW_FLAG_CHAININFO) != 0)) {
+    }
+    else if ((PrologOffset >= UnwindInfo->SizeOfProlog) || ((UnwindInfo->Flags & UNW_FLAG_CHAININFO) != 0))
+    {
         *EstablisherFrame = (&ContextRecord->Rax)[UnwindInfo->FrameRegister];
         *EstablisherFrame -= UnwindInfo->FrameOffset * 16;
-
-    } else {
+    }
+    else
+    {
         Index = 0;
-        while (Index < UnwindInfo->CountOfCodes) {
-            if (UnwindInfo->UnwindCode[Index].UnwindOp == UWOP_SET_FPREG) {
+        while (Index < UnwindInfo->CountOfCodes)
+        {
+            if (UnwindInfo->UnwindCode[Index].UnwindOp == UWOP_SET_FPREG)
+            {
                 break;
             }
 
             Index += 1;
         }
 
-        if (PrologOffset >= UnwindInfo->UnwindCode[Index].CodeOffset) {
+        if (PrologOffset >= UnwindInfo->UnwindCode[Index].CodeOffset)
+        {
             *EstablisherFrame = (&ContextRecord->Rax)[UnwindInfo->FrameRegister];
             *EstablisherFrame -= UnwindInfo->FrameOffset * 16;
-
-        } else {
+        }
+        else
+        {
             *EstablisherFrame = ContextRecord->Rsp;
         }
     }
@@ -1374,41 +1332,41 @@ Return Value:
     //   lea rsp, -disp32[fp]
     //
 
-    if ((NextByte[0] == SIZE64_PREFIX) &&
-        (NextByte[1] == ADD_IMM8_OP) &&
-        (NextByte[2] == 0xc4)) {
+    if ((NextByte[0] == SIZE64_PREFIX) && (NextByte[1] == ADD_IMM8_OP) && (NextByte[2] == 0xc4))
+    {
 
         //
         // add rsp, imm8.
         //
 
         NextByte += 4;
-
-    } else if ((NextByte[0] == SIZE64_PREFIX) &&
-               (NextByte[1] == ADD_IMM32_OP) &&
-               (NextByte[2] == 0xc4)) {
+    }
+    else if ((NextByte[0] == SIZE64_PREFIX) && (NextByte[1] == ADD_IMM32_OP) && (NextByte[2] == 0xc4))
+    {
 
         //
         // add rsp, imm32.
         //
 
         NextByte += 7;
-
-    } else if (((NextByte[0] & 0xf8) == SIZE64_PREFIX) &&
-               (NextByte[1] == LEA_OP)) {
+    }
+    else if (((NextByte[0] & 0xf8) == SIZE64_PREFIX) && (NextByte[1] == LEA_OP))
+    {
 
         FrameRegister = ((NextByte[0] & 0x7) << 3) | (NextByte[2] & 0x7);
-        if ((FrameRegister != 0) &&
-            (FrameRegister == UnwindInfo->FrameRegister)) {
-            if ((NextByte[2] & 0xf8) == 0x60) {
+        if ((FrameRegister != 0) && (FrameRegister == UnwindInfo->FrameRegister))
+        {
+            if ((NextByte[2] & 0xf8) == 0x60)
+            {
 
                 //
                 // lea rsp, disp8[fp].
                 //
 
                 NextByte += 4;
-
-            } else if ((NextByte[2] &0xf8) == 0xa0) {
+            }
+            else if ((NextByte[2] & 0xf8) == 0xa0)
+            {
 
                 //
                 // lea rsp, disp32[fp].
@@ -1425,16 +1383,19 @@ Return Value:
     //   pop nonvolatile-integer-register[0..15].
     //
 
-    while (TRUE) {
-        if ((NextByte[0] & 0xf8) == POP_OP) {
+    while (TRUE)
+    {
+        if ((NextByte[0] & 0xf8) == POP_OP)
+        {
             NextByte += 1;
-
-        } else if (((NextByte[0] & 0xf8) == SIZE64_PREFIX) &&
-                   ((NextByte[1] & 0xf8) == POP_OP)) {
+        }
+        else if (((NextByte[0] & 0xf8) == SIZE64_PREFIX) && ((NextByte[1] & 0xf8) == POP_OP))
+        {
 
             NextByte += 2;
-
-        } else {
+        }
+        else
+        {
             break;
         }
     }
@@ -1446,7 +1407,8 @@ Return Value:
     // be unwound.
     //
 
-    if (NextByte[0] == RET_OP) {
+    if (NextByte[0] == RET_OP)
+    {
         NextByte = (PUCHAR)ControlPc;
 
         //
@@ -1461,7 +1423,8 @@ Return Value:
         //   lea rsp, disp32[frame-register]
         //
 
-        if (NextByte[1] == ADD_IMM8_OP) {
+        if (NextByte[1] == ADD_IMM8_OP)
+        {
 
             //
             // add rsp, imm8.
@@ -1469,8 +1432,9 @@ Return Value:
 
             ContextRecord->Rsp += (CHAR)NextByte[3];
             NextByte += 4;
-
-        } else if (NextByte[1] == ADD_IMM32_OP) {
+        }
+        else if (NextByte[1] == ADD_IMM32_OP)
+        {
 
             //
             // add rsp, imm32.
@@ -1480,9 +1444,11 @@ Return Value:
             Displacement |= (NextByte[5] << 16) | (NextByte[6] << 24);
             ContextRecord->Rsp += Displacement;
             NextByte += 7;
-
-        } else if (NextByte[1] == LEA_OP) {
-            if ((NextByte[2] & 0xf8) == 0x60) {
+        }
+        else if (NextByte[1] == LEA_OP)
+        {
+            if ((NextByte[2] & 0xf8) == 0x60)
+            {
 
                 //
                 // lea rsp, disp8[frame-register].
@@ -1491,8 +1457,9 @@ Return Value:
                 ContextRecord->Rsp = IntegerRegister[FrameRegister];
                 ContextRecord->Rsp += (CHAR)NextByte[3];
                 NextByte += 4;
-
-            } else if ((NextByte[2] & 0xf8) == 0xa0) {
+            }
+            else if ((NextByte[2] & 0xf8) == 0xa0)
+            {
 
                 //
                 // lea rsp, disp32[frame-register].
@@ -1512,8 +1479,10 @@ Return Value:
         //   pop nonvolatile-integer-register.
         //
 
-        while (TRUE) {
-            if ((NextByte[0] & 0xf8) == POP_OP) {
+        while (TRUE)
+        {
+            if ((NextByte[0] & 0xf8) == POP_OP)
+            {
 
                 //
                 // pop nonvolatile-integer-register[0..7]
@@ -1523,9 +1492,9 @@ Return Value:
                 IntegerRegister[RegisterNumber] = *(PULONG64)(ContextRecord->Rsp);
                 ContextRecord->Rsp += 8;
                 NextByte += 1;
-
-            } else if (((NextByte[0] & 0xf8) == SIZE64_PREFIX) &&
-                       ((NextByte[1] & 0xf8) == POP_OP)) {
+            }
+            else if (((NextByte[0] & 0xf8) == SIZE64_PREFIX) && ((NextByte[1] & 0xf8) == POP_OP))
+            {
 
                 //
                 // pop nonvolatile-integer-regiser[8..15]
@@ -1535,8 +1504,9 @@ Return Value:
                 IntegerRegister[RegisterNumber] = *(PULONG64)(ContextRecord->Rsp);
                 ContextRecord->Rsp += 8;
                 NextByte += 2;
-
-            } else {
+            }
+            else
+            {
                 break;
             }
         }
@@ -1555,12 +1525,8 @@ Return Value:
     // subject function and any chained unwind information.
     //
 
-    FunctionEntry = RtlpUnwindPrologue(ImageBase,
-                                       ControlPc,
-                                       *EstablisherFrame,
-                                       FunctionEntry,
-                                       ContextRecord,
-                                       ContextPointers);
+    FunctionEntry =
+        RtlpUnwindPrologue(ImageBase, ControlPc, *EstablisherFrame, FunctionEntry, ContextRecord, ContextPointers);
 
     //
     // If control left the specified function outside of the prologue and
@@ -1571,26 +1537,24 @@ Return Value:
 
     UnwindInfo = (PUNWIND_INFO)(FunctionEntry->UnwindData + ImageBase);
     PrologOffset = (ULONG)(ControlPc - (FunctionEntry->BeginAddress + ImageBase));
-    if ((PrologOffset >= UnwindInfo->SizeOfProlog) &&
-        ((UnwindInfo->Flags & HandlerType) != 0)) {
+    if ((PrologOffset >= UnwindInfo->SizeOfProlog) && ((UnwindInfo->Flags & HandlerType) != 0))
+    {
         Index = UnwindInfo->CountOfCodes;
-        if ((Index & 1) != 0) {
+        if ((Index & 1) != 0)
+        {
             Index += 1;
         }
 
         *HandlerData = &UnwindInfo->UnwindCode[Index + 2];
         return (PEXCEPTION_ROUTINE)(*((PULONG)&UnwindInfo->UnwindCode[Index]) + ImageBase);
-
-    } else {
+    }
+    else
+    {
         return NULL;
     }
 }
 
-VOID
-RtlpGetStackLimits (
-    OUT PULONG64 LowLimit,
-    OUT PULONG64 HighLimit
-    )
+VOID RtlpGetStackLimits(OUT PULONG64 LowLimit, OUT PULONG64 HighLimit)
 
 /*++
 
@@ -1637,9 +1601,7 @@ Return Value:
 LIST_ENTRY RtlpDynamicFunctionTable;
 
 PLIST_ENTRY
-RtlGetFunctionTableListHead (
-    VOID
-    )
+RtlGetFunctionTableListHead(VOID)
 
 /*++
 
@@ -1663,11 +1625,7 @@ Return value:
 }
 
 BOOLEAN
-RtlAddFunctionTable (
-    IN PRUNTIME_FUNCTION FunctionTable,
-    IN ULONG EntryCount,
-    IN ULONG64 BaseAddress
-    )
+RtlAddFunctionTable(IN PRUNTIME_FUNCTION FunctionTable, IN ULONG EntryCount, IN ULONG64 BaseAddress)
 
 /*++
 
@@ -1707,15 +1665,14 @@ Return value:
     // Allocate a new dynamic function table.
     //
 
-    NewTable = RtlAllocateHeap(RtlProcessHeap(),
-                               0,
-                               sizeof(DYNAMIC_FUNCTION_TABLE));
+    NewTable = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(DYNAMIC_FUNCTION_TABLE));
 
     //
     // If the allocation is successful, then add dynamic function table.
     //
 
-    if (NewTable != NULL) {
+    if (NewTable != NULL)
+    {
         NewTable->FunctionTable = FunctionTable;
         NewTable->EntryCount = EntryCount;
         NtQuerySystemTime(&NewTable->TimeStamp);
@@ -1732,17 +1689,20 @@ Return value:
         NewTable->BaseAddress = BaseAddress;
         FunctionEntry += 1;
 
-        for (Index = 1; Index < EntryCount; Index += 1) {
-            if ((NewTable->Type == RF_SORTED) &&
-                (FunctionEntry->BeginAddress < FunctionTable[Index - 1].BeginAddress)) {
+        for (Index = 1; Index < EntryCount; Index += 1)
+        {
+            if ((NewTable->Type == RF_SORTED) && (FunctionEntry->BeginAddress < FunctionTable[Index - 1].BeginAddress))
+            {
                 NewTable->Type = RF_UNSORTED;
             }
 
-            if (FunctionEntry->BeginAddress < NewTable->MinimumAddress) {
+            if (FunctionEntry->BeginAddress < NewTable->MinimumAddress)
+            {
                 NewTable->MinimumAddress = FunctionEntry->BeginAddress;
             }
 
-            if (FunctionEntry->EndAddress > NewTable->MaximumAddress) {
+            if (FunctionEntry->EndAddress > NewTable->MaximumAddress)
+            {
                 NewTable->MaximumAddress = FunctionEntry->EndAddress;
             }
 
@@ -1760,21 +1720,17 @@ Return value:
         InsertTailList(&RtlpDynamicFunctionTable, &NewTable->ListEntry);
         RtlLeaveCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
         return TRUE;
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 BOOLEAN
-RtlInstallFunctionTableCallback (
-    IN ULONG64 TableIdentifier,
-    IN ULONG64 BaseAddress,
-    IN ULONG Length,
-    IN PGET_RUNTIME_FUNCTION_CALLBACK Callback,
-    IN PVOID Context,
-    IN PCWSTR OutOfProcessCallbackDll OPTIONAL
-    )
+RtlInstallFunctionTableCallback(IN ULONG64 TableIdentifier, IN ULONG64 BaseAddress, IN ULONG Length,
+                                IN PGET_RUNTIME_FUNCTION_CALLBACK Callback, IN PVOID Context,
+                                IN PCWSTR OutOfProcessCallbackDll OPTIONAL)
 
 /*++
 
@@ -1828,7 +1784,8 @@ Return Value
     //      of a function table, i.e., this value is used to delete the entry.
     //
 
-    if ((TableIdentifier & 0x3) != 3) {
+    if ((TableIdentifier & 0x3) != 3)
+    {
         return FALSE;
     }
 
@@ -1837,7 +1794,8 @@ Return Value
     // FALSE.
     //
 
-    if ((LONG)Length < 0) {
+    if ((LONG)Length < 0)
+    {
         return FALSE;
     }
 
@@ -1846,19 +1804,19 @@ Return Value
     //
 
     Size = 0;
-    if (ARGUMENT_PRESENT(OutOfProcessCallbackDll)) {
+    if (ARGUMENT_PRESENT(OutOfProcessCallbackDll))
+    {
         Size = (wcslen(OutOfProcessCallbackDll) + 1) * sizeof(WCHAR);
     }
 
-    NewTable = RtlAllocateHeap(RtlProcessHeap(),
-                               0,
-                               sizeof(DYNAMIC_FUNCTION_TABLE) + Size);
+    NewTable = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(DYNAMIC_FUNCTION_TABLE) + Size);
 
     //
     // If the allocation is successful, then add dynamic function table.
     //
 
-    if (NewTable != NULL) {
+    if (NewTable != NULL)
+    {
 
         //
         // Initialize the dynamic function table callback entry.
@@ -1873,7 +1831,8 @@ Return Value
         NewTable->Context = Context;
         NewTable->Type = RF_CALLBACK;
         NewTable->OutOfProcessCallbackDll = NULL;
-        if (ARGUMENT_PRESENT(OutOfProcessCallbackDll)) {
+        if (ARGUMENT_PRESENT(OutOfProcessCallbackDll))
+        {
             NewTable->OutOfProcessCallbackDll = (PWSTR)(NewTable + 1);
             wcscpy((PWSTR)(NewTable + 1), OutOfProcessCallbackDll);
         }
@@ -1887,16 +1846,15 @@ Return Value
         InsertTailList(&RtlpDynamicFunctionTable, &NewTable->ListEntry);
         RtlLeaveCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
         return TRUE;
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 BOOLEAN
-RtlDeleteFunctionTable (
-    IN PRUNTIME_FUNCTION FunctionTable
-    )
+RtlDeleteFunctionTable(IN PRUNTIME_FUNCTION FunctionTable)
 
 /*++
 
@@ -1931,19 +1889,19 @@ Return Value
     RtlEnterCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
     ListHead = &RtlpDynamicFunctionTable;
     NextEntry = ListHead->Flink;
-    while (NextEntry != ListHead) {
-        CurrentTable = CONTAINING_RECORD(NextEntry,
-                                         DYNAMIC_FUNCTION_TABLE,
-                                         ListEntry);
+    while (NextEntry != ListHead)
+    {
+        CurrentTable = CONTAINING_RECORD(NextEntry, DYNAMIC_FUNCTION_TABLE, ListEntry);
 
-        if (CurrentTable->FunctionTable == FunctionTable) {
+        if (CurrentTable->FunctionTable == FunctionTable)
+        {
             RemoveEntryList(&CurrentTable->ListEntry);
             RtlFreeHeap(RtlProcessHeap(), 0, CurrentTable);
             Status = TRUE;
             break;
-         }
+        }
 
-         NextEntry = NextEntry->Flink;
+        NextEntry = NextEntry->Flink;
     }
 
     RtlLeaveCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
@@ -1951,10 +1909,7 @@ Return Value
 }
 
 PRUNTIME_FUNCTION
-RtlpLookupDynamicFunctionEntry (
-    IN ULONG64 ControlPc,
-    OUT PULONG64 ImageBase
-    )
+RtlpLookupDynamicFunctionEntry(IN ULONG64 ControlPc, OUT PULONG64 ImageBase)
 
 /*++
 
@@ -2005,18 +1960,17 @@ Return Value
     RtlEnterCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
     ListHead = &RtlpDynamicFunctionTable;
     NextEntry = ListHead->Flink;
-    while (NextEntry != ListHead) {
-        CurrentTable = CONTAINING_RECORD(NextEntry,
-                                         DYNAMIC_FUNCTION_TABLE,
-                                         ListEntry);
+    while (NextEntry != ListHead)
+    {
+        CurrentTable = CONTAINING_RECORD(NextEntry, DYNAMIC_FUNCTION_TABLE, ListEntry);
 
         //
         // If the control PC is within the range of this dynamic function
         // table, then search the associaed function table.
         //
 
-        if ((ControlPc >= CurrentTable->MinimumAddress) &&
-            (ControlPc <  CurrentTable->MaximumAddress)) {
+        if ((ControlPc >= CurrentTable->MinimumAddress) && (ControlPc < CurrentTable->MaximumAddress))
+        {
 
             //
             // If this function table is sorted do a binary search. Otherwise,
@@ -2025,7 +1979,8 @@ Return Value
 
             FunctionTable = CurrentTable->FunctionTable;
             BaseAddress = CurrentTable->BaseAddress;
-            if (CurrentTable->Type == RF_SORTED) {
+            if (CurrentTable->Type == RF_SORTED)
+            {
 
                 //
                 // Perform binary search on the function table for a function table
@@ -2035,7 +1990,8 @@ Return Value
                 ControlPc -= BaseAddress;
                 Low = 0;
                 High = CurrentTable->EntryCount - 1;
-                while (High >= Low) {
+                while (High >= Low)
+                {
 
                     //
                     // Compute next probe index and test entry. If the specified PC
@@ -2047,20 +2003,24 @@ Return Value
 
                     Middle = (Low + High) >> 1;
                     FunctionEntry = &FunctionTable[Middle];
-                    if (ControlPc < FunctionEntry->BeginAddress) {
+                    if (ControlPc < FunctionEntry->BeginAddress)
+                    {
                         High = Middle - 1;
-
-                    } else if (ControlPc >= FunctionEntry->EndAddress) {
+                    }
+                    else if (ControlPc >= FunctionEntry->EndAddress)
+                    {
                         Low = Middle + 1;
-
-                    } else {
+                    }
+                    else
+                    {
                         *ImageBase = BaseAddress;
                         RtlLeaveCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
                         return FunctionEntry;
                     }
                 }
-
-            } else if (CurrentTable->Type == RF_UNSORTED)  {
+            }
+            else if (CurrentTable->Type == RF_UNSORTED)
+            {
 
                 //
                 // Perform a linear seach on the function table for a function
@@ -2069,9 +2029,10 @@ Return Value
 
                 ControlPc -= BaseAddress;
                 FunctionEntry = CurrentTable->FunctionTable;
-                for (Index = 0; Index < CurrentTable->EntryCount; Index += 1) {
-                    if ((ControlPc >= FunctionEntry->BeginAddress) &&
-                        (ControlPc < FunctionEntry->EndAddress)) {
+                for (Index = 0; Index < CurrentTable->EntryCount; Index += 1)
+                {
+                    if ((ControlPc >= FunctionEntry->BeginAddress) && (ControlPc < FunctionEntry->EndAddress))
+                    {
                         *ImageBase = BaseAddress;
                         RtlLeaveCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
                         return FunctionEntry;
@@ -2079,8 +2040,9 @@ Return Value
 
                     FunctionEntry += 1;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Perform a callback to obtain the runtime function table
@@ -2115,11 +2077,7 @@ ULONG HistoryInsert = 0;
 ULONG HistoryInsertHits = 0;
 
 PRUNTIME_FUNCTION
-RtlLookupFunctionEntry (
-    IN ULONG64 ControlPc,
-    OUT PULONG64 ImageBase,
-    IN OUT PUNWIND_HISTORY_TABLE HistoryTable OPTIONAL
-    )
+RtlLookupFunctionEntry(IN ULONG64 ControlPc, OUT PULONG64 ImageBase, IN OUT PUNWIND_HISTORY_TABLE HistoryTable OPTIONAL)
 
 /*++
 
@@ -2169,11 +2127,11 @@ Return Value:
     //
     // If a history table is supplied and search is specfied, then the current
     // operation that is being performed is the unwind phase of an exception
-    // dispatch followed by a unwind. 
+    // dispatch followed by a unwind.
     //
 
-    if ((ARGUMENT_PRESENT(HistoryTable)) &&
-        (HistoryTable->Search != UNWIND_HISTORY_TABLE_NONE)) {
+    if ((ARGUMENT_PRESENT(HistoryTable)) && (HistoryTable->Search != UNWIND_HISTORY_TABLE_NONE))
+    {
         HistoryTotal += 1;
 
         //
@@ -2181,17 +2139,20 @@ Return Value:
         // match.
         //
 
-        if (HistoryTable->Search == UNWIND_HISTORY_TABLE_GLOBAL) {
-            if ((ControlPc >= RtlpUnwindHistoryTable.LowAddress) &&
-                (ControlPc < RtlpUnwindHistoryTable.HighAddress)) {
+        if (HistoryTable->Search == UNWIND_HISTORY_TABLE_GLOBAL)
+        {
+            if ((ControlPc >= RtlpUnwindHistoryTable.LowAddress) && (ControlPc < RtlpUnwindHistoryTable.HighAddress))
+            {
 
                 HistoryGlobal += 1;
-                for (Index = 0; Index < RtlpUnwindHistoryTable.Count; Index += 1) {
+                for (Index = 0; Index < RtlpUnwindHistoryTable.Count; Index += 1)
+                {
                     BaseAddress = RtlpUnwindHistoryTable.Entry[Index].ImageBase;
                     FunctionEntry = RtlpUnwindHistoryTable.Entry[Index].FunctionEntry;
                     BeginAddress = FunctionEntry->BeginAddress + BaseAddress;
                     EndAddress = FunctionEntry->EndAddress + BaseAddress;
-                    if ((ControlPc >= BeginAddress) && (ControlPc < EndAddress)) {
+                    if ((ControlPc >= BeginAddress) && (ControlPc < EndAddress))
+                    {
                         *ImageBase = BaseAddress;
                         HistoryGlobalHits += 1;
                         return FunctionEntry;
@@ -2207,16 +2168,18 @@ Return Value:
         // match.
         //
 
-        if ((ControlPc >= HistoryTable->LowAddress) &&
-            (ControlPc < HistoryTable->HighAddress)) {
-    
+        if ((ControlPc >= HistoryTable->LowAddress) && (ControlPc < HistoryTable->HighAddress))
+        {
+
             HistorySearch += 1;
-            for (Index = 0; Index < HistoryTable->Count; Index += 1) {
+            for (Index = 0; Index < HistoryTable->Count; Index += 1)
+            {
                 BaseAddress = HistoryTable->Entry[Index].ImageBase;
                 FunctionEntry = HistoryTable->Entry[Index].FunctionEntry;
                 BeginAddress = FunctionEntry->BeginAddress + BaseAddress;
                 EndAddress = FunctionEntry->EndAddress + BaseAddress;
-                if ((ControlPc >= BeginAddress) && (ControlPc < EndAddress)) {
+                if ((ControlPc >= BeginAddress) && (ControlPc < EndAddress))
+                {
                     *ImageBase = BaseAddress;
                     HistorySearchHits += 1;
                     return FunctionEntry;
@@ -2230,20 +2193,20 @@ Return Value:
     // to find a matching entry in the loaded module list.
     //
 
-    FunctionTable = RtlpLookupFunctionTable((PVOID)ControlPc,
-                                            (PVOID *)ImageBase,
-                                            &SizeOfTable);
+    FunctionTable = RtlpLookupFunctionTable((PVOID)ControlPc, (PVOID *)ImageBase, &SizeOfTable);
 
     //
     // If a function table is located, then search for a function table
     // entry that contains the specified control PC.
     //
 
-    if (FunctionTable != NULL) {
+    if (FunctionTable != NULL)
+    {
         Low = 0;
         High = (SizeOfTable / sizeof(RUNTIME_FUNCTION)) - 1;
         RelativePc = (ULONG)(ControlPc - *ImageBase);
-        while (High >= Low) {
+        while (High >= Low)
+        {
 
             //
             // Compute next probe index and test entry. If the specified
@@ -2256,38 +2219,42 @@ Return Value:
             Middle = (Low + High) >> 1;
             FunctionEntry = &FunctionTable[Middle];
 
-            if (RelativePc < FunctionEntry->BeginAddress) {
+            if (RelativePc < FunctionEntry->BeginAddress)
+            {
                 High = Middle - 1;
-
-            } else if (RelativePc >= FunctionEntry->EndAddress) {
+            }
+            else if (RelativePc >= FunctionEntry->EndAddress)
+            {
                 Low = Middle + 1;
-
-            } else {
+            }
+            else
+            {
                 break;
             }
         }
 
-        if (High < Low) {
+        if (High < Low)
+        {
             FunctionEntry = NULL;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // There was not a match in the loaded module list so attempt to find
         // a matching entry in the dynamic function table list.
         //
-    
-#if !defined(NTOS_KERNEL_RUNTIME)
-    
-        FunctionEntry = RtlpLookupDynamicFunctionEntry(ControlPc, ImageBase);
-    
-#else
-    
-        FunctionEntry = NULL;
-    
-#endif  // NTOS_KERNEL_RUNTIME
 
+#if !defined(NTOS_KERNEL_RUNTIME)
+
+        FunctionEntry = RtlpLookupDynamicFunctionEntry(ControlPc, ImageBase);
+
+#else
+
+        FunctionEntry = NULL;
+
+#endif // NTOS_KERNEL_RUNTIME
     }
 
     //
@@ -2296,29 +2263,31 @@ Return Value:
     // in the history table.
     //
 
-    if (ARGUMENT_PRESENT(HistoryTable) &&
-        (HistoryTable->Search == UNWIND_HISTORY_TABLE_NONE)) {
+    if (ARGUMENT_PRESENT(HistoryTable) && (HistoryTable->Search == UNWIND_HISTORY_TABLE_NONE))
+    {
 
         HistoryInsert += 1;
     }
 
-    if (FunctionEntry != NULL) {
-        if (ARGUMENT_PRESENT(HistoryTable) &&
-            (HistoryTable->Search == UNWIND_HISTORY_TABLE_NONE) &&
-            (HistoryTable->Count < UNWIND_HISTORY_TABLE_SIZE)) {
-    
+    if (FunctionEntry != NULL)
+    {
+        if (ARGUMENT_PRESENT(HistoryTable) && (HistoryTable->Search == UNWIND_HISTORY_TABLE_NONE) &&
+            (HistoryTable->Count < UNWIND_HISTORY_TABLE_SIZE))
+        {
+
             Index = HistoryTable->Count;
             HistoryTable->Count += 1;
             HistoryTable->Entry[Index].ImageBase = *ImageBase;
             HistoryTable->Entry[Index].FunctionEntry = FunctionEntry;
             BeginAddress = FunctionEntry->BeginAddress + *ImageBase;
             EndAddress = FunctionEntry->EndAddress + *ImageBase;
-            if (BeginAddress < HistoryTable->LowAddress) {
+            if (BeginAddress < HistoryTable->LowAddress)
+            {
                 HistoryTable->LowAddress = BeginAddress;
-    
             }
-    
-            if (EndAddress > HistoryTable->HighAddress) {
+
+            if (EndAddress > HistoryTable->HighAddress)
+            {
                 HistoryTable->HighAddress = EndAddress;
             }
 
@@ -2329,11 +2298,7 @@ Return Value:
     return FunctionEntry;
 }
 
-VOID
-RtlpCopyContext (
-    OUT PCONTEXT Destination,
-    IN PCONTEXT Source
-    )
+VOID RtlpCopyContext(OUT PCONTEXT Destination, IN PCONTEXT Source)
 
 /*++
 

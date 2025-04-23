@@ -19,14 +19,11 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 #pragma hdrstop
-#include    <evntrace.h>
+#include <evntrace.h>
 
-VOID
-CmpWmiDumpKcbTable(
-    VOID
-);
+VOID CmpWmiDumpKcbTable(VOID);
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg("PAGEDATA")
@@ -34,25 +31,25 @@ CmpWmiDumpKcbTable(
 PCM_TRACE_NOTIFY_ROUTINE CmpTraceRoutine = NULL;
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmSetTraceNotifyRoutine)
-#pragma alloc_text(PAGE,CmpWmiDumpKcbTable)
-#pragma alloc_text(PAGE,CmpWmiDumpKcb)
+#pragma alloc_text(PAGE, CmSetTraceNotifyRoutine)
+#pragma alloc_text(PAGE, CmpWmiDumpKcbTable)
+#pragma alloc_text(PAGE, CmpWmiDumpKcb)
 #endif
 
 
 NTSTATUS
-CmSetTraceNotifyRoutine(
-    IN PCM_TRACE_NOTIFY_ROUTINE NotifyRoutine,
-    IN BOOLEAN Remove
-    )
+CmSetTraceNotifyRoutine(IN PCM_TRACE_NOTIFY_ROUTINE NotifyRoutine, IN BOOLEAN Remove)
 {
-    if(Remove) {
+    if (Remove)
+    {
         // we shouldn't be called if the bellow assert fails
         // but since we are and the caller think is legitimate
         // just remove the assert
         //ASSERT(CmpTraceRoutine != NULL);
         CmpTraceRoutine = NULL;
-    } else {
+    }
+    else
+    {
         // we shouldn't be called if the bellow assert fails
         // but since we are and the caller think is legitimate
         // just remove the assert
@@ -67,10 +64,7 @@ CmSetTraceNotifyRoutine(
     return STATUS_SUCCESS;
 }
 
-VOID
-CmpWmiDumpKcbTable(
-    VOID
-)
+VOID CmpWmiDumpKcbTable(VOID)
 /*++
 
 Routine Description:
@@ -87,36 +81,35 @@ Return Value:
 
 --*/
 {
-    ULONG                       i;
-    PCM_KEY_HASH                Current;
-    PCM_KEY_CONTROL_BLOCK       kcb;
-    PUNICODE_STRING             KeyName;
-    PCM_TRACE_NOTIFY_ROUTINE    TraceRoutine = CmpTraceRoutine;
+    ULONG i;
+    PCM_KEY_HASH Current;
+    PCM_KEY_CONTROL_BLOCK kcb;
+    PUNICODE_STRING KeyName;
+    PCM_TRACE_NOTIFY_ROUTINE TraceRoutine = CmpTraceRoutine;
 
     PAGED_CODE();
 
-    if( TraceRoutine == NULL ) {
+    if (TraceRoutine == NULL)
+    {
         return;
     }
 
     CmpLockRegistry();
 
-    BEGIN_KCB_LOCK_GUARD;    
+    BEGIN_KCB_LOCK_GUARD;
     CmpLockKCBTreeExclusive();
 
-    for (i=0; i<CmpHashTableSize; i++) {
+    for (i = 0; i < CmpHashTableSize; i++)
+    {
         Current = CmpCacheTable[i];
-        while (Current) {
+        while (Current)
+        {
             kcb = CONTAINING_RECORD(Current, CM_KEY_CONTROL_BLOCK, KeyHash);
             KeyName = CmpConstructName(kcb);
-            if(KeyName != NULL) {
-                (*TraceRoutine)(STATUS_SUCCESS,
-                                kcb, 
-                                0, 
-                                0,
-                                KeyName,
-                                EVENT_TRACE_TYPE_REGKCBDMP);
-	     
+            if (KeyName != NULL)
+            {
+                (*TraceRoutine)(STATUS_SUCCESS, kcb, 0, 0, KeyName, EVENT_TRACE_TYPE_REGKCBDMP);
+
                 ExFreePoolWithTag(KeyName, CM_NAME_TAG | PROTECTED_POOL);
             }
             Current = Current->NextHash;
@@ -124,15 +117,12 @@ Return Value:
     }
 
     CmpUnlockKCBTree();
-    END_KCB_LOCK_GUARD;    
-    
+    END_KCB_LOCK_GUARD;
+
     CmpUnlockRegistry();
 }
 
-VOID
-CmpWmiDumpKcb(
-    PCM_KEY_CONTROL_BLOCK       kcb
-)
+VOID CmpWmiDumpKcb(PCM_KEY_CONTROL_BLOCK kcb)
 /*++
 
 Routine Description:
@@ -149,28 +139,21 @@ Return Value:
 
 --*/
 {
-    PCM_TRACE_NOTIFY_ROUTINE    TraceRoutine = CmpTraceRoutine;
-    PUNICODE_STRING             KeyName;
+    PCM_TRACE_NOTIFY_ROUTINE TraceRoutine = CmpTraceRoutine;
+    PUNICODE_STRING KeyName;
 
     PAGED_CODE();
 
-    if( TraceRoutine == NULL ) {
+    if (TraceRoutine == NULL)
+    {
         return;
     }
 
     KeyName = CmpConstructName(kcb);
-    if(KeyName != NULL) {
-        (*TraceRoutine)(STATUS_SUCCESS,
-                        kcb, 
-                        0, 
-                        0,
-                        KeyName,
-                        EVENT_TRACE_TYPE_REGKCBDMP);
- 
+    if (KeyName != NULL)
+    {
+        (*TraceRoutine)(STATUS_SUCCESS, kcb, 0, 0, KeyName, EVENT_TRACE_TYPE_REGKCBDMP);
+
         ExFreePoolWithTag(KeyName, CM_NAME_TAG | PROTECTED_POOL);
     }
 }
-
-
-
-

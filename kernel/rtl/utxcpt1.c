@@ -18,65 +18,68 @@ main()
 
     CurrentProcessHandle = NtCurrentProcess();
 
-    for(i=0;i<3;i++){
+    for (i = 0; i < 3; i++)
+    {
         DbgPrint("Hello World...\n\n");
     }
 
     DbgPrint("allocating virtual memory\n");
 
     p1 = (PULONG)NULL;
-    Size1 = 5*4096;
+    Size1 = 5 * 4096;
 
-    status = NtAllocateVirtualMemory (CurrentProcessHandle, (PVOID)&p1,
-                        0, &Size1, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    status =
+        NtAllocateVirtualMemory(CurrentProcessHandle, (PVOID)&p1, 0, &Size1, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
-    DbgPrint("created vm status %X start %lx size %lx\n",
-            status, (ULONG)p1, Size1);
+    DbgPrint("created vm status %X start %lx size %lx\n", status, (ULONG)p1, Size1);
 
     p2 = p1;
 
     *p2 = 99;
     Size2 = 4;
 
-    status = NtProtectVirtualMemory (CurrentProcessHandle, (PVOID)&p2,
-                        &Size2, PAGE_GUARD | PAGE_READONLY, &OldProtect);
+    status = NtProtectVirtualMemory(CurrentProcessHandle, (PVOID)&p2, &Size2, PAGE_GUARD | PAGE_READONLY, &OldProtect);
 
-    DbgPrint("protected VM status %X, base %lx, size %lx, old protect %lx\n",
-                    status, p2, Size2, OldProtect);
+    DbgPrint("protected VM status %X, base %lx, size %lx, old protect %lx\n", status, p2, Size2, OldProtect);
 
     p3 = p1 + 1024;
 
-    *p3 =91;
+    *p3 = 91;
     Size2 = 4;
 
-    status = NtProtectVirtualMemory (CurrentProcessHandle, (PVOID)&p3,
-                        &Size2, PAGE_NOACCESS, &OldProtect);
+    status = NtProtectVirtualMemory(CurrentProcessHandle, (PVOID)&p3, &Size2, PAGE_NOACCESS, &OldProtect);
 
-    DbgPrint("protected VM status %X, base %lx, size %lx, old protect %lx\n",
-                    status, p3, Size2, OldProtect);
-    try {
+    DbgPrint("protected VM status %X, base %lx, size %lx, old protect %lx\n", status, p3, Size2, OldProtect);
+    try
+    {
         *p2 = 94;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         status = GetExceptionCode();
-        DbgPrint("got an exception of %X\n",status);
+        DbgPrint("got an exception of %X\n", status);
     }
 
-    try {
+    try
+    {
         i = *p2;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         status = GetExceptionCode();
-        DbgPrint("got an exception of %X\n",status);
+        DbgPrint("got an exception of %X\n", status);
     }
 
-    DbgPrint("value of p2 should be 94 is %ld\n",*p2);
+    DbgPrint("value of p2 should be 94 is %ld\n", *p2);
 
-    try {
+    try
+    {
         *p3 = 94;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         status = GetExceptionCode();
-        DbgPrint("got an exception of %X\n",status);
+        DbgPrint("got an exception of %X\n", status);
     }
 
     return 0;

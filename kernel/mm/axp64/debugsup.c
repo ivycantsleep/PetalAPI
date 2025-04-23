@@ -20,12 +20,9 @@ Revision History:
 --*/
 
 #include "mi.h"
-
+
 PHARDWARE_PTE
-MiCheckAddress (
-    IN PVOID VirtualAddress,
-    OUT PVOID *AccessAddress
-    )
+MiCheckAddress(IN PVOID VirtualAddress, OUT PVOID *AccessAddress)
 
 /*++
 
@@ -64,7 +61,8 @@ Return Value:
     // the page directory hierarchy.
     //
 
-    if ((ULONG_PTR)(((LONG_PTR)VirtualAddress >> 43) + 1) > 1) {
+    if ((ULONG_PTR)(((LONG_PTR)VirtualAddress >> 43) + 1) > 1)
+    {
         return NULL;
     }
 
@@ -76,7 +74,8 @@ Return Value:
 
     Pdr1 = (PHARDWARE_PTE)(KSEG43_BASE | (((PHARDWARE_PTE)PDE_SELFMAP)->PageFrameNumber << PAGE_SHIFT));
     Index = (ULONG)(((ULONG_PTR)VirtualAddress >> PDI1_SHIFT) & PDI_MASK);
-    if (Pdr1[Index].Valid == 0) {
+    if (Pdr1[Index].Valid == 0)
+    {
         return NULL;
     }
 
@@ -88,7 +87,8 @@ Return Value:
 
     Pdr2 = (PHARDWARE_PTE)(KSEG43_BASE | (Pdr1[Index].PageFrameNumber << PAGE_SHIFT));
     Index = (ULONG)(((ULONG_PTR)VirtualAddress >> PDI2_SHIFT) & PDI_MASK);
-    if (Pdr2[Index].Valid == 0) {
+    if (Pdr2[Index].Valid == 0)
+    {
         return NULL;
     }
 
@@ -98,7 +98,8 @@ Return Value:
 
     Ptp = (PHARDWARE_PTE)(KSEG43_BASE | (Pdr2[Index].PageFrameNumber << PAGE_SHIFT));
     Index = (ULONG)(((ULONG_PTR)VirtualAddress >> PTI_SHIFT) & PDI_MASK);
-    if (Ptp[Index].Valid == 0) {
+    if (Ptp[Index].Valid == 0)
+    {
         return NULL;
     }
 
@@ -107,17 +108,14 @@ Return Value:
     // address of the PTE that maps the data page as the function value.
     //
 
-    *AccessAddress = (PVOID)(KSEG43_BASE |
-                                (Ptp[Index].PageFrameNumber << PAGE_SHIFT) |
-                                (ULONG_PTR)VirtualAddress & (PAGE_SIZE - 1));
+    *AccessAddress =
+        (PVOID)(KSEG43_BASE | (Ptp[Index].PageFrameNumber << PAGE_SHIFT) | (ULONG_PTR)VirtualAddress & (PAGE_SIZE - 1));
 
     return &Ptp[Index];
 }
-
+
 PVOID
-MmDbgReadCheck (
-    IN PVOID VirtualAddress
-    )
+MmDbgReadCheck(IN PVOID VirtualAddress)
 
 /*++
 
@@ -151,7 +149,8 @@ Return Value:
     // the address is returned as the function value.
     //
 
-    if (MI_IS_PHYSICAL_ADDRESS(VirtualAddress)) {
+    if (MI_IS_PHYSICAL_ADDRESS(VirtualAddress))
+    {
         return VirtualAddress;
     }
 
@@ -161,19 +160,18 @@ Return Value:
     // corresponds to the virtual address. Otherwise, return NULL.
     //
 
-    if (MiCheckAddress(VirtualAddress, &AccessAddress) == NULL) {
+    if (MiCheckAddress(VirtualAddress, &AccessAddress) == NULL)
+    {
         return NULL;
-
-    } else {
+    }
+    else
+    {
         return AccessAddress;
     }
 }
-
+
 PVOID
-MmDbgWriteCheck (
-    IN PVOID VirtualAddress,
-    IN PHARDWARE_PTE Opaque
-    )
+MmDbgWriteCheck(IN PVOID VirtualAddress, IN PHARDWARE_PTE Opaque)
 
 /*++
 
@@ -215,7 +213,8 @@ Return Value:
     // the address is returned as the function value.
     //
 
-    if (MI_IS_PHYSICAL_ADDRESS(VirtualAddress)) {
+    if (MI_IS_PHYSICAL_ADDRESS(VirtualAddress))
+    {
         return VirtualAddress;
     }
 
@@ -227,30 +226,32 @@ Return Value:
     //
 
     Pte = MiCheckAddress(VirtualAddress, &AccessAddress);
-    if (Pte == NULL) {
+    if (Pte == NULL)
+    {
         return NULL;
     }
 
-    if (Pte->Write == 0) {
+    if (Pte->Write == 0)
+    {
 
         //
         // PTE is not writable, make it so.
         //
 
         PteContents = *(PMMPTE)Pte;
-    
+
         *InputPte = PteContents;
-    
+
         //
         // Modify the PTE to ensure write permissions :
         // turn on write and turn off fault on write.
         //
-    
+
         PteContents.u.Hard.Write = 1;
         PteContents.u.Hard.FaultOnWrite = 0;
 
         *(PMMPTE)Pte = PteContents;
-    
+
         //
         // KeFillEntryTb is liable to IPI the other processors. This is
         // definitely NOT what we want as the other processors are frozen
@@ -262,18 +263,15 @@ Return Value:
 
         KiFlushSingleTb(TRUE, VirtualAddress);
     }
-    else {
+    else
+    {
         return AccessAddress;
     }
 
     return VirtualAddress;
 }
-
-VOID
-MmDbgReleaseAddress (
-    IN PVOID VirtualAddress,
-    IN PHARDWARE_PTE Opaque
-    )
+
+VOID MmDbgReleaseAddress(IN PVOID VirtualAddress, IN PHARDWARE_PTE Opaque)
 
 /*++
 
@@ -307,16 +305,17 @@ Environment:
 
     InputPte = (PMMPTE)Opaque;
 
-    ASSERT (MmIsAddressValid (VirtualAddress));
+    ASSERT(MmIsAddressValid(VirtualAddress));
 
-    if (InputPte->u.Long != 0) {
+    if (InputPte->u.Long != 0)
+    {
 
-        PointerPte = MiGetPteAddress (VirtualAddress);
-    
+        PointerPte = MiGetPteAddress(VirtualAddress);
+
         TempPte = *InputPte;
 
         *PointerPte = TempPte;
-    
+
         //
         // KeFillEntryTb is liable to IPI the other processors. This is
         // definitely NOT what we want as the other processors are frozen
@@ -331,11 +330,9 @@ Environment:
 
     return;
 }
-
+
 PVOID64
-MmDbgReadCheck64 (
-    IN PVOID64 VirtualAddress
-    )
+MmDbgReadCheck64(IN PVOID64 VirtualAddress)
 
 /*++
 
@@ -364,11 +361,9 @@ Return Value:
 
     return MmDbgReadCheck(VirtualAddress);
 }
-
+
 PVOID64
-MmDbgWriteCheck64 (
-    IN PVOID64 VirtualAddress
-    )
+MmDbgWriteCheck64(IN PVOID64 VirtualAddress)
 
 /*++
 
@@ -398,11 +393,9 @@ Return Value:
 
     return MmDbgWriteCheck(VirtualAddress, &Opaque);
 }
-
+
 PVOID64
-MmDbgTranslatePhysicalAddress64 (
-    IN PHYSICAL_ADDRESS PhysicalAddress
-    )
+MmDbgTranslatePhysicalAddress64(IN PHYSICAL_ADDRESS PhysicalAddress)
 
 /*++
 
@@ -435,7 +428,8 @@ Environment:
 --*/
 
 {
-    switch (KeProcessorLevel) {
+    switch (KeProcessorLevel)
+    {
 
     case PROCESSOR_ALPHA_21064:
     case PROCESSOR_ALPHA_21066:
@@ -457,7 +451,6 @@ Environment:
 
     default:
         return NULL64;
-
     }
 
     return (PVOID64)PhysicalAddress.QuadPart;

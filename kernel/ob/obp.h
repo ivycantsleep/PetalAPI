@@ -37,8 +37,8 @@ struct _OBJECT_BODY_HEADER;
 //
 
 #ifdef POOL_TAGGING
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'  bO')
-#define ExAllocatePoolWithQuota(a,b) ExAllocatePoolWithQuotaTag(a,b,'  bO')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, '  bO')
+#define ExAllocatePoolWithQuota(a, b) ExAllocatePoolWithQuotaTag(a, b, '  bO')
 #endif
 
 //
@@ -46,17 +46,19 @@ struct _OBJECT_BODY_HEADER;
 //
 
 #if DBG
-#define ObpBeginTypeSpecificCallOut( IRQL ) (IRQL)=KeGetCurrentIrql()
-#define ObpEndTypeSpecificCallOut( IRQL, str, ot, o ) {                                               \
-    if ((IRQL)!=KeGetCurrentIrql()) {                                                                 \
-        DbgPrint( "OB: ObjectType: %wZ  Procedure: %s  Object: %08x\n", &ot->Name, str, o );          \
-        DbgPrint( "    Returned at %x IRQL, but was called at %x IRQL\n", KeGetCurrentIrql(), IRQL ); \
-        DbgBreakPoint();                                                                              \
-    }                                                                                                 \
-}
+#define ObpBeginTypeSpecificCallOut(IRQL) (IRQL) = KeGetCurrentIrql()
+#define ObpEndTypeSpecificCallOut(IRQL, str, ot, o)                                                     \
+    {                                                                                                   \
+        if ((IRQL) != KeGetCurrentIrql())                                                               \
+        {                                                                                               \
+            DbgPrint("OB: ObjectType: %wZ  Procedure: %s  Object: %08x\n", &ot->Name, str, o);          \
+            DbgPrint("    Returned at %x IRQL, but was called at %x IRQL\n", KeGetCurrentIrql(), IRQL); \
+            DbgBreakPoint();                                                                            \
+        }                                                                                               \
+    }
 #else
-#define ObpBeginTypeSpecificCallOut( IRQL )
-#define ObpEndTypeSpecificCallOut( IRQL, str, ot, o )
+#define ObpBeginTypeSpecificCallOut(IRQL)
+#define ObpEndTypeSpecificCallOut(IRQL, str, ot, o)
 #endif // DBG
 
 //
@@ -64,16 +66,17 @@ struct _OBJECT_BODY_HEADER;
 //
 
 #if DBG
-#define ObpValidateIrql( str ) \
-    if (KeGetCurrentIrql() > APC_LEVEL) { \
-        DbgPrint( "OB: %s called at IRQL %d\n", (str), KeGetCurrentIrql() ); \
-        DbgBreakPoint(); \
-        }
+#define ObpValidateIrql(str)                                               \
+    if (KeGetCurrentIrql() > APC_LEVEL)                                    \
+    {                                                                      \
+        DbgPrint("OB: %s called at IRQL %d\n", (str), KeGetCurrentIrql()); \
+        DbgBreakPoint();                                                   \
+    }
 #else
-#define ObpValidateIrql( str )
+#define ObpValidateIrql(str)
 #endif // DBG
 
-
+
 //
 //  This global lock protects the granted access lists when we are collecting stack traces
 //
@@ -98,11 +101,9 @@ FAST_MUTEX ObpDeviceMapLock;
 
 #define OBP_DECLARE_OLDIRQL
 
-#define ObpLockDeviceMap() \
-    ExAcquireFastMutex( &ObpDeviceMapLock )
+#define ObpLockDeviceMap() ExAcquireFastMutex(&ObpDeviceMapLock)
 
-#define ObpUnlockDeviceMap() \
-    ExReleaseFastMutex( &ObpDeviceMapLock )
+#define ObpUnlockDeviceMap() ExReleaseFastMutex(&ObpDeviceMapLock)
 
 #else // !OBP_PAGEDPOOL_NAMESPACE
 
@@ -110,59 +111,48 @@ FAST_MUTEX ObpDeviceMapLock;
 
 KSPIN_LOCK ObpDeviceMapLock;
 
-#define ObpLockDeviceMap() \
-    ExAcquireSpinLock( &ObpDeviceMapLock, &OldIrql )
+#define ObpLockDeviceMap() ExAcquireSpinLock(&ObpDeviceMapLock, &OldIrql)
 
-#define ObpUnlockDeviceMap() \
-    ExReleaseSpinLock( &ObpDeviceMapLock, OldIrql )
+#define ObpUnlockDeviceMap() ExReleaseSpinLock(&ObpDeviceMapLock, OldIrql)
 
-#endif  // OBP_PAGEDPOOL_NAMESPACE
+#endif // OBP_PAGEDPOOL_NAMESPACE
 
-#define ObpIncrPointerCountEx(np,Count) (InterlockedExchangeAdd (&np->PointerCount, Count) + Count)
-#define ObpDecrPointerCountEx(np,Count) (InterlockedExchangeAdd (&np->PointerCount, -(LONG)(Count)) - Count)
+#define ObpIncrPointerCountEx(np, Count) (InterlockedExchangeAdd(&np->PointerCount, Count) + Count)
+#define ObpDecrPointerCountEx(np, Count) (InterlockedExchangeAdd(&np->PointerCount, -(LONG)(Count)) - Count)
 
 #ifndef POOL_TAGGING
 
-#define ObpIncrPointerCount(np)           InterlockedIncrement( &np->PointerCount )
-#define ObpDecrPointerCount(np)           InterlockedDecrement( &np->PointerCount )
-#define ObpDecrPointerCountWithResult(np) (InterlockedDecrement( &np->PointerCount ) == 0)
+#define ObpIncrPointerCount(np) InterlockedIncrement(&np->PointerCount)
+#define ObpDecrPointerCount(np) InterlockedDecrement(&np->PointerCount)
+#define ObpDecrPointerCountWithResult(np) (InterlockedDecrement(&np->PointerCount) == 0)
 
 #define ObpPushStackInfo(np, inc)
 
 #else //POOL_TAGGING
 
-VOID
-ObpInitStackTrace();
+VOID ObpInitStackTrace();
 
-VOID
-ObpRegisterObject (
-    POBJECT_HEADER ObjectHeader
-    );
+VOID ObpRegisterObject(POBJECT_HEADER ObjectHeader);
 
-VOID
-ObpDeregisterObject (
-    POBJECT_HEADER ObjectHeader
-    );
+VOID ObpDeregisterObject(POBJECT_HEADER ObjectHeader);
 
-VOID
-ObpPushStackInfo (
-    POBJECT_HEADER ObjectHeader,
-    BOOLEAN IsRef
-    );
+VOID ObpPushStackInfo(POBJECT_HEADER ObjectHeader, BOOLEAN IsRef);
 
 extern BOOLEAN ObpTraceEnabled;
 
-#define ObpIncrPointerCount(np)           ((ObpTraceEnabled ? ObpPushStackInfo(np,TRUE) : 0),InterlockedIncrement( &np->PointerCount ))
-#define ObpDecrPointerCount(np)           ((ObpTraceEnabled ? ObpPushStackInfo(np,FALSE) : 0),InterlockedDecrement( &np->PointerCount ))
-#define ObpDecrPointerCountWithResult(np) ((ObpTraceEnabled ? ObpPushStackInfo(np,FALSE) : 0),(InterlockedDecrement( &np->PointerCount ) == 0))
+#define ObpIncrPointerCount(np) \
+    ((ObpTraceEnabled ? ObpPushStackInfo(np, TRUE) : 0), InterlockedIncrement(&np->PointerCount))
+#define ObpDecrPointerCount(np) \
+    ((ObpTraceEnabled ? ObpPushStackInfo(np, FALSE) : 0), InterlockedDecrement(&np->PointerCount))
+#define ObpDecrPointerCountWithResult(np) \
+    ((ObpTraceEnabled ? ObpPushStackInfo(np, FALSE) : 0), (InterlockedDecrement(&np->PointerCount) == 0))
 
 #endif //POOL_TAGGING
 
-#define ObpIncrHandleCount(np)            InterlockedIncrement( &np->HandleCount )
-#define ObpDecrHandleCount(np)            (InterlockedDecrement( &np->HandleCount ) == 0)
+#define ObpIncrHandleCount(np) InterlockedIncrement(&np->HandleCount)
+#define ObpDecrHandleCount(np) (InterlockedDecrement(&np->HandleCount) == 0)
 
 
-
 //
 //  Define macros to acquire and release an object type fast mutex.
 //
@@ -173,11 +163,12 @@ extern BOOLEAN ObpTraceEnabled;
 //      )
 //
 
-#define ObpEnterObjectTypeMutex(_ObjectType) {                   \
-    ObpValidateIrql("ObpEnterObjectTypeMutex");                  \
-    KeEnterCriticalRegion();                                     \
-    ExAcquireResourceExclusiveLite(&(_ObjectType)->Mutex, TRUE); \
-}
+#define ObpEnterObjectTypeMutex(_ObjectType)                         \
+    {                                                                \
+        ObpValidateIrql("ObpEnterObjectTypeMutex");                  \
+        KeEnterCriticalRegion();                                     \
+        ExAcquireResourceExclusiveLite(&(_ObjectType)->Mutex, TRUE); \
+    }
 
 //
 //  VOID
@@ -186,39 +177,42 @@ extern BOOLEAN ObpTraceEnabled;
 //      )
 //
 
-#define ObpLeaveObjectTypeMutex(_ObjectType) {  \
-    ExReleaseResourceLite(&(_ObjectType)->Mutex);   \
-    KeLeaveCriticalRegion();                    \
-    ObpValidateIrql("ObpLeaveObjectTypeMutex"); \
-}
+#define ObpLeaveObjectTypeMutex(_ObjectType)          \
+    {                                                 \
+        ExReleaseResourceLite(&(_ObjectType)->Mutex); \
+        KeLeaveCriticalRegion();                      \
+        ObpValidateIrql("ObpLeaveObjectTypeMutex");   \
+    }
 
 #define LOCK_HASH_MASK (OBJECT_LOCK_COUNT - 1)
 
-#define ObpHashObjectHeader(_ObjectHeader)      \
-    ((((ULONG_PTR)(_ObjectHeader)) >> 8) & LOCK_HASH_MASK)
+#define ObpHashObjectHeader(_ObjectHeader) ((((ULONG_PTR)(_ObjectHeader)) >> 8) & LOCK_HASH_MASK)
 
-#define ObpLockObject(_ObjectHeader) {                           \
-    ULONG_PTR LockIndex = ObpHashObjectHeader(_ObjectHeader);    \
-    ObpValidateIrql("ObpEnterObjectTypeMutex");                  \
-    KeEnterCriticalRegion();                                     \
-    ExAcquireResourceExclusiveLite(&((_ObjectHeader)->Type->ObjectLocks[LockIndex]), TRUE); \
-}
+#define ObpLockObject(_ObjectHeader)                                                            \
+    {                                                                                           \
+        ULONG_PTR LockIndex = ObpHashObjectHeader(_ObjectHeader);                               \
+        ObpValidateIrql("ObpEnterObjectTypeMutex");                                             \
+        KeEnterCriticalRegion();                                                                \
+        ExAcquireResourceExclusiveLite(&((_ObjectHeader)->Type->ObjectLocks[LockIndex]), TRUE); \
+    }
 
-#define ObpLockObjectShared(_ObjectHeader) {                     \
-    ULONG_PTR LockIndex = ObpHashObjectHeader(_ObjectHeader);    \
-    ObpValidateIrql("ObpEnterObjectTypeMutex");                  \
-    KeEnterCriticalRegion();                                     \
-    ExAcquireResourceSharedLite(&((_ObjectHeader)->Type->ObjectLocks[LockIndex]), TRUE); \
-}
+#define ObpLockObjectShared(_ObjectHeader)                                                   \
+    {                                                                                        \
+        ULONG_PTR LockIndex = ObpHashObjectHeader(_ObjectHeader);                            \
+        ObpValidateIrql("ObpEnterObjectTypeMutex");                                          \
+        KeEnterCriticalRegion();                                                             \
+        ExAcquireResourceSharedLite(&((_ObjectHeader)->Type->ObjectLocks[LockIndex]), TRUE); \
+    }
 
-#define ObpUnlockObject(_ObjectHeader) {                                        \
-    ULONG_PTR LockIndex = ObpHashObjectHeader(_ObjectHeader);                   \
-    ExReleaseResourceLite(&((_ObjectHeader)->Type->ObjectLocks[LockIndex]));        \
-    KeLeaveCriticalRegion();                                                    \
-    ObpValidateIrql("ObpLeaveObjectTypeMutex");                                 \
-}
+#define ObpUnlockObject(_ObjectHeader)                                           \
+    {                                                                            \
+        ULONG_PTR LockIndex = ObpHashObjectHeader(_ObjectHeader);                \
+        ExReleaseResourceLite(&((_ObjectHeader)->Type->ObjectLocks[LockIndex])); \
+        KeLeaveCriticalRegion();                                                 \
+        ObpValidateIrql("ObpLeaveObjectTypeMutex");                              \
+    }
 
-
+
 //
 //  A Macro to return the object table for the current process
 //
@@ -231,38 +225,33 @@ extern BOOLEAN ObpTraceEnabled;
 //  security management routines.
 //
 
-#define ObpCentralizedSecurity(_ObjectType)                              \
-    ((_ObjectType)->TypeInfo.SecurityProcedure == SeDefaultObjectMethod)
+#define ObpCentralizedSecurity(_ObjectType) ((_ObjectType)->TypeInfo.SecurityProcedure == SeDefaultObjectMethod)
 
 //
 //  Declare a global table of object types.
 //
 
 #define OBP_MAX_DEFINED_OBJECT_TYPES 48
-POBJECT_TYPE ObpObjectTypes[ OBP_MAX_DEFINED_OBJECT_TYPES ];
+POBJECT_TYPE ObpObjectTypes[OBP_MAX_DEFINED_OBJECT_TYPES];
 
-
+
 //
 //  This is some special purpose code to keep a table of access masks correlated with
 //  back traces.  If used these routines replace the GrantedAccess mask in the
 //  preceding object table entry with a granted access index and a call back index.
 //
 
-#if i386 
+#if i386
 ACCESS_MASK
-ObpTranslateGrantedAccessIndex (
-    USHORT GrantedAccessIndex
-    );
+ObpTranslateGrantedAccessIndex(USHORT GrantedAccessIndex);
 
 USHORT
-ObpComputeGrantedAccessIndex (
-    ACCESS_MASK GrantedAccess
-    );
+ObpComputeGrantedAccessIndex(ACCESS_MASK GrantedAccess);
 
 USHORT ObpCurCachedGrantedAccessIndex;
 USHORT ObpMaxCachedGrantedAccessIndex;
 PACCESS_MASK ObpCachedGrantedAccesses;
-#endif // i386 
+#endif // i386
 
 //
 //  The three low order bits of the object table entry are used for handle
@@ -271,7 +260,7 @@ PACCESS_MASK ObpCachedGrantedAccesses;
 //  Define the bit mask for the protect from close handle attribute.
 //
 
-#define OBJ_PROTECT_CLOSE   0x1
+#define OBJ_PROTECT_CLOSE 0x1
 
 //
 //  We moved the PROTECT_CLOSE in the granted access mask
@@ -308,37 +297,38 @@ extern ULONG ObpAccessProtectCloseBit;
 
 #define OBJ_HANDLE_ATTRIBUTES (OBJ_PROTECT_CLOSE | OBJ_INHERIT | OBJ_AUDIT_OBJECT_CLOSE)
 
-#define ObpDecodeGrantedAccess(Access)       \
-    ((Access) & ~ObpAccessProtectCloseBit)
+#define ObpDecodeGrantedAccess(Access) ((Access) & ~ObpAccessProtectCloseBit)
 
-#define ObpGetHandleAttributes(HandleTableEntry)                                    \
-     ((((HandleTableEntry)->GrantedAccess) & ObpAccessProtectCloseBit) ?            \
-     ((((HandleTableEntry)->ObAttributes) & OBJ_HANDLE_ATTRIBUTES) | OBJ_PROTECT_CLOSE) : \
-     (((HandleTableEntry)->ObAttributes) & (OBJ_INHERIT | OBJ_AUDIT_OBJECT_CLOSE)) )
+#define ObpGetHandleAttributes(HandleTableEntry)                                              \
+    ((((HandleTableEntry)->GrantedAccess) & ObpAccessProtectCloseBit)                         \
+         ? ((((HandleTableEntry)->ObAttributes) & OBJ_HANDLE_ATTRIBUTES) | OBJ_PROTECT_CLOSE) \
+         : (((HandleTableEntry)->ObAttributes) & (OBJ_INHERIT | OBJ_AUDIT_OBJECT_CLOSE)))
 
-#define ObpEncodeProtectClose(ObjectTableEntry)                         \
-    if ( (ObjectTableEntry).ObAttributes & OBJ_PROTECT_CLOSE ) {        \
-                                                                        \
-        (ObjectTableEntry).ObAttributes &= ~OBJ_PROTECT_CLOSE;          \
-        (ObjectTableEntry).GrantedAccess |= ObpAccessProtectCloseBit;   \
+#define ObpEncodeProtectClose(ObjectTableEntry)                       \
+    if ((ObjectTableEntry).ObAttributes & OBJ_PROTECT_CLOSE)          \
+    {                                                                 \
+                                                                      \
+        (ObjectTableEntry).ObAttributes &= ~OBJ_PROTECT_CLOSE;        \
+        (ObjectTableEntry).GrantedAccess |= ObpAccessProtectCloseBit; \
     }
 
-
+
 //
 //  Security Descriptor Cache
 //
 //  Cache entry header.
 //
 
-typedef struct _SECURITY_DESCRIPTOR_HEADER {
+typedef struct _SECURITY_DESCRIPTOR_HEADER
+{
 
     LIST_ENTRY Link;
-    ULONG  RefCount;
-    ULONG  FullHash;
-#if defined (_WIN64)
-    PVOID  Spare;   // Align to 16 byte boundary.
+    ULONG RefCount;
+    ULONG FullHash;
+#if defined(_WIN64)
+    PVOID Spare; // Align to 16 byte boundary.
 #endif
-    QUAD   SecurityDescriptor;
+    QUAD SecurityDescriptor;
 
 } SECURITY_DESCRIPTOR_HEADER, *PSECURITY_DESCRIPTOR_HEADER;
 
@@ -346,41 +336,39 @@ typedef struct _SECURITY_DESCRIPTOR_HEADER {
 //  Macro to convert a security descriptor into its security descriptor header
 //
 
-#define SD_TO_SD_HEADER(_sd) \
-    CONTAINING_RECORD( (_sd), SECURITY_DESCRIPTOR_HEADER, SecurityDescriptor )
+#define SD_TO_SD_HEADER(_sd) CONTAINING_RECORD((_sd), SECURITY_DESCRIPTOR_HEADER, SecurityDescriptor)
 
 //
 //  Macro to convert a header link into its security descriptor header
 //
 
-#define LINK_TO_SD_HEADER(_link) \
-    CONTAINING_RECORD( (_link), SECURITY_DESCRIPTOR_HEADER, Link )
+#define LINK_TO_SD_HEADER(_link) CONTAINING_RECORD((_link), SECURITY_DESCRIPTOR_HEADER, Link)
 
 
 //
 //  Number of minor hash entries
 //
 
-#define SECURITY_DESCRIPTOR_CACHE_ENTRIES    257
+#define SECURITY_DESCRIPTOR_CACHE_ENTRIES 257
 
-
 
 //
 //  Lock state signatures
 //
 
-#define OBP_LOCK_WAITEXCLUSIVE_SIGNATURE    0xAAAA1234
-#define OBP_LOCK_WAITSHARED_SIGNATURE       0xBBBB1234
-#define OBP_LOCK_OWNEDEXCLUSIVE_SIGNATURE   0xCCCC1234
-#define OBP_LOCK_OWNEDSHARED_SIGNATURE      0xDDDD1234
-#define OBP_LOCK_RELEASED_SIGNATURE         0xEEEE1234
-#define OBP_LOCK_UNUSED_SIGNATURE           0xFFFF1234
+#define OBP_LOCK_WAITEXCLUSIVE_SIGNATURE 0xAAAA1234
+#define OBP_LOCK_WAITSHARED_SIGNATURE 0xBBBB1234
+#define OBP_LOCK_OWNEDEXCLUSIVE_SIGNATURE 0xCCCC1234
+#define OBP_LOCK_OWNEDSHARED_SIGNATURE 0xDDDD1234
+#define OBP_LOCK_RELEASED_SIGNATURE 0xEEEE1234
+#define OBP_LOCK_UNUSED_SIGNATURE 0xFFFF1234
 
 //
 //  Lookup directories
 //
 
-typedef struct _OBP_LOOKUP_CONTEXT {
+typedef struct _OBP_LOOKUP_CONTEXT
+{
 
     POBJECT_DIRECTORY Directory;
     PVOID Object;
@@ -393,12 +381,13 @@ typedef struct _OBP_LOOKUP_CONTEXT {
 //
 // Context for the sweep routine. Passed through handle enumeration.
 //
-typedef struct _OBP_SWEEP_CONTEXT {
+typedef struct _OBP_SWEEP_CONTEXT
+{
     PHANDLE_TABLE HandleTable;
     KPROCESSOR_MODE PreviousMode;
 } OBP_SWEEP_CONTEXT, *POBP_SWEEP_CONTEXT;
 
-
+
 //
 //  Global data
 //
@@ -410,8 +399,9 @@ POBJECT_TYPE ObpDeviceMapObjectType;
 POBJECT_DIRECTORY ObpRootDirectoryObject;
 POBJECT_DIRECTORY ObpTypeDirectoryObject;
 
-typedef union {
-    WCHAR Name[sizeof(ULARGE_INTEGER)/sizeof(WCHAR)];
+typedef union
+{
+    WCHAR Name[sizeof(ULARGE_INTEGER) / sizeof(WCHAR)];
     ULARGE_INTEGER Alignment;
 } ALIGNEDNAME;
 
@@ -451,11 +441,9 @@ PHANDLE_TABLE ObpKernelHandleTable;
 
 #define KERNEL_HANDLE_MASK ((ULONG_PTR)((LONG)0x80000000))
 
-#define IsKernelHandle(H,M)                                \
-    (((KERNEL_HANDLE_MASK & (ULONG_PTR)(H)) == KERNEL_HANDLE_MASK) && \
-     ((M) == KernelMode) &&                                \
-     ((H) != NtCurrentThread()) &&                         \
-     ((H) != NtCurrentProcess()))
+#define IsKernelHandle(H, M)                                                                 \
+    (((KERNEL_HANDLE_MASK & (ULONG_PTR)(H)) == KERNEL_HANDLE_MASK) && ((M) == KernelMode) && \
+     ((H) != NtCurrentThread()) && ((H) != NtCurrentProcess()))
 
 #define EncodeKernelHandle(H) (HANDLE)(KERNEL_HANDLE_MASK | (ULONG_PTR)(H))
 
@@ -465,77 +453,53 @@ PHANDLE_TABLE ObpKernelHandleTable;
 //  Test macro for overflow
 //
 
-#define ObpIsOverflow(A,B) ((A) > ((A) + (B)))
+#define ObpIsOverflow(A, B) ((A) > ((A) + (B)))
 
-
+
 //
 //  Internal Entry Points defined in obcreate.c and some associated macros
 //
 
-#define ObpFreeObjectCreateInformation(_ObjectCreateInfo) { \
-    ObpReleaseObjectCreateInformation((_ObjectCreateInfo)); \
-    ObpFreeObjectCreateInfoBuffer((_ObjectCreateInfo));     \
-}
+#define ObpFreeObjectCreateInformation(_ObjectCreateInfo)       \
+    {                                                           \
+        ObpReleaseObjectCreateInformation((_ObjectCreateInfo)); \
+        ObpFreeObjectCreateInfoBuffer((_ObjectCreateInfo));     \
+    }
 
-#define ObpReleaseObjectCreateInformation(_ObjectCreateInfo) {               \
-    if ((_ObjectCreateInfo)->SecurityDescriptor != NULL) {                   \
-        SeReleaseSecurityDescriptor((_ObjectCreateInfo)->SecurityDescriptor, \
-                                    (_ObjectCreateInfo)->ProbeMode,          \
-                                     TRUE);                                  \
-        (_ObjectCreateInfo)->SecurityDescriptor = NULL;                      \
-    }                                                                        \
-}
-
-NTSTATUS
-ObpCaptureObjectCreateInformation (
-    IN POBJECT_TYPE ObjectType OPTIONAL,
-    IN KPROCESSOR_MODE ProbeMode,
-    IN KPROCESSOR_MODE CreatorMode,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PUNICODE_STRING CapturedObjectName,
-    IN POBJECT_CREATE_INFORMATION ObjectCreateInfo,
-    IN LOGICAL UseLookaside
-    );
+#define ObpReleaseObjectCreateInformation(_ObjectCreateInfo)                                                     \
+    {                                                                                                            \
+        if ((_ObjectCreateInfo)->SecurityDescriptor != NULL)                                                     \
+        {                                                                                                        \
+            SeReleaseSecurityDescriptor((_ObjectCreateInfo)->SecurityDescriptor, (_ObjectCreateInfo)->ProbeMode, \
+                                        TRUE);                                                                   \
+            (_ObjectCreateInfo)->SecurityDescriptor = NULL;                                                      \
+        }                                                                                                        \
+    }
 
 NTSTATUS
-ObpCaptureObjectName (
-    IN KPROCESSOR_MODE ProbeMode,
-    IN PUNICODE_STRING ObjectName,
-    IN OUT PUNICODE_STRING CapturedObjectName,
-    IN LOGICAL UseLookaside
-    );
+ObpCaptureObjectCreateInformation(IN POBJECT_TYPE ObjectType OPTIONAL, IN KPROCESSOR_MODE ProbeMode,
+                                  IN KPROCESSOR_MODE CreatorMode, IN POBJECT_ATTRIBUTES ObjectAttributes,
+                                  OUT PUNICODE_STRING CapturedObjectName,
+                                  IN POBJECT_CREATE_INFORMATION ObjectCreateInfo, IN LOGICAL UseLookaside);
+
+NTSTATUS
+ObpCaptureObjectName(IN KPROCESSOR_MODE ProbeMode, IN PUNICODE_STRING ObjectName,
+                     IN OUT PUNICODE_STRING CapturedObjectName, IN LOGICAL UseLookaside);
 
 PWCHAR
-ObpAllocateObjectNameBuffer (
-    IN ULONG Length,
-    IN LOGICAL UseLookaside,
-    IN OUT PUNICODE_STRING ObjectName
-    );
+ObpAllocateObjectNameBuffer(IN ULONG Length, IN LOGICAL UseLookaside, IN OUT PUNICODE_STRING ObjectName);
 
-VOID
-FASTCALL
-ObpFreeObjectNameBuffer (
-    IN PUNICODE_STRING ObjectName
-    );
+VOID FASTCALL ObpFreeObjectNameBuffer(IN PUNICODE_STRING ObjectName);
 
 NTSTATUS
-ObpAllocateObject (
-    IN POBJECT_CREATE_INFORMATION ObjectCreateInfo,
-    IN KPROCESSOR_MODE OwnershipMode,
-    IN POBJECT_TYPE ObjectType,
-    IN PUNICODE_STRING ObjectName,
-    IN ULONG ObjectBodySize,
-    OUT POBJECT_HEADER *ReturnedObjectHeader
-    );
+ObpAllocateObject(IN POBJECT_CREATE_INFORMATION ObjectCreateInfo, IN KPROCESSOR_MODE OwnershipMode,
+                  IN POBJECT_TYPE ObjectType, IN PUNICODE_STRING ObjectName, IN ULONG ObjectBodySize,
+                  OUT POBJECT_HEADER *ReturnedObjectHeader);
 
 
-VOID
-FASTCALL
-ObpFreeObject (
-    IN PVOID Object
-    );
+VOID FASTCALL ObpFreeObject(IN PVOID Object);
 
-
+
 /*++
 
 POBJECT_CREATE_INFORMATION
@@ -561,10 +525,10 @@ Return Value:
 
 --*/
 
-#define ObpAllocateObjectCreateInfoBuffer()             \
-    (POBJECT_CREATE_INFORMATION)ExAllocateFromPPLookasideList(LookasideCreateInfoList)
+#define ObpAllocateObjectCreateInfoBuffer() \
+    (POBJECT_CREATE_INFORMATION) ExAllocateFromPPLookasideList(LookasideCreateInfoList)
 
-
+
 /*++
 
 VOID
@@ -597,307 +561,160 @@ Return Value:
 //
 
 NTSTATUS
-ObpParseSymbolicLink (
-    IN PVOID ParseObject,
-    IN PVOID ObjectType,
-    IN PACCESS_STATE AccessState,
-    IN KPROCESSOR_MODE AccessMode,
-    IN ULONG Attributes,
-    IN OUT PUNICODE_STRING CompleteName,
-    IN OUT PUNICODE_STRING RemainingName,
-    IN OUT PVOID Context OPTIONAL,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL,
-    OUT PVOID *Object
-    );
+ObpParseSymbolicLink(IN PVOID ParseObject, IN PVOID ObjectType, IN PACCESS_STATE AccessState,
+                     IN KPROCESSOR_MODE AccessMode, IN ULONG Attributes, IN OUT PUNICODE_STRING CompleteName,
+                     IN OUT PUNICODE_STRING RemainingName, IN OUT PVOID Context OPTIONAL,
+                     IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL, OUT PVOID *Object);
 
-VOID
-ObpDeleteSymbolicLink (
-    IN  PVOID   Object
-    );
+VOID ObpDeleteSymbolicLink(IN PVOID Object);
 
-VOID
-ObpCreateSymbolicLinkName (
-    POBJECT_SYMBOLIC_LINK SymbolicLink
-    );
+VOID ObpCreateSymbolicLinkName(POBJECT_SYMBOLIC_LINK SymbolicLink);
 
-VOID
-ObpDeleteSymbolicLinkName (
-    POBJECT_SYMBOLIC_LINK SymbolicLink
-    );
+VOID ObpDeleteSymbolicLinkName(POBJECT_SYMBOLIC_LINK SymbolicLink);
 
-
+
 //
 //  Internal Entry Points defined in obdir.c
 //
 
 PVOID
-ObpLookupDirectoryEntry (
-    IN POBJECT_DIRECTORY Directory,
-    IN PUNICODE_STRING Name,
-    IN ULONG Attributes,
-    IN BOOLEAN SearchShadow,
-    OUT POBP_LOOKUP_CONTEXT LookupContext
-    );
+ObpLookupDirectoryEntry(IN POBJECT_DIRECTORY Directory, IN PUNICODE_STRING Name, IN ULONG Attributes,
+                        IN BOOLEAN SearchShadow, OUT POBP_LOOKUP_CONTEXT LookupContext);
 
 
 BOOLEAN
-ObpInsertDirectoryEntry (
-    IN POBJECT_DIRECTORY Directory,
-    IN POBP_LOOKUP_CONTEXT LookupContext,
-    IN POBJECT_HEADER ObjectHeader
-    );
+ObpInsertDirectoryEntry(IN POBJECT_DIRECTORY Directory, IN POBP_LOOKUP_CONTEXT LookupContext,
+                        IN POBJECT_HEADER ObjectHeader);
 
 
 BOOLEAN
-ObpDeleteDirectoryEntry (
-    IN POBP_LOOKUP_CONTEXT LookupContext
-    );
+ObpDeleteDirectoryEntry(IN POBP_LOOKUP_CONTEXT LookupContext);
 
 
 NTSTATUS
-ObpLookupObjectName (
-    IN HANDLE RootDirectoryHandle,
-    IN PUNICODE_STRING ObjectName,
-    IN ULONG Attributes,
-    IN POBJECT_TYPE ObjectType,
-    IN KPROCESSOR_MODE AccessMode,
-    IN PVOID ParseContext OPTIONAL,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL,
-    IN PVOID InsertObject OPTIONAL,
-    IN OUT PACCESS_STATE AccessState,
-    OUT POBP_LOOKUP_CONTEXT LookupContext,
-    OUT PVOID *FoundObject
-    );
+ObpLookupObjectName(IN HANDLE RootDirectoryHandle, IN PUNICODE_STRING ObjectName, IN ULONG Attributes,
+                    IN POBJECT_TYPE ObjectType, IN KPROCESSOR_MODE AccessMode, IN PVOID ParseContext OPTIONAL,
+                    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL, IN PVOID InsertObject OPTIONAL,
+                    IN OUT PACCESS_STATE AccessState, OUT POBP_LOOKUP_CONTEXT LookupContext, OUT PVOID *FoundObject);
 
-VOID
-ObpUnlockObjectDirectoryPath (
-    IN POBJECT_DIRECTORY LockedDirectory
-    );
+VOID ObpUnlockObjectDirectoryPath(IN POBJECT_DIRECTORY LockedDirectory);
 
 PDEVICE_MAP
-ObpReferenceDeviceMap(
-    );
+ObpReferenceDeviceMap();
 
-VOID
-FASTCALL
-ObfDereferenceDeviceMap(
-    IN PDEVICE_MAP DeviceMap
-    );
+VOID FASTCALL ObfDereferenceDeviceMap(IN PDEVICE_MAP DeviceMap);
 
-
+
 //
 //  Internal entry points defined in obref.c
 //
 
 
-VOID
-ObpDeleteNameCheck (
-    IN PVOID Object
-    );
+VOID ObpDeleteNameCheck(IN PVOID Object);
 
 
-VOID
-ObpProcessRemoveObjectQueue (
-    PVOID Parameter
-    );
+VOID ObpProcessRemoveObjectQueue(PVOID Parameter);
 
-VOID
-ObpRemoveObjectRoutine (
-    IN  PVOID   Object,
-    IN  BOOLEAN CalledOnWorkerThread
-    );
+VOID ObpRemoveObjectRoutine(IN PVOID Object, IN BOOLEAN CalledOnWorkerThread);
 
-
+
 //
 //  Internal entry points defined in obhandle.c
 //
 
 
 POBJECT_HANDLE_COUNT_ENTRY
-ObpInsertHandleCount (
-    POBJECT_HEADER ObjectHeader
-    );
+ObpInsertHandleCount(POBJECT_HEADER ObjectHeader);
 
 NTSTATUS
-ObpIncrementHandleCount (
-    OB_OPEN_REASON OpenReason,
-    PEPROCESS Process,
-    PVOID Object,
-    POBJECT_TYPE ObjectType,
-    PACCESS_STATE AccessState OPTIONAL,
-    KPROCESSOR_MODE AccessMode,
-    ULONG Attributes
-    );
+ObpIncrementHandleCount(OB_OPEN_REASON OpenReason, PEPROCESS Process, PVOID Object, POBJECT_TYPE ObjectType,
+                        PACCESS_STATE AccessState OPTIONAL, KPROCESSOR_MODE AccessMode, ULONG Attributes);
 
 
-VOID
-ObpDecrementHandleCount (
-    PEPROCESS Process,
-    POBJECT_HEADER ObjectHeader,
-    POBJECT_TYPE ObjectType,
-    ACCESS_MASK GrantedAccess
-    );
+VOID ObpDecrementHandleCount(PEPROCESS Process, POBJECT_HEADER ObjectHeader, POBJECT_TYPE ObjectType,
+                             ACCESS_MASK GrantedAccess);
 
 NTSTATUS
-ObpCreateHandle (
-    IN OB_OPEN_REASON OpenReason,
-    IN PVOID Object,
-    IN POBJECT_TYPE ExpectedObjectType OPTIONAL,
-    IN PACCESS_STATE AccessState,
-    IN ULONG ObjectPointerBias OPTIONAL,
-    IN ULONG Attributes,
-    IN POBP_LOOKUP_CONTEXT LookupContext,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PVOID *ReferencedNewObject OPTIONAL,
-    OUT PHANDLE Handle
-    );
+ObpCreateHandle(IN OB_OPEN_REASON OpenReason, IN PVOID Object, IN POBJECT_TYPE ExpectedObjectType OPTIONAL,
+                IN PACCESS_STATE AccessState, IN ULONG ObjectPointerBias OPTIONAL, IN ULONG Attributes,
+                IN POBP_LOOKUP_CONTEXT LookupContext, IN KPROCESSOR_MODE AccessMode,
+                OUT PVOID *ReferencedNewObject OPTIONAL, OUT PHANDLE Handle);
 
 NTSTATUS
-ObpIncrementUnnamedHandleCount (
-    PACCESS_MASK DesiredAccess,
-    PEPROCESS Process,
-    PVOID Object,
-    POBJECT_TYPE ObjectType,
-    KPROCESSOR_MODE AccessMode,
-    ULONG Attributes
-    );
+ObpIncrementUnnamedHandleCount(PACCESS_MASK DesiredAccess, PEPROCESS Process, PVOID Object, POBJECT_TYPE ObjectType,
+                               KPROCESSOR_MODE AccessMode, ULONG Attributes);
 
 
 NTSTATUS
-ObpCreateUnnamedHandle (
-    IN PVOID Object,
-    IN ACCESS_MASK DesiredAccess,
-    IN ULONG ObjectPointerBias OPTIONAL,
-    IN ULONG Attributes,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PVOID *ReferencedNewObject OPTIONAL,
-    OUT PHANDLE Handle
-    );
+ObpCreateUnnamedHandle(IN PVOID Object, IN ACCESS_MASK DesiredAccess, IN ULONG ObjectPointerBias OPTIONAL,
+                       IN ULONG Attributes, IN KPROCESSOR_MODE AccessMode, OUT PVOID *ReferencedNewObject OPTIONAL,
+                       OUT PHANDLE Handle);
 
 NTSTATUS
-ObpChargeQuotaForObject (
-    IN POBJECT_HEADER ObjectHeader,
-    IN POBJECT_TYPE ObjectType,
-    OUT PBOOLEAN NewObject
-    );
+ObpChargeQuotaForObject(IN POBJECT_HEADER ObjectHeader, IN POBJECT_TYPE ObjectType, OUT PBOOLEAN NewObject);
 
 NTSTATUS
-ObpValidateDesiredAccess (
-    IN ACCESS_MASK DesiredAccess
-    );
+ObpValidateDesiredAccess(IN ACCESS_MASK DesiredAccess);
 
-
+
 //
 //  Internal entry points defined in obse.c
 //
 
 BOOLEAN
-ObpCheckPseudoHandleAccess (
-    IN PVOID Object,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PNTSTATUS AccessStatus,
-    IN BOOLEAN TypeMutexLocked
-    );
+ObpCheckPseudoHandleAccess(IN PVOID Object, IN ACCESS_MASK DesiredAccess, OUT PNTSTATUS AccessStatus,
+                           IN BOOLEAN TypeMutexLocked);
 
 
 BOOLEAN
-ObpCheckTraverseAccess (
-    IN PVOID DirectoryObject,
-    IN ACCESS_MASK TraverseAccess,
-    IN PACCESS_STATE AccessState OPTIONAL,
-    IN BOOLEAN TypeMutexLocked,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT PNTSTATUS AccessStatus
-    );
+ObpCheckTraverseAccess(IN PVOID DirectoryObject, IN ACCESS_MASK TraverseAccess, IN PACCESS_STATE AccessState OPTIONAL,
+                       IN BOOLEAN TypeMutexLocked, IN KPROCESSOR_MODE PreviousMode, OUT PNTSTATUS AccessStatus);
 
 BOOLEAN
-ObpCheckObjectReference (
-    IN PVOID Object,
-    IN OUT PACCESS_STATE AccessState,
-    IN BOOLEAN TypeMutexLocked,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PNTSTATUS AccessStatus
-    );
+ObpCheckObjectReference(IN PVOID Object, IN OUT PACCESS_STATE AccessState, IN BOOLEAN TypeMutexLocked,
+                        IN KPROCESSOR_MODE AccessMode, OUT PNTSTATUS AccessStatus);
 
-
+
 //
 //  Internal entry points defined in obsdata.c
 //
 
 NTSTATUS
-ObpInitSecurityDescriptorCache (
-    VOID
-    );
+ObpInitSecurityDescriptorCache(VOID);
 
 ULONG
-ObpHashSecurityDescriptor (
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
+ObpHashSecurityDescriptor(PSECURITY_DESCRIPTOR SecurityDescriptor);
 
 ULONG
-ObpHashBuffer (
-    PVOID Data,
-    ULONG Length
-    );
+ObpHashBuffer(PVOID Data, ULONG Length);
 
 PSECURITY_DESCRIPTOR_HEADER
-ObpCreateCacheEntry (
-    PSECURITY_DESCRIPTOR InputSecurityDescriptor,
-    ULONG FullHash,
-    ULONG RefBias
-    );
+ObpCreateCacheEntry(PSECURITY_DESCRIPTOR InputSecurityDescriptor, ULONG FullHash, ULONG RefBias);
 
 
 PSECURITY_DESCRIPTOR
-ObpReferenceSecurityDescriptor (
-    POBJECT_HEADER ObjectHeader
-    );
+ObpReferenceSecurityDescriptor(POBJECT_HEADER ObjectHeader);
 
 
 PVOID
-ObpDestroySecurityDescriptorHeader (
-    IN PSECURITY_DESCRIPTOR_HEADER Header
-    );
+ObpDestroySecurityDescriptorHeader(IN PSECURITY_DESCRIPTOR_HEADER Header);
 
 BOOLEAN
-ObpCompareSecurityDescriptors (
-    IN PSECURITY_DESCRIPTOR SD1,
-    IN PSECURITY_DESCRIPTOR SD2
-    );
+ObpCompareSecurityDescriptors(IN PSECURITY_DESCRIPTOR SD1, IN PSECURITY_DESCRIPTOR SD2);
 
 NTSTATUS
-ObpValidateAccessMask (
-    PACCESS_STATE AccessState
-    );
+ObpValidateAccessMask(PACCESS_STATE AccessState);
 
-ObpCloseHandleTableEntry (
-    IN PHANDLE_TABLE ObjectTable,
-    IN PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN Rundown,
-    IN BOOLEAN CanNotRaise
-    );
+ObpCloseHandleTableEntry(IN PHANDLE_TABLE ObjectTable, IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE Handle,
+                         IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN Rundown, IN BOOLEAN CanNotRaise);
 
 NTSTATUS
-ObpCloseHandle (
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN CanNotRaise
-    );
+ObpCloseHandle(IN HANDLE Handle, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN CanNotRaise);
 
-VOID
-ObpDeleteObjectType (
-    IN  PVOID   Object
-    );
+VOID ObpDeleteObjectType(IN PVOID Object);
 
-VOID
-ObpAuditObjectAccess(
-    IN HANDLE Handle,
-    IN PHANDLE_TABLE_ENTRY_INFO ObjectTableEntryInfo,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN ACCESS_MASK DesiredAccess
-    );
+VOID ObpAuditObjectAccess(IN HANDLE Handle, IN PHANDLE_TABLE_ENTRY_INFO ObjectTableEntryInfo,
+                          IN PUNICODE_STRING ObjectTypeName, IN ACCESS_MASK DesiredAccess);
 
 
 //
@@ -906,9 +723,7 @@ ObpAuditObjectAccess(
 
 FORCEINLINE
 BOOLEAN
-ObpSafeInterlockedIncrement(
-    IN OUT PLONG lpValue
-    )
+ObpSafeInterlockedIncrement(IN OUT PLONG lpValue)
 
 /*
 
@@ -937,21 +752,22 @@ Return Value:
     // the long value but avoid the 0 -> 1 transition that would cause a double delete.
     //
 
-    PointerCount = *(volatile *) lpValue;
+    PointerCount = *(volatile *)lpValue;
 
-    do {
-        if (PointerCount == 0) {
+    do
+    {
+        if (PointerCount == 0)
+        {
             return FALSE;
         }
-        NewPointerCount = InterlockedCompareExchange (lpValue,
-                                                      PointerCount+1,
-                                                      PointerCount);
+        NewPointerCount = InterlockedCompareExchange(lpValue, PointerCount + 1, PointerCount);
 
         //
         // If the exchange compare completed ok then we did a reference so return true.
         //
 
-        if (NewPointerCount == PointerCount) {
+        if (NewPointerCount == PointerCount)
+        {
 
             return TRUE;
         }
@@ -967,12 +783,10 @@ Return Value:
     return TRUE;
 }
 
-
+
 POBJECT_HEADER_NAME_INFO
 FORCEINLINE
-ObpReferenceNameInfo(
-    IN POBJECT_HEADER ObjectHeader
-    )
+ObpReferenceNameInfo(IN POBJECT_HEADER ObjectHeader)
 
 /*
 
@@ -995,11 +809,10 @@ Return Value:
 
 {
     POBJECT_HEADER_NAME_INFO NameInfo;
-    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-    if ((NameInfo != NULL)
-            &&
-        ObpSafeInterlockedIncrement( &NameInfo->QueryReferences )) {
+    if ((NameInfo != NULL) && ObpSafeInterlockedIncrement(&NameInfo->QueryReferences))
+    {
 
         return NameInfo;
     }
@@ -1007,12 +820,8 @@ Return Value:
     return NULL;
 }
 
-
-VOID
-FORCEINLINE
-ObpDereferenceNameInfo(
-    IN POBJECT_HEADER_NAME_INFO NameInfo
-    )
+
+VOID FORCEINLINE ObpDereferenceNameInfo(IN POBJECT_HEADER_NAME_INFO NameInfo)
 
 /*
 
@@ -1032,9 +841,8 @@ Return Value:
 
 {
 
-    if ( (NameInfo != NULL)
-            &&
-         (InterlockedDecrement(&NameInfo->QueryReferences) == 0)) {
+    if ((NameInfo != NULL) && (InterlockedDecrement(&NameInfo->QueryReferences) == 0))
+    {
 
         PVOID DirObject;
 
@@ -1042,9 +850,10 @@ Return Value:
         //  Free the name buffer and zero out the name data fields
         //
 
-        if (NameInfo->Name.Buffer != NULL) {
+        if (NameInfo->Name.Buffer != NULL)
+        {
 
-            ExFreePool( NameInfo->Name.Buffer );
+            ExFreePool(NameInfo->Name.Buffer);
 
             NameInfo->Name.Buffer = NULL;
             NameInfo->Name.Length = 0;
@@ -1053,21 +862,17 @@ Return Value:
 
         DirObject = NameInfo->Directory;
 
-        if (DirObject != NULL) {
+        if (DirObject != NULL)
+        {
 
             NameInfo->Directory = NULL;
-            ObDereferenceObjectDeferDelete( DirObject );
+            ObDereferenceObjectDeferDelete(DirObject);
         }
     }
 }
 
-
-VOID
-FORCEINLINE
-ObpLockDirectoryExclusive(
-    IN POBJECT_DIRECTORY Directory,
-    IN POBP_LOOKUP_CONTEXT LockContext
-    )
+
+VOID FORCEINLINE ObpLockDirectoryExclusive(IN POBJECT_DIRECTORY Directory, IN POBP_LOOKUP_CONTEXT LockContext)
 
 /*
 
@@ -1087,17 +892,12 @@ Return Value:
 {
     LockContext->LockStateSignature = OBP_LOCK_WAITEXCLUSIVE_SIGNATURE;
     KeEnterCriticalRegion();
-    ExAcquirePushLockExclusive( &Directory->Lock );
+    ExAcquirePushLockExclusive(&Directory->Lock);
     LockContext->LockStateSignature = OBP_LOCK_OWNEDEXCLUSIVE_SIGNATURE;
 }
 
-
-VOID
-FORCEINLINE
-ObpLockDirectoryShared (
-    IN POBJECT_DIRECTORY Directory,
-    IN POBP_LOOKUP_CONTEXT LockContext
-    )
+
+VOID FORCEINLINE ObpLockDirectoryShared(IN POBJECT_DIRECTORY Directory, IN POBP_LOOKUP_CONTEXT LockContext)
 
 /*
 
@@ -1117,17 +917,12 @@ Return Value:
 {
     LockContext->LockStateSignature = OBP_LOCK_WAITSHARED_SIGNATURE;
     KeEnterCriticalRegion();
-    ExAcquirePushLockShared( &Directory->Lock );
+    ExAcquirePushLockShared(&Directory->Lock);
     LockContext->LockStateSignature = OBP_LOCK_OWNEDSHARED_SIGNATURE;
 }
 
-
-VOID
-FORCEINLINE
-ObpUnlockDirectory(
-    IN POBJECT_DIRECTORY Directory,
-    IN POBP_LOOKUP_CONTEXT LockContext
-    )
+
+VOID FORCEINLINE ObpUnlockDirectory(IN POBJECT_DIRECTORY Directory, IN POBP_LOOKUP_CONTEXT LockContext)
 
 /*
 
@@ -1144,17 +939,13 @@ Return Value:
 */
 
 {
-    ExReleasePushLock( &Directory->Lock );
+    ExReleasePushLock(&Directory->Lock);
     LockContext->LockStateSignature = OBP_LOCK_RELEASED_SIGNATURE;
     KeLeaveCriticalRegion();
 }
 
-
-VOID
-FORCEINLINE
-ObpInitializeLookupContext(
-    IN POBP_LOOKUP_CONTEXT LookupContext
-    )
+
+VOID FORCEINLINE ObpInitializeLookupContext(IN POBP_LOOKUP_CONTEXT LookupContext)
 
 /*
 
@@ -1177,13 +968,8 @@ Return Value:
     LookupContext->LockStateSignature = OBP_LOCK_UNUSED_SIGNATURE;
 }
 
-
-VOID
-FORCEINLINE
-ObpLockLookupContext (
-    IN POBP_LOOKUP_CONTEXT LookupContext,
-    IN POBJECT_DIRECTORY Directory
-    )
+
+VOID FORCEINLINE ObpLockLookupContext(IN POBP_LOOKUP_CONTEXT LookupContext, IN POBJECT_DIRECTORY Directory)
 
 /*
 
@@ -1214,12 +1000,7 @@ Return Value:
 }
 
 
-
-VOID
-FORCEINLINE
-ObpReleaseLookupContext (
-    IN POBP_LOOKUP_CONTEXT LookupContext
-    )
+VOID FORCEINLINE ObpReleaseLookupContext(IN POBP_LOOKUP_CONTEXT LookupContext)
 
 /*
 
@@ -1245,9 +1026,10 @@ Return Value:
     //  If the context was locked we need to unlock the directory
     //
 
-    if (LookupContext->DirectoryLocked) {
+    if (LookupContext->DirectoryLocked)
+    {
 
-        ObpUnlockDirectory( LookupContext->Directory, LookupContext );
+        ObpUnlockDirectory(LookupContext->Directory, LookupContext);
         LookupContext->Directory = NULL;
         LookupContext->DirectoryLocked = FALSE;
     }
@@ -1256,15 +1038,14 @@ Return Value:
     //  Remove the references added to the name info and object
     //
 
-    if (LookupContext->Object) {
+    if (LookupContext->Object)
+    {
         POBJECT_HEADER_NAME_INFO NameInfo;
 
         NameInfo = OBJECT_HEADER_TO_NAME_INFO(OBJECT_TO_OBJECT_HEADER(LookupContext->Object));
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
         ObDereferenceObject(LookupContext->Object);
         LookupContext->Object = NULL;
     }
 }
-
-

@@ -33,7 +33,7 @@ Revision History:
 #include "mtrr.h"
 
 #if DBG
-#define DBGMSG(a)   DbgPrint(a)
+#define DBGMSG(a) DbgPrint(a)
 #else
 #define DBGMSG(a)
 #endif
@@ -42,60 +42,39 @@ Revision History:
 // Structure used for PAT initialization
 //
 
-typedef struct _NEW_PAT {
+typedef struct _NEW_PAT
+{
 
-    PAT                 Attributes;
+    PAT Attributes;
 
     //
     // IPI context to coordinate concurrent PAT update
     //
 
-    PROCESSOR_LOCKSTEP  Synchronize;
+    PROCESSOR_LOCKSTEP Synchronize;
 } NEW_PAT, *PNEW_PAT;
 
 // Prototypes
 
-VOID
-KeRestorePAT (
-    VOID
-    );
+VOID KeRestorePAT(VOID);
 
-VOID
-KiInitializePAT (
-    VOID
-    );
+VOID KiInitializePAT(VOID);
 
-VOID
-KiLoadPAT (
-    IN PNEW_PAT Context
-    );
+VOID KiLoadPAT(IN PNEW_PAT Context);
 
-VOID
-KiLoadPATTarget (
-    IN PKIPI_CONTEXT    SignalDone,
-    IN PVOID            Context,
-    IN PVOID            Parameter2,
-    IN PVOID            Parameter3
-    );
+VOID KiLoadPATTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Context, IN PVOID Parameter2, IN PVOID Parameter3);
 
 #if DBG
-VOID
-KiDumpPAT (
-    PUCHAR      DebugString,
-    PAT         Attributes
-    );
+VOID KiDumpPAT(PUCHAR DebugString, PAT Attributes);
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGELK,KiInitializePAT)
-#pragma alloc_text(PAGELK,KiLoadPAT)
-#pragma alloc_text(PAGELK,KiLoadPATTarget)
+#pragma alloc_text(PAGELK, KiInitializePAT)
+#pragma alloc_text(PAGELK, KiLoadPAT)
+#pragma alloc_text(PAGELK, KiLoadPATTarget)
 #endif
 
-VOID
-KeRestorePAT (
-    VOID
-    )
+VOID KeRestorePAT(VOID)
 /*++
 Routine Description:
 
@@ -112,15 +91,13 @@ Return Value:
     None.
 --*/
 {
-    if (KeFeatureBits & KF_PAT) {
+    if (KeFeatureBits & KF_PAT)
+    {
         KiInitializePAT();
     }
 }
 
-VOID
-KiInitializePAT (
-    VOID
-    )
+VOID KiInitializePAT(VOID)
 /*++
 
 Routine Description:
@@ -154,14 +131,14 @@ Return Value:
 
 --*/
 {
-    PAT         PatAttributes;
-    ULONG       Size;
-    KIRQL       OldIrql, NewIrql;
-    PKPRCB      Prcb;
-    NEW_PAT     NewPAT;
-    KAFFINITY   TargetProcessors;
+    PAT PatAttributes;
+    ULONG Size;
+    KIRQL OldIrql, NewIrql;
+    PKPRCB Prcb;
+    NEW_PAT NewPAT;
+    KAFFINITY TargetProcessors;
 
-    ASSERT ((KeFeatureBits & KF_PAT) != 0);
+    ASSERT((KeFeatureBits & KF_PAT) != 0);
 
     //
     // Initialize the PAT
@@ -197,16 +174,10 @@ Return Value:
     //
 
     TargetProcessors = KeActiveProcessors & ~Prcb->SetMember;
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
 
-        KiIpiSendSynchronousPacket (
-            Prcb,
-            TargetProcessors,
-            KiLoadPATTarget,
-            (PVOID) (&NewPAT),
-            NULL,
-            NULL
-            );
+        KiIpiSendSynchronousPacket(Prcb, TargetProcessors, KiLoadPATTarget, (PVOID)(&NewPAT), NULL, NULL);
 
         //
         // Wait for all processors to be collected
@@ -220,7 +191,7 @@ Return Value:
         // some interrupt service routine.
         //
 
-        KeRaiseIrql (HIGH_LEVEL, &NewIrql);
+        KeRaiseIrql(HIGH_LEVEL, &NewIrql);
 
         //
         // There's no reason for any debug events now, so signal
@@ -247,13 +218,7 @@ Return Value:
     return;
 }
 
-VOID
-KiLoadPATTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID NewPAT,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KiLoadPATTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID NewPAT, IN PVOID Parameter2, IN PVOID Parameter3)
 /*++
 
 Routine Description:
@@ -272,26 +237,22 @@ Return Value:
 {
     PNEW_PAT Context;
 
-    Context = (PNEW_PAT) NewPAT;
+    Context = (PNEW_PAT)NewPAT;
 
     //
     // Wait for all processors to be ready
     //
 
-    KiIpiSignalPacketDoneAndStall(SignalDone,
-                                  Context->Synchronize.TargetPhase);
+    KiIpiSignalPacketDoneAndStall(SignalDone, Context->Synchronize.TargetPhase);
 
     //
     // Update PAT
     //
 
-    KiLoadPAT (Context);
+    KiLoadPAT(Context);
 }
 
-VOID
-KiLoadPAT (
-    IN PNEW_PAT Context
-    )
+VOID KiLoadPAT(IN PNEW_PAT Context)
 /*++
 
 Routine Description:
@@ -308,8 +269,8 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             Enable;
-    ULONG               HldCr0, HldCr4, Index;
+    BOOLEAN Enable;
+    ULONG HldCr0, HldCr4, Index;
 
     //
     // Disable interrupts
@@ -321,7 +282,7 @@ Return Value:
     // Synchronize all processors
     //
 
-    KiLockStepExecution (&Context->Synchronize);
+    KiLockStepExecution(&Context->Synchronize);
 
     _asm {
         ;
@@ -380,7 +341,7 @@ Return Value:
     // Load new PAT
     //
 
-    WRMSR (PAT_MSR, Context->Attributes.QuadPart);
+    WRMSR(PAT_MSR, Context->Attributes.QuadPart);
 
     _asm {
 
@@ -403,22 +364,20 @@ Return Value:
         mov     cr3, eax
     }
 
-    _asm {
+    _asm
+    {
         ;
-        ; Restore CR4 (global page enable)
         ;
+        Restore CR4(global page enable);
 
-        mov     eax, HldCr4
-        _emit  0Fh
-        _emit  22h
-        _emit  0E0h             ; mov cr4, eax
+        mov eax, HldCr4 _emit 0Fh _emit 22h _emit 0E0h;
+        mov cr4, eax
 
+            ;
         ;
-        ; Restore CR0 (cache enable)
-        ;
+        Restore CR0(cache enable);
 
-        mov     eax, HldCr0
-        mov     cr0, eax
+        mov eax, HldCr0 mov cr0, eax
     }
 
     //
@@ -426,6 +385,6 @@ Return Value:
     // restore interrupts and return.
     //
 
-    KiLockStepExecution (&Context->Synchronize);
-    KeEnableInterrupts (Enable);
+    KiLockStepExecution(&Context->Synchronize);
+    KeEnableInterrupts(Enable);
 }

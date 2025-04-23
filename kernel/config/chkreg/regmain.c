@@ -35,11 +35,11 @@ BOOLEAN FixHive = FALSE;
 // repair damaged hives.
 BOOLEAN SpaceUsage = FALSE;
 
-// maximum level to dump 
-ULONG   MaxLevel = 0;
+// maximum level to dump
+ULONG MaxLevel = 0;
 
 // bin to examine space display
-LONG    BinIndex = -1;
+LONG BinIndex = -1;
 
 // the hive file name
 TCHAR *Hive = NULL;
@@ -48,7 +48,7 @@ TCHAR *Hive = NULL;
 HCELL_INDEX RootCell;
 
 // Usage string
-char *Usage="\
+char *Usage = "\
 Checks a hive file and perform repairs, compacts or displays a status report.\n\n\
 CHKREG /F <filename[.<LOG>]> [/H] [/D [<level>] [/S [<bin>]] [/C] [/L] [/R]\n\n\
     <filename>      FileName of hive to be analyzed\n\
@@ -65,7 +65,7 @@ CHKREG /F <filename[.<LOG>]> [/H] [/D [<level>] [/S [<bin>]] [/C] [/L] [/R]\n\n\
     ";
 
 // Lost Space Warning
-char *LostSpaceWarning="\n\
+char *LostSpaceWarning = "\n\
 WARNING :  Lost space detection may take a while. Are you sure you want this (y/n)?";
 
 // Starting address of the in-memory maped hive image
@@ -79,63 +79,62 @@ FILE *OutputFile;
 
 #define NAME_BUFFERSIZE 2000
 
-UNICODE_STRING  KeyName;
+UNICODE_STRING KeyName;
 WCHAR NameBuffer[NAME_BUFFERSIZE];
 
 // Miscelaneous variables used fo data statistics
-ULONG   TotalKeyNode=0;
-ULONG   TotalKeyValue=0;
-ULONG   TotalKeyIndex=0;
-ULONG   TotalKeySecurity=0;
-ULONG   TotalValueIndex=0;
-ULONG   TotalUnknown=0;
+ULONG TotalKeyNode = 0;
+ULONG TotalKeyValue = 0;
+ULONG TotalKeyIndex = 0;
+ULONG TotalKeySecurity = 0;
+ULONG TotalValueIndex = 0;
+ULONG TotalUnknown = 0;
 
-ULONG   CountKeyNode=0;
-ULONG   CountKeyValue=0;
-ULONG   CountKeyIndex=0;
-ULONG   CountKeySecurity=0;
-ULONG   CountValueIndex=0;
-ULONG   CountUnknown=0;
+ULONG CountKeyNode = 0;
+ULONG CountKeyValue = 0;
+ULONG CountKeyIndex = 0;
+ULONG CountKeySecurity = 0;
+ULONG CountValueIndex = 0;
+ULONG CountUnknown = 0;
 
-ULONG   CountKeyNodeCompacted=0;
+ULONG CountKeyNodeCompacted = 0;
 
-ULONG   TotalFree=0; 
-ULONG   FreeCount=0; 
-ULONG   TotalUsed=0;
+ULONG TotalFree = 0;
+ULONG FreeCount = 0;
+ULONG TotalUsed = 0;
 
-PHBIN   FirstBin;
-PHBIN   MaxBin;
-ULONG   HiveLength;
+PHBIN FirstBin;
+PHBIN MaxBin;
+ULONG HiveLength;
 
 #define OPTION_MODE 0
-#define FILE_MODE   1
-#define LEVEL_MODE  2
-#define BIN_MODE    3
+#define FILE_MODE 1
+#define LEVEL_MODE 2
+#define BIN_MODE 3
 
-VOID
-ChkDumpLogFile( PHBASE_BLOCK BaseBlock,ULONG Length );
+VOID ChkDumpLogFile(PHBASE_BLOCK BaseBlock, ULONG Length);
 
-VOID
-ParseArgs (
-    int argc,
-    char *argv[]
-    )
+VOID ParseArgs(int argc, char *argv[])
 {
 
     char *p;
     int i;
-    
+
     // specified what should we expect from the command line
     int iMode = OPTION_MODE;
-    
-    for(i=0;i<argc;i++) {
-        p  = argv[i];
-        if ( *p == '/' || *p == '-' ) {
+
+    for (i = 0; i < argc; i++)
+    {
+        p = argv[i];
+        if (*p == '/' || *p == '-')
+        {
             // option mode
             p++;
             iMode = OPTION_MODE;
-            while ((*p != '\0') && (*p != ' ')) {
-                switch (*p) {
+            while ((*p != '\0') && (*p != ' '))
+            {
+                switch (*p)
+                {
                 case 'h':
                 case 'H':
                 case '?':
@@ -176,86 +175,87 @@ ParseArgs (
                 default:
                     break;
                 }
-                if( iMode != OPTION_MODE ) {
+                if (iMode != OPTION_MODE)
+                {
                     // break the loop; ignore the rest of the current argv
                     break;
                 }
             } // while
-        } else {
-            switch(iMode) {
+        }
+        else
+        {
+            switch (iMode)
+            {
             case FILE_MODE:
-                Hive = argv[i]; 
+                Hive = argv[i];
                 break;
             case LEVEL_MODE:
-                MaxLevel = (ULONG) atol(argv[i]);
+                MaxLevel = (ULONG)atol(argv[i]);
                 break;
             case BIN_MODE:
-                BinIndex = (LONG) atol(argv[i]);
+                BinIndex = (LONG)atol(argv[i]);
                 break;
             default:
                 break;
             }
         }
     }
-    
 }
 
-__cdecl
-main(
-    int argc,
-    char *argv[]
-    )
+__cdecl main(int argc, char *argv[])
 {
-    ULONG   FileIndex;
+    ULONG FileIndex;
     HANDLE myFileHandle, myMMFHandle;
     LPBYTE myMMFViewHandle;
     BYTE lowChar, hiChar, modVal;
     DWORD dwFileSize;
-    ULONG   Index,Index2;
+    ULONG Index, Index2;
 
     PHBASE_BLOCK PHBaseBlock;
-    PHBIN        NewBins;
-    ULONG        Offset;
-    ULONG        CellCount;
-    ULONG        SizeCount;
+    PHBIN NewBins;
+    ULONG Offset;
+    ULONG CellCount;
+    ULONG SizeCount;
 
-    REG_USAGE    TotalUsage;
+    REG_USAGE TotalUsage;
     DWORD dwHiveFileAccess = GENERIC_READ;
     DWORD flHiveViewProtect = PAGE_READONLY;
     DWORD dwHiveViewAccess = FILE_MAP_READ;
-    ParseArgs( argc, argv );
+    ParseArgs(argc, argv);
 
-    if (!Hive) {
+    if (!Hive)
+    {
         fprintf(stderr, "\nMust provide a hive name !!!\n\n");
         fprintf(stderr, "%s\n", Usage);
         ExitProcess(-1);
     }
 
-    if(LostSpace) {
-    // are you sure you want lost cells detection? It may take a while!
+    if (LostSpace)
+    {
+        // are you sure you want lost cells detection? It may take a while!
         int chLost;
-        fprintf(stdout, "%s",LostSpaceWarning);
+        fprintf(stdout, "%s", LostSpaceWarning);
         fflush(stdin);
         chLost = getchar();
-        if( (chLost != 'y') && (chLost != 'Y') ) {
-        // he changed his mind
+        if ((chLost != 'y') && (chLost != 'Y'))
+        {
+            // he changed his mind
             LostSpace = FALSE;
         }
         fprintf(stderr, "\n");
     }
 
-    if( FixHive ) {
+    if (FixHive)
+    {
         dwHiveFileAccess |= GENERIC_WRITE;
         flHiveViewProtect = PAGE_READWRITE;
         dwHiveViewAccess = FILE_MAP_WRITE;
     }
     /* Create temporary file for mapping. */
-    if ((myFileHandle = CreateFile (Hive, dwHiveFileAccess,
-                                   0 , NULL, OPEN_EXISTING,
-                                   FILE_ATTRIBUTE_NORMAL,
-                                   NULL))
-         == (HANDLE) INVALID_HANDLE_VALUE) /* Bad handle */ {
-        fprintf(stderr,"Could not create file %s\n", Hive);
+    if ((myFileHandle = CreateFile(Hive, dwHiveFileAccess, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) ==
+        (HANDLE)INVALID_HANDLE_VALUE) /* Bad handle */
+    {
+        fprintf(stderr, "Could not create file %s\n", Hive);
         exit(-1);
     }
 
@@ -266,149 +266,114 @@ main(
     /* If we get here, we managed to name and create a temp file. Now we need
        to create a mapping */
 
-    myMMFHandle = CreateFileMapping (myFileHandle, NULL, flHiveViewProtect,
-                                     0, dwFileSize, NULL);
-    if (myMMFHandle == (HANDLE) INVALID_HANDLE_VALUE) {
-        fprintf(stderr,"Could not map file %s\n", Hive);
+    myMMFHandle = CreateFileMapping(myFileHandle, NULL, flHiveViewProtect, 0, dwFileSize, NULL);
+    if (myMMFHandle == (HANDLE)INVALID_HANDLE_VALUE)
+    {
+        fprintf(stderr, "Could not map file %s\n", Hive);
         exit(-1);
     }
 
     /* So we've mapped the file. Now try to map a view */
 
-    myMMFViewHandle = (LPBYTE) MapViewOfFile (myMMFHandle, dwHiveViewAccess, 0, 0, dwFileSize);
-    if (!myMMFViewHandle) {
-        fprintf(stderr,"Could not map view of file %s   error = %lx\n", Hive,(ULONG)GetLastError());
+    myMMFViewHandle = (LPBYTE)MapViewOfFile(myMMFHandle, dwHiveViewAccess, 0, 0, dwFileSize);
+    if (!myMMFViewHandle)
+    {
+        fprintf(stderr, "Could not map view of file %s   error = %lx\n", Hive, (ULONG)GetLastError());
         exit(-1);
     }
 
     /* Now we have a view. Read through it */
 
-    PHBaseBlock = (PHBASE_BLOCK) myMMFViewHandle;
+    PHBaseBlock = (PHBASE_BLOCK)myMMFViewHandle;
 
-    if( strstr(Hive,".LOG") != NULL ) {
-        // dumping log file 
-        ChkDumpLogFile(PHBaseBlock,MaxLevel);
-    } else {
-/*
+    if (strstr(Hive, ".LOG") != NULL)
+    {
+        // dumping log file
+        ChkDumpLogFile(PHBaseBlock, MaxLevel);
+    }
+    else
+    {
+        /*
         if (PHBaseBlock->Minor < 4) {
             fprintf(stderr,"Hive version %d is too old, must be 3 or later\n", PHBaseBlock->Minor);
             ExitProcess(-1);
         }
 */
         // Initialization stuff
-        for(Index =0;Index<FRAGMENTATION;Index++) {
+        for (Index = 0; Index < FRAGMENTATION; Index++)
+        {
             LostCells[Index].Count = 0;
-            for(Index2 = 0;Index2<SUBLISTS;Index2++) {
+            for (Index2 = 0; Index2 < SUBLISTS; Index2++)
+            {
                 LostCells[Index].List[Index2] = NULL;
             }
         }
-    
+
         RootCell = PHBaseBlock->RootCell;
-    
+
         OutputFile = stdout;
         Base = (PUCHAR)(PHBaseBlock) + HBLOCK_SIZE;
 
-        Offset=HBLOCK_SIZE;
+        Offset = HBLOCK_SIZE;
         HiveLength = PHBaseBlock->Length;
 
-        MaxBin= (PHBIN) (Base + HiveLength);
-        FirstBin = (PHBIN) (Base);
+        MaxBin = (PHBIN)(Base + HiveLength);
+        FirstBin = (PHBIN)(Base);
 
         KeyName.Buffer = NameBuffer;
         KeyName.MaximumLength = NAME_BUFFERSIZE;
 
-        ChkBaseBlock(PHBaseBlock,dwFileSize);
-    
+        ChkBaseBlock(PHBaseBlock, dwFileSize);
+
         ChkSecurityDescriptors();
 
         ChkPhysicalHive();
 
-        if (MaxLevel) {
-            fprintf(stdout,"%6s,%6s,%7s,%10s, %s\n", 
-                    "Keys",
-                    "Values",
-                    "Cells",
-                    "Size",
-                    "SubKeys");
+        if (MaxLevel)
+        {
+            fprintf(stdout, "%6s,%6s,%7s,%10s, %s\n", "Keys", "Values", "Cells", "Size", "SubKeys");
         }
 
-        DumpChkRegistry(0, 0, PHBaseBlock->RootCell,HCELL_NIL,&TotalUsage);
+        DumpChkRegistry(0, 0, PHBaseBlock->RootCell, HCELL_NIL, &TotalUsage);
 
-        if(LostSpace) {
+        if (LostSpace)
+        {
             // clear the dirt on the screen
-            fprintf(OutputFile,"\r                          \n");
+            fprintf(OutputFile, "\r                          \n");
         }
 
         DumpUnknownList();
         FreeUnknownList();
 
-        fprintf(OutputFile,"\nSUMMARY: \n");
-        fprintf(OutputFile,"%15s,%15s,     %s\n", 
-                    "Cells",
-                    "Size",
-                    "Category");
+        fprintf(OutputFile, "\nSUMMARY: \n");
+        fprintf(OutputFile, "%15s,%15s,     %s\n", "Cells", "Size", "Category");
 
-        fprintf(OutputFile,"%15lu,%15lu,     Keys\n", 
-                CountKeyNode,
-                TotalKeyNode
-                );
-        fprintf(OutputFile,"%15lu,%15lu,     Values\n", 
-                CountKeyValue,
-                TotalKeyValue
-                );
-        fprintf(OutputFile,"%15lu,%15lu,     Key Index\n", 
-                CountKeyIndex,
-                TotalKeyIndex
-                );
-        fprintf(OutputFile,"%15lu,%15lu,     Value Index\n", 
-                CountValueIndex,
-                TotalValueIndex
-                );
-        fprintf(OutputFile,"%15lu,%15lu,     Security\n", 
-                CountKeySecurity,
-                TotalKeySecurity
-                );
-        fprintf(OutputFile,"%15lu,%15lu,     Data\n", 
-                CountUnknown - CountValueIndex,
-                TotalUnknown - TotalValueIndex
-                );
+        fprintf(OutputFile, "%15lu,%15lu,     Keys\n", CountKeyNode, TotalKeyNode);
+        fprintf(OutputFile, "%15lu,%15lu,     Values\n", CountKeyValue, TotalKeyValue);
+        fprintf(OutputFile, "%15lu,%15lu,     Key Index\n", CountKeyIndex, TotalKeyIndex);
+        fprintf(OutputFile, "%15lu,%15lu,     Value Index\n", CountValueIndex, TotalValueIndex);
+        fprintf(OutputFile, "%15lu,%15lu,     Security\n", CountKeySecurity, TotalKeySecurity);
+        fprintf(OutputFile, "%15lu,%15lu,     Data\n", CountUnknown - CountValueIndex, TotalUnknown - TotalValueIndex);
 
-        fprintf(OutputFile,"%15lu,%15lu,     Free\n", 
-                FreeCount,
-                TotalFree
-                );
+        fprintf(OutputFile, "%15lu,%15lu,     Free\n", FreeCount, TotalFree);
 
-        CellCount = CountKeyNode + 
-                    CountKeyValue + 
-                    CountKeyIndex + 
-                    CountKeySecurity + 
-                    CountUnknown +
-                    FreeCount;
+        CellCount = CountKeyNode + CountKeyValue + CountKeyIndex + CountKeySecurity + CountUnknown + FreeCount;
 
-        SizeCount = TotalKeyNode +
-                    TotalKeyValue +
-                    TotalKeyIndex +
-                    TotalKeySecurity +
-                    TotalUnknown +
-                    TotalFree;
+        SizeCount = TotalKeyNode + TotalKeyValue + TotalKeyIndex + TotalKeySecurity + TotalUnknown + TotalFree;
 
-        fprintf(OutputFile,"%15lu,%15lu,     %s\n", 
-                CellCount,
-                SizeCount,
-                "Total Hive");
+        fprintf(OutputFile, "%15lu,%15lu,     %s\n", CellCount, SizeCount, "Total Hive");
 
-        fprintf(OutputFile,"\n%15lu compacted  keys (all related cells in the same view)\n",CountKeyNodeCompacted);
-            
+        fprintf(OutputFile, "\n%15lu compacted  keys (all related cells in the same view)\n", CountKeyNodeCompacted);
     }
-        
+
     UnmapViewOfFile(myMMFViewHandle);
     CloseHandle(myMMFHandle);
     CloseHandle(myFileHandle);
 
-    if(CompactHive) {
+    if (CompactHive)
+    {
         DoCompactHive();
     }
 
-    return(0);
+    return (0);
 }
-

@@ -23,93 +23,63 @@ Environment:
 #include "pch.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,RegisterOperationRegionHandler)
+#pragma alloc_text(PAGE, RegisterOperationRegionHandler)
 #endif
 
 NTSTATUS
 EXPORT
-InternalRawAccessOpRegionHandler (
-    IN ULONG dwAccType,
-    IN PFIELDUNITOBJ FieldUnit,
-    IN POBJDATA data,
-    IN ULONG_PTR Context,
-    IN PFNAA CompletionHandler,
-    IN PVOID IntContext
-    )
+InternalRawAccessOpRegionHandler(IN ULONG dwAccType, IN PFIELDUNITOBJ FieldUnit, IN POBJDATA data, IN ULONG_PTR Context,
+                                 IN PFNAA CompletionHandler, IN PVOID IntContext)
 {
-    NTSTATUS         status;
-    PNSOBJ           HostDevice = NULL;
+    NTSTATUS status;
+    PNSOBJ HostDevice = NULL;
     PACPI_POWER_INFO DeviceNode;
-    PVOID            DeviceHandle;
+    PVOID DeviceHandle;
 
     //
     // Get the device
     //
-    status = AMLIGetFieldUnitRegionObj( FieldUnit, &HostDevice );
-    if ( AMLIERR( status ) != AMLIERR_NONE || HostDevice == NULL) {
+    status = AMLIGetFieldUnitRegionObj(FieldUnit, &HostDevice);
+    if (AMLIERR(status) != AMLIERR_NONE || HostDevice == NULL)
+    {
 
         return (STATUS_UNSUCCESSFUL);
-
     }
 
     HostDevice = NSGETPARENT(HostDevice);
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "Raw OpRegion Access on field unit object %x device %x\n",
-        FieldUnit, HostDevice
-        ));
-    if ( (!HostDevice) || (NSGETOBJTYPE(HostDevice)!=OBJTYPE_DEVICE) ) {
+    ACPIPrint((ACPI_PRINT_IO, "Raw OpRegion Access on field unit object %x device %x\n", FieldUnit, HostDevice));
+    if ((!HostDevice) || (NSGETOBJTYPE(HostDevice) != OBJTYPE_DEVICE))
+    {
 
         return (STATUS_UNSUCCESSFUL);
-
     }
 
     DeviceNode = OSPowerFindPowerInfo(HostDevice);
-    if ( DeviceNode == NULL ) {
+    if (DeviceNode == NULL)
+    {
 
         return (STATUS_UNSUCCESSFUL);
-
     }
 
     DeviceHandle = DeviceNode->Context;
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "DeviceHandle %x\n",
-        DeviceHandle
-        ) );
+    ACPIPrint((ACPI_PRINT_IO, "DeviceHandle %x\n", DeviceHandle));
 
 
-    if ( !(POPREGIONHANDLER)Context || !(((POPREGIONHANDLER)Context)->Handler) ) {
+    if (!(POPREGIONHANDLER)Context || !(((POPREGIONHANDLER)Context)->Handler))
+    {
 
         return (STATUS_UNSUCCESSFUL);
-
     }
 
-    return(
-        (((POPREGIONHANDLER)Context)->Handler)(
-            dwAccType,
-            FieldUnit,
-            data,
-            ((POPREGIONHANDLER)Context)->HandlerContext,
-            CompletionHandler,
-            IntContext
-            )
-        );
+    return ((((POPREGIONHANDLER)Context)->Handler)(
+        dwAccType, FieldUnit, data, ((POPREGIONHANDLER)Context)->HandlerContext, CompletionHandler, IntContext));
 }
 
 
 NTSTATUS
 EXPORT
-InternalOpRegionHandler (
-    IN ULONG dwAccType,
-    IN PNSOBJ pnsOpRegion,
-    IN ULONG dwAddr,
-    IN ULONG dwSize,
-    IN PULONG pdwData,
-    IN ULONG_PTR Context,
-    IN PFNAA CompletionHandler,
-    IN PVOID IntContext
-    )
+InternalOpRegionHandler(IN ULONG dwAccType, IN PNSOBJ pnsOpRegion, IN ULONG dwAddr, IN ULONG dwSize, IN PULONG pdwData,
+                        IN ULONG_PTR Context, IN PFNAA CompletionHandler, IN PVOID IntContext)
 {
     PNSOBJ HostDevice;
     PACPI_POWER_INFO DeviceNode;
@@ -119,50 +89,32 @@ InternalOpRegionHandler (
 
     HostDevice = NSGETPARENT(pnsOpRegion);
 
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "OpRegion Access on region %x device %x\n",
-        pnsOpRegion, HostDevice
-        ) );
-    if ( (!HostDevice) || (NSGETOBJTYPE(HostDevice) != OBJTYPE_DEVICE) ) {
+    ACPIPrint((ACPI_PRINT_IO, "OpRegion Access on region %x device %x\n", pnsOpRegion, HostDevice));
+    if ((!HostDevice) || (NSGETOBJTYPE(HostDevice) != OBJTYPE_DEVICE))
+    {
 
         return (STATUS_UNSUCCESSFUL);
-
     }
 
-    DeviceNode = OSPowerFindPowerInfo (HostDevice);
-    if ( DeviceNode == NULL ) {
+    DeviceNode = OSPowerFindPowerInfo(HostDevice);
+    if (DeviceNode == NULL)
+    {
 
         return (STATUS_UNSUCCESSFUL);
-
     }
 
     DeviceHandle = DeviceNode->Context;
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "DeviceHandle %x\n",
-        DeviceHandle
-        ) );
-    if ( !(POPREGIONHANDLER)Context || !(((POPREGIONHANDLER)Context)->Handler) ) {
+    ACPIPrint((ACPI_PRINT_IO, "DeviceHandle %x\n", DeviceHandle));
+    if (!(POPREGIONHANDLER)Context || !(((POPREGIONHANDLER)Context)->Handler))
+    {
 
         return (STATUS_UNSUCCESSFUL);
-
     }
 
-    status = (((POPREGIONHANDLER)Context)->Handler) (
-        dwAccType,
-        pnsOpRegion,
-        dwAddr,
-        dwSize,
-        pdwData,
-        ((POPREGIONHANDLER)Context)->HandlerContext,
-        CompletionHandler,
-        IntContext);
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "Return from OR handler - status %x\n",
-        status
-        ) );
+    status = (((POPREGIONHANDLER)Context)->Handler)(dwAccType, pnsOpRegion, dwAddr, dwSize, pdwData,
+                                                    ((POPREGIONHANDLER)Context)->HandlerContext, CompletionHandler,
+                                                    IntContext);
+    ACPIPrint((ACPI_PRINT_IO, "Return from OR handler - status %x\n", status));
     return (status);
 }
 
@@ -170,19 +122,13 @@ InternalOpRegionHandler (
 // Register to receive accesses to the specified operation region
 //
 NTSTATUS
-RegisterOperationRegionHandler  (
-    IN PNSOBJ           RegionParent,
-    IN ULONG            AccessType,
-    IN ULONG            RegionSpace,
-    IN PFNHND           Handler,
-    IN ULONG_PTR        Context,
-    OUT PVOID           *OperationRegionObject
-    )
+RegisterOperationRegionHandler(IN PNSOBJ RegionParent, IN ULONG AccessType, IN ULONG RegionSpace, IN PFNHND Handler,
+                               IN ULONG_PTR Context, OUT PVOID *OperationRegionObject)
 {
-    NTSTATUS            status;
-    OBJDATA             regArgs[2];
-    POPREGIONHANDLER    HandlerNode;
-    PNSOBJ              regObject;
+    NTSTATUS status;
+    OBJDATA regArgs[2];
+    POPREGIONHANDLER HandlerNode;
+    PNSOBJ regObject;
 
     PAGED_CODE();
 
@@ -192,52 +138,43 @@ RegisterOperationRegionHandler  (
     //
     // Allocate a new Operation Region Object
     //
-    HandlerNode = ExAllocatePool (NonPagedPool, sizeof(OPREGIONHANDLER));
-    if ( !HandlerNode ) {
+    HandlerNode = ExAllocatePool(NonPagedPool, sizeof(OPREGIONHANDLER));
+    if (!HandlerNode)
+    {
 
         return (STATUS_INSUFFICIENT_RESOURCES);
-
     }
 
     //
     // Init the Operation Region Object
     //
-    HandlerNode->Handler        = Handler;
+    HandlerNode->Handler = Handler;
     HandlerNode->HandlerContext = (PVOID)Context;
-    HandlerNode->AccessType     = AccessType;
-    HandlerNode->RegionSpace    = RegionSpace;
+    HandlerNode->AccessType = AccessType;
+    HandlerNode->RegionSpace = RegionSpace;
 
     //
     // Raw or Cooked access supported
     //
-    switch ( AccessType ) {
+    switch (AccessType)
+    {
     case EVTYPE_RS_COOKACCESS:
 
-        status = AMLIRegEventHandler(
-            AccessType,
-            RegionSpace,
-            InternalOpRegionHandler,
-            (ULONG_PTR)HandlerNode
-            );
-        if ( AMLIERR(status) != AMLIERR_NONE ) {
+        status = AMLIRegEventHandler(AccessType, RegionSpace, InternalOpRegionHandler, (ULONG_PTR)HandlerNode);
+        if (AMLIERR(status) != AMLIERR_NONE)
+        {
 
             status = STATUS_UNSUCCESSFUL;
-
         }
         break;
 
     case EVTYPE_RS_RAWACCESS:
 
-        status = AMLIRegEventHandler(
-            AccessType,
-            RegionSpace,
-            InternalRawAccessOpRegionHandler,
-            (ULONG_PTR)HandlerNode
-            );
-        if ( AMLIERR(status) != AMLIERR_NONE ) {
+        status = AMLIRegEventHandler(AccessType, RegionSpace, InternalRawAccessOpRegionHandler, (ULONG_PTR)HandlerNode);
+        if (AMLIERR(status) != AMLIERR_NONE)
+        {
 
             status = STATUS_UNSUCCESSFUL;
-
         }
         break;
 
@@ -245,17 +182,16 @@ RegisterOperationRegionHandler  (
 
         status = STATUS_INVALID_PARAMETER;
         break;
-
     }
 
     //
     // Cleanup if needed
     //
-    if ( !NT_SUCCESS (status) ) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ExFreePool (HandlerNode);
+        ExFreePool(HandlerNode);
         return (status);
-
     }
 
     //
@@ -266,37 +202,32 @@ RegisterOperationRegionHandler  (
     //
     // Can we find something?
     //
-    if ( RegionParent == NULL ) {
+    if (RegionParent == NULL)
+    {
 
         //
         // Do nothing
         //
         return (STATUS_SUCCESS);
-
     }
 
     //
     // see if there is a _REG object to run
     //
-    status = AMLIGetNameSpaceObject(
-        "_REG",
-        RegionParent,
-        &regObject,
-        NSF_LOCAL_SCOPE
-        );
-    if ( !NT_SUCCESS(status) ) {
+    status = AMLIGetNameSpaceObject("_REG", RegionParent, &regObject, NSF_LOCAL_SCOPE);
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // Nothing to do
         //
         return (STATUS_SUCCESS);
-
     }
 
     //
     // Initialize the parameters
     //
-    RtlZeroMemory( regArgs, sizeof(OBJDATA) * 2 );
+    RtlZeroMemory(regArgs, sizeof(OBJDATA) * 2);
     regArgs[0].dwDataType = OBJTYPE_INTDATA;
     regArgs[0].uipDataValue = RegionSpace;
     regArgs[1].dwDataType = OBJTYPE_INTDATA;
@@ -306,14 +237,7 @@ RegisterOperationRegionHandler  (
     // Eval the request. We can do this asynchronously since we don't actually
     // care when the registration is complete
     //
-    AMLIAsyncEvalObject(
-        regObject,
-        NULL,
-        2,
-        regArgs,
-        NULL,
-        NULL
-        );
+    AMLIAsyncEvalObject(regObject, NULL, 2, regArgs, NULL, NULL);
 
     //
     // Done
@@ -322,40 +246,33 @@ RegisterOperationRegionHandler  (
 }
 
 
-
 //
 // UnRegister to receive accesses to the specified operation region
 //
 NTSTATUS
-UnRegisterOperationRegionHandler  (
-    IN PNSOBJ   RegionParent,
-    IN PVOID    OperationRegionObject
-    )
+UnRegisterOperationRegionHandler(IN PNSOBJ RegionParent, IN PVOID OperationRegionObject)
 {
-    NTSTATUS            status;
-    OBJDATA             regArgs[2];
-    PNSOBJ              regObject;
-    POPREGIONHANDLER    HandlerNode = (POPREGIONHANDLER) OperationRegionObject;
+    NTSTATUS status;
+    OBJDATA regArgs[2];
+    PNSOBJ regObject;
+    POPREGIONHANDLER HandlerNode = (POPREGIONHANDLER)OperationRegionObject;
 
     PAGED_CODE();
 
     //
     // Is there a _REG method that we should run?
     //
-    if ( RegionParent != NULL ) {
+    if (RegionParent != NULL)
+    {
 
-        status = AMLIGetNameSpaceObject(
-            "_REG",
-            RegionParent,
-            &regObject,
-            NSF_LOCAL_SCOPE
-            );
-        if ( NT_SUCCESS(status) ) {
+        status = AMLIGetNameSpaceObject("_REG", RegionParent, &regObject, NSF_LOCAL_SCOPE);
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Initialize the parameters
             //
-            RtlZeroMemory( regArgs, sizeof(OBJDATA) * 2 );
+            RtlZeroMemory(regArgs, sizeof(OBJDATA) * 2);
             regArgs[0].dwDataType = OBJTYPE_INTDATA;
             regArgs[0].uipDataValue = HandlerNode->RegionSpace;
             regArgs[1].dwDataType = OBJTYPE_INTDATA;
@@ -365,35 +282,23 @@ UnRegisterOperationRegionHandler  (
             // Eval the request. We don't care what it returns, but we must do
             // it synchronously
             //
-            AMLIEvalNameSpaceObject(
-                regObject,
-                NULL,
-                2,
-                regArgs
-                );
-
+            AMLIEvalNameSpaceObject(regObject, NULL, 2, regArgs);
         }
-
     }
 
     //
     // Call interpreter with null handler to remove the handler for this access/region
     //
-    status = AMLIRegEventHandler(
-        HandlerNode->AccessType,
-        HandlerNode->RegionSpace,
-        NULL,
-        0
-        );
-    if ( AMLIERR(status) != AMLIERR_NONE ) {
+    status = AMLIRegEventHandler(HandlerNode->AccessType, HandlerNode->RegionSpace, NULL, 0);
+    if (AMLIERR(status) != AMLIERR_NONE)
+    {
 
         return (STATUS_UNSUCCESSFUL);
-
     }
 
     //
     // Cleanup
     //
-    ExFreePool (HandlerNode);
+    ExFreePool(HandlerNode);
     return (STATUS_SUCCESS);
 }

@@ -30,11 +30,11 @@ Revision History:
 
 main()
 {
-    INTERLOCKED_RESULT  RetVal;
-    LONG                SpinVar;            // talk about a hack...
-    LONG                LongVar;
-    SHORT               ShortVar;
-    KSPIN_LOCK          Lock;
+    INTERLOCKED_RESULT RetVal;
+    LONG SpinVar; // talk about a hack...
+    LONG LongVar;
+    SHORT ShortVar;
+    KSPIN_LOCK Lock;
 
     Lock = &SpinVar;
 
@@ -42,50 +42,50 @@ main()
     ShortVar = 0;
 
     RetVal = ExInterlockedDecrementLong(&LongVar, &Lock);
-    if ((RetVal != ResultNegative) ||
-        (LongVar != -1)) {
+    if ((RetVal != ResultNegative) || (LongVar != -1))
+    {
         DbgPrint("t&Lock failure #L1\n");
     }
 
     RetVal = ExInterlockedDecrementLong(&LongVar, &Lock);
-    if ((RetVal != ResultNegative) ||
-        (LongVar != -2)) {
+    if ((RetVal != ResultNegative) || (LongVar != -2))
+    {
         DbgPrint("t&Lock failure #L2\n");
     }
 
     RetVal = ExInterlockedIncrementLong(&LongVar, &Lock);
-    if ((RetVal != ResultNegative) ||
-        (LongVar != -1)) {
+    if ((RetVal != ResultNegative) || (LongVar != -1))
+    {
         DbgPrint("t&Lock failure #L3\n");
     }
 
     RetVal = ExInterlockedIncrementLong(&LongVar, &Lock);
-    if ((RetVal != ResultZero) ||
-        (LongVar != 0)) {
+    if ((RetVal != ResultZero) || (LongVar != 0))
+    {
         DbgPrint("t&Lock failure #L4\n");
     }
 
     RetVal = ExInterlockedIncrementLong(&LongVar, &Lock);
-    if ((RetVal != ResultPositive) ||
-        (LongVar != 1)) {
+    if ((RetVal != ResultPositive) || (LongVar != 1))
+    {
         DbgPrint("t&Lock failure #L5\n");
     }
 
     RetVal = ExInterlockedIncrementLong(&LongVar, &Lock);
-    if ((RetVal != ResultPositive) ||
-        (LongVar != 2)) {
+    if ((RetVal != ResultPositive) || (LongVar != 2))
+    {
         DbgPrint("t&Lock failure #L6\n");
     }
 
     RetVal = ExInterlockedDecrementLong(&LongVar, &Lock);
-    if ((RetVal != ResultPositive) ||
-        (LongVar != 1)) {
+    if ((RetVal != ResultPositive) || (LongVar != 1))
+    {
         DbgPrint("t&Lock failure #L7\n");
     }
 
     RetVal = ExInterlockedDecrementLong(&LongVar, &Lock);
-    if ((RetVal != ResultZero) ||
-        (LongVar != 0)) {
+    if ((RetVal != ResultZero) || (LongVar != 0))
+    {
         DbgPrint("t&Lock failure #L8\n");
     }
 }

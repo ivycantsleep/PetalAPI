@@ -20,14 +20,9 @@ Revision History:
 
 #include "kdp.h"
 
-
 
 BOOLEAN
-KdRegisterDebuggerDataBlock(
-    IN ULONG Tag,
-    IN PDBGKD_DEBUG_DATA_HEADER64 DataHeader,
-    IN ULONG Size
-    );
+KdRegisterDebuggerDataBlock(IN ULONG Tag, IN PDBGKD_DEBUG_DATA_HEADER64 DataHeader, IN ULONG Size);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGEKD, KdInitSystem)
@@ -37,10 +32,7 @@ KdRegisterDebuggerDataBlock(
 
 BOOLEAN KdBreakAfterSymbolLoad;
 
-VOID
-KdUpdateDataBlock(
-    VOID
-    )
+VOID KdUpdateDataBlock(VOID)
 /*++
 
 Routine Description:
@@ -50,14 +42,12 @@ Routine Description:
 
 --*/
 {
-    KdDebuggerDataBlock.KeUserCallbackDispatcher = (ULONG_PTR) KeUserCallbackDispatcher;
+    KdDebuggerDataBlock.KeUserCallbackDispatcher = (ULONG_PTR)KeUserCallbackDispatcher;
 }
 
 
 ULONG_PTR
-KdGetDataBlock(
-    VOID
-    )
+KdGetDataBlock(VOID)
 /*++
 
 Routine Description:
@@ -71,12 +61,8 @@ Routine Description:
 }
 
 
-
 BOOLEAN
-KdInitSystem(
-    IN ULONG Phase,
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock OPTIONAL
-    )
+KdInitSystem(IN ULONG Phase, IN PLOADER_PARAMETER_BLOCK LoaderBlock OPTIONAL)
 
 /*++
 
@@ -105,13 +91,15 @@ Return Value:
     PCHAR Options;
     PCHAR PortOption;
 
-    if (Phase == 0) {
+    if (Phase == 0)
+    {
 
         //
         // If kernel debugger is already initialized, then return.
         //
 
-        if (KdDebuggerEnabled != FALSE) {
+        if (KdDebuggerEnabled != FALSE)
+        {
             return TRUE;
         }
 
@@ -130,22 +118,16 @@ Return Value:
         {
             InitializeListHead(&KdpDebuggerDataListHead);
 
-            KdRegisterDebuggerDataBlock(KDBG_TAG,
-                                        &KdDebuggerDataBlock.Header,
-                                        sizeof(KdDebuggerDataBlock));
+            KdRegisterDebuggerDataBlock(KDBG_TAG, &KdDebuggerDataBlock.Header, sizeof(KdDebuggerDataBlock));
 
             KdVersionBlock.MinorVersion = (short)NtBuildNumber;
             KdVersionBlock.MajorVersion = (short)((NtBuildNumber >> 28) & 0xFFFFFFF);
 
-            KdVersionBlock.MaxStateChange =
-                (UCHAR)(DbgKdMaximumStateChange - DbgKdMinimumStateChange);
-            KdVersionBlock.MaxManipulate =
-                (UCHAR)(DbgKdMaximumManipulate - DbgKdMinimumManipulate);
+            KdVersionBlock.MaxStateChange = (UCHAR)(DbgKdMaximumStateChange - DbgKdMinimumStateChange);
+            KdVersionBlock.MaxManipulate = (UCHAR)(DbgKdMaximumManipulate - DbgKdMinimumManipulate);
 
-            KdVersionBlock.PsLoadedModuleList =
-                (ULONG64)(LONG64)(LONG_PTR)&PsLoadedModuleList;
-            KdVersionBlock.DebuggerDataList =
-                (ULONG64)(LONG64)(LONG_PTR)&KdpDebuggerDataListHead;
+            KdVersionBlock.PsLoadedModuleList = (ULONG64)(LONG64)(LONG_PTR)&PsLoadedModuleList;
+            KdVersionBlock.DebuggerDataList = (ULONG64)(LONG64)(LONG_PTR)&KdpDebuggerDataListHead;
 
 #if !defined(NT_UP)
             KdVersionBlock.Flags |= DBGKD_VERS_FLAG_MP;
@@ -162,7 +144,8 @@ Return Value:
 #endif
         }
 
-        if (LoaderBlock != NULL) {
+        if (LoaderBlock != NULL)
+        {
 
             // If the debugger is being initialized during boot, PsNtosImageBase
             // and PsLoadedModuleList are not yet valid.  KdInitSystem got
@@ -172,11 +155,10 @@ Return Value:
             // running so the other variables are valid.
             //
 
-            KdVersionBlock.KernBase = (ULONG64)(LONG64)(LONG_PTR)
-                                      CONTAINING_RECORD(
-                                          (LoaderBlock->LoadOrderListHead.Flink),
-                                          KLDR_DATA_TABLE_ENTRY,
-                                          InLoadOrderLinks)->DllBase;
+            KdVersionBlock.KernBase =
+                (ULONG64)(LONG64)(LONG_PTR)CONTAINING_RECORD((LoaderBlock->LoadOrderListHead.Flink),
+                                                             KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks)
+                    ->DllBase;
 
             //
             // Fill in and register the debugger's debugger data blocks.
@@ -184,7 +166,8 @@ Return Value:
             // filled in until later.
             //
 
-            if (LoaderBlock->LoadOptions != NULL) {
+            if (LoaderBlock->LoadOptions != NULL)
+            {
                 Options = LoaderBlock->LoadOptions;
                 _strupr(Options);
 
@@ -195,7 +178,8 @@ Return Value:
                 //
 
                 Initialize = TRUE;
-                if (strstr(Options, "DEBUG") == NULL) {
+                if (strstr(Options, "DEBUG") == NULL)
+                {
                     Initialize = FALSE;
                 }
 
@@ -203,17 +187,20 @@ Return Value:
                 // If the debugger is explicitly disabled, then set to NODEBUG.
                 //
 
-                if (strstr(Options, "NODEBUG")) {
+                if (strstr(Options, "NODEBUG"))
+                {
                     Initialize = FALSE;
                     KdPitchDebugger = TRUE;
                 }
 
-                if (strstr(Options, "CRASHDEBUG")) {
+                if (strstr(Options, "CRASHDEBUG"))
+                {
                     Initialize = FALSE;
                     KdPitchDebugger = FALSE;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // If the load options are not specified, then set to NODEBUG.
@@ -222,19 +209,22 @@ Return Value:
                 KdPitchDebugger = TRUE;
                 Initialize = FALSE;
             }
-
-        } else {
+        }
+        else
+        {
             KdVersionBlock.KernBase = (ULONG64)(LONG64)(LONG_PTR)PsNtosImageBase;
             Initialize = TRUE;
         }
 
-        KdDebuggerDataBlock.KernBase = (ULONG_PTR) KdVersionBlock.KernBase;
+        KdDebuggerDataBlock.KernBase = (ULONG_PTR)KdVersionBlock.KernBase;
 
-        if (Initialize == FALSE) {
-            return(TRUE);
+        if (Initialize == FALSE)
+        {
+            return (TRUE);
         }
 
-        if (!NT_SUCCESS(KdDebuggerInitialize0(LoaderBlock))) {
+        if (!NT_SUCCESS(KdDebuggerInitialize0(LoaderBlock)))
+        {
             return TRUE;
         }
 
@@ -244,7 +234,8 @@ Return Value:
 
         KiDebugRoutine = KdpTrap;
 
-        if (!KdpDebuggerStructuresInitialized) {
+        if (!KdpDebuggerStructuresInitialized)
+        {
 
             KdpContext.KdpControlCPending = FALSE;
 
@@ -260,7 +251,7 @@ Return Value:
             KeInitializeTimer(&KdpTimeSlipTimer);
             ExInitializeWorkItem(&KdpTimeSlipWorkItem, KdpTimeSlipWork, NULL);
 
-            KdpDebuggerStructuresInitialized = TRUE ;
+            KdpDebuggerStructuresInitialized = TRUE;
         }
 
         KdTimerStart.HighPart = 0L;
@@ -282,11 +273,12 @@ Return Value:
         // this point.
         //
 
-        if (LoaderBlock != NULL) {
+        if (LoaderBlock != NULL)
+        {
             Index = 0;
             NextEntry = LoaderBlock->LoadOrderListHead.Flink;
-            while ((NextEntry != &LoaderBlock->LoadOrderListHead) &&
-                   (Index < 2)) {
+            while ((NextEntry != &LoaderBlock->LoadOrderListHead) && (Index < 2))
+            {
 
                 CHAR Buffer[256];
                 ULONG Count;
@@ -299,9 +291,7 @@ Return Value:
                 // Get the address of the data table entry for the next component.
                 //
 
-                DataTableEntry = CONTAINING_RECORD(NextEntry,
-                                                   KLDR_DATA_TABLE_ENTRY,
-                                                   InLoadOrderLinks);
+                DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
                 //
                 // Load the symbols for the next component.
@@ -310,15 +300,14 @@ Return Value:
                 Filename = DataTableEntry->FullDllName.Buffer;
                 Length = DataTableEntry->FullDllName.Length / sizeof(WCHAR);
                 Count = 0;
-                do {
+                do
+                {
                     Buffer[Count++] = (CHAR)*Filename++;
                 } while (Count < Length);
 
                 Buffer[Count] = 0;
                 RtlInitString(&NameString, Buffer);
-                DbgLoadImageSymbols(&NameString,
-                                    DataTableEntry->DllBase,
-                                    (ULONG)-1);
+                DbgLoadImageSymbols(&NameString, DataTableEntry->DllBase, (ULONG)-1);
 
                 NextEntry = NextEntry->Flink;
                 Index += 1;
@@ -331,11 +320,13 @@ Return Value:
         // that were loaded by the loader.
         //
 
-        if (LoaderBlock != NULL) {
+        if (LoaderBlock != NULL)
+        {
             KdBreakAfterSymbolLoad = KdPollBreakIn();
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Initialize timer facility - HACKHACK
@@ -347,13 +338,9 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-KdRegisterDebuggerDataBlock(
-    IN ULONG Tag,
-    IN PDBGKD_DEBUG_DATA_HEADER64 DataHeader,
-    IN ULONG Size
-    )
+KdRegisterDebuggerDataBlock(IN ULONG Tag, IN PDBGKD_DEBUG_DATA_HEADER64 DataHeader, IN ULONG Size)
 /*++
 
 Routine Description:
@@ -397,13 +384,15 @@ Return Value:
 
     List = KdpDebuggerDataListHead.Flink;
 
-    while (List != &KdpDebuggerDataListHead) {
+    while (List != &KdpDebuggerDataListHead)
+    {
 
         Header = CONTAINING_RECORD(List, DBGKD_DEBUG_DATA_HEADER64, List);
 
         List = List->Flink;
 
-        if ((Header == DataHeader) || (Header->OwnerTag == Tag)) {
+        if ((Header == DataHeader) || (Header->OwnerTag == Tag))
+        {
             KeReleaseSpinLock(&KdpDataSpinLock, OldIrql);
             return FALSE;
         }
@@ -423,11 +412,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-KdDeregisterDebuggerDataBlock(
-    IN PDBGKD_DEBUG_DATA_HEADER64 DataHeader
-    )
+
+VOID KdDeregisterDebuggerDataBlock(IN PDBGKD_DEBUG_DATA_HEADER64 DataHeader)
 /*++
 
 Routine Description:
@@ -460,12 +446,14 @@ Return Value:
 
     List = KdpDebuggerDataListHead.Flink;
 
-    while (List != &KdpDebuggerDataListHead) {
+    while (List != &KdpDebuggerDataListHead)
+    {
 
         Header = CONTAINING_RECORD(List, DBGKD_DEBUG_DATA_HEADER64, List);
         List = List->Flink;
 
-        if (DataHeader == Header) {
+        if (DataHeader == Header)
+        {
             RemoveEntryList((PLIST_ENTRY)(&DataHeader->List));
             break;
         }
@@ -475,60 +463,65 @@ Return Value:
 }
 
 
-VOID
-KdLogDbgPrint(
-    IN PSTRING String
-    )
+VOID KdLogDbgPrint(IN PSTRING String)
 {
     KIRQL OldIrql;
     ULONG Length;
     ULONG LengthCopied;
 
-    for (; ;) {
-        if (KeTestSpinLock (&KdpPrintSpinLock)) {
-            KeRaiseIrql (HIGH_LEVEL, &OldIrql);
-            if (KeTryToAcquireSpinLockAtDpcLevel(&KdpPrintSpinLock)) {
-                break;          // got the lock
+    for (;;)
+    {
+        if (KeTestSpinLock(&KdpPrintSpinLock))
+        {
+            KeRaiseIrql(HIGH_LEVEL, &OldIrql);
+            if (KeTryToAcquireSpinLockAtDpcLevel(&KdpPrintSpinLock))
+            {
+                break; // got the lock
             }
             KeLowerIrql(OldIrql);
         }
     }
 
-    if (KdPrintCircularBuffer) {
+    if (KdPrintCircularBuffer)
+    {
         Length = String->Length;
         //
         // truncate ridiculous strings
         //
-        if (Length > KDPRINTBUFFERSIZE) {
+        if (Length > KDPRINTBUFFERSIZE)
+        {
             Length = KDPRINTBUFFERSIZE;
         }
 
-        if (KdPrintWritePointer + Length <= KdPrintCircularBuffer+KDPRINTBUFFERSIZE) {
+        if (KdPrintWritePointer + Length <= KdPrintCircularBuffer + KDPRINTBUFFERSIZE)
+        {
             KdpCopyFromPtr(KdPrintWritePointer, String->Buffer, Length, &LengthCopied);
             KdPrintWritePointer += LengthCopied;
-            if (KdPrintWritePointer >= KdPrintCircularBuffer+KDPRINTBUFFERSIZE) {
+            if (KdPrintWritePointer >= KdPrintCircularBuffer + KDPRINTBUFFERSIZE)
+            {
                 KdPrintWritePointer = KdPrintCircularBuffer;
                 KdPrintRolloverCount++;
             }
-        } else {
+        }
+        else
+        {
             ULONG First = (ULONG)(KdPrintCircularBuffer + KDPRINTBUFFERSIZE - KdPrintWritePointer);
-            KdpCopyFromPtr(KdPrintWritePointer,
-                           String->Buffer,
-                           First,
-                           &LengthCopied);
-            if (LengthCopied == First) {
-                KdpCopyFromPtr(KdPrintCircularBuffer,
-                               String->Buffer + First,
-                               Length - First,
-                               &LengthCopied);
+            KdpCopyFromPtr(KdPrintWritePointer, String->Buffer, First, &LengthCopied);
+            if (LengthCopied == First)
+            {
+                KdpCopyFromPtr(KdPrintCircularBuffer, String->Buffer + First, Length - First, &LengthCopied);
                 LengthCopied += First;
             }
-            if (LengthCopied > First) {
+            if (LengthCopied > First)
+            {
                 KdPrintWritePointer = KdPrintCircularBuffer + LengthCopied - First;
                 KdPrintRolloverCount++;
-            } else {
+            }
+            else
+            {
                 KdPrintWritePointer += LengthCopied;
-                if (KdPrintWritePointer >= KdPrintCircularBuffer+KDPRINTBUFFERSIZE) {
+                if (KdPrintWritePointer >= KdPrintCircularBuffer + KDPRINTBUFFERSIZE)
+                {
                     KdPrintWritePointer = KdPrintCircularBuffer;
                     KdPrintRolloverCount++;
                 }

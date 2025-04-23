@@ -22,5 +22,4 @@
 UINT GetKBCodePage(VOID)
 {
     return GetOEMCP();
-
 }

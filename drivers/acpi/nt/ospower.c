@@ -22,11 +22,9 @@ Environment:
 --*/
 
 #include "pch.h"
-
+
 PACPI_POWER_INFO
-OSPowerFindPowerInfo(
-    PNSOBJ  AcpiObject
-    )
+OSPowerFindPowerInfo(PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -44,15 +42,15 @@ Return Value:
 
 --*/
 {
-    KIRQL               oldIrql;
-    PDEVICE_EXTENSION   deviceExtension;
+    KIRQL oldIrql;
+    PDEVICE_EXTENSION deviceExtension;
 
-    ASSERT( AcpiObject != NULL);
+    ASSERT(AcpiObject != NULL);
 
     //
     // Grab the spinlock
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     //
     // Check for the case that there is no device object associated with
@@ -60,25 +58,23 @@ Return Value:
     // the device in the AML.
     //
     deviceExtension = AcpiObject->Context;
-    if (deviceExtension) {
+    if (deviceExtension)
+    {
 
-        ASSERT( deviceExtension->Signature == ACPI_SIGNATURE );
-	KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+        ASSERT(deviceExtension->Signature == ACPI_SIGNATURE);
+        KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
         return &(deviceExtension->PowerInfo);
-
     }
-    
+
     //
     // Done with the spinlock
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
     return NULL;
 }
-
+
 PACPI_POWER_INFO
-OSPowerFindPowerInfoByContext(
-    PVOID   Context
-    )
+OSPowerFindPowerInfoByContext(PVOID Context)
 /*++
 
 Routine Description:
@@ -101,28 +97,26 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT      deviceObject = (PDEVICE_OBJECT) Context;
-    PDEVICE_EXTENSION   deviceExtension = (PDEVICE_EXTENSION) Context;
+    PDEVICE_OBJECT deviceObject = (PDEVICE_OBJECT)Context;
+    PDEVICE_EXTENSION deviceExtension = (PDEVICE_EXTENSION)Context;
 
-    ASSERT( Context != NULL );
+    ASSERT(Context != NULL);
 
 
     //
     // Get the real extension
     //
-    deviceExtension = ACPIInternalGetDeviceExtension( deviceObject );
-    ASSERT( deviceExtension->Signature == ACPI_SIGNATURE );
+    deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
+    ASSERT(deviceExtension->Signature == ACPI_SIGNATURE);
 
     //
     // We store the Power info in the device extension
     //
     return &(deviceExtension->PowerInfo);
 }
-
+
 PACPI_POWER_DEVICE_NODE
-OSPowerFindPowerNode(
-    PNSOBJ  PowerObject
-    )
+OSPowerFindPowerNode(PNSOBJ PowerObject)
 /*++
 
 Routine Description:
@@ -140,51 +134,51 @@ Return Value:
 
 --*/
 {
-    KIRQL                   oldIrql;
+    KIRQL oldIrql;
     PACPI_POWER_DEVICE_NODE powerNode = NULL;
 
     //
     // Before we touch the power list, we need to have a spinlock
     //
-    KeAcquireSpinLock( &AcpiPowerLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiPowerLock, &oldIrql);
 
     //
     // Boundary check
     //
-    if (AcpiPowerNodeList.Flink == &AcpiPowerNodeList) {
+    if (AcpiPowerNodeList.Flink == &AcpiPowerNodeList)
+    {
 
         //
         // At end
         //
         goto OSPowerFindPowerNodeExit;
-
     }
 
     //
     // Start from the first node and check to see if they match the
     // required NameSpace object
     //
-    powerNode = (PACPI_POWER_DEVICE_NODE) AcpiPowerNodeList.Flink;
-    while (powerNode != (PACPI_POWER_DEVICE_NODE) &AcpiPowerNodeList) {
+    powerNode = (PACPI_POWER_DEVICE_NODE)AcpiPowerNodeList.Flink;
+    while (powerNode != (PACPI_POWER_DEVICE_NODE)&AcpiPowerNodeList)
+    {
 
         //
         // Check to see if the node that we are looking at matches the
         // name space object in question
         //
-        if (powerNode->PowerObject == PowerObject) {
+        if (powerNode->PowerObject == PowerObject)
+        {
 
             //
             // Match
             //
             goto OSPowerFindPowerNodeExit;
-
         }
 
         //
         // Next object
         //
-        powerNode = (PACPI_POWER_DEVICE_NODE) powerNode->ListEntry.Flink;
-
+        powerNode = (PACPI_POWER_DEVICE_NODE)powerNode->ListEntry.Flink;
     }
 
     //
@@ -196,7 +190,7 @@ OSPowerFindPowerNodeExit:
     //
     // No longer need the spin lock
     //
-    KeReleaseSpinLock( &AcpiPowerLock, oldIrql );
+    KeReleaseSpinLock(&AcpiPowerLock, oldIrql);
 
     //
     // Return the node we found

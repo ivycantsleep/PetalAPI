@@ -25,14 +25,9 @@ Revision History:
 --*/
 
 #include "ki.h"
-
-VOID
-KiContinuePreviousModeUser(
-    IN PCONTEXT ContextRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+
+VOID KiContinuePreviousModeUser(IN PCONTEXT ContextRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                                IN PKTRAP_FRAME TrapFrame, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -80,20 +75,12 @@ Return Value:
     // and trap frames.
     //
 
-    KeContextToKframes(TrapFrame,
-                       ExceptionFrame,
-                       &ContextRecord2,
-                       ContextRecord2.ContextFlags,
-                       PreviousMode);
+    KeContextToKframes(TrapFrame, ExceptionFrame, &ContextRecord2, ContextRecord2.ContextFlags, PreviousMode);
 }
 
-
+
 NTSTATUS
-KiContinue (
-    IN PCONTEXT ContextRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiContinue(IN PCONTEXT ContextRecord, IN PKEXCEPTION_FRAME ExceptionFrame, IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -134,7 +121,8 @@ Return Value:
     //
 
     Status = STATUS_SUCCESS;
-    if (KeGetCurrentIrql() < APC_LEVEL) {
+    if (KeGetCurrentIrql() < APC_LEVEL)
+    {
 
         //
         // To support try-except and ExRaiseStatus in device driver code we
@@ -153,7 +141,8 @@ Return Value:
     // and return success as the function value.
     //
 
-    try {
+    try
+    {
 
         //
         // Get the previous processor mode. If the previous processor mode is
@@ -161,50 +150,43 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
-            KiContinuePreviousModeUser(ContextRecord,
-                                       ExceptionFrame,
-                                       TrapFrame,
-                                       PreviousMode);
-        } else {
+        if (PreviousMode != KernelMode)
+        {
+            KiContinuePreviousModeUser(ContextRecord, ExceptionFrame, TrapFrame, PreviousMode);
+        }
+        else
+        {
 
             //
             // Move information from the context record to the exception
             // and trap frames.
             //
 
-            KeContextToKframes(TrapFrame,
-                               ExceptionFrame,
-                               ContextRecord,
-                               ContextRecord->ContextFlags,
-                               PreviousMode);
+            KeContextToKframes(TrapFrame, ExceptionFrame, ContextRecord, ContextRecord->ContextFlags, PreviousMode);
         }
 
-    //
-    // If an exception occurs during the probe or copy of the context
-    // record, then always handle the exception and return the exception
-    // code as the status value.
-    //
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe or copy of the context
+        // record, then always handle the exception and return the exception
+        // code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
-    if (IrqlChanged) {
-        KeLowerIrql (OldIrql);
+    if (IrqlChanged)
+    {
+        KeLowerIrql(OldIrql);
     }
 
     return Status;
 }
-
+
 NTSTATUS
-KiRaiseException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN BOOLEAN FirstChance
-    )
+KiRaiseException(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                 IN PKTRAP_FRAME TrapFrame, IN BOOLEAN FirstChance)
 
 /*++
 
@@ -256,7 +238,8 @@ Return Value:
     // dispatcher to dispatch the exception.
     //
 
-    try {
+    try
+    {
 
         //
         // Get the previous processor mode. If the previous processor mode
@@ -265,13 +248,16 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForReadSmallStructure(ContextRecord, sizeof(CONTEXT), CONTEXT_ALIGN);
             ProbeForReadSmallStructure(ExceptionRecord,
-                         FIELD_OFFSET (EXCEPTION_RECORD, NumberParameters) +
-                         sizeof (ExceptionRecord->NumberParameters), sizeof(ULONG));
+                                       FIELD_OFFSET(EXCEPTION_RECORD, NumberParameters) +
+                                           sizeof(ExceptionRecord->NumberParameters),
+                                       sizeof(ULONG));
             Params = ExceptionRecord->NumberParameters;
-            if (Params > EXCEPTION_MAXIMUM_PARAMETERS) {
+            if (Params > EXCEPTION_MAXIMUM_PARAMETERS)
+            {
                 return STATUS_INVALID_PARAMETER;
             }
 
@@ -281,8 +267,7 @@ Return Value:
             // element.
             //
             Length = (sizeof(EXCEPTION_RECORD) -
-                     ((EXCEPTION_MAXIMUM_PARAMETERS - Params) *
-                     sizeof(ExceptionRecord->ExceptionInformation[0])));
+                      ((EXCEPTION_MAXIMUM_PARAMETERS - Params) * sizeof(ExceptionRecord->ExceptionInformation[0])));
 
             //
             // The structure is currently less that 64k so we don't really need this probe.
@@ -302,16 +287,17 @@ Return Value:
             // The number of parameters might have changed after we validated but before we
             // copied the structure. Fix this up as lower levels might not like this.
             //
-            ExceptionRecord->NumberParameters = Params;            
+            ExceptionRecord->NumberParameters = Params;
         }
 
-    //
-    // If an exception occurs during the probe of the exception or context
-    // record, then always handle the exception and return the exception code
-    // as the status value.
-    //
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the exception or context
+        // record, then always handle the exception and return the exception code
+        // as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -320,11 +306,7 @@ Return Value:
     // trap frames.
     //
 
-    KeContextToKframes(TrapFrame,
-                       ExceptionFrame,
-                       ContextRecord,
-                       ContextRecord->ContextFlags,
-                       PreviousMode);
+    KeContextToKframes(TrapFrame, ExceptionFrame, ContextRecord, ContextRecord->ContextFlags, PreviousMode);
 
     //
     // Make sure the reserved bit is clear in the exception code and
@@ -335,11 +317,7 @@ Return Value:
     //
 
     ExceptionRecord->ExceptionCode &= 0xefffffff;
-    KiDispatchException(ExceptionRecord,
-                        ExceptionFrame,
-                        TrapFrame,
-                        PreviousMode,
-                        FirstChance);
+    KiDispatchException(ExceptionRecord, ExceptionFrame, TrapFrame, PreviousMode, FirstChance);
 
     return STATUS_SUCCESS;
 }

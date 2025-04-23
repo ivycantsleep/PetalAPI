@@ -33,38 +33,29 @@ Revision History:
 
 #include "ki.h"
 
-#define FN_BITS_PER_TAGWORD     16
-#define FN_TAG_EMPTY            0x3
-#define FN_TAG_MASK             0x3
-#define FX_TAG_VALID            0x1
-#define NUMBER_OF_FP_REGISTERS  8
-#define BYTES_PER_FP_REGISTER   10
-#define BYTES_PER_FX_REGISTER   16
+#define FN_BITS_PER_TAGWORD 16
+#define FN_TAG_EMPTY 0x3
+#define FN_TAG_MASK 0x3
+#define FX_TAG_VALID 0x1
+#define NUMBER_OF_FP_REGISTERS 8
+#define BYTES_PER_FP_REGISTER 10
+#define BYTES_PER_FX_REGISTER 16
 
 extern UCHAR VdmUserCr0MapIn[];
 extern BOOLEAN KeI386FxsrPresent;
 extern BOOLEAN KeI386XMMIPresent;
 
-VOID
-Ki386AdjustEsp0(
-    IN PKTRAP_FRAME TrapFrame
-    );
+VOID Ki386AdjustEsp0(IN PKTRAP_FRAME TrapFrame);
 
 BOOLEAN
-KiEm87StateToNpxFrame(
-    OUT PFLOATING_SAVE_AREA NpxFrmae
-    );
+KiEm87StateToNpxFrame(OUT PFLOATING_SAVE_AREA NpxFrmae);
 
 BOOLEAN
-KiNpxFrameToEm87State(
-    IN PFLOATING_SAVE_AREA NpxFrmae
-    );
+KiNpxFrameToEm87State(IN PFLOATING_SAVE_AREA NpxFrmae);
 
-
+
 ULONG
-KiEspFromTrapFrame(
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiEspFromTrapFrame(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -86,23 +77,26 @@ Return Value:
 --*/
 
 {
-    if (((TrapFrame->SegCs & MODE_MASK) != KernelMode) ||
-         (TrapFrame->EFlags & EFLAGS_V86_MASK)) {
+    if (((TrapFrame->SegCs & MODE_MASK) != KernelMode) || (TrapFrame->EFlags & EFLAGS_V86_MASK))
+    {
 
         //  User mode frame, real value of Esp is always in HardwareEsp.
 
         return TrapFrame->HardwareEsp;
+    }
+    else
+    {
 
-    } else {
-
-        if ((TrapFrame->SegCs & FRAME_EDITED) == 0) {
+        if ((TrapFrame->SegCs & FRAME_EDITED) == 0)
+        {
 
             //  Kernel mode frame which has had esp edited,
             //  value of Esp is in TempEsp.
 
             return TrapFrame->TempEsp;
-
-        } else {
+        }
+        else
+        {
 
             //  Kernel mode frame has has not had esp edited, compute esp.
 
@@ -110,12 +104,8 @@ Return Value:
         }
     }
 }
-
-VOID
-KiEspToTrapFrame(
-    IN PKTRAP_FRAME TrapFrame,
-    IN ULONG Esp
-    )
+
+VOID KiEspToTrapFrame(IN PKTRAP_FRAME TrapFrame, IN ULONG Esp)
 
 /*++
 
@@ -138,46 +128,49 @@ Return Value:
 
 --*/
 {
-    ULONG   OldEsp;
+    ULONG OldEsp;
 
     OldEsp = KiEspFromTrapFrame(TrapFrame);
 
-    if (((TrapFrame->SegCs & MODE_MASK) != KernelMode) ||
-         (TrapFrame->EFlags & EFLAGS_V86_MASK)) {
+    if (((TrapFrame->SegCs & MODE_MASK) != KernelMode) || (TrapFrame->EFlags & EFLAGS_V86_MASK))
+    {
 
         //
         //  User mode trap frame
         //
 
         TrapFrame->HardwareEsp = Esp;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Kernel mode esp can't be lowered or iret emulation will fail
         //
 
         if (Esp < OldEsp)
-            KeBugCheckEx(SET_OF_INVALID_CONTEXT,
-                         Esp, OldEsp, (ULONG_PTR)TrapFrame, 0);
+            KeBugCheckEx(SET_OF_INVALID_CONTEXT, Esp, OldEsp, (ULONG_PTR)TrapFrame, 0);
 
         //
         //  Edit frame, setting edit marker as needed.
         //
 
-        if ((TrapFrame->SegCs & FRAME_EDITED) == 0) {
+        if ((TrapFrame->SegCs & FRAME_EDITED) == 0)
+        {
 
             //  Kernel frame that has already been edited,
             //  store value in TempEsp.
 
             TrapFrame->TempEsp = Esp;
-
-        } else {
+        }
+        else
+        {
 
             //  Kernel frame for which Esp is being edited first time.
             //  Save real SegCs, set marked in SegCs, save Esp value.
 
-            if (OldEsp != Esp) {
+            if (OldEsp != Esp)
+            {
                 TrapFrame->TempSegCs = TrapFrame->SegCs;
                 TrapFrame->SegCs = TrapFrame->SegCs & ~FRAME_EDITED;
                 TrapFrame->TempEsp = Esp;
@@ -185,11 +178,9 @@ Return Value:
         }
     }
 }
-
+
 ULONG
-KiSegSsFromTrapFrame(
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiSegSsFromTrapFrame(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -210,25 +201,26 @@ Return Value:
 --*/
 
 {
-    if (TrapFrame->EFlags & EFLAGS_V86_MASK){
+    if (TrapFrame->EFlags & EFLAGS_V86_MASK)
+    {
         return TrapFrame->HardwareSegSs;
-    } else if ((TrapFrame->SegCs & MODE_MASK) != KernelMode) {
+    }
+    else if ((TrapFrame->SegCs & MODE_MASK) != KernelMode)
+    {
 
         //
         // It's user mode.  The HardwareSegSs contains R3 data selector.
         //
 
         return TrapFrame->HardwareSegSs | RPL_MASK;
-    } else {
+    }
+    else
+    {
         return KGDT_R0_DATA;
     }
 }
-
-VOID
-KiSegSsToTrapFrame(
-    IN PKTRAP_FRAME TrapFrame,
-    IN ULONG SegSs
-    )
+
+VOID KiSegSsToTrapFrame(IN PKTRAP_FRAME TrapFrame, IN ULONG SegSs)
 
 /*++
 
@@ -253,11 +245,14 @@ Return Value:
 --*/
 
 {
-    SegSs &= SEGMENT_MASK;  // Throw away the high order trash bits
+    SegSs &= SEGMENT_MASK; // Throw away the high order trash bits
 
-    if (TrapFrame->EFlags & EFLAGS_V86_MASK) {
+    if (TrapFrame->EFlags & EFLAGS_V86_MASK)
+    {
         TrapFrame->HardwareSegSs = SegSs;
-    } else if ((TrapFrame->SegCs & MODE_MASK) == UserMode) {
+    }
+    else if ((TrapFrame->SegCs & MODE_MASK) == UserMode)
+    {
 
         //
         // If user mode, we simply put SegSs to trapfram.  If the SegSs
@@ -274,13 +269,8 @@ Return Value:
     //      a place to store SS.  Therefore, do nothing.
     //
 }
-
-VOID
-KeContextFromKframes (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN OUT PCONTEXT ContextFrame
-    )
+
+VOID KeContextFromKframes(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN OUT PCONTEXT ContextFrame)
 
 /*++
 
@@ -313,19 +303,21 @@ Return Value:
     PFX_SAVE_AREA NpxFrame;
     BOOLEAN StateSaved;
     ULONG i;
-    struct _FPSaveBuffer {
-        UCHAR               Buffer[15];
-        FLOATING_SAVE_AREA  SaveArea;
+    struct _FPSaveBuffer
+    {
+        UCHAR Buffer[15];
+        FLOATING_SAVE_AREA SaveArea;
     } FloatSaveBuffer;
     PFLOATING_SAVE_AREA PSaveArea;
 
-    UNREFERENCED_PARAMETER( ExceptionFrame );
+    UNREFERENCED_PARAMETER(ExceptionFrame);
 
     //
     // Set control information if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFrame->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Set registers ebp, eip, cs, eflag, esp and ss.
@@ -334,10 +326,12 @@ Return Value:
         ContextFrame->Ebp = TrapFrame->Ebp;
         ContextFrame->Eip = TrapFrame->Eip;
 
-        if (((TrapFrame->SegCs & FRAME_EDITED) == 0) &&
-            ((TrapFrame->EFlags & EFLAGS_V86_MASK) == 0)) {
+        if (((TrapFrame->SegCs & FRAME_EDITED) == 0) && ((TrapFrame->EFlags & EFLAGS_V86_MASK) == 0))
+        {
             ContextFrame->SegCs = TrapFrame->TempSegCs & SEGMENT_MASK;
-        } else {
+        }
+        else
+        {
             ContextFrame->SegCs = TrapFrame->SegCs & SEGMENT_MASK;
         }
         ContextFrame->EFlags = TrapFrame->EFlags;
@@ -349,7 +343,8 @@ Return Value:
     // Set segment register contents if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_SEGMENTS) == CONTEXT_SEGMENTS) {
+    if ((ContextFrame->ContextFlags & CONTEXT_SEGMENTS) == CONTEXT_SEGMENTS)
+    {
 
         //
         // Set segment registers gs, fs, es, ds.
@@ -358,14 +353,17 @@ Return Value:
         // for debugging under certain conditions.  Therefore,
         // we report whatever was in the frame.
         //
-        if (TrapFrame->EFlags & EFLAGS_V86_MASK) {
+        if (TrapFrame->EFlags & EFLAGS_V86_MASK)
+        {
             ContextFrame->SegGs = TrapFrame->V86Gs & SEGMENT_MASK;
             ContextFrame->SegFs = TrapFrame->V86Fs & SEGMENT_MASK;
             ContextFrame->SegEs = TrapFrame->V86Es & SEGMENT_MASK;
             ContextFrame->SegDs = TrapFrame->V86Ds & SEGMENT_MASK;
         }
-        else {
-            if (TrapFrame->SegCs == KGDT_R0_CODE) {
+        else
+        {
+            if (TrapFrame->SegCs == KGDT_R0_CODE)
+            {
                 //
                 // Trap frames created from R0_CODE traps do not save
                 // the following selectors.  Set them in the frame now.
@@ -382,14 +380,14 @@ Return Value:
             ContextFrame->SegEs = TrapFrame->SegEs & SEGMENT_MASK;
             ContextFrame->SegDs = TrapFrame->SegDs & SEGMENT_MASK;
         }
-
     }
 
     //
     // Set integer register contents if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFrame->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set integer registers edi, esi, ebx, edx, ecx, eax
@@ -403,9 +401,9 @@ Return Value:
         ContextFrame->Eax = TrapFrame->Eax;
     }
 
-    if (((ContextFrame->ContextFlags & CONTEXT_EXTENDED_REGISTERS) ==
-        CONTEXT_EXTENDED_REGISTERS) &&
-        ((TrapFrame->SegCs & MODE_MASK) == UserMode)) {
+    if (((ContextFrame->ContextFlags & CONTEXT_EXTENDED_REGISTERS) == CONTEXT_EXTENDED_REGISTERS) &&
+        ((TrapFrame->SegCs & MODE_MASK) == UserMode))
+    {
 
         //
         // This is the base TrapFrame, and the NpxFrame is on the base
@@ -414,12 +412,11 @@ Return Value:
 
         NpxFrame = (PFX_SAVE_AREA)(TrapFrame + 1);
 
-        if (KeI386NpxPresent) {
-            KiFlushNPXState (NULL);
-            RtlCopyMemory( (PVOID)&(ContextFrame->ExtendedRegisters[0]),
-                           (PVOID)&(NpxFrame->U.FxArea),                    
-                           MAXIMUM_SUPPORTED_EXTENSION
-                         );
+        if (KeI386NpxPresent)
+        {
+            KiFlushNPXState(NULL);
+            RtlCopyMemory((PVOID) & (ContextFrame->ExtendedRegisters[0]), (PVOID) & (NpxFrame->U.FxArea),
+                          MAXIMUM_SUPPORTED_EXTENSION);
         }
     }
 
@@ -427,9 +424,9 @@ Return Value:
     // Fetch floating register contents if requested, and type of target
     // is user.  (system frames have no fp state, so ignore request)
     //
-    if ( ((ContextFrame->ContextFlags & CONTEXT_FLOATING_POINT) ==
-          CONTEXT_FLOATING_POINT) &&
-         ((TrapFrame->SegCs & MODE_MASK) == UserMode)) {
+    if (((ContextFrame->ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) &&
+        ((TrapFrame->SegCs & MODE_MASK) == UserMode))
+    {
 
         //
         // This is the base TrapFrame, and the NpxFrame is on the base
@@ -438,14 +435,16 @@ Return Value:
 
         NpxFrame = (PFX_SAVE_AREA)(TrapFrame + 1);
 
-        if (KeI386NpxPresent) {
+        if (KeI386NpxPresent)
+        {
 
             //
             // Force the coprocessors state to the save area and copy it
             // to the context frame.
             //
 
-            if (KeI386FxsrPresent == TRUE) {
+            if (KeI386FxsrPresent == TRUE)
+            {
 
                 //
                 // FP state save was done using fxsave. Get the save
@@ -460,28 +459,31 @@ Return Value:
                 Temp = (ULONG_PTR)&FloatSaveBuffer.SaveArea;
                 Temp &= ~0xf;
                 PSaveArea = (PFLOATING_SAVE_AREA)Temp;
-                KiFlushNPXState (PSaveArea);
-            } else {
+                KiFlushNPXState(PSaveArea);
+            }
+            else
+            {
 
-                PSaveArea = (PFLOATING_SAVE_AREA)&(NpxFrame->U.FnArea);
-                KiFlushNPXState (NULL);
-
+                PSaveArea = (PFLOATING_SAVE_AREA) & (NpxFrame->U.FnArea);
+                KiFlushNPXState(NULL);
             }
 
-            ContextFrame->FloatSave.ControlWord   = PSaveArea->ControlWord;
-            ContextFrame->FloatSave.StatusWord    = PSaveArea->StatusWord;
-            ContextFrame->FloatSave.TagWord       = PSaveArea->TagWord;
-            ContextFrame->FloatSave.ErrorOffset   = PSaveArea->ErrorOffset;
+            ContextFrame->FloatSave.ControlWord = PSaveArea->ControlWord;
+            ContextFrame->FloatSave.StatusWord = PSaveArea->StatusWord;
+            ContextFrame->FloatSave.TagWord = PSaveArea->TagWord;
+            ContextFrame->FloatSave.ErrorOffset = PSaveArea->ErrorOffset;
             ContextFrame->FloatSave.ErrorSelector = PSaveArea->ErrorSelector;
-            ContextFrame->FloatSave.DataOffset    = PSaveArea->DataOffset;
-            ContextFrame->FloatSave.DataSelector  = PSaveArea->DataSelector;
-            ContextFrame->FloatSave.Cr0NpxState   = NpxFrame->Cr0NpxState;
+            ContextFrame->FloatSave.DataOffset = PSaveArea->DataOffset;
+            ContextFrame->FloatSave.DataSelector = PSaveArea->DataSelector;
+            ContextFrame->FloatSave.Cr0NpxState = NpxFrame->Cr0NpxState;
 
-            for (i = 0; i < SIZE_OF_80387_REGISTERS; i++) {
+            for (i = 0; i < SIZE_OF_80387_REGISTERS; i++)
+            {
                 ContextFrame->FloatSave.RegisterArea[i] = PSaveArea->RegisterArea[i];
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // The 80387 is being emulated by the R3 emulator.
@@ -492,9 +494,12 @@ Return Value:
             //
 
             StateSaved = KiEm87StateToNpxFrame(&ContextFrame->FloatSave);
-            if (StateSaved) {
+            if (StateSaved)
+            {
                 ContextFrame->FloatSave.Cr0NpxState = NpxFrame->Cr0NpxState;
-            } else {
+            }
+            else
+            {
 
                 //
                 // The floatingpoint state can not be determined.
@@ -510,8 +515,8 @@ Return Value:
     // Fetch Dr register contents if requested.  Values may be trash.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_DEBUG_REGISTERS) ==
-        CONTEXT_DEBUG_REGISTERS) {
+    if ((ContextFrame->ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS)
+    {
 
         ContextFrame->Dr0 = TrapFrame->Dr0;
         ContextFrame->Dr1 = TrapFrame->Dr1;
@@ -526,29 +531,22 @@ Return Value:
         // Dr7 must be set to 0 if we get a non-active user mode frame.
         //
 
-        if ((((TrapFrame->SegCs & MODE_MASK) != KernelMode) ||
-            ((TrapFrame->EFlags & EFLAGS_V86_MASK) != 0)) &&
-            (KeGetCurrentThread()->DebugActive == TRUE)) {
+        if ((((TrapFrame->SegCs & MODE_MASK) != KernelMode) || ((TrapFrame->EFlags & EFLAGS_V86_MASK) != 0)) &&
+            (KeGetCurrentThread()->DebugActive == TRUE))
+        {
 
             ContextFrame->Dr7 = TrapFrame->Dr7;
-
-        } else {
+        }
+        else
+        {
 
             ContextFrame->Dr7 = 0L;
-
         }
     }
-
 }
-
-VOID
-KeContextToKframes (
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN PCONTEXT ContextFrame,
-    IN ULONG ContextFlags,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+
+VOID KeContextToKframes(IN OUT PKTRAP_FRAME TrapFrame, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                        IN PCONTEXT ContextFrame, IN ULONG ContextFlags, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -584,29 +582,32 @@ Return Value:
 
 {
 
-    PFX_SAVE_AREA     NpxFrame;
+    PFX_SAVE_AREA NpxFrame;
     ULONG i;
     ULONG j;
     ULONG TagWord;
     BOOLEAN StateSaved;
     BOOLEAN ModeChanged;
 #if DBG
-    PKPCR   Pcr;
-    KIRQL   OldIrql;
+    PKPCR Pcr;
+    KIRQL OldIrql;
 #endif
 
-    UNREFERENCED_PARAMETER( ExceptionFrame );
+    UNREFERENCED_PARAMETER(ExceptionFrame);
 
     //
     // Set control information if specified.
     //
 
-    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
-        if ((ContextFrame->EFlags & EFLAGS_V86_MASK) !=
-            (TrapFrame->EFlags & EFLAGS_V86_MASK)) {
+        if ((ContextFrame->EFlags & EFLAGS_V86_MASK) != (TrapFrame->EFlags & EFLAGS_V86_MASK))
+        {
             ModeChanged = TRUE;
-        } else {
+        }
+        else
+        {
             ModeChanged = FALSE;
         }
 
@@ -622,11 +623,15 @@ Return Value:
         TrapFrame->EFlags = SANITIZE_FLAGS(ContextFrame->EFlags, PreviousMode);
         TrapFrame->Ebp = ContextFrame->Ebp;
         TrapFrame->Eip = ContextFrame->Eip;
-        if (TrapFrame->EFlags & EFLAGS_V86_MASK) {
+        if (TrapFrame->EFlags & EFLAGS_V86_MASK)
+        {
             TrapFrame->SegCs = ContextFrame->SegCs;
-        } else {
+        }
+        else
+        {
             TrapFrame->SegCs = SANITIZE_SEG(ContextFrame->SegCs, PreviousMode);
-            if (PreviousMode != KernelMode && TrapFrame->SegCs < 8) {
+            if (PreviousMode != KernelMode && TrapFrame->SegCs < 8)
+            {
 
                 //
                 // If user mode and the selector value is less than 8, we
@@ -641,8 +646,9 @@ Return Value:
         }
         KiSegSsToTrapFrame(TrapFrame, ContextFrame->SegSs);
         KiEspToTrapFrame(TrapFrame, ContextFrame->Esp);
-        if (ModeChanged) {
-            Ki386AdjustEsp0(TrapFrame);             // realign esp0 in the tss
+        if (ModeChanged)
+        {
+            Ki386AdjustEsp0(TrapFrame); // realign esp0 in the tss
         }
     }
 
@@ -650,7 +656,8 @@ Return Value:
     // Set segment register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_SEGMENTS) == CONTEXT_SEGMENTS) {
+    if ((ContextFlags & CONTEXT_SEGMENTS) == CONTEXT_SEGMENTS)
+    {
 
         //
         // Set segment registers gs, fs, es, ds.
@@ -669,12 +676,15 @@ Return Value:
         // set from the supplied context.
         //
 
-        if (TrapFrame->EFlags & EFLAGS_V86_MASK) {
+        if (TrapFrame->EFlags & EFLAGS_V86_MASK)
+        {
             TrapFrame->V86Fs = ContextFrame->SegFs;
             TrapFrame->V86Es = ContextFrame->SegEs;
             TrapFrame->V86Ds = ContextFrame->SegDs;
             TrapFrame->V86Gs = ContextFrame->SegGs;
-        } else if (((TrapFrame->SegCs & MODE_MASK) == KernelMode)) {
+        }
+        else if (((TrapFrame->SegCs & MODE_MASK) == KernelMode))
+        {
 
             //
             // set up the standard selectors
@@ -684,7 +694,9 @@ Return Value:
             TrapFrame->SegEs = KGDT_R3_DATA | RPL_MASK;
             TrapFrame->SegDs = KGDT_R3_DATA | RPL_MASK;
             TrapFrame->SegGs = 0;
-        } else {
+        }
+        else
+        {
 
             //
             // If user mode, we simply return whatever left in context frame
@@ -695,9 +707,12 @@ Return Value:
             TrapFrame->SegFs = ContextFrame->SegFs;
             TrapFrame->SegEs = ContextFrame->SegEs;
             TrapFrame->SegDs = ContextFrame->SegDs;
-            if (TrapFrame->SegCs == (KGDT_R3_CODE | RPL_MASK)) {
+            if (TrapFrame->SegCs == (KGDT_R3_CODE | RPL_MASK))
+            {
                 TrapFrame->SegGs = 0;
-            } else {
+            }
+            else
+            {
                 TrapFrame->SegGs = ContextFrame->SegGs;
             }
         }
@@ -706,7 +721,8 @@ Return Value:
     // Set integer registers contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set integer registers edi, esi, ebx, edx, ecx, eax.
@@ -722,7 +738,6 @@ Return Value:
         TrapFrame->Ecx = ContextFrame->Ecx;
         TrapFrame->Edx = ContextFrame->Edx;
         TrapFrame->Eax = ContextFrame->Eax;
-
     }
 
     //
@@ -731,7 +746,8 @@ Return Value:
     //
 
     if (((ContextFlags & CONTEXT_EXTENDED_REGISTERS) == CONTEXT_EXTENDED_REGISTERS) &&
-        ((TrapFrame->SegCs & MODE_MASK) == UserMode)) {
+        ((TrapFrame->SegCs & MODE_MASK) == UserMode))
+    {
 
         //
         // This is the base TrapFrame, and the NpxFrame is on the base
@@ -740,12 +756,11 @@ Return Value:
 
         NpxFrame = (PFX_SAVE_AREA)(TrapFrame + 1);
 
-        if (KeI386NpxPresent) {
-            KiFlushNPXState (NULL);
-            RtlCopyMemory( (PVOID)&(NpxFrame->U.FxArea),
-                      (PVOID)&(ContextFrame->ExtendedRegisters[0]),
-                           MAXIMUM_SUPPORTED_EXTENSION
-                         );
+        if (KeI386NpxPresent)
+        {
+            KiFlushNPXState(NULL);
+            RtlCopyMemory((PVOID) & (NpxFrame->U.FxArea), (PVOID) & (ContextFrame->ExtendedRegisters[0]),
+                          MAXIMUM_SUPPORTED_EXTENSION);
             //
             // Make sure only valid floating state bits are moved to Cr0NpxState.
             //
@@ -762,9 +777,9 @@ Return Value:
             // Only let VDMs turn on the EM bit.  The kernel can't do
             // anything for FLAT apps
             //
-            if (PsGetCurrentProcess()->VdmObjects != NULL) {
-                NpxFrame->Cr0NpxState |= ContextFrame->FloatSave.Cr0NpxState &
-                                      (CR0_EM | CR0_MP);
+            if (PsGetCurrentProcess()->VdmObjects != NULL)
+            {
+                NpxFrame->Cr0NpxState |= ContextFrame->FloatSave.Cr0NpxState & (CR0_EM | CR0_MP);
             }
         }
     }
@@ -775,7 +790,8 @@ Return Value:
     //
 
     if (((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) &&
-        ((TrapFrame->SegCs & MODE_MASK) == UserMode)) {
+        ((TrapFrame->SegCs & MODE_MASK) == UserMode))
+    {
 
         //
         // This is the base TrapFrame, and the NpxFrame is on the base
@@ -784,24 +800,24 @@ Return Value:
 
         NpxFrame = (PFX_SAVE_AREA)(TrapFrame + 1);
 
-        if (KeI386NpxPresent) {
+        if (KeI386NpxPresent)
+        {
 
             //
             // Set coprocessor stack, control and status registers
             //
 
-            KiFlushNPXState (NULL);
+            KiFlushNPXState(NULL);
 
-            if (KeI386FxsrPresent == TRUE) {
+            if (KeI386FxsrPresent == TRUE)
+            {
 
                 //
                 // Restore FP state in the fxrstor format
                 //
 
-                NpxFrame->U.FxArea.ControlWord   =
-                                    (USHORT)ContextFrame->FloatSave.ControlWord;
-                NpxFrame->U.FxArea.StatusWord    =
-                                    (USHORT)ContextFrame->FloatSave.StatusWord;
+                NpxFrame->U.FxArea.ControlWord = (USHORT)ContextFrame->FloatSave.ControlWord;
+                NpxFrame->U.FxArea.StatusWord = (USHORT)ContextFrame->FloatSave.StatusWord;
 
                 //
                 // Construct the tag word from fnsave format to fxsave format
@@ -811,65 +827,55 @@ Return Value:
 
                 TagWord = ContextFrame->FloatSave.TagWord;
 
-                for (i = 0; i < FN_BITS_PER_TAGWORD; i+=2) {
+                for (i = 0; i < FN_BITS_PER_TAGWORD; i += 2)
+                {
 
-                    if (((TagWord >> i) & FN_TAG_MASK) != FN_TAG_EMPTY) {
+                    if (((TagWord >> i) & FN_TAG_MASK) != FN_TAG_EMPTY)
+                    {
 
                         //
                         // This register is valid
                         //
 
-                        NpxFrame->U.FxArea.TagWord |= (FX_TAG_VALID << (i/2));
+                        NpxFrame->U.FxArea.TagWord |= (FX_TAG_VALID << (i / 2));
                     }
                 }
 
-                NpxFrame->U.FxArea.ErrorOffset   =
-                                        ContextFrame->FloatSave.ErrorOffset;
-                NpxFrame->U.FxArea.ErrorSelector =
-                               (ContextFrame->FloatSave.ErrorSelector & 0xFFFF);
-                NpxFrame->U.FxArea.ErrorOpcode =
-                    (USHORT)((ContextFrame->FloatSave.ErrorSelector >> 16) & 0xFFFF);
-                NpxFrame->U.FxArea.DataOffset    =
-                                ContextFrame->FloatSave.DataOffset;
-                NpxFrame->U.FxArea.DataSelector  =
-                                ContextFrame->FloatSave.DataSelector;
+                NpxFrame->U.FxArea.ErrorOffset = ContextFrame->FloatSave.ErrorOffset;
+                NpxFrame->U.FxArea.ErrorSelector = (ContextFrame->FloatSave.ErrorSelector & 0xFFFF);
+                NpxFrame->U.FxArea.ErrorOpcode = (USHORT)((ContextFrame->FloatSave.ErrorSelector >> 16) & 0xFFFF);
+                NpxFrame->U.FxArea.DataOffset = ContextFrame->FloatSave.DataOffset;
+                NpxFrame->U.FxArea.DataSelector = ContextFrame->FloatSave.DataSelector;
 
                 //
                 // Fxrstor format has each FP register in 128 bits (16 bytes)
                 // where as fnsave saves each FP register in 80 bits (10 bytes)
                 //
-                RtlZeroMemory ((PVOID)&NpxFrame->U.FxArea.RegisterArea[0],
-                               SIZE_OF_FX_REGISTERS
-                              );
+                RtlZeroMemory((PVOID)&NpxFrame->U.FxArea.RegisterArea[0], SIZE_OF_FX_REGISTERS);
 
-                for (i = 0; i < NUMBER_OF_FP_REGISTERS; i++) {
-                    for (j = 0; j < BYTES_PER_FP_REGISTER; j++) {
-                        NpxFrame->U.FxArea.RegisterArea[i*BYTES_PER_FX_REGISTER+j] =
-                                ContextFrame->FloatSave.RegisterArea[i*BYTES_PER_FP_REGISTER+j];
+                for (i = 0; i < NUMBER_OF_FP_REGISTERS; i++)
+                {
+                    for (j = 0; j < BYTES_PER_FP_REGISTER; j++)
+                    {
+                        NpxFrame->U.FxArea.RegisterArea[i * BYTES_PER_FX_REGISTER + j] =
+                            ContextFrame->FloatSave.RegisterArea[i * BYTES_PER_FP_REGISTER + j];
                     }
                 }
+            }
+            else
+            {
+                NpxFrame->U.FnArea.ControlWord = ContextFrame->FloatSave.ControlWord;
+                NpxFrame->U.FnArea.StatusWord = ContextFrame->FloatSave.StatusWord;
+                NpxFrame->U.FnArea.TagWord = ContextFrame->FloatSave.TagWord;
+                NpxFrame->U.FnArea.ErrorOffset = ContextFrame->FloatSave.ErrorOffset;
+                NpxFrame->U.FnArea.ErrorSelector = ContextFrame->FloatSave.ErrorSelector;
+                NpxFrame->U.FnArea.DataOffset = ContextFrame->FloatSave.DataOffset;
+                NpxFrame->U.FnArea.DataSelector = ContextFrame->FloatSave.DataSelector;
 
-            } else {
-                NpxFrame->U.FnArea.ControlWord   =
-                                        ContextFrame->FloatSave.ControlWord;
-                NpxFrame->U.FnArea.StatusWord    =
-                                        ContextFrame->FloatSave.StatusWord;
-                NpxFrame->U.FnArea.TagWord       =
-                                        ContextFrame->FloatSave.TagWord;
-                NpxFrame->U.FnArea.ErrorOffset   =
-                                        ContextFrame->FloatSave.ErrorOffset;
-                NpxFrame->U.FnArea.ErrorSelector =
-                                        ContextFrame->FloatSave.ErrorSelector;
-                NpxFrame->U.FnArea.DataOffset    =
-                                        ContextFrame->FloatSave.DataOffset;
-                NpxFrame->U.FnArea.DataSelector  =
-                                        ContextFrame->FloatSave.DataSelector;
-
-                for (i = 0; i < SIZE_OF_80387_REGISTERS; i++) {
-                    NpxFrame->U.FnArea.RegisterArea[i] =
-                            ContextFrame->FloatSave.RegisterArea[i];
+                for (i = 0; i < SIZE_OF_80387_REGISTERS; i++)
+                {
+                    NpxFrame->U.FnArea.RegisterArea[i] = ContextFrame->FloatSave.RegisterArea[i];
                 }
-
             }
 
             //
@@ -882,14 +888,16 @@ Return Value:
             // Only let VDMs turn on the EM bit.  The kernel can't do
             // anything for FLAT apps
             //
-            if (PsGetCurrentProcess()->VdmObjects != NULL) {
-                NpxFrame->Cr0NpxState |= ContextFrame->FloatSave.Cr0NpxState &
-                                      (CR0_EM | CR0_MP);
+            if (PsGetCurrentProcess()->VdmObjects != NULL)
+            {
+                NpxFrame->Cr0NpxState |= ContextFrame->FloatSave.Cr0NpxState & (CR0_EM | CR0_MP);
             }
+        }
+        else
+        {
 
-        } else {
-
-            if (PsGetCurrentProcess()->VdmObjects != NULL) {
+            if (PsGetCurrentProcess()->VdmObjects != NULL)
+            {
 
                 //
                 // This is a special hack to allow SetContext for VDMs to
@@ -897,10 +905,10 @@ Return Value:
                 //
 
                 NpxFrame->Cr0NpxState &= ~(CR0_MP | CR0_TS | CR0_EM | CR0_PE);
-                NpxFrame->Cr0NpxState |=
-                    VdmUserCr0MapIn[ContextFrame->FloatSave.Cr0NpxState & (CR0_EM | CR0_MP)];
-
-            } else {
+                NpxFrame->Cr0NpxState |= VdmUserCr0MapIn[ContextFrame->FloatSave.Cr0NpxState & (CR0_EM | CR0_MP)];
+            }
+            else
+            {
 
                 //
                 // The 80387 is being emulated by the R3 emulator.
@@ -913,12 +921,13 @@ Return Value:
 #if DBG
                 OldIrql = KeRaiseIrqlToSynchLevel();
                 Pcr = KeGetPcr();
-                ASSERT (Pcr->Prcb->CurrentThread->Teb == Pcr->NtTib.Self);
-                KeLowerIrql (OldIrql);
+                ASSERT(Pcr->Prcb->CurrentThread->Teb == Pcr->NtTib.Self);
+                KeLowerIrql(OldIrql);
 #endif
 
                 StateSaved = KiNpxFrameToEm87State(&ContextFrame->FloatSave);
-                if (StateSaved) {
+                if (StateSaved)
+                {
 
                     //
                     // Make sure only valid floating state bits are moved to
@@ -927,8 +936,7 @@ Return Value:
                     //
 
                     NpxFrame->Cr0NpxState &= ~(CR0_MP | CR0_TS);
-                    NpxFrame->Cr0NpxState |=
-                        ContextFrame->FloatSave.Cr0NpxState & CR0_MP;
+                    NpxFrame->Cr0NpxState |= ContextFrame->FloatSave.Cr0NpxState & CR0_MP;
                 }
             }
         }
@@ -942,7 +950,8 @@ Return Value:
     // in the thread object to true.  Otherwise set it to false.
     //
 
-    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS) {
+    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS)
+    {
 
         TrapFrame->Dr0 = SANITIZE_DRADDR(ContextFrame->Dr0, PreviousMode);
         TrapFrame->Dr1 = SANITIZE_DRADDR(ContextFrame->Dr1, PreviousMode);
@@ -951,7 +960,8 @@ Return Value:
         TrapFrame->Dr6 = SANITIZE_DR6(ContextFrame->Dr6, PreviousMode);
         TrapFrame->Dr7 = SANITIZE_DR7(ContextFrame->Dr7, PreviousMode);
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             KeGetPcr()->DebugActive = KeGetCurrentThread()->DebugActive =
                 (BOOLEAN)((ContextFrame->Dr7 & DR7_ACTIVE) != 0);
         }
@@ -960,21 +970,16 @@ Return Value:
     //
     // If thread is supposed to have IOPL, then force it on in eflags
     //
-    if (KeGetCurrentThread()->Iopl) {
-        TrapFrame->EFlags |= (EFLAGS_IOPL_MASK & -1);  // IOPL = 3
+    if (KeGetCurrentThread()->Iopl)
+    {
+        TrapFrame->EFlags |= (EFLAGS_IOPL_MASK & -1); // IOPL = 3
     }
 
     return;
 }
-
-VOID
-KiDispatchException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN FirstChance
-    )
+
+VOID KiDispatchException(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                         IN PKTRAP_FRAME TrapFrame, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN FirstChance)
 
 /*++
 
@@ -1023,7 +1028,8 @@ Return Value:
 
     KeGetCurrentPrcb()->KeExceptionDispatchCount += 1;
     ContextFrame.ContextFlags = CONTEXT_FULL | CONTEXT_DEBUG_REGISTERS;
-    if (PreviousMode == UserMode) {
+    if (PreviousMode == UserMode)
+    {
         //
         // For usermode exceptions always try to dispatch the floating
         // point state.  This allows expection handlers & debuggers to
@@ -1038,7 +1044,8 @@ Return Value:
         //
 
         ContextFrame.ContextFlags |= CONTEXT_FLOATING_POINT;
-        if (KeI386XMMIPresent) {
+        if (KeI386XMMIPresent)
+        {
             ContextFrame.ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
         }
     }
@@ -1059,25 +1066,24 @@ Return Value:
     //
     //
 
-//    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-//      !(ContextFrame.EFlags & EFLAGS_V86_MASK)) {
+    //    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
+    //      !(ContextFrame.EFlags & EFLAGS_V86_MASK)) {
 
-    switch (ExceptionRecord->ExceptionCode) {
-        case STATUS_BREAKPOINT:
-            ContextFrame.Eip--;
-            break;
+    switch (ExceptionRecord->ExceptionCode)
+    {
+    case STATUS_BREAKPOINT:
+        ContextFrame.Eip--;
+        break;
     }
 
     //
     // Select the method of handling the exception based on the previous mode.
     //
 
-    ASSERT ((
-             !((PreviousMode == KernelMode) &&
-             (ContextFrame.EFlags & EFLAGS_V86_MASK))
-           ));
+    ASSERT((!((PreviousMode == KernelMode) && (ContextFrame.EFlags & EFLAGS_V86_MASK))));
 
-    if (PreviousMode == KernelMode) {
+    if (PreviousMode == KernelMode)
+    {
 
         //
         // Previous mode was kernel.
@@ -1094,22 +1100,20 @@ Return Value:
         // If the exception is still unhandled, call KeBugCheck().
         //
 
-        if (FirstChance == TRUE) {
+        if (FirstChance == TRUE)
+        {
 
-            if ((KiDebugRoutine != NULL) &&
-               (((KiDebugRoutine) (TrapFrame,
-                                   ExceptionFrame,
-                                   ExceptionRecord,
-                                   &ContextFrame,
-                                   PreviousMode,
-                                   FALSE)) != FALSE)) {
+            if ((KiDebugRoutine != NULL) && (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord,
+                                                               &ContextFrame, PreviousMode, FALSE)) != FALSE))
+            {
 
                 goto Handled1;
             }
 
             // Kernel debugger didn't handle exception.
 
-            if (RtlDispatchException(ExceptionRecord, &ContextFrame) == TRUE) {
+            if (RtlDispatchException(ExceptionRecord, &ContextFrame) == TRUE)
+            {
                 goto Handled1;
             }
         }
@@ -1118,25 +1122,18 @@ Return Value:
         // This is the second chance to handle the exception.
         //
 
-        if ((KiDebugRoutine != NULL) &&
-            (((KiDebugRoutine) (TrapFrame,
-                                ExceptionFrame,
-                                ExceptionRecord,
-                                &ContextFrame,
-                                PreviousMode,
-                                TRUE)) != FALSE)) {
+        if ((KiDebugRoutine != NULL) && (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextFrame,
+                                                           PreviousMode, TRUE)) != FALSE))
+        {
 
             goto Handled1;
         }
 
-        KeBugCheckEx(
-            KERNEL_MODE_EXCEPTION_NOT_HANDLED,
-            ExceptionRecord->ExceptionCode,
-            (ULONG)ExceptionRecord->ExceptionAddress,
-            (ULONG)TrapFrame,
-            0);
-
-    } else {
+        KeBugCheckEx(KERNEL_MODE_EXCEPTION_NOT_HANDLED, ExceptionRecord->ExceptionCode,
+                     (ULONG)ExceptionRecord->ExceptionAddress, (ULONG)TrapFrame, 0);
+    }
+    else
+    {
 
         //
         // Previous mode was user.
@@ -1160,32 +1157,30 @@ Return Value:
         //
 
 
-        if (FirstChance == TRUE) {
+        if (FirstChance == TRUE)
+        {
 
             //
             // This is the first chance to handle the exception.
             //
 
-            if ((KiDebugRoutine != NULL)  &&
-                ((PsGetCurrentProcess()->DebugPort == NULL) ||
-                 (KdIsThisAKdTrap(ExceptionRecord, &ContextFrame, UserMode))))
+            if ((KiDebugRoutine != NULL) && ((PsGetCurrentProcess()->DebugPort == NULL) ||
+                                             (KdIsThisAKdTrap(ExceptionRecord, &ContextFrame, UserMode))))
             {
                 //
                 // Now dispatch the fault to the kernel debugger.
                 //
 
-                if ((((KiDebugRoutine) (TrapFrame,
-                                        ExceptionFrame,
-                                        ExceptionRecord,
-                                        &ContextFrame,
-                                        PreviousMode,
-                                        FALSE)) != FALSE)) {
+                if ((((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextFrame, PreviousMode,
+                                       FALSE)) != FALSE))
+                {
 
                     goto Handled1;
                 }
             }
 
-            if (DbgkForwardException(ExceptionRecord, TRUE, FALSE)) {
+            if (DbgkForwardException(ExceptionRecord, TRUE, FALSE))
+            {
                 goto Handled2;
             }
 
@@ -1195,15 +1190,16 @@ Return Value:
             // based handler.
 
         repeat:
-            try {
+            try
+            {
 
                 //
                 // If the SS segment is not 32 bit flat, there is no point
                 // to dispatch exception to frame based exception handler.
                 //
 
-                if (TrapFrame->HardwareSegSs != (KGDT_R3_DATA | RPL_MASK) ||
-                    TrapFrame->EFlags & EFLAGS_V86_MASK ) {
+                if (TrapFrame->HardwareSegSs != (KGDT_R3_DATA | RPL_MASK) || TrapFrame->EFlags & EFLAGS_V86_MASK)
+                {
                     ExceptionRecord2.ExceptionCode = STATUS_ACCESS_VIOLATION;
                     ExceptionRecord2.ExceptionFlags = 0;
                     ExceptionRecord2.NumberParameters = 0;
@@ -1231,8 +1227,8 @@ Return Value:
                 // address.
                 //
 
-                Length = (sizeof(EXCEPTION_RECORD) - (EXCEPTION_MAXIMUM_PARAMETERS -
-                         ExceptionRecord->NumberParameters) * sizeof(ULONG) +3) &
+                Length = (sizeof(EXCEPTION_RECORD) -
+                          (EXCEPTION_MAXIMUM_PARAMETERS - ExceptionRecord->NumberParameters) * sizeof(ULONG) + 3) &
                          (~3);
                 UserStack2 = UserStack1 - Length;
 
@@ -1253,14 +1249,14 @@ Return Value:
                 //
 
                 *(PULONG)(UserStack2 - sizeof(ULONG)) = UserStack1;
-                *(PULONG)(UserStack2 - 2*sizeof(ULONG)) = UserStack2;
+                *(PULONG)(UserStack2 - 2 * sizeof(ULONG)) = UserStack2;
 
                 //
                 // Set new stack pointer to the trap frame.
                 //
 
                 KiSegSsToTrapFrame(TrapFrame, KGDT_R3_DATA);
-                KiEspToTrapFrame(TrapFrame, (UserStack2 - sizeof(ULONG)*2));
+                KiEspToTrapFrame(TrapFrame, (UserStack2 - sizeof(ULONG) * 2));
 
                 //
                 // Force correct R3 selectors into TrapFrame.
@@ -1282,9 +1278,9 @@ Return Value:
 
                 TrapFrame->Eip = (ULONG)KeUserExceptionDispatcher;
                 return;
-
-            } except (KiCopyInformation(&ExceptionRecord1,
-                        (GetExceptionInformation())->ExceptionRecord)) {
+            }
+            except(KiCopyInformation(&ExceptionRecord1, (GetExceptionInformation())->ExceptionRecord))
+            {
 
                 //
                 // If the exception is a stack overflow, then attempt
@@ -1293,10 +1289,10 @@ Return Value:
                 // and second chance processing is performed.
                 //
 
-                if (ExceptionRecord1.ExceptionCode == STATUS_STACK_OVERFLOW) {
+                if (ExceptionRecord1.ExceptionCode == STATUS_STACK_OVERFLOW)
+                {
                     ExceptionRecord1.ExceptionAddress = ExceptionRecord->ExceptionAddress;
-                    RtlCopyMemory((PVOID)ExceptionRecord,
-                                  &ExceptionRecord1, sizeof(EXCEPTION_RECORD));
+                    RtlCopyMemory((PVOID)ExceptionRecord, &ExceptionRecord1, sizeof(EXCEPTION_RECORD));
                     goto repeat;
                 }
             }
@@ -1306,18 +1302,19 @@ Return Value:
         // This is the second chance to handle the exception.
         //
 
-        if (DbgkForwardException(ExceptionRecord, TRUE, TRUE)) {
+        if (DbgkForwardException(ExceptionRecord, TRUE, TRUE))
+        {
             goto Handled2;
-        } else if (DbgkForwardException(ExceptionRecord, FALSE, TRUE)) {
+        }
+        else if (DbgkForwardException(ExceptionRecord, FALSE, TRUE))
+        {
             goto Handled2;
-        } else {
+        }
+        else
+        {
             ZwTerminateThread(NtCurrentThread(), ExceptionRecord->ExceptionCode);
-            KeBugCheckEx(
-                KERNEL_MODE_EXCEPTION_NOT_HANDLED,
-                ExceptionRecord->ExceptionCode,
-                (ULONG)ExceptionRecord->ExceptionAddress,
-                (ULONG)TrapFrame,
-                0);
+            KeBugCheckEx(KERNEL_MODE_EXCEPTION_NOT_HANDLED, ExceptionRecord->ExceptionCode,
+                         (ULONG)ExceptionRecord->ExceptionAddress, (ULONG)TrapFrame, 0);
         }
     }
 
@@ -1328,8 +1325,7 @@ Return Value:
 
 Handled1:
 
-    KeContextToKframes(TrapFrame, ExceptionFrame, &ContextFrame,
-                       ContextFrame.ContextFlags, PreviousMode);
+    KeContextToKframes(TrapFrame, ExceptionFrame, &ContextFrame, ContextFrame.ContextFlags, PreviousMode);
 
     //
     // Exception was handled by the debugger or the associated subsystem
@@ -1341,12 +1337,9 @@ Handled1:
 Handled2:
     return;
 }
-
+
 ULONG
-KiCopyInformation (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord1,
-    IN PEXCEPTION_RECORD ExceptionRecord2
-    )
+KiCopyInformation(IN OUT PEXCEPTION_RECORD ExceptionRecord1, IN PEXCEPTION_RECORD ExceptionRecord2)
 
 /*++
 
@@ -1374,18 +1367,14 @@ Return Value:
     // an exception handler to be executed.
     //
 
-    RtlCopyMemory((PVOID)ExceptionRecord1,
-                  (PVOID)ExceptionRecord2,
-                  sizeof(EXCEPTION_RECORD));
+    RtlCopyMemory((PVOID)ExceptionRecord1, (PVOID)ExceptionRecord2, sizeof(EXCEPTION_RECORD));
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-
+
 NTSTATUS
-KeRaiseUserException(
-    IN NTSTATUS ExceptionCode
-    )
+KeRaiseUserException(IN NTSTATUS ExceptionCode)
 
 /*++
 
@@ -1416,7 +1405,8 @@ Return Value:
 
     Thread = KeGetCurrentThread();
     TrapFrame = Thread->TrapFrame;
-    if (TrapFrame == NULL) {
+    if (TrapFrame == NULL)
+    {
         return ExceptionCode;
     }
 
@@ -1428,19 +1418,21 @@ Return Value:
     // in the TEB.
     //
 
-    try {
+    try
+    {
         Teb->ExceptionCode = ExceptionCode;
 
-        PreviousEsp = KiEspFromTrapFrame (TrapFrame) - sizeof (ULONG);
+        PreviousEsp = KiEspFromTrapFrame(TrapFrame) - sizeof(ULONG);
 
-        ProbeForWriteSmallStructure ((PLONG)PreviousEsp, sizeof (LONG), sizeof (UCHAR));
+        ProbeForWriteSmallStructure((PLONG)PreviousEsp, sizeof(LONG), sizeof(UCHAR));
         *(PLONG)PreviousEsp = TrapFrame->Eip;
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-        return(ExceptionCode);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return (ExceptionCode);
     }
 
-    KiEspToTrapFrame (TrapFrame, PreviousEsp);
+    KiEspToTrapFrame(TrapFrame, PreviousEsp);
 
     TrapFrame->Eip = (ULONG)KeRaiseUserExceptionDispatcher;
 

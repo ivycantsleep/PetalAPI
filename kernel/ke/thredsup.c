@@ -44,14 +44,8 @@ Revision History:
 
 #endif
 
-VOID
-KiSuspendNop (
-    IN PKAPC Apc,
-    IN OUT PKNORMAL_ROUTINE *NormalRoutine,
-    IN OUT PVOID *NormalContext,
-    IN OUT PVOID *SystemArgument1,
-    IN OUT PVOID *SystemArgument2
-    )
+VOID KiSuspendNop(IN PKAPC Apc, IN OUT PKNORMAL_ROUTINE *NormalRoutine, IN OUT PVOID *NormalContext,
+                  IN OUT PVOID *SystemArgument1, IN OUT PVOID *SystemArgument2)
 
 /*++
 
@@ -89,10 +83,7 @@ Return Value:
     return;
 }
 
-VOID
-KiSuspendRundown (
-    IN PKAPC Apc
-    )
+VOID KiSuspendRundown(IN PKAPC Apc)
 
 /*++
 
@@ -119,10 +110,7 @@ Return Value:
 
 PKTHREAD
 FASTCALL
-KiFindReadyThread (
-    IN ULONG ProcessorNumber,
-    IN KPRIORITY LowPriority
-    )
+KiFindReadyThread(IN ULONG ProcessorNumber, IN KPRIORITY LowPriority)
 
 /*++
 
@@ -178,14 +166,16 @@ Return Value:
     KeFindFirstSetLeftMember(PrioritySet, &HighPriority);
     ListHead = &KiDispatcherReadyListHead[HighPriority];
     PrioritySet <<= (31 - HighPriority);
-    while (PrioritySet != 0) {
+    while (PrioritySet != 0)
+    {
 
         //
         // If the next bit in the priority set is a one, then examine the
         // corresponding dispatcher ready queue.
         //
 
-        if ((LONG)PrioritySet < 0) {
+        if ((LONG)PrioritySet < 0)
+        {
             NextEntry = ListHead->Flink;
 
             ASSERT(NextEntry != ListHead);
@@ -194,7 +184,8 @@ Return Value:
 
             Thread = CONTAINING_RECORD(NextEntry, KTHREAD, WaitListEntry);
             RemoveEntryList(&Thread->WaitListEntry);
-            if (IsListEmpty(ListHead)) {
+            if (IsListEmpty(ListHead))
+            {
                 ClearMember(HighPriority, KiReadySummary);
             }
 
@@ -207,10 +198,12 @@ Return Value:
             // thread to execute.
             //
 
-            while (NextEntry != ListHead) {
+            while (NextEntry != ListHead)
+            {
                 Thread = CONTAINING_RECORD(NextEntry, KTHREAD, WaitListEntry);
                 NextEntry = NextEntry->Flink;
-                if (Thread->Affinity & ProcessorSet) {
+                if (Thread->Affinity & ProcessorSet)
+                {
 
                     //
                     // If the found thread ran on the specified processor
@@ -225,8 +218,7 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-                        (!((Thread->NextProcessor == Processor) &&
-                           ((Thread->SoftAffinity & ProcessorSet) != 0))) &&
+                        (!((Thread->NextProcessor == Processor) && ((Thread->SoftAffinity & ProcessorSet) != 0))) &&
 
 #else
 
@@ -234,8 +226,8 @@ Return Value:
 
 #endif
 
-                        (WaitLimit < Thread->WaitTime) &&
-                        (HighPriority < (LOW_REALTIME_PRIORITY + 9))) {
+                        (WaitLimit < Thread->WaitTime) && (HighPriority < (LOW_REALTIME_PRIORITY + 9)))
+                    {
 
                         //
                         // Search forward in the ready queue until the end
@@ -243,54 +235,56 @@ Return Value:
                         // thread is found.
                         //
 
-                        while (NextEntry != ListHead) {
-                            Thread1 = CONTAINING_RECORD(NextEntry,
-                                                        KTHREAD,
-                                                        WaitListEntry);
+                        while (NextEntry != ListHead)
+                        {
+                            Thread1 = CONTAINING_RECORD(NextEntry, KTHREAD, WaitListEntry);
 
                             NextEntry = NextEntry->Flink;
-                            if ((Thread1->Affinity & ProcessorSet) == 0) {
+                            if ((Thread1->Affinity & ProcessorSet) == 0)
+                            {
                                 continue;
                             }
 
-                            if ((Thread1->IdealProcessor == Processor) ||
-                                (Thread1->NextProcessor == Processor)) {
+                            if ((Thread1->IdealProcessor == Processor) || (Thread1->NextProcessor == Processor))
+                            {
 
-                                    //
-                                    // This thread is a better choice than
-                                    // the first one but, if this is a multi
-                                    // node configuration, and this thread
-                                    // isn't on it's prefered node, see if
-                                    // there is a better choice.
-                                    //
+                                //
+                                // This thread is a better choice than
+                                // the first one but, if this is a multi
+                                // node configuration, and this thread
+                                // isn't on it's prefered node, see if
+                                // there is a better choice.
+                                //
 
 #if defined(KE_MULTINODE)
 
-                                    if (Thread1->SoftAffinity & ProcessorSet) {
-                                        Thread = Thread1;
-                                        break;
-                                    }
+                                if (Thread1->SoftAffinity & ProcessorSet)
+                                {
+                                    Thread = Thread1;
+                                    break;
+                                }
 
-                                    //
-                                    // Not on preferred node, only update
-                                    // "Thread" if this is the first possible.
-                                    //
+                                //
+                                // Not on preferred node, only update
+                                // "Thread" if this is the first possible.
+                                //
 
-                                    if (Thread2 == NULL) {
-                                        Thread2 = Thread1;
-                                        Thread = Thread1;
-                                    }
+                                if (Thread2 == NULL)
+                                {
+                                    Thread2 = Thread1;
+                                    Thread = Thread1;
+                                }
 
 #else
 
-                                    Thread = Thread1;
-                                    break;
+                                Thread = Thread1;
+                                break;
 
 #endif
-
                             }
 
-                            if (WaitLimit >= Thread1->WaitTime) {
+                            if (WaitLimit >= Thread1->WaitTime)
+                            {
 
                                 //
                                 // This thread has been ready without
@@ -305,13 +299,16 @@ Return Value:
 
 #if defined(_COLLECT_SWITCH_DATA_)
 
-                    if (Processor == Thread->IdealProcessor) {
+                    if (Processor == Thread->IdealProcessor)
+                    {
                         KiIncrementSwitchCounter(FindIdeal);
-
-                    } else if (Processor == Thread->NextProcessor) {
+                    }
+                    else if (Processor == Thread->NextProcessor)
+                    {
                         KiIncrementSwitchCounter(FindLast);
-
-                    } else {
+                    }
+                    else
+                    {
                         KiIncrementSwitchCounter(FindAny);
                     }
 
@@ -319,7 +316,8 @@ Return Value:
 
                     Thread->NextProcessor = Processor;
                     RemoveEntryList(&Thread->WaitListEntry);
-                    if (IsListEmpty(ListHead)) {
+                    if (IsListEmpty(ListHead))
+                    {
                         ClearMember(HighPriority, KiReadySummary);
                     }
 
@@ -328,7 +326,6 @@ Return Value:
             }
 
 #endif
-
         }
 
         HighPriority -= 1;
@@ -343,11 +340,7 @@ Return Value:
     return NULL;
 }
 
-VOID
-FASTCALL
-KiReadyThread (
-    IN PKTHREAD Thread
-    )
+VOID FASTCALL KiReadyThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -401,21 +394,23 @@ Return Value:
     //
 
     Process = Thread->ApcState.Process;
-    if (Process->State != ProcessInMemory) {
+    if (Process->State != ProcessInMemory)
+    {
         Thread->State = Ready;
         Thread->ProcessReadyQueue = TRUE;
         InsertTailList(&Process->ReadyListHead, &Thread->WaitListEntry);
-        if (Process->State == ProcessOutOfMemory) {
+        if (Process->State == ProcessOutOfMemory)
+        {
             Process->State = ProcessInTransition;
-            InterlockedPushEntrySingleList(&KiProcessInSwapListHead,
-                                           &Process->SwapListEntry);
+            InterlockedPushEntrySingleList(&KiProcessInSwapListHead, &Process->SwapListEntry);
 
             KiSetSwapEvent();
         }
 
         return;
-
-    } else if (Thread->KernelStackResident == FALSE) {
+    }
+    else if (Thread->KernelStackResident == FALSE)
+    {
 
         //
         // The thread's kernel stack is not resident. Increment the process
@@ -426,13 +421,13 @@ Return Value:
 
         Process->StackCount += 1;
         Thread->State = Transition;
-        InterlockedPushEntrySingleList(&KiStackInSwapListHead,
-                                       &Thread->SwapListEntry);
+        InterlockedPushEntrySingleList(&KiStackInSwapListHead, &Thread->SwapListEntry);
 
         KiSetSwapEvent();
         return;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Assume we will succeed in scheduling this thread.
@@ -466,7 +461,8 @@ Return Value:
 #if defined(NT_UP)
 
         Prcb = KiProcessorBlock[0];
-        if (KiIdleSummary != 0) {
+        if (KiIdleSummary != 0)
+        {
             KiIdleSummary = 0;
             KiIncrementSwitchCounter(IdleLast);
             Prcb->NextThread = Thread;
@@ -485,15 +481,18 @@ Return Value:
 
         Affinity = Thread->Affinity;
 
-        if (Affinity & Thread->SoftAffinity) {
+        if (Affinity & Thread->SoftAffinity)
+        {
             Affinity &= Thread->SoftAffinity;
         }
 
         IdleSet = KiIdleSummary & Affinity;
 
-        if (IdleSet != 0) {
+        if (IdleSet != 0)
+        {
             Prcb = KeGetCurrentPrcb();
-            if ((IdleSet & AFFINITY_MASK(Processor)) == 0) {
+            if ((IdleSet & AFFINITY_MASK(Processor)) == 0)
+            {
 
                 //
                 // Ideal processor is not available.
@@ -504,7 +503,8 @@ Return Value:
 
 #if defined(NT_SMT)
 
-                if (IdleSet & KiIdleSMTSummary) {
+                if (IdleSet & KiIdleSMTSummary)
+                {
                     IdleSet &= KiIdleSMTSummary;
                 }
 
@@ -515,8 +515,10 @@ Return Value:
                 //
 
                 Processor = Thread->NextProcessor;
-                if ((IdleSet & AFFINITY_MASK(Processor)) == 0) {
-                    if ((IdleSet & Prcb->SetMember) == 0) {
+                if ((IdleSet & AFFINITY_MASK(Processor)) == 0)
+                {
+                    if ((IdleSet & Prcb->SetMember) == 0)
+                    {
 
                         //
                         // Select from idle processors.
@@ -529,9 +531,12 @@ Return Value:
 
 #if defined(NT_SMT)
 
-                        if (IdleSet & FavoredSMTSet) {
+                        if (IdleSet & FavoredSMTSet)
+                        {
                             IdleSet &= FavoredSMTSet;
-                        } else {
+                        }
+                        else
+                        {
 
                             //
                             // No logical processor in the ideal set, try
@@ -539,14 +544,16 @@ Return Value:
                             //
 
                             FavoredSMTSet = KiProcessorBlock[Processor]->MultiThreadProcessorSet;
-                            if (IdleSet & FavoredSMTSet) {
+                            if (IdleSet & FavoredSMTSet)
+                            {
                                 IdleSet &= FavoredSMTSet;
                             }
                         }
 
 #endif
 
-                        if ((IdleSet & ~PoSleepingSummary) != 0) {
+                        if ((IdleSet & ~PoSleepingSummary) != 0)
+                        {
 
                             //
                             // Choose an idle processor which is
@@ -558,17 +565,20 @@ Return Value:
 
                         KeFindFirstSetLeftAffinity(IdleSet, &Processor);
                         KiIncrementSwitchCounter(IdleAny);
-
-                    } else {
+                    }
+                    else
+                    {
                         Processor = Prcb->Number;
                         KiIncrementSwitchCounter(IdleCurrent);
                     }
-
-                } else {
+                }
+                else
+                {
                     KiIncrementSwitchCounter(IdleLast);
                 }
-
-            } else {
+            }
+            else
+            {
                 KiIncrementSwitchCounter(IdleIdeal);
             }
 
@@ -589,8 +599,8 @@ Return Value:
 
 #endif
 
-            if ((PoSleepingSummary & AFFINITY_MASK(Processor)) &&
-                (Processor != (ULONG)Prcb->Number)) {
+            if ((PoSleepingSummary & AFFINITY_MASK(Processor)) && (Processor != (ULONG)Prcb->Number))
+            {
                 KiIpiSend(AFFINITY_MASK(Processor), IPI_DPC);
             }
 
@@ -606,7 +616,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-        if ((Affinity & AFFINITY_MASK(Processor)) == 0) {
+        if ((Affinity & AFFINITY_MASK(Processor)) == 0)
+        {
 
             //
             // Check if thread can run in the same place it
@@ -614,7 +625,8 @@ Return Value:
             //
 
             Processor = Thread->NextProcessor;
-            if ((Affinity & AFFINITY_MASK(Processor)) == 0) {
+            if ((Affinity & AFFINITY_MASK(Processor)) == 0)
+            {
 
                 //
                 // Select leftmost processor from the available
@@ -631,8 +643,10 @@ Return Value:
 #endif
 
         Thread1 = Prcb->NextThread;
-        if (Thread1 != NULL) {
-            if (ThreadPriority > Thread1->Priority) {
+        if (Thread1 != NULL)
+        {
+            if (ThreadPriority > Thread1->Priority)
+            {
 
                 PKSPIN_LOCK_QUEUE ContextSwap;
 
@@ -652,7 +666,8 @@ Return Value:
 
                 ContextSwap = &(KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
                 KeAcquireQueuedSpinLockAtDpcLevel(ContextSwap);
-                if (Prcb->NextThread != NULL) {
+                if (Prcb->NextThread != NULL)
+                {
 
                     //
                     // The thread is still in Standby state, substitute the
@@ -664,8 +679,9 @@ Return Value:
                     KiReadyThread(Thread1);
                     KiIncrementSwitchCounter(PreemptLast);
                     return;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // The thread has migrated to the running state.
@@ -686,12 +702,13 @@ Return Value:
                 return;
 
 #endif
-
             }
-
-        } else {
+        }
+        else
+        {
             Thread1 = Prcb->CurrentThread;
-            if (ThreadPriority > Thread1->Priority) {
+            if (ThreadPriority > Thread1->Priority)
+            {
                 Thread1->Preempted = TRUE;
                 Prcb->NextThread = Thread;
                 KiRequestDispatchInterrupt(Thread->NextProcessor);
@@ -709,13 +726,13 @@ Return Value:
     //
 
     Thread->State = Ready;
-    if (Preempted != FALSE) {
-        InsertHeadList(&KiDispatcherReadyListHead[ThreadPriority],
-                       &Thread->WaitListEntry);
-
-    } else {
-        InsertTailList(&KiDispatcherReadyListHead[ThreadPriority],
-                       &Thread->WaitListEntry);
+    if (Preempted != FALSE)
+    {
+        InsertHeadList(&KiDispatcherReadyListHead[ThreadPriority], &Thread->WaitListEntry);
+    }
+    else
+    {
+        InsertTailList(&KiDispatcherReadyListHead[ThreadPriority], &Thread->WaitListEntry);
     }
 
     SetMember(ThreadPriority, KiReadySummary);
@@ -724,9 +741,7 @@ Return Value:
 
 PKTHREAD
 FASTCALL
-KiSelectNextThread (
-    IN ULONG Processor
-    )
+KiSelectNextThread(IN ULONG Processor)
 
 /*++
 
@@ -756,7 +771,8 @@ Return Value:
     // set the processor member in the idle summary.
     //
 
-    if ((Thread = KiFindReadyThread(Processor, 0)) == NULL) {
+    if ((Thread = KiFindReadyThread(Processor, 0)) == NULL)
+    {
         Prcb = KiProcessorBlock[Processor];
         KiIncrementSwitchCounter(SwitchToIdle);
         Thread = Prcb->IdleThread;
@@ -769,15 +785,14 @@ Return Value:
 
 #if defined(NT_SMT)
 
-        if ((KiIdleSummary & Prcb->MultiThreadProcessorSet) ==
-                        Prcb->MultiThreadProcessorSet) {
+        if ((KiIdleSummary & Prcb->MultiThreadProcessorSet) == Prcb->MultiThreadProcessorSet)
+        {
 
             KiIdleSMTSummary |= Prcb->MultiThreadProcessorSet;
             Prcb->MultiThreadSetMaster->MultiThreadSetBusy = FALSE;
         }
 
 #endif
-
     }
 
     //
@@ -789,10 +804,7 @@ Return Value:
 
 KAFFINITY
 FASTCALL
-KiSetAffinityThread (
-    IN PKTHREAD Thread,
-    IN KAFFINITY Affinity
-    )
+KiSetAffinityThread(IN PKTHREAD Thread, IN KAFFINITY Affinity)
 
 /*++
 
@@ -842,7 +854,8 @@ Return Value:
     // or the new affinity is null, then bugcheck.
     //
 
-    if (((Affinity & Process->Affinity) != (Affinity)) || (!Affinity)) {
+    if (((Affinity & Process->Affinity) != (Affinity)) || (!Affinity))
+    {
         KeBugCheck(INVALID_AFFINITY_SET);
     }
 
@@ -854,9 +867,11 @@ Return Value:
     //
 
     Thread->UserAffinity = Affinity;
-    if (Thread->SystemAffinityActive == FALSE) {
+    if (Thread->SystemAffinityActive == FALSE)
+    {
         Thread->Affinity = Affinity;
-        switch (Thread->State) {
+        switch (Thread->State)
+        {
 
             //
             // Ready State.
@@ -867,10 +882,12 @@ Return Value:
             //
 
         case Ready:
-            if (Thread->ProcessReadyQueue == FALSE) {
+            if (Thread->ProcessReadyQueue == FALSE)
+            {
                 RemoveEntryList(&Thread->WaitListEntry);
                 ThreadPriority = Thread->Priority;
-                if (IsListEmpty(&KiDispatcherReadyListHead[ThreadPriority]) != FALSE) {
+                if (IsListEmpty(&KiDispatcherReadyListHead[ThreadPriority]) != FALSE)
+                {
                     ClearMember(ThreadPriority, KiReadySummary);
                 }
 
@@ -896,12 +913,13 @@ Return Value:
         case Standby:
             Processor = Thread->NextProcessor;
             Prcb = KiProcessorBlock[Processor];
-            if ((Prcb->SetMember & Affinity) == 0) {
+            if ((Prcb->SetMember & Affinity) == 0)
+            {
                 Thread1 = KiSelectNextThread(Processor);
                 Thread1->State = Standby;
-                KeAcquireQueuedSpinLockAtDpcLevel(
-                    &KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
-                if (Prcb->NextThread != NULL) {
+                KeAcquireQueuedSpinLockAtDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
+                if (Prcb->NextThread != NULL)
+                {
 
                     //
                     // The thread is still in Standby state, substitute
@@ -909,17 +927,17 @@ Return Value:
                     //
 
                     Prcb->NextThread = Thread1;
-                    KeReleaseQueuedSpinLockFromDpcLevel(
-                        &KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
+                    KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
                     KiReadyThread(Thread);
-                } else {
+                }
+                else
+                {
 
                     //
                     // The thread has become ready.
                     //
 
-                    KeReleaseQueuedSpinLockFromDpcLevel(
-                        &KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
+                    KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
                     Prcb->NextThread = Thread1;
                     KiRequestDispatchInterrupt(Processor);
                 }
@@ -947,8 +965,8 @@ Return Value:
             // not holding the dispatcher lock.
             //
 
-            if (((Prcb->SetMember & Affinity) == 0) &&
-                ((Prcb->NextThread == NULL) || (Prcb->NextThread == Thread))) {
+            if (((Prcb->SetMember & Affinity) == 0) && ((Prcb->NextThread == NULL) || (Prcb->NextThread == Thread)))
+            {
                 Thread1 = KiSelectNextThread(Processor);
                 Thread1->State = Standby;
                 Prcb->NextThread = Thread1;
@@ -974,12 +992,7 @@ Return Value:
     return OldAffinity;
 }
 
-VOID
-FASTCALL
-KiSetPriorityThread (
-    IN PKTHREAD Thread,
-    IN KPRIORITY Priority
-    )
+VOID FASTCALL KiSetPriorityThread(IN PKTHREAD Thread, IN KPRIORITY Priority)
 
 /*++
 
@@ -1022,14 +1035,16 @@ Return Value:
     // new priority of the thread and redispatch a processor if necessary.
     //
 
-    if (Priority != ThreadPriority) {
+    if (Priority != ThreadPriority)
+    {
         Thread->Priority = (SCHAR)Priority;
 
         //
         // Case on the thread state.
         //
 
-        switch (Thread->State) {
+        switch (Thread->State)
+        {
 
             //
             // Ready case - If the thread is not in the process ready queue,
@@ -1040,19 +1055,22 @@ Return Value:
             //
 
         case Ready:
-            if (Thread->ProcessReadyQueue == FALSE) {
+            if (Thread->ProcessReadyQueue == FALSE)
+            {
                 RemoveEntryList(&Thread->WaitListEntry);
-                if (IsListEmpty(&KiDispatcherReadyListHead[ThreadPriority])) {
+                if (IsListEmpty(&KiDispatcherReadyListHead[ThreadPriority]))
+                {
                     ClearMember(ThreadPriority, KiReadySummary);
                 }
 
-                if (Priority < ThreadPriority) {
-                    InsertTailList(&KiDispatcherReadyListHead[Priority],
-                                   &Thread->WaitListEntry);
+                if (Priority < ThreadPriority)
+                {
+                    InsertTailList(&KiDispatcherReadyListHead[Priority], &Thread->WaitListEntry);
 
                     SetMember(Priority, KiReadySummary);
-
-                } else {
+                }
+                else
+                {
                     KiReadyThread(Thread);
                 }
             }
@@ -1068,12 +1086,14 @@ Return Value:
 
         case Standby:
 
-            if (Priority < ThreadPriority) {
+            if (Priority < ThreadPriority)
+            {
 
 #if defined(NT_UP)
 
                 Thread1 = KiFindReadyThread(0, Priority + 1);
-                if (Thread1 != NULL) {
+                if (Thread1 != NULL)
+                {
                     Prcb = KiProcessorBlock[0];
                     Thread1->State = Standby;
                     Prcb->NextThread = Thread1;
@@ -1084,13 +1104,14 @@ Return Value:
 
                 Processor = Thread->NextProcessor;
                 Thread1 = KiFindReadyThread(Processor, Priority + 1);
-                if (Thread1 != NULL) {
+                if (Thread1 != NULL)
+                {
                     Prcb = KiProcessorBlock[Processor];
                     Thread1->State = Standby;
-                    KeAcquireQueuedSpinLockAtDpcLevel(
-                        &KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
+                    KeAcquireQueuedSpinLockAtDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
 
-                    if (Prcb->NextThread != NULL) {
+                    if (Prcb->NextThread != NULL)
+                    {
 
                         //
                         // The thread is still in Standby state, substitute
@@ -1098,20 +1119,19 @@ Return Value:
                         //
 
                         Prcb->NextThread = Thread1;
-                        KeReleaseQueuedSpinLockFromDpcLevel(
-                            &KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
+                        KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
 
                         KiReadyThread(Thread);
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // The thread has transitioned from Standby
                         // to running, treat as if running.
                         //
 
-                        KeReleaseQueuedSpinLockFromDpcLevel(
-                            &KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
+                        KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueContextSwapLock]);
 
                         Prcb->NextThread = Thread1;
                         KiRequestDispatchInterrupt(Processor);
@@ -1119,7 +1139,6 @@ Return Value:
                 }
 
 #endif
-
             }
 
             break;
@@ -1134,14 +1153,17 @@ Return Value:
 
         case Running:
 
-            if (Priority < ThreadPriority) {
+            if (Priority < ThreadPriority)
+            {
 
 #if defined(NT_UP)
 
                 Prcb = KiProcessorBlock[0];
-                if (Prcb->NextThread == NULL) {
+                if (Prcb->NextThread == NULL)
+                {
                     Thread1 = KiFindReadyThread(0, Priority + 1);
-                    if (Thread1 != NULL) {
+                    if (Thread1 != NULL)
+                    {
                         Thread1->State = Standby;
                         Prcb->NextThread = Thread1;
                     }
@@ -1158,17 +1180,17 @@ Return Value:
                 // not yet cleared the NextThread field.
                 //
 
-                if ((Prcb->NextThread == NULL) ||
-                    (Prcb->NextThread == Thread)) {
+                if ((Prcb->NextThread == NULL) || (Prcb->NextThread == Thread))
+                {
                     Thread1 = KiFindReadyThread(Processor, Priority + 1);
-                    if (Thread1 != NULL) {
+                    if (Thread1 != NULL)
+                    {
                         Thread1->State = Standby;
                         Prcb->NextThread = Thread1;
                         KiRequestDispatchInterrupt(Processor);
                     }
                 }
 #endif
-
             }
 
             break;
@@ -1187,12 +1209,7 @@ Return Value:
     return;
 }
 
-VOID
-KiSuspendThread (
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID KiSuspendThread(IN PVOID NormalContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -1228,20 +1245,14 @@ Return Value:
     //
 
     Thread = KeGetCurrentThread();
-    KeWaitForSingleObject(&Thread->SuspendSemaphore,
-                          Suspended,
-                          KernelMode,
-                          FALSE,
-                          NULL);
+    KeWaitForSingleObject(&Thread->SuspendSemaphore, Suspended, KernelMode, FALSE, NULL);
 
     return;
 }
 
 LONG_PTR
 FASTCALL
-KiSwapThread (
-    VOID
-    )
+KiSwapThread(VOID)
 
 /*++
 
@@ -1284,10 +1295,12 @@ Return Value:
 
     Prcb = KeGetCurrentPrcb();
     OldThread = Prcb->CurrentThread;
-    if ((NewThread = Prcb->NextThread) != NULL) {
+    if ((NewThread = Prcb->NextThread) != NULL)
+    {
         Prcb->NextThread = NULL;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Attempt to find a ready thread to run.
@@ -1297,7 +1310,8 @@ Return Value:
         //
 
         Number = Prcb->Number;
-        if ((NewThread = KiFindReadyThread(Number, 0)) == NULL) {
+        if ((NewThread = KiFindReadyThread(Number, 0)) == NULL)
+        {
             KiIncrementSwitchCounter(SwitchToIdle);
             NewThread = Prcb->IdleThread;
             KiIdleSummary |= AFFINITY_MASK(Number);
@@ -1309,14 +1323,13 @@ Return Value:
 
 #if defined(NT_SMT)
 
-            if ((KiIdleSummary & Prcb->MultiThreadProcessorSet) ==
-                            Prcb->MultiThreadProcessorSet) {
+            if ((KiIdleSummary & Prcb->MultiThreadProcessorSet) == Prcb->MultiThreadProcessorSet)
+            {
                 KiIdleSMTSummary |= Prcb->MultiThreadProcessorSet;
                 Prcb->MultiThreadSetMaster->MultiThreadSetBusy = FALSE;
             }
 
 #endif
-
         }
     }
 
@@ -1330,7 +1343,8 @@ Return Value:
     Pending = KiSwapContext(NewThread);
     WaitIrql = OldThread->WaitIrql;
     WaitStatus = OldThread->WaitStatus;
-    if (Pending != FALSE) {
+    if (Pending != FALSE)
+    {
         KeLowerIrql(APC_LEVEL);
         KiDeliverApc(KernelMode, NULL, NULL);
         WaitIrql = 0;
@@ -1346,10 +1360,7 @@ Return Value:
 }
 
 UCHAR
-KeFindNextRightSetAffinity (
-    ULONG Number,
-    KAFFINITY Set
-    )
+KeFindNextRightSetAffinity(ULONG Number, KAFFINITY Set)
 
 /*++
 
@@ -1391,7 +1402,8 @@ Return Value:
     // the complete set.
     //
 
-    if (NewSet == 0) {
+    if (NewSet == 0)
+    {
         NewSet = Set;
     }
 

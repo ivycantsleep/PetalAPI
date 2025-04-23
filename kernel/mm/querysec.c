@@ -24,18 +24,13 @@ Revision History:
 #include "mi.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtQuerySection)
+#pragma alloc_text(PAGE, NtQuerySection)
 #endif
 
-
+
 NTSTATUS
-NtQuerySection(
-    IN HANDLE SectionHandle,
-    IN SECTION_INFORMATION_CLASS SectionInformationClass,
-    OUT PVOID SectionInformation,
-    IN SIZE_T SectionInformationLength,
-    OUT PSIZE_T ReturnLength OPTIONAL
-    )
+NtQuerySection(IN HANDLE SectionHandle, IN SECTION_INFORMATION_CLASS SectionInformationClass,
+               OUT PVOID SectionInformation, IN SIZE_T SectionInformationLength, OUT PSIZE_T ReturnLength OPTIONAL)
 
 /*++
 
@@ -110,23 +105,25 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Check arguments.
         //
 
-        try {
+        try
+        {
 
-            ProbeForWrite(SectionInformation,
-                          SectionInformationLength,
-                          sizeof(ULONG));
+            ProbeForWrite(SectionInformation, SectionInformationLength, sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT (ReturnLength)) {
-                ProbeForWriteUlong_ptr (ReturnLength);
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
+                ProbeForWriteUlong_ptr(ReturnLength);
             }
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -142,18 +139,22 @@ Return Value:
     // Check argument validity.
     //
 
-    if ((SectionInformationClass != SectionBasicInformation) &&
-        (SectionInformationClass != SectionImageInformation)) {
+    if ((SectionInformationClass != SectionBasicInformation) && (SectionInformationClass != SectionImageInformation))
+    {
         return STATUS_INVALID_INFO_CLASS;
     }
 
-    if (SectionInformationClass == SectionBasicInformation) {
-        if (SectionInformationLength < (ULONG)sizeof(SECTION_BASIC_INFORMATION)) {
+    if (SectionInformationClass == SectionBasicInformation)
+    {
+        if (SectionInformationLength < (ULONG)sizeof(SECTION_BASIC_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
     }
-    else {
-        if (SectionInformationLength < (ULONG)sizeof(SECTION_IMAGE_INFORMATION)) {
+    else
+    {
+        if (SectionInformationLength < (ULONG)sizeof(SECTION_IMAGE_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
     }
@@ -165,80 +166,81 @@ Return Value:
     // the information structure, and return service status.
     //
 
-    Status = ObReferenceObjectByHandle (SectionHandle,
-                                        SECTION_QUERY,
-                                        MmSectionObjectType,
-                                        PreviousMode,
-                                        (PVOID *)&Section,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(SectionHandle, SECTION_QUERY, MmSectionObjectType, PreviousMode,
+                                       (PVOID *)&Section, NULL);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        try {
+        try
+        {
 
-            if (SectionInformationClass == SectionBasicInformation) {
-                ((PSECTION_BASIC_INFORMATION)SectionInformation)->BaseAddress =
-                                           (PVOID)Section->Address.StartingVpn;
+            if (SectionInformationClass == SectionBasicInformation)
+            {
+                ((PSECTION_BASIC_INFORMATION)SectionInformation)->BaseAddress = (PVOID)Section->Address.StartingVpn;
 
-                ((PSECTION_BASIC_INFORMATION)SectionInformation)->MaximumSize =
-                                                 Section->SizeOfSection;
+                ((PSECTION_BASIC_INFORMATION)SectionInformation)->MaximumSize = Section->SizeOfSection;
 
-                ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes =
-                                                        0;
+                ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes = 0;
 
-                if (Section->u.Flags.Image) {
-                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes =
-                                                        SEC_IMAGE;
+                if (Section->u.Flags.Image)
+                {
+                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes = SEC_IMAGE;
                 }
-                if (Section->u.Flags.Based) {
-                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |=
-                                                        SEC_BASED;
+                if (Section->u.Flags.Based)
+                {
+                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |= SEC_BASED;
                 }
-                if (Section->u.Flags.File) {
-                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |=
-                                                        SEC_FILE;
+                if (Section->u.Flags.File)
+                {
+                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |= SEC_FILE;
                 }
-                if (Section->u.Flags.NoCache) {
-                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |=
-                                                        SEC_NOCACHE;
+                if (Section->u.Flags.NoCache)
+                {
+                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |= SEC_NOCACHE;
                 }
-                if (Section->u.Flags.Reserve) {
-                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |=
-                                                        SEC_RESERVE;
+                if (Section->u.Flags.Reserve)
+                {
+                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |= SEC_RESERVE;
                 }
-                if (Section->u.Flags.Commit) {
-                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |=
-                                                        SEC_COMMIT;
+                if (Section->u.Flags.Commit)
+                {
+                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |= SEC_COMMIT;
                 }
-                if (Section->Segment->ControlArea->u.Flags.GlobalMemory) {
-                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |=
-                                                        SEC_GLOBAL;
+                if (Section->Segment->ControlArea->u.Flags.GlobalMemory)
+                {
+                    ((PSECTION_BASIC_INFORMATION)SectionInformation)->AllocationAttributes |= SEC_GLOBAL;
                 }
 
-                if (ARGUMENT_PRESENT(ReturnLength)) {
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
                     *ReturnLength = sizeof(SECTION_BASIC_INFORMATION);
                 }
             }
-            else {
+            else
+            {
 
-                if (Section->u.Flags.Image == 0) {
+                if (Section->u.Flags.Image == 0)
+                {
                     Status = STATUS_SECTION_NOT_IMAGE;
                 }
-                else {
-                    *((PSECTION_IMAGE_INFORMATION)SectionInformation) =
-                        *Section->Segment->u2.ImageInformation;
-    
-                    if (ARGUMENT_PRESENT(ReturnLength)) {
+                else
+                {
+                    *((PSECTION_IMAGE_INFORMATION)SectionInformation) = *Section->Segment->u2.ImageInformation;
+
+                    if (ARGUMENT_PRESENT(ReturnLength))
+                    {
                         *ReturnLength = sizeof(SECTION_IMAGE_INFORMATION);
                     }
                 }
             }
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            Status = GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            Status = GetExceptionCode();
         }
 
-        ObDereferenceObject ((PVOID)Section);
+        ObDereferenceObject((PVOID)Section);
     }
     return Status;
 }

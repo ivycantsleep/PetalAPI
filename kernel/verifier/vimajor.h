@@ -25,21 +25,19 @@ Revision History:
 
 --*/
 
-typedef struct {
+typedef struct
+{
 
-    PFN_DUMP_IRP_STACK              DumpIrpStack;
-    PFN_VERIFY_NEW_REQUEST          VerifyNewRequest;
-    PFN_VERIFY_IRP_STACK_DOWNWARD   VerifyStackDownward;
-    PFN_VERIFY_IRP_STACK_UPWARD     VerifyStackUpward;
-    PFN_IS_SYSTEM_RESTRICTED_IRP    IsSystemRestrictedIrp;
-    PFN_ADVANCE_IRP_STATUS          AdvanceIrpStatus;
-    PFN_IS_VALID_IRP_STATUS         IsValidIrpStatus;
-    PFN_IS_NEW_REQUEST              IsNewRequest;
-    PFN_VERIFY_NEW_IRP              VerifyNewIrp;
-    PFN_VERIFY_FINAL_IRP_STACK      VerifyFinalIrpStack;
-    PFN_TEST_STARTED_PDO_STACK      TestStartedPdoStack;
+    PFN_DUMP_IRP_STACK DumpIrpStack;
+    PFN_VERIFY_NEW_REQUEST VerifyNewRequest;
+    PFN_VERIFY_IRP_STACK_DOWNWARD VerifyStackDownward;
+    PFN_VERIFY_IRP_STACK_UPWARD VerifyStackUpward;
+    PFN_IS_SYSTEM_RESTRICTED_IRP IsSystemRestrictedIrp;
+    PFN_ADVANCE_IRP_STATUS AdvanceIrpStatus;
+    PFN_IS_VALID_IRP_STATUS IsValidIrpStatus;
+    PFN_IS_NEW_REQUEST IsNewRequest;
+    PFN_VERIFY_NEW_IRP VerifyNewIrp;
+    PFN_VERIFY_FINAL_IRP_STACK VerifyFinalIrpStack;
+    PFN_TEST_STARTED_PDO_STACK TestStartedPdoStack;
 
 } IRP_MAJOR_VERIFIER_ROUTINES, *PIRP_MAJOR_VERIFIER_ROUTINES;
-
-
-

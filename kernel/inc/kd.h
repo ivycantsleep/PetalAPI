@@ -34,9 +34,9 @@ Revision History:
 // Status Constants for reading data from comport
 //
 
-#define CP_GET_SUCCESS  0
-#define CP_GET_NODATA   1
-#define CP_GET_ERROR    2
+#define CP_GET_SUCCESS 0
+#define CP_GET_NODATA 1
+#define CP_GET_ERROR 2
 
 // end_nthal
 
@@ -44,9 +44,9 @@ Revision History:
 // Debug constants for FreezeFlag
 //
 
-#define FREEZE_BACKUP               0x0001
-#define FREEZE_SKIPPED_PROCESSOR    0x0002
-#define FREEZE_FROZEN               0x0004
+#define FREEZE_BACKUP 0x0001
+#define FREEZE_SKIPPED_PROCESSOR 0x0002
+#define FREEZE_FROZEN 0x0004
 
 
 //
@@ -54,45 +54,24 @@ Revision History:
 //
 
 BOOLEAN
-KdInitSystem(
-    IN ULONG Phase,
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+KdInitSystem(IN ULONG Phase, IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 BOOLEAN
-KdEnterDebugger(
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    );
+KdEnterDebugger(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame);
 
-VOID
-KdExitDebugger(
-    IN BOOLEAN Enable
-    );
+VOID KdExitDebugger(IN BOOLEAN Enable);
 
 extern BOOLEAN KdPitchDebugger;
 
 BOOLEAN
-KdPollBreakIn (
-    VOID
-    );
+KdPollBreakIn(VOID);
 
 BOOLEAN
-KdIsThisAKdTrap (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+KdIsThisAKdTrap(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode);
 
-VOID
-KdSetOwedBreakpoints(
-    VOID
-    );
+VOID KdSetOwedBreakpoints(VOID);
 
-VOID
-KdDeleteAllBreakpoints(
-    VOID
-    );
+VOID KdDeleteAllBreakpoints(VOID);
 
 
 //
@@ -100,7 +79,8 @@ KdDeleteAllBreakpoints(
 // function via the debug trap
 //
 
-typedef struct _KD_SYMBOLS_INFO {
+typedef struct _KD_SYMBOLS_INFO
+{
     IN PVOID BaseOfDll;
     IN ULONG_PTR ProcessId;
     IN ULONG CheckSum;
@@ -117,7 +97,8 @@ typedef struct _KD_SYMBOLS_INFO {
 //                       0 - use default rate.
 //
 
-typedef struct _DEBUG_PARAMETERS {
+typedef struct _DEBUG_PARAMETERS
+{
     ULONG CommunicationPort;
     ULONG BaudRate;
 } DEBUG_PARAMETERS, *PDEBUG_PARAMETERS;
@@ -134,18 +115,17 @@ typedef struct _DEBUG_PARAMETERS {
 
 extern PBOOLEAN KdDebuggerNotPresent;
 extern PBOOLEAN KdDebuggerEnabled;
-#define KD_DEBUGGER_ENABLED     *KdDebuggerEnabled
+#define KD_DEBUGGER_ENABLED *KdDebuggerEnabled
 #define KD_DEBUGGER_NOT_PRESENT *KdDebuggerNotPresent
 
 #else
 
 extern BOOLEAN KdDebuggerNotPresent;
 extern BOOLEAN KdDebuggerEnabled;
-#define KD_DEBUGGER_ENABLED     KdDebuggerEnabled
+#define KD_DEBUGGER_ENABLED KdDebuggerEnabled
 #define KD_DEBUGGER_NOT_PRESENT KdDebuggerNotPresent
 
 #endif
-
 
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
@@ -158,10 +138,7 @@ extern DEBUG_PARAMETERS KdDebugParameters;
 // to debugger activity.
 //
 
-VOID
-KdUpdateTimeSlipEvent(
-    PVOID Event
-    );
+VOID KdUpdateTimeSlipEvent(PVOID Event);
 
 
 //
@@ -173,22 +150,14 @@ ULONG_PTR KdGetDataBlock(VOID);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntifs
 
-VOID
-KdDisableDebugger(
-    VOID
-    );
+VOID KdDisableDebugger(VOID);
 
-VOID
-KdEnableDebugger(
-    VOID
-    );
+VOID KdEnableDebugger(VOID);
 
 // end_ntddk end_wdm end_nthal end_ntifs
 
 NTSTATUS
-KdPowerTransition(
-    IN DEVICE_POWER_STATE newDeviceState
-    );
+KdPowerTransition(IN DEVICE_POWER_STATE newDeviceState);
 
 //
 // DbgPrint strings will always be logged to a circular buffer. This
@@ -197,22 +166,15 @@ KdPowerTransition(
 //
 
 #if DBG
-#define KDPRINTBUFFERSIZE   32768
+#define KDPRINTBUFFERSIZE 32768
 #else
-#define KDPRINTBUFFERSIZE   4096
+#define KDPRINTBUFFERSIZE 4096
 #endif
 
-VOID
-KdLogDbgPrint(
-    IN PSTRING String
-    );
+VOID KdLogDbgPrint(IN PSTRING String);
 
 
-__inline
-VOID
-KdCheckForDebugBreak(
-    VOID
-    )
+__inline VOID KdCheckForDebugBreak(VOID)
 /*++
 
 Routine Description:
@@ -233,8 +195,9 @@ Return Value:
 
 --*/
 {
-    if (KdDebuggerEnabled && KdPollBreakIn()) {
-        DbgBreakPointWithStatus (DBG_STATUS_CONTROL_C);
+    if (KdDebuggerEnabled && KdPollBreakIn())
+    {
+        DbgBreakPointWithStatus(DBG_STATUS_CONTROL_C);
     }
 }
 
@@ -250,11 +213,7 @@ extern ULONG Kd_WIN2000_Mask;
 // over the kd protocol.
 //
 
-VOID
-KdReportTraceData(
-    IN struct _WMI_BUFFER_HEADER* Buffer,
-    IN PVOID Context
-    );
+VOID KdReportTraceData(IN struct _WMI_BUFFER_HEADER *Buffer, IN PVOID Context);
 
 //
 // Allow file I/O for files on the kd host machine.
@@ -262,54 +221,25 @@ KdReportTraceData(
 //
 
 NTSTATUS
-KdCreateRemoteFile(
-    OUT PHANDLE Handle,
-    OUT PULONG64 Length, OPTIONAL
-    IN PUNICODE_STRING FileName,
-    IN ACCESS_MASK DesiredAccess,
-    IN ULONG FileAttributes,
-    IN ULONG ShareAccess,
-    IN ULONG CreateDisposition,
-    IN ULONG CreateOptions
-    );
+KdCreateRemoteFile(OUT PHANDLE Handle, OUT PULONG64 Length, OPTIONAL IN PUNICODE_STRING FileName,
+                   IN ACCESS_MASK DesiredAccess, IN ULONG FileAttributes, IN ULONG ShareAccess,
+                   IN ULONG CreateDisposition, IN ULONG CreateOptions);
 
 NTSTATUS
-KdReadRemoteFile(
-    IN HANDLE Handle,
-    IN ULONG64 Offset,
-    OUT PVOID Buffer,
-    IN ULONG Length,
-    OUT PULONG Completed
-    );
+KdReadRemoteFile(IN HANDLE Handle, IN ULONG64 Offset, OUT PVOID Buffer, IN ULONG Length, OUT PULONG Completed);
 
 NTSTATUS
-KdWriteRemoteFile(
-    IN HANDLE Handle,
-    IN ULONG64 Offset,
-    IN PVOID Buffer,
-    IN ULONG Length,
-    OUT PULONG Completed
-    );
+KdWriteRemoteFile(IN HANDLE Handle, IN ULONG64 Offset, IN PVOID Buffer, IN ULONG Length, OUT PULONG Completed);
 
 NTSTATUS
-KdCloseRemoteFile(
-    IN HANDLE Handle
-    );
+KdCloseRemoteFile(IN HANDLE Handle);
 
 NTSTATUS
-KdPullRemoteFile(
-    IN PUNICODE_STRING FileName,
-    IN ULONG FileAttributes,
-    IN ULONG CreateDisposition,
-    IN ULONG CreateOptions
-    );
+KdPullRemoteFile(IN PUNICODE_STRING FileName, IN ULONG FileAttributes, IN ULONG CreateDisposition,
+                 IN ULONG CreateOptions);
 
 NTSTATUS
-KdPushRemoteFile(
-    IN PUNICODE_STRING FileName,
-    IN ULONG FileAttributes,
-    IN ULONG CreateDisposition,
-    IN ULONG CreateOptions
-    );
+KdPushRemoteFile(IN PUNICODE_STRING FileName, IN ULONG FileAttributes, IN ULONG CreateDisposition,
+                 IN ULONG CreateOptions);
 
-#endif  // _KD_
+#endif // _KD_

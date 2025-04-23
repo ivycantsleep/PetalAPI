@@ -35,13 +35,10 @@ Revision History:
 #pragma alloc_text(PAGE, FsRtlNotifyVolumeEvent)
 #endif
 
-
+
 NTKERNELAPI
 NTSTATUS
-FsRtlNotifyVolumeEvent (
-    IN PFILE_OBJECT FileObject,
-    IN ULONG EventCode
-    )
+FsRtlNotifyVolumeEvent(IN PFILE_OBJECT FileObject, IN ULONG EventCode)
 
 /*++
 
@@ -73,69 +70,69 @@ Return Value:
     //  Retrieve the device object associated with this file object.
     //
 
-    Status = IoGetRelatedTargetDevice( FileObject, &Pdo );
+    Status = IoGetRelatedTargetDevice(FileObject, &Pdo);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         ASSERT(Pdo != NULL);
 
         Event.Version = 1;
         Event.FileObject = NULL;
         Event.NameBufferOffset = -1;
-        Event.Size = (USHORT)FIELD_OFFSET( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer );
+        Event.Size = (USHORT)FIELD_OFFSET(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer);
 
-        switch (EventCode) {
+        switch (EventCode)
+        {
 
         case FSRTL_VOLUME_DISMOUNT:
-            
-            RtlCopyMemory( &Event.Event, &GUID_IO_VOLUME_DISMOUNT, sizeof( GUID ));
+
+            RtlCopyMemory(&Event.Event, &GUID_IO_VOLUME_DISMOUNT, sizeof(GUID));
             break;
-            
+
         case FSRTL_VOLUME_DISMOUNT_FAILED:
-            
-            RtlCopyMemory( &Event.Event, &GUID_IO_VOLUME_DISMOUNT_FAILED, sizeof( GUID ));
-            break;            
+
+            RtlCopyMemory(&Event.Event, &GUID_IO_VOLUME_DISMOUNT_FAILED, sizeof(GUID));
+            break;
 
         case FSRTL_VOLUME_LOCK:
-        
-            RtlCopyMemory( &Event.Event, &GUID_IO_VOLUME_LOCK, sizeof( GUID ));
+
+            RtlCopyMemory(&Event.Event, &GUID_IO_VOLUME_LOCK, sizeof(GUID));
             break;
 
         case FSRTL_VOLUME_LOCK_FAILED:
-        
-            RtlCopyMemory( &Event.Event, &GUID_IO_VOLUME_LOCK_FAILED, sizeof( GUID ));
+
+            RtlCopyMemory(&Event.Event, &GUID_IO_VOLUME_LOCK_FAILED, sizeof(GUID));
             break;
-        
+
         case FSRTL_VOLUME_MOUNT:
-            
+
             //
-            //  Mount notification is asynchronous to avoid deadlocks when someone 
+            //  Mount notification is asynchronous to avoid deadlocks when someone
             //  unwittingly causes a mount in the course of handling some other
             //  PnP notification, e.g. MountMgr's device arrival code.
             //
-            
-            RtlCopyMemory( &Event.Event, &GUID_IO_VOLUME_MOUNT, sizeof( GUID ));
-            IoReportTargetDeviceChangeAsynchronous( Pdo, &Event, NULL, NULL );
-            ObDereferenceObject( Pdo );
+
+            RtlCopyMemory(&Event.Event, &GUID_IO_VOLUME_MOUNT, sizeof(GUID));
+            IoReportTargetDeviceChangeAsynchronous(Pdo, &Event, NULL, NULL);
+            ObDereferenceObject(Pdo);
             return STATUS_SUCCESS;
             break;
 
         case FSRTL_VOLUME_UNLOCK:
-        
-            RtlCopyMemory( &Event.Event, &GUID_IO_VOLUME_UNLOCK, sizeof( GUID ));
+
+            RtlCopyMemory(&Event.Event, &GUID_IO_VOLUME_UNLOCK, sizeof(GUID));
             break;
-            
+
         default:
 
-            ObDereferenceObject( Pdo );
+            ObDereferenceObject(Pdo);
             return STATUS_INVALID_PARAMETER;
         }
-        
-        IoReportTargetDeviceChange( Pdo, &Event );
-        ObDereferenceObject( Pdo );
+
+        IoReportTargetDeviceChange(Pdo, &Event);
+        ObDereferenceObject(Pdo);
     }
 
     return Status;
 }
-
-

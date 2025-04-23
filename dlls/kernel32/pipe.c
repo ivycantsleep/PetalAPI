@@ -22,14 +22,8 @@ Revision History:
 
 ULONG PipeSerialNumber;
 
-BOOL
-APIENTRY
-CreatePipe(
-    OUT LPHANDLE lpReadPipe,
-    OUT LPHANDLE lpWritePipe,
-    IN LPSECURITY_ATTRIBUTES lpPipeAttributes,
-    IN DWORD nSize
-    )
+BOOL APIENTRY CreatePipe(OUT LPHANDLE lpReadPipe, OUT LPHANDLE lpWritePipe, IN LPSECURITY_ATTRIBUTES lpPipeAttributes,
+                         IN DWORD nSize)
 
 /*++
 
@@ -75,7 +69,7 @@ Return Value:
 --*/
 
 {
-    UCHAR PipeNameBuffer[ MAX_PATH ];
+    UCHAR PipeNameBuffer[MAX_PATH];
     ANSI_STRING PipeName;
     OBJECT_ATTRIBUTES ObjectAttributes;
     HANDLE ReadPipeHandle, WritePipeHandle;
@@ -90,77 +84,59 @@ Return Value:
     //  Set the default timeout to 120 seconds
     //
 
-    Timeout.QuadPart = - 10 * 1000 * 1000 * 120;
+    Timeout.QuadPart = -10 * 1000 * 1000 * 120;
 
-    if (nSize == 0) {
+    if (nSize == 0)
+    {
         nSize = 4096;
-        }
+    }
 
-    sprintf( PipeNameBuffer,
-             WIN32_SS_PIPE_FORMAT_STRING,
-             HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess),
-             InterlockedIncrement(&PipeSerialNumber)
-           );
+    sprintf(PipeNameBuffer, WIN32_SS_PIPE_FORMAT_STRING, HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess),
+            InterlockedIncrement(&PipeSerialNumber));
 
-    RtlInitAnsiString( &PipeName, PipeNameBuffer );
+    RtlInitAnsiString(&PipeName, PipeNameBuffer);
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
-    Status = RtlAnsiStringToUnicodeString(Unicode,&PipeName,FALSE);
-    if ( !NT_SUCCESS(Status) ) {
+    Status = RtlAnsiStringToUnicodeString(Unicode, &PipeName, FALSE);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
-    if ( ARGUMENT_PRESENT(lpPipeAttributes) ) {
-        Attributes =
-              lpPipeAttributes->bInheritHandle ? (OBJ_INHERIT | OBJ_CASE_INSENSITIVE) : (OBJ_CASE_INSENSITIVE);
+    if (ARGUMENT_PRESENT(lpPipeAttributes))
+    {
+        Attributes = lpPipeAttributes->bInheritHandle ? (OBJ_INHERIT | OBJ_CASE_INSENSITIVE) : (OBJ_CASE_INSENSITIVE);
         SecurityDescriptor = lpPipeAttributes->lpSecurityDescriptor;
-        }
-    else {
+    }
+    else
+    {
         Attributes = OBJ_CASE_INSENSITIVE;
         SecurityDescriptor = NULL;
-        }
+    }
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                Unicode,
-                                Attributes,
-                                NULL,
-                                SecurityDescriptor
-                              );
+    InitializeObjectAttributes(&ObjectAttributes, Unicode, Attributes, NULL, SecurityDescriptor);
 
-    Status = NtCreateNamedPipeFile( &ReadPipeHandle,
-                                    GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
-                                    &ObjectAttributes,
-                                    &Iosb,
-                                    FILE_SHARE_READ | FILE_SHARE_WRITE, // Gary ?
-                                    FILE_CREATE,
-                                    FILE_SYNCHRONOUS_IO_NONALERT,
-                                    FILE_PIPE_BYTE_STREAM_TYPE,
-                                    FILE_PIPE_BYTE_STREAM_MODE,
-                                    FILE_PIPE_QUEUE_OPERATION,
-                                    1,
-                                    nSize,
-                                    nSize,
-                                    (PLARGE_INTEGER) &Timeout
-                                  );
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
+    Status = NtCreateNamedPipeFile(
+        &ReadPipeHandle, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &ObjectAttributes, &Iosb,
+        FILE_SHARE_READ | FILE_SHARE_WRITE, // Gary ?
+        FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT, FILE_PIPE_BYTE_STREAM_TYPE, FILE_PIPE_BYTE_STREAM_MODE,
+        FILE_PIPE_QUEUE_OPERATION, 1, nSize, nSize, (PLARGE_INTEGER)&Timeout);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 
-    Status = NtOpenFile( &WritePipeHandle,
-                         GENERIC_WRITE | SYNCHRONIZE,
-                         &ObjectAttributes,
-                         &Iosb,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE,
-                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE
-                       );
-    if (!NT_SUCCESS( Status )) {
-        NtClose( ReadPipeHandle );
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
+    Status = NtOpenFile(&WritePipeHandle, GENERIC_WRITE | SYNCHRONIZE, &ObjectAttributes, &Iosb,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE);
+    if (!NT_SUCCESS(Status))
+    {
+        NtClose(ReadPipeHandle);
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 
     *lpReadPipe = ReadPipeHandle;
     *lpWritePipe = WritePipeHandle;
-    return( TRUE );
+    return (TRUE);
 }

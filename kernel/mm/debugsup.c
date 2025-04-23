@@ -26,13 +26,9 @@ Revision History:
 
 ULONG MmPoisonedTb;
 
-
+
 PVOID
-MiDbgWriteCheck (
-    IN PVOID VirtualAddress,
-    IN PHARDWARE_PTE Opaque,
-    IN LOGICAL ForceWritableIfPossible
-    )
+MiDbgWriteCheck(IN PVOID VirtualAddress, IN PHARDWARE_PTE Opaque, IN LOGICAL ForceWritableIfPossible)
 
 /*++
 
@@ -69,7 +65,8 @@ Environment:
 
     InputPte->u.Long = 0;
 
-    if (!MmIsAddressValid (VirtualAddress)) {
+    if (!MmIsAddressValid(VirtualAddress))
+    {
         return NULL;
     }
 
@@ -80,15 +77,17 @@ Environment:
     // not part of the MI_IS_PHYSICAL_ADDRESS macro.
     //
 
-    IsPhysical = MiIsVirtualAddressMappedByTr (VirtualAddress);
-    if (IsPhysical == FALSE) {
-        IsPhysical = MI_IS_PHYSICAL_ADDRESS (VirtualAddress);
+    IsPhysical = MiIsVirtualAddressMappedByTr(VirtualAddress);
+    if (IsPhysical == FALSE)
+    {
+        IsPhysical = MI_IS_PHYSICAL_ADDRESS(VirtualAddress);
     }
 #else
-    IsPhysical = MI_IS_PHYSICAL_ADDRESS (VirtualAddress);
+    IsPhysical = MI_IS_PHYSICAL_ADDRESS(VirtualAddress);
 #endif
 
-    if (IsPhysical) {
+    if (IsPhysical)
+    {
 
         //
         // All superpage mappings must be read-write and never generate
@@ -98,17 +97,18 @@ Environment:
         return VirtualAddress;
     }
 
-    PointerPte = MiGetPteAddress (VirtualAddress);
+    PointerPte = MiGetPteAddress(VirtualAddress);
 
     PteContents = *PointerPte;
-    
+
 #if defined(NT_UP) || defined(_IA64_)
     if (PteContents.u.Hard.Write == 0)
 #else
     if (PteContents.u.Hard.Writable == 0)
 #endif
     {
-        if (ForceWritableIfPossible == FALSE) {
+        if (ForceWritableIfPossible == FALSE)
+        {
             return NULL;
         }
 
@@ -117,23 +117,23 @@ Environment:
         //
 
         *InputPte = PteContents;
-    
+
         //
         // Carefully modify the PTE to ensure write permissions,
         // preserving the page's cache attributes to keep the TB
         // coherent.
         //
-    
+
 #if defined(NT_UP) || defined(_IA64_)
         PteContents.u.Hard.Write = 1;
 #else
         PteContents.u.Hard.Writable = 1;
 #endif
-        MI_SET_PTE_DIRTY (PteContents);
-        MI_SET_ACCESSED_IN_PTE (&PteContents, 1);
-    
+        MI_SET_PTE_DIRTY(PteContents);
+        MI_SET_ACCESSED_IN_PTE(&PteContents, 1);
+
         *PointerPte = PteContents;
-    
+
         //
         // Note KeFillEntryTb does not IPI the other processors. This is
         // required as the other processors are frozen in the debugger
@@ -141,17 +141,13 @@ Environment:
         // Just flush the current processor instead.
         //
 
-        KeFillEntryTb ((PHARDWARE_PTE)PointerPte, VirtualAddress, TRUE);
+        KeFillEntryTb((PHARDWARE_PTE)PointerPte, VirtualAddress, TRUE);
     }
 
     return VirtualAddress;
 }
-
-VOID
-MiDbgReleaseAddress (
-    IN PVOID VirtualAddress,
-    IN PHARDWARE_PTE Opaque
-    )
+
+VOID MiDbgReleaseAddress(IN PVOID VirtualAddress, IN PHARDWARE_PTE Opaque)
 
 /*++
 
@@ -183,28 +179,26 @@ Environment:
 
     InputPte = (PMMPTE)Opaque;
 
-    ASSERT (MmIsAddressValid (VirtualAddress));
+    ASSERT(MmIsAddressValid(VirtualAddress));
 
-    if (InputPte->u.Long != 0) {
+    if (InputPte->u.Long != 0)
+    {
 
-        PointerPte = MiGetPteAddress (VirtualAddress);
+        PointerPte = MiGetPteAddress(VirtualAddress);
 
         TempPte = *InputPte;
         TempPte.u.Hard.Dirty = 1;
-    
+
         *PointerPte = TempPte;
-    
-        KeFillEntryTb ((PHARDWARE_PTE)PointerPte, VirtualAddress, TRUE);
+
+        KeFillEntryTb((PHARDWARE_PTE)PointerPte, VirtualAddress, TRUE);
     }
 
     return;
 }
-
+
 PVOID64
-MiDbgTranslatePhysicalAddress (
-    IN PHYSICAL_ADDRESS PhysicalAddress,
-    IN ULONG Flags
-    )
+MiDbgTranslatePhysicalAddress(IN PHYSICAL_ADDRESS PhysicalAddress, IN ULONG Flags)
 
 /*++
 
@@ -266,12 +260,13 @@ Environment:
     // causing an infinite loop wedging the machine.
     //
 
-    if (MmPhysicalMemoryBlock == NULL) {
+    if (MmPhysicalMemoryBlock == NULL)
+    {
         return NULL;
     }
 
     Hint = 0;
-    BaseAddress = MiGetVirtualAddressMappedByPte (MmDebugPte);
+    BaseAddress = MiGetVirtualAddressMappedByPte(MmDebugPte);
 
     TempPte = ValidKernelPte;
 
@@ -279,30 +274,35 @@ Environment:
 
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
 
-    if (MiIsPhysicalMemoryAddress (PageFrameIndex, &Hint, FALSE) == TRUE) {
+    if (MiIsPhysicalMemoryAddress(PageFrameIndex, &Hint, FALSE) == TRUE)
+    {
 
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-        switch (Pfn1->u3.e1.CacheAttribute) {
+        switch (Pfn1->u3.e1.CacheAttribute)
+        {
 
-            case MiCached:
-            case MiNotMapped:
-            default:
-                break;
-            case MiNonCached:
-                MI_DISABLE_CACHING (TempPte);
-                break;
-            case MiWriteCombined:
-                MI_SET_PTE_WRITE_COMBINE (TempPte);
-                break;
+        case MiCached:
+        case MiNotMapped:
+        default:
+            break;
+        case MiNonCached:
+            MI_DISABLE_CACHING(TempPte);
+            break;
+        case MiWriteCombined:
+            MI_SET_PTE_WRITE_COMBINE(TempPte);
+            break;
         }
     }
-    else {
+    else
+    {
 
-        if (Flags & MMDBG_COPY_CACHED) {
+        if (Flags & MMDBG_COPY_CACHED)
+        {
             NOTHING;
         }
-        else if (Flags & MMDBG_COPY_UNCACHED) {
+        else if (Flags & MMDBG_COPY_UNCACHED)
+        {
 
             //
             // Just flush the entire TB on this processor but not the others
@@ -313,11 +313,12 @@ Environment:
             // MI_PREPARE_FOR_NONCACHED (MiNonCached) instead.
             //
 
-            KeFlushCurrentTb ();
+            KeFlushCurrentTb();
 
-            MI_DISABLE_CACHING (TempPte);
+            MI_DISABLE_CACHING(TempPte);
         }
-        else if (Flags & MMDBG_COPY_WRITE_COMBINED) {
+        else if (Flags & MMDBG_COPY_WRITE_COMBINED)
+        {
 
             //
             // Just flush the entire TB on this processor but not the others
@@ -328,11 +329,12 @@ Environment:
             // MI_PREPARE_FOR_NONCACHED (MiWriteCombined) instead.
             //
 
-            KeFlushCurrentTb ();
+            KeFlushCurrentTb();
 
-            MI_SET_PTE_WRITE_COMBINE (TempPte);
+            MI_SET_PTE_WRITE_COMBINE(TempPte);
         }
-        else {
+        else
+        {
 
             //
             // This is an access to I/O space and we don't know the correct
@@ -353,15 +355,14 @@ Environment:
         MmPoisonedTb += 1;
     }
 
-    MI_SET_ACCESSED_IN_PTE (&TempPte, 1);
+    MI_SET_ACCESSED_IN_PTE(&TempPte, 1);
 
     OriginalPte.u.Long = 0;
 
-    OriginalPte.u.Long = InterlockedCompareExchangePte (MmDebugPte,
-                                                        TempPte.u.Long,
-                                                        OriginalPte.u.Long);
-                                                         
-    if (OriginalPte.u.Long != 0) {
+    OriginalPte.u.Long = InterlockedCompareExchangePte(MmDebugPte, TempPte.u.Long, OriginalPte.u.Long);
+
+    if (OriginalPte.u.Long != 0)
+    {
 
         //
         // Someone else is using the debug PTE.  Inform our caller it is not
@@ -381,15 +382,12 @@ Environment:
     // are not frozen.
     //
 
-    KiFlushSingleTb (TRUE, BaseAddress);
+    KiFlushSingleTb(TRUE, BaseAddress);
 
     return (PVOID64)((ULONG_PTR)BaseAddress + BYTE_OFFSET(PhysicalAddress.LowPart));
 }
-
-VOID
-MiDbgUnTranslatePhysicalAddress (
-    VOID
-    )
+
+VOID MiDbgUnTranslatePhysicalAddress(VOID)
 
 /*++
 
@@ -421,31 +419,25 @@ Environment:
 {
     PVOID BaseAddress;
 
-    BaseAddress = MiGetVirtualAddressMappedByPte (MmDebugPte);
+    BaseAddress = MiGetVirtualAddressMappedByPte(MmDebugPte);
 
-    ASSERT (MmIsAddressValid (BaseAddress));
+    ASSERT(MmIsAddressValid(BaseAddress));
 
-#if defined (_WIN64)
-    InterlockedExchange64 ((PLONG64)MmDebugPte, ZeroPte.u.Long);
+#if defined(_WIN64)
+    InterlockedExchange64((PLONG64)MmDebugPte, ZeroPte.u.Long);
 #elif defined(_X86PAE_)
-    KeInterlockedSwapPte ((PHARDWARE_PTE)MmDebugPte,
-                          (PHARDWARE_PTE)&ZeroPte.u.Long);
+    KeInterlockedSwapPte((PHARDWARE_PTE)MmDebugPte, (PHARDWARE_PTE)&ZeroPte.u.Long);
 #else
-    InterlockedExchange ((PLONG)MmDebugPte, ZeroPte.u.Long);
+    InterlockedExchange((PLONG)MmDebugPte, ZeroPte.u.Long);
 #endif
 
-    KiFlushSingleTb (TRUE, BaseAddress);
+    KiFlushSingleTb(TRUE, BaseAddress);
 
     return;
 }
- 
+
 NTSTATUS
-MmDbgCopyMemory (
-    IN ULONG64 UntrustedAddress,
-    IN PVOID Buffer,
-    IN ULONG Size,
-    IN ULONG Flags
-    )
+MmDbgCopyMemory(IN ULONG64 UntrustedAddress, IN PVOID Buffer, IN ULONG Size, IN ULONG Flags)
 
 /*++
 
@@ -525,20 +517,22 @@ Return Value:
     LOGICAL PfnHeld;
     ULONG WsHeld;
 
-    switch (Size) {
-        case 1:
-            break;
-        case 2:
-            break;
-        case 4:
-            break;
-        case 8:
-            break;
-        default:
-            return STATUS_INVALID_PARAMETER_3;
+    switch (Size)
+    {
+    case 1:
+        break;
+    case 2:
+        break;
+    case 4:
+        break;
+    case 8:
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER_3;
     }
 
-    if (UntrustedAddress & (Size - 1)) {
+    if (UntrustedAddress & (Size - 1))
+    {
 
         //
         // The untrusted address is not properly aligned with the requested
@@ -548,8 +542,8 @@ Return Value:
         return STATUS_INVALID_PARAMETER_3;
     }
 
-    if (((ULONG)UntrustedAddress & ~(Size - 1)) !=
-        (((ULONG)UntrustedAddress + Size - 1) & ~(Size - 1))) {
+    if (((ULONG)UntrustedAddress & ~(Size - 1)) != (((ULONG)UntrustedAddress + Size - 1) & ~(Size - 1)))
+    {
 
         //
         // The range spanned by the untrusted address crosses a page boundary.
@@ -573,7 +567,8 @@ Return Value:
     PhysicalAddress.LowPart = 0;
     ForceWritableIfPossible = TRUE;
 
-    if ((Flags & MMDBG_COPY_PHYSICAL) == 0) {
+    if ((Flags & MMDBG_COPY_PHYSICAL) == 0)
+    {
 
         //
         // If the caller has not frozen the machine (ie: this is localkd or the
@@ -586,9 +581,11 @@ Return Value:
         // virtual address inside an exception handler.
         //
 
-        if ((Flags & MMDBG_COPY_UNSAFE) == 0) {
+        if ((Flags & MMDBG_COPY_UNSAFE) == 0)
+        {
 
-            if (KeGetCurrentIrql () > APC_LEVEL) {
+            if (KeGetCurrentIrql() > APC_LEVEL)
+            {
                 return STATUS_INVALID_PARAMETER_4;
             }
 
@@ -601,72 +598,89 @@ Return Value:
 
             ForceWritableIfPossible = FALSE;
 
-            if ((PVOID) (ULONG_PTR) UntrustedAddress >= MmSystemRangeStart) {
+            if ((PVOID)(ULONG_PTR)UntrustedAddress >= MmSystemRangeStart)
+            {
 
-                Thread = PsGetCurrentThread ();
+                Thread = PsGetCurrentThread();
 
-                if (MmIsSessionAddress ((PVOID)(ULONG_PTR)UntrustedAddress)) {
-                    if (MmGetSessionId (PsGetCurrentProcess ()) == 0) {
+                if (MmIsSessionAddress((PVOID)(ULONG_PTR)UntrustedAddress))
+                {
+                    if (MmGetSessionId(PsGetCurrentProcess()) == 0)
+                    {
                         return STATUS_INVALID_PARAMETER_1;
                     }
 
                     WsHeld = 1;
-                    LOCK_SESSION_SPACE_WS (OldIrql, Thread);
+                    LOCK_SESSION_SPACE_WS(OldIrql, Thread);
                 }
-                else {
+                else
+                {
                     WsHeld = 2;
-                    LOCK_SYSTEM_WS (OldIrql, Thread);
+                    LOCK_SYSTEM_WS(OldIrql, Thread);
                 }
 
                 PfnHeld = TRUE;
-                LOCK_PFN (PfnIrql);
+                LOCK_PFN(PfnIrql);
             }
-            else {
+            else
+            {
                 //
                 // The caller specified a user address.  Probe and access
                 // the address carefully inside an exception handler.
                 //
 
-                try {
-                    if (Flags & MMDBG_COPY_WRITE) {
-                        ProbeForWrite ((PVOID)(ULONG_PTR)UntrustedAddress, Size, Size);
+                try
+                {
+                    if (Flags & MMDBG_COPY_WRITE)
+                    {
+                        ProbeForWrite((PVOID)(ULONG_PTR)UntrustedAddress, Size, Size);
                     }
-                    else {
-                        ProbeForRead ((PVOID)(ULONG_PTR)UntrustedAddress, Size, Size);
+                    else
+                    {
+                        ProbeForRead((PVOID)(ULONG_PTR)UntrustedAddress, Size, Size);
                     }
-                } except(EXCEPTION_EXECUTE_HANDLER) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     return GetExceptionCode();
                 }
 
-                VirtualAddress = (PVOID) (ULONG_PTR) UntrustedAddress;
+                VirtualAddress = (PVOID)(ULONG_PTR)UntrustedAddress;
 
-                if (Flags & MMDBG_COPY_WRITE) {
+                if (Flags & MMDBG_COPY_WRITE)
+                {
                     goto WriteData;
                 }
-                else {
+                else
+                {
                     goto ReadData;
                 }
             }
         }
 
-        if (MmIsAddressValid ((PVOID) (ULONG_PTR) UntrustedAddress) == FALSE) {
+        if (MmIsAddressValid((PVOID)(ULONG_PTR)UntrustedAddress) == FALSE)
+        {
 
-            if (PfnHeld == TRUE) {
-                UNLOCK_PFN (PfnIrql);
+            if (PfnHeld == TRUE)
+            {
+                UNLOCK_PFN(PfnIrql);
             }
-            if (WsHeld == 1) {
-                UNLOCK_SESSION_SPACE_WS (OldIrql);
+            if (WsHeld == 1)
+            {
+                UNLOCK_SESSION_SPACE_WS(OldIrql);
             }
-            else if (WsHeld == 2) {
-                UNLOCK_SYSTEM_WS (OldIrql);
+            else if (WsHeld == 2)
+            {
+                UNLOCK_SYSTEM_WS(OldIrql);
             }
 
             return STATUS_INVALID_PARAMETER_1;
         }
 
-        VirtualAddress = (PVOID) (ULONG_PTR) UntrustedAddress;
+        VirtualAddress = (PVOID)(ULONG_PTR)UntrustedAddress;
     }
-    else {
+    else
+    {
 
         PhysicalAddress.QuadPart = UntrustedAddress;
 
@@ -678,43 +692,52 @@ Return Value:
         // while we hold the debug PTE.
         //
 
-        if ((Flags & MMDBG_COPY_UNSAFE) == 0) {
+        if ((Flags & MMDBG_COPY_UNSAFE) == 0)
+        {
 
-            if (KeGetCurrentIrql () > APC_LEVEL) {
+            if (KeGetCurrentIrql() > APC_LEVEL)
+            {
                 return STATUS_INVALID_PARAMETER_4;
             }
 
             PfnHeld = TRUE;
-            LOCK_PFN (PfnIrql);
+            LOCK_PFN(PfnIrql);
         }
 
-        VirtualAddress = (PVOID) (ULONG_PTR) MiDbgTranslatePhysicalAddress (PhysicalAddress, Flags);
+        VirtualAddress = (PVOID)(ULONG_PTR)MiDbgTranslatePhysicalAddress(PhysicalAddress, Flags);
 
-        if (VirtualAddress == NULL) {
-            if (PfnHeld == TRUE) {
-                UNLOCK_PFN (PfnIrql);
+        if (VirtualAddress == NULL)
+        {
+            if (PfnHeld == TRUE)
+            {
+                UNLOCK_PFN(PfnIrql);
             }
             return STATUS_UNSUCCESSFUL;
         }
     }
 
-    if (Flags & MMDBG_COPY_WRITE) {
-        VirtualAddress = MiDbgWriteCheck (VirtualAddress, &Opaque, ForceWritableIfPossible);
+    if (Flags & MMDBG_COPY_WRITE)
+    {
+        VirtualAddress = MiDbgWriteCheck(VirtualAddress, &Opaque, ForceWritableIfPossible);
 
-        if (VirtualAddress == NULL) {
-            if (PfnHeld == TRUE) {
-                UNLOCK_PFN (PfnIrql);
+        if (VirtualAddress == NULL)
+        {
+            if (PfnHeld == TRUE)
+            {
+                UNLOCK_PFN(PfnIrql);
             }
-            if (WsHeld == 1) {
-                UNLOCK_SESSION_SPACE_WS (OldIrql);
+            if (WsHeld == 1)
+            {
+                UNLOCK_SESSION_SPACE_WS(OldIrql);
             }
-            else if (WsHeld == 2) {
-                UNLOCK_SYSTEM_WS (OldIrql);
+            else if (WsHeld == 2)
+            {
+                UNLOCK_SYSTEM_WS(OldIrql);
             }
             return STATUS_INVALID_PARAMETER_1;
         }
 
-WriteData:
+    WriteData:
 
         //
         // Carefully capture the source buffer into a local *aligned* buffer
@@ -723,64 +746,75 @@ WriteData:
         // a memory mapped device which requires specific transfer sizes.
         //
 
-        SourceBuffer = (PCHAR) Buffer;
+        SourceBuffer = (PCHAR)Buffer;
 
-        try {
-            for (i = 0; i < Size; i += 1) {
+        try
+        {
+            for (i = 0; i < Size; i += 1)
+            {
                 TempBuffer[i] = *SourceBuffer;
                 SourceBuffer += 1;
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            ASSERT (WsHeld == 0);
-            ASSERT (PfnHeld == FALSE);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            ASSERT(WsHeld == 0);
+            ASSERT(PfnHeld == FALSE);
             return GetExceptionCode();
         }
 
-        switch (Size) {
+        switch (Size)
+        {
+        case 1:
+            *(PCHAR)VirtualAddress = *(PCHAR)TempBuffer;
+            break;
+        case 2:
+            *(PSHORT)VirtualAddress = *(PSHORT)TempBuffer;
+            break;
+        case 4:
+            *(PULONG)VirtualAddress = *(PULONG)TempBuffer;
+            break;
+        case 8:
+            *(PULONGLONG)VirtualAddress = *(PULONGLONG)TempBuffer;
+            break;
+        default:
+            break;
+        }
+
+        if ((PVOID)(ULONG_PTR)UntrustedAddress >= MmSystemRangeStart)
+        {
+            MiDbgReleaseAddress(VirtualAddress, &Opaque);
+        }
+    }
+    else
+    {
+
+    ReadData:
+
+        try
+        {
+            switch (Size)
+            {
             case 1:
-                *(PCHAR) VirtualAddress = *(PCHAR) TempBuffer;
+                *(PCHAR)TempBuffer = *(PCHAR)VirtualAddress;
                 break;
             case 2:
-                *(PSHORT) VirtualAddress = *(PSHORT) TempBuffer;
+                *(PSHORT)TempBuffer = *(PSHORT)VirtualAddress;
                 break;
             case 4:
-                *(PULONG) VirtualAddress = *(PULONG) TempBuffer;
+                *(PULONG)TempBuffer = *(PULONG)VirtualAddress;
                 break;
             case 8:
-                *(PULONGLONG) VirtualAddress = *(PULONGLONG) TempBuffer;
+                *(PULONGLONG)TempBuffer = *(PULONGLONG)VirtualAddress;
                 break;
             default:
                 break;
-        }
-
-        if ((PVOID) (ULONG_PTR) UntrustedAddress >= MmSystemRangeStart) {
-            MiDbgReleaseAddress (VirtualAddress, &Opaque);
-        }
-    }
-    else {
-
-ReadData:
-
-        try {
-            switch (Size) {
-                case 1:
-                    *(PCHAR) TempBuffer = *(PCHAR) VirtualAddress;
-                    break;
-                case 2:
-                    *(PSHORT) TempBuffer = *(PSHORT) VirtualAddress;
-                    break;
-                case 4:
-                    *(PULONG) TempBuffer = *(PULONG) VirtualAddress;
-                    break;
-                case 8:
-                    *(PULONGLONG) TempBuffer = *(PULONGLONG) VirtualAddress;
-                    break;
-                default:
-                    break;
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            ASSERT (WsHeld == 0);
-            ASSERT (PfnHeld == FALSE);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            ASSERT(WsHeld == 0);
+            ASSERT(PfnHeld == FALSE);
             return GetExceptionCode();
         }
 
@@ -789,38 +823,39 @@ ReadData:
         // a time.
         //
 
-        TargetBuffer = (PCHAR) Buffer;
+        TargetBuffer = (PCHAR)Buffer;
 
-        for (i = 0; i < Size; i += 1) {
+        for (i = 0; i < Size; i += 1)
+        {
             *TargetBuffer = TempBuffer[i];
             TargetBuffer += 1;
         }
     }
 
-    if (Flags & MMDBG_COPY_PHYSICAL) {
-        MiDbgUnTranslatePhysicalAddress ();
+    if (Flags & MMDBG_COPY_PHYSICAL)
+    {
+        MiDbgUnTranslatePhysicalAddress();
     }
 
-    if (PfnHeld == TRUE) {
-        UNLOCK_PFN (PfnIrql);
+    if (PfnHeld == TRUE)
+    {
+        UNLOCK_PFN(PfnIrql);
     }
 
-    if (WsHeld == 1) {
-        UNLOCK_SESSION_SPACE_WS (OldIrql);
+    if (WsHeld == 1)
+    {
+        UNLOCK_SESSION_SPACE_WS(OldIrql);
     }
-    else if (WsHeld == 2) {
-        UNLOCK_SYSTEM_WS (OldIrql);
+    else if (WsHeld == 2)
+    {
+        UNLOCK_SYSTEM_WS(OldIrql);
     }
 
     return STATUS_SUCCESS;
 }
 
 LOGICAL
-MmDbgIsLowMemOk (
-    IN PFN_NUMBER PageFrameIndex,
-    OUT PPFN_NUMBER NextPageFrameIndex,
-    IN OUT PULONG CorruptionOffset
-    )
+MmDbgIsLowMemOk(IN PFN_NUMBER PageFrameIndex, OUT PPFN_NUMBER NextPageFrameIndex, IN OUT PULONG CorruptionOffset)
 
 /*++
 
@@ -858,7 +893,7 @@ Environment:
 --*/
 
 {
-#if defined (_MI_MORE_THAN_4GB_)
+#if defined(_MI_MORE_THAN_4GB_)
 
     PULONG Va;
     ULONG Index;
@@ -867,20 +902,24 @@ Environment:
     PMMPFN Pfn;
 #endif
 
-    if (MiNoLowMemory == 0) {
+    if (MiNoLowMemory == 0)
+    {
         *NextPageFrameIndex = 0;
         return TRUE;
     }
 
-    if (MiLowMemoryBitMap == NULL) {
+    if (MiLowMemoryBitMap == NULL)
+    {
         *NextPageFrameIndex = 0;
         return TRUE;
     }
 
-    if (PageFrameIndex >= MiNoLowMemory - 1) {
+    if (PageFrameIndex >= MiNoLowMemory - 1)
+    {
         *NextPageFrameIndex = 0;
     }
-    else {
+    else
+    {
         *NextPageFrameIndex = PageFrameIndex + 1;
     }
 
@@ -889,8 +928,8 @@ Environment:
     // pages.
     //
 
-    if ((PageFrameIndex >= MiLowMemoryBitMap->SizeOfBitMap) ||
-        (RtlCheckBit (MiLowMemoryBitMap, PageFrameIndex) == 0)) {
+    if ((PageFrameIndex >= MiLowMemoryBitMap->SizeOfBitMap) || (RtlCheckBit(MiLowMemoryBitMap, PageFrameIndex) == 0))
+    {
 
         return TRUE;
     }
@@ -901,9 +940,9 @@ Environment:
     //
 
 #if DBG
-    Pfn = MI_PFN_ELEMENT (PageFrameIndex);
-    ASSERT (Pfn->u4.PteFrame == MI_MAGIC_4GB_RECLAIM);
-    ASSERT (Pfn->u3.e1.PageLocation == ActiveAndValid);
+    Pfn = MI_PFN_ELEMENT(PageFrameIndex);
+    ASSERT(Pfn->u4.PteFrame == MI_MAGIC_4GB_RECLAIM);
+    ASSERT(Pfn->u3.e1.PageLocation == ActiveAndValid);
 #endif
 
     //
@@ -915,30 +954,34 @@ Environment:
 
     Pa.QuadPart = ((ULONGLONG)PageFrameIndex) << PAGE_SHIFT;
 
-    Va = (PULONG) MiDbgTranslatePhysicalAddress (Pa, 0);
+    Va = (PULONG)MiDbgTranslatePhysicalAddress(Pa, 0);
 
-    if (Va == NULL) {
+    if (Va == NULL)
+    {
         return TRUE;
     }
 
-    for (Index = 0; Index < PAGE_SIZE / sizeof(ULONG); Index += 1) {
+    for (Index = 0; Index < PAGE_SIZE / sizeof(ULONG); Index += 1)
+    {
 
-        if (*Va != (PageFrameIndex | MI_LOWMEM_MAGIC_BIT)) {
+        if (*Va != (PageFrameIndex | MI_LOWMEM_MAGIC_BIT))
+        {
 
-            if (CorruptionOffset != NULL) {
+            if (CorruptionOffset != NULL)
+            {
                 *CorruptionOffset = Index * sizeof(ULONG);
             }
 
-            MiDbgUnTranslatePhysicalAddress ();
+            MiDbgUnTranslatePhysicalAddress();
             return FALSE;
         }
 
         Va += 1;
     }
-    MiDbgUnTranslatePhysicalAddress ();
+    MiDbgUnTranslatePhysicalAddress();
 #else
-    UNREFERENCED_PARAMETER (PageFrameIndex);
-    UNREFERENCED_PARAMETER (CorruptionOffset);
+    UNREFERENCED_PARAMETER(PageFrameIndex);
+    UNREFERENCED_PARAMETER(CorruptionOffset);
 
     *NextPageFrameIndex = 0;
 #endif

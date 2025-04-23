@@ -38,10 +38,10 @@ Revision History:
 
 #define VALUE_BUFFER_SIZE (4096 * 100)
 
-void
-RegInitialize( void );
+void RegInitialize(void);
 
-typedef struct _REG_UNICODE_FILE {
+typedef struct _REG_UNICODE_FILE
+{
     LARGE_INTEGER LastWriteTime;
     PWSTR FileContents;
     PWSTR EndOfFile;
@@ -51,69 +51,35 @@ typedef struct _REG_UNICODE_FILE {
 } REG_UNICODE_FILE, *PREG_UNICODE_FILE;
 
 NTSTATUS
-RegReadBinaryFile(
-    IN PUNICODE_STRING FileName,
-    OUT PVOID *ValueBuffer,
-    OUT PULONG ValueLength
-    );
+RegReadBinaryFile(IN PUNICODE_STRING FileName, OUT PVOID *ValueBuffer, OUT PULONG ValueLength);
 
 NTSTATUS
-RegLoadAsciiFileAsUnicode(
-    IN PUNICODE_STRING FileName,
-    OUT PREG_UNICODE_FILE UnicodeFile
-    );
+RegLoadAsciiFileAsUnicode(IN PUNICODE_STRING FileName, OUT PREG_UNICODE_FILE UnicodeFile);
 
 BOOLEAN DebugOutput;
 BOOLEAN SummaryOutput;
 
 BOOLEAN
-RegGetNextLine(
-    IN OUT PREG_UNICODE_FILE UnicodeFile,
-    OUT PULONG IndentAmount,
-    OUT PWSTR *FirstEqual
-    );
+RegGetNextLine(IN OUT PREG_UNICODE_FILE UnicodeFile, OUT PULONG IndentAmount, OUT PWSTR *FirstEqual);
 
 BOOLEAN
-RegGetKeyValue(
-    IN PUNICODE_STRING KeyValue,
-    IN OUT PREG_UNICODE_FILE UnicodeFile,
-    OUT PULONG ValueType,
-    OUT PVOID *ValueBuffer,
-    OUT PULONG ValueLength
-    );
+RegGetKeyValue(IN PUNICODE_STRING KeyValue, IN OUT PREG_UNICODE_FILE UnicodeFile, OUT PULONG ValueType,
+               OUT PVOID *ValueBuffer, OUT PULONG ValueLength);
 
 BOOLEAN
-RegGetMultiString(
-    IN OUT PUNICODE_STRING ValueString,
-    OUT PUNICODE_STRING MultiString
-    );
+RegGetMultiString(IN OUT PUNICODE_STRING ValueString, OUT PUNICODE_STRING MultiString);
 
-void
-RegDumpKeyValue(
-    FILE *fh,
-    PKEY_VALUE_FULL_INFORMATION KeyValueInformation,
-    ULONG IndentLevel
-    );
+void RegDumpKeyValue(FILE *fh, PKEY_VALUE_FULL_INFORMATION KeyValueInformation, ULONG IndentLevel);
 
 //
 // routines for creating security descriptors (regacl.c)
 //
 
 BOOLEAN
-RegInitializeSecurity(
-    VOID
-    );
+RegInitializeSecurity(VOID);
 
 BOOLEAN
-RegCreateSecurity(
-    IN PUNICODE_STRING Description,
-    OUT PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
+RegCreateSecurity(IN PUNICODE_STRING Description, OUT PSECURITY_DESCRIPTOR SecurityDescriptor);
 
-VOID
-RegDestroySecurity(
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
-
-
+VOID RegDestroySecurity(IN PSECURITY_DESCRIPTOR SecurityDescriptor);
 

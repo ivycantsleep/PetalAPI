@@ -22,8 +22,8 @@
 #include "strid.h"
 #include <dbt.h>
 #include <regstr.h>
-#include <winsta.h>     // for WinStationGetTermSrvCountersValue
-#include <allproc.h>    // for TS_COUNTER
+#include <winsta.h>  // for WinStationGetTermSrvCountersValue
+#include <allproc.h> // for TS_COUNTER
 
 CONST WCHAR gszReliabilityKey[] = L"\\Registry\\Machine\\" REGSTR_PATH_RELIABILITY;
 
@@ -33,74 +33,86 @@ CONST WCHAR gszReliabilityKey[] = L"\\Registry\\Machine\\" REGSTR_PATH_RELIABILI
 #undef RIPNTERR0
 #undef RIPMSG0
 
-#define RIPNTERR0(status, flags, szFmt) {if (NtCurrentTeb()) NtCurrentTeb()->LastErrorValue = RtlNtStatusToDosError(status);}
-#define RIPERR0(idErr, flags, szFmt) {if (NtCurrentTeb()) NtCurrentTeb()->LastErrorValue = (idErr);}
+#define RIPNTERR0(status, flags, szFmt)                                     \
+    {                                                                       \
+        if (NtCurrentTeb())                                                 \
+            NtCurrentTeb()->LastErrorValue = RtlNtStatusToDosError(status); \
+    }
+#define RIPERR0(idErr, flags, szFmt)                  \
+    {                                                 \
+        if (NtCurrentTeb())                           \
+            NtCurrentTeb()->LastErrorValue = (idErr); \
+    }
 #define RIPMSG0(flags, szFmt)
 
 #endif
 
-#define SET_LAST_ERROR_RETURNED()   if (a->dwLastError) RIPERR0(a->dwLastError, RIP_VERBOSE, "")
+#define SET_LAST_ERROR_RETURNED() \
+    if (a->dwLastError)           \
+    RIPERR0(a->dwLastError, RIP_VERBOSE, "")
 
 #if !defined(BUILD_WOW6432)
 
 NTSTATUS
 APIENTRY
-CallUserpExitWindowsEx(
-    IN UINT uFlags,
-    OUT PBOOL pfSuccess)
+CallUserpExitWindowsEx(IN UINT uFlags, OUT PBOOL pfSuccess)
 {
 
     USER_API_MSG m;
     PEXITWINDOWSEXMSG a = &m.u.ExitWindowsEx;
 
     a->uFlags = uFlags;
-    CsrClientCallServer( (PCSR_API_MSG)&m,
-                         NULL,
-                         CSR_MAKE_API_NUMBER( USERSRV_SERVERDLL_INDEX,
-                                              UserpExitWindowsEx
-                                            ),
-                         sizeof( *a )
-                       );
+    CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpExitWindowsEx),
+                        sizeof(*a));
 
-    if (NT_SUCCESS( m.ReturnValue ) || m.ReturnValue == STATUS_CANT_WAIT) {
+    if (NT_SUCCESS(m.ReturnValue) || m.ReturnValue == STATUS_CANT_WAIT)
+    {
         SET_LAST_ERROR_RETURNED();
         *pfSuccess = a->fSuccess;
-    } else {
+    }
+    else
+    {
         RIPNTERR0(m.ReturnValue, RIP_VERBOSE, "");
         *pfSuccess = FALSE;
     }
 
     return m.ReturnValue;
-
 }
 
 #endif
 
 #if !defined(BUILD_CSRWOW64)
 
-typedef struct _EXITWINDOWSDATA {
+typedef struct _EXITWINDOWSDATA
+{
     UINT uFlags;
 } EXITWINDOWSDATA, *PEXITWINDOWSDATA;
 
 __inline void GetShutdownType(LPWSTR pszBuff, int cch, DWORD dwFlags)
 {
-    if ((dwFlags & (EWX_POWEROFF | EWX_WINLOGON_OLD_POWEROFF)) != 0) {
+    if ((dwFlags & (EWX_POWEROFF | EWX_WINLOGON_OLD_POWEROFF)) != 0)
+    {
         LoadString(hmodUser, STR_SHUTDOWN_POWEROFF, pszBuff, cch);
-    } else if ((dwFlags & (EWX_REBOOT | EWX_WINLOGON_OLD_REBOOT)) != 0) {
+    }
+    else if ((dwFlags & (EWX_REBOOT | EWX_WINLOGON_OLD_REBOOT)) != 0)
+    {
         LoadString(hmodUser, STR_SHUTDOWN_REBOOT, pszBuff, cch);
-    } else if ((dwFlags & (EWX_SHUTDOWN | EWX_WINLOGON_OLD_SHUTDOWN)) != 0) {
+    }
+    else if ((dwFlags & (EWX_SHUTDOWN | EWX_WINLOGON_OLD_SHUTDOWN)) != 0)
+    {
         LoadString(hmodUser, STR_SHUTDOWN_SHUTDOWN, pszBuff, cch);
-    } else {
+    }
+    else
+    {
         LoadString(hmodUser, STR_UNKNOWN, pszBuff, cch);
     }
 }
 
-#define MAX_SNAPSHOT_SIZE   2048
+#define MAX_SNAPSHOT_SIZE 2048
 typedef ULONG (*SNAPSHOTFUNC)(DWORD Flags, LPCTSTR *lpStrings, PLONG MaxBuffSize, LPTSTR SnapShotBuff);
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, RecordShutdownReason, PSHUTDOWN_REASON, psr)
-BOOL RecordShutdownReason(
-    PSHUTDOWN_REASON psr)
+BOOL RecordShutdownReason(PSHUTDOWN_REASON psr)
 {
     HANDLE hEventLog;
     PSID pUserSid = NULL;
@@ -115,18 +127,20 @@ BOOL RecordShutdownReason(
     BOOL bRet = FALSE;
     HMODULE hSnapShot;
     SNAPSHOTFUNC pSnapShotProc;
-    struct {
+    struct
+    {
         DWORD Reason;
         PWCHAR SnapShotBuf;
     } SnapShot;
     LONG SnapShotSize = 0;
-    LONG ResultLength = 0;       // Assume no snapshot
-    DWORD DoSnapShotValue = 0;   // Prepare for the reg. key not exisiting
+    LONG ResultLength = 0;     // Assume no snapshot
+    DWORD DoSnapShotValue = 0; // Prepare for the reg. key not exisiting
     NTSTATUS Status;
     UNICODE_STRING KeyString, ValueString;
     OBJECT_ATTRIBUTES ObjA;
     HKEY hKey = NULL;
-    struct {
+    struct
+    {
         ULONG TitleIndex;
         ULONG Type;
         ULONG DataLength;
@@ -134,12 +148,14 @@ BOOL RecordShutdownReason(
     } PartialInfoBuffer;
 
     // Validate the structure
-    if (psr == NULL || psr->cbSize != sizeof(SHUTDOWN_REASON)) {
+    if (psr == NULL || psr->cbSize != sizeof(SHUTDOWN_REASON))
+    {
         RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "Bad psr %p in RecordShutdownReason", psr);
         return FALSE;
     }
 
-    if ((hEventLog = RegisterEventSourceW(NULL, L"USER32")) == NULL) {
+    if ((hEventLog = RegisterEventSourceW(NULL, L"USER32")) == NULL)
+    {
         // RegisterEventSourceW should have set the last error, so just return
         // FALSE.
         return FALSE;
@@ -149,7 +165,8 @@ BOOL RecordShutdownReason(
     GetShutdownType(szShutdownType, ARRAY_SIZE(szShutdownType), psr->uFlags);
 
     // Get the user's SID so we can output their account name to the event log.
-    if (GetUserSid(&pTokenUser)) {
+    if (GetUserSid(&pTokenUser))
+    {
         pUserSid = pTokenUser->User.Sid;
     }
 
@@ -159,16 +176,21 @@ BOOL RecordShutdownReason(
     SnapShot.Reason = psr->dwReasonCode;
     SnapShot.SnapShotBuf = NULL;
 
-    switch (psr->dwEventType) {
+    switch (psr->dwEventType)
+    {
     case SR_EVENT_EXITWINDOWS:
-        if (psr->fShutdownCancelled) {
+        if (psr->fShutdownCancelled)
+        {
             wEventType = EVENTLOG_WARNING_TYPE;
             dwEventID = WARNING_EW_SHUTDOWN_CANCELLED;
             wStringCnt = 2;
             lpStrings[0] = szShutdownType;
             lpStrings[1] = szComputerName;
-        } else {
-            if (!GetReasonTitleFromReasonCode(psr->dwReasonCode, szReason, ARRAY_SIZE(szReason))) {
+        }
+        else
+        {
+            if (!GetReasonTitleFromReasonCode(psr->dwReasonCode, szReason, ARRAY_SIZE(szReason)))
+            {
                 goto Cleanup;
             }
             GetCurrentProcessName(szProcessName, ARRAY_SIZE(szProcessName));
@@ -186,7 +208,8 @@ BOOL RecordShutdownReason(
         }
         break;
     case SR_EVENT_INITIATE_CLEAN:
-        if (!GetReasonTitleFromReasonCode(psr->dwReasonCode, szReason, ARRAY_SIZE(szReason))) {
+        if (!GetReasonTitleFromReasonCode(psr->dwReasonCode, szReason, ARRAY_SIZE(szReason)))
+        {
             goto Cleanup;
         }
         GetCurrentProcessName(szProcessName, ARRAY_SIZE(szProcessName));
@@ -205,55 +228,52 @@ BOOL RecordShutdownReason(
         //
         // Take a snapshot if shutdown is unplanned.
         //
-        PartialInfoBuffer.dwValue = 0 ;
+        PartialInfoBuffer.dwValue = 0;
         RtlInitUnicodeString(&KeyString, gszReliabilityKey);
-        InitializeObjectAttributes(&ObjA,
-                                   &KeyString,
-                                   OBJ_CASE_INSENSITIVE,
-                                   NULL,
-                                   NULL);
-        Status = NtOpenKey(&hKey,
-                           KEY_ALL_ACCESS,
-                           &ObjA);
+        InitializeObjectAttributes(&ObjA, &KeyString, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        Status = NtOpenKey(&hKey, KEY_ALL_ACCESS, &ObjA);
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             RtlInitUnicodeString(&ValueString, REGSTR_VAL_SHUTDOWN_DO_STATE_SNAPSHOT);
-            Status = NtQueryValueKey(hKey,
-                                     &ValueString,
-                                     KeyValuePartialInformation,
-                                     &PartialInfoBuffer,
-                                     sizeof(PartialInfoBuffer),
-                                     &ResultLength);
+            Status = NtQueryValueKey(hKey, &ValueString, KeyValuePartialInformation, &PartialInfoBuffer,
+                                     sizeof(PartialInfoBuffer), &ResultLength);
         }
 
-        DoSnapShotValue = PartialInfoBuffer.dwValue ;
+        DoSnapShotValue = PartialInfoBuffer.dwValue;
 
-        if ((DoSnapShotValue & DO_SNAPSHOT_NEVER) != DO_SNAPSHOT_NEVER) {
+        if ((DoSnapShotValue & DO_SNAPSHOT_NEVER) != DO_SNAPSHOT_NEVER)
+        {
             if (((DoSnapShotValue & DO_SNAPSHOT_ALWAYS) == DO_SNAPSHOT_ALWAYS) ||
-                !(psr->dwReasonCode & SHTDN_REASON_FLAG_PLANNED)) {
+                !(psr->dwReasonCode & SHTDN_REASON_FLAG_PLANNED))
+            {
                 UINT cbLength;
                 SnapShotSize = MAX_SNAPSHOT_SIZE;
                 SnapShot.SnapShotBuf = LocalAlloc(LPTR, SnapShotSize);
-                if (SnapShot.SnapShotBuf == NULL) {
-                    if (hKey != NULL) {
+                if (SnapShot.SnapShotBuf == NULL)
+                {
+                    if (hKey != NULL)
+                    {
                         NtClose(hKey);
                     }
                     goto Cleanup;
                 }
 
-                cbLength = GetSystemDirectoryW(SnapShot.SnapShotBuf,
-                                               SnapShotSize - 1);
-                wcsncat(SnapShot.SnapShotBuf, L"\\snapshot.dll",
-                        ARRAY_SIZE(SnapShot.SnapShotBuf) - cbLength);
+                cbLength = GetSystemDirectoryW(SnapShot.SnapShotBuf, SnapShotSize - 1);
+                wcsncat(SnapShot.SnapShotBuf, L"\\snapshot.dll", ARRAY_SIZE(SnapShot.SnapShotBuf) - cbLength);
                 hSnapShot = LoadLibrary(SnapShot.SnapShotBuf);
-                if (hSnapShot) {
+                if (hSnapShot)
+                {
                     pSnapShotProc = (SNAPSHOTFUNC)GetProcAddress(hSnapShot, "LogSystemSnapshot");
-                    if (pSnapShotProc) {
-                        __try { // Assume the worst about the snapshot DLL!
+                    if (pSnapShotProc)
+                    {
+                        __try
+                        { // Assume the worst about the snapshot DLL!
 
                             (*pSnapShotProc)(DoSnapShotValue, lpStrings, &SnapShotSize, SnapShot.SnapShotBuf);
-
-                        } __except(EXCEPTION_EXECUTE_HANDLER) {
+                        }
+                        __except (EXCEPTION_EXECUTE_HANDLER)
+                        {
                             wsprintf(SnapShot.SnapShotBuf, L"State Snapshot took an exception\n");
                         }
                         SnapShotSize = wcslen(SnapShot.SnapShotBuf);
@@ -261,22 +281,20 @@ BOOL RecordShutdownReason(
                     FreeLibrary(hSnapShot);
                 }
 
-                if (SnapShotSize > 0 ) {
-                    if (hKey != NULL) {
+                if (SnapShotSize > 0)
+                {
+                    if (hKey != NULL)
+                    {
                         RtlInitUnicodeString(&ValueString, REGSTR_VAL_SHUTDOWN_STATE_SNAPSHOT);
-                        Status = NtSetValueKey(hKey,
-                                               &ValueString,
-                                               0,
-                                               REG_SZ,
-                                               SnapShot.SnapShotBuf,
+                        Status = NtSetValueKey(hKey, &ValueString, 0, REG_SZ, SnapShot.SnapShotBuf,
                                                SnapShotSize * sizeof(WCHAR));
-                       //Ignore failure here
- 
+                        //Ignore failure here
                     }
                 }
             }
         }
-        if (hKey != NULL) {
+        if (hKey != NULL)
+        {
             NtClose(hKey);
         }
         break;
@@ -287,7 +305,8 @@ BOOL RecordShutdownReason(
         lpStrings[0] = szComputerName;
         break;
     case SR_EVENT_DIRTY:
-        if (!GetReasonTitleFromReasonCode(psr->dwReasonCode, szReason, ARRAY_SIZE(szReason))) {
+        if (!GetReasonTitleFromReasonCode(psr->dwReasonCode, szReason, ARRAY_SIZE(szReason)))
+        {
             goto Cleanup;
         }
         // The minor reason is the low-order word of the reason code.
@@ -304,16 +323,16 @@ BOOL RecordShutdownReason(
         goto Cleanup;
     }
 
-    bRet = ReportEventW(hEventLog, wEventType, 0, dwEventID, pUserSid,
-                        wStringCnt, sizeof(DWORD),
-                        lpStrings, &SnapShot);
+    bRet = ReportEventW(hEventLog, wEventType, 0, dwEventID, pUserSid, wStringCnt, sizeof(DWORD), lpStrings, &SnapShot);
 
 Cleanup:
-    if (SnapShot.SnapShotBuf != NULL) {
+    if (SnapShot.SnapShotBuf != NULL)
+    {
         LocalFree(SnapShot.SnapShotBuf);
     }
 
-    if (pTokenUser != NULL) {
+    if (pTokenUser != NULL)
+    {
         LocalFree(pTokenUser);
     }
 
@@ -321,14 +340,14 @@ Cleanup:
     return bRet;
 }
 
-BOOL CheckShutdownLogging(
-    VOID)
+BOOL CheckShutdownLogging(VOID)
 {
     NTSTATUS Status;
     UNICODE_STRING KeyString, ValueString;
     OBJECT_ATTRIBUTES ObjA;
     HKEY hKey;
-    struct {
+    struct
+    {
         ULONG TitleIndex;
         ULONG Type;
         ULONG DataLength;
@@ -336,26 +355,17 @@ BOOL CheckShutdownLogging(
     } PartialInfoBuffer;
 
     RtlInitUnicodeString(&KeyString, gszReliabilityKey);
-    InitializeObjectAttributes(&ObjA,
-                               &KeyString,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtOpenKey(&hKey,
-                       KEY_READ,
-                       &ObjA);
+    InitializeObjectAttributes(&ObjA, &KeyString, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtOpenKey(&hKey, KEY_READ, &ObjA);
 
     PartialInfoBuffer.dwValue = 0;
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         ULONG ResultLength;
 
         RtlInitUnicodeString(&ValueString, REGSTR_VAL_SHOWREASONUI);
-        Status = NtQueryValueKey(hKey,
-                                 &ValueString,
-                                 KeyValuePartialInformation,
-                                 &PartialInfoBuffer,
-                                 sizeof(PartialInfoBuffer),
-                                 &ResultLength );
+        Status = NtQueryValueKey(hKey, &ValueString, KeyValuePartialInformation, &PartialInfoBuffer,
+                                 sizeof(PartialInfoBuffer), &ResultLength);
         UserAssert(!NT_SUCCESS(Status) || ResultLength == sizeof(PartialInfoBuffer));
         NtClose(hKey);
     }
@@ -363,8 +373,7 @@ BOOL CheckShutdownLogging(
     return (PartialInfoBuffer.dwValue != 0);
 }
 
-UINT GetLoggedOnUserCount(
-    VOID)
+UINT GetLoggedOnUserCount(VOID)
 {
     int iCount = 0;
     BOOLEAN bSuccess;
@@ -377,7 +386,8 @@ UINT GetLoggedOnUserCount(
     // access the termsrv counters to find out how many users are logged onto the system
     bSuccess = WinStationGetTermSrvCountersValue(SERVERNAME_CURRENT, 2, TSCountersDyn);
 
-    if (bSuccess) {
+    if (bSuccess)
+    {
         if (TSCountersDyn[0].counterHead.bResult)
             iCount += TSCountersDyn[0].dwValue;
 
@@ -390,48 +400,45 @@ UINT GetLoggedOnUserCount(
 
 BOOL IsSeShutdownNameEnabled()
 {
-    BOOL bRet = FALSE;  // assume the privilege is not held
+    BOOL bRet = FALSE; // assume the privilege is not held
     NTSTATUS Status;
     HANDLE hToken;
 
     // try to get the thread token
-    Status = NtOpenThreadToken(GetCurrentThread(),
-                               TOKEN_QUERY,
-                               FALSE,
-                               &hToken);
-    if (!NT_SUCCESS(Status)) {
+    Status = NtOpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hToken);
+    if (!NT_SUCCESS(Status))
+    {
         // try the process token if we failed to get the thread token
-        Status = NtOpenProcessToken(GetCurrentProcess(),
-                                    TOKEN_QUERY,
-                                    &hToken);
+        Status = NtOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken);
     }
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DWORD cbSize = 0;
-        TOKEN_PRIVILEGES* ptp;
+        TOKEN_PRIVILEGES *ptp;
 
-        NtQueryInformationToken(hToken,
-                                TokenPrivileges,
-                                NULL,
-                                0,
-                                &cbSize);
-        if (cbSize) {
-            ptp = (TOKEN_PRIVILEGES*)LocalAlloc(LPTR, cbSize);
-        } else {
+        NtQueryInformationToken(hToken, TokenPrivileges, NULL, 0, &cbSize);
+        if (cbSize)
+        {
+            ptp = (TOKEN_PRIVILEGES *)LocalAlloc(LPTR, cbSize);
+        }
+        else
+        {
             ptp = NULL;
         }
 
-        if (ptp) {
-            Status = NtQueryInformationToken(hToken,
-                                             TokenPrivileges,
-                                             ptp,
-                                             cbSize,
-                                             &cbSize);
-            if (NT_SUCCESS(Status)) {
+        if (ptp)
+        {
+            Status = NtQueryInformationToken(hToken, TokenPrivileges, ptp, cbSize, &cbSize);
+            if (NT_SUCCESS(Status))
+            {
                 DWORD i;
-                for (i = 0; i < ptp->PrivilegeCount; i++) {
-                    if (((ptp->Privileges[i].Luid.HighPart == 0) && (ptp->Privileges[i].Luid.LowPart == SE_SHUTDOWN_PRIVILEGE)) &&
-                        (ptp->Privileges[i].Attributes & (SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED))) {
+                for (i = 0; i < ptp->PrivilegeCount; i++)
+                {
+                    if (((ptp->Privileges[i].Luid.HighPart == 0) &&
+                         (ptp->Privileges[i].Luid.LowPart == SE_SHUTDOWN_PRIVILEGE)) &&
+                        (ptp->Privileges[i].Attributes & (SE_PRIVILEGE_ENABLED_BY_DEFAULT | SE_PRIVILEGE_ENABLED)))
+                    {
                         // found the privilege and it is enabled
                         bRet = TRUE;
                         break;
@@ -448,7 +455,7 @@ BOOL IsSeShutdownNameEnabled()
     return bRet;
 }
 
-BOOL NeedsDisplayWarning (UINT uNumUsers, UINT uExitWindowsFlags)
+BOOL NeedsDisplayWarning(UINT uNumUsers, UINT uExitWindowsFlags)
 {
 
     //  If EWX_SYSTEM_CALLER then there's nobody on this session.
@@ -513,15 +520,14 @@ BOOL APIENTRY DisplayExitWindowsWarnings(UINT uExitWindowsFlags)
         TCHAR szTitle[MAX_PATH];
         TCHAR szMessage[MAX_PATH];
 
-        LoadString(hmodUser, IDS_EXITWINDOWS_TITLE, szTitle, sizeof(szTitle)/sizeof(szTitle[0]));
-        LoadString(hmodUser, uID, szMessage, sizeof(szMessage)/sizeof(szMessage[0]));
+        LoadString(hmodUser, IDS_EXITWINDOWS_TITLE, szTitle, sizeof(szTitle) / sizeof(szTitle[0]));
+        LoadString(hmodUser, uID, szMessage, sizeof(szMessage) / sizeof(szMessage[0]));
 
         // We want to display the message box to be displayed to the user, and since this can be called from winlogon/services
         // we need to pass the MB_SERVICE_NOTIFICATION flag.
-        if (MessageBox(NULL,
-                       szMessage,
-                       szTitle,
-                       MB_ICONEXCLAMATION | MB_YESNO | MB_SERVICE_NOTIFICATION | MB_SYSTEMMODAL | MB_SETFOREGROUND) == IDNO)
+        if (MessageBox(NULL, szMessage, szTitle,
+                       MB_ICONEXCLAMATION | MB_YESNO | MB_SERVICE_NOTIFICATION | MB_SYSTEMMODAL | MB_SETFOREGROUND) ==
+            IDNO)
         {
             bContinue = FALSE;
         }
@@ -532,9 +538,7 @@ BOOL APIENTRY DisplayExitWindowsWarnings(UINT uExitWindowsFlags)
 
 DWORD ExitWindowsThread(PVOID pvParam);
 
-BOOL WINAPI ExitWindowsWorker(
-    UINT uFlags,
-    BOOL fSecondThread)
+BOOL WINAPI ExitWindowsWorker(UINT uFlags, BOOL fSecondThread)
 {
     EXITWINDOWSDATA ewd;
     HANDLE hThread;
@@ -549,71 +553,85 @@ BOOL WINAPI ExitWindowsWorker(
      * Force a connection so apps will have a windowstation
      * to log off of.
      */
-    if (PtiCurrent() == NULL) {
+    if (PtiCurrent() == NULL)
+    {
         return FALSE;
     }
 
     /*
      * Check for UI restrictions
      */
-    if (!NtUserCallOneParam((ULONG_PTR)uFlags, SFI_PREPAREFORLOGOFF)) {
+    if (!NtUserCallOneParam((ULONG_PTR)uFlags, SFI_PREPAREFORLOGOFF))
+    {
         RIPMSG0(RIP_WARNING, "ExitWindows called by a restricted thread\n");
         return FALSE;
     }
 
     Status = CallUserpExitWindowsEx(uFlags, &fSuccess);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
         return fSuccess;
-    } else if (Status == STATUS_CANT_WAIT && !fSecondThread) {
+    }
+    else if (Status == STATUS_CANT_WAIT && !fSecondThread)
+    {
         ewd.uFlags = uFlags;
-        hThread = CreateThread(NULL, 0, ExitWindowsThread, &ewd,
-                0, &dwThreadId);
-        if (hThread == NULL) {
+        hThread = CreateThread(NULL, 0, ExitWindowsThread, &ewd, 0, &dwThreadId);
+        if (hThread == NULL)
+        {
             return FALSE;
         }
 
-        while (1) {
-            idWait = MsgWaitForMultipleObjectsEx(1, &hThread,
-                    INFINITE, QS_ALLINPUT, 0);
+        while (1)
+        {
+            idWait = MsgWaitForMultipleObjectsEx(1, &hThread, INFINITE, QS_ALLINPUT, 0);
 
             /*
              * If the thread was signaled, we're done.
              */
-            if (idWait == WAIT_OBJECT_0) {
+            if (idWait == WAIT_OBJECT_0)
+            {
                 break;
             }
 
             /*
              * Process any waiting messages
              */
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            {
                 DispatchMessage(&msg);
             }
         }
         GetExitCodeThread(hThread, &dwExitCode);
         NtClose(hThread);
-        if (dwExitCode == ERROR_SUCCESS) {
+        if (dwExitCode == ERROR_SUCCESS)
+        {
             return TRUE;
-        } else {
+        }
+        else
+        {
             RIPERR0(dwExitCode, RIP_VERBOSE, "");
             return FALSE;
         }
-    } else {
+    }
+    else
+    {
         RIPNTERR0(Status, RIP_VERBOSE, "");
         return FALSE;
     }
 }
 
-DWORD ExitWindowsThread(
-    PVOID pvParam)
+DWORD ExitWindowsThread(PVOID pvParam)
 {
     PEXITWINDOWSDATA pewd = pvParam;
     DWORD dwExitCode;
 
-    if (ExitWindowsWorker(pewd->uFlags, TRUE)) {
+    if (ExitWindowsWorker(pewd->uFlags, TRUE))
+    {
         dwExitCode = 0;
-    } else {
+    }
+    else
+    {
         dwExitCode = GetLastError();
     }
 
@@ -622,9 +640,7 @@ DWORD ExitWindowsThread(
 }
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, ExitWindowsEx, UINT, uFlags, DWORD, dwReasonCode)
-BOOL WINAPI ExitWindowsEx(
-    UINT uFlags,
-    DWORD dwReasonCode)
+BOOL WINAPI ExitWindowsEx(UINT uFlags, DWORD dwReasonCode)
 {
     BOOL bSuccess;
     BOOL bShutdown = (uFlags & SHUTDOWN_FLAGS) != 0;
@@ -635,35 +651,43 @@ BOOL WINAPI ExitWindowsEx(
      * Terminal Server users connected to this machine. We only do this if the
      * caller has not specified the EWX_FORCE option.
      */
-    if (bShutdown && !(uFlags & EWX_FORCE)) {
+    if (bShutdown && !(uFlags & EWX_FORCE))
+    {
         /*
          * We don't want to display the warning dialog twice! (this function
          * can be called by an application and again by winlogon in response to
          * the first call)
          */
-        if (!gfLogonProcess || (uFlags & EWX_WINLOGON_INITIATED)) {
+        if (!gfLogonProcess || (uFlags & EWX_WINLOGON_INITIATED))
+        {
             /*
              * Don't put up UI if termsrv is our caller. Termsrv uses this api to shutdown winlogon
              * on session 0 when a shutdown was initiated from a different session.
              */
-            if (!(uFlags & EWX_TERMSRV_INITIATED)) {
+            if (!(uFlags & EWX_TERMSRV_INITIATED))
+            {
                 /*
                  * There are a bunch of lame apps (including InstallShield v5.1) that call ExitWindowsEx and then when it fails
                  * they go and enable the SE_SHUTDOWN_NAME privilege and then us call again. The problem is that we end up prompting the
                  * user twice in these cases. So before we put up any UI we check for the SE_SHUTDOWN_NAME privilege.
                  */
-                if (IsSeShutdownNameEnabled()) {
-                    if (!DisplayExitWindowsWarnings(uFlags & ~(EWX_WINLOGON_CALLER | EWX_SYSTEM_CALLER))) {
+                if (IsSeShutdownNameEnabled())
+                {
+                    if (!DisplayExitWindowsWarnings(uFlags & ~(EWX_WINLOGON_CALLER | EWX_SYSTEM_CALLER)))
+                    {
                         /*
                          * We only want to return the real error code if our caller was winlogon. We lie
                          * to everyone else and tell them that everything succeeded. If we return failure
                          * when the user cancel's the operation, a some of apps just call ExitWindowsEx
                          * again, causing another dialog.
                          */
-                        if (uFlags & EWX_WINLOGON_INITIATED) {
+                        if (uFlags & EWX_WINLOGON_INITIATED)
+                        {
                             SetLastError(ERROR_CANCELLED);
                             return FALSE;
-                        } else {
+                        }
+                        else
+                        {
                             return TRUE;
                         }
                     }
@@ -685,8 +709,10 @@ BOOL WINAPI ExitWindowsEx(
      * shutdown, the cancel event will be logged before the initial shutdown
      * event.
      */
-    if (gfLogonProcess && bShutdown && (uFlags & EWX_WINLOGON_INITIATED) != 0) {
-        if (CheckShutdownLogging()) {
+    if (gfLogonProcess && bShutdown && (uFlags & EWX_WINLOGON_INITIATED) != 0)
+    {
+        if (CheckShutdownLogging())
+        {
             RecordShutdownReason(&sr);
         }
     }
@@ -700,7 +726,8 @@ BOOL WINAPI ExitWindowsEx(
      * 3) We're actually shutting down (i.e., not logging off).
      * 4) The registry key telling us to log is set.
      */
-    if (!gfLogonProcess && bSuccess && bShutdown && CheckShutdownLogging()) {
+    if (!gfLogonProcess && bSuccess && bShutdown && CheckShutdownLogging())
+    {
         RecordShutdownReason(&sr);
     }
 
@@ -711,10 +738,7 @@ BOOL WINAPI ExitWindowsEx(
 
 #if !defined(BUILD_WOW6432)
 
-BOOL WINAPI EndTask(
-    HWND hwnd,
-    BOOL fShutdown,
-    BOOL fForce)
+BOOL WINAPI EndTask(HWND hwnd, BOOL fShutdown, BOOL fForce)
 {
     USER_API_MSG m;
     PENDTASKMSG a = &m.u.EndTask;
@@ -722,44 +746,31 @@ BOOL WINAPI EndTask(
     UNREFERENCED_PARAMETER(fShutdown);
     a->hwnd = hwnd;
     a->fForce = fForce;
-    CsrClientCallServer( (PCSR_API_MSG)&m,
-                         NULL,
-                         CSR_MAKE_API_NUMBER( USERSRV_SERVERDLL_INDEX,
-                                              UserpEndTask
-                                            ),
-                         sizeof( *a )
-                       );
-    if (NT_SUCCESS( m.ReturnValue )) {
+    CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpEndTask), sizeof(*a));
+    if (NT_SUCCESS(m.ReturnValue))
+    {
         SET_LAST_ERROR_RETURNED();
         return a->fSuccess;
-    } else {
+    }
+    else
+    {
         RIPNTERR0(m.ReturnValue, RIP_VERBOSE, "");
         return FALSE;
     }
 }
 
-VOID
-APIENTRY
-Logon(
-    BOOL fLogon)
+VOID APIENTRY Logon(BOOL fLogon)
 {
     USER_API_MSG m;
     PLOGONMSG a = &m.u.Logon;
 
     a->fLogon = fLogon;
-    CsrClientCallServer( (PCSR_API_MSG)&m,
-                         NULL,
-                         CSR_MAKE_API_NUMBER( USERSRV_SERVERDLL_INDEX,
-                                              UserpLogon
-                                            ),
-                         sizeof(*a)
-                       );
+    CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpLogon), sizeof(*a));
 }
 
 NTSTATUS
 APIENTRY
-CallUserpRegisterLogonProcess(
-    IN DWORD dwProcessId)
+CallUserpRegisterLogonProcess(IN DWORD dwProcessId)
 {
 
     USER_API_MSG m;
@@ -767,11 +778,8 @@ CallUserpRegisterLogonProcess(
     NTSTATUS Status;
 
     m.u.IdLogon = dwProcessId;
-    Status = CsrClientCallServer( (PCSR_API_MSG)&m,
-                                  NULL,
-                                  CSR_MAKE_API_NUMBER( USERSRV_SERVERDLL_INDEX,
-                                                       UserpRegisterLogonProcess),
-                                  sizeof(*a));
+    Status = CsrClientCallServer((PCSR_API_MSG)&m, NULL,
+                                 CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpRegisterLogonProcess), sizeof(*a));
 
     return Status;
 }
@@ -781,17 +789,15 @@ CallUserpRegisterLogonProcess(
 #if !defined(BUILD_CSRWOW64)
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, RegisterLogonProcess, DWORD, dwProcessId, BOOL, fSecure)
-BOOL RegisterLogonProcess(
-    DWORD dwProcessId,
-    BOOL fSecure)
+BOOL RegisterLogonProcess(DWORD dwProcessId, BOOL fSecure)
 {
-    gfLogonProcess = (BOOL)NtUserCallTwoParam(dwProcessId, fSecure,
-            SFI__REGISTERLOGONPROCESS);
+    gfLogonProcess = (BOOL)NtUserCallTwoParam(dwProcessId, fSecure, SFI__REGISTERLOGONPROCESS);
 
     /*
      * Now, register the logon process into winsrv.
      */
-    if (gfLogonProcess) {
+    if (gfLogonProcess)
+    {
         CallUserpRegisterLogonProcess(dwProcessId);
     }
 
@@ -802,48 +808,40 @@ BOOL RegisterLogonProcess(
 
 #if !defined(BUILD_WOW6432)
 
-BOOL
-WINAPI
-RegisterServicesProcess(
-    DWORD dwProcessId)
+BOOL WINAPI RegisterServicesProcess(DWORD dwProcessId)
 {
     USER_API_MSG m;
     PREGISTERSERVICESPROCESSMSG a = &m.u.RegisterServicesProcess;
 
     a->dwProcessId = dwProcessId;
-    CsrClientCallServer( (PCSR_API_MSG)&m,
-                         NULL,
-                         CSR_MAKE_API_NUMBER( USERSRV_SERVERDLL_INDEX,
-                                              UserpRegisterServicesProcess
-                                            ),
-                         sizeof( *a )
-                       );
-    if (NT_SUCCESS( m.ReturnValue )) {
+    CsrClientCallServer((PCSR_API_MSG)&m, NULL,
+                        CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpRegisterServicesProcess), sizeof(*a));
+    if (NT_SUCCESS(m.ReturnValue))
+    {
         SET_LAST_ERROR_RETURNED();
         return a->fSuccess;
-    } else {
+    }
+    else
+    {
         RIPNTERR0(m.ReturnValue, RIP_VERBOSE, "");
         return FALSE;
     }
 }
 
-HDESK WINAPI GetThreadDesktop(
-    DWORD dwThreadId)
+HDESK WINAPI GetThreadDesktop(DWORD dwThreadId)
 {
     USER_API_MSG m;
     PGETTHREADCONSOLEDESKTOPMSG a = &m.u.GetThreadConsoleDesktop;
 
     a->dwThreadId = dwThreadId;
-    CsrClientCallServer( (PCSR_API_MSG)&m,
-                         NULL,
-                         CSR_MAKE_API_NUMBER( USERSRV_SERVERDLL_INDEX,
-                                              UserpGetThreadConsoleDesktop
-                                            ),
-                         sizeof( *a )
-                       );
-    if (NT_SUCCESS( m.ReturnValue )) {
+    CsrClientCallServer((PCSR_API_MSG)&m, NULL,
+                        CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpGetThreadConsoleDesktop), sizeof(*a));
+    if (NT_SUCCESS(m.ReturnValue))
+    {
         return NtUserGetThreadDesktop(dwThreadId, a->hdeskConsole);
-    } else {
+    }
+    else
+    {
         RIPNTERR0(m.ReturnValue, RIP_VERBOSE, "");
         return NULL;
     }
@@ -866,22 +864,17 @@ HDESK WINAPI GetThreadDesktop(
 \**************************************************************************/
 ULONG
 WINAPI
-DeviceEventWorker(
-    IN HWND    hWnd,
-    IN WPARAM  wParam,
-    IN LPARAM  lParam,
-    IN DWORD   dwFlags,
-    OUT PDWORD pdwResult)
+DeviceEventWorker(IN HWND hWnd, IN WPARAM wParam, IN LPARAM lParam, IN DWORD dwFlags, OUT PDWORD pdwResult)
 {
     USER_API_MSG m;
     PDEVICEEVENTMSG a = &m.u.DeviceEvent;
     PCSR_CAPTURE_HEADER CaptureBuffer = NULL;
     int cb = 0;
 
-    a->hWnd     = hWnd;
-    a->wParam   = wParam;
-    a->lParam   = lParam;
-    a->dwFlags  = dwFlags;
+    a->hWnd = hWnd;
+    a->wParam = wParam;
+    a->lParam = lParam;
+    a->dwFlags = dwFlags;
     a->dwResult = 0;
 
     //
@@ -890,49 +883,46 @@ DeviceEventWorker(
     // DEV_BROADCAST_HDR structure).
     //
 
-    if (lParam) {
+    if (lParam)
+    {
 
         cb = ((PDEV_BROADCAST_HDR)lParam)->dbch_size;
 
         CaptureBuffer = CsrAllocateCaptureBuffer(1, cb);
-        if (CaptureBuffer == NULL) {
+        if (CaptureBuffer == NULL)
+        {
             return STATUS_NO_MEMORY;
         }
 
-        CsrCaptureMessageBuffer(CaptureBuffer,
-                                (PCHAR)lParam,
-                                cb,
-                                (PVOID *)&a->lParam);
+        CsrCaptureMessageBuffer(CaptureBuffer, (PCHAR)lParam, cb, (PVOID *)&a->lParam);
 
         //
         // This ends up calling SrvDeviceEvent routine in the server.
         //
 
-        CsrClientCallServer((PCSR_API_MSG)&m,
-                            CaptureBuffer,
-                            CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX,
-                                                UserpDeviceEvent),
-                            sizeof(*a));
+        CsrClientCallServer((PCSR_API_MSG)&m, CaptureBuffer,
+                            CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpDeviceEvent), sizeof(*a));
 
         CsrFreeCaptureBuffer(CaptureBuffer);
-
-    } else {
+    }
+    else
+    {
 
         //
         // This ends up calling SrvDeviceEvent routine in the server.
         //
 
-        CsrClientCallServer((PCSR_API_MSG)&m,
-                            NULL,
-                            CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX,
-                                                UserpDeviceEvent),
+        CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpDeviceEvent),
                             sizeof(*a));
     }
 
 
-    if (NT_SUCCESS(m.ReturnValue)) {
+    if (NT_SUCCESS(m.ReturnValue))
+    {
         *pdwResult = (DWORD)a->dwResult;
-    } else {
+    }
+    else
+    {
         RIPMSG0(RIP_WARNING, "DeviceEventWorker failed.");
     }
 
@@ -942,11 +932,7 @@ DeviceEventWorker(
 
 #if DBG
 
-VOID
-APIENTRY
-CsrWin32HeapFail(
-    IN DWORD dwFlags,
-    IN BOOL  bFail)
+VOID APIENTRY CsrWin32HeapFail(IN DWORD dwFlags, IN BOOL bFail)
 {
     USER_API_MSG m;
     PWIN32HEAPFAILMSG a = &m.u.Win32HeapFail;
@@ -954,22 +940,16 @@ CsrWin32HeapFail(
     a->dwFlags = dwFlags;
     a->bFail = bFail;
 
-    CsrClientCallServer((PCSR_API_MSG)&m,
-                        NULL,
-                        CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX,
-                                            UserpWin32HeapFail),
+    CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpWin32HeapFail),
                         sizeof(*a));
 
-    if (!NT_SUCCESS(m.ReturnValue)) {
+    if (!NT_SUCCESS(m.ReturnValue))
+    {
         RIPNTERR0(m.ReturnValue, RIP_VERBOSE, "UserpWin32HeapFail failed");
     }
 }
 
-UINT
-APIENTRY
-CsrWin32HeapStat(
-    PDBGHEAPSTAT    phs,
-    DWORD   dwLen)
+UINT APIENTRY CsrWin32HeapStat(PDBGHEAPSTAT phs, DWORD dwLen)
 {
     USER_API_MSG m;
     PWIN32HEAPSTATMSG a = &m.u.Win32HeapStat;
@@ -978,22 +958,18 @@ CsrWin32HeapStat(
     a->dwLen = dwLen;
 
     CaptureBuffer = CsrAllocateCaptureBuffer(1, dwLen);
-    if (CaptureBuffer == NULL) {
+    if (CaptureBuffer == NULL)
+    {
         return 0;
     }
 
-    CsrCaptureMessageBuffer(CaptureBuffer,
-                            (PCHAR)phs,
-                            dwLen,
-                            (PVOID *)&a->phs);
+    CsrCaptureMessageBuffer(CaptureBuffer, (PCHAR)phs, dwLen, (PVOID *)&a->phs);
 
-    CsrClientCallServer((PCSR_API_MSG)&m,
-                        CaptureBuffer,
-                        CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX,
-                                            UserpWin32HeapStat),
-                        sizeof(*a));
+    CsrClientCallServer((PCSR_API_MSG)&m, CaptureBuffer,
+                        CSR_MAKE_API_NUMBER(USERSRV_SERVERDLL_INDEX, UserpWin32HeapStat), sizeof(*a));
 
-    if (!NT_SUCCESS(m.ReturnValue)) {
+    if (!NT_SUCCESS(m.ReturnValue))
+    {
         RIPNTERR0(m.ReturnValue, RIP_VERBOSE, "UserpWin32HeapStat failed");
         a->dwMaxTag = 0;
         goto ErrExit;
@@ -1043,17 +1019,12 @@ ErrExit:
 *   Appropriate NTSTATUS code
 *
 \******************************************************************************/
-FUNCLOG6(LOG_GENERAL, NTSTATUS, APIENTRY, CsrBroadcastSystemMessageExW, DWORD, dwFlags, LPDWORD, lpdwRecipients, UINT, uiMessage, WPARAM, wParam, LPARAM, lParam, PBSMINFO, pBSMInfo)
+FUNCLOG6(LOG_GENERAL, NTSTATUS, APIENTRY, CsrBroadcastSystemMessageExW, DWORD, dwFlags, LPDWORD, lpdwRecipients, UINT,
+         uiMessage, WPARAM, wParam, LPARAM, lParam, PBSMINFO, pBSMInfo)
 NTSTATUS
 APIENTRY
-CsrBroadcastSystemMessageExW(
-    DWORD dwFlags,
-    LPDWORD lpdwRecipients,
-    UINT uiMessage,
-    WPARAM wParam,
-    LPARAM lParam,
-    PBSMINFO pBSMInfo
-    )
+CsrBroadcastSystemMessageExW(DWORD dwFlags, LPDWORD lpdwRecipients, UINT uiMessage, WPARAM wParam, LPARAM lParam,
+                             PBSMINFO pBSMInfo)
 {
     USERTHREAD_USEDESKTOPINFO utudi;
     long result;
@@ -1062,8 +1033,9 @@ CsrBroadcastSystemMessageExW(
     /*
      * Caller must be from the csrss server
      */
-    if( !gfServerProcess ) {
-        return( STATUS_ACCESS_DENIED );
+    if (!gfServerProcess)
+    {
+        return (STATUS_ACCESS_DENIED);
     }
 
     /*
@@ -1076,34 +1048,24 @@ CsrBroadcastSystemMessageExW(
     utudi.hThread = NULL;
     utudi.drdRestore.pdeskRestore = NULL;
 
-    Status = NtUserSetInformationThread( NtCurrentThread(),
-                                         UserThreadUseActiveDesktop,
-                                         &utudi,
-                                         sizeof(utudi) );
+    Status = NtUserSetInformationThread(NtCurrentThread(), UserThreadUseActiveDesktop, &utudi, sizeof(utudi));
 
-    if( NT_SUCCESS( Status ) ) {
-        result = BroadcastSystemMessageExW(
-                        dwFlags,
-                        lpdwRecipients,
-                        uiMessage,
-                        wParam,
-                        lParam,
-                        pBSMInfo );
+    if (NT_SUCCESS(Status))
+    {
+        result = BroadcastSystemMessageExW(dwFlags, lpdwRecipients, uiMessage, wParam, lParam, pBSMInfo);
 
         /*
          * Restore the previous desktop of the thread
          */
-        Status = NtUserSetInformationThread( NtCurrentThread(),
-                                             UserThreadUseDesktop,
-                                             &utudi,
-                                             sizeof(utudi) );
+        Status = NtUserSetInformationThread(NtCurrentThread(), UserThreadUseDesktop, &utudi, sizeof(utudi));
 
-        if( NT_SUCCESS( Status ) && ( result <= 0 ) ) {
+        if (NT_SUCCESS(Status) && (result <= 0))
+        {
             Status = STATUS_UNSUCCESSFUL;
         }
     }
 
-    return( Status );
+    return (Status);
 }
 
 #endif

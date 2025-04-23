@@ -5,9 +5,7 @@
 
 #include <ntos.h>
 
-VOID
-ExceptionTest (
-    )
+VOID ExceptionTest()
 
 //
 // This routine tests the structured exception handling capabilities of the
@@ -40,14 +38,19 @@ ExceptionTest (
     //
     DbgPrint("t1...");
     Counter = 0;
-    try {
+    try
+    {
         Counter += 1;
-    } finally {
-        if (abnormal_termination() == 0) {
+    }
+    finally
+    {
+        if (abnormal_termination() == 0)
+        {
             Counter += 1;
         }
     }
-    if (Counter != 2) {
+    if (Counter != 2)
+    {
         DbgPrint("BUG  Finally clause executed as result of unwind\n");
     }
     DbgPrint("done\n");
@@ -56,16 +59,20 @@ ExceptionTest (
     // Simple try statement with an exception clause that is never executed
     // because there is no exception raised in the try clause.
     //
-//  goto a;
+    //  goto a;
     DbgPrint("t2...");
     Counter = 0;
-    try {
-//a:	    Counter += 1;
-	  Counter += 1;
-    } except (Counter) {
+    try
+    {
+        //a:	    Counter += 1;
         Counter += 1;
     }
-    if (Counter != 1) {
+    except(Counter)
+    {
+        Counter += 1;
+    }
+    if (Counter != 1)
+    {
         DbgPrint("BUG  Exception clause executed when it shouldn't be\n");
     }
     DbgPrint("done\n");
@@ -77,13 +84,17 @@ ExceptionTest (
     DbgPrint("t3...");
     Counter = 0;
     ExceptionRecord.ExceptionFlags = 0;
-    try {
+    try
+    {
         Counter -= 1;
         RtlRaiseException(&ExceptionRecord);
-    } except (Counter) {
+    }
+    except(Counter)
+    {
         Counter -= 1;
     }
-    if (Counter != - 1) {
+    if (Counter != -1)
+    {
         DbgPrint("BUG  Exception clause executed when it shouldn't be\n");
     }
     DbgPrint("done\n");
@@ -94,13 +105,17 @@ ExceptionTest (
     DbgPrint("t4...");
     Counter = 0;
     ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-    try {
+    try
+    {
         Counter += 1;
         RtlRaiseException(&ExceptionRecord);
-    } except (Counter) {
+    }
+    except(Counter)
+    {
         Counter += 1;
     }
-    if (Counter != 2) {
+    if (Counter != 2)
+    {
         DbgPrint("BUG  Exception clause not executed when it should be\n");
     }
     DbgPrint("done\n");
@@ -113,21 +128,30 @@ ExceptionTest (
     DbgPrint("t5...");
     Counter = 0;
     ExceptionRecord.ExceptionFlags = 0;
-    try {
-        try {
+    try
+    {
+        try
+        {
             Counter += 1;
             RtlRaiseException(&ExceptionRecord);
-        } finally {
-            if (abnormal_termination() != 0) {
+        }
+        finally
+        {
+            if (abnormal_termination() != 0)
+            {
                 Counter += 1;
             }
         }
-    } except (Counter) {
-        if (Counter == 2) {
+    }
+    except(Counter)
+    {
+        if (Counter == 2)
+        {
             Counter += 1;
         }
     }
-    if (Counter != 3) {
+    if (Counter != 3)
+    {
         DbgPrint("BUG  Finally clause executed as result of sequential exit\n");
     }
     DbgPrint("done\n");
@@ -138,15 +162,19 @@ ExceptionTest (
     DbgPrint("t6...");
     Counter = 0;
     ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-    try {
+    try
+    {
         VOID foo(IN NTSTATUS Status);
 
         Counter += 1;
         foo(STATUS_ACCESS_VIOLATION);
-    } except (exception_code() == STATUS_ACCESS_VIOLATION) {
+    }
+    except(exception_code() == STATUS_ACCESS_VIOLATION)
+    {
         Counter += 1;
     }
-    if (Counter != 2) {
+    if (Counter != 2)
+    {
         DbgPrint("BUG  Exception clause not executed when it should be\n");
     }
     DbgPrint("done\n");
@@ -159,13 +187,16 @@ ExceptionTest (
     DbgPrint("t7...");
     Counter = 0;
     ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-    try {
+    try
+    {
         VOID bar(IN NTSTATUS Status, IN PULONG Counter);
 
         bar(STATUS_ACCESS_VIOLATION, &Counter);
-
-    } except (exception_code() == STATUS_ACCESS_VIOLATION) {
-        if (Counter != 99) {
+    }
+    except(exception_code() == STATUS_ACCESS_VIOLATION)
+    {
+        if (Counter != 99)
+        {
             DbgPrint("BUG  finally in called procedure not executed\n");
         }
     }
@@ -177,27 +208,32 @@ ExceptionTest (
     DbgPrint("t8...");
     Counter = 0;
     ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-    try {
+    try
+    {
 
         foo(STATUS_ACCESS_VIOLATION);
-
-    } except (exception_code() == STATUS_ACCESS_VIOLATION) {
+    }
+    except(exception_code() == STATUS_ACCESS_VIOLATION)
+    {
 
         Counter++;
 
-        try {
+        try
+        {
 
             foo(STATUS_SUCCESS);
-
-        } except (exception_code() == STATUS_SUCCESS) {
-            if ( Counter != 1 ) {
+        }
+        except(exception_code() == STATUS_SUCCESS)
+        {
+            if (Counter != 1)
+            {
                 DbgPrint("BUG  Previous Handler not Entered\n");
             }
             Counter++;
-
         }
     }
-    if (Counter != 2) {
+    if (Counter != 2)
+    {
         DbgPrint("BUG Both Handlers not entered\n");
     }
     DbgPrint("done\n");
@@ -209,18 +245,25 @@ ExceptionTest (
     DbgPrint("t9...");
     Counter = 0;
     ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-    try {
-        try {
+    try
+    {
+        try
+        {
             foo(STATUS_ACCESS_VIOLATION);
-        } except (exception_code() == STATUS_ACCESS_VIOLATION) {
+        }
+        except(exception_code() == STATUS_ACCESS_VIOLATION)
+        {
             Counter++;
             goto t9;
         }
-    } finally {
+    }
+    finally
+    {
         Counter++;
     }
 t9:
-    if (Counter != 2) {
+    if (Counter != 2)
+    {
         DbgPrint("BUG Finally and Exception Handlers not entered\n");
     }
     DbgPrint("done\n");
@@ -232,18 +275,25 @@ t9:
     DbgPrint("t10...");
     Counter = 0;
     ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-    try {
-        try {
+    try
+    {
+        try
+        {
             Counter++;
-        } finally {
+        }
+        finally
+        {
             Counter++;
             goto t10;
         }
-    } finally {
+    }
+    finally
+    {
         Counter++;
     }
 t10:
-    if (Counter != 3) {
+    if (Counter != 3)
+    {
         DbgPrint("BUG Both Finally Handlers not entered\n");
     }
     DbgPrint("done\n");
@@ -255,19 +305,24 @@ t10:
     Counter = 0;
     ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
 
-    try {
+    try
+    {
         ULONG eret(IN NTSTATUS Status, IN PULONG Counter);
 
         Counter++;
         rv = eret(STATUS_ACCESS_VIOLATION, &Counter);
-    } finally {
+    }
+    finally
+    {
         Counter++;
     }
 
-    if (Counter != 4) {
+    if (Counter != 4)
+    {
         DbgPrint("BUG Both Finally Handlers and Exception Handler not entered\n");
     }
-    if (rv != 0xDEADBEEF) {
+    if (rv != 0xDEADBEEF)
+    {
         DbgPrint("BUG rv is wrong\n");
     }
     DbgPrint("done\n");
@@ -279,16 +334,20 @@ t10:
     Counter = 0;
     ExceptionRecord.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
 
-    try {
+    try
+    {
         VOID fret(IN PULONG Counter);
 
         Counter++;
         fret(&Counter);
-    } finally {
+    }
+    finally
+    {
         Counter++;
     }
 
-    if (Counter != 5) {
+    if (Counter != 5)
+    {
         DbgPrint("BUG All three Finally Handlers not entered\n");
     }
     DbgPrint("done\n");
@@ -303,85 +362,87 @@ t10:
 
 main()
 {
-    ExceptionTest ();
+    ExceptionTest();
 }
 
 
 NTSTATUS
-ZwLastChance (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord
-    )
+ZwLastChance(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord)
 {
-    DbgPrint("ZwLastChance Entered\n");;
+    DbgPrint("ZwLastChance Entered\n");
+    ;
 }
 
 
-VOID
-fret(
-    IN PULONG Counter
-    )
+VOID fret(IN PULONG Counter)
 {
 
-    try {
+    try
+    {
 
-        try {
+        try
+        {
             *Counter += 1;
-        } finally {
+        }
+        finally
+        {
             *Counter += 1;
             return;
         }
-    } finally {
+    }
+    finally
+    {
         *Counter += 1;
     }
 }
 ULONG
-eret(
-    IN NTSTATUS Status,
-    IN PULONG Counter
-    )
+eret(IN NTSTATUS Status, IN PULONG Counter)
 {
 
     EXCEPTION_RECORD ExceptionRecord;
 
-    try {
+    try
+    {
 
-        try {
+        try
+        {
             foo(Status);
-        } except (exception_code() == Status) {
+        }
+        except(exception_code() == Status)
+        {
             *Counter += 1;
             return 0xDEADBEEF;
         }
-    } finally {
+    }
+    finally
+    {
         *Counter += 1;
     }
 }
-VOID
-bar(
-    IN NTSTATUS Status,
-    IN PULONG Counter
-    )
+VOID bar(IN NTSTATUS Status, IN PULONG Counter)
 {
 
     EXCEPTION_RECORD ExceptionRecord;
 
-    try {
+    try
+    {
         foo(Status);
     }
 
-    finally {
-        if (abnormal_termination() != 0) {
+    finally
+    {
+        if (abnormal_termination() != 0)
+        {
             *Counter = 99;
-        } else {
+        }
+        else
+        {
             *Counter = 100;
         }
     }
 }
 
-VOID
-foo(
-    IN NTSTATUS Status
-    )
+VOID foo(IN NTSTATUS Status)
 {
     EXCEPTION_RECORD ExceptionRecord;
     LONG Counter;

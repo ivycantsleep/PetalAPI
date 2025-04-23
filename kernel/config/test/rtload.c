@@ -36,31 +36,27 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-#define WORK_SIZE   1024
+#define WORK_SIZE 1024
 
 void __cdecl main(int, char *);
 void processargs();
 
-UNICODE_STRING  KeyPath;
-WCHAR           KeyPathBuffer[WORK_SIZE];
+UNICODE_STRING KeyPath;
+WCHAR KeyPathBuffer[WORK_SIZE];
 
-UNICODE_STRING  FileName;
-WCHAR           FileNameBuffer[WORK_SIZE];
+UNICODE_STRING FileName;
+WCHAR FileNameBuffer[WORK_SIZE];
 
 OBJECT_ATTRIBUTES FileAttributes;
 OBJECT_ATTRIBUTES KeyAttributes;
 RTL_RELATIVE_NAME RelativeName;
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS status;
-    IO_STATUS_BLOCK  IoStatus;
-    HANDLE  FileHandle;
-    HANDLE  KeyHandle;
+    IO_STATUS_BLOCK IoStatus;
+    HANDLE FileHandle;
+    HANDLE KeyHandle;
 
     //
     // Process args
@@ -85,21 +81,20 @@ __cdecl main(
 
 
     status = NtLoadKey(&KeyAttributes, &FileAttributes);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("rtload: key load failed status = %08lx\n", status);
         exit(1);
-    } else {
+    }
+    else
+    {
         printf("rtload: success!\n");
     }
 
     exit(0);
 }
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
     UNICODE_STRING DosFileName;
@@ -107,95 +102,52 @@ processargs(
     PWSTR FilePart;
     NTSTATUS Status;
 
-    if ( (argc != 2) && (argc != 3))
+    if ((argc != 2) && (argc != 3))
     {
-        printf("Usage: %s [ <KeyName> ] <FileName>\n",
-                argv[0]);
+        printf("Usage: %s [ <KeyName> ] <FileName>\n", argv[0]);
         exit(1);
     }
-    if (argc == 3) {
+    if (argc == 3)
+    {
 
-        RtlInitAnsiString(
-            &temp,
-            argv[1]
-            );
+        RtlInitAnsiString(&temp, argv[1]);
 
-        RtlAnsiStringToUnicodeString(
-            &KeyPath,
-            &temp,
-            TRUE
-            );
+        RtlAnsiStringToUnicodeString(&KeyPath, &temp, TRUE);
 
-        RtlInitAnsiString(
-            &temp,
-            argv[2]
-            );
+        RtlInitAnsiString(&temp, argv[2]);
 
-        RtlAnsiStringToUnicodeString(
-            &DosFileName,
-            &temp,
-            TRUE
-            );
+        RtlAnsiStringToUnicodeString(&DosFileName, &temp, TRUE);
 
-        RtlDosPathNameToNtPathName_U( DosFileName.Buffer,
-                                      &FileName,
-                                      NULL,
-                                      NULL );
+        RtlDosPathNameToNtPathName_U(DosFileName.Buffer, &FileName, NULL, NULL);
 
-        InitializeObjectAttributes(
-            &FileAttributes,
-            &FileName,
-            OBJ_CASE_INSENSITIVE,
-            (HANDLE)NULL,
-            NULL
-            );
+        InitializeObjectAttributes(&FileAttributes, &FileName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
         //
         // Set up KeyPath
         //
 
-        InitializeObjectAttributes(
-            &KeyAttributes,
-            &KeyPath,
-            OBJ_CASE_INSENSITIVE,
-            (HANDLE)NULL,
-            NULL
-            );
-    } else if (argc==2) {
+        InitializeObjectAttributes(&KeyAttributes, &KeyPath, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
+    }
+    else if (argc == 2)
+    {
         RtlInitAnsiString(&temp, argv[1]);
         RtlAnsiStringToUnicodeString(&DosFileName, &temp, TRUE);
-        RtlDosPathNameToNtPathName_U( DosFileName.Buffer,
-                                      &FileName,
-                                      &FilePart,
-                                      &RelativeName );
+        RtlDosPathNameToNtPathName_U(DosFileName.Buffer, &FileName, &FilePart, &RelativeName);
 
-        InitializeObjectAttributes( &FileAttributes,
-                                    &RelativeName.RelativeName,
-                                    OBJ_CASE_INSENSITIVE,
-                                    RelativeName.ContainingDirectory,
-                                    NULL );
+        InitializeObjectAttributes(&FileAttributes, &RelativeName.RelativeName, OBJ_CASE_INSENSITIVE,
+                                   RelativeName.ContainingDirectory, NULL);
 
         RtlInitUnicodeString(&KeyPath, L"\\Registry\\User");
-        InitializeObjectAttributes( &KeyAttributes,
-                                    &KeyPath,
-                                    OBJ_CASE_INSENSITIVE,
-                                    NULL,
-                                    NULL );
-        Status = NtOpenKey( &UserHandle,
-                            KEY_READ,
-                            &KeyAttributes);
-        if (!NT_SUCCESS(Status)) {
-            printf("Couldn't open \\Registry\\User, status %08lx\n",Status);
+        InitializeObjectAttributes(&KeyAttributes, &KeyPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
+        Status = NtOpenKey(&UserHandle, KEY_READ, &KeyAttributes);
+        if (!NT_SUCCESS(Status))
+        {
+            printf("Couldn't open \\Registry\\User, status %08lx\n", Status);
             exit(1);
         }
 
         RtlInitUnicodeString(&KeyPath, FilePart);
-        InitializeObjectAttributes( &KeyAttributes,
-                                    &KeyPath,
-                                    OBJ_CASE_INSENSITIVE,
-                                    UserHandle,
-                                    NULL );
-
+        InitializeObjectAttributes(&KeyAttributes, &KeyPath, OBJ_CASE_INSENSITIVE, UserHandle, NULL);
     }
 
 

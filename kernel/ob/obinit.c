@@ -43,110 +43,64 @@ GENERAL_LOOKASIDE ObpNameBufferLookasideList;
 #endif
 
 
-const GENERIC_MAPPING ObpTypeMapping = {
-    STANDARD_RIGHTS_READ,
-    STANDARD_RIGHTS_WRITE,
-    STANDARD_RIGHTS_EXECUTE,
-    OBJECT_TYPE_ALL_ACCESS
-};
+const GENERIC_MAPPING ObpTypeMapping = { STANDARD_RIGHTS_READ, STANDARD_RIGHTS_WRITE, STANDARD_RIGHTS_EXECUTE,
+                                         OBJECT_TYPE_ALL_ACCESS };
 
-const GENERIC_MAPPING ObpDirectoryMapping = {
-    STANDARD_RIGHTS_READ |
-        DIRECTORY_QUERY |
-        DIRECTORY_TRAVERSE,
-    STANDARD_RIGHTS_WRITE |
-        DIRECTORY_CREATE_OBJECT |
-        DIRECTORY_CREATE_SUBDIRECTORY,
-    STANDARD_RIGHTS_EXECUTE |
-        DIRECTORY_QUERY |
-        DIRECTORY_TRAVERSE,
-    DIRECTORY_ALL_ACCESS
-};
+const GENERIC_MAPPING ObpDirectoryMapping = { STANDARD_RIGHTS_READ | DIRECTORY_QUERY | DIRECTORY_TRAVERSE,
+                                              STANDARD_RIGHTS_WRITE | DIRECTORY_CREATE_OBJECT |
+                                                  DIRECTORY_CREATE_SUBDIRECTORY,
+                                              STANDARD_RIGHTS_EXECUTE | DIRECTORY_QUERY | DIRECTORY_TRAVERSE,
+                                              DIRECTORY_ALL_ACCESS };
 
-const GENERIC_MAPPING ObpSymbolicLinkMapping = {
-    STANDARD_RIGHTS_READ |
-        SYMBOLIC_LINK_QUERY,
-    STANDARD_RIGHTS_WRITE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYMBOLIC_LINK_QUERY,
-    SYMBOLIC_LINK_ALL_ACCESS
-};
+const GENERIC_MAPPING ObpSymbolicLinkMapping = { STANDARD_RIGHTS_READ | SYMBOLIC_LINK_QUERY, STANDARD_RIGHTS_WRITE,
+                                                 STANDARD_RIGHTS_EXECUTE | SYMBOLIC_LINK_QUERY,
+                                                 SYMBOLIC_LINK_ALL_ACCESS };
 
 //
 //  Local procedure prototypes
 //
 
 NTSTATUS
-ObpCreateDosDevicesDirectory (
-    VOID
-    );
+ObpCreateDosDevicesDirectory(VOID);
 
 NTSTATUS
-ObpGetDosDevicesProtection (
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
+ObpGetDosDevicesProtection(PSECURITY_DESCRIPTOR SecurityDescriptor);
 
-VOID
-ObpFreeDosDevicesProtection (
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
+VOID ObpFreeDosDevicesProtection(PSECURITY_DESCRIPTOR SecurityDescriptor);
 
 BOOLEAN
-ObpShutdownCloseHandleProcedure (
-    IN PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN HANDLE HandleId,
-    IN PVOID EnumParameter
-    );
+ObpShutdownCloseHandleProcedure(IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE HandleId, IN PVOID EnumParameter);
 
-
+
 #ifdef ALLOC_PRAGMA
 BOOLEAN
-ObDupHandleProcedure (
-    PEPROCESS Process,
-    PHANDLE_TABLE OldObjectTable,
-    PHANDLE_TABLE_ENTRY OldObjectTableEntry,
-    PHANDLE_TABLE_ENTRY ObjectTableEntry
-    );
+ObDupHandleProcedure(PEPROCESS Process, PHANDLE_TABLE OldObjectTable, PHANDLE_TABLE_ENTRY OldObjectTableEntry,
+                     PHANDLE_TABLE_ENTRY ObjectTableEntry);
 BOOLEAN
-ObAuditInheritedHandleProcedure (
-    IN PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN HANDLE HandleId,
-    IN PVOID EnumParameter
-    );
-VOID
-ObDestroyHandleProcedure (
-    IN HANDLE HandleIndex
-    );
+ObAuditInheritedHandleProcedure(IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE HandleId, IN PVOID EnumParameter);
+VOID ObDestroyHandleProcedure(IN HANDLE HandleIndex);
 BOOLEAN
-ObpEnumFindHandleProcedure (
-    PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    HANDLE HandleId,
-    PVOID EnumParameter
-    );
+ObpEnumFindHandleProcedure(PHANDLE_TABLE_ENTRY ObjectTableEntry, HANDLE HandleId, PVOID EnumParameter);
 
 BOOLEAN
-ObpCloseHandleProcedure (
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry,
-    IN HANDLE Handle,
-    IN PVOID EnumParameter
-    );
+ObpCloseHandleProcedure(IN PHANDLE_TABLE_ENTRY HandleTableEntry, IN HANDLE Handle, IN PVOID EnumParameter);
 
-#pragma alloc_text(INIT,ObInitSystem)
-#pragma alloc_text(PAGE,ObDupHandleProcedure)
-#pragma alloc_text(PAGE,ObAuditInheritedHandleProcedure)
-#pragma alloc_text(PAGE,ObInitProcess)
-#pragma alloc_text(PAGE,ObInitProcess2)
-#pragma alloc_text(PAGE,ObDestroyHandleProcedure)
-#pragma alloc_text(PAGE,ObKillProcess)
-#pragma alloc_text(PAGE,ObClearProcessHandleTable)
-#pragma alloc_text(PAGE,ObpCloseHandleProcedure)
-#pragma alloc_text(PAGE,ObpEnumFindHandleProcedure)
-#pragma alloc_text(PAGE,ObFindHandleForObject)
-#pragma alloc_text(PAGE,ObpShutdownCloseHandleProcedure)
-#pragma alloc_text(PAGE,ObShutdownSystem)
-#pragma alloc_text(INIT,ObpCreateDosDevicesDirectory)
-#pragma alloc_text(INIT,ObpGetDosDevicesProtection)
-#pragma alloc_text(INIT,ObpFreeDosDevicesProtection)
+#pragma alloc_text(INIT, ObInitSystem)
+#pragma alloc_text(PAGE, ObDupHandleProcedure)
+#pragma alloc_text(PAGE, ObAuditInheritedHandleProcedure)
+#pragma alloc_text(PAGE, ObInitProcess)
+#pragma alloc_text(PAGE, ObInitProcess2)
+#pragma alloc_text(PAGE, ObDestroyHandleProcedure)
+#pragma alloc_text(PAGE, ObKillProcess)
+#pragma alloc_text(PAGE, ObClearProcessHandleTable)
+#pragma alloc_text(PAGE, ObpCloseHandleProcedure)
+#pragma alloc_text(PAGE, ObpEnumFindHandleProcedure)
+#pragma alloc_text(PAGE, ObFindHandleForObject)
+#pragma alloc_text(PAGE, ObpShutdownCloseHandleProcedure)
+#pragma alloc_text(PAGE, ObShutdownSystem)
+#pragma alloc_text(INIT, ObpCreateDosDevicesDirectory)
+#pragma alloc_text(INIT, ObpGetDosDevicesProtection)
+#pragma alloc_text(INIT, ObpFreeDosDevicesProtection)
 #endif
 
 //
@@ -204,25 +158,21 @@ extern ULONG MmNumberOfPagingFiles;
 //  A ULONGLONG aligned global variable
 //  for use by ObpLookupObjectName for quick comparisons.
 //
-const ALIGNEDNAME ObpDosDevicesShortNamePrefix = { L'\\',L'?',L'?',L'\\' }; // L"\??\"
-const ALIGNEDNAME ObpDosDevicesShortNameRoot = { L'\\',L'?',L'?',L'\0' }; // L"\??"
-const UNICODE_STRING ObpDosDevicesShortName = {
-    sizeof(ObpDosDevicesShortNamePrefix),
-    sizeof(ObpDosDevicesShortNamePrefix),
-    (PWSTR)&ObpDosDevicesShortNamePrefix
-};
+const ALIGNEDNAME ObpDosDevicesShortNamePrefix = { L'\\', L'?', L'?', L'\\' }; // L"\??\"
+const ALIGNEDNAME ObpDosDevicesShortNameRoot = { L'\\', L'?', L'?', L'\0' };   // L"\??"
+const UNICODE_STRING ObpDosDevicesShortName = { sizeof(ObpDosDevicesShortNamePrefix),
+                                                sizeof(ObpDosDevicesShortNamePrefix),
+                                                (PWSTR)&ObpDosDevicesShortNamePrefix };
 
-#define ObpGlobalDosDevicesShortName    L"\\GLOBAL??"  // \GLOBAL??
+#define ObpGlobalDosDevicesShortName L"\\GLOBAL??" // \GLOBAL??
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg()
 #pragma const_seg()
 #endif
-
+
 BOOLEAN
-ObInitSystem (
-    VOID
-    )
+ObInitSystem(VOID)
 
 /*++
 
@@ -270,9 +220,9 @@ Return Value:
     MM_SYSTEMSIZE SystemSize;
     SECURITY_DESCRIPTOR AuditSd;
     PSECURITY_DESCRIPTOR EffectiveSd;
-    PACL    AuditAllAcl;
-    UCHAR   AuditAllBuffer[250];  // Ample room for the ACL
-    ULONG   AuditAllLength;
+    PACL AuditAllAcl;
+    UCHAR AuditAllBuffer[250]; // Ample room for the ACL
+    ULONG AuditAllLength;
     PACE_HEADER Ace;
     PGENERAL_LOOKASIDE Lookaside;
     ULONG Index;
@@ -290,20 +240,24 @@ Return Value:
 
     SystemSize = MmQuerySystemSize();
 
-    if (SystemSize == MmLargeSystem) {
+    if (SystemSize == MmLargeSystem)
+    {
 
-        if (MmIsThisAnNtAsSystem()) {
+        if (MmIsThisAnNtAsSystem())
+        {
 
             CreateInfoMaxDepth = 64;
             NameBufferMaxDepth = 32;
-
-        } else {
+        }
+        else
+        {
 
             CreateInfoMaxDepth = 32;
             NameBufferMaxDepth = 16;
         }
-
-    } else {
+    }
+    else
+    {
 
         CreateInfoMaxDepth = 3;
         NameBufferMaxDepth = 3;
@@ -313,39 +267,34 @@ Return Value:
     //  PHASE 0 Initialization
     //
 
-    if (InitializationPhase == 0) {
+    if (InitializationPhase == 0)
+    {
 
         //
         //  Initialize the object creation lookaside list.
         //
 
-        ExInitializeSystemLookasideList( &ObpCreateInfoLookasideList,
-                                         NonPagedPool,
-                                         sizeof(OBJECT_CREATE_INFORMATION),
-                                         'iCbO',
-                                         CreateInfoMaxDepth,
-                                         &ExSystemLookasideListHead );
+        ExInitializeSystemLookasideList(&ObpCreateInfoLookasideList, NonPagedPool, sizeof(OBJECT_CREATE_INFORMATION),
+                                        'iCbO', CreateInfoMaxDepth, &ExSystemLookasideListHead);
 
         //
         //  Initialize the name buffer lookaside list.
         //
 
-        ExInitializeSystemLookasideList( &ObpNameBufferLookasideList,
+        ExInitializeSystemLookasideList(&ObpNameBufferLookasideList,
 
 #ifndef OBP_PAGEDPOOL_NAMESPACE
 
-                                         NonPagedPool,
+                                        NonPagedPool,
 
 #else
 
-                                         PagedPool,
+                                        PagedPool,
 
 #endif
 
-                                         OBJECT_NAME_BUFFER_SIZE,
-                                         'mNbO',
-                                         NameBufferMaxDepth,
-                                         &ExSystemLookasideListHead );
+                                        OBJECT_NAME_BUFFER_SIZE, 'mNbO', NameBufferMaxDepth,
+                                        &ExSystemLookasideListHead);
 
         //
         //  Initialize the system create info and name buffer lookaside lists
@@ -376,84 +325,77 @@ Return Value:
 
         ObpInitSecurityDescriptorCache();
 
-        KeInitializeEvent( &ObpDefaultObject, NotificationEvent, TRUE );
-        ExInitializePushLock( &ObpLock );
+        KeInitializeEvent(&ObpDefaultObject, NotificationEvent, TRUE);
+        ExInitializePushLock(&ObpLock);
         PsGetCurrentProcess()->GrantedAccess = PROCESS_ALL_ACCESS;
         PsGetCurrentThread()->GrantedAccess = THREAD_ALL_ACCESS;
 
 #ifndef OBP_PAGEDPOOL_NAMESPACE
-        KeInitializeSpinLock( &ObpDeviceMapLock );
+        KeInitializeSpinLock(&ObpDeviceMapLock);
 #else
-        ExInitializeFastMutex( &ObpDeviceMapLock );
-#endif  // OBP_PAGEDPOOL_NAMESPACE
+        ExInitializeFastMutex(&ObpDeviceMapLock);
+#endif // OBP_PAGEDPOOL_NAMESPACE
 
         //
         //  Initialize the quota system
         //
-        PsInitializeQuotaSystem ();
+        PsInitializeQuotaSystem();
 
         //
         //  Initialize the handle table for the system process and also the global
         //  kernel handle table
         //
 
-        ObpKernelHandleTable = PsGetCurrentProcess()->ObjectTable = ExCreateHandleTable( NULL );
+        ObpKernelHandleTable = PsGetCurrentProcess()->ObjectTable = ExCreateHandleTable(NULL);
 #if DBG
         //
         // On checked make handle reuse take much longer
         //
-        ExSetHandleTableStrictFIFO (ObpKernelHandleTable);
+        ExSetHandleTableStrictFIFO(ObpKernelHandleTable);
 #endif
 
         //
         // Initialize the deferred delete work item.
         //
 
-        ExInitializeWorkItem( &ObpRemoveObjectWorkItem,
-                              ObpProcessRemoveObjectQueue,
-                              NULL );
+        ExInitializeWorkItem(&ObpRemoveObjectWorkItem, ObpProcessRemoveObjectQueue, NULL);
 
         //
         //  Create an object type for the "Type" object.  This is the start of
         //  of the object types and goes in the ObpTypeDirectoryObject.
         //
 
-        RtlZeroMemory( &ObjectTypeInitializer, sizeof( ObjectTypeInitializer ) );
-        ObjectTypeInitializer.Length = sizeof( ObjectTypeInitializer );
+        RtlZeroMemory(&ObjectTypeInitializer, sizeof(ObjectTypeInitializer));
+        ObjectTypeInitializer.Length = sizeof(ObjectTypeInitializer);
         ObjectTypeInitializer.InvalidAttributes = OBJ_OPENLINK;
         ObjectTypeInitializer.PoolType = NonPagedPool;
 
-        RtlInitUnicodeString( &TypeTypeName, L"Type" );
+        RtlInitUnicodeString(&TypeTypeName, L"Type");
         ObjectTypeInitializer.ValidAccessMask = OBJECT_TYPE_ALL_ACCESS;
         ObjectTypeInitializer.GenericMapping = ObpTypeMapping;
-        ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( OBJECT_TYPE );
+        ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(OBJECT_TYPE);
         ObjectTypeInitializer.MaintainTypeList = TRUE;
         ObjectTypeInitializer.UseDefaultObject = TRUE;
         ObjectTypeInitializer.DeleteProcedure = &ObpDeleteObjectType;
-        ObCreateObjectType( &TypeTypeName,
-                            &ObjectTypeInitializer,
-                            (PSECURITY_DESCRIPTOR)NULL,
-                            &ObpTypeObjectType );
+        ObCreateObjectType(&TypeTypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &ObpTypeObjectType);
 
         //
         //  Create the object type for the "Directory" object.
         //
-        
+
         ObjectTypeInitializer.PoolType = OB_NAMESPACE_POOL_TYPE;
 
-        RtlInitUnicodeString( &DirectoryTypeName, L"Directory" );
-        ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( OBJECT_DIRECTORY );
+        RtlInitUnicodeString(&DirectoryTypeName, L"Directory");
+        ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(OBJECT_DIRECTORY);
         ObjectTypeInitializer.ValidAccessMask = DIRECTORY_ALL_ACCESS;
         ObjectTypeInitializer.CaseInsensitive = TRUE;
         ObjectTypeInitializer.GenericMapping = ObpDirectoryMapping;
         ObjectTypeInitializer.UseDefaultObject = TRUE;
         ObjectTypeInitializer.MaintainTypeList = FALSE;
         ObjectTypeInitializer.DeleteProcedure = NULL;
-        ObCreateObjectType( &DirectoryTypeName,
-                            &ObjectTypeInitializer,
-                            (PSECURITY_DESCRIPTOR)NULL,
-                            &ObpDirectoryObjectType );
-        
+        ObCreateObjectType(&DirectoryTypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL,
+                           &ObpDirectoryObjectType);
+
         //
         //  Clear SYNCHRONIZE from the access mask to not allow
         //  synchronization on directory objects
@@ -465,18 +407,16 @@ Return Value:
         //  Create the object type for the "SymbolicLink" object.
         //
 
-        RtlInitUnicodeString( &SymbolicLinkTypeName, L"SymbolicLink" );
-        ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( OBJECT_SYMBOLIC_LINK );
+        RtlInitUnicodeString(&SymbolicLinkTypeName, L"SymbolicLink");
+        ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(OBJECT_SYMBOLIC_LINK);
         ObjectTypeInitializer.ValidAccessMask = SYMBOLIC_LINK_ALL_ACCESS;
         ObjectTypeInitializer.CaseInsensitive = TRUE;
         ObjectTypeInitializer.GenericMapping = ObpSymbolicLinkMapping;
         ObjectTypeInitializer.DeleteProcedure = ObpDeleteSymbolicLink;
         ObjectTypeInitializer.ParseProcedure = ObpParseSymbolicLink;
-        ObCreateObjectType( &SymbolicLinkTypeName,
-                            &ObjectTypeInitializer,
-                            (PSECURITY_DESCRIPTOR)NULL,
-                            &ObpSymbolicLinkObjectType );
-        
+        ObCreateObjectType(&SymbolicLinkTypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL,
+                           &ObpSymbolicLinkObjectType);
+
         //
         //  Clear SYNCHRONIZE from the access mask to not allow
         //  synchronization on symbolic link objects objects
@@ -492,7 +432,7 @@ Return Value:
         ObpInitStackTrace();
 #endif //POOL_TAGGING
 
-#if i386 
+#if i386
 
         //
         //  Initialize the cached granted access structure.  These variables are used
@@ -501,19 +441,22 @@ Return Value:
 
         ObpCurCachedGrantedAccessIndex = 0;
 
-        if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB) {
+        if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB)
+        {
 
-            ObpMaxCachedGrantedAccessIndex = 2*PAGE_SIZE / sizeof( ACCESS_MASK );
-            ObpCachedGrantedAccesses = ExAllocatePoolWithTag( PagedPool, 2*PAGE_SIZE, 'gAbO' );
+            ObpMaxCachedGrantedAccessIndex = 2 * PAGE_SIZE / sizeof(ACCESS_MASK);
+            ObpCachedGrantedAccesses = ExAllocatePoolWithTag(PagedPool, 2 * PAGE_SIZE, 'gAbO');
 
             ObpAccessProtectCloseBit = 0x80000000;
-        } else {
+        }
+        else
+        {
 
             ObpMaxCachedGrantedAccessIndex = 0;
             ObpCachedGrantedAccesses = NULL;
         }
 
-#endif // i386 
+#endif // i386
 
     } // End of Phase 0 Initialization
 
@@ -521,13 +464,15 @@ Return Value:
     //  PHASE 1 Initialization
     //
 
-    if (InitializationPhase == 1) {
+    if (InitializationPhase == 1)
+    {
 
         //
         //  Initialize the per processor nonpaged lookaside lists and descriptors.
         //
 
-        for (Index = 0; Index < (ULONG)KeNumberProcessors; Index += 1) {
+        for (Index = 0; Index < (ULONG)KeNumberProcessors; Index += 1)
+        {
             Prcb = KiProcessorBlock[Index];
 
             //
@@ -535,19 +480,15 @@ Return Value:
             //
 
             Prcb->PPLookasideList[LookasideCreateInfoList].L = &ObpCreateInfoLookasideList;
-            Lookaside = ExAllocatePoolWithTag( NonPagedPool,
-                                               sizeof(GENERAL_LOOKASIDE),
-                                              'ICbO');
+            Lookaside = ExAllocatePoolWithTag(NonPagedPool, sizeof(GENERAL_LOOKASIDE), 'ICbO');
 
-            if (Lookaside != NULL) {
-                ExInitializeSystemLookasideList( Lookaside,
-                                                 NonPagedPool,
-                                                 sizeof(OBJECT_CREATE_INFORMATION),
-                                                 'ICbO',
-                                                 CreateInfoMaxDepth,
-                                                 &ExSystemLookasideListHead );
-
-            } else {
+            if (Lookaside != NULL)
+            {
+                ExInitializeSystemLookasideList(Lookaside, NonPagedPool, sizeof(OBJECT_CREATE_INFORMATION), 'ICbO',
+                                                CreateInfoMaxDepth, &ExSystemLookasideListHead);
+            }
+            else
+            {
                 Lookaside = &ObpCreateInfoLookasideList;
             }
 
@@ -559,16 +500,15 @@ Return Value:
 
 
             Prcb->PPLookasideList[LookasideNameBufferList].L = &ObpNameBufferLookasideList;
-            Lookaside = ExAllocatePoolWithTag( NonPagedPool,
-                                               sizeof(GENERAL_LOOKASIDE),
-                                               'MNbO');
+            Lookaside = ExAllocatePoolWithTag(NonPagedPool, sizeof(GENERAL_LOOKASIDE), 'MNbO');
 
-            if (Lookaside != NULL) {
-                ExInitializeSystemLookasideList( Lookaside,
+            if (Lookaside != NULL)
+            {
+                ExInitializeSystemLookasideList(Lookaside,
 
 #ifndef OBP_PAGEDPOOL_NAMESPACE
 
-                                                 NonPagedPool,
+                                                NonPagedPool,
 
 #else
 
@@ -576,17 +516,15 @@ Return Value:
 
 #endif
 
-                                                 OBJECT_NAME_BUFFER_SIZE,
-                                                 'MNbO',
-                                                 NameBufferMaxDepth,
-                                                 &ExSystemLookasideListHead );
-
-            } else {
+                                                OBJECT_NAME_BUFFER_SIZE, 'MNbO', NameBufferMaxDepth,
+                                                &ExSystemLookasideListHead);
+            }
+            else
+            {
                 Lookaside = &ObpNameBufferLookasideList;
             }
 
             Prcb->PPLookasideList[LookasideNameBufferList].P = Lookaside;
-
         }
 
         EffectiveSd = SePublicDefaultUnrestrictedSd;
@@ -595,44 +533,40 @@ Return Value:
         //  This code is only executed if base auditing is turned on.
         //
 
-        if ((ObpAuditBaseDirectories != 0) || (ObpAuditBaseObjects != 0)) {
+        if ((ObpAuditBaseDirectories != 0) || (ObpAuditBaseObjects != 0))
+        {
 
             //
             //  build an SACL to audit
             //
 
             AuditAllAcl = (PACL)AuditAllBuffer;
-            AuditAllLength = (ULONG)sizeof(ACL) +
-                               ((ULONG)sizeof(SYSTEM_AUDIT_ACE)) +
-                               SeLengthSid(SeWorldSid);
+            AuditAllLength = (ULONG)sizeof(ACL) + ((ULONG)sizeof(SYSTEM_AUDIT_ACE)) + SeLengthSid(SeWorldSid);
 
-            ASSERT( sizeof(AuditAllBuffer)   >   AuditAllLength );
+            ASSERT(sizeof(AuditAllBuffer) > AuditAllLength);
 
-            Status = RtlCreateAcl( AuditAllAcl, AuditAllLength, ACL_REVISION2);
+            Status = RtlCreateAcl(AuditAllAcl, AuditAllLength, ACL_REVISION2);
 
-            ASSERT( NT_SUCCESS(Status) );
+            ASSERT(NT_SUCCESS(Status));
 
-            Status = RtlAddAuditAccessAce ( AuditAllAcl,
-                                            ACL_REVISION2,
-                                            GENERIC_ALL,
-                                            SeWorldSid,
-                                            TRUE,  TRUE ); //Audit success and failure
-            ASSERT( NT_SUCCESS(Status) );
+            Status = RtlAddAuditAccessAce(AuditAllAcl, ACL_REVISION2, GENERIC_ALL, SeWorldSid, TRUE,
+                                          TRUE); //Audit success and failure
+            ASSERT(NT_SUCCESS(Status));
 
-            Status = RtlGetAce( AuditAllAcl, 0,  (PVOID)&Ace );
+            Status = RtlGetAce(AuditAllAcl, 0, (PVOID)&Ace);
 
-            ASSERT( NT_SUCCESS(Status) );
+            ASSERT(NT_SUCCESS(Status));
 
-            if (ObpAuditBaseDirectories != 0) {
+            if (ObpAuditBaseDirectories != 0)
+            {
 
                 Ace->AceFlags |= (CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
             }
 
-            if (ObpAuditBaseObjects != 0) {
+            if (ObpAuditBaseObjects != 0)
+            {
 
-                Ace->AceFlags |= (OBJECT_INHERIT_ACE    |
-                                  CONTAINER_INHERIT_ACE |
-                                  INHERIT_ONLY_ACE);
+                Ace->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
             }
 
             //
@@ -641,24 +575,23 @@ Return Value:
             //
 
             EffectiveSd = (PSECURITY_DESCRIPTOR)&AuditSd;
-            Status = RtlCreateSecurityDescriptor( EffectiveSd,
-                                                  SECURITY_DESCRIPTOR_REVISION1 );
+            Status = RtlCreateSecurityDescriptor(EffectiveSd, SECURITY_DESCRIPTOR_REVISION1);
 
-            ASSERT( NT_SUCCESS(Status) );
+            ASSERT(NT_SUCCESS(Status));
 
-            Status = RtlSetDaclSecurityDescriptor( EffectiveSd,
-                                                   TRUE,        // DaclPresent
-                                                   SePublicDefaultUnrestrictedDacl,
-                                                   FALSE );     // DaclDefaulted
+            Status = RtlSetDaclSecurityDescriptor(EffectiveSd,
+                                                  TRUE, // DaclPresent
+                                                  SePublicDefaultUnrestrictedDacl,
+                                                  FALSE); // DaclDefaulted
 
-            ASSERT( NT_SUCCESS(Status) );
+            ASSERT(NT_SUCCESS(Status));
 
-            Status = RtlSetSaclSecurityDescriptor( EffectiveSd,
-                                                   TRUE,        // DaclPresent
-                                                   AuditAllAcl,
-                                                   FALSE );     // DaclDefaulted
+            Status = RtlSetSaclSecurityDescriptor(EffectiveSd,
+                                                  TRUE, // DaclPresent
+                                                  AuditAllAcl,
+                                                  FALSE); // DaclDefaulted
 
-            ASSERT( NT_SUCCESS(Status) );
+            ASSERT(NT_SUCCESS(Status));
         }
 
         //
@@ -670,176 +603,151 @@ Return Value:
         //  Create a directory object for the root directory
         //
 
-        RtlInitUnicodeString( &RootDirectoryName, L"\\" );
+        RtlInitUnicodeString(&RootDirectoryName, L"\\");
 
-        InitializeObjectAttributes( &ObjectAttributes,
-                                    &RootDirectoryName,
-                                    OBJ_CASE_INSENSITIVE |
-                                    OBJ_PERMANENT,
-                                    NULL,
-                                    EffectiveSd );
+        InitializeObjectAttributes(&ObjectAttributes, &RootDirectoryName, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, NULL,
+                                   EffectiveSd);
 
-        Status = NtCreateDirectoryObject( &RootDirectoryHandle,
-                                          DIRECTORY_ALL_ACCESS,
-                                          &ObjectAttributes );
+        Status = NtCreateDirectoryObject(&RootDirectoryHandle, DIRECTORY_ALL_ACCESS, &ObjectAttributes);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            return( FALSE );
+            return (FALSE);
         }
 
-        Status = ObReferenceObjectByHandle( RootDirectoryHandle,
-                                            0,
-                                            ObpDirectoryObjectType,
-                                            KernelMode,
-                                            (PVOID *)&ObpRootDirectoryObject,
-                                            NULL );
+        Status = ObReferenceObjectByHandle(RootDirectoryHandle, 0, ObpDirectoryObjectType, KernelMode,
+                                           (PVOID *)&ObpRootDirectoryObject, NULL);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            return( FALSE );
+            return (FALSE);
         }
 
-        Status = NtClose( RootDirectoryHandle );
+        Status = NtClose(RootDirectoryHandle);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            return( FALSE );
+            return (FALSE);
         }
 
         //
         //  Create a directory object for the directory of kernel objects
         //
 
-        Status = RtlCreateSecurityDescriptor (&SecurityDescriptor,
-                                              SECURITY_DESCRIPTOR_REVISION);
+        Status = RtlCreateSecurityDescriptor(&SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
-        if (!NT_SUCCESS (Status)) {
-            return( FALSE );
+        if (!NT_SUCCESS(Status))
+        {
+            return (FALSE);
         }
 
-        DaclLength = sizeof (ACL) + sizeof (ACCESS_ALLOWED_ACE) * 3 +
-                     RtlLengthSid (SeLocalSystemSid) +
-                     RtlLengthSid (SeAliasAdminsSid) +
-                     RtlLengthSid (SeWorldSid);
+        DaclLength = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) * 3 + RtlLengthSid(SeLocalSystemSid) +
+                     RtlLengthSid(SeAliasAdminsSid) + RtlLengthSid(SeWorldSid);
 
-        Dacl = ExAllocatePoolWithTag (PagedPool, DaclLength, 'lcaD');
+        Dacl = ExAllocatePoolWithTag(PagedPool, DaclLength, 'lcaD');
 
-        if (Dacl == NULL) {
-            return( FALSE );
+        if (Dacl == NULL)
+        {
+            return (FALSE);
         }
 
-        Status = RtlCreateAcl (Dacl, DaclLength, ACL_REVISION);
+        Status = RtlCreateAcl(Dacl, DaclLength, ACL_REVISION);
 
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Dacl);
-            return( FALSE );
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Dacl);
+            return (FALSE);
         }
 
-        Status = RtlAddAccessAllowedAce (Dacl,
-                                         ACL_REVISION,
-                                         DIRECTORY_ALL_ACCESS,
-                                         SeAliasAdminsSid);
+        Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, DIRECTORY_ALL_ACCESS, SeAliasAdminsSid);
 
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Dacl);
-            return( FALSE );
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Dacl);
+            return (FALSE);
         }
 
-        Status = RtlAddAccessAllowedAce (Dacl,
-                                         ACL_REVISION,
-                                         DIRECTORY_ALL_ACCESS,
-                                         SeLocalSystemSid);
+        Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, DIRECTORY_ALL_ACCESS, SeLocalSystemSid);
 
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Dacl);
-            return( FALSE );
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Dacl);
+            return (FALSE);
         }
 
-        Status = RtlAddAccessAllowedAce (Dacl,
-                                         ACL_REVISION,
-                                         DIRECTORY_QUERY|DIRECTORY_TRAVERSE|READ_CONTROL,
-                                         SeWorldSid);
+        Status =
+            RtlAddAccessAllowedAce(Dacl, ACL_REVISION, DIRECTORY_QUERY | DIRECTORY_TRAVERSE | READ_CONTROL, SeWorldSid);
 
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Dacl);
-            return( FALSE );
-        }
-      
-        Status = RtlSetDaclSecurityDescriptor (&SecurityDescriptor,
-                                               TRUE,
-                                               Dacl,
-                                               FALSE);
-
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Dacl);
-            return( FALSE );
-        }
-      
-        RtlInitUnicodeString( &TypeDirectoryName, L"\\KernelObjects" );
-
-        InitializeObjectAttributes( &ObjectAttributes,
-                                    &TypeDirectoryName,
-                                    OBJ_CASE_INSENSITIVE |
-                                    OBJ_PERMANENT,
-                                    NULL,
-                                    &SecurityDescriptor );
-
-        Status = NtCreateDirectoryObject( &TypeDirectoryHandle,
-                                          DIRECTORY_ALL_ACCESS,
-                                          &ObjectAttributes );
-
-        if (!NT_SUCCESS( Status )) {
-
-            return( FALSE );
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Dacl);
+            return (FALSE);
         }
 
-        Status = NtClose( TypeDirectoryHandle );
+        Status = RtlSetDaclSecurityDescriptor(&SecurityDescriptor, TRUE, Dacl, FALSE);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Dacl);
+            return (FALSE);
+        }
 
-            return( FALSE );
+        RtlInitUnicodeString(&TypeDirectoryName, L"\\KernelObjects");
+
+        InitializeObjectAttributes(&ObjectAttributes, &TypeDirectoryName, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, NULL,
+                                   &SecurityDescriptor);
+
+        Status = NtCreateDirectoryObject(&TypeDirectoryHandle, DIRECTORY_ALL_ACCESS, &ObjectAttributes);
+
+        if (!NT_SUCCESS(Status))
+        {
+
+            return (FALSE);
+        }
+
+        Status = NtClose(TypeDirectoryHandle);
+
+        if (!NT_SUCCESS(Status))
+        {
+
+            return (FALSE);
         }
 
         //
         //  Create a directory object for the directory of object types
         //
 
-        RtlInitUnicodeString( &TypeDirectoryName, L"\\ObjectTypes" );
+        RtlInitUnicodeString(&TypeDirectoryName, L"\\ObjectTypes");
 
-        InitializeObjectAttributes( &ObjectAttributes,
-                                    &TypeDirectoryName,
-                                    OBJ_CASE_INSENSITIVE |
-                                    OBJ_PERMANENT,
-                                    NULL,
-                                    NULL );
+        InitializeObjectAttributes(&ObjectAttributes, &TypeDirectoryName, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, NULL,
+                                   NULL);
 
-        Status = NtCreateDirectoryObject( &TypeDirectoryHandle,
-                                          DIRECTORY_ALL_ACCESS,
-                                          &ObjectAttributes );
+        Status = NtCreateDirectoryObject(&TypeDirectoryHandle, DIRECTORY_ALL_ACCESS, &ObjectAttributes);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            return( FALSE );
+            return (FALSE);
         }
 
-        Status = ObReferenceObjectByHandle( TypeDirectoryHandle,
-                                            0,
-                                            ObpDirectoryObjectType,
-                                            KernelMode,
-                                            (PVOID *)&ObpTypeDirectoryObject,
-                                            NULL );
+        Status = ObReferenceObjectByHandle(TypeDirectoryHandle, 0, ObpDirectoryObjectType, KernelMode,
+                                           (PVOID *)&ObpTypeDirectoryObject, NULL);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            return( FALSE );
+            return (FALSE);
         }
 
-        Status = NtClose( TypeDirectoryHandle );
+        Status = NtClose(TypeDirectoryHandle);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            return( FALSE );
+            return (FALSE);
         }
 
         //
@@ -851,49 +759,45 @@ Return Value:
         //  entry in the type object types lists.
         //
 
-        ObpInitializeLookupContext( &LookupContext );
-        ObpLockLookupContext ( &LookupContext, ObpTypeDirectoryObject );
+        ObpInitializeLookupContext(&LookupContext);
+        ObpLockLookupContext(&LookupContext, ObpTypeDirectoryObject);
 
         Head = &ObpTypeObjectType->TypeList;
         Next = Head->Flink;
 
-        while (Next != Head) {
+        while (Next != Head)
+        {
 
             //
             //  Right after the creator info is the object header.  Get
             //  the object header and then see if there is a name.
             //
 
-            CreatorInfo = CONTAINING_RECORD( Next,
-                                             OBJECT_HEADER_CREATOR_INFO,
-                                             TypeList );
+            CreatorInfo = CONTAINING_RECORD(Next, OBJECT_HEADER_CREATOR_INFO, TypeList);
 
-            ObjectTypeHeader = (POBJECT_HEADER)(CreatorInfo+1);
+            ObjectTypeHeader = (POBJECT_HEADER)(CreatorInfo + 1);
 
-            NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectTypeHeader );
+            NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectTypeHeader);
 
             //
             //  Check if we have a name and we're not in a directory
             //
 
 
-            if ((NameInfo != NULL) && (NameInfo->Directory == NULL)) {
+            if ((NameInfo != NULL) && (NameInfo->Directory == NULL))
+            {
 
-                if (!ObpLookupDirectoryEntry( ObpTypeDirectoryObject,
-                                              &NameInfo->Name,
-                                              OBJ_CASE_INSENSITIVE,
-                                              FALSE,
-                                              &LookupContext)) {
+                if (!ObpLookupDirectoryEntry(ObpTypeDirectoryObject, &NameInfo->Name, OBJ_CASE_INSENSITIVE, FALSE,
+                                             &LookupContext))
+                {
 
-                    ObpInsertDirectoryEntry( ObpTypeDirectoryObject,
-                                             &LookupContext,
-                                             ObjectTypeHeader );
+                    ObpInsertDirectoryEntry(ObpTypeDirectoryObject, &LookupContext, ObjectTypeHeader);
                 }
             }
 
             Next = Next->Flink;
         }
-        
+
         ObpReleaseLookupContext(&LookupContext);
 
         //
@@ -902,7 +806,8 @@ Return Value:
 
         Status = ObpCreateDosDevicesDirectory();
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return FALSE;
         }
@@ -911,14 +816,10 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-ObDupHandleProcedure (
-    PEPROCESS Process,
-    PHANDLE_TABLE OldObjectTable,
-    PHANDLE_TABLE_ENTRY OldObjectTableEntry,
-    PHANDLE_TABLE_ENTRY ObjectTableEntry
-    )
+ObDupHandleProcedure(PEPROCESS Process, PHANDLE_TABLE OldObjectTable, PHANDLE_TABLE_ENTRY OldObjectTableEntry,
+                     PHANDLE_TABLE_ENTRY ObjectTableEntry)
 
 /*++
 
@@ -952,10 +853,11 @@ Return Value:
     //
     //  If the object table should not be inherited then return false
     //
-    if (!(ObjectTableEntry->ObAttributes & OBJ_INHERIT)) {
+    if (!(ObjectTableEntry->ObAttributes & OBJ_INHERIT))
+    {
 
-        ExUnlockHandleTableEntry (OldObjectTable, OldObjectTableEntry);
-        return( FALSE );
+        ExUnlockHandleTableEntry(OldObjectTable, OldObjectTableEntry);
+        return (FALSE);
     }
 
     //
@@ -970,9 +872,9 @@ Return Value:
     //  Increment the pointer count to the object before we unlock the old entry
     //
 
-    ObpIncrPointerCount (ObjectHeader);
+    ObpIncrPointerCount(ObjectHeader);
 
-    ExUnlockHandleTableEntry (OldObjectTable, OldObjectTableEntry);
+    ExUnlockHandleTableEntry(OldObjectTable, OldObjectTableEntry);
 
     //
     //  If we are tracing the call stacks for cached security indices then
@@ -982,11 +884,13 @@ Return Value:
 
 #if i386
 
-    if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB) {
+    if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB)
+    {
 
-        AccessState.PreviouslyGrantedAccess = ObpTranslateGrantedAccessIndex( ObjectTableEntry->GrantedAccessIndex );
-
-    } else {
+        AccessState.PreviouslyGrantedAccess = ObpTranslateGrantedAccessIndex(ObjectTableEntry->GrantedAccessIndex);
+    }
+    else
+    {
 
         AccessState.PreviouslyGrantedAccess = ObpDecodeGrantedAccess(ObjectTableEntry->GrantedAccess);
     }
@@ -995,38 +899,29 @@ Return Value:
 
     AccessState.PreviouslyGrantedAccess = ObpDecodeGrantedAccess(ObjectTableEntry->GrantedAccess);
 
-#endif // i386 
+#endif // i386
 
     //
     //  Increment the handle count on the object because we've just added
     //  another handle to it.
     //
 
-    Status = ObpIncrementHandleCount( ObInheritHandle,
-                                      Process,
-                                      Object,
-                                      ObjectHeader->Type,
-                                      &AccessState,
-                                      KernelMode,
-                                      0 );
+    Status = ObpIncrementHandleCount(ObInheritHandle, Process, Object, ObjectHeader->Type, &AccessState, KernelMode, 0);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        ObDereferenceObject (Object);
-        return( FALSE );
+        ObDereferenceObject(Object);
+        return (FALSE);
     }
 
 
-    return( TRUE );
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-ObAuditInheritedHandleProcedure (
-    IN PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN HANDLE HandleId,
-    IN PVOID EnumParameter
-    )
+ObAuditInheritedHandleProcedure(IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE HandleId, IN PVOID EnumParameter)
 
 /*++
 
@@ -1058,30 +953,24 @@ Return Value:
     //  Check if we have to do an audit
     //
 
-    if (!(ObjectTableEntry->ObAttributes & OBJ_AUDIT_OBJECT_CLOSE)) {
+    if (!(ObjectTableEntry->ObAttributes & OBJ_AUDIT_OBJECT_CLOSE))
+    {
 
-        return( FALSE );
+        return (FALSE);
     }
 
     //
     //  Do the audit then return for more
     //
 
-    SeAuditHandleDuplication( HandleId,
-                              HandleId,
-                              ProcessAuditInfo->Parent,
-                              ProcessAuditInfo->Process );
+    SeAuditHandleDuplication(HandleId, HandleId, ProcessAuditInfo->Parent, ProcessAuditInfo->Process);
 
-    return( FALSE );
+    return (FALSE);
 }
 
 
-
 NTSTATUS
-ObInitProcess (
-    PEPROCESS ParentProcess OPTIONAL,
-    PEPROCESS NewProcess
-    )
+ObInitProcess(PEPROCESS ParentProcess OPTIONAL, PEPROCESS NewProcess)
 
 /*++
 
@@ -1124,23 +1013,24 @@ Return Value:
     //  we'll start with an empty handle table.
     //
 
-    if (ARGUMENT_PRESENT( ParentProcess )) {
+    if (ARGUMENT_PRESENT(ParentProcess))
+    {
 
-        OldObjectTable = ObReferenceProcessHandleTable (ParentProcess);
+        OldObjectTable = ObReferenceProcessHandleTable(ParentProcess);
 
-        if ( !OldObjectTable ) {
+        if (!OldObjectTable)
+        {
 
             return STATUS_PROCESS_IS_TERMINATING;
         }
 
-        NewObjectTable = ExDupHandleTable( NewProcess,
-                                           OldObjectTable,
-                                           ObDupHandleProcedure );
-
-    } else {
+        NewObjectTable = ExDupHandleTable(NewProcess, OldObjectTable, ObDupHandleProcedure);
+    }
+    else
+    {
 
         OldObjectTable = NULL;
-        NewObjectTable = ExCreateHandleTable( NewProcess );
+        NewObjectTable = ExCreateHandleTable(NewProcess);
     }
 
     //
@@ -1148,7 +1038,8 @@ Return Value:
     //  we must be out of resources
     //
 
-    if ( NewObjectTable ) {
+    if (NewObjectTable)
+    {
 
         //
         //  Set the new processes object table and if we are
@@ -1158,15 +1049,13 @@ Return Value:
 
         NewProcess->ObjectTable = NewObjectTable;
 
-        if ( SeDetailedAuditing ) {
+        if (SeDetailedAuditing)
+        {
 
             ProcessAuditInfo.Process = NewProcess;
-            ProcessAuditInfo.Parent  = ParentProcess;
+            ProcessAuditInfo.Parent = ParentProcess;
 
-            ExEnumHandleTable( NewObjectTable,
-                               ObAuditInheritedHandleProcedure,
-                               (PVOID)&ProcessAuditInfo,
-                               (PHANDLE)NULL );
+            ExEnumHandleTable(NewObjectTable, ObAuditInheritedHandleProcedure, (PVOID)&ProcessAuditInfo, (PHANDLE)NULL);
         }
 
         //
@@ -1174,14 +1063,16 @@ Return Value:
         //  return to our caller
         //
 
-        if ( OldObjectTable ) {
+        if (OldObjectTable)
+        {
 
-            ObDereferenceProcessHandleTable( ParentProcess );
+            ObDereferenceProcessHandleTable(ParentProcess);
         }
 
         return (STATUS_SUCCESS);
-
-    } else {
+    }
+    else
+    {
 
         //
         //  We're out of resources to null out the new object table field,
@@ -1191,20 +1082,18 @@ Return Value:
 
         NewProcess->ObjectTable = NULL;
 
-        if ( OldObjectTable ) {
+        if (OldObjectTable)
+        {
 
-            ObDereferenceProcessHandleTable( ParentProcess );
+            ObDereferenceProcessHandleTable(ParentProcess);
         }
 
         return (STATUS_INSUFFICIENT_RESOURCES);
     }
 }
 
-
-VOID
-ObInitProcess2 (
-    PEPROCESS NewProcess
-    )
+
+VOID ObInitProcess2(PEPROCESS NewProcess)
 
 /*++
 
@@ -1230,19 +1119,17 @@ Return Value:
     //  Set LIFO ordering of handles for images <= SubSystemVersion 3.50
     //
 
-    if (NewProcess->ObjectTable) {
+    if (NewProcess->ObjectTable)
+    {
 
-        ExSetHandleTableOrder( NewProcess->ObjectTable, (BOOLEAN)(NewProcess->SubSystemVersion <= 0x332) );
+        ExSetHandleTableOrder(NewProcess->ObjectTable, (BOOLEAN)(NewProcess->SubSystemVersion <= 0x332));
     }
 
     return;
 }
 
-
-VOID
-ObDestroyHandleProcedure (
-    IN HANDLE HandleIndex
-    )
+
+VOID ObDestroyHandleProcedure(IN HANDLE HandleIndex)
 
 /*++
 
@@ -1264,17 +1151,13 @@ Return Value:
 --*/
 
 {
-    ZwClose( HandleIndex );
+    ZwClose(HandleIndex);
 
     return;
 }
 
 BOOLEAN
-ObpCloseHandleProcedure (
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry,
-    IN HANDLE Handle,
-    IN PVOID EnumParameter
-    )
+ObpCloseHandleProcedure(IN PHANDLE_TABLE_ENTRY HandleTableEntry, IN HANDLE Handle, IN PVOID EnumParameter)
 /*++
 
 Routine Description:
@@ -1297,19 +1180,12 @@ Return Value:
     POBP_SWEEP_CONTEXT SweepContext;
 
     SweepContext = EnumParameter;
-    ObpCloseHandleTableEntry (SweepContext->HandleTable,
-                              HandleTableEntry,
-                              Handle,
-                              SweepContext->PreviousMode,
-                              TRUE,
-                              TRUE);
+    ObpCloseHandleTableEntry(SweepContext->HandleTable, HandleTableEntry, Handle, SweepContext->PreviousMode, TRUE,
+                             TRUE);
     return TRUE;
 }
 
-VOID
-ObClearProcessHandleTable (
-    PEPROCESS Process
-    )
+VOID ObClearProcessHandleTable(PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -1329,16 +1205,18 @@ Arguments:
     PETHREAD CurrentThread;
     OBP_SWEEP_CONTEXT SweepContext;
 
-    ObjectTable = ObReferenceProcessHandleTable (Process);
+    ObjectTable = ObReferenceProcessHandleTable(Process);
 
-    if (ObjectTable == NULL) {
+    if (ObjectTable == NULL)
+    {
         return;
     }
 
 
-    CurrentThread = PsGetCurrentThread ();
-    if (PsGetCurrentProcessByThread(CurrentThread) != Process) {
-        KeStackAttachProcess (&Process->Pcb, &ApcState);
+    CurrentThread = PsGetCurrentThread();
+    if (PsGetCurrentProcessByThread(CurrentThread) != Process)
+    {
+        KeStackAttachProcess(&Process->Pcb, &ApcState);
         AttachedToProcess = TRUE;
     }
 
@@ -1349,25 +1227,21 @@ Arguments:
     SweepContext.PreviousMode = UserMode;
     SweepContext.HandleTable = ObjectTable;
 
-    ExSweepHandleTable (ObjectTable,
-                        ObpCloseHandleProcedure,
-                        &SweepContext);
+    ExSweepHandleTable(ObjectTable, ObpCloseHandleProcedure, &SweepContext);
 
     KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
-    if (AttachedToProcess == TRUE) {
-        KeUnstackDetachProcess (&ApcState);
+    if (AttachedToProcess == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
     }
 
-    ObDereferenceProcessHandleTable (Process);
+    ObDereferenceProcessHandleTable(Process);
     return;
 }
 
-
-VOID
-ObKillProcess (
-    PEPROCESS Process
-    )
+
+VOID ObKillProcess(PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -1393,17 +1267,17 @@ Return Value:
 
     PAGED_CODE();
 
-    ObpValidateIrql( "ObKillProcess" );
+    ObpValidateIrql("ObKillProcess");
 
     //
     // Wait for any cross process references to finish
     //
-    ExWaitForRundownProtectionRelease (&Process->RundownProtect);
+    ExWaitForRundownProtectionRelease(&Process->RundownProtect);
     //
     // This routine gets recalled multiple times for the same object so just mark the object so future waits
     // work ok.
     //
-    ExRundownCompleted (&Process->RundownProtect);
+    ExRundownCompleted(&Process->RundownProtect);
 
     //
     //  If the process does NOT have an object table, return
@@ -1411,7 +1285,8 @@ Return Value:
 
     ObjectTable = Process->ObjectTable;
 
-    if (ObjectTable != NULL) {
+    if (ObjectTable != NULL)
+    {
 
         PreviousIOHardError = IoSetThreadHardErrorMode(FALSE);
 
@@ -1424,27 +1299,25 @@ Return Value:
         // Close all the handles
         //
 
-        CurrentThread = KeGetCurrentThread ();
+        CurrentThread = KeGetCurrentThread();
 
         KeEnterCriticalRegionThread(CurrentThread);
 
         SweepContext.PreviousMode = KernelMode;
         SweepContext.HandleTable = ObjectTable;
 
-        ExSweepHandleTable (ObjectTable,
-                            ObpCloseHandleProcedure,
-                            &SweepContext);
+        ExSweepHandleTable(ObjectTable, ObpCloseHandleProcedure, &SweepContext);
 
-        ASSERT (ObjectTable->HandleCount == 0);
+        ASSERT(ObjectTable->HandleCount == 0);
 
         KeLeaveCriticalRegionThread(CurrentThread);
 
-        IoSetThreadHardErrorMode( PreviousIOHardError );
+        IoSetThreadHardErrorMode(PreviousIOHardError);
 
 
         Process->ObjectTable = NULL;
 
-        ExDestroyHandleTable( ObjectTable, NULL );
+        ExDestroyHandleTable(ObjectTable, NULL);
     }
 
     //
@@ -1454,14 +1327,15 @@ Return Value:
     return;
 }
 
-
+
 //
 //  The following structure is only used by the enumeration routine
 //  and the callback.  It provides context for the comparison of
 //  the objects.
 //
 
-typedef struct _OBP_FIND_HANDLE_DATA {
+typedef struct _OBP_FIND_HANDLE_DATA
+{
 
     POBJECT_HEADER ObjectHeader;
     POBJECT_TYPE ObjectType;
@@ -1470,11 +1344,7 @@ typedef struct _OBP_FIND_HANDLE_DATA {
 } OBP_FIND_HANDLE_DATA, *POBP_FIND_HANDLE_DATA;
 
 BOOLEAN
-ObpEnumFindHandleProcedure (
-    PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    HANDLE HandleId,
-    PVOID EnumParameter
-    )
+ObpEnumFindHandleProcedure(PHANDLE_TABLE_ENTRY ObjectTableEntry, HANDLE HandleId, PVOID EnumParameter)
 
 /*++
 
@@ -1512,14 +1382,14 @@ Return Value:
 
     ObjectHeader = (POBJECT_HEADER)((ULONG_PTR)ObjectTableEntry->Object & ~OBJ_HANDLE_ATTRIBUTES);
 
-    if ((MatchCriteria->ObjectHeader != NULL) &&
-        (MatchCriteria->ObjectHeader != ObjectHeader)) {
+    if ((MatchCriteria->ObjectHeader != NULL) && (MatchCriteria->ObjectHeader != ObjectHeader))
+    {
 
         return FALSE;
     }
 
-    if ((MatchCriteria->ObjectType != NULL) &&
-        (MatchCriteria->ObjectType != ObjectHeader->Type)) {
+    if ((MatchCriteria->ObjectType != NULL) && (MatchCriteria->ObjectType != ObjectHeader->Type))
+    {
 
         return FALSE;
     }
@@ -1528,7 +1398,8 @@ Return Value:
     //  Check if we have handle information that we need to compare
     //
 
-    if (ARGUMENT_PRESENT( MatchCriteria->HandleInformation )) {
+    if (ARGUMENT_PRESENT(MatchCriteria->HandleInformation))
+    {
 
         //
         //  If we are tracing the call stacks for cached security indices then
@@ -1536,13 +1407,15 @@ Return Value:
         //  straight away the granted access mask.
         //
 
-#if i386 
+#if i386
 
-        if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB) {
+        if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB)
+        {
 
-            GrantedAccess = ObpTranslateGrantedAccessIndex( ObjectTableEntry->GrantedAccessIndex );
-
-        } else {
+            GrantedAccess = ObpTranslateGrantedAccessIndex(ObjectTableEntry->GrantedAccessIndex);
+        }
+        else
+        {
 
             GrantedAccess = ObpDecodeGrantedAccess(ObjectTableEntry->GrantedAccess);
         }
@@ -1561,7 +1434,8 @@ Return Value:
         HandleAttributes = ObpGetHandleAttributes(ObjectTableEntry);
 
         if (MatchCriteria->HandleInformation->HandleAttributes != HandleAttributes ||
-            MatchCriteria->HandleInformation->GrantedAccess != GrantedAccess ) {
+            MatchCriteria->HandleInformation->GrantedAccess != GrantedAccess)
+        {
 
             return FALSE;
         }
@@ -1575,15 +1449,10 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-ObFindHandleForObject (
-    IN PEPROCESS Process,
-    IN PVOID Object OPTIONAL,
-    IN POBJECT_TYPE ObjectType OPTIONAL,
-    IN POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL,
-    OUT PHANDLE Handle
-    )
+ObFindHandleForObject(IN PEPROCESS Process, IN PVOID Object OPTIONAL, IN POBJECT_TYPE ObjectType OPTIONAL,
+                      IN POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL, OUT PHANDLE Handle)
 
 /*++
 
@@ -1629,24 +1498,27 @@ Return Value:
     //  Lock the object object name space
     //
 
-    ObjectTable = ObReferenceProcessHandleTable (Process);
+    ObjectTable = ObReferenceProcessHandleTable(Process);
 
     //
     //  We only do the work if the process has an object table meaning
     //  it isn't going away
     //
 
-    if (ObjectTable != NULL) {
+    if (ObjectTable != NULL)
+    {
 
         //
         //  Set the match parameters that our caller supplied
         //
 
-        if (ARGUMENT_PRESENT( Object )) {
+        if (ARGUMENT_PRESENT(Object))
+        {
 
-            EnumParameter.ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
-
-        } else {
+            EnumParameter.ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
+        }
+        else
+        {
 
             EnumParameter.ObjectHeader = NULL;
         }
@@ -1661,29 +1533,25 @@ Return Value:
         //  translate it to a real handle before returning.
         //
 
-        if (ExEnumHandleTable( ObjectTable,
-                               ObpEnumFindHandleProcedure,
-                               &EnumParameter,
-                               Handle )) {
+        if (ExEnumHandleTable(ObjectTable, ObpEnumFindHandleProcedure, &EnumParameter, Handle))
+        {
 
             Result = TRUE;
         }
 
-        ObDereferenceProcessHandleTable( Process );
+        ObDereferenceProcessHandleTable(Process);
     }
 
     return Result;
 }
 
-
+
 //
 //  Local support routine
 //
 
 NTSTATUS
-ObpCreateDosDevicesDirectory (
-    VOID
-    )
+ObpCreateDosDevicesDirectory(VOID)
 
 /*++
 
@@ -1718,10 +1586,12 @@ Return Value:
     //     0 - LUID device maps are disabled
     //     1 - LUID device maps are enabled
     //
-    if ((ObpProtectionMode == 0) || (ObpLUIDDeviceMapsDisabled != 0)) {
+    if ((ObpProtectionMode == 0) || (ObpLUIDDeviceMapsDisabled != 0))
+    {
         ObpLUIDDeviceMapsEnabled = 0;
     }
-    else {
+    else
+    {
         ObpLUIDDeviceMapsEnabled = 1;
     }
 
@@ -1729,9 +1599,10 @@ Return Value:
     //  Create the security descriptor to use for the \?? directory
     //
 
-    Status = ObpGetDosDevicesProtection( &DosDevicesSD );
+    Status = ObpGetDosDevicesProtection(&DosDevicesSD);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
     }
@@ -1740,19 +1611,14 @@ Return Value:
     //  Create the root directory object for the global \?? directory.
     //
 
-    RtlInitUnicodeString( &RootNameString, ObpGlobalDosDevicesShortName );
+    RtlInitUnicodeString(&RootNameString, ObpGlobalDosDevicesShortName);
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &RootNameString,
-                                OBJ_PERMANENT,
-                                (HANDLE) NULL,
-                                &DosDevicesSD );
+    InitializeObjectAttributes(&ObjectAttributes, &RootNameString, OBJ_PERMANENT, (HANDLE)NULL, &DosDevicesSD);
 
-    Status = NtCreateDirectoryObject( &DirectoryHandle,
-                                      DIRECTORY_ALL_ACCESS,
-                                      &ObjectAttributes );
+    Status = NtCreateDirectoryObject(&DirectoryHandle, DIRECTORY_ALL_ACCESS, &ObjectAttributes);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
     }
@@ -1766,7 +1632,7 @@ Return Value:
     //  device map field is cleared when the EPROCESS access token is set.
     //
 
-    Status = ObSetDeviceMap( NULL, DirectoryHandle );
+    Status = ObSetDeviceMap(NULL, DirectoryHandle);
 
 
     //
@@ -1778,23 +1644,18 @@ Return Value:
     //  link is used to escape out of the current process's DosDevices directory
     //
 
-    RtlInitUnicodeString( &NameString, L"GLOBALROOT" );
-    RtlInitUnicodeString( &TargetString, L"" );
+    RtlInitUnicodeString(&NameString, L"GLOBALROOT");
+    RtlInitUnicodeString(&TargetString, L"");
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &NameString,
-                                OBJ_PERMANENT,
-                                DirectoryHandle,
-                                &DosDevicesSD );
+    InitializeObjectAttributes(&ObjectAttributes, &NameString, OBJ_PERMANENT, DirectoryHandle, &DosDevicesSD);
 
-    Status = NtCreateSymbolicLinkObject( &SymbolicLinkHandle,
-                                         SYMBOLIC_LINK_ALL_ACCESS,
-                                         &ObjectAttributes,
-                                         &TargetString );
+    Status =
+        NtCreateSymbolicLinkObject(&SymbolicLinkHandle, SYMBOLIC_LINK_ALL_ACCESS, &ObjectAttributes, &TargetString);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        NtClose( SymbolicLinkHandle );
+        NtClose(SymbolicLinkHandle);
     }
 
     //
@@ -1806,28 +1667,24 @@ Return Value:
     //  and use the global dosdevices directory. e.g CreateFile("\\\\.\\Global\\NMDev"..);
     //
 
-    RtlInitUnicodeString( &NameString, L"Global" );
+    RtlInitUnicodeString(&NameString, L"Global");
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &NameString,
-                                OBJ_PERMANENT,
-                                DirectoryHandle,
-                                &DosDevicesSD );
+    InitializeObjectAttributes(&ObjectAttributes, &NameString, OBJ_PERMANENT, DirectoryHandle, &DosDevicesSD);
 
-    Status = NtCreateSymbolicLinkObject( &SymbolicLinkHandle,
-                                         SYMBOLIC_LINK_ALL_ACCESS,
-                                         &ObjectAttributes,
-                                         &RootNameString );
+    Status =
+        NtCreateSymbolicLinkObject(&SymbolicLinkHandle, SYMBOLIC_LINK_ALL_ACCESS, &ObjectAttributes, &RootNameString);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        NtClose( SymbolicLinkHandle );
+        NtClose(SymbolicLinkHandle);
     }
 
 
-    NtClose( DirectoryHandle );
+    NtClose(DirectoryHandle);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
     }
@@ -1838,44 +1695,37 @@ Return Value:
     //  name.
     //
 
-    RtlInitUnicodeString( &RootNameString, (PWCHAR)&ObpDosDevicesShortNameRoot );
+    RtlInitUnicodeString(&RootNameString, (PWCHAR)&ObpDosDevicesShortNameRoot);
 
-    RtlCreateUnicodeString( &NameString, L"\\DosDevices" );
+    RtlCreateUnicodeString(&NameString, L"\\DosDevices");
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &NameString,
-                                OBJ_PERMANENT,
-                                (HANDLE) NULL,
-                                &DosDevicesSD );
+    InitializeObjectAttributes(&ObjectAttributes, &NameString, OBJ_PERMANENT, (HANDLE)NULL, &DosDevicesSD);
 
-    Status = NtCreateSymbolicLinkObject( &SymbolicLinkHandle,
-                                         SYMBOLIC_LINK_ALL_ACCESS,
-                                         &ObjectAttributes,
-                                         &RootNameString );
+    Status =
+        NtCreateSymbolicLinkObject(&SymbolicLinkHandle, SYMBOLIC_LINK_ALL_ACCESS, &ObjectAttributes, &RootNameString);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        NtClose( SymbolicLinkHandle );
+        NtClose(SymbolicLinkHandle);
     }
 
     //
     //  All done with the security descriptor for \??
     //
 
-    ObpFreeDosDevicesProtection( &DosDevicesSD );
+    ObpFreeDosDevicesProtection(&DosDevicesSD);
 
     return STATUS_SUCCESS;
 }
 
-
+
 //
 //  Local support routine
 //
 
 NTSTATUS
-ObpGetDosDevicesProtection (
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+ObpGetDosDevicesProtection(PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -1959,20 +1809,18 @@ Return Value:
     PACE_HEADER ace;
     ACCESS_MASK accessMask;
 
-    UCHAR inheritOnlyFlags = (OBJECT_INHERIT_ACE    |
-                              CONTAINER_INHERIT_ACE |
-                              INHERIT_ONLY_ACE
-                             );
+    UCHAR inheritOnlyFlags = (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
 
     //
     //  NOTE:  This routine expects the value of ObpProtectionMode to have been set
     //
 
-    Status = RtlCreateSecurityDescriptor( SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION );
+    Status = RtlCreateSecurityDescriptor(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
-    ASSERT( NT_SUCCESS( Status ) );
+    ASSERT(NT_SUCCESS(Status));
 
-    if (ObpProtectionMode & 0x00000001) {
+    if (ObpProtectionMode & 0x00000001)
+    {
 
         //
         //  Dacl:
@@ -1984,22 +1832,20 @@ Return Value:
         //          Grant:  Owner:   All Access             (Inherit Only)
         //
 
-        aclLength = sizeof( ACL )                           +
-                    6 * sizeof( ACCESS_ALLOWED_ACE )        +
-                    (2*RtlLengthSid( SeWorldSid ))          +
-                    (2*RtlLengthSid( SeLocalSystemSid ))    +
-                    RtlLengthSid( SeAliasAdminsSid )        +
-                    RtlLengthSid( SeCreatorOwnerSid );
+        aclLength = sizeof(ACL) + 6 * sizeof(ACCESS_ALLOWED_ACE) + (2 * RtlLengthSid(SeWorldSid)) +
+                    (2 * RtlLengthSid(SeLocalSystemSid)) + RtlLengthSid(SeAliasAdminsSid) +
+                    RtlLengthSid(SeCreatorOwnerSid);
 
-        dacl = (PACL)ExAllocatePool(PagedPool, aclLength );
+        dacl = (PACL)ExAllocatePool(PagedPool, aclLength);
 
-        if (dacl == NULL) {
+        if (dacl == NULL)
+        {
 
             return STATUS_NO_MEMORY;
         }
 
-        Status = RtlCreateAcl( dacl, aclLength, ACL_REVISION2);
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlCreateAcl(dacl, aclLength, ACL_REVISION2);
+        ASSERT(NT_SUCCESS(Status));
 
         //
         //  Non-inheritable ACEs first
@@ -2009,12 +1855,12 @@ Return Value:
 
         aceIndex = 0;
         accessMask = (GENERIC_READ | GENERIC_EXECUTE);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeWorldSid );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeWorldSid);
+        ASSERT(NT_SUCCESS(Status));
         aceIndex++;
         accessMask = (GENERIC_ALL);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeLocalSystemSid );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeLocalSystemSid);
+        ASSERT(NT_SUCCESS(Status));
 
         //
         //  Inheritable ACEs at the end of the ACL
@@ -2026,44 +1872,45 @@ Return Value:
 
         aceIndex++;
         accessMask = (GENERIC_EXECUTE);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeWorldSid );
-        ASSERT( NT_SUCCESS( Status ) );
-        Status = RtlGetAce( dacl, aceIndex, (PVOID)&ace );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeWorldSid);
+        ASSERT(NT_SUCCESS(Status));
+        Status = RtlGetAce(dacl, aceIndex, (PVOID)&ace);
+        ASSERT(NT_SUCCESS(Status));
         ace->AceFlags |= inheritOnlyFlags;
 
         aceIndex++;
         accessMask = (GENERIC_ALL);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeAliasAdminsSid );
-        ASSERT( NT_SUCCESS( Status ) );
-        Status = RtlGetAce( dacl, aceIndex, (PVOID)&ace );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeAliasAdminsSid);
+        ASSERT(NT_SUCCESS(Status));
+        Status = RtlGetAce(dacl, aceIndex, (PVOID)&ace);
+        ASSERT(NT_SUCCESS(Status));
         ace->AceFlags |= inheritOnlyFlags;
 
         aceIndex++;
         accessMask = (GENERIC_ALL);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeLocalSystemSid );
-        ASSERT( NT_SUCCESS( Status ) );
-        Status = RtlGetAce( dacl, aceIndex, (PVOID)&ace );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeLocalSystemSid);
+        ASSERT(NT_SUCCESS(Status));
+        Status = RtlGetAce(dacl, aceIndex, (PVOID)&ace);
+        ASSERT(NT_SUCCESS(Status));
         ace->AceFlags |= inheritOnlyFlags;
 
         aceIndex++;
         accessMask = (GENERIC_ALL);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeCreatorOwnerSid );
-        ASSERT( NT_SUCCESS( Status ) );
-        Status = RtlGetAce( dacl, aceIndex, (PVOID)&ace );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeCreatorOwnerSid);
+        ASSERT(NT_SUCCESS(Status));
+        Status = RtlGetAce(dacl, aceIndex, (PVOID)&ace);
+        ASSERT(NT_SUCCESS(Status));
         ace->AceFlags |= inheritOnlyFlags;
 
-        Status = RtlSetDaclSecurityDescriptor( SecurityDescriptor,
-                                               TRUE,               //DaclPresent,
-                                               dacl,               //Dacl
-                                               FALSE );            //!DaclDefaulted
+        Status = RtlSetDaclSecurityDescriptor(SecurityDescriptor,
+                                              TRUE,   //DaclPresent,
+                                              dacl,   //Dacl
+                                              FALSE); //!DaclDefaulted
 
-        ASSERT( NT_SUCCESS( Status ) );
-
-    } else {
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else
+    {
 
         //
         //  DACL:
@@ -2072,20 +1919,19 @@ Return Value:
         //          Grant:  World:   All Access             (Inherit Only)
         //
 
-        aclLength = sizeof( ACL )                           +
-                    3 * sizeof( ACCESS_ALLOWED_ACE )        +
-                    (2*RtlLengthSid( SeWorldSid ))          +
-                    RtlLengthSid( SeLocalSystemSid );
+        aclLength = sizeof(ACL) + 3 * sizeof(ACCESS_ALLOWED_ACE) + (2 * RtlLengthSid(SeWorldSid)) +
+                    RtlLengthSid(SeLocalSystemSid);
 
-        dacl = (PACL)ExAllocatePool(PagedPool, aclLength );
+        dacl = (PACL)ExAllocatePool(PagedPool, aclLength);
 
-        if (dacl == NULL) {
+        if (dacl == NULL)
+        {
 
             return STATUS_NO_MEMORY;
         }
 
-        Status = RtlCreateAcl( dacl, aclLength, ACL_REVISION2);
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlCreateAcl(dacl, aclLength, ACL_REVISION2);
+        ASSERT(NT_SUCCESS(Status));
 
         //
         //  Non-inheritable ACEs first
@@ -2095,13 +1941,13 @@ Return Value:
 
         aceIndex = 0;
         accessMask = (GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeWorldSid );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeWorldSid);
+        ASSERT(NT_SUCCESS(Status));
 
         aceIndex++;
         accessMask = (GENERIC_ALL);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeLocalSystemSid );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeLocalSystemSid);
+        ASSERT(NT_SUCCESS(Status));
 
         //
         //  Inheritable ACEs at the end of the ACL
@@ -2110,32 +1956,29 @@ Return Value:
 
         aceIndex++;
         accessMask = (GENERIC_ALL);
-        Status = RtlAddAccessAllowedAce ( dacl, ACL_REVISION2, accessMask, SeWorldSid );
-        ASSERT( NT_SUCCESS( Status ) );
-        Status = RtlGetAce( dacl, aceIndex, (PVOID)&ace );
-        ASSERT( NT_SUCCESS( Status ) );
+        Status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, accessMask, SeWorldSid);
+        ASSERT(NT_SUCCESS(Status));
+        Status = RtlGetAce(dacl, aceIndex, (PVOID)&ace);
+        ASSERT(NT_SUCCESS(Status));
         ace->AceFlags |= inheritOnlyFlags;
 
-        Status = RtlSetDaclSecurityDescriptor( SecurityDescriptor,
-                                               TRUE,               //DaclPresent,
-                                               dacl,               //Dacl
-                                               FALSE );            //!DaclDefaulted
+        Status = RtlSetDaclSecurityDescriptor(SecurityDescriptor,
+                                              TRUE,   //DaclPresent,
+                                              dacl,   //Dacl
+                                              FALSE); //!DaclDefaulted
 
-        ASSERT( NT_SUCCESS( Status ) );
+        ASSERT(NT_SUCCESS(Status));
     }
 
     return STATUS_SUCCESS;
 }
 
-
+
 //
 //  Local support routine
 //
 
-VOID
-ObpFreeDosDevicesProtection (
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+VOID ObpFreeDosDevicesProtection(PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -2159,26 +2002,19 @@ Return Value:
     PACL Dacl;
     BOOLEAN DaclPresent, Defaulted;
 
-    Status = RtlGetDaclSecurityDescriptor ( SecurityDescriptor,
-                                            &DaclPresent,
-                                            &Dacl,
-                                            &Defaulted );
+    Status = RtlGetDaclSecurityDescriptor(SecurityDescriptor, &DaclPresent, &Dacl, &Defaulted);
 
-    ASSERT( NT_SUCCESS( Status ) );
-    ASSERT( DaclPresent );
-    ASSERT( Dacl != NULL );
+    ASSERT(NT_SUCCESS(Status));
+    ASSERT(DaclPresent);
+    ASSERT(Dacl != NULL);
 
-    ExFreePool( (PVOID)Dacl );
+    ExFreePool((PVOID)Dacl);
 
     return;
 }
 
 BOOLEAN
-ObpShutdownCloseHandleProcedure (
-    IN PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN HANDLE HandleId,
-    IN PVOID EnumParameter
-    )
+ObpShutdownCloseHandleProcedure(IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE HandleId, IN PVOID EnumParameter)
 
 /*++
 
@@ -2205,7 +2041,7 @@ Return Value:
 {
 
     POBJECT_HEADER ObjectHeader;
-    PULONG         NumberOfOpenHandles;
+    PULONG NumberOfOpenHandles;
 
     //
     //  Get the object header from the table entry and then copy over the information
@@ -2217,30 +2053,24 @@ Return Value:
     //  Dump the leak info for the checked build
     //
 
-    KdPrint(("\tFound object %p (handle %08lx)\n",
-              &ObjectHeader->Body,
-              HandleId
-            ));
+    KdPrint(("\tFound object %p (handle %08lx)\n", &ObjectHeader->Body, HandleId));
 
     NumberOfOpenHandles = (PULONG)EnumParameter;
     ASSERT(NumberOfOpenHandles);
 
     ++*NumberOfOpenHandles;
 
-    return( FALSE );
+    return (FALSE);
 }
 
 extern PLIST_ENTRY *ObsSecurityDescriptorCache;
 
-
+
 //
 //  Object manager shutdown routine
 //
 
-VOID
-ObShutdownSystem (
-    IN ULONG Phase
-    )
+VOID ObShutdownSystem(IN ULONG Phase)
 
 /*++
 
@@ -2257,21 +2087,18 @@ Return Value:
 --*/
 
 {
-    switch (Phase) {
+    switch (Phase)
+    {
     case 0:
     {
-        ULONG                    Bucket,
-                                 Depth,
-                                 SymlinkHitDepth;
-        POBJECT_TYPE             ObjectType;
+        ULONG Bucket, Depth, SymlinkHitDepth;
+        POBJECT_TYPE ObjectType;
         POBJECT_HEADER_NAME_INFO NameInfo;
-        KIRQL                    SaveIrql;
-        POBJECT_HEADER           ObjectHeader;
-        POBJECT_DIRECTORY        Directory,
-                                 DescentDirectory;
-        POBJECT_DIRECTORY_ENTRY  OldDirectoryEntry,
-                                *DirectoryEntryPtr;
-        PVOID                    Object;
+        KIRQL SaveIrql;
+        POBJECT_HEADER ObjectHeader;
+        POBJECT_DIRECTORY Directory, DescentDirectory;
+        POBJECT_DIRECTORY_ENTRY OldDirectoryEntry, *DirectoryEntryPtr;
+        PVOID Object;
 
         Directory = ObpRootDirectoryObject;
 
@@ -2284,37 +2111,40 @@ Return Value:
         Depth = 1;
         SymlinkHitDepth = 1;
 
-        while (Directory) {
+        while (Directory)
+        {
 
             ASSERT(Depth);
 
-      restart_dir_walk:
+        restart_dir_walk:
             ASSERT(Directory);
 
-            for (Bucket = 0;
-                 Bucket < NUMBER_HASH_BUCKETS;
-                 Bucket++) {
+            for (Bucket = 0; Bucket < NUMBER_HASH_BUCKETS; Bucket++)
+            {
 
                 DirectoryEntryPtr = Directory->HashBuckets + Bucket;
-                while (*DirectoryEntryPtr) {
+                while (*DirectoryEntryPtr)
+                {
                     Object = (*DirectoryEntryPtr)->Object;
-                    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+                    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
                     ObjectType = ObjectHeader->Type;
-                    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+                    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-                    if (DescentDirectory) {
+                    if (DescentDirectory)
+                    {
                         // We're recovering from a descent; we want to
                         // iterate forward until we're past the
                         // directory which we were just processing.
-                        if (Object == DescentDirectory) {
+                        if (Object == DescentDirectory)
+                        {
                             DescentDirectory = NULL;
-                            if (SymlinkHitDepth > Depth) {
+                            if (SymlinkHitDepth > Depth)
+                            {
                                 // We hit a symlink in that descent, which
                                 // potentially rearranged the buckets in
                                 // this chain; we need to rescan the
                                 // entire chain.
-                                DirectoryEntryPtr =
-                                    Directory->HashBuckets + Bucket;
+                                DirectoryEntryPtr = Directory->HashBuckets + Bucket;
                                 SymlinkHitDepth = Depth;
                                 continue;
                             }
@@ -2326,55 +2156,55 @@ Return Value:
                         // to deal with a symlink readjustment --
                         // either way, march forward.
 
-                        DirectoryEntryPtr =
-                            &(*DirectoryEntryPtr)->ChainLink;
+                        DirectoryEntryPtr = &(*DirectoryEntryPtr)->ChainLink;
 
                         continue;
                     }
 
-                    if (ObjectType == ObpTypeObjectType) {
+                    if (ObjectType == ObpTypeObjectType)
+                    {
                         // We'll clean these up later
                         // Keep going down the chain
-                        DirectoryEntryPtr =
-                            &(*DirectoryEntryPtr)->ChainLink;
+                        DirectoryEntryPtr = &(*DirectoryEntryPtr)->ChainLink;
                         continue;
-                    } else if (ObjectType == ObpDirectoryObjectType) {
+                    }
+                    else if (ObjectType == ObpDirectoryObjectType)
+                    {
                         // Iteratively descend
                         Directory = Object;
                         Depth++;
                         goto restart_dir_walk;
-                    } else {
+                    }
+                    else
+                    {
                         // It's an object not related to Ob object
                         // management; mark it non-permanent, and if
                         // it doesn't have any handles, remove it from
                         // the directory (delete the name and
                         // dereference it once).
 
-                        ObpLockObject( ObjectHeader );
+                        ObpLockObject(ObjectHeader);
 
                         ObjectHeader->Flags &= ~OB_FLAG_PERMANENT_OBJECT;
 
-                        ObpUnlockObject( ObjectHeader );
+                        ObpUnlockObject(ObjectHeader);
 
-                        if (ObjectHeader->HandleCount == 0) {
+                        if (ObjectHeader->HandleCount == 0)
+                        {
                             OldDirectoryEntry = *DirectoryEntryPtr;
                             *DirectoryEntryPtr = OldDirectoryEntry->ChainLink;
                             ExFreePool(OldDirectoryEntry);
 
-                            if ( !ObjectType->TypeInfo.SecurityRequired ) {
+                            if (!ObjectType->TypeInfo.SecurityRequired)
+                            {
 
-                                ObpBeginTypeSpecificCallOut( SaveIrql );
+                                ObpBeginTypeSpecificCallOut(SaveIrql);
 
-                                (ObjectType->TypeInfo.SecurityProcedure)( Object,
-                                                                          DeleteSecurityDescriptor,
-                                                                          NULL,
-                                                                          NULL,
-                                                                          NULL,
-                                                                          &ObjectHeader->SecurityDescriptor,
-                                                                          ObjectType->TypeInfo.PoolType,
-                                                                          NULL );
+                                (ObjectType->TypeInfo.SecurityProcedure)(Object, DeleteSecurityDescriptor, NULL, NULL,
+                                                                         NULL, &ObjectHeader->SecurityDescriptor,
+                                                                         ObjectType->TypeInfo.PoolType, NULL);
 
-                                ObpEndTypeSpecificCallOut( SaveIrql, "Security", ObjectType, Object );
+                                ObpEndTypeSpecificCallOut(SaveIrql, "Security", ObjectType, Object);
                             }
 
                             //
@@ -2382,31 +2212,33 @@ Return Value:
                             //  delete the symbolic link
                             //
 
-                            if (ObjectType == ObpSymbolicLinkObjectType) {
+                            if (ObjectType == ObpSymbolicLinkObjectType)
+                            {
                                 SymlinkHitDepth = Depth;
-                                ObpDeleteSymbolicLinkName( (POBJECT_SYMBOLIC_LINK)Object );
+                                ObpDeleteSymbolicLinkName((POBJECT_SYMBOLIC_LINK)Object);
                                 // Since ObpDeleteSymbolicLinkName may
                                 // potentially rearrange our buckets,
                                 // we need to rescan from the
                                 // beginning of this hash chain.
-                                DirectoryEntryPtr =
-                                    Directory->HashBuckets + Bucket;
+                                DirectoryEntryPtr = Directory->HashBuckets + Bucket;
                             }
 
                             //
                             //  Free the name buffer and zero out the name data fields
                             //
 
-                            ExFreePool( NameInfo->Name.Buffer );
+                            ExFreePool(NameInfo->Name.Buffer);
 
                             NameInfo->Name.Buffer = NULL;
                             NameInfo->Name.Length = 0;
                             NameInfo->Name.MaximumLength = 0;
                             NameInfo->Directory = NULL;
 
-                            ObDereferenceObject( Object );
-                            ObDereferenceObject( Directory );
-                        } else {
+                            ObDereferenceObject(Object);
+                            ObDereferenceObject(Directory);
+                        }
+                        else
+                        {
                             // Keep going down the chain
                             DirectoryEntryPtr = &(*DirectoryEntryPtr)->ChainLink;
                         }
@@ -2437,18 +2269,15 @@ Return Value:
 
     case 1:
     {
-        ULONG NumberOfOpenKernelHandles = 0,
-              NumberOfOpenSystemHandles = 0;
+        ULONG NumberOfOpenKernelHandles = 0, NumberOfOpenSystemHandles = 0;
 
         //
         //  Iterate through the handle tables, and look for existing handles
         //
 
         KdPrint(("Scanning open system handles...\n"));
-        ExEnumHandleTable ( PsInitialSystemProcess->ObjectTable,
-                            ObpShutdownCloseHandleProcedure,
-                            &NumberOfOpenSystemHandles,
-                            NULL );
+        ExEnumHandleTable(PsInitialSystemProcess->ObjectTable, ObpShutdownCloseHandleProcedure,
+                          &NumberOfOpenSystemHandles, NULL);
 
         ASSERT(NumberOfOpenKernelHandles == MmNumberOfPagingFiles);
 
@@ -2471,7 +2300,7 @@ Return Value:
         UNICODE_STRING RootNameString;
         PLIST_ENTRY Next, Head;
         POBJECT_HEADER_CREATOR_INFO CreatorInfo;
-        POBJECT_HEADER  ObjectTypeHeader, ObjectHeader;
+        POBJECT_HEADER ObjectTypeHeader, ObjectHeader;
         POBJECT_HEADER_NAME_INFO NameInfo;
         PVOID Object;
 
@@ -2481,14 +2310,15 @@ Return Value:
         //  Free the SecurityDescriptor chche
         //
 
-    //
-    //  Remove all types from the object type directory
-    //
+        //
+        //  Remove all types from the object type directory
+        //
 
         Head = &ObpTypeObjectType->TypeList;
         Next = Head->Flink;
 
-        while (Next != Head) {
+        while (Next != Head)
+        {
 
             PVOID Object;
 
@@ -2497,11 +2327,9 @@ Return Value:
             //  the object header and then see if there is a name
             //
 
-            CreatorInfo = CONTAINING_RECORD( Next,
-                                             OBJECT_HEADER_CREATOR_INFO,
-                                             TypeList );
+            CreatorInfo = CONTAINING_RECORD(Next, OBJECT_HEADER_CREATOR_INFO, TypeList);
 
-            ObjectTypeHeader = (POBJECT_HEADER)(CreatorInfo+1);
+            ObjectTypeHeader = (POBJECT_HEADER)(CreatorInfo + 1);
 
             Object = &ObjectTypeHeader->Body;
 
@@ -2511,100 +2339,81 @@ Return Value:
         }
 
 
-        RtlInitUnicodeString( &RootNameString, L"DosDevices" );
+        RtlInitUnicodeString(&RootNameString, L"DosDevices");
 
-        Status = ObReferenceObjectByName( &RootNameString,
-                                          OBJ_CASE_INSENSITIVE,
-                                          0L,
-                                          0,
-                                          ObpSymbolicLinkObjectType,
-                                          KernelMode,
-                                          NULL,
-                                          &Object
-            );
-        if ( NT_SUCCESS( Status ) ) {
+        Status = ObReferenceObjectByName(&RootNameString, OBJ_CASE_INSENSITIVE, 0L, 0, ObpSymbolicLinkObjectType,
+                                         KernelMode, NULL, &Object);
+        if (NT_SUCCESS(Status))
+        {
 
             ObMakeTemporaryObject(Object);
-            ObDereferenceObject( Object );
+            ObDereferenceObject(Object);
         }
 
-        RtlInitUnicodeString( &RootNameString, L"Global" );
+        RtlInitUnicodeString(&RootNameString, L"Global");
 
-        Status = ObReferenceObjectByName( &RootNameString,
-                                          OBJ_CASE_INSENSITIVE,
-                                          0L,
-                                          0,
-                                          ObpSymbolicLinkObjectType,
-                                          KernelMode,
-                                          NULL,
-                                          &Object
-            );
-        
-        if ( NT_SUCCESS( Status ) ) {
+        Status = ObReferenceObjectByName(&RootNameString, OBJ_CASE_INSENSITIVE, 0L, 0, ObpSymbolicLinkObjectType,
+                                         KernelMode, NULL, &Object);
+
+        if (NT_SUCCESS(Status))
+        {
 
             ObMakeTemporaryObject(Object);
-            ObDereferenceObject( Object );
+            ObDereferenceObject(Object);
         }
 
-        RtlInitUnicodeString( &RootNameString, L"GLOBALROOT" );
+        RtlInitUnicodeString(&RootNameString, L"GLOBALROOT");
 
-        Status = ObReferenceObjectByName( &RootNameString,
-                                          OBJ_CASE_INSENSITIVE,
-                                          0L,
-                                          0,
-                                          ObpSymbolicLinkObjectType,
-                                          KernelMode,
-                                          NULL,
-                                          &Object
-            );
-        if ( NT_SUCCESS( Status ) ) {
+        Status = ObReferenceObjectByName(&RootNameString, OBJ_CASE_INSENSITIVE, 0L, 0, ObpSymbolicLinkObjectType,
+                                         KernelMode, NULL, &Object);
+        if (NT_SUCCESS(Status))
+        {
 
             ObMakeTemporaryObject(Object);
-            ObDereferenceObject( Object );
+            ObDereferenceObject(Object);
         }
 
         //
         //  Destroy the root directory
         //
 
-        ObDereferenceObject( ObpRootDirectoryObject );
+        ObDereferenceObject(ObpRootDirectoryObject);
 
         //
         //  Destroy the ObpDirectoryObjectType object
         //
 
-        ObDereferenceObject( ObpDirectoryObjectType );
+        ObDereferenceObject(ObpDirectoryObjectType);
 
         //
         //  Destroy the ObpSymbolicLinkObjectType
         //
 
-        ObDereferenceObject( ObpSymbolicLinkObjectType );
+        ObDereferenceObject(ObpSymbolicLinkObjectType);
 
         //
         //  Destroy the type directory object
         //
 
-        ObDereferenceObject( ObpTypeDirectoryObject );
+        ObDereferenceObject(ObpTypeDirectoryObject);
 
         //
         //  Destroy the ObpTypeObjectType
         //
 
-        ObDereferenceObject( ObpTypeObjectType );
+        ObDereferenceObject(ObpTypeObjectType);
 
         //
         //  Free the ObpCachedGrantedAccesses pool
         //
 
-#if i386 
-        if (ObpCachedGrantedAccesses) {
-            ExFreePool( ObpCachedGrantedAccesses );
+#if i386
+        if (ObpCachedGrantedAccesses)
+        {
+            ExFreePool(ObpCachedGrantedAccesses);
         }
-#endif // i386 
+#endif // i386
 
     } // default Phase (2)
     } // switch (Phase)
 }
-
-

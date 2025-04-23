@@ -55,15 +55,15 @@ Revision History:
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'  pP')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, '  pP')
 #undef ExAllocatePoolWithQuota
-#define ExAllocatePoolWithQuota(a,b) ExAllocatePoolWithQuotaTag(a,b,'  pP')
+#define ExAllocatePoolWithQuota(a, b) ExAllocatePoolWithQuotaTag(a, b, '  pP')
 #endif
 
 //
 // For XP SP1, we could not do any UI change, so these are temporary place holders.
 //
-#define STATUS_PNP_INVALID_ID   ((NTSTATUS)0xC0040038L)
+#define STATUS_PNP_INVALID_ID ((NTSTATUS)0xC0040038L)
 #define PpSetInvalidIDEvent(s)
 
 #define FAULT_INJECT_INVALID_ID 1

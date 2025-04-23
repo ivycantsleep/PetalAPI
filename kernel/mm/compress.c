@@ -21,7 +21,7 @@ Revision History:
 
 #include "mi.h"
 
-#if defined (_MI_COMPRESSION)
+#if defined(_MI_COMPRESSION)
 
 Enable the #if 0 code in cmdat3.c to allow Ratio specification.
 
@@ -29,33 +29,26 @@ Enable the #if 0 code in cmdat3.c to allow Ratio specification.
 // Compression public interface.
 //
 
-#define MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION      0x1
+#define MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION 0x1
 
-typedef 
-NTSTATUS
-(*PMM_SET_COMPRESSION_THRESHOLD) (
-    IN ULONGLONG CompressionByteThreshold
-    );
+    typedef NTSTATUS (*PMM_SET_COMPRESSION_THRESHOLD)(IN ULONGLONG CompressionByteThreshold);
 
-typedef struct _MM_COMPRESSION_CONTEXT {
+typedef struct _MM_COMPRESSION_CONTEXT
+{
     ULONG Version;
     ULONG SizeInBytes;
     ULONGLONG ReservedBytes;
     PMM_SET_COMPRESSION_THRESHOLD SetCompressionThreshold;
 } MM_COMPRESSION_CONTEXT, *PMM_COMPRESSION_CONTEXT;
 
-#define MM_COMPRESSION_VERSION_INITIAL  1
-#define MM_COMPRESSION_VERSION_CURRENT  1
+#define MM_COMPRESSION_VERSION_INITIAL 1
+#define MM_COMPRESSION_VERSION_CURRENT 1
 
 NTSTATUS
-MmRegisterCompressionDevice (
-    IN PMM_COMPRESSION_CONTEXT Context
-    );
+MmRegisterCompressionDevice(IN PMM_COMPRESSION_CONTEXT Context);
 
 NTSTATUS
-MmDeregisterCompressionDevice (
-    IN PMM_COMPRESSION_CONTEXT Context
-    );
+MmDeregisterCompressionDevice(IN PMM_COMPRESSION_CONTEXT Context);
 
 //
 // This defaults to 75% but can be overridden in the registry.  At this
@@ -63,7 +56,7 @@ MmDeregisterCompressionDevice (
 // that memory management can zero pages to make more memory available.
 //
 
-#define MI_DEFAULT_COMPRESSION_THRESHOLD    75
+#define MI_DEFAULT_COMPRESSION_THRESHOLD 75
 
 ULONG MmCompressionThresholdRatio;
 
@@ -79,9 +72,10 @@ KIRQL MiCompressionIrql;
 // Note there is also code in dynmem.c that is dependent on this #define.
 //
 
-#if defined (_MI_COMPRESSION_SUPPORTED_)
+#if defined(_MI_COMPRESSION_SUPPORTED_)
 
-typedef struct _MI_COMPRESSION_INFO {
+typedef struct _MI_COMPRESSION_INFO
+{
     ULONG IsrPageProcessed;
     ULONG DpcPageProcessed;
     ULONG IsrForcedDpc;
@@ -101,41 +95,26 @@ typedef struct _MI_COMPRESSION_INFO {
 
 } MI_COMPRESSION_INFO, *PMI_COMPRESSION_INFO;
 
-MI_COMPRESSION_INFO MiCompressionInfo;      // LWFIX - temp remove.
+MI_COMPRESSION_INFO MiCompressionInfo; // LWFIX - temp remove.
 
 PFN_NUMBER MiCompressionOverHeadInPages;
 
 PKDPC MiCompressionDpcArray;
 CCHAR MiCompressionProcessors;
 
-VOID
-MiCompressionDispatch (
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID MiCompressionDispatch(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
 PVOID
-MiMapCompressionInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex
-    );
+MiMapCompressionInHyperSpace(IN PFN_NUMBER PageFrameIndex);
 
-VOID
-MiUnmapCompressionInHyperSpace (
-    VOID
-    );
+VOID MiUnmapCompressionInHyperSpace(VOID);
 
 SIZE_T
-MiMakeCompressibleMemoryAtDispatch (
-    IN SIZE_T NumberOfBytes OPTIONAL
-    );
+MiMakeCompressibleMemoryAtDispatch(IN SIZE_T NumberOfBytes OPTIONAL);
 
-
+
 NTSTATUS
-MmRegisterCompressionDevice (
-    IN PMM_COMPRESSION_CONTEXT Context
-    )
+MmRegisterCompressionDevice(IN PMM_COMPRESSION_CONTEXT Context)
 
 /*++
 
@@ -166,13 +145,15 @@ Environment:
     CCHAR NumberProcessors;
     PKDPC CompressionDpcArray;
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    if (Context->Version != MM_COMPRESSION_VERSION_CURRENT) {
+    if (Context->Version != MM_COMPRESSION_VERSION_CURRENT)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-    if (Context->SizeInBytes < sizeof (MM_COMPRESSION_CONTEXT)) {
+    if (Context->SizeInBytes < sizeof(MM_COMPRESSION_CONTEXT))
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
@@ -180,7 +161,8 @@ Environment:
     // If the subsequent hot-add cannot succeed then fail this API now.
     //
 
-    if (MmDynamicPfn == 0) {
+    if (MmDynamicPfn == 0)
+    {
         return STATUS_NOT_SUPPORTED;
     }
 
@@ -188,14 +170,15 @@ Environment:
     // Hardware that can't generate a configurable interrupt is not supported.
     //
 
-    if (Context->SetCompressionThreshold == NULL) {
+    if (Context->SetCompressionThreshold == NULL)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
     //
     // ReservedBytes indicates the number of reserved bytes required by the
     // underlying hardware.  For example, some hardware might have:
-    //                    
+    //
     //  1.  translation tables which are 1/64 of the fictional RAM total.
     //
     //  2.  the first MB of memory is never compressed.
@@ -209,13 +192,16 @@ Environment:
 
     OverHeadInPages = (PFN_COUNT)(Context->ReservedBytes / PAGE_SIZE);
 
-    if (MmResidentAvailablePages < (SPFN_NUMBER) OverHeadInPages) {
+    if (MmResidentAvailablePages < (SPFN_NUMBER)OverHeadInPages)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if (MmAvailablePages < OverHeadInPages) {
-        MmEmptyAllWorkingSets ();
-        if (MmAvailablePages < OverHeadInPages) {
+    if (MmAvailablePages < OverHeadInPages)
+    {
+        MmEmptyAllWorkingSets();
+        if (MmAvailablePages < OverHeadInPages)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
     }
@@ -227,46 +213,48 @@ Environment:
 
     NumberProcessors = KeNumberProcessors;
 
-    CompressionDpcArray = ExAllocatePoolWithTag (NonPagedPool,
-                                             NumberProcessors * sizeof (KDPC),
-                                             'pDmM');
+    CompressionDpcArray = ExAllocatePoolWithTag(NonPagedPool, NumberProcessors * sizeof(KDPC), 'pDmM');
 
-    if (CompressionDpcArray == NULL) {
+    if (CompressionDpcArray == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    for (Processor = 0; Processor < NumberProcessors; Processor += 1) {
+    for (Processor = 0; Processor < NumberProcessors; Processor += 1)
+    {
 
-        KeInitializeDpc (CompressionDpcArray + Processor, MiCompressionDispatch, NULL);
+        KeInitializeDpc(CompressionDpcArray + Processor, MiCompressionDispatch, NULL);
 
         //
         // Set importance so this DPC always gets queued at the head.
         //
 
-        KeSetImportanceDpc (CompressionDpcArray + Processor, HighImportance);
+        KeSetImportanceDpc(CompressionDpcArray + Processor, HighImportance);
 
-        KeSetTargetProcessorDpc (CompressionDpcArray + Processor, Processor);
+        KeSetTargetProcessorDpc(CompressionDpcArray + Processor, Processor);
     }
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (MmCompressionThresholdRatio == 0) {
+    if (MmCompressionThresholdRatio == 0)
+    {
         MmCompressionThresholdRatio = MI_DEFAULT_COMPRESSION_THRESHOLD;
     }
-    else if (MmCompressionThresholdRatio > 100) {
+    else if (MmCompressionThresholdRatio > 100)
+    {
         MmCompressionThresholdRatio = 100;
     }
 
-    if ((MmResidentAvailablePages < (SPFN_NUMBER) OverHeadInPages) ||
-        (MmAvailablePages < OverHeadInPages)) {
+    if ((MmResidentAvailablePages < (SPFN_NUMBER)OverHeadInPages) || (MmAvailablePages < OverHeadInPages))
+    {
 
-        UNLOCK_PFN (OldIrql);
-        ExFreePool (CompressionDpcArray);
+        UNLOCK_PFN(OldIrql);
+        ExFreePool(CompressionDpcArray);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     MmResidentAvailablePages -= OverHeadInPages;
-    MmAvailablePages -= (PFN_COUNT) OverHeadInPages;
+    MmAvailablePages -= (PFN_COUNT)OverHeadInPages;
 
     //
     // Snap our own copy to prevent busted drivers from causing overcommits
@@ -275,31 +263,31 @@ Environment:
 
     MiCompressionOverHeadInPages += OverHeadInPages;
 
-    ASSERT (MiNumberOfCompressionPages == 0);
+    ASSERT(MiNumberOfCompressionPages == 0);
 
-    ASSERT (MiSetCompressionThreshold == NULL);
+    ASSERT(MiSetCompressionThreshold == NULL);
     MiSetCompressionThreshold = Context->SetCompressionThreshold;
 
-    if (MiCompressionDpcArray == NULL) {
+    if (MiCompressionDpcArray == NULL)
+    {
         MiCompressionDpcArray = CompressionDpcArray;
         CompressionDpcArray = NULL;
         MiCompressionProcessors = NumberProcessors;
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    if (CompressionDpcArray != NULL) {
-        ExFreePool (CompressionDpcArray);
+    if (CompressionDpcArray != NULL)
+    {
+        ExFreePool(CompressionDpcArray);
     }
 
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-MiArmCompressionInterrupt (
-    VOID
-    )
+MiArmCompressionInterrupt(VOID)
 
 /*++
 
@@ -328,7 +316,8 @@ Environment:
 
     MM_PFN_LOCK_ASSERT();
 
-    if (MiSetCompressionThreshold == NULL) {
+    if (MiSetCompressionThreshold == NULL)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -341,29 +330,24 @@ Environment:
     // Note this callout is made with the PFN lock held !
     //
 
-    Status = (*MiSetCompressionThreshold) (ByteThreshold);
+    Status = (*MiSetCompressionThreshold)(ByteThreshold);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // If the hardware fails, all is lost.
         //
 
-        KeBugCheckEx (MEMORY_MANAGEMENT,
-                      0x61941, 
-                      MmNumberOfPhysicalPages,
-                      RealPages,
-                      MmCompressionThresholdRatio);
+        KeBugCheckEx(MEMORY_MANAGEMENT, 0x61941, MmNumberOfPhysicalPages, RealPages, MmCompressionThresholdRatio);
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-MmDeregisterCompressionDevice (
-    IN PMM_COMPRESSION_CONTEXT Context
-    )
+MmDeregisterCompressionDevice(IN PMM_COMPRESSION_CONTEXT Context)
 
 /*++
 
@@ -391,38 +375,33 @@ Environment:
     KIRQL OldIrql;
     PFN_COUNT OverHeadInPages;
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     OverHeadInPages = (PFN_COUNT)(Context->ReservedBytes / PAGE_SIZE);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (OverHeadInPages > MiCompressionOverHeadInPages) {
-        UNLOCK_PFN (OldIrql);
+    if (OverHeadInPages > MiCompressionOverHeadInPages)
+    {
+        UNLOCK_PFN(OldIrql);
         return STATUS_INVALID_PARAMETER;
     }
 
     MmResidentAvailablePages += OverHeadInPages;
     MmAvailablePages += OverHeadInPages;
 
-    ASSERT (MiCompressionOverHeadInPages == OverHeadInPages);
+    ASSERT(MiCompressionOverHeadInPages == OverHeadInPages);
 
     MiCompressionOverHeadInPages -= OverHeadInPages;
 
     MiSetCompressionThreshold = NULL;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     return STATUS_SUCCESS;
 }
 
-VOID
-MiCompressionDispatch (
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID MiCompressionDispatch(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 /*++
 
 Routine Description:
@@ -448,21 +427,19 @@ Environment:
 {
     SIZE_T NumberOfBytes;
 
-    UNREFERENCED_PARAMETER (Dpc);
-    UNREFERENCED_PARAMETER (DeferredContext);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(DeferredContext);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
-    NumberOfBytes = (SIZE_T) SystemArgument1;
+    NumberOfBytes = (SIZE_T)SystemArgument1;
 
     MiCompressionInfo.DpcsFired += 1;
 
-    MiMakeCompressibleMemoryAtDispatch (NumberOfBytes);
+    MiMakeCompressibleMemoryAtDispatch(NumberOfBytes);
 }
-
+
 SIZE_T
-MmMakeCompressibleMemory (
-    IN SIZE_T NumberOfBytes OPTIONAL
-    )
+MmMakeCompressibleMemory(IN SIZE_T NumberOfBytes OPTIONAL)
 
 /*++
 
@@ -512,8 +489,9 @@ Environment:
 
     OldIrql = KeGetCurrentIrql();
 
-    if (OldIrql <= DISPATCH_LEVEL) {
-        return MiMakeCompressibleMemoryAtDispatch (NumberOfBytes);
+    if (OldIrql <= DISPATCH_LEVEL)
+    {
+        return MiMakeCompressibleMemoryAtDispatch(NumberOfBytes);
     }
 
 #if defined(NT_UP)
@@ -526,13 +504,13 @@ Environment:
     // assume the lock is owned and just always queue a DPC in these cases.
     //
 
-    Queued = KeInsertQueueDpc (MiCompressionDpcArray,
-                               (PVOID) NumberOfBytes,
-                               NULL);
-    if (Queued == TRUE) {
+    Queued = KeInsertQueueDpc(MiCompressionDpcArray, (PVOID)NumberOfBytes, NULL);
+    if (Queued == TRUE)
+    {
         MiCompressionInfo.CtxswapForcedDpcInsert += 1;
     }
-    else {
+    else
+    {
         MiCompressionInfo.CtxswapFailedDpcInsert += 1;
     }
 
@@ -545,7 +523,7 @@ Environment:
     // Make sure this interrupt always comes in at the same device IRQL.
     //
 
-    ASSERT ((MiCompressionIrql == 0) || (OldIrql == MiCompressionIrql));
+    ASSERT((MiCompressionIrql == 0) || (OldIrql == MiCompressionIrql));
     MiCompressionIrql = OldIrql;
 #endif
 
@@ -561,28 +539,30 @@ Environment:
     // by an immediate release to decide if it is safe to proceed.
     //
 
-    if (KeTryToAcquireQueuedSpinLockAtRaisedIrql (LockQueueContextSwap) == FALSE) {
+    if (KeTryToAcquireQueuedSpinLockAtRaisedIrql(LockQueueContextSwap) == FALSE)
+    {
 
         //
         // Unable to acquire the spinlock, queue a DPC to pick it up instead.
         //
 
-        for (Processor = 0; Processor < MiCompressionProcessors; Processor += 1) {
+        for (Processor = 0; Processor < MiCompressionProcessors; Processor += 1)
+        {
 
-            Queued = KeInsertQueueDpc (MiCompressionDpcArray + Processor,
-                                       (PVOID) NumberOfBytes,
-                                       NULL);
-            if (Queued == TRUE) {
+            Queued = KeInsertQueueDpc(MiCompressionDpcArray + Processor, (PVOID)NumberOfBytes, NULL);
+            if (Queued == TRUE)
+            {
                 MiCompressionInfo.CtxswapForcedDpcInsert += 1;
             }
-            else {
+            else
+            {
                 MiCompressionInfo.CtxswapFailedDpcInsert += 1;
             }
         }
         return 0;
     }
 
-    KeReleaseQueuedSpinLockFromDpcLevel (LockQueueContextSwap);
+    KeReleaseQueuedSpinLockFromDpcLevel(LockQueueContextSwap);
 
     RequestedPages = NumberOfBytes >> PAGE_SHIFT;
     ActualPages = 0;
@@ -593,21 +573,23 @@ Environment:
 
     LockQueuePfn = &Prcb->LockQueue[LockQueuePfnLock];
 
-    if (KeTryToAcquireQueuedSpinLockAtRaisedIrql (LockQueuePfn) == FALSE) {
+    if (KeTryToAcquireQueuedSpinLockAtRaisedIrql(LockQueuePfn) == FALSE)
+    {
 
         //
         // Unable to acquire the spinlock, queue a DPC to pick it up instead.
         //
 
-        for (Processor = 0; Processor < MiCompressionProcessors; Processor += 1) {
+        for (Processor = 0; Processor < MiCompressionProcessors; Processor += 1)
+        {
 
-            Queued = KeInsertQueueDpc (MiCompressionDpcArray + Processor,
-                                       (PVOID) NumberOfBytes,
-                                       NULL);
-            if (Queued == TRUE) {
+            Queued = KeInsertQueueDpc(MiCompressionDpcArray + Processor, (PVOID)NumberOfBytes, NULL);
+            if (Queued == TRUE)
+            {
                 MiCompressionInfo.PfnForcedDpcInsert += 1;
             }
-            else {
+            else
+            {
                 MiCompressionInfo.PfnFailedDpcInsert += 1;
             }
         }
@@ -620,13 +602,15 @@ Environment:
     // Run the free and transition list and zero the pages.
     //
 
-    while (MemoryList <= StandbyPageList) {
+    while (MemoryList <= StandbyPageList)
+    {
 
         Total = ListHead->Total;
 
         PageFrameIndex = ListHead->Flink;
 
-        while (Total != 0) {
+        while (Total != 0)
+        {
 
             //
             // Transition pages may need restoration which requires a
@@ -635,10 +619,10 @@ Environment:
             // only do the minimum and queue the rest.
             //
 
-            Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+            Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-            if ((Pfn1->u3.e1.InPageError == 1) &&
-                (Pfn1->u3.e1.ReadInProgress == 1)) {
+            if ((Pfn1->u3.e1.InPageError == 1) && (Pfn1->u3.e1.ReadInProgress == 1))
+            {
 
                 //
                 // This page is already zeroed so skip it.
@@ -646,7 +630,8 @@ Environment:
 
                 MiCompressionInfo.IsrSkippedZeroedPage += 1;
             }
-            else {
+            else
+            {
 
                 //
                 // Zero the page directly now instead of waiting for the low
@@ -656,13 +641,13 @@ Environment:
                 // Maybe we should change this someday.
                 //
 
-                ZeroBase = MiMapCompressionInHyperSpace (PageFrameIndex);
+                ZeroBase = MiMapCompressionInHyperSpace(PageFrameIndex);
 
-                RtlZeroMemory (ZeroBase, PAGE_SIZE);
+                RtlZeroMemory(ZeroBase, PAGE_SIZE);
 
-                MiUnmapCompressionInHyperSpace ();
+                MiUnmapCompressionInHyperSpace();
 
-                ASSERT (Pfn1->u3.e2.ReferenceCount == 0);
+                ASSERT(Pfn1->u3.e2.ReferenceCount == 0);
 
                 //
                 // Overload ReadInProgress to signify that collided faults that
@@ -671,12 +656,13 @@ Environment:
                 //
 
                 Pfn1->u3.e1.InPageError = 1;
-                ASSERT (Pfn1->u3.e1.ReadInProgress == 0);
+                ASSERT(Pfn1->u3.e1.ReadInProgress == 0);
                 Pfn1->u3.e1.ReadInProgress = 1;
 
                 ActualPages += 1;
 
-                if (ActualPages == RequestedPages) {
+                if (ActualPages == RequestedPages)
+                {
                     MemoryList = StandbyPageList;
                     ListHead = MmPageLocationList[MemoryList];
                     break;
@@ -690,18 +676,20 @@ Environment:
         ListHead += 1;
     }
 
-    if (ActualPages != 0) {
+    if (ActualPages != 0)
+    {
 
         //
         // Rearm the interrupt as pages have now been zeroed.
         //
 
-        MiArmCompressionInterrupt ();
+        MiArmCompressionInterrupt();
     }
 
-    KeReleaseQueuedSpinLockFromDpcLevel (LockQueuePfn);
+    KeReleaseQueuedSpinLockFromDpcLevel(LockQueuePfn);
 
-    if (ActualPages != 0) {
+    if (ActualPages != 0)
+    {
 
         //
         // Pages were zeroed - queue a DPC to the current processor to
@@ -711,23 +699,24 @@ Environment:
 
         MiCompressionInfo.IsrPageProcessed += (ULONG)ActualPages;
 
-        Processor = (CCHAR) KeGetCurrentProcessorNumber ();
+        Processor = (CCHAR)KeGetCurrentProcessorNumber();
 
         //
         // Ensure a hot-added processor scenario just works.
         //
 
-        if (Processor >= MiCompressionProcessors) {
+        if (Processor >= MiCompressionProcessors)
+        {
             Processor = MiCompressionProcessors;
         }
 
-        Queued = KeInsertQueueDpc (MiCompressionDpcArray + Processor,
-                                   (PVOID) NumberOfBytes,
-                                   NULL);
-        if (Queued == TRUE) {
+        Queued = KeInsertQueueDpc(MiCompressionDpcArray + Processor, (PVOID)NumberOfBytes, NULL);
+        if (Queued == TRUE)
+        {
             MiCompressionInfo.IsrForcedDpc += 1;
         }
-        else {
+        else
+        {
             MiCompressionInfo.IsrFailedDpc += 1;
         }
     }
@@ -735,11 +724,9 @@ Environment:
     return (ActualPages << PAGE_SHIFT);
 #endif
 }
-
+
 SIZE_T
-MiMakeCompressibleMemoryAtDispatch (
-    IN SIZE_T NumberOfBytes OPTIONAL
-    )
+MiMakeCompressibleMemoryAtDispatch(IN SIZE_T NumberOfBytes OPTIONAL)
 
 /*++
 
@@ -775,7 +762,7 @@ Environment:
     PFN_NUMBER ActualPages;
     LOGICAL NeedToZero;
 
-    ASSERT (KeGetCurrentIrql () == DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
 
     RequestedPages = NumberOfBytes >> PAGE_SHIFT;
     ActualPages = 0;
@@ -785,15 +772,17 @@ Environment:
 
     MiCompressionInfo.DpcRan += 1;
 
-    LOCK_PFN2 (OldIrql);
+    LOCK_PFN2(OldIrql);
 
     //
     // Run the free and transition list and zero the pages.
     //
 
-    while (MemoryList <= StandbyPageList) {
+    while (MemoryList <= StandbyPageList)
+    {
 
-        while (ListHead->Total != 0) {
+        while (ListHead->Total != 0)
+        {
 
             //
             // Before removing the page from the head of the list (which will
@@ -802,10 +791,11 @@ Environment:
             //
 
             PageFrameIndex = ListHead->Flink;
-            Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+            Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
             NeedToZero = TRUE;
-            if ((Pfn1->u3.e1.InPageError == 1) && (Pfn1->u3.e1.ReadInProgress == 1)) {
+            if ((Pfn1->u3.e1.InPageError == 1) && (Pfn1->u3.e1.ReadInProgress == 1))
+            {
                 MiCompressionInfo.DpcSkippedZeroedPage += 1;
                 NeedToZero = FALSE;
             }
@@ -817,8 +807,8 @@ Environment:
             // now, go ahead and do it.
             //
 
-            PageFrameIndex2 = MiRemovePageFromList (ListHead);
-            ASSERT (PageFrameIndex == PageFrameIndex2);
+            PageFrameIndex2 = MiRemovePageFromList(ListHead);
+            ASSERT(PageFrameIndex == PageFrameIndex2);
 
             //
             // Zero the page directly now instead of waiting for the low
@@ -828,32 +818,35 @@ Environment:
             // Maybe we should change this someday.
             //
 
-            if (NeedToZero == TRUE) {
-                ZeroBase = MiMapCompressionInHyperSpace (PageFrameIndex);
+            if (NeedToZero == TRUE)
+            {
+                ZeroBase = MiMapCompressionInHyperSpace(PageFrameIndex);
 
-                RtlZeroMemory (ZeroBase, PAGE_SIZE);
+                RtlZeroMemory(ZeroBase, PAGE_SIZE);
 
-                MiUnmapCompressionInHyperSpace ();
+                MiUnmapCompressionInHyperSpace();
             }
 
-            ASSERT (Pfn1->u2.ShareCount == 0);
-            ASSERT (Pfn1->u3.e2.ReferenceCount == 0);
+            ASSERT(Pfn1->u2.ShareCount == 0);
+            ASSERT(Pfn1->u3.e2.ReferenceCount == 0);
 
-            MiInsertPageInList (&MmZeroedPageListHead, PageFrameIndex);
+            MiInsertPageInList(&MmZeroedPageListHead, PageFrameIndex);
 
             //
             // We have changed (zeroed) the contents of this page.
             // If memory mirroring is in progress, the bitmap must be updated.
             //
 
-            if (MiMirroringActive == TRUE) {
-                RtlSetBit (MiMirrorBitMap2, (ULONG)PageFrameIndex);
+            if (MiMirroringActive == TRUE)
+            {
+                RtlSetBit(MiMirrorBitMap2, (ULONG)PageFrameIndex);
             }
 
             MiCompressionInfo.DpcPageProcessed += 1;
             ActualPages += 1;
 
-            if (ActualPages == RequestedPages) {
+            if (ActualPages == RequestedPages)
+            {
                 MemoryList = StandbyPageList;
                 ListHead = MmPageLocationList[MemoryList];
                 break;
@@ -867,17 +860,15 @@ Environment:
     // Rearm the interrupt as pages have now been zeroed.
     //
 
-    MiArmCompressionInterrupt ();
+    MiArmCompressionInterrupt();
 
-    UNLOCK_PFN2 (OldIrql);
+    UNLOCK_PFN2(OldIrql);
 
     return (ActualPages << PAGE_SHIFT);
 }
-
+
 PVOID
-MiMapCompressionInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiMapCompressionInHyperSpace(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -909,43 +900,35 @@ Environment:
     PMMPTE PointerPte;
     PVOID FlushVaPointer;
 
-    ASSERT (PageFrameIndex != 0);
+    ASSERT(PageFrameIndex != 0);
 
     TempPte = ValidPtePte;
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
 
-    FlushVaPointer = (PVOID) (ULONG_PTR) COMPRESSION_MAPPING_PTE;
+    FlushVaPointer = (PVOID)(ULONG_PTR)COMPRESSION_MAPPING_PTE;
 
     //
     // Ensure both modified and accessed bits are set so the hardware doesn't
     // ever write this PTE.
     //
 
-    ASSERT (TempPte.u.Hard.Dirty == 1);
-    ASSERT (TempPte.u.Hard.Accessed == 1);
+    ASSERT(TempPte.u.Hard.Dirty == 1);
+    ASSERT(TempPte.u.Hard.Accessed == 1);
 
-    PointerPte = MiGetPteAddress (COMPRESSION_MAPPING_PTE);
-    ASSERT (PointerPte->u.Long == 0);
+    PointerPte = MiGetPteAddress(COMPRESSION_MAPPING_PTE);
+    ASSERT(PointerPte->u.Long == 0);
 
     //
     // Only flush the TB on the current processor as no context switch can
     // occur while using this mapping.
     //
 
-    KeFlushSingleTb (FlushVaPointer,
-                     TRUE,
-                     FALSE,
-                     (PHARDWARE_PTE) PointerPte,
-                     TempPte.u.Flush);
+    KeFlushSingleTb(FlushVaPointer, TRUE, FALSE, (PHARDWARE_PTE)PointerPte, TempPte.u.Flush);
 
-    return (PVOID) MiGetVirtualAddressMappedByPte (PointerPte);
+    return (PVOID)MiGetVirtualAddressMappedByPte(PointerPte);
 }
-
-__forceinline
-VOID
-MiUnmapCompressionInHyperSpace (
-    VOID
-    )
+
+__forceinline VOID MiUnmapCompressionInHyperSpace(VOID)
 
 /*++
 
@@ -970,13 +953,13 @@ Environment:
 {
     PMMPTE PointerPte;
 
-    PointerPte = MiGetPteAddress (COMPRESSION_MAPPING_PTE);
+    PointerPte = MiGetPteAddress(COMPRESSION_MAPPING_PTE);
 
     //
     // Capture the number of waiters.
     //
 
-    ASSERT (PointerPte->u.Long != 0);
+    ASSERT(PointerPte->u.Long != 0);
 
     PointerPte->u.Long = 0;
 
@@ -984,37 +967,29 @@ Environment:
 }
 #else
 NTSTATUS
-MmRegisterCompressionDevice (
-    IN PMM_COMPRESSION_CONTEXT Context
-    )
+MmRegisterCompressionDevice(IN PMM_COMPRESSION_CONTEXT Context)
 {
-    UNREFERENCED_PARAMETER (Context);
+    UNREFERENCED_PARAMETER(Context);
 
     return STATUS_NOT_SUPPORTED;
 }
 
 NTSTATUS
-MmDeregisterCompressionDevice (
-    IN PMM_COMPRESSION_CONTEXT Context
-    )
+MmDeregisterCompressionDevice(IN PMM_COMPRESSION_CONTEXT Context)
 {
-    UNREFERENCED_PARAMETER (Context);
+    UNREFERENCED_PARAMETER(Context);
 
     return STATUS_NOT_SUPPORTED;
 }
 SIZE_T
-MmMakeCompressibleMemory (
-    IN SIZE_T NumberOfBytes OPTIONAL
-    )
+MmMakeCompressibleMemory(IN SIZE_T NumberOfBytes OPTIONAL)
 {
-    UNREFERENCED_PARAMETER (NumberOfBytes);
+    UNREFERENCED_PARAMETER(NumberOfBytes);
 
     return 0;
 }
 NTSTATUS
-MiArmCompressionInterrupt (
-    VOID
-    )
+MiArmCompressionInterrupt(VOID)
 {
     return STATUS_NOT_SUPPORTED;
 }

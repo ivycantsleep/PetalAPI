@@ -26,9 +26,10 @@ Revision History:
 // Define the debug object thats used to atatch to processes that are being debugged.
 //
 #define DEBUG_OBJECT_DELETE_PENDING (0x1) // Debug object is delete pending.
-#define DEBUG_OBJECT_KILL_ON_CLOSE  (0x2) // Kill all debugged processes on close
+#define DEBUG_OBJECT_KILL_ON_CLOSE (0x2)  // Kill all debugged processes on close
 
-typedef struct _DEBUG_OBJECT {
+typedef struct _DEBUG_OBJECT
+{
     //
     // Event thats set when the EventList is populated.
     //
@@ -47,64 +48,29 @@ typedef struct _DEBUG_OBJECT {
     ULONG Flags;
 } DEBUG_OBJECT, *PDEBUG_OBJECT;
 
-VOID
-DbgkCreateThread(
-    PVOID StartAddress
-    );
+VOID DbgkCreateThread(PVOID StartAddress);
 
-VOID
-DbgkExitThread(
-    NTSTATUS ExitStatus
-    );
+VOID DbgkExitThread(NTSTATUS ExitStatus);
 
-VOID
-DbgkExitProcess(
-    NTSTATUS ExitStatus
-    );
+VOID DbgkExitProcess(NTSTATUS ExitStatus);
 
-VOID
-DbgkMapViewOfSection(
-    IN HANDLE SectionHandle,
-    IN PVOID BaseAddress,
-    IN ULONG SectionOffset,
-    IN ULONG_PTR ViewSize
-    );
+VOID DbgkMapViewOfSection(IN HANDLE SectionHandle, IN PVOID BaseAddress, IN ULONG SectionOffset, IN ULONG_PTR ViewSize);
 
-VOID
-DbgkUnMapViewOfSection(
-    IN PVOID BaseAddress
-    );
+VOID DbgkUnMapViewOfSection(IN PVOID BaseAddress);
 
 BOOLEAN
-DbgkForwardException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN BOOLEAN DebugException,
-    IN BOOLEAN SecondChance
-    );
+DbgkForwardException(IN PEXCEPTION_RECORD ExceptionRecord, IN BOOLEAN DebugException, IN BOOLEAN SecondChance);
 
 NTSTATUS
-DbgkInitialize (
-    VOID
-    );
+DbgkInitialize(VOID);
 
-VOID
-DbgkCopyProcessDebugPort (
-    IN PEPROCESS TargetProcess,
-    IN PEPROCESS SourceProcess
-    );
+VOID DbgkCopyProcessDebugPort(IN PEPROCESS TargetProcess, IN PEPROCESS SourceProcess);
 
 NTSTATUS
-DbgkOpenProcessDebugPort (
-    IN PEPROCESS TargetProcess,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT HANDLE *pHandle
-    );
+DbgkOpenProcessDebugPort(IN PEPROCESS TargetProcess, IN KPROCESSOR_MODE PreviousMode, OUT HANDLE *pHandle);
 
 NTSTATUS
-DbgkClearProcessDebugObject (
-    IN PEPROCESS Process,
-    IN PDEBUG_OBJECT SourceDebugObject
-    );
+DbgkClearProcessDebugObject(IN PEPROCESS Process, IN PDEBUG_OBJECT SourceDebugObject);
 
 
 extern POBJECT_TYPE DbgkDebugObjectType;

@@ -26,7 +26,7 @@ Revision History:
 #ifndef _i386_
 #define _i386_
 
-
+
 // begin_ntddk begin_wdm begin_nthal begin_ntndis begin_ntosp
 
 #if defined(_X86_)
@@ -81,44 +81,44 @@ typedef ULONG PFN_NUMBER, *PPFN_NUMBER;
 
 // begin_nthal
 
-#define NORMAL_DISPATCH_LENGTH 106                  // ntddk wdm
-#define DISPATCH_LENGTH NORMAL_DISPATCH_LENGTH      // ntddk wdm
+#define NORMAL_DISPATCH_LENGTH 106             // ntddk wdm
+#define DISPATCH_LENGTH NORMAL_DISPATCH_LENGTH // ntddk wdm
 
 
 //
 // Define constants to access the bits in CR0.
 //
 
-#define CR0_PG  0x80000000          // paging
-#define CR0_ET  0x00000010          // extension type (80387)
-#define CR0_TS  0x00000008          // task switched
-#define CR0_EM  0x00000004          // emulate math coprocessor
-#define CR0_MP  0x00000002          // math present
-#define CR0_PE  0x00000001          // protection enable
+#define CR0_PG 0x80000000 // paging
+#define CR0_ET 0x00000010 // extension type (80387)
+#define CR0_TS 0x00000008 // task switched
+#define CR0_EM 0x00000004 // emulate math coprocessor
+#define CR0_MP 0x00000002 // math present
+#define CR0_PE 0x00000001 // protection enable
 
 //
 // More CR0 bits; these only apply to the 80486.
 //
 
-#define CR0_CD  0x40000000          // cache disable
-#define CR0_NW  0x20000000          // not write-through
-#define CR0_AM  0x00040000          // alignment mask
-#define CR0_WP  0x00010000          // write protect
-#define CR0_NE  0x00000020          // numeric error
+#define CR0_CD 0x40000000 // cache disable
+#define CR0_NW 0x20000000 // not write-through
+#define CR0_AM 0x00040000 // alignment mask
+#define CR0_WP 0x00010000 // write protect
+#define CR0_NE 0x00000020 // numeric error
 
 //
 // CR4 bits;  These only apply to Pentium
 //
-#define CR4_VME 0x00000001          // V86 mode extensions
-#define CR4_PVI 0x00000002          // Protected mode virtual interrupts
-#define CR4_TSD 0x00000004          // Time stamp disable
-#define CR4_DE  0x00000008          // Debugging Extensions
-#define CR4_PSE 0x00000010          // Page size extensions
-#define CR4_PAE 0x00000020          // Physical address extensions
-#define CR4_MCE 0x00000040          // Machine check enable
-#define CR4_PGE 0x00000080          // Page global enable
-#define CR4_FXSR 0x00000200         // FXSR used by OS
-#define CR4_XMMEXCPT 0x00000400     // XMMI used by OS
+#define CR4_VME 0x00000001      // V86 mode extensions
+#define CR4_PVI 0x00000002      // Protected mode virtual interrupts
+#define CR4_TSD 0x00000004      // Time stamp disable
+#define CR4_DE 0x00000008       // Debugging Extensions
+#define CR4_PSE 0x00000010      // Page size extensions
+#define CR4_PAE 0x00000020      // Physical address extensions
+#define CR4_MCE 0x00000040      // Machine check enable
+#define CR4_PGE 0x00000080      // Page global enable
+#define CR4_FXSR 0x00000200     // FXSR used by OS
+#define CR4_XMMEXCPT 0x00000400 // XMMI used by OS
 
 // end_nthal
 
@@ -126,8 +126,8 @@ typedef ULONG PFN_NUMBER, *PPFN_NUMBER;
 // Define constants to access ThNpxState
 //
 
-#define NPX_STATE_NOT_LOADED    (CR0_TS | CR0_MP)
-#define NPX_STATE_LOADED        0
+#define NPX_STATE_NOT_LOADED (CR0_TS | CR0_MP)
+#define NPX_STATE_LOADED 0
 
 //
 // External references to the labels defined in int.asm
@@ -143,31 +143,31 @@ extern PULONG KiInterruptTemplate2ndDispatch;
 // Interrupt Request Level definitions
 //
 
-#define PASSIVE_LEVEL 0             // Passive release level
-#define LOW_LEVEL 0                 // Lowest interrupt level
-#define APC_LEVEL 1                 // APC interrupt level
-#define DISPATCH_LEVEL 2            // Dispatcher level
+#define PASSIVE_LEVEL 0  // Passive release level
+#define LOW_LEVEL 0      // Lowest interrupt level
+#define APC_LEVEL 1      // APC interrupt level
+#define DISPATCH_LEVEL 2 // Dispatcher level
 
-#define PROFILE_LEVEL 27            // timer used for profiling.
-#define CLOCK1_LEVEL 28             // Interval clock 1 level - Not used on x86
-#define CLOCK2_LEVEL 28             // Interval clock 2 level
-#define IPI_LEVEL 29                // Interprocessor interrupt level
-#define POWER_LEVEL 30              // Power failure level
-#define HIGH_LEVEL 31               // Highest interrupt level
+#define PROFILE_LEVEL 27 // timer used for profiling.
+#define CLOCK1_LEVEL 28  // Interval clock 1 level - Not used on x86
+#define CLOCK2_LEVEL 28  // Interval clock 2 level
+#define IPI_LEVEL 29     // Interprocessor interrupt level
+#define POWER_LEVEL 30   // Power failure level
+#define HIGH_LEVEL 31    // Highest interrupt level
 
 #if defined(NT_UP)
 
-#define SYNCH_LEVEL DISPATCH_LEVEL  // synchronization level - UP system
+#define SYNCH_LEVEL DISPATCH_LEVEL // synchronization level - UP system
 
 #else
 
-#define SYNCH_LEVEL (IPI_LEVEL-1)   // synchronization level - MP system
+#define SYNCH_LEVEL (IPI_LEVEL - 1) // synchronization level - MP system
 
 #endif
 
 // end_ntddk end_wdm end_ntosp
 
-#define KiSynchIrql SYNCH_LEVEL     // enable portable code
+#define KiSynchIrql SYNCH_LEVEL // enable portable code
 
 //
 // Machine type definitions
@@ -196,8 +196,8 @@ extern ULONG KeI386MachineType;
 //              or ring-3.  Ring-1 or Ring-2 support will require changing
 //              this value and all of the code that refers to it.
 
-#define MODE_MASK    1      // ntosp
-#define RPL_MASK     3
+#define MODE_MASK 1 // ntosp
+#define RPL_MASK 3
 
 //
 // SEGMENT_MASK is used to throw away trash part of segment.  Part always
@@ -205,7 +205,7 @@ extern ULONG KeI386MachineType;
 // high order 16 bits are trash.
 //
 
-#define SEGMENT_MASK    0xffff
+#define SEGMENT_MASK 0xffff
 
 //
 // Startup count value for KeStallExecution.  This value is used
@@ -216,22 +216,20 @@ extern ULONG KeI386MachineType;
 #define INITIAL_STALL_COUNT 100
 
 // end_nthal
-
+
 //
 // begin_nthal
 //
 // Macro to extract the high word of a long offset
 //
 
-#define HIGHWORD(l) \
-    ((USHORT)(((ULONG)(l)>>16) & 0xffff))
+#define HIGHWORD(l) ((USHORT)(((ULONG)(l) >> 16) & 0xffff))
 
 //
 // Macro to extract the low word of a long offset
 //
 
-#define LOWWORD(l) \
-    ((USHORT)((ULONG)l & 0x0000ffff))
+#define LOWWORD(l) ((USHORT)((ULONG)l & 0x0000ffff))
 
 //
 // Macro to combine two USHORT offsets into a long offset
@@ -239,9 +237,7 @@ extern ULONG KeI386MachineType;
 
 #if !defined(MAKEULONG)
 
-#define MAKEULONG(x, y) \
-    (((((ULONG)(x))<<16) & 0xffff0000) | \
-    ((ULONG)(y) & 0xffff))
+#define MAKEULONG(x, y) (((((ULONG)(x)) << 16) & 0xffff0000) | ((ULONG)(y) & 0xffff))
 
 #endif
 
@@ -251,8 +247,7 @@ extern ULONG KeI386MachineType;
 // Request a software interrupt.
 //
 
-#define KiRequestSoftwareInterrupt(RequestIrql) \
-    HalRequestSoftwareInterrupt( RequestIrql )
+#define KiRequestSoftwareInterrupt(RequestIrql) HalRequestSoftwareInterrupt(RequestIrql)
 
 // begin_ntddk begin_wdm begin_nthal begin_ntndis begin_ntosp
 
@@ -273,201 +268,87 @@ extern ULONG KeI386MachineType;
 NTKERNELAPI
 UCHAR
 NTAPI
-READ_REGISTER_UCHAR(
-    PUCHAR  Register
-    );
+READ_REGISTER_UCHAR(PUCHAR Register);
 
 NTKERNELAPI
 USHORT
 NTAPI
-READ_REGISTER_USHORT(
-    PUSHORT Register
-    );
+READ_REGISTER_USHORT(PUSHORT Register);
 
 NTKERNELAPI
 ULONG
 NTAPI
-READ_REGISTER_ULONG(
-    PULONG  Register
-    );
+READ_REGISTER_ULONG(PULONG Register);
 
 NTKERNELAPI
-VOID
-NTAPI
-READ_REGISTER_BUFFER_UCHAR(
-    PUCHAR  Register,
-    PUCHAR  Buffer,
-    ULONG   Count
-    );
+VOID NTAPI READ_REGISTER_BUFFER_UCHAR(PUCHAR Register, PUCHAR Buffer, ULONG Count);
 
 NTKERNELAPI
-VOID
-NTAPI
-READ_REGISTER_BUFFER_USHORT(
-    PUSHORT Register,
-    PUSHORT Buffer,
-    ULONG   Count
-    );
+VOID NTAPI READ_REGISTER_BUFFER_USHORT(PUSHORT Register, PUSHORT Buffer, ULONG Count);
 
 NTKERNELAPI
-VOID
-NTAPI
-READ_REGISTER_BUFFER_ULONG(
-    PULONG  Register,
-    PULONG  Buffer,
-    ULONG   Count
-    );
+VOID NTAPI READ_REGISTER_BUFFER_ULONG(PULONG Register, PULONG Buffer, ULONG Count);
 
 
 NTKERNELAPI
-VOID
-NTAPI
-WRITE_REGISTER_UCHAR(
-    PUCHAR  Register,
-    UCHAR   Value
-    );
+VOID NTAPI WRITE_REGISTER_UCHAR(PUCHAR Register, UCHAR Value);
 
 NTKERNELAPI
-VOID
-NTAPI
-WRITE_REGISTER_USHORT(
-    PUSHORT Register,
-    USHORT  Value
-    );
+VOID NTAPI WRITE_REGISTER_USHORT(PUSHORT Register, USHORT Value);
 
 NTKERNELAPI
-VOID
-NTAPI
-WRITE_REGISTER_ULONG(
-    PULONG  Register,
-    ULONG   Value
-    );
+VOID NTAPI WRITE_REGISTER_ULONG(PULONG Register, ULONG Value);
 
 NTKERNELAPI
-VOID
-NTAPI
-WRITE_REGISTER_BUFFER_UCHAR(
-    PUCHAR  Register,
-    PUCHAR  Buffer,
-    ULONG   Count
-    );
+VOID NTAPI WRITE_REGISTER_BUFFER_UCHAR(PUCHAR Register, PUCHAR Buffer, ULONG Count);
 
 NTKERNELAPI
-VOID
-NTAPI
-WRITE_REGISTER_BUFFER_USHORT(
-    PUSHORT Register,
-    PUSHORT Buffer,
-    ULONG   Count
-    );
+VOID NTAPI WRITE_REGISTER_BUFFER_USHORT(PUSHORT Register, PUSHORT Buffer, ULONG Count);
 
 NTKERNELAPI
-VOID
-NTAPI
-WRITE_REGISTER_BUFFER_ULONG(
-    PULONG  Register,
-    PULONG  Buffer,
-    ULONG   Count
-    );
+VOID NTAPI WRITE_REGISTER_BUFFER_ULONG(PULONG Register, PULONG Buffer, ULONG Count);
 
 NTHALAPI
 UCHAR
 NTAPI
-READ_PORT_UCHAR(
-    PUCHAR  Port
-    );
+READ_PORT_UCHAR(PUCHAR Port);
 
 NTHALAPI
 USHORT
 NTAPI
-READ_PORT_USHORT(
-    PUSHORT Port
-    );
+READ_PORT_USHORT(PUSHORT Port);
 
 NTHALAPI
 ULONG
 NTAPI
-READ_PORT_ULONG(
-    PULONG  Port
-    );
+READ_PORT_ULONG(PULONG Port);
 
 NTHALAPI
-VOID
-NTAPI
-READ_PORT_BUFFER_UCHAR(
-    PUCHAR  Port,
-    PUCHAR  Buffer,
-    ULONG   Count
-    );
+VOID NTAPI READ_PORT_BUFFER_UCHAR(PUCHAR Port, PUCHAR Buffer, ULONG Count);
 
 NTHALAPI
-VOID
-NTAPI
-READ_PORT_BUFFER_USHORT(
-    PUSHORT Port,
-    PUSHORT Buffer,
-    ULONG   Count
-    );
+VOID NTAPI READ_PORT_BUFFER_USHORT(PUSHORT Port, PUSHORT Buffer, ULONG Count);
 
 NTHALAPI
-VOID
-NTAPI
-READ_PORT_BUFFER_ULONG(
-    PULONG  Port,
-    PULONG  Buffer,
-    ULONG   Count
-    );
+VOID NTAPI READ_PORT_BUFFER_ULONG(PULONG Port, PULONG Buffer, ULONG Count);
 
 NTHALAPI
-VOID
-NTAPI
-WRITE_PORT_UCHAR(
-    PUCHAR  Port,
-    UCHAR   Value
-    );
+VOID NTAPI WRITE_PORT_UCHAR(PUCHAR Port, UCHAR Value);
 
 NTHALAPI
-VOID
-NTAPI
-WRITE_PORT_USHORT(
-    PUSHORT Port,
-    USHORT  Value
-    );
+VOID NTAPI WRITE_PORT_USHORT(PUSHORT Port, USHORT Value);
 
 NTHALAPI
-VOID
-NTAPI
-WRITE_PORT_ULONG(
-    PULONG  Port,
-    ULONG   Value
-    );
+VOID NTAPI WRITE_PORT_ULONG(PULONG Port, ULONG Value);
 
 NTHALAPI
-VOID
-NTAPI
-WRITE_PORT_BUFFER_UCHAR(
-    PUCHAR  Port,
-    PUCHAR  Buffer,
-    ULONG   Count
-    );
+VOID NTAPI WRITE_PORT_BUFFER_UCHAR(PUCHAR Port, PUCHAR Buffer, ULONG Count);
 
 NTHALAPI
-VOID
-NTAPI
-WRITE_PORT_BUFFER_USHORT(
-    PUSHORT Port,
-    PUSHORT Buffer,
-    ULONG   Count
-    );
+VOID NTAPI WRITE_PORT_BUFFER_USHORT(PUSHORT Port, PUSHORT Buffer, ULONG Count);
 
 NTHALAPI
-VOID
-NTAPI
-WRITE_PORT_BUFFER_ULONG(
-    PULONG  Port,
-    PULONG  Buffer,
-    ULONG   Count
-    );
+VOID NTAPI WRITE_PORT_BUFFER_ULONG(PULONG Port, PULONG Buffer, ULONG Count);
 
 // end_ntndis
 //
@@ -475,7 +356,7 @@ WRITE_PORT_BUFFER_ULONG(
 //
 
 #if PRAGMA_DEPRECATED_DDK
-#pragma deprecated(KeGetDcacheFillSize)      // Use GetDmaAlignment
+#pragma deprecated(KeGetDcacheFillSize) // Use GetDmaAlignment
 #endif
 
 #define KeGetDcacheFillSize() 1L
@@ -486,19 +367,16 @@ WRITE_PORT_BUFFER_ULONG(
 // Fill TB entry.
 //
 
-#define KeFillEntryTb(Pte, Virtual, Invalid)    \
-    if (Invalid != FALSE) {                     \
-        Ke386InvalidateTb (Virtual);            \
+#define KeFillEntryTb(Pte, Virtual, Invalid) \
+    if (Invalid != FALSE)                    \
+    {                                        \
+        Ke386InvalidateTb(Virtual);          \
     }
 
 #if !defined(MIDL_PASS) && defined(_M_IX86) && !defined(_CROSS_PLATFORM_)
 
 FORCEINLINE
-VOID
-NTAPI
-Ke386InvalidateTb (
-    IN PVOID Virtual
-    )
+VOID NTAPI Ke386InvalidateTb(IN PVOID Virtual)
 {
     __asm {
         mov eax, Virtual
@@ -508,12 +386,12 @@ Ke386InvalidateTb (
 
 #endif
 
-NTKERNELAPI                                         // nthal
-VOID                                                // nthal
-KeFlushCurrentTb (                                  // nthal
-    VOID                                            // nthal
-    );                                              // nthal
-                                                    // nthal
+NTKERNELAPI               // nthal
+    VOID                  // nthal
+        KeFlushCurrentTb( // nthal
+            VOID          // nthal
+        );                // nthal
+                          // nthal
 //
 // Data cache, instruction cache, I/O buffer, and write buffer flush routine
 // prototypes.
@@ -535,7 +413,7 @@ KeFlushCurrentTb (                                  // nthal
 
 // end_ntddk end_wdm end_ntndis end_ntosp
 
-#define KeYieldProcessor()    __asm { rep nop }
+#define KeYieldProcessor() __asm { rep nop }
 
 // end_nthal
 
@@ -584,25 +462,23 @@ KeFlushCurrentTb (                                  // nthal
 
 #if defined(_M_IX86) && !defined(USER_MODE_CODE)
 
-#pragma warning(disable:4164)
+#pragma warning(disable : 4164)
 #pragma intrinsic(_disable)
 #pragma intrinsic(_enable)
-#pragma warning(default:4164)
+#pragma warning(default : 4164)
 
 #endif
 
 #if defined(NT_UP) && !DBG && !defined(USER_MODE_CODE)
 #define ExAcquireFastLock(Lock, OldIrql) _disable()
 #else
-#define ExAcquireFastLock(Lock, OldIrql) \
-    ExAcquireSpinLock(Lock, OldIrql)
+#define ExAcquireFastLock(Lock, OldIrql) ExAcquireSpinLock(Lock, OldIrql)
 #endif
 
 #if defined(NT_UP) && !DBG && !defined(USER_MODE_CODE)
 #define ExReleaseFastLock(Lock, OldIrql) _enable()
 #else
-#define ExReleaseFastLock(Lock, OldIrql) \
-    ExReleaseSpinLock(Lock, OldIrql)
+#define ExReleaseFastLock(Lock, OldIrql) ExReleaseSpinLock(Lock, OldIrql)
 #endif
 
 //
@@ -611,17 +487,9 @@ KeFlushCurrentTb (                                  // nthal
 //
 // begin_nthal
 
-VOID
-FASTCALL
-KiAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    );
+VOID FASTCALL KiAcquireSpinLock(IN PKSPIN_LOCK SpinLock);
 
-VOID
-FASTCALL
-KiReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    );
+VOID FASTCALL KiReleaseSpinLock(IN PKSPIN_LOCK SpinLock);
 
 // end_nthal
 
@@ -639,9 +507,7 @@ KiReleaseSpinLock (
 
 BOOLEAN
 FASTCALL
-KeTestSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    );
+KeTestSpinLock(IN PKSPIN_LOCK SpinLock);
 
 #endif
 
@@ -654,15 +520,18 @@ KeTestSpinLock (
 
 // begin_wdm
 
-#define KeQueryTickCount(CurrentCount ) { \
-    volatile PKSYSTEM_TIME _TickCount = *((PKSYSTEM_TIME *)(&KeTickCount)); \
-    while (TRUE) {                                                          \
-        (CurrentCount)->HighPart = _TickCount->High1Time;                   \
-        (CurrentCount)->LowPart = _TickCount->LowPart;                      \
-        if ((CurrentCount)->HighPart == _TickCount->High2Time) break;       \
-        _asm { rep nop }                                                    \
-    }                                                                       \
-}
+#define KeQueryTickCount(CurrentCount)                                          \
+    {                                                                           \
+        volatile PKSYSTEM_TIME _TickCount = *((PKSYSTEM_TIME *)(&KeTickCount)); \
+        while (TRUE)                                                            \
+        {                                                                       \
+            (CurrentCount)->HighPart = _TickCount->High1Time;                   \
+            (CurrentCount)->LowPart = _TickCount->LowPart;                      \
+            if ((CurrentCount)->HighPart == _TickCount->High2Time)              \
+                break;                                                          \
+            _asm { rep nop }                                                      \
+        }                                                                       \
+    }
 
 // end_wdm
 
@@ -670,27 +539,25 @@ KeTestSpinLock (
 
 // end_ntddk end_nthal end_ntosp
 
-#define KiQueryTickCount(CurrentCount) \
-    while (TRUE) {                                                      \
-        (CurrentCount)->HighPart = KeTickCount.High1Time;               \
-        (CurrentCount)->LowPart = KeTickCount.LowPart;                  \
-        if ((CurrentCount)->HighPart == KeTickCount.High2Time) break;   \
-        _asm { rep nop }                                                \
+#define KiQueryTickCount(CurrentCount)                         \
+    while (TRUE)                                               \
+    {                                                          \
+        (CurrentCount)->HighPart = KeTickCount.High1Time;      \
+        (CurrentCount)->LowPart = KeTickCount.LowPart;         \
+        if ((CurrentCount)->HighPart == KeTickCount.High2Time) \
+            break;                                             \
+        _asm { rep nop }                                         \
     }
 
 // begin_ntddk begin_nthal begin_ntosp
 
-VOID
-NTAPI
-KeQueryTickCount (
-    OUT PLARGE_INTEGER CurrentCount
-    );
+VOID NTAPI KeQueryTickCount(OUT PLARGE_INTEGER CurrentCount);
 
 #endif // defined(_NTDRIVER_) || defined(_NTDDK_) || defined(_NTIFS_)
 
 // end_ntddk end_nthal end_ntosp
 
-
+
 // begin_nthal begin_ntosp
 //
 // 386 hardware structures
@@ -704,7 +571,8 @@ KeQueryTickCount (
 //
 
 
-typedef struct _HARDWARE_PTE_X86 {
+typedef struct _HARDWARE_PTE_X86
+{
     ULONG Valid : 1;
     ULONG Write : 1;
     ULONG Owner : 1;
@@ -716,13 +584,16 @@ typedef struct _HARDWARE_PTE_X86 {
     ULONG Global : 1;
     ULONG CopyOnWrite : 1; // software field
     ULONG Prototype : 1;   // software field
-    ULONG reserved : 1;  // software field
+    ULONG reserved : 1;    // software field
     ULONG PageFrameNumber : 20;
 } HARDWARE_PTE_X86, *PHARDWARE_PTE_X86;
 
-typedef struct _HARDWARE_PTE_X86PAE {
-    union {
-        struct {
+typedef struct _HARDWARE_PTE_X86PAE
+{
+    union
+    {
+        struct
+        {
             ULONGLONG Valid : 1;
             ULONGLONG Write : 1;
             ULONGLONG Owner : 1;
@@ -734,11 +605,12 @@ typedef struct _HARDWARE_PTE_X86PAE {
             ULONGLONG Global : 1;
             ULONGLONG CopyOnWrite : 1; // software field
             ULONGLONG Prototype : 1;   // software field
-            ULONGLONG reserved0 : 1;  // software field
+            ULONGLONG reserved0 : 1;   // software field
             ULONGLONG PageFrameNumber : 26;
-            ULONGLONG reserved1 : 26;  // software field
+            ULONGLONG reserved1 : 26; // software field
         };
-        struct {
+        struct
+        {
             ULONG LowPart;
             ULONG HighPart;
         };
@@ -748,9 +620,10 @@ typedef struct _HARDWARE_PTE_X86PAE {
 //
 // Special check to work around mspdb limitation
 //
-#if defined (_NTSYM_HARDWARE_PTE_SYMBOL_)
-#if !defined (_X86PAE_)
-typedef struct _HARDWARE_PTE {
+#if defined(_NTSYM_HARDWARE_PTE_SYMBOL_)
+#if !defined(_X86PAE_)
+typedef struct _HARDWARE_PTE
+{
     ULONG Valid : 1;
     ULONG Write : 1;
     ULONG Owner : 1;
@@ -762,14 +635,17 @@ typedef struct _HARDWARE_PTE {
     ULONG Global : 1;
     ULONG CopyOnWrite : 1; // software field
     ULONG Prototype : 1;   // software field
-    ULONG reserved : 1;  // software field
+    ULONG reserved : 1;    // software field
     ULONG PageFrameNumber : 20;
 } HARDWARE_PTE, *PHARDWARE_PTE;
 
 #else
-typedef struct _HARDWARE_PTE {
-    union {
-        struct {
+typedef struct _HARDWARE_PTE
+{
+    union
+    {
+        struct
+        {
             ULONGLONG Valid : 1;
             ULONGLONG Write : 1;
             ULONGLONG Owner : 1;
@@ -781,11 +657,12 @@ typedef struct _HARDWARE_PTE {
             ULONGLONG Global : 1;
             ULONGLONG CopyOnWrite : 1; // software field
             ULONGLONG Prototype : 1;   // software field
-            ULONGLONG reserved0 : 1;  // software field
+            ULONGLONG reserved0 : 1;   // software field
             ULONGLONG PageFrameNumber : 26;
-            ULONGLONG reserved1 : 26;  // software field
+            ULONGLONG reserved1 : 26; // software field
         };
-        struct {
+        struct
+        {
             ULONG LowPart;
             ULONG HighPart;
         };
@@ -795,7 +672,7 @@ typedef struct _HARDWARE_PTE {
 
 #else
 
-#if !defined (_X86PAE_)
+#if !defined(_X86PAE_)
 typedef HARDWARE_PTE_X86 HARDWARE_PTE;
 typedef PHARDWARE_PTE_X86 PHARDWARE_PTE;
 #else
@@ -808,41 +685,45 @@ typedef PHARDWARE_PTE_X86PAE PHARDWARE_PTE;
 // GDT Entry
 //
 
-typedef struct _KGDTENTRY {
-    USHORT  LimitLow;
-    USHORT  BaseLow;
-    union {
-        struct {
-            UCHAR   BaseMid;
-            UCHAR   Flags1;     // Declare as bytes to avoid alignment
-            UCHAR   Flags2;     // Problems.
-            UCHAR   BaseHi;
+typedef struct _KGDTENTRY
+{
+    USHORT LimitLow;
+    USHORT BaseLow;
+    union
+    {
+        struct
+        {
+            UCHAR BaseMid;
+            UCHAR Flags1; // Declare as bytes to avoid alignment
+            UCHAR Flags2; // Problems.
+            UCHAR BaseHi;
         } Bytes;
-        struct {
-            ULONG   BaseMid : 8;
-            ULONG   Type : 5;
-            ULONG   Dpl : 2;
-            ULONG   Pres : 1;
-            ULONG   LimitHi : 4;
-            ULONG   Sys : 1;
-            ULONG   Reserved_0 : 1;
-            ULONG   Default_Big : 1;
-            ULONG   Granularity : 1;
-            ULONG   BaseHi : 8;
+        struct
+        {
+            ULONG BaseMid : 8;
+            ULONG Type : 5;
+            ULONG Dpl : 2;
+            ULONG Pres : 1;
+            ULONG LimitHi : 4;
+            ULONG Sys : 1;
+            ULONG Reserved_0 : 1;
+            ULONG Default_Big : 1;
+            ULONG Granularity : 1;
+            ULONG BaseHi : 8;
         } Bits;
     } HighWord;
 } KGDTENTRY, *PKGDTENTRY;
 
-#define TYPE_CODE   0x10  // 11010 = Code, Readable, NOT Conforming, Accessed
-#define TYPE_DATA   0x12  // 10010 = Data, ReadWrite, NOT Expanddown, Accessed
-#define TYPE_TSS    0x01  // 01001 = NonBusy TSS
-#define TYPE_LDT    0x02  // 00010 = LDT
+#define TYPE_CODE 0x10 // 11010 = Code, Readable, NOT Conforming, Accessed
+#define TYPE_DATA 0x12 // 10010 = Data, ReadWrite, NOT Expanddown, Accessed
+#define TYPE_TSS 0x01  // 01001 = NonBusy TSS
+#define TYPE_LDT 0x02  // 00010 = LDT
 
-#define DPL_USER    3
-#define DPL_SYSTEM  0
+#define DPL_USER 3
+#define DPL_SYSTEM 0
 
-#define GRAN_BYTE   0
-#define GRAN_PAGE   1
+#define GRAN_BYTE 0
+#define GRAN_PAGE 1
 
 #define SELECTOR_TABLE_INDEX 0x04
 
@@ -850,11 +731,12 @@ typedef struct _KGDTENTRY {
 // Entry of Interrupt Descriptor Table (IDTENTRY)
 //
 
-typedef struct _KIDTENTRY {
-   USHORT Offset;
-   USHORT Selector;
-   USHORT Access;
-   USHORT ExtendedOffset;
+typedef struct _KIDTENTRY
+{
+    USHORT Offset;
+    USHORT Selector;
+    USHORT Access;
+    USHORT ExtendedOffset;
 } KIDTENTRY;
 
 typedef KIDTENTRY *PKIDTENTRY;
@@ -876,78 +758,82 @@ typedef KIDTENTRY *PKIDTENTRY;
 // There is one for each IOPM.  It is located by subtracting
 // 32 from the IOPM base in the Tss.
 //
-#define INT_DIRECTION_MAP_SIZE   32
-typedef UCHAR   KINT_DIRECTION_MAP[INT_DIRECTION_MAP_SIZE];
+#define INT_DIRECTION_MAP_SIZE 32
+typedef UCHAR KINT_DIRECTION_MAP[INT_DIRECTION_MAP_SIZE];
 
-#define IOPM_COUNT      1           // Number of i/o access maps that
-                                    // exist (in addition to
-                                    // IO_ACCESS_MAP_NONE)
+#define IOPM_COUNT                        \
+    1   // Number of i/o access maps that \
+        // exist (in addition to          \
+        // IO_ACCESS_MAP_NONE)
 
 #define IO_ACCESS_MAP_NONE 0
 
-#define IOPM_SIZE           8192    // Size of map callers can set.
+#define IOPM_SIZE 8192 // Size of map callers can set.
 
-#define PIOPM_SIZE          8196    // Size of structure we must allocate
-                                    // to hold it.
+#define PIOPM_SIZE                             \
+    8196 // Size of structure we must allocate \
+         // to hold it.
 
-typedef UCHAR   KIO_ACCESS_MAP[IOPM_SIZE];
+typedef UCHAR KIO_ACCESS_MAP[IOPM_SIZE];
 
 typedef KIO_ACCESS_MAP *PKIO_ACCESS_MAP;
 
-typedef struct _KiIoAccessMap {
+typedef struct _KiIoAccessMap
+{
     KINT_DIRECTION_MAP DirectionMap;
     UCHAR IoMap[PIOPM_SIZE];
 } KIIO_ACCESS_MAP;
 
 
-typedef struct _KTSS {
+typedef struct _KTSS
+{
 
-    USHORT  Backlink;
-    USHORT  Reserved0;
+    USHORT Backlink;
+    USHORT Reserved0;
 
-    ULONG   Esp0;
-    USHORT  Ss0;
-    USHORT  Reserved1;
+    ULONG Esp0;
+    USHORT Ss0;
+    USHORT Reserved1;
 
-    ULONG   NotUsed1[4];
+    ULONG NotUsed1[4];
 
-    ULONG   CR3;
-    ULONG   Eip;
-    ULONG   EFlags;
-    ULONG   Eax;
-    ULONG   Ecx;
-    ULONG   Edx;
-    ULONG   Ebx;
-    ULONG   Esp;
-    ULONG   Ebp;
-    ULONG   Esi;
-    ULONG   Edi;
+    ULONG CR3;
+    ULONG Eip;
+    ULONG EFlags;
+    ULONG Eax;
+    ULONG Ecx;
+    ULONG Edx;
+    ULONG Ebx;
+    ULONG Esp;
+    ULONG Ebp;
+    ULONG Esi;
+    ULONG Edi;
 
 
-    USHORT  Es;
-    USHORT  Reserved2;
+    USHORT Es;
+    USHORT Reserved2;
 
-    USHORT  Cs;
-    USHORT  Reserved3;
+    USHORT Cs;
+    USHORT Reserved3;
 
-    USHORT  Ss;
-    USHORT  Reserved4;
+    USHORT Ss;
+    USHORT Reserved4;
 
-    USHORT  Ds;
-    USHORT  Reserved5;
+    USHORT Ds;
+    USHORT Reserved5;
 
-    USHORT  Fs;
-    USHORT  Reserved6;
+    USHORT Fs;
+    USHORT Reserved6;
 
-    USHORT  Gs;
-    USHORT  Reserved7;
+    USHORT Gs;
+    USHORT Reserved7;
 
-    USHORT  LDT;
-    USHORT  Reserved8;
+    USHORT LDT;
+    USHORT Reserved8;
 
-    USHORT  Flags;
+    USHORT Flags;
 
-    USHORT  IoMapBase;
+    USHORT IoMapBase;
 
     KIIO_ACCESS_MAP IoMaps[IOPM_COUNT];
 
@@ -959,10 +845,9 @@ typedef struct _KTSS {
 } KTSS, *PKTSS;
 
 
-#define KiComputeIopmOffset(MapNumber)          \
-    (MapNumber == IO_ACCESS_MAP_NONE) ?         \
-        (USHORT)(sizeof(KTSS)) :                    \
-        (USHORT)(FIELD_OFFSET(KTSS, IoMaps[MapNumber-1].IoMap))
+#define KiComputeIopmOffset(MapNumber)                         \
+    (MapNumber == IO_ACCESS_MAP_NONE) ? (USHORT)(sizeof(KTSS)) \
+                                      : (USHORT)(FIELD_OFFSET(KTSS, IoMaps[MapNumber - 1].IoMap))
 
 // begin_windbgkd
 
@@ -972,13 +857,15 @@ typedef struct _KTSS {
 
 #ifdef _X86_
 
-typedef struct _DESCRIPTOR {
-    USHORT  Pad;
-    USHORT  Limit;
-    ULONG   Base;
+typedef struct _DESCRIPTOR
+{
+    USHORT Pad;
+    USHORT Limit;
+    ULONG Base;
 } KDESCRIPTOR, *PKDESCRIPTOR;
 
-typedef struct _KSPECIAL_REGISTERS {
+typedef struct _KSPECIAL_REGISTERS
+{
     ULONG Cr0;
     ULONG Cr2;
     ULONG Cr3;
@@ -1002,7 +889,8 @@ typedef struct _KSPECIAL_REGISTERS {
 // debugger to examine.
 //
 
-typedef struct _KPROCESSOR_STATE {
+typedef struct _KPROCESSOR_STATE
+{
     struct _CONTEXT ContextFrame;
     struct _KSPECIAL_REGISTERS SpecialRegisters;
 } KPROCESSOR_STATE, *PKPROCESSOR_STATE;
@@ -1017,16 +905,17 @@ typedef struct _KPROCESSOR_STATE {
 
 #define PRCB_MAJOR_VERSION 1
 #define PRCB_MINOR_VERSION 1
-#define PRCB_BUILD_DEBUG        0x0001
+#define PRCB_BUILD_DEBUG 0x0001
 #define PRCB_BUILD_UNIPROCESSOR 0x0002
 
-typedef struct _KPRCB {
+typedef struct _KPRCB
+{
 
-//
-// Start of the architecturally defined section of the PRCB. This section
-// may be directly addressed by vendor/platform specific HAL code and will
-// not change from version to version of NT.
-//
+    //
+    // Start of the architecturally defined section of the PRCB. This section
+    // may be directly addressed by vendor/platform specific HAL code and will
+    // not change from version to version of NT.
+    //
     USHORT MinorVersion;
     USHORT MajorVersion;
 
@@ -1034,68 +923,68 @@ typedef struct _KPRCB {
     struct _KTHREAD *NextThread;
     struct _KTHREAD *IdleThread;
 
-    CCHAR  Number;
-    CCHAR  Reserved;
+    CCHAR Number;
+    CCHAR Reserved;
     USHORT BuildType;
     KAFFINITY SetMember;
 
-    CCHAR   CpuType;
-    CCHAR   CpuID;
-    USHORT  CpuStep;
+    CCHAR CpuType;
+    CCHAR CpuID;
+    USHORT CpuStep;
 
     struct _KPROCESSOR_STATE ProcessorState;
 
-    ULONG   KernelReserved[16];         // For use by the kernel
-    ULONG   HalReserved[16];            // For use by Hal
+    ULONG KernelReserved[16]; // For use by the kernel
+    ULONG HalReserved[16];    // For use by Hal
 
-//
-// Per processor lock queue entries.
-//
-// N.B. The following padding is such that the first lock entry falls in the
-//      last eight bytes of a cache line. This makes the dispatcher lock and
-//      the context swap lock lie in separate cache lines.
-//
+    //
+    // Per processor lock queue entries.
+    //
+    // N.B. The following padding is such that the first lock entry falls in the
+    //      last eight bytes of a cache line. This makes the dispatcher lock and
+    //      the context swap lock lie in separate cache lines.
+    //
 
     UCHAR PrcbPad0[28 + 64];
     KSPIN_LOCK_QUEUE LockQueue[16];
     UCHAR PrcbPad1[8];
 
-// End of the architecturally defined section of the PRCB.
-// end_nthal end_ntosp
+    // End of the architecturally defined section of the PRCB.
+    // end_nthal end_ntosp
 
-//
-// Micellaneous counters - 64-byte aligned.
-//
+    //
+    // Micellaneous counters - 64-byte aligned.
+    //
 
     struct _KTHREAD *NpxThread;
-    ULONG   InterruptCount;
-    ULONG   KernelTime;
-    ULONG   UserTime;
-    ULONG   DpcTime;
-    ULONG   DebugDpcTime;
-    ULONG   InterruptTime;
-    ULONG   AdjustDpcThreshold;
-    ULONG   PageColor;
+    ULONG InterruptCount;
+    ULONG KernelTime;
+    ULONG UserTime;
+    ULONG DpcTime;
+    ULONG DebugDpcTime;
+    ULONG InterruptTime;
+    ULONG AdjustDpcThreshold;
+    ULONG PageColor;
     LOGICAL SkipTick;
 
-//
-// MultiThreadSetBusy is TRUE is all the processors in the set are
-// not idle.   This field is only updated in the PRCB of the first
-// member of the SMT set and only by members of the same set.
-//
+    //
+    // MultiThreadSetBusy is TRUE is all the processors in the set are
+    // not idle.   This field is only updated in the PRCB of the first
+    // member of the SMT set and only by members of the same set.
+    //
 
     BOOLEAN MultiThreadSetBusy;
-    UCHAR   Spare2[3];
-    struct _KNODE * ParentNode;         // Node this processor is a member of
-    KAFFINITY MultiThreadProcessorSet;  // Processors in SMT set
-    struct _KPRCB * MultiThreadSetMaster;// Pointer to first proc in SMT set
-    ULONG   ThreadStartCount[2];        // perf data
+    UCHAR Spare2[3];
+    struct _KNODE *ParentNode;           // Node this processor is a member of
+    KAFFINITY MultiThreadProcessorSet;   // Processors in SMT set
+    struct _KPRCB *MultiThreadSetMaster; // Pointer to first proc in SMT set
+    ULONG ThreadStartCount[2];           // perf data
 
-//
-// Performance counters - 64-byte aligned.
-//
-// Cache manager performance counters.
-//
+    //
+    // Performance counters - 64-byte aligned.
+    //
+    // Cache manager performance counters.
+    //
 
     ULONG CcFastReadNoWait;
     ULONG CcFastReadWait;
@@ -1104,9 +993,9 @@ typedef struct _KPRCB {
     ULONG CcCopyReadWait;
     ULONG CcCopyReadNoWaitMiss;
 
-//
-//  Kernel performance counters.
-//
+    //
+    //  Kernel performance counters.
+    //
 
     ULONG KeAlignmentFixupCount;
     ULONG KeContextSwitches;
@@ -1119,36 +1008,36 @@ typedef struct _KPRCB {
     ULONG KeSystemCalls;
     ULONG SpareCounter0[1];
 
-//
-// Nonpaged per processor lookaside lists - 64-byte aligned.
-//
+    //
+    // Nonpaged per processor lookaside lists - 64-byte aligned.
+    //
 
     PP_LOOKASIDE_LIST PPLookasideList[16];
 
-//
-// Nonpaged per processor small pool lookaside lists - 64-byte aligned.
-//
+    //
+    // Nonpaged per processor small pool lookaside lists - 64-byte aligned.
+    //
 
     PP_LOOKASIDE_LIST PPNPagedLookasideList[POOL_SMALL_LISTS];
 
-//
-// Paged per processor small pool lookaside lists - 64-byte aligned.
-//
+    //
+    // Paged per processor small pool lookaside lists - 64-byte aligned.
+    //
 
     PP_LOOKASIDE_LIST PPPagedLookasideList[POOL_SMALL_LISTS];
 
-//
-// MP interprocessor request packet barrier - 64-byte aligned.
-//
+    //
+    // MP interprocessor request packet barrier - 64-byte aligned.
+    //
 
     volatile ULONG PacketBarrier;
     volatile ULONG ReverseStall;
     PVOID IpiFrame;
     UCHAR PrcbPad2[52];
 
-//
-// MP interprocessor request packet and summary - 64-byte aligned.
-//
+    //
+    // MP interprocessor request packet and summary - 64-byte aligned.
+    //
 
     volatile PVOID CurrentPacket[3];
     volatile KAFFINITY TargetSet;
@@ -1156,17 +1045,17 @@ typedef struct _KPRCB {
     volatile ULONG IpiFrozen;
     UCHAR PrcbPad3[40];
 
-//
-// MP interprocessor request summary and packet address - 64-byte aligned.
-//
+    //
+    // MP interprocessor request summary and packet address - 64-byte aligned.
+    //
 
     volatile ULONG RequestSummary;
     volatile struct _KPRCB *SignalDone;
     UCHAR PrcbPad4[56];
 
-//
-// DPC listhead, counts, and batching parameters - 64-byte aligned.
-//
+    //
+    // DPC listhead, counts, and batching parameters - 64-byte aligned.
+    //
 
     LIST_ENTRY DpcListHead;
     PVOID DpcStack;
@@ -1181,34 +1070,34 @@ typedef struct _KPRCB {
     ULONG QuantumEnd;
     UCHAR PrcbPad5[16];
 
-//
-// DPC list lock - 64-byte aligned.
-//
+    //
+    // DPC list lock - 64-byte aligned.
+    //
 
     KSPIN_LOCK DpcLock;
     UCHAR PrcbPad6[60];
 
-//
-// Per processor chained interrupt list.
-//
+    //
+    // Per processor chained interrupt list.
+    //
 
     PVOID ChainedInterruptList;
 
-//
-// I/O IRP float.
-//
+    //
+    // I/O IRP float.
+    //
 
     LONG LookasideIrpFloat;
 
-//
-// Spare fields.
-//
+    //
+    // Spare fields.
+    //
 
-    ULONG   SpareFields0[6];
+    ULONG SpareFields0[6];
 
-//
-// Processor information.
-//
+    //
+    // Processor information.
+    //
 
     UCHAR VendorString[13];
     UCHAR InitialApicId;
@@ -1217,19 +1106,19 @@ typedef struct _KPRCB {
     ULONG FeatureBits;
     LARGE_INTEGER UpdateSignature;
 
-//
-// Npx save area - 16-byte aligned.
-//
+    //
+    // Npx save area - 16-byte aligned.
+    //
 
     FX_SAVE_AREA NpxSaveArea;
 
-//
-// Processors power state
-//
+    //
+    // Processors power state
+    //
 
     PROCESSOR_POWER_STATE PowerState;
 
-// begin_nthal begin_ntosp
+    // begin_nthal begin_ntosp
 
 } KPRCB, *PKPRCB, *RESTRICTED_POINTER PRKPRCB;
 
@@ -1264,51 +1153,52 @@ C_ASSERT(((FIELD_OFFSET(KPRCB, NpxSaveArea) + 32) & (16 - 1)) == 0);
 #define PCR_MINOR_VERSION 1
 #define PCR_MAJOR_VERSION 1
 
-typedef struct _KPCR {
+typedef struct _KPCR
+{
 
-//
-// Start of the architecturally defined section of the PCR. This section
-// may be directly addressed by vendor/platform specific HAL code and will
-// not change from version to version of NT.
-//
+    //
+    // Start of the architecturally defined section of the PCR. This section
+    // may be directly addressed by vendor/platform specific HAL code and will
+    // not change from version to version of NT.
+    //
 
-    NT_TIB  NtTib;
-    struct _KPCR *SelfPcr;              // flat address of this PCR
-    struct _KPRCB *Prcb;                // pointer to Prcb
-    KIRQL   Irql;
-    ULONG   IRR;
-    ULONG   IrrActive;
-    ULONG   IDR;
-    PVOID   KdVersionBlock;
+    NT_TIB NtTib;
+    struct _KPCR *SelfPcr; // flat address of this PCR
+    struct _KPRCB *Prcb;   // pointer to Prcb
+    KIRQL Irql;
+    ULONG IRR;
+    ULONG IrrActive;
+    ULONG IDR;
+    PVOID KdVersionBlock;
 
     struct _KIDTENTRY *IDT;
     struct _KGDTENTRY *GDT;
-    struct _KTSS      *TSS;
-    USHORT  MajorVersion;
-    USHORT  MinorVersion;
+    struct _KTSS *TSS;
+    USHORT MajorVersion;
+    USHORT MinorVersion;
     KAFFINITY SetMember;
-    ULONG   StallScaleFactor;
-    UCHAR   DebugActive;
-    UCHAR   Number;
+    ULONG StallScaleFactor;
+    UCHAR DebugActive;
+    UCHAR Number;
 
-// end_ntddk end_ntosp
+    // end_ntddk end_ntosp
 
-    UCHAR   Spare0;
-    UCHAR   SecondLevelCacheAssociativity;
-    ULONG   VdmAlert;
-    ULONG   KernelReserved[14];         // For use by the kernel
-    ULONG   SecondLevelCacheSize;
-    ULONG   HalReserved[16];            // For use by Hal
+    UCHAR Spare0;
+    UCHAR SecondLevelCacheAssociativity;
+    ULONG VdmAlert;
+    ULONG KernelReserved[14]; // For use by the kernel
+    ULONG SecondLevelCacheSize;
+    ULONG HalReserved[16]; // For use by Hal
 
-// End of the architecturally defined section of the PCR.
-// end_nthal
+    // End of the architecturally defined section of the PCR.
+    // end_nthal
 
-    ULONG   InterruptMode;
-    UCHAR   Spare1;
-    ULONG   KernelReserved2[17];
+    ULONG InterruptMode;
+    UCHAR Spare1;
+    ULONG KernelReserved2[17];
     struct _KPRCB PrcbData;
 
-// begin_nthal begin_ntddk begin_ntosp
+    // begin_nthal begin_ntddk begin_ntosp
 
 } KPCR, *PKPCR;
 
@@ -1318,15 +1208,15 @@ C_ASSERT((FIELD_OFFSET(KPCR, PrcbData) & (64 - 1)) == 32);
 
 // begin_nthal begin_ntosp
 
-#define EFLAGS_TF             0x00000100L
+#define EFLAGS_TF 0x00000100L
 #define EFLAGS_INTERRUPT_MASK 0x00000200L
-#define EFLAGS_DF_MASK        0x00000400L
-#define EFLAGS_V86_MASK       0x00020000L
-#define EFLAGS_ALIGN_CHECK    0x00040000L
-#define EFLAGS_IOPL_MASK      0x00003000L
-#define EFLAGS_VIF            0x00080000L
-#define EFLAGS_VIP            0x00100000L
-#define EFLAGS_USER_SANITIZE  0x003e0dd7L
+#define EFLAGS_DF_MASK 0x00000400L
+#define EFLAGS_V86_MASK 0x00020000L
+#define EFLAGS_ALIGN_CHECK 0x00040000L
+#define EFLAGS_IOPL_MASK 0x00003000L
+#define EFLAGS_VIF 0x00080000L
+#define EFLAGS_VIP 0x00100000L
+#define EFLAGS_USER_SANITIZE 0x003e0dd7L
 
 // end_nthal
 
@@ -1340,10 +1230,8 @@ C_ASSERT((FIELD_OFFSET(KPCR, PrcbData) & (64 - 1)) == 32);
 //      force CPL == 3
 //
 
-#define SANITIZE_SEG(segCS, mode) (\
-    ((mode) == KernelMode ? \
-        ((0x00000000L) | ((segCS) & 0xfffc)) : \
-        ((0x00000003L) | ((segCS) & 0xffff))))
+#define SANITIZE_SEG(segCS, mode) \
+    (((mode) == KernelMode ? ((0x00000000L) | ((segCS) & 0xfffc)) : ((0x00000003L) | ((segCS) & 0xffff))))
 
 //
 // If kernel mode, then
@@ -1357,37 +1245,31 @@ C_ASSERT((FIELD_OFFSET(KPCR, PrcbData) & (64 - 1)) == 32);
 //
 
 
-#define SANITIZE_FLAGS(eFlags, mode) (\
-    ((mode) == KernelMode ? \
-        ((0x00000000L) | ((eFlags) & 0x003e0fd7)) : \
-        ((((eFlags) & EFLAGS_V86_MASK) && KeI386VdmIoplAllowed) ? \
-        (((eFlags) & KeI386EFlagsAndMaskV86) | KeI386EFlagsOrMaskV86) : \
-        ((EFLAGS_INTERRUPT_MASK) | ((eFlags) & EFLAGS_USER_SANITIZE)))))
+#define SANITIZE_FLAGS(eFlags, mode)                                                              \
+    (((mode) == KernelMode ? ((0x00000000L) | ((eFlags) & 0x003e0fd7))                            \
+                           : ((((eFlags) & EFLAGS_V86_MASK) && KeI386VdmIoplAllowed)              \
+                                  ? (((eFlags) & KeI386EFlagsAndMaskV86) | KeI386EFlagsOrMaskV86) \
+                                  : ((EFLAGS_INTERRUPT_MASK) | ((eFlags) & EFLAGS_USER_SANITIZE)))))
 
 //
 // Masks for Dr7 and sanitize macros for various Dr registers.
 //
 
-#define DR6_LEGAL   0x0000e00f
+#define DR6_LEGAL 0x0000e00f
 
-#define DR7_LEGAL   0xffff0155  // R/W, LEN for Dr0-Dr4,
-                                // Local enable for Dr0-Dr4,
-                                // Le for "perfect" trapping
+#define DR7_LEGAL                           \
+    0xffff0155 // R/W, LEN for Dr0-Dr4,     \
+               // Local enable for Dr0-Dr4, \
+               // Le for "perfect" trapping
 
-#define DR7_ACTIVE  0x00000055  // If any of these bits are set, a Dr is active
+#define DR7_ACTIVE 0x00000055 // If any of these bits are set, a Dr is active
 
 #define SANITIZE_DR6(Dr6, mode) ((Dr6 & DR6_LEGAL));
 
 #define SANITIZE_DR7(Dr7, mode) ((Dr7 & DR7_LEGAL));
 
-#define SANITIZE_DRADDR(DrReg, mode) (          \
-    (mode) == KernelMode ?                      \
-        (DrReg) :                               \
-        (((PVOID)DrReg <= MM_HIGHEST_USER_ADDRESS) ?   \
-            (DrReg) :                           \
-            (0)                                 \
-        )                                       \
-    )
+#define SANITIZE_DRADDR(DrReg, mode) \
+    ((mode) == KernelMode ? (DrReg) : (((PVOID)DrReg <= MM_HIGHEST_USER_ADDRESS) ? (DrReg) : (0)))
 
 //
 // Define macro to clear reserved bits from MXCSR so that we don't
@@ -1407,9 +1289,10 @@ extern ULONG KiMXCsrMask;
 //                     field to be void, so declare a Junk structure
 //                     instead.
 
-typedef struct _KNONVOLATILE_CONTEXT_POINTERS {
-    ULONG   Junk;
-} KNONVOLATILE_CONTEXT_POINTERS,  *PKNONVOLATILE_CONTEXT_POINTERS;
+typedef struct _KNONVOLATILE_CONTEXT_POINTERS
+{
+    ULONG Junk;
+} KNONVOLATILE_CONTEXT_POINTERS, *PKNONVOLATILE_CONTEXT_POINTERS;
 
 // begin_nthal
 //
@@ -1439,121 +1322,122 @@ typedef struct _KNONVOLATILE_CONTEXT_POINTERS {
 //      KTRAP_FRAME_LENGTH needs to be 16byte integral (at present.)
 //
 
-typedef struct _KTRAP_FRAME {
+typedef struct _KTRAP_FRAME
+{
 
 
-//
-//  Following 4 values are only used and defined for DBG systems,
-//  but are always allocated to make switching from DBG to non-DBG
-//  and back quicker.  They are not DEVL because they have a non-0
-//  performance impact.
-//
+    //
+    //  Following 4 values are only used and defined for DBG systems,
+    //  but are always allocated to make switching from DBG to non-DBG
+    //  and back quicker.  They are not DEVL because they have a non-0
+    //  performance impact.
+    //
 
-    ULONG   DbgEbp;         // Copy of User EBP set up so KB will work.
-    ULONG   DbgEip;         // EIP of caller to system call, again, for KB.
-    ULONG   DbgArgMark;     // Marker to show no args here.
-    ULONG   DbgArgPointer;  // Pointer to the actual args
+    ULONG DbgEbp;        // Copy of User EBP set up so KB will work.
+    ULONG DbgEip;        // EIP of caller to system call, again, for KB.
+    ULONG DbgArgMark;    // Marker to show no args here.
+    ULONG DbgArgPointer; // Pointer to the actual args
 
-//
-//  Temporary values used when frames are edited.
-//
-//
-//  NOTE:   Any code that want's ESP must materialize it, since it
-//          is not stored in the frame for kernel mode callers.
-//
-//          And code that sets ESP in a KERNEL mode frame, must put
-//          the new value in TempEsp, make sure that TempSegCs holds
-//          the real SegCs value, and put a special marker value into SegCs.
-//
+    //
+    //  Temporary values used when frames are edited.
+    //
+    //
+    //  NOTE:   Any code that want's ESP must materialize it, since it
+    //          is not stored in the frame for kernel mode callers.
+    //
+    //          And code that sets ESP in a KERNEL mode frame, must put
+    //          the new value in TempEsp, make sure that TempSegCs holds
+    //          the real SegCs value, and put a special marker value into SegCs.
+    //
 
-    ULONG   TempSegCs;
-    ULONG   TempEsp;
+    ULONG TempSegCs;
+    ULONG TempEsp;
 
-//
-//  Debug registers.
-//
+    //
+    //  Debug registers.
+    //
 
-    ULONG   Dr0;
-    ULONG   Dr1;
-    ULONG   Dr2;
-    ULONG   Dr3;
-    ULONG   Dr6;
-    ULONG   Dr7;
+    ULONG Dr0;
+    ULONG Dr1;
+    ULONG Dr2;
+    ULONG Dr3;
+    ULONG Dr6;
+    ULONG Dr7;
 
-//
-//  Segment registers
-//
+    //
+    //  Segment registers
+    //
 
-    ULONG   SegGs;
-    ULONG   SegEs;
-    ULONG   SegDs;
+    ULONG SegGs;
+    ULONG SegEs;
+    ULONG SegDs;
 
-//
-//  Volatile registers
-//
+    //
+    //  Volatile registers
+    //
 
-    ULONG   Edx;
-    ULONG   Ecx;
-    ULONG   Eax;
+    ULONG Edx;
+    ULONG Ecx;
+    ULONG Eax;
 
-//
-//  Nesting state, not part of context record
-//
+    //
+    //  Nesting state, not part of context record
+    //
 
-    ULONG   PreviousPreviousMode;
+    ULONG PreviousPreviousMode;
 
     PEXCEPTION_REGISTRATION_RECORD ExceptionList;
-                                            // Trash if caller was user mode.
-                                            // Saved exception list if caller
-                                            // was kernel mode or we're in
-                                            // an interrupt.
+    // Trash if caller was user mode.
+    // Saved exception list if caller
+    // was kernel mode or we're in
+    // an interrupt.
 
-//
-//  FS is TIB/PCR pointer, is here to make save sequence easy
-//
+    //
+    //  FS is TIB/PCR pointer, is here to make save sequence easy
+    //
 
-    ULONG   SegFs;
+    ULONG SegFs;
 
-//
-//  Non-volatile registers
-//
+    //
+    //  Non-volatile registers
+    //
 
-    ULONG   Edi;
-    ULONG   Esi;
-    ULONG   Ebx;
-    ULONG   Ebp;
+    ULONG Edi;
+    ULONG Esi;
+    ULONG Ebx;
+    ULONG Ebp;
 
-//
-//  Control registers
-//
+    //
+    //  Control registers
+    //
 
-    ULONG   ErrCode;
-    ULONG   Eip;
-    ULONG   SegCs;
-    ULONG   EFlags;
+    ULONG ErrCode;
+    ULONG Eip;
+    ULONG SegCs;
+    ULONG EFlags;
 
-    ULONG   HardwareEsp;    // WARNING - segSS:esp are only here for stacks
-    ULONG   HardwareSegSs;  // that involve a ring transition.
+    ULONG HardwareEsp;   // WARNING - segSS:esp are only here for stacks
+    ULONG HardwareSegSs; // that involve a ring transition.
 
-    ULONG   V86Es;          // these will be present for all transitions from
-    ULONG   V86Ds;          // V86 mode
-    ULONG   V86Fs;
-    ULONG   V86Gs;
+    ULONG V86Es; // these will be present for all transitions from
+    ULONG V86Ds; // V86 mode
+    ULONG V86Fs;
+    ULONG V86Gs;
 } KTRAP_FRAME;
 
 
 typedef KTRAP_FRAME *PKTRAP_FRAME;
 typedef KTRAP_FRAME *PKEXCEPTION_FRAME;
 
-#define KTRAP_FRAME_LENGTH  (sizeof(KTRAP_FRAME))
-#define KTRAP_FRAME_ALIGN   (sizeof(ULONG))
-#define KTRAP_FRAME_ROUND   (KTRAP_FRAME_ALIGN-1)
+#define KTRAP_FRAME_LENGTH (sizeof(KTRAP_FRAME))
+#define KTRAP_FRAME_ALIGN (sizeof(ULONG))
+#define KTRAP_FRAME_ROUND (KTRAP_FRAME_ALIGN - 1)
 
 //
 //  Bits forced to 0 in SegCs if Esp has been edited.
 //
 
-#define FRAME_EDITED        0xfff8
+#define FRAME_EDITED 0xfff8
 
 // end_nthal
 
@@ -1563,17 +1447,18 @@ typedef KTRAP_FRAME *PKEXCEPTION_FRAME;
 // when usermode callouts are pending.
 //
 
-typedef struct _KCALLOUT_FRAME {
-    ULONG   InStk;          // saved initial stack address
-    ULONG   TrFr;           // saved callback trap frame
-    ULONG   CbStk;          // saved callback stack address
-    ULONG   Edi;            // saved nonvolatile registers
-    ULONG   Esi;            //
-    ULONG   Ebx;            //
-    ULONG   Ebp;            //
-    ULONG   Ret;            // saved return address
-    ULONG   OutBf;          // address to store output buffer
-    ULONG   OutLn;          // address to store output length
+typedef struct _KCALLOUT_FRAME
+{
+    ULONG InStk; // saved initial stack address
+    ULONG TrFr;  // saved callback trap frame
+    ULONG CbStk; // saved callback stack address
+    ULONG Edi;   // saved nonvolatile registers
+    ULONG Esi;   //
+    ULONG Ebx;   //
+    ULONG Ebp;   //
+    ULONG Ret;   // saved return address
+    ULONG OutBf; // address to store output buffer
+    ULONG OutLn; // address to store output length
 } KCALLOUT_FRAME;
 
 typedef KCALLOUT_FRAME *PKCALLOUT_FRAME;
@@ -1592,10 +1477,11 @@ typedef KCALLOUT_FRAME *PKCALLOUT_FRAME;
 //  This is that structure.
 //
 
-typedef struct _KSWITCHFRAME {
-    ULONG   ExceptionList;
-    ULONG   Eflags;
-    ULONG   RetAddr;
+typedef struct _KSWITCHFRAME
+{
+    ULONG ExceptionList;
+    ULONG Eflags;
+    ULONG RetAddr;
 } KSWITCHFRAME, *PKSWITCHFRAME;
 
 
@@ -1603,31 +1489,32 @@ typedef struct _KSWITCHFRAME {
 // Various 387 defines
 //
 
-#define I386_80387_NP_VECTOR    0x07    // trap 7 when hardware not present
+#define I386_80387_NP_VECTOR 0x07 // trap 7 when hardware not present
 
 // begin_ntddk begin_wdm
 //
 // The non-volatile 387 state
 //
 
-typedef struct _KFLOATING_SAVE {
-    ULONG   ControlWord;
-    ULONG   StatusWord;
-    ULONG   ErrorOffset;
-    ULONG   ErrorSelector;
-    ULONG   DataOffset;                 // Not used in wdm
-    ULONG   DataSelector;
-    ULONG   Cr0NpxState;
-    ULONG   Spare1;                     // Not used in wdm
+typedef struct _KFLOATING_SAVE
+{
+    ULONG ControlWord;
+    ULONG StatusWord;
+    ULONG ErrorOffset;
+    ULONG ErrorSelector;
+    ULONG DataOffset; // Not used in wdm
+    ULONG DataSelector;
+    ULONG Cr0NpxState;
+    ULONG Spare1; // Not used in wdm
 } KFLOATING_SAVE, *PKFLOATING_SAVE;
 
 // end_ntddk end_wdm end_ntosp
-
+
 //
 // i386 Profile values
 //
 
-#define DEFAULT_PROFILE_INTERVAL   39063
+#define DEFAULT_PROFILE_INTERVAL 39063
 
 //
 // The minimum acceptable profiling interval is set to 1221 which is the
@@ -1635,9 +1522,9 @@ typedef struct _KFLOATING_SAVE {
 // value is too small, the system will run very slowly.
 //
 
-#define MINIMUM_PROFILE_INTERVAL   1221
+#define MINIMUM_PROFILE_INTERVAL 1221
 
-
+
 // begin_ntddk begin_wdm begin_nthal begin_ntndis begin_ntosp
 //
 // i386 Specific portions of mm component
@@ -1663,10 +1550,10 @@ typedef struct _KFLOATING_SAVE {
 // field of a PTE.
 //
 
-#define PDI_SHIFT_X86    22
+#define PDI_SHIFT_X86 22
 #define PDI_SHIFT_X86PAE 21
 
-#if !defined (_X86PAE_)
+#if !defined(_X86PAE_)
 #define PDI_SHIFT PDI_SHIFT_X86
 #else
 #define PDI_SHIFT PDI_SHIFT_X86PAE
@@ -1723,7 +1610,7 @@ extern ULONG MmUserProbeAddress;
 // The lowest address for system space.
 //
 
-#if !defined (_X86PAE_)
+#if !defined(_X86PAE_)
 #define MM_LOWEST_SYSTEM_ADDRESS (PVOID)0xC0800000
 #else
 #define MM_LOWEST_SYSTEM_ADDRESS (PVOID)0xC0C00000
@@ -1741,10 +1628,10 @@ extern ULONG MmUserProbeAddress;
 // field of a PTE.
 //
 
-#define PDI_SHIFT_X86    22
+#define PDI_SHIFT_X86 22
 #define PDI_SHIFT_X86PAE 21
 
-#if !defined (_X86PAE_)
+#if !defined(_X86PAE_)
 #define PDI_SHIFT PDI_SHIFT_X86
 #else
 #define PDI_SHIFT PDI_SHIFT_X86PAE
@@ -1762,24 +1649,24 @@ extern ULONG MmUserProbeAddress;
 // Define page directory and page base addresses.
 //
 
-#define PDE_BASE_X86    0xc0300000
+#define PDE_BASE_X86 0xc0300000
 #define PDE_BASE_X86PAE 0xc0600000
 
-#define PTE_TOP_X86     0xC03FFFFF
-#define PDE_TOP_X86     0xC0300FFF
+#define PTE_TOP_X86 0xC03FFFFF
+#define PDE_TOP_X86 0xC0300FFF
 
-#define PTE_TOP_X86PAE  0xC07FFFFF
-#define PDE_TOP_X86PAE  0xC0603FFF
+#define PTE_TOP_X86PAE 0xC07FFFFF
+#define PDE_TOP_X86PAE 0xC0603FFF
 
 
-#if !defined (_X86PAE_)
+#if !defined(_X86PAE_)
 #define PDE_BASE PDE_BASE_X86
-#define PTE_TOP  PTE_TOP_X86
-#define PDE_TOP  PDE_TOP_X86
+#define PTE_TOP PTE_TOP_X86
+#define PDE_TOP PDE_TOP_X86
 #else
 #define PDE_BASE PDE_BASE_X86PAE
-#define PTE_TOP  PTE_TOP_X86PAE
-#define PDE_TOP  PDE_TOP_X86PAE
+#define PTE_TOP PTE_TOP_X86PAE
+#define PDE_TOP PDE_TOP_X86PAE
 #endif
 #define PTE_BASE 0xc0000000
 
@@ -1796,8 +1683,7 @@ extern ULONG MmUserProbeAddress;
 // Define macro to initialize directory table base.
 //
 
-#define INITIALIZE_DIRECTORY_TABLE_BASE(dirbase,pfn) \
-     *((PULONG)(dirbase)) = ((pfn) << PAGE_SHIFT)
+#define INITIALIZE_DIRECTORY_TABLE_BASE(dirbase, pfn) *((PULONG)(dirbase)) = ((pfn) << PAGE_SHIFT)
 
 
 // begin_nthal
@@ -1808,13 +1694,13 @@ extern ULONG MmUserProbeAddress;
 // addressed from 0xffdf0000 - 0xffdfffff are reserved for the system
 // (ie, not for use by the hal)
 
-#define KI_BEGIN_KERNEL_RESERVED    0xffdf0000
-#define KIP0PCRADDRESS              0xffdff000  // ntddk wdm ntosp
+#define KI_BEGIN_KERNEL_RESERVED 0xffdf0000
+#define KIP0PCRADDRESS 0xffdff000 // ntddk wdm ntosp
 
 // begin_ntddk  begin_ntosp
 
-#define KI_USER_SHARED_DATA         0xffdf0000
-#define SharedUserData  ((KUSER_SHARED_DATA * const) KI_USER_SHARED_DATA)
+#define KI_USER_SHARED_DATA 0xffdf0000
+#define SharedUserData ((KUSER_SHARED_DATA *const)KI_USER_SHARED_DATA)
 
 //
 // Result type definition for i386.  (Machine specific enumerate type
@@ -1825,12 +1711,12 @@ extern ULONG MmUserProbeAddress;
 
 // Flags loaded into AH by LAHF instruction
 
-#define EFLAG_SIGN      0x8000
-#define EFLAG_ZERO      0x4000
-#define EFLAG_SELECT    (EFLAG_SIGN | EFLAG_ZERO)
+#define EFLAG_SIGN 0x8000
+#define EFLAG_ZERO 0x4000
+#define EFLAG_SELECT (EFLAG_SIGN | EFLAG_ZERO)
 
 #define RESULT_NEGATIVE ((EFLAG_SIGN & ~EFLAG_ZERO) & EFLAG_SELECT)
-#define RESULT_ZERO     ((~EFLAG_SIGN & EFLAG_ZERO) & EFLAG_SELECT)
+#define RESULT_ZERO ((~EFLAG_SIGN & EFLAG_ZERO) & EFLAG_SELECT)
 #define RESULT_POSITIVE ((~EFLAG_SIGN & ~EFLAG_ZERO) & EFLAG_SELECT)
 
 //
@@ -1839,28 +1725,25 @@ extern ULONG MmUserProbeAddress;
 //
 
 #if PRAGMA_DEPRECATED_DDK
-#pragma deprecated(ExInterlockedIncrementLong)      // Use InterlockedIncrement
-#pragma deprecated(ExInterlockedDecrementLong)      // Use InterlockedDecrement
-#pragma deprecated(ExInterlockedExchangeUlong)      // Use InterlockedExchange
+#pragma deprecated(ExInterlockedIncrementLong) // Use InterlockedIncrement
+#pragma deprecated(ExInterlockedDecrementLong) // Use InterlockedDecrement
+#pragma deprecated(ExInterlockedExchangeUlong) // Use InterlockedExchange
 #endif
 
-#define ExInterlockedIncrementLong(Addend,Lock) \
-        Exfi386InterlockedIncrementLong(Addend)
+#define ExInterlockedIncrementLong(Addend, Lock) Exfi386InterlockedIncrementLong(Addend)
 
-#define ExInterlockedDecrementLong(Addend,Lock) \
-        Exfi386InterlockedDecrementLong(Addend)
+#define ExInterlockedDecrementLong(Addend, Lock) Exfi386InterlockedDecrementLong(Addend)
 
-#define ExInterlockedExchangeUlong(Target,Value,Lock) \
-        Exfi386InterlockedExchangeUlong(Target,Value)
+#define ExInterlockedExchangeUlong(Target, Value, Lock) Exfi386InterlockedExchangeUlong(Target, Value)
 
 //  begin_wdm
 
-#define ExInterlockedAddUlong           ExfInterlockedAddUlong
-#define ExInterlockedInsertHeadList     ExfInterlockedInsertHeadList
-#define ExInterlockedInsertTailList     ExfInterlockedInsertTailList
-#define ExInterlockedRemoveHeadList     ExfInterlockedRemoveHeadList
-#define ExInterlockedPopEntryList       ExfInterlockedPopEntryList
-#define ExInterlockedPushEntryList      ExfInterlockedPushEntryList
+#define ExInterlockedAddUlong ExfInterlockedAddUlong
+#define ExInterlockedInsertHeadList ExfInterlockedInsertHeadList
+#define ExInterlockedInsertTailList ExfInterlockedInsertTailList
+#define ExInterlockedRemoveHeadList ExfInterlockedRemoveHeadList
+#define ExInterlockedPopEntryList ExfInterlockedPopEntryList
+#define ExInterlockedPushEntryList ExfInterlockedPushEntryList
 
 //  end_wdm
 
@@ -1873,33 +1756,27 @@ extern ULONG MmUserProbeAddress;
 // Constants for value are in i386.h, mips.h, etc.
 //
 
-typedef enum _INTERLOCKED_RESULT {
+typedef enum _INTERLOCKED_RESULT
+{
     ResultNegative = RESULT_NEGATIVE,
-    ResultZero     = RESULT_ZERO,
+    ResultZero = RESULT_ZERO,
     ResultPositive = RESULT_POSITIVE
 } INTERLOCKED_RESULT;
 
 NTKERNELAPI
 INTERLOCKED_RESULT
 FASTCALL
-Exfi386InterlockedIncrementLong (
-    IN PLONG Addend
-    );
+Exfi386InterlockedIncrementLong(IN PLONG Addend);
 
 NTKERNELAPI
 INTERLOCKED_RESULT
 FASTCALL
-Exfi386InterlockedDecrementLong (
-    IN PLONG Addend
-    );
+Exfi386InterlockedDecrementLong(IN PLONG Addend);
 
 NTKERNELAPI
 ULONG
 FASTCALL
-Exfi386InterlockedExchangeUlong (
-    IN PULONG Target,
-    IN ULONG Value
-    );
+Exfi386InterlockedExchangeUlong(IN PULONG Target, IN ULONG Value);
 
 // end_ntddk end_nthal end_ntosp
 
@@ -1912,7 +1789,7 @@ Exfi386InterlockedExchangeUlong (
 #if !defined(_WINBASE_) && !defined(NONTOSPINTERLOCK) // ntosp ntddk nthal
 #if defined(_M_IX86)
 
-#pragma warning(disable:4035)               // wdm re-enable below
+#pragma warning(disable : 4035) // wdm re-enable below
 
 // begin_ntddk begin_nthal begin_ntosp
 #if !defined(MIDL_PASS) // wdm
@@ -1920,48 +1797,23 @@ Exfi386InterlockedExchangeUlong (
 //  begin_wdm
 
 NTKERNELAPI
-LONG
-FASTCALL
-InterlockedIncrement(
-    IN LONG volatile *Addend
-    );
+LONG FASTCALL InterlockedIncrement(IN LONG volatile *Addend);
 
 NTKERNELAPI
-LONG
-FASTCALL
-InterlockedDecrement(
-    IN LONG volatile *Addend
-    );
+LONG FASTCALL InterlockedDecrement(IN LONG volatile *Addend);
 
 NTKERNELAPI
-LONG
-FASTCALL
-InterlockedExchange(
-    IN OUT LONG volatile *Target,
-    IN LONG Value
-    );
+LONG FASTCALL InterlockedExchange(IN OUT LONG volatile *Target, IN LONG Value);
 
-#define InterlockedExchangePointer(Target, Value) \
-   (PVOID)InterlockedExchange((PLONG)(Target), (LONG)(Value))
+#define InterlockedExchangePointer(Target, Value) (PVOID) InterlockedExchange((PLONG)(Target), (LONG)(Value))
 
-LONG
-FASTCALL
-InterlockedExchangeAdd(
-    IN OUT LONG volatile *Addend,
-    IN LONG Increment
-    );
+LONG FASTCALL InterlockedExchangeAdd(IN OUT LONG volatile *Addend, IN LONG Increment);
 
 NTKERNELAPI
-LONG
-FASTCALL
-InterlockedCompareExchange(
-    IN OUT LONG volatile *Destination,
-    IN LONG ExChange,
-    IN LONG Comperand
-    );
+LONG FASTCALL InterlockedCompareExchange(IN OUT LONG volatile *Destination, IN LONG ExChange, IN LONG Comperand);
 
 #define InterlockedCompareExchangePointer(Destination, ExChange, Comperand) \
-    (PVOID)InterlockedCompareExchange((PLONG)Destination, (LONG)ExChange, (LONG)Comperand)
+    (PVOID) InterlockedCompareExchange((PLONG)Destination, (LONG)ExChange, (LONG)Comperand)
 
 #define InterlockedCompareExchange64(Destination, ExChange, Comperand) \
     ExfInterlockedCompareExchange64(Destination, &(ExChange), &(Comperand))
@@ -1969,25 +1821,20 @@ InterlockedCompareExchange(
 NTKERNELAPI
 LONGLONG
 FASTCALL
-ExfInterlockedCompareExchange64(
-    IN OUT LONGLONG volatile *Destination,
-    IN PLONGLONG ExChange,
-    IN PLONGLONG Comperand
-    );
+ExfInterlockedCompareExchange64(IN OUT LONGLONG volatile *Destination, IN PLONGLONG ExChange, IN PLONGLONG Comperand);
 
 //  end_wdm
 
-#else       // NO_INTERLOCKED_INCREMENTS || _CROSS_PLATFORM_
+#else // NO_INTERLOCKED_INCREMENTS || _CROSS_PLATFORM_
 
-#define InterlockedExchangePointer(Target, Value) \
-   (PVOID)InterlockedExchange((PLONG)Target, (LONG)Value)
+#define InterlockedExchangePointer(Target, Value) (PVOID) InterlockedExchange((PLONG)Target, (LONG)Value)
 
 // end_ntddk end_nthal end_ntosp
 
-#if defined(NT_UP) && !defined (_NTDDK_) && !defined(_NTIFS_)
+#if defined(NT_UP) && !defined(_NTDDK_) && !defined(_NTIFS_)
 
-#define InterlockedIncrement(Addend) (InterlockedExchangeAdd (Addend, 1)+1)
-#define InterlockedDecrement(Addend) (InterlockedExchangeAdd (Addend, -1)-1)
+#define InterlockedIncrement(Addend) (InterlockedExchangeAdd(Addend, 1) + 1)
+#define InterlockedDecrement(Addend) (InterlockedExchangeAdd(Addend, -1) - 1)
 
 //FORCEINLINE
 //LONG
@@ -2020,12 +1867,7 @@ ExfInterlockedCompareExchange64(
 //}
 
 FORCEINLINE
-LONG
-FASTCALL
-InterlockedExchange(
-    IN OUT LONG volatile *Target,
-    IN LONG Value
-    )
+LONG FASTCALL InterlockedExchange(IN OUT LONG volatile *Target, IN LONG Value)
 {
     __asm {
         mov     eax, Value
@@ -2035,12 +1877,7 @@ InterlockedExchange(
 }
 
 FORCEINLINE
-LONG
-FASTCALL
-InterlockedExchangeAdd(
-    IN OUT LONG volatile *Addend,
-    IN LONG Increment
-    )
+LONG FASTCALL InterlockedExchangeAdd(IN OUT LONG volatile *Addend, IN LONG Increment)
 {
     __asm {
         mov     eax, Increment
@@ -2050,13 +1887,7 @@ InterlockedExchangeAdd(
 }
 
 FORCEINLINE
-LONG
-FASTCALL
-InterlockedCompareExchange(
-    IN OUT LONG volatile *Destination,
-    IN LONG Exchange,
-    IN LONG Comperand
-    )
+LONG FASTCALL InterlockedCompareExchange(IN OUT LONG volatile *Destination, IN LONG Exchange, IN LONG Comperand)
 {
     __asm {
         mov     eax, Comperand
@@ -2067,41 +1898,27 @@ InterlockedCompareExchange(
 }
 
 #define InterlockedCompareExchangePointer(Destination, ExChange, Comperand) \
-    (PVOID)InterlockedCompareExchange((PLONG)Destination, (LONG)ExChange, (LONG)Comperand)
+    (PVOID) InterlockedCompareExchange((PLONG)Destination, (LONG)ExChange, (LONG)Comperand)
 
 #define InterlockedCompareExchange64(Destination, ExChange, Comperand) \
     ExfInterlockedCompareExchange64(Destination, &(ExChange), &(Comperand))
 
 LONGLONG
 FASTCALL
-ExfInterlockedCompareExchange64(
-    IN OUT LONGLONG volatile *Destination,
-    IN PLONGLONG ExChange,
-    IN PLONGLONG Comperand
-    );
+ExfInterlockedCompareExchange64(IN OUT LONGLONG volatile *Destination, IN PLONGLONG ExChange, IN PLONGLONG Comperand);
 
-#else   // NT_UP
+#else // NT_UP
 
 // begin_ntosp begin_ntddk begin_nthal
 
 #if (_MSC_FULL_VER > 13009037)
-LONG
-__cdecl
-_InterlockedExchange(
-    IN OUT LONG volatile *Target,
-    IN LONG Value
-    );
+LONG __cdecl _InterlockedExchange(IN OUT LONG volatile *Target, IN LONG Value);
 
-#pragma intrinsic (_InterlockedExchange)
+#pragma intrinsic(_InterlockedExchange)
 #define InterlockedExchange _InterlockedExchange
 #else
 FORCEINLINE
-LONG
-FASTCALL
-InterlockedExchange(
-    IN OUT LONG volatile *Target,
-    IN LONG Value
-    )
+LONG FASTCALL InterlockedExchange(IN OUT LONG volatile *Target, IN LONG Value)
 {
     __asm {
         mov     eax, Value
@@ -2112,50 +1929,32 @@ InterlockedExchange(
 #endif
 
 #if (_MSC_FULL_VER > 13009037)
-LONG
-__cdecl
-_InterlockedIncrement(
-    IN LONG volatile *Addend
-    );
+LONG __cdecl _InterlockedIncrement(IN LONG volatile *Addend);
 
-#pragma intrinsic (_InterlockedIncrement)
+#pragma intrinsic(_InterlockedIncrement)
 #define InterlockedIncrement _InterlockedIncrement
 #else
-#define InterlockedIncrement(Addend) (InterlockedExchangeAdd (Addend, 1)+1)
+#define InterlockedIncrement(Addend) (InterlockedExchangeAdd(Addend, 1) + 1)
 #endif
 
 #if (_MSC_FULL_VER > 13009037)
-LONG
-__cdecl
-_InterlockedDecrement(
-    IN LONG volatile *Addend
-    );
+LONG __cdecl _InterlockedDecrement(IN LONG volatile *Addend);
 
-#pragma intrinsic (_InterlockedDecrement)
+#pragma intrinsic(_InterlockedDecrement)
 #define InterlockedDecrement _InterlockedDecrement
 #else
-#define InterlockedDecrement(Addend) (InterlockedExchangeAdd (Addend, -1)-1)
+#define InterlockedDecrement(Addend) (InterlockedExchangeAdd(Addend, -1) - 1)
 #endif
 
 #if (_MSC_FULL_VER > 13009037)
-LONG
-__cdecl
-_InterlockedExchangeAdd(
-    IN OUT LONG volatile *Addend,
-    IN LONG Increment
-    );
+LONG __cdecl _InterlockedExchangeAdd(IN OUT LONG volatile *Addend, IN LONG Increment);
 
-#pragma intrinsic (_InterlockedExchangeAdd)
+#pragma intrinsic(_InterlockedExchangeAdd)
 #define InterlockedExchangeAdd _InterlockedExchangeAdd
 #else
 // begin_wdm
 FORCEINLINE
-LONG
-FASTCALL
-InterlockedExchangeAdd(
-    IN OUT LONG volatile *Addend,
-    IN LONG Increment
-    )
+LONG FASTCALL InterlockedExchangeAdd(IN OUT LONG volatile *Addend, IN LONG Increment)
 {
     __asm {
          mov     eax, Increment
@@ -2167,25 +1966,13 @@ InterlockedExchangeAdd(
 #endif
 
 #if (_MSC_FULL_VER > 13009037)
-LONG
-__cdecl
-_InterlockedCompareExchange (
-    IN OUT LONG volatile *Destination,
-    IN LONG ExChange,
-    IN LONG Comperand
-    );
+LONG __cdecl _InterlockedCompareExchange(IN OUT LONG volatile *Destination, IN LONG ExChange, IN LONG Comperand);
 
-#pragma intrinsic (_InterlockedCompareExchange)
-#define InterlockedCompareExchange (LONG)_InterlockedCompareExchange
+#pragma intrinsic(_InterlockedCompareExchange)
+#define InterlockedCompareExchange (LONG) _InterlockedCompareExchange
 #else
 FORCEINLINE
-LONG
-FASTCALL
-InterlockedCompareExchange(
-    IN OUT LONG volatile *Destination,
-    IN LONG Exchange,
-    IN LONG Comperand
-    )
+LONG FASTCALL InterlockedCompareExchange(IN OUT LONG volatile *Destination, IN LONG Exchange, IN LONG Comperand)
 {
     __asm {
         mov     eax, Comperand
@@ -2197,7 +1984,7 @@ InterlockedCompareExchange(
 #endif
 
 #define InterlockedCompareExchangePointer(Destination, ExChange, Comperand) \
-    (PVOID)InterlockedCompareExchange((PLONG)Destination, (LONG)ExChange, (LONG)Comperand)
+    (PVOID) InterlockedCompareExchange((PLONG)Destination, (LONG)ExChange, (LONG)Comperand)
 
 #define InterlockedCompareExchange64(Destination, ExChange, Comperand) \
     ExfInterlockedCompareExchange64(Destination, &(ExChange), &(Comperand))
@@ -2205,24 +1992,20 @@ InterlockedCompareExchange(
 NTKERNELAPI
 LONGLONG
 FASTCALL
-ExfInterlockedCompareExchange64(
-    IN OUT LONGLONG volatile *Destination,
-    IN PLONGLONG ExChange,
-    IN PLONGLONG Comperand
-    );
+ExfInterlockedCompareExchange64(IN OUT LONGLONG volatile *Destination, IN PLONGLONG ExChange, IN PLONGLONG Comperand);
 
 // end_ntosp end_ntddk end_nthal
-#endif      // NT_UP
+#endif // NT_UP
 // begin_ntddk begin_nthal begin_ntosp
-#endif      // INTERLOCKED_INTRINSICS || _CROSS_PLATFORM_
+#endif // INTERLOCKED_INTRINSICS || _CROSS_PLATFORM_
 // begin_wdm
-#endif      // MIDL_PASS
+#endif // MIDL_PASS
 // end_ntosp end_ntddk end_nthal
-#pragma warning(default:4035)
+#pragma warning(default : 4035)
 // end_wdm
-#endif      // _M_IX86 && !CROSS_PLATFORM
+#endif // _M_IX86 && !CROSS_PLATFORM
 // begin_ntddk begin_nthal begin_ntosp
-#endif      // __WINBASE__ && !NONTOSPINTERLOCK
+#endif // __WINBASE__ && !NONTOSPINTERLOCK
 // end_ntosp end_ntddk end_nthal
 
 // begin_nthal begin_ntddk
@@ -2232,54 +2015,37 @@ ExfInterlockedCompareExchange64(
 //
 #if (_MSC_FULL_VER > 13009037)
 
-LONG
-_InterlockedOr (
-    IN OUT PLONG Target,
-    IN LONG Set
-    );
+LONG _InterlockedOr(IN OUT PLONG Target, IN LONG Set);
 
-#pragma intrinsic (_InterlockedOr)
+#pragma intrinsic(_InterlockedOr)
 
 #define InterlockedOr _InterlockedOr
 
-LONG
-_InterlockedAnd (
-    IN OUT LONG volatile *Target,
-    IN LONG Set
-    );
+LONG _InterlockedAnd(IN OUT LONG volatile *Target, IN LONG Set);
 
-#pragma intrinsic (_InterlockedAnd)
+#pragma intrinsic(_InterlockedAnd)
 
 #define InterlockedAnd _InterlockedAnd
 
-LONG
-_InterlockedXor (
-    IN OUT LONG volatile Target,
-    IN LONG Set
-    );
+LONG _InterlockedXor(IN OUT LONG volatile Target, IN LONG Set);
 
-#pragma intrinsic (_InterlockedXor)
+#pragma intrinsic(_InterlockedXor)
 
 #define InterlockedXor _InterlockedXor
 
 #else // compiler version
 
 FORCEINLINE
-LONG
-InterlockedAnd (
-    IN OUT LONG volatile *Target,
-    LONG Set
-    )
+LONG InterlockedAnd(IN OUT LONG volatile *Target, LONG Set)
 {
     LONG i;
     LONG j;
 
     j = *Target;
-    do {
+    do
+    {
         i = j;
-        j = InterlockedCompareExchange(Target,
-                                       i & Set,
-                                       i);
+        j = InterlockedCompareExchange(Target, i & Set, i);
 
     } while (i != j);
 
@@ -2287,21 +2053,16 @@ InterlockedAnd (
 }
 
 FORCEINLINE
-LONG
-InterlockedOr (
-    IN OUT LONG volatile *Target,
-    IN LONG Set
-    )
+LONG InterlockedOr(IN OUT LONG volatile *Target, IN LONG Set)
 {
     LONG i;
     LONG j;
 
     j = *Target;
-    do {
+    do
+    {
         i = j;
-        j = InterlockedCompareExchange(Target,
-                                       i | Set,
-                                       i);
+        j = InterlockedCompareExchange(Target, i | Set, i);
 
     } while (i != j);
 
@@ -2315,7 +2076,8 @@ InterlockedOr (
 //
 // Structure for Ldt information in x86 processes
 //
-typedef struct _LDTINFORMATION {
+typedef struct _LDTINFORMATION
+{
     ULONG Size;
     ULONG AllocatedSize;
     PLDT_ENTRY Ldt;
@@ -2327,8 +2089,9 @@ typedef struct _LDTINFORMATION {
 
 // begin_ntosp
 
-typedef struct _PROCESS_IO_PORT_HANDLER_INFORMATION {
-    BOOLEAN Install;            // true if handlers to be installed
+typedef struct _PROCESS_IO_PORT_HANDLER_INFORMATION
+{
+    BOOLEAN Install; // true if handlers to be installed
     ULONG NumEntries;
     ULONG Context;
     PEMULATOR_ACCESS_ENTRY EmulatorAccessEntries;
@@ -2339,8 +2102,9 @@ typedef struct _PROCESS_IO_PORT_HANDLER_INFORMATION {
 //    Vdm Objects and Io handling structure
 //
 
-typedef struct _VDM_IO_HANDLER_FUNCTIONS {
-    PDRIVER_IO_PORT_ULONG  UlongIo;
+typedef struct _VDM_IO_HANDLER_FUNCTIONS
+{
+    PDRIVER_IO_PORT_ULONG UlongIo;
     PDRIVER_IO_PORT_ULONG_STRING UlongStringIo;
     PDRIVER_IO_PORT_USHORT UshortIo[2];
     PDRIVER_IO_PORT_USHORT_STRING UshortStringIo[2];
@@ -2348,12 +2112,12 @@ typedef struct _VDM_IO_HANDLER_FUNCTIONS {
     PDRIVER_IO_PORT_UCHAR_STRING UcharStringIo[4];
 } VDM_IO_HANDLER_FUNCTIONS, *PVDM_IO_HANDLER_FUNCTIONS;
 
-typedef struct _VDM_IO_HANDLER {
+typedef struct _VDM_IO_HANDLER
+{
     struct _VDM_IO_HANDLER *Next;
     ULONG PortNumber;
     VDM_IO_HANDLER_FUNCTIONS IoFunctions[2];
 } VDM_IO_HANDLER, *PVDM_IO_HANDLER;
-
 
 
 // begin_nthal begin_ntddk begin_wdm
@@ -2365,14 +2129,18 @@ typedef struct _VDM_IO_HANDLER {
 // i386 function definitions
 //
 
-#pragma warning(disable:4035)               // re-enable below
+#pragma warning(disable : 4035) // re-enable below
 
 // end_wdm
 
 #if NT_UP
-    #define _PCR   ds:[KIP0PCRADDRESS]
+#define _PCR \
+    ds:      \
+    [KIP0PCRADDRESS]
 #else
-    #define _PCR   fs:[0]
+#define _PCR \
+    fs:      \
+    [0]
 #endif
 
 // end_ntddk end_ntosp
@@ -2391,7 +2159,7 @@ KeGetPcr(VOID)
 #if NT_UP
     __asm {  mov eax, KIP0PCRADDRESS }
 #else
-    __asm {  mov eax, _PCR KPCR.SelfPcr  }
+    __asm {  mov eax, _PCR KPCR.SelfPcr }
 #endif
 }
 
@@ -2405,9 +2173,9 @@ KeGetPcr(VOID)
 FORCEINLINE
 PKPRCB
 NTAPI
-KeGetCurrentPrcb (VOID)
+KeGetCurrentPrcb(VOID)
 {
-    __asm {  mov eax, _PCR KPCR.Prcb     }
+    __asm {  mov eax, _PCR KPCR.Prcb }
 }
 
 // begin_ntddk begin_wdm
@@ -2433,7 +2201,7 @@ ULONG
 NTAPI
 KeGetCurrentProcessorNumber(VOID)
 {
-    __asm {  movzx eax, _PCR KPCR.Number  }
+    __asm {  movzx eax, _PCR KPCR.Number }
 }
 
 // end_nthal end_ntddk end_ntosp
@@ -2447,8 +2215,7 @@ KeGetCurrentProcessorNumber(VOID)
 //
 //
 FORCEINLINE
-struct _KTHREAD *
-NTAPI KeGetCurrentThread (VOID)
+struct _KTHREAD *NTAPI KeGetCurrentThread(VOID)
 {
     __asm {  mov eax, fs:[0] KPCR.PrcbData.CurrentThread }
 }
@@ -2468,7 +2235,7 @@ KeIsExecutingDpc(VOID)
 
 // begin_nthal begin_ntddk begin_ntosp
 
-#pragma warning(default:4035)
+#pragma warning(default : 4035)
 
 // begin_wdm
 #endif // !defined(MIDL_PASS) && defined(_M_IX86)
@@ -2505,18 +2272,20 @@ KeIsExecutingDpc(VOID)
 //
 // Macro to set address of a trap/interrupt handler to IDT
 //
-#define KiSetHandlerAddressToIDT(Vector, HandlerAddress) {\
-    UCHAR IDTEntry = HalVectorToIDTEntry(Vector); \
-    ULONG Ha = (ULONG)HandlerAddress; \
-    KeGetPcr()->IDT[IDTEntry].ExtendedOffset = HIGHWORD(Ha); \
-    KeGetPcr()->IDT[IDTEntry].Offset = LOWWORD(Ha); \
-}
+#define KiSetHandlerAddressToIDT(Vector, HandlerAddress)         \
+    {                                                            \
+        UCHAR IDTEntry = HalVectorToIDTEntry(Vector);            \
+        ULONG Ha = (ULONG)HandlerAddress;                        \
+        KeGetPcr()->IDT[IDTEntry].ExtendedOffset = HIGHWORD(Ha); \
+        KeGetPcr()->IDT[IDTEntry].Offset = LOWWORD(Ha);          \
+    }
 
 //
 // Macro to return address of a trap/interrupt handler in IDT
 //
-#define KiReturnHandlerAddressFromIDT(Vector) \
-   MAKEULONG(KiPcr()->IDT[HalVectorToIDTEntry(Vector)].ExtendedOffset, KiPcr()->IDT[HalVectorToIDTEntry(Vector)].Offset)
+#define KiReturnHandlerAddressFromIDT(Vector)                           \
+    MAKEULONG(KiPcr()->IDT[HalVectorToIDTEntry(Vector)].ExtendedOffset, \
+              KiPcr()->IDT[HalVectorToIDTEntry(Vector)].Offset)
 
 // end_nthal
 
@@ -2528,8 +2297,7 @@ KeIsExecutingDpc(VOID)
 //     )
 //
 //--
-#define KiIsThreadNumericStateSaved(a) \
-    (a->NpxState != NPX_STATE_LOADED)
+#define KiIsThreadNumericStateSaved(a) (a->NpxState != NPX_STATE_LOADED)
 
 //++
 //
@@ -2549,9 +2317,10 @@ KeIsExecutingDpc(VOID)
 // terminated.
 //
 
-#define KiRundownThread(a)                          \
-    if (KeGetCurrentPrcb()->NpxThread == (a))   {   \
-        KeGetCurrentPrcb()->NpxThread = NULL;       \
+#define KiRundownThread(a)                    \
+    if (KeGetCurrentPrcb()->NpxThread == (a)) \
+    {                                         \
+        KeGetCurrentPrcb()->NpxThread = NULL; \
     }
 
 #else
@@ -2564,11 +2333,7 @@ KeIsExecutingDpc(VOID)
 // functions specific to 386 structure
 //
 
-VOID
-NTAPI
-KiSetIRR (
-    IN ULONG SWInterruptMask
-    );
+VOID NTAPI KiSetIRR(IN ULONG SWInterruptMask);
 
 //
 // Procedures to support frame manipulation
@@ -2576,95 +2341,49 @@ KiSetIRR (
 
 ULONG
 NTAPI
-KiEspFromTrapFrame(
-    IN PKTRAP_FRAME TrapFrame
-    );
+KiEspFromTrapFrame(IN PKTRAP_FRAME TrapFrame);
 
-VOID
-NTAPI
-KiEspToTrapFrame(
-    IN PKTRAP_FRAME TrapFrame,
-    IN ULONG Esp
-    );
+VOID NTAPI KiEspToTrapFrame(IN PKTRAP_FRAME TrapFrame, IN ULONG Esp);
 
 ULONG
 NTAPI
-KiSegSsFromTrapFrame(
-    IN PKTRAP_FRAME TrapFrame
-    );
+KiSegSsFromTrapFrame(IN PKTRAP_FRAME TrapFrame);
 
-VOID
-NTAPI
-KiSegSsToTrapFrame(
-    IN PKTRAP_FRAME TrapFrame,
-    IN ULONG SegSs
-    );
+VOID NTAPI KiSegSsToTrapFrame(IN PKTRAP_FRAME TrapFrame, IN ULONG SegSs);
 
 //
 // Define prototypes for i386 specific clock and profile interrupt routines.
 //
 
-VOID
-NTAPI
-KiUpdateRunTime (
-    VOID
-    );
+VOID NTAPI KiUpdateRunTime(VOID);
 
-VOID
-NTAPI
-KiUpdateSystemTime (
-    VOID
-    );
+VOID NTAPI KiUpdateSystemTime(VOID);
 
 // begin_ntddk begin_wdm begin_ntosp
 
 NTKERNELAPI
 NTSTATUS
 NTAPI
-KeSaveFloatingPointState (
-    OUT PKFLOATING_SAVE     FloatSave
-    );
+KeSaveFloatingPointState(OUT PKFLOATING_SAVE FloatSave);
 
 NTKERNELAPI
 NTSTATUS
 NTAPI
-KeRestoreFloatingPointState (
-    IN PKFLOATING_SAVE      FloatSave
-    );
+KeRestoreFloatingPointState(IN PKFLOATING_SAVE FloatSave);
 
 // end_ntddk end_wdm
 // begin_nthal
 
 NTKERNELAPI
-VOID
-NTAPI
-KeProfileInterruptWithSource (
-    IN struct _KTRAP_FRAME *TrapFrame,
-    IN KPROFILE_SOURCE ProfileSource
-    );
+VOID NTAPI KeProfileInterruptWithSource(IN struct _KTRAP_FRAME *TrapFrame, IN KPROFILE_SOURCE ProfileSource);
 
 // end_ntosp
 
-VOID
-NTAPI
-KeProfileInterrupt (
-    IN KIRQL OldIrql,
-    IN KTRAP_FRAME TrapFrame
-    );
+VOID NTAPI KeProfileInterrupt(IN KIRQL OldIrql, IN KTRAP_FRAME TrapFrame);
 
-VOID
-NTAPI
-KeUpdateRuntime (
-    IN KIRQL OldIrql,
-    IN KTRAP_FRAME TrapFrame
-    );
+VOID NTAPI KeUpdateRuntime(IN KIRQL OldIrql, IN KTRAP_FRAME TrapFrame);
 
-VOID
-NTAPI
-KeUpdateSystemTime (
-    IN KIRQL OldIrql,
-    IN KTRAP_FRAME TrapFrame
-    );
+VOID NTAPI KeUpdateSystemTime(IN KIRQL OldIrql, IN KTRAP_FRAME TrapFrame);
 
 // begin_ntddk begin_wdm begin_ntndis begin_ntosp
 
@@ -2694,9 +2413,9 @@ KeUpdateSystemTime (
 #undef SetNotNEC_98
 #endif
 
-#define IsNEC_98     (SharedUserData->AlternativeArchitecture == NEC98x86)
-#define IsNotNEC_98  (SharedUserData->AlternativeArchitecture != NEC98x86)
-#define SetNEC_98    SharedUserData->AlternativeArchitecture = NEC98x86
+#define IsNEC_98 (SharedUserData->AlternativeArchitecture == NEC98x86)
+#define IsNotNEC_98 (SharedUserData->AlternativeArchitecture != NEC98x86)
+#define SetNEC_98 SharedUserData->AlternativeArchitecture = NEC98x86
 #define SetNotNEC_98 SharedUserData->AlternativeArchitecture = StandardDesign
 
 #endif
@@ -2709,96 +2428,44 @@ KeUpdateSystemTime (
 
 // begin_ntosp
 #ifdef _X86_
-VOID
-NTAPI
-Ke386SetLdtProcess (
-    struct _KPROCESS  *Process,
-    PLDT_ENTRY  Ldt,
-    ULONG       Limit
-    );
+VOID NTAPI Ke386SetLdtProcess(struct _KPROCESS *Process, PLDT_ENTRY Ldt, ULONG Limit);
 
-VOID
-NTAPI
-Ke386SetDescriptorProcess (
-    struct _KPROCESS  *Process,
-    ULONG       Offset,
-    LDT_ENTRY   LdtEntry
-    );
+VOID NTAPI Ke386SetDescriptorProcess(struct _KPROCESS *Process, ULONG Offset, LDT_ENTRY LdtEntry);
 
-VOID
-NTAPI
-Ke386GetGdtEntryThread (
-    struct _KTHREAD *Thread,
-    ULONG Offset,
-    PKGDTENTRY Descriptor
-    );
+VOID NTAPI Ke386GetGdtEntryThread(struct _KTHREAD *Thread, ULONG Offset, PKGDTENTRY Descriptor);
 
 BOOLEAN
 NTAPI
-Ke386SetIoAccessMap (
-    ULONG               MapNumber,
-    PKIO_ACCESS_MAP     IoAccessMap
-    );
+Ke386SetIoAccessMap(ULONG MapNumber, PKIO_ACCESS_MAP IoAccessMap);
 
 BOOLEAN
 NTAPI
-Ke386QueryIoAccessMap (
-    ULONG              MapNumber,
-    PKIO_ACCESS_MAP    IoAccessMap
-    );
+Ke386QueryIoAccessMap(ULONG MapNumber, PKIO_ACCESS_MAP IoAccessMap);
 
 BOOLEAN
 NTAPI
-Ke386IoSetAccessProcess (
-    struct _KPROCESS    *Process,
-    ULONG       MapNumber
-    );
+Ke386IoSetAccessProcess(struct _KPROCESS *Process, ULONG MapNumber);
 
-VOID
-NTAPI
-Ke386SetIOPL(
-    struct _KPROCESS    *Process
-    );
+VOID NTAPI Ke386SetIOPL(struct _KPROCESS *Process);
 
 NTSTATUS
 NTAPI
-Ke386CallBios (
-    IN ULONG BiosCommand,
-    IN OUT PCONTEXT BiosArguments
-    );
+Ke386CallBios(IN ULONG BiosCommand, IN OUT PCONTEXT BiosArguments);
 
-VOID
-NTAPI
-KiEditIopmDpc (
-    IN struct _KDPC *Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID NTAPI KiEditIopmDpc(IN struct _KDPC *Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                         IN PVOID SystemArgument2);
 
 BOOLEAN
 NTAPI
-Ki386GetSelectorParameters(
-    IN USHORT Selector,
-    OUT PULONG Flags,
-    OUT PULONG Base,
-    OUT PULONG Limit
-    );
+Ki386GetSelectorParameters(IN USHORT Selector, OUT PULONG Flags, OUT PULONG Base, OUT PULONG Limit);
 
 ULONG
-Ki386DispatchOpcodeV86 (
-    IN PKTRAP_FRAME TrapFrame
-    );
+Ki386DispatchOpcodeV86(IN PKTRAP_FRAME TrapFrame);
 
 NTSTATUS
 NTAPI
-Ke386SetVdmInterruptHandler (
-    IN struct _KPROCESS *Process,
-    IN ULONG Interrupt,
-    IN USHORT Selector,
-    IN ULONG  Offset,
-    IN BOOLEAN Gate32
-    );
+Ke386SetVdmInterruptHandler(IN struct _KPROCESS *Process, IN ULONG Interrupt, IN USHORT Selector, IN ULONG Offset,
+                            IN BOOLEAN Gate32);
 #endif //_X86_
 // end_ntosp
 //
@@ -2807,83 +2474,45 @@ Ke386SetVdmInterruptHandler (
 
 NTSTATUS
 NTAPI
-KeI386GetLid(
-    IN USHORT DeviceId,
-    IN USHORT RelativeLid,
-    IN BOOLEAN SharedLid,
-    IN struct _DRIVER_OBJECT *DeviceObject,
-    OUT PUSHORT LogicalId
-    );
+KeI386GetLid(IN USHORT DeviceId, IN USHORT RelativeLid, IN BOOLEAN SharedLid, IN struct _DRIVER_OBJECT *DeviceObject,
+             OUT PUSHORT LogicalId);
 
 NTSTATUS
 NTAPI
-KeI386ReleaseLid(
-    IN USHORT LogicalId,
-    IN struct _DRIVER_OBJECT *DeviceObject
-    );
+KeI386ReleaseLid(IN USHORT LogicalId, IN struct _DRIVER_OBJECT *DeviceObject);
 
 NTSTATUS
 NTAPI
-KeI386AbiosCall(
-    IN USHORT LogicalId,
-    IN struct _DRIVER_OBJECT *DriverObject,
-    IN PUCHAR RequestBlock,
-    IN USHORT EntryPoint
-    );
+KeI386AbiosCall(IN USHORT LogicalId, IN struct _DRIVER_OBJECT *DriverObject, IN PUCHAR RequestBlock,
+                IN USHORT EntryPoint);
 
 //
 // i386 misc routines
 //
 NTSTATUS
 NTAPI
-KeI386AllocateGdtSelectors(
-    OUT PUSHORT SelectorArray,
-    IN USHORT NumberOfSelectors
-    );
+KeI386AllocateGdtSelectors(OUT PUSHORT SelectorArray, IN USHORT NumberOfSelectors);
 
-VOID
-NTAPI
-KeI386Call16BitFunction (
-    IN OUT PCONTEXT Regs
-    );
+VOID NTAPI KeI386Call16BitFunction(IN OUT PCONTEXT Regs);
 
 USHORT
 NTAPI
-KeI386Call16BitCStyleFunction (
-    IN ULONG EntryOffset,
-    IN ULONG EntrySelector,
-    IN PUCHAR Parameters,
-    IN ULONG Size
-    );
+KeI386Call16BitCStyleFunction(IN ULONG EntryOffset, IN ULONG EntrySelector, IN PUCHAR Parameters, IN ULONG Size);
 
 NTSTATUS
 NTAPI
-KeI386FlatToGdtSelector(
-    IN ULONG SelectorBase,
-    IN USHORT Length,
-    IN USHORT Selector
-    );
+KeI386FlatToGdtSelector(IN ULONG SelectorBase, IN USHORT Length, IN USHORT Selector);
 
 NTSTATUS
 NTAPI
-KeI386ReleaseGdtSelectors(
-    OUT PUSHORT SelectorArray,
-    IN USHORT NumberOfSelectors
-    );
+KeI386ReleaseGdtSelectors(OUT PUSHORT SelectorArray, IN USHORT NumberOfSelectors);
 
 NTSTATUS
 NTAPI
-KeI386SetGdtSelector (
-    ULONG       Selector,
-    PKGDTENTRY  GdtValue
-    );
+KeI386SetGdtSelector(ULONG Selector, PKGDTENTRY GdtValue);
 
 
-VOID
-NTAPI
-KeOptimizeProcessorControlState (
-    VOID
-    );
+VOID NTAPI KeOptimizeProcessorControlState(VOID);
 
 //
 // Vdm specific functions.
@@ -2891,68 +2520,38 @@ KeOptimizeProcessorControlState (
 
 BOOLEAN
 NTAPI
-KeVdmInsertQueueApc (
-    IN PKAPC             Apc,
-    IN struct _KTHREAD  *Thread,
-    IN KPROCESSOR_MODE   ApcMode,
-    IN PKKERNEL_ROUTINE  KernelRoutine,
-    IN PKRUNDOWN_ROUTINE RundownRoutine OPTIONAL,
-    IN PKNORMAL_ROUTINE  NormalRoutine OPTIONAL,
-    IN PVOID             NormalContext OPTIONAL,
-    IN KPRIORITY         Increment
-    );
+KeVdmInsertQueueApc(IN PKAPC Apc, IN struct _KTHREAD *Thread, IN KPROCESSOR_MODE ApcMode,
+                    IN PKKERNEL_ROUTINE KernelRoutine, IN PKRUNDOWN_ROUTINE RundownRoutine OPTIONAL,
+                    IN PKNORMAL_ROUTINE NormalRoutine OPTIONAL, IN PVOID NormalContext OPTIONAL,
+                    IN KPRIORITY Increment);
 
 FORCEINLINE
-VOID
-NTAPI
-KeVdmClearApcThreadAddress (
-    IN PKAPC Apc
-    )
+VOID NTAPI KeVdmClearApcThreadAddress(IN PKAPC Apc)
 
 {
-    if (Apc->Inserted == FALSE) {
+    if (Apc->Inserted == FALSE)
+    {
         Apc->Thread = NULL;
     }
 }
 
-VOID
-NTAPI
-KeI386VdmInitialize (
-    VOID
-    );
+VOID NTAPI KeI386VdmInitialize(VOID);
 
 //
 // x86 functions for special instructions
 //
 
-VOID
-NTAPI
-CPUID (
-    ULONG   InEax,
-    PULONG  OutEax,
-    PULONG  OutEbx,
-    PULONG  OutEcx,
-    PULONG  OutEdx
-    );
+VOID NTAPI CPUID(ULONG InEax, PULONG OutEax, PULONG OutEbx, PULONG OutEcx, PULONG OutEdx);
 
 LONGLONG
 NTAPI
-RDTSC (
-    VOID
-    );
+RDTSC(VOID);
 
 ULONGLONG
 FASTCALL
-RDMSR (
-    IN ULONG MsrRegister
-    );
+RDMSR(IN ULONG MsrRegister);
 
-VOID
-NTAPI
-WRMSR (
-    IN ULONG MsrRegister,
-    IN ULONGLONG MsrValue
-    );
+VOID NTAPI WRMSR(IN ULONG MsrRegister, IN ULONGLONG MsrValue);
 
 //
 // i386 Vdm specific data
@@ -2973,25 +2572,25 @@ extern BOOLEAN KeI386FxsrPresent;
 // i386 Feature bit definitions
 //
 
-#define KF_V86_VIS          0x00000001
-#define KF_RDTSC            0x00000002
-#define KF_CR4              0x00000004
-#define KF_CMOV             0x00000008
-#define KF_GLOBAL_PAGE      0x00000010
-#define KF_LARGE_PAGE       0x00000020
-#define KF_MTRR             0x00000040
-#define KF_CMPXCHG8B        0x00000080
-#define KF_MMX              0x00000100
-#define KF_WORKING_PTE      0x00000200
-#define KF_PAT              0x00000400
-#define KF_FXSR             0x00000800
-#define KF_FAST_SYSCALL     0x00001000
-#define KF_XMMI             0x00002000
-#define KF_3DNOW            0x00004000
-#define KF_AMDK6MTRR        0x00008000
-#define KF_XMMI64           0x00010000
-#define KF_DTS              0x00020000
-#define KF_SMT              0x00040000
+#define KF_V86_VIS 0x00000001
+#define KF_RDTSC 0x00000002
+#define KF_CR4 0x00000004
+#define KF_CMOV 0x00000008
+#define KF_GLOBAL_PAGE 0x00000010
+#define KF_LARGE_PAGE 0x00000020
+#define KF_MTRR 0x00000040
+#define KF_CMPXCHG8B 0x00000080
+#define KF_MMX 0x00000100
+#define KF_WORKING_PTE 0x00000200
+#define KF_PAT 0x00000400
+#define KF_FXSR 0x00000800
+#define KF_FAST_SYSCALL 0x00001000
+#define KF_XMMI 0x00002000
+#define KF_3DNOW 0x00004000
+#define KF_AMDK6MTRR 0x00008000
+#define KF_XMMI64 0x00010000
+#define KF_DTS 0x00020000
+#define KF_SMT 0x00040000
 
 //
 // Define macro to test if x86 feature is present.

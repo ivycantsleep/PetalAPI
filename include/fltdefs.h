@@ -25,8 +25,8 @@ Revision History:
 #pragma once
 #endif
 
-typedef PVOID  FILTER_HANDLE, *PFILTER_HANDLE;
-typedef PVOID  INTERFACE_HANDLE, *PINTERFACE_HANDLE;
+typedef PVOID FILTER_HANDLE, *PFILTER_HANDLE;
+typedef PVOID INTERFACE_HANDLE, *PINTERFACE_HANDLE;
 
 #define PFEXPORT _declspec(dllexport)
 
@@ -40,9 +40,9 @@ typedef PVOID  INTERFACE_HANDLE, *PINTERFACE_HANDLE;
 
 typedef enum _GlobalFilter
 {
-    GF_FRAGMENTS = 2,        // check consistency of fragments
-    GF_STRONGHOST = 8,       // check destination address of input frames
-    GF_FRAGCACHE = 9         // check fragments from cache
+    GF_FRAGMENTS = 2,  // check consistency of fragments
+    GF_STRONGHOST = 8, // check destination address of input frames
+    GF_FRAGCACHE = 9   // check fragments from cache
 } GLOBAL_FILTER, *PGLOBAL_FILTER;
 
 typedef enum _PfForwardAction
@@ -63,34 +63,34 @@ typedef enum _PfAddresType
 //                                                                          //
 //////////////////////////////////////////////////////////////////////////////
 
-#define FILTER_PROTO(ProtoId)   MAKELONG(MAKEWORD((ProtoId),0x00),0x00000)
+#define FILTER_PROTO(ProtoId) MAKELONG(MAKEWORD((ProtoId), 0x00), 0x00000)
 
-#define FILTER_PROTO_ANY        FILTER_PROTO(0x00)
-#define FILTER_PROTO_ICMP       FILTER_PROTO(0x01)
-#define FILTER_PROTO_TCP        FILTER_PROTO(0x06)
-#define FILTER_PROTO_UDP        FILTER_PROTO(0x11)
+#define FILTER_PROTO_ANY FILTER_PROTO(0x00)
+#define FILTER_PROTO_ICMP FILTER_PROTO(0x01)
+#define FILTER_PROTO_TCP FILTER_PROTO(0x06)
+#define FILTER_PROTO_UDP FILTER_PROTO(0x11)
 
-#define FILTER_TCPUDP_PORT_ANY  (WORD)0x0000
+#define FILTER_TCPUDP_PORT_ANY (WORD)0x0000
 
-#define FILTER_ICMP_TYPE_ANY    (BYTE)0xff
-#define FILTER_ICMP_CODE_ANY    (BYTE)0xff
+#define FILTER_ICMP_TYPE_ANY (BYTE)0xff
+#define FILTER_ICMP_CODE_ANY (BYTE)0xff
 
 typedef struct _PF_FILTER_DESCRIPTOR
 {
-    DWORD           dwFilterFlags;    // see below
-    DWORD           dwRule;           // copied into the log when appropriate
-    PFADDRESSTYPE   pfatType;
-    PBYTE           SrcAddr;
-    PBYTE           SrcMask;
-    PBYTE           DstAddr;
-    PBYTE           DstMask;
-    DWORD           dwProtocol;
-    DWORD           fLateBound;
-    WORD            wSrcPort;
-    WORD            wDstPort;
-    WORD            wSrcPortHighRange;
-    WORD            wDstPortHighRange;
-}PF_FILTER_DESCRIPTOR, *PPF_FILTER_DESCRIPTOR;
+    DWORD dwFilterFlags; // see below
+    DWORD dwRule;        // copied into the log when appropriate
+    PFADDRESSTYPE pfatType;
+    PBYTE SrcAddr;
+    PBYTE SrcMask;
+    PBYTE DstAddr;
+    PBYTE DstMask;
+    DWORD dwProtocol;
+    DWORD fLateBound;
+    WORD wSrcPort;
+    WORD wDstPort;
+    WORD wSrcPortHighRange;
+    WORD wDstPortHighRange;
+} PF_FILTER_DESCRIPTOR, *PPF_FILTER_DESCRIPTOR;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -101,28 +101,28 @@ typedef struct _PF_FILTER_DESCRIPTOR
 
 typedef struct _PF_FILTER_STATS
 {
-    DWORD       dwNumPacketsFiltered;
+    DWORD dwNumPacketsFiltered;
     PF_FILTER_DESCRIPTOR info;
-}PF_FILTER_STATS, *PPF_FILTER_STATS;
+} PF_FILTER_STATS, *PPF_FILTER_STATS;
 
 typedef struct _PF_INTERFACE_STATS
 {
-    PVOID               pvDriverContext;
-    DWORD               dwFlags;          // none as yet (28-Sept-1997)
-    DWORD               dwInDrops;
-    DWORD               dwOutDrops;
-    PFFORWARD_ACTION    eaInAction;
-    PFFORWARD_ACTION    eaOutAction;
-    DWORD               dwNumInFilters;
-    DWORD               dwNumOutFilters;
-    DWORD               dwFrag;
-    DWORD               dwSpoof;
-    DWORD               dwReserved1;
-    DWORD               dwReserved2;
-    LARGE_INTEGER       liSYN;
-    LARGE_INTEGER       liTotalLogged;
-    DWORD               dwLostLogEntries;
-    PF_FILTER_STATS     FilterInfo[1];
+    PVOID pvDriverContext;
+    DWORD dwFlags; // none as yet (28-Sept-1997)
+    DWORD dwInDrops;
+    DWORD dwOutDrops;
+    PFFORWARD_ACTION eaInAction;
+    PFFORWARD_ACTION eaOutAction;
+    DWORD dwNumInFilters;
+    DWORD dwNumOutFilters;
+    DWORD dwFrag;
+    DWORD dwSpoof;
+    DWORD dwReserved1;
+    DWORD dwReserved2;
+    LARGE_INTEGER liSYN;
+    LARGE_INTEGER liTotalLogged;
+    DWORD dwLostLogEntries;
+    PF_FILTER_STATS FilterInfo[1];
 } PF_INTERFACE_STATS, *PPF_INTERFACE_STATS;
 
 
@@ -133,9 +133,7 @@ typedef struct _PF_INTERFACE_STATS
 //                                                                          //
 //////////////////////////////////////////////////////////////////////////////
 
-#define FILTERSIZE                                      \
-    (sizeof(PF_FILTER_DESCRIPTOR) -                     \
-     (DWORD)(&((PPF_FILTER_DESCRIPTOR)0)->SrcAddr))
+#define FILTERSIZE (sizeof(PF_FILTER_DESCRIPTOR) - (DWORD)(&((PPF_FILTER_DESCRIPTOR)0)->SrcAddr))
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -148,13 +146,13 @@ typedef struct _PF_INTERFACE_STATS
 // Disallows incoming SYN
 //
 
-#define FD_FLAGS_NOSYN      0x1
+#define FD_FLAGS_NOSYN 0x1
 
 //
 // All legal flags
 //
 
-#define FD_FLAGS_ALLFLAGS   FD_FLAGS_NOSYN
+#define FD_FLAGS_ALLFLAGS FD_FLAGS_NOSYN
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -169,19 +167,19 @@ typedef struct _PF_INTERFACE_STATS
 //////////////////////////////////////////////////////////////////////////////
 
 
-#define LB_SRC_ADDR_USE_SRCADDR_FLAG     0x00000001
-#define LB_SRC_ADDR_USE_DSTADDR_FLAG     0x00000002
-#define LB_DST_ADDR_USE_SRCADDR_FLAG     0x00000004
-#define LB_DST_ADDR_USE_DSTADDR_FLAG     0x00000008
-#define LB_SRC_MASK_LATE_FLAG            0x00000010
-#define LB_DST_MASK_LATE_FLAG            0x00000020
+#define LB_SRC_ADDR_USE_SRCADDR_FLAG 0x00000001
+#define LB_SRC_ADDR_USE_DSTADDR_FLAG 0x00000002
+#define LB_DST_ADDR_USE_SRCADDR_FLAG 0x00000004
+#define LB_DST_ADDR_USE_DSTADDR_FLAG 0x00000008
+#define LB_SRC_MASK_LATE_FLAG 0x00000010
+#define LB_DST_MASK_LATE_FLAG 0x00000020
 
 typedef struct _PF_LATEBIND_INFO
 {
-    PBYTE   SrcAddr;
-    PBYTE   DstAddr;
-    PBYTE   Mask;
-}PF_LATEBIND_INFO, *PPF_LATEBIND_INFO;
+    PBYTE SrcAddr;
+    PBYTE DstAddr;
+    PBYTE Mask;
+} PF_LATEBIND_INFO, *PPF_LATEBIND_INFO;
 
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
@@ -191,24 +189,24 @@ typedef struct _PF_LATEBIND_INFO
 
 typedef enum _PfFrameType
 {
-    PFFT_FILTER = 1,                  // a filter violation
-    PFFT_FRAG   = 2,                  // bad fragment
-    PFFT_SPOOF   = 3                  // strong host failure
+    PFFT_FILTER = 1, // a filter violation
+    PFFT_FRAG = 2,   // bad fragment
+    PFFT_SPOOF = 3   // strong host failure
 } PFFRAMETYPE, *PPFFRAMETYPE;
 
 typedef struct _pfLogFrame
 {
-    LARGE_INTEGER  Timestamp;
-    PFFRAMETYPE    pfeTypeOfFrame;
-    DWORD          dwTotalSizeUsed;      // used to find the next frame
-    DWORD          dwFilterRule;         // from the filter
-    WORD           wSizeOfAdditionalData;
-    WORD           wSizeOfIpHeader;
-    DWORD          dwInterfaceName;      // the name of the interface
-    DWORD          dwIPIndex;
-    BYTE           bPacketData[1];       // the frame. wsizeOfIpHeader
-                                         // and wsizeOfAdditionalData
-                                         // describe this
+    LARGE_INTEGER Timestamp;
+    PFFRAMETYPE pfeTypeOfFrame;
+    DWORD dwTotalSizeUsed; // used to find the next frame
+    DWORD dwFilterRule;    // from the filter
+    WORD wSizeOfAdditionalData;
+    WORD wSizeOfIpHeader;
+    DWORD dwInterfaceName; // the name of the interface
+    DWORD dwIPIndex;
+    BYTE bPacketData[1]; // the frame. wsizeOfIpHeader
+                         // and wsizeOfAdditionalData
+                         // describe this
 } PFLOGFRAME, *PPFLOGFRAME;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -220,11 +218,11 @@ typedef struct _pfLogFrame
 //////////////////////////////////////////////////////////////////////////////
 
 
-#define ERROR_BASE  23000
+#define ERROR_BASE 23000
 
-#define PFERROR_NO_PF_INTERFACE    (ERROR_BASE + 0)   // never returned.
-#define PFERROR_NO_FILTERS_GIVEN   (ERROR_BASE + 1)
-#define PFERROR_BUFFER_TOO_SMALL   (ERROR_BASE + 2)
+#define PFERROR_NO_PF_INTERFACE (ERROR_BASE + 0) // never returned.
+#define PFERROR_NO_FILTERS_GIVEN (ERROR_BASE + 1)
+#define PFERROR_BUFFER_TOO_SMALL (ERROR_BASE + 2)
 #define ERROR_IPV6_NOT_IMPLEMENTED (ERROR_BASE + 3)
 
 
@@ -235,84 +233,41 @@ typedef struct _pfLogFrame
 //////////////////////////////////////////////////////////////////////////////
 
 PFAPIENTRY
-PfCreateInterface(
-    DWORD            dwName,
-    PFFORWARD_ACTION inAction,
-    PFFORWARD_ACTION outAction,
-    BOOL             bUseLog,
-    BOOL             bMustBeUnique,
-    INTERFACE_HANDLE *ppInterface
-    );
+PfCreateInterface(DWORD dwName, PFFORWARD_ACTION inAction, PFFORWARD_ACTION outAction, BOOL bUseLog, BOOL bMustBeUnique,
+                  INTERFACE_HANDLE *ppInterface);
 
 PFAPIENTRY
-PfDeleteInterface(
-    INTERFACE_HANDLE pInterface
-    );
+PfDeleteInterface(INTERFACE_HANDLE pInterface);
 
 PFAPIENTRY
-PfAddFiltersToInterface(
-    INTERFACE_HANDLE      ih,
-    DWORD                 cInFilters,
-    PPF_FILTER_DESCRIPTOR pfiltIn,
-    DWORD                 cOutFilters,
-    PPF_FILTER_DESCRIPTOR pfiltOut,
-    PFILTER_HANDLE        pfHandle
-    );
+PfAddFiltersToInterface(INTERFACE_HANDLE ih, DWORD cInFilters, PPF_FILTER_DESCRIPTOR pfiltIn, DWORD cOutFilters,
+                        PPF_FILTER_DESCRIPTOR pfiltOut, PFILTER_HANDLE pfHandle);
 
 PFAPIENTRY
-PfRemoveFiltersFromInterface(
-    INTERFACE_HANDLE      ih,
-    DWORD                 cInFilters,
-    PPF_FILTER_DESCRIPTOR pfiltIn,
-    DWORD                 cOutFilters,
-    PPF_FILTER_DESCRIPTOR pfiltOut
-    );
+PfRemoveFiltersFromInterface(INTERFACE_HANDLE ih, DWORD cInFilters, PPF_FILTER_DESCRIPTOR pfiltIn, DWORD cOutFilters,
+                             PPF_FILTER_DESCRIPTOR pfiltOut);
 
 PFAPIENTRY
-PfRemoveFilterHandles(
-    INTERFACE_HANDLE   pInterface,
-    DWORD              cFilters,
-    PFILTER_HANDLE     pvHandles
-    );
+PfRemoveFilterHandles(INTERFACE_HANDLE pInterface, DWORD cFilters, PFILTER_HANDLE pvHandles);
 
 
 PFAPIENTRY
-PfUnBindInterface(
-    INTERFACE_HANDLE   pInterface
-    );
+PfUnBindInterface(INTERFACE_HANDLE pInterface);
 
 PFAPIENTRY
-PfBindInterfaceToIndex(
-    INTERFACE_HANDLE    pInterface,
-    DWORD               dwIndex,
-    PFADDRESSTYPE       pfatLinkType,
-    PBYTE               LinkIPAddress
-    );
+PfBindInterfaceToIndex(INTERFACE_HANDLE pInterface, DWORD dwIndex, PFADDRESSTYPE pfatLinkType, PBYTE LinkIPAddress);
 
 PFAPIENTRY
-PfBindInterfaceToIPAddress(
-    INTERFACE_HANDLE    pInterface,
-    PFADDRESSTYPE       pfatType,
-    PBYTE               IPAddress
-    );
+PfBindInterfaceToIPAddress(INTERFACE_HANDLE pInterface, PFADDRESSTYPE pfatType, PBYTE IPAddress);
 
 PFAPIENTRY
-PfRebindFilters(
-    INTERFACE_HANDLE    pInterface,
-    PPF_LATEBIND_INFO   pLateBindInfo
-    );
+PfRebindFilters(INTERFACE_HANDLE pInterface, PPF_LATEBIND_INFO pLateBindInfo);
 
 PFAPIENTRY
-PfAddGlobalFilterToInterface(
-    INTERFACE_HANDLE   pInterface,
-    GLOBAL_FILTER      gfFilter
-    );
+PfAddGlobalFilterToInterface(INTERFACE_HANDLE pInterface, GLOBAL_FILTER gfFilter);
 
 PFAPIENTRY
-PfRemoveGlobalFilterFromInterface(
-    INTERFACE_HANDLE   pInterface,
-    GLOBAL_FILTER      gfFilter
-    );
+PfRemoveGlobalFilterFromInterface(INTERFACE_HANDLE pInterface, GLOBAL_FILTER gfFilter);
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -325,9 +280,7 @@ PfRemoveGlobalFilterFromInterface(
 //////////////////////////////////////////////////////////////////////////////
 
 PFAPIENTRY
-PfMakeLog(
-    HANDLE  hEvent
-    );
+PfMakeLog(HANDLE hEvent);
 
 //
 // Provide a buffer, and notification parameters, and get back
@@ -335,15 +288,8 @@ PfMakeLog(
 //
 
 PFAPIENTRY
-PfSetLogBuffer(
-    PBYTE   pbBuffer,
-    DWORD   dwSize,
-    DWORD   dwThreshold,
-    DWORD   dwEntries,
-    PDWORD  pdwLoggedEntries,
-    PDWORD  pdwLostEntries,
-    PDWORD  pdwSizeUsed
-    );
+PfSetLogBuffer(PBYTE pbBuffer, DWORD dwSize, DWORD dwThreshold, DWORD dwEntries, PDWORD pdwLoggedEntries,
+               PDWORD pdwLostEntries, PDWORD pdwSizeUsed);
 
 //
 // Doing this will disable the log on any of the interfaces. But if
@@ -353,9 +299,7 @@ PfSetLogBuffer(
 //
 
 PFAPIENTRY
-PfDeleteLog(
-    VOID
-    );
+PfDeleteLog(VOID);
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -376,12 +320,8 @@ PfDeleteLog(
 
 
 PFAPIENTRY
-PfGetInterfaceStatistics(
-    INTERFACE_HANDLE    pInterface,
-    PPF_INTERFACE_STATS ppfStats,
-    PDWORD              pdwBufferSize,
-    BOOL                fResetCounters
-    );
+PfGetInterfaceStatistics(INTERFACE_HANDLE pInterface, PPF_INTERFACE_STATS ppfStats, PDWORD pdwBufferSize,
+                         BOOL fResetCounters);
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -393,13 +333,8 @@ PfGetInterfaceStatistics(
 //////////////////////////////////////////////////////////////////////////////
 
 PFAPIENTRY
-PfTestPacket(
-    INTERFACE_HANDLE   pInInterface  OPTIONAL,
-    INTERFACE_HANDLE   pOutInterface OPTIONAL,
-    DWORD              cBytes,
-    PBYTE              pbPacket,
-    PPFFORWARD_ACTION  ppAction
-    );
+PfTestPacket(INTERFACE_HANDLE pInInterface OPTIONAL, INTERFACE_HANDLE pOutInterface OPTIONAL, DWORD cBytes,
+             PBYTE pbPacket, PPFFORWARD_ACTION ppAction);
 
 
 #endif

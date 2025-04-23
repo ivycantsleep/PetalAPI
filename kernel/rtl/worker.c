@@ -47,44 +47,40 @@ Environment:
 // waited upon by the non I/O worker threads. One should not post overlapped IO requests
 // in worker threads.
 
-ULONG StartedWorkerInitialization ;     // Used for Worker thread startup synchronization
-ULONG CompletedWorkerInitialization ;   // Used to check if Worker thread pool is initialized
-ULONG NumFutureWorkItems = 0 ;          // Future work items (timers, waits, &c to exec in workers)
-ULONG NumFutureIOWorkItems = 0 ;        // Future IO work items (timers, waits, &c to exec in IO workers)
-ULONG NumIOWorkerThreads ;              // Count of IO Worker Threads alive
-ULONG NumWorkerThreads ;                // Count of Worker Threads alive
-ULONG NumMinWorkerThreads ;             // Min worker threads should be alive: 1 if ioCompletion used, else 0
-ULONG NumIOWorkRequests ;               // Count of IO Work Requests pending
-ULONG NumLongIOWorkRequests ;           // IO Worker threads executing long worker functions
-ULONG NumWorkRequests ;                 // Count of Work Requests pending.
-ULONG NumQueuedWorkRequests;            // Count of work requests pending on IO completion
-ULONG NumLongWorkRequests ;             // Worker threads executing long worker functions
-ULONG NumExecutingWorkerThreads ;       // Worker threads currently executing worker functions
-ULONG TotalExecutedWorkRequests ;       // Total worker requests that were picked up
-ULONG OldTotalExecutedWorkRequests ;    // Total worker requests since last timeout.
-HANDLE WorkerThreadTimerQueue = NULL ;  // Timer queue used by worker threads
-HANDLE WorkerThreadTimer = NULL ;       // Timer used by worker threads
+ULONG StartedWorkerInitialization;               // Used for Worker thread startup synchronization
+ULONG CompletedWorkerInitialization;             // Used to check if Worker thread pool is initialized
+ULONG NumFutureWorkItems = 0;                    // Future work items (timers, waits, &c to exec in workers)
+ULONG NumFutureIOWorkItems = 0;                  // Future IO work items (timers, waits, &c to exec in IO workers)
+ULONG NumIOWorkerThreads;                        // Count of IO Worker Threads alive
+ULONG NumWorkerThreads;                          // Count of Worker Threads alive
+ULONG NumMinWorkerThreads;                       // Min worker threads should be alive: 1 if ioCompletion used, else 0
+ULONG NumIOWorkRequests;                         // Count of IO Work Requests pending
+ULONG NumLongIOWorkRequests;                     // IO Worker threads executing long worker functions
+ULONG NumWorkRequests;                           // Count of Work Requests pending.
+ULONG NumQueuedWorkRequests;                     // Count of work requests pending on IO completion
+ULONG NumLongWorkRequests;                       // Worker threads executing long worker functions
+ULONG NumExecutingWorkerThreads;                 // Worker threads currently executing worker functions
+ULONG TotalExecutedWorkRequests;                 // Total worker requests that were picked up
+ULONG OldTotalExecutedWorkRequests;              // Total worker requests since last timeout.
+HANDLE WorkerThreadTimerQueue = NULL;            // Timer queue used by worker threads
+HANDLE WorkerThreadTimer = NULL;                 // Timer used by worker threads
 RTL_CRITICAL_SECTION WorkerTimerCriticalSection; // Synchronizes access to the worker timer
 
-ULONG LastThreadCreationTickCount ;     // Tick count at which the last thread was created
+ULONG LastThreadCreationTickCount; // Tick count at which the last thread was created
 
-LIST_ENTRY IOWorkerThreads ;            // List of IOWorkerThreads
-PRTLP_IOWORKER_TCB PersistentIOTCB ;    // ptr to TCB of persistest IO worker thread
-HANDLE WorkerCompletionPort ;           // Completion port used for queuing tasks to Worker threads
+LIST_ENTRY IOWorkerThreads;         // List of IOWorkerThreads
+PRTLP_IOWORKER_TCB PersistentIOTCB; // ptr to TCB of persistest IO worker thread
+HANDLE WorkerCompletionPort;        // Completion port used for queuing tasks to Worker threads
 
-RTL_CRITICAL_SECTION WorkerCriticalSection ;    // Exclusion used by worker threads
+RTL_CRITICAL_SECTION WorkerCriticalSection; // Exclusion used by worker threads
 
 NTSTATUS
-RtlpStartWorkerThread (
-    VOID
-    );
+RtlpStartWorkerThread(VOID);
 
-VOID
-RtlpWorkerThreadCancelTimer(
-    VOID
-    )
+VOID RtlpWorkerThreadCancelTimer(VOID)
 {
-    if (! RtlTryEnterCriticalSection(&WorkerTimerCriticalSection)) {
+    if (!RtlTryEnterCriticalSection(&WorkerTimerCriticalSection))
+    {
         //
         // Either another thread is setting a timer, or clearing it.
         // Either way, there's no reason for us to clear the timer --
@@ -93,28 +89,25 @@ RtlpWorkerThreadCancelTimer(
         return;
     }
 
-    __try {
-        if (WorkerThreadTimer) {
+    __try
+    {
+        if (WorkerThreadTimer)
+        {
             ASSERT(WorkerThreadTimerQueue);
-            
-            RtlDeleteTimer(WorkerThreadTimerQueue,
-                           WorkerThreadTimer,
-                           NULL);
+
+            RtlDeleteTimer(WorkerThreadTimerQueue, WorkerThreadTimer, NULL);
         }
-    } __finally {
+    }
+    __finally
+    {
 
         WorkerThreadTimer = NULL;
 
         RtlLeaveCriticalSection(&WorkerTimerCriticalSection);
-
     }
 }
 
-VOID
-RtlpWorkerThreadTimerCallback(
-    PVOID Context,
-    BOOLEAN NotUsed
-    )
+VOID RtlpWorkerThreadTimerCallback(PVOID Context, BOOLEAN NotUsed)
 /*++
 
 Routine Description:
@@ -129,32 +122,27 @@ Return Value:
 
 --*/
 {
-    IO_COMPLETION_BASIC_INFORMATION Info ;
-    BOOLEAN bCreateThread = FALSE ;
-    NTSTATUS Status ;
-    ULONG QueueLength, Threshold, ShortWorkRequests ;
+    IO_COMPLETION_BASIC_INFORMATION Info;
+    BOOLEAN bCreateThread = FALSE;
+    NTSTATUS Status;
+    ULONG QueueLength, Threshold, ShortWorkRequests;
 
 
-    Status = NtQueryIoCompletion(
-                WorkerCompletionPort,
-                IoCompletionBasicInformation,
-                &Info,
-                sizeof(Info),
-                NULL
-                ) ;
+    Status = NtQueryIoCompletion(WorkerCompletionPort, IoCompletionBasicInformation, &Info, sizeof(Info), NULL);
 
     if (!NT_SUCCESS(Status))
-        return ;
+        return;
 
-    QueueLength = Info.Depth ;
+    QueueLength = Info.Depth;
 
-    if (!QueueLength) {
-        OldTotalExecutedWorkRequests = TotalExecutedWorkRequests ;
-        return ;
+    if (!QueueLength)
+    {
+        OldTotalExecutedWorkRequests = TotalExecutedWorkRequests;
+        return;
     }
 
 
-    RtlEnterCriticalSection (&WorkerCriticalSection) ;
+    RtlEnterCriticalSection(&WorkerCriticalSection);
 
 
     // if there are queued work items and no new work items have been scheduled
@@ -163,71 +151,63 @@ Return Value:
 
     // this will create a problem only if some thread is running for a long time
 
-    if (TotalExecutedWorkRequests == OldTotalExecutedWorkRequests) {
+    if (TotalExecutedWorkRequests == OldTotalExecutedWorkRequests)
+    {
 
-        bCreateThread = TRUE ;
+        bCreateThread = TRUE;
     }
 
 
     // if there are a lot of queued work items, then create a new thread
     {
-        ULONG NumEffWorkerThreads = NumWorkerThreads > NumLongWorkRequests
-                                     ? NumWorkerThreads - NumLongWorkRequests
-                                     : 0;
-        ULONG ShortWorkRequests ;
+        ULONG NumEffWorkerThreads = NumWorkerThreads > NumLongWorkRequests ? NumWorkerThreads - NumLongWorkRequests : 0;
+        ULONG ShortWorkRequests;
         ULONG CapturedNumExecutingWorkerThreads;
 
-        ULONG ThreadCreationDampingTime = NumWorkerThreads < NEW_THREAD_THRESHOLD
-                                            ? THREAD_CREATION_DAMPING_TIME1
-                                            : (NumWorkerThreads < 30
-                                                ? THREAD_CREATION_DAMPING_TIME2
-                                                : (NumWorkerThreads << 13)); // *100ms
-        
+        ULONG ThreadCreationDampingTime =
+            NumWorkerThreads < NEW_THREAD_THRESHOLD
+                ? THREAD_CREATION_DAMPING_TIME1
+                : (NumWorkerThreads < 30 ? THREAD_CREATION_DAMPING_TIME2 : (NumWorkerThreads << 13)); // *100ms
+
         Threshold = (NumWorkerThreads < MAX_WORKER_THREADS
-                        ? (NumEffWorkerThreads < 7
-                            ? NumEffWorkerThreads*NumEffWorkerThreads
-                            : ((NumEffWorkerThreads<40)
-                                ? NEW_THREAD_THRESHOLD * NumEffWorkerThreads
-                                : NEW_THREAD_THRESHOLD2 * NumEffWorkerThreads))
-                        : 0xffffffff) ;
+                         ? (NumEffWorkerThreads < 7
+                                ? NumEffWorkerThreads * NumEffWorkerThreads
+                                : ((NumEffWorkerThreads < 40) ? NEW_THREAD_THRESHOLD * NumEffWorkerThreads
+                                                              : NEW_THREAD_THRESHOLD2 * NumEffWorkerThreads))
+                         : 0xffffffff);
 
         CapturedNumExecutingWorkerThreads = NumExecutingWorkerThreads;
 
         ShortWorkRequests = QueueLength + CapturedNumExecutingWorkerThreads > NumLongWorkRequests
-                             ? QueueLength + CapturedNumExecutingWorkerThreads - NumLongWorkRequests
-                             : 0;
+                                ? QueueLength + CapturedNumExecutingWorkerThreads - NumLongWorkRequests
+                                : 0;
 
         if (LastThreadCreationTickCount > NtGetTickCount())
-            LastThreadCreationTickCount = NtGetTickCount() ;
+            LastThreadCreationTickCount = NtGetTickCount();
 
 
-        if (ShortWorkRequests  > Threshold
-            && (LastThreadCreationTickCount + ThreadCreationDampingTime
-                    < NtGetTickCount()))
+        if (ShortWorkRequests > Threshold &&
+            (LastThreadCreationTickCount + ThreadCreationDampingTime < NtGetTickCount()))
         {
-            bCreateThread = TRUE ;
+            bCreateThread = TRUE;
         }
-
-
     }
 
-    if (bCreateThread && NumWorkerThreads<MaxThreads) {
+    if (bCreateThread && NumWorkerThreads < MaxThreads)
+    {
 
         RtlpStartWorkerThread();
         RtlpWorkerThreadCancelTimer();
     }
 
 
-    OldTotalExecutedWorkRequests = TotalExecutedWorkRequests ;
+    OldTotalExecutedWorkRequests = TotalExecutedWorkRequests;
 
-    RtlLeaveCriticalSection (&WorkerCriticalSection) ;
-
+    RtlLeaveCriticalSection(&WorkerCriticalSection);
 }
 
 NTSTATUS
-RtlpWorkerThreadSetTimer(
-    VOID
-    )
+RtlpWorkerThreadSetTimer(VOID)
 {
     NTSTATUS Status;
     HANDLE NewTimerQueue;
@@ -235,7 +215,8 @@ RtlpWorkerThreadSetTimer(
 
     Status = STATUS_SUCCESS;
 
-    if (! RtlTryEnterCriticalSection(&WorkerTimerCriticalSection)) {
+    if (!RtlTryEnterCriticalSection(&WorkerTimerCriticalSection))
+    {
         //
         // Either another thread is setting a timer, or clearing it.
         // Either way, there's no reason for us to set the timer --
@@ -244,41 +225,39 @@ RtlpWorkerThreadSetTimer(
         return STATUS_SUCCESS;
     }
 
-    __try {
+    __try
+    {
 
-        if (! WorkerThreadTimerQueue) {
+        if (!WorkerThreadTimerQueue)
+        {
             Status = RtlCreateTimerQueue(&NewTimerQueue);
-            if (! NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 __leave;
             }
-            
+
             WorkerThreadTimerQueue = NewTimerQueue;
         }
-        
+
         ASSERT(WorkerThreadTimerQueue != NULL);
 
-        if (! WorkerThreadTimer) {
-            Status = RtlCreateTimer(
-                WorkerThreadTimerQueue,
-                &NewTimer,
-                RtlpWorkerThreadTimerCallback,
-                NULL,
-                60000,
-                60000,
-                WT_EXECUTEINTIMERTHREAD
-                ) ;
-            
-            if (! NT_SUCCESS(Status)) {
+        if (!WorkerThreadTimer)
+        {
+            Status = RtlCreateTimer(WorkerThreadTimerQueue, &NewTimer, RtlpWorkerThreadTimerCallback, NULL, 60000,
+                                    60000, WT_EXECUTEINTIMERTHREAD);
+
+            if (!NT_SUCCESS(Status))
+            {
                 __leave;
             }
 
             WorkerThreadTimer = NewTimer;
         }
-
-    } __finally {
+    }
+    __finally
+    {
 
         RtlLeaveCriticalSection(&WorkerTimerCriticalSection);
-
     }
 
     return Status;
@@ -286,13 +265,10 @@ RtlpWorkerThreadSetTimer(
 
 #if _MSC_FULL_VER >= 13008827
 #pragma warning(push)
-#pragma warning(disable:4715)			// Not all control paths return (due to infinite loop)
+#pragma warning(disable : 4715) // Not all control paths return (due to infinite loop)
 #endif
 
-LONG
-RtlpWorkerThread (
-    PVOID Parameter
-    )
+LONG RtlpWorkerThread(PVOID Parameter)
 /*++
 
 Routine Description:
@@ -315,52 +291,46 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
-    PVOID WorkerProc ;
-    PVOID Context ;
-    IO_STATUS_BLOCK IoSb ;
-    ULONG SleepTime ;
-    LARGE_INTEGER TimeOut ;
-    ULONG Terminate ;
-    PVOID Overlapped ;
+    NTSTATUS Status;
+    PVOID WorkerProc;
+    PVOID Context;
+    IO_STATUS_BLOCK IoSb;
+    ULONG SleepTime;
+    LARGE_INTEGER TimeOut;
+    ULONG Terminate;
+    PVOID Overlapped;
 
     UNREFERENCED_PARAMETER(Parameter);
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "Starting worker thread\n");
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "Starting worker thread\n");
 #endif
 
     // Set default sleep time for 40 seconds.
 
-#define WORKER_IDLE_TIMEOUT     40000    // In Milliseconds
+#define WORKER_IDLE_TIMEOUT 40000 // In Milliseconds
 
-    SleepTime = WORKER_IDLE_TIMEOUT ;
+    SleepTime = WORKER_IDLE_TIMEOUT;
 
     // Loop servicing I/O completion requests
 
-    for ( ; ; ) {
+    for (;;)
+    {
 
-        TimeOut.QuadPart = Int32x32To64( SleepTime, -10000 ) ;
+        TimeOut.QuadPart = Int32x32To64(SleepTime, -10000);
 
-        Status = NtRemoveIoCompletion(
-                    WorkerCompletionPort,
-                    (PVOID) &WorkerProc,
-                    &Overlapped,
-                    &IoSb,
-                    &TimeOut
-                    ) ;
+        Status = NtRemoveIoCompletion(WorkerCompletionPort, (PVOID)&WorkerProc, &Overlapped, &IoSb, &TimeOut);
 
-        if (Status == STATUS_SUCCESS) {
+        if (Status == STATUS_SUCCESS)
+        {
 
 
-            TotalExecutedWorkRequests ++ ;//interlocked op not req
-            InterlockedIncrement(&NumExecutingWorkerThreads) ;
+            TotalExecutedWorkRequests++; //interlocked op not req
+            InterlockedIncrement(&NumExecutingWorkerThreads);
             InterlockedDecrement(&NumQueuedWorkRequests);
 
-            if (NumExecutingWorkerThreads == NumWorkerThreads
-                && NumQueuedWorkRequests > 0) {
+            if (NumExecutingWorkerThreads == NumWorkerThreads && NumQueuedWorkRequests > 0)
+            {
                 RtlpWorkerThreadSetTimer();
             }
 
@@ -370,42 +340,42 @@ Return Value:
             // If (IO)WorkerFunction, context1 contains the actual WorkerFunction to be
             // executed and context2 contains the actual context
 
-            Context = (PVOID) IoSb.Information ;
+            Context = (PVOID)IoSb.Information;
 
-            RtlpApcCallout(WorkerProc,
-                           IoSb.Status,
-                           Context,
-                           Overlapped);
+            RtlpApcCallout(WorkerProc, IoSb.Status, Context, Overlapped);
 
-            SleepTime = WORKER_IDLE_TIMEOUT ;
+            SleepTime = WORKER_IDLE_TIMEOUT;
 
-            InterlockedDecrement(&NumExecutingWorkerThreads) ;
+            InterlockedDecrement(&NumExecutingWorkerThreads);
 
             RtlpWorkerThreadCancelTimer();
-
-        } else if (Status == STATUS_TIMEOUT) {
+        }
+        else if (Status == STATUS_TIMEOUT)
+        {
 
             // NtRemoveIoCompletion timed out. Check to see if have hit our limit
             // on waiting. If so terminate.
 
-            Terminate = FALSE ;
+            Terminate = FALSE;
 
-            RtlEnterCriticalSection (&WorkerCriticalSection) ;
+            RtlEnterCriticalSection(&WorkerCriticalSection);
 
             // The thread terminates if there are > 1 threads and the queue is small
             // OR if there is only 1 thread and there is no request pending
 
-            if (NumWorkerThreads >  1) {
+            if (NumWorkerThreads > 1)
+            {
 
-                ULONG NumEffWorkerThreads = NumWorkerThreads > NumLongWorkRequests
-                                             ? NumWorkerThreads - NumLongWorkRequests
-                                             : 0;
+                ULONG NumEffWorkerThreads =
+                    NumWorkerThreads > NumLongWorkRequests ? NumWorkerThreads - NumLongWorkRequests : 0;
 
-                if (NumEffWorkerThreads<=NumMinWorkerThreads) {
+                if (NumEffWorkerThreads <= NumMinWorkerThreads)
+                {
 
-                    Terminate = FALSE ;
-
-                } else {
+                    Terminate = FALSE;
+                }
+                else
+                {
 
                     //
                     // have been idle for very long time. terminate irrespective of number of
@@ -414,80 +384,78 @@ Return Value:
                     // (NumEffWorkerThreads == 1)
                     //
 
-                    if (NumEffWorkerThreads > 1) {
-                        Terminate = TRUE ;
-                    } else {
-                        Terminate = FALSE ;
+                    if (NumEffWorkerThreads > 1)
+                    {
+                        Terminate = TRUE;
                     }
-
+                    else
+                    {
+                        Terminate = FALSE;
+                    }
                 }
+            }
+            else
+            {
 
-            } else {
+                if (NumMinWorkerThreads == 0 && NumWorkRequests == 0 && NumFutureWorkItems == 0)
+                {
 
-                if ( NumMinWorkerThreads == 0
-                     && NumWorkRequests == 0
-                     && NumFutureWorkItems == 0) {
-
-                    Terminate = TRUE ;
-
-                } else {
-
-                    Terminate = FALSE ;
-
+                    Terminate = TRUE;
                 }
+                else
+                {
 
+                    Terminate = FALSE;
+                }
             }
 
-            if (Terminate) {
+            if (Terminate)
+            {
 
                 THREAD_BASIC_INFORMATION ThreadInfo;
-                ULONG IsIoPending ;
+                ULONG IsIoPending;
 
-                Terminate = FALSE ;
+                Terminate = FALSE;
 
-                Status = NtQueryInformationThread( NtCurrentThread(),
-                                                   ThreadIsIoPending,
-                                                   &IsIoPending,
-                                                   sizeof( IsIoPending ),
-                                                   NULL
-                                                 );
-                if (NT_SUCCESS( Status )) {
+                Status = NtQueryInformationThread(NtCurrentThread(), ThreadIsIoPending, &IsIoPending,
+                                                  sizeof(IsIoPending), NULL);
+                if (NT_SUCCESS(Status))
+                {
 
-                    if (! IsIoPending )
-                        Terminate = TRUE ;
+                    if (!IsIoPending)
+                        Terminate = TRUE;
                 }
             }
 
-            if (Terminate) {
+            if (Terminate)
+            {
 
                 ASSERT(NumWorkerThreads > 0);
                 NumWorkerThreads--;
 
-                RtlLeaveCriticalSection (&WorkerCriticalSection) ;
+                RtlLeaveCriticalSection(&WorkerCriticalSection);
 
-                RtlpExitThreadFunc( 0 );
-
-            } else {
+                RtlpExitThreadFunc(0);
+            }
+            else
+            {
 
                 // This is the condition where a request was queued *after* the
                 // thread woke up - ready to terminate because of inactivity. In
                 // this case dont terminate - service the completion port.
 
-                RtlLeaveCriticalSection (&WorkerCriticalSection) ;
-
+                RtlLeaveCriticalSection(&WorkerCriticalSection);
             }
-
-        } else {
-
-            ASSERTMSG ("NtRemoveIoCompletion failed",
-                       (Status != STATUS_SUCCESS) && (Status != STATUS_TIMEOUT)) ;
-
         }
+        else
+        {
 
+            ASSERTMSG("NtRemoveIoCompletion failed", (Status != STATUS_SUCCESS) && (Status != STATUS_TIMEOUT));
+        }
     }
 
 
-    return 1 ;
+    return 1;
 }
 
 #if _MSC_FULL_VER >= 13008827
@@ -495,9 +463,7 @@ Return Value:
 #endif
 
 NTSTATUS
-RtlpStartWorkerThread (
-    VOID
-    )
+RtlpStartWorkerThread(VOID)
 /*++
 
 Routine Description:
@@ -520,16 +486,13 @@ Return Value:
 
     // Create worker thread
 
-    Status = RtlpStartThreadpoolThread (RtlpWorkerThread,
-                                        NULL,
-                                        &ThreadHandle);
+    Status = RtlpStartThreadpoolThread(RtlpWorkerThread, NULL, &ThreadHandle);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
 #if DBG
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_TRACE_MASK,
-                   "Created worker thread; handle %d (closing)\n",
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "Created worker thread; handle %d (closing)\n",
                    ThreadHandle);
 #endif
 
@@ -538,37 +501,35 @@ Return Value:
 
         // Update the time at which the current thread was created
 
-        LastThreadCreationTickCount = NtGetTickCount() ;
+        LastThreadCreationTickCount = NtGetTickCount();
 
         // Increment the count of the thread type created
 
         NumWorkerThreads++;
-
-    } else {
+    }
+    else
+    {
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "Failed to create worker thread; status %p\n",
-               Status);
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "Failed to create worker thread; status %p\n",
+                   Status);
 #endif
 
         // Thread creation failed. If there is even one thread present do not return
         // failure - else queue the request anyway.
 
-        if (NumWorkerThreads <= NumLongWorkRequests) {
+        if (NumWorkerThreads <= NumLongWorkRequests)
+        {
 
-            return Status ;
+            return Status;
         }
-
     }
 
-    return STATUS_SUCCESS ;
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS
-RtlpInitializeWorkerThreadPool (
-    )
+RtlpInitializeWorkerThreadPool()
 /*++
 
 Routine Description:
@@ -585,20 +546,20 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status = STATUS_SUCCESS ;
-    LARGE_INTEGER TimeOut ;
+    NTSTATUS Status = STATUS_SUCCESS;
+    LARGE_INTEGER TimeOut;
     SYSTEM_BASIC_INFORMATION BasicInfo;
 
 
     // Initialize the timer component if it hasnt been done already
 
-    if (CompletedTimerInitialization != 1) {
+    if (CompletedTimerInitialization != 1)
+    {
 
-        Status = RtlpInitializeTimerThreadPool () ;
+        Status = RtlpInitializeTimerThreadPool();
 
-        if ( !NT_SUCCESS(Status) )
-            return Status ;
-
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 
 
@@ -608,94 +569,89 @@ Return Value:
     // This scheme does not work if RtlInitializeCriticalSection() fails - but in this case the
     // caller has no choices left.
 
-    if (!InterlockedExchange(&StartedWorkerInitialization, 1L)) {
+    if (!InterlockedExchange(&StartedWorkerInitialization, 1L))
+    {
 
         if (CompletedWorkerInitialization)
-            InterlockedExchange( &CompletedWorkerInitialization, 0 ) ;
+            InterlockedExchange(&CompletedWorkerInitialization, 0);
 
 
-        do {
+        do
+        {
 
             // Initialize Critical Sections
 
-            Status = RtlInitializeCriticalSection( &WorkerCriticalSection );
+            Status = RtlInitializeCriticalSection(&WorkerCriticalSection);
             if (!NT_SUCCESS(Status))
-                break ;
+                break;
 
-            Status = RtlInitializeCriticalSection( &WorkerTimerCriticalSection );
-            if (! NT_SUCCESS(Status)) {
-                RtlDeleteCriticalSection( &WorkerCriticalSection );
+            Status = RtlInitializeCriticalSection(&WorkerTimerCriticalSection);
+            if (!NT_SUCCESS(Status))
+            {
+                RtlDeleteCriticalSection(&WorkerCriticalSection);
                 break;
             }
 
-            InitializeListHead (&IOWorkerThreads) ;
+            InitializeListHead(&IOWorkerThreads);
 
             // get number of processors
 
-            Status = NtQuerySystemInformation (
-                                SystemBasicInformation,
-                                &BasicInfo,
-                                sizeof(BasicInfo),
-                                NULL
-                                ) ;
+            Status = NtQuerySystemInformation(SystemBasicInformation, &BasicInfo, sizeof(BasicInfo), NULL);
 
-            if ( !NT_SUCCESS(Status) ) {
-                BasicInfo.NumberOfProcessors = 1 ;
+            if (!NT_SUCCESS(Status))
+            {
+                BasicInfo.NumberOfProcessors = 1;
             }
 
             // Create completion port used by worker threads
 
-            Status = NtCreateIoCompletion (
-                                &WorkerCompletionPort,
-                                IO_COMPLETION_ALL_ACCESS,
-                                NULL,
-                                BasicInfo.NumberOfProcessors
-                                );
+            Status = NtCreateIoCompletion(&WorkerCompletionPort, IO_COMPLETION_ALL_ACCESS, NULL,
+                                          BasicInfo.NumberOfProcessors);
 
-            if (!NT_SUCCESS(Status)) {
-                RtlDeleteCriticalSection( &WorkerCriticalSection );
-                RtlDeleteCriticalSection( &WorkerTimerCriticalSection );
+            if (!NT_SUCCESS(Status))
+            {
+                RtlDeleteCriticalSection(&WorkerCriticalSection);
+                RtlDeleteCriticalSection(&WorkerTimerCriticalSection);
                 break;
             }
 
-        } while ( FALSE ) ;
+        } while (FALSE);
 
-        if (!NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            StartedWorkerInitialization = 0 ;
-            InterlockedExchange( &CompletedWorkerInitialization, ~0 ) ;
-            return Status ;
+            StartedWorkerInitialization = 0;
+            InterlockedExchange(&CompletedWorkerInitialization, ~0);
+            return Status;
         }
 
         // Signal that initialization has completed
 
-        InterlockedExchange (&CompletedWorkerInitialization, 1L) ;
+        InterlockedExchange(&CompletedWorkerInitialization, 1L);
+    }
+    else
+    {
 
-    } else {
-
-        LARGE_INTEGER Timeout ;
+        LARGE_INTEGER Timeout;
 
         // Sleep 1 ms and see if the other thread has completed initialization
 
-        ONE_MILLISECOND_TIMEOUT(TimeOut) ;
+        ONE_MILLISECOND_TIMEOUT(TimeOut);
 
-        while (!*((ULONG volatile *)&CompletedWorkerInitialization)) {
+        while (!*((ULONG volatile *)&CompletedWorkerInitialization))
+        {
 
-            NtDelayExecution (FALSE, &TimeOut) ;
+            NtDelayExecution(FALSE, &TimeOut);
         }
 
         if (CompletedWorkerInitialization != 1)
-            return STATUS_NO_MEMORY ;
-
+            return STATUS_NO_MEMORY;
     }
 
-    return NT_SUCCESS(Status)  ? STATUS_SUCCESS : Status ;
+    return NT_SUCCESS(Status) ? STATUS_SUCCESS : Status;
 }
 
-LONG
-RtlpIOWorkerThread (
-    PVOID Parameter
-    )
+LONG RtlpIOWorkerThread(PVOID Parameter)
 /*++
 
 Routine Description:
@@ -711,42 +667,42 @@ Return Value:
 
 --*/
 {
-    #define IOWORKER_IDLE_TIMEOUT     40000    // In Milliseconds
+#define IOWORKER_IDLE_TIMEOUT 40000 // In Milliseconds
 
-    LARGE_INTEGER TimeOut ;
-    ULONG SleepTime = IOWORKER_IDLE_TIMEOUT ;
-    PRTLP_IOWORKER_TCB ThreadCB ;    // Control Block allocated on the
-                                     // heap by the parent thread
-    NTSTATUS Status ;
-    BOOLEAN Terminate ;
+    LARGE_INTEGER TimeOut;
+    ULONG SleepTime = IOWORKER_IDLE_TIMEOUT;
+    PRTLP_IOWORKER_TCB ThreadCB; // Control Block allocated on the
+                                 // heap by the parent thread
+    NTSTATUS Status;
+    BOOLEAN Terminate;
 
     ASSERT(Parameter != NULL);
 
-    ThreadCB = (PRTLP_IOWORKER_TCB) Parameter;
+    ThreadCB = (PRTLP_IOWORKER_TCB)Parameter;
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "Starting IO worker thread\n");
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "Starting IO worker thread\n");
 #endif
 
     // Sleep alertably so that all the activity can take place
     // in APCs
 
-    for ( ; ; ) {
+    for (;;)
+    {
 
         // Set timeout for IdleTimeout
 
-        TimeOut.QuadPart = Int32x32To64( SleepTime, -10000 ) ;
+        TimeOut.QuadPart = Int32x32To64(SleepTime, -10000);
 
 
-        Status = NtDelayExecution (TRUE, &TimeOut) ;
+        Status = NtDelayExecution(TRUE, &TimeOut);
 
 
         // Status is STATUS_SUCCESS only when it has timed out
 
-        if (Status != STATUS_SUCCESS) {
-            continue ;
+        if (Status != STATUS_SUCCESS)
+        {
+            continue;
         }
 
 
@@ -754,139 +710,142 @@ Return Value:
         // idle timeout. check if you can terminate the thread
         //
 
-        Terminate = FALSE ;
+        Terminate = FALSE;
 
-        RtlEnterCriticalSection (&WorkerCriticalSection) ;
+        RtlEnterCriticalSection(&WorkerCriticalSection);
 
 
         // dont terminate if it is a persistent thread
 
-        if (ThreadCB->Flags & WT_EXECUTEINPERSISTENTIOTHREAD) {
+        if (ThreadCB->Flags & WT_EXECUTEINPERSISTENTIOTHREAD)
+        {
 
             TimeOut.LowPart = 0x0;
             TimeOut.HighPart = 0x80000000;
 
-            RtlLeaveCriticalSection (&WorkerCriticalSection) ;
+            RtlLeaveCriticalSection(&WorkerCriticalSection);
 
-            continue ;
+            continue;
         }
 
 
         // The thread terminates if there are > 1 threads and the queue is small
         // OR if there is only 1 thread and there is no request pending
 
-        if (NumIOWorkerThreads >  1) {
+        if (NumIOWorkerThreads > 1)
+        {
 
 
-            ULONG NumEffIOWorkerThreads = NumIOWorkerThreads > NumLongIOWorkRequests
-                                           ? NumIOWorkerThreads - NumLongIOWorkRequests
-                                           : 0;
+            ULONG NumEffIOWorkerThreads =
+                NumIOWorkerThreads > NumLongIOWorkRequests ? NumIOWorkerThreads - NumLongIOWorkRequests : 0;
             ULONG Threshold;
 
-            if (NumEffIOWorkerThreads == 0) {
+            if (NumEffIOWorkerThreads == 0)
+            {
 
-                Terminate = FALSE ;
-
-            } else {
+                Terminate = FALSE;
+            }
+            else
+            {
 
                 // Check if we need to shrink worker thread pool
 
-                Threshold = NEW_THREAD_THRESHOLD * (NumEffIOWorkerThreads-1);
+                Threshold = NEW_THREAD_THRESHOLD * (NumEffIOWorkerThreads - 1);
 
 
+                if (NumIOWorkRequests - NumLongIOWorkRequests < Threshold)
+                {
 
-                if  (NumIOWorkRequests-NumLongIOWorkRequests < Threshold)  {
+                    Terminate = TRUE;
+                }
+                else
+                {
 
-                    Terminate = TRUE ;
-
-                } else {
-
-                    Terminate = FALSE ;
-                    SleepTime <<= 1 ;
+                    Terminate = FALSE;
+                    SleepTime <<= 1;
                 }
             }
+        }
+        else
+        {
 
-        } else {
-
-            if (NumIOWorkRequests == 0
-                && NumFutureIOWorkItems == 0) {
+            if (NumIOWorkRequests == 0 && NumFutureIOWorkItems == 0)
+            {
 
                 // delay termination of last thread
 
-                if (SleepTime < 4*IOWORKER_IDLE_TIMEOUT) {
+                if (SleepTime < 4 * IOWORKER_IDLE_TIMEOUT)
+                {
 
-                    SleepTime <<= 1 ;
-                    Terminate = FALSE ;
-
-                } else {
-
-                    Terminate = TRUE ;
+                    SleepTime <<= 1;
+                    Terminate = FALSE;
                 }
+                else
+                {
 
-            } else {
-
-                Terminate = FALSE ;
-
+                    Terminate = TRUE;
+                }
             }
+            else
+            {
 
+                Terminate = FALSE;
+            }
         }
 
         //
         // terminate only if no io is pending
         //
 
-        if (Terminate) {
+        if (Terminate)
+        {
 
             NTSTATUS Status;
             THREAD_BASIC_INFORMATION ThreadInfo;
-            ULONG IsIoPending ;
+            ULONG IsIoPending;
 
-            Terminate = FALSE ;
+            Terminate = FALSE;
 
-            Status = NtQueryInformationThread( ThreadCB->ThreadHandle,
-                                               ThreadIsIoPending,
-                                               &IsIoPending,
-                                               sizeof( IsIoPending ),
-                                               NULL
-                                             );
-            if (NT_SUCCESS( Status )) {
+            Status = NtQueryInformationThread(ThreadCB->ThreadHandle, ThreadIsIoPending, &IsIoPending,
+                                              sizeof(IsIoPending), NULL);
+            if (NT_SUCCESS(Status))
+            {
 
-                if (! IsIoPending )
-                    Terminate = TRUE ;
+                if (!IsIoPending)
+                    Terminate = TRUE;
             }
         }
 
-        if (Terminate) {
+        if (Terminate)
+        {
 
             ASSERT(NumIOWorkerThreads > 0);
             NumIOWorkerThreads--;
 
-            RemoveEntryList (&ThreadCB->List) ;
-            NtClose( ThreadCB->ThreadHandle ) ;
-            RtlpFreeTPHeap( ThreadCB );
+            RemoveEntryList(&ThreadCB->List);
+            NtClose(ThreadCB->ThreadHandle);
+            RtlpFreeTPHeap(ThreadCB);
 
-            RtlLeaveCriticalSection (&WorkerCriticalSection) ;
+            RtlLeaveCriticalSection(&WorkerCriticalSection);
 
-            RtlpExitThreadFunc( 0 );
-
-        } else {
+            RtlpExitThreadFunc(0);
+        }
+        else
+        {
 
             // This is the condition where a request was queued *after* the
             // thread woke up - ready to terminate because of inactivity. In
             // this case dont terminate - service the completion port.
 
-            RtlLeaveCriticalSection (&WorkerCriticalSection) ;
-
+            RtlLeaveCriticalSection(&WorkerCriticalSection);
         }
     }
 
-    return 0 ;  // Keep compiler happy
-
+    return 0; // Keep compiler happy
 }
 
 NTSTATUS
-RtlpStartIOWorkerThread (
-    )
+RtlpStartIOWorkerThread()
 /*++
 
 Routine Description:
@@ -905,13 +864,14 @@ Return Value:
 
 --*/
 {
-    ULONG CurrentTickCount ;
-    NTSTATUS Status ;
+    ULONG CurrentTickCount;
+    NTSTATUS Status;
     PRTLP_IOWORKER_TCB ThreadCB;
 
     // Create the worker's control block
-    ThreadCB = (PRTLP_IOWORKER_TCB) RtlpAllocateTPHeap(sizeof(RTLP_IOWORKER_TCB), 0);
-    if (! ThreadCB) {
+    ThreadCB = (PRTLP_IOWORKER_TCB)RtlpAllocateTPHeap(sizeof(RTLP_IOWORKER_TCB), 0);
+    if (!ThreadCB)
+    {
         return STATUS_NO_MEMORY;
     }
 
@@ -921,20 +881,20 @@ Return Value:
 
     // Create worker thread
 
-    Status = RtlpStartThreadpoolThread (RtlpIOWorkerThread,
-                                        ThreadCB,
-                                        &ThreadCB->ThreadHandle);
+    Status = RtlpStartThreadpoolThread(RtlpIOWorkerThread, ThreadCB, &ThreadCB->ThreadHandle);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         // Update the time at which the current thread was created,
         // and insert the ThreadCB into the IO worker thread list.
 
-        LastThreadCreationTickCount = NtGetTickCount() ;
+        LastThreadCreationTickCount = NtGetTickCount();
         NumIOWorkerThreads++;
         InsertHeadList(&IOWorkerThreads, &ThreadCB->List);
-
-    } else {
+    }
+    else
+    {
 
         // Thread creation failed.
 
@@ -943,22 +903,17 @@ Return Value:
         // If there is even one thread present do not return
         // failure since we can still service the work request.
 
-        if (NumIOWorkerThreads <= NumLongIOWorkRequests) {
+        if (NumIOWorkerThreads <= NumLongIOWorkRequests)
+        {
 
-            return Status ;
-
+            return Status;
         }
     }
 
-    return STATUS_SUCCESS ;
+    return STATUS_SUCCESS;
 }
 
-VOID
-RtlpExecuteLongIOWorkItem (
-    PVOID Function,
-    PVOID Context,
-    PVOID ThreadCB
-    )
+VOID RtlpExecuteLongIOWorkItem(PVOID Function, PVOID Context, PVOID ThreadCB)
 /*++
 
 Routine Description:
@@ -977,12 +932,9 @@ Return Value:
 
 --*/
 {
-    RtlpWorkerCallout(Function,
-                      Context,
-                      NULL,
-                      NULL);
+    RtlpWorkerCallout(Function, Context, NULL, NULL);
 
-    ((PRTLP_IOWORKER_TCB)ThreadCB)->LongFunctionFlag = FALSE ;
+    ((PRTLP_IOWORKER_TCB)ThreadCB)->LongFunctionFlag = FALSE;
 
     RtlEnterCriticalSection(&WorkerCriticalSection);
 
@@ -997,12 +949,7 @@ Return Value:
     RtlLeaveCriticalSection(&WorkerCriticalSection);
 }
 
-VOID
-RtlpExecuteIOWorkItem (
-    PVOID Function,
-    PVOID Context,
-    PVOID NotUsed
-    )
+VOID RtlpExecuteIOWorkItem(PVOID Function, PVOID Context, PVOID NotUsed)
 /*++
 
 Routine Description:
@@ -1022,10 +969,7 @@ Return Value:
 
 --*/
 {
-    RtlpWorkerCallout(Function,
-                      Context,
-                      NULL,
-                      NULL);
+    RtlpWorkerCallout(Function, Context, NULL, NULL);
 
     RtlEnterCriticalSection(&WorkerCriticalSection);
 
@@ -1037,11 +981,7 @@ Return Value:
 }
 
 NTSTATUS
-RtlpQueueIOWorkerRequest (
-    WORKERCALLBACKFUNC Function,
-    PVOID Context,
-    ULONG Flags
-    )
+RtlpQueueIOWorkerRequest(WORKERCALLBACKFUNC Function, PVOID Context, ULONG Flags)
 
 /*++
 
@@ -1060,63 +1000,71 @@ Return Value:
 --*/
 
 {
-    NTSTATUS Status ;
-    PRTLP_IOWORKER_TCB TCB ;
-    BOOLEAN LongFunction = (Flags & WT_EXECUTELONGFUNCTION) ? TRUE : FALSE ;
-    PLIST_ENTRY  ple ;
+    NTSTATUS Status;
+    PRTLP_IOWORKER_TCB TCB;
+    BOOLEAN LongFunction = (Flags & WT_EXECUTELONGFUNCTION) ? TRUE : FALSE;
+    PLIST_ENTRY ple;
 
 
-    if (Flags & WT_EXECUTEINPERSISTENTIOTHREAD) {
+    if (Flags & WT_EXECUTEINPERSISTENTIOTHREAD)
+    {
 
-        if (!PersistentIOTCB) {
-            for (ple=IOWorkerThreads.Flink;  ple!=&IOWorkerThreads;  ple=ple->Flink) {
-                TCB = CONTAINING_RECORD (ple, RTLP_IOWORKER_TCB, List) ;
-                if (! TCB->LongFunctionFlag)
+        if (!PersistentIOTCB)
+        {
+            for (ple = IOWorkerThreads.Flink; ple != &IOWorkerThreads; ple = ple->Flink)
+            {
+                TCB = CONTAINING_RECORD(ple, RTLP_IOWORKER_TCB, List);
+                if (!TCB->LongFunctionFlag)
                     break;
             }
 
-            if (ple == &IOWorkerThreads) {
+            if (ple == &IOWorkerThreads)
+            {
                 return STATUS_NO_MEMORY;
             }
 
 
-            PersistentIOTCB = TCB ;
-            TCB->Flags |= WT_EXECUTEINPERSISTENTIOTHREAD ;
-
-        } else {
-            TCB = PersistentIOTCB ;
+            PersistentIOTCB = TCB;
+            TCB->Flags |= WT_EXECUTEINPERSISTENTIOTHREAD;
         }
+        else
+        {
+            TCB = PersistentIOTCB;
+        }
+    }
+    else
+    {
+        for (ple = IOWorkerThreads.Flink; ple != &IOWorkerThreads; ple = ple->Flink)
+        {
 
-    } else {
-        for (ple=IOWorkerThreads.Flink;  ple!=&IOWorkerThreads;  ple=ple->Flink) {
-
-            TCB = CONTAINING_RECORD (ple, RTLP_IOWORKER_TCB, List) ;
+            TCB = CONTAINING_RECORD(ple, RTLP_IOWORKER_TCB, List);
 
             // do not queue to the thread if it is executing a long function, or
             // if you are queueing a long function and the thread is a persistent thread
 
-            if (! TCB->LongFunctionFlag
-                && (! ((TCB->Flags&WT_EXECUTEINPERSISTENTIOTHREAD)
-                        && (Flags&WT_EXECUTELONGFUNCTION)))) {
-                break ;
+            if (!TCB->LongFunctionFlag &&
+                (!((TCB->Flags & WT_EXECUTEINPERSISTENTIOTHREAD) && (Flags & WT_EXECUTELONGFUNCTION))))
+            {
+                break;
             }
-
         }
 
-        if ((ple == &IOWorkerThreads) && (NumIOWorkerThreads<1)) {
+        if ((ple == &IOWorkerThreads) && (NumIOWorkerThreads < 1))
+        {
 
 #if DBG
-            DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                       RTLP_THREADPOOL_WARNING_MASK,
+            DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_WARNING_MASK,
                        "Out of memory. "
-                       "Could not execute IOWorkItem(%x)\n", (ULONG_PTR)Function);
+                       "Could not execute IOWorkItem(%x)\n",
+                       (ULONG_PTR)Function);
 #endif
 
             return STATUS_NO_MEMORY;
         }
-        else {
+        else
+        {
             ple = IOWorkerThreads.Flink;
-            TCB = CONTAINING_RECORD (ple, RTLP_IOWORKER_TCB, List) ;
+            TCB = CONTAINING_RECORD(ple, RTLP_IOWORKER_TCB, List);
 
             // treat it as a short function so that counters work fine.
 
@@ -1126,46 +1074,39 @@ Return Value:
         // In order to implement "fair" assignment of work items between IO worker threads
         // each time remove the entry and reinsert at back.
 
-        RemoveEntryList (&TCB->List) ;
-        InsertTailList (&IOWorkerThreads, &TCB->List) ;
+        RemoveEntryList(&TCB->List);
+        InsertTailList(&IOWorkerThreads, &TCB->List);
     }
 
 
     // Increment the outstanding work request counter
 
     NumIOWorkRequests++;
-    if (LongFunction) {
+    if (LongFunction)
+    {
         NumLongIOWorkRequests++;
-        TCB->LongFunctionFlag = TRUE ;
+        TCB->LongFunctionFlag = TRUE;
     }
 
     // Queue an APC to the IoWorker Thread
 
-    Status = NtQueueApcThread(
-                    TCB->ThreadHandle,
-                    LongFunction? (PPS_APC_ROUTINE)RtlpExecuteLongIOWorkItem:
-                                  (PPS_APC_ROUTINE)RtlpExecuteIOWorkItem,
-                    (PVOID)Function,
-                    Context,
-                    TCB
-                    );
+    Status = NtQueueApcThread(TCB->ThreadHandle,
+                              LongFunction ? (PPS_APC_ROUTINE)RtlpExecuteLongIOWorkItem
+                                           : (PPS_APC_ROUTINE)RtlpExecuteIOWorkItem,
+                              (PVOID)Function, Context, TCB);
 
-    if (! NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
         NumIOWorkRequests--;
         if (LongFunction)
             NumLongIOWorkRequests--;
     }
 
-    return Status ;
-
+    return Status;
 }
 
 NTSTATUS
-RtlSetIoCompletionCallback (
-    IN  HANDLE  FileHandle,
-    IN  APC_CALLBACK_FUNCTION  CompletionProc,
-    IN  ULONG Flags
-    )
+RtlSetIoCompletionCallback(IN HANDLE FileHandle, IN APC_CALLBACK_FUNCTION CompletionProc, IN ULONG Flags)
 
 /*++
 
@@ -1186,24 +1127,25 @@ Arguments:
 --*/
 
 {
-    IO_STATUS_BLOCK IoSb ;
-    FILE_COMPLETION_INFORMATION CompletionInfo ;
+    IO_STATUS_BLOCK IoSb;
+    FILE_COMPLETION_INFORMATION CompletionInfo;
     NTSTATUS Status;
 
-    if (LdrpShutdownInProgress) {
+    if (LdrpShutdownInProgress)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
     // Make sure that the worker thread pool is initialized as the file handle
     // is bound to IO completion port.
 
-    if (CompletedWorkerInitialization != 1) {
+    if (CompletedWorkerInitialization != 1)
+    {
 
-        Status = RtlpInitializeWorkerThreadPool () ;
+        Status = RtlpInitializeWorkerThreadPool();
 
-        if (! NT_SUCCESS(Status) )
-            return Status ;
-
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 
 
@@ -1212,51 +1154,47 @@ Arguments:
     // create a new one.
     //
 
-    if ( NumMinWorkerThreads == 0 ) {
+    if (NumMinWorkerThreads == 0)
+    {
 
         // Take lock for the global worker thread pool
 
-        RtlEnterCriticalSection (&WorkerCriticalSection) ;
+        RtlEnterCriticalSection(&WorkerCriticalSection);
 
-        if ((NumWorkerThreads-NumLongWorkRequests) == 0) {
+        if ((NumWorkerThreads - NumLongWorkRequests) == 0)
+        {
 
-            Status = RtlpStartWorkerThread () ;
+            Status = RtlpStartWorkerThread();
 
-            if ( ! NT_SUCCESS(Status) ) {
+            if (!NT_SUCCESS(Status))
+            {
 
-                RtlLeaveCriticalSection (&WorkerCriticalSection) ;
-                return Status ;
+                RtlLeaveCriticalSection(&WorkerCriticalSection);
+                return Status;
             }
         }
 
         // from now on, there will be at least 1 worker thread
-        NumMinWorkerThreads = 1 ;
+        NumMinWorkerThreads = 1;
 
-        RtlLeaveCriticalSection (&WorkerCriticalSection) ;
-
+        RtlLeaveCriticalSection(&WorkerCriticalSection);
     }
 
     // bind to IoCompletionPort, which queues work items to worker threads
 
-    CompletionInfo.Port = WorkerCompletionPort ;
-    CompletionInfo.Key = (PVOID) CompletionProc ;
+    CompletionInfo.Port = WorkerCompletionPort;
+    CompletionInfo.Key = (PVOID)CompletionProc;
 
-    Status = NtSetInformationFile (
-                        FileHandle,
-                        &IoSb, //not initialized
-                        &CompletionInfo,
-                        sizeof(CompletionInfo),
-                        FileCompletionInformation //enum flag
-                        ) ;
-    return Status ;
+    Status = NtSetInformationFile(FileHandle,
+                                  &IoSb, //not initialized
+                                  &CompletionInfo, sizeof(CompletionInfo),
+                                  FileCompletionInformation //enum flag
+    );
+    return Status;
 }
 
-VOID
-RtlpExecuteWorkerRequest (
-    NTSTATUS StatusIn, //not  used
-    PVOID Context,
-    PVOID WorkContext
-    )
+VOID RtlpExecuteWorkerRequest(NTSTATUS StatusIn, //not  used
+                              PVOID Context, PVOID WorkContext)
 /*++
 
 Routine Description:
@@ -1278,17 +1216,15 @@ Notes:
 --*/
 
 {
-    PRTLP_WORK WorkEntry = (PRTLP_WORK) WorkContext;
+    PRTLP_WORK WorkEntry = (PRTLP_WORK)WorkContext;
     NTSTATUS Status;
 
-    RtlpWorkerCallout(WorkEntry->Function,
-                      Context,
-                      WorkEntry->ActivationContext,
-                      WorkEntry->ImpersonationToken);
+    RtlpWorkerCallout(WorkEntry->Function, Context, WorkEntry->ActivationContext, WorkEntry->ImpersonationToken);
 
     RtlEnterCriticalSection(&WorkerCriticalSection);
     NumWorkRequests--;
-    if (WorkEntry->Flags & WT_EXECUTELONGFUNCTION) {
+    if (WorkEntry->Flags & WT_EXECUTELONGFUNCTION)
+    {
         NumLongWorkRequests--;
     }
     RtlLeaveCriticalSection(&WorkerCriticalSection);
@@ -1296,19 +1232,16 @@ Notes:
     if (WorkEntry->ActivationContext != INVALID_ACTIVATION_CONTEXT)
         RtlReleaseActivationContext(WorkEntry->ActivationContext);
 
-    if (WorkEntry->ImpersonationToken) {
+    if (WorkEntry->ImpersonationToken)
+    {
         NtClose(WorkEntry->ImpersonationToken);
     }
 
-    RtlpFreeTPHeap( WorkEntry ) ;
+    RtlpFreeTPHeap(WorkEntry);
 }
 
 NTSTATUS
-RtlpQueueWorkerRequest (
-    WORKERCALLBACKFUNC Function,
-    PVOID Context,
-    ULONG Flags
-    )
+RtlpQueueWorkerRequest(WORKERCALLBACKFUNC Function, PVOID Context, ULONG Flags)
 /*++
 
 Routine Description:
@@ -1328,36 +1261,42 @@ Return Value:
 --*/
 
 {
-    NTSTATUS Status ;
-    PRTLP_WORK WorkEntry ;
+    NTSTATUS Status;
+    PRTLP_WORK WorkEntry;
 
-    WorkEntry = (PRTLP_WORK) RtlpAllocateTPHeap ( sizeof (RTLP_WORK),
-                                                  HEAP_ZERO_MEMORY) ;
+    WorkEntry = (PRTLP_WORK)RtlpAllocateTPHeap(sizeof(RTLP_WORK), HEAP_ZERO_MEMORY);
 
-    if (! WorkEntry) {
+    if (!WorkEntry)
+    {
         return STATUS_NO_MEMORY;
     }
 
-    if (NtCurrentTeb()->IsImpersonating) {
-        Status = NtOpenThreadToken(NtCurrentThread(),
-                                   MAXIMUM_ALLOWED,
-                                   TRUE,
-                                   &WorkEntry->ImpersonationToken);
-        if (! NT_SUCCESS(Status)) {
+    if (NtCurrentTeb()->IsImpersonating)
+    {
+        Status = NtOpenThreadToken(NtCurrentThread(), MAXIMUM_ALLOWED, TRUE, &WorkEntry->ImpersonationToken);
+        if (!NT_SUCCESS(Status))
+        {
             RtlpFreeTPHeap(WorkEntry);
             return Status;
         }
-    } else {
+    }
+    else
+    {
         WorkEntry->ImpersonationToken = NULL;
     }
 
     Status = RtlpThreadPoolGetActiveActivationContext(&WorkEntry->ActivationContext);
-    if (!NT_SUCCESS(Status)) {
-        if (Status == STATUS_SXS_THREAD_QUERIES_DISABLED) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_SXS_THREAD_QUERIES_DISABLED)
+        {
             WorkEntry->ActivationContext = INVALID_ACTIVATION_CONTEXT;
             Status = STATUS_SUCCESS;
-        } else {
-            if (WorkEntry->ImpersonationToken) {
+        }
+        else
+        {
+            if (WorkEntry->ImpersonationToken)
+            {
                 NtClose(WorkEntry->ImpersonationToken);
             }
             RtlpFreeTPHeap(WorkEntry);
@@ -1368,66 +1307,59 @@ Return Value:
     // Increment the outstanding work request counter
 
     NumWorkRequests++;
-    if (Flags & WT_EXECUTELONGFUNCTION) {
+    if (Flags & WT_EXECUTELONGFUNCTION)
+    {
         NumLongWorkRequests++;
     }
 
-    WorkEntry->Function = Function ;
-    WorkEntry->Flags = Flags ;
+    WorkEntry->Function = Function;
+    WorkEntry->Flags = Flags;
 
-    if (Flags & WT_EXECUTEINPERSISTENTTHREAD) {
+    if (Flags & WT_EXECUTEINPERSISTENTTHREAD)
+    {
 
         // Queue APC to timer thread
 
-        Status = NtQueueApcThread(
-                        TimerThreadHandle,
-                        (PPS_APC_ROUTINE)RtlpExecuteWorkerRequest,
-                        (PVOID) STATUS_SUCCESS,
-                        (PVOID) Context,
-                        (PVOID) WorkEntry
-                        ) ;
-
-    } else {
+        Status = NtQueueApcThread(TimerThreadHandle, (PPS_APC_ROUTINE)RtlpExecuteWorkerRequest, (PVOID)STATUS_SUCCESS,
+                                  (PVOID)Context, (PVOID)WorkEntry);
+    }
+    else
+    {
 
         InterlockedIncrement(&NumQueuedWorkRequests);
 
-        Status = NtSetIoCompletion (
-                    WorkerCompletionPort,
-                    RtlpExecuteWorkerRequest,
-                    (PVOID) WorkEntry,
-                    STATUS_SUCCESS,
-                    (ULONG_PTR)Context
-                    );
-        if (! NT_SUCCESS(Status)) {
+        Status = NtSetIoCompletion(WorkerCompletionPort, RtlpExecuteWorkerRequest, (PVOID)WorkEntry, STATUS_SUCCESS,
+                                   (ULONG_PTR)Context);
+        if (!NT_SUCCESS(Status))
+        {
             InterlockedDecrement(&NumQueuedWorkRequests);
         }
     }
 
-    if ( ! NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         NumWorkRequests--;
-        if (Flags & WT_EXECUTELONGFUNCTION) {
+        if (Flags & WT_EXECUTELONGFUNCTION)
+        {
             NumLongWorkRequests--;
         }
 
         if (WorkEntry->ActivationContext != INVALID_ACTIVATION_CONTEXT)
             RtlReleaseActivationContext(WorkEntry->ActivationContext);
 
-        if (WorkEntry->ImpersonationToken) {
+        if (WorkEntry->ImpersonationToken)
+        {
             NtClose(WorkEntry->ImpersonationToken);
         }
 
-        RtlpFreeTPHeap( WorkEntry ) ;
+        RtlpFreeTPHeap(WorkEntry);
     }
 
-    return Status ;
+    return Status;
 }
 
 NTSTATUS
-RtlQueueWorkItem(
-    IN  WORKERCALLBACKFUNC Function,
-    IN  PVOID Context,
-    IN  ULONG  Flags
-    )
+RtlQueueWorkItem(IN WORKERCALLBACKFUNC Function, IN PVOID Context, IN ULONG Flags)
 
 /*++
 
@@ -1461,235 +1393,209 @@ Return Value:
 --*/
 
 {
-    ULONG Threshold ;
-    ULONG CurrentTickCount ;
-    NTSTATUS Status = STATUS_SUCCESS ;
+    ULONG Threshold;
+    ULONG CurrentTickCount;
+    NTSTATUS Status = STATUS_SUCCESS;
 
-    if (LdrpShutdownInProgress) {
+    if (LdrpShutdownInProgress)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
     // Make sure the worker thread pool is initialized
 
-    if (CompletedWorkerInitialization != 1) {
+    if (CompletedWorkerInitialization != 1)
+    {
 
-        Status = RtlpInitializeWorkerThreadPool () ;
+        Status = RtlpInitializeWorkerThreadPool();
 
-        if (! NT_SUCCESS(Status) )
-            return Status ;
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 
 
     // Take lock for the global worker thread pool
 
-    RtlEnterCriticalSection (&WorkerCriticalSection) ;
+    RtlEnterCriticalSection(&WorkerCriticalSection);
 
-    if (Flags&0xffff0000) {
-        MaxThreads = (Flags & 0xffff0000)>>16;
+    if (Flags & 0xffff0000)
+    {
+        MaxThreads = (Flags & 0xffff0000) >> 16;
     }
 
-    if (NEEDS_IO_THREAD(Flags)) {
+    if (NEEDS_IO_THREAD(Flags))
+    {
 
         //
         // execute in IO Worker thread
         //
 
-        ULONG NumEffIOWorkerThreads = NumIOWorkerThreads > NumLongIOWorkRequests
-                                       ? NumIOWorkerThreads - NumLongIOWorkRequests
-                                       : 0;
-        
-        ULONG ThreadCreationDampingTime = NumIOWorkerThreads < NEW_THREAD_THRESHOLD
-                                            ? THREAD_CREATION_DAMPING_TIME1
-                                            : THREAD_CREATION_DAMPING_TIME2 ;
+        ULONG NumEffIOWorkerThreads =
+            NumIOWorkerThreads > NumLongIOWorkRequests ? NumIOWorkerThreads - NumLongIOWorkRequests : 0;
 
-        if (NumEffIOWorkerThreads && PersistentIOTCB && (Flags&WT_EXECUTELONGFUNCTION))
-            NumEffIOWorkerThreads -- ;
+        ULONG ThreadCreationDampingTime =
+            NumIOWorkerThreads < NEW_THREAD_THRESHOLD ? THREAD_CREATION_DAMPING_TIME1 : THREAD_CREATION_DAMPING_TIME2;
+
+        if (NumEffIOWorkerThreads && PersistentIOTCB && (Flags & WT_EXECUTELONGFUNCTION))
+            NumEffIOWorkerThreads--;
 
 
-            // Check if we need to grow I/O worker thread pool
+        // Check if we need to grow I/O worker thread pool
 
-        Threshold = (NumEffIOWorkerThreads < MAX_WORKER_THREADS
-                         ? NEW_THREAD_THRESHOLD * NumEffIOWorkerThreads
-                         : 0xffffffff) ;
+        Threshold =
+            (NumEffIOWorkerThreads < MAX_WORKER_THREADS ? NEW_THREAD_THRESHOLD * NumEffIOWorkerThreads : 0xffffffff);
 
         if (LastThreadCreationTickCount > NtGetTickCount())
-            LastThreadCreationTickCount = NtGetTickCount() ;
+            LastThreadCreationTickCount = NtGetTickCount();
 
-        if (NumEffIOWorkerThreads == 0
-            || ((NumIOWorkRequests - NumLongIOWorkRequests > Threshold)
-                && (LastThreadCreationTickCount + ThreadCreationDampingTime
-                    < NtGetTickCount()))) {
+        if (NumEffIOWorkerThreads == 0 ||
+            ((NumIOWorkRequests - NumLongIOWorkRequests > Threshold) &&
+             (LastThreadCreationTickCount + ThreadCreationDampingTime < NtGetTickCount())))
+        {
 
             // Grow the IO worker thread pool
 
-            Status = RtlpStartIOWorkerThread () ;
-
+            Status = RtlpStartIOWorkerThread();
         }
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
             // Queue the work request
 
-            Status = RtlpQueueIOWorkerRequest (Function, Context, Flags) ;
+            Status = RtlpQueueIOWorkerRequest(Function, Context, Flags);
         }
-
-
-    } else {
+    }
+    else
+    {
 
         //
         // execute in regular worker thread
         //
 
-        ULONG NumEffWorkerThreads = NumWorkerThreads > NumLongWorkRequests
-                                     ? NumWorkerThreads - NumLongWorkRequests
-                                     : 0;
-        ULONG ThreadCreationDampingTime = NumWorkerThreads < NEW_THREAD_THRESHOLD
-                                            ? THREAD_CREATION_DAMPING_TIME1
-                                            : (NumWorkerThreads < 30
-                                                ? THREAD_CREATION_DAMPING_TIME2
-                                                : NumWorkerThreads << 13);
+        ULONG NumEffWorkerThreads = NumWorkerThreads > NumLongWorkRequests ? NumWorkerThreads - NumLongWorkRequests : 0;
+        ULONG ThreadCreationDampingTime =
+            NumWorkerThreads < NEW_THREAD_THRESHOLD
+                ? THREAD_CREATION_DAMPING_TIME1
+                : (NumWorkerThreads < 30 ? THREAD_CREATION_DAMPING_TIME2 : NumWorkerThreads << 13);
 
         // if io completion set, then have 1 more thread
 
         if (NumMinWorkerThreads && NumEffWorkerThreads)
-            NumEffWorkerThreads -- ;
+            NumEffWorkerThreads--;
 
 
         // Check if we need to grow worker thread pool
 
         Threshold = (NumWorkerThreads < MAX_WORKER_THREADS
-                     ? (NumEffWorkerThreads < 7
-                        ? NumEffWorkerThreads*NumEffWorkerThreads
-                        : ((NumEffWorkerThreads<40)
-                          ? NEW_THREAD_THRESHOLD * NumEffWorkerThreads 
-                          : NEW_THREAD_THRESHOLD2 * NumEffWorkerThreads))
-                      : 0xffffffff) ;
+                         ? (NumEffWorkerThreads < 7
+                                ? NumEffWorkerThreads * NumEffWorkerThreads
+                                : ((NumEffWorkerThreads < 40) ? NEW_THREAD_THRESHOLD * NumEffWorkerThreads
+                                                              : NEW_THREAD_THRESHOLD2 * NumEffWorkerThreads))
+                         : 0xffffffff);
 
         if (LastThreadCreationTickCount > NtGetTickCount())
-            LastThreadCreationTickCount = NtGetTickCount() ;
+            LastThreadCreationTickCount = NtGetTickCount();
 
-        if (NumEffWorkerThreads == 0 ||
-            ( (NumWorkRequests - NumLongWorkRequests >= Threshold)
-              && (LastThreadCreationTickCount + ThreadCreationDampingTime
-                  < NtGetTickCount())))
+        if (NumEffWorkerThreads == 0 || ((NumWorkRequests - NumLongWorkRequests >= Threshold) &&
+                                         (LastThreadCreationTickCount + ThreadCreationDampingTime < NtGetTickCount())))
+        {
+            // Grow the worker thread pool
+            if (NumWorkerThreads < MaxThreads)
             {
-                // Grow the worker thread pool
-                if (NumWorkerThreads<MaxThreads) {
-                    
-                    Status = RtlpStartWorkerThread () ;
 
-                }
+                Status = RtlpStartWorkerThread();
             }
+        }
 
         // Queue the work request
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
-            Status = RtlpQueueWorkerRequest (Function, Context, Flags) ;
+            Status = RtlpQueueWorkerRequest(Function, Context, Flags);
         }
-
     }
 
     // Release lock on the worker thread pool
 
-    RtlLeaveCriticalSection (&WorkerCriticalSection) ;
+    RtlLeaveCriticalSection(&WorkerCriticalSection);
 
-    return Status ;
+    return Status;
 }
 
 NTSTATUS
-RtlpWorkerCleanup(
-    VOID
-    )
+RtlpWorkerCleanup(VOID)
 {
     PLIST_ENTRY Node;
     ULONG i;
     HANDLE TmpHandle;
     BOOLEAN Cleanup;
 
-        IS_COMPONENT_INITIALIZED( StartedWorkerInitialization,
-                            CompletedWorkerInitialization,
-                            Cleanup ) ;
+    IS_COMPONENT_INITIALIZED(StartedWorkerInitialization, CompletedWorkerInitialization, Cleanup);
 
-    if ( Cleanup ) {
+    if (Cleanup)
+    {
 
-        RtlEnterCriticalSection (&WorkerCriticalSection) ;
+        RtlEnterCriticalSection(&WorkerCriticalSection);
 
-        if ( (NumWorkRequests != 0) || (NumIOWorkRequests != 0) ) {
+        if ((NumWorkRequests != 0) || (NumIOWorkRequests != 0))
+        {
 
-            RtlLeaveCriticalSection (&WorkerCriticalSection) ;
+            RtlLeaveCriticalSection(&WorkerCriticalSection);
 
-            return STATUS_UNSUCCESSFUL ;
+            return STATUS_UNSUCCESSFUL;
         }
 
         // queue a cleanup for each worker thread
 
-        for (i = 0 ;  i < NumWorkerThreads ; i ++ ) {
+        for (i = 0; i < NumWorkerThreads; i++)
+        {
 
-            NtSetIoCompletion (
-                    WorkerCompletionPort,
-                    RtlpThreadCleanup,
-                    NULL,
-                    STATUS_SUCCESS,
-                    0
-                    );
+            NtSetIoCompletion(WorkerCompletionPort, RtlpThreadCleanup, NULL, STATUS_SUCCESS, 0);
         }
 
         // queue an apc to cleanup all IO worker threads
 
-        for (Node = IOWorkerThreads.Flink ; Node != &IOWorkerThreads ;
-                Node = Node->Flink )
+        for (Node = IOWorkerThreads.Flink; Node != &IOWorkerThreads; Node = Node->Flink)
         {
-            PRTLP_IOWORKER_TCB ThreadCB ;
+            PRTLP_IOWORKER_TCB ThreadCB;
 
-            ThreadCB = CONTAINING_RECORD (Node, RTLP_IOWORKER_TCB, List) ;
-            RemoveEntryList( &ThreadCB->List) ;
-            TmpHandle = ThreadCB->ThreadHandle ;
+            ThreadCB = CONTAINING_RECORD(Node, RTLP_IOWORKER_TCB, List);
+            RemoveEntryList(&ThreadCB->List);
+            TmpHandle = ThreadCB->ThreadHandle;
 
-            NtQueueApcThread(
-                   ThreadCB->ThreadHandle,
-                   (PPS_APC_ROUTINE)RtlpThreadCleanup,
-                   NULL,
-                   NULL,
-                   NULL
-                   );
+            NtQueueApcThread(ThreadCB->ThreadHandle, (PPS_APC_ROUTINE)RtlpThreadCleanup, NULL, NULL, NULL);
 
-            NtClose( TmpHandle ) ;
+            NtClose(TmpHandle);
         }
 
-        NumWorkerThreads = NumIOWorkerThreads = 0 ;
+        NumWorkerThreads = NumIOWorkerThreads = 0;
 
-        RtlLeaveCriticalSection (&WorkerCriticalSection) ;
-
+        RtlLeaveCriticalSection(&WorkerCriticalSection);
     }
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-RtlpThreadPoolGetActiveActivationContext(
-    PACTIVATION_CONTEXT* ActivationContext
-    )
+RtlpThreadPoolGetActiveActivationContext(PACTIVATION_CONTEXT *ActivationContext)
 {
-    ACTIVATION_CONTEXT_BASIC_INFORMATION ActivationContextInfo = {0};
+    ACTIVATION_CONTEXT_BASIC_INFORMATION ActivationContextInfo = { 0 };
     NTSTATUS Status = STATUS_SUCCESS;
 
     ASSERT(ActivationContext != NULL);
     *ActivationContext = NULL;
 
-    Status =
-        RtlQueryInformationActivationContext(
-            RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_USE_ACTIVE_ACTIVATION_CONTEXT,
-            NULL,
-            0,
-            ActivationContextBasicInformation,
-            &ActivationContextInfo,
-            sizeof(ActivationContextInfo),
-            NULL);
-    if (!NT_SUCCESS(Status)) {
+    Status = RtlQueryInformationActivationContext(
+        RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_USE_ACTIVE_ACTIVATION_CONTEXT, NULL, 0,
+        ActivationContextBasicInformation, &ActivationContextInfo, sizeof(ActivationContextInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         goto Exit;
     }
-    if ((ActivationContextInfo.Flags & ACTIVATION_CONTEXT_FLAG_NO_INHERIT) != 0) {
+    if ((ActivationContextInfo.Flags & ACTIVATION_CONTEXT_FLAG_NO_INHERIT) != 0)
+    {
         RtlReleaseActivationContext(ActivationContextInfo.ActivationContext);
         ActivationContextInfo.ActivationContext = NULL;
         // fall through
@@ -1704,25 +1610,31 @@ NTSTATUS
 RtlpAcquireWorker(ULONG Flags)
 {
     NTSTATUS Status = STATUS_SUCCESS;
-    
-    if (CompletedWorkerInitialization != 1) {
-        Status = RtlpInitializeWorkerThreadPool () ;
 
-        if (! NT_SUCCESS(Status) )
-            return Status ;
+    if (CompletedWorkerInitialization != 1)
+    {
+        Status = RtlpInitializeWorkerThreadPool();
+
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 
-    if (NEEDS_IO_THREAD(Flags)) {
+    if (NEEDS_IO_THREAD(Flags))
+    {
         RtlEnterCriticalSection(&WorkerCriticalSection);
         InterlockedIncrement(&NumFutureIOWorkItems);
-        if (NumIOWorkerThreads == 0) {
+        if (NumIOWorkerThreads == 0)
+        {
             Status = RtlpStartIOWorkerThread();
         }
         RtlLeaveCriticalSection(&WorkerCriticalSection);
-    } else {
+    }
+    else
+    {
         RtlEnterCriticalSection(&WorkerCriticalSection);
         InterlockedIncrement(&NumFutureWorkItems);
-        if (NumWorkerThreads == 0) {
+        if (NumWorkerThreads == 0)
+        {
             Status = RtlpStartWorkerThread();
         }
         RtlLeaveCriticalSection(&WorkerCriticalSection);
@@ -1731,13 +1643,15 @@ RtlpAcquireWorker(ULONG Flags)
     return Status;
 }
 
-VOID
-RtlpReleaseWorker(ULONG Flags)
+VOID RtlpReleaseWorker(ULONG Flags)
 {
-    if (NEEDS_IO_THREAD(Flags)) {
+    if (NEEDS_IO_THREAD(Flags))
+    {
         ASSERT(NumFutureIOWorkItems > 0);
         InterlockedDecrement(&NumFutureIOWorkItems);
-    } else {
+    }
+    else
+    {
         ASSERT(NumFutureWorkItems > 0);
         InterlockedDecrement(&NumFutureWorkItems);
     }

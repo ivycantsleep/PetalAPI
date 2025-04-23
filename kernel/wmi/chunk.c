@@ -20,44 +20,30 @@ Revision History:
 
 #include "wmikmp.h"
 
-PENTRYHEADER WmipAllocEntry(
-    PCHUNKINFO ChunkInfo
-    );
+PENTRYHEADER WmipAllocEntry(PCHUNKINFO ChunkInfo);
 
-void WmipFreeEntry(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    );
+void WmipFreeEntry(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry);
 
-ULONG WmipUnreferenceEntry(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    );
+ULONG WmipUnreferenceEntry(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry);
 
-PWCHAR WmipCountedToSz(
-    PWCHAR Counted
-    );
+PWCHAR WmipCountedToSz(PWCHAR Counted);
 
 #if HEAPVALIDATION
-PVOID WmipAlloc(
-    ULONG Size
-    );
+PVOID WmipAlloc(ULONG Size);
 
-void WmipFree(
-    PVOID p
-    );
+void WmipFree(PVOID p);
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,WmipAllocEntry)
-#pragma alloc_text(PAGE,WmipFreeEntry)
-#pragma alloc_text(PAGE,WmipUnreferenceEntry)
-#pragma alloc_text(PAGE,WmipCountedToSz)
+#pragma alloc_text(PAGE, WmipAllocEntry)
+#pragma alloc_text(PAGE, WmipFreeEntry)
+#pragma alloc_text(PAGE, WmipUnreferenceEntry)
+#pragma alloc_text(PAGE, WmipCountedToSz)
 
 #if HEAPVALIDATION
-#pragma alloc_text(PAGE,WmipAllocWithTag)
-#pragma alloc_text(PAGE,WmipAlloc)
-#pragma alloc_text(PAGE,WmipFree)
+#pragma alloc_text(PAGE, WmipAllocWithTag)
+#pragma alloc_text(PAGE, WmipAlloc)
+#pragma alloc_text(PAGE, WmipFree)
 #endif
 #endif
 
@@ -65,9 +51,7 @@ void WmipFree(
 // TODO: Use Ex lookaside lists instead of my own allocations
 //
 
-PENTRYHEADER WmipAllocEntry(
-    PCHUNKINFO ChunkInfo
-    )
+PENTRYHEADER WmipAllocEntry(PCHUNKINFO ChunkInfo)
 /*++
 
 Routine Description:
@@ -94,23 +78,21 @@ Return Value:
     ULONG i;
 
     PAGED_CODE();
-    
+
     WmipEnterSMCritSection();
     ChunkList = ChunkInfo->ChunkHead.Flink;
 
     //
     // Loop over all chunks to see if any chunk has a free entry for us
-    while(ChunkList != &ChunkInfo->ChunkHead)
+    while (ChunkList != &ChunkInfo->ChunkHead)
     {
         Chunk = CONTAINING_RECORD(ChunkList, CHUNKHEADER, ChunkList);
-        if (! IsListEmpty(&Chunk->FreeEntryHead))
+        if (!IsListEmpty(&Chunk->FreeEntryHead))
         {
             EntryList = RemoveHeadList(&Chunk->FreeEntryHead);
             Chunk->EntriesInUse++;
             WmipLeaveSMCritSection();
-            Entry = (CONTAINING_RECORD(EntryList,
-                                       ENTRYHEADER,
-                                       FreeEntryList));
+            Entry = (CONTAINING_RECORD(EntryList, ENTRYHEADER, FreeEntryList));
             WmipAssert(Entry->Flags & FLAG_ENTRY_ON_FREE_LIST);
             memset(Entry, 0, ChunkInfo->EntrySize);
             Entry->Chunk = Chunk;
@@ -120,7 +102,7 @@ Return Value:
 #if DBG
             InterlockedIncrement(&ChunkInfo->AllocCount);
 #endif
-            return(Entry);
+            return (Entry);
         }
         ChunkList = ChunkList->Flink;
     }
@@ -129,11 +111,8 @@ Return Value:
     //
     // There are no more free entries in any of the chunks. Allocate a new
     // chunk if we can
-    ChunkSize = (ChunkInfo->EntrySize * ChunkInfo->EntriesPerChunk) +
-                  sizeof(CHUNKHEADER);
-    Chunk = (PCHUNKHEADER)ExAllocatePoolWithTag(PagedPool,
-                                            ChunkSize,
-                        ChunkInfo->Signature);
+    ChunkSize = (ChunkInfo->EntrySize * ChunkInfo->EntriesPerChunk) + sizeof(CHUNKHEADER);
+    Chunk = (PCHUNKHEADER)ExAllocatePoolWithTag(PagedPool, ChunkSize, ChunkInfo->Signature);
     if (Chunk != NULL)
     {
         //
@@ -152,8 +131,7 @@ Return Value:
             Entry = (PENTRYHEADER)EntryPtr;
             Entry->Chunk = Chunk;
             Entry->Flags = FLAG_ENTRY_ON_FREE_LIST;
-            InsertHeadList(FreeEntryHead,
-                           &((PENTRYHEADER)EntryPtr)->FreeEntryList);
+            InsertHeadList(FreeEntryHead, &((PENTRYHEADER)EntryPtr)->FreeEntryList);
             EntryPtr = EntryPtr + ChunkInfo->EntrySize;
         }
         //
@@ -173,19 +151,17 @@ Return Value:
         WmipEnterSMCritSection();
         InsertHeadList(&ChunkInfo->ChunkHead, &Chunk->ChunkList);
         WmipLeaveSMCritSection();
-
-    } else {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Could not allocate memory for new chunk %x\n",
-                        ChunkInfo));
+    }
+    else
+    {
+        WmipDebugPrintEx(
+            (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Could not allocate memory for new chunk %x\n", ChunkInfo));
         Entry = NULL;
     }
-    return(Entry);
+    return (Entry);
 }
 
-void WmipFreeEntry(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    )
+void WmipFreeEntry(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry)
 /*++
 
 Routine Description:
@@ -207,9 +183,9 @@ Return Value:
     PCHUNKHEADER Chunk;
 
     PAGED_CODE();
-    
+
     WmipAssert(Entry != NULL);
-    WmipAssert(! (Entry->Flags & FLAG_ENTRY_ON_FREE_LIST));
+    WmipAssert(!(Entry->Flags & FLAG_ENTRY_ON_FREE_LIST));
     WmipAssert(Entry->Flags & FLAG_ENTRY_INVALID);
     WmipAssert(Entry->RefCount == 0);
     WmipAssert(Entry->Signature == ChunkInfo->Signature);
@@ -218,8 +194,7 @@ Return Value:
     WmipAssert(Chunk->EntriesInUse > 0);
 
     WmipEnterSMCritSection();
-    if ((--Chunk->EntriesInUse == 0) &&
-        (ChunkInfo->ChunkHead.Blink != &Chunk->ChunkList))
+    if ((--Chunk->EntriesInUse == 0) && (ChunkInfo->ChunkHead.Blink != &Chunk->ChunkList))
     {
         //
         // We return the chunks memory back to the heap if there are no
@@ -228,7 +203,9 @@ Return Value:
         RemoveEntryList(&Chunk->ChunkList);
         WmipLeaveSMCritSection();
         ExFreePoolWithTag(Chunk, ChunkInfo->Signature);
-    } else {
+    }
+    else
+    {
         //
         // Otherwise just mark the entry as free and put it back on the
         // chunks free list.
@@ -243,10 +220,7 @@ Return Value:
 }
 
 
-ULONG WmipUnreferenceEntry(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    )
+ULONG WmipUnreferenceEntry(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry)
 /*+++
 
 Routine Description:
@@ -270,7 +244,7 @@ Return Value:
     ULONG RefCount;
 
     PAGED_CODE();
-    
+
     WmipAssert(Entry != NULL);
     WmipAssert(Entry->RefCount > 0);
     WmipAssert(Entry->Signature == ChunkInfo->Signature);
@@ -286,8 +260,7 @@ Return Value:
         // it from its active list.
         Entry->Flags |= FLAG_ENTRY_INVALID;
 
-        if ((Entry->InUseEntryList.Flink != NULL) &&
-            (Entry->Flags & FLAG_ENTRY_REMOVE_LIST))
+        if ((Entry->InUseEntryList.Flink != NULL) && (Entry->Flags & FLAG_ENTRY_REMOVE_LIST))
         {
             RemoveEntryList(&Entry->InUseEntryList);
         }
@@ -304,38 +277,35 @@ Return Value:
         //
         // Place the entry back on its free list
         WmipFreeEntry(ChunkInfo, Entry);
-    } else {
+    }
+    else
+    {
         WmipLeaveSMCritSection();
     }
-    return(RefCount);
+    return (RefCount);
 }
 
-PWCHAR WmipCountedToSz(
-    PWCHAR Counted
-    )
+PWCHAR WmipCountedToSz(PWCHAR Counted)
 {
     PWCHAR Sz;
     USHORT CountedLen;
 
     PAGED_CODE();
-    
+
     CountedLen = *Counted++;
-       Sz = WmipAlloc(CountedLen + sizeof(WCHAR));
+    Sz = WmipAlloc(CountedLen + sizeof(WCHAR));
     if (Sz != NULL)
     {
-           memcpy(Sz, Counted, CountedLen);
-        Sz[CountedLen/sizeof(WCHAR)] = UNICODE_NULL;
-    }        
+        memcpy(Sz, Counted, CountedLen);
+        Sz[CountedLen / sizeof(WCHAR)] = UNICODE_NULL;
+    }
 
-    return(Sz);
+    return (Sz);
 }
 
 #ifdef HEAPVALIDATION
 
-PVOID WmipAllocWithTag(
-    ULONG Size,
-    ULONG Tag
-    )
+PVOID WmipAllocWithTag(ULONG Size, ULONG Tag)
 {
     PVOID p;
 
@@ -343,39 +313,33 @@ PVOID WmipAllocWithTag(
 
     p = ExAllocatePoolWithTag(PagedPool, Size, Tag);
 
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAlloc %x (%x)\n", p, Size));
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: WmipAlloc %x (%x)\n", p, Size));
 
-    return(p);
+    return (p);
 }
 
 
-
-PVOID WmipAlloc(
-    ULONG Size
-    )
+PVOID WmipAlloc(ULONG Size)
 {
     PVOID p;
 
     PAGED_CODE();
-    
+
     p = ExAllocatePoolWithTag(PagedPool, Size, 'pimW');
 
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAlloc %x (%x)\n", p, Size));
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: WmipAlloc %x (%x)\n", p, Size));
 
-    return(p);
+    return (p);
 }
 
-void WmipFree(
-    PVOID p
-    )
+void WmipFree(PVOID p)
 {
 
     PAGED_CODE();
-    
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipFree %x\n", p));
+
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: WmipFree %x\n", p));
     WmipAssert(p != NULL);
 
     ExFreePool(p);
 }
 #endif
-

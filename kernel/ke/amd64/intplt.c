@@ -26,11 +26,8 @@ Revision History:
 #include "ki.h"
 
 BOOLEAN
-KeSynchronizeExecution (
-    IN PKINTERRUPT Interrupt,
-    IN PKSYNCHRONIZE_ROUTINE SynchronizeRoutine,
-    IN PVOID SynchronizeContext
-    )
+KeSynchronizeExecution(IN PKINTERRUPT Interrupt, IN PKSYNCHRONIZE_ROUTINE SynchronizeRoutine,
+                       IN PVOID SynchronizeContext)
 
 /*++
 

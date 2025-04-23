@@ -31,9 +31,7 @@ Revision History:
 
 
 NTSTATUS
-PpPagePathAssign(
-    IN PFILE_OBJECT FileObject
-    )
+PpPagePathAssign(IN PFILE_OBJECT FileObject)
 /*++
 
 Routine Description:
@@ -60,9 +58,7 @@ Return Value:
 
 
 NTSTATUS
-PpPagePathRelease(
-    IN PFILE_OBJECT FileObject
-    )
+PpPagePathRelease(IN PFILE_OBJECT FileObject)
 /*++
 
 Routine Description:
@@ -88,10 +84,7 @@ Return Value:
 
 
 NTSTATUS
-PiPagePathSetState(
-    IN PFILE_OBJECT FileObject,
-    IN BOOLEAN      InPath
-    )
+PiPagePathSetState(IN PFILE_OBJECT FileObject, IN BOOLEAN InPath)
 /*++
 
 Routine Description:
@@ -144,7 +137,8 @@ Return Value:
     //
     irp = IoAllocateIrp(deviceObject->StackSize, FALSE);
 
-    if (irp == NULL) {
+    if (irp == NULL)
+    {
 
         //
         // Don't dereference the file object, our caller will take care of that.
@@ -162,7 +156,7 @@ Return Value:
     irp->UserEvent = &event;
     irp->Flags = IRP_SYNCHRONOUS_API;
     irp->UserIosb = &localIoStatus;
-    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
 
     //
     // Get a pointer to the stack location for the first driver.  This will be
@@ -199,13 +193,10 @@ Return Value:
     // Wait for the local event and copy the final status information
     // back to the caller.
     //
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
 
-        (VOID) KeWaitForSingleObject(&event,
-                                     Executive,
-                                     KernelMode,
-                                     FALSE,
-                                     NULL);
+        (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
         status = localIoStatus.Status;
     }
@@ -217,5 +208,3 @@ Return Value:
 
     return status;
 }
-
-

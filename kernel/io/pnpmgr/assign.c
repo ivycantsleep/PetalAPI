@@ -28,18 +28,13 @@ Revision History:
 #include "pnpmgrp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,IoAssignResources)
-#endif  // ALLOC_PRAGMA
+#pragma alloc_text(PAGE, IoAssignResources)
+#endif // ALLOC_PRAGMA
 
 NTSTATUS
-IoAssignResources (
-    IN      PUNICODE_STRING                 RegistryPath,
-    IN      PUNICODE_STRING                 DriverClassName OPTIONAL,
-    IN      PDRIVER_OBJECT                  DriverObject,
-    IN      PDEVICE_OBJECT                  DeviceObject OPTIONAL,
-    IN      PIO_RESOURCE_REQUIREMENTS_LIST  RequestedResources,
-    IN OUT  PCM_RESOURCE_LIST               *pAllocatedResources
-    )
+IoAssignResources(IN PUNICODE_STRING RegistryPath, IN PUNICODE_STRING DriverClassName OPTIONAL,
+                  IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                  IN PIO_RESOURCE_REQUIREMENTS_LIST RequestedResources, IN OUT PCM_RESOURCE_LIST *pAllocatedResources)
 /*++
 
 Routine Description:
@@ -104,43 +99,37 @@ Return Value:
 
 --*/
 {
-    PDEVICE_NODE    deviceNode;
+    PDEVICE_NODE deviceNode;
 
     UNREFERENCED_PARAMETER(RegistryPath);
     UNREFERENCED_PARAMETER(DriverClassName);
 
-    if (DeviceObject) {
+    if (DeviceObject)
+    {
 
         deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
-        if (    deviceNode &&
-                !(deviceNode->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)) {
+        if (deviceNode && !(deviceNode->Flags & DNF_LEGACY_RESOURCE_DEVICENODE))
+        {
 
             PP_SAVE_DRIVEROBJECT_TO_TRIAGE_DUMP(DriverObject);
             PP_SAVE_DEVICEOBJECT_TO_TRIAGE_DUMP(DeviceObject);
-            KeBugCheckEx(
-                PNP_DETECTED_FATAL_ERROR, 
-                PNP_ERR_INVALID_PDO, 
-                (ULONG_PTR)DeviceObject, 
-                0, 
-                0);
+            KeBugCheckEx(PNP_DETECTED_FATAL_ERROR, PNP_ERR_INVALID_PDO, (ULONG_PTR)DeviceObject, 0, 0);
         }
     }
-    if (RequestedResources) {
+    if (RequestedResources)
+    {
 
-        if (    RequestedResources->AlternativeLists == 0 ||
-                RequestedResources->List[0].Count == 0) {
+        if (RequestedResources->AlternativeLists == 0 || RequestedResources->List[0].Count == 0)
+        {
 
             RequestedResources = NULL;
         }
     }
-    if (pAllocatedResources) {
+    if (pAllocatedResources)
+    {
 
         *pAllocatedResources = NULL;
     }
-    return IopLegacyResourceAllocation (    
-            ArbiterRequestLegacyAssigned,
-            DriverObject,
-            DeviceObject,
-            RequestedResources,
-            pAllocatedResources);
+    return IopLegacyResourceAllocation(ArbiterRequestLegacyAssigned, DriverObject, DeviceObject, RequestedResources,
+                                       pAllocatedResources);
 }

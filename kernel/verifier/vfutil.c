@@ -31,82 +31,89 @@ Revision History:
 #endif // ALLOC_PRAGMA
 
 // allow constructions like `((PCHAR)Address)++'
-#pragma warning(disable:4213)   // type cast on l-value
+#pragma warning(disable : 4213) // type cast on l-value
 
 
 BOOLEAN
-VfUtilIsMemoryRangeReadable(
-    IN PVOID                Location,
-    IN size_t               Length,
-    IN MEMORY_PERSISTANCE   Persistance
-    )
+VfUtilIsMemoryRangeReadable(IN PVOID Location, IN size_t Length, IN MEMORY_PERSISTANCE Persistance)
 {
-    while (((ULONG_PTR)Location & (sizeof(ULONG_PTR)-1)) && (Length > 0)) {
+    while (((ULONG_PTR)Location & (sizeof(ULONG_PTR) - 1)) && (Length > 0))
+    {
 
         //
         // Check to determine if the move will succeed before actually performing
         // the operation.
         //
-        if (MmIsAddressValid(Location)==FALSE) {
+        if (MmIsAddressValid(Location) == FALSE)
+        {
             return FALSE;
         }
 
-        if (Persistance == VFMP_INSTANT_NONPAGED) {
+        if (Persistance == VFMP_INSTANT_NONPAGED)
+        {
 
-            if (!MmIsNonPagedSystemAddressValid(Location)) {
+            if (!MmIsNonPagedSystemAddressValid(Location))
+            {
 
                 return FALSE;
             }
         }
 
-        ((PCHAR) Location)++;
+        ((PCHAR)Location)++;
         Length--;
     }
 
-    while (Length > (sizeof(ULONG_PTR)-1)) {
+    while (Length > (sizeof(ULONG_PTR) - 1))
+    {
 
         //
         // Check to determine if the move will succeed before actually performing
         // the operation.
         //
-        if (MmIsAddressValid(Location)==FALSE) {
+        if (MmIsAddressValid(Location) == FALSE)
+        {
             return FALSE;
         }
 
-        if (Persistance == VFMP_INSTANT_NONPAGED) {
+        if (Persistance == VFMP_INSTANT_NONPAGED)
+        {
 
-            if (!MmIsNonPagedSystemAddressValid(Location)) {
+            if (!MmIsNonPagedSystemAddressValid(Location))
+            {
 
                 return FALSE;
             }
         }
 
-        ((PCHAR) Location) += sizeof(ULONG_PTR);
+        ((PCHAR)Location) += sizeof(ULONG_PTR);
         Length -= sizeof(ULONG_PTR);
     }
 
-    while (Length > 0) {
+    while (Length > 0)
+    {
 
         //
         // Check to determine if the move will succeed before actually performing
         // the operation.
         //
-        if (MmIsAddressValid(Location)==FALSE) {
+        if (MmIsAddressValid(Location) == FALSE)
+        {
             return FALSE;
         }
 
-        if (Persistance == VFMP_INSTANT_NONPAGED) {
+        if (Persistance == VFMP_INSTANT_NONPAGED)
+        {
 
-            if (!MmIsNonPagedSystemAddressValid(Location)) {
+            if (!MmIsNonPagedSystemAddressValid(Location))
+            {
 
                 return FALSE;
             }
         }
 
-        ((PCHAR) Location)++;
+        ((PCHAR)Location)++;
         Length--;
     }
 
     return TRUE;
 }
-

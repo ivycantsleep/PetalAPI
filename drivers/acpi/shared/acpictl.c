@@ -27,13 +27,9 @@ Revision History:
 --*/
 
 #include "pch.h"
-
+
 NTSTATUS
-ACPIIoctlAcquireGlobalLock(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PIRP                Irp,
-    IN  PIO_STACK_LOCATION  IrpStack
-    )
+ACPIIoctlAcquireGlobalLock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PIO_STACK_LOCATION IrpStack)
 /*++
 
 Routine Description:
@@ -52,10 +48,10 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                            status;
-    PACPI_GLOBAL_LOCK                   newLock;
+    NTSTATUS status;
+    PACPI_GLOBAL_LOCK newLock;
     PACPI_MANIPULATE_GLOBAL_LOCK_BUFFER outputBuffer;
-    ULONG                               outputLength = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
+    ULONG outputLength = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
 
     //
     // Remember that we don't be returning any data
@@ -65,40 +61,35 @@ Return Value:
     //
     // Is the irp have a minimum size buffer?
     //
-    if (outputLength < sizeof(ACPI_MANIPULATE_GLOBAL_LOCK_BUFFER) ) {
+    if (outputLength < sizeof(ACPI_MANIPULATE_GLOBAL_LOCK_BUFFER))
+    {
 
         status = STATUS_INFO_LENGTH_MISMATCH;
         goto ACPIIoctlAcquireGlobalLockExit;
-
     }
 
     //
     // Grab a pointer at the input buffer
     //
-    outputBuffer = (PACPI_MANIPULATE_GLOBAL_LOCK_BUFFER)
-        Irp->AssociatedIrp.SystemBuffer;
-    if (outputBuffer->Signature != ACPI_ACQUIRE_GLOBAL_LOCK_SIGNATURE) {
+    outputBuffer = (PACPI_MANIPULATE_GLOBAL_LOCK_BUFFER)Irp->AssociatedIrp.SystemBuffer;
+    if (outputBuffer->Signature != ACPI_ACQUIRE_GLOBAL_LOCK_SIGNATURE)
+    {
 
         status = STATUS_INVALID_PARAMETER_1;
         goto ACPIIoctlAcquireGlobalLockExit;
-
     }
 
     //
     // Allocate storage for the lock
     //
-    newLock = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(ACPI_GLOBAL_LOCK),
-        'LcpA'
-        );
-    if (newLock == NULL) {
+    newLock = ExAllocatePoolWithTag(NonPagedPool, sizeof(ACPI_GLOBAL_LOCK), 'LcpA');
+    if (newLock == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ACPIIoctlAcquireGlobalLockExit;
-
     }
-    RtlZeroMemory( newLock, sizeof(ACPI_GLOBAL_LOCK) );
+    RtlZeroMemory(newLock, sizeof(ACPI_GLOBAL_LOCK));
 
     //
     // Initialize the new lock and the request
@@ -111,31 +102,26 @@ Return Value:
     //
     // Mark the irp as pending, since we can block while acquire the lock
     //
-    IoMarkIrpPending( Irp );
+    IoMarkIrpPending(Irp);
 
     //
     // Request the lock now
     //
-    status = ACPIAsyncAcquireGlobalLock( newLock );
-    if (status == STATUS_PENDING) {
+    status = ACPIAsyncAcquireGlobalLock(newLock);
+    if (status == STATUS_PENDING)
+    {
 
         return status;
-
     }
 ACPIIoctlAcquireGlobalLockExit:
 
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
     return status;
-
 }
-
+
 NTSTATUS
-ACPIIoctlAsyncEvalControlMethod(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PIRP                Irp,
-    IN  PIO_STACK_LOCATION  IrpStack
-    )
+ACPIIoctlAsyncEvalControlMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PIO_STACK_LOCATION IrpStack)
 /*++
 
 Routine Description:
@@ -154,42 +140,28 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    PNSOBJ      methodObject;
-    POBJDATA    argumentData = NULL;
-    POBJDATA    resultData = NULL;
-    ULONG       argumentCount = 0;
+    NTSTATUS status;
+    PNSOBJ methodObject;
+    POBJDATA argumentData = NULL;
+    POBJDATA resultData = NULL;
+    ULONG argumentCount = 0;
 
     //
     // Do the pre processing on the irp
     //
-    status = ACPIIoctlEvalPreProcessing(
-        DeviceObject,
-        Irp,
-        IrpStack,
-        NonPagedPool,
-        &methodObject,
-        &resultData,
-        &argumentData,
-        &argumentCount
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIIoctlEvalPreProcessing(DeviceObject, Irp, IrpStack, NonPagedPool, &methodObject, &resultData,
+                                        &argumentData, &argumentCount);
+    if (!NT_SUCCESS(status))
+    {
 
         goto ACPIIoctlAsyncEvalControlMethodExit;
-
     }
 
     //
     // At this point, we can run the async method
     //
-    status = AMLIAsyncEvalObject(
-        methodObject,
-        resultData,
-        argumentCount,
-        argumentData,
-        ACPIIoctlAsyncEvalControlMethodCompletion,
-        Irp
-        );
+    status = AMLIAsyncEvalObject(methodObject, resultData, argumentCount, argumentData,
+                                 ACPIIoctlAsyncEvalControlMethodCompletion, Irp);
 
     //
     // We no longer need the arguments now. Note, that we should clean up
@@ -197,31 +169,29 @@ Return Value:
     // allocated data. Freeing something in the middle of the block would be
     // very bad.
     //
-    if (argumentData != NULL) {
+    if (argumentData != NULL)
+    {
 
-        ExFreePool( argumentData );
+        ExFreePool(argumentData);
         argumentData = NULL;
-
     }
 
     //
     // Check the return data now
     //
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
 
         return status;
-
-    } else if (NT_SUCCESS(status)) {
+    }
+    else if (NT_SUCCESS(status))
+    {
 
         //
         // Do the post processing ourselves
         //
-        status = ACPIIoctlEvalPostProcessing(
-            Irp,
-            resultData
-            );
-        AMLIFreeDataBuffs( resultData, 1 );
-
+        status = ACPIIoctlEvalPostProcessing(Irp, resultData);
+        AMLIFreeDataBuffs(resultData, 1);
     }
 
 ACPIIoctlAsyncEvalControlMethodExit:
@@ -229,28 +199,23 @@ ACPIIoctlAsyncEvalControlMethodExit:
     //
     // No longer need this data
     //
-    if (resultData != NULL) {
+    if (resultData != NULL)
+    {
 
-        ExFreePool( resultData );
-
+        ExFreePool(resultData);
     }
 
     //
     // If we got here, then we must complete the irp and return
     //
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     return status;
 }
-
-VOID EXPORT
-ACPIIoctlAsyncEvalControlMethodCompletion(
-    IN  PNSOBJ          AcpiObject,
-    IN  NTSTATUS        Status,
-    IN  POBJDATA        ObjectData,
-    IN  PVOID           Context
-    )
+
+VOID EXPORT ACPIIoctlAsyncEvalControlMethodCompletion(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA ObjectData,
+                                                      IN PVOID Context)
 /*++
 
 Routine Description:
@@ -271,28 +236,25 @@ Return Value:
 
 --*/
 {
-    PIRP        irp = (PIRP) Context;
+    PIRP irp = (PIRP)Context;
 
     //
     // Did we succeed the request?
     //
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Do the work now
         //
-        Status = ACPIIoctlEvalPostProcessing(
-            irp,
-            ObjectData
-            );
-        AMLIFreeDataBuffs( ObjectData, 1 );
-
+        Status = ACPIIoctlEvalPostProcessing(irp, ObjectData);
+        AMLIFreeDataBuffs(ObjectData, 1);
     }
 
     //
     // No longer need this data
     //
-    ExFreePool( ObjectData );
+    ExFreePool(ObjectData);
 
     //
     // If our completion routine got called, then AMLIAsyncEvalObject returned
@@ -304,16 +266,11 @@ Return Value:
     // Complete the request
     //
     irp->IoStatus.Status = Status;
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
-
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
-
+
 NTSTATUS
-ACPIIoctlCalculateOutputBuffer(
-    IN  POBJDATA                ObjectData,
-    IN  PACPI_METHOD_ARGUMENT   Argument,
-    IN  BOOLEAN                 TopLevel
-    )
+ACPIIoctlCalculateOutputBuffer(IN POBJDATA ObjectData, IN PACPI_METHOD_ARGUMENT Argument, IN BOOLEAN TopLevel)
 /*++
 
 Routine Description:
@@ -340,40 +297,38 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    POBJDATA    objData;
+    NTSTATUS status;
+    POBJDATA objData;
     PPACKAGEOBJ package;
-    ULONG       count;
-    ULONG       packageCount;
-    ULONG       packageSize;
+    ULONG count;
+    ULONG packageCount;
+    ULONG packageSize;
     PACPI_METHOD_ARGUMENT packageArgument;
 
-    ASSERT( Argument );
+    ASSERT(Argument);
 
     //
     // Fill in the output buffer arguments
     //
-    if (ObjectData->dwDataType == OBJTYPE_INTDATA) {
+    if (ObjectData->dwDataType == OBJTYPE_INTDATA)
+    {
 
         Argument->Type = ACPI_METHOD_ARGUMENT_INTEGER;
         Argument->DataLength = sizeof(ULONG);
-        Argument->Argument = (ULONG) ObjectData->uipDataValue;
+        Argument->Argument = (ULONG)ObjectData->uipDataValue;
+    }
+    else if (ObjectData->dwDataType == OBJTYPE_STRDATA || ObjectData->dwDataType == OBJTYPE_BUFFDATA)
+    {
 
-    } else if (ObjectData->dwDataType == OBJTYPE_STRDATA ||
-        ObjectData->dwDataType == OBJTYPE_BUFFDATA) {
-
-        Argument->Type = (ObjectData->dwDataType == OBJTYPE_STRDATA ?
-            ACPI_METHOD_ARGUMENT_STRING : ACPI_METHOD_ARGUMENT_BUFFER);
+        Argument->Type =
+            (ObjectData->dwDataType == OBJTYPE_STRDATA ? ACPI_METHOD_ARGUMENT_STRING : ACPI_METHOD_ARGUMENT_BUFFER);
         Argument->DataLength = (USHORT)ObjectData->dwDataLen;
-        RtlCopyMemory(
-            Argument->Data,
-            ObjectData->pbDataBuff,
-            ObjectData->dwDataLen
-            );
+        RtlCopyMemory(Argument->Data, ObjectData->pbDataBuff, ObjectData->dwDataLen);
+    }
+    else if (ObjectData->dwDataType == OBJTYPE_PKGDATA)
+    {
 
-    } else if (ObjectData->dwDataType == OBJTYPE_PKGDATA) {
-
-        package = (PPACKAGEOBJ) ObjectData->pbDataBuff;
+        package = (PPACKAGEOBJ)ObjectData->pbDataBuff;
 
         //
         // Get the size of the space necessary to store a package's
@@ -385,18 +340,17 @@ Return Value:
 
         packageSize = 0;
         packageCount = 0;
-        status = ACPIIoctlCalculateOutputBufferSize(ObjectData,
-                                                    &packageSize,
-                                                    &packageCount,
-                                                    TRUE);
+        status = ACPIIoctlCalculateOutputBufferSize(ObjectData, &packageSize, &packageCount, TRUE);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
 
         ASSERT(packageCount == package->dwcElements);
 
-        if (!TopLevel) {
+        if (!TopLevel)
+        {
             //
             // Create a package argument.
             //
@@ -404,23 +358,21 @@ Return Value:
             Argument->Type = ACPI_METHOD_ARGUMENT_PACKAGE;
             Argument->DataLength = (USHORT)packageSize;
 
-            packageArgument = (PACPI_METHOD_ARGUMENT)
-                ((PUCHAR)Argument + FIELD_OFFSET(ACPI_METHOD_ARGUMENT, Data));
-
-        } else {
+            packageArgument = (PACPI_METHOD_ARGUMENT)((PUCHAR)Argument + FIELD_OFFSET(ACPI_METHOD_ARGUMENT, Data));
+        }
+        else
+        {
 
             packageArgument = Argument;
         }
 
-        for (count = 0; count < package->dwcElements; count++) {
+        for (count = 0; count < package->dwcElements; count++)
+        {
 
             objData = &(package->adata[count]);
-            status = ACPIIoctlCalculateOutputBuffer(
-                objData,
-                packageArgument,
-                FALSE
-                );
-            if (!NT_SUCCESS(status)) {
+            status = ACPIIoctlCalculateOutputBuffer(objData, packageArgument, FALSE);
+            if (!NT_SUCCESS(status))
+            {
                 return status;
             }
 
@@ -430,14 +382,14 @@ Return Value:
 
             packageArgument = ACPI_METHOD_NEXT_ARGUMENT(packageArgument);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // We don't understand this data type, we won't return anything
         //
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
     //
@@ -445,14 +397,10 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIIoctlCalculateOutputBufferSize(
-    IN  POBJDATA            ObjectData,
-    IN  PULONG              BufferSize,
-    IN  PULONG              BufferCount,
-    IN  BOOLEAN             TopLevel
-    )
+ACPIIoctlCalculateOutputBufferSize(IN POBJDATA ObjectData, IN PULONG BufferSize, IN PULONG BufferCount,
+                                   IN BOOLEAN TopLevel)
 /*++
 
 Routine Description:
@@ -476,30 +424,32 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    POBJDATA    objData;
+    NTSTATUS status;
+    POBJDATA objData;
     PPACKAGEOBJ package;
-    ULONG       bufferLength;
-    ULONG       count;
-    ULONG       packageCount;
-    ULONG       dummyCount;
+    ULONG bufferLength;
+    ULONG count;
+    ULONG packageCount;
+    ULONG dummyCount;
 
     //
     // Determine how much buffer space is required to hold the
     // flattened data structure
     //
-    if (ObjectData->dwDataType == OBJTYPE_INTDATA) {
+    if (ObjectData->dwDataType == OBJTYPE_INTDATA)
+    {
 
-        bufferLength = ACPI_METHOD_ARGUMENT_LENGTH( sizeof(ULONG) );
+        bufferLength = ACPI_METHOD_ARGUMENT_LENGTH(sizeof(ULONG));
         *BufferCount = 1;
+    }
+    else if (ObjectData->dwDataType == OBJTYPE_STRDATA || ObjectData->dwDataType == OBJTYPE_BUFFDATA)
+    {
 
-    } else if (ObjectData->dwDataType == OBJTYPE_STRDATA ||
-        ObjectData->dwDataType == OBJTYPE_BUFFDATA) {
-
-        bufferLength = ACPI_METHOD_ARGUMENT_LENGTH( ObjectData->dwDataLen );
+        bufferLength = ACPI_METHOD_ARGUMENT_LENGTH(ObjectData->dwDataLen);
         *BufferCount = 1;
-
-    } else if (ObjectData->dwDataType == OBJTYPE_PKGDATA) {
+    }
+    else if (ObjectData->dwDataType == OBJTYPE_PKGDATA)
+    {
 
         //
         // Remember that walking the package means that we have accounted for
@@ -511,9 +461,10 @@ Return Value:
         //
         // Walk the package
         //
-        package = (PPACKAGEOBJ) ObjectData->pbDataBuff;
+        package = (PPACKAGEOBJ)ObjectData->pbDataBuff;
 
-        if (!TopLevel) {
+        if (!TopLevel)
+        {
 
             //
             // Packages are contained in an ACPI_METHOD_ARGUMENT structure.
@@ -522,34 +473,34 @@ Return Value:
             //
             bufferLength = FIELD_OFFSET(ACPI_METHOD_ARGUMENT, Data);
             *BufferCount = 1;
-
-        } else {
+        }
+        else
+        {
 
             bufferLength = 0;
             *BufferCount = package->dwcElements;
         }
 
-        for (count = 0; count < package->dwcElements; count++) {
+        for (count = 0; count < package->dwcElements; count++)
+        {
 
             objData = &(package->adata[count]);
-            status = ACPIIoctlCalculateOutputBufferSize(
-                objData,
-                BufferSize,
-                &dummyCount,
-                FALSE
-                );
+            status = ACPIIoctlCalculateOutputBufferSize(objData, BufferSize, &dummyCount, FALSE);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 return status;
             }
         }
-
-    } else if (ObjectData->dwDataType == OBJTYPE_UNKNOWN) {
+    }
+    else if (ObjectData->dwDataType == OBJTYPE_UNKNOWN)
+    {
 
         *BufferCount = 1;
         bufferLength = 0;
-
-    } else {
+    }
+    else
+    {
 
         //
         // We don't understand this data type, so we won't return anything
@@ -561,18 +512,14 @@ Return Value:
     //
     // Update the package lengths
     //
-    ASSERT( BufferSize && BufferCount );
+    ASSERT(BufferSize && BufferCount);
     *BufferSize += bufferLength;
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIIoctlEvalControlMethod(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PIRP                Irp,
-    IN  PIO_STACK_LOCATION  IrpStack
-    )
+ACPIIoctlEvalControlMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PIO_STACK_LOCATION IrpStack)
 /*++
 
 Routine Description:
@@ -591,65 +538,49 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    PNSOBJ      methodObject;
-    POBJDATA    argumentData = NULL;
-    POBJDATA    resultData = NULL;
-    ULONG       argumentCount = 0;
+    NTSTATUS status;
+    PNSOBJ methodObject;
+    POBJDATA argumentData = NULL;
+    POBJDATA resultData = NULL;
+    ULONG argumentCount = 0;
 
     //
     // Do the pre processing on the irp
     //
-    status = ACPIIoctlEvalPreProcessing(
-        DeviceObject,
-        Irp,
-        IrpStack,
-        PagedPool,
-        &methodObject,
-        &resultData,
-        &argumentData,
-        &argumentCount
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIIoctlEvalPreProcessing(DeviceObject, Irp, IrpStack, PagedPool, &methodObject, &resultData,
+                                        &argumentData, &argumentCount);
+    if (!NT_SUCCESS(status))
+    {
 
         goto ACPIIoctlEvalControlMethodExit;
-
     }
 
     //
     // At this point, we can run the async method
     //
-    status = AMLIEvalNameSpaceObject(
-        methodObject,
-        resultData,
-        argumentCount,
-        argumentData
-        );
+    status = AMLIEvalNameSpaceObject(methodObject, resultData, argumentCount, argumentData);
 
     //
     // We no longer need the arguments now
     //
-    if (argumentData != NULL) {
+    if (argumentData != NULL)
+    {
 
-        ExFreePool( argumentData );
+        ExFreePool(argumentData);
         argumentData = NULL;
-
     }
 
     //
     // Check the return data now and fake a call to the completion routine
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Do the post processing now
         //
-        status = ACPIIoctlEvalPostProcessing(
-            Irp,
-            resultData
-            );
-        AMLIFreeDataBuffs( resultData, 1 );
-
+        status = ACPIIoctlEvalPostProcessing(Irp, resultData);
+        AMLIFreeDataBuffs(resultData, 1);
     }
 
 ACPIIoctlEvalControlMethodExit:
@@ -657,26 +588,23 @@ ACPIIoctlEvalControlMethodExit:
     //
     // No longer need this data
     //
-    if (resultData != NULL) {
+    if (resultData != NULL)
+    {
 
-        ExFreePool( resultData );
-
+        ExFreePool(resultData);
     }
 
     //
     // If we got here, then we must complete the irp and return
     //
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     return status;
 }
-
+
 NTSTATUS
-ACPIIoctlEvalPostProcessing(
-    IN  PIRP        Irp,
-    IN  POBJDATA    ObjectData
-    )
+ACPIIoctlEvalPostProcessing(IN PIRP Irp, IN POBJDATA ObjectData)
 /*++
 
 Routine Description:
@@ -698,22 +626,22 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                    status;
-    PACPI_EVAL_OUTPUT_BUFFER    outputBuffer;
-    PACPI_METHOD_ARGUMENT       arg;
-    PIO_STACK_LOCATION          irpStack = IoGetCurrentIrpStackLocation( Irp );
-    ULONG                       bufferLength = 0;
-    ULONG                       outputLength = irpStack->Parameters.DeviceIoControl.OutputBufferLength;
-    ULONG                       packageCount = 0;
+    NTSTATUS status;
+    PACPI_EVAL_OUTPUT_BUFFER outputBuffer;
+    PACPI_METHOD_ARGUMENT arg;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    ULONG bufferLength = 0;
+    ULONG outputLength = irpStack->Parameters.DeviceIoControl.OutputBufferLength;
+    ULONG packageCount = 0;
 
     //
     // If we don't have an output buffer, then we can complete the request
     //
-    if (outputLength == 0) {
+    if (outputLength == 0)
+    {
 
         Irp->IoStatus.Information = 0;
         return STATUS_SUCCESS;
-
     }
 
     //
@@ -722,13 +650,9 @@ Return Value:
     //
     bufferLength = 0;
     packageCount = 0;
-    status = ACPIIoctlCalculateOutputBufferSize(
-        ObjectData,
-        &bufferLength,
-        &packageCount,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIIoctlCalculateOutputBufferSize(ObjectData, &bufferLength, &packageCount, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // We don't understand a data type in the handling of the data, so
@@ -736,53 +660,49 @@ Return Value:
         //
         Irp->IoStatus.Information = 0;
         return STATUS_SUCCESS;
-
     }
 
     //
     // Add in the fudge factor that we need to account for the Output buffer
     //
-    bufferLength += (sizeof(ACPI_EVAL_OUTPUT_BUFFER) -
-        sizeof(ACPI_METHOD_ARGUMENT) );
+    bufferLength += (sizeof(ACPI_EVAL_OUTPUT_BUFFER) - sizeof(ACPI_METHOD_ARGUMENT));
 
-    if (bufferLength < sizeof(ACPI_EVAL_OUTPUT_BUFFER)) {
+    if (bufferLength < sizeof(ACPI_EVAL_OUTPUT_BUFFER))
+    {
         bufferLength = sizeof(ACPI_EVAL_OUTPUT_BUFFER);
     }
 
     //
     // Setup the Output buffer
     //
-    if (outputLength >= sizeof(ACPI_EVAL_OUTPUT_BUFFER)) {
+    if (outputLength >= sizeof(ACPI_EVAL_OUTPUT_BUFFER))
+    {
 
-        outputBuffer = (PACPI_EVAL_OUTPUT_BUFFER) Irp->AssociatedIrp.SystemBuffer;
+        outputBuffer = (PACPI_EVAL_OUTPUT_BUFFER)Irp->AssociatedIrp.SystemBuffer;
         outputBuffer->Signature = ACPI_EVAL_OUTPUT_BUFFER_SIGNATURE;
         outputBuffer->Length = bufferLength;
         outputBuffer->Count = packageCount;
         arg = outputBuffer->Argument;
-
     }
 
     //
     // Make sure that we have enough output buffer space
     //
-    if (bufferLength > outputLength) {
+    if (bufferLength > outputLength)
+    {
 
         Irp->IoStatus.Information = sizeof(ACPI_EVAL_OUTPUT_BUFFER);
         return STATUS_BUFFER_OVERFLOW;
-
-
-    } else {
+    }
+    else
+    {
 
         Irp->IoStatus.Information = bufferLength;
-
     }
 
-    status = ACPIIoctlCalculateOutputBuffer(
-        ObjectData,
-        arg,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIIoctlCalculateOutputBuffer(ObjectData, arg, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // We don't understand a data type in the handling of the data, so we
@@ -790,7 +710,6 @@ Return Value:
         //
         Irp->IoStatus.Information = 0;
         return STATUS_SUCCESS;
-
     }
 
     //
@@ -798,18 +717,11 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIIoctlEvalPreProcessing(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PIRP                Irp,
-    IN  PIO_STACK_LOCATION  IrpStack,
-    IN  POOL_TYPE           PoolType,
-    OUT PNSOBJ              *MethodObject,
-    OUT POBJDATA            *ResultData,
-    OUT POBJDATA            *ArgumentData,
-    OUT ULONG               *ArgumentCount
-    )
+ACPIIoctlEvalPreProcessing(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PIO_STACK_LOCATION IrpStack,
+                           IN POOL_TYPE PoolType, OUT PNSOBJ *MethodObject, OUT POBJDATA *ResultData,
+                           OUT POBJDATA *ArgumentData, OUT ULONG *ArgumentCount)
 /*++
 
 Routine Description:
@@ -836,16 +748,16 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                status;
+    NTSTATUS status;
     PACPI_EVAL_INPUT_BUFFER inputBuffer;
-    PNSOBJ                  acpiObject;
-    PNSOBJ                  methodObject;
-    POBJDATA                argumentData = NULL;
-    POBJDATA                resultData = NULL;
-    UCHAR                   methodName[5];
-    ULONG                   argumentCount = 0;
-    ULONG                   inputLength = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-    ULONG                   outputLength = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
+    PNSOBJ acpiObject;
+    PNSOBJ methodObject;
+    POBJDATA argumentData = NULL;
+    POBJDATA resultData = NULL;
+    UCHAR methodName[5];
+    ULONG argumentCount = 0;
+    ULONG inputLength = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+    ULONG outputLength = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
 
     //
     // Do this step before we do anything else --- this way we won't
@@ -856,192 +768,183 @@ Return Value:
     //
     // Is the irp have a minimum size buffer?
     //
-    if (inputLength < sizeof(ACPI_EVAL_INPUT_BUFFER) ) {
+    if (inputLength < sizeof(ACPI_EVAL_INPUT_BUFFER))
+    {
 
         return STATUS_INFO_LENGTH_MISMATCH;
-
     }
 
     //
     // Do we have a non-null output length? if so, then it must meet the
     // minimum size
     //
-    if (outputLength != 0 && outputLength < sizeof(ACPI_EVAL_OUTPUT_BUFFER)) {
+    if (outputLength != 0 && outputLength < sizeof(ACPI_EVAL_OUTPUT_BUFFER))
+    {
 
         return STATUS_BUFFER_TOO_SMALL;
-
     }
 
     //
     // Grab a pointer at the input buffer
     //
-    inputBuffer = (PACPI_EVAL_INPUT_BUFFER) Irp->AssociatedIrp.SystemBuffer;
+    inputBuffer = (PACPI_EVAL_INPUT_BUFFER)Irp->AssociatedIrp.SystemBuffer;
 
     //
     // Convert the name to a null terminated string
     //
-    RtlZeroMemory( methodName, 5 * sizeof(UCHAR) );
-    RtlCopyMemory( methodName, inputBuffer->MethodName, sizeof(NAMESEG) );
+    RtlZeroMemory(methodName, 5 * sizeof(UCHAR));
+    RtlCopyMemory(methodName, inputBuffer->MethodName, sizeof(NAMESEG));
 
     //
     // Search for the name space object that corresponds to the one that we
     // being asked about
     //
-    acpiObject = OSConvertDeviceHandleToPNSOBJ( DeviceObject );
-    if (acpiObject == NULL) {
+    acpiObject = OSConvertDeviceHandleToPNSOBJ(DeviceObject);
+    if (acpiObject == NULL)
+    {
 
         return STATUS_NO_SUCH_DEVICE;
-
     }
-    status = AMLIGetNameSpaceObject(
-        methodName,
-        acpiObject,
-        &methodObject,
-        NSF_LOCAL_SCOPE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = AMLIGetNameSpaceObject(methodName, acpiObject, &methodObject, NSF_LOCAL_SCOPE);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
-
     }
 
     //
     // Allocate memory for return data
     //
-    resultData = ExAllocatePoolWithTag( PoolType, sizeof(OBJDATA), 'RcpA' );
-    if (resultData == NULL) {
+    resultData = ExAllocatePoolWithTag(PoolType, sizeof(OBJDATA), 'RcpA');
+    if (resultData == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
 
     //
     // What we do is really based on what the signature in this buffer is
     //
-    switch (inputBuffer->Signature) {
-        case ACPI_EVAL_INPUT_BUFFER_SIGNATURE:
+    switch (inputBuffer->Signature)
+    {
+    case ACPI_EVAL_INPUT_BUFFER_SIGNATURE:
 
-            //
-            // Nothing to do here
-            //
-            break;
+        //
+        // Nothing to do here
+        //
+        break;
 
-        case ACPI_EVAL_INPUT_BUFFER_SIMPLE_INTEGER_SIGNATURE:
-        case ACPI_EVAL_INPUT_BUFFER_SIMPLE_STRING_SIGNATURE:
+    case ACPI_EVAL_INPUT_BUFFER_SIMPLE_INTEGER_SIGNATURE:
+    case ACPI_EVAL_INPUT_BUFFER_SIMPLE_STRING_SIGNATURE:
 
-            //
-            // We need to create a single argument to pass to the function
-            //
-            argumentCount = 1;
-            argumentData = ExAllocatePoolWithTag(
-                PoolType,
-                sizeof(OBJDATA),
-                'AcpA'
-                );
-            if (argumentData == NULL) {
+        //
+        // We need to create a single argument to pass to the function
+        //
+        argumentCount = 1;
+        argumentData = ExAllocatePoolWithTag(PoolType, sizeof(OBJDATA), 'AcpA');
+        if (argumentData == NULL)
+        {
 
-                ExFreePool( resultData );
-                return STATUS_INSUFFICIENT_RESOURCES;
-
-            }
-
-            //
-            // Initialize the argument to the proper value
-            //
-            RtlZeroMemory( argumentData, sizeof(OBJDATA) );
-            if (inputBuffer->Signature == ACPI_EVAL_INPUT_BUFFER_SIMPLE_INTEGER_SIGNATURE) {
-
-                PACPI_EVAL_INPUT_BUFFER_SIMPLE_INTEGER integerBuffer;
-
-                integerBuffer = (PACPI_EVAL_INPUT_BUFFER_SIMPLE_INTEGER) inputBuffer;
-
-                argumentData->dwDataType = OBJTYPE_INTDATA;
-                argumentData->uipDataValue = integerBuffer->IntegerArgument;
-
-            } else {
-
-                PACPI_EVAL_INPUT_BUFFER_SIMPLE_STRING stringBuffer;
-
-                stringBuffer = (PACPI_EVAL_INPUT_BUFFER_SIMPLE_STRING) inputBuffer;
-
-                argumentData->dwDataType = OBJTYPE_STRDATA;
-                argumentData->dwDataLen = stringBuffer->StringLength;
-                argumentData->pbDataBuff = stringBuffer->String;
-
-            }
-            break;
-
-        case ACPI_EVAL_INPUT_BUFFER_COMPLEX_SIGNATURE: {
-
-            PACPI_EVAL_INPUT_BUFFER_COMPLEX complexBuffer;
-            PACPI_METHOD_ARGUMENT           methodArgument;
-            ULONG                           i;
-
-            complexBuffer = (PACPI_EVAL_INPUT_BUFFER_COMPLEX) inputBuffer;
-
-            //
-            // Do we need to create any arguments?
-            //
-            if (complexBuffer->ArgumentCount == 0) {
-
-                break;
-            }
-
-            //
-            // Create the object data structures to hold these arguments
-            //
-            argumentCount = complexBuffer->ArgumentCount;
-            methodArgument = complexBuffer->Argument;
-            argumentData = ExAllocatePoolWithTag(
-                PoolType,
-                sizeof(OBJDATA) * argumentCount,
-                'AcpA'
-                );
-            if (argumentData == NULL) {
-
-                ExFreePool( resultData );
-                return STATUS_INSUFFICIENT_RESOURCES;
-
-            }
-
-            RtlZeroMemory( argumentData, argumentCount * sizeof(OBJDATA) );
-            for (i = 0; i < argumentCount; i++) {
-
-                if (methodArgument->Type == ACPI_METHOD_ARGUMENT_INTEGER) {
-
-                    (argumentData[i]).dwDataType = OBJTYPE_INTDATA;
-                    (argumentData[i]).uipDataValue = methodArgument->Argument;
-
-                } else {
-
-                    (argumentData[i]).dwDataLen = methodArgument->DataLength;
-                    (argumentData[i]).pbDataBuff = methodArgument->Data;
-                    if (methodArgument->Type == ACPI_METHOD_ARGUMENT_STRING) {
-
-                        (argumentData[i]).dwDataType = OBJTYPE_STRDATA;
-
-                    } else {
-
-                        (argumentData[i]).dwDataType = OBJTYPE_BUFFDATA;
-
-                    }
-
-                }
-
-                //
-                // Look at the next method
-                //
-                methodArgument = ACPI_METHOD_NEXT_ARGUMENT( methodArgument );
-
-            }
-
-            break;
-
+            ExFreePool(resultData);
+            return STATUS_INSUFFICIENT_RESOURCES;
         }
-        default:
 
-            return STATUS_INVALID_PARAMETER_1;
+        //
+        // Initialize the argument to the proper value
+        //
+        RtlZeroMemory(argumentData, sizeof(OBJDATA));
+        if (inputBuffer->Signature == ACPI_EVAL_INPUT_BUFFER_SIMPLE_INTEGER_SIGNATURE)
+        {
 
+            PACPI_EVAL_INPUT_BUFFER_SIMPLE_INTEGER integerBuffer;
+
+            integerBuffer = (PACPI_EVAL_INPUT_BUFFER_SIMPLE_INTEGER)inputBuffer;
+
+            argumentData->dwDataType = OBJTYPE_INTDATA;
+            argumentData->uipDataValue = integerBuffer->IntegerArgument;
+        }
+        else
+        {
+
+            PACPI_EVAL_INPUT_BUFFER_SIMPLE_STRING stringBuffer;
+
+            stringBuffer = (PACPI_EVAL_INPUT_BUFFER_SIMPLE_STRING)inputBuffer;
+
+            argumentData->dwDataType = OBJTYPE_STRDATA;
+            argumentData->dwDataLen = stringBuffer->StringLength;
+            argumentData->pbDataBuff = stringBuffer->String;
+        }
+        break;
+
+    case ACPI_EVAL_INPUT_BUFFER_COMPLEX_SIGNATURE:
+    {
+
+        PACPI_EVAL_INPUT_BUFFER_COMPLEX complexBuffer;
+        PACPI_METHOD_ARGUMENT methodArgument;
+        ULONG i;
+
+        complexBuffer = (PACPI_EVAL_INPUT_BUFFER_COMPLEX)inputBuffer;
+
+        //
+        // Do we need to create any arguments?
+        //
+        if (complexBuffer->ArgumentCount == 0)
+        {
+
+            break;
+        }
+
+        //
+        // Create the object data structures to hold these arguments
+        //
+        argumentCount = complexBuffer->ArgumentCount;
+        methodArgument = complexBuffer->Argument;
+        argumentData = ExAllocatePoolWithTag(PoolType, sizeof(OBJDATA) * argumentCount, 'AcpA');
+        if (argumentData == NULL)
+        {
+
+            ExFreePool(resultData);
+            return STATUS_INSUFFICIENT_RESOURCES;
+        }
+
+        RtlZeroMemory(argumentData, argumentCount * sizeof(OBJDATA));
+        for (i = 0; i < argumentCount; i++)
+        {
+
+            if (methodArgument->Type == ACPI_METHOD_ARGUMENT_INTEGER)
+            {
+
+                (argumentData[i]).dwDataType = OBJTYPE_INTDATA;
+                (argumentData[i]).uipDataValue = methodArgument->Argument;
+            }
+            else
+            {
+
+                (argumentData[i]).dwDataLen = methodArgument->DataLength;
+                (argumentData[i]).pbDataBuff = methodArgument->Data;
+                if (methodArgument->Type == ACPI_METHOD_ARGUMENT_STRING)
+                {
+
+                    (argumentData[i]).dwDataType = OBJTYPE_STRDATA;
+                }
+                else
+                {
+
+                    (argumentData[i]).dwDataType = OBJTYPE_BUFFDATA;
+                }
+            }
+
+            //
+            // Look at the next method
+            //
+            methodArgument = ACPI_METHOD_NEXT_ARGUMENT(methodArgument);
+        }
+
+        break;
+    }
+    default:
+
+        return STATUS_INVALID_PARAMETER_1;
     }
 
     //
@@ -1057,13 +960,9 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIIoctlRegisterOpRegionHandler(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PIRP                Irp,
-    IN  PIO_STACK_LOCATION  IrpStack
-    )
+ACPIIoctlRegisterOpRegionHandler(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PIO_STACK_LOCATION IrpStack)
 /*++
 
 Routine Description:
@@ -1083,20 +982,20 @@ Return Value
 
 --*/
 {
-    NTSTATUS                                    status;
-    PACPI_REGISTER_OPREGION_HANDLER_BUFFER      inputBuffer;
-    PACPI_UNREGISTER_OPREGION_HANDLER_BUFFER    outputBuffer;
-    PNSOBJ                                      regionObject;
-    PVOID                                       opregionObject;
-    ULONG                                       accessType;
-    ULONG                                       inputLength = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-    ULONG                                       outputLength = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
-    ULONG                                       regionSpace;
+    NTSTATUS status;
+    PACPI_REGISTER_OPREGION_HANDLER_BUFFER inputBuffer;
+    PACPI_UNREGISTER_OPREGION_HANDLER_BUFFER outputBuffer;
+    PNSOBJ regionObject;
+    PVOID opregionObject;
+    ULONG accessType;
+    ULONG inputLength = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+    ULONG outputLength = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
+    ULONG regionSpace;
 
     //
     // Grab the acpi object that corresponds to the current one
     //
-    regionObject  = OSConvertDeviceHandleToPNSOBJ( DeviceObject );
+    regionObject = OSConvertDeviceHandleToPNSOBJ(DeviceObject);
 
     //
     // Preload this value. This is so that we don't have to remember how
@@ -1107,141 +1006,134 @@ Return Value
     //
     // Is the irp have a minimum size buffer?
     //
-    if (inputLength < sizeof(ACPI_REGISTER_OPREGION_HANDLER_BUFFER) ) {
+    if (inputLength < sizeof(ACPI_REGISTER_OPREGION_HANDLER_BUFFER))
+    {
 
         status = STATUS_INFO_LENGTH_MISMATCH;
         goto ACPIIoctlRegisterOpRegionHandlerExit;
-
     }
 
     //
     // Do we have a non-null output length? if so, then it must meet the
     // minimum size
     //
-    if (outputLength < sizeof(ACPI_UNREGISTER_OPREGION_HANDLER_BUFFER) ) {
+    if (outputLength < sizeof(ACPI_UNREGISTER_OPREGION_HANDLER_BUFFER))
+    {
 
         status = STATUS_BUFFER_TOO_SMALL;
         goto ACPIIoctlRegisterOpRegionHandlerExit;
-
     }
 
     //
     // Grab a pointer at the input buffer
     //
-    inputBuffer = (PACPI_REGISTER_OPREGION_HANDLER_BUFFER)
-        Irp->AssociatedIrp.SystemBuffer;
+    inputBuffer = (PACPI_REGISTER_OPREGION_HANDLER_BUFFER)Irp->AssociatedIrp.SystemBuffer;
 
     //
     // Is this an input buffer?
     //
-    if (inputBuffer->Signature != ACPI_REGISTER_OPREGION_HANDLER_BUFFER_SIGNATURE) {
+    if (inputBuffer->Signature != ACPI_REGISTER_OPREGION_HANDLER_BUFFER_SIGNATURE)
+    {
 
         status = STATUS_ACPI_INVALID_DATA;
         goto ACPIIoctlRegisterOpRegionHandlerExit;
-
     }
 
     //
     // Set the correct access type
     //
-    switch (inputBuffer->AccessType) {
-        case ACPI_OPREGION_ACCESS_AS_RAW:
+    switch (inputBuffer->AccessType)
+    {
+    case ACPI_OPREGION_ACCESS_AS_RAW:
 
-            accessType = EVTYPE_RS_RAWACCESS;
-            break;
+        accessType = EVTYPE_RS_RAWACCESS;
+        break;
 
-        case ACPI_OPREGION_ACCESS_AS_COOKED:
+    case ACPI_OPREGION_ACCESS_AS_COOKED:
 
-            accessType = EVTYPE_RS_COOKACCESS;
-            break;
+        accessType = EVTYPE_RS_COOKACCESS;
+        break;
 
-        default:
+    default:
 
-            status = STATUS_ACPI_INVALID_DATA;
-            goto ACPIIoctlRegisterOpRegionHandlerExit;
+        status = STATUS_ACPI_INVALID_DATA;
+        goto ACPIIoctlRegisterOpRegionHandlerExit;
     }
 
     //
     // Set the correct region space
     //
-    switch (inputBuffer->RegionSpace) {
-        case ACPI_OPREGION_REGION_SPACE_MEMORY:
+    switch (inputBuffer->RegionSpace)
+    {
+    case ACPI_OPREGION_REGION_SPACE_MEMORY:
 
-            regionSpace = REGSPACE_MEM;
+        regionSpace = REGSPACE_MEM;
+        break;
+
+    case ACPI_OPREGION_REGION_SPACE_IO:
+
+        regionSpace = REGSPACE_IO;
+        break;
+
+    case ACPI_OPREGION_REGION_SPACE_PCI_CONFIG:
+
+        regionSpace = REGSPACE_PCICFG;
+        break;
+
+    case ACPI_OPREGION_REGION_SPACE_EC:
+
+        regionSpace = REGSPACE_EC;
+        break;
+
+    case ACPI_OPREGION_REGION_SPACE_SMB:
+
+        regionSpace = REGSPACE_SMB;
+        break;
+
+    case ACPI_OPREGION_REGION_SPACE_CMOS_CONFIG:
+
+        regionSpace = REGSPACE_CMOSCFG;
+        break;
+
+    case ACPI_OPREGION_REGION_SPACE_PCIBARTARGET:
+
+        regionSpace = REGSPACE_PCIBARTARGET;
+        break;
+
+    default:
+
+        if (inputBuffer->RegionSpace >= 0x80 && inputBuffer->RegionSpace <= 0xff)
+        {
+
+            //
+            // This one is vendor-defined.  Just use
+            // the value that the vendor passed in.
+            //
+
+            regionSpace = inputBuffer->RegionSpace;
             break;
+        }
 
-        case ACPI_OPREGION_REGION_SPACE_IO:
-
-            regionSpace = REGSPACE_IO;
-            break;
-
-        case ACPI_OPREGION_REGION_SPACE_PCI_CONFIG:
-
-            regionSpace = REGSPACE_PCICFG;
-            break;
-
-        case ACPI_OPREGION_REGION_SPACE_EC:
-
-            regionSpace = REGSPACE_EC;
-            break;
-
-        case ACPI_OPREGION_REGION_SPACE_SMB:
-
-            regionSpace = REGSPACE_SMB;
-            break;
-
-        case ACPI_OPREGION_REGION_SPACE_CMOS_CONFIG:
-
-            regionSpace = REGSPACE_CMOSCFG;
-            break;
-
-        case ACPI_OPREGION_REGION_SPACE_PCIBARTARGET:
-
-            regionSpace = REGSPACE_PCIBARTARGET;
-            break;
-
-        default:
-
-            if (inputBuffer->RegionSpace >= 0x80 &&
-                inputBuffer->RegionSpace <= 0xff ) {
-
-                //
-                // This one is vendor-defined.  Just use
-                // the value that the vendor passed in.
-                //
-
-                regionSpace = inputBuffer->RegionSpace;
-                break;
-            }
-
-            status = STATUS_ACPI_INVALID_DATA;
-            goto ACPIIoctlRegisterOpRegionHandlerExit;
+        status = STATUS_ACPI_INVALID_DATA;
+        goto ACPIIoctlRegisterOpRegionHandlerExit;
     }
 
     //
     // Evaluate the registration
     //
-    status = RegisterOperationRegionHandler(
-        regionObject,
-        accessType,
-        regionSpace,
-        (PFNHND) inputBuffer->Handler,
-        (ULONG_PTR)inputBuffer->Context,
-        &opregionObject
-        );
+    status = RegisterOperationRegionHandler(regionObject, accessType, regionSpace, (PFNHND)inputBuffer->Handler,
+                                            (ULONG_PTR)inputBuffer->Context, &opregionObject);
 
     //
     // If we succeeded, then setup the output buffer
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        outputBuffer = (PACPI_UNREGISTER_OPREGION_HANDLER_BUFFER)
-            Irp->AssociatedIrp.SystemBuffer;
+        outputBuffer = (PACPI_UNREGISTER_OPREGION_HANDLER_BUFFER)Irp->AssociatedIrp.SystemBuffer;
         outputBuffer->Signature = ACPI_UNREGISTER_OPREGION_HANDLER_BUFFER_SIGNATURE;
         outputBuffer->OperationRegionObject = opregionObject;
-        Irp->IoStatus.Information =
-            sizeof(ACPI_UNREGISTER_OPREGION_HANDLER_BUFFER);
-
+        Irp->IoStatus.Information = sizeof(ACPI_UNREGISTER_OPREGION_HANDLER_BUFFER);
     }
 
 ACPIIoctlRegisterOpRegionHandlerExit:
@@ -1250,20 +1142,16 @@ ACPIIoctlRegisterOpRegionHandlerExit:
     // Done with the request
     //
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     //
     // return with the status code
     //
     return status;
 }
-
+
 NTSTATUS
-ACPIIoctlReleaseGlobalLock(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PIRP                Irp,
-    IN  PIO_STACK_LOCATION  IrpStack
-    )
+ACPIIoctlReleaseGlobalLock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PIO_STACK_LOCATION IrpStack)
 /*++
 
 Routine Description:
@@ -1282,10 +1170,10 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                            status;
-    PACPI_GLOBAL_LOCK                   acpiLock;
+    NTSTATUS status;
+    PACPI_GLOBAL_LOCK acpiLock;
     PACPI_MANIPULATE_GLOBAL_LOCK_BUFFER inputBuffer;
-    ULONG                               inputLength = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+    ULONG inputLength = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
 
     //
     // Remember that we don't be returning any data
@@ -1295,54 +1183,48 @@ Return Value:
     //
     // Is the irp have a minimum size buffer?
     //
-    if (inputLength < sizeof(ACPI_MANIPULATE_GLOBAL_LOCK_BUFFER) ) {
+    if (inputLength < sizeof(ACPI_MANIPULATE_GLOBAL_LOCK_BUFFER))
+    {
 
         status = STATUS_INFO_LENGTH_MISMATCH;
         goto ACPIIoctlReleaseGlobalLockExit;
-
     }
 
     //
     // Grab a pointer at the input buffer
     //
-    inputBuffer = (PACPI_MANIPULATE_GLOBAL_LOCK_BUFFER)
-        Irp->AssociatedIrp.SystemBuffer;
-    if (inputBuffer->Signature != ACPI_RELEASE_GLOBAL_LOCK_SIGNATURE) {
+    inputBuffer = (PACPI_MANIPULATE_GLOBAL_LOCK_BUFFER)Irp->AssociatedIrp.SystemBuffer;
+    if (inputBuffer->Signature != ACPI_RELEASE_GLOBAL_LOCK_SIGNATURE)
+    {
 
         status = STATUS_INVALID_PARAMETER_1;
         goto ACPIIoctlReleaseGlobalLockExit;
-
     }
     acpiLock = inputBuffer->LockObject;
 
     //
     // Release the lock now
     //
-    status = ACPIReleaseGlobalLock( acpiLock );
+    status = ACPIReleaseGlobalLock(acpiLock);
 
     //
     // Free the memory for the lock
     //
-    ExFreePool( acpiLock );
+    ExFreePool(acpiLock);
 
 ACPIIoctlReleaseGlobalLockExit:
 
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     //
     // Done
     //
     return status;
-
 }
-
+
 NTSTATUS
-ACPIIoctlUnRegisterOpRegionHandler(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PIRP                Irp,
-    IN  PIO_STACK_LOCATION  IrpStack
-    )
+ACPIIoctlUnRegisterOpRegionHandler(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PIO_STACK_LOCATION IrpStack)
 /*++
 
 Routine Description:
@@ -1362,39 +1244,35 @@ NTSTATUS
 
 --*/
 {
-    NTSTATUS                                    status;
-    PACPI_UNREGISTER_OPREGION_HANDLER_BUFFER    inputBuffer;
-    PNSOBJ                                      regionObject;
-    ULONG                                       inputLength = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+    NTSTATUS status;
+    PACPI_UNREGISTER_OPREGION_HANDLER_BUFFER inputBuffer;
+    PNSOBJ regionObject;
+    ULONG inputLength = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
 
     //
     // Grab the region object that corresponds to the requested on
     //
-    regionObject = OSConvertDeviceHandleToPNSOBJ( DeviceObject );
+    regionObject = OSConvertDeviceHandleToPNSOBJ(DeviceObject);
 
     //
     // Is the irp have a minimum size buffer?
     //
-    if (inputLength < sizeof(ACPI_UNREGISTER_OPREGION_HANDLER_BUFFER) ) {
+    if (inputLength < sizeof(ACPI_UNREGISTER_OPREGION_HANDLER_BUFFER))
+    {
 
         status = STATUS_INFO_LENGTH_MISMATCH;
         goto ACPIIoctlUnRegisterOpRegionHandlerExit;
-
     }
 
     //
     // Grab a pointer at the input buffer
     //
-    inputBuffer = (PACPI_UNREGISTER_OPREGION_HANDLER_BUFFER)
-        Irp->AssociatedIrp.SystemBuffer;
+    inputBuffer = (PACPI_UNREGISTER_OPREGION_HANDLER_BUFFER)Irp->AssociatedIrp.SystemBuffer;
 
     //
     // Evaluate the registration
     //
-    status = UnRegisterOperationRegionHandler(
-        regionObject,
-        inputBuffer->OperationRegionObject
-        );
+    status = UnRegisterOperationRegionHandler(regionObject, inputBuffer->OperationRegionObject);
 
 ACPIIoctlUnRegisterOpRegionHandlerExit:
 
@@ -1403,19 +1281,16 @@ ACPIIoctlUnRegisterOpRegionHandlerExit:
     //
     Irp->IoStatus.Status = status;
     Irp->IoStatus.Information = 0;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     //
     // return with the status code
     //
     return status;
 }
-
+
 NTSTATUS
-ACPIIrpDispatchDeviceControl(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIIrpDispatchDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1434,18 +1309,18 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PIO_STACK_LOCATION  irpStack = IoGetCurrentIrpStackLocation( Irp );
-    ULONG               ioctlCode;
+    NTSTATUS status;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    ULONG ioctlCode;
 
     //
     // Make sure that this is an internally generated irp
     //
-    if (Irp->RequestorMode != KernelMode) {
+    if (Irp->RequestorMode != KernelMode)
+    {
 
-        status = ACPIDispatchForwardIrp( DeviceObject, Irp );
+        status = ACPIDispatchForwardIrp(DeviceObject, Irp);
         return status;
-
     }
 
     //
@@ -1456,92 +1331,66 @@ Return Value:
     //
     // What is the IOCTL that we need to handle?
     //
-    switch (ioctlCode ) {
-        case IOCTL_ACPI_ASYNC_EVAL_METHOD:
+    switch (ioctlCode)
+    {
+    case IOCTL_ACPI_ASYNC_EVAL_METHOD:
 
-            //
-            // Handle this elsewhere
-            //
-            status = ACPIIoctlAsyncEvalControlMethod(
-                DeviceObject,
-                Irp,
-                irpStack
-                );
-            break;
+        //
+        // Handle this elsewhere
+        //
+        status = ACPIIoctlAsyncEvalControlMethod(DeviceObject, Irp, irpStack);
+        break;
 
-        case IOCTL_ACPI_EVAL_METHOD:
+    case IOCTL_ACPI_EVAL_METHOD:
 
-            //
-            // Handle this elsewhere
-            //
-            status = ACPIIoctlEvalControlMethod(
-                DeviceObject,
-                Irp,
-                irpStack
-                );
-            break;
+        //
+        // Handle this elsewhere
+        //
+        status = ACPIIoctlEvalControlMethod(DeviceObject, Irp, irpStack);
+        break;
 
-        case IOCTL_ACPI_REGISTER_OPREGION_HANDLER:
+    case IOCTL_ACPI_REGISTER_OPREGION_HANDLER:
 
-            //
-            // Handle this elsewhere
-            //
-            status = ACPIIoctlRegisterOpRegionHandler(
-                DeviceObject,
-                Irp,
-                irpStack
-                );
-            break;
+        //
+        // Handle this elsewhere
+        //
+        status = ACPIIoctlRegisterOpRegionHandler(DeviceObject, Irp, irpStack);
+        break;
 
-        case IOCTL_ACPI_UNREGISTER_OPREGION_HANDLER:
+    case IOCTL_ACPI_UNREGISTER_OPREGION_HANDLER:
 
-            //
-            // Handle this elsewhere
-            //
-            status = ACPIIoctlUnRegisterOpRegionHandler(
-                DeviceObject,
-                Irp,
-                irpStack
-                );
-            break;
+        //
+        // Handle this elsewhere
+        //
+        status = ACPIIoctlUnRegisterOpRegionHandler(DeviceObject, Irp, irpStack);
+        break;
 
-        case IOCTL_ACPI_ACQUIRE_GLOBAL_LOCK:
+    case IOCTL_ACPI_ACQUIRE_GLOBAL_LOCK:
 
-            //
-            // Handle this elsewhere
-            //
-            status = ACPIIoctlAcquireGlobalLock(
-                DeviceObject,
-                Irp,
-                irpStack
-                );
-            break;
+        //
+        // Handle this elsewhere
+        //
+        status = ACPIIoctlAcquireGlobalLock(DeviceObject, Irp, irpStack);
+        break;
 
-        case IOCTL_ACPI_RELEASE_GLOBAL_LOCK:
+    case IOCTL_ACPI_RELEASE_GLOBAL_LOCK:
 
-            //
-            // Handle this elsewhere
-            //
-            status = ACPIIoctlReleaseGlobalLock(
-                DeviceObject,
-                Irp,
-                irpStack
-                );
-            break;
+        //
+        // Handle this elsewhere
+        //
+        status = ACPIIoctlReleaseGlobalLock(DeviceObject, Irp, irpStack);
+        break;
 
-        default:
+    default:
 
-            //
-            // Handle this with the default mechanism
-            //
-            status = ACPIDispatchForwardIrp( DeviceObject, Irp );
-
+        //
+        // Handle this with the default mechanism
+        //
+        status = ACPIDispatchForwardIrp(DeviceObject, Irp);
     }
 
     //
     // Done
     //
     return status;
-
 }
-

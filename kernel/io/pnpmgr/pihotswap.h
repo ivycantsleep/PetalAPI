@@ -19,15 +19,6 @@ Revision History:
 
 --*/
 
-VOID
-PiHotSwapGetDetachableNode(
-    IN  PDEVICE_NODE    DeviceNode,
-    OUT PDEVICE_NODE   *DetachableNode
-    );
+VOID PiHotSwapGetDetachableNode(IN PDEVICE_NODE DeviceNode, OUT PDEVICE_NODE *DetachableNode);
 
-VOID
-PiHotSwapGetDefaultBusRemovalPolicy(
-    IN  PDEVICE_NODE            DeviceNode,
-    OUT PDEVICE_REMOVAL_POLICY  RemovalPolicy
-    );
-
+VOID PiHotSwapGetDefaultBusRemovalPolicy(IN PDEVICE_NODE DeviceNode, OUT PDEVICE_REMOVAL_POLICY RemovalPolicy);

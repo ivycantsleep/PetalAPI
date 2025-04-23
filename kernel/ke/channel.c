@@ -24,42 +24,23 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 //
 // Define local function prototypes.
 //
 
-VOID
-KiAllocateReceiveBufferChannel (
-    VOID
-    );
+VOID KiAllocateReceiveBufferChannel(VOID);
 
-VOID
-KiCloseChannel (
-    IN PEPROCESS Process,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG ProcessHandleCount,
-    IN ULONG SystemHandleCount
-    );
+VOID KiCloseChannel(IN PEPROCESS Process, IN PVOID Object, IN ACCESS_MASK GrantedAccess, IN ULONG ProcessHandleCount,
+                    IN ULONG SystemHandleCount);
 
-VOID
-KiDeleteChannel (
-    IN PVOID Object
-    );
+VOID KiDeleteChannel(IN PVOID Object);
 
 NTSTATUS
-KiListenChannel (
-    IN PRECHANNEL ServerChannel,
-    IN KPROCESSOR_MODE WaitMode,
-    OUT PCHANNEL_MESSAGE *Message
-    );
+KiListenChannel(IN PRECHANNEL ServerChannel, IN KPROCESSOR_MODE WaitMode, OUT PCHANNEL_MESSAGE *Message);
 
 PKTHREAD
-KiRendezvousWithThread (
-    IN PRECHANNEL WaitChannel,
-    IN ULONG WaitMode
-    );
+KiRendezvousWithThread(IN PRECHANNEL WaitChannel, IN ULONG WaitMode);
 
 //
 // Address of event object type descriptor.
@@ -75,15 +56,9 @@ POBJECT_TYPE KeChannelType;
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const GENERIC_MAPPING KiChannelMapping = {
-    STANDARD_RIGHTS_READ |
-        CHANNEL_READ_MESSAGE,
-    STANDARD_RIGHTS_WRITE |
-        CHANNEL_WRITE_MESSAGE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    CHANNEL_ALL_ACCESS
-};
+const GENERIC_MAPPING KiChannelMapping = { STANDARD_RIGHTS_READ | CHANNEL_READ_MESSAGE,
+                                           STANDARD_RIGHTS_WRITE | CHANNEL_WRITE_MESSAGE,
+                                           STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, CHANNEL_ALL_ACCESS };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
@@ -102,12 +77,9 @@ const GENERIC_MAPPING KiChannelMapping = {
 #pragma alloc_text(PAGE, NtOpenChannel)
 #pragma alloc_text(PAGE, NtSetContextChannel)
 #endif
-
+
 NTSTATUS
-NtCreateChannel (
-    OUT PHANDLE ChannelHandle,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL
-    )
+NtCreateChannel(OUT PHANDLE ChannelHandle, IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL)
 
 /*++
 
@@ -235,14 +207,10 @@ Return Value:
     return STATUS_NOT_IMPLEMENTED;
 
 #endif
-
 }
-
+
 NTSTATUS
-NtListenChannel (
-    IN HANDLE ChannelHandle,
-    OUT PCHANNEL_MESSAGE *Message
-    )
+NtListenChannel(IN HANDLE ChannelHandle, OUT PCHANNEL_MESSAGE *Message)
 
 /*++
 
@@ -347,14 +315,10 @@ Return Value:
     return STATUS_NOT_IMPLEMENTED;
 
 #endif
-
 }
-
+
 NTSTATUS
-NtOpenChannel (
-    OUT PHANDLE ChannelHandle,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenChannel(OUT PHANDLE ChannelHandle, IN POBJECT_ATTRIBUTES ObjectAttributes)
 
 /*++
 
@@ -524,15 +488,10 @@ Return Value:
     return STATUS_NOT_IMPLEMENTED;
 
 #endif
-
 }
-
+
 NTSTATUS
-NtReplyWaitSendChannel (
-    IN PVOID Text,
-    IN ULONG Length,
-    OUT PCHANNEL_MESSAGE *Message
-    )
+NtReplyWaitSendChannel(IN PVOID Text, IN ULONG Length, OUT PCHANNEL_MESSAGE *Message)
 
 /*++
 
@@ -806,16 +765,10 @@ Return Value:
     return STATUS_NOT_IMPLEMENTED;
 
 #endif
-
 }
-
+
 NTSTATUS
-NtSendWaitReplyChannel (
-    IN HANDLE ChannelHandle,
-    IN PVOID Text,
-    IN ULONG Length,
-    OUT PCHANNEL_MESSAGE *Message
-    )
+NtSendWaitReplyChannel(IN HANDLE ChannelHandle, IN PVOID Text, IN ULONG Length, OUT PCHANNEL_MESSAGE *Message)
 
 /*++
 
@@ -1081,13 +1034,10 @@ Return Value:
     return STATUS_NOT_IMPLEMENTED;
 
 #endif
-
 }
-
+
 NTSTATUS
-NtSetContextChannel (
-    IN PVOID Context
-    )
+NtSetContextChannel(IN PVOID Context)
 
 /*++
 
@@ -1146,7 +1096,6 @@ Return Value:
     return STATUS_NOT_IMPLEMENTED;
 
 #endif
-
 }
 
 #if 0

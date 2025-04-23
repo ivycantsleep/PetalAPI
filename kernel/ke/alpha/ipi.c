@@ -26,12 +26,8 @@ Revision History:
 --*/
 
 #include "ki.h"
-
-VOID
-KiRestoreProcessorState (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+
+VOID KiRestoreProcessorState(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -66,22 +62,14 @@ Return Value:
 #if !defined(NT_UP)
 
     Prcb = KeGetCurrentPrcb();
-    KeContextToKframes(TrapFrame,
-                       ExceptionFrame,
-                       &Prcb->ProcessorState.ContextFrame,
-                       CONTEXT_FULL,
-                       KernelMode);
+    KeContextToKframes(TrapFrame, ExceptionFrame, &Prcb->ProcessorState.ContextFrame, CONTEXT_FULL, KernelMode);
 
 #endif
 
     return;
 }
-
-VOID
-KiSaveProcessorState (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+
+VOID KiSaveProcessorState(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -117,20 +105,15 @@ Return Value:
 
     Prcb = KeGetCurrentPrcb();
     Prcb->ProcessorState.ContextFrame.ContextFlags = CONTEXT_FULL;
-    KeContextFromKframes(TrapFrame,
-                         ExceptionFrame,
-                         &Prcb->ProcessorState.ContextFrame);
+    KeContextFromKframes(TrapFrame, ExceptionFrame, &Prcb->ProcessorState.ContextFrame);
 
 #endif
 
     return;
 }
-
+
 BOOLEAN
-KiIpiServiceRoutine (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+KiIpiServiceRoutine(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -167,7 +150,8 @@ Return Value:
     // If freeze is requested, then freeze target execution.
     //
 
-    if ((RequestSummary & IPI_FREEZE) != 0) {
+    if ((RequestSummary & IPI_FREEZE) != 0)
+    {
         KiFreezeTargetExecution(TrapFrame, ExceptionFrame);
     }
 

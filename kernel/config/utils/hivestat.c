@@ -64,82 +64,49 @@ Revision History:
 #include <string.h>
 #include <windows.h>
 
-UCHAR *helptext[] = {
- "hivestat:                                                               ",
- "Statistics:                                                             ",
- "    Short:  # of bins                                                   ",
- "            average bin size                                            ",
- "            max bin size                                                ",
- "            # of cells                                                  ",
- "            # of free cells                                             ",
- "            # of allocated cells                                        ",
- "            average free cell size                                      ",
- "            total free size                                             ",
- "            max free cell size                                          ",
- "            average allocated size                                      ",
- "            total allocated size                                        ",
- "            max allocated cell size                                     ",
- "            overhead summary (header, bin headers, cell headers)        ",
- "    Long: bin#, offset, size                                            ",
- "          cell offset, size, allocated                                  ",
- "          cell offset, size, free                                       ",
- "Usage: {[+|-][<option>]} <filename>                                     ",
- "       (+ = on by default, - = off by default)                          ",
- "       +s = summary - all of the short statistics                       ",
- "       -t[bafc] = trace, line per entry, bin, allocated, free, all cells",
- "            (+tbc == +tbaf)                                             ",
- "       -c = cell type summary                                           ",
- "       -a[kvs] = Access Export (key nodes, values, SDs)                 ",
- NULL
-};
+UCHAR *helptext[] = { "hivestat:                                                               ",
+                      "Statistics:                                                             ",
+                      "    Short:  # of bins                                                   ",
+                      "            average bin size                                            ",
+                      "            max bin size                                                ",
+                      "            # of cells                                                  ",
+                      "            # of free cells                                             ",
+                      "            # of allocated cells                                        ",
+                      "            average free cell size                                      ",
+                      "            total free size                                             ",
+                      "            max free cell size                                          ",
+                      "            average allocated size                                      ",
+                      "            total allocated size                                        ",
+                      "            max allocated cell size                                     ",
+                      "            overhead summary (header, bin headers, cell headers)        ",
+                      "    Long: bin#, offset, size                                            ",
+                      "          cell offset, size, allocated                                  ",
+                      "          cell offset, size, free                                       ",
+                      "Usage: {[+|-][<option>]} <filename>                                     ",
+                      "       (+ = on by default, - = off by default)                          ",
+                      "       +s = summary - all of the short statistics                       ",
+                      "       -t[bafc] = trace, line per entry, bin, allocated, free, all cells",
+                      "            (+tbc == +tbaf)                                             ",
+                      "       -c = cell type summary                                           ",
+                      "       -a[kvs] = Access Export (key nodes, values, SDs)                 ",
+                      NULL };
 
 
-VOID
-ParseArgs(
-    int     argc,
-    char    *argv[]
-    );
+VOID ParseArgs(int argc, char *argv[]);
 
-VOID
-ScanHive(
-    VOID
-    );
+VOID ScanHive(VOID);
 
-VOID
-ScanCell(
-    PHCELL Cell,
-    ULONG CellSize
-    );
+VOID ScanCell(PHCELL Cell, ULONG CellSize);
 
-VOID
-ScanKeyNode(
-    IN PCM_KEY_NODE Node,
-    IN ULONG CellSize
-    );
+VOID ScanKeyNode(IN PCM_KEY_NODE Node, IN ULONG CellSize);
 
-VOID
-ScanKeyValue(
-    IN PCM_KEY_VALUE Value,
-    IN ULONG CellSize
-    );
+VOID ScanKeyValue(IN PCM_KEY_VALUE Value, IN ULONG CellSize);
 
-VOID
-ScanKeySD(
-    IN PCM_KEY_SECURITY Security,
-    IN ULONG CellSize
-    );
+VOID ScanKeySD(IN PCM_KEY_SECURITY Security, IN ULONG CellSize);
 
-VOID
-ScanKeyIndex(
-    IN PCM_KEY_INDEX Index,
-    IN ULONG CellSize
-    );
+VOID ScanKeyIndex(IN PCM_KEY_INDEX Index, IN ULONG CellSize);
 
-VOID
-ScanUnknown(
-    IN PCELL_DATA Data,
-    IN ULONG CellSize
-    );
+VOID ScanUnknown(IN PCELL_DATA Data, IN ULONG CellSize);
 
 
 //
@@ -161,34 +128,26 @@ ULONG HiveVersion;
 //
 //  SUMMARY TOTALS
 //
-ULONG SizeKeyData=0;
-ULONG SizeValueData=0;
-ULONG SizeSDData=0;
-ULONG SizeIndexData=0;
-ULONG SizeUnknownData=0;
+ULONG SizeKeyData = 0;
+ULONG SizeValueData = 0;
+ULONG SizeSDData = 0;
+ULONG SizeIndexData = 0;
+ULONG SizeUnknownData = 0;
 
-ULONG NumKeyData=0;
-ULONG NumValueData=0;
-ULONG NumSDData=0;
-ULONG NumIndexData=0;
-ULONG NumUnknownData=0;
+ULONG NumKeyData = 0;
+ULONG NumValueData = 0;
+ULONG NumSDData = 0;
+ULONG NumIndexData = 0;
+ULONG NumUnknownData = 0;
 
-void
-main(
-    int argc,
-    char *argv[]
-    )
+void main(int argc, char *argv[])
 {
     ParseArgs(argc, argv);
     ScanHive();
     exit(0);
 }
 
-VOID
-ParseArgs(
-    int     argc,
-    char    *argv[]
-    )
+VOID ParseArgs(int argc, char *argv[])
 /*++
 
 Routine Description:
@@ -209,25 +168,31 @@ Return Value:
     int i;
     BOOLEAN command;
 
-    if (argc == 1) {
-        for (i = 0; helptext[i] != NULL; i++) {
+    if (argc == 1)
+    {
+        for (i = 0; helptext[i] != NULL; i++)
+        {
             fprintf(stderr, "%s\n", helptext[i]);
         }
         exit(1);
     }
 
-    for (i = 1; i < argc; i++) {
+    for (i = 1; i < argc; i++)
+    {
         p = argv[i];
 
-        if (*p == '+') {
+        if (*p == '+')
+        {
             // switch something on
             command = TRUE;
-
-        } else if (*p == '-') {
+        }
+        else if (*p == '-')
+        {
             // switch something off
             command = FALSE;
-
-        } else {
+        }
+        else
+        {
             FileName = p;
             continue;
         }
@@ -236,7 +201,8 @@ Return Value:
         if (*p == '\0')
             continue;
 
-        switch (*p) {
+        switch (*p)
+        {
         case 's':
         case 'S':
             DoSummary = command;
@@ -250,25 +216,27 @@ Return Value:
         case 'a':
         case 'A':
             p++;
-            while (*p != '\0') {
-                switch (*p) {
-                    case 'k':
-                    case 'K':
-                        AccessKeys = command;
-                        break;
+            while (*p != '\0')
+            {
+                switch (*p)
+                {
+                case 'k':
+                case 'K':
+                    AccessKeys = command;
+                    break;
 
-                    case 's':
-                    case 'S':
-                        AccessSD = command;
-                        break;
+                case 's':
+                case 'S':
+                    AccessSD = command;
+                    break;
 
-                    case 'v':
-                    case 'V':
-                        AccessValues = command;
-                        break;
+                case 'v':
+                case 'V':
+                    AccessValues = command;
+                    break;
 
-                    default:
-                        break;
+                default:
+                    break;
                 }
                 p++;
             }
@@ -277,9 +245,11 @@ Return Value:
         case 't':
         case 'T':
             p++;
-            while (*p != '\0') {
+            while (*p != '\0')
+            {
 
-                switch (*p) {
+                switch (*p)
+                {
                 case 'b':
                 case 'B':
                     DoTraceBin = command;
@@ -316,9 +286,7 @@ Return Value:
     return;
 }
 
-VOID
-ScanHive(
-    )
+VOID ScanHive()
 /*++
 
 Routine Description:
@@ -357,14 +325,12 @@ Routine Description:
     //
     // open the file
     //
-    filehandle = CreateFile(FileName, GENERIC_READ, FILE_SHARE_READ, NULL,
-                            OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    filehandle =
+        CreateFile(FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 
-    if (filehandle == INVALID_HANDLE_VALUE) {
-        fprintf(stderr,
-                "hivestat: Could not open file '%s' error = %08lx\n",
-                FileName, GetLastError()
-                );
+    if (filehandle == INVALID_HANDLE_VALUE)
+    {
+        fprintf(stderr, "hivestat: Could not open file '%s' error = %08lx\n", FileName, GetLastError());
         exit(1);
     }
 
@@ -373,20 +339,17 @@ Routine Description:
     // read the header
     //
     rf = ReadFile(filehandle, buffer, HBLOCK_SIZE, &readcount, NULL);
-    if ( ( ! rf ) || (readcount != HBLOCK_SIZE) ) {
+    if ((!rf) || (readcount != HBLOCK_SIZE))
+    {
         fprintf(stderr, "hivestat: '%s' - cannot read base block!\n", FileName);
         exit(1);
     }
 
     bbp = (PHBASE_BLOCK)(&(buffer[0]));
 
-    if ((bbp->Major != HSYS_MAJOR) ||
-        (bbp->Minor > HSYS_MINOR))
+    if ((bbp->Major != HSYS_MAJOR) || (bbp->Minor > HSYS_MINOR))
     {
-        fprintf(stderr,
-                "hivestat: major/minor != %d/%d get newer hivestat\n",
-                HSYS_MAJOR, HSYS_MINOR
-                );
+        fprintf(stderr, "hivestat: major/minor != %d/%d get newer hivestat\n", HSYS_MAJOR, HSYS_MINOR);
         exit(1);
     }
 
@@ -397,7 +360,8 @@ Routine Description:
     hoff = 0;
 
     printf("hivestat: '%s'\n", FileName);
-    if (DoTraceBin || DoTraceFree || DoTraceAlloc) {
+    if (DoTraceBin || DoTraceFree || DoTraceAlloc)
+    {
         printf("\nTrace\n");
         printf("bi=bin, fr=free, al=allocated\n");
         printf("offset is file offset, sub HBLOCK to get HCELL\n");
@@ -420,35 +384,39 @@ Routine Description:
     //
     // cp is pointer into memory, within range of buffer, it's a cell pointer
     //
-    while (hiveposition < hivelength) {
+    while (hiveposition < hivelength)
+    {
 
         //
         // read in first block of bin, check signature, get bin stats
         //
         rf = ReadFile(filehandle, buffer, HBLOCK_SIZE, &readcount, NULL);
-        if ( ( ! rf ) || (readcount != HBLOCK_SIZE) ) {
+        if ((!rf) || (readcount != HBLOCK_SIZE))
+        {
             fprintf(stderr, "hivestat: '%s' read error @%08lx\n", FileName, hiveposition);
             exit(1);
         }
         hbp = (PHBIN)(&(buffer[0]));
 
-        if (hbp->Signature != HBIN_SIGNATURE) {
-            fprintf(stderr,
-                    "hivestat: '%s' bad bin sign. @%08lx\n", FileName, hiveposition);
+        if (hbp->Signature != HBIN_SIGNATURE)
+        {
+            fprintf(stderr, "hivestat: '%s' bad bin sign. @%08lx\n", FileName, hiveposition);
             exit(1);
         }
         hiveposition += HBLOCK_SIZE;
         hoff += HBLOCK_SIZE;
-        ASSERT(hoff+HBLOCK_SIZE == hiveposition);
+        ASSERT(hoff + HBLOCK_SIZE == hiveposition);
 
         StatBinCount++;
         binsize = hbp->Size;
         StatBinTotal += binsize;
-        if (binsize > StatBinMax) {
+        if (binsize > StatBinMax)
+        {
             StatBinMax = binsize;
         }
 
-        if (DoTraceBin) {
+        if (DoTraceBin)
+        {
             printf("bi,x%08lx,%ld\n", hoff, binsize);
         }
 
@@ -465,48 +433,51 @@ Routine Description:
         lboff = -1;
         binread = HBLOCK_SIZE;
 
-        while (binread <= binsize) {
+        while (binread <= binsize)
+        {
 
             //
             // if free, do free stuff
             // else do alloc stuff
             // do full stuff
             //
-            if (cp->Size > 0) {
+            if (cp->Size > 0)
+            {
                 //
                 // free
                 //
                 cellsize = cp->Size;
                 StatFreeCount++;
                 StatFreeTotal += cellsize;
-                if (cellsize > StatFreeMax) {
+                if (cellsize > StatFreeMax)
+                {
                     StatFreeMax = cellsize;
                 }
 
-                if (DoTraceFree) {
-                    printf("fr,x%08lx,%ld\n",
-                           hoff+((PUCHAR)cp - &(buffer[0])), cellsize);
+                if (DoTraceFree)
+                {
+                    printf("fr,x%08lx,%ld\n", hoff + ((PUCHAR)cp - &(buffer[0])), cellsize);
                 }
-
-
-            } else {
+            }
+            else
+            {
                 //
                 // alloc
                 //
                 cellsize = -1 * cp->Size;
                 StatAllocCount++;
                 StatAllocTotal += cellsize;
-                if (cellsize > StatAllocMax) {
+                if (cellsize > StatAllocMax)
+                {
                     StatAllocMax = cellsize;
                 }
 
-                if (DoTraceAlloc) {
-                    printf("al,x%08lx,%ld\n",
-                           hoff+((PUCHAR)cp - &(buffer[0])), cellsize);
+                if (DoTraceAlloc)
+                {
+                    printf("al,x%08lx,%ld\n", hoff + ((PUCHAR)cp - &(buffer[0])), cellsize);
                 }
 
-                ScanCell(cp,cellsize);
-
+                ScanCell(cp, cellsize);
             }
 
             //
@@ -531,10 +502,12 @@ Routine Description:
             // AND there's bin left to read.
             // do this BEFORE breaking out for boff at end.
             //
-            while ( (cp >= guard) && (binread < binsize) ) {
+            while ((cp >= guard) && (binread < binsize))
+            {
 
                 rf = ReadFile(filehandle, buffer, HBLOCK_SIZE, &readcount, NULL);
-                if ( ( ! rf ) || (readcount != HBLOCK_SIZE) ) {
+                if ((!rf) || (readcount != HBLOCK_SIZE))
+                {
                     fprintf(stderr, "hivestat: '%s' read error @%08lx\n", FileName, hiveposition);
                     exit(1);
                 }
@@ -542,11 +515,12 @@ Routine Description:
                 hiveposition += HBLOCK_SIZE;
                 hoff += HBLOCK_SIZE;
                 binread += HBLOCK_SIZE;
-                ASSERT(hoff+HBLOCK_SIZE == hiveposition);
+                ASSERT(hoff + HBLOCK_SIZE == hiveposition);
             }
 
-            if (boff >= binsize) {
-                break;              // we are done with this bin
+            if (boff >= binsize)
+            {
+                break; // we are done with this bin
             }
         }
     }
@@ -554,65 +528,40 @@ Routine Description:
     //
     // Traces are done, stats gathered, print summary
     //
-    if (DoSummary) {
+    if (DoSummary)
+    {
 
         printf("\nSummary:\n");
         printf("type\tcount/max single/total space\n");
-        printf("%s\t%7ld\t%7ld\t%7ld\n",
-                "bin", StatBinCount, StatBinMax, StatBinTotal);
-        printf("%s\t%7ld\t%7ld\t%7ld\n",
-                "free", StatFreeCount, StatFreeMax, StatFreeTotal);
-        printf("%s\t%7ld\t%7ld\t%7ld\n",
-                "alloc", StatAllocCount, StatAllocMax, StatAllocTotal);
-
+        printf("%s\t%7ld\t%7ld\t%7ld\n", "bin", StatBinCount, StatBinMax, StatBinTotal);
+        printf("%s\t%7ld\t%7ld\t%7ld\n", "free", StatFreeCount, StatFreeMax, StatFreeTotal);
+        printf("%s\t%7ld\t%7ld\t%7ld\n", "alloc", StatAllocCount, StatAllocMax, StatAllocTotal);
     }
 
-    if (DoSummary && DoCellType) {
+    if (DoSummary && DoCellType)
+    {
 
         printf("\n");
 
-        SizeTotal = SizeKeyData +
-                    SizeValueData +
-                    SizeSDData +
-                    SizeIndexData +
-                    SizeUnknownData;
+        SizeTotal = SizeKeyData + SizeValueData + SizeSDData + SizeIndexData + SizeUnknownData;
 
-        printf("Total Key Data     %7d (%5.2f %%)\n", SizeKeyData,
-            (float)SizeKeyData*100/SizeTotal);
-        printf("Total Value Data   %7d (%5.2f %%)\n", SizeValueData,
-            (float)SizeValueData*100/SizeTotal);
-        printf("Total SD Data      %7d (%5.2f %%)\n", SizeSDData,
-            (float)SizeSDData*100/SizeTotal);
-        printf("Total Index Data   %7d (%5.2f %%)\n", SizeIndexData,
-            (float)SizeIndexData*100/SizeTotal);
-        printf("Total Unknown Data %7d (%5.2f %%)\n", SizeUnknownData,
-            (float)SizeUnknownData*100/SizeTotal);
+        printf("Total Key Data     %7d (%5.2f %%)\n", SizeKeyData, (float)SizeKeyData * 100 / SizeTotal);
+        printf("Total Value Data   %7d (%5.2f %%)\n", SizeValueData, (float)SizeValueData * 100 / SizeTotal);
+        printf("Total SD Data      %7d (%5.2f %%)\n", SizeSDData, (float)SizeSDData * 100 / SizeTotal);
+        printf("Total Index Data   %7d (%5.2f %%)\n", SizeIndexData, (float)SizeIndexData * 100 / SizeTotal);
+        printf("Total Unknown Data %7d (%5.2f %%)\n", SizeUnknownData, (float)SizeUnknownData * 100 / SizeTotal);
 
         printf("\n");
-        printf("Average Key Data     %8.2f (%d cells)\n",
-            (float)SizeKeyData/NumKeyData,
-            NumKeyData);
-        printf("Average Value Data   %8.2f (%d cells)\n",
-            (float)SizeValueData/NumValueData,
-            NumValueData);
-        printf("Average SD Data      %8.2f (%d cells)\n",
-            (float)SizeSDData/NumSDData,
-            NumSDData);
-        printf("Average Index Data   %8.2f (%d cells)\n",
-            (float)SizeIndexData/NumIndexData,
-            NumIndexData);
-        printf("Average Unknown Data %8.2f (%d cells)\n",
-            (float)SizeUnknownData/NumUnknownData,
-            NumUnknownData);
+        printf("Average Key Data     %8.2f (%d cells)\n", (float)SizeKeyData / NumKeyData, NumKeyData);
+        printf("Average Value Data   %8.2f (%d cells)\n", (float)SizeValueData / NumValueData, NumValueData);
+        printf("Average SD Data      %8.2f (%d cells)\n", (float)SizeSDData / NumSDData, NumSDData);
+        printf("Average Index Data   %8.2f (%d cells)\n", (float)SizeIndexData / NumIndexData, NumIndexData);
+        printf("Average Unknown Data %8.2f (%d cells)\n", (float)SizeUnknownData / NumUnknownData, NumUnknownData);
     }
     return;
 }
 
-VOID
-ScanCell(
-    IN PHCELL Cell,
-    IN ULONG CellSize
-    )
+VOID ScanCell(IN PHCELL Cell, IN ULONG CellSize)
 
 /*++
 
@@ -637,51 +586,56 @@ Return Value:
 {
     PCELL_DATA Data;
 
-    if (!DoCellType) {
+    if (!DoCellType)
+    {
         return;
     }
 
-    if (HiveVersion==1) {
+    if (HiveVersion == 1)
+    {
         Data = (PCELL_DATA)&Cell->u.OldCell.u.UserData;
-    } else {
+    }
+    else
+    {
         Data = (PCELL_DATA)&Cell->u.NewCell.u.UserData;
     }
 
     //
     // grovel through the data, see if we can figure out what it looks like
     //
-    if ((Data->u.KeyNode.Signature == CM_KEY_NODE_SIGNATURE) &&
-        (CellSize > sizeof(CM_KEY_NODE))) {
+    if ((Data->u.KeyNode.Signature == CM_KEY_NODE_SIGNATURE) && (CellSize > sizeof(CM_KEY_NODE)))
+    {
 
         //
         // probably a key node
         //
         ScanKeyNode(&Data->u.KeyNode, CellSize);
-
-    } else if ((Data->u.KeyValue.Signature == CM_KEY_VALUE_SIGNATURE) &&
-               (CellSize > sizeof(CM_KEY_VALUE))) {
+    }
+    else if ((Data->u.KeyValue.Signature == CM_KEY_VALUE_SIGNATURE) && (CellSize > sizeof(CM_KEY_VALUE)))
+    {
 
         //
         // probably a key value
         //
         ScanKeyValue(&Data->u.KeyValue, CellSize);
-
-    } else if ((Data->u.KeySecurity.Signature == CM_KEY_SECURITY_SIGNATURE) &&
-               (CellSize > sizeof(CM_KEY_SECURITY))) {
+    }
+    else if ((Data->u.KeySecurity.Signature == CM_KEY_SECURITY_SIGNATURE) && (CellSize > sizeof(CM_KEY_SECURITY)))
+    {
 
         //
         // probably a security descriptor
         //
         ScanKeySD(&Data->u.KeySecurity, CellSize);
-
-    } else if ((Data->u.KeyIndex.Signature == CM_KEY_INDEX_ROOT) ||
-               (Data->u.KeyIndex.Signature == CM_KEY_INDEX_LEAF)) {
+    }
+    else if ((Data->u.KeyIndex.Signature == CM_KEY_INDEX_ROOT) || (Data->u.KeyIndex.Signature == CM_KEY_INDEX_LEAF))
+    {
         //
         // probably a key index
         //
         ScanKeyIndex(&Data->u.KeyIndex, CellSize);
-
-    } else {
+    }
+    else
+    {
         //
         // Nothing with a signature, could be either
         //  name
@@ -689,96 +643,69 @@ Return Value:
         //  value data
         //
         ScanUnknown(Data, CellSize);
-
     }
 }
 
-VOID
-ScanKeyNode(
-    IN PCM_KEY_NODE Node,
-    IN ULONG CellSize
-    )
+VOID ScanKeyNode(IN PCM_KEY_NODE Node, IN ULONG CellSize)
 {
     int i;
 
     SizeKeyData += CellSize;
     NumKeyData++;
 
-    if (AccessKeys) {
-        printf("%d, %d, %d, %d, \"",
-               Node->SubKeyCounts[Stable],
-               Node->ValueList.Count,
-               Node->NameLength,
+    if (AccessKeys)
+    {
+        printf("%d, %d, %d, %d, \"", Node->SubKeyCounts[Stable], Node->ValueList.Count, Node->NameLength,
                Node->ClassLength);
 
-        for (i=0; i < Node->NameLength/sizeof(WCHAR); i++) {
-            printf("%c",(CHAR)Node->Name[i]);
+        for (i = 0; i < Node->NameLength / sizeof(WCHAR); i++)
+        {
+            printf("%c", (CHAR)Node->Name[i]);
         }
         printf("\"\n");
     }
-
 }
-VOID
-ScanKeyValue(
-    IN PCM_KEY_VALUE Value,
-    IN ULONG CellSize
-    )
+VOID ScanKeyValue(IN PCM_KEY_VALUE Value, IN ULONG CellSize)
 {
     int i;
     int DataLength;
 
     SizeValueData += CellSize;
     NumValueData++;
-    if (AccessValues) {
+    if (AccessValues)
+    {
         DataLength = Value->DataLength;
-        if (DataLength >= CM_KEY_VALUE_SPECIAL_SIZE) {
+        if (DataLength >= CM_KEY_VALUE_SPECIAL_SIZE)
+        {
             DataLength -= CM_KEY_VALUE_SPECIAL_SIZE;
         }
-        printf("%d, %d, \"",
-               DataLength,
-               Value->NameLength);
+        printf("%d, %d, \"", DataLength, Value->NameLength);
 
-        for (i=0; i < Value->NameLength/sizeof(WCHAR); i++) {
-            printf("%c",(CHAR)Value->Name[i]);
+        for (i = 0; i < Value->NameLength / sizeof(WCHAR); i++)
+        {
+            printf("%c", (CHAR)Value->Name[i]);
         }
         printf("\"\n");
     }
-
 }
-VOID
-ScanKeySD(
-    IN PCM_KEY_SECURITY Security,
-    IN ULONG CellSize
-    )
+VOID ScanKeySD(IN PCM_KEY_SECURITY Security, IN ULONG CellSize)
 {
     SizeSDData += CellSize;
     NumSDData++;
 
-    if (AccessSD) {
-        printf("%d,%d\n",
-               Security->ReferenceCount,
-               Security->DescriptorLength);
+    if (AccessSD)
+    {
+        printf("%d,%d\n", Security->ReferenceCount, Security->DescriptorLength);
     }
-
 }
-VOID
-ScanKeyIndex(
-    IN PCM_KEY_INDEX Index,
-    IN ULONG CellSize
-    )
+VOID ScanKeyIndex(IN PCM_KEY_INDEX Index, IN ULONG CellSize)
 {
     SizeIndexData += CellSize;
     NumIndexData++;
-
 }
-VOID
-ScanUnknown(
-    IN PCELL_DATA Data,
-    IN ULONG CellSize
-    )
+VOID ScanUnknown(IN PCELL_DATA Data, IN ULONG CellSize)
 {
     SizeUnknownData += CellSize;
     NumUnknownData++;
-
 }
 

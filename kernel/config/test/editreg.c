@@ -43,60 +43,31 @@ Revision History:
 // Tempory stuff to get types and values to print in help.
 //
 
-PUCHAR TypeNames[] =
-{
-    "REG_NONE",
-    "REG_SZ",
-    "REG_BINARY",
-    "REG_DWORD",
-    "REG_DWORD_LITTLE_ENDIAN",
-    "REG_DWORD_BIG_ENDIAN",
-    "REG_LINK",
-    "REG_MULTI_SZ",
-    "REG_RESOURCE_LIST",
-    NULL
+PUCHAR TypeNames[] = {
+    "REG_NONE", "REG_SZ",       "REG_BINARY",        "REG_DWORD", "REG_DWORD_LITTLE_ENDIAN", "REG_DWORD_BIG_ENDIAN",
+    "REG_LINK", "REG_MULTI_SZ", "REG_RESOURCE_LIST", NULL
 };
 
-ULONG TypeNumbers[] =
-{
-    REG_NONE,
-    REG_SZ,
-    REG_BINARY,
-    REG_DWORD,
-    REG_DWORD_LITTLE_ENDIAN,
-    REG_DWORD_BIG_ENDIAN,
-    REG_LINK,
-    REG_MULTI_SZ,
-    REG_RESOURCE_LIST
+ULONG TypeNumbers[] = {
+    REG_NONE, REG_SZ,       REG_BINARY,       REG_DWORD, REG_DWORD_LITTLE_ENDIAN, REG_DWORD_BIG_ENDIAN,
+    REG_LINK, REG_MULTI_SZ, REG_RESOURCE_LIST
 };
 
 //
 // Special support for the driver load lists in the registry.
 //
 
-PUCHAR StartDescription[] =
-{
-    "Boot loader",
-    "System",
-    "2",
-    "3",
-    
-    //
-    // Anything above 3 is not loaded.
-    //
+PUCHAR StartDescription[] = { "Boot loader", "System", "2", "3",
 
-    NULL
-};
+                              //
+                              // Anything above 3 is not loaded.
+                              //
 
-PUCHAR TypeDescription[] =
-{
-    "System driver",
-    "File system",
-    "Service",
-    NULL
-};
+                              NULL };
 
-
+PUCHAR TypeDescription[] = { "System driver", "File system", "Service", NULL };
+
+
 //
 // Constants and defines.
 //
@@ -131,49 +102,49 @@ PUCHAR TypeDescription[] =
 // Subkey name located in the FT_REGISTRY_ROOT for stripes.
 //
 
-#define FT_STRIPE_BASE   "Stripe%d"
+#define FT_STRIPE_BASE "Stripe%d"
 
 //
 // Subkey name located in the FT_REGISTRY_ROOT for mirrors.
 //
 
-#define FT_MIRROR_BASE   "Mirror%d"
+#define FT_MIRROR_BASE "Mirror%d"
 
 //
 // Subkey name located in the FT_REGISTRY_ROOT for volume sets.
 //
 
-#define FT_VOLSET_BASE   "VolSet%d"
+#define FT_VOLSET_BASE "VolSet%d"
 
-
+
 //
 // Constants for the command values.
 //
 
-#define INVALID   -1
-#define DIR       0
-#define CREATE    1
-#define LIST      2
-#define CHDIR     3
-#define HELP      4
-#define QUIT      5
-#define DDEBUG    6
-#define SETVALUE  7
-#define DELKEY    8
-#define DELVALUE  9
-#define DIRLONG  10
-#define INLONG   11
-#define INSHORT  12
-#define INBYTE   13
-#define DUMP     14
-#define DISKREG  15
-#define FIXDISK  16
-#define RESTORE  17
-#define DRIVERS  18
-#define ORPHAN   19
-#define REGEN    20
-#define INIT     21
-#define MAKEFT   22
+#define INVALID -1
+#define DIR 0
+#define CREATE 1
+#define LIST 2
+#define CHDIR 3
+#define HELP 4
+#define QUIT 5
+#define DDEBUG 6
+#define SETVALUE 7
+#define DELKEY 8
+#define DELVALUE 9
+#define DIRLONG 10
+#define INLONG 11
+#define INSHORT 12
+#define INBYTE 13
+#define DUMP 14
+#define DISKREG 15
+#define FIXDISK 16
+#define RESTORE 17
+#define DRIVERS 18
+#define ORPHAN 19
+#define REGEN 20
+#define INIT 21
+#define MAKEFT 22
 
 #define CTRL_C 0x03
 
@@ -181,41 +152,10 @@ PUCHAR TypeDescription[] =
 // Table of recognized commands.
 //
 
-PUCHAR Commands[] = {
-    "dir",
-    "keys",
-    "lc",
-    "ls",
-    "create",
-    "set",
-    "unset",
-    "erase",
-    "delete",
-    "rm",
-    "list",
-    "values",
-    "display",
-    "cd",
-    "chdir",
-    "help",
-    "?",
-    "quit",
-    "exit",
-    "debug",
-    "longs",
-    "shorts",
-    "bytes",
-    "dump",
-    "disks",
-    "fix",
-    "restore",
-    "drivers",
-    "orphan",
-    "regenerate",
-    "initialize",
-    "makeft",
-    NULL
-};
+PUCHAR Commands[] = { "dir",     "keys",   "lc",         "ls",         "create", "set",   "unset", "erase", "delete",
+                      "rm",      "list",   "values",     "display",    "cd",     "chdir", "help",  "?",     "quit",
+                      "exit",    "debug",  "longs",      "shorts",     "bytes",  "dump",  "disks", "fix",   "restore",
+                      "drivers", "orphan", "regenerate", "initialize", "makeft", NULL };
 
 //
 // Using the index from the match on the commands in Commands[], this
@@ -225,38 +165,9 @@ PUCHAR Commands[] = {
 
 int CommandMap[] = {
 
-    DIRLONG,
-    DIR,
-    DIR,
-    DIR,
-    CREATE,
-    SETVALUE,
-    DELVALUE,
-    DELVALUE,
-    DELKEY,
-    DELKEY,
-    LIST,
-    LIST,
-    LIST,
-    CHDIR,
-    CHDIR,
-    HELP,
-    HELP,
-    QUIT,
-    QUIT,
-    DDEBUG,
-    INLONG,
-    INSHORT,
-    INBYTE,
-    DUMP,
-    DISKREG,
-    FIXDISK,
-    RESTORE,
-    DRIVERS,
-    ORPHAN,
-    REGEN,
-    INIT,
-    MAKEFT
+    DIRLONG, DIR,  DIR,     DIR,     CREATE,  SETVALUE, DELVALUE, DELVALUE, DELKEY, DELKEY, LIST,
+    LIST,    LIST, CHDIR,   CHDIR,   HELP,    HELP,     QUIT,     QUIT,     DDEBUG, INLONG, INSHORT,
+    INBYTE,  DUMP, DISKREG, FIXDISK, RESTORE, DRIVERS,  ORPHAN,   REGEN,    INIT,   MAKEFT
 };
 
 //
@@ -266,7 +177,7 @@ int CommandMap[] = {
 // commands aliases.
 //
 
-PUCHAR   CommandHelp[] = {
+PUCHAR CommandHelp[] = {
 
     "Displays keys.",
     "Create a new key.",
@@ -319,10 +230,7 @@ UCHAR CommandLine[512];
 
 PUCHAR SetPrompts[] = {
 
-    "Name => ",
-    "Value => ",
-    "Index => ",
-    NULL
+    "Name => ", "Value => ", "Index => ", NULL
 };
 
 //
@@ -341,7 +249,8 @@ ULONG Debug = 0;
 // Dump control values.
 //
 
-typedef enum _DUMP_CONTROL {
+typedef enum _DUMP_CONTROL
+{
 
     InBytes,
     InShorts,
@@ -352,65 +261,9 @@ typedef enum _DUMP_CONTROL {
 ULONG ForceDump = 0;
 
 DUMP_CONTROL DumpControl = InLongs;
-
+
 NTSTATUS
-FtOpenKey(
-    PHANDLE HandlePtr,
-    PUCHAR  KeyName
-    )
-
-/*++
-
-Routine Description:
-
-Arguments:
-
-Return Value:
-
---*/
-
-{
-    NTSTATUS          status;
-    STRING            keyString;
-    OBJECT_ATTRIBUTES objectAttributes;
-    UNICODE_STRING    unicodeKeyName;
-
-    RtlInitString(&keyString,
-                  KeyName);
-
-    (VOID)RtlAnsiStringToUnicodeString(&unicodeKeyName,
-                                       &keyString,
-                                       (BOOLEAN) TRUE);
-
-    memset(&objectAttributes, 0, sizeof(OBJECT_ATTRIBUTES));
-    InitializeObjectAttributes(&objectAttributes,
-                               &unicodeKeyName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-
-    status = NtOpenKey(HandlePtr,
-                       MAXIMUM_ALLOWED,
-                       &objectAttributes);
-
-    RtlFreeUnicodeString(&unicodeKeyName);
-
-    if (Debug == 1) {
-        if (!NT_SUCCESS(status)) {
-            printf("Failed NtOpenKey for %s => %x\n",
-                   KeyName,
-                   status);
-        }
-    }
-
-    return status;
-}
-
-
-NTSTATUS
-FtDeleteKey(
-    PUCHAR KeyName
-    )
+FtOpenKey(PHANDLE HandlePtr, PUCHAR KeyName)
 
 /*++
 
@@ -424,37 +277,35 @@ Return Value:
 
 {
     NTSTATUS status;
-    HANDLE   keyToDelete;
+    STRING keyString;
+    OBJECT_ATTRIBUTES objectAttributes;
+    UNICODE_STRING unicodeKeyName;
 
-    status = FtOpenKey(&keyToDelete,
-                       KeyName);
+    RtlInitString(&keyString, KeyName);
 
-    if (!NT_SUCCESS(status)) {
-        printf("Key %s not found (0x%x).\n", KeyName, status);
-        return status;
-    }
+    (VOID) RtlAnsiStringToUnicodeString(&unicodeKeyName, &keyString, (BOOLEAN)TRUE);
 
-    status = NtDeleteKey(keyToDelete);
+    memset(&objectAttributes, 0, sizeof(OBJECT_ATTRIBUTES));
+    InitializeObjectAttributes(&objectAttributes, &unicodeKeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    if (Debug == 1) {
-        if (!NT_SUCCESS(status)) {
-            printf("Could not delete key %s => %x\n",
-                   KeyName,
-                   status);
+    status = NtOpenKey(HandlePtr, MAXIMUM_ALLOWED, &objectAttributes);
+
+    RtlFreeUnicodeString(&unicodeKeyName);
+
+    if (Debug == 1)
+    {
+        if (!NT_SUCCESS(status))
+        {
+            printf("Failed NtOpenKey for %s => %x\n", KeyName, status);
         }
     }
 
-    NtClose(keyToDelete);
     return status;
 }
 
-
+
 NTSTATUS
-FtCreateKey(
-    PUCHAR KeyName,
-    PUCHAR KeyClass,
-    ULONG  Index
-    )
+FtDeleteKey(PUCHAR KeyName)
 
 /*++
 
@@ -467,21 +318,59 @@ Return Value:
 --*/
 
 {
-    NTSTATUS          status;
-    STRING            keyString;
-    UNICODE_STRING    unicodeKeyName;
-    STRING            classString;
-    UNICODE_STRING    unicodeClassName;
+    NTSTATUS status;
+    HANDLE keyToDelete;
+
+    status = FtOpenKey(&keyToDelete, KeyName);
+
+    if (!NT_SUCCESS(status))
+    {
+        printf("Key %s not found (0x%x).\n", KeyName, status);
+        return status;
+    }
+
+    status = NtDeleteKey(keyToDelete);
+
+    if (Debug == 1)
+    {
+        if (!NT_SUCCESS(status))
+        {
+            printf("Could not delete key %s => %x\n", KeyName, status);
+        }
+    }
+
+    NtClose(keyToDelete);
+    return status;
+}
+
+
+NTSTATUS
+FtCreateKey(PUCHAR KeyName, PUCHAR KeyClass, ULONG Index)
+
+/*++
+
+Routine Description:
+
+Arguments:
+
+Return Value:
+
+--*/
+
+{
+    NTSTATUS status;
+    STRING keyString;
+    UNICODE_STRING unicodeKeyName;
+    STRING classString;
+    UNICODE_STRING unicodeClassName;
     OBJECT_ATTRIBUTES objectAttributes;
-    ULONG             disposition;
-    HANDLE            tempHandle;
+    ULONG disposition;
+    HANDLE tempHandle;
 
 #if DBG
-    if ((KeyName == NULL) ||
-        (KeyClass == NULL)) {
-        printf("FtCreateKey: Invalid parameter 0x%x, 0x%x\n",
-               KeyName,
-               KeyClass);
+    if ((KeyName == NULL) || (KeyClass == NULL))
+    {
+        printf("FtCreateKey: Invalid parameter 0x%x, 0x%x\n", KeyName, KeyClass);
         ASSERT(0);
     }
 #endif
@@ -490,43 +379,29 @@ Return Value:
     // Initialize the object for the key.
     //
 
-    RtlInitString(&keyString,
-                  KeyName);
+    RtlInitString(&keyString, KeyName);
 
-    (VOID)RtlAnsiStringToUnicodeString(&unicodeKeyName,
-                                       &keyString,
-                                       (BOOLEAN) TRUE);
+    (VOID) RtlAnsiStringToUnicodeString(&unicodeKeyName, &keyString, (BOOLEAN)TRUE);
 
     memset(&objectAttributes, 0, sizeof(OBJECT_ATTRIBUTES));
-    InitializeObjectAttributes(&objectAttributes,
-                               &unicodeKeyName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&objectAttributes, &unicodeKeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
     // Setup the unicode class value.
     //
 
-    RtlInitString(&classString,
-                  KeyClass);
-    (VOID)RtlAnsiStringToUnicodeString(&unicodeClassName,
-                                       &classString,
-                                       (BOOLEAN) TRUE);
+    RtlInitString(&classString, KeyClass);
+    (VOID) RtlAnsiStringToUnicodeString(&unicodeClassName, &classString, (BOOLEAN)TRUE);
 
     //
     // Create the key.
     //
 
-    status = NtCreateKey(&tempHandle,
-                         MAXIMUM_ALLOWED,
-                         &objectAttributes,
-                         Index,
-                         &unicodeClassName,
-                         REG_OPTION_NON_VOLATILE,
-                         &disposition);
+    status = NtCreateKey(&tempHandle, MAXIMUM_ALLOWED, &objectAttributes, Index, &unicodeClassName,
+                         REG_OPTION_NON_VOLATILE, &disposition);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         switch (disposition)
         {
         case REG_CREATED_NEW_KEY:
@@ -552,12 +427,9 @@ Return Value:
     return status;
 }
 
-
+
 NTSTATUS
-FtDeleteValue(
-    HANDLE KeyHandle,
-    PUCHAR ValueName
-    )
+FtDeleteValue(HANDLE KeyHandle, PUCHAR ValueName)
 
 /*++
 
@@ -570,42 +442,33 @@ Return Value:
 --*/
 
 {
-    NTSTATUS       status;
-    STRING         valueString;
+    NTSTATUS status;
+    STRING valueString;
     UNICODE_STRING unicodeValueName;
 
-    RtlInitString(&valueString,
-                  ValueName);
-    status = RtlAnsiStringToUnicodeString(&unicodeValueName,
-                                          &valueString,
-                                          (BOOLEAN) TRUE);
-    if (!NT_SUCCESS(status)) {
+    RtlInitString(&valueString, ValueName);
+    status = RtlAnsiStringToUnicodeString(&unicodeValueName, &valueString, (BOOLEAN)TRUE);
+    if (!NT_SUCCESS(status))
+    {
         printf("FtDeleteValue: internal conversion error 0x%x\n", status);
         return status;
     }
 
-    status = NtDeleteValueKey(KeyHandle,
-                              &unicodeValueName);
-    if (Debug == 1) {
-        if (!NT_SUCCESS(status)) {
-            printf("Could not delete value %s => %x\n",
-                   ValueName,
-                   status);
+    status = NtDeleteValueKey(KeyHandle, &unicodeValueName);
+    if (Debug == 1)
+    {
+        if (!NT_SUCCESS(status))
+        {
+            printf("Could not delete value %s => %x\n", ValueName, status);
         }
     }
 
     RtlFreeUnicodeString(&unicodeValueName);
     return status;
 }
-
+
 NTSTATUS
-FtSetValue(
-    HANDLE KeyHandle,
-    PUCHAR ValueName,
-    PVOID  DataBuffer,
-    ULONG  DataLength,
-    ULONG  Type
-    )
+FtSetValue(HANDLE KeyHandle, PUCHAR ValueName, PVOID DataBuffer, ULONG DataLength, ULONG Type)
 
 /*++
 
@@ -618,26 +481,18 @@ Return Value:
 --*/
 
 {
-    NTSTATUS          status;
-    STRING            valueString;
-    UNICODE_STRING    unicodeValueName;
+    NTSTATUS status;
+    STRING valueString;
+    UNICODE_STRING unicodeValueName;
 
-    RtlInitString(&valueString,
-                  ValueName);
-    RtlAnsiStringToUnicodeString(&unicodeValueName,
-                                 &valueString,
-                                 (BOOLEAN) TRUE);
-    status = NtSetValueKey(KeyHandle,
-                           &unicodeValueName,
-                           0,
-                           Type,
-                           DataBuffer,
-                           DataLength);
-    if (Debug == 1) {
-        if (!NT_SUCCESS(status)) {
-            printf("Could not set value %s => %x\n",
-                   ValueName,
-                   status);
+    RtlInitString(&valueString, ValueName);
+    RtlAnsiStringToUnicodeString(&unicodeValueName, &valueString, (BOOLEAN)TRUE);
+    status = NtSetValueKey(KeyHandle, &unicodeValueName, 0, Type, DataBuffer, DataLength);
+    if (Debug == 1)
+    {
+        if (!NT_SUCCESS(status))
+        {
+            printf("Could not set value %s => %x\n", ValueName, status);
         }
     }
 
@@ -645,11 +500,9 @@ Return Value:
     return status;
 }
 
-
+
 PUCHAR
-FindTypeString(
-    ULONG Type
-    )
+FindTypeString(ULONG Type)
 
 /*++
 
@@ -664,21 +517,20 @@ Return Value:
 {
     int i;
 
-    for (i = 0; TypeNames[i] != NULL; i++) {
+    for (i = 0; TypeNames[i] != NULL; i++)
+    {
 
-        if (TypeNumbers[i] == Type) {
+        if (TypeNumbers[i] == Type)
+        {
             return TypeNames[i];
         }
     }
     return "(Unknown)";
 }
 
-
+
 BOOLEAN
-ProcessHex(
-    PUCHAR String,
-    PULONG Value
-    )
+ProcessHex(PUCHAR String, PULONG Value)
 
 /*++
 
@@ -691,11 +543,12 @@ Return Value:
 --*/
 
 {
-    ULONG  workValue;
-    int    i;
+    ULONG workValue;
+    int i;
     PUCHAR cp;
 
-    if (String == NULL) {
+    if (String == NULL)
+    {
         return FALSE;
     }
 
@@ -707,12 +560,14 @@ Return Value:
     //
 
     i = -1;
-    while ((*cp) && (*cp != '\n')) {
+    while ((*cp) && (*cp != '\n'))
+    {
         i++;
         cp++;
     }
 
-    if (i >= 8) {
+    if (i >= 8)
+    {
 
         //
         // String to long for a long.
@@ -723,10 +578,12 @@ Return Value:
 
     workValue = 0;
     cp = String;
-    while (*cp) {
-        *cp = (UCHAR) tolower(*cp);
+    while (*cp)
+    {
+        *cp = (UCHAR)tolower(*cp);
 
-        switch (*cp) {
+        switch (*cp)
+        {
 
         case '0':
         case '1':
@@ -767,12 +624,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-Dump(
-    PVOID Buffer,
-    ULONG Length
-    )
+
+VOID Dump(PVOID Buffer, ULONG Length)
 
 /*++
 
@@ -793,11 +646,11 @@ Return Value:
 {
     PUCHAR location;
     PUCHAR internalBuffer;
-    int    i;
-    int    j;
-    int    numberLines;
-    UCHAR  outHexLine[128];
-    UCHAR  outPrintable[64];
+    int i;
+    int j;
+    int numberLines;
+    UCHAR outHexLine[128];
+    UCHAR outPrintable[64];
 
     numberLines = (Length + 15) / 16;
 
@@ -807,33 +660,34 @@ Return Value:
     // it won't fault if the data is at the end of memory.
     //
 
-    internalBuffer = (PUCHAR) malloc(numberLines * 16);
+    internalBuffer = (PUCHAR)malloc(numberLines * 16);
     RtlMoveMemory(internalBuffer, Buffer, Length);
-    location = (PUCHAR) internalBuffer;
+    location = (PUCHAR)internalBuffer;
 
-    for (i = 0; i < numberLines; i++) {
+    for (i = 0; i < numberLines; i++)
+    {
 
         sprintf(outHexLine, "%8x: ", (i * 16));
         sprintf(outPrintable, "*");
-        switch (DumpControl) {
+        switch (DumpControl)
+        {
 
         case InBytes:
 
-            for (j = 0; j < 16; j++) {
+            for (j = 0; j < 16; j++)
+            {
                 sprintf(outHexLine, "%s%2X ", outHexLine, *location);
-                sprintf(outPrintable, "%s%c", outPrintable,
-                        (isprint(location[0])) ? location[0] : '.');
+                sprintf(outPrintable, "%s%c", outPrintable, (isprint(location[0])) ? location[0] : '.');
                 location++;
             }
             break;
 
         case InShorts:
 
-            for (j = 0; j < 8; j++) {
-                sprintf(outHexLine, "%s%4X ", outHexLine,
-                        *((PUSHORT)location));
-                sprintf(outPrintable, "%s%c%c", outPrintable,
-                        (isprint(location[0])) ? location[0] : '.',
+            for (j = 0; j < 8; j++)
+            {
+                sprintf(outHexLine, "%s%4X ", outHexLine, *((PUSHORT)location));
+                sprintf(outPrintable, "%s%c%c", outPrintable, (isprint(location[0])) ? location[0] : '.',
                         (isprint(location[1])) ? location[1] : '.');
                 location += 2;
             }
@@ -842,13 +696,11 @@ Return Value:
         default:
         case InLongs:
 
-            for (j = 0; j < 4; j++) {
-                sprintf(outHexLine, "%s%8X ", outHexLine,
-                        *((PULONG)location));
-                sprintf(outPrintable, "%s%c%c%c%c", outPrintable,
-                        (isprint(location[0])) ? location[0] : '.',
-                        (isprint(location[1])) ? location[1] : '.',
-                        (isprint(location[2])) ? location[2] : '.',
+            for (j = 0; j < 4; j++)
+            {
+                sprintf(outHexLine, "%s%8X ", outHexLine, *((PULONG)location));
+                sprintf(outPrintable, "%s%c%c%c%c", outPrintable, (isprint(location[0])) ? location[0] : '.',
+                        (isprint(location[1])) ? location[1] : '.', (isprint(location[2])) ? location[2] : '.',
                         (isprint(location[3])) ? location[3] : '.');
                 location += 4;
             }
@@ -861,11 +713,8 @@ Return Value:
     free(internalBuffer);
 }
 
-
-void
-UnicodePrint(
-    PUNICODE_STRING  UnicodeString
-    )
+
+void UnicodePrint(PUNICODE_STRING UnicodeString)
 
 /*++
 
@@ -884,26 +733,21 @@ Return Value:
 --*/
 {
     ANSI_STRING ansiString;
-    PUCHAR      tempbuffer = (PUCHAR) malloc(WORK_BUFFER_SIZE);
+    PUCHAR tempbuffer = (PUCHAR)malloc(WORK_BUFFER_SIZE);
 
     ansiString.MaximumLength = WORK_BUFFER_SIZE;
     ansiString.Length = 0L;
     ansiString.Buffer = tempbuffer;
 
-    RtlUnicodeStringToAnsiString(&ansiString,
-                                 UnicodeString,
-                                 (BOOLEAN) FALSE);
+    RtlUnicodeStringToAnsiString(&ansiString, UnicodeString, (BOOLEAN)FALSE);
     printf("%s", ansiString.Buffer);
     free(tempbuffer);
     return;
 }
 
-
+
 NTSTATUS
-Directory(
-    HANDLE  KeyHandle,
-    BOOLEAN LongListing
-    )
+Directory(HANDLE KeyHandle, BOOLEAN LongListing)
 
 /*++
 
@@ -917,34 +761,31 @@ Return Value:
 --*/
 
 {
-    NTSTATUS        status;
-    ULONG           index;
-    ULONG           resultLength;
-    UNICODE_STRING  unicodeValueName;
+    NTSTATUS status;
+    ULONG index;
+    ULONG resultLength;
+    UNICODE_STRING unicodeValueName;
     PKEY_BASIC_INFORMATION keyInformation;
 
-    keyInformation = (PKEY_BASIC_INFORMATION) malloc(WORK_BUFFER_SIZE);
+    keyInformation = (PKEY_BASIC_INFORMATION)malloc(WORK_BUFFER_SIZE);
 
-    for (index = 0; TRUE; index++) {
+    for (index = 0; TRUE; index++)
+    {
 
         RtlZeroMemory(keyInformation, WORK_BUFFER_SIZE);
 
-        status = NtEnumerateKey(KeyHandle,
-                                index,
-                                KeyBasicInformation,
-                                keyInformation,
-                                WORK_BUFFER_SIZE,
-                                &resultLength);
+        status = NtEnumerateKey(KeyHandle, index, KeyBasicInformation, keyInformation, WORK_BUFFER_SIZE, &resultLength);
 
-        if (status == STATUS_NO_MORE_ENTRIES) {
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
 
             break;
-
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
 
             printf("readreg: Error on Enumerate status = %x\n", status);
             break;
-
         }
 
         unicodeValueName.Length = (USHORT)keyInformation->NameLength;
@@ -953,7 +794,8 @@ Return Value:
         UnicodePrint(&unicodeValueName);
         printf("\n");
 
-        if (LongListing) {
+        if (LongListing)
+        {
         }
     }
 
@@ -961,12 +803,9 @@ Return Value:
     return status;
 }
 
-
+
 NTSTATUS
-List(
-    HANDLE KeyHandle,
-    PUCHAR ItemName
-    )
+List(HANDLE KeyHandle, PUCHAR ItemName)
 
 /*++
 
@@ -979,11 +818,11 @@ Return Value:
 
 --*/
 {
-    NTSTATUS       status;
-    ULONG          index;
-    ULONG          resultLength;
-    ULONG          type;
-    PUCHAR         typeString;
+    NTSTATUS status;
+    ULONG index;
+    ULONG resultLength;
+    ULONG type;
+    PUCHAR typeString;
     UNICODE_STRING unicodeValueName;
     PKEY_VALUE_FULL_INFORMATION keyValueInformation;
 
@@ -992,82 +831,79 @@ Return Value:
     resultLength = WORK_BUFFER_SIZE;
     keyValueInformation = (PKEY_VALUE_FULL_INFORMATION)malloc(WORK_BUFFER_SIZE);
 
-    for (index = 0; TRUE; index++) {
+    for (index = 0; TRUE; index++)
+    {
 
-        while (1) {
+        while (1)
+        {
 
             RtlZeroMemory(keyValueInformation, resultLength);
-            status = NtEnumerateValueKey(KeyHandle,
-                                         index,
-                                         KeyValueFullInformation,
-                                         keyValueInformation,
-                                         resultLength,
+            status = NtEnumerateValueKey(KeyHandle, index, KeyValueFullInformation, keyValueInformation, resultLength,
                                          &resultLength);
 
-            if (status == STATUS_BUFFER_OVERFLOW) {
+            if (status == STATUS_BUFFER_OVERFLOW)
+            {
                 free(keyValueInformation);
-                keyValueInformation = (PKEY_VALUE_FULL_INFORMATION)
-                                           malloc(resultLength + 10);
-            } else {
+                keyValueInformation = (PKEY_VALUE_FULL_INFORMATION)malloc(resultLength + 10);
+            }
+            else
+            {
                 break;
             }
         }
 
-        if (status == STATUS_NO_MORE_ENTRIES) {
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
 
             break;
-
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
 
             printf("readreg: Cannot list (%x)\n", status);
             break;
-
         }
 
         type = keyValueInformation->Type;
         typeString = FindTypeString(type);
         unicodeValueName.Length = (USHORT)keyValueInformation->NameLength;
-        unicodeValueName.MaximumLength =(USHORT)keyValueInformation->NameLength;
+        unicodeValueName.MaximumLength = (USHORT)keyValueInformation->NameLength;
         unicodeValueName.Buffer = (PWSTR)&keyValueInformation->Name[0];
-        printf("Name-> """);
+        printf("Name-> "
+               "");
         UnicodePrint(&unicodeValueName);
-        printf("""\n");
-        printf("\ttype = %s (%d)\ttitle index = %d\tdata length = %d\n",
-               typeString,
-               type,
-               keyValueInformation->TitleIndex,
-               keyValueInformation->DataLength);
+        printf(""
+               "\n");
+        printf("\ttype = %s (%d)\ttitle index = %d\tdata length = %d\n", typeString, type,
+               keyValueInformation->TitleIndex, keyValueInformation->DataLength);
         printf("\tData:\n");
 
-        if (ForceDump) {
+        if (ForceDump)
+        {
             type = REG_BINARY;
         }
 
-        switch (type) {
+        switch (type)
+        {
 
         case REG_DWORD:
-        // case REG_DWORD_LITTLE_ENDIAN:
+            // case REG_DWORD_LITTLE_ENDIAN:
             printf("\tDWORD value == %d, (0x%x)\n",
-               *((PULONG)((PUCHAR)keyValueInformation +
-                                  keyValueInformation->DataOffset)),
-               *((PULONG)((PUCHAR)keyValueInformation +
-                                  keyValueInformation->DataOffset)));
+                   *((PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset)),
+                   *((PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset)));
             break;
 
         case REG_SZ:
 
             unicodeValueName.Length = (USHORT)keyValueInformation->DataLength;
-            unicodeValueName.MaximumLength = (USHORT)
-                                                keyValueInformation->DataLength;
-            unicodeValueName.Buffer = (PWSTR) ((PUCHAR) keyValueInformation +
-                                               keyValueInformation->DataOffset);
+            unicodeValueName.MaximumLength = (USHORT)keyValueInformation->DataLength;
+            unicodeValueName.Buffer = (PWSTR)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
             UnicodePrint(&unicodeValueName);
             break;
 
         case REG_BINARY:
         default:
-            Dump(((PUCHAR)keyValueInformation +keyValueInformation->DataOffset),
-                 keyValueInformation->DataLength);
+            Dump(((PUCHAR)keyValueInformation + keyValueInformation->DataOffset), keyValueInformation->DataLength);
         }
         printf("\n");
     }
@@ -1076,11 +912,9 @@ Return Value:
     return status;
 }
 
-
+
 UCHAR
-GetCharacter(
-    BOOLEAN Batch
-    )
+GetCharacter(BOOLEAN Batch)
 
 /*++
 
@@ -1102,26 +936,24 @@ Return Value:
 {
     UCHAR c;
 
-    if (Batch) {
+    if (Batch)
+    {
 
-        while ((c = (UCHAR) getchar()) == ' ')
+        while ((c = (UCHAR)getchar()) == ' ')
             ;
+    }
+    else
+    {
 
-    } else {
-
-        c = (UCHAR) getchar();
+        c = (UCHAR)getchar();
     }
 
     return c;
 } // GetCharacter
 
-
+
 PUCHAR
-GetArgumentString(
-    BOOLEAN Batch,
-    PUCHAR  Prompt,
-    BOOLEAN ConvertToLower
-    )
+GetArgumentString(BOOLEAN Batch, PUCHAR Prompt, BOOLEAN ConvertToLower)
 
 /*++
 
@@ -1148,15 +980,17 @@ Return Value:
     //
 
     PUCHAR argument = CommandLine;
-    int    i;
-    UCHAR  c;
+    int i;
+    UCHAR c;
 
-    if (!Batch) {
+    if (!Batch)
+    {
 
         printf("%s", Prompt);
     }
 
-    while ((c = GetCharacter(Batch)) == ' ') {
+    while ((c = GetCharacter(Batch)) == ' ')
+    {
 
         //
         // Ignore leading spaces.
@@ -1164,29 +998,37 @@ Return Value:
     }
 
     i = 0;
-    while (c) {
+    while (c)
+    {
 
         putchar(c);
 
-        if (c == CTRL_C) {
+        if (c == CTRL_C)
+        {
 
             return NULL;
         }
 
-        if ((c == '\n') || (c == '\r')) {
+        if ((c == '\n') || (c == '\r'))
+        {
 
             putchar('\n');
 
-            if (i == 0) {
+            if (i == 0)
+            {
                 return NULL;
-            } else {
+            }
+            else
+            {
                 break;
             }
         }
 
-        if (c == '\b') {
+        if (c == '\b')
+        {
 
-            if (i > 0) {
+            if (i > 0)
+            {
 
                 //
                 // blank over last char
@@ -1195,8 +1037,9 @@ Return Value:
                 putchar(' ');
                 putchar('\b');
                 i--;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // space forward to keep prompt in the same place.
@@ -1204,20 +1047,23 @@ Return Value:
 
                 putchar(' ');
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // Collect the argument.
             //
 
-            if (ConvertToLower == TRUE) {
-                argument[i] = (UCHAR) tolower(c);
-            } else {
-                argument[i] = (UCHAR) c;
+            if (ConvertToLower == TRUE)
+            {
+                argument[i] = (UCHAR)tolower(c);
+            }
+            else
+            {
+                argument[i] = (UCHAR)c;
             }
             i++;
-
         }
 
         c = GetCharacter(Batch);
@@ -1228,11 +1074,9 @@ Return Value:
 
 } // GetArgumentString
 
-
+
 ULONG
-ParseArgumentNumeric(
-    PUCHAR  *ArgumentPtr
-    )
+ParseArgumentNumeric(PUCHAR *ArgumentPtr)
 
 /*++
 
@@ -1251,13 +1095,14 @@ Return Value:
 --*/
 
 {
-    UCHAR   c;
-    ULONG   number;
-    int     i;
+    UCHAR c;
+    ULONG number;
+    int i;
     BOOLEAN complete = FALSE;
-    PUCHAR  argument = *ArgumentPtr;
+    PUCHAR argument = *ArgumentPtr;
 
-    while (*argument == ' ') {
+    while (*argument == ' ')
+    {
 
         //
         // skip spaces.
@@ -1275,11 +1120,13 @@ Return Value:
 
     i = 0;
 
-    while (complete == FALSE) {
+    while (complete == FALSE)
+    {
 
         c = argument[i];
 
-        switch (c) {
+        switch (c)
+        {
 
         case '\n':
         case '\r':
@@ -1307,24 +1154,23 @@ Return Value:
             i++;
             break;
         }
-
     }
 
-    if (i > 0) {
-        number = (ULONG) atoi(argument);
-    } else {
-        number = (ULONG) -1;
+    if (i > 0)
+    {
+        number = (ULONG)atoi(argument);
+    }
+    else
+    {
+        number = (ULONG)-1;
     }
 
     return number;
 
 } // ParseArgumentNumeric
 
-
-VOID
-PromptUser(
-    BOOLEAN Batch
-    )
+
+VOID PromptUser(BOOLEAN Batch)
 
 /*++
 
@@ -1343,19 +1189,16 @@ Return Value:
 --*/
 
 {
-    if (!Batch) {
+    if (!Batch)
+    {
 
         printf("\n%s> ", CurrentDirectory);
     }
 
 } // PromptUser
 
-
-int
-GetCommand(
-    BOOLEAN Batch,
-    PUCHAR *ArgumentPtr
-    )
+
+int GetCommand(BOOLEAN Batch, PUCHAR *ArgumentPtr)
 /*++
 
 Routine Description:
@@ -1376,18 +1219,19 @@ Return Value:
 --*/
 
 {
-    int    i;
-    int    commandIndex;
-    int    commandCode;
-    UCHAR  c;
+    int i;
+    int commandIndex;
+    int commandCode;
+    UCHAR c;
     PUCHAR commandPtr;
     PUCHAR command = CommandLine;
-    int    argumentIndex = -1;
+    int argumentIndex = -1;
     PUCHAR argument = NULL;
 
     PromptUser(Batch);
 
-    while ((c = GetCharacter(Batch)) == ' ') {
+    while ((c = GetCharacter(Batch)) == ' ')
+    {
 
         //
         // Ignore leading spaces.
@@ -1395,13 +1239,16 @@ Return Value:
     }
 
     i = 0;
-    while (c) {
+    while (c)
+    {
 
         putchar(c);
 
-        if ((c == '\n') || (c == '\r')) {
+        if ((c == '\n') || (c == '\r'))
+        {
             putchar('\n');
-            if (i == 0) {
+            if (i == 0)
+            {
                 PromptUser(Batch);
                 c = GetCharacter(Batch);
                 continue;
@@ -1409,9 +1256,11 @@ Return Value:
             break;
         }
 
-        if (c == '\b') {
+        if (c == '\b')
+        {
 
-            if (i > 0) {
+            if (i > 0)
+            {
 
                 //
                 // blank over last char
@@ -1421,11 +1270,14 @@ Return Value:
                 putchar('\b');
                 i--;
 
-                if (argumentIndex == i) {
+                if (argumentIndex == i)
+                {
                     argumentIndex = -1;
                     argument = NULL;
                 }
-            } else {
+            }
+            else
+            {
 
                 //
                 // space forward to keep prompt in the same place.
@@ -1433,7 +1285,9 @@ Return Value:
 
                 putchar(' ');
             }
-        } else {
+        }
+        else
+        {
 
             //
             // Collect the command.
@@ -1443,7 +1297,8 @@ Return Value:
             i++;
         }
 
-        if ((c == ' ') && (argument == NULL)) {
+        if ((c == ' ') && (argument == NULL))
+        {
 
             argument = &command[i];
             argumentIndex = i;
@@ -1459,7 +1314,8 @@ Return Value:
 
     command[i] = '\0';
 
-    if (Debug) {
+    if (Debug)
+    {
         printf("command => %s$\n", command);
     }
 
@@ -1469,27 +1325,31 @@ Return Value:
 
     commandIndex = 0;
 
-    for (commandPtr = Commands[commandIndex];
-         commandPtr != NULL;
-         commandPtr = Commands[commandIndex]) {
+    for (commandPtr = Commands[commandIndex]; commandPtr != NULL; commandPtr = Commands[commandIndex])
+    {
 
-        if (Debug) {
+        if (Debug)
+        {
             printf("Testing => %s$ ... ", commandPtr);
         }
 
         i = 0;
-        while (commandPtr[i] == command[i]) {
-            if (command[i] == '\0') {
+        while (commandPtr[i] == command[i])
+        {
+            if (command[i] == '\0')
+            {
                 break;
             }
             i++;
         }
 
-        if (Debug) {
+        if (Debug)
+        {
             printf(" i == %d, command[i] == 0x%x\n", i, command[i]);
         }
 
-        if (command[i]) {
+        if (command[i])
+        {
 
             //
             // Not complete there was a mismatch on the command.
@@ -1503,10 +1363,9 @@ Return Value:
         // Have a match on the command.
         //
 
-        if (Debug) {
-            printf("Command match %d, argument %s\n",
-                   commandIndex,
-                   (argument == NULL) ? "(none)" : argument);
+        if (Debug)
+        {
+            printf("Command match %d, argument %s\n", commandIndex, (argument == NULL) ? "(none)" : argument);
         }
 
         commandCode = CommandMap[commandIndex];
@@ -1518,9 +1377,8 @@ Return Value:
     return INVALID;
 } // GetCommand
 
-
-VOID
-NotImplemented()
+
+VOID NotImplemented()
 
 /*++
 
@@ -1529,14 +1387,9 @@ NotImplemented()
 {
     printf("Sorry, function not implemented yet.\n");
 }
-
+
 NTSTATUS
-FtReturnValue(
-    IN HANDLE Handle,
-    IN PUCHAR ValueName,
-    IN PUCHAR Buffer,
-    IN ULONG  BufferLength
-    )
+FtReturnValue(IN HANDLE Handle, IN PUCHAR ValueName, IN PUCHAR Buffer, IN ULONG BufferLength)
 
 /*++
 
@@ -1555,46 +1408,39 @@ Return Values:
 --*/
 
 {
-    NTSTATUS       status;
-    ULONG          resultLength;
-    ULONG          length;
-    STRING         valueString;
+    NTSTATUS status;
+    ULONG resultLength;
+    ULONG length;
+    STRING valueString;
     UNICODE_STRING unicodeValueName;
-    PUCHAR         internalBuffer;
+    PUCHAR internalBuffer;
     PKEY_VALUE_FULL_INFORMATION keyValueInformation;
 
     keyValueInformation = (PKEY_VALUE_FULL_INFORMATION)malloc(WORK_BUFFER_SIZE);
-    if (keyValueInformation == NULL) {
+    if (keyValueInformation == NULL)
+    {
         printf("FtReturnValue: cannot allocate memory.\n");
         return STATUS_NO_MEMORY;
     }
 
-    RtlInitString(&valueString,
-                  ValueName);
-    RtlAnsiStringToUnicodeString(&unicodeValueName,
-                                 &valueString,
-                                 (BOOLEAN) TRUE);
-    status = NtQueryValueKey(Handle,
-                             &unicodeValueName,
-                             KeyValueFullInformation,
-                             keyValueInformation,
-                             WORK_BUFFER_SIZE,
+    RtlInitString(&valueString, ValueName);
+    RtlAnsiStringToUnicodeString(&unicodeValueName, &valueString, (BOOLEAN)TRUE);
+    status = NtQueryValueKey(Handle, &unicodeValueName, KeyValueFullInformation, keyValueInformation, WORK_BUFFER_SIZE,
                              &resultLength);
     RtlFreeUnicodeString(&unicodeValueName);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         length = (resultLength > BufferLength) ? BufferLength : resultLength;
-        internalBuffer =
-           ((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
+        internalBuffer = ((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
 
         RtlMoveMemory(Buffer, internalBuffer, length);
     }
     free(keyValueInformation);
     return status;
 }
-
-VOID
-DiskDump()
+
+VOID DiskDump()
 
 /*++
 
@@ -1613,42 +1459,41 @@ Return Values:
 --*/
 
 {
-    ULONG               outerLoop;
-    ULONG               innerLoop;
-    HANDLE              handle;
-    NTSTATUS            status;
+    ULONG outerLoop;
+    ULONG innerLoop;
+    HANDLE handle;
+    NTSTATUS status;
     PDISK_CONFIG_HEADER configHeader;
-    PDISK_REGISTRY      diskRegistry;
-    PDISK_DESCRIPTION   diskDescription;
-    PDISK_PARTITION     diskPartition;
-    PFT_REGISTRY        ftRegistry;
-    PFT_DESCRIPTION     ftDescription;
+    PDISK_REGISTRY diskRegistry;
+    PDISK_DESCRIPTION diskDescription;
+    PDISK_PARTITION diskPartition;
+    PFT_REGISTRY ftRegistry;
+    PFT_DESCRIPTION ftDescription;
     PFT_MEMBER_DESCRIPTION ftMember;
 
-    status = FtOpenKey(&handle,
-                       DISK_REGISTRY_KEY);
+    status = FtOpenKey(&handle, DISK_REGISTRY_KEY);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("Currently there is no key in the registry"
                " for the disk information.\n");
         return;
     }
 
-    configHeader = (PDISK_CONFIG_HEADER) malloc(WORK_BUFFER_SIZE);
-    if (configHeader == NULL) {
+    configHeader = (PDISK_CONFIG_HEADER)malloc(WORK_BUFFER_SIZE);
+    if (configHeader == NULL)
+    {
         printf("Unable to allocate memory for the disk registy information.\n");
         return;
     }
 
     RtlZeroMemory(configHeader, WORK_BUFFER_SIZE);
 
-    status = FtReturnValue(handle,
-                           (PUCHAR) DISK_REGISTRY_VALUE,
-                           (PUCHAR) configHeader,
-                           WORK_BUFFER_SIZE);
+    status = FtReturnValue(handle, (PUCHAR)DISK_REGISTRY_VALUE, (PUCHAR)configHeader, WORK_BUFFER_SIZE);
     NtClose(handle);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("There is no disk registry information (%x)\n", status);
         free(configHeader);
         return;
@@ -1659,121 +1504,85 @@ Return Values:
     //
 
     printf("Registry header information:\n");
-    printf("\tVersion = 0x%x, Checksum = 0x%x\n",
-           configHeader->Version,
-           configHeader->CheckSum);
-    printf("\tDisk info Offset = 0x%x, Size = 0x%x\n",
-           configHeader->DiskInformationOffset,
+    printf("\tVersion = 0x%x, Checksum = 0x%x\n", configHeader->Version, configHeader->CheckSum);
+    printf("\tDisk info Offset = 0x%x, Size = 0x%x\n", configHeader->DiskInformationOffset,
            configHeader->DiskInformationSize);
-    printf("\tFT info Offset = 0x%x, Size = 0x%x\n",
-           configHeader->FtInformationOffset,
+    printf("\tFT info Offset = 0x%x, Size = 0x%x\n", configHeader->FtInformationOffset,
            configHeader->FtInformationSize);
 
     //
     // Print the information on disks.
     //
 
-    diskRegistry = (PDISK_REGISTRY)
-                 ((PUCHAR) configHeader + configHeader->DiskInformationOffset);
-    printf("\nDisk information for %d disks:\n",
-           diskRegistry->NumberOfDisks);
+    diskRegistry = (PDISK_REGISTRY)((PUCHAR)configHeader + configHeader->DiskInformationOffset);
+    printf("\nDisk information for %d disks:\n", diskRegistry->NumberOfDisks);
 
     diskDescription = &diskRegistry->Disks[0];
-    for (outerLoop = 0;
-         outerLoop < diskRegistry->NumberOfDisks;
-         outerLoop++) {
+    for (outerLoop = 0; outerLoop < diskRegistry->NumberOfDisks; outerLoop++)
+    {
 
-        printf("\nDisk %d signature 0x%08x has %d partitions:\n",
-               outerLoop,
-               diskDescription->Signature,
+        printf("\nDisk %d signature 0x%08x has %d partitions:\n", outerLoop, diskDescription->Signature,
                diskDescription->NumberOfPartitions);
 
         printf("       Ln Type  Start              Length             FtGrp  Member\n");
-        for (innerLoop = 0;
-             innerLoop < diskDescription->NumberOfPartitions;
-             innerLoop++) {
+        for (innerLoop = 0; innerLoop < diskDescription->NumberOfPartitions; innerLoop++)
+        {
             diskPartition = &diskDescription->Partitions[innerLoop];
             printf("  %c: %c %1d   %3d  %08x:%08x  %08x:%08x  %5d  %4d  %s\n",
-                   (diskPartition->DriveLetter != '\0') ?
-                                               diskPartition->DriveLetter : ' ',
-                   (diskPartition->AssignDriveLetter) ? 'A' : ' ',
-                   diskPartition->LogicalNumber,
-                   diskPartition->FtType,
-                   diskPartition->StartingOffset.HighPart,
-                   diskPartition->StartingOffset.LowPart,
-                   diskPartition->Length.HighPart,
-                   diskPartition->Length.LowPart,
-                   diskPartition->FtGroup,
+                   (diskPartition->DriveLetter != '\0') ? diskPartition->DriveLetter : ' ',
+                   (diskPartition->AssignDriveLetter) ? 'A' : ' ', diskPartition->LogicalNumber, diskPartition->FtType,
+                   diskPartition->StartingOffset.HighPart, diskPartition->StartingOffset.LowPart,
+                   diskPartition->Length.HighPart, diskPartition->Length.LowPart, diskPartition->FtGroup,
                    diskPartition->FtMember,
-                   (diskPartition->FtState == Orphaned) ? "Orphan" :
-                     (diskPartition->FtState == Regenerating) ? "Regen" :
-                     (diskPartition->FtState == Initializing) ? "Init" : "");
-
+                   (diskPartition->FtState == Orphaned)       ? "Orphan"
+                   : (diskPartition->FtState == Regenerating) ? "Regen"
+                   : (diskPartition->FtState == Initializing) ? "Init"
+                                                              : "");
         }
 
-        diskDescription = (PDISK_DESCRIPTION)
-          &diskDescription->Partitions[diskDescription->NumberOfPartitions];
+        diskDescription = (PDISK_DESCRIPTION)&diskDescription->Partitions[diskDescription->NumberOfPartitions];
     }
 
     //
     // Print the information for FT.
     //
 
-    if (configHeader->FtInformationSize == 0) {
+    if (configHeader->FtInformationSize == 0)
+    {
         printf("There is no FT configuration.\n");
         free(configHeader);
         return;
     }
 
-    ftRegistry = (PFT_REGISTRY)
-                 ((PUCHAR) configHeader + configHeader->FtInformationOffset);
+    ftRegistry = (PFT_REGISTRY)((PUCHAR)configHeader + configHeader->FtInformationOffset);
 
-    printf("\nNumber of FT components = %d\n",
-           ftRegistry->NumberOfComponents);
+    printf("\nNumber of FT components = %d\n", ftRegistry->NumberOfComponents);
 
     ftDescription = &ftRegistry->FtDescription[0];
-    for (outerLoop = 0;
-         outerLoop < ftRegistry->NumberOfComponents;
-         outerLoop++) {
+    for (outerLoop = 0; outerLoop < ftRegistry->NumberOfComponents; outerLoop++)
+    {
 
-        printf("Component %d has %d members and is type %d\n",
-               outerLoop,
-               ftDescription->NumberOfMembers,
+        printf("Component %d has %d members and is type %d\n", outerLoop, ftDescription->NumberOfMembers,
                ftDescription->Type);
 
         printf("      State Signature Start              Length            #\n");
-        for (innerLoop = 0;
-             innerLoop < ftDescription->NumberOfMembers;
-             innerLoop++) {
+        for (innerLoop = 0; innerLoop < ftDescription->NumberOfMembers; innerLoop++)
+        {
             ftMember = &ftDescription->FtMemberDescription[innerLoop];
 
-            diskPartition = (PDISK_PARTITION)
-                 ((PUCHAR) configHeader + ftMember->OffsetToPartitionInfo);
-            
-            printf("%5x    %2x %08x  %08x:%08x  %08x:%08x %d\n",
-                   ftMember->OffsetToPartitionInfo,
-                   ftMember->State,
-                   ftMember->Signature,
-                   diskPartition->StartingOffset.HighPart,
-                   diskPartition->StartingOffset.LowPart,
-                   diskPartition->Length.HighPart,
-                   diskPartition->Length.LowPart,
-                   ftMember->LogicalNumber);
+            diskPartition = (PDISK_PARTITION)((PUCHAR)configHeader + ftMember->OffsetToPartitionInfo);
+
+            printf("%5x    %2x %08x  %08x:%08x  %08x:%08x %d\n", ftMember->OffsetToPartitionInfo, ftMember->State,
+                   ftMember->Signature, diskPartition->StartingOffset.HighPart, diskPartition->StartingOffset.LowPart,
+                   diskPartition->Length.HighPart, diskPartition->Length.LowPart, ftMember->LogicalNumber);
         }
 
-        ftDescription = (PFT_DESCRIPTION)
-         &ftDescription->FtMemberDescription[ftDescription->NumberOfMembers];
+        ftDescription = (PFT_DESCRIPTION)&ftDescription->FtMemberDescription[ftDescription->NumberOfMembers];
     }
 }
 
-
-VOID
-ChangeMemberState(
-    IN ULONG Type,
-    IN ULONG Group,
-    IN ULONG Member,
-    IN FT_PARTITION_STATE NewState
-    )
+
+VOID ChangeMemberState(IN ULONG Type, IN ULONG Group, IN ULONG Member, IN FT_PARTITION_STATE NewState)
 
 /*++
 
@@ -1794,27 +1603,28 @@ Return Values:
 --*/
 
 {
-    BOOLEAN             writeBackRegistry = FALSE;
-    HANDLE              handle;
-    ULONG               outerLoop;
-    ULONG               innerLoop;
-    NTSTATUS            status;
+    BOOLEAN writeBackRegistry = FALSE;
+    HANDLE handle;
+    ULONG outerLoop;
+    ULONG innerLoop;
+    NTSTATUS status;
     PDISK_CONFIG_HEADER configHeader;
-    PDISK_REGISTRY      diskRegistry;
-    PDISK_DESCRIPTION   diskDescription;
-    PDISK_PARTITION     partitionDescription;
+    PDISK_REGISTRY diskRegistry;
+    PDISK_DESCRIPTION diskDescription;
+    PDISK_PARTITION partitionDescription;
 
-    status = FtOpenKey(&handle,
-                       DISK_REGISTRY_KEY);
+    status = FtOpenKey(&handle, DISK_REGISTRY_KEY);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("Currently there is no key in the registry"
                " for the disk information.\n");
         return;
     }
 
-    configHeader = (PDISK_CONFIG_HEADER) malloc(WORK_BUFFER_SIZE);
-    if (configHeader == NULL) {
+    configHeader = (PDISK_CONFIG_HEADER)malloc(WORK_BUFFER_SIZE);
+    if (configHeader == NULL)
+    {
         printf("Unable to allocate memory for the disk registy information.\n");
         NtClose(handle);
         return;
@@ -1822,35 +1632,30 @@ Return Values:
 
     RtlZeroMemory(configHeader, WORK_BUFFER_SIZE);
 
-    status = FtReturnValue(handle,
-                           (PUCHAR) DISK_REGISTRY_VALUE,
-                           (PUCHAR) configHeader,
-                           WORK_BUFFER_SIZE);
+    status = FtReturnValue(handle, (PUCHAR)DISK_REGISTRY_VALUE, (PUCHAR)configHeader, WORK_BUFFER_SIZE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("There is no disk registry information (%x)\n", status);
         free(configHeader);
         NtClose(handle);
         return;
     }
 
-    diskRegistry = (PDISK_REGISTRY)
-                 ((PUCHAR) configHeader + configHeader->DiskInformationOffset);
+    diskRegistry = (PDISK_REGISTRY)((PUCHAR)configHeader + configHeader->DiskInformationOffset);
 
     diskDescription = &diskRegistry->Disks[0];
-    for (outerLoop = 0;
-         outerLoop < diskRegistry->NumberOfDisks;
-         outerLoop++) {
+    for (outerLoop = 0; outerLoop < diskRegistry->NumberOfDisks; outerLoop++)
+    {
 
-        for (innerLoop = 0;
-             innerLoop < diskDescription->NumberOfPartitions;
-             innerLoop++) {
+        for (innerLoop = 0; innerLoop < diskDescription->NumberOfPartitions; innerLoop++)
+        {
 
             partitionDescription = &diskDescription->Partitions[innerLoop];
 
-            if ((partitionDescription->FtType == (FT_TYPE) Type) &&
-                (partitionDescription->FtGroup == (USHORT) Group) &&
-                (partitionDescription->FtMember == (USHORT) Member)) {
+            if ((partitionDescription->FtType == (FT_TYPE)Type) && (partitionDescription->FtGroup == (USHORT)Group) &&
+                (partitionDescription->FtMember == (USHORT)Member))
+            {
 
                 partitionDescription->FtState = NewState;
                 writeBackRegistry = TRUE;
@@ -1858,41 +1663,33 @@ Return Values:
             }
         }
 
-        if (writeBackRegistry == TRUE) {
+        if (writeBackRegistry == TRUE)
+        {
             ULONG size;
 
-            if (configHeader->FtInformationSize == 0) {
+            if (configHeader->FtInformationSize == 0)
+            {
                 printf("Seems a little odd to be setting FT state " // no comma
                        "with no FT information...\n");
-                size = configHeader->DiskInformationOffset +
-                       configHeader->DiskInformationSize;
-            } else {
-                size = configHeader->FtInformationOffset +
-                       configHeader->FtInformationSize;
+                size = configHeader->DiskInformationOffset + configHeader->DiskInformationSize;
+            }
+            else
+            {
+                size = configHeader->FtInformationOffset + configHeader->FtInformationSize;
             }
 
-            (VOID) FtSetValue(handle,
-                              (PUCHAR) DISK_REGISTRY_VALUE,
-                              (PUCHAR) configHeader,
-                              size,
-                              REG_BINARY);
+            (VOID) FtSetValue(handle, (PUCHAR)DISK_REGISTRY_VALUE, (PUCHAR)configHeader, size, REG_BINARY);
             break;
         }
-        diskDescription = (PDISK_DESCRIPTION)
-              &diskDescription->Partitions[diskDescription->NumberOfPartitions];
+        diskDescription = (PDISK_DESCRIPTION)&diskDescription->Partitions[diskDescription->NumberOfPartitions];
     }
 
     NtClose(handle);
     free(configHeader);
 }
 
-
-VOID
-RestoreOrphan(
-    IN ULONG Type,
-    IN ULONG Group,
-    IN ULONG Member
-    )
+
+VOID RestoreOrphan(IN ULONG Type, IN ULONG Group, IN ULONG Member)
 
 /*++
 
@@ -1913,19 +1710,11 @@ Return Values:
 --*/
 
 {
-    ChangeMemberState(Type,
-                      Group,
-                      Member,
-                      Healthy);
+    ChangeMemberState(Type, Group, Member, Healthy);
 }
 
-
-VOID
-OrphanMember(
-    IN ULONG Type,
-    IN ULONG Group,
-    IN ULONG Member
-    )
+
+VOID OrphanMember(IN ULONG Type, IN ULONG Group, IN ULONG Member)
 
 /*++
 
@@ -1946,19 +1735,11 @@ Return Values:
 --*/
 
 {
-    ChangeMemberState(Type,
-                      Group,
-                      Member,
-                      Orphaned);
+    ChangeMemberState(Type, Group, Member, Orphaned);
 }
 
-
-VOID
-RegenerateMember(
-    IN ULONG Type,
-    IN ULONG Group,
-    IN ULONG Member
-    )
+
+VOID RegenerateMember(IN ULONG Type, IN ULONG Group, IN ULONG Member)
 
 /*++
 
@@ -1979,15 +1760,11 @@ Return Values:
 --*/
 
 {
-    ChangeMemberState(Type,
-                      Group,
-                      Member,
-                      Regenerating);
+    ChangeMemberState(Type, Group, Member, Regenerating);
 }
 
-
-VOID
-FixDisk()
+
+VOID FixDisk()
 
 /*++
 
@@ -2006,32 +1783,33 @@ Return Values:
 --*/
 
 {
-    ULONG               outerLoop;
-    ULONG               innerLoop;
-    ULONG               length;
-    HANDLE              handle;
-    NTSTATUS            status;
+    ULONG outerLoop;
+    ULONG innerLoop;
+    ULONG length;
+    HANDLE handle;
+    NTSTATUS status;
     PDISK_CONFIG_HEADER configHeader;
-    PDISK_REGISTRY      diskRegistry;
-    PDISK_DESCRIPTION   diskDescription;
-    PFT_REGISTRY        ftRegistry;
-    PFT_DESCRIPTION     ftDescription;
+    PDISK_REGISTRY diskRegistry;
+    PDISK_DESCRIPTION diskDescription;
+    PFT_REGISTRY ftRegistry;
+    PFT_DESCRIPTION ftDescription;
     PFT_MEMBER_DESCRIPTION ftMember;
-    UCHAR               prompt[128];
-    PUCHAR              hexString;
-    BOOLEAN             changed = FALSE;
+    UCHAR prompt[128];
+    PUCHAR hexString;
+    BOOLEAN changed = FALSE;
 
-    status = FtOpenKey(&handle,
-                       DISK_REGISTRY_KEY);
+    status = FtOpenKey(&handle, DISK_REGISTRY_KEY);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("Currently there is no key in the registry"
                " for the disk information.\n");
         return;
     }
 
-    configHeader = (PDISK_CONFIG_HEADER) malloc(WORK_BUFFER_SIZE);
-    if (configHeader == NULL) {
+    configHeader = (PDISK_CONFIG_HEADER)malloc(WORK_BUFFER_SIZE);
+    if (configHeader == NULL)
+    {
         printf("Unable to allocate memory for the disk registy information.\n");
         NtClose(handle);
         return;
@@ -2039,97 +1817,79 @@ Return Values:
 
     RtlZeroMemory(configHeader, WORK_BUFFER_SIZE);
 
-    status = FtReturnValue(handle,
-                           (PUCHAR) DISK_REGISTRY_VALUE,
-                           (PUCHAR) configHeader,
-                           WORK_BUFFER_SIZE);
+    status = FtReturnValue(handle, (PUCHAR)DISK_REGISTRY_VALUE, (PUCHAR)configHeader, WORK_BUFFER_SIZE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("There is no disk registry information (%x)\n", status);
         free(configHeader);
         NtClose(handle);
         return;
     }
 
-    diskRegistry = (PDISK_REGISTRY)
-                 ((PUCHAR) configHeader + configHeader->DiskInformationOffset);
-    printf("\nDisk information for %d disks:\n",
-           diskRegistry->NumberOfDisks);
+    diskRegistry = (PDISK_REGISTRY)((PUCHAR)configHeader + configHeader->DiskInformationOffset);
+    printf("\nDisk information for %d disks:\n", diskRegistry->NumberOfDisks);
 
     diskDescription = &diskRegistry->Disks[0];
-    for (outerLoop = 0;
-         outerLoop < diskRegistry->NumberOfDisks;
-         outerLoop++) {
+    for (outerLoop = 0; outerLoop < diskRegistry->NumberOfDisks; outerLoop++)
+    {
 
-        sprintf(prompt,
-               "\nDisk %d signature 0x%08x = ",
-               outerLoop,
-               diskDescription->Signature);
+        sprintf(prompt, "\nDisk %d signature 0x%08x = ", outerLoop, diskDescription->Signature);
 
-        hexString = GetArgumentString((BOOLEAN) FALSE,
-                                      prompt,
-                                      (BOOLEAN) TRUE);
+        hexString = GetArgumentString((BOOLEAN)FALSE, prompt, (BOOLEAN)TRUE);
 
-        if (hexString != NULL) {
+        if (hexString != NULL)
+        {
 
             changed = ProcessHex(hexString, &diskDescription->Signature);
         }
 
-        diskDescription = (PDISK_DESCRIPTION)
-          &diskDescription->Partitions[diskDescription->NumberOfPartitions];
+        diskDescription = (PDISK_DESCRIPTION)&diskDescription->Partitions[diskDescription->NumberOfPartitions];
     }
 
     //
     // Print the information for FT.
     //
 
-    if (configHeader->FtInformationSize == 0) {
+    if (configHeader->FtInformationSize == 0)
+    {
         printf("There is no FT configuration.\n");
         free(configHeader);
         NtClose(handle);
         return;
     }
 
-    ftRegistry = (PFT_REGISTRY)
-                 ((PUCHAR) configHeader + configHeader->FtInformationOffset);
+    ftRegistry = (PFT_REGISTRY)((PUCHAR)configHeader + configHeader->FtInformationOffset);
 
-    printf("\nNumber of FT components = %d\n",
-           ftRegistry->NumberOfComponents);
+    printf("\nNumber of FT components = %d\n", ftRegistry->NumberOfComponents);
 
     ftDescription = &ftRegistry->FtDescription[0];
-    for (outerLoop = 0;
-         outerLoop < ftRegistry->NumberOfComponents;
-         outerLoop++) {
+    for (outerLoop = 0; outerLoop < ftRegistry->NumberOfComponents; outerLoop++)
+    {
 
-        printf("Component %d has %d members and is type %d\n",
-               outerLoop,
-               ftDescription->NumberOfMembers,
+        printf("Component %d has %d members and is type %d\n", outerLoop, ftDescription->NumberOfMembers,
                ftDescription->Type);
 
-        for (innerLoop = 0;
-             innerLoop < ftDescription->NumberOfMembers;
-             innerLoop++) {
+        for (innerLoop = 0; innerLoop < ftDescription->NumberOfMembers; innerLoop++)
+        {
             ftMember = &ftDescription->FtMemberDescription[innerLoop];
 
-            sprintf(prompt,
-                    "FT Member Signature 0x%x = ",
-                    ftMember->Signature);
+            sprintf(prompt, "FT Member Signature 0x%x = ", ftMember->Signature);
 
-            hexString = GetArgumentString((BOOLEAN) FALSE,
-                                          prompt,
-                                          (BOOLEAN) TRUE);
+            hexString = GetArgumentString((BOOLEAN)FALSE, prompt, (BOOLEAN)TRUE);
 
-            if (hexString != NULL) {
+            if (hexString != NULL)
+            {
 
                 changed = ProcessHex(hexString, &ftMember->Signature);
             }
         }
 
-        ftDescription = (PFT_DESCRIPTION)
-         &ftDescription->FtMemberDescription[ftDescription->NumberOfMembers];
+        ftDescription = (PFT_DESCRIPTION)&ftDescription->FtMemberDescription[ftDescription->NumberOfMembers];
     }
 
-    if (changed == TRUE) {
+    if (changed == TRUE)
+    {
 
         printf("Attempting to update registry information.\n");
 
@@ -2137,20 +1897,19 @@ Return Values:
         // Delete the current registry value and write the new one.
         //
 
-        status = FtDeleteValue(handle,
-                               DISK_REGISTRY_VALUE);
+        status = FtDeleteValue(handle, DISK_REGISTRY_VALUE);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             printf("Could not delete value (0x%x).\n", status);
-        } else {
+        }
+        else
+        {
 
-            length = (ULONG) ((PCHAR)ftDescription - (PUCHAR)configHeader);
-            status = FtSetValue(handle,
-                                DISK_REGISTRY_VALUE,
-                                configHeader,
-                                length,
-                                REG_BINARY);
-            if (!NT_SUCCESS(status)) {
+            length = (ULONG)((PCHAR)ftDescription - (PUCHAR)configHeader);
+            status = FtSetValue(handle, DISK_REGISTRY_VALUE, configHeader, length, REG_BINARY);
+            if (!NT_SUCCESS(status))
+            {
                 printf("Could not write value (0x%x)\n.", status);
             }
         }
@@ -2167,22 +1926,23 @@ GetDiskInfo()
 --*/
 
 {
-    HANDLE              handle;
-    ULONG               length;
-    NTSTATUS            status;
+    HANDLE handle;
+    ULONG length;
+    NTSTATUS status;
     PDISK_CONFIG_HEADER configHeader;
 
-    status = FtOpenKey(&handle,
-                       DISK_REGISTRY_KEY);
+    status = FtOpenKey(&handle, DISK_REGISTRY_KEY);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("Currently there is no key in the registry"
                " for the disk information.\n");
         return NULL;
     }
 
-    configHeader = (PDISK_CONFIG_HEADER) malloc(WORK_BUFFER_SIZE);
-    if (configHeader == NULL) {
+    configHeader = (PDISK_CONFIG_HEADER)malloc(WORK_BUFFER_SIZE);
+    if (configHeader == NULL)
+    {
         printf("Unable to allocate memory for the disk registy information.\n");
         NtClose(handle);
         return NULL;
@@ -2190,13 +1950,11 @@ GetDiskInfo()
 
     RtlZeroMemory(configHeader, WORK_BUFFER_SIZE);
 
-    status = FtReturnValue(handle,
-                           (PUCHAR) DISK_REGISTRY_VALUE,
-                           (PUCHAR) configHeader,
-                           WORK_BUFFER_SIZE);
+    status = FtReturnValue(handle, (PUCHAR)DISK_REGISTRY_VALUE, (PUCHAR)configHeader, WORK_BUFFER_SIZE);
     NtClose(handle);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("There is no disk registry information (%x)\n", status);
         free(configHeader);
         return NULL;
@@ -2205,32 +1963,25 @@ GetDiskInfo()
     return configHeader;
 }
 
-
+
 BOOLEAN
-CreateFtMember(
-    IN PDISK_CONFIG_HEADER ConfigHeader,
-    IN ULONG Disk,
-    IN ULONG Partition,
-    IN ULONG Type,
-    IN ULONG Group,
-    IN ULONG Member
-    )
+CreateFtMember(IN PDISK_CONFIG_HEADER ConfigHeader, IN ULONG Disk, IN ULONG Partition, IN ULONG Type, IN ULONG Group,
+               IN ULONG Member)
 
 /*++
 
 --*/
 
 {
-    ULONG               innerLoop;
-    ULONG               outerLoop;
-    ULONG               length;
-    NTSTATUS            status;
-    PDISK_REGISTRY      diskRegistry;
-    PDISK_DESCRIPTION   diskDescription;
-    PDISK_PARTITION     diskPartition;
+    ULONG innerLoop;
+    ULONG outerLoop;
+    ULONG length;
+    NTSTATUS status;
+    PDISK_REGISTRY diskRegistry;
+    PDISK_DESCRIPTION diskDescription;
+    PDISK_PARTITION diskPartition;
 
-    diskRegistry = (PDISK_REGISTRY)
-                 ((PUCHAR) ConfigHeader + ConfigHeader->DiskInformationOffset);
+    diskRegistry = (PDISK_REGISTRY)((PUCHAR)ConfigHeader + ConfigHeader->DiskInformationOffset);
     diskDescription = &diskRegistry->Disks[0];
 
     //
@@ -2238,18 +1989,18 @@ CreateFtMember(
     // disk number and partition
     //
 
-    for (outerLoop = 0;
-         outerLoop < diskRegistry->NumberOfDisks;
-         outerLoop++) {
+    for (outerLoop = 0; outerLoop < diskRegistry->NumberOfDisks; outerLoop++)
+    {
 
-        if (outerLoop == Disk) {
-            for (innerLoop = 0;
-                 innerLoop < diskDescription->NumberOfPartitions;
-                 innerLoop++) {
+        if (outerLoop == Disk)
+        {
+            for (innerLoop = 0; innerLoop < diskDescription->NumberOfPartitions; innerLoop++)
+            {
                 diskPartition = &diskDescription->Partitions[innerLoop];
-    
-                if (diskPartition->LogicalNumber == Partition) {
-    
+
+                if (diskPartition->LogicalNumber == Partition)
+                {
+
                     //
                     // Found a match.
                     //
@@ -2264,8 +2015,7 @@ CreateFtMember(
             }
         }
 
-        diskDescription = (PDISK_DESCRIPTION)
-          &diskDescription->Partitions[diskDescription->NumberOfPartitions];
+        diskDescription = (PDISK_DESCRIPTION)&diskDescription->Partitions[diskDescription->NumberOfPartitions];
     }
 
     //
@@ -2275,12 +2025,12 @@ CreateFtMember(
     return FALSE;
 }
 
-
+
 #define DRIVER_KEY "\\REGISTRY\\MACHINE\\System\\CurrentControlSet\\Services"
 
-#define TYPE_KEY     "Type"
-#define START_KEY    "Start"
-#define GROUP_KEY    "Group"
+#define TYPE_KEY "Type"
+#define START_KEY "Start"
+#define GROUP_KEY "Group"
 #define DEPENDENCIES "DependOnGroup"
 
 #if 0
@@ -2353,20 +2103,15 @@ Return Value:
     NtClose(keyHandle);
 }
 #else
-VOID
-DisplayLoadInformation(
-    IN PUCHAR DriverKey
-    )
+VOID DisplayLoadInformation(IN PUCHAR DriverKey)
 {
     UNREFERENCED_PARAMETER(DriverKey);
 }
 #endif
 
 
-
 #define TEMP_BUFFER_SIZE 256
-VOID
-ListDrivers()
+VOID ListDrivers()
 
 /*++
 
@@ -2385,12 +2130,12 @@ Return Value:
 --*/
 
 {
-    int            index;
-    NTSTATUS       status;
-    HANDLE         keyHandle;
-    ULONG          resultLength;
-    UCHAR          tempBuffer[TEMP_BUFFER_SIZE];
-    ANSI_STRING    ansiString;
+    int index;
+    NTSTATUS status;
+    HANDLE keyHandle;
+    ULONG resultLength;
+    UCHAR tempBuffer[TEMP_BUFFER_SIZE];
+    ANSI_STRING ansiString;
     UNICODE_STRING unicodeValueName;
     PKEY_BASIC_INFORMATION keyInformation;
 
@@ -2398,32 +2143,30 @@ Return Value:
 
     status = FtOpenKey(&keyHandle, DRIVER_KEY);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         printf("Could not open Services key (0x%x).\n", status);
         return;
     }
 
-    for (index = 0; TRUE; index++) {
+    for (index = 0; TRUE; index++)
+    {
 
         RtlZeroMemory(keyInformation, WORK_BUFFER_SIZE);
 
-        status = NtEnumerateKey(keyHandle,
-                                index,
-                                KeyBasicInformation,
-                                keyInformation,
-                                WORK_BUFFER_SIZE,
-                                &resultLength);
+        status = NtEnumerateKey(keyHandle, index, KeyBasicInformation, keyInformation, WORK_BUFFER_SIZE, &resultLength);
 
-        if (status == STATUS_NO_MORE_ENTRIES) {
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
 
             break;
-
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
 
             printf("readreg: Error on Enumerate status = %x\n", status);
             break;
-
         }
 
         unicodeValueName.Length = (USHORT)keyInformation->NameLength;
@@ -2434,19 +2177,14 @@ Return Value:
         ansiString.Length = 0L;
         ansiString.Buffer = &tempBuffer[0];
 
-        RtlUnicodeStringToAnsiString(&ansiString,
-                                     &unicodeValueName,
-                                     (BOOLEAN) FALSE);
+        RtlUnicodeStringToAnsiString(&ansiString, &unicodeValueName, (BOOLEAN)FALSE);
 
         //
         // Now have the key name for the driver - concatenate it and
         // call the routine to display what is in the key.
         //
 
-        sprintf(WorkingDirectory,
-                "%s\\%s",
-                DRIVER_KEY,
-                tempBuffer);
+        sprintf(WorkingDirectory, "%s\\%s", DRIVER_KEY, tempBuffer);
 
         DisplayLoadInformation(WorkingDirectory);
     }
@@ -2455,9 +2193,8 @@ Return Value:
     NtClose(keyHandle);
 }
 
-
-VOID
-main()
+
+VOID main()
 
 /*++
 
@@ -2481,127 +2218,122 @@ Return Value:
 
 {
     NTSTATUS status;
-    BOOLEAN  batch;
-    PUCHAR   argumentString;
-    int      commandCode;
-    HANDLE   keyHandle;
+    BOOLEAN batch;
+    PUCHAR argumentString;
+    int commandCode;
+    HANDLE keyHandle;
 
 
     status = FtOpenKey(&keyHandle, REGISTRY_BASE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         printf("readreg: Unable to open registry base (0x%x)\n", status);
         exit(1);
     }
 
-    sprintf(CurrentDirectory,
-            REGISTRY_BASE);
+    sprintf(CurrentDirectory, REGISTRY_BASE);
 
     //
     // See if we are connected to CON
     //
 
     batch = FALSE;
-//  batch = (BOOLEAN)(!isatty(0));
+    //  batch = (BOOLEAN)(!isatty(0));
 
-    if (!batch) {
+    if (!batch)
+    {
         printf("FT registry edit utility.  %s:\n", Version);
     }
 
-    while(1) {
-        while ((commandCode = GetCommand(batch,
-                                         &argumentString)) == INVALID) {
+    while (1)
+    {
+        while ((commandCode = GetCommand(batch, &argumentString)) == INVALID)
+        {
 
             //
             // Continue until we get a valid command.
             //
-
         }
 
-        if (Debug) {
-            printf("Command code == %d, argumentString = %s\n",
-                   commandCode,
+        if (Debug)
+        {
+            printf("Command code == %d, argumentString = %s\n", commandCode,
                    (argumentString == NULL) ? "(none)" : argumentString);
         }
 
-        switch (commandCode) {
+        switch (commandCode)
+        {
 
         case DIRLONG:
 
-            Directory(keyHandle, (BOOLEAN) TRUE);
+            Directory(keyHandle, (BOOLEAN)TRUE);
             break;
 
         case DIR:
 
-            Directory(keyHandle, (BOOLEAN) FALSE);
+            Directory(keyHandle, (BOOLEAN)FALSE);
             break;
 
         case CREATE:
         {
-            ULONG   index;
-            PUCHAR  keyClass;
+            ULONG index;
+            PUCHAR keyClass;
             BOOLEAN classAllocated = FALSE;
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "Key Name = ", 
-                                                   (BOOLEAN) FALSE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "Key Name = ", (BOOLEAN)FALSE);
             }
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
                 break;
             }
 
-            sprintf(WorkingDirectory,
-                    "%s\\%s",
-                    CurrentDirectory,
-                    argumentString);
+            sprintf(WorkingDirectory, "%s\\%s", CurrentDirectory, argumentString);
 
-            argumentString = GetArgumentString(batch,
-                                               "Key Class = ",
-                                               (BOOLEAN) FALSE);
+            argumentString = GetArgumentString(batch, "Key Class = ", (BOOLEAN)FALSE);
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
                 keyClass = "Default Class";
-            } else {
-                keyClass = (PUCHAR) malloc(strlen(argumentString) + FUDGE);
+            }
+            else
+            {
+                keyClass = (PUCHAR)malloc(strlen(argumentString) + FUDGE);
                 classAllocated = TRUE;
 
-                sprintf(keyClass,
-                        "%s",
-                        argumentString);
+                sprintf(keyClass, "%s", argumentString);
             }
 
-            argumentString = GetArgumentString(batch,
-                                               "Index = ",
-                                               (BOOLEAN) TRUE);
+            argumentString = GetArgumentString(batch, "Index = ", (BOOLEAN)TRUE);
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
                 index = 1;
-            } else {
+            }
+            else
+            {
                 index = ParseArgumentNumeric(&argumentString);
             }
 
-            if (Debug) {
-                printf("Creating key %s, index %d with class %s\n",
-                       WorkingDirectory,
-                       index,
-                       keyClass);
+            if (Debug)
+            {
+                printf("Creating key %s, index %d with class %s\n", WorkingDirectory, index, keyClass);
             }
 
-            status = FtCreateKey(WorkingDirectory,
-                                 keyClass,
-                                 index);
+            status = FtCreateKey(WorkingDirectory, keyClass, index);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
-                printf("Could not create key %s (0x%x).\n",
-                       WorkingDirectory,
-                       status);
+                printf("Could not create key %s (0x%x).\n", WorkingDirectory, status);
             }
 
-            if (classAllocated == TRUE) {
+            if (classAllocated == TRUE)
+            {
                 free(keyClass);
             }
 
@@ -2610,24 +2342,24 @@ Return Value:
 
         case LIST:
 
-            List(keyHandle,
-                 argumentString);
+            List(keyHandle, argumentString);
             break;
 
         case CHDIR:
 
             NtClose(keyHandle);
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
 
-                argumentString = GetArgumentString(batch,
-                                                   "New location = ",
-                                                   (BOOLEAN) TRUE);
+                argumentString = GetArgumentString(batch, "New location = ", (BOOLEAN)TRUE);
             }
 
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
 
-                if (*argumentString == '\\') {
+                if (*argumentString == '\\')
+                {
 
                     //
                     // Root relative string.
@@ -2635,17 +2367,16 @@ Return Value:
                     // by putting %s in the string).
                     //
 
-                    sprintf(WorkingDirectory,
-                            "%s",
-                            argumentString);
+                    sprintf(WorkingDirectory, "%s", argumentString);
+                }
+                else
+                {
 
-                } else {
+                    while ((*argumentString == '.') && (*(argumentString + 1) == '.'))
+                    {
 
-                    while ((*argumentString == '.') &&
-                           (*(argumentString + 1) == '.')) {
-
-                        if ((*(argumentString + 2) == '\\') ||
-                            (*(argumentString + 2) == '\0')) {
+                        if ((*(argumentString + 2) == '\\') || (*(argumentString + 2) == '\0'))
+                        {
 
                             PUCHAR cptr = CurrentDirectory;
 
@@ -2659,7 +2390,8 @@ Return Value:
                             // Find end of current directory.
                             //
 
-                            while (*cptr != '\0') {
+                            while (*cptr != '\0')
+                            {
                                 cptr++;
                             }
 
@@ -2667,11 +2399,13 @@ Return Value:
                             // Backup to last component.
                             //
 
-                            while (*cptr != '\\') {
+                            while (*cptr != '\\')
+                            {
                                 cptr--;
                             }
 
-                            if (cptr == CurrentDirectory) {
+                            if (cptr == CurrentDirectory)
+                            {
 
                                 //
                                 // Cannot backup anymore.  Continue parsing
@@ -2687,7 +2421,8 @@ Return Value:
 
                             *cptr = '\0';
 
-                            if (*argumentString == '\0') {
+                            if (*argumentString == '\0')
+                            {
 
                                 //
                                 // All done with argument.
@@ -2701,8 +2436,9 @@ Return Value:
                             //
 
                             argumentString++;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             //
                             // Assume it is a real name.
@@ -2712,36 +2448,32 @@ Return Value:
                         }
                     }
 
-                    if (*argumentString != '\0') {
-                        sprintf(WorkingDirectory,
-                                "%s\\%s",
-                                CurrentDirectory,
-                                argumentString);
-                    } else {
-                        sprintf(WorkingDirectory,
-                                "%s",
-                                CurrentDirectory);
+                    if (*argumentString != '\0')
+                    {
+                        sprintf(WorkingDirectory, "%s\\%s", CurrentDirectory, argumentString);
+                    }
+                    else
+                    {
+                        sprintf(WorkingDirectory, "%s", CurrentDirectory);
                     }
                 }
 
-                status = FtOpenKey(&keyHandle,
-                                   WorkingDirectory);
+                status = FtOpenKey(&keyHandle, WorkingDirectory);
 
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
 
-                    sprintf(CurrentDirectory,
-                            "%s",
-                            WorkingDirectory);
-                } else {
+                    sprintf(CurrentDirectory, "%s", WorkingDirectory);
+                }
+                else
+                {
 
-                    (VOID) FtOpenKey(&keyHandle,
-                                     CurrentDirectory);
+                    (VOID) FtOpenKey(&keyHandle, CurrentDirectory);
 
                     //
                     // No error checks because this was opened once before.
                     //
                 }
-
             }
 
             break;
@@ -2752,10 +2484,9 @@ Return Value:
 
             printf("Valid commands are:\n");
 
-            for (i = 0; Commands[i] != NULL; i++) {
-                printf("  %10s  - %s\n",
-                       Commands[i],
-                       CommandHelp[CommandMap[i]]);
+            for (i = 0; Commands[i] != NULL; i++)
+            {
+                printf("  %10s  - %s\n", Commands[i], CommandHelp[CommandMap[i]]);
             }
             break;
         }
@@ -2767,17 +2498,23 @@ Return Value:
 
         case DDEBUG:
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
 
-                if (Debug) {
+                if (Debug)
+                {
 
                     printf("Debug turned off.\n");
                     Debug = 0;
-                } else {
+                }
+                else
+                {
 
                     Debug = 1;
                 }
-            } else {
+            }
+            else
+            {
 
                 Debug = atoi(argumentString);
                 printf("Debug set to %d\n", Debug);
@@ -2786,89 +2523,87 @@ Return Value:
 
         case SETVALUE:
         {
-            int    i;
+            int i;
             BOOLEAN convertToUnicode = FALSE;
             PUCHAR valueName;
             PUCHAR valueData;
-            ULONG  valueLength;
-            ULONG  valueWord;
-            PVOID  valuePtr;
-            ULONG  type = DEFAULT_TYPE;
-            STRING         valueString;
+            ULONG valueLength;
+            ULONG valueWord;
+            PVOID valuePtr;
+            ULONG type = DEFAULT_TYPE;
+            STRING valueString;
             UNICODE_STRING unicodeValue;
             BOOLEAN dataAllocated = FALSE;
             BOOLEAN unicodeAllocated = FALSE;
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
 
-                argumentString = GetArgumentString(batch,
-                                                   "Value Name = ",
-                                                   (BOOLEAN) FALSE);
+                argumentString = GetArgumentString(batch, "Value Name = ", (BOOLEAN)FALSE);
             }
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
 
                 break;
             }
 
-            valueName = (PUCHAR) malloc(strlen(argumentString) + FUDGE);
+            valueName = (PUCHAR)malloc(strlen(argumentString) + FUDGE);
 
-            sprintf(valueName,
-                    "%s",
-                    argumentString);
+            sprintf(valueName, "%s", argumentString);
 
             //
             // print a help banner on type and get the type.
             //
 
-            for (i = 0; TypeNames[i] != NULL; i++) {
+            for (i = 0; TypeNames[i] != NULL; i++)
+            {
 
                 printf("%d - %s\n", TypeNumbers[i], TypeNames[i]);
             }
             printf("# - Other numbers are user defined\n");
-            argumentString = GetArgumentString(batch,
-                                               "Numeric value for type = ",
-                                               (BOOLEAN) TRUE);
+            argumentString = GetArgumentString(batch, "Numeric value for type = ", (BOOLEAN)TRUE);
 
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 type = ParseArgumentNumeric(&argumentString);
             }
 
-            switch(type)
+            switch (type)
             {
             default:
             case REG_SZ:
-                if (type == REG_SZ) {
+                if (type == REG_SZ)
+                {
                     convertToUnicode = TRUE;
                     printf("Typed in string will be converted to unicode...\n");
-                    argumentString = GetArgumentString(batch,
-                                                       "Value Data = ",
-                                                       (BOOLEAN) FALSE);
-                } else {
+                    argumentString = GetArgumentString(batch, "Value Data = ", (BOOLEAN)FALSE);
+                }
+                else
+                {
                     printf("For now the data must be typed in...\n");
-                    argumentString = GetArgumentString(batch,
-                                                       "Value Data = ",
-                                                       (BOOLEAN) FALSE);
+                    argumentString = GetArgumentString(batch, "Value Data = ", (BOOLEAN)FALSE);
                 }
 
-                if (argumentString == NULL) {
+                if (argumentString == NULL)
+                {
                     valueData = "Default Data";
                     valueLength = strlen(valueData);
-                } else {
-                    valueData = (PUCHAR) malloc(strlen(argumentString) + FUDGE);
+                }
+                else
+                {
+                    valueData = (PUCHAR)malloc(strlen(argumentString) + FUDGE);
                     dataAllocated = TRUE;
-                    sprintf(valueData,
-                            "%s",
-                            argumentString);
-                    if (convertToUnicode == TRUE) {
-                        RtlInitString(&valueString,
-                                      valueData);
-                        RtlAnsiStringToUnicodeString(&unicodeValue,
-                                                     &valueString,
-                                                     (BOOLEAN) TRUE);
+                    sprintf(valueData, "%s", argumentString);
+                    if (convertToUnicode == TRUE)
+                    {
+                        RtlInitString(&valueString, valueData);
+                        RtlAnsiStringToUnicodeString(&unicodeValue, &valueString, (BOOLEAN)TRUE);
                         unicodeAllocated = TRUE;
                         valueLength = unicodeValue.Length + 2;
-                    } else {
+                    }
+                    else
+                    {
                         valueLength = strlen(valueData);
                     }
                 }
@@ -2876,12 +2611,13 @@ Return Value:
                 break;
 
             case REG_DWORD:
-                argumentString = GetArgumentString(batch,
-                                                   "Value Data Word = ",
-                                                   (BOOLEAN) TRUE);
-                if (argumentString == NULL) {
+                argumentString = GetArgumentString(batch, "Value Data Word = ", (BOOLEAN)TRUE);
+                if (argumentString == NULL)
+                {
                     valueWord = 0;
-                } else {
+                }
+                else
+                {
                     valueWord = ParseArgumentNumeric(&argumentString);
                 }
 
@@ -2889,35 +2625,35 @@ Return Value:
                 break;
             }
 
-            switch (type) {
+            switch (type)
+            {
 
             case REG_DWORD:
-                valuePtr = (PVOID) &valueWord;
+                valuePtr = (PVOID)&valueWord;
                 break;
 
             case REG_SZ:
-                valuePtr = (PVOID) unicodeValue.Buffer;
+                valuePtr = (PVOID)unicodeValue.Buffer;
                 break;
 
             default:
-                valuePtr = (PVOID) valueData;
+                valuePtr = (PVOID)valueData;
                 break;
             }
-            status = FtSetValue(keyHandle,
-                                valueName,
-                                valuePtr,
-                                valueLength,
-                                type);
+            status = FtSetValue(keyHandle, valueName, valuePtr, valueLength, type);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 printf("Could not set value %s (0x%x).\n", valueName, status);
             }
 
             free(valueName);
-            if (dataAllocated == TRUE) {
+            if (dataAllocated == TRUE)
+            {
                 free(valueData);
             }
-            if (unicodeAllocated == TRUE) {
+            if (unicodeAllocated == TRUE)
+            {
                 RtlFreeUnicodeString(&unicodeValue);
             }
             break;
@@ -2925,29 +2661,25 @@ Return Value:
 
         case DELKEY:
         {
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
 
-                argumentString = GetArgumentString(batch,
-                                                   "Key Name = ",
-                                                   (BOOLEAN) TRUE);
+                argumentString = GetArgumentString(batch, "Key Name = ", (BOOLEAN)TRUE);
             }
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
 
                 break;
             }
 
-            sprintf(WorkingDirectory,
-                    "%s\\%s",
-                    CurrentDirectory,
-                    argumentString);
+            sprintf(WorkingDirectory, "%s\\%s", CurrentDirectory, argumentString);
 
             status = FtDeleteKey(WorkingDirectory);
 
-            if (!NT_SUCCESS(status)) {
-                printf("Unable to delete key %s (0x%x)\n",
-                       WorkingDirectory,
-                       status);
+            if (!NT_SUCCESS(status))
+            {
+                printf("Unable to delete key %s (0x%x)\n", WorkingDirectory, status);
             }
 
             break;
@@ -2955,26 +2687,24 @@ Return Value:
 
         case DELVALUE:
         {
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
 
-                argumentString = GetArgumentString(batch,
-                                                   "Key Name = ",
-                                                   (BOOLEAN) TRUE);
+                argumentString = GetArgumentString(batch, "Key Name = ", (BOOLEAN)TRUE);
             }
 
-            if (argumentString == NULL) {
+            if (argumentString == NULL)
+            {
 
                 break;
             }
 
-            status = FtDeleteValue(keyHandle,
-                                   argumentString);
+            status = FtDeleteValue(keyHandle, argumentString);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
-                printf("Unable to delete value %s (0x%x)\n",
-                       argumentString,
-                       status);
+                printf("Unable to delete value %s (0x%x)\n", argumentString, status);
             }
             break;
         }
@@ -2993,9 +2723,12 @@ Return Value:
 
         case DUMP:
 
-            if (ForceDump) {
+            if (ForceDump)
+            {
                 ForceDump = 0;
-            } else {
+            }
+            else
+            {
                 ForceDump++;
             }
             break;
@@ -3022,14 +2755,16 @@ Return Value:
             // Get the type
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT volume type = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT volume type = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 type = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3037,14 +2772,16 @@ Return Value:
             // Get the group
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT group number = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT group number = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 group = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3052,14 +2789,16 @@ Return Value:
             // Get the member
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT member number = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT member number = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 member = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3086,14 +2825,16 @@ Return Value:
             // Get the type
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT volume type = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT volume type = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 type = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3101,14 +2842,16 @@ Return Value:
             // Get the group
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT group number = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT group number = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 group = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3116,14 +2859,16 @@ Return Value:
             // Get the member
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT member number = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT member number = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 member = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3145,14 +2890,16 @@ Return Value:
             // Get the type
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT volume type = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT volume type = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 type = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3160,14 +2907,16 @@ Return Value:
             // Get the group
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT group number = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT group number = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 group = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3175,14 +2924,16 @@ Return Value:
             // Get the member
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "FT member number = ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "FT member number = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 member = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
@@ -3202,21 +2953,20 @@ Return Value:
             // Get the group
             //
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                               "Parity stripe group number = ",
-                                               (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "Parity stripe group number = ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 group = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
-            ChangeMemberState(StripeWithParity,
-                              group,
-                              0,
-                              Initializing);
+            ChangeMemberState(StripeWithParity, group, 0, Initializing);
             break;
         }
 
@@ -3231,7 +2981,8 @@ Return Value:
             BOOLEAN doUpdate = TRUE;
 
             configHeader = GetDiskInfo();
-            if (configHeader == NULL) {
+            if (configHeader == NULL)
+            {
                 break;
             }
             printf("\t%d for Mirrors\n", Mirror);
@@ -3239,66 +2990,76 @@ Return Value:
             printf("\t%d for Stripe with parity\n", StripeWithParity);
             printf("\t%d for Volume Set\n", VolumeSet);
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "Which FT set to create? ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "Which FT set to create? ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 type = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
-            if (argumentString == NULL) {
-                argumentString = GetArgumentString(batch,
-                                                   "Please give an FT group # - ",
-                                                   (BOOLEAN) TRUE);
+            if (argumentString == NULL)
+            {
+                argumentString = GetArgumentString(batch, "Please give an FT group # - ", (BOOLEAN)TRUE);
             }
-            if (argumentString != NULL) {
+            if (argumentString != NULL)
+            {
                 group = ParseArgumentNumeric(&argumentString);
-            } else {
+            }
+            else
+            {
                 break;
             }
 
-            for (member = 0; TRUE; member++) {
+            for (member = 0; TRUE; member++)
+            {
                 printf("Information for member %d\n", member);
 
-                if (argumentString == NULL) {
-                    argumentString = GetArgumentString(batch,
-                                                       "Disk Number = ",
-                                                       (BOOLEAN) TRUE);
+                if (argumentString == NULL)
+                {
+                    argumentString = GetArgumentString(batch, "Disk Number = ", (BOOLEAN)TRUE);
                 }
 
-                if (argumentString != NULL) {
+                if (argumentString != NULL)
+                {
                     disk = ParseArgumentNumeric(&argumentString);
-                } else {
+                }
+                else
+                {
                     break;
                 }
 
-                if (argumentString == NULL) {
-                    argumentString = GetArgumentString(batch,
-                                                       "Partition Number = ",
-                                                       (BOOLEAN) TRUE);
+                if (argumentString == NULL)
+                {
+                    argumentString = GetArgumentString(batch, "Partition Number = ", (BOOLEAN)TRUE);
                 }
 
-                if (argumentString != NULL) {
+                if (argumentString != NULL)
+                {
                     partition = ParseArgumentNumeric(&argumentString);
-                } else {
+                }
+                else
+                {
                     break;
                 }
 
-                if (CreateFtMember(configHeader, disk, partition, type, group, member) == FALSE) {
+                if (CreateFtMember(configHeader, disk, partition, type, group, member) == FALSE)
+                {
                     printf("Failed to change member state\n");
                     printf("No update will be made\n");
                     doUpdate = FALSE;
                     break;
                 }
             }
-            if (doUpdate == TRUE) {
+            if (doUpdate == TRUE)
+            {
                 PDISK_REGISTRY diskRegistry;
-                diskRegistry = (PDISK_REGISTRY)
-                             ((PUCHAR) configHeader + configHeader->DiskInformationOffset);
+                diskRegistry = (PDISK_REGISTRY)((PUCHAR)configHeader + configHeader->DiskInformationOffset);
                 DiskRegistrySet(diskRegistry);
             }
             free(configHeader);

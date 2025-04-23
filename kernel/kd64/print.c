@@ -33,18 +33,10 @@ Revision History:
 #if 0
 ULONG gLdrHits;
 #endif
-
+
 NTSTATUS
-KdpPrint(
-    IN ULONG ComponentId,
-    IN ULONG Level,
-    IN PCHAR Message,
-    IN USHORT Length,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    OUT PBOOLEAN Completion
-    )
+KdpPrint(IN ULONG ComponentId, IN ULONG Level, IN PCHAR Message, IN USHORT Length, IN KPROCESSOR_MODE PreviousMode,
+         IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, OUT PBOOLEAN Completion)
 
 /*++
 
@@ -104,25 +96,29 @@ Return Value:
     //
 
     *Completion = FALSE;
-    if (Level > 31) {
+    if (Level > 31)
+    {
         Mask = Level;
-
-    } else {
+    }
+    else
+    {
         Mask = 1 << Level;
     }
 
-    if (((Mask & Kd_WIN2000_Mask) == 0) &&
-        (ComponentId < KdComponentTableSize) &&
-        ((Mask & *KdComponentTable[ComponentId]) == 0)) {
+    if (((Mask & Kd_WIN2000_Mask) == 0) && (ComponentId < KdComponentTableSize) &&
+        ((Mask & *KdComponentTable[ComponentId]) == 0))
+    {
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Limit the message length to 512 bytes.
         //
 
-        if (Length > 512) {
+        if (Length > 512)
+        {
             Length = 512;
         }
 
@@ -131,14 +127,17 @@ Return Value:
         // message buffer on the stack.
         //
 
-        if (PreviousMode != KernelMode) {
-            try {
+        if (PreviousMode != KernelMode)
+        {
+            try
+            {
                 ProbeForRead(Message, Length, sizeof(UCHAR));
                 Buffer = alloca(512);
                 KdpQuickMoveMemory(Buffer, Message, Length);
                 Message = Buffer;
-
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return STATUS_ACCESS_VIOLATION;
             }
         }
@@ -151,18 +150,22 @@ Return Value:
         Output.Buffer = Message;
         Output.Length = Length;
         KdLogDbgPrint(&Output);
-        if (KdDebuggerNotPresent == FALSE) {
+        if (KdDebuggerNotPresent == FALSE)
+        {
             Enable = KdEnterDebugger(TrapFrame, ExceptionFrame);
-            if (KdpPrintString(&Output)) {
+            if (KdpPrintString(&Output))
+            {
                 Status = STATUS_BREAKPOINT;
-
-            } else {
+            }
+            else
+            {
                 Status = STATUS_SUCCESS;
             }
 
             KdExitDebugger(Enable);
-
-        } else {
+        }
+        else
+        {
             Status = STATUS_DEVICE_NOT_CONNECTED;
         }
     }
@@ -170,17 +173,10 @@ Return Value:
     *Completion = TRUE;
     return Status;
 }
-
+
 USHORT
-KdpPrompt(
-    IN PCHAR Message,
-    IN USHORT MessageLength,
-    IN OUT PCHAR Reply,
-    IN USHORT ReplyLength,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+KdpPrompt(IN PCHAR Message, IN USHORT MessageLength, IN OUT PCHAR Reply, IN USHORT ReplyLength,
+          IN KPROCESSOR_MODE PreviousMode, IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -223,11 +219,13 @@ Return Value:
     // Limit the output and input message length to 512 bytes.
     //
 
-    if (MessageLength > 512) {
+    if (MessageLength > 512)
+    {
         MessageLength = 512;
     }
 
-    if (ReplyLength > 512) {
+    if (ReplyLength > 512)
+    {
         ReplyLength = 512;
     }
 
@@ -236,20 +234,24 @@ Return Value:
     // message buffer on the stack.
     //
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             ProbeForRead(Message, MessageLength, sizeof(UCHAR));
             Buffer = alloca(512);
             KdpQuickMoveMemory(Buffer, Message, MessageLength);
             Message = Buffer;
             ProbeForWrite(Reply, ReplyLength, sizeof(UCHAR));
             Buffer = alloca(512);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return 0;
         }
-
-    } else {
+    }
+    else
+    {
         Buffer = Reply;
     }
 
@@ -265,7 +267,8 @@ Return Value:
 
     KdLogDbgPrint(&Output);
     Enable = KdEnterDebugger(TrapFrame, ExceptionFrame);
-    do {
+    do
+    {
     } while (KdpPromptString(&Output, &Input) == TRUE);
 
     KdExitDebugger(Enable);
@@ -275,26 +278,23 @@ Return Value:
     // reply buffer.
     //
 
-    if (PreviousMode == UserMode) {
-        try {
+    if (PreviousMode == UserMode)
+    {
+        try
+        {
             KdpQuickMoveMemory(Reply, Input.Buffer, Input.Length);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
     }
 
     return Input.Length;
 }
-
+
 BOOLEAN
-KdpReport(
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    )
+KdpReport(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+          IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -338,9 +338,9 @@ Return Value:
     //
 
     if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) ||
-        (ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP)  ||
-        ((NtGlobalFlag & FLG_STOP_ON_EXCEPTION) != 0) ||
-        (SecondChance != FALSE)) {
+        (ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP) || ((NtGlobalFlag & FLG_STOP_ON_EXCEPTION) != 0) ||
+        (SecondChance != FALSE))
+    {
 
         //
         // If this is the first chance to handle the exception and the
@@ -348,9 +348,9 @@ Return Value:
         // then do not enter the kernel debugger.
         //
 
-        if ((SecondChance == FALSE) &&
-            ((ExceptionRecord->ExceptionCode == STATUS_PORT_DISCONNECTED) ||
-            (NT_SUCCESS(ExceptionRecord->ExceptionCode)))) {
+        if ((SecondChance == FALSE) && ((ExceptionRecord->ExceptionCode == STATUS_PORT_DISCONNECTED) ||
+                                        (NT_SUCCESS(ExceptionRecord->ExceptionCode))))
+        {
 
             //
             // This exception should not be reported to the kernel debugger.
@@ -413,25 +413,19 @@ Return Value:
 
         Prcb = KeGetCurrentPrcb();
         KiSaveProcessorControlState(&Prcb->ProcessorState);
-        KdpQuickMoveMemory((PCHAR)&Prcb->ProcessorState.ContextFrame,
-                           (PCHAR)ContextRecord,
-                           sizeof(CONTEXT));
+        KdpQuickMoveMemory((PCHAR)&Prcb->ProcessorState.ContextFrame, (PCHAR)ContextRecord, sizeof(CONTEXT));
 
-        Completion =
-            KdpReportExceptionStateChange(ExceptionRecord,
-                                          &Prcb->ProcessorState.ContextFrame,
-                                          SecondChance);
+        Completion = KdpReportExceptionStateChange(ExceptionRecord, &Prcb->ProcessorState.ContextFrame, SecondChance);
 
-        KdpQuickMoveMemory((PCHAR)ContextRecord,
-                           (PCHAR)&Prcb->ProcessorState.ContextFrame,
-                           sizeof(CONTEXT));
+        KdpQuickMoveMemory((PCHAR)ContextRecord, (PCHAR)&Prcb->ProcessorState.ContextFrame, sizeof(CONTEXT));
 
         KiRestoreProcessorControlState(&Prcb->ProcessorState);
         KdExitDebugger(Enable);
         KdpControlCPressed = FALSE;
         return Completion;
-
-    } else {
+    }
+    else
+    {
 
         //
         // This exception should not be reported to the kernel debugger.
@@ -440,17 +434,9 @@ Return Value:
         return FALSE;
     }
 }
-
-VOID
-KdpSymbol(
-    IN PSTRING String,
-    IN PKD_SYMBOLS_INFO Symbol,
-    IN BOOLEAN Unload,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PCONTEXT ContextRecord,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+
+VOID KdpSymbol(IN PSTRING String, IN PKD_SYMBOLS_INFO Symbol, IN BOOLEAN Unload, IN KPROCESSOR_MODE PreviousMode,
+               IN PCONTEXT ContextRecord, IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -491,8 +477,8 @@ Return Value:
     // then load or unload symbols.
     //
 
-    if ((PreviousMode == KernelMode) &&
-        (KdDebuggerNotPresent == FALSE)) {
+    if ((PreviousMode == KernelMode) && (KdDebuggerNotPresent == FALSE))
+    {
 
         //
         // Save and restore the processor context in case the
@@ -504,17 +490,10 @@ Return Value:
 
         Prcb = KeGetCurrentPrcb();
         KiSaveProcessorControlState(&Prcb->ProcessorState);
-        KdpQuickMoveMemory((PCHAR)&Prcb->ProcessorState.ContextFrame,
-                           (PCHAR)ContextRecord,
-                           sizeof(CONTEXT));
+        KdpQuickMoveMemory((PCHAR)&Prcb->ProcessorState.ContextFrame, (PCHAR)ContextRecord, sizeof(CONTEXT));
 
-        KdpReportLoadSymbolsStateChange(String,
-                                        Symbol,
-                                        Unload,
-                                        &Prcb->ProcessorState.ContextFrame);
-        KdpQuickMoveMemory((PCHAR)ContextRecord,
-                           (PCHAR)&Prcb->ProcessorState.ContextFrame,
-                           sizeof(CONTEXT));
+        KdpReportLoadSymbolsStateChange(String, Symbol, Unload, &Prcb->ProcessorState.ContextFrame);
+        KdpQuickMoveMemory((PCHAR)ContextRecord, (PCHAR)&Prcb->ProcessorState.ContextFrame, sizeof(CONTEXT));
 
         KiRestoreProcessorControlState(&Prcb->ProcessorState);
         KdExitDebugger(Enable);
@@ -522,16 +501,9 @@ Return Value:
 
     return;
 }
-
-VOID
-KdpCommandString(
-    IN PSTRING Name,
-    IN PSTRING Command,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PCONTEXT ContextRecord,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+
+VOID KdpCommandString(IN PSTRING Name, IN PSTRING Command, IN KPROCESSOR_MODE PreviousMode, IN PCONTEXT ContextRecord,
+                      IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -566,8 +538,8 @@ Return Value:
     // Report state change to the host kernel debugger.
     //
 
-    if ((PreviousMode == KernelMode) &&
-        (KdDebuggerNotPresent == FALSE)) {
+    if ((PreviousMode == KernelMode) && (KdDebuggerNotPresent == FALSE))
+    {
 
         BOOLEAN Enable;
         PKPRCB Prcb;
@@ -576,16 +548,11 @@ Return Value:
 
         Prcb = KeGetCurrentPrcb();
         KiSaveProcessorControlState(&Prcb->ProcessorState);
-        KdpQuickMoveMemory((PCHAR)&Prcb->ProcessorState.ContextFrame,
-                           (PCHAR)ContextRecord,
-                           sizeof(CONTEXT));
+        KdpQuickMoveMemory((PCHAR)&Prcb->ProcessorState.ContextFrame, (PCHAR)ContextRecord, sizeof(CONTEXT));
 
-        KdpReportCommandStringStateChange(Name, Command,
-                                          &Prcb->ProcessorState.ContextFrame);
-        
-        KdpQuickMoveMemory((PCHAR)ContextRecord,
-                           (PCHAR)&Prcb->ProcessorState.ContextFrame,
-                           sizeof(CONTEXT));
+        KdpReportCommandStringStateChange(Name, Command, &Prcb->ProcessorState.ContextFrame);
+
+        KdpQuickMoveMemory((PCHAR)ContextRecord, (PCHAR)&Prcb->ProcessorState.ContextFrame, sizeof(CONTEXT));
 
         KiRestoreProcessorControlState(&Prcb->ProcessorState);
         KdExitDebugger(Enable);

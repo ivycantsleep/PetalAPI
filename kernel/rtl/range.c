@@ -36,84 +36,39 @@ LONG RtlRangeDebugLevel = 0;
 #endif
 
 NTSTATUS
-RtlpAddRange(
-    IN OUT PLIST_ENTRY ListHead,
-    IN PRTLP_RANGE_LIST_ENTRY Entry,
-    IN ULONG AddRangeFlags
-    );
+RtlpAddRange(IN OUT PLIST_ENTRY ListHead, IN PRTLP_RANGE_LIST_ENTRY Entry, IN ULONG AddRangeFlags);
 
 NTSTATUS
-RtlpAddToMergedRange(
-    IN PRTLP_RANGE_LIST_ENTRY Merged,
-    IN PRTLP_RANGE_LIST_ENTRY Entry,
-    IN ULONG AddRangeFlags
-    );
+RtlpAddToMergedRange(IN PRTLP_RANGE_LIST_ENTRY Merged, IN PRTLP_RANGE_LIST_ENTRY Entry, IN ULONG AddRangeFlags);
 
 NTSTATUS
-RtlpConvertToMergedRange(
-    IN PRTLP_RANGE_LIST_ENTRY Entry
-    );
+RtlpConvertToMergedRange(IN PRTLP_RANGE_LIST_ENTRY Entry);
 
 PRTLP_RANGE_LIST_ENTRY
-RtlpCreateRangeListEntry(
-    IN ULONGLONG Start,
-    IN ULONGLONG End,
-    IN UCHAR Attributes,
-    IN PVOID UserData,
-    IN PVOID Owner
-    );
+RtlpCreateRangeListEntry(IN ULONGLONG Start, IN ULONGLONG End, IN UCHAR Attributes, IN PVOID UserData, IN PVOID Owner);
 
 NTSTATUS
-RtlpAddIntersectingRanges(
-    IN PLIST_ENTRY ListHead,
-    IN PRTLP_RANGE_LIST_ENTRY First,
-    IN PRTLP_RANGE_LIST_ENTRY Entry,
-    IN ULONG AddRangeFlags
-    );
+RtlpAddIntersectingRanges(IN PLIST_ENTRY ListHead, IN PRTLP_RANGE_LIST_ENTRY First, IN PRTLP_RANGE_LIST_ENTRY Entry,
+                          IN ULONG AddRangeFlags);
 
 NTSTATUS
-RtlpDeleteFromMergedRange(
-    IN PRTLP_RANGE_LIST_ENTRY Delete,
-    IN PRTLP_RANGE_LIST_ENTRY Merged
-    );
+RtlpDeleteFromMergedRange(IN PRTLP_RANGE_LIST_ENTRY Delete, IN PRTLP_RANGE_LIST_ENTRY Merged);
 
 PRTLP_RANGE_LIST_ENTRY
-RtlpCopyRangeListEntry(
-    PRTLP_RANGE_LIST_ENTRY Entry
-    );
+RtlpCopyRangeListEntry(PRTLP_RANGE_LIST_ENTRY Entry);
 
-VOID
-RtlpDeleteRangeListEntry(
-    IN PRTLP_RANGE_LIST_ENTRY Entry
-    );
+VOID RtlpDeleteRangeListEntry(IN PRTLP_RANGE_LIST_ENTRY Entry);
 
 BOOLEAN
-RtlpIsRangeAvailable(
-    IN PRTL_RANGE_LIST_ITERATOR Iterator,
-    IN ULONGLONG Start,
-    IN ULONGLONG End,
-    IN UCHAR AttributeAvailableMask,
-    IN BOOLEAN SharedOK,
-    IN BOOLEAN NullConflictOK,
-    IN BOOLEAN Forward,
-    IN PVOID Context OPTIONAL,
-    IN PRTL_CONFLICT_RANGE_CALLBACK Callback OPTIONAL
-    );
+RtlpIsRangeAvailable(IN PRTL_RANGE_LIST_ITERATOR Iterator, IN ULONGLONG Start, IN ULONGLONG End,
+                     IN UCHAR AttributeAvailableMask, IN BOOLEAN SharedOK, IN BOOLEAN NullConflictOK,
+                     IN BOOLEAN Forward, IN PVOID Context OPTIONAL, IN PRTL_CONFLICT_RANGE_CALLBACK Callback OPTIONAL);
 
 #if DBG
 
-VOID
-RtlpDumpRangeListEntry(
-    LONG Level,
-    PRTLP_RANGE_LIST_ENTRY Entry,
-    BOOLEAN Indent
-    );
+VOID RtlpDumpRangeListEntry(LONG Level, PRTLP_RANGE_LIST_ENTRY Entry, BOOLEAN Indent);
 
-VOID
-RtlpDumpRangeList(
-    LONG Level,
-    PRTL_RANGE_LIST RangeList
-    );
+VOID RtlpDumpRangeList(LONG Level, PRTL_RANGE_LIST RangeList);
 
 #else
 
@@ -172,14 +127,11 @@ RtlpDumpRangeList(
 // of range list entries.  The PAGED_LOOKASIDE_LIST structure should be non-paged.
 //
 
-#define RTLP_RANGE_LIST_ENTRY_LOOKASIDE_DEPTH   16
+#define RTLP_RANGE_LIST_ENTRY_LOOKASIDE_DEPTH 16
 
 PAGED_LOOKASIDE_LIST RtlpRangeListEntryLookasideList;
 
-VOID
-RtlInitializeRangeListPackage(
-    VOID
-    )
+VOID RtlInitializeRangeListPackage(VOID)
 /*++
 
 Routine Description:
@@ -198,16 +150,9 @@ Return Value:
 
 --*/
 {
-    ExInitializePagedLookasideList(
-        &RtlpRangeListEntryLookasideList,
-        NULL,
-        NULL,
-        POOL_COLD_ALLOCATION,
-        sizeof(RTLP_RANGE_LIST_ENTRY),
-        RTL_RANGE_LIST_ENTRY_TAG,
-        RTLP_RANGE_LIST_ENTRY_LOOKASIDE_DEPTH
-        );
-
+    ExInitializePagedLookasideList(&RtlpRangeListEntryLookasideList, NULL, NULL, POOL_COLD_ALLOCATION,
+                                   sizeof(RTLP_RANGE_LIST_ENTRY), RTL_RANGE_LIST_ENTRY_TAG,
+                                   RTLP_RANGE_LIST_ENTRY_LOOKASIDE_DEPTH);
 }
 
 //
@@ -216,10 +161,8 @@ Return Value:
 //     VOID
 //     )
 //
-#define RtlpAllocateRangeListEntry()                                    \
-    (PRTLP_RANGE_LIST_ENTRY) ExAllocateFromPagedLookasideList(          \
-        &RtlpRangeListEntryLookasideList                                \
-        )
+#define RtlpAllocateRangeListEntry() \
+    (PRTLP_RANGE_LIST_ENTRY) ExAllocateFromPagedLookasideList(&RtlpRangeListEntryLookasideList)
 
 //
 // VOID
@@ -227,8 +170,7 @@ Return Value:
 //     IN PRTLP_RANGE_LIST_ENTRY Entry
 //     )
 //
-#define RtlpFreeRangeListEntry(Entry)                                   \
-    ExFreeToPagedLookasideList(&RtlpRangeListEntryLookasideList, (Entry))
+#define RtlpFreeRangeListEntry(Entry) ExFreeToPagedLookasideList(&RtlpRangeListEntryLookasideList, (Entry))
 
 
 //
@@ -237,8 +179,7 @@ Return Value:
 //     IN ULONG Size
 //     )
 //
-#define RtlpRangeListAllocatePool(Size)                                 \
-    ExAllocatePoolWithTag(PagedPool, (Size), RTL_RANGE_LIST_MISC_TAG)
+#define RtlpRangeListAllocatePool(Size) ExAllocatePoolWithTag(PagedPool, (Size), RTL_RANGE_LIST_MISC_TAG)
 
 //
 // VOID
@@ -246,8 +187,7 @@ Return Value:
 //     IN PVOID Free
 //     )
 //
-#define RtlpRangeListFreePool(Free)                                     \
-    ExFreePool(Free)
+#define RtlpRangeListFreePool(Free) ExFreePool(Free)
 
 
 #else // defined(NTOS_KERNEL_RUNTIME)
@@ -263,12 +203,8 @@ Return Value:
 //     VOID
 //     );
 //
-#define RtlpAllocateRangeListEntry()                                    \
-    (PRTLP_RANGE_LIST_ENTRY) RtlAllocateHeap(                           \
-        RtlProcessHeap(),                                               \
-        RTL_RANGE_LIST_ENTRY_TAG,                                       \
-        sizeof(RTLP_RANGE_LIST_ENTRY)                                   \
-        )
+#define RtlpAllocateRangeListEntry() \
+    (PRTLP_RANGE_LIST_ENTRY) RtlAllocateHeap(RtlProcessHeap(), RTL_RANGE_LIST_ENTRY_TAG, sizeof(RTLP_RANGE_LIST_ENTRY))
 
 //
 // VOID
@@ -276,8 +212,7 @@ Return Value:
 //     IN PRTLP_RANGE_LIST_ENTRY Entry
 //     )
 //
-#define RtlpFreeRangeListEntry(Entry)                                   \
-    RtlFreeHeap( RtlProcessHeap(), 0, (Entry) )
+#define RtlpFreeRangeListEntry(Entry) RtlFreeHeap(RtlProcessHeap(), 0, (Entry))
 
 //
 // PVOID
@@ -285,8 +220,7 @@ Return Value:
 //     IN ULONG Size
 //     )
 //
-#define RtlpRangeListAllocatePool(Size)                                 \
-    RtlAllocateHeap(RtlProcessHeap(), RTL_RANGE_LIST_MISC_TAG, (Size))
+#define RtlpRangeListAllocatePool(Size) RtlAllocateHeap(RtlProcessHeap(), RTL_RANGE_LIST_MISC_TAG, (Size))
 
 //
 // VOID
@@ -294,16 +228,12 @@ Return Value:
 //     IN PVOID Free
 //     )
 //
-#define RtlpRangeListFreePool(Free)                                     \
-    RtlFreeHeap( RtlProcessHeap(), 0, (Free) )
+#define RtlpRangeListFreePool(Free) RtlFreeHeap(RtlProcessHeap(), 0, (Free))
 
 
 #endif // defined(NTOS_KERNEL_RUNTIME)
-
-VOID
-RtlInitializeRangeList(
-    IN OUT PRTL_RANGE_LIST RangeList
-    )
+
+VOID RtlInitializeRangeList(IN OUT PRTL_RANGE_LIST RangeList)
 /*++
 
 Routine Description:
@@ -334,17 +264,10 @@ Return Value:
     RangeList->Count = 0;
     RangeList->Stamp = 0;
 }
-
+
 NTSTATUS
-RtlAddRange(
-    IN OUT PRTL_RANGE_LIST RangeList,
-    IN ULONGLONG Start,
-    IN ULONGLONG End,
-    IN UCHAR Attributes,
-    IN ULONG Flags,
-    IN PVOID UserData, OPTIONAL
-    IN PVOID Owner     OPTIONAL
-    )
+RtlAddRange(IN OUT PRTL_RANGE_LIST RangeList, IN ULONGLONG Start, IN ULONGLONG End, IN UCHAR Attributes, IN ULONG Flags,
+            IN PVOID UserData, OPTIONAL IN PVOID Owner OPTIONAL)
 /*++
 
 Routine Description:
@@ -396,21 +319,15 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    DEBUG_PRINT(1,
-        ("RtlAddRange(0x%08x, 0x%I64x, 0x%I64x, 0x%08x, 0x%08x, 0x%08x)\n",
-        RangeList,
-        Start,
-        End,
-        Flags,
-        UserData,
-        Owner
-        ));
+    DEBUG_PRINT(1, ("RtlAddRange(0x%08x, 0x%I64x, 0x%I64x, 0x%08x, 0x%08x, 0x%08x)\n", RangeList, Start, End, Flags,
+                    UserData, Owner));
 
     //
     // Validate parameters
     //
 
-    if (End < Start) {
+    if (End < Start)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -418,7 +335,8 @@ Return Value:
     // Create a new entry
     //
 
-    if (!(newEntry = RtlpCreateRangeListEntry(Start, End, Attributes, UserData, Owner))) {
+    if (!(newEntry = RtlpCreateRangeListEntry(Start, End, Attributes, UserData, Owner)))
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -426,24 +344,24 @@ Return Value:
     // Mark the new entry as shared if appropriate
     //
 
-    if (Flags & RTL_RANGE_LIST_ADD_SHARED) {
+    if (Flags & RTL_RANGE_LIST_ADD_SHARED)
+    {
         newEntry->PublicFlags |= RTL_RANGE_SHARED;
     }
 
-    status = RtlpAddRange(&RangeList->ListHead,
-                        newEntry,
-                        Flags
-                        );
+    status = RtlpAddRange(&RangeList->ListHead, newEntry, Flags);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // We added a range so bump the count
         //
         RangeList->Count++;
         RangeList->Stamp++;
-
-    } else {
+    }
+    else
+    {
 
         //
         // We didn't add a range so free up the entry
@@ -453,15 +371,10 @@ Return Value:
     }
 
     return status;
-
 }
-
+
 NTSTATUS
-RtlpAddRange(
-    IN OUT PLIST_ENTRY ListHead,
-    IN PRTLP_RANGE_LIST_ENTRY Entry,
-    IN ULONG AddRangeFlags
-    )
+RtlpAddRange(IN OUT PLIST_ENTRY ListHead, IN PRTLP_RANGE_LIST_ENTRY Entry, IN ULONG AddRangeFlags)
 /*++
 
 Routine Description:
@@ -491,14 +404,8 @@ Return Value:
     PRTLP_RANGE_LIST_ENTRY previous, current;
     ULONGLONG start, end;
 
-    DEBUG_PRINT(2,
-                ("RtlpAddRange(0x%08x, 0x%08x{0x%I64x-0x%I64x}, 0x%08x)\n",
-                ListHead,
-                Entry,
-                Entry->Start,
-                Entry->End,
-                AddRangeFlags
-                ));
+    DEBUG_PRINT(2, ("RtlpAddRange(0x%08x, 0x%08x{0x%I64x-0x%I64x}, 0x%08x)\n", ListHead, Entry, Entry->Start,
+                    Entry->End, AddRangeFlags));
 
     RTL_PAGED_CODE();
     ASSERT(Entry);
@@ -516,9 +423,11 @@ Return Value:
     // Iterate through the list and find where to insert the entry
     //
 
-    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, ListHead, current) {
+    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, ListHead, current)
+    {
 
-        if (end < current->Start) {
+        if (end < current->Start)
+        {
 
             //
             // The new range is completely before this one
@@ -526,21 +435,16 @@ Return Value:
 
             DEBUG_PRINT(2, ("Completely before\n"));
 
-            InsertEntryList(current->ListEntry.Blink,
-                            &Entry->ListEntry
-                            );
+            InsertEntryList(current->ListEntry.Blink, &Entry->ListEntry);
 
             goto exit;
+        }
+        else if (RANGE_INTERSECT(Entry, current))
+        {
 
-        } else if (RANGE_INTERSECT(Entry, current)) {
-
-            status = RtlpAddIntersectingRanges(ListHead,
-                       current,
-                       Entry,
-                       AddRangeFlags);
+            status = RtlpAddIntersectingRanges(ListHead, current, Entry, AddRangeFlags);
 
             goto exit;
-
         }
     }
 
@@ -550,22 +454,15 @@ Return Value:
 
     DEBUG_PRINT(2, ("After all existing ranges\n"));
 
-    InsertTailList(ListHead,
-                   &Entry->ListEntry
-                  );
+    InsertTailList(ListHead, &Entry->ListEntry);
 
 exit:
 
     return status;
-
 }
-
+
 NTSTATUS
-RtlpAddToMergedRange(
-    IN PRTLP_RANGE_LIST_ENTRY Merged,
-    IN PRTLP_RANGE_LIST_ENTRY Entry,
-    IN ULONG AddRangeFlags
-    )
+RtlpAddToMergedRange(IN PRTLP_RANGE_LIST_ENTRY Merged, IN PRTLP_RANGE_LIST_ENTRY Entry, IN ULONG AddRangeFlags)
 /*++
 
 Routine Description:
@@ -605,20 +502,22 @@ Return Value:
     // Insert it into the merged list, this is sorted in order of start
     //
 
-    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &Merged->Merged.ListHead, current) {
+    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &Merged->Merged.ListHead, current)
+    {
 
         //
         // Do we conflict?
         //
 
-        if (RANGE_INTERSECT(current, Entry)
-        && !(entryShared && SHARED(current))) {
+        if (RANGE_INTERSECT(current, Entry) && !(entryShared && SHARED(current)))
+        {
 
             //
             // Are conflicts ok?
             //
 
-            if (AddRangeFlags & RTL_RANGE_LIST_ADD_IF_CONFLICT) {
+            if (AddRangeFlags & RTL_RANGE_LIST_ADD_IF_CONFLICT)
+            {
 
                 //
                 // Yes - Mark both entries as conflicting
@@ -626,15 +525,15 @@ Return Value:
 
                 current->PublicFlags |= RTL_RANGE_CONFLICT;
                 Entry->PublicFlags |= RTL_RANGE_CONFLICT;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // No - Fail
                 //
 
                 return STATUS_RANGE_LIST_CONFLICT;
-
             }
         }
 
@@ -642,7 +541,8 @@ Return Value:
         // Have we not yet found the insertion point and just passed it?
         //
 
-        if (!insert && current->Start > Entry->Start) {
+        if (!insert && current->Start > Entry->Start)
+        {
 
             //
             // Insert is before current
@@ -656,25 +556,23 @@ Return Value:
     // Did we find where to insert the new range?
     //
 
-    if (!insert) {
+    if (!insert)
+    {
 
         //
         // New range is after all existing ranges
         //
 
-        InsertTailList(&Merged->Merged.ListHead,
-                       &Entry->ListEntry
-                      );
-
-    } else {
+        InsertTailList(&Merged->Merged.ListHead, &Entry->ListEntry);
+    }
+    else
+    {
 
         //
         // Insert in the list
         //
 
-        InsertEntryList(insert,
-                        &Entry->ListEntry
-                        );
+        InsertEntryList(insert, &Entry->ListEntry);
     }
 
 
@@ -682,11 +580,13 @@ Return Value:
     // Expand the merged range if necessary
     //
 
-    if (Entry->Start < Merged->Start) {
+    if (Entry->Start < Merged->Start)
+    {
         Merged->Start = Entry->Start;
     }
 
-    if (Entry->End > Merged->End) {
+    if (Entry->End > Merged->End)
+    {
         Merged->End = Entry->End;
     }
 
@@ -695,21 +595,19 @@ Return Value:
     // range then the shared flag can stay otherwise it must go
     //
 
-    if (SHARED(Merged) && !entryShared) {
+    if (SHARED(Merged) && !entryShared)
+    {
 
-        DEBUG_PRINT(2,
-            ("RtlpAddToMergedRange: Merged range no longer completely shared\n"));
+        DEBUG_PRINT(2, ("RtlpAddToMergedRange: Merged range no longer completely shared\n"));
 
         Merged->PublicFlags &= ~RTL_RANGE_SHARED;
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-RtlpConvertToMergedRange(
-    IN PRTLP_RANGE_LIST_ENTRY Entry
-    )
+RtlpConvertToMergedRange(IN PRTLP_RANGE_LIST_ENTRY Entry)
 /*++
 
 Routine Description:
@@ -740,7 +638,8 @@ Return Value:
     // Create a new entry
     //
 
-    if (!(newEntry = RtlpCopyRangeListEntry(Entry))) {
+    if (!(newEntry = RtlpCopyRangeListEntry(Entry)))
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -758,22 +657,14 @@ Return Value:
     // Add the range
     //
 
-    InsertHeadList(&Entry->Merged.ListHead,
-                   &newEntry->ListEntry
-                   );
+    InsertHeadList(&Entry->Merged.ListHead, &newEntry->ListEntry);
 
 
     return STATUS_SUCCESS;
 }
-
+
 PRTLP_RANGE_LIST_ENTRY
-RtlpCreateRangeListEntry(
-    IN ULONGLONG Start,
-    IN ULONGLONG End,
-    IN UCHAR Attributes,
-    IN PVOID UserData,
-    IN PVOID Owner
-    )
+RtlpCreateRangeListEntry(IN ULONGLONG Start, IN ULONGLONG End, IN UCHAR Attributes, IN PVOID UserData, IN PVOID Owner)
 /*++
 
 Routine Description:
@@ -814,7 +705,8 @@ Return Value:
     // Allocate a new entry
     //
 
-    if (entry = RtlpAllocateRangeListEntry()) {
+    if (entry = RtlpAllocateRangeListEntry())
+    {
 
         //
         // Fill in the details
@@ -835,16 +727,11 @@ Return Value:
     }
 
     return entry;
-
 }
-
+
 NTSTATUS
-RtlpAddIntersectingRanges(
-    IN PLIST_ENTRY ListHead,
-    IN PRTLP_RANGE_LIST_ENTRY First,
-    IN PRTLP_RANGE_LIST_ENTRY Entry,
-    IN ULONG AddRangeFlags
-    )
+RtlpAddIntersectingRanges(IN PLIST_ENTRY ListHead, IN PRTLP_RANGE_LIST_ENTRY First, IN PRTLP_RANGE_LIST_ENTRY Entry,
+                          IN ULONG AddRangeFlags)
 /*++
 
 Routine Description:
@@ -886,16 +773,19 @@ Return Value:
     // If we care about conflicts see if we conflict with anyone
     //
 
-    if (!(AddRangeFlags & RTL_RANGE_LIST_ADD_IF_CONFLICT)) {
+    if (!(AddRangeFlags & RTL_RANGE_LIST_ADD_IF_CONFLICT))
+    {
 
         //
         // Examine all ranges after the first intersecting one
         //
 
         current = First;
-        FOR_REST_IN_LIST(RTLP_RANGE_LIST_ENTRY, ListHead, current) {
+        FOR_REST_IN_LIST(RTLP_RANGE_LIST_ENTRY, ListHead, current)
+        {
 
-            if (Entry->End < current->Start) {
+            if (Entry->End < current->Start)
+            {
 
                 //
                 // We don't intersect anymore so there arn't any more
@@ -903,34 +793,34 @@ Return Value:
                 //
 
                 break;
-
-            } else if (MERGED(current)) {
+            }
+            else if (MERGED(current))
+            {
 
                 //
                 // Check if any of the merged ranges conflict
                 //
 
-                FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY,
-                                &current->Merged.ListHead,
-                                currentMerged) {
+                FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &current->Merged.ListHead, currentMerged)
+                {
 
                     //
                     // Do we conflict?
                     //
 
-                    if (RANGE_INTERSECT(currentMerged, Entry)
-                    && !(entryShared && SHARED(currentMerged))) {
+                    if (RANGE_INTERSECT(currentMerged, Entry) && !(entryShared && SHARED(currentMerged)))
+                    {
 
                         //
                         // We conflict with one of the merged ranges
                         //
 
                         return STATUS_RANGE_LIST_CONFLICT;
-
                     }
                 }
-
-            } else if (!(entryShared && SHARED(current))) {
+            }
+            else if (!(entryShared && SHARED(current)))
+            {
 
                 //
                 // We conflict with a non shared region in the  main list.
@@ -948,14 +838,15 @@ Return Value:
     // add the rest of the ranges
     //
 
-    if (!MERGED(First)) {
+    if (!MERGED(First))
+    {
 
         status = RtlpConvertToMergedRange(First);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto cleanup;
         }
-
     }
 
     ASSERT(MERGED(First));
@@ -967,27 +858,28 @@ Return Value:
     // intersecting one.
     //
 
-    FOR_REST_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, ListHead, current, next) {
+    FOR_REST_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, ListHead, current, next)
+    {
 
-         if (Entry->End < current->Start) {
+        if (Entry->End < current->Start)
+        {
 
             //
             // We don't intersect any more
             //
 
             break;
-         }
+        }
 
-        if (MERGED(current)) {
+        if (MERGED(current))
+        {
 
             //
             // Add all the merged ranges to the new entry
             //
 
-            FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY,
-                                 &current->Merged.ListHead,
-                                 currentMerged,
-                                 nextMerged) {
+            FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &current->Merged.ListHead, currentMerged, nextMerged)
+            {
 
                 //
                 // Remove the entry from the current list
@@ -999,10 +891,7 @@ Return Value:
                 // Add the entry to the new merged range
                 //
 
-                status = RtlpAddToMergedRange(First,
-                                            currentMerged,
-                                            AddRangeFlags
-                                            );
+                status = RtlpAddToMergedRange(First, currentMerged, AddRangeFlags);
 
                 //
                 // We should not be able to fail the add but just to be
@@ -1010,7 +899,6 @@ Return Value:
                 //
 
                 ASSERT(NT_SUCCESS(status));
-
             }
 
             //
@@ -1021,8 +909,9 @@ Return Value:
 
             RemoveEntryList(&current->ListEntry);
             RtlpFreeRangeListEntry(current);
-
-        } else {
+        }
+        else
+        {
 
             //
             // Remove the entry from the main list
@@ -1034,10 +923,7 @@ Return Value:
             // Add the entry to the new merged range
             //
 
-            status = RtlpAddToMergedRange(First,
-                                        current,
-                                        AddRangeFlags
-                                        );
+            status = RtlpAddToMergedRange(First, current, AddRangeFlags);
 
             //
             // We should not be able to fail the add but just to be
@@ -1045,7 +931,6 @@ Return Value:
             //
 
             ASSERT(NT_SUCCESS(status));
-
         }
     }
 
@@ -1053,26 +938,17 @@ Return Value:
     // Finally add the entry that did the overlapping
     //
 
-    status = RtlpAddToMergedRange(First,
-                                Entry,
-                                AddRangeFlags
-                                );
+    status = RtlpAddToMergedRange(First, Entry, AddRangeFlags);
 
     ASSERT(NT_SUCCESS(status));
 
 cleanup:
 
     return status;
-
 }
-
+
 NTSTATUS
-RtlDeleteRange(
-    IN OUT PRTL_RANGE_LIST RangeList,
-    IN ULONGLONG Start,
-    IN ULONGLONG End,
-    IN PVOID Owner
-    )
+RtlDeleteRange(IN OUT PRTL_RANGE_LIST RangeList, IN ULONGLONG Start, IN ULONGLONG End, IN PVOID Owner)
 /*++
 
 Routine Description:
@@ -1103,25 +979,18 @@ Return Value:
     RTL_PAGED_CODE();
     ASSERT(RangeList);
 
-    DEBUG_PRINT(1,
-        ("RtlDeleteRange(0x%08x, 0x%I64x, 0x%I64x, 0x%08x)\n",
-        RangeList,
-        Start,
-        End,
-        Owner
-        ));
+    DEBUG_PRINT(1, ("RtlDeleteRange(0x%08x, 0x%I64x, 0x%I64x, 0x%08x)\n", RangeList, Start, End, Owner));
 
 
-    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY,
-                         &RangeList->ListHead,
-                         current,
-                         next) {
+    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &RangeList->ListHead, current, next)
+    {
 
         //
         // We're passed all possible intersections
         //
 
-        if (End < current->Start) {
+        if (End < current->Start)
+        {
 
             //
             // We didn't find a match
@@ -1130,40 +999,36 @@ Return Value:
             break;
         }
 
-        if (MERGED(current)) {
+        if (MERGED(current))
+        {
 
             //
             // COuld our range exist in this merged range?
             //
 
-            if (Start >= current->Start && End <= current->End) {
+            if (Start >= current->Start && End <= current->End)
+            {
 
-                FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY,
-                                     &current->Merged.ListHead,
-                                     currentMerged,
-                                     nextMerged) {
+                FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &current->Merged.ListHead, currentMerged, nextMerged)
+                {
 
-                    if (currentMerged->Start == Start
-                    && currentMerged->End == End
-                    && currentMerged->Allocated.Owner == Owner) {
+                    if (currentMerged->Start == Start && currentMerged->End == End &&
+                        currentMerged->Allocated.Owner == Owner)
+                    {
 
                         //
                         // This is the range - delete it and rebuild the merged
                         // range appropriately
                         //
 
-                        status = RtlpDeleteFromMergedRange(currentMerged,
-                                                         current
-                                                         );
+                        status = RtlpDeleteFromMergedRange(currentMerged, current);
                         goto exit;
                     }
-
                 }
             }
-
-        } else if (current->Start == Start
-               && current->End == End
-               && current->Allocated.Owner == Owner) {
+        }
+        else if (current->Start == Start && current->End == End && current->Allocated.Owner == Owner)
+        {
 
             //
             // This is the range - delete it!
@@ -1178,7 +1043,8 @@ Return Value:
 
 exit:
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // We have removed a range so decrement the count in the header
@@ -1186,17 +1052,13 @@ exit:
 
         RangeList->Count--;
         RangeList->Stamp++;
-
     }
 
     return status;
 }
-
+
 NTSTATUS
-RtlDeleteOwnersRanges(
-    IN OUT PRTL_RANGE_LIST RangeList,
-    IN PVOID Owner
-    )
+RtlDeleteOwnersRanges(IN OUT PRTL_RANGE_LIST RangeList, IN PVOID Owner)
 /*++
 
 Routine Description:
@@ -1222,44 +1084,34 @@ Return Value:
     RTL_PAGED_CODE();
     ASSERT(RangeList);
 
-    DEBUG_PRINT(1,
-                ("RtlDeleteOwnersRanges(0x%08x, 0x%08x)\n",
-                RangeList,
-                Owner
-                ));
+    DEBUG_PRINT(1, ("RtlDeleteOwnersRanges(0x%08x, 0x%08x)\n", RangeList, Owner));
 
 findNext:
 
-    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY,
-                         &RangeList->ListHead,
-                         current,
-                         next) {
+    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &RangeList->ListHead, current, next)
+    {
 
-        if (MERGED(current)) {
+        if (MERGED(current))
+        {
 
-            FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY,
-                                 &current->Merged.ListHead,
-                                 currentMerged,
-                                 nextMerged) {
+            FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &current->Merged.ListHead, currentMerged, nextMerged)
+            {
 
-                if (currentMerged->Allocated.Owner == Owner) {
+                if (currentMerged->Allocated.Owner == Owner)
+                {
 
                     //
                     // This is the range - delete it and rebuild the merged
                     // range appropriately
                     //
 
-                    DEBUG_PRINT(2,
-                        ("RtlDeleteOwnersRanges: Deleting merged range \
+                    DEBUG_PRINT(2, ("RtlDeleteOwnersRanges: Deleting merged range \
                             (Start=%I64x, End=%I64x)\n",
-                        currentMerged->Start,
-                        currentMerged->End
-                        ));
+                                    currentMerged->Start, currentMerged->End));
 
-                    status = RtlpDeleteFromMergedRange(currentMerged,
-                                                     current
-                                                     );
-                    if (!NT_SUCCESS(status)) {
+                    status = RtlpDeleteFromMergedRange(currentMerged, current);
+                    if (!NT_SUCCESS(status))
+                    {
                         goto cleanup;
                     }
 
@@ -1272,11 +1124,11 @@ findNext:
                     // (We could keep a last safe position to go from...)
                     //
                     goto findNext;
-
                 }
             }
-
-        } else if (current->Allocated.Owner == Owner) {
+        }
+        else if (current->Allocated.Owner == Owner)
+        {
 
             //
             // This is the range - delete it!
@@ -1285,31 +1137,23 @@ findNext:
             RemoveEntryList(&current->ListEntry);
             RtlpFreeRangeListEntry(current);
 
-            DEBUG_PRINT(2,
-                ("RtlDeleteOwnersRanges: Deleting range (Start=%I64x,End=%I64x)\n",
-                current->Start,
-                current->End
-                ));
+            DEBUG_PRINT(
+                2, ("RtlDeleteOwnersRanges: Deleting range (Start=%I64x,End=%I64x)\n", current->Start, current->End));
 
             RangeList->Count--;
             RangeList->Stamp++;
 
             status = STATUS_SUCCESS;
-
         }
     }
 
 cleanup:
 
     return status;
-
 }
-
+
 NTSTATUS
-RtlpDeleteFromMergedRange(
-    IN PRTLP_RANGE_LIST_ENTRY Delete,
-    IN PRTLP_RANGE_LIST_ENTRY Merged
-    )
+RtlpDeleteFromMergedRange(IN PRTLP_RANGE_LIST_ENTRY Delete, IN PRTLP_RANGE_LIST_ENTRY Merged)
 /*++
 
 Routine Description:
@@ -1357,10 +1201,8 @@ Return Value:
     // any duplicates of the delete range into the delete list
     //
 
-    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY,
-                         &Merged->Merged.ListHead,
-                         current,
-                         next) {
+    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &Merged->Merged.ListHead, current, next)
+    {
 
         //
         // Add it to the keepList.  Explicitly remove the entries from the
@@ -1376,12 +1218,10 @@ Return Value:
 
         current->PublicFlags &= ~RTL_RANGE_CONFLICT;
 
-        status = RtlpAddRange(&keepList,
-                              current,
-                              RTL_RANGE_LIST_ADD_IF_CONFLICT
-                             );
+        status = RtlpAddRange(&keepList, current, RTL_RANGE_LIST_ADD_IF_CONFLICT);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             //
             // This should only happen if we run out of pool
             //
@@ -1389,7 +1229,8 @@ Return Value:
         }
     }
 
-    if (!IsListEmpty(&keepList)) {
+    if (!IsListEmpty(&keepList))
+    {
 
         //
         // Everything went well so splice this temporary list into the
@@ -1404,11 +1245,11 @@ Return Value:
 
         nextInsert->Blink = keepList.Blink;
         keepList.Blink->Flink = nextInsert;
-
-    } else {
+    }
+    else
+    {
 
         RemoveEntryList(&Merged->ListEntry);
-
     }
 
     //
@@ -1434,12 +1275,10 @@ cleanup:
     // Add all the ranges we moved to the keepList back into Merged
     //
 
-    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &keepList, current, next) {
+    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &keepList, current, next)
+    {
 
-        status = RtlpAddToMergedRange(Merged,
-                                    current,
-                                    RTL_RANGE_LIST_ADD_IF_CONFLICT
-                                    );
+        status = RtlpAddToMergedRange(Merged, current, RTL_RANGE_LIST_ADD_IF_CONFLICT);
 
         ASSERT(NT_SUCCESS(status));
     }
@@ -1448,18 +1287,13 @@ cleanup:
     // And the one were meant to delete
     //
 
-    status = RtlpAddToMergedRange(Merged,
-                                  Delete,
-                                  RTL_RANGE_LIST_ADD_IF_CONFLICT
-                                 );
+    status = RtlpAddToMergedRange(Merged, Delete, RTL_RANGE_LIST_ADD_IF_CONFLICT);
 
     return status;
 }
-
+
 PRTLP_RANGE_LIST_ENTRY
-RtlpCopyRangeListEntry(
-    PRTLP_RANGE_LIST_ENTRY Entry
-    )
+RtlpCopyRangeListEntry(PRTLP_RANGE_LIST_ENTRY Entry)
 /*++
 
 Routine Description:
@@ -1483,7 +1317,8 @@ Return Value:
     RTL_PAGED_CODE();
     ASSERT(Entry);
 
-    if (newEntry = RtlpAllocateRangeListEntry()) {
+    if (newEntry = RtlpAllocateRangeListEntry())
+    {
 
         RtlCopyMemory(newEntry, Entry, sizeof(RTLP_RANGE_LIST_ENTRY));
 
@@ -1492,7 +1327,8 @@ Return Value:
         newEntry->ListEntry.Blink = NULL;
 #endif
 
-        if (MERGED(Entry)) {
+        if (MERGED(Entry))
+        {
 
             //
             // Copy the merged list
@@ -1502,9 +1338,8 @@ Return Value:
 
             InitializeListHead(&newEntry->Merged.ListHead);
 
-            FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY,
-                            &Entry->Merged.ListHead,
-                            current) {
+            FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &Entry->Merged.ListHead, current)
+            {
 
                 //
                 // Allocate a new entry and copy the contents
@@ -1512,7 +1347,8 @@ Return Value:
 
                 newMerged = RtlpAllocateRangeListEntry();
 
-                if (!newMerged) {
+                if (!newMerged)
+                {
                     goto cleanup;
                 }
 
@@ -1538,14 +1374,10 @@ cleanup:
     RtlpDeleteRangeListEntry(newEntry);
 
     return NULL;
-
 }
-
+
 NTSTATUS
-RtlCopyRangeList(
-    OUT PRTL_RANGE_LIST CopyRangeList,
-    IN PRTL_RANGE_LIST RangeList
-    )
+RtlCopyRangeList(OUT PRTL_RANGE_LIST CopyRangeList, IN PRTL_RANGE_LIST RangeList)
 /*++
 
 Routine Description:
@@ -1577,17 +1409,14 @@ Return Value:
     ASSERT(CopyRangeList);
 
 
-    DEBUG_PRINT(1,
-                ("RtlCopyRangeList(0x%08x, 0x%08x)\n",
-                CopyRangeList,
-                RangeList
-                ));
+    DEBUG_PRINT(1, ("RtlCopyRangeList(0x%08x, 0x%08x)\n", CopyRangeList, RangeList));
 
     //
     // Sanity checks...
     //
 
-    if (CopyRangeList->Count != 0) {
+    if (CopyRangeList->Count != 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -1603,7 +1432,8 @@ Return Value:
     // Perform the copy
     //
 
-    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &RangeList->ListHead, current) {
+    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &RangeList->ListHead, current)
+    {
 
         //
         // Copy the current entry
@@ -1611,7 +1441,8 @@ Return Value:
 
         newEntry = RtlpCopyRangeListEntry(current);
 
-        if (!newEntry) {
+        if (!newEntry)
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto cleanup;
         }
@@ -1633,13 +1464,9 @@ cleanup:
 
     RtlFreeRangeList(CopyRangeList);
     return status;
-
 }
-
-VOID
-RtlpDeleteRangeListEntry(
-    IN PRTLP_RANGE_LIST_ENTRY Entry
-    )
+
+VOID RtlpDeleteRangeListEntry(IN PRTLP_RANGE_LIST_ENTRY Entry)
 /*++
 
 Routine Description:
@@ -1662,7 +1489,8 @@ Return Value:
 {
     RTL_PAGED_CODE();
 
-    if (MERGED(Entry)) {
+    if (MERGED(Entry))
+    {
 
         PRTLP_RANGE_LIST_ENTRY current, next;
 
@@ -1670,10 +1498,8 @@ Return Value:
         // Free all member ranges first
         //
 
-        FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY,
-                             &Entry->Merged.ListHead,
-                             current,
-                             next) {
+        FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &Entry->Merged.ListHead, current, next)
+        {
 
             RtlpFreeRangeListEntry(current);
         }
@@ -1681,11 +1507,8 @@ Return Value:
 
     RtlpFreeRangeListEntry(Entry);
 }
-
-VOID
-RtlFreeRangeList(
-    IN PRTL_RANGE_LIST RangeList
-    )
+
+VOID RtlFreeRangeList(IN PRTL_RANGE_LIST RangeList)
 /*++
 
 Routine Description:
@@ -1719,10 +1542,8 @@ Return Value:
     RangeList->Flags = 0;
     RangeList->Count = 0;
 
-    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY,
-                         &RangeList->ListHead,
-                         current,
-                         next) {
+    FOR_ALL_IN_LIST_SAFE(RTLP_RANGE_LIST_ENTRY, &RangeList->ListHead, current, next)
+    {
 
         //
         // Delete the current entry
@@ -1732,18 +1553,11 @@ Return Value:
         RtlpDeleteRangeListEntry(current);
     }
 }
-
+
 NTSTATUS
-RtlIsRangeAvailable(
-    IN PRTL_RANGE_LIST RangeList,
-    IN ULONGLONG Start,
-    IN ULONGLONG End,
-    IN ULONG Flags,
-    IN UCHAR AttributeAvailableMask,
-    IN PVOID Context OPTIONAL,
-    IN PRTL_CONFLICT_RANGE_CALLBACK Callback OPTIONAL,
-    OUT PBOOLEAN Available
-    )
+RtlIsRangeAvailable(IN PRTL_RANGE_LIST RangeList, IN ULONGLONG Start, IN ULONGLONG End, IN ULONG Flags,
+                    IN UCHAR AttributeAvailableMask, IN PVOID Context OPTIONAL,
+                    IN PRTL_CONFLICT_RANGE_CALLBACK Callback OPTIONAL, OUT PBOOLEAN Available)
 /*++
 
 Routine Description:
@@ -1784,14 +1598,8 @@ Return Value:
     ASSERT(RangeList);
     ASSERT(Available);
 
-    DEBUG_PRINT(1,
-        ("RtlIsRangeAvailable(0x%08x, 0x%I64x, 0x%I64x, 0x%08x, 0x%08x)\n",
-        RangeList,
-        Start,
-        End,
-        Flags,
-        Available
-        ));
+    DEBUG_PRINT(1, ("RtlIsRangeAvailable(0x%08x, 0x%I64x, 0x%I64x, 0x%08x, 0x%08x)\n", RangeList, Start, End, Flags,
+                    Available));
 
     //
     // Initialize iterator to the start of the list
@@ -1799,47 +1607,32 @@ Return Value:
     status = RtlGetFirstRange(RangeList, &iterator, &dummy);
 
 
-    if (status == STATUS_NO_MORE_ENTRIES) {
+    if (status == STATUS_NO_MORE_ENTRIES)
+    {
         //
         // The range list is empty therefore the range is available
         //
 
         *Available = TRUE;
         return STATUS_SUCCESS;
-
-    } else if (!NT_SUCCESS(status)) {
+    }
+    else if (!NT_SUCCESS(status))
+    {
 
         return status;
-
     }
 
-    *Available = RtlpIsRangeAvailable(&iterator,
-                                      Start,
-                                      End,
-                                      AttributeAvailableMask,
-                                      (BOOLEAN)(Flags & RTL_RANGE_LIST_SHARED_OK),
-                                      (BOOLEAN)(Flags & RTL_RANGE_LIST_NULL_CONFLICT_OK),
-                                      TRUE,
-                                      Context,
-                                      Callback
-                                      );
+    *Available =
+        RtlpIsRangeAvailable(&iterator, Start, End, AttributeAvailableMask, (BOOLEAN)(Flags & RTL_RANGE_LIST_SHARED_OK),
+                             (BOOLEAN)(Flags & RTL_RANGE_LIST_NULL_CONFLICT_OK), TRUE, Context, Callback);
 
     return STATUS_SUCCESS;
-
 }
-
+
 BOOLEAN
-RtlpIsRangeAvailable(
-    IN PRTL_RANGE_LIST_ITERATOR Iterator,
-    IN ULONGLONG Start,
-    IN ULONGLONG End,
-    IN UCHAR AttributeAvailableMask,
-    IN BOOLEAN SharedOK,
-    IN BOOLEAN NullConflictOK,
-    IN BOOLEAN Forward,
-    IN PVOID Context OPTIONAL,
-    IN PRTL_CONFLICT_RANGE_CALLBACK Callback OPTIONAL
-    )
+RtlpIsRangeAvailable(IN PRTL_RANGE_LIST_ITERATOR Iterator, IN ULONGLONG Start, IN ULONGLONG End,
+                     IN UCHAR AttributeAvailableMask, IN BOOLEAN SharedOK, IN BOOLEAN NullConflictOK,
+                     IN BOOLEAN Forward, IN PVOID Context OPTIONAL, IN PRTL_CONFLICT_RANGE_CALLBACK Callback OPTIONAL)
 /*++
 
 Routine Description:
@@ -1872,19 +1665,25 @@ Return Value:
 
     ASSERT(Iterator);
 
-    FOR_REST_OF_RANGES(Iterator, current, Forward) {
+    FOR_REST_OF_RANGES(Iterator, current, Forward)
+    {
 
         //
         // If we have passed all possible intersections then break out.  This
         // can't be done in a merged region because of possible overlaps.
         //
 
-        if (Forward) {
-            if (!Iterator->MergedHead && End < current->Start) {
+        if (Forward)
+        {
+            if (!Iterator->MergedHead && End < current->Start)
+            {
                 break;
             }
-        } else {
-            if (!Iterator->MergedHead && Start > current->End) {
+        }
+        else
+        {
+            if (!Iterator->MergedHead && Start > current->End)
+            {
                 break;
             }
         }
@@ -1892,15 +1691,11 @@ Return Value:
         //
         // Do we intersect?
         //
-        if (RANGE_LIMITS_INTERSECT(Start, End, current->Start, current->End)) {
+        if (RANGE_LIMITS_INTERSECT(Start, End, current->Start, current->End))
+        {
 
-            DEBUG_PRINT(2,
-                ("Intersection 0x%I64x-0x%I64x and 0x%I64x-0x%I64x\n",
-                Start,
-                End,
-                current->Start,
-                current->End
-                ));
+            DEBUG_PRINT(
+                2, ("Intersection 0x%I64x-0x%I64x and 0x%I64x-0x%I64x\n", Start, End, current->Start, current->End));
 
             //
             // Is the intersection not Ok because it is with a non-shared
@@ -1908,27 +1703,22 @@ Return Value:
             // it should be considered available because of the user flags set.
             //
 
-            if (!((SharedOK && (current->Flags & RTL_RANGE_SHARED))
-                  || (current->Attributes & AttributeAvailableMask)
-                  || (NullConflictOK && (current->Owner == NULL))
-                  )
-                )  {
+            if (!((SharedOK && (current->Flags & RTL_RANGE_SHARED)) || (current->Attributes & AttributeAvailableMask) ||
+                  (NullConflictOK && (current->Owner == NULL))))
+            {
 
                 //
                 // If the caller provided a callback to support extra conflict
                 // semantics call it
                 //
 
-                if (ARGUMENT_PRESENT(Callback)) {
-                    if ((*Callback)(Context, (PRTL_RANGE)current)) {
+                if (ARGUMENT_PRESENT(Callback))
+                {
+                    if ((*Callback)(Context, (PRTL_RANGE)current))
+                    {
 
-                    DEBUG_PRINT(2,
-                        ("User provided callback overrode conflict\n",
-                        Start,
-                        End,
-                        current->Start,
-                        current->End
-                        ));
+                        DEBUG_PRINT(2, ("User provided callback overrode conflict\n", Start, End, current->Start,
+                                        current->End));
 
                         continue;
                     }
@@ -1942,20 +1732,11 @@ Return Value:
 
     return TRUE;
 }
-
+
 NTSTATUS
-RtlFindRange(
-    IN PRTL_RANGE_LIST RangeList,
-    IN ULONGLONG Minimum,
-    IN ULONGLONG Maximum,
-    IN ULONG Length,
-    IN ULONG Alignment,
-    IN ULONG Flags,
-    IN UCHAR AttributeAvailableMask,
-    IN PVOID Context OPTIONAL,
-    IN PRTL_CONFLICT_RANGE_CALLBACK Callback OPTIONAL,
-    OUT PULONGLONG Start
-    )
+RtlFindRange(IN PRTL_RANGE_LIST RangeList, IN ULONGLONG Minimum, IN ULONGLONG Maximum, IN ULONG Length,
+             IN ULONG Alignment, IN ULONG Flags, IN UCHAR AttributeAvailableMask, IN PVOID Context OPTIONAL,
+             IN PRTL_CONFLICT_RANGE_CALLBACK Callback OPTIONAL, OUT PULONGLONG Start)
 /*++
 
 Routine Description:
@@ -2007,16 +1788,8 @@ Return Value:
     ASSERT(Alignment > 0);
     ASSERT(Length > 0);
 
-    DEBUG_PRINT(1,
-        ("RtlFindRange(0x%08x, 0x%I64x, 0x%I64x, 0x%08x, 0x%08x, 0x%08x, 0x%08x)\n",
-        RangeList,
-        Minimum,
-        Maximum,
-        Length,
-        Alignment,
-        Flags,
-        Start
-        ));
+    DEBUG_PRINT(1, ("RtlFindRange(0x%08x, 0x%I64x, 0x%I64x, 0x%08x, 0x%08x, 0x%08x, 0x%08x)\n", RangeList, Minimum,
+                    Maximum, Length, Alignment, Flags, Start));
 
     //
     // Search from high to low, Align start if necessary
@@ -2029,18 +1802,15 @@ Return Value:
     // Valiate parameters
     //
 
-    if ((Minimum > Maximum)
-    || (Maximum - Minimum < Length - 1)
-    || (Minimum + Alignment < Minimum)
-    || (start < Minimum)
-    || (Length == 0)
-    || (Alignment == 0)) {
+    if ((Minimum > Maximum) || (Maximum - Minimum < Length - 1) || (Minimum + Alignment < Minimum) ||
+        (start < Minimum) || (Length == 0) || (Alignment == 0))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
 
-    sharedOK = (BOOLEAN) Flags & RTL_RANGE_LIST_SHARED_OK;
-    nullConflictOK = (BOOLEAN) Flags & RTL_RANGE_LIST_NULL_CONFLICT_OK;
+    sharedOK = (BOOLEAN)Flags & RTL_RANGE_LIST_SHARED_OK;
+    nullConflictOK = (BOOLEAN)Flags & RTL_RANGE_LIST_NULL_CONFLICT_OK;
     //
     // Calculate the end
     //
@@ -2058,23 +1828,14 @@ Return Value:
     // wrap around
     //
 
-    do {
+    do
+    {
 
-        DEBUG_PRINT(2,
-            ("RtlFindRange: Testing range %I64x-%I64x\n",
-            start,
-            end
-            ));
+        DEBUG_PRINT(2, ("RtlFindRange: Testing range %I64x-%I64x\n", start, end));
 
-        if (RtlpIsRangeAvailable(&iterator,
-                                 start,
-                                 end,
-                                 AttributeAvailableMask,
-                                 sharedOK,
-                                 nullConflictOK,
-                                 FALSE,
-                                 Context,
-                                 Callback)) {
+        if (RtlpIsRangeAvailable(&iterator, start, end, AttributeAvailableMask, sharedOK, nullConflictOK, FALSE,
+                                 Context, Callback))
+        {
 
             *Start = start;
 
@@ -2095,7 +1856,8 @@ Return Value:
         //
 
         start = ((PRTLP_RANGE_LIST_ENTRY)(iterator.Current))->Start;
-        if ((start - Length) > start) {
+        if ((start - Length) > start)
+        {
 
             //
             // Wrapped, fail.
@@ -2108,17 +1870,13 @@ Return Value:
         start -= start % Alignment;
         end = start + Length - 1;
 
-    } while ( start >= Minimum );
+    } while (start >= Minimum);
 
     return STATUS_UNSUCCESSFUL;
 }
-
+
 NTSTATUS
-RtlGetFirstRange(
-    IN PRTL_RANGE_LIST RangeList,
-    OUT PRTL_RANGE_LIST_ITERATOR Iterator,
-    OUT PRTL_RANGE *Range
-    )
+RtlGetFirstRange(IN PRTL_RANGE_LIST RangeList, OUT PRTL_RANGE_LIST_ITERATOR Iterator, OUT PRTL_RANGE *Range)
 /*++
 
 Routine Description:
@@ -2155,7 +1913,8 @@ Return Value:
     Iterator->RangeListHead = &RangeList->ListHead;
     Iterator->Stamp = RangeList->Stamp;
 
-    if (!IsListEmpty(&RangeList->ListHead)) {
+    if (!IsListEmpty(&RangeList->ListHead))
+    {
 
         first = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(RangeList->ListHead.Flink);
 
@@ -2164,24 +1923,25 @@ Return Value:
         // range if we are merged
         //
 
-        if (MERGED(first)) {
+        if (MERGED(first))
+        {
 
             ASSERT(!IsListEmpty(&first->Merged.ListHead));
 
             Iterator->MergedHead = &first->Merged.ListHead;
-            Iterator->Current = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(
-                                    first->Merged.ListHead.Flink
-                                    );
-
-        } else {
+            Iterator->Current = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(first->Merged.ListHead.Flink);
+        }
+        else
+        {
 
             Iterator->MergedHead = NULL;
             Iterator->Current = first;
         }
 
-        *Range = (PRTL_RANGE) Iterator->Current;
-
-    } else {
+        *Range = (PRTL_RANGE)Iterator->Current;
+    }
+    else
+    {
 
         Iterator->Current = NULL;
         Iterator->MergedHead = NULL;
@@ -2193,13 +1953,9 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-RtlGetLastRange(
-    IN PRTL_RANGE_LIST RangeList,
-    OUT PRTL_RANGE_LIST_ITERATOR Iterator,
-    OUT PRTL_RANGE *Range
-    )
+RtlGetLastRange(IN PRTL_RANGE_LIST RangeList, OUT PRTL_RANGE_LIST_ITERATOR Iterator, OUT PRTL_RANGE *Range)
 /*++
 
 Routine Description:
@@ -2236,7 +1992,8 @@ Return Value:
     Iterator->RangeListHead = &RangeList->ListHead;
     Iterator->Stamp = RangeList->Stamp;
 
-    if (!IsListEmpty(&RangeList->ListHead)) {
+    if (!IsListEmpty(&RangeList->ListHead))
+    {
 
         first = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(RangeList->ListHead.Blink);
 
@@ -2245,24 +2002,25 @@ Return Value:
         // range if we are merged
         //
 
-        if (MERGED(first)) {
+        if (MERGED(first))
+        {
 
             ASSERT(!IsListEmpty(&first->Merged.ListHead));
 
             Iterator->MergedHead = &first->Merged.ListHead;
-            Iterator->Current = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(
-                                    first->Merged.ListHead.Blink
-                                    );
-
-        } else {
+            Iterator->Current = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(first->Merged.ListHead.Blink);
+        }
+        else
+        {
 
             Iterator->MergedHead = NULL;
             Iterator->Current = first;
         }
 
-        *Range = (PRTL_RANGE) Iterator->Current;
-
-    } else {
+        *Range = (PRTL_RANGE)Iterator->Current;
+    }
+    else
+    {
 
         Iterator->Current = NULL;
         Iterator->MergedHead = NULL;
@@ -2274,13 +2032,9 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-RtlGetNextRange(
-    IN OUT PRTL_RANGE_LIST_ITERATOR Iterator,
-    OUT    PRTL_RANGE *Range,
-    IN     BOOLEAN MoveForwards
-    )
+RtlGetNextRange(IN OUT PRTL_RANGE_LIST_ITERATOR Iterator, OUT PRTL_RANGE *Range, IN BOOLEAN MoveForwards)
 /*++
 
 Routine Description:
@@ -2320,12 +2074,12 @@ Note:
     // Make sure that we haven't changed the list between calls
     //
 
-    if (RANGE_LIST_FROM_LIST_HEAD(Iterator->RangeListHead)->Stamp !=
-            Iterator->Stamp) {
+    if (RANGE_LIST_FROM_LIST_HEAD(Iterator->RangeListHead)->Stamp != Iterator->Stamp)
+    {
 
-        ASSERTMSG(
-            "RtlGetNextRange: Add/Delete operations have been performed while \
-            iterating through a list\n", FALSE);
+        ASSERTMSG("RtlGetNextRange: Add/Delete operations have been performed while \
+            iterating through a list\n",
+                  FALSE);
 
         return STATUS_INVALID_PARAMETER;
     }
@@ -2334,56 +2088,50 @@ Note:
     // If we have already reached the end of the list then return
     //
 
-    if (!Iterator->Current) {
+    if (!Iterator->Current)
+    {
         *Range = NULL;
         return STATUS_NO_MORE_ENTRIES;
     }
 
     entry = &((PRTLP_RANGE_LIST_ENTRY)(Iterator->Current))->ListEntry;
-    next = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(
-               MoveForwards ? entry->Flink : entry->Blink);
+    next = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(MoveForwards ? entry->Flink : entry->Blink);
 
     ASSERT(next);
 
     //
     // Are we in a merged range?
     //
-    if (Iterator->MergedHead) {
+    if (Iterator->MergedHead)
+    {
 
         //
         // Have we reached the end of the merged range?
         //
-        if (&next->ListEntry == Iterator->MergedHead) {
+        if (&next->ListEntry == Iterator->MergedHead)
+        {
 
             //
             // Get back to the merged entry
             //
-            mergedEntry = CONTAINING_RECORD(
-                              Iterator->MergedHead,
-                              RTLP_RANGE_LIST_ENTRY,
-                              Merged.ListHead
-                              );
+            mergedEntry = CONTAINING_RECORD(Iterator->MergedHead, RTLP_RANGE_LIST_ENTRY, Merged.ListHead);
 
             //
             // Move on to the next entry in the main list
             //
 
-            next = MoveForwards ?
-                       RANGE_LIST_ENTRY_FROM_LIST_ENTRY(
-                           mergedEntry->ListEntry.Flink
-                           )
-                   :   RANGE_LIST_ENTRY_FROM_LIST_ENTRY(
-                           mergedEntry->ListEntry.Blink
-                           );
+            next = MoveForwards ? RANGE_LIST_ENTRY_FROM_LIST_ENTRY(mergedEntry->ListEntry.Flink)
+                                : RANGE_LIST_ENTRY_FROM_LIST_ENTRY(mergedEntry->ListEntry.Blink);
             Iterator->MergedHead = NULL;
-
-        } else {
+        }
+        else
+        {
 
             //
             // There are merged ranges left - return the next one
             //
             Iterator->Current = next;
-            *Range = (PRTL_RANGE) next;
+            *Range = (PRTL_RANGE)next;
 
             return STATUS_SUCCESS;
         }
@@ -2392,7 +2140,8 @@ Note:
     //
     // Have we reached the end of the main list?
     //
-    if (&next->ListEntry == Iterator->RangeListHead) {
+    if (&next->ListEntry == Iterator->RangeListHead)
+    {
 
         //
         // Tell the caller there are no more ranges
@@ -2400,14 +2149,16 @@ Note:
         Iterator->Current = NULL;
         *Range = NULL;
         return STATUS_NO_MORE_ENTRIES;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Is the next range merged?
         //
 
-        if (MERGED(next)) {
+        if (MERGED(next))
+        {
 
             //
             // Goto the first merged entry
@@ -2415,37 +2166,28 @@ Note:
             ASSERT(!Iterator->MergedHead);
 
             Iterator->MergedHead = &next->Merged.ListHead;
-            Iterator->Current = MoveForwards ?
-                                    RANGE_LIST_ENTRY_FROM_LIST_ENTRY(
-                                        next->Merged.ListHead.Flink
-                                        )
-                                :   RANGE_LIST_ENTRY_FROM_LIST_ENTRY(
-                                        next->Merged.ListHead.Blink
-                                        );
-        } else {
+            Iterator->Current = MoveForwards ? RANGE_LIST_ENTRY_FROM_LIST_ENTRY(next->Merged.ListHead.Flink)
+                                             : RANGE_LIST_ENTRY_FROM_LIST_ENTRY(next->Merged.ListHead.Blink);
+        }
+        else
+        {
 
             //
             // Go to the next entry in the main list
             //
 
-            Iterator->Current = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(
-                                    &next->ListEntry
-                                    );
+            Iterator->Current = RANGE_LIST_ENTRY_FROM_LIST_ENTRY(&next->ListEntry);
         }
 
-        *Range = (PRTL_RANGE) Iterator->Current;
+        *Range = (PRTL_RANGE)Iterator->Current;
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-RtlMergeRangeLists(
-    OUT PRTL_RANGE_LIST MergedRangeList,
-    IN PRTL_RANGE_LIST RangeList1,
-    IN PRTL_RANGE_LIST RangeList2,
-    IN ULONG Flags
-    )
+RtlMergeRangeLists(OUT PRTL_RANGE_LIST MergedRangeList, IN PRTL_RANGE_LIST RangeList1, IN PRTL_RANGE_LIST RangeList2,
+                   IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -2480,13 +2222,8 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    DEBUG_PRINT(1,
-            ("RtlMergeRangeList(0x%08x, 0x%08x, 0x%08x, 0x%08x)\n",
-            MergedRangeList,
-            RangeList1,
-            RangeList2,
-            Flags
-            ));
+    DEBUG_PRINT(
+        1, ("RtlMergeRangeList(0x%08x, 0x%08x, 0x%08x, 0x%08x)\n", MergedRangeList, RangeList1, RangeList2, Flags));
 
     //
     // Copy the first range list
@@ -2494,7 +2231,8 @@ Return Value:
 
     status = RtlCopyRangeList(MergedRangeList, RangeList1);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto cleanup;
     }
 
@@ -2502,20 +2240,23 @@ Return Value:
     // Add all ranges from 2nd list
     //
 
-    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &RangeList2->ListHead, current) {
+    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &RangeList2->ListHead, current)
+    {
 
-        if (MERGED(current)) {
+        if (MERGED(current))
+        {
 
-            FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY,
-                            &current->Merged.ListHead,
-                            currentMerged) {
+            FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &current->Merged.ListHead, currentMerged)
+            {
 
-                if (!(newEntry = RtlpCopyRangeListEntry(currentMerged))) {
-                        status = STATUS_INSUFFICIENT_RESOURCES;
-                        goto cleanup;
+                if (!(newEntry = RtlpCopyRangeListEntry(currentMerged)))
+                {
+                    status = STATUS_INSUFFICIENT_RESOURCES;
+                    goto cleanup;
                 }
 
-                if (CONFLICT(currentMerged)) {
+                if (CONFLICT(currentMerged))
+                {
 
                     //
                     // If a range was already conflicting in then it will conflict in
@@ -2523,27 +2264,28 @@ Return Value:
                     //
 
                     addFlags = Flags | RTL_RANGE_LIST_ADD_IF_CONFLICT;
-                } else {
+                }
+                else
+                {
 
                     addFlags = Flags;
                 }
 
-                status = RtlpAddRange(&MergedRangeList->ListHead,
-                                      newEntry,
-                                      addFlags
-                                      );
-
+                status = RtlpAddRange(&MergedRangeList->ListHead, newEntry, addFlags);
             }
+        }
+        else
+        {
 
-        } else {
 
-
-            if (!(newEntry = RtlpCopyRangeListEntry(current))){
+            if (!(newEntry = RtlpCopyRangeListEntry(current)))
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto cleanup;
             }
 
-            if (CONFLICT(current)) {
+            if (CONFLICT(current))
+            {
 
                 //
                 // If a range was already conflicting in then it will conflict in
@@ -2551,20 +2293,19 @@ Return Value:
                 //
 
                 addFlags = Flags | RTL_RANGE_LIST_ADD_IF_CONFLICT;
-            } else {
+            }
+            else
+            {
                 addFlags = Flags;
             }
 
-            status = RtlpAddRange(&MergedRangeList->ListHead,
-                                  newEntry,
-                                  addFlags
-                                  );
+            status = RtlpAddRange(&MergedRangeList->ListHead, newEntry, addFlags);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto cleanup;
             }
         }
-
     }
     //
     // Correct the count
@@ -2585,14 +2326,10 @@ cleanup:
     RtlFreeRangeList(MergedRangeList);
 
     return status;
-
 }
 
 NTSTATUS
-RtlInvertRangeList(
-    OUT PRTL_RANGE_LIST InvertedRangeList,
-    IN PRTL_RANGE_LIST RangeList
-    )
+RtlInvertRangeList(OUT PRTL_RANGE_LIST InvertedRangeList, IN PRTL_RANGE_LIST RangeList)
 /*
 
 Routine Description:
@@ -2635,25 +2372,24 @@ Return Value:
     // to the RealAllocation
     //
 
-    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY,
-                    &RangeList->ListHead,
-                    currentRange) {
+    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &RangeList->ListHead, currentRange)
+    {
 
-        if (currentRange->Start > currentStart) {
+        if (currentRange->Start > currentStart)
+        {
 
             //
             // we want a NULL range owner to show that the
             // range is unavailable
             //
-            status = RtlAddRange(InvertedRangeList,
-                                 currentStart,
-                                 currentRange->Start-1,
-                                 0,            // Attributes
-                                 0,            // Flags
-                                 0,            // UserData
-                                 NULL);        // Owner
+            status = RtlAddRange(InvertedRangeList, currentStart, currentRange->Start - 1,
+                                 0,     // Attributes
+                                 0,     // Flags
+                                 0,     // UserData
+                                 NULL); // Owner
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 return status;
             }
         }
@@ -2669,56 +2405,43 @@ Return Value:
     // the last element
     //
 
-    if (currentStart > (currentStart - 1)) {
+    if (currentStart > (currentStart - 1))
+    {
 
-        status = RtlAddRange(InvertedRangeList,
-                             currentStart,
-                             MAX_ULONGLONG,
-                             0,
-                             0,
-                             0,
-                             NULL);
+        status = RtlAddRange(InvertedRangeList, currentStart, MAX_ULONGLONG, 0, 0, 0, NULL);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
     }
 
     return STATUS_SUCCESS;
-
 }
 
-
+
 #if DBG
 
-VOID
-RtlpDumpRangeListEntry(
-    LONG Level,
-    PRTLP_RANGE_LIST_ENTRY Entry,
-    BOOLEAN Indent
-    )
+VOID RtlpDumpRangeListEntry(LONG Level, PRTLP_RANGE_LIST_ENTRY Entry, BOOLEAN Indent)
 {
     PWSTR indentString;
     PRTLP_RANGE_LIST_ENTRY current;
 
     RTL_PAGED_CODE();
 
-    if (Indent) {
+    if (Indent)
+    {
         indentString = L"\t\t";
-    } else {
+    }
+    else
+    {
         indentString = L"";
     }
     //
     // Print the range
     //
 
-    DEBUG_PRINT(Level,
-                ("%sRange (0x%08x): 0x%I64x-0x%I64x\n",
-                indentString,
-                Entry,
-                Entry->Start,
-                Entry->End
-                ));
+    DEBUG_PRINT(Level, ("%sRange (0x%08x): 0x%I64x-0x%I64x\n", indentString, Entry, Entry->Start, Entry->End));
 
     //
     // Print the flags
@@ -2726,25 +2449,28 @@ RtlpDumpRangeListEntry(
 
     DEBUG_PRINT(Level, ("%s\tPrivateFlags: ", indentString));
 
-    if (MERGED(Entry)) {
+    if (MERGED(Entry))
+    {
         DEBUG_PRINT(Level, ("MERGED "));
-
     }
 
     DEBUG_PRINT(Level, ("\n%s\tPublicFlags: ", indentString));
 
-    if (SHARED(Entry)) {
+    if (SHARED(Entry))
+    {
         DEBUG_PRINT(Level, ("SHARED "));
     }
 
-    if (CONFLICT(Entry)) {
+    if (CONFLICT(Entry))
+    {
         DEBUG_PRINT(Level, ("CONFLICT "));
     }
 
     DEBUG_PRINT(Level, ("\n"));
 
 
-    if (MERGED(Entry)) {
+    if (MERGED(Entry))
+    {
 
         DEBUG_PRINT(Level, ("%sMerged entries:\n", indentString));
 
@@ -2752,46 +2478,34 @@ RtlpDumpRangeListEntry(
         // Print the merged entries
         //
 
-        FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY,
-                        &Entry->Merged.ListHead,
-                        current) {
+        FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &Entry->Merged.ListHead, current)
+        {
             RtlpDumpRangeListEntry(Level, current, TRUE);
         }
-
-
-    } else {
+    }
+    else
+    {
 
         //
         // Print the other data
         //
 
-        DEBUG_PRINT(Level,
-            ("%s\tUserData: 0x%08x\n\tOwner: 0x%08x\n",
-            indentString,
-            Entry->Allocated.UserData,
-            Entry->Allocated.Owner
-            ));
+        DEBUG_PRINT(Level, ("%s\tUserData: 0x%08x\n\tOwner: 0x%08x\n", indentString, Entry->Allocated.UserData,
+                            Entry->Allocated.Owner));
     }
 }
-
-VOID
-RtlpDumpRangeList(
-    LONG Level,
-    PRTL_RANGE_LIST RangeList
-    )
+
+VOID RtlpDumpRangeList(LONG Level, PRTL_RANGE_LIST RangeList)
 
 {
     PRTLP_RANGE_LIST_ENTRY current, currentMerged;
 
     RTL_PAGED_CODE();
 
-    DEBUG_PRINT(Level,
-                ("*** Range List (0x%08x) - Count: %i\n",
-                RangeList,
-                RangeList->Count
-                ));
+    DEBUG_PRINT(Level, ("*** Range List (0x%08x) - Count: %i\n", RangeList, RangeList->Count));
 
-    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &RangeList->ListHead, current) {
+    FOR_ALL_IN_LIST(RTLP_RANGE_LIST_ENTRY, &RangeList->ListHead, current)
+    {
 
         //
         // Print the entry

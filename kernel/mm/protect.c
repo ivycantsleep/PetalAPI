@@ -27,44 +27,29 @@ PEPROCESS MmWatchProcess;
 #endif // DBG
 
 HARDWARE_PTE
-MiFlushTbAndCapture(
-    IN PMMPTE PtePointer,
-    IN HARDWARE_PTE TempPte,
-    IN PMMPFN Pfn1
-    );
+MiFlushTbAndCapture(IN PMMPTE PtePointer, IN HARDWARE_PTE TempPte, IN PMMPFN Pfn1);
 
 ULONG
-MiSetProtectionOnTransitionPte (
-    IN PMMPTE PointerPte,
-    IN ULONG ProtectionMask
-    );
+MiSetProtectionOnTransitionPte(IN PMMPTE PointerPte, IN ULONG ProtectionMask);
 
 MMPTE
-MiCaptureSystemPte (
-    IN PMMPTE PointerProtoPte,
-    IN PEPROCESS Process
-    );
+MiCaptureSystemPte(IN PMMPTE PointerProtoPte, IN PEPROCESS Process);
 
 extern CCHAR MmReadWrite[32];
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtProtectVirtualMemory)
-#pragma alloc_text(PAGE,MiProtectVirtualMemory)
-#pragma alloc_text(PAGE,MiSetProtectionOnSection)
-#pragma alloc_text(PAGE,MiGetPageProtection)
-#pragma alloc_text(PAGE,MiChangeNoAccessForkPte)
-#pragma alloc_text(PAGE,MiCheckSecuredVad)
+#pragma alloc_text(PAGE, NtProtectVirtualMemory)
+#pragma alloc_text(PAGE, MiProtectVirtualMemory)
+#pragma alloc_text(PAGE, MiSetProtectionOnSection)
+#pragma alloc_text(PAGE, MiGetPageProtection)
+#pragma alloc_text(PAGE, MiChangeNoAccessForkPte)
+#pragma alloc_text(PAGE, MiCheckSecuredVad)
 #endif
 
-
+
 NTSTATUS
-NtProtectVirtualMemory(
-     IN HANDLE ProcessHandle,
-     IN OUT PVOID *BaseAddress,
-     IN OUT PSIZE_T RegionSize,
-     IN ULONG NewProtect,
-     OUT PULONG OldProtect
-     )
+NtProtectVirtualMemory(IN HANDLE ProcessHandle, IN OUT PVOID *BaseAddress, IN OUT PSIZE_T RegionSize,
+                       IN ULONG NewProtect, OUT PULONG OldProtect)
 
 /*++
 
@@ -182,29 +167,32 @@ Environment:
     // Check the protection field.
     //
 
-    ProtectionMask = MiMakeProtectionMask (NewProtect);
+    ProtectionMask = MiMakeProtectionMask(NewProtect);
 
-    if (ProtectionMask == MM_INVALID_PROTECTION) {
+    if (ProtectionMask == MM_INVALID_PROTECTION)
+    {
         return STATUS_INVALID_PAGE_PROTECTION;
     }
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    CurrentProcess = PsGetCurrentProcessByThread (CurrentThread);
+    CurrentProcess = PsGetCurrentProcessByThread(CurrentThread);
 
     PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Capture the region size and base address under an exception handler.
         //
 
-        try {
+        try
+        {
 
-            ProbeForWritePointer (BaseAddress);
-            ProbeForWriteUlong_ptr (RegionSize);
-            ProbeForWriteUlong (OldProtect);
+            ProbeForWritePointer(BaseAddress);
+            ProbeForWriteUlong_ptr(RegionSize);
+            ProbeForWriteUlong(OldProtect);
 
             //
             // Capture the region size and base address.
@@ -212,8 +200,9 @@ Environment:
 
             CapturedBase = *BaseAddress;
             CapturedRegionSize = *RegionSize;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -223,9 +212,9 @@ Environment:
 
             return GetExceptionCode();
         }
-
     }
-    else {
+    else
+    {
 
         //
         // Capture the region size and base address.
@@ -240,7 +229,8 @@ Environment:
     // within the user part of the virtual address space.
     //
 
-    if (CapturedBase > MM_HIGHEST_USER_ADDRESS) {
+    if (CapturedBase > MM_HIGHEST_USER_ADDRESS)
+    {
 
         //
         // Invalid base address.
@@ -249,8 +239,8 @@ Environment:
         return STATUS_INVALID_PARAMETER_2;
     }
 
-    if ((ULONG_PTR)MM_HIGHEST_USER_ADDRESS - (ULONG_PTR)CapturedBase <
-                  CapturedRegionSize) {
+    if ((ULONG_PTR)MM_HIGHEST_USER_ADDRESS - (ULONG_PTR)CapturedBase < CapturedRegionSize)
+    {
 
         //
         // Invalid region size;
@@ -259,18 +249,16 @@ Environment:
         return STATUS_INVALID_PARAMETER_3;
     }
 
-    if (CapturedRegionSize == 0) {
+    if (CapturedRegionSize == 0)
+    {
         return STATUS_INVALID_PARAMETER_3;
     }
 
-    Status = ObReferenceObjectByHandle ( ProcessHandle,
-                                         PROCESS_VM_OPERATION,
-                                         PsProcessType,
-                                         PreviousMode,
-                                         (PVOID *)&Process,
-                                         NULL );
+    Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_OPERATION, PsProcessType, PreviousMode,
+                                       (PVOID *)&Process, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -279,30 +267,29 @@ Environment:
     // to the specified process.
     //
 
-    if (CurrentProcess != Process) {
-        KeStackAttachProcess (&Process->Pcb, &ApcState);
+    if (CurrentProcess != Process)
+    {
+        KeStackAttachProcess(&Process->Pcb, &ApcState);
         Attached = TRUE;
     }
 
-    Status = MiProtectVirtualMemory (Process,
-                                     &CapturedBase,
-                                     &CapturedRegionSize,
-                                     NewProtect,
-                                     &LastProtect);
+    Status = MiProtectVirtualMemory(Process, &CapturedBase, &CapturedRegionSize, NewProtect, &LastProtect);
 
 
-    if (Attached) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached)
+    {
+        KeUnstackDetachProcess(&ApcState);
     }
 
-    ObDereferenceObject (Process);
+    ObDereferenceObject(Process);
 
     //
     // Establish an exception handler and write the size and base
     // address.
     //
 
-    try {
+    try
+    {
 
         //
         // Reprobe the addresses as certain architectures (intel 386 for one)
@@ -311,33 +298,30 @@ Environment:
         // and the final argument update.
         //
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
-            ProbeForWritePointer (BaseAddress);
-            ProbeForWriteUlong_ptr (RegionSize);
-            ProbeForWriteUlong (OldProtect);
+            ProbeForWritePointer(BaseAddress);
+            ProbeForWriteUlong_ptr(RegionSize);
+            ProbeForWriteUlong(OldProtect);
         }
 
         *RegionSize = CapturedRegionSize;
         *BaseAddress = CapturedBase;
         *OldProtect = LastProtect;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         NOTHING;
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-MiProtectVirtualMemory (
-    IN PEPROCESS Process,
-    IN PVOID *BaseAddress,
-    IN PSIZE_T RegionSize,
-    IN ULONG NewProtect,
-    IN PULONG LastProtect
-    )
+MiProtectVirtualMemory(IN PEPROCESS Process, IN PVOID *BaseAddress, IN PSIZE_T RegionSize, IN ULONG NewProtect,
+                       IN PULONG LastProtect)
 
 /*++
 
@@ -426,30 +410,31 @@ Environment:
     OriginalProtect = NewProtect;
 
 #if defined(_MIALT4K_)
-    EmulationFor4kPage = FALSE; 
+    EmulationFor4kPage = FALSE;
     OriginalBase = CapturedBase;
     OriginalRegionSize = CapturedRegionSize;
     CapturedOldProtectFor4k = 0;
     OriginalProtectionMask = 0;
 
-    if (Process->Wow64Process != NULL) {
+    if (Process->Wow64Process != NULL)
+    {
 
         StartingAddressFor4k = (PVOID)PAGE_4K_ALIGN(OriginalBase);
 
-        EndingAddressFor4k = (PVOID)(((ULONG_PTR)OriginalBase +
-                                      OriginalRegionSize - 1) | (PAGE_4K - 1));
-            
-        CapturedRegionSizeFor4k = (ULONG_PTR)EndingAddressFor4k - 
-                                  (ULONG_PTR)StartingAddressFor4k + 1L;
+        EndingAddressFor4k = (PVOID)(((ULONG_PTR)OriginalBase + OriginalRegionSize - 1) | (PAGE_4K - 1));
+
+        CapturedRegionSizeFor4k = (ULONG_PTR)EndingAddressFor4k - (ULONG_PTR)StartingAddressFor4k + 1L;
 
         OriginalProtectionMask = MiMakeProtectionMask(NewProtect);
-        if (OriginalProtectionMask == MM_INVALID_PROTECTION) {
+        if (OriginalProtectionMask == MM_INVALID_PROTECTION)
+        {
             return STATUS_INVALID_PAGE_PROTECTION;
         }
 
         EmulationFor4kPage = TRUE;
     }
-    else {
+    else
+    {
         //
         // Initializing these is not needed for correctness, but
         // without it the compiler cannot compile this code W4 to check
@@ -462,30 +447,32 @@ Environment:
     }
 #endif
 
-    ProtectionMask = MiMakeProtectionMask (NewProtect);
-    if (ProtectionMask == MM_INVALID_PROTECTION) {
+    ProtectionMask = MiMakeProtectionMask(NewProtect);
+    if (ProtectionMask == MM_INVALID_PROTECTION)
+    {
         return STATUS_INVALID_PAGE_PROTECTION;
     }
 
-    EndingAddress = (PVOID)(((ULONG_PTR)CapturedBase +
-                                CapturedRegionSize - 1L) | (PAGE_SIZE - 1L));
+    EndingAddress = (PVOID)(((ULONG_PTR)CapturedBase + CapturedRegionSize - 1L) | (PAGE_SIZE - 1L));
 
     StartingAddress = (PVOID)PAGE_ALIGN(CapturedBase);
 
-    LOCK_ADDRESS_SPACE (Process);
+    LOCK_ADDRESS_SPACE(Process);
 
     //
     // Make sure the address space was not deleted, if so, return an error.
     //
 
-    if (Process->Flags & PS_PROCESS_FLAGS_VM_DELETED) {
+    if (Process->Flags & PS_PROCESS_FLAGS_VM_DELETED)
+    {
         Status = STATUS_PROCESS_IS_TERMINATING;
         goto ErrorFound;
     }
 
-    FoundVad = MiCheckForConflictingVad (Process, StartingAddress, EndingAddress);
+    FoundVad = MiCheckForConflictingVad(Process, StartingAddress, EndingAddress);
 
-    if (FoundVad == NULL) {
+    if (FoundVad == NULL)
+    {
 
         //
         // No virtual address is reserved at the specified base address,
@@ -501,8 +488,8 @@ Environment:
     // the same virtual address descriptor.
     //
 
-    if ((MI_VA_TO_VPN (StartingAddress) < FoundVad->StartingVpn) ||
-        (MI_VA_TO_VPN (EndingAddress) > FoundVad->EndingVpn)) {
+    if ((MI_VA_TO_VPN(StartingAddress) < FoundVad->StartingVpn) || (MI_VA_TO_VPN(EndingAddress) > FoundVad->EndingVpn))
+    {
 
         //
         // Not within the section virtual address descriptor,
@@ -513,15 +500,17 @@ Environment:
         goto ErrorFound;
     }
 
-    if (FoundVad->u.VadFlags.UserPhysicalPages == 1) {
+    if (FoundVad->u.VadFlags.UserPhysicalPages == 1)
+    {
 
         //
         // These regions are always readwrite (but no execute).
         //
 
-        if (ProtectionMask == MM_READWRITE) {
+        if (ProtectionMask == MM_READWRITE)
+        {
 
-            UNLOCK_ADDRESS_SPACE (Process);
+            UNLOCK_ADDRESS_SPACE(Process);
 
             *RegionSize = (PCHAR)EndingAddress - (PCHAR)StartingAddress + 1L;
             *BaseAddress = StartingAddress;
@@ -534,7 +523,8 @@ Environment:
         goto ErrorFound;
     }
 
-    if (FoundVad->u.VadFlags.PhysicalMapping == 1) {
+    if (FoundVad->u.VadFlags.PhysicalMapping == 1)
+    {
 
         //
         // Setting the protection of a physically mapped section is
@@ -545,7 +535,8 @@ Environment:
         goto ErrorFound;
     }
 
-    if (FoundVad->u.VadFlags.NoChange == 1) {
+    if (FoundVad->u.VadFlags.NoChange == 1)
+    {
 
         //
         // An attempt is made at changing the protection
@@ -553,19 +544,19 @@ Environment:
         // to change allows the change.
         //
 
-        Status = MiCheckSecuredVad (FoundVad,
-                                    CapturedBase,
-                                    CapturedRegionSize,
-                                    ProtectionMask);
+        Status = MiCheckSecuredVad(FoundVad, CapturedBase, CapturedRegionSize, ProtectionMask);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto ErrorFound;
         }
     }
 #if defined(_MIALT4K_)
-    else if (EmulationFor4kPage == TRUE) {
+    else if (EmulationFor4kPage == TRUE)
+    {
 
-        if (StartingAddressFor4k >= (PVOID)MM_MAX_WOW64_ADDRESS) {
+        if (StartingAddressFor4k >= (PVOID)MM_MAX_WOW64_ADDRESS)
+        {
             Status = STATUS_INVALID_PAGE_PROTECTION;
             goto ErrorFound;
         }
@@ -574,26 +565,27 @@ Environment:
         // If not secured, relax the protection.
         //
 
-        NewProtect = MiMakeProtectForNativePage (StartingAddressFor4k, 
-                                                 NewProtect, 
-                                                 Process);
+        NewProtect = MiMakeProtectForNativePage(StartingAddressFor4k, NewProtect, Process);
 
         ProtectionMask = MiMakeProtectionMask(NewProtect);
 
-        if (ProtectionMask == MM_INVALID_PROTECTION) {
+        if (ProtectionMask == MM_INVALID_PROTECTION)
+        {
             Status = STATUS_INVALID_PAGE_PROTECTION;
             goto ErrorFound;
         }
     }
 #endif
 
-    if (FoundVad->u.VadFlags.PrivateMemory == 0) {
+    if (FoundVad->u.VadFlags.PrivateMemory == 0)
+    {
 
         //
         // For mapped sections, the NO_CACHE attribute is not allowed.
         //
 
-        if (NewProtect & PAGE_NOCACHE) {
+        if (NewProtect & PAGE_NOCACHE)
+        {
 
             //
             // Not allowed.
@@ -609,8 +601,8 @@ Environment:
         //
 
         if ((FoundVad->ControlArea->u.Flags.Image == 0) &&
-            (!MiIsPteProtectionCompatible ((ULONG)FoundVad->u.VadFlags.Protection,
-                                           OriginalProtect))) {
+            (!MiIsPteProtectionCompatible((ULONG)FoundVad->u.VadFlags.Protection, OriginalProtect)))
+        {
             Status = STATUS_SECTION_PROTECTION;
             goto ErrorFound;
         }
@@ -622,13 +614,11 @@ Environment:
         // than the page size.
         //
 
-        if ((FoundVad->ControlArea->u.Flags.File == 0) ||
-            (FoundVad->ControlArea->u.Flags.Image == 1)) {
+        if ((FoundVad->ControlArea->u.Flags.File == 0) || (FoundVad->ControlArea->u.Flags.Image == 1))
+        {
 
-            PointerProtoPte = MiGetProtoPteAddress (FoundVad,
-                                        MI_VA_TO_VPN (StartingAddress));
-            LastProtoPte = MiGetProtoPteAddress (FoundVad,
-                                        MI_VA_TO_VPN (EndingAddress));
+            PointerProtoPte = MiGetProtoPteAddress(FoundVad, MI_VA_TO_VPN(StartingAddress));
+            LastProtoPte = MiGetProtoPteAddress(FoundVad, MI_VA_TO_VPN(EndingAddress));
 
             //
             // Release the working set mutex and acquire the section
@@ -636,22 +626,24 @@ Environment:
             // the virtual address range to ensure they are committed.
             //
 
-            ExAcquireFastMutexUnsafe (&MmSectionCommitMutex);
+            ExAcquireFastMutexUnsafe(&MmSectionCommitMutex);
 
-            while (PointerProtoPte <= LastProtoPte) {
+            while (PointerProtoPte <= LastProtoPte)
+            {
 
                 //
                 // Check to see if the prototype PTE is committed, if
                 // not return an error.
                 //
 
-                if (PointerProtoPte->u.Long == 0) {
+                if (PointerProtoPte->u.Long == 0)
+                {
 
                     //
                     // Error, this prototype PTE is not committed.
                     //
 
-                    ExReleaseFastMutexUnsafe (&MmSectionCommitMutex);
+                    ExReleaseFastMutexUnsafe(&MmSectionCommitMutex);
                     Status = STATUS_NOT_COMMITTED;
                     goto ErrorFound;
                 }
@@ -663,7 +655,7 @@ Environment:
             // mutex, acquire the working set mutex and update the local PTEs.
             //
 
-            ExReleaseFastMutexUnsafe (&MmSectionCommitMutex);
+            ExReleaseFastMutexUnsafe(&MmSectionCommitMutex);
         }
 
 #if defined(_MIALT4K_)
@@ -673,28 +665,27 @@ Environment:
         // are created for the protection change.
         //
 
-        if (EmulationFor4kPage == TRUE) {
+        if (EmulationFor4kPage == TRUE)
+        {
 
             //
             // Capture the old protection.
             //
 
-            CapturedOldProtectFor4k = 
-                MiQueryProtectionFor4kPage (StartingAddressFor4k, Process);
-            
-            if (CapturedOldProtectFor4k != 0) {
- 
-                CapturedOldProtectFor4k = 
-                    MI_CONVERT_FROM_PTE_PROTECTION(CapturedOldProtectFor4k);
+            CapturedOldProtectFor4k = MiQueryProtectionFor4kPage(StartingAddressFor4k, Process);
 
+            if (CapturedOldProtectFor4k != 0)
+            {
+
+                CapturedOldProtectFor4k = MI_CONVERT_FROM_PTE_PROTECTION(CapturedOldProtectFor4k);
             }
 
             //
             // Update the alternate permission table.
             //
 
-            if ((FoundVad->u.VadFlags.ImageMap == 1) ||
-                (FoundVad->u2.VadFlags2.CopyOnWrite == 1)) {
+            if ((FoundVad->u.VadFlags.ImageMap == 1) || (FoundVad->u2.VadFlags2.CopyOnWrite == 1))
+            {
 
                 //
                 // Only set the MM_PROTECTION_COPY_MASK if the new protection
@@ -702,17 +693,14 @@ Environment:
                 // considered as MM_READ inside MiProtectFor4kPage ().
                 //
 
-                if ((OriginalProtectionMask & MM_PROTECTION_WRITE_MASK) == MM_PROTECTION_WRITE_MASK) {
+                if ((OriginalProtectionMask & MM_PROTECTION_WRITE_MASK) == MM_PROTECTION_WRITE_MASK)
+                {
                     OriginalProtectionMask |= MM_PROTECTION_COPY_MASK;
                 }
-
             }
 
-            MiProtectFor4kPage (StartingAddressFor4k, 
-                                CapturedRegionSizeFor4k, 
-                                OriginalProtectionMask, 
-                                ALT_CHANGE,
-                                Process);
+            MiProtectFor4kPage(StartingAddressFor4k, CapturedRegionSizeFor4k, OriginalProtectionMask, ALT_CHANGE,
+                               Process);
         }
 #endif
 
@@ -720,14 +708,8 @@ Environment:
         // Set the protection on the section pages.
         //
 
-        Status = MiSetProtectionOnSection (Process,
-                                           FoundVad,
-                                           StartingAddress,
-                                           EndingAddress,
-                                           NewProtect,
-                                           &CapturedOldProtect,
-                                           FALSE,
-                                           &Locked);
+        Status = MiSetProtectionOnSection(Process, FoundVad, StartingAddress, EndingAddress, NewProtect,
+                                          &CapturedOldProtect, FALSE, &Locked);
 
         //
         //      ***  WARNING ***
@@ -737,19 +719,21 @@ Environment:
         // (large) VAD - if so, the old VAD is freed and cannot be referenced.
         //
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto ErrorFound;
         }
     }
-    else {
+    else
+    {
 
         //
         // Not a section, private.
         // For private pages, the WRITECOPY attribute is not allowed.
         //
 
-        if ((NewProtect & PAGE_WRITECOPY) ||
-            (NewProtect & PAGE_EXECUTE_WRITECOPY)) {
+        if ((NewProtect & PAGE_WRITECOPY) || (NewProtect & PAGE_EXECUTE_WRITECOPY))
+        {
 
             //
             // Not allowed.
@@ -759,24 +743,22 @@ Environment:
             goto ErrorFound;
         }
 
-        LOCK_WS_UNSAFE (Process);
+        LOCK_WS_UNSAFE(Process);
 
         //
         // Ensure all of the pages are already committed as described
         // in the virtual address descriptor.
         //
 
-        if ( !MiIsEntireRangeCommitted (StartingAddress,
-                                        EndingAddress,
-                                        FoundVad,
-                                        Process)) {
+        if (!MiIsEntireRangeCommitted(StartingAddress, EndingAddress, FoundVad, Process))
+        {
 
             //
             // Previously reserved pages have been decommitted, or an error
             // occurred, release mutex and return status.
             //
 
-            UNLOCK_WS_UNSAFE (Process);
+            UNLOCK_WS_UNSAFE(Process);
             Status = STATUS_NOT_COMMITTED;
             goto ErrorFound;
         }
@@ -788,39 +770,35 @@ Environment:
         // are created for the protection change.
         //
 
-        if (EmulationFor4kPage == TRUE) {
+        if (EmulationFor4kPage == TRUE)
+        {
 
             //
             // Before accessing Alternate Table, unlock the working set mutex.
             //
 
-            UNLOCK_WS_UNSAFE (Process);
+            UNLOCK_WS_UNSAFE(Process);
 
             //
             // Get the old protection
             //
 
-            CapturedOldProtectFor4k = 
-                MiQueryProtectionFor4kPage(StartingAddressFor4k, Process);
-            
-            if (CapturedOldProtectFor4k != 0) {
- 
-                CapturedOldProtectFor4k = 
-                    MI_CONVERT_FROM_PTE_PROTECTION(CapturedOldProtectFor4k);
+            CapturedOldProtectFor4k = MiQueryProtectionFor4kPage(StartingAddressFor4k, Process);
 
+            if (CapturedOldProtectFor4k != 0)
+            {
+
+                CapturedOldProtectFor4k = MI_CONVERT_FROM_PTE_PROTECTION(CapturedOldProtectFor4k);
             }
 
             //
             // Update the alternate permission table.
             //
 
-            MiProtectFor4kPage (StartingAddressFor4k, 
-                                CapturedRegionSizeFor4k, 
-                                OriginalProtectionMask, 
-                                ALT_CHANGE,
-                                Process);
+            MiProtectFor4kPage(StartingAddressFor4k, CapturedRegionSizeFor4k, OriginalProtectionMask, ALT_CHANGE,
+                               Process);
 
-            LOCK_WS_UNSAFE (Process);
+            LOCK_WS_UNSAFE(Process);
         }
 #endif
 
@@ -828,9 +806,9 @@ Environment:
         // The address range is committed, change the protection.
         //
 
-        PointerPde = MiGetPdeAddress (StartingAddress);
-        PointerPte = MiGetPteAddress (StartingAddress);
-        LastPte = MiGetPteAddress (EndingAddress);
+        PointerPde = MiGetPdeAddress(StartingAddress);
+        PointerPte = MiGetPteAddress(StartingAddress);
+        LastPte = MiGetPteAddress(EndingAddress);
 
         MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
 
@@ -838,25 +816,25 @@ Environment:
         // Capture the protection for the first page.
         //
 
-        if (PointerPte->u.Long != 0) {
+        if (PointerPte->u.Long != 0)
+        {
 
-            CapturedOldProtect = MiGetPageProtection (PointerPte, Process, FALSE);
+            CapturedOldProtect = MiGetPageProtection(PointerPte, Process, FALSE);
 
             //
             // Make sure the page directory & table pages are still resident.
             //
 
             MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
-
         }
-        else {
+        else
+        {
 
             //
             // Get the protection from the VAD.
             //
 
-            CapturedOldProtect =
-               MI_CONVERT_FROM_PTE_PROTECTION(FoundVad->u.VadFlags.Protection);
+            CapturedOldProtect = MI_CONVERT_FROM_PTE_PROTECTION(FoundVad->u.VadFlags.Protection);
         }
 
         //
@@ -864,9 +842,11 @@ Environment:
         // protection depending on the state of the PTE.
         //
 
-        while (PointerPte <= LastPte) {
+        while (PointerPte <= LastPte)
+        {
 
-            if (MiIsPteOnPdeBoundary (PointerPte)) {
+            if (MiIsPteOnPdeBoundary(PointerPte))
+            {
 
                 PointerPde = MiGetPteAddress(PointerPte);
 
@@ -875,7 +855,8 @@ Environment:
 
             PteContents = *PointerPte;
 
-            if (PteContents.u.Long == 0) {
+            if (PteContents.u.Long == 0)
+            {
 
                 //
                 // Increment the count of non-zero page table entries
@@ -884,29 +865,30 @@ Environment:
                 // if the PTE was demand zero.
                 //
 
-                UsedPageTableHandle = MI_GET_USED_PTES_HANDLE (MiGetVirtualAddressMappedByPte (PointerPte));
+                UsedPageTableHandle = MI_GET_USED_PTES_HANDLE(MiGetVirtualAddressMappedByPte(PointerPte));
 
-                MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageTableHandle);
+                MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageTableHandle);
             }
 
-            if (PteContents.u.Hard.Valid == 1) {
+            if (PteContents.u.Hard.Valid == 1)
+            {
 
                 //
                 // Set the protection into both the PTE and the original PTE
                 // in the PFN database.
                 //
 
-                Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
+                Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
 
-                if (Pfn1->u3.e1.PrototypePte == 1) {
+                if (Pfn1->u3.e1.PrototypePte == 1)
+                {
 
                     //
                     // This PTE refers to a fork prototype PTE, make it
                     // private.
                     //
 
-                    MiCopyOnWrite (MiGetVirtualAddressMappedByPte (PointerPte),
-                                   PointerPte);
+                    MiCopyOnWrite(MiGetVirtualAddressMappedByPte(PointerPte), PointerPte);
 
                     //
                     // This may have released the working set mutex and
@@ -914,30 +896,22 @@ Environment:
                     // in memory.
                     //
 
-                    do {
+                    do
+                    {
 
-                        MiDoesPxeExistAndMakeValid (MiGetPdeAddress (PointerPde),
-                                                    Process,
-                                                    FALSE,
-                                                    &Waited);
+                        MiDoesPxeExistAndMakeValid(MiGetPdeAddress(PointerPde), Process, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS >= 4)
                         Waited = 0;
 #endif
 
-                        MiDoesPpeExistAndMakeValid (MiGetPteAddress (PointerPde),
-                                                    Process,
-                                                    FALSE,
-                                                    &Waited);
+                        MiDoesPpeExistAndMakeValid(MiGetPteAddress(PointerPde), Process, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS < 4)
                         Waited = 0;
 #endif
 
-                        MiDoesPdeExistAndMakeValid (PointerPde,
-                                                    Process,
-                                                    FALSE,
-                                                    &Waited);
+                        MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited);
 
                     } while (Waited != 0);
 
@@ -954,41 +928,37 @@ Environment:
                 // remove the PTE from the working set.
                 //
 
-                if ((NewProtect & PAGE_NOACCESS) || (NewProtect & PAGE_GUARD)) {
+                if ((NewProtect & PAGE_NOACCESS) || (NewProtect & PAGE_GUARD))
+                {
 
                     //
                     // Remove the page from the working set.
                     //
 
-                    Locked = MiRemovePageFromWorkingSet (PointerPte,
-                                                         Pfn1,
-                                                         &Process->Vm);
+                    Locked = MiRemovePageFromWorkingSet(PointerPte, Pfn1, &Process->Vm);
 
                     continue;
                 }
 
                 Pfn1->OriginalPte.u.Soft.Protection = ProtectionMask;
 
-                MI_MAKE_VALID_PTE (TempPte,
-                                   PointerPte->u.Hard.PageFrameNumber,
-                                   ProtectionMask,
-                                   PointerPte);
+                MI_MAKE_VALID_PTE(TempPte, PointerPte->u.Hard.PageFrameNumber, ProtectionMask, PointerPte);
 
-                WorkingSetIndex = MI_GET_WORKING_SET_FROM_PTE (&PteContents);
-                MI_SET_PTE_IN_WORKING_SET (&TempPte, WorkingSetIndex);
+                WorkingSetIndex = MI_GET_WORKING_SET_FROM_PTE(&PteContents);
+                MI_SET_PTE_IN_WORKING_SET(&TempPte, WorkingSetIndex);
 
                 //
                 // Flush the TB as we have changed the protection
                 // of a valid PTE.
                 //
 
-                PreviousPte.u.Flush = MiFlushTbAndCapture (PointerPte,
-                                                           TempPte.u.Flush,
-                                                           Pfn1);
+                PreviousPte.u.Flush = MiFlushTbAndCapture(PointerPte, TempPte.u.Flush, Pfn1);
             }
-            else {
+            else
+            {
 
-                if (PteContents.u.Soft.Prototype == 1) {
+                if (PteContents.u.Soft.Prototype == 1)
+                {
 
                     //
                     // This PTE refers to a fork prototype PTE, make the
@@ -1002,84 +972,91 @@ Environment:
                     // page exceptions and no-access exceptions.
                     //
 
-                    Va = MiGetVirtualAddressMappedByPte (PointerPte);
+                    Va = MiGetVirtualAddressMappedByPte(PointerPte);
 
                     DoAgain = TRUE;
 
-                    while (PteContents.u.Hard.Valid == 0) {
-    
-                        UNLOCK_WS_UNSAFE (Process);
+                    while (PteContents.u.Hard.Valid == 0)
+                    {
+
+                        UNLOCK_WS_UNSAFE(Process);
                         WsHeld = FALSE;
-    
-                        try {
-    
+
+                        try
+                        {
+
                             *(volatile ULONG *)Va;
-    
-                        } except (EXCEPTION_EXECUTE_HANDLER) {
-    
-                            if (GetExceptionCode() == STATUS_ACCESS_VIOLATION) {
-    
+                        }
+                        except(EXCEPTION_EXECUTE_HANDLER)
+                        {
+
+                            if (GetExceptionCode() == STATUS_ACCESS_VIOLATION)
+                            {
+
                                 //
                                 // The prototype PTE must be noaccess.
                                 //
-    
+
                                 WsHeld = TRUE;
-                                LOCK_WS_UNSAFE (Process);
-                                MiMakePdeExistAndMakeValid (PointerPde,
-                                                            Process,
-                                                            FALSE);
-    
-                                if (MiChangeNoAccessForkPte (PointerPte, ProtectionMask) == TRUE) {
+                                LOCK_WS_UNSAFE(Process);
+                                MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
+
+                                if (MiChangeNoAccessForkPte(PointerPte, ProtectionMask) == TRUE)
+                                {
                                     DoAgain = FALSE;
                                 }
                             }
-                            else if (GetExceptionCode() == STATUS_IN_PAGE_ERROR) {
-    
+                            else if (GetExceptionCode() == STATUS_IN_PAGE_ERROR)
+                            {
+
                                 //
                                 // Ignore this page and go on to the next one.
                                 //
-    
+
                                 PointerPte += 1;
                                 DoAgain = TRUE;
-    
+
                                 WsHeld = TRUE;
-                                LOCK_WS_UNSAFE (Process);
+                                LOCK_WS_UNSAFE(Process);
                                 break;
                             }
                         }
-    
-                        if (WsHeld == FALSE) {
-                            LOCK_WS_UNSAFE (Process);
+
+                        if (WsHeld == FALSE)
+                        {
+                            LOCK_WS_UNSAFE(Process);
                         }
-    
-                        MiMakePdeExistAndMakeValid (PointerPde, Process, FALSE);
-    
+
+                        MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
+
                         PteContents = *PointerPte;
                     }
 
-                    if (DoAgain) {
+                    if (DoAgain)
+                    {
                         continue;
                     }
-
                 }
-                else {
+                else
+                {
 
-                    if (PteContents.u.Soft.Transition == 1) {
+                    if (PteContents.u.Soft.Transition == 1)
+                    {
 
-                        if (MiSetProtectionOnTransitionPte (
-                                                    PointerPte,
-                                                    ProtectionMask)) {
+                        if (MiSetProtectionOnTransitionPte(PointerPte, ProtectionMask))
+                        {
                             continue;
                         }
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // Must be page file space or demand zero.
                         //
 
                         PointerPte->u.Soft.Protection = ProtectionMask;
-                        ASSERT (PointerPte->u.Long != 0);
+                        ASSERT(PointerPte->u.Long != 0);
                     }
                 }
             }
@@ -1088,10 +1065,10 @@ Environment:
 
         } //end while
 
-        UNLOCK_WS_UNSAFE (Process);
+        UNLOCK_WS_UNSAFE(Process);
     }
 
-    UNLOCK_ADDRESS_SPACE (Process);
+    UNLOCK_ADDRESS_SPACE(Process);
 
     //
     // Common completion code.
@@ -1099,13 +1076,15 @@ Environment:
 
 #if defined(_MIALT4K_)
 
-    if (EmulationFor4kPage == TRUE) {
+    if (EmulationFor4kPage == TRUE)
+    {
 
         StartingAddress = StartingAddressFor4k;
 
         EndingAddress = EndingAddressFor4k;
-            
-        if (CapturedOldProtectFor4k != 0) {
+
+        if (CapturedOldProtectFor4k != 0)
+        {
 
             //
             // change CapturedOldProtect when CapturedOldProtectFor4k
@@ -1113,7 +1092,6 @@ Environment:
             //
 
             CapturedOldProtect = CapturedOldProtectFor4k;
-
         }
     }
 #endif
@@ -1122,7 +1100,8 @@ Environment:
     *BaseAddress = StartingAddress;
     *LastProtect = CapturedOldProtect;
 
-    if (Locked) {
+    if (Locked)
+    {
         return STATUS_WAS_UNLOCKED;
     }
 
@@ -1130,22 +1109,14 @@ Environment:
 
 ErrorFound:
 
-    UNLOCK_ADDRESS_SPACE (Process);
+    UNLOCK_ADDRESS_SPACE(Process);
     return Status;
 }
 
-
+
 NTSTATUS
-MiSetProtectionOnSection (
-    IN PEPROCESS Process,
-    IN PMMVAD FoundVad,
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress,
-    IN ULONG NewProtect,
-    OUT PULONG CapturedOldProtect,
-    IN ULONG DontCharge,
-    OUT PULONG Locked
-    )
+MiSetProtectionOnSection(IN PEPROCESS Process, IN PMMVAD FoundVad, IN PVOID StartingAddress, IN PVOID EndingAddress,
+                         IN ULONG NewProtect, OUT PULONG CapturedOldProtect, IN ULONG DontCharge, OUT PULONG Locked)
 
 /*++
 
@@ -1231,24 +1202,27 @@ Environment:
     // Make the protection field.
     //
 
-    ASSERT (FoundVad->u.VadFlags.PrivateMemory == 0);
+    ASSERT(FoundVad->u.VadFlags.PrivateMemory == 0);
 
-    if ((FoundVad->u.VadFlags.ImageMap == 1) ||
-        (FoundVad->u2.VadFlags2.CopyOnWrite == 1)) {
+    if ((FoundVad->u.VadFlags.ImageMap == 1) || (FoundVad->u2.VadFlags2.CopyOnWrite == 1))
+    {
 
-        if (NewProtect & PAGE_READWRITE) {
+        if (NewProtect & PAGE_READWRITE)
+        {
             NewProtect &= ~PAGE_READWRITE;
             NewProtect |= PAGE_WRITECOPY;
         }
 
-        if (NewProtect & PAGE_EXECUTE_READWRITE) {
+        if (NewProtect & PAGE_EXECUTE_READWRITE)
+        {
             NewProtect &= ~PAGE_EXECUTE_READWRITE;
             NewProtect |= PAGE_EXECUTE_WRITECOPY;
         }
     }
 
-    ProtectionMask = MiMakeProtectionMask (NewProtect);
-    if (ProtectionMask == MM_INVALID_PROTECTION) {
+    ProtectionMask = MiMakeProtectionMask(NewProtect);
+    if (ProtectionMask == MM_INVALID_PROTECTION)
+    {
 
         //
         // Return the error.
@@ -1262,27 +1236,23 @@ Environment:
     //
 
     ProtectionMaskNotCopy = ProtectionMask;
-    if ((ProtectionMask & MM_COPY_ON_WRITE_MASK) == MM_COPY_ON_WRITE_MASK) {
+    if ((ProtectionMask & MM_COPY_ON_WRITE_MASK) == MM_COPY_ON_WRITE_MASK)
+    {
         WriteCopy = TRUE;
         ProtectionMaskNotCopy &= ~MM_PROTECTION_COPY_MASK;
     }
 
 #if defined(_MIALT4K_)
 
-    if ((Process->Wow64Process != NULL) && 
-        (FoundVad->u.VadFlags.ImageMap == 0) &&
-        (FoundVad->u2.VadFlags2.CopyOnWrite == 0) && 
-        (WriteCopy)) {
-        
+    if ((Process->Wow64Process != NULL) && (FoundVad->u.VadFlags.ImageMap == 0) &&
+        (FoundVad->u2.VadFlags2.CopyOnWrite == 0) && (WriteCopy))
+    {
+
         PMMVAD NewVad;
 
-        Status = MiSetCopyPagesFor4kPage (Process,
-                                          FoundVad,
-                                          StartingAddress,
-                                          EndingAddress,
-                                          ProtectionMask,
-                                          &NewVad);
-        if (!NT_SUCCESS (Status)) {
+        Status = MiSetCopyPagesFor4kPage(Process, FoundVad, StartingAddress, EndingAddress, ProtectionMask, &NewVad);
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
@@ -1293,20 +1263,20 @@ Environment:
         // VAD - if so, the old VAD is freed and cannot be referenced.
         //
 
-        ASSERT (NewVad != NULL);
+        ASSERT(NewVad != NULL);
 
         FoundVad = NewVad;
     }
-        
+
 #endif
 
-    PointerPxe = MiGetPxeAddress (StartingAddress);
-    PointerPpe = MiGetPpeAddress (StartingAddress);
-    PointerPde = MiGetPdeAddress (StartingAddress);
-    PointerPte = MiGetPteAddress (StartingAddress);
-    LastPte = MiGetPteAddress (EndingAddress);
+    PointerPxe = MiGetPxeAddress(StartingAddress);
+    PointerPpe = MiGetPpeAddress(StartingAddress);
+    PointerPde = MiGetPdeAddress(StartingAddress);
+    PointerPte = MiGetPteAddress(StartingAddress);
+    LastPte = MiGetPteAddress(EndingAddress);
 
-    LOCK_WS_UNSAFE (Process);
+    LOCK_WS_UNSAFE(Process);
 
     MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
 
@@ -1314,73 +1284,73 @@ Environment:
     // Capture the protection for the first page.
     //
 
-    if (PointerPte->u.Long != 0) {
+    if (PointerPte->u.Long != 0)
+    {
 
-        *CapturedOldProtect = MiGetPageProtection (PointerPte, Process, FALSE);
+        *CapturedOldProtect = MiGetPageProtection(PointerPte, Process, FALSE);
 
         //
         // Make sure the Page table page is still resident.
         //
 
-        PointerPpe = MiGetPteAddress (PointerPde);
-        PointerPxe = MiGetPdeAddress (PointerPde);
+        PointerPpe = MiGetPteAddress(PointerPde);
+        PointerPxe = MiGetPdeAddress(PointerPde);
 
-        do {
+        do
+        {
 
-            MiDoesPxeExistAndMakeValid (PointerPxe, Process, FALSE, &Waited);
+            MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited);
 #if (_MI_PAGING_LEVELS >= 4)
             Waited = 0;
 #endif
 
-            MiDoesPpeExistAndMakeValid (PointerPpe, Process, FALSE, &Waited);
+            MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited);
 #if (_MI_PAGING_LEVELS < 4)
             Waited = 0;
 #endif
 
-            MiDoesPdeExistAndMakeValid (PointerPde, Process, FALSE, &Waited);
+            MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited);
         } while (Waited != 0);
-
     }
-    else {
+    else
+    {
 
         //
         // Get the protection from the VAD, unless image file.
         //
 
-        if (FoundVad->u.VadFlags.ImageMap == 0) {
+        if (FoundVad->u.VadFlags.ImageMap == 0)
+        {
 
             //
             // This is not an image file, the protection is in the VAD.
             //
 
-            *CapturedOldProtect =
-                MI_CONVERT_FROM_PTE_PROTECTION(FoundVad->u.VadFlags.Protection);
+            *CapturedOldProtect = MI_CONVERT_FROM_PTE_PROTECTION(FoundVad->u.VadFlags.Protection);
         }
-        else {
+        else
+        {
 
             //
             // This is an image file, the protection is in the
             // prototype PTE.
             //
 
-            PointerProtoPte = MiGetProtoPteAddress (FoundVad,
-                                    MI_VA_TO_VPN (
-                                    MiGetVirtualAddressMappedByPte (PointerPte)));
+            PointerProtoPte = MiGetProtoPteAddress(FoundVad, MI_VA_TO_VPN(MiGetVirtualAddressMappedByPte(PointerPte)));
 
-            TempPte = MiCaptureSystemPte (PointerProtoPte, Process);
+            TempPte = MiCaptureSystemPte(PointerProtoPte, Process);
 
-            *CapturedOldProtect = MiGetPageProtection (&TempPte,
-                                                       Process,
-                                                       TRUE);
+            *CapturedOldProtect = MiGetPageProtection(&TempPte, Process, TRUE);
 
             //
             // Make sure the Page directory and table pages are still resident.
             //
 
-            PointerPpe = MiGetPteAddress (PointerPde);
-            PointerPxe = MiGetPdeAddress (PointerPde);
+            PointerPpe = MiGetPteAddress(PointerPde);
+            PointerPxe = MiGetPdeAddress(PointerPde);
 
-            do {
+            do
+            {
 
                 MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited);
 #if (_MI_PAGING_LEVELS >= 4)
@@ -1404,27 +1374,32 @@ Environment:
     // protections are changed as the changes cannot be undone.
     //
 
-    if (WriteCopy) {
+    if (WriteCopy)
+    {
 
         //
         // Calculate the charges.  If the page is shared and not write copy
         // it is counted as a charged page.
         //
 
-        while (PointerPte <= LastPte) {
+        while (PointerPte <= LastPte)
+        {
 
-            if (MiIsPteOnPdeBoundary (PointerPte)) {
+            if (MiIsPteOnPdeBoundary(PointerPte))
+            {
 
-                PointerPde = MiGetPteAddress (PointerPte);
-                PointerPpe = MiGetPteAddress (PointerPde);
-                PointerPxe = MiGetPdeAddress (PointerPde);
+                PointerPde = MiGetPteAddress(PointerPte);
+                PointerPpe = MiGetPteAddress(PointerPde);
+                PointerPxe = MiGetPdeAddress(PointerPde);
 
 #if (_MI_PAGING_LEVELS >= 4)
-retry:
+            retry:
 #endif
-                do {
+                do
+                {
 
-                    while (!MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited)) {
+                    while (!MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited))
+                    {
 
                         //
                         // No PXE exists for this address.  Therefore
@@ -1433,12 +1408,13 @@ retry:
                         //
 
                         PointerPxe += 1;
-                        PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-                        PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
+                        PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+                        PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
                         PointerProtoPte = PointerPte;
-                        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+                        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
-                        if (PointerPte > LastPte) {
+                        if (PointerPte > LastPte)
+                        {
                             QuotaCharge += 1 + LastPte - PointerProtoPte;
                             goto Done;
                         }
@@ -1448,7 +1424,8 @@ retry:
                     Waited = 0;
 #endif
 
-                    while (!MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited)) {
+                    while (!MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited))
+                    {
 
                         //
                         // No PPE exists for this address.  Therefore
@@ -1457,18 +1434,20 @@ retry:
                         //
 
                         PointerPpe += 1;
-                        PointerPxe = MiGetPteAddress (PointerPpe);
-                        PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
+                        PointerPxe = MiGetPteAddress(PointerPpe);
+                        PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
                         PointerProtoPte = PointerPte;
-                        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-                        if (PointerPte > LastPte) {
+                        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+                        if (PointerPte > LastPte)
+                        {
                             QuotaCharge += 1 + LastPte - PointerProtoPte;
                             goto Done;
                         }
 
 #if (_MI_PAGING_LEVELS >= 4)
-                        if (MiIsPteOnPdeBoundary (PointerPpe)) {
-                            PointerPxe = MiGetPdeAddress (PointerPde);
+                        if (MiIsPteOnPdeBoundary(PointerPpe))
+                        {
+                            PointerPxe = MiGetPdeAddress(PointerPde);
                             goto retry;
                         }
 #endif
@@ -1479,7 +1458,8 @@ retry:
                     Waited = 0;
 #endif
 
-                    while (!MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited)) {
+                    while (!MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited))
+                    {
 
                         //
                         // No PDE exists for this address.  Therefore
@@ -1489,17 +1469,19 @@ retry:
 
                         PointerPde += 1;
                         PointerProtoPte = PointerPte;
-                        PointerPpe = MiGetPteAddress (PointerPde);
-                        PointerPxe = MiGetPteAddress (PointerPpe);
-                        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+                        PointerPpe = MiGetPteAddress(PointerPde);
+                        PointerPxe = MiGetPteAddress(PointerPpe);
+                        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
-                        if (PointerPte > LastPte) {
+                        if (PointerPte > LastPte)
+                        {
                             QuotaCharge += 1 + LastPte - PointerProtoPte;
                             goto Done;
                         }
                         QuotaCharge += PointerPte - PointerProtoPte;
 #if (_MI_PAGING_LEVELS >= 3)
-                        if (MiIsPteOnPdeBoundary (PointerPde)) {
+                        if (MiIsPteOnPdeBoundary(PointerPde))
+                        {
                             Waited = 1;
                             break;
                         }
@@ -1510,48 +1492,56 @@ retry:
 
             PteContents = *PointerPte;
 
-            if (PteContents.u.Long == 0) {
+            if (PteContents.u.Long == 0)
+            {
 
                 //
                 // The PTE has not been evaluated, assume copy on write.
                 //
 
                 QuotaCharge += 1;
-
             }
-            else if (PteContents.u.Hard.Valid == 1) {
-                if (PteContents.u.Hard.CopyOnWrite == 0) {
+            else if (PteContents.u.Hard.Valid == 1)
+            {
+                if (PteContents.u.Hard.CopyOnWrite == 0)
+                {
 
                     //
                     // See if this is a prototype PTE, if so charge it.
                     //
 
-                    Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
+                    Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
 
-                    if (Pfn1->u3.e1.PrototypePte == 1) {
+                    if (Pfn1->u3.e1.PrototypePte == 1)
+                    {
                         QuotaCharge += 1;
                     }
                 }
             }
-            else {
+            else
+            {
 
-                if (PteContents.u.Soft.Prototype == 1) {
+                if (PteContents.u.Soft.Prototype == 1)
+                {
 
                     //
                     // This is a prototype PTE.  Charge if it is not
                     // in copy on write format.
                     //
 
-                    if (PteContents.u.Soft.PageFileHigh == MI_PTE_LOOKUP_NEEDED) {
+                    if (PteContents.u.Soft.PageFileHigh == MI_PTE_LOOKUP_NEEDED)
+                    {
                         //
                         // Page protection is within the PTE.
                         //
 
-                        if (!MI_IS_PTE_PROTECTION_COPY_WRITE(PteContents.u.Soft.Protection)) {
+                        if (!MI_IS_PTE_PROTECTION_COPY_WRITE(PteContents.u.Soft.Protection))
+                        {
                             QuotaCharge += 1;
                         }
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // The PTE references the prototype directly, therefore
@@ -1565,44 +1555,53 @@ retry:
             PointerPte += 1;
         }
 
-Done:
+    Done:
 
         //
         // If any quota is required, charge for it now.
         //
 
-        if ((!DontCharge) && (QuotaCharge != 0)) {
+        if ((!DontCharge) && (QuotaCharge != 0))
+        {
 
-            Status = PsChargeProcessPageFileQuota (Process, QuotaCharge);
-            if (!NT_SUCCESS (Status)) {
-                UNLOCK_WS_UNSAFE (Process);
+            Status = PsChargeProcessPageFileQuota(Process, QuotaCharge);
+            if (!NT_SUCCESS(Status))
+            {
+                UNLOCK_WS_UNSAFE(Process);
                 return STATUS_PAGEFILE_QUOTA_EXCEEDED;
             }
 
-            if (Process->CommitChargeLimit) {
-                if (Process->CommitCharge + QuotaCharge > Process->CommitChargeLimit) {
-                    PsReturnProcessPageFileQuota (Process, QuotaCharge);
-                    if (Process->Job) {
-                        PsReportProcessMemoryLimitViolation ();
+            if (Process->CommitChargeLimit)
+            {
+                if (Process->CommitCharge + QuotaCharge > Process->CommitChargeLimit)
+                {
+                    PsReturnProcessPageFileQuota(Process, QuotaCharge);
+                    if (Process->Job)
+                    {
+                        PsReportProcessMemoryLimitViolation();
                     }
-                    UNLOCK_WS_UNSAFE (Process);
+                    UNLOCK_WS_UNSAFE(Process);
                     return STATUS_COMMITMENT_LIMIT;
                 }
             }
-            if (Process->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES) {
-                if (PsChangeJobMemoryUsage(QuotaCharge) == FALSE) {
-                    PsReturnProcessPageFileQuota (Process, QuotaCharge);
-                    UNLOCK_WS_UNSAFE (Process);
+            if (Process->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES)
+            {
+                if (PsChangeJobMemoryUsage(QuotaCharge) == FALSE)
+                {
+                    PsReturnProcessPageFileQuota(Process, QuotaCharge);
+                    UNLOCK_WS_UNSAFE(Process);
                     return STATUS_COMMITMENT_LIMIT;
                 }
             }
 
-            if (MiChargeCommitment (QuotaCharge, Process) == FALSE) {
-                if (Process->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES) {
+            if (MiChargeCommitment(QuotaCharge, Process) == FALSE)
+            {
+                if (Process->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES)
+                {
                     PsChangeJobMemoryUsage(-(SSIZE_T)QuotaCharge);
                 }
-                PsReturnProcessPageFileQuota (Process, QuotaCharge);
-                UNLOCK_WS_UNSAFE (Process);
+                PsReturnProcessPageFileQuota(Process, QuotaCharge);
+                UNLOCK_WS_UNSAFE(Process);
                 return STATUS_COMMITMENT_LIMIT;
             }
 
@@ -1610,13 +1609,14 @@ Done:
             // Add the quota into the charge to the VAD.
             //
 
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_SET_PROTECTION, QuotaCharge);
+            MM_TRACK_COMMIT(MM_DBG_COMMIT_SET_PROTECTION, QuotaCharge);
             FoundVad->u.VadFlags.CommitCharge += QuotaCharge;
             Process->CommitCharge += QuotaCharge;
-            if (Process->CommitCharge > Process->CommitChargePeak) {
+            if (Process->CommitCharge > Process->CommitChargePeak)
+            {
                 Process->CommitChargePeak = Process->CommitCharge;
             }
-            MI_INCREMENT_TOTAL_PROCESS_COMMIT (QuotaCharge);
+            MI_INCREMENT_TOTAL_PROCESS_COMMIT(QuotaCharge);
         }
     }
 
@@ -1635,43 +1635,47 @@ Done:
     // and commitment.
     //
 
-    PointerPxe = MiGetPxeAddress (StartingAddress);
-    PointerPpe = MiGetPpeAddress (StartingAddress);
-    PointerPde = MiGetPdeAddress (StartingAddress);
-    PointerPte = MiGetPteAddress (StartingAddress);
+    PointerPxe = MiGetPxeAddress(StartingAddress);
+    PointerPpe = MiGetPpeAddress(StartingAddress);
+    PointerPde = MiGetPdeAddress(StartingAddress);
+    PointerPte = MiGetPteAddress(StartingAddress);
 
-    do {
+    do
+    {
 
-        MiDoesPxeExistAndMakeValid (PointerPxe, Process, FALSE, &Waited);
+        MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited);
 #if (_MI_PAGING_LEVELS >= 4)
         Waited = 0;
 #endif
 
-        MiDoesPpeExistAndMakeValid (PointerPpe, Process, FALSE, &Waited);
+        MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS < 4)
         Waited = 0;
 #endif
 
-        MiDoesPdeExistAndMakeValid (PointerPde, Process, FALSE, &Waited);
+        MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited);
 
     } while (Waited != 0);
 
     QuotaCharge = 0;
 
-    while (PointerPte <= LastPte) {
+    while (PointerPte <= LastPte)
+    {
 
-        if (MiIsPteOnPdeBoundary (PointerPte)) {
-            PointerPde = MiGetPteAddress (PointerPte);
-            PointerPpe = MiGetPdeAddress (PointerPte);
-            PointerPxe = MiGetPpeAddress (PointerPte);
+        if (MiIsPteOnPdeBoundary(PointerPte))
+        {
+            PointerPde = MiGetPteAddress(PointerPte);
+            PointerPpe = MiGetPdeAddress(PointerPte);
+            PointerPxe = MiGetPpeAddress(PointerPte);
 
-            MiMakePdeExistAndMakeValid (PointerPde, Process, FALSE);
+            MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
         }
 
         PteContents = *PointerPte;
 
-        if (PteContents.u.Long == 0) {
+        if (PteContents.u.Long == 0)
+        {
 
             //
             // Increment the count of non-zero page table entries
@@ -1679,9 +1683,9 @@ Done:
             // for the process.
             //
 
-            UsedPageTableHandle = MI_GET_USED_PTES_HANDLE (MiGetVirtualAddressMappedByPte (PointerPte));
+            UsedPageTableHandle = MI_GET_USED_PTES_HANDLE(MiGetVirtualAddressMappedByPte(PointerPte));
 
-            MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageTableHandle);
+            MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageTableHandle);
 
             //
             // The PTE is zero, set it into prototype PTE format
@@ -1690,9 +1694,10 @@ Done:
 
             TempPte = PrototypePte;
             TempPte.u.Soft.Protection = ProtectionMask;
-            MI_WRITE_INVALID_PTE (PointerPte, TempPte);
+            MI_WRITE_INVALID_PTE(PointerPte, TempPte);
         }
-        else if (PteContents.u.Hard.Valid == 1) {
+        else if (PteContents.u.Hard.Valid == 1)
+        {
 
             //
             // Set the protection into both the PTE and the original PTE
@@ -1701,33 +1706,33 @@ Done:
 
             NewProtectionMask = ProtectionMask;
 
-            Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
+            Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
 
 #if DBG
-            if (PteIndex < PTES_TRACKED) {
+            if (PteIndex < PTES_TRACKED)
+            {
                 PteTracker[PteIndex] = PteContents;
                 PfnTracker[PteIndex] = *Pfn1;
                 PteIndex += 1;
             }
 #endif
 
-            if ((NewProtect & PAGE_NOACCESS) ||
-                (NewProtect & PAGE_GUARD)) {
+            if ((NewProtect & PAGE_NOACCESS) || (NewProtect & PAGE_GUARD))
+            {
 
-                *Locked = MiRemovePageFromWorkingSet (PointerPte,
-                                                      Pfn1,
-                                                      &Process->Vm);
+                *Locked = MiRemovePageFromWorkingSet(PointerPte, Pfn1, &Process->Vm);
                 continue;
             }
 
-            if (Pfn1->u3.e1.PrototypePte == 1) {
+            if (Pfn1->u3.e1.PrototypePte == 1)
+            {
 
                 //
                 // The true protection may be in the WSLE, locate
                 // the WSLE.
                 //
 
-                Va = (PULONG)MiGetVirtualAddressMappedByPte (PointerPte);
+                Va = (PULONG)MiGetVirtualAddressMappedByPte(PointerPte);
 
                 //
                 // Check to see if this is a prototype PTE.  This
@@ -1736,17 +1741,18 @@ Done:
                 // If they are not equal, this is a fork prototype PTE.
                 //
 
-                if (Pfn1->PteAddress !=
-                              MiGetProtoPteAddress (FoundVad,
-                                          MI_VA_TO_VPN ((PVOID)Va))) {
+                if (Pfn1->PteAddress != MiGetProtoPteAddress(FoundVad, MI_VA_TO_VPN((PVOID)Va)))
+                {
 
                     //
                     // This PTE refers to a fork prototype PTE, make it
                     // private.
                     //
 
-                    if (MiCopyOnWrite ((PVOID)Va, PointerPte) == TRUE) {
-                        if (WriteCopy) {
+                    if (MiCopyOnWrite((PVOID)Va, PointerPte) == TRUE)
+                    {
+                        if (WriteCopy)
+                        {
                             QuotaCharge += 1;
                         }
                     }
@@ -1756,33 +1762,25 @@ Done:
                     // the page table page may no longer be in memory.
                     //
 
-                    PointerPpe = MiGetPteAddress (PointerPde);
-                    PointerPxe = MiGetPdeAddress (PointerPde);
+                    PointerPpe = MiGetPteAddress(PointerPde);
+                    PointerPxe = MiGetPdeAddress(PointerPde);
 
-                    do {
+                    do
+                    {
 
-                        MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                    Process,
-                                                    FALSE,
-                                                    &Waited);
+                        MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS >= 4)
                         Waited = 0;
 #endif
 
-                        MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                    Process,
-                                                    FALSE,
-                                                    &Waited);
+                        MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited);
 
 #if (_MI_PAGING_LEVELS < 4)
                         Waited = 0;
 #endif
 
-                        MiDoesPdeExistAndMakeValid (PointerPde,
-                                                    Process,
-                                                    FALSE,
-                                                    &Waited);
+                        MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited);
 
                     } while (Waited != 0);
 
@@ -1791,7 +1789,6 @@ Done:
                     //
 
                     continue;
-
                 }
 
                 //
@@ -1803,7 +1800,8 @@ Done:
                 // previously charged quota.
                 //
 
-                if ((!WriteCopy) && (PteContents.u.Hard.CopyOnWrite == 1)) {
+                if ((!WriteCopy) && (PteContents.u.Hard.CopyOnWrite == 1))
+                {
                     QuotaCharge += 1;
                 }
 
@@ -1811,14 +1809,13 @@ Done:
                 // The true protection may be in the WSLE, locate it.
                 //
 
-                Index = MiLocateWsle ((PVOID)Va, 
-                                      MmWorkingSetList,
-                                      Pfn1->u1.WsIndex);
+                Index = MiLocateWsle((PVOID)Va, MmWorkingSetList, Pfn1->u1.WsIndex);
 
                 MmWsle[Index].u1.e1.Protection = ProtectionMask;
                 MmWsle[Index].u1.e1.SameProtectAsProto = 0;
             }
-            else {
+            else
+            {
 
                 //
                 // Page is private (copy on written), protection mask
@@ -1830,32 +1827,30 @@ Done:
                 NewProtectionMask = ProtectionMaskNotCopy;
             }
 
-            MI_SNAP_DATA (Pfn1, PointerPte, 7);
+            MI_SNAP_DATA(Pfn1, PointerPte, 7);
 
-            MI_MAKE_VALID_PTE (TempPte,
-                               PteContents.u.Hard.PageFrameNumber,
-                               NewProtectionMask,
-                               PointerPte);
+            MI_MAKE_VALID_PTE(TempPte, PteContents.u.Hard.PageFrameNumber, NewProtectionMask, PointerPte);
 
-            WorkingSetIndex = MI_GET_WORKING_SET_FROM_PTE (&PteContents);
+            WorkingSetIndex = MI_GET_WORKING_SET_FROM_PTE(&PteContents);
 
-            MI_SET_PTE_IN_WORKING_SET (&TempPte, WorkingSetIndex);
+            MI_SET_PTE_IN_WORKING_SET(&TempPte, WorkingSetIndex);
 
             //
             // Flush the TB as we have changed the protection
             // of a valid PTE.
             //
 
-            PreviousPte.u.Flush = MiFlushTbAndCapture (PointerPte,
-                                                       TempPte.u.Flush,
-                                                       Pfn1);
+            PreviousPte.u.Flush = MiFlushTbAndCapture(PointerPte, TempPte.u.Flush, Pfn1);
         }
-        else {
+        else
+        {
 
-            if (PteContents.u.Soft.Prototype == 1) {
+            if (PteContents.u.Soft.Prototype == 1)
+            {
 
 #if DBG
-                if (PteIndex < PTES_TRACKED) {
+                if (PteIndex < PTES_TRACKED)
+                {
                     PteTracker[PteIndex] = PteContents;
                     *(PULONG)(&PfnTracker[PteIndex]) = 0x88;
                     PteIndex += 1;
@@ -1870,12 +1865,11 @@ Done:
                 // Is it a fork prototype PTE?
                 //
 
-                Va = (PULONG)MiGetVirtualAddressMappedByPte (PointerPte);
+                Va = (PULONG)MiGetVirtualAddressMappedByPte(PointerPte);
 
                 if ((PteContents.u.Soft.PageFileHigh != MI_PTE_LOOKUP_NEEDED) &&
-                   (MiPteToProto (PointerPte) !=
-                                     MiGetProtoPteAddress (FoundVad,
-                                         MI_VA_TO_VPN ((PVOID)Va)))) {
+                    (MiPteToProto(PointerPte) != MiGetProtoPteAddress(FoundVad, MI_VA_TO_VPN((PVOID)Va))))
+                {
 
                     //
                     // This PTE refers to a fork prototype PTE, make the
@@ -1891,52 +1885,58 @@ Done:
 
                     DoAgain = TRUE;
 
-                    while (PteContents.u.Hard.Valid == 0) {
-    
-                        UNLOCK_WS_UNSAFE (Process);
-    
+                    while (PteContents.u.Hard.Valid == 0)
+                    {
+
+                        UNLOCK_WS_UNSAFE(Process);
+
                         WsHeld = FALSE;
-    
-                        try {
-    
+
+                        try
+                        {
+
                             *(volatile ULONG *)Va;
-                        } except (EXCEPTION_EXECUTE_HANDLER) {
-    
-                            if (GetExceptionCode() != STATUS_GUARD_PAGE_VIOLATION) {
-    
+                        }
+                        except(EXCEPTION_EXECUTE_HANDLER)
+                        {
+
+                            if (GetExceptionCode() != STATUS_GUARD_PAGE_VIOLATION)
+                            {
+
                                 //
                                 // The prototype PTE must be noaccess.
                                 //
-    
+
                                 WsHeld = TRUE;
-                                LOCK_WS_UNSAFE (Process);
-                                MiMakePdeExistAndMakeValid (PointerPde,
-                                                            Process,
-                                                            FALSE);
-                                if (MiChangeNoAccessForkPte (PointerPte, ProtectionMask) == TRUE) {
+                                LOCK_WS_UNSAFE(Process);
+                                MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
+                                if (MiChangeNoAccessForkPte(PointerPte, ProtectionMask) == TRUE)
+                                {
                                     DoAgain = FALSE;
                                 }
                             }
                         }
-    
-                        PointerPpe = MiGetPteAddress (PointerPde);
-                        PointerPxe = MiGetPdeAddress (PointerPde);
-    
-                        if (WsHeld == FALSE) {
-                            LOCK_WS_UNSAFE (Process);
+
+                        PointerPpe = MiGetPteAddress(PointerPde);
+                        PointerPxe = MiGetPdeAddress(PointerPde);
+
+                        if (WsHeld == FALSE)
+                        {
+                            LOCK_WS_UNSAFE(Process);
                         }
-    
-                        MiMakePdeExistAndMakeValid (PointerPde, Process, FALSE);
-    
+
+                        MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
+
                         PteContents = *PointerPte;
                     }
 
-                    if (DoAgain) {
+                    if (DoAgain)
+                    {
                         continue;
                     }
-
                 }
-                else {
+                else
+                {
 
                     //
                     // If the new protection is not write-copy, the PTE
@@ -1946,12 +1946,12 @@ Done:
                     // quota and commitment for this page.
                     //
 
-                    if ((!WriteCopy) &&
-                        (PteContents.u.Soft.PageFileHigh == MI_PTE_LOOKUP_NEEDED)) {
-                        if (MI_IS_PTE_PROTECTION_COPY_WRITE(PteContents.u.Soft.Protection)) {
+                    if ((!WriteCopy) && (PteContents.u.Soft.PageFileHigh == MI_PTE_LOOKUP_NEEDED))
+                    {
+                        if (MI_IS_PTE_PROTECTION_COPY_WRITE(PteContents.u.Soft.Protection))
+                        {
                             QuotaCharge += 1;
                         }
-
                     }
 
                     //
@@ -1960,19 +1960,21 @@ Done:
                     // is in the PTE itself.
                     //
 
-                    MI_WRITE_INVALID_PTE (PointerPte, PrototypePte);
+                    MI_WRITE_INVALID_PTE(PointerPte, PrototypePte);
                     PointerPte->u.Soft.Protection = ProtectionMask;
                 }
-
             }
-            else {
+            else
+            {
 
-                if (PteContents.u.Soft.Transition == 1) {
+                if (PteContents.u.Soft.Transition == 1)
+                {
 
 #if DBG
-                    if (PteIndex < PTES_TRACKED) {
+                    if (PteIndex < PTES_TRACKED)
+                    {
                         PteTracker[PteIndex] = PteContents;
-                        Pfn1 = MI_PFN_ELEMENT (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents));
+                        Pfn1 = MI_PFN_ELEMENT(MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents));
                         PfnTracker[PteIndex] = *Pfn1;
                         PteIndex += 1;
                     }
@@ -1982,17 +1984,17 @@ Done:
                     // This is a transition PTE. (Page is private)
                     //
 
-                    if (MiSetProtectionOnTransitionPte (
-                                                PointerPte,
-                                                ProtectionMaskNotCopy)) {
+                    if (MiSetProtectionOnTransitionPte(PointerPte, ProtectionMaskNotCopy))
+                    {
                         continue;
                     }
-
                 }
-                else {
+                else
+                {
 
 #if DBG
-                    if (PteIndex < PTES_TRACKED) {
+                    if (PteIndex < PTES_TRACKED)
+                    {
                         PteTracker[PteIndex] = PteContents;
                         *(PULONG)(&PfnTracker[PteIndex]) = 0x99;
                         PteIndex += 1;
@@ -2015,42 +2017,40 @@ Done:
     // Return the quota charge and the commitment, if any.
     //
 
-    if ((QuotaCharge > 0) && (!DontCharge)) {
+    if ((QuotaCharge > 0) && (!DontCharge))
+    {
 
-        MiReturnCommitment (QuotaCharge);
-        MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_PROTECTION, QuotaCharge);
-        PsReturnProcessPageFileQuota (Process, QuotaCharge);
+        MiReturnCommitment(QuotaCharge);
+        MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_PROTECTION, QuotaCharge);
+        PsReturnProcessPageFileQuota(Process, QuotaCharge);
 
 #if DBG
-        if (QuotaCharge > FoundVad->u.VadFlags.CommitCharge) {
-            DbgPrint ("MMPROTECT QUOTA FAILURE: %p %p %x %p\n",
-                PteTracker, PfnTracker, PteIndex, PteQuotaCharge);
-            DbgBreakPoint ();
+        if (QuotaCharge > FoundVad->u.VadFlags.CommitCharge)
+        {
+            DbgPrint("MMPROTECT QUOTA FAILURE: %p %p %x %p\n", PteTracker, PfnTracker, PteIndex, PteQuotaCharge);
+            DbgBreakPoint();
         }
 #endif
 
-        ASSERT (QuotaCharge <= FoundVad->u.VadFlags.CommitCharge);
+        ASSERT(QuotaCharge <= FoundVad->u.VadFlags.CommitCharge);
 
         FoundVad->u.VadFlags.CommitCharge -= QuotaCharge;
-        if (Process->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES) {
+        if (Process->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES)
+        {
             PsChangeJobMemoryUsage(-(SSIZE_T)QuotaCharge);
         }
         Process->CommitCharge -= QuotaCharge;
 
-        MI_INCREMENT_TOTAL_PROCESS_COMMIT (0 - QuotaCharge);
+        MI_INCREMENT_TOTAL_PROCESS_COMMIT(0 - QuotaCharge);
     }
 
-    UNLOCK_WS_UNSAFE (Process);
+    UNLOCK_WS_UNSAFE(Process);
 
     return STATUS_SUCCESS;
 }
-
+
 ULONG
-MiGetPageProtection (
-    IN PMMPTE PointerPte,
-    IN PEPROCESS Process,
-    IN LOGICAL PteCapturedToLocalStack
-    )
+MiGetPageProtection(IN PMMPTE PointerPte, IN PEPROCESS Process, IN LOGICAL PteCapturedToLocalStack)
 
 /*++
 
@@ -2101,32 +2101,32 @@ Environment:
 
     PteContents = *PointerPte;
 
-    if ((PteContents.u.Soft.Valid == 0) && (PteContents.u.Soft.Prototype == 1)) {
+    if ((PteContents.u.Soft.Valid == 0) && (PteContents.u.Soft.Prototype == 1))
+    {
 
         //
         // This PTE is in prototype format, the protection is
         // stored in the prototype PTE.
         //
 
-        if ((MI_IS_PTE_PROTOTYPE(PointerPte)) ||
-            (PteCapturedToLocalStack == TRUE) ||
-            (PteContents.u.Soft.PageFileHigh == MI_PTE_LOOKUP_NEEDED)) {
+        if ((MI_IS_PTE_PROTOTYPE(PointerPte)) || (PteCapturedToLocalStack == TRUE) ||
+            (PteContents.u.Soft.PageFileHigh == MI_PTE_LOOKUP_NEEDED))
+        {
 
             //
             // The protection is within this PTE.
             //
 
-            return MI_CONVERT_FROM_PTE_PROTECTION (
-                                            PteContents.u.Soft.Protection);
+            return MI_CONVERT_FROM_PTE_PROTECTION(PteContents.u.Soft.Protection);
         }
 
-        ProtoPteAddress = MiPteToProto (PointerPte);
+        ProtoPteAddress = MiPteToProto(PointerPte);
 
         //
         // Capture protopte PTE contents.
         //
 
-        ProtoPteContents = MiCaptureSystemPte (ProtoPteAddress, Process);
+        ProtoPteContents = MiCaptureSystemPte(ProtoPteAddress, Process);
 
         //
         // The working set mutex may have been released and the
@@ -2134,41 +2134,42 @@ Environment:
         // new contents of the PTE and obtain the protection mask.
         //
 
-        PteContents = MiCaptureSystemPte (PointerPte, Process);
+        PteContents = MiCaptureSystemPte(PointerPte, Process);
     }
 
-    if ((PteContents.u.Soft.Valid == 0) && (PteContents.u.Soft.Prototype == 1)) {
+    if ((PteContents.u.Soft.Valid == 0) && (PteContents.u.Soft.Prototype == 1))
+    {
 
         //
         // Pte is still prototype, return the protection captured
         // from the prototype PTE.
         //
 
-        if (ProtoPteContents.u.Hard.Valid == 1) {
+        if (ProtoPteContents.u.Hard.Valid == 1)
+        {
 
             //
             // The prototype PTE is valid, get the protection from
             // the PFN database.
             //
 
-            Pfn1 = MI_PFN_ELEMENT (ProtoPteContents.u.Hard.PageFrameNumber);
-            return MI_CONVERT_FROM_PTE_PROTECTION(
-                                      Pfn1->OriginalPte.u.Soft.Protection);
-
+            Pfn1 = MI_PFN_ELEMENT(ProtoPteContents.u.Hard.PageFrameNumber);
+            return MI_CONVERT_FROM_PTE_PROTECTION(Pfn1->OriginalPte.u.Soft.Protection);
         }
-        else {
+        else
+        {
 
             //
             // The prototype PTE is not valid, return the protection from the
             // PTE.
             //
 
-            return MI_CONVERT_FROM_PTE_PROTECTION (
-                                     ProtoPteContents.u.Soft.Protection);
+            return MI_CONVERT_FROM_PTE_PROTECTION(ProtoPteContents.u.Soft.Protection);
         }
     }
 
-    if (PteContents.u.Hard.Valid == 1) {
+    if (PteContents.u.Hard.Valid == 1)
+    {
 
         //
         // The page is valid, the protection field is either in the
@@ -2177,11 +2178,10 @@ Environment:
         // element, else use the WSLE.
         //
 
-        Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
+        Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
 
-        if ((Pfn1->u3.e1.PrototypePte == 0) ||
-            (PteCapturedToLocalStack == TRUE) ||
-            (MI_IS_PTE_PROTOTYPE(PointerPte))) {
+        if ((Pfn1->u3.e1.PrototypePte == 0) || (PteCapturedToLocalStack == TRUE) || (MI_IS_PTE_PROTOTYPE(PointerPte)))
+        {
 
             //
             // This is a private PTE or the PTE address is that of a
@@ -2189,21 +2189,18 @@ Environment:
             // the original PTE.
             //
 
-            return MI_CONVERT_FROM_PTE_PROTECTION(
-                                      Pfn1->OriginalPte.u.Soft.Protection);
+            return MI_CONVERT_FROM_PTE_PROTECTION(Pfn1->OriginalPte.u.Soft.Protection);
         }
 
         //
         // The PTE was a hardware PTE, get the protection
         // from the WSLE.
 
-        Va = (PULONG)MiGetVirtualAddressMappedByPte (PointerPte);
+        Va = (PULONG)MiGetVirtualAddressMappedByPte(PointerPte);
 
-        Index = MiLocateWsle ((PVOID)Va,
-                              MmWorkingSetList,
-                              Pfn1->u1.WsIndex);
+        Index = MiLocateWsle((PVOID)Va, MmWorkingSetList, Pfn1->u1.WsIndex);
 
-        return MI_CONVERT_FROM_PTE_PROTECTION (MmWsle[Index].u1.e1.Protection);
+        return MI_CONVERT_FROM_PTE_PROTECTION(MmWsle[Index].u1.e1.Protection);
     }
 
     //
@@ -2211,15 +2208,11 @@ Environment:
     // case protection is in PTE.
     //
 
-    return MI_CONVERT_FROM_PTE_PROTECTION (PteContents.u.Soft.Protection);
-
+    return MI_CONVERT_FROM_PTE_PROTECTION(PteContents.u.Soft.Protection);
 }
-
+
 ULONG
-MiChangeNoAccessForkPte (
-    IN PMMPTE PointerPte,
-    IN ULONG ProtectionMask
-    )
+MiChangeNoAccessForkPte(IN PMMPTE PointerPte, IN ULONG ProtectionMask)
 
 /*++
 
@@ -2246,7 +2239,8 @@ Environment:
 {
     PAGED_CODE();
 
-    if (ProtectionMask == MM_NOACCESS) {
+    if (ProtectionMask == MM_NOACCESS)
+    {
 
         //
         // No need to change the page protection.
@@ -2262,11 +2256,7 @@ Environment:
 
 
 HARDWARE_PTE
-MiFlushTbAndCapture(
-    IN PMMPTE PointerPte,
-    IN HARDWARE_PTE TempPte,
-    IN PMMPFN Pfn1
-    )
+MiFlushTbAndCapture(IN PMMPTE PointerPte, IN HARDWARE_PTE TempPte, IN PMMPFN Pfn1)
 
 // non pagable helper routine.
 
@@ -2281,16 +2271,12 @@ MiFlushTbAndCapture(
     // of a valid PTE.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    PreviousPte.u.Flush = KeFlushSingleTb (
-                            MiGetVirtualAddressMappedByPte (PointerPte),
-                            FALSE,
-                            FALSE,
-                            (PHARDWARE_PTE)PointerPte,
-                            TempPte);
+    PreviousPte.u.Flush =
+        KeFlushSingleTb(MiGetVirtualAddressMappedByPte(PointerPte), FALSE, FALSE, (PHARDWARE_PTE)PointerPte, TempPte);
 
-    ASSERT (PreviousPte.u.Hard.Valid == 1);
+    ASSERT(PreviousPte.u.Hard.Valid == 1);
 
     //
     // A page protection is being changed, on certain
@@ -2298,7 +2284,7 @@ MiFlushTbAndCapture(
     // modify bit in the PFN element.
     //
 
-    MI_CAPTURE_DIRTY_BIT_TO_PFN (&PreviousPte, Pfn1);
+    MI_CAPTURE_DIRTY_BIT_TO_PFN(&PreviousPte, Pfn1);
 
     //
     // If the PTE indicates the page has been modified (this is different
@@ -2306,13 +2292,15 @@ MiFlushTbAndCapture(
     // bitmap now since we are still in the correct process context.
     //
 
-    if (MiActiveWriteWatch != 0) {
-        if ((Pfn1->u3.e1.PrototypePte == 0) &&
-            (MI_IS_PTE_DIRTY(PreviousPte))) {
+    if (MiActiveWriteWatch != 0)
+    {
+        if ((Pfn1->u3.e1.PrototypePte == 0) && (MI_IS_PTE_DIRTY(PreviousPte)))
+        {
 
             Process = PsGetCurrentProcess();
 
-            if (Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH) {
+            if (Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH)
+            {
 
                 //
                 // This process has (or had) write watch VADs.  Search now
@@ -2320,29 +2308,27 @@ MiFlushTbAndCapture(
                 // invalidated.
                 //
 
-                VirtualAddress = MiGetVirtualAddressMappedByPte (PointerPte);
-                MiCaptureWriteWatchDirtyBit (Process, VirtualAddress);
+                VirtualAddress = MiGetVirtualAddressMappedByPte(PointerPte);
+                MiCaptureWriteWatchDirtyBit(Process, VirtualAddress);
             }
         }
     }
 #if DBG
-    else {
+    else
+    {
         Process = PsGetCurrentProcess();
-        ASSERT ((Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH) == 0);
+        ASSERT((Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH) == 0);
     }
 #endif
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return PreviousPte.u.Flush;
 }
 
 ULONG
-MiSetProtectionOnTransitionPte (
-    IN PMMPTE PointerPte,
-    IN ULONG ProtectionMask
-    )
+MiSetProtectionOnTransitionPte(IN PMMPTE PointerPte, IN ULONG ProtectionMask)
 
-    // nonpaged helper routine.
+// nonpaged helper routine.
 
 {
     KIRQL OldIrql;
@@ -2358,7 +2344,7 @@ MiSetProtectionOnTransitionPte (
     // non-transition.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Make sure the page is still a transition page.
@@ -2366,15 +2352,14 @@ MiSetProtectionOnTransitionPte (
 
     PteContents = *(volatile MMPTE *)PointerPte;
 
-    if ((PteContents.u.Soft.Prototype == 0) &&
-                     (PointerPte->u.Soft.Transition == 1)) {
+    if ((PteContents.u.Soft.Prototype == 0) && (PointerPte->u.Soft.Transition == 1))
+    {
 
-        Pfn1 = MI_PFN_ELEMENT (
-                      PteContents.u.Trans.PageFrameNumber);
+        Pfn1 = MI_PFN_ELEMENT(PteContents.u.Trans.PageFrameNumber);
 
         Pfn1->OriginalPte.u.Soft.Protection = ProtectionMask;
         PointerPte->u.Soft.Protection = ProtectionMask;
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return FALSE;
     }
 
@@ -2382,15 +2367,12 @@ MiSetProtectionOnTransitionPte (
     // Do this loop again for the same PTE.
     //
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return TRUE;
 }
 
 MMPTE
-MiCaptureSystemPte (
-    IN PMMPTE PointerProtoPte,
-    IN PEPROCESS Process
-    )
+MiCaptureSystemPte(IN PMMPTE PointerProtoPte, IN PEPROCESS Process)
 
 /*++
 
@@ -2419,20 +2401,15 @@ Environment:
     MMPTE TempPte;
     KIRQL OldIrql;
 
-    LOCK_PFN (OldIrql);
-    MiMakeSystemAddressValidPfnWs (PointerProtoPte, Process);
+    LOCK_PFN(OldIrql);
+    MiMakeSystemAddressValidPfnWs(PointerProtoPte, Process);
     TempPte = *PointerProtoPte;
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return TempPte;
 }
-
+
 NTSTATUS
-MiCheckSecuredVad (
-    IN PMMVAD Vad,
-    IN PVOID Base,
-    IN SIZE_T Size,
-    IN ULONG ProtectionMask
-    )
+MiCheckSecuredVad(IN PMMVAD Vad, IN PVOID Base, IN SIZE_T Size, IN ULONG ProtectionMask)
 
 /*++
 
@@ -2470,10 +2447,11 @@ Environment:
 
     End = (PVOID)((PCHAR)Base + Size);
 
-    if (ProtectionMask < MM_SECURE_DELETE_CHECK) {
-        if ((Vad->u.VadFlags.NoChange == 1) &&
-            (Vad->u2.VadFlags2.SecNoChange == 1) &&
-            (Vad->u.VadFlags.Protection != ProtectionMask)) {
+    if (ProtectionMask < MM_SECURE_DELETE_CHECK)
+    {
+        if ((Vad->u.VadFlags.NoChange == 1) && (Vad->u2.VadFlags2.SecNoChange == 1) &&
+            (Vad->u.VadFlags.Protection != ProtectionMask))
+        {
 
             //
             // An attempt is made at changing the protection
@@ -2484,7 +2462,8 @@ Environment:
             goto done;
         }
     }
-    else {
+    else
+    {
 
         //
         // Deletion - set to no-access for check.  SEC_NOCHANGE allows
@@ -2494,63 +2473,74 @@ Environment:
         ProtectionMask = 0;
     }
 
-    if (Vad->u2.VadFlags2.OneSecured) {
+    if (Vad->u2.VadFlags2.OneSecured)
+    {
 
         if (((ULONG_PTR)Base <= ((PMMVAD_LONG)Vad)->u3.Secured.EndVpn) &&
-             ((ULONG_PTR)End >= ((PMMVAD_LONG)Vad)->u3.Secured.StartVpn)) {
+            ((ULONG_PTR)End >= ((PMMVAD_LONG)Vad)->u3.Secured.StartVpn))
+        {
 
             //
             // This region conflicts, check the protections.
             //
 
-            if (ProtectionMask & MM_GUARD_PAGE) {
+            if (ProtectionMask & MM_GUARD_PAGE)
+            {
                 Status = STATUS_INVALID_PAGE_PROTECTION;
                 goto done;
             }
 
-            if (Vad->u2.VadFlags2.ReadOnly) {
-                if (MmReadWrite[ProtectionMask] < 10) {
+            if (Vad->u2.VadFlags2.ReadOnly)
+            {
+                if (MmReadWrite[ProtectionMask] < 10)
+                {
                     Status = STATUS_INVALID_PAGE_PROTECTION;
                     goto done;
                 }
             }
-            else {
-                if (MmReadWrite[ProtectionMask] < 11) {
+            else
+            {
+                if (MmReadWrite[ProtectionMask] < 11)
+                {
                     Status = STATUS_INVALID_PAGE_PROTECTION;
                     goto done;
                 }
             }
         }
-
     }
-    else if (Vad->u2.VadFlags2.MultipleSecured) {
+    else if (Vad->u2.VadFlags2.MultipleSecured)
+    {
 
         Next = ((PMMVAD_LONG)Vad)->u3.List.Flink;
-        do {
-            Entry = CONTAINING_RECORD( Next,
-                                       MMSECURE_ENTRY,
-                                       List);
+        do
+        {
+            Entry = CONTAINING_RECORD(Next, MMSECURE_ENTRY, List);
 
-            if (((ULONG_PTR)Base <= Entry->EndVpn) &&
-                ((ULONG_PTR)End >= Entry->StartVpn)) {
+            if (((ULONG_PTR)Base <= Entry->EndVpn) && ((ULONG_PTR)End >= Entry->StartVpn))
+            {
 
                 //
                 // This region conflicts, check the protections.
                 //
 
-                if (ProtectionMask & MM_GUARD_PAGE) {
+                if (ProtectionMask & MM_GUARD_PAGE)
+                {
                     Status = STATUS_INVALID_PAGE_PROTECTION;
                     goto done;
                 }
-    
-                if (Entry->u2.VadFlags2.ReadOnly) {
-                    if (MmReadWrite[ProtectionMask] < 10) {
+
+                if (Entry->u2.VadFlags2.ReadOnly)
+                {
+                    if (MmReadWrite[ProtectionMask] < 10)
+                    {
                         Status = STATUS_INVALID_PAGE_PROTECTION;
                         goto done;
                     }
                 }
-                else {
-                    if (MmReadWrite[ProtectionMask] < 11) {
+                else
+                {
+                    if (MmReadWrite[ProtectionMask] < 11)
+                    {
                         Status = STATUS_INVALID_PAGE_PROTECTION;
                         goto done;
                     }

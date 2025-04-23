@@ -58,30 +58,21 @@ Revision History:
 
 
 NTSTATUS
-SepDefaultDeleteMethod (
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor
-    );
-
+SepDefaultDeleteMethod(IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor);
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SeSetSecurityAccessMask)
-#pragma alloc_text(PAGE,SeQuerySecurityAccessMask)
-#pragma alloc_text(PAGE,SeDefaultObjectMethod)
-#pragma alloc_text(PAGE,SeSetSecurityDescriptorInfo)
-#pragma alloc_text(PAGE,SeSetSecurityDescriptorInfoEx)
-#pragma alloc_text(PAGE,SeQuerySecurityDescriptorInfo)
-#pragma alloc_text(PAGE,SepDefaultDeleteMethod)
+#pragma alloc_text(PAGE, SeSetSecurityAccessMask)
+#pragma alloc_text(PAGE, SeQuerySecurityAccessMask)
+#pragma alloc_text(PAGE, SeDefaultObjectMethod)
+#pragma alloc_text(PAGE, SeSetSecurityDescriptorInfo)
+#pragma alloc_text(PAGE, SeSetSecurityDescriptorInfoEx)
+#pragma alloc_text(PAGE, SeQuerySecurityDescriptorInfo)
+#pragma alloc_text(PAGE, SepDefaultDeleteMethod)
 #endif
 
 
-
-
-VOID
-SeSetSecurityAccessMask(
-    IN SECURITY_INFORMATION SecurityInformation,
-    OUT PACCESS_MASK DesiredAccess
-    )
+VOID SeSetSecurityAccessMask(IN SECURITY_INFORMATION SecurityInformation, OUT PACCESS_MASK DesiredAccess)
 
 /*++
 
@@ -119,29 +110,26 @@ Return Value:
 
     (*DesiredAccess) = 0;
 
-    if ((SecurityInformation & OWNER_SECURITY_INFORMATION) ||
-        (SecurityInformation & GROUP_SECURITY_INFORMATION)   ) {
+    if ((SecurityInformation & OWNER_SECURITY_INFORMATION) || (SecurityInformation & GROUP_SECURITY_INFORMATION))
+    {
         (*DesiredAccess) |= WRITE_OWNER;
     }
 
-    if (SecurityInformation & DACL_SECURITY_INFORMATION) {
+    if (SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
         (*DesiredAccess) |= WRITE_DAC;
     }
 
-    if (SecurityInformation & SACL_SECURITY_INFORMATION) {
+    if (SecurityInformation & SACL_SECURITY_INFORMATION)
+    {
         (*DesiredAccess) |= ACCESS_SYSTEM_SECURITY;
     }
 
     return;
-
 }
 
-
-VOID
-SeQuerySecurityAccessMask(
-    IN SECURITY_INFORMATION SecurityInformation,
-    OUT PACCESS_MASK DesiredAccess
-    )
+
+VOID SeQuerySecurityAccessMask(IN SECURITY_INFORMATION SecurityInformation, OUT PACCESS_MASK DesiredAccess)
 
 /*++
 
@@ -178,33 +166,26 @@ Return Value:
 
     (*DesiredAccess) = 0;
 
-    if ((SecurityInformation & OWNER_SECURITY_INFORMATION) ||
-        (SecurityInformation & GROUP_SECURITY_INFORMATION) ||
-        (SecurityInformation & DACL_SECURITY_INFORMATION)) {
+    if ((SecurityInformation & OWNER_SECURITY_INFORMATION) || (SecurityInformation & GROUP_SECURITY_INFORMATION) ||
+        (SecurityInformation & DACL_SECURITY_INFORMATION))
+    {
         (*DesiredAccess) |= READ_CONTROL;
     }
 
-    if ((SecurityInformation & SACL_SECURITY_INFORMATION)) {
+    if ((SecurityInformation & SACL_SECURITY_INFORMATION))
+    {
         (*DesiredAccess) |= ACCESS_SYSTEM_SECURITY;
     }
 
     return;
-
 }
 
 
-
 NTSTATUS
-SeDefaultObjectMethod (
-    IN PVOID Object,
-    IN SECURITY_OPERATION_CODE OperationCode,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG CapturedLength,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    )
+SeDefaultObjectMethod(IN PVOID Object, IN SECURITY_OPERATION_CODE OperationCode,
+                      IN PSECURITY_INFORMATION SecurityInformation, IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
+                      IN OUT PULONG CapturedLength, IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
+                      IN POOL_TYPE PoolType, IN PGENERIC_MAPPING GenericMapping)
 
 /*++
 
@@ -294,30 +275,23 @@ Return Value:
     //  Make sure the common parts of our input are proper
     //
 
-    ASSERT( (OperationCode == SetSecurityDescriptor) ||
-            (OperationCode == QuerySecurityDescriptor) ||
-            (OperationCode == AssignSecurityDescriptor) ||
-            (OperationCode == DeleteSecurityDescriptor) );
+    ASSERT((OperationCode == SetSecurityDescriptor) || (OperationCode == QuerySecurityDescriptor) ||
+           (OperationCode == AssignSecurityDescriptor) || (OperationCode == DeleteSecurityDescriptor));
 
     //
     //  This routine simply cases off of the operation code to decide
     //  which support routine to call
     //
 
-    switch (OperationCode) {
+    switch (OperationCode)
+    {
 
     case SetSecurityDescriptor:
 
-        ASSERT( (PoolType == PagedPool) || (PoolType == NonPagedPool) );
+        ASSERT((PoolType == PagedPool) || (PoolType == NonPagedPool));
 
-        return ObSetSecurityDescriptorInfo( Object,
-                                            SecurityInformation,
-                                            SecurityDescriptor,
-                                            ObjectsSecurityDescriptor,
-                                            PoolType,
-                                            GenericMapping
-                                            );
-
+        return ObSetSecurityDescriptorInfo(Object, SecurityInformation, SecurityDescriptor, ObjectsSecurityDescriptor,
+                                           PoolType, GenericMapping);
 
 
     case QuerySecurityDescriptor:
@@ -327,13 +301,10 @@ Return Value:
         //  method
         //
 
-        ASSERT( CapturedLength != NULL );
+        ASSERT(CapturedLength != NULL);
 
-        return ObQuerySecurityDescriptorInfo( Object,
-                                              SecurityInformation,
-                                              SecurityDescriptor,
-                                              CapturedLength,
-                                              ObjectsSecurityDescriptor );
+        return ObQuerySecurityDescriptorInfo(Object, SecurityInformation, SecurityDescriptor, CapturedLength,
+                                             ObjectsSecurityDescriptor);
 
     case DeleteSecurityDescriptor:
 
@@ -341,12 +312,12 @@ Return Value:
         //  call the default delete security method
         //
 
-        return SepDefaultDeleteMethod( ObjectsSecurityDescriptor );
+        return SepDefaultDeleteMethod(ObjectsSecurityDescriptor);
 
     case AssignSecurityDescriptor:
 
-        ObAssignObjectSecurityDescriptor( Object, SecurityDescriptor, PoolType );
-        return( STATUS_SUCCESS );
+        ObAssignObjectSecurityDescriptor(Object, SecurityDescriptor, PoolType);
+        return (STATUS_SUCCESS);
 
     default:
 
@@ -355,23 +326,16 @@ Return Value:
         //  the earlier asserts are still checked.
         //
 
-        KeBugCheckEx( SECURITY_SYSTEM, 0, STATUS_INVALID_PARAMETER, 0, 0 );
+        KeBugCheckEx(SECURITY_SYSTEM, 0, STATUS_INVALID_PARAMETER, 0, 0);
     }
-
 }
 
 
-
-
 NTSTATUS
-SeSetSecurityDescriptorInfo (
-    IN PVOID Object OPTIONAL,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN PSECURITY_DESCRIPTOR ModificationDescriptor,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    )
+SeSetSecurityDescriptorInfo(IN PVOID Object OPTIONAL, IN PSECURITY_INFORMATION SecurityInformation,
+                            IN PSECURITY_DESCRIPTOR ModificationDescriptor,
+                            IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor, IN POOL_TYPE PoolType,
+                            IN PGENERIC_MAPPING GenericMapping)
 
 /*++
 
@@ -417,7 +381,6 @@ Return Value:
 {
 
 
-
     //
     // Make sure the object already has a security descriptor.
     // Objects that 'may' have security descriptors 'must' have security
@@ -425,8 +388,9 @@ Return Value:
     // assign one to it.
     //
 
-    if ((*ObjectsSecurityDescriptor) == NULL) {
-        return(STATUS_NO_SECURITY_ON_OBJECT);
+    if ((*ObjectsSecurityDescriptor) == NULL)
+    {
+        return (STATUS_NO_SECURITY_ON_OBJECT);
     }
 
 
@@ -434,32 +398,18 @@ Return Value:
     // Pass this call to the common Rtlp routine.
     //
 
-    return RtlpSetSecurityObject (
-                    Object,
-                    *SecurityInformation,
-                    ModificationDescriptor,
-                    ObjectsSecurityDescriptor,
-                    0,  // No Auto Inheritance
-                    PoolType,
-                    GenericMapping,
-                    NULL ); // No Token
-
-
+    return RtlpSetSecurityObject(Object, *SecurityInformation, ModificationDescriptor, ObjectsSecurityDescriptor,
+                                 0, // No Auto Inheritance
+                                 PoolType, GenericMapping,
+                                 NULL); // No Token
 }
 
 
-
-
 NTSTATUS
-SeSetSecurityDescriptorInfoEx (
-    IN PVOID Object OPTIONAL,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN PSECURITY_DESCRIPTOR ModificationDescriptor,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN ULONG AutoInheritFlags,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    )
+SeSetSecurityDescriptorInfoEx(IN PVOID Object OPTIONAL, IN PSECURITY_INFORMATION SecurityInformation,
+                              IN PSECURITY_DESCRIPTOR ModificationDescriptor,
+                              IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor, IN ULONG AutoInheritFlags,
+                              IN POOL_TYPE PoolType, IN PGENERIC_MAPPING GenericMapping)
 
 /*++
 
@@ -534,8 +484,9 @@ Return Value:
     // assign one to it.
     //
 
-    if ((*ObjectsSecurityDescriptor) == NULL) {
-        return(STATUS_NO_SECURITY_ON_OBJECT);
+    if ((*ObjectsSecurityDescriptor) == NULL)
+    {
+        return (STATUS_NO_SECURITY_ON_OBJECT);
     }
 
 
@@ -543,28 +494,15 @@ Return Value:
     // Pass this call to the common Rtlp routine.
     //
 
-    return RtlpSetSecurityObject (
-                    Object,
-                    *SecurityInformation,
-                    ModificationDescriptor,
-                    ObjectsSecurityDescriptor,
-                    AutoInheritFlags,
-                    PoolType,
-                    GenericMapping,
-                    NULL ); // No Token
-
-
+    return RtlpSetSecurityObject(Object, *SecurityInformation, ModificationDescriptor, ObjectsSecurityDescriptor,
+                                 AutoInheritFlags, PoolType, GenericMapping,
+                                 NULL); // No Token
 }
 
 
-
 NTSTATUS
-SeQuerySecurityDescriptorInfo (
-    IN PSECURITY_INFORMATION SecurityInformation,
-    OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG Length,
-    IN PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor
-    )
+SeQuerySecurityDescriptorInfo(IN PSECURITY_INFORMATION SecurityInformation, OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
+                              IN OUT PULONG Length, IN PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor)
 
 /*++
 
@@ -605,10 +543,10 @@ Return Value:
     ULONG BufferLength;
 
     ULONG Size;
-    ULONG OwnerLength=0;
-    ULONG GroupLength=0;
-    ULONG DaclLength=0;
-    ULONG SaclLength=0;
+    ULONG OwnerLength = 0;
+    ULONG GroupLength = 0;
+    ULONG DaclLength = 0;
+    ULONG SaclLength = 0;
     PUCHAR NextFree;
     SECURITY_DESCRIPTOR IObjectSecurity;
 
@@ -626,7 +564,8 @@ Return Value:
     //  therefore do everything in a try-except clause.
     //
 
-    try {
+    try
+    {
 
         BufferLength = *Length;
 
@@ -635,7 +574,8 @@ Return Value:
         //  we only need to return a blank security descriptor record
         //
 
-        if (*ObjectsSecurityDescriptor == NULL) {
+        if (*ObjectsSecurityDescriptor == NULL)
+        {
 
             *Length = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
@@ -644,10 +584,10 @@ Return Value:
             //  record
             //
 
-            if (BufferLength < sizeof(SECURITY_DESCRIPTOR_RELATIVE)) {
+            if (BufferLength < sizeof(SECURITY_DESCRIPTOR_RELATIVE))
+            {
 
                 return STATUS_BUFFER_TOO_SMALL;
-
             }
 
             //
@@ -665,21 +605,19 @@ Return Value:
             // descriptor.
             //
 
-            RtlCreateSecurityDescriptorRelative( SecurityDescriptor,
-                                                 SECURITY_DESCRIPTOR_REVISION );
+            RtlCreateSecurityDescriptorRelative(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
             //
             // Mark it as self-relative
             //
 
-            RtlpSetControlBits( ISecurityDescriptor, SE_SELF_RELATIVE );
+            RtlpSetControlBits(ISecurityDescriptor, SE_SELF_RELATIVE);
 
             //
             //  And return to our caller
             //
 
             return STATUS_SUCCESS;
-
         }
 
         //
@@ -687,18 +625,12 @@ Return Value:
         // user space to simplify the following code
         //
 
-        RtlCopyMemory( (&IObjectSecurity),
-                      *ObjectsSecurityDescriptor,
-                      sizeof(SECURITY_DESCRIPTOR_RELATIVE) );
+        RtlCopyMemory((&IObjectSecurity), *ObjectsSecurityDescriptor, sizeof(SECURITY_DESCRIPTOR_RELATIVE));
 
-        IObjectSecurity.Owner = RtlpOwnerAddrSecurityDescriptor(
-                    (SECURITY_DESCRIPTOR *) *ObjectsSecurityDescriptor );
-        IObjectSecurity.Group = RtlpGroupAddrSecurityDescriptor(
-                    (SECURITY_DESCRIPTOR *) *ObjectsSecurityDescriptor );
-        IObjectSecurity.Dacl = RtlpDaclAddrSecurityDescriptor(
-                    (SECURITY_DESCRIPTOR *) *ObjectsSecurityDescriptor );
-        IObjectSecurity.Sacl = RtlpSaclAddrSecurityDescriptor(
-                    (SECURITY_DESCRIPTOR *) *ObjectsSecurityDescriptor );
+        IObjectSecurity.Owner = RtlpOwnerAddrSecurityDescriptor((SECURITY_DESCRIPTOR *)*ObjectsSecurityDescriptor);
+        IObjectSecurity.Group = RtlpGroupAddrSecurityDescriptor((SECURITY_DESCRIPTOR *)*ObjectsSecurityDescriptor);
+        IObjectSecurity.Dacl = RtlpDaclAddrSecurityDescriptor((SECURITY_DESCRIPTOR *)*ObjectsSecurityDescriptor);
+        IObjectSecurity.Sacl = RtlpSaclAddrSecurityDescriptor((SECURITY_DESCRIPTOR *)*ObjectsSecurityDescriptor);
 
         IObjectSecurity.Control &= ~SE_SELF_RELATIVE;
 
@@ -710,39 +642,35 @@ Return Value:
 
         Size = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
-        if ( (((*SecurityInformation) & OWNER_SECURITY_INFORMATION)) &&
-             (IObjectSecurity.Owner != NULL) ) {
+        if ((((*SecurityInformation) & OWNER_SECURITY_INFORMATION)) && (IObjectSecurity.Owner != NULL))
+        {
 
-            OwnerLength = SeLengthSid( IObjectSecurity.Owner );
+            OwnerLength = SeLengthSid(IObjectSecurity.Owner);
             Size += (ULONG)LongAlignSize(OwnerLength);
-
         }
 
-        if ( (((*SecurityInformation) & GROUP_SECURITY_INFORMATION)) &&
-             (IObjectSecurity.Group != NULL) ) {
+        if ((((*SecurityInformation) & GROUP_SECURITY_INFORMATION)) && (IObjectSecurity.Group != NULL))
+        {
 
-            GroupLength = SeLengthSid( IObjectSecurity.Group );
+            GroupLength = SeLengthSid(IObjectSecurity.Group);
             Size += (ULONG)LongAlignSize(GroupLength);
-
         }
 
-        if ( (((*SecurityInformation) & DACL_SECURITY_INFORMATION)) &&
-             (IObjectSecurity.Control & SE_DACL_PRESENT) &&
-             (IObjectSecurity.Dacl != NULL) ) {
+        if ((((*SecurityInformation) & DACL_SECURITY_INFORMATION)) && (IObjectSecurity.Control & SE_DACL_PRESENT) &&
+            (IObjectSecurity.Dacl != NULL))
+        {
 
 
             DaclLength = (ULONG)LongAlignSize((IObjectSecurity.Dacl)->AclSize);
             Size += DaclLength;
-
         }
 
-        if ( (((*SecurityInformation) & SACL_SECURITY_INFORMATION)) &&
-             (IObjectSecurity.Control & SE_SACL_PRESENT) &&
-             (IObjectSecurity.Sacl != NULL) ) {
+        if ((((*SecurityInformation) & SACL_SECURITY_INFORMATION)) && (IObjectSecurity.Control & SE_SACL_PRESENT) &&
+            (IObjectSecurity.Sacl != NULL))
+        {
 
             SaclLength = (ULONG)LongAlignSize((IObjectSecurity.Sacl)->AclSize);
             Size += SaclLength;
-
         }
 
         //
@@ -757,10 +685,10 @@ Return Value:
         //  we were passed
         //
 
-        if (Size > BufferLength) {
+        if (Size > BufferLength)
+        {
 
             return STATUS_BUFFER_TOO_SMALL;
-
         }
 
         //
@@ -778,46 +706,37 @@ Return Value:
         //  so we can just write to it.
         //
 
-        RtlCreateSecurityDescriptorRelative( SecurityDescriptor,
-                                             SECURITY_DESCRIPTOR_REVISION );
+        RtlCreateSecurityDescriptorRelative(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
         //
         // Mark the returned Security Descriptor as being in
         // self-relative format
         //
 
-        RtlpSetControlBits( ISecurityDescriptor, SE_SELF_RELATIVE );
+        RtlpSetControlBits(ISecurityDescriptor, SE_SELF_RELATIVE);
 
         //
         //  NextFree is used to point to the next free spot in the
         //  returned security descriptor.
         //
 
-        NextFree = LongAlignPtr((PUCHAR)SecurityDescriptor +
-                                        sizeof(SECURITY_DESCRIPTOR_RELATIVE));
+        NextFree = LongAlignPtr((PUCHAR)SecurityDescriptor + sizeof(SECURITY_DESCRIPTOR_RELATIVE));
 
         //
         //  Copy the Owner SID if necessary and update the NextFree pointer,
         //  keeping it longword aligned.
         //
 
-        if ( ((*SecurityInformation) & OWNER_SECURITY_INFORMATION) &&
-             ((IObjectSecurity.Owner) != NULL) ) {
+        if (((*SecurityInformation) & OWNER_SECURITY_INFORMATION) && ((IObjectSecurity.Owner) != NULL))
+        {
 
-                RtlMoveMemory( NextFree,
-                               IObjectSecurity.Owner,
-                               OwnerLength );
+            RtlMoveMemory(NextFree, IObjectSecurity.Owner, OwnerLength);
 
-                ISecurityDescriptor->Owner = (ULONG)((PUCHAR)NextFree - (PUCHAR)SecurityDescriptor);
+            ISecurityDescriptor->Owner = (ULONG)((PUCHAR)NextFree - (PUCHAR)SecurityDescriptor);
 
-                RtlpPropagateControlBits(
-                    ISecurityDescriptor,
-                    &IObjectSecurity,
-                    SE_OWNER_DEFAULTED
-                    );
+            RtlpPropagateControlBits(ISecurityDescriptor, &IObjectSecurity, SE_OWNER_DEFAULTED);
 
-                NextFree += (ULONG)LongAlignSize(OwnerLength);
-
+            NextFree += (ULONG)LongAlignSize(OwnerLength);
         }
 
 
@@ -826,23 +745,16 @@ Return Value:
         //  keeping it longword aligned.
         //
 
-        if ( ((*SecurityInformation) & GROUP_SECURITY_INFORMATION) &&
-             (IObjectSecurity.Group != NULL) ) {
+        if (((*SecurityInformation) & GROUP_SECURITY_INFORMATION) && (IObjectSecurity.Group != NULL))
+        {
 
-                RtlMoveMemory( NextFree,
-                               IObjectSecurity.Group,
-                               GroupLength );
+            RtlMoveMemory(NextFree, IObjectSecurity.Group, GroupLength);
 
-                ISecurityDescriptor->Group = (ULONG)((PUCHAR)NextFree - (PUCHAR)SecurityDescriptor);
+            ISecurityDescriptor->Group = (ULONG)((PUCHAR)NextFree - (PUCHAR)SecurityDescriptor);
 
-                RtlpPropagateControlBits(
-                    ISecurityDescriptor,
-                    &IObjectSecurity,
-                    SE_GROUP_DEFAULTED
-                    );
+            RtlpPropagateControlBits(ISecurityDescriptor, &IObjectSecurity, SE_GROUP_DEFAULTED);
 
-                NextFree += (ULONG)LongAlignSize(GroupLength);
-
+            NextFree += (ULONG)LongAlignSize(GroupLength);
         }
 
 
@@ -852,30 +764,25 @@ Return Value:
         //  then everything is already set properly.
         //
 
-        if ( (*SecurityInformation) & DACL_SECURITY_INFORMATION) {
+        if ((*SecurityInformation) & DACL_SECURITY_INFORMATION)
+        {
 
-            RtlpPropagateControlBits(
-                ISecurityDescriptor,
-                &IObjectSecurity,
-                SE_DACL_PRESENT | SE_DACL_DEFAULTED | SE_DACL_PROTECTED | SE_DACL_AUTO_INHERITED
-                );
+            RtlpPropagateControlBits(ISecurityDescriptor, &IObjectSecurity,
+                                     SE_DACL_PRESENT | SE_DACL_DEFAULTED | SE_DACL_PROTECTED | SE_DACL_AUTO_INHERITED);
 
             //
             // Copy the acl if non-null  and update the NextFree pointer,
             // keeping it longword aligned.
             //
 
-            if ( (IObjectSecurity.Control & SE_DACL_PRESENT) != 0 &&
-                 IObjectSecurity.Dacl != NULL) {
+            if ((IObjectSecurity.Control & SE_DACL_PRESENT) != 0 && IObjectSecurity.Dacl != NULL)
+            {
 
-                RtlMoveMemory( NextFree,
-                               IObjectSecurity.Dacl,
-                               (IObjectSecurity.Dacl)->AclSize );
+                RtlMoveMemory(NextFree, IObjectSecurity.Dacl, (IObjectSecurity.Dacl)->AclSize);
 
                 ISecurityDescriptor->Dacl = (ULONG)((PUCHAR)NextFree - (PUCHAR)SecurityDescriptor);
 
                 NextFree += DaclLength;
-
             }
         }
 
@@ -886,43 +793,36 @@ Return Value:
         //  then everything is already set properly.
         //
 
-        if ( (*SecurityInformation) & SACL_SECURITY_INFORMATION) {
+        if ((*SecurityInformation) & SACL_SECURITY_INFORMATION)
+        {
 
-            RtlpPropagateControlBits(
-                ISecurityDescriptor,
-                &IObjectSecurity,
-                SE_SACL_PRESENT | SE_SACL_DEFAULTED | SE_SACL_PROTECTED | SE_SACL_AUTO_INHERITED
-                );
+            RtlpPropagateControlBits(ISecurityDescriptor, &IObjectSecurity,
+                                     SE_SACL_PRESENT | SE_SACL_DEFAULTED | SE_SACL_PROTECTED | SE_SACL_AUTO_INHERITED);
 
             //
             // Copy the acl if non-null  and update the NextFree pointer,
             // keeping it longword aligned.
             //
-            if ( (IObjectSecurity.Control & SE_SACL_PRESENT) != 0 &&
-                 IObjectSecurity.Sacl != NULL) {
+            if ((IObjectSecurity.Control & SE_SACL_PRESENT) != 0 && IObjectSecurity.Sacl != NULL)
+            {
 
-                RtlMoveMemory( NextFree,
-                               IObjectSecurity.Sacl,
-                               (IObjectSecurity.Sacl)->AclSize );
+                RtlMoveMemory(NextFree, IObjectSecurity.Sacl, (IObjectSecurity.Sacl)->AclSize);
 
                 ISecurityDescriptor->Sacl = (ULONG)((PUCHAR)NextFree - (PUCHAR)SecurityDescriptor);
-
             }
         }
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-        return(GetExceptionCode());
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return (GetExceptionCode());
     }
 
     return STATUS_SUCCESS;
-
 }
 
-
+
 NTSTATUS
-SepDefaultDeleteMethod (
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor
-    )
+SepDefaultDeleteMethod(IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor)
 
 /*++
 
@@ -946,5 +846,5 @@ Return Value:
 {
     PAGED_CODE();
 
-    return (ObDeassignSecurity ( ObjectsSecurityDescriptor ));
+    return (ObDeassignSecurity(ObjectsSecurityDescriptor));
 }

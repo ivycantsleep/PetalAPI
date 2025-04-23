@@ -27,10 +27,11 @@ Revision History:
 // Constants
 //
 
-#define MAX_ULONGLONG           ((ULONGLONG) -1)
-#define MAX_ALIAS_PORT          0x0000FFFF
+#define MAX_ULONGLONG ((ULONGLONG) - 1)
+#define MAX_ALIAS_PORT 0x0000FFFF
 
-typedef struct _PORT_ARBITER_EXTENSION {
+typedef struct _PORT_ARBITER_EXTENSION
+{
 
     PRTL_RANGE_LIST Aliases;
     PRTL_RANGE_LIST PossibleAliases;
@@ -42,84 +43,42 @@ typedef struct _PORT_ARBITER_EXTENSION {
 // Prototypes
 //
 
-VOID
-IopPortBacktrackAllocation(
-     IN PARBITER_INSTANCE Arbiter,
-     IN PARBITER_ALLOCATION_STATE State
-     );
+VOID IopPortBacktrackAllocation(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State);
 
 BOOLEAN
-IopPortGetNextAlias(
-    ULONG IoDescriptorFlags,
-    ULONGLONG LastAlias,
-    PULONGLONG NextAlias
-    );
+IopPortGetNextAlias(ULONG IoDescriptorFlags, ULONGLONG LastAlias, PULONGLONG NextAlias);
 
 BOOLEAN
-IopPortFindSuitableRange(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALLOCATION_STATE State
-    );
+IopPortFindSuitableRange(PARBITER_INSTANCE Arbiter, PARBITER_ALLOCATION_STATE State);
 
 BOOLEAN
-IopMemFindSuitableRange(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALLOCATION_STATE State
-    );
+IopMemFindSuitableRange(PARBITER_INSTANCE Arbiter, PARBITER_ALLOCATION_STATE State);
 
 
 NTSTATUS
-IopGenericUnpackRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Minimum,
-    OUT PULONGLONG Maximum,
-    OUT PULONG Length,
-    OUT PULONG Alignment
-    );
+IopGenericUnpackRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Minimum, OUT PULONGLONG Maximum,
+                            OUT PULONG Length, OUT PULONG Alignment);
 
 NTSTATUS
-IopGenericPackResource(
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    IN ULONGLONG Start,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor
-    );
+IopGenericPackResource(IN PIO_RESOURCE_DESCRIPTOR Requirement, IN ULONGLONG Start,
+                       OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor);
 
-LONG
-IopGenericScoreRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor
-    );
+LONG IopGenericScoreRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor);
 
 NTSTATUS
-IopGenericUnpackResource(
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Start,
-    OUT PULONG Length
-    );
+IopGenericUnpackResource(IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Start, OUT PULONG Length);
 
 BOOLEAN
-IopPortIsAliasedRangeAvailable(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    );
+IopPortIsAliasedRangeAvailable(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State);
 
 NTSTATUS
-IopMemInitialize(
-    VOID
-    );
+IopMemInitialize(VOID);
 
-VOID
-IopPortAddAllocation(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    );
+VOID IopPortAddAllocation(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State);
 
 NTSTATUS
-IopTranslateBusAddress(
-    IN PHYSICAL_ADDRESS SourceAddress,
-    IN UCHAR SourceResourceType,
-    OUT PPHYSICAL_ADDRESS TargetAddress,
-    OUT PUCHAR TargetResourceType
-    );
+IopTranslateBusAddress(IN PHYSICAL_ADDRESS SourceAddress, IN UCHAR SourceResourceType,
+                       OUT PPHYSICAL_ADDRESS TargetAddress, OUT PUCHAR TargetResourceType);
 
 
 //
@@ -129,10 +88,7 @@ IopTranslateBusAddress(
 #ifdef ALLOC_PRAGMA
 
 NTSTATUS
-IopGenericTranslateOrdering(
-    OUT PIO_RESOURCE_DESCRIPTOR Target,
-    IN PIO_RESOURCE_DESCRIPTOR Source
-    );
+IopGenericTranslateOrdering(OUT PIO_RESOURCE_DESCRIPTOR Target, IN PIO_RESOURCE_DESCRIPTOR Source);
 #pragma alloc_text(PAGE, IopGenericTranslateOrdering)
 #pragma alloc_text(PAGE, IopPortInitialize)
 #pragma alloc_text(PAGE, IopMemInitialize)
@@ -150,20 +106,16 @@ IopGenericTranslateOrdering(
 #endif // ALLOC_PRAGMA
 
 
-#define ADDRESS_SPACE_MEMORY                0x0
-#define ADDRESS_SPACE_PORT                  0x1
-#define ADDRESS_SPACE_USER_MEMORY           0x2
-#define ADDRESS_SPACE_USER_PORT             0x3
-#define ADDRESS_SPACE_DENSE_MEMORY          0x4
-#define ADDRESS_SPACE_USER_DENSE_MEMORY     0x6
+#define ADDRESS_SPACE_MEMORY 0x0
+#define ADDRESS_SPACE_PORT 0x1
+#define ADDRESS_SPACE_USER_MEMORY 0x2
+#define ADDRESS_SPACE_USER_PORT 0x3
+#define ADDRESS_SPACE_DENSE_MEMORY 0x4
+#define ADDRESS_SPACE_USER_DENSE_MEMORY 0x6
 
 NTSTATUS
-IopTranslateBusAddress(
-    IN PHYSICAL_ADDRESS SourceAddress,
-    IN UCHAR SourceResourceType,
-    OUT PPHYSICAL_ADDRESS TargetAddress,
-    OUT PUCHAR TargetResourceType
-    )
+IopTranslateBusAddress(IN PHYSICAL_ADDRESS SourceAddress, IN UCHAR SourceResourceType,
+                       OUT PPHYSICAL_ADDRESS TargetAddress, OUT PUCHAR TargetResourceType)
 /*++
 
 Routine Description:
@@ -195,20 +147,21 @@ Return Value:
     // Select the appropriate address space
     //
 
-    if (SourceResourceType == CmResourceTypeMemory) {
+    if (SourceResourceType == CmResourceTypeMemory)
+    {
         sourceAddressSpace = ADDRESS_SPACE_MEMORY;
-    } else if (SourceResourceType == CmResourceTypePort) {
+    }
+    else if (SourceResourceType == CmResourceTypePort)
+    {
         sourceAddressSpace = ADDRESS_SPACE_PORT;
-    } else {
+    }
+    else
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    ARB_PRINT(
-        2,
-        ("Translating %s address 0x%I64x => ",
-        SourceResourceType == CmResourceTypeMemory ? "Memory" : "I/O",
-        SourceAddress.QuadPart
-       ));
+    ARB_PRINT(2, ("Translating %s address 0x%I64x => ", SourceResourceType == CmResourceTypeMemory ? "Memory" : "I/O",
+                  SourceAddress.QuadPart));
 
     //
     // HACKHACK Ask the HAL to translate on ISA bus - if we can't then just
@@ -217,16 +170,11 @@ Return Value:
     //
 
     targetAddressSpace = sourceAddressSpace;
-    translated = HalTranslateBusAddress(
-                     Isa,
-                     0,
-                     SourceAddress,
-                     &targetAddressSpace,
-                     TargetAddress
-                     );
+    translated = HalTranslateBusAddress(Isa, 0, SourceAddress, &targetAddressSpace, TargetAddress);
 
-    if (!translated) {
-        ARB_PRINT(2,("Translation failed!\n"));
+    if (!translated)
+    {
+        ARB_PRINT(2, ("Translation failed!\n"));
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -240,36 +188,30 @@ Return Value:
     // I think the answer is dense -> spares is multiply length by 32
     //
 
-    if (targetAddressSpace == ADDRESS_SPACE_MEMORY
-    ||  targetAddressSpace == ADDRESS_SPACE_USER_MEMORY
-    ||  targetAddressSpace == ADDRESS_SPACE_DENSE_MEMORY
-    ||  targetAddressSpace == ADDRESS_SPACE_USER_DENSE_MEMORY) {
+    if (targetAddressSpace == ADDRESS_SPACE_MEMORY || targetAddressSpace == ADDRESS_SPACE_USER_MEMORY ||
+        targetAddressSpace == ADDRESS_SPACE_DENSE_MEMORY || targetAddressSpace == ADDRESS_SPACE_USER_DENSE_MEMORY)
+    {
         *TargetResourceType = CmResourceTypeMemory;
-    } else if (targetAddressSpace == ADDRESS_SPACE_PORT
-           ||  targetAddressSpace == ADDRESS_SPACE_USER_PORT) {
+    }
+    else if (targetAddressSpace == ADDRESS_SPACE_PORT || targetAddressSpace == ADDRESS_SPACE_USER_PORT)
+    {
         *TargetResourceType = CmResourceTypePort;
-    } else {
+    }
+    else
+    {
         ASSERT(0 && "Translation has returned an unknown address space");
         return STATUS_INVALID_PARAMETER;
     }
 
-    ARB_PRINT(
-        2,
-        ("%s address 0x%I64x\n",
-        *TargetResourceType == CmResourceTypeMemory ? "Memory" : "I/O",
-        TargetAddress->QuadPart
-        ));
+    ARB_PRINT(2, ("%s address 0x%I64x\n", *TargetResourceType == CmResourceTypeMemory ? "Memory" : "I/O",
+                  TargetAddress->QuadPart));
 
     return STATUS_SUCCESS;
-
 }
 
 
 NTSTATUS
-IopGenericTranslateOrdering(
-    OUT PIO_RESOURCE_DESCRIPTOR Target,
-    IN PIO_RESOURCE_DESCRIPTOR Source
-    )
+IopGenericTranslateOrdering(OUT PIO_RESOURCE_DESCRIPTOR Target, IN PIO_RESOURCE_DESCRIPTOR Source)
 
 /*
 
@@ -300,8 +242,8 @@ Return Value:
 
     *Target = *Source;
 
-    if (Source->Type != CmResourceTypeMemory
-    && Source->Type != CmResourceTypePort) {
+    if (Source->Type != CmResourceTypeMemory && Source->Type != CmResourceTypePort)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -311,24 +253,18 @@ Return Value:
     // Translate the minimum
     //
 
-    status = IopTranslateBusAddress(Source->u.Generic.MinimumAddress,
-                                    initialResourceType,
-                                    &Target->u.Generic.MinimumAddress,
-                                    &minResourceType
-                                    );
+    status = IopTranslateBusAddress(Source->u.Generic.MinimumAddress, initialResourceType,
+                                    &Target->u.Generic.MinimumAddress, &minResourceType);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Translate the maximum iff we could translate the minimum
         //
 
-        status = IopTranslateBusAddress(Source->u.Generic.MaximumAddress,
-                                        initialResourceType,
-                                        &Target->u.Generic.MaximumAddress,
-                                        &maxResourceType
-                                        );
-
+        status = IopTranslateBusAddress(Source->u.Generic.MaximumAddress, initialResourceType,
+                                        &Target->u.Generic.MaximumAddress, &maxResourceType);
     }
 
     //
@@ -336,15 +272,17 @@ Return Value:
     // range - set it's type to CmResourceTypeNull
     //
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         Target->Type = CmResourceTypeNull;
-    } else {
+    }
+    else
+    {
         ASSERT(minResourceType == maxResourceType);
         Target->Type = minResourceType;
     }
 
     return STATUS_SUCCESS;
-
 }
 
 //
@@ -352,9 +290,7 @@ Return Value:
 //
 
 NTSTATUS
-IopPortInitialize(
-    VOID
-    )
+IopPortInitialize(VOID)
 
 /*++
 
@@ -379,29 +315,22 @@ Return Value:
     // Fill in the non-default action handlers
     //
 
-    IopRootPortArbiter.FindSuitableRange    = IopPortFindSuitableRange;
-    IopRootPortArbiter.AddAllocation        = IopPortAddAllocation;
-    IopRootPortArbiter.BacktrackAllocation  = IopPortBacktrackAllocation;
+    IopRootPortArbiter.FindSuitableRange = IopPortFindSuitableRange;
+    IopRootPortArbiter.AddAllocation = IopPortAddAllocation;
+    IopRootPortArbiter.BacktrackAllocation = IopPortBacktrackAllocation;
 
-    IopRootPortArbiter.UnpackRequirement    = IopGenericUnpackRequirement;
-    IopRootPortArbiter.PackResource         = IopGenericPackResource;
-    IopRootPortArbiter.UnpackResource       = IopGenericUnpackResource;
-    IopRootPortArbiter.ScoreRequirement     = IopGenericScoreRequirement;
+    IopRootPortArbiter.UnpackRequirement = IopGenericUnpackRequirement;
+    IopRootPortArbiter.PackResource = IopGenericPackResource;
+    IopRootPortArbiter.UnpackResource = IopGenericUnpackResource;
+    IopRootPortArbiter.ScoreRequirement = IopGenericScoreRequirement;
 
     return ArbInitializeArbiterInstance(&IopRootPortArbiter,
-                                        NULL,     // Indicates ROOT arbiter
-                                        CmResourceTypePort,
-                                        L"RootPort",
-                                        L"Root",
-                                        IopGenericTranslateOrdering
-                                        );
-
+                                        NULL, // Indicates ROOT arbiter
+                                        CmResourceTypePort, L"RootPort", L"Root", IopGenericTranslateOrdering);
 }
 
 NTSTATUS
-IopMemInitialize(
-    VOID
-    )
+IopMemInitialize(VOID)
 
 /*++
 
@@ -425,21 +354,18 @@ Return Value:
     PAGED_CODE();
 
     IopRootMemArbiter.UnpackRequirement = IopGenericUnpackRequirement;
-    IopRootMemArbiter.PackResource      = IopGenericPackResource;
-    IopRootMemArbiter.UnpackResource    = IopGenericUnpackResource;
-    IopRootMemArbiter.ScoreRequirement  = IopGenericScoreRequirement;
+    IopRootMemArbiter.PackResource = IopGenericPackResource;
+    IopRootMemArbiter.UnpackResource = IopGenericUnpackResource;
+    IopRootMemArbiter.ScoreRequirement = IopGenericScoreRequirement;
 
-    IopRootMemArbiter.FindSuitableRange    = IopMemFindSuitableRange;
+    IopRootMemArbiter.FindSuitableRange = IopMemFindSuitableRange;
 
     status = ArbInitializeArbiterInstance(&IopRootMemArbiter,
-                                          NULL,     // Indicates ROOT arbiter
-                                          CmResourceTypeMemory,
-                                          L"RootMemory",
-                                          L"Root",
-                                          IopGenericTranslateOrdering
-                                          );
+                                          NULL, // Indicates ROOT arbiter
+                                          CmResourceTypeMemory, L"RootMemory", L"Root", IopGenericTranslateOrdering);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -448,16 +374,11 @@ Return Value:
     // doesn't report it as so Mm doesn't reuse it.
     //
 
-    status = RtlAddRange(IopRootMemArbiter.Allocation,
-                         0,
-                         PAGE_SIZE - 1,
+    status = RtlAddRange(IopRootMemArbiter.Allocation, 0, PAGE_SIZE - 1,
                          0, // RangeAttributes
                          0, // Flags
-                         NULL,
-                         NULL
-                         );
+                         NULL, NULL);
     return status;
-
 }
 
 
@@ -466,13 +387,8 @@ Return Value:
 //
 
 NTSTATUS
-IopGenericUnpackRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Minimum,
-    OUT PULONGLONG Maximum,
-    OUT PULONG Length,
-    OUT PULONG Alignment
-    )
+IopGenericUnpackRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Minimum, OUT PULONGLONG Maximum,
+                            OUT PULONG Length, OUT PULONG Alignment)
 
 /*++
 
@@ -503,12 +419,11 @@ Return Value:
 {
     PAGED_CODE();
     ASSERT(Descriptor);
-    ASSERT(Descriptor->Type == CmResourceTypePort
-           || Descriptor->Type == CmResourceTypeMemory);
+    ASSERT(Descriptor->Type == CmResourceTypePort || Descriptor->Type == CmResourceTypeMemory);
 
 
-    *Minimum = (ULONGLONG) Descriptor->u.Generic.MinimumAddress.QuadPart;
-    *Maximum = (ULONGLONG) Descriptor->u.Generic.MaximumAddress.QuadPart;
+    *Minimum = (ULONGLONG)Descriptor->u.Generic.MinimumAddress.QuadPart;
+    *Maximum = (ULONGLONG)Descriptor->u.Generic.MaximumAddress.QuadPart;
     *Length = Descriptor->u.Generic.Length;
     *Alignment = Descriptor->u.Generic.Alignment;
 
@@ -516,7 +431,8 @@ Return Value:
     // Fix the broken hardware that reports 0 alignment
     //
 
-    if (*Alignment == 0) {
+    if (*Alignment == 0)
+    {
         *Alignment = 1;
     }
 
@@ -524,30 +440,20 @@ Return Value:
     // Fix broken INF's that report they support 24bit memory > 0xFFFFFF
     //
 
-    if (Descriptor->Type == CmResourceTypeMemory
-    && Descriptor->Flags & CM_RESOURCE_MEMORY_24
-    && Descriptor->u.Memory.MaximumAddress.QuadPart > 0xFFFFFF) {
+    if (Descriptor->Type == CmResourceTypeMemory && Descriptor->Flags & CM_RESOURCE_MEMORY_24 &&
+        Descriptor->u.Memory.MaximumAddress.QuadPart > 0xFFFFFF)
+    {
         *Maximum = 0xFFFFFF;
     }
 
-    ARB_PRINT(2,
-                ("Unpacking %s requirement %p => 0x%I64x-0x%I64x length 0x%x alignment 0x%x\n",
-                Descriptor->Type == CmResourceTypePort ? "port" : "memory",
-                Descriptor,
-                *Minimum,
-                *Maximum,
-                *Length,
-                *Alignment
-                ));
+    ARB_PRINT(2, ("Unpacking %s requirement %p => 0x%I64x-0x%I64x length 0x%x alignment 0x%x\n",
+                  Descriptor->Type == CmResourceTypePort ? "port" : "memory", Descriptor, *Minimum, *Maximum, *Length,
+                  *Alignment));
 
     return STATUS_SUCCESS;
-
 }
 
-LONG
-IopGenericScoreRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor
-    )
+LONG IopGenericScoreRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor)
 
 /*++
 
@@ -579,8 +485,7 @@ Return Value:
 #define MAX_SCORE MAXLONG
 
     ASSERT(Descriptor);
-    ASSERT((Descriptor->Type == CmResourceTypePort) ||
-           (Descriptor->Type == CmResourceTypeMemory));
+    ASSERT((Descriptor->Type == CmResourceTypePort) || (Descriptor->Type == CmResourceTypeMemory));
 
     alignment = Descriptor->u.Generic.Alignment;
 
@@ -590,16 +495,13 @@ Return Value:
     //
     //
 
-    if (alignment == 0) {
+    if (alignment == 0)
+    {
         alignment = 1;
     }
 
 
-
-    start = ALIGN_ADDRESS_UP(
-                Descriptor->u.Generic.MinimumAddress.QuadPart,
-                alignment
-                );
+    start = ALIGN_ADDRESS_UP(Descriptor->u.Generic.MinimumAddress.QuadPart, alignment);
 
     end = Descriptor->u.Generic.MaximumAddress.QuadPart;
 
@@ -608,34 +510,28 @@ Return Value:
     // given the alignment and length constraints
     //
 
-    bigscore = (((end - Descriptor->u.Generic.Length + 1) - start)
-                    / alignment) + 1;
+    bigscore = (((end - Descriptor->u.Generic.Length + 1) - start) / alignment) + 1;
 
     score = (LONG)bigscore;
-    if (bigscore < 0) {
+    if (bigscore < 0)
+    {
         score = -1;
-    } else if (bigscore > MAX_SCORE) {
+    }
+    else if (bigscore > MAX_SCORE)
+    {
         score = MAX_SCORE;
     }
 
-    ARB_PRINT(2,
-                ("Scoring port resource %p(0x%I64x-0x%I64x) => %i\n",
-                Descriptor->Type == CmResourceTypePort ? "port" : "memory",
-                Descriptor,
-                Descriptor->u.Generic.MinimumAddress.QuadPart,
-                end,
-                score
-                ));
+    ARB_PRINT(2, ("Scoring port resource %p(0x%I64x-0x%I64x) => %i\n",
+                  Descriptor->Type == CmResourceTypePort ? "port" : "memory", Descriptor,
+                  Descriptor->u.Generic.MinimumAddress.QuadPart, end, score));
 
     return score;
 }
 
 NTSTATUS
-IopGenericPackResource(
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    IN ULONGLONG Start,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor
-    )
+IopGenericPackResource(IN PIO_RESOURCE_DESCRIPTOR Requirement, IN ULONGLONG Start,
+                       OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor)
 
 /*++
 
@@ -662,8 +558,7 @@ Return Value:
     PAGED_CODE();
     ASSERT(Descriptor);
     ASSERT(Requirement);
-    ASSERT(Requirement->Type == CmResourceTypePort
-           || Requirement->Type == CmResourceTypeMemory);
+    ASSERT(Requirement->Type == CmResourceTypePort || Requirement->Type == CmResourceTypeMemory);
 
     Descriptor->Type = Requirement->Type;
     Descriptor->Flags = Requirement->Flags;
@@ -671,23 +566,15 @@ Return Value:
     Descriptor->u.Generic.Start.QuadPart = Start;
     Descriptor->u.Generic.Length = Requirement->u.Generic.Length;
 
-    ARB_PRINT(2,
-                ("Packing %s resource %p => 0x%I64x length 0x%x\n",
-                Descriptor->Type == CmResourceTypePort ? "port" : "memory",
-                Descriptor,
-                Descriptor->u.Port.Start.QuadPart,
-                Descriptor->u.Port.Length
-                ));
+    ARB_PRINT(2, ("Packing %s resource %p => 0x%I64x length 0x%x\n",
+                  Descriptor->Type == CmResourceTypePort ? "port" : "memory", Descriptor,
+                  Descriptor->u.Port.Start.QuadPart, Descriptor->u.Port.Length));
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-IopGenericUnpackResource(
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Start,
-    OUT PULONG Length
-    )
+IopGenericUnpackResource(IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Start, OUT PULONG Length)
 
 /*++
 
@@ -713,22 +600,15 @@ Return Value:
 
     PAGED_CODE();
     ASSERT(Descriptor);
-    ASSERT(Descriptor->Type == CmResourceTypePort
-           || Descriptor->Type == CmResourceTypeMemory);
+    ASSERT(Descriptor->Type == CmResourceTypePort || Descriptor->Type == CmResourceTypeMemory);
 
     *Start = Descriptor->u.Generic.Start.QuadPart;
     *Length = Descriptor->u.Generic.Length;
 
-    ARB_PRINT(2,
-                ("Unpacking %s resource %p => 0x%I64x Length 0x%x\n",
-                Descriptor->Type == CmResourceTypePort ? "port" : "memory",
-                Descriptor,
-                *Start,
-                *Length
-                ));
+    ARB_PRINT(2, ("Unpacking %s resource %p => 0x%I64x Length 0x%x\n",
+                  Descriptor->Type == CmResourceTypePort ? "port" : "memory", Descriptor, *Start, *Length));
 
     return STATUS_SUCCESS;
-
 }
 #if 0
 NTSTATUS
@@ -890,11 +770,7 @@ cleanup:
     return status;
 }
 #endif
-VOID
-IopPortBacktrackAllocation(
-     IN PARBITER_INSTANCE Arbiter,
-     IN PARBITER_ALLOCATION_STATE State
-     )
+VOID IopPortBacktrackAllocation(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -932,16 +808,11 @@ Return Value:
 
     ARB_PRINT(2, ("\t\tDeleting aliases\n"));
 
-    while (IopPortGetNextAlias(State->CurrentAlternative->Flags,
-                               alias,
-                               &alias)) {
+    while (IopPortGetNextAlias(State->CurrentAlternative->Flags, alias, &alias))
+    {
 
-        status = RtlDeleteRange(
-                     Arbiter->PossibleAllocation,
-                     alias,
-                     alias + State->CurrentAlternative->Length - 1,
-                     State->Entry->PhysicalDeviceObject
-                     );
+        status = RtlDeleteRange(Arbiter->PossibleAllocation, alias, alias + State->CurrentAlternative->Length - 1,
+                                State->Entry->PhysicalDeviceObject);
 
         //
         // We should not fail...
@@ -955,15 +826,11 @@ Return Value:
     //
 
     ArbBacktrackAllocation(Arbiter, State);
-
 }
 
 
 BOOLEAN
-IopPortFindSuitableRange(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALLOCATION_STATE State
-    )
+IopPortFindSuitableRange(PARBITER_INSTANCE Arbiter, PARBITER_ALLOCATION_STATE State)
 /*++
 
 Routine Description:
@@ -996,7 +863,8 @@ Return Value:
     // value
     //
 
-    if (State->CurrentAlternative->Length == 0) {
+    if (State->CurrentAlternative->Length == 0)
+    {
         State->End = State->Start;
         return TRUE;
     }
@@ -1010,9 +878,9 @@ Return Value:
     // boot configs to be available.
     //
 
-    if (State->Entry->RequestSource == ArbiterRequestLegacyReported
-        || State->Entry->RequestSource == ArbiterRequestLegacyAssigned
-        || State->Entry->Flags & ARBITER_FLAG_BOOT_CONFIG) {
+    if (State->Entry->RequestSource == ArbiterRequestLegacyReported ||
+        State->Entry->RequestSource == ArbiterRequestLegacyAssigned || State->Entry->Flags & ARBITER_FLAG_BOOT_CONFIG)
+    {
 
         userFlagsMask = ARBITER_RANGE_BOOT_ALLOCATED;
     }
@@ -1021,48 +889,42 @@ Return Value:
     // Try to satisfy the request
     //
 
-    while (State->CurrentMinimum <= State->CurrentMaximum) {
+    while (State->CurrentMinimum <= State->CurrentMaximum)
+    {
 
         //
         // Select the first free alternative from the current alternative
         //
 
         status = RtlFindRange(
-                     Arbiter->PossibleAllocation,
-                     State->CurrentMinimum,
-                     State->CurrentMaximum,
-                     State->CurrentAlternative->Length,
-                     State->CurrentAlternative->Alignment,
-                     State->CurrentAlternative->Flags &
-                        ARBITER_ALTERNATIVE_FLAG_SHARED ?
-                            RTL_RANGE_LIST_SHARED_OK : 0,
-                     userFlagsMask,
-                     Arbiter->ConflictCallbackContext,
-                     Arbiter->ConflictCallback,
-                     &State->Start
-                     );
+            Arbiter->PossibleAllocation, State->CurrentMinimum, State->CurrentMaximum,
+            State->CurrentAlternative->Length, State->CurrentAlternative->Alignment,
+            State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ? RTL_RANGE_LIST_SHARED_OK : 0,
+            userFlagsMask, Arbiter->ConflictCallbackContext, Arbiter->ConflictCallback, &State->Start);
 
 
         //
         // Did we find a range and if not can we override any conflict
         //
-        if (NT_SUCCESS(status)
-        || Arbiter->OverrideConflict(Arbiter, State)) {
+        if (NT_SUCCESS(status) || Arbiter->OverrideConflict(Arbiter, State))
+        {
 
             State->End = State->Start + State->CurrentAlternative->Length - 1;
 
             //
             // Check if the aliases are available
             //
-            if (IopPortIsAliasedRangeAvailable(Arbiter, State)) {
+            if (IopPortIsAliasedRangeAvailable(Arbiter, State))
+            {
 
                 //
                 // We found a suitable range so return
                 //
 
                 return TRUE;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // This range's aliases arn't available so try the next range
@@ -1072,7 +934,9 @@ Return Value:
 
                 continue;
             }
-        } else {
+        }
+        else
+        {
 
             //
             // We couldn't find a base range
@@ -1086,13 +950,8 @@ Return Value:
 }
 
 
-
 BOOLEAN
-IopPortGetNextAlias(
-    ULONG IoDescriptorFlags,
-    ULONGLONG LastAlias,
-    PULONGLONG NextAlias
-    )
+IopPortGetNextAlias(ULONG IoDescriptorFlags, ULONGLONG LastAlias, PULONGLONG NextAlias)
 /*++
 
 Routine Description:
@@ -1119,11 +978,16 @@ Return Value:
 
     PAGED_CODE();
 
-    if (IoDescriptorFlags & CM_RESOURCE_PORT_10_BIT_DECODE) {
+    if (IoDescriptorFlags & CM_RESOURCE_PORT_10_BIT_DECODE)
+    {
         next = LastAlias + (1 << 10);
-    } else if (IoDescriptorFlags & CM_RESOURCE_PORT_12_BIT_DECODE) {
+    }
+    else if (IoDescriptorFlags & CM_RESOURCE_PORT_12_BIT_DECODE)
+    {
         next = LastAlias + (1 << 12);
-    } else {
+    }
+    else
+    {
 
         //
         // There are no aliases
@@ -1136,20 +1000,19 @@ Return Value:
     // Check that we are below the maximum aliased port
     //
 
-    if (next > MAX_ALIAS_PORT) {
+    if (next > MAX_ALIAS_PORT)
+    {
         return FALSE;
-    } else {
+    }
+    else
+    {
         *NextAlias = next;
         return TRUE;
     }
 }
 
 
-VOID
-IopPortAddAllocation(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    )
+VOID IopPortAddAllocation(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -1180,16 +1043,11 @@ Return Value:
     ASSERT(Arbiter);
     ASSERT(State);
 
-    status = RtlAddRange(Arbiter->PossibleAllocation,
-                 State->Start,
-                 State->End,
-                 State->RangeAttributes,
-                 RTL_RANGE_LIST_ADD_IF_CONFLICT +
-                    (State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED
-                        ? RTL_RANGE_LIST_ADD_SHARED : 0),
-                 NULL,
-                 State->Entry->PhysicalDeviceObject
-                 );
+    status = RtlAddRange(
+        Arbiter->PossibleAllocation, State->Start, State->End, State->RangeAttributes,
+        RTL_RANGE_LIST_ADD_IF_CONFLICT +
+            (State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ? RTL_RANGE_LIST_ADD_SHARED : 0),
+        NULL, State->Entry->PhysicalDeviceObject);
 
     ASSERT(NT_SUCCESS(status));
 
@@ -1200,20 +1058,15 @@ Return Value:
     alias = State->Start;
     ARB_PRINT(2, ("Adding aliases\n"));
 
-    while (IopPortGetNextAlias(State->CurrentAlternative->Descriptor->Flags,
-                             alias,
-                             &alias)) {
+    while (IopPortGetNextAlias(State->CurrentAlternative->Descriptor->Flags, alias, &alias))
+    {
 
-        status = RtlAddRange(Arbiter->PossibleAllocation,
-                     alias,
-                     alias + State->CurrentAlternative->Length - 1,
-                     (UCHAR) (State->RangeAttributes | ARBITER_RANGE_ALIAS),
-                     RTL_RANGE_LIST_ADD_IF_CONFLICT +
-                        (State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED
-                            ? RTL_RANGE_LIST_ADD_SHARED : 0),
-                     NULL,
-                     State->Entry->PhysicalDeviceObject
-                     );
+        status = RtlAddRange(
+            Arbiter->PossibleAllocation, alias, alias + State->CurrentAlternative->Length - 1,
+            (UCHAR)(State->RangeAttributes | ARBITER_RANGE_ALIAS),
+            RTL_RANGE_LIST_ADD_IF_CONFLICT +
+                (State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ? RTL_RANGE_LIST_ADD_SHARED : 0),
+            NULL, State->Entry->PhysicalDeviceObject);
 
         //
         // We have already checked if these ranges are available
@@ -1226,10 +1079,7 @@ Return Value:
 
 
 BOOLEAN
-IopPortIsAliasedRangeAvailable(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALLOCATION_STATE State
-    )
+IopPortIsAliasedRangeAvailable(PARBITER_INSTANCE Arbiter, PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -1262,8 +1112,8 @@ Return Value:
 
 #if defined(BUGFEST_HACKS)
 
-    UNREFERENCED_PARAMETER( Arbiter );
-    UNREFERENCED_PARAMETER( State );
+    UNREFERENCED_PARAMETER(Arbiter);
+    UNREFERENCED_PARAMETER(State);
 
     PAGED_CODE();
 
@@ -1285,31 +1135,25 @@ Return Value:
     // HalAssignSlotResources) or IoReportResourceUsage we consider preallocated
     // resources to be available for backward compatibility reasons.
     //
-    if (State->Entry->RequestSource == ArbiterRequestLegacyReported
-        || State->Entry->RequestSource == ArbiterRequestLegacyAssigned) {
+    if (State->Entry->RequestSource == ArbiterRequestLegacyReported ||
+        State->Entry->RequestSource == ArbiterRequestLegacyAssigned)
+    {
 
         userFlagsMask |= ARBITER_RANGE_BOOT_ALLOCATED;
     }
 
-    while (IopPortGetNextAlias(State->CurrentAlternative->Descriptor->Flags,
-                             alias,
-                             &alias)) {
+    while (IopPortGetNextAlias(State->CurrentAlternative->Descriptor->Flags, alias, &alias))
+    {
 
         status = RtlIsRangeAvailable(
-                     Arbiter->PossibleAllocation,
-                     alias,
-                     alias + State->CurrentAlternative->Length - 1,
-                     State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ?
-                        RTL_RANGE_LIST_SHARED_OK : 0,
-                     userFlagsMask,
-                     Arbiter->ConflictCallbackContext,
-                     Arbiter->ConflictCallback,
-                     &aliasAvailable
-                     );
+            Arbiter->PossibleAllocation, alias, alias + State->CurrentAlternative->Length - 1,
+            State->CurrentAlternative->Flags & ARBITER_ALTERNATIVE_FLAG_SHARED ? RTL_RANGE_LIST_SHARED_OK : 0,
+            userFlagsMask, Arbiter->ConflictCallbackContext, Arbiter->ConflictCallback, &aliasAvailable);
 
         ASSERT(NT_SUCCESS(status));
 
-        if (!aliasAvailable) {
+        if (!aliasAvailable)
+        {
 
             ARBITER_ALLOCATION_STATE tempState;
 
@@ -1323,25 +1167,21 @@ Return Value:
             tempState.CurrentMinimum = alias;
             tempState.CurrentMaximum = alias + State->CurrentAlternative->Length - 1;
 
-            if (Arbiter->OverrideConflict(Arbiter, &tempState)) {
+            if (Arbiter->OverrideConflict(Arbiter, &tempState))
+            {
                 //
                 // We decided this conflict was ok so contine checking the rest
                 // of the aliases
                 //
 
                 continue;
-
             }
 
             //
             // An alias isn't available - get another possibility
             //
 
-            ARB_PRINT(2,
-                        ("\t\tAlias 0x%x-0x%x not available\n",
-                        alias,
-                        alias + State->CurrentAlternative->Length - 1
-                        ));
+            ARB_PRINT(2, ("\t\tAlias 0x%x-0x%x not available\n", alias, alias + State->CurrentAlternative->Length - 1));
 
             return FALSE;
         }
@@ -1352,10 +1192,7 @@ Return Value:
 }
 
 BOOLEAN
-IopMemFindSuitableRange(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALLOCATION_STATE State
-    )
+IopMemFindSuitableRange(PARBITER_INSTANCE Arbiter, PARBITER_ALLOCATION_STATE State)
 /*++
 
 Routine Description:
@@ -1383,7 +1220,8 @@ Return Value:
     // available
     //
 
-    if (State->Entry->Flags & ARBITER_FLAG_BOOT_CONFIG) {
+    if (State->Entry->Flags & ARBITER_FLAG_BOOT_CONFIG)
+    {
         State->RangeAvailableAttributes |= ARBITER_RANGE_BOOT_ALLOCATED;
     }
 
@@ -1393,4 +1231,3 @@ Return Value:
 
     return ArbFindSuitableRange(Arbiter, State);
 }
-

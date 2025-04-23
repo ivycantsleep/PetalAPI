@@ -47,16 +47,13 @@ Revision History:
 #pragma alloc_text(PAGEVRFY, IovpSessionDataUnbufferIO)
 #endif
 
-#define POOL_TAG_SESSION_DATA       'sprI'
-#define POOL_TAG_DIRECT_BUFFER      'BprI'
+#define POOL_TAG_SESSION_DATA 'sprI'
+#define POOL_TAG_DIRECT_BUFFER 'BprI'
 
 PIOV_SESSION_DATA
 FASTCALL
-IovpSessionDataCreate(
-    IN      PDEVICE_OBJECT       DeviceObject,
-    IN OUT  PIOV_REQUEST_PACKET  *IovPacketPointer,
-    OUT     PBOOLEAN             SurrogateSpawned
-    )
+IovpSessionDataCreate(IN PDEVICE_OBJECT DeviceObject, IN OUT PIOV_REQUEST_PACKET *IovPacketPointer,
+                      OUT PBOOLEAN SurrogateSpawned)
 /*++
 
   Description:
@@ -82,21 +79,17 @@ IovpSessionDataCreate(
 
     *SurrogateSpawned = FALSE;
 
-    headPacket = (PIOV_REQUEST_PACKET) (*IovPacketPointer)->ChainHead;
+    headPacket = (PIOV_REQUEST_PACKET)(*IovPacketPointer)->ChainHead;
     ASSERT(headPacket == (*IovPacketPointer));
     irp = headPacket->TrackedIrp;
 
     //
     // Check the IRP appropriately
     //
-    IovpSessionDataDeterminePolicy(
-        headPacket,
-        DeviceObject,
-        &trackable,
-        &useSurrogateIrp
-        );
+    IovpSessionDataDeterminePolicy(headPacket, DeviceObject, &trackable, &useSurrogateIrp);
 
-    if (!trackable) {
+    if (!trackable)
+    {
 
         return NULL;
     }
@@ -106,37 +99,29 @@ IovpSessionDataCreate(
     // simplify some logic...
     //
     sessionDataSize =
-        sizeof(IOV_SESSION_DATA)+
-        irp->StackCount*sizeof(IOV_STACK_LOCATION) +
-        VfSettingsGetSnapshotSize();
+        sizeof(IOV_SESSION_DATA) + irp->StackCount * sizeof(IOV_STACK_LOCATION) + VfSettingsGetSnapshotSize();
 
-    iovSessionData = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sessionDataSize,
-        POOL_TAG_SESSION_DATA
-        );
+    iovSessionData = ExAllocatePoolWithTag(NonPagedPool, sessionDataSize, POOL_TAG_SESSION_DATA);
 
-    if (iovSessionData == NULL) {
+    if (iovSessionData == NULL)
+    {
 
         return NULL;
     }
 
     RtlZeroMemory(iovSessionData, sessionDataSize);
 
-    iovSessionData->VerifierSettings = (PVERIFIER_SETTINGS_SNAPSHOT)
-        (((PUCHAR) iovSessionData) + (sessionDataSize-VfSettingsGetSnapshotSize()));
+    iovSessionData->VerifierSettings =
+        (PVERIFIER_SETTINGS_SNAPSHOT)(((PUCHAR)iovSessionData) + (sessionDataSize - VfSettingsGetSnapshotSize()));
 
-    RtlCopyMemory(
-        iovSessionData->VerifierSettings,
-        headPacket->VerifierSettings,
-        VfSettingsGetSnapshotSize()
-        );
+    RtlCopyMemory(iovSessionData->VerifierSettings, headPacket->VerifierSettings, VfSettingsGetSnapshotSize());
 
     iovSessionData->IovRequestPacket = headPacket;
     InsertHeadList(&headPacket->SessionHead, &iovSessionData->SessionLink);
 
-    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_DEFER_COMPLETION)||
-        VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_COMPLETE_AT_PASSIVE)) {
+    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_DEFER_COMPLETION) ||
+        VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_COMPLETE_AT_PASSIVE))
+    {
 
         VfSettingsSetOption(iovSessionData->VerifierSettings, VERIFIER_OPTION_FORCE_PENDING, TRUE);
     }
@@ -146,7 +131,8 @@ IovpSessionDataCreate(
     // screwing it up is gaurenteed to be fatal!
     //
     if ((irp->Flags & IRP_DEFER_IO_COMPLETION) &&
-        VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+        VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
         VfSettingsSetOption(iovSessionData->VerifierSettings, VERIFIER_OPTION_MONITOR_PENDING_IO, TRUE);
     }
@@ -154,72 +140,48 @@ IovpSessionDataCreate(
     headPacket->pIovSessionData = iovSessionData;
     headPacket->TopStackLocation = irp->CurrentLocation;
     headPacket->Flags |= TRACKFLAG_ACTIVE;
-    headPacket->Flags &= ~
-        (
-        TRACKFLAG_QUEUED_INTERNALLY|
-        TRACKFLAG_RELEASED|
-        TRACKFLAG_SRB_MUNGED|
-        TRACKFLAG_SWAPPED_BACK
-        );
+    headPacket->Flags &=
+        ~(TRACKFLAG_QUEUED_INTERNALLY | TRACKFLAG_RELEASED | TRACKFLAG_SRB_MUNGED | TRACKFLAG_SWAPPED_BACK);
 
     iovSessionData->BestVisibleIrp = irp;
-    if (useSurrogateIrp) {
+    if (useSurrogateIrp)
+    {
 
         //
         // We will track the IRP using a surrogate.
         //
-        *SurrogateSpawned = IovpSessionDataAttachSurrogate(
-            IovPacketPointer,
-            iovSessionData
-            );
+        *SurrogateSpawned = IovpSessionDataAttachSurrogate(IovPacketPointer, iovSessionData);
     }
 
-    TRACKIRP_DBGPRINT((
-        "  SSN CREATE(%x)->%x\n",
-        headPacket,
-        iovSessionData
-        ), 3);
+    TRACKIRP_DBGPRINT(("  SSN CREATE(%x)->%x\n", headPacket, iovSessionData), 3);
 
     return iovSessionData;
 }
 
 
-VOID
-FASTCALL
-IovpSessionDataAdvance(
-    IN      PDEVICE_OBJECT       DeviceObject,
-    IN      PIOV_SESSION_DATA    IovSessionData,
-    IN OUT  PIOV_REQUEST_PACKET  *IovPacketPointer,
-    OUT     PBOOLEAN             SurrogateSpawned
-    )
+VOID FASTCALL IovpSessionDataAdvance(IN PDEVICE_OBJECT DeviceObject, IN PIOV_SESSION_DATA IovSessionData,
+                                     IN OUT PIOV_REQUEST_PACKET *IovPacketPointer, OUT PBOOLEAN SurrogateSpawned)
 {
     *SurrogateSpawned = FALSE;
 }
 
 
-VOID
-FASTCALL
-IovpSessionDataDereference(
-    IN PIOV_SESSION_DATA IovSessionData
-    )
+VOID FASTCALL IovpSessionDataDereference(IN PIOV_SESSION_DATA IovSessionData)
 {
     PIOV_REQUEST_PACKET iovPacket;
 
     iovPacket = IovSessionData->IovRequestPacket;
-    ASSERT((PIOV_REQUEST_PACKET) iovPacket->ChainHead == iovPacket);
+    ASSERT((PIOV_REQUEST_PACKET)iovPacket->ChainHead == iovPacket);
 
     ASSERT_SPINLOCK_HELD(&iovPacket->HeaderLock);
     ASSERT(IovSessionData->SessionRefCount > 0);
     ASSERT(iovPacket->ReferenceCount >= 0);
 
-    TRACKIRP_DBGPRINT((
-        "  SSN DEREF(%x) %x--\n",
-        IovSessionData,
-        IovSessionData->SessionRefCount
-        ), 3);
+    TRACKIRP_DBGPRINT(("  SSN DEREF(%x) %x--\n", IovSessionData, IovSessionData->SessionRefCount), 3);
 
     IovSessionData->SessionRefCount--;
-    if (!IovSessionData->SessionRefCount) {
+    if (!IovSessionData->SessionRefCount)
+    {
 
         ASSERT(iovPacket->pIovSessionData != IovSessionData);
         ASSERT(iovPacket->ReferenceCount > iovPacket->PointerCount);
@@ -234,28 +196,21 @@ IovpSessionDataDereference(
 }
 
 
-VOID
-FASTCALL
-IovpSessionDataReference(
-    IN PIOV_SESSION_DATA IovSessionData
-    )
+VOID FASTCALL IovpSessionDataReference(IN PIOV_SESSION_DATA IovSessionData)
 {
     PIOV_REQUEST_PACKET iovPacket;
 
     iovPacket = IovSessionData->IovRequestPacket;
-    ASSERT((PIOV_REQUEST_PACKET) iovPacket->ChainHead == iovPacket);
+    ASSERT((PIOV_REQUEST_PACKET)iovPacket->ChainHead == iovPacket);
 
     ASSERT_SPINLOCK_HELD(&iovPacket->HeaderLock);
     ASSERT(IovSessionData->SessionRefCount >= 0);
     ASSERT(iovPacket->ReferenceCount >= 0);
 
-    TRACKIRP_DBGPRINT((
-        "  SSN REF(%x) %x++\n",
-        IovSessionData,
-        IovSessionData->SessionRefCount
-        ), 3);
+    TRACKIRP_DBGPRINT(("  SSN REF(%x) %x++\n", IovSessionData, IovSessionData->SessionRefCount), 3);
 
-    if (!IovSessionData->SessionRefCount) {
+    if (!IovSessionData->SessionRefCount)
+    {
 
         VfPacketReference(iovPacket, IOVREFTYPE_PACKET);
     }
@@ -263,36 +218,24 @@ IovpSessionDataReference(
 }
 
 
-VOID
-FASTCALL
-IovpSessionDataClose(
-    IN PIOV_SESSION_DATA IovSessionData
-    )
+VOID FASTCALL IovpSessionDataClose(IN PIOV_SESSION_DATA IovSessionData)
 {
-   PIOV_REQUEST_PACKET iovPacket = IovSessionData->IovRequestPacket;
+    PIOV_REQUEST_PACKET iovPacket = IovSessionData->IovRequestPacket;
 
-   ASSERT_SPINLOCK_HELD(&iovPacket->HeaderLock);
+    ASSERT_SPINLOCK_HELD(&iovPacket->HeaderLock);
 
-   ASSERT(iovPacket == (PIOV_REQUEST_PACKET) iovPacket->ChainHead);
-   ASSERT(iovPacket->pIovSessionData == IovSessionData);
+    ASSERT(iovPacket == (PIOV_REQUEST_PACKET)iovPacket->ChainHead);
+    ASSERT(iovPacket->pIovSessionData == IovSessionData);
 
-   TRACKIRP_DBGPRINT((
-       "  SSN CLOSE(%x)\n",
-       IovSessionData
-       ), 3);
+    TRACKIRP_DBGPRINT(("  SSN CLOSE(%x)\n", IovSessionData), 3);
 
-   iovPacket->Flags &= ~TRACKFLAG_ACTIVE;
-   iovPacket->pIovSessionData = NULL;
+    iovPacket->Flags &= ~TRACKFLAG_ACTIVE;
+    iovPacket->pIovSessionData = NULL;
 }
 
 
-VOID
-IovpSessionDataDeterminePolicy(
-    IN   PIOV_REQUEST_PACKET IovRequestPacket,
-    IN   PDEVICE_OBJECT      DeviceObject,
-    OUT  PBOOLEAN            Trackable,
-    OUT  PBOOLEAN            UseSurrogateIrp
-    )
+VOID IovpSessionDataDeterminePolicy(IN PIOV_REQUEST_PACKET IovRequestPacket, IN PDEVICE_OBJECT DeviceObject,
+                                    OUT PBOOLEAN Trackable, OUT PBOOLEAN UseSurrogateIrp)
 /*++
 
   Description:
@@ -333,12 +276,15 @@ IovpSessionDataDeterminePolicy(
 
     irpSp = IoGetNextIrpStackLocation(irp);
 
-    if (VfSettingsIsOptionEnabled(IovRequestPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+    if (VfSettingsIsOptionEnabled(IovRequestPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
         *UseSurrogateIrp = VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_SURROGATE_IRPS);
-        *UseSurrogateIrp &= (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_SMASH_SRBS) ||
-                             (irpSp->MajorFunction != IRP_MJ_SCSI));
-    } else {
+        *UseSurrogateIrp &=
+            (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_SMASH_SRBS) || (irpSp->MajorFunction != IRP_MJ_SCSI));
+    }
+    else
+    {
 
         *UseSurrogateIrp = FALSE;
     }
@@ -347,10 +293,7 @@ IovpSessionDataDeterminePolicy(
 
 BOOLEAN
 FASTCALL
-IovpSessionDataAttachSurrogate(
-    IN OUT  PIOV_REQUEST_PACKET  *IovPacketPointer,
-    IN      PIOV_SESSION_DATA    IovSessionData
-    )
+IovpSessionDataAttachSurrogate(IN OUT PIOV_REQUEST_PACKET *IovPacketPointer, IN PIOV_SESSION_DATA IovSessionData)
 /*++
 
   Description:
@@ -382,12 +325,12 @@ IovpSessionDataAttachSurrogate(
     iovPacket = *IovPacketPointer;
     ASSERT_SPINLOCK_HELD(&iovPacket->HeaderLock);
 
-    ASSERT(VfIrpDatabaseEntryGetChainNext((PIOV_DATABASE_HEADER) iovPacket) == NULL);
+    ASSERT(VfIrpDatabaseEntryGetChainNext((PIOV_DATABASE_HEADER)iovPacket) == NULL);
 
     ASSERT(iovPacket->Flags & TRACKFLAG_ACTIVE);
 
     irp = iovPacket->TrackedIrp;
-    activeSize = (irp->CurrentLocation-1);
+    activeSize = (irp->CurrentLocation - 1);
     ASSERT(activeSize);
 
     //
@@ -404,7 +347,8 @@ IovpSessionDataAttachSurrogate(
     //
     surrogateIrp = VfIrpAllocate(irp->StackCount); // activeSize
 
-    if (surrogateIrp == NULL) {
+    if (surrogateIrp == NULL)
+    {
 
         return FALSE;
     }
@@ -419,8 +363,7 @@ IovpSessionDataAttachSurrogate(
     // Adjust StackCount and CurrentLocation
     //
     surrogateIrp->StackCount = irp->StackCount; // activeSize
-    surrogateIrp->Tail.Overlay.CurrentStackLocation =
-        ((PIO_STACK_LOCATION) (surrogateIrp+1))+activeSize;
+    surrogateIrp->Tail.Overlay.CurrentStackLocation = ((PIO_STACK_LOCATION)(surrogateIrp + 1)) + activeSize;
 
     //
     // Our new IRP "floats", and is not attached to any thread.
@@ -440,29 +383,28 @@ IovpSessionDataAttachSurrogate(
     // assume that the last stack location is right after the end of the IRP,
     // as we may change this someday!
     //
-    irpSp = (IoGetCurrentIrpStackLocation(irp)-activeSize);
-    RtlCopyMemory(surrogateIrp+1, irpSp, sizeof(IO_STACK_LOCATION)*activeSize);
+    irpSp = (IoGetCurrentIrpStackLocation(irp) - activeSize);
+    RtlCopyMemory(surrogateIrp + 1, irpSp, sizeof(IO_STACK_LOCATION) * activeSize);
 
     //
     // Zero the portion of the new IRP we won't be using (this should
     // eventually go away).
     //
-    RtlZeroMemory(
-        ((PIO_STACK_LOCATION) (surrogateIrp+1))+activeSize,
-        sizeof(IO_STACK_LOCATION)*(surrogateIrp->StackCount - activeSize)
-        );
+    RtlZeroMemory(((PIO_STACK_LOCATION)(surrogateIrp + 1)) + activeSize,
+                  sizeof(IO_STACK_LOCATION) * (surrogateIrp->StackCount - activeSize));
 
     //
     // Now create a surrogate packet to track the new IRP.
     //
     iovSurrogatePacket = VfPacketCreateAndLock(surrogateIrp);
-    if (iovSurrogatePacket == NULL) {
+    if (iovSurrogatePacket == NULL)
+    {
 
         VfIrpFree(surrogateIrp);
         return FALSE;
     }
 
-    headPacket = (PIOV_REQUEST_PACKET) iovPacket->ChainHead;
+    headPacket = (PIOV_REQUEST_PACKET)iovPacket->ChainHead;
 
     ASSERT(iovSurrogatePacket->LockIrql == DISPATCH_LEVEL);
     irpSp = IoGetNextIrpStackLocation(irp);
@@ -477,7 +419,7 @@ IovpSessionDataAttachSurrogate(
     // now; store a pointer to our tracking data in the information field. We
     // don't use this, but it's nice when debugging...
     //
-    irp->IoStatus.Information = (ULONG_PTR) iovPacket;
+    irp->IoStatus.Information = (ULONG_PTR)iovPacket;
 
     //
     // ADRIAO N.B. #28 06/10/98 - This is absolutely *gross*, and not
@@ -487,10 +429,13 @@ IovpSessionDataAttachSurrogate(
     // if we have an SRB coming through. If so, fake out the OriginalRequest
     // IRP pointer as appropriate.
     //
-    if (irpSp->MajorFunction == IRP_MJ_SCSI) {
+    if (irpSp->MajorFunction == IRP_MJ_SCSI)
+    {
         srb = irpSp->Parameters.Others.Argument1;
-        if (VfUtilIsMemoryRangeReadable(srb, SCSI_REQUEST_BLOCK_SIZE, VFMP_INSTANT_NONPAGED)) {
-            if ((srb->Length == SCSI_REQUEST_BLOCK_SIZE)&&(srb->OriginalRequest == irp)) {
+        if (VfUtilIsMemoryRangeReadable(srb, SCSI_REQUEST_BLOCK_SIZE, VFMP_INSTANT_NONPAGED))
+        {
+            if ((srb->Length == SCSI_REQUEST_BLOCK_SIZE) && (srb->OriginalRequest == irp))
+            {
                 srb->OriginalRequest = surrogateIrp;
                 headPacket->Flags |= TRACKFLAG_SRB_MUNGED;
             }
@@ -501,7 +446,7 @@ IovpSessionDataAttachSurrogate(
     // Since the replacement will never make it back to user mode (the real
     // IRP shall of course), we will steal a field or two for debugging info.
     //
-    surrogateIrp->UserIosb = (PIO_STATUS_BLOCK) iovPacket;
+    surrogateIrp->UserIosb = (PIO_STATUS_BLOCK)iovPacket;
 
     //
     // Now that everything is built correctly, attach the surrogate. The
@@ -522,11 +467,7 @@ IovpSessionDataAttachSurrogate(
     iovSurrogatePacket->Flags |= TRACKFLAG_SURROGATE | TRACKFLAG_ACTIVE;
     iovSurrogatePacket->pIovSessionData = iovPacket->pIovSessionData;
 
-    RtlCopyMemory(
-        iovSurrogatePacket->VerifierSettings,
-        iovPacket->VerifierSettings,
-        VfSettingsGetSnapshotSize()
-        );
+    RtlCopyMemory(iovSurrogatePacket->VerifierSettings, iovPacket->VerifierSettings, VfSettingsGetSnapshotSize());
 
     iovSurrogatePacket->LastLocation = iovPacket->LastLocation;
     iovSurrogatePacket->TopStackLocation = irp->CurrentLocation;
@@ -539,29 +480,18 @@ IovpSessionDataAttachSurrogate(
     //
     // Link in the new surrogate
     //
-    VfIrpDatabaseEntryAppendToChain(
-        (PIOV_DATABASE_HEADER) iovPacket,
-        (PIOV_DATABASE_HEADER) iovSurrogatePacket
-        );
+    VfIrpDatabaseEntryAppendToChain((PIOV_DATABASE_HEADER)iovPacket, (PIOV_DATABASE_HEADER)iovSurrogatePacket);
 
     *IovPacketPointer = iovSurrogatePacket;
 
-    IovpSessionDataBufferIO(
-        iovSurrogatePacket,
-        surrogateIrp
-        );
+    IovpSessionDataBufferIO(iovSurrogatePacket, surrogateIrp);
 
     return TRUE;
 }
 
 
-VOID
-FASTCALL
-IovpSessionDataFinalizeSurrogate(
-    IN      PIOV_SESSION_DATA    IovSessionData,
-    IN OUT  PIOV_REQUEST_PACKET  IovPacket,
-    IN      PIRP                 SurrogateIrp
-    )
+VOID FASTCALL IovpSessionDataFinalizeSurrogate(IN PIOV_SESSION_DATA IovSessionData,
+                                               IN OUT PIOV_REQUEST_PACKET IovPacket, IN PIRP SurrogateIrp)
 /*++
 
   Description:
@@ -585,7 +515,7 @@ IovpSessionDataFinalizeSurrogate(
     PIO_STACK_LOCATION irpSp;
     PIRP irp;
 
-    ASSERT(IovPacket->Flags&TRACKFLAG_SURROGATE);
+    ASSERT(IovPacket->Flags & TRACKFLAG_SURROGATE);
 
     ASSERT(VfPacketGetCurrentSessionData(IovPacket) == IovSessionData);
 
@@ -594,34 +524,29 @@ IovpSessionDataFinalizeSurrogate(
     //
     // It's a surrogate, do as appropriate.
     //
-    ASSERT(IovPacket->TopStackLocation == SurrogateIrp->CurrentLocation+1);
+    ASSERT(IovPacket->TopStackLocation == SurrogateIrp->CurrentLocation + 1);
 
     IovpSessionDataUnbufferIO(IovPacket, SurrogateIrp);
 
-    iovPrevPacket = (PIOV_REQUEST_PACKET) VfIrpDatabaseEntryGetChainPrevious(
-        (PIOV_DATABASE_HEADER) IovPacket
-        );
+    iovPrevPacket = (PIOV_REQUEST_PACKET)VfIrpDatabaseEntryGetChainPrevious((PIOV_DATABASE_HEADER)IovPacket);
 
     irp = iovPrevPacket->TrackedIrp;
 
     //
     // Carry the pending bit over.
     //
-    if (SurrogateIrp->PendingReturned) {
+    if (SurrogateIrp->PendingReturned)
+    {
         IoMarkIrpPending(irp);
     }
 
-    nonInterestingFlags = (
-        IRPFLAG_EXAMINE_MASK |
-        IRP_DIAG_IS_SURROGATE|
-        IRP_DIAG_HAS_SURROGATE
-        );
+    nonInterestingFlags = (IRPFLAG_EXAMINE_MASK | IRP_DIAG_IS_SURROGATE | IRP_DIAG_HAS_SURROGATE);
 
     //
     // Wipe the flags nice and clean
     //
     SurrogateIrp->Flags &= ~IRP_DIAG_IS_SURROGATE;
-    irp->Flags          &= ~IRP_DIAG_HAS_SURROGATE;
+    irp->Flags &= ~IRP_DIAG_HAS_SURROGATE;
 
     //
     // ASSERT portions of the IRP header have not changed.
@@ -634,27 +559,17 @@ IovpSessionDataFinalizeSurrogate(
     ASSERT(irp->AllocationFlags == SurrogateIrp->AllocationFlags);
     ASSERT(irp->Tail.Overlay.Thread == SurrogateIrp->Tail.Overlay.Thread);
 
-    ASSERT(
-        irp->Overlay.AsynchronousParameters.UserApcRoutine ==
-        SurrogateIrp->Overlay.AsynchronousParameters.UserApcRoutine
-        );
+    ASSERT(irp->Overlay.AsynchronousParameters.UserApcRoutine ==
+           SurrogateIrp->Overlay.AsynchronousParameters.UserApcRoutine);
 
-    ASSERT(
-        irp->Overlay.AsynchronousParameters.UserApcContext ==
-        SurrogateIrp->Overlay.AsynchronousParameters.UserApcContext
-        );
+    ASSERT(irp->Overlay.AsynchronousParameters.UserApcContext ==
+           SurrogateIrp->Overlay.AsynchronousParameters.UserApcContext);
 
-    ASSERT(
-        irp->Tail.Overlay.OriginalFileObject ==
-        SurrogateIrp->Tail.Overlay.OriginalFileObject
-        );
+    ASSERT(irp->Tail.Overlay.OriginalFileObject == SurrogateIrp->Tail.Overlay.OriginalFileObject);
 
-    ASSERT(
-        irp->Tail.Overlay.AuxiliaryBuffer ==
-        SurrogateIrp->Tail.Overlay.AuxiliaryBuffer
-        );
+    ASSERT(irp->Tail.Overlay.AuxiliaryBuffer == SurrogateIrp->Tail.Overlay.AuxiliaryBuffer);
 
-/*
+    /*
     ASSERT(
         irp->AssociatedIrp.SystemBuffer ==
         SurrogateIrp->AssociatedIrp.SystemBuffer
@@ -681,8 +596,8 @@ IovpSessionDataFinalizeSurrogate(
     //
     irp->UserBuffer = SurrogateIrp->UserBuffer;
 
-    if ((irp->Flags&IRP_DEALLOCATE_BUFFER)&&
-        (irp->AssociatedIrp.SystemBuffer == NULL)) {
+    if ((irp->Flags & IRP_DEALLOCATE_BUFFER) && (irp->AssociatedIrp.SystemBuffer == NULL))
+    {
 
         irp->Flags &= ~IRP_DEALLOCATE_BUFFER;
     }
@@ -705,7 +620,7 @@ IovpSessionDataFinalizeSurrogate(
 
     IovSessionData->IovRequestPacket = iovPrevPacket;
 
-    VfIrpDatabaseEntryRemoveFromChain((PIOV_DATABASE_HEADER) IovPacket);
+    VfIrpDatabaseEntryRemoveFromChain((PIOV_DATABASE_HEADER)IovPacket);
 
     VfPacketDereference(iovPrevPacket, IOVREFTYPE_POINTER);
 
@@ -715,12 +630,7 @@ IovpSessionDataFinalizeSurrogate(
 }
 
 
-VOID
-FASTCALL
-IovpSessionDataBufferIO(
-    IN OUT  PIOV_REQUEST_PACKET  IovSurrogatePacket,
-    IN      PIRP                 SurrogateIrp
-    )
+VOID FASTCALL IovpSessionDataBufferIO(IN OUT PIOV_REQUEST_PACKET IovSurrogatePacket, IN PIRP SurrogateIrp)
 {
     PMDL mdl;
     ULONG bufferLength;
@@ -728,34 +638,40 @@ IovpSessionDataBufferIO(
     PVOID systemBuffer;
     PIO_STACK_LOCATION irpSp;
 
-    if (!VfSettingsIsOptionEnabled(IovSurrogatePacket->VerifierSettings, VERIFIER_OPTION_BUFFER_DIRECT_IO)) {
+    if (!VfSettingsIsOptionEnabled(IovSurrogatePacket->VerifierSettings, VERIFIER_OPTION_BUFFER_DIRECT_IO))
+    {
 
         return;
     }
 
-    if (SurrogateIrp->Flags & IRP_PAGING_IO) {
+    if (SurrogateIrp->Flags & IRP_PAGING_IO)
+    {
 
         return;
     }
 
-    if (SurrogateIrp->MdlAddress == NULL) {
+    if (SurrogateIrp->MdlAddress == NULL)
+    {
 
         return;
     }
 
-    if (SurrogateIrp->MdlAddress->Next) {
+    if (SurrogateIrp->MdlAddress->Next)
+    {
 
         return;
     }
 
-    if (SurrogateIrp->Flags & IRP_BUFFERED_IO) {
+    if (SurrogateIrp->Flags & IRP_BUFFERED_IO)
+    {
 
         return;
     }
 
     irpSp = IoGetNextIrpStackLocation(SurrogateIrp);
 
-    if (irpSp->MajorFunction != IRP_MJ_READ) {
+    if (irpSp->MajorFunction != IRP_MJ_READ)
+    {
 
         return;
     }
@@ -764,20 +680,16 @@ IovpSessionDataBufferIO(
     // Extract length and VA from the MDL.
     //
     bufferLength = SurrogateIrp->MdlAddress->ByteCount;
-    bufferVA = (PUCHAR) SurrogateIrp->MdlAddress->StartVa +
-                        SurrogateIrp->MdlAddress->ByteOffset;
+    bufferVA = (PUCHAR)SurrogateIrp->MdlAddress->StartVa + SurrogateIrp->MdlAddress->ByteOffset;
 
     //
     // Allocate memory and make it the target of the MDL
     //
-    systemBuffer = ExAllocatePoolWithTagPriority(
-        NonPagedPool,
-        bufferLength,
-        POOL_TAG_DIRECT_BUFFER,
-        HighPoolPrioritySpecialPoolOverrun
-        );
+    systemBuffer = ExAllocatePoolWithTagPriority(NonPagedPool, bufferLength, POOL_TAG_DIRECT_BUFFER,
+                                                 HighPoolPrioritySpecialPoolOverrun);
 
-    if (systemBuffer == NULL) {
+    if (systemBuffer == NULL)
+    {
 
         return;
     }
@@ -786,10 +698,10 @@ IovpSessionDataBufferIO(
     // Save off a pointer to the Mdl's buffer. This should never fail, but
     // one never knows...
     //
-    systemDestVA =
-        MmGetSystemAddressForMdlSafe(SurrogateIrp->MdlAddress, HighPagePriority);
+    systemDestVA = MmGetSystemAddressForMdlSafe(SurrogateIrp->MdlAddress, HighPagePriority);
 
-    if (systemDestVA == NULL) {
+    if (systemDestVA == NULL)
+    {
 
         ASSERT(0);
         ExFreePool(systemBuffer);
@@ -799,32 +711,22 @@ IovpSessionDataBufferIO(
     //
     // Allocate a MDL, update the IRP.
     //
-    mdl = IoAllocateMdl(
-        systemBuffer,
-        bufferLength,
-        FALSE,
-        TRUE,
-        SurrogateIrp
-        );
+    mdl = IoAllocateMdl(systemBuffer, bufferLength, FALSE, TRUE, SurrogateIrp);
 
-    if (mdl == NULL) {
+    if (mdl == NULL)
+    {
 
         ExFreePool(systemBuffer);
         return;
     }
 
-    MmProbeAndLockPages( mdl, KernelMode, IoWriteAccess );
+    MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
     IovSurrogatePacket->SystemDestVA = systemDestVA;
     IovSurrogatePacket->Flags |= TRACKFLAG_DIRECT_BUFFERED;
 }
 
 
-VOID
-FASTCALL
-IovpSessionDataUnbufferIO(
-    IN OUT  PIOV_REQUEST_PACKET  IovSurrogatePacket,
-    IN      PIRP                 SurrogateIrp
-    )
+VOID FASTCALL IovpSessionDataUnbufferIO(IN OUT PIOV_REQUEST_PACKET IovSurrogatePacket, IN PIRP SurrogateIrp)
 {
     PMDL mdl;
     ULONG surrogateLength, originalLength;
@@ -834,14 +736,13 @@ IovpSessionDataUnbufferIO(
     PIOV_REQUEST_PACKET iovPrevPacket;
     PIRP irp;
 
-    if (!(IovSurrogatePacket->Flags & TRACKFLAG_DIRECT_BUFFERED)) {
+    if (!(IovSurrogatePacket->Flags & TRACKFLAG_DIRECT_BUFFERED))
+    {
 
         return;
     }
 
-    iovPrevPacket = (PIOV_REQUEST_PACKET) VfIrpDatabaseEntryGetChainPrevious(
-        (PIOV_DATABASE_HEADER) IovSurrogatePacket
-        );
+    iovPrevPacket = (PIOV_REQUEST_PACKET)VfIrpDatabaseEntryGetChainPrevious((PIOV_DATABASE_HEADER)IovSurrogatePacket);
 
     irp = iovPrevPacket->TrackedIrp;
 
@@ -856,15 +757,13 @@ IovpSessionDataUnbufferIO(
     // Extract length and VA from the MDLs.
     //
     surrogateLength = SurrogateIrp->MdlAddress->ByteCount;
-    surrogateVA = (PUCHAR) SurrogateIrp->MdlAddress->StartVa +
-                           SurrogateIrp->MdlAddress->ByteOffset;
+    surrogateVA = (PUCHAR)SurrogateIrp->MdlAddress->StartVa + SurrogateIrp->MdlAddress->ByteOffset;
 
     //
     // We use these only for the purpose of assertions.
     //
     originalLength = irp->MdlAddress->ByteCount;
-    originalVA = (PUCHAR) irp->MdlAddress->StartVa +
-                          irp->MdlAddress->ByteOffset;
+    originalVA = (PUCHAR)irp->MdlAddress->StartVa + irp->MdlAddress->ByteOffset;
 
     ASSERT(surrogateLength == originalLength);
     ASSERT(SurrogateIrp->IoStatus.Information <= originalLength);
@@ -905,4 +804,3 @@ IovpSessionDataUnbufferIO(
 }
 
 #endif // NO_SPECIAL_IRP
-

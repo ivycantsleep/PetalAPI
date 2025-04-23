@@ -36,27 +36,23 @@ Revision History:
 
 #include <zwapi.h>
 
-#include "tsevars.c"    // Common test variables
+#include "tsevars.c" // Common test variables
 
-#include "ctsertl.c"    // Common RTL test routines
+#include "ctsertl.c" // Common RTL test routines
 
 
 BOOLEAN SeRtlTest();
 
-int
-main(
-    int argc,
-    char *argv[]
-    )
+int main(int argc, char *argv[])
 {
     VOID KiSystemStartup();
 
     TestFunction = SeRtlTest;
     KiSystemStartup();
-    return( 0 );
+    return (0);
 }
 
-
+
 BOOLEAN
 SeRtlTest()
 {
@@ -67,7 +63,8 @@ SeRtlTest()
 
     Result = TestSeRtl();
 
-    if (!Result) {
+    if (!Result)
+    {
         DbgPrint("Se: ** Kernel Mode RTL Test Failed **\n");
     }
     DbgPrint("Se: End Kernel Mode RTL Test.\n");

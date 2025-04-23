@@ -24,13 +24,13 @@ Revision History:
 #include <ntrtl.h>
 #include <nturtl.h>
 
-#define _TST_USER_      // User mode test
+#define _TST_USER_ // User mode test
 
-#include "tsevars.c"    // Common test variables
+#include "tsevars.c" // Common test variables
 
-#include "ctsertl.c"    // Common RTL test routines
+#include "ctsertl.c" // Common RTL test routines
 
-
+
 BOOLEAN
 turtl()
 {
@@ -40,16 +40,16 @@ turtl()
 
     Result = TestSeRtl();
 
-    if (!Result) {
+    if (!Result)
+    {
         DbgPrint("Se: ** User Mode RTL Test Failed **\n");
     }
     DbgPrint("Se: End User Mode RTL Test.\n");
     return Result;
 }
-
+
 NTSTATUS
-__cdecl
-main()
+__cdecl main()
 {
     turtl();
 

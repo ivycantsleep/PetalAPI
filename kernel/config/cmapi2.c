@@ -23,14 +23,12 @@ Revision History:
 #include "cmp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmDeleteKey)
+#pragma alloc_text(PAGE, CmDeleteKey)
 #endif
 
-
+
 NTSTATUS
-CmDeleteKey(
-    IN PCM_KEY_BODY KeyBody
-    )
+CmDeleteKey(IN PCM_KEY_BODY KeyBody)
 /*++
 
 Routine Description:
@@ -47,15 +45,15 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                status;
-    PCM_KEY_NODE            ptarget;
-    PHHIVE                  Hive;
-    HCELL_INDEX             Cell;
-    HCELL_INDEX             Parent;
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock;
-    LARGE_INTEGER           TimeStamp;
+    NTSTATUS status;
+    PCM_KEY_NODE ptarget;
+    PHHIVE Hive;
+    HCELL_INDEX Cell;
+    HCELL_INDEX Parent;
+    PCM_KEY_CONTROL_BLOCK KeyControlBlock;
+    LARGE_INTEGER TimeStamp;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmDeleteKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmDeleteKey\n"));
 
     CmpLockRegistryExclusive();
 
@@ -71,7 +69,8 @@ Return Value:
 
     PERFINFO_REG_DELETE_KEY(KeyControlBlock);
 
-    if (KeyControlBlock->Delete == TRUE) {
+    if (KeyControlBlock->Delete == TRUE)
+    {
         status = STATUS_SUCCESS;
         goto Exit;
     }
@@ -80,7 +79,8 @@ Return Value:
     CmpMarkAllBinsReadOnly(KeyControlBlock->KeyHive);
 
     ptarget = (PCM_KEY_NODE)HvGetCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
-    if( ptarget == NULL ) {
+    if (ptarget == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -92,10 +92,10 @@ Return Value:
     // release the cell right here, as the registry is locked exclusively, so we don't care
     HvReleaseCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
 
-    ASSERT( ptarget->Flags == KeyControlBlock->Flags );
+    ASSERT(ptarget->Flags == KeyControlBlock->Flags);
 
-    if ( ((ptarget->SubKeyCounts[Stable] + ptarget->SubKeyCounts[Volatile]) == 0) &&
-         ((ptarget->Flags & KEY_NO_DELETE) == 0))
+    if (((ptarget->SubKeyCounts[Stable] + ptarget->SubKeyCounts[Volatile]) == 0) &&
+        ((ptarget->Flags & KEY_NO_DELETE) == 0))
     {
         //
         // Cell is NOT marked NO_DELETE and does NOT have children
@@ -107,16 +107,12 @@ Return Value:
         Cell = KeyControlBlock->KeyCell;
         Parent = ptarget->Parent;
 
-        CmpReportNotify(
-            KeyControlBlock,
-            Hive,
-            Cell,
-            REG_NOTIFY_CHANGE_NAME
-            );
+        CmpReportNotify(KeyControlBlock, Hive, Cell, REG_NOTIFY_CHANGE_NAME);
 
         status = CmpFreeKeyByCell(Hive, Cell, TRUE);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             //
             // post any waiting notifies
             //
@@ -134,7 +130,7 @@ Return Value:
             //
             // At this point, we have no way of deleting the fake subkeys from cache
             // unless we do a search for the whole cache, which is too expensive.
-            // Thus, we decide to either let the fake keys age out of cache or when 
+            // Thus, we decide to either let the fake keys age out of cache or when
             // someone is doing the lookup for the fake key, then we delete it at that point.
             // See routine CmpCacheLookup in cmparse.c for more details.
             //
@@ -144,7 +140,8 @@ Return Value:
             ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
             CmpCleanUpSubKeyInfo(KeyControlBlock->ParentKcb);
             ptarget = (PCM_KEY_NODE)HvGetCell(Hive, Parent);
-            if( ptarget != NULL ) {
+            if (ptarget != NULL)
+            {
                 // release the cell right here, as the registry is locked exclusively, so we don't care
                 HvReleaseCell(Hive, Parent);
 
@@ -153,25 +150,24 @@ Return Value:
                 //
                 KeyControlBlock->ParentKcb->KcbMaxNameLen = (USHORT)ptarget->MaxNameLen;
                 // sanity
-                ASSERT_CELL_DIRTY(Hive,Parent);
+                ASSERT_CELL_DIRTY(Hive, Parent);
                 //
                 // update the LastWriteTime on parent and kcb too
                 //
                 KeQuerySystemTime(&TimeStamp);
                 ptarget->LastWriteTime = TimeStamp;
                 KeyBody->KeyControlBlock->ParentKcb->KcbLastWriteTime = TimeStamp;
-
             }
 
             KeyControlBlock->Delete = TRUE;
             CmpRemoveKeyControlBlock(KeyControlBlock);
             KeyControlBlock->KeyCell = HCELL_NIL;
         }
-
-    } else {
+    }
+    else
+    {
 
         status = STATUS_CANNOT_DELETE;
-
     }
 
 Exit:

@@ -23,12 +23,8 @@
 #include <tchar.h>
 #include "ntsend.h"
 
-HWND TEXT_FN(InternalFindWindowEx)(
-    HWND    hwndParent,
-    HWND    hwndChild,
-    LPCTSTR pClassName,
-    LPCTSTR pWindowName,
-    DWORD   dwFlag)
+HWND TEXT_FN(InternalFindWindowEx)(HWND hwndParent, HWND hwndChild, LPCTSTR pClassName, LPCTSTR pWindowName,
+                                   DWORD dwFlag)
 {
     IN_STRING strClass;
     IN_STRING strWindow;
@@ -41,33 +37,25 @@ HWND TEXT_FN(InternalFindWindowEx)(
 
     BEGINCALL()
 
-        FIRSTCOPYLPTSTRIDOPT(&strClass, pClassName);
-        COPYLPTSTROPT(&strWindow, pWindowName);
+    FIRSTCOPYLPTSTRIDOPT(&strClass, pClassName);
+    COPYLPTSTROPT(&strWindow, pWindowName);
 
-        retval = (ULONG_PTR)NtUserFindWindowEx(
-                hwndParent,
-                hwndChild,
-                strClass.pstr,
-                strWindow.pstr,
-                dwFlag);
+    retval = (ULONG_PTR)NtUserFindWindowEx(hwndParent, hwndChild, strClass.pstr, strWindow.pstr, dwFlag);
 
     ERRORTRAP(0);
     CLEANUPLPTSTR(strClass);
     CLEANUPLPTSTR(strWindow);
     ENDCALL(HWND);
-
 }
 
 #ifdef UNICODE
-FUNCLOG4(LOG_GENERAL, HWND, WINUSERAPI, FindWindowExW, HWND, hwndParent, HWND, hwndChild, LPCTSTR, pClassName, LPCTSTR, pWindowName)    
+FUNCLOG4(LOG_GENERAL, HWND, WINUSERAPI, FindWindowExW, HWND, hwndParent, HWND, hwndChild, LPCTSTR, pClassName, LPCTSTR,
+         pWindowName)
 #else
-FUNCLOG4(LOG_GENERAL, HWND, WINUSERAPI, FindWindowExA, HWND, hwndParent, HWND, hwndChild, LPCTSTR, pClassName, LPCTSTR, pWindowName)
+FUNCLOG4(LOG_GENERAL, HWND, WINUSERAPI, FindWindowExA, HWND, hwndParent, HWND, hwndChild, LPCTSTR, pClassName, LPCTSTR,
+         pWindowName)
 #endif // UNICODE
-HWND FindWindowEx(
-    HWND    hwndParent,
-    HWND    hwndChild,
-    LPCTSTR pClassName,
-    LPCTSTR pWindowName)
+HWND FindWindowEx(HWND hwndParent, HWND hwndChild, LPCTSTR pClassName, LPCTSTR pWindowName)
 {
     return TEXT_FN(InternalFindWindowEx)(hwndParent, hwndChild, pClassName, pWindowName, FW_BOTH);
 }
@@ -78,19 +66,14 @@ FUNCLOG2(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, FindWindowW, LPCTSTR, pClassName, 
 FUNCLOG2(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, FindWindowA, LPCTSTR, pClassName, LPCTSTR, pWindowName)
 #endif // UNICODE
 
-HWND FindWindow(
-    LPCTSTR pClassName,
-    LPCTSTR pWindowName)
+HWND FindWindow(LPCTSTR pClassName, LPCTSTR pWindowName)
 {
     return TEXT_FN(InternalFindWindowEx)(NULL, NULL, pClassName, pWindowName, FW_BOTH);
 }
 
 extern WNDPROC mpPfnAddress[];
 
-BOOL GetClassInfo(
-    HINSTANCE hmod OPTIONAL,
-    LPCTSTR pszClassName,
-    LPWNDCLASS pwc)
+BOOL GetClassInfo(HINSTANCE hmod OPTIONAL, LPCTSTR pszClassName, LPWNDCLASS pwc)
 {
     IN_STRING strClassName;
     LPWSTR pszMenuName;
@@ -103,44 +86,38 @@ BOOL GetClassInfo(
 
     BEGINCALL_CLASSV()
 
-        FIRSTCOPYLPTSTRID(&strClassName, lpClassNameVer);
+    FIRSTCOPYLPTSTRID(&strClassName, lpClassNameVer);
 
-        retval = (DWORD)NtUserGetClassInfo(
-                hmod,
-                strClassName.pstr,
-                &WndClass,
-                &pszMenuName,
-                IS_ANSI);
+    retval = (DWORD)NtUserGetClassInfo(hmod, strClassName.pstr, &WndClass, &pszMenuName, IS_ANSI);
 
-        if (retval) {
+    if (retval)
+    {
 
-            /*
+        /*
              * Move the info from the WNDCLASSEX to the WNDCLASS structure
              * On 64-bit plaforms we'll have 32 bits of padding between style and
              * lpfnWndProc in WNDCLASS, so start the copy from the first 64-bit
              * aligned field and hand copy the rest.
              */
-            RtlCopyMemory(&(pwc->lpfnWndProc), &(WndClass.lpfnWndProc), sizeof(WNDCLASS) - FIELD_OFFSET(WNDCLASS, lpfnWndProc));
-            pwc->style = WndClass.style;
+        RtlCopyMemory(&(pwc->lpfnWndProc), &(WndClass.lpfnWndProc),
+                      sizeof(WNDCLASS) - FIELD_OFFSET(WNDCLASS, lpfnWndProc));
+        pwc->style = WndClass.style;
 
-            /*
+        /*
              * Update these pointers so they point to something real.
              * pszMenuName is actually just the pointer the app originally
              * passed to us.
              */
-            pwc->lpszMenuName = (LPTSTR)pszMenuName;
-            pwc->lpszClassName = pszClassName;
-        }
+        pwc->lpszMenuName = (LPTSTR)pszMenuName;
+        pwc->lpszClassName = pszClassName;
+    }
 
     ERRORTRAP(0);
     CLEANUPLPTSTR(strClassName);
     ENDCALL(BOOL);
 }
 
-BOOL GetClassInfoEx(
-    HINSTANCE hmod OPTIONAL,
-    LPCTSTR pszClassName,
-    LPWNDCLASSEX pwc)
+BOOL GetClassInfoEx(HINSTANCE hmod OPTIONAL, LPCTSTR pszClassName, LPWNDCLASSEX pwc)
 {
     IN_STRING strClassName;
     LPWSTR pszMenuName;
@@ -152,25 +129,21 @@ BOOL GetClassInfoEx(
 
     BEGINCALL_CLASSV()
 
-        FIRSTCOPYLPTSTRID(&strClassName, lpClassNameVer);
+    FIRSTCOPYLPTSTRID(&strClassName, lpClassNameVer);
 
-        retval = (DWORD)NtUserGetClassInfo(
-                hmod,
-                strClassName.pstr,
-                (LPWNDCLASSEXW)pwc,
-                &pszMenuName,
-                IS_ANSI);
+    retval = (DWORD)NtUserGetClassInfo(hmod, strClassName.pstr, (LPWNDCLASSEXW)pwc, &pszMenuName, IS_ANSI);
 
-        if (retval) {
+    if (retval)
+    {
 
-            /*
+        /*
              * Update these pointers so they point to something real.
              * pszMenuName is actually just the pointer the app originally
              * passed to us.
              */
-            pwc->lpszMenuName = (LPTSTR)pszMenuName;
-            pwc->lpszClassName = pszClassName;
-        }
+        pwc->lpszMenuName = (LPTSTR)pszMenuName;
+        pwc->lpszClassName = pszClassName;
+    }
 
     ERRORTRAP(0);
     CLEANUPLPTSTR(strClassName);
@@ -178,44 +151,41 @@ BOOL GetClassInfoEx(
 }
 
 #ifdef UNICODE
-FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetClipboardFormatNameW, UINT, wFormat, LPTSTR, pFormatName, int, chMaxCount)
+FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetClipboardFormatNameW, UINT, wFormat, LPTSTR, pFormatName, int,
+         chMaxCount)
 #else
-FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetClipboardFormatNameA, UINT, wFormat, LPTSTR, pFormatName, int, chMaxCount)
+FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetClipboardFormatNameA, UINT, wFormat, LPTSTR, pFormatName, int,
+         chMaxCount)
 #endif // UNICODE
-int GetClipboardFormatName(
-    UINT wFormat,
-    LPTSTR pFormatName,
-    int chMaxCount)
+int GetClipboardFormatName(UINT wFormat, LPTSTR pFormatName, int chMaxCount)
 {
     LPWSTR lpszReserve;
 
     BEGINCALL()
 
 #ifdef UNICODE
-        lpszReserve = pFormatName;
+    lpszReserve = pFormatName;
 #else
-        lpszReserve = LocalAlloc(LMEM_FIXED, chMaxCount * sizeof(WCHAR));
-        if (!lpszReserve) {
-            return 0;
-        }
+    lpszReserve = LocalAlloc(LMEM_FIXED, chMaxCount * sizeof(WCHAR));
+    if (!lpszReserve)
+    {
+        return 0;
+    }
 #endif
 
-        retval = (DWORD)NtUserGetClipboardFormatName(
-                wFormat,
-                lpszReserve,
-                chMaxCount);
+    retval = (DWORD)NtUserGetClipboardFormatName(wFormat, lpszReserve, chMaxCount);
 
 #ifndef UNICODE
-        if (retval) {
-            /*
+    if (retval)
+    {
+        /*
              * Do not copy out more than the requested byte count 'chMaxCount'.
              * Set retval to reflect the number of ANSI bytes.
              */
-            retval = WCSToMB(lpszReserve, (UINT)retval,
-                    &pFormatName, chMaxCount-1, FALSE);
-            pFormatName[retval] = '\0';
-        }
-        LocalFree(lpszReserve);
+        retval = WCSToMB(lpszReserve, (UINT)retval, &pFormatName, chMaxCount - 1, FALSE);
+        pFormatName[retval] = '\0';
+    }
+    LocalFree(lpszReserve);
 #endif
 
     ERRORTRAP(0);
@@ -227,40 +197,35 @@ FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetKeyNameTextW, LONG, lParam, LPTS
 #else
 FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetKeyNameTextA, LONG, lParam, LPTSTR, pString, int, cchSize)
 #endif // UNICODE
-int GetKeyNameText(
-    LONG lParam,
-    LPTSTR pString,
-    int cchSize)
+int GetKeyNameText(LONG lParam, LPTSTR pString, int cchSize)
 {
     LPWSTR lpszReserve;
 
     BEGINCALL()
 
 #ifdef UNICODE
-        lpszReserve = pString;
+    lpszReserve = pString;
 #else
-        lpszReserve = LocalAlloc(LMEM_FIXED, cchSize * sizeof(WCHAR));
-        if (!lpszReserve) {
-            return 0;
-        }
+    lpszReserve = LocalAlloc(LMEM_FIXED, cchSize * sizeof(WCHAR));
+    if (!lpszReserve)
+    {
+        return 0;
+    }
 #endif
 
-        retval = (DWORD)NtUserGetKeyNameText(
-                lParam,
-                lpszReserve,
-                cchSize);
+    retval = (DWORD)NtUserGetKeyNameText(lParam, lpszReserve, cchSize);
 
 #ifndef UNICODE
-        if (retval) {
-            /*
+    if (retval)
+    {
+        /*
              * Do not copy out more than the requested byte count 'nSize'.
              * Set retval to reflect the number of ANSI bytes.
              */
-            retval = WCSToMB(lpszReserve, (UINT)retval,
-                    &pString, cchSize-1, FALSE);
-        }
-        LocalFree(lpszReserve);
-        ((LPSTR)pString)[retval] = '\0';
+        retval = WCSToMB(lpszReserve, (UINT)retval, &pString, cchSize - 1, FALSE);
+    }
+    LocalFree(lpszReserve);
+    ((LPSTR)pString)[retval] = '\0';
 #endif
 
     ERRORTRAP(0);
@@ -272,71 +237,70 @@ FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, GetMessageW, LPMSG, pmsg, HWND, hwnd, UINT
 #else
 FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, GetMessageA, LPMSG, pmsg, HWND, hwnd, UINT, wMsgFilterMin, UINT, wMsgFilterMax)
 #endif // UNICODE
-BOOL APIENTRY GetMessage(
-    LPMSG pmsg,
-    HWND hwnd,
-    UINT wMsgFilterMin,
-    UINT wMsgFilterMax)
+BOOL APIENTRY GetMessage(LPMSG pmsg, HWND hwnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
 {
     BEGINCALL()
 
-        /*
+    /*
          * Prevent apps from setting hi 16 bits so we can use them internally.
          */
-        if ((wMsgFilterMin | wMsgFilterMax) & RESERVED_MSG_BITS) {
-            /*
+    if ((wMsgFilterMin | wMsgFilterMax) & RESERVED_MSG_BITS)
+    {
+        /*
              *  Backward compatability with Win9x where someone is setting
              *  wMsgFilterMax to -1 to get all the messages
              */
-            if(wMsgFilterMax == (UINT)(-1) && !(wMsgFilterMin & RESERVED_MSG_BITS)) {
-                wMsgFilterMax = 0;
-            }
-            else {
-                MSGERRORCODE(ERROR_INVALID_PARAMETER);
-            }    
+        if (wMsgFilterMax == (UINT)(-1) && !(wMsgFilterMin & RESERVED_MSG_BITS))
+        {
+            wMsgFilterMax = 0;
         }
+        else
+        {
+            MSGERRORCODE(ERROR_INVALID_PARAMETER);
+        }
+    }
 
 #ifndef UNICODE
-        /*
+    /*
          * If we have pushed message for DBCS messaging, we should pass this one
          * to Apps at first...
          */
-        GET_DBCS_MESSAGE_IF_EXIST(GetMessage, pmsg, wMsgFilterMin, wMsgFilterMax, TRUE);
+    GET_DBCS_MESSAGE_IF_EXIST(GetMessage, pmsg, wMsgFilterMin, wMsgFilterMax, TRUE);
 #endif
 
-        retval = (DWORD)NtUserGetMessage(
-                pmsg,
-                hwnd,
-                wMsgFilterMin,
-                wMsgFilterMax);
+    retval = (DWORD)NtUserGetMessage(pmsg, hwnd, wMsgFilterMin, wMsgFilterMax);
 
 #ifndef UNICODE
-        // May have a bit more work to do if this MSG is for an ANSI app
+    // May have a bit more work to do if this MSG is for an ANSI app
 
-        // !!! LATER if the unichar translates into multiple ANSI chars
-        // !!! then what??? Divide into two messages??  WM_SYSDEADCHAR??
+    // !!! LATER if the unichar translates into multiple ANSI chars
+    // !!! then what??? Divide into two messages??  WM_SYSDEADCHAR??
 
-        if (RtlWCSMessageWParamCharToMB(pmsg->message, &(pmsg->wParam))) {
-            WPARAM dwAnsi = pmsg->wParam;
-            /*
+    if (RtlWCSMessageWParamCharToMB(pmsg->message, &(pmsg->wParam)))
+    {
+        WPARAM dwAnsi = pmsg->wParam;
+        /*
              * Build DBCS-ware wParam. (for EM_SETPASSWORDCHAR...)
              */
-            BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_SERVER(pmsg, dwAnsi, TRUE, TRUE);
-        } else {
-            retval = 0;
-        }
+        BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_SERVER(pmsg, dwAnsi, TRUE, TRUE);
+    }
+    else
+    {
+        retval = 0;
+    }
 ExitGetMessage:
 #else
-        /*
+    /*
          * Only LOWORD of WPARAM is valid for WM_CHAR (Unicode)....
          * (Mask off DBCS messaging information.)
          */
-        BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_SERVER(pmsg->message,pmsg->wParam);
+    BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_SERVER(pmsg->message, pmsg->wParam);
 #endif // UNICODE
 
 #if DBG && defined(GENERIC_INPUT)
     // TEST PURPOSE ONLY
-    if (pmsg->message == WM_INPUT) {
+    if (pmsg->message == WM_INPUT)
+    {
         TAGMSG3(DBGTAG_PNP, "GetMessage: WM_INPUT, hwnd=%p, wp=%04x, lp=%08x", pmsg->hwnd, pmsg->wParam, pmsg->lParam);
     }
 #endif // GENERIC_INPUT
@@ -350,8 +314,7 @@ FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, GetKeyboardLayoutNameW, LPTSTR, pw
 #else
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, GetKeyboardLayoutNameA, LPTSTR, pwszKL)
 #endif // UNICODE
-BOOL GetKeyboardLayoutName(
-    LPTSTR pwszKL)
+BOOL GetKeyboardLayoutName(LPTSTR pwszKL)
 {
 #ifdef UNICODE
     UNICODE_STRING str;
@@ -363,20 +326,21 @@ BOOL GetKeyboardLayoutName(
     BEGINCALL()
 
 #ifdef UNICODE
-        str.MaximumLength = KL_NAMELENGTH * sizeof(WCHAR);
-        str.Buffer = pwszKL;
+    str.MaximumLength = KL_NAMELENGTH * sizeof(WCHAR);
+    str.Buffer = pwszKL;
 #endif
 
-        retval = (DWORD)NtUserGetKeyboardLayoutName(pstr);
+    retval = (DWORD)NtUserGetKeyboardLayoutName(pstr);
 
 #ifndef UNICODE
-        if (retval) {
-            /*
+    if (retval)
+    {
+        /*
              * Non-zero retval means some text to copy out.  Do not copy out
              * more than the requested byte count 'chMaxCount'.
              */
-            WCSToMB(pstr->Buffer, -1, &pwszKL, KL_NAMELENGTH, FALSE);
-        }
+        WCSToMB(pstr->Buffer, -1, &pwszKL, KL_NAMELENGTH, FALSE);
+    }
 #endif
 
     ERRORTRAP(0);
@@ -389,25 +353,19 @@ FUNCLOG2(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, MapVirtualKeyW, UINT, wCode, UINT,
 FUNCLOG2(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, MapVirtualKeyA, UINT, wCode, UINT, wMapType)
 #endif // UNICODE
 
-UINT MapVirtualKey(
-    UINT wCode,
-    UINT wMapType)
+UINT MapVirtualKey(UINT wCode, UINT wMapType)
 {
     BEGINCALL()
 
-        retval = (DWORD)NtUserMapVirtualKeyEx(
-                wCode,
-                wMapType,
-                0,
-                FALSE);
+    retval = (DWORD)NtUserMapVirtualKeyEx(wCode, wMapType, 0, FALSE);
 
 #ifndef UNICODE
-        if ((wMapType == 2) && (retval != 0)) {
-            WCHAR wch = LOWORD(retval);
-            retval &= ~0xFFFF;
-            RtlUnicodeToMultiByteN((LPSTR)&(retval), sizeof(CHAR),
-                    NULL, &wch, sizeof(WCHAR));
-        }
+    if ((wMapType == 2) && (retval != 0))
+    {
+        WCHAR wch = LOWORD(retval);
+        retval &= ~0xFFFF;
+        RtlUnicodeToMultiByteN((LPSTR) & (retval), sizeof(CHAR), NULL, &wch, sizeof(WCHAR));
+    }
 #endif
 
     ERRORTRAP(0);
@@ -421,8 +379,8 @@ UINT MapVirtualKey(
 \**************************************************************************/
 
 #ifndef UNICODE
-static HKL  hMVKCachedHKL = 0;
-static UINT uMVKCachedCP  = 0;
+static HKL hMVKCachedHKL = 0;
+static UINT uMVKCachedCP = 0;
 #endif
 
 #ifdef UNICODE
@@ -431,53 +389,38 @@ FUNCLOG3(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, MapVirtualKeyExW, UINT, wCode, UIN
 FUNCLOG3(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, MapVirtualKeyExA, UINT, wCode, UINT, wMapType, HKL, hkl)
 #endif // UNICODE
 
-UINT MapVirtualKeyEx(
-    UINT wCode,
-    UINT wMapType,
-    HKL hkl)
+UINT MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
     BEGINCALL()
 
-        retval = (DWORD)NtUserMapVirtualKeyEx(
-                wCode,
-                wMapType,
-                (ULONG_PTR)hkl,
-                TRUE);
+    retval = (DWORD)NtUserMapVirtualKeyEx(wCode, wMapType, (ULONG_PTR)hkl, TRUE);
 
 #ifndef UNICODE
-        if ((wMapType == 2) && (retval != 0)) {
-            WCHAR wch = LOWORD(retval);
+    if ((wMapType == 2) && (retval != 0))
+    {
+        WCHAR wch = LOWORD(retval);
 
-            if (hkl != hMVKCachedHKL) {
-                DWORD dwCodePage;
-                if (!GetLocaleInfoW(
-                         HandleToUlong(hkl) & 0xffff,
-                         LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                         (LPWSTR)&dwCodePage,
-                         sizeof(dwCodePage) / sizeof(WCHAR)
-                         )) {
-                    MSGERROR();
-                }
-                uMVKCachedCP = dwCodePage;
-                hMVKCachedHKL = hkl;
+        if (hkl != hMVKCachedHKL)
+        {
+            DWORD dwCodePage;
+            if (!GetLocaleInfoW(HandleToUlong(hkl) & 0xffff, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                                (LPWSTR)&dwCodePage, sizeof(dwCodePage) / sizeof(WCHAR)))
+            {
+                MSGERROR();
             }
-            /*
+            uMVKCachedCP = dwCodePage;
+            hMVKCachedHKL = hkl;
+        }
+        /*
              * Clear low word which contains Unicode character returned from server.
              * This preserves the high word which is used to indicate dead key status.
              */
-            retval = retval & 0xffff0000;
-            if (!WideCharToMultiByte(
-                     uMVKCachedCP,
-                     0,
-                     &wch,
-                     1,
-                     (LPSTR)&(retval),
-                     1,
-                     NULL,
-                     NULL)) {
-                MSGERROR();
-            }
+        retval = retval & 0xffff0000;
+        if (!WideCharToMultiByte(uMVKCachedCP, 0, &wch, 1, (LPSTR) & (retval), 1, NULL, NULL))
+        {
+            MSGERROR();
         }
+    }
 #endif
 
     ERRORTRAP(0);
@@ -485,59 +428,53 @@ UINT MapVirtualKeyEx(
 }
 
 #ifdef UNICODE
-FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, PostMessageW , HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam)
+FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, PostMessageW, HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam)
 #else
-FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, PostMessageA , HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam)
+FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, PostMessageA, HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam)
 #endif // UNICODE
-BOOL APIENTRY PostMessage(
-    HWND hwnd,
-    UINT wMsg,
-    WPARAM wParam,
-    LPARAM lParam)
+BOOL APIENTRY PostMessage(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
     BEGINCALL()
 
-        switch (wMsg) {
-        case WM_DROPFILES:
-            if (GetWindowProcess(hwnd) != GETPROCESSID()) {
-                /*
+    switch (wMsg)
+    {
+    case WM_DROPFILES:
+        if (GetWindowProcess(hwnd) != GETPROCESSID())
+        {
+            /*
                  * We first send a WM_COPYGLOBALDATA message to get the data into the proper
                  * context.
                  */
-                HGLOBAL hg;
+            HGLOBAL hg;
 
-                hg = (HGLOBAL)SendMessage(hwnd, WM_COPYGLOBALDATA,
-                        GlobalSize((HGLOBAL)wParam), wParam);
-                if (!hg) {
-                    MSGERROR();
-                }
-                wParam = (WPARAM)hg;
+            hg = (HGLOBAL)SendMessage(hwnd, WM_COPYGLOBALDATA, GlobalSize((HGLOBAL)wParam), wParam);
+            if (!hg)
+            {
+                MSGERROR();
             }
-            break;
+            wParam = (WPARAM)hg;
+        }
+        break;
 
-        case LB_DIR:
-        case CB_DIR:
-            /*
+    case LB_DIR:
+    case CB_DIR:
+        /*
              * Make sure this bit is set so the client side string gets
              * successfully copied over.
              */
-            wParam |= DDL_POSTMSGS;
-            break;
-        }
+        wParam |= DDL_POSTMSGS;
+        break;
+    }
 
 #ifndef UNICODE
-        /*
+    /*
          * Setup DBCS Messaging for WM_CHAR...
          */
-        BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(wMsg,wParam,TRUE);
+    BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(wMsg, wParam, TRUE);
 
-        RtlMBMessageWParamCharToWCS(wMsg, &wParam);
+    RtlMBMessageWParamCharToWCS(wMsg, &wParam);
 #endif
-        retval = (DWORD)NtUserPostMessage(
-                hwnd,
-                wMsg,
-                wParam,
-                lParam);
+    retval = (DWORD)NtUserPostMessage(hwnd, wMsg, wParam, lParam);
 
     ERRORTRAP(0);
     ENDCALL(BOOL);
@@ -548,31 +485,23 @@ FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, PostThreadMessageW, DWORD, idThread, UINT,
 #else
 FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, PostThreadMessageA, DWORD, idThread, UINT, msg, WPARAM, wParam, LPARAM, lParam)
 #endif // UNICODE
-BOOL APIENTRY PostThreadMessage(
-    DWORD idThread,
-    UINT msg,
-    WPARAM wParam,
-    LPARAM lParam)
+BOOL APIENTRY PostThreadMessage(DWORD idThread, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     BEGINCALL()
 
 #ifndef UNICODE
 #ifdef FE_SB // PostThreadMessage()
-        /*
+    /*
          * The server always expects the characters to be unicode so
          * if this was generated from an ANSI routine convert it to Unicode
          */
-        BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(msg,wParam,TRUE);
+    BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(msg, wParam, TRUE);
 #endif // FE_SB
 
-        RtlMBMessageWParamCharToWCS(msg, &wParam);
+    RtlMBMessageWParamCharToWCS(msg, &wParam);
 #endif
 
-        retval = (DWORD)NtUserPostThreadMessage(
-                idThread,
-                msg,
-                wParam,
-                lParam);
+    retval = (DWORD)NtUserPostThreadMessage(idThread, msg, wParam, lParam);
 
     ERRORTRAP(0);
     ENDCALL(BOOL);
@@ -585,13 +514,15 @@ BOOL APIENTRY PostThreadMessage(
 * 03-25-96 GerardoB         Added Header.
 \**************************************************************************/
 #define StringDuplicate TEXT_FN(StringDuplicate)
-LPTSTR StringDuplicate(LPCTSTR ptszDup) {
+LPTSTR StringDuplicate(LPCTSTR ptszDup)
+{
     LPTSTR ptsz;
     ULONG cb;
 
     cb = (_tcslen(ptszDup) + 1) * sizeof(TCHAR);
     ptsz = (LPTSTR)LocalAlloc(NONZEROLPTR, cb);
-    if (ptsz != NULL) {
+    if (ptsz != NULL)
+    {
         RtlCopyMemory(ptsz, ptszDup, cb);
     }
     return ptsz;
@@ -602,30 +533,37 @@ LPTSTR StringDuplicate(LPCTSTR ptszDup) {
 * 03-22-96 GerardoB         Created.
 \**************************************************************************/
 #define InitClsMenuName TEXT_FN(InitClsMenuName)
-BOOL InitClsMenuName (PCLSMENUNAME pcmn, LPCTSTR lpszMenuName, PIN_STRING pstrMenuName)
+BOOL InitClsMenuName(PCLSMENUNAME pcmn, LPCTSTR lpszMenuName, PIN_STRING pstrMenuName)
 {
     /*
      * We check the high-word because this may be a resource-ID.
      */
-    if (IS_PTR(lpszMenuName)) {
+    if (IS_PTR(lpszMenuName))
+    {
 #ifdef UNICODE
-        if ((pcmn->pwszClientUnicodeMenuName = StringDuplicate(lpszMenuName)) == NULL) {
+        if ((pcmn->pwszClientUnicodeMenuName = StringDuplicate(lpszMenuName)) == NULL)
+        {
             return FALSE;
         }
 
-        if (!WCSToMB(lpszMenuName, -1, &(pcmn->pszClientAnsiMenuName), -1, TRUE)) {
+        if (!WCSToMB(lpszMenuName, -1, &(pcmn->pszClientAnsiMenuName), -1, TRUE))
+        {
             pcmn->pszClientAnsiMenuName = NULL;
         }
 #else
-        if ((pcmn->pszClientAnsiMenuName = StringDuplicate(lpszMenuName)) == NULL) {
+        if ((pcmn->pszClientAnsiMenuName = StringDuplicate(lpszMenuName)) == NULL)
+        {
             return FALSE;
         }
 
-        if (!MBToWCS(lpszMenuName, -1, &(pcmn->pwszClientUnicodeMenuName), -1, TRUE)) {
+        if (!MBToWCS(lpszMenuName, -1, &(pcmn->pwszClientUnicodeMenuName), -1, TRUE))
+        {
             pcmn->pwszClientUnicodeMenuName = NULL;
         }
 #endif // UNICODE
-    } else {
+    }
+    else
+    {
         /* Copy the ID */
         pcmn->pszClientAnsiMenuName = (LPSTR)lpszMenuName;
         pcmn->pwszClientUnicodeMenuName = (LPWSTR)lpszMenuName;
@@ -637,8 +575,8 @@ BOOL InitClsMenuName (PCLSMENUNAME pcmn, LPCTSTR lpszMenuName, PIN_STRING pstrMe
     return TRUE;
 
     goto errorexit; /* Keep the compiler happy */
-errorexit: /* Used by COPYLPTSTRID */
-   return FALSE;
+errorexit:          /* Used by COPYLPTSTRID */
+    return FALSE;
 }
 
 /**************************************************************************\
@@ -656,28 +594,32 @@ ULONG_PTR APIENTRY SetClassLongPtr(HWND hwnd, int nIndex, LONG_PTR dwNewLong)
     CLSMENUNAME cmn;
     IN_STRING strMenuName;
 
-    switch (nIndex) {
-        case GCLP_MENUNAME:
-            if (!InitClsMenuName(&cmn, (LPCTSTR) dwNewLong, &strMenuName)) {
-                RIPERR0(ERROR_INVALID_HANDLE, RIP_WARNING, "SetClassLong: InitClsMenuName failed");
-                return 0;
-            }
-            dwNewLong = (ULONG_PTR) &cmn;
-            break;
+    switch (nIndex)
+    {
+    case GCLP_MENUNAME:
+        if (!InitClsMenuName(&cmn, (LPCTSTR)dwNewLong, &strMenuName))
+        {
+            RIPERR0(ERROR_INVALID_HANDLE, RIP_WARNING, "SetClassLong: InitClsMenuName failed");
+            return 0;
+        }
+        dwNewLong = (ULONG_PTR)&cmn;
+        break;
 
-        case GCLP_HBRBACKGROUND:
-            if ((DWORD)dwNewLong > COLOR_ENDCOLORS) {
-                /*
+    case GCLP_HBRBACKGROUND:
+        if ((DWORD)dwNewLong > COLOR_ENDCOLORS)
+        {
+            /*
                  * Let gdi validate the brush.  If it's invalid, then
                  * gdi will log a warning.  No need to rip twice so we'll
                  * just set the last-error.
                  */
-                if (GdiValidateHandle((HBRUSH)dwNewLong) == FALSE) {
-                    RIPERR0(ERROR_INVALID_HANDLE, RIP_VERBOSE, "");
-                    return 0;
-                }
+            if (GdiValidateHandle((HBRUSH)dwNewLong) == FALSE)
+            {
+                RIPERR0(ERROR_INVALID_HANDLE, RIP_VERBOSE, "");
+                return 0;
             }
-            break;
+        }
+        break;
     }
 
     BEGINCALL()
@@ -687,29 +629,31 @@ ULONG_PTR APIENTRY SetClassLongPtr(HWND hwnd, int nIndex, LONG_PTR dwNewLong)
     ERRORTRAP(0);
 
     /* Clean up */
-    switch (nIndex) {
-        case GCLP_MENUNAME:
-            CLEANUPLPTSTR(strMenuName); /* Initialized by InitClsMenuName */
-            /*
+    switch (nIndex)
+    {
+    case GCLP_MENUNAME:
+        CLEANUPLPTSTR(strMenuName); /* Initialized by InitClsMenuName */
+        /*
              * We free either the old strings (returned by the kernel),
              *  or the new ones if the kernel call failed
              */
-            if (IS_PTR(cmn.pszClientAnsiMenuName)) {
-                LocalFree(KPVOID_TO_PVOID(cmn.pszClientAnsiMenuName));
-            }
-            if (IS_PTR(cmn.pwszClientUnicodeMenuName)) {
-                LocalFree(KPVOID_TO_PVOID(cmn.pwszClientUnicodeMenuName));
-            }
+        if (IS_PTR(cmn.pszClientAnsiMenuName))
+        {
+            LocalFree(KPVOID_TO_PVOID(cmn.pszClientAnsiMenuName));
+        }
+        if (IS_PTR(cmn.pwszClientUnicodeMenuName))
+        {
+            LocalFree(KPVOID_TO_PVOID(cmn.pwszClientUnicodeMenuName));
+        }
 
-            break;
+        break;
     }
 
     ENDCALL(ULONG_PTR);
-
 }
 
 #ifdef _WIN64
-DWORD  APIENTRY SetClassLong(HWND hwnd, int nIndex, LONG dwNewLong)
+DWORD APIENTRY SetClassLong(HWND hwnd, int nIndex, LONG dwNewLong)
 {
     BEGINCALL()
 
@@ -724,11 +668,7 @@ DWORD  APIENTRY SetClassLong(HWND hwnd, int nIndex, LONG dwNewLong)
 *
 * 03-22-96 GerardoB      Added Header
 \**************************************************************************/
-ATOM TEXT_FN(RegisterClassExWOW)(
-    WNDCLASSEX *lpWndClass,
-    LPDWORD pdwWOWstuff,
-    WORD fnid,
-    DWORD dwFlags)
+ATOM TEXT_FN(RegisterClassExWOW)(WNDCLASSEX *lpWndClass, LPDWORD pdwWOWstuff, WORD fnid, DWORD dwFlags)
 {
     WNDCLASSEX WndClass;
     IN_STRING strClassName;
@@ -737,31 +677,36 @@ ATOM TEXT_FN(RegisterClassExWOW)(
     DWORD dwExpWinVer;
     CLSMENUNAME cmn;
     TCHAR ClassNameVer[MAX_ATOM_LEN];
-    LPTSTR lpClassNameVer; 
+    LPTSTR lpClassNameVer;
 
     strClassName.fAllocated = 0;
     strClassNameVer.fAllocated = 0;
-    strMenuName.fAllocated  = 0;
+    strMenuName.fAllocated = 0;
 
     /*
      * Skip validation for our classes
      */
-    if (fnid !=0) {
+    if (fnid != 0)
+    {
         /*
          * This is a hack to bypass validation for DDE classes
          * specifically, allow them to use hmodUser.
          */
-         if (fnid == FNID_DDE_BIT) {
-             fnid = 0;
-         }
-         dwExpWinVer = VER40;
-    } else {
-        if (lpWndClass->cbSize != sizeof(WNDCLASSEX)) {
+        if (fnid == FNID_DDE_BIT)
+        {
+            fnid = 0;
+        }
+        dwExpWinVer = VER40;
+    }
+    else
+    {
+        if (lpWndClass->cbSize != sizeof(WNDCLASSEX))
+        {
             RIPMSG0(RIP_WARNING, "RegisterClass: Invalid cbSize");
         }
 
-        if (lpWndClass->cbClsExtra < 0 ||
-                lpWndClass->cbWndExtra < 0) {
+        if (lpWndClass->cbClsExtra < 0 || lpWndClass->cbWndExtra < 0)
+        {
             RIPMSG0(RIP_WARNING, "RegisterClass: invalid cb*Extra");
             goto BadParameter;
         }
@@ -770,19 +715,20 @@ ATOM TEXT_FN(RegisterClassExWOW)(
          * Validate hInstance
          * Don't allow 4.0 apps to use hmodUser
          */
-         if ((lpWndClass->hInstance == hmodUser)
-                && (GetClientInfo()->dwExpWinVer >= VER40)) {
-             RIPMSG0(RIP_WARNING, "RegisterClass: Cannot use USER's hInstance");
-             goto BadParameter;
-         } else if (lpWndClass->hInstance == NULL) {
+        if ((lpWndClass->hInstance == hmodUser) && (GetClientInfo()->dwExpWinVer >= VER40))
+        {
+            RIPMSG0(RIP_WARNING, "RegisterClass: Cannot use USER's hInstance");
+            goto BadParameter;
+        }
+        else if (lpWndClass->hInstance == NULL)
+        {
             /*
              * For 32 bit apps we need to fix up the hInstance because Win 95 does
              * this in their thunk MapHInstLS
              */
 
             lpWndClass->hInstance = GetModuleHandle(NULL);
-            RIPMSG1(RIP_VERBOSE, "RegisterClass: fixing up NULL hmodule to %#p",
-                    lpWndClass->hInstance);
+            RIPMSG1(RIP_VERBOSE, "RegisterClass: fixing up NULL hmodule to %#p", lpWndClass->hInstance);
         }
 
         dwExpWinVer = GETEXPWINVER(lpWndClass->hInstance);
@@ -791,9 +737,11 @@ ATOM TEXT_FN(RegisterClassExWOW)(
         /*
          * Check for valid style bits and strip if appropriate
          */
-        if (lpWndClass->style & ~CS_VALID40) {
+        if (lpWndClass->style & ~CS_VALID40)
+        {
 
-            if (dwExpWinVer > VER31) {
+            if (dwExpWinVer > VER31)
+            {
                 RIPMSG0(RIP_WARNING, "RegisterClass: Invalid class style");
                 goto BadParameter;
             }
@@ -808,11 +756,12 @@ ATOM TEXT_FN(RegisterClassExWOW)(
         /*
          * Validate hbrBackground
          */
-        if (lpWndClass->hbrBackground > (HBRUSH)COLOR_MAX
-                && !GdiValidateHandle(lpWndClass->hbrBackground)) {
+        if (lpWndClass->hbrBackground > (HBRUSH)COLOR_MAX && !GdiValidateHandle(lpWndClass->hbrBackground))
+        {
 
             RIPMSG1(RIP_WARNING, "RegisterClass: Invalid class brush:%#p", lpWndClass->hbrBackground);
-            if (dwExpWinVer > VER30) {
+            if (dwExpWinVer > VER30)
+            {
                 goto BadParameter;
             }
 
@@ -822,70 +771,76 @@ ATOM TEXT_FN(RegisterClassExWOW)(
     } /* if (fnid !=0) */
 
 
-    if (!InitClsMenuName(&cmn, lpWndClass->lpszMenuName, &strMenuName)) {
+    if (!InitClsMenuName(&cmn, lpWndClass->lpszMenuName, &strMenuName))
+    {
         return FALSE;
     }
 
     BEGINCALL()
-        WndClass = *lpWndClass;
+    WndClass = *lpWndClass;
 
 #ifndef UNICODE
-        dwFlags |= CSF_ANSIPROC;
+    dwFlags |= CSF_ANSIPROC;
 #endif // UNICODE
 
-        if (dwExpWinVer > VER31) {
-            dwFlags |= CSF_WIN40COMPAT;
-        }
-        
-        if(GetClientInfo()->dwTIFlags & TIF_16BIT) {
-          /*
+    if (dwExpWinVer > VER31)
+    {
+        dwFlags |= CSF_WIN40COMPAT;
+    }
+
+    if (GetClientInfo()->dwTIFlags & TIF_16BIT)
+    {
+        /*
            * No Fusion redirection for 16BIT apps
            */
-           if(!(GetAppCompatFlags2(VERMAX) & GACF2_FORCEFUSION)) {
-              dwFlags &= ~CW_FLAGS_VERSIONCLASS;
-           }
+        if (!(GetAppCompatFlags2(VERMAX) & GACF2_FORCEFUSION))
+        {
+            dwFlags &= ~CW_FLAGS_VERSIONCLASS;
         }
-                 
-        if (dwFlags & CSF_VERSIONCLASS) {
-            lpClassNameVer = (LPTSTR)ClassNameToVersion((LPCWSTR)lpWndClass->lpszClassName, (LPWSTR)ClassNameVer, NULL, IS_ANSI);
+    }
 
-            if (lpClassNameVer == NULL) {
-                RIPMSG0(RIP_WARNING, "RegisterClass: Couldn't resolve class name");
-                MSGERROR();
-            }
-        } else {
-            lpClassNameVer = (LPTSTR)lpWndClass->lpszClassName;
+    if (dwFlags & CSF_VERSIONCLASS)
+    {
+        lpClassNameVer =
+            (LPTSTR)ClassNameToVersion((LPCWSTR)lpWndClass->lpszClassName, (LPWSTR)ClassNameVer, NULL, IS_ANSI);
+
+        if (lpClassNameVer == NULL)
+        {
+            RIPMSG0(RIP_WARNING, "RegisterClass: Couldn't resolve class name");
+            MSGERROR();
         }
+    }
+    else
+    {
+        lpClassNameVer = (LPTSTR)lpWndClass->lpszClassName;
+    }
 
-        COPYLPTSTRID(&strClassName, (LPTSTR)lpWndClass->lpszClassName);
-        COPYLPTSTRID(&strClassNameVer, (LPTSTR)lpClassNameVer);
+    COPYLPTSTRID(&strClassName, (LPTSTR)lpWndClass->lpszClassName);
+    COPYLPTSTRID(&strClassNameVer, (LPTSTR)lpClassNameVer);
 
-        retval = NtUserRegisterClassExWOW(
-                &WndClass,
-                strClassName.pstr,
-                strClassNameVer.pstr,
-                &cmn,
-                fnid,
-                dwFlags,
-                pdwWOWstuff);
+    retval =
+        NtUserRegisterClassExWOW(&WndClass, strClassName.pstr, strClassNameVer.pstr, &cmn, fnid, dwFlags, pdwWOWstuff);
 
-        /*
+    /*
          * Return the atom associated with this class or if earlier
          * than Win 3.1 convert it to a strict BOOL (some apps check)
          */
-        if (GETEXPWINVER(lpWndClass->hInstance) < VER31)
-            retval = !!retval;
+    if (GETEXPWINVER(lpWndClass->hInstance) < VER31)
+        retval = !!retval;
 
     ERRORTRAP(0);
-    CLEANUPLPTSTR(strMenuName);     /* Initialized by InitClsMenuName */
+    CLEANUPLPTSTR(strMenuName); /* Initialized by InitClsMenuName */
     CLEANUPLPTSTR(strClassName);
     CLEANUPLPTSTR(strClassNameVer);
 
-    if (!retval) {
-        if (IS_PTR(cmn.pszClientAnsiMenuName)) {
+    if (!retval)
+    {
+        if (IS_PTR(cmn.pszClientAnsiMenuName))
+        {
             LocalFree(KPVOID_TO_PVOID(cmn.pszClientAnsiMenuName));
         }
-        if (IS_PTR(cmn.pwszClientUnicodeMenuName)) {
+        if (IS_PTR(cmn.pwszClientUnicodeMenuName))
+        {
             LocalFree(KPVOID_TO_PVOID(cmn.pwszClientUnicodeMenuName));
         }
     }
@@ -894,16 +849,14 @@ ATOM TEXT_FN(RegisterClassExWOW)(
 BadParameter:
     RIPERR0(ERROR_INVALID_PARAMETER, RIP_VERBOSE, "RegisterClass: Invalid Parameter");
     return FALSE;
-
 }
 
 #ifdef UNICODE
-FUNCLOG1(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, RegisterWindowMessageW , LPCTSTR, pString)
+FUNCLOG1(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, RegisterWindowMessageW, LPCTSTR, pString)
 #else
-FUNCLOG1(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, RegisterWindowMessageA , LPCTSTR, pString)
+FUNCLOG1(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, RegisterWindowMessageA, LPCTSTR, pString)
 #endif // UNICODE
-UINT RegisterWindowMessage(
-    LPCTSTR pString)
+UINT RegisterWindowMessage(LPCTSTR pString)
 {
     IN_STRING str;
 
@@ -914,10 +867,9 @@ UINT RegisterWindowMessage(
 
     BEGINCALL()
 
-        FIRSTCOPYLPTSTR(&str, (LPTSTR)pString);
+    FIRSTCOPYLPTSTR(&str, (LPTSTR)pString);
 
-        retval = (DWORD)NtUserRegisterWindowMessage(
-                str.pstr);
+    retval = (DWORD)NtUserRegisterWindowMessage(str.pstr);
 
     ERRORTRAP(0);
     CLEANUPLPTSTR(str);
@@ -925,119 +877,104 @@ UINT RegisterWindowMessage(
 }
 
 #ifdef UNICODE
-FUNCLOG2(LOG_GENERAL, HANDLE, DUMMYCALLINGTYPE, RemovePropW , HWND, hwnd, LPCTSTR, pString)
+FUNCLOG2(LOG_GENERAL, HANDLE, DUMMYCALLINGTYPE, RemovePropW, HWND, hwnd, LPCTSTR, pString)
 #else
-FUNCLOG2(LOG_GENERAL, HANDLE, DUMMYCALLINGTYPE, RemovePropA , HWND, hwnd, LPCTSTR, pString)
+FUNCLOG2(LOG_GENERAL, HANDLE, DUMMYCALLINGTYPE, RemovePropA, HWND, hwnd, LPCTSTR, pString)
 #endif // UNICODE
 
-HANDLE RemoveProp(
-    HWND hwnd,
-    LPCTSTR pString)
+HANDLE RemoveProp(HWND hwnd, LPCTSTR pString)
 {
     ATOM atomProp;
     DWORD dwProp;
 
     BEGINCALL()
 
-        if (IS_PTR(pString)) {
-            atomProp = GlobalFindAtom(pString);
-            if (atomProp == 0)
-                MSGERROR();
-            dwProp = MAKELONG(atomProp, TRUE);
-        } else
-            dwProp = MAKELONG(PTR_TO_ID(pString), FALSE);
+    if (IS_PTR(pString))
+    {
+        atomProp = GlobalFindAtom(pString);
+        if (atomProp == 0)
+            MSGERROR();
+        dwProp = MAKELONG(atomProp, TRUE);
+    }
+    else
+        dwProp = MAKELONG(PTR_TO_ID(pString), FALSE);
 
-        retval = (ULONG_PTR)NtUserRemoveProp(
-                hwnd,
-                dwProp);
+    retval = (ULONG_PTR)NtUserRemoveProp(hwnd, dwProp);
 
-        if (retval != 0 && IS_PTR(pString))
-            GlobalDeleteAtom(atomProp);
+    if (retval != 0 && IS_PTR(pString))
+        GlobalDeleteAtom(atomProp);
 
     ERRORTRAP(0);
     ENDCALL(HANDLE);
 }
 
 #ifdef UNICODE
-FUNCLOG6(LOG_GENERAL, BOOL, APIENTRY, SendMessageCallbackW, HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam, SENDASYNCPROC, lpResultCallBack, ULONG_PTR, dwData)
+FUNCLOG6(LOG_GENERAL, BOOL, APIENTRY, SendMessageCallbackW, HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam,
+         SENDASYNCPROC, lpResultCallBack, ULONG_PTR, dwData)
 #else
-FUNCLOG6(LOG_GENERAL, BOOL, APIENTRY, SendMessageCallbackA, HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam, SENDASYNCPROC, lpResultCallBack, ULONG_PTR, dwData)
+FUNCLOG6(LOG_GENERAL, BOOL, APIENTRY, SendMessageCallbackA, HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam,
+         SENDASYNCPROC, lpResultCallBack, ULONG_PTR, dwData)
 #endif // UNICODE
-BOOL APIENTRY SendMessageCallback(
-    HWND hwnd,
-    UINT wMsg,
-    WPARAM wParam,
-    LPARAM lParam,
-    SENDASYNCPROC lpResultCallBack,
-    ULONG_PTR dwData)
+BOOL APIENTRY SendMessageCallback(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam, SENDASYNCPROC lpResultCallBack,
+                                  ULONG_PTR dwData)
 {
     SNDMSGCALLBACK smcb;
-    
+
     BEGINCALL()
 
-        smcb.dwData = dwData;
-        smcb.lpResultCallBack = lpResultCallBack;
-        
-        retval = (DWORD)CsSendMessage(hwnd, wMsg, wParam, lParam,
-            (ULONG_PTR)&smcb, FNID_SENDMESSAGECALLBACK, IS_ANSI);
+    smcb.dwData = dwData;
+    smcb.lpResultCallBack = lpResultCallBack;
+
+    retval = (DWORD)CsSendMessage(hwnd, wMsg, wParam, lParam, (ULONG_PTR)&smcb, FNID_SENDMESSAGECALLBACK, IS_ANSI);
     ERRORTRAP(0);
     ENDCALL(BOOL);
 }
 
 #ifdef UNICODE
-FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, SendNotifyMessageW , HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam)
+FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, SendNotifyMessageW, HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam)
 #else
-FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, SendNotifyMessageA , HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam)
+FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, SendNotifyMessageA, HWND, hwnd, UINT, wMsg, WPARAM, wParam, LPARAM, lParam)
 #endif // UNICODE
 
-BOOL APIENTRY SendNotifyMessage(
-    HWND hwnd,
-    UINT wMsg,
-    WPARAM wParam,
-    LPARAM lParam)
+BOOL APIENTRY SendNotifyMessage(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
     BEGINCALL()
 
-        retval = (DWORD)CsSendMessage(hwnd, wMsg, wParam, lParam,
-                0L, FNID_SENDNOTIFYMESSAGE, IS_ANSI);
+    retval = (DWORD)CsSendMessage(hwnd, wMsg, wParam, lParam, 0L, FNID_SENDNOTIFYMESSAGE, IS_ANSI);
     ERRORTRAP(0);
     ENDCALL(BOOL);
 }
 
 #ifdef UNICODE
-FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, SetPropW , HWND, hwnd, LPCTSTR, pString, HANDLE, hData)
+FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, SetPropW, HWND, hwnd, LPCTSTR, pString, HANDLE, hData)
 #else
-FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, SetPropA , HWND, hwnd, LPCTSTR, pString, HANDLE, hData)
+FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, SetPropA, HWND, hwnd, LPCTSTR, pString, HANDLE, hData)
 #endif // UNICODE
 
-BOOL SetProp(
-    HWND hwnd,
-    LPCTSTR pString,
-    HANDLE hData)
+BOOL SetProp(HWND hwnd, LPCTSTR pString, HANDLE hData)
 {
     ATOM atomProp;
     DWORD dwProp;
 
     BEGINCALL()
 
-        if (IS_PTR(pString)) {
-            atomProp = GlobalAddAtom(pString);
-            if (atomProp == 0)
-                MSGERROR();
-            dwProp = MAKELONG(atomProp, TRUE);
-        } else
-            dwProp = MAKELONG(PTR_TO_ID(pString), FALSE);
+    if (IS_PTR(pString))
+    {
+        atomProp = GlobalAddAtom(pString);
+        if (atomProp == 0)
+            MSGERROR();
+        dwProp = MAKELONG(atomProp, TRUE);
+    }
+    else
+        dwProp = MAKELONG(PTR_TO_ID(pString), FALSE);
 
-        retval = (DWORD)NtUserSetProp(
-                hwnd,
-                dwProp,
-                hData);
+    retval = (DWORD)NtUserSetProp(hwnd, dwProp, hData);
 
-        /*
+    /*
          * If it failed, get rid of the atom
          */
-        if (retval == FALSE && IS_PTR(pString))
-            GlobalDeleteAtom(atomProp);
+    if (retval == FALSE && IS_PTR(pString))
+        GlobalDeleteAtom(atomProp);
 
     ERRORTRAP(0);
     ENDCALL(BOOL);
@@ -1048,9 +985,7 @@ FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, UnregisterClassW, LPCTSTR, pszClas
 #else
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, UnregisterClassA, LPCTSTR, pszClassName, HINSTANCE, hModule)
 #endif // UNICODE
-BOOL UnregisterClass(
-    LPCTSTR pszClassName,
-    HINSTANCE hModule)
+BOOL UnregisterClass(LPCTSTR pszClassName, HINSTANCE hModule)
 {
     IN_STRING strClassName;
     CLSMENUNAME cmn;
@@ -1062,29 +997,29 @@ BOOL UnregisterClass(
 
     BEGINCALL_CLASSV()
 
-        FIRSTCOPYLPTSTRID(&strClassName, lpClassNameVer);
+    FIRSTCOPYLPTSTRID(&strClassName, lpClassNameVer);
 
-        retval = (DWORD)NtUserUnregisterClass(
-                strClassName.pstr,
-                hModule,
-                &cmn);
+    retval = (DWORD)NtUserUnregisterClass(strClassName.pstr, hModule, &cmn);
 
 
-        /*
+    /*
          * Check explicity for TRUE so we don't get a !FALSE when
          * converttogui fails and the NtUser returns a status code intead of bool.
          */
-        if (retval == TRUE) {
-            /*
+    if (retval == TRUE)
+    {
+        /*
              * Free the menu strings if they are not resource IDs
              */
-            if (IS_PTR(cmn.pszClientAnsiMenuName)) {
-                LocalFree(KPVOID_TO_PVOID(cmn.pszClientAnsiMenuName));
-            }
-            if (IS_PTR(cmn.pwszClientUnicodeMenuName)) {
-                LocalFree(KPVOID_TO_PVOID(cmn.pwszClientUnicodeMenuName));
-            }
+        if (IS_PTR(cmn.pszClientAnsiMenuName))
+        {
+            LocalFree(KPVOID_TO_PVOID(cmn.pszClientAnsiMenuName));
         }
+        if (IS_PTR(cmn.pwszClientUnicodeMenuName))
+        {
+            LocalFree(KPVOID_TO_PVOID(cmn.pwszClientUnicodeMenuName));
+        }
+    }
 
     ERRORTRAP(0);
     CLEANUPLPTSTR(strClassName);
@@ -1092,117 +1027,100 @@ BOOL UnregisterClass(
 }
 
 #ifdef UNICODE
-FUNCLOG1(LOG_GENERAL, SHORT, DUMMYCALLINGTYPE, VkKeyScanW , TCHAR, cChar)
+FUNCLOG1(LOG_GENERAL, SHORT, DUMMYCALLINGTYPE, VkKeyScanW, TCHAR, cChar)
 #else
-FUNCLOG1(LOG_GENERAL, SHORT, DUMMYCALLINGTYPE, VkKeyScanA , TCHAR, cChar)
+FUNCLOG1(LOG_GENERAL, SHORT, DUMMYCALLINGTYPE, VkKeyScanA, TCHAR, cChar)
 #endif // UNICODE
 
-SHORT VkKeyScan(
-    TCHAR cChar)
+SHORT VkKeyScan(TCHAR cChar)
 {
     WCHAR wChar;
 
     BEGINCALL()
 
 #ifdef UNICODE
-        wChar = cChar;
+    wChar = cChar;
 #else
 #ifdef FE_SB // VkKeyScan()
-        /*
+    /*
          * Return 0xFFFFFFFF for DBCS LeadByte character.
          */
-        if (IsDBCSLeadByte(cChar)) {
-            MSGERROR();
-        }
-#endif // FE_SB
+    if (IsDBCSLeadByte(cChar))
+    {
+        MSGERROR();
+    }
+#endif       // FE_SB
 
-        RtlMultiByteToUnicodeN((LPWSTR)&(wChar), sizeof(WCHAR), NULL, &cChar, sizeof(CHAR));
-#endif // UNICODE
+    RtlMultiByteToUnicodeN((LPWSTR) & (wChar), sizeof(WCHAR), NULL, &cChar, sizeof(CHAR));
+#endif       // UNICODE
 
-        retval = (DWORD)NtUserVkKeyScanEx(
-                wChar,
-                0,
-                FALSE);
+    retval = (DWORD)NtUserVkKeyScanEx(wChar, 0, FALSE);
 
     ERRORTRAP(-1);
     ENDCALL(SHORT);
 }
 
 #ifndef UNICODE
-static HKL  hVKSCachedHKL = 0;
-static UINT uVKSCachedCP  = 0;
+static HKL hVKSCachedHKL = 0;
+static UINT uVKSCachedCP = 0;
 #endif
 #ifdef UNICODE
 FUNCLOG2(LOG_GENERAL, SHORT, DUMMYCALLINGTYPE, VkKeyScanExW, TCHAR, cChar, HKL, hkl)
 #else
 FUNCLOG2(LOG_GENERAL, SHORT, DUMMYCALLINGTYPE, VkKeyScanExA, TCHAR, cChar, HKL, hkl)
 #endif // UNICODE
-SHORT VkKeyScanEx(
-    TCHAR cChar,
-    HKL hkl)
+SHORT VkKeyScanEx(TCHAR cChar, HKL hkl)
 {
     WCHAR wChar;
     BEGINCALL()
 
 #ifdef UNICODE
-        wChar = cChar;
+    wChar = cChar;
 #else
-        if (hkl != hVKSCachedHKL) {
-            DWORD dwCodePage;
-            if (!GetLocaleInfoW(
-                     HandleToUlong(hkl) & 0xffff,
-                     LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                     (LPWSTR)&dwCodePage,
-                     sizeof(dwCodePage) / sizeof(WCHAR)
-                     )) {
-                MSGERROR();
-            }
-            uVKSCachedCP = dwCodePage;
-            hVKSCachedHKL = hkl;
+    if (hkl != hVKSCachedHKL)
+    {
+        DWORD dwCodePage;
+        if (!GetLocaleInfoW(HandleToUlong(hkl) & 0xffff, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                            (LPWSTR)&dwCodePage, sizeof(dwCodePage) / sizeof(WCHAR)))
+        {
+            MSGERROR();
         }
+        uVKSCachedCP = dwCodePage;
+        hVKSCachedHKL = hkl;
+    }
 
 #ifdef FE_SB // VkKeyScanEx()
-        /*
+    /*
          * Return 0xFFFFFFFF for DBCS LeadByte character.
          */
-        if (IsDBCSLeadByteEx(uVKSCachedCP,cChar)) {
-            MSGERROR();
-        }
-#endif // FE_SB
+    if (IsDBCSLeadByteEx(uVKSCachedCP, cChar))
+    {
+        MSGERROR();
+    }
+#endif       // FE_SB
 
-        if (!MultiByteToWideChar(
-                 uVKSCachedCP,
-                 0,
-                 &cChar,
-                 sizeof(CHAR),
-                 &wChar,
-                 sizeof(WCHAR))) {
-            MSGERROR();
-        }
-#endif // UNICODE
+    if (!MultiByteToWideChar(uVKSCachedCP, 0, &cChar, sizeof(CHAR), &wChar, sizeof(WCHAR)))
+    {
+        MSGERROR();
+    }
+#endif       // UNICODE
 
-        retval = (DWORD)NtUserVkKeyScanEx(
-                wChar,
-                (ULONG_PTR)hkl,
-                TRUE);
+    retval = (DWORD)NtUserVkKeyScanEx(wChar, (ULONG_PTR)hkl, TRUE);
 
     ERRORTRAP(-1);
     ENDCALL(SHORT);
 }
 
 #ifdef UNICODE
-FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplayDevicesW, LPCTSTR, lpszDevice, DWORD, iDevNum, PDISPLAY_DEVICE, lpDisplayDevice, DWORD, dwFlags)
+FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplayDevicesW, LPCTSTR, lpszDevice, DWORD, iDevNum, PDISPLAY_DEVICE,
+         lpDisplayDevice, DWORD, dwFlags)
 #else
-FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplayDevicesA, LPCTSTR, lpszDevice, DWORD, iDevNum, PDISPLAY_DEVICE, lpDisplayDevice, DWORD, dwFlags)
+FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplayDevicesA, LPCTSTR, lpszDevice, DWORD, iDevNum, PDISPLAY_DEVICE,
+         lpDisplayDevice, DWORD, dwFlags)
 #endif // UNICODE
-BOOL
-EnumDisplayDevices(
-    LPCTSTR lpszDevice,
-    DWORD iDevNum,
-    PDISPLAY_DEVICE lpDisplayDevice,
-    DWORD dwFlags)
+BOOL EnumDisplayDevices(LPCTSTR lpszDevice, DWORD iDevNum, PDISPLAY_DEVICE lpDisplayDevice, DWORD dwFlags)
 {
-    UNICODE_STRING  UnicodeString;
+    UNICODE_STRING UnicodeString;
     PUNICODE_STRING pUnicodeString = NULL;
     NTSTATUS Status;
     DISPLAY_DEVICEW tmpDisplayDevice;
@@ -1212,12 +1130,12 @@ EnumDisplayDevices(
     // parameters
     //
 
-    ZeroMemory(((PUCHAR)lpDisplayDevice) + sizeof(DWORD),
-               lpDisplayDevice->cb - sizeof(DWORD));
+    ZeroMemory(((PUCHAR)lpDisplayDevice) + sizeof(DWORD), lpDisplayDevice->cb - sizeof(DWORD));
 
     tmpDisplayDevice.cb = sizeof(DISPLAY_DEVICEW);
 
-    if (lpszDevice) {
+    if (lpszDevice)
+    {
 
 #ifdef UNICODE
 
@@ -1225,14 +1143,13 @@ EnumDisplayDevices(
 
 #else
 
-        ANSI_STRING     AnsiString;
+        ANSI_STRING AnsiString;
 
         UnicodeString = NtCurrentTeb()->StaticUnicodeString;
         RtlInitAnsiString(&AnsiString, (LPSTR)lpszDevice);
 
-        if (!NT_SUCCESS(RtlAnsiStringToUnicodeString(&UnicodeString,
-                                                     &AnsiString,
-                                                     FALSE))) {
+        if (!NT_SUCCESS(RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, FALSE)))
+        {
             return FALSE;
         }
 
@@ -1241,37 +1158,38 @@ EnumDisplayDevices(
         pUnicodeString = &UnicodeString;
     }
 
-    Status = NtUserEnumDisplayDevices(
-                pUnicodeString,
-                iDevNum,
-                &tmpDisplayDevice,
-                dwFlags);
+    Status = NtUserEnumDisplayDevices(pUnicodeString, iDevNum, &tmpDisplayDevice, dwFlags);
 
     if (NT_SUCCESS(Status))
     {
 #ifndef UNICODE
         LPSTR psz;
 
-        if (lpDisplayDevice->cb >= FIELD_OFFSET(DISPLAY_DEVICE, DeviceString)) {
-            psz = (LPSTR)&(lpDisplayDevice->DeviceName[0]);
+        if (lpDisplayDevice->cb >= FIELD_OFFSET(DISPLAY_DEVICE, DeviceString))
+        {
+            psz = (LPSTR) & (lpDisplayDevice->DeviceName[0]);
             WCSToMB(&(tmpDisplayDevice.DeviceName[0]), -1, &psz, 32, FALSE);
         }
 
-        if (lpDisplayDevice->cb >= FIELD_OFFSET(DISPLAY_DEVICE, StateFlags)) {
-            psz = (LPSTR)&(lpDisplayDevice->DeviceString[0]);
+        if (lpDisplayDevice->cb >= FIELD_OFFSET(DISPLAY_DEVICE, StateFlags))
+        {
+            psz = (LPSTR) & (lpDisplayDevice->DeviceString[0]);
             WCSToMB(&(tmpDisplayDevice.DeviceString[0]), -1, &psz, 128, FALSE);
         }
 
-        if (lpDisplayDevice->cb >= FIELD_OFFSET(DISPLAY_DEVICE, DeviceID)) {
+        if (lpDisplayDevice->cb >= FIELD_OFFSET(DISPLAY_DEVICE, DeviceID))
+        {
             lpDisplayDevice->StateFlags = tmpDisplayDevice.StateFlags;
         }
 
-        if (lpDisplayDevice->cb >= FIELD_OFFSET(DISPLAY_DEVICE, DeviceKey)) {
-            psz = (LPSTR)&(lpDisplayDevice->DeviceID[0]);
+        if (lpDisplayDevice->cb >= FIELD_OFFSET(DISPLAY_DEVICE, DeviceKey))
+        {
+            psz = (LPSTR) & (lpDisplayDevice->DeviceID[0]);
             WCSToMB(&(tmpDisplayDevice.DeviceID[0]), -1, &psz, 128, FALSE);
         }
-        if (lpDisplayDevice->cb >= sizeof(DISPLAY_DEVICE)) {
-            psz = (LPSTR)&(lpDisplayDevice->DeviceKey[0]);
+        if (lpDisplayDevice->cb >= sizeof(DISPLAY_DEVICE))
+        {
+            psz = (LPSTR) & (lpDisplayDevice->DeviceKey[0]);
             WCSToMB(&(tmpDisplayDevice.DeviceKey[0]), -1, &psz, 128, FALSE);
         }
 #else
@@ -1282,8 +1200,7 @@ EnumDisplayDevices(
         // size field.
         //
 
-        RtlMoveMemory((PUCHAR)lpDisplayDevice + sizeof(DWORD),
-                      ((PUCHAR)&tmpDisplayDevice + sizeof(DWORD)),
+        RtlMoveMemory((PUCHAR)lpDisplayDevice + sizeof(DWORD), ((PUCHAR)&tmpDisplayDevice + sizeof(DWORD)),
                       lpDisplayDevice->cb - sizeof(DWORD));
 
 #endif
@@ -1295,14 +1212,13 @@ EnumDisplayDevices(
 }
 
 #ifdef UNICODE
-FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplaySettingsW , LPCTSTR, lpszDeviceName, DWORD, iModeNum, LPDEVMODE, lpDevMode)
+FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplaySettingsW, LPCTSTR, lpszDeviceName, DWORD, iModeNum, LPDEVMODE,
+         lpDevMode)
 #else
-FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplaySettingsA, LPCTSTR, lpszDeviceName, DWORD, iModeNum, LPDEVMODE, lpDevMode)
+FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplaySettingsA, LPCTSTR, lpszDeviceName, DWORD, iModeNum, LPDEVMODE,
+         lpDevMode)
 #endif // UNICODE
-BOOL EnumDisplaySettings(
-    LPCTSTR   lpszDeviceName,
-    DWORD     iModeNum,
-    LPDEVMODE lpDevMode)
+BOOL EnumDisplaySettings(LPCTSTR lpszDeviceName, DWORD iModeNum, LPDEVMODE lpDevMode)
 {
 
     //
@@ -1317,23 +1233,22 @@ BOOL EnumDisplaySettings(
 }
 
 #ifdef UNICODE
-FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplaySettingsExW, LPCTSTR, lpszDeviceName, DWORD, iModeNum, LPDEVMODE, lpDevMode, DWORD, dwFlags)
+FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplaySettingsExW, LPCTSTR, lpszDeviceName, DWORD, iModeNum,
+         LPDEVMODE, lpDevMode, DWORD, dwFlags)
 #else
-FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplaySettingsExA, LPCTSTR, lpszDeviceName, DWORD, iModeNum, LPDEVMODE, lpDevMode, DWORD, dwFlags)
+FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EnumDisplaySettingsExA, LPCTSTR, lpszDeviceName, DWORD, iModeNum,
+         LPDEVMODE, lpDevMode, DWORD, dwFlags)
 #endif // UNICODE
-BOOL EnumDisplaySettingsEx(
-    LPCTSTR   lpszDeviceName,
-    DWORD     iModeNum,
-    LPDEVMODE lpDevMode,
-    DWORD     dwFlags)
+BOOL EnumDisplaySettingsEx(LPCTSTR lpszDeviceName, DWORD iModeNum, LPDEVMODE lpDevMode, DWORD dwFlags)
 {
-    UNICODE_STRING  UnicodeString;
+    UNICODE_STRING UnicodeString;
     PUNICODE_STRING pUnicodeString = NULL;
-    LPDEVMODEW      lpDevModeReserve;
-    BOOL            retval = FALSE;
-    WORD            size = lpDevMode->dmSize;
+    LPDEVMODEW lpDevModeReserve;
+    BOOL retval = FALSE;
+    WORD size = lpDevMode->dmSize;
 
-    if (lpszDeviceName) {
+    if (lpszDeviceName)
+    {
 
 #ifdef UNICODE
 
@@ -1341,14 +1256,13 @@ BOOL EnumDisplaySettingsEx(
 
 #else
 
-        ANSI_STRING     AnsiString;
+        ANSI_STRING AnsiString;
 
         UnicodeString = NtCurrentTeb()->StaticUnicodeString;
         RtlInitAnsiString(&AnsiString, (LPSTR)lpszDeviceName);
 
-        if (!NT_SUCCESS(RtlAnsiStringToUnicodeString(&UnicodeString,
-                                                     &AnsiString,
-                                                     FALSE))) {
+        if (!NT_SUCCESS(RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, FALSE)))
+        {
             return FALSE;
         }
 
@@ -1378,10 +1292,10 @@ BOOL EnumDisplaySettingsEx(
      * So allocate the space needed
      *
      */
-    lpDevModeReserve = UserLocalAlloc(HEAP_ZERO_MEMORY,
-                                      sizeof(DEVMODEW) + lpDevMode->dmDriverExtra);
+    lpDevModeReserve = UserLocalAlloc(HEAP_ZERO_MEMORY, sizeof(DEVMODEW) + lpDevMode->dmDriverExtra);
 
-    if (lpDevModeReserve) {
+    if (lpDevModeReserve)
+    {
 
         lpDevModeReserve->dmSize = sizeof(DEVMODEW);
         lpDevModeReserve->dmDriverExtra = lpDevMode->dmDriverExtra;
@@ -1389,11 +1303,9 @@ BOOL EnumDisplaySettingsEx(
         /*
          * Get the information
          */
-        retval = (NT_SUCCESS(NtUserEnumDisplaySettings(pUnicodeString,
-                                                       iModeNum,
-                                                       lpDevModeReserve,
-                                                       dwFlags)));
-        if (retval) {
+        retval = (NT_SUCCESS(NtUserEnumDisplaySettings(pUnicodeString, iModeNum, lpDevModeReserve, dwFlags)));
+        if (retval)
+        {
 
 #ifndef UNICODE
             LPSTR psz;
@@ -1408,45 +1320,36 @@ BOOL EnumDisplaySettingsEx(
              * First, copy the driver extra information
              */
 
-            if (lpDevMode->dmDriverExtra &&
-                lpDevModeReserve->dmDriverExtra) {
+            if (lpDevMode->dmDriverExtra && lpDevModeReserve->dmDriverExtra)
+            {
 
-                RtlMoveMemory(((PUCHAR)lpDevMode) + size,
-                              lpDevModeReserve + 1,
-                              min(lpDevMode->dmDriverExtra,
-                                  lpDevModeReserve->dmDriverExtra));
+                RtlMoveMemory(((PUCHAR)lpDevMode) + size, lpDevModeReserve + 1,
+                              min(lpDevMode->dmDriverExtra, lpDevModeReserve->dmDriverExtra));
             }
 
 #ifndef UNICODE
-            psz = (LPSTR)&(lpDevMode->dmDeviceName[0]);
+            psz = (LPSTR) & (lpDevMode->dmDeviceName[0]);
 
-            retval = WCSToMB(lpDevModeReserve->dmDeviceName,
-                             -1,
-                             &psz,
-                             32,
-                             FALSE);
+            retval = WCSToMB(lpDevModeReserve->dmDeviceName, -1, &psz, 32, FALSE);
 
-            RtlMoveMemory(&lpDevMode->dmSpecVersion,
-                          &lpDevModeReserve->dmSpecVersion,
-                          min(size, FIELD_OFFSET(DEVMODE,dmFormName)) -
-                              FIELD_OFFSET(DEVMODE,dmSpecVersion));
+            RtlMoveMemory(&lpDevMode->dmSpecVersion, &lpDevModeReserve->dmSpecVersion,
+                          min(size, FIELD_OFFSET(DEVMODE, dmFormName)) - FIELD_OFFSET(DEVMODE, dmSpecVersion));
 
             lpDevMode->dmSize = size;
 
-            if (size >= FIELD_OFFSET(DEVMODE,dmFormName)) {
+            if (size >= FIELD_OFFSET(DEVMODE, dmFormName))
+            {
 
-                psz = (LPSTR)&(lpDevMode->dmFormName[0]);
+                psz = (LPSTR) & (lpDevMode->dmFormName[0]);
 
                 retval = WCSToMB(lpDevModeReserve->dmFormName, -1, &psz, 32, FALSE);
             }
 
-            if (size > FIELD_OFFSET(DEVMODE,dmBitsPerPel)) {
+            if (size > FIELD_OFFSET(DEVMODE, dmBitsPerPel))
+            {
 
-                RtlMoveMemory(&lpDevMode->dmBitsPerPel,
-                              &lpDevModeReserve->dmBitsPerPel,
-                              lpDevMode->dmSize +
-                                  lpDevMode->dmDriverExtra -
-                                  FIELD_OFFSET(DEVMODE,dmBitsPerPel));
+                RtlMoveMemory(&lpDevMode->dmBitsPerPel, &lpDevModeReserve->dmBitsPerPel,
+                              lpDevMode->dmSize + lpDevMode->dmDriverExtra - FIELD_OFFSET(DEVMODE, dmBitsPerPel));
             }
 
 #else
@@ -1456,7 +1359,8 @@ BOOL EnumDisplaySettingsEx(
 
 #endif
 
-            if (size != lpDevMode->dmSize) {
+            if (size != lpDevMode->dmSize)
+            {
                 RIPMSG0(RIP_WARNING, "EnumDisplaySettings : Error in dmSize");
             }
 
@@ -1468,10 +1372,10 @@ BOOL EnumDisplaySettingsEx(
              * now ...
              */
 
-            if (size < FIELD_OFFSET(DEVMODE,dmPanningWidth))
+            if (size < FIELD_OFFSET(DEVMODE, dmPanningWidth))
                 lpDevMode->dmFields &= ~DM_PANNINGWIDTH;
 
-            if (size < FIELD_OFFSET(DEVMODE,dmPanningHeight))
+            if (size < FIELD_OFFSET(DEVMODE, dmPanningHeight))
                 lpDevMode->dmFields &= ~DM_PANNINGHEIGHT;
         }
 
@@ -1487,9 +1391,7 @@ FUNCLOG2(LOG_GENERAL, LONG, DUMMYCALLINGTYPE, ChangeDisplaySettingsW, LPDEVMODE,
 #else
 FUNCLOG2(LOG_GENERAL, LONG, DUMMYCALLINGTYPE, ChangeDisplaySettingsA, LPDEVMODE, lpDevMode, DWORD, dwFlags)
 #endif // UNICODE
-LONG ChangeDisplaySettings(
-    LPDEVMODE lpDevMode,
-    DWORD     dwFlags)
+LONG ChangeDisplaySettings(LPDEVMODE lpDevMode, DWORD dwFlags)
 {
 
     /*
@@ -1502,27 +1404,25 @@ LONG ChangeDisplaySettings(
 }
 
 #ifdef UNICODE
-FUNCLOG5(LOG_GENERAL, LONG, DUMMYCALLINGTYPE, ChangeDisplaySettingsExW, LPCTSTR, lpszDeviceName, LPDEVMODE, lpDevMode, HWND, hwnd, DWORD, dwFlags, LPVOID, lParam)
+FUNCLOG5(LOG_GENERAL, LONG, DUMMYCALLINGTYPE, ChangeDisplaySettingsExW, LPCTSTR, lpszDeviceName, LPDEVMODE, lpDevMode,
+         HWND, hwnd, DWORD, dwFlags, LPVOID, lParam)
 #else
-FUNCLOG5(LOG_GENERAL, LONG, DUMMYCALLINGTYPE, ChangeDisplaySettingsExA, LPCTSTR, lpszDeviceName, LPDEVMODE, lpDevMode, HWND, hwnd, DWORD, dwFlags, LPVOID, lParam)
+FUNCLOG5(LOG_GENERAL, LONG, DUMMYCALLINGTYPE, ChangeDisplaySettingsExA, LPCTSTR, lpszDeviceName, LPDEVMODE, lpDevMode,
+         HWND, hwnd, DWORD, dwFlags, LPVOID, lParam)
 #endif // UNICODE
-LONG ChangeDisplaySettingsEx(
-    LPCTSTR   lpszDeviceName,
-    LPDEVMODE lpDevMode,
-    HWND      hwnd,
-    DWORD     dwFlags,
-    LPVOID    lParam)
+LONG ChangeDisplaySettingsEx(LPCTSTR lpszDeviceName, LPDEVMODE lpDevMode, HWND hwnd, DWORD dwFlags, LPVOID lParam)
 {
 #ifndef UNICODE
-    ANSI_STRING     AnsiString;
+    ANSI_STRING AnsiString;
 #endif
 
-    UNICODE_STRING  UnicodeString;
+    UNICODE_STRING UnicodeString;
     PUNICODE_STRING pUnicodeString = NULL;
-    LONG            status = DISP_CHANGE_FAILED;
-    LPDEVMODEW      lpDevModeW;
+    LONG status = DISP_CHANGE_FAILED;
+    LPDEVMODEW lpDevModeW;
 
-    if (lpszDeviceName) {
+    if (lpszDeviceName)
+    {
 
 #ifdef UNICODE
 
@@ -1533,9 +1433,8 @@ LONG ChangeDisplaySettingsEx(
         UnicodeString = NtCurrentTeb()->StaticUnicodeString;
         RtlInitAnsiString(&AnsiString, (LPSTR)lpszDeviceName);
 
-        if (!NT_SUCCESS(RtlAnsiStringToUnicodeString(&UnicodeString,
-                                                     &AnsiString,
-                                                     FALSE))) {
+        if (!NT_SUCCESS(RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, FALSE)))
+        {
             return FALSE;
         }
 
@@ -1552,11 +1451,13 @@ LONG ChangeDisplaySettingsEx(
 
     lpDevModeW = NULL;
 
-    if (lpDevMode) {
+    if (lpDevMode)
+    {
 
         lpDevModeW = GdiConvertToDevmodeW(lpDevMode);
 
-        if (lpDevModeW == NULL) {
+        if (lpDevModeW == NULL)
+        {
 
             return FALSE;
         }
@@ -1564,14 +1465,11 @@ LONG ChangeDisplaySettingsEx(
 
 #endif
 
-    status = NtUserChangeDisplaySettings(pUnicodeString,
-                                         lpDevModeW,
-                                         hwnd,
-                                         dwFlags,
-                                         lParam);
+    status = NtUserChangeDisplaySettings(pUnicodeString, lpDevModeW, hwnd, dwFlags, lParam);
 
 #ifndef UNICODE
-    if (lpDevMode) {
+    if (lpDevMode)
+    {
         LocalFree(lpDevModeW);
     }
 #endif
@@ -1581,95 +1479,89 @@ LONG ChangeDisplaySettingsEx(
 
 
 #ifdef UNICODE
-FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, CallMsgFilterW , LPMSG, pmsg, int, nCode)
+FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, CallMsgFilterW, LPMSG, pmsg, int, nCode)
 #else
-FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, CallMsgFilterA , LPMSG, pmsg, int, nCode)
+FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, CallMsgFilterA, LPMSG, pmsg, int, nCode)
 #endif // UNICODE
-BOOL CallMsgFilter(
-    LPMSG pmsg,
-    int   nCode)
+BOOL CallMsgFilter(LPMSG pmsg, int nCode)
 {
     PCLIENTINFO pci;
-    MSG         msg;
+    MSG msg;
 
     BEGINCALLCONNECT()
 
-        /*
+    /*
          * If we're not hooked, don't bother going to the server
          */
-        pci = GetClientInfo();
-        if (!IsHooked(pci, (WH_MSGFILTER | WH_SYSMSGFILTER))) {
-            return FALSE;
-        }
+    pci = GetClientInfo();
+    if (!IsHooked(pci, (WH_MSGFILTER | WH_SYSMSGFILTER)))
+    {
+        return FALSE;
+    }
 
-        /*
+    /*
          * Don't allow apps to use the hiword of the message parameter.
          */
-        if (pmsg->message & RESERVED_MSG_BITS) {
-            MSGERRORCODE(ERROR_INVALID_PARAMETER);
-        }
-        msg = *pmsg;
+    if (pmsg->message & RESERVED_MSG_BITS)
+    {
+        MSGERRORCODE(ERROR_INVALID_PARAMETER);
+    }
+    msg = *pmsg;
 
 #ifndef UNICODE
-        switch (pmsg->message) {
+    switch (pmsg->message)
+    {
 #ifdef FE_SB // CallMsgFilter()
-        case WM_CHAR:
-        case EM_SETPASSWORDCHAR:
+    case WM_CHAR:
+    case EM_SETPASSWORDCHAR:
 #ifndef LATER
-             /*
+        /*
               * we should not return "TRUE" everytime for DBCS leadbyte character...
               * but should convert DBCS character to Unicode correctly.. How I can do ??
               * then ,finally, we just take what we did in NT 3.51, it means do nothing..
               */
 #else
-             /*
+        /*
               * Build DBCS-aware message.
               */
-             BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(pmsg->message,pmsg->wParam,TRUE);
-             /*
+        BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(pmsg->message, pmsg->wParam, TRUE);
+        /*
               * Fall through.....
               */
 #endif // LATER
 #else
-        case WM_CHAR:
-        case EM_SETPASSWORDCHAR:
+    case WM_CHAR:
+    case EM_SETPASSWORDCHAR:
 #endif // FE_SB
-        case WM_CHARTOITEM:
-        case WM_DEADCHAR:
-        case WM_SYSCHAR:
-        case WM_SYSDEADCHAR:
-        case WM_MENUCHAR:
+    case WM_CHARTOITEM:
+    case WM_DEADCHAR:
+    case WM_SYSCHAR:
+    case WM_SYSDEADCHAR:
+    case WM_MENUCHAR:
 #ifdef FE_IME // CallMsgFilter()
-        case WM_IME_CHAR:
-        case WM_IME_COMPOSITION:
+    case WM_IME_CHAR:
+    case WM_IME_COMPOSITION:
 #endif // FE_IME
 
-            RtlMBMessageWParamCharToWCS( msg.message, &(msg.wParam));
-            break;
-        }
+        RtlMBMessageWParamCharToWCS(msg.message, &(msg.wParam));
+        break;
+    }
 #endif //!UNICODE
 
-        retval = (DWORD)NtUserCallMsgFilter(
-                &msg,
-                nCode);
+    retval = (DWORD)NtUserCallMsgFilter(&msg, nCode);
 
     ERRORTRAP(0);
     ENDCALL(BOOL);
 }
 
 #ifdef UNICODE
-FUNCLOG7(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, DrawCaptionTempW, HWND, hwnd, HDC, hdc, LPCRECT, lprc, HFONT, hFont, HICON, hicon, LPCTSTR, lpText, UINT, flags)
+FUNCLOG7(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, DrawCaptionTempW, HWND, hwnd, HDC, hdc, LPCRECT, lprc, HFONT, hFont,
+         HICON, hicon, LPCTSTR, lpText, UINT, flags)
 #else
-FUNCLOG7(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, DrawCaptionTempA, HWND, hwnd, HDC, hdc, LPCRECT, lprc, HFONT, hFont, HICON, hicon, LPCTSTR, lpText, UINT, flags)
+FUNCLOG7(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, DrawCaptionTempA, HWND, hwnd, HDC, hdc, LPCRECT, lprc, HFONT, hFont,
+         HICON, hicon, LPCTSTR, lpText, UINT, flags)
 #endif // UNICODE
-BOOL DrawCaptionTemp(
-    HWND hwnd,
-    HDC hdc,
-    LPCRECT lprc,
-    HFONT hFont,
-    HICON hicon,
-    LPCTSTR lpText,
-    UINT flags)
+BOOL DrawCaptionTemp(HWND hwnd, HDC hdc, LPCRECT lprc, HFONT hFont, HICON hicon, LPCTSTR lpText, UINT flags)
 {
     HDC hdcr;
     IN_STRING strText;
@@ -1681,22 +1573,16 @@ BOOL DrawCaptionTemp(
 
     BEGINCALL()
 
-        if (IsMetaFile(hdc)) return FALSE;
+    if (IsMetaFile(hdc))
+        return FALSE;
 
-        hdcr = GdiConvertAndCheckDC(hdc);
-        if (hdcr == (HDC)0)
-            return FALSE;
+    hdcr = GdiConvertAndCheckDC(hdc);
+    if (hdcr == (HDC)0)
+        return FALSE;
 
-        FIRSTCOPYLPTSTRIDOPT(&strText, lpText);
+    FIRSTCOPYLPTSTRIDOPT(&strText, lpText);
 
-        retval = (DWORD)NtUserDrawCaptionTemp(
-                hwnd,
-                hdc,
-                lprc,
-                hFont,
-                hicon,
-                strText.pstr,
-                flags);
+    retval = (DWORD)NtUserDrawCaptionTemp(hwnd, hdc, lprc, hFont, hicon, strText.pstr, flags);
 
     ERRORTRAP(0);
     CLEANUPLPTSTR(strText);
@@ -1709,11 +1595,7 @@ FUNCLOG3(LOG_GENERAL, UINT, WINUSERAPI, RealGetWindowClassW, HWND, hwnd, LPTSTR,
 FUNCLOG3(LOG_GENERAL, UINT, WINUSERAPI, RealGetWindowClassA, HWND, hwnd, LPTSTR, ptszClassName, UINT, cchClassNameMax)
 #endif // UNICODE
 
-WINUSERAPI UINT WINAPI
-RealGetWindowClass(
-    HWND hwnd,
-    LPTSTR ptszClassName,
-    UINT cchClassNameMax)
+WINUSERAPI UINT WINAPI RealGetWindowClass(HWND hwnd, LPTSTR ptszClassName, UINT cchClassNameMax)
 {
     UNICODE_STRING strClassName;
     int retval;
@@ -1722,7 +1604,8 @@ RealGetWindowClass(
 
 #ifndef UNICODE
     strClassName.Buffer = LocalAlloc(LMEM_FIXED, strClassName.MaximumLength);
-    if (!strClassName.Buffer) {
+    if (!strClassName.Buffer)
+    {
         return 0;
     }
 #else
@@ -1732,31 +1615,26 @@ RealGetWindowClass(
     retval = NtUserGetClassName(hwnd, TRUE, &strClassName);
 
 #ifndef UNICODE
-    if (retval || (cchClassNameMax == 1)) {
+    if (retval || (cchClassNameMax == 1))
+    {
         /*
          * Copy the result
          */
-        retval = WCSToMB(strClassName.Buffer, retval,
-                &ptszClassName, cchClassNameMax-1, FALSE);
+        retval = WCSToMB(strClassName.Buffer, retval, &ptszClassName, cchClassNameMax - 1, FALSE);
         ptszClassName[retval] = '\0';
     }
     LocalFree(strClassName.Buffer);
 #endif
 
-  return retval;
+    return retval;
 }
 
-WINUSERAPI BOOL WINAPI GetAltTabInfo(
-    HWND hwnd,
-    int iItem,
-    PALTTABINFO pati,
-    LPTSTR pszItemText,
-    UINT cchItemText OPTIONAL)
+WINUSERAPI BOOL WINAPI GetAltTabInfo(HWND hwnd, int iItem, PALTTABINFO pati, LPTSTR pszItemText,
+                                     UINT cchItemText OPTIONAL)
 {
     BEGINCALL()
 
-    retval = (DWORD)NtUserGetAltTabInfo(hwnd,  iItem, pati,
-            (LPWSTR)pszItemText, cchItemText, IS_ANSI);
+    retval = (DWORD)NtUserGetAltTabInfo(hwnd, iItem, pati, (LPWSTR)pszItemText, cchItemText, IS_ANSI);
 
     ERRORTRAP(0);
     ENDCALL(BOOL);

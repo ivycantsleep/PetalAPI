@@ -13,7 +13,8 @@
 #pragma hdrstop
 
 
-typedef struct tagFE_KEYBOARDS {
+typedef struct tagFE_KEYBOARDS
+{
     BOOLEAN fJPN : 1;
     BOOLEAN fCHT : 1;
     BOOLEAN fCHS : 1;
@@ -29,17 +30,12 @@ VOID NumToHexAscii(DWORD, PTSTR);
 BOOL CliGetImeHotKeysFromRegistry(void);
 BOOL CliSetSingleHotKey(PKEY_BASIC_INFORMATION pKeyInfo, HANDLE hKey);
 VOID CliSetDefaultImeHotKeys(PCIMEHOTKEY ph, INT num, BOOL fCheckExistingHotKey);
-VOID CliGetPreloadKeyboardLayouts(FE_KEYBOARDS* pFeKbds);
+VOID CliGetPreloadKeyboardLayouts(FE_KEYBOARDS *pFeKbds);
 
 //
 // IMM hotkey related registry keys under HKEY_CURRENT_USER
 //
-CONST TCHAR *szaRegImmHotKeys[] = {
-    TEXT("Control Panel"),
-    TEXT("Input Method"),
-    TEXT("Hot Keys"),
-    NULL
-};
+CONST TCHAR *szaRegImmHotKeys[] = { TEXT("Control Panel"), TEXT("Input Method"), TEXT("Hot Keys"), NULL };
 
 CONST TCHAR szRegImeHotKey[] = TEXT("Control Panel\\Input Method\\Hot Keys");
 CONST TCHAR szRegKeyboardPreload[] = TEXT("Keyboard Layout\\Preload");
@@ -53,24 +49,20 @@ CONST TCHAR szRegHKL[] = TEXT("Target IME");
 //
 // CR:takaok - move this to the resource if you have time
 //
-CONST IMEHOTKEY DefaultHotKeyTableJ[]= {
-    {IME_JHOTKEY_CLOSE_OPEN, VK_KANJI, MOD_IGNORE_ALL_MODIFIER, NULL}
-};
+CONST IMEHOTKEY DefaultHotKeyTableJ[] = { { IME_JHOTKEY_CLOSE_OPEN, VK_KANJI, MOD_IGNORE_ALL_MODIFIER, NULL } };
 CONST INT DefaultHotKeyNumJ = sizeof(DefaultHotKeyTableJ) / sizeof(IMEHOTKEY);
 
-CONST IMEHOTKEY DefaultHotKeyTableT[] = {
-    { IME_THOTKEY_IME_NONIME_TOGGLE, VK_SPACE, MOD_BOTH_SIDES|MOD_CONTROL, NULL },
-    { IME_THOTKEY_SHAPE_TOGGLE, VK_SPACE, MOD_BOTH_SIDES|MOD_SHIFT,  NULL }
-};
+CONST IMEHOTKEY DefaultHotKeyTableT[] = { { IME_THOTKEY_IME_NONIME_TOGGLE, VK_SPACE, MOD_BOTH_SIDES | MOD_CONTROL,
+                                            NULL },
+                                          { IME_THOTKEY_SHAPE_TOGGLE, VK_SPACE, MOD_BOTH_SIDES | MOD_SHIFT, NULL } };
 CONST INT DefaultHotKeyNumT = sizeof(DefaultHotKeyTableT) / sizeof(IMEHOTKEY);
 
-CONST IMEHOTKEY DefaultHotKeyTableC[] = {
-    { IME_CHOTKEY_IME_NONIME_TOGGLE, VK_SPACE, MOD_BOTH_SIDES|MOD_CONTROL, NULL },
-    { IME_CHOTKEY_SHAPE_TOGGLE, VK_SPACE, MOD_BOTH_SIDES|MOD_SHIFT,  NULL }
-};
+CONST IMEHOTKEY DefaultHotKeyTableC[] = { { IME_CHOTKEY_IME_NONIME_TOGGLE, VK_SPACE, MOD_BOTH_SIDES | MOD_CONTROL,
+                                            NULL },
+                                          { IME_CHOTKEY_SHAPE_TOGGLE, VK_SPACE, MOD_BOTH_SIDES | MOD_SHIFT, NULL } };
 CONST INT DefaultHotKeyNumC = sizeof(DefaultHotKeyTableC) / sizeof(IMEHOTKEY);
 
-#if 0   // just FYI.
+#if 0 // just FYI.
 CONST IMEHOTKEY DefaultHotKeyTableK[] = {
     { IME_KHOTKEY_ENGLISH,  VK_HANGEUL, MOD_IGNORE_ALL_MODIFIER,  NULL },
     { IME_KHOTKEY_SHAPE_TOGGLE, VK_JUNJA, MOD_IGNORE_ALL_MODIFIER,  NULL },
@@ -82,9 +74,10 @@ CONST INT DefaultHotKeyNumK = sizeof(DefaultHotKeyTableK) / sizeof(IMEHOTKEY);
 //
 // Set language flags.
 //
-VOID SetFeKeyboardFlags(LANGID langid, FE_KEYBOARDS* pFeKbds)
+VOID SetFeKeyboardFlags(LANGID langid, FE_KEYBOARDS *pFeKbds)
 {
-    switch (langid) {
+    switch (langid)
+    {
     case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL):
     case MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG):
         pFeKbds->fCHT = TRUE;
@@ -114,7 +107,12 @@ VOID SetFeKeyboardFlags(LANGID langid, FE_KEYBOARDS* pFeKbds)
 \***************************************************************************/
 VOID CliImmInitializeHotKeys(DWORD dwAction, HKL hkl)
 {
-    FE_KEYBOARDS feKbds = { 0, 0, 0, 0, };
+    FE_KEYBOARDS feKbds = {
+        0,
+        0,
+        0,
+        0,
+    };
     BOOL fFoundAny;
 
     UNREFERENCED_PARAMETER(hkl);
@@ -126,7 +124,8 @@ VOID CliImmInitializeHotKeys(DWORD dwAction, HKL hkl)
     // (they're stored in the registry)
     fFoundAny = CliGetImeHotKeysFromRegistry();
 
-    if (dwAction == ISHK_INITIALIZE) {
+    if (dwAction == ISHK_INITIALIZE)
+    {
         TAGMSG0(DBGTAG_IMM, "Setting IME HotKeys for Init.\n");
 
         // Get the user's default locale and set its flag
@@ -134,9 +133,9 @@ VOID CliImmInitializeHotKeys(DWORD dwAction, HKL hkl)
 
         // Get preloaded keyboards' locales and set their flags
         CliGetPreloadKeyboardLayouts(&feKbds);
-
     }
-    else {
+    else
+    {
         UINT i;
         UINT nLayouts;
         LPHKL lphkl;
@@ -144,15 +143,18 @@ VOID CliImmInitializeHotKeys(DWORD dwAction, HKL hkl)
         TAGMSG0(DBGTAG_IMM, "Setting IME HotKeys for Add.\n");
 
         nLayouts = NtUserGetKeyboardLayoutList(0, NULL);
-        if (nLayouts == 0) {
+        if (nLayouts == 0)
+        {
             return;
         }
         lphkl = UserLocalAlloc(0, nLayouts * sizeof(HKL));
-        if (lphkl == NULL) {
+        if (lphkl == NULL)
+        {
             return;
         }
         NtUserGetKeyboardLayoutList(nLayouts, lphkl);
-        for (i = 0; i < nLayouts; ++i) {
+        for (i = 0; i < nLayouts; ++i)
+        {
             //
             // Set language flags. By its definition, LOWORD(hkl) is LANGID
             //
@@ -161,20 +163,24 @@ VOID CliImmInitializeHotKeys(DWORD dwAction, HKL hkl)
         UserLocalFree(lphkl);
     }
 
-    if (feKbds.fJPN) {
+    if (feKbds.fJPN)
+    {
         TAGMSG0(DBGTAG_IMM, "JPN KL Preloaded.\n");
         CliSetDefaultImeHotKeys(DefaultHotKeyTableJ, DefaultHotKeyNumJ, fFoundAny);
     }
 
-    if (feKbds.fKOR) {
+    if (feKbds.fKOR)
+    {
         TAGMSG0(DBGTAG_IMM, "KOR KL Preloaded, but KOR hotkeys will not be registered.\n");
     }
 
-    if (feKbds.fCHT) {
+    if (feKbds.fCHT)
+    {
         TAGMSG0(DBGTAG_IMM, "CHT KL Preloaded.\n");
         CliSetDefaultImeHotKeys(DefaultHotKeyTableT, DefaultHotKeyNumT, fFoundAny);
     }
-    if (feKbds.fCHS) {
+    if (feKbds.fCHS)
+    {
         TAGMSG0(DBGTAG_IMM, "CHS KL Preloaded.\n");
         CliSetDefaultImeHotKeys(DefaultHotKeyTableC, DefaultHotKeyNumC, fFoundAny);
     }
@@ -184,19 +190,16 @@ VOID CliSetDefaultImeHotKeys(PCIMEHOTKEY ph, INT num, BOOL fNeedToCheckExistingH
 {
     IMEHOTKEY hkt;
 
-    while( num-- > 0 ) {
+    while (num-- > 0)
+    {
         //
         // Set IME hotkey only if there is no such
         // hotkey in the registry
         //
-        if (!fNeedToCheckExistingHotKey ||
-                !NtUserGetImeHotKey(ph->dwHotKeyID, &hkt.uModifiers, &hkt.uVKey, &hkt.hKL)) {
+        if (!fNeedToCheckExistingHotKey || !NtUserGetImeHotKey(ph->dwHotKeyID, &hkt.uModifiers, &hkt.uVKey, &hkt.hKL))
+        {
 
-            CliImmSetHotKeyWorker(ph->dwHotKeyID,
-                                    ph->uModifiers,
-                                    ph->uVKey,
-                                    ph->hKL,
-                                    ISHK_ADD);
+            CliImmSetHotKeyWorker(ph->dwHotKeyID, ph->uModifiers, ph->uVKey, ph->hKL, ISHK_ADD);
         }
         ph++;
     }
@@ -212,23 +215,23 @@ VOID CliSetDefaultImeHotKeys(PCIMEHOTKEY ph, INT num, BOOL fNeedToCheckExistingH
 * 03-Dec-1997 Hiroyama     Created
 \***************************************************************************/
 
-VOID CliGetPreloadKeyboardLayouts(FE_KEYBOARDS* pFeKbds)
+VOID CliGetPreloadKeyboardLayouts(FE_KEYBOARDS *pFeKbds)
 {
-    UINT  i;
-    WCHAR szPreLoadee[4];   // up to 999 preloads
+    UINT i;
+    WCHAR szPreLoadee[4]; // up to 999 preloads
     WCHAR lpszName[KL_NAMELENGTH];
     UNICODE_STRING UnicodeString;
     HKL hkl;
 
-    for (i = 1; i < 1000; i++) {
+    for (i = 1; i < 1000; i++)
+    {
         wsprintf(szPreLoadee, L"%d", i);
-        if ((GetPrivateProfileStringW(
-                 L"Preload",
-                 szPreLoadee,
-                 L"",                            // default = NULL
-                 lpszName,                       // output buffer
-                 KL_NAMELENGTH,
-                 L"keyboardlayout.ini") == -1 ) || (*lpszName == L'\0')) {
+        if ((GetPrivateProfileStringW(L"Preload", szPreLoadee,
+                                      L"",      // default = NULL
+                                      lpszName, // output buffer
+                                      KL_NAMELENGTH, L"keyboardlayout.ini") == -1) ||
+            (*lpszName == L'\0'))
+        {
             break;
         }
         RtlInitUnicodeString(&UnicodeString, lpszName);
@@ -245,13 +248,13 @@ VOID CliGetPreloadKeyboardLayouts(FE_KEYBOARDS* pFeKbds)
 
 BOOL CliGetImeHotKeysFromRegistry()
 {
-    BOOL    fFoundAny = FALSE;
+    BOOL fFoundAny = FALSE;
 
     HANDLE hCurrentUserKey;
     HANDLE hKeyHotKeys;
 
-    OBJECT_ATTRIBUTES   Obja;
-    UNICODE_STRING      SubKeyName;
+    OBJECT_ATTRIBUTES Obja;
+    UNICODE_STRING SubKeyName;
 
     NTSTATUS Status;
     ULONG uIndex;
@@ -260,43 +263,40 @@ BOOL CliGetImeHotKeysFromRegistry()
     // Open the current user registry key
     //
     Status = RtlOpenCurrentUser(MAXIMUM_ALLOWED, &hCurrentUserKey);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return fFoundAny;
     }
 
-    RtlInitUnicodeString( &SubKeyName, szRegImeHotKey );
-    InitializeObjectAttributes( &Obja,
-                                &SubKeyName,
-                                OBJ_CASE_INSENSITIVE,
-                                hCurrentUserKey,
-                                NULL);
-    Status = NtOpenKey( &hKeyHotKeys, KEY_READ, &Obja );
-    if (!NT_SUCCESS(Status)) {
-        NtClose( hCurrentUserKey );
+    RtlInitUnicodeString(&SubKeyName, szRegImeHotKey);
+    InitializeObjectAttributes(&Obja, &SubKeyName, OBJ_CASE_INSENSITIVE, hCurrentUserKey, NULL);
+    Status = NtOpenKey(&hKeyHotKeys, KEY_READ, &Obja);
+    if (!NT_SUCCESS(Status))
+    {
+        NtClose(hCurrentUserKey);
         return fFoundAny;
     }
 
-    for (uIndex = 0; TRUE; uIndex++) {
+    for (uIndex = 0; TRUE; uIndex++)
+    {
         BYTE KeyBuffer[sizeof(KEY_BASIC_INFORMATION) + 16 * sizeof(WCHAR)];
         PKEY_BASIC_INFORMATION pKeyInfo;
         ULONG ResultLength;
 
         pKeyInfo = (PKEY_BASIC_INFORMATION)KeyBuffer;
-        Status = NtEnumerateKey(hKeyHotKeys,
-                                 uIndex,
-                                 KeyBasicInformation,
-                                 pKeyInfo,
-                                 sizeof( KeyBuffer ),
-                                 &ResultLength );
+        Status = NtEnumerateKey(hKeyHotKeys, uIndex, KeyBasicInformation, pKeyInfo, sizeof(KeyBuffer), &ResultLength);
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
-            if (CliSetSingleHotKey(pKeyInfo, hKeyHotKeys)) {
+            if (CliSetSingleHotKey(pKeyInfo, hKeyHotKeys))
+            {
 
-                    fFoundAny = TRUE;
+                fFoundAny = TRUE;
             }
-
-        } else if (Status == STATUS_NO_MORE_ENTRIES) {
+        }
+        else if (Status == STATUS_NO_MORE_ENTRIES)
+        {
             break;
         }
     }
@@ -311,26 +311,23 @@ DWORD CliReadRegistryValue(HANDLE hKey, PCWSTR pName)
 {
     BYTE ValueBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + 16 * sizeof(UCHAR)];
     PKEY_VALUE_PARTIAL_INFORMATION pKeyValue;
-    UNICODE_STRING      ValueName;
+    UNICODE_STRING ValueName;
     ULONG ResultLength;
     NTSTATUS Status;
 
     pKeyValue = (PKEY_VALUE_PARTIAL_INFORMATION)ValueBuffer;
 
     RtlInitUnicodeString(&ValueName, pName);
-    Status = NtQueryValueKey(hKey,
-                             &ValueName,
-                             KeyValuePartialInformation,
-                             pKeyValue,
-                             sizeof(ValueBuffer),
-                             &ResultLength );
+    Status =
+        NtQueryValueKey(hKey, &ValueName, KeyValuePartialInformation, pKeyValue, sizeof(ValueBuffer), &ResultLength);
 
-    if (NT_SUCCESS(Status) && pKeyValue->DataLength > 3) {
+    if (NT_SUCCESS(Status) && pKeyValue->DataLength > 3)
+    {
         //
         // In Win95 registry, these items are written as BYTE data...
         //
-        return (DWORD)(MAKEWORD( pKeyValue->Data[0], pKeyValue->Data[1])) |
-                 (((DWORD)(MAKEWORD( pKeyValue->Data[2], pKeyValue->Data[3]))) << 16);
+        return (DWORD)(MAKEWORD(pKeyValue->Data[0], pKeyValue->Data[1])) |
+               (((DWORD)(MAKEWORD(pKeyValue->Data[2], pKeyValue->Data[3]))) << 16);
     }
 
     return 0;
@@ -338,35 +335,32 @@ DWORD CliReadRegistryValue(HANDLE hKey, PCWSTR pName)
 
 BOOL CliSetSingleHotKey(PKEY_BASIC_INFORMATION pKeyInfo, HANDLE hKey)
 {
-    UNICODE_STRING      SubKeyName;
-    HANDLE    hKeySingleHotKey;
-    OBJECT_ATTRIBUTES   Obja;
+    UNICODE_STRING SubKeyName;
+    HANDLE hKeySingleHotKey;
+    OBJECT_ATTRIBUTES Obja;
 
     DWORD dwID = 0;
-    UINT  uVKey = 0;
-    UINT  uModifiers = 0;
-    HKL   hKL = NULL;
+    UINT uVKey = 0;
+    UINT uModifiers = 0;
+    HKL hKL = NULL;
 
     NTSTATUS Status;
 
-    SubKeyName.Buffer = (PWSTR)&(pKeyInfo->Name[0]);
+    SubKeyName.Buffer = (PWSTR) & (pKeyInfo->Name[0]);
     SubKeyName.Length = (USHORT)pKeyInfo->NameLength;
     SubKeyName.MaximumLength = (USHORT)pKeyInfo->NameLength;
-    InitializeObjectAttributes(&Obja,
-                               &SubKeyName,
-                               OBJ_CASE_INSENSITIVE,
-                               hKey,
-                               NULL);
+    InitializeObjectAttributes(&Obja, &SubKeyName, OBJ_CASE_INSENSITIVE, hKey, NULL);
 
     Status = NtOpenKey(&hKeySingleHotKey, KEY_READ, &Obja);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
     RtlUnicodeStringToInteger(&SubKeyName, 16L, &dwID);
     uVKey = CliReadRegistryValue(hKeySingleHotKey, szRegVK);
     uModifiers = CliReadRegistryValue(hKeySingleHotKey, szRegMOD);
-    hKL = (HKL)LongToHandle( CliReadRegistryValue(hKeySingleHotKey, szRegHKL) );
+    hKL = (HKL)LongToHandle(CliReadRegistryValue(hKeySingleHotKey, szRegHKL));
 
     NtClose(hKeySingleHotKey);
 
@@ -383,38 +377,40 @@ BOOL CliSetSingleHotKey(PKEY_BASIC_INFORMATION pKeyInfo, HANDLE hKey)
 \***************************************************************************/
 
 FUNCLOG4(LOG_GENERAL, BOOL, WINAPI, CliImmSetHotKey, DWORD, dwID, UINT, uModifiers, UINT, uVKey, HKL, hkl)
-BOOL WINAPI CliImmSetHotKey(
-    DWORD dwID,
-    UINT uModifiers,
-    UINT uVKey,
-    HKL hkl)
+BOOL WINAPI CliImmSetHotKey(DWORD dwID, UINT uModifiers, UINT uVKey, HKL hkl)
 {
     BOOL fResult;
     BOOL fTmp;
-    BOOL fDelete = (uVKey == 0 );
+    BOOL fDelete = (uVKey == 0);
 
-    if (fDelete) {
+    if (fDelete)
+    {
         //
         // Removing an IME hotkey from the list in the kernel side
         // should not be failed, if we succeed to remove the IME
         // hotkey entry from the registry. Therefore CliSaveImeHotKey
         // is called first.
         //
-        fResult = CliSaveImeHotKey( dwID, uModifiers, uVKey, hkl,  fDelete );
-        if (fResult) {
-            fTmp = CliImmSetHotKeyWorker( dwID, uModifiers, uVKey, hkl, ISHK_REMOVE );
+        fResult = CliSaveImeHotKey(dwID, uModifiers, uVKey, hkl, fDelete);
+        if (fResult)
+        {
+            fTmp = CliImmSetHotKeyWorker(dwID, uModifiers, uVKey, hkl, ISHK_REMOVE);
             UserAssert(fTmp);
         }
-    } else {
+    }
+    else
+    {
         //
         // CliImmSetHotKeyWorker should be called first since
         // adding an IME hotkey into the list in the kernel side
         // will be failed in various reasons.
         //
         fResult = CliImmSetHotKeyWorker(dwID, uModifiers, uVKey, hkl, ISHK_ADD);
-        if (fResult) {
+        if (fResult)
+        {
             fResult = CliSaveImeHotKey(dwID, uModifiers, uVKey, hkl, fDelete);
-            if (!fResult) {
+            if (!fResult)
+            {
                 //
                 // We failed to save the hotkey to the registry.
                 // We need to remove the entry from the IME hotkey
@@ -443,7 +439,8 @@ BOOL CliSaveImeHotKey(DWORD id, UINT mod, UINT vk, HKL hkl, BOOL fDelete)
     LONG lResult;
     TCHAR szHex[16];
 
-    if (fDelete) {
+    if (fDelete)
+    {
         TCHAR szRegTmp[(sizeof(szRegImeHotKey) / sizeof(TCHAR) + 1 + 8 + 1)];
 
         lstrcpy(szRegTmp, szRegImeHotKey);
@@ -452,93 +449,67 @@ BOOL CliSaveImeHotKey(DWORD id, UINT mod, UINT vk, HKL hkl, BOOL fDelete)
         lstrcat(szRegTmp, szHex);
 
         lResult = RegDeleteKeyW(HKEY_CURRENT_USER, szRegTmp);
-        if (lResult != ERROR_SUCCESS) {
-            RIPERR1(lResult, RIP_WARNING,
-                     "CliSaveImeHotKey: deleting %s failed", szRegTmp);
+        if (lResult != ERROR_SUCCESS)
+        {
+            RIPERR1(lResult, RIP_WARNING, "CliSaveImeHotKey: deleting %s failed", szRegTmp);
             return FALSE;
         }
         return TRUE;
     }
 
     hKeyParent = HKEY_CURRENT_USER;
-    for (i = 0; szaRegImmHotKeys[i] != NULL; i++) {
-        lResult = RegCreateKeyExW(hKeyParent,
-                                  szaRegImmHotKeys[i],
-                                  0,
-                                  NULL,
-                                  REG_OPTION_NON_VOLATILE,
-                                  KEY_WRITE|KEY_READ,
-                                  NULL,
-                                  &hKey,
-                                  NULL );
+    for (i = 0; szaRegImmHotKeys[i] != NULL; i++)
+    {
+        lResult = RegCreateKeyExW(hKeyParent, szaRegImmHotKeys[i], 0, NULL, REG_OPTION_NON_VOLATILE,
+                                  KEY_WRITE | KEY_READ, NULL, &hKey, NULL);
         RegCloseKey(hKeyParent);
-        if (lResult == ERROR_SUCCESS) {
+        if (lResult == ERROR_SUCCESS)
+        {
             hKeyParent = hKey;
-        } else {
-            RIPERR1(lResult, RIP_WARNING,
-                    "CliSaveImeHotKey: creating %s failed", szaRegImmHotKeys[i]);
+        }
+        else
+        {
+            RIPERR1(lResult, RIP_WARNING, "CliSaveImeHotKey: creating %s failed", szaRegImmHotKeys[i]);
 
             return FALSE;
         }
     }
 
     NumToHexAscii(id, szHex);
-    lResult = RegCreateKeyExW(hKeyParent,
-                             szHex,
-                             0,
-                             NULL,
-                             REG_OPTION_NON_VOLATILE,
-                             KEY_WRITE|KEY_READ,
-                             NULL,
-                             &hKey,
-                             NULL );
+    lResult =
+        RegCreateKeyExW(hKeyParent, szHex, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE | KEY_READ, NULL, &hKey, NULL);
     RegCloseKey(hKeyParent);
-    if (lResult != ERROR_SUCCESS) {
-        RIPERR1(lResult, RIP_WARNING,
-                "CliSaveImeHotKey: creating %s failed", szHex );
+    if (lResult != ERROR_SUCCESS)
+    {
+        RIPERR1(lResult, RIP_WARNING, "CliSaveImeHotKey: creating %s failed", szHex);
         return FALSE;
     }
 
-    lResult = RegSetValueExW(hKey,
-                             szRegVK,
-                             0,
-                             REG_BINARY,
-                            (LPBYTE)&vk,
-                            sizeof(DWORD));
-    if (lResult != ERROR_SUCCESS) {
+    lResult = RegSetValueExW(hKey, szRegVK, 0, REG_BINARY, (LPBYTE)&vk, sizeof(DWORD));
+    if (lResult != ERROR_SUCCESS)
+    {
         RegCloseKey(hKey);
         CliSaveImeHotKey(id, vk, mod, hkl, TRUE);
-        RIPERR1( lResult, RIP_WARNING,
-                 "SaveImeHotKey:setting value on %s failed", szRegVK );
-        return ( FALSE );
+        RIPERR1(lResult, RIP_WARNING, "SaveImeHotKey:setting value on %s failed", szRegVK);
+        return (FALSE);
     }
-    lResult = RegSetValueExW(hKey,
-                             szRegMOD,
-                             0,
-                             REG_BINARY,
-                             (LPBYTE)&mod,
-                             sizeof(DWORD));
+    lResult = RegSetValueExW(hKey, szRegMOD, 0, REG_BINARY, (LPBYTE)&mod, sizeof(DWORD));
 
-    if (lResult != ERROR_SUCCESS) {
+    if (lResult != ERROR_SUCCESS)
+    {
         RegCloseKey(hKey);
         CliSaveImeHotKey(id, vk, mod, hkl, TRUE);
-        RIPERR1(lResult, RIP_WARNING,
-                "CliSaveImeHotKey: setting value on %s failed", szRegMOD);
+        RIPERR1(lResult, RIP_WARNING, "CliSaveImeHotKey: setting value on %s failed", szRegMOD);
         return FALSE;
     }
 
-    lResult = RegSetValueExW(hKey,
-                             szRegHKL,
-                             0,
-                             REG_BINARY,
-                             (LPBYTE)&hkl,
-                             sizeof(DWORD));
+    lResult = RegSetValueExW(hKey, szRegHKL, 0, REG_BINARY, (LPBYTE)&hkl, sizeof(DWORD));
 
-    if (lResult != ERROR_SUCCESS) {
+    if (lResult != ERROR_SUCCESS)
+    {
         RegCloseKey(hKey);
         CliSaveImeHotKey(id, vk, mod, hkl, TRUE);
-        RIPERR1(lResult, RIP_WARNING,
-                "CliSaveImeHotKey: setting value on %s failed", szRegHKL);
+        RIPERR1(lResult, RIP_WARNING, "CliSaveImeHotKey: setting value on %s failed", szRegHKL);
         return FALSE;
     }
 
@@ -546,64 +517,67 @@ BOOL CliSaveImeHotKey(DWORD id, UINT mod, UINT vk, HKL hkl, BOOL fDelete)
     return TRUE;
 }
 
-BOOL CliImmSetHotKeyWorker(
-    DWORD dwID,
-    UINT uModifiers,
-    UINT uVKey,
-    HKL hkl,
-    DWORD dwAction)
+BOOL CliImmSetHotKeyWorker(DWORD dwID, UINT uModifiers, UINT uVKey, HKL hkl, DWORD dwAction)
 {
     //
     // if we're adding an IME hotkey entry, let's check
     // the parameters before calling the kernel side code
     //
-    if (dwAction == ISHK_ADD) {
+    if (dwAction == ISHK_ADD)
+    {
 
-        if (dwID >= IME_HOTKEY_DSWITCH_FIRST &&
-                dwID <= IME_HOTKEY_DSWITCH_LAST) {
+        if (dwID >= IME_HOTKEY_DSWITCH_FIRST && dwID <= IME_HOTKEY_DSWITCH_LAST)
+        {
             //
             // IME direct switching hot key - switch to
             // the keyboard layout specified.
             // We need to specify keyboard layout.
             //
-            if (hkl == NULL) {
+            if (hkl == NULL)
+            {
                 RIPERR0(ERROR_INVALID_PARAMETER, RIP_WARNING, "hkl should be specified");
                 return FALSE;
             }
-
-        } else {
+        }
+        else
+        {
             //
             // normal hot keys - change the mode of current iME
             //
             // Because it should be effective in all IME no matter
             // which IME is active we should not specify a target IME
             //
-            if (hkl != NULL) {
+            if (hkl != NULL)
+            {
                 RIPERR0(ERROR_INVALID_PARAMETER, RIP_WARNING, "hkl shouldn't be specified");
                 return FALSE;
             }
 
-            if (dwID >= IME_KHOTKEY_FIRST && dwID <= IME_KHOTKEY_LAST) {
+            if (dwID >= IME_KHOTKEY_FIRST && dwID <= IME_KHOTKEY_LAST)
+            {
                 RIPERR0(ERROR_INVALID_PARAMETER, RIP_WARNING, "Hotkey for Korean IMEs are invalid.");
                 return FALSE;
             }
         }
 
-        if (uModifiers & MOD_MODIFY_KEYS) {
+        if (uModifiers & MOD_MODIFY_KEYS)
+        {
             //
             // Because normal keyboard has left and right key for
             // these keys, you should specify left or right ( or both )
             //
-            if ((uModifiers & MOD_BOTH_SIDES) == 0) {
-                RIPERR3(ERROR_INVALID_PARAMETER, RIP_WARNING, "invalid modifiers %x for id %x vKey %x", uModifiers, dwID, uVKey);
+            if ((uModifiers & MOD_BOTH_SIDES) == 0)
+            {
+                RIPERR3(ERROR_INVALID_PARAMETER, RIP_WARNING, "invalid modifiers %x for id %x vKey %x", uModifiers,
+                        dwID, uVKey);
                 return FALSE;
             }
         }
 
-#if 0   // Skip this check for now
-        //
-        // It doesn't make sense if vkey is same as modifiers
-        //
+#if 0 // Skip this check for now                            \
+      //                                                    \
+      // It doesn't make sense if vkey is same as modifiers \
+      //
         if ( ((uModifiers & MOD_ALT) && (uVKey == VK_MENU))        ||
              ((uModifiers & MOD_CONTROL) && (uVKey == VK_CONTROL)) ||
              ((uModifiers & MOD_SHIFT) && (uVKey == VK_SHIFT))     ||
@@ -628,14 +602,12 @@ BOOL CliImmSetHotKeyWorker(
 //
 static CONST TCHAR szHexString[] = TEXT("0123456789ABCDEF");
 
-VOID
-NumToHexAscii(
-    DWORD dwNum,
-    PWSTR szAscii)
+VOID NumToHexAscii(DWORD dwNum, PWSTR szAscii)
 {
     int i;
 
-    for (i = 7; i >= 0; i--) {
+    for (i = 7; i >= 0; i--)
+    {
         szAscii[i] = szHexString[dwNum & 0x0000000f];
         dwNum >>= 4;
     }
@@ -643,4 +615,3 @@ NumToHexAscii(
 
     return;
 }
-

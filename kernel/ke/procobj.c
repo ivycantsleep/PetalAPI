@@ -32,37 +32,22 @@ Revision History:
 // Define forward referenced function prototypes.
 //
 
-VOID
-KiAttachProcess (
-    IN PRKTHREAD Thread,
-    IN PRKPROCESS Process,
-    IN KIRQL OldIrql,
-    OUT PRKAPC_STATE SavedApcState
-    );
+VOID KiAttachProcess(IN PRKTHREAD Thread, IN PRKPROCESS Process, IN KIRQL OldIrql, OUT PRKAPC_STATE SavedApcState);
 
-VOID
-KiMoveApcState (
-    IN PKAPC_STATE Source,
-    OUT PKAPC_STATE Destination
-    );
+VOID KiMoveApcState(IN PKAPC_STATE Source, OUT PKAPC_STATE Destination);
 
 //
 // The following assert macro is used to check that an input process is
 // really a kprocess and not something else, like deallocated pool.
 //
 
-#define ASSERT_PROCESS(E) {             \
-    ASSERT((E)->Header.Type == ProcessObject); \
-}
+#define ASSERT_PROCESS(E)                          \
+    {                                              \
+        ASSERT((E)->Header.Type == ProcessObject); \
+    }
 
-VOID
-KeInitializeProcess (
-    IN PRKPROCESS Process,
-    IN KPRIORITY BasePriority,
-    IN KAFFINITY Affinity,
-    IN ULONG_PTR DirectoryTableBase[2],
-    IN BOOLEAN Enable
-    )
+VOID KeInitializeProcess(IN PRKPROCESS Process, IN KPRIORITY BasePriority, IN KAFFINITY Affinity,
+                         IN ULONG_PTR DirectoryTableBase[2], IN BOOLEAN Enable)
 
 /*++
 
@@ -154,25 +139,28 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-    if (KeNumberNodes > 1) {
+    if (KeNumberNodes > 1)
+    {
         NodeNumber = (KeProcessNodeSeed + 1) % KeNumberNodes;
         KeProcessNodeSeed = NodeNumber;
-        for (i = 0; i < KeNumberNodes; i++) {
-            if (KeNodeBlock[NodeNumber]->ProcessorMask & Affinity) {
+        for (i = 0; i < KeNumberNodes; i++)
+        {
+            if (KeNodeBlock[NodeNumber]->ProcessorMask & Affinity)
+            {
                 break;
             }
 
             NodeNumber = (NodeNumber + 1) % KeNumberNodes;
         }
-
-    } else {
+    }
+    else
+    {
         NodeNumber = 0;
     }
 
     Process->IdealNode = NodeNumber;
     Node = KeNodeBlock[NodeNumber];
-    Process->ThreadSeed = KeFindNextRightSetAffinity(Node->Seed,
-                                                     Node->ProcessorMask & Affinity);
+    Process->ThreadSeed = KeFindNextRightSetAffinity(Node->Seed, Node->ProcessorMask & Affinity);
 
     Node->Seed = Process->ThreadSeed;
 
@@ -195,10 +183,7 @@ Return Value:
     return;
 }
 
-VOID
-KeAttachProcess (
-    IN PRKPROCESS Process
-    )
+VOID KeAttachProcess(IN PRKPROCESS Process)
 
 /*++
 
@@ -231,23 +216,21 @@ Return Value:
     //
 
     Thread = KeGetCurrentThread();
-    if (Thread->ApcState.Process != Process) {
+    if (Thread->ApcState.Process != Process)
+    {
 
         //
         // If the current thread is already attached or executing a DPC, then
         // bugcheck.
         //
-    
-        if ((Thread->ApcStateIndex != 0) ||
-            (KeIsExecutingDpc() != FALSE)) {
-    
-            KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT,
-                         (ULONG_PTR)Process,
-                         (ULONG_PTR)Thread->ApcState.Process,
-                         (ULONG)Thread->ApcStateIndex,
-                         (ULONG)KeIsExecutingDpc());
+
+        if ((Thread->ApcStateIndex != 0) || (KeIsExecutingDpc() != FALSE))
+        {
+
+            KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT, (ULONG_PTR)Process, (ULONG_PTR)Thread->ApcState.Process,
+                         (ULONG)Thread->ApcStateIndex, (ULONG)KeIsExecutingDpc());
         }
-    
+
         //
         // Raise IRQL to dispatcher level and lock dispatcher database.
         //
@@ -262,9 +245,7 @@ Return Value:
 }
 
 LOGICAL
-KeForceAttachProcess (
-    IN PRKPROCESS Process
-    )
+KeForceAttachProcess(IN PRKPROCESS Process)
 
 /*++
 
@@ -299,14 +280,11 @@ Return Value:
     //
 
     Thread = KeGetCurrentThread();
-    if ((Thread->ApcStateIndex != 0) ||
-        (KeIsExecutingDpc() != FALSE)) {
+    if ((Thread->ApcStateIndex != 0) || (KeIsExecutingDpc() != FALSE))
+    {
 
-        KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT,
-                     (ULONG_PTR)Process,
-                     (ULONG_PTR)Thread->ApcState.Process,
-                     (ULONG)Thread->ApcStateIndex,
-                     (ULONG)KeIsExecutingDpc());
+        KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT, (ULONG_PTR)Process, (ULONG_PTR)Thread->ApcState.Process,
+                     (ULONG)Thread->ApcStateIndex, (ULONG)KeIsExecutingDpc());
     }
 
     //
@@ -315,7 +293,8 @@ Return Value:
     // out of memory.
     //
 
-    if (Thread->ApcState.Process != Process) {
+    if (Thread->ApcState.Process != Process)
+    {
 
         //
         // Raise IRQL to dispatcher level and lock dispatcher database.
@@ -326,14 +305,14 @@ Return Value:
         //
 
         KiLockDispatcherDatabase(&OldIrql);
-        if ((Process->State == ProcessInSwap) ||
-            (Process->State == ProcessInTransition) ||
-            (Process->State == ProcessOutTransition) ||
-            (Process->State == ProcessOutSwap)) {
+        if ((Process->State == ProcessInSwap) || (Process->State == ProcessInTransition) ||
+            (Process->State == ProcessOutTransition) || (Process->State == ProcessOutSwap))
+        {
             KiUnlockDispatcherDatabase(OldIrql);
             return FALSE;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Force the process state to in memory and attach the target process.
@@ -349,11 +328,7 @@ Return Value:
     return TRUE;
 }
 
-VOID
-KeStackAttachProcess (
-    IN PRKPROCESS Process,
-    OUT PRKAPC_STATE ApcState
-    )
+VOID KeStackAttachProcess(IN PRKPROCESS Process, OUT PRKAPC_STATE ApcState)
 
 /*++
 
@@ -385,12 +360,10 @@ Return Value:
     //
 
     Thread = KeGetCurrentThread();
-    if (KeIsExecutingDpc() != FALSE) {
-        KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT,
-                     (ULONG_PTR)Process,
-                     (ULONG_PTR)Thread->ApcState.Process,
-                     (ULONG)Thread->ApcStateIndex,
-                     (ULONG)KeIsExecutingDpc());
+    if (KeIsExecutingDpc() != FALSE)
+    {
+        KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT, (ULONG_PTR)Process, (ULONG_PTR)Thread->ApcState.Process,
+                     (ULONG)Thread->ApcStateIndex, (ULONG)KeIsExecutingDpc());
     }
 
     //
@@ -399,10 +372,12 @@ Return Value:
     // indicate that an attach was not performed.
     //
 
-    if (Thread->ApcState.Process == Process) {
+    if (Thread->ApcState.Process == Process)
+    {
         ApcState->Process = (PRKPROCESS)1;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Raise IRQL to dispatcher level and lock dispatcher database.
@@ -416,10 +391,12 @@ Return Value:
         //
 
         KiLockDispatcherDatabase(&OldIrql);
-        if (Thread->ApcStateIndex != 0) {
+        if (Thread->ApcStateIndex != 0)
+        {
             KiAttachProcess(Thread, Process, OldIrql, ApcState);
-
-        } else {
+        }
+        else
+        {
             KiAttachProcess(Thread, Process, OldIrql, &Thread->SavedApcState);
             ApcState->Process = NULL;
         }
@@ -428,10 +405,7 @@ Return Value:
     return;
 }
 
-VOID
-KeDetachProcess (
-    VOID
-    )
+VOID KeDetachProcess(VOID)
 
 /*++
 
@@ -463,7 +437,8 @@ Return Value:
     //
 
     Thread = KeGetCurrentThread();
-    if (Thread->ApcStateIndex != 0) {
+    if (Thread->ApcStateIndex != 0)
+    {
 
         //
         // Raise IRQL to dispatcher level and lock dispatcher database.
@@ -484,7 +459,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-        while (Thread->ApcState.KernelApcPending && (OldIrql < APC_LEVEL)) {
+        while (Thread->ApcState.KernelApcPending && (OldIrql < APC_LEVEL))
+        {
 
             //
             // Unlock the dispatcher database and lower IRQL to its previous
@@ -507,7 +483,8 @@ Return Value:
 
         if ((Thread->ApcState.KernelApcInProgress) ||
             (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE) ||
-            (IsListEmpty(&Thread->ApcState.ApcListHead[UserMode]) == FALSE)) {
+            (IsListEmpty(&Thread->ApcState.ApcListHead[UserMode]) == FALSE))
+        {
 
             KeBugCheck(INVALID_PROCESS_DETACH_ATTEMPT);
         }
@@ -521,12 +498,11 @@ Return Value:
 
         Process = Thread->ApcState.Process;
         Process->StackCount -= 1;
-        if ((Process->StackCount == 0) &&
-            (IsListEmpty(&Process->ThreadListHead) == FALSE)) {
+        if ((Process->StackCount == 0) && (IsListEmpty(&Process->ThreadListHead) == FALSE))
+        {
 
             Process->State = ProcessOutTransition;
-            InterlockedPushEntrySingleList(&KiProcessOutSwapListHead,
-                                           &Process->SwapListEntry);
+            InterlockedPushEntrySingleList(&KiProcessOutSwapListHead, &Process->SwapListEntry);
 
             KiSetSwapEvent();
         }
@@ -542,7 +518,8 @@ Return Value:
         Thread->ApcStatePointer[0] = &Thread->ApcState;
         Thread->ApcStatePointer[1] = &Thread->SavedApcState;
         Thread->ApcStateIndex = 0;
-        if (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE) {
+        if (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE)
+        {
             Thread->ApcState.KernelApcPending = TRUE;
             KiRequestSoftwareInterrupt(APC_LEVEL);
         }
@@ -556,17 +533,14 @@ Return Value:
         //
         // Lower IRQL to its previous value and return.
         //
-    
+
         KiUnlockDispatcherDatabase(OldIrql);
     }
 
     return;
 }
 
-VOID
-KeUnstackDetachProcess (
-    IN PRKAPC_STATE ApcState
-    )
+VOID KeUnstackDetachProcess(IN PRKAPC_STATE ApcState)
 
 /*++
 
@@ -599,7 +573,8 @@ Return Value:
     // attach was performed on the paired call to stack attach process.
     //
 
-    if (ApcState->Process != (PRKPROCESS)1) {
+    if (ApcState->Process != (PRKPROCESS)1)
+    {
 
         //
         // Raise IRQL to dispatcher level and lock dispatcher database.
@@ -621,7 +596,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-        while (Thread->ApcState.KernelApcPending && (OldIrql < APC_LEVEL)) {
+        while (Thread->ApcState.KernelApcPending && (OldIrql < APC_LEVEL))
+        {
 
             //
             // Unlock the dispatcher database and lower IRQL to its previous
@@ -641,10 +617,10 @@ Return Value:
         // not empty, then bug check.
         //
 
-        if ((Thread->ApcStateIndex == 0) ||
-             (Thread->ApcState.KernelApcInProgress) ||
-             (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE) ||
-             (IsListEmpty(&Thread->ApcState.ApcListHead[UserMode]) == FALSE)) {
+        if ((Thread->ApcStateIndex == 0) || (Thread->ApcState.KernelApcInProgress) ||
+            (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE) ||
+            (IsListEmpty(&Thread->ApcState.ApcListHead[UserMode]) == FALSE))
+        {
 
             KeBugCheck(INVALID_PROCESS_DETACH_ATTEMPT);
         }
@@ -656,11 +632,10 @@ Return Value:
 
         Process = Thread->ApcState.Process;
         Process->StackCount -= 1;
-        if ((Process->StackCount == 0) &&
-            (IsListEmpty(&Process->ThreadListHead) == FALSE)) {
+        if ((Process->StackCount == 0) && (IsListEmpty(&Process->ThreadListHead) == FALSE))
+        {
             Process->State = ProcessOutTransition;
-            InterlockedPushEntrySingleList(&KiProcessOutSwapListHead,
-                                           &Process->SwapListEntry);
+            InterlockedPushEntrySingleList(&KiProcessOutSwapListHead, &Process->SwapListEntry);
 
             KiSetSwapEvent();
         }
@@ -671,10 +646,12 @@ Return Value:
         // APC pending and request a software interrupt at APC_LEVEL.
         //
 
-        if (ApcState->Process != NULL) {
+        if (ApcState->Process != NULL)
+        {
             KiMoveApcState(ApcState, &Thread->ApcState);
-
-        } else {
+        }
+        else
+        {
             KiMoveApcState(&Thread->SavedApcState, &Thread->ApcState);
             Thread->SavedApcState.Process = (PKPROCESS)NULL;
             Thread->ApcStatePointer[0] = &Thread->ApcState;
@@ -682,7 +659,8 @@ Return Value:
             Thread->ApcStateIndex = 0;
         }
 
-        if (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE) {
+        if (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE)
+        {
             Thread->ApcState.KernelApcPending = TRUE;
             KiRequestSoftwareInterrupt(APC_LEVEL);
         }
@@ -696,17 +674,14 @@ Return Value:
         //
         // Lower IRQL to its previous value and return.
         //
-    
+
         KiUnlockDispatcherDatabase(OldIrql);
     }
 
     return;
 }
 
-LONG
-KeReadStateProcess (
-    IN PRKPROCESS Process
-    )
+LONG KeReadStateProcess(IN PRKPROCESS Process)
 
 /*++
 
@@ -735,12 +710,7 @@ Return Value:
     return Process->Header.SignalState;
 }
 
-LONG
-KeSetProcess (
-    IN PRKPROCESS Process,
-    IN KPRIORITY Increment,
-    IN BOOLEAN Wait
-    )
+LONG KeSetProcess(IN PRKPROCESS Process, IN KPRIORITY Increment, IN BOOLEAN Wait)
 
 /*++
 
@@ -790,7 +760,8 @@ Return Value:
 
     OldState = Process->Header.SignalState;
     Process->Header.SignalState = 1;
-    if ((OldState == 0) && (!IsListEmpty(&Process->Header.WaitListHead))) {
+    if ((OldState == 0) && (!IsListEmpty(&Process->Header.WaitListHead)))
+    {
         KiWaitTest(Process, Increment);
     }
 
@@ -801,12 +772,14 @@ Return Value:
     // previous value.
     //
 
-    if (Wait) {
+    if (Wait)
+    {
         Thread = KeGetCurrentThread();
         Thread->WaitNext = Wait;
         Thread->WaitIrql = OldIrql;
-
-    } else {
+    }
+    else
+    {
         KiUnlockDispatcherDatabase(OldIrql);
     }
 
@@ -818,10 +791,7 @@ Return Value:
 }
 
 KAFFINITY
-KeSetAffinityProcess (
-    IN PKPROCESS Process,
-    IN KAFFINITY Affinity
-    )
+KeSetAffinityProcess(IN PKPROCESS Process, IN KAFFINITY Affinity)
 
 /*++
 
@@ -872,7 +842,8 @@ Return Value:
     OldAffinity = Process->Affinity;
     Process->Affinity = Affinity;
     NextEntry = Process->ThreadListHead.Flink;
-    while (NextEntry != &Process->ThreadListHead) {
+    while (NextEntry != &Process->ThreadListHead)
+    {
         Thread = CONTAINING_RECORD(NextEntry, KTHREAD, ThreadListEntry);
         KiSetAffinityThread(Thread, Affinity);
         NextEntry = NextEntry->Flink;
@@ -893,10 +864,7 @@ Return Value:
 }
 
 KPRIORITY
-KeSetPriorityProcess (
-    IN PKPROCESS Process,
-    IN KPRIORITY NewBase
-    )
+KeSetPriorityProcess(IN PKPROCESS Process, IN KPRIORITY NewBase)
 
 /*++
 
@@ -939,7 +907,8 @@ Return Value:
     // calling this routine exists with or without the lock being held.
     //
 
-    if (Process->BasePriority == NewBase) {
+    if (Process->BasePriority == NewBase)
+    {
         return NewBase;
     }
 
@@ -961,8 +930,10 @@ Return Value:
     Process->BasePriority = (SCHAR)NewBase;
     Adjustment = NewBase - OldBase;
     NextEntry = Process->ThreadListHead.Flink;
-    if (NewBase >= LOW_REALTIME_PRIORITY) {
-        while (NextEntry != &Process->ThreadListHead) {
+    if (NewBase >= LOW_REALTIME_PRIORITY)
+    {
+        while (NextEntry != &Process->ThreadListHead)
+        {
             Thread = CONTAINING_RECORD(NextEntry, KTHREAD, ThreadListEntry);
 
             //
@@ -976,10 +947,12 @@ Return Value:
             // then limit the change to the realtime class.
             //
 
-            if (NewPriority < LOW_REALTIME_PRIORITY) {
+            if (NewPriority < LOW_REALTIME_PRIORITY)
+            {
                 NewPriority = LOW_REALTIME_PRIORITY;
-
-            } else if (NewPriority > HIGH_PRIORITY) {
+            }
+            else if (NewPriority > HIGH_PRIORITY)
+            {
                 NewPriority = HIGH_PRIORITY;
             }
 
@@ -993,11 +966,14 @@ Return Value:
             //      necessary to change the thread priority.
             //
 
-            if ((Thread->Saturation == 0) || (OldBase < LOW_REALTIME_PRIORITY)) {
-                if (Thread->Saturation > 0) {
+            if ((Thread->Saturation == 0) || (OldBase < LOW_REALTIME_PRIORITY))
+            {
+                if (Thread->Saturation > 0)
+                {
                     NewPriority = HIGH_PRIORITY;
-
-                } else if (Thread->Saturation < 0) {
+                }
+                else if (Thread->Saturation < 0)
+                {
                     NewPriority = LOW_REALTIME_PRIORITY;
                 }
 
@@ -1010,9 +986,11 @@ Return Value:
 
             NextEntry = NextEntry->Flink;
         }
-
-    } else {
-        while (NextEntry != &Process->ThreadListHead) {
+    }
+    else
+    {
+        while (NextEntry != &Process->ThreadListHead)
+        {
             Thread = CONTAINING_RECORD(NextEntry, KTHREAD, ThreadListEntry);
 
             //
@@ -1026,10 +1004,12 @@ Return Value:
             // then limit the change to the variable class.
             //
 
-            if (NewPriority >= LOW_REALTIME_PRIORITY) {
+            if (NewPriority >= LOW_REALTIME_PRIORITY)
+            {
                 NewPriority = LOW_REALTIME_PRIORITY - 1;
-
-            } else if (NewPriority <= LOW_PRIORITY) {
+            }
+            else if (NewPriority <= LOW_PRIORITY)
+            {
                 NewPriority = 1;
             }
 
@@ -1043,11 +1023,14 @@ Return Value:
             //      necessary to change the thread priority.
             //
 
-            if ((Thread->Saturation == 0) || (OldBase >= LOW_REALTIME_PRIORITY)) {
-                if (Thread->Saturation > 0) {
+            if ((Thread->Saturation == 0) || (OldBase >= LOW_REALTIME_PRIORITY))
+            {
+                if (Thread->Saturation > 0)
+                {
                     NewPriority = LOW_REALTIME_PRIORITY - 1;
-
-                } else if (Thread->Saturation < 0) {
+                }
+                else if (Thread->Saturation < 0)
+                {
                     NewPriority = 1;
                 }
 
@@ -1074,10 +1057,7 @@ Return Value:
 }
 
 LOGICAL
-KeSetDisableQuantumProcess (
-    IN PKPROCESS Process,
-    IN LOGICAL Disable
-    )
+KeSetDisableQuantumProcess(IN PKPROCESS Process, IN LOGICAL Disable)
 
 /*++
 
@@ -1121,13 +1101,7 @@ Return Value:
     return DisableQuantum;
 }
 
-VOID
-KiAttachProcess (
-    IN PRKTHREAD Thread,
-    IN PKPROCESS Process,
-    IN KIRQL OldIrql,
-    OUT PRKAPC_STATE SavedApcState
-    )
+VOID KiAttachProcess(IN PRKTHREAD Thread, IN PKPROCESS Process, IN KIRQL OldIrql, OUT PRKAPC_STATE SavedApcState)
 
 /*++
 
@@ -1182,7 +1156,8 @@ Return Value:
     Thread->ApcState.KernelApcInProgress = FALSE;
     Thread->ApcState.KernelApcPending = FALSE;
     Thread->ApcState.UserApcPending = FALSE;
-    if (SavedApcState == &Thread->SavedApcState) {
+    if (SavedApcState == &Thread->SavedApcState)
+    {
         Thread->ApcStatePointer[0] = &Thread->SavedApcState;
         Thread->ApcStatePointer[1] = &Thread->ApcState;
         Thread->ApcStateIndex = 1;
@@ -1196,7 +1171,8 @@ Return Value:
     // the current processor and context switch to the new thread.
     //
 
-    if (Process->State == ProcessInMemory) {
+    if (Process->State == ProcessInMemory)
+    {
 
         //
         // It is possible that the process is in memory, but there exist
@@ -1205,7 +1181,8 @@ Return Value:
         //
 
         NextEntry = Process->ReadyListHead.Flink;
-        while (NextEntry != &Process->ReadyListHead) {
+        while (NextEntry != &Process->ReadyListHead)
+        {
             OutThread = CONTAINING_RECORD(NextEntry, KTHREAD, WaitListEntry);
             RemoveEntryList(NextEntry);
             OutThread->ProcessReadyQueue = FALSE;
@@ -1215,15 +1192,16 @@ Return Value:
 
         KiSwapProcess(Process, SavedApcState->Process);
         KiUnlockDispatcherDatabase(OldIrql);
-
-    } else {
+    }
+    else
+    {
         Thread->State = Ready;
         Thread->ProcessReadyQueue = TRUE;
         InsertTailList(&Process->ReadyListHead, &Thread->WaitListEntry);
-        if (Process->State == ProcessOutOfMemory) {
+        if (Process->State == ProcessOutOfMemory)
+        {
             Process->State = ProcessInTransition;
-            InterlockedPushEntrySingleList(&KiProcessInSwapListHead,
-                                           &Process->SwapListEntry);
+            InterlockedPushEntrySingleList(&KiProcessInSwapListHead, &Process->SwapListEntry);
 
             KiSetSwapEvent();
         }
@@ -1250,11 +1228,7 @@ Return Value:
     return;
 }
 
-VOID
-KiMoveApcState (
-    IN PKAPC_STATE Source,
-    OUT PKAPC_STATE Destination
-    )
+VOID KiMoveApcState(IN PKAPC_STATE Source, OUT PKAPC_STATE Destination)
 
 /*++
 
@@ -1286,10 +1260,12 @@ Return Value:
     //
 
     *Destination = *Source;
-    if (IsListEmpty(&Source->ApcListHead[KernelMode]) != FALSE) {
+    if (IsListEmpty(&Source->ApcListHead[KernelMode]) != FALSE)
+    {
         InitializeListHead(&Destination->ApcListHead[KernelMode]);
-
-    } else {
+    }
+    else
+    {
         First = Source->ApcListHead[KernelMode].Flink;
         Last = Source->ApcListHead[KernelMode].Blink;
         Destination->ApcListHead[KernelMode].Flink = First;
@@ -1298,10 +1274,12 @@ Return Value:
         Last->Flink = &Destination->ApcListHead[KernelMode];
     }
 
-    if (IsListEmpty(&Source->ApcListHead[UserMode]) != FALSE) {
+    if (IsListEmpty(&Source->ApcListHead[UserMode]) != FALSE)
+    {
         InitializeListHead(&Destination->ApcListHead[UserMode]);
-
-    } else {
+    }
+    else
+    {
         First = Source->ApcListHead[UserMode].Flink;
         Last = Source->ApcListHead[UserMode].Blink;
         Destination->ApcListHead[UserMode].Flink = First;

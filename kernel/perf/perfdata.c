@@ -29,9 +29,9 @@ const PERFINFO_HOOK_HANDLE PerfNullHookHandle = { NULL, NULL };
 //
 
 KPROFILE PerfInfoProfileObject;
-KPROFILE_SOURCE PerfInfoProfileSourceActive = ProfileMaximum;   // Set to invalid source
+KPROFILE_SOURCE PerfInfoProfileSourceActive = ProfileMaximum; // Set to invalid source
 KPROFILE_SOURCE PerfInfoProfileSourceRequested = ProfileTime;
-KPROFILE_SOURCE PerfInfoProfileInterval = 10000;    // 1ms in 100ns ticks
+KPROFILE_SOURCE PerfInfoProfileInterval = 10000; // 1ms in 100ns ticks
 BOOLEAN PerfInfoSampledProfileCaching;
 ULONG PerfInfoSampledProfileFlushInProgress;
 PERFINFO_SAMPLED_PROFILE_CACHE PerfProfileCache;
@@ -42,4 +42,3 @@ PERFINFO_GROUPMASK StartAtBootGroupMask;
 ULONG PerfInfo_InitialStackWalk_Threshold_ms = 3000 * 1000;
 ULONG PerfInfoLoggingToPerfMem = 0;
 #endif //NTPERF
-

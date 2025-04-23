@@ -65,22 +65,13 @@ Revision History:
 BOOLEAN IovUtilVerifierEnabled = FALSE;
 
 
-VOID
-FASTCALL
-IovUtilInit(
-    VOID
-    )
+VOID FASTCALL IovUtilInit(VOID)
 {
     IovUtilVerifierEnabled = TRUE;
 }
 
 
-VOID
-FASTCALL
-IovUtilGetLowerDeviceObject(
-    IN  PDEVICE_OBJECT  UpperDeviceObject,
-    OUT PDEVICE_OBJECT  *LowerDeviceObject
-    )
+VOID FASTCALL IovUtilGetLowerDeviceObject(IN PDEVICE_OBJECT UpperDeviceObject, OUT PDEVICE_OBJECT *LowerDeviceObject)
 /*++
 
 Routine Description:
@@ -101,32 +92,28 @@ Return Value:
 
 --*/
 {
-    PDEVOBJ_EXTENSION   deviceExtension;
-    PDEVICE_OBJECT      deviceAttachedTo;
-    KIRQL               irql;
+    PDEVOBJ_EXTENSION deviceExtension;
+    PDEVICE_OBJECT deviceAttachedTo;
+    KIRQL irql;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
     deviceExtension = UpperDeviceObject->DeviceObjectExtension;
     deviceAttachedTo = deviceExtension->AttachedTo;
 
-    if (deviceAttachedTo) {
+    if (deviceAttachedTo)
+    {
 
         ObReferenceObject(deviceAttachedTo);
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
     *LowerDeviceObject = deviceAttachedTo;
 }
 
 
-VOID
-FASTCALL
-IovUtilGetBottomDeviceObject(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    OUT PDEVICE_OBJECT  *BottomDeviceObject
-    )
+VOID FASTCALL IovUtilGetBottomDeviceObject(IN PDEVICE_OBJECT DeviceObject, OUT PDEVICE_OBJECT *BottomDeviceObject)
 /*++
 
 Routine Description:
@@ -148,35 +135,31 @@ Return Value:
 
 --*/
 {
-    PDEVOBJ_EXTENSION   deviceExtension;
-    PDEVICE_OBJECT      lowerDeviceObject, deviceAttachedTo;
-    KIRQL               irql;
+    PDEVOBJ_EXTENSION deviceExtension;
+    PDEVICE_OBJECT lowerDeviceObject, deviceAttachedTo;
+    KIRQL irql;
 
     deviceAttachedTo = DeviceObject;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-    do {
+    do
+    {
         lowerDeviceObject = deviceAttachedTo;
         deviceExtension = lowerDeviceObject->DeviceObjectExtension;
         deviceAttachedTo = deviceExtension->AttachedTo;
 
-    } while ( deviceAttachedTo );
+    } while (deviceAttachedTo);
 
     ObReferenceObject(lowerDeviceObject);
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
     *BottomDeviceObject = lowerDeviceObject;
 }
 
 
-VOID
-FASTCALL
-IovUtilGetUpperDeviceObject(
-    IN  PDEVICE_OBJECT  LowerDeviceObject,
-    OUT PDEVICE_OBJECT  *UpperDeviceObject
-    )
+VOID FASTCALL IovUtilGetUpperDeviceObject(IN PDEVICE_OBJECT LowerDeviceObject, OUT PDEVICE_OBJECT *UpperDeviceObject)
 /*++
 
 Routine Description:
@@ -197,18 +180,19 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT      deviceAbove;
-    KIRQL               irql;
+    PDEVICE_OBJECT deviceAbove;
+    KIRQL irql;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
     deviceAbove = LowerDeviceObject->AttachedDevice;
-    if (deviceAbove) {
+    if (deviceAbove)
+    {
 
         ObReferenceObject(deviceAbove);
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
     *UpperDeviceObject = deviceAbove;
 }
@@ -216,9 +200,7 @@ Return Value:
 
 BOOLEAN
 FASTCALL
-IovUtilIsVerifiedDeviceStack(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+IovUtilIsVerifiedDeviceStack(IN PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -237,18 +219,18 @@ Return Value:
 
 --*/
 {
-    PDEVOBJ_EXTENSION   deviceExtension;
-    PDEVICE_OBJECT      currentDevObj, deviceAttachedTo;
-    BOOLEAN             stackIsInteresting;
-    KIRQL               irql;
+    PDEVOBJ_EXTENSION deviceExtension;
+    PDEVICE_OBJECT currentDevObj, deviceAttachedTo;
+    BOOLEAN stackIsInteresting;
+    KIRQL irql;
 
     //
     // Quickly check the cached result stored on the device object...
     //
-    if (DeviceObject->DeviceObjectExtension->ExtensionFlags & DOV_EXAMINED) {
+    if (DeviceObject->DeviceObjectExtension->ExtensionFlags & DOV_EXAMINED)
+    {
 
-        stackIsInteresting =
-           ((DeviceObject->DeviceObjectExtension->ExtensionFlags & DOV_TRACKED) != 0);
+        stackIsInteresting = ((DeviceObject->DeviceObjectExtension->ExtensionFlags & DOV_TRACKED) != 0);
 
         return stackIsInteresting;
     }
@@ -256,11 +238,12 @@ Return Value:
     //
     // Walk the entire stack and update everything appropriately.
     //
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
     stackIsInteresting = FALSE;
     deviceAttachedTo = DeviceObject;
-    do {
+    do
+    {
         currentDevObj = deviceAttachedTo;
         deviceExtension = currentDevObj->DeviceObjectExtension;
         deviceAttachedTo = deviceExtension->AttachedTo;
@@ -268,17 +251,16 @@ Return Value:
         //
         // Remember this...
         //
-        if (MmIsDriverVerifying(currentDevObj->DriverObject)) {
+        if (MmIsDriverVerifying(currentDevObj->DriverObject))
+        {
 
             stackIsInteresting = TRUE;
         }
 
-    } while (deviceAttachedTo &&
-             (!(deviceAttachedTo->DeviceObjectExtension->ExtensionFlags & DOV_EXAMINED))
-            );
+    } while (deviceAttachedTo && (!(deviceAttachedTo->DeviceObjectExtension->ExtensionFlags & DOV_EXAMINED)));
 
-    if (deviceAttachedTo &&
-        (deviceAttachedTo->DeviceObjectExtension->ExtensionFlags & DOV_TRACKED)) {
+    if (deviceAttachedTo && (deviceAttachedTo->DeviceObjectExtension->ExtensionFlags & DOV_TRACKED))
+    {
 
         //
         // Propogate upwards the "interesting-ness" of the last examined device
@@ -290,16 +272,19 @@ Return Value:
     //
     // Walk upwards, marking everything examined and appropriately tracked.
     //
-    do {
+    do
+    {
         deviceExtension = currentDevObj->DeviceObjectExtension;
 
-        if (stackIsInteresting) {
+        if (stackIsInteresting)
+        {
 
             deviceExtension->ExtensionFlags |= DOV_TRACKED;
+        }
+        else
+        {
 
-        } else {
-
-            deviceExtension->ExtensionFlags &=~ DOV_TRACKED;
+            deviceExtension->ExtensionFlags &= ~DOV_TRACKED;
         }
 
         deviceExtension->ExtensionFlags |= DOV_EXAMINED;
@@ -308,18 +293,13 @@ Return Value:
 
     } while (currentDevObj);
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
     return stackIsInteresting;
 }
 
 
-VOID
-FASTCALL
-IovUtilFlushStackCache(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  DATABASELOCKSTATE   DatabaseLockState
-    )
+VOID FASTCALL IovUtilFlushStackCache(IN PDEVICE_OBJECT DeviceObject, IN DATABASELOCKSTATE DatabaseLockState)
 /*++
 
 Routine Description:
@@ -343,49 +323,49 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT      pBottomDeviceObject, pCurrentDeviceObject;
-    PDEVOBJ_EXTENSION   deviceExtension;
-    KIRQL               irql;
+    PDEVICE_OBJECT pBottomDeviceObject, pCurrentDeviceObject;
+    PDEVOBJ_EXTENSION deviceExtension;
+    KIRQL irql;
 
-    if (DatabaseLockState == DATABASELOCKSTATE_NOT_HELD) {
+    if (DatabaseLockState == DATABASELOCKSTATE_NOT_HELD)
+    {
 
-        irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+        irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
     }
 
     //
     // Walk to the bottom of the stack
     //
     pCurrentDeviceObject = DeviceObject;
-    do {
+    do
+    {
         pBottomDeviceObject = pCurrentDeviceObject;
         deviceExtension = pBottomDeviceObject->DeviceObjectExtension;
         pCurrentDeviceObject = deviceExtension->AttachedTo;
 
-    } while ( pCurrentDeviceObject );
+    } while (pCurrentDeviceObject);
 
     //
     // Walk back up clearing the appropriate flags.
     //
     pCurrentDeviceObject = pBottomDeviceObject;
-    while(pCurrentDeviceObject) {
+    while (pCurrentDeviceObject)
+    {
 
         deviceExtension = pCurrentDeviceObject->DeviceObjectExtension;
         deviceExtension->ExtensionFlags &= ~(DOV_EXAMINED | DOV_TRACKED);
         pCurrentDeviceObject = pCurrentDeviceObject->AttachedDevice;
     }
 
-    if (DatabaseLockState == DATABASELOCKSTATE_NOT_HELD) {
+    if (DatabaseLockState == DATABASELOCKSTATE_NOT_HELD)
+    {
 
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
     }
 }
 
 
-VOID
-FASTCALL
-IovUtilFlushVerifierDriverListCache(
-    VOID
-    )
+VOID FASTCALL IovUtilFlushVerifierDriverListCache(VOID)
 /*++
 
 Routine Description:
@@ -408,22 +388,13 @@ Return Value:
     //
     PAGED_CODE();
 
-    ObEnumerateObjectsByType(
-        IoDeviceObjectType,
-        IovpUtilFlushListCallback,
-        NULL
-        );
+    ObEnumerateObjectsByType(IoDeviceObjectType, IovpUtilFlushListCallback, NULL);
 }
 
 
 BOOLEAN
-IovpUtilFlushListCallback(
-    IN PVOID            Object,
-    IN PUNICODE_STRING  ObjectName,
-    IN ULONG            HandleCount,
-    IN ULONG            PointerCount,
-    IN PVOID            Context
-    )
+IovpUtilFlushListCallback(IN PVOID Object, IN PUNICODE_STRING ObjectName, IN ULONG HandleCount, IN ULONG PointerCount,
+                          IN PVOID Context)
 /*++
 
 Routine Description:
@@ -445,13 +416,14 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT      deviceObject;
-    PDEVOBJ_EXTENSION   deviceExtension;
+    PDEVICE_OBJECT deviceObject;
+    PDEVOBJ_EXTENSION deviceExtension;
 
-    deviceObject = (PDEVICE_OBJECT) Object;
+    deviceObject = (PDEVICE_OBJECT)Object;
     deviceExtension = deviceObject->DeviceObjectExtension;
 
-    if (PointerCount || HandleCount) {
+    if (PointerCount || HandleCount)
+    {
 
         deviceExtension->ExtensionFlags &= ~(DOV_EXAMINED | DOV_TRACKED);
     }
@@ -460,12 +432,8 @@ Return Value:
 }
 
 
-VOID
-IovUtilRelateDeviceObjects(
-    IN     PDEVICE_OBJECT   FirstDeviceObject,
-    IN     PDEVICE_OBJECT   SecondDeviceObject,
-    OUT    DEVOBJ_RELATION  *DeviceObjectRelation
-    )
+VOID IovUtilRelateDeviceObjects(IN PDEVICE_OBJECT FirstDeviceObject, IN PDEVICE_OBJECT SecondDeviceObject,
+                                OUT DEVOBJ_RELATION *DeviceObjectRelation)
 /*++
 
 Routine Description:
@@ -517,27 +485,30 @@ Return Value:
     //
     // Try the easiest early out
     //
-    if (FirstDeviceObject == SecondDeviceObject) {
+    if (FirstDeviceObject == SecondDeviceObject)
+    {
 
         *DeviceObjectRelation = DEVOBJ_RELATION_IDENTICAL;
         return;
     }
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
     //
     // Try the most common early out
     //
-    if (FirstDeviceObject == SecondDeviceObject->AttachedDevice){
+    if (FirstDeviceObject == SecondDeviceObject->AttachedDevice)
+    {
 
         *DeviceObjectRelation = DEVOBJ_RELATION_FIRST_IMMEDIATELY_ABOVE_SECOND;
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
         return;
-
-    } else if (FirstDeviceObject->AttachedDevice == SecondDeviceObject) {
+    }
+    else if (FirstDeviceObject->AttachedDevice == SecondDeviceObject)
+    {
 
         *DeviceObjectRelation = DEVOBJ_RELATION_FIRST_IMMEDIATELY_BELOW_SECOND;
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
         return;
     }
 
@@ -546,8 +517,10 @@ Return Value:
     // device object.
     //
     deviceAttachedTo = FirstDeviceObject;
-    do {
-        if (deviceAttachedTo == SecondDeviceObject) {
+    do
+    {
+        if (deviceAttachedTo == SecondDeviceObject)
+        {
 
             break;
         }
@@ -556,16 +529,17 @@ Return Value:
         deviceExtension = lowerDeviceObject->DeviceObjectExtension;
         deviceAttachedTo = deviceExtension->AttachedTo;
 
-    } while ( deviceAttachedTo );
+    } while (deviceAttachedTo);
 
     //
     // If deviceAttachedTo isn't NULL, then we walked down from
     // FirstDeviceObject and found SecondDeviceObject.
     //
-    if (deviceAttachedTo) {
+    if (deviceAttachedTo)
+    {
 
         *DeviceObjectRelation = DEVOBJ_RELATION_FIRST_ABOVE_SECOND;
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
         return;
     }
 
@@ -574,35 +548,37 @@ Return Value:
     // SecondDeviceObject.
     //
     upperDevobj = FirstDeviceObject->AttachedDevice;
-    while(upperDevobj && (upperDevobj != SecondDeviceObject)) {
+    while (upperDevobj && (upperDevobj != SecondDeviceObject))
+    {
 
         upperDevobj = upperDevobj->AttachedDevice;
     }
 
-    if (upperDevobj == NULL) {
+    if (upperDevobj == NULL)
+    {
 
         *DeviceObjectRelation = DEVOBJ_RELATION_NOT_IN_SAME_STACK;
-
-    } else {
+    }
+    else
+    {
 
         *DeviceObjectRelation = DEVOBJ_RELATION_FIRST_BELOW_SECOND;
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 }
 
 
 BOOLEAN
-IovUtilIsPdo(
-    IN  PDEVICE_OBJECT  DeviceObject
-    )
+IovUtilIsPdo(IN PDEVICE_OBJECT DeviceObject)
 {
     PDEVICE_NODE deviceNode;
     PDEVICE_OBJECT possiblePdo;
     BOOLEAN isPdo;
 
     IovUtilGetBottomDeviceObject(DeviceObject, &possiblePdo);
-    if (possiblePdo != DeviceObject) {
+    if (possiblePdo != DeviceObject)
+    {
 
         ObDereferenceObject(possiblePdo);
         return FALSE;
@@ -610,8 +586,7 @@ IovUtilIsPdo(
 
     deviceNode = possiblePdo->DeviceObjectExtension->DeviceNode;
 
-    isPdo =
-        (deviceNode && (!(deviceNode->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)));
+    isPdo = (deviceNode && (!(deviceNode->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)));
 
     //
     // Free our reference.
@@ -623,9 +598,7 @@ IovUtilIsPdo(
 
 
 BOOLEAN
-IovUtilIsWdmStack(
-    IN  PDEVICE_OBJECT  DeviceObject
-    )
+IovUtilIsWdmStack(IN PDEVICE_OBJECT DeviceObject)
 {
     PDEVICE_NODE deviceNode;
     PDEVICE_OBJECT possiblePdo;
@@ -635,8 +608,7 @@ IovUtilIsWdmStack(
 
     deviceNode = possiblePdo->DeviceObjectExtension->DeviceNode;
 
-    isWdmStack =
-        (deviceNode && (!(deviceNode->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)));
+    isWdmStack = (deviceNode && (!(deviceNode->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)));
 
     //
     // Free our reference.
@@ -649,10 +621,7 @@ IovUtilIsWdmStack(
 
 BOOLEAN
 FASTCALL
-IovUtilHasDispatchHandler(
-    IN  PDRIVER_OBJECT  DriverObject,
-    IN  UCHAR           MajorFunction
-    )
+IovUtilHasDispatchHandler(IN PDRIVER_OBJECT DriverObject, IN UCHAR MajorFunction)
 {
     return (DriverObject->MajorFunction[MajorFunction] != IopInvalidDeviceRequest);
 }
@@ -660,9 +629,7 @@ IovUtilHasDispatchHandler(
 
 BOOLEAN
 FASTCALL
-IovUtilIsInFdoStack(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+IovUtilIsInFdoStack(IN PDEVICE_OBJECT DeviceObject)
 {
     PDEVOBJ_EXTENSION deviceExtension;
     PDEVICE_OBJECT deviceAttachedTo, lowerDevobj;
@@ -670,29 +637,29 @@ IovUtilIsInFdoStack(
 
     deviceAttachedTo = DeviceObject;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-    do {
+    do
+    {
 
-        if (IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_BOTTOM_OF_FDO_STACK)) {
+        if (IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_BOTTOM_OF_FDO_STACK))
+        {
 
             break;
         }
 
         deviceAttachedTo = deviceAttachedTo->DeviceObjectExtension->AttachedTo;
 
-    } while ( deviceAttachedTo );
+    } while (deviceAttachedTo);
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
     return (deviceAttachedTo != NULL);
 }
 
 
 BOOLEAN
 FASTCALL
-IovUtilIsRawPdo(
-    IN  PDEVICE_OBJECT  DeviceObject
-    )
+IovUtilIsRawPdo(IN PDEVICE_OBJECT DeviceObject)
 {
     return IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_RAW_PDO);
 }
@@ -700,109 +667,96 @@ IovUtilIsRawPdo(
 
 BOOLEAN
 FASTCALL
-IovUtilIsDesignatedFdo(
-    IN  PDEVICE_OBJECT  DeviceObject
-    )
+IovUtilIsDesignatedFdo(IN PDEVICE_OBJECT DeviceObject)
 {
     return IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DESIGNATED_FDO);
 }
 
 
-VOID
-FASTCALL
-IovUtilMarkDeviceObject(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  MARK_TYPE       MarkType
-    )
+VOID FASTCALL IovUtilMarkDeviceObject(IN PDEVICE_OBJECT DeviceObject, IN MARK_TYPE MarkType)
 {
     PULONG extensionFlags;
 
-    if (!IovUtilVerifierEnabled) {
+    if (!IovUtilVerifierEnabled)
+    {
 
         return;
     }
 
     extensionFlags = &DeviceObject->DeviceObjectExtension->ExtensionFlags;
 
-    switch(MarkType) {
+    switch (MarkType)
+    {
 
-        case MARKTYPE_DELETED:
-            *extensionFlags |= DOV_DELETED;
-            break;
+    case MARKTYPE_DELETED:
+        *extensionFlags |= DOV_DELETED;
+        break;
 
-        case MARKTYPE_BOTTOM_OF_FDO_STACK:
-            *extensionFlags |= DOV_BOTTOM_OF_FDO_STACK;
-            break;
+    case MARKTYPE_BOTTOM_OF_FDO_STACK:
+        *extensionFlags |= DOV_BOTTOM_OF_FDO_STACK;
+        break;
 
-        case MARKTYPE_DESIGNATED_FDO:
-            *extensionFlags |= DOV_DESIGNATED_FDO;
-            break;
+    case MARKTYPE_DESIGNATED_FDO:
+        *extensionFlags |= DOV_DESIGNATED_FDO;
+        break;
 
-        case MARKTYPE_RAW_PDO:
-            *extensionFlags |= DOV_RAW_PDO;
-            break;
+    case MARKTYPE_RAW_PDO:
+        *extensionFlags |= DOV_RAW_PDO;
+        break;
 
-        case MARKTYPE_DEVICE_CHECKED:
-            *extensionFlags |= DOV_FLAGS_CHECKED;
-            break;
+    case MARKTYPE_DEVICE_CHECKED:
+        *extensionFlags |= DOV_FLAGS_CHECKED;
+        break;
 
-        case MARKTYPE_RELATION_PDO_EXAMINED:
-            *extensionFlags |= DOV_FLAGS_RELATION_EXAMINED;
-            break;
+    case MARKTYPE_RELATION_PDO_EXAMINED:
+        *extensionFlags |= DOV_FLAGS_RELATION_EXAMINED;
+        break;
 
-        default:
-            ASSERT(0);
-            break;
+    default:
+        ASSERT(0);
+        break;
     }
 }
 
 
 BOOLEAN
 FASTCALL
-IovUtilIsDeviceObjectMarked(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  MARK_TYPE       MarkType
-    )
+IovUtilIsDeviceObjectMarked(IN PDEVICE_OBJECT DeviceObject, IN MARK_TYPE MarkType)
 {
     ULONG extensionFlags;
 
     extensionFlags = DeviceObject->DeviceObjectExtension->ExtensionFlags;
 
-    switch(MarkType) {
+    switch (MarkType)
+    {
 
-        case MARKTYPE_DELETED:
-            return ((extensionFlags & DOV_DELETED) != 0);
+    case MARKTYPE_DELETED:
+        return ((extensionFlags & DOV_DELETED) != 0);
 
-        case MARKTYPE_BOTTOM_OF_FDO_STACK:
-            return ((extensionFlags & DOV_BOTTOM_OF_FDO_STACK) != 0);
+    case MARKTYPE_BOTTOM_OF_FDO_STACK:
+        return ((extensionFlags & DOV_BOTTOM_OF_FDO_STACK) != 0);
 
-        case MARKTYPE_DESIGNATED_FDO:
-            return ((extensionFlags & DOV_DESIGNATED_FDO) != 0);
+    case MARKTYPE_DESIGNATED_FDO:
+        return ((extensionFlags & DOV_DESIGNATED_FDO) != 0);
 
-        case MARKTYPE_RAW_PDO:
-            return ((extensionFlags & DOV_RAW_PDO) != 0);
+    case MARKTYPE_RAW_PDO:
+        return ((extensionFlags & DOV_RAW_PDO) != 0);
 
-        case MARKTYPE_DEVICE_CHECKED:
-            return ((extensionFlags & DOV_FLAGS_CHECKED) != 0);
+    case MARKTYPE_DEVICE_CHECKED:
+        return ((extensionFlags & DOV_FLAGS_CHECKED) != 0);
 
-        case MARKTYPE_RELATION_PDO_EXAMINED:
-            return ((extensionFlags & DOV_FLAGS_RELATION_EXAMINED) != 0);
+    case MARKTYPE_RELATION_PDO_EXAMINED:
+        return ((extensionFlags & DOV_FLAGS_RELATION_EXAMINED) != 0);
 
-        default:
-            ASSERT(0);
-            return FALSE;
+    default:
+        ASSERT(0);
+        return FALSE;
     }
 }
 
 
-VOID
-FASTCALL
-IovUtilMarkStack(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject,
-    IN  PDEVICE_OBJECT  BottomOfFdoStack        OPTIONAL,
-    IN  PDEVICE_OBJECT  FunctionalDeviceObject  OPTIONAL,
-    IN  BOOLEAN         RawStack
-    )
+VOID FASTCALL IovUtilMarkStack(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDEVICE_OBJECT BottomOfFdoStack OPTIONAL,
+                               IN PDEVICE_OBJECT FunctionalDeviceObject OPTIONAL, IN BOOLEAN RawStack)
 /*++
 
   Description:
@@ -831,23 +785,27 @@ IovUtilMarkStack(
 {
     PDEVICE_OBJECT trueFunctionalDeviceObject;
 
-    if (BottomOfFdoStack) {
+    if (BottomOfFdoStack)
+    {
 
         IovUtilMarkDeviceObject(BottomOfFdoStack, MARKTYPE_BOTTOM_OF_FDO_STACK);
     }
 
-    if (FunctionalDeviceObject) {
+    if (FunctionalDeviceObject)
+    {
 
         trueFunctionalDeviceObject = FunctionalDeviceObject;
 
-        if (IovUtilVerifierEnabled) {
+        if (IovUtilVerifierEnabled)
+        {
 
             VfDevObjAdjustFdoForVerifierFilters(&trueFunctionalDeviceObject);
         }
 
         IovUtilMarkDeviceObject(trueFunctionalDeviceObject, MARKTYPE_DESIGNATED_FDO);
-
-    } else if (RawStack) {
+    }
+    else if (RawStack)
+    {
 
         IovUtilMarkDeviceObject(PhysicalDeviceObject, MARKTYPE_DESIGNATED_FDO);
         IovUtilMarkDeviceObject(PhysicalDeviceObject, MARKTYPE_RAW_PDO);
@@ -855,14 +813,10 @@ IovUtilMarkStack(
 }
 
 
-VOID
-FASTCALL
-IovUtilWatermarkIrp(
-    IN PIRP  Irp,
-    IN ULONG Flags
-    )
+VOID FASTCALL IovUtilWatermarkIrp(IN PIRP Irp, IN ULONG Flags)
 {
-    if (IovUtilVerifierEnabled) {
+    if (IovUtilVerifierEnabled)
+    {
 
         VfIrpWatermark(Irp, Flags);
     }
@@ -876,35 +830,20 @@ IovUtilWatermarkIrp(
 // support for the verifier.
 //
 
-VOID
-FASTCALL
-IovUtilInit(
-    VOID
-    )
+VOID FASTCALL IovUtilInit(VOID)
 {
 }
 
 
-VOID
-FASTCALL
-IovUtilMarkDeviceObject(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  MARK_TYPE       MarkType
-    )
+VOID FASTCALL IovUtilMarkDeviceObject(IN PDEVICE_OBJECT DeviceObject, IN MARK_TYPE MarkType)
 {
     UNREFERENCED_PARAMETER(DeviceObject);
     UNREFERENCED_PARAMETER(MarkType);
 }
 
 
-VOID
-FASTCALL
-IovUtilMarkStack(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject,
-    IN  PDEVICE_OBJECT  BottomOfFdoStack        OPTIONAL,
-    IN  PDEVICE_OBJECT  FunctionalDeviceObject  OPTIONAL,
-    IN  BOOLEAN         RawStack
-    )
+VOID FASTCALL IovUtilMarkStack(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDEVICE_OBJECT BottomOfFdoStack OPTIONAL,
+                               IN PDEVICE_OBJECT FunctionalDeviceObject OPTIONAL, IN BOOLEAN RawStack)
 {
     UNREFERENCED_PARAMETER(PhysicalDeviceObject);
     UNREFERENCED_PARAMETER(BottomOfFdoStack);
@@ -913,12 +852,7 @@ IovUtilMarkStack(
 }
 
 
-VOID
-FASTCALL
-IovUtilWatermarkIrp(
-    IN PIRP  Irp,
-    IN ULONG Flags
-    )
+VOID FASTCALL IovUtilWatermarkIrp(IN PIRP Irp, IN ULONG Flags)
 {
     UNREFERENCED_PARAMETER(Irp);
     UNREFERENCED_PARAMETER(Flags);
@@ -926,4 +860,3 @@ IovUtilWatermarkIrp(
 
 
 #endif // NO_VERIFIER
-

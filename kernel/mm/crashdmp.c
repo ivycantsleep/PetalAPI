@@ -22,22 +22,21 @@ Revision History:
 #include "mi.h"
 
 LOGICAL
-MiIsAddressRangeValid (
-    IN PVOID VirtualAddress,
-    IN SIZE_T Length
-    )
+MiIsAddressRangeValid(IN PVOID VirtualAddress, IN SIZE_T Length)
 {
     PUCHAR Va;
     PUCHAR EndVa;
     ULONG Pages;
-    
-    Va = PAGE_ALIGN (VirtualAddress);
-    Pages = ADDRESS_AND_SIZE_TO_SPAN_PAGES (VirtualAddress, Length);
-    EndVa = Va + (Pages << PAGE_SHIFT);
-    
-    while (Va < EndVa) {
 
-        if (!MmIsAddressValid (Va)) {
+    Va = PAGE_ALIGN(VirtualAddress);
+    Pages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(VirtualAddress, Length);
+    EndVa = Va + (Pages << PAGE_SHIFT);
+
+    while (Va < EndVa)
+    {
+
+        if (!MmIsAddressValid(Va))
+        {
             return FALSE;
         }
 
@@ -47,10 +46,7 @@ MiIsAddressRangeValid (
     return TRUE;
 }
 
-VOID
-MiRemoveFreePoolMemoryFromDump (
-    IN PMM_KERNEL_DUMP_CONTEXT Context
-    )
+VOID MiRemoveFreePoolMemoryFromDump(IN PMM_KERNEL_DUMP_CONTEXT Context)
 
 /*++
 
@@ -89,48 +85,51 @@ Environment:
     List = &MmNonPagedPoolFreeListHead[0];
     ListEnd = List + MI_MAX_FREE_LIST_HEADS;
 
-    for ( ; List < ListEnd; List += 1) {
+    for (; List < ListEnd; List += 1)
+    {
 
-        for (Entry = List->Flink; Entry != List; Entry = Entry->Flink) {
+        for (Entry = List->Flink; Entry != List; Entry = Entry->Flink)
+        {
 
-            PoolEntry = CONTAINING_RECORD (Entry,
-                                           MMFREE_POOL_ENTRY,
-                                           List);
+            PoolEntry = CONTAINING_RECORD(Entry, MMFREE_POOL_ENTRY, List);
 
             //
             // Check for corrupted values.
             //
-            
-            if (BYTE_OFFSET(PoolEntry) != 0) {
+
+            if (BYTE_OFFSET(PoolEntry) != 0)
+            {
                 break;
             }
 
             //
             // Check that the entry has not been corrupted.
             //
-            
-            if (MiIsAddressRangeValid (PoolEntry, sizeof (MMFREE_POOL_ENTRY)) == FALSE) {
+
+            if (MiIsAddressRangeValid(PoolEntry, sizeof(MMFREE_POOL_ENTRY)) == FALSE)
+            {
                 break;
             }
 
-            if (PoolEntry->Size == 0) {
+            if (PoolEntry->Size == 0)
+            {
                 break;
             }
 
             //
             // Signature is only maintained in checked builds.
             //
-            
-            ASSERT (PoolEntry->Signature == MM_FREE_POOL_SIGNATURE);
+
+            ASSERT(PoolEntry->Signature == MM_FREE_POOL_SIGNATURE);
 
             //
             // Verify that the element's flinks and blinks are valid.
             //
 
-            if ((!MiIsAddressRangeValid (Entry->Flink, sizeof (LIST_ENTRY))) ||
-                (!MiIsAddressRangeValid (Entry->Blink, sizeof (LIST_ENTRY))) ||
-                (Entry->Blink->Flink != Entry) ||
-                (Entry->Flink->Blink != Entry)) {
+            if ((!MiIsAddressRangeValid(Entry->Flink, sizeof(LIST_ENTRY))) ||
+                (!MiIsAddressRangeValid(Entry->Blink, sizeof(LIST_ENTRY))) || (Entry->Blink->Flink != Entry) ||
+                (Entry->Flink->Blink != Entry))
+            {
 
                 break;
             }
@@ -138,30 +137,24 @@ Environment:
             //
             // The list entry is valid, remove it from the dump.
             //
-        
-            if (MI_IS_PHYSICAL_ADDRESS (PoolEntry)) {
+
+            if (MI_IS_PHYSICAL_ADDRESS(PoolEntry))
+            {
                 LargePageMapped = 1;
             }
-            else {
+            else
+            {
                 LargePageMapped = 0;
             }
 
-            Context->FreeDumpRange (Context,
-                                    PoolEntry,
-                                    PoolEntry->Size,
-                                    LargePageMapped);
+            Context->FreeDumpRange(Context, PoolEntry, PoolEntry->Size, LargePageMapped);
         }
     }
-
 }
 
-
+
 LOGICAL
-MiIsPhysicalMemoryAddress (
-    IN PFN_NUMBER PageFrameIndex,
-    IN OUT PULONG Hint,
-    IN LOGICAL PfnLockNeeded
-    )
+MiIsPhysicalMemoryAddress(IN PFN_NUMBER PageFrameIndex, IN OUT PULONG Hint, IN LOGICAL PfnLockNeeded)
 
 /*++
 
@@ -200,7 +193,7 @@ Environment:
     KIRQL OldIrql;
     PPHYSICAL_MEMORY_RUN Run;
     PPHYSICAL_MEMORY_DESCRIPTOR PhysicalMemoryBlock;
-    
+
     //
     // Initializing OldIrql is not needed for correctness, but without it
     // the compiler cannot compile this code W4 to check for use of
@@ -209,43 +202,50 @@ Environment:
 
     OldIrql = PASSIVE_LEVEL;
 
-    if (PfnLockNeeded) {
-        LOCK_PFN2 (OldIrql);
+    if (PfnLockNeeded)
+    {
+        LOCK_PFN2(OldIrql);
     }
 
     PhysicalMemoryBlock = MmPhysicalMemoryBlock;
 
-    if (PageFrameIndex > MmHighestPhysicalPage) {
-        if (PfnLockNeeded) {
-            UNLOCK_PFN2 (OldIrql);
+    if (PageFrameIndex > MmHighestPhysicalPage)
+    {
+        if (PfnLockNeeded)
+        {
+            UNLOCK_PFN2(OldIrql);
         }
         return FALSE;
     }
 
-    if (*Hint < PhysicalMemoryBlock->NumberOfRuns) {
+    if (*Hint < PhysicalMemoryBlock->NumberOfRuns)
+    {
 
         Run = &PhysicalMemoryBlock->Run[*Hint];
 
-        if ((PageFrameIndex >= Run->BasePage) &&
-            (PageFrameIndex < Run->BasePage + Run->PageCount)) {
+        if ((PageFrameIndex >= Run->BasePage) && (PageFrameIndex < Run->BasePage + Run->PageCount))
+        {
 
-            if (PfnLockNeeded) {
-                UNLOCK_PFN2 (OldIrql);
+            if (PfnLockNeeded)
+            {
+                UNLOCK_PFN2(OldIrql);
             }
             return TRUE;
         }
     }
-    
-    for (Index = 0; Index < PhysicalMemoryBlock->NumberOfRuns; Index += 1) {
+
+    for (Index = 0; Index < PhysicalMemoryBlock->NumberOfRuns; Index += 1)
+    {
 
         Run = &PhysicalMemoryBlock->Run[Index];
 
-        if ((PageFrameIndex >= Run->BasePage) &&
-            (PageFrameIndex < Run->BasePage + Run->PageCount)) {
+        if ((PageFrameIndex >= Run->BasePage) && (PageFrameIndex < Run->BasePage + Run->PageCount))
+        {
 
             *Hint = Index;
-            if (PfnLockNeeded) {
-                UNLOCK_PFN2 (OldIrql);
+            if (PfnLockNeeded)
+            {
+                UNLOCK_PFN2(OldIrql);
             }
             return TRUE;
         }
@@ -255,24 +255,23 @@ Environment:
         // base page PFN number, if this PFN is smaller, then bail.
         //
 
-        if (Run->BasePage + Run->PageCount > PageFrameIndex) {
+        if (Run->BasePage + Run->PageCount > PageFrameIndex)
+        {
             *Hint = Index;
             break;
         }
     }
 
-    if (PfnLockNeeded) {
-        UNLOCK_PFN2 (OldIrql);
+    if (PfnLockNeeded)
+    {
+        UNLOCK_PFN2(OldIrql);
     }
 
     return FALSE;
 }
 
 
-VOID
-MiAddPagesWithNoMappings (
-    IN PMM_KERNEL_DUMP_CONTEXT Context
-    )
+VOID MiAddPagesWithNoMappings(IN PMM_KERNEL_DUMP_CONTEXT Context)
 /*++
 
 Routine Description:
@@ -299,7 +298,7 @@ Environment:
 --*/
 
 {
-#if defined (_X86_)
+#if defined(_X86_)
 
     ULONG LargePageMapped;
     PVOID Va;
@@ -322,19 +321,18 @@ Environment:
 
     DirBase.HighPart = 0;
 
-    Va = MmGetVirtualForPhysical (DirBase);
+    Va = MmGetVirtualForPhysical(DirBase);
 
-    if (MI_IS_PHYSICAL_ADDRESS (Va)) {
+    if (MI_IS_PHYSICAL_ADDRESS(Va))
+    {
         LargePageMapped = 1;
     }
-    else {
+    else
+    {
         LargePageMapped = 0;
     }
 
-    Context->SetDumpRange (Context,
-                           Va,
-                           1,
-                           LargePageMapped);
+    Context->SetDumpRange(Context, Va, 1, LargePageMapped);
 
 #elif defined(_AMD64_)
 
@@ -348,42 +346,35 @@ Environment:
     // stack overflow crashes, etc.
     //
 
-    DirBase.QuadPart = ReadCR3 ();
+    DirBase.QuadPart = ReadCR3();
 
-    Va = MmGetVirtualForPhysical (DirBase);
+    Va = MmGetVirtualForPhysical(DirBase);
 
-    if (MI_IS_PHYSICAL_ADDRESS (Va)) {
+    if (MI_IS_PHYSICAL_ADDRESS(Va))
+    {
         LargePageMapped = 1;
     }
-    else {
+    else
+    {
         LargePageMapped = 0;
     }
 
-    Context->SetDumpRange (Context,
-                           Va,
-                           1,
-                           LargePageMapped);
+    Context->SetDumpRange(Context, Va, 1, LargePageMapped);
 
 #elif defined(_IA64_)
 
-    if (MiKseg0Mapping == TRUE) {
-        Context->SetDumpRange (
-                        Context,
-                        MiKseg0Start,
-                        (((ULONG_PTR)MiKseg0End - (ULONG_PTR)MiKseg0Start) >> PAGE_SHIFT) + 1,
-                        1);
+    if (MiKseg0Mapping == TRUE)
+    {
+        Context->SetDumpRange(Context, MiKseg0Start,
+                              (((ULONG_PTR)MiKseg0End - (ULONG_PTR)MiKseg0Start) >> PAGE_SHIFT) + 1, 1);
     }
 
 #endif
 }
 
-
+
 LOGICAL
-MiAddRangeToCrashDump (
-    IN PMM_KERNEL_DUMP_CONTEXT Context,
-    IN PVOID Va,
-    IN SIZE_T NumberOfBytes
-    )
+MiAddRangeToCrashDump(IN PMM_KERNEL_DUMP_CONTEXT Context, IN PVOID Va, IN SIZE_T NumberOfBytes)
 
 /*++
 
@@ -422,10 +413,10 @@ Environment:
     PMMPTE PointerPpe;
     PMMPTE PointerPxe;
     PFN_NUMBER PageFrameIndex;
-#if defined (_X86_) || defined (_AMD64_)
+#if defined(_X86_) || defined(_AMD64_)
     PFN_NUMBER NumberOfPages;
 #endif
-    
+
     Hint = 0;
     Status = TRUE;
 
@@ -444,30 +435,32 @@ Environment:
     // because the PPEs would just wrap anyway.
     //
 
-    if (((ULONG_PTR)EndingAddress & ~VRN_MASK) >= MM_VA_MAPPED_BY_PPE * PDE_PER_PAGE) {
-        EndingAddress = (PVOID)(((ULONG_PTR)EndingAddress & VRN_MASK) |
-                         ((MM_VA_MAPPED_BY_PPE * PDE_PER_PAGE) - 1));
+    if (((ULONG_PTR)EndingAddress & ~VRN_MASK) >= MM_VA_MAPPED_BY_PPE * PDE_PER_PAGE)
+    {
+        EndingAddress = (PVOID)(((ULONG_PTR)EndingAddress & VRN_MASK) | ((MM_VA_MAPPED_BY_PPE * PDE_PER_PAGE) - 1));
     }
 
 #endif
 
-    Va = PAGE_ALIGN (Va);
+    Va = PAGE_ALIGN(Va);
 
-    PointerPxe = MiGetPxeAddress (Va);
-    PointerPpe = MiGetPpeAddress (Va);
-    PointerPde = MiGetPdeAddress (Va);
-    PointerPte = MiGetPteAddress (Va);
+    PointerPxe = MiGetPxeAddress(Va);
+    PointerPpe = MiGetPpeAddress(Va);
+    PointerPde = MiGetPdeAddress(Va);
+    PointerPte = MiGetPteAddress(Va);
 
-    do {
+    do
+    {
 
 #if (_MI_PAGING_LEVELS >= 3)
-restart:
+    restart:
 #endif
 
-        KdCheckForDebugBreak ();
+        KdCheckForDebugBreak();
 
 #if (_MI_PAGING_LEVELS >= 4)
-        while (PointerPxe->u.Hard.Valid == 0) {
+        while (PointerPxe->u.Hard.Valid == 0)
+        {
 
             //
             // This extended page directory parent entry is empty,
@@ -475,12 +468,13 @@ restart:
             //
 
             PointerPxe += 1;
-            PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-            PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-            Va = MiGetVirtualAddressMappedByPte (PointerPte);
+            PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+            PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+            Va = MiGetVirtualAddressMappedByPte(PointerPte);
 
-            if ((Va > EndingAddress) || (Va == NULL)) {
+            if ((Va > EndingAddress) || (Va == NULL))
+            {
 
                 //
                 // All done, return.
@@ -491,21 +485,23 @@ restart:
         }
 #endif
 
-        ASSERT (MiGetPpeAddress(Va) == PointerPpe);
+        ASSERT(MiGetPpeAddress(Va) == PointerPpe);
 
 #if (_MI_PAGING_LEVELS >= 3)
-        while (PointerPpe->u.Hard.Valid == 0) {
+        while (PointerPpe->u.Hard.Valid == 0)
+        {
 
             //
             // This page directory parent entry is empty, go to the next one.
             //
 
             PointerPpe += 1;
-            PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-            Va = MiGetVirtualAddressMappedByPte (PointerPte);
+            PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+            Va = MiGetVirtualAddressMappedByPte(PointerPte);
 
-            if ((Va > EndingAddress) || (Va == NULL)) {
+            if ((Va > EndingAddress) || (Va == NULL))
+            {
 
                 //
                 // All done, return.
@@ -514,27 +510,29 @@ restart:
                 return Status;
             }
 #if (_MI_PAGING_LEVELS >= 4)
-            if (MiIsPteOnPdeBoundary (PointerPpe)) {
+            if (MiIsPteOnPdeBoundary(PointerPpe))
+            {
                 PointerPxe += 1;
-                ASSERT (PointerPxe == MiGetPteAddress (PointerPpe));
+                ASSERT(PointerPxe == MiGetPteAddress(PointerPpe));
                 goto restart;
             }
 #endif
-
         }
 #endif
 
-        while (PointerPde->u.Hard.Valid == 0) {
+        while (PointerPde->u.Hard.Valid == 0)
+        {
 
             //
             // This page directory entry is empty, go to the next one.
             //
 
             PointerPde += 1;
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-            Va = MiGetVirtualAddressMappedByPte (PointerPte);
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+            Va = MiGetVirtualAddressMappedByPte(PointerPte);
 
-            if ((Va > EndingAddress) || (Va == NULL)) {
+            if ((Va > EndingAddress) || (Va == NULL))
+            {
 
                 //
                 // All done, return.
@@ -544,10 +542,11 @@ restart:
             }
 
 #if (_MI_PAGING_LEVELS >= 3)
-            if (MiIsPteOnPdeBoundary (PointerPde)) {
+            if (MiIsPteOnPdeBoundary(PointerPde))
+            {
                 PointerPpe += 1;
-                ASSERT (PointerPpe == MiGetPteAddress (PointerPde));
-                PointerPxe = MiGetPteAddress (PointerPpe);
+                ASSERT(PointerPpe == MiGetPteAddress(PointerPde));
+                PointerPxe = MiGetPteAddress(PointerPpe);
                 goto restart;
             }
 #endif
@@ -557,44 +556,44 @@ restart:
         // A valid PDE has been located, examine each PTE.
         //
 
-        ASSERT64 (PointerPpe->u.Hard.Valid == 1);
-        ASSERT (PointerPde->u.Hard.Valid == 1);
-        ASSERT (Va <= EndingAddress);
+        ASSERT64(PointerPpe->u.Hard.Valid == 1);
+        ASSERT(PointerPde->u.Hard.Valid == 1);
+        ASSERT(Va <= EndingAddress);
 
-#if defined (_X86_) || defined (_AMD64_)
+#if defined(_X86_) || defined(_AMD64_)
 
-        if (PointerPde->u.Hard.LargePage == 1) {
+        if (PointerPde->u.Hard.LargePage == 1)
+        {
 
             //
             // Large pages are always backed by RAM, not mapped to
             // I/O space, so always add them to the dump.
             //
-                
-            NumberOfPages = (((ULONG_PTR)MiGetVirtualAddressMappedByPde (PointerPde + 1) - (ULONG_PTR)Va) / PAGE_SIZE);
 
-            Status = Context->SetDumpRange (Context,
-                                            Va,
-                                            NumberOfPages,
-                                            1);
+            NumberOfPages = (((ULONG_PTR)MiGetVirtualAddressMappedByPde(PointerPde + 1) - (ULONG_PTR)Va) / PAGE_SIZE);
 
-            if (!NT_SUCCESS (Status)) {
+            Status = Context->SetDumpRange(Context, Va, NumberOfPages, 1);
+
+            if (!NT_SUCCESS(Status))
+            {
 #if DBG
-                DbgPrint ("Adding large VA %p to crashdump failed\n", Va);
-                DbgBreakPoint ();
+                DbgPrint("Adding large VA %p to crashdump failed\n", Va);
+                DbgBreakPoint();
 #endif
                 Status = FALSE;
             }
 
             PointerPde += 1;
-            Va = MiGetVirtualAddressMappedByPde (PointerPde);
+            Va = MiGetVirtualAddressMappedByPde(PointerPde);
 
-            if ((Va > EndingAddress) || (Va == NULL)) {
+            if ((Va > EndingAddress) || (Va == NULL))
+            {
                 return Status;
             }
 
-            PointerPte = MiGetPteAddress (Va);
-            PointerPpe = MiGetPpeAddress (Va);
-            PointerPxe = MiGetPxeAddress (Va);
+            PointerPte = MiGetPteAddress(Va);
+            PointerPpe = MiGetPpeAddress(Va);
+            PointerPxe = MiGetPxeAddress(Va);
 
             //
             // March on to the next page directory.
@@ -610,18 +609,20 @@ restart:
         // Note the system cache starts and ends on page directory boundaries
         // and is never mapped with large pages.
         //
-        
-        if (MI_IS_SYSTEM_CACHE_ADDRESS (Va)) {
-            PointerPde += 1;
-            Va = MiGetVirtualAddressMappedByPde (PointerPde);
 
-            if ((Va > EndingAddress) || (Va == NULL)) {
+        if (MI_IS_SYSTEM_CACHE_ADDRESS(Va))
+        {
+            PointerPde += 1;
+            Va = MiGetVirtualAddressMappedByPde(PointerPde);
+
+            if ((Va > EndingAddress) || (Va == NULL))
+            {
                 return Status;
             }
 
-            PointerPte = MiGetPteAddress (Va);
-            PointerPpe = MiGetPpeAddress (Va);
-            PointerPxe = MiGetPxeAddress (Va);
+            PointerPte = MiGetPteAddress(Va);
+            PointerPpe = MiGetPpeAddress(Va);
+            PointerPxe = MiGetPxeAddress(Va);
 
             //
             // March on to the next page directory.
@@ -630,45 +631,47 @@ restart:
             continue;
         }
 
-        do {
+        do
+        {
 
             AddThisPage = FALSE;
             PageFrameIndex = 0;
 
-            if (PointerPte->u.Hard.Valid == 1) {
+            if (PointerPte->u.Hard.Valid == 1)
+            {
 
-                PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+                PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
                 AddThisPage = TRUE;
             }
-            else if ((PointerPte->u.Soft.Prototype == 0) &&
-                     (PointerPte->u.Soft.Transition == 1)) {
+            else if ((PointerPte->u.Soft.Prototype == 0) && (PointerPte->u.Soft.Transition == 1))
+            {
 
-                PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (PointerPte);
+                PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(PointerPte);
                 AddThisPage = TRUE;
             }
 
-            if (AddThisPage == TRUE) {
+            if (AddThisPage == TRUE)
+            {
 
                 //
                 // Include only addresses that are backed by RAM, not mapped to
                 // I/O space.
                 //
-                
-                if (MiIsPhysicalMemoryAddress (PageFrameIndex, &Hint, FALSE)) {
+
+                if (MiIsPhysicalMemoryAddress(PageFrameIndex, &Hint, FALSE))
+                {
 
                     //
                     // Add this page to the dump.
                     //
-        
-                    Status = Context->SetDumpRange (Context,
-                                                    (PVOID) PageFrameIndex,
-                                                    1,
-                                                    2);
 
-                    if (!NT_SUCCESS (Status)) {
+                    Status = Context->SetDumpRange(Context, (PVOID)PageFrameIndex, 1, 2);
+
+                    if (!NT_SUCCESS(Status))
+                    {
 #if DBG
-                        DbgPrint ("Adding VA %p to crashdump failed\n", Va);
-                        DbgBreakPoint ();
+                        DbgPrint("Adding VA %p to crashdump failed\n", Va);
+                        DbgBreakPoint();
 #endif
                         Status = FALSE;
                     }
@@ -678,10 +681,11 @@ restart:
             Va = (PVOID)((ULONG_PTR)Va + PAGE_SIZE);
             PointerPte += 1;
 
-            ASSERT64 (PointerPpe->u.Hard.Valid == 1);
-            ASSERT (PointerPde->u.Hard.Valid == 1);
+            ASSERT64(PointerPpe->u.Hard.Valid == 1);
+            ASSERT(PointerPde->u.Hard.Valid == 1);
 
-            if ((Va > EndingAddress) || (Va == NULL)) {
+            if ((Va > EndingAddress) || (Va == NULL))
+            {
                 return Status;
             }
 
@@ -696,39 +700,37 @@ restart:
 
         } while (!MiIsVirtualAddressOnPdeBoundary(Va));
 
-        ASSERT (PointerPte == MiGetPteAddress (Va));
-        PointerPde = MiGetPdeAddress (Va);
-        PointerPpe = MiGetPpeAddress (Va);
-        PointerPxe = MiGetPxeAddress (Va);
+        ASSERT(PointerPte == MiGetPteAddress(Va));
+        PointerPde = MiGetPdeAddress(Va);
+        PointerPpe = MiGetPpeAddress(Va);
+        PointerPxe = MiGetPxeAddress(Va);
 
     } while (TRUE);
 
     // NEVER REACHED
 }
 
-
-VOID
-MiAddActivePageDirectories (
-    IN PMM_KERNEL_DUMP_CONTEXT Context
-    )
+
+VOID MiAddActivePageDirectories(IN PMM_KERNEL_DUMP_CONTEXT Context)
 {
     UCHAR i;
     PKPRCB Prcb;
     PKPROCESS Process;
     PFN_NUMBER PageFrameIndex;
 
-#if defined (_X86PAE_)
+#if defined(_X86PAE_)
     PMMPTE PointerPte;
     ULONG j;
 #endif
 
-    for (i = 0; i < KeNumberProcessors; i += 1) {
+    for (i = 0; i < KeNumberProcessors; i += 1)
+    {
 
         Prcb = KiProcessorBlock[i];
 
         Process = Prcb->CurrentThread->ApcState.Process;
 
-#if defined (_X86PAE_)
+#if defined(_X86PAE_)
 
         //
         // Note that on PAE systems, the idle and system process have
@@ -740,16 +742,18 @@ MiAddActivePageDirectories (
         // Add the 4 top level page directory pages to the dump.
         //
 
-        PointerPte = (PMMPTE) ((PEPROCESS)Process)->PaeTop;
+        PointerPte = (PMMPTE)((PEPROCESS)Process)->PaeTop;
 
-        if (PointerPte == NULL) {
+        if (PointerPte == NULL)
+        {
             PointerPte = &MiSystemPaeVa.PteEntry[0];
         }
 
-        for (j = 0; j < PD_PER_SYSTEM; j += 1) {
+        for (j = 0; j < PD_PER_SYSTEM; j += 1)
+        {
             PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
             PointerPte += 1;
-            Context->SetDumpRange (Context, (PVOID) PageFrameIndex, 1, 2);
+            Context->SetDumpRange(Context, (PVOID)PageFrameIndex, 1, 2);
         }
 
         //
@@ -762,8 +766,7 @@ MiAddActivePageDirectories (
 
 #else
 
-        PageFrameIndex =
-            MI_GET_DIRECTORY_FRAME_FROM_PROCESS ((PEPROCESS)(Process));
+        PageFrameIndex = MI_GET_DIRECTORY_FRAME_FROM_PROCESS((PEPROCESS)(Process));
 
 #endif
 
@@ -771,7 +774,7 @@ MiAddActivePageDirectories (
         // Add this physical page to the dump.
         //
 
-        Context->SetDumpRange (Context, (PVOID) PageFrameIndex, 1, 2);
+        Context->SetDumpRange(Context, (PVOID)PageFrameIndex, 1, 2);
     }
 
 #if defined(_IA64_)
@@ -783,15 +786,12 @@ MiAddActivePageDirectories (
 
     Prcb = KiProcessorBlock[0];
 
-    Context->SetDumpRange (Context, (PVOID) Prcb->PcrPage, 1, 2);
+    Context->SetDumpRange(Context, (PVOID)Prcb->PcrPage, 1, 2);
 #endif
 }
 
-
-VOID
-MmGetKernelDumpRange (
-    IN PMM_KERNEL_DUMP_CONTEXT Context
-    )
+
+VOID MmGetKernelDumpRange(IN PMM_KERNEL_DUMP_CONTEXT Context)
 
 /*++
 
@@ -818,12 +818,10 @@ Environment:
 {
     PVOID Va;
     SIZE_T NumberOfBytes;
-    
-    ASSERT ((Context != NULL) &&
-            (Context->SetDumpRange != NULL) &&
-            (Context->FreeDumpRange != NULL));
-            
-    MiAddActivePageDirectories (Context);
+
+    ASSERT((Context != NULL) && (Context->SetDumpRange != NULL) && (Context->FreeDumpRange != NULL));
+
+    MiAddActivePageDirectories(Context);
 
 #if defined(_IA64_)
 
@@ -831,37 +829,37 @@ Environment:
     // Note each IA64 region must be passed separately to MiAddRange...
     //
 
-    Va = (PVOID) ALT4KB_PERMISSION_TABLE_START;
-    NumberOfBytes = PDE_UTBASE + PAGE_SIZE - (ULONG_PTR) Va;
-    MiAddRangeToCrashDump (Context, Va, NumberOfBytes);
+    Va = (PVOID)ALT4KB_PERMISSION_TABLE_START;
+    NumberOfBytes = PDE_UTBASE + PAGE_SIZE - (ULONG_PTR)Va;
+    MiAddRangeToCrashDump(Context, Va, NumberOfBytes);
 
-    Va = (PVOID) MM_SESSION_SPACE_DEFAULT;
-    NumberOfBytes = PDE_STBASE + PAGE_SIZE - (ULONG_PTR) Va;
-    MiAddRangeToCrashDump (Context, Va, NumberOfBytes);
+    Va = (PVOID)MM_SESSION_SPACE_DEFAULT;
+    NumberOfBytes = PDE_STBASE + PAGE_SIZE - (ULONG_PTR)Va;
+    MiAddRangeToCrashDump(Context, Va, NumberOfBytes);
 
-    Va = (PVOID) KADDRESS_BASE;
-    NumberOfBytes = PDE_KTBASE + PAGE_SIZE - (ULONG_PTR) Va;
-    MiAddRangeToCrashDump (Context, Va, NumberOfBytes);
+    Va = (PVOID)KADDRESS_BASE;
+    NumberOfBytes = PDE_KTBASE + PAGE_SIZE - (ULONG_PTR)Va;
+    MiAddRangeToCrashDump(Context, Va, NumberOfBytes);
 
 #elif defined(_AMD64_)
 
-    Va = (PVOID) MM_SYSTEM_RANGE_START;
-    NumberOfBytes = MM_KSEG0_BASE - (ULONG_PTR) Va;
-    MiAddRangeToCrashDump (Context, Va, NumberOfBytes);
+    Va = (PVOID)MM_SYSTEM_RANGE_START;
+    NumberOfBytes = MM_KSEG0_BASE - (ULONG_PTR)Va;
+    MiAddRangeToCrashDump(Context, Va, NumberOfBytes);
 
-    Va = (PVOID) MM_KSEG2_BASE;
-    NumberOfBytes = MM_SYSTEM_SPACE_START - (ULONG_PTR) Va;
-    MiAddRangeToCrashDump (Context, Va, NumberOfBytes);
+    Va = (PVOID)MM_KSEG2_BASE;
+    NumberOfBytes = MM_SYSTEM_SPACE_START - (ULONG_PTR)Va;
+    MiAddRangeToCrashDump(Context, Va, NumberOfBytes);
 
-    Va = (PVOID) MM_PAGED_POOL_START;
-    NumberOfBytes = MM_SYSTEM_SPACE_END - (ULONG_PTR) Va + 1;
-    MiAddRangeToCrashDump (Context, Va, NumberOfBytes);
+    Va = (PVOID)MM_PAGED_POOL_START;
+    NumberOfBytes = MM_SYSTEM_SPACE_END - (ULONG_PTR)Va + 1;
+    MiAddRangeToCrashDump(Context, Va, NumberOfBytes);
 
 #else
 
     Va = MmSystemRangeStart;
-    NumberOfBytes = MM_SYSTEM_SPACE_END - (ULONG_PTR) Va + 1;
-    MiAddRangeToCrashDump (Context, Va, NumberOfBytes);
+    NumberOfBytes = MM_SYSTEM_SPACE_END - (ULONG_PTR)Va + 1;
+    MiAddRangeToCrashDump(Context, Va, NumberOfBytes);
 
 #endif
 
@@ -869,12 +867,12 @@ Environment:
     // Add any memory that is a part of the kernel space, but does not
     // have a virtual mapping (hence was not collected above).
     //
-    
-    MiAddPagesWithNoMappings (Context);
+
+    MiAddPagesWithNoMappings(Context);
 
     //
     // Remove nonpaged pool that is not in use.
     //
 
-    MiRemoveFreePoolMemoryFromDump (Context);
+    MiRemoveFreePoolMemoryFromDump(Context);
 }

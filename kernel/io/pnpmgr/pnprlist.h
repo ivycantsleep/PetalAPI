@@ -32,11 +32,12 @@ Revision History:
 // of elements which are currently being used.  When a relation list is
 // compressed Count will equal MaxCount.
 //
-typedef struct _RELATION_LIST_ENTRY {
-    ULONG                   Count;          // Number of current entries
-    ULONG                   MaxCount;       // Size of Entries list
-    PDEVICE_OBJECT          Devices[1];     // Variable length list of device objects
-}   RELATION_LIST_ENTRY, *PRELATION_LIST_ENTRY;
+typedef struct _RELATION_LIST_ENTRY
+{
+    ULONG Count;               // Number of current entries
+    ULONG MaxCount;            // Size of Entries list
+    PDEVICE_OBJECT Devices[1]; // Variable length list of device objects
+} RELATION_LIST_ENTRY, *PRELATION_LIST_ENTRY;
 
 //
 // A RELATION_LIST contains a number of RELATION_LIST_ENTRY structures.
@@ -56,13 +57,14 @@ typedef struct _RELATION_LIST_ENTRY {
 // kept in TagCount.  This is used to rapidly determine whether or not all
 // objects have been tagged.
 //
-typedef struct _RELATION_LIST {
-    ULONG                   Count;          // Count of Devices in all Entries
-    ULONG                   TagCount;       // Count of Tagged Devices
-    ULONG                   FirstLevel;     // Level Number of Entries[0]
-    ULONG                   MaxLevel;       // - FirstLevel + 1 = Number of Entries
-    PRELATION_LIST_ENTRY    Entries[1];     // Variable length list of entries
-}   RELATION_LIST, *PRELATION_LIST;
+typedef struct _RELATION_LIST
+{
+    ULONG Count;                     // Count of Devices in all Entries
+    ULONG TagCount;                  // Count of Tagged Devices
+    ULONG FirstLevel;                // Level Number of Entries[0]
+    ULONG MaxLevel;                  // - FirstLevel + 1 = Number of Entries
+    PRELATION_LIST_ENTRY Entries[1]; // Variable length list of entries
+} RELATION_LIST, *PRELATION_LIST;
 
 //
 // A PENDING_RELATIONS_LIST_ENTRY is used to track relation lists for operations
@@ -81,100 +83,59 @@ typedef struct _RELATION_LIST {
 // The EjectIrp is pointer to the Eject IRP which has been sent to the PDO.  If
 // this is a pending surprise removal then EjectIrp is not used.
 //
-typedef struct _PENDING_RELATIONS_LIST_ENTRY {
-    LIST_ENTRY              Link;
-    WORK_QUEUE_ITEM         WorkItem;
+typedef struct _PENDING_RELATIONS_LIST_ENTRY
+{
+    LIST_ENTRY Link;
+    WORK_QUEUE_ITEM WorkItem;
     PPNP_DEVICE_EVENT_ENTRY DeviceEvent;
-    PDEVICE_OBJECT          DeviceObject;
-    PRELATION_LIST          RelationsList;
-    PIRP                    EjectIrp;
-    ULONG                   Problem;
-    BOOLEAN                 ProfileChangingEject;
-    BOOLEAN                 DisplaySafeRemovalDialog;
-    SYSTEM_POWER_STATE      LightestSleepState;
-    PDOCK_INTERFACE         DockInterface;
-}   PENDING_RELATIONS_LIST_ENTRY, *PPENDING_RELATIONS_LIST_ENTRY;
+    PDEVICE_OBJECT DeviceObject;
+    PRELATION_LIST RelationsList;
+    PIRP EjectIrp;
+    ULONG Problem;
+    BOOLEAN ProfileChangingEject;
+    BOOLEAN DisplaySafeRemovalDialog;
+    SYSTEM_POWER_STATE LightestSleepState;
+    PDOCK_INTERFACE DockInterface;
+} PENDING_RELATIONS_LIST_ENTRY, *PPENDING_RELATIONS_LIST_ENTRY;
 
 //
 // Functions exported to other kernel modules.
 //
 NTSTATUS
-IopAddRelationToList(
-    IN PRELATION_LIST List,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN DirectDescendant,
-    IN BOOLEAN Tagged
-    );
+IopAddRelationToList(IN PRELATION_LIST List, IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN DirectDescendant,
+                     IN BOOLEAN Tagged);
 
 PRELATION_LIST
-IopAllocateRelationList(
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode
-    );
+IopAllocateRelationList(IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode);
 
 NTSTATUS
-IopCompressRelationList(
-    IN OUT PRELATION_LIST *List
-    );
+IopCompressRelationList(IN OUT PRELATION_LIST *List);
 
 BOOLEAN
-IopEnumerateRelations(
-    IN PRELATION_LIST List,
-    IN OUT PULONG Marker,
-    OUT PDEVICE_OBJECT *PhysicalDevice,
-    OUT BOOLEAN *DirectDescendant, OPTIONAL
-    OUT BOOLEAN *Tagged, OPTIONAL
-    BOOLEAN Reverse
-    );
+IopEnumerateRelations(IN PRELATION_LIST List, IN OUT PULONG Marker, OUT PDEVICE_OBJECT *PhysicalDevice,
+                      OUT BOOLEAN *DirectDescendant, OPTIONAL OUT BOOLEAN *Tagged, OPTIONAL BOOLEAN Reverse);
 
-VOID
-IopFreeRelationList(
-    IN PRELATION_LIST List
-    );
+VOID IopFreeRelationList(IN PRELATION_LIST List);
 
 ULONG
-IopGetRelationsCount(
-    IN PRELATION_LIST List
-    );
+IopGetRelationsCount(IN PRELATION_LIST List);
 
 ULONG
-IopGetRelationsTaggedCount(
-    IN PRELATION_LIST List
-    );
+IopGetRelationsTaggedCount(IN PRELATION_LIST List);
 
 BOOLEAN
-IopIsRelationInList(
-    IN PRELATION_LIST List,
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IopIsRelationInList(IN PRELATION_LIST List, IN PDEVICE_OBJECT DeviceObject);
 
 NTSTATUS
-IopMergeRelationLists(
-    IN OUT PRELATION_LIST TargetList,
-    IN PRELATION_LIST SourceList,
-    IN BOOLEAN Tagged
-    );
+IopMergeRelationLists(IN OUT PRELATION_LIST TargetList, IN PRELATION_LIST SourceList, IN BOOLEAN Tagged);
 
 NTSTATUS
-IopRemoveIndirectRelationsFromList(
-    IN PRELATION_LIST List
-    );
+IopRemoveIndirectRelationsFromList(IN PRELATION_LIST List);
 
 NTSTATUS
-IopRemoveRelationFromList(
-    IN PRELATION_LIST List,
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IopRemoveRelationFromList(IN PRELATION_LIST List, IN PDEVICE_OBJECT DeviceObject);
 
-VOID
-IopSetAllRelationsTags(
-    IN PRELATION_LIST List,
-    IN BOOLEAN Tagged
-    );
+VOID IopSetAllRelationsTags(IN PRELATION_LIST List, IN BOOLEAN Tagged);
 
 NTSTATUS
-IopSetRelationsTag(
-    IN PRELATION_LIST List,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN Tagged
-    );
-
+IopSetRelationsTag(IN PRELATION_LIST List, IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN Tagged);

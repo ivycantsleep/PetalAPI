@@ -31,9 +31,7 @@ Revision History:
 
 FORCEINLINE
 PSINGLE_LIST_ENTRY
-InterlockedPopEntrySingleList (
-    IN PSINGLE_LIST_ENTRY ListHead
-    )
+InterlockedPopEntrySingleList(IN PSINGLE_LIST_ENTRY ListHead)
 
 /*
 
@@ -59,16 +57,16 @@ Return Value:
     PSINGLE_LIST_ENTRY NextEntry;
 
     FirstEntry = ListHead->Next;
-    do {
-        if (FirstEntry == NULL) {
+    do
+    {
+        if (FirstEntry == NULL)
+        {
             return NULL;
         }
 
         NextEntry = FirstEntry;
         FirstEntry =
-            (PSINGLE_LIST_ENTRY)InterlockedCompareExchangePointer((PVOID *)ListHead,
-                                                                  FirstEntry->Next,
-                                                                  FirstEntry);
+            (PSINGLE_LIST_ENTRY)InterlockedCompareExchangePointer((PVOID *)ListHead, FirstEntry->Next, FirstEntry);
 
     } while (FirstEntry != NextEntry);
     return FirstEntry;
@@ -76,10 +74,7 @@ Return Value:
 
 FORCEINLINE
 PSINGLE_LIST_ENTRY
-InterlockedPushEntrySingleList (
-    IN PSINGLE_LIST_ENTRY ListHead,
-    IN PSINGLE_LIST_ENTRY Entry
-    )
+InterlockedPushEntrySingleList(IN PSINGLE_LIST_ENTRY ListHead, IN PSINGLE_LIST_ENTRY Entry)
 
 /*
 
@@ -107,13 +102,11 @@ Return Value:
     PSINGLE_LIST_ENTRY NextEntry;
 
     FirstEntry = ListHead->Next;
-    do {
+    do
+    {
         Entry->Next = FirstEntry;
         NextEntry = FirstEntry;
-        FirstEntry =
-            (PSINGLE_LIST_ENTRY)InterlockedCompareExchangePointer((PVOID *)ListHead,
-                                                                  Entry,
-                                                                  FirstEntry);
+        FirstEntry = (PSINGLE_LIST_ENTRY)InterlockedCompareExchangePointer((PVOID *)ListHead, Entry, FirstEntry);
 
     } while (FirstEntry != NextEntry);
     return FirstEntry;
@@ -121,9 +114,7 @@ Return Value:
 
 FORCEINLINE
 PSINGLE_LIST_ENTRY
-InterlockedFlushSingleList (
-    IN PSINGLE_LIST_ENTRY ListHead
-    )
+InterlockedFlushSingleList(IN PSINGLE_LIST_ENTRY ListHead)
 
 /*
 
@@ -145,8 +136,7 @@ Return Value:
 
 {
 
-    return (PSINGLE_LIST_ENTRY)InterlockedExchangePointer((PVOID *)ListHead,
-                                                          NULL);
+    return (PSINGLE_LIST_ENTRY)InterlockedExchangePointer((PVOID *)ListHead, NULL);
 }
 
 #endif // _INTRLK_

@@ -25,15 +25,9 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-KiInitializeUserApc (
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKNORMAL_ROUTINE NormalRoutine,
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID KiInitializeUserApc(IN PKEXCEPTION_FRAME ExceptionFrame, IN PKTRAP_FRAME TrapFrame,
+                         IN PKNORMAL_ROUTINE NormalRoutine, IN PVOID NormalContext, IN PVOID SystemArgument1,
+                         IN PVOID SystemArgument2)
 
 /*++
 
@@ -82,20 +76,18 @@ Return Value:
     // continue in user mode at the user mode APC dispatch routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Compute address of aligned machine frame, compute address of
         // context record, and probe user stack for writeability.
         //
 
-        MachineFrame =
-            (PMACHINE_FRAME)((ContextRecord.Rsp - sizeof(MACHINE_FRAME)) & ~STACK_ROUND);
+        MachineFrame = (PMACHINE_FRAME)((ContextRecord.Rsp - sizeof(MACHINE_FRAME)) & ~STACK_ROUND);
 
         UserStack = (ULONG64)MachineFrame - CONTEXT_LENGTH;
-        ProbeForWriteSmallStructure((PVOID)UserStack,
-                                     sizeof(MACHINE_FRAME) + CONTEXT_LENGTH,
-                                     STACK_ALIGN);
+        ProbeForWriteSmallStructure((PVOID)UserStack, sizeof(MACHINE_FRAME) + CONTEXT_LENGTH, STACK_ALIGN);
 
         //
         // Fill in machine frame information.
@@ -127,9 +119,9 @@ Return Value:
 
         TrapFrame->Rsp = UserStack;
         TrapFrame->Rip = (ULONG64)KeUserApcDispatcher;
-
-    } except (DbgBreakPoint(), KiCopyInformation(&ExceptionRecord,
-                                (GetExceptionInformation())->ExceptionRecord)) {
+    }
+    except(DbgBreakPoint(), KiCopyInformation(&ExceptionRecord, (GetExceptionInformation())->ExceptionRecord))
+    {
 
         //
         // Set the address of the exception to the current program address
@@ -137,11 +129,7 @@ Return Value:
         //
 
         ExceptionRecord.ExceptionAddress = (PVOID)(TrapFrame->Rip);
-        KiDispatchException(&ExceptionRecord,
-                            ExceptionFrame,
-                            TrapFrame,
-                            UserMode,
-                            TRUE);
+        KiDispatchException(&ExceptionRecord, ExceptionFrame, TrapFrame, UserMode, TRUE);
     }
 
     return;

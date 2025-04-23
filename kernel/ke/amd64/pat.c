@@ -26,10 +26,7 @@ Revision History:
 
 #pragma alloc_text(PAGELK, KiSetPageAttributesTable)
 
-VOID
-KiSetPageAttributesTable (
-    VOID
-    )
+VOID KiSetPageAttributesTable(VOID)
 
 /*++
 

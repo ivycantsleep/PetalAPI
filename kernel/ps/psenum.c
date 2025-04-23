@@ -37,10 +37,7 @@ Revision History:
 #endif
 
 NTSTATUS
-PsEnumProcesses (
-    IN PROCESS_ENUM_ROUTINE CallBack,
-    IN PVOID Context
-    )
+PsEnumProcesses(IN PROCESS_ENUM_ROUTINE CallBack, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -67,50 +64,50 @@ Return Value:
 
     Process = NULL;
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     PspLockProcessList(CurrentThread);
 
-    for (ListEntry = PsActiveProcessHead.Flink;
-         ListEntry != &PsActiveProcessHead;
-         ListEntry = ListEntry->Flink) {
+    for (ListEntry = PsActiveProcessHead.Flink; ListEntry != &PsActiveProcessHead; ListEntry = ListEntry->Flink)
+    {
 
-        NewProcess = CONTAINING_RECORD (ListEntry, EPROCESS, ActiveProcessLinks);
-        if (ObReferenceObjectSafe (NewProcess)) {
+        NewProcess = CONTAINING_RECORD(ListEntry, EPROCESS, ActiveProcessLinks);
+        if (ObReferenceObjectSafe(NewProcess))
+        {
 
             PspUnlockProcessList(CurrentThread);
 
-            if (Process != NULL) {
-                ObDereferenceObject (Process);
+            if (Process != NULL)
+            {
+                ObDereferenceObject(Process);
             }
 
             Process = NewProcess;
 
-            Status = CallBack (Process, Context);
+            Status = CallBack(Process, Context);
 
-            if (!NT_SUCCESS (Status)) {
-                ObDereferenceObject (Process);
+            if (!NT_SUCCESS(Status))
+            {
+                ObDereferenceObject(Process);
                 return Status;
             }
 
             PspLockProcessList(CurrentThread);
-
         }
     }
 
     PspUnlockProcessList(CurrentThread);
 
-    if (Process != NULL) {
-        ObDereferenceObject (Process);
+    if (Process != NULL)
+    {
+        ObDereferenceObject(Process);
     }
 
     return STATUS_SUCCESS;
 }
 
 PEPROCESS
-PsGetNextProcess (
-    IN PEPROCESS Process
-    )
+PsGetNextProcess(IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -155,39 +152,38 @@ Return Value:
     PETHREAD CurrentThread;
     PLIST_ENTRY ListEntry;
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    PspLockProcessList (CurrentThread);
+    PspLockProcessList(CurrentThread);
 
     for (ListEntry = (Process == NULL) ? PsActiveProcessHead.Flink : Process->ActiveProcessLinks.Flink;
-         ListEntry != &PsActiveProcessHead;
-         ListEntry = ListEntry->Flink) {
+         ListEntry != &PsActiveProcessHead; ListEntry = ListEntry->Flink)
+    {
 
-        NewProcess = CONTAINING_RECORD (ListEntry, EPROCESS, ActiveProcessLinks);
+        NewProcess = CONTAINING_RECORD(ListEntry, EPROCESS, ActiveProcessLinks);
 
         //
         // Processes are removed from this list during process objected deletion (object reference count goes
         // to zero). To prevent double deletion of the process we need to do a safe reference here.
         //
-        if (ObReferenceObjectSafe (NewProcess)) {
+        if (ObReferenceObjectSafe(NewProcess))
+        {
             break;
         }
         NewProcess = NULL;
     }
-    PspUnlockProcessList (CurrentThread);
+    PspUnlockProcessList(CurrentThread);
 
-    if (Process != NULL) {
-        ObDereferenceObject (Process);
+    if (Process != NULL)
+    {
+        ObDereferenceObject(Process);
     }
 
     return NewProcess;
 }
 
 
-VOID
-PsQuitNextProcess (
-    IN PEPROCESS Process
-    )
+VOID PsQuitNextProcess(IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -204,14 +200,11 @@ Return Value:
 
 --*/
 {
-    ObDereferenceObject (Process);
+    ObDereferenceObject(Process);
 }
 
 PETHREAD
-PsGetNextProcessThread (
-    IN PEPROCESS Process,
-    IN PETHREAD Thread
-    )
+PsGetNextProcessThread(IN PEPROCESS Process, IN PETHREAD Thread)
 /*++
 
 Routine Description:
@@ -235,40 +228,42 @@ Return Value:
     PLIST_ENTRY ListEntry;
     PETHREAD NewThread, CurrentThread;
 
-    PAGED_CODE ();
- 
-    CurrentThread = PsGetCurrentThread ();
+    PAGED_CODE();
 
-    PspLockProcessShared (Process, CurrentThread);
+    CurrentThread = PsGetCurrentThread();
 
-    for (ListEntry = (Thread == NULL) ? Process->ThreadListHead.Flink : Thread->ThreadListEntry.Flink;
-         ;
-         ListEntry = ListEntry->Flink) {
-        if (ListEntry != &Process->ThreadListHead) {
-            NewThread = CONTAINING_RECORD (ListEntry, ETHREAD, ThreadListEntry);
+    PspLockProcessShared(Process, CurrentThread);
+
+    for (ListEntry = (Thread == NULL) ? Process->ThreadListHead.Flink : Thread->ThreadListEntry.Flink;;
+         ListEntry = ListEntry->Flink)
+    {
+        if (ListEntry != &Process->ThreadListHead)
+        {
+            NewThread = CONTAINING_RECORD(ListEntry, ETHREAD, ThreadListEntry);
             //
             // Don't reference a thread thats in its delete routine
             //
-            if (ObReferenceObjectSafe (NewThread)) {
+            if (ObReferenceObjectSafe(NewThread))
+            {
                 break;
             }
-        } else {
+        }
+        else
+        {
             NewThread = NULL;
             break;
         }
     }
-    PspUnlockProcessShared (Process, CurrentThread);
+    PspUnlockProcessShared(Process, CurrentThread);
 
-    if (Thread != NULL) {
-        ObDereferenceObject (Thread);
+    if (Thread != NULL)
+    {
+        ObDereferenceObject(Thread);
     }
     return NewThread;
 }
 
-VOID
-PsQuitNextProcessThread (
-    IN PETHREAD Thread
-    )
+VOID PsQuitNextProcessThread(IN PETHREAD Thread)
 /*++
 
 Routine Description:
@@ -285,15 +280,11 @@ Return Value:
 
 --*/
 {
-    ObDereferenceObject (Thread);
+    ObDereferenceObject(Thread);
 }
 
 NTSTATUS
-PsEnumProcessThreads (
-    IN PEPROCESS Process,
-    IN THREAD_ENUM_ROUTINE CallBack,
-    IN PVOID Context
-    )
+PsEnumProcessThreads(IN PEPROCESS Process, IN THREAD_ENUM_ROUTINE CallBack, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -317,12 +308,13 @@ Return Value:
     PETHREAD Thread;
 
     Status = STATUS_SUCCESS;
-    for (Thread = PsGetNextProcessThread (Process, NULL);
-         Thread != NULL;
-         Thread = PsGetNextProcessThread (Process, Thread)) {
-        Status = CallBack (Process, Thread, Context);
-        if (!NT_SUCCESS (Status)) {
-            PsQuitNextProcessThread (Thread);
+    for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+         Thread = PsGetNextProcessThread(Process, Thread))
+    {
+        Status = CallBack(Process, Thread, Context);
+        if (!NT_SUCCESS(Status))
+        {
+            PsQuitNextProcessThread(Thread);
             break;
         }
     }
@@ -330,9 +322,7 @@ Return Value:
 }
 
 PEJOB
-PsGetNextJob (
-    IN PEJOB Job
-    )
+PsGetNextJob(IN PEJOB Job)
 /*++
 
 Routine Description:
@@ -376,38 +366,37 @@ Return Value:
     PEJOB NewJob = NULL;
     PLIST_ENTRY ListEntry;
 
-    ExAcquireFastMutex (&PspJobListLock);
+    ExAcquireFastMutex(&PspJobListLock);
 
-    for (ListEntry = (Job == NULL) ? PspJobList.Flink : Job->JobLinks.Flink;
-         ListEntry != &PspJobList;
-         ListEntry = ListEntry->Flink) {
+    for (ListEntry = (Job == NULL) ? PspJobList.Flink : Job->JobLinks.Flink; ListEntry != &PspJobList;
+         ListEntry = ListEntry->Flink)
+    {
 
-        NewJob = CONTAINING_RECORD (ListEntry, EJOB, JobLinks);
+        NewJob = CONTAINING_RECORD(ListEntry, EJOB, JobLinks);
 
         //
         // Jobs are removed from this list during job objected deletion (object reference count goes
         // to zero). To prevent double deletion of the job we need to do a safe reference here.
         //
-        if (ObReferenceObjectSafe (NewJob)) {
+        if (ObReferenceObjectSafe(NewJob))
+        {
             break;
         }
         NewJob = NULL;
     }
 
-    ExReleaseFastMutex (&PspJobListLock);
+    ExReleaseFastMutex(&PspJobListLock);
 
-    if (Job != NULL) {
-        ObDereferenceObject (Job);
+    if (Job != NULL)
+    {
+        ObDereferenceObject(Job);
     }
 
     return NewJob;
 }
 
 
-VOID
-PsQuitNextJob (
-    IN PEJOB Job
-    )
+VOID PsQuitNextJob(IN PEJOB Job)
 /*++
 
 Routine Description:
@@ -424,14 +413,11 @@ Return Value:
 
 --*/
 {
-    ObDereferenceObject (Job);
+    ObDereferenceObject(Job);
 }
 
 PEPROCESS
-PsGetNextJobProcess (
-    IN PEJOB Job,
-    IN PEPROCESS Process
-    )
+PsGetNextJobProcess(IN PEJOB Job, IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -456,44 +442,46 @@ Return Value:
     PEPROCESS NewProcess;
     PETHREAD CurrentThread;
 
-    PAGED_CODE ();
- 
-    CurrentThread = PsGetCurrentThread ();
+    PAGED_CODE();
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-    ExAcquireResourceExclusiveLite (&Job->JobLock, TRUE);
+    CurrentThread = PsGetCurrentThread();
 
-    for (ListEntry = (Process == NULL) ? Job->ProcessListHead.Flink : Process->JobLinks.Flink;
-         ;
-         ListEntry = ListEntry->Flink) {
-        if (ListEntry != &Job->ProcessListHead) {
-            NewProcess = CONTAINING_RECORD (ListEntry, EPROCESS, JobLinks);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+    ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
+
+    for (ListEntry = (Process == NULL) ? Job->ProcessListHead.Flink : Process->JobLinks.Flink;;
+         ListEntry = ListEntry->Flink)
+    {
+        if (ListEntry != &Job->ProcessListHead)
+        {
+            NewProcess = CONTAINING_RECORD(ListEntry, EPROCESS, JobLinks);
             //
             // Don't reference a process thats in its delete routine
             //
-            if (ObReferenceObjectSafe (NewProcess)) {
+            if (ObReferenceObjectSafe(NewProcess))
+            {
                 break;
             }
-        } else {
+        }
+        else
+        {
             NewProcess = NULL;
             break;
         }
     }
 
-    ExReleaseResourceLite (&Job->JobLock);
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    ExReleaseResourceLite(&Job->JobLock);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
 
-    if (Process != NULL) {
-        ObDereferenceObject (Process);
+    if (Process != NULL)
+    {
+        ObDereferenceObject(Process);
     }
     return NewProcess;
 }
 
-VOID
-PsQuitNextJobProcess (
-    IN PEPROCESS Process
-    )
+VOID PsQuitNextJobProcess(IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -510,14 +498,11 @@ Return Value:
 
 --*/
 {
-    ObDereferenceObject (Process);
+    ObDereferenceObject(Process);
 }
 
 PEPROCESS
-PspGetNextJobProcess (
-    IN PEJOB Job,
-    IN PEPROCESS Process
-    )
+PspGetNextJobProcess(IN PEJOB Job, IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -541,35 +526,37 @@ Return Value:
     PLIST_ENTRY ListEntry;
     PEPROCESS NewProcess;
 
-    PAGED_CODE ();
- 
-    for (ListEntry = (Process == NULL) ? Job->ProcessListHead.Flink : Process->JobLinks.Flink;
-         ;
-         ListEntry = ListEntry->Flink) {
-        if (ListEntry != &Job->ProcessListHead) {
-            NewProcess = CONTAINING_RECORD (ListEntry, EPROCESS, JobLinks);
+    PAGED_CODE();
+
+    for (ListEntry = (Process == NULL) ? Job->ProcessListHead.Flink : Process->JobLinks.Flink;;
+         ListEntry = ListEntry->Flink)
+    {
+        if (ListEntry != &Job->ProcessListHead)
+        {
+            NewProcess = CONTAINING_RECORD(ListEntry, EPROCESS, JobLinks);
             //
             // Don't reference a process thats in its delete routine
             //
-            if (ObReferenceObjectSafe (NewProcess)) {
+            if (ObReferenceObjectSafe(NewProcess))
+            {
                 break;
             }
-        } else {
+        }
+        else
+        {
             NewProcess = NULL;
             break;
         }
     }
 
-    if (Process != NULL) {
-        ObDereferenceObjectDeferDelete (Process);
+    if (Process != NULL)
+    {
+        ObDereferenceObjectDeferDelete(Process);
     }
     return NewProcess;
 }
 
-VOID
-PspQuitNextJobProcess (
-    IN PEPROCESS Process
-    )
+VOID PspQuitNextJobProcess(IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -586,5 +573,5 @@ Return Value:
 
 --*/
 {
-    ObDereferenceObjectDeferDelete (Process);
+    ObDereferenceObjectDeferDelete(Process);
 }

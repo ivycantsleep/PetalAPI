@@ -24,19 +24,15 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,KeFindConfigurationEntry)
-#pragma alloc_text(INIT,KeFindConfigurationNextEntry)
+#pragma alloc_text(INIT, KeFindConfigurationEntry)
+#pragma alloc_text(INIT, KeFindConfigurationNextEntry)
 #endif
 
 PCONFIGURATION_COMPONENT_DATA
-KeFindConfigurationEntry (
-    IN PCONFIGURATION_COMPONENT_DATA Child,
-    IN CONFIGURATION_CLASS Class,
-    IN CONFIGURATION_TYPE Type,
-    IN PULONG Key OPTIONAL
-    )
+KeFindConfigurationEntry(IN PCONFIGURATION_COMPONENT_DATA Child, IN CONFIGURATION_CLASS Class,
+                         IN CONFIGURATION_TYPE Type, IN PULONG Key OPTIONAL)
 /*++
 
 Routine Description:
@@ -55,17 +51,13 @@ Routine Description:
     PCONFIGURATION_COMPONENT_DATA Resume;
 
     Resume = NULL;
-    return KeFindConfigurationNextEntry (Child, Class, Type, Key, &Resume);
+    return KeFindConfigurationNextEntry(Child, Class, Type, Key, &Resume);
 }
-
+
 PCONFIGURATION_COMPONENT_DATA
-KeFindConfigurationNextEntry (
-    IN PCONFIGURATION_COMPONENT_DATA Child,
-    IN CONFIGURATION_CLASS Class,
-    IN CONFIGURATION_TYPE Type,
-    IN PULONG Key OPTIONAL,
-    IN PCONFIGURATION_COMPONENT_DATA *Resume
-    )
+KeFindConfigurationNextEntry(IN PCONFIGURATION_COMPONENT_DATA Child, IN CONFIGURATION_CLASS Class,
+                             IN CONFIGURATION_TYPE Type, IN PULONG Key OPTIONAL,
+                             IN PCONFIGURATION_COMPONENT_DATA *Resume)
 
 /*++
 
@@ -110,11 +102,13 @@ Return Value:
     // value is specified.
     //
 
-    if (ARGUMENT_PRESENT(Key)) {
+    if (ARGUMENT_PRESENT(Key))
+    {
         MatchMask = 0xffffffff;
         MatchKey = *Key;
-
-    } else {
+    }
+    else
+    {
         MatchMask = 0;
         MatchKey = 0;
     }
@@ -124,26 +118,31 @@ Return Value:
     // the specified class, type, and key.
     //
 
-    while (Child != NULL) {
-        if (*Resume) {
+    while (Child != NULL)
+    {
+        if (*Resume)
+        {
             //
             // If resume location found, clear resume location and continue
             // search with next entry
             //
 
-            if (Child == *Resume) {
+            if (Child == *Resume)
+            {
                 *Resume = NULL;
             }
-        } else {
+        }
+        else
+        {
 
             //
             // If the class, type, and key match, then return a pointer to
             // the child entry.
             //
 
-            if ((Child->ComponentEntry.Class == Class) &&
-                (Child->ComponentEntry.Type == Type) &&
-                ((Child->ComponentEntry.Key & MatchMask) == MatchKey)) {
+            if ((Child->ComponentEntry.Class == Class) && (Child->ComponentEntry.Type == Type) &&
+                ((Child->ComponentEntry.Key & MatchMask) == MatchKey))
+            {
                 return Child;
             }
         }
@@ -154,26 +153,31 @@ Return Value:
         //
 
         Sibling = Child->Sibling;
-        while (Sibling != NULL) {
-            if (*Resume) {
+        while (Sibling != NULL)
+        {
+            if (*Resume)
+            {
                 //
                 // If resume location found, clear resume location and continue
                 // search with next entry
                 //
 
-                if (Sibling == *Resume) {
+                if (Sibling == *Resume)
+                {
                     *Resume = NULL;
                 }
-            } else {
+            }
+            else
+            {
 
                 //
                 // If the class, type, and key match, then return a pointer to
                 // the child entry.
                 //
 
-                if ((Sibling->ComponentEntry.Class == Class) &&
-                    (Sibling->ComponentEntry.Type == Type) &&
-                    ((Sibling->ComponentEntry.Key & MatchMask) == MatchKey)) {
+                if ((Sibling->ComponentEntry.Class == Class) && (Sibling->ComponentEntry.Type == Type) &&
+                    ((Sibling->ComponentEntry.Key & MatchMask) == MatchKey))
+                {
                     return Sibling;
                 }
             }
@@ -183,18 +187,14 @@ Return Value:
             // for an entry that matches the specified class, type, and key.
             //
 
-            if (Sibling->Child != NULL) {
-               Entry = KeFindConfigurationNextEntry (
-                                Sibling->Child,
-                                Class,
-                                Type,
-                                Key,
-                                Resume
-                                );
+            if (Sibling->Child != NULL)
+            {
+                Entry = KeFindConfigurationNextEntry(Sibling->Child, Class, Type, Key, Resume);
 
-               if (Entry != NULL) {
-                   return Entry;
-               }
+                if (Entry != NULL)
+                {
+                    return Entry;
+                }
             }
 
             Sibling = Sibling->Sibling;

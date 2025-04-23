@@ -19,11 +19,9 @@ Revision History:
 --*/
 
 #include "kdp.h"
-
+
 LARGE_INTEGER
-KdpQueryPerformanceCounter (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KdpQueryPerformanceCounter(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -47,4 +45,3 @@ Return Value:
 
     return KeQueryPerformanceCounter(0);
 }
-

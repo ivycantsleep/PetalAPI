@@ -22,9 +22,4 @@ Revision History:
 
 --*/
 
-VOID
-FASTCALL
-VfInitVerifier(
-    IN  ULONG   MmFlags
-    );
-
+VOID FASTCALL VfInitVerifier(IN ULONG MmFlags);

@@ -21,11 +21,7 @@ Revision History:
 
 #include "pop.h"
 
-VOID
-PopRegisterForDeviceNotification (
-    IN LPGUID                   Guid,
-    IN POP_POLICY_DEVICE_TYPE   DeviceType
-    );
+VOID PopRegisterForDeviceNotification(IN LPGUID Guid, IN POP_POLICY_DEVICE_TYPE DeviceType);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, PoInitSystem)
@@ -37,9 +33,7 @@ PopRegisterForDeviceNotification (
 #endif
 
 BOOLEAN
-PoInitSystem(
-    IN ULONG  Phase
-    )
+PoInitSystem(IN ULONG Phase)
 /*++
 
 Routine Description:
@@ -58,21 +52,24 @@ Return Value:
 --*/
 
 {
-    HANDLE                              handle;
-    ULONG                               Length, i;
-    UNICODE_STRING                      UnicodeString;
-    NTSTATUS                            Status;
-    PADMINISTRATOR_POWER_POLICY         AdminPolicy;
-    PPOP_HEURISTICS                     HeuristicData;
-    struct {
-        KEY_VALUE_PARTIAL_INFORMATION   Inf;
-        union {
-            POP_HEURISTICS              Heuristics;
-            ADMINISTRATOR_POWER_POLICY  AdminPolicy;
+    HANDLE handle;
+    ULONG Length, i;
+    UNICODE_STRING UnicodeString;
+    NTSTATUS Status;
+    PADMINISTRATOR_POWER_POLICY AdminPolicy;
+    PPOP_HEURISTICS HeuristicData;
+    struct
+    {
+        KEY_VALUE_PARTIAL_INFORMATION Inf;
+        union
+        {
+            POP_HEURISTICS Heuristics;
+            ADMINISTRATOR_POWER_POLICY AdminPolicy;
         } Data;
     } PartialInformation;
 
-    if (Phase == 0) {
+    if (Phase == 0)
+    {
         //
         // irp serialization, notify network, etc.
         //
@@ -90,7 +87,7 @@ Return Value:
         KeInitializeSpinLock(&PopWorkerLock);
         PopCallSystemState = 0;
 
-        ExInitializeWorkItem(&PopUnlockAfterSleepWorkItem,PopUnlockAfterSleepWorker,NULL);
+        ExInitializeWorkItem(&PopUnlockAfterSleepWorkItem, PopUnlockAfterSleepWorker, NULL);
         KeInitializeEvent(&PopUnlockComplete, SynchronizationEvent, TRUE);
 
         //
@@ -115,46 +112,40 @@ Return Value:
         // policy workers
         //
 
-        KeInitializeSpinLock (&PopWorkerSpinLock);
-        InitializeListHead (&PopPolicyIrpQueue);
-        ExInitializeWorkItem (&PopPolicyWorker, PopPolicyWorkerThread, UIntToPtr(PO_WORKER_STATUS));
+        KeInitializeSpinLock(&PopWorkerSpinLock);
+        InitializeListHead(&PopPolicyIrpQueue);
+        ExInitializeWorkItem(&PopPolicyWorker, PopPolicyWorkerThread, UIntToPtr(PO_WORKER_STATUS));
         PopWorkerStatus = 0xffffffff;
 
         //
         // Policy manager
         //
 
-        ExInitializeResourceLite (&PopPolicyLock);
-        ExInitializeFastMutex (&PopVolumeLock);
-        InitializeListHead (&PopVolumeDevices);
-        InitializeListHead (&PopSwitches);
-        InitializeListHead (&PopThermal);
-        InitializeListHead (&PopActionWaiters);
-        ExInitializeNPagedLookasideList(
-            &PopIdleHandlerLookAsideList,
-            NULL,
-            NULL,
-            0,
-            (sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLERS),
-            POP_IDLE_TAG,
-            (sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLERS * 3)
-            );
+        ExInitializeResourceLite(&PopPolicyLock);
+        ExInitializeFastMutex(&PopVolumeLock);
+        InitializeListHead(&PopVolumeDevices);
+        InitializeListHead(&PopSwitches);
+        InitializeListHead(&PopThermal);
+        InitializeListHead(&PopActionWaiters);
+        ExInitializeNPagedLookasideList(&PopIdleHandlerLookAsideList, NULL, NULL, 0,
+                                        (sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLERS), POP_IDLE_TAG,
+                                        (sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLERS * 3));
         PopAction.Action = PowerActionNone;
 
-        PopDefaultPolicy (&PopAcPolicy);
-        PopDefaultPolicy (&PopDcPolicy);
+        PopDefaultPolicy(&PopAcPolicy);
+        PopDefaultPolicy(&PopDcPolicy);
         PopPolicy = &PopAcPolicy;
 
-        PopDefaultProcessorPolicy( &PopAcProcessorPolicy );
-        PopDefaultProcessorPolicy( &PopDcProcessorPolicy );
+        PopDefaultProcessorPolicy(&PopAcProcessorPolicy);
+        PopDefaultProcessorPolicy(&PopDcProcessorPolicy);
         PopProcessorPolicy = &PopAcProcessorPolicy;
 
         PopAdminPolicy.MinSleep = PowerSystemSleeping1;
         PopAdminPolicy.MaxSleep = PowerSystemHibernate;
         PopAdminPolicy.MinVideoTimeout = 0;
-        PopAdminPolicy.MaxVideoTimeout = (ULONG) -1;
+        PopAdminPolicy.MaxVideoTimeout = (ULONG)-1;
         PopAdminPolicy.MinSpindownTimeout = 0;
-        PopAdminPolicy.MaxSpindownTimeout = (ULONG) -1;
+        PopAdminPolicy.MaxSpindownTimeout = (ULONG)-1;
 
         PopFullWake = PO_FULL_WAKE_STATUS | PO_GDI_STATUS;
         PopCoolingMode = PO_TZ_ACTIVE;
@@ -164,7 +155,8 @@ Return Value:
         //
 
         KeInitializeEvent(&PopCB.Event, NotificationEvent, FALSE);
-        for (i=0; i < PO_NUM_POWER_LEVELS; i++) {
+        for (i = 0; i < PO_NUM_POWER_LEVELS; i++)
+        {
             PopCB.Trigger[i].Type = PolicyDeviceBattery;
         }
 
@@ -173,11 +165,10 @@ Return Value:
         // Verify there's no overlap
         //
 
-        ASSERT (!( (ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT) &
-                   (POP_LOW_LATENCY | POP_DISK_SPINDOWN)
-                 ) );
+        ASSERT(!((ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT) &
+                 (POP_LOW_LATENCY | POP_DISK_SPINDOWN)));
 
-    
+
         //
         // Set the default shutdown handler just in case there's hal out there
         // that never registers a shutdown handler of his own.  This will avoid
@@ -188,11 +179,10 @@ Return Value:
         PopPowerStateHandlers[PowerStateShutdownOff].Type = PowerStateShutdownOff;
         PopPowerStateHandlers[PowerStateShutdownOff].RtcWake = FALSE;
         PopPowerStateHandlers[PowerStateShutdownOff].Handler = PopShutdownHandler;
-    
-    
     }
 
-    if (Phase == 1) {
+    if (Phase == 1)
+    {
 
         //
         // Reload PopSimulate to pick up any overrides
@@ -203,7 +193,8 @@ Return Value:
         // For testing, if simulate flag is set turn on
         //
 
-        if (PopSimulate & POP_SIM_CAPABILITIES) {
+        if (PopSimulate & POP_SIM_CAPABILITIES)
+        {
             PopCapabilities.SystemBatteriesPresent = TRUE;
             PopCapabilities.BatteryScale[0].Granularity = 100;
             PopCapabilities.BatteryScale[0].Capacity = 400;
@@ -218,7 +209,8 @@ Return Value:
         // we can on
         //
 
-        if (PopSimulate & POP_SIM_ALL_CAPABILITIES) {
+        if (PopSimulate & POP_SIM_ALL_CAPABILITIES)
+        {
             PopCapabilities.PowerButtonPresent = TRUE;
             PopCapabilities.SleepButtonPresent = TRUE;
             PopCapabilities.LidPresent = TRUE;
@@ -233,29 +225,24 @@ Return Value:
         // Load current status and policie information
         //
 
-        PopAcquirePolicyLock ();
+        PopAcquirePolicyLock();
 
-        Status = PopOpenPowerKey (&handle);
-        if (NT_SUCCESS(Status)) {
+        Status = PopOpenPowerKey(&handle);
+        if (NT_SUCCESS(Status))
+        {
             //
             // Read heuristics structure
             //
 
-            RtlInitUnicodeString (&UnicodeString, PopHeuristicsRegName);
-            Status = ZwQueryValueKey (
-                            handle,
-                            &UnicodeString,
-                            KeyValuePartialInformation,
-                            &PartialInformation,
-                            sizeof (PartialInformation),
-                            &Length
-                            );
+            RtlInitUnicodeString(&UnicodeString, PopHeuristicsRegName);
+            Status = ZwQueryValueKey(handle, &UnicodeString, KeyValuePartialInformation, &PartialInformation,
+                                     sizeof(PartialInformation), &Length);
 
             Length -= FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
-            HeuristicData = (PPOP_HEURISTICS) PartialInformation.Inf.Data;
+            HeuristicData = (PPOP_HEURISTICS)PartialInformation.Inf.Data;
 
-            if (NT_SUCCESS(Status)  &&
-                Length == sizeof(PopHeuristics)) {
+            if (NT_SUCCESS(Status) && Length == sizeof(PopHeuristics))
+            {
 
                 //
                 // If we see a version 2 heuristics field, it probably has a
@@ -266,16 +253,18 @@ Return Value:
                 // shipping NT5 beta3
                 //
 
-                if (HeuristicData->Version <= POP_HEURISTICS_VERSION_CLEAR_TRANSFER) {
+                if (HeuristicData->Version <= POP_HEURISTICS_VERSION_CLEAR_TRANSFER)
+                {
                     HeuristicData->Version = POP_HEURISTICS_VERSION;
                     HeuristicData->IoTransferSamples = 0;
                 }
-                if (HeuristicData->Version == POP_HEURISTICS_VERSION) {
+                if (HeuristicData->Version == POP_HEURISTICS_VERSION)
+                {
                     //
                     // Restore values
                     //
 
-                    RtlCopyMemory (&PopHeuristics, HeuristicData, sizeof(*HeuristicData));
+                    RtlCopyMemory(&PopHeuristics, HeuristicData, sizeof(*HeuristicData));
                 }
             }
 
@@ -284,7 +273,8 @@ Return Value:
             //
 
             PopHeuristics.Version = POP_HEURISTICS_VERSION;
-            if (!PopHeuristics.IoTransferWeight) {
+            if (!PopHeuristics.IoTransferWeight)
+            {
                 PopHeuristics.IoTransferWeight = 999999;
                 PopHeuristics.IoTransferSamples = 0;
                 PopHeuristics.IoTransferTotal = 0;
@@ -294,49 +284,43 @@ Return Value:
             // Read administrator policy
             //
 
-            RtlInitUnicodeString (&UnicodeString, PopAdminRegName);
-            Status = ZwQueryValueKey (
-                            handle,
-                            &UnicodeString,
-                            KeyValuePartialInformation,
-                            &PartialInformation,
-                            sizeof (PartialInformation),
-                            &Length
-                            );
+            RtlInitUnicodeString(&UnicodeString, PopAdminRegName);
+            Status = ZwQueryValueKey(handle, &UnicodeString, KeyValuePartialInformation, &PartialInformation,
+                                     sizeof(PartialInformation), &Length);
 
             Length -= FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
-            AdminPolicy = (PADMINISTRATOR_POWER_POLICY) PartialInformation.Inf.Data;
-            if (NT_SUCCESS(Status)) {
-                try {
-                    PopApplyAdminPolicy (FALSE, AdminPolicy, Length);
-                } except (EXCEPTION_EXECUTE_HANDLER) {
-                    ASSERT (GetExceptionCode());
+            AdminPolicy = (PADMINISTRATOR_POWER_POLICY)PartialInformation.Inf.Data;
+            if (NT_SUCCESS(Status))
+            {
+                try
+                {
+                    PopApplyAdminPolicy(FALSE, AdminPolicy, Length);
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
+                    ASSERT(GetExceptionCode());
                 }
             }
-            NtClose (handle);
+            NtClose(handle);
         }
 
         //
         // Read and apply the current policies
         //
 
-        PopResetCurrentPolicies ();
-        PopReleasePolicyLock (FALSE);
+        PopResetCurrentPolicies();
+        PopReleasePolicyLock(FALSE);
 
         //
         // Turn on idle detection
         //
         PopIdleScanTime.HighPart = 0;
-        PopIdleScanTime.LowPart = 10*1000*1000 * PO_IDLE_SCAN_INTERVAL;
+        PopIdleScanTime.LowPart = 10 * 1000 * 1000 * PO_IDLE_SCAN_INTERVAL;
 
         KeInitializeTimer(&PopIdleScanTimer);
-        KeSetTimerEx(
-            &PopIdleScanTimer,
-            PopIdleScanTime,
-            PO_IDLE_SCAN_INTERVAL*1000,  // call wants milliseconds
-            &PopIdleScanDpc
-            );
-
+        KeSetTimerEx(&PopIdleScanTimer, PopIdleScanTime,
+                     PO_IDLE_SCAN_INTERVAL * 1000, // call wants milliseconds
+                     &PopIdleScanDpc);
     }
 
     //
@@ -346,37 +330,32 @@ Return Value:
     return TRUE;
 }
 
-VOID
-PopDefaultPolicy (
-    IN OUT PSYSTEM_POWER_POLICY Policy
-    )
+VOID PopDefaultPolicy(IN OUT PSYSTEM_POWER_POLICY Policy)
 {
-    ULONG       i;
+    ULONG i;
 
 
-    RtlZeroMemory (Policy, sizeof(SYSTEM_POWER_POLICY));
-    Policy->Revision             = 1;
-    Policy->PowerButton.Action   = PowerActionShutdownOff;
-    Policy->SleepButton.Action   = PowerActionSleep;
-    Policy->LidClose.Action      = PowerActionNone;
-    Policy->LidOpenWake          = PowerSystemWorking;
-    Policy->MinSleep             = PowerSystemSleeping1;
-    Policy->MaxSleep             = PowerSystemSleeping3;
-    Policy->ReducedLatencySleep  = PowerSystemSleeping1;
-    Policy->WinLogonFlags        = 0;
+    RtlZeroMemory(Policy, sizeof(SYSTEM_POWER_POLICY));
+    Policy->Revision = 1;
+    Policy->PowerButton.Action = PowerActionShutdownOff;
+    Policy->SleepButton.Action = PowerActionSleep;
+    Policy->LidClose.Action = PowerActionNone;
+    Policy->LidOpenWake = PowerSystemWorking;
+    Policy->MinSleep = PowerSystemSleeping1;
+    Policy->MaxSleep = PowerSystemSleeping3;
+    Policy->ReducedLatencySleep = PowerSystemSleeping1;
+    Policy->WinLogonFlags = 0;
     Policy->FanThrottleTolerance = PO_NO_FAN_THROTTLE;
-    Policy->ForcedThrottle       = PO_NO_FORCED_THROTTLE;
+    Policy->ForcedThrottle = PO_NO_FORCED_THROTTLE;
     Policy->OverThrottled.Action = PowerActionNone;
     Policy->BroadcastCapacityResolution = 25;
-    for (i=0; i < NUM_DISCHARGE_POLICIES; i++) {
+    for (i = 0; i < NUM_DISCHARGE_POLICIES; i++)
+    {
         Policy->DischargePolicy[i].MinSystemState = PowerSystemSleeping1;
     }
 }
 
-VOID
-PopDefaultProcessorPolicy(
-    IN OUT PPROCESSOR_POWER_POLICY Policy
-    )
+VOID PopDefaultProcessorPolicy(IN OUT PPROCESSOR_POWER_POLICY Policy)
 {
     int i;
 
@@ -384,146 +363,118 @@ PopDefaultProcessorPolicy(
     Policy->Revision = 1;
     Policy->PolicyCount = 3;
 
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++)
+    {
 
         //
         // Initialize the entries to some common values
         //
-        Policy->Policy[i].TimeCheck      = PopIdleTimeCheck;
-        Policy->Policy[i].PromoteLimit   = PopIdleDefaultPromoteTime;
-        Policy->Policy[i].DemoteLimit    = PopIdleDefaultDemoteTime;
-        Policy->Policy[i].PromotePercent = (UCHAR) PopIdleDefaultPromotePercent;
-        Policy->Policy[i].DemotePercent  = (UCHAR) PopIdleDefaultDemotePercent;
-        Policy->Policy[i].AllowDemotion  = 1;
+        Policy->Policy[i].TimeCheck = PopIdleTimeCheck;
+        Policy->Policy[i].PromoteLimit = PopIdleDefaultPromoteTime;
+        Policy->Policy[i].DemoteLimit = PopIdleDefaultDemoteTime;
+        Policy->Policy[i].PromotePercent = (UCHAR)PopIdleDefaultPromotePercent;
+        Policy->Policy[i].DemotePercent = (UCHAR)PopIdleDefaultDemotePercent;
+        Policy->Policy[i].AllowDemotion = 1;
         Policy->Policy[i].AllowPromotion = 1;
 
         //
         // Special cases
         //
-        if (i == 0) {
+        if (i == 0)
+        {
 
-            Policy->Policy[i].PromoteLimit   = PopIdleDefaultPromoteFromC1Time;
-            Policy->Policy[i].PromotePercent = (UCHAR) PopIdleDefaultPromoteFromC1Percent;
-            Policy->Policy[i].TimeCheck      = PopIdle0TimeCheck;
+            Policy->Policy[i].PromoteLimit = PopIdleDefaultPromoteFromC1Time;
+            Policy->Policy[i].PromotePercent = (UCHAR)PopIdleDefaultPromoteFromC1Percent;
+            Policy->Policy[i].TimeCheck = PopIdle0TimeCheck;
 
             //
             // Do Something special if we are a multiprocessor machine..
             //
-            if (KeNumberProcessors > 1) {
+            if (KeNumberProcessors > 1)
+            {
 
-                Policy->Policy[i].DemotePercent = (UCHAR) PopIdleTo0Percent;
-
-            } else {
+                Policy->Policy[i].DemotePercent = (UCHAR)PopIdleTo0Percent;
+            }
+            else
+            {
 
                 Policy->Policy[i].DemotePercent = 0;
                 Policy->Policy[i].AllowDemotion = 0;
-
             }
+        }
+        else if (i == 1)
+        {
 
-        } else if (i == 1) {
-
-            Policy->Policy[i].DemoteLimit   = PopIdleDefaultDemoteToC1Time;
-            Policy->Policy[i].DemotePercent = (UCHAR) PopIdleDefaultDemoteToC1Percent;
-
-        } else if (i == 2) {
+            Policy->Policy[i].DemoteLimit = PopIdleDefaultDemoteToC1Time;
+            Policy->Policy[i].DemotePercent = (UCHAR)PopIdleDefaultDemoteToC1Percent;
+        }
+        else if (i == 2)
+        {
 
             Policy->Policy[i].AllowPromotion = 0;
-            Policy->Policy[i].PromoteLimit = (ULONG) -1;
+            Policy->Policy[i].PromoteLimit = (ULONG)-1;
             Policy->Policy[i].PromotePercent = 0;
-
         }
-
     }
-
-
 }
 
 
-VOID
-PoInitDriverServices (
-    IN ULONG Phase
-    )
+VOID PoInitDriverServices(IN ULONG Phase)
 {
-    ULONG           TickRate;
-    LARGE_INTEGER   PerfRate;
+    ULONG TickRate;
+    LARGE_INTEGER PerfRate;
 
-    if (Phase == 0) {
+    if (Phase == 0)
+    {
         TickRate = KeQueryTimeIncrement();
-        KeQueryPerformanceCounter (&PerfRate);
+        KeQueryPerformanceCounter(&PerfRate);
 
         //
         // Connect to any policy devices which arrive
         //
 
-        PopRegisterForDeviceNotification (
-                (LPGUID) &GUID_CLASS_INPUT,
-                PolicyDeviceSystemButton
-                );
+        PopRegisterForDeviceNotification((LPGUID)&GUID_CLASS_INPUT, PolicyDeviceSystemButton);
 
-        PopRegisterForDeviceNotification (
-                (LPGUID) &GUID_DEVICE_THERMAL_ZONE,
-                PolicyDeviceThermalZone
-                );
+        PopRegisterForDeviceNotification((LPGUID)&GUID_DEVICE_THERMAL_ZONE, PolicyDeviceThermalZone);
 
-        PopRegisterForDeviceNotification (
-                (LPGUID) &GUID_DEVICE_SYS_BUTTON,
-                PolicyDeviceSystemButton
-                );
+        PopRegisterForDeviceNotification((LPGUID)&GUID_DEVICE_SYS_BUTTON, PolicyDeviceSystemButton);
 
-        PopRegisterForDeviceNotification (
-                (LPGUID) &GUID_DEVICE_BATTERY,
-                PolicyDeviceBattery
-                );
+        PopRegisterForDeviceNotification((LPGUID)&GUID_DEVICE_BATTERY, PolicyDeviceBattery);
 
 
         //
         // Initialize global idle values
         //
         PopIdle0PromoteTicks = PopIdleFrom0Delay * US2TIME / TickRate + 1;
-        PopIdle0PromoteLimit = (PopIdleFrom0Delay * US2TIME / TickRate) * 100 /
-            PopIdleFrom0IdlePercent;
+        PopIdle0PromoteLimit = (PopIdleFrom0Delay * US2TIME / TickRate) * 100 / PopIdleFrom0IdlePercent;
 
         //
         // Initialize global perf values
         //
-        PopPerfTimeTicks         = PopPerfTimeDelta * US2TIME / TickRate + 1;
+        PopPerfTimeTicks = PopPerfTimeDelta * US2TIME / TickRate + 1;
         PopPerfCriticalTimeTicks = PopPerfCriticalTimeDelta * US2TIME / TickRate + 1;
 
         //
         // Initialize DPC for idle device timer
         //
         KeInitializeDpc(&PopIdleScanDpc, PopScanIdleList, NULL);
-        return ;
+        return;
     }
 }
 
 
-VOID
-PopRegisterForDeviceNotification (
-    IN LPGUID                   Guid,
-    IN POP_POLICY_DEVICE_TYPE   DeviceType
-    )
+VOID PopRegisterForDeviceNotification(IN LPGUID Guid, IN POP_POLICY_DEVICE_TYPE DeviceType)
 {
-    NTSTATUS    Status;
-    PVOID       junk;
+    NTSTATUS Status;
+    PVOID junk;
 
-    Status = IoRegisterPlugPlayNotification (
-                    EventCategoryDeviceInterfaceChange,
-                    0,
-                    Guid,
-                    IoPnpDriverObject,
-                    PopNotifyPolicyDevice,
-                    (PVOID) DeviceType,
-                    &junk
-                    );
+    Status = IoRegisterPlugPlayNotification(EventCategoryDeviceInterfaceChange, 0, Guid, IoPnpDriverObject,
+                                            PopNotifyPolicyDevice, (PVOID)DeviceType, &junk);
 
-    ASSERT (NT_SUCCESS(Status));
+    ASSERT(NT_SUCCESS(Status));
 }
 
-VOID
-PoInitHiberServices (
-    IN BOOLEAN  Setup
-    )
+VOID PoInitHiberServices(IN BOOLEAN Setup)
 /*++
 
 Routine Description:
@@ -547,20 +498,18 @@ Return Value:
 --*/
 {
     NTSTATUS Status;
-    SYSTEM_POWER_CAPABILITIES   PowerCapabilities;
+    SYSTEM_POWER_CAPABILITIES PowerCapabilities;
 
     //
     // If a hiber file was reserved before then try to reserve one this
     // time too.
     //
-    Status = ZwPowerInformation(SystemPowerCapabilities,
-                                NULL,
-                                0,
-                                &PowerCapabilities,
-                                sizeof(SYSTEM_POWER_CAPABILITIES));
+    Status =
+        ZwPowerInformation(SystemPowerCapabilities, NULL, 0, &PowerCapabilities, sizeof(SYSTEM_POWER_CAPABILITIES));
     ASSERT(NT_SUCCESS(Status));
 
-    if (PopHeuristics.HiberFileEnabled) {
+    if (PopHeuristics.HiberFileEnabled)
+    {
         PopAcquirePolicyLock();
         PopEnableHiberFile(TRUE);
 
@@ -573,7 +522,8 @@ Return Value:
         // will try and reenable hibernation on the next boot. So if someone boots to
         // safe mode, hibernation will still be enabled after they reboot.
         //
-        if (!PowerCapabilities.SystemS4) {
+        if (!PowerCapabilities.SystemS4)
+        {
             PopEnableHiberFile(FALSE);
             PopHeuristics.HiberFileEnabled = TRUE;
             PopHeuristics.Dirty = TRUE;
@@ -588,6 +538,6 @@ Return Value:
     //
 
     PopDispatchPolicyIrps = TRUE;
-    PopGetPolicyWorker (PO_WORKER_MAIN);
-    PopCheckForWork (TRUE);
+    PopGetPolicyWorker(PO_WORKER_MAIN);
+    PopCheckForWork(TRUE);
 }

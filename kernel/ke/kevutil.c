@@ -31,12 +31,8 @@ Revision History:
 #endif // ALLOC_PRAGMA
 
 NTSTATUS
-KevUtilAddressToFileHeader(
-    IN  PVOID                   Address,
-    OUT UINT_PTR                *OffsetIntoImage,
-    OUT PUNICODE_STRING         *DriverName,
-    OUT BOOLEAN                 *InVerifierList
-    )
+KevUtilAddressToFileHeader(IN PVOID Address, OUT UINT_PTR *OffsetIntoImage, OUT PUNICODE_STRING *DriverName,
+                           OUT BOOLEAN *InVerifierList)
 /*++
 
 Routine Description:
@@ -86,22 +82,21 @@ Return Value:
     // pageable, so we do what the bugcheck stuff does...
     //
     next = pModuleListHead->Flink;
-    if (next != NULL) {
-        while (next != pModuleListHead) {
+    if (next != NULL)
+    {
+        while (next != pModuleListHead)
+        {
 
             //
             // Extract the data table entry
             //
-            pDataTableEntry = CONTAINING_RECORD(
-                next,
-                LDR_DATA_TABLE_ENTRY,
-                InLoadOrderLinks
-                );
+            pDataTableEntry = CONTAINING_RECORD(next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
             next = next->Flink;
-            pCurBase = (UINT_PTR) pDataTableEntry->DllBase;
+            pCurBase = (UINT_PTR)pDataTableEntry->DllBase;
             bounds = pCurBase + pDataTableEntry->SizeOfImage;
-            if ((UINT_PTR)Address >= pCurBase && (UINT_PTR)Address < bounds) {
+            if ((UINT_PTR)Address >= pCurBase && (UINT_PTR)Address < bounds)
+            {
 
                 //
                 // We have a match, record it and get out of here.
@@ -112,7 +107,8 @@ Return Value:
         }
     }
 
-    if (!pReturnBase) {
+    if (!pReturnBase)
+    {
 
         //
         // ADRIAO BUGBUG 02/16/2000 -
@@ -124,19 +120,17 @@ Return Value:
     //
     // Here we go!
     //
-    *OffsetIntoImage = (UINT_PTR) Address - pReturnBase;
+    *OffsetIntoImage = (UINT_PTR)Address - pReturnBase;
     *DriverName = &pDataTableEntry->BaseDllName;
 
     //
     // Now record whether this is in the verifying table.
     //
-    if (pDataTableEntry->Flags & LDRP_IMAGE_VERIFYING) {
+    if (pDataTableEntry->Flags & LDRP_IMAGE_VERIFYING)
+    {
 
         *InVerifierList = TRUE;
     }
 
     return STATUS_SUCCESS;
 }
-
-
-

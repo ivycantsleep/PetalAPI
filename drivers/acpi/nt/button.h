@@ -23,40 +23,23 @@ Environment:
 #ifndef _BUTTON_H_
 #define _BUTTON_H_
 
-    extern KSPIN_LOCK     AcpiButtonLock;
-    extern LIST_ENTRY     AcpiButtonList;
-    extern PDEVICE_OBJECT FixedButtonDeviceObject;
+extern KSPIN_LOCK AcpiButtonLock;
+extern LIST_ENTRY AcpiButtonList;
+extern PDEVICE_OBJECT FixedButtonDeviceObject;
 
-    VOID
-    ACPIButtonCancelRequest(
-        IN  PDEVICE_OBJECT  DeviceObject,
-        IN  PIRP            Irp
-        );
+VOID ACPIButtonCancelRequest(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-    BOOLEAN
-    ACPIButtonCompletePendingIrps(
-        IN  PDEVICE_OBJECT  DeviceObject,
-        IN  ULONG           ButtonEvent
-        );
+BOOLEAN
+ACPIButtonCompletePendingIrps(IN PDEVICE_OBJECT DeviceObject, IN ULONG ButtonEvent);
 
 
-    NTSTATUS
-    ACPIButtonDeviceControl (
-        IN  PDEVICE_OBJECT  DeviceObject,
-        IN  PIRP            Irp
-        );
+NTSTATUS
+ACPIButtonDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-    NTSTATUS
-    ACPIButtonEvent (
-        IN PDEVICE_OBJECT   DeviceObject,
-        IN ULONG            ButtonEvent,
-        IN PIRP             Irp
-        );
+NTSTATUS
+ACPIButtonEvent(IN PDEVICE_OBJECT DeviceObject, IN ULONG ButtonEvent, IN PIRP Irp);
 
-    NTSTATUS
-    ACPIButtonStartDevice (
-        IN  PDEVICE_OBJECT  DeviceObject,
-        IN  PIRP            Irp
-        );
+NTSTATUS
+ACPIButtonStartDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 #endif

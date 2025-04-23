@@ -34,32 +34,28 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-#define WORK_SIZE   1024
+#define WORK_SIZE 1024
 
 void __cdecl main(int, char *);
 void processargs();
 
-UNICODE_STRING  KeyPath;
-WCHAR           KeyPathBuffer[WORK_SIZE];
+UNICODE_STRING KeyPath;
+WCHAR KeyPathBuffer[WORK_SIZE];
 
-UNICODE_STRING  NewName;
-WCHAR           NewNameBuffer[WORK_SIZE];
-UNICODE_STRING  OldName;
-WCHAR           OldNameBuffer[WORK_SIZE];
+UNICODE_STRING NewName;
+WCHAR NewNameBuffer[WORK_SIZE];
+UNICODE_STRING OldName;
+WCHAR OldNameBuffer[WORK_SIZE];
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES NewAttributes;
     OBJECT_ATTRIBUTES OldAttributes;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    IO_STATUS_BLOCK  IoStatus;
-    HANDLE  FileHandle;
-    HANDLE  KeyHandle;
+    IO_STATUS_BLOCK IoStatus;
+    HANDLE FileHandle;
+    HANDLE KeyHandle;
     BOOLEAN WasEnabled;
 
     //
@@ -86,47 +82,25 @@ __cdecl main(
 
     printf("rtreplac: starting\n");
 
-    InitializeObjectAttributes(
-        &NewAttributes,
-        &NewName,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&NewAttributes, &NewName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
-    InitializeObjectAttributes(
-        &OldAttributes,
-        &OldName,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&OldAttributes, &OldName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &KeyPath,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyPath, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
-    status = NtOpenKey(
-                &KeyHandle,
-                MAXIMUM_ALLOWED,
-                &ObjectAttributes
-                );
-    if (!NT_SUCCESS(status)) {
+    status = NtOpenKey(&KeyHandle, MAXIMUM_ALLOWED, &ObjectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         printf("rtreplac: key open failed status = %08lx\n", status);
         exit(1);
     }
 
     RtlAdjustPrivilege(SE_RESTORE_PRIVILEGE, TRUE, FALSE, &WasEnabled);
-    status = NtReplaceKey(&NewAttributes,
-                          KeyHandle,
-                          &OldAttributes);
+    status = NtReplaceKey(&NewAttributes, KeyHandle, &OldAttributes);
     RtlAdjustPrivilege(SE_RESTORE_PRIVILEGE, WasEnabled, FALSE, &WasEnabled);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("rtreplac: NtReplaceKey failed status = %08lx\n", status);
         exit(1);
     }
@@ -134,65 +108,33 @@ __cdecl main(
     printf("rtreplac: success\n");
     exit(0);
 }
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
     UNICODE_STRING DosFileName;
 
-    if ( (argc != 4) )
+    if ((argc != 4))
     {
-        printf("Usage: %s <KeyName> <NewFileName> <OldFileName>\n",
-                argv[0]);
+        printf("Usage: %s <KeyName> <NewFileName> <OldFileName>\n", argv[0]);
         exit(1);
     }
 
-    RtlInitAnsiString(
-        &temp,
-        argv[1]
-        );
+    RtlInitAnsiString(&temp, argv[1]);
 
-    RtlAnsiStringToUnicodeString(
-        &KeyPath,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&KeyPath, &temp, TRUE);
 
-    RtlInitAnsiString(
-        &temp,
-        argv[2]
-        );
+    RtlInitAnsiString(&temp, argv[2]);
 
-    RtlAnsiStringToUnicodeString(
-        &DosFileName,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&DosFileName, &temp, TRUE);
 
-    RtlDosPathNameToNtPathName_U( DosFileName.Buffer,
-                                  &NewName,
-                                  NULL,
-                                  NULL );
+    RtlDosPathNameToNtPathName_U(DosFileName.Buffer, &NewName, NULL, NULL);
 
-    RtlInitAnsiString(
-        &temp,
-        argv[3]
-        );
+    RtlInitAnsiString(&temp, argv[3]);
 
-    RtlAnsiStringToUnicodeString(
-        &DosFileName,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&DosFileName, &temp, TRUE);
 
-    RtlDosPathNameToNtPathName_U( DosFileName.Buffer,
-                                  &OldName,
-                                  NULL,
-                                  NULL );
+    RtlDosPathNameToNtPathName_U(DosFileName.Buffer, &OldName, NULL, NULL);
 
     return;
 }

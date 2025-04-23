@@ -19,7 +19,8 @@
  * (.ICO & .CUR) files.  All fields are shared except xHotspot and yHotspot
  * which are only valid for cursors.
  */
-typedef struct _ICONFILERESDIR {    // ird
+typedef struct _ICONFILERESDIR
+{ // ird
     BYTE bWidth;
     BYTE bHeight;
     BYTE bColorCount;
@@ -30,58 +31,27 @@ typedef struct _ICONFILERESDIR {    // ird
     DWORD dwDIBOffset;
 } ICONFILERESDIR;
 
-typedef struct _HOTSPOTREC {    // hs
+typedef struct _HOTSPOTREC
+{ // hs
     WORD xHotspot;
     WORD yHotspot;
 } HOTSPOTREC;
 
-PCURSORRESOURCE ReadIconGuts(
-    IN  PFILEINFO   pfi,
-    IN  LPNEWHEADER pnhBase,
-    IN  int         offResBase,
-    OUT LPWSTR     *prt,
-    IN  int         cxDesired,
-    IN  int         cyDesired,
-    IN  DWORD       LR_flags);
+PCURSORRESOURCE ReadIconGuts(IN PFILEINFO pfi, IN LPNEWHEADER pnhBase, IN int offResBase, OUT LPWSTR *prt,
+                             IN int cxDesired, IN int cyDesired, IN DWORD LR_flags);
 
-BOOL ReadTag(
-    IN  PFILEINFO pfi,
-    OUT PRTAG     ptag);
+BOOL ReadTag(IN PFILEINFO pfi, OUT PRTAG ptag);
 
-BOOL ReadChunk(
-    IN  PFILEINFO pfi,
-    IN      PRTAG ptag,
-    OUT     PVOID pv);
+BOOL ReadChunk(IN PFILEINFO pfi, IN PRTAG ptag, OUT PVOID pv);
 
-BOOL SkipChunk(
-    IN PFILEINFO pfi,
-    IN PRTAG     ptag);
+BOOL SkipChunk(IN PFILEINFO pfi, IN PRTAG ptag);
 
-HICON CreateAniIcon(
-    LPCWSTR pszName,
-    LPWSTR rt,
-    int cicur,
-    DWORD *aicur,
-    int cpcur,
-    HCURSOR *ahcur,
-    JIF jifRate,
-    PJIF ajifRate,
-    BOOL fPublic);
+HICON CreateAniIcon(LPCWSTR pszName, LPWSTR rt, int cicur, DWORD *aicur, int cpcur, HCURSOR *ahcur, JIF jifRate,
+                    PJIF ajifRate, BOOL fPublic);
 
-HCURSOR ReadIconFromFileMap(
-    IN PFILEINFO   pfi,
-    IN int         cbSize,
-    IN DWORD       cxDesired,
-    IN DWORD       cyDesired,
-    IN DWORD       LR_flags);
+HCURSOR ReadIconFromFileMap(IN PFILEINFO pfi, IN int cbSize, IN DWORD cxDesired, IN DWORD cyDesired, IN DWORD LR_flags);
 
-HICON LoadAniIcon(
-    IN PFILEINFO pfi,
-    IN LPWSTR    rt,
-    IN DWORD     cxDesired,
-    IN DWORD     cyDesired,
-    IN DWORD     LR_flags);
-
+HICON LoadAniIcon(IN PFILEINFO pfi, IN LPWSTR rt, IN DWORD cxDesired, IN DWORD cyDesired, IN DWORD LR_flags);
 
 
 /***************************************************************************\
@@ -95,17 +65,10 @@ HICON LoadAniIcon(
 
 
 FUNCLOG1(LOG_GENERAL, HCURSOR, WINAPI, LoadCursorFromFileW, LPCWSTR, pszFilename)
-HCURSOR WINAPI LoadCursorFromFileW(
-    LPCWSTR pszFilename)
+HCURSOR WINAPI LoadCursorFromFileW(LPCWSTR pszFilename)
 {
-    return(LoadImage(NULL,
-                     pszFilename,
-                     IMAGE_CURSOR,
-                     0,
-                     0,
-                     LR_DEFAULTSIZE | LR_LOADFROMFILE));
+    return (LoadImage(NULL, pszFilename, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_LOADFROMFILE));
 }
-
 
 
 /***********************************************************************\
@@ -118,14 +81,12 @@ HCURSOR WINAPI LoadCursorFromFileW(
 
 
 FUNCLOG1(LOG_GENERAL, HCURSOR, WINAPI, LoadCursorFromFileA, LPCSTR, pszFilename)
-HCURSOR WINAPI LoadCursorFromFileA(
-    LPCSTR pszFilename)
+HCURSOR WINAPI LoadCursorFromFileA(LPCSTR pszFilename)
 {
     LPWSTR lpUniName;
     HCURSOR hcur;
 
-    if (pszFilename == NULL ||
-            !MBToWCS(pszFilename, -1, &lpUniName, -1, TRUE))
+    if (pszFilename == NULL || !MBToWCS(pszFilename, -1, &lpUniName, -1, TRUE))
         return (HANDLE)NULL;
 
     hcur = LoadCursorFromFileW(lpUniName);
@@ -134,7 +95,6 @@ HCURSOR WINAPI LoadCursorFromFileA(
 
     return hcur;
 }
-
 
 
 /***********************************************************************\
@@ -146,16 +106,12 @@ HCURSOR WINAPI LoadCursorFromFileA(
 *
 * 11/16/1995 Created SanfordS
 \***********************************************************************/
-BOOL ReadFilePtr(
-    IN  PFILEINFO pfi,
-    OUT LPVOID   *ppBuf,
-    IN  DWORD     cb)
+BOOL ReadFilePtr(IN PFILEINFO pfi, OUT LPVOID *ppBuf, IN DWORD cb)
 {
     *ppBuf = pfi->pFilePtr;
     pfi->pFilePtr += cb;
     return (pfi->pFilePtr <= pfi->pFileEnd);
 }
-
 
 
 /***********************************************************************\
@@ -167,16 +123,12 @@ BOOL ReadFilePtr(
 *
 * 11/16/1995 Created SanfordS
 \***********************************************************************/
-BOOL ReadFilePtrUnaligned(
-    IN  PFILEINFO pfi,
-    OUT VOID UNALIGNED **ppBuf,
-    IN  DWORD     cb)
+BOOL ReadFilePtrUnaligned(IN PFILEINFO pfi, OUT VOID UNALIGNED **ppBuf, IN DWORD cb)
 {
     *ppBuf = pfi->pFilePtr;
     pfi->pFilePtr += cb;
     return (pfi->pFilePtr <= pfi->pFileEnd);
 }
-
 
 
 /***********************************************************************\
@@ -188,19 +140,16 @@ BOOL ReadFilePtrUnaligned(
 *
 * 11/16/1995 Created SanfordS
 \***********************************************************************/
-BOOL ReadFilePtrCopy(
-    IN     PFILEINFO pfi,
-    IN OUT LPVOID pBuf,
-    IN     DWORD cb)
+BOOL ReadFilePtrCopy(IN PFILEINFO pfi, IN OUT LPVOID pBuf, IN DWORD cb)
 {
-    if (pfi->pFilePtr + cb > pfi->pFileEnd) {
-        return(FALSE);
+    if (pfi->pFilePtr + cb > pfi->pFileEnd)
+    {
+        return (FALSE);
     }
     RtlCopyMemory(pBuf, pfi->pFilePtr, cb);
     pfi->pFilePtr += cb;
     return TRUE;
 }
-
 
 
 /***************************************************************************\
@@ -212,57 +161,53 @@ BOOL ReadFilePtrCopy(
 * 10-02-91 DarrinM      Created.
 * 03-25-93 Jonpa        Changed to use RIFF format instead of ASDF
 \***************************************************************************/
-BOOL ReadTag(
-    IN  PFILEINFO pfi,
-    OUT PRTAG     ptag)
+BOOL ReadTag(IN PFILEINFO pfi, OUT PRTAG ptag)
 {
-    ptag->ckID = ptag->ckSize = 0L;  // in case we fail the read.
+    ptag->ckID = ptag->ckSize = 0L; // in case we fail the read.
 
-    return(ReadFilePtrCopy(pfi, ptag, sizeof(RTAG)));
+    return (ReadFilePtrCopy(pfi, ptag, sizeof(RTAG)));
 }
 
 
-
-BOOL ReadChunk(
-    IN  PFILEINFO pfi,
-    IN  PRTAG     ptag,
-    OUT PVOID     pv)
+BOOL ReadChunk(IN PFILEINFO pfi, IN PRTAG ptag, OUT PVOID pv)
 {
     if (!ReadFilePtrCopy(pfi, pv, ptag->ckSize))
         return FALSE;
 
     /* WORD align file pointer */
-    if( ptag->ckSize & 1 )
+    if (ptag->ckSize & 1)
         pfi->pFilePtr++;
 
 
-    if (pfi->pFilePtr <= pfi->pFileEnd) {
+    if (pfi->pFilePtr <= pfi->pFileEnd)
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         RIPMSG0(RIP_WARNING, "ReadChunk: Advanced pointer past end of file map");
         return FALSE;
     }
 }
 
 
-
-BOOL SkipChunk(
-    IN PFILEINFO pfi,
-    IN PRTAG     ptag)
+BOOL SkipChunk(IN PFILEINFO pfi, IN PRTAG ptag)
 {
     /*
      * Round ptag->ckSize up to nearest word boundary
      * to maintain alignment
      */
     pfi->pFilePtr += (ptag->ckSize + 1) & (~1);
-    if (pfi->pFilePtr <= pfi->pFileEnd) {
+    if (pfi->pFilePtr <= pfi->pFileEnd)
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         RIPMSG0(RIP_WARNING, "SkipChunk: Advanced pointer past end of file map");
         return FALSE;
     }
 }
-
 
 
 /***************************************************************************\
@@ -280,13 +225,8 @@ BOOL SkipChunk(
 * 11/16/1995 SanfordS   Added LR_flags support
 \***************************************************************************/
 
-HANDLE LoadCursorIconFromFileMap(
-    IN PFILEINFO   pfi,
-    IN OUT LPWSTR *prt,
-    IN DWORD       cxDesired,
-    IN DWORD       cyDesired,
-    IN DWORD       LR_flags,
-    OUT LPBOOL     pfAni)
+HANDLE LoadCursorIconFromFileMap(IN PFILEINFO pfi, IN OUT LPWSTR *prt, IN DWORD cxDesired, IN DWORD cyDesired,
+                                 IN DWORD LR_flags, OUT LPBOOL pfAni)
 {
     LPNEWHEADER pnh;
     int offResBase;
@@ -298,7 +238,8 @@ HANDLE LoadCursorIconFromFileMap(
      * Determine if this is an .ICO/.CUR file or an .ANI file.
      */
     pnh = (LPNEWHEADER)pfi->pFileMap;
-    if (*(LPDWORD)pnh == FOURCC_RIFF) {
+    if (*(LPDWORD)pnh == FOURCC_RIFF)
+    {
 
         RTAG tag;
 
@@ -309,11 +250,13 @@ HANDLE LoadCursorIconFromFileMap(
         pfi->pFilePtr = pfi->pFileMap + sizeof(tag);
 
         /* check RIFF type for ACON */
-        if (*(LPDWORD)pfi->pFilePtr != FOURCC_ACON) {
+        if (*(LPDWORD)pfi->pFilePtr != FOURCC_ACON)
+        {
             return NULL;
         }
         pfi->pFilePtr += sizeof(DWORD);
-        if (pfi->pFilePtr > pfi->pFileEnd) {
+        if (pfi->pFilePtr > pfi->pFileEnd)
+        {
             return NULL;
         }
 
@@ -322,19 +265,23 @@ HANDLE LoadCursorIconFromFileMap(
          * things up so it looks we've just loaded the header of a normal
          * .CUR file, then fall into the .CUR bits handling code below.
          */
-        while (ReadTag(pfi, &tag)) {
+        while (ReadTag(pfi, &tag))
+        {
             /*
              * Handle each chunk type.
              */
-            if (tag.ckID == FOURCC_anih) {
+            if (tag.ckID == FOURCC_anih)
+            {
 
                 ANIHEADER anih;
 
-                if (!ReadChunk(pfi, &tag, &anih)) {
+                if (!ReadChunk(pfi, &tag, &anih))
+                {
                     return NULL;
                 }
 
-                if (!(anih.fl & AF_ICON) || (anih.cFrames == 0)) {
+                if (!(anih.fl & AF_ICON) || (anih.cFrames == 0))
+                {
                     return NULL;
                 }
 
@@ -342,18 +289,16 @@ HANDLE LoadCursorIconFromFileMap(
                 // and create an ACON, otherwise just use the first
                 // frame to create a normal ICON/CURSOR.
 
-                if (anih.cFrames > 1) {
+                if (anih.cFrames > 1)
+                {
 
                     *pfAni = TRUE;
                     *prt = RT_CURSOR;
-                    return(LoadAniIcon(pfi,
-                                       RT_CURSOR,
-                                       cxDesired,
-                                       cyDesired,
-                                       LR_flags));
+                    return (LoadAniIcon(pfi, RT_CURSOR, cxDesired, cyDesired, LR_flags));
                 }
-
-            } else if (tag.ckID == FOURCC_LIST) {
+            }
+            else if (tag.ckID == FOURCC_LIST)
+            {
                 LPDWORD pdwType = NULL;
                 BOOL fOK = FALSE;
                 /*
@@ -362,17 +307,17 @@ HANDLE LoadCursorIconFromFileMap(
 
                 /* check LIST type for fram */
 
-                if( tag.ckSize >= sizeof(DWORD) &&
-                        (fOK = ReadFilePtr( pfi,
-                                            &pdwType,
-                                            sizeof(DWORD))) &&
-                        *pdwType == FOURCC_fram) {
+                if (tag.ckSize >= sizeof(DWORD) && (fOK = ReadFilePtr(pfi, &pdwType, sizeof(DWORD))) &&
+                    *pdwType == FOURCC_fram)
+                {
 
-                    if (!ReadTag(pfi, &tag)) {
+                    if (!ReadTag(pfi, &tag))
+                    {
                         return NULL;
                     }
 
-                    if (tag.ckID == FOURCC_icon) {
+                    if (tag.ckID == FOURCC_icon)
+                    {
                         /*
                          * We've found what we're looking for.  Get current position
                          * in file to be used as the base from which the icon data
@@ -391,16 +336,21 @@ HANDLE LoadCursorIconFromFileMap(
                          * take it from here.
                          */
                         break;
-                    } else {
+                    }
+                    else
+                    {
                         SkipChunk(pfi, &tag);
                     }
-                } else {
+                }
+                else
+                {
                     /*
                      * Something bad happened in the type read, if it was
                      * a file error then close and exit, otherwise just
                      * skip the rest of the chunk
                      */
-                    if(!fOK) {
+                    if (!fOK)
+                    {
                         return NULL;
                     }
                     /*
@@ -410,39 +360,34 @@ HANDLE LoadCursorIconFromFileMap(
                     tag.ckSize -= sizeof(DWORD);
                     SkipChunk(pfi, &tag);
                 }
-            } else {
+            }
+            else
+            {
                 /*
                  * We're not interested in this chunk, skip it.
                  */
                 SkipChunk(pfi, &tag);
             }
         }
-    } else { // not a RIFF file.
-        if ((pnh->ResType != FT_ICON) && (pnh->ResType != FT_CURSOR)) {
+    }
+    else
+    { // not a RIFF file.
+        if ((pnh->ResType != FT_ICON) && (pnh->ResType != FT_CURSOR))
+        {
             return NULL;
         }
     }
     {
         PCURSORRESOURCE pcres;
 
-        pcres = ReadIconGuts(pfi,
-                             pnh,
-                             offResBase,
-                             prt,
-                             cxDesired,
-                             cyDesired,
-                             LR_flags);
+        pcres = ReadIconGuts(pfi, pnh, offResBase, prt, cxDesired, cyDesired, LR_flags);
 
-        if (pcres == NULL) {
+        if (pcres == NULL)
+        {
             return NULL;
         }
 
-        return ConvertDIBIcon((LPBITMAPINFOHEADER)pcres,
-                              NULL,
-                              pfi->pszName,
-                              *prt == RT_ICON,
-                              cxDesired,
-                              cyDesired,
+        return ConvertDIBIcon((LPBITMAPINFOHEADER)pcres, NULL, pfi->pszName, *prt == RT_ICON, cxDesired, cyDesired,
                               LR_flags);
     }
 }
@@ -459,14 +404,8 @@ HANDLE LoadCursorIconFromFileMap(
 * 8/23/1995 SanfordS   Documented
 * 11/16/1995 SanfordS  Added LR_flags support
 \***********************************************************************/
-PCURSORRESOURCE ReadIconGuts(
-    IN  PFILEINFO  pfi,
-    IN  NEWHEADER *pnhBase,
-    IN  int        offResBase,
-    OUT LPWSTR    *prt,
-    IN  int        cxDesired,
-    IN  int        cyDesired,
-    IN  DWORD      LR_flags)
+PCURSORRESOURCE ReadIconGuts(IN PFILEINFO pfi, IN NEWHEADER *pnhBase, IN int offResBase, OUT LPWSTR *prt,
+                             IN int cxDesired, IN int cyDesired, IN DWORD LR_flags)
 {
     NEWHEADER *pnh;
     int i, Id;
@@ -482,8 +421,8 @@ PCURSORRESOURCE ReadIconGuts(
      * of the file.  Store the data offset in the idIcon WORD so it can be
      * returned by RtlGetIdFromDirectory.
      */
-    pnh = (NEWHEADER *)UserLocalAlloc(0, sizeof(NEWHEADER) +
-            (pnhBase->ResCount * (sizeof(RESDIR) + sizeof(HOTSPOTREC))));
+    pnh =
+        (NEWHEADER *)UserLocalAlloc(0, sizeof(NEWHEADER) + (pnhBase->ResCount * (sizeof(RESDIR) + sizeof(HOTSPOTREC))));
     if (pnh == NULL)
         return NULL;
 
@@ -491,7 +430,8 @@ PCURSORRESOURCE ReadIconGuts(
     prd = (RESDIR UNALIGNED *)(pnh + 1);
     phs = (HOTSPOTREC UNALIGNED *)(prd + pnhBase->ResCount);
 
-    for (i = 0; i < (int)pnh->ResCount; i++, prd++) {
+    for (i = 0; i < (int)pnh->ResCount; i++, prd++)
+    {
         /*
          * Read the resource directory from the icon file.
          */
@@ -501,13 +441,14 @@ PCURSORRESOURCE ReadIconGuts(
          * Convert from the icon editor's resource directory format
          * to the post-RC.EXE format LookupIconIdFromDirectory expects.
          */
-        prd->Icon.Width  = pird->bWidth;
+        prd->Icon.Width = pird->bWidth;
         prd->Icon.Height = pird->bHeight;
         prd->Icon.reserved = 0;
         prd->BytesInRes = pird->dwDIBSize;
         prd->idIcon = (WORD)pird->dwDIBOffset;
 
-        if (pnh->ResType == FT_ICON) {
+        if (pnh->ResType == FT_ICON)
+        {
             /*
              * 10/18/2000 - dwaynen
              *
@@ -516,9 +457,11 @@ PCURSORRESOURCE ReadIconGuts(
              * yHotSpot!
              */
             prd->Icon.ColorCount = pird->bColorCount;
-            prd->Planes     = pird->xHotspot;
-            prd->BitCount   = pird->yHotspot;
-        } else {
+            prd->Planes = pird->xHotspot;
+            prd->BitCount = pird->yHotspot;
+        }
+        else
+        {
             /*
              * 10/18/2000 - dwaynen
              *
@@ -529,8 +472,8 @@ PCURSORRESOURCE ReadIconGuts(
              * this if we ever want to support multi-resource cursors.
              */
             prd->Icon.ColorCount = 0;
-            prd->Planes     = 0;
-            prd->BitCount   = 0;
+            prd->Planes = 0;
+            prd->BitCount = 0;
         }
 
         phs->xHotspot = pird->xHotspot;
@@ -539,43 +482,44 @@ PCURSORRESOURCE ReadIconGuts(
     }
 
     *prt = pnhBase->ResType == FT_ICON ? RT_ICON : RT_CURSOR;
-    Id = RtlGetIdFromDirectory((PBYTE)pnh,
-                                *prt == RT_ICON,
-                                cxDesired,
-                                cyDesired,
-                                LR_flags,
-                                &cb);
+    Id = RtlGetIdFromDirectory((PBYTE)pnh, *prt == RT_ICON, cxDesired, cyDesired, LR_flags, &cb);
 
     /*
      * Allocate for worst case (cursor).
      */
-    pcres = (PCURSORRESOURCE)UserLocalAlloc(0,
-            cb + FIELD_OFFSET(CURSORRESOURCE, bih));
-    if (pcres == NULL) {
+    pcres = (PCURSORRESOURCE)UserLocalAlloc(0, cb + FIELD_OFFSET(CURSORRESOURCE, bih));
+    if (pcres == NULL)
+    {
         goto CleanExit;
     }
 
-    if (*prt == RT_CURSOR) {
+    if (*prt == RT_CURSOR)
+    {
         /*
          * Fill in hotspot info for cursors.
          */
         prd = (RESDIR UNALIGNED *)(pnh + 1);
         phs = (HOTSPOTREC UNALIGNED *)(prd + pnh->ResCount);
 
-        for( i = 0; i < pnh->ResCount; i++ ) {
-            if (prd[i].idIcon == (WORD)Id) {
+        for (i = 0; i < pnh->ResCount; i++)
+        {
+            if (prd[i].idIcon == (WORD)Id)
+            {
                 pcres->xHotspot = phs[i].xHotspot;
                 pcres->yHotspot = phs[i].yHotspot;
                 break;
             }
         }
 
-        if (i == pnh->ResCount) {
+        if (i == pnh->ResCount)
+        {
             pcres->xHotspot = pird->xHotspot;
             pcres->yHotspot = pird->yHotspot;
         }
         pbih = &pcres->bih;
-    } else {
+    }
+    else
+    {
         pbih = (LPBITMAPINFOHEADER)pcres;
     }
 
@@ -583,7 +527,8 @@ PCURSORRESOURCE ReadIconGuts(
      * Read in the header information into pcres.
      */
     pfi->pFilePtr = pfi->pFileMap + offResBase + Id;
-    if (!ReadFilePtrCopy(pfi, pbih, cb)) {
+    if (!ReadFilePtrCopy(pfi, pbih, cb))
+    {
         UserLocalFree(pnh);
         UserLocalFree(pcres);
         return NULL;
@@ -607,31 +552,22 @@ CleanExit:
 * 10-02-91 DarrinM      Created.
 \***************************************************************************/
 
-HCURSOR CreateAniIcon(
-    LPCWSTR pszName,
-    LPWSTR  rt,
-    int     cicur,
-    DWORD   *aicur,
-    int     cpcur,
-    HCURSOR *ahcur,
-    JIF     jifRate,
-    PJIF    ajifRate,
-    BOOL    fPublic)
+HCURSOR CreateAniIcon(LPCWSTR pszName, LPWSTR rt, int cicur, DWORD *aicur, int cpcur, HCURSOR *ahcur, JIF jifRate,
+                      PJIF ajifRate, BOOL fPublic)
 {
     HCURSOR hacon;
     CURSORDATA acon;
     DWORD cbacon;
-    HCURSOR *ahcurT;             // Array of image frame pointers
-    DWORD *aicurT;               // Array of frame indices (sequence table)
-    PJIF ajifRateT;              // Array of time offsets
+    HCURSOR *ahcurT; // Array of image frame pointers
+    DWORD *aicurT;   // Array of frame indices (sequence table)
+    PJIF ajifRateT;  // Array of time offsets
     int i;
 
     /*
      * Start by allocating space for the ACON structure and the ahcur and
      * ajifRate arrays.
      */
-    hacon = (HCURSOR)NtUserCallOneParam(fPublic,
-                                        SFI__CREATEEMPTYCURSOROBJECT);
+    hacon = (HCURSOR)NtUserCallOneParam(fPublic, SFI__CREATEEMPTYCURSOROBJECT);
     if (hacon == NULL)
         return NULL;
 
@@ -640,10 +576,10 @@ HCURSOR CreateAniIcon(
      * the CURSOR, JIF, and SEQ arrays at once.
      */
     RtlZeroMemory(&acon, sizeof(acon));
-    cbacon = (cpcur * sizeof(HCURSOR)) +
-            (cicur * sizeof(JIF)) + (cicur * sizeof(DWORD));
+    cbacon = (cpcur * sizeof(HCURSOR)) + (cicur * sizeof(JIF)) + (cicur * sizeof(DWORD));
     ahcurT = (HCURSOR *)UserLocalAlloc(HEAP_ZERO_MEMORY, cbacon);
-    if (ahcurT == NULL) {
+    if (ahcurT == NULL)
+    {
         NtUserDestroyCursor((HCURSOR)hacon, CURSOR_ALWAYSDESTROY);
         return NULL;
     }
@@ -679,13 +615,14 @@ HCURSOR CreateAniIcon(
     /*
      * Make a private copy of the cursor pointers and the animation rate table.
      */
-    for (i = 0; i < cpcur; i++) {
+    for (i = 0; i < cpcur; i++)
+    {
         ahcurT[i] = ahcur[i];
-//        ahcurT[i]->fPointer |= PTRI_ANIMATED;   // if GDI needs it
-
+        //        ahcurT[i]->fPointer |= PTRI_ANIMATED;   // if GDI needs it
     }
 
-    for (i = 0; i < cicur; i++) {
+    for (i = 0; i < cicur; i++)
+    {
 
         /*
          * If constant rate, initialize the rate table to a single value.
@@ -707,7 +644,8 @@ HCURSOR CreateAniIcon(
     /*
      * Stuff acon data into the cursor
      */
-    if (!_SetCursorIconData(hacon, &acon)) {
+    if (!_SetCursorIconData(hacon, &acon))
+    {
         NtUserDestroyCursor(hacon, CURSOR_ALWAYSDESTROY);
         hacon = NULL;
     }
@@ -726,18 +664,15 @@ HCURSOR CreateAniIcon(
 * 12-21-91 DarrinM      Created.
 \***************************************************************************/
 
-HCURSOR ReadIconFromFileMap(
-    PFILEINFO   pfi,
-    int         cbSize,   // used to seek past this chunk in case of error
-    DWORD       cxDesired,
-    DWORD       cyDesired,
-    DWORD       LR_flags)
+HCURSOR ReadIconFromFileMap(PFILEINFO pfi,
+                            int cbSize, // used to seek past this chunk in case of error
+                            DWORD cxDesired, DWORD cyDesired, DWORD LR_flags)
 {
     PCURSORRESOURCE pcres;
-    HCURSOR         hcur = NULL;
-    LPNEWHEADER     pnh;
-    int             offResBase;
-    LPWSTR          rt;
+    HCURSOR hcur = NULL;
+    LPNEWHEADER pnh;
+    int offResBase;
+    LPWSTR rt;
 
     /*
      * Get current position in file to be used as the base from which
@@ -750,21 +685,11 @@ HCURSOR ReadIconFromFileMap(
      */
     ReadFilePtr(pfi, &pnh, sizeof(NEWHEADER));
 
-    pcres = ReadIconGuts(pfi,
-                         pnh,
-                         offResBase,
-                         &rt,
-                         cxDesired,
-                         cyDesired,
-                         LR_flags);
+    pcres = ReadIconGuts(pfi, pnh, offResBase, &rt, cxDesired, cyDesired, LR_flags);
 
-    if (pcres != NULL) {
-        hcur = (HCURSOR)ConvertDIBIcon((LPBITMAPINFOHEADER)pcres,
-                                       NULL,
-                                       NULL,
-                                       (rt == RT_ICON),
-                                       cxDesired,
-                                       cyDesired,
+    if (pcres != NULL)
+    {
+        hcur = (HCURSOR)ConvertDIBIcon((LPBITMAPINFOHEADER)pcres, NULL, NULL, (rt == RT_ICON), cxDesired, cyDesired,
                                        LR_ACONFRAME | LR_flags);
 
         UserLocalFree(pcres);
@@ -804,12 +729,7 @@ HCURSOR ReadIconFromFileMap(
 * 11/16/1995 SanfordS   Added LR_flags support.
 \***************************************************************************/
 
-HICON LoadAniIcon(
-    IN PFILEINFO pfi,
-    IN LPWSTR    rt,
-    IN DWORD     cxDesired,
-    IN DWORD     cyDesired,
-    IN DWORD     LR_flags)
+HICON LoadAniIcon(IN PFILEINFO pfi, IN LPWSTR rt, IN DWORD cxDesired, IN DWORD cyDesired, IN DWORD LR_flags)
 {
     int cpcur, ipcur = 0, i, cicur;
     ANIHEADER anih;
@@ -826,16 +746,17 @@ HICON LoadAniIcon(
     pfi->pFilePtr = pfi->pFileMap + sizeof(tag);
 
 #if DBG
-    if ((ULONG_PTR)pfi->pFileEnd != ((ULONG_PTR)(pfi->pFileMap + sizeof (RTAG) + ((RTAG *)(pfi->pFileMap))->ckSize + 1) & ~1)) {
+    if ((ULONG_PTR)pfi->pFileEnd !=
+        ((ULONG_PTR)(pfi->pFileMap + sizeof(RTAG) + ((RTAG *)(pfi->pFileMap))->ckSize + 1) & ~1))
+    {
         RIPMSG2(RIP_WARNING, "LoadAniIcon: First RIFF chunk has invalid ckSize. Actual:%#lx Expected:%#lx",
                 ((RTAG *)(pfi->pFileMap))->ckSize, (pfi->pFileEnd - pfi->pFileMap - sizeof(RTAG)) & ~1);
     }
 #endif
 
     /* read the chunk type */
-    if(!ReadFilePtrCopy(pfi,
-                        &tag.ckID,
-                        sizeof(tag.ckID))) {
+    if (!ReadFilePtrCopy(pfi, &tag.ckID, sizeof(tag.ckID)))
+    {
         goto laiFileErr;
     }
 
@@ -843,9 +764,11 @@ HICON LoadAniIcon(
         goto laiFileErr;
 
     /* look for 'anih', 'rate', 'seq ', and 'icon' chunks */
-    while( ReadTag(pfi, &tag)) {
+    while (ReadTag(pfi, &tag))
+    {
 
-        switch( tag.ckID ) {
+        switch (tag.ckID)
+        {
         case FOURCC_anih:
             if (!ReadChunk(pfi, &tag, &anih))
                 goto laiFileErr;
@@ -864,9 +787,11 @@ HICON LoadAniIcon(
             if (panih == NULL)
                 goto laiFileErr;
 
-            phcur = UserLocalAlloc(HEAP_ZERO_MEMORY, cpcur * sizeof(HCURSOR) + cicur * sizeof(JIF) + cicur * sizeof(DWORD));
+            phcur =
+                UserLocalAlloc(HEAP_ZERO_MEMORY, cpcur * sizeof(HCURSOR) + cicur * sizeof(JIF) + cicur * sizeof(DWORD));
             UserAssert(phcur == NATURAL_ALIGNED_PTR(HCURSOR, phcur));
-            if (phcur == NULL) {
+            if (phcur == NULL)
+            {
                 goto laiFileErr;
             }
 
@@ -885,7 +810,7 @@ HICON LoadAniIcon(
              */
             pjifRate = (PJIF)((PBYTE)phcur + cpcur * sizeof(HCURSOR));
             UserAssert(pjifRate == NATURAL_ALIGNED_PTR(JIF, pjifRate));
-            if(!ReadChunk(pfi, &tag, (PBYTE)pjifRate))
+            if (!ReadChunk(pfi, &tag, (PBYTE)pjifRate))
                 goto laiFileErr;
             break;
 
@@ -895,117 +820,109 @@ HICON LoadAniIcon(
              * If we find a seq chunk, read it into its preallocated
              * space.
              */
-            picur = (DWORD *)((PBYTE)phcur + cpcur * sizeof(HCURSOR) +
-                    cicur * sizeof(JIF));
+            picur = (DWORD *)((PBYTE)phcur + cpcur * sizeof(HCURSOR) + cicur * sizeof(JIF));
             UserAssert(picur == NATURAL_ALIGNED_PTR(DWORD, picur));
-            if(!ReadChunk(pfi, &tag, (PBYTE)picur))
+            if (!ReadChunk(pfi, &tag, (PBYTE)picur))
                 goto laiFileErr;
             break;
 
 
         case FOURCC_LIST:
-            {
-                DWORD cbChunk = (tag.ckSize + 1) & ~1;
+        {
+            DWORD cbChunk = (tag.ckSize + 1) & ~1;
 
-                /*
+            /*
                  * See if this list is the 'fram' list of icon chunks
                  */
-                if(!ReadFilePtrCopy(pfi, &tag.ckID, sizeof(tag.ckID))) {
-                    goto laiFileErr;
-                }
+            if (!ReadFilePtrCopy(pfi, &tag.ckID, sizeof(tag.ckID)))
+            {
+                goto laiFileErr;
+            }
 
-                cbChunk -= sizeof(tag.ckID);
+            cbChunk -= sizeof(tag.ckID);
 
-                if (tag.ckID != FOURCC_fram) {
-                    /*
+            if (tag.ckID != FOURCC_fram)
+            {
+                /*
                      * Not the fram list (probably the INFO list).  Skip
                      * the rest of this chunk.  (Don't forget that we have
                      * already skipped one dword!)
                      */
-                    tag.ckSize = cbChunk;
-                    SkipChunk(pfi, &tag);
-                    break;
-                }
+                tag.ckSize = cbChunk;
+                SkipChunk(pfi, &tag);
+                break;
+            }
 
-                while(cbChunk >= sizeof(tag)) {
-                    if (!ReadTag(pfi, &tag))
-                        goto laiFileErr;
+            while (cbChunk >= sizeof(tag))
+            {
+                if (!ReadTag(pfi, &tag))
+                    goto laiFileErr;
 
-                    cbChunk -= sizeof(tag);
+                cbChunk -= sizeof(tag);
 
-                    if(tag.ckID == FOURCC_icon) {
+                if (tag.ckID == FOURCC_icon)
+                {
 
-                        /*
+                    /*
                          * Ok, load the icon/cursor bits, create a cursor from
                          * them, and save a pointer to it away in the ACON
                          * cursor pointer array.
                          */
-                        phcur[ipcur] = ReadIconFromFileMap(pfi,
-                                                           tag.ckSize,
-                                                           cxDesired,
-                                                           cyDesired,
-                                                           LR_flags);
+                    phcur[ipcur] = ReadIconFromFileMap(pfi, tag.ckSize, cxDesired, cyDesired, LR_flags);
 
-                        if (phcur[ipcur] == NULL) {
-                            for (i = 0; i < ipcur; i++)
-                                NtUserDestroyCursor(phcur[i], 0);
-                            goto laiFileErr;
-                        }
-
-                        ipcur++;
-                    } else {
-                        /*
-                         * Unknown chunk in fram list, just ignore it
-                         */
-                        SkipChunk(pfi, &tag);
+                    if (phcur[ipcur] == NULL)
+                    {
+                        for (i = 0; i < ipcur; i++)
+                            NtUserDestroyCursor(phcur[i], 0);
+                        goto laiFileErr;
                     }
 
-                    cbChunk -= (tag.ckSize + 1) & ~1;
+                    ipcur++;
                 }
+                else
+                {
+                    /*
+                         * Unknown chunk in fram list, just ignore it
+                         */
+                    SkipChunk(pfi, &tag);
+                }
+
+                cbChunk -= (tag.ckSize + 1) & ~1;
             }
-            break;
+        }
+        break;
 
         default:
             /*
              * We're not interested in this chunk, skip it.
              */
-            if(!SkipChunk(pfi, &tag))
+            if (!SkipChunk(pfi, &tag))
                 goto laiFileErr;
             break;
-
         }
-
     }
 
     /*
      * Sanity check the count of frames so we won't fault trying
      * to select a nonexistant cursor
      */
-    if (cpcur != ipcur) {
-        RIPMSG2(RIP_WARNING, "LoadAniIcon: Invalid number of frames; Actual:%#lx Expected:%#lx",
-                ipcur, cpcur);
+    if (cpcur != ipcur)
+    {
+        RIPMSG2(RIP_WARNING, "LoadAniIcon: Invalid number of frames; Actual:%#lx Expected:%#lx", ipcur, cpcur);
         for (i = 0; i < ipcur; i++)
             NtUserDestroyCursor(phcur[i], CURSOR_ALWAYSDESTROY);
         goto laiFileErr;
     }
 
 
-
     if (cpcur != 0)
-        hacon = CreateAniIcon(pfi->pszName,
-                              rt,
-                              cicur,
-                              picur,
-                              cpcur,
-                              phcur,
-                              jifRate,
-                              pjifRate,
-                              LR_flags & LR_GLOBAL);
+        hacon = CreateAniIcon(pfi->pszName, rt, cicur, picur, cpcur, phcur, jifRate, pjifRate, LR_flags & LR_GLOBAL);
 
 laiFileErr:
 
 #if DBG
-    if (hacon == NULL) {
+    if (hacon == NULL)
+    {
         RIPMSG0(RIP_WARNING, "LoadAniIcon: Invalid icon data format");
     }
 #endif
@@ -1013,7 +930,8 @@ laiFileErr:
     if (panih != NULL)
         UserLocalFree(panih);
 
-    if (phcur != NULL) {
+    if (phcur != NULL)
+    {
         UserLocalFree(phcur);
     }
 

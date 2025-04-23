@@ -33,31 +33,23 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-#define WORK_SIZE   1024
+#define WORK_SIZE 1024
 
 void __cdecl main(int argc, char *);
 void processargs();
 
-void
-Copy(
-    HANDLE  Source,
-    HANDLE  Dest
-    );
+void Copy(HANDLE Source, HANDLE Dest);
 
-UNICODE_STRING  SourceName;
-UNICODE_STRING  DestName;
+UNICODE_STRING SourceName;
+UNICODE_STRING DestName;
 BOOLEAN CopySecurity;
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    HANDLE  SourceHandle;
-    HANDLE  DestHandle;
+    HANDLE SourceHandle;
+    HANDLE DestHandle;
 
     //
     // Process args
@@ -71,63 +63,41 @@ __cdecl main(
 
     printf("rttrecpy: starting\n");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &SourceName,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &SourceName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
-    Status = NtOpenKey(
-                &SourceHandle,
-                KEY_READ,
-                &ObjectAttributes
-                );
-    if (!NT_SUCCESS(Status)) {
+    Status = NtOpenKey(&SourceHandle, KEY_READ, &ObjectAttributes);
+    if (!NT_SUCCESS(Status))
+    {
         printf("rttrecpy: NtOpenKey %wS failed %08lx\n", &SourceName, Status);
         exit(1);
     }
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &DestName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtCreateKey(&DestHandle,
-                         KEY_WRITE,
-                         &ObjectAttributes,
-                         0,
-                         NULL,
-                         0,
-                         NULL);
-    if (!NT_SUCCESS(Status)) {
-        printf("rttrecpy: NtCreateKey %wS failed %08lx\n",DestName,Status);
+    InitializeObjectAttributes(&ObjectAttributes, &DestName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtCreateKey(&DestHandle, KEY_WRITE, &ObjectAttributes, 0, NULL, 0, NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        printf("rttrecpy: NtCreateKey %wS failed %08lx\n", DestName, Status);
         exit(1);
     }
 
     Copy(SourceHandle, DestHandle);
 }
 
-
-void
-Copy(
-    HANDLE  Source,
-    HANDLE  Dest
-    )
+
+void Copy(HANDLE Source, HANDLE Dest)
 {
-    NTSTATUS    Status;
+    NTSTATUS Status;
     PKEY_BASIC_INFORMATION KeyInformation;
     PKEY_VALUE_FULL_INFORMATION KeyValue;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    ULONG   NamePos;
-    ULONG   index;
-    STRING  enumname;
-    HANDLE  SourceChild;
-    HANDLE  DestChild;
-    ULONG   ResultLength;
-    static  char buffer[WORK_SIZE];
-    static  char SecurityBuffer[WORK_SIZE];
+    ULONG NamePos;
+    ULONG index;
+    STRING enumname;
+    HANDLE SourceChild;
+    HANDLE DestChild;
+    ULONG ResultLength;
+    static char buffer[WORK_SIZE];
+    static char SecurityBuffer[WORK_SIZE];
     PSECURITY_DESCRIPTOR SecurityDescriptor;
     UNICODE_STRING ValueName;
     UNICODE_STRING KeyName;
@@ -137,23 +107,23 @@ Copy(
     // Enumerate source node's values and copy them to target node.
     //
     KeyValue = (PKEY_VALUE_FULL_INFORMATION)buffer;
-    for (index = 0; TRUE; index++) {
-        Status = NtEnumerateValueKey(Source,
-                                     index,
-                                     KeyValueFullInformation,
-                                     buffer,
-                                     WORK_SIZE,
-                                     &ResultLength);
+    for (index = 0; TRUE; index++)
+    {
+        Status = NtEnumerateValueKey(Source, index, KeyValueFullInformation, buffer, WORK_SIZE, &ResultLength);
 
-        if (!NT_SUCCESS(Status)) {
-            if (Status == STATUS_NO_MORE_ENTRIES) {
+        if (!NT_SUCCESS(Status))
+        {
+            if (Status == STATUS_NO_MORE_ENTRIES)
+            {
 
                 //
                 // done with the values
                 //
                 break;
-            } else {
-                printf("rttrecpy: NtEnumerateValueKey failed %08lx\n",Status);
+            }
+            else
+            {
+                printf("rttrecpy: NtEnumerateValueKey failed %08lx\n", Status);
                 break;
             }
         }
@@ -161,16 +131,12 @@ Copy(
         ValueName.Buffer = KeyValue->Name;
         ValueName.Length = KeyValue->NameLength;
 
-        Status = NtSetValueKey(Dest,
-                               &ValueName,
-                               KeyValue->TitleIndex,
-                               KeyValue->Type,
-                               buffer+KeyValue->DataOffset,
+        Status = NtSetValueKey(Dest, &ValueName, KeyValue->TitleIndex, KeyValue->Type, buffer + KeyValue->DataOffset,
                                KeyValue->DataLength);
-        if (!NT_SUCCESS(Status)) {
-            printf("rttrecpy: NtSetValueKey failed to set value %wS\n",&ValueName);
+        if (!NT_SUCCESS(Status))
+        {
+            printf("rttrecpy: NtSetValueKey failed to set value %wS\n", &ValueName);
         }
-
     }
 
     //
@@ -178,25 +144,26 @@ Copy(
     //
 
     KeyInformation = (PKEY_BASIC_INFORMATION)buffer;
-    if (CopySecurity) {
+    if (CopySecurity)
+    {
         SecurityDescriptor = SecurityBuffer;
-    } else {
+    }
+    else
+    {
         SecurityDescriptor = NULL;
     }
-    for (index = 0; TRUE; index++) {
+    for (index = 0; TRUE; index++)
+    {
 
-        Status = NtEnumerateKey(Source,
-                                index,
-                                KeyBasicInformation,
-                                KeyInformation,
-                                WORK_SIZE,
-                                &ResultLength);
+        Status = NtEnumerateKey(Source, index, KeyBasicInformation, KeyInformation, WORK_SIZE, &ResultLength);
 
-        if (Status == STATUS_NO_MORE_ENTRIES) {
+        if (Status == STATUS_NO_MORE_ENTRIES)
+        {
 
             break;
-
-        } else if (!NT_SUCCESS(Status)) {
+        }
+        else if (!NT_SUCCESS(Status))
+        {
             printf("rttrecpy: NtEnumerateKey failed Status = %08lx\n", Status);
             exit(1);
         }
@@ -204,105 +171,73 @@ Copy(
         KeyName.Buffer = KeyInformation->Name;
         KeyName.Length = KeyInformation->NameLength;
 
-        InitializeObjectAttributes(
-            &ObjectAttributes,
-            &KeyName,
-            OBJ_CASE_INSENSITIVE,
-            Source,
-            NULL
-            );
+        InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, Source, NULL);
 
-        Status = NtOpenKey(
-                    &SourceChild,
-                    KEY_READ,
-                    &ObjectAttributes
-                    );
-        if (!NT_SUCCESS(Status)) {
+        Status = NtOpenKey(&SourceChild, KEY_READ, &ObjectAttributes);
+        if (!NT_SUCCESS(Status))
+        {
             printf("rttrecpy: NtOpenKey %wS failed: %08lx\n", Status);
             exit(1);
         }
 
-        if (CopySecurity) {
-            Status = NtQuerySecurityObject(SourceChild,
-                                           DACL_SECURITY_INFORMATION,
-                                           SecurityDescriptor,
-                                           WORK_SIZE,
+        if (CopySecurity)
+        {
+            Status = NtQuerySecurityObject(SourceChild, DACL_SECURITY_INFORMATION, SecurityDescriptor, WORK_SIZE,
                                            &ResultLength);
-            if (!NT_SUCCESS(Status)) {
-                printf("rttrecpy: NtQuerySecurityObject failed %08lx\n",Status);
+            if (!NT_SUCCESS(Status))
+            {
+                printf("rttrecpy: NtQuerySecurityObject failed %08lx\n", Status);
             }
         }
 
-        InitializeObjectAttributes(&ObjectAttributes,
-                                   &KeyName,
-                                   OBJ_CASE_INSENSITIVE,
-                                   Dest,
-                                   SecurityDescriptor);
-        Status = NtCreateKey(&DestChild,
-                             KEY_READ | KEY_WRITE,
-                             &ObjectAttributes,
-                             0,
-                             NULL,
-                             0,
-                             NULL);
-        if (!NT_SUCCESS(Status)) {
-            printf("rttrecpy: NtCreateKey %wS failed %08lx\n",Status);
+        InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, Dest, SecurityDescriptor);
+        Status = NtCreateKey(&DestChild, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, NULL, 0, NULL);
+        if (!NT_SUCCESS(Status))
+        {
+            printf("rttrecpy: NtCreateKey %wS failed %08lx\n", Status);
             exit(1);
         }
 
         Copy(SourceChild, DestChild);
         NtClose(SourceChild);
         NtClose(DestChild);
-
     }
 
     return;
 }
 
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
     char **p;
 
-    if ( (argc > 4) || (argc < 3) )
+    if ((argc > 4) || (argc < 3))
     {
-        printf("Usage: %s [-s] <SourceKey> <DestKey>\n",
-                argv[0]);
+        printf("Usage: %s [-s] <SourceKey> <DestKey>\n", argv[0]);
         exit(1);
     }
 
-    p=argv+1;
-    if (_stricmp(*p,"-s")==0) {
+    p = argv + 1;
+    if (_stricmp(*p, "-s") == 0)
+    {
         CopySecurity = TRUE;
         ++p;
-    } else {
+    }
+    else
+    {
         CopySecurity = FALSE;
     }
 
-    RtlInitAnsiString(
-        &temp,
-        *p
-        );
+    RtlInitAnsiString(&temp, *p);
 
     ++p;
 
-    RtlAnsiStringToUnicodeString(
-        &SourceName,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&SourceName, &temp, TRUE);
 
-    RtlInitAnsiString(&temp,
-                      *p);
+    RtlInitAnsiString(&temp, *p);
 
-    RtlAnsiStringToUnicodeString(&DestName,
-                                 &temp,
-                                 TRUE);
+    RtlAnsiStringToUnicodeString(&DestName, &temp, TRUE);
 
     return;
 }

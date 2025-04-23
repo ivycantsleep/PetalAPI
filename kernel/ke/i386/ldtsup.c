@@ -24,47 +24,25 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 //
 // Low level assembler support procedures
 //
 
-VOID
-KiLoadLdtr(
-    VOID
-    );
+VOID KiLoadLdtr(VOID);
 
-VOID
-KiFlushDescriptors(
-    VOID
-    );
+VOID KiFlushDescriptors(VOID);
 
 //
 // Local service procedures
 //
 
-VOID
-Ki386LoadTargetLdtr (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID Ki386LoadTargetLdtr(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-Ki386FlushTargetDescriptors (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
-
-VOID
-Ke386SetLdtProcess (
-    IN PKPROCESS Process,
-    IN PLDT_ENTRY Ldt,
-    IN ULONG Limit
-    )
+VOID Ki386FlushTargetDescriptors(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                                 IN PVOID Parameter3);
+
+VOID Ke386SetLdtProcess(IN PKPROCESS Process, IN PLDT_ENTRY Ldt, IN ULONG Limit)
 /*++
 
 Routine Description:
@@ -117,7 +95,8 @@ Return Value:
     // Compute the contents of the Ldt descriptor
     //
 
-    if ((Ldt == NULL) || (Limit == 0)) {
+    if ((Ldt == NULL) || (Limit == 0))
+    {
 
         //
         //  Set up an empty descriptor
@@ -129,8 +108,9 @@ Return Value:
         LdtDescriptor.HighWord.Bytes.Flags1 = 0;
         LdtDescriptor.HighWord.Bytes.Flags2 = 0;
         LdtDescriptor.HighWord.Bytes.BaseHi = 0;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Insure that the unfilled fields of the selector are zero
@@ -145,10 +125,10 @@ Return Value:
         //  Set the limit and base
         //
 
-        LdtDescriptor.LimitLow = (USHORT) ((ULONG) Limit - 1);
-        LdtDescriptor.BaseLow = (USHORT)  ((ULONG) Ldt & 0xffff);
-        LdtDescriptor.HighWord.Bytes.BaseMid = (UCHAR) (((ULONG)Ldt & 0xff0000) >> 16);
-        LdtDescriptor.HighWord.Bytes.BaseHi =  (UCHAR) (((ULONG)Ldt & 0xff000000) >> 24);
+        LdtDescriptor.LimitLow = (USHORT)((ULONG)Limit - 1);
+        LdtDescriptor.BaseLow = (USHORT)((ULONG)Ldt & 0xffff);
+        LdtDescriptor.HighWord.Bytes.BaseMid = (UCHAR)(((ULONG)Ldt & 0xff0000) >> 16);
+        LdtDescriptor.HighWord.Bytes.BaseHi = (UCHAR)(((ULONG)Ldt & 0xff000000) >> 24);
 
         //
         //  Type is LDT, DPL = 0
@@ -162,7 +142,6 @@ Return Value:
         //
 
         LdtDescriptor.HighWord.Bits.Pres = 1;
-
     }
 
     //
@@ -189,16 +168,14 @@ Return Value:
 
     Prcb = KeGetCurrentPrcb();
     TargetProcessors = Process->ActiveProcessors & ~Prcb->SetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        Ki386LoadTargetLdtr,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, Ki386LoadTargetLdtr, NULL, NULL, NULL);
     }
 
     KiLoadLdtr();
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
 
         //
         //  Stall until target processor(s) release us
@@ -216,14 +193,8 @@ Return Value:
     KiUnlockContextSwap(OldIrql);
     return;
 }
-
-VOID
-Ki386LoadTargetLdtr (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID Ki386LoadTargetLdtr(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 /*++
 
 Routine Description:
@@ -250,13 +221,8 @@ Return Value:
     KiIpiSignalPacketDone(SignalDone);
     return;
 }
-
-VOID
-Ke386SetDescriptorProcess (
-    IN PKPROCESS Process,
-    IN ULONG Offset,
-    IN LDT_ENTRY LdtEntry
-    )
+
+VOID Ke386SetDescriptorProcess(IN PKPROCESS Process, IN ULONG Offset, IN LDT_ENTRY LdtEntry)
 /*++
 
 Routine Description:
@@ -301,11 +267,9 @@ Return Value:
     // Compute address of descriptor to edit.
     //
 
-    Ldt =
-        (PLDT_ENTRY)
-         ((Process->LdtDescriptor.HighWord.Bytes.BaseHi << 24) |
-         ((Process->LdtDescriptor.HighWord.Bytes.BaseMid << 16) & 0xff0000) |
-         (Process->LdtDescriptor.BaseLow & 0xffff));
+    Ldt = (PLDT_ENTRY)((Process->LdtDescriptor.HighWord.Bytes.BaseHi << 24) |
+                       ((Process->LdtDescriptor.HighWord.Bytes.BaseMid << 16) & 0xff0000) |
+                       (Process->LdtDescriptor.BaseLow & 0xffff));
     Offset = Offset / 8;
     KiLockContextSwap(&OldIrql);
 
@@ -321,14 +285,10 @@ Return Value:
 
     Prcb = KeGetCurrentPrcb();
     TargetProcessors = Process->ActiveProcessors & ~Prcb->SetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendSynchronousPacket(
-            Prcb,
-            TargetProcessors,
-            Ki386FlushTargetDescriptors,
-            (PVOID)&Prcb->ReverseStall,
-            NULL,
-            NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendSynchronousPacket(Prcb, TargetProcessors, Ki386FlushTargetDescriptors, (PVOID)&Prcb->ReverseStall,
+                                   NULL, NULL);
 
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
@@ -340,7 +300,8 @@ Return Value:
     //
 
     Ldt[Offset] = LdtEntry;
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         Prcb->ReverseStall += 1;
     }
 
@@ -353,14 +314,9 @@ Return Value:
     KiUnlockContextSwap(OldIrql);
     return;
 }
-
-VOID
-Ki386FlushTargetDescriptors (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Proceed,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID Ki386FlushTargetDescriptors(IN PKIPI_CONTEXT SignalDone, IN PVOID Proceed, IN PVOID Parameter2,
+                                 IN PVOID Parameter3)
 
 /*++
 
@@ -387,6 +343,6 @@ Return Value:
     //
 
     KiFlushDescriptors();
-    KiIpiSignalPacketDoneAndStall (SignalDone, Proceed);
+    KiIpiSignalPacketDoneAndStall(SignalDone, Proceed);
     return;
 }

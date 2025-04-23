@@ -22,10 +22,7 @@ Environment:
 
 #include "ki.h"
 
-VOID
-KeRestoreProcessorSpecificFeatures(
-    VOID
-    )
+VOID KeRestoreProcessorSpecificFeatures(VOID)
 
 /*++
 
@@ -53,10 +50,7 @@ Return Value:
     return;
 }
 
-VOID
-KeSaveStateForHibernate (
-    IN PKPROCESSOR_STATE ProcessorState
-    )
+VOID KeSaveStateForHibernate(IN PKPROCESSOR_STATE ProcessorState)
 
 /*++
 
@@ -82,10 +76,7 @@ Return Value:
     KiSaveProcessorControlState(ProcessorState);
 }
 
-VOID
-KiCheckBreakInRequest (
-    VOID
-    )
+VOID KiCheckBreakInRequest(VOID)
 
 /*++
 
@@ -106,7 +97,8 @@ Return Value:
 
 {
 
-    if (KdPollBreakIn() != FALSE) {
+    if (KdPollBreakIn() != FALSE)
+    {
         DbgBreakPointWithStatus(DBG_STATUS_CONTROL_C);
     }
 
@@ -114,10 +106,7 @@ Return Value:
 }
 
 
-VOID
-KiInstantiateInlineFunctions (
-    VOID
-    )
+VOID KiInstantiateInlineFunctions(VOID)
 
 /*++
 

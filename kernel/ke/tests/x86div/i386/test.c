@@ -1,7 +1,7 @@
-/*****************************************************************/ 
-/**		     Microsoft LAN Manager			**/ 
-/**	       Copyright(c) Microsoft Corp., 1988-1991		**/ 
-/*****************************************************************/ 
+/*****************************************************************/
+/**		     Microsoft LAN Manager			**/
+/**	       Copyright(c) Microsoft Corp., 1988-1991		**/
+/*****************************************************************/
 
 #include <stdio.h>
 #include <process.h>
@@ -16,32 +16,30 @@
 
 // declare a BSS value - see what the assemble looks like
 
-CONTEXT     RegContext;
-ULONG       DefaultValue;
-ULONG       TestCount;
-ULONG       ExpectedException;
+CONTEXT RegContext;
+ULONG DefaultValue;
+ULONG TestCount;
+ULONG ExpectedException;
 
-extern  ULONG   DivOperand;
-extern  ULONG   DivRegPointer;
-extern  LONG    DivRegScaler;
-extern  ULONG   ExceptEip;
-extern  ULONG   ExceptEsp;
-extern  ULONG   TestTable[];
-extern  ULONG   TestTableCenter[];
-#define TESTTABLESIZE    (128*sizeof(ULONG))
+extern ULONG DivOperand;
+extern ULONG DivRegPointer;
+extern LONG DivRegScaler;
+extern ULONG ExceptEip;
+extern ULONG ExceptEsp;
+extern ULONG TestTable[];
+extern ULONG TestTableCenter[];
+#define TESTTABLESIZE (128 * sizeof(ULONG))
 
-extern  TestDiv();
+extern TestDiv();
 
 BOOLEAN vInitialized;
-ULONG   vZero = 0;
-ULONG   vTwo  = 0;
-ULONG   vDivOk = 0x7f7f7f7f;
+ULONG vZero = 0;
+ULONG vTwo = 0;
+ULONG vDivOk = 0x7f7f7f7f;
 
 
-VOID __cdecl
-main (argc, argv)
-int     argc;
-char    *argv[];
+VOID __cdecl main(argc, argv) int argc;
+char *argv[];
 {
 
     /***
@@ -51,7 +49,8 @@ char    *argv[];
      *  or an overflow execption.
      */
 
-    try {
+    try
+    {
         //
         // Setup for divide by zero test
         //
@@ -62,14 +61,15 @@ char    *argv[];
         DefaultValue = 0x01010101;
         ExpectedException = STATUS_INTEGER_DIVIDE_BY_ZERO;
 
-        printf ("Begin divide by zero test\n");
+        printf("Begin divide by zero test\n");
 
-        for (DivRegScaler = -7; DivRegScaler <  7; DivRegScaler++) {
+        for (DivRegScaler = -7; DivRegScaler < 7; DivRegScaler++)
+        {
             vInitialized = FALSE;
-            TestDiv ();
+            TestDiv();
         }
 
-        printf ("End divide by zero test\n\n");
+        printf("End divide by zero test\n\n");
 
         //
         // Setup for divide overflow test
@@ -80,81 +80,81 @@ char    *argv[];
         DefaultValue = 0;
         ExpectedException = STATUS_INTEGER_OVERFLOW;
 
-        printf ("Begin divide overflow test\n");
+        printf("Begin divide overflow test\n");
 
-        for (DivRegScaler = -7; DivRegScaler < 7; DivRegScaler++) {
+        for (DivRegScaler = -7; DivRegScaler < 7; DivRegScaler++)
+        {
             vInitialized = FALSE;
-            TestDiv ();
+            TestDiv();
         }
-        printf ("End divide overflow test\n\n");
-
-    } except (HandleException(GetExceptionInformation())) {
-        printf ("FAIL: in divide by zero exception handler");
+        printf("End divide overflow test\n\n");
+    }
+    except(HandleException(GetExceptionInformation()))
+    {
+        printf("FAIL: in divide by zero exception handler");
     }
 
-    printf ("%ld varations run ", TestCount);
+    printf("%ld varations run ", TestCount);
 }
 
-HandleException (
-    IN PEXCEPTION_POINTERS ExceptionPointers
-    )
+HandleException(IN PEXCEPTION_POINTERS ExceptionPointers)
 {
-    ULONG       i;
-    PUCHAR      p;
-    PCONTEXT    Context;
-    ULONG       def;
+    ULONG i;
+    PUCHAR p;
+    PCONTEXT Context;
+    ULONG def;
 
-    switch (i = ExceptionPointers->ExceptionRecord->ExceptionCode) {
-        case 1:
-            Context = ExceptionPointers->ContextRecord;
-            Context->Eip = ExceptEip;
-            Context->Esp = ExceptEsp;
+    switch (i = ExceptionPointers->ExceptionRecord->ExceptionCode)
+    {
+    case 1:
+        Context = ExceptionPointers->ContextRecord;
+        Context->Eip = ExceptEip;
+        Context->Esp = ExceptEsp;
 
-            if (vInitialized) {
-                printf ("Divide failed - div instruction completed\n");
-                return EXCEPTION_CONTINUE_SEARCH;   // to debugger
-            }
-            vInitialized = TRUE;
-            TestCount--;
-            // fall through...
+        if (vInitialized)
+        {
+            printf("Divide failed - div instruction completed\n");
+            return EXCEPTION_CONTINUE_SEARCH; // to debugger
+        }
+        vInitialized = TRUE;
+        TestCount--;
+        // fall through...
 
-        case STATUS_INTEGER_OVERFLOW:
-        case STATUS_INTEGER_DIVIDE_BY_ZERO:
-            if (i != ExpectedException  &&  i != 1) {
-                break;
-            }
+    case STATUS_INTEGER_OVERFLOW:
+    case STATUS_INTEGER_DIVIDE_BY_ZERO:
+        if (i != ExpectedException && i != 1)
+        {
+            break;
+        }
 
-            TestCount++;
+        TestCount++;
 
-            // set context
-            def = DefaultValue;
-            Context = ExceptionPointers->ContextRecord;
-            Context->Eax = def;
-            Context->Ebx = def;
-            Context->Ecx = def;
-            Context->Edx = def;
-            Context->Esi = def;
-            Context->Edi = def;
-            Context->Ebp = def;
+        // set context
+        def = DefaultValue;
+        Context = ExceptionPointers->ContextRecord;
+        Context->Eax = def;
+        Context->Ebx = def;
+        Context->Ecx = def;
+        Context->Edx = def;
+        Context->Esi = def;
+        Context->Edi = def;
+        Context->Ebp = def;
 
-            // find next test
-            for (p = (PUCHAR) Context->Eip; ((PULONG) p)[0] != 0xCCCCCCCC; p++) ;
-            Context->Eip = (ULONG) (p + 4);
+        // find next test
+        for (p = (PUCHAR)Context->Eip; ((PULONG)p)[0] != 0xCCCCCCCC; p++)
+            ;
+        Context->Eip = (ULONG)(p + 4);
 
-            // clear global testable
-            RtlFillMemoryUlong (TestTable, TESTTABLESIZE, def);
-            return EXCEPTION_CONTINUE_EXECUTION;
+        // clear global testable
+        RtlFillMemoryUlong(TestTable, TESTTABLESIZE, def);
+        return EXCEPTION_CONTINUE_EXECUTION;
     }
 
-    printf ("\nFailed - unexpected exception code %lx  (expected %lx)\n",
-        ExceptionPointers->ExceptionRecord->ExceptionCode,
-        ExpectedException
-        );
+    printf("\nFailed - unexpected exception code %lx  (expected %lx)\n",
+           ExceptionPointers->ExceptionRecord->ExceptionCode, ExpectedException);
 
     return EXCEPTION_CONTINUE_SEARCH;
 }
-
-
 
 
 DivMarker()
@@ -165,9 +165,9 @@ DivMarker()
     // Construct an exception record.
     //
 
-    ExceptionRecord.ExceptionCode    = 1;
-    ExceptionRecord.ExceptionRecord  = (PEXCEPTION_RECORD)NULL;
+    ExceptionRecord.ExceptionCode = 1;
+    ExceptionRecord.ExceptionRecord = (PEXCEPTION_RECORD)NULL;
     ExceptionRecord.NumberParameters = 0;
-    ExceptionRecord.ExceptionFlags   = 0;
+    ExceptionRecord.ExceptionFlags = 0;
     RtlRaiseException(&ExceptionRecord);
 }

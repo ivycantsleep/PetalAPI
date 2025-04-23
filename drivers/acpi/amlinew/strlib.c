@@ -9,9 +9,9 @@
 
 #include "pch.h"
 
-#ifdef	LOCKABLE_PRAGMA
-#pragma	ACPI_LOCKABLE_DATA
-#pragma	ACPI_LOCKABLE_CODE
+#ifdef LOCKABLE_PRAGMA
+#pragma ACPI_LOCKABLE_DATA
+#pragma ACPI_LOCKABLE_CODE
 #endif
 
 /***EP  StrLen - determine string length
@@ -39,7 +39,7 @@ ULONG EXPORT StrLen(PSZ psz, ULONG n)
 
     EXIT(5, ("StrLen=%u\n", dwLen));
     return dwLen;
-}       //StrLen
+} //StrLen
 
 /***EP  StrCpy - copy string
  *
@@ -71,7 +71,7 @@ PSZ EXPORT StrCpy(PSZ pszDst, PSZ pszSrc, ULONG n)
 
     EXIT(5, ("StrCpy=%s\n", pszDst));
     return pszDst;
-}       //StrCpy
+} //StrCpy
 
 /***EP  StrCat - concatenate strings
  *
@@ -104,7 +104,7 @@ PSZ EXPORT StrCat(PSZ pszDst, PSZ pszSrc, ULONG n)
 
     EXIT(5, ("StrCat=%s\n", pszDst));
     return pszDst;
-}       //StrCat
+} //StrCat
 
 /***EP  StrCmp - compare strings
  *
@@ -127,8 +127,7 @@ LONG EXPORT StrCmp(PSZ psz1, PSZ psz2, ULONG n, BOOLEAN fMatchCase)
     ULONG dwLen1, dwLen2;
     ULONG i;
 
-    ENTER(5, ("StrCmp(s1=%s,s2=%s,n=%d,fMatchCase=%d)\n",
-              psz1, psz2, n, fMatchCase));
+    ENTER(5, ("StrCmp(s1=%s,s2=%s,n=%d,fMatchCase=%d)\n", psz1, psz2, n, fMatchCase));
 
     ASSERT(psz1 != NULL);
     ASSERT(psz2 != NULL);
@@ -136,22 +135,18 @@ LONG EXPORT StrCmp(PSZ psz1, PSZ psz2, ULONG n, BOOLEAN fMatchCase)
     dwLen1 = StrLen(psz1, n);
     dwLen2 = StrLen(psz2, n);
     if (n == (ULONG)(-1))
-        n = (dwLen1 > dwLen2)? dwLen1: dwLen2;
+        n = (dwLen1 > dwLen2) ? dwLen1 : dwLen2;
 
     if (fMatchCase)
     {
-        for (i = 0, rc = 0;
-             (rc == 0) && (i < n) && (i < dwLen1) && (i < dwLen2);
-             ++i)
+        for (i = 0, rc = 0; (rc == 0) && (i < n) && (i < dwLen1) && (i < dwLen2); ++i)
         {
             rc = (LONG)(psz1[i] - psz2[i]);
         }
     }
     else
     {
-        for (i = 0, rc = 0;
-             (rc == 0) && (i < n) && (i < dwLen1) && (i < dwLen2);
-             ++i)
+        for (i = 0, rc = 0; (rc == 0) && (i < n) && (i < dwLen1) && (i < dwLen2); ++i)
         {
             rc = (LONG)(TOUPPER(psz1[i]) - TOUPPER(psz2[i]));
         }
@@ -167,7 +162,7 @@ LONG EXPORT StrCmp(PSZ psz1, PSZ psz2, ULONG n, BOOLEAN fMatchCase)
 
     EXIT(5, ("StrCmp=%d\n", rc));
     return rc;
-}       //StrCmp
+} //StrCmp
 
 /***EP  StrChr - look for a character in a string
  *
@@ -197,7 +192,7 @@ PSZ EXPORT StrChr(PSZ pszStr, CHAR c)
 
     EXIT(5, ("StrChr=%x\n", psz));
     return psz;
-}       //StrChr
+} //StrChr
 
 /***EP  StrRChr - look for a character in a string in reverse direction
  *
@@ -219,9 +214,7 @@ PSZ EXPORT StrRChr(PSZ pszStr, CHAR c)
     ENTER(5, ("StrChr(s=%s,c=%c)\n", pszStr, c));
 
     ASSERT(pszStr != NULL);
-    for (psz = &pszStr[StrLen(pszStr, (ULONG)-1)];
-         (*psz != c) && (psz > pszStr);
-	 psz--)
+    for (psz = &pszStr[StrLen(pszStr, (ULONG)-1)]; (*psz != c) && (psz > pszStr); psz--)
     {
     }
 
@@ -230,7 +223,7 @@ PSZ EXPORT StrRChr(PSZ pszStr, CHAR c)
 
     EXIT(5, ("StrRChr=%x\n", psz));
     return psz;
-}       //StrRChr
+} //StrRChr
 
 /***EP  StrTok - find the next token in string
  *
@@ -265,9 +258,7 @@ PSZ EXPORT StrTok(PSZ pszStr, PSZ pszSep)
         while ((*pszStr != '\0') && (StrChr(pszSep, *pszStr) != NULL))
             pszStr++;
 
-        for (pszNext = pszStr;
-             (*pszNext != '\0') && (StrChr(pszSep, *pszNext) == NULL);
-             pszNext++)
+        for (pszNext = pszStr; (*pszNext != '\0') && (StrChr(pszSep, *pszNext) == NULL); pszNext++)
             ;
 
         if (*pszStr == '\0')
@@ -279,10 +270,9 @@ PSZ EXPORT StrTok(PSZ pszStr, PSZ pszSep)
         }
     }
 
-    EXIT(5, ("StrTok=%s (Next=%s)\n",
-             pszStr? pszStr: "(null)", pszNext? pszNext: "(null)"));
+    EXIT(5, ("StrTok=%s (Next=%s)\n", pszStr ? pszStr : "(null)", pszNext ? pszNext : "(null)"));
     return pszStr;
-}       //StrTok
+} //StrTok
 
 /***EP  StrToUL - convert the number in a string to a unsigned long integer
  *
@@ -330,12 +320,12 @@ ULONG EXPORT StrToUL(PSZ psz, PSZ *ppszEnd, ULONG dwBase)
             m = *psz - 'A' + 10;
         else if ((*psz >= 'a') && (*psz <= 'z'))
             m = *psz - 'a' + 10;
-	else
-	    break;
+        else
+            break;
 
         if (m < dwBase)
         {
-            n = (n*dwBase) + m;
+            n = (n * dwBase) + m;
             psz++;
         }
         else
@@ -345,9 +335,9 @@ ULONG EXPORT StrToUL(PSZ psz, PSZ *ppszEnd, ULONG dwBase)
     if (ppszEnd != NULL)
         *ppszEnd = psz;
 
-    EXIT(5, ("StrToUL=%x (pszEnd=%x)\n", n, ppszEnd? *ppszEnd: 0));
+    EXIT(5, ("StrToUL=%x (pszEnd=%x)\n", n, ppszEnd ? *ppszEnd : 0));
     return n;
-}       //StrToUL
+} //StrToUL
 
 /***EP  StrToL - convert the number in a string to a long integer
  *
@@ -381,9 +371,9 @@ LONG EXPORT StrToL(PSZ psz, PSZ *ppszEnd, ULONG dwBase)
     if (fMinus)
         n = -n;
 
-    EXIT(5, ("StrToL=%x (pszEnd=%x)\n", n, ppszEnd? *ppszEnd: 0));
+    EXIT(5, ("StrToL=%x (pszEnd=%x)\n", n, ppszEnd ? *ppszEnd : 0));
     return n;
-}       //StrToL
+} //StrToL
 
 /***EP  StrStr - find a substring in a given string
  *
@@ -416,7 +406,7 @@ PSZ EXPORT StrStr(PSZ psz1, PSZ psz2)
 
     EXIT(5, ("StrStr=%s\n", psz));
     return psz;
-}       //StrStr
+} //StrStr
 
 /***EP  StrUpr - convert string to upper case
  *
@@ -441,7 +431,7 @@ PSZ EXPORT StrUpr(PSZ pszStr)
 
     EXIT(5, ("StrUpr=%s\n", pszStr));
     return pszStr;
-}       //StrUpr
+} //StrUpr
 
 /***EP  StrLwr - convert string to lower case
  *
@@ -466,7 +456,7 @@ PSZ EXPORT StrLwr(PSZ pszStr)
 
     EXIT(5, ("StrLwr=%s\n", pszStr));
     return pszStr;
-}       //StrLwr
+} //StrLwr
 
 /***EP  UlToA - convert an unsigned long value to a string
  *
@@ -487,9 +477,9 @@ PSZ EXPORT UlToA(ULONG dwValue, PSZ pszStr, ULONG dwRadix)
 
     ENTER(5, ("UlToA(Value=%x,pszStr=%x,Radix=%d\n", dwValue, pszStr, dwRadix));
 
-    for (psz = pszStr; dwValue != 0; dwValue/=dwRadix, psz++)
+    for (psz = pszStr; dwValue != 0; dwValue /= dwRadix, psz++)
     {
-        ch = (char)(dwValue%dwRadix);
+        ch = (char)(dwValue % dwRadix);
         if (ch <= 9)
         {
             *psz = (char)(ch + '0');
@@ -520,4 +510,4 @@ PSZ EXPORT UlToA(ULONG dwValue, PSZ pszStr, ULONG dwRadix)
 
     EXIT(5, ("UlToA=%s\n", pszStr));
     return pszStr;
-}       //UlToA
+} //UlToA

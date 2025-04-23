@@ -25,10 +25,7 @@ Revision History:
 
 #include "exp.h"
 
-VOID
-ExAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    )
+VOID ExAcquireFastMutex(IN PFAST_MUTEX FastMutex)
 
 /*++
 
@@ -57,19 +54,15 @@ Return Value:
     //
 
     OldIrql = KfRaiseIrql(APC_LEVEL);
-    if (InterlockedDecrement(&FastMutex->Count) != 0) {
+    if (InterlockedDecrement(&FastMutex->Count) != 0)
+    {
 
         //
         // The fast mutex is owned - wait for ownership to be granted.
         //
 
         FastMutex->Contention += 1;
-        KeWaitForSingleObject(&FastMutex->Event,
-                              WrExecutive,
-                              KernelMode,
-                              FALSE,
-                              NULL);
-
+        KeWaitForSingleObject(&FastMutex->Event, WrExecutive, KernelMode, FALSE, NULL);
     }
 
     //
@@ -81,10 +74,7 @@ Return Value:
     return;
 }
 
-VOID
-ExReleaseFastMutex (
-    IN PFAST_MUTEX FastMutex
-    )
+VOID ExReleaseFastMutex(IN PFAST_MUTEX FastMutex)
 
 /*++
 
@@ -120,7 +110,8 @@ Return Value:
     ASSERT(KeGetCurrentIrql() == APC_LEVEL);
 
     FastMutex->Owner = NULL;
-    if (InterlockedIncrement(&FastMutex->Count) <= 0) {
+    if (InterlockedIncrement(&FastMutex->Count) <= 0)
+    {
 
         //
         // There are one or more threads waiting for ownership of the fast
@@ -139,9 +130,7 @@ Return Value:
 }
 
 BOOLEAN
-ExTryToAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    )
+ExTryToAcquireFastMutex(IN PFAST_MUTEX FastMutex)
 
 /*++
 
@@ -172,7 +161,8 @@ Return Value:
     //
 
     OldIrql = KfRaiseIrql(APC_LEVEL);
-    if (InterlockedCompareExchange(&FastMutex->Count, 0, 1) != 1) {
+    if (InterlockedCompareExchange(&FastMutex->Count, 0, 1) != 1)
+    {
 
         //
         // The fast mutex is owned - lower IRQL to its previous value
@@ -181,8 +171,9 @@ Return Value:
 
         KeLowerIrql(OldIrql);
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Grant ownership of the fast mutext to the current thread and
@@ -195,10 +186,7 @@ Return Value:
     }
 }
 
-VOID
-ExAcquireFastMutexUnsafe (
-    IN PFAST_MUTEX FastMutex
-    )
+VOID ExAcquireFastMutexUnsafe(IN PFAST_MUTEX FastMutex)
 
 /*++
 
@@ -223,19 +211,15 @@ Return Value:
     // Decrement the ownership count to determine if the fast mutex is owned.
     //
 
-    if (InterlockedDecrement(&FastMutex->Count) != 0) {
+    if (InterlockedDecrement(&FastMutex->Count) != 0)
+    {
 
         //
         // The fast mutex is owned - wait for ownership to be granted.
         //
 
         FastMutex->Contention += 1;
-        KeWaitForSingleObject(&FastMutex->Event,
-                              WrExecutive,
-                              KernelMode,
-                              FALSE,
-                              NULL);
-
+        KeWaitForSingleObject(&FastMutex->Event, WrExecutive, KernelMode, FALSE, NULL);
     }
 
     //
@@ -246,10 +230,7 @@ Return Value:
     return;
 }
 
-VOID
-ExReleaseFastMutexUnsafe (
-    IN PFAST_MUTEX FastMutex
-    )
+VOID ExReleaseFastMutexUnsafe(IN PFAST_MUTEX FastMutex)
 
 /*++
 
@@ -278,7 +259,8 @@ Return Value:
     ASSERT(FastMutex->Owner == KeGetCurrentThread());
 
     FastMutex->Owner = NULL;
-    if (InterlockedIncrement(&FastMutex->Count) <= 0) {
+    if (InterlockedIncrement(&FastMutex->Count) <= 0)
+    {
 
         //
         // There are one or more threads waiting for ownership of the fast

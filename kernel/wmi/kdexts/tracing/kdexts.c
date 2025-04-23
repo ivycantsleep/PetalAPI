@@ -30,21 +30,17 @@ Environment:
 //
 // globals
 //
-WINDBG_EXTENSION_APIS   ExtensionApis;
+WINDBG_EXTENSION_APIS ExtensionApis;
 
 #define KDEXTS_EXTERN
-#include    "kdExts.h"
-#undef  KDEXTS_EXTERN
+#include "kdExts.h"
+#undef KDEXTS_EXTERN
 
-static USHORT           SavedMajorVersion;
-static USHORT           SavedMinorVersion;
+static USHORT SavedMajorVersion;
+static USHORT SavedMinorVersion;
 
 
-DllInit(
-    HANDLE hModule,
-    DWORD  dwReason,
-    DWORD  dwReserved
-    )
+DllInit(HANDLE hModule, DWORD dwReason, DWORD dwReserved)
 {
 #if 0
     switch (dwReason) {
@@ -66,12 +62,7 @@ DllInit(
 }
 
 
-VOID
-WinDbgExtensionDllInit(
-    PWINDBG_EXTENSION_APIS64 lpExtensionApis,
-    USHORT MajorVersion,
-    USHORT MinorVersion
-    )
+VOID WinDbgExtensionDllInit(PWINDBG_EXTENSION_APIS64 lpExtensionApis, USHORT MajorVersion, USHORT MinorVersion)
 {
     ExtensionApis = *lpExtensionApis;
 
@@ -82,12 +73,7 @@ WinDbgExtensionDllInit(
 }
 
 
-VOID
-wmiTraceDllInit(
-    PWINDBG_EXTENSION_APIS64 lpExtensionApis,
-    USHORT MajorVersion,
-    USHORT MinorVersion
-    )
+VOID wmiTraceDllInit(PWINDBG_EXTENSION_APIS64 lpExtensionApis, USHORT MajorVersion, USHORT MinorVersion)
 {
     ExtensionApis = *lpExtensionApis;
 
@@ -98,75 +84,70 @@ wmiTraceDllInit(
 }
 
 
-VOID
-CheckVersion(
-    VOID
-    )
+VOID CheckVersion(VOID)
 {
 }
 
 
 BOOLEAN
-IsCheckedBuild(
-    PBOOLEAN Checked
-    )
+IsCheckedBuild(PBOOLEAN Checked)
 {
     BOOLEAN result;
 
     result = FALSE;
-    if (HaveDebuggerData ()) {
+    if (HaveDebuggerData())
+    {
         result = TRUE;
-        *Checked = (KernelVersionPacket.MajorVersion == 0xc) ;
+        *Checked = (KernelVersionPacket.MajorVersion == 0xc);
     }
 
-   return (result);
+    return (result);
 }
 
 
 LPEXT_API_VERSION
-ExtensionApiVersion(
-    VOID
-    )
+ExtensionApiVersion(VOID)
 {
-    static  EXT_API_VERSION ApiVersion = { (VER_PRODUCTVERSION_W >> 8),
-                                           (VER_PRODUCTVERSION_W & 0xff),
-                                           EXT_API_VERSION_NUMBER64,  0 };
+    static EXT_API_VERSION ApiVersion = { (VER_PRODUCTVERSION_W >> 8), (VER_PRODUCTVERSION_W & 0xff),
+                                          EXT_API_VERSION_NUMBER64, 0 };
     return (&ApiVersion);
 }
 
 
-BOOL
-HaveDebuggerData(
-    VOID
-    )
+BOOL HaveDebuggerData(VOID)
 {
     static int havedata = 0;
 
-    if (havedata == 0) {
-        if (!Ioctl (IG_GET_KERNEL_VERSION, &KernelVersionPacket, sizeof(KernelVersionPacket))) {
+    if (havedata == 0)
+    {
+        if (!Ioctl(IG_GET_KERNEL_VERSION, &KernelVersionPacket, sizeof(KernelVersionPacket)))
+        {
             havedata = 2;
-        } else if (KernelVersionPacket.MajorVersion == 0) {
+        }
+        else if (KernelVersionPacket.MajorVersion == 0)
+        {
             havedata = 2;
-        } else {
+        }
+        else
+        {
             havedata = 1;
         }
     }
 
-    return ((havedata == 1) &&
-            ((KernelVersionPacket.Flags & DBGKD_VERS_FLAG_DATA) != 0));
+    return ((havedata == 1) && ((KernelVersionPacket.Flags & DBGKD_VERS_FLAG_DATA) != 0));
 }
 
 
 USHORT
-TargetMachineType(
-    VOID
-    )
+TargetMachineType(VOID)
 {
-    if (HaveDebuggerData()) {
+    if (HaveDebuggerData())
+    {
         return (KernelVersionPacket.MachineType);
-    } else {
+    }
+    else
+    {
         dprintf("Error - Cannot get Kernel Version.\n");
     }
     return 0;
 }
-

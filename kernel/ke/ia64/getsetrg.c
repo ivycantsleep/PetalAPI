@@ -28,13 +28,8 @@ Revision History:
 #include "ntfpia64.h"
 
 
-
 ULONGLONG
-KiGetRegisterValue (
-    IN ULONG Register,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiGetRegisterValue(IN ULONG Register, IN PKEXCEPTION_FRAME ExceptionFrame, IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -64,19 +59,26 @@ Return Value:
     // Dispatch on the register number.
     //
 
-    if (Register == 0) {
+    if (Register == 0)
+    {
         return 0;
-    } else if (Register <= 3) {
-        Register -= 1;
-        return ( *(&TrapFrame->IntGp + Register) );
-    } else if (Register <= 7) {
-        Register -= 4;
-        return ( *(&ExceptionFrame->IntS0 + Register) );
-    } else if (Register <= 31) {
-        Register -= 8;
-        return ( *(&TrapFrame->IntV0 + Register) );
     }
-    
+    else if (Register <= 3)
+    {
+        Register -= 1;
+        return (*(&TrapFrame->IntGp + Register));
+    }
+    else if (Register <= 7)
+    {
+        Register -= 4;
+        return (*(&ExceptionFrame->IntS0 + Register));
+    }
+    else if (Register <= 31)
+    {
+        Register -= 8;
+        return (*(&TrapFrame->IntV0 + Register));
+    }
+
     //
     // Register is the stacked register
     //
@@ -90,22 +92,25 @@ Return Value:
         SizeOfCurrentFrame = (ULONG)(TrapFrame->StIFS & 0x7F);
         Register = Register - 32;
 
-        if (TrapFrame->PreviousMode == UserMode) {
+        if (TrapFrame->PreviousMode == UserMode)
+        {
 
             //
             // PreviousMode is user
             //
 
-            UserBStore = (PULONGLONG) TrapFrame->RsBSP; 
+            UserBStore = (PULONGLONG)TrapFrame->RsBSP;
 
-            do {
+            do
+            {
 
                 UserBStore = UserBStore - 1;
-                
+
                 SizeOfCurrentFrame = SizeOfCurrentFrame - 1;
 
-                if (((ULONG_PTR) UserBStore & 0x1F8) == 0x1F8) {
-                    
+                if (((ULONG_PTR)UserBStore & 0x1F8) == 0x1F8)
+                {
+
                     //
                     // Adjust Bsp, by skipping RNAT
                     //
@@ -113,52 +118,50 @@ Return Value:
                     UserBStore = UserBStore - 1;
                 }
 
-            } while (Register < SizeOfCurrentFrame); 
+            } while (Register < SizeOfCurrentFrame);
 
             return (*UserBStore);
-
-        } else {
+        }
+        else
+        {
 
             //
             // PreviousMode is kernel
             //
 
-            KernelBStore = (ULONGLONG *) TrapFrame->RsBSP;
+            KernelBStore = (ULONGLONG *)TrapFrame->RsBSP;
 
-            do {
+            do
+            {
 
                 KernelBStore = KernelBStore - 1;
 
                 SizeOfCurrentFrame = SizeOfCurrentFrame - 1;
 
-                if (((ULONG_PTR) KernelBStore & 0x1F8) == 0x1F8) {
-                    
+                if (((ULONG_PTR)KernelBStore & 0x1F8) == 0x1F8)
+                {
+
                     //
                     // Adjust UserBsp, by skipping RNAT
                     //
 
-                    KernelBStore = KernelBStore -1;
+                    KernelBStore = KernelBStore - 1;
                 }
-                
-            } while (Register < SizeOfCurrentFrame); 
-            
+
+            } while (Register < SizeOfCurrentFrame);
+
             return (*KernelBStore);
         }
     }
-}   
+}
 
-#define GET_NAT_OFFSET(addr) (USHORT)(((ULONG_PTR) (addr) >> 3) & 0x3F)
-#define CLEAR_NAT_BIT(Nats, Offset)  Nats &= ~((ULONGLONG)1i64 << Offset)
+#define GET_NAT_OFFSET(addr) (USHORT)(((ULONG_PTR)(addr) >> 3) & 0x3F)
+#define CLEAR_NAT_BIT(Nats, Offset) Nats &= ~((ULONGLONG)1i64 << Offset)
 #define GET_NAT(Nats, addr) (UCHAR)((Nats >> GET_NAT_OFFSET(addr)) & 1)
 
-
-VOID
-KiSetRegisterValue (
-    IN ULONG Register,
-    IN ULONGLONG Value,
-    OUT PKEXCEPTION_FRAME ExceptionFrame,
-    OUT PKTRAP_FRAME TrapFrame
-    )
+
+VOID KiSetRegisterValue(IN ULONG Register, IN ULONGLONG Value, OUT PKEXCEPTION_FRAME ExceptionFrame,
+                        OUT PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -194,15 +197,21 @@ Return Value:
     // Dispatch on the register number.
     //
 
-    if (Register == 0) {
+    if (Register == 0)
+    {
         return;
-    } else if (Register < 32) {
-        if ((Register <= 3) || (Register >= 8)) {
+    }
+    else if (Register < 32)
+    {
+        if ((Register <= 3) || (Register >= 8))
+        {
             Register -= 1;
             *(&TrapFrame->IntGp + Register) = Value;
             NatBitOffset = GET_NAT_OFFSET(&TrapFrame->IntGp + Register);
             CLEAR_NAT_BIT(TrapFrame->IntNats, NatBitOffset);
-        } else if ((Register >= 4) && (Register <= 7)) {
+        }
+        else if ((Register >= 4) && (Register <= 7))
+        {
             Register -= 4;
             *(&ExceptionFrame->IntS0 + Register) = Value;
             NatBitOffset = GET_NAT_OFFSET(&ExceptionFrame->IntS0 + Register);
@@ -221,22 +230,25 @@ Return Value:
     SizeOfCurrentFrame = (ULONG)(TrapFrame->StIFS & 0x7F);
     Register = Register - 32;
 
-    if (TrapFrame->PreviousMode == UserMode) {
+    if (TrapFrame->PreviousMode == UserMode)
+    {
 
         //
         // PreviousMode is user
         //
 
-        UserBStore = (PULONGLONG) TrapFrame->RsBSP; 
+        UserBStore = (PULONGLONG)TrapFrame->RsBSP;
 
-        do {
+        do
+        {
 
             UserBStore = UserBStore - 1;
-                
+
             SizeOfCurrentFrame = SizeOfCurrentFrame - 1;
 
-            if (((ULONG_PTR) UserBStore & 0x1F8) == 0x1F8) {
-                    
+            if (((ULONG_PTR)UserBStore & 0x1F8) == 0x1F8)
+            {
+
                 //
                 // Adjust Bsp, by skipping RNAT
                 //
@@ -245,17 +257,21 @@ Return Value:
                 UserBStore = UserBStore - 1;
             }
 
-        } while (Register < SizeOfCurrentFrame); 
+        } while (Register < SizeOfCurrentFrame);
 
         *UserBStore = Value;
         NatBitOffset = GET_NAT_OFFSET(UserBStore);
-        if (RnatAddress == NULL) {
+        if (RnatAddress == NULL)
+        {
             CLEAR_NAT_BIT(TrapFrame->RsRNAT, NatBitOffset);
-        } else {
+        }
+        else
+        {
             CLEAR_NAT_BIT(*RnatAddress, NatBitOffset);
         }
-            
-    } else {
+    }
+    else
+    {
 
         //
         // PreviousMode is kernel
@@ -270,25 +286,27 @@ Return Value:
         OriginalRsc = __getReg(CV_IA64_RsRSC);
         __setReg(CV_IA64_RsRSC, RSC_KERNEL_DISABLED);
 
-        KernelBStore = (ULONGLONG *) TrapFrame->RsBSP;
+        KernelBStore = (ULONGLONG *)TrapFrame->RsBSP;
 
-        do {
+        do
+        {
 
             KernelBStore = KernelBStore - 1;
 
             SizeOfCurrentFrame = SizeOfCurrentFrame - 1;
 
-            if (((ULONG_PTR) KernelBStore & 0x1F8) == 0x1F8) {
-                    
+            if (((ULONG_PTR)KernelBStore & 0x1F8) == 0x1F8)
+            {
+
                 //
                 // Adjust UserBsp, by skipping RNAT
                 //
 
-                KernelBStore = KernelBStore -1;
+                KernelBStore = KernelBStore - 1;
             }
-                
-        } while (Register < SizeOfCurrentFrame); 
-            
+
+        } while (Register < SizeOfCurrentFrame);
+
         *KernelBStore = Value;
         NatBitOffset = GET_NAT_OFFSET(KernelBStore);
         RnatAddress = (PULONGLONG)((ULONGLONG)KernelBStore | RNAT_ALIGNMENT);
@@ -301,80 +319,95 @@ Return Value:
         BspStore = __getReg(CV_IA64_RsBSPSTORE);
         Rnat = __getReg(CV_IA64_RsRNAT);
 
-        if ((ULONGLONG)RnatAddress == ((ULONGLONG)BspStore | RNAT_ALIGNMENT)) {
-             CLEAR_NAT_BIT(Rnat, NatBitOffset);   
+        if ((ULONGLONG)RnatAddress == ((ULONGLONG)BspStore | RNAT_ALIGNMENT))
+        {
+            CLEAR_NAT_BIT(Rnat, NatBitOffset);
             __setReg(CV_IA64_RsRNAT, Rnat);
-        } else {
-             CLEAR_NAT_BIT(*RnatAddress, NatBitOffset);
+        }
+        else
+        {
+            CLEAR_NAT_BIT(*RnatAddress, NatBitOffset);
         }
 
         //
         // enable interrupt and restore RSC setting
         //
-       
+
         _enable();
         __setReg(CV_IA64_RsRSC, OriginalRsc);
     }
 }
-
+
 
 FLOAT128
-KiGetFloatRegisterValue (
-    IN ULONG Register,
-    IN struct _KEXCEPTION_FRAME *ExceptionFrame,
-    IN struct _KTRAP_FRAME *TrapFrame
-    )
+KiGetFloatRegisterValue(IN ULONG Register, IN struct _KEXCEPTION_FRAME *ExceptionFrame,
+                        IN struct _KTRAP_FRAME *TrapFrame)
 
 {
-    if (Register == 0) {
-        FLOAT128 t = {0ULL,0ULL};
+    if (Register == 0)
+    {
+        FLOAT128 t = { 0ULL, 0ULL };
         return t;
-    } else if (Register == 1) {
-        FLOAT128 t = {0x8000000000000000ULL,0x000000000000FFFFULL}; // low,high
+    }
+    else if (Register == 1)
+    {
+        FLOAT128 t = { 0x8000000000000000ULL, 0x000000000000FFFFULL }; // low,high
         return t;
-    } else if (Register <= 5) {
+    }
+    else if (Register <= 5)
+    {
         Register -= 2;
-        return ( *(&ExceptionFrame->FltS0 + Register) );
-    } else if (Register <= 15) {
+        return (*(&ExceptionFrame->FltS0 + Register));
+    }
+    else if (Register <= 15)
+    {
         Register -= 6;
-        return ( *(&TrapFrame->FltT0 + Register) );
-    } else if (Register <= 31) {
+        return (*(&TrapFrame->FltT0 + Register));
+    }
+    else if (Register <= 31)
+    {
         Register -= 16;
-        return ( *(&ExceptionFrame->FltS4 + Register) );
-    } else {
+        return (*(&ExceptionFrame->FltS4 + Register));
+    }
+    else
+    {
         PKHIGHER_FP_VOLATILE HigherVolatile;
 
         HigherVolatile = GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase);
         Register -= 32;
-        return ( *(&HigherVolatile->FltF32 + Register) );
+        return (*(&HigherVolatile->FltF32 + Register));
     }
 }
 
 
-VOID
-KiSetFloatRegisterValue (
-    IN ULONG Register,
-    IN FLOAT128 Value,
-    OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
-    OUT struct _KTRAP_FRAME *TrapFrame
-    )
+VOID KiSetFloatRegisterValue(IN ULONG Register, IN FLOAT128 Value, OUT struct _KEXCEPTION_FRAME *ExceptionFrame,
+                             OUT struct _KTRAP_FRAME *TrapFrame)
 
 {
-    if (Register <= 1) {
+    if (Register <= 1)
+    {
         return;
-    } else if (Register <= 5) {
+    }
+    else if (Register <= 5)
+    {
         Register -= 2;
         *(&ExceptionFrame->FltS0 + Register) = Value;
         return;
-    } else if (Register <= 15) {
+    }
+    else if (Register <= 15)
+    {
         Register -= 6;
         *(&TrapFrame->FltT0 + Register) = Value;
         return;
-    } else if (Register <= 31) {
+    }
+    else if (Register <= 31)
+    {
         Register -= 16;
         *(&ExceptionFrame->FltS4 + Register) = Value;
         return;
-    } else {
+    }
+    else
+    {
         PKHIGHER_FP_VOLATILE HigherVolatile;
 
         HigherVolatile = GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase);
@@ -385,12 +418,8 @@ KiSetFloatRegisterValue (
         return;
     }
 }
-
-VOID
-__cdecl
-KeSaveStateForHibernate(
-    IN PKPROCESSOR_STATE ProcessorState
-    )
+
+VOID __cdecl KeSaveStateForHibernate(IN PKPROCESSOR_STATE ProcessorState)
 /*++
 
 Routine Description:
@@ -412,36 +441,20 @@ Return Value:
 {
     //
     // BUGBUG John Vert (jvert) 4/30/1998
-    //  someone needs to implement this and probably put it in a more 
+    //  someone needs to implement this and probably put it in a more
     //  appropriate file.
-    
 }
-
+
 
 FLOAT128
-get_fp_register (
-    IN ULONG Register,
-    IN PVOID FpState
-    )
+get_fp_register(IN ULONG Register, IN PVOID FpState)
 {
-    return(KiGetFloatRegisterValue (
-               Register, 
-               ((PFLOATING_POINT_STATE)FpState)->ExceptionFrame,
-               ((PFLOATING_POINT_STATE)FpState)->TrapFrame
-               ));
+    return (KiGetFloatRegisterValue(Register, ((PFLOATING_POINT_STATE)FpState)->ExceptionFrame,
+                                    ((PFLOATING_POINT_STATE)FpState)->TrapFrame));
 }
 
-VOID
-set_fp_register (
-    IN ULONG Register,
-    IN FLOAT128 Value,
-    IN PVOID FpState
-    )
+VOID set_fp_register(IN ULONG Register, IN FLOAT128 Value, IN PVOID FpState)
 {
-    KiSetFloatRegisterValue (
-        Register, 
-        Value,
-        ((PFLOATING_POINT_STATE)FpState)->ExceptionFrame,
-        ((PFLOATING_POINT_STATE)FpState)->TrapFrame
-        );
+    KiSetFloatRegisterValue(Register, Value, ((PFLOATING_POINT_STATE)FpState)->ExceptionFrame,
+                            ((PFLOATING_POINT_STATE)FpState)->TrapFrame);
 }

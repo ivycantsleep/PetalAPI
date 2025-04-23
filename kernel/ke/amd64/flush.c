@@ -29,18 +29,11 @@ Revision History:
 // Define prototypes for forward referenced functions.
 //
 
-VOID
-KiInvalidateAllCachesTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiInvalidateAllCachesTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                                 IN PVOID Parameter3);
 
 BOOLEAN
-KeInvalidateAllCaches (
-    IN BOOLEAN AllProcessors
-    )
+KeInvalidateAllCaches(IN BOOLEAN AllProcessors)
 
 /*++
 
@@ -76,12 +69,14 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (AllProcessors != FALSE) {
+    if (AllProcessors != FALSE)
+    {
         OldIrql = KeRaiseIrqlToSynchLevel();
         Prcb = KeGetCurrentPrcb();
         TargetProcessors = KeActiveProcessors;
-
-    } else {
+    }
+    else
+    {
         KiLockContextSwap(&OldIrql);
         Prcb = KeGetCurrentPrcb();
         Process = Prcb->CurrentThread->ApcState.Process;
@@ -93,12 +88,9 @@ Return Value:
     //
 
     TargetProcessors &= Prcb->NotSetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiInvalidateAllCachesTarget,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiInvalidateAllCachesTarget, NULL, NULL, NULL);
     }
 
 #endif
@@ -115,7 +107,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -123,10 +116,12 @@ Return Value:
     // Lower IRQL and unlock as appropriate.
     //
 
-    if (AllProcessors != FALSE) {
+    if (AllProcessors != FALSE)
+    {
         KeLowerIrql(OldIrql);
-
-    } else {
+    }
+    else
+    {
         KiUnlockContextSwap(OldIrql);
     }
 
@@ -137,13 +132,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-VOID
-KiInvalidateAllCachesTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KiInvalidateAllCachesTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                                 IN PVOID Parameter3)
 
 /*++
 

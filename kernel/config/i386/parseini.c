@@ -32,45 +32,46 @@ Revision History:
 #include "stdlib.h"
 #include "parseini.h"
 
-typedef struct _value   VALUE,      *PVALUE;
-typedef struct _line    LINE,       *PLINE;
-typedef struct _section SECTION,    *PSECTION;
-typedef struct _inf     INF,        *PINF;
-typedef struct _cm_token   CM_TOKEN,*PCM_TOKEN;
-typedef enum _tokentype TOKENTYPE,  *PTOKENTTYPE;
-typedef enum _stringsSectionType    STRINGSSECTIONTYPE;;
+typedef struct _value VALUE, *PVALUE;
+typedef struct _line LINE, *PLINE;
+typedef struct _section SECTION, *PSECTION;
+typedef struct _inf INF, *PINF;
+typedef struct _cm_token CM_TOKEN, *PCM_TOKEN;
+typedef enum _tokentype TOKENTYPE, *PTOKENTTYPE;
+typedef enum _stringsSectionType STRINGSSECTIONTYPE;
+;
 
 struct _value
 {
-    PVALUE  pNext;
-    PCHAR   pName;
+    PVALUE pNext;
+    PCHAR pName;
     BOOLEAN Allocated;
 };
 
 struct _line
 {
-    PLINE   pNext;
-    PCHAR   pName;
-    PVALUE  pValue;
+    PLINE pNext;
+    PCHAR pName;
+    PVALUE pValue;
     BOOLEAN Allocated;
 };
 
 struct _section
 {
-    PSECTION    pNext;
-    PCHAR       pName;
-    PLINE       pLine;
-    BOOLEAN     Allocated;
+    PSECTION pNext;
+    PCHAR pName;
+    PLINE pLine;
+    BOOLEAN Allocated;
 };
 
 struct _inf
 {
-    PSECTION            pSection;
-    PSECTION            pSectionRecord;
-    PLINE               pLineRecord;
-    PVALUE              pValueRecord;
-    STRINGSSECTIONTYPE  StringsSectionType;
-    PSECTION            StringsSection;
+    PSECTION pSection;
+    PSECTION pSectionRecord;
+    PLINE pLineRecord;
+    PVALUE pValueRecord;
+    STRINGSSECTIONTYPE StringsSectionType;
+    PSECTION StringsSection;
 };
 
 //
@@ -100,108 +101,64 @@ enum _tokentype
 
 struct _cm_token
 {
-    TOKENTYPE   Type;
-    PCHAR       pValue;
-    BOOLEAN     Allocated;
+    TOKENTYPE Type;
+    PCHAR pValue;
+    BOOLEAN Allocated;
 };
 
-VOID
-CmpFreeValueList(
-    IN PVALUE pValue
-    );
+VOID CmpFreeValueList(IN PVALUE pValue);
 
-VOID
-CmpFreeLineList(
-    IN PLINE pLine
-    );
+VOID CmpFreeLineList(IN PLINE pLine);
 
-VOID
-CmpFreeSectionList(
-    IN PSECTION pSection
-    );
+VOID CmpFreeSectionList(IN PSECTION pSection);
 
 PCHAR
-CmpProcessForSimpleStringSub(
-    IN PINF pInf,
-    IN PCHAR String
-    );
+CmpProcessForSimpleStringSub(IN PINF pInf, IN PCHAR String);
 
 BOOLEAN
-CmpAppendSection(
-    IN PINF  pInf,
-    IN PCHAR pSectionName,
-    IN BOOLEAN Allocated
-    );
+CmpAppendSection(IN PINF pInf, IN PCHAR pSectionName, IN BOOLEAN Allocated);
 
 BOOLEAN
-CmpAppendLine(
-    IN PINF pInf,
-    IN PCHAR pLineKey,
-    IN BOOLEAN Allocated
-    );
+CmpAppendLine(IN PINF pInf, IN PCHAR pLineKey, IN BOOLEAN Allocated);
 
 BOOLEAN
-CmpAppendValue(
-    IN PINF pInf,
-    IN PCHAR pValueString,
-    IN BOOLEAN Allocated
-    );
+CmpAppendValue(IN PINF pInf, IN PCHAR pValueString, IN BOOLEAN Allocated);
 
-VOID
-CmpGetToken(
-    IN OUT PCHAR *Stream,
-    IN PCHAR MaxStream,
-    IN OUT PULONG LineNumber,
-    IN OUT PCM_TOKEN Token
-    );
+VOID CmpGetToken(IN OUT PCHAR *Stream, IN PCHAR MaxStream, IN OUT PULONG LineNumber, IN OUT PCM_TOKEN Token);
 
-PINF
-CmpParseInfBuffer(
-    IN PCHAR Buffer,
-    IN ULONG Size,
-    IN OUT PULONG ErrorLine
-    );
+PINF CmpParseInfBuffer(IN PCHAR Buffer, IN ULONG Size, IN OUT PULONG ErrorLine);
 
 PVALUE
-CmpSearchValueInLine(
-    IN PLINE pLine,
-    IN ULONG ValueIndex
-    );
+CmpSearchValueInLine(IN PLINE pLine, IN ULONG ValueIndex);
 
 PLINE
-CmpSearchLineInSectionByIndex(
-    IN PSECTION pSection,
-    IN ULONG    LineIndex
-    );
+CmpSearchLineInSectionByIndex(IN PSECTION pSection, IN ULONG LineIndex);
 
 PSECTION
-CmpSearchSectionByName(
-    IN PINF  pInf,
-    IN PCHAR SectionName
-    );
+CmpSearchSectionByName(IN PINF pInf, IN PCHAR SectionName);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CmpFreeValueList)
-#pragma alloc_text(INIT,CmpFreeLineList)
-#pragma alloc_text(INIT,CmpFreeSectionList)
-#pragma alloc_text(INIT,CmpProcessForSimpleStringSub)
-#pragma alloc_text(INIT,CmpAppendSection)
-#pragma alloc_text(INIT,CmpAppendLine)
-#pragma alloc_text(INIT,CmpAppendValue)
-#pragma alloc_text(INIT,CmpGetToken)
-#pragma alloc_text(INIT,CmpParseInfBuffer)
-#pragma alloc_text(INIT,CmpSearchValueInLine)
-#pragma alloc_text(INIT,CmpSearchLineInSectionByIndex)
-#pragma alloc_text(INIT,CmpSearchSectionByName)
-#pragma alloc_text(INIT,CmpSearchInfLine)
-#pragma alloc_text(INIT,CmpOpenInfFile)
-#pragma alloc_text(INIT,CmpCloseInfFile)
-#pragma alloc_text(INIT,CmpGetKeyName)
-#pragma alloc_text(INIT,CmpSearchInfSection)
-#pragma alloc_text(INIT,CmpGetSectionLineIndex)
-#pragma alloc_text(INIT,CmpGetSectionLineIndexValueCount)
-#pragma alloc_text(INIT,CmpGetIntField)
-#pragma alloc_text(INIT,CmpGetBinaryField)
+#pragma alloc_text(INIT, CmpFreeValueList)
+#pragma alloc_text(INIT, CmpFreeLineList)
+#pragma alloc_text(INIT, CmpFreeSectionList)
+#pragma alloc_text(INIT, CmpProcessForSimpleStringSub)
+#pragma alloc_text(INIT, CmpAppendSection)
+#pragma alloc_text(INIT, CmpAppendLine)
+#pragma alloc_text(INIT, CmpAppendValue)
+#pragma alloc_text(INIT, CmpGetToken)
+#pragma alloc_text(INIT, CmpParseInfBuffer)
+#pragma alloc_text(INIT, CmpSearchValueInLine)
+#pragma alloc_text(INIT, CmpSearchLineInSectionByIndex)
+#pragma alloc_text(INIT, CmpSearchSectionByName)
+#pragma alloc_text(INIT, CmpSearchInfLine)
+#pragma alloc_text(INIT, CmpOpenInfFile)
+#pragma alloc_text(INIT, CmpCloseInfFile)
+#pragma alloc_text(INIT, CmpGetKeyName)
+#pragma alloc_text(INIT, CmpSearchInfSection)
+#pragma alloc_text(INIT, CmpGetSectionLineIndex)
+#pragma alloc_text(INIT, CmpGetSectionLineIndexValueCount)
+#pragma alloc_text(INIT, CmpGetIntField)
+#pragma alloc_text(INIT, CmpGetBinaryField)
 #endif
 
 
@@ -214,17 +171,13 @@ CmpSearchSectionByName(
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const CHAR  StringTerminators[] = "[]=,\t \"\n\f\v\r";
-CHAR const* const QStringTerminators = StringTerminators + 6;
+const CHAR StringTerminators[] = "[]=,\t \"\n\f\v\r";
+CHAR const *const QStringTerminators = StringTerminators + 6;
 const CHAR EmptyValue[] = "";
-const CHAR  DblSpaceSection[] = "DBLSPACE_SECTION";
+const CHAR DblSpaceSection[] = "DBLSPACE_SECTION";
 
 BOOLEAN
-CmpAppendSection(
-    IN PINF  pInf,
-    IN PCHAR pSectionName,
-    IN BOOLEAN Allocated
-    )
+CmpAppendSection(IN PINF pInf, IN PCHAR pSectionName, IN BOOLEAN Allocated)
 
 /*++
 
@@ -247,19 +200,18 @@ CmpAppendSection(
 --*/
 
 {
-    PSECTION            pNewSection;
-    PLINE               pLineRecord;
-    STRINGSSECTIONTYPE  type;
-    USHORT              id;
-    USHORT              threadLang;
-    PCHAR               p;
+    PSECTION pNewSection;
+    PLINE pLineRecord;
+    STRINGSSECTIONTYPE type;
+    USHORT id;
+    USHORT threadLang;
+    PCHAR p;
 
     //
     // Check to see if INF initialised and the parameters passed in is valid
     //
 
-    if (    pInf == (PINF)NULL ||
-            pSectionName == (PCHAR)NULL)
+    if (pInf == (PINF)NULL || pSectionName == (PCHAR)NULL)
     {
         return (FALSE);
     }
@@ -269,25 +221,22 @@ CmpAppendSection(
     // to merge sections.
     //
 
-    for(    pNewSection = pInf->pSection;
-            pNewSection;
-            pNewSection = pNewSection->pNext)
+    for (pNewSection = pInf->pSection; pNewSection; pNewSection = pNewSection->pNext)
     {
-        if(pNewSection->pName && _stricmp(pNewSection->pName,pSectionName) == 0)
+        if (pNewSection->pName && _stricmp(pNewSection->pName, pSectionName) == 0)
         {
             break;
         }
     }
 
-    if(pNewSection)
+    if (pNewSection)
     {
         //
         // Set pLineRecord to point to the last line currently in the section.
         //
 
-        for(    pLineRecord = pNewSection->pLine;
-                pLineRecord && pLineRecord->pNext;
-                pLineRecord = pLineRecord->pNext);
+        for (pLineRecord = pNewSection->pLine; pLineRecord && pLineRecord->pNext; pLineRecord = pLineRecord->pNext)
+            ;
 
         pInf->pLineRecord = pLineRecord;
     }
@@ -321,34 +270,34 @@ CmpAppendSection(
         pNewSection->pNext = pInf->pSection;
         pInf->pSection = pNewSection;
 
-        if(_strnicmp(pSectionName, "Strings", 7) == 0)
+        if (_strnicmp(pSectionName, "Strings", 7) == 0)
         {
             type = StringsSectionNone;
 
-            if(pSectionName[7] == '.')
+            if (pSectionName[7] == '.')
             {
                 //
                 // The langid part must be in the form of 4 hex digits.
                 //
 
                 id = (USHORT)strtoul(pSectionName + 8, &p, 16);
-                if(p == (pSectionName + 8 + 5) && *p == '\0')
+                if (p == (pSectionName + 8 + 5) && *p == '\0')
                 {
                     threadLang = LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale);
 
-                    if(threadLang == id)
+                    if (threadLang == id)
                     {
                         type = StringsSectionExactMatch;
                     }
                     else
                     {
-                        if(id == PRIMARYLANGID(threadLang))
+                        if (id == PRIMARYLANGID(threadLang))
                         {
                             type = StringsSectionExactPrimaryMatch;
                         }
                         else
                         {
-                            if(PRIMARYLANGID(id) == PRIMARYLANGID(threadLang))
+                            if (PRIMARYLANGID(id) == PRIMARYLANGID(threadLang))
                             {
                                 type = StringsSectionLoosePrimaryMatch;
                             }
@@ -358,13 +307,13 @@ CmpAppendSection(
             }
             else
             {
-                if(!pSectionName[7])
+                if (!pSectionName[7])
                 {
                     type = StringsSectionPlain;
                 }
             }
 
-            if(type > pInf->StringsSectionType)
+            if (type > pInf->StringsSectionType)
             {
                 pInf->StringsSection = pNewSection;
             }
@@ -384,11 +333,7 @@ CmpAppendSection(
 }
 
 BOOLEAN
-CmpAppendLine(
-    IN PINF pInf,
-    IN PCHAR pLineKey,
-    IN BOOLEAN Allocated
-    )
+CmpAppendLine(IN PINF pInf, IN PCHAR pLineKey, IN BOOLEAN Allocated)
 
 /*++
 
@@ -437,9 +382,9 @@ CmpAppendLine(
     // Link it in.
     //
 
-    pNewLine->pNext  = (PLINE)NULL;
+    pNewLine->pNext = (PLINE)NULL;
     pNewLine->pValue = (PVALUE)NULL;
-    pNewLine->pName  = pLineKey;
+    pNewLine->pName = pLineKey;
     pNewLine->Allocated = Allocated;
 
     if (pInf->pLineRecord == (PLINE)NULL)
@@ -451,7 +396,7 @@ CmpAppendLine(
         pInf->pLineRecord->pNext = pNewLine;
     }
 
-    pInf->pLineRecord  = pNewLine;
+    pInf->pLineRecord = pNewLine;
 
     //
     // Reset the current value record
@@ -463,11 +408,7 @@ CmpAppendLine(
 }
 
 BOOLEAN
-CmpAppendValue(
-    IN PINF pInf,
-    IN PCHAR pValueString,
-    IN BOOLEAN Allocated
-    )
+CmpAppendValue(IN PINF pInf, IN PCHAR pValueString, IN BOOLEAN Allocated)
 
 /*++
 
@@ -497,8 +438,7 @@ CmpAppendValue(
     // the parameter passed in is valid.
     //
 
-    if (    pInf->pLineRecord == (PLINE)NULL ||
-            pValueString == (PCHAR)NULL)
+    if (pInf->pLineRecord == (PLINE)NULL || pValueString == (PCHAR)NULL)
     {
         return (FALSE);
     }
@@ -519,8 +459,8 @@ CmpAppendValue(
     // Link it in.
     //
 
-    pNewValue->pNext  = (PVALUE)NULL;
-    pNewValue->pName  = pValueString;
+    pNewValue->pNext = (PVALUE)NULL;
+    pNewValue->pName = pValueString;
     pNewValue->Allocated = Allocated;
 
     if (pInf->pValueRecord == (PVALUE)NULL)
@@ -537,13 +477,7 @@ CmpAppendValue(
     return (TRUE);
 }
 
-VOID
-CmpGetToken(
-    IN OUT PCHAR *Stream,
-    IN PCHAR MaxStream,
-    IN OUT PULONG LineNumber,
-    IN OUT PCM_TOKEN Token
-    )
+VOID CmpGetToken(IN OUT PCHAR *Stream, IN PCHAR MaxStream, IN OUT PULONG LineNumber, IN OUT PCM_TOKEN Token)
 
 /*++
 
@@ -568,10 +502,10 @@ Return Value:
 
 {
 
-    PCHAR   pch;
-    PCHAR   pchStart;
-    PCHAR   pchNew;
-    ULONG   length;
+    PCHAR pch;
+    PCHAR pchStart;
+    PCHAR pchNew;
+    ULONG length;
     BOOLEAN done;
 
     Token->Allocated = FALSE;
@@ -585,16 +519,14 @@ Return Value:
         //  Skip whitespace (except for EOL).
         //
 
-        for (   pch = *Stream;
-                pch < MaxStream && *pch != '\n' && isspace(*pch);
-                pch++);
+        for (pch = *Stream; pch < MaxStream && *pch != '\n' && isspace(*pch); pch++)
+            ;
 
         //
         // Check for comments and remove them.
         //
 
-        if (    pch < MaxStream &&
-                (*pch == '#' || *pch == ';'))
+        if (pch < MaxStream && (*pch == '#' || *pch == ';'))
         {
             while (pch < MaxStream && *pch != '\n')
             {
@@ -610,7 +542,7 @@ Return Value:
         if (pch >= MaxStream || *pch == 26)
         {
             *Stream = pch;
-            Token->Type  = TOK_EOF;
+            Token->Type = TOK_EOF;
             Token->pValue = NULL;
 
             return;
@@ -618,138 +550,128 @@ Return Value:
 
         switch (*pch)
         {
-            case '[':
+        case '[':
 
-                pch++;
-                Token->Type  = TOK_LBRACE;
-                break;
+            pch++;
+            Token->Type = TOK_LBRACE;
+            break;
 
-            case ']':
+        case ']':
 
-                pch++;
-                Token->Type  = TOK_RBRACE;
-                break;
+            pch++;
+            Token->Type = TOK_RBRACE;
+            break;
 
-            case '=':
+        case '=':
 
-                pch++;
-                Token->Type  = TOK_EQUAL;
-                break;
+            pch++;
+            Token->Type = TOK_EQUAL;
+            break;
 
-            case ',':
+        case ',':
 
-                pch++;
-                Token->Type  = TOK_COMMA;
-                break;
+            pch++;
+            Token->Type = TOK_COMMA;
+            break;
 
-            case '\n':
+        case '\n':
 
-                pch++;
-                Token->Type  = TOK_EOL;
-                break;
+            pch++;
+            Token->Type = TOK_EOL;
+            break;
 
-            case '\"':
+        case '\"':
 
-                pch++;
+            pch++;
+
+            //
+            // Determine quoted string.
+            //
+
+            for (pchStart = pch; pch < MaxStream && (strchr(QStringTerminators, *pch) == NULL); pch++)
+                ;
+
+            if (pch >= MaxStream || *pch != '\"')
+            {
+                Token->Type = TOK_ERRPARSE;
+            }
+            else
+            {
 
                 //
-                // Determine quoted string.
+                // We require a quoted string to end with a double-quote.
+                // (If the string ended with anything else, the if() above
+                // would not have let us into the else clause.) The quote
+                // character is irrelevent, however, and can be overwritten.
+                // So we'll save some heap and use the string in-place.
+                // No need to make a copy.
+                //
+                // Note that this alters the image of txtsetup.sif we pass
+                // to setupdd.sys. Thus the inf parser in setupdd.sys must
+                // be able to treat a nul character as if it were a terminating
+                // double quote.
                 //
 
-                for (   pchStart = pch;
-                        pch < MaxStream && (strchr(QStringTerminators, *pch) == NULL);
-                        pch++);
+                *pch++ = '\0';
+                Token->Type = TOK_STRING;
+                Token->pValue = pchStart;
+            }
+            break;
 
-                if (pch >= MaxStream || *pch != '\"')
+        case '\\':
+
+            for (pchNew = ++pch; pchNew < MaxStream && *pchNew != '\n' && isspace(*pchNew); pchNew++)
+                ;
+
+            if (*pchNew == '\n')
+            {
+                pch = pchNew + 1;
+                done = FALSE;
+                break;
+            }
+
+        default:
+
+            //
+            // Determine regular string.
+            //
+
+            for (pchStart = pch; pch < MaxStream && (strchr(StringTerminators, *pch) == NULL); pch++)
+                ;
+
+            if (pch == pchStart)
+            {
+                pch++;
+                Token->Type = TOK_ERRPARSE;
+            }
+            else
+            {
+                length = (ULONG)(pch - pchStart);
+                pchNew = ExAllocatePoolWithTag(PagedPool, length + 1, CM_PARSEINI_TAG);
+                if (pchNew == NULL)
                 {
-                    Token->Type   = TOK_ERRPARSE;
+                    ASSERT(pchNew);
+                    Token->Type = TOK_ERRNOMEM;
                 }
                 else
                 {
-
-                    //
-                    // We require a quoted string to end with a double-quote.
-                    // (If the string ended with anything else, the if() above
-                    // would not have let us into the else clause.) The quote
-                    // character is irrelevent, however, and can be overwritten.
-                    // So we'll save some heap and use the string in-place.
-                    // No need to make a copy.
-                    //
-                    // Note that this alters the image of txtsetup.sif we pass
-                    // to setupdd.sys. Thus the inf parser in setupdd.sys must
-                    // be able to treat a nul character as if it were a terminating
-                    // double quote.
-                    //
-
-                    *pch++ = '\0';
+                    strncpy(pchNew, pchStart, length);
+                    pchNew[length] = 0;
                     Token->Type = TOK_STRING;
-                    Token->pValue = pchStart;
+                    Token->pValue = pchNew;
+                    Token->Allocated = TRUE;
                 }
-                break;
-
-            case '\\':
-
-                for (   pchNew = ++pch;
-                        pchNew < MaxStream &&
-                            *pchNew != '\n' && isspace(*pchNew);
-                        pchNew++);
-
-                if (*pchNew == '\n')
-                {
-                    pch = pchNew + 1;
-                    done = FALSE;
-                    break;
-                }
-
-            default:
-
-                //
-                // Determine regular string.
-                //
-
-                for (   pchStart = pch;
-                        pch < MaxStream && (strchr(StringTerminators, *pch) == NULL);
-                        pch++);
-
-                if (pch == pchStart)
-                {
-                    pch++;
-                    Token->Type  = TOK_ERRPARSE;
-                }
-                else
-                {
-                    length = (ULONG)(pch - pchStart);
-                    pchNew = ExAllocatePoolWithTag(PagedPool, length + 1, CM_PARSEINI_TAG);
-                    if (pchNew == NULL)
-                    {
-                        ASSERT(pchNew);
-                        Token->Type = TOK_ERRNOMEM;
-                    }
-                    else
-                    {
-                        strncpy(pchNew, pchStart, length);
-                        pchNew[length] = 0;
-                        Token->Type = TOK_STRING;
-                        Token->pValue = pchNew;
-                        Token->Allocated = TRUE;
-                    }
-                }
-                break;
+            }
+            break;
         }
 
         *Stream = pch;
-    }
-    while (!done);
+    } while (!done);
 
     return;
 }
 
-PINF
-CmpParseInfBuffer(
-    IN PCHAR Buffer,
-    IN ULONG Size,
-    IN OUT PULONG ErrorLine
-    )
+PINF CmpParseInfBuffer(IN PCHAR Buffer, IN ULONG Size, IN OUT PULONG ErrorLine)
 
 /*++
 
@@ -776,17 +698,17 @@ Return Value:
 --*/
 
 {
-    PINF        pInf;
-    ULONG       state;
-    PCHAR       stream;
-    PCHAR       maxStream;
-    PCHAR       pchSectionName;
-    PCHAR       pchValue;
-    CM_TOKEN    token;
-    BOOLEAN     done;
-    BOOLEAN     error;
-    ULONG       infLine;
-    BOOLEAN     allocated;
+    PINF pInf;
+    ULONG state;
+    PCHAR stream;
+    PCHAR maxStream;
+    PCHAR pchSectionName;
+    PCHAR pchValue;
+    CM_TOKEN token;
+    BOOLEAN done;
+    BOOLEAN error;
+    ULONG infLine;
+    BOOLEAN allocated;
 
     //
     // Allocate memory for the INF record.
@@ -811,13 +733,13 @@ Return Value:
     // Set initial state.
     //
 
-    state     = 1;
-    stream    = Buffer;
+    state = 1;
+    stream = Buffer;
     maxStream = Buffer + Size;
     pchSectionName = NULL;
     pchValue = NULL;
-    done      = FALSE;
-    error     = FALSE;
+    done = FALSE;
+    error = FALSE;
     infLine = 1;
 
     //
@@ -827,7 +749,7 @@ Return Value:
     while (!done)
     {
 
-       CmpGetToken(&stream, maxStream, &infLine, &token);
+        CmpGetToken(&stream, maxStream, &infLine, &token);
 
         switch (state)
         {
@@ -838,479 +760,49 @@ Return Value:
             //               TOK_STRING when reading Dblspace.inf
             //
 
-            case 1:
+        case 1:
 
-                switch (token.Type)
-                {
-                    case TOK_EOL:
-
-                        break;
-
-                    case TOK_EOF:
-
-                        done = TRUE;
-
-                        break;
-
-                    case TOK_LBRACE:
-
-                        state = 2;
-
-                        break;
-
-                    case TOK_STRING:
-
-                        pchSectionName = ExAllocatePoolWithTag(PagedPool, sizeof(DblSpaceSection), CM_PARSEINI_TAG);
-                        if (pchSectionName)
-                        {
-                            strcpy(pchSectionName, DblSpaceSection);
-                            pchValue = token.pValue;
-                            allocated = TRUE;
-                            token.Allocated = TRUE;
-                            if (CmpAppendSection(pInf, pchSectionName, TRUE))
-                            {
-                                pchSectionName = NULL;
-                                state = 6;
-                            }
-                            else
-                            {
-                                error = done = TRUE;
-                            }
-                        }
-                        else
-                        {
-                            ASSERT(pchSectionName);
-                            error = done = TRUE;
-                        }
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
-                }
+            switch (token.Type)
+            {
+            case TOK_EOL:
 
                 break;
 
-            //
-            // STATE 2: Section LBRACE has been received, expecting STRING
-            //
-            // Valid Tokens: TOK_STRING, TOK_RBRACE
-            //
+            case TOK_EOF:
 
-            case 2:
-
-                switch (token.Type)
-                {
-                    case TOK_STRING:
-
-                        state = 3;
-                        pchSectionName = token.pValue;
-                        allocated = token.Allocated;
-
-                        break;
-
-                    case TOK_RBRACE:
-
-                        token.pValue = (PCHAR)EmptyValue;
-                        token.Allocated = FALSE;
-                        allocated = FALSE;
-                        state = 4;
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
-
-                }
+                done = TRUE;
 
                 break;
 
-            //
-            // STATE 3: Section Name received, expecting RBRACE
-            //
-            // Valid Tokens: TOK_RBRACE
-            //
+            case TOK_LBRACE:
 
-            case 3:
-
-                switch (token.Type)
-                {
-                    case TOK_RBRACE:
-
-                        state = 4;
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
-                }
+                state = 2;
 
                 break;
 
-            //
-            // STATE 4: Section Definition Complete, expecting EOL
-            //
-            // Valid Tokens: TOK_EOL, TOK_EOF
-            //
+            case TOK_STRING:
 
-            case 4:
-
-                switch (token.Type)
+                pchSectionName = ExAllocatePoolWithTag(PagedPool, sizeof(DblSpaceSection), CM_PARSEINI_TAG);
+                if (pchSectionName)
                 {
-
-                    case TOK_EOL:
-
-                        if (!CmpAppendSection(pInf, pchSectionName, allocated))
-                        {
-
-                            error = done = TRUE;
-                        }
-                        else
-                        {
-                            pchSectionName = NULL;
-                            state = 5;
-                        }
-
-                        break;
-
-                    case TOK_EOF:
-
-                        if (!CmpAppendSection(pInf, pchSectionName, allocated))
-                        {
-                            error = done = TRUE;
-                        }
-                        else
-                        {
-                            pchSectionName = NULL;
-                            done = TRUE;
-                        }
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
-                }
-
-                break;
-
-            //
-            // STATE 5: Expecting Section Lines
-            //
-            // Valid Tokens: TOK_EOL, TOK_EOF, TOK_STRING, TOK_LBRACE
-            //
-
-            case 5:
-
-                switch (token.Type)
-                {
-                    case TOK_EOL:
-
-                        break;
-
-                    case TOK_EOF:
-
-                        done = TRUE;
-
-                        break;
-
-                    case TOK_STRING:
-
-                        pchValue = token.pValue;
-                        allocated = token.Allocated;
+                    strcpy(pchSectionName, DblSpaceSection);
+                    pchValue = token.pValue;
+                    allocated = TRUE;
+                    token.Allocated = TRUE;
+                    if (CmpAppendSection(pInf, pchSectionName, TRUE))
+                    {
+                        pchSectionName = NULL;
                         state = 6;
-
-                        break;
-
-                    case TOK_LBRACE:
-
-                        state = 2;
-
-                        break;
-
-                    default:
-
+                    }
+                    else
+                    {
                         error = done = TRUE;
-
-                        break;
+                    }
                 }
-
-                break;
-
-            //
-            // STATE 6: String returned, not sure whether it is key or value
-            //
-            // Valid Tokens: TOK_EOL, TOK_EOF, TOK_COMMA, TOK_EQUAL
-            //
-
-            case 6:
-
-                switch (token.Type)
+                else
                 {
-
-                    case TOK_EOL:
-
-                        if (    !CmpAppendLine(pInf, NULL, FALSE) ||
-                                !CmpAppendValue(pInf, pchValue, allocated))
-                        {
-                            error = done = TRUE;
-                        }
-                        else
-                        {
-                            pchValue = NULL;
-                            state = 5;
-                        }
-
-                        break;
-
-                    case TOK_EOF:
-
-                        if (    !CmpAppendLine(pInf, NULL, FALSE) ||
-                                !CmpAppendValue(pInf, pchValue, allocated))
-                        {
-                            error = done = TRUE;
-                        }
-                        else
-                        {
-                            pchValue = NULL;
-                            done = TRUE;
-                        }
-
-                        break;
-
-                    case TOK_COMMA:
-
-                        if (    !CmpAppendLine(pInf, NULL, FALSE) ||
-                                !CmpAppendValue(pInf, pchValue, allocated))
-                        {
-                            error = done = TRUE;
-                        }
-                        else
-                        {
-                            pchValue = NULL;
-                            state = 7;
-                        }
-
-                        break;
-
-                    case TOK_EQUAL:
-
-                        if (!CmpAppendLine(pInf, pchValue, allocated))
-                        {
-                            error = done = TRUE;
-                        }
-                        else
-                        {
-                            pchValue = NULL;
-                            state = 8;
-                        }
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
-                }
-
-                break;
-
-            //
-            // STATE 7: Comma received, Expecting another string
-            //
-            // Valid Tokens: TOK_STRING TOK_COMMA
-            //   A comma means we have an empty value.
-            //
-
-            case 7:
-
-                switch (token.Type)
-                {
-
-                    case TOK_COMMA:
-
-                        token.pValue = (PCHAR)EmptyValue;
-                        token.Allocated = FALSE;
-                        allocated = FALSE;
-                        if (!CmpAppendValue(pInf, token.pValue, FALSE))
-                        {
-                            error = done = TRUE;
-                        }
-
-                        //
-                        // State stays at 7 because we are expecting a string
-                        //
-
-                        break;
-
-                    case TOK_STRING:
-
-                        if (!CmpAppendValue(pInf, token.pValue, token.Allocated))
-                        {
-                            error = done = TRUE;
-                        }
-                        else
-                        {
-                            state = 9;
-                        }
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
-                }
-
-                break;
-
-            //
-            // STATE 8: Equal received, Expecting another string
-            //          If none, assume there is a single empty string on the RHS
-            //
-            // Valid Tokens: TOK_STRING, TOK_EOL, TOK_EOF
-            //
-
-            case 8:
-
-                switch (token.Type)
-                {
-                    case TOK_EOF:
-
-                        token.pValue = (PCHAR)EmptyValue;
-                        token.Allocated = FALSE;
-                        allocated = FALSE;
-                        if(!CmpAppendValue(pInf, token.pValue, FALSE))
-                        {
-                            error = TRUE;
-                        }
-
-                        done = TRUE;
-
-                        break;
-
-                    case TOK_EOL:
-
-                        token.pValue = (PCHAR)EmptyValue;
-                        token.Allocated = FALSE;
-                        allocated = FALSE;
-                        if(!CmpAppendValue(pInf, token.pValue, FALSE))
-                        {
-                            error = TRUE;
-                            done = TRUE;
-                        }
-                        else
-                        {
-                            state = 5;
-                        }
-
-                        break;
-
-                    case TOK_STRING:
-
-                        if (!CmpAppendValue(pInf, token.pValue, FALSE))
-                        {
-                            error = done = TRUE;
-                        }
-                        else
-                        {
-                            state = 9;
-                        }
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
-                }
-
-                break;
-
-            //
-            // STATE 9: String received after equal, value string
-            //
-            // Valid Tokens: TOK_EOL, TOK_EOF, TOK_COMMA
-            //
-
-            case 9:
-
-                switch (token.Type)
-                {
-                    case TOK_EOL:
-
-                        state = 5;
-
-                        break;
-
-                    case TOK_EOF:
-
-                        done = TRUE;
-
-                        break;
-
-                    case TOK_COMMA:
-
-                        state = 7;
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
-                }
-
-                break;
-
-            //
-            // STATE 10: Value string definitely received
-            //
-            // Valid Tokens: TOK_EOL, TOK_EOF, TOK_COMMA
-            //
-
-            case 10:
-
-                switch (token.Type)
-                {
-                    case TOK_EOL:
-
-                        state =5;
-
-                        break;
-
-                    case TOK_EOF:
-
-                        done = TRUE;
-
-                        break;
-
-                    case TOK_COMMA:
-
-                        state = 7;
-
-                        break;
-
-                    default:
-
-                        error = done = TRUE;
-
-                        break;
+                    ASSERT(pchSectionName);
+                    error = done = TRUE;
                 }
 
                 break;
@@ -1320,6 +812,432 @@ Return Value:
                 error = done = TRUE;
 
                 break;
+            }
+
+            break;
+
+            //
+            // STATE 2: Section LBRACE has been received, expecting STRING
+            //
+            // Valid Tokens: TOK_STRING, TOK_RBRACE
+            //
+
+        case 2:
+
+            switch (token.Type)
+            {
+            case TOK_STRING:
+
+                state = 3;
+                pchSectionName = token.pValue;
+                allocated = token.Allocated;
+
+                break;
+
+            case TOK_RBRACE:
+
+                token.pValue = (PCHAR)EmptyValue;
+                token.Allocated = FALSE;
+                allocated = FALSE;
+                state = 4;
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+            //
+            // STATE 3: Section Name received, expecting RBRACE
+            //
+            // Valid Tokens: TOK_RBRACE
+            //
+
+        case 3:
+
+            switch (token.Type)
+            {
+            case TOK_RBRACE:
+
+                state = 4;
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+            //
+            // STATE 4: Section Definition Complete, expecting EOL
+            //
+            // Valid Tokens: TOK_EOL, TOK_EOF
+            //
+
+        case 4:
+
+            switch (token.Type)
+            {
+
+            case TOK_EOL:
+
+                if (!CmpAppendSection(pInf, pchSectionName, allocated))
+                {
+
+                    error = done = TRUE;
+                }
+                else
+                {
+                    pchSectionName = NULL;
+                    state = 5;
+                }
+
+                break;
+
+            case TOK_EOF:
+
+                if (!CmpAppendSection(pInf, pchSectionName, allocated))
+                {
+                    error = done = TRUE;
+                }
+                else
+                {
+                    pchSectionName = NULL;
+                    done = TRUE;
+                }
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+            //
+            // STATE 5: Expecting Section Lines
+            //
+            // Valid Tokens: TOK_EOL, TOK_EOF, TOK_STRING, TOK_LBRACE
+            //
+
+        case 5:
+
+            switch (token.Type)
+            {
+            case TOK_EOL:
+
+                break;
+
+            case TOK_EOF:
+
+                done = TRUE;
+
+                break;
+
+            case TOK_STRING:
+
+                pchValue = token.pValue;
+                allocated = token.Allocated;
+                state = 6;
+
+                break;
+
+            case TOK_LBRACE:
+
+                state = 2;
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+            //
+            // STATE 6: String returned, not sure whether it is key or value
+            //
+            // Valid Tokens: TOK_EOL, TOK_EOF, TOK_COMMA, TOK_EQUAL
+            //
+
+        case 6:
+
+            switch (token.Type)
+            {
+
+            case TOK_EOL:
+
+                if (!CmpAppendLine(pInf, NULL, FALSE) || !CmpAppendValue(pInf, pchValue, allocated))
+                {
+                    error = done = TRUE;
+                }
+                else
+                {
+                    pchValue = NULL;
+                    state = 5;
+                }
+
+                break;
+
+            case TOK_EOF:
+
+                if (!CmpAppendLine(pInf, NULL, FALSE) || !CmpAppendValue(pInf, pchValue, allocated))
+                {
+                    error = done = TRUE;
+                }
+                else
+                {
+                    pchValue = NULL;
+                    done = TRUE;
+                }
+
+                break;
+
+            case TOK_COMMA:
+
+                if (!CmpAppendLine(pInf, NULL, FALSE) || !CmpAppendValue(pInf, pchValue, allocated))
+                {
+                    error = done = TRUE;
+                }
+                else
+                {
+                    pchValue = NULL;
+                    state = 7;
+                }
+
+                break;
+
+            case TOK_EQUAL:
+
+                if (!CmpAppendLine(pInf, pchValue, allocated))
+                {
+                    error = done = TRUE;
+                }
+                else
+                {
+                    pchValue = NULL;
+                    state = 8;
+                }
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+            //
+            // STATE 7: Comma received, Expecting another string
+            //
+            // Valid Tokens: TOK_STRING TOK_COMMA
+            //   A comma means we have an empty value.
+            //
+
+        case 7:
+
+            switch (token.Type)
+            {
+
+            case TOK_COMMA:
+
+                token.pValue = (PCHAR)EmptyValue;
+                token.Allocated = FALSE;
+                allocated = FALSE;
+                if (!CmpAppendValue(pInf, token.pValue, FALSE))
+                {
+                    error = done = TRUE;
+                }
+
+                //
+                // State stays at 7 because we are expecting a string
+                //
+
+                break;
+
+            case TOK_STRING:
+
+                if (!CmpAppendValue(pInf, token.pValue, token.Allocated))
+                {
+                    error = done = TRUE;
+                }
+                else
+                {
+                    state = 9;
+                }
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+            //
+            // STATE 8: Equal received, Expecting another string
+            //          If none, assume there is a single empty string on the RHS
+            //
+            // Valid Tokens: TOK_STRING, TOK_EOL, TOK_EOF
+            //
+
+        case 8:
+
+            switch (token.Type)
+            {
+            case TOK_EOF:
+
+                token.pValue = (PCHAR)EmptyValue;
+                token.Allocated = FALSE;
+                allocated = FALSE;
+                if (!CmpAppendValue(pInf, token.pValue, FALSE))
+                {
+                    error = TRUE;
+                }
+
+                done = TRUE;
+
+                break;
+
+            case TOK_EOL:
+
+                token.pValue = (PCHAR)EmptyValue;
+                token.Allocated = FALSE;
+                allocated = FALSE;
+                if (!CmpAppendValue(pInf, token.pValue, FALSE))
+                {
+                    error = TRUE;
+                    done = TRUE;
+                }
+                else
+                {
+                    state = 5;
+                }
+
+                break;
+
+            case TOK_STRING:
+
+                if (!CmpAppendValue(pInf, token.pValue, FALSE))
+                {
+                    error = done = TRUE;
+                }
+                else
+                {
+                    state = 9;
+                }
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+            //
+            // STATE 9: String received after equal, value string
+            //
+            // Valid Tokens: TOK_EOL, TOK_EOF, TOK_COMMA
+            //
+
+        case 9:
+
+            switch (token.Type)
+            {
+            case TOK_EOL:
+
+                state = 5;
+
+                break;
+
+            case TOK_EOF:
+
+                done = TRUE;
+
+                break;
+
+            case TOK_COMMA:
+
+                state = 7;
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+            //
+            // STATE 10: Value string definitely received
+            //
+            // Valid Tokens: TOK_EOL, TOK_EOF, TOK_COMMA
+            //
+
+        case 10:
+
+            switch (token.Type)
+            {
+            case TOK_EOL:
+
+                state = 5;
+
+                break;
+
+            case TOK_EOF:
+
+                done = TRUE;
+
+                break;
+
+            case TOK_COMMA:
+
+                state = 7;
+
+                break;
+
+            default:
+
+                error = done = TRUE;
+
+                break;
+            }
+
+            break;
+
+        default:
+
+            error = done = TRUE;
+
+            break;
 
         } // END switch(state)
 
@@ -1360,14 +1278,11 @@ Return Value:
         pInf->pSectionRecord = NULL;
     }
 
-    return(pInf);
+    return (pInf);
 }
 
 PCHAR
-CmpProcessForSimpleStringSub(
-    IN PINF pInf,
-    IN PCHAR String
-    )
+CmpProcessForSimpleStringSub(IN PINF pInf, IN PCHAR String)
 
 /*++
 
@@ -1388,10 +1303,10 @@ CmpProcessForSimpleStringSub(
 --*/
 
 {
-    ULONG       len;
-    PCHAR       returnString;
-    PSECTION    pSection;
-    PLINE       pLine;
+    ULONG len;
+    PCHAR returnString;
+    PSECTION pSection;
+    PLINE pLine;
 
     //
     // Assume no substitution necessary.
@@ -1408,35 +1323,27 @@ CmpProcessForSimpleStringSub(
     // there is no substitution.
     //
 
-    if( String[0] == '%' &&
-        len > 2 &&
-        String[len - 1] == '%' &&
-        pSection)
+    if (String[0] == '%' && len > 2 && String[len - 1] == '%' && pSection)
     {
 
-        for(pLine = pSection->pLine; pLine; pLine = pLine->pNext)
+        for (pLine = pSection->pLine; pLine; pLine = pLine->pNext)
         {
-            if( pLine->pName &&
-                _strnicmp(pLine->pName, String + 1, len - 2) == 0 &&
-                pLine->pName[len - 2] == '\0')
+            if (pLine->pName && _strnicmp(pLine->pName, String + 1, len - 2) == 0 && pLine->pName[len - 2] == '\0')
             {
                 break;
             }
         }
 
-        if(pLine && pLine->pValue && pLine->pValue->pName)
+        if (pLine && pLine->pValue && pLine->pValue->pName)
         {
             returnString = pLine->pValue->pName;
         }
     }
 
-    return(returnString);
+    return (returnString);
 }
 
-VOID
-CmpFreeValueList(
-    IN PVALUE pValue
-    )
+VOID CmpFreeValueList(IN PVALUE pValue)
 
 /*++
 
@@ -1489,10 +1396,7 @@ CmpFreeValueList(
     }
 }
 
-VOID
-CmpFreeLineList(
-    IN PLINE pLine
-    )
+VOID CmpFreeLineList(IN PLINE pLine)
 
 /*++
 
@@ -1552,10 +1456,7 @@ CmpFreeLineList(
     }
 }
 
-VOID
-CmpFreeSectionList(
-    IN PSECTION pSection
-    )
+VOID CmpFreeSectionList(IN PSECTION pSection)
 
 /*++
 
@@ -1613,14 +1514,10 @@ CmpFreeSectionList(
 
         pSection = pNext;
     }
-
 }
 
 PVALUE
-CmpSearchValueInLine(
-    IN PLINE pLine,
-    IN ULONG ValueIndex
-    )
+CmpSearchValueInLine(IN PLINE pLine, IN ULONG ValueIndex)
 
 /*++
 
@@ -1641,14 +1538,13 @@ CmpSearchValueInLine(
 --*/
 
 {
-    ULONG   i;
-    PVALUE  pValue = NULL;
+    ULONG i;
+    PVALUE pValue = NULL;
 
     if (pLine)
     {
-        for (   i = 0, pValue = pLine->pValue;
-                i < ValueIndex && pValue;
-                i++, pValue = pValue->pNext);
+        for (i = 0, pValue = pLine->pValue; i < ValueIndex && pValue; i++, pValue = pValue->pNext)
+            ;
     }
 
     return (pValue);
@@ -1656,10 +1552,7 @@ CmpSearchValueInLine(
 
 
 PSECTION
-CmpSearchSectionByName(
-    IN PINF  pInf,
-    IN PCHAR SectionName
-    )
+CmpSearchSectionByName(IN PINF pInf, IN PCHAR SectionName)
 
 /*++
 
@@ -1680,8 +1573,8 @@ CmpSearchSectionByName(
 --*/
 
 {
-    PSECTION    pSection = NULL;
-    PSECTION    pFirstSearchedSection;
+    PSECTION pSection = NULL;
+    PSECTION pFirstSearchedSection;
 
     //
     // Validate the parameters passed in.
@@ -1694,9 +1587,9 @@ CmpSearchSectionByName(
         // section name mentioned.
         //
 
-        for (   pSection = pFirstSearchedSection = pInf->pSectionRecord;
-                pSection && _stricmp(pSection->pName, SectionName);
-                pSection = pSection->pNext);
+        for (pSection = pFirstSearchedSection = pInf->pSectionRecord;
+             pSection && _stricmp(pSection->pName, SectionName); pSection = pSection->pNext)
+            ;
 
         //
         // If we did not find the section, search from the beginning.
@@ -1704,9 +1597,7 @@ CmpSearchSectionByName(
 
         if (pSection == NULL)
         {
-            for (   pSection = pInf->pSection;
-                    pSection && pSection != pFirstSearchedSection;
-                    pSection = pSection->pNext)
+            for (pSection = pInf->pSection; pSection && pSection != pFirstSearchedSection; pSection = pSection->pNext)
             {
                 if (pSection->pName && _stricmp(pSection->pName, SectionName) == 0)
                 {
@@ -1734,10 +1625,7 @@ CmpSearchSectionByName(
 }
 
 PLINE
-CmpSearchLineInSectionByIndex(
-    IN PSECTION pSection,
-    IN ULONG    LineIndex
-    )
+CmpSearchLineInSectionByIndex(IN PSECTION pSection, IN ULONG LineIndex)
 
 /*++
 
@@ -1758,8 +1646,8 @@ CmpSearchLineInSectionByIndex(
 --*/
 
 {
-    PLINE   pLine = NULL;
-    ULONG   i;
+    PLINE pLine = NULL;
+    ULONG i;
 
     //
     // Validate the parameters passed in.
@@ -1772,9 +1660,8 @@ CmpSearchLineInSectionByIndex(
         // Traverse down the current line list to the LineIndex line.
         //
 
-        for(    i = 0, pLine = pSection->pLine;
-                i < LineIndex && pLine;
-                i++, pLine = pLine->pNext);
+        for (i = 0, pLine = pSection->pLine; i < LineIndex && pLine; i++, pLine = pLine->pNext)
+            ;
     }
 
     //
@@ -1785,10 +1672,7 @@ CmpSearchLineInSectionByIndex(
 }
 
 PVOID
-CmpOpenInfFile(
-    IN  PVOID   InfImage,
-    IN  ULONG   ImageSize
-   )
+CmpOpenInfFile(IN PVOID InfImage, IN ULONG ImageSize)
 
 /*++
 
@@ -1809,8 +1693,8 @@ CmpOpenInfFile(
 --*/
 
 {
-    PINF    infHandle;
-    ULONG   errorLine = 0;
+    PINF infHandle;
+    ULONG errorLine = 0;
 
     //
     // Parse the inf buffer.
@@ -1821,17 +1705,14 @@ CmpOpenInfFile(
     if (infHandle == NULL)
     {
 #ifndef _CM_LDR_
-        DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Error on line %d in CmpOpenInfFile!\n", errorLine);
+        DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Error on line %d in CmpOpenInfFile!\n", errorLine);
 #endif //_CM_LDR_
     }
 
     return (infHandle);
 }
 
-VOID
-CmpCloseInfFile(
-    PVOID   InfHandle
-    )
+VOID CmpCloseInfFile(PVOID InfHandle)
 
 /*++
 
@@ -1859,10 +1740,7 @@ CmpCloseInfFile(
 }
 
 BOOLEAN
-CmpSearchInfSection(
-    IN PINF  pInf,
-    IN PCHAR Section
-    )
+CmpSearchInfSection(IN PINF pInf, IN PCHAR Section)
 
 /*++
 
@@ -1887,11 +1765,7 @@ CmpSearchInfSection(
 }
 
 PCHAR
-CmpGetKeyName(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    )
+CmpGetKeyName(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex)
 
 /*++
 
@@ -1914,24 +1788,24 @@ CmpGetKeyName(
 --*/
 
 {
-    PSECTION    pSection;
-    PLINE       pLine;
+    PSECTION pSection;
+    PLINE pLine;
 
     //
     // First search the section.
     //
 
     pSection = CmpSearchSectionByName((PINF)InfHandle, Section);
-    if(pSection)
+    if (pSection)
     {
         //
         // Get the line in the section.
         //
 
         pLine = CmpSearchLineInSectionByIndex(pSection, LineIndex);
-        if(pLine)
+        if (pLine)
         {
-            return(pLine->pName);
+            return (pLine->pName);
         }
     }
 
@@ -1939,11 +1813,7 @@ CmpGetKeyName(
 }
 
 BOOLEAN
-CmpSearchInfLine(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    )
+CmpSearchInfLine(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex)
 
 /*++
 
@@ -1966,15 +1836,15 @@ CmpSearchInfLine(
 --*/
 
 {
-    PSECTION    pSection;
-    PLINE       pLine = NULL;
+    PSECTION pSection;
+    PLINE pLine = NULL;
 
     //
     // First search the section.
     //
 
     pSection = CmpSearchSectionByName((PINF)InfHandle, Section);
-    if(pSection)
+    if (pSection)
     {
         //
         // Search the line in the section.
@@ -1988,12 +1858,7 @@ CmpSearchInfLine(
 
 
 PCHAR
-CmpGetSectionLineIndex (
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex,
-    IN ULONG ValueIndex
-    )
+CmpGetSectionLineIndex(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex, IN ULONG ValueIndex)
 
 /*++
 
@@ -2019,49 +1884,45 @@ CmpGetSectionLineIndex (
 
 {
     PSECTION pSection;
-    PLINE    pLine;
-    PVALUE   pValue;
+    PLINE pLine;
+    PVALUE pValue;
 
     //
     // Search the section in the inf.
     //
 
     pSection = CmpSearchSectionByName((PINF)InfHandle, Section);
-    if(pSection)
+    if (pSection)
     {
         //
         // Search the line in the section.
         //
 
         pLine = CmpSearchLineInSectionByIndex(pSection, LineIndex);
-        if(pLine)
+        if (pLine)
         {
             //
             // Search the value in the line.
             //
 
             pValue = CmpSearchValueInLine(pLine, ValueIndex);
-            if(pValue)
+            if (pValue)
             {
                 //
                 // The value may need to be replaced by one of the strings
                 // from the string section.
                 //
 
-                return(CmpProcessForSimpleStringSub(InfHandle, pValue->pName));
+                return (CmpProcessForSimpleStringSub(InfHandle, pValue->pName));
             }
         }
     }
 
-    return(NULL);
+    return (NULL);
 }
 
 ULONG
-CmpGetSectionLineIndexValueCount(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    )
+CmpGetSectionLineIndexValueCount(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex)
 
 /*++
 
@@ -2084,17 +1945,17 @@ CmpGetSectionLineIndexValueCount(
 --*/
 
 {
-    PSECTION    pSection;
-    PLINE       pLine;
-    PVALUE      pValue;
-    ULONG       count = 0;
+    PSECTION pSection;
+    PLINE pLine;
+    PVALUE pValue;
+    ULONG count = 0;
 
     //
     // Search the section in the inf.
     //
 
     pSection = CmpSearchSectionByName((PINF)InfHandle, Section);
-    if(pSection)
+    if (pSection)
     {
         //
         // Search the line in the section.
@@ -2107,9 +1968,8 @@ CmpGetSectionLineIndexValueCount(
             // Count the number of values in this line.
             //
 
-            for(    pValue = pLine->pValue;
-                    pValue;
-                    pValue = pValue->pNext, count++);
+            for (pValue = pLine->pValue; pValue; pValue = pValue->pNext, count++)
+                ;
         }
     }
 
@@ -2117,13 +1977,7 @@ CmpGetSectionLineIndexValueCount(
 }
 
 BOOLEAN
-CmpGetIntField(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex,
-    IN ULONG ValueIndex,
-    IN OUT PULONG Data
-    )
+CmpGetIntField(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex, IN ULONG ValueIndex, IN OUT PULONG Data)
 
 /*++
 
@@ -2150,16 +2004,13 @@ CmpGetIntField(
 --*/
 
 {
-    PCHAR   valueStr;
+    PCHAR valueStr;
 
     //
     // Get the specified value.
     //
 
-    valueStr = CmpGetSectionLineIndex(  InfHandle,
-                                        Section,
-                                        LineIndex,
-                                        ValueIndex);
+    valueStr = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, ValueIndex);
     //
     // If valid value is found, convert it to an integer.
     //
@@ -2174,15 +2025,8 @@ CmpGetIntField(
 }
 
 BOOLEAN
-CmpGetBinaryField(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex,
-    IN ULONG ValueIndex,
-    IN OUT PVOID Buffer,
-    IN ULONG BufferSize,
-    IN OUT PULONG ActualSize
-    )
+CmpGetBinaryField(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex, IN ULONG ValueIndex, IN OUT PVOID Buffer,
+                  IN ULONG BufferSize, IN OUT PULONG ActualSize)
 
 /*++
 
@@ -2213,21 +2057,19 @@ CmpGetBinaryField(
 --*/
 
 {
-    BOOLEAN     result = FALSE;
-    ULONG       requiredSize;
-    PSECTION    pSection;
-    PLINE       pLine;
-    PVALUE      pValue;
-    ULONG       count;
-    PCHAR       valueStr;
+    BOOLEAN result = FALSE;
+    ULONG requiredSize;
+    PSECTION pSection;
+    PLINE pLine;
+    PVALUE pValue;
+    ULONG count;
+    PCHAR valueStr;
 
     //
     // Compute the size of buffer required to read in the binary data.
     //
 
-    requiredSize = (CmpGetSectionLineIndexValueCount(   InfHandle,
-                                                        Section,
-                                                        LineIndex) - ValueIndex) * sizeof(UCHAR);
+    requiredSize = (CmpGetSectionLineIndexValueCount(InfHandle, Section, LineIndex) - ValueIndex) * sizeof(UCHAR);
     //
     // Validate input parameters.
     //
@@ -2239,7 +2081,7 @@ CmpGetBinaryField(
         //
 
         pSection = CmpSearchSectionByName((PINF)InfHandle, Section);
-        if(pSection)
+        if (pSection)
         {
             //
             // Search the line in this section.
@@ -2252,22 +2094,16 @@ CmpGetBinaryField(
                 // Go to the specified value.
                 //
 
-                for(    pValue = pLine->pValue, count = 0;
-                        pValue && count < ValueIndex;
-                        pValue = pValue->pNext, count++);
+                for (pValue = pLine->pValue, count = 0; pValue && count < ValueIndex; pValue = pValue->pNext, count++)
+                    ;
 
                 //
                 // Read in and convert the binary data.
                 //
 
-                for (   ;
-                        pValue;
-                        pValue = pValue->pNext)
+                for (; pValue; pValue = pValue->pNext)
                 {
-                    valueStr = CmpGetSectionLineIndex(  InfHandle,
-                                                        Section,
-                                                        LineIndex,
-                                                        ValueIndex++);
+                    valueStr = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, ValueIndex++);
                     if (valueStr == NULL)
                     {
                         break;

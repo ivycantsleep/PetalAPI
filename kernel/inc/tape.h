@@ -38,11 +38,12 @@ Revision History:
 // Tape device data
 //
 
-typedef struct _TAPE_DATA {
-     ULONG        Flags;
-     ULONG        CurrentPartition;
-     PVOID        DeviceSpecificExtension;
-     PSCSI_INQUIRY_DATA InquiryData;
+typedef struct _TAPE_DATA
+{
+    ULONG Flags;
+    ULONG CurrentPartition;
+    PVOID DeviceSpecificExtension;
+    PSCSI_INQUIRY_DATA InquiryData;
 } TAPE_DATA, *PTAPE_DATA;
 
 #define DEVICE_EXTENSION_SIZE sizeof(DEVICE_EXTENSION) + sizeof(TAPE_DATA)
@@ -52,7 +53,8 @@ typedef struct _TAPE_DATA {
 // Define Device Configuration Page
 //
 
-typedef struct _MODE_DEVICE_CONFIGURATION_PAGE {
+typedef struct _MODE_DEVICE_CONFIGURATION_PAGE
+{
 
     UCHAR PageCode : 6;
     UCHAR Reserved1 : 1;
@@ -88,7 +90,8 @@ typedef struct _MODE_DEVICE_CONFIGURATION_PAGE {
 // Define Medium Partition Page
 //
 
-typedef struct _MODE_MEDIUM_PARTITION_PAGE {
+typedef struct _MODE_MEDIUM_PARTITION_PAGE
+{
 
     UCHAR PageCode : 6;
     UCHAR Reserved1 : 1;
@@ -112,7 +115,8 @@ typedef struct _MODE_MEDIUM_PARTITION_PAGE {
 // Define Data Compression Page
 //
 
-typedef struct _MODE_DATA_COMPRESSION_PAGE {
+typedef struct _MODE_DATA_COMPRESSION_PAGE
+{
 
     UCHAR PageCode : 6;
     UCHAR Reserved1 : 2;
@@ -134,10 +138,11 @@ typedef struct _MODE_DATA_COMPRESSION_PAGE {
 // used in creating partitions
 //
 
-typedef struct _MODE_MEDIUM_PART_PAGE {
+typedef struct _MODE_MEDIUM_PART_PAGE
+{
 
-   MODE_PARAMETER_HEADER       ParameterListHeader;
-   MODE_MEDIUM_PARTITION_PAGE  MediumPartPage;
+    MODE_PARAMETER_HEADER ParameterListHeader;
+    MODE_MEDIUM_PARTITION_PAGE MediumPartPage;
 
 } MODE_MEDIUM_PART_PAGE, *PMODE_MEDIUM_PART_PAGE;
 
@@ -146,11 +151,12 @@ typedef struct _MODE_MEDIUM_PART_PAGE {
 // Mode parameters for retrieving tape or media information
 //
 
-typedef struct _MODE_TAPE_MEDIA_INFORMATION {
+typedef struct _MODE_TAPE_MEDIA_INFORMATION
+{
 
-   MODE_PARAMETER_HEADER       ParameterListHeader;
-   MODE_PARAMETER_BLOCK        ParameterListBlock;
-   MODE_MEDIUM_PARTITION_PAGE  MediumPartPage;
+    MODE_PARAMETER_HEADER ParameterListHeader;
+    MODE_PARAMETER_BLOCK ParameterListBlock;
+    MODE_MEDIUM_PARTITION_PAGE MediumPartPage;
 
 } MODE_TAPE_MEDIA_INFORMATION, *PMODE_TAPE_MEDIA_INFORMATION;
 
@@ -159,10 +165,11 @@ typedef struct _MODE_TAPE_MEDIA_INFORMATION {
 // used in retrieving device configuration information
 //
 
-typedef struct _MODE_DEVICE_CONFIG_PAGE {
+typedef struct _MODE_DEVICE_CONFIG_PAGE
+{
 
-   MODE_PARAMETER_HEADER       ParameterListHeader;
-   MODE_DEVICE_CONFIGURATION_PAGE  DeviceConfigPage;
+    MODE_PARAMETER_HEADER ParameterListHeader;
+    MODE_DEVICE_CONFIGURATION_PAGE DeviceConfigPage;
 
 } MODE_DEVICE_CONFIG_PAGE, *PMODE_DEVICE_CONFIG_PAGE;
 
@@ -172,15 +179,15 @@ typedef struct _MODE_DEVICE_CONFIG_PAGE {
 // used in retrieving data compression information
 //
 
-typedef struct _MODE_DATA_COMPRESS_PAGE {
+typedef struct _MODE_DATA_COMPRESS_PAGE
+{
 
-   MODE_PARAMETER_HEADER       ParameterListHeader;
-   MODE_DATA_COMPRESSION_PAGE  DataCompressPage;
+    MODE_PARAMETER_HEADER ParameterListHeader;
+    MODE_DATA_COMPRESSION_PAGE DataCompressPage;
 
 } MODE_DATA_COMPRESS_PAGE, *PMODE_DATA_COMPRESS_PAGE;
 
 
-
 //
 // The following routines are the exported entry points for
 // all tape class drivers. Note all these routines name start
@@ -188,124 +195,64 @@ typedef struct _MODE_DATA_COMPRESS_PAGE {
 //
 
 NTSTATUS
-DriverEntry(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    );
+DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
 NTSTATUS
-ScsiTapeInitialize(
-    IN PDRIVER_OBJECT DriverObject
-    );
+ScsiTapeInitialize(IN PDRIVER_OBJECT DriverObject);
 
 NTSTATUS
-ScsiTapeCreate (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+ScsiTapeCreate(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-ScsiTapeReadWrite (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+ScsiTapeReadWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-ScsiTapeDeviceControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+ScsiTapeDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 
-
 //
 // The following routines are provided by the tape
 // device-specific module. Each routine name is
 // prefixed with 'Tape.'
 
 NTSTATUS
-TapeCreatePartition(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeCreatePartition(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapeErase(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeErase(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-VOID
-TapeError(
-    PDEVICE_OBJECT DeviceObject,
-    PSCSI_REQUEST_BLOCK Srb,
-    NTSTATUS *Status,
-    BOOLEAN *Retry
-    );
+VOID TapeError(PDEVICE_OBJECT DeviceObject, PSCSI_REQUEST_BLOCK Srb, NTSTATUS *Status, BOOLEAN *Retry);
 
 NTSTATUS
-TapeGetDriveParameters(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeGetDriveParameters(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapeGetMediaParameters(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeGetMediaParameters(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapeGetPosition(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeGetPosition(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapeGetStatus(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeGetStatus(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapePrepare(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapePrepare(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapeReadWrite(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeReadWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapeSetDriveParameters(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeSetDriveParameters(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapeSetMediaParameters(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeSetMediaParameters(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-TapeSetPosition(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+TapeSetPosition(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 BOOLEAN
-TapeVerifyInquiry(
-    IN PSCSI_INQUIRY_DATA LunInfo
-    );
+TapeVerifyInquiry(IN PSCSI_INQUIRY_DATA LunInfo);
 
 NTSTATUS
-TapeWriteMarks(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
-
+TapeWriteMarks(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 

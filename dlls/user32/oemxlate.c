@@ -32,17 +32,17 @@
 \***************************************************************************/
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, CharToOemA, LPCSTR, pSrc, LPSTR, pDst)
-BOOL WINAPI CharToOemA(
-    LPCSTR pSrc,
-    LPSTR pDst)
+BOOL WINAPI CharToOemA(LPCSTR pSrc, LPSTR pDst)
 {
     UserAssert(gpsi);
 
-    if (pSrc == NULL || pDst == NULL) {
+    if (pSrc == NULL || pDst == NULL)
+    {
         return FALSE;
     }
 
-    do {
+    do
+    {
         *pDst++ = gpsi->acAnsiToOem[(UCHAR)*pSrc];
     } while (*pSrc++);
 
@@ -60,18 +60,17 @@ BOOL WINAPI CharToOemA(
 \***************************************************************************/
 
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, CharToOemBuffA, LPCSTR, pSrc, LPSTR, pDst, DWORD, nLength)
-BOOL WINAPI CharToOemBuffA(
-    LPCSTR pSrc,
-    LPSTR pDst,
-    DWORD nLength)
+BOOL WINAPI CharToOemBuffA(LPCSTR pSrc, LPSTR pDst, DWORD nLength)
 {
     UserAssert(gpsi);
 
-    if (pSrc == NULL || pDst == NULL) {
+    if (pSrc == NULL || pDst == NULL)
+    {
         return FALSE;
     }
 
-    while (nLength--) {
+    while (nLength--)
+    {
         *pDst++ = gpsi->acAnsiToOem[(UCHAR)*pSrc++];
     }
 
@@ -91,17 +90,17 @@ BOOL WINAPI CharToOemBuffA(
 \***************************************************************************/
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, OemToCharA, LPCSTR, pSrc, LPSTR, pDst)
-BOOL WINAPI OemToCharA(
-    LPCSTR pSrc,
-    LPSTR pDst)
+BOOL WINAPI OemToCharA(LPCSTR pSrc, LPSTR pDst)
 {
     UserAssert(gpsi);
 
-    if (pSrc == NULL || pDst == NULL) {
+    if (pSrc == NULL || pDst == NULL)
+    {
         return FALSE;
     }
 
-    do {
+    do
+    {
         *pDst++ = gpsi->acOemToAnsi[(UCHAR)*pSrc];
     } while (*pSrc++);
 
@@ -122,18 +121,17 @@ BOOL WINAPI OemToCharA(
 \***************************************************************************/
 
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, OemToCharBuffA, LPCSTR, pSrc, LPSTR, pDst, DWORD, nLength)
-BOOL WINAPI OemToCharBuffA(
-    LPCSTR pSrc,
-    LPSTR pDst,
-    DWORD nLength)
+BOOL WINAPI OemToCharBuffA(LPCSTR pSrc, LPSTR pDst, DWORD nLength)
 {
     UserAssert(gpsi);
 
-    if (pSrc == NULL || pDst == NULL) {
+    if (pSrc == NULL || pDst == NULL)
+    {
         return FALSE;
     }
 
-    while (nLength--) {
+    while (nLength--)
+    {
         *pDst++ = gpsi->acOemToAnsi[(UCHAR)*pSrc++];
     }
 
@@ -151,14 +149,15 @@ BOOL WINAPI OemToCharBuffA(
 \***************************************************************************/
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, CharToOemW, LPCWSTR, pSrc, LPSTR, pDst)
-BOOL WINAPI CharToOemW(
-    LPCWSTR pSrc,
-    LPSTR pDst)
+BOOL WINAPI CharToOemW(LPCWSTR pSrc, LPSTR pDst)
 {
     int cch;
-    if (pSrc == NULL || pDst == NULL) {
+    if (pSrc == NULL || pDst == NULL)
+    {
         return FALSE;
-    } else if (pSrc == (LPCWSTR)pDst) {
+    }
+    else if (pSrc == (LPCWSTR)pDst)
+    {
         /*
          * WideCharToMultiByte() requires pSrc != pDst: fail this call.
          * LATER: Is this really true?
@@ -168,14 +167,13 @@ BOOL WINAPI CharToOemW(
 
     cch = wcslen(pSrc) + 1;
 
-    WideCharToMultiByte(
-            CP_OEMCP,           // Unicode -> OEM
-            0,                  // gives best visual match
-            (LPWSTR)pSrc, cch,  // source & length
-            pDst,               // dest
-            cch * 2,            // max poss.length (DBCS may * 2)
-            "_",                // default char
-            NULL);              // (don't care whether defaulted)
+    WideCharToMultiByte(CP_OEMCP,          // Unicode -> OEM
+                        0,                 // gives best visual match
+                        (LPWSTR)pSrc, cch, // source & length
+                        pDst,              // dest
+                        cch * 2,           // max poss.length (DBCS may * 2)
+                        "_",               // default char
+                        NULL);             // (don't care whether defaulted)
 
     return TRUE;
 }
@@ -191,14 +189,14 @@ BOOL WINAPI CharToOemW(
 \***************************************************************************/
 
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, CharToOemBuffW, LPCWSTR, pSrc, LPSTR, pDst, DWORD, nLength)
-BOOL WINAPI CharToOemBuffW(
-    LPCWSTR pSrc,
-    LPSTR pDst,
-    DWORD nLength)
+BOOL WINAPI CharToOemBuffW(LPCWSTR pSrc, LPSTR pDst, DWORD nLength)
 {
-    if (pSrc == NULL || pDst == NULL) {
+    if (pSrc == NULL || pDst == NULL)
+    {
         return FALSE;
-    } else if (pSrc == (LPCWSTR)pDst) {
+    }
+    else if (pSrc == (LPCWSTR)pDst)
+    {
         /*
          * WideCharToMultiByte() requires pSrc != pDst: fail this call.
          * LATER: Is this really true?
@@ -206,14 +204,13 @@ BOOL WINAPI CharToOemBuffW(
         return FALSE;
     }
 
-    WideCharToMultiByte(
-            CP_OEMCP,                   // Unicode -> OEM
-            0,                          // gives best visual match
-            (LPWSTR)pSrc, (int)nLength, // source & length
-            pDst,                       // dest
-            (int)nLength * 2,           // max poss. length (DBCS may * 2)
-            "_",                        // default char
-            NULL);                      // (don't care whether defaulted)
+    WideCharToMultiByte(CP_OEMCP,                   // Unicode -> OEM
+                        0,                          // gives best visual match
+                        (LPWSTR)pSrc, (int)nLength, // source & length
+                        pDst,                       // dest
+                        (int)nLength * 2,           // max poss. length (DBCS may * 2)
+                        "_",                        // default char
+                        NULL);                      // (don't care whether defaulted)
 
     return TRUE;
 }
@@ -228,14 +225,15 @@ BOOL WINAPI CharToOemBuffW(
 \***************************************************************************/
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, OemToCharW, LPCSTR, pSrc, LPWSTR, pDst)
-BOOL WINAPI OemToCharW(
-    LPCSTR pSrc,
-    LPWSTR pDst)
+BOOL WINAPI OemToCharW(LPCSTR pSrc, LPWSTR pDst)
 {
     int cch;
-    if (pSrc == NULL || pDst == NULL) {
+    if (pSrc == NULL || pDst == NULL)
+    {
         return FALSE;
-    } else if (pSrc == (LPCSTR)pDst) {
+    }
+    else if (pSrc == (LPCSTR)pDst)
+    {
         /*
          * MultiByteToWideChar() requires pSrc != pDst: fail this call.
          * LATER: Is this really true?
@@ -245,12 +243,11 @@ BOOL WINAPI OemToCharW(
 
     cch = strlen(pSrc) + 1;
 
-    MultiByteToWideChar(
-            CP_OEMCP,                          // Unicode -> OEM
-            MB_PRECOMPOSED | MB_USEGLYPHCHARS, // visual map to precomposed
-            (LPSTR)pSrc, cch,                  // source & length
-            pDst,                              // destination
-            cch);                              // max poss. precomposed length
+    MultiByteToWideChar(CP_OEMCP,                          // Unicode -> OEM
+                        MB_PRECOMPOSED | MB_USEGLYPHCHARS, // visual map to precomposed
+                        (LPSTR)pSrc, cch,                  // source & length
+                        pDst,                              // destination
+                        cch);                              // max poss. precomposed length
 
     return TRUE;
 }
@@ -266,14 +263,14 @@ BOOL WINAPI OemToCharW(
 \***************************************************************************/
 
 FUNCLOG3(LOG_GENERAL, BOOL, WINAPI, OemToCharBuffW, LPCSTR, pSrc, LPWSTR, pDst, DWORD, nLength)
-BOOL WINAPI OemToCharBuffW(
-    LPCSTR pSrc,
-    LPWSTR pDst,
-    DWORD nLength)
+BOOL WINAPI OemToCharBuffW(LPCSTR pSrc, LPWSTR pDst, DWORD nLength)
 {
-    if (pSrc == NULL || pDst == NULL) {
+    if (pSrc == NULL || pDst == NULL)
+    {
         return FALSE;
-    } else if (pSrc == (LPCSTR)pDst) {
+    }
+    else if (pSrc == (LPCSTR)pDst)
+    {
         /*
          * MultiByteToWideChar() requires pSrc != pDst: fail this call.
          * LATER: Is this really true?
@@ -281,12 +278,12 @@ BOOL WINAPI OemToCharBuffW(
         return FALSE;
     }
 
-    if (MultiByteToWideChar(
-            CP_OEMCP,                          // Unicode -> OEM
-            MB_PRECOMPOSED | MB_USEGLYPHCHARS, // visual map to precomposed
-            (LPSTR)pSrc, nLength,              // source & length
-            pDst,                              // destination
-            nLength)) {                          // max poss. precomposed length
+    if (MultiByteToWideChar(CP_OEMCP,                          // Unicode -> OEM
+                            MB_PRECOMPOSED | MB_USEGLYPHCHARS, // visual map to precomposed
+                            (LPSTR)pSrc, nLength,              // source & length
+                            pDst,                              // destination
+                            nLength))
+    { // max poss. precomposed length
         return TRUE;
     }
 
@@ -305,8 +302,7 @@ BOOL WINAPI OemToCharBuffW(
 
 
 FUNCLOG1(LOG_GENERAL, DWORD, WINAPI, OemKeyScan, WORD, wOemChar)
-DWORD WINAPI OemKeyScan(
-    WORD wOemChar)
+DWORD WINAPI OemKeyScan(WORD wOemChar)
 {
     WCHAR wchOem;
     SHORT sVk;
@@ -316,17 +312,20 @@ DWORD WINAPI OemKeyScan(
     /*
      * Return 0xFFFFFFFF for DBCS LeadByte character.
      */
-    if (IsDBCSLeadByte(LOBYTE(wOemChar))) {
+    if (IsDBCSLeadByte(LOBYTE(wOemChar)))
+    {
         return 0xFFFFFFFF;
     }
 #endif // FE_SB
 
-    if (!OemToCharBuffW((LPCSTR)&wOemChar, &wchOem, 1)) {
+    if (!OemToCharBuffW((LPCSTR)&wOemChar, &wchOem, 1))
+    {
         return 0xFFFFFFFF;
     }
 
     sVk = VkKeyScanW(wchOem);
-    if ((dwRet = MapVirtualKeyW(LOBYTE(sVk), 0)) == 0) {
+    if ((dwRet = MapVirtualKeyW(LOBYTE(sVk), 0)) == 0)
+    {
         return 0xFFFFFFFF;
     }
     return dwRet | ((sVk & 0xFF00) << 8);

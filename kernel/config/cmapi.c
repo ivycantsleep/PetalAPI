@@ -21,195 +21,126 @@ Revision History:
 #include "cmp.h"
 
 
+extern BOOLEAN CmpNoWrite;
 
-extern  BOOLEAN     CmpNoWrite;
+extern LIST_ENTRY CmpHiveListHead;
 
-extern  LIST_ENTRY  CmpHiveListHead;
+extern BOOLEAN CmpProfileLoaded;
+extern BOOLEAN CmpWasSetupBoot;
 
-extern  BOOLEAN CmpProfileLoaded;
-extern  BOOLEAN CmpWasSetupBoot;
+extern UNICODE_STRING CmSymbolicLinkValueName;
 
-extern  UNICODE_STRING CmSymbolicLinkValueName;
-
-extern ULONG   CmpGlobalQuotaAllowed;
-extern ULONG   CmpGlobalQuotaWarning;
+extern ULONG CmpGlobalQuotaAllowed;
+extern ULONG CmpGlobalQuotaWarning;
 extern PCMHIVE CmpMasterHive;
 extern HIVE_LIST_ENTRY CmpMachineHiveList[];
 
-VOID
-CmpDereferenceNameControlBlockWithLock(
-    PCM_NAME_CONTROL_BLOCK   Ncb
-    );
+VOID CmpDereferenceNameControlBlockWithLock(PCM_NAME_CONTROL_BLOCK Ncb);
 
 //
 // procedures private to this file
 //
 NTSTATUS
-CmpSetValueKeyExisting(
-    IN PHHIVE  Hive,
-    IN HCELL_INDEX OldChild,
-    IN PCM_KEY_VALUE Value,
-    IN ULONG Type,
-    IN PVOID Data,
-    IN ULONG DataSize,
-    IN ULONG StorageType,
-    IN ULONG TempData
-    );
+CmpSetValueKeyExisting(IN PHHIVE Hive, IN HCELL_INDEX OldChild, IN PCM_KEY_VALUE Value, IN ULONG Type, IN PVOID Data,
+                       IN ULONG DataSize, IN ULONG StorageType, IN ULONG TempData);
 
 
 NTSTATUS
-CmpSetValueKeyNew(
-    IN PHHIVE  Hive,
-    IN PCM_KEY_NODE Parent,
-    IN PUNICODE_STRING ValueName,
-    IN ULONG Index,
-    IN ULONG Type,
-    IN PVOID Data,
-    IN ULONG DataSize,
-    IN ULONG StorageType,
-    IN ULONG TempData
-    );
+CmpSetValueKeyNew(IN PHHIVE Hive, IN PCM_KEY_NODE Parent, IN PUNICODE_STRING ValueName, IN ULONG Index, IN ULONG Type,
+                  IN PVOID Data, IN ULONG DataSize, IN ULONG StorageType, IN ULONG TempData);
 
-VOID
-CmpRemoveKeyHash(
-    IN PCM_KEY_HASH KeyHash
-    );
+VOID CmpRemoveKeyHash(IN PCM_KEY_HASH KeyHash);
 
 PCM_KEY_CONTROL_BLOCK
-CmpInsertKeyHash(
-    IN PCM_KEY_HASH KeyHash,
-    IN BOOLEAN      FakeKey
-    );
+CmpInsertKeyHash(IN PCM_KEY_HASH KeyHash, IN BOOLEAN FakeKey);
 
 #if DBG
 ULONG
-CmpUnloadKeyWorker(
-    PCM_KEY_CONTROL_BLOCK Current,
-    PVOID                 Context1,
-    PVOID                 Context2
-    );
+CmpUnloadKeyWorker(PCM_KEY_CONTROL_BLOCK Current, PVOID Context1, PVOID Context2);
 #endif
 
 ULONG
-CmpCompressKeyWorker(
-    PCM_KEY_CONTROL_BLOCK Current,
-    PVOID                 Context1,
-    PVOID                 Context2
-    );
+CmpCompressKeyWorker(PCM_KEY_CONTROL_BLOCK Current, PVOID Context1, PVOID Context2);
 
 NTSTATUS
-CmpDuplicateKey(
-    PHHIVE          Hive,
-    HCELL_INDEX     OldKeyCell,
-    PHCELL_INDEX    NewKeyCell
-    );
+CmpDuplicateKey(PHHIVE Hive, HCELL_INDEX OldKeyCell, PHCELL_INDEX NewKeyCell);
 
 
-VOID
-CmpDestroyTemporaryHive(
-    PCMHIVE CmHive
-    );
+VOID CmpDestroyTemporaryHive(PCMHIVE CmHive);
 
 BOOLEAN
-CmpCompareNewValueDataAgainstKCBCache(  PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-                                        PUNICODE_STRING ValueName,
-                                        ULONG Type,
-                                        PVOID Data,
-                                        ULONG DataSize
-                                        );
+CmpCompareNewValueDataAgainstKCBCache(PCM_KEY_CONTROL_BLOCK KeyControlBlock, PUNICODE_STRING ValueName, ULONG Type,
+                                      PVOID Data, ULONG DataSize);
 BOOLEAN
-CmpGetValueDataFromCache(
-    IN PHHIVE               Hive,
-    IN PPCM_CACHED_VALUE    ContainingList,
-    IN PCELL_DATA           ValueKey,
-    IN BOOLEAN              ValueCached,
-    OUT PUCHAR              *DataPointer,
-    OUT PBOOLEAN            Allocated,
-    OUT PHCELL_INDEX        CellToRelease
-);
+CmpGetValueDataFromCache(IN PHHIVE Hive, IN PPCM_CACHED_VALUE ContainingList, IN PCELL_DATA ValueKey,
+                         IN BOOLEAN ValueCached, OUT PUCHAR *DataPointer, OUT PBOOLEAN Allocated,
+                         OUT PHCELL_INDEX CellToRelease);
 
 BOOLEAN
-CmpCompareNewValueDataAgainstKCBCache(  PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-                                        PUNICODE_STRING ValueName,
-                                        ULONG Type,
-                                        PVOID Data,
-                                        ULONG DataSize
-                                        );
+CmpCompareNewValueDataAgainstKCBCache(PCM_KEY_CONTROL_BLOCK KeyControlBlock, PUNICODE_STRING ValueName, ULONG Type,
+                                      PVOID Data, ULONG DataSize);
 BOOLEAN
-CmpGetValueDataFromCache(
-    IN PHHIVE               Hive,
-    IN PPCM_CACHED_VALUE    ContainingList,
-    IN PCELL_DATA           ValueKey,
-    IN BOOLEAN              ValueCached,
-    OUT PUCHAR              *DataPointer,
-    OUT PBOOLEAN            Allocated,
-    OUT PHCELL_INDEX        CellToRelease
-);
+CmpGetValueDataFromCache(IN PHHIVE Hive, IN PPCM_CACHED_VALUE ContainingList, IN PCELL_DATA ValueKey,
+                         IN BOOLEAN ValueCached, OUT PUCHAR *DataPointer, OUT PBOOLEAN Allocated,
+                         OUT PHCELL_INDEX CellToRelease);
 
 BOOLEAN
-CmpIsHiveAlreadyLoaded( IN HANDLE KeyHandle,
-                        IN POBJECT_ATTRIBUTES SourceFile
-                        );
+CmpIsHiveAlreadyLoaded(IN HANDLE KeyHandle, IN POBJECT_ATTRIBUTES SourceFile);
 
 NTSTATUS
-static
-__forceinline
-CmpCheckReplaceHive(    IN PHHIVE           Hive,
-                        OUT PHCELL_INDEX    Key
-                    );
+static __forceinline CmpCheckReplaceHive(IN PHHIVE Hive, OUT PHCELL_INDEX Key);
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmDeleteValueKey)
-#pragma alloc_text(PAGE,CmEnumerateKey)
-#pragma alloc_text(PAGE,CmEnumerateValueKey)
-#pragma alloc_text(PAGE,CmFlushKey)
-#pragma alloc_text(PAGE,CmQueryKey)
-#pragma alloc_text(PAGE,CmQueryValueKey)
-#pragma alloc_text(PAGE,CmQueryMultipleValueKey)
-#pragma alloc_text(PAGE,CmSetValueKey)
-#pragma alloc_text(PAGE,CmpSetValueKeyExisting)
-#pragma alloc_text(PAGE,CmpSetValueKeyNew)
-#pragma alloc_text(PAGE,CmSetLastWriteTimeKey)
-#pragma alloc_text(PAGE,CmSetKeyUserFlags)
-#pragma alloc_text(PAGE,CmLoadKey)
-#pragma alloc_text(PAGE,CmUnloadKey)
+#pragma alloc_text(PAGE, CmDeleteValueKey)
+#pragma alloc_text(PAGE, CmEnumerateKey)
+#pragma alloc_text(PAGE, CmEnumerateValueKey)
+#pragma alloc_text(PAGE, CmFlushKey)
+#pragma alloc_text(PAGE, CmQueryKey)
+#pragma alloc_text(PAGE, CmQueryValueKey)
+#pragma alloc_text(PAGE, CmQueryMultipleValueKey)
+#pragma alloc_text(PAGE, CmSetValueKey)
+#pragma alloc_text(PAGE, CmpSetValueKeyExisting)
+#pragma alloc_text(PAGE, CmpSetValueKeyNew)
+#pragma alloc_text(PAGE, CmSetLastWriteTimeKey)
+#pragma alloc_text(PAGE, CmSetKeyUserFlags)
+#pragma alloc_text(PAGE, CmLoadKey)
+#pragma alloc_text(PAGE, CmUnloadKey)
 
 #ifdef NT_UNLOAD_KEY_EX
-#pragma alloc_text(PAGE,CmUnloadKeyEx)
+#pragma alloc_text(PAGE, CmUnloadKeyEx)
 #endif //NT_UNLOAD_KEY_EX
 
-#pragma alloc_text(PAGE,CmpDoFlushAll)
-#pragma alloc_text(PAGE,CmReplaceKey)
+#pragma alloc_text(PAGE, CmpDoFlushAll)
+#pragma alloc_text(PAGE, CmReplaceKey)
 
 #ifdef WRITE_PROTECTED_REGISTRY_POOL
-#pragma alloc_text(PAGE,CmpMarkAllBinsReadOnly)
+#pragma alloc_text(PAGE, CmpMarkAllBinsReadOnly)
 #endif //WRITE_PROTECTED_REGISTRY_POOL
 
 #ifdef NT_RENAME_KEY
-#pragma alloc_text(PAGE,CmRenameKey)
+#pragma alloc_text(PAGE, CmRenameKey)
 #endif //NT_RENAME_KEY
 
-#pragma alloc_text(PAGE,CmLockKcbForWrite)
+#pragma alloc_text(PAGE, CmLockKcbForWrite)
 
 #if DBG
-#pragma alloc_text(PAGE,CmpUnloadKeyWorker)
+#pragma alloc_text(PAGE, CmpUnloadKeyWorker)
 #endif
 
-#pragma alloc_text(PAGE,CmMoveKey)
-#pragma alloc_text(PAGE,CmpDuplicateKey)
-#pragma alloc_text(PAGE,CmCompressKey)
-#pragma alloc_text(PAGE,CmpCompressKeyWorker)
-#pragma alloc_text(PAGE,CmpCompareNewValueDataAgainstKCBCache)
-#pragma alloc_text(PAGE,CmpIsHiveAlreadyLoaded)
-#pragma alloc_text(PAGE,CmpCheckReplaceHive)
+#pragma alloc_text(PAGE, CmMoveKey)
+#pragma alloc_text(PAGE, CmpDuplicateKey)
+#pragma alloc_text(PAGE, CmCompressKey)
+#pragma alloc_text(PAGE, CmpCompressKeyWorker)
+#pragma alloc_text(PAGE, CmpCompareNewValueDataAgainstKCBCache)
+#pragma alloc_text(PAGE, CmpIsHiveAlreadyLoaded)
+#pragma alloc_text(PAGE, CmpCheckReplaceHive)
 #endif
 
 NTSTATUS
-CmDeleteValueKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN UNICODE_STRING           ValueName         // RAW
-    )
+CmDeleteValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
+                 IN UNICODE_STRING ValueName // RAW
+)
 /*++
 
 Routine Description:
@@ -233,18 +164,18 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    PCM_KEY_NODE    pcell = NULL;
-    PCHILD_LIST     plist;
-    PCM_KEY_VALUE   Value = NULL;
-    ULONG           targetindex;
-    HCELL_INDEX     ChildCell;
-    PHHIVE          Hive;
-    HCELL_INDEX     Cell;
-    ULONG           realsize;
-    LARGE_INTEGER   systemtime;
+    NTSTATUS status;
+    PCM_KEY_NODE pcell = NULL;
+    PCHILD_LIST plist;
+    PCM_KEY_VALUE Value = NULL;
+    ULONG targetindex;
+    HCELL_INDEX ChildCell;
+    PHHIVE Hive;
+    HCELL_INDEX Cell;
+    ULONG realsize;
+    LARGE_INTEGER systemtime;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmDeleteValueKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmDeleteValueKey\n"));
 
     CmpLockRegistryExclusive();
 
@@ -254,11 +185,13 @@ Return Value:
 
     PERFINFO_REG_DELETE_VALUE(KeyControlBlock, &ValueName);
 
-    try {
+    try
+    {
         //
         // no edits, not even this one, on keys marked for deletion
         //
-        if (KeyControlBlock->Delete) {
+        if (KeyControlBlock->Delete)
+        {
             return STATUS_KEY_DELETED;
         }
 
@@ -266,7 +199,8 @@ Return Value:
         Cell = KeyControlBlock->KeyCell;
 
         pcell = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
-        if( pcell == NULL ) {
+        if (pcell == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
@@ -281,7 +215,8 @@ Return Value:
         plist = &(pcell->ValueList);
         ChildCell = HCELL_NIL;
 
-        if (plist->Count != 0) {
+        if (plist->Count != 0)
+        {
 
             //
             // The parent has at least one value, map in the list of
@@ -293,19 +228,17 @@ Return Value:
             // pchild -> the child node structure being examined
             //
 
-            if( CmpFindNameInList(Hive,
-                                  plist,
-                                  &ValueName,
-                                  &targetindex,
-                                  &ChildCell) == FALSE ) {
-            
-                    // Mark the hive as read only
-                    CmpMarkAllBinsReadOnly(Hive);
+            if (CmpFindNameInList(Hive, plist, &ValueName, &targetindex, &ChildCell) == FALSE)
+            {
 
-                    return STATUS_INSUFFICIENT_RESOURCES;
+                // Mark the hive as read only
+                CmpMarkAllBinsReadOnly(Hive);
+
+                return STATUS_INSUFFICIENT_RESOURCES;
             }
 
-            if (ChildCell != HCELL_NIL) {
+            if (ChildCell != HCELL_NIL)
+            {
 
                 //
                 // 1. the desired target was found
@@ -317,8 +250,7 @@ Return Value:
                 //
                 // attempt to mark all relevent cells dirty
                 //
-                if (!(HvMarkCellDirty(Hive, Cell) &&
-                      HvMarkCellDirty(Hive, pcell->ValueList.List) &&
+                if (!(HvMarkCellDirty(Hive, Cell) && HvMarkCellDirty(Hive, pcell->ValueList.List) &&
                       HvMarkCellDirty(Hive, ChildCell)))
 
                 {
@@ -328,36 +260,40 @@ Return Value:
                     return STATUS_NO_LOG_SPACE;
                 }
 
-                Value = (PCM_KEY_VALUE)HvGetCell(Hive,ChildCell);
-                if( Value == NULL ) {
+                Value = (PCM_KEY_VALUE)HvGetCell(Hive, ChildCell);
+                if (Value == NULL)
+                {
                     //
                     // could not map view inside
                     // this is impossible as we just dirtied the view
                     //
-                    ASSERT( FALSE );
+                    ASSERT(FALSE);
                     // Mark the hive as read only
                     CmpMarkAllBinsReadOnly(Hive);
 
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
-                if( !CmpMarkValueDataDirty(Hive,Value) ) {
+                if (!CmpMarkValueDataDirty(Hive, Value))
+                {
                     // Mark the hive as read only
                     CmpMarkAllBinsReadOnly(Hive);
 
-                    return(STATUS_NO_LOG_SPACE);
+                    return (STATUS_NO_LOG_SPACE);
                 }
 
                 // sanity
-                ASSERT_CELL_DIRTY(Hive,pcell->ValueList.List);
-                ASSERT_CELL_DIRTY(Hive,ChildCell);
+                ASSERT_CELL_DIRTY(Hive, pcell->ValueList.List);
+                ASSERT_CELL_DIRTY(Hive, ChildCell);
 
-                if( !NT_SUCCESS(CmpRemoveValueFromList(Hive,targetindex,plist)) ) {
+                if (!NT_SUCCESS(CmpRemoveValueFromList(Hive, targetindex, plist)))
+                {
                     //
                     // bail out !
                     //
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
-                if( CmpFreeValue(Hive, ChildCell) == FALSE ) {
+                if (CmpFreeValue(Hive, ChildCell) == FALSE)
+                {
                     //
                     // we couldn't map a view inside above call
                     //
@@ -368,13 +304,14 @@ Return Value:
                 pcell->LastWriteTime = systemtime;
                 // cache it in the kcb too.
                 KeyControlBlock->KcbLastWriteTime = systemtime;
-                
-                // some sanity asserts
-                ASSERT( pcell->MaxValueNameLen == KeyControlBlock->KcbMaxValueNameLen );
-                ASSERT( pcell->MaxValueDataLen == KeyControlBlock->KcbMaxValueDataLen );
-                ASSERT_CELL_DIRTY(Hive,Cell);
 
-                if (pcell->ValueList.Count == 0) {
+                // some sanity asserts
+                ASSERT(pcell->MaxValueNameLen == KeyControlBlock->KcbMaxValueNameLen);
+                ASSERT(pcell->MaxValueDataLen == KeyControlBlock->KcbMaxValueDataLen);
+                ASSERT_CELL_DIRTY(Hive, Cell);
+
+                if (pcell->ValueList.Count == 0)
+                {
                     pcell->MaxValueNameLen = 0;
                     pcell->MaxValueDataLen = 0;
                     // update the kcb cache too
@@ -392,25 +329,27 @@ Return Value:
                 // Invalidate and rebuild the cache
                 //
                 CmpCleanUpKcbValueCache(KeyControlBlock);
-                CmpSetUpKcbValueCache(KeyControlBlock,plist->Count,plist->List);
-    
-                CmpReportNotify(
-                        KeyControlBlock,
-                        KeyControlBlock->KeyHive,
-                        KeyControlBlock->KeyCell,
-                        REG_NOTIFY_CHANGE_LAST_SET
-                        );
+                CmpSetUpKcbValueCache(KeyControlBlock, plist->Count, plist->List);
+
+                CmpReportNotify(KeyControlBlock, KeyControlBlock->KeyHive, KeyControlBlock->KeyCell,
+                                REG_NOTIFY_CHANGE_LAST_SET);
                 status = STATUS_SUCCESS;
-            } else {
+            }
+            else
+            {
                 status = STATUS_OBJECT_NAME_NOT_FOUND;
             }
         }
-    } finally {
-        if(pcell != NULL){
+    }
+    finally
+    {
+        if (pcell != NULL)
+        {
             HvReleaseCell(Hive, Cell);
         }
-        if(Value != NULL){
-            ASSERT( ChildCell != HCELL_NIL );
+        if (Value != NULL)
+        {
+            ASSERT(ChildCell != HCELL_NIL);
             HvReleaseCell(Hive, ChildCell);
         }
 
@@ -427,16 +366,10 @@ Return Value:
     return status;
 }
 
-
+
 NTSTATUS
-CmEnumerateKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN ULONG Index,
-    IN KEY_INFORMATION_CLASS KeyInformationClass,
-    IN PVOID KeyInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    )
+CmEnumerateKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN ULONG Index, IN KEY_INFORMATION_CLASS KeyInformationClass,
+               IN PVOID KeyInformation, IN ULONG Length, IN PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -484,20 +417,21 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    HCELL_INDEX     childcell;
-    PHHIVE          Hive;
-    HCELL_INDEX     Cell;
-    PCM_KEY_NODE    Node;
+    NTSTATUS status;
+    HCELL_INDEX childcell;
+    PHHIVE Hive;
+    HCELL_INDEX Cell;
+    PCM_KEY_NODE Node;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmEnumerateKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmEnumerateKey\n"));
 
 
     CmpLockRegistry();
 
     PERFINFO_REG_ENUM_KEY(KeyControlBlock, Index);
 
-    if (KeyControlBlock->Delete) {
+    if (KeyControlBlock->Delete)
+    {
         CmpUnlockRegistry();
         return STATUS_KEY_DELETED;
     }
@@ -513,25 +447,26 @@ Return Value:
     //
 
     Node = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
         CmpUnlockRegistry();
         CmpMarkAllBinsReadOnly(Hive);
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
     childcell = CmpFindSubKeyByNumber(Hive, Node, Index);
-    
+
     // release this cell here as we don't need this Node anymore
     HvReleaseCell(Hive, Cell);
 
-    if (childcell == HCELL_NIL) {
+    if (childcell == HCELL_NIL)
+    {
         //
         // no such child, clean up and return error
         //
-        // we cannot return STATUS_INSUFFICIENT_RESOURCES because of Iop 
+        // we cannot return STATUS_INSUFFICIENT_RESOURCES because of Iop
         // subsystem which treats INSUFFICIENT RESOURCES as no fatal error
         //
         CmpUnlockRegistry();
@@ -542,8 +477,9 @@ Return Value:
         return STATUS_NO_MORE_ENTRIES;
     }
 
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,childcell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, childcell);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -552,25 +488,22 @@ Return Value:
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    try {
+    try
+    {
 
         //
         // call a worker to perform data transfer
         //
 
-        status = CmpQueryKeyData(Hive,
-                                 Node,
-                                 KeyInformationClass,
-                                 KeyInformation,
-                                 Length,
-                                 ResultLength
+        status = CmpQueryKeyData(Hive, Node, KeyInformationClass, KeyInformation, Length, ResultLength
 #if defined(CMP_STATS) || defined(CMP_KCB_CACHE_VALIDATION)
                                  ,
                                  NULL
 #endif
-                                 );
-
-     } except (EXCEPTION_EXECUTE_HANDLER) {
+        );
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         HvReleaseCell(Hive, childcell);
 
@@ -594,16 +527,10 @@ Return Value:
 }
 
 
-
 NTSTATUS
-CmEnumerateValueKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN ULONG Index,
-    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-    IN PVOID KeyValueInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    )
+CmEnumerateValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN ULONG Index,
+                    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass, IN PVOID KeyValueInformation,
+                    IN ULONG Length, IN PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -652,17 +579,17 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PHHIVE              Hive;
-    PCM_KEY_NODE        Node;
-    PCELL_DATA          ChildList;
-    PCM_KEY_VALUE       ValueData;
-    BOOLEAN             IndexCached;
-    BOOLEAN             ValueCached;
-    PPCM_CACHED_VALUE   ContainingList;
-    HCELL_INDEX         ValueDataCellToRelease = HCELL_NIL;
+    NTSTATUS status;
+    PHHIVE Hive;
+    PCM_KEY_NODE Node;
+    PCELL_DATA ChildList;
+    PCM_KEY_VALUE ValueData;
+    BOOLEAN IndexCached;
+    BOOLEAN ValueCached;
+    PPCM_CACHED_VALUE ContainingList;
+    HCELL_INDEX ValueDataCellToRelease = HCELL_NIL;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmEnumerateValueKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmEnumerateValueKey\n"));
 
 
     //
@@ -673,13 +600,15 @@ Return Value:
 
     PERFINFO_REG_ENUM_VALUE(KeyControlBlock, Index);
 
-    if (KeyControlBlock->Delete) {
+    if (KeyControlBlock->Delete)
+    {
         CmpUnlockRegistry();
         return STATUS_KEY_DELETED;
     }
     Hive = KeyControlBlock->KeyHive;
     Node = (PCM_KEY_NODE)HvGetCell(Hive, KeyControlBlock->KeyCell);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -693,13 +622,14 @@ Return Value:
     //
     // Do it using the cache
     //
-    if (Index >= KeyControlBlock->ValueCache.Count) {
+    if (Index >= KeyControlBlock->ValueCache.Count)
+    {
         //
         // No such child, clean up and return error.
         //
         HvReleaseCell(Hive, KeyControlBlock->KeyCell);
         CmpUnlockRegistry();
-        return(STATUS_NO_MORE_ENTRIES);
+        return (STATUS_NO_MORE_ENTRIES);
     }
 
     // Mark the hive as read only
@@ -708,17 +638,19 @@ Return Value:
     BEGIN_KCB_LOCK_GUARD;
     CmpLockKCBTreeExclusive();
 
-    if (KeyControlBlock->ExtFlags & CM_KCB_SYM_LINK_FOUND) {
+    if (KeyControlBlock->ExtFlags & CM_KCB_SYM_LINK_FOUND)
+    {
         //
         // The value list is now set to the KCB for symbolic link,
         // Clean it up and set the value right before we do the query.
         //
         CmpCleanUpKcbValueCache(KeyControlBlock);
-        CmpSetUpKcbValueCache(KeyControlBlock,Node->ValueList.Count,Node->ValueList.List);
+        CmpSetUpKcbValueCache(KeyControlBlock, Node->ValueList.Count, Node->ValueList.List);
     }
 
     ChildList = CmpGetValueListFromCache(Hive, &(KeyControlBlock->ValueCache), &IndexCached);
-    if( ChildList == NULL ) {
+    if (ChildList == NULL)
+    {
         //
         // couldn't map view; treat it as insufficient resources
         //
@@ -730,18 +662,20 @@ Return Value:
 
         CmpUnlockKCBTree();
         CmpUnlockRegistry();
-        return(STATUS_INSUFFICIENT_RESOURCES);
-
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
-    ValueData = CmpGetValueKeyFromCache(Hive, ChildList, Index, &ContainingList, IndexCached, &ValueCached,&ValueDataCellToRelease);    
-    if( ValueData == NULL ) {
+    ValueData = CmpGetValueKeyFromCache(Hive, ChildList, Index, &ContainingList, IndexCached, &ValueCached,
+                                        &ValueDataCellToRelease);
+    if (ValueData == NULL)
+    {
         //
         // couldn't map view; treat it as insufficient resources
         //
 
         HvReleaseCell(Hive, KeyControlBlock->KeyCell);
-        if( ValueDataCellToRelease != HCELL_NIL ) {
-            HvReleaseCell(Hive,ValueDataCellToRelease);
+        if (ValueDataCellToRelease != HCELL_NIL)
+        {
+            HvReleaseCell(Hive, ValueDataCellToRelease);
         }
 
         // Mark the hive as read only
@@ -749,41 +683,38 @@ Return Value:
 
         CmpUnlockKCBTree();
         CmpUnlockRegistry();
-        return(STATUS_INSUFFICIENT_RESOURCES);
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
     END_KCB_LOCK_GUARD;
 
 
     // Trying to catch the BAD guy who writes over our pool.
-    CmpMakeValueCacheReadWrite(ValueCached,CMP_GET_CACHED_ADDRESS(KeyControlBlock->ValueCache.ValueList));
+    CmpMakeValueCacheReadWrite(ValueCached, CMP_GET_CACHED_ADDRESS(KeyControlBlock->ValueCache.ValueList));
 
-    try {
+    try
+    {
 
         //
         // call a worker to perform data transfer; we are touching user-mode address; do it in a try/except
         //
-        status = CmpQueryKeyValueData(Hive,
-                                  ContainingList,
-                                  ValueData,
-                                  ValueCached,
-                                  KeyValueInformationClass,
-                                  KeyValueInformation,
-                                  Length,
-                                  ResultLength);
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_EXCEPTION,"CmEnumerateValueKey: code:%08lx\n", GetExceptionCode()));
+        status = CmpQueryKeyValueData(Hive, ContainingList, ValueData, ValueCached, KeyValueInformationClass,
+                                      KeyValueInformation, Length, ResultLength);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_EXCEPTION, "CmEnumerateValueKey: code:%08lx\n", GetExceptionCode()));
         status = GetExceptionCode();
     }
 
-     // Trying to catch the BAD guy who writes over our pool.
-    CmpMakeValueCacheReadOnly(ValueCached,CMP_GET_CACHED_ADDRESS(KeyControlBlock->ValueCache.ValueList));
+    // Trying to catch the BAD guy who writes over our pool.
+    CmpMakeValueCacheReadOnly(ValueCached, CMP_GET_CACHED_ADDRESS(KeyControlBlock->ValueCache.ValueList));
 
     HvReleaseCell(Hive, KeyControlBlock->KeyCell);
 
-    if( ValueDataCellToRelease != HCELL_NIL ) {
-        HvReleaseCell(Hive,ValueDataCellToRelease);
+    if (ValueDataCellToRelease != HCELL_NIL)
+    {
+        HvReleaseCell(Hive, ValueDataCellToRelease);
     }
 
     CmpUnlockKCBTree();
@@ -796,12 +727,8 @@ Return Value:
 }
 
 
-
 NTSTATUS
-CmFlushKey(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell
-    )
+CmFlushKey(IN PHHIVE Hive, IN HCELL_INDEX Cell)
 /*++
 
 Routine Description:
@@ -829,16 +756,17 @@ Return Value:
 --*/
 {
     PCMHIVE CmHive;
-    NTSTATUS    status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmFlushKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmFlushKey\n"));
 
     //
     // If writes are not working, lie and say we succeeded, will
     // clean up in a short time.  Only early system init code
     // will ever know the difference.
     //
-    if (CmpNoWrite) {
+    if (CmpNoWrite)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -853,21 +781,25 @@ Return Value:
     // the master hive, do a CmpDoFlushAll instead.  CmpDoFlushAll flushes
     // every hive except the master hive, which is what they REALLY want.
     //
-    if (CmHive == CmpMasterHive) {
+    if (CmHive == CmpMasterHive)
+    {
         CmpDoFlushAll(FALSE);
-    } else {
+    }
+    else
+    {
         DCmCheckRegistry(CONTAINING_RECORD(Hive, CMHIVE, Hive));
 
-        CmLockHive (CmHive);
-        CmLockHiveViews (CmHive);
+        CmLockHive(CmHive);
+        CmLockHiveViews(CmHive);
 
-        if( HvHiveWillShrink( &(CmHive->Hive) ) ) {
+        if (HvHiveWillShrink(&(CmHive->Hive)))
+        {
             //
             // we may end up here is when the hive shrinks and we need
             // exclusive access over the registry, as we are going to CcPurge !
             //
-            CmUnlockHiveViews (CmHive);
-            CmUnlockHive (CmHive);
+            CmUnlockHiveViews(CmHive);
+            CmUnlockHive(CmHive);
             CmpUnlockRegistry();
             CmpLockRegistryExclusive();
 
@@ -875,45 +807,44 @@ Return Value:
             CmpCheckRegistryUseCount();
 #endif //CHECK_REGISTRY_USECOUNT
 
-            CmLockHive (CmHive);
+            CmLockHive(CmHive);
 
-            if( CmHive->UseCount != 0) {
+            if (CmHive->UseCount != 0)
+            {
                 ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
                 CmpFixHiveUsageCount(CmHive);
-                ASSERT( CmHive->UseCount == 0 );
+                ASSERT(CmHive->UseCount == 0);
             }
-        } else {
+        }
+        else
+        {
             //
             // release the views
             //
-            CmUnlockHiveViews (CmHive);
+            CmUnlockHiveViews(CmHive);
         }
 
-        if (! HvSyncHive(Hive)) {
+        if (!HvSyncHive(Hive))
+        {
 
             status = STATUS_REGISTRY_IO_FAILED;
 
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmFlushKey: HvSyncHive failed\n"));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmFlushKey: HvSyncHive failed\n"));
         }
 
-        CmUnlockHive (CmHive);
+        CmUnlockHive(CmHive);
     }
 
     // Mark the hive as read only
     CmpMarkAllBinsReadOnly(Hive);
 
-    return  status;
+    return status;
 }
 
-
+
 NTSTATUS
-CmQueryKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN KEY_INFORMATION_CLASS    KeyInformationClass,
-    IN PVOID                    KeyInformation,
-    IN ULONG                    Length,
-    IN PULONG                   ResultLength
-    )
+CmQueryKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN KEY_INFORMATION_CLASS KeyInformationClass,
+           IN PVOID KeyInformation, IN ULONG Length, IN PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -955,11 +886,11 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    PCM_KEY_NODE    Node = NULL;
+    NTSTATUS status;
+    PCM_KEY_NODE Node = NULL;
     PUNICODE_STRING Name = NULL;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmQueryKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmQueryKey\n"));
 
     CmpLockRegistry();
 
@@ -968,56 +899,68 @@ Return Value:
     // Mark the hive as read only
     CmpMarkAllBinsReadOnly(KeyControlBlock->KeyHive);
 
-    try {
+    try
+    {
 
         //
         // request for the FULL path of the key
         //
-        if( KeyInformationClass == KeyNameInformation ) {
-            if (KeyControlBlock->Delete ) {
+        if (KeyInformationClass == KeyNameInformation)
+        {
+            if (KeyControlBlock->Delete)
+            {
                 //
                 // special case: return key deleted status, but still fill the full name of the key.
                 //
                 status = STATUS_KEY_DELETED;
-            } else {
+            }
+            else
+            {
                 status = STATUS_SUCCESS;
             }
-            
-            if( KeyControlBlock->NameBlock ) {
+
+            if (KeyControlBlock->NameBlock)
+            {
 
                 Name = CmpConstructName(KeyControlBlock);
-                if (Name == NULL) {
+                if (Name == NULL)
+                {
                     status = STATUS_INSUFFICIENT_RESOURCES;
-                } else {
-                    ULONG       requiredlength;
-                    ULONG       minimumlength;
-                    USHORT      NameLength;
-                    LONG        leftlength;
+                }
+                else
+                {
+                    ULONG requiredlength;
+                    ULONG minimumlength;
+                    USHORT NameLength;
+                    LONG leftlength;
                     PKEY_INFORMATION pbuffer = (PKEY_INFORMATION)KeyInformation;
 
                     NameLength = Name->Length;
 
                     requiredlength = FIELD_OFFSET(KEY_NAME_INFORMATION, Name) + NameLength;
-                    
+
                     minimumlength = FIELD_OFFSET(KEY_NAME_INFORMATION, Name);
 
                     *ResultLength = requiredlength;
-                    if (Length < minimumlength) {
+                    if (Length < minimumlength)
+                    {
 
                         status = STATUS_BUFFER_TOO_SMALL;
-
-                    } else {
+                    }
+                    else
+                    {
                         //
                         // Fill in the length of the name
                         //
                         pbuffer->KeyNameInformation.NameLength = NameLength;
-                        
+
                         //
                         // Now copy the full name into the user buffer, if enough space
                         //
                         leftlength = Length - minimumlength;
                         requiredlength = NameLength;
-                        if (leftlength < (LONG)requiredlength) {
+                        if (leftlength < (LONG)requiredlength)
+                        {
                             requiredlength = leftlength;
                             status = STATUS_BUFFER_OVERFLOW;
                         }
@@ -1025,82 +968,90 @@ Return Value:
                         //
                         // If not enough space, copy how much we can and return overflow
                         //
-                        RtlCopyMemory(
-                            &(pbuffer->KeyNameInformation.Name[0]),
-                            Name->Buffer,
-                            requiredlength
-                            );
+                        RtlCopyMemory(&(pbuffer->KeyNameInformation.Name[0]), Name->Buffer, requiredlength);
                     }
                 }
             }
-        } else if(KeyControlBlock->Delete ) {
-            // 
+        }
+        else if (KeyControlBlock->Delete)
+        {
+            //
             // key already deleted
             //
             status = STATUS_KEY_DELETED;
-        } else if( KeyInformationClass == KeyFlagsInformation ) {
+        }
+        else if (KeyInformationClass == KeyFlagsInformation)
+        {
             //
             // we only want to get the user defined flags;
             //
-            PKEY_INFORMATION    pbuffer = (PKEY_INFORMATION)KeyInformation;
-            ULONG               requiredlength;
+            PKEY_INFORMATION pbuffer = (PKEY_INFORMATION)KeyInformation;
+            ULONG requiredlength;
 
             requiredlength = sizeof(KEY_FLAGS_INFORMATION);
 
             *ResultLength = requiredlength;
 
-            if (Length < requiredlength) {
+            if (Length < requiredlength)
+            {
                 status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                pbuffer->KeyFlagsInformation.UserFlags = (ULONG)((USHORT)KeyControlBlock->Flags >> KEY_USER_FLAGS_SHIFT);
+            }
+            else
+            {
+                pbuffer->KeyFlagsInformation.UserFlags =
+                    (ULONG)((USHORT)KeyControlBlock->Flags >> KEY_USER_FLAGS_SHIFT);
                 status = STATUS_SUCCESS;
             }
-        } else {
+        }
+        else
+        {
             //
             // call a worker to perform data transfer
             //
 
-            if( KeyInformationClass == KeyCachedInformation ) {
+            if (KeyInformationClass == KeyCachedInformation)
+            {
                 //
                 // call the fast version
                 //
-                status = CmpQueryKeyDataFromCache(  KeyControlBlock,
-                                                    KeyInformationClass,
-                                                    KeyInformation,
-                                                    Length,
-                                                    ResultLength );
-            } else {
+                status = CmpQueryKeyDataFromCache(KeyControlBlock, KeyInformationClass, KeyInformation, Length,
+                                                  ResultLength);
+            }
+            else
+            {
                 //
                 // old'n plain slow version
                 //
                 Node = (PCM_KEY_NODE)HvGetCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
-                if( Node == NULL ) {
+                if (Node == NULL)
+                {
                     //
                     // we couldn't map a view for the bin containing this cell
                     //
                     status = STATUS_INSUFFICIENT_RESOURCES;
-                } else {
-                    status = CmpQueryKeyData(KeyControlBlock->KeyHive,
-                                             Node,
-                                             KeyInformationClass,
-                                             KeyInformation,
-                                             Length,
-                                             ResultLength 
+                }
+                else
+                {
+                    status = CmpQueryKeyData(KeyControlBlock->KeyHive, Node, KeyInformationClass, KeyInformation,
+                                             Length, ResultLength
 #if defined(CMP_STATS) || defined(CMP_KCB_CACHE_VALIDATION)
-                                 ,
-                                 KeyControlBlock
+                                             ,
+                                             KeyControlBlock
 #endif
-                                             );
+                    );
                 }
             }
         }
-
-    } finally {
-        if( Node != NULL ) {
+    }
+    finally
+    {
+        if (Node != NULL)
+        {
             HvReleaseCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
         }
 
-        if( Name != NULL ) {
+        if (Name != NULL)
+        {
             ExFreePoolWithTag(Name, CM_NAME_TAG | PROTECTED_POOL);
         }
         CmpUnlockRegistry();
@@ -1112,16 +1063,11 @@ Return Value:
     return status;
 }
 
-
+
 NTSTATUS
-CmQueryValueKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN UNICODE_STRING ValueName,
-    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-    IN PVOID KeyValueInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    )
+CmQueryValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN UNICODE_STRING ValueName,
+                IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass, IN PVOID KeyValueInformation, IN ULONG Length,
+                IN PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -1162,25 +1108,26 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    HCELL_INDEX         childcell;
-    PHCELL_INDEX        childindex;
-    HCELL_INDEX         Cell;
-    PCM_KEY_VALUE       ValueData;
-    ULONG               Index;
-    BOOLEAN             ValueCached;
-    PPCM_CACHED_VALUE   ContainingList;
-    HCELL_INDEX         ValueDataCellToRelease = HCELL_NIL;
+    NTSTATUS status;
+    HCELL_INDEX childcell;
+    PHCELL_INDEX childindex;
+    HCELL_INDEX Cell;
+    PCM_KEY_VALUE ValueData;
+    ULONG Index;
+    BOOLEAN ValueCached;
+    PPCM_CACHED_VALUE ContainingList;
+    HCELL_INDEX ValueDataCellToRelease = HCELL_NIL;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmQueryValueKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmQueryValueKey\n"));
 
 
     CmpLockRegistry();
 
     PERFINFO_REG_QUERY_VALUE(KeyControlBlock, &ValueName);
 
-    if (KeyControlBlock->Delete) {
+    if (KeyControlBlock->Delete)
+    {
 
         CmpUnlockRegistry();
         return STATUS_KEY_DELETED;
@@ -1193,7 +1140,8 @@ Return Value:
 
     CmpLockKCBTreeExclusive();
 
-    if (KeyControlBlock->ExtFlags & CM_KCB_SYM_LINK_FOUND) {
+    if (KeyControlBlock->ExtFlags & CM_KCB_SYM_LINK_FOUND)
+    {
         //
         // The value list is now set to the KCB for symbolic link,
         // Clean it up and set the value right before we do the query.
@@ -1202,21 +1150,21 @@ Return Value:
 
         {
             PCM_KEY_NODE Node = (PCM_KEY_NODE)HvGetCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
-            if( Node == NULL ) {
+            if (Node == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
-                
+
                 CmpUnlockKCBTree();
                 CmpUnlockRegistry();
                 // Mark the hive as read only
                 CmpMarkAllBinsReadOnly(KeyControlBlock->KeyHive);
 
                 return STATUS_INSUFFICIENT_RESOURCES;
-
             }
-            
-            CmpSetUpKcbValueCache(KeyControlBlock,Node->ValueList.Count,Node->ValueList.List);
+
+            CmpSetUpKcbValueCache(KeyControlBlock, Node->ValueList.Count, Node->ValueList.List);
 
             HvReleaseCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
         }
@@ -1226,52 +1174,45 @@ Return Value:
     // Find the data
     //
 
-    ValueData = CmpFindValueByNameFromCache(KeyControlBlock->KeyHive,
-                                            &(KeyControlBlock->ValueCache),
-                                            &ValueName,
-                                            &ContainingList,
-                                            &Index,
-                                            &ValueCached,
-                                            &ValueDataCellToRelease
-                                            );
+    ValueData = CmpFindValueByNameFromCache(KeyControlBlock->KeyHive, &(KeyControlBlock->ValueCache), &ValueName,
+                                            &ContainingList, &Index, &ValueCached, &ValueDataCellToRelease);
 
     END_KCB_LOCK_GUARD;
 
-    if (ValueData) {
+    if (ValueData)
+    {
 
         // Trying to catch the BAD guy who writes over our pool.
-        CmpMakeValueCacheReadWrite(ValueCached,CMP_GET_CACHED_ADDRESS(KeyControlBlock->ValueCache.ValueList));
+        CmpMakeValueCacheReadWrite(ValueCached, CMP_GET_CACHED_ADDRESS(KeyControlBlock->ValueCache.ValueList));
 
-        try {
+        try
+        {
 
             //
             // call a worker to perform data transfer; we are touching user-mode address; do it in a try/except
             //
 
-            status = CmpQueryKeyValueData(KeyControlBlock->KeyHive,
-                                          ContainingList,
-                                          ValueData,
-                                          ValueCached,
-                                          KeyValueInformationClass,
-                                          KeyValueInformation,
-                                          Length,
-                                          ResultLength);
-
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_EXCEPTION,"CmQueryValueKey: code:%08lx\n", GetExceptionCode()));
+            status = CmpQueryKeyValueData(KeyControlBlock->KeyHive, ContainingList, ValueData, ValueCached,
+                                          KeyValueInformationClass, KeyValueInformation, Length, ResultLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_EXCEPTION, "CmQueryValueKey: code:%08lx\n", GetExceptionCode()));
             status = GetExceptionCode();
         }
 
         // Trying to catch the BAD guy who writes over our pool.
-        CmpMakeValueCacheReadOnly(ValueCached,CMP_GET_CACHED_ADDRESS(KeyControlBlock->ValueCache.ValueList));
-    } else {
+        CmpMakeValueCacheReadOnly(ValueCached, CMP_GET_CACHED_ADDRESS(KeyControlBlock->ValueCache.ValueList));
+    }
+    else
+    {
         status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
 
-    if(ValueDataCellToRelease != HCELL_NIL) {
-        HvReleaseCell(KeyControlBlock->KeyHive,ValueDataCellToRelease);
+    if (ValueDataCellToRelease != HCELL_NIL)
+    {
+        HvReleaseCell(KeyControlBlock->KeyHive, ValueDataCellToRelease);
     }
     CmpUnlockKCBTree();
     CmpUnlockRegistry();
@@ -1282,16 +1223,10 @@ Return Value:
     return status;
 }
 
-
+
 NTSTATUS
-CmQueryMultipleValueKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN PKEY_VALUE_ENTRY ValueEntries,
-    IN ULONG EntryCount,
-    IN PVOID ValueBuffer,
-    IN OUT PULONG BufferLength,
-    IN OPTIONAL PULONG ResultLength
-    )
+CmQueryMultipleValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN PKEY_VALUE_ENTRY ValueEntries, IN ULONG EntryCount,
+                        IN PVOID ValueBuffer, IN OUT PULONG BufferLength, IN OPTIONAL PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -1322,28 +1257,29 @@ Return Value:
 --*/
 
 {
-    PHHIVE          Hive;
-    NTSTATUS        Status;
-    ULONG           i;
-    UNICODE_STRING  CurrentName;
-    HCELL_INDEX     ValueCell = HCELL_NIL;
-    PCM_KEY_VALUE   ValueNode;
-    ULONG           RequiredLength = 0;
-    ULONG           UsedLength = 0;
-    ULONG           DataLength;
-    BOOLEAN         BufferFull = FALSE;
-    BOOLEAN         Small;
-    PUCHAR          Data;
+    PHHIVE Hive;
+    NTSTATUS Status;
+    ULONG i;
+    UNICODE_STRING CurrentName;
+    HCELL_INDEX ValueCell = HCELL_NIL;
+    PCM_KEY_VALUE ValueNode;
+    ULONG RequiredLength = 0;
+    ULONG UsedLength = 0;
+    ULONG DataLength;
+    BOOLEAN BufferFull = FALSE;
+    BOOLEAN Small;
+    PUCHAR Data;
     KPROCESSOR_MODE PreviousMode;
-    PCM_KEY_NODE    Node;
+    PCM_KEY_NODE Node;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmQueryMultipleValueKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmQueryMultipleValueKey\n"));
 
 
     CmpLockRegistry();
 
-    if (KeyControlBlock->Delete) {
+    if (KeyControlBlock->Delete)
+    {
         CmpUnlockRegistry();
         return STATUS_KEY_DELETED;
     }
@@ -1351,7 +1287,8 @@ Return Value:
     Status = STATUS_SUCCESS;
 
     Node = (PCM_KEY_NODE)HvGetCell(Hive, KeyControlBlock->KeyCell);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -1363,31 +1300,36 @@ Return Value:
     CmpMarkAllBinsReadOnly(Hive);
 
     PreviousMode = KeGetPreviousMode();
-    try {
-        for (i=0; i < EntryCount; i++) {
+    try
+    {
+        for (i = 0; i < EntryCount; i++)
+        {
             //
             // find the data
             //
-            if (PreviousMode == UserMode) {
+            if (PreviousMode == UserMode)
+            {
                 CurrentName = ProbeAndReadUnicodeString(ValueEntries[i].ValueName);
-                ProbeForRead(CurrentName.Buffer,CurrentName.Length,sizeof(WCHAR));
-            } else {
+                ProbeForRead(CurrentName.Buffer, CurrentName.Length, sizeof(WCHAR));
+            }
+            else
+            {
                 CurrentName = *(ValueEntries[i].ValueName);
             }
 
-            PERFINFO_REG_QUERY_MULTIVALUE(KeyControlBlock, &CurrentName); 
+            PERFINFO_REG_QUERY_MULTIVALUE(KeyControlBlock, &CurrentName);
 
-            ValueCell = CmpFindValueByName(Hive,
-                                           Node,
-                                           &CurrentName);
-            if (ValueCell != HCELL_NIL) {
+            ValueCell = CmpFindValueByName(Hive, Node, &CurrentName);
+            if (ValueCell != HCELL_NIL)
+            {
 
                 ValueNode = (PCM_KEY_VALUE)HvGetCell(Hive, ValueCell);
-                if( ValueNode == NULL ) {
+                if (ValueNode == NULL)
+                {
                     //
                     // we couldn't map a view for the bin containing this cell
                     //
-                
+
                     Status = STATUS_INSUFFICIENT_RESOURCES;
                     break;
                 }
@@ -1396,8 +1338,8 @@ Return Value:
                 //
                 // Round up UsedLength and RequiredLength to a ULONG boundary
                 //
-                UsedLength = (UsedLength + sizeof(ULONG)-1) & ~(sizeof(ULONG)-1);
-                RequiredLength = (RequiredLength + sizeof(ULONG)-1) & ~(sizeof(ULONG)-1);
+                UsedLength = (UsedLength + sizeof(ULONG) - 1) & ~(sizeof(ULONG) - 1);
+                RequiredLength = (RequiredLength + sizeof(ULONG) - 1) & ~(sizeof(ULONG) - 1);
 
                 //
                 // If there is enough room for this data value in the buffer,
@@ -1405,71 +1347,80 @@ Return Value:
                 // keep iterating through the values in order to determine the
                 // RequiredLength.
                 //
-                if ((UsedLength + DataLength <= *BufferLength) &&
-                    (!BufferFull)) {
-                    PCELL_DATA  Buffer;
-                    BOOLEAN     BufferAllocated;
+                if ((UsedLength + DataLength <= *BufferLength) && (!BufferFull))
+                {
+                    PCELL_DATA Buffer;
+                    BOOLEAN BufferAllocated;
                     HCELL_INDEX CellToRelease;
                     //
                     // get the data from source, regardless of the size
                     //
-                    if( CmpGetValueData(Hive,ValueNode,&DataLength,&Buffer,&BufferAllocated,&CellToRelease) == FALSE ) {
+                    if (CmpGetValueData(Hive, ValueNode, &DataLength, &Buffer, &BufferAllocated, &CellToRelease) ==
+                        FALSE)
+                    {
                         //
                         // insufficient resources; return NULL
                         //
-                        ASSERT( BufferAllocated == FALSE );
-                        ASSERT( Buffer == NULL );
+                        ASSERT(BufferAllocated == FALSE);
+                        ASSERT(Buffer == NULL);
                         Status = STATUS_INSUFFICIENT_RESOURCES;
                         break;
                     }
 
-                    RtlCopyMemory((PUCHAR)ValueBuffer + UsedLength,
-                                  Buffer,
-                                  DataLength);
+                    RtlCopyMemory((PUCHAR)ValueBuffer + UsedLength, Buffer, DataLength);
                     //
                     // cleanup the temporary buffer
                     //
-                    if( BufferAllocated == TRUE ) {
-                        ExFreePool( Buffer );
+                    if (BufferAllocated == TRUE)
+                    {
+                        ExFreePool(Buffer);
                     }
                     //
                     // release the buffer in case we are using hive storage
                     //
-                    if( CellToRelease != HCELL_NIL ) {
-                        HvReleaseCell(Hive,CellToRelease);
+                    if (CellToRelease != HCELL_NIL)
+                    {
+                        HvReleaseCell(Hive, CellToRelease);
                     }
 
                     ValueEntries[i].Type = ValueNode->Type;
                     ValueEntries[i].DataLength = DataLength;
                     ValueEntries[i].DataOffset = UsedLength;
                     UsedLength += DataLength;
-                } else {
+                }
+                else
+                {
                     BufferFull = TRUE;
                     Status = STATUS_BUFFER_OVERFLOW;
                 }
                 RequiredLength += DataLength;
                 HvReleaseCell(Hive, ValueCell);
                 ValueCell = HCELL_NIL;
-            } else {
+            }
+            else
+            {
                 Status = STATUS_OBJECT_NAME_NOT_FOUND;
                 break;
             }
         }
 
-        if (NT_SUCCESS(Status) ||
-            (Status == STATUS_BUFFER_OVERFLOW)) {
+        if (NT_SUCCESS(Status) || (Status == STATUS_BUFFER_OVERFLOW))
+        {
             *BufferLength = UsedLength;
-            if (ARGUMENT_PRESENT(ResultLength)) {
+            if (ARGUMENT_PRESENT(ResultLength))
+            {
                 *ResultLength = RequiredLength;
             }
         }
-
-    } finally {
-        if( ValueCell != HCELL_NIL) {
+    }
+    finally
+    {
+        if (ValueCell != HCELL_NIL)
+        {
             HvReleaseCell(Hive, ValueCell);
         }
         HvReleaseCell(Hive, KeyControlBlock->KeyCell);
-        
+
         CmpUnlockRegistry();
     }
 
@@ -1480,13 +1431,8 @@ Return Value:
 }
 
 NTSTATUS
-CmSetValueKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN PUNICODE_STRING ValueName,
-    IN ULONG Type,
-    IN PVOID Data,
-    IN ULONG DataSize
-    )
+CmSetValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN PUNICODE_STRING ValueName, IN ULONG Type, IN PVOID Data,
+              IN ULONG DataSize)
 /*++
 
 Routine Description:
@@ -1522,25 +1468,25 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    PCM_KEY_NODE    parent = NULL;
-    HCELL_INDEX     oldchild;
-    ULONG           count;
-    PHHIVE          Hive;
-    HCELL_INDEX     Cell;
-    ULONG           StorageType;
-    ULONG           TempData;
-    BOOLEAN         found;
-    PCM_KEY_VALUE   Value = NULL;
-    LARGE_INTEGER   systemtime;
-    ULONG           mustChange=FALSE;
-    ULONG           ChildIndex;
-    HCELL_INDEX     ParentToRelease = HCELL_NIL;
-    HCELL_INDEX     ChildToRelease = HCELL_NIL;
+    NTSTATUS status;
+    PCM_KEY_NODE parent = NULL;
+    HCELL_INDEX oldchild;
+    ULONG count;
+    PHHIVE Hive;
+    HCELL_INDEX Cell;
+    ULONG StorageType;
+    ULONG TempData;
+    BOOLEAN found;
+    PCM_KEY_VALUE Value = NULL;
+    LARGE_INTEGER systemtime;
+    ULONG mustChange = FALSE;
+    ULONG ChildIndex;
+    HCELL_INDEX ParentToRelease = HCELL_NIL;
+    HCELL_INDEX ChildToRelease = HCELL_NIL;
 
     PERFINFO_REG_SET_VALUE_DECL();
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmSetValueKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmSetValueKey\n"));
 
     CmpLockRegistry();
 
@@ -1551,12 +1497,14 @@ Return Value:
     // Mark the hive as read only
     CmpMarkAllBinsReadOnly(KeyControlBlock->KeyHive);
 
-    while (TRUE) {
+    while (TRUE)
+    {
         //
         // Check that we are not being asked to add a value to a key
         // that has been deleted
         //
-        if (KeyControlBlock->Delete == TRUE) {
+        if (KeyControlBlock->Delete == TRUE)
+        {
             status = STATUS_KEY_DELETED;
             goto Exit;
         }
@@ -1569,28 +1517,28 @@ Return Value:
 
 #ifdef CMP_KCB_CACHE_VALIDATION
         {
-            PCM_KEY_NODE    Node;
+            PCM_KEY_NODE Node;
             Node = (PCM_KEY_NODE)HvGetCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
-            if( Node == NULL ) {
+            if (Node == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
-        
+
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto Exit;
             }
-            ASSERT( Node->Flags == KeyControlBlock->Flags );
+            ASSERT(Node->Flags == KeyControlBlock->Flags);
             HvReleaseCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
         }
 #endif
         if (KeyControlBlock->Flags & KEY_SYM_LINK &&
-            (( (Type != REG_LINK) 
+            (((Type != REG_LINK)
 #ifdef CM_DYN_SYM_LINK
-            && (Type != REG_DYN_LINK)
+              && (Type != REG_DYN_LINK)
 #endif //CM_DYN_SYM_LINK
-            ) ||
-             ValueName == NULL ||
-             !RtlEqualUnicodeString(&CmSymbolicLinkValueName, ValueName, TRUE)))
+                  ) ||
+             ValueName == NULL || !RtlEqualUnicodeString(&CmSymbolicLinkValueName, ValueName, TRUE)))
         {
             //
             // Disallow attempts to manipulate any value names under a symbolic link
@@ -1604,12 +1552,14 @@ Return Value:
             goto Exit;
         }
 
-        if( mustChange == FALSE ) {
+        if (mustChange == FALSE)
+        {
             //
             // first iteration; look inside the kcb cache
             //
-            
-            if( CmpCompareNewValueDataAgainstKCBCache(KeyControlBlock,ValueName,Type,Data,DataSize) == TRUE ) {
+
+            if (CmpCompareNewValueDataAgainstKCBCache(KeyControlBlock, ValueName, Type, Data, DataSize) == TRUE)
+            {
                 //
                 // the value is in the cache and is the same; make this call a noop
                 //
@@ -1619,28 +1569,32 @@ Return Value:
             //
             // To Get here, we must either be changing a value, or setting a new one
             //
-            mustChange=TRUE;
-        } else {
+            mustChange = TRUE;
+        }
+        else
+        {
             //
             // second iteration; look inside the hive
             //
 
-            
+
             //
             // get reference to parent key,
             //
             Hive = KeyControlBlock->KeyHive;
             Cell = KeyControlBlock->KeyCell;
-            if( ParentToRelease != HCELL_NIL ) {
-                HvReleaseCell(Hive,ParentToRelease);
+            if (ParentToRelease != HCELL_NIL)
+            {
+                HvReleaseCell(Hive, ParentToRelease);
                 ParentToRelease = HCELL_NIL;
             }
             parent = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
-            if( parent == NULL ) {
+            if (parent == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
-        
+
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto Exit;
             }
@@ -1651,27 +1605,28 @@ Return Value:
             count = parent->ValueList.Count;
             found = FALSE;
 
-            if (count > 0) {
-                if( CmpFindNameInList(Hive,
-                                     &parent->ValueList,
-                                     ValueName,
-                                     &ChildIndex,
-                                     &oldchild) == FALSE ) {
+            if (count > 0)
+            {
+                if (CmpFindNameInList(Hive, &parent->ValueList, ValueName, &ChildIndex, &oldchild) == FALSE)
+                {
                     //
                     // we couldn't map a view for the bin containing this cell
                     //
-        
+
                     status = STATUS_INSUFFICIENT_RESOURCES;
                     goto Exit;
                 }
 
-                if (oldchild != HCELL_NIL) {
-                    if( ChildToRelease != HCELL_NIL ) {
-                        HvReleaseCell(Hive,ChildToRelease);
+                if (oldchild != HCELL_NIL)
+                {
+                    if (ChildToRelease != HCELL_NIL)
+                    {
+                        HvReleaseCell(Hive, ChildToRelease);
                         ChildToRelease = HCELL_NIL;
                     }
-                    Value = (PCM_KEY_VALUE)HvGetCell(Hive,oldchild);
-                    if( Value == NULL ) {
+                    Value = (PCM_KEY_VALUE)HvGetCell(Hive, oldchild);
+                    if (Value == NULL)
+                    {
                         //
                         // could no map view
                         //
@@ -1681,7 +1636,9 @@ Return Value:
                     ChildToRelease = oldchild;
                     found = TRUE;
                 }
-            } else {
+            }
+            else
+            {
                 //
                 // empty list; add it first
                 //
@@ -1708,17 +1665,18 @@ Return Value:
         CmpLockRegistryExclusive();
 
 #ifdef CHECK_REGISTRY_USECOUNT
-    CmpCheckRegistryUseCount();
+        CmpCheckRegistryUseCount();
 #endif //CHECK_REGISTRY_USECOUNT
 
-    }// while
+    } // while
 
-    ASSERT( mustChange == TRUE );
+    ASSERT(mustChange == TRUE);
 
     // It's a different or new value, mark it dirty, since we'll
     // at least set its time stamp
 
-    if (! HvMarkCellDirty(Hive, Cell)) {
+    if (!HvMarkCellDirty(Hive, Cell))
+    {
         status = STATUS_NO_LOG_SPACE;
         goto Exit;
     }
@@ -1729,23 +1687,24 @@ Return Value:
     // stash small data if relevent
     //
     TempData = 0;
-    if ((DataSize <= CM_KEY_VALUE_SMALL) &&
-        (DataSize > 0))
+    if ((DataSize <= CM_KEY_VALUE_SMALL) && (DataSize > 0))
     {
-        try {
-            RtlMoveMemory(          // yes, move memory, could be 1 byte
-                &TempData,          // at the end of a page.
-                Data,
-                DataSize
-                );
-         } except (EXCEPTION_EXECUTE_HANDLER) {
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_EXCEPTION,"!!CmSetValueKey: code:%08lx\n", GetExceptionCode()));
+        try
+        {
+            RtlMoveMemory( // yes, move memory, could be 1 byte
+                &TempData, // at the end of a page.
+                Data, DataSize);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_EXCEPTION, "!!CmSetValueKey: code:%08lx\n", GetExceptionCode()));
             status = GetExceptionCode();
             goto Exit;
         }
     }
 
-    if (found) {
+    if (found)
+    {
 
         //
         // ----- Existing Value Entry Path -----
@@ -1755,17 +1714,12 @@ Return Value:
         // An existing value entry of the specified name exists,
         // set our data into it.
         //
-        status = CmpSetValueKeyExisting(Hive,
-                                        oldchild,
-                                        Value,
-                                        Type,
-                                        Data,
-                                        DataSize,
-                                        StorageType,
-                                        TempData);
+        status = CmpSetValueKeyExisting(Hive, oldchild, Value, Type, Data, DataSize, StorageType, TempData);
 
         PERFINFO_REG_SET_VALUE_EXIST();
-    } else {
+    }
+    else
+    {
 
         //
         // ----- New Value Entry Path -----
@@ -1776,31 +1730,26 @@ Return Value:
         // specified is not in the list.  In either case, create and
         // fill a new one, and add it to the list
         //
-        status = CmpSetValueKeyNew(Hive,
-                                   parent,
-                                   ValueName,
-                                   ChildIndex,
-                                   Type,
-                                   Data,
-                                   DataSize,
-                                   StorageType,
-                                   TempData);
+        status = CmpSetValueKeyNew(Hive, parent, ValueName, ChildIndex, Type, Data, DataSize, StorageType, TempData);
         PERFINFO_REG_SET_VALUE_NEW();
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         // sanity assert
-        ASSERT( parent->MaxValueNameLen == KeyControlBlock->KcbMaxValueNameLen );
-        if (parent->MaxValueNameLen < ValueName->Length) {
+        ASSERT(parent->MaxValueNameLen == KeyControlBlock->KcbMaxValueNameLen);
+        if (parent->MaxValueNameLen < ValueName->Length)
+        {
             parent->MaxValueNameLen = ValueName->Length;
             // update the kcb cache too
             KeyControlBlock->KcbMaxValueNameLen = ValueName->Length;
         }
 
         //sanity assert
-        ASSERT( parent->MaxValueDataLen == KeyControlBlock->KcbMaxValueDataLen );
-        if (parent->MaxValueDataLen < DataSize) {
+        ASSERT(parent->MaxValueDataLen == KeyControlBlock->KcbMaxValueDataLen);
+        if (parent->MaxValueDataLen < DataSize)
+        {
             parent->MaxValueDataLen = DataSize;
             // update the kcb cache too
             KeyControlBlock->KcbMaxValueDataLen = parent->MaxValueDataLen;
@@ -1810,66 +1759,61 @@ Return Value:
         parent->LastWriteTime = systemtime;
         // update the kcb cache too.
         KeyControlBlock->KcbLastWriteTime = systemtime;
-    
+
         //
         // Update the cache, no need for KCB lock as the registry is locked exclusively.
         //
         ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
-        if( found && (CMP_IS_CELL_CACHED(KeyControlBlock->ValueCache.ValueList)) ) {
+        if (found && (CMP_IS_CELL_CACHED(KeyControlBlock->ValueCache.ValueList)))
+        {
             //
             // invalidate only the entry we changed.
             //
-            PULONG_PTR CachedList = (PULONG_PTR) CMP_GET_CACHED_CELLDATA(KeyControlBlock->ValueCache.ValueList);
-            if (CMP_IS_CELL_CACHED(CachedList[ChildIndex])) {
+            PULONG_PTR CachedList = (PULONG_PTR)CMP_GET_CACHED_CELLDATA(KeyControlBlock->ValueCache.ValueList);
+            if (CMP_IS_CELL_CACHED(CachedList[ChildIndex]))
+            {
 
-                ExFreePool((PVOID) CMP_GET_CACHED_ADDRESS(CachedList[ChildIndex]));
+                ExFreePool((PVOID)CMP_GET_CACHED_ADDRESS(CachedList[ChildIndex]));
             }
             CachedList[ChildIndex] = oldchild;
-
-        } else {
+        }
+        else
+        {
             //
             // rebuild ALL KCB cache
-            // 
+            //
             CmpCleanUpKcbValueCache(KeyControlBlock);
-            CmpSetUpKcbValueCache(KeyControlBlock,parent->ValueList.Count,parent->ValueList.List);
+            CmpSetUpKcbValueCache(KeyControlBlock, parent->ValueList.Count, parent->ValueList.List);
         }
-        CmpReportNotify(KeyControlBlock,
-                        KeyControlBlock->KeyHive,
-                        KeyControlBlock->KeyCell,
+        CmpReportNotify(KeyControlBlock, KeyControlBlock->KeyHive, KeyControlBlock->KeyCell,
                         REG_NOTIFY_CHANGE_LAST_SET);
     }
 
 Exit:
     PERFINFO_REG_SET_VALUE_DONE(ValueName);
 
-    if( ParentToRelease != HCELL_NIL ) {
-        HvReleaseCell(Hive,ParentToRelease);
+    if (ParentToRelease != HCELL_NIL)
+    {
+        HvReleaseCell(Hive, ParentToRelease);
     }
-    if( ChildToRelease != HCELL_NIL ) {
-        HvReleaseCell(Hive,ChildToRelease);
+    if (ChildToRelease != HCELL_NIL)
+    {
+        HvReleaseCell(Hive, ChildToRelease);
     }
 
     CmpUnlockRegistry();
-  
+
     // Mark the hive as read only
     CmpMarkAllBinsReadOnly(KeyControlBlock->KeyHive);
 
     return status;
 }
 
-
+
 NTSTATUS
-CmpSetValueKeyExisting(
-    IN PHHIVE  Hive,
-    IN HCELL_INDEX OldChild,
-    IN PCM_KEY_VALUE Value,
-    IN ULONG Type,
-    IN PVOID Data,
-    IN ULONG DataSize,
-    IN ULONG StorageType,
-    IN ULONG TempData
-    )
+CmpSetValueKeyExisting(IN PHHIVE Hive, IN HCELL_INDEX OldChild, IN PCM_KEY_VALUE Value, IN ULONG Type, IN PVOID Data,
+                       IN ULONG DataSize, IN ULONG StorageType, IN ULONG TempData)
 /*++
 
 Routine Description:
@@ -1919,16 +1863,16 @@ Note:
 
 --*/
 {
-    HCELL_INDEX     DataCell;
-    HCELL_INDEX     OldDataCell;
-    PCELL_DATA      pdata;
-    HCELL_INDEX     NewCell;
-    ULONG           OldRealSize;
-    USHORT          OldSizeType;    // 0 - small
-    USHORT          NewSizeType;    // 1 - normal
-                                    // 2 - bigdata
-    HANDLE          hSecure = 0;
-    NTSTATUS        status = STATUS_SUCCESS;
+    HCELL_INDEX DataCell;
+    HCELL_INDEX OldDataCell;
+    PCELL_DATA pdata;
+    HCELL_INDEX NewCell;
+    ULONG OldRealSize;
+    USHORT OldSizeType; // 0 - small
+    USHORT NewSizeType; // 1 - normal
+                        // 2 - bigdata
+    HANDLE hSecure = 0;
+    NTSTATUS status = STATUS_SUCCESS;
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
@@ -1938,38 +1882,49 @@ Note:
     // oldchild is hcell_index of its value entry body
     //  which we will always edit, so mark it dirty
     //
-    if (! HvMarkCellDirty(Hive, OldChild)) {
+    if (!HvMarkCellDirty(Hive, OldChild))
+    {
         return STATUS_NO_LOG_SPACE;
     }
 
-    if(CmpIsHKeyValueSmall(OldRealSize, Value->DataLength) == TRUE ) {
+    if (CmpIsHKeyValueSmall(OldRealSize, Value->DataLength) == TRUE)
+    {
         //
         // old data was small
         //
         OldSizeType = 0;
-    } else if( CmpIsHKeyValueBig(Hive,OldRealSize) == TRUE ) {
+    }
+    else if (CmpIsHKeyValueBig(Hive, OldRealSize) == TRUE)
+    {
         //
         // old data was big
         //
         OldSizeType = 2;
-    } else {
+    }
+    else
+    {
         //
         // old data was normal
         //
         OldSizeType = 1;
     }
 
-    if( DataSize <= CM_KEY_VALUE_SMALL ) {
+    if (DataSize <= CM_KEY_VALUE_SMALL)
+    {
         //
         // new data is small
         //
         NewSizeType = 0;
-    } else if( CmpIsHKeyValueBig(Hive,DataSize) == TRUE ) {
+    }
+    else if (CmpIsHKeyValueBig(Hive, DataSize) == TRUE)
+    {
         //
         // new data is big
         //
         NewSizeType = 2;
-    } else {
+    }
+    else
+    {
         //
         // new data is normal
         //
@@ -1978,22 +1933,23 @@ Note:
 
 
     //
-    // this will handle all cases and will make sure data is marked dirty 
+    // this will handle all cases and will make sure data is marked dirty
     //
-    if( !CmpMarkValueDataDirty(Hive,Value) ) {
+    if (!CmpMarkValueDataDirty(Hive, Value))
+    {
         return STATUS_NO_LOG_SPACE;
     }
 
     //
     // cases 1,2,3
     //
-    if( NewSizeType == 0 ) {
-        if( ((OldSizeType == 1) && (OldRealSize > 0) ) ||
-            (OldSizeType == 2) 
-            ) {
-            CmpFreeValueData(Hive,Value->Data,OldRealSize);
+    if (NewSizeType == 0)
+    {
+        if (((OldSizeType == 1) && (OldRealSize > 0)) || (OldSizeType == 2))
+        {
+            CmpFreeValueData(Hive, Value->Data, OldRealSize);
         }
-        
+
         //
         // write our new small data into value entry body
         //
@@ -2003,19 +1959,21 @@ Note:
 
         return STATUS_SUCCESS;
     }
-    
+
     //
     // secure the user buffer so we don't get inconsistencies.
     // ONLY if we are called with a user mode buffer !!!
     //
 
-    if ( (ULONG_PTR)Data <= (ULONG_PTR)MM_HIGHEST_USER_ADDRESS ) {
-        hSecure = MmSecureVirtualMemory(Data,DataSize, PAGE_READONLY);
-        if (hSecure == 0) {
+    if ((ULONG_PTR)Data <= (ULONG_PTR)MM_HIGHEST_USER_ADDRESS)
+    {
+        hSecure = MmSecureVirtualMemory(Data, DataSize, PAGE_READONLY);
+        if (hSecure == 0)
+        {
             return STATUS_INVALID_PARAMETER;
         }
     }
-    
+
     //
     // store it to be freed if the allocation succeeds
     //
@@ -2024,16 +1982,19 @@ Note:
     //
     // cases 4,5,6
     //
-    if( NewSizeType == 1 ){
+    if (NewSizeType == 1)
+    {
 
-        if( (OldSizeType == 1) && (OldRealSize > 0)) { 
+        if ((OldSizeType == 1) && (OldRealSize > 0))
+        {
             //
             // we already have a cell; see if we can reuse it !
             //
             DataCell = Value->Data;
             ASSERT(DataCell != HCELL_NIL);
             pdata = HvGetCell(Hive, DataCell);
-            if( pdata == NULL ) {
+            if (pdata == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
@@ -2045,51 +2006,58 @@ Note:
 
             ASSERT(HvGetCellSize(Hive, pdata) > 0);
 
-            if (DataSize <= (ULONG)(HvGetCellSize(Hive, pdata))) {
+            if (DataSize <= (ULONG)(HvGetCellSize(Hive, pdata)))
+            {
 
                 //
-                // The existing data cell is big enough to hold the new data.  
+                // The existing data cell is big enough to hold the new data.
                 //
 
                 //
                 // we'll keep this cell
                 //
                 NewCell = DataCell;
-
-            } else {
+            }
+            else
+            {
                 //
                 // grow the existing cell
                 //
-                NewCell = HvReallocateCell(Hive,DataCell,DataSize);
-                if (NewCell == HCELL_NIL) {
+                NewCell = HvReallocateCell(Hive, DataCell, DataSize);
+                if (NewCell == HCELL_NIL)
+                {
                     status = STATUS_INSUFFICIENT_RESOURCES;
                     goto Exit;
                 }
             }
-
-        } else {
+        }
+        else
+        {
             //
-            // allocate a new cell 
+            // allocate a new cell
             //
-            NewCell = HvAllocateCell(Hive, DataSize, StorageType,(HvGetCellType(OldChild)==StorageType)?OldChild:HCELL_NIL);
+            NewCell = HvAllocateCell(Hive, DataSize, StorageType,
+                                     (HvGetCellType(OldChild) == StorageType) ? OldChild : HCELL_NIL);
 
-            if (NewCell == HCELL_NIL) {
+            if (NewCell == HCELL_NIL)
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto Exit;
             }
         }
-        
+
         //
         // now we have a cell that can accomodate the data
         //
         pdata = HvGetCell(Hive, NewCell);
-        if( pdata == NULL ) {
+        if (pdata == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
             // this shouldn't happen as we just allocated/ reallocated/ marked dirty this cell
             //
-            ASSERT( FALSE );
+            ASSERT(FALSE);
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto Exit;
         }
@@ -2099,57 +2067,64 @@ Note:
         //
         // copy the actual data
         //
-        RtlCopyMemory(pdata,Data,DataSize);
+        RtlCopyMemory(pdata, Data, DataSize);
         Value->Data = NewCell;
         Value->DataLength = DataSize;
         Value->Type = Type;
-        
-        // sanity
-        ASSERT_CELL_DIRTY(Hive,NewCell);
 
-        if( OldSizeType == 2 ) {
+        // sanity
+        ASSERT_CELL_DIRTY(Hive, NewCell);
+
+        if (OldSizeType == 2)
+        {
             //
             // old data was big; free it
             //
-            ASSERT( OldDataCell != NewCell );
-            CmpFreeValueData(Hive,OldDataCell,OldRealSize);
+            ASSERT(OldDataCell != NewCell);
+            CmpFreeValueData(Hive, OldDataCell, OldRealSize);
         }
 
         status = STATUS_SUCCESS;
         goto Exit;
     }
-    
+
     //
     // cases 7,8,9
     //
-    if( NewSizeType == 2 ) {
+    if (NewSizeType == 2)
+    {
 
-        if( OldSizeType == 2 ) { 
+        if (OldSizeType == 2)
+        {
             //
             // data was previously big; grow it!
             //
-            
-            status =CmpSetValueDataExisting(Hive,Data,DataSize,StorageType,OldDataCell);
-            if( !NT_SUCCESS(status) ) {
+
+            status = CmpSetValueDataExisting(Hive, Data, DataSize, StorageType, OldDataCell);
+            if (!NT_SUCCESS(status))
+            {
                 goto Exit;
             }
             NewCell = OldDataCell;
-            
-        } else {
+        }
+        else
+        {
             //
-            // data was small or normal. 
-            // allocate and copy to a new big data cell; 
+            // data was small or normal.
+            // allocate and copy to a new big data cell;
             // then free the old cell
             //
-            status = CmpSetValueDataNew(Hive,Data,DataSize,StorageType,OldChild,&NewCell);
-            if( !NT_SUCCESS(status) ) {
+            status = CmpSetValueDataNew(Hive, Data, DataSize, StorageType, OldChild, &NewCell);
+            if (!NT_SUCCESS(status))
+            {
                 //
                 // We have bombed out loading user data, clean up and exit.
                 //
                 goto Exit;
             }
-            
-            if( (OldSizeType != 0) && (OldRealSize != 0) ) {
+
+            if ((OldSizeType != 0) && (OldRealSize != 0))
+            {
                 //
                 // there is something to free
                 //
@@ -2162,37 +2137,28 @@ Note:
         Value->Type = Type;
 
         // sanity
-        ASSERT_CELL_DIRTY(Hive,NewCell);
+        ASSERT_CELL_DIRTY(Hive, NewCell);
 
         status = STATUS_SUCCESS;
         goto Exit;
-
     }
 
     //
     // we shouldn't go here
     //
-    ASSERT( FALSE );
+    ASSERT(FALSE);
 
 Exit:
-    if( hSecure) {
+    if (hSecure)
+    {
         MmUnsecureVirtualMemory(hSecure);
     }
     return status;
 }
 
 NTSTATUS
-CmpSetValueKeyNew(
-    IN PHHIVE  Hive,
-    IN PCM_KEY_NODE Parent,
-    IN PUNICODE_STRING ValueName,
-    IN ULONG Index,
-    IN ULONG Type,
-    IN PVOID Data,
-    IN ULONG DataSize,
-    IN ULONG StorageType,
-    IN ULONG TempData
-    )
+CmpSetValueKeyNew(IN PHHIVE Hive, IN PCM_KEY_NODE Parent, IN PUNICODE_STRING ValueName, IN ULONG Index, IN ULONG Type,
+                  IN PVOID Data, IN ULONG DataSize, IN ULONG StorageType, IN ULONG TempData)
 /*++
 
 Routine Description:
@@ -2229,9 +2195,9 @@ Return Value:
 
 --*/
 {
-    PCELL_DATA  pvalue;
+    PCELL_DATA pvalue;
     HCELL_INDEX ValueCell;
-    NTSTATUS    Status;
+    NTSTATUS Status;
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
@@ -2240,9 +2206,11 @@ Return Value:
     // the list.  Create a new value entry body, and data.  Add to list.
     // (May create the list.)
     //
-    if (Parent->ValueList.Count != 0) {
+    if (Parent->ValueList.Count != 0)
+    {
         ASSERT(Parent->ValueList.List != HCELL_NIL);
-        if (! HvMarkCellDirty(Hive, Parent->ValueList.List)) {
+        if (!HvMarkCellDirty(Hive, Parent->ValueList.List))
+        {
             return STATUS_NO_LOG_SPACE;
         }
     }
@@ -2250,14 +2218,10 @@ Return Value:
     //
     // allocate the body of the value entry, and the data
     //
-    ValueCell = HvAllocateCell(
-                    Hive,
-                    CmpHKeyValueSize(Hive, ValueName),
-                    StorageType,
-                    HCELL_NIL
-                    );
+    ValueCell = HvAllocateCell(Hive, CmpHKeyValueSize(Hive, ValueName), StorageType, HCELL_NIL);
 
-    if (ValueCell == HCELL_NIL) {
+    if (ValueCell == HCELL_NIL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2265,7 +2229,8 @@ Return Value:
     // map in the body, and fill in its fixed portion
     //
     pvalue = HvGetCell(Hive, ValueCell);
-    if( pvalue == NULL ) {
+    if (pvalue == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2274,7 +2239,7 @@ Return Value:
         // normally this shouldn't happen as we just allocated ValueCell
         // i.e. the bin containing ValueCell should be mapped in memory at this point.
         //
-        ASSERT( FALSE );
+        ASSERT(FALSE);
         HvFreeCell(Hive, ValueCell);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -2282,7 +2247,7 @@ Return Value:
     HvReleaseCell(Hive, ValueCell);
 
     // sanity
-    ASSERT_CELL_DIRTY(Hive,ValueCell);
+    ASSERT_CELL_DIRTY(Hive, ValueCell);
 
     pvalue->u.KeyValue.Signature = CM_KEY_VALUE_SIGNATURE;
 
@@ -2290,16 +2255,17 @@ Return Value:
     // fill in the variable portions of the new value entry,  name and
     // and data are copied from caller space, could fault.
     //
-    try {
+    try
+    {
 
         //
         // fill in the name
         //
-        pvalue->u.KeyValue.NameLength = CmpCopyName(Hive,
-                                                    pvalue->u.KeyValue.Name,
-                                                    ValueName);
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_EXCEPTION,"!!CmSetValueKey: code:%08lx\n", GetExceptionCode()));
+        pvalue->u.KeyValue.NameLength = CmpCopyName(Hive, pvalue->u.KeyValue.Name, ValueName);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_EXCEPTION, "!!CmSetValueKey: code:%08lx\n", GetExceptionCode()));
 
         //
         // We have bombed out loading user data, clean up and exit.
@@ -2308,18 +2274,23 @@ Return Value:
         return GetExceptionCode();
     }
 
-    if (pvalue->u.KeyValue.NameLength < ValueName->Length) {
+    if (pvalue->u.KeyValue.NameLength < ValueName->Length)
+    {
         pvalue->u.KeyValue.Flags = VALUE_COMP_NAME;
-    } else {
+    }
+    else
+    {
         pvalue->u.KeyValue.Flags = 0;
     }
 
     //
     // fill in the data
     //
-    if (DataSize > CM_KEY_VALUE_SMALL) {
-        Status = CmpSetValueDataNew(Hive,Data,DataSize,StorageType,ValueCell,&(pvalue->u.KeyValue.Data));
-        if( !NT_SUCCESS(Status) ) {
+    if (DataSize > CM_KEY_VALUE_SMALL)
+    {
+        Status = CmpSetValueDataNew(Hive, Data, DataSize, StorageType, ValueCell, &(pvalue->u.KeyValue.Data));
+        if (!NT_SUCCESS(Status))
+        {
             //
             // We have bombed out loading user data, clean up and exit.
             //
@@ -2329,18 +2300,20 @@ Return Value:
 
         pvalue->u.KeyValue.DataLength = DataSize;
         // sanity
-        ASSERT_CELL_DIRTY(Hive,pvalue->u.KeyValue.Data);
-
-    } else {
+        ASSERT_CELL_DIRTY(Hive, pvalue->u.KeyValue.Data);
+    }
+    else
+    {
         pvalue->u.KeyValue.DataLength = DataSize + CM_KEY_VALUE_SPECIAL_SIZE;
         pvalue->u.KeyValue.Data = TempData;
     }
     pvalue->u.KeyValue.Type = Type;
 
-    if( !NT_SUCCESS(CmpAddValueToList(Hive,ValueCell,Index,StorageType,&(Parent->ValueList)) ) ) {
+    if (!NT_SUCCESS(CmpAddValueToList(Hive, ValueCell, Index, StorageType, &(Parent->ValueList))))
+    {
         // out of space, free all allocated stuff
         // this will free embeded cigdata cell info too (if any)
-        CmpFreeValue(Hive,ValueCell);
+        CmpFreeValue(Hive, ValueCell);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2348,10 +2321,7 @@ Return Value:
 }
 
 NTSTATUS
-CmSetLastWriteTimeKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN PLARGE_INTEGER LastWriteTime
-    )
+CmSetLastWriteTimeKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN PLARGE_INTEGER LastWriteTime)
 /*++
 
 Routine Description:
@@ -2374,11 +2344,11 @@ Return Value:
 --*/
 {
     PCM_KEY_NODE parent;
-    PHHIVE      Hive;
+    PHHIVE Hive;
     HCELL_INDEX Cell;
-    NTSTATUS    status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmSetLastWriteTimeKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmSetLastWriteTimeKey\n"));
 
     CmpLockRegistryExclusive();
 
@@ -2386,7 +2356,8 @@ Return Value:
     // Check that we are not being asked to modify a key
     // that has been deleted
     //
-    if (KeyControlBlock->Delete == TRUE) {
+    if (KeyControlBlock->Delete == TRUE)
+    {
         status = STATUS_KEY_DELETED;
         goto Exit;
     }
@@ -2394,7 +2365,8 @@ Return Value:
     Hive = KeyControlBlock->KeyHive;
     Cell = KeyControlBlock->KeyCell;
     parent = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
-    if( parent == NULL ) {
+    if (parent == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2406,7 +2378,8 @@ Return Value:
     // release the cell right here, as the registry is locked exclusively, so we don't care
     HvReleaseCell(Hive, Cell);
 
-    if (! HvMarkCellDirty(Hive, Cell)) {
+    if (!HvMarkCellDirty(Hive, Cell))
+    {
         status = STATUS_NO_LOG_SPACE;
         goto Exit;
     }
@@ -2422,10 +2395,7 @@ Exit:
 }
 
 NTSTATUS
-CmSetKeyUserFlags(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN ULONG                    UserFlags
-    )
+CmSetKeyUserFlags(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN ULONG UserFlags)
 /*++
 
 Routine Description:
@@ -2448,13 +2418,13 @@ Return Value:
 
 --*/
 {
-    PCM_KEY_NODE    Node;
-    PHHIVE          Hive;
-    HCELL_INDEX     Cell;
-    LARGE_INTEGER   LastWriteTime;
-    NTSTATUS        status = STATUS_SUCCESS;
+    PCM_KEY_NODE Node;
+    PHHIVE Hive;
+    HCELL_INDEX Cell;
+    LARGE_INTEGER LastWriteTime;
+    NTSTATUS status = STATUS_SUCCESS;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmSetKeyUserFlags\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmSetKeyUserFlags\n"));
 
     CmpLockRegistryExclusive();
 
@@ -2462,25 +2432,27 @@ Return Value:
     // Check that we are not being asked to modify a key
     // that has been deleted
     //
-    if (KeyControlBlock->Delete == TRUE) {
+    if (KeyControlBlock->Delete == TRUE)
+    {
         status = STATUS_KEY_DELETED;
         goto Exit;
     }
 
-    if( UserFlags & (~((ULONG)KEY_USER_FLAGS_VALID_MASK)) ) {
+    if (UserFlags & (~((ULONG)KEY_USER_FLAGS_VALID_MASK)))
+    {
         //
         // number of user defined flags exceeded; punt
         //
         status = STATUS_INVALID_PARAMETER;
         goto Exit;
-
     }
 
     Hive = KeyControlBlock->KeyHive;
     Cell = KeyControlBlock->KeyCell;
 
     Node = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
@@ -2492,18 +2464,19 @@ Return Value:
     // release the cell right here, as the registry is locked exclusively, so we don't care
     HvReleaseCell(Hive, Cell);
 
-    if (! HvMarkCellDirty(Hive, Cell)) {
+    if (!HvMarkCellDirty(Hive, Cell))
+    {
         status = STATUS_NO_LOG_SPACE;
         goto Exit;
     }
-    
+
     //
     // shift/(pack) the user defined flags and
     // update knode and kcb cache
     //
     // first, erase the old flags
     Node->Flags &= KEY_USER_FLAGS_CLEAR_MASK;
-    Node->Flags |= (USHORT)(UserFlags<<KEY_USER_FLAGS_SHIFT);
+    Node->Flags |= (USHORT)(UserFlags << KEY_USER_FLAGS_SHIFT);
     // update the kcb cache
     KeyControlBlock->Flags = Node->Flags;
 
@@ -2521,9 +2494,7 @@ Exit:
 }
 
 BOOLEAN
-CmpIsHiveAlreadyLoaded( IN HANDLE KeyHandle,
-                        IN POBJECT_ATTRIBUTES SourceFile
-                        )
+CmpIsHiveAlreadyLoaded(IN HANDLE KeyHandle, IN POBJECT_ATTRIBUTES SourceFile)
 /*++
 
 Routine Description:
@@ -2543,39 +2514,35 @@ Return Value:
     TRUE/FALSE
 --*/
 {
-    NTSTATUS                    status;
-    PCM_KEY_BODY                KeyBody;
-    BOOLEAN                     Result = FALSE; // pesimistic
-    PCMHIVE                     CmHive;
+    NTSTATUS status;
+    PCM_KEY_BODY KeyBody;
+    BOOLEAN Result = FALSE; // pesimistic
+    PCMHIVE CmHive;
 
     PAGED_CODE();
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
-    status = ObReferenceObjectByHandle(KeyHandle,
-                                       0,
-                                       CmpKeyObjectType,
-                                       KernelMode,
-                                       (PVOID *)(&KeyBody),
-                                       NULL);
-    if(!NT_SUCCESS(status)) {
+    status = ObReferenceObjectByHandle(KeyHandle, 0, CmpKeyObjectType, KernelMode, (PVOID *)(&KeyBody), NULL);
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
-    
+
     CmHive = (PCMHIVE)CONTAINING_RECORD(KeyBody->KeyControlBlock->KeyHive, CMHIVE, Hive);
 
     //
     // should be the root of a hive
-    // 
-    if( !(KeyBody->KeyControlBlock->Flags & KEY_HIVE_ENTRY) || // not root of a hive
-        (CmHive->FileUserName.Buffer == NULL)// no name captured
-        ) {
+    //
+    if (!(KeyBody->KeyControlBlock->Flags & KEY_HIVE_ENTRY) || // not root of a hive
+        (CmHive->FileUserName.Buffer == NULL)                  // no name captured
+    )
+    {
         goto ExitCleanup;
     }
-    
-    if( RtlCompareUnicodeString(&(CmHive->FileUserName),
-                                SourceFile->ObjectName,
-                                TRUE) == 0 ) {
+
+    if (RtlCompareUnicodeString(&(CmHive->FileUserName), SourceFile->ObjectName, TRUE) == 0)
+    {
         //
         // same file; same spot
         //
@@ -2585,21 +2552,22 @@ Return Value:
         // it is safe to do this because we hold an extra refcount on the root of the hive
         // as we have specifically opened the root to check if it's already loaded
         //
-        if( IsHiveFrozen(CmHive) ) {
+        if (IsHiveFrozen(CmHive))
+        {
             CmHive->Frozen = FALSE;
-            if( CmHive->UnloadWorkItem != NULL ) {
-                ExFreePool( CmHive->UnloadWorkItem );
+            if (CmHive->UnloadWorkItem != NULL)
+            {
+                ExFreePool(CmHive->UnloadWorkItem);
                 CmHive->UnloadWorkItem = NULL;
             }
-            if( CmHive->RootKcb ) {
+            if (CmHive->RootKcb)
+            {
                 CmpDereferenceKeyControlBlockWithLock(CmHive->RootKcb);
                 CmHive->RootKcb = NULL;
             }
-
         }
-
     }
-    
+
 ExitCleanup:
     ObDereferenceObject((PVOID)KeyBody);
     return Result;
@@ -2607,11 +2575,7 @@ ExitCleanup:
 
 
 NTSTATUS
-CmLoadKey(
-    IN POBJECT_ATTRIBUTES TargetKey,
-    IN POBJECT_ATTRIBUTES SourceFile,
-    IN ULONG Flags
-    )
+CmLoadKey(IN POBJECT_ATTRIBUTES TargetKey, IN POBJECT_ATTRIBUTES SourceFile, IN ULONG Flags)
 
 /*++
 
@@ -2657,14 +2621,13 @@ Return Value:
 
 --*/
 {
-    PCMHIVE                     NewHive;
-    NTSTATUS                    Status;
-    BOOLEAN                     Allocate;
-    BOOLEAN                     RegistryLockAquired;
+    PCMHIVE NewHive;
+    NTSTATUS Status;
+    BOOLEAN Allocate;
+    BOOLEAN RegistryLockAquired;
     SECURITY_QUALITY_OF_SERVICE ServiceQos;
-    SECURITY_CLIENT_CONTEXT     ClientSecurityContext;
-    HANDLE                      KeyHandle;
-
+    SECURITY_CLIENT_CONTEXT ClientSecurityContext;
+    HANDLE KeyHandle;
 
 
     //
@@ -2677,31 +2640,25 @@ Return Value:
     ServiceQos.ImpersonationLevel = SecurityImpersonation;
     ServiceQos.ContextTrackingMode = SECURITY_DYNAMIC_TRACKING;
     ServiceQos.EffectiveOnly = TRUE;
-    Status = SeCreateClientSecurity(CONTAINING_RECORD(KeGetCurrentThread(),ETHREAD,Tcb),
-                                    &ServiceQos,
-                                    FALSE,
+    Status = SeCreateClientSecurity(CONTAINING_RECORD(KeGetCurrentThread(), ETHREAD, Tcb), &ServiceQos, FALSE,
                                     &ClientSecurityContext);
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
     // we open the root of the hive here. if it already exists,this will prevent it from going
     // away from under us while we are doing the "already loaded" check (due to delay unload logic)
     //
-    Status = ObOpenObjectByName(TargetKey,
-                                CmpKeyObjectType,
-                                KernelMode,
-                                NULL,
-                                KEY_READ,
-                                NULL,
-                                &KeyHandle);
-    if(!NT_SUCCESS(Status)) {
+    Status = ObOpenObjectByName(TargetKey, CmpKeyObjectType, KernelMode, NULL, KEY_READ, NULL, &KeyHandle);
+    if (!NT_SUCCESS(Status))
+    {
         KeyHandle = NULL;
     }
 
     //
-    // Do not lock the registry; Instead set the RegistryLockAquired member 
+    // Do not lock the registry; Instead set the RegistryLockAquired member
     // of REGISTRY_COMMAND so CmpWorker can lock it after opening the hive files
     //
     //CmpLockRegistryExclusive();
@@ -2709,55 +2666,64 @@ Return Value:
 
     RegistryLockAquired = FALSE;
     Allocate = TRUE;
-    Status = CmpCmdHiveOpen(    SourceFile,             // FileAttributes
-                                &ClientSecurityContext, // ImpersonationContext
-                                &Allocate,              // Allocate
-                                &RegistryLockAquired,   // RegistryLockAquired
-                                &NewHive,               // NewHive
-								CM_CHECK_REGISTRY_CHECK_CLEAN //CheckFlags
-                            );
+    Status = CmpCmdHiveOpen(SourceFile,                   // FileAttributes
+                            &ClientSecurityContext,       // ImpersonationContext
+                            &Allocate,                    // Allocate
+                            &RegistryLockAquired,         // RegistryLockAquired
+                            &NewHive,                     // NewHive
+                            CM_CHECK_REGISTRY_CHECK_CLEAN //CheckFlags
+    );
 
-    SeDeleteClientSecurity( &ClientSecurityContext );
+    SeDeleteClientSecurity(&ClientSecurityContext);
 
 
-    if (!NT_SUCCESS(Status)) {
-        if( KeyHandle != NULL ) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (KeyHandle != NULL)
+        {
             //
             // lock the registry exclusive while we are checking attempt to load same file into the same spot
             //
-            if( !RegistryLockAquired ) {
+            if (!RegistryLockAquired)
+            {
                 CmpLockRegistryExclusive();
                 RegistryLockAquired = TRUE;
             }
-            
+
             //
             // check if the same file is loaded in the same spot
             //
-            if( CmpIsHiveAlreadyLoaded(KeyHandle,SourceFile) ) {
+            if (CmpIsHiveAlreadyLoaded(KeyHandle, SourceFile))
+            {
                 Status = STATUS_SUCCESS;
             }
         }
-        
-        if( RegistryLockAquired ) {
+
+        if (RegistryLockAquired)
+        {
             // if CmpWorker has locked the registry, unlock it now.
             CmpUnlockRegistry();
         }
 
-        if( KeyHandle != NULL ) {
+        if (KeyHandle != NULL)
+        {
             ZwClose(KeyHandle);
         }
-        return(Status);
-    } else {
+        return (Status);
+    }
+    else
+    {
         //
         // if we got here, CmpWorker should have locked the registry exclusive.
         //
-        ASSERT( RegistryLockAquired );
+        ASSERT(RegistryLockAquired);
     }
 
     //
     // if this is a NO_LAZY_FLUSH hive, set the appropriate bit.
     //
-    if (Flags & REG_NO_LAZY_FLUSH) {
+    if (Flags & REG_NO_LAZY_FLUSH)
+    {
         NewHive->Hive.HiveFlags |= HIVE_NOLAZYFLUSH;
     }
 
@@ -2765,27 +2731,27 @@ Return Value:
     // We now have a succesfully loaded and initialized CmHive, so we
     // just need to link that into the appropriate spot in the master hive.
     //
-    Status = CmpLinkHiveToMaster(TargetKey->ObjectName,
-                                 TargetKey->RootDirectory,
-                                 NewHive,
-                                 Allocate,
+    Status = CmpLinkHiveToMaster(TargetKey->ObjectName, TargetKey->RootDirectory, NewHive, Allocate,
                                  TargetKey->SecurityDescriptor);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         //
         // add new hive to hivelist
         //
         CmpAddToHiveFileList(NewHive);
         //
-        // flush the hive right here if just created; this is to avoid situations where 
+        // flush the hive right here if just created; this is to avoid situations where
         // the lazy flusher doesn't get a chance to flush the hive, or it can't (because
         // the hive is a no_lazy_flush hive and it is never explicitly flushed)
-        // 
-        if( Allocate == TRUE ) {
+        //
+        if (Allocate == TRUE)
+        {
             HvSyncHive(&(NewHive->Hive));
         }
-
-    } else {
+    }
+    else
+    {
         LOCK_HIVE_LIST();
         CmpRemoveEntryList(&(NewHive->HiveList));
         UNLOCK_HIVE_LIST();
@@ -2793,7 +2759,7 @@ Return Value:
         CmpCheckForOrphanedKcbs((PHHIVE)NewHive);
 
         CmpDestroyHiveViewList(NewHive);
-        CmpDestroySecurityCache (NewHive);
+        CmpDestroySecurityCache(NewHive);
         CmpDropFileObjectForHive(NewHive);
 
         HvFreeHive((PHHIVE)NewHive);
@@ -2806,9 +2772,9 @@ Return Value:
         //
         // free the cm level structure
         //
-        ASSERT( NewHive->HiveLock );
+        ASSERT(NewHive->HiveLock);
         ExFreePool(NewHive->HiveLock);
-        ASSERT( NewHive->ViewLock );
+        ASSERT(NewHive->ViewLock);
         ExFreePool(NewHive->ViewLock);
         CmpFree(NewHive, sizeof(CMHIVE));
     }
@@ -2816,8 +2782,8 @@ Return Value:
     //
     // We've given user chance to log on, so turn on quota
     //
-    if ((CmpProfileLoaded == FALSE) &&
-        (CmpWasSetupBoot == FALSE)) {
+    if ((CmpProfileLoaded == FALSE) && (CmpWasSetupBoot == FALSE))
+    {
         CmpProfileLoaded = TRUE;
         CmpSetGlobalQuotaAllowed();
     }
@@ -2828,39 +2794,34 @@ Return Value:
 
     CmpUnlockRegistry();
 
-    if( KeyHandle != NULL ) {
+    if (KeyHandle != NULL)
+    {
         ZwClose(KeyHandle);
     }
-    return(Status);
+    return (Status);
 }
 
 #if DBG
 ULONG
-CmpUnloadKeyWorker(
-    PCM_KEY_CONTROL_BLOCK Current,
-    PVOID                 Context1,
-    PVOID                 Context2
-    )
+CmpUnloadKeyWorker(PCM_KEY_CONTROL_BLOCK Current, PVOID Context1, PVOID Context2)
 {
     PUNICODE_STRING ConstructedName;
-    if (Current->KeyHive == Context1) {
+    if (Current->KeyHive == Context1)
+    {
         ConstructedName = CmpConstructName(Current);
 
-        if (ConstructedName) {
-            CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"%wZ\n", ConstructedName));
+        if (ConstructedName)
+        {
+            CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "%wZ\n", ConstructedName));
             ExFreePoolWithTag(ConstructedName, CM_NAME_TAG | PROTECTED_POOL);
         }
     }
-    return KCB_WORKER_CONTINUE;   // always keep searching
+    return KCB_WORKER_CONTINUE; // always keep searching
 }
 #endif
 
 NTSTATUS
-CmUnloadKey(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN PCM_KEY_CONTROL_BLOCK Kcb
-    )
+CmUnloadKey(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN PCM_KEY_CONTROL_BLOCK Kcb)
 
 /*++
 
@@ -2891,13 +2852,14 @@ Return Value:
     PCMHIVE CmHive;
     BOOLEAN Success;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmUnloadKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmUnloadKey\n"));
 
     //
     // Make sure the cell passed in is the root cell of the hive.
     //
-    if (Cell != Hive->BaseBlock->RootCell) {
-        return(STATUS_INVALID_PARAMETER);
+    if (Cell != Hive->BaseBlock->RootCell)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     //
@@ -2906,24 +2868,23 @@ Return Value:
     //
 
     CmHive = CONTAINING_RECORD(Hive, CMHIVE, Hive);
-    if(Kcb->RefCount != 1) {
-        Success = (CmpSearchForOpenSubKeys(Kcb,SearchIfExist) == 0);
+    if (Kcb->RefCount != 1)
+    {
+        Success = (CmpSearchForOpenSubKeys(Kcb, SearchIfExist) == 0);
         Success = Success && (Kcb->RefCount == 1);
-        
-        if( Success == FALSE) {
+
+        if (Success == FALSE)
+        {
 #if DBG
-            CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"List of keys open against hive unload was attempted on:\n"));
-            CmpSearchKeyControlBlockTree(
-                CmpUnloadKeyWorker,
-                Hive,
-                NULL
-                );
+            CmKdPrintEx(
+                (DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "List of keys open against hive unload was attempted on:\n"));
+            CmpSearchKeyControlBlockTree(CmpUnloadKeyWorker, Hive, NULL);
 #endif
             return STATUS_CANNOT_DELETE;
         }
     }
-    
-    ASSERT( Kcb->RefCount == 1 );
+
+    ASSERT(Kcb->RefCount == 1);
 
     //
     // Flush any dirty data to disk. If this fails, too bad.
@@ -2940,18 +2901,20 @@ Return Value:
     //
     Success = CmpDestroyHive(Hive, Cell);
 
-    if (Success) {
+    if (Success)
+    {
         //
         // signal the user event (if any), then do the cleanup (i.e. deref the event
         // and the artificial refcount we set on the root kcb)
         //
-        if( CmHive->UnloadEvent != NULL ) {
-            KeSetEvent(CmHive->UnloadEvent,0,FALSE);
+        if (CmHive->UnloadEvent != NULL)
+        {
+            KeSetEvent(CmHive->UnloadEvent, 0, FALSE);
             ObDereferenceObject(CmHive->UnloadEvent);
         }
 
         CmpDestroyHiveViewList(CmHive);
-        CmpDestroySecurityCache (CmHive);
+        CmpDestroySecurityCache(CmHive);
         CmpDropFileObjectForHive(CmHive);
 
         HvFreeHive(Hive);
@@ -2964,25 +2927,23 @@ Return Value:
         //
         // free the cm level structure
         //
-        ASSERT( CmHive->HiveLock );
+        ASSERT(CmHive->HiveLock);
         ExFreePool(CmHive->HiveLock);
-        ASSERT( CmHive->ViewLock );
+        ASSERT(CmHive->ViewLock);
         ExFreePool(CmHive->ViewLock);
         CmpFree(CmHive, sizeof(CMHIVE));
 
-        return(STATUS_SUCCESS);
-    } else {
-        return(STATUS_INSUFFICIENT_RESOURCES);
+        return (STATUS_SUCCESS);
     }
-
+    else
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
+    }
 }
 
 #ifdef NT_UNLOAD_KEY_EX
 NTSTATUS
-CmUnloadKeyEx(
-    IN PCM_KEY_CONTROL_BLOCK kcb,
-    IN PKEVENT UserEvent
-    )
+CmUnloadKeyEx(IN PCM_KEY_CONTROL_BLOCK kcb, IN PKEVENT UserEvent)
 
 /*++
 
@@ -3011,16 +2972,17 @@ Return Value:
 
 --*/
 {
-    PCMHIVE         CmHive;
-    HCELL_INDEX     Cell;    
-    NTSTATUS        Status;
+    PCMHIVE CmHive;
+    HCELL_INDEX Cell;
+    NTSTATUS Status;
 
     PAGED_CODE();
 
     Cell = kcb->KeyCell;
     CmHive = (PCMHIVE)CONTAINING_RECORD(kcb->KeyHive, CMHIVE, Hive);
 
-    if( IsHiveFrozen(CmHive) ) {
+    if (IsHiveFrozen(CmHive))
+    {
         //
         // don't let them hurt themselves by calling it twice
         //
@@ -3030,15 +2992,16 @@ Return Value:
     // first, try out he sync routine; this may or may not unload the hive,
     // but at least will kick kcbs with refcount = 0 out of cache
     //
-    Status = CmUnloadKey(&(CmHive->Hive),Cell,kcb);
-    if( Status != STATUS_CANNOT_DELETE ) {
+    Status = CmUnloadKey(&(CmHive->Hive), Cell, kcb);
+    if (Status != STATUS_CANNOT_DELETE)
+    {
         //
         // the hive was either unloaded, or some bad thing happened
         //
         return Status;
     }
 
-    ASSERT( kcb->RefCount > 1 );
+    ASSERT(kcb->RefCount > 1);
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
     //
@@ -3046,15 +3009,16 @@ Return Value:
     // 1. reference the kcb, to make sure it won't go away without us noticing
     //  (we have the registry locked in exclusive mode, so we don't need to lock the kcbtree
     //
-    if (!CmpReferenceKeyControlBlock(kcb)) {
+    if (!CmpReferenceKeyControlBlock(kcb))
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-	//
-	// parse the kcb tree and mark all open kcbs inside this hive and "no delay close"
-	//
-    CmpSearchForOpenSubKeys(kcb,SearchAndTagNoDelayClose);
-	kcb->ExtFlags |= CM_KCB_NO_DELAY_CLOSE;
+    //
+    // parse the kcb tree and mark all open kcbs inside this hive and "no delay close"
+    //
+    CmpSearchForOpenSubKeys(kcb, SearchAndTagNoDelayClose);
+    kcb->ExtFlags |= CM_KCB_NO_DELAY_CLOSE;
 
     //
     // 2. Freeze the hive
@@ -3072,9 +3036,7 @@ Return Value:
 extern BOOLEAN CmpForceForceFlush;
 
 BOOLEAN
-CmpDoFlushAll(
-    BOOLEAN ForceFlush
-    )
+CmpDoFlushAll(BOOLEAN ForceFlush)
 /*++
 
 Routine Description:
@@ -3109,11 +3071,11 @@ Notes:
 
 --*/
 {
-    NTSTATUS    Status;
+    NTSTATUS Status;
     PLIST_ENTRY p;
-    PCMHIVE     h;
-    BOOLEAN     Result = TRUE;    
-/*
+    PCMHIVE h;
+    BOOLEAN Result = TRUE;
+    /*
     ULONG rc;
 */
     extern PCMHIVE CmpMasterHive;
@@ -3123,10 +3085,11 @@ Notes:
     // clean up in a short time.  Only early system init code
     // will ever know the difference.
     //
-    if (CmpNoWrite) {
+    if (CmpNoWrite)
+    {
         return TRUE;
     }
-    
+
     CmpForceForceFlush = FALSE;
 
     //
@@ -3134,11 +3097,13 @@ Notes:
     //
     LOCK_HIVE_LIST();
     p = CmpHiveListHead.Flink;
-    while (p != &CmpHiveListHead) {
+    while (p != &CmpHiveListHead)
+    {
 
         h = CONTAINING_RECORD(p, CMHIVE, HiveList);
 
-        if (!(h->Hive.HiveFlags & HIVE_NOLAZYFLUSH)) {
+        if (!(h->Hive.HiveFlags & HIVE_NOLAZYFLUSH))
+        {
 
             //
             //Lock the hive before we flush it.
@@ -3146,29 +3111,38 @@ Notes:
             // during a flush (a flush is considered a read)
             // we have to force a serialization on the vector table
             //
-            CmLockHive (h);
-            
-            if( (ForceFlush == TRUE) &&  (h->UseCount != 0) ) {
+            CmLockHive(h);
+
+            if ((ForceFlush == TRUE) && (h->UseCount != 0))
+            {
                 //
-                // hive was left in an instable state by a prior exception raised 
+                // hive was left in an instable state by a prior exception raised
                 // somewhere inside a CM function.
                 //
                 ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
                 CmpFixHiveUsageCount(h);
-                ASSERT( h->UseCount == 0 );
+                ASSERT(h->UseCount == 0);
             }
 
-            
-            if( (ForceFlush == TRUE) || (!HvHiveWillShrink((PHHIVE)h)) ) {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"CmpDoFlushAll hive = %p ForceFlush = %lu IsHiveShrinking = %lu BaseLength = %lx StableLength = %lx\n",
-                    h,(ULONG)ForceFlush,(ULONG)HvHiveWillShrink((PHHIVE)h),((PHHIVE)h)->BaseBlock->Length,((PHHIVE)h)->Storage[Stable].Length));
+
+            if ((ForceFlush == TRUE) || (!HvHiveWillShrink((PHHIVE)h)))
+            {
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO,
+                             "CmpDoFlushAll hive = %p ForceFlush = %lu IsHiveShrinking = %lu BaseLength = %lx "
+                             "StableLength = %lx\n",
+                             h, (ULONG)ForceFlush, (ULONG)HvHiveWillShrink((PHHIVE)h), ((PHHIVE)h)->BaseBlock->Length,
+                             ((PHHIVE)h)->Storage[Stable].Length));
                 Status = HvSyncHive((PHHIVE)h);
 
-                if( !NT_SUCCESS( Status ) ) {
+                if (!NT_SUCCESS(Status))
+                {
                     Result = FALSE;
                 }
-            } else {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CmpDoFlushAll: Fail to flush hive %p because is shrinking\n",h));
+            }
+            else
+            {
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+                             "CmpDoFlushAll: Fail to flush hive %p because is shrinking\n", h));
                 Result = FALSE;
                 //
                 // another unsuccessful attempt to save this hive, because we needed the reglock exclisive
@@ -3176,7 +3150,7 @@ Notes:
                 CmpForceForceFlush = TRUE;
             }
 
-            CmUnlockHive (h);
+            CmUnlockHive(h);
             //
             // WARNNOTE - the above means that a lazy flush or
             //            or shutdown flush did not work.  we don't
@@ -3191,18 +3165,13 @@ Notes:
         p = p->Flink;
     }
     UNLOCK_HIVE_LIST();
-    
+
     return Result;
 }
 
-
+
 NTSTATUS
-CmReplaceKey(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN PUNICODE_STRING NewHiveName,
-    IN PUNICODE_STRING OldFileName
-    )
+CmReplaceKey(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN PUNICODE_STRING NewHiveName, IN PUNICODE_STRING OldFileName)
 
 /*++
 
@@ -3231,26 +3200,27 @@ Return Value:
 --*/
 
 {
-    CHAR                        ObjectInfoBuffer[512];
-    NTSTATUS                    Status;
-    NTSTATUS                    Status2;
-    OBJECT_ATTRIBUTES           Attributes;
-    PCMHIVE                     NewHive;
-    PCMHIVE                     CmHive; 
-    POBJECT_NAME_INFORMATION    NameInfo;
-    ULONG                       OldQuotaAllowed;
-    ULONG                       OldQuotaWarning;
-    BOOLEAN                     Allocate;
-    BOOLEAN                     RegistryLockAquired;
+    CHAR ObjectInfoBuffer[512];
+    NTSTATUS Status;
+    NTSTATUS Status2;
+    OBJECT_ATTRIBUTES Attributes;
+    PCMHIVE NewHive;
+    PCMHIVE CmHive;
+    POBJECT_NAME_INFORMATION NameInfo;
+    ULONG OldQuotaAllowed;
+    ULONG OldQuotaWarning;
+    BOOLEAN Allocate;
+    BOOLEAN RegistryLockAquired;
 
-    UNREFERENCED_PARAMETER (Cell);
+    UNREFERENCED_PARAMETER(Cell);
     CmpLockRegistryExclusive();
 
 #ifdef CHECK_REGISTRY_USECOUNT
     CmpCheckRegistryUseCount();
 #endif //CHECK_REGISTRY_USECOUNT
 
-    if (Hive->HiveFlags & HIVE_HAS_BEEN_REPLACED) {
+    if (Hive->HiveFlags & HIVE_HAS_BEEN_REPLACED)
+    {
         CmpUnlockRegistry();
         return STATUS_FILE_RENAMED;
     }
@@ -3266,49 +3236,50 @@ Return Value:
     //
     // First open the new hive file and check to make sure it is valid.
     //
-    InitializeObjectAttributes(&Attributes,
-                               NewHiveName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&Attributes, NewHiveName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     Allocate = FALSE;
     RegistryLockAquired = TRUE;
-    Status = CmpCmdHiveOpen(    &Attributes,            // FileAttributes
-                                NULL,                   // ImpersonationContext
-                                &Allocate,              // Allocate
-                                &RegistryLockAquired,   // RegistryLockAquired
-                                &NewHive,               // NewHive
-								CM_CHECK_REGISTRY_CHECK_CLEAN // CheckFlags
-                            );
+    Status = CmpCmdHiveOpen(&Attributes,                  // FileAttributes
+                            NULL,                         // ImpersonationContext
+                            &Allocate,                    // Allocate
+                            &RegistryLockAquired,         // RegistryLockAquired
+                            &NewHive,                     // NewHive
+                            CM_CHECK_REGISTRY_CHECK_CLEAN // CheckFlags
+    );
 
-    
-    if (!NT_SUCCESS(Status)) {
+
+    if (!NT_SUCCESS(Status))
+    {
         goto ErrorExit;
     }
     ASSERT(Allocate == FALSE);
 
-    if( Hive == (PHHIVE)(CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive) ) {
+    if (Hive == (PHHIVE)(CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive))
+    {
         //
         // Somebody attempts to replace the system hive: do the WPA test
         //
-        HCELL_INDEX Src,Dest;
+        HCELL_INDEX Src, Dest;
 
-        Status = CmpCheckReplaceHive(Hive,&Src);
-        if( !NT_SUCCESS(Status) ) {
+        Status = CmpCheckReplaceHive(Hive, &Src);
+        if (!NT_SUCCESS(Status))
+        {
             goto ErrorCleanup;
         }
-        Status = CmpCheckReplaceHive((PHHIVE)NewHive,&Dest);
-        if( !NT_SUCCESS(Status) ) {
+        Status = CmpCheckReplaceHive((PHHIVE)NewHive, &Dest);
+        if (!NT_SUCCESS(Status))
+        {
             goto ErrorCleanup;
         }
 
-        ASSERT( Src != HCELL_NIL );
-        ASSERT( Dest != HCELL_NIL );
+        ASSERT(Src != HCELL_NIL);
+        ASSERT(Dest != HCELL_NIL);
         //
         // now stuff the current WPA subtree into the new hive
         //
-        if( !CmpSyncTrees(Hive, Src, (PHHIVE)NewHive, Dest, FALSE ) ) {
+        if (!CmpSyncTrees(Hive, Src, (PHHIVE)NewHive, Dest, FALSE))
+        {
             Status = STATUS_REGISTRY_CORRUPT;
             goto ErrorCleanup;
         }
@@ -3316,7 +3287,8 @@ Return Value:
         //
         // commit the changes we've made in the destination hive
         //
-        if( !HvSyncHive((PHHIVE)NewHive) ) {
+        if (!HvSyncHive((PHHIVE)NewHive))
+        {
             Status = STATUS_REGISTRY_CORRUPT;
             goto ErrorCleanup;
         }
@@ -3326,13 +3298,14 @@ Return Value:
     // Now rename the current hive file.
     //
     CmHive = (PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive);
-    Status = CmpCmdRenameHive(  CmHive,                                     // CmHive
-                                (POBJECT_NAME_INFORMATION)ObjectInfoBuffer, // OldName
-                                OldFileName,                                // NewName
-                                sizeof(ObjectInfoBuffer)                    // NameInfoLength
-                                );
+    Status = CmpCmdRenameHive(CmHive,                                     // CmHive
+                              (POBJECT_NAME_INFORMATION)ObjectInfoBuffer, // OldName
+                              OldFileName,                                // NewName
+                              sizeof(ObjectInfoBuffer)                    // NameInfoLength
+    );
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         //
         // rename failed, close the files associated with the new hive
         //
@@ -3347,13 +3320,14 @@ Return Value:
     Hive->HiveFlags |= HIVE_HAS_BEEN_REPLACED;
     NameInfo = (POBJECT_NAME_INFORMATION)ObjectInfoBuffer;
 
-    Status = CmpCmdRenameHive(  NewHive,        // CmHive
-                                NULL,           // OldName
-                                &NameInfo->Name,// NewName
-                                0               // NameInfoLength
-                            );
-   
-    if (!NT_SUCCESS(Status)) {
+    Status = CmpCmdRenameHive(NewHive,         // CmHive
+                              NULL,            // OldName
+                              &NameInfo->Name, // NewName
+                              0                // NameInfoLength
+    );
+
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // We are in trouble now.  We have renamed the existing hive file,
@@ -3362,17 +3336,18 @@ Return Value:
         //
 
         CmHive = (PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive);
-        Status2 = CmpCmdRenameHive( CmHive,             // CmHive            
-                                    NULL,               // OldName
-                                    &NameInfo->Name,    // NewName
-                                    0                   // NameInfoLength
-                                );
-        
-        if (!NT_SUCCESS(Status2)) {
+        Status2 = CmpCmdRenameHive(CmHive,          // CmHive
+                                   NULL,            // OldName
+                                   &NameInfo->Name, // NewName
+                                   0                // NameInfoLength
+        );
 
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmReplaceKey: renamed existing hive file, but couldn't\n"));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"              rename new hive file (%08lx) ",Status));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK," or replace old hive file (%08lx)!\n",Status2));
+        if (!NT_SUCCESS(Status2))
+        {
+
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmReplaceKey: renamed existing hive file, but couldn't\n"));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "              rename new hive file (%08lx) ", Status));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, " or replace old hive file (%08lx)!\n", Status2));
 
             //
             // WARNNOTE:
@@ -3387,15 +3362,17 @@ Return Value:
             //
 
             Status = STATUS_REGISTRY_CORRUPT;
-
         }
-    } else {
+    }
+    else
+    {
         //
         // flush file buffers (we are particulary interested in ValidDataLength to be updated on-disk)
         //
         IO_STATUS_BLOCK IoStatus;
-        Status = ZwFlushBuffersFile(NewHive->FileHandles[HFILE_TYPE_PRIMARY],&IoStatus);
-        if (!NT_SUCCESS(Status)) {
+        Status = ZwFlushBuffersFile(NewHive->FileHandles[HFILE_TYPE_PRIMARY], &IoStatus);
+        if (!NT_SUCCESS(Status))
+        {
             //
             // failed to set ValidDataLength, close the files associated with the new hive
             //
@@ -3407,17 +3384,19 @@ Return Value:
             //
 
             CmHive = (PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive);
-            Status2 = CmpCmdRenameHive( CmHive,             // CmHive            
-                                        NULL,               // OldName
-                                        &NameInfo->Name,    // NewName
-                                        0                   // NameInfoLength
-                                    );
-        
-            if (!NT_SUCCESS(Status2)) {
+            Status2 = CmpCmdRenameHive(CmHive,          // CmHive
+                                       NULL,            // OldName
+                                       &NameInfo->Name, // NewName
+                                       0                // NameInfoLength
+            );
 
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmReplaceKey: renamed existing hive file, but couldn't\n"));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"              rename new hive file (%08lx) ",Status));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK," or replace old hive file (%08lx)!\n",Status2));
+            if (!NT_SUCCESS(Status2))
+            {
+
+                CmKdPrintEx(
+                    (DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmReplaceKey: renamed existing hive file, but couldn't\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "              rename new hive file (%08lx) ", Status));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, " or replace old hive file (%08lx)!\n", Status2));
 
                 //
                 // WARNNOTE:
@@ -3432,7 +3411,6 @@ Return Value:
                 //
 
                 Status = STATUS_REGISTRY_CORRUPT;
-
             }
         }
     }
@@ -3460,13 +3438,14 @@ ErrorCleanup:
     //
     // only close handles on error
     //
-    if( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         CmpCmdHiveClose(NewHive);
     }
 
-    ASSERT( NewHive->HiveLock );
+    ASSERT(NewHive->HiveLock);
     ExFreePool(NewHive->HiveLock);
-    ASSERT( NewHive->ViewLock );
+    ASSERT(NewHive->ViewLock);
     ExFreePool(NewHive->ViewLock);
     CmpFree(NewHive, sizeof(CMHIVE));
 
@@ -3482,21 +3461,18 @@ ErrorExit:
 #endif //CHECK_REGISTRY_USECOUNT
 
     CmpUnlockRegistry();
-    return(Status);
+    return (Status);
 }
 
 #ifdef NT_RENAME_KEY
 
 ULONG
-CmpComputeKcbConvKey(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
+CmpComputeKcbConvKey(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
 NTSTATUS
-CmRenameKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN UNICODE_STRING           NewKeyName         // RAW
-    )
+CmRenameKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
+            IN UNICODE_STRING NewKeyName // RAW
+)
 /*++
 
 Routine Description:
@@ -3529,31 +3505,32 @@ Comments:
     What do we do with symbolic links?
 --*/
 {
-    NTSTATUS                Status;
-    PHHIVE                  Hive;
-    HCELL_INDEX             Cell;
-    PCM_KEY_NODE            Node;
-    PCM_KEY_NODE            ParentNode;
-    ULONG                   NodeSize;
-    HCELL_INDEX             NewKeyCell = HCELL_NIL;
-    HSTORAGE_TYPE           StorageType;
-    HCELL_INDEX             OldSubKeyList = HCELL_NIL;
-    PCM_KEY_NODE            NewKeyNode;
-    PCM_KEY_INDEX           Index;
-    ULONG                   i;
-    LARGE_INTEGER           TimeStamp;
-    ULONG                   NameLength;
-    PCM_NAME_CONTROL_BLOCK  OldNcb;
-    ULONG                   ConvKey;
+    NTSTATUS Status;
+    PHHIVE Hive;
+    HCELL_INDEX Cell;
+    PCM_KEY_NODE Node;
+    PCM_KEY_NODE ParentNode;
+    ULONG NodeSize;
+    HCELL_INDEX NewKeyCell = HCELL_NIL;
+    HSTORAGE_TYPE StorageType;
+    HCELL_INDEX OldSubKeyList = HCELL_NIL;
+    PCM_KEY_NODE NewKeyNode;
+    PCM_KEY_INDEX Index;
+    ULONG i;
+    LARGE_INTEGER TimeStamp;
+    ULONG NameLength;
+    PCM_NAME_CONTROL_BLOCK OldNcb;
+    ULONG ConvKey;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmRenameKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmRenameKey\n"));
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
     //
     // no edits, on keys marked for deletion
     //
-    if (KeyControlBlock->Delete) {
+    if (KeyControlBlock->Delete)
+    {
         return STATUS_KEY_DELETED;
     }
 
@@ -3565,11 +3542,12 @@ Comments:
     StorageType = HvGetCellType(Cell);
 
     //
-    // OBS. we could have worked with the kcb tree instead, but if this is not 
+    // OBS. we could have worked with the kcb tree instead, but if this is not
     // going to work, we are in trouble anyway, so it's better to find out soon
     //
-    Node = (PCM_KEY_NODE)HvGetCell(Hive,Cell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
+    if (Node == NULL)
+    {
         //
         // cannot map view
         //
@@ -3582,23 +3560,28 @@ Comments:
     //
     // cannot rename the root of a hive; or anything in the master hive !!!
     //
-    if((Hive == &CmpMasterHive->Hive) || (KeyControlBlock->ParentKcb == NULL) || (KeyControlBlock->ParentKcb->KeyHive == &CmpMasterHive->Hive) ) {
+    if ((Hive == &CmpMasterHive->Hive) || (KeyControlBlock->ParentKcb == NULL) ||
+        (KeyControlBlock->ParentKcb->KeyHive == &CmpMasterHive->Hive))
+    {
         return STATUS_ACCESS_DENIED;
     }
 
-    ParentNode = (PCM_KEY_NODE)HvGetCell(Hive,Node->Parent);
-    if( ParentNode == NULL ) {
+    ParentNode = (PCM_KEY_NODE)HvGetCell(Hive, Node->Parent);
+    if (ParentNode == NULL)
+    {
         //
         // cannot map view
         //
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    
+
     // release the cell right here, as the registry is locked exclusively, so we don't care
     HvReleaseCell(Hive, Node->Parent);
 
-    try {
-        if( CmpFindSubKeyByName(Hive,ParentNode,&NewKeyName) != HCELL_NIL ) {
+    try
+    {
+        if (CmpFindSubKeyByName(Hive, ParentNode, &NewKeyName) != HCELL_NIL)
+        {
             //
             // a subkey with this name already exists
             //
@@ -3609,47 +3592,53 @@ Comments:
         // since we are in try-except, compute the new node size
         //
         NodeSize = CmpHKeyNodeSize(Hive, &NewKeyName);
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_EXCEPTION,"!!CmRenameKey: code:%08lx\n", GetExceptionCode()));
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_EXCEPTION, "!!CmRenameKey: code:%08lx\n", GetExceptionCode()));
         return GetExceptionCode();
-    }    
-    
+    }
+
     //
-    // 1. Allocate the new knode cell and copy the data from the old one, updating 
-    // the name. 
-    
+    // 1. Allocate the new knode cell and copy the data from the old one, updating
+    // the name.
+
     //
     // mark the parent dirty, as we will modify its SubkeyLists
     //
-    if(!HvMarkCellDirty(Hive, Node->Parent)) {
+    if (!HvMarkCellDirty(Hive, Node->Parent))
+    {
         return STATUS_NO_LOG_SPACE;
     }
 
     //
     // mark the index dirty as we are going to free it on success
     //
-    if ( !CmpMarkIndexDirty(Hive, Node->Parent, Cell) ) {
+    if (!CmpMarkIndexDirty(Hive, Node->Parent, Cell))
+    {
         return STATUS_NO_LOG_SPACE;
     }
     //
     // mark key_node as dirty as we are going to free it if we succeed
     //
-    if(!HvMarkCellDirty(Hive, Cell)) {
+    if (!HvMarkCellDirty(Hive, Cell))
+    {
         return STATUS_NO_LOG_SPACE;
     }
-   
-    OldSubKeyList = ParentNode->SubKeyLists[StorageType];       
-    ASSERT( OldSubKeyList != HCELL_NIL );
-    if(!HvMarkCellDirty(Hive, OldSubKeyList)) {
+
+    OldSubKeyList = ParentNode->SubKeyLists[StorageType];
+    ASSERT(OldSubKeyList != HCELL_NIL);
+    if (!HvMarkCellDirty(Hive, OldSubKeyList))
+    {
         return STATUS_NO_LOG_SPACE;
     }
-    Index = (PCM_KEY_INDEX)HvGetCell(Hive,OldSubKeyList);
-    if( Index == NULL ) {
+    Index = (PCM_KEY_INDEX)HvGetCell(Hive, OldSubKeyList);
+    if (Index == NULL)
+    {
         //
         // this is a bad joke; we just marked this dirty
         //
-        ASSERT( FALSE );
+        ASSERT(FALSE);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorExit;
     }
@@ -3659,38 +3648,39 @@ Comments:
     //
     // mark all the index cells dirty
     //
-    if( Index->Signature == CM_KEY_INDEX_ROOT ) {
+    if (Index->Signature == CM_KEY_INDEX_ROOT)
+    {
         //
         // it's a root
         //
-        for(i=0;i<Index->Count;i++) {
+        for (i = 0; i < Index->Count; i++)
+        {
             // common sense
-            ASSERT( (Index->List[i] != 0) && (Index->List[i] != HCELL_NIL) );
-            if(!HvMarkCellDirty(Hive, Index->List[i])) {
+            ASSERT((Index->List[i] != 0) && (Index->List[i] != HCELL_NIL));
+            if (!HvMarkCellDirty(Hive, Index->List[i]))
+            {
                 return STATUS_NO_LOG_SPACE;
             }
         }
+    }
 
-    } 
 
-
-    NewKeyCell = HvAllocateCell(
-                    Hive,
-                    NodeSize,
-                    StorageType,
-                    Cell // in the same vicinity
-                    );
-    if( NewKeyCell == HCELL_NIL ) {
+    NewKeyCell = HvAllocateCell(Hive, NodeSize, StorageType,
+                                Cell // in the same vicinity
+    );
+    if (NewKeyCell == HCELL_NIL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    
-    NewKeyNode = (PCM_KEY_NODE)HvGetCell(Hive,NewKeyCell);
-    if( NewKeyNode == NULL ) {
+
+    NewKeyNode = (PCM_KEY_NODE)HvGetCell(Hive, NewKeyCell);
+    if (NewKeyNode == NULL)
+    {
         //
-        // cannot map view; this shouldn't happen as we just allocated 
+        // cannot map view; this shouldn't happen as we just allocated
         // this cell (i.e. it should be dirty/pinned into memory)
         //
-        ASSERT( FALSE );
+        ASSERT(FALSE);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorExit;
     }
@@ -3701,28 +3691,32 @@ Comments:
     // copy old keynode info onto the new cell and update the name
     //
     // first everything BUT the name
-    RtlCopyMemory(NewKeyNode,Node,FIELD_OFFSET(CM_KEY_NODE, Name));
+    RtlCopyMemory(NewKeyNode, Node, FIELD_OFFSET(CM_KEY_NODE, Name));
     // second, the new name
-    try {
-        NewKeyNode->NameLength = CmpCopyName(   Hive,
-                                                NewKeyNode->Name,
-                                                &NewKeyName);
+    try
+    {
+        NewKeyNode->NameLength = CmpCopyName(Hive, NewKeyNode->Name, &NewKeyName);
         NameLength = NewKeyName.Length;
 
-        if (NewKeyNode->NameLength < NameLength ) {
+        if (NewKeyNode->NameLength < NameLength)
+        {
             NewKeyNode->Flags |= KEY_COMP_NAME;
-        } else {
+        }
+        else
+        {
             NewKeyNode->Flags &= ~KEY_COMP_NAME;
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_EXCEPTION,"!!CmRenameKey: code:%08lx\n", GetExceptionCode()));
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_EXCEPTION, "!!CmRenameKey: code:%08lx\n", GetExceptionCode()));
         Status = GetExceptionCode();
         goto ErrorExit;
-    }    
+    }
     // third, the timestamp
     KeQuerySystemTime(&TimeStamp);
     NewKeyNode->LastWriteTime = TimeStamp;
-    
+
     //
     // at this point we have the new key_node all built up.
     //
@@ -3730,19 +3724,21 @@ Comments:
     //
     // 2.3. Make a duplicate of the parent's subkeylist and replace the original
     //
-    ParentNode->SubKeyLists[StorageType] = CmpDuplicateIndex(Hive,OldSubKeyList,StorageType);
-    if( ParentNode->SubKeyLists[StorageType] == HCELL_NIL ) {
+    ParentNode->SubKeyLists[StorageType] = CmpDuplicateIndex(Hive, OldSubKeyList, StorageType);
+    if (ParentNode->SubKeyLists[StorageType] == HCELL_NIL)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorExit;
     }
 
     //
-    // 4. Add new subkey to the parent. This will take care of index 
-    // grow and rebalance problems. 
-    // Note: the index is at this point a duplicate, so if we fail, we still have the 
+    // 4. Add new subkey to the parent. This will take care of index
+    // grow and rebalance problems.
+    // Note: the index is at this point a duplicate, so if we fail, we still have the
     // original one handy to recover
     //
-    if( !CmpAddSubKey(Hive,Node->Parent,NewKeyCell) ) {
+    if (!CmpAddSubKey(Hive, Node->Parent, NewKeyCell))
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorExit;
     }
@@ -3750,7 +3746,8 @@ Comments:
     //
     // 5. remove old subkey;
     //
-    if( !CmpRemoveSubKey(Hive,Node->Parent,Cell) ) {
+    if (!CmpRemoveSubKey(Hive, Node->Parent, Cell))
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorExit;
     }
@@ -3758,69 +3755,75 @@ Comments:
     //
     // 5'. update the parent on each and every son.
     //
-    if( !CmpUpdateParentForEachSon(Hive,NewKeyCell) ) {
+    if (!CmpUpdateParentForEachSon(Hive, NewKeyCell))
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorExit;
     }
 
     //
-    // update the NCB in the kcb; at the end of this function, the kcbs underneath this 
+    // update the NCB in the kcb; at the end of this function, the kcbs underneath this
     // will eventually get rehashed
     //
     OldNcb = KeyControlBlock->NameBlock;
-    try {
-        KeyControlBlock->NameBlock = CmpGetNameControlBlock (&NewKeyName);
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_EXCEPTION,"!!CmRenameKey: code:%08lx\n", GetExceptionCode()));
+    try
+    {
+        KeyControlBlock->NameBlock = CmpGetNameControlBlock(&NewKeyName);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_EXCEPTION, "!!CmRenameKey: code:%08lx\n", GetExceptionCode()));
         Status = GetExceptionCode();
         goto ErrorExit;
-    }    
+    }
 
     //
     // 6. At this point we have it all done. We just need to free the old index and key_cell
     //
-    
+
     //
     // free old index
     //
-    Index = (PCM_KEY_INDEX)HvGetCell(Hive,OldSubKeyList);
-    if( Index == NULL ) {
+    Index = (PCM_KEY_INDEX)HvGetCell(Hive, OldSubKeyList);
+    if (Index == NULL)
+    {
         //
         // this is a bad joke; we just marked this dirty
         //
-        ASSERT( FALSE );
+        ASSERT(FALSE);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorExit;
     }
     // release the cell right here, as the registry is locked exclusively, so we don't care
     HvReleaseCell(Hive, OldSubKeyList);
 
-    if( Index->Signature == CM_KEY_INDEX_ROOT ) {
+    if (Index->Signature == CM_KEY_INDEX_ROOT)
+    {
         //
         // it's a root
         //
-        for(i=0;i<Index->Count;i++) {
+        for (i = 0; i < Index->Count; i++)
+        {
             // common sense
-            ASSERT( (Index->List[i] != 0) && (Index->List[i] != HCELL_NIL) );
+            ASSERT((Index->List[i] != 0) && (Index->List[i] != HCELL_NIL));
             HvFreeCell(Hive, Index->List[i]);
         }
-
-    } else {
+    }
+    else
+    {
         //
-        // should be a leaf 
+        // should be a leaf
         //
-        ASSERT((Index->Signature == CM_KEY_INDEX_LEAF)  ||
-               (Index->Signature == CM_KEY_FAST_LEAF)   ||
-               (Index->Signature == CM_KEY_HASH_LEAF)
-               );
+        ASSERT((Index->Signature == CM_KEY_INDEX_LEAF) || (Index->Signature == CM_KEY_FAST_LEAF) ||
+               (Index->Signature == CM_KEY_HASH_LEAF));
         ASSERT(Index->Count != 0);
     }
     HvFreeCell(Hive, OldSubKeyList);
-    
+
     //
     // free old cell
     //
-    HvFreeCell(Hive,Cell);
+    HvFreeCell(Hive, Cell);
 
     //
     // update the node KeyCell for this kcb and the timestamp on the kcb;
@@ -3831,103 +3834,109 @@ Comments:
     //
     // and one last "little" thing: update parent's maxnamelen and reset parents cache
     //
-    CmpCleanUpSubKeyInfo (KeyControlBlock->ParentKcb);
+    CmpCleanUpSubKeyInfo(KeyControlBlock->ParentKcb);
 
-    if (ParentNode->MaxNameLen < NameLength) {
+    if (ParentNode->MaxNameLen < NameLength)
+    {
         ParentNode->MaxNameLen = NameLength;
         KeyControlBlock->ParentKcb->KcbMaxNameLen = (USHORT)NameLength;
     }
-    
+
     //
     // rehash this kcb
     //
     ConvKey = CmpComputeKcbConvKey(KeyControlBlock);
-    if( ConvKey != KeyControlBlock->ConvKey ) {
+    if (ConvKey != KeyControlBlock->ConvKey)
+    {
         //
         // rehash the kcb by removing it from hash, and then inserting it
         // again with th new ConvKey
         //
         CmpRemoveKeyHash(&(KeyControlBlock->KeyHash));
         KeyControlBlock->ConvKey = ConvKey;
-        CmpInsertKeyHash(&(KeyControlBlock->KeyHash),FALSE);
+        CmpInsertKeyHash(&(KeyControlBlock->KeyHash), FALSE);
     }
 
     //
     // Aditional work: take care of the kcb subtree; this cannot fail, punt
     //
-    CmpSearchForOpenSubKeys(KeyControlBlock,SearchAndRehash);
+    CmpSearchForOpenSubKeys(KeyControlBlock, SearchAndRehash);
 
     //
     // last, dereference the OldNcb for this kcb
     //
-    ASSERT( OldNcb != NULL );
+    ASSERT(OldNcb != NULL);
     CmpDereferenceNameControlBlockWithLock(OldNcb);
 
     return STATUS_SUCCESS;
 
 ErrorExit:
-    if( OldSubKeyList != HCELL_NIL ) {
+    if (OldSubKeyList != HCELL_NIL)
+    {
         //
         // we have attempted (maybe even succedded) to duplicate parent's index)
         //
-        if( ParentNode->SubKeyLists[StorageType] != HCELL_NIL ) {
+        if (ParentNode->SubKeyLists[StorageType] != HCELL_NIL)
+        {
             //
             // we need to free this as it is a duplicate
             //
-            Index = (PCM_KEY_INDEX)HvGetCell(Hive,ParentNode->SubKeyLists[StorageType]);
-            if( Index == NULL ) {
+            Index = (PCM_KEY_INDEX)HvGetCell(Hive, ParentNode->SubKeyLists[StorageType]);
+            if (Index == NULL)
+            {
                 //
                 // could not map view;this shouldn't happen as we just allocated this cell
                 //
-                ASSERT( FALSE );
-            } else {
+                ASSERT(FALSE);
+            }
+            else
+            {
                 // release the cell right here, as the registry is locked exclusively, so we don't care
                 HvReleaseCell(Hive, ParentNode->SubKeyLists[StorageType]);
 
-                if( Index->Signature == CM_KEY_INDEX_ROOT ) {
+                if (Index->Signature == CM_KEY_INDEX_ROOT)
+                {
                     //
                     // it's a root
                     //
-                    for(i=0;i<Index->Count;i++) {
+                    for (i = 0; i < Index->Count; i++)
+                    {
                         // common sense
-                        ASSERT( (Index->List[i] != 0) && (Index->List[i] != HCELL_NIL) );
+                        ASSERT((Index->List[i] != 0) && (Index->List[i] != HCELL_NIL));
                         HvFreeCell(Hive, Index->List[i]);
                     }
-
-                } else {
+                }
+                else
+                {
                     //
-                    // should be a leaf 
+                    // should be a leaf
                     //
-                    ASSERT((Index->Signature == CM_KEY_INDEX_LEAF)  ||
-                           (Index->Signature == CM_KEY_FAST_LEAF)   ||
-                           (Index->Signature == CM_KEY_HASH_LEAF)
-                           );
+                    ASSERT((Index->Signature == CM_KEY_INDEX_LEAF) || (Index->Signature == CM_KEY_FAST_LEAF) ||
+                           (Index->Signature == CM_KEY_HASH_LEAF));
                     ASSERT(Index->Count != 0);
                 }
                 HvFreeCell(Hive, ParentNode->SubKeyLists[StorageType]);
             }
-
         }
         //
         // restore the parent's index
         //
         ParentNode->SubKeyLists[StorageType] = OldSubKeyList;
     }
-    ASSERT( NewKeyCell != HCELL_NIL );
-    HvFreeCell(Hive,NewKeyCell);
-    
-    if( OldNcb != NULL ) {
+    ASSERT(NewKeyCell != HCELL_NIL);
+    HvFreeCell(Hive, NewKeyCell);
+
+    if (OldNcb != NULL)
+    {
         KeyControlBlock->NameBlock = OldNcb;
     }
-    
+
     return Status;
 }
 #endif
 
 NTSTATUS
-CmMoveKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock
-    )
+CmMoveKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock)
 /*++
 
 Routine Description:
@@ -3958,33 +3967,34 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                Status;
-    PHHIVE                  Hive;
-    HCELL_INDEX             OldKeyCell;
-    HCELL_INDEX             NewKeyCell = HCELL_NIL;
-    HCELL_INDEX             ParentKeyCell;
-    HSTORAGE_TYPE           StorageType;
-    PCM_KEY_NODE            OldKeyNode;
-    PCM_KEY_NODE            ParentKeyNode;
-    PCM_KEY_NODE            NewKeyNode;
-    PCM_KEY_INDEX           ParentIndex;
-    PCM_KEY_INDEX           OldIndex;
-    ULONG                   i,j;
-    HCELL_INDEX             LeafCell;
-    PCM_KEY_INDEX           Leaf;
-    PCM_KEY_FAST_INDEX      FastIndex;
-    PHCELL_INDEX            ParentIndexLocation = NULL;
+    NTSTATUS Status;
+    PHHIVE Hive;
+    HCELL_INDEX OldKeyCell;
+    HCELL_INDEX NewKeyCell = HCELL_NIL;
+    HCELL_INDEX ParentKeyCell;
+    HSTORAGE_TYPE StorageType;
+    PCM_KEY_NODE OldKeyNode;
+    PCM_KEY_NODE ParentKeyNode;
+    PCM_KEY_NODE NewKeyNode;
+    PCM_KEY_INDEX ParentIndex;
+    PCM_KEY_INDEX OldIndex;
+    ULONG i, j;
+    HCELL_INDEX LeafCell;
+    PCM_KEY_INDEX Leaf;
+    PCM_KEY_FAST_INDEX FastIndex;
+    PHCELL_INDEX ParentIndexLocation = NULL;
 
     PAGED_CODE();
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmMoveKey\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmMoveKey\n"));
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
     //
     // no edits, on keys marked for deletion
     //
-    if (KeyControlBlock->Delete) {
+    if (KeyControlBlock->Delete)
+    {
         return STATUS_KEY_DELETED;
     }
 
@@ -3995,14 +4005,16 @@ Return Value:
     OldKeyCell = KeyControlBlock->KeyCell;
     StorageType = HvGetCellType(OldKeyCell);
 
-    if( StorageType != Stable ) {
+    if (StorageType != Stable)
+    {
         //
         // nop the volatiles
         //
         return STATUS_SUCCESS;
     }
 
-    if( OldKeyCell ==  Hive->BaseBlock->RootCell ) {
+    if (OldKeyCell == Hive->BaseBlock->RootCell)
+    {
         //
         // this works only for stable keys.
         //
@@ -4015,68 +4027,80 @@ Return Value:
     // parent's index, as we will replace the key node cell in it
     // we only search in the Stable storage. It is supposed to be there
     //
-    OldKeyNode = (PCM_KEY_NODE)HvGetCell(Hive,OldKeyCell);
-    if( OldKeyNode == NULL ) {
+    OldKeyNode = (PCM_KEY_NODE)HvGetCell(Hive, OldKeyCell);
+    if (OldKeyNode == NULL)
+    {
         //
         // cannot map view
         //
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if (! CmpMarkKeyDirty(Hive, OldKeyCell
+    if (!CmpMarkKeyDirty(Hive, OldKeyCell
 #if DBG
-		,FALSE
+                         ,
+                         FALSE
 #endif //DBG
-		)) {
+                         ))
+    {
         HvReleaseCell(Hive, OldKeyCell);
         return STATUS_NO_LOG_SPACE;
     }
     // release the cell right here, as the registry is locked exclusively, and the key_cell is marked as dirty
     HvReleaseCell(Hive, OldKeyCell);
 
-	if( OldKeyNode->Flags & KEY_SYM_LINK ) {
-		//
-		// we do not compact links
-		//
-		return STATUS_INVALID_PARAMETER;
-	}
-	if( OldKeyNode->SubKeyLists[Stable] != HCELL_NIL ) {
-		//
-		// mark the index dirty
-		//
-		OldIndex = (PCM_KEY_INDEX)HvGetCell(Hive, OldKeyNode->SubKeyLists[Stable]);
-		if( OldIndex == NULL ) {
-			//
-			// we couldn't map the bin containing this cell
-			//
-			return STATUS_INSUFFICIENT_RESOURCES;
-		}
-		HvReleaseCell(Hive, OldKeyNode->SubKeyLists[Stable]);
-		if( !HvMarkCellDirty(Hive, OldKeyNode->SubKeyLists[Stable]) ) {
-			return STATUS_NO_LOG_SPACE;
-		}
+    if (OldKeyNode->Flags & KEY_SYM_LINK)
+    {
+        //
+        // we do not compact links
+        //
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (OldKeyNode->SubKeyLists[Stable] != HCELL_NIL)
+    {
+        //
+        // mark the index dirty
+        //
+        OldIndex = (PCM_KEY_INDEX)HvGetCell(Hive, OldKeyNode->SubKeyLists[Stable]);
+        if (OldIndex == NULL)
+        {
+            //
+            // we couldn't map the bin containing this cell
+            //
+            return STATUS_INSUFFICIENT_RESOURCES;
+        }
+        HvReleaseCell(Hive, OldKeyNode->SubKeyLists[Stable]);
+        if (!HvMarkCellDirty(Hive, OldKeyNode->SubKeyLists[Stable]))
+        {
+            return STATUS_NO_LOG_SPACE;
+        }
 
-		if(OldIndex->Signature == CM_KEY_INDEX_ROOT) {
-			for (i = 0; i < OldIndex->Count; i++) {
-				if( !HvMarkCellDirty(Hive, OldIndex->List[i]) ) {
-					return STATUS_NO_LOG_SPACE;
-				}
-			}
-		} 
-	}
+        if (OldIndex->Signature == CM_KEY_INDEX_ROOT)
+        {
+            for (i = 0; i < OldIndex->Count; i++)
+            {
+                if (!HvMarkCellDirty(Hive, OldIndex->List[i]))
+                {
+                    return STATUS_NO_LOG_SPACE;
+                }
+            }
+        }
+    }
 
     ParentKeyCell = OldKeyNode->Parent;
     //
     // now in the parent's spot
     //
-    ParentKeyNode = (PCM_KEY_NODE)HvGetCell(Hive,ParentKeyCell);
-    if( ParentKeyNode == NULL ) {
+    ParentKeyNode = (PCM_KEY_NODE)HvGetCell(Hive, ParentKeyCell);
+    if (ParentKeyNode == NULL)
+    {
         //
         // cannot map view
         //
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    if( !HvMarkCellDirty(Hive, ParentKeyCell) ) {
+    if (!HvMarkCellDirty(Hive, ParentKeyCell))
+    {
         HvReleaseCell(Hive, ParentKeyCell);
         return STATUS_NO_LOG_SPACE;
     }
@@ -4085,7 +4109,8 @@ Return Value:
     HvReleaseCell(Hive, ParentKeyCell);
 
     ParentIndex = (PCM_KEY_INDEX)HvGetCell(Hive, ParentKeyNode->SubKeyLists[Stable]);
-    if( ParentIndex == NULL ) {
+    if (ParentIndex == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -4093,15 +4118,18 @@ Return Value:
     }
     HvReleaseCell(Hive, ParentKeyNode->SubKeyLists[Stable]);
 
-    if(ParentIndex->Signature == CM_KEY_INDEX_ROOT) {
+    if (ParentIndex->Signature == CM_KEY_INDEX_ROOT)
+    {
 
         //
         // step through root, till we find the right leaf
         //
-        for (i = 0; i < ParentIndex->Count; i++) {
+        for (i = 0; i < ParentIndex->Count; i++)
+        {
             LeafCell = ParentIndex->List[i];
             Leaf = (PCM_KEY_INDEX)HvGetCell(Hive, LeafCell);
-            if( Leaf == NULL ) {
+            if (Leaf == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 //
@@ -4109,67 +4137,84 @@ Return Value:
             }
             HvReleaseCell(Hive, LeafCell);
 
-            if ( (Leaf->Signature == CM_KEY_FAST_LEAF) ||
-                 (Leaf->Signature == CM_KEY_HASH_LEAF)
-                ) {
+            if ((Leaf->Signature == CM_KEY_FAST_LEAF) || (Leaf->Signature == CM_KEY_HASH_LEAF))
+            {
                 FastIndex = (PCM_KEY_FAST_INDEX)Leaf;
-                for(j=0;j<FastIndex->Count;j++) {
-                    if( FastIndex->List[j].Cell == OldKeyCell ) {
+                for (j = 0; j < FastIndex->Count; j++)
+                {
+                    if (FastIndex->List[j].Cell == OldKeyCell)
+                    {
                         //
                         // found it! remember the locations we want to update later and break the loop
                         //
-                        if( !HvMarkCellDirty(Hive, LeafCell) ) {
-					        return STATUS_NO_LOG_SPACE;
+                        if (!HvMarkCellDirty(Hive, LeafCell))
+                        {
+                            return STATUS_NO_LOG_SPACE;
                         }
                         ParentIndexLocation = &(FastIndex->List[j].Cell);
                         break;
                     }
                 }
-                if( ParentIndexLocation != NULL ) {
+                if (ParentIndexLocation != NULL)
+                {
                     break;
                 }
-            } else {
-                for(j=0;j<Leaf->Count;j++) {
-                    if( Leaf->List[j] == OldKeyCell ) {
+            }
+            else
+            {
+                for (j = 0; j < Leaf->Count; j++)
+                {
+                    if (Leaf->List[j] == OldKeyCell)
+                    {
                         //
                         // found it! remember the locations we want to update later and break the loop
                         //
-                        if( !HvMarkCellDirty(Hive, LeafCell) ) {
-					        return STATUS_NO_LOG_SPACE;
+                        if (!HvMarkCellDirty(Hive, LeafCell))
+                        {
+                            return STATUS_NO_LOG_SPACE;
                         }
                         ParentIndexLocation = &(Leaf->List[j]);
                         break;
                     }
                 }
-                if( ParentIndexLocation != NULL ) {
+                if (ParentIndexLocation != NULL)
+                {
                     break;
                 }
             }
         }
-    } else if ( (ParentIndex->Signature == CM_KEY_FAST_LEAF) ||
-                (ParentIndex->Signature == CM_KEY_HASH_LEAF)
-        ) {
+    }
+    else if ((ParentIndex->Signature == CM_KEY_FAST_LEAF) || (ParentIndex->Signature == CM_KEY_HASH_LEAF))
+    {
         FastIndex = (PCM_KEY_FAST_INDEX)ParentIndex;
-        for(j=0;j<FastIndex->Count;j++) {
-            if( FastIndex->List[j].Cell == OldKeyCell ) {
+        for (j = 0; j < FastIndex->Count; j++)
+        {
+            if (FastIndex->List[j].Cell == OldKeyCell)
+            {
                 //
                 // found it! remember the locations we want to update later and break the loop
                 //
-                if( !HvMarkCellDirty(Hive, ParentKeyNode->SubKeyLists[Stable]) ) {
-			        return STATUS_NO_LOG_SPACE;
+                if (!HvMarkCellDirty(Hive, ParentKeyNode->SubKeyLists[Stable]))
+                {
+                    return STATUS_NO_LOG_SPACE;
                 }
                 ParentIndexLocation = &(FastIndex->List[j].Cell);
                 break;
             }
         }
-    } else {
-        for(j=0;j<ParentIndex->Count;j++) {
-            if( ParentIndex->List[j] == OldKeyCell ) {
+    }
+    else
+    {
+        for (j = 0; j < ParentIndex->Count; j++)
+        {
+            if (ParentIndex->List[j] == OldKeyCell)
+            {
                 //
                 // found it! remember the locations we want to update later and break the loop
                 //
-                if( !HvMarkCellDirty(Hive, ParentKeyNode->SubKeyLists[Stable]) ) {
-			        return STATUS_NO_LOG_SPACE;
+                if (!HvMarkCellDirty(Hive, ParentKeyNode->SubKeyLists[Stable]))
+                {
+                    return STATUS_NO_LOG_SPACE;
                 }
                 ParentIndexLocation = &(ParentIndex->List[j]);
                 break;
@@ -4178,23 +4223,25 @@ Return Value:
     }
 
     // we should've find it !!!
-    ASSERT( ParentIndexLocation != NULL );
+    ASSERT(ParentIndexLocation != NULL);
 
-    // 
+    //
     // 2. Duplicate the key_node (and values and all cells involved)
     //
-    Status = CmpDuplicateKey(Hive,OldKeyCell,&NewKeyCell);
-    if( !NT_SUCCESS(Status) ) {
+    Status = CmpDuplicateKey(Hive, OldKeyCell, &NewKeyCell);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
     // sanity
-    ASSERT( (NewKeyCell != HCELL_NIL) && (StorageType == (HSTORAGE_TYPE)HvGetCellType(NewKeyCell)));
+    ASSERT((NewKeyCell != HCELL_NIL) && (StorageType == (HSTORAGE_TYPE)HvGetCellType(NewKeyCell)));
 
     //
     // 3. update the parent on each and every son.
     //
-    if( !CmpUpdateParentForEachSon(Hive,NewKeyCell) ) {
+    if (!CmpUpdateParentForEachSon(Hive, NewKeyCell))
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorExit;
     }
@@ -4219,22 +4266,25 @@ Return Value:
     //
     // First the Index; it's already marked dirty (i.e. PINNED)
     //
-	if( OldKeyNode->SubKeyLists[Stable] != HCELL_NIL ) {
-		OldIndex = (PCM_KEY_INDEX)HvGetCell(Hive, OldKeyNode->SubKeyLists[Stable]);
-		ASSERT( OldIndex != NULL );
-		HvReleaseCell(Hive, OldKeyNode->SubKeyLists[Stable]);
-		if(OldIndex->Signature == CM_KEY_INDEX_ROOT) {
-			for (i = 0; i < OldIndex->Count; i++) {
-				HvFreeCell(Hive, OldIndex->List[i]);
-			}
-		} 
-		HvFreeCell(Hive,OldKeyNode->SubKeyLists[Stable]);
-	}
+    if (OldKeyNode->SubKeyLists[Stable] != HCELL_NIL)
+    {
+        OldIndex = (PCM_KEY_INDEX)HvGetCell(Hive, OldKeyNode->SubKeyLists[Stable]);
+        ASSERT(OldIndex != NULL);
+        HvReleaseCell(Hive, OldKeyNode->SubKeyLists[Stable]);
+        if (OldIndex->Signature == CM_KEY_INDEX_ROOT)
+        {
+            for (i = 0; i < OldIndex->Count; i++)
+            {
+                HvFreeCell(Hive, OldIndex->List[i]);
+            }
+        }
+        HvFreeCell(Hive, OldKeyNode->SubKeyLists[Stable]);
+    }
 
-	OldKeyNode->SubKeyCounts[Stable] = 0;
+    OldKeyNode->SubKeyCounts[Stable] = 0;
     OldKeyNode->SubKeyCounts[Volatile] = 0;
 
-    CmpFreeKeyByCell(Hive,OldKeyCell,FALSE);
+    CmpFreeKeyByCell(Hive, OldKeyCell, FALSE);
 
     return STATUS_SUCCESS;
 
@@ -4242,35 +4292,33 @@ ErrorExit:
     //
     // we need to free the new knode allocated
     //
-    NewKeyNode = (PCM_KEY_NODE)HvGetCell(Hive,NewKeyCell);
+    NewKeyNode = (PCM_KEY_NODE)HvGetCell(Hive, NewKeyCell);
     // must be dirty
-    ASSERT( NewKeyNode != NULL );
-	HvReleaseCell(Hive, NewKeyCell);
-	if( NewKeyNode->SubKeyLists[Stable] != HCELL_NIL ) {
-		OldIndex = (PCM_KEY_INDEX)HvGetCell(Hive, NewKeyNode->SubKeyLists[Stable]);
-		ASSERT( OldIndex != NULL );
-		HvReleaseCell(Hive, NewKeyNode->SubKeyLists[Stable]);
-		if(OldIndex->Signature == CM_KEY_INDEX_ROOT) {
-			for (i = 0; i < OldIndex->Count; i++) {
-				HvFreeCell(Hive, OldIndex->List[i]);
-			}
-		} 
-		HvFreeCell(Hive,NewKeyNode->SubKeyLists[Stable]);
-	}
+    ASSERT(NewKeyNode != NULL);
+    HvReleaseCell(Hive, NewKeyCell);
+    if (NewKeyNode->SubKeyLists[Stable] != HCELL_NIL)
+    {
+        OldIndex = (PCM_KEY_INDEX)HvGetCell(Hive, NewKeyNode->SubKeyLists[Stable]);
+        ASSERT(OldIndex != NULL);
+        HvReleaseCell(Hive, NewKeyNode->SubKeyLists[Stable]);
+        if (OldIndex->Signature == CM_KEY_INDEX_ROOT)
+        {
+            for (i = 0; i < OldIndex->Count; i++)
+            {
+                HvFreeCell(Hive, OldIndex->List[i]);
+            }
+        }
+        HvFreeCell(Hive, NewKeyNode->SubKeyLists[Stable]);
+    }
     NewKeyNode->SubKeyCounts[Stable] = 0;
     NewKeyNode->SubKeyCounts[Volatile] = 0;
 
-    CmpFreeKeyByCell(Hive,NewKeyCell,FALSE);
+    CmpFreeKeyByCell(Hive, NewKeyCell, FALSE);
     return Status;
-
 }
 
 NTSTATUS
-CmpDuplicateKey(
-    PHHIVE          Hive,
-    HCELL_INDEX     OldKeyCell,
-    PHCELL_INDEX    NewKeyCell
-    )
+CmpDuplicateKey(PHHIVE Hive, HCELL_INDEX OldKeyCell, PHCELL_INDEX NewKeyCell)
 /*++
 
 Routine Description:
@@ -4290,18 +4338,19 @@ Return Value:
 
 --*/
 {
-    PCM_KEY_NODE			OldKeyNode;
-    PCM_KEY_NODE			NewKeyNode;
-    ULONG					i;
-    PRELEASE_CELL_ROUTINE   TargetReleaseCellRoutine;
+    PCM_KEY_NODE OldKeyNode;
+    PCM_KEY_NODE NewKeyNode;
+    ULONG i;
+    PRELEASE_CELL_ROUTINE TargetReleaseCellRoutine;
 
     PAGED_CODE();
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
-    ASSERT( HvGetCellType(OldKeyCell) == Stable );
-    
-    OldKeyNode = (PCM_KEY_NODE)HvGetCell(Hive,OldKeyCell);
-    if( OldKeyNode == NULL ) {
+    ASSERT(HvGetCellType(OldKeyCell) == Stable);
+
+    OldKeyNode = (PCM_KEY_NODE)HvGetCell(Hive, OldKeyCell);
+    if (OldKeyNode == NULL)
+    {
         //
         // cannot map view
         //
@@ -4309,28 +4358,30 @@ Return Value:
     }
 
     //
-    // since the registry is locked exclusively here, we don't need to lock/release cells 
+    // since the registry is locked exclusively here, we don't need to lock/release cells
     // while copying the trees; So, we just set the release routines to NULL and restore after
     // the copy is complete; this saves some pain
     //
     TargetReleaseCellRoutine = Hive->ReleaseCellRoutine;
     Hive->ReleaseCellRoutine = NULL;
 
-    *NewKeyCell = CmpCopyKeyPartial(Hive,OldKeyCell,Hive,OldKeyNode->Parent,TRUE);
-    Hive->ReleaseCellRoutine  = TargetReleaseCellRoutine;
+    *NewKeyCell = CmpCopyKeyPartial(Hive, OldKeyCell, Hive, OldKeyNode->Parent, TRUE);
+    Hive->ReleaseCellRoutine = TargetReleaseCellRoutine;
 
-    if( *NewKeyCell == HCELL_NIL ) {
-	    HvReleaseCell(Hive, OldKeyCell);
+    if (*NewKeyCell == HCELL_NIL)
+    {
+        HvReleaseCell(Hive, OldKeyCell);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    NewKeyNode = (PCM_KEY_NODE)HvGetCell(Hive,*NewKeyCell);
-    if( NewKeyNode == NULL ) {
+    NewKeyNode = (PCM_KEY_NODE)HvGetCell(Hive, *NewKeyCell);
+    if (NewKeyNode == NULL)
+    {
         //
         // cannot map view
         //
-	    HvReleaseCell(Hive, OldKeyCell);
-        CmpFreeKeyByCell(Hive,*NewKeyCell,FALSE);
+        HvReleaseCell(Hive, OldKeyCell);
+        CmpFreeKeyByCell(Hive, *NewKeyCell, FALSE);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -4338,35 +4389,35 @@ Return Value:
     // now we have the key_cell duplicated. Values and security has also been taken care of
     // Go ahead and duplicate the Index.
     //
-    if( OldKeyNode->SubKeyLists[Stable] != HCELL_NIL ) {
-		NewKeyNode->SubKeyLists[Stable] = CmpDuplicateIndex(Hive,OldKeyNode->SubKeyLists[Stable],Stable);
-		if( NewKeyNode->SubKeyLists[Stable] == HCELL_NIL ) {
-			HvReleaseCell(Hive, OldKeyCell);
-			CmpFreeKeyByCell(Hive,*NewKeyCell,FALSE);
-			HvReleaseCell(Hive, *NewKeyCell);
-			return STATUS_INSUFFICIENT_RESOURCES;
-		}
-	} else {
-		ASSERT( OldKeyNode->SubKeyCounts[Stable] == 0 );
-		NewKeyNode->SubKeyLists[Stable] = HCELL_NIL;
-	}
+    if (OldKeyNode->SubKeyLists[Stable] != HCELL_NIL)
+    {
+        NewKeyNode->SubKeyLists[Stable] = CmpDuplicateIndex(Hive, OldKeyNode->SubKeyLists[Stable], Stable);
+        if (NewKeyNode->SubKeyLists[Stable] == HCELL_NIL)
+        {
+            HvReleaseCell(Hive, OldKeyCell);
+            CmpFreeKeyByCell(Hive, *NewKeyCell, FALSE);
+            HvReleaseCell(Hive, *NewKeyCell);
+            return STATUS_INSUFFICIENT_RESOURCES;
+        }
+    }
+    else
+    {
+        ASSERT(OldKeyNode->SubKeyCounts[Stable] == 0);
+        NewKeyNode->SubKeyLists[Stable] = HCELL_NIL;
+    }
     NewKeyNode->SubKeyCounts[Stable] = OldKeyNode->SubKeyCounts[Stable];
     NewKeyNode->SubKeyLists[Volatile] = OldKeyNode->SubKeyLists[Volatile];
     NewKeyNode->SubKeyCounts[Volatile] = OldKeyNode->SubKeyCounts[Volatile];
 
-	HvReleaseCell(Hive, *NewKeyCell);
+    HvReleaseCell(Hive, *NewKeyCell);
     HvReleaseCell(Hive, OldKeyCell);
     return STATUS_SUCCESS;
-
 }
 
 
 #ifdef WRITE_PROTECTED_REGISTRY_POOL
 
-VOID
-CmpMarkAllBinsReadOnly(
-    PHHIVE      Hive
-    )
+VOID CmpMarkAllBinsReadOnly(PHHIVE Hive)
 /*++
 
 Routine Description:
@@ -4385,9 +4436,9 @@ Return Value:
 --*/
 {
     PHMAP_ENTRY t;
-    PHBIN       Bin;
+    PHBIN Bin;
     HCELL_INDEX p;
-    ULONG       Length;
+    ULONG Length;
 
     //
     // we are only interested in the stable storage
@@ -4399,45 +4450,42 @@ Return Value:
     //
     // for each bin in the space
     //
-    while (p < Length) {
+    while (p < Length)
+    {
         t = HvpGetCellMap(Hive, p);
-        VALIDATE_CELL_MAP(__LINE__,t,Hive,p);
+        VALIDATE_CELL_MAP(__LINE__, t, Hive, p);
 
         Bin = (PHBIN)HBIN_BASE(t->BinAddress);
 
-        if (t->BinAddress & HMAP_NEWALLOC) {
+        if (t->BinAddress & HMAP_NEWALLOC)
+        {
 
             //
             // Mark it as read Only
             //
-            HvpChangeBinAllocation(Bin,TRUE);
+            HvpChangeBinAllocation(Bin, TRUE);
         }
 
         // next one, please
         p = (ULONG)p + Bin->Size;
-
     }
-
 }
 
 #endif //WRITE_PROTECTED_REGISTRY_POOL
 
 ULONG
-CmpCompressKeyWorker(
-    PCM_KEY_CONTROL_BLOCK Current,
-    PVOID                 Context1,
-    PVOID                 Context2
-    )
+CmpCompressKeyWorker(PCM_KEY_CONTROL_BLOCK Current, PVOID Context1, PVOID Context2)
 {
-	PLIST_ENTRY				pListHead;
-	PCM_KCB_REMAP_BLOCK		kcbRemapBlock;
-	//PLIST_ENTRY             AnchorAddr;
+    PLIST_ENTRY pListHead;
+    PCM_KCB_REMAP_BLOCK kcbRemapBlock;
+    //PLIST_ENTRY             AnchorAddr;
 
-    if (Current->KeyHive == Context1) {
-		
-		pListHead = (PLIST_ENTRY)Context2;
-		ASSERT( pListHead );
-/*
+    if (Current->KeyHive == Context1)
+    {
+
+        pListHead = (PLIST_ENTRY)Context2;
+        ASSERT(pListHead);
+        /*
 		//
 		// check if we didn't already recorded this kcb
 		//
@@ -4463,25 +4511,23 @@ CmpCompressKeyWorker(
 		}
 */
 
-		kcbRemapBlock = (PCM_KCB_REMAP_BLOCK)ExAllocatePool(PagedPool, sizeof(CM_KCB_REMAP_BLOCK));
-		if( kcbRemapBlock == NULL ) {
-			return KCB_WORKER_ERROR;
-		}
-		kcbRemapBlock->KeyControlBlock = Current;
-		kcbRemapBlock->NewCellIndex = HCELL_NIL;
-		kcbRemapBlock->OldCellIndex = Current->KeyCell;
-		kcbRemapBlock->ValueCount = 0;
-		kcbRemapBlock->ValueList = HCELL_NIL;
-        InsertTailList(pListHead,&(kcbRemapBlock->RemapList));
-
+        kcbRemapBlock = (PCM_KCB_REMAP_BLOCK)ExAllocatePool(PagedPool, sizeof(CM_KCB_REMAP_BLOCK));
+        if (kcbRemapBlock == NULL)
+        {
+            return KCB_WORKER_ERROR;
+        }
+        kcbRemapBlock->KeyControlBlock = Current;
+        kcbRemapBlock->NewCellIndex = HCELL_NIL;
+        kcbRemapBlock->OldCellIndex = Current->KeyCell;
+        kcbRemapBlock->ValueCount = 0;
+        kcbRemapBlock->ValueList = HCELL_NIL;
+        InsertTailList(pListHead, &(kcbRemapBlock->RemapList));
     }
-    return KCB_WORKER_CONTINUE;   // always keep searching
+    return KCB_WORKER_CONTINUE; // always keep searching
 }
 
 NTSTATUS
-CmCompressKey(
-    IN PHHIVE Hive
-    )
+CmCompressKey(IN PHHIVE Hive)
 /*++
 
 Routine Description:
@@ -4515,24 +4561,25 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                Status = STATUS_SUCCESS;
-    HCELL_INDEX             KeyCell;
-    PCMHIVE                 CmHive;
-    PCM_KCB_REMAP_BLOCK     RemapBlock;
-    PCMHIVE                 NewHive = NULL;
-    HCELL_INDEX             LinkCell;
-    PCM_KEY_NODE            LinkNode;
-    PCM_KNODE_REMAP_BLOCK   KnodeRemapBlock;
-    ULONG                   OldLength;
+    NTSTATUS Status = STATUS_SUCCESS;
+    HCELL_INDEX KeyCell;
+    PCMHIVE CmHive;
+    PCM_KCB_REMAP_BLOCK RemapBlock;
+    PCMHIVE NewHive = NULL;
+    HCELL_INDEX LinkCell;
+    PCM_KEY_NODE LinkNode;
+    PCM_KNODE_REMAP_BLOCK KnodeRemapBlock;
+    ULONG OldLength;
 
-    
-	PAGED_CODE();
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_CM,"CmCompressKey\n"));
+    PAGED_CODE();
+
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_CM, "CmCompressKey\n"));
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
-    if( HvAutoCompressCheck(Hive) == FALSE ) {
+    if (HvAutoCompressCheck(Hive) == FALSE)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -4541,132 +4588,135 @@ Return Value:
     //
     // Make sure the cell passed in is the root cell of the hive.
     //
-    if ( CmHive == CmpMasterHive ) {
+    if (CmHive == CmpMasterHive)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-	//
-	// 0. Get the cells we need to relink the compressed hive
-	//
-	LinkNode = (PCM_KEY_NODE)HvGetCell(Hive,KeyCell);
-	if( LinkNode == NULL ) {
+    //
+    // 0. Get the cells we need to relink the compressed hive
+    //
+    LinkNode = (PCM_KEY_NODE)HvGetCell(Hive, KeyCell);
+    if (LinkNode == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
-	}
-	LinkCell = LinkNode->Parent;
-	HvReleaseCell(Hive,KeyCell);
-	LinkNode = (PCM_KEY_NODE)HvGetCell((PHHIVE)CmpMasterHive,LinkCell);
-	// master storage is paged pool
-	ASSERT(LinkNode != NULL);
-	HvReleaseCell((PHHIVE)CmpMasterHive,LinkCell);
+    }
+    LinkCell = LinkNode->Parent;
+    HvReleaseCell(Hive, KeyCell);
+    LinkNode = (PCM_KEY_NODE)HvGetCell((PHHIVE)CmpMasterHive, LinkCell);
+    // master storage is paged pool
+    ASSERT(LinkNode != NULL);
+    HvReleaseCell((PHHIVE)CmpMasterHive, LinkCell);
 
 
     OldLength = Hive->BaseBlock->Length;
-	//
-	//	1. iterate through the kcb tree and make a list of all the kcbs 
-	//	that need to be changed (their keycell will change during the process)
-	//
-	ASSERT( IsListEmpty(&(CmHive->KcbConvertListHead)) );
-	//
-	// this will kick all kcb with refcount == 0 out of cache, so we can use 
-	// CmpSearchKeyControlBlockTree for recording referenced kcbs
-	//
-	CmpCleanUpKCBCacheTable();
-	//CmpSearchForOpenSubKeys(KeyControlBlock,SearchIfExist);
-    if( !CmpSearchKeyControlBlockTree(CmpCompressKeyWorker,(PVOID)Hive,(PVOID)(&(CmHive->KcbConvertListHead))) ) {
-		Status = STATUS_INSUFFICIENT_RESOURCES;
-		goto Exit;
-	}
+    //
+    //	1. iterate through the kcb tree and make a list of all the kcbs
+    //	that need to be changed (their keycell will change during the process)
+    //
+    ASSERT(IsListEmpty(&(CmHive->KcbConvertListHead)));
+    //
+    // this will kick all kcb with refcount == 0 out of cache, so we can use
+    // CmpSearchKeyControlBlockTree for recording referenced kcbs
+    //
+    CmpCleanUpKCBCacheTable();
+    //CmpSearchForOpenSubKeys(KeyControlBlock,SearchIfExist);
+    if (!CmpSearchKeyControlBlockTree(CmpCompressKeyWorker, (PVOID)Hive, (PVOID)(&(CmHive->KcbConvertListHead))))
+    {
+        Status = STATUS_INSUFFICIENT_RESOURCES;
+        goto Exit;
+    }
 
-	//
-	// 2. iterate through the cache and compute an array of security cells.
-	// We'll need it to map security cells into the new hive.
-	//
-	if( !CmpBuildSecurityCellMappingArray(CmHive) ) {
-		Status = STATUS_INSUFFICIENT_RESOURCES;
-		goto Exit;
-	}
+    //
+    // 2. iterate through the cache and compute an array of security cells.
+    // We'll need it to map security cells into the new hive.
+    //
+    if (!CmpBuildSecurityCellMappingArray(CmHive))
+    {
+        Status = STATUS_INSUFFICIENT_RESOURCES;
+        goto Exit;
+    }
 
-	//
-	// 3. Save the hive into a temporary hive , preserving
-	// the volatile info in keynodes and updating the cell mappings.
-	//
-	Status = CmpShiftHiveFreeBins(CmHive,&NewHive);
-	if( !NT_SUCCESS(Status) ) {
-		goto Exit;
-	}
+    //
+    // 3. Save the hive into a temporary hive , preserving
+    // the volatile info in keynodes and updating the cell mappings.
+    //
+    Status = CmpShiftHiveFreeBins(CmHive, &NewHive);
+    if (!NT_SUCCESS(Status))
+    {
+        goto Exit;
+    }
 
-	//
-	// 5. Dump temporary (compressed) hive over to the old file.
-	//
-	Status = CmpOverwriteHive(CmHive,NewHive,LinkCell);
-    if (!NT_SUCCESS(Status)) {
+    //
+    // 5. Dump temporary (compressed) hive over to the old file.
+    //
+    Status = CmpOverwriteHive(CmHive, NewHive, LinkCell);
+    if (!NT_SUCCESS(Status))
+    {
         goto Exit;
     }
 
 
-	//
-	// From this point on, we WILL NOT FAIL!
-	//
+    //
+    // From this point on, we WILL NOT FAIL!
+    //
 
-	//
-	// get the root node and link it into the master storage
-	//
-	LinkNode->ChildHiveReference.KeyCell = NewHive->Hive.BaseBlock->RootCell;
+    //
+    // get the root node and link it into the master storage
+    //
+    LinkNode->ChildHiveReference.KeyCell = NewHive->Hive.BaseBlock->RootCell;
 
-	//
-	// 6. Switch hive data from the compressed one to the existing one and update
-	// the kcb KeyCell and security mapping
-	// This should better NOT fail!!! If it does, we are doomed, as we have partial
-	// data => bugcheck
-	//
-	CmpSwitchStorageAndRebuildMappings(CmHive,NewHive);
+    //
+    // 6. Switch hive data from the compressed one to the existing one and update
+    // the kcb KeyCell and security mapping
+    // This should better NOT fail!!! If it does, we are doomed, as we have partial
+    // data => bugcheck
+    //
+    CmpSwitchStorageAndRebuildMappings(CmHive, NewHive);
 
-	
-	//
-	// 7. Invalidate the map and drop paged bins. If system hive, check for the hysteresis callback.
-	//
+
+    //
+    // 7. Invalidate the map and drop paged bins. If system hive, check for the hysteresis callback.
+    //
     HvpDropAllPagedBins(&(CmHive->Hive));
-    if( OldLength < CmHive->Hive.BaseBlock->Length ) {
-        CmpUpdateSystemHiveHysteresis(&(CmHive->Hive),CmHive->Hive.BaseBlock->Length,OldLength);
+    if (OldLength < CmHive->Hive.BaseBlock->Length)
+    {
+        CmpUpdateSystemHiveHysteresis(&(CmHive->Hive), CmHive->Hive.BaseBlock->Length, OldLength);
     }
 
 
 Exit:
 
-	//
-	// 8. Free storage for the new hive (OK if we fail)
-	//
-	if( NewHive != NULL ) { 
-		CmpDestroyTemporaryHive(NewHive);	
-	}
+    //
+    // 8. Free storage for the new hive (OK if we fail)
+    //
+    if (NewHive != NULL)
+    {
+        CmpDestroyTemporaryHive(NewHive);
+    }
 
-	if( CmHive->CellRemapArray != NULL ) {
-		ExFreePool(CmHive->CellRemapArray);
-		CmHive->CellRemapArray = NULL;
-	}
-	//
-	// remove all remap blocks and free them
-	//
-	while (IsListEmpty(&(CmHive->KcbConvertListHead)) == FALSE) {
+    if (CmHive->CellRemapArray != NULL)
+    {
+        ExFreePool(CmHive->CellRemapArray);
+        CmHive->CellRemapArray = NULL;
+    }
+    //
+    // remove all remap blocks and free them
+    //
+    while (IsListEmpty(&(CmHive->KcbConvertListHead)) == FALSE)
+    {
         RemapBlock = (PCM_KCB_REMAP_BLOCK)RemoveHeadList(&(CmHive->KcbConvertListHead));
-        RemapBlock = CONTAINING_RECORD(
-                        RemapBlock,
-                        CM_KCB_REMAP_BLOCK,
-                        RemapList
-                        );
-		ExFreePool(RemapBlock);
-	}
-	while (IsListEmpty(&(CmHive->KnodeConvertListHead)) == FALSE) {
+        RemapBlock = CONTAINING_RECORD(RemapBlock, CM_KCB_REMAP_BLOCK, RemapList);
+        ExFreePool(RemapBlock);
+    }
+    while (IsListEmpty(&(CmHive->KnodeConvertListHead)) == FALSE)
+    {
         KnodeRemapBlock = (PCM_KNODE_REMAP_BLOCK)RemoveHeadList(&(CmHive->KnodeConvertListHead));
-        KnodeRemapBlock = CONTAINING_RECORD(
-                            KnodeRemapBlock,
-                            CM_KNODE_REMAP_BLOCK,
-                            RemapList
-                        );
-		ExFreePool(KnodeRemapBlock);
-	}
+        KnodeRemapBlock = CONTAINING_RECORD(KnodeRemapBlock, CM_KNODE_REMAP_BLOCK, RemapList);
+        ExFreePool(KnodeRemapBlock);
+    }
 
-	return Status;
+    return Status;
 }
 
 NTSTATUS
@@ -4692,26 +4742,27 @@ Return Value:
     CmpLockKCBTreeExclusive();
 
     ASSERT_KCB(KeyControlBlock);
-    if( KeyControlBlock->Delete ) {
+    if (KeyControlBlock->Delete)
+    {
         CmpUnlockKCBTree();
         return STATUS_KEY_DELETED;
     }
     //
     // sanity check in case we are called twice
     //
-    ASSERT( ((KeyControlBlock->ExtFlags&CM_KCB_READ_ONLY_KEY) && (KeyControlBlock->ExtFlags&CM_KCB_NO_DELAY_CLOSE)) ||
-            (!(KeyControlBlock->ExtFlags&CM_KCB_READ_ONLY_KEY))
-        );
+    ASSERT(
+        ((KeyControlBlock->ExtFlags & CM_KCB_READ_ONLY_KEY) && (KeyControlBlock->ExtFlags & CM_KCB_NO_DELAY_CLOSE)) ||
+        (!(KeyControlBlock->ExtFlags & CM_KCB_READ_ONLY_KEY)));
 
     //
     // tag the kcb as read-only; also make it no-delay close so it can revert to the normal state after all handles are closed.
     //
-    KeyControlBlock->ExtFlags |= (CM_KCB_READ_ONLY_KEY|CM_KCB_NO_DELAY_CLOSE);
+    KeyControlBlock->ExtFlags |= (CM_KCB_READ_ONLY_KEY | CM_KCB_NO_DELAY_CLOSE);
 
     //
     // add an artificial refcount on this kcb. This will keep the kcb (and the read only flag set in memory for as long as the system is up)
     //
-    InterlockedIncrement( (PLONG)&KeyControlBlock->RefCount );
+    InterlockedIncrement((PLONG)&KeyControlBlock->RefCount);
 
     CmpUnlockKCBTree();
 
@@ -4720,12 +4771,8 @@ Return Value:
 
 
 BOOLEAN
-CmpCompareNewValueDataAgainstKCBCache(  PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-                                        PUNICODE_STRING ValueName,
-                                        ULONG Type,
-                                        PVOID Data,
-                                        ULONG DataSize
-                                        )
+CmpCompareNewValueDataAgainstKCBCache(PCM_KEY_CONTROL_BLOCK KeyControlBlock, PUNICODE_STRING ValueName, ULONG Type,
+                                      PVOID Data, ULONG DataSize)
 
 /*++
 
@@ -4756,31 +4803,33 @@ Return Value:
 
 --*/
 {
-    PCM_KEY_VALUE       Value;
-    ULONG               Index;
-    BOOLEAN             ValueCached;
-    PPCM_CACHED_VALUE   ContainingList;
-    HCELL_INDEX         ValueDataCellToRelease = HCELL_NIL;
-    BOOLEAN             Result = FALSE;
-    PUCHAR              datapointer;
-    BOOLEAN             BufferAllocated = FALSE;
-    HCELL_INDEX         CellToRelease = HCELL_NIL;
-    ULONG               compareSize;
-    ULONG               realsize;
-    BOOLEAN             small;
+    PCM_KEY_VALUE Value;
+    ULONG Index;
+    BOOLEAN ValueCached;
+    PPCM_CACHED_VALUE ContainingList;
+    HCELL_INDEX ValueDataCellToRelease = HCELL_NIL;
+    BOOLEAN Result = FALSE;
+    PUCHAR datapointer;
+    BOOLEAN BufferAllocated = FALSE;
+    HCELL_INDEX CellToRelease = HCELL_NIL;
+    ULONG compareSize;
+    ULONG realsize;
+    BOOLEAN small;
 
     PAGED_CODE();
 
     BEGIN_KCB_LOCK_GUARD;
     CmpLockKCBTreeExclusive();
 
-    if( KeyControlBlock->Flags & KEY_SYM_LINK ) {
+    if (KeyControlBlock->Flags & KEY_SYM_LINK)
+    {
         //
         // need to rebuild the value cache, so we could runt the same code
         //
-        PCM_KEY_NODE    Node = (PCM_KEY_NODE)HvGetCell(KeyControlBlock->KeyHive,KeyControlBlock->KeyCell);
+        PCM_KEY_NODE Node = (PCM_KEY_NODE)HvGetCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
 
-        if( Node == NULL ) {
+        if (Node == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             //
@@ -4788,54 +4837,59 @@ Return Value:
         }
 
         CmpCleanUpKcbValueCache(KeyControlBlock);
-        CmpSetUpKcbValueCache(KeyControlBlock,Node->ValueList.Count,Node->ValueList.List);
+        CmpSetUpKcbValueCache(KeyControlBlock, Node->ValueList.Count, Node->ValueList.List);
 
-        HvReleaseCell(KeyControlBlock->KeyHive,KeyControlBlock->KeyCell);
+        HvReleaseCell(KeyControlBlock->KeyHive, KeyControlBlock->KeyCell);
     }
 
-    Value = CmpFindValueByNameFromCache(KeyControlBlock->KeyHive,
-                                        &(KeyControlBlock->ValueCache),
-                                        ValueName,
-                                        &ContainingList,
-                                        &Index,
-                                        &ValueCached,
-                                        &ValueDataCellToRelease
-                                        );
+    Value = CmpFindValueByNameFromCache(KeyControlBlock->KeyHive, &(KeyControlBlock->ValueCache), ValueName,
+                                        &ContainingList, &Index, &ValueCached, &ValueDataCellToRelease);
 
-    if(Value) {
-        if( (Type == Value->Type) && (DataSize == (Value->DataLength & ~CM_KEY_VALUE_SPECIAL_SIZE)) ) {
-        
+    if (Value)
+    {
+        if ((Type == Value->Type) && (DataSize == (Value->DataLength & ~CM_KEY_VALUE_SPECIAL_SIZE)))
+        {
+
             small = CmpIsHKeyValueSmall(realsize, Value->DataLength);
-            if (small == TRUE) {
+            if (small == TRUE)
+            {
                 datapointer = (PUCHAR)(&(Value->Data));
-            } else if( CmpGetValueDataFromCache(KeyControlBlock->KeyHive, ContainingList,(PCELL_DATA)Value, 
-                                                ValueCached,&datapointer,&BufferAllocated,&CellToRelease) == FALSE ){
+            }
+            else if (CmpGetValueDataFromCache(KeyControlBlock->KeyHive, ContainingList, (PCELL_DATA)Value, ValueCached,
+                                              &datapointer, &BufferAllocated, &CellToRelease) == FALSE)
+            {
                 //
                 // we couldn't map view for cell; treat it as insufficient resources problem
                 //
-                ASSERT( datapointer == NULL );
-                ASSERT( BufferAllocated == FALSE );
+                ASSERT(datapointer == NULL);
+                ASSERT(BufferAllocated == FALSE);
                 goto Exit;
-            } 
+            }
             //
             // compare data
             //
-            if (DataSize > 0) {
+            if (DataSize > 0)
+            {
 
-                try {
-                    compareSize = (ULONG)RtlCompareMemory ((PVOID)datapointer,Data,(DataSize & ~CM_KEY_VALUE_SPECIAL_SIZE));
-                } except (EXCEPTION_EXECUTE_HANDLER) {
+                try
+                {
+                    compareSize =
+                        (ULONG)RtlCompareMemory((PVOID)datapointer, Data, (DataSize & ~CM_KEY_VALUE_SPECIAL_SIZE));
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     goto Exit;
                 }
-
-            } else {
+            }
+            else
+            {
                 compareSize = 0;
             }
 
-            if (compareSize == DataSize) {
+            if (compareSize == DataSize)
+            {
                 Result = TRUE;
             }
-
         }
     }
 
@@ -4844,41 +4898,40 @@ Exit:
     CmpUnlockKCBTree();
     END_KCB_LOCK_GUARD;
 
-    if(ValueDataCellToRelease != HCELL_NIL) {
-        HvReleaseCell(KeyControlBlock->KeyHive,ValueDataCellToRelease);
+    if (ValueDataCellToRelease != HCELL_NIL)
+    {
+        HvReleaseCell(KeyControlBlock->KeyHive, ValueDataCellToRelease);
     }
-    if( BufferAllocated == TRUE ) {
+    if (BufferAllocated == TRUE)
+    {
         ExFreePool(datapointer);
     }
-    if(CellToRelease != HCELL_NIL) {
-        HvReleaseCell(KeyControlBlock->KeyHive,CellToRelease);
+    if (CellToRelease != HCELL_NIL)
+    {
+        HvReleaseCell(KeyControlBlock->KeyHive, CellToRelease);
     }
-    
+
     return Result;
 }
 
 NTSTATUS
-static
-__forceinline
-CmpCheckReplaceHive(    IN PHHIVE           Hive,
-                        OUT PHCELL_INDEX    Key
-                    )
+static __forceinline CmpCheckReplaceHive(IN PHHIVE Hive, OUT PHCELL_INDEX Key)
 {
-    HCELL_INDEX             RootCell;
-    UNICODE_STRING          Name;
-    NTSTATUS                Status = STATUS_SUCCESS;
-    PRELEASE_CELL_ROUTINE   TargetReleaseCellRoutine;
-    WCHAR                   Buffer[4];
+    HCELL_INDEX RootCell;
+    UNICODE_STRING Name;
+    NTSTATUS Status = STATUS_SUCCESS;
+    PRELEASE_CELL_ROUTINE TargetReleaseCellRoutine;
+    WCHAR Buffer[4];
 
     PAGED_CODE();
-    
+
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
     //
     // disable refcounting
     //
     TargetReleaseCellRoutine = Hive->ReleaseCellRoutine;
     Hive->ReleaseCellRoutine = NULL;
-    
+
     Buffer[3] = 0;
     *Key = HCELL_NIL;
     Buffer[1] = (WCHAR)'P';
@@ -4886,31 +4939,33 @@ CmpCheckReplaceHive(    IN PHHIVE           Hive,
     RootCell = Hive->BaseBlock->RootCell;
     Buffer[2] = (WCHAR)'A';
 
-    if( RootCell == HCELL_NIL ) {
+    if (RootCell == HCELL_NIL)
+    {
         //
         // could not find root cell. Bogus.
         //
-        Status =  STATUS_REGISTRY_CORRUPT;
+        Status = STATUS_REGISTRY_CORRUPT;
         goto Exit;
     }
     Buffer[0] = (WCHAR)'W';
 
     RtlInitUnicodeString(&Name, Buffer);
-    RootCell = CmpFindSubKeyByName(Hive,
-                                   (PCM_KEY_NODE)HvGetCell(Hive,RootCell),
-                                   &Name);
+    RootCell = CmpFindSubKeyByName(Hive, (PCM_KEY_NODE)HvGetCell(Hive, RootCell), &Name);
 
 
-    if( RootCell != HCELL_NIL ) {
+    if (RootCell != HCELL_NIL)
+    {
         //
         // found it.
         //
         *Key = RootCell;
-    } else {
+    }
+    else
+    {
         //
         // WPA key should be present; it's created by GUI mode.
         //
-        Status =  STATUS_REGISTRY_CORRUPT;
+        Status = STATUS_REGISTRY_CORRUPT;
         goto Exit;
     }
 

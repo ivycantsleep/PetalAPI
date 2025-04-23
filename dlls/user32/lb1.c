@@ -29,19 +29,14 @@ LOOKASIDE ListboxLookaside;
 * 16-Apr-1992 beng      Added LB_SETCOUNT
 \***************************************************************************/
 
-LRESULT APIENTRY ListBoxWndProcWorker(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    DWORD fAnsi)
+LRESULT APIENTRY ListBoxWndProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi)
 {
     HWND hwnd = HWq(pwnd);
     PAINTSTRUCT ps;
-    HDC         hdc;
-    LPRECT      lprc;
-    PLBIV plb;    /* List Box Instance Variable */
-    INT iSel;     /* Index of selected item */
+    HDC hdc;
+    LPRECT lprc;
+    PLBIV plb; /* List Box Instance Variable */
+    INT iSel;  /* Index of selected item */
     DWORD dw;
     TL tlpwndParent;
     UINT wFlags;
@@ -64,8 +59,10 @@ LRESULT APIENTRY ListBoxWndProcWorker(
     /*
      * Handle ANSI translations of input parameters
      */
-    if (fAnsi) {
-        switch (message) {
+    if (fAnsi)
+    {
+        switch (message)
+        {
         case LB_ADDSTRING:
         case LB_ADDSTRINGUPPER:
         case LB_ADDSTRINGLOWER:
@@ -75,13 +72,15 @@ LRESULT APIENTRY ListBoxWndProcWorker(
         case LB_INSERTSTRINGUPPER:
         case LB_INSERTSTRINGLOWER:
         case LB_SELECTSTRING:
-            if (!plb->fHasStrings) {
+            if (!plb->fHasStrings)
+            {
                 break;
             }
             // Fall through...
         case LB_ADDFILE:
         case LB_DIR:
-            if (lParam) {
+            if (lParam)
+            {
                 if (!MBToWCS((LPSTR)lParam, -1, &lpwsz, -1, TRUE))
                     return LB_ERR;
             }
@@ -89,29 +88,33 @@ LRESULT APIENTRY ListBoxWndProcWorker(
         default:
             break;
         }
-        if (lpwsz) {
+        if (lpwsz)
+        {
             lParam = (LPARAM)lpwsz;
         }
     }
 
-    switch (message) {
+    switch (message)
+    {
 
-    case LB_GETTOPINDEX:        // Return index of top item displayed.
+    case LB_GETTOPINDEX: // Return index of top item displayed.
         return plb->iTop;
 
     case LB_SETTOPINDEX:
-        if (wParam && ((INT)wParam < 0 || (INT)wParam >= plb->cMac)) {
+        if (wParam && ((INT)wParam < 0 || (INT)wParam >= plb->cMac))
+        {
             RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
             return LB_ERR;
         }
-        if (plb->cMac) {
+        if (plb->cMac)
+        {
             xxxNewITop(plb, (INT)wParam);
         }
         break;
 
     case WM_STYLECHANGED:
         plb->fRtoLReading = (TestWF(pwnd, WEFRTLREADING) != 0);
-        plb->fRightAlign  = (TestWF(pwnd, WEFRIGHT) != 0);
+        plb->fRightAlign = (TestWF(pwnd, WEFRIGHT) != 0);
         xxxCheckRedraw(plb, FALSE, 0);
         break;
 
@@ -138,8 +141,7 @@ LRESULT APIENTRY ListBoxWndProcWorker(
 
     case WM_ERASEBKGND:
         ThreadLock(plb->spwndParent, &tlpwndParent);
-        FillWindow(HW(plb->spwndParent), hwnd, (HDC)wParam,
-                (HBRUSH)CTLCOLOR_LISTBOX);
+        FillWindow(HW(plb->spwndParent), hwnd, (HDC)wParam, (HBRUSH)CTLCOLOR_LISTBOX);
         ThreadUnlock(&tlpwndParent);
         return TRUE;
 
@@ -148,7 +150,8 @@ LRESULT APIENTRY ListBoxWndProcWorker(
         break;
 
     case WM_TIMER:
-        if (wParam == IDSYS_LBSEARCH) {
+        if (wParam == IDSYS_LBSEARCH)
+        {
             plb->iTypeSearch = 0;
             NtUserKillTimer(hwnd, IDSYS_LBSEARCH);
             xxxInvertLBItem(plb, plb->iSel, TRUE);
@@ -166,23 +169,23 @@ LRESULT APIENTRY ListBoxWndProcWorker(
     case WM_LBUTTONDOWN:
     case WM_LBUTTONUP:
     case WM_LBUTTONDBLCLK:
-        {
-            POINT pt;
+    {
+        POINT pt;
 
-            POINTSTOPOINT(pt, lParam);
-            xxxTrackMouse(plb, message, pt);
-        }
-        break;
+        POINTSTOPOINT(pt, lParam);
+        xxxTrackMouse(plb, message, pt);
+    }
+    break;
 
     case WM_MBUTTONDOWN:
         EnterReaderModeHelper(hwnd);
         break;
 
     case WM_CAPTURECHANGED:
-            //
-            // Note that this message should be handled only on unexpected
-            // capture changes currently.
-            //
+        //
+        // Note that this message should be handled only on unexpected
+        // capture changes currently.
+        //
         UserAssert(TestWF(pwnd, WFWIN40COMPAT));
         if (plb->fCaptured)
             xxxLBButtonUp(plb, LBUP_NOTIFY);
@@ -196,14 +199,17 @@ LRESULT APIENTRY ListBoxWndProcWorker(
             break;
 
         plb->fCaptured = FALSE;
-        if (wParam) {
+        if (wParam)
+        {
             POINT pt;
 
             POINTSTOPOINT(pt, lParam);
 
             _ScreenToClient(pwnd, &pt);
             xxxTrackMouse(plb, WM_LBUTTONDOWN, pt);
-        } else {
+        }
+        else
+        {
             NtUserSetCapture(hwnd);
             plb->fCaptured = TRUE;
             plb->iLastSelection = plb->iSel;
@@ -213,19 +219,21 @@ LRESULT APIENTRY ListBoxWndProcWorker(
     case LBCB_ENDTRACK:
         // Kill capture, tracking, etc.
         if (plb->fCaptured)
-            xxxLBButtonUp(plb, LBUP_RELEASECAPTURE | (wParam ? LBUP_SELCHANGE :
-                LBUP_RESETSELECTION));
+            xxxLBButtonUp(plb, LBUP_RELEASECAPTURE | (wParam ? LBUP_SELCHANGE : LBUP_RESETSELECTION));
         break;
 
     case WM_PRINTCLIENT:
-        xxxLBPaint(plb, (HDC) wParam, NULL);
+        xxxLBPaint(plb, (HDC)wParam, NULL);
         break;
 
     case WM_PAINT:
-        if (wParam) {
-            hdc = (HDC) wParam;
+        if (wParam)
+        {
+            hdc = (HDC)wParam;
             lprc = NULL;
-        } else {
+        }
+        else
+        {
             hdc = NtUserBeginPaint(hwnd, &ps);
             lprc = &(ps.rcPaint);
         }
@@ -243,7 +251,7 @@ LRESULT APIENTRY ListBoxWndProcWorker(
         break;
 
     case WM_SETFOCUS:
-// DISABLED in Win 3.1        xxxUpdateWindow(pwnd);
+        // DISABLED in Win 3.1        xxxUpdateWindow(pwnd);
         CaretCreate(plb);
         xxxLBSetCaret(plb, TRUE);
         xxxNotifyOwner(plb, LBN_SETFOCUS);
@@ -252,7 +260,7 @@ LRESULT APIENTRY ListBoxWndProcWorker(
          * We need to send this event even if the listbox isn't visible. See
          * bug #88548.
          */
-         LBEvent(plb, EVENT_OBJECT_FOCUS, plb->iSelBase);
+        LBEvent(plb, EVENT_OBJECT_FOCUS, plb->iSelBase);
         break;
 
     case WM_KILLFOCUS:
@@ -264,85 +272,87 @@ LRESULT APIENTRY ListBoxWndProcWorker(
         xxxLBSetCaret(plb, FALSE);
         xxxCaretDestroy(plb);
         xxxNotifyOwner(plb, LBN_KILLFOCUS);
-        if (plb->iTypeSearch) {
+        if (plb->iTypeSearch)
+        {
             plb->iTypeSearch = 0;
             NtUserKillTimer(hwnd, IDSYS_LBSEARCH);
         }
-        if (plb->pszTypeSearch) {
+        if (plb->pszTypeSearch)
+        {
             UserLocalFree(plb->pszTypeSearch);
             plb->pszTypeSearch = NULL;
         }
         break;
 
     case WM_MOUSEWHEEL:
-        {
-            int     cDetants;
-            int     cPage;
-            int     cLines;
-            RECT    rc;
-            int     windowWidth;
-            int     cPos;
+    {
+        int cDetants;
+        int cPage;
+        int cLines;
+        RECT rc;
+        int windowWidth;
+        int cPos;
 
-            /*
+        /*
              * Don't handle zoom and datazoom.
              */
-            if (wParam & (MK_SHIFT | MK_CONTROL)) {
-                goto CallDWP;
+        if (wParam & (MK_SHIFT | MK_CONTROL))
+        {
+            goto CallDWP;
+        }
+
+        lReturn = 1;
+        gcWheelDelta -= (short)HIWORD(wParam);
+        cDetants = gcWheelDelta / WHEEL_DELTA;
+        if (cDetants != 0 && gpsi->ucWheelScrollLines > 0 && (pwnd->style & (WS_VSCROLL | WS_HSCROLL)))
+        {
+
+            gcWheelDelta = gcWheelDelta % WHEEL_DELTA;
+
+            if (pwnd->style & WS_VSCROLL)
+            {
+                cPage = max(1, (plb->cItemFullMax - 1));
+                cLines = cDetants * (int)min((UINT)cPage, gpsi->ucWheelScrollLines);
+
+                cPos = max(0, min(plb->iTop + cLines, plb->cMac - 1));
+                if (cPos != plb->iTop)
+                {
+                    xxxLBoxCtlScroll(plb, SB_THUMBPOSITION, cPos);
+                    xxxLBoxCtlScroll(plb, SB_ENDSCROLL, 0);
+                }
             }
+            else if (plb->fMultiColumn)
+            {
+                cPage = max(1, plb->numberOfColumns);
+                cLines = cDetants * (int)min((UINT)cPage, gpsi->ucWheelScrollLines);
+                cPos = max(0, min((plb->iTop / plb->itemsPerColumn) + cLines,
+                                  plb->cMac - 1 - ((plb->cMac - 1) % plb->itemsPerColumn)));
 
-            lReturn = 1;
-            gcWheelDelta -= (short) HIWORD(wParam);
-            cDetants = gcWheelDelta / WHEEL_DELTA;
-            if (    cDetants != 0 &&
-                    gpsi->ucWheelScrollLines > 0 &&
-                    (pwnd->style & (WS_VSCROLL | WS_HSCROLL))) {
+                if (cPos != plb->iTop)
+                {
+                    xxxLBoxCtlHScrollMultiColumn(plb, SB_THUMBPOSITION, cPos);
+                    xxxLBoxCtlHScrollMultiColumn(plb, SB_ENDSCROLL, 0);
+                }
+            }
+            else
+            {
+                _GetClientRect(plb->spwnd, &rc);
+                windowWidth = rc.right;
+                cPage = max(plb->cxChar, (windowWidth / 3) * 2) / plb->cxChar;
 
-                gcWheelDelta = gcWheelDelta % WHEEL_DELTA;
+                cLines = cDetants * (int)min((UINT)cPage, gpsi->ucWheelScrollLines);
 
-                if (pwnd->style & WS_VSCROLL) {
-                    cPage = max(1, (plb->cItemFullMax - 1));
-                    cLines = cDetants *
-                            (int) min((UINT) cPage, gpsi->ucWheelScrollLines);
+                cPos = max(0, min(plb->xOrigin + (cLines * plb->cxChar), plb->maxWidth));
 
-                    cPos = max(0, min(plb->iTop + cLines, plb->cMac - 1));
-                    if (cPos != plb->iTop) {
-                        xxxLBoxCtlScroll(plb, SB_THUMBPOSITION, cPos);
-                        xxxLBoxCtlScroll(plb, SB_ENDSCROLL, 0);
-                    }
-                } else if (plb->fMultiColumn) {
-                    cPage = max(1, plb->numberOfColumns);
-                    cLines = cDetants * (int) min((UINT) cPage, gpsi->ucWheelScrollLines);
-                    cPos = max(
-                            0,
-                            min((plb->iTop / plb->itemsPerColumn) + cLines,
-                                plb->cMac - 1 - ((plb->cMac - 1) % plb->itemsPerColumn)));
-
-                    if (cPos != plb->iTop) {
-                        xxxLBoxCtlHScrollMultiColumn(plb, SB_THUMBPOSITION, cPos);
-                        xxxLBoxCtlHScrollMultiColumn(plb, SB_ENDSCROLL, 0);
-                    }
-                } else {
-                    _GetClientRect(plb->spwnd, &rc);
-                    windowWidth = rc.right;
-                    cPage = max(plb->cxChar, (windowWidth / 3) * 2) /
-                            plb->cxChar;
-
-                    cLines = cDetants *
-                            (int) min((UINT) cPage, gpsi->ucWheelScrollLines);
-
-                    cPos = max(
-                            0,
-                            min(plb->xOrigin + (cLines * plb->cxChar),
-                                plb->maxWidth));
-
-                    if (cPos != plb->xOrigin) {
-                        xxxLBoxCtlHScroll(plb, SB_THUMBPOSITION, cPos);
-                        xxxLBoxCtlHScroll(plb, SB_ENDSCROLL, 0);
-                    }
+                if (cPos != plb->xOrigin)
+                {
+                    xxxLBoxCtlHScroll(plb, SB_THUMBPOSITION, cPos);
+                    xxxLBoxCtlHScroll(plb, SB_ENDSCROLL, 0);
                 }
             }
         }
-        break;
+    }
+    break;
 
     case WM_VSCROLL:
         xxxLBoxCtlScroll(plb, LOWORD(wParam), HIWORD(wParam));
@@ -356,7 +366,7 @@ LRESULT APIENTRY ListBoxWndProcWorker(
         return DLGC_WANTARROWS | DLGC_WANTCHARS;
 
     case WM_CREATE:
-        return xxxLBCreate(plb, pwnd, (LPCREATESTRUCT) lParam);
+        return xxxLBCreate(plb, pwnd, (LPCREATESTRUCT)lParam);
 
     case WM_SETREDRAW:
 
@@ -404,7 +414,7 @@ LRESULT APIENTRY ListBoxWndProcWorker(
         return LBGetItemRect(plb, (INT)wParam, (LPRECT)lParam);
 
     case LB_GETITEMDATA:
-        return LBGetItemData(plb, (INT)wParam);  // wParam = item index
+        return LBGetItemData(plb, (INT)wParam); // wParam = item index
 
     case LB_SETITEMDATA:
 
@@ -435,8 +445,8 @@ LRESULT APIENTRY ListBoxWndProcWorker(
 
     case LB_INSERTSTRING:
         wFlags = 0;
-CallInsertItem:
-        lReturn = ((LRESULT) xxxLBInsertItem(plb, (LPWSTR) lParam, (int) wParam, wFlags));
+    CallInsertItem:
+        lReturn = ((LRESULT)xxxLBInsertItem(plb, (LPWSTR)lParam, (int)wParam, wFlags));
         break;
 
     case LB_INITSTORAGE:
@@ -464,27 +474,29 @@ CallInsertItem:
         /*
          * If window obscured, update so invert will work correctly
          */
-// DISABLED in Win 3.1        xxxUpdateWindow(pwnd);
+        // DISABLED in Win 3.1        xxxUpdateWindow(pwnd);
         return xxxLBSetCurSel(plb, (INT)wParam);
 
     case LB_GETSEL:
-        if (wParam >= (UINT) plb->cMac)
-                return((LRESULT) LB_ERR);
+        if (wParam >= (UINT)plb->cMac)
+            return ((LRESULT)LB_ERR);
 
         return IsSelected(plb, (INT)wParam, SELONLY);
 
     case LB_GETCURSEL:
-        if (plb->wMultiple == SINGLESEL) {
+        if (plb->wMultiple == SINGLESEL)
+        {
             return plb->iSel;
         }
         return plb->iSelBase;
 
     case LB_SELITEMRANGE:
-        if (plb->wMultiple == SINGLESEL) {
+        if (plb->wMultiple == SINGLESEL)
+        {
             /*
              * Can't select a range if only single selections are enabled
              */
-            RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE,"Invalid index passed to LB_SELITEMRANGE");
+            RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "Invalid index passed to LB_SELITEMRANGE");
             return LB_ERR;
         }
 
@@ -492,15 +504,20 @@ CallInsertItem:
         break;
 
     case LB_SELITEMRANGEEX:
-        if (plb->wMultiple == SINGLESEL) {
+        if (plb->wMultiple == SINGLESEL)
+        {
             /*
              * Can't select a range if only single selections are enabled
              */
-            RIPERR0(ERROR_INVALID_LB_MESSAGE, RIP_VERBOSE,"LB_SELITEMRANGEEX:Can't select a range if only single selections are enabled");
+            RIPERR0(ERROR_INVALID_LB_MESSAGE, RIP_VERBOSE,
+                    "LB_SELITEMRANGEEX:Can't select a range if only single selections are enabled");
             return LB_ERR;
-        } else {
+        }
+        else
+        {
             BOOL fHighlight = ((DWORD)lParam > (DWORD)wParam);
-            if (fHighlight == FALSE) {
+            if (fHighlight == FALSE)
+            {
                 ULONG_PTR temp = lParam;
                 lParam = wParam;
                 wParam = temp;
@@ -510,7 +527,8 @@ CallInsertItem:
         break;
 
     case LB_GETTEXTLEN:
-        if (lParam != 0) {
+        if (lParam != 0)
+        {
             RIPMSG1(RIP_WARNING, "LB_GETTEXTLEN with lParam = %lx\n", lParam);
         }
         lReturn = LBGetText(plb, TRUE, fAnsi, (INT)wParam, NULL);
@@ -524,10 +542,10 @@ CallInsertItem:
         // Lotus Approach calls CallWndProc(ListWndProc, LB_GETCOUNT,...)
         // on a window that doesn't have a plb yet. So, we need to make
         // this check. Bug #6675 - 11/7/94 --
-        if(plb)
-            return((LRESULT) plb->cMac);
+        if (plb)
+            return ((LRESULT)plb->cMac);
         else
-            return(0);
+            return (0);
 
     case LB_SETCOUNT:
         return xxxLBSetCount(plb, (INT)wParam);
@@ -535,9 +553,12 @@ CallInsertItem:
     case LB_SELECTSTRING:
     case LB_FINDSTRING:
         iSel = xxxFindString(plb, (LPWSTR)lParam, (INT)wParam, PREFIX, TRUE);
-        if (message == LB_FINDSTRING || iSel == LB_ERR) {
+        if (message == LB_FINDSTRING || iSel == LB_ERR)
+        {
             lReturn = iSel;
-        } else {
+        }
+        else
+        {
             lReturn = xxxLBSetCurSel(plb, iSel);
         }
         break;
@@ -577,8 +598,7 @@ CallInsertItem:
         /*
          * IanJa/Win32 should this be LPWORD now?
          */
-        return LBoxGetSelItems(plb, (message == LB_GETSELCOUNT), (INT)wParam,
-                (LPINT)lParam);
+        return LBoxGetSelItems(plb, (message == LB_GETSELCOUNT), (INT)wParam, (LPINT)lParam);
 
     case LB_SETTABSTOPS:
 
@@ -599,7 +619,8 @@ CallInsertItem:
         /*
          * Set the max width of the listbox used for horizontal scrolling
          */
-        if (plb->maxWidth != (INT)wParam) {
+        if (plb->maxWidth != (INT)wParam)
+        {
             plb->maxWidth = (INT)wParam;
 
             /*
@@ -608,14 +629,15 @@ CallInsertItem:
              * Fix for Bug #2477 -- 01/14/91 -- SANKAR --
              */
             xxxLBShowHideScrollBars(plb); //Try to show or hide scroll bars
-            if (plb->fHorzBar && plb->fRightAlign && !(plb->fMultiColumn || plb->OwnerDraw)) {
+            if (plb->fHorzBar && plb->fRightAlign && !(plb->fMultiColumn || plb->OwnerDraw))
+            {
                 /*
                  * origin to right
                  */
                 xxxLBoxCtlHScroll(plb, SB_BOTTOM, 0);
             }
         }
-        break;    /* originally returned register ax (message) ! */
+        break; /* originally returned register ax (message) ! */
 
     case LB_SETCOLUMNWIDTH:
 
@@ -630,21 +652,22 @@ CallInsertItem:
         break;
 
     case LB_SETANCHORINDEX:
-        if ((INT)wParam >= plb->cMac) {
-            RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE,"Invalid index passed to LB_SETANCHORINDEX");
+        if ((INT)wParam >= plb->cMac)
+        {
+            RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "Invalid index passed to LB_SETANCHORINDEX");
             return LB_ERR;
         }
         plb->iMouseDown = (INT)wParam;
         plb->iLastMouseMove = (INT)wParam;
-        xxxInsureVisible(plb, (int) wParam, (BOOL)(lParam != 0));
+        xxxInsureVisible(plb, (int)wParam, (BOOL)(lParam != 0));
         break;
 
     case LB_GETANCHORINDEX:
         return plb->iMouseDown;
 
     case LB_SETCARETINDEX:
-        if ( (plb->iSel == -1) || ((plb->wMultiple != SINGLESEL) &&
-                    (plb->cMac > (INT)wParam))) {
+        if ((plb->iSel == -1) || ((plb->wMultiple != SINGLESEL) && (plb->cMac > (INT)wParam)))
+        {
 
             /*
              * Set's the iSelBase to the wParam
@@ -654,9 +677,12 @@ CallInsertItem:
             xxxInsureVisible(plb, (INT)wParam, (BOOL)LOWORD(lParam));
             xxxSetISelBase(plb, (INT)wParam);
             break;
-        } else {
-            if ((INT)wParam >= plb->cMac) {
-                RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE,"Invalid index passed to LB_SETCARETINDEX");
+        }
+        else
+        {
+            if ((INT)wParam >= plb->cMac)
+            {
+                RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "Invalid index passed to LB_SETCARETINDEX");
             }
             return LB_ERR;
         }
@@ -674,7 +700,8 @@ CallInsertItem:
         lReturn = xxxFindString(plb, (LPWSTR)lParam, (INT)wParam, EQ, TRUE);
         break;
 
-    case LB_ITEMFROMPOINT: {
+    case LB_ITEMFROMPOINT:
+    {
         POINT pt;
         BOOL bOutside;
         DWORD dwItem;
@@ -694,16 +721,17 @@ CallInsertItem:
         // Set up the caret in the proper location for drop downs.
         plb->iSelBase = plb->iSel;
         xxxLBSetCaret(plb, TRUE);
-            
+
         /*
          * We need to send this event even if the listbox isn't visible. See
          * bug #88548.  Also see 355612.
          */
-        if (_IsWindowVisible(pwnd) || (GetFocus() == hwnd)) {
+        if (_IsWindowVisible(pwnd) || (GetFocus() == hwnd))
+        {
             LBEvent(plb, EVENT_OBJECT_FOCUS, plb->iSelBase);
         }
 
-        return(plb->iSel);
+        return (plb->iSel);
 
     case LBCB_CARETOFF:
 
@@ -715,14 +743,15 @@ CallInsertItem:
         break;
 
     case LB_GETLISTBOXINFO:
-       return NtUserGetListBoxInfo(hwnd);
+        return NtUserGetListBoxInfo(hwnd);
 
     case WM_NCCREATE:
         if ((pwnd->style & LBS_MULTICOLUMN) && (pwnd->style & WS_VSCROLL))
         {
             DWORD mask = WS_VSCROLL;
             DWORD flags = 0;
-            if (!TestWF(pwnd, WFWIN40COMPAT)) {
+            if (!TestWF(pwnd, WFWIN40COMPAT))
+            {
                 mask |= WS_HSCROLL;
                 flags = WS_HSCROLL;
             }
@@ -730,15 +759,16 @@ CallInsertItem:
         }
         goto CallDWP;
 
-     default:
-CallDWP:
+    default:
+    CallDWP:
         return DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
     }
 
     /*
      * Handle translation of ANSI output data and free buffer
      */
-    if (lpwsz) {
+    if (lpwsz)
+    {
         UserLocalFree(lpwsz);
     }
 
@@ -749,15 +779,12 @@ CallDWP:
 /***************************************************************************\
 \***************************************************************************/
 
-LRESULT WINAPI ListBoxWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI ListBoxWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -771,15 +798,12 @@ LRESULT WINAPI ListBoxWndProcA(
     return ListBoxWndProcWorker(pwnd, message, wParam, lParam, TRUE);
 }
 
-LRESULT WINAPI ListBoxWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI ListBoxWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -793,15 +817,12 @@ LRESULT WINAPI ListBoxWndProcW(
     return ListBoxWndProcWorker(pwnd, message, wParam, lParam, FALSE);
 }
 
-LRESULT WINAPI ComboListBoxWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI ComboListBoxWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -815,15 +836,12 @@ LRESULT WINAPI ComboListBoxWndProcA(
     return ListBoxWndProcWorker(pwnd, message, wParam, lParam, TRUE);
 }
 
-LRESULT WINAPI ComboListBoxWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI ComboListBoxWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -847,18 +865,14 @@ LRESULT WINAPI ComboListBoxWndProcW(
 * History:
 \***************************************************************************/
 
-LPWSTR GetLpszItem(
-    PLBIV pLBIV,
-    INT sItem)
+LPWSTR GetLpszItem(PLBIV pLBIV, INT sItem)
 {
     LONG offsz;
     lpLBItem plbi;
 
-    if (sItem < 0 || sItem >= pLBIV->cMac) {
-        RIPERR1(ERROR_INVALID_PARAMETER,
-                RIP_WARNING,
-                "Invalid parameter \"sItem\" (%ld) to GetLpszItem",
-                sItem);
+    if (sItem < 0 || sItem >= pLBIV->cMac)
+    {
+        RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "Invalid parameter \"sItem\" (%ld) to GetLpszItem", sItem);
 
         return NULL;
     }

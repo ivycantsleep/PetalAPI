@@ -33,129 +33,120 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SepAdtPrivilegeObjectAuditAlarm)
-#pragma alloc_text(PAGE,SepAdtPrivilegedServiceAuditAlarm)
-#pragma alloc_text(PAGE,SepAdtOpenObjectAuditAlarm)
-#pragma alloc_text(PAGE,SepAdtOpenObjectForDeleteAuditAlarm)
-#pragma alloc_text(PAGE,SepAdtCloseObjectAuditAlarm)
-#pragma alloc_text(PAGE,SepAdtDeleteObjectAuditAlarm)
-#pragma alloc_text(PAGE,SepAdtObjectReferenceAuditAlarm)
-#pragma alloc_text(PAGE,SepQueryNameString)
-#pragma alloc_text(PAGE,SepQueryTypeString)
-#pragma alloc_text(PAGE,SeAuditProcessCreation)
-#pragma alloc_text(PAGE,SeAuditHandleDuplication)
-#pragma alloc_text(PAGE,SeAuditProcessExit)
-#pragma alloc_text(PAGE,SeAuditSystemTimeChange)
-#pragma alloc_text(PAGE,SepAdtGenerateDiscardAudit)
-#pragma alloc_text(PAGE,SeLocateProcessImageName)
-#pragma alloc_text(PAGE,SeInitializeProcessAuditName)
-#pragma alloc_text(PAGE,SepAuditAssignPrimaryToken)
-#pragma alloc_text(PAGE,SeAuditLPCInvalidUse)
-#pragma alloc_text(PAGE,SeAuditHardLinkCreation)
-#pragma alloc_text(PAGE,SeOperationAuditAlarm)
+#pragma alloc_text(PAGE, SepAdtPrivilegeObjectAuditAlarm)
+#pragma alloc_text(PAGE, SepAdtPrivilegedServiceAuditAlarm)
+#pragma alloc_text(PAGE, SepAdtOpenObjectAuditAlarm)
+#pragma alloc_text(PAGE, SepAdtOpenObjectForDeleteAuditAlarm)
+#pragma alloc_text(PAGE, SepAdtCloseObjectAuditAlarm)
+#pragma alloc_text(PAGE, SepAdtDeleteObjectAuditAlarm)
+#pragma alloc_text(PAGE, SepAdtObjectReferenceAuditAlarm)
+#pragma alloc_text(PAGE, SepQueryNameString)
+#pragma alloc_text(PAGE, SepQueryTypeString)
+#pragma alloc_text(PAGE, SeAuditProcessCreation)
+#pragma alloc_text(PAGE, SeAuditHandleDuplication)
+#pragma alloc_text(PAGE, SeAuditProcessExit)
+#pragma alloc_text(PAGE, SeAuditSystemTimeChange)
+#pragma alloc_text(PAGE, SepAdtGenerateDiscardAudit)
+#pragma alloc_text(PAGE, SeLocateProcessImageName)
+#pragma alloc_text(PAGE, SeInitializeProcessAuditName)
+#pragma alloc_text(PAGE, SepAuditAssignPrimaryToken)
+#pragma alloc_text(PAGE, SeAuditLPCInvalidUse)
+#pragma alloc_text(PAGE, SeAuditHardLinkCreation)
+#pragma alloc_text(PAGE, SeOperationAuditAlarm)
 
 #endif
 
 
-#define SepSetParmTypeSid( AuditParameters, Index, Sid )                       \
-    {                                                                          \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeSid;         \
-        (AuditParameters).Parameters[(Index)].Length = SeLengthSid( (Sid) );   \
-        (AuditParameters).Parameters[(Index)].Address = (Sid);                 \
+#define SepSetParmTypeSid(AuditParameters, Index, Sid)                     \
+    {                                                                      \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeSid;     \
+        (AuditParameters).Parameters[(Index)].Length = SeLengthSid((Sid)); \
+        (AuditParameters).Parameters[(Index)].Address = (Sid);             \
     }
 
 
-#define SepSetParmTypeString( AuditParameters, Index, String )                 \
-    {                                                                          \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeString;      \
-        (AuditParameters).Parameters[(Index)].Length =                         \
-                sizeof(UNICODE_STRING)+(String)->Length;                       \
-        (AuditParameters).Parameters[(Index)].Address = (String);              \
+#define SepSetParmTypeString(AuditParameters, Index, String)                                      \
+    {                                                                                             \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeString;                         \
+        (AuditParameters).Parameters[(Index)].Length = sizeof(UNICODE_STRING) + (String)->Length; \
+        (AuditParameters).Parameters[(Index)].Address = (String);                                 \
     }
 
 
-#define SepSetParmTypeFileSpec( AuditParameters, Index, String )               \
-    {                                                                          \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeFileSpec;    \
-        (AuditParameters).Parameters[(Index)].Length =                         \
-                sizeof(UNICODE_STRING)+(String)->Length;                       \
-        (AuditParameters).Parameters[(Index)].Address = (String);              \
+#define SepSetParmTypeFileSpec(AuditParameters, Index, String)                                    \
+    {                                                                                             \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeFileSpec;                       \
+        (AuditParameters).Parameters[(Index)].Length = sizeof(UNICODE_STRING) + (String)->Length; \
+        (AuditParameters).Parameters[(Index)].Address = (String);                                 \
     }
 
-#define SepSetParmTypeUlong( AuditParameters, Index, Ulong )                   \
-    {                                                                          \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeUlong;       \
-        (AuditParameters).Parameters[(Index)].Length =  sizeof( (Ulong) );     \
-        (AuditParameters).Parameters[(Index)].Data[0] = (ULONG)(Ulong);        \
+#define SepSetParmTypeUlong(AuditParameters, Index, Ulong)               \
+    {                                                                    \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeUlong; \
+        (AuditParameters).Parameters[(Index)].Length = sizeof((Ulong));  \
+        (AuditParameters).Parameters[(Index)].Data[0] = (ULONG)(Ulong);  \
     }
 
-#define SepSetParmTypePtr( AuditParameters, Index, Ptr )                       \
-    {                                                                          \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypePtr;         \
-        (AuditParameters).Parameters[(Index)].Length =  sizeof( ULONG_PTR );   \
-        (AuditParameters).Parameters[(Index)].Data[0] = (ULONG_PTR)(Ptr);      \
+#define SepSetParmTypePtr(AuditParameters, Index, Ptr)                    \
+    {                                                                     \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypePtr;    \
+        (AuditParameters).Parameters[(Index)].Length = sizeof(ULONG_PTR); \
+        (AuditParameters).Parameters[(Index)].Data[0] = (ULONG_PTR)(Ptr); \
     }
 
-#define SepSetParmTypeNoLogon( AuditParameters, Index )                        \
-    {                                                                          \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeNoLogonId;   \
-    }
-
-#define SepSetParmTypeLogonId( AuditParameters, Index, LogonId )             \
+#define SepSetParmTypeNoLogon(AuditParameters, Index)                        \
     {                                                                        \
-        LUID * TmpLuid;                                                      \
-                                                                             \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeLogonId;   \
-        (AuditParameters).Parameters[(Index)].Length =  sizeof( (LogonId) ); \
-        TmpLuid = (LUID *)(&(AuditParameters).Parameters[(Index)].Data[0]);  \
-        *TmpLuid = (LogonId);                                                \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeNoLogonId; \
     }
 
-#define SepSetParmTypeAccessMask( AuditParameters, Index, AccessMask, ObjectTypeIndex )  \
-    {                                                                                    \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeAccessMask;            \
-        (AuditParameters).Parameters[(Index)].Length = sizeof( ACCESS_MASK );            \
-        (AuditParameters).Parameters[(Index)].Data[0] = (AccessMask);                    \
-        (AuditParameters).Parameters[(Index)].Data[1] = (ObjectTypeIndex);               \
+#define SepSetParmTypeLogonId(AuditParameters, Index, LogonId)              \
+    {                                                                       \
+        LUID *TmpLuid;                                                      \
+                                                                            \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeLogonId;  \
+        (AuditParameters).Parameters[(Index)].Length = sizeof((LogonId));   \
+        TmpLuid = (LUID *)(&(AuditParameters).Parameters[(Index)].Data[0]); \
+        *TmpLuid = (LogonId);                                               \
     }
 
-#define SepSetParmTypePrivileges( AuditParameters, Index, Privileges )                      \
-    {                                                                                       \
-        ASSERT( Privileges->PrivilegeCount <= SEP_MAX_PRIVILEGE_COUNT ); \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypePrivs;                    \
-        (AuditParameters).Parameters[(Index)].Length = SepPrivilegeSetSize( (Privileges) ); \
-        (AuditParameters).Parameters[(Index)].Address = (Privileges);                       \
-    }
-
-#define SepSetParmTypeObjectTypes( AuditParameters, Index, ObjectTypes, ObjectTypeCount, ObjectTypeIndex )             \
-    {                                                                               \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeObjectTypes;            \
-        (AuditParameters).Parameters[(Index)].Length = sizeof( SE_ADT_OBJECT_TYPE ) * (ObjectTypeCount);\
-        (AuditParameters).Parameters[(Index)].Address = (ObjectTypes);                    \
-        (AuditParameters).Parameters[(Index)].Data[1] = (ObjectTypeIndex);               \
-    }
-
-
-#define SepSetParmTypeTime( AuditParameters, Index, Time )                            \
+#define SepSetParmTypeAccessMask(AuditParameters, Index, AccessMask, ObjectTypeIndex) \
     {                                                                                 \
-        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeTime;               \
-        (AuditParameters).Parameters[(Index)].Length =  sizeof( (Time) );             \
-        *((PLARGE_INTEGER)(&(AuditParameters).Parameters[(Index)].Data[0])) = Time;   \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeAccessMask;         \
+        (AuditParameters).Parameters[(Index)].Length = sizeof(ACCESS_MASK);           \
+        (AuditParameters).Parameters[(Index)].Data[0] = (AccessMask);                 \
+        (AuditParameters).Parameters[(Index)].Data[1] = (ObjectTypeIndex);            \
+    }
+
+#define SepSetParmTypePrivileges(AuditParameters, Index, Privileges)                      \
+    {                                                                                     \
+        ASSERT(Privileges->PrivilegeCount <= SEP_MAX_PRIVILEGE_COUNT);                    \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypePrivs;                  \
+        (AuditParameters).Parameters[(Index)].Length = SepPrivilegeSetSize((Privileges)); \
+        (AuditParameters).Parameters[(Index)].Address = (Privileges);                     \
+    }
+
+#define SepSetParmTypeObjectTypes(AuditParameters, Index, ObjectTypes, ObjectTypeCount, ObjectTypeIndex) \
+    {                                                                                                    \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeObjectTypes;                           \
+        (AuditParameters).Parameters[(Index)].Length = sizeof(SE_ADT_OBJECT_TYPE) * (ObjectTypeCount);   \
+        (AuditParameters).Parameters[(Index)].Address = (ObjectTypes);                                   \
+        (AuditParameters).Parameters[(Index)].Data[1] = (ObjectTypeIndex);                               \
     }
 
 
-
+#define SepSetParmTypeTime(AuditParameters, Index, Time)                            \
+    {                                                                               \
+        (AuditParameters).Parameters[(Index)].Type = SeAdtParmTypeTime;             \
+        (AuditParameters).Parameters[(Index)].Length = sizeof((Time));              \
+        *((PLARGE_INTEGER)(&(AuditParameters).Parameters[(Index)].Data[0])) = Time; \
+    }
+
+
 BOOLEAN
-SepAdtPrivilegeObjectAuditAlarm (
-    IN PUNICODE_STRING CapturedSubsystemName OPTIONAL,
-    IN PVOID HandleId,
-    IN PTOKEN ClientToken OPTIONAL,
-    IN PTOKEN PrimaryToken,
-    IN PVOID ProcessId,
-    IN ACCESS_MASK DesiredAccess,
-    IN PPRIVILEGE_SET CapturedPrivileges,
-    IN BOOLEAN AccessGranted
-    )
+SepAdtPrivilegeObjectAuditAlarm(IN PUNICODE_STRING CapturedSubsystemName OPTIONAL, IN PVOID HandleId,
+                                IN PTOKEN ClientToken OPTIONAL, IN PTOKEN PrimaryToken, IN PVOID ProcessId,
+                                IN ACCESS_MASK DesiredAccess, IN PPRIVILEGE_SET CapturedPrivileges,
+                                IN BOOLEAN AccessGranted)
 
 /*++
 
@@ -232,30 +223,33 @@ Return value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( DesiredAccess );
-    
+    UNREFERENCED_PARAMETER(DesiredAccess);
+
     //
     // Determine if we are auditing the use of privileges
     //
 
-    if ( SepAdtAuditThisEvent( AuditCategoryPrivilegeUse, &AccessGranted ) &&
-         SepFilterPrivilegeAudits( CapturedPrivileges )) {
+    if (SepAdtAuditThisEvent(AuditCategoryPrivilegeUse, &AccessGranted) && SepFilterPrivilegeAudits(CapturedPrivileges))
+    {
 
-        if ( ARGUMENT_PRESENT( ClientToken )) {
+        if (ARGUMENT_PRESENT(ClientToken))
+        {
 
-            CapturedUserSid = SepTokenUserSid( ClientToken );
+            CapturedUserSid = SepTokenUserSid(ClientToken);
+        }
+        else
+        {
 
-        } else {
-
-            CapturedUserSid = SepTokenUserSid( PrimaryToken );
+            CapturedUserSid = SepTokenUserSid(PrimaryToken);
         }
 
-        if ( RtlEqualSid( SeLocalSystemSid, CapturedUserSid )) {
+        if (RtlEqualSid(SeLocalSystemSid, CapturedUserSid))
+        {
 
             return (FALSE);
         }
 
-        PrimaryAuthenticationId = SepTokenAuthenticationId( PrimaryToken );
+        PrimaryAuthenticationId = SepTokenAuthenticationId(PrimaryToken);
 
         //
         // A completely zero'd entry will be interpreted
@@ -265,22 +259,21 @@ Return value:
         // us to avoid filling in each not supplied entry.
         //
 
-        RtlZeroMemory (
-           (PVOID) &AuditParameters,
-           sizeof( AuditParameters )
-           );
+        RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-        ASSERT( SeAdtParmTypeNone == 0 );
+        ASSERT(SeAdtParmTypeNone == 0);
 
         AuditParameters.CategoryId = SE_CATEGID_PRIVILEGE_USE;
         AuditParameters.AuditId = SE_AUDITID_PRIVILEGED_OBJECT;
         AuditParameters.ParameterCount = 0;
 
-        if ( AccessGranted ) {
+        if (AccessGranted)
+        {
 
             AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
-
-        } else {
+        }
+        else
+        {
 
             AuditParameters.Type = EVENTLOG_AUDIT_FAILURE;
         }
@@ -289,7 +282,7 @@ Return value:
         //    Parameter[0] - User Sid
         //
 
-        SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, CapturedUserSid );
+        SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, CapturedUserSid);
 
         AuditParameters.ParameterCount++;
 
@@ -297,7 +290,7 @@ Return value:
         //    Parameter[1] - Subsystem name (if available)
         //
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
 
         AuditParameters.ParameterCount++;
 
@@ -305,7 +298,7 @@ Return value:
         //    Parameter[2] - Subsystem name (if available)
         //
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
 
         AuditParameters.ParameterCount++;
 
@@ -313,7 +306,7 @@ Return value:
         //    Parameter[3] - New handle ID
         //
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, HandleId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, HandleId);
 
         AuditParameters.ParameterCount++;
 
@@ -321,7 +314,7 @@ Return value:
         //    Parameter[4] - Subject's process id
         //
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessId);
 
         AuditParameters.ParameterCount++;
 
@@ -329,7 +322,7 @@ Return value:
         //    Parameter[5] - Subject's primary authentication ID
         //
 
-        SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, PrimaryAuthenticationId );
+        SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, PrimaryAuthenticationId);
 
         AuditParameters.ParameterCount++;
 
@@ -337,14 +330,16 @@ Return value:
         //    Parameter[6] - Subject's client authentication ID
         //
 
-        if ( ARGUMENT_PRESENT( ClientToken )) {
+        if (ARGUMENT_PRESENT(ClientToken))
+        {
 
-            ClientAuthenticationId = SepTokenAuthenticationId( ClientToken );
-            SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, ClientAuthenticationId );
+            ClientAuthenticationId = SepTokenAuthenticationId(ClientToken);
+            SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, ClientAuthenticationId);
+        }
+        else
+        {
 
-        } else {
-
-            SepSetParmTypeNoLogon( AuditParameters, AuditParameters.ParameterCount );
+            SepSetParmTypeNoLogon(AuditParameters, AuditParameters.ParameterCount);
         }
 
         AuditParameters.ParameterCount++;
@@ -353,32 +348,26 @@ Return value:
         //    Parameter[7] - Privileges used for open
         //
 
-        if ( (CapturedPrivileges != NULL) && (CapturedPrivileges->PrivilegeCount > 0) ) {
+        if ((CapturedPrivileges != NULL) && (CapturedPrivileges->PrivilegeCount > 0))
+        {
 
-            SepSetParmTypePrivileges( AuditParameters, AuditParameters.ParameterCount, CapturedPrivileges );
+            SepSetParmTypePrivileges(AuditParameters, AuditParameters.ParameterCount, CapturedPrivileges);
         }
 
         AuditParameters.ParameterCount++;
 
-        SepAdtLogAuditRecord( &AuditParameters );
+        SepAdtLogAuditRecord(&AuditParameters);
 
-        return ( TRUE );
-
+        return (TRUE);
     }
 
-    return ( FALSE );
+    return (FALSE);
 }
 
-
-VOID
-SepAdtPrivilegedServiceAuditAlarm (
-    IN PUNICODE_STRING CapturedSubsystemName,
-    IN PUNICODE_STRING CapturedServiceName,
-    IN PTOKEN ClientToken OPTIONAL,
-    IN PTOKEN PrimaryToken,
-    IN PPRIVILEGE_SET CapturedPrivileges,
-    IN BOOLEAN AccessGranted
-    )
+
+VOID SepAdtPrivilegedServiceAuditAlarm(IN PUNICODE_STRING CapturedSubsystemName, IN PUNICODE_STRING CapturedServiceName,
+                                       IN PTOKEN ClientToken OPTIONAL, IN PTOKEN PrimaryToken,
+                                       IN PPRIVILEGE_SET CapturedPrivileges, IN BOOLEAN AccessGranted)
 
 /*++
 
@@ -456,24 +445,29 @@ Return value:
     // Determine if we are auditing privileged services
     //
 
-    if ( SepAdtAuditThisEvent( AuditCategoryPrivilegeUse, &AccessGranted )) {
+    if (SepAdtAuditThisEvent(AuditCategoryPrivilegeUse, &AccessGranted))
+    {
 
-        if ( ARGUMENT_PRESENT( ClientToken )) {
+        if (ARGUMENT_PRESENT(ClientToken))
+        {
 
-            CapturedUserSid = SepTokenUserSid( ClientToken );
+            CapturedUserSid = SepTokenUserSid(ClientToken);
+        }
+        else
+        {
 
-        } else {
-
-            CapturedUserSid = SepTokenUserSid( PrimaryToken );
+            CapturedUserSid = SepTokenUserSid(PrimaryToken);
         }
 
-        PrimaryAuthenticationId = SepTokenAuthenticationId( PrimaryToken );
+        PrimaryAuthenticationId = SepTokenAuthenticationId(PrimaryToken);
 
-        if ( !ARGUMENT_PRESENT( CapturedSubsystemName )) {
+        if (!ARGUMENT_PRESENT(CapturedSubsystemName))
+        {
 
             SubsystemName = (PUNICODE_STRING)&SeSubsystemName;
-
-        } else {
+        }
+        else
+        {
 
             SubsystemName = CapturedSubsystemName;
         }
@@ -486,134 +480,120 @@ Return value:
         // us to avoid filling in each not supplied entry.
         //
 
-        RtlZeroMemory (
-           (PVOID) &AuditParameters,
-           sizeof( AuditParameters )
-           );
+        RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-        ASSERT( SeAdtParmTypeNone == 0 );
+        ASSERT(SeAdtParmTypeNone == 0);
 
         AuditParameters.CategoryId = SE_CATEGID_PRIVILEGE_USE;
         AuditParameters.AuditId = SE_AUDITID_PRIVILEGED_SERVICE;
         AuditParameters.ParameterCount = 0;
 
-        if ( AccessGranted ) {
+        if (AccessGranted)
+        {
 
             AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
-
-        } else {
+        }
+        else
+        {
 
             AuditParameters.Type = EVENTLOG_AUDIT_FAILURE;
         }
 
 
-    //
-    //    Parameter[0] - User Sid
-    //
+        //
+        //    Parameter[0] - User Sid
+        //
 
-        SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, CapturedUserSid );
+        SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, CapturedUserSid);
 
         AuditParameters.ParameterCount++;
 
-    //
-    //    Parameter[1] - Subsystem name (if available)
-    //
+        //
+        //    Parameter[1] - Subsystem name (if available)
+        //
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, SubsystemName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, SubsystemName);
 
-    AuditParameters.ParameterCount++;
-
-
-    //
-    //    Parameter[2] - Server
-    //
-
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, SubsystemName );
-
-    AuditParameters.ParameterCount++;
+        AuditParameters.ParameterCount++;
 
 
-    //
-    //    Parameter[3] - Service name (if available)
-    //
+        //
+        //    Parameter[2] - Server
+        //
 
-    if ( ARGUMENT_PRESENT( CapturedServiceName )) {
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, SubsystemName);
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedServiceName );
+        AuditParameters.ParameterCount++;
+
+
+        //
+        //    Parameter[3] - Service name (if available)
+        //
+
+        if (ARGUMENT_PRESENT(CapturedServiceName))
+        {
+
+            SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedServiceName);
+        }
+
+        AuditParameters.ParameterCount++;
+
+        //
+        //    Parameter[3] - Subject's primary authentication ID
+        //
+
+
+        SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, PrimaryAuthenticationId);
+
+        AuditParameters.ParameterCount++;
+
+
+        //
+        //    Parameter[4] - Subject's client authentication ID
+        //
+
+        if (ARGUMENT_PRESENT(ClientToken))
+        {
+
+            ClientAuthenticationId = SepTokenAuthenticationId(ClientToken);
+            SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, ClientAuthenticationId);
+        }
+        else
+        {
+
+            SepSetParmTypeNoLogon(AuditParameters, AuditParameters.ParameterCount);
+        }
+
+        AuditParameters.ParameterCount++;
+
+
+        //
+        //    Parameter[5] - Privileges used for open
+        //
+
+
+        if ((CapturedPrivileges != NULL) && (CapturedPrivileges->PrivilegeCount > 0))
+        {
+
+            SepSetParmTypePrivileges(AuditParameters, AuditParameters.ParameterCount, CapturedPrivileges);
+        }
+
+        AuditParameters.ParameterCount++;
+
+
+        SepAdtLogAuditRecord(&AuditParameters);
     }
-
-    AuditParameters.ParameterCount++;
-
-    //
-    //    Parameter[3] - Subject's primary authentication ID
-    //
-
-
-    SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, PrimaryAuthenticationId );
-
-    AuditParameters.ParameterCount++;
-
-
-    //
-    //    Parameter[4] - Subject's client authentication ID
-    //
-
-    if ( ARGUMENT_PRESENT( ClientToken )) {
-
-        ClientAuthenticationId =  SepTokenAuthenticationId( ClientToken );
-        SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, ClientAuthenticationId );
-
-    } else {
-
-        SepSetParmTypeNoLogon( AuditParameters, AuditParameters.ParameterCount );
-    }
-
-    AuditParameters.ParameterCount++;
-
-
-    //
-    //    Parameter[5] - Privileges used for open
-    //
-
-
-    if ( (CapturedPrivileges != NULL) && (CapturedPrivileges->PrivilegeCount > 0) ) {
-
-        SepSetParmTypePrivileges( AuditParameters, AuditParameters.ParameterCount, CapturedPrivileges );
-    }
-
-    AuditParameters.ParameterCount++;
-
-
-    SepAdtLogAuditRecord( &AuditParameters );
-
-    }
-
 }
 
 
-
-
-
-
 BOOLEAN
-SepAdtOpenObjectAuditAlarm (
-    IN PUNICODE_STRING CapturedSubsystemName,
-    IN PVOID *HandleId OPTIONAL,
-    IN PUNICODE_STRING CapturedObjectTypeName,
-    IN PUNICODE_STRING CapturedObjectName OPTIONAL,
-    IN PTOKEN ClientToken OPTIONAL,
-    IN PTOKEN PrimaryToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN ACCESS_MASK GrantedAccess,
-    IN PLUID OperationId,
-    IN PPRIVILEGE_SET CapturedPrivileges OPTIONAL,
-    IN BOOLEAN AccessGranted,
-    IN HANDLE ProcessID,
-    IN POLICY_AUDIT_EVENT_TYPE AuditType,
-    IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
-    IN ULONG ObjectTypeListLength,
-    IN PACCESS_MASK GrantedAccessArray OPTIONAL
-    )
+SepAdtOpenObjectAuditAlarm(IN PUNICODE_STRING CapturedSubsystemName, IN PVOID *HandleId OPTIONAL,
+                           IN PUNICODE_STRING CapturedObjectTypeName, IN PUNICODE_STRING CapturedObjectName OPTIONAL,
+                           IN PTOKEN ClientToken OPTIONAL, IN PTOKEN PrimaryToken, IN ACCESS_MASK DesiredAccess,
+                           IN ACCESS_MASK GrantedAccess, IN PLUID OperationId,
+                           IN PPRIVILEGE_SET CapturedPrivileges OPTIONAL, IN BOOLEAN AccessGranted, IN HANDLE ProcessID,
+                           IN POLICY_AUDIT_EVENT_TYPE AuditType, IN PIOBJECT_TYPE_LIST ObjectTypeList OPTIONAL,
+                           IN ULONG ObjectTypeListLength, IN PACCESS_MASK GrantedAccessArray OPTIONAL)
 
 /*++
 
@@ -737,30 +717,33 @@ Return Value:
     PSE_ADT_OBJECT_TYPE AdtObjectTypeBuffer = NULL;
     PEPROCESS Process = NULL;
     PUNICODE_STRING ImageFileName;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
     NTSTATUS Status;
 
     PAGED_CODE();
 
     Process = PsGetCurrentProcess();
-    
-    Status = SeLocateProcessImageName( Process, &ImageFileName );
 
-    if ( !NT_SUCCESS(Status) ) {
+    Status = SeLocateProcessImageName(Process, &ImageFileName);
+
+    if (!NT_SUCCESS(Status))
+    {
         ImageFileName = &NullString;
     }
 
-    if ( ARGUMENT_PRESENT( ClientToken )) {
+    if (ARGUMENT_PRESENT(ClientToken))
+    {
 
-        CapturedUserSid = SepTokenUserSid( ClientToken );
-        ClientAuthenticationId =  SepTokenAuthenticationId( ClientToken );
+        CapturedUserSid = SepTokenUserSid(ClientToken);
+        ClientAuthenticationId = SepTokenAuthenticationId(ClientToken);
+    }
+    else
+    {
 
-    } else {
-
-        CapturedUserSid = SepTokenUserSid( PrimaryToken );
+        CapturedUserSid = SepTokenUserSid(PrimaryToken);
     }
 
-    PrimaryAuthenticationId = SepTokenAuthenticationId( PrimaryToken );
+    PrimaryAuthenticationId = SepTokenAuthenticationId(PrimaryToken);
 
     //
     // A completely zero'd entry will be interpreted
@@ -770,20 +753,19 @@ Return Value:
     // us to avoid filling in each not supplied entry.
     //
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
-    ASSERT( ( AuditType == AuditCategoryObjectAccess ) ||
-            ( AuditType == AuditCategoryDirectoryServiceAccess ) );
+    ASSERT((AuditType == AuditCategoryObjectAccess) || (AuditType == AuditCategoryDirectoryServiceAccess));
 
-    if (AuditType == AuditCategoryObjectAccess) {
+    if (AuditType == AuditCategoryObjectAccess)
+    {
 
         AuditParameters.CategoryId = SE_CATEGID_OBJECT_ACCESS;
-    } else {
+    }
+    else
+    {
 
         AuditParameters.CategoryId = SE_CATEGID_DS_ACCESS;
     }
@@ -791,11 +773,13 @@ Return Value:
     AuditParameters.AuditId = SE_AUDITID_OPEN_HANDLE;
     AuditParameters.ParameterCount = 0;
 
-    if ( AccessGranted ) {
+    if (AccessGranted)
+    {
 
         AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         AuditParameters.Type = EVENTLOG_AUDIT_FAILURE;
     }
@@ -804,7 +788,7 @@ Return Value:
     //  Parameter[0] - User Sid
     //
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, CapturedUserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, CapturedUserSid);
 
     AuditParameters.ParameterCount++;
 
@@ -812,7 +796,7 @@ Return Value:
     //  Parameter[1] - Subsystem name (if available)
     //
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
 
     AuditParameters.ParameterCount++;
 
@@ -820,9 +804,10 @@ Return Value:
     //  Parameter[2] - Object Server (if available)
     //
 
-    if ( ARGUMENT_PRESENT( CapturedSubsystemName )) {
+    if (ARGUMENT_PRESENT(CapturedSubsystemName))
+    {
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
     }
 
     AuditParameters.ParameterCount++;
@@ -831,9 +816,10 @@ Return Value:
     //  Parameter[3] - Object Type Name
     //
 
-    if ( ARGUMENT_PRESENT( CapturedObjectTypeName )) {
+    if (ARGUMENT_PRESENT(CapturedObjectTypeName))
+    {
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedObjectTypeName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedObjectTypeName);
     }
 
     ObjectTypeIndex = AuditParameters.ParameterCount;
@@ -843,9 +829,10 @@ Return Value:
     //  Parameter[4] - Object Name
     //
 
-    if ( ARGUMENT_PRESENT( CapturedObjectName )) {
+    if (ARGUMENT_PRESENT(CapturedObjectName))
+    {
 
-        SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, CapturedObjectName );
+        SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, CapturedObjectName);
     }
 
     AuditParameters.ParameterCount++;
@@ -854,24 +841,27 @@ Return Value:
     //  Parameter[5] - New handle ID
     //
 
-    if ( ARGUMENT_PRESENT( HandleId )) {
+    if (ARGUMENT_PRESENT(HandleId))
+    {
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, *HandleId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, *HandleId);
     }
 
     AuditParameters.ParameterCount++;
 
-    if ( ARGUMENT_PRESENT( OperationId )) {
+    if (ARGUMENT_PRESENT(OperationId))
+    {
 
-        SepSetParmTypeUlong( AuditParameters, AuditParameters.ParameterCount, (*OperationId).HighPart );
-
-        AuditParameters.ParameterCount++;
-
-        SepSetParmTypeUlong( AuditParameters, AuditParameters.ParameterCount, (*OperationId).LowPart );
+        SepSetParmTypeUlong(AuditParameters, AuditParameters.ParameterCount, (*OperationId).HighPart);
 
         AuditParameters.ParameterCount++;
 
-    } else {
+        SepSetParmTypeUlong(AuditParameters, AuditParameters.ParameterCount, (*OperationId).LowPart);
+
+        AuditParameters.ParameterCount++;
+    }
+    else
+    {
 
         AuditParameters.ParameterCount += 2;
     }
@@ -880,7 +870,7 @@ Return Value:
     //  Parameter[6] - Subject's process id
     //
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessID );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessID);
 
     AuditParameters.ParameterCount++;
 
@@ -889,14 +879,14 @@ Return Value:
     //    Parameter[7] - Subject's Image Name
     //
 
-    SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
-    AuditParameters.ParameterCount ++;
+    SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
+    AuditParameters.ParameterCount++;
 
     //
     //  Parameter[8] - Subject's primary authentication ID
     //
 
-    SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, PrimaryAuthenticationId );
+    SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, PrimaryAuthenticationId);
 
     AuditParameters.ParameterCount++;
 
@@ -904,13 +894,15 @@ Return Value:
     //  Parameter[9] - Subject's client authentication ID
     //
 
-    if ( ARGUMENT_PRESENT( ClientToken )) {
+    if (ARGUMENT_PRESENT(ClientToken))
+    {
 
-        SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, ClientAuthenticationId );
+        SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, ClientAuthenticationId);
+    }
+    else
+    {
 
-    } else {
-
-        SepSetParmTypeNoLogon( AuditParameters, AuditParameters.ParameterCount  );
+        SepSetParmTypeNoLogon(AuditParameters, AuditParameters.ParameterCount);
     }
 
     AuditParameters.ParameterCount++;
@@ -919,13 +911,15 @@ Return Value:
     //  Parameter[10] - DesiredAccess mask
     //
 
-    if ( AccessGranted ) {
+    if (AccessGranted)
+    {
 
-        SepSetParmTypeAccessMask( AuditParameters, AuditParameters.ParameterCount, GrantedAccess, ObjectTypeIndex );
+        SepSetParmTypeAccessMask(AuditParameters, AuditParameters.ParameterCount, GrantedAccess, ObjectTypeIndex);
+    }
+    else
+    {
 
-    } else {
-
-        SepSetParmTypeAccessMask( AuditParameters, AuditParameters.ParameterCount, DesiredAccess, ObjectTypeIndex );
+        SepSetParmTypeAccessMask(AuditParameters, AuditParameters.ParameterCount, DesiredAccess, ObjectTypeIndex);
     }
 
     AuditParameters.ParameterCount++;
@@ -934,9 +928,10 @@ Return Value:
     //    Parameter[11] - Privileges used for open
     //
 
-    if ( (CapturedPrivileges != NULL) && (CapturedPrivileges->PrivilegeCount > 0) ) {
+    if ((CapturedPrivileges != NULL) && (CapturedPrivileges->PrivilegeCount > 0))
+    {
 
-        SepSetParmTypePrivileges( AuditParameters, AuditParameters.ParameterCount, CapturedPrivileges );
+        SepSetParmTypePrivileges(AuditParameters, AuditParameters.ParameterCount, CapturedPrivileges);
     }
 
     AuditParameters.ParameterCount++;
@@ -945,7 +940,8 @@ Return Value:
     //    Parameter[12] - ObjectTypes of Audited objects/parameter sets/parameters
     //
 
-    if ( ObjectTypeListLength != 0 ) {
+    if (ObjectTypeListLength != 0)
+    {
         ULONG GuidCount;
         ULONG i;
         USHORT FlagMask = AccessGranted ? OBJECT_SUCCESS_AUDIT : OBJECT_FAILURE_AUDIT;
@@ -955,12 +951,16 @@ Return Value:
         //
 
         GuidCount = 0;
-        for ( i=0; i<ObjectTypeListLength; i++ ) {
+        for (i = 0; i < ObjectTypeListLength; i++)
+        {
 
-            if ( i == 0 ) {
+            if (i == 0)
+            {
                 GuidCount++;
-            } else if ( ObjectTypeList[i].Flags & FlagMask ) {
-                GuidCount ++;
+            }
+            else if (ObjectTypeList[i].Flags & FlagMask)
+            {
+                GuidCount++;
             }
         }
 
@@ -969,9 +969,10 @@ Return Value:
         //  copy them into a locally allocated buffer.
         //
 
-        if ( GuidCount > 0 ) {
+        if (GuidCount > 0)
+        {
 
-            AdtObjectTypeBuffer = ExAllocatePoolWithTag( PagedPool, GuidCount * sizeof(SE_ADT_OBJECT_TYPE), 'pAeS' );
+            AdtObjectTypeBuffer = ExAllocatePoolWithTag(PagedPool, GuidCount * sizeof(SE_ADT_OBJECT_TYPE), 'pAeS');
 
             //
             // If the buffer can be allocated,
@@ -980,41 +981,48 @@ Return Value:
             //  generate a truncated audit.
             //
 
-            if ( AdtObjectTypeBuffer != NULL ) {
+            if (AdtObjectTypeBuffer != NULL)
+            {
 
                 //
                 // Copy the GUIDs and optional access masks to the buffer.
                 //
 
                 GuidCount = 0;
-                for ( i=0; i<ObjectTypeListLength; i++ ) {
+                for (i = 0; i < ObjectTypeListLength; i++)
+                {
 
-                    if ( ( i > 0 ) && !( ObjectTypeList[i].Flags & FlagMask ) ) {
+                    if ((i > 0) && !(ObjectTypeList[i].Flags & FlagMask))
+                    {
 
                         continue;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         AdtObjectTypeBuffer[GuidCount].ObjectType = ObjectTypeList[i].ObjectType;
-                        AdtObjectTypeBuffer[GuidCount].Level      = ObjectTypeList[i].Level;
+                        AdtObjectTypeBuffer[GuidCount].Level = ObjectTypeList[i].Level;
 
-                        if ( i == 0 ) {
+                        if (i == 0)
+                        {
                             //
                             // Always copy the GUID representing the object itself.
                             //  Mark it as a such to avoid including it in the audit.
                             //
-                            AdtObjectTypeBuffer[GuidCount].Flags      = SE_ADT_OBJECT_ONLY;
+                            AdtObjectTypeBuffer[GuidCount].Flags = SE_ADT_OBJECT_ONLY;
                             AdtObjectTypeBuffer[GuidCount].AccessMask = 0;
-
-                        } else  {
+                        }
+                        else
+                        {
 
                             AdtObjectTypeBuffer[GuidCount].Flags = 0;
-                            if ( ARGUMENT_PRESENT(GrantedAccessArray) && AccessGranted ) {
+                            if (ARGUMENT_PRESENT(GrantedAccessArray) && AccessGranted)
+                            {
 
                                 AdtObjectTypeBuffer[GuidCount].AccessMask = GrantedAccessArray[i];
                             }
                         }
-                        GuidCount ++;
+                        GuidCount++;
                     }
                 }
 
@@ -1022,54 +1030,48 @@ Return Value:
                 // Store the Object Types.
                 //
 
-                SepSetParmTypeObjectTypes( AuditParameters, AuditParameters.ParameterCount, AdtObjectTypeBuffer, GuidCount, ObjectTypeIndex );
-                AuditParameters.ParameterCount ++;
+                SepSetParmTypeObjectTypes(AuditParameters, AuditParameters.ParameterCount, AdtObjectTypeBuffer,
+                                          GuidCount, ObjectTypeIndex);
+                AuditParameters.ParameterCount++;
                 AuditParameters.AuditId = SE_AUDITID_OPEN_HANDLE_OBJECT_TYPE;
             }
         }
-
     }
 
     //
     //    Parameter[13] - Restricted Sids in token
     //
 
-    SepSetParmTypeUlong( AuditParameters, AuditParameters.ParameterCount, PrimaryToken->RestrictedSidCount );
-    AuditParameters.ParameterCount ++;
+    SepSetParmTypeUlong(AuditParameters, AuditParameters.ParameterCount, PrimaryToken->RestrictedSidCount);
+    AuditParameters.ParameterCount++;
 
 
     //
     // Audit it.
     //
-    SepAdtLogAuditRecord( &AuditParameters );
+    SepAdtLogAuditRecord(&AuditParameters);
 
-    if ( AdtObjectTypeBuffer != NULL ) {
-        ExFreePool( AdtObjectTypeBuffer );
+    if (AdtObjectTypeBuffer != NULL)
+    {
+        ExFreePool(AdtObjectTypeBuffer);
     }
 
-    if ( ImageFileName != &NullString ) {
-        ExFreePool( ImageFileName );
+    if (ImageFileName != &NullString)
+    {
+        ExFreePool(ImageFileName);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
-
+
 BOOLEAN
-SepAdtOpenObjectForDeleteAuditAlarm (
-    IN PUNICODE_STRING CapturedSubsystemName,
-    IN PVOID *HandleId OPTIONAL,
-    IN PUNICODE_STRING CapturedObjectTypeName,
-    IN PUNICODE_STRING CapturedObjectName OPTIONAL,
-    IN PTOKEN ClientToken OPTIONAL,
-    IN PTOKEN PrimaryToken,
-    IN ACCESS_MASK DesiredAccess,
-    IN ACCESS_MASK GrantedAccess,
-    IN PLUID OperationId,
-    IN PPRIVILEGE_SET CapturedPrivileges OPTIONAL,
-    IN BOOLEAN AccessGranted,
-    IN HANDLE ProcessID
-    )
+SepAdtOpenObjectForDeleteAuditAlarm(IN PUNICODE_STRING CapturedSubsystemName, IN PVOID *HandleId OPTIONAL,
+                                    IN PUNICODE_STRING CapturedObjectTypeName,
+                                    IN PUNICODE_STRING CapturedObjectName OPTIONAL, IN PTOKEN ClientToken OPTIONAL,
+                                    IN PTOKEN PrimaryToken, IN ACCESS_MASK DesiredAccess, IN ACCESS_MASK GrantedAccess,
+                                    IN PLUID OperationId, IN PPRIVILEGE_SET CapturedPrivileges OPTIONAL,
+                                    IN BOOLEAN AccessGranted, IN HANDLE ProcessID)
 
 /*++
 
@@ -1179,16 +1181,18 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( ARGUMENT_PRESENT( ClientToken )) {
+    if (ARGUMENT_PRESENT(ClientToken))
+    {
 
-        CapturedUserSid = SepTokenUserSid( ClientToken );
+        CapturedUserSid = SepTokenUserSid(ClientToken);
+    }
+    else
+    {
 
-    } else {
-
-        CapturedUserSid = SepTokenUserSid( PrimaryToken );
+        CapturedUserSid = SepTokenUserSid(PrimaryToken);
     }
 
-    PrimaryAuthenticationId = SepTokenAuthenticationId( PrimaryToken );
+    PrimaryAuthenticationId = SepTokenAuthenticationId(PrimaryToken);
 
     //
     // A completely zero'd entry will be interpreted
@@ -1198,22 +1202,21 @@ Return Value:
     // us to avoid filling in each not supplied entry.
     //
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
     AuditParameters.CategoryId = SE_CATEGID_OBJECT_ACCESS;
     AuditParameters.AuditId = SE_AUDITID_OPEN_OBJECT_FOR_DELETE;
     AuditParameters.ParameterCount = 0;
 
-    if ( AccessGranted ) {
+    if (AccessGranted)
+    {
 
         AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         AuditParameters.Type = EVENTLOG_AUDIT_FAILURE;
     }
@@ -1222,7 +1225,7 @@ Return Value:
     //  Parameter[0] - User Sid
     //
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, CapturedUserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, CapturedUserSid);
 
     AuditParameters.ParameterCount++;
 
@@ -1230,7 +1233,7 @@ Return Value:
     //  Parameter[1] - Subsystem name (if available)
     //
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
 
     AuditParameters.ParameterCount++;
 
@@ -1238,9 +1241,10 @@ Return Value:
     //  Parameter[2] - Object Server (if available)
     //
 
-    if ( ARGUMENT_PRESENT( CapturedSubsystemName )) {
+    if (ARGUMENT_PRESENT(CapturedSubsystemName))
+    {
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
     }
 
     AuditParameters.ParameterCount++;
@@ -1249,9 +1253,10 @@ Return Value:
     //  Parameter[3] - Object Type Name
     //
 
-    if ( ARGUMENT_PRESENT( CapturedObjectTypeName )) {
+    if (ARGUMENT_PRESENT(CapturedObjectTypeName))
+    {
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedObjectTypeName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedObjectTypeName);
     }
 
     ObjectTypeIndex = AuditParameters.ParameterCount;
@@ -1261,9 +1266,10 @@ Return Value:
     //  Parameter[4] - Object Name
     //
 
-    if ( ARGUMENT_PRESENT( CapturedObjectName )) {
+    if (ARGUMENT_PRESENT(CapturedObjectName))
+    {
 
-        SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, CapturedObjectName );
+        SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, CapturedObjectName);
     }
 
     AuditParameters.ParameterCount++;
@@ -1272,24 +1278,27 @@ Return Value:
     //  Parameter[5] - New handle ID
     //
 
-    if ( ARGUMENT_PRESENT( HandleId )) {
+    if (ARGUMENT_PRESENT(HandleId))
+    {
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, *HandleId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, *HandleId);
     }
 
     AuditParameters.ParameterCount++;
 
-    if ( ARGUMENT_PRESENT( OperationId )) {
+    if (ARGUMENT_PRESENT(OperationId))
+    {
 
-        SepSetParmTypeUlong( AuditParameters, AuditParameters.ParameterCount, (*OperationId).HighPart );
-
-        AuditParameters.ParameterCount++;
-
-        SepSetParmTypeUlong( AuditParameters, AuditParameters.ParameterCount, (*OperationId).LowPart );
+        SepSetParmTypeUlong(AuditParameters, AuditParameters.ParameterCount, (*OperationId).HighPart);
 
         AuditParameters.ParameterCount++;
 
-    } else {
+        SepSetParmTypeUlong(AuditParameters, AuditParameters.ParameterCount, (*OperationId).LowPart);
+
+        AuditParameters.ParameterCount++;
+    }
+    else
+    {
 
         AuditParameters.ParameterCount += 2;
     }
@@ -1298,7 +1307,7 @@ Return Value:
     //  Parameter[6] - Subject's process id
     //
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessID );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessID);
 
     AuditParameters.ParameterCount++;
 
@@ -1306,7 +1315,7 @@ Return Value:
     //  Parameter[7] - Subject's primary authentication ID
     //
 
-    SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, PrimaryAuthenticationId );
+    SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, PrimaryAuthenticationId);
 
     AuditParameters.ParameterCount++;
 
@@ -1314,14 +1323,16 @@ Return Value:
     //  Parameter[8] - Subject's client authentication ID
     //
 
-    if ( ARGUMENT_PRESENT( ClientToken )) {
+    if (ARGUMENT_PRESENT(ClientToken))
+    {
 
-        ClientAuthenticationId =  SepTokenAuthenticationId( ClientToken );
-        SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, ClientAuthenticationId );
+        ClientAuthenticationId = SepTokenAuthenticationId(ClientToken);
+        SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, ClientAuthenticationId);
+    }
+    else
+    {
 
-    } else {
-
-        SepSetParmTypeNoLogon( AuditParameters, AuditParameters.ParameterCount  );
+        SepSetParmTypeNoLogon(AuditParameters, AuditParameters.ParameterCount);
     }
 
     AuditParameters.ParameterCount++;
@@ -1330,13 +1341,15 @@ Return Value:
     //  Parameter[9] - DesiredAccess mask
     //
 
-    if ( AccessGranted ) {
+    if (AccessGranted)
+    {
 
-        SepSetParmTypeAccessMask( AuditParameters, AuditParameters.ParameterCount, GrantedAccess, ObjectTypeIndex );
+        SepSetParmTypeAccessMask(AuditParameters, AuditParameters.ParameterCount, GrantedAccess, ObjectTypeIndex);
+    }
+    else
+    {
 
-    } else {
-
-        SepSetParmTypeAccessMask( AuditParameters, AuditParameters.ParameterCount, DesiredAccess, ObjectTypeIndex );
+        SepSetParmTypeAccessMask(AuditParameters, AuditParameters.ParameterCount, DesiredAccess, ObjectTypeIndex);
     }
 
     AuditParameters.ParameterCount++;
@@ -1345,27 +1358,21 @@ Return Value:
     //    Parameter[10] - Privileges used for open
     //
 
-    if ( (CapturedPrivileges != NULL) && (CapturedPrivileges->PrivilegeCount > 0) ) {
+    if ((CapturedPrivileges != NULL) && (CapturedPrivileges->PrivilegeCount > 0))
+    {
 
-        SepSetParmTypePrivileges( AuditParameters, AuditParameters.ParameterCount, CapturedPrivileges );
+        SepSetParmTypePrivileges(AuditParameters, AuditParameters.ParameterCount, CapturedPrivileges);
     }
 
     AuditParameters.ParameterCount++;
 
-    SepAdtLogAuditRecord( &AuditParameters );
+    SepAdtLogAuditRecord(&AuditParameters);
 
-    return( TRUE );
+    return (TRUE);
 }
 
 
-
-
-VOID
-SepAdtCloseObjectAuditAlarm (
-    IN PUNICODE_STRING CapturedSubsystemName,
-    IN PVOID HandleId,
-    IN PSID UserSid
-    )
+VOID SepAdtCloseObjectAuditAlarm(IN PUNICODE_STRING CapturedSubsystemName, IN PVOID HandleId, IN PSID UserSid)
 
 /*++
 
@@ -1428,24 +1435,27 @@ Return value:
     HANDLE ProcessId;
     PEPROCESS Process = NULL;
     PUNICODE_STRING ImageFileName;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
     NTSTATUS Status;
 
     PAGED_CODE();
 
-    if ( SepAuditOptions.DoNotAuditCloseObjectEvents ) {
+    if (SepAuditOptions.DoNotAuditCloseObjectEvents)
+    {
 
         return;
     }
 
-    if ( SepAdtAuditThisEvent( AuditCategoryObjectAccess, &AccessGranted ) ) {
+    if (SepAdtAuditThisEvent(AuditCategoryObjectAccess, &AccessGranted))
+    {
 
         Process = PsGetCurrentProcess();
-        ProcessId = PsProcessAuditId( Process );
+        ProcessId = PsProcessAuditId(Process);
 
-        Status = SeLocateProcessImageName( Process, &ImageFileName );
-        
-        if ( !NT_SUCCESS(Status) ) {
+        Status = SeLocateProcessImageName(Process, &ImageFileName);
+
+        if (!NT_SUCCESS(Status))
+        {
             ImageFileName = &NullString;
         }
 
@@ -1457,12 +1467,9 @@ Return value:
         // us to avoid filling in each not supplied entry.
         //
 
-        RtlZeroMemory (
-           (PVOID) &AuditParameters,
-           sizeof( AuditParameters )
-           );
+        RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-        ASSERT( SeAdtParmTypeNone == 0 );
+        ASSERT(SeAdtParmTypeNone == 0);
 
         AuditParameters.CategoryId = SE_CATEGID_OBJECT_ACCESS;
         AuditParameters.AuditId = SE_AUDITID_CLOSE_HANDLE;
@@ -1474,7 +1481,7 @@ Return value:
         //  Parameter[0] - User Sid
         //
 
-        SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+        SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
 
         AuditParameters.ParameterCount++;
 
@@ -1483,9 +1490,10 @@ Return value:
         //  Parameter[1] - Subsystem name (if available)
         //
 
-        if ( ARGUMENT_PRESENT( CapturedSubsystemName )) {
+        if (ARGUMENT_PRESENT(CapturedSubsystemName))
+        {
 
-            SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+            SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
         }
 
         AuditParameters.ParameterCount++;
@@ -1494,9 +1502,10 @@ Return value:
         //  Parameter[2] - Subsystem name (if available)
         //
 
-        if ( ARGUMENT_PRESENT( CapturedSubsystemName )) {
+        if (ARGUMENT_PRESENT(CapturedSubsystemName))
+        {
 
-            SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+            SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
         }
 
         AuditParameters.ParameterCount++;
@@ -1505,7 +1514,7 @@ Return value:
         //    Parameter[3] - New handle ID
         //
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, HandleId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, HandleId);
 
         AuditParameters.ParameterCount++;
 
@@ -1513,7 +1522,7 @@ Return value:
         //    Parameter[4] - Subject's process id
         //
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessId);
 
         AuditParameters.ParameterCount++;
 
@@ -1521,26 +1530,20 @@ Return value:
         //    Parameter[5] - Subject's Image Name
         //
 
-        SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
-        AuditParameters.ParameterCount ++;
+        SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
+        AuditParameters.ParameterCount++;
 
-        SepAdtLogAuditRecord( &AuditParameters );
+        SepAdtLogAuditRecord(&AuditParameters);
 
-        if ( ImageFileName != &NullString ) {
-            ExFreePool( ImageFileName );
+        if (ImageFileName != &NullString)
+        {
+            ExFreePool(ImageFileName);
         }
-
     }
 }
 
 
-
-VOID
-SepAdtDeleteObjectAuditAlarm (
-    IN PUNICODE_STRING CapturedSubsystemName,
-    IN PVOID HandleId,
-    IN PSID UserSid
-    )
+VOID SepAdtDeleteObjectAuditAlarm(IN PUNICODE_STRING CapturedSubsystemName, IN PVOID HandleId, IN PSID UserSid)
 
 /*++
 
@@ -1600,21 +1603,23 @@ Return value:
     BOOLEAN AccessGranted = TRUE;
     HANDLE ProcessId;
     PUNICODE_STRING ImageFileName = NULL;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
     PEPROCESS Process = NULL;
     NTSTATUS Status = STATUS_SUCCESS;
 
     PAGED_CODE();
 
-    if ( SepAdtAuditThisEvent( AuditCategoryObjectAccess, &AccessGranted ) ) {
+    if (SepAdtAuditThisEvent(AuditCategoryObjectAccess, &AccessGranted))
+    {
 
         Process = PsGetCurrentProcess();
-        Status = SeLocateProcessImageName( Process, &ImageFileName );
+        Status = SeLocateProcessImageName(Process, &ImageFileName);
 
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             ImageFileName = &NullString;
         }
-        
+
         //
         // A completely zero'd entry will be interpreted
         // as a "null string" or not supplied parameter.
@@ -1623,12 +1628,9 @@ Return value:
         // us to avoid filling in each not supplied entry.
         //
 
-        RtlZeroMemory (
-           (PVOID) &AuditParameters,
-           sizeof( AuditParameters )
-           );
+        RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-        ASSERT( SeAdtParmTypeNone == 0 );
+        ASSERT(SeAdtParmTypeNone == 0);
 
         AuditParameters.CategoryId = SE_CATEGID_OBJECT_ACCESS;
         AuditParameters.AuditId = SE_AUDITID_DELETE_OBJECT;
@@ -1640,7 +1642,7 @@ Return value:
         //  Parameter[0] - User Sid
         //
 
-        SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+        SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
 
         AuditParameters.ParameterCount++;
 
@@ -1649,9 +1651,10 @@ Return value:
         //  Parameter[1] - Subsystem name (if available)
         //
 
-        if ( ARGUMENT_PRESENT( CapturedSubsystemName )) {
+        if (ARGUMENT_PRESENT(CapturedSubsystemName))
+        {
 
-            SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+            SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
         }
 
         AuditParameters.ParameterCount++;
@@ -1660,9 +1663,10 @@ Return value:
         //  Parameter[2] - Subsystem name (if available)
         //
 
-        if ( ARGUMENT_PRESENT( CapturedSubsystemName )) {
+        if (ARGUMENT_PRESENT(CapturedSubsystemName))
+        {
 
-            SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName );
+            SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, CapturedSubsystemName);
         }
 
         AuditParameters.ParameterCount++;
@@ -1671,7 +1675,7 @@ Return value:
         //    Parameter[3] - New handle ID
         //
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, HandleId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, HandleId);
 
         AuditParameters.ParameterCount++;
 
@@ -1679,35 +1683,30 @@ Return value:
         //    Parameter[4] - Subject's process id
         //
 
-        ProcessId =  PsProcessAuditId( PsGetCurrentProcess() );
+        ProcessId = PsProcessAuditId(PsGetCurrentProcess());
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessId);
 
         AuditParameters.ParameterCount++;
-        
+
         //
         //    Parameter[5] - Subject's Image Name
         //
 
-        SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
-        AuditParameters.ParameterCount ++;
+        SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
+        AuditParameters.ParameterCount++;
 
-        SepAdtLogAuditRecord( &AuditParameters );
+        SepAdtLogAuditRecord(&AuditParameters);
 
-        if (ImageFileName != &NullString) {
+        if (ImageFileName != &NullString)
+        {
             ExFreePool(ImageFileName);
         }
     }
 }
 
-VOID
-SeOperationAuditAlarm (
-    IN PUNICODE_STRING CapturedSubsystemName OPTIONAL,
-    IN PVOID HandleId,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN ACCESS_MASK AuditMask,
-    IN PSID UserSid OPTIONAL
-    )
+VOID SeOperationAuditAlarm(IN PUNICODE_STRING CapturedSubsystemName OPTIONAL, IN PVOID HandleId,
+                           IN PUNICODE_STRING ObjectTypeName, IN ACCESS_MASK AuditMask, IN PSID UserSid OPTIONAL)
 
 /*++
 
@@ -1769,21 +1768,22 @@ Return value:
     ULONG ObjectTypeIndex;
     PUNICODE_STRING SubsystemName;
     NTSTATUS Status;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
     PUNICODE_STRING ImageFileName = NULL;
     PEPROCESS Process = NULL;
 
     PAGED_CODE();
 
     Process = PsGetCurrentProcess();
-    ProcessId = PsProcessAuditId( Process );
+    ProcessId = PsProcessAuditId(Process);
 
-    Status = SeLocateProcessImageName( Process, &ImageFileName );
+    Status = SeLocateProcessImageName(Process, &ImageFileName);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         ImageFileName = &NullString;
     }
-    
+
     //
     // A completely zero'd entry will be interpreted
     // as a "null string" or not supplied parameter.
@@ -1792,32 +1792,31 @@ Return value:
     // us to avoid filling in each not supplied entry.
     //
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
-    AuditParameters.CategoryId     = SE_CATEGID_OBJECT_ACCESS;
-    AuditParameters.AuditId        = SE_AUDITID_OBJECT_ACCESS;
+    AuditParameters.CategoryId = SE_CATEGID_OBJECT_ACCESS;
+    AuditParameters.AuditId = SE_AUDITID_OBJECT_ACCESS;
     AuditParameters.ParameterCount = 0;
-    AuditParameters.Type           = EVENTLOG_AUDIT_SUCCESS;
+    AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
 
     //
     //  If the user's SID was not passed, get it out of the current
     //  subject context
     //
 
-    SeCaptureSubjectContext( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    UserSid = SepTokenUserSid( EffectiveToken( &SubjectSecurityContext ));
+    UserSid = SepTokenUserSid(EffectiveToken(&SubjectSecurityContext));
 
-    if ( !ARGUMENT_PRESENT( CapturedSubsystemName )) {
+    if (!ARGUMENT_PRESENT(CapturedSubsystemName))
+    {
 
         SubsystemName = (PUNICODE_STRING)&SeSubsystemName;
-
-    } else {
+    }
+    else
+    {
 
         SubsystemName = CapturedSubsystemName;
     }
@@ -1826,7 +1825,7 @@ Return value:
     //  Parameter[0] - User Sid
     //
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
 
     AuditParameters.ParameterCount++;
 
@@ -1835,7 +1834,7 @@ Return value:
     //  Parameter[1] - Subsystem name (if available)
     //
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, SubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, SubsystemName);
 
     AuditParameters.ParameterCount++;
 
@@ -1843,7 +1842,7 @@ Return value:
     //  Parameter[2] - Subsystem name (if available)
     //
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, SubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, SubsystemName);
 
     AuditParameters.ParameterCount++;
 
@@ -1851,7 +1850,7 @@ Return value:
     //    Parameter[3] - New handle ID
     //
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, HandleId );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, HandleId);
 
     AuditParameters.ParameterCount++;
 
@@ -1859,7 +1858,7 @@ Return value:
     //    Parameter[4] - Object Type Name
     //
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, ObjectTypeName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, ObjectTypeName);
     ObjectTypeIndex = AuditParameters.ParameterCount;
 
     AuditParameters.ParameterCount++;
@@ -1868,7 +1867,7 @@ Return value:
     //    Parameter[5] - Subject's process id
     //
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessId );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessId);
 
     AuditParameters.ParameterCount++;
 
@@ -1877,7 +1876,7 @@ Return value:
     //    Parameter[6] - Subject's process name
     //
 
-    SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
+    SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
 
     AuditParameters.ParameterCount++;
 
@@ -1885,29 +1884,23 @@ Return value:
     //    Parameter[7] - Audit Mask
     //
 
-    SepSetParmTypeAccessMask( AuditParameters, AuditParameters.ParameterCount, AuditMask, ObjectTypeIndex );
+    SepSetParmTypeAccessMask(AuditParameters, AuditParameters.ParameterCount, AuditMask, ObjectTypeIndex);
 
     AuditParameters.ParameterCount++;
 
-    SepAdtLogAuditRecord( &AuditParameters );
+    SepAdtLogAuditRecord(&AuditParameters);
 
-    if ( ImageFileName != &NullString ) {
-        ExFreePool( ImageFileName );
+    if (ImageFileName != &NullString)
+    {
+        ExFreePool(ImageFileName);
     }
 
-    SeReleaseSubjectContext( &SubjectSecurityContext );
-
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 }
 
 
-
-VOID
-SepAdtObjectReferenceAuditAlarm(
-    IN PVOID Object,
-    IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
-    IN ACCESS_MASK DesiredAccess,
-    IN BOOLEAN AccessGranted
-    )
+VOID SepAdtObjectReferenceAuditAlarm(IN PVOID Object, IN PSECURITY_SUBJECT_CONTEXT SubjectSecurityContext,
+                                     IN ACCESS_MASK DesiredAccess, IN BOOLEAN AccessGranted)
 
 /*++
 
@@ -1958,16 +1951,18 @@ Return Value:
     PAGED_CODE();
 
 
-    if ( ARGUMENT_PRESENT( ClientToken )) {
+    if (ARGUMENT_PRESENT(ClientToken))
+    {
 
-        UserSid = SepTokenUserSid( ClientToken );
+        UserSid = SepTokenUserSid(ClientToken);
+    }
+    else
+    {
 
-    } else {
-
-        UserSid = SepTokenUserSid( PrimaryToken );
+        UserSid = SepTokenUserSid(PrimaryToken);
     }
 
-    PrimaryAuthenticationId = SepTokenAuthenticationId( PrimaryToken );
+    PrimaryAuthenticationId = SepTokenAuthenticationId(PrimaryToken);
 
     //
     // A completely zero'd entry will be interpreted
@@ -1977,22 +1972,21 @@ Return Value:
     // us to avoid filling in each not supplied entry.
     //
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
     AuditParameters.CategoryId = SE_CATEGID_DETAILED_TRACKING;
     AuditParameters.AuditId = SE_AUDITID_INDIRECT_REFERENCE;
     AuditParameters.ParameterCount = 8;
 
-    if ( AccessGranted ) {
+    if (AccessGranted)
+    {
 
         AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         AuditParameters.Type = EVENTLOG_AUDIT_FAILURE;
     }
@@ -2002,35 +1996,34 @@ Return Value:
     // object.
     //
 
-    ObjectNameInformation = SepQueryNameString( Object );
+    ObjectNameInformation = SepQueryNameString(Object);
 
 
-    ObjectTypeInformation = SepQueryTypeString( Object );
-
-
+    ObjectTypeInformation = SepQueryTypeString(Object);
 
 
     //
     //  Parameter[0] - User Sid
     //
 
-    SepSetParmTypeSid( AuditParameters, 0, UserSid );
+    SepSetParmTypeSid(AuditParameters, 0, UserSid);
 
 
     //
     //  Parameter[1] - Subsystem name (if available)
     //
 
-    SepSetParmTypeString( AuditParameters, 1, (PUNICODE_STRING)&SeSubsystemName );
+    SepSetParmTypeString(AuditParameters, 1, (PUNICODE_STRING)&SeSubsystemName);
 
 
     //
     //  Parameter[2] - Object Type Name
     //
 
-    if ( ObjectTypeInformation != NULL ) {
+    if (ObjectTypeInformation != NULL)
+    {
 
-        SepSetParmTypeString( AuditParameters, 2, ObjectTypeInformation );
+        SepSetParmTypeString(AuditParameters, 2, ObjectTypeInformation);
     }
 
     ObjectTypeIndex = 2;
@@ -2040,21 +2033,18 @@ Return Value:
     //  Parameter[3] - Object Name
     //
 
-    if ( ObjectNameInformation != NULL ) {
+    if (ObjectNameInformation != NULL)
+    {
 
-        SepSetParmTypeString( AuditParameters, 3, &ObjectNameInformation->Name );
+        SepSetParmTypeString(AuditParameters, 3, &ObjectNameInformation->Name);
     }
-
-
 
 
     //
     //  Parameter[4] - Subject's process id
     //
 
-    SepSetParmTypePtr( AuditParameters, 4, SubjectSecurityContext->ProcessAuditId );
-
-
+    SepSetParmTypePtr(AuditParameters, 4, SubjectSecurityContext->ProcessAuditId);
 
 
     //
@@ -2062,24 +2052,23 @@ Return Value:
     //
 
 
-    SepSetParmTypeLogonId( AuditParameters, 5, PrimaryAuthenticationId );
-
-
+    SepSetParmTypeLogonId(AuditParameters, 5, PrimaryAuthenticationId);
 
 
     //
     //  Parameter[6] - Subject's client authentication ID
     //
 
-    if ( ARGUMENT_PRESENT( ClientToken )) {
+    if (ARGUMENT_PRESENT(ClientToken))
+    {
 
-        ClientAuthenticationId =  SepTokenAuthenticationId( ClientToken );
-        SepSetParmTypeLogonId( AuditParameters, 6, ClientAuthenticationId );
+        ClientAuthenticationId = SepTokenAuthenticationId(ClientToken);
+        SepSetParmTypeLogonId(AuditParameters, 6, ClientAuthenticationId);
+    }
+    else
+    {
 
-    } else {
-
-        SepSetParmTypeNoLogon( AuditParameters, 6 );
-
+        SepSetParmTypeNoLogon(AuditParameters, 6);
     }
 
     //
@@ -2087,30 +2076,25 @@ Return Value:
     //
 
 
-    SepSetParmTypeAccessMask( AuditParameters, 7, DesiredAccess, ObjectTypeIndex );
+    SepSetParmTypeAccessMask(AuditParameters, 7, DesiredAccess, ObjectTypeIndex);
 
 
-    SepAdtLogAuditRecord( &AuditParameters );
+    SepAdtLogAuditRecord(&AuditParameters);
 
-    if ( ObjectNameInformation != NULL ) {
-        ExFreePool( ObjectNameInformation );
+    if (ObjectNameInformation != NULL)
+    {
+        ExFreePool(ObjectNameInformation);
     }
 
-    if ( ObjectTypeInformation != NULL ) {
-        ExFreePool( ObjectTypeInformation );
+    if (ObjectTypeInformation != NULL)
+    {
+        ExFreePool(ObjectTypeInformation);
     }
-
 }
 
 
-
-
-
-
 POBJECT_NAME_INFORMATION
-SepQueryNameString(
-    IN PVOID Object
-    )
+SepQueryNameString(IN PVOID Object)
 
 /*++
 
@@ -2142,51 +2126,42 @@ Return Value:
 
     PAGED_CODE();
 
-    Status = ObQueryNameString(
-                 Object,
-                 ObjectNameInfo,
-                 0,
-                 &ReturnLength
-                 );
+    Status = ObQueryNameString(Object, ObjectNameInfo, 0, &ReturnLength);
 
-    if ( Status == STATUS_INFO_LENGTH_MISMATCH ) {
+    if (Status == STATUS_INFO_LENGTH_MISMATCH)
+    {
 
-        ObjectNameInfo = ExAllocatePoolWithTag( PagedPool, ReturnLength, 'nOeS' );
+        ObjectNameInfo = ExAllocatePoolWithTag(PagedPool, ReturnLength, 'nOeS');
 
-        if ( ObjectNameInfo != NULL ) {
+        if (ObjectNameInfo != NULL)
+        {
 
-            Status = ObQueryNameString(
-                        Object,
-                        ObjectNameInfo,
-                        ReturnLength,
-                        &ReturnLength
-                        );
+            Status = ObQueryNameString(Object, ObjectNameInfo, ReturnLength, &ReturnLength);
 
-            if ( NT_SUCCESS( Status )) {
+            if (NT_SUCCESS(Status))
+            {
 
-                if (ObjectNameInfo->Name.Length != 0) {
+                if (ObjectNameInfo->Name.Length != 0)
+                {
 
-                    return( ObjectNameInfo );
+                    return (ObjectNameInfo);
+                }
+                else
+                {
 
-                } else {
-
-                    ExFreePool( ObjectNameInfo );
-                    return( NULL );
+                    ExFreePool(ObjectNameInfo);
+                    return (NULL);
                 }
             }
         }
     }
 
-    return( NULL );
+    return (NULL);
 }
 
 
-
-
 PUNICODE_STRING
-SepQueryTypeString(
-    IN PVOID Object
-    )
+SepQueryTypeString(IN PVOID Object)
 /*++
 
 Routine Description:
@@ -2217,41 +2192,31 @@ Return Value:
 
     PAGED_CODE();
 
-    Status = ObQueryTypeName(
-                 Object,
-                 TypeName,
-                 0,
-                 &ReturnLength
-                 );
+    Status = ObQueryTypeName(Object, TypeName, 0, &ReturnLength);
 
-    if ( Status == STATUS_INFO_LENGTH_MISMATCH ) {
+    if (Status == STATUS_INFO_LENGTH_MISMATCH)
+    {
 
-        TypeName = ExAllocatePoolWithTag( PagedPool, ReturnLength, 'nTeS' );
+        TypeName = ExAllocatePoolWithTag(PagedPool, ReturnLength, 'nTeS');
 
-        if ( TypeName != NULL ) {
+        if (TypeName != NULL)
+        {
 
-            Status = ObQueryTypeName(
-                        Object,
-                        TypeName,
-                        ReturnLength,
-                        &ReturnLength
-                        );
+            Status = ObQueryTypeName(Object, TypeName, ReturnLength, &ReturnLength);
 
-            if ( NT_SUCCESS( Status )) {
+            if (NT_SUCCESS(Status))
+            {
 
-                return( TypeName );
+                return (TypeName);
             }
         }
     }
 
-    return( NULL );
+    return (NULL);
 }
 
-
-VOID
-SeAuditProcessCreation(
-    PEPROCESS Process
-    )
+
+VOID SeAuditProcessCreation(PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -2279,7 +2244,7 @@ Return Value:
     HANDLE ProcessId;
     HANDLE ParentProcessId;
     PUNICODE_STRING ImageFileName;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
 
     PAGED_CODE();
 
@@ -2293,9 +2258,10 @@ Return Value:
     ProcessId = Process->UniqueProcessId;
     ParentProcessId = Process->InheritedFromUniqueProcessId;
 
-    Status = SeLocateProcessImageName( Process, &ImageFileName );
+    Status = SeLocateProcessImageName(Process, &ImageFileName);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         ImageFileName = &NullString;
     }
 
@@ -2305,14 +2271,11 @@ Return Value:
     // directly.
     //
 
-    SeCaptureSubjectContext( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
     AuditParameters.CategoryId = SE_CATEGID_DETAILED_TRACKING;
     AuditParameters.AuditId = SE_AUDITID_PROCESS_CREATED;
@@ -2324,51 +2287,46 @@ Return Value:
     // when the created process exits.
     //
 
-    UserSid = SepTokenUserSid( SubjectSecurityContext.PrimaryToken );
+    UserSid = SepTokenUserSid(SubjectSecurityContext.PrimaryToken);
 
-    UserAuthenticationId = SepTokenAuthenticationId( SubjectSecurityContext.PrimaryToken );
+    UserAuthenticationId = SepTokenAuthenticationId(SubjectSecurityContext.PrimaryToken);
 
     //
     // Fill in the AuditParameters structure.
     //
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessId );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessId);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
+    SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ParentProcessId );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ParentProcessId);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, UserAuthenticationId );
+    SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, UserAuthenticationId);
     AuditParameters.ParameterCount++;
 
-    SepAdtLogAuditRecord( &AuditParameters );
+    SepAdtLogAuditRecord(&AuditParameters);
 
-    SeReleaseSubjectContext( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
-    if ( ImageFileName != &NullString ) {
-        ExFreePool( ImageFileName );
+    if (ImageFileName != &NullString)
+    {
+        ExFreePool(ImageFileName);
     }
 
     return;
 }
 
-
-VOID
-SeAuditHandleDuplication(
-    PVOID SourceHandle,
-    PVOID NewHandle,
-    PEPROCESS SourceProcess,
-    PEPROCESS TargetProcess
-    )
+
+VOID SeAuditHandleDuplication(PVOID SourceHandle, PVOID NewHandle, PEPROCESS SourceProcess, PEPROCESS TargetProcess)
 
 /*++
 
@@ -2400,52 +2358,46 @@ Return Value:
 
     PAGED_CODE();
 
-    SeCaptureSubjectContext( &SubjectSecurityContext );
+    SeCaptureSubjectContext(&SubjectSecurityContext);
 
-    UserSid = SepTokenUserSid( EffectiveToken( &SubjectSecurityContext ));
+    UserSid = SepTokenUserSid(EffectiveToken(&SubjectSecurityContext));
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
     AuditParameters.CategoryId = SE_CATEGID_DETAILED_TRACKING;
     AuditParameters.AuditId = SE_AUDITID_DUPLICATE_HANDLE;
     AuditParameters.ParameterCount = 0;
     AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, SourceHandle );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, SourceHandle);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, PsProcessAuditId( SourceProcess ));
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, PsProcessAuditId(SourceProcess));
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, NewHandle );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, NewHandle);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, PsProcessAuditId( TargetProcess ));
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, PsProcessAuditId(TargetProcess));
     AuditParameters.ParameterCount++;
 
 
-    SepAdtLogAuditRecord( &AuditParameters );
+    SepAdtLogAuditRecord(&AuditParameters);
 
-    SeReleaseSubjectContext( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 }
 
-
-VOID
-SeAuditProcessExit(
-    PEPROCESS Process
-    )
+
+VOID SeAuditProcessExit(PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -2470,67 +2422,61 @@ Return Value:
     LUID LogonId;
     HANDLE ProcessId;
     PUNICODE_STRING ImageFileName;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
     NTSTATUS Status;
-    
+
     PAGED_CODE();
 
-    Token = (PTOKEN) PsReferencePrimaryToken (Process);
+    Token = (PTOKEN)PsReferencePrimaryToken(Process);
 
-    UserSid = SepTokenUserSid( Token );
-    LogonId = SepTokenAuthenticationId( Token );
+    UserSid = SepTokenUserSid(Token);
+    LogonId = SepTokenAuthenticationId(Token);
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
-    Status = SeLocateProcessImageName( Process, &ImageFileName );
+    Status = SeLocateProcessImageName(Process, &ImageFileName);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         ImageFileName = &NullString;
     }
-    
+
     AuditParameters.CategoryId = SE_CATEGID_DETAILED_TRACKING;
     AuditParameters.AuditId = SE_AUDITID_PROCESS_EXIT;
     AuditParameters.ParameterCount = 0;
     AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName);
     AuditParameters.ParameterCount++;
 
-    ProcessId =  PsProcessAuditId( Process );
+    ProcessId = PsProcessAuditId(Process);
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessId );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessId);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
+    SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, LogonId );
+    SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, LogonId);
     AuditParameters.ParameterCount++;
 
-    SepAdtLogAuditRecord( &AuditParameters );
-   
-    PsDereferencePrimaryToken( Token );
-    
-    if ( ImageFileName != &NullString ) {
-        ExFreePool( ImageFileName );
+    SepAdtLogAuditRecord(&AuditParameters);
+
+    PsDereferencePrimaryToken(Token);
+
+    if (ImageFileName != &NullString)
+    {
+        ExFreePool(ImageFileName);
     }
-
 }
 
 
-
-VOID
-SepAdtGenerateDiscardAudit(
-    VOID
-    )
+VOID SepAdtGenerateDiscardAudit(VOID)
 
 /*++
 
@@ -2557,38 +2503,32 @@ Return Value:
 
     UserSid = SeLocalSystemSid;
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
     AuditParameters.CategoryId = SE_CATEGID_SYSTEM;
     AuditParameters.AuditId = SE_AUDITID_AUDITS_DISCARDED;
     AuditParameters.ParameterCount = 0;
     AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeUlong( AuditParameters, AuditParameters.ParameterCount, SepAdtCountEventsDiscarded );
+    SepSetParmTypeUlong(AuditParameters, AuditParameters.ParameterCount, SepAdtCountEventsDiscarded);
     AuditParameters.ParameterCount++;
 
-    SepAdtLogAuditRecord( &AuditParameters );
+    SepAdtLogAuditRecord(&AuditParameters);
 }
 
-
+
 NTSTATUS
-SeInitializeProcessAuditName (
-    IN PVOID FileObject,
-    IN BOOLEAN bIgnoreAuditPolicy,
-    OUT POBJECT_NAME_INFORMATION *pAuditName
-    )
+SeInitializeProcessAuditName(IN PVOID FileObject, IN BOOLEAN bIgnoreAuditPolicy,
+                             OUT POBJECT_NAME_INFORMATION *pAuditName)
 
 /*++
 
@@ -2626,33 +2566,38 @@ Environment:
 
     PAGED_CODE();
 
-    ASSERT (pAuditName != NULL);
+    ASSERT(pAuditName != NULL);
     *pAuditName = NULL;
 
     //
-    // Check if the caller would like to get the process name, even if auditing does not 
+    // Check if the caller would like to get the process name, even if auditing does not
     // require it.
     //
 
-    if (FALSE == bIgnoreAuditPolicy) {
+    if (FALSE == bIgnoreAuditPolicy)
+    {
         //
-        // At the time of process creation, this routine should only proceed when Object Access or 
+        // At the time of process creation, this routine should only proceed when Object Access or
         // Detailed Tracking auditing is enabled.  In all other cases, the process name is acquired
         // when it is requested.
         //
 
-        if (FALSE == SepAdtAuditingEnabled) {                                                                                                   
+        if (FALSE == SepAdtAuditingEnabled)
+        {
             return STATUS_SUCCESS;
         }
 
-        if ((FALSE == (SeAuditingState[AuditCategoryObjectAccess].AuditOnSuccess | SeAuditingState[AuditCategoryObjectAccess].AuditOnFailure)) &&
-            (FALSE == (SeAuditingState[AuditCategoryDetailedTracking].AuditOnSuccess | SeAuditingState[AuditCategoryDetailedTracking].AuditOnFailure))) {
+        if ((FALSE == (SeAuditingState[AuditCategoryObjectAccess].AuditOnSuccess |
+                       SeAuditingState[AuditCategoryObjectAccess].AuditOnFailure)) &&
+            (FALSE == (SeAuditingState[AuditCategoryDetailedTracking].AuditOnSuccess |
+                       SeAuditingState[AuditCategoryDetailedTracking].AuditOnFailure)))
+        {
 
             return STATUS_SUCCESS;
         }
     }
 
-    FilePointer = (PFILE_OBJECT) FileObject;
+    FilePointer = (PFILE_OBJECT)FileObject;
 
     //
     // Compute full path for imagefile.
@@ -2661,41 +2606,38 @@ Environment:
     // UNICODE_STRING, so if this call succeeded it would indicate
     // an imagefile name of length 0.  That is bad, so all return
     // values except STATUS_BUFFER_OVERFLOW (from NTFS) and
-    // STATUS_BUFFER_TOO_SMALL (from DFS).  This call gives 
+    // STATUS_BUFFER_TOO_SMALL (from DFS).  This call gives
     // me the buffer size that I need to store the image name.
     //
 
     pInternalAuditName = &TempNameInfo;
     ObjectNameInformationLength = sizeof(OBJECT_NAME_INFORMATION);
 
-    Status = ObQueryNameString (FilePointer,
-                                pInternalAuditName,
-                                ObjectNameInformationLength,
-                                &ObjectNameInformationLength);
+    Status =
+        ObQueryNameString(FilePointer, pInternalAuditName, ObjectNameInformationLength, &ObjectNameInformationLength);
 
-    if ((Status == STATUS_BUFFER_OVERFLOW) ||
-        (Status == STATUS_BUFFER_TOO_SMALL)) {
-    
+    if ((Status == STATUS_BUFFER_OVERFLOW) || (Status == STATUS_BUFFER_TOO_SMALL))
+    {
+
         //
         // Sanity check ObQueryNameString.  Different filesystems
         // may be buggy, so make sure that the return length makes
         // sense (that it has room for a non-NULL Buffer in the
         // UNICODE_STRING).
         //
-    
-        if (ObjectNameInformationLength > sizeof(OBJECT_NAME_INFORMATION)) {
-            pInternalAuditName = ExAllocatePoolWithTag (NonPagedPool, 
-                                                        ObjectNameInformationLength, 
-                                                        'aPeS');
 
-            if (pInternalAuditName != NULL) {
-                Status = ObQueryNameString (FilePointer,
-                                            pInternalAuditName,
-                                            ObjectNameInformationLength,
-                                            &ObjectNameInformationLength);
-            
-                if (!NT_SUCCESS(Status)) {
-                
+        if (ObjectNameInformationLength > sizeof(OBJECT_NAME_INFORMATION))
+        {
+            pInternalAuditName = ExAllocatePoolWithTag(NonPagedPool, ObjectNameInformationLength, 'aPeS');
+
+            if (pInternalAuditName != NULL)
+            {
+                Status = ObQueryNameString(FilePointer, pInternalAuditName, ObjectNameInformationLength,
+                                           &ObjectNameInformationLength);
+
+                if (!NT_SUCCESS(Status))
+                {
+
 #if DBG
                     DbgPrint("\n** ObqueryNameString is busted for a filesystem you are using.\n");
 #endif //DBG
@@ -2703,34 +2645,39 @@ Environment:
                     //
                     // If the second call to ObQueryNameString did not succeed, then
                     // something is very wrong.  Set the image name to NULL string.
-                    //                                           
+                    //
                     // Free the memory that the first call to ObQueryNameString requested,
                     // and allocate enough space to store an empty UNICODE_STRING.
                     //
 
-                    ExFreePool (pInternalAuditName); 
+                    ExFreePool(pInternalAuditName);
                     ObjectNameInformationLength = sizeof(OBJECT_NAME_INFORMATION);
-                    pInternalAuditName = ExAllocatePoolWithTag (NonPagedPool, 
-                                                                ObjectNameInformationLength, 
-                                                                'aPeS');
-                
-                    if (pInternalAuditName != NULL) {
+                    pInternalAuditName = ExAllocatePoolWithTag(NonPagedPool, ObjectNameInformationLength, 'aPeS');
+
+                    if (pInternalAuditName != NULL)
+                    {
                         RtlZeroMemory(pInternalAuditName, ObjectNameInformationLength);
-                    
+
                         //
                         // Status = STATUS_SUCCESS to allow the process creation to continue.
                         //
 
                         Status = STATUS_SUCCESS;
-                    } else {
+                    }
+                    else
+                    {
                         Status = STATUS_NO_MEMORY;
                     }
                 }
-            } else {
+            }
+            else
+            {
                 Status = STATUS_NO_MEMORY;
             }
-        } else {
-        
+        }
+        else
+        {
+
             //
             // If this happens, then ObQueryNameString is broken for the FS on which
             // it was called.
@@ -2741,35 +2688,38 @@ Environment:
             DbgPrint("** Please mail jhamblin about this!!\n\n\n");
 #endif //DBG
             ObjectNameInformationLength = sizeof(OBJECT_NAME_INFORMATION);
-            pInternalAuditName = ExAllocatePoolWithTag (NonPagedPool, 
-                                                        ObjectNameInformationLength, 
-                                                        'aPeS');
+            pInternalAuditName = ExAllocatePoolWithTag(NonPagedPool, ObjectNameInformationLength, 'aPeS');
 
-            if (pInternalAuditName != NULL) {
+            if (pInternalAuditName != NULL)
+            {
                 RtlZeroMemory(pInternalAuditName, ObjectNameInformationLength);
-            
+
                 //
                 // Status = STATUS_SUCCESS to allow the process creation to continue.
                 //
 
                 Status = STATUS_SUCCESS;
-            } else {
+            }
+            else
+            {
                 Status = STATUS_NO_MEMORY;
             }
         }
-    } else {
+    }
+    else
+    {
 
         //
         // If ObQueryNameString returns some other error code, we cannot
         // be certain of which action to take, or whether it has properly
-        // set the ReturnLength.  For example, ObQueryNameString has slightly 
-        // different semantics under DFS than NTFS.  Additionally, 3rd 
+        // set the ReturnLength.  For example, ObQueryNameString has slightly
+        // different semantics under DFS than NTFS.  Additionally, 3rd
         // party file systems may also behave unpredictably.  For these reasons,
-        // in the case of an unexpected error code from ObQueryNameString 
+        // in the case of an unexpected error code from ObQueryNameString
         // we set AuditName to zero length unicode string and allow process
         // creation to continue.
         //
-    
+
 #if DBG
         DbgPrint("\n\n\n** ObqueryNameString is busted for a filesystem you are using.\n");
         DbgPrint("** Please mail jhamblin about this!!\n\n\n");
@@ -2777,7 +2727,8 @@ Environment:
         ObjectNameInformationLength = sizeof(OBJECT_NAME_INFORMATION);
         pInternalAuditName = ExAllocatePoolWithTag(NonPagedPool, ObjectNameInformationLength, 'aPeS');
 
-        if (pInternalAuditName != NULL) {
+        if (pInternalAuditName != NULL)
+        {
             RtlZeroMemory(pInternalAuditName, ObjectNameInformationLength);
 
             //
@@ -2785,7 +2736,9 @@ Environment:
             //
 
             Status = STATUS_SUCCESS;
-        } else {
+        }
+        else
+        {
             Status = STATUS_NO_MEMORY;
         }
     }
@@ -2796,12 +2749,8 @@ Environment:
 }
 
 
-
 NTSTATUS
-SeLocateProcessImageName(
-    IN PEPROCESS Process,
-    OUT PUNICODE_STRING *pImageFileName
-    )
+SeLocateProcessImageName(IN PEPROCESS Process, OUT PUNICODE_STRING *pImageFileName)
 
 /*++
 
@@ -2825,82 +2774,81 @@ Return Value
 --*/
 
 {
-    NTSTATUS                 Status            = STATUS_SUCCESS;
-    PVOID                    FilePointer       = NULL;
-    PVOID                    PreviousValue     = NULL;
+    NTSTATUS Status = STATUS_SUCCESS;
+    PVOID FilePointer = NULL;
+    PVOID PreviousValue = NULL;
     POBJECT_NAME_INFORMATION pProcessImageName = NULL;
-    PUNICODE_STRING          pTempUS           = NULL;
-    ULONG                    NameLength        = 0;
+    PUNICODE_STRING pTempUS = NULL;
+    ULONG NameLength = 0;
 
     PAGED_CODE();
 
     *pImageFileName = NULL;
-    
-    if (NULL == Process->SeAuditProcessCreationInfo.ImageFileName) {
+
+    if (NULL == Process->SeAuditProcessCreationInfo.ImageFileName)
+    {
 
         //
-        // The name has not been predetermined.  We must determine the process name.   First, reference the 
-        // PFILE_OBJECT and lookup the name.  Then again check the process image name pointer against NULL.  
+        // The name has not been predetermined.  We must determine the process name.   First, reference the
+        // PFILE_OBJECT and lookup the name.  Then again check the process image name pointer against NULL.
         // Finally, set the name.
         //
 
-        Status = PsReferenceProcessFilePointer( Process, &FilePointer );
-        
-        if (NT_SUCCESS(Status)) {
+        Status = PsReferenceProcessFilePointer(Process, &FilePointer);
+
+        if (NT_SUCCESS(Status))
+        {
 
             //
-            // Get the process name information.  
+            // Get the process name information.
             //
 
-            Status = SeInitializeProcessAuditName( 
-                          FilePointer,
-                          TRUE, // skip audit policy
-                          &pProcessImageName // to be allocated in nonpaged pool
-                          );
+            Status = SeInitializeProcessAuditName(FilePointer,
+                                                  TRUE,              // skip audit policy
+                                                  &pProcessImageName // to be allocated in nonpaged pool
+            );
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
                 //
                 // Only use the pProcessImageName if the field in the process is currently NULL.
                 //
 
                 PreviousValue = InterlockedCompareExchangePointer(
-                                    (PVOID *) &Process->SeAuditProcessCreationInfo.ImageFileName,
-                                    (PVOID) pProcessImageName,
-                                    (PVOID) NULL
-                                    );
-                
-                if (NULL != PreviousValue) {
+                    (PVOID *)&Process->SeAuditProcessCreationInfo.ImageFileName, (PVOID)pProcessImageName, (PVOID)NULL);
+
+                if (NULL != PreviousValue)
+                {
                     ExFreePool(pProcessImageName); // free what we caused to be allocated.
                 }
             }
-            ObDereferenceObject( FilePointer );
+            ObDereferenceObject(FilePointer);
         }
     }
-    
-    
-    if (NT_SUCCESS(Status)) {
-        
+
+
+    if (NT_SUCCESS(Status))
+    {
+
         //
         // Allocate space for a buffer to contain the name for returning to the caller.
         //
 
         NameLength = sizeof(UNICODE_STRING) + Process->SeAuditProcessCreationInfo.ImageFileName->Name.MaximumLength;
-        pTempUS = ExAllocatePoolWithTag( NonPagedPool, NameLength, 'aPeS' );
+        pTempUS = ExAllocatePoolWithTag(NonPagedPool, NameLength, 'aPeS');
 
-        if (NULL != pTempUS) {
+        if (NULL != pTempUS)
+        {
 
-            RtlCopyMemory( 
-                pTempUS, 
-                &Process->SeAuditProcessCreationInfo.ImageFileName->Name, 
-                NameLength 
-                );
+            RtlCopyMemory(pTempUS, &Process->SeAuditProcessCreationInfo.ImageFileName->Name, NameLength);
 
-            pTempUS->Buffer = (PWSTR)(((PUCHAR) pTempUS) + sizeof(UNICODE_STRING));
+            pTempUS->Buffer = (PWSTR)(((PUCHAR)pTempUS) + sizeof(UNICODE_STRING));
             *pImageFileName = pTempUS;
+        }
+        else
+        {
 
-        } else {
-            
             Status = STATUS_NO_MEMORY;
         }
     }
@@ -2909,12 +2857,7 @@ Return Value
 }
 
 
-
-VOID
-SepAuditAssignPrimaryToken(
-    IN PEPROCESS Process,
-    IN PACCESS_TOKEN AccessToken
-    )
+VOID SepAuditAssignPrimaryToken(IN PEPROCESS Process, IN PACCESS_TOKEN AccessToken)
 
 /*++
 
@@ -2941,21 +2884,18 @@ Return Value:
     PSID UserSid;
     PTOKEN Token;
     HANDLE ProcessId;
-    
+
     SECURITY_SUBJECT_CONTEXT SubjectSecurityContext;
     PTOKEN CurrentToken;
     PEPROCESS CurrentProcess;
     HANDLE CurrentProcessId;
     PUNICODE_STRING CurrentImageFileName;
     PUNICODE_STRING ImageFileName;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
 
     PAGED_CODE();
 
-    RtlZeroMemory (
-       (PVOID) &AuditParameters,
-       sizeof( AuditParameters )
-       );
+    RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
     //
     // Get information about the current process, that is, the process
@@ -2963,87 +2903,86 @@ Return Value:
     //
 
     CurrentProcess = PsGetCurrentProcess();
-    CurrentProcessId = PsProcessAuditId( CurrentProcess );
-    SeCaptureSubjectContext( &SubjectSecurityContext );
-    CurrentToken = EffectiveToken( &SubjectSecurityContext );
-    UserSid = SepTokenUserSid( CurrentToken );
-    Status = SeLocateProcessImageName( CurrentProcess, &CurrentImageFileName );
-    
-    if (!NT_SUCCESS(Status)) {
+    CurrentProcessId = PsProcessAuditId(CurrentProcess);
+    SeCaptureSubjectContext(&SubjectSecurityContext);
+    CurrentToken = EffectiveToken(&SubjectSecurityContext);
+    UserSid = SepTokenUserSid(CurrentToken);
+    Status = SeLocateProcessImageName(CurrentProcess, &CurrentImageFileName);
+
+    if (!NT_SUCCESS(Status))
+    {
         CurrentImageFileName = &NullString;
     }
-    
+
     //
     // Retrieve information about the process receiving the new token.
     //
 
-    Token = (PTOKEN) AccessToken;
-    ProcessId =  PsProcessAuditId( Process );
+    Token = (PTOKEN)AccessToken;
+    ProcessId = PsProcessAuditId(Process);
 
-    Status = SeLocateProcessImageName( Process, &ImageFileName );
+    Status = SeLocateProcessImageName(Process, &ImageFileName);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         ImageFileName = &NullString;
     }
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
     AuditParameters.CategoryId = SE_CATEGID_DETAILED_TRACKING;
     AuditParameters.AuditId = SE_AUDITID_ASSIGN_TOKEN;
     AuditParameters.ParameterCount = 0;
     AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName);
     AuditParameters.ParameterCount++;
 
     //
     // Information regarding the assigning process
     //
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, CurrentProcessId );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, CurrentProcessId);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, CurrentImageFileName );
+    SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, CurrentImageFileName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, SepTokenAuthenticationId( CurrentToken ) );
+    SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, SepTokenAuthenticationId(CurrentToken));
     AuditParameters.ParameterCount++;
 
     //
     // Information about the process receiving the new primary token.
     //
 
-    SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessId );
+    SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessId);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
+    SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, SepTokenAuthenticationId( Token ) );
+    SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, SepTokenAuthenticationId(Token));
     AuditParameters.ParameterCount++;
 
-    SepAdtLogAuditRecord( &AuditParameters );
-    
-    if ( ImageFileName != &NullString ) {
-        ExFreePool( ImageFileName );
+    SepAdtLogAuditRecord(&AuditParameters);
+
+    if (ImageFileName != &NullString)
+    {
+        ExFreePool(ImageFileName);
     }
 
-    if ( CurrentImageFileName != &NullString ) {
-        ExFreePool( CurrentImageFileName );
+    if (CurrentImageFileName != &NullString)
+    {
+        ExFreePool(CurrentImageFileName);
     }
 
-    SeReleaseSubjectContext( &SubjectSecurityContext );
-
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 }
 
-VOID
-SeAuditLPCInvalidUse(
-    IN PUNICODE_STRING LpcCallName,
-    IN PUNICODE_STRING LpcServerPort
-    )
+VOID SeAuditLPCInvalidUse(IN PUNICODE_STRING LpcCallName, IN PUNICODE_STRING LpcServerPort)
 
 /*++
 
@@ -3072,92 +3011,92 @@ Return Value:
     PEPROCESS Process;
     HANDLE ProcessID;
     PUNICODE_STRING ImageFileName;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
     NTSTATUS Status;
     BOOLEAN AccessGranted = TRUE;
 
     PAGED_CODE();
 
 
-    if ( SepAdtAuditThisEvent( AuditCategorySystem, &AccessGranted )) {
+    if (SepAdtAuditThisEvent(AuditCategorySystem, &AccessGranted))
+    {
 
-        RtlZeroMemory (
-           (PVOID) &AuditParameters,
-           sizeof( AuditParameters )
-           );
+        RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-        Process   = PsGetCurrentProcess();
-        ProcessID = PsProcessAuditId( Process );
-        Status    = SeLocateProcessImageName( Process, &ImageFileName );
+        Process = PsGetCurrentProcess();
+        ProcessID = PsProcessAuditId(Process);
+        Status = SeLocateProcessImageName(Process, &ImageFileName);
 
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             ImageFileName = &NullString;
         }
 
-        ASSERT( SeAdtParmTypeNone == 0 );
+        ASSERT(SeAdtParmTypeNone == 0);
 
-        AuditParameters.CategoryId     = SE_CATEGID_SYSTEM;
-        AuditParameters.AuditId        = SE_AUDITID_LPC_INVALID_USE;
+        AuditParameters.CategoryId = SE_CATEGID_SYSTEM;
+        AuditParameters.AuditId = SE_AUDITID_LPC_INVALID_USE;
         AuditParameters.ParameterCount = 0;
-        AuditParameters.Type           = EVENTLOG_AUDIT_SUCCESS;
+        AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
 
-        SeCaptureSubjectContext( &SubjectSecurityContext );
-        
-        UserSid              = SepTokenUserSid( SubjectSecurityContext.PrimaryToken );
-        UserAuthenticationId = SepTokenAuthenticationId( SubjectSecurityContext.PrimaryToken );
-        
+        SeCaptureSubjectContext(&SubjectSecurityContext);
+
+        UserSid = SepTokenUserSid(SubjectSecurityContext.PrimaryToken);
+        UserAuthenticationId = SepTokenAuthenticationId(SubjectSecurityContext.PrimaryToken);
+
         //
         // Fill in the AuditParameters structure.
         //
 
-        SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+        SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessID );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessID);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
+        SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, UserAuthenticationId );
+        SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, UserAuthenticationId);
         AuditParameters.ParameterCount++;
 
-        if ( SubjectSecurityContext.ClientToken ) {
+        if (SubjectSecurityContext.ClientToken)
+        {
 
-            SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, SepTokenAuthenticationId( SubjectSecurityContext.ClientToken ));
-        } else {
+            SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount,
+                                  SepTokenAuthenticationId(SubjectSecurityContext.ClientToken));
+        }
+        else
+        {
 
-            SepSetParmTypeNoLogon( AuditParameters, AuditParameters.ParameterCount );
+            SepSetParmTypeNoLogon(AuditParameters, AuditParameters.ParameterCount);
         }
 
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, LpcCallName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, LpcCallName);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, LpcServerPort );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, LpcServerPort);
         AuditParameters.ParameterCount++;
 
-        SepAdtLogAuditRecord( &AuditParameters );
+        SepAdtLogAuditRecord(&AuditParameters);
 
-        SeReleaseSubjectContext( &SubjectSecurityContext );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
 
-        if ( ImageFileName != &NullString ) {
-            ExFreePool( ImageFileName );
+        if (ImageFileName != &NullString)
+        {
+            ExFreePool(ImageFileName);
         }
     }
     return;
 }
 
 
-VOID
-SeAuditSystemTimeChange(
-    IN LARGE_INTEGER OldTime,
-    IN LARGE_INTEGER NewTime
-    )
+VOID SeAuditSystemTimeChange(IN LARGE_INTEGER OldTime, IN LARGE_INTEGER NewTime)
 /*++
 
 Routine Description:
@@ -3182,92 +3121,91 @@ Return Value:
     HANDLE ProcessId;
     PEPROCESS Process;
     PUNICODE_STRING ImageFileName;
-    UNICODE_STRING NullString = {0};
+    UNICODE_STRING NullString = { 0 };
     NTSTATUS Status;
     SECURITY_SUBJECT_CONTEXT SubjectSecurityContext;
-    
+
     PAGED_CODE();
 
     //
     // Make sure that we care to audit system events.
     //
 
-    if ((SepAdtAuditingEnabled) && (SeAuditingState[AuditCategorySystem].AuditOnSuccess)) {
+    if ((SepAdtAuditingEnabled) && (SeAuditingState[AuditCategorySystem].AuditOnSuccess))
+    {
 
-        SeCaptureSubjectContext( &SubjectSecurityContext );
-        
-        UserSid = SepTokenUserSid( SubjectSecurityContext.PrimaryToken );
-        LogonId = SepTokenAuthenticationId( SubjectSecurityContext.PrimaryToken );
-        
+        SeCaptureSubjectContext(&SubjectSecurityContext);
+
+        UserSid = SepTokenUserSid(SubjectSecurityContext.PrimaryToken);
+        LogonId = SepTokenAuthenticationId(SubjectSecurityContext.PrimaryToken);
+
         Process = PsGetCurrentProcess();
 
-        RtlZeroMemory (
-           (PVOID) &AuditParameters,
-           sizeof( AuditParameters )
-           );
+        RtlZeroMemory((PVOID)&AuditParameters, sizeof(AuditParameters));
 
-        Status = SeLocateProcessImageName( Process, &ImageFileName );
+        Status = SeLocateProcessImageName(Process, &ImageFileName);
 
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             ImageFileName = &NullString;
         }
 
-        ASSERT( SeAdtParmTypeNone == 0 );
+        ASSERT(SeAdtParmTypeNone == 0);
 
         AuditParameters.CategoryId = SE_CATEGID_SYSTEM;
         AuditParameters.AuditId = SE_AUDITID_SYSTEM_TIME_CHANGE;
         AuditParameters.ParameterCount = 0;
         AuditParameters.Type = EVENTLOG_AUDIT_SUCCESS;
 
-        SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+        SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName );
+        SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName);
         AuditParameters.ParameterCount++;
 
-        ProcessId = PsProcessAuditId( Process );
+        ProcessId = PsProcessAuditId(Process);
 
-        SepSetParmTypePtr( AuditParameters, AuditParameters.ParameterCount, ProcessId );
+        SepSetParmTypePtr(AuditParameters, AuditParameters.ParameterCount, ProcessId);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, ImageFileName );
+        SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, ImageFileName);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, LogonId );
+        SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, LogonId);
         AuditParameters.ParameterCount++;
 
-        if ( SubjectSecurityContext.ClientToken ) {
+        if (SubjectSecurityContext.ClientToken)
+        {
 
-            SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, SepTokenAuthenticationId( SubjectSecurityContext.ClientToken ));
-        } else {
+            SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount,
+                                  SepTokenAuthenticationId(SubjectSecurityContext.ClientToken));
+        }
+        else
+        {
 
-            SepSetParmTypeNoLogon( AuditParameters, AuditParameters.ParameterCount );
+            SepSetParmTypeNoLogon(AuditParameters, AuditParameters.ParameterCount);
         }
 
         AuditParameters.ParameterCount++;
-        SepSetParmTypeTime( AuditParameters, AuditParameters.ParameterCount, OldTime );
+        SepSetParmTypeTime(AuditParameters, AuditParameters.ParameterCount, OldTime);
         AuditParameters.ParameterCount++;
 
-        SepSetParmTypeTime( AuditParameters, AuditParameters.ParameterCount, NewTime );
+        SepSetParmTypeTime(AuditParameters, AuditParameters.ParameterCount, NewTime);
         AuditParameters.ParameterCount++;
 
-        SepAdtLogAuditRecord( &AuditParameters );
-        
-        SeReleaseSubjectContext( &SubjectSecurityContext );
+        SepAdtLogAuditRecord(&AuditParameters);
 
-        if ( ImageFileName != &NullString ) {
-            ExFreePool( ImageFileName );
+        SeReleaseSubjectContext(&SubjectSecurityContext);
+
+        if (ImageFileName != &NullString)
+        {
+            ExFreePool(ImageFileName);
         }
     }
 }
 
-
-VOID
-SeAuditHardLinkCreation(
-    IN PUNICODE_STRING FileName,
-    IN PUNICODE_STRING LinkName,
-    IN BOOLEAN bSuccess
-    )
+
+VOID SeAuditHardLinkCreation(IN PUNICODE_STRING FileName, IN PUNICODE_STRING LinkName, IN BOOLEAN bSuccess)
 
 /*++
 
@@ -3297,43 +3235,43 @@ Return Value:
 
     PAGED_CODE();
 
-    ASSERT( SeAdtParmTypeNone == 0 );
+    ASSERT(SeAdtParmTypeNone == 0);
 
-    AuditParameters.CategoryId     = SE_CATEGID_OBJECT_ACCESS;
-    AuditParameters.AuditId        = SE_AUDITID_HARDLINK_CREATION;
+    AuditParameters.CategoryId = SE_CATEGID_OBJECT_ACCESS;
+    AuditParameters.AuditId = SE_AUDITID_HARDLINK_CREATION;
     AuditParameters.ParameterCount = 0;
-    AuditParameters.Type           = bSuccess ? EVENTLOG_AUDIT_SUCCESS : EVENTLOG_AUDIT_FAILURE;
+    AuditParameters.Type = bSuccess ? EVENTLOG_AUDIT_SUCCESS : EVENTLOG_AUDIT_FAILURE;
 
     //
     // Use the effective token.
     //
 
-    SeCaptureSubjectContext( &SubjectSecurityContext );
-    UserSid              = SepTokenUserSid( EffectiveToken( &SubjectSecurityContext ));
-    UserAuthenticationId = SepTokenAuthenticationId( EffectiveToken( &SubjectSecurityContext ));
+    SeCaptureSubjectContext(&SubjectSecurityContext);
+    UserSid = SepTokenUserSid(EffectiveToken(&SubjectSecurityContext));
+    UserAuthenticationId = SepTokenAuthenticationId(EffectiveToken(&SubjectSecurityContext));
 
     //
     // Fill in the AuditParameters structure.
     //
 
-    SepSetParmTypeSid( AuditParameters, AuditParameters.ParameterCount, UserSid );
+    SepSetParmTypeSid(AuditParameters, AuditParameters.ParameterCount, UserSid);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeString( AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName );
+    SepSetParmTypeString(AuditParameters, AuditParameters.ParameterCount, (PUNICODE_STRING)&SeSubsystemName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeLogonId( AuditParameters, AuditParameters.ParameterCount, UserAuthenticationId );
+    SepSetParmTypeLogonId(AuditParameters, AuditParameters.ParameterCount, UserAuthenticationId);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, FileName );
+    SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, FileName);
     AuditParameters.ParameterCount++;
 
-    SepSetParmTypeFileSpec( AuditParameters, AuditParameters.ParameterCount, LinkName );
+    SepSetParmTypeFileSpec(AuditParameters, AuditParameters.ParameterCount, LinkName);
     AuditParameters.ParameterCount++;
 
-    SepAdtLogAuditRecord( &AuditParameters );
+    SepAdtLogAuditRecord(&AuditParameters);
 
-    SeReleaseSubjectContext( &SubjectSecurityContext );
+    SeReleaseSubjectContext(&SubjectSecurityContext);
 
     return;
 }

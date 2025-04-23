@@ -24,23 +24,21 @@ Abstract:
 #include "bootstatus.h"
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,RtlLockBootStatusData)
-#pragma alloc_text(PAGE,RtlUnlockBootStatusData)
-#pragma alloc_text(PAGE,RtlGetSetBootStatusData)
-#pragma alloc_text(PAGE,RtlCreateBootStatusDataFile)
+#pragma alloc_text(PAGE, RtlLockBootStatusData)
+#pragma alloc_text(PAGE, RtlUnlockBootStatusData)
+#pragma alloc_text(PAGE, RtlGetSetBootStatusData)
+#pragma alloc_text(PAGE, RtlCreateBootStatusDataFile)
 #endif
 
-#define MYTAG 'fdsb'    // bsdf
+#define MYTAG 'fdsb' // bsdf
 
-
+
 NTSTATUS
-RtlLockBootStatusData(
-    OUT PHANDLE BootStatusDataHandle
-    )
+RtlLockBootStatusData(OUT PHANDLE BootStatusDataHandle)
 {
     OBJECT_ATTRIBUTES objectAttributes;
 
-    WCHAR fileNameBuffer[MAXIMUM_FILENAME_LENGTH+1];
+    WCHAR fileNameBuffer[MAXIMUM_FILENAME_LENGTH + 1];
     UNICODE_STRING fileName;
 
     HANDLE dataFileHandle;
@@ -50,67 +48,47 @@ RtlLockBootStatusData(
     NTSTATUS status;
 
     wcsncpy(fileNameBuffer, L"\\SystemRoot", MAXIMUM_FILENAME_LENGTH);
-    wcsncat(fileNameBuffer, 
-            BSD_FILE_NAME, 
-            MAXIMUM_FILENAME_LENGTH - wcslen(fileNameBuffer));
+    wcsncat(fileNameBuffer, BSD_FILE_NAME, MAXIMUM_FILENAME_LENGTH - wcslen(fileNameBuffer));
 
     RtlInitUnicodeString(&fileName, fileNameBuffer);
 
-    InitializeObjectAttributes(&objectAttributes,
-                               &fileName,
-                               OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&objectAttributes, &fileName, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, NULL, NULL);
 
-    status = ZwOpenFile(&dataFileHandle,
-                        FILE_GENERIC_READ | FILE_GENERIC_WRITE,
-                        &objectAttributes,
-                        &ioStatusBlock,
-                        0,
+    status = ZwOpenFile(&dataFileHandle, FILE_GENERIC_READ | FILE_GENERIC_WRITE, &objectAttributes, &ioStatusBlock, 0,
                         FILE_SYNCHRONOUS_IO_NONALERT);
 
     ASSERT(status != STATUS_PENDING);
 
-    if(NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         *BootStatusDataHandle = dataFileHandle;
-    } else {
+    }
+    else
+    {
         *BootStatusDataHandle = NULL;
     }
 
     return status;
 }
 
-VOID
-RtlUnlockBootStatusData(
-    IN HANDLE BootStatusDataHandle
-    )
+VOID RtlUnlockBootStatusData(IN HANDLE BootStatusDataHandle)
 {
     IO_STATUS_BLOCK ioStatusBlock;
 
     USHORT i = COMPRESSION_FORMAT_NONE;
-    
+
     NTSTATUS status;
 
     //
     // Decompress the data file.  If the file is not already compressed then
-    // this should be a very lightweight operation (so say the FS guys).  
+    // this should be a very lightweight operation (so say the FS guys).
     //
     // On the other hand if the file is compressed then the boot loader will
     // be unable to write to it and auto-recovery is effectively disabled.
     //
 
-    status = ZwFsControlFile(
-                BootStatusDataHandle,
-                NULL,
-                NULL,
-                NULL,
-                &ioStatusBlock,
-                FSCTL_SET_COMPRESSION,
-                &i, 
-                sizeof(USHORT),
-                NULL,
-                0
-                );
+    status = ZwFsControlFile(BootStatusDataHandle, NULL, NULL, NULL, &ioStatusBlock, FSCTL_SET_COMPRESSION, &i,
+                             sizeof(USHORT), NULL, 0);
 
     ASSERT(status != STATUS_PENDING);
 
@@ -124,31 +102,21 @@ RtlUnlockBootStatusData(
 }
 
 
-#define FIELD_SIZE(type, field)  sizeof(((type *)0)->field)
-#define FIELD_OFFSET_AND_SIZE(n)   {FIELD_OFFSET(BSD_BOOT_STATUS_DATA, n), FIELD_SIZE(BSD_BOOT_STATUS_DATA, n)}
+#define FIELD_SIZE(type, field) sizeof(((type *)0)->field)
+#define FIELD_OFFSET_AND_SIZE(n) { FIELD_OFFSET(BSD_BOOT_STATUS_DATA, n), FIELD_SIZE(BSD_BOOT_STATUS_DATA, n) }
 
-
+
 NTSTATUS
-RtlGetSetBootStatusData(
-    IN HANDLE Handle,
-    IN BOOLEAN Get,
-    IN RTL_BSD_ITEM_TYPE DataItem,
-    IN PVOID DataBuffer,
-    IN ULONG DataBufferLength,
-    OUT PULONG BytesReturned OPTIONAL
-    )
+RtlGetSetBootStatusData(IN HANDLE Handle, IN BOOLEAN Get, IN RTL_BSD_ITEM_TYPE DataItem, IN PVOID DataBuffer,
+                        IN ULONG DataBufferLength, OUT PULONG BytesReturned OPTIONAL)
 {
-    struct {
+    struct
+    {
         ULONG FieldOffset;
         ULONG FieldLength;
-    } bootStatusFields[] = {
-        FIELD_OFFSET_AND_SIZE(Version),
-        FIELD_OFFSET_AND_SIZE(ProductType),
-        FIELD_OFFSET_AND_SIZE(AutoAdvancedBoot),
-        FIELD_OFFSET_AND_SIZE(AdvancedBootMenuTimeout),
-        FIELD_OFFSET_AND_SIZE(LastBootSucceeded),
-        FIELD_OFFSET_AND_SIZE(LastBootShutdown)
-    };
+    } bootStatusFields[] = { FIELD_OFFSET_AND_SIZE(Version),           FIELD_OFFSET_AND_SIZE(ProductType),
+                             FIELD_OFFSET_AND_SIZE(AutoAdvancedBoot),  FIELD_OFFSET_AND_SIZE(AdvancedBootMenuTimeout),
+                             FIELD_OFFSET_AND_SIZE(LastBootSucceeded), FIELD_OFFSET_AND_SIZE(LastBootShutdown) };
 
     LARGE_INTEGER fileOffset;
     ULONG dataFileVersion;
@@ -169,28 +137,22 @@ RtlGetSetBootStatusData(
 
     fileOffset.QuadPart = 0;
 
-    status = ZwReadFile(Handle,
-                        NULL,
-                        NULL,
-                        NULL,
-                        &ioStatusBlock,
-                        &dataFileVersion,
-                        sizeof(ULONG),
-                        &fileOffset,
-                        NULL);
+    status = ZwReadFile(Handle, NULL, NULL, NULL, &ioStatusBlock, &dataFileVersion, sizeof(ULONG), &fileOffset, NULL);
 
     ASSERT(status != STATUS_PENDING);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     //
-    // If the data item requsted isn't one we have code to handle then 
+    // If the data item requsted isn't one we have code to handle then
     // return invalid parameter.
     //
 
-    if(DataItem >= (sizeof(bootStatusFields) / sizeof(bootStatusFields[0]))) {
+    if (DataItem >= (sizeof(bootStatusFields) / sizeof(bootStatusFields[0])))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -198,59 +160,47 @@ RtlGetSetBootStatusData(
     itemLength = bootStatusFields[DataItem].FieldLength;
 
     //
-    // If the data item offset is beyond the end of the file then return a 
+    // If the data item offset is beyond the end of the file then return a
     // versioning error.
     //
 
-    if((fileOffset.QuadPart + itemLength) > dataFileVersion) {
+    if ((fileOffset.QuadPart + itemLength) > dataFileVersion)
+    {
         return STATUS_REVISION_MISMATCH;
     }
 
-    if(DataBufferLength < itemLength) { 
+    if (DataBufferLength < itemLength)
+    {
         DataBufferLength = itemLength;
         return STATUS_BUFFER_TOO_SMALL;
     }
 
-    if(Get) {
-        status = ZwReadFile(Handle,
-                            NULL,
-                            NULL,
-                            NULL,
-                            &ioStatusBlock,
-                            DataBuffer,
-                            itemLength,
-                            &fileOffset,
-                            NULL);
-    } else {
-        status = ZwWriteFile(Handle,
-                             NULL,
-                             NULL,
-                             NULL,
-                             &ioStatusBlock,
-                             DataBuffer,
-                             itemLength,
-                             &fileOffset,
-                             NULL);
+    if (Get)
+    {
+        status = ZwReadFile(Handle, NULL, NULL, NULL, &ioStatusBlock, DataBuffer, itemLength, &fileOffset, NULL);
+    }
+    else
+    {
+        status = ZwWriteFile(Handle, NULL, NULL, NULL, &ioStatusBlock, DataBuffer, itemLength, &fileOffset, NULL);
     }
 
     ASSERT(status != STATUS_PENDING);
 
-    if(NT_SUCCESS(status) && ARGUMENT_PRESENT(BytesReturned)) {
-        *BytesReturned = (ULONG) ioStatusBlock.Information;
+    if (NT_SUCCESS(status) && ARGUMENT_PRESENT(BytesReturned))
+    {
+        *BytesReturned = (ULONG)ioStatusBlock.Information;
     }
 
     return status;
 }
 
-
+
 NTSTATUS
-RtlCreateBootStatusDataFile(
-    VOID
-    )
+RtlCreateBootStatusDataFile(VOID)
 {
     OBJECT_ATTRIBUTES objectAttributes;
 
-    WCHAR fileNameBuffer[MAXIMUM_FILENAME_LENGTH+1];
+    WCHAR fileNameBuffer[MAXIMUM_FILENAME_LENGTH + 1];
     UNICODE_STRING fileName;
 
     HANDLE dataFileHandle;
@@ -265,22 +215,16 @@ RtlCreateBootStatusDataFile(
     NTSTATUS status;
 
     wcsncpy(fileNameBuffer, L"\\SystemRoot", MAXIMUM_FILENAME_LENGTH);
-    wcsncat(fileNameBuffer, 
-            BSD_FILE_NAME, 
-            MAXIMUM_FILENAME_LENGTH - wcslen(fileNameBuffer));
+    wcsncat(fileNameBuffer, BSD_FILE_NAME, MAXIMUM_FILENAME_LENGTH - wcslen(fileNameBuffer));
 
     RtlInitUnicodeString(&fileName, fileNameBuffer);
 
-    InitializeObjectAttributes(&objectAttributes,
-                               &fileName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&objectAttributes, &fileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
-    // The file must be large enough that it doesn't reside in the MFT entry 
+    // The file must be large enough that it doesn't reside in the MFT entry
     // or the loader won't be able to write to it.
-    // 
+    //
 
     t.QuadPart = 2048;
 
@@ -288,45 +232,30 @@ RtlCreateBootStatusDataFile(
     // Create the file.
     //
 
-    status = ZwCreateFile(&dataFileHandle,
-                          FILE_GENERIC_READ | FILE_GENERIC_WRITE,
-                          &objectAttributes,
-                          &(ioStatusBlock),
-                          &t,
-                          FILE_ATTRIBUTE_SYSTEM,
-                          0,
-                          FILE_CREATE,
-                          FILE_SYNCHRONOUS_IO_NONALERT,
-                          NULL,
-                          0);
+    status = ZwCreateFile(&dataFileHandle, FILE_GENERIC_READ | FILE_GENERIC_WRITE, &objectAttributes, &(ioStatusBlock),
+                          &t, FILE_ATTRIBUTE_SYSTEM, 0, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
 
     ASSERT(status != STATUS_PENDING);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     //
     // Write a single zero byte to the 0x7ffth byte in the file to make
-    // sure that 2k are actually allocated.  This is to ensure that the 
+    // sure that 2k are actually allocated.  This is to ensure that the
     // file will not become attribute resident even after a conversion
     // from FAT to NTFS.
     //
 
     t.QuadPart = t.QuadPart - 1;
-    status = ZwWriteFile(dataFileHandle,
-                         NULL,
-                         NULL,
-                         NULL,
-                         &ioStatusBlock,
-                         &zero,
-                         1,
-                         &t,
-                         NULL);
+    status = ZwWriteFile(dataFileHandle, NULL, NULL, NULL, &ioStatusBlock, &zero, 1, &t, NULL);
 
     ASSERT(status != STATUS_PENDING);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto CreateDone;
     }
 
@@ -343,27 +272,20 @@ RtlCreateBootStatusDataFile(
 
     t.QuadPart = 0;
 
-    status = ZwWriteFile(dataFileHandle,
-                         NULL,
-                         NULL,
-                         NULL,
-                         &ioStatusBlock,
-                         &defaultValues,
-                         sizeof(BSD_BOOT_STATUS_DATA),
-                         &t,
-                         NULL);
+    status = ZwWriteFile(dataFileHandle, NULL, NULL, NULL, &ioStatusBlock, &defaultValues, sizeof(BSD_BOOT_STATUS_DATA),
+                         &t, NULL);
 
     ASSERT(status != STATUS_PENDING);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // The data file was created and we can assume the contents were zeroed
-        // even if we couldn't write out the defaults.  Since this wouldn't 
-        // enable auto-advanced boot we'll leave the data file in place with 
+        // even if we couldn't write out the defaults.  Since this wouldn't
+        // enable auto-advanced boot we'll leave the data file in place with
         // its zeroed contents.
         //
-
     }
 
 CreateDone:

@@ -1,4 +1,4 @@
-#pragma warning (disable: 4201 4206 4214 4220 4115 4514)
+#pragma warning(disable : 4201 4206 4214 4220 4115 4514)
 #define SPEC_VER 99
 
 #define _NTDRIVER_
@@ -32,4 +32,3 @@
 #include "errlog.h"
 #include "acpilog.h"
 #include "wmilog.h"
-

@@ -27,31 +27,33 @@ Revision History:
 
 --*/
 
-#define RTL_REMOVE_LOCK_SIG     'COLR'
+#define RTL_REMOVE_LOCK_SIG 'COLR'
 
 #if DBG
-typedef struct _RTL_REMOVE_LOCK_TRACKING_BLOCK {
-    struct _RTL_REMOVE_LOCK_TRACKING_BLOCK * Link;
-    PVOID           Tag;
-    LARGE_INTEGER   TimeLocked;
-    PCSTR           File;
-    ULONG           Line;
+typedef struct _RTL_REMOVE_LOCK_TRACKING_BLOCK
+{
+    struct _RTL_REMOVE_LOCK_TRACKING_BLOCK *Link;
+    PVOID Tag;
+    LARGE_INTEGER TimeLocked;
+    PCSTR File;
+    ULONG Line;
 } RTL_REMOVE_LOCK_TRACKING_BLOCK, *PRTL_REMOVE_LOCK_TRACKING_BLOCK;
 #endif
 
 
-typedef struct _RTL_REMOVE_LOCK {
-    LONG        Signature;
-    BOOLEAN     Removed;
-    BOOLEAN     Reserved [3];
-    LONG        IoCount;
-    KEVENT      RemoveEvent;
+typedef struct _RTL_REMOVE_LOCK
+{
+    LONG Signature;
+    BOOLEAN Removed;
+    BOOLEAN Reserved[3];
+    LONG IoCount;
+    KEVENT RemoveEvent;
 #if DBG
-    LONG        HighWatermark;
-    LONG        MaxLockedMinutes;
-    LONG        AllocateTag;
-    LIST_ENTRY  LockList;
-    KSPIN_LOCK  Spin;
+    LONG HighWatermark;
+    LONG MaxLockedMinutes;
+    LONG AllocateTag;
+    LIST_ENTRY LockList;
+    KSPIN_LOCK Spin;
     RTL_REMOVE_LOCK_TRACKING_BLOCK Blocks;
 #endif
 } RTL_REMOVE_LOCK, *PRTL_REMOVE_LOCK;

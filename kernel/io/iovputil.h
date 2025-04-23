@@ -28,22 +28,15 @@ Revision History:
 //
 // These must coexist with the DOE_ flags.
 //
-#define DOV_EXAMINED                   0x80000000
-#define DOV_TRACKED                    0x40000000
-#define DOV_DESIGNATED_FDO             0x20000000
-#define DOV_BOTTOM_OF_FDO_STACK        0x10000000
-#define DOV_RAW_PDO                    0x08000000
-#define DOV_DELETED                    0x04000000
-#define DOV_FLAGS_CHECKED              0x02000000
-#define DOV_FLAGS_RELATION_EXAMINED    0x01000000
+#define DOV_EXAMINED 0x80000000
+#define DOV_TRACKED 0x40000000
+#define DOV_DESIGNATED_FDO 0x20000000
+#define DOV_BOTTOM_OF_FDO_STACK 0x10000000
+#define DOV_RAW_PDO 0x08000000
+#define DOV_DELETED 0x04000000
+#define DOV_FLAGS_CHECKED 0x02000000
+#define DOV_FLAGS_RELATION_EXAMINED 0x01000000
 
 BOOLEAN
-IovpUtilFlushListCallback(
-    IN PVOID            Object,
-    IN PUNICODE_STRING  ObjectName,
-    IN ULONG            HandleCount,
-    IN ULONG            PointerCount,
-    IN PVOID            Context
-    );
-
-
+IovpUtilFlushListCallback(IN PVOID Object, IN PUNICODE_STRING ObjectName, IN ULONG HandleCount, IN ULONG PointerCount,
+                          IN PVOID Context);

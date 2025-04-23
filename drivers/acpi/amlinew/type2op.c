@@ -9,14 +9,11 @@
 
 #include "pch.h"
 
-_CRTIMP unsigned __int64 __cdecl _strtoui64(
-    const char * _String,
-    char ** _EndPtr,
-    int _Radix);
+_CRTIMP unsigned __int64 __cdecl _strtoui64(const char *_String, char **_EndPtr, int _Radix);
 
-#ifdef	LOCKABLE_PRAGMA
-#pragma	ACPI_LOCKABLE_DATA
-#pragma	ACPI_LOCKABLE_CODE
+#ifdef LOCKABLE_PRAGMA
+#pragma ACPI_LOCKABLE_DATA
+#pragma ACPI_LOCKABLE_CODE
 #endif
 
 /***LP  Buffer - Parse and execute the Buffer instruction
@@ -33,35 +30,32 @@ _CRTIMP unsigned __int64 __cdecl _strtoui64(
 
 NTSTATUS LOCAL Buffer(PCTXT pctxt, PTERM pterm)
 {
-    USHORT* wIOBuf;
+    USHORT *wIOBuf;
     TRACENAME("BUFFER")
     NTSTATUS rc = STATUS_SUCCESS;
     ULONG dwInitSize = (ULONG)(pterm->pbOpEnd - pctxt->pbOp);
 
-    ENTER(2, ("Buffer(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("Buffer(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "I")) == STATUS_SUCCESS)
     {
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
         {
             PrintBuffData(pctxt->pbOp, dwInitSize);
         }
-      #endif
+#endif
 
         if ((ULONG)pterm->pdataArgs[0].uipDataValue < dwInitSize)
         {
-            rc = AMLI_LOGERR(AMLIERR_BUFF_TOOSMALL,
-                             ("Buffer: too many initializers (buffsize=%d,InitSize=%d)",
-                              pterm->pdataArgs[0].uipDataValue, dwInitSize));
+            rc = AMLI_LOGERR(AMLIERR_BUFF_TOOSMALL, ("Buffer: too many initializers (buffsize=%d,InitSize=%d)",
+                                                     pterm->pdataArgs[0].uipDataValue, dwInitSize));
         }
         else if (pterm->pdataArgs[0].uipDataValue == 0)
         {
             rc = AMLI_LOGERR(AMLIERR_INVALID_BUFFSIZE,
-                             ("Buffer: invalid buffer size (size=%d)",
-                             pterm->pdataArgs[0].uipDataValue));
-            
+                             ("Buffer: invalid buffer size (size=%d)", pterm->pdataArgs[0].uipDataValue));
+
             // Zero length buffer BSOD workaround
             pterm->pdataResult->pbDataBuff = NEWBDOBJ(gpheapGlobal, 1); // alloc 1 byte fake buffer
             pterm->pdataResult->dwDataType = OBJTYPE_BUFFDATA;
@@ -71,21 +65,17 @@ NTSTATUS LOCAL Buffer(PCTXT pctxt, PTERM pterm)
 
             rc = STATUS_SUCCESS;
         }
-        else if ((pterm->pdataResult->pbDataBuff =
-                  NEWBDOBJ(gpheapGlobal,
-                           (ULONG)pterm->pdataArgs[0].uipDataValue)) == NULL)
+        else if ((pterm->pdataResult->pbDataBuff = NEWBDOBJ(gpheapGlobal, (ULONG)pterm->pdataArgs[0].uipDataValue)) ==
+                 NULL)
         {
             rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                             ("Buffer: failed to allocate data buffer (size=%d)",
-                             pterm->pdataArgs[0].uipDataValue));
+                             ("Buffer: failed to allocate data buffer (size=%d)", pterm->pdataArgs[0].uipDataValue));
         }
         else
         {
             pterm->pdataResult->dwDataType = OBJTYPE_BUFFDATA;
-            pterm->pdataResult->dwDataLen = (ULONG)
-                                            pterm->pdataArgs[0].uipDataValue;
-            MEMZERO(pterm->pdataResult->pbDataBuff,
-                    pterm->pdataResult->dwDataLen);
+            pterm->pdataResult->dwDataLen = (ULONG)pterm->pdataArgs[0].uipDataValue;
+            MEMZERO(pterm->pdataResult->pbDataBuff, pterm->pdataResult->dwDataLen);
             MEMCPY(pterm->pdataResult->pbDataBuff, pctxt->pbOp, dwInitSize);
             pctxt->pbOp = pterm->pbOpEnd;
 
@@ -106,14 +96,13 @@ NTSTATUS LOCAL Buffer(PCTXT pctxt, PTERM pterm)
              }
             */
 
-            if (dwInitSize == 10) {
-                wIOBuf = (USHORT*) pterm->pdataResult->pbDataBuff;
-                if (wIOBuf[0] == 0x0147 &&
-                    wIOBuf[1] == 0x0000 &&
-                    wIOBuf[2] == 0x0000 &&
-                    wIOBuf[3] == 0xFF01 &&
-                    wIOBuf[4] == 0x0079 ) {
-                        pterm->pdataResult->pbDataBuff[7] = 1;  // limit range to one adress
+            if (dwInitSize == 10)
+            {
+                wIOBuf = (USHORT *)pterm->pdataResult->pbDataBuff;
+                if (wIOBuf[0] == 0x0147 && wIOBuf[1] == 0x0000 && wIOBuf[2] == 0x0000 && wIOBuf[3] == 0xFF01 &&
+                    wIOBuf[4] == 0x0079)
+                {
+                    pterm->pdataResult->pbDataBuff[7] = 1; // limit range to one adress
                 }
             }
         }
@@ -121,7 +110,7 @@ NTSTATUS LOCAL Buffer(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("Buffer=%x\n", rc));
     return rc;
-}       //Buffer
+} //Buffer
 
 /***LP  Package - Parse and execute the Package instruction
  *
@@ -140,25 +129,19 @@ NTSTATUS LOCAL Package(PCTXT pctxt, PTERM pterm)
     TRACENAME("PACKAGE")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("Package(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("Package(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "I")) == STATUS_SUCCESS)
     {
         PPACKAGEOBJ ppkgobj;
 
-        pterm->pdataResult->dwDataLen = (ULONG)
-                                        (FIELD_OFFSET(PACKAGEOBJ, adata) +
-                                         sizeof(OBJDATA)*
-                                         pterm->pdataArgs[0].uipDataValue);
+        pterm->pdataResult->dwDataLen =
+            (ULONG)(FIELD_OFFSET(PACKAGEOBJ, adata) + sizeof(OBJDATA) * pterm->pdataArgs[0].uipDataValue);
 
-        if ((ppkgobj = (PPACKAGEOBJ)NEWPKOBJ(gpheapGlobal,
-                                             pterm->pdataResult->dwDataLen)) ==
-            NULL)
+        if ((ppkgobj = (PPACKAGEOBJ)NEWPKOBJ(gpheapGlobal, pterm->pdataResult->dwDataLen)) == NULL)
         {
             rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                             ("Package: failed to allocate package object (size=%d)",
-                             pterm->pdataResult->dwDataLen));
+                             ("Package: failed to allocate package object (size=%d)", pterm->pdataResult->dwDataLen));
         }
         else
         {
@@ -169,8 +152,7 @@ NTSTATUS LOCAL Package(PCTXT pctxt, PTERM pterm)
             pterm->pdataResult->pbDataBuff = (PUCHAR)ppkgobj;
             ppkgobj->dwcElements = (UCHAR)pterm->pdataArgs[0].uipDataValue;
 
-            if ((rc = PushFrame(pctxt, SIG_PACKAGE, sizeof(PACKAGE),
-                                ParsePackage, &ppkg)) == STATUS_SUCCESS)
+            if ((rc = PushFrame(pctxt, SIG_PACKAGE, sizeof(PACKAGE), ParsePackage, &ppkg)) == STATUS_SUCCESS)
             {
                 ppkg->ppkgobj = ppkgobj;
                 ppkg->pbOpEnd = pterm->pbOpEnd;
@@ -180,7 +162,7 @@ NTSTATUS LOCAL Package(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("Package=%x\n", rc));
     return rc;
-}       //Package
+} //Package
 
 /***LP  ParsePackage - Parse and evaluate the Package term
  *
@@ -198,129 +180,109 @@ NTSTATUS LOCAL Package(PCTXT pctxt, PTERM pterm)
 NTSTATUS LOCAL ParsePackage(PCTXT pctxt, PPACKAGE ppkg, NTSTATUS rc)
 {
     TRACENAME("PARSEPACKAGE")
-    ULONG dwStage = (rc == STATUS_SUCCESS)?
-                    (ppkg->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK): 2;
+    ULONG dwStage = (rc == STATUS_SUCCESS) ? (ppkg->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK) : 2;
     int i;
 
-    ENTER(2, ("ParsePackage(Stage=%d,pctxt=%x,pbOp=%x,ppkg=%x,rc=%x)\n",
-              dwStage, pctxt, pctxt->pbOp, ppkg, rc));
+    ENTER(2, ("ParsePackage(Stage=%d,pctxt=%x,pbOp=%x,ppkg=%x,rc=%x)\n", dwStage, pctxt, pctxt->pbOp, ppkg, rc));
 
     ASSERT(ppkg->FrameHdr.dwSig == SIG_PACKAGE);
     switch (dwStage)
     {
-        case 0:
-            //
-            // Stage 0: Do some debugger work here.
-            //
-            ppkg->FrameHdr.dwfFrame++;
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+    case 0:
+        //
+        // Stage 0: Do some debugger work here.
+        //
+        ppkg->FrameHdr.dwfFrame++;
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            PrintIndent(pctxt);
+            PRINTF("{");
+            gDebugger.iPrintLevel++;
+        }
+#endif
+
+    case 1:
+    Stage1:
+        //
+        // Stage 1: Parse package elements
+        //
+        while ((pctxt->pbOp < ppkg->pbOpEnd) && (ppkg->iElement < (int)ppkg->ppkgobj->dwcElements))
+
+        {
+            i = ppkg->iElement++;
+#ifdef DEBUGGER
+            if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
             {
-                PrintIndent(pctxt);
-                PRINTF("{");
-                gDebugger.iPrintLevel++;
-            }
-          #endif
-
-        case 1:
-        Stage1:
-            //
-            // Stage 1: Parse package elements
-            //
-            while ((pctxt->pbOp < ppkg->pbOpEnd) &&
-                   (ppkg->iElement < (int)ppkg->ppkgobj->dwcElements))
-
-            {
-                i = ppkg->iElement++;
-              #ifdef DEBUGGER
-                if (gDebugger.dwfDebugger &
-                    (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+                if (i > 0)
                 {
-                    if (i > 0)
-                    {
-                        PRINTF(",");
-                    }
-                }
-              #endif
-
-                if ((*pctxt->pbOp == OP_BUFFER) || (*pctxt->pbOp == OP_PACKAGE))
-                {
-                    if (((rc = ParseOpcode(pctxt, NULL,
-                                           &ppkg->ppkgobj->adata[i])) !=
-                         STATUS_SUCCESS) ||
-                        (&ppkg->FrameHdr !=
-                         (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                  #ifdef DEBUGGER
-                    if (gDebugger.dwfDebugger &
-                        (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-                    {
-                        PrintIndent(pctxt);
-                    }
-                  #endif
-
-                    if (((rc = ParseIntObj(&pctxt->pbOp,
-                                           &ppkg->ppkgobj->adata[i], TRUE)) ==
-                         AMLIERR_INVALID_OPCODE) &&
-                        ((rc = ParseString(&pctxt->pbOp,
-                                           &ppkg->ppkgobj->adata[i], TRUE)) ==
-                         AMLIERR_INVALID_OPCODE) &&
-                        ((rc = ParseObjName(&pctxt->pbOp,
-                                            &ppkg->ppkgobj->adata[i], TRUE)) ==
-                         AMLIERR_INVALID_OPCODE))
-                    {
-                        rc = AMLI_LOGERR(rc,
-                                         ("ParsePackage: invalid opcode 0x%02x at 0x%08x",
-                                          *pctxt->pbOp, pctxt->pbOp));
-                        break;
-                    }
-                    else if (rc != STATUS_SUCCESS)
-                    {
-                        break;
-                    }
+                    PRINTF(",");
                 }
             }
+#endif
 
-            if ((rc == AMLISTA_PENDING) ||
-                (&ppkg->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
+            if ((*pctxt->pbOp == OP_BUFFER) || (*pctxt->pbOp == OP_PACKAGE))
             {
-                break;
+                if (((rc = ParseOpcode(pctxt, NULL, &ppkg->ppkgobj->adata[i])) != STATUS_SUCCESS) ||
+                    (&ppkg->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
+                {
+                    break;
+                }
             }
-            else if ((rc == STATUS_SUCCESS) &&
-                     (pctxt->pbOp < ppkg->pbOpEnd) &&
-                     (ppkg->iElement < (int)ppkg->ppkgobj->dwcElements))
+            else
             {
-                goto Stage1;
-            }
+#ifdef DEBUGGER
+                if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+                {
+                    PrintIndent(pctxt);
+                }
+#endif
 
-            ppkg->FrameHdr.dwfFrame++;
-
-        case 2:
-            //
-            // Stage 2: Clean up.
-            //
-          #ifdef DEBUGGER
-            if (gDebugger.dwfDebugger &
-                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
-            {
-                gDebugger.iPrintLevel--;
-                PrintIndent(pctxt);
-                PRINTF("}");
-                gDebugger.iPrintLevel--;
+                if (((rc = ParseIntObj(&pctxt->pbOp, &ppkg->ppkgobj->adata[i], TRUE)) == AMLIERR_INVALID_OPCODE) &&
+                    ((rc = ParseString(&pctxt->pbOp, &ppkg->ppkgobj->adata[i], TRUE)) == AMLIERR_INVALID_OPCODE) &&
+                    ((rc = ParseObjName(&pctxt->pbOp, &ppkg->ppkgobj->adata[i], TRUE)) == AMLIERR_INVALID_OPCODE))
+                {
+                    rc = AMLI_LOGERR(rc, ("ParsePackage: invalid opcode 0x%02x at 0x%08x", *pctxt->pbOp, pctxt->pbOp));
+                    break;
+                }
+                else if (rc != STATUS_SUCCESS)
+                {
+                    break;
+                }
             }
-          #endif
-            PopFrame(pctxt);
+        }
+
+        if ((rc == AMLISTA_PENDING) || (&ppkg->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
+        {
+            break;
+        }
+        else if ((rc == STATUS_SUCCESS) && (pctxt->pbOp < ppkg->pbOpEnd) &&
+                 (ppkg->iElement < (int)ppkg->ppkgobj->dwcElements))
+        {
+            goto Stage1;
+        }
+
+        ppkg->FrameHdr.dwfFrame++;
+
+    case 2:
+        //
+        // Stage 2: Clean up.
+        //
+#ifdef DEBUGGER
+        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+        {
+            gDebugger.iPrintLevel--;
+            PrintIndent(pctxt);
+            PRINTF("}");
+            gDebugger.iPrintLevel--;
+        }
+#endif
+        PopFrame(pctxt);
     }
 
     EXIT(2, ("ParsePackage=%x\n", rc));
     return rc;
-}       //ParsePackage
+} //ParsePackage
 
 /***LP  Acquire - Parse and execute the Acquire instruction
  *
@@ -339,8 +301,7 @@ NTSTATUS LOCAL Acquire(PCTXT pctxt, PTERM pterm)
     TRACENAME("ACQUIRE")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("Acquire(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("Acquire(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "OI")) == STATUS_SUCCESS)
     {
@@ -350,18 +311,15 @@ NTSTATUS LOCAL Acquire(PCTXT pctxt, PTERM pterm)
         if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_MUTEX)
         {
             rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                             ("Acquire: object is not mutex type (obj=%s,type=%s)",
-                              GetObjectPath(pterm->pnsObj),
+                             ("Acquire: object is not mutex type (obj=%s,type=%s)", GetObjectPath(pterm->pnsObj),
                               GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
         }
-        else if ((rc = PushFrame(pctxt, SIG_ACQUIRE, sizeof(ACQUIRE),
-                                 ParseAcquire, &pacq)) == STATUS_SUCCESS)
+        else if ((rc = PushFrame(pctxt, SIG_ACQUIRE, sizeof(ACQUIRE), ParseAcquire, &pacq)) == STATUS_SUCCESS)
         {
             pacq->pmutex = (PMUTEXOBJ)pterm->pnsObj->ObjData.pbDataBuff;
-            pacq->FrameHdr.dwfFrame = (pterm->pnsObj->ObjData.dwfData &
-                                       DATAF_GLOBAL_LOCK)?
-                                        ACQF_SET_RESULT | ACQF_NEED_GLOBALLOCK:
-                                        ACQF_SET_RESULT;
+            pacq->FrameHdr.dwfFrame = (pterm->pnsObj->ObjData.dwfData & DATAF_GLOBAL_LOCK)
+                                          ? ACQF_SET_RESULT | ACQF_NEED_GLOBALLOCK
+                                          : ACQF_SET_RESULT;
             pacq->wTimeout = (USHORT)pterm->pdataArgs[1].uipDataValue;
             pacq->pdataResult = pterm->pdataResult;
         }
@@ -369,7 +327,7 @@ NTSTATUS LOCAL Acquire(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("Acquire=%x\n", rc));
     return rc;
-}       //Acquire
+} //Acquire
 
 /***LP  Concat - Parse and execute the Concatenate instruction
  *
@@ -389,12 +347,10 @@ NTSTATUS LOCAL Concat(PCTXT pctxt, PTERM pterm)
     NTSTATUS rc = STATUS_SUCCESS;
     POBJDATA pdata;
 
-    ENTER(2, ("Concat(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("Concat(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if (((rc = ValidateArgTypes(pterm->pdataArgs, "DD")) == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata))
-         == STATUS_SUCCESS))
+        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
     {
         if (pterm->pdataArgs[0].dwDataType != pterm->pdataArgs[1].dwDataType)
         {
@@ -408,13 +364,12 @@ NTSTATUS LOCAL Concat(PCTXT pctxt, PTERM pterm)
             if (pterm->pdataArgs[0].dwDataType == OBJTYPE_INTDATA)
             {
                 pterm->pdataResult->dwDataType = OBJTYPE_BUFFDATA;
-                pterm->pdataResult->dwDataLen = sizeof(ULONG)*2;
+                pterm->pdataResult->dwDataLen = sizeof(ULONG) * 2;
             }
             else
             {
                 pterm->pdataResult->dwDataType = pterm->pdataArgs[0].dwDataType;
-                pterm->pdataResult->dwDataLen = pterm->pdataArgs[0].dwDataLen +
-                                                pterm->pdataArgs[1].dwDataLen;
+                pterm->pdataResult->dwDataLen = pterm->pdataArgs[0].dwDataLen + pterm->pdataArgs[1].dwDataLen;
                 //
                 // If object is string, take one NULL off
                 //
@@ -422,41 +377,29 @@ NTSTATUS LOCAL Concat(PCTXT pctxt, PTERM pterm)
                     pterm->pdataResult->dwDataLen--;
             }
 
-            if ((pterm->pdataResult->pbDataBuff =
-                     (pterm->pdataResult->dwDataType == OBJTYPE_STRDATA)?
-                     NEWSDOBJ(gpheapGlobal,
-                              pterm->pdataResult->dwDataLen):
-                     NEWBDOBJ(gpheapGlobal,
-                              pterm->pdataResult->dwDataLen)) == NULL)
+            if ((pterm->pdataResult->pbDataBuff = (pterm->pdataResult->dwDataType == OBJTYPE_STRDATA)
+                                                      ? NEWSDOBJ(gpheapGlobal, pterm->pdataResult->dwDataLen)
+                                                      : NEWBDOBJ(gpheapGlobal, pterm->pdataResult->dwDataLen)) == NULL)
             {
-                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("Concat: failed to allocate target buffer"));
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("Concat: failed to allocate target buffer"));
             }
             else if (pterm->pdataArgs[0].dwDataType == OBJTYPE_INTDATA)
             {
-                MEMCPY(pterm->pdataResult->pbDataBuff,
-                       &pterm->pdataArgs[0].uipDataValue, sizeof(ULONG));
-                MEMCPY(pterm->pdataResult->pbDataBuff + sizeof(ULONG),
-                       &pterm->pdataArgs[1].uipDataValue, sizeof(ULONG));
+                MEMCPY(pterm->pdataResult->pbDataBuff, &pterm->pdataArgs[0].uipDataValue, sizeof(ULONG));
+                MEMCPY(pterm->pdataResult->pbDataBuff + sizeof(ULONG), &pterm->pdataArgs[1].uipDataValue,
+                       sizeof(ULONG));
             }
             else if (pterm->pdataArgs[0].dwDataType == OBJTYPE_STRDATA)
             {
-                MEMCPY(pterm->pdataResult->pbDataBuff,
-                       pterm->pdataArgs[0].pbDataBuff,
+                MEMCPY(pterm->pdataResult->pbDataBuff, pterm->pdataArgs[0].pbDataBuff,
                        pterm->pdataArgs[0].dwDataLen - 1);
-                MEMCPY(pterm->pdataResult->pbDataBuff +
-                       pterm->pdataArgs[0].dwDataLen - 1,
-                       pterm->pdataArgs[1].pbDataBuff,
-                       pterm->pdataArgs[1].dwDataLen);
+                MEMCPY(pterm->pdataResult->pbDataBuff + pterm->pdataArgs[0].dwDataLen - 1,
+                       pterm->pdataArgs[1].pbDataBuff, pterm->pdataArgs[1].dwDataLen);
             }
             else
             {
-                MEMCPY(pterm->pdataResult->pbDataBuff,
-                       pterm->pdataArgs[0].pbDataBuff,
-                       pterm->pdataArgs[0].dwDataLen);
-                MEMCPY(pterm->pdataResult->pbDataBuff +
-                       pterm->pdataArgs[0].dwDataLen,
-                       pterm->pdataArgs[1].pbDataBuff,
+                MEMCPY(pterm->pdataResult->pbDataBuff, pterm->pdataArgs[0].pbDataBuff, pterm->pdataArgs[0].dwDataLen);
+                MEMCPY(pterm->pdataResult->pbDataBuff + pterm->pdataArgs[0].dwDataLen, pterm->pdataArgs[1].pbDataBuff,
                        pterm->pdataArgs[1].dwDataLen);
             }
 
@@ -469,7 +412,7 @@ NTSTATUS LOCAL Concat(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("Concat=%x\n", rc));
     return rc;
-}       //Concat
+} //Concat
 
 /***LP  DerefOf - Parse and execute the DerefOf instruction
  *
@@ -488,8 +431,7 @@ NTSTATUS LOCAL DerefOf(PCTXT pctxt, PTERM pterm)
     TRACENAME("DEREFOF")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("DerefOf(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("DerefOf(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "R")) == STATUS_SUCCESS)
     {
@@ -504,12 +446,10 @@ NTSTATUS LOCAL DerefOf(PCTXT pctxt, PTERM pterm)
         rc = ReadObject(pctxt, pdata, pterm->pdataResult);
     }
 
-    EXIT(2, ("DerefOf=%x (type=%s,value=%x,len=%d,buff=%x)\n",
-             rc, GetObjectTypeName(pterm->pdataResult->dwDataType),
-             pterm->pdataResult->uipDataValue, pterm->pdataResult->dwDataLen,
-             pterm->pdataResult->pbDataBuff));
+    EXIT(2, ("DerefOf=%x (type=%s,value=%x,len=%d,buff=%x)\n", rc, GetObjectTypeName(pterm->pdataResult->dwDataType),
+             pterm->pdataResult->uipDataValue, pterm->pdataResult->dwDataLen, pterm->pdataResult->pbDataBuff));
     return rc;
-}       //DerefOf
+} //DerefOf
 
 /***LP  ExprOp1 - Parse and execute the 1-operand expression instructions
  *
@@ -530,76 +470,65 @@ NTSTATUS LOCAL ExprOp1(PCTXT pctxt, PTERM pterm)
     POBJDATA pdata;
     ULONG dwResult = 0;
 
-    ENTER(2, ("ExprOp1(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("ExprOp1(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if (((rc = ValidateArgTypes(pterm->pdataArgs, "I")) == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata))
-         == STATUS_SUCCESS))
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
     {
         int i;
         ULONG dwData1, dwData2;
 
         switch (pterm->pamlterm->dwOpcode)
         {
-            case OP_FINDSETLBIT:
-                ENTER(2, ("FindSetLeftBit(Value=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue));
-                for (i = 31; i >= 0; --i)
+        case OP_FINDSETLBIT:
+            ENTER(2, ("FindSetLeftBit(Value=%x)\n", pterm->pdataArgs[0].uipDataValue));
+            for (i = 31; i >= 0; --i)
+            {
+                if (pterm->pdataArgs[0].uipDataValue & (1 << i))
                 {
-                    if (pterm->pdataArgs[0].uipDataValue & (1 << i))
-                    {
-                        dwResult = i + 1;
-                        break;
-                    }
+                    dwResult = i + 1;
+                    break;
                 }
-                EXIT(2, ("FindSetLeftBit=%x (Result=%x)\n", rc, dwResult));
-                break;
+            }
+            EXIT(2, ("FindSetLeftBit=%x (Result=%x)\n", rc, dwResult));
+            break;
 
-            case OP_FINDSETRBIT:
-                ENTER(2, ("FindSetRightBit(Value=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue));
-                for (i = 0; i <= 31; ++i)
+        case OP_FINDSETRBIT:
+            ENTER(2, ("FindSetRightBit(Value=%x)\n", pterm->pdataArgs[0].uipDataValue));
+            for (i = 0; i <= 31; ++i)
+            {
+                if (pterm->pdataArgs[0].uipDataValue & (1 << i))
                 {
-                    if (pterm->pdataArgs[0].uipDataValue & (1 << i))
-                    {
-                        dwResult = i + 1;
-                        break;
-                    }
+                    dwResult = i + 1;
+                    break;
                 }
-                EXIT(2, ("FindSetRightBit=%x (Result=%x)\n", rc, dwResult));
-                break;
+            }
+            EXIT(2, ("FindSetRightBit=%x (Result=%x)\n", rc, dwResult));
+            break;
 
-            case OP_FROMBCD:
-                ENTER(2, ("FromBCD(Value=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue));
-                for (dwData1 = (ULONG)pterm->pdataArgs[0].uipDataValue,
-                     dwData2 = 1;
-                     dwData1 != 0;
-                     dwData2 *= 10, dwData1 >>= 4)
-                {
-                    dwResult += (dwData1 & 0x0f)*dwData2;
-                }
-                EXIT(2, ("FromBCD=%x (Result=%x)\n", rc, dwResult));
-                break;
+        case OP_FROMBCD:
+            ENTER(2, ("FromBCD(Value=%x)\n", pterm->pdataArgs[0].uipDataValue));
+            for (dwData1 = (ULONG)pterm->pdataArgs[0].uipDataValue, dwData2 = 1; dwData1 != 0;
+                 dwData2 *= 10, dwData1 >>= 4)
+            {
+                dwResult += (dwData1 & 0x0f) * dwData2;
+            }
+            EXIT(2, ("FromBCD=%x (Result=%x)\n", rc, dwResult));
+            break;
 
-            case OP_TOBCD:
-                ENTER(2, ("ToBCD(Value=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue));
-                for (i = 0, dwData1 = (ULONG)pterm->pdataArgs[0].uipDataValue;
-                     dwData1 != 0;
-                     ++i, dwData1 /= 10)
-                {
-                    dwResult |= (dwData1%10) << (4*i);
-                }
-                EXIT(2, ("ToBCD=%x (Result=%x)\n", rc, dwResult));
-                break;
+        case OP_TOBCD:
+            ENTER(2, ("ToBCD(Value=%x)\n", pterm->pdataArgs[0].uipDataValue));
+            for (i = 0, dwData1 = (ULONG)pterm->pdataArgs[0].uipDataValue; dwData1 != 0; ++i, dwData1 /= 10)
+            {
+                dwResult |= (dwData1 % 10) << (4 * i);
+            }
+            EXIT(2, ("ToBCD=%x (Result=%x)\n", rc, dwResult));
+            break;
 
-            case OP_NOT:
-                ENTER(2, ("Not(Value=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue));
-                dwResult = ~(ULONG)pterm->pdataArgs[0].uipDataValue;
-                EXIT(2, ("Not=%x (Result=%x)\n", rc, dwResult));
+        case OP_NOT:
+            ENTER(2, ("Not(Value=%x)\n", pterm->pdataArgs[0].uipDataValue));
+            dwResult = ~(ULONG)pterm->pdataArgs[0].uipDataValue;
+            EXIT(2, ("Not=%x (Result=%x)\n", rc, dwResult));
         }
 
         pterm->pdataResult->dwDataType = OBJTYPE_INTDATA;
@@ -609,7 +538,7 @@ NTSTATUS LOCAL ExprOp1(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("ExprOp1=%x (value=%x)\n", rc, dwResult));
     return rc;
-}       //ExprOp1
+} //ExprOp1
 
 /***LP  ExprOp2 - Parse and execute 2-operands expression instructions
  *
@@ -629,135 +558,90 @@ NTSTATUS LOCAL ExprOp2(PCTXT pctxt, PTERM pterm)
     NTSTATUS rc = STATUS_SUCCESS;
     POBJDATA pdata;
 
-    ENTER(2, ("ExprOp2(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("ExprOp2(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if (((rc = ValidateArgTypes(pterm->pdataArgs, "II")) == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata))
-         == STATUS_SUCCESS))
+        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
     {
         pterm->pdataResult->dwDataType = OBJTYPE_INTDATA;
         switch (pterm->pamlterm->dwOpcode)
         {
-            case OP_ADD:
-                ENTER(2, ("Add(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    pterm->pdataArgs[0].uipDataValue +
-                    pterm->pdataArgs[1].uipDataValue;
-                EXIT(2, ("Add=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_ADD:
+            ENTER(2,
+                  ("Add(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = pterm->pdataArgs[0].uipDataValue + pterm->pdataArgs[1].uipDataValue;
+            EXIT(2, ("Add=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_AND:
-                ENTER(2, ("And(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    pterm->pdataArgs[0].uipDataValue &
-                    pterm->pdataArgs[1].uipDataValue;
-                EXIT(2, ("And=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_AND:
+            ENTER(2,
+                  ("And(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = pterm->pdataArgs[0].uipDataValue & pterm->pdataArgs[1].uipDataValue;
+            EXIT(2, ("And=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_MULTIPLY:
-                ENTER(2, ("Multiply(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    pterm->pdataArgs[0].uipDataValue *
-                    pterm->pdataArgs[1].uipDataValue;
-                EXIT(2, ("Multiply=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_MULTIPLY:
+            ENTER(2, ("Multiply(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue,
+                      pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = pterm->pdataArgs[0].uipDataValue * pterm->pdataArgs[1].uipDataValue;
+            EXIT(2, ("Multiply=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_NAND:
-                ENTER(2, ("NAnd(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    ~(pterm->pdataArgs[0].uipDataValue &
-                      pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("NAnd=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_NAND:
+            ENTER(2,
+                  ("NAnd(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = ~(pterm->pdataArgs[0].uipDataValue & pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("NAnd=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_NOR:
-                ENTER(2, ("NOr(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    ~(pterm->pdataArgs[0].uipDataValue |
-                      pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("NOr=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_NOR:
+            ENTER(2,
+                  ("NOr(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = ~(pterm->pdataArgs[0].uipDataValue | pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("NOr=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_OR:
-                ENTER(2, ("Or(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    pterm->pdataArgs[0].uipDataValue |
-                    pterm->pdataArgs[1].uipDataValue;
-                EXIT(2, ("Or=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_OR:
+            ENTER(2, ("Or(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = pterm->pdataArgs[0].uipDataValue | pterm->pdataArgs[1].uipDataValue;
+            EXIT(2, ("Or=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_SHIFTL:
-                ENTER(2, ("ShiftLeft(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    SHIFTLEFT(pterm->pdataArgs[0].uipDataValue,
-                              pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("ShiftLeft=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_SHIFTL:
+            ENTER(2, ("ShiftLeft(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue,
+                      pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue =
+                SHIFTLEFT(pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("ShiftLeft=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_SHIFTR:
-                ENTER(2, ("ShiftRight(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    SHIFTRIGHT(pterm->pdataArgs[0].uipDataValue,
-                               pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("ShiftRight=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_SHIFTR:
+            ENTER(2, ("ShiftRight(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue,
+                      pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue =
+                SHIFTRIGHT(pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("ShiftRight=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_SUBTRACT:
-                ENTER(2, ("Subtract(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    pterm->pdataArgs[0].uipDataValue -
-                    pterm->pdataArgs[1].uipDataValue;
-                EXIT(2, ("Subtract=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
+        case OP_SUBTRACT:
+            ENTER(2, ("Subtract(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue,
+                      pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = pterm->pdataArgs[0].uipDataValue - pterm->pdataArgs[1].uipDataValue;
+            EXIT(2, ("Subtract=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
 
-            case OP_XOR:
-                ENTER(2, ("XOr(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    pterm->pdataArgs[0].uipDataValue ^
-                    pterm->pdataArgs[1].uipDataValue;
-                EXIT(2, ("XOr=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
-                break;
-                
-            case OP_MOD:
-                ENTER(2, ("Mod(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                pterm->pdataResult->uipDataValue =
-                    pterm->pdataArgs[0].uipDataValue %
-                    pterm->pdataArgs[1].uipDataValue;
-                EXIT(2, ("Mod=%x (Result=%x)\n",
-                         rc, pterm->pdataResult->uipDataValue));
+        case OP_XOR:
+            ENTER(2,
+                  ("XOr(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = pterm->pdataArgs[0].uipDataValue ^ pterm->pdataArgs[1].uipDataValue;
+            EXIT(2, ("XOr=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
+            break;
+
+        case OP_MOD:
+            ENTER(2,
+                  ("Mod(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            pterm->pdataResult->uipDataValue = pterm->pdataArgs[0].uipDataValue % pterm->pdataArgs[1].uipDataValue;
+            EXIT(2, ("Mod=%x (Result=%x)\n", rc, pterm->pdataResult->uipDataValue));
         }
 
         rc = WriteObject(pctxt, pdata, pterm->pdataResult);
@@ -765,7 +649,7 @@ NTSTATUS LOCAL ExprOp2(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("ExprOp2=%x (value=%x)\n", rc, pterm->pdataResult->uipDataValue));
     return rc;
-}       //ExprOp2
+} //ExprOp2
 
 /***LP  Divide - Parse and execute the Divide instruction
  *
@@ -789,35 +673,26 @@ NTSTATUS LOCAL Divide(PCTXT pctxt, PTERM pterm)
     ENTER(2, ("Divide(pctxt=%x,pbOp=%x,pterm)\n", pctxt, pctxt->pbOp, pterm));
 
     if (((rc = ValidateArgTypes(pterm->pdataArgs, "II")) == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata1))
-         == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[3], OBJTYPE_DATAOBJ, &pdata2))
-         == STATUS_SUCCESS))
+        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata1)) == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[3], OBJTYPE_DATAOBJ, &pdata2)) == STATUS_SUCCESS))
     {
-        ENTER(2, ("Divide(Value1=%x,Value2=%x)\n",
-                  pterm->pdataArgs[0].uipDataValue,
-                  pterm->pdataArgs[1].uipDataValue));
-        dwDividend = (ULONG)(pterm->pdataArgs[0].uipDataValue /
-                             pterm->pdataArgs[1].uipDataValue);
-        dwRemainder = (ULONG)(pterm->pdataArgs[0].uipDataValue %
-                              pterm->pdataArgs[1].uipDataValue);
-        EXIT(2, ("Divide=%x (Dividend=%x,Remainder=%x)\n",
-                 rc, dwDividend, dwRemainder));
+        ENTER(2, ("Divide(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+        dwDividend = (ULONG)(pterm->pdataArgs[0].uipDataValue / pterm->pdataArgs[1].uipDataValue);
+        dwRemainder = (ULONG)(pterm->pdataArgs[0].uipDataValue % pterm->pdataArgs[1].uipDataValue);
+        EXIT(2, ("Divide=%x (Dividend=%x,Remainder=%x)\n", rc, dwDividend, dwRemainder));
 
         pterm->pdataResult->dwDataType = OBJTYPE_INTDATA;
         pterm->pdataResult->uipDataValue = (ULONG_PTR)dwDividend;
 
-        if ((rc = PushPost(pctxt, ProcessDivide, (ULONG_PTR)pdata2, 0,
-                           pterm->pdataResult)) == STATUS_SUCCESS)
+        if ((rc = PushPost(pctxt, ProcessDivide, (ULONG_PTR)pdata2, 0, pterm->pdataResult)) == STATUS_SUCCESS)
         {
             rc = PutIntObjData(pctxt, pdata1, dwRemainder);
         }
     }
 
-    EXIT(2, ("Divide=%x (Dividend=%x,Remainder%x)\n",
-             rc, dwDividend, dwRemainder));
+    EXIT(2, ("Divide=%x (Dividend=%x,Remainder%x)\n", rc, dwDividend, dwRemainder));
     return rc;
-}       //Divide
+} //Divide
 
 /***LP  ProcessDivide - post processing of Divide
  *
@@ -835,41 +710,36 @@ NTSTATUS LOCAL Divide(PCTXT pctxt, PTERM pterm)
 NTSTATUS LOCAL ProcessDivide(PCTXT pctxt, PPOST ppost, NTSTATUS rc)
 {
     TRACENAME("PROCESSDIVIDE")
-    ULONG dwStage = (rc == STATUS_SUCCESS)?
-                    (ppost->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK): 1;
+    ULONG dwStage = (rc == STATUS_SUCCESS) ? (ppost->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK) : 1;
 
-    ENTER(2, ("ProcessDivide(Stage=%d,pctxt=%x,pbOp=%x,ppost=%x,rc=%x)\n",
-              dwStage, pctxt, pctxt->pbOp, ppost, rc));
+    ENTER(2, ("ProcessDivide(Stage=%d,pctxt=%x,pbOp=%x,ppost=%x,rc=%x)\n", dwStage, pctxt, pctxt->pbOp, ppost, rc));
 
     ASSERT(ppost->FrameHdr.dwSig == SIG_POST);
 
     switch (dwStage)
     {
-        case 0:
-            //
-            // Stage 0: Do the write.
-            //
-            ppost->FrameHdr.dwfFrame++;
-            rc = WriteObject(pctxt, (POBJDATA)ppost->uipData1,
-                             ppost->pdataResult);
+    case 0:
+        //
+        // Stage 0: Do the write.
+        //
+        ppost->FrameHdr.dwfFrame++;
+        rc = WriteObject(pctxt, (POBJDATA)ppost->uipData1, ppost->pdataResult);
 
-            if ((rc == AMLISTA_PENDING) ||
-                (&ppost->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
-            {
-                break;
-            }
+        if ((rc == AMLISTA_PENDING) || (&ppost->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
+        {
+            break;
+        }
 
-        case 1:
-            //
-            // Stage 1: Clean up.
-            //
-            PopFrame(pctxt);
+    case 1:
+        //
+        // Stage 1: Clean up.
+        //
+        PopFrame(pctxt);
     }
 
-    EXIT(2, ("ProcessDivide=%x (value=%x)\n",
-             rc, ppost->pdataResult->uipDataValue));
+    EXIT(2, ("ProcessDivide=%x (value=%x)\n", rc, ppost->pdataResult->uipDataValue));
     return rc;
-}       //ProcessDivide
+} //ProcessDivide
 
 /***LP  IncDec - Parse and execute the Increment/Decrement instructions
  *
@@ -888,20 +758,17 @@ NTSTATUS LOCAL IncDec(PCTXT pctxt, PTERM pterm)
     TRACENAME("INCDEC")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("IncDec(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("IncDec(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if ((rc = PushPost(pctxt, ProcessIncDec,
-                       (ULONG_PTR)pterm->pamlterm->dwOpcode,
-                       (ULONG_PTR)&pterm->pdataArgs[0], pterm->pdataResult)) ==
-        STATUS_SUCCESS)
+    if ((rc = PushPost(pctxt, ProcessIncDec, (ULONG_PTR)pterm->pamlterm->dwOpcode, (ULONG_PTR)&pterm->pdataArgs[0],
+                       pterm->pdataResult)) == STATUS_SUCCESS)
     {
         rc = ReadObject(pctxt, &pterm->pdataArgs[0], pterm->pdataResult);
     }
 
     EXIT(2, ("IncDec=%x\n", rc));
     return rc;
-}       //IncDec
+} //IncDec
 
 /***LP  ProcessIncDec - post processing of IncDec
  *
@@ -919,69 +786,59 @@ NTSTATUS LOCAL IncDec(PCTXT pctxt, PTERM pterm)
 NTSTATUS LOCAL ProcessIncDec(PCTXT pctxt, PPOST ppost, NTSTATUS rc)
 {
     TRACENAME("PROCESSINCDEC")
-    ULONG dwStage = (rc == STATUS_SUCCESS)?
-                    (ppost->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK): 1;
+    ULONG dwStage = (rc == STATUS_SUCCESS) ? (ppost->FrameHdr.dwfFrame & FRAMEF_STAGE_MASK) : 1;
 
-    ENTER(2, ("ProcessIncDec(Stage=%d,pctxt=%x,pbOp=%x,ppost=%x,rc=%x)\n",
-              dwStage, pctxt, pctxt->pbOp, ppost, rc));
+    ENTER(2, ("ProcessIncDec(Stage=%d,pctxt=%x,pbOp=%x,ppost=%x,rc=%x)\n", dwStage, pctxt, pctxt->pbOp, ppost, rc));
 
     ASSERT(ppost->FrameHdr.dwSig == SIG_POST);
 
     switch (dwStage)
     {
-        case 0:
-            //
-            // Stage 0: do the inc/dec operation.
-            //
-            ppost->FrameHdr.dwfFrame++;
-            if (ppost->pdataResult->dwDataType != OBJTYPE_INTDATA)
-            {
-                FreeDataBuffs(ppost->pdataResult, 1);
-                rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                                 ("ProcessIncDec: object is not integer type (obj=%x,type=%s)",
-                                  ppost->pdataResult,
-                                  GetObjectTypeName(ppost->pdataResult->dwDataType)));
-            }
-            else if (ppost->uipData1 == OP_INCREMENT)
-            {
-                ENTER(2, ("Increment(Value=%x)\n",
-                          ppost->pdataResult->uipDataValue));
-                ppost->pdataResult->uipDataValue++;
-                EXIT(2, ("Increment=%x (Value=%x)\n",
-                         rc, ppost->pdataResult->uipDataValue));
-            }
-            else
-            {
-                ENTER(2, ("Decrement(Value=%x)\n",
-                          ppost->pdataResult->uipDataValue));
-                ppost->pdataResult->uipDataValue--;
-                EXIT(2, ("Decrement=%x (Value=%x)\n",
-                         rc, ppost->pdataResult->uipDataValue));
-            }
+    case 0:
+        //
+        // Stage 0: do the inc/dec operation.
+        //
+        ppost->FrameHdr.dwfFrame++;
+        if (ppost->pdataResult->dwDataType != OBJTYPE_INTDATA)
+        {
+            FreeDataBuffs(ppost->pdataResult, 1);
+            rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
+                             ("ProcessIncDec: object is not integer type (obj=%x,type=%s)", ppost->pdataResult,
+                              GetObjectTypeName(ppost->pdataResult->dwDataType)));
+        }
+        else if (ppost->uipData1 == OP_INCREMENT)
+        {
+            ENTER(2, ("Increment(Value=%x)\n", ppost->pdataResult->uipDataValue));
+            ppost->pdataResult->uipDataValue++;
+            EXIT(2, ("Increment=%x (Value=%x)\n", rc, ppost->pdataResult->uipDataValue));
+        }
+        else
+        {
+            ENTER(2, ("Decrement(Value=%x)\n", ppost->pdataResult->uipDataValue));
+            ppost->pdataResult->uipDataValue--;
+            EXIT(2, ("Decrement=%x (Value=%x)\n", rc, ppost->pdataResult->uipDataValue));
+        }
 
-            if (rc == STATUS_SUCCESS)
+        if (rc == STATUS_SUCCESS)
+        {
+            rc = WriteObject(pctxt, (POBJDATA)ppost->uipData2, ppost->pdataResult);
+
+            if ((rc == AMLISTA_PENDING) || (&ppost->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
             {
-                rc = WriteObject(pctxt, (POBJDATA)ppost->uipData2,
-                                 ppost->pdataResult);
-
-                if ((rc == AMLISTA_PENDING) ||
-                    (&ppost->FrameHdr != (PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd))
-                {
-                    break;
-                }
+                break;
             }
+        }
 
-        case 1:
-            //
-            // Stage 1: Clean up.
-            //
-            PopFrame(pctxt);
+    case 1:
+        //
+        // Stage 1: Clean up.
+        //
+        PopFrame(pctxt);
     }
 
-    EXIT(2, ("ProcessIncDec=%x (value=%x)\n",
-             rc, ppost->pdataResult->uipDataValue));
+    EXIT(2, ("ProcessIncDec=%x (value=%x)\n", rc, ppost->pdataResult->uipDataValue));
     return rc;
-}       //ProcessIncDec
+} //ProcessIncDec
 
 /***LP  Index - Parse and execute the Index instruction
  *
@@ -1004,8 +861,7 @@ NTSTATUS LOCAL Index(PCTXT pctxt, PTERM pterm)
     ENTER(2, ("Index(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if (((rc = ValidateArgTypes(pterm->pdataArgs, "CI")) == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATA, &pdata)) ==
-         STATUS_SUCCESS))
+        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATA, &pdata)) == STATUS_SUCCESS))
     {
         if (pterm->pdataArgs[0].dwDataType == OBJTYPE_PKGDATA)
         {
@@ -1014,38 +870,31 @@ NTSTATUS LOCAL Index(PCTXT pctxt, PTERM pterm)
             if ((ULONG)pterm->pdataArgs[1].uipDataValue < ppkg->dwcElements)
             {
                 pterm->pdataResult->dwDataType = OBJTYPE_DATAALIAS;
-                pterm->pdataResult->pdataAlias =
-                    &ppkg->adata[pterm->pdataArgs[1].uipDataValue];
+                pterm->pdataResult->pdataAlias = &ppkg->adata[pterm->pdataArgs[1].uipDataValue];
             }
             else
             {
-                rc = AMLI_LOGERR(AMLIERR_INDEX_TOO_BIG,
-                                 ("Index: index out-of-bound (index=%d,max=%d)",
-                                  pterm->pdataArgs[1].uipDataValue,
-                                  ppkg->dwcElements));
+                rc = AMLI_LOGERR(AMLIERR_INDEX_TOO_BIG, ("Index: index out-of-bound (index=%d,max=%d)",
+                                                         pterm->pdataArgs[1].uipDataValue, ppkg->dwcElements));
             }
         }
         else
         {
             ASSERT(pterm->pdataArgs[0].dwDataType == OBJTYPE_BUFFDATA);
-            if ((ULONG)pterm->pdataArgs[1].uipDataValue <
-                pterm->pdataArgs[0].dwDataLen)
+            if ((ULONG)pterm->pdataArgs[1].uipDataValue < pterm->pdataArgs[0].dwDataLen)
             {
                 pterm->pdataResult->dwDataType = OBJTYPE_BUFFFIELD;
                 pterm->pdataResult->dwDataLen = sizeof(BUFFFIELDOBJ);
-                if ((pterm->pdataResult->pbDataBuff =
-                     NEWBFOBJ(pctxt->pheapCurrent,
-                              pterm->pdataResult->dwDataLen)) == NULL)
+                if ((pterm->pdataResult->pbDataBuff = NEWBFOBJ(pctxt->pheapCurrent, pterm->pdataResult->dwDataLen)) ==
+                    NULL)
                 {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                     ("Index: failed to allocate buffer field object"));
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("Index: failed to allocate buffer field object"));
                 }
                 else
                 {
                     PBUFFFIELDOBJ pbf = (PBUFFFIELDOBJ)pterm->pdataResult->pbDataBuff;
 
-                    pbf->FieldDesc.dwByteOffset =
-                        (ULONG)pterm->pdataArgs[1].uipDataValue;
+                    pbf->FieldDesc.dwByteOffset = (ULONG)pterm->pdataArgs[1].uipDataValue;
                     pbf->FieldDesc.dwStartBitPos = 0;
                     pbf->FieldDesc.dwNumBits = 8;
                     pbf->pbDataBuff = pterm->pdataArgs[0].pbDataBuff;
@@ -1055,8 +904,7 @@ NTSTATUS LOCAL Index(PCTXT pctxt, PTERM pterm)
             else
             {
                 rc = AMLI_LOGERR(AMLIERR_INDEX_TOO_BIG,
-                                 ("Index: index out-of-bound (index=%d,max=%d)",
-                                  pterm->pdataArgs[1].uipDataValue,
+                                 ("Index: index out-of-bound (index=%d,max=%d)", pterm->pdataArgs[1].uipDataValue,
                                   pterm->pdataArgs[0].dwDataLen));
             }
         }
@@ -1067,12 +915,10 @@ NTSTATUS LOCAL Index(PCTXT pctxt, PTERM pterm)
         }
     }
 
-    EXIT(2, ("Index=%x (Type=%s,Value=%x,Len=%x,Buff=%x)\n",
-             rc, GetObjectTypeName(pterm->pdataResult->dwDataType),
-             pterm->pdataResult->uipDataValue, pterm->pdataResult->dwDataLen,
-             pterm->pdataResult->pbDataBuff));
+    EXIT(2, ("Index=%x (Type=%s,Value=%x,Len=%x,Buff=%x)\n", rc, GetObjectTypeName(pterm->pdataResult->dwDataType),
+             pterm->pdataResult->uipDataValue, pterm->pdataResult->dwDataLen, pterm->pdataResult->pbDataBuff));
     return rc;
-}       //Index
+} //Index
 
 /***LP  LNot - Parse and execute the LNot instruction
  *
@@ -1107,7 +953,7 @@ NTSTATUS LOCAL LNot(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("LNot=%x (value=%x)\n", rc, pterm->pdataResult->uipDataValue));
     return rc;
-}       //LNot
+} //LNot
 
 /***LP  LogOp2 - Parse and execute 2-operand logical expression instructions
  *
@@ -1126,8 +972,7 @@ NTSTATUS LOCAL LogOp2(PCTXT pctxt, PTERM pterm)
     TRACENAME("LOGOP2")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("LogOp2(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("LogOp2(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     DEREF(pctxt);
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "II")) == STATUS_SUCCESS)
@@ -1136,58 +981,47 @@ NTSTATUS LOCAL LogOp2(PCTXT pctxt, PTERM pterm)
 
         switch (pterm->pamlterm->dwOpcode)
         {
-            case OP_LAND:
-                ENTER(2, ("LAnd(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue &&
-                                    pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("LAnd=%x (Result=%x)\n", rc, fResult));
-                break;
+        case OP_LAND:
+            ENTER(2,
+                  ("LAnd(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue && pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("LAnd=%x (Result=%x)\n", rc, fResult));
+            break;
 
-            case OP_LOR:
-                ENTER(2, ("LOr(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue ||
-                                    pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("LOr=%x (Result=%x)\n", rc, fResult));
-                break;
+        case OP_LOR:
+            ENTER(2,
+                  ("LOr(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue || pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("LOr=%x (Result=%x)\n", rc, fResult));
+            break;
 
-            case OP_LG:
-                ENTER(2, ("LGreater(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue >
-                                    pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("LGreater=%x (Result=%x)\n", rc, fResult));
-                break;
+        case OP_LG:
+            ENTER(2, ("LGreater(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue,
+                      pterm->pdataArgs[1].uipDataValue));
+            fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue > pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("LGreater=%x (Result=%x)\n", rc, fResult));
+            break;
 
-            case OP_LL:
-                ENTER(2, ("LLess(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue <
-                                    pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("LLess=%x (Result=%x)\n", rc, fResult));
-                break;
+        case OP_LL:
+            ENTER(2,
+                  ("LLess(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[1].uipDataValue));
+            fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue < pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("LLess=%x (Result=%x)\n", rc, fResult));
+            break;
 
-            case OP_LEQ:
-                ENTER(2, ("LEqual(Value1=%x,Value2=%x)\n",
-                          pterm->pdataArgs[0].uipDataValue,
-                          pterm->pdataArgs[1].uipDataValue));
-                fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue ==
-                                    pterm->pdataArgs[1].uipDataValue);
-                EXIT(2, ("LEqual=%x (Result=%x)\n", rc, fResult));
+        case OP_LEQ:
+            ENTER(2, ("LEqual(Value1=%x,Value2=%x)\n", pterm->pdataArgs[0].uipDataValue,
+                      pterm->pdataArgs[1].uipDataValue));
+            fResult = (BOOLEAN)(pterm->pdataArgs[0].uipDataValue == pterm->pdataArgs[1].uipDataValue);
+            EXIT(2, ("LEqual=%x (Result=%x)\n", rc, fResult));
         }
         pterm->pdataResult->dwDataType = OBJTYPE_INTDATA;
-        pterm->pdataResult->uipDataValue = fResult?
-                                              DATAVALUE_ONES: DATAVALUE_ZERO;
+        pterm->pdataResult->uipDataValue = fResult ? DATAVALUE_ONES : DATAVALUE_ZERO;
     }
 
     EXIT(2, ("LogOp2=%x (value=%x)\n", rc, pterm->pdataResult->uipDataValue));
     return rc;
-}       //LogOp2
+} //LogOp2
 
 /***LP  ObjTypeSizeOf - Parse and execute the ObjectType/SizeOf instructions
  *
@@ -1207,8 +1041,7 @@ NTSTATUS LOCAL ObjTypeSizeOf(PCTXT pctxt, PTERM pterm)
     NTSTATUS rc = STATUS_SUCCESS;
     POBJDATA pdata;
 
-    ENTER(2, ("ObjTypeSizeOf(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("ObjTypeSizeOf(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     DEREF(pctxt);
     pdata = GetBaseData(&pterm->pdataArgs[0]);
@@ -1217,40 +1050,36 @@ NTSTATUS LOCAL ObjTypeSizeOf(PCTXT pctxt, PTERM pterm)
     {
         ENTER(2, ("ObjectType(pdataObj=%x)\n", pdata));
         pterm->pdataResult->uipDataValue = (ULONG_PTR)pdata->dwDataType;
-        EXIT(2, ("ObjectType=%x (Type=%s)\n",
-                 rc, GetObjectTypeName(pdata->dwDataType)));
+        EXIT(2, ("ObjectType=%x (Type=%s)\n", rc, GetObjectTypeName(pdata->dwDataType)));
     }
     else
     {
         ENTER(2, ("SizeOf(pdataObj=%x)\n", pdata));
         switch (pdata->dwDataType)
         {
-            case OBJTYPE_BUFFDATA:
-                pterm->pdataResult->uipDataValue = (ULONG_PTR)pdata->dwDataLen;
-                break;
+        case OBJTYPE_BUFFDATA:
+            pterm->pdataResult->uipDataValue = (ULONG_PTR)pdata->dwDataLen;
+            break;
 
-            case OBJTYPE_STRDATA:
-                pterm->pdataResult->uipDataValue = (ULONG_PTR)
-                                                    (pdata->dwDataLen - 1);
-                break;
+        case OBJTYPE_STRDATA:
+            pterm->pdataResult->uipDataValue = (ULONG_PTR)(pdata->dwDataLen - 1);
+            break;
 
-            case OBJTYPE_PKGDATA:
-                pterm->pdataResult->uipDataValue = (ULONG_PTR)
-                    ((PPACKAGEOBJ)pdata->pbDataBuff)->dwcElements;
-                break;
+        case OBJTYPE_PKGDATA:
+            pterm->pdataResult->uipDataValue = (ULONG_PTR)((PPACKAGEOBJ)pdata->pbDataBuff)->dwcElements;
+            break;
 
-            default:
-                rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_ARGTYPE,
-                                 ("SizeOf: expected argument type string/buffer/package (type=%s)",
-                                  GetObjectTypeName(pdata->dwDataType)));
+        default:
+            rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_ARGTYPE,
+                             ("SizeOf: expected argument type string/buffer/package (type=%s)",
+                              GetObjectTypeName(pdata->dwDataType)));
         }
         EXIT(2, ("Sizeof=%x (Size=%d)\n", rc, pterm->pdataResult->uipDataValue));
     }
 
-    EXIT(2, ("ObjTypeSizeOf=%x (value=%x)\n",
-             rc, pterm->pdataResult->uipDataValue));
+    EXIT(2, ("ObjTypeSizeOf=%x (value=%x)\n", rc, pterm->pdataResult->uipDataValue));
     return rc;
-}       //ObjTypeSizeOf
+} //ObjTypeSizeOf
 
 /***LP  RefOf - Parse and execute the RefOf instructions
  *
@@ -1276,7 +1105,7 @@ NTSTATUS LOCAL RefOf(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("RefOf=%x (ObjAlias=%x)\n", rc, pterm->pdataResult->uipDataValue));
     return rc;
-}       //RefOf
+} //RefOf
 
 /***LP  CondRefOf - Parse and execute the CondRefOf instructions
  *
@@ -1296,11 +1125,9 @@ NTSTATUS LOCAL CondRefOf(PCTXT pctxt, PTERM pterm)
     NTSTATUS rc = STATUS_SUCCESS;
     POBJDATA pdata;
 
-    ENTER(2, ("CondRefOf(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("CondRefOf(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) ==
-        STATUS_SUCCESS)
+    if ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)
     {
         pterm->pdataResult->dwDataType = OBJTYPE_INTDATA;
         if ((pterm->pdataArgs[0].dwDataType == OBJTYPE_OBJALIAS) ||
@@ -1315,10 +1142,9 @@ NTSTATUS LOCAL CondRefOf(PCTXT pctxt, PTERM pterm)
         }
     }
 
-    EXIT(2, ("CondRefOf=%x (ObjAlias=%x)\n",
-             rc, pterm->pdataResult->uipDataValue));
+    EXIT(2, ("CondRefOf=%x (ObjAlias=%x)\n", rc, pterm->pdataResult->uipDataValue));
     return rc;
-}       //CondRefOf
+} //CondRefOf
 
 /***LP  Store - Parse and execute the Store instruction
  *
@@ -1340,19 +1166,16 @@ NTSTATUS LOCAL Store(PCTXT pctxt, PTERM pterm)
 
     ENTER(2, ("Store(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) ==
-        STATUS_SUCCESS)
+    if ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)
     {
         MoveObjData(pterm->pdataResult, &pterm->pdataArgs[0]);
         rc = WriteObject(pctxt, pdata, pterm->pdataResult);
     }
 
-    EXIT(2, ("Store=%x (type=%s,value=%x,buff=%x,len=%x)\n",
-             rc, GetObjectTypeName(pterm->pdataArgs[0].dwDataType),
-             pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[0].pbDataBuff,
-             pterm->pdataArgs[0].dwDataLen));
+    EXIT(2, ("Store=%x (type=%s,value=%x,buff=%x,len=%x)\n", rc, GetObjectTypeName(pterm->pdataArgs[0].dwDataType),
+             pterm->pdataArgs[0].uipDataValue, pterm->pdataArgs[0].pbDataBuff, pterm->pdataArgs[0].dwDataLen));
     return rc;
-}       //Store
+} //Store
 
 /***LP  Wait - Parse and execute the Wait instruction
  *
@@ -1379,22 +1202,19 @@ NTSTATUS LOCAL Wait(PCTXT pctxt, PTERM pterm)
         if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_EVENT)
         {
             rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                             ("Wait: object is not event type (obj=%s,type=%s)",
-                              GetObjectPath(pterm->pnsObj),
+                             ("Wait: object is not event type (obj=%s,type=%s)", GetObjectPath(pterm->pnsObj),
                               GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
         }
-        else if ((rc = PushPost(pctxt, ProcessWait, 0, 0, pterm->pdataResult))
-                 == STATUS_SUCCESS)
+        else if ((rc = PushPost(pctxt, ProcessWait, 0, 0, pterm->pdataResult)) == STATUS_SUCCESS)
         {
-            rc = WaitASLEvent(pctxt,
-                              (PEVENTOBJ)pterm->pnsObj->ObjData.pbDataBuff,
+            rc = WaitASLEvent(pctxt, (PEVENTOBJ)pterm->pnsObj->ObjData.pbDataBuff,
                               (USHORT)pterm->pdataArgs[1].uipDataValue);
         }
     }
 
     EXIT(2, ("Wait=%x (value=%x)\n", rc, pterm->pdataResult->uipDataValue));
     return rc;
-}       //Wait
+} //Wait
 
 /***LP  ProcessWait - post process of Wait
  *
@@ -1413,8 +1233,7 @@ NTSTATUS LOCAL ProcessWait(PCTXT pctxt, PPOST ppost, NTSTATUS rc)
 {
     TRACENAME("PROCESSWAIT")
 
-    ENTER(2, ("ProcessWait(pctxt=%x,pbOp=%x,ppost=%x,rc=%x)\n",
-              pctxt, pctxt->pbOp, ppost, rc));
+    ENTER(2, ("ProcessWait(pctxt=%x,pbOp=%x,ppost=%x,rc=%x)\n", pctxt, pctxt->pbOp, ppost, rc));
 
     ASSERT(ppost->FrameHdr.dwSig == SIG_POST);
     ppost->pdataResult->dwDataType = OBJTYPE_INTDATA;
@@ -1429,10 +1248,9 @@ NTSTATUS LOCAL ProcessWait(PCTXT pctxt, PPOST ppost, NTSTATUS rc)
     }
     PopFrame(pctxt);
 
-    EXIT(2, ("ProcessWait=%x (value=%x)\n",
-             rc, ppost->pdataResult->uipDataValue));
+    EXIT(2, ("ProcessWait=%x (value=%x)\n", rc, ppost->pdataResult->uipDataValue));
     return rc;
-}       //ProcessWait
+} //ProcessWait
 
 /***LP  Match - Parse and execute the Match instruction
  *
@@ -1461,23 +1279,18 @@ NTSTATUS LOCAL Match(PCTXT pctxt, PTERM pterm)
         int i;
 
         MEMZERO(&data, sizeof(data));
-        for (i = (int)pterm->pdataArgs[5].uipDataValue;
-             rc == STATUS_SUCCESS;
-             ++i)
+        for (i = (int)pterm->pdataArgs[5].uipDataValue; rc == STATUS_SUCCESS; ++i)
         {
             FreeDataBuffs(&data, 1);
             //
             // This will never block because package element can only be simple
             // data.
             //
-            if (((rc = EvalPackageElement(ppkgobj, i, &data)) ==
-                 STATUS_SUCCESS) &&
+            if (((rc = EvalPackageElement(ppkgobj, i, &data)) == STATUS_SUCCESS) &&
                 (data.dwDataType == OBJTYPE_INTDATA) &&
-                MatchData((ULONG)data.uipDataValue,
-                          (ULONG)pterm->pdataArgs[1].uipDataValue,
+                MatchData((ULONG)data.uipDataValue, (ULONG)pterm->pdataArgs[1].uipDataValue,
                           (ULONG)pterm->pdataArgs[2].uipDataValue) &&
-                MatchData((ULONG)data.uipDataValue,
-                          (ULONG)pterm->pdataArgs[3].uipDataValue,
+                MatchData((ULONG)data.uipDataValue, (ULONG)pterm->pdataArgs[3].uipDataValue,
                           (ULONG)pterm->pdataArgs[4].uipDataValue))
             {
                 break;
@@ -1501,7 +1314,7 @@ NTSTATUS LOCAL Match(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("Match=%x\n", rc));
     return rc;
-}       //Match
+} //Match
 
 /***LP  MatchData - Match data of a package element
  *
@@ -1521,44 +1334,40 @@ BOOLEAN LOCAL MatchData(ULONG dwPkgData, ULONG dwOp, ULONG dwData)
     TRACENAME("MATCHDATA")
     BOOLEAN rc = FALSE;
 
-    ENTER(2, ("MatchData(PkgData=%x,Op=%x,Data=%x)\n",
-              dwPkgData, dwOp, dwData));
+    ENTER(2, ("MatchData(PkgData=%x,Op=%x,Data=%x)\n", dwPkgData, dwOp, dwData));
 
     switch (dwOp)
     {
-        case MTR:
-            rc = TRUE;
-            break;
+    case MTR:
+        rc = TRUE;
+        break;
 
-        case MEQ:
-            rc = (BOOLEAN)(dwPkgData == dwData);
-            break;
+    case MEQ:
+        rc = (BOOLEAN)(dwPkgData == dwData);
+        break;
 
-        case MLE:
-            rc = (BOOLEAN)(dwPkgData <= dwData);
-            break;
+    case MLE:
+        rc = (BOOLEAN)(dwPkgData <= dwData);
+        break;
 
-        case MLT:
-            rc = (BOOLEAN)(dwPkgData < dwData);
-            break;
+    case MLT:
+        rc = (BOOLEAN)(dwPkgData < dwData);
+        break;
 
-        case MGE:
-            rc = (BOOLEAN)(dwPkgData >= dwData);
-            break;
+    case MGE:
+        rc = (BOOLEAN)(dwPkgData >= dwData);
+        break;
 
-        case MGT:
-            rc = (BOOLEAN)(dwPkgData > dwData);
-            break;
+    case MGT:
+        rc = (BOOLEAN)(dwPkgData > dwData);
+        break;
     }
 
     EXIT(2, ("MatchData=%x\n", rc));
     return rc;
-}       //MatchData
+} //MatchData
 
-NTSTATUS LOCAL OSInterface(
-                                PCTXT pctxt, 
-                                PTERM pterm
-                              )
+NTSTATUS LOCAL OSInterface(PCTXT pctxt, PTERM pterm)
 /*++
 
 Routine Description:
@@ -1583,17 +1392,12 @@ Return Value:
     char Win2001[] = "Windows 2001";
     char Win2001SP1[] = "Windows 2001 SP1";
     char Win2001SP2[] = "Windows 2001 SP2";
-    char* SupportedOSList[] = {
-                                    Win2000, 
-                                    Win2001,
-                                    Win2001SP1,
-                                    Win2001SP2
-                                };
-    ULONG ListSize = sizeof(SupportedOSList) / sizeof(char*);
+    char *SupportedOSList[] = { Win2000, Win2001, Win2001SP1, Win2001SP2 };
+    ULONG ListSize = sizeof(SupportedOSList) / sizeof(char *);
     ULONG i = 0;
-    
-    ENTER(2, ("OSInterface(pctxt=%x,pbOp=%x,pterm=%x, Querying for %s)\n",
-              pctxt, pctxt->pbOp, pterm, pterm->pdataArgs[0].pbDataBuff));
+
+    ENTER(2, ("OSInterface(pctxt=%x,pbOp=%x,pterm=%x, Querying for %s)\n", pctxt, pctxt->pbOp, pterm,
+              pterm->pdataArgs[0].pbDataBuff));
 
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "A")) == STATUS_SUCCESS)
     {
@@ -1601,11 +1405,11 @@ Return Value:
         {
             pterm->pdataResult->dwDataType = OBJTYPE_INTDATA;
             pterm->pdataResult->uipDataValue = DATAVALUE_ZERO;
-                    
-            for(i=0; i<ListSize; i++)
+
+            for (i = 0; i < ListSize; i++)
             {
-                if(STRCMPI(SupportedOSList[i], (pterm->pdataArgs)->pdataAlias->pbDataBuff) == 0)
-                { 
+                if (STRCMPI(SupportedOSList[i], (pterm->pdataArgs)->pdataAlias->pbDataBuff) == 0)
+                {
                     pterm->pdataResult->uipDataValue = DATAVALUE_ONES;
                     rc = STATUS_SUCCESS;
 
@@ -1616,34 +1420,35 @@ Return Value:
                     // 2 == Windows 2001 SP1
                     // 3 == Windows 2001 SP2
                     //
-                    if(gdwHighestOSVerQueried < i)
+                    if (gdwHighestOSVerQueried < i)
                     {
                         gdwHighestOSVerQueried = i;
                     }
-                    
+
                     break;
                 }
             }
         }
     }
-    
+
     EXIT(2, ("OSInterface=%x (pnsObj=%x)\n", rc, pterm->pnsObj));
     return rc;
-}       //OSInterface
-
+} //OSInterface
 
 
 ///////////////////////////////////////////////
 // ACPI 2.0
 
 
-NTSTATUS LOCAL ConvertToInteger(POBJDATA In, POBJDATA Out) {
-    ULONG   dwDataLen;
+NTSTATUS LOCAL ConvertToInteger(POBJDATA In, POBJDATA Out)
+{
+    ULONG dwDataLen;
     OBJDATA data;
 
     MEMZERO(&data, sizeof(data));
     data.dwDataType = OBJTYPE_INTDATA;
-    switch (In->dwDataType) {
+    switch (In->dwDataType)
+    {
     case OBJTYPE_INTDATA:
         data.dwDataValue = In->dwDataValue;
 
@@ -1660,7 +1465,7 @@ NTSTATUS LOCAL ConvertToInteger(POBJDATA In, POBJDATA Out) {
         break;
     case OBJTYPE_BUFFDATA:
         dwDataLen = In->dwDataLen;
-        if (dwDataLen > 4)    // 8 - int64
+        if (dwDataLen > 4) // 8 - int64
             dwDataLen = 4;
         MEMCPY(&data.dwDataValue, In->pbDataBuff, dwDataLen);
 
@@ -1682,10 +1487,11 @@ NTSTATUS LOCAL ToInteger(PCTXT pctxt, PTERM pterm)
     TRACENAME("TOINTEGER")
     ENTER(2, ("ToInteger(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D"))                       == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
-            if ((rc = ConvertToInteger(pterm->pdataArgs, pterm->pdataResult)) == STATUS_SUCCESS)
-                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D")) == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
+    {
+        if ((rc = ConvertToInteger(pterm->pdataArgs, pterm->pdataResult)) == STATUS_SUCCESS)
+            rc = WriteObject(pctxt, pdata, pterm->pdataResult);
     }
 
     EXIT(2, ("ToInteger=%x (Result=%x)\n", rc, pterm->pdataResult));
@@ -1693,96 +1499,107 @@ NTSTATUS LOCAL ToInteger(PCTXT pctxt, PTERM pterm)
 }
 
 
-char HTOALookupTable[]="0123456789ABCDEF";
+char HTOALookupTable[] = "0123456789ABCDEF";
 
 
 NTSTATUS LOCAL ToHexString(PCTXT pctxt, PTERM pterm)
 {
     NTSTATUS rc = STATUS_SUCCESS;
     POBJDATA pdata;
-    int      StrLen;
-    POBJDATA In  = pterm->pdataArgs;
+    int StrLen;
+    POBJDATA In = pterm->pdataArgs;
     POBJDATA Out = pterm->pdataResult;
-    ULONG    int32;
-    ULONG    SrcIdx;
-    int      i;
-    UCHAR    pair;
+    ULONG int32;
+    ULONG SrcIdx;
+    int i;
+    UCHAR pair;
     TRACENAME("TOHEXSTRING")
     ENTER(2, ("ToHexString(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D"))                       == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
-            StrLen = 2;
-            Out->dwDataType = OBJTYPE_STRDATA;
-            switch (In->dwDataType) {
-            case OBJTYPE_INTDATA:
-                int32 = In->dwDataValue;
-                do {
-                    int32 >>= 4;
-                    ++StrLen;
-                } while (int32);
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D")) == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
+    {
+        StrLen = 2;
+        Out->dwDataType = OBJTYPE_STRDATA;
+        switch (In->dwDataType)
+        {
+        case OBJTYPE_INTDATA:
+            int32 = In->dwDataValue;
+            do
+            {
+                int32 >>= 4;
+                ++StrLen;
+            } while (int32);
 
-                Out->dwDataLen = StrLen + 1;
-                Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+            Out->dwDataLen = StrLen + 1;
+            Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
 
-                if (Out->pbDataBuff == NULL) {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("ToHexString: failed to allocate target buffer"));
-                } else {
-                    Out->pbDataBuff[0] = '0';
-                    Out->pbDataBuff[1] = 'x';
-                    int32 = In->dwDataValue;
-                    for (i = StrLen - 1; i >= 2; --i) {
-                        Out->pbDataBuff[i] = HTOALookupTable[int32 & 0xF];
-                        int32 >>= 4;
-                    }
-
-                    Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
-                    rc = WriteObject(pctxt, pdata, pterm->pdataResult);
-                }
-                break;
-            case OBJTYPE_STRDATA:
-                Out->dwDataLen = In->dwDataLen;
-                Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
-                    
-                if (Out->pbDataBuff == NULL) {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("ToHexString: failed to allocate target buffer"));
-                } else {
-                    MEMCPY(Out->pbDataBuff, In->pbDataBuff, Out->dwDataLen);
-                    rc = WriteObject(pctxt, pdata, pterm->pdataResult);
-                }
-                break;
-            case OBJTYPE_BUFFDATA:
-                Out->dwDataLen = 5 * In->dwDataLen;
-                Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
-
-                if (Out->pbDataBuff == NULL) {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("ToHexString: failed to allocate target buffer"));
-                } else {
-                    i = 0;
-                    if (In->dwDataLen) {
-                        for (SrcIdx = 0; SrcIdx < In->dwDataLen; SrcIdx++) {
-                            Out->pbDataBuff[i]   = '0';
-                            Out->pbDataBuff[i+1] = 'x';
-                            pair = In->pbDataBuff[SrcIdx];
-                            Out->pbDataBuff[i+2] = HTOALookupTable[pair >> 4];
-                            Out->pbDataBuff[i+3] = HTOALookupTable[pair & 0xF];
-                            Out->pbDataBuff[i+4] = ',';
-                            i += 5;
-                        }
-                    }
-
-                    Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
-                    rc = WriteObject(pctxt, pdata, pterm->pdataResult);
-                }
-                break;
-            default:
-                rc = AMLI_LOGERR(AMLIERR_FATAL,
-                            ("ToHexString: invalid arg0 type"));
-                break;
+            if (Out->pbDataBuff == NULL)
+            {
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ToHexString: failed to allocate target buffer"));
             }
+            else
+            {
+                Out->pbDataBuff[0] = '0';
+                Out->pbDataBuff[1] = 'x';
+                int32 = In->dwDataValue;
+                for (i = StrLen - 1; i >= 2; --i)
+                {
+                    Out->pbDataBuff[i] = HTOALookupTable[int32 & 0xF];
+                    int32 >>= 4;
+                }
+
+                Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+            }
+            break;
+        case OBJTYPE_STRDATA:
+            Out->dwDataLen = In->dwDataLen;
+            Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+
+            if (Out->pbDataBuff == NULL)
+            {
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ToHexString: failed to allocate target buffer"));
+            }
+            else
+            {
+                MEMCPY(Out->pbDataBuff, In->pbDataBuff, Out->dwDataLen);
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+            }
+            break;
+        case OBJTYPE_BUFFDATA:
+            Out->dwDataLen = 5 * In->dwDataLen;
+            Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+
+            if (Out->pbDataBuff == NULL)
+            {
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ToHexString: failed to allocate target buffer"));
+            }
+            else
+            {
+                i = 0;
+                if (In->dwDataLen)
+                {
+                    for (SrcIdx = 0; SrcIdx < In->dwDataLen; SrcIdx++)
+                    {
+                        Out->pbDataBuff[i] = '0';
+                        Out->pbDataBuff[i + 1] = 'x';
+                        pair = In->pbDataBuff[SrcIdx];
+                        Out->pbDataBuff[i + 2] = HTOALookupTable[pair >> 4];
+                        Out->pbDataBuff[i + 3] = HTOALookupTable[pair & 0xF];
+                        Out->pbDataBuff[i + 4] = ',';
+                        i += 5;
+                    }
+                }
+
+                Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+            }
+            break;
+        default:
+            rc = AMLI_LOGERR(AMLIERR_FATAL, ("ToHexString: invalid arg0 type"));
+            break;
+        }
     }
 
     EXIT(2, ("ToHexString=%x (Result=%x)\n", rc, pterm->pdataResult));
@@ -1790,29 +1607,35 @@ NTSTATUS LOCAL ToHexString(PCTXT pctxt, PTERM pterm)
 }
 
 
-NTSTATUS LOCAL ConvertToBuffer(POBJDATA In, POBJDATA Out) {
+NTSTATUS LOCAL ConvertToBuffer(POBJDATA In, POBJDATA Out)
+{
     OBJDATA data;
-    int     Len;
-    int     i;
-    ULONG   int32;
+    int Len;
+    int i;
+    ULONG int32;
     NTSTATUS rc = STATUS_SUCCESS;
 
     MEMZERO(&data, sizeof(data));
     data.dwDataType = OBJTYPE_BUFFDATA;
-    switch (In->dwDataType) {
+    switch (In->dwDataType)
+    {
     case OBJTYPE_INTDATA:
         int32 = In->dwDataValue;
         Len = 4;
 
         data.dwDataLen = Len;
-        data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Len);
-        if (data.pbDataBuff == NULL) {
+        data.pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, Len);
+        if (data.pbDataBuff == NULL)
+        {
             rc = AMLIERR_OUT_OF_MEM;
-        } else {
-            for (i = 0; i < Len; i++) {
-                data.pbDataBuff[i] = (UCHAR) int32;
+        }
+        else
+        {
+            for (i = 0; i < Len; i++)
+            {
+                data.pbDataBuff[i] = (UCHAR)int32;
                 int32 >>= 8;
-              }
+            }
 
             FreeDataBuffs(Out, 1);
             MEMCPY(Out, &data, sizeof(data));
@@ -1823,10 +1646,13 @@ NTSTATUS LOCAL ConvertToBuffer(POBJDATA In, POBJDATA Out) {
         Len = In->dwDataLen;
         data.dwDataLen = Len;
 
-        data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Len);
-        if (data.pbDataBuff == NULL) {
+        data.pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, Len);
+        if (data.pbDataBuff == NULL)
+        {
             rc = AMLIERR_OUT_OF_MEM;
-        } else {
+        }
+        else
+        {
             MEMCPY(data.pbDataBuff, In->pbDataBuff, Len);
 
             FreeDataBuffs(Out, 1);
@@ -1849,10 +1675,11 @@ NTSTATUS LOCAL ToBuffer(PCTXT pctxt, PTERM pterm)
     TRACENAME("TOBUFFER")
     ENTER(2, ("ToBuffer(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D"))                       == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
-            if ((rc = ConvertToBuffer(pterm->pdataArgs, pterm->pdataResult))  == STATUS_SUCCESS)
-                rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D")) == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
+    {
+        if ((rc = ConvertToBuffer(pterm->pdataArgs, pterm->pdataResult)) == STATUS_SUCCESS)
+            rc = WriteObject(pctxt, pdata, pterm->pdataResult);
     }
 
     EXIT(2, ("ToBuffer=%x (Result=%x)\n", rc, pterm->pdataResult));
@@ -1864,40 +1691,47 @@ NTSTATUS LOCAL ToDecimalString(PCTXT pctxt, PTERM pterm)
 {
     NTSTATUS rc = STATUS_SUCCESS;
     POBJDATA pdata;
-    POBJDATA In  = pterm->pdataArgs;
+    POBJDATA In = pterm->pdataArgs;
     POBJDATA Out = pterm->pdataResult;
-    ULONG    int32;
-    ULONG    StrLen;
-    int      SrcBufLen;
-    ULONG    SrcIdx;
-    int      i;
-    int      j;
-    UCHAR    number;
+    ULONG int32;
+    ULONG StrLen;
+    int SrcBufLen;
+    ULONG SrcIdx;
+    int i;
+    int j;
+    UCHAR number;
     TRACENAME("TODECSTRING")
     ENTER(2, ("ToDecimalString(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D"))                       == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "D")) == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
+    {
         Out->dwDataType = OBJTYPE_STRDATA;
-        switch (In->dwDataType) {
+        switch (In->dwDataType)
+        {
         case OBJTYPE_INTDATA:
             int32 = In->dwDataValue;
             StrLen = 0;
-            do {
+            do
+            {
                 int32 /= 10;
-                ++StrLen; 
+                ++StrLen;
             } while (int32);
 
             Out->dwDataLen = StrLen + 1;
-            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+            Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
 
-            if (Out->pbDataBuff == NULL) {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("ToDecimalString: failed to allocate target buffer"));
-            } else {
+            if (Out->pbDataBuff == NULL)
+            {
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ToDecimalString: failed to allocate target buffer"));
+            }
+            else
+            {
                 int32 = In->dwDataValue;
-                if (StrLen >= 1) {
-                    for (i = StrLen - 1; i >= 0; --i) {
+                if (StrLen >= 1)
+                {
+                    for (i = StrLen - 1; i >= 0; --i)
+                    {
                         Out->pbDataBuff[i] = HTOALookupTable[int32 % 10];
                         int32 /= 10;
                     }
@@ -1909,12 +1743,14 @@ NTSTATUS LOCAL ToDecimalString(PCTXT pctxt, PTERM pterm)
             break;
         case OBJTYPE_STRDATA:
             Out->dwDataLen = In->dwDataLen;
-            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+            Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
 
-            if (Out->pbDataBuff == NULL) {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("ToDecimalString: failed to allocate target buffer"));
-            } else {
+            if (Out->pbDataBuff == NULL)
+            {
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ToDecimalString: failed to allocate target buffer"));
+            }
+            else
+            {
                 MEMCPY(Out->pbDataBuff, In->pbDataBuff, Out->dwDataLen);
                 rc = WriteObject(pctxt, pdata, pterm->pdataResult);
             }
@@ -1922,49 +1758,59 @@ NTSTATUS LOCAL ToDecimalString(PCTXT pctxt, PTERM pterm)
         case OBJTYPE_BUFFDATA:
             SrcBufLen = In->dwDataLen;
             StrLen = SrcBufLen - 1;
-            if (SrcBufLen) {
-                for (i = 0; i < SrcBufLen; i++) {
+            if (SrcBufLen)
+            {
+                for (i = 0; i < SrcBufLen; i++)
+                {
                     number = In->pbDataBuff[i];
-                    if (number >= 10) {
+                    if (number >= 10)
+                    {
                         if (number >= 100)
                             StrLen += 3;
                         else
                             StrLen += 2;
-                    } else {
+                    }
+                    else
+                    {
                         StrLen++;
                     }
                 }
             }
 
             Out->dwDataLen = StrLen + 1;
-            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
+            Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, Out->dwDataLen);
 
-            if (Out->pbDataBuff == NULL) {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("ToDecimalString: failed to allocate target buffer"));
-            } else {
-                j = 0;  // result buffer index
-                for ( SrcIdx = 0; SrcIdx < In->dwDataLen; SrcIdx++ ) {
+            if (Out->pbDataBuff == NULL)
+            {
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ToDecimalString: failed to allocate target buffer"));
+            }
+            else
+            {
+                j = 0; // result buffer index
+                for (SrcIdx = 0; SrcIdx < In->dwDataLen; SrcIdx++)
+                {
                     number = In->pbDataBuff[SrcIdx];
-                    if (number >= 10) {
+                    if (number >= 10)
+                    {
                         if (number >= 100)
-                            Out->pbDataBuff[j++] = HTOALookupTable[(number / 100) % 10];  // 2xx
+                            Out->pbDataBuff[j++] = HTOALookupTable[(number / 100) % 10]; // 2xx
 
-                        Out->pbDataBuff[j++] = HTOALookupTable[(number / 10) % 10];       // x2x
-                        Out->pbDataBuff[j++] = HTOALookupTable[number % 10];              // xx2  
-                    } else {
+                        Out->pbDataBuff[j++] = HTOALookupTable[(number / 10) % 10]; // x2x
+                        Out->pbDataBuff[j++] = HTOALookupTable[number % 10];        // xx2
+                    }
+                    else
+                    {
                         Out->pbDataBuff[j++] = HTOALookupTable[number];
                     }
                     Out->pbDataBuff[j++] = ',';
                 }
-                
+
                 Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
                 rc = WriteObject(pctxt, pdata, pterm->pdataResult);
             }
             break;
         default:
-            rc = AMLI_LOGERR(AMLIERR_FATAL,
-                            ("ToDecimalString: invalid arg0 type"));
+            rc = AMLI_LOGERR(AMLIERR_FATAL, ("ToDecimalString: invalid arg0 type"));
             break;
         }
     }
@@ -1979,16 +1825,14 @@ NTSTATUS LOCAL CreateQWordField(PCTXT pctxt, PTERM pterm)
     TRACENAME("CREATEQWORDFIELD")
     NTSTATUS rc = STATUS_SUCCESS;
     PBUFFFIELDOBJ pbf;
-    ENTER(2, ("CreateQWordField(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("CreateQWordField(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if ((rc = CreateXField(pctxt, pterm, &pterm->pdataArgs[2], &pbf)) ==
-        STATUS_SUCCESS)
+    if ((rc = CreateXField(pctxt, pterm, &pterm->pdataArgs[2], &pbf)) == STATUS_SUCCESS)
     {
         pbf->FieldDesc.dwByteOffset = (ULONG)pterm->pdataArgs[1].uipDataValue;
         pbf->FieldDesc.dwStartBitPos = 0;
-        pbf->FieldDesc.dwNumBits = 8*sizeof(ULONG);     // 8*sizeof(ULONG64) ACPI 2.0
-        pbf->FieldDesc.dwFieldFlags = ACCTYPE_DWORD;    // ACCTYPE_QWORD ACPI 2.0
+        pbf->FieldDesc.dwNumBits = 8 * sizeof(ULONG); // 8*sizeof(ULONG64) ACPI 2.0
+        pbf->FieldDesc.dwFieldFlags = ACCTYPE_DWORD;  // ACCTYPE_QWORD ACPI 2.0
     }
 
     EXIT(2, ("CreateQWordField=%x (pnsObj=%x)\n", rc, pterm->pnsObj));
@@ -1996,10 +1840,12 @@ NTSTATUS LOCAL CreateQWordField(PCTXT pctxt, PTERM pterm)
 }
 
 
-UCHAR LOCAL ComputeDataChkSum(UCHAR *Buffer, int Len) {
+UCHAR LOCAL ComputeDataChkSum(UCHAR *Buffer, int Len)
+{
     UCHAR checksum = 0;
 
-    for ( ; Len; --Len ) {
+    for (; Len; --Len)
+    {
         checksum += *Buffer;
         Buffer++;
     }
@@ -2010,51 +1856,59 @@ UCHAR LOCAL ComputeDataChkSum(UCHAR *Buffer, int Len) {
 
 NTSTATUS LOCAL ConcatenateResTemplate(PCTXT pctxt, PTERM pterm)
 {
-    NTSTATUS  rc = STATUS_SUCCESS;
-    POBJDATA  pdata;
-    POBJDATA  In  = pterm->pdataArgs;
-    POBJDATA  Out = pterm->pdataResult;
-    ULONG     i,j;
-    ULONG     NewLength;
+    NTSTATUS rc = STATUS_SUCCESS;
+    POBJDATA pdata;
+    POBJDATA In = pterm->pdataArgs;
+    POBJDATA Out = pterm->pdataResult;
+    ULONG i, j;
+    ULONG NewLength;
     TRACENAME("CONCATENATERESTEMPLATE")
     ENTER(2, ("ConcatenateResTemplate(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if (((rc = ValidateArgTypes(pterm->pdataArgs, "BB"))                      == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
-        if (In[0].dwDataLen <= 1 || In[1].dwDataLen <= 1 ) {
-            rc = AMLI_LOGERR(AMLIERR_FATAL,
-                    ("ConcatenateResTemplate: arg0 or arg1 has length <= 1"));
-        } else {
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "BB")) == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
+    {
+        if (In[0].dwDataLen <= 1 || In[1].dwDataLen <= 1)
+        {
+            rc = AMLI_LOGERR(AMLIERR_FATAL, ("ConcatenateResTemplate: arg0 or arg1 has length <= 1"));
+        }
+        else
+        {
             Out->dwDataType = OBJTYPE_BUFFDATA;
             NewLength = In[0].dwDataLen + In[1].dwDataLen - 2;
             Out->dwDataLen = NewLength;
 
-            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, NewLength);
-            if (Out->pbDataBuff == NULL) {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                            ("ConcatenateResTemplate: failed to allocate target buffer"));
-            } else {
+            Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, NewLength);
+            if (Out->pbDataBuff == NULL)
+            {
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ConcatenateResTemplate: failed to allocate target buffer"));
+            }
+            else
+            {
                 j = 0;
 
                 i = 0;
-                if (In[0].dwDataLen != 2) {
-                    do {
+                if (In[0].dwDataLen != 2)
+                {
+                    do
+                    {
                         Out->pbDataBuff[j++] = In[0].pbDataBuff[i++];
                     } while (i < In[0].dwDataLen - 2);
                 }
 
                 i = 0;
-                if (In[1].dwDataLen != 2) {
-                    do {
+                if (In[1].dwDataLen != 2)
+                {
+                    do
+                    {
                         Out->pbDataBuff[j++] = In[1].pbDataBuff[i++];
                     } while (i < In[1].dwDataLen - 2);
                 }
 
-                Out->pbDataBuff[j++] = 0x79;     //EndTag
-                Out->pbDataBuff[j]   = ComputeDataChkSum(Out->pbDataBuff, NewLength - 1);
+                Out->pbDataBuff[j++] = 0x79; //EndTag
+                Out->pbDataBuff[j] = ComputeDataChkSum(Out->pbDataBuff, NewLength - 1);
                 rc = WriteObject(pctxt, pdata, pterm->pdataResult);
             }
-            
         }
     }
 
@@ -2065,22 +1919,23 @@ NTSTATUS LOCAL ConcatenateResTemplate(PCTXT pctxt, PTERM pterm)
 
 size_t LOCAL strnlen(const char *Str, size_t MaxCount)
 {
-  size_t result;
+    size_t result;
 
-  for (result = 0; result < MaxCount; ++Str) {
-    if (!*Str)
-      break;
+    for (result = 0; result < MaxCount; ++Str)
+    {
+        if (!*Str)
+            break;
 
-    result++;
-  }
-  return result;
+        result++;
+    }
+    return result;
 }
 
 
-#define STRSAFE_MAX_CCH  2147483647
+#define STRSAFE_MAX_CCH 2147483647
 
 // ntstrsafe.c
-NTSTATUS RtlStringVPrintfWorkerA(char* pszDest, size_t cchDest, const char* pszFormat, va_list argList)
+NTSTATUS RtlStringVPrintfWorkerA(char *pszDest, size_t cchDest, const char *pszFormat, va_list argList)
 {
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -2121,7 +1976,7 @@ NTSTATUS RtlStringVPrintfWorkerA(char* pszDest, size_t cchDest, const char* pszF
 
 
 // ntstrsafe.c
-NTSTATUS RtlStringCchPrintfA(char* pszDest, size_t cchDest, const char* pszFormat, ...)
+NTSTATUS RtlStringCchPrintfA(char *pszDest, size_t cchDest, const char *pszFormat, ...)
 {
     NTSTATUS status;
 
@@ -2146,18 +2001,19 @@ NTSTATUS RtlStringCchPrintfA(char* pszDest, size_t cchDest, const char* pszForma
 
 NTSTATUS LOCAL ConvertToString(POBJDATA In, ULONG MaxLen, POBJDATA Out)
 {
-    NTSTATUS    rc = STATUS_SUCCESS;
-    ULONG       StrLen = MaxLen;
-    char        TmpBuf[9]; // 17 ACPI 2.0
-    OBJDATA     data;
-    ULONG       BufLen;
-    ULONG       InStrLen;
+    NTSTATUS rc = STATUS_SUCCESS;
+    ULONG StrLen = MaxLen;
+    char TmpBuf[9]; // 17 ACPI 2.0
+    OBJDATA data;
+    ULONG BufLen;
+    ULONG InStrLen;
 
     MEMZERO(&TmpBuf, sizeof(TmpBuf));
-    MEMZERO(&data,   sizeof(data));
+    MEMZERO(&data, sizeof(data));
     data.dwDataType = OBJTYPE_STRDATA;
 
-    switch (In->dwDataType) {
+    switch (In->dwDataType)
+    {
     case OBJTYPE_INTDATA:
         BufLen = 9;
         RtlStringCchPrintfA(TmpBuf, 9, "%x", In->dwDataValue);
@@ -2165,10 +2021,13 @@ NTSTATUS LOCAL ConvertToString(POBJDATA In, ULONG MaxLen, POBJDATA Out)
             StrLen = strnlen(TmpBuf, BufLen);
         data.dwDataLen = StrLen + 1;
 
-        data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, data.dwDataLen);
-        if (data.pbDataBuff == NULL) {
+        data.pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, data.dwDataLen);
+        if (data.pbDataBuff == NULL)
+        {
             rc = STATUS_INSUFFICIENT_RESOURCES;
-        } else {
+        }
+        else
+        {
             MEMCPY(data.pbDataBuff, TmpBuf, data.dwDataLen);
             data.pbDataBuff[data.dwDataLen - 1] = '\0'; // ending zero
             FreeDataBuffs(Out, 1);
@@ -2178,15 +2037,19 @@ NTSTATUS LOCAL ConvertToString(POBJDATA In, ULONG MaxLen, POBJDATA Out)
     case OBJTYPE_STRDATA:
         if (MaxLen > In->dwDataLen - 1)
             rc = STATUS_ACPI_FATAL;
-        else {
+        else
+        {
             if (!MaxLen)
                 StrLen = In->dwDataLen - 1;
             data.dwDataLen = StrLen + 1;
 
-            data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, data.dwDataLen);
-            if (data.pbDataBuff == NULL) {
+            data.pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, data.dwDataLen);
+            if (data.pbDataBuff == NULL)
+            {
                 rc = STATUS_INSUFFICIENT_RESOURCES;
-            } else {
+            }
+            else
+            {
                 MEMCPY(data.pbDataBuff, In->pbDataBuff, data.dwDataLen);
                 data.pbDataBuff[data.dwDataLen - 1] = '\0'; // ending zero
                 FreeDataBuffs(Out, 1);
@@ -2198,20 +2061,26 @@ NTSTATUS LOCAL ConvertToString(POBJDATA In, ULONG MaxLen, POBJDATA Out)
         InStrLen = In->dwDataLen;
         if (InStrLen >= 201)
             InStrLen = 201;
-        if (!MaxLen) {
+        if (!MaxLen)
+        {
             StrLen = strnlen((PCHAR)In->pbDataBuff, InStrLen);
             if (StrLen == InStrLen)
                 return STATUS_INVALID_BUFFER_SIZE;
-        } else {
+        }
+        else
+        {
             if (MaxLen > InStrLen || MaxLen > 200)
-               return STATUS_ACPI_FATAL;
+                return STATUS_ACPI_FATAL;
         }
 
         data.dwDataLen = StrLen + 1;
-        data.pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, data.dwDataLen);
-        if (data.pbDataBuff == NULL) {
+        data.pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, data.dwDataLen);
+        if (data.pbDataBuff == NULL)
+        {
             rc = STATUS_INSUFFICIENT_RESOURCES;
-        } else {
+        }
+        else
+        {
             MEMCPY(data.pbDataBuff, In->pbDataBuff, data.dwDataLen - 1);
             data.pbDataBuff[data.dwDataLen - 1] = '\0'; // ending zero
             FreeDataBuffs(Out, 1);
@@ -2230,58 +2099,59 @@ NTSTATUS LOCAL ToString(PCTXT pctxt, PTERM pterm)
 {
     NTSTATUS rc = STATUS_SUCCESS;
     POBJDATA pdata;
-    ULONG    MaxLen;
+    ULONG MaxLen;
     TRACENAME("TOSTRING")
     ENTER(2, ("ToString(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if ( pterm->icArgs == 2                                                                    &&
-         ((rc = ValidateArgTypes(pterm->pdataArgs, "B"))                    == STATUS_SUCCESS) &&
-         ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATA, &pdata)) == STATUS_SUCCESS) ) {
+    if (pterm->icArgs == 2 && ((rc = ValidateArgTypes(pterm->pdataArgs, "B")) == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATA, &pdata)) == STATUS_SUCCESS))
+    {
+        rc = ConvertToString(pterm->pdataArgs, 0, pterm->pdataResult);
+
+        switch (rc)
+        {
+        case STATUS_INSUFFICIENT_RESOURCES:
+            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ToString: failed to allocate target buffer"));
+            break;
+        case STATUS_INVALID_BUFFER_SIZE:
+            rc = AMLI_LOGERR(AMLIERR_FATAL, ("ToString: buffer length exceeds maximum value"));
+            break;
+        case STATUS_ACPI_FATAL:
+            rc =
+                AMLI_LOGERR(AMLIERR_FATAL, ("ToString: length specified exceeds input buffer length or maximum value"));
+            break;
+        }
+    }
+    else if (pterm->icArgs == 3 && ((rc = ValidateArgTypes(pterm->pdataArgs, "BI")) == STATUS_SUCCESS) &&
+             ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATA, &pdata)) == STATUS_SUCCESS))
+    {
+        MaxLen = pterm->pdataArgs[1].dwDataValue;
+        if (MaxLen != 0 && MaxLen != 0xFFFFFFFF)
+        {
+            rc = ConvertToString(pterm->pdataArgs, MaxLen, pterm->pdataResult);
+        }
+        else
+        {
             rc = ConvertToString(pterm->pdataArgs, 0, pterm->pdataResult);
+        }
 
-            switch (rc) {
-            case STATUS_INSUFFICIENT_RESOURCES:
-              rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                  ("ToString: failed to allocate target buffer"));
-              break;
-            case STATUS_INVALID_BUFFER_SIZE:
-              rc = AMLI_LOGERR(AMLIERR_FATAL,
-                  ("ToString: buffer length exceeds maximum value"));
-              break;
-            case STATUS_ACPI_FATAL:
-              rc = AMLI_LOGERR(AMLIERR_FATAL,
-                  ("ToString: length specified exceeds input buffer length or maximum value"));
-              break;
-            }
-    } else 
-    if ( pterm->icArgs == 3                                                                    &&
-         ((rc = ValidateArgTypes(pterm->pdataArgs, "BI"))                   == STATUS_SUCCESS) &&
-         ((rc = ValidateTarget(&pterm->pdataArgs[2], OBJTYPE_DATA, &pdata)) == STATUS_SUCCESS) ) {
-            MaxLen = pterm->pdataArgs[1].dwDataValue;
-            if (MaxLen != 0 &&
-                MaxLen != 0xFFFFFFFF) {
-                  rc = ConvertToString(pterm->pdataArgs, MaxLen, pterm->pdataResult);
-            } else {
-                  rc = ConvertToString(pterm->pdataArgs, 0, pterm->pdataResult);
-            }
-
-            switch (rc) {
-            case STATUS_INSUFFICIENT_RESOURCES:
-              rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                  ("ToString: failed to allocate target buffer"));
-              break;
-            case STATUS_INVALID_BUFFER_SIZE:
-              rc = AMLI_LOGERR(AMLIERR_FATAL,
-                  ("ToString: buffer length exceeds maximum value"));
-              break;
-            case STATUS_ACPI_FATAL:
-              rc = AMLI_LOGERR(AMLIERR_FATAL,
-                  ("ToString: length specified exceeds input buffer length or maximum value"));
-              break;
-            }
-    } else {
-        rc = AMLI_LOGERR(AMLIERR_FATAL,
-                            ("ToString: invalid # of arguments: %x", pterm->icArgs));
+        switch (rc)
+        {
+        case STATUS_INSUFFICIENT_RESOURCES:
+            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("ToString: failed to allocate target buffer"));
+            break;
+        case STATUS_INVALID_BUFFER_SIZE:
+            rc = AMLI_LOGERR(AMLIERR_FATAL, ("ToString: buffer length exceeds maximum value"));
+            break;
+        case STATUS_ACPI_FATAL:
+            rc =
+                AMLI_LOGERR(AMLIERR_FATAL, ("ToString: length specified exceeds input buffer length or maximum value"));
+            break;
+        }
+    }
+    else
+    {
+        rc = AMLI_LOGERR(AMLIERR_FATAL, ("ToString: invalid # of arguments: %x", pterm->icArgs));
     }
 
     EXIT(2, ("ToString=%x (Result=%x)\n", rc, pterm->pdataResult));
@@ -2292,24 +2162,27 @@ NTSTATUS LOCAL ToString(PCTXT pctxt, PTERM pterm)
 NTSTATUS LOCAL CopyObject(PCTXT pctxt, PTERM pterm)
 {
     NTSTATUS rc = STATUS_SUCCESS;
-    POBJDATA  In  = pterm->pdataArgs;
-    POBJDATA  Out = pterm->pdataResult;
-    POBJDATA  pdata;
-    BOOLEAN   bWrite;
+    POBJDATA In = pterm->pdataArgs;
+    POBJDATA Out = pterm->pdataResult;
+    POBJDATA pdata;
+    BOOLEAN bWrite;
     TRACENAME("COPYOBJECT")
     ENTER(2, ("CopyObject(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     bWrite = FALSE;
     rc = ValidateTarget(&pterm->pdataArgs[1], 0, &pdata);
-    if (rc) {
-        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                ("CopyObject: failed because target object is not a supername"));
-    } else {
-        if (MatchObjType(pdata->dwDataType, OBJTYPE_DATAFIELD)) {
-            if (In->dwDataType != OBJTYPE_INTDATA &&
-                In->dwDataType != OBJTYPE_BUFFDATA)
+    if (rc)
+    {
+        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("CopyObject: failed because target object is not a supername"));
+    }
+    else
+    {
+        if (MatchObjType(pdata->dwDataType, OBJTYPE_DATAFIELD))
+        {
+            if (In->dwDataType != OBJTYPE_INTDATA && In->dwDataType != OBJTYPE_BUFFDATA)
             {
-                rc = AMLI_LOGERR(AMLIERR_FATAL,
+                rc = AMLI_LOGERR(
+                    AMLIERR_FATAL,
                     ("CopyObject: Only Integer and Buffer data can be copied to a Field unit or Buffer Field"));
                 goto Exit;
             }
@@ -2322,19 +2195,15 @@ NTSTATUS LOCAL CopyObject(PCTXT pctxt, PTERM pterm)
         else
             rc = DupObjData(gpheapGlobal, pdata, Out);
 
-        if (rc) {
-            AMLI_LOGERR(rc,
-                    ("CopyObject: failed to duplicate objdata"));
+        if (rc)
+        {
+            AMLI_LOGERR(rc, ("CopyObject: failed to duplicate objdata"));
         }
     }
 
 Exit:
-    EXIT(2, ("CopyObject=%x (type=%s,value=%I64x,buff=%x,len=%x)\n",
-            rc,
-            GetObjectTypeName(In->dwDataType),
-            In->dwDataValue,
-            In->pbDataBuff,
-            In->dwDataLen));
+    EXIT(2, ("CopyObject=%x (type=%s,value=%I64x,buff=%x,len=%x)\n", rc, GetObjectTypeName(In->dwDataType),
+             In->dwDataValue, In->pbDataBuff, In->dwDataLen));
     return rc;
 }
 
@@ -2342,85 +2211,107 @@ Exit:
 NTSTATUS LOCAL MidString(PCTXT pctxt, PTERM pterm)
 {
     NTSTATUS rc = STATUS_SUCCESS;
-    POBJDATA  In  = pterm->pdataArgs;
-    POBJDATA  Out = pterm->pdataResult;
-    POBJDATA  pdata;
-    ULONG     DataLen, NewLength;
-    ULONG     MidIndex, MidSize;  
-    ULONG     i,j;
+    POBJDATA In = pterm->pdataArgs;
+    POBJDATA Out = pterm->pdataResult;
+    POBJDATA pdata;
+    ULONG DataLen, NewLength;
+    ULONG MidIndex, MidSize;
+    ULONG i, j;
     TRACENAME("MID")
     ENTER(2, ("MidString(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
-    if (((rc = ValidateArgTypes(pterm->pdataArgs, "TII"))                     == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[3], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS)) {
-            if (In->dwDataType > OBJTYPE_BUFFDATA) {
-                rc = AMLI_LOGERR(AMLIERR_FATAL,
-                        ("Mid: invalid arg0 type"));
-            } else {
-                Out->dwDataType = In->dwDataType;
-                DataLen = In->dwDataLen;
-                MidIndex = In[1].dwDataValue;
-                MidSize  = In[2].dwDataValue;
-                if (MidIndex < DataLen) {
-                    NewLength = MidSize;
+    if (((rc = ValidateArgTypes(pterm->pdataArgs, "TII")) == STATUS_SUCCESS) &&
+        ((rc = ValidateTarget(&pterm->pdataArgs[3], OBJTYPE_DATAOBJ, &pdata)) == STATUS_SUCCESS))
+    {
+        if (In->dwDataType > OBJTYPE_BUFFDATA)
+        {
+            rc = AMLI_LOGERR(AMLIERR_FATAL, ("Mid: invalid arg0 type"));
+        }
+        else
+        {
+            Out->dwDataType = In->dwDataType;
+            DataLen = In->dwDataLen;
+            MidIndex = In[1].dwDataValue;
+            MidSize = In[2].dwDataValue;
+            if (MidIndex < DataLen)
+            {
+                NewLength = MidSize;
 
-                    if (Out->dwDataType == OBJTYPE_STRDATA) {
-                        DataLen--;   // exclude ending zero
+                if (Out->dwDataType == OBJTYPE_STRDATA)
+                {
+                    DataLen--; // exclude ending zero
+                    if ((MidIndex + MidSize) > DataLen)
+                        NewLength = DataLen - MidIndex;
+
+                    Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, NewLength + 1);
+                    if (Out->pbDataBuff == NULL)
+                    {
+                        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("Mid: failed to allocate target string"));
+                    }
+                    else
+                    {
+                        Out->dwDataLen = NewLength + 1;
+                        Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                    }
+                }
+                else
+                {
+                    if (Out->dwDataType != OBJTYPE_BUFFDATA)
+                    {
+                        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
+                                         ("Mid: pterm->pdataResult->dwDataType != OBJTYPE_BUFFDATA"));
+                    }
+                    else
+                    {
                         if ((MidIndex + MidSize) > DataLen)
                             NewLength = DataLen - MidIndex;
 
-                        Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, NewLength + 1);
-                        if (Out->pbDataBuff ==  NULL) {
-                            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("Mid: failed to allocate target string"));
-                        } else {
-                            Out->dwDataLen = NewLength + 1;
-                            Out->pbDataBuff[Out->dwDataLen - 1] = '\0'; // ending zero
+                        Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, NewLength);
+                        if (Out->pbDataBuff == NULL)
+                        {
+                            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("Mid: failed to allocate target string"));
                         }
-                    } else {
-                        if ( Out->dwDataType != OBJTYPE_BUFFDATA ) {
-                            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("Mid: pterm->pdataResult->dwDataType != OBJTYPE_BUFFDATA"));
-                        } else {
-                            if ((MidIndex + MidSize) > DataLen)
-                                NewLength = DataLen - MidIndex;
-
-                            Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, NewLength);
-                            if (Out->pbDataBuff ==  NULL) {
-                                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                     ("Mid: failed to allocate target string"));
-                            } else {
-                                Out->dwDataLen = NewLength;
-                            }
-                        }
-                    }
-
-                    if (!rc) {
-                        i = MidIndex;
-                        j = 0;
-                        if (NewLength) {
-                            do {
-                                Out->pbDataBuff[j++] = In->pbDataBuff[i++];
-                            } while (j < NewLength);
-                        }
-    
-                        rc = WriteObject(pctxt, pdata, pterm->pdataResult);
-                    }
-                } else { // MidIndex >= DataLen, set len = 0
-                    if (In->dwDataType == OBJTYPE_STRDATA) {
-                        Out->pbDataBuff = (PUCHAR) NEWSDOBJ(gpheapGlobal, 1);
-                        if (Out->pbDataBuff ==  NULL) {
-                            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("Mid: failed to allocate target string"));
-                        } else {
-                            Out->pbDataBuff[0] = '\0'; // ending zero
-                            Out->dwDataLen = 1;
-
-                            rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+                        else
+                        {
+                            Out->dwDataLen = NewLength;
                         }
                     }
                 }
+
+                if (!rc)
+                {
+                    i = MidIndex;
+                    j = 0;
+                    if (NewLength)
+                    {
+                        do
+                        {
+                            Out->pbDataBuff[j++] = In->pbDataBuff[i++];
+                        } while (j < NewLength);
+                    }
+
+                    rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+                }
             }
+            else
+            { // MidIndex >= DataLen, set len = 0
+                if (In->dwDataType == OBJTYPE_STRDATA)
+                {
+                    Out->pbDataBuff = (PUCHAR)NEWSDOBJ(gpheapGlobal, 1);
+                    if (Out->pbDataBuff == NULL)
+                    {
+                        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("Mid: failed to allocate target string"));
+                    }
+                    else
+                    {
+                        Out->pbDataBuff[0] = '\0'; // ending zero
+                        Out->dwDataLen = 1;
+
+                        rc = WriteObject(pctxt, pdata, pterm->pdataResult);
+                    }
+                }
+            }
+        }
     }
 
     EXIT(2, ("MidString=%x (Result=%x)\n", rc, pterm->pdataResult));
@@ -2443,11 +2334,8 @@ NTSTATUS LOCAL Continue(PCTXT pctxt, PTERM pterm)
 NTSTATUS LOCAL Timer(PCTXT pctxt, PTERM pterm)
 {
     TRACENAME("TIMER")
-    ENTER(2, ("Timer(pctxt=%x,pbOp=%x,pterm=%x, Querying for %s)\n",
-                  pctxt,
-                  pctxt->pbOp,
-                  pterm,
-                  pterm->pdataArgs->pbDataBuff));
+    ENTER(2, ("Timer(pctxt=%x,pbOp=%x,pterm=%x, Querying for %s)\n", pctxt, pctxt->pbOp, pterm,
+              pterm->pdataArgs->pbDataBuff));
 
     pterm->pdataResult->dwDataType = 1;
     pterm->pdataResult->dwDataValue = (ULONG)KeQueryInterruptTime();
@@ -2457,7 +2345,7 @@ NTSTATUS LOCAL Timer(PCTXT pctxt, PTERM pterm)
 }
 
 
-    /*
+/*
     __asm {
         L1: jmp L1
     }

@@ -23,58 +23,52 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-RtlpFlushRSE (
-    OUT PULONGLONG BackingStore,
-    OUT PULONGLONG RNat
-    );
+VOID RtlpFlushRSE(OUT PULONGLONG BackingStore, OUT PULONGLONG RNat);
 
-#define ALIGN_NATS(Result, Source, Start, AddressOffset, Mask)    \
-    if (AddressOffset == Start) {                                       \
-        Result = (ULONGLONG)Source;                                     \
-    } else if (AddressOffset < Start) {                                 \
-        Result = (ULONGLONG)(Source << (Start - AddressOffset));        \
-    } else {                                                            \
-        Result = (ULONGLONG)((Source >> (AddressOffset - Start)) |      \
-                             (Source << (64 + Start - AddressOffset))); \
-    }                                                                   \
+#define ALIGN_NATS(Result, Source, Start, AddressOffset, Mask)                                                \
+    if (AddressOffset == Start)                                                                               \
+    {                                                                                                         \
+        Result = (ULONGLONG)Source;                                                                           \
+    }                                                                                                         \
+    else if (AddressOffset < Start)                                                                           \
+    {                                                                                                         \
+        Result = (ULONGLONG)(Source << (Start - AddressOffset));                                              \
+    }                                                                                                         \
+    else                                                                                                      \
+    {                                                                                                         \
+        Result = (ULONGLONG)((Source >> (AddressOffset - Start)) | (Source << (64 + Start - AddressOffset))); \
+    }                                                                                                         \
     Result = Result & (ULONGLONG)Mask
 
-#define EXTRACT_NATS(Result, Source, Start, AddressOffset, Mask)        \
-    Result = (ULONGLONG)(Source & (ULONGLONG)Mask);                     \
-    if (AddressOffset < Start) {                                        \
-        Result = Result >> (Start - AddressOffset);                     \
-    } else if (AddressOffset > Start) {                                 \
-        Result = ((Result << (AddressOffset - Start)) |                 \
-                  (Result >> (64 + Start - AddressOffset)));            \
+#define EXTRACT_NATS(Result, Source, Start, AddressOffset, Mask)                                   \
+    Result = (ULONGLONG)(Source & (ULONGLONG)Mask);                                                \
+    if (AddressOffset < Start)                                                                     \
+    {                                                                                              \
+        Result = Result >> (Start - AddressOffset);                                                \
+    }                                                                                              \
+    else if (AddressOffset > Start)                                                                \
+    {                                                                                              \
+        Result = ((Result << (AddressOffset - Start)) | (Result >> (64 + Start - AddressOffset))); \
     }
 
-LONG
-KeFlushRseExceptionFilter (
-    IN PEXCEPTION_POINTERS ExceptionPointer,
-    IN NTSTATUS *Status
-    )
+LONG KeFlushRseExceptionFilter(IN PEXCEPTION_POINTERS ExceptionPointer, IN NTSTATUS *Status)
 {
 
     PETHREAD Thread = PsGetCurrentThread();
-    
+
     *Status = ExceptionPointer->ExceptionRecord->ExceptionCode;
 
-    if (*Status == STATUS_IN_PAGE_ERROR &&
-        ExceptionPointer->ExceptionRecord->NumberParameters >= 3) {
-        *Status = (LONG) ExceptionPointer->ExceptionRecord->ExceptionInformation[2];
+    if (*Status == STATUS_IN_PAGE_ERROR && ExceptionPointer->ExceptionRecord->NumberParameters >= 3)
+    {
+        *Status = (LONG)ExceptionPointer->ExceptionRecord->ExceptionInformation[2];
     }
 
     DbgPrint("KeFlushRseExceptionFilter: Exception raised in krnl-to-user bstore copy. Status = %x\n", *Status);
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
-
-VOID
-KiGetDebugContext (
-    IN PKTRAP_FRAME TrapFrame,
-    IN OUT PCONTEXT ContextFrame
-    )
+
+VOID KiGetDebugContext(IN PKTRAP_FRAME TrapFrame, IN OUT PCONTEXT ContextFrame)
 
 /*++
 
@@ -106,21 +100,15 @@ Note:
 {
     PKDEBUG_REGISTERS DebugRegistersSaveArea;
 
-    if (TrapFrame->PreviousMode == UserMode) {
+    if (TrapFrame->PreviousMode == UserMode)
+    {
         DebugRegistersSaveArea = GET_DEBUG_REGISTER_SAVEAREA();
 
-        RtlCopyMemory(&ContextFrame->DbI0,
-                      (PVOID)DebugRegistersSaveArea,
-                      sizeof(KDEBUG_REGISTERS));
+        RtlCopyMemory(&ContextFrame->DbI0, (PVOID)DebugRegistersSaveArea, sizeof(KDEBUG_REGISTERS));
     }
 }
 
-VOID
-KiSetDebugContext (
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN PCONTEXT ContextFrame,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+VOID KiSetDebugContext(IN OUT PKTRAP_FRAME TrapFrame, IN PCONTEXT ContextFrame, IN KPROCESSOR_MODE PreviousMode)
 /*++
 
 Routine Description:
@@ -150,9 +138,10 @@ Notes:
 --*/
 
 {
-    PKDEBUG_REGISTERS DebugRegistersSaveArea;  // User mode h/w debug registers
+    PKDEBUG_REGISTERS DebugRegistersSaveArea; // User mode h/w debug registers
 
-    if (PreviousMode == UserMode) {
+    if (PreviousMode == UserMode)
+    {
 
         DebugRegistersSaveArea = GET_DEBUG_REGISTER_SAVEAREA();
 
@@ -161,32 +150,26 @@ Notes:
         //
 
         DebugRegistersSaveArea->DbI0 = ContextFrame->DbI0;
-        DebugRegistersSaveArea->DbI1 = SANITIZE_DR(ContextFrame->DbI1,UserMode);
+        DebugRegistersSaveArea->DbI1 = SANITIZE_DR(ContextFrame->DbI1, UserMode);
         DebugRegistersSaveArea->DbI2 = ContextFrame->DbI2;
-        DebugRegistersSaveArea->DbI3 = SANITIZE_DR(ContextFrame->DbI3,UserMode);
+        DebugRegistersSaveArea->DbI3 = SANITIZE_DR(ContextFrame->DbI3, UserMode);
         DebugRegistersSaveArea->DbI4 = ContextFrame->DbI4;
-        DebugRegistersSaveArea->DbI5 = SANITIZE_DR(ContextFrame->DbI5,UserMode);
+        DebugRegistersSaveArea->DbI5 = SANITIZE_DR(ContextFrame->DbI5, UserMode);
         DebugRegistersSaveArea->DbI6 = ContextFrame->DbI6;
-        DebugRegistersSaveArea->DbI7 = SANITIZE_DR(ContextFrame->DbI7,UserMode);
+        DebugRegistersSaveArea->DbI7 = SANITIZE_DR(ContextFrame->DbI7, UserMode);
 
         DebugRegistersSaveArea->DbD0 = ContextFrame->DbD0;
-        DebugRegistersSaveArea->DbD1 = SANITIZE_DR(ContextFrame->DbD1,UserMode);
+        DebugRegistersSaveArea->DbD1 = SANITIZE_DR(ContextFrame->DbD1, UserMode);
         DebugRegistersSaveArea->DbD2 = ContextFrame->DbD2;
-        DebugRegistersSaveArea->DbD3 = SANITIZE_DR(ContextFrame->DbD3,UserMode);
+        DebugRegistersSaveArea->DbD3 = SANITIZE_DR(ContextFrame->DbD3, UserMode);
         DebugRegistersSaveArea->DbD4 = ContextFrame->DbD4;
-        DebugRegistersSaveArea->DbD5 = SANITIZE_DR(ContextFrame->DbD5,UserMode);
+        DebugRegistersSaveArea->DbD5 = SANITIZE_DR(ContextFrame->DbD5, UserMode);
         DebugRegistersSaveArea->DbD6 = ContextFrame->DbD6;
-        DebugRegistersSaveArea->DbD7 = SANITIZE_DR(ContextFrame->DbD7,UserMode);
-
+        DebugRegistersSaveArea->DbD7 = SANITIZE_DR(ContextFrame->DbD7, UserMode);
     }
 }
-
-VOID
-KeContextFromKframes (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN OUT PCONTEXT ContextFrame
-    )
+
+VOID KeContextFromKframes(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN OUT PCONTEXT ContextFrame)
 
 /*++
 
@@ -224,7 +207,8 @@ Return Value:
     // Set control information if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFrame->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         ContextFrame->IntGp = TrapFrame->IntGp;
         ContextFrame->IntSp = TrapFrame->IntSp;
@@ -246,9 +230,10 @@ Return Value:
         ContextFrame->RsPFS = TrapFrame->RsPFS;
 
         BsFrameSize = (SHORT)(TrapFrame->StIFS & PFS_SIZE_MASK);
-        RNatSaveIndex = (USHORT) (TrapFrame->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG;
+        RNatSaveIndex = (USHORT)(TrapFrame->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG;
         TempFrameSize = BsFrameSize - RNatSaveIndex;
-        while (TempFrameSize > 0) {
+        while (TempFrameSize > 0)
+        {
             BsFrameSize++;
             TempFrameSize -= NAT_BITS_PER_RNAT_REG;
         }
@@ -259,8 +244,7 @@ Return Value:
         ContextFrame->RsRNAT = TrapFrame->RsRNAT;
 
 #if DEBUG
-        DbgPrint("KeContextFromKFrames: RsRNAT = 0x%I64x\n",
-                 ContextFrame->RsRNAT);
+        DbgPrint("KeContextFromKFrames: RsRNAT = 0x%I64x\n", ContextFrame->RsRNAT);
 #endif // DEBUG
 
         //
@@ -282,14 +266,14 @@ Return Value:
         ContextFrame->StFSR = __getReg(CV_IA64_AR28);
         ContextFrame->StFIR = __getReg(CV_IA64_AR29);
         ContextFrame->StFDR = __getReg(CV_IA64_AR30);
-
     }
 
     //
     // Set integer register contents if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFrame->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         ContextFrame->IntT0 = TrapFrame->IntT0;
         ContextFrame->IntT1 = TrapFrame->IntT1;
@@ -304,7 +288,7 @@ Return Value:
         // t5 - t22
         //
 
-        memcpy(&ContextFrame->IntT5, &TrapFrame->IntT5, 18*sizeof(ULONGLONG));
+        memcpy(&ContextFrame->IntT5, &TrapFrame->IntT5, 18 * sizeof(ULONGLONG));
 
         //
         // Set branch registers from trap frame & exception frame
@@ -313,7 +297,7 @@ Return Value:
         ContextFrame->BrT0 = TrapFrame->BrT0;
         ContextFrame->BrT1 = TrapFrame->BrT1;
 
-        memcpy(&ContextFrame->BrS0, &ExceptionFrame->BrS0, 5*sizeof(ULONGLONG));
+        memcpy(&ContextFrame->BrS0, &ExceptionFrame->BrS0, 5 * sizeof(ULONGLONG));
 
         //
         // Set integer registers s0 - s3 from exception frame.
@@ -336,19 +320,19 @@ Return Value:
         ContextFrame->IntNats = IntNats1 | IntNats2;
 
 #if DEBUG
-        DbgPrint("KeContextFromKFrames: TF->IntNats = 0x%I64x, R1OffSet = 0x%x, R4Offset = 0x%x\n",
-                 TrapFrame->IntNats, R1Offset, R4Offset);
+        DbgPrint("KeContextFromKFrames: TF->IntNats = 0x%I64x, R1OffSet = 0x%x, R4Offset = 0x%x\n", TrapFrame->IntNats,
+                 R1Offset, R4Offset);
         DbgPrint("KeContextFromKFrames: CF->IntNats = 0x%I64x, IntNats1 = 0x%I64x, IntNats2 = 0x%I64x\n",
                  ContextFrame->IntNats, IntNats1, IntNats2);
 #endif // DEBUG
-
     }
 
     //
     // Set lower floating register contents if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT) {
+    if ((ContextFrame->ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT)
+    {
 
         //
         // Set EM + ia32 FP status
@@ -360,25 +344,19 @@ Return Value:
         // Set floating registers fs0 - fs19 from exception frame.
         //
 
-        RtlCopyIa64FloatRegisterContext(&ContextFrame->FltS0,
-                                        &ExceptionFrame->FltS0,
-                                        sizeof(FLOAT128) * (4));
+        RtlCopyIa64FloatRegisterContext(&ContextFrame->FltS0, &ExceptionFrame->FltS0, sizeof(FLOAT128) * (4));
 
-        RtlCopyIa64FloatRegisterContext(&ContextFrame->FltS4,
-                                        &ExceptionFrame->FltS4,
-                                        16*sizeof(FLOAT128));
+        RtlCopyIa64FloatRegisterContext(&ContextFrame->FltS4, &ExceptionFrame->FltS4, 16 * sizeof(FLOAT128));
 
         //
         // Set floating registers ft0 - ft9 from trap frame.
         //
 
-        RtlCopyIa64FloatRegisterContext(&ContextFrame->FltT0,
-                                        &TrapFrame->FltT0,
-                                        sizeof(FLOAT128) * (10));
-
+        RtlCopyIa64FloatRegisterContext(&ContextFrame->FltT0, &TrapFrame->FltT0, sizeof(FLOAT128) * (10));
     }
 
-    if ((ContextFrame->ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT) {
+    if ((ContextFrame->ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT)
+    {
 
         ContextFrame->StFPSR = TrapFrame->StFPSR;
 
@@ -386,15 +364,14 @@ Return Value:
         // Set floating regs f32 - f127 from higher floating point save area
         //
 
-        if (TrapFrame->PreviousMode == UserMode) {
+        if (TrapFrame->PreviousMode == UserMode)
+        {
 
             RtlCopyIa64FloatRegisterContext(
                 &ContextFrame->FltF32,
                 (PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase),
-                96*sizeof(FLOAT128)
-                );
+                96 * sizeof(FLOAT128));
         }
-
     }
 
     //
@@ -402,21 +379,16 @@ Return Value:
     // Note: PSR.db must be set to activate the debug registers.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG) {
+    if ((ContextFrame->ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG)
+    {
         KiGetDebugContext(TrapFrame, ContextFrame);
     }
 
     return;
 }
-
-VOID
-KeContextToKframes (
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN PCONTEXT ContextFrame,
-    IN ULONG ContextFlags,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+
+VOID KeContextToKframes(IN OUT PKTRAP_FRAME TrapFrame, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                        IN PCONTEXT ContextFrame, IN ULONG ContextFlags, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -459,7 +431,8 @@ Return Value:
     // Set control information if specified.
     //
 
-    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         TrapFrame->IntGp = ContextFrame->IntGp;
         TrapFrame->IntSp = ContextFrame->IntSp;
@@ -486,7 +459,8 @@ Return Value:
         RNatSaveIndex = (USHORT)((ContextFrame->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG);
 
         TempFrameSize = RNatSaveIndex + BsFrameSize - NAT_BITS_PER_RNAT_REG;
-        while (TempFrameSize >= 0) {
+        while (TempFrameSize >= 0)
+        {
             BsFrameSize++;
             TempFrameSize -= NAT_BITS_PER_RNAT_REG;
         }
@@ -507,10 +481,11 @@ Return Value:
 
         TrapFrame->StFPSR = SANITIZE_FSR(ContextFrame->StFPSR, PreviousMode);
         TrapFrame->StIPSR = SANITIZE_PSR(ContextFrame->StIPSR, PreviousMode);
-        TrapFrame->StIFS  = SANITIZE_IFS(ContextFrame->StIFS, PreviousMode);
-        TrapFrame->StIIP  = ContextFrame->StIIP;
+        TrapFrame->StIFS = SANITIZE_IFS(ContextFrame->StIFS, PreviousMode);
+        TrapFrame->StIIP = ContextFrame->StIIP;
 
-        if (PreviousMode == UserMode ) {
+        if (PreviousMode == UserMode)
+        {
             //
             // DebugActive controls h/w debug registers. Set if new psr.db = 1
             //
@@ -521,15 +496,15 @@ Return Value:
             // Set and sanitize iA status
             //
 
-            __setReg(CV_IA64_AR21, SANITIZE_AR21_FCR (ContextFrame->StFCR, UserMode));
-            __setReg(CV_IA64_AR24, SANITIZE_AR24_EFLAGS (ContextFrame->Eflag, UserMode));
+            __setReg(CV_IA64_AR21, SANITIZE_AR21_FCR(ContextFrame->StFCR, UserMode));
+            __setReg(CV_IA64_AR24, SANITIZE_AR24_EFLAGS(ContextFrame->Eflag, UserMode));
             __setReg(CV_IA64_AR25, ContextFrame->SegCSD);
             __setReg(CV_IA64_AR26, ContextFrame->SegSSD);
-            __setReg(CV_IA64_AR27, SANITIZE_AR27_CFLG (ContextFrame->Cflag, UserMode));
+            __setReg(CV_IA64_AR27, SANITIZE_AR27_CFLG(ContextFrame->Cflag, UserMode));
 
-            __setReg(CV_IA64_AR28, SANITIZE_AR28_FSR (ContextFrame->StFSR, UserMode));
-            __setReg(CV_IA64_AR29, SANITIZE_AR29_FIR (ContextFrame->StFIR, UserMode));
-            __setReg(CV_IA64_AR30, SANITIZE_AR30_FDR (ContextFrame->StFDR, UserMode));
+            __setReg(CV_IA64_AR28, SANITIZE_AR28_FSR(ContextFrame->StFSR, UserMode));
+            __setReg(CV_IA64_AR29, SANITIZE_AR29_FIR(ContextFrame->StFIR, UserMode));
+            __setReg(CV_IA64_AR30, SANITIZE_AR30_FDR(ContextFrame->StFDR, UserMode));
         }
     }
 
@@ -537,7 +512,8 @@ Return Value:
     // Set integer registers contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         TrapFrame->IntT0 = ContextFrame->IntT0;
         TrapFrame->IntT1 = ContextFrame->IntT1;
@@ -552,7 +528,7 @@ Return Value:
         // t5 - t22
         //
 
-        memcpy(&TrapFrame->IntT5, &ContextFrame->IntT5, 18*sizeof(ULONGLONG));
+        memcpy(&TrapFrame->IntT5, &ContextFrame->IntT5, 18 * sizeof(ULONGLONG));
 
         //
         // Set integer registers s0 - s3 in exception frame.
@@ -570,16 +546,13 @@ Return Value:
         R1Offset = (USHORT)((ULONG_PTR)(&TrapFrame->IntGp) >> 3) & 0x3f;
         R4Offset = (USHORT)((ULONG_PTR)(&ExceptionFrame->IntS0) >> 3) & 0x3f;
 
-        EXTRACT_NATS(TrapFrame->IntNats, ContextFrame->IntNats,
-                     1, R1Offset, 0xFFFFFF0E);
-        EXTRACT_NATS(ExceptionFrame->IntNats, ContextFrame->IntNats,
-                     4, R4Offset, 0xF0);
+        EXTRACT_NATS(TrapFrame->IntNats, ContextFrame->IntNats, 1, R1Offset, 0xFFFFFF0E);
+        EXTRACT_NATS(ExceptionFrame->IntNats, ContextFrame->IntNats, 4, R4Offset, 0xF0);
 
 #if DEBUG
         DbgPrint("KeContextToKFrames: TF->IntNats = 0x%I64x, ContestFrame->IntNats = 0x%I64x, R1OffSet = 0x%x\n",
                  TrapFrame->IntNats, ContextFrame->IntNats, R1Offset);
-        DbgPrint("KeContextToKFrames: EF->IntNats = 0x%I64x, R4OffSet = 0x%x\n",
-                 ExceptionFrame->IntNats, R4Offset);
+        DbgPrint("KeContextToKFrames: EF->IntNats = 0x%I64x, R4OffSet = 0x%x\n", ExceptionFrame->IntNats, R4Offset);
 #endif // DEBUG
 
         //
@@ -589,15 +562,15 @@ Return Value:
         TrapFrame->BrT0 = ContextFrame->BrT0;
         TrapFrame->BrT1 = ContextFrame->BrT1;
 
-        memcpy(&ExceptionFrame->BrS0, &ContextFrame->BrS0, 5*sizeof(ULONGLONG));
-
+        memcpy(&ExceptionFrame->BrS0, &ContextFrame->BrS0, 5 * sizeof(ULONGLONG));
     }
 
     //
     // Set lower floating register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT)
+    {
 
         TrapFrame->StFPSR = SANITIZE_FSR(ContextFrame->StFPSR, PreviousMode);
 
@@ -605,33 +578,28 @@ Return Value:
         // Set floating registers fs0 - fs19 in exception frame.
         //
 
-        RtlCopyIa64FloatRegisterContext(&ExceptionFrame->FltS0,
-                                        &ContextFrame->FltS0,
-                                        sizeof(FLOAT128) * (4));
+        RtlCopyIa64FloatRegisterContext(&ExceptionFrame->FltS0, &ContextFrame->FltS0, sizeof(FLOAT128) * (4));
 
-        RtlCopyIa64FloatRegisterContext(&ExceptionFrame->FltS4,
-                                        &ContextFrame->FltS4,
-                                        16*sizeof(FLOAT128));
+        RtlCopyIa64FloatRegisterContext(&ExceptionFrame->FltS4, &ContextFrame->FltS4, 16 * sizeof(FLOAT128));
 
         //
         // Set floating registers ft0 - ft9 in trap frame.
         //
 
-        RtlCopyIa64FloatRegisterContext(&TrapFrame->FltT0,
-                                        &ContextFrame->FltT0,
-                                        sizeof(FLOAT128) * (10));
-
+        RtlCopyIa64FloatRegisterContext(&TrapFrame->FltT0, &ContextFrame->FltT0, sizeof(FLOAT128) * (10));
     }
 
     //
     // Set higher floating register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT)
+    {
 
         TrapFrame->StFPSR = SANITIZE_FSR(ContextFrame->StFPSR, PreviousMode);
 
-        if (PreviousMode == UserMode) {
+        if (PreviousMode == UserMode)
+        {
 
             //
             // Update the higher floating point save area (f32-f127) and
@@ -640,31 +608,27 @@ Return Value:
 
             RtlCopyIa64FloatRegisterContext(
                 (PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase),
-                &ContextFrame->FltF32,
-                96*sizeof(FLOAT128)
-                );
+                &ContextFrame->FltF32, 96 * sizeof(FLOAT128));
 
             TrapFrame->StIPSR |= (1i64 << PSR_DFH);
             TrapFrame->StIPSR &= ~(1i64 << PSR_MFH);
         }
-
     }
 
     //
     // Set debug registers.
     //
 
-    if ((ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG) {
-        KiSetDebugContext (TrapFrame, ContextFrame, PreviousMode);
+    if ((ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG)
+    {
+        KiSetDebugContext(TrapFrame, ContextFrame, PreviousMode);
     }
 
     return;
 }
-
+
 NTSTATUS
-KeFlushUserRseState (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KeFlushUserRseState(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -701,7 +665,8 @@ Return Value:
     // N.B. Stack overflow could happen.
     //
 
-    try {
+    try
+    {
 
         //
         // The RsBSPSTORE value may be incorrect paritcularly if the kernel debugger
@@ -709,10 +674,11 @@ Return Value:
         // correct.
         //
 
-        BsFrameSize = (SHORT) (TrapFrame->RsRSC >> RSC_MBZ1);
+        BsFrameSize = (SHORT)(TrapFrame->RsRSC >> RSC_MBZ1);
         BspStoreReal = TrapFrame->RsBSP - BsFrameSize;
 
-        if (BsFrameSize) {
+        if (BsFrameSize)
+        {
 
             ULONGLONG Bsp, Rnat, KernelInitBsp;
 
@@ -722,16 +688,15 @@ Return Value:
             //
 
             RtlpFlushRSE(&Bsp, &Rnat);
-            TearPointOffset = (USHORT) BspStoreReal & 0x1F8;
+            TearPointOffset = (USHORT)BspStoreReal & 0x1F8;
 
-            KernelInitBsp= (PCR->InitialBStore | TearPointOffset) + BsFrameSize - 8;
-            if ((KernelInitBsp | RNAT_ALIGNMENT) != ((Bsp - 8) | RNAT_ALIGNMENT)) {
+            KernelInitBsp = (PCR->InitialBStore | TearPointOffset) + BsFrameSize - 8;
+            if ((KernelInitBsp | RNAT_ALIGNMENT) != ((Bsp - 8) | RNAT_ALIGNMENT))
+            {
                 Rnat = *(PULONGLONG)(KernelInitBsp | RNAT_ALIGNMENT);
             }
 
-            RtlCopyMemory((PVOID)(BspStoreReal),
-                         (PVOID)(PCR->InitialBStore + TearPointOffset),
-                         BsFrameSize);
+            RtlCopyMemory((PVOID)(BspStoreReal), (PVOID)(PCR->InitialBStore + TearPointOffset), BsFrameSize);
 
             TopBound = (TrapFrame->RsBSP - 8) | RNAT_ALIGNMENT;
             BottomBound = BspStoreReal | RNAT_ALIGNMENT;
@@ -740,7 +705,8 @@ Return Value:
             Mask = (((1ULL << (NAT_BITS_PER_RNAT_REG - RNatSaveIndex)) - 1) << RNatSaveIndex);
             UserRnats1 = TrapFrame->RsRNAT & ((1ULL << RNatSaveIndex) - 1);
 
-            if (TopBound > BottomBound) {
+            if (TopBound > BottomBound)
+            {
 
                 //
                 // user dirty stacked GR span across at least one RNAT
@@ -757,8 +723,9 @@ Return Value:
                 DbgPrint("KiFlushUserRseState 1: UserRnats1 = 0x%I64x, UserRnats2 = 0x%I64x, TF->RsRNAT = 0x%I64x\n",
                          UserRnats1, UserRnats2, TrapFrame->RsRNAT);
 #endif // DEBUG
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // user stacked register region does not span across an
@@ -773,7 +740,6 @@ Return Value:
                 DbgPrint("KiFlushUserRseState 2: UserRnats1 = 0x%I64x, UserRnats2 = 0x%I64x, TF->RsRNAT = 0x%I64x\n",
                          UserRnats1, UserRnats2, TrapFrame->RsRNAT);
 #endif // DEBUG
-
             }
         }
 
@@ -785,22 +751,16 @@ Return Value:
 
         TrapFrame->RsBSPSTORE = TrapFrame->RsBSP;
         TrapFrame->RsRSC = ZERO_PRELOAD_SIZE(TrapFrame->RsRSC);
-
-    } except (KeFlushRseExceptionFilter(GetExceptionInformation(), &Status)) {
-
+    }
+    except(KeFlushRseExceptionFilter(GetExceptionInformation(), &Status))
+    {
     }
 
     return Status;
 }
 
-VOID
-KeContextToKframesSpecial (
-    IN PKTHREAD Thread,
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN PCONTEXT ContextFrame,
-    IN ULONG ContextFlags
-    )
+VOID KeContextToKframesSpecial(IN PKTHREAD Thread, IN OUT PKTRAP_FRAME TrapFrame,
+                               IN OUT PKEXCEPTION_FRAME ExceptionFrame, IN PCONTEXT ContextFrame, IN ULONG ContextFlags)
 
 /*++
 
@@ -843,7 +803,8 @@ Return Value:
     // Set control information if specified.
     //
 
-    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         TrapFrame->IntGp = ContextFrame->IntGp;
         TrapFrame->IntSp = ContextFrame->IntSp;
@@ -870,7 +831,8 @@ Return Value:
         RNatSaveIndex = (USHORT)((ContextFrame->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG);
 
         TempFrameSize = RNatSaveIndex + BsFrameSize - NAT_BITS_PER_RNAT_REG;
-        while (TempFrameSize >= 0) {
+        while (TempFrameSize >= 0)
+        {
             BsFrameSize++;
             TempFrameSize -= NAT_BITS_PER_RNAT_REG;
         }
@@ -890,40 +852,42 @@ Return Value:
 
         TrapFrame->StFPSR = SANITIZE_FSR(ContextFrame->StFPSR, UserMode);
         TrapFrame->StIPSR = SANITIZE_PSR(ContextFrame->StIPSR, UserMode);
-        TrapFrame->StIFS  = SANITIZE_IFS(ContextFrame->StIFS, UserMode);
-        TrapFrame->StIIP  = ContextFrame->StIIP;
+        TrapFrame->StIFS = SANITIZE_IFS(ContextFrame->StIFS, UserMode);
+        TrapFrame->StIIP = ContextFrame->StIIP;
 
         //
         // Set application registers directly
         //
 
-        if (Thread == KeGetCurrentThread()) {
+        if (Thread == KeGetCurrentThread())
+        {
             //
             // Set and sanitize iA status
             //
 
-            __setReg(CV_IA64_AR21, SANITIZE_AR21_FCR (ContextFrame->StFCR, UserMode));
-            __setReg(CV_IA64_AR24, SANITIZE_AR24_EFLAGS (ContextFrame->Eflag, UserMode));
+            __setReg(CV_IA64_AR21, SANITIZE_AR21_FCR(ContextFrame->StFCR, UserMode));
+            __setReg(CV_IA64_AR24, SANITIZE_AR24_EFLAGS(ContextFrame->Eflag, UserMode));
             __setReg(CV_IA64_AR25, ContextFrame->SegCSD);
             __setReg(CV_IA64_AR26, ContextFrame->SegSSD);
-            __setReg(CV_IA64_AR27, SANITIZE_AR27_CFLG (ContextFrame->Cflag, UserMode));
+            __setReg(CV_IA64_AR27, SANITIZE_AR27_CFLG(ContextFrame->Cflag, UserMode));
 
-            __setReg(CV_IA64_AR28, SANITIZE_AR28_FSR (ContextFrame->StFSR, UserMode));
-            __setReg(CV_IA64_AR29, SANITIZE_AR29_FIR (ContextFrame->StFIR, UserMode));
-            __setReg(CV_IA64_AR30, SANITIZE_AR30_FDR (ContextFrame->StFDR, UserMode));
-
-        } else {
+            __setReg(CV_IA64_AR28, SANITIZE_AR28_FSR(ContextFrame->StFSR, UserMode));
+            __setReg(CV_IA64_AR29, SANITIZE_AR29_FIR(ContextFrame->StFIR, UserMode));
+            __setReg(CV_IA64_AR30, SANITIZE_AR30_FDR(ContextFrame->StFDR, UserMode));
+        }
+        else
+        {
             PKAPPLICATION_REGISTERS AppRegs;
 
             AppRegs = GET_APPLICATION_REGISTER_SAVEAREA(Thread->StackBase);
-            AppRegs->Ar21 = SANITIZE_AR21_FCR (ContextFrame->StFCR, UserMode);
-            AppRegs->Ar24 = SANITIZE_AR24_EFLAGS (ContextFrame->Eflag, UserMode);
+            AppRegs->Ar21 = SANITIZE_AR21_FCR(ContextFrame->StFCR, UserMode);
+            AppRegs->Ar24 = SANITIZE_AR24_EFLAGS(ContextFrame->Eflag, UserMode);
             AppRegs->Ar25 = ContextFrame->SegCSD;
             AppRegs->Ar26 = ContextFrame->SegSSD;
-            AppRegs->Ar27 = SANITIZE_AR27_CFLG (ContextFrame->Cflag, UserMode);
-            AppRegs->Ar28 = SANITIZE_AR28_FSR (ContextFrame->StFSR, UserMode);
-            AppRegs->Ar29 = SANITIZE_AR29_FIR (ContextFrame->StFIR, UserMode);
-            AppRegs->Ar30 = SANITIZE_AR30_FDR (ContextFrame->StFDR, UserMode);
+            AppRegs->Ar27 = SANITIZE_AR27_CFLG(ContextFrame->Cflag, UserMode);
+            AppRegs->Ar28 = SANITIZE_AR28_FSR(ContextFrame->StFSR, UserMode);
+            AppRegs->Ar29 = SANITIZE_AR29_FIR(ContextFrame->StFIR, UserMode);
+            AppRegs->Ar30 = SANITIZE_AR30_FDR(ContextFrame->StFDR, UserMode);
         }
     }
 
@@ -931,7 +895,8 @@ Return Value:
     // Set integer registers contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         TrapFrame->IntT0 = ContextFrame->IntT0;
         TrapFrame->IntT1 = ContextFrame->IntT1;
@@ -946,7 +911,7 @@ Return Value:
         // t5 - t22
         //
 
-        memcpy(&TrapFrame->IntT5, &ContextFrame->IntT5, 18*sizeof(ULONGLONG));
+        memcpy(&TrapFrame->IntT5, &ContextFrame->IntT5, 18 * sizeof(ULONGLONG));
 
         //
         // Set integer registers s0 - s3 in exception frame.
@@ -964,16 +929,13 @@ Return Value:
         R1Offset = (USHORT)((ULONG_PTR)(&TrapFrame->IntGp) >> 3) & 0x3f;
         R4Offset = (USHORT)((ULONG_PTR)(&ExceptionFrame->IntS0) >> 3) & 0x3f;
 
-        EXTRACT_NATS(TrapFrame->IntNats, ContextFrame->IntNats,
-                     1, R1Offset, 0xFFFFFF0E);
-        EXTRACT_NATS(ExceptionFrame->IntNats, ContextFrame->IntNats,
-                     4, R4Offset, 0xF0);
+        EXTRACT_NATS(TrapFrame->IntNats, ContextFrame->IntNats, 1, R1Offset, 0xFFFFFF0E);
+        EXTRACT_NATS(ExceptionFrame->IntNats, ContextFrame->IntNats, 4, R4Offset, 0xF0);
 
 #if DEBUG
         DbgPrint("KeContextToKFrames: TF->IntNats = 0x%I64x, ContestFrame->IntNats = 0x%I64x, R1OffSet = 0x%x\n",
                  TrapFrame->IntNats, ContextFrame->IntNats, R1Offset);
-        DbgPrint("KeContextToKFrames: EF->IntNats = 0x%I64x, R4OffSet = 0x%x\n",
-                 ExceptionFrame->IntNats, R4Offset);
+        DbgPrint("KeContextToKFrames: EF->IntNats = 0x%I64x, R4OffSet = 0x%x\n", ExceptionFrame->IntNats, R4Offset);
 #endif // DEBUG
 
         //
@@ -983,15 +945,15 @@ Return Value:
         TrapFrame->BrT0 = ContextFrame->BrT0;
         TrapFrame->BrT1 = ContextFrame->BrT1;
 
-        memcpy(&ExceptionFrame->BrS0, &ContextFrame->BrS0, 5*sizeof(ULONGLONG));
-
+        memcpy(&ExceptionFrame->BrS0, &ContextFrame->BrS0, 5 * sizeof(ULONGLONG));
     }
 
     //
     // Set lower floating register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT)
+    {
 
         TrapFrame->StFPSR = SANITIZE_FSR(ContextFrame->StFPSR, UserMode);
 
@@ -999,29 +961,23 @@ Return Value:
         // Set floating registers fs0 - fs19 in exception frame.
         //
 
-        RtlCopyIa64FloatRegisterContext(&ExceptionFrame->FltS0,
-                                        &ContextFrame->FltS0,
-                                        sizeof(FLOAT128) * (4));
+        RtlCopyIa64FloatRegisterContext(&ExceptionFrame->FltS0, &ContextFrame->FltS0, sizeof(FLOAT128) * (4));
 
-        RtlCopyIa64FloatRegisterContext(&ExceptionFrame->FltS4,
-                                        &ContextFrame->FltS4,
-                                        16*sizeof(FLOAT128));
+        RtlCopyIa64FloatRegisterContext(&ExceptionFrame->FltS4, &ContextFrame->FltS4, 16 * sizeof(FLOAT128));
 
         //
         // Set floating registers ft0 - ft9 in trap frame.
         //
 
-        RtlCopyIa64FloatRegisterContext(&TrapFrame->FltT0,
-                                        &ContextFrame->FltT0,
-                                        sizeof(FLOAT128) * (10));
-
+        RtlCopyIa64FloatRegisterContext(&TrapFrame->FltT0, &ContextFrame->FltT0, sizeof(FLOAT128) * (10));
     }
 
     //
     // Set higher floating register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT)
+    {
 
         TrapFrame->StFPSR = SANITIZE_FSR(ContextFrame->StFPSR, UserMode);
 
@@ -1030,23 +986,20 @@ Return Value:
         // set the corresponding modified bit in the PSR to 1.
         //
 
-        RtlCopyIa64FloatRegisterContext(
-            (PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(Thread->StackBase),
-            &ContextFrame->FltF32,
-            96*sizeof(FLOAT128)
-            );
+        RtlCopyIa64FloatRegisterContext((PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(Thread->StackBase),
+                                        &ContextFrame->FltF32, 96 * sizeof(FLOAT128));
 
         TrapFrame->StIPSR |= (1i64 << PSR_DFH);
         TrapFrame->StIPSR &= ~(1i64 << PSR_MFH);
-
     }
 
     //
     // Set debug registers.
     //
 
-    if ((ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG) {
-        KiSetDebugContext (TrapFrame, ContextFrame, UserMode);
+    if ((ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG)
+    {
+        KiSetDebugContext(TrapFrame, ContextFrame, UserMode);
     }
 
     return;

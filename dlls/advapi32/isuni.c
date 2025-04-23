@@ -24,18 +24,14 @@ Revision History:
 #include <nturtl.h>
 #include <windows.h>
 
-BOOL
-WINAPI
-IsTextUnicode(
-    CONST VOID* lpv,
-    int iSize,
-    LPINT lpiResult
-    )
+BOOL WINAPI IsTextUnicode(CONST VOID *lpv, int iSize, LPINT lpiResult)
 {
-    if (RtlIsTextUnicode( lpv, iSize, lpiResult )) {
+    if (RtlIsTextUnicode(lpv, iSize, lpiResult))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         return FALSE;
-        }
+    }
 }

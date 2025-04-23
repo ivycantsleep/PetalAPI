@@ -30,19 +30,11 @@ Revision History:
 #pragma alloc_text(PAGE, NtQueryEaFile)
 #pragma alloc_text(PAGE, NtSetEaFile)
 #endif
-
+
 NTSTATUS
-NtQueryEaFile(
-    IN HANDLE FileHandle,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
-    IN ULONG Length,
-    IN BOOLEAN ReturnSingleEntry,
-    IN PVOID EaList OPTIONAL,
-    IN ULONG EaListLength,
-    IN PULONG EaIndex OPTIONAL,
-    IN BOOLEAN RestartScan
-    )
+NtQueryEaFile(IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID Buffer, IN ULONG Length,
+              IN BOOLEAN ReturnSingleEntry, IN PVOID EaList OPTIONAL, IN ULONG EaListLength, IN PULONG EaIndex OPTIONAL,
+              IN BOOLEAN RestartScan)
 
 /*++
 
@@ -86,8 +78,7 @@ Return Value:
 
 --*/
 
-#define GET_OFFSET_LENGTH( CurrentEa, EaBase ) (    \
-    (ULONG) ((PCHAR) CurrentEa - (PCHAR) EaBase) )
+#define GET_OFFSET_LENGTH(CurrentEa, EaBase) ((ULONG)((PCHAR)CurrentEa - (PCHAR)EaBase))
 
 
 {
@@ -95,8 +86,8 @@ Return Value:
     NTSTATUS status;
     PFILE_OBJECT fileObject;
     PDEVICE_OBJECT deviceObject;
-    PKEVENT event = (PKEVENT) NULL;
-    PCHAR auxiliaryBuffer = (PCHAR) NULL;
+    PKEVENT event = (PKEVENT)NULL;
+    PCHAR auxiliaryBuffer = (PCHAR)NULL;
     BOOLEAN eaListPresent = FALSE;
     ULONG eaIndexValue = 0L;
     KPROCESSOR_MODE requestorMode;
@@ -111,10 +102,11 @@ Return Value:
     // Get the previous mode;  i.e., the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is not kernel so probe each of the arguments
@@ -124,27 +116,29 @@ Return Value:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatus( IoStatusBlock );
+            ProbeForWriteIoStatus(IoStatusBlock);
 
             //
             // The buffer must be writeable by the caller.
             //
 
-            ProbeForWrite( Buffer, Length, sizeof( ULONG ) );
+            ProbeForWrite(Buffer, Length, sizeof(ULONG));
 
             //
             // If the optional EaIndex parameter was specified, then it must be
             // readable by the caller.  Capture its value.
             //
 
-            if (ARGUMENT_PRESENT( EaIndex )) {
-                eaIndexValue = ProbeAndReadUlong( EaIndex );
+            if (ARGUMENT_PRESENT(EaIndex))
+            {
+                eaIndexValue = ProbeAndReadUlong(EaIndex);
             }
 
             //
@@ -153,7 +147,8 @@ Return Value:
             // legal get information structure.
             //
 
-            if (ARGUMENT_PRESENT( EaList ) && EaListLength != 0) {
+            if (ARGUMENT_PRESENT(EaList) && EaListLength != 0)
+            {
 
                 PFILE_GET_EA_INFORMATION eas;
                 LONG tempLength;
@@ -161,12 +156,11 @@ Return Value:
 
                 eaListPresent = TRUE;
 
-                ProbeForRead( EaList, EaListLength, sizeof( ULONG ) );
-                auxiliaryBuffer = ExAllocatePoolWithQuota( NonPagedPool,
-                                                           EaListLength );
-                RtlCopyMemory( auxiliaryBuffer, EaList, EaListLength );
+                ProbeForRead(EaList, EaListLength, sizeof(ULONG));
+                auxiliaryBuffer = ExAllocatePoolWithQuota(NonPagedPool, EaListLength);
+                RtlCopyMemory(auxiliaryBuffer, EaList, EaListLength);
 
-                eas = (PFILE_GET_EA_INFORMATION) auxiliaryBuffer;
+                eas = (PFILE_GET_EA_INFORMATION)auxiliaryBuffer;
                 tempLength = EaListLength;
 
                 //
@@ -175,33 +169,37 @@ Return Value:
                 // end of the buffer that has been captured.
                 //
 
-                for (;;) {
+                for (;;)
+                {
 
                     //
                     // Get the size of the current entry in the buffer.
                     //
 
-                    if (tempLength < FIELD_OFFSET( FILE_GET_EA_INFORMATION, EaName[0])) {
+                    if (tempLength < FIELD_OFFSET(FILE_GET_EA_INFORMATION, EaName[0]))
+                    {
                         tempLength = 0;
-                        ExFreePool( auxiliaryBuffer );
-                        auxiliaryBuffer = (PVOID) NULL;
+                        ExFreePool(auxiliaryBuffer);
+                        auxiliaryBuffer = (PVOID)NULL;
                         IoStatusBlock->Status = STATUS_EA_LIST_INCONSISTENT;
                         IoStatusBlock->Information = tempLength;
                         return STATUS_EA_LIST_INCONSISTENT;
-                        }
+                    }
 
-                    entrySize = FIELD_OFFSET( FILE_GET_EA_INFORMATION, EaName[0] ) + eas->EaNameLength + 1;
+                    entrySize = FIELD_OFFSET(FILE_GET_EA_INFORMATION, EaName[0]) + eas->EaNameLength + 1;
 
-                    if ((ULONG) tempLength < entrySize) {
-                        tempLength = GET_OFFSET_LENGTH( eas, auxiliaryBuffer );
-                        ExFreePool( auxiliaryBuffer );
-                        auxiliaryBuffer = (PVOID) NULL;
+                    if ((ULONG)tempLength < entrySize)
+                    {
+                        tempLength = GET_OFFSET_LENGTH(eas, auxiliaryBuffer);
+                        ExFreePool(auxiliaryBuffer);
+                        auxiliaryBuffer = (PVOID)NULL;
                         IoStatusBlock->Status = STATUS_EA_LIST_INCONSISTENT;
                         IoStatusBlock->Information = tempLength;
                         return STATUS_EA_LIST_INCONSISTENT;
-                        }
+                    }
 
-                    if (eas->NextEntryOffset != 0) {
+                    if (eas->NextEntryOffset != 0)
+                    {
 
                         //
                         // There is another entry in the buffer and it must
@@ -210,16 +208,17 @@ Return Value:
                         // invalid parameter status.
                         //
 
-                        if ((((entrySize + 3) & ~3) != eas->NextEntryOffset) ||
-                            ((LONG) eas->NextEntryOffset < 0)) {
-                            tempLength = GET_OFFSET_LENGTH( eas, auxiliaryBuffer );
-                            ExFreePool( auxiliaryBuffer );
-                            auxiliaryBuffer = (PVOID) NULL;
+                        if ((((entrySize + 3) & ~3) != eas->NextEntryOffset) || ((LONG)eas->NextEntryOffset < 0))
+                        {
+                            tempLength = GET_OFFSET_LENGTH(eas, auxiliaryBuffer);
+                            ExFreePool(auxiliaryBuffer);
+                            auxiliaryBuffer = (PVOID)NULL;
                             IoStatusBlock->Status = STATUS_EA_LIST_INCONSISTENT;
                             IoStatusBlock->Information = tempLength;
                             return STATUS_EA_LIST_INCONSISTENT;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             //
                             // There is another entry in the buffer, so
@@ -229,18 +228,20 @@ Return Value:
                             //
 
                             tempLength -= eas->NextEntryOffset;
-                            if (tempLength < 0) {
-                                tempLength = GET_OFFSET_LENGTH( eas, auxiliaryBuffer );
-                                ExFreePool( auxiliaryBuffer );
-                                auxiliaryBuffer = (PVOID) NULL;
+                            if (tempLength < 0)
+                            {
+                                tempLength = GET_OFFSET_LENGTH(eas, auxiliaryBuffer);
+                                ExFreePool(auxiliaryBuffer);
+                                auxiliaryBuffer = (PVOID)NULL;
                                 IoStatusBlock->Status = STATUS_EA_LIST_INCONSISTENT;
                                 IoStatusBlock->Information = tempLength;
                                 return STATUS_EA_LIST_INCONSISTENT;
                             }
-                            eas = (PFILE_GET_EA_INFORMATION) ((PCHAR) eas + eas->NextEntryOffset);
+                            eas = (PFILE_GET_EA_INFORMATION)((PCHAR)eas + eas->NextEntryOffset);
                         }
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // There are no other entries in the buffer.  Simply
@@ -260,18 +261,19 @@ Return Value:
                 // negative.  If so, return an error.
                 //
 
-                if (tempLength < 0) {
-                    tempLength = GET_OFFSET_LENGTH( eas, auxiliaryBuffer );
-                    ExFreePool( auxiliaryBuffer );
-                    auxiliaryBuffer = (PVOID) NULL;
+                if (tempLength < 0)
+                {
+                    tempLength = GET_OFFSET_LENGTH(eas, auxiliaryBuffer);
+                    ExFreePool(auxiliaryBuffer);
+                    auxiliaryBuffer = (PVOID)NULL;
                     IoStatusBlock->Status = STATUS_EA_LIST_INCONSISTENT;
                     IoStatusBlock->Information = tempLength;
                     return STATUS_EA_LIST_INCONSISTENT;
                 }
-
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while probing the caller's
@@ -280,15 +282,16 @@ Return Value:
             // appropriate error status code.
             //
 
-            if (auxiliaryBuffer != NULL) {
-                ExFreePool( auxiliaryBuffer );
+            if (auxiliaryBuffer != NULL)
+            {
+                ExFreePool(auxiliaryBuffer);
             }
 
             return GetExceptionCode();
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The caller's mode was KernelMode.  Simply allocate pool for the
@@ -296,18 +299,22 @@ Return Value:
         // if an EaIndex was specified copy it as well.
         //
 
-        if (ARGUMENT_PRESENT( EaList ) && (EaListLength != 0)) {
+        if (ARGUMENT_PRESENT(EaList) && (EaListLength != 0))
+        {
             eaListPresent = TRUE;
-            try {
-                auxiliaryBuffer = ExAllocatePoolWithQuota( NonPagedPool,
-                                                           EaListLength );
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            try
+            {
+                auxiliaryBuffer = ExAllocatePoolWithQuota(NonPagedPool, EaListLength);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
-            RtlCopyMemory( auxiliaryBuffer, EaList, EaListLength );
+            RtlCopyMemory(auxiliaryBuffer, EaList, EaListLength);
         }
 
-        if (ARGUMENT_PRESENT( EaIndex )) {
+        if (ARGUMENT_PRESENT(EaIndex))
+        {
             eaIndexValue = *EaIndex;
         }
     }
@@ -319,15 +326,13 @@ Return Value:
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        FILE_READ_EA,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        NULL );
-    if (!NT_SUCCESS( status )) {
-        if (eaListPresent) {
-            ExFreePool( auxiliaryBuffer );
+    status = ObReferenceObjectByHandle(FileHandle, FILE_READ_EA, IoFileObjectType, requestorMode, (PVOID *)&fileObject,
+                                       NULL);
+    if (!NT_SUCCESS(status))
+    {
+        if (eaListPresent)
+        {
+            ExFreePool(auxiliaryBuffer);
         }
         return status;
     }
@@ -339,25 +344,29 @@ Return Value:
     // operation, then allocate and initialize the local event.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                if (eaListPresent) {
-                    ExFreePool( auxiliaryBuffer );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                if (eaListPresent)
+                {
+                    ExFreePool(auxiliaryBuffer);
                 }
-                ObDereferenceObject( fileObject );
+                ObDereferenceObject(fileObject);
                 return status;
             }
         }
         synchronousIo = TRUE;
-    } else {
+    }
+    else
+    {
 
         //
         // This is a synchronous API being invoked for a file that is opened
@@ -366,15 +375,17 @@ Return Value:
         // to the caller.  A local event is used to do this.
         //
 
-        event = ExAllocatePool( NonPagedPool, sizeof( KEVENT ) );
-        if (event == NULL) {
-            if (eaListPresent) {
-                ExFreePool( auxiliaryBuffer );
+        event = ExAllocatePool(NonPagedPool, sizeof(KEVENT));
+        if (event == NULL)
+        {
+            if (eaListPresent)
+            {
+                ExFreePool(auxiliaryBuffer);
             }
-            ObDereferenceObject( fileObject );
+            ObDereferenceObject(fileObject);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        KeInitializeEvent( event, SynchronizationEvent, FALSE );
+        KeInitializeEvent(event, SynchronizationEvent, FALSE);
         synchronousIo = FALSE;
     }
 
@@ -382,35 +393,38 @@ Return Value:
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( fileObject );
+    deviceObject = IoGetRelatedDeviceObject(fileObject);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IoAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IoAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        if (!(fileObject->Flags & FO_SYNCHRONOUS_IO)) {
-            ExFreePool( event );
+        if (!(fileObject->Flags & FO_SYNCHRONOUS_IO))
+        {
+            ExFreePool(event);
         }
 
-        IopAllocateIrpCleanup( fileObject, (PKEVENT) NULL );
+        IopAllocateIrpCleanup(fileObject, (PKEVENT)NULL);
 
-        if (eaListPresent) {
-            ExFreePool( auxiliaryBuffer );
+        if (eaListPresent)
+        {
+            ExFreePool(auxiliaryBuffer);
         }
 
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -423,22 +437,25 @@ Return Value:
     // Fill in the service independent parameters in the IRP.
     //
 
-    if (synchronousIo) {
-        irp->UserEvent = (PKEVENT) NULL;
+    if (synchronousIo)
+    {
+        irp->UserEvent = (PKEVENT)NULL;
         irp->UserIosb = IoStatusBlock;
-    } else {
+    }
+    else
+    {
         irp->UserEvent = event;
         irp->UserIosb = &localIoStatus;
         irp->Flags = IRP_SYNCHRONOUS_API;
     }
-    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
 
     //
     // Get a pointer to the stack location for the first driver.  This will be
     // used to pass the original function codes and parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->MajorFunction = IRP_MJ_QUERY_EA;
     irpSp->FileObject = fileObject;
 
@@ -448,7 +465,8 @@ Return Value:
     // driver.
     //
 
-    if (eaListPresent) {
+    if (eaListPresent)
+    {
         irp->Tail.Overlay.AuxiliaryBuffer = auxiliaryBuffer;
         irpSp->Parameters.QueryEa.EaList = auxiliaryBuffer;
         irpSp->Parameters.QueryEa.EaListLength = EaListLength;
@@ -467,7 +485,8 @@ Return Value:
     // all of the checking and buffering if any is required.
     //
 
-    if (deviceObject->Flags & DO_BUFFERED_IO) {
+    if (deviceObject->Flags & DO_BUFFERED_IO)
+    {
 
         //
         // The driver wishes the caller's buffered be copied into an
@@ -478,18 +497,20 @@ Return Value:
         // handler that will perform cleanup if the operation fails.
         //
 
-        if (Length) {
-            try {
+        if (Length)
+        {
+            try
+            {
 
                 //
                 // Allocate the intermediary system buffer from nonpaged
                 // pool and charge quota for it.
                 //
 
-                irp->AssociatedIrp.SystemBuffer =
-                   ExAllocatePoolWithQuota( NonPagedPool, Length );
- 
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                irp->AssociatedIrp.SystemBuffer = ExAllocatePoolWithQuota(NonPagedPool, Length);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // An exception was incurred while either probing the
@@ -498,17 +519,14 @@ Return Value:
                 // up, and return an appropriate error status code.
                 //
 
-                IopExceptionCleanup( fileObject,
-                                     irp,
-                                     (PKEVENT) NULL,
-                                     event );
+                IopExceptionCleanup(fileObject, irp, (PKEVENT)NULL, event);
 
-                if (auxiliaryBuffer != NULL) {
-                    ExFreePool( auxiliaryBuffer );
+                if (auxiliaryBuffer != NULL)
+                {
+                    ExFreePool(auxiliaryBuffer);
                 }
 
                 return GetExceptionCode();
-
             }
 
             //
@@ -519,10 +537,10 @@ Return Value:
             //
 
             irp->UserBuffer = Buffer;
-            irp->Flags |= (ULONG) (IRP_BUFFERED_IO |
-                                   IRP_DEALLOCATE_BUFFER |
-                                   IRP_INPUT_OPERATION);
-        } else {
+            irp->Flags |= (ULONG)(IRP_BUFFERED_IO | IRP_DEALLOCATE_BUFFER | IRP_INPUT_OPERATION);
+        }
+        else
+        {
             //
             // This is a zero-length request.  Simply indicate that this is
             // buffered I/O, and pass along the request.  The buffer will
@@ -531,11 +549,11 @@ Return Value:
             //
 
             irp->AssociatedIrp.SystemBuffer = NULL;
-            irp->Flags |= (ULONG) (IRP_BUFFERED_IO | IRP_INPUT_OPERATION);
-
+            irp->Flags |= (ULONG)(IRP_BUFFERED_IO | IRP_INPUT_OPERATION);
         }
-
-    } else if (deviceObject->Flags & DO_DIRECT_IO) {
+    }
+    else if (deviceObject->Flags & DO_DIRECT_IO)
+    {
 
         PMDL mdl;
 
@@ -546,10 +564,12 @@ Return Value:
         // cleanup if the operation fails.
         //
 
-        if (Length) {
-            mdl = (PMDL) NULL;
+        if (Length)
+        {
+            mdl = (PMDL)NULL;
 
-            try {
+            try
+            {
 
                 //
                 // Allocate an MDL, charging quota for it, and hang it off
@@ -558,13 +578,15 @@ Return Value:
                 // with the PFNs of those pages.
                 //
 
-                mdl = IoAllocateMdl( Buffer, Length, FALSE, TRUE, irp );
-                if (mdl == NULL) {
-                    ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                mdl = IoAllocateMdl(Buffer, Length, FALSE, TRUE, irp);
+                if (mdl == NULL)
+                {
+                    ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
                 }
-                MmProbeAndLockPages( mdl, requestorMode, IoWriteAccess );
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                MmProbeAndLockPages(mdl, requestorMode, IoWriteAccess);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // An exception was incurred while either probing the
@@ -573,21 +595,19 @@ Return Value:
                 // appropriate error status code.
                 //
 
-                IopExceptionCleanup( fileObject,
-                                     irp,
-                                     (PKEVENT) NULL,
-                                     event );
+                IopExceptionCleanup(fileObject, irp, (PKEVENT)NULL, event);
 
-                if (auxiliaryBuffer != NULL) {
-                    ExFreePool( auxiliaryBuffer );
+                if (auxiliaryBuffer != NULL)
+                {
+                    ExFreePool(auxiliaryBuffer);
                 }
 
                 return GetExceptionCode();
-
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Pass the address of the user's buffer so the driver has access
@@ -595,7 +615,6 @@ Return Value:
         //
 
         irp->UserBuffer = Buffer;
-
     }
 
     //
@@ -606,13 +625,16 @@ Return Value:
     irpSp->Parameters.QueryEa.Length = Length;
     irpSp->Parameters.QueryEa.EaIndex = eaIndexValue;
     irpSp->Flags = 0;
-    if (RestartScan) {
+    if (RestartScan)
+    {
         irpSp->Flags = SL_RESTART_SCAN;
     }
-    if (ReturnSingleEntry) {
+    if (ReturnSingleEntry)
+    {
         irpSp->Flags |= SL_RETURN_SINGLE_ENTRY;
     }
-    if (ARGUMENT_PRESENT( EaIndex )) {
+    if (ARGUMENT_PRESENT(EaIndex))
+    {
         irpSp->Flags |= SL_INDEX_SPECIFIED;
     }
 
@@ -621,13 +643,8 @@ Return Value:
     // I/O completion.
     //
 
-    status = IopSynchronousServiceTail( deviceObject,
-                                        irp,
-                                        fileObject,
-                                        FALSE,
-                                        requestorMode,
-                                        synchronousIo,
-                                        OtherTransfer );
+    status =
+        IopSynchronousServiceTail(deviceObject, irp, fileObject, FALSE, requestorMode, synchronousIo, OtherTransfer);
 
     //
     // If the file for this operation was not opened for synchronous I/O, then
@@ -637,26 +654,17 @@ Return Value:
     // operation now.
     //
 
-    if (!synchronousIo) {
+    if (!synchronousIo)
+    {
 
-        status = IopSynchronousApiServiceTail( status,
-                                               event,
-                                               irp,
-                                               requestorMode,
-                                               &localIoStatus,
-                                               IoStatusBlock );
+        status = IopSynchronousApiServiceTail(status, event, irp, requestorMode, &localIoStatus, IoStatusBlock);
     }
 
     return status;
 }
-
+
 NTSTATUS
-NtSetEaFile(
-    IN HANDLE FileHandle,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PVOID Buffer,
-    IN ULONG Length
-    )
+NtSetEaFile(IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, IN PVOID Buffer, IN ULONG Length)
 
 /*++
 
@@ -688,7 +696,7 @@ Return Value:
     NTSTATUS status;
     PFILE_OBJECT fileObject;
     PDEVICE_OBJECT deviceObject;
-    PKEVENT event = (PKEVENT) NULL;
+    PKEVENT event = (PKEVENT)NULL;
     KPROCESSOR_MODE requestorMode;
     PIO_STACK_LOCATION irpSp;
     IO_STATUS_BLOCK localIoStatus;
@@ -701,10 +709,11 @@ Return Value:
     // Get the previous mode;  i.e., the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is user, so probe each of the arguments
@@ -714,21 +723,23 @@ Return Value:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatus( IoStatusBlock );
+            ProbeForWriteIoStatus(IoStatusBlock);
 
             //
             // The Buffer parameter must be readable by the caller.
             //
 
-            ProbeForRead( Buffer, Length, sizeof( ULONG ) );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForRead(Buffer, Length, sizeof(ULONG));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while probing the caller's parameters.
@@ -747,13 +758,10 @@ Return Value:
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        FILE_WRITE_EA,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        NULL );
-    if (!NT_SUCCESS( status )) {
+    status = ObReferenceObjectByHandle(FileHandle, FILE_WRITE_EA, IoFileObjectType, requestorMode, (PVOID *)&fileObject,
+                                       NULL);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -764,22 +772,25 @@ Return Value:
     // operation, then allocate and initialize the local event.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                ObDereferenceObject( fileObject );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                ObDereferenceObject(fileObject);
                 return status;
             }
         }
         synchronousIo = TRUE;
-    } else {
+    }
+    else
+    {
 
         //
         // This is a synchronous API being invoked for a file that is opened
@@ -788,12 +799,13 @@ Return Value:
         // to the caller.  A local event is used to do this.
         //
 
-        event = ExAllocatePool( NonPagedPool, sizeof( KEVENT ) );
-        if (event == NULL) {
-            ObDereferenceObject( fileObject );
+        event = ExAllocatePool(NonPagedPool, sizeof(KEVENT));
+        if (event == NULL)
+        {
+            ObDereferenceObject(fileObject);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        KeInitializeEvent( event, SynchronizationEvent, FALSE );
+        KeInitializeEvent(event, SynchronizationEvent, FALSE);
         synchronousIo = FALSE;
     }
 
@@ -801,32 +813,34 @@ Return Value:
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( fileObject );
+    deviceObject = IoGetRelatedDeviceObject(fileObject);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IoAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IoAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        if (!(fileObject->Flags & FO_SYNCHRONOUS_IO)) {
-            ExFreePool( event );
+        if (!(fileObject->Flags & FO_SYNCHRONOUS_IO))
+        {
+            ExFreePool(event);
         }
 
-        IopAllocateIrpCleanup( fileObject, (PKEVENT) NULL );
+        IopAllocateIrpCleanup(fileObject, (PKEVENT)NULL);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -838,22 +852,25 @@ Return Value:
     // Fill in the service independent parameters in the IRP.
     //
 
-    if (synchronousIo) {
-        irp->UserEvent = (PKEVENT) NULL;
+    if (synchronousIo)
+    {
+        irp->UserEvent = (PKEVENT)NULL;
         irp->UserIosb = IoStatusBlock;
-    } else {
+    }
+    else
+    {
         irp->UserEvent = event;
         irp->UserIosb = &localIoStatus;
         irp->Flags = IRP_SYNCHRONOUS_API;
     }
-    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
 
     //
     // Get a pointer to the stack location for the first driver.  This will be
     // used to pass the original function codes and parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->MajorFunction = IRP_MJ_SET_EA;
     irpSp->FileObject = fileObject;
 
@@ -869,7 +886,8 @@ Return Value:
     // checking and buffering if any is required.
     //
 
-    if (deviceObject->Flags & DO_BUFFERED_IO) {
+    if (deviceObject->Flags & DO_BUFFERED_IO)
+    {
 
         PFILE_FULL_EA_INFORMATION systemBuffer;
         ULONG errorOffset;
@@ -883,32 +901,34 @@ Return Value:
         // cleanup if the operation fails.
         //
 
-        if (Length) {
-            try {
+        if (Length)
+        {
+            try
+            {
 
-            //
-            // Allocate the intermediary system buffer and charge the caller
-            // quota for its allocation.  Copy the caller's EA buffer into the
-            // buffer and check to ensure that it is valid.
-            //
+                //
+                // Allocate the intermediary system buffer and charge the caller
+                // quota for its allocation.  Copy the caller's EA buffer into the
+                // buffer and check to ensure that it is valid.
+                //
 
-                systemBuffer = ExAllocatePoolWithQuota( NonPagedPool, Length );
+                systemBuffer = ExAllocatePoolWithQuota(NonPagedPool, Length);
 
                 irp->AssociatedIrp.SystemBuffer = systemBuffer;
 
-                RtlCopyMemory( systemBuffer, Buffer, Length );
+                RtlCopyMemory(systemBuffer, Buffer, Length);
 
-                status = IoCheckEaBufferValidity( systemBuffer,
-                                                  Length,
-                                                  &errorOffset );
+                status = IoCheckEaBufferValidity(systemBuffer, Length, &errorOffset);
 
-                if (!NT_SUCCESS( status )) {
+                if (!NT_SUCCESS(status))
+                {
                     IoStatusBlock->Status = status;
                     IoStatusBlock->Information = errorOffset;
-                    ExRaiseStatus( status );
+                    ExRaiseStatus(status);
                 }
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // An exception was incurred while allocating the buffer, copying
@@ -917,27 +937,25 @@ Return Value:
                 // code.
                 //
 
-                IopExceptionCleanup( fileObject,
-                                     irp,
-                                     (PKEVENT) NULL,
-                                     event );
+                IopExceptionCleanup(fileObject, irp, (PKEVENT)NULL, event);
 
                 return GetExceptionCode();
-
             }
 
             //
             // Set the flags so that the completion code knows to deallocate the
             // buffer.
             //
-    
+
             irp->Flags |= IRP_BUFFERED_IO | IRP_DEALLOCATE_BUFFER;
-        } else {
+        }
+        else
+        {
             irp->AssociatedIrp.SystemBuffer = NULL;
         }
-
-
-    } else if (deviceObject->Flags & DO_DIRECT_IO) {
+    }
+    else if (deviceObject->Flags & DO_DIRECT_IO)
+    {
 
         PMDL mdl;
 
@@ -948,10 +966,12 @@ Return Value:
         // operation fails.
         //
 
-        mdl = (PMDL) NULL;
+        mdl = (PMDL)NULL;
 
-        if (Length) {
-            try {
+        if (Length)
+        {
+            try
+            {
 
                 //
                 // Allocate an MDL, charging quota for it, and hang it off of the
@@ -960,13 +980,15 @@ Return Value:
                 // pages.
                 //
 
-                mdl = IoAllocateMdl( Buffer, Length, FALSE, TRUE, irp );
-                if (mdl == NULL) {
-                    ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                mdl = IoAllocateMdl(Buffer, Length, FALSE, TRUE, irp);
+                if (mdl == NULL)
+                {
+                    ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
                 }
-                MmProbeAndLockPages( mdl, requestorMode, IoReadAccess );
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                MmProbeAndLockPages(mdl, requestorMode, IoReadAccess);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // An exception was incurred while either probing the caller's
@@ -974,17 +996,14 @@ Return Value:
                 // clean everything up, and return an appropriate error status code.
                 //
 
-                IopExceptionCleanup( fileObject,
-                                     irp,
-                                     (PKEVENT) NULL,
-                                     event );
+                IopExceptionCleanup(fileObject, irp, (PKEVENT)NULL, event);
 
                 return GetExceptionCode();
-
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Pass the address of the user's buffer so the driver has access to
@@ -992,7 +1011,6 @@ Return Value:
         //
 
         irp->UserBuffer = Buffer;
-
     }
 
     //
@@ -1008,13 +1026,8 @@ Return Value:
     // I/O completion.
     //
 
-    status = IopSynchronousServiceTail( deviceObject,
-                                        irp,
-                                        fileObject,
-                                        FALSE,
-                                        requestorMode,
-                                        synchronousIo,
-                                        OtherTransfer );
+    status =
+        IopSynchronousServiceTail(deviceObject, irp, fileObject, FALSE, requestorMode, synchronousIo, OtherTransfer);
 
     //
     // If the file for this operation was not opened for synchronous I/O, then
@@ -1024,14 +1037,10 @@ Return Value:
     // operation now.
     //
 
-    if (!synchronousIo) {
+    if (!synchronousIo)
+    {
 
-        status = IopSynchronousApiServiceTail( status,
-                                               event,
-                                               irp,
-                                               requestorMode,
-                                               &localIoStatus,
-                                               IoStatusBlock );
+        status = IopSynchronousApiServiceTail(status, event, irp, requestorMode, &localIoStatus, IoStatusBlock);
     }
 
     return status;

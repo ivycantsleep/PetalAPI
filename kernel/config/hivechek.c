@@ -21,40 +21,39 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,HvCheckHive)
-#pragma alloc_text(PAGE,HvCheckBin)
+#pragma alloc_text(PAGE, HvCheckHive)
+#pragma alloc_text(PAGE, HvCheckBin)
 #endif
 
 //
 // debug structures
 //
-extern struct {
-    PHHIVE      Hive;
-    ULONG       Status;
-    ULONG       Space;
+extern struct
+{
+    PHHIVE Hive;
+    ULONG Status;
+    ULONG Space;
     HCELL_INDEX MapPoint;
-    PHBIN       BinPoint;
+    PHBIN BinPoint;
 } HvCheckHiveDebug;
 
-extern struct {
-    PHBIN       Bin;
-    ULONG       Status;
-    PHCELL      CellPoint;
+extern struct
+{
+    PHBIN Bin;
+    ULONG Status;
+    PHCELL CellPoint;
 } HvCheckBinDebug;
 
 
 #if DBG
-ULONG HvHiveChecking=0;
+ULONG HvHiveChecking = 0;
 #endif
 
 ULONG
-HvCheckHive(
-    PHHIVE  Hive,
-    PULONG  Storage OPTIONAL
-    )
+HvCheckHive(PHHIVE Hive, PULONG Storage OPTIONAL)
 /*++
 
 Routine Description:
@@ -79,13 +78,13 @@ Return Value:
 --*/
 {
     HCELL_INDEX p;
-    ULONG       Length;
-    ULONG       localstorage = 0;
+    ULONG Length;
+    ULONG localstorage = 0;
     PHMAP_ENTRY t;
-    PHBIN       Bin;
-    ULONG   i;
-    ULONG   rc;
-    PFREE_HBIN  FreeBin;
+    PHBIN Bin;
+    ULONG i;
+    ULONG rc;
+    PFREE_HBIN FreeBin;
 
     HvCheckHiveDebug.Hive = Hive;
     HvCheckHiveDebug.Status = 0;
@@ -98,51 +97,58 @@ Return Value:
 #ifdef CM_MAP_NO_READ
 #ifndef _CM_LDR_
     //
-    // we need to make sure all the cell's data is faulted in inside a 
+    // we need to make sure all the cell's data is faulted in inside a
     // try/except block, as the IO to fault the data in can throw exceptions
     // STATUS_INSUFFICIENT_RESOURCES, in particular
     //
 
-    try {
+    try
+    {
 #endif //_CM_LDR_
 #endif //CM_MAP_NO_READ
 
         //
         // one pass for Stable space, one pass for Volatile
         //
-        for (i = 0; i <= Volatile; i++) {
+        for (i = 0; i <= Volatile; i++)
+        {
             Length = Hive->Storage[i].Length;
 
             //
             // for each bin in the space
             //
-            while (p < Length) {
+            while (p < Length)
+            {
                 t = HvpGetCellMap(Hive, p);
-                if (t == NULL) {
-                    CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckHive:"));
-                    CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"\tBin@:%p invalid\n", Bin));
+                if (t == NULL)
+                {
+                    CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckHive:"));
+                    CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "\tBin@:%p invalid\n", Bin));
                     HvCheckHiveDebug.Status = 2005;
                     HvCheckHiveDebug.Space = i;
                     HvCheckHiveDebug.MapPoint = p;
                     return 2005;
                 }
 
-            
-                if( (t->BinAddress & (HMAP_INPAGEDPOOL|HMAP_INVIEW)) == 0) {
+
+                if ((t->BinAddress & (HMAP_INPAGEDPOOL | HMAP_INVIEW)) == 0)
+                {
                     //
                     // view is not mapped, neither in paged pool
                     // try to map it.
                     //
-                
-                    // volatile info is always in paged pool
-                    ASSERT( i == Stable );
 
-                    if( !NT_SUCCESS(CmpMapThisBin((PCMHIVE)Hive,p,FALSE)) ) {
+                    // volatile info is always in paged pool
+                    ASSERT(i == Stable);
+
+                    if (!NT_SUCCESS(CmpMapThisBin((PCMHIVE)Hive, p, FALSE)))
+                    {
                         //
-                        // we cannot map this bin due to insufficient resources. 
+                        // we cannot map this bin due to insufficient resources.
                         //
-                        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckHive:"));
-                        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"\tinsufficient resources while mapping Bin@:%p\n", Bin));
+                        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckHive:"));
+                        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                                     "\tinsufficient resources while mapping Bin@:%p\n", Bin));
                         HvCheckHiveDebug.Status = 2006;
                         HvCheckHiveDebug.Space = i;
                         HvCheckHiveDebug.MapPoint = p;
@@ -150,20 +156,18 @@ Return Value:
                     }
                 }
 
-                if ((t->BinAddress & HMAP_DISCARDABLE) == 0) {
+                if ((t->BinAddress & HMAP_DISCARDABLE) == 0)
+                {
 
                     Bin = (PHBIN)HBIN_BASE(t->BinAddress);
 
                     //
                     // bin header valid?
                     //
-                    if ( (Bin->Size > Length)                           ||
-                         (Bin->Signature != HBIN_SIGNATURE)             ||
-                         (Bin->FileOffset != p)
-                       )
+                    if ((Bin->Size > Length) || (Bin->Signature != HBIN_SIGNATURE) || (Bin->FileOffset != p))
                     {
-                        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckHive:"));
-                        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"\tBin@:%p invalid\n", Bin));
+                        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckHive:"));
+                        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "\tBin@:%p invalid\n", Bin));
                         HvCheckHiveDebug.Status = 2010;
                         HvCheckHiveDebug.Space = i;
                         HvCheckHiveDebug.MapPoint = p;
@@ -175,7 +179,8 @@ Return Value:
                     // structure inside the bin valid?
                     //
                     rc = HvCheckBin(Hive, Bin, &localstorage);
-                    if (rc != 0) {
+                    if (rc != 0)
+                    {
                         HvCheckHiveDebug.Status = rc;
                         HvCheckHiveDebug.Space = i;
                         HvCheckHiveDebug.MapPoint = p;
@@ -184,22 +189,25 @@ Return Value:
                     }
 
                     p = (ULONG)p + Bin->Size;
-
-                } else {
+                }
+                else
+                {
                     //
                     // Bin is not present, skip it and advance to the next one.
                     //
                     FreeBin = (PFREE_HBIN)t->BlockAddress;
-                    p+=FreeBin->Size;
+                    p += FreeBin->Size;
                 }
             }
 
-            p = 0x80000000;     // Beginning of Volatile space
+            p = 0x80000000; // Beginning of Volatile space
         }
 
 #ifdef CM_MAP_NO_READ
 #ifndef _CM_LDR_
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         HvCheckHiveDebug.Status = 2015;
         HvCheckHiveDebug.Space = GetExceptionCode();
         return HvCheckHiveDebug.Status;
@@ -207,19 +215,16 @@ Return Value:
 #endif //_CM_LDR_
 #endif //CM_MAP_NO_READ
 
-    if (ARGUMENT_PRESENT(Storage)) {
+    if (ARGUMENT_PRESENT(Storage))
+    {
         *Storage = localstorage;
     }
     return 0;
 }
 
-
+
 ULONG
-HvCheckBin(
-    PHHIVE  Hive,
-    PHBIN   Bin,
-    PULONG  Storage
-    )
+HvCheckBin(PHHIVE Hive, PHBIN Bin, PULONG Storage)
 /*++
 
 Routine Description:
@@ -243,12 +248,12 @@ Return Value:
 
 --*/
 {
-    PHCELL  p;
-    PHCELL  np;
-    PHCELL  lp;
-    ULONG   freespace = 0L;
-    ULONG   allocated = 0L;
-    ULONG   userallocated = 0L;
+    PHCELL p;
+    PHCELL np;
+    PHCELL lp;
+    ULONG freespace = 0L;
+    ULONG allocated = 0L;
+    ULONG userallocated = 0L;
 
     HvCheckBinDebug.Bin = Bin;
     HvCheckBinDebug.Status = 0;
@@ -268,17 +273,17 @@ Return Value:
     //              ==> p + p->Size - (Bin + sizeof(HBIN)) > Bin->Size.
     //              ==> p + p->Size > Bin + Bin->Size + sizeof(HBIN)
     //              ==> p + p->Size > Bin + Bin->Size
-    //      This proves that the test "NeverFail 1" (see bellow) will never fail, because when something is wrong, the test above it (namely "Fail 1") will fail 
+    //      This proves that the test "NeverFail 1" (see bellow) will never fail, because when something is wrong, the test above it (namely "Fail 1") will fail
     //      and the function will exit.
     //
     //    The same logic applies to the test "NeverFail 2", so it can be removed also.
     //
-    // 2. The new value of p is always calculated as p = p + p->Size. By the time this is done, the new value of p (ie. p + p->Size) is already checked against 
-    //      Bin + Bin->Size (see tests "Fail 1" and "Fail 2"). So, if p > Bin + Bin->Size, either "Fail 1" or "Fail 2" will fail before asigning the new bogus value 
+    // 2. The new value of p is always calculated as p = p + p->Size. By the time this is done, the new value of p (ie. p + p->Size) is already checked against
+    //      Bin + Bin->Size (see tests "Fail 1" and "Fail 2"). So, if p > Bin + Bin->Size, either "Fail 1" or "Fail 2" will fail before asigning the new bogus value
     //      to p. Therefore, the only possible path to exit the while loop (except a return 20 or return 40), is when p == Bin + Bin->Size.
     //      ==> test "NeverFail 3" can be removed as it will never fail !
     //
-    // 3. Considering 1 (where p + p->Size became p) 
+    // 3. Considering 1 (where p + p->Size became p)
     //              ==> allocated + freespace =  p - (Bin + sizeof(HBIN))
     //    But, Considering 2 (above), when the while loop exits, p = Bin + Bin->Size
     //              ==> allocated + freespace = Bin + Bin->Size - (Bin + sizeof(HBIN))
@@ -286,25 +291,33 @@ Return Value:
     //       This proves that test "NeverFail 4" (see bellow) will never fail as the expresion tested is always true (if the flow of execution reaches the test point).
     //
 
-    while (p < (PHCELL)((PUCHAR)Bin + Bin->Size)) {
+    while (p < (PHCELL)((PUCHAR)Bin + Bin->Size))
+    {
 
         //
         // Check last pointer
         //
-        if (USE_OLD_CELL(Hive)) {
-            if (lp == p) {
-                if (p->u.OldCell.Last != HBIN_NIL) {
-                    CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckBin 20: First cell has wrong last pointer\n"));
-                    CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Bin = %p\n", Bin));
+        if (USE_OLD_CELL(Hive))
+        {
+            if (lp == p)
+            {
+                if (p->u.OldCell.Last != HBIN_NIL)
+                {
+                    CmKdPrintEx(
+                        (DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckBin 20: First cell has wrong last pointer\n"));
+                    CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Bin = %p\n", Bin));
                     HvCheckBinDebug.Status = 20;
                     HvCheckBinDebug.CellPoint = p;
                     return 20;
                 }
-            } else {
-                if ((PHCELL)(p->u.OldCell.Last + (PUCHAR)Bin) != lp) {
-                    CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckBin 30: incorrect last pointer\n"));
-                    CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Bin = %p\n", Bin));
-                    CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"p = %p\n", (ULONG_PTR)p));
+            }
+            else
+            {
+                if ((PHCELL)(p->u.OldCell.Last + (PUCHAR)Bin) != lp)
+                {
+                    CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckBin 30: incorrect last pointer\n"));
+                    CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Bin = %p\n", Bin));
+                    CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "p = %p\n", (ULONG_PTR)p));
                     HvCheckBinDebug.Status = 30;
                     HvCheckBinDebug.CellPoint = p;
                     return 30;
@@ -312,11 +325,12 @@ Return Value:
             }
         }
 
-        
+
         //
         // Check size
         //
-        if (p->Size < 0) {
+        if (p->Size < 0)
+        {
 
             //
             // allocated cell
@@ -325,22 +339,23 @@ Return Value:
             // DRAGOS:    Fail 1
             // This test will alway fail prior to the failure of the bellow test
             //
-            if ( ((ULONG)(p->Size * -1) > Bin->Size)        ||
-                 ( (PHCELL)((p->Size * -1) + (PUCHAR)p) >
-                   (PHCELL)((PUCHAR)Bin + Bin->Size) )
-               )
+            if (((ULONG)(p->Size * -1) > Bin->Size) ||
+                ((PHCELL)((p->Size * -1) + (PUCHAR)p) > (PHCELL)((PUCHAR)Bin + Bin->Size)))
             {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckBin 40: impossible allocation\n"));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Bin = %p\n", Bin));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckBin 40: impossible allocation\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Bin = %p\n", Bin));
                 HvCheckBinDebug.Status = 40;
                 HvCheckBinDebug.CellPoint = p;
                 return 40;
             }
 
             allocated += (p->Size * -1);
-            if (USE_OLD_CELL(Hive)) {
+            if (USE_OLD_CELL(Hive))
+            {
                 userallocated += (p->Size * -1) - FIELD_OFFSET(HCELL, u.OldCell.u.UserData);
-            } else {
+            }
+            else
+            {
                 userallocated += (p->Size * -1) - FIELD_OFFSET(HCELL, u.NewCell.u.UserData);
             }
 
@@ -348,19 +363,19 @@ Return Value:
             // DRAGOS:   NeverFail 1
             // This test will never fail. If a size is wrong the above test (Fail 1)will fail. We can remove this test (it's useless).
             //
-            if (allocated > Bin->Size) {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckBin 50: allocated exceeds available\n"));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Bin = %p\n", Bin));
+            if (allocated > Bin->Size)
+            {
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckBin 50: allocated exceeds available\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Bin = %p\n", Bin));
                 HvCheckBinDebug.Status = 50;
                 HvCheckBinDebug.CellPoint = p;
                 return 50;
             }
 
             np = (PHCELL)((PUCHAR)p + (p->Size * -1));
-
-
-
-        } else {
+        }
+        else
+        {
 
             //
             // free cell
@@ -369,13 +384,11 @@ Return Value:
             // DRAGOS:    Fail 2
             // This test will alway fail prior to the failure of the bellow test
             //
-            if ( ((ULONG)p->Size > Bin->Size)               ||
-                 ( (PHCELL)(p->Size + (PUCHAR)p) >
-                   (PHCELL)((PUCHAR)Bin + Bin->Size) ) ||
-                 (p->Size == 0) )
+            if (((ULONG)p->Size > Bin->Size) || ((PHCELL)(p->Size + (PUCHAR)p) > (PHCELL)((PUCHAR)Bin + Bin->Size)) ||
+                (p->Size == 0))
             {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckBin 60: impossible free block\n"));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Bin = %p\n", Bin));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckBin 60: impossible free block\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Bin = %p\n", Bin));
                 HvCheckBinDebug.Status = 60;
                 HvCheckBinDebug.CellPoint = p;
                 return 60;
@@ -387,16 +400,16 @@ Return Value:
             // DRAGOS:   NeverFail 2
             // This test will never fail. If a size is wrong the above test (Fail 2) will fail. We can remove this test (it's useless).
             //
-            if (freespace > Bin->Size) {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckBin 70: free exceeds available\n"));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Bin = %p\n", Bin));
+            if (freespace > Bin->Size)
+            {
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckBin 70: free exceeds available\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Bin = %p\n", Bin));
                 HvCheckBinDebug.Status = 70;
                 HvCheckBinDebug.CellPoint = p;
                 return 70;
             }
 
             np = (PHCELL)((PUCHAR)p + p->Size);
-
         }
 
         lp = p;
@@ -407,12 +420,13 @@ Return Value:
     // This test never fails. If the while loop exits, the condition tested here is always true!!!
     // We can remove this test (it's useless)
     //
-    if ((freespace + allocated + sizeof(HBIN)) != Bin->Size) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckBin 995: sizes do not add up\n"));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Bin = %p\n", Bin));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"freespace = %08lx  ", freespace));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"allocated = %08lx  ", allocated));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"size = %08lx\n", Bin->Size));
+    if ((freespace + allocated + sizeof(HBIN)) != Bin->Size)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckBin 995: sizes do not add up\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Bin = %p\n", Bin));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "freespace = %08lx  ", freespace));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "allocated = %08lx  ", allocated));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "size = %08lx\n", Bin->Size));
         HvCheckBinDebug.Status = 995;
         return 995;
     }
@@ -421,14 +435,16 @@ Return Value:
     // This test never fails. The only way out of the while loop is when p == Bin + Bin->Size !!!!!!!
     // We can remove this test (it's useless)
     //
-    if (p != (PHCELL)((PUCHAR)Bin + Bin->Size)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"HvCheckBin 1000: last cell points off the end\n"));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Bin = %p\n", Bin));
+    if (p != (PHCELL)((PUCHAR)Bin + Bin->Size))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "HvCheckBin 1000: last cell points off the end\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "Bin = %p\n", Bin));
         HvCheckBinDebug.Status = 1000;
         return 1000;
     }
 
-    if (ARGUMENT_PRESENT(Storage)) {
+    if (ARGUMENT_PRESENT(Storage))
+    {
         *Storage += userallocated;
     }
     return 0;

@@ -21,19 +21,15 @@ Revision History:
 
 #include "ki.h"
 
-
 
 NTSTATUS
-NtInitializeVDM(
-    VOID
-    )
+NtInitializeVDM(VOID)
 {
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-NtVdmStartExecution (
-    )
+NtVdmStartExecution()
 
 /*++
 
@@ -50,5 +46,4 @@ Return Value:
 {
 
     return STATUS_NOT_IMPLEMENTED;
-
 }

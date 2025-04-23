@@ -20,14 +20,14 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpFileSetSize)
+#pragma alloc_text(PAGE, CmpFileSetSize)
 #endif
 
-extern  KEVENT StartRegistryCommand;
-extern  KEVENT EndRegistryCommand;
+extern KEVENT StartRegistryCommand;
+extern KEVENT EndRegistryCommand;
 
 //
 // Write-Control:
@@ -37,16 +37,11 @@ extern  KEVENT EndRegistryCommand;
 //  AND autocheck (chkdsk) has done its thing.
 //
 
-extern  BOOLEAN CmpNoWrite;
+extern BOOLEAN CmpNoWrite;
 
-
+
 BOOLEAN
-CmpFileSetSize(
-    PHHIVE      Hive,
-    ULONG       FileType,
-    ULONG       FileSize,
-    ULONG       OldFileSize
-    )
+CmpFileSetSize(PHHIVE Hive, ULONG FileType, ULONG FileSize, ULONG OldFileSize)
 /*++
 
 Routine Description:
@@ -73,7 +68,7 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
+    NTSTATUS status;
 
     ASSERT(FIELD_OFFSET(CMHIVE, Hive) == 0);
 
@@ -82,11 +77,12 @@ Return Value:
     //
     // Call the worker to do real work for us.
     //
-    status = CmpDoFileSetSize(Hive,FileType,FileSize,OldFileSize);
-    
-    if (!NT_SUCCESS(status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpFileSetSize:\n\t"));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"Failure: status = %08lx ", status));
+    status = CmpDoFileSetSize(Hive, FileType, FileSize, OldFileSize);
+
+    if (!NT_SUCCESS(status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpFileSetSize:\n\t"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "Failure: status = %08lx ", status));
         return FALSE;
     }
 

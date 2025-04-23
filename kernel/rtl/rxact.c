@@ -35,7 +35,7 @@ Revision History:
 
 --*/
 
-
+
 /*
 ////////////////////////////////////////////////////////////////////////////
 
@@ -116,7 +116,6 @@ High Level Description:
 */
 
 
-
 /*
 ////////////////////////////////////////////////////////////////////////////
 
@@ -209,12 +208,9 @@ Detailed Description:
 //
 // Cannot include <windows.h> from kernel code
 //
-#define INVALID_HANDLE_VALUE (HANDLE)-1
+#define INVALID_HANDLE_VALUE (HANDLE) - 1
 
 
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //    Local Macros & Definitions                                             //
@@ -225,23 +221,21 @@ Detailed Description:
 // Revision level of a registry transaction .
 //
 
-#define RTLP_RXACT_REVISION1          (1l)
-#define RTLP_RXACT_CURRENT_REVISION   RTLP_RXACT_REVISION1
+#define RTLP_RXACT_REVISION1 (1l)
+#define RTLP_RXACT_CURRENT_REVISION RTLP_RXACT_REVISION1
 
 
-#define RTLP_RXACT_KEY_NAME           L"RXACT"
+#define RTLP_RXACT_KEY_NAME L"RXACT"
 
-#define RTLP_RXACT_LOG_NAME           L"Log"
+#define RTLP_RXACT_LOG_NAME L"Log"
 
-#define RTLP_INITIAL_LOG_SIZE         0x4000
+#define RTLP_INITIAL_LOG_SIZE 0x4000
 
 //
 //  Given a value return its longword aligned equivalent value
 //
 
-#define DwordAlign(Value) (                       \
-    (ULONG)((((ULONG)(Value)) + 3) & 0xfffffffc)  \
-    )
+#define DwordAlign(Value) ((ULONG)((((ULONG)(Value)) + 3) & 0xfffffffc))
 
 //
 // The value field of the RXACT registry key is one of the following data
@@ -257,33 +251,34 @@ Detailed Description:
 //                                       applied to the registry database.
 //
 
-typedef enum _RTLP_RXACT_STATE {
+typedef enum _RTLP_RXACT_STATE
+{
     RtlpRXactStateNoTransaction = 2,
     RtlpRXactStateCommitting
 } RTLP_RXACT_STATE, *PRTLP_RXACT_STATE;
 
 
-typedef struct _RTLP_RXACT {
+typedef struct _RTLP_RXACT
+{
     ULONG Revision;
-    RTLP_RXACT_STATE State;   // no longer used
-    ULONG OperationCount;     // no longer used
+    RTLP_RXACT_STATE State; // no longer used
+    ULONG OperationCount;   // no longer used
 } RTLP_RXACT, *PRTLP_RXACT;
 
 
-typedef struct _RXACT_LOG_ENTRY {
+typedef struct _RXACT_LOG_ENTRY
+{
     ULONG LogEntrySize;
     RTL_RXACT_OPERATION Operation;
-    UNICODE_STRING SubKeyName;       // Self-relativized (Buffer is really offset)
-    UNICODE_STRING AttributeName;    // Self-relativized (Buffer is really offset)
-    HANDLE KeyHandle;                // optional, not valid if read from disk.
+    UNICODE_STRING SubKeyName;    // Self-relativized (Buffer is really offset)
+    UNICODE_STRING AttributeName; // Self-relativized (Buffer is really offset)
+    HANDLE KeyHandle;             // optional, not valid if read from disk.
     ULONG NewKeyValueType;
     ULONG NewKeyValueLength;
-    PVOID NewKeyValue;               // Contains offset to data from start of log
+    PVOID NewKeyValue; // Contains offset to data from start of log
 } RXACT_LOG_ENTRY, *PRXACT_LOG_ENTRY;
 
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
 //                      Prototypes for local procedures                       //
@@ -291,45 +286,31 @@ typedef struct _RXACT_LOG_ENTRY {
 ////////////////////////////////////////////////////////////////////////////////
 
 
-
+NTSTATUS
+RXactpCommit(IN PRTL_RXACT_CONTEXT RXactContext);
 
 NTSTATUS
-RXactpCommit(
-    IN PRTL_RXACT_CONTEXT RXactContext
-    );
-
-NTSTATUS
-RXactpOpenTargetKey(
-    IN HANDLE RootRegistryKey,
-    IN RTL_RXACT_OPERATION Operation,
-    IN PUNICODE_STRING SubKeyName,
-    OUT PHANDLE TargetKey
-    );
+RXactpOpenTargetKey(IN HANDLE RootRegistryKey, IN RTL_RXACT_OPERATION Operation, IN PUNICODE_STRING SubKeyName,
+                    OUT PHANDLE TargetKey);
 
 
-
-VOID
-RXactInitializeContext(
-    IN PRTL_RXACT_CONTEXT RXactContext,
-    IN HANDLE RootRegistryKey,
-    IN HANDLE RXactKey
-    );
+VOID RXactInitializeContext(IN PRTL_RXACT_CONTEXT RXactContext, IN HANDLE RootRegistryKey, IN HANDLE RXactKey);
 
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,RXactpCommit)
-#pragma alloc_text(PAGE,RXactpOpenTargetKey)
-#pragma alloc_text(PAGE,RXactInitializeContext)
-#pragma alloc_text(PAGE,RtlInitializeRXact)
-#pragma alloc_text(PAGE,RtlStartRXact)
-#pragma alloc_text(PAGE,RtlAbortRXact)
-#pragma alloc_text(PAGE,RtlAddAttributeActionToRXact)
-#pragma alloc_text(PAGE,RtlAddActionToRXact)
-#pragma alloc_text(PAGE,RtlApplyRXact)
-#pragma alloc_text(PAGE,RtlApplyRXactNoFlush)
+#pragma alloc_text(PAGE, RXactpCommit)
+#pragma alloc_text(PAGE, RXactpOpenTargetKey)
+#pragma alloc_text(PAGE, RXactInitializeContext)
+#pragma alloc_text(PAGE, RtlInitializeRXact)
+#pragma alloc_text(PAGE, RtlStartRXact)
+#pragma alloc_text(PAGE, RtlAbortRXact)
+#pragma alloc_text(PAGE, RtlAddAttributeActionToRXact)
+#pragma alloc_text(PAGE, RtlAddActionToRXact)
+#pragma alloc_text(PAGE, RtlApplyRXact)
+#pragma alloc_text(PAGE, RtlApplyRXactNoFlush)
 #endif
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //    Exported Procedures   (defined in ntrtl.h)                             //
@@ -338,11 +319,7 @@ RXactInitializeContext(
 
 
 NTSTATUS
-RtlInitializeRXact(
-    IN HANDLE RootRegistryKey,
-    IN BOOLEAN CommitIfNecessary,
-    OUT PRTL_RXACT_CONTEXT *RXactContext
-    )
+RtlInitializeRXact(IN HANDLE RootRegistryKey, IN BOOLEAN CommitIfNecessary, OUT PRTL_RXACT_CONTEXT *RXactContext)
 
 /*++
 
@@ -406,7 +383,7 @@ Return Value:
     OBJECT_ATTRIBUTES RXactAttributes;
     PKEY_VALUE_FULL_INFORMATION FullInformation;
     RTLP_RXACT RXactKeyValue;
-    UCHAR BasicInformation[128];      // Should be more than long enough
+    UCHAR BasicInformation[128]; // Should be more than long enough
     ULONG Disposition;
     ULONG KeyValueLength;
     ULONG KeyValueType;
@@ -421,110 +398,103 @@ Return Value:
     // Initialize some stuff
     //
 
-    KeyValueLength = (ULONG)sizeof( RTLP_RXACT );
-    KeyValueType   = 0;         // Not used by RXact
+    KeyValueLength = (ULONG)sizeof(RTLP_RXACT);
+    KeyValueType = 0; // Not used by RXact
 
-    RtlInitUnicodeString( &NullName, NULL );
+    RtlInitUnicodeString(&NullName, NULL);
 
     //
     // Create or open the RXACT key.
     //
 
-    RtlInitUnicodeString( &RXactKeyName, RTLP_RXACT_KEY_NAME);
+    RtlInitUnicodeString(&RXactKeyName, RTLP_RXACT_KEY_NAME);
 
-    InitializeObjectAttributes(
-        &RXactAttributes,
-        &RXactKeyName,
-        OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
-        RootRegistryKey,
-        NULL);
+    InitializeObjectAttributes(&RXactAttributes, &RXactKeyName, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, RootRegistryKey,
+                               NULL);
 
-//    Status = RtlpNtCreateKey(
-//                 &RXactKey,
-//                 (KEY_READ | KEY_WRITE | DELETE),
-//                 &RXactAttributes,
-//                 0,
-//                 NULL,
-//                 &Disposition
-//                 );
+    //    Status = RtlpNtCreateKey(
+    //                 &RXactKey,
+    //                 (KEY_READ | KEY_WRITE | DELETE),
+    //                 &RXactAttributes,
+    //                 0,
+    //                 NULL,
+    //                 &Disposition
+    //                 );
 
-    Status = NtCreateKey( &RXactKey,
-                          (KEY_READ | KEY_WRITE | DELETE),
-                          &RXactAttributes,
-                          0,                          //TitleIndex
-                          NULL,                       //Class OPTIONAL,
-                          REG_OPTION_NON_VOLATILE,    //CreateOptions,
-                          &Disposition
-                          );
+    Status = NtCreateKey(&RXactKey, (KEY_READ | KEY_WRITE | DELETE), &RXactAttributes,
+                         0,                       //TitleIndex
+                         NULL,                    //Class OPTIONAL,
+                         REG_OPTION_NON_VOLATILE, //CreateOptions,
+                         &Disposition);
 
-    if ( !NT_SUCCESS(Status) ) {
-        return(Status);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
     // Allocate the RXactContext block
     //
 
-    *RXactContext = RtlAllocateHeap( RtlProcessHeap(), 0, sizeof( RTL_RXACT_CONTEXT ));
+    *RXactContext = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(RTL_RXACT_CONTEXT));
 
-    if ( *RXactContext == NULL ) {
+    if (*RXactContext == NULL)
+    {
 
         //
         // Something prevented value assignment...
         // Get rid of the RXact key and return the error
         //
 
-        TmpStatus = NtDeleteKey( RXactKey );
+        TmpStatus = NtDeleteKey(RXactKey);
         ASSERT(NT_SUCCESS(TmpStatus)); //Safe to ignore, notify security group
-        TmpStatus = NtClose( RXactKey );
+        TmpStatus = NtClose(RXactKey);
         ASSERT(NT_SUCCESS(TmpStatus)); //Safe to ignore, notify security group
 
-        return( STATUS_NO_MEMORY );
+        return (STATUS_NO_MEMORY);
     }
 
     //
     // Initialize the newly created RXactContext structure.
     //
 
-    RXactInitializeContext( *RXactContext, RootRegistryKey, RXactKey );
+    RXactInitializeContext(*RXactContext, RootRegistryKey, RXactKey);
 
     //
     // If we created (as opposed to opened an existing) rxact key,
     // then we need to initialize it.
     //
 
-    if ( Disposition == REG_CREATED_NEW_KEY ) {
+    if (Disposition == REG_CREATED_NEW_KEY)
+    {
 
-        RXactKeyValue.Revision       = RTLP_RXACT_REVISION1;
+        RXactKeyValue.Revision = RTLP_RXACT_REVISION1;
 
-        Status = NtSetValueKey( RXactKey,
-                                &NullName,       // ValueName
-                                0,               // TitleIndex
-                                KeyValueType,
-                                &RXactKeyValue,
-                                KeyValueLength
-                                );
+        Status = NtSetValueKey(RXactKey,
+                               &NullName, // ValueName
+                               0,         // TitleIndex
+                               KeyValueType, &RXactKeyValue, KeyValueLength);
 
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // Something prevented value assignment...
             // Get rid of the RXact key and return the error
             //
 
-            TmpStatus = NtDeleteKey( RXactKey );
+            TmpStatus = NtDeleteKey(RXactKey);
             ASSERT(NT_SUCCESS(TmpStatus)); //Safe to ignore, notify security group
-            TmpStatus = NtClose( RXactKey );
+            TmpStatus = NtClose(RXactKey);
             ASSERT(NT_SUCCESS(TmpStatus)); //Safe to ignore, notify security group
 
-            RtlFreeHeap( RtlProcessHeap(), 0, *RXactContext );
+            RtlFreeHeap(RtlProcessHeap(), 0, *RXactContext);
 
-            return( Status );
+            return (Status);
         }
 
-        return( STATUS_RXACT_STATE_CREATED );
+        return (STATUS_RXACT_STATE_CREATED);
     }
-
 
 
     //
@@ -532,42 +502,43 @@ Return Value:
     // See if it is a revision level we know about.
     //
 
-    Status = RtlpNtQueryValueKey(
-                 RXactKey,              // KeyHandle
-                 &KeyValueType,         // KeyValueType
-                 &RXactKeyValue,        // KeyValue
-                 &KeyValueLength,       // KeyValueLength
-                 &LastWriteTime         // LastWriteTime
-                 );
+    Status = RtlpNtQueryValueKey(RXactKey,        // KeyHandle
+                                 &KeyValueType,   // KeyValueType
+                                 &RXactKeyValue,  // KeyValue
+                                 &KeyValueLength, // KeyValueLength
+                                 &LastWriteTime   // LastWriteTime
+    );
 
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // Something prevented value query...
         //
 
-        TmpStatus = NtClose( RXactKey );
+        TmpStatus = NtClose(RXactKey);
         ASSERT(NT_SUCCESS(TmpStatus)); //Safe to ignore, notify security group
-        RtlFreeHeap( RtlProcessHeap(), 0, *RXactContext );
-        return( Status );
+        RtlFreeHeap(RtlProcessHeap(), 0, *RXactContext);
+        return (Status);
     }
 
 
-    if ( KeyValueLength != (ULONG)sizeof(RTLP_RXACT) ) {
-        TmpStatus = NtClose( RXactKey );
+    if (KeyValueLength != (ULONG)sizeof(RTLP_RXACT))
+    {
+        TmpStatus = NtClose(RXactKey);
         ASSERT(NT_SUCCESS(TmpStatus)); //Safe to ignore, notify security group
-        RtlFreeHeap( RtlProcessHeap(), 0, *RXactContext );
-        return( STATUS_UNKNOWN_REVISION );
+        RtlFreeHeap(RtlProcessHeap(), 0, *RXactContext);
+        return (STATUS_UNKNOWN_REVISION);
     }
 
-    if (RXactKeyValue.Revision != RTLP_RXACT_REVISION1) {
-        TmpStatus = NtClose( RXactKey );
+    if (RXactKeyValue.Revision != RTLP_RXACT_REVISION1)
+    {
+        TmpStatus = NtClose(RXactKey);
         ASSERT(NT_SUCCESS(TmpStatus)); //Safe to ignore, notify security group
-        RtlFreeHeap( RtlProcessHeap(), 0, *RXactContext );
-        return( STATUS_UNKNOWN_REVISION );
+        RtlFreeHeap(RtlProcessHeap(), 0, *RXactContext);
+        return (STATUS_UNKNOWN_REVISION);
     }
-
 
 
     //
@@ -580,65 +551,50 @@ Return Value:
     // If a log file exists, then we are committing.
     //
 
-    RtlInitUnicodeString( &ValueName, RTLP_RXACT_LOG_NAME );
+    RtlInitUnicodeString(&ValueName, RTLP_RXACT_LOG_NAME);
 
-    Status = NtQueryValueKey(
-                 RXactKey,
-                 &ValueName,
-                 KeyValueBasicInformation,
-                 &BasicInformation,
-                 128,
-                 &ResultLength
-                 );
+    Status = NtQueryValueKey(RXactKey, &ValueName, KeyValueBasicInformation, &BasicInformation, 128, &ResultLength);
 
-    if ( NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // We found a value called 'Log'.  This means that a commit
         // was in progress.
         //
 
-        if ( CommitIfNecessary ) {
+        if (CommitIfNecessary)
+        {
 
             //
             // Query the full value of the log, then call a low level routine
             // to actually perform the commit.
             //
 
-            Status = NtQueryValueKey(
-                         RXactKey,
-                         &ValueName,
-                         KeyValueFullInformation,
-                         NULL,
-                         0,
-                         &ResultLength
-                         );
+            Status = NtQueryValueKey(RXactKey, &ValueName, KeyValueFullInformation, NULL, 0, &ResultLength);
 
-            if ( Status != STATUS_BUFFER_TOO_SMALL ) {
-                return( Status );
+            if (Status != STATUS_BUFFER_TOO_SMALL)
+            {
+                return (Status);
             }
 
-            FullInformation = RtlAllocateHeap( RtlProcessHeap(), 0, ResultLength );
+            FullInformation = RtlAllocateHeap(RtlProcessHeap(), 0, ResultLength);
 
-            if ( FullInformation == NULL ) {
-                return( STATUS_NO_MEMORY );
+            if (FullInformation == NULL)
+            {
+                return (STATUS_NO_MEMORY);
             }
 
 
-            Status = NtQueryValueKey(
-                         RXactKey,
-                         &ValueName,
-                         KeyValueFullInformation,
-                         FullInformation,
-                         ResultLength,
-                         &ResultLength
-                         );
+            Status = NtQueryValueKey(RXactKey, &ValueName, KeyValueFullInformation, FullInformation, ResultLength,
+                                     &ResultLength);
 
-            if ( !NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
-                RtlFreeHeap( RtlProcessHeap(), 0, FullInformation );
-                RtlFreeHeap( RtlProcessHeap(), 0, *RXactContext );
-                return( Status );
+                RtlFreeHeap(RtlProcessHeap(), 0, FullInformation);
+                RtlFreeHeap(RtlProcessHeap(), 0, *RXactContext);
+                return (Status);
             }
 
             //
@@ -655,13 +611,14 @@ Return Value:
 
             (*RXactContext)->HandlesValid = FALSE;
 
-            Status = RXactpCommit( *RXactContext );
+            Status = RXactpCommit(*RXactContext);
 
-            if ( !NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
-                RtlFreeHeap( RtlProcessHeap(), 0, FullInformation );
-                RtlFreeHeap( RtlProcessHeap(), 0, *RXactContext );
-                return( Status );
+                RtlFreeHeap(RtlProcessHeap(), 0, FullInformation);
+                RtlFreeHeap(RtlProcessHeap(), 0, *RXactContext);
+                return (Status);
             }
 
 
@@ -670,13 +627,13 @@ Return Value:
             // Delete the log file value and data
             //
 
-            Status = NtDeleteValueKey( RXactKey, &ValueName );
+            Status = NtDeleteValueKey(RXactKey, &ValueName);
 
             //
             // This should never fail
             //
 
-            ASSERT( NT_SUCCESS( Status ));
+            ASSERT(NT_SUCCESS(Status));
 
             //
             // Get rid of the in memory data structures.  Abort
@@ -686,38 +643,34 @@ Return Value:
 
             (*RXactContext)->RXactLog = (PRTL_RXACT_LOG)FullInformation;
 
-            Status = RtlAbortRXact( *RXactContext );
+            Status = RtlAbortRXact(*RXactContext);
 
             //
             // This should never fail
             //
 
-            ASSERT( NT_SUCCESS( Status ));
-            return( Status );
-        } else {
-
-            return( STATUS_RXACT_COMMIT_NECESSARY );
+            ASSERT(NT_SUCCESS(Status));
+            return (Status);
         }
+        else
+        {
 
-    } else {
+            return (STATUS_RXACT_COMMIT_NECESSARY);
+        }
+    }
+    else
+    {
 
         //
         // No log, so nothing to do here.
         //
 
-        return( STATUS_SUCCESS );
+        return (STATUS_SUCCESS);
     }
-
 }
 
 
-
-VOID
-RXactInitializeContext(
-    IN PRTL_RXACT_CONTEXT RXactContext,
-    IN HANDLE RootRegistryKey,
-    IN HANDLE RXactKey
-    )
+VOID RXactInitializeContext(IN PRTL_RXACT_CONTEXT RXactContext, IN HANDLE RootRegistryKey, IN HANDLE RXactKey)
 
 /*++
 
@@ -746,20 +699,17 @@ Return Value:
     // Initialize the RXactContext for this client
     //
 
-    RXactContext->RootRegistryKey      = RootRegistryKey;
-    RXactContext->HandlesValid         = TRUE;
-    RXactContext->RXactLog             = NULL;
-    RXactContext->RXactKey             = RXactKey;
+    RXactContext->RootRegistryKey = RootRegistryKey;
+    RXactContext->HandlesValid = TRUE;
+    RXactContext->RXactLog = NULL;
+    RXactContext->RXactKey = RXactKey;
 
     return;
 }
 
 
-
 NTSTATUS
-RtlStartRXact(
-    IN PRTL_RXACT_CONTEXT RXactContext
-    )
+RtlStartRXact(IN PRTL_RXACT_CONTEXT RXactContext)
 
 /*++
 
@@ -796,20 +746,22 @@ Return Value:
     // sets the state to 'transaction in progress'.
     //
 
-    if ( RXactContext->RXactLog != NULL ) {
+    if (RXactContext->RXactLog != NULL)
+    {
 
         //
         // There is already a transaction in progress for this
         // context.  Return an error.
         //
 
-        return( STATUS_RXACT_INVALID_STATE );
+        return (STATUS_RXACT_INVALID_STATE);
     }
 
-    RXactLogHeader = RtlAllocateHeap( RtlProcessHeap(), 0, RTLP_INITIAL_LOG_SIZE );
+    RXactLogHeader = RtlAllocateHeap(RtlProcessHeap(), 0, RTLP_INITIAL_LOG_SIZE);
 
-    if ( RXactLogHeader == NULL ) {
-        return( STATUS_NO_MEMORY );
+    if (RXactLogHeader == NULL)
+    {
+        return (STATUS_NO_MEMORY);
     }
 
     //
@@ -819,20 +771,17 @@ Return Value:
 
 
     RXactLogHeader->OperationCount = 0;
-    RXactLogHeader->LogSize        = RTLP_INITIAL_LOG_SIZE;
-    RXactLogHeader->LogSizeInUse   = sizeof( RTL_RXACT_LOG );
+    RXactLogHeader->LogSize = RTLP_INITIAL_LOG_SIZE;
+    RXactLogHeader->LogSizeInUse = sizeof(RTL_RXACT_LOG);
 
     RXactContext->RXactLog = RXactLogHeader;
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
-
+
 NTSTATUS
-RtlAbortRXact(
-    IN PRTL_RXACT_CONTEXT RXactContext
-    )
+RtlAbortRXact(IN PRTL_RXACT_CONTEXT RXactContext)
 
 /*++
 
@@ -867,46 +816,35 @@ Return Value:
 {
     RTL_PAGED_CODE();
 
-    if ( RXactContext->RXactLog == NULL ) {
+    if (RXactContext->RXactLog == NULL)
+    {
 
         //
         // There is no transaction in progress for this
         // context.  Return an error.
         //
 
-        return( STATUS_RXACT_INVALID_STATE );
+        return (STATUS_RXACT_INVALID_STATE);
     }
 
-    (VOID) RtlFreeHeap( RtlProcessHeap(), 0, RXactContext->RXactLog );
+    (VOID) RtlFreeHeap(RtlProcessHeap(), 0, RXactContext->RXactLog);
 
     //
     // Reinitialize the RXactContext structure with the same initial data.
     //
 
-    RXactInitializeContext(
-        RXactContext,
-        RXactContext->RootRegistryKey,
-        RXactContext->RXactKey
-        );
+    RXactInitializeContext(RXactContext, RXactContext->RootRegistryKey, RXactContext->RXactKey);
 
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
 
-
 NTSTATUS
-RtlAddAttributeActionToRXact(
-    IN PRTL_RXACT_CONTEXT RXactContext,
-    IN RTL_RXACT_OPERATION Operation,
-    IN PUNICODE_STRING SubKeyName,
-    IN HANDLE KeyHandle OPTIONAL,
-    IN PUNICODE_STRING AttributeName,
-    IN ULONG NewValueType,
-    IN PVOID NewValue,
-    IN ULONG NewValueLength
-    )
+RtlAddAttributeActionToRXact(IN PRTL_RXACT_CONTEXT RXactContext, IN RTL_RXACT_OPERATION Operation,
+                             IN PUNICODE_STRING SubKeyName, IN HANDLE KeyHandle OPTIONAL,
+                             IN PUNICODE_STRING AttributeName, IN ULONG NewValueType, IN PVOID NewValue,
+                             IN ULONG NewValueLength)
 
 /*++
 
@@ -975,7 +913,7 @@ Return Value:
 
 {
 
-    PRTL_RXACT_LOG   NewLog;
+    PRTL_RXACT_LOG NewLog;
     PRXACT_LOG_ENTRY Base;
 
     ULONG End;
@@ -988,8 +926,8 @@ Return Value:
     // Make sure we were passed a legitimate operation.
     //
 
-    if (  (Operation != RtlRXactOperationDelete)  &&
-          (Operation != RtlRXactOperationSetValue)   ) {
+    if ((Operation != RtlRXactOperationDelete) && (Operation != RtlRXactOperationSetValue))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -997,12 +935,10 @@ Return Value:
     // Compute the total size of the new data
     //
 
-    LogEntrySize = sizeof( RXACT_LOG_ENTRY )               +
-                   DwordAlign( SubKeyName->Length )        +
-                   DwordAlign( AttributeName->Length )     +
-                   DwordAlign( NewValueLength );
+    LogEntrySize = sizeof(RXACT_LOG_ENTRY) + DwordAlign(SubKeyName->Length) + DwordAlign(AttributeName->Length) +
+                   DwordAlign(NewValueLength);
 
-    LogEntrySize = ALIGN_UP( LogEntrySize, PVOID );
+    LogEntrySize = ALIGN_UP(LogEntrySize, PVOID);
 
     //
     // Make sure there is enough space in the current
@@ -1011,8 +947,8 @@ Return Value:
     // append this to the end.
     //
 
-    if ( RXactContext->RXactLog->LogSizeInUse + LogEntrySize >
-                                   RXactContext->RXactLog->LogSize ) {
+    if (RXactContext->RXactLog->LogSizeInUse + LogEntrySize > RXactContext->RXactLog->LogSize)
+    {
 
         //
         // We must allocate a bigger log file.
@@ -1020,30 +956,31 @@ Return Value:
 
         NewLogSize = RXactContext->RXactLog->LogSize;
 
-        do {
+        do
+        {
 
             NewLogSize = NewLogSize * 2;
 
-        } while ( NewLogSize <
-            ( RXactContext->RXactLog->LogSizeInUse + LogEntrySize ) );
+        } while (NewLogSize < (RXactContext->RXactLog->LogSizeInUse + LogEntrySize));
 
-        NewLog = RtlAllocateHeap( RtlProcessHeap(), 0, NewLogSize );
+        NewLog = RtlAllocateHeap(RtlProcessHeap(), 0, NewLogSize);
 
-        if ( NewLog == NULL ) {
-            return( STATUS_NO_MEMORY );
+        if (NewLog == NULL)
+        {
+            return (STATUS_NO_MEMORY);
         }
 
         //
         // Copy over previous information
         //
 
-        RtlCopyMemory( NewLog, RXactContext->RXactLog, RXactContext->RXactLog->LogSizeInUse );
+        RtlCopyMemory(NewLog, RXactContext->RXactLog, RXactContext->RXactLog->LogSizeInUse);
 
         //
         // Free the old log file
         //
 
-        RtlFreeHeap( RtlProcessHeap(), 0, RXactContext->RXactLog );
+        RtlFreeHeap(RtlProcessHeap(), 0, RXactContext->RXactLog);
 
         //
         // Install the new log file and adjust its size in its header
@@ -1058,8 +995,7 @@ Return Value:
     // the end.
     //
 
-    Base = (PRXACT_LOG_ENTRY)((PCHAR)(RXactContext->RXactLog) +
-                             (RXactContext->RXactLog->LogSizeInUse));
+    Base = (PRXACT_LOG_ENTRY)((PCHAR)(RXactContext->RXactLog) + (RXactContext->RXactLog->LogSizeInUse));
 
 
     //
@@ -1069,13 +1005,13 @@ Return Value:
     // relative to the beginning of the log file.
     //
 
-    Base->LogEntrySize      = LogEntrySize;
-    Base->Operation         = Operation;
-    Base->SubKeyName        = *SubKeyName;
-    Base->AttributeName     = *AttributeName;
-    Base->NewKeyValueType   = NewValueType;
+    Base->LogEntrySize = LogEntrySize;
+    Base->Operation = Operation;
+    Base->SubKeyName = *SubKeyName;
+    Base->AttributeName = *AttributeName;
+    Base->NewKeyValueType = NewValueType;
     Base->NewKeyValueLength = NewValueLength;
-    Base->KeyHandle         = KeyHandle;
+    Base->KeyHandle = KeyHandle;
 
     //
     // Fill in the variable length data: SubKeyName, AttributeName,
@@ -1088,23 +1024,17 @@ Return Value:
     // following the structure we just filled in above.
     //
 
-    End = (ULONG)((RXactContext->RXactLog->LogSizeInUse) +
-                 sizeof( *Base ));
+    End = (ULONG)((RXactContext->RXactLog->LogSizeInUse) + sizeof(*Base));
 
 
     //
     // Append SubKeyName information to the log file
     //
 
-    RtlMoveMemory (
-        (PCHAR)(RXactContext->RXactLog) + End,
-        SubKeyName->Buffer,
-        SubKeyName->Length
-        );
+    RtlMoveMemory((PCHAR)(RXactContext->RXactLog) + End, SubKeyName->Buffer, SubKeyName->Length);
 
     Base->SubKeyName.Buffer = (PWSTR)ULongToPtr(End);
-    End += DwordAlign( SubKeyName->Length );
-
+    End += DwordAlign(SubKeyName->Length);
 
 
     //
@@ -1112,34 +1042,26 @@ Return Value:
     //
 
 
-    RtlMoveMemory(
-        (PCHAR)(RXactContext->RXactLog) + End,
-        AttributeName->Buffer,
-        AttributeName->Length
-        );
+    RtlMoveMemory((PCHAR)(RXactContext->RXactLog) + End, AttributeName->Buffer, AttributeName->Length);
 
     Base->AttributeName.Buffer = (PWSTR)ULongToPtr(End);
-    End += DwordAlign( AttributeName->Length );
-
+    End += DwordAlign(AttributeName->Length);
 
 
     //
     // Append NewKeyValue information (if present) to the log file
     //
 
-    if ( Operation == RtlRXactOperationSetValue ) {
+    if (Operation == RtlRXactOperationSetValue)
+    {
 
-        RtlMoveMemory(
-            (PCHAR)(RXactContext->RXactLog) + End,
-            NewValue,
-            NewValueLength
-            );
+        RtlMoveMemory((PCHAR)(RXactContext->RXactLog) + End, NewValue, NewValueLength);
 
         Base->NewKeyValue = (PVOID)ULongToPtr(End);
-        End += DwordAlign( NewValueLength );
+        End += DwordAlign(NewValueLength);
     }
 
-    End = ALIGN_UP( End, PVOID );
+    End = ALIGN_UP(End, PVOID);
 
     RXactContext->RXactLog->LogSizeInUse = End;
     RXactContext->RXactLog->OperationCount++;
@@ -1148,19 +1070,13 @@ Return Value:
     // We're done
     //
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-
+
 NTSTATUS
-RtlAddActionToRXact(
-    IN PRTL_RXACT_CONTEXT RXactContext,
-    IN RTL_RXACT_OPERATION Operation,
-    IN PUNICODE_STRING SubKeyName,
-    IN ULONG NewKeyValueType,
-    IN PVOID NewKeyValue OPTIONAL,
-    IN ULONG NewKeyValueLength
-    )
+RtlAddActionToRXact(IN PRTL_RXACT_CONTEXT RXactContext, IN RTL_RXACT_OPERATION Operation, IN PUNICODE_STRING SubKeyName,
+                    IN ULONG NewKeyValueType, IN PVOID NewKeyValue OPTIONAL, IN ULONG NewKeyValueLength)
 
 /*++
 
@@ -1216,30 +1132,17 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    RtlInitUnicodeString( &AttributeName, NULL );
+    RtlInitUnicodeString(&AttributeName, NULL);
 
-    Status = RtlAddAttributeActionToRXact(
-                 RXactContext,
-                 Operation,
-                 SubKeyName,
-                 INVALID_HANDLE_VALUE,
-                 &AttributeName,
-                 NewKeyValueType,
-                 NewKeyValue,
-                 NewKeyValueLength
-                 );
+    Status = RtlAddAttributeActionToRXact(RXactContext, Operation, SubKeyName, INVALID_HANDLE_VALUE, &AttributeName,
+                                          NewKeyValueType, NewKeyValue, NewKeyValueLength);
 
-    return( Status );
-
-
+    return (Status);
 }
 
 
-
 NTSTATUS
-RtlApplyRXact(
-    IN PRTL_RXACT_CONTEXT RXactContext
-    )
+RtlApplyRXact(IN PRTL_RXACT_CONTEXT RXactContext)
 
 /*++
 
@@ -1294,23 +1197,22 @@ Return Value:
 
     RXactKey = RXactContext->RXactKey;
 
-    RtlInitUnicodeString( &LogName, RTLP_RXACT_LOG_NAME );
+    RtlInitUnicodeString(&LogName, RTLP_RXACT_LOG_NAME);
 
-    Status = NtSetValueKey( RXactKey,
-                            &LogName,        // ValueName
-                            0,               // TitleIndex
-                            REG_BINARY,
-                            RXactContext->RXactLog,
-                            RXactContext->RXactLog->LogSizeInUse
-                            );
+    Status = NtSetValueKey(RXactKey,
+                           &LogName, // ValueName
+                           0,        // TitleIndex
+                           REG_BINARY, RXactContext->RXactLog, RXactContext->RXactLog->LogSizeInUse);
 
-    if ( !NT_SUCCESS( Status )) {
-        return( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
-    Status = NtFlushKey( RXactKey );
+    Status = NtFlushKey(RXactKey);
 
-    if ( !NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // If this fails, maintain the in-memory data,
@@ -1321,18 +1223,19 @@ Return Value:
         // state right now.
         //
 
-        (VOID) NtDeleteValueKey( RXactKey, &LogName );
+        (VOID) NtDeleteValueKey(RXactKey, &LogName);
 
-        return( Status );
+        return (Status);
     }
 
     //
     // The log is safe, now execute what is in it
     //
 
-    Status = RXactpCommit( RXactContext );
+    Status = RXactpCommit(RXactContext);
 
-    if ( !NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // As above, try to get rid of what's on
@@ -1340,46 +1243,42 @@ Return Value:
         // so that the caller may try again.
         //
 
-        (VOID) NtDeleteValueKey( RXactKey, &LogName );
+        (VOID) NtDeleteValueKey(RXactKey, &LogName);
 
-        return( Status );
+        return (Status);
     }
 
     //
     // Delete the log file value and data
     //
 
-    Status = NtDeleteValueKey( RXactKey, &LogName );
+    Status = NtDeleteValueKey(RXactKey, &LogName);
 
     //
     // This should never fail
     //
 
-    ASSERT( NT_SUCCESS( Status ));
+    ASSERT(NT_SUCCESS(Status));
 
     //
     // Get rid of the in memory data structures.  Abort
     // does exactly what we want to do.
     //
 
-    Status = RtlAbortRXact( RXactContext );
+    Status = RtlAbortRXact(RXactContext);
 
     //
     // This should never fail
     //
 
-    ASSERT( NT_SUCCESS( Status ));
+    ASSERT(NT_SUCCESS(Status));
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
 
-
 NTSTATUS
-RtlApplyRXactNoFlush(
-    IN PRTL_RXACT_CONTEXT RXactContext
-    )
+RtlApplyRXactNoFlush(IN PRTL_RXACT_CONTEXT RXactContext)
 
 /*++
 
@@ -1423,30 +1322,29 @@ Return Value:
     // Execute the contents of the RXACT log.
     //
 
-    Status = RXactpCommit( RXactContext );
+    Status = RXactpCommit(RXactContext);
 
-    if ( NT_SUCCESS( Status ) ) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Get rid of the in memory data structures.  Abort
         // does exactly what we want to do.
         //
 
-        Status = RtlAbortRXact( RXactContext );
+        Status = RtlAbortRXact(RXactContext);
 
         //
         // This should never fail
         //
 
-        ASSERT( NT_SUCCESS( Status ));
+        ASSERT(NT_SUCCESS(Status));
     }
 
-    return( Status );
-
+    return (Status);
 }
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //    Internal Procedures   (defined in within this file)                    //
@@ -1454,13 +1352,8 @@ Return Value:
 ///////////////////////////////////////////////////////////////////////////////
 
 
-
-
-
 NTSTATUS
-RXactpCommit(
-    IN PRTL_RXACT_CONTEXT RXactContext
-    )
+RXactpCommit(IN PRTL_RXACT_CONTEXT RXactContext)
 
 /*++
 
@@ -1490,8 +1383,8 @@ Return Value:
     HANDLE RXactKey;
     HANDLE RootRegistryKey;
 
-    PRTL_RXACT_LOG      RXactLog;
-    PRXACT_LOG_ENTRY    RXactLogEntry;
+    PRTL_RXACT_LOG RXactLog;
+    PRXACT_LOG_ENTRY RXactLogEntry;
     RTL_RXACT_OPERATION Operation;
 
     ULONG OperationCount;
@@ -1507,19 +1400,19 @@ Return Value:
     //
 
     RootRegistryKey = RXactContext->RootRegistryKey;
-    RXactKey        = RXactContext->RXactKey;
-    RXactLog        = RXactContext->RXactLog;
+    RXactKey = RXactContext->RXactKey;
+    RXactLog = RXactContext->RXactLog;
 
-    OperationCount  = RXactLog->OperationCount;
+    OperationCount = RXactLog->OperationCount;
 
-    HandlesValid    = RXactContext->HandlesValid;
+    HandlesValid = RXactContext->HandlesValid;
 
 
     //
     // Keep a pointer to the beginning of the current log entry.
     //
 
-    RXactLogEntry = (PRXACT_LOG_ENTRY)((PCHAR)RXactLog + sizeof( RTL_RXACT_LOG ));
+    RXactLogEntry = (PRXACT_LOG_ENTRY)((PCHAR)RXactLog + sizeof(RTL_RXACT_LOG));
 
 
     //
@@ -1529,18 +1422,17 @@ Return Value:
     // log entry keys.
     //
 
-    for ( i=0 ; i<OperationCount ; i++ ) {
+    for (i = 0; i < OperationCount; i++)
+    {
 
         //
         // Turn the self-relative offsets in the structure
         // back into real pointers.
         //
 
-        RXactLogEntry->SubKeyName.Buffer = (PWSTR) ((PCHAR)RXactLogEntry->SubKeyName.Buffer +
-                                                    (ULONG_PTR)RXactLog);
+        RXactLogEntry->SubKeyName.Buffer = (PWSTR)((PCHAR)RXactLogEntry->SubKeyName.Buffer + (ULONG_PTR)RXactLog);
 
-        RXactLogEntry->AttributeName.Buffer = (PWSTR) ((PCHAR)RXactLogEntry->AttributeName.Buffer +
-                                                       (ULONG_PTR)RXactLog);
+        RXactLogEntry->AttributeName.Buffer = (PWSTR)((PCHAR)RXactLogEntry->AttributeName.Buffer + (ULONG_PTR)RXactLog);
 
         RXactLogEntry->NewKeyValue = (PVOID)((PCHAR)RXactLogEntry->NewKeyValue + (ULONG_PTR)RXactLog);
 
@@ -1550,176 +1442,167 @@ Return Value:
         // Perform this operation
         //
 
-        switch (Operation) {
-            case RtlRXactOperationDelete:
+        switch (Operation)
+        {
+        case RtlRXactOperationDelete:
 
-                //
-                // Open the target key and delete it.
-                // The name is relative to the RootRegistryKey.
-                //
+            //
+            // Open the target key and delete it.
+            // The name is relative to the RootRegistryKey.
+            //
 
-                if ( ((RXactLogEntry->KeyHandle == INVALID_HANDLE_VALUE) || !HandlesValid) ) {
+            if (((RXactLogEntry->KeyHandle == INVALID_HANDLE_VALUE) || !HandlesValid))
+            {
 
-                    Status = RXactpOpenTargetKey(
-                                 RootRegistryKey,
-                                 RtlRXactOperationDelete,
-                                 &RXactLogEntry->SubKeyName,
-                                 &TargetKey
-                                 );
+                Status = RXactpOpenTargetKey(RootRegistryKey, RtlRXactOperationDelete, &RXactLogEntry->SubKeyName,
+                                             &TargetKey);
 
-                    if ( !NT_SUCCESS(Status)) {
-
-                        //
-                        // We must allow the object not to be found,
-                        // because we may be replaying this log after
-                        // it had been partially executed.
-                        //
-
-                        if ( Status != STATUS_OBJECT_NAME_NOT_FOUND ) {
-
-                            return( Status );
-
-                        } else {
-
-                            break;
-                        }
-                    }
-
-                    CloseTargetKey = TRUE;
-
-                } else {
-
-                    TargetKey = RXactLogEntry->KeyHandle;
-                    CloseTargetKey = FALSE;
-                }
-
-
-                //
-                // If this fails, then it is an error
-                // because the key should exist at
-                // this point.
-                //
-
-                Status = NtDeleteKey( TargetKey );
-
-
-                //
-                // Only close the target key if we opened it
-                //
-
-                if ( CloseTargetKey ) {
-
-                    TmpStatus = NtClose( TargetKey );
+                if (!NT_SUCCESS(Status))
+                {
 
                     //
-                    // If we opened this handle, then we should
-                    // be able to close it, whether it has been
-                    // deleted or not.
+                    // We must allow the object not to be found,
+                    // because we may be replaying this log after
+                    // it had been partially executed.
                     //
 
-                    ASSERT(NT_SUCCESS(TmpStatus));        // safe to ignore, but curious...
-                }
+                    if (Status != STATUS_OBJECT_NAME_NOT_FOUND)
+                    {
 
-
-                if (!NT_SUCCESS(Status)) {
-                    return(Status);
-                }
-
-                break;
-
-            case RtlRXactOperationSetValue:
-
-                //
-                // Open the target key.
-                // The name is relative to the RootRegistryKey.
-                //
-
-                if ( ((RXactLogEntry->KeyHandle == INVALID_HANDLE_VALUE) || !HandlesValid) ) {
-
-                    Status = RXactpOpenTargetKey(
-                                 RootRegistryKey,
-                                 RtlRXactOperationSetValue,
-                                 &RXactLogEntry->SubKeyName,
-                                 &TargetKey
-                                 );
-
-                    if ( !NT_SUCCESS(Status) ) {
-                        return(Status);
+                        return (Status);
                     }
+                    else
+                    {
 
-                    CloseTargetKey = TRUE;
-
-                } else {
-
-                    TargetKey = RXactLogEntry->KeyHandle;
-                    CloseTargetKey = FALSE;
+                        break;
+                    }
                 }
 
+                CloseTargetKey = TRUE;
+            }
+            else
+            {
+
+                TargetKey = RXactLogEntry->KeyHandle;
+                CloseTargetKey = FALSE;
+            }
+
+
+            //
+            // If this fails, then it is an error
+            // because the key should exist at
+            // this point.
+            //
+
+            Status = NtDeleteKey(TargetKey);
+
+
+            //
+            // Only close the target key if we opened it
+            //
+
+            if (CloseTargetKey)
+            {
+
+                TmpStatus = NtClose(TargetKey);
+
                 //
-                // Assign to the target key's new value
+                // If we opened this handle, then we should
+                // be able to close it, whether it has been
+                // deleted or not.
                 //
 
-                Status = NtSetValueKey( TargetKey,
-                                        &RXactLogEntry->AttributeName,
-                                        0,               // TitleIndex
-                                        RXactLogEntry->NewKeyValueType,
-                                        RXactLogEntry->NewKeyValue,
-                                        RXactLogEntry->NewKeyValueLength
-                                        );
+                ASSERT(NT_SUCCESS(TmpStatus)); // safe to ignore, but curious...
+            }
 
-                //
-                // Only close the target key if we opened it
-                //
 
-                if ( CloseTargetKey ) {
+            if (!NT_SUCCESS(Status))
+            {
+                return (Status);
+            }
 
-                    TmpStatus = NtClose( TargetKey );
-                    ASSERT(NT_SUCCESS(TmpStatus));        // safe to ignore, but curious...
+            break;
 
+        case RtlRXactOperationSetValue:
+
+            //
+            // Open the target key.
+            // The name is relative to the RootRegistryKey.
+            //
+
+            if (((RXactLogEntry->KeyHandle == INVALID_HANDLE_VALUE) || !HandlesValid))
+            {
+
+                Status = RXactpOpenTargetKey(RootRegistryKey, RtlRXactOperationSetValue, &RXactLogEntry->SubKeyName,
+                                             &TargetKey);
+
+                if (!NT_SUCCESS(Status))
+                {
+                    return (Status);
                 }
 
-                if ( !NT_SUCCESS(Status) ) {
-                    return(Status);
-                }
+                CloseTargetKey = TRUE;
+            }
+            else
+            {
 
-                break;
+                TargetKey = RXactLogEntry->KeyHandle;
+                CloseTargetKey = FALSE;
+            }
+
+            //
+            // Assign to the target key's new value
+            //
+
+            Status = NtSetValueKey(TargetKey, &RXactLogEntry->AttributeName,
+                                   0, // TitleIndex
+                                   RXactLogEntry->NewKeyValueType, RXactLogEntry->NewKeyValue,
+                                   RXactLogEntry->NewKeyValueLength);
+
+            //
+            // Only close the target key if we opened it
+            //
+
+            if (CloseTargetKey)
+            {
+
+                TmpStatus = NtClose(TargetKey);
+                ASSERT(NT_SUCCESS(TmpStatus)); // safe to ignore, but curious...
+            }
+
+            if (!NT_SUCCESS(Status))
+            {
+                return (Status);
+            }
+
+            break;
 
 
+        default:
 
-            default:
+            //
+            // Unknown operation type.  This should never happen.
+            //
 
-                //
-                // Unknown operation type.  This should never happen.
-                //
+            ASSERT(FALSE);
 
-                ASSERT( FALSE );
-
-                return(STATUS_INVALID_PARAMETER);
-
+            return (STATUS_INVALID_PARAMETER);
         }
 
         RXactLogEntry = (PRXACT_LOG_ENTRY)((PCHAR)RXactLogEntry + RXactLogEntry->LogEntrySize);
-
     }
 
     //
     // Commit complete
     //
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
 
-
-
 NTSTATUS
-RXactpOpenTargetKey(
-    IN HANDLE RootRegistryKey,
-    IN RTL_RXACT_OPERATION Operation,
-    IN PUNICODE_STRING SubKeyName,
-    OUT PHANDLE TargetKey
-    )
+RXactpOpenTargetKey(IN HANDLE RootRegistryKey, IN RTL_RXACT_OPERATION Operation, IN PUNICODE_STRING SubKeyName,
+                    OUT PHANDLE TargetKey)
 
 /*++
 
@@ -1756,61 +1639,41 @@ Return Value:
     ULONG Disposition;
 
 
-    if (Operation == RtlRXactOperationDelete) {
+    if (Operation == RtlRXactOperationDelete)
+    {
 
         DesiredAccess = DELETE;
 
-        InitializeObjectAttributes(
-            &TargetKeyAttributes,
-            SubKeyName,
-            OBJ_CASE_INSENSITIVE,
-            RootRegistryKey,
-            NULL);
+        InitializeObjectAttributes(&TargetKeyAttributes, SubKeyName, OBJ_CASE_INSENSITIVE, RootRegistryKey, NULL);
 
-//        Status = RtlpNtOpenKey(
-//                     TargetKey,
-//                     DesiredAccess,
-//                     &TargetKeyAttributes,
-//                     0);
+        //        Status = RtlpNtOpenKey(
+        //                     TargetKey,
+        //                     DesiredAccess,
+        //                     &TargetKeyAttributes,
+        //                     0);
 
-        Status = NtOpenKey( TargetKey,
-                            DesiredAccess,
-                            &TargetKeyAttributes
-                            );
-
-
-    } else if (Operation == RtlRXactOperationSetValue) {
+        Status = NtOpenKey(TargetKey, DesiredAccess, &TargetKeyAttributes);
+    }
+    else if (Operation == RtlRXactOperationSetValue)
+    {
 
         DesiredAccess = KEY_WRITE;
 
-        InitializeObjectAttributes(
-            &TargetKeyAttributes,
-            SubKeyName,
-            OBJ_CASE_INSENSITIVE | OBJ_OPENIF,
-            RootRegistryKey,
-            NULL);
+        InitializeObjectAttributes(&TargetKeyAttributes, SubKeyName, OBJ_CASE_INSENSITIVE | OBJ_OPENIF, RootRegistryKey,
+                                   NULL);
 
-        Status = NtCreateKey(
-                     TargetKey,
-                     DesiredAccess,
-                     &TargetKeyAttributes,
-                     0,
-                     NULL,
-                     REG_OPTION_NON_VOLATILE,
-                     &Disposition
-                     );
-
-    } else {
+        Status =
+            NtCreateKey(TargetKey, DesiredAccess, &TargetKeyAttributes, 0, NULL, REG_OPTION_NON_VOLATILE, &Disposition);
+    }
+    else
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
 
-
-    return( Status );
-
+    return (Status);
 }
 
-
 
 //NTSTATUS
 //RXactpAssignTargetValue(

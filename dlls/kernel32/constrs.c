@@ -23,8 +23,7 @@ Revision History:
 #include <windows.h>
 #include <string.h>
 
-VOID
-NewProcess()
+VOID NewProcess()
 {
 
     SMALL_RECT Window;
@@ -34,24 +33,16 @@ NewProcess()
     Window.Right = 15;
     Window.Bottom = 5;
 
-    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE),
-                         TRUE,
-                         &Window
-                        );
-    TerminateProcess(GetCurrentProcess(),0);
+    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), TRUE, &Window);
+    TerminateProcess(GetCurrentProcess(), 0);
 }
 
 
 DWORD
-_cdecl
-main(
-    int argc,
-    char *argv[],
-    char *envp[]
-    )
+_cdecl main(int argc, char *argv[], char *envp[])
 {
 
-    STARTUPINFO	StartupInfo;
+    STARTUPINFO StartupInfo;
     PROCESS_INFORMATION ProcessInfo;
     BOOL Success;
     DWORD st;
@@ -59,9 +50,10 @@ main(
     SMALL_RECT Window;
 
     ProcessCount = 0;
-    if ( strchr(GetCommandLine(),'+') ) {
+    if (strchr(GetCommandLine(), '+'))
+    {
         NewProcess();
-        }
+    }
 
     GetStartupInfo(&StartupInfo);
     Window.Left = 0;
@@ -69,34 +61,23 @@ main(
     Window.Right = 15;
     Window.Bottom = 5;
 
-    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE),
-                         TRUE,
-                         &Window
-                        );
+    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), TRUE, &Window);
 
 
-    while ( TRUE ) {
+    while (TRUE)
+    {
 
-        Success = CreateProcess(
-                        NULL,
-                        "constrs +",
-                        NULL,
-                        NULL,
-                        FALSE,
-                        CREATE_NEW_CONSOLE,
-                        NULL,
-                        NULL,
-                        &StartupInfo,
-                        &ProcessInfo
-                        );
+        Success = CreateProcess(NULL, "constrs +", NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &StartupInfo,
+                                &ProcessInfo);
 
-        if (Success) {
+        if (Success)
+        {
             ProcessCount++;
-            printf("Process %d Created\n",ProcessCount);
-            st = WaitForSingleObject(ProcessInfo.hProcess,-1);
+            printf("Process %d Created\n", ProcessCount);
+            st = WaitForSingleObject(ProcessInfo.hProcess, -1);
             (st == 0);
             CloseHandle(ProcessInfo.hProcess);
             CloseHandle(ProcessInfo.hThread);
-            }
         }
+    }
 }

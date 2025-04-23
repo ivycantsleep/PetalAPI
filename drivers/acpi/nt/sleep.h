@@ -23,10 +23,7 @@ Environment:
 #ifndef _SLEEP_H_
 #define _SLEEP_H_
 
-    NTSTATUS
-    ACPIHandleSetPower (
-        IN  PDEVICE_OBJECT  DeviceObject,
-        IN  PIRP            Irp
-        );
+NTSTATUS
+ACPIHandleSetPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 #endif

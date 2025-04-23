@@ -21,11 +21,8 @@ Revision History:
 
 #include "kdp.h"
 
-
-VOID
-KdpPortLock(
-    VOID
-    )
+
+VOID KdpPortLock(VOID)
 
 /*++
 
@@ -55,11 +52,8 @@ Return value:
     KiAcquireSpinLock(&KdpDebuggerLock);
 }
 
-
-VOID
-KdpPortUnlock(
-    VOID
-    )
+
+VOID KdpPortUnlock(VOID)
 
 /*++
 
@@ -88,11 +82,9 @@ Return value:
 {
     KiReleaseSpinLock(&KdpDebuggerLock);
 }
-
+
 BOOLEAN
-KdPollBreakIn(
-    VOID
-    )
+KdPollBreakIn(VOID)
 
 /*++
 
@@ -118,8 +110,8 @@ Return Value:
 {
     BOOLEAN BreakIn;
     BOOLEAN Enable;
-    KIRQL   OldIrql;
-    ULONG   Status;
+    KIRQL OldIrql;
+    ULONG Status;
 
     //
     // If the debugger is enabled, see if a breakin by the kernel
@@ -127,7 +119,8 @@ Return Value:
     //
 
     BreakIn = FALSE;
-    if (KdDebuggerEnabled != FALSE) {
+    if (KdDebuggerEnabled != FALSE)
+    {
         Enable = KeDisableInterrupts();
 
 #ifndef _X86_
@@ -136,19 +129,19 @@ Return Value:
 
 #endif
 
-        if (KdpContext.KdpControlCPending != FALSE) {
+        if (KdpContext.KdpControlCPending != FALSE)
+        {
             KdpControlCPressed = TRUE;
             BreakIn = TRUE;
             KdpContext.KdpControlCPending = FALSE;
-
-        } else {
-            if (KeTryToAcquireSpinLockAtDpcLevel(&KdpDebuggerLock) != FALSE) {
-                Status = KdReceivePacket(PACKET_TYPE_KD_POLL_BREAKIN,
-                                         NULL,
-                                         NULL,
-                                         NULL,
-                                         NULL);
-                if (Status == KDP_PACKET_RECEIVED) {
+        }
+        else
+        {
+            if (KeTryToAcquireSpinLockAtDpcLevel(&KdpDebuggerLock) != FALSE)
+            {
+                Status = KdReceivePacket(PACKET_TYPE_KD_POLL_BREAKIN, NULL, NULL, NULL, NULL);
+                if (Status == KDP_PACKET_RECEIVED)
+                {
                     BreakIn = TRUE;
                     KdpControlCPressed = TRUE;
                 }
@@ -171,9 +164,7 @@ Return Value:
 
 
 BOOLEAN
-KdpPollBreakInWithPortLock(
-    VOID
-    )
+KdpPollBreakInWithPortLock(VOID)
 
 /*++
 
@@ -208,18 +199,18 @@ Return Value:
     //
 
     BreakIn = FALSE;
-    if (KdDebuggerEnabled != FALSE) {
-        if (KdpContext.KdpControlCPending != FALSE) {
+    if (KdDebuggerEnabled != FALSE)
+    {
+        if (KdpContext.KdpControlCPending != FALSE)
+        {
             BreakIn = TRUE;
             KdpContext.KdpControlCPending = FALSE;
-
-        } else {
-            Status = KdReceivePacket(PACKET_TYPE_KD_POLL_BREAKIN,
-                                     NULL,
-                                     NULL,
-                                     NULL,
-                                     NULL);
-            if (Status == KDP_PACKET_RECEIVED) {
+        }
+        else
+        {
+            Status = KdReceivePacket(PACKET_TYPE_KD_POLL_BREAKIN, NULL, NULL, NULL, NULL);
+            if (Status == KDP_PACKET_RECEIVED)
+            {
                 BreakIn = TRUE;
             }
         }

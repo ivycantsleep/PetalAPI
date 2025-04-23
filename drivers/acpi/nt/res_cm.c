@@ -27,28 +27,25 @@ Revision History:
 --*/
 
 #include "pch.h"
-
+
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosAddress)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosAddressDouble)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosDma)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosExtendedIrq)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosIoFixedPort)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosIoPort)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosIrq)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosMemory)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosMemory32)
-#pragma alloc_text(PAGE,PnpiCmResourceToBiosMemory32Fixed)
-#pragma alloc_text(PAGE,PnpiCmResourceValidEmptyList)
-#pragma alloc_text(PAGE,PnpCmResourcesToBiosResources)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosAddress)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosAddressDouble)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosDma)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosExtendedIrq)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosIoFixedPort)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosIoPort)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosIrq)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosMemory)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosMemory32)
+#pragma alloc_text(PAGE, PnpiCmResourceToBiosMemory32Fixed)
+#pragma alloc_text(PAGE, PnpiCmResourceValidEmptyList)
+#pragma alloc_text(PAGE, PnpCmResourcesToBiosResources)
 #endif
 
-
+
 NTSTATUS
-PnpiCmResourceToBiosAddress(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosAddress(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -67,30 +64,31 @@ Return:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_WORD_ADDRESS_DESCRIPTOR    buffer;
-    UCHAR                           type;
-    ULONG                           i;
+    PPNP_WORD_ADDRESS_DESCRIPTOR buffer;
+    UCHAR type;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_WORD_ADDRESS_DESCRIPTOR) Buffer;
+    buffer = (PPNP_WORD_ADDRESS_DESCRIPTOR)Buffer;
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1 );
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // Determine which type of descriptor we are looking for
     //
-    switch (buffer->RFlag) {
+    switch (buffer->RFlag)
+    {
     case PNP_ADDRESS_MEMORY_TYPE:
         type = CmResourceTypeMemory;
         break;
@@ -107,7 +105,8 @@ Return:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -117,57 +116,60 @@ Return:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != type) {
+        if (desc->Type != type)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
-        switch (desc->Type) {
+        switch (desc->Type)
+        {
         case PNP_ADDRESS_MEMORY_TYPE:
 
             //
             // Set the flags
             //
             buffer->TFlag = 0;
-            if (desc->Flags & CM_RESOURCE_MEMORY_READ_WRITE) {
+            if (desc->Flags & CM_RESOURCE_MEMORY_READ_WRITE)
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_READ_WRITE;
-
-            } else {
+            }
+            else
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_READ_ONLY;
-
             }
-            if (desc->Flags & CM_RESOURCE_MEMORY_CACHEABLE) {
+            if (desc->Flags & CM_RESOURCE_MEMORY_CACHEABLE)
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_CACHEABLE;
-
-            } else if (desc->Flags & CM_RESOURCE_MEMORY_COMBINEDWRITE) {
+            }
+            else if (desc->Flags & CM_RESOURCE_MEMORY_COMBINEDWRITE)
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_WRITE_COMBINE;
-
-            } else if (desc->Flags & CM_RESOURCE_MEMORY_PREFETCHABLE) {
+            }
+            else if (desc->Flags & CM_RESOURCE_MEMORY_PREFETCHABLE)
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_PREFETCHABLE;
-
-            } else {
+            }
+            else
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_NONCACHEABLE;
-
             }
 
             //
             // Set the rest of the information
             //
-            buffer->MinimumAddress = (USHORT)
-                (desc->u.Memory.Start.LowPart & 0xFFFF);
-            buffer->MaximumAddress = buffer->MinimumAddress +
-                (USHORT) (desc->u.Memory.Length - 1);
-            buffer->AddressLength = (USHORT) desc->u.Memory.Length;
+            buffer->MinimumAddress = (USHORT)(desc->u.Memory.Start.LowPart & 0xFFFF);
+            buffer->MaximumAddress = buffer->MinimumAddress + (USHORT)(desc->u.Memory.Length - 1);
+            buffer->AddressLength = (USHORT)desc->u.Memory.Length;
             break;
 
         case PNP_ADDRESS_IO_TYPE:
@@ -180,20 +182,16 @@ Return:
             //
             // Set the rest of the information
             //
-            buffer->MinimumAddress = (USHORT)
-                (desc->u.Port.Start.LowPart & 0xFFFF);
-            buffer->MaximumAddress = buffer->MinimumAddress +
-                (USHORT) (desc->u.Port.Length - 1);
-            buffer->AddressLength = (USHORT) desc->u.Port.Length;
+            buffer->MinimumAddress = (USHORT)(desc->u.Port.Start.LowPart & 0xFFFF);
+            buffer->MaximumAddress = buffer->MinimumAddress + (USHORT)(desc->u.Port.Length - 1);
+            buffer->AddressLength = (USHORT)desc->u.Port.Length;
             break;
 
         case PNP_ADDRESS_BUS_NUMBER_TYPE:
 
-            buffer->MinimumAddress = (USHORT)
-                (desc->u.BusNumber.Start & 0xFFFF);
-            buffer->MaximumAddress = buffer->MinimumAddress +
-                (USHORT) (desc->u.BusNumber.Length - 1);
-            buffer->AddressLength = (USHORT) desc->u.BusNumber.Length;
+            buffer->MinimumAddress = (USHORT)(desc->u.BusNumber.Start & 0xFFFF);
+            buffer->MaximumAddress = buffer->MinimumAddress + (USHORT)(desc->u.BusNumber.Length - 1);
+            buffer->AddressLength = (USHORT)desc->u.BusNumber.Length;
             break;
 
         } // switch
@@ -216,12 +214,9 @@ Return:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosAddressDouble(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosAddressDouble(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -240,30 +235,31 @@ Return:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_DWORD_ADDRESS_DESCRIPTOR   buffer;
-    UCHAR                           type;
-    ULONG                           i;
+    PPNP_DWORD_ADDRESS_DESCRIPTOR buffer;
+    UCHAR type;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_DWORD_ADDRESS_DESCRIPTOR) Buffer;
+    buffer = (PPNP_DWORD_ADDRESS_DESCRIPTOR)Buffer;
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1 );
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // Determine which type of descriptor we are looking for
     //
-    switch (buffer->RFlag) {
+    switch (buffer->RFlag)
+    {
     case PNP_ADDRESS_MEMORY_TYPE:
         type = CmResourceTypeMemory;
         break;
@@ -280,7 +276,8 @@ Return:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -290,55 +287,59 @@ Return:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != type) {
+        if (desc->Type != type)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
-        switch (desc->Type) {
+        switch (desc->Type)
+        {
         case PNP_ADDRESS_MEMORY_TYPE:
 
             //
             // Set the flags
             //
             buffer->TFlag = 0;
-            if (desc->Flags & CM_RESOURCE_MEMORY_READ_WRITE) {
+            if (desc->Flags & CM_RESOURCE_MEMORY_READ_WRITE)
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_READ_WRITE;
-
-            } else {
+            }
+            else
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_READ_ONLY;
-
             }
-            if (desc->Flags & CM_RESOURCE_MEMORY_CACHEABLE) {
+            if (desc->Flags & CM_RESOURCE_MEMORY_CACHEABLE)
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_CACHEABLE;
-
-            } else if (desc->Flags & CM_RESOURCE_MEMORY_COMBINEDWRITE) {
+            }
+            else if (desc->Flags & CM_RESOURCE_MEMORY_COMBINEDWRITE)
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_WRITE_COMBINE;
-
-            } else if (desc->Flags & CM_RESOURCE_MEMORY_PREFETCHABLE) {
+            }
+            else if (desc->Flags & CM_RESOURCE_MEMORY_PREFETCHABLE)
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_PREFETCHABLE;
-
-            } else {
+            }
+            else
+            {
 
                 buffer->TFlag |= PNP_ADDRESS_TYPE_MEMORY_NONCACHEABLE;
-
             }
 
             //
             // Set the rest of the information
             //
-            buffer->MinimumAddress = (ULONG) desc->u.Memory.Start.LowPart;
-            buffer->MaximumAddress = buffer->MinimumAddress +
-                (ULONG) (desc->u.Memory.Length - 1);
+            buffer->MinimumAddress = (ULONG)desc->u.Memory.Start.LowPart;
+            buffer->MaximumAddress = buffer->MinimumAddress + (ULONG)(desc->u.Memory.Length - 1);
             buffer->AddressLength = desc->u.Memory.Length;
             break;
 
@@ -352,17 +353,15 @@ Return:
             //
             // Set the rest of the information
             //
-            buffer->MinimumAddress = (ULONG) desc->u.Port.Start.LowPart;
-            buffer->MaximumAddress = buffer->MinimumAddress +
-                (ULONG) (desc->u.Port.Length - 1);
+            buffer->MinimumAddress = (ULONG)desc->u.Port.Start.LowPart;
+            buffer->MaximumAddress = buffer->MinimumAddress + (ULONG)(desc->u.Port.Length - 1);
             buffer->AddressLength = desc->u.Port.Length;
             break;
 
         case PNP_ADDRESS_BUS_NUMBER_TYPE:
 
-            buffer->MinimumAddress = (ULONG) desc->u.BusNumber.Start;
-            buffer->MaximumAddress = buffer->MinimumAddress +
-                (ULONG) (desc->u.BusNumber.Length - 1);
+            buffer->MinimumAddress = (ULONG)desc->u.BusNumber.Start;
+            buffer->MaximumAddress = buffer->MinimumAddress + (ULONG)(desc->u.BusNumber.Length - 1);
             buffer->AddressLength = desc->u.BusNumber.Length;
             break;
 
@@ -385,12 +384,9 @@ Return:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosDma(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosDma(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -409,25 +405,25 @@ Return:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_DMA_DESCRIPTOR             buffer;
-    ULONG                           i;
+    PPNP_DMA_DESCRIPTOR buffer;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_DMA_DESCRIPTOR) Buffer;
-    ASSERT( (buffer->Tag & SMALL_TAG_SIZE_MASK) == 2);
+    buffer = (PPNP_DMA_DESCRIPTOR)Buffer;
+    ASSERT((buffer->Tag & SMALL_TAG_SIZE_MASK) == 2);
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // We can have a descriptor with no DMA channels
@@ -437,7 +433,8 @@ Return:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -447,13 +444,13 @@ Return:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypeDma) {
+        if (desc->Type != CmResourceTypeDma)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
@@ -465,40 +462,45 @@ Return:
         // Set the correct flags
         //
         buffer->Flags = 0;
-        if (desc->Flags & CM_RESOURCE_DMA_8) {
+        if (desc->Flags & CM_RESOURCE_DMA_8)
+        {
 
             buffer->Flags |= PNP_DMA_SIZE_8;
-
-        } else if (desc->Flags & CM_RESOURCE_DMA_8_AND_16) {
+        }
+        else if (desc->Flags & CM_RESOURCE_DMA_8_AND_16)
+        {
 
             buffer->Flags |= PNP_DMA_SIZE_8_AND_16;
-
-        } else if (desc->Flags & CM_RESOURCE_DMA_16) {
+        }
+        else if (desc->Flags & CM_RESOURCE_DMA_16)
+        {
 
             buffer->Flags |= PNP_DMA_SIZE_16;
-
-        } else if (desc->Flags & CM_RESOURCE_DMA_32) {
+        }
+        else if (desc->Flags & CM_RESOURCE_DMA_32)
+        {
 
             buffer->Flags |= PNP_DMA_SIZE_RESERVED;
-
         }
-        if (desc->Flags & CM_RESOURCE_DMA_BUS_MASTER) {
+        if (desc->Flags & CM_RESOURCE_DMA_BUS_MASTER)
+        {
 
             buffer->Flags |= PNP_DMA_BUS_MASTER;
-
         }
-        if (desc->Flags & CM_RESOURCE_DMA_TYPE_A) {
+        if (desc->Flags & CM_RESOURCE_DMA_TYPE_A)
+        {
 
             buffer->Flags |= PNP_DMA_TYPE_A;
-
-        } else if (desc->Flags & CM_RESOURCE_DMA_TYPE_B) {
+        }
+        else if (desc->Flags & CM_RESOURCE_DMA_TYPE_B)
+        {
 
             buffer->Flags |= PNP_DMA_TYPE_B;
-
-        } else if (desc->Flags & CM_RESOURCE_DMA_TYPE_F) {
+        }
+        else if (desc->Flags & CM_RESOURCE_DMA_TYPE_F)
+        {
 
             buffer->Flags |= PNP_DMA_TYPE_F;
-
         }
 
         //
@@ -506,7 +508,6 @@ Return:
         //
         desc->Type = CmResourceTypeNull;
         break;
-
     }
 
     //
@@ -514,12 +515,9 @@ Return:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosExtendedIrq(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosExtendedIrq(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -538,32 +536,33 @@ Return Value:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_EXTENDED_IRQ_DESCRIPTOR    buffer;
-    ULONG                           i;
-    ULONG                           matches = 0;
+    PPNP_EXTENDED_IRQ_DESCRIPTOR buffer;
+    ULONG i;
+    ULONG matches = 0;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_EXTENDED_IRQ_DESCRIPTOR) Buffer;
-    ASSERT( buffer->TableSize == 1);
-    ASSERT( buffer->Length >= 6);
+    buffer = (PPNP_EXTENDED_IRQ_DESCRIPTOR)Buffer;
+    ASSERT(buffer->TableSize == 1);
+    ASSERT(buffer->Length >= 6);
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -573,37 +572,38 @@ Return Value:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypeInterrupt) {
+        if (desc->Type != CmResourceTypeInterrupt)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // Here we *have* a match...
         //
-        buffer->Table[0] = (ULONG) desc->u.Interrupt.Level;
+        buffer->Table[0] = (ULONG)desc->u.Interrupt.Level;
 
         //
         // Set the Flags
         //
         buffer->Flags = 0;
-        if ( (desc->Flags & CM_RESOURCE_INTERRUPT_LATCHED) ) {
+        if ((desc->Flags & CM_RESOURCE_INTERRUPT_LATCHED))
+        {
 
             buffer->Flags |= $EDG | $HGH;
-
-        } else {
+        }
+        else
+        {
 
             buffer->Flags |= $LVL | $LOW;
-
         }
-        if (desc->ShareDisposition == CmResourceShareShared) {
+        if (desc->ShareDisposition == CmResourceShareShared)
+        {
 
             buffer->Flags |= PNP_EXTENDED_IRQ_SHARED;
-
         }
 
         //
@@ -618,20 +618,16 @@ Return Value:
         desc->Type = CmResourceTypeNull;
         matches++;
         break;
-
     }
 
     //
     // Done with matches
     //
-    return (matches == 0 ? STATUS_UNSUCCESSFUL : STATUS_SUCCESS );
+    return (matches == 0 ? STATUS_UNSUCCESSFUL : STATUS_SUCCESS);
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosIoFixedPort(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosIoFixedPort(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -650,25 +646,25 @@ Return:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_FIXED_PORT_DESCRIPTOR      buffer;
-    ULONG                           i;
+    PPNP_FIXED_PORT_DESCRIPTOR buffer;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_FIXED_PORT_DESCRIPTOR) Buffer;
-    ASSERT( (buffer->Tag & SMALL_TAG_SIZE_MASK) == 3);
+    buffer = (PPNP_FIXED_PORT_DESCRIPTOR)Buffer;
+    ASSERT((buffer->Tag & SMALL_TAG_SIZE_MASK) == 3);
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // Our fixed port can be nothing
@@ -678,7 +674,8 @@ Return:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -688,39 +685,38 @@ Return:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypePort) {
+        if (desc->Type != CmResourceTypePort)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // This port type is always set to a 10 bit decode
         //
-        if ( !(desc->Flags & CM_RESOURCE_PORT_10_BIT_DECODE) ) {
+        if (!(desc->Flags & CM_RESOURCE_PORT_10_BIT_DECODE))
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // Here we *have* a match...
         //
-        buffer->MinimumAddress = (USHORT) desc->u.Port.Start.LowPart;
-        buffer->Length = (UCHAR) desc->u.Port.Length;
+        buffer->MinimumAddress = (USHORT)desc->u.Port.Start.LowPart;
+        buffer->Length = (UCHAR)desc->u.Port.Length;
 
         //
         // Done with descriptor and match
         //
         desc->Type = CmResourceTypeNull;
         break;
-
     }
 
     //
@@ -728,12 +724,9 @@ Return:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosIoPort(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosIoPort(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -752,25 +745,25 @@ Return:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_PORT_DESCRIPTOR            buffer;
-    ULONG                           i;
+    PPNP_PORT_DESCRIPTOR buffer;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_PORT_DESCRIPTOR) Buffer;
-    ASSERT( (buffer->Tag & SMALL_TAG_SIZE_MASK) == 7);
+    buffer = (PPNP_PORT_DESCRIPTOR)Buffer;
+    ASSERT((buffer->Tag & SMALL_TAG_SIZE_MASK) == 7);
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // We can use no ports
@@ -784,7 +777,8 @@ Return:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -794,36 +788,36 @@ Return:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypePort) {
+        if (desc->Type != CmResourceTypePort)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // Here we *have* a match...
         //
-        buffer->MinimumAddress = (USHORT) desc->u.Port.Start.LowPart;
+        buffer->MinimumAddress = (USHORT)desc->u.Port.Start.LowPart;
         buffer->MaximumAddress = buffer->MinimumAddress;
         buffer->Alignment = 1;
-        buffer->Length = (UCHAR) desc->u.Port.Length;
+        buffer->Length = (UCHAR)desc->u.Port.Length;
 
         //
         // Set the flags
         //
         buffer->Information = 0;
-        if (desc->Flags & CM_RESOURCE_PORT_10_BIT_DECODE) {
+        if (desc->Flags & CM_RESOURCE_PORT_10_BIT_DECODE)
+        {
 
             buffer->Information |= PNP_PORT_10_BIT_DECODE;
-
         }
-        if (desc->Flags & CM_RESOURCE_PORT_16_BIT_DECODE) {
+        if (desc->Flags & CM_RESOURCE_PORT_16_BIT_DECODE)
+        {
 
             buffer->Information |= PNP_PORT_16_BIT_DECODE;
-
         }
 
         //
@@ -831,7 +825,6 @@ Return:
         //
         desc->Type = CmResourceTypeNull;
         break;
-
     }
 
     //
@@ -839,12 +832,9 @@ Return:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosIrq(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosIrq(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -863,25 +853,25 @@ Return Value:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_IRQ_DESCRIPTOR             buffer;
-    ULONG                           i;
+    PPNP_IRQ_DESCRIPTOR buffer;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_IRQ_DESCRIPTOR) Buffer;
-    ASSERT( (buffer->Tag & SMALL_TAG_SIZE_MASK) >= 2);
+    buffer = (PPNP_IRQ_DESCRIPTOR)Buffer;
+    ASSERT((buffer->Tag & SMALL_TAG_SIZE_MASK) >= 2);
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // We can use no interrupts
@@ -891,7 +881,8 @@ Return Value:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -901,52 +892,53 @@ Return Value:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypeInterrupt) {
+        if (desc->Type != CmResourceTypeInterrupt)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // Okay, we have a possible match...
         //
-        if (desc->u.Interrupt.Level >= sizeof(USHORT) * 8) {
+        if (desc->u.Interrupt.Level >= sizeof(USHORT) * 8)
+        {
 
             //
             // Interrupts > 15 are Extended Irqs
             //
             continue;
-
         }
 
         //
         // Here we *have* a match...
         //
-        buffer->IrqMask = ( 1 << desc->u.Interrupt.Level );
-        if ( (buffer->Tag & SMALL_TAG_SIZE_MASK) == 3) {
+        buffer->IrqMask = (1 << desc->u.Interrupt.Level);
+        if ((buffer->Tag & SMALL_TAG_SIZE_MASK) == 3)
+        {
 
             //
             // Wipe out the previous flags
             //
             buffer->Information = 0;
-            if ( (desc->Flags & CM_RESOURCE_INTERRUPT_LATCHED) ) {
+            if ((desc->Flags & CM_RESOURCE_INTERRUPT_LATCHED))
+            {
 
                 buffer->Information |= PNP_IRQ_LATCHED;
-
-            } else {
+            }
+            else
+            {
 
                 buffer->Information |= PNP_IRQ_LEVEL;
-
             }
-            if (desc->ShareDisposition == CmResourceShareShared) {
+            if (desc->ShareDisposition == CmResourceShareShared)
+            {
 
                 buffer->Information |= PNP_IRQ_SHARED;
-
             }
-
         }
 
         //
@@ -954,7 +946,6 @@ Return Value:
         //
         desc->Type = CmResourceTypeNull;
         break;
-
     }
 
     //
@@ -962,12 +953,9 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosMemory(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosMemory(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -986,25 +974,25 @@ Return:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_MEMORY_DESCRIPTOR          buffer;
-    ULONG                           i;
+    PPNP_MEMORY_DESCRIPTOR buffer;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_MEMORY_DESCRIPTOR) Buffer;
-    ASSERT( buffer->Length == 9);
+    buffer = (PPNP_MEMORY_DESCRIPTOR)Buffer;
+    ASSERT(buffer->Length == 9);
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // We can use no memory
@@ -1018,7 +1006,8 @@ Return:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -1028,41 +1017,41 @@ Return:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypeMemory) {
+        if (desc->Type != CmResourceTypeMemory)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // Is this a 24 bit memory descriptor?
         //
-        if ( !(desc->Flags & CM_RESOURCE_MEMORY_24)) {
+        if (!(desc->Flags & CM_RESOURCE_MEMORY_24))
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // Here we *have* a match...
         //
-        buffer->MinimumAddress = buffer->MaximumAddress =
-            (USHORT) (desc->u.Memory.Start.LowPart >> 8);
-        buffer->MemorySize = (USHORT) (desc->u.Memory.Length >> 8);
-        if (desc->Flags & CM_RESOURCE_MEMORY_READ_ONLY) {
+        buffer->MinimumAddress = buffer->MaximumAddress = (USHORT)(desc->u.Memory.Start.LowPart >> 8);
+        buffer->MemorySize = (USHORT)(desc->u.Memory.Length >> 8);
+        if (desc->Flags & CM_RESOURCE_MEMORY_READ_ONLY)
+        {
 
             buffer->Information |= PNP_MEMORY_READ_ONLY;
-
-        } else {
+        }
+        else
+        {
 
             buffer->Information |= PNP_MEMORY_READ_WRITE;
-
         }
 
         //
@@ -1070,7 +1059,6 @@ Return:
         //
         desc->Type = CmResourceTypeNull;
         break;
-
     }
 
     //
@@ -1078,12 +1066,9 @@ Return:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosMemory32(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosMemory32(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -1102,25 +1087,25 @@ Return:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_MEMORY32_DESCRIPTOR        buffer;
-    ULONG                           i;
+    PPNP_MEMORY32_DESCRIPTOR buffer;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_MEMORY32_DESCRIPTOR) Buffer;
-    ASSERT( buffer->Length == 17);
+    buffer = (PPNP_MEMORY32_DESCRIPTOR)Buffer;
+    ASSERT(buffer->Length == 17);
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // We can use no memory
@@ -1134,7 +1119,8 @@ Return:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -1144,13 +1130,13 @@ Return:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypeMemory) {
+        if (desc->Type != CmResourceTypeMemory)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
@@ -1158,14 +1144,15 @@ Return:
         //
         buffer->MemorySize = desc->u.Memory.Length;
         buffer->MinimumAddress = buffer->MaximumAddress = desc->u.Memory.Start.LowPart;
-        if (desc->Flags & CM_RESOURCE_MEMORY_READ_ONLY) {
+        if (desc->Flags & CM_RESOURCE_MEMORY_READ_ONLY)
+        {
 
             buffer->Information |= PNP_MEMORY_READ_ONLY;
-
-        } else {
+        }
+        else
+        {
 
             buffer->Information |= PNP_MEMORY_READ_WRITE;
-
         }
 
         //
@@ -1173,7 +1160,6 @@ Return:
         //
         desc->Type = CmResourceTypeNull;
         break;
-
     }
 
     //
@@ -1181,12 +1167,9 @@ Return:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PnpiCmResourceToBiosMemory32Fixed(
-    IN  PUCHAR              Buffer,
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceToBiosMemory32Fixed(IN PUCHAR Buffer, IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -1205,25 +1188,25 @@ Return:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PPNP_FIXED_MEMORY32_DESCRIPTOR  buffer;
-    ULONG                           i;
+    PPNP_FIXED_MEMORY32_DESCRIPTOR buffer;
+    ULONG i;
 
     PAGED_CODE();
 
     //
     // Setup the initial buffer
     //
-    buffer = (PPNP_FIXED_MEMORY32_DESCRIPTOR) Buffer;
-    ASSERT( buffer->Length == 9);
+    buffer = (PPNP_FIXED_MEMORY32_DESCRIPTOR)Buffer;
+    ASSERT(buffer->Length == 9);
 
     //
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // We can use no memory
@@ -1235,7 +1218,8 @@ Return:
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -1245,28 +1229,29 @@ Return:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypeMemory) {
+        if (desc->Type != CmResourceTypeMemory)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // Here we *have* a match...
         //
         buffer->BaseAddress = desc->u.Memory.Start.LowPart;
-        buffer->MemorySize =  desc->u.Memory.Length >> 8;
-        if (desc->Flags & CM_RESOURCE_MEMORY_READ_ONLY) {
+        buffer->MemorySize = desc->u.Memory.Length >> 8;
+        if (desc->Flags & CM_RESOURCE_MEMORY_READ_ONLY)
+        {
 
             buffer->Information |= PNP_MEMORY_READ_ONLY;
-
-        } else {
+        }
+        else
+        {
 
             buffer->Information |= PNP_MEMORY_READ_WRITE;
-
         }
 
         //
@@ -1274,7 +1259,6 @@ Return:
         //
         desc->Type = CmResourceTypeNull;
         break;
-
     }
 
     //
@@ -1282,11 +1266,9 @@ Return:
     //
     return STATUS_SUCCESS;
 }
-
+
 BOOLEAN
-PnpiCmResourceValidEmptyList(
-    IN  PCM_RESOURCE_LIST   List
-    )
+PnpiCmResourceValidEmptyList(IN PCM_RESOURCE_LIST List)
 /*++
 
 Routine Description:
@@ -1306,9 +1288,9 @@ Return Value:
 --*/
 {
 
-    PCM_FULL_RESOURCE_DESCRIPTOR    aList;
+    PCM_FULL_RESOURCE_DESCRIPTOR aList;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    ULONG                           i;
+    ULONG i;
 
     PAGED_CODE();
 
@@ -1316,13 +1298,14 @@ Return Value:
     // We can only have one list...
     //
     aList = &(List->List[0]);
-    ASSERT( List->Count == 1);
-    ASSERT( aList->PartialResourceList.Count );
+    ASSERT(List->Count == 1);
+    ASSERT(aList->PartialResourceList.Count);
 
     //
     // Loop for each of the partial resource descriptors
     //
-    for (i = 0; i < aList->PartialResourceList.Count; i++) {
+    for (i = 0; i < aList->PartialResourceList.Count; i++)
+    {
 
         //
         // Current descriptor
@@ -1332,33 +1315,29 @@ Return Value:
         //
         // Is this an interesting descriptor?
         //
-        if (desc->Type != CmResourceTypeNull) {
+        if (desc->Type != CmResourceTypeNull)
+        {
 
             //
             // No
             //
             continue;
-
         }
 
         //
         // This element wasn't consumed...<sigh>
         //
         break;
-
     }
 
     //
     // Done
     //
-    return ( i == aList->PartialResourceList.Count ? TRUE : FALSE );
+    return (i == aList->PartialResourceList.Count ? TRUE : FALSE);
 }
-
+
 NTSTATUS
-PnpCmResourcesToBiosResources(
-    IN  PCM_RESOURCE_LIST   List,
-    IN  PUCHAR              Data
-    )
+PnpCmResourcesToBiosResources(IN PCM_RESOURCE_LIST List, IN PUCHAR Data)
 /*++
 
 Routine Description:
@@ -1379,15 +1358,15 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                        status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    PUCHAR                          buffer;
-    UCHAR                           tagName;
-    USHORT                          increment;
+    PUCHAR buffer;
+    UCHAR tagName;
+    USHORT increment;
 
     PAGED_CODE();
 
-    ASSERT( Data != NULL );
+    ASSERT(Data != NULL);
 
     //
     // Setup initial variables.
@@ -1400,145 +1379,136 @@ Return Value:
     // match it with an entry in the resource list. So we take the convertion routine
     // for the previous problem and turn it upside down.
     //
-    while (1) {
+    while (1)
+    {
 
         //
         // Determine the size of the PNP resource descriptor
         //
-        if ( !(tagName & LARGE_RESOURCE_TAG) ) {
+        if (!(tagName & LARGE_RESOURCE_TAG))
+        {
 
             //
             // Small Tag
             //
-            increment = (USHORT) (tagName & SMALL_TAG_SIZE_MASK) + 1;
+            increment = (USHORT)(tagName & SMALL_TAG_SIZE_MASK) + 1;
             tagName &= SMALL_TAG_MASK;
 
-            ACPIPrint( (
-                ACPI_PRINT_RESOURCES_2,
-                "PnpCmResourcesToBiosResources: small tag = %#02lx increment = %#02lx\n",
-                tagName, increment
-                ) );
-
-        } else {
+            ACPIPrint((ACPI_PRINT_RESOURCES_2, "PnpCmResourcesToBiosResources: small tag = %#02lx increment = %#02lx\n",
+                       tagName, increment));
+        }
+        else
+        {
 
             //
             // Large Tag
             //
-            increment = ( *(USHORT UNALIGNED *)(buffer+1) ) + 3;
+            increment = (*(USHORT UNALIGNED *)(buffer + 1)) + 3;
 
-            ACPIPrint( (
-                ACPI_PRINT_RESOURCES_2,
-                "PnpCmResourcesToBiosResources: large tag = %#02lx increment = %#02lx\n",
-                tagName, increment
-                ) );
-
+            ACPIPrint((ACPI_PRINT_RESOURCES_2, "PnpCmResourcesToBiosResources: large tag = %#02lx increment = %#02lx\n",
+                       tagName, increment));
         }
 
         //
         // We are done if the current tag is the end tag
         //
-        if (tagName == TAG_END) {
+        if (tagName == TAG_END)
+        {
 
-            ACPIPrint( (
-                ACPI_PRINT_RESOURCES_2,
-                "PnpCmResourcesToBiosResources: TAG_END\n"
-                ) );
+            ACPIPrint((ACPI_PRINT_RESOURCES_2, "PnpCmResourcesToBiosResources: TAG_END\n"));
 
             break;
-
         }
 
 
-        switch(tagName) {
-            case TAG_IRQ:
+        switch (tagName)
+        {
+        case TAG_IRQ:
 
-                status = PnpiCmResourceToBiosIrq( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosIrq(buffer, List);
+            break;
 
-            case TAG_EXTENDED_IRQ:
+        case TAG_EXTENDED_IRQ:
 
-                status = PnpiCmResourceToBiosExtendedIrq( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosExtendedIrq(buffer, List);
+            break;
 
-            case TAG_DMA:
+        case TAG_DMA:
 
-                status = PnpiCmResourceToBiosDma( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosDma(buffer, List);
+            break;
 
-            case TAG_START_DEPEND:
+        case TAG_START_DEPEND:
 
-                ASSERT( tagName != TAG_START_DEPEND );
-                break;
+            ASSERT(tagName != TAG_START_DEPEND);
+            break;
 
-            case TAG_END_DEPEND:
+        case TAG_END_DEPEND:
 
-                ASSERT( tagName != TAG_END_DEPEND );
-                break;
+            ASSERT(tagName != TAG_END_DEPEND);
+            break;
 
-            case TAG_IO:
+        case TAG_IO:
 
-                status = PnpiCmResourceToBiosIoPort( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosIoPort(buffer, List);
+            break;
 
-            case TAG_IO_FIXED:
+        case TAG_IO_FIXED:
 
-                status = PnpiCmResourceToBiosIoFixedPort( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosIoFixedPort(buffer, List);
+            break;
 
-            case TAG_MEMORY:
+        case TAG_MEMORY:
 
-                status = PnpiCmResourceToBiosMemory( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosMemory(buffer, List);
+            break;
 
-            case TAG_MEMORY32:
+        case TAG_MEMORY32:
 
-                status = PnpiCmResourceToBiosMemory32( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosMemory32(buffer, List);
+            break;
 
-            case TAG_MEMORY32_FIXED:
+        case TAG_MEMORY32_FIXED:
 
-                status = PnpiCmResourceToBiosMemory32Fixed( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosMemory32Fixed(buffer, List);
+            break;
 
-            case TAG_WORD_ADDRESS:
+        case TAG_WORD_ADDRESS:
 
-                status = PnpiCmResourceToBiosAddress( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosAddress(buffer, List);
+            break;
 
-           case TAG_DOUBLE_ADDRESS:
+        case TAG_DOUBLE_ADDRESS:
 
-                status = PnpiCmResourceToBiosAddressDouble( buffer, List );
-                break;
+            status = PnpiCmResourceToBiosAddressDouble(buffer, List);
+            break;
 
-            case TAG_VENDOR:
+        case TAG_VENDOR:
 
-                //
-                // Ignore this tag
-                //
-                break;
+            //
+            // Ignore this tag
+            //
+            break;
 
-            default: {
+        default:
+        {
 
-                //
-                // Unknown tag. Skip it
-                //
-                ACPIPrint( (
-                    ACPI_PRINT_WARNING,
-                    "PnpBiosResourceToNtResources: TAG_UNKNOWN [tagName = %#02lx]\n",
-                    tagName
-                    ) );
+            //
+            // Unknown tag. Skip it
+            //
+            ACPIPrint((ACPI_PRINT_WARNING, "PnpBiosResourceToNtResources: TAG_UNKNOWN [tagName = %#02lx]\n", tagName));
 
-                break;
-            }
+            break;
+        }
 
         } // switch
         //
         // Did we fail?
         //
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             break;
-
         }
 
         //
@@ -1546,25 +1516,24 @@ Return Value:
         //
         buffer += increment;
         tagName = *buffer;
-
     }
 
-    if (!( NT_SUCCESS(status) )) {
+    if (!(NT_SUCCESS(status)))
+    {
 
         return status;
-
     }
 
     //
     // Check to see if we have consumed all of the appropriate resources...
     //
-    if (PnpiCmResourceValidEmptyList( List ) ) {
+    if (PnpiCmResourceValidEmptyList(List))
+    {
 
         //
         // We failed to empty the list... <sigh>
         //
         return STATUS_UNSUCCESSFUL;
-
     }
 
     return STATUS_SUCCESS;

@@ -22,12 +22,8 @@ Revision History:
 
 
 NTSTATUS
-PspQueryLdtInformation( 
-    IN PEPROCESS Process,
-    OUT PVOID LdtInformation,
-    IN ULONG LdtInformationLength,
-    OUT PULONG ReturnLength
-    )
+PspQueryLdtInformation(IN PEPROCESS Process, OUT PVOID LdtInformation, IN ULONG LdtInformationLength,
+                       OUT PULONG ReturnLength)
 /*++
 
 Routine Description:
@@ -45,20 +41,16 @@ Return Value:
     STATUS_NOT_IMPLEMENTED
 --*/
 {
-    UNREFERENCED_PARAMETER (Process);
-    UNREFERENCED_PARAMETER (LdtInformation);
-    UNREFERENCED_PARAMETER (LdtInformationLength);
-    UNREFERENCED_PARAMETER (ReturnLength);
+    UNREFERENCED_PARAMETER(Process);
+    UNREFERENCED_PARAMETER(LdtInformation);
+    UNREFERENCED_PARAMETER(LdtInformationLength);
+    UNREFERENCED_PARAMETER(ReturnLength);
     return STATUS_NOT_IMPLEMENTED;
 }
 
 
 NTSTATUS
-PspSetLdtSize(
-    IN PEPROCESS Process,
-    IN PVOID LdtSize,
-    IN ULONG LdtSizeLength
-    )
+PspSetLdtSize(IN PEPROCESS Process, IN PVOID LdtSize, IN ULONG LdtSizeLength)
 
 /*++
 
@@ -77,19 +69,15 @@ Return Value:
     STATUS_NOT_IMPLEMENTED
 --*/
 {
-    UNREFERENCED_PARAMETER (Process);
-    UNREFERENCED_PARAMETER (LdtSize);
-    UNREFERENCED_PARAMETER (LdtSizeLength);
+    UNREFERENCED_PARAMETER(Process);
+    UNREFERENCED_PARAMETER(LdtSize);
+    UNREFERENCED_PARAMETER(LdtSizeLength);
     return STATUS_NOT_IMPLEMENTED;
 }
 
 
 NTSTATUS
-PspSetLdtInformation(
-    IN PEPROCESS Process,
-    IN PVOID LdtInformation,
-    IN ULONG LdtInformationLength
-    )
+PspSetLdtInformation(IN PEPROCESS Process, IN PVOID LdtInformation, IN ULONG LdtInformationLength)
 
 /*++
 
@@ -112,19 +100,14 @@ Return Value:
     STATUS_NOT_IMPLEMENTED
 --*/
 {
-    UNREFERENCED_PARAMETER (Process);
-    UNREFERENCED_PARAMETER (LdtInformation);
-    UNREFERENCED_PARAMETER (LdtInformationLength);
+    UNREFERENCED_PARAMETER(Process);
+    UNREFERENCED_PARAMETER(LdtInformation);
+    UNREFERENCED_PARAMETER(LdtInformationLength);
     return STATUS_NOT_IMPLEMENTED;
 }
 
 NTSTATUS
-PspQueryDescriptorThread (
-    PETHREAD Thread,
-    PVOID ThreadInformation,
-    ULONG ThreadInformationLength,
-    PULONG ReturnLength
-    )
+PspQueryDescriptorThread(PETHREAD Thread, PVOID ThreadInformation, ULONG ThreadInformationLength, PULONG ReturnLength)
 /*++
 
 Routine Description:
@@ -143,17 +126,14 @@ Return Value:
     STATUS_NOT_IMPLEMENTED
 --*/
 {
-    UNREFERENCED_PARAMETER (Thread);
-    UNREFERENCED_PARAMETER (ThreadInformation);
-    UNREFERENCED_PARAMETER (ThreadInformationLength);
-    UNREFERENCED_PARAMETER (ReturnLength);
+    UNREFERENCED_PARAMETER(Thread);
+    UNREFERENCED_PARAMETER(ThreadInformation);
+    UNREFERENCED_PARAMETER(ThreadInformationLength);
+    UNREFERENCED_PARAMETER(ReturnLength);
     return STATUS_NOT_IMPLEMENTED;
 }
 
-VOID
-PspDeleteLdt(
-    IN PEPROCESS Process
-    )
+VOID PspDeleteLdt(IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -169,24 +149,18 @@ Return Value:
     None
 --*/
 {
-    UNREFERENCED_PARAMETER (Process);
+    UNREFERENCED_PARAMETER(Process);
 }
 
 NTSTATUS
-NtSetLdtEntries(
-    IN ULONG Selector0,
-    IN ULONG Entry0Low,
-    IN ULONG Entry0Hi,
-    IN ULONG Selector1,
-    IN ULONG Entry1Low,
-    IN ULONG Entry1High
-    )
+NtSetLdtEntries(IN ULONG Selector0, IN ULONG Entry0Low, IN ULONG Entry0Hi, IN ULONG Selector1, IN ULONG Entry1Low,
+                IN ULONG Entry1High)
 {
-    UNREFERENCED_PARAMETER (Selector0);
-    UNREFERENCED_PARAMETER (Entry0Low);
-    UNREFERENCED_PARAMETER (Entry0Hi);
-    UNREFERENCED_PARAMETER (Selector1);
-    UNREFERENCED_PARAMETER (Entry1Low);
-    UNREFERENCED_PARAMETER (Entry1High);
+    UNREFERENCED_PARAMETER(Selector0);
+    UNREFERENCED_PARAMETER(Entry0Low);
+    UNREFERENCED_PARAMETER(Entry0Hi);
+    UNREFERENCED_PARAMETER(Selector1);
+    UNREFERENCED_PARAMETER(Entry1Low);
+    UNREFERENCED_PARAMETER(Entry1High);
     return STATUS_NOT_IMPLEMENTED;
 }

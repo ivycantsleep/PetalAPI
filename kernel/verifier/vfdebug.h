@@ -22,13 +22,13 @@ Revision History:
 extern ULONG VfSpewLevel;
 
 #if DBG
-#define VERIFIER_DBGPRINT(txt,level) \
-{ \
-    if (VfSpewLevel>(level)) { \
-        DbgPrint##txt; \
-    }\
-}
+#define VERIFIER_DBGPRINT(txt, level) \
+    {                                 \
+        if (VfSpewLevel > (level))    \
+        {                             \
+            DbgPrint##txt;            \
+        }                             \
+    }
 #else
-#define VERIFIER_DBGPRINT(txt,level)
+#define VERIFIER_DBGPRINT(txt, level)
 #endif
-

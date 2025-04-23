@@ -19,10 +19,10 @@ Revision History:
 
 --*/
 
-#pragma warning(disable:4214)   // bit field types other than int
-#pragma warning(disable:4201)   // nameless struct/union
-#pragma warning(disable:4115)   // named type definition in parentheses
-#pragma warning(disable:4127)   // condition expression is constant
+#pragma warning(disable : 4214) // bit field types other than int
+#pragma warning(disable : 4201) // nameless struct/union
+#pragma warning(disable : 4115) // named type definition in parentheses
+#pragma warning(disable : 4127) // condition expression is constant
 
 #include <nt.h>
 #include <ntrtl.h>
@@ -41,21 +41,16 @@ typedef const void *PCVOID;
 //#define DPFLTR_INFO_LEVEL DPFLTR_ERROR_LEVEL
 //#endif
 
-#define ARRAY_FITS(_base, _count, _elemtype, _limit) ((((ULONG) (_base)) < (_limit)) && ((((ULONG) ((_base) + ((_count) * (sizeof(_elemtype)))))) <= (_limit)))
+#define ARRAY_FITS(_base, _count, _elemtype, _limit) \
+    ((((ULONG)(_base)) < (_limit)) && ((((ULONG)((_base) + ((_count) * (sizeof(_elemtype)))))) <= (_limit)))
 #define SINGLETON_FITS(_base, _elemtype, _limit) ARRAY_FITS((_base), 1, _elemtype, (_limit))
 
 //
 // Comparison of unsigned numbers by subtraction does Not work!
 //
-#define RTLP_COMPARE_NUMBER(x, y) \
-    (((x) < (y)) ? -1 : ((x) > (y)) ? +1 : 0)
+#define RTLP_COMPARE_NUMBER(x, y) (((x) < (y)) ? -1 : ((x) > (y)) ? +1 : 0)
 
-int
-__cdecl
-RtlpCompareActivationContextDataTOCEntryById(
-    CONST VOID* VoidElement1,
-    CONST VOID* VoidElement2
-    )
+int __cdecl RtlpCompareActivationContextDataTOCEntryById(CONST VOID *VoidElement1, CONST VOID *VoidElement2)
 /*++
 This code must kinda sorta mimic code in sxs.dll.
 base\win32\fusion\dll\whistler\actctxgenctxctb.cpp
@@ -63,104 +58,93 @@ base\win32\fusion\dll\whistler\actctxgenctxctb.cpp
 But we handle extended sections differently.
 --*/
 {
-    const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED * Element1 = (const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *)VoidElement1;
-    const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED * Element2 = (const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *)VoidElement2;
+    const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *Element1 =
+        (const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *)VoidElement1;
+    const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *Element2 =
+        (const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *)VoidElement2;
 
     return RTLP_COMPARE_NUMBER(Element1->Id, Element2->Id);
 }
 
 NTSTATUS
-RtlpLocateActivationContextSection(
-    PCACTIVATION_CONTEXT_DATA ActivationContextData,
-    const GUID *ExtensionGuid,
-    ULONG Id,
-    PVOID *SectionData,
-    ULONG *SectionLength
-    )
+RtlpLocateActivationContextSection(PCACTIVATION_CONTEXT_DATA ActivationContextData, const GUID *ExtensionGuid, ULONG Id,
+                                   PVOID *SectionData, ULONG *SectionLength)
 {
     NTSTATUS Status = STATUS_SUCCESS;
-    const ACTIVATION_CONTEXT_DATA_TOC_HEADER UNALIGNED * TocHeader = NULL;
-    const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED * TocEntries = NULL;
-    const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED * TocEntry = NULL;
+    const ACTIVATION_CONTEXT_DATA_TOC_HEADER UNALIGNED *TocHeader = NULL;
+    const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *TocEntries = NULL;
+    const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *TocEntry = NULL;
     ULONG i;
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Entered RtlpLocateActivationContextSection() Id = %u\n", Id);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL, "Entered RtlpLocateActivationContextSection() Id = %u\n", Id);
 #endif
 
     if ((ActivationContextData->TotalSize < sizeof(ACTIVATION_CONTEXT_DATA)) ||
         (ActivationContextData->HeaderSize < sizeof(ACTIVATION_CONTEXT_DATA)))
     {
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_ERROR_LEVEL,
-            "SXS/RTL: Activation context data at %p too small; TotalSize = %lu; HeaderSize = %lu\n",
-            ActivationContextData,
-            ActivationContextData->TotalSize,
-            ActivationContextData->HeaderSize);
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                   "SXS/RTL: Activation context data at %p too small; TotalSize = %lu; HeaderSize = %lu\n",
+                   ActivationContextData, ActivationContextData->TotalSize, ActivationContextData->HeaderSize);
         Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
         goto Exit;
     }
-    
+
     if (ExtensionGuid != NULL)
     {
         if (ActivationContextData->ExtendedTocOffset != 0)
         {
-            const ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_HEADER UNALIGNED * ExtHeader = NULL;
-            const ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_ENTRY UNALIGNED * ExtEntry = NULL;
+            const ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_HEADER UNALIGNED *ExtHeader = NULL;
+            const ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_ENTRY UNALIGNED *ExtEntry = NULL;
 
-            if (!SINGLETON_FITS(ActivationContextData->ExtendedTocOffset, ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_HEADER, ActivationContextData->TotalSize))
+            if (!SINGLETON_FITS(ActivationContextData->ExtendedTocOffset, ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_HEADER,
+                                ActivationContextData->TotalSize))
             {
                 DbgPrintEx(
-                    DPFLTR_SXS_ID,
-                    DPFLTR_ERROR_LEVEL,
+                    DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
                     "SXS/RTL: Extended TOC offset (%ld) is outside bounds of activation context data (%lu bytes)\n",
                     ActivationContextData->ExtendedTocOffset, ActivationContextData->TotalSize);
                 Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
                 goto Exit;
             }
 
-            ExtHeader = (PCACTIVATION_CONTEXT_DATA_EXTENDED_TOC_HEADER) (((LONG_PTR) ActivationContextData) + ActivationContextData->ExtendedTocOffset);
+            ExtHeader = (PCACTIVATION_CONTEXT_DATA_EXTENDED_TOC_HEADER)(((LONG_PTR)ActivationContextData) +
+                                                                        ActivationContextData->ExtendedTocOffset);
 
-            if (!ARRAY_FITS(ExtHeader->FirstEntryOffset, ExtHeader->EntryCount, ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_ENTRY, ActivationContextData->TotalSize))
+            if (!ARRAY_FITS(ExtHeader->FirstEntryOffset, ExtHeader->EntryCount,
+                            ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_ENTRY, ActivationContextData->TotalSize))
             {
-                DbgPrintEx(
-                    DPFLTR_SXS_ID,
-                    DPFLTR_ERROR_LEVEL,
-                    "SXS/RTL: Extended TOC entry array (starting at offset %ld; count = %lu; entry size = %u) is outside bounds of activation context data (%lu bytes)\n",
-                    ExtHeader->FirstEntryOffset,
-                    ExtHeader->EntryCount,
-                    sizeof(ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_ENTRY),
-                    ActivationContextData->TotalSize);
+                DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                           "SXS/RTL: Extended TOC entry array (starting at offset %ld; count = %lu; entry size = %u) "
+                           "is outside bounds of activation context data (%lu bytes)\n",
+                           ExtHeader->FirstEntryOffset, ExtHeader->EntryCount,
+                           sizeof(ACTIVATION_CONTEXT_DATA_EXTENDED_TOC_ENTRY), ActivationContextData->TotalSize);
                 Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
                 goto Exit;
             }
 
-            ExtEntry = (PCACTIVATION_CONTEXT_DATA_EXTENDED_TOC_ENTRY) (((LONG_PTR) ActivationContextData) + ExtHeader->FirstEntryOffset);
+            ExtEntry = (PCACTIVATION_CONTEXT_DATA_EXTENDED_TOC_ENTRY)(((LONG_PTR)ActivationContextData) +
+                                                                      ExtHeader->FirstEntryOffset);
 
             // No fancy searching for the extension; just a dumb linear search.
-            for (i=0; i<ExtHeader->EntryCount; i++)
+            for (i = 0; i < ExtHeader->EntryCount; i++)
             {
                 if (IsEqualGUID(ExtensionGuid, &ExtEntry[i].ExtensionGuid))
                 {
-                    if (!SINGLETON_FITS(ExtEntry[i].TocOffset, ACTIVATION_CONTEXT_DATA_TOC_HEADER, ActivationContextData->TotalSize))
+                    if (!SINGLETON_FITS(ExtEntry[i].TocOffset, ACTIVATION_CONTEXT_DATA_TOC_HEADER,
+                                        ActivationContextData->TotalSize))
                     {
-                        DbgPrintEx(
-                            DPFLTR_SXS_ID,
-                            DPFLTR_ERROR_LEVEL,
-                            "SXS/RTL: Extended TOC section TOC %d (offset: %ld, size: %u) is outside activation context data bounds (%lu bytes)\n",
-                            i,
-                            ExtEntry[i].TocOffset,
-                            sizeof(ACTIVATION_CONTEXT_DATA_TOC_HEADER),
-                            ActivationContextData->TotalSize);
+                        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                                   "SXS/RTL: Extended TOC section TOC %d (offset: %ld, size: %u) is outside activation "
+                                   "context data bounds (%lu bytes)\n",
+                                   i, ExtEntry[i].TocOffset, sizeof(ACTIVATION_CONTEXT_DATA_TOC_HEADER),
+                                   ActivationContextData->TotalSize);
                         Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
                         goto Exit;
                     }
 
-                    TocHeader = (PCACTIVATION_CONTEXT_DATA_TOC_HEADER) (((LONG_PTR) ActivationContextData) + ExtEntry[i].TocOffset);
+                    TocHeader = (PCACTIVATION_CONTEXT_DATA_TOC_HEADER)(((LONG_PTR)ActivationContextData) +
+                                                                       ExtEntry[i].TocOffset);
                     break;
                 }
             }
@@ -168,7 +152,8 @@ RtlpLocateActivationContextSection(
     }
     else if (ActivationContextData->DefaultTocOffset != 0)
     {
-        TocHeader = (PCACTIVATION_CONTEXT_DATA_TOC_HEADER) (((LONG_PTR) ActivationContextData) + ActivationContextData->DefaultTocOffset);
+        TocHeader = (PCACTIVATION_CONTEXT_DATA_TOC_HEADER)(((LONG_PTR)ActivationContextData) +
+                                                           ActivationContextData->DefaultTocOffset);
     }
 
     if ((TocHeader == NULL) || (TocHeader->EntryCount == 0))
@@ -177,21 +162,19 @@ RtlpLocateActivationContextSection(
         goto Exit;
     }
 
-    if (!ARRAY_FITS(TocHeader->FirstEntryOffset, TocHeader->EntryCount, ACTIVATION_CONTEXT_DATA_TOC_ENTRY, ActivationContextData->TotalSize))
+    if (!ARRAY_FITS(TocHeader->FirstEntryOffset, TocHeader->EntryCount, ACTIVATION_CONTEXT_DATA_TOC_ENTRY,
+                    ActivationContextData->TotalSize))
     {
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_ERROR_LEVEL,
-            "SXS/RTL: TOC entry array (offset: %ld; count = %lu; entry size = %u) is outside bounds of activation context data (%lu bytes)\n",
-            TocHeader->FirstEntryOffset,
-            TocHeader->EntryCount,
-            sizeof(ACTIVATION_CONTEXT_DATA_TOC_ENTRY),
-            ActivationContextData->TotalSize);
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                   "SXS/RTL: TOC entry array (offset: %ld; count = %lu; entry size = %u) is outside bounds of "
+                   "activation context data (%lu bytes)\n",
+                   TocHeader->FirstEntryOffset, TocHeader->EntryCount, sizeof(ACTIVATION_CONTEXT_DATA_TOC_ENTRY),
+                   ActivationContextData->TotalSize);
         Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
         goto Exit;
     }
 
-    TocEntries = (PCACTIVATION_CONTEXT_DATA_TOC_ENTRY) (((LONG_PTR) ActivationContextData) + TocHeader->FirstEntryOffset);
+    TocEntries = (PCACTIVATION_CONTEXT_DATA_TOC_ENTRY)(((LONG_PTR)ActivationContextData) + TocHeader->FirstEntryOffset);
 
     if (TocHeader->Flags & ACTIVATION_CONTEXT_DATA_TOC_HEADER_INORDER)
     {
@@ -199,8 +182,8 @@ RtlpLocateActivationContextSection(
         // Paranoia while we're writing the code to encode the data structure...
         ULONG j;
 
-        for (j=1; j<TocHeader->EntryCount; j++)
-            ASSERT(TocEntries[j-1].Id < TocEntries[j].Id);
+        for (j = 1; j < TocHeader->EntryCount; j++)
+            ASSERT(TocEntries[j - 1].Id < TocEntries[j].Id);
 #endif // DBG
 
         if (Id < TocEntries[0].Id)
@@ -215,8 +198,8 @@ RtlpLocateActivationContextSection(
 
 #if DBG
             ULONG jx;
-            for (jx=1; jx<TocHeader->EntryCount; jx++)
-                ASSERT((TocEntries[jx-1].Id + 1) == TocEntries[jx].Id);
+            for (jx = 1; jx < TocHeader->EntryCount; jx++)
+                ASSERT((TocEntries[jx - 1].Id + 1) == TocEntries[jx].Id);
 #endif // DBG
 
             if (Index >= TocHeader->EntryCount)
@@ -234,20 +217,15 @@ RtlpLocateActivationContextSection(
 
             Key.Id = Id;
 
-            TocEntry = (const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *)
-                bsearch(
-                    &Key,
-                    TocEntries,
-                    TocHeader->EntryCount,
-                    sizeof(*TocEntries),
-                    RtlpCompareActivationContextDataTOCEntryById
-                    );
+            TocEntry = (const ACTIVATION_CONTEXT_DATA_TOC_ENTRY UNALIGNED *)bsearch(
+                &Key, TocEntries, TocHeader->EntryCount, sizeof(*TocEntries),
+                RtlpCompareActivationContextDataTOCEntryById);
         }
     }
     else
     {
         // They're not in order; just do a linear search.
-        for (i=0; i<TocHeader->EntryCount; i++)
+        for (i = 0; i < TocHeader->EntryCount; i++)
         {
             if (TocEntries[i].Id == Id)
             {
@@ -266,38 +244,29 @@ RtlpLocateActivationContextSection(
     if (!SINGLETON_FITS(TocEntry->Offset, TocEntry->Length, ActivationContextData->TotalSize))
     {
         DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_ERROR_LEVEL,
+            DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
             "SXS/RTL: Section found (offset %ld; length %lu) extends past end of activation context data (%lu bytes)\n",
-            TocEntry->Offset,
-            TocEntry->Length,
-            ActivationContextData->TotalSize);
+            TocEntry->Offset, TocEntry->Length, ActivationContextData->TotalSize);
         Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
         goto Exit;
     }
 
-    *SectionData = (PVOID) (((LONG_PTR) ActivationContextData) + TocEntry->Offset);
+    *SectionData = (PVOID)(((LONG_PTR)ActivationContextData) + TocEntry->Offset);
     *SectionLength = TocEntry->Length;
 
     Status = STATUS_SUCCESS;
 Exit:
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving RtlpLocateActivationContextSection() with NTSTATUS 0x%08lx\n", Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Leaving RtlpLocateActivationContextSection() with NTSTATUS 0x%08lx\n", Status);
 #endif // DBG_SXS
 
     return Status;
 }
 
 NTSTATUS
-RtlpFindNextActivationContextSection(
-    PFINDFIRSTACTIVATIONCONTEXTSECTION Context,
-    PVOID *SectionData,
-    ULONG *SectionLength,
-    PACTIVATION_CONTEXT *ActivationContextOut
-    )
+RtlpFindNextActivationContextSection(PFINDFIRSTACTIVATIONCONTEXTSECTION Context, PVOID *SectionData,
+                                     ULONG *SectionLength, PACTIVATION_CONTEXT *ActivationContextOut)
 {
     NTSTATUS Status = STATUS_SUCCESS;
     PCACTIVATION_CONTEXT_DATA ActivationContextData = NULL;
@@ -306,10 +275,7 @@ RtlpFindNextActivationContextSection(
     const PPEB Peb = Teb->ProcessEnvironmentBlock;
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Entered RtlpFindNextActivationContextSection()\n");
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL, "Entered RtlpFindNextActivationContextSection()\n");
 #endif // DBG_SXS
 
     if (ActivationContextOut != NULL)
@@ -321,22 +287,27 @@ RtlpFindNextActivationContextSection(
         {
         case 0:
             // first time through; select the activation context at the head of the stack.
-            if (Teb->ActivationContextStack.ActiveFrame != NULL) {
-                PRTL_ACTIVATION_CONTEXT_STACK_FRAME Frame = (PRTL_ACTIVATION_CONTEXT_STACK_FRAME) Teb->ActivationContextStack.ActiveFrame;
+            if (Teb->ActivationContextStack.ActiveFrame != NULL)
+            {
+                PRTL_ACTIVATION_CONTEXT_STACK_FRAME Frame =
+                    (PRTL_ACTIVATION_CONTEXT_STACK_FRAME)Teb->ActivationContextStack.ActiveFrame;
 
                 ActivationContextWeAreTrying = Frame->ActivationContext;
 
-                if ((ActivationContextWeAreTrying != NULL) &&
-                    (ActivationContextWeAreTrying != ACTCTX_PROCESS_DEFAULT)) {
-                    if (ActivationContextWeAreTrying == ACTCTX_SYSTEM_DEFAULT) {
+                if ((ActivationContextWeAreTrying != NULL) && (ActivationContextWeAreTrying != ACTCTX_PROCESS_DEFAULT))
+                {
+                    if (ActivationContextWeAreTrying == ACTCTX_SYSTEM_DEFAULT)
+                    {
                         ActivationContextData = Peb->SystemDefaultActivationContextData;
-                    } else {
+                    }
+                    else
+                    {
                         ActivationContextData = ActivationContextWeAreTrying->ActivationContextData;
                     }
-
                 }
 
-                if (ActivationContextData != NULL) {
+                if (ActivationContextData != NULL)
+                {
                     // We got what we were looking for...
                     Context->Depth = 1;
                     break;
@@ -349,7 +320,8 @@ RtlpFindNextActivationContextSection(
             ActivationContextWeAreTrying = ACTCTX_PROCESS_DEFAULT;
             ActivationContextData = Peb->ActivationContextData;
 
-            if (ActivationContextData != NULL) {
+            if (ActivationContextData != NULL)
+            {
                 Context->Depth = 2;
                 break;
             }
@@ -360,14 +332,16 @@ RtlpFindNextActivationContextSection(
             ActivationContextWeAreTrying = ACTCTX_SYSTEM_DEFAULT;
             ActivationContextData = Peb->SystemDefaultActivationContextData;
 
-            if (ActivationContextData != NULL) {
+            if (ActivationContextData != NULL)
+            {
                 Context->Depth = 3;
                 break;
             }
 
         default:
             ASSERT(Context->Depth <= 3);
-            if (Context->Depth > 3) {
+            if (Context->Depth > 3)
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
@@ -375,17 +349,14 @@ RtlpFindNextActivationContextSection(
         }
 
         // Hmm... no data.
-        if (ActivationContextData == NULL) {
+        if (ActivationContextData == NULL)
+        {
             Status = STATUS_SXS_SECTION_NOT_FOUND;
             goto Exit;
         }
 
-        Status = RtlpLocateActivationContextSection(
-                        ActivationContextData,
-                        Context->ExtensionGuid,
-                        Context->Id,
-                        SectionData,
-                        SectionLength);
+        Status = RtlpLocateActivationContextSection(ActivationContextData, Context->ExtensionGuid, Context->Id,
+                                                    SectionData, SectionLength);
 
         if (NT_SUCCESS(Status))
             break;
@@ -394,20 +365,16 @@ RtlpFindNextActivationContextSection(
         // than STATUS_SXS_SECTION_NOT_FOUND, report it.  If it is
         // STATUS_SXS_SECTION_NOT_FOUND and we're not at the end of the list,
         // iterate again.
-        if ((Status != STATUS_SXS_SECTION_NOT_FOUND) ||
-            (Context->Depth == 3))
-             goto Exit;
+        if ((Status != STATUS_SXS_SECTION_NOT_FOUND) || (Context->Depth == 3))
+            goto Exit;
     }
 
-    Context->OutFlags = 
-        ((ActivationContextWeAreTrying == ACTCTX_SYSTEM_DEFAULT)
-        ? FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT
-        : 0)
-        |
-        ((ActivationContextWeAreTrying == ACTCTX_PROCESS_DEFAULT)
-        ? FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT
-        : 0)
-        ;
+    Context->OutFlags = ((ActivationContextWeAreTrying == ACTCTX_SYSTEM_DEFAULT)
+                             ? FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT
+                             : 0) |
+                        ((ActivationContextWeAreTrying == ACTCTX_PROCESS_DEFAULT)
+                             ? FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT
+                             : 0);
 
     if (ActivationContextOut != NULL)
     {
@@ -422,10 +389,8 @@ RtlpFindNextActivationContextSection(
     Status = STATUS_SUCCESS;
 Exit:
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving RtlpFindNextActivationContextSection() with NTSTATUS 0x%08lx\n", Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Leaving RtlpFindNextActivationContextSection() with NTSTATUS 0x%08lx\n", Status);
 #endif // DBG_SXS
 
     return Status;
@@ -433,33 +398,23 @@ Exit:
 
 NTSTATUS
 NTAPI
-RtlFindFirstActivationContextSection(
-    IN PFINDFIRSTACTIVATIONCONTEXTSECTION Context,
-    OUT PVOID *SectionData,
-    OUT ULONG *SectionLength,
-    OUT PACTIVATION_CONTEXT *ActivationContextFound OPTIONAL
-    )
+RtlFindFirstActivationContextSection(IN PFINDFIRSTACTIVATIONCONTEXTSECTION Context, OUT PVOID *SectionData,
+                                     OUT ULONG *SectionLength, OUT PACTIVATION_CONTEXT *ActivationContextFound OPTIONAL)
 {
     NTSTATUS Status = STATUS_SUCCESS;
     PACTIVATION_CONTEXT ActivationContextTemp = NULL;
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Entered RtlFindFirstActivationContextSection()\n");
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL, "Entered RtlFindFirstActivationContextSection()\n");
 #endif // DBG_SXS
 
     if (ActivationContextFound != NULL)
         *ActivationContextFound = NULL;
 
-    if ((Context == NULL) ||
-        (Context->Size < sizeof(FINDFIRSTACTIVATIONCONTEXTSECTION)) ||
-        (Context->Flags & ~(
-                    FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT
-                    | FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS)) ||
-        (SectionData == NULL) ||
-        (SectionLength == NULL))
+    if ((Context == NULL) || (Context->Size < sizeof(FINDFIRSTACTIVATIONCONTEXTSECTION)) ||
+        (Context->Flags & ~(FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT |
+                            FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS)) ||
+        (SectionData == NULL) || (SectionLength == NULL))
     {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
@@ -480,42 +435,31 @@ RtlFindFirstActivationContextSection(
     Status = STATUS_SUCCESS;
 Exit:
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving RtlFindFirstActivationContextSection() with NTSTATUS 0x%08lx\n", Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Leaving RtlFindFirstActivationContextSection() with NTSTATUS 0x%08lx\n", Status);
 #endif // DBG_SXS
 
     return Status;
 }
 
 NTSTATUS
-RtlpFindFirstActivationContextSection(
-    IN PFINDFIRSTACTIVATIONCONTEXTSECTION Context,
-    OUT PVOID *SectionData,
-    OUT ULONG *SectionLength,
-    OUT PACTIVATION_CONTEXT *ActivationContextFound OPTIONAL
-    )
+RtlpFindFirstActivationContextSection(IN PFINDFIRSTACTIVATIONCONTEXTSECTION Context, OUT PVOID *SectionData,
+                                      OUT ULONG *SectionLength,
+                                      OUT PACTIVATION_CONTEXT *ActivationContextFound OPTIONAL)
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Entered %s()\n", __FUNCTION__);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL, "Entered %s()\n", __FUNCTION__);
 #endif // DBG_SXS
 
     if (ActivationContextFound != NULL)
         *ActivationContextFound = NULL;
 
-    if ((Context == NULL) ||
-        (Context->Size < sizeof(FINDFIRSTACTIVATIONCONTEXTSECTION)) ||
-        (Context->Flags & ~(
-                    FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT
-                    | FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS)) ||
-        (SectionData == NULL) ||
-        (SectionLength == NULL))
+    if ((Context == NULL) || (Context->Size < sizeof(FINDFIRSTACTIVATIONCONTEXTSECTION)) ||
+        (Context->Flags & ~(FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT |
+                            FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS)) ||
+        (SectionData == NULL) || (SectionLength == NULL))
     {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
@@ -530,10 +474,7 @@ RtlpFindFirstActivationContextSection(
     Status = STATUS_SUCCESS;
 Exit:
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving %s() with NTSTATUS 0x%08lx\n", __FUNCTION__, Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL, "Leaving %s() with NTSTATUS 0x%08lx\n", __FUNCTION__, Status);
 #endif // DBG_SXS
 
     return Status;
@@ -541,47 +482,34 @@ Exit:
 
 NTSTATUS
 NTAPI
-RtlFindNextActivationContextSection(
-    IN PFINDFIRSTACTIVATIONCONTEXTSECTION Context,
-    OUT PVOID *SectionData,
-    OUT ULONG *SectionLength,
-    OUT PACTIVATION_CONTEXT *ActivationContextFound OPTIONAL
-    )
+RtlFindNextActivationContextSection(IN PFINDFIRSTACTIVATIONCONTEXTSECTION Context, OUT PVOID *SectionData,
+                                    OUT ULONG *SectionLength, OUT PACTIVATION_CONTEXT *ActivationContextFound OPTIONAL)
 {
     NTSTATUS Status = STATUS_SUCCESS;
     PACTIVATION_CONTEXT ActivationContextTemp = NULL;
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Entered RtlFindNextActivationContextSection()\n");
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL, "Entered RtlFindNextActivationContextSection()\n");
 #endif // DBG_SXS
 
     if (ActivationContextFound != NULL)
         *ActivationContextFound = NULL;
 
-    if ((Context == NULL) ||
-        (Context->Size < sizeof(FINDFIRSTACTIVATIONCONTEXTSECTION)) ||
-        (Context->Flags & ~(
-                    FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT
-                    | FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS)) ||
-        (SectionData == NULL) ||
-        (SectionLength == NULL))
+    if ((Context == NULL) || (Context->Size < sizeof(FINDFIRSTACTIVATIONCONTEXTSECTION)) ||
+        (Context->Flags & ~(FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT |
+                            FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS)) ||
+        (SectionData == NULL) || (SectionLength == NULL))
     {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
 
-    Status = RtlpFindNextActivationContextSection(
-                    Context,
-                    SectionData,
-                    SectionLength,
-                    &ActivationContextTemp);
+    Status = RtlpFindNextActivationContextSection(Context, SectionData, SectionLength, &ActivationContextTemp);
     if (!NT_SUCCESS(Status))
         goto Exit;
 
-    if (ActivationContextFound != NULL) {
+    if (ActivationContextFound != NULL)
+    {
         RtlAddRefActivationContext(ActivationContextTemp);
         *ActivationContextFound = ActivationContextTemp;
     }
@@ -590,77 +518,72 @@ RtlFindNextActivationContextSection(
 
 Exit:
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving RtlFindNextActivationContextSection() with NTSTATUS 0x%08lx\n", Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Leaving RtlFindNextActivationContextSection() with NTSTATUS 0x%08lx\n", Status);
 #endif // DBG_SXS
 
     return Status;
 }
 
-VOID
-NTAPI
-RtlEndFindActivationContextSection(
-    IN PFINDFIRSTACTIVATIONCONTEXTSECTION Context
-    )
+VOID NTAPI RtlEndFindActivationContextSection(IN PFINDFIRSTACTIVATIONCONTEXTSECTION Context)
 {
     // We don't maintain any state, so nothing to do today.  Who knows what we might
     // do in the future however...
-    UNREFERENCED_PARAMETER (Context);
+    UNREFERENCED_PARAMETER(Context);
 }
 
 NTSTATUS
-RtlpFindActivationContextSection_FillOutReturnedData(
-    IN ULONG                                    Flags,
-    OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA  ReturnedData,
-    IN OUT PACTIVATION_CONTEXT                  ActivationContext,
-    IN PCFINDFIRSTACTIVATIONCONTEXTSECTION      Context,
-    IN const VOID * UNALIGNED                   Header,
-    IN ULONG                                    Header_UserDataOffset,
-    IN ULONG                                    Header_UserDataSize,
-    IN ULONG                                    SectionLength
-    )
+RtlpFindActivationContextSection_FillOutReturnedData(IN ULONG Flags,
+                                                     OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData,
+                                                     IN OUT PACTIVATION_CONTEXT ActivationContext,
+                                                     IN PCFINDFIRSTACTIVATIONCONTEXTSECTION Context,
+                                                     IN const VOID *UNALIGNED Header, IN ULONG Header_UserDataOffset,
+                                                     IN ULONG Header_UserDataSize, IN ULONG SectionLength)
 {
     NTSTATUS Status;
-    PCACTIVATION_CONTEXT_DATA                           ActivationContextData;
-    PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER    AssemblyRosterHeader;
-    PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_ENTRY     AssemblyRosterEntryList;
-    PCACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION      AssemblyDataInfo;
+    PCACTIVATION_CONTEXT_DATA ActivationContextData;
+    PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER AssemblyRosterHeader;
+    PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_ENTRY AssemblyRosterEntryList;
+    PCACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION AssemblyDataInfo;
 
 #if DBG
     Status = STATUS_INTERNAL_ERROR;
 #if !defined(INVALID_HANDLE_VALUE)
-#define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
+#define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR) - 1)
 #endif
-    ActivationContextData =     (PCACTIVATION_CONTEXT_DATA)INVALID_HANDLE_VALUE;
-    AssemblyRosterHeader =      (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER)INVALID_HANDLE_VALUE;
-    AssemblyRosterEntryList =   (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_ENTRY)INVALID_HANDLE_VALUE;
-    AssemblyDataInfo =          (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION)INVALID_HANDLE_VALUE;
+    ActivationContextData = (PCACTIVATION_CONTEXT_DATA)INVALID_HANDLE_VALUE;
+    AssemblyRosterHeader = (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER)INVALID_HANDLE_VALUE;
+    AssemblyRosterEntryList = (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_ENTRY)INVALID_HANDLE_VALUE;
+    AssemblyDataInfo = (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION)INVALID_HANDLE_VALUE;
 #endif
 
-    if (Context == NULL) {
+    if (Context == NULL)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
-    if (Header == NULL) {
+    if (Header == NULL)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
-    if (ReturnedData == NULL) {
+    if (ReturnedData == NULL)
+    {
         Status = STATUS_SUCCESS;
         goto Exit;
     }
 
-    if (Header_UserDataOffset != 0) {
-        ReturnedData->SectionGlobalData = (PVOID) (((ULONG_PTR) Header) + Header_UserDataOffset);
+    if (Header_UserDataOffset != 0)
+    {
+        ReturnedData->SectionGlobalData = (PVOID)(((ULONG_PTR)Header) + Header_UserDataOffset);
         ReturnedData->SectionGlobalDataLength = Header_UserDataSize;
     }
 
     ReturnedData->SectionBase = (PVOID)Header;
     ReturnedData->SectionTotalLength = SectionLength;
 
-    if (Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT) {
+    if (Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT)
+    {
 
         ASSERT(RTL_CONTAINS_FIELD(ReturnedData, ReturnedData->Size, ActivationContext));
 
@@ -668,22 +591,21 @@ RtlpFindActivationContextSection_FillOutReturnedData(
         ReturnedData->ActivationContext = ActivationContext;
     }
 
-    if (Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS) {
+    if (Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS)
+    {
 
         ASSERT(RTL_CONTAINS_FIELD(ReturnedData, ReturnedData->Size, Flags));
 
-        ReturnedData->Flags =
-            ((Context->OutFlags & FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT)
-            ? ACTIVATION_CONTEXT_SECTION_KEYED_DATA_FLAG_FOUND_IN_PROCESS_DEFAULT
-            : 0)
-            |
-            ((Context->OutFlags & FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT)
-            ? ACTIVATION_CONTEXT_SECTION_KEYED_DATA_FLAG_FOUND_IN_SYSTEM_DEFAULT
-            : 0)
-            ;
+        ReturnedData->Flags = ((Context->OutFlags & FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT)
+                                   ? ACTIVATION_CONTEXT_SECTION_KEYED_DATA_FLAG_FOUND_IN_PROCESS_DEFAULT
+                                   : 0) |
+                              ((Context->OutFlags & FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT)
+                                   ? ACTIVATION_CONTEXT_SECTION_KEYED_DATA_FLAG_FOUND_IN_SYSTEM_DEFAULT
+                                   : 0);
     }
 
-    if (Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ASSEMBLY_METADATA) {
+    if (Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ASSEMBLY_METADATA)
+    {
 
         typedef ACTIVATION_CONTEXT_SECTION_KEYED_DATA RETURNED_DATA;
 
@@ -693,7 +615,7 @@ RtlpFindActivationContextSection_FillOutReturnedData(
         ULONG AssemblyRosterIndex;
 
 #if DBG
-        AssemblyRosterIndex =       ~0UL;
+        AssemblyRosterIndex = ~0UL;
         AssemblyMetadataStringSectionHeader = (PCACTIVATION_CONTEXT_STRING_SECTION_HEADER)INVALID_HANDLE_VALUE;
         AssemblyMetadataSectionBase = (PVOID)INVALID_HANDLE_VALUE;
         AssemblyMetadataSectionLength = ~0UL;
@@ -702,16 +624,13 @@ RtlpFindActivationContextSection_FillOutReturnedData(
 
         ASSERT(RTL_CONTAINS_FIELD(ReturnedData, ReturnedData->Size, AssemblyMetadata));
 
-        Status = RtlpGetActivationContextData(
-                0,
-                ActivationContext,
-                Context, /* for its flags */
-                &ActivationContextData
-                );
+        Status = RtlpGetActivationContextData(0, ActivationContext, Context, /* for its flags */
+                                              &ActivationContextData);
         if (!NT_SUCCESS(Status))
             goto Exit;
 
-        if (!RTL_VERIFY(ActivationContextData != NULL)) {
+        if (!RTL_VERIFY(ActivationContextData != NULL))
+        {
             Status = STATUS_INTERNAL_ERROR;
             goto Exit;
         }
@@ -719,79 +638,96 @@ RtlpFindActivationContextSection_FillOutReturnedData(
         AssemblyRosterIndex = ReturnedData->AssemblyRosterIndex;
         ASSERT(AssemblyRosterIndex >= 1);
 
-        AssemblyRosterHeader = (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER) (((ULONG_PTR) ActivationContextData) + ActivationContextData->AssemblyRosterOffset);
+        AssemblyRosterHeader =
+            (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_HEADER)(((ULONG_PTR)ActivationContextData) +
+                                                               ActivationContextData->AssemblyRosterOffset);
         ASSERT(AssemblyRosterIndex < AssemblyRosterHeader->EntryCount);
 
-        AssemblyRosterEntryList = (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_ENTRY) (((ULONG_PTR) ActivationContextData) + AssemblyRosterHeader->FirstEntryOffset);
-        AssemblyDataInfo = (PACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION)((ULONG_PTR)ActivationContextData + AssemblyRosterEntryList[AssemblyRosterIndex].AssemblyInformationOffset);
+        AssemblyRosterEntryList =
+            (PCACTIVATION_CONTEXT_DATA_ASSEMBLY_ROSTER_ENTRY)(((ULONG_PTR)ActivationContextData) +
+                                                              AssemblyRosterHeader->FirstEntryOffset);
+        AssemblyDataInfo = (PACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION)((ULONG_PTR)ActivationContextData +
+                                                                           AssemblyRosterEntryList[AssemblyRosterIndex]
+                                                                               .AssemblyInformationOffset);
 
-        ReturnedData->AssemblyMetadata.Information = RTL_CONST_CAST(PACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION)(AssemblyDataInfo);
+        ReturnedData->AssemblyMetadata.Information =
+            RTL_CONST_CAST(PACTIVATION_CONTEXT_DATA_ASSEMBLY_INFORMATION)(AssemblyDataInfo);
 
-        Status =
-            RtlpLocateActivationContextSection(
-                ActivationContextData,
-                NULL, // ExtensionGuid
-                ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION,
-                &AssemblyMetadataSectionBase,
-                &AssemblyMetadataSectionLength
-                );
+        Status = RtlpLocateActivationContextSection(ActivationContextData,
+                                                    NULL, // ExtensionGuid
+                                                    ACTIVATION_CONTEXT_SECTION_ASSEMBLY_INFORMATION,
+                                                    &AssemblyMetadataSectionBase, &AssemblyMetadataSectionLength);
         if (!NT_SUCCESS(Status))
             goto Exit;
 
         ReturnedData->AssemblyMetadata.SectionBase = AssemblyMetadataSectionBase;
         ReturnedData->AssemblyMetadata.SectionLength = AssemblyMetadataSectionLength;
 
-        if (AssemblyMetadataSectionBase != NULL
-            && AssemblyMetadataSectionLength != 0) {
+        if (AssemblyMetadataSectionBase != NULL && AssemblyMetadataSectionLength != 0)
+        {
 
             ULONG HeaderSize;
             ULONG Magic;
 
-            AssemblyMetadataStringSectionHeader = (PCACTIVATION_CONTEXT_STRING_SECTION_HEADER)(((ULONG_PTR)AssemblyMetadataSectionBase) + AssemblyMetadataSectionLength);
+            AssemblyMetadataStringSectionHeader =
+                (PCACTIVATION_CONTEXT_STRING_SECTION_HEADER)(((ULONG_PTR)AssemblyMetadataSectionBase) +
+                                                             AssemblyMetadataSectionLength);
 
-            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, AssemblyMetadataSectionLength, Magic)) {
+            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, AssemblyMetadataSectionLength, Magic))
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
-            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, AssemblyMetadataSectionLength, HeaderSize)) {
+            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, AssemblyMetadataSectionLength, HeaderSize))
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
             Magic = AssemblyMetadataStringSectionHeader->Magic;
-            if (AssemblyMetadataStringSectionHeader->Magic != ACTIVATION_CONTEXT_STRING_SECTION_MAGIC) {
+            if (AssemblyMetadataStringSectionHeader->Magic != ACTIVATION_CONTEXT_STRING_SECTION_MAGIC)
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
             HeaderSize = AssemblyMetadataStringSectionHeader->HeaderSize;
-            if (HeaderSize > AssemblyMetadataSectionLength) {
+            if (HeaderSize > AssemblyMetadataSectionLength)
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
-            if (AssemblyMetadataSectionLength < sizeof(ACTIVATION_CONTEXT_STRING_SECTION_HEADER)) {
+            if (AssemblyMetadataSectionLength < sizeof(ACTIVATION_CONTEXT_STRING_SECTION_HEADER))
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
-            if (HeaderSize < sizeof(ACTIVATION_CONTEXT_STRING_SECTION_HEADER)) {
+            if (HeaderSize < sizeof(ACTIVATION_CONTEXT_STRING_SECTION_HEADER))
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
-            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, HeaderSize, Magic)) {
+            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, HeaderSize, Magic))
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
-            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, HeaderSize, HeaderSize)) {
+            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, HeaderSize, HeaderSize))
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
-            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, HeaderSize, UserDataOffset)) {
+            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, HeaderSize, UserDataOffset))
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
-            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, HeaderSize, UserDataSize)) {
+            if (!RTL_CONTAINS_FIELD(AssemblyMetadataStringSectionHeader, HeaderSize, UserDataSize))
+            {
                 Status = STATUS_INTERNAL_ERROR;
                 goto Exit;
             }
-            ReturnedData->AssemblyMetadata.SectionGlobalDataBase = (PVOID)(((ULONG_PTR)AssemblyMetadataStringSectionHeader) + AssemblyMetadataStringSectionHeader->UserDataOffset);
+            ReturnedData->AssemblyMetadata.SectionGlobalDataBase =
+                (PVOID)(((ULONG_PTR)AssemblyMetadataStringSectionHeader) +
+                        AssemblyMetadataStringSectionHeader->UserDataOffset);
             ReturnedData->AssemblyMetadata.SectionGlobalDataLength = AssemblyMetadataStringSectionHeader->UserDataSize;
         }
     }
@@ -802,13 +738,9 @@ Exit:
 }
 
 NTSTATUS
-RtlpFindActivationContextSection_CheckParameters(
-    IN ULONG Flags,
-    IN const GUID *ExtensionGuid OPTIONAL,
-    IN ULONG SectionId,
-    IN PCVOID ThingToFind,
-    OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData OPTIONAL
-    )
+RtlpFindActivationContextSection_CheckParameters(IN ULONG Flags, IN const GUID *ExtensionGuid OPTIONAL,
+                                                 IN ULONG SectionId, IN PCVOID ThingToFind,
+                                                 OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData OPTIONAL)
 {
     NTSTATUS Status = STATUS_INTERNAL_ERROR;
 
@@ -816,37 +748,40 @@ RtlpFindActivationContextSection_CheckParameters(
     UNREFERENCED_PARAMETER(SectionId);
 
     if ((ThingToFind == NULL) ||
-            ((Flags & ~(
-                FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT
-                | FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS
-                | FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ASSEMBLY_METADATA
-                )) != 0) ||
-            (((Flags & (
-                FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT
-                | FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS
-                | FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ASSEMBLY_METADATA
-                )) != 0) &&
-            (ReturnedData == NULL)) ||
-            ((ReturnedData != NULL) &&
-             (ReturnedData->Size < (FIELD_OFFSET(ACTIVATION_CONTEXT_SECTION_KEYED_DATA, ActivationContext) + sizeof(ReturnedData->ActivationContext)))
-             )) {
+        ((Flags & ~(FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT |
+                    FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS |
+                    FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ASSEMBLY_METADATA)) != 0) ||
+        (((Flags & (FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ACTIVATION_CONTEXT |
+                    FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS |
+                    FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ASSEMBLY_METADATA)) != 0) &&
+         (ReturnedData == NULL)) ||
+        ((ReturnedData != NULL) &&
+         (ReturnedData->Size < (FIELD_OFFSET(ACTIVATION_CONTEXT_SECTION_KEYED_DATA, ActivationContext) +
+                                sizeof(ReturnedData->ActivationContext)))))
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
 
-    if ((Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS) != 0
-        && !RTL_CONTAINS_FIELD(ReturnedData, ReturnedData->Size, Flags)
-        ) {
+    if ((Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_FLAGS) != 0 &&
+        !RTL_CONTAINS_FIELD(ReturnedData, ReturnedData->Size, Flags))
+    {
         Status = STATUS_INVALID_PARAMETER;
-        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL, "SXS: %s() flags contains return_flags but they don't fit in size, return invalid_parameter 0x%08lx.\n", __FUNCTION__, STATUS_INVALID_PARAMETER);
+        DbgPrintEx(
+            DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+            "SXS: %s() flags contains return_flags but they don't fit in size, return invalid_parameter 0x%08lx.\n",
+            __FUNCTION__, STATUS_INVALID_PARAMETER);
         goto Exit;
     }
 
-    if ((Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ASSEMBLY_METADATA) != 0
-        && !RTL_CONTAINS_FIELD(ReturnedData, ReturnedData->Size, AssemblyMetadata)
-        ) {
+    if ((Flags & FIND_ACTIVATION_CONTEXT_SECTION_KEY_RETURN_ASSEMBLY_METADATA) != 0 &&
+        !RTL_CONTAINS_FIELD(ReturnedData, ReturnedData->Size, AssemblyMetadata))
+    {
         Status = STATUS_INVALID_PARAMETER;
-        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL, "SXS: %s() flags contains return_assembly_metadata but they don't fit in size, return invalid_parameter 0x%08lx.\n", __FUNCTION__, STATUS_INVALID_PARAMETER);
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                   "SXS: %s() flags contains return_assembly_metadata but they don't fit in size, return "
+                   "invalid_parameter 0x%08lx.\n",
+                   __FUNCTION__, STATUS_INVALID_PARAMETER);
         goto Exit;
     }
 
@@ -854,10 +789,8 @@ RtlpFindActivationContextSection_CheckParameters(
 Exit:
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving RtlFindActivationContextSectionString() with NTSTATUS 0x%08lx\n", Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Leaving RtlFindActivationContextSectionString() with NTSTATUS 0x%08lx\n", Status);
 #endif // DBG_SXS
 
     return Status;
@@ -865,18 +798,14 @@ Exit:
 
 NTSTATUS
 NTAPI
-RtlFindActivationContextSectionString(
-    IN ULONG Flags,
-    IN const GUID *ExtensionGuid OPTIONAL,
-    IN ULONG SectionId,
-    IN PCUNICODE_STRING StringToFind,
-    OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData OPTIONAL
-    )
+RtlFindActivationContextSectionString(IN ULONG Flags, IN const GUID *ExtensionGuid OPTIONAL, IN ULONG SectionId,
+                                      IN PCUNICODE_STRING StringToFind,
+                                      OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData OPTIONAL)
 {
     NTSTATUS Status = STATUS_INTERNAL_ERROR;
 
     FINDFIRSTACTIVATIONCONTEXTSECTION Context;
-    const ACTIVATION_CONTEXT_STRING_SECTION_HEADER UNALIGNED * Header;
+    const ACTIVATION_CONTEXT_STRING_SECTION_HEADER UNALIGNED *Header;
     ULONG StringSectionLength;
     BOOLEAN EndSearch;
     ULONG HashAlgorithm;
@@ -889,8 +818,7 @@ RtlFindActivationContextSectionString(
     const PPEB Peb = Teb->ProcessEnvironmentBlock;
 
     // Super short circuit...
-    if ((Peb->ActivationContextData == NULL) &&
-        (Peb->SystemDefaultActivationContextData == NULL) &&
+    if ((Peb->ActivationContextData == NULL) && (Peb->SystemDefaultActivationContextData == NULL) &&
         (Teb->ActivationContextStack.ActiveFrame == NULL))
         return STATUS_SXS_SECTION_NOT_FOUND;
 
@@ -903,23 +831,19 @@ RtlFindActivationContextSectionString(
     ActivationContext = NULL;
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Entered RtlFindActivationContextSectionString()\n"
-        "   Flags = 0x%08lx\n"
-        "   ExtensionGuid = %s\n"
-        "   SectionId = %lu\n"
-        "   StringToFind = %wZ\n"
-        "   ReturnedData = %p\n",
-        Flags,
-        RtlpFormatGuidANSI(ExtensionGuid, ExtensionGuidBuffer, sizeof(ExtensionGuidBuffer)),
-        SectionId,
-        StringToFind,
-        ReturnedData);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Entered RtlFindActivationContextSectionString()\n"
+               "   Flags = 0x%08lx\n"
+               "   ExtensionGuid = %s\n"
+               "   SectionId = %lu\n"
+               "   StringToFind = %wZ\n"
+               "   ReturnedData = %p\n",
+               Flags, RtlpFormatGuidANSI(ExtensionGuid, ExtensionGuidBuffer, sizeof(ExtensionGuidBuffer)), SectionId,
+               StringToFind, ReturnedData);
 #endif // DBG_SXS
 
-    Status = RtlpFindActivationContextSection_CheckParameters(Flags, ExtensionGuid, SectionId, StringToFind, ReturnedData);
+    Status =
+        RtlpFindActivationContextSection_CheckParameters(Flags, ExtensionGuid, SectionId, StringToFind, ReturnedData);
     if (!NT_SUCCESS(Status))
         goto Exit;
 
@@ -929,41 +853,37 @@ RtlFindActivationContextSectionString(
     Context.ExtensionGuid = ExtensionGuid;
     Context.Id = SectionId;
 
-    Status = RtlpFindFirstActivationContextSection(&Context, (PVOID *) &Header, &StringSectionLength, &ActivationContext);
+    Status =
+        RtlpFindFirstActivationContextSection(&Context, (PVOID *)&Header, &StringSectionLength, &ActivationContext);
     if (!NT_SUCCESS(Status))
         goto Exit;
 
-    for (;;) {
+    for (;;)
+    {
         // Validate that this actually looks like a string section...
         if ((StringSectionLength < sizeof(ACTIVATION_CONTEXT_STRING_SECTION_HEADER)) ||
-            (Header->Magic != ACTIVATION_CONTEXT_STRING_SECTION_MAGIC)) {
-            DbgPrintEx(
-                DPFLTR_SXS_ID,
-                DPFLTR_ERROR_LEVEL,
-                "RtlFindActivationContextSectionString() found section at %p (length %lu) which is not a string section\n",
-                Header,
-                StringSectionLength);
+            (Header->Magic != ACTIVATION_CONTEXT_STRING_SECTION_MAGIC))
+        {
+            DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                       "RtlFindActivationContextSectionString() found section at %p (length %lu) which is not a string "
+                       "section\n",
+                       Header, StringSectionLength);
             Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
             goto Exit;
         }
 
-        Status = RtlpFindUnicodeStringInSection(
-                        Header,
-                        StringSectionLength,
-                        StringToFind,
-                        ReturnedData,
-                        &HashAlgorithm,
-                        &PseudoKey,
-                        NULL,
-                        NULL);
+        Status = RtlpFindUnicodeStringInSection(Header, StringSectionLength, StringToFind, ReturnedData, &HashAlgorithm,
+                                                &PseudoKey, NULL, NULL);
         if (NT_SUCCESS(Status))
             break;
 
         if (Status != STATUS_SXS_KEY_NOT_FOUND)
             goto Exit;
 
-        Status = RtlFindNextActivationContextSection(&Context, (PVOID *) &Header, &StringSectionLength, &ActivationContext);
-        if (!NT_SUCCESS(Status)) {
+        Status =
+            RtlFindNextActivationContextSection(&Context, (PVOID *)&Header, &StringSectionLength, &ActivationContext);
+        if (!NT_SUCCESS(Status))
+        {
             // Convert from section not found to string not found so that the
             // caller can get an indication that at least some indirection
             // information was available but just not the particular key that
@@ -977,18 +897,11 @@ RtlFindActivationContextSectionString(
 
     SEND_ACTIVATION_CONTEXT_NOTIFICATION(ActivationContext, USED, NULL);
 
-    if (ReturnedData != NULL) {
-        Status =
-            RtlpFindActivationContextSection_FillOutReturnedData(
-                Flags,
-                ReturnedData,
-                ActivationContext,
-                &Context,
-                Header,
-                Header->UserDataOffset,
-                Header->UserDataSize,
-                StringSectionLength
-                );
+    if (ReturnedData != NULL)
+    {
+        Status = RtlpFindActivationContextSection_FillOutReturnedData(Flags, ReturnedData, ActivationContext, &Context,
+                                                                      Header, Header->UserDataOffset,
+                                                                      Header->UserDataSize, StringSectionLength);
         if (!NT_SUCCESS(Status))
             goto Exit;
     }
@@ -997,68 +910,51 @@ RtlFindActivationContextSectionString(
 Exit:
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving RtlFindActivationContextSectionString() with NTSTATUS 0x%08lx\n", Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Leaving RtlFindActivationContextSectionString() with NTSTATUS 0x%08lx\n", Status);
 #endif // DBG_SXS
 
     return Status;
 }
 
-int
-__cdecl
-RtlpCompareActivationContextStringSectionEntryByPseudoKey(
-    const void *elem1, 
-    const void *elem2
-    )
+int __cdecl RtlpCompareActivationContextStringSectionEntryByPseudoKey(const void *elem1, const void *elem2)
 /*++
 This code must mimic code in sxs.dll
 (base\win32\fusion\dll\whistler\ssgenctx.cpp CSSGenCtx::CompareStringSectionEntries)
 --*/
 {
-    const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED * pEntry1 =
+    const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *pEntry1 =
         (const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *)elem1;
-    const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED * pEntry2 =
+    const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *pEntry2 =
         (const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *)elem2;
 
     return RTLP_COMPARE_NUMBER(pEntry1->PseudoKey, pEntry2->PseudoKey);
 }
 
 NTSTATUS
-RtlpFindUnicodeStringInSection(
-    const ACTIVATION_CONTEXT_STRING_SECTION_HEADER UNALIGNED * Header,
-    SIZE_T SectionSize,
-    PCUNICODE_STRING String,
-    PACTIVATION_CONTEXT_SECTION_KEYED_DATA DataOut,
-    PULONG HashAlgorithm,
-    PULONG PseudoKey,
-    PULONG UserDataSize,
-    PCVOID *UserData
-    )
+RtlpFindUnicodeStringInSection(const ACTIVATION_CONTEXT_STRING_SECTION_HEADER UNALIGNED *Header, SIZE_T SectionSize,
+                               PCUNICODE_STRING String, PACTIVATION_CONTEXT_SECTION_KEYED_DATA DataOut,
+                               PULONG HashAlgorithm, PULONG PseudoKey, PULONG UserDataSize, PCVOID *UserData)
 {
     NTSTATUS Status = STATUS_SUCCESS;
     BOOLEAN CaseInsensitiveFlag;
     BOOLEAN UseHashTable = TRUE;
     BOOLEAN UsePseudoKey = TRUE;
-    const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED * Entry = NULL;
+    const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *Entry = NULL;
 
-    if (Header->Flags & ACTIVATION_CONTEXT_STRING_SECTION_CASE_INSENSITIVE) {
+    if (Header->Flags & ACTIVATION_CONTEXT_STRING_SECTION_CASE_INSENSITIVE)
+    {
         CaseInsensitiveFlag = TRUE;
     }
-    else {
+    else
+    {
         CaseInsensitiveFlag = FALSE;
     }
 
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Entered RtlpFindUnicodeStringInSection() for string %p (->Length = %u; ->Buffer = %p) \"%wZ\"\n",
-            String,
-            (String != NULL) ? String->Length : 0,
-            (String != NULL) ? String->Buffer : 0,
-            String);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Entered RtlpFindUnicodeStringInSection() for string %p (->Length = %u; ->Buffer = %p) \"%wZ\"\n",
+               String, (String != NULL) ? String->Length : 0, (String != NULL) ? String->Buffer : 0, String);
 #endif // DBG_SXS
 
     if (UserDataSize != NULL)
@@ -1073,10 +969,8 @@ RtlpFindUnicodeStringInSection(
     if (Header->Magic != ACTIVATION_CONTEXT_STRING_SECTION_MAGIC)
     {
 #if DBG_SXS
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_TRACE_LEVEL,
-            "RtlpFindUnicodeStringInSection: String section header has invalid .Magic value.\n");
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+                   "RtlpFindUnicodeStringInSection: String section header has invalid .Magic value.\n");
 #endif
         Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
         goto Exit;
@@ -1105,18 +999,17 @@ RtlpFindUnicodeStringInSection(
 
                 // The only likely reason for invalid parameter is that the hash algorithm
                 // wasn't understood.  We'll be pedantic and see if everything else is OK...
-                Status = RtlHashUnicodeString(String, CaseInsensitiveFlag, HASH_STRING_ALGORITHM_DEFAULT, &TempPseudoKey);
+                Status =
+                    RtlHashUnicodeString(String, CaseInsensitiveFlag, HASH_STRING_ALGORITHM_DEFAULT, &TempPseudoKey);
                 if (!NT_SUCCESS(Status))
                 {
                     // Something's wrong, probably with the "String" parameter.  Punt.
                     goto Exit;
                 }
 
-                DbgPrintEx(
-                    DPFLTR_SXS_ID,
-                    DPFLTR_ERROR_LEVEL,
-                    "RtlpFindUnicodeStringInSection: Unsupported hash algorithm %lu found in string section.\n",
-                    Header->HashAlgorithm);
+                DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                           "RtlpFindUnicodeStringInSection: Unsupported hash algorithm %lu found in string section.\n",
+                           Header->HashAlgorithm);
 
                 // Ok, it's an algorithm ID that we don't understand.  We can't use the hash
                 // table or the pseudokey.
@@ -1146,60 +1039,58 @@ RtlpFindUnicodeStringInSection(
     {
         ULONG i;
 
-        const ACTIVATION_CONTEXT_STRING_SECTION_HASH_TABLE UNALIGNED * Table = (const ACTIVATION_CONTEXT_STRING_SECTION_HASH_TABLE UNALIGNED *)
-            (((LONG_PTR) Header) + Header->SearchStructureOffset);
+        const ACTIVATION_CONTEXT_STRING_SECTION_HASH_TABLE UNALIGNED *Table =
+            (const ACTIVATION_CONTEXT_STRING_SECTION_HASH_TABLE UNALIGNED *)(((LONG_PTR)Header) +
+                                                                             Header->SearchStructureOffset);
         ULONG Index = ((*PseudoKey) % Table->BucketTableEntryCount);
-        const ACTIVATION_CONTEXT_STRING_SECTION_HASH_BUCKET UNALIGNED * Bucket = ((const ACTIVATION_CONTEXT_STRING_SECTION_HASH_BUCKET UNALIGNED *)
-            (((LONG_PTR) Header) + Table->BucketTableOffset)) + Index;
-        const LONG UNALIGNED *Chain = (const LONG UNALIGNED *) (((LONG_PTR) Header) + Bucket->ChainOffset);
+        const ACTIVATION_CONTEXT_STRING_SECTION_HASH_BUCKET UNALIGNED *Bucket =
+            ((const ACTIVATION_CONTEXT_STRING_SECTION_HASH_BUCKET UNALIGNED *)(((LONG_PTR)Header) +
+                                                                               Table->BucketTableOffset)) +
+            Index;
+        const LONG UNALIGNED *Chain = (const LONG UNALIGNED *)(((LONG_PTR)Header) + Bucket->ChainOffset);
 
-        for (i=0; i<Bucket->ChainCount; i++)
+        for (i = 0; i < Bucket->ChainCount; i++)
         {
             const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *TmpEntry = NULL;
             UNICODE_STRING TmpEntryString;
 
-            if (((SIZE_T) Chain[i]) > SectionSize)
+            if (((SIZE_T)Chain[i]) > SectionSize)
             {
-                DbgPrintEx(
-                    DPFLTR_SXS_ID,
-                    DPFLTR_ERROR_LEVEL,
-                    "SXS: String hash collision chain offset at %p (= %ld) out of bounds\n", &Chain[i], Chain[i]);
+                DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                           "SXS: String hash collision chain offset at %p (= %ld) out of bounds\n", &Chain[i],
+                           Chain[i]);
 
                 Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
                 goto Exit;
             }
 
-            TmpEntry = (const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *) (((LONG_PTR) Header) + Chain[i]);
+            TmpEntry = (const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *)(((LONG_PTR)Header) + Chain[i]);
 
 #if DBG_SXS
-            DbgPrintEx(
-                DPFLTR_SXS_ID,
-                DPFLTR_INFO_LEVEL,
-                "SXS: Searching bucket collision %d; Chain[%d] = %ld\n"
-                "   TmpEntry = %p; ->KeyLength = %lu; ->KeyOffset = %lu\n",
-                i, i, Chain[i], TmpEntry, TmpEntry->KeyLength, TmpEntry->KeyOffset);
+            DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_INFO_LEVEL,
+                       "SXS: Searching bucket collision %d; Chain[%d] = %ld\n"
+                       "   TmpEntry = %p; ->KeyLength = %lu; ->KeyOffset = %lu\n",
+                       i, i, Chain[i], TmpEntry, TmpEntry->KeyLength, TmpEntry->KeyOffset);
 #endif DBG_SXS
 
             if (!UsePseudoKey || (TmpEntry->PseudoKey == *PseudoKey))
             {
-                if (((SIZE_T) TmpEntry->KeyOffset) > SectionSize)
+                if (((SIZE_T)TmpEntry->KeyOffset) > SectionSize)
                 {
-                    DbgPrintEx(
-                        DPFLTR_SXS_ID,
-                        DPFLTR_ERROR_LEVEL,
-                        "SXS: String hash table entry at %p has invalid key offset (= %ld)\n"
-                        "   Header = %p; Index = %lu; Bucket = %p; Chain = %p\n",
-                        TmpEntry, TmpEntry->KeyOffset, Header, Index, Bucket, Chain);
+                    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
+                               "SXS: String hash table entry at %p has invalid key offset (= %ld)\n"
+                               "   Header = %p; Index = %lu; Bucket = %p; Chain = %p\n",
+                               TmpEntry, TmpEntry->KeyOffset, Header, Index, Bucket, Chain);
 
                     Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
                     goto Exit;
                 }
 
-                TmpEntryString.Length = (USHORT) TmpEntry->KeyLength;
+                TmpEntryString.Length = (USHORT)TmpEntry->KeyLength;
                 TmpEntryString.MaximumLength = TmpEntryString.Length;
-                TmpEntryString.Buffer = (PWSTR) (((LONG_PTR) Header) + TmpEntry->KeyOffset);
+                TmpEntryString.Buffer = (PWSTR)(((LONG_PTR)Header) + TmpEntry->KeyOffset);
 
-                if (RtlCompareUnicodeString((PUNICODE_STRING) String, &TmpEntryString, CaseInsensitiveFlag) == 0)
+                if (RtlCompareUnicodeString((PUNICODE_STRING)String, &TmpEntryString, CaseInsensitiveFlag) == 0)
                 {
                     Entry = TmpEntry;
                     break;
@@ -1209,24 +1100,19 @@ RtlpFindUnicodeStringInSection(
     }
     else if (UsePseudoKey && ((Header->Flags & ACTIVATION_CONTEXT_STRING_SECTION_ENTRIES_IN_PSEUDOKEY_ORDER) != 0))
     {
-	    const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED * const first = (PCACTIVATION_CONTEXT_STRING_SECTION_ENTRY)
-            (((LONG_PTR) Header) + Header->ElementListOffset);
+        const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *const first =
+            (PCACTIVATION_CONTEXT_STRING_SECTION_ENTRY)(((LONG_PTR)Header) + Header->ElementListOffset);
 
-        const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED * const last = first + (Header->ElementCount - 1);
+        const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *const last = first + (Header->ElementCount - 1);
 
         ACTIVATION_CONTEXT_STRING_SECTION_ENTRY Key;
 
         Key.PseudoKey = *PseudoKey;
 
-        Entry = (const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *)
-            bsearch(
-                &Key,
-                first,
-                Header->ElementCount,
-                sizeof(*first),
-                RtlpCompareActivationContextStringSectionEntryByPseudoKey
-                );
-     
+        Entry = (const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *)bsearch(
+            &Key, first, Header->ElementCount, sizeof(*first),
+            RtlpCompareActivationContextStringSectionEntryByPseudoKey);
+
         if (Entry != NULL)
         {
             // Wow, we found the same pseudokey.  We need to search all the equal
@@ -1244,11 +1130,11 @@ RtlpFindUnicodeStringInSection(
             do
             {
                 UNICODE_STRING TmpEntryString;
-                TmpEntryString.Length = (USHORT) Entry->KeyLength;
+                TmpEntryString.Length = (USHORT)Entry->KeyLength;
                 TmpEntryString.MaximumLength = TmpEntryString.Length;
-                TmpEntryString.Buffer = (PWSTR) (((LONG_PTR) Header) + Entry->KeyOffset);
+                TmpEntryString.Buffer = (PWSTR)(((LONG_PTR)Header) + Entry->KeyOffset);
 
-                if (RtlCompareUnicodeString((PUNICODE_STRING) String, &TmpEntryString, CaseInsensitiveFlag) == 0)
+                if (RtlCompareUnicodeString((PUNICODE_STRING)String, &TmpEntryString, CaseInsensitiveFlag) == 0)
                     break;
                 Entry++;
             } while ((Entry <= last) && (Entry->PseudoKey == *PseudoKey));
@@ -1260,28 +1146,26 @@ RtlpFindUnicodeStringInSection(
     else
     {
         // Argh; we just have to do it the hard way.
-        const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED * TmpEntry = (PCACTIVATION_CONTEXT_STRING_SECTION_ENTRY)
-            (((LONG_PTR) Header) + Header->ElementListOffset);
+        const ACTIVATION_CONTEXT_STRING_SECTION_ENTRY UNALIGNED *TmpEntry =
+            (PCACTIVATION_CONTEXT_STRING_SECTION_ENTRY)(((LONG_PTR)Header) + Header->ElementListOffset);
         ULONG Count;
 
 #if DBG_SXS
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_INFO_LEVEL,
-            "RtlpFindUnicodeStringInSection: About to do linear search of %d entries.\n", Header->ElementCount);
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_INFO_LEVEL,
+                   "RtlpFindUnicodeStringInSection: About to do linear search of %d entries.\n", Header->ElementCount);
 #endif // DBG_SXS
 
         for (Count = Header->ElementCount; Count != 0; Count--, TmpEntry++)
         {
             UNICODE_STRING TmpEntryString;
 
-            TmpEntryString.Length = (USHORT) TmpEntry->KeyLength;
+            TmpEntryString.Length = (USHORT)TmpEntry->KeyLength;
             TmpEntryString.MaximumLength = TmpEntryString.Length;
-            TmpEntryString.Buffer = (PWSTR) (((LONG_PTR) Header) + TmpEntry->KeyOffset);
+            TmpEntryString.Buffer = (PWSTR)(((LONG_PTR)Header) + TmpEntry->KeyOffset);
 
             if (!UsePseudoKey || (TmpEntry->PseudoKey == *PseudoKey))
             {
-                if (RtlCompareUnicodeString((PUNICODE_STRING) String, &TmpEntryString, CaseInsensitiveFlag) == 0)
+                if (RtlCompareUnicodeString((PUNICODE_STRING)String, &TmpEntryString, CaseInsensitiveFlag) == 0)
                 {
                     Entry = TmpEntry;
                     break;
@@ -1296,9 +1180,10 @@ RtlpFindUnicodeStringInSection(
         goto Exit;
     }
 
-    if (DataOut != NULL) {
+    if (DataOut != NULL)
+    {
         DataOut->DataFormatVersion = Header->DataFormatVersion;
-        DataOut->Data = (PVOID) (((ULONG_PTR) Header) + Entry->Offset);
+        DataOut->Data = (PVOID)(((ULONG_PTR)Header) + Entry->Offset);
         DataOut->Length = Entry->Length;
 
         if (RTL_CONTAINS_FIELD(DataOut, DataOut->Size, AssemblyRosterIndex))
@@ -1309,16 +1194,14 @@ RtlpFindUnicodeStringInSection(
         *UserDataSize = Header->UserDataSize;
 
     if ((UserData != NULL) && (Header->UserDataOffset != 0))
-        *UserData = (PCVOID) (((ULONG_PTR) Header) + Header->UserDataOffset);
+        *UserData = (PCVOID)(((ULONG_PTR)Header) + Header->UserDataOffset);
 
     Status = STATUS_SUCCESS;
 
 Exit:
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving RtlpFindUnicodeStringInSection() with NTSTATUS 0x%08lx\n", Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL, "Leaving RtlpFindUnicodeStringInSection() with NTSTATUS 0x%08lx\n",
+               Status);
 #endif // DBG_SXS
 
     return Status;
@@ -1326,13 +1209,8 @@ Exit:
 
 NTSTATUS
 NTAPI
-RtlFindActivationContextSectionGuid(
-    IN ULONG Flags,
-    IN const GUID *ExtensionGuid OPTIONAL,
-    IN ULONG SectionId,
-    IN const GUID *GuidToFind,
-    OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData
-    )
+RtlFindActivationContextSectionGuid(IN ULONG Flags, IN const GUID *ExtensionGuid OPTIONAL, IN ULONG SectionId,
+                                    IN const GUID *GuidToFind, OUT PACTIVATION_CONTEXT_SECTION_KEYED_DATA ReturnedData)
 {
     NTSTATUS Status;
     FINDFIRSTACTIVATIONCONTEXTSECTION Context;
@@ -1349,17 +1227,13 @@ RtlFindActivationContextSectionGuid(
     PPEB Peb = Teb->ProcessEnvironmentBlock;
 
     // Super short circuit...
-    if ((Peb->ActivationContextData == NULL) &&
-        (Peb->SystemDefaultActivationContextData == NULL) &&
-        (Teb->ActivationContextStack.ActiveFrame == NULL)) {
+    if ((Peb->ActivationContextData == NULL) && (Peb->SystemDefaultActivationContextData == NULL) &&
+        (Teb->ActivationContextStack.ActiveFrame == NULL))
+    {
 
 #if DBG_SXS
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_TRACE_LEVEL,
-            __FUNCTION__"({%s}) super short circuited\n",
-            RtlpFormatGuidANSI(GuidToFind, GuidBuffer, sizeof(GuidBuffer));
-            );
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL, __FUNCTION__ "({%s}) super short circuited\n",
+                   RtlpFormatGuidANSI(GuidToFind, GuidBuffer, sizeof(GuidBuffer)););
 #endif
         return STATUS_SXS_SECTION_NOT_FOUND;
     }
@@ -1376,32 +1250,31 @@ RtlFindActivationContextSectionGuid(
     //
     // Comparison to TRUE is odd, but such is NtQueryDebugFilterState.
     //
-    if (NtQueryDebugFilterState(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL) == TRUE) {
+    if (NtQueryDebugFilterState(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL) == TRUE)
+    {
         DbgPrintSxsTraceLevel = TRUE;
     }
-    else {
+    else
+    {
         DbgPrintSxsTraceLevel = FALSE;
     }
 
-    if (DbgPrintSxsTraceLevel) {
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_TRACE_LEVEL,
-            "Entered RtlFindActivationContextSectionGuid()\n"
-            "   Flags = 0x%08lx\n"
-            "   ExtensionGuid = %s\n"
-            "   SectionId = %lu\n"
-            "   GuidToFind = %s\n"
-            "   ReturnedData = %p\n",
-            Flags,
-            RtlpFormatGuidANSI(ExtensionGuid, ExtensionGuidBuffer, sizeof(ExtensionGuidBuffer)),
-            SectionId,
-            RtlpFormatGuidANSI(GuidToFind, GuidBuffer, sizeof(GuidBuffer)),
-            ReturnedData);
+    if (DbgPrintSxsTraceLevel)
+    {
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+                   "Entered RtlFindActivationContextSectionGuid()\n"
+                   "   Flags = 0x%08lx\n"
+                   "   ExtensionGuid = %s\n"
+                   "   SectionId = %lu\n"
+                   "   GuidToFind = %s\n"
+                   "   ReturnedData = %p\n",
+                   Flags, RtlpFormatGuidANSI(ExtensionGuid, ExtensionGuidBuffer, sizeof(ExtensionGuidBuffer)),
+                   SectionId, RtlpFormatGuidANSI(GuidToFind, GuidBuffer, sizeof(GuidBuffer)), ReturnedData);
     }
 #endif
 
-    Status = RtlpFindActivationContextSection_CheckParameters(Flags, ExtensionGuid, SectionId, GuidToFind, ReturnedData);
+    Status =
+        RtlpFindActivationContextSection_CheckParameters(Flags, ExtensionGuid, SectionId, GuidToFind, ReturnedData);
     if (!NT_SUCCESS(Status))
         goto Exit;
 
@@ -1411,28 +1284,25 @@ RtlFindActivationContextSectionGuid(
     Context.Id = SectionId;
     Context.OutFlags = 0;
 
-    Status = RtlpFindFirstActivationContextSection(&Context, (PVOID *) &Header, &GuidSectionLength, &ActivationContext);
+    Status = RtlpFindFirstActivationContextSection(&Context, (PVOID *)&Header, &GuidSectionLength, &ActivationContext);
     if (!NT_SUCCESS(Status))
         goto Exit;
 
-    for (;;) {
+    for (;;)
+    {
         // Validate that this actually looks like a guid section...
         if ((GuidSectionLength < sizeof(ACTIVATION_CONTEXT_GUID_SECTION_HEADER)) ||
-            (Header->Magic != ACTIVATION_CONTEXT_GUID_SECTION_MAGIC)) {
+            (Header->Magic != ACTIVATION_CONTEXT_GUID_SECTION_MAGIC))
+        {
             DbgPrintEx(
-                DPFLTR_SXS_ID,
-                DPFLTR_ERROR_LEVEL,
+                DPFLTR_SXS_ID, DPFLTR_ERROR_LEVEL,
                 "RtlFindActivationContextSectionGuid() found section at %p (length %lu) which is not a GUID section\n",
-                Header,
-                GuidSectionLength);
+                Header, GuidSectionLength);
             Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
             goto Exit;
         }
 
-        Status = RtlpFindGuidInSection(
-                        Header,
-                        GuidToFind,
-                        ReturnedData);
+        Status = RtlpFindGuidInSection(Header, GuidToFind, ReturnedData);
         if (NT_SUCCESS(Status))
             break;
 
@@ -1440,8 +1310,10 @@ RtlFindActivationContextSectionGuid(
         if (Status != STATUS_SXS_KEY_NOT_FOUND)
             goto Exit;
 
-        Status = RtlpFindNextActivationContextSection(&Context, (PVOID *) &Header, &GuidSectionLength, &ActivationContext);
-        if (!NT_SUCCESS(Status)) {
+        Status =
+            RtlpFindNextActivationContextSection(&Context, (PVOID *)&Header, &GuidSectionLength, &ActivationContext);
+        if (!NT_SUCCESS(Status))
+        {
             // Convert from section not found to key not found so that the
             // caller can get an indication that at least some indirection
             // information was available but just not the particular key that
@@ -1455,18 +1327,11 @@ RtlFindActivationContextSectionGuid(
 
     SEND_ACTIVATION_CONTEXT_NOTIFICATION(ActivationContext, USED, NULL);
 
-    if (ReturnedData != NULL) {
-        Status =
-            RtlpFindActivationContextSection_FillOutReturnedData(
-                Flags,
-                ReturnedData,
-                ActivationContext,
-                &Context,
-                Header,
-                Header->UserDataOffset,
-                Header->UserDataSize,
-                GuidSectionLength
-                );
+    if (ReturnedData != NULL)
+    {
+        Status = RtlpFindActivationContextSection_FillOutReturnedData(Flags, ReturnedData, ActivationContext, &Context,
+                                                                      Header, Header->UserDataOffset,
+                                                                      Header->UserDataSize, GuidSectionLength);
         if (!NT_SUCCESS(Status))
             goto Exit;
     }
@@ -1474,45 +1339,35 @@ RtlFindActivationContextSectionGuid(
     Status = STATUS_SUCCESS;
 Exit:
 #if DBG_SXS
-    if (DbgPrintSxsTraceLevel) {
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_TRACE_LEVEL,
-            "Leaving "__FUNCTION__"(%s) with NTSTATUS 0x%08lx\n",
-            RtlpFormatGuidANSI(GuidToFind, GuidBuffer, sizeof(GuidBuffer)),
-            Status);
+    if (DbgPrintSxsTraceLevel)
+    {
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+                   "Leaving "__FUNCTION__
+                   "(%s) with NTSTATUS 0x%08lx\n",
+                   RtlpFormatGuidANSI(GuidToFind, GuidBuffer, sizeof(GuidBuffer)), Status);
     }
 #endif
 
     return Status;
 }
 
-int
-__cdecl
-RtlpCompareActivationContextGuidSectionEntryByGuid(
-    const void *elem1, 
-    const void *elem2
-    )
+int __cdecl RtlpCompareActivationContextGuidSectionEntryByGuid(const void *elem1, const void *elem2)
 /*++
 This code must mimic code in sxs.dll
 (base\win32\fusion\dll\whistler\gsgenctx.cpp CGSGenCtx::SortGuidSectionEntries)
 --*/
 {
-    const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED * pLeft =
-            (const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY*)elem1;
+    const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *pLeft = (const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY *)elem1;
 
-    const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED * pRight =
-        (const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY*)elem2;
+    const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *pRight =
+        (const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY *)elem2;
 
-    return memcmp( &pLeft->Guid, &pRight->Guid, sizeof(GUID) );
+    return memcmp(&pLeft->Guid, &pRight->Guid, sizeof(GUID));
 }
 
 NTSTATUS
-RtlpFindGuidInSection(
-    const ACTIVATION_CONTEXT_GUID_SECTION_HEADER UNALIGNED *Header,
-    const GUID *Guid,
-    PACTIVATION_CONTEXT_SECTION_KEYED_DATA DataOut
-    )
+RtlpFindGuidInSection(const ACTIVATION_CONTEXT_GUID_SECTION_HEADER UNALIGNED *Header, const GUID *Guid,
+                      PACTIVATION_CONTEXT_SECTION_KEYED_DATA DataOut)
 {
     NTSTATUS Status = STATUS_SUCCESS;
     BOOLEAN UseHashTable = TRUE;
@@ -1521,21 +1376,17 @@ RtlpFindGuidInSection(
 #if DBG_SXS
     CHAR GuidBuffer[39];
 
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Entered "__FUNCTION__"({%s})\n",
-        RtlpFormatGuidANSI(Guid, GuidBuffer, sizeof(GuidBuffer))
-        );
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Entered "__FUNCTION__
+               "({%s})\n",
+               RtlpFormatGuidANSI(Guid, GuidBuffer, sizeof(GuidBuffer)));
 #endif
 
     if (Header->Magic != ACTIVATION_CONTEXT_GUID_SECTION_MAGIC)
     {
 #if DBG_SXS
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_TRACE_LEVEL,
-            "RtlpFindGuidInSection: Guid section header has invalid .Magic value.\n");
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+                   "RtlpFindGuidInSection: Guid section header has invalid .Magic value.\n");
 #endif
         Status = STATUS_SXS_INVALID_ACTCTXDATA_FORMAT;
         goto Exit;
@@ -1560,17 +1411,17 @@ RtlpFindGuidInSection(
     {
         ULONG i;
 
-        const ACTIVATION_CONTEXT_GUID_SECTION_HASH_TABLE UNALIGNED *Table = (PCACTIVATION_CONTEXT_GUID_SECTION_HASH_TABLE)
-            (((LONG_PTR) Header) + Header->SearchStructureOffset);
+        const ACTIVATION_CONTEXT_GUID_SECTION_HASH_TABLE UNALIGNED *Table =
+            (PCACTIVATION_CONTEXT_GUID_SECTION_HASH_TABLE)(((LONG_PTR)Header) + Header->SearchStructureOffset);
         ULONG Index = ((Guid->Data1) % Table->BucketTableEntryCount);
-        const ACTIVATION_CONTEXT_GUID_SECTION_HASH_BUCKET UNALIGNED *Bucket = ((PCACTIVATION_CONTEXT_GUID_SECTION_HASH_BUCKET)
-            (((LONG_PTR) Header) + Table->BucketTableOffset)) + Index;
-        const ULONG UNALIGNED *Chain = (PULONG) (((LONG_PTR) Header) + Bucket->ChainOffset);
+        const ACTIVATION_CONTEXT_GUID_SECTION_HASH_BUCKET UNALIGNED *Bucket =
+            ((PCACTIVATION_CONTEXT_GUID_SECTION_HASH_BUCKET)(((LONG_PTR)Header) + Table->BucketTableOffset)) + Index;
+        const ULONG UNALIGNED *Chain = (PULONG)(((LONG_PTR)Header) + Bucket->ChainOffset);
 
-        for (i=0; i<Bucket->ChainCount; i++)
+        for (i = 0; i < Bucket->ChainCount; i++)
         {
-            const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED * TmpEntry = (PCACTIVATION_CONTEXT_GUID_SECTION_ENTRY)
-                (((LONG_PTR) Header) + *Chain++);
+            const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *TmpEntry =
+                (PCACTIVATION_CONTEXT_GUID_SECTION_ENTRY)(((LONG_PTR)Header) + *Chain++);
 
             if (RtlCompareMemory(&TmpEntry->Guid, Guid, sizeof(GUID)) == sizeof(GUID))
             {
@@ -1581,54 +1432,48 @@ RtlpFindGuidInSection(
     }
     else if ((Header->Flags & ACTIVATION_CONTEXT_GUID_SECTION_ENTRIES_IN_ORDER) != 0)
     {
-	    const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED * const first = (PCACTIVATION_CONTEXT_GUID_SECTION_ENTRY)
-            (((LONG_PTR) Header) + Header->ElementListOffset);
+        const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *const first =
+            (PCACTIVATION_CONTEXT_GUID_SECTION_ENTRY)(((LONG_PTR)Header) + Header->ElementListOffset);
 
         ACTIVATION_CONTEXT_GUID_SECTION_ENTRY Key;
 
         Key.Guid = *Guid;
 
-        Entry = (const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *)
-            bsearch(
-                &Key,
-                first,
-                Header->ElementCount,
-                sizeof(*first),
-                RtlpCompareActivationContextGuidSectionEntryByGuid
-                );
+        Entry = (const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *)bsearch(
+            &Key, first, Header->ElementCount, sizeof(*first), RtlpCompareActivationContextGuidSectionEntryByGuid);
     }
     else
     {
         // Argh; we just have to do it the hard way.
-        const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED * TmpEntry = (const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *)
-            (((LONG_PTR) Header) + Header->ElementListOffset);
+        const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *TmpEntry =
+            (const ACTIVATION_CONTEXT_GUID_SECTION_ENTRY UNALIGNED *)(((LONG_PTR)Header) + Header->ElementListOffset);
         ULONG Count;
 
 #if DBG_SXS
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_INFO_LEVEL,
-            __FUNCTION__"({%s}): About to do linear search of %d entries.\n",
-            RtlpFormatGuidANSI(Guid, GuidBuffer, sizeof(GuidBuffer)),
-            Header->ElementCount);
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_INFO_LEVEL, __FUNCTION__ "({%s}): About to do linear search of %d entries.\n",
+                   RtlpFormatGuidANSI(Guid, GuidBuffer, sizeof(GuidBuffer)), Header->ElementCount);
 #endif // DBG_SXS
 
-        for (Count = Header->ElementCount; Count != 0; Count--, TmpEntry++) {
-            if (RtlCompareMemory(&TmpEntry->Guid, Guid, sizeof(GUID)) == sizeof(GUID)) {
+        for (Count = Header->ElementCount; Count != 0; Count--, TmpEntry++)
+        {
+            if (RtlCompareMemory(&TmpEntry->Guid, Guid, sizeof(GUID)) == sizeof(GUID))
+            {
                 Entry = TmpEntry;
                 break;
             }
         }
     }
 
-    if ((Entry == NULL) || (Entry->Offset == 0)) {
+    if ((Entry == NULL) || (Entry->Offset == 0))
+    {
         Status = STATUS_SXS_KEY_NOT_FOUND;
         goto Exit;
     }
 
-    if (DataOut != NULL) {
+    if (DataOut != NULL)
+    {
         DataOut->DataFormatVersion = Header->DataFormatVersion;
-        DataOut->Data = (PVOID) (((ULONG_PTR) Header) + Entry->Offset);
+        DataOut->Data = (PVOID)(((ULONG_PTR)Header) + Entry->Offset);
         DataOut->Length = Entry->Length;
 
         if (RTL_CONTAINS_FIELD(DataOut, DataOut->Size, AssemblyRosterIndex))
@@ -1639,25 +1484,18 @@ RtlpFindGuidInSection(
 
 Exit:
 #if DBG_SXS
-    DbgPrintEx(
-        DPFLTR_SXS_ID,
-        DPFLTR_TRACE_LEVEL,
-        "Leaving "__FUNCTION__"({%s}) with NTSTATUS 0x%08lx\n",
-        RtlpFormatGuidANSI(Guid, GuidBuffer, sizeof(GuidBuffer)),
-        Status);
+    DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_TRACE_LEVEL,
+               "Leaving "__FUNCTION__
+               "({%s}) with NTSTATUS 0x%08lx\n",
+               RtlpFormatGuidANSI(Guid, GuidBuffer, sizeof(GuidBuffer)), Status);
 #endif // DBG_SXS
 
     return Status;
 }
 
-#define tohexdigit(_x) ((CHAR) (((_x) < 10) ? ((_x) + '0') : ((_x) + 'A' - 10)))
+#define tohexdigit(_x) ((CHAR)(((_x) < 10) ? ((_x) + '0') : ((_x) + 'A' - 10)))
 
-PSTR
-RtlpFormatGuidANSI(
-    const GUID *Guid,
-    PSTR Buffer,
-    SIZE_T BufferLength
-    )
+PSTR RtlpFormatGuidANSI(const GUID *Guid, PSTR Buffer, SIZE_T BufferLength)
 {
     CHAR *pch = Buffer;
 
@@ -1717,21 +1555,21 @@ RtlpFormatGuidANSI(
 
 
 NTSTATUS
-RtlpGetActivationContextData(
-    IN ULONG                           Flags,
-    IN PCACTIVATION_CONTEXT            ActivationContext,
-    IN PCFINDFIRSTACTIVATIONCONTEXTSECTION  FindContext, OPTIONAL /* This is used for its flags. */
-    OUT PCACTIVATION_CONTEXT_DATA*  ActivationContextData
-    )
+RtlpGetActivationContextData(IN ULONG Flags, IN PCACTIVATION_CONTEXT ActivationContext,
+                             IN PCFINDFIRSTACTIVATIONCONTEXTSECTION FindContext,
+                             OPTIONAL /* This is used for its flags. */
+                                 OUT PCACTIVATION_CONTEXT_DATA *ActivationContextData)
 {
     NTSTATUS Status = STATUS_INTERNAL_ERROR; // in case someone forgets to set it...
     SIZE_T PebOffset;
 
-    if (ActivationContextData == NULL) {
+    if (ActivationContextData == NULL)
+    {
         Status = STATUS_INVALID_PARAMETER_4;
         goto Exit;
     }
-    if (Flags & ~(RTLP_GET_ACTIVATION_CONTEXT_DATA_MAP_NULL_TO_EMPTY)) {
+    if (Flags & ~(RTLP_GET_ACTIVATION_CONTEXT_DATA_MAP_NULL_TO_EMPTY))
+    {
         Status = STATUS_INVALID_PARAMETER_1;
         goto Exit;
     }
@@ -1744,45 +1582,46 @@ RtlpGetActivationContextData(
     //
     switch ((ULONG_PTR)ActivationContext)
     {
-        case ((ULONG_PTR)NULL):
-            if (FindContext == NULL) {
+    case ((ULONG_PTR)NULL):
+        if (FindContext == NULL)
+        {
+            PebOffset = FIELD_OFFSET(PEB, ActivationContextData);
+        }
+        else
+        {
+            switch (FindContext->OutFlags & (FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT |
+                                             FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT))
+            {
+            case 0: // FALLTHROUGH
+            case FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT:
                 PebOffset = FIELD_OFFSET(PEB, ActivationContextData);
-            } else {
-                switch (
-                    FindContext->OutFlags
-                        & (   FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT
-                            | FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT
-                    )) {
-                    case 0: // FALLTHROUGH
-                    case FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT:
-                        PebOffset = FIELD_OFFSET(PEB, ActivationContextData);
-                        break;
-                    case FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT:
-                        PebOffset = FIELD_OFFSET(PEB, SystemDefaultActivationContextData);
-                        break;
-                    case (FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT 
-                        | FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT):
-                        Status = STATUS_INVALID_PARAMETER_2;
-                        goto Exit;
-                        break;
-                }
+                break;
+            case FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT:
+                PebOffset = FIELD_OFFSET(PEB, SystemDefaultActivationContextData);
+                break;
+            case (FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_PROCESS_DEFAULT |
+                  FIND_ACTIVATION_CONTEXT_SECTION_OUTFLAG_FOUND_IN_SYSTEM_DEFAULT):
+                Status = STATUS_INVALID_PARAMETER_2;
+                goto Exit;
+                break;
             }
-            break;
+        }
+        break;
 
-        case ((ULONG_PTR)ACTCTX_EMPTY):
-            *ActivationContextData = &RtlpTheEmptyActivationContextData;
-            break;
+    case ((ULONG_PTR)ACTCTX_EMPTY):
+        *ActivationContextData = &RtlpTheEmptyActivationContextData;
+        break;
 
-        case ((ULONG_PTR)ACTCTX_SYSTEM_DEFAULT):
-            PebOffset = FIELD_OFFSET(PEB, SystemDefaultActivationContextData);
-            break;
+    case ((ULONG_PTR)ACTCTX_SYSTEM_DEFAULT):
+        PebOffset = FIELD_OFFSET(PEB, SystemDefaultActivationContextData);
+        break;
 
-        default:
-            *ActivationContextData = ActivationContext->ActivationContextData;
-            break;
+    default:
+        *ActivationContextData = ActivationContext->ActivationContextData;
+        break;
     }
     if (PebOffset != 0)
-        *ActivationContextData = *(PCACTIVATION_CONTEXT_DATA*)(((ULONG_PTR)NtCurrentPeb()) + PebOffset);
+        *ActivationContextData = *(PCACTIVATION_CONTEXT_DATA *)(((ULONG_PTR)NtCurrentPeb()) + PebOffset);
 
     //
     // special transmutation of lack of actctx into the empty actctx
@@ -1795,4 +1634,3 @@ RtlpGetActivationContextData(
 Exit:
     return Status;
 }
-

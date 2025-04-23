@@ -7,44 +7,35 @@
 
 #include "pch.h"
 
-KSPIN_LOCK      ACPIWorkerSpinLock;
+KSPIN_LOCK ACPIWorkerSpinLock;
 WORK_QUEUE_ITEM ACPIWorkItem;
-LIST_ENTRY      ACPIDeviceWorkQueue;
-BOOLEAN         ACPIWorkerBusy;
+LIST_ENTRY ACPIDeviceWorkQueue;
+BOOLEAN ACPIWorkerBusy;
 
-KEVENT          ACPIWorkToDoEvent;
-KEVENT          ACPITerminateEvent;
-LIST_ENTRY      ACPIWorkQueue;
-HANDLE          ACPIThread;
+KEVENT ACPIWorkToDoEvent;
+KEVENT ACPITerminateEvent;
+LIST_ENTRY ACPIWorkQueue;
+HANDLE ACPIThread;
 
-VOID
-ACPIWorkerThread (
-    IN PVOID    Context
-    );
+VOID ACPIWorkerThread(IN PVOID Context);
 
-VOID
-ACPIWorker(
-    IN PVOID StartContext
-    );
+VOID ACPIWorker(IN PVOID StartContext);
 
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, ACPIInitializeWorker)
 #endif
 
-VOID
-ACPIInitializeWorker (
-    VOID
-    )
+VOID ACPIInitializeWorker(VOID)
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES ObjectAttributes;
     HANDLE ThreadHandle;
     PETHREAD *Thread;
 
-    KeInitializeSpinLock (&ACPIWorkerSpinLock);
-    ExInitializeWorkItem (&ACPIWorkItem, ACPIWorkerThread, NULL);
-    InitializeListHead (&ACPIDeviceWorkQueue);
+    KeInitializeSpinLock(&ACPIWorkerSpinLock);
+    ExInitializeWorkItem(&ACPIWorkItem, ACPIWorkerThread, NULL);
+    InitializeListHead(&ACPIDeviceWorkQueue);
 
     //
     // Initialize the ACPI worker thread. This thread is for use by the AML
@@ -58,48 +49,33 @@ ACPIInitializeWorker (
     // Create the worker thread
     //
     InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
-    Status = PsCreateSystemThread(&ThreadHandle,
-                                  THREAD_ALL_ACCESS,
-                                  &ObjectAttributes,
-                                  0,
-                                  NULL,
-                                  ACPIWorker,
-                                  NULL);
-    if (Status != STATUS_SUCCESS) {
+    Status = PsCreateSystemThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, 0, NULL, ACPIWorker, NULL);
+    if (Status != STATUS_SUCCESS)
+    {
 
-        ACPIInternalError( ACPI_WORKER );
-
+        ACPIInternalError(ACPI_WORKER);
     }
 
-    Status = ObReferenceObjectByHandle (ThreadHandle,
-                                        THREAD_ALL_ACCESS,
-                                        NULL,
-                                        KernelMode,
-                                        (PVOID *)&Thread,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(ThreadHandle, THREAD_ALL_ACCESS, NULL, KernelMode, (PVOID *)&Thread, NULL);
 
-    if (Status != STATUS_SUCCESS) {
+    if (Status != STATUS_SUCCESS)
+    {
 
-        ACPIInternalError( ACPI_WORKER );
-
+        ACPIInternalError(ACPI_WORKER);
     }
 }
 
 
-VOID
-ACPISetDeviceWorker (
-    IN PDEVICE_EXTENSION    DevExt,
-    IN ULONG                Events
-    )
+VOID ACPISetDeviceWorker(IN PDEVICE_EXTENSION DevExt, IN ULONG Events)
 {
-    BOOLEAN         QueueWorker;
-    KIRQL           OldIrql;
+    BOOLEAN QueueWorker;
+    KIRQL OldIrql;
 
     //
     // Synchronize with worker thread
     //
 
-    KeAcquireSpinLock (&ACPIWorkerSpinLock, &OldIrql);
+    KeAcquireSpinLock(&ACPIWorkerSpinLock, &OldIrql);
     QueueWorker = FALSE;
 
     //
@@ -112,12 +88,13 @@ ACPISetDeviceWorker (
     // If this device is not being processed, start now
     //
 
-    if (!DevExt->WorkQueue.Link.Flink) {
+    if (!DevExt->WorkQueue.Link.Flink)
+    {
         //
         // Queue to worker thread
         //
 
-        InsertTailList (&ACPIDeviceWorkQueue, &DevExt->WorkQueue.Link);
+        InsertTailList(&ACPIDeviceWorkQueue, &DevExt->WorkQueue.Link);
         QueueWorker = !ACPIWorkerBusy;
         ACPIWorkerBusy = TRUE;
     }
@@ -126,35 +103,34 @@ ACPISetDeviceWorker (
     // Drop lock, and if needed get a worker thread
     //
 
-    KeReleaseSpinLock (&ACPIWorkerSpinLock, OldIrql);
-    if (QueueWorker) {
-        ExQueueWorkItem (&ACPIWorkItem, DelayedWorkQueue);
+    KeReleaseSpinLock(&ACPIWorkerSpinLock, OldIrql);
+    if (QueueWorker)
+    {
+        ExQueueWorkItem(&ACPIWorkItem, DelayedWorkQueue);
     }
 }
 
-VOID
-ACPIWorkerThread (
-    IN PVOID    Context
-    )
+VOID ACPIWorkerThread(IN PVOID Context)
 {
-    KIRQL               OldIrql;
-    PDEVICE_EXTENSION   DevExt;
-    ULONG               Events;
-    PLIST_ENTRY         Link;
+    KIRQL OldIrql;
+    PDEVICE_EXTENSION DevExt;
+    ULONG Events;
+    PLIST_ENTRY Link;
 
-    KeAcquireSpinLock (&ACPIWorkerSpinLock, &OldIrql);
+    KeAcquireSpinLock(&ACPIWorkerSpinLock, &OldIrql);
     ACPIWorkerBusy = TRUE;
 
     //
     // Loop and handle each queue device
     //
 
-    while (!IsListEmpty(&ACPIDeviceWorkQueue)) {
+    while (!IsListEmpty(&ACPIDeviceWorkQueue))
+    {
         Link = ACPIDeviceWorkQueue.Flink;
-        RemoveEntryList (Link);
+        RemoveEntryList(Link);
         Link->Flink = NULL;
 
-        DevExt = CONTAINING_RECORD (Link, DEVICE_EXTENSION, WorkQueue.Link);
+        DevExt = CONTAINING_RECORD(Link, DEVICE_EXTENSION, WorkQueue.Link);
 
         //
         // Dispatch the pending events
@@ -163,53 +139,50 @@ ACPIWorkerThread (
         Events = DevExt->WorkQueue.PendingEvents;
         DevExt->WorkQueue.PendingEvents = 0;
 
-        KeReleaseSpinLock (&ACPIWorkerSpinLock, OldIrql);
-        DevExt->DispatchTable->Worker (DevExt, Events);
-        KeAcquireSpinLock (&ACPIWorkerSpinLock, &OldIrql);
+        KeReleaseSpinLock(&ACPIWorkerSpinLock, OldIrql);
+        DevExt->DispatchTable->Worker(DevExt, Events);
+        KeAcquireSpinLock(&ACPIWorkerSpinLock, &OldIrql);
     }
 
     ACPIWorkerBusy = FALSE;
-    KeReleaseSpinLock (&ACPIWorkerSpinLock, OldIrql);
+    KeReleaseSpinLock(&ACPIWorkerSpinLock, OldIrql);
 }
 
 #if DBG
 
 EXCEPTION_DISPOSITION
-ACPIWorkerThreadFilter(
-    IN PWORKER_THREAD_ROUTINE WorkerRoutine,
-    IN PVOID Parameter,
-    IN PEXCEPTION_POINTERS ExceptionInfo
-    )
+ACPIWorkerThreadFilter(IN PWORKER_THREAD_ROUTINE WorkerRoutine, IN PVOID Parameter,
+                       IN PEXCEPTION_POINTERS ExceptionInfo)
 {
     KdPrint(("ACPIWORKER: exception in worker routine %lx(%lx)\n", WorkerRoutine, Parameter));
     KdPrint(("  exception record at %lx\n", ExceptionInfo->ExceptionRecord));
-    KdPrint(("  context record at %lx\n",ExceptionInfo->ContextRecord));
+    KdPrint(("  context record at %lx\n", ExceptionInfo->ContextRecord));
 
-    try {
+    try
+    {
         DbgBreakPoint();
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         //
         // No kernel debugger attached, so let the system thread
         // exception handler call KeBugCheckEx.
         //
-        return(EXCEPTION_CONTINUE_SEARCH);
+        return (EXCEPTION_CONTINUE_SEARCH);
     }
 
-    return(EXCEPTION_EXECUTE_HANDLER);
+    return (EXCEPTION_EXECUTE_HANDLER);
 }
 #endif
 
-typedef enum _ACPI_WORKER_OBJECT {
+typedef enum _ACPI_WORKER_OBJECT
+{
     ACPIWorkToDo,
     ACPITerminate,
     ACPIMaximumObject
 } ACPI_WORKER_OBJECT;
 
-VOID
-ACPIWorker(
-    IN PVOID StartContext
-    )
+VOID ACPIWorker(IN PVOID StartContext)
 {
     PLIST_ENTRY Entry;
     WORK_QUEUE_TYPE QueueType;
@@ -219,7 +192,7 @@ ACPIWorker(
     static KWAIT_BLOCK WaitBlockArray[ACPIMaximumObject];
     PVOID WaitObjects[ACPIMaximumObject];
 
-    ACPIThread = PsGetCurrentThread ();
+    ACPIThread = PsGetCurrentThread();
 
     //
     // Wait for the modified page writer event AND the PFN mutex.
@@ -233,7 +206,8 @@ ACPIWorker(
     // routine, and then waiting for another work queue item.
     //
 
-    do {
+    do
+    {
 
         //
         // Wait until something is put in the queue.
@@ -243,42 +217,38 @@ ACPIWorker(
         //
 
 
-        Status = KeWaitForMultipleObjects(ACPIMaximumObject,
-                                          &WaitObjects[0],
-                                          WaitAny,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          NULL,
-                                          &WaitBlockArray[0]);
+        Status = KeWaitForMultipleObjects(ACPIMaximumObject, &WaitObjects[0], WaitAny, Executive, KernelMode, FALSE,
+                                          NULL, &WaitBlockArray[0]);
 
         //
         // Switch on the wait status.
         //
 
-        switch (Status) {
+        switch (Status)
+        {
 
         case ACPIWorkToDo:
-                break;
+            break;
 
         case ACPITerminate:
-                // Stephane - you need to clear out any pending requests,
-                // wake people up, etc.  here.
-                //
-                // Also make sure you free up any allocated pool, etc.
+            // Stephane - you need to clear out any pending requests,
+            // wake people up, etc.  here.
+            //
+            // Also make sure you free up any allocated pool, etc.
 
-                PsTerminateSystemThread (STATUS_SUCCESS);
-                break;
+            PsTerminateSystemThread(STATUS_SUCCESS);
+            break;
 
         default:
-                break;
+            break;
         }
 
         KeAcquireSpinLock(&ACPIWorkerSpinLock, &OldIrql);
         ASSERT(!IsListEmpty(&ACPIWorkQueue));
         Entry = RemoveHeadList(&ACPIWorkQueue);
 
-        if (IsListEmpty(&ACPIWorkQueue)) {
+        if (IsListEmpty(&ACPIWorkQueue))
+        {
             KeClearEvent(&ACPIWorkToDoEvent);
         }
         KeReleaseSpinLock(&ACPIWorkerSpinLock, OldIrql);
@@ -291,7 +261,8 @@ ACPIWorker(
 
 #if DBG
 
-        try {
+        try
+        {
 
             PVOID WorkerRoutine;
             PVOID Parameter;
@@ -299,47 +270,32 @@ ACPIWorker(
             WorkerRoutine = WorkItem->WorkerRoutine;
             Parameter = WorkItem->Parameter;
             (WorkItem->WorkerRoutine)(WorkItem->Parameter);
-            if (KeGetCurrentIrql() != 0) {
+            if (KeGetCurrentIrql() != 0)
+            {
 
-                ACPIPrint( (
-                    ACPI_PRINT_CRITICAL,
-                    "ACPIWORKER: worker exit at IRQL %d, worker routine %x, "
-                    "parameter %x, item %x\n",
-                    KeGetCurrentIrql(),
-                    WorkerRoutine,
-                    Parameter,
-                    WorkItem
-                    ) );
+                ACPIPrint((ACPI_PRINT_CRITICAL,
+                           "ACPIWORKER: worker exit at IRQL %d, worker routine %x, "
+                           "parameter %x, item %x\n",
+                           KeGetCurrentIrql(), WorkerRoutine, Parameter, WorkItem));
                 DbgBreakPoint();
-
             }
-
-        } except( ACPIWorkerThreadFilter(WorkItem->WorkerRoutine,
-                                         WorkItem->Parameter,
-                                         GetExceptionInformation() )) {
         }
+        except(ACPIWorkerThreadFilter(WorkItem->WorkerRoutine, WorkItem->Parameter, GetExceptionInformation())){}
 
 #else
 
         (WorkItem->WorkerRoutine)(WorkItem->Parameter);
-        if (KeGetCurrentIrql() != 0) {
-            KeBugCheckEx(
-                IRQL_NOT_LESS_OR_EQUAL,
-                (ULONG_PTR)WorkItem->WorkerRoutine,
-                (ULONG_PTR)KeGetCurrentIrql(),
-                (ULONG_PTR)WorkItem->WorkerRoutine,
-                (ULONG_PTR)WorkItem
-                );
-            }
+        if (KeGetCurrentIrql() != 0)
+        {
+            KeBugCheckEx(IRQL_NOT_LESS_OR_EQUAL, (ULONG_PTR)WorkItem->WorkerRoutine, (ULONG_PTR)KeGetCurrentIrql(),
+                         (ULONG_PTR)WorkItem->WorkerRoutine, (ULONG_PTR)WorkItem);
+        }
 #endif
 
-    } while(TRUE);
+    } while (TRUE);
 }
 
-VOID
-OSQueueWorkItem(
-    IN PWORK_QUEUE_ITEM WorkItem
-    )
+VOID OSQueueWorkItem(IN PWORK_QUEUE_ITEM WorkItem)
 
 /*++
 
@@ -370,7 +326,8 @@ Return Value:
     // Insert the work item
     //
     KeAcquireSpinLock(&ACPIWorkerSpinLock, &OldIrql);
-    if (IsListEmpty(&ACPIWorkQueue)) {
+    if (IsListEmpty(&ACPIWorkQueue))
+    {
         KeSetEvent(&ACPIWorkToDoEvent, 0, FALSE);
     }
     InsertTailList(&ACPIWorkQueue, &WorkItem->List);

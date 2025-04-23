@@ -9,9 +9,9 @@
 
 #include "pch.h"
 
-#ifdef	LOCKABLE_PRAGMA
-#pragma	ACPI_LOCKABLE_DATA
-#pragma	ACPI_LOCKABLE_CODE
+#ifdef LOCKABLE_PRAGMA
+#pragma ACPI_LOCKABLE_DATA
+#pragma ACPI_LOCKABLE_CODE
 #endif
 
 /***LP  Alias - Parse and execute the Alias instruction
@@ -36,13 +36,10 @@ NTSTATUS LOCAL Alias(PCTXT pctxt, PTERM pterm)
 
     ASSERT(pterm->pdataArgs[0].dwDataType == OBJTYPE_STRDATA);
     ASSERT(pterm->pdataArgs[1].dwDataType == OBJTYPE_STRDATA);
-    if (((rc = GetNameSpaceObject((PSZ)pterm->pdataArgs[0].pbDataBuff,
-                                  pctxt->pnsScope, &pnsSrc, NSF_WARN_NOTFOUND))
-         == STATUS_SUCCESS) &&
-        ((rc = CreateNameSpaceObject(pctxt->pheapCurrent,
-                                     (PSZ)pterm->pdataArgs[1].pbDataBuff,
-                                     pctxt->pnsScope, pctxt->powner,
-                                     &pterm->pnsObj, 0)) == STATUS_SUCCESS))
+    if (((rc = GetNameSpaceObject((PSZ)pterm->pdataArgs[0].pbDataBuff, pctxt->pnsScope, &pnsSrc, NSF_WARN_NOTFOUND)) ==
+         STATUS_SUCCESS) &&
+        ((rc = CreateNameSpaceObject(pctxt->pheapCurrent, (PSZ)pterm->pdataArgs[1].pbDataBuff, pctxt->pnsScope,
+                                     pctxt->powner, &pterm->pnsObj, 0)) == STATUS_SUCCESS))
     {
         pterm->pnsObj->ObjData.dwDataType = OBJTYPE_OBJALIAS;
         pterm->pnsObj->ObjData.uipDataValue = (ULONG_PTR)pnsSrc;
@@ -50,7 +47,7 @@ NTSTATUS LOCAL Alias(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("Alias=%x (pnsObj=%x)\n", rc, pterm->pnsObj));
     return rc;
-}       //Alias
+} //Alias
 
 /***LP  Name - Parse and execute the Name instruction
  *
@@ -72,17 +69,15 @@ NTSTATUS LOCAL Name(PCTXT pctxt, PTERM pterm)
     ENTER(2, ("Name(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     ASSERT(pterm->pdataArgs[0].dwDataType == OBJTYPE_STRDATA);
-    if ((rc = CreateNameSpaceObject(pctxt->pheapCurrent,
-                                    (PSZ)pterm->pdataArgs[0].pbDataBuff,
-                                    pctxt->pnsScope, pctxt->powner,
-                                    &pterm->pnsObj, 0)) == STATUS_SUCCESS)
+    if ((rc = CreateNameSpaceObject(pctxt->pheapCurrent, (PSZ)pterm->pdataArgs[0].pbDataBuff, pctxt->pnsScope,
+                                    pctxt->powner, &pterm->pnsObj, 0)) == STATUS_SUCCESS)
     {
         MoveObjData(&pterm->pnsObj->ObjData, &pterm->pdataArgs[1]);
     }
 
     EXIT(2, ("Name=%x (pnsObj=%x)\n", rc, pterm->pnsObj));
     return rc;
-}       //Name
+} //Name
 
 /***LP  Scope - Parse and execute the Scope instruction
  *
@@ -104,14 +99,13 @@ NTSTATUS LOCAL Scope(PCTXT pctxt, PTERM pterm)
     ENTER(2, ("Scope(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     ASSERT(pterm->pdataArgs[0].dwDataType == OBJTYPE_STRDATA);
-    if ((rc = GetNameSpaceObject((PSZ)pterm->pdataArgs[0].pbDataBuff,
-                                 pctxt->pnsScope, &pterm->pnsObj,
+    if ((rc = GetNameSpaceObject((PSZ)pterm->pdataArgs[0].pbDataBuff, pctxt->pnsScope, &pterm->pnsObj,
                                  NSF_WARN_NOTFOUND)) == STATUS_SUCCESS)
     {
-        rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, NULL, pterm->pnsObj,
-                       pctxt->powner, pctxt->pheapCurrent, pterm->pdataResult);
+        rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, NULL, pterm->pnsObj, pctxt->powner, pctxt->pheapCurrent,
+                       pterm->pdataResult);
     }
 
     EXIT(2, ("Scope=%x\n", rc));
     return rc;
-}       //Scope
+} //Scope

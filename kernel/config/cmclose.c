@@ -18,20 +18,14 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpCloseKeyObject)
+#pragma alloc_text(PAGE, CmpCloseKeyObject)
 #endif
 
-VOID
-CmpCloseKeyObject(
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG ProcessHandleCount,
-    IN ULONG SystemHandleCount
-    )
+VOID CmpCloseKeyObject(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN ACCESS_MASK GrantedAccess,
+                       IN ULONG ProcessHandleCount, IN ULONG SystemHandleCount)
 /*++
 
 Routine Description:
@@ -60,13 +54,14 @@ Return Value:
 
 --*/
 {
-    PCM_KEY_BODY        KeyBody;
-    PCM_NOTIFY_BLOCK    NotifyBlock;
+    PCM_KEY_BODY KeyBody;
+    PCM_NOTIFY_BLOCK NotifyBlock;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"CmpCloseKeyObject: Object = %p\n", Object));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL, "CmpCloseKeyObject: Object = %p\n", Object));
 
-    if( SystemHandleCount > 1 ) {
+    if (SystemHandleCount > 1)
+    {
         //
         // There are still has open handles on this key. Do nothing
         //
@@ -81,36 +76,35 @@ Return Value:
     // Check the type, it will be something else if we are closing a predefined
     // handle key
     //
-    if (KeyBody->Type == KEY_BODY_TYPE) {
+    if (KeyBody->Type == KEY_BODY_TYPE)
+    {
         //
         // Clean up any outstanding notifies attached to the KeyBody
         //
-        if (KeyBody->NotifyBlock != NULL) {
+        if (KeyBody->NotifyBlock != NULL)
+        {
             //
             // Post all PostBlocks waiting on the NotifyBlock
             //
             NotifyBlock = KeyBody->NotifyBlock;
-            if (IsListEmpty(&(NotifyBlock->PostList)) == FALSE) {
+            if (IsListEmpty(&(NotifyBlock->PostList)) == FALSE)
+            {
                 //
                 // we need to follow the rule here and aquire kcb lock before hive lock
                 // other wise we could deadlock down in CmDeleteKeyObject
                 //
-                BEGIN_KCB_LOCK_GUARD;    
+                BEGIN_KCB_LOCK_GUARD;
                 CmpLockKCBTreeExclusive();
                 CmLockHive((PCMHIVE)(KeyBody->KeyControlBlock->KeyHive));
-                CmpPostNotify(NotifyBlock,
-                              NULL,
-                              0,
-                              STATUS_NOTIFY_CLEANUP,
-                              NULL
-#ifdef CM_NOTIFY_CHANGED_KCB_FULLPATH  
+                CmpPostNotify(NotifyBlock, NULL, 0, STATUS_NOTIFY_CLEANUP, NULL
+#ifdef CM_NOTIFY_CHANGED_KCB_FULLPATH
                               ,
                               NULL
-#endif //CM_NOTIFY_CHANGED_KCB_FULLPATH  
-                              );
+#endif //CM_NOTIFY_CHANGED_KCB_FULLPATH
+                );
                 CmUnlockHive((PCMHIVE)(KeyBody->KeyControlBlock->KeyHive));
                 CmpUnlockKCBTree();
-                END_KCB_LOCK_GUARD;    
+                END_KCB_LOCK_GUARD;
             }
         }
     }

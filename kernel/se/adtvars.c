@@ -42,7 +42,7 @@ Revision History:
 // Audit Log Information
 //
 
-POLICY_AUDIT_LOG_INFO SepAdtLogInformation = {0};
+POLICY_AUDIT_LOG_INFO SepAdtLogInformation = { 0 };
 
 //
 // High and low water marks to control the length of the audit queue
@@ -69,4 +69,3 @@ BOOLEAN SepAdtDiscardingAudits = FALSE;
 SEP_AUDIT_OPTIONS SepAuditOptions = { 0 };
 
 PKEVENT SepAdtLsaDeadEvent = NULL;
-

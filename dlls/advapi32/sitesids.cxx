@@ -13,26 +13,17 @@ RTL_CRITICAL_SECTION SiteSidCacheLock;
 
 // internal function declarations
 HRESULT MakeSidFromHash(PSID *ppSid, BYTE *pbBuffer, DWORD cbBuffer);
-void UpdateSiteSidUsage(
-            HKEY    hCacheKey,
-            LPCWSTR lpwszSiteSid,
-            LPWSTR  lpwszSite,
-            UINT    cbSiteBuffer);
+void UpdateSiteSidUsage(HKEY hCacheKey, LPCWSTR lpwszSiteSid, LPWSTR lpwszSite, UINT cbSiteBuffer);
 void Base32Encode(LPVOID pvData, UINT cbData, LPWSTR pchData);
 
-typedef HRESULT (STDAPICALLTYPE CREATESECURITYMANAGER) (
-                                                        IServiceProvider *pSP, IInternetSecurityManager **ppSM, DWORD dwReserved);
+typedef HRESULT(STDAPICALLTYPE CREATESECURITYMANAGER)(IServiceProvider *pSP, IInternetSecurityManager **ppSM,
+                                                      DWORD dwReserved);
 
 CREATESECURITYMANAGER *pfnCoInternetCreateSecurityManager = CoInternetCreateSecurityManager;
 HMODULE hUrlMon = 0;
 
 
-
-PSID
-APIENTRY
-GetSiteSidFromToken(
-                    IN HANDLE TokenHandle
-                    )
+PSID APIENTRY GetSiteSidFromToken(IN HANDLE TokenHandle)
 {
     PTOKEN_GROUPS RestrictedSids = NULL;
     ULONG ReturnLength;
@@ -40,55 +31,46 @@ GetSiteSidFromToken(
     PSID psSiteSid = NULL;
 
 
-    Status = NtQueryInformationToken(
-        TokenHandle,
-        TokenRestrictedSids,
-        NULL,
-        0,
-        &ReturnLength
-        );
+    Status = NtQueryInformationToken(TokenHandle, TokenRestrictedSids, NULL, 0, &ReturnLength);
     if (Status != STATUS_BUFFER_TOO_SMALL)
     {
         BaseSetLastNTError(Status);
         return NULL;
     }
 
-    RestrictedSids = (PTOKEN_GROUPS) RtlAllocateHeap(RtlProcessHeap(), 0, ReturnLength);
+    RestrictedSids = (PTOKEN_GROUPS)RtlAllocateHeap(RtlProcessHeap(), 0, ReturnLength);
     if (RestrictedSids == NULL)
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return NULL;
     }
 
-    Status = NtQueryInformationToken(
-        TokenHandle,
-        TokenRestrictedSids,
-        RestrictedSids,
-        ReturnLength,
-        &ReturnLength
-        );
+    Status = NtQueryInformationToken(TokenHandle, TokenRestrictedSids, RestrictedSids, ReturnLength, &ReturnLength);
     if (NT_SUCCESS(Status))
     {
         UINT i;
         SID_IDENTIFIER_AUTHORITY InternetSiteAuthority = SECURITY_INTERNETSITE_AUTHORITY;
 
-        for (i = 0; i < RestrictedSids->GroupCount; i++) {
+        for (i = 0; i < RestrictedSids->GroupCount; i++)
+        {
 
-            if (RtlCompareMemory((PVOID) &((SID *) RestrictedSids->Groups[i].Sid)->IdentifierAuthority,
-                (PVOID) &InternetSiteAuthority,
-                sizeof(SID_IDENTIFIER_AUTHORITY)) == sizeof(SID_IDENTIFIER_AUTHORITY))
+            if (RtlCompareMemory((PVOID) & ((SID *)RestrictedSids->Groups[i].Sid)->IdentifierAuthority,
+                                 (PVOID)&InternetSiteAuthority,
+                                 sizeof(SID_IDENTIFIER_AUTHORITY)) == sizeof(SID_IDENTIFIER_AUTHORITY))
             {
                 psSiteSid = RtlAllocateHeap(RtlProcessHeap(), 0, RtlLengthSid((RestrictedSids->Groups[i]).Sid));
-                if (psSiteSid == NULL) {
+                if (psSiteSid == NULL)
+                {
                     SetLastError(ERROR_OUTOFMEMORY);
                 }
-                else {
-                    RtlCopySid(RtlLengthSid((RestrictedSids->Groups[i]).Sid), psSiteSid, (RestrictedSids->Groups[i]).Sid);
+                else
+                {
+                    RtlCopySid(RtlLengthSid((RestrictedSids->Groups[i]).Sid), psSiteSid,
+                               (RestrictedSids->Groups[i]).Sid);
                 }
 
                 break;
             }
-
         }
     }
     else
@@ -101,13 +83,10 @@ GetSiteSidFromToken(
 }
 
 
-HRESULT GetRestrictedSids(
-                          LPCWSTR pszSite,
-                          SID_AND_ATTRIBUTES *pSidToRestrict,
-                          ULONG *pCount)
+HRESULT GetRestrictedSids(LPCWSTR pszSite, SID_AND_ATTRIBUTES *pSidToRestrict, ULONG *pCount)
 {
     HRESULT hr = S_OK;
-    ULONG   i = 0;
+    ULONG i = 0;
     long error;
     SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
 
@@ -120,7 +99,7 @@ HRESULT GetRestrictedSids(
 
     //Get the site SID.
     pSidToRestrict[0].Sid = GetSiteSidFromUrl(pszSite);
-    if(!pSidToRestrict[0].Sid)
+    if (!pSidToRestrict[0].Sid)
     {
         return HRESULT_FROM_WIN32(GetLastError());
     }
@@ -130,21 +109,18 @@ HRESULT GetRestrictedSids(
     //BUGBUG: Get the zone SID.
 
     //Get the restricted SID.
-    error = RtlAllocateAndInitializeSid(&NtAuthority,
-        1,
-        SECURITY_RESTRICTED_CODE_RID,
-        0, 0, 0, 0, 0, 0, 0,
-        &pSidToRestrict[i].Sid);
-    if(!error)
+    error = RtlAllocateAndInitializeSid(&NtAuthority, 1, SECURITY_RESTRICTED_CODE_RID, 0, 0, 0, 0, 0, 0, 0,
+                                        &pSidToRestrict[i].Sid);
+    if (!error)
     {
         i++;
     }
     else
     {
-        hr =  HRESULT_FROM_WIN32( GetLastError() );
+        hr = HRESULT_FROM_WIN32(GetLastError());
     }
 
-    if(FAILED(hr))
+    if (FAILED(hr))
     {
         return hr;
     }
@@ -159,31 +135,30 @@ HRESULT
 APIENTRY
 GetSiteNameFromSid(PSID pSid, LPWSTR *pwsSite)
 {
-    HRESULT         hr = S_OK;
-    WCHAR           wsValueNameBuffer[MAX_MANGLED_SITE];
-    LPWSTR          wsValueName = wsValueNameBuffer;
-    HKEY            hCacheKey;
-    DWORD           dwDisposition;
-    WCHAR          *wszValue;
-    ULONG           ulValueSize;
-    DWORD           error;
+    HRESULT hr = S_OK;
+    WCHAR wsValueNameBuffer[MAX_MANGLED_SITE];
+    LPWSTR wsValueName = wsValueNameBuffer;
+    HKEY hCacheKey;
+    DWORD dwDisposition;
+    WCHAR *wszValue;
+    ULONG ulValueSize;
+    DWORD error;
 
     *pwsSite = NULL;
 
-    error = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SITE_SID_CACHE_REG_KEY,
-                            0, NULL, 0, KEY_ALL_ACCESS,
-                            NULL, &hCacheKey, &dwDisposition);
+    error = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SITE_SID_CACHE_REG_KEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hCacheKey,
+                            &dwDisposition);
 
     if (ERROR_SUCCESS != error)
     {
         // Can't write, try read-only.  We won't be able to update the cache,
         // but we might be able to return the site name
 
-        error = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SITE_SID_CACHE_REG_KEY,
-                                0, NULL, 0, KEY_QUERY_VALUE,
-                                NULL, &hCacheKey, &dwDisposition);
+        error = RegCreateKeyExW(HKEY_LOCAL_MACHINE, SITE_SID_CACHE_REG_KEY, 0, NULL, 0, KEY_QUERY_VALUE, NULL,
+                                &hCacheKey, &dwDisposition);
 
-        if (ERROR_SUCCESS != error) {
+        if (ERROR_SUCCESS != error)
+        {
             return HRESULT_FROM_WIN32(error);
         }
     }
@@ -192,30 +167,19 @@ GetSiteNameFromSid(PSID pSid, LPWSTR *pwsSite)
     ASSERT(wsValueName == wsValueNameBuffer);
 
     //Get the size and allocate memory for the site name.
-    error = RegQueryValueExW(
-                    hCacheKey,
-                    wsValueName,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &ulValueSize);
+    error = RegQueryValueExW(hCacheKey, wsValueName, NULL, NULL, NULL, &ulValueSize);
 
-    if (ERROR_SUCCESS != error) {
+    if (ERROR_SUCCESS != error)
+    {
         RegCloseKey(hCacheKey);
         return HRESULT_FROM_WIN32(error);
     }
 
-    wszValue = (WCHAR *) LocalAlloc(0, ulValueSize);
+    wszValue = (WCHAR *)LocalAlloc(0, ulValueSize);
 
     if (wszValue != NULL)
     {
-        error = RegQueryValueExW(
-                        hCacheKey,
-                        wsValueName,
-                        NULL,
-                        NULL,
-                        (BYTE *) wszValue,
-                        &ulValueSize);
+        error = RegQueryValueExW(hCacheKey, wsValueName, NULL, NULL, (BYTE *)wszValue, &ulValueSize);
 
         if (ERROR_SUCCESS == error)
         {
@@ -239,14 +203,13 @@ GetSiteNameFromSid(PSID pSid, LPWSTR *pwsSite)
     return hr;
 }
 
-PSID APIENTRY
-GetSiteSidFromUrl(LPCWSTR wsUrl)
+PSID APIENTRY GetSiteSidFromUrl(LPCWSTR wsUrl)
 {
     HRESULT hr;
     PSID pSid = NULL;
     IInternetSecurityManager *pIScManager;
     DWORD cbSecurityId = lstrlenW(wsUrl) * sizeof(WCHAR) + sizeof(DWORD);
-    BYTE *pbSecurityId = (BYTE *) alloca(cbSecurityId);
+    BYTE *pbSecurityId = (BYTE *)alloca(cbSecurityId);
 
     HCRYPTPROV hProv;
     HCRYPTHASH hHash;
@@ -265,27 +228,27 @@ GetSiteSidFromUrl(LPCWSTR wsUrl)
     ULONG ulValueSize = (lstrlenW(wsUrl) + 1) * sizeof(WCHAR);
     WCHAR *wsValue;
     NTSTATUS Status;
-    DWORD    error;
+    DWORD error;
 
     //Crack the URL to get the site name.
     hr = (*pfnCoInternetCreateSecurityManager)(NULL, &pIScManager, 0);
-    if(SUCCEEDED(hr))
+    if (SUCCEEDED(hr))
     {
         hr = pIScManager->GetSecurityId(wsUrl, pbSecurityId, &cbSecurityId, 0);
 
-        if(HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) == hr)
+        if (HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) == hr)
         {
-            pbSecurityId = (BYTE *) alloca(cbSecurityId);
+            pbSecurityId = (BYTE *)alloca(cbSecurityId);
             hr = pIScManager->GetSecurityId(wsUrl, pbSecurityId, &cbSecurityId, 0);
         }
 
         //Remove the dwZone from the end of the pbSecurityId.
-        cbSecurityId -=  sizeof(DWORD);
+        cbSecurityId -= sizeof(DWORD);
 
         pIScManager->Release();
     }
 
-    if(FAILED(hr))
+    if (FAILED(hr))
     {
         SetLastError(hr);
         return NULL;
@@ -313,14 +276,14 @@ GetSiteSidFromUrl(LPCWSTR wsUrl)
 
     // get size of the hash value - for memory allocation
     dwCount = sizeof(DWORD);
-    if (!CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *) &dwHashLen, &dwCount, 0))
+    if (!CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE *)&dwHashLen, &dwCount, 0))
     {
         CryptDestroyHash(hHash);
         CryptReleaseContext(hProv, 0);
         return NULL;
     }
 
-    pbBuffer = (BYTE *) LocalAlloc(0, dwHashLen);
+    pbBuffer = (BYTE *)LocalAlloc(0, dwHashLen);
     if (pbBuffer == NULL)
     {
         //out of memory
@@ -364,14 +327,14 @@ GetSiteSidFromUrl(LPCWSTR wsUrl)
 
     __try
     {
-        wsUrl = (WCHAR *) alloca(ulValueSize);
+        wsUrl = (WCHAR *)alloca(ulValueSize);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
-        return pSid;        // alloca failed
+        return pSid; // alloca failed
     }
 
-    Status = RtlMultiByteToUnicodeN((WCHAR *) wsUrl, ulValueSize, &dwCount, (char *) pbSecurityId, cbSecurityId);
+    Status = RtlMultiByteToUnicodeN((WCHAR *)wsUrl, ulValueSize, &dwCount, (char *)pbSecurityId, cbSecurityId);
     if (!(NT_SUCCESS(Status)))
     {
         return pSid;
@@ -379,8 +342,8 @@ GetSiteSidFromUrl(LPCWSTR wsUrl)
     ((WCHAR *)wsUrl)[dwCount / sizeof(WCHAR)] = L'\0';
 
     hCacheKey = NULL;
-    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, SITE_SID_CACHE_REG_KEY, 0, NULL, 0,
-        KEY_ALL_ACCESS, NULL, &hCacheKey, &dwDisposition) != ERROR_SUCCESS)
+    if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, SITE_SID_CACHE_REG_KEY, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hCacheKey,
+                        &dwDisposition) != ERROR_SUCCESS)
     {
         // cannot open/create the cache registry key
         return pSid;
@@ -391,7 +354,7 @@ GetSiteSidFromUrl(LPCWSTR wsUrl)
 
     __try
     {
-        wsValue = (WCHAR *) alloca(ulValueSize);
+        wsValue = (WCHAR *)alloca(ulValueSize);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -399,60 +362,50 @@ GetSiteSidFromUrl(LPCWSTR wsUrl)
         return pSid;
     }
 
-    error = RegQueryValueExW(
-                    hCacheKey,
-                    wsValueName,
-                    NULL,
-                    NULL,
-                    (BYTE *) wsValue,
-                    &ulValueSize);
+    error = RegQueryValueExW(hCacheKey, wsValueName, NULL, NULL, (BYTE *)wsValue, &ulValueSize);
 
-    if (ERROR_SUCCESS == error) {
+    if (ERROR_SUCCESS == error)
+    {
         // this SID is already there in the cache
         // check for collision
 
         // if wsValue is "", we already know of a collision
-        if (wsValue[0] != L'\0') {
-            if (wcscmp(wsUrl, wsValue) != 0) {
+        if (wsValue[0] != L'\0')
+        {
+            if (wcscmp(wsUrl, wsValue) != 0)
+            {
                 // COLLISION !!!
 
                 // we handle collision by retaining the SID in
                 // the cache and setting the site name to ""
                 // so the wrong site name cannot be returned
 
-                DbgPrint("Site SID Collision:\n\t%ws\n\t%ws\n", wsUrl,wsValue);
+                DbgPrint("Site SID Collision:\n\t%ws\n\t%ws\n", wsUrl, wsValue);
 
                 WCHAR wcNull = L'\0';
-                RegSetValueExW(hCacheKey, wsValueName, 0, REG_BINARY,
-                    (CONST BYTE *) &wcNull, sizeof(WCHAR));
+                RegSetValueExW(hCacheKey, wsValueName, 0, REG_BINARY, (CONST BYTE *)&wcNull, sizeof(WCHAR));
             }
-            else {
-                UpdateSiteSidUsage(
-                        hCacheKey,
-                        wsValueName,
-                        wsValue,
-                        ulValueSize);
+            else
+            {
+                UpdateSiteSidUsage(hCacheKey, wsValueName, wsValue, ulValueSize);
             }
         }
     }
-    else if (ERROR_FILE_NOT_FOUND == error) {
-        UpdateSiteSidUsage(hCacheKey, wsValueName, (WCHAR *) wsUrl, 0);
-   }
+    else if (ERROR_FILE_NOT_FOUND == error)
+    {
+        UpdateSiteSidUsage(hCacheKey, wsValueName, (WCHAR *)wsUrl, 0);
+    }
 
-   RegCloseKey(hCacheKey);
+    RegCloseKey(hCacheKey);
 
-   return pSid;
+    return pSid;
 }
 
-void UpdateSiteSidUsage(
-            HKEY    hCacheKey,
-            LPCWSTR lpwszSiteSid,
-            LPWSTR  lpwszSite,
-            UINT    cbSiteBuffer)
+void UpdateSiteSidUsage(HKEY hCacheKey, LPCWSTR lpwszSiteSid, LPWSTR lpwszSite, UINT cbSiteBuffer)
 {
-    UINT    cbSite           = wcslen(lpwszSite)*sizeof(WCHAR) + sizeof(L'\0');
-    UINT    cbRequiredBuffer = cbSite + sizeof(LARGE_INTEGER);
-    BOOL    bCheckOverflow   = (0 == cbSiteBuffer);
+    UINT cbSite = wcslen(lpwszSite) * sizeof(WCHAR) + sizeof(L'\0');
+    UINT cbRequiredBuffer = cbSite + sizeof(LARGE_INTEGER);
+    BOOL bCheckOverflow = (0 == cbSiteBuffer);
 
     LARGE_INTEGER Now;
 
@@ -464,11 +417,11 @@ void UpdateSiteSidUsage(
 
         __try
         {
-            lpwsz = (LPWSTR) alloca(cbRequiredBuffer);
+            lpwsz = (LPWSTR)alloca(cbRequiredBuffer);
         }
         __except (EXCEPTION_EXECUTE_HANDLER)
         {
-            return;     // alloca failed
+            return; // alloca failed
         }
 
         wcscpy(lpwsz, lpwszSite);
@@ -479,49 +432,41 @@ void UpdateSiteSidUsage(
     // Tack the current time after the end of the string and write it out
 
     NtQuerySystemTime(&Now);
-    * (UNALIGNED LARGE_INTEGER *) (((BYTE *) lpwszSite) + cbSite) = Now;
+    *(UNALIGNED LARGE_INTEGER *)(((BYTE *)lpwszSite) + cbSite) = Now;
 
-    RegSetValueExW(
-            hCacheKey,
-            lpwszSiteSid,
-            NULL,
-            REG_BINARY,
-            (BYTE *) lpwszSite,
-            cbSiteBuffer);
+    RegSetValueExW(hCacheKey, lpwszSiteSid, NULL, REG_BINARY, (BYTE *)lpwszSite, cbSiteBuffer);
 
     if (!bCheckOverflow)
         return;
 
     // Check for cache overflow
 
-#define _PTIME(i)  ((__int64 *) (pEntryInfo + i * cbEntryInfo))
-#define _PVALUE(i) ((WCHAR *) (_PTIME(i) + 1))
+#define _PTIME(i) ((__int64 *)(pEntryInfo + i * cbEntryInfo))
+#define _PVALUE(i) ((WCHAR *)(_PTIME(i) + 1))
 
     static volatile LONG lFlushing = 0;
 
-    DWORD   error;
-    DWORD   cEntries;
-    DWORD   cTotalEntries;
-    DWORD   cbEntryValue;
-    DWORD   cbMaxEntryValue;
-    BYTE   *pEntryValue;
-    DWORD   cbMaxEntryName;
-    DWORD   cbEntryInfo;
-    BYTE   *pEntryInfo;
-    UINT    iFreeEntry;
-    UINT    iNewestEntry;
-    UINT    i;
-    DWORD   cb;
+    DWORD error;
+    DWORD cEntries;
+    DWORD cTotalEntries;
+    DWORD cbEntryValue;
+    DWORD cbMaxEntryValue;
+    BYTE *pEntryValue;
+    DWORD cbMaxEntryName;
+    DWORD cbEntryInfo;
+    BYTE *pEntryInfo;
+    UINT iFreeEntry;
+    UINT iNewestEntry;
+    UINT i;
+    DWORD cb;
 
-    error = RegQueryInfoKeyW(hCacheKey, NULL, NULL, NULL, NULL, NULL, NULL,
-                             &cEntries, &cbMaxEntryName, &cbMaxEntryValue,
-                             NULL, NULL);
+    error = RegQueryInfoKeyW(hCacheKey, NULL, NULL, NULL, NULL, NULL, NULL, &cEntries, &cbMaxEntryName,
+                             &cbMaxEntryValue, NULL, NULL);
 
-    if (ERROR_SUCCESS != error
-        || cEntries < SITE_SID_CACHE_SIZE_HIGH
-        || 1 == InterlockedExchange((LONG *) &lFlushing, 1))
+    if (ERROR_SUCCESS != error || cEntries < SITE_SID_CACHE_SIZE_HIGH ||
+        1 == InterlockedExchange((LONG *)&lFlushing, 1))
     {
-        return;     // Cache is under limit or we are already flushing
+        return; // Cache is under limit or we are already flushing
     }
 
     cbMaxEntryName = (cbMaxEntryName + 1) * sizeof(WCHAR);
@@ -532,7 +477,7 @@ void UpdateSiteSidUsage(
 
     __try
     {
-        pEntryValue = (BYTE *) alloca(cbMaxEntryValue);
+        pEntryValue = (BYTE *)alloca(cbMaxEntryValue);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -543,7 +488,7 @@ void UpdateSiteSidUsage(
 
     do
     {
-        pEntryInfo = (BYTE *) LocalAlloc(0, cbEntryInfo * cTotalEntries);
+        pEntryInfo = (BYTE *)LocalAlloc(0, cbEntryInfo * cTotalEntries);
 
         if (NULL == pEntryInfo)
         {
@@ -555,8 +500,7 @@ void UpdateSiteSidUsage(
                 return;
             }
         }
-    }
-    while (NULL == pEntryInfo);
+    } while (NULL == pEntryInfo);
 
     iFreeEntry = 0;
     iNewestEntry = 0;
@@ -566,21 +510,14 @@ void UpdateSiteSidUsage(
     BOOL bNewNewest = FALSE;
     cbEntryValue = cbMaxEntryValue;
 
-    while (ERROR_SUCCESS == RegEnumValueW(
-                                hCacheKey,
-                                i,
-                                _PVALUE(iFreeEntry),
-                                &cb,
-                                NULL,
-                                NULL,
-                                pEntryValue,
-                                &cbEntryValue))
+    while (ERROR_SUCCESS ==
+           RegEnumValueW(hCacheKey, i, _PVALUE(iFreeEntry), &cb, NULL, NULL, pEntryValue, &cbEntryValue))
     {
         ++i;
         cb = cbEntryInfo - sizeof(LARGE_INTEGER);
         cbEntryValue = cbMaxEntryValue;
 
-        * _PTIME(iFreeEntry) = * (__int64 *) (wcschr((WCHAR *) pEntryValue, L'\0') + 1);
+        *_PTIME(iFreeEntry) = *(__int64 *)(wcschr((WCHAR *)pEntryValue, L'\0') + 1);
 
         if (cEntries < cTotalEntries)
         {
@@ -628,7 +565,6 @@ void UpdateSiteSidUsage(
 }
 
 
-
 HRESULT MakeSidFromHash(PSID *ppSid, BYTE *pbBuffer, DWORD cbBuffer)
 {
     HRESULT hr = S_OK;
@@ -638,7 +574,7 @@ HRESULT MakeSidFromHash(PSID *ppSid, BYTE *pbBuffer, DWORD cbBuffer)
 
     *ppSid = NULL;
 
-    if(cbBuffer > sizeof(aSubAuthorities))
+    if (cbBuffer > sizeof(aSubAuthorities))
     {
         return E_INVALIDARG;
     }
@@ -646,18 +582,10 @@ HRESULT MakeSidFromHash(PSID *ppSid, BYTE *pbBuffer, DWORD cbBuffer)
     memset(aSubAuthorities, 0, sizeof(aSubAuthorities));
     memcpy(aSubAuthorities, pbBuffer, cbBuffer);
 
-    error = RtlAllocateAndInitializeSid(&siaAuthority,
-        (BYTE) ((cbBuffer + 3) / sizeof(DWORD)),
-        aSubAuthorities[0],
-        aSubAuthorities[1],
-        aSubAuthorities[2],
-        aSubAuthorities[3],
-        aSubAuthorities[4],
-        aSubAuthorities[5],
-        aSubAuthorities[6],
-        aSubAuthorities[7],
-        ppSid);
-    if(error)
+    error = RtlAllocateAndInitializeSid(&siaAuthority, (BYTE)((cbBuffer + 3) / sizeof(DWORD)), aSubAuthorities[0],
+                                        aSubAuthorities[1], aSubAuthorities[2], aSubAuthorities[3], aSubAuthorities[4],
+                                        aSubAuthorities[5], aSubAuthorities[6], aSubAuthorities[7], ppSid);
+    if (error)
     {
         hr = HRESULT_FROM_WIN32(error);
     }
@@ -676,19 +604,14 @@ GetMangledSiteSid(PSID pSid, ULONG cchMangledSite, LPWSTR *ppwszMangledSite)
     if (NULL == InAuthority)
         return HRESULT_FROM_WIN32(ERROR_INVALID_SID);
 
-    if (0 != memcmp(
-                InAuthority,
-                &InternetSiteAuthority,
-                sizeof(InternetSiteAuthority)))
+    if (0 != memcmp(InAuthority, &InternetSiteAuthority, sizeof(InternetSiteAuthority)))
     {
         return HRESULT_FROM_WIN32(ERROR_INVALID_SID);
     }
 
     if (cchMangledSite < MAX_MANGLED_SITE)
     {
-        *ppwszMangledSite = (WCHAR *) LocalAlloc(
-                                            0,
-                                            MAX_MANGLED_SITE * sizeof(WCHAR));
+        *ppwszMangledSite = (WCHAR *)LocalAlloc(0, MAX_MANGLED_SITE * sizeof(WCHAR));
         if (NULL == *ppwszMangledSite)
             return E_OUTOFMEMORY;
     }
@@ -696,10 +619,7 @@ GetMangledSiteSid(PSID pSid, ULONG cchMangledSite, LPWSTR *ppwszMangledSite)
     // The value of MAX_MANGLED_SITE assumes 4 dwords
     ASSERT(4 == *RtlSubAuthorityCountSid(pSid));
 
-    Base32Encode(
-            RtlSubAuthoritySid(pSid, 0),
-            *RtlSubAuthorityCountSid(pSid) * sizeof(DWORD),
-            *ppwszMangledSite);
+    Base32Encode(RtlSubAuthoritySid(pSid, 0), *RtlSubAuthorityCountSid(pSid) * sizeof(DWORD), *ppwszMangledSite);
 
     // The output string should always be MAX_MANGLED_SITE - 1 chars long
     ASSERT(MAX_MANGLED_SITE - 1 == lstrlenW(*ppwszMangledSite));
@@ -710,11 +630,7 @@ GetMangledSiteSid(PSID pSid, ULONG cchMangledSite, LPWSTR *ppwszMangledSite)
 
 ULONG
 APIENTRY
-GetSiteDirectoryA(
-                  HANDLE hToken,
-                  LPSTR lpBuffer,
-                  ULONG nBufferLength
-                  )
+GetSiteDirectoryA(HANDLE hToken, LPSTR lpBuffer, ULONG nBufferLength)
 
 /*++
 
@@ -729,22 +645,19 @@ ANSI thunk to GetSiteDirectoryW
     ANSI_STRING AnsiString;
     NTSTATUS Status;
     DWORD ReturnValue;
-#if defined (FE_SB) // GetSiteDirectoryA(); local variable
+#if defined(FE_SB) // GetSiteDirectoryA(); local variable
     ULONG cbAnsiString;
 #endif // FE_SB
 
-    if ( nBufferLength > MAXUSHORT ) {
-        nBufferLength = MAXUSHORT-2;
+    if (nBufferLength > MAXUSHORT)
+    {
+        nBufferLength = MAXUSHORT - 2;
     }
 
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
-    Unicode->Length = (USHORT)GetSiteDirectoryW(
-        hToken,
-        Unicode->Buffer,
-        Unicode->MaximumLength
-        );
+    Unicode->Length = (USHORT)GetSiteDirectoryW(hToken, Unicode->Buffer, Unicode->MaximumLength);
 
-#if defined (FE_SB) // GetSiteDirectoryA(): bug fix
+#if defined(FE_SB) // GetSiteDirectoryA(): bug fix
     //
     // Unicode->Length contains the byte count of unicode string.
     // Original code does "UnicodeLength / sizeof(WCHAR)" to
@@ -752,26 +665,32 @@ ANSI thunk to GetSiteDirectoryW
     // This is correct in SBCS environment. However in DBCS
     // environment, it's definitely WRONG.
     //
-    Status = RtlUnicodeToMultiByteSize( &cbAnsiString, Unicode->Buffer, Unicode->Length );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = RtlUnicodeToMultiByteSize(&cbAnsiString, Unicode->Buffer, Unicode->Length);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         ReturnValue = 0;
     }
-    else {
-        if ( nBufferLength > (DWORD)(cbAnsiString ) ) {
+    else
+    {
+        if (nBufferLength > (DWORD)(cbAnsiString))
+        {
             AnsiString.Buffer = lpBuffer;
-            AnsiString.MaximumLength = (USHORT)(nBufferLength+1);
-            Status = BasepUnicodeStringTo8BitString(&AnsiString,Unicode,FALSE);
+            AnsiString.MaximumLength = (USHORT)(nBufferLength + 1);
+            Status = BasepUnicodeStringTo8BitString(&AnsiString, Unicode, FALSE);
 
-            if ( !NT_SUCCESS(Status) ) {
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 ReturnValue = 0;
             }
-            else {
+            else
+            {
                 ReturnValue = AnsiString.Length;
             }
         }
-        else {
+        else
+        {
             //
             // current spec says the length doesn't
             // include null terminate character.
@@ -782,20 +701,24 @@ ANSI thunk to GetSiteDirectoryW
         }
     }
 #else
-    if ( nBufferLength > (DWORD)(Unicode->Length>>1) ) {
+    if (nBufferLength > (DWORD)(Unicode->Length >> 1))
+    {
         AnsiString.Buffer = lpBuffer;
-        AnsiString.MaximumLength = (USHORT)(nBufferLength+1);
-        Status = RtlUnicodeStringToAnsiString(&AnsiString,Unicode,FALSE);
-        if ( !NT_SUCCESS(Status) ) {
+        AnsiString.MaximumLength = (USHORT)(nBufferLength + 1);
+        Status = RtlUnicodeStringToAnsiString(&AnsiString, Unicode, FALSE);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             ReturnValue = 0;
         }
-        else {
+        else
+        {
             ReturnValue = AnsiString.Length;
         }
     }
-    else {
-        ReturnValue = ((Unicode->Length)>>1)+1;
+    else
+    {
+        ReturnValue = ((Unicode->Length) >> 1) + 1;
     }
 #endif // FE_SB
     return ReturnValue;
@@ -814,302 +737,312 @@ ANSI thunk to GetSiteDirectoryW
 * History:
 * 26-Aug-92 Davidc      Created.
 \***************************************************************************/
-PSID GetUserSid (HANDLE UserToken)
+PSID GetUserSid(HANDLE UserToken)
 {
-  PTOKEN_USER pUser;
-  PSID pSid;
-  DWORD BytesRequired = 200;
-  NTSTATUS status;
+    PTOKEN_USER pUser;
+    PSID pSid;
+    DWORD BytesRequired = 200;
+    NTSTATUS status;
 
 
-  //
-  // Allocate space for the user info
-  //
+    //
+    // Allocate space for the user info
+    //
 
-  pUser = (PTOKEN_USER)LocalAlloc(LMEM_FIXED, BytesRequired);
-
-
-  if (pUser == NULL) {
-      //        DebugMsg((DM_WARNING, TEXT("GetUserSid: Failed to allocate %d bytes"),
-      //                  BytesRequired));
-      return NULL;
-  }
+    pUser = (PTOKEN_USER)LocalAlloc(LMEM_FIXED, BytesRequired);
 
 
-  //
-  // Read in the UserInfo
-  //
-
-  status = NtQueryInformationToken(
-      UserToken,                 // Handle
-      TokenUser,                 // TokenInformationClass
-      pUser,                     // TokenInformation
-      BytesRequired,             // TokenInformationLength
-      &BytesRequired             // ReturnLength
-      );
-
-  if (status == STATUS_BUFFER_TOO_SMALL) {
-
-      //
-      // Allocate a bigger buffer and try again.
-      //
-
-      HLOCAL realloc = LocalReAlloc(pUser, BytesRequired, LMEM_MOVEABLE);
-      if (NULL == realloc) {
-          //            DebugMsg((DM_WARNING, TEXT("GetUserSid: Failed to allocate %d bytes"),
-          //                      BytesRequired));
-          LocalFree(pUser);
-          return NULL;
-      }
-      pUser = (PTOKEN_USER) realloc;
-
-      status = NtQueryInformationToken(
-          UserToken,             // Handle
-          TokenUser,             // TokenInformationClass
-          pUser,                 // TokenInformation
-          BytesRequired,         // TokenInformationLength
-          &BytesRequired         // ReturnLength
-          );
-
-  }
-
-  if (!NT_SUCCESS(status)) {
-      //        DebugMsg((DM_WARNING, TEXT("GetUserSid: Failed to query user info from user token, status = 0x%x"),
-      //                  status));
-      LocalFree(pUser);
-      return NULL;
-  }
+    if (pUser == NULL)
+    {
+        //        DebugMsg((DM_WARNING, TEXT("GetUserSid: Failed to allocate %d bytes"),
+        //                  BytesRequired));
+        return NULL;
+    }
 
 
-  BytesRequired = RtlLengthSid(pUser->User.Sid);
-  pSid = LocalAlloc(LMEM_FIXED, BytesRequired);
-  if (pSid == NULL) {
-      //        DebugMsg((DM_WARNING, TEXT("GetUserSid: Failed to allocate %d bytes"),
-      //                  BytesRequired));
-      LocalFree(pUser);
-      return NULL;
-  }
+    //
+    // Read in the UserInfo
+    //
+
+    status = NtQueryInformationToken(UserToken,     // Handle
+                                     TokenUser,     // TokenInformationClass
+                                     pUser,         // TokenInformation
+                                     BytesRequired, // TokenInformationLength
+                                     &BytesRequired // ReturnLength
+    );
+
+    if (status == STATUS_BUFFER_TOO_SMALL)
+    {
+
+        //
+        // Allocate a bigger buffer and try again.
+        //
+
+        HLOCAL realloc = LocalReAlloc(pUser, BytesRequired, LMEM_MOVEABLE);
+        if (NULL == realloc)
+        {
+            //            DebugMsg((DM_WARNING, TEXT("GetUserSid: Failed to allocate %d bytes"),
+            //                      BytesRequired));
+            LocalFree(pUser);
+            return NULL;
+        }
+        pUser = (PTOKEN_USER)realloc;
+
+        status = NtQueryInformationToken(UserToken,     // Handle
+                                         TokenUser,     // TokenInformationClass
+                                         pUser,         // TokenInformation
+                                         BytesRequired, // TokenInformationLength
+                                         &BytesRequired // ReturnLength
+        );
+    }
+
+    if (!NT_SUCCESS(status))
+    {
+        //        DebugMsg((DM_WARNING, TEXT("GetUserSid: Failed to query user info from user token, status = 0x%x"),
+        //                  status));
+        LocalFree(pUser);
+        return NULL;
+    }
 
 
-  status = RtlCopySid(BytesRequired, pSid, pUser->User.Sid);
+    BytesRequired = RtlLengthSid(pUser->User.Sid);
+    pSid = LocalAlloc(LMEM_FIXED, BytesRequired);
+    if (pSid == NULL)
+    {
+        //        DebugMsg((DM_WARNING, TEXT("GetUserSid: Failed to allocate %d bytes"),
+        //                  BytesRequired));
+        LocalFree(pUser);
+        return NULL;
+    }
 
-  LocalFree(pUser);
 
-  if (!NT_SUCCESS(status)) {
-      //        DebugMsg((DM_WARNING, TEXT("GetUserSid: RtlCopySid Failed. status = %d"),
-      //                  status));
-      LocalFree(pSid);
-      pSid = NULL;
-  }
+    status = RtlCopySid(BytesRequired, pSid, pUser->User.Sid);
+
+    LocalFree(pUser);
+
+    if (!NT_SUCCESS(status))
+    {
+        //        DebugMsg((DM_WARNING, TEXT("GetUserSid: RtlCopySid Failed. status = %d"),
+        //                  status));
+        LocalFree(pSid);
+        pSid = NULL;
+    }
 
 
-  return pSid;
+    return pSid;
 }
 
-BOOL
-  CreateSiteDirectory(
-  LPCWSTR pszSiteDirectory,
-  PSID psidUser,
-  PSID psidSite)
+BOOL CreateSiteDirectory(LPCWSTR pszSiteDirectory, PSID psidUser, PSID psidSite)
 {
-  BOOL bRetVal = FALSE;
-  SID_IDENTIFIER_AUTHORITY authNT = SECURITY_NT_AUTHORITY;
-  PACL pAcl = NULL;
-  PSID psidSystem = NULL;
-  PSID psidAdmin = NULL;
-  DWORD cbAcl, AceIndex, dwDisp;
-  ACE_HEADER * lpAceHeader;
-  SECURITY_DESCRIPTOR sd;
-  SECURITY_ATTRIBUTES saSite;
+    BOOL bRetVal = FALSE;
+    SID_IDENTIFIER_AUTHORITY authNT = SECURITY_NT_AUTHORITY;
+    PACL pAcl = NULL;
+    PSID psidSystem = NULL;
+    PSID psidAdmin = NULL;
+    DWORD cbAcl, AceIndex, dwDisp;
+    ACE_HEADER *lpAceHeader;
+    SECURITY_DESCRIPTOR sd;
+    SECURITY_ATTRIBUTES saSite;
 
 
-  //
-  // Get the system sid
-  //
+    //
+    // Get the system sid
+    //
 
-  if (!AllocateAndInitializeSid(&authNT, 1, SECURITY_LOCAL_SYSTEM_RID,
-      0, 0, 0, 0, 0, 0, 0, &psidSystem)) {
-      goto Exit;
-  }
-
-
-  //
-  // Get the admin sid
-  //
-
-  if (!AllocateAndInitializeSid(&authNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
-      DOMAIN_ALIAS_RID_ADMINS, 0, 0,
-      0, 0, 0, 0, &psidAdmin)) {
-      goto Exit;
-  }
-
-  //
-  // Allocate space for the ACL
-  //
-
-  cbAcl = (2 * GetLengthSid (psidUser)) + (2 * GetLengthSid (psidSystem)) +
-      (2 * GetLengthSid (psidAdmin)) + (2 * GetLengthSid (psidSite)) +
-      sizeof(ACL) +
-      (8 * (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)));
+    if (!AllocateAndInitializeSid(&authNT, 1, SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0, &psidSystem))
+    {
+        goto Exit;
+    }
 
 
-  pAcl = (PACL) GlobalAlloc(GMEM_FIXED, cbAcl);
-  if (!pAcl) {
-      goto Exit;
-  }
+    //
+    // Get the admin sid
+    //
 
-  if (!InitializeAcl(pAcl, cbAcl, ACL_REVISION)) {
-      goto Exit;
-  }
+    if (!AllocateAndInitializeSid(&authNT, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
+                                  &psidAdmin))
+    {
+        goto Exit;
+    }
 
+    //
+    // Allocate space for the ACL
+    //
 
-  //
-  // Add Aces for User, System, and Admin.  Non-inheritable ACEs first
-  //
-
-  AceIndex = 0;
-  if (!AddAccessAllowedAce(pAcl, ACL_REVISION, FILE_ALL_ACCESS, psidUser)) {
-      goto Exit;
-  }
+    cbAcl = (2 * GetLengthSid(psidUser)) + (2 * GetLengthSid(psidSystem)) + (2 * GetLengthSid(psidAdmin)) +
+            (2 * GetLengthSid(psidSite)) + sizeof(ACL) + (8 * (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)));
 
 
-  AceIndex++;
-  if (!AddAccessAllowedAce(pAcl, ACL_REVISION, FILE_ALL_ACCESS, psidSystem)) {
-      goto Exit;
-  }
+    pAcl = (PACL)GlobalAlloc(GMEM_FIXED, cbAcl);
+    if (!pAcl)
+    {
+        goto Exit;
+    }
 
-  AceIndex++;
-  if (!AddAccessAllowedAce(pAcl, ACL_REVISION, FILE_ALL_ACCESS, psidAdmin)) {
-      goto Exit;
-  }
-
-  AceIndex++;
-  if (!AddAccessAllowedAce(pAcl, ACL_REVISION, FILE_ALL_ACCESS, psidSite)) {
-      goto Exit;
-  }
+    if (!InitializeAcl(pAcl, cbAcl, ACL_REVISION))
+    {
+        goto Exit;
+    }
 
 
+    //
+    // Add Aces for User, System, and Admin.  Non-inheritable ACEs first
+    //
 
-  //
-  // Now the inheritable ACEs
-  //
-
-  AceIndex++;
-  if (!AddAccessAllowedAce(pAcl, ACL_REVISION, GENERIC_ALL, psidUser)) {
-      goto Exit;
-  }
-
-  if (!GetAce(pAcl, AceIndex, (void **)&lpAceHeader)) {
-      goto Exit;
-  }
-
-  lpAceHeader->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
+    AceIndex = 0;
+    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, FILE_ALL_ACCESS, psidUser))
+    {
+        goto Exit;
+    }
 
 
-  AceIndex++;
-  if (!AddAccessAllowedAce(pAcl, ACL_REVISION, GENERIC_ALL, psidSystem)) {
-      goto Exit;
-  }
+    AceIndex++;
+    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, FILE_ALL_ACCESS, psidSystem))
+    {
+        goto Exit;
+    }
 
-  if (!GetAce(pAcl, AceIndex, (void **)&lpAceHeader)) {
-      goto Exit;
-  }
+    AceIndex++;
+    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, FILE_ALL_ACCESS, psidAdmin))
+    {
+        goto Exit;
+    }
 
-  lpAceHeader->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
-
-
-  AceIndex++;
-  if (!AddAccessAllowedAce(pAcl, ACL_REVISION, GENERIC_ALL, psidAdmin)) {
-      goto Exit;
-  }
-
-  if (!GetAce(pAcl, AceIndex, (void **)&lpAceHeader)) {
-      goto Exit;
-  }
-
-  lpAceHeader->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
-
-  AceIndex++;
-  if (!AddAccessAllowedAce(pAcl, ACL_REVISION, GENERIC_ALL, psidSite)) {
-      goto Exit;
-  }
-
-  if (!GetAce(pAcl, AceIndex, (void **)&lpAceHeader)) {
-      goto Exit;
-  }
-
-  lpAceHeader->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
+    AceIndex++;
+    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, FILE_ALL_ACCESS, psidSite))
+    {
+        goto Exit;
+    }
 
 
-  //
-  // Put together the security descriptor
-  //
+    //
+    // Now the inheritable ACEs
+    //
 
-  if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
-      goto Exit;
-  }
+    AceIndex++;
+    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, GENERIC_ALL, psidUser))
+    {
+        goto Exit;
+    }
+
+    if (!GetAce(pAcl, AceIndex, (void **)&lpAceHeader))
+    {
+        goto Exit;
+    }
+
+    lpAceHeader->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
 
 
-  if (!SetSecurityDescriptorDacl(&sd, TRUE, pAcl, FALSE)) {
-      goto Exit;
-  }
+    AceIndex++;
+    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, GENERIC_ALL, psidSystem))
+    {
+        goto Exit;
+    }
+
+    if (!GetAce(pAcl, AceIndex, (void **)&lpAceHeader))
+    {
+        goto Exit;
+    }
+
+    lpAceHeader->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
 
 
-  //
-  // Add the security descriptor to the sa structure
-  //
+    AceIndex++;
+    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, GENERIC_ALL, psidAdmin))
+    {
+        goto Exit;
+    }
 
-  saSite.nLength = sizeof(SECURITY_ATTRIBUTES);
-  saSite.lpSecurityDescriptor = &sd;
-  saSite.bInheritHandle = FALSE;
+    if (!GetAce(pAcl, AceIndex, (void **)&lpAceHeader))
+    {
+        goto Exit;
+    }
 
-  //
-  // Attempt to create the directory
-  //
+    lpAceHeader->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
 
-  bRetVal = CreateDirectoryW(pszSiteDirectory, &saSite);
+    AceIndex++;
+    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, GENERIC_ALL, psidSite))
+    {
+        goto Exit;
+    }
+
+    if (!GetAce(pAcl, AceIndex, (void **)&lpAceHeader))
+    {
+        goto Exit;
+    }
+
+    lpAceHeader->AceFlags |= (OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE | INHERIT_ONLY_ACE);
+
+
+    //
+    // Put together the security descriptor
+    //
+
+    if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
+    {
+        goto Exit;
+    }
+
+
+    if (!SetSecurityDescriptorDacl(&sd, TRUE, pAcl, FALSE))
+    {
+        goto Exit;
+    }
+
+
+    //
+    // Add the security descriptor to the sa structure
+    //
+
+    saSite.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saSite.lpSecurityDescriptor = &sd;
+    saSite.bInheritHandle = FALSE;
+
+    //
+    // Attempt to create the directory
+    //
+
+    bRetVal = CreateDirectoryW(pszSiteDirectory, &saSite);
 
 Exit:
 
-  //
-  // Free the sids and acl
-  //
+    //
+    // Free the sids and acl
+    //
 
-  if (psidSystem) {
-      FreeSid(psidSystem);
-  }
+    if (psidSystem)
+    {
+        FreeSid(psidSystem);
+    }
 
-  if (psidAdmin) {
-      FreeSid(psidAdmin);
-  }
+    if (psidAdmin)
+    {
+        FreeSid(psidAdmin);
+    }
 
-  if (pAcl) {
-      GlobalFree (pAcl);
-  }
-  return bRetVal;
+    if (pAcl)
+    {
+        GlobalFree(pAcl);
+    }
+    return bRetVal;
 }
 
 ULONG
 APIENTRY
-GetSiteDirectoryW(
-                  HANDLE hToken,
-                  LPWSTR pszSiteDirectory,
-                  ULONG  uSize)
+GetSiteDirectoryW(HANDLE hToken, LPWSTR pszSiteDirectory, ULONG uSize)
 {
-    ULONG  cb = 0;
-    PSID   psidUser = 0;
-    PSID   psidSite = 0;
-    WCHAR  szProfile[MAX_PATH + 1];
+    ULONG cb = 0;
+    PSID psidUser = 0;
+    PSID psidSite = 0;
+    WCHAR szProfile[MAX_PATH + 1];
     LPWSTR pszProfile = szProfile;
     HANDLE hProcessToken = 0;
-    long   error = 0;
+    long error = 0;
 
     //Get the process token.
-    if(!hToken)
+    if (!hToken)
     {
-        if(OpenProcessToken(GetCurrentProcess(),
-            TOKEN_QUERY,
-            &hProcessToken))
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hProcessToken))
         {
             hToken = hProcessToken;
         }
@@ -1121,14 +1054,12 @@ GetSiteDirectoryW(
 
     //Get the path to the user profile directory.
     psidUser = GetUserSid(hToken);
-    if(psidUser != NULL)
+    if (psidUser != NULL)
     {
-        UNICODE_STRING          wstrUserSid = {0, 0, 0};
+        UNICODE_STRING wstrUserSid = { 0, 0, 0 };
 
-        error = RtlConvertSidToUnicodeString(&wstrUserSid,
-            psidUser,
-            TRUE);
-        if(!error)
+        error = RtlConvertSidToUnicodeString(&wstrUserSid, psidUser, TRUE);
+        if (!error)
         {
             HKEY hkUserProfile;
 
@@ -1136,30 +1067,19 @@ GetSiteDirectoryW(
             lstrcpyW(szProfile, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\ProfileList\\");
             lstrcatW(szProfile, wstrUserSid.Buffer);
 
-            error = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
-                szProfile,
-                0,
-                KEY_READ,
-                &hkUserProfile);
-            if(!error)
+            error = RegOpenKeyExW(HKEY_LOCAL_MACHINE, szProfile, 0, KEY_READ, &hkUserProfile);
+            if (!error)
             {
                 DWORD dwType;
                 DWORD dwSize = sizeof(szProfile);
 
-                error = RegQueryValueExW(hkUserProfile,
-                    L"ProfileImagePath",
-                    NULL,
-                    &dwType,
-                    (BYTE*)szProfile,
-                    &dwSize );
-                if(!error)
+                error = RegQueryValueExW(hkUserProfile, L"ProfileImagePath", NULL, &dwType, (BYTE *)szProfile, &dwSize);
+                if (!error)
                 {
-                    if ( dwType == REG_EXPAND_SZ )
+                    if (dwType == REG_EXPAND_SZ)
                     {
-                        pszProfile = (LPWSTR) alloca((MAX_PATH + 1) * sizeof(WCHAR));
-                        ExpandEnvironmentStringsW(szProfile,
-                            pszProfile,
-                            MAX_PATH);
+                        pszProfile = (LPWSTR)alloca((MAX_PATH + 1) * sizeof(WCHAR));
+                        ExpandEnvironmentStringsW(szProfile, pszProfile, MAX_PATH);
                     }
                 }
 
@@ -1176,11 +1096,11 @@ GetSiteDirectoryW(
 
 
     //Get the path to the site directory.
-    if(!error)
+    if (!error)
     {
         psidSite = GetSiteSidFromToken(hToken);
 
-        if(psidSite != NULL)
+        if (psidSite != NULL)
         {
             WCHAR wszSiteNameBuffer[MAX_MANGLED_SITE];
             LPWSTR wszSiteName = wszSiteNameBuffer;
@@ -1188,14 +1108,11 @@ GetSiteDirectoryW(
             GetMangledSiteSid(psidSite, MAX_MANGLED_SITE, &wszSiteName);
             ASSERT(wszSiteName == wszSiteNameBuffer);
 
-            cb = sizeof(WCHAR) * (lstrlenW(pszProfile)
-                                  + sizeof('\\')
-                                  + lstrlenW(wszSiteName)
-                                  + sizeof('\0'));
+            cb = sizeof(WCHAR) * (lstrlenW(pszProfile) + sizeof('\\') + lstrlenW(wszSiteName) + sizeof('\0'));
 
-            if(uSize * 2 < cb)
+            if (uSize * 2 < cb)
             {
-                return cb/2;
+                return cb / 2;
             }
             else
             {
@@ -1204,7 +1121,7 @@ GetSiteDirectoryW(
                 lstrcatW(pszSiteDirectory, wszSiteName);
 
                 //Check if the directory already exists.
-                if(GetFileAttributesW(pszSiteDirectory) == -1)
+                if (GetFileAttributesW(pszSiteDirectory) == -1)
                 {
                     CreateSiteDirectory(pszSiteDirectory, psidUser, psidSite);
                 }
@@ -1217,17 +1134,17 @@ GetSiteDirectoryW(
         }
     }
 
-    if(error)
+    if (error)
     {
         SetLastError(error);
     }
 
-    if(hProcessToken)
+    if (hProcessToken)
     {
         CloseHandle(hProcessToken);
     }
 
-    if(psidUser)
+    if (psidUser)
     {
         RtlFreeSid(psidUser);
     }
@@ -1236,8 +1153,7 @@ GetSiteDirectoryW(
 }
 
 
-BOOL APIENTRY
-IsProcessRestricted(void)
+BOOL APIENTRY IsProcessRestricted(void)
 
 /*++
 
@@ -1262,7 +1178,7 @@ Notes:
 {
     static long fIsRestricted = -1;
 
-    if(-1 == fIsRestricted)
+    if (-1 == fIsRestricted)
     {
         HANDLE hToken;
         if (OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &hToken))
@@ -1279,11 +1195,9 @@ Notes:
 }
 
 WINADVAPI
-BOOL
-WINAPI IsInSandbox(VOID)
+BOOL WINAPI IsInSandbox(VOID)
 {
     return IsProcessRestricted();
-
 }
 
 //+-------------------------------------------------------------------
@@ -1295,24 +1209,22 @@ WINAPI IsInSandbox(VOID)
 //  Returns:    S_OK, ERROR_MOD_NOT_FOUND
 //
 //--------------------------------------------------------------------
-STDAPI CoInternetCreateSecurityManager(
-                                       IN  IServiceProvider *pSP,
-                                       OUT IInternetSecurityManager **ppSM,
+STDAPI CoInternetCreateSecurityManager(IN IServiceProvider *pSP, OUT IInternetSecurityManager **ppSM,
                                        IN DWORD dwReserved)
 {
     HRESULT hr = E_FAIL;
 
-    if(!hUrlMon)
+    if (!hUrlMon)
     {
         hUrlMon = LoadLibraryA("urlmon.dll");
     }
 
-    if(hUrlMon != 0)
+    if (hUrlMon != 0)
     {
         void *pfn = GetProcAddress(hUrlMon, "CoInternetCreateSecurityManager");
-        if(pfn != NULL)
+        if (pfn != NULL)
         {
-            pfnCoInternetCreateSecurityManager = (CREATESECURITYMANAGER *) pfn;
+            pfnCoInternetCreateSecurityManager = (CREATESECURITYMANAGER *)pfn;
             hr = (*pfnCoInternetCreateSecurityManager)(pSP, ppSM, dwReserved);
         }
         else
@@ -1327,7 +1239,6 @@ STDAPI CoInternetCreateSecurityManager(
 
     return hr;
 }
-
 
 
 //+----------------------------------------------------------------------------
@@ -1345,16 +1256,14 @@ STDAPI CoInternetCreateSecurityManager(
 
 void Base32Encode(LPVOID pvData, UINT cbData, LPWSTR pchData)
 {
-    static const WCHAR alphabet[32] =
-        { L'a', L'b', L'c', L'd', L'e', L'f', L'g', L'h',
-          L'i', L'j', L'k', L'l', L'm', L'n', L'o', L'p',
-          L'q', L'r', L's', L't', L'u', L'v', L'w', L'x',
-          L'y', L'z', L'0', L'1', L'2', L'3', L'4', L'5' };
+    static const WCHAR alphabet[32] = { L'a', L'b', L'c', L'd', L'e', L'f', L'g', L'h', L'i', L'j', L'k',
+                                        L'l', L'm', L'n', L'o', L'p', L'q', L'r', L's', L't', L'u', L'v',
+                                        L'w', L'x', L'y', L'z', L'0', L'1', L'2', L'3', L'4', L'5' };
 
-    int   shift = 0;    // The # of unprocessed bits in accum
-    ULONG accum = 0;    // The unprocessed bits
+    int shift = 0;   // The # of unprocessed bits in accum
+    ULONG accum = 0; // The unprocessed bits
     ULONG value;
-    BYTE *pData = (BYTE *) pvData;
+    BYTE *pData = (BYTE *)pvData;
 
     // For each byte...
 
@@ -1368,7 +1277,7 @@ void Base32Encode(LPVOID pvData, UINT cbData, LPWSTR pchData)
 
         // Lop off the high 5 or 10 bits and write them out
 
-        while ( shift >= 5 )
+        while (shift >= 5)
         {
             shift -= 5;
             value = (accum >> shift) & 0x1Fl;
@@ -1388,4 +1297,3 @@ void Base32Encode(LPVOID pvData, UINT cbData, LPWSTR pchData)
 
     *pchData = L'\0';
 }
-

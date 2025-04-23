@@ -23,9 +23,7 @@
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, EndDialog, HWND, hwnd, INT_PTR, result)
-BOOL EndDialog(
-    HWND hwnd,
-    INT_PTR result)
+BOOL EndDialog(HWND hwnd, INT_PTR result)
 {
     PWND pwnd;
     PWND pwndOwner;
@@ -35,7 +33,8 @@ BOOL EndDialog(
     HWND hwndOldSysModal;
 #endif
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -47,7 +46,8 @@ BOOL EndDialog(
     if (!ValidateDialogPwnd(pwnd))
         return 0;
 
-    if (SAMEWOWHANDLE(hwnd, GetActiveWindow())) {
+    if (SAMEWOWHANDLE(hwnd, GetActiveWindow()))
+    {
         fWasActive = TRUE;
     }
 
@@ -56,17 +56,21 @@ BOOL EndDialog(
      */
     pwndOwner = GetWindowCreator(pwnd);
 
-    if (pwndOwner != NULL) {
+    if (pwndOwner != NULL)
+    {
 
         /*
          * Hide the window.
          */
         pwndOwner = REBASEPTR(pwnd, pwndOwner);
         hwndOwner = HWq(pwndOwner);
-        if (!PDLG(pwnd)->fDisabled) {
+        if (!PDLG(pwnd)->fDisabled)
+        {
             NtUserEnableWindow(hwndOwner, TRUE);
         }
-    } else {
+    }
+    else
+    {
         hwndOwner = NULL;
     }
 
@@ -76,7 +80,8 @@ BOOL EndDialog(
     PDLG(pwnd)->fEnd = TRUE;
     PDLG(pwnd)->result = result;
 
-    if (fWasActive && IsChild(hwnd, GetFocus())) {
+    if (fWasActive && IsChild(hwnd, GetFocus()))
+    {
 
         /*
          * Set focus to the dialog box so that any control which has the focus
@@ -93,8 +98,7 @@ BOOL EndDialog(
     }
 
     NtUserSetWindowPos(hwnd, NULL, 0, 0, 0, 0,
-                       SWP_HIDEWINDOW | SWP_NOACTIVATE | SWP_NOMOVE |
-                       SWP_NOSIZE | SWP_NOZORDER);
+                       SWP_HIDEWINDOW | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
 
 #ifdef SYSMODALWINDOWS
 
@@ -103,7 +107,8 @@ BOOL EndDialog(
      * won't have a hidden sysmodal window that will mess things
      * up royally...
      */
-    if (pwnd == gspwndSysModal) {
+    if (pwnd == gspwndSysModal)
+    {
         hwndOldSysModal = PDLG(pwnd)->hwndSysModalSave;
         if (hwndOldSysModal && !IsWindow(hwndOldSysModal))
             hwndOldSysModal = NULL;
@@ -121,9 +126,12 @@ BOOL EndDialog(
     /*
      * Don't do any activation unless we were previously active.
      */
-    if (fWasActive && hwndOwner) {
+    if (fWasActive && hwndOwner)
+    {
         NtUserSetActiveWindow(hwndOwner);
-    } else {
+    }
+    else
+    {
 
         /*
          * If at this point we are still the active window it means that
@@ -132,14 +140,15 @@ BOOL EndDialog(
          * needs to be fixed better later on.  For now, though, just
          * set the active and focus window to NULL.
          */
-        if (SAMEWOWHANDLE(hwnd, GetActiveWindow())) {
-//     The next two lines are *not* the equivalent of the two Unlock
-//      statements that were in Daytona server-side dlgend.c.  So, we
-//      need to go over to server/kernel and do it right.  This fixes
-//      a problem in Visual Slick, which had the MDI window lose focus
-//      when a message box was dismissed.  FritzS
-//            SetActiveWindow(NULL);
-//            SetFocus(NULL);
+        if (SAMEWOWHANDLE(hwnd, GetActiveWindow()))
+        {
+            //     The next two lines are *not* the equivalent of the two Unlock
+            //      statements that were in Daytona server-side dlgend.c.  So, we
+            //      need to go over to server/kernel and do it right.  This fixes
+            //      a problem in Visual Slick, which had the MDI window lose focus
+            //      when a message box was dismissed.  FritzS
+            //            SetActiveWindow(NULL);
+            //            SetFocus(NULL);
             NtUserCallNoParam(SFI_ZAPACTIVEANDFOCUS);
         }
     }
@@ -152,7 +161,8 @@ BOOL EndDialog(
      * up
      * See comments for Bug #134; SANKAR -- 08-25-89 --;
      */
-    if (pwnd == gspwndSysModal) {
+    if (pwnd == gspwndSysModal)
+    {
 
         /*
          * Check if the previous Sysmodal guy is still valid?

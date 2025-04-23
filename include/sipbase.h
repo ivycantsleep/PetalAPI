@@ -23,5 +23,3 @@
 #include <mssip.h>
 
 #endif // SIPBASE_H
-
-

@@ -24,12 +24,8 @@ Revision History:
 
 NTKERNELAPI
 PULONG
-PoRegisterDeviceForIdleDetection (
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN ULONG                ConservationIdleTime,
-    IN ULONG                PerformanceIdleTime,
-    IN DEVICE_POWER_STATE   State
-    )
+PoRegisterDeviceForIdleDetection(IN PDEVICE_OBJECT DeviceObject, IN ULONG ConservationIdleTime,
+                                 IN ULONG PerformanceIdleTime, IN DEVICE_POWER_STATE State)
 /*++
 
 Routine Description:
@@ -65,38 +61,41 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT_POWER_EXTENSION  pdope;
-    KIRQL           OldIrql;
-    NTSTATUS        Status;
-    ULONG           DeviceType, OldDeviceType;
+    PDEVICE_OBJECT_POWER_EXTENSION pdope;
+    KIRQL OldIrql;
+    NTSTATUS Status;
+    ULONG DeviceType, OldDeviceType;
 
     ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
     //
     // deal with the case where idle detection is being turned off
     //
-    if ((ConservationIdleTime == 0) && (PerformanceIdleTime == 0)) {
+    if ((ConservationIdleTime == 0) && (PerformanceIdleTime == 0))
+    {
         PopLockDopeGlobal(&OldIrql);
         pdope = DeviceObject->DeviceObjectExtension->Dope;
 
-        if (pdope == NULL) {
+        if (pdope == NULL)
+        {
             //
             // cannot be linked into the chain, so must already be off,
             // so we're done
             //
-
-        } else {
+        }
+        else
+        {
             //
             // there is a pdope, so we may be on the idle list
             //
-            if ((pdope->IdleList.Flink == &(pdope->IdleList)) &&
-                (pdope->IdleList.Blink == &(pdope->IdleList)))
+            if ((pdope->IdleList.Flink == &(pdope->IdleList)) && (pdope->IdleList.Blink == &(pdope->IdleList)))
             {
                 //
                 // we're off the queue already, so we're done
                 //
-
-            } else {
+            }
+            else
+            {
                 //
                 // a dope vector exists and is on the idle scan list,
                 // so we must delist ourselves
@@ -104,7 +103,7 @@ Return Value:
                 RemoveEntryList(&(pdope->IdleList));
                 OldDeviceType = pdope->DeviceType | ES_CONTINUOUS;
                 pdope->DeviceType = 0;
-                PopApplyAttributeState (ES_CONTINUOUS, OldDeviceType);
+                PopApplyAttributeState(ES_CONTINUOUS, OldDeviceType);
 
                 pdope->ConservationIdleTime = 0L;
                 pdope->PerformanceIdleTime = 0L;
@@ -122,21 +121,22 @@ Return Value:
     //
 
     DeviceType = 0;
-    if (ConservationIdleTime == (ULONG) -1 &&
-        PerformanceIdleTime  == (ULONG) -1) {
+    if (ConservationIdleTime == (ULONG)-1 && PerformanceIdleTime == (ULONG)-1)
+    {
 
-        switch (DeviceObject->DeviceType) {
-            case FILE_DEVICE_DISK:
-            case FILE_DEVICE_MASS_STORAGE:
-                DeviceType = POP_DISK_SPINDOWN | ES_CONTINUOUS;
-                break;
+        switch (DeviceObject->DeviceType)
+        {
+        case FILE_DEVICE_DISK:
+        case FILE_DEVICE_MASS_STORAGE:
+            DeviceType = POP_DISK_SPINDOWN | ES_CONTINUOUS;
+            break;
 
-            default:
-                //
-                // Unsupported type
-                //
+        default:
+            //
+            // Unsupported type
+            //
 
-                return NULL;
+            return NULL;
         }
     }
 
@@ -145,7 +145,8 @@ Return Value:
     // now, the case where it's being turned on
     //
     pdope = PopGetDope(DeviceObject);
-    if (pdope == NULL) {
+    if (pdope == NULL)
+    {
         //
         // we didn't have a DOPE structure and couldn't allocate one, fail
         //
@@ -166,10 +167,9 @@ Return Value:
     pdope->PerformanceIdleTime = PerformanceIdleTime;
     pdope->State = State;
     pdope->IdleCount = 0;
-    pdope->DeviceType = (UCHAR) DeviceType;
+    pdope->DeviceType = (UCHAR)DeviceType;
 
-    if ((pdope->IdleList.Flink == &(pdope->IdleList)) &&
-        (pdope->IdleList.Blink == &(pdope->IdleList)))
+    if ((pdope->IdleList.Flink == &(pdope->IdleList)) && (pdope->IdleList.Blink == &(pdope->IdleList)))
     {
         //
         // we're off the queue, and must be enqueued
@@ -181,19 +181,11 @@ Return Value:
     PopApplyAttributeState(DeviceType, OldDeviceType);
     PopCheckForWork(TRUE);
 
-    return &(pdope->IdleCount);  // success
+    return &(pdope->IdleCount); // success
 }
 
 
-
-
-VOID
-PopScanIdleList(
-    IN PKDPC    Dpc,
-    IN PVOID    DeferredContext,
-    IN PVOID    SystemArgument1,
-    IN PVOID    SystemArgument2
-    )
+VOID PopScanIdleList(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -216,55 +208,48 @@ Return Value:
 
 --*/
 {
-    KIRQL   OldIrql;
+    KIRQL OldIrql;
     PLIST_ENTRY link;
-    ULONG       idlelimit;
-    PDEVICE_OBJECT_POWER_EXTENSION  pblock;
+    ULONG idlelimit;
+    PDEVICE_OBJECT_POWER_EXTENSION pblock;
     POWER_STATE PowerState;
-    PULONG  pIdleCount;
-    ULONG   oldCount;
+    PULONG pIdleCount;
+    ULONG oldCount;
 
     PopLockDopeGlobal(&OldIrql);
 
     link = PopIdleDetectList.Flink;
-    while (link != &PopIdleDetectList) {
+    while (link != &PopIdleDetectList)
+    {
 
 
         pblock = CONTAINING_RECORD(link, DEVICE_OBJECT_POWER_EXTENSION, IdleList);
         pIdleCount = &(pblock->IdleCount);
         oldCount = InterlockedIncrement(pIdleCount);
 
-        switch (pblock->DeviceType) {
-            case 0:
-                idlelimit = pblock->PerformanceIdleTime;
-                if (PopIdleDetectionMode == PO_IDLE_CONSERVATION) {
-                    idlelimit = pblock->ConservationIdleTime;
-                }
-                break;
+        switch (pblock->DeviceType)
+        {
+        case 0:
+            idlelimit = pblock->PerformanceIdleTime;
+            if (PopIdleDetectionMode == PO_IDLE_CONSERVATION)
+            {
+                idlelimit = pblock->ConservationIdleTime;
+            }
+            break;
 
-            case POP_DISK_SPINDOWN:
-                idlelimit = PopPolicy->SpindownTimeout;
-                break;
+        case POP_DISK_SPINDOWN:
+            idlelimit = PopPolicy->SpindownTimeout;
+            break;
 
-            default:
-                PopInternalAddToDumpFile( NULL, 0, pblock->DeviceObject, NULL, NULL, pblock );
-                KeBugCheckEx( INTERNAL_POWER_ERROR,
-                              0x200,
-                              POP_IDLE,
-                              (ULONG_PTR)pblock->DeviceObject,
-                              (ULONG_PTR)pblock );
+        default:
+            PopInternalAddToDumpFile(NULL, 0, pblock->DeviceObject, NULL, NULL, pblock);
+            KeBugCheckEx(INTERNAL_POWER_ERROR, 0x200, POP_IDLE, (ULONG_PTR)pblock->DeviceObject, (ULONG_PTR)pblock);
         }
 
-        if ((idlelimit > 0) && ((oldCount+1) == idlelimit)) {
+        if ((idlelimit > 0) && ((oldCount + 1) == idlelimit))
+        {
             PowerState.DeviceState = pblock->State;
-            PoRequestPowerIrp (
-                pblock->DeviceObject,
-                IRP_MN_SET_POWER,
-                PowerState,
-                NULL,
-                NULL,
-                NULL
-                );
+            PoRequestPowerIrp(pblock->DeviceObject, IRP_MN_SET_POWER, PowerState, NULL, NULL, NULL);
         }
 
         link = link->Flink;
@@ -276,28 +261,25 @@ Return Value:
 
 
 PDEVICE_OBJECT_POWER_EXTENSION
-PopGetDope (
-    PDEVICE_OBJECT DeviceObject
-    )
+PopGetDope(PDEVICE_OBJECT DeviceObject)
 {
-    PDEVOBJ_EXTENSION               Doe;
-    PDEVICE_OBJECT_POWER_EXTENSION  Dope;
-    KIRQL                           OldIrql;
+    PDEVOBJ_EXTENSION Doe;
+    PDEVICE_OBJECT_POWER_EXTENSION Dope;
+    KIRQL OldIrql;
 
-    Doe = (PDEVOBJ_EXTENSION) DeviceObject->DeviceObjectExtension;
+    Doe = (PDEVOBJ_EXTENSION)DeviceObject->DeviceObjectExtension;
 
-    if (!Doe->Dope) {
+    if (!Doe->Dope)
+    {
         PopLockDopeGlobal(&OldIrql);
 
-        if (!Doe->Dope) {
-            Dope = (PDEVICE_OBJECT_POWER_EXTENSION)
-                    ExAllocatePoolWithTag(
-                        NonPagedPool,
-                        sizeof(DEVICE_OBJECT_POWER_EXTENSION),
-                        POP_DOPE_TAG
-                        );
-            if (Dope) {
-                RtlZeroMemory (Dope, sizeof(DEVICE_OBJECT_POWER_EXTENSION));
+        if (!Doe->Dope)
+        {
+            Dope = (PDEVICE_OBJECT_POWER_EXTENSION)ExAllocatePoolWithTag(
+                NonPagedPool, sizeof(DEVICE_OBJECT_POWER_EXTENSION), POP_DOPE_TAG);
+            if (Dope)
+            {
+                RtlZeroMemory(Dope, sizeof(DEVICE_OBJECT_POWER_EXTENSION));
                 Dope->DeviceObject = DeviceObject;
                 Dope->State = PowerDeviceUnspecified;
                 InitializeListHead(&(Dope->IdleList));

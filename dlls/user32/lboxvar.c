@@ -22,14 +22,13 @@
 * History:
 \***************************************************************************/
 
-INT LBGetVariableHeightItemHeight(
-    PLBIV plb,
-    INT itemNumber)
+INT LBGetVariableHeightItemHeight(PLBIV plb, INT itemNumber)
 {
     BYTE itemHeight;
     int offsetHeight;
 
-    if (plb->cMac) {
+    if (plb->cMac)
+    {
         if (plb->fHasStrings)
             offsetHeight = plb->cMac * sizeof(LBItem);
         else
@@ -40,10 +39,9 @@ INT LBGetVariableHeightItemHeight(
 
         offsetHeight += itemNumber;
 
-        itemHeight = *(plb->rgpch+(UINT)offsetHeight);
+        itemHeight = *(plb->rgpch + (UINT)offsetHeight);
 
         return (INT)itemHeight;
-
     }
 
     /*
@@ -64,10 +62,7 @@ INT LBGetVariableHeightItemHeight(
 * History:
 \***************************************************************************/
 
-void LBSetVariableHeightItemHeight(
-    PLBIV plb,
-    INT itemNumber,
-    INT itemHeight)
+void LBSetVariableHeightItemHeight(PLBIV plb, INT itemNumber, INT itemHeight)
 {
     int offsetHeight;
 
@@ -82,7 +77,6 @@ void LBSetVariableHeightItemHeight(
     offsetHeight += itemNumber;
 
     *(plb->rgpch + (UINT)offsetHeight) = (BYTE)itemHeight;
-
 }
 
 
@@ -98,9 +92,7 @@ void LBSetVariableHeightItemHeight(
 * History:
 \***************************************************************************/
 
-INT CItemInWindowVarOwnerDraw(
-    PLBIV plb,
-    BOOL fPartial)
+INT CItemInWindowVarOwnerDraw(PLBIV plb, BOOL fPartial)
 {
     RECT rect;
     INT sItem;
@@ -113,12 +105,14 @@ INT CItemInWindowVarOwnerDraw(
      * Find the number of var height ownerdraw items which are visible starting
      * from plb->iTop.
      */
-    for (sItem = plb->iTop; sItem < plb->cMac; sItem++) {
+    for (sItem = plb->iTop; sItem < plb->cMac; sItem++)
+    {
 
         /*
          * Find out if the item is visible or not
          */
-        if (!LBGetItemRect(plb, sItem, (LPRECT)&rect)) {
+        if (!LBGetItemRect(plb, sItem, (LPRECT)&rect))
+        {
 
             /*
              * This is the first item which is completely invisible, so return
@@ -127,7 +121,8 @@ INT CItemInWindowVarOwnerDraw(
             return (sItem - plb->iTop);
         }
 
-        if (!fPartial && rect.bottom > clientbottom) {
+        if (!fPartial && rect.bottom > clientbottom)
+        {
 
             /*
              * If we only want fully visible items, then if this item is
@@ -154,34 +149,33 @@ INT CItemInWindowVarOwnerDraw(
 * History:
 \***************************************************************************/
 
-INT LBPage(
-    PLBIV plb,
-    INT startItem,
-    BOOL fPageForwardDirection)
+INT LBPage(PLBIV plb, INT startItem, BOOL fPageForwardDirection)
 {
-    INT     i;
+    INT i;
     INT height;
-    RECT    rc;
+    RECT rc;
 
     if (plb->cMac == 1)
-        return(0);
+        return (0);
 
     _GetClientRect(plb->spwnd, &rc);
     height = rc.bottom;
     i = startItem;
 
-    if (fPageForwardDirection) {
+    if (fPageForwardDirection)
+    {
         while ((height >= 0) && (i < plb->cMac))
             height -= LBGetVariableHeightItemHeight(plb, i++);
 
-        return((height >= 0) ? plb->cMac - 1 : max(i - 2, startItem + 1));
-    } else {
+        return ((height >= 0) ? plb->cMac - 1 : max(i - 2, startItem + 1));
+    }
+    else
+    {
         while ((height >= 0) && (i >= 0))
             height -= LBGetVariableHeightItemHeight(plb, i--);
 
-        return((height >= 0) ? 0 : min(i + 2, startItem - 1));
+        return ((height >= 0) ? 0 : min(i + 2, startItem - 1));
     }
-
 }
 
 
@@ -195,10 +189,7 @@ INT LBPage(
 * History:
 \***************************************************************************/
 
-INT LBCalcVarITopScrollAmt(
-    PLBIV plb,
-    INT iTopOld,
-    INT iTopNew)
+INT LBCalcVarITopScrollAmt(PLBIV plb, INT iTopOld, INT iTopNew)
 {
     RECT rc;
     RECT rcClient;
@@ -209,7 +200,8 @@ INT LBCalcVarITopScrollAmt(
      * Just optimize redrawing when move +/- 1 item.  We will redraw all items
      * if moving more than 1 item ahead or back.  This is good enough for now.
      */
-    if (iTopOld + 1 == iTopNew) {
+    if (iTopOld + 1 == iTopNew)
+    {
 
         /*
          * We are scrolling the current iTop up off the top off the listbox so
@@ -219,7 +211,8 @@ INT LBCalcVarITopScrollAmt(
         return (rcClient.top - rc.bottom);
     }
 
-    if (iTopOld - 1 == iTopNew) {
+    if (iTopOld - 1 == iTopNew)
+    {
 
         /*
          * We are scrolling the current iTop down and the previous item is

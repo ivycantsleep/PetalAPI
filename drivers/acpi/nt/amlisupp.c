@@ -22,22 +22,17 @@ Environment:
 --*/
 
 #include "pch.h"
-
+
 
 PSZ gpszOSName = "Microsoft Windows NT";
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,ACPIAmliFindObject)
+#pragma alloc_text(PAGE, ACPIAmliFindObject)
 #endif
 
 
-VOID
-ACPIAmliDoubleToName(
-    IN  OUT PUCHAR  ACPIName,
-    IN      ULONG   DwordID,
-    IN      BOOLEAN ConvertToID
-    )
+VOID ACPIAmliDoubleToName(IN OUT PUCHAR ACPIName, IN ULONG DwordID, IN BOOLEAN ConvertToID)
 /*++
 
 Routine Description:
@@ -55,7 +50,7 @@ Return Value:
 
 --*/
 {
-    USHORT   value;
+    USHORT value;
 
     //
     // Leading Star
@@ -65,7 +60,8 @@ Return Value:
     //  InstanceID  = yyyy
     //  HardwareID  = DeviceID,*PNPxxxx
     //
-    if (ConvertToID) {
+    if (ConvertToID)
+    {
 
         *ACPIName = '*';
         ACPIName++;
@@ -74,41 +70,35 @@ Return Value:
     //
     // First character of DwordID[2..6]
     //
-    *ACPIName = (UCHAR) ( ( (DwordID & 0x007C) >> 2 ) + 'A' - 1);
+    *ACPIName = (UCHAR)(((DwordID & 0x007C) >> 2) + 'A' - 1);
     ACPIName++;
 
     //
     // Second Character from DwordID[13..15,0..1]
     //
-    *ACPIName = (UCHAR) ( ( (DwordID & 0x3 )<< 3 ) +
-        ( (DwordID & 0xE000) >> 13 ) + 'A' - 1);
+    *ACPIName = (UCHAR)(((DwordID & 0x3) << 3) + ((DwordID & 0xE000) >> 13) + 'A' - 1);
     ACPIName++;
 
     //
     // Third Character from dwID[8..12]
     //
-    *ACPIName = (UCHAR) ( ( (DwordID >> 8 ) & 0x1F) + 'A' - 1);
+    *ACPIName = (UCHAR)(((DwordID >> 8) & 0x1F) + 'A' - 1);
     ACPIName++;
 
     //
     // The rest is made up of the Product ID, which is the HIWORD of the
     // DwordID
     //
-    value = (USHORT) (DwordID >> 16);
+    value = (USHORT)(DwordID >> 16);
 
     //
     // Add to the reset of the string
     //
-    sprintf(ACPIName, "%02X%02X",(value & 0xFF ) ,( value >> 8 ));
+    sprintf(ACPIName, "%02X%02X", (value & 0xFF), (value >> 8));
 }
 
-
-VOID
-ACPIAmliDoubleToNameWide(
-    IN  OUT PWCHAR  ACPIName,
-    IN      ULONG   DwordID,
-    IN      BOOLEAN ConvertToID
-    )
+
+VOID ACPIAmliDoubleToNameWide(IN OUT PWCHAR ACPIName, IN ULONG DwordID, IN BOOLEAN ConvertToID)
 /*++
 
 Routine Description:
@@ -126,7 +116,7 @@ Return Value:
 
 --*/
 {
-    USHORT   value;
+    USHORT value;
 
     //
     // Leading Star
@@ -136,52 +126,44 @@ Return Value:
     //  InstanceID  = yyyy
     //  HardwareID  = DeviceID,*PNPxxxx
     //
-    if (ConvertToID) {
+    if (ConvertToID)
+    {
 
         *ACPIName = L'*';
         ACPIName++;
-
     }
 
     //
     // First character of DwordID[2..6]
     //
-    *ACPIName = (WCHAR) ( ( (DwordID & 0x007C) >> 2 ) + L'A' - 1);
+    *ACPIName = (WCHAR)(((DwordID & 0x007C) >> 2) + L'A' - 1);
     ACPIName++;
 
     //
     // Second Character from DwordID[13..15,0..1]
     //
-    *ACPIName = (WCHAR) ( ( (DwordID & 0x3 )<< 3 ) +
-        ( (DwordID & 0xE000) >> 13 ) + L'A' - 1);
+    *ACPIName = (WCHAR)(((DwordID & 0x3) << 3) + ((DwordID & 0xE000) >> 13) + L'A' - 1);
     ACPIName++;
 
     //
     // Third Character from dwID[8..12]
     //
-    *ACPIName = (WCHAR) ( ( (DwordID >> 8 ) & 0x1F) + L'A' - 1);
+    *ACPIName = (WCHAR)(((DwordID >> 8) & 0x1F) + L'A' - 1);
     ACPIName++;
 
     //
     // The rest is made up of the Product ID, which is the HIWORD of the
     // DwordID
     //
-    value = (USHORT) (DwordID >> 16);
+    value = (USHORT)(DwordID >> 16);
 
     //
     // Add to the reset of the string
     //
-    swprintf(ACPIName, L"%02X%02X",(value & 0xFF ) ,( value >> 8 ));
+    swprintf(ACPIName, L"%02X%02X", (value & 0xFF), (value >> 8));
 }
-
-VOID
-EXPORT
-AmlisuppCompletePassive(
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             Status,
-    IN POBJDATA             Result,
-    IN PVOID                Context
-    )
+
+VOID EXPORT AmlisuppCompletePassive(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -202,19 +184,16 @@ Return Value:
 
 --*/
 {
-    PRKEVENT    event = &((PAMLISUPP_CONTEXT_PASSIVE)Context)->Event;
+    PRKEVENT event = &((PAMLISUPP_CONTEXT_PASSIVE)Context)->Event;
 
     ASSERT(Context);
 
     ((PAMLISUPP_CONTEXT_PASSIVE)Context)->Status = Status;
     KeSetEvent(event, IO_NO_INCREMENT, FALSE);
 }
-
+
 PNSOBJ
-ACPIAmliGetNamedChild(
-    IN  PNSOBJ  AcpiObject,
-    IN  ULONG   ObjectId
-    )
+ACPIAmliGetNamedChild(IN PNSOBJ AcpiObject, IN ULONG ObjectId)
 /*++
 
 Routine Description:
@@ -233,30 +212,26 @@ Return Value:
 
 --*/
 {
-    PNSOBJ  tempObject;
+    PNSOBJ tempObject;
 
     //
     // Lets try to find a child object
     //
-    for (tempObject = NSGETFIRSTCHILD(AcpiObject);
-         tempObject != NULL;
-         tempObject = NSGETNEXTSIBLING(tempObject)) {
+    for (tempObject = NSGETFIRSTCHILD(AcpiObject); tempObject != NULL; tempObject = NSGETNEXTSIBLING(tempObject))
+    {
 
-        if (ObjectId == tempObject->dwNameSeg) {
+        if (ObjectId == tempObject->dwNameSeg)
+        {
 
             break;
-
         }
-
     }
 
     return tempObject;
 }
-
+
 PUCHAR
-ACPIAmliNameObject(
-    IN  PNSOBJ  AcpiObject
-    )
+ACPIAmliNameObject(IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -274,20 +249,16 @@ Returns:
 
 --*/
 {
-    static  UCHAR   buffer[5];
+    static UCHAR buffer[5];
 
-    RtlCopyMemory( &buffer[0], &(AcpiObject->dwNameSeg), 4 );
+    RtlCopyMemory(&buffer[0], &(AcpiObject->dwNameSeg), 4);
     buffer[4] = '\0';
 
     return &(buffer[0]);
 }
-
+
 NTSTATUS
-ACPIAmliFindObject(
-    IN  PUCHAR  ObjectName,
-    IN  PNSOBJ  Scope,
-    OUT PNSOBJ  *Object
-    )
+ACPIAmliFindObject(IN PUCHAR ObjectName, IN PNSOBJ Scope, OUT PNSOBJ *Object)
 /*++
 
 Routine Description:
@@ -308,50 +279,45 @@ Returns:
 
 --*/
 {
-    NTSTATUS    status;
-    PNSOBJ      child;
-    PNSOBJ      sibling;
+    NTSTATUS status;
+    PNSOBJ child;
+    PNSOBJ sibling;
 
     PAGED_CODE();
 
-    status = AMLIGetNameSpaceObject(ObjectName,
-                                    Scope,
-                                    Object,
-                                    NSF_LOCAL_SCOPE);
+    status = AMLIGetNameSpaceObject(ObjectName, Scope, Object, NSF_LOCAL_SCOPE);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         return status;
     }
 
     child = NSGETFIRSTCHILD(Scope);
 
-    if (child) {
+    if (child)
+    {
 
-        status = ACPIAmliFindObject(ObjectName,
-                                    child,
-                                    Object);
+        status = ACPIAmliFindObject(ObjectName, child, Object);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             return status;
         }
     }
 
     sibling = NSGETNEXTSIBLING(Scope);
 
-    if (sibling) {
+    if (sibling)
+    {
 
-        status = ACPIAmliFindObject(ObjectName,
-                                    sibling,
-                                    Object);
+        status = ACPIAmliFindObject(ObjectName, sibling, Object);
     }
 
     return status;
 }
-
+
 NTSTATUS
-ACPIAmliGetFirstChild(
-    IN  PUCHAR  ObjectName,
-    OUT PNSOBJ  *Object)
+ACPIAmliGetFirstChild(IN PUCHAR ObjectName, OUT PNSOBJ *Object)
 /*++
 
 Routine Description:
@@ -370,57 +336,48 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    PNSOBJ      parentObj;
+    NTSTATUS status;
+    PNSOBJ parentObj;
 
-    status = AMLIGetNameSpaceObject(
-        ObjectName,
-        NULL,
-        &parentObj,
-        0
-        );
-    if (!NT_SUCCESS(status)) {
+    status = AMLIGetNameSpaceObject(ObjectName, NULL, &parentObj, 0);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
-
     }
 
     *Object = parentObj->pnsFirstChild;
-    if (*Object == NULL ) {
+    if (*Object == NULL)
+    {
 
         return STATUS_OBJECT_NAME_NOT_FOUND;
-
     }
 
-    if ( NSGETOBJTYPE(*Object) == OBJTYPE_DEVICE) {
+    if (NSGETOBJTYPE(*Object) == OBJTYPE_DEVICE)
+    {
 
         return STATUS_SUCCESS;
-
     }
 
-    *Object = (PNSOBJ) (*Object)->list.plistNext;
+    *Object = (PNSOBJ)(*Object)->list.plistNext;
     parentObj = parentObj->pnsFirstChild;
-    while (*Object != parentObj) {
+    while (*Object != parentObj)
+    {
 
-        if ( NSGETOBJTYPE( *Object ) == OBJTYPE_DEVICE) {
+        if (NSGETOBJTYPE(*Object) == OBJTYPE_DEVICE)
+        {
 
             return STATUS_SUCCESS;
-
         }
-        *Object = (PNSOBJ) (*Object)->list.plistNext;
-
+        *Object = (PNSOBJ)(*Object)->list.plistNext;
     }
 
     *Object = NULL;
     return STATUS_OBJECT_NAME_NOT_FOUND;
-
 }
-
+
 NTSTATUS
-ACPIAmliBuildObjectPathname(
-    IN     PNSOBJ   ACPIObject,
-    OUT    PUCHAR   *ConstructedPathName
-    )
+ACPIAmliBuildObjectPathname(IN PNSOBJ ACPIObject, OUT PUCHAR *ConstructedPathName)
 /*++
 
 Routine Description:
@@ -442,84 +399,75 @@ Return Value:
 
 --*/
 {
-    PNSOBJ      currentAcpiObject, nextAcpiObject ;
-    ULONG       nDepth, i, j ;
-    PUCHAR      objectPathname ;
+    PNSOBJ currentAcpiObject, nextAcpiObject;
+    ULONG nDepth, i, j;
+    PUCHAR objectPathname;
 
-    ASSERT(ACPIObject) ;
+    ASSERT(ACPIObject);
 
     //
     // First, calculate the size of data we must allocate
     //
-    nDepth=0 ;
-    currentAcpiObject=ACPIObject ;
-    while(1) {
+    nDepth = 0;
+    currentAcpiObject = ACPIObject;
+    while (1)
+    {
 
         nextAcpiObject = NSGETPARENT(currentAcpiObject);
-        if (!nextAcpiObject) {
+        if (!nextAcpiObject)
+        {
 
             break;
-
         }
         nDepth++;
         currentAcpiObject = nextAcpiObject;
-
     }
 
-    objectPathname = (PUCHAR) ExAllocatePoolWithTag(
-        NonPagedPool,
-        (nDepth * 5) + 1,
-        ACPI_STRING_POOLTAG
-        );
-    if (!objectPathname) {
+    objectPathname = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, (nDepth * 5) + 1, ACPI_STRING_POOLTAG);
+    if (!objectPathname)
+    {
 
-        return STATUS_INSUFFICIENT_RESOURCES ;
-
+        return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    objectPathname[ nDepth * 5 ] = '\0';
+    objectPathname[nDepth * 5] = '\0';
     j = nDepth;
     currentAcpiObject = ACPIObject;
 
-    while(1) {
+    while (1)
+    {
 
         nextAcpiObject = NSGETPARENT(currentAcpiObject);
-        if (!nextAcpiObject) {
+        if (!nextAcpiObject)
+        {
 
             break;
-
         }
 
         j--;
-        RtlCopyMemory(
-            &objectPathname[ (j * 5) ],
-            &(currentAcpiObject->dwNameSeg),
-            sizeof(NAMESEG)
-            );
-        for(i = 0; i < 4; i++) {
+        RtlCopyMemory(&objectPathname[(j * 5)], &(currentAcpiObject->dwNameSeg), sizeof(NAMESEG));
+        for (i = 0; i < 4; i++)
+        {
 
-            if (objectPathname[ (j * 5) + i ] == '\0' ) {
+            if (objectPathname[(j * 5) + i] == '\0')
+            {
 
-                objectPathname[ (j * 5) + i ] = '*';
-
+                objectPathname[(j * 5) + i] = '*';
             }
-
         }
-        objectPathname[ (j * 5) + 4 ] = '.';
+        objectPathname[(j * 5) + 4] = '.';
         currentAcpiObject = nextAcpiObject;
-
     }
 
     //
     // Smack of trailing '.'
     //
-    if (nDepth) {
+    if (nDepth)
+    {
 
-        objectPathname[ (nDepth * 5) - 1 ] = '\0';
-
+        objectPathname[(nDepth * 5) - 1] = '\0';
     }
 
     *ConstructedPathName = objectPathname;
     return STATUS_SUCCESS;
 }
-

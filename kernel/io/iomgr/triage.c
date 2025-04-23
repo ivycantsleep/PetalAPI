@@ -36,11 +36,11 @@ Comments:
 
 
 #ifndef NtBuildNumber
-#  if DBG
-#    define NtBuildNumber   (VER_PRODUCTBUILD | 0xC0000000)
-#  else
-#    define NtBuildNumber (VER_PRODUCTBUILD | 0xF0000000)
-# endif
+#if DBG
+#define NtBuildNumber (VER_PRODUCTBUILD | 0xC0000000)
+#else
+#define NtBuildNumber (VER_PRODUCTBUILD | 0xF0000000)
+#endif
 #endif
 
 
@@ -49,41 +49,35 @@ Comments:
 // global header files.
 //
 
-#define PAGE_SIZE_I386      0x1000
-#define PAGE_SIZE_ALPHA     0x2000
-#define PAGE_SIZE_IA64      0x2000
+#define PAGE_SIZE_I386 0x1000
+#define PAGE_SIZE_ALPHA 0x2000
+#define PAGE_SIZE_IA64 0x2000
 
 
 ULONG TriageImagePageSize = -1;
 
 BOOLEAN
-TriagepVerifyDump(
-    IN LPVOID TriageDumpBlock
-    );
+TriagepVerifyDump(IN LPVOID TriageDumpBlock);
 
 ULONG
-TriagepGetPageSize(
-    ULONG Architecture
-    );
+TriagepGetPageSize(ULONG Architecture);
 
 PTRIAGE_DUMP
-TriagepGetTriagePointer(
-    IN PVOID TriageDumpBlock
-    );
+TriagepGetTriagePointer(IN PVOID TriageDumpBlock);
 
 
 #ifdef ALLOC_PRAGMA
 
-#pragma alloc_text (INIT, TriagepVerifyDump)
-#pragma alloc_text (INIT, TriagepGetPageSize)
-#pragma alloc_text (INIT, TriagepGetTriagePointer)
+#pragma alloc_text(INIT, TriagepVerifyDump)
+#pragma alloc_text(INIT, TriagepGetPageSize)
+#pragma alloc_text(INIT, TriagepGetTriagePointer)
 
-#pragma alloc_text (INIT, TriageGetVersion)
-#pragma alloc_text (INIT, TriageGetDriverCount)
-#pragma alloc_text (INIT, TriageGetContext)
-#pragma alloc_text (INIT, TriageGetExceptionRecord)
-#pragma alloc_text (INIT, TriageGetBugcheckData)
-#pragma alloc_text (INIT, TriageGetDriverEntry)
+#pragma alloc_text(INIT, TriageGetVersion)
+#pragma alloc_text(INIT, TriageGetDriverCount)
+#pragma alloc_text(INIT, TriageGetContext)
+#pragma alloc_text(INIT, TriageGetExceptionRecord)
+#pragma alloc_text(INIT, TriageGetBugcheckData)
+#pragma alloc_text(INIT, TriageGetDriverEntry)
 
 #endif
 
@@ -113,7 +107,7 @@ TriagepGetTriagePointer(
 //
 //--
 
-#define IndexByUlong(Pointer,Index) (&(((ULONG*) (Pointer)) [Index]))
+#define IndexByUlong(Pointer, Index) (&(((ULONG *)(Pointer))[Index]))
 
 
 //++
@@ -141,60 +135,59 @@ TriagepGetTriagePointer(
 //
 //--
 
-#define IndexByByte(Pointer, Index) (&(((BYTE*) (Pointer)) [Index]))
+#define IndexByByte(Pointer, Index) (&(((BYTE *)(Pointer))[Index]))
 
-
+
 ULONG
-TriagepGetPageSize(
-    ULONG Architecture
-    )
+TriagepGetPageSize(ULONG Architecture)
 {
-    switch (Architecture) {
+    switch (Architecture)
+    {
 
-        case IMAGE_FILE_MACHINE_I386:
-            return PAGE_SIZE_I386;
+    case IMAGE_FILE_MACHINE_I386:
+        return PAGE_SIZE_I386;
 
-        case IMAGE_FILE_MACHINE_ALPHA:
-            return PAGE_SIZE_ALPHA;
+    case IMAGE_FILE_MACHINE_ALPHA:
+        return PAGE_SIZE_ALPHA;
 
-        case IMAGE_FILE_MACHINE_IA64:
-            return PAGE_SIZE_IA64;
+    case IMAGE_FILE_MACHINE_IA64:
+        return PAGE_SIZE_IA64;
 
-        default:
-            return -1;
+    default:
+        return -1;
     }
 }
 
 
-
 BOOLEAN
-TriagepVerifyDump(
-    IN LPVOID TriageDumpBlock
-    )
+TriagepVerifyDump(IN LPVOID TriageDumpBlock)
 {
     BOOLEAN Succ = FALSE;
     PMEMORY_DUMP MemoryDump = NULL;
 
-    if (!TriageDumpBlock) {
+    if (!TriageDumpBlock)
+    {
         return FALSE;
     }
 
-    MemoryDump = (PMEMORY_DUMP) TriageDumpBlock;
+    MemoryDump = (PMEMORY_DUMP)TriageDumpBlock;
 
-    try {
+    try
+    {
 
-        if (MemoryDump->Header.ValidDump != 'PMUD' ||
-            MemoryDump->Header.Signature != 'EGAP' ||
-            TriagepGetPageSize (MemoryDump->Header.MachineImageType) == -1) {
+        if (MemoryDump->Header.ValidDump != 'PMUD' || MemoryDump->Header.Signature != 'EGAP' ||
+            TriagepGetPageSize(MemoryDump->Header.MachineImageType) == -1)
+        {
 
             Succ = FALSE;
             leave;
         }
 
-        TriageImagePageSize = TriagepGetPageSize (MemoryDump->Header.MachineImageType);
+        TriageImagePageSize = TriagepGetPageSize(MemoryDump->Header.MachineImageType);
 
-        if ( MemoryDump->Header.DumpType != DUMP_TYPE_TRIAGE ||
-             *(ULONG*)IndexByByte (MemoryDump, MemoryDump->Triage.SizeOfDump - sizeof (DWORD)) != TRIAGE_DUMP_VALID ) {
+        if (MemoryDump->Header.DumpType != DUMP_TYPE_TRIAGE ||
+            *(ULONG *)IndexByByte(MemoryDump, MemoryDump->Triage.SizeOfDump - sizeof(DWORD)) != TRIAGE_DUMP_VALID)
+        {
 
             Succ = FALSE;
             leave;
@@ -205,7 +198,8 @@ TriagepVerifyDump(
         Succ = TRUE;
     }
 
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Succ = FALSE;
     }
@@ -213,52 +207,50 @@ TriagepVerifyDump(
     return Succ;
 }
 
-
-PTRIAGE_DUMP
-TriagepGetTriagePointer(
-    IN PVOID TriageDumpBlock
-    )
-{
-    ASSERT (TriageImagePageSize != -1);
-    ASSERT (TriagepVerifyDump (TriageDumpBlock));
 
-    return (PTRIAGE_DUMP) IndexByByte (TriageDumpBlock, TriageImagePageSize);
+PTRIAGE_DUMP
+TriagepGetTriagePointer(IN PVOID TriageDumpBlock)
+{
+    ASSERT(TriageImagePageSize != -1);
+    ASSERT(TriagepVerifyDump(TriageDumpBlock));
+
+    return (PTRIAGE_DUMP)IndexByByte(TriageDumpBlock, TriageImagePageSize);
 }
 
 
-
 NTSTATUS
-TriageGetVersion(
-    IN LPVOID TriageDumpBlock,
-    OUT ULONG * MajorVersion,
-    OUT ULONG * MinorVersion,
-    OUT ULONG * ServicePackBuild
-    )
+TriageGetVersion(IN LPVOID TriageDumpBlock, OUT ULONG *MajorVersion, OUT ULONG *MinorVersion,
+                 OUT ULONG *ServicePackBuild)
 {
     PTRIAGE_DUMP TriageDump;
     PDUMP_HEADER DumpHeader;
 
-    if (!TriagepVerifyDump (TriageDumpBlock)) {
+    if (!TriagepVerifyDump(TriageDumpBlock))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    TriageDump = TriagepGetTriagePointer (TriageDumpBlock);
+    TriageDump = TriagepGetTriagePointer(TriageDumpBlock);
 
-    if (!TriageDump) {
+    if (!TriageDump)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    DumpHeader = (PDUMP_HEADER) TriageDumpBlock;
+    DumpHeader = (PDUMP_HEADER)TriageDumpBlock;
 
-    if (MajorVersion) {
+    if (MajorVersion)
+    {
         *MajorVersion = DumpHeader->MajorVersion;
     }
 
-    if (MinorVersion) {
+    if (MinorVersion)
+    {
         *MinorVersion = DumpHeader->MinorVersion;
     }
 
-    if (ServicePackBuild) {
+    if (ServicePackBuild)
+    {
         *ServicePackBuild = TriageDump->ServicePackBuild;
     }
 
@@ -266,22 +258,20 @@ TriageGetVersion(
 }
 
 
-
 NTSTATUS
-TriageGetDriverCount(
-    IN LPVOID TriageDumpBlock,
-    OUT ULONG * DriverCount
-    )
+TriageGetDriverCount(IN LPVOID TriageDumpBlock, OUT ULONG *DriverCount)
 {
     PTRIAGE_DUMP TriageDump;
 
-    if (!TriagepVerifyDump (TriageDumpBlock)) {
+    if (!TriagepVerifyDump(TriageDumpBlock))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    TriageDump = TriagepGetTriagePointer (TriageDumpBlock);
+    TriageDump = TriagepGetTriagePointer(TriageDumpBlock);
 
-    if (!TriageDump) {
+    if (!TriageDump)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -289,7 +279,6 @@ TriageGetDriverCount(
 
     return STATUS_SUCCESS;
 }
-
 
 
 #if 0
@@ -357,49 +346,45 @@ TriageGetExceptionRecord(
 }
 #endif
 
-
+
 LOGICAL
-TriageActUpon(
-    IN PVOID TriageDumpBlock
-    )
+TriageActUpon(IN PVOID TriageDumpBlock)
 {
     PTRIAGE_DUMP TriageDump;
 
-    if (!TriagepVerifyDump (TriageDumpBlock)) {
+    if (!TriagepVerifyDump(TriageDumpBlock))
+    {
         return FALSE;
     }
 
-    TriageDump = TriagepGetTriagePointer (TriageDumpBlock);
+    TriageDump = TriagepGetTriagePointer(TriageDumpBlock);
 
-    if (!TriageDump) {
+    if (!TriageDump)
+    {
         return FALSE;
     }
 
-    if ((TriageDump->TriageOptions & DCB_TRIAGE_DUMP_ACT_UPON_ENABLED) == 0) {
+    if ((TriageDump->TriageOptions & DCB_TRIAGE_DUMP_ACT_UPON_ENABLED) == 0)
+    {
         return FALSE;
     }
 
     return TRUE;
 }
 
-
+
 NTSTATUS
-TriageGetBugcheckData(
-    IN LPVOID TriageDumpBlock,
-    OUT ULONG * BugCheckCode,
-    OUT UINT_PTR * BugCheckParam1,
-    OUT UINT_PTR * BugCheckParam2,
-    OUT UINT_PTR * BugCheckParam3,
-    OUT UINT_PTR * BugCheckParam4
-    )
+TriageGetBugcheckData(IN LPVOID TriageDumpBlock, OUT ULONG *BugCheckCode, OUT UINT_PTR *BugCheckParam1,
+                      OUT UINT_PTR *BugCheckParam2, OUT UINT_PTR *BugCheckParam3, OUT UINT_PTR *BugCheckParam4)
 {
     PDUMP_HEADER DumpHeader;
 
-    if (!TriagepVerifyDump (TriageDumpBlock)) {
+    if (!TriagepVerifyDump(TriageDumpBlock))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    DumpHeader = (PDUMP_HEADER) TriageDumpBlock;
+    DumpHeader = (PDUMP_HEADER)TriageDumpBlock;
 
     *BugCheckCode = DumpHeader->BugCheckCode;
     *BugCheckParam1 = DumpHeader->BugCheckParameter1;
@@ -411,12 +396,8 @@ TriageGetBugcheckData(
 }
 
 
-
 PKLDR_DATA_TABLE_ENTRY
-TriageGetLoaderEntry(
-    IN PVOID TriageDumpBlock,
-    IN ULONG ModuleIndex
-    )
+TriageGetLoaderEntry(IN PVOID TriageDumpBlock, IN ULONG ModuleIndex)
 
 /*++
 
@@ -448,42 +429,39 @@ Environment:
     PTRIAGE_DUMP TriageDump;
     PKLDR_DATA_TABLE_ENTRY DataTableEntry;
 
-    if (!TriagepVerifyDump (TriageDumpBlock)) {
+    if (!TriagepVerifyDump(TriageDumpBlock))
+    {
         return NULL;
     }
 
-    TriageDump = TriagepGetTriagePointer (TriageDumpBlock);
+    TriageDump = TriagepGetTriagePointer(TriageDumpBlock);
 
-    if (ModuleIndex >= TriageDump->DriverCount) {
+    if (ModuleIndex >= TriageDump->DriverCount)
+    {
         return NULL;
     }
 
-    DriverList = (PDUMP_DRIVER_ENTRY)
-            IndexByByte (TriageDumpBlock, TriageDump->DriverListOffset);
+    DriverList = (PDUMP_DRIVER_ENTRY)IndexByByte(TriageDumpBlock, TriageDump->DriverListOffset);
 
 
-    DataTableEntry = (PKLDR_DATA_TABLE_ENTRY) (&DriverList[ModuleIndex].LdrEntry);
+    DataTableEntry = (PKLDR_DATA_TABLE_ENTRY)(&DriverList[ModuleIndex].LdrEntry);
 
     //
     // Repoint the module driver name into the triage buffer.
     //
 
-    DriverName = (PDUMP_STRING)
-            IndexByByte (TriageDumpBlock,
-                         DriverList [ ModuleIndex ].DriverNameOffset);
+    DriverName = (PDUMP_STRING)IndexByByte(TriageDumpBlock, DriverList[ModuleIndex].DriverNameOffset);
 
-    DataTableEntry->BaseDllName.Length = (USHORT) (DriverName->Length * sizeof (WCHAR));
+    DataTableEntry->BaseDllName.Length = (USHORT)(DriverName->Length * sizeof(WCHAR));
     DataTableEntry->BaseDllName.MaximumLength = DataTableEntry->BaseDllName.Length;
     DataTableEntry->BaseDllName.Buffer = DriverName->Buffer;
 
     return DataTableEntry;
 }
 
-
+
 PVOID
-TriageGetMmInformation(
-    IN PVOID TriageDumpBlock
-    )
+TriageGetMmInformation(IN PVOID TriageDumpBlock)
 
 /*++
 
@@ -510,15 +488,17 @@ Environment:
 {
     PTRIAGE_DUMP TriageDump;
 
-    if (!TriagepVerifyDump (TriageDumpBlock)) {
+    if (!TriagepVerifyDump(TriageDumpBlock))
+    {
         return NULL;
     }
 
-    TriageDump = TriagepGetTriagePointer (TriageDumpBlock);
+    TriageDump = TriagepGetTriagePointer(TriageDumpBlock);
 
-    if (!TriageDump) {
+    if (!TriageDump)
+    {
         return NULL;
     }
 
-    return (PVOID)IndexByByte (TriageDumpBlock, TriageDump->MmOffset);
+    return (PVOID)IndexByByte(TriageDumpBlock, TriageDump->MmOffset);
 }

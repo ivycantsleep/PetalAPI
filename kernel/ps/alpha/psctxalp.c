@@ -24,13 +24,9 @@ Revision History:
 --*/
 
 #include "psp.h"
-
-VOID
-PspGetContext (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
-    IN OUT PCONTEXT ContextRecord
-    )
+
+VOID PspGetContext(IN PKTRAP_FRAME TrapFrame, IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+                   IN OUT PCONTEXT ContextRecord)
 
 /*++
 
@@ -59,7 +55,8 @@ Return Value:
     // Get control information if specified.
     //
 
-    if ((ContextRecord->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextRecord->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Get integer registers gp, ra, sp, FIR, and PSR from trap frame.
@@ -76,7 +73,8 @@ Return Value:
     // Get integer register contents if specified.
     //
 
-    if ((ContextRecord->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextRecord->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Get volatile integer registers v0 and t0 - t7 from trap frame.
@@ -136,7 +134,8 @@ Return Value:
     // Get floating register contents if specified.
     //
 
-    if ((ContextRecord->ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) {
+    if ((ContextRecord->ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT)
+    {
 
         //
         // Get volatile floating registers f0 - f1 from trap frame.
@@ -151,8 +150,7 @@ Return Value:
         //
 
         ASSERT((&ContextRecord->FltF30 - &ContextRecord->FltF10) == 20);
-        RtlMoveMemory(&ContextRecord->FltF10, &TrapFrame->FltF10,
-                      sizeof(ULONGLONG) * 21);
+        RtlMoveMemory(&ContextRecord->FltF10, &TrapFrame->FltF10, sizeof(ULONGLONG) * 21);
 
         ContextRecord->FltF31 = 0;
 
@@ -175,25 +173,21 @@ Return Value:
         //
 
         ContextRecord->Fpcr = TrapFrame->Fpcr;
-        try {
-            ContextRecord->SoftFpcr =
-                (ULONGLONG)(NtCurrentTeb()->FpSoftwareStatusRegister);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            ContextRecord->SoftFpcr = (ULONGLONG)(NtCurrentTeb()->FpSoftwareStatusRegister);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             ContextRecord->SoftFpcr = 0;
         }
     }
 
     return;
 }
-
-VOID
-PspSetContext (
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE ProcessorMode
-    )
+
+VOID PspSetContext(IN OUT PKTRAP_FRAME TrapFrame, IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+                   IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE ProcessorMode)
 
 /*++
 
@@ -225,7 +219,8 @@ Return Value:
     // Set control information if specified.
     //
 
-    if ((ContextRecord->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextRecord->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Set integer registers gp, sp, ra, FIR, and PSR in trap frame.
@@ -242,7 +237,8 @@ Return Value:
     // Set integer register contents if specified.
     //
 
-    if ((ContextRecord->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextRecord->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set volatile integer registers v0 and t0 - t7 in trap frame.
@@ -296,7 +292,8 @@ Return Value:
     // Set floating register contents if specified.
     //
 
-    if ((ContextRecord->ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) {
+    if ((ContextRecord->ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT)
+    {
 
         //
         // Set volatile floating registers f0 - f1 in trap frame.
@@ -311,8 +308,7 @@ Return Value:
         //
 
         ASSERT((&ContextRecord->FltF30 - &ContextRecord->FltF10) == 20);
-        RtlMoveMemory(&TrapFrame->FltF10, &ContextRecord->FltF10,
-                      sizeof(ULONGLONG) * 21);
+        RtlMoveMemory(&TrapFrame->FltF10, &ContextRecord->FltF10, sizeof(ULONGLONG) * 21);
 
         //
         // Set nonvolatile floating registers f2 - f9 through context pointers.
@@ -333,26 +329,21 @@ Return Value:
         //
 
         TrapFrame->Fpcr = ContextRecord->Fpcr;
-        try {
-            NtCurrentTeb()->FpSoftwareStatusRegister =
-                (ULONG)ContextRecord->SoftFpcr;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            NtCurrentTeb()->FpSoftwareStatusRegister = (ULONG)ContextRecord->SoftFpcr;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             NOTHING;
         }
     }
 
     return;
 }
-
-VOID
-PspGetSetContextSpecialApcMain (
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+
+VOID PspGetSetContextSpecialApcMain(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                                    IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -449,7 +440,8 @@ Return Value:
     // unwind call frames until the system entry trap frame is encountered.
     //
 
-    do {
+    do
+    {
 
         //
         // Lookup the function table entry using the point at which control
@@ -466,15 +458,13 @@ Return Value:
         // where control left the caller.
         //
 
-        if (FunctionEntry != NULL) {
-            ControlPc = RtlVirtualUnwind(ControlPc,
-                                         FunctionEntry,
-                                         &ContextRecord,
-                                         &InFunction,
-                                         &EstablisherFrame,
+        if (FunctionEntry != NULL)
+        {
+            ControlPc = RtlVirtualUnwind(ControlPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame,
                                          &ContextPointers);
-
-        } else {
+        }
+        else
+        {
             ControlPc = (ULONG_PTR)ContextRecord.IntRa;
         }
 
@@ -489,8 +479,7 @@ Return Value:
         //
 
     } while ((ContextRecord.IntSp != TrapFrame1) &&
-             ((ContextRecord.IntSp < TrapFrame2) ||
-              (ControlPc < PCR->SystemServiceDispatchStart) ||
+             ((ContextRecord.IntSp < TrapFrame2) || (ControlPc < PCR->SystemServiceDispatchStart) ||
               (ControlPc >= PCR->SystemServiceDispatchEnd)));
 
     //
@@ -498,26 +487,23 @@ Return Value:
     // thread. Otherwise, get the context of the current thread.
     //
 
-    if (Apc->SystemArgument1 != 0) {
+    if (Apc->SystemArgument1 != 0)
+    {
 
         //
         // Set context of current thread.
         //
 
-        PspSetContext((PKTRAP_FRAME)TrapFrame1,
-                      &ContextPointers,
-                      &ContextBlock->Context,
-                      ContextBlock->Mode);
-
-    } else {
+        PspSetContext((PKTRAP_FRAME)TrapFrame1, &ContextPointers, &ContextBlock->Context, ContextBlock->Mode);
+    }
+    else
+    {
 
         //
         // Get context of current thread.
         //
 
-        PspGetContext((PKTRAP_FRAME)TrapFrame1,
-                      &ContextPointers,
-                      &ContextBlock->Context);
+        PspGetContext((PKTRAP_FRAME)TrapFrame1, &ContextPointers, &ContextBlock->Context);
     }
 
     KeSetEvent(&ContextBlock->OperationComplete, 0, FALSE);

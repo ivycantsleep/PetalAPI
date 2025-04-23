@@ -78,14 +78,8 @@ KSPIN_LOCK KiAbiosLidTableLock;
 //
 
 ULONG KiStack16GdtEntry;
-
-VOID
-KiInitializeAbiosGdtEntry (
-    OUT PKGDTENTRY GdtEntry,
-    IN ULONG Base,
-    IN ULONG Limit,
-    IN USHORT Type
-    )
+
+VOID KiInitializeAbiosGdtEntry(OUT PKGDTENTRY GdtEntry, IN ULONG Base, IN ULONG Limit, IN USHORT Type)
 
 /*++
 
@@ -128,11 +122,9 @@ Return Value:
     GdtEntry->HighWord.Bits.Granularity = 0;
     GdtEntry->HighWord.Bytes.BaseHi = (UCHAR)((Base & 0xff000000) >> 24);
 }
-
+
 ULONG
-KiI386SelectorBase (
-    IN USHORT Selector
-    )
+KiI386SelectorBase(IN USHORT Selector)
 
 /*++
 
@@ -157,23 +149,20 @@ Return Value:
 
 
     GdtEntry = (PKGDTENTRY)(KiAbiosGetGdt() + Selector);
-    if (GdtEntry->HighWord.Bits.Pres) {
-        return ((ULONG)GdtEntry->BaseLow |
-                (ULONG)GdtEntry->HighWord.Bytes.BaseMid << 16 |
+    if (GdtEntry->HighWord.Bits.Pres)
+    {
+        return ((ULONG)GdtEntry->BaseLow | (ULONG)GdtEntry->HighWord.Bytes.BaseMid << 16 |
                 (ULONG)GdtEntry->HighWord.Bytes.BaseHi << 24);
-    } else {
+    }
+    else
+    {
         return (ULONG)(-1L);
     }
 }
-
+
 NTSTATUS
-KeI386GetLid(
-    IN USHORT DeviceId,
-    IN USHORT RelativeLid,
-    IN BOOLEAN SharedLid,
-    IN PDRIVER_OBJECT DriverObject,
-    OUT PUSHORT LogicalId
-    )
+KeI386GetLid(IN USHORT DeviceId, IN USHORT RelativeLid, IN BOOLEAN SharedLid, IN PDRIVER_OBJECT DriverObject,
+             OUT PUSHORT LogicalId)
 
 /*++
 
@@ -226,14 +215,18 @@ Return Value:
     KIRQL OldIrql;
     NTSTATUS Status;
 
-    if (!KiAbiosPresent) {
+    if (!KiAbiosPresent)
+    {
         return STATUS_ABIOS_NOT_PRESENT;
     }
 
-    if (SharedLid) {
+    if (SharedLid)
+    {
         Owner = LID_NO_SPECIFIC_OWNER;
         Increment = 1;
-    } else {
+    }
+    else
+    {
         Owner = (ULONG)DriverObject;
         Increment = 0;
     }
@@ -241,15 +234,15 @@ Return Value:
     //
     // If the Logical Id Table hasn't been created yet, create it now.
     //
-    if (KiLogicalIdTable==NULL) {
-        KiLogicalIdTable = ExAllocatePoolWithTag(NonPagedPool,
-                                          NUMBER_LID_TABLE_ENTRIES *
-                                          sizeof(KLID_TABLE_ENTRY),
-                                          '  eK');
-        if (KiLogicalIdTable == NULL) {
-            return(STATUS_NO_MEMORY);
+    if (KiLogicalIdTable == NULL)
+    {
+        KiLogicalIdTable =
+            ExAllocatePoolWithTag(NonPagedPool, NUMBER_LID_TABLE_ENTRIES * sizeof(KLID_TABLE_ENTRY), '  eK');
+        if (KiLogicalIdTable == NULL)
+        {
+            return (STATUS_NO_MEMORY);
         }
-        RtlZeroMemory(KiLogicalIdTable, NUMBER_LID_TABLE_ENTRIES*sizeof(KLID_TABLE_ENTRY));
+        RtlZeroMemory(KiLogicalIdTable, NUMBER_LID_TABLE_ENTRIES * sizeof(KLID_TABLE_ENTRY));
     }
 
     //
@@ -263,36 +256,50 @@ Return Value:
 
     ExAcquireSpinLock(&KiAbiosLidTableLock, &OldIrql);
 
-    for (Lid = 2; Lid < KiCommonDataArea->NumberLids; Lid++) {
-        if (CdaPointer->DeviceBlock.Selector != 0 &&
-            CdaPointer->FunctionTransferTable.Selector != 0) {
+    for (Lid = 2; Lid < KiCommonDataArea->NumberLids; Lid++)
+    {
+        if (CdaPointer->DeviceBlock.Selector != 0 && CdaPointer->FunctionTransferTable.Selector != 0)
+        {
 
-            DeviceBlock = (PKDEVICE_BLOCK)(KiI386SelectorBase(
-                                               CdaPointer->DeviceBlock.Selector)
-                                           + (CdaPointer->DeviceBlock.Offset));
-            if (DeviceBlock->DeviceId == DeviceId) {
-                if (RelativeLid == RelativeLidCount || RelativeLid == 0) {
-                    if (KiLogicalIdTable[Lid].Owner == 0L) {
+            DeviceBlock = (PKDEVICE_BLOCK)(KiI386SelectorBase(CdaPointer->DeviceBlock.Selector) +
+                                           (CdaPointer->DeviceBlock.Offset));
+            if (DeviceBlock->DeviceId == DeviceId)
+            {
+                if (RelativeLid == RelativeLidCount || RelativeLid == 0)
+                {
+                    if (KiLogicalIdTable[Lid].Owner == 0L)
+                    {
                         KiLogicalIdTable[Lid].Owner = Owner;
                         KiLogicalIdTable[Lid].OwnerCount += Increment;
                         *LogicalId = Lid;
                         Status = STATUS_SUCCESS;
-                    } else if (KiLogicalIdTable[Lid].Owner == LID_NO_SPECIFIC_OWNER) {
-                        if (SharedLid) {
+                    }
+                    else if (KiLogicalIdTable[Lid].Owner == LID_NO_SPECIFIC_OWNER)
+                    {
+                        if (SharedLid)
+                        {
                             *LogicalId = Lid;
                             KiLogicalIdTable[Lid].OwnerCount += Increment;
                             Status = STATUS_SUCCESS;
-                        } else {
+                        }
+                        else
+                        {
                             Status = STATUS_ABIOS_LID_ALREADY_OWNED;
                         }
-                    } else if (KiLogicalIdTable[Lid].Owner == (ULONG)DriverObject) {
+                    }
+                    else if (KiLogicalIdTable[Lid].Owner == (ULONG)DriverObject)
+                    {
                         *LogicalId = Lid;
                         Status = STATUS_SUCCESS;
-                    } else if (RelativeLid != 0) {
+                    }
+                    else if (RelativeLid != 0)
+                    {
                         Status = STATUS_ABIOS_LID_ALREADY_OWNED;
                     }
                     break;
-                } else {
+                }
+                else
+                {
                     RelativeLidCount++;
                 }
             }
@@ -303,12 +310,9 @@ Return Value:
     ExReleaseSpinLock(&KiAbiosLidTableLock, OldIrql);
     return Status;
 }
-
+
 NTSTATUS
-KeI386ReleaseLid(
-    IN USHORT LogicalId,
-    IN PDRIVER_OBJECT DriverObject
-    )
+KeI386ReleaseLid(IN USHORT LogicalId, IN PDRIVER_OBJECT DriverObject)
 
 /*++
 
@@ -339,22 +343,29 @@ Return Value:
     KIRQL OldIrql;
     NTSTATUS Status;
 
-    if (!KiAbiosPresent) {
+    if (!KiAbiosPresent)
+    {
         return STATUS_ABIOS_NOT_PRESENT;
     }
 
     ExAcquireSpinLock(&KiAbiosLidTableLock, &OldIrql);
 
-    if (KiLogicalIdTable[LogicalId].Owner == (ULONG)DriverObject) {
+    if (KiLogicalIdTable[LogicalId].Owner == (ULONG)DriverObject)
+    {
         KiLogicalIdTable[LogicalId].Owner = 0L;
         Status = STATUS_SUCCESS;
-    } else if (KiLogicalIdTable[LogicalId].Owner == LID_NO_SPECIFIC_OWNER) {
+    }
+    else if (KiLogicalIdTable[LogicalId].Owner == LID_NO_SPECIFIC_OWNER)
+    {
         KiLogicalIdTable[LogicalId].OwnerCount--;
-        if (KiLogicalIdTable[LogicalId].OwnerCount == 0L) {
+        if (KiLogicalIdTable[LogicalId].OwnerCount == 0L)
+        {
             KiLogicalIdTable[LogicalId].Owner = 0L;
         }
         Status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         Status = STATUS_ABIOS_NOT_LID_OWNER;
     }
 
@@ -362,14 +373,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-KeI386AbiosCall(
-    IN USHORT LogicalId,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUCHAR RequestBlock,
-    IN USHORT EntryPoint
-    )
+KeI386AbiosCall(IN USHORT LogicalId, IN PDRIVER_OBJECT DriverObject, IN PUCHAR RequestBlock, IN USHORT EntryPoint)
 
 /*++
 
@@ -417,39 +423,37 @@ Return Value:
     KABIOS_POINTER AbiosFunction;
     PKFUNCTION_TRANSFER_TABLE FttPointer;
 
-    if (!KiAbiosPresent) {
+    if (!KiAbiosPresent)
+    {
         return STATUS_ABIOS_NOT_PRESENT;
     }
 
-    if (LogicalId >= KiCommonDataArea->NumberLids) {
+    if (LogicalId >= KiCommonDataArea->NumberLids)
+    {
         return STATUS_ABIOS_INVALID_LID;
-    } else if (KiLogicalIdTable[LogicalId].Owner != (ULONG)DriverObject &&
-               KiLogicalIdTable[LogicalId].Owner != LID_NO_SPECIFIC_OWNER) {
+    }
+    else if (KiLogicalIdTable[LogicalId].Owner != (ULONG)DriverObject &&
+             KiLogicalIdTable[LogicalId].Owner != LID_NO_SPECIFIC_OWNER)
+    {
         return STATUS_ABIOS_NOT_LID_OWNER;
-    } else if (EntryPoint > 2) {
+    }
+    else if (EntryPoint > 2)
+    {
         return STATUS_ABIOS_INVALID_COMMAND;
     }
 
-    FuncTransferTable = ((PKDB_FTT_SECTION)KiCommonDataArea + LogicalId)->
-                                               FunctionTransferTable;
+    FuncTransferTable = ((PKDB_FTT_SECTION)KiCommonDataArea + LogicalId)->FunctionTransferTable;
     DeviceBlock = ((PKDB_FTT_SECTION)KiCommonDataArea + LogicalId)->DeviceBlock;
-    FttPointer = (PKFUNCTION_TRANSFER_TABLE)(KiI386SelectorBase(FuncTransferTable.Selector) +
-                                             (ULONG)FuncTransferTable.Offset);
+    FttPointer =
+        (PKFUNCTION_TRANSFER_TABLE)(KiI386SelectorBase(FuncTransferTable.Selector) + (ULONG)FuncTransferTable.Offset);
     AbiosFunction = FttPointer->CommonRoutine[EntryPoint];
-    KiI386CallAbios(AbiosFunction,
-                    DeviceBlock,
-                    FuncTransferTable,
-                    *(PKABIOS_POINTER)&RequestBlock
-                    );
+    KiI386CallAbios(AbiosFunction, DeviceBlock, FuncTransferTable, *(PKABIOS_POINTER)&RequestBlock);
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-KeI386AllocateGdtSelectors(
-    OUT PUSHORT SelectorArray,
-    IN USHORT NumberOfSelectors
-    )
+KeI386AllocateGdtSelectors(OUT PUSHORT SelectorArray, IN USHORT NumberOfSelectors)
 
 /*++
 
@@ -479,7 +483,8 @@ Return Value:
     PKFREE_GDT_ENTRY GdtEntry;
     KIRQL OldIrql;
 
-    if (KiNumberFreeSelectors >= NumberOfSelectors) {
+    if (KiNumberFreeSelectors >= NumberOfSelectors)
+    {
         ExAcquireSpinLock(&KiAbiosGdtLock, &OldIrql);
 
         //
@@ -490,7 +495,8 @@ Return Value:
 
         KiNumberFreeSelectors -= NumberOfSelectors;
         GdtEntry = KiFreeGdtListHead;
-        while (NumberOfSelectors != 0) {
+        while (NumberOfSelectors != 0)
+        {
             *SelectorArray++ = (USHORT)((ULONG)GdtEntry - KiAbiosGdt[0]);
             GdtEntry = GdtEntry->Flink;
             NumberOfSelectors--;
@@ -498,16 +504,15 @@ Return Value:
         KiFreeGdtListHead = GdtEntry;
         ExReleaseSpinLock(&KiAbiosGdtLock, OldIrql);
         return STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         return STATUS_ABIOS_SELECTOR_NOT_AVAILABLE;
     }
 }
-
+
 NTSTATUS
-KeI386ReleaseGdtSelectors(
-    OUT PUSHORT SelectorArray,
-    IN USHORT NumberOfSelectors
-    )
+KeI386ReleaseGdtSelectors(OUT PUSHORT SelectorArray, IN USHORT NumberOfSelectors)
 
 /*++
 
@@ -544,7 +549,8 @@ Return Value:
 
     KiNumberFreeSelectors += NumberOfSelectors;
     Gdt = KiAbiosGdt[0];
-    while (NumberOfSelectors != 0) {
+    while (NumberOfSelectors != 0)
+    {
         GdtEntry = (PKFREE_GDT_ENTRY)(Gdt + *SelectorArray++);
         GdtEntry->Flink = KiFreeGdtListHead;
         KiFreeGdtListHead = GdtEntry;
@@ -553,13 +559,9 @@ Return Value:
     ExReleaseSpinLock(&KiAbiosGdtLock, OldIrql);
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-KeI386FlatToGdtSelector(
-    IN ULONG SelectorBase,
-    IN USHORT Length,
-    IN USHORT Selector
-    )
+KeI386FlatToGdtSelector(IN ULONG SelectorBase, IN USHORT Length, IN USHORT Selector)
 
 /*++
 
@@ -594,12 +596,16 @@ Return Value:
     KIRQL OldIrql;
     ULONG i;
 
-    if (!KiAbiosPresent) {
+    if (!KiAbiosPresent)
+    {
         return STATUS_ABIOS_NOT_PRESENT;
     }
-    if (Selector < RESERVED_GDT_ENTRIES * sizeof(KGDTENTRY)) {
+    if (Selector < RESERVED_GDT_ENTRIES * sizeof(KGDTENTRY))
+    {
         return STATUS_ABIOS_INVALID_SELECTOR;
-    } else {
+    }
+    else
+    {
         ExAcquireSpinLock(&KiAbiosGdtLock, &OldIrql);
         GdtEntry = (PKGDTENTRY)(KiAbiosGdt[0] + Selector);
         GdtEntry->LimitLow = (USHORT)(Length - 1);
@@ -609,7 +615,8 @@ Return Value:
         GdtEntry->HighWord.Bits.Pres = 1;
         GdtEntry->HighWord.Bits.Type = TYPE_DATA;
         GdtEntry->HighWord.Bits.Dpl = DPL_SYSTEM;
-        for (i = 1; i < (ULONG)KeNumberProcessors; i++) {
+        for (i = 1; i < (ULONG)KeNumberProcessors; i++)
+        {
             GdtEntry1 = (PKGDTENTRY)(KiAbiosGdt[i] + Selector);
             *GdtEntry1 = *GdtEntry;
         }
@@ -617,11 +624,8 @@ Return Value:
         return STATUS_SUCCESS;
     }
 }
-
-VOID
-Ki386InitializeGdtFreeList (
-    PKFREE_GDT_ENTRY EndOfGdt
-    )
+
+VOID Ki386InitializeGdtFreeList(PKFREE_GDT_ENTRY EndOfGdt)
 
 /*++
 
@@ -644,9 +648,10 @@ Return Value:
 
     GdtEntry = EndOfGdt - 1;
     KiFreeGdtListHead = (PKFREE_GDT_ENTRY)0;
-    while (GdtEntry != (PKFREE_GDT_ENTRY)KiAbiosGetGdt() +
-                        RESERVED_GDT_ENTRIES - 1) {
-        if (GdtEntry->Present == 0) {
+    while (GdtEntry != (PKFREE_GDT_ENTRY)KiAbiosGetGdt() + RESERVED_GDT_ENTRIES - 1)
+    {
+        if (GdtEntry->Present == 0)
+        {
             GdtEntry->Flink = KiFreeGdtListHead;
             KiFreeGdtListHead = GdtEntry;
             KiNumberFreeSelectors++;
@@ -654,11 +659,8 @@ Return Value:
         GdtEntry--;
     }
 }
-
-VOID
-KiInitializeAbios (
-    IN UCHAR Processor
-    )
+
+VOID KiInitializeAbios(IN UCHAR Processor)
 
 /*++
 
@@ -693,9 +695,12 @@ Return Value:
     // NOTE For now we want to disable ABIOS support on MP.
     //
 
-    if (KiCommonDataArea == NULL || Processor != 0) {
+    if (KiCommonDataArea == NULL || Processor != 0)
+    {
         KiAbiosPresent = FALSE;
-    } else {
+    }
+    else
+    {
         KiAbiosPresent = TRUE;
     }
 
@@ -703,8 +708,8 @@ Return Value:
     // Initialize the spinlocks for accessing GDTs and Lid Table.
     //
 
-    KeInitializeSpinLock( &KiAbiosGdtLock );
-    KeInitializeSpinLock( &KiAbiosLidTableLock );
+    KeInitializeSpinLock(&KiAbiosGdtLock);
+    KeInitializeSpinLock(&KiAbiosLidTableLock);
 
     //
     // Determine the starting and ending addresses of GDT.
@@ -713,8 +718,8 @@ Return Value:
     KiAbiosGdt[Processor] = KiAbiosGetGdt();
 
     AliasGdtSelectorEntry = (PKGDTENTRY)(KiAbiosGetGdt() + KGDT_GDT_ALIAS);
-    GdtLength = 1 + (ULONG)(AliasGdtSelectorEntry->LimitLow) +
-                (ULONG)(AliasGdtSelectorEntry->HighWord.Bits.LimitHi << 16);
+    GdtLength =
+        1 + (ULONG)(AliasGdtSelectorEntry->LimitLow) + (ULONG)(AliasGdtSelectorEntry->HighWord.Bits.LimitHi << 16);
     EndOfGdt = (PKFREE_GDT_ENTRY)(KiAbiosGetGdt() + GdtLength);
 
     //
@@ -723,40 +728,29 @@ Return Value:
 
     KiStack16GdtEntry = KiAbiosGetGdt() + KGDT_STACK16;
 
-    KiInitializeAbiosGdtEntry(
-                (PKGDTENTRY)KiStack16GdtEntry,
-                0L,
-                0xffff,
-                TYPE_DATA
-                );
+    KiInitializeAbiosGdtEntry((PKGDTENTRY)KiStack16GdtEntry, 0L, 0xffff, TYPE_DATA);
 
     //
     // Establish the addressability of Common Data Area selector.
     //
 
-    KiInitializeAbiosGdtEntry(
-                (PKGDTENTRY)(KiAbiosGetGdt() + KGDT_CDA16),
-                (ULONG)KiCommonDataArea,
-                0xffff,
-                TYPE_DATA
-                );
+    KiInitializeAbiosGdtEntry((PKGDTENTRY)(KiAbiosGetGdt() + KGDT_CDA16), (ULONG)KiCommonDataArea, 0xffff, TYPE_DATA);
 
     //
     // Set up 16-bit code selector for KiI386AbiosCall
     //
 
-    KiInitializeAbiosGdtEntry(
-                (PKGDTENTRY)(KiAbiosGetGdt() + KGDT_CODE16),
-                (ULONG)&KiI386CallAbios,
-                (ULONG)&KiEndOfCode16 - (ULONG)&KiI386CallAbios - 1,
-                0x18                   // TYPE_CODE
-                );
+    KiInitializeAbiosGdtEntry((PKGDTENTRY)(KiAbiosGetGdt() + KGDT_CODE16), (ULONG)&KiI386CallAbios,
+                              (ULONG)&KiEndOfCode16 - (ULONG)&KiI386CallAbios - 1,
+                              0x18 // TYPE_CODE
+    );
 
     //
     // Link all the unused GDT entries to our GDT free list.
     //
 
-    if (Processor == 0) {
+    if (Processor == 0)
+    {
         Ki386InitializeGdtFreeList(EndOfGdt);
     }
 }

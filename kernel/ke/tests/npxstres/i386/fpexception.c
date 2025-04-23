@@ -22,10 +22,7 @@ Revision History:
 
 #include "pch.h"
 
-VOID
-FPxInit(
-    OUT  PFP_THREAD_DATA FpThreadData
-    )
+VOID FPxInit(OUT PFP_THREAD_DATA FpThreadData)
 /*++
 
 Routine Description:
@@ -62,11 +59,7 @@ Return Value:
 }
 
 
-VOID
-FPxLoadTag(
-    IN OUT  PFP_THREAD_DATA FpThreadData,
-    IN      UINT            Tag
-    )
+VOID FPxLoadTag(IN OUT PFP_THREAD_DATA FpThreadData, IN UINT Tag)
 /*++
 
 Routine Description:
@@ -89,14 +82,11 @@ Return Value:
 
     FpThreadData->Ftag = localCopy = Tag * 1.41415926e3;
 
-    _asm fld    [localCopy]
+    _asm fld[localCopy]
 }
 
 
-VOID
-FPxPendDivideByZero(
-    VOID
-    )
+VOID FPxPendDivideByZero(VOID)
 /*++
 
 Routine Description:
@@ -122,10 +112,7 @@ Return Value:
 }
 
 
-VOID
-FPxDrain(
-    IN OUT  PFP_THREAD_DATA FpThreadData
-    )
+VOID FPxDrain(IN OUT PFP_THREAD_DATA FpThreadData)
 /*++
 
 Routine Description:
@@ -160,9 +147,7 @@ Return Value:
 
 
 FPXERR
-FPxCheckTag(
-    IN OUT  PFP_THREAD_DATA FpThreadData
-    )
+FPxCheckTag(IN OUT PFP_THREAD_DATA FpThreadData)
 /*++
 
 Routine Description:
@@ -215,10 +200,7 @@ Return Value:
 
 
 EXCEPTION_DISPOSITION
-FPxUnexpectedExceptionFilter(
-    IN      LPEXCEPTION_POINTERS    ExcInfo,
-    IN OUT  PFP_THREAD_DATA         FpThreadData
-    )
+FPxUnexpectedExceptionFilter(IN LPEXCEPTION_POINTERS ExcInfo, IN OUT PFP_THREAD_DATA FpThreadData)
 /*++
 
 Routine Description:
@@ -243,10 +225,7 @@ Return Value:
 
 
 EXCEPTION_DISPOSITION
-FPxExpectedExceptionFilter(
-    IN      LPEXCEPTION_POINTERS    ExcInfo,
-    IN OUT  PFP_THREAD_DATA         FpThreadData
-    )
+FPxExpectedExceptionFilter(IN LPEXCEPTION_POINTERS ExcInfo, IN OUT PFP_THREAD_DATA FpThreadData)
 /*++
 
 Routine Description:
@@ -265,15 +244,16 @@ Return Value:
 
 --*/
 {
-    if (ExcInfo->ContextRecord->Eip != FpThreadData->ExpectedExceptionEIP) {
+    if (ExcInfo->ContextRecord->Eip != FpThreadData->ExpectedExceptionEIP)
+    {
 
         FpThreadData->BadEip = ExcInfo->ContextRecord->Eip;
         FpThreadData->status = stBAD_EIP;
-
-    } else {
+    }
+    else
+    {
 
         FpThreadData->status = stOK;
-
     }
 
     return EXCEPTION_EXECUTE_HANDLER;
@@ -281,12 +261,8 @@ Return Value:
 
 
 FPXERR
-FPxTestExceptions(
-    IN      UINT                    Tag,
-    IN      PFN_FPX_CALLBACK_FUNC   CallbackFunction,
-    IN OUT  PFP_THREAD_DATA         FpThreadData,
-    IN OUT  PVOID                   Context
-    )
+FPxTestExceptions(IN UINT Tag, IN PFN_FPX_CALLBACK_FUNC CallbackFunction, IN OUT PFP_THREAD_DATA FpThreadData,
+                  IN OUT PVOID Context)
 /*++
 
 Routine Description:
@@ -313,27 +289,30 @@ Return Value:
 
 --*/
 {
-    __try {
+    __try
+    {
 
         //
         // Tag the Npx
         //
         FPxLoadTag(FpThreadData, Tag);
 
-        __try {
+        __try
+        {
 
             //
             // generate pending exception
             //
             FPxPendDivideByZero();
-
-        } __except(FPxUnexpectedExceptionFilter(GetExceptionInformation(),
-                                                FpThreadData)) {
+        }
+        __except (FPxUnexpectedExceptionFilter(GetExceptionInformation(), FpThreadData))
+        {
 
             FpThreadData->status = stSPURIOUS_EXCEPTION;
         }
 
-        if (FpThreadData->status == stOK) {
+        if (FpThreadData->status == stOK)
+        {
 
             //
             // Invoke the callback function.
@@ -350,35 +329,40 @@ Return Value:
             //
             FpThreadData->status = stMISSING_EXCEPTION;
         }
+    }
+    __except (FPxExpectedExceptionFilter(GetExceptionInformation(), FpThreadData))
+    {
 
-    } __except(FPxExpectedExceptionFilter(GetExceptionInformation(),
-                                          FpThreadData)) {
+        if (FpThreadData->status == stOK)
+        {
 
-        if (FpThreadData->status == stOK) {
-
-            __try {
+            __try
+            {
 
                 //
                 // ST(2) should still have our tag value
                 //
                 FpThreadData->status = FPxCheckTag(FpThreadData);
-
-            } __except(FPxUnexpectedExceptionFilter(GetExceptionInformation(),
-                                                    FpThreadData)) {
+            }
+            __except (FPxUnexpectedExceptionFilter(GetExceptionInformation(), FpThreadData))
+            {
 
                 FpThreadData->status = stEXCEPTION_IN_HANDLER;
             }
         }
     }
 
-    if (FpThreadData->status == stMISSING_EXCEPTION) {
+    if (FpThreadData->status == stMISSING_EXCEPTION)
+    {
 
-        __try {
+        __try
+        {
 
             FPxDrain(FpThreadData);
             FPxDrain(FpThreadData);
-
-        } __except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
 
             FpThreadData->status = stMISSING_EXCEPTION_FOUND;
         }
@@ -386,5 +370,3 @@ Return Value:
 
     return FpThreadData->status;
 }
-
-

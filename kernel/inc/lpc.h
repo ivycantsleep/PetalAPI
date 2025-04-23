@@ -28,45 +28,25 @@ Revision History:
 //
 
 BOOLEAN
-LpcInitSystem( VOID );
+LpcInitSystem(VOID);
 
-VOID
-LpcExitThread(
-    PETHREAD Thread
-    );
+VOID LpcExitThread(PETHREAD Thread);
 
-VOID
-LpcDumpThread(
-    PETHREAD Thread,
-    IN POB_DUMP_CONTROL Control OPTIONAL
-    );
+VOID LpcDumpThread(PETHREAD Thread, IN POB_DUMP_CONTROL Control OPTIONAL);
 
 // begin_ntosp
 NTKERNELAPI
 NTSTATUS
-LpcRequestPort(
-    IN PVOID PortAddress,
-    IN PPORT_MESSAGE RequestMessage
-    );
+LpcRequestPort(IN PVOID PortAddress, IN PPORT_MESSAGE RequestMessage);
 
 NTSTATUS
-LpcRequestWaitReplyPort(
-    IN PVOID PortAddress,
-    IN PPORT_MESSAGE RequestMessage,
-    OUT PPORT_MESSAGE ReplyMessage
-    );
+LpcRequestWaitReplyPort(IN PVOID PortAddress, IN PPORT_MESSAGE RequestMessage, OUT PPORT_MESSAGE ReplyMessage);
 
 NTSTATUS
-LpcRequestWaitReplyPortEx (
-    IN PVOID PortAddress,
-    IN PPORT_MESSAGE RequestMessage,
-    OUT PPORT_MESSAGE ReplyMessage
-    );
+LpcRequestWaitReplyPortEx(IN PVOID PortAddress, IN PPORT_MESSAGE RequestMessage, OUT PPORT_MESSAGE ReplyMessage);
 
 NTSTATUS
-LpcDisconnectPort (
-    IN PVOID Port
-    );
+LpcDisconnectPort(IN PVOID Port);
 
 // end_ntosp
 //
@@ -81,30 +61,33 @@ extern ULONG LpcDatagramOperationCount;
 //
 // Nonpagable portion of a port queue
 //
-typedef struct _LPCP_NONPAGED_PORT_QUEUE {
-    KSEMAPHORE Semaphore;       // Counting semaphore that is incremented
-                                // whenever a message is put in receive queue
+typedef struct _LPCP_NONPAGED_PORT_QUEUE
+{
+    KSEMAPHORE Semaphore; // Counting semaphore that is incremented
+                          // whenever a message is put in receive queue
     struct _LPCP_PORT_OBJECT *BackPointer;
 } LPCP_NONPAGED_PORT_QUEUE, *PLPCP_NONPAGED_PORT_QUEUE;
 
-typedef struct _LPCP_PORT_QUEUE {
+typedef struct _LPCP_PORT_QUEUE
+{
     PLPCP_NONPAGED_PORT_QUEUE NonPagedPortQueue;
-    PKSEMAPHORE Semaphore;      // Counting semaphore that is incremented
-                                // whenever a message is put in receive queue
-    LIST_ENTRY ReceiveHead;     // list of messages to receive
+    PKSEMAPHORE Semaphore;  // Counting semaphore that is incremented
+                            // whenever a message is put in receive queue
+    LIST_ENTRY ReceiveHead; // list of messages to receive
 } LPCP_PORT_QUEUE, *PLPCP_PORT_QUEUE;
 
 #define LPCP_ZONE_ALIGNMENT 16
-#define LPCP_ZONE_ALIGNMENT_MASK ~(LPCP_ZONE_ALIGNMENT-1)
+#define LPCP_ZONE_ALIGNMENT_MASK ~(LPCP_ZONE_ALIGNMENT - 1)
 
 //
 // This allows ~96 outstanding messages
 //
 
-#define LPCP_ZONE_MAX_POOL_USAGE (8*PAGE_SIZE)
-typedef struct _LPCP_PORT_ZONE {
-    KEVENT FreeEvent;           // Autoclearing event that is whenever the
-                                // zone free list goes from empty to non-empty
+#define LPCP_ZONE_MAX_POOL_USAGE (8 * PAGE_SIZE)
+typedef struct _LPCP_PORT_ZONE
+{
+    KEVENT FreeEvent; // Autoclearing event that is whenever the
+                      // zone free list goes from empty to non-empty
     ULONG MaxPoolUsage;
     ULONG GrowSize;
     ZONE_HEADER Zone;
@@ -114,7 +97,8 @@ typedef struct _LPCP_PORT_ZONE {
 // Data Types and Constants
 //
 
-typedef struct _LPCP_PORT_OBJECT {
+typedef struct _LPCP_PORT_OBJECT
+{
     struct _LPCP_PORT_OBJECT *ConnectionPort;
     struct _LPCP_PORT_OBJECT *ConnectedPort;
     LPCP_PORT_QUEUE MsgQueue;
@@ -122,47 +106,51 @@ typedef struct _LPCP_PORT_OBJECT {
     PVOID ClientSectionBase;
     PVOID ServerSectionBase;
     PVOID PortContext;
-    PETHREAD ClientThread;                  // only SERVER_COMMUNICATION_PORT
+    PETHREAD ClientThread; // only SERVER_COMMUNICATION_PORT
     SECURITY_QUALITY_OF_SERVICE SecurityQos;
     SECURITY_CLIENT_CONTEXT StaticSecurity;
-    LIST_ENTRY LpcReplyChainHead;           // Only in _COMMUNICATION ports
-    LIST_ENTRY LpcDataInfoChainHead;        // Only in _COMMUNICATION ports
-    union {
-        PEPROCESS ServerProcess;                // Only in SERVER_CONNECTION ports
-        PEPROCESS MappingProcess;               // Only in _COMMUNICATION    ports
+    LIST_ENTRY LpcReplyChainHead;    // Only in _COMMUNICATION ports
+    LIST_ENTRY LpcDataInfoChainHead; // Only in _COMMUNICATION ports
+    union
+    {
+        PEPROCESS ServerProcess;  // Only in SERVER_CONNECTION ports
+        PEPROCESS MappingProcess; // Only in _COMMUNICATION    ports
     };
     USHORT MaxMessageLength;
     USHORT MaxConnectionInfoLength;
     ULONG Flags;
-    KEVENT WaitEvent;                          // Object is truncated for non-waitable ports
+    KEVENT WaitEvent; // Object is truncated for non-waitable ports
 } LPCP_PORT_OBJECT, *PLPCP_PORT_OBJECT;
 
 //
 // Valid values for Flags field
 //
 
-#define PORT_TYPE                           0x0000000F
-#define SERVER_CONNECTION_PORT              0x00000001
-#define UNCONNECTED_COMMUNICATION_PORT      0x00000002
-#define SERVER_COMMUNICATION_PORT           0x00000003
-#define CLIENT_COMMUNICATION_PORT           0x00000004
-#define PORT_WAITABLE                       0x20000000
-#define PORT_NAME_DELETED                   0x40000000
-#define PORT_DYNAMIC_SECURITY               0x80000000
+#define PORT_TYPE 0x0000000F
+#define SERVER_CONNECTION_PORT 0x00000001
+#define UNCONNECTED_COMMUNICATION_PORT 0x00000002
+#define SERVER_COMMUNICATION_PORT 0x00000003
+#define CLIENT_COMMUNICATION_PORT 0x00000004
+#define PORT_WAITABLE 0x20000000
+#define PORT_NAME_DELETED 0x40000000
+#define PORT_DYNAMIC_SECURITY 0x80000000
 
-typedef struct _LPCP_MESSAGE {
-    union {
+typedef struct _LPCP_MESSAGE
+{
+    union
+    {
         LIST_ENTRY Entry;
-        struct {
+        struct
+        {
             SINGLE_LIST_ENTRY FreeEntry;
             ULONG Reserved0;
         };
     };
 
     PVOID SenderPort;
-    PETHREAD RepliedToThread;               // Filled in when reply is sent so recipient
-                                            // of reply can dereference it.
-    PVOID PortContext;                      // Captured from senders communication port.
+    PETHREAD RepliedToThread; // Filled in when reply is sent so recipient
+                              // of reply can dereference it.
+    PVOID PortContext;        // Captured from senders communication port.
     PORT_MESSAGE Request;
 } LPCP_MESSAGE, *PLPCP_MESSAGE;
 
@@ -179,7 +167,8 @@ typedef struct _LPCP_MESSAGE {
 // LPC_CONNECTION_REQUEST message.
 //
 
-typedef struct _LPCP_CONNECTION_MESSAGE {
+typedef struct _LPCP_CONNECTION_MESSAGE
+{
     PORT_VIEW ClientView;
     PLPCP_PORT_OBJECT ClientPort;
     PVOID SectionToMap;
@@ -187,4 +176,4 @@ typedef struct _LPCP_CONNECTION_MESSAGE {
 } LPCP_CONNECTION_MESSAGE, *PLPCP_CONNECTION_MESSAGE;
 
 
-#endif  // _LPC_
+#endif // _LPC_

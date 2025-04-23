@@ -44,21 +44,22 @@ Revision History:
 #endif
 
 SEP_LOGON_SESSION_TERMINATED_NOTIFICATION
-SeFileSystemNotifyRoutinesHead = {0};
+SeFileSystemNotifyRoutinesHead = { 0 };
 
-
+
 ////////////////////////////////////////////////////////////////////////////
 //                                                                        //
 // Internally defined data types                                          //
 //                                                                        //
 ////////////////////////////////////////////////////////////////////////////
 
-typedef struct _SEP_FILE_SYSTEM_NOTIFY_CONTEXT {
+typedef struct _SEP_FILE_SYSTEM_NOTIFY_CONTEXT
+{
     WORK_QUEUE_ITEM WorkItem;
     LUID LogonId;
 } SEP_FILE_SYSTEM_NOTIFY_CONTEXT, *PSEP_FILE_SYSTEM_NOTIFY_CONTEXT;
 
-
+
 ////////////////////////////////////////////////////////////////////////////
 //                                                                        //
 // Internally defined routines                                            //
@@ -66,66 +67,47 @@ typedef struct _SEP_FILE_SYSTEM_NOTIFY_CONTEXT {
 ////////////////////////////////////////////////////////////////////////////
 
 
-VOID
-SepInformLsaOfDeletedLogon(
-    IN PLUID LogonId
-    );
+VOID SepInformLsaOfDeletedLogon(IN PLUID LogonId);
 
-VOID
-SepInformFileSystemsOfDeletedLogon(
-    IN PLUID LogonId
-    );
+VOID SepInformFileSystemsOfDeletedLogon(IN PLUID LogonId);
 
-VOID
-SepNotifyFileSystems(
-    IN PVOID Context
-    );
+VOID SepNotifyFileSystems(IN PVOID Context);
 
 NTSTATUS
-SepCleanupLUIDDeviceMapDirectory(
-    PLUID pLogonId
-    );
+SepCleanupLUIDDeviceMapDirectory(PLUID pLogonId);
 
 NTSTATUS
-SeGetLogonIdDeviceMap(
-    IN PLUID pLogonId,
-    OUT PDEVICE_MAP* ppDevMap
-    );
+SeGetLogonIdDeviceMap(IN PLUID pLogonId, OUT PDEVICE_MAP *ppDevMap);
 
 //
 // declared in ntos\ob\obp.h
 // defined in ntos\ob\obdir.c
 // Used to dereference the LUID device map
 //
-VOID
-FASTCALL
-ObfDereferenceDeviceMap(
-    IN PDEVICE_MAP DeviceMap
-    );
+VOID FASTCALL ObfDereferenceDeviceMap(IN PDEVICE_MAP DeviceMap);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SepRmCreateLogonSessionWrkr)
-#pragma alloc_text(PAGE,SepRmDeleteLogonSessionWrkr)
-#pragma alloc_text(PAGE,SepReferenceLogonSession)
-#pragma alloc_text(PAGE,SepCleanupLUIDDeviceMapDirectory)
-#pragma alloc_text(PAGE,SepDeReferenceLogonSession)
-#pragma alloc_text(PAGE,SepCreateLogonSessionTrack)
-#pragma alloc_text(PAGE,SepDeleteLogonSessionTrack)
-#pragma alloc_text(PAGE,SepInformLsaOfDeletedLogon)
-#pragma alloc_text(PAGE,SeRegisterLogonSessionTerminatedRoutine)
-#pragma alloc_text(PAGE,SeUnregisterLogonSessionTerminatedRoutine)
-#pragma alloc_text(PAGE,SeMarkLogonSessionForTerminationNotification)
-#pragma alloc_text(PAGE,SepInformFileSystemsOfDeletedLogon)
-#pragma alloc_text(PAGE,SepNotifyFileSystems)
-#pragma alloc_text(PAGE,SeGetLogonIdDeviceMap)
+#pragma alloc_text(PAGE, SepRmCreateLogonSessionWrkr)
+#pragma alloc_text(PAGE, SepRmDeleteLogonSessionWrkr)
+#pragma alloc_text(PAGE, SepReferenceLogonSession)
+#pragma alloc_text(PAGE, SepCleanupLUIDDeviceMapDirectory)
+#pragma alloc_text(PAGE, SepDeReferenceLogonSession)
+#pragma alloc_text(PAGE, SepCreateLogonSessionTrack)
+#pragma alloc_text(PAGE, SepDeleteLogonSessionTrack)
+#pragma alloc_text(PAGE, SepInformLsaOfDeletedLogon)
+#pragma alloc_text(PAGE, SeRegisterLogonSessionTerminatedRoutine)
+#pragma alloc_text(PAGE, SeUnregisterLogonSessionTerminatedRoutine)
+#pragma alloc_text(PAGE, SeMarkLogonSessionForTerminationNotification)
+#pragma alloc_text(PAGE, SepInformFileSystemsOfDeletedLogon)
+#pragma alloc_text(PAGE, SepNotifyFileSystems)
+#pragma alloc_text(PAGE, SeGetLogonIdDeviceMap)
 #if DBG || TOKEN_LEAK_MONITOR
-#pragma alloc_text(PAGE,SepAddTokenLogonSession)
-#pragma alloc_text(PAGE,SepRemoveTokenLogonSession)
+#pragma alloc_text(PAGE, SepAddTokenLogonSession)
+#pragma alloc_text(PAGE, SepRemoveTokenLogonSession)
 #endif
 #endif
 
 
-
 ////////////////////////////////////////////////////////////////////////////
 //                                                                        //
 // Local macros                                                           //
@@ -138,23 +120,16 @@ ObfDereferenceDeviceMap(
 // array given a logon session ID (a LUID).
 //
 
-#define SepLogonSessionIndex( PLogonId ) (                                    \
-     (PLogonId)->LowPart & SEP_LOGON_TRACK_INDEX_MASK                         \
-     )
+#define SepLogonSessionIndex(PLogonId) ((PLogonId)->LowPart & SEP_LOGON_TRACK_INDEX_MASK)
 
 
-
 ////////////////////////////////////////////////////////////////////////////
 //                                                                        //
 // Exported Services                                                      //
 //                                                                        //
 ////////////////////////////////////////////////////////////////////////////
 
-VOID
-SepRmCreateLogonSessionWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    )
+VOID SepRmCreateLogonSessionWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage)
 
 /*++
 
@@ -197,23 +172,21 @@ Return Value:
     // Check that command is expected type
     //
 
-    ASSERT( CommandMessage->CommandNumber == RmCreateLogonSession );
+    ASSERT(CommandMessage->CommandNumber == RmCreateLogonSession);
 
 
     //
     // Typecast the command parameter to what we expect.
     //
 
-    LogonId = *((LUID UNALIGNED *) CommandMessage->CommandParams);
-
+    LogonId = *((LUID UNALIGNED *)CommandMessage->CommandParams);
 
 
     //
     // Try to create the logon session tracking record
     //
 
-    Status = SepCreateLogonSessionTrack( &LogonId );
-
+    Status = SepCreateLogonSessionTrack(&LogonId);
 
 
     //
@@ -227,12 +200,7 @@ Return Value:
 }
 
 
-
-VOID
-SepRmDeleteLogonSessionWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    )
+VOID SepRmDeleteLogonSessionWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage)
 
 /*++
 
@@ -275,23 +243,21 @@ Return Value:
     // Check that command is expected type
     //
 
-    ASSERT( CommandMessage->CommandNumber == RmDeleteLogonSession );
+    ASSERT(CommandMessage->CommandNumber == RmDeleteLogonSession);
 
 
     //
     // Typecast the command parameter to what we expect.
     //
 
-    LogonId = *((LUID UNALIGNED *) CommandMessage->CommandParams);
-
+    LogonId = *((LUID UNALIGNED *)CommandMessage->CommandParams);
 
 
     //
     // Try to create the logon session tracking record
     //
 
-    Status = SepDeleteLogonSessionTrack( &LogonId );
-
+    Status = SepDeleteLogonSessionTrack(&LogonId);
 
 
     //
@@ -304,11 +270,9 @@ Return Value:
     return;
 }
 
-
+
 NTSTATUS
-SepReferenceLogonSession(
-    IN PLUID LogonId
-    )
+SepReferenceLogonSession(IN PLUID LogonId)
 
 /*++
 
@@ -344,9 +308,9 @@ Return Value:
 
     PAGED_CODE();
 
-    SessionArrayIndex = SepLogonSessionIndex( LogonId );
+    SessionArrayIndex = SepLogonSessionIndex(LogonId);
 
-    Previous = &SepLogonSessions[ SessionArrayIndex ];
+    Previous = &SepLogonSessions[SessionArrayIndex];
 
     //
     // Protect modification of reference monitor database
@@ -361,33 +325,33 @@ Return Value:
 
     Current = *Previous;
 
-    while (Current != NULL) {
+    while (Current != NULL)
+    {
 
         //
         // If we found it, increment the reference count and return
         //
 
-        if (RtlEqualLuid( LogonId, &Current->LogonId) ) {
+        if (RtlEqualLuid(LogonId, &Current->LogonId))
+        {
 #ifdef SEP_TRACK_LOGON_SESSION_REFS
-             ULONG Refs;
+            ULONG Refs;
 #endif //SEP_TRACK_LOGON_SESSION_REFS
 
-             Current->ReferenceCount += 1;
+            Current->ReferenceCount += 1;
 
 #ifdef SEP_TRACK_LOGON_SESSION_REFS
-             Refs = Current->ReferenceCount;
+            Refs = Current->ReferenceCount;
 #endif //SEP_TRACK_LOGON_SESSION_REFS
 
-             SepRmReleaseDbWriteLock();
+            SepRmReleaseDbWriteLock();
 
 #ifdef SEP_TRACK_LOGON_SESSION_REFS
-             DbgPrint("SE (rm): ++ logon session: (%d, %d) to %d by (%d, %d)\n",
-                      LogonId->HighPart, LogonId->LowPart, Refs,
-                      PsGetCurrentThread()->Cid.UniqueProcess,
-                      PsGetCurrentThread()->Cid.UniqueThread);
+            DbgPrint("SE (rm): ++ logon session: (%d, %d) to %d by (%d, %d)\n", LogonId->HighPart, LogonId->LowPart,
+                     Refs, PsGetCurrentThread()->Cid.UniqueProcess, PsGetCurrentThread()->Cid.UniqueThread);
 
 #endif //SEP_TRACK_LOGON_SESSION_REFS
-             return STATUS_SUCCESS;
+            return STATUS_SUCCESS;
         }
 
         Current = Current->Next;
@@ -404,17 +368,11 @@ Return Value:
 
 
     return STATUS_NO_SUCH_LOGON_SESSION;
-
-
-
 }
 
 
-
 NTSTATUS
-SepCleanupLUIDDeviceMapDirectory(
-    PLUID pLogonId
-    )
+SepCleanupLUIDDeviceMapDirectory(PLUID pLogonId)
 /*++
 
 Routine Description:
@@ -441,25 +399,26 @@ Return Value:
 
 --*/
 {
-    NTSTATUS          Status;
+    NTSTATUS Status;
     OBJECT_ATTRIBUTES Attributes;
-    UNICODE_STRING    UnicodeString;
-    HANDLE            LinkHandle;
+    UNICODE_STRING UnicodeString;
+    HANDLE LinkHandle;
     POBJECT_DIRECTORY_INFORMATION DirInfo = NULL;
-    BOOLEAN           RestartScan;
-    WCHAR             szString[64]; // \Sessions\0\DosDevices\x-x = 10+1+12+(8)+1+(8)+1 = 41
-    ULONG             Context = 0;
-    ULONG             ReturnedLength;
-    HANDLE            DosDevicesDirectory;
-    HANDLE            *HandleArray;
-    ULONG             Size = 100;
-    ULONG             i, Count = 0;
-    ULONG             dirInfoLength = 0;
+    BOOLEAN RestartScan;
+    WCHAR szString[64]; // \Sessions\0\DosDevices\x-x = 10+1+12+(8)+1+(8)+1 = 41
+    ULONG Context = 0;
+    ULONG ReturnedLength;
+    HANDLE DosDevicesDirectory;
+    HANDLE *HandleArray;
+    ULONG Size = 100;
+    ULONG i, Count = 0;
+    ULONG dirInfoLength = 0;
 
     PAGED_CODE();
 
-    if (pLogonId == NULL) {
-        return( STATUS_INVALID_PARAMETER );
+    if (pLogonId == NULL)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     //
@@ -467,24 +426,16 @@ Return Value:
     // Get a kernel handle
     //
 
-    _snwprintf( szString,
-                sizeof(szString)/sizeof(WCHAR),
-                L"\\Sessions\\0\\DosDevices\\%08x-%08x",
-                pLogonId->HighPart,
-                pLogonId->LowPart );
+    _snwprintf(szString, sizeof(szString) / sizeof(WCHAR), L"\\Sessions\\0\\DosDevices\\%08x-%08x", pLogonId->HighPart,
+               pLogonId->LowPart);
 
     RtlInitUnicodeString(&UnicodeString, szString);
 
-    InitializeObjectAttributes(&Attributes,
-                               &UnicodeString,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&Attributes, &UnicodeString, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    Status = ZwOpenDirectoryObject(&DosDevicesDirectory,
-                                   DIRECTORY_QUERY,
-                                   &Attributes);
-    if (!NT_SUCCESS(Status)) {
+    Status = ZwOpenDirectoryObject(&DosDevicesDirectory, DIRECTORY_QUERY, &Attributes);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -494,16 +445,14 @@ Restart:
     // Create an array of handles to close with each scan
     // of the directory
     //
-    HandleArray = (HANDLE *)ExAllocatePoolWithTag(
-                                PagedPool,
-                                (Size * sizeof(HANDLE)),
-                                'aHeS'
-                                );
+    HandleArray = (HANDLE *)ExAllocatePoolWithTag(PagedPool, (Size * sizeof(HANDLE)), 'aHeS');
 
-    if (HandleArray == NULL) {
+    if (HandleArray == NULL)
+    {
 
         ZwClose(DosDevicesDirectory);
-        if (DirInfo != NULL) {
+        if (DirInfo != NULL)
+        {
             ExFreePool(DirInfo);
         }
         return STATUS_NO_MEMORY;
@@ -511,38 +460,40 @@ Restart:
 
     RestartScan = TRUE;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        do {
+        do
+        {
             //
             // ZwQueryDirectoryObject returns one element at a time
             //
-            Status = ZwQueryDirectoryObject( DosDevicesDirectory,
-                                             (PVOID)DirInfo,
-                                             dirInfoLength,
-                                             TRUE,
-                                             RestartScan,
-                                             &Context,
-                                             &ReturnedLength );
+            Status = ZwQueryDirectoryObject(DosDevicesDirectory, (PVOID)DirInfo, dirInfoLength, TRUE, RestartScan,
+                                            &Context, &ReturnedLength);
 
-            if (Status == STATUS_BUFFER_TOO_SMALL) {
+            if (Status == STATUS_BUFFER_TOO_SMALL)
+            {
                 dirInfoLength = ReturnedLength;
-                if (DirInfo != NULL) {
+                if (DirInfo != NULL)
+                {
                     ExFreePool(DirInfo);
                 }
-                DirInfo = ExAllocatePoolWithTag( PagedPool, dirInfoLength, 'bDeS' );
-                if (DirInfo == NULL) {
+                DirInfo = ExAllocatePoolWithTag(PagedPool, dirInfoLength, 'bDeS');
+                if (DirInfo == NULL)
+                {
                     Status = STATUS_INSUFFICIENT_RESOURCES;
                 }
             }
-        }while (Status == STATUS_BUFFER_TOO_SMALL);
+        } while (Status == STATUS_BUFFER_TOO_SMALL);
 
         //
         //  Check the status of the operation.
         //
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            if (Status == STATUS_NO_MORE_ENTRIES) {
+            if (Status == STATUS_NO_MORE_ENTRIES)
+            {
                 Status = STATUS_SUCCESS;
             }
             break;
@@ -551,12 +502,14 @@ Restart:
         //
         // Check that the element is a symbolic link
         //
-        if (!wcscmp(DirInfo->TypeName.Buffer, L"SymbolicLink")) {
+        if (!wcscmp(DirInfo->TypeName.Buffer, L"SymbolicLink"))
+        {
 
             //
             // check if the handle array is full
             //
-            if ( Count >= Size ) {
+            if (Count >= Size)
+            {
 
                 //
                 // empty the handle array by closing all the handles
@@ -564,78 +517,74 @@ Restart:
                 // a bigger handle array
                 // Need to restart the directory scan
                 //
-                for (i = 0; i < Count ; i++) {
-                    ZwClose (HandleArray[i]);
+                for (i = 0; i < Count; i++)
+                {
+                    ZwClose(HandleArray[i]);
                 }
                 Size += 20;
                 Count = 0;
                 ExFreePool((PVOID)HandleArray);
                 HandleArray = NULL;
                 goto Restart;
-
             }
 
-            InitializeObjectAttributes( &Attributes,
-                                        &DirInfo->Name,
-                                        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                                        DosDevicesDirectory,
-                                        NULL);
+            InitializeObjectAttributes(&Attributes, &DirInfo->Name, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+                                       DosDevicesDirectory, NULL);
 
-            Status = ZwOpenSymbolicLinkObject( &LinkHandle,
-                                               SYMBOLIC_LINK_ALL_ACCESS,
-                                               &Attributes);
+            Status = ZwOpenSymbolicLinkObject(&LinkHandle, SYMBOLIC_LINK_ALL_ACCESS, &Attributes);
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
                 //
                 // Make the object temporary so that its name goes away from
                 // the Object Manager's namespace
                 //
-                Status = ZwMakeTemporaryObject( LinkHandle );
+                Status = ZwMakeTemporaryObject(LinkHandle);
 
-                if (NT_SUCCESS( Status )) {
+                if (NT_SUCCESS(Status))
+                {
                     HandleArray[Count] = LinkHandle;
                     Count++;
                 }
-                else {
-                    ZwClose( LinkHandle );
+                else
+                {
+                    ZwClose(LinkHandle);
                 }
             }
-
         }
         RestartScan = FALSE;
-     }
+    }
 
-     //
-     // Close all the handles
-     //
-     for (i = 0; i < Count ; i++) {
+    //
+    // Close all the handles
+    //
+    for (i = 0; i < Count; i++)
+    {
 
-         ZwClose (HandleArray[i]);
+        ZwClose(HandleArray[i]);
+    }
 
-     }
+    if (HandleArray != NULL)
+    {
+        ExFreePool((PVOID)HandleArray);
+    }
 
-     if (HandleArray != NULL) {
-         ExFreePool((PVOID)HandleArray);
-     }
+    if (DirInfo != NULL)
+    {
+        ExFreePool(DirInfo);
+    }
 
-     if (DirInfo != NULL) {
-         ExFreePool(DirInfo);
-     }
+    if (DosDevicesDirectory != NULL)
+    {
+        ZwClose(DosDevicesDirectory);
+    }
 
-     if (DosDevicesDirectory != NULL) {
-         ZwClose(DosDevicesDirectory);
-     }
-
-     return Status;
+    return Status;
 }
 
 
-
-VOID
-SepDeReferenceLogonSession(
-    IN PLUID LogonId
-    )
+VOID SepDeReferenceLogonSession(IN PLUID LogonId)
 
 /*++
 
@@ -674,9 +623,9 @@ Return Value:
 
     PAGED_CODE();
 
-    SessionArrayIndex = SepLogonSessionIndex( LogonId );
+    SessionArrayIndex = SepLogonSessionIndex(LogonId);
 
-    Previous = &SepLogonSessions[ SessionArrayIndex ];
+    Previous = &SepLogonSessions[SessionArrayIndex];
 
     //
     // Protect modification of reference monitor database
@@ -691,15 +640,18 @@ Return Value:
 
     Current = *Previous;
 
-    while (Current != NULL) {
+    while (Current != NULL)
+    {
 
         //
         // If we found it, decrement the reference count and return
         //
 
-        if (RtlEqualLuid( LogonId, &Current->LogonId) ) {
+        if (RtlEqualLuid(LogonId, &Current->LogonId))
+        {
             Current->ReferenceCount -= 1;
-            if (Current->ReferenceCount == 0) {
+            if (Current->ReferenceCount == 0)
+            {
 
                 //
                 // Pull it from the list
@@ -718,7 +670,8 @@ Return Value:
                 // If the Device Map exist for this LUID,
                 // dereference the pointer to the Device Map
                 //
-                if (Current->pDeviceMap != NULL) {
+                if (Current->pDeviceMap != NULL)
+                {
 
                     //
                     // Dereference our reference on the device map
@@ -737,9 +690,10 @@ Return Value:
                 // namespace
                 // Remove our reference on the LUID's device map
                 //
-                if (pDeviceMap != NULL) {
-                    SepCleanupLUIDDeviceMapDirectory( LogonId );
-                    ObfDereferenceDeviceMap( pDeviceMap );
+                if (pDeviceMap != NULL)
+                {
+                    SepCleanupLUIDDeviceMapDirectory(LogonId);
+                    ObfDereferenceDeviceMap(pDeviceMap);
                 }
 
                 //
@@ -748,22 +702,22 @@ Return Value:
                 // logon session.
                 //
 
-                if (Current->Flags & SEP_TERMINATION_NOTIFY) {
-                    SepInformFileSystemsOfDeletedLogon( LogonId );
+                if (Current->Flags & SEP_TERMINATION_NOTIFY)
+                {
+                    SepInformFileSystemsOfDeletedLogon(LogonId);
                 }
 
                 //
                 // Deallocate the logon session track record.
                 //
 
-                ExFreePool( (PVOID)Current );
+                ExFreePool((PVOID)Current);
 
 
 #ifdef SEP_TRACK_LOGON_SESSION_REFS
-            DbgPrint("SE (rm): -- ** logon session: (%d, %d) to ZERO by (%d, %d)\n",
-                      LogonId->HighPart, LogonId->LowPart,
-                      PsGetCurrentThread()->Cid.UniqueProcess,
-                      PsGetCurrentThread()->Cid.UniqueThread);
+                DbgPrint("SE (rm): -- ** logon session: (%d, %d) to ZERO by (%d, %d)\n", LogonId->HighPart,
+                         LogonId->LowPart, PsGetCurrentThread()->Cid.UniqueProcess,
+                         PsGetCurrentThread()->Cid.UniqueThread);
 
 #endif //SEP_TRACK_LOGON_SESSION_REFS
 
@@ -771,12 +725,10 @@ Return Value:
                 // Inform the LSA about the deletion of this logon session.
                 //
 
-                SepInformLsaOfDeletedLogon( LogonId );
-
+                SepInformLsaOfDeletedLogon(LogonId);
 
 
                 return;
-
             }
 
             //
@@ -790,10 +742,8 @@ Return Value:
             SepRmReleaseDbWriteLock();
 
 #ifdef SEP_TRACK_LOGON_SESSION_REFS
-            DbgPrint("SE (rm): -- logon session: (%d, %d) to %d by (%d, %d)\n",
-                      LogonId->HighPart, LogonId->LowPart, Refs,
-                      PsGetCurrentThread()->Cid.UniqueProcess,
-                      PsGetCurrentThread()->Cid.UniqueThread);
+            DbgPrint("SE (rm): -- logon session: (%d, %d) to %d by (%d, %d)\n", LogonId->HighPart, LogonId->LowPart,
+                     Refs, PsGetCurrentThread()->Cid.UniqueProcess, PsGetCurrentThread()->Cid.UniqueThread);
 #endif //SEP_TRACK_LOGON_SESSION_REFS
 
             return;
@@ -810,17 +760,14 @@ Return Value:
     // a logon session we didn't know existed.
     //
 
-    KeBugCheckEx( DEREF_UNKNOWN_LOGON_SESSION, 0, 0, 0, 0 );
+    KeBugCheckEx(DEREF_UNKNOWN_LOGON_SESSION, 0, 0, 0, 0);
 
     return;
-
 }
 
-
+
 NTSTATUS
-SepCreateLogonSessionTrack(
-    IN PLUID LogonId
-    )
+SepCreateLogonSessionTrack(IN PLUID LogonId)
 
 /*++
 
@@ -861,14 +808,11 @@ Return Value:
     // Make sure we can allocate a new logon session track record
     //
 
-    LogonSessionTrack = (PSEP_LOGON_SESSION_REFERENCES)
-                        ExAllocatePoolWithTag(
-                            PagedPool,
-                            sizeof(SEP_LOGON_SESSION_REFERENCES),
-                            'sLeS'
-                            );
+    LogonSessionTrack =
+        (PSEP_LOGON_SESSION_REFERENCES)ExAllocatePoolWithTag(PagedPool, sizeof(SEP_LOGON_SESSION_REFERENCES), 'sLeS');
 
-    if (LogonSessionTrack == NULL) {
+    if (LogonSessionTrack == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -882,9 +826,9 @@ Return Value:
 #endif
 
 
-    SessionArrayIndex = SepLogonSessionIndex( LogonId );
+    SessionArrayIndex = SepLogonSessionIndex(LogonId);
 
-    Previous = &SepLogonSessions[ SessionArrayIndex ];
+    Previous = &SepLogonSessions[SessionArrayIndex];
 
     //
     // Protect modification of reference monitor database
@@ -900,9 +844,11 @@ Return Value:
 
     Current = *Previous;
 
-    while (Current != NULL) {
+    while (Current != NULL)
+    {
 
-        if (RtlEqualLuid( LogonId, &Current->LogonId) ) {
+        if (RtlEqualLuid(LogonId, &Current->LogonId))
+        {
 
             //
             // One already exists. Hmmm.
@@ -912,7 +858,6 @@ Return Value:
 
             ExFreePool(LogonSessionTrack);
             return STATUS_LOGON_SESSION_EXISTS;
-
         }
 
         Current = Current->Next;
@@ -930,14 +875,11 @@ Return Value:
     SepRmReleaseDbWriteLock();
 
     return STATUS_SUCCESS;
-
 }
 
-
+
 NTSTATUS
-SepDeleteLogonSessionTrack(
-    IN PLUID LogonId
-    )
+SepDeleteLogonSessionTrack(IN PLUID LogonId)
 
 /*++
 
@@ -978,9 +920,9 @@ Return Value:
 
     PAGED_CODE();
 
-    SessionArrayIndex = SepLogonSessionIndex( LogonId );
+    SessionArrayIndex = SepLogonSessionIndex(LogonId);
 
-    Previous = &SepLogonSessions[ SessionArrayIndex ];
+    Previous = &SepLogonSessions[SessionArrayIndex];
 
     //
     // Protect modification of reference monitor database
@@ -995,15 +937,18 @@ Return Value:
 
     Current = *Previous;
 
-    while (Current != NULL) {
+    while (Current != NULL)
+    {
 
         //
         // If we found it, make sure reference count is zero
         //
 
-        if (RtlEqualLuid( LogonId, &Current->LogonId) ) {
+        if (RtlEqualLuid(LogonId, &Current->LogonId))
+        {
 
-            if (Current->ReferenceCount == 0) {
+            if (Current->ReferenceCount == 0)
+            {
 
                 //
                 // Pull it from the list
@@ -1015,7 +960,8 @@ Return Value:
                 // If the Device Map exist for this LUID,
                 // dereference the pointer to the Device Map
                 //
-                if (Current->pDeviceMap != NULL) {
+                if (Current->pDeviceMap != NULL)
+                {
 
                     //
                     // Dereference our reference on the device map
@@ -1040,20 +986,20 @@ Return Value:
                 // namespace
                 // Remove our reference on the LUID's device map
                 //
-                if (pDeviceMap != NULL) {
-                    SepCleanupLUIDDeviceMapDirectory( LogonId );
-                    ObfDereferenceDeviceMap( pDeviceMap );
+                if (pDeviceMap != NULL)
+                {
+                    SepCleanupLUIDDeviceMapDirectory(LogonId);
+                    ObfDereferenceDeviceMap(pDeviceMap);
                 }
 
                 //
                 // Deallocate the logon session track record.
                 //
 
-                ExFreePool( (PVOID)Current );
+                ExFreePool((PVOID)Current);
 
 
                 return STATUS_SUCCESS;
-
             }
 
             //
@@ -1078,14 +1024,10 @@ Return Value:
     //
 
     return STATUS_NO_SUCH_LOGON_SESSION;
-
 }
 
-
-VOID
-SepInformLsaOfDeletedLogon(
-    IN PLUID LogonId
-    )
+
+VOID SepInformLsaOfDeletedLogon(IN PLUID LogonId)
 
 /*++
 
@@ -1122,8 +1064,9 @@ Return Value:
     // structure.
     //
 
-    DeleteLogonItem = ExAllocatePoolWithTag( PagedPool, sizeof(SEP_LSA_WORK_ITEM), 'wLeS' );
-    if (DeleteLogonItem == NULL) {
+    DeleteLogonItem = ExAllocatePoolWithTag(PagedPool, sizeof(SEP_LSA_WORK_ITEM), 'wLeS');
+    if (DeleteLogonItem == NULL)
+    {
 
         //
         // I don't know what to do here... we loose track of a logon session,
@@ -1131,33 +1074,30 @@ Return Value:
         //
 
         return;
-
     }
 
-    DeleteLogonItem->CommandParams.LogonId   = (*LogonId);
-    DeleteLogonItem->CommandNumber           = LsapLogonSessionDeletedCommand;
-    DeleteLogonItem->CommandParamsLength     = sizeof( LUID );
-    DeleteLogonItem->ReplyBuffer             = NULL;
-    DeleteLogonItem->ReplyBufferLength       = 0;
-    DeleteLogonItem->CleanupFunction         = NULL;
-    DeleteLogonItem->CleanupParameter        = 0;
-    DeleteLogonItem->Tag                     = SepDeleteLogon;
+    DeleteLogonItem->CommandParams.LogonId = (*LogonId);
+    DeleteLogonItem->CommandNumber = LsapLogonSessionDeletedCommand;
+    DeleteLogonItem->CommandParamsLength = sizeof(LUID);
+    DeleteLogonItem->ReplyBuffer = NULL;
+    DeleteLogonItem->ReplyBufferLength = 0;
+    DeleteLogonItem->CleanupFunction = NULL;
+    DeleteLogonItem->CleanupParameter = 0;
+    DeleteLogonItem->Tag = SepDeleteLogon;
     DeleteLogonItem->CommandParamsMemoryType = SepRmImmediateMemory;
 
-    if (!SepQueueWorkItem( DeleteLogonItem, TRUE )) {
+    if (!SepQueueWorkItem(DeleteLogonItem, TRUE))
+    {
 
-        ExFreePool( DeleteLogonItem );
+        ExFreePool(DeleteLogonItem);
     }
 
     return;
-
 }
 
-
+
 NTSTATUS
-SeRegisterLogonSessionTerminatedRoutine(
-    IN PSE_LOGON_SESSION_TERMINATED_ROUTINE CallbackRoutine
-    )
+SeRegisterLogonSessionTerminatedRoutine(IN PSE_LOGON_SESSION_TERMINATED_ROUTINE CallbackRoutine)
 
 /*++
 
@@ -1186,17 +1126,17 @@ Return Value:
 
     PAGED_CODE();
 
-    if (CallbackRoutine == NULL) {
-        return( STATUS_INVALID_PARAMETER );
+    if (CallbackRoutine == NULL)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
-    NewCallback = ExAllocatePoolWithTag(
-                        PagedPool | POOL_COLD_ALLOCATION,
-                        sizeof(SEP_LOGON_SESSION_TERMINATED_NOTIFICATION),
-                        'SFeS');
+    NewCallback = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION,
+                                        sizeof(SEP_LOGON_SESSION_TERMINATED_NOTIFICATION), 'SFeS');
 
-    if (NewCallback == NULL) {
-        return( STATUS_INSUFFICIENT_RESOURCES );
+    if (NewCallback == NULL)
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
     SepRmAcquireDbWriteLock();
@@ -1209,14 +1149,12 @@ Return Value:
 
     SepRmReleaseDbWriteLock();
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-
+
 NTSTATUS
-SeUnregisterLogonSessionTerminatedRoutine(
-    IN PSE_LOGON_SESSION_TERMINATED_ROUTINE CallbackRoutine
-    )
+SeUnregisterLogonSessionTerminatedRoutine(IN PSE_LOGON_SESSION_TERMINATED_ROUTINE CallbackRoutine)
 
 /*++
 
@@ -1246,51 +1184,47 @@ Return Value:
 
     PAGED_CODE();
 
-    if (CallbackRoutine == NULL) {
-        return( STATUS_INVALID_PARAMETER );
+    if (CallbackRoutine == NULL)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     SepRmAcquireDbWriteLock();
 
-    for (PreviousEntry = &SeFileSystemNotifyRoutinesHead,
-            NotifyEntry = SeFileSystemNotifyRoutinesHead.Next;
-                NotifyEntry != NULL;
-                    PreviousEntry = NotifyEntry,
-                        NotifyEntry = NotifyEntry->Next) {
+    for (PreviousEntry = &SeFileSystemNotifyRoutinesHead, NotifyEntry = SeFileSystemNotifyRoutinesHead.Next;
+         NotifyEntry != NULL; PreviousEntry = NotifyEntry, NotifyEntry = NotifyEntry->Next)
+    {
 
-         if (NotifyEntry->CallbackRoutine == CallbackRoutine)
-             break;
-
+        if (NotifyEntry->CallbackRoutine == CallbackRoutine)
+            break;
     }
 
-    if (NotifyEntry != NULL) {
+    if (NotifyEntry != NULL)
+    {
 
         PreviousEntry->Next = NotifyEntry->Next;
 
         SepRmReleaseDbWriteLock();
 
-        ExFreePool( NotifyEntry );
+        ExFreePool(NotifyEntry);
 
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         SepRmReleaseDbWriteLock();
 
         Status = STATUS_NOT_FOUND;
-
     }
 
 
-    return( Status );
-
+    return (Status);
 }
 
-
+
 NTSTATUS
-SeMarkLogonSessionForTerminationNotification(
-    IN PLUID LogonId
-    )
+SeMarkLogonSessionForTerminationNotification(IN PLUID LogonId)
 
 /*++
 
@@ -1318,9 +1252,9 @@ Returns:
 
     PAGED_CODE();
 
-    SessionArrayIndex = SepLogonSessionIndex( LogonId );
+    SessionArrayIndex = SepLogonSessionIndex(LogonId);
 
-    Previous = &SepLogonSessions[ SessionArrayIndex ];
+    Previous = &SepLogonSessions[SessionArrayIndex];
 
     //
     // Protect modification of reference monitor database
@@ -1335,13 +1269,15 @@ Returns:
 
     Current = *Previous;
 
-    while (Current != NULL) {
+    while (Current != NULL)
+    {
 
         //
         // If we found it, decrement the reference count and return
         //
 
-        if (RtlEqualLuid( LogonId, &Current->LogonId) ) {
+        if (RtlEqualLuid(LogonId, &Current->LogonId))
+        {
             Current->Flags |= SEP_TERMINATION_NOTIFY;
             break;
         }
@@ -1351,15 +1287,11 @@ Returns:
 
     SepRmReleaseDbWriteLock();
 
-    return( (Current != NULL) ? STATUS_SUCCESS : STATUS_NOT_FOUND );
-
+    return ((Current != NULL) ? STATUS_SUCCESS : STATUS_NOT_FOUND);
 }
 
-
-VOID
-SepInformFileSystemsOfDeletedLogon(
-    IN PLUID LogonId
-    )
+
+VOID SepInformFileSystemsOfDeletedLogon(IN PLUID LogonId)
 
 /*++
 
@@ -1387,12 +1319,10 @@ Return Value:
 
     PAGED_CODE();
 
-    FSNotifyContext = ExAllocatePoolWithTag(
-                            NonPagedPool,
-                            sizeof(SEP_FILE_SYSTEM_NOTIFY_CONTEXT),
-                            'SFeS');
+    FSNotifyContext = ExAllocatePoolWithTag(NonPagedPool, sizeof(SEP_FILE_SYSTEM_NOTIFY_CONTEXT), 'SFeS');
 
-    if (FSNotifyContext == NULL) {
+    if (FSNotifyContext == NULL)
+    {
 
         //
         // I don't know what to do here... file systems will loose track of a
@@ -1400,27 +1330,20 @@ Return Value:
         //
 
         return;
-
     }
 
     FSNotifyContext->LogonId = *LogonId;
 
-    ExInitializeWorkItem( &FSNotifyContext->WorkItem,
-                          (PWORKER_THREAD_ROUTINE) SepNotifyFileSystems,
-                          (PVOID) FSNotifyContext);
+    ExInitializeWorkItem(&FSNotifyContext->WorkItem, (PWORKER_THREAD_ROUTINE)SepNotifyFileSystems,
+                         (PVOID)FSNotifyContext);
 
-    ExQueueWorkItem( &FSNotifyContext->WorkItem, DelayedWorkQueue );
-
+    ExQueueWorkItem(&FSNotifyContext->WorkItem, DelayedWorkQueue);
 }
 
-
-VOID
-SepNotifyFileSystems(
-    IN PVOID Context
-    )
+
+VOID SepNotifyFileSystems(IN PVOID Context)
 {
-    PSEP_FILE_SYSTEM_NOTIFY_CONTEXT FSNotifyContext =
-        (PSEP_FILE_SYSTEM_NOTIFY_CONTEXT) Context;
+    PSEP_FILE_SYSTEM_NOTIFY_CONTEXT FSNotifyContext = (PSEP_FILE_SYSTEM_NOTIFY_CONTEXT)Context;
 
     PSEP_LOGON_SESSION_TERMINATED_NOTIFICATION NextCallback;
 
@@ -1434,24 +1357,22 @@ SepNotifyFileSystems(
 
     NextCallback = SeFileSystemNotifyRoutinesHead.Next;
 
-    while (NextCallback != NULL) {
+    while (NextCallback != NULL)
+    {
 
-        NextCallback->CallbackRoutine( &FSNotifyContext->LogonId );
+        NextCallback->CallbackRoutine(&FSNotifyContext->LogonId);
 
         NextCallback = NextCallback->Next;
     }
 
     SepRmReleaseDbReadLock();
 
-    ExFreePool( FSNotifyContext );
+    ExFreePool(FSNotifyContext);
 }
 
-
+
 NTSTATUS
-SeGetLogonIdDeviceMap(
-    IN PLUID pLogonId,
-    OUT PDEVICE_MAP* ppDevMap
-    )
+SeGetLogonIdDeviceMap(IN PLUID pLogonId, OUT PDEVICE_MAP *ppDevMap)
 
 /*++
 
@@ -1481,17 +1402,19 @@ Return Value:
 
     PAGED_CODE();
 
-    if( pLogonId == NULL ) {
-        return( STATUS_INVALID_PARAMETER );
+    if (pLogonId == NULL)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
-    if( ppDevMap == NULL ) {
-        return( STATUS_INVALID_PARAMETER );
+    if (ppDevMap == NULL)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
-    SessionArrayIndex = SepLogonSessionIndex( pLogonId );
+    SessionArrayIndex = SepLogonSessionIndex(pLogonId);
 
-    Previous = &SepLogonSessions[ SessionArrayIndex ];
+    Previous = &SepLogonSessions[SessionArrayIndex];
 
     //
     // Protect modification of reference monitor database
@@ -1505,13 +1428,15 @@ Return Value:
 
     Current = *Previous;
 
-    while (Current != NULL) {
+    while (Current != NULL)
+    {
 
         //
         // If we found it, return a handle to the device map
         //
 
-        if (RtlEqualLuid( pLogonId, &(Current->LogonId) )) {
+        if (RtlEqualLuid(pLogonId, &(Current->LogonId)))
+        {
 
             NTSTATUS Status;
 
@@ -1520,11 +1445,12 @@ Return Value:
             //
             // Check if the Device Map does not exist for this LUID
             //
-            if (Current->pDeviceMap == NULL) {
+            if (Current->pDeviceMap == NULL)
+            {
 
-                WCHAR  szString[64]; // \Sessions\0\DosDevices\x-x = 10+1+12+(8)+1+(8)+1 = 41
+                WCHAR szString[64]; // \Sessions\0\DosDevices\x-x = 10+1+12+(8)+1+(8)+1 = 41
                 OBJECT_ATTRIBUTES Obja;
-                UNICODE_STRING    UnicodeString, SymLinkUnicodeString;
+                UNICODE_STRING UnicodeString, SymLinkUnicodeString;
                 HANDLE hDevMap, hSymLink;
                 PDEVICE_MAP pDeviceMap = NULL;
 
@@ -1534,65 +1460,54 @@ Return Value:
                 Current->ReferenceCount += 1;
                 SepRmReleaseDbWriteLock();
 
-                _snwprintf( szString,
-                            sizeof(szString)/sizeof(WCHAR),
-                            L"\\Sessions\\0\\DosDevices\\%08x-%08x",
-                            pLogonId->HighPart,
-                            pLogonId->LowPart );
+                _snwprintf(szString, sizeof(szString) / sizeof(WCHAR), L"\\Sessions\\0\\DosDevices\\%08x-%08x",
+                           pLogonId->HighPart, pLogonId->LowPart);
 
-                RtlInitUnicodeString( &UnicodeString, szString );
+                RtlInitUnicodeString(&UnicodeString, szString);
 
                 //
                 // Device Map for LUID does not exist
                 // Create the Device Map for the LUID
                 //
-                InitializeObjectAttributes( &Obja,
-                                            &UnicodeString,
-                                            OBJ_CASE_INSENSITIVE | OBJ_OPENIF | OBJ_KERNEL_HANDLE,
-                                            NULL,
-                                            NULL );
+                InitializeObjectAttributes(&Obja, &UnicodeString, OBJ_CASE_INSENSITIVE | OBJ_OPENIF | OBJ_KERNEL_HANDLE,
+                                           NULL, NULL);
 
-                Status = ZwCreateDirectoryObject( &hDevMap,
-                                                  DIRECTORY_ALL_ACCESS,
-                                                  &Obja );
+                Status = ZwCreateDirectoryObject(&hDevMap, DIRECTORY_ALL_ACCESS, &Obja);
 
-                if (NT_SUCCESS( Status )) {
+                if (NT_SUCCESS(Status))
+                {
 
                     //
                     // Set the DeviceMap for this directory object
                     //
-                    Status = ObSetDirectoryDeviceMap( &pDeviceMap,
-                                                      hDevMap );
+                    Status = ObSetDirectoryDeviceMap(&pDeviceMap, hDevMap);
 
-                    if (NT_SUCCESS( Status )) {
+                    if (NT_SUCCESS(Status))
+                    {
 
                         //
                         // Create the Global SymLink to the global DosDevices
                         //
-                        RtlInitUnicodeString( &SymLinkUnicodeString, L"Global" );
+                        RtlInitUnicodeString(&SymLinkUnicodeString, L"Global");
 
-                        RtlInitUnicodeString( &UnicodeString, L"\\Global??" );
+                        RtlInitUnicodeString(&UnicodeString, L"\\Global??");
 
                         InitializeObjectAttributes(
-                                &Obja,
-                                &SymLinkUnicodeString,
-                                OBJ_PERMANENT | OBJ_CASE_INSENSITIVE | OBJ_OPENIF | OBJ_KERNEL_HANDLE,
-                                hDevMap,
-                                NULL );
+                            &Obja, &SymLinkUnicodeString,
+                            OBJ_PERMANENT | OBJ_CASE_INSENSITIVE | OBJ_OPENIF | OBJ_KERNEL_HANDLE, hDevMap, NULL);
 
-                        Status = ZwCreateSymbolicLinkObject( &hSymLink,
-                                                             SYMBOLIC_LINK_ALL_ACCESS,
-                                                             &Obja,
-                                                             &UnicodeString );
-                        if (NT_SUCCESS( Status )) {
-                            ZwClose( hSymLink );
+                        Status = ZwCreateSymbolicLinkObject(&hSymLink, SYMBOLIC_LINK_ALL_ACCESS, &Obja, &UnicodeString);
+                        if (NT_SUCCESS(Status))
+                        {
+                            ZwClose(hSymLink);
                         }
-                        else {
+                        else
+                        {
                             ObfDereferenceDeviceMap(pDeviceMap);
                         }
                     }
 
-                    ZwClose( hDevMap );
+                    ZwClose(hDevMap);
                 }
 
                 //
@@ -1600,14 +1515,18 @@ Return Value:
                 //
                 SepRmAcquireDbWriteLock();
 
-                if (!NT_SUCCESS( Status )) {
+                if (!NT_SUCCESS(Status))
+                {
                     *ppDevMap = NULL;
                 }
-                else {
-                    if(Current->pDeviceMap == NULL) {
+                else
+                {
+                    if (Current->pDeviceMap == NULL)
+                    {
                         Current->pDeviceMap = pDeviceMap;
                     }
-                    else {
+                    else
+                    {
                         ObfDereferenceDeviceMap(pDeviceMap);
                     }
                     *ppDevMap = Current->pDeviceMap;
@@ -1616,27 +1535,27 @@ Return Value:
                 //
                 // Remove the reference we just added
                 //
-                if(Current->ReferenceCount == 1) {
+                if (Current->ReferenceCount == 1)
+                {
 
                     //
-                    // Special case: the count will be decremented to zero, so 
-                    // the LUID should go away.  We drop the lock and call the 
-                    // existing DeReference function to actually destroy the 
+                    // Special case: the count will be decremented to zero, so
+                    // the LUID should go away.  We drop the lock and call the
+                    // existing DeReference function to actually destroy the
                     // object.
                     //
 
                     SepRmReleaseDbWriteLock();
                     SepDeReferenceLogonSession(pLogonId);
-                    return ( Status );
-
-                } 
-                else {
+                    return (Status);
+                }
+                else
+                {
                     Current->ReferenceCount -= 1;
                 }
-
-
             }
-            else {
+            else
+            {
 
                 //
                 // Device Map for LUID already exist
@@ -1648,7 +1567,7 @@ Return Value:
 
             SepRmReleaseDbWriteLock();
 
-            return ( Status );
+            return (Status);
         }
 
         Current = Current->Next;
@@ -1668,10 +1587,7 @@ Return Value:
 
 #if DBG || TOKEN_LEAK_MONITOR
 
-VOID 
-SepAddTokenLogonSession(
-    IN PTOKEN Token
-    )
+VOID SepAddTokenLogonSession(IN PTOKEN Token)
 
 /*++
 
@@ -1697,7 +1613,7 @@ Return Value
 
     PAGED_CODE();
 
-    SessionArrayIndex = SepLogonSessionIndex( LogonId );
+    SessionArrayIndex = SepLogonSessionIndex(LogonId);
 
     //
     // Protect modification of reference monitor database
@@ -1705,35 +1621,38 @@ Return Value
 
     SepRmAcquireDbWriteLock();
 
-    Current = SepLogonSessions[ SessionArrayIndex ];
+    Current = SepLogonSessions[SessionArrayIndex];
 
     //
     // Now walk the list for our logon session array hash index.
     //
 
-    while (Current != NULL) {
+    while (Current != NULL)
+    {
 
         //
         // If we found it, increment the reference count and return
         //
-                   
-        if (RtlEqualLuid( LogonId, &Current->LogonId )) {
 
-             // 
-             // Stick the token address into the track.  Find the last in the list of tokens
-             // for this session.
-             //
-                        
-             TokenTrack = ExAllocatePoolWithTag(PagedPool, sizeof(SEP_LOGON_SESSION_TOKEN), 'sLeS');
+        if (RtlEqualLuid(LogonId, &Current->LogonId))
+        {
 
-             if (TokenTrack) {
-                 RtlZeroMemory(TokenTrack, sizeof(SEP_LOGON_SESSION_TOKEN));
-                 TokenTrack->Token = Token;
-                 InsertTailList(&Current->TokenList, &TokenTrack->ListEntry);
-             } 
+            //
+            // Stick the token address into the track.  Find the last in the list of tokens
+            // for this session.
+            //
 
-             SepRmReleaseDbWriteLock();
-             return;
+            TokenTrack = ExAllocatePoolWithTag(PagedPool, sizeof(SEP_LOGON_SESSION_TOKEN), 'sLeS');
+
+            if (TokenTrack)
+            {
+                RtlZeroMemory(TokenTrack, sizeof(SEP_LOGON_SESSION_TOKEN));
+                TokenTrack->Token = Token;
+                InsertTailList(&Current->TokenList, &TokenTrack->ListEntry);
+            }
+
+            SepRmReleaseDbWriteLock();
+            return;
         }
 
         Current = Current->Next;
@@ -1743,10 +1662,7 @@ Return Value
     SepRmReleaseDbWriteLock();
 }
 
-VOID
-SepRemoveTokenLogonSession(
-    IN PTOKEN Token
-    )
+VOID SepRemoveTokenLogonSession(IN PTOKEN Token)
 
 /*++
 
@@ -1770,14 +1686,15 @@ Return Value
     PSEP_LOGON_SESSION_TOKEN TokenTrack = NULL;
     PLUID LogonId = &Token->AuthenticationId;
     PLIST_ENTRY ListEntry;
-    
+
     PAGED_CODE();
 
-    if (Token->TokenFlags & TOKEN_SESSION_NOT_REFERENCED) {
+    if (Token->TokenFlags & TOKEN_SESSION_NOT_REFERENCED)
+    {
         return;
     }
 
-    SessionArrayIndex = SepLogonSessionIndex( LogonId );
+    SessionArrayIndex = SepLogonSessionIndex(LogonId);
 
     //
     // Protect modification of reference monitor database
@@ -1785,26 +1702,30 @@ Return Value
 
     SepRmAcquireDbWriteLock();
 
-    Current = SepLogonSessions[ SessionArrayIndex ];
+    Current = SepLogonSessions[SessionArrayIndex];
 
     //
     // Now walk the list for our logon session array hash index.
     //
 
-    while (Current != NULL) {
+    while (Current != NULL)
+    {
 
-        if (RtlEqualLuid( LogonId, &Current->LogonId )) {
-            
+        if (RtlEqualLuid(LogonId, &Current->LogonId))
+        {
+
             //
             // Remove the token from the token list for this session.
             //
 
             ListEntry = Current->TokenList.Flink;
-            
-            while (ListEntry != &Current->TokenList) {
-                TokenTrack = CONTAINING_RECORD (ListEntry, SEP_LOGON_SESSION_TOKEN, ListEntry);
-                if (TokenTrack->Token == Token) {
-                    RemoveEntryList (ListEntry);
+
+            while (ListEntry != &Current->TokenList)
+            {
+                TokenTrack = CONTAINING_RECORD(ListEntry, SEP_LOGON_SESSION_TOKEN, ListEntry);
+                if (TokenTrack->Token == Token)
+                {
+                    RemoveEntryList(ListEntry);
                     SepRmReleaseDbWriteLock();
 
                     ExFreePool(TokenTrack);

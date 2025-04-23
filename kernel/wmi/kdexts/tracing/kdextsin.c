@@ -31,9 +31,8 @@ Environment:
 #include <windows.h>
 #include <wdbgexts.h>
 
-#undef  KDEXTS_EXTERN
+#undef KDEXTS_EXTERN
 
 #include <ntverp.h>
 
 #include <kdexts.c>
-

@@ -37,65 +37,59 @@ PVOID gpDDEMLHeap;
 * 11-1-91 sanfords Created.
 \***************************************************************************/
 
-FUNCLOG4(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, DdeInitializeA, LPDWORD, pidInst, PFNCALLBACK, pfnCallback, DWORD, afCmd, DWORD, ulRes)
-UINT DdeInitializeA(
-LPDWORD pidInst,
-PFNCALLBACK pfnCallback,
-DWORD afCmd,
-DWORD ulRes)
+FUNCLOG4(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, DdeInitializeA, LPDWORD, pidInst, PFNCALLBACK, pfnCallback, DWORD, afCmd,
+         DWORD, ulRes)
+UINT DdeInitializeA(LPDWORD pidInst, PFNCALLBACK pfnCallback, DWORD afCmd, DWORD ulRes)
 {
-    if (ulRes != 0) {
+    if (ulRes != 0)
+    {
         return (DMLERR_INVALIDPARAMETER);
     }
     return (InternalDdeInitialize(pidInst, pfnCallback, afCmd, 0));
 }
 
 
-
-FUNCLOG4(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, DdeInitializeW, LPDWORD, pidInst, PFNCALLBACK, pfnCallback, DWORD, afCmd, DWORD, ulRes)
-UINT DdeInitializeW(
-LPDWORD pidInst,
-PFNCALLBACK pfnCallback,
-DWORD afCmd,
-DWORD ulRes)
+FUNCLOG4(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, DdeInitializeW, LPDWORD, pidInst, PFNCALLBACK, pfnCallback, DWORD, afCmd,
+         DWORD, ulRes)
+UINT DdeInitializeW(LPDWORD pidInst, PFNCALLBACK pfnCallback, DWORD afCmd, DWORD ulRes)
 {
-    if (ulRes != 0) {
+    if (ulRes != 0)
+    {
         return (DMLERR_INVALIDPARAMETER);
     }
     return (InternalDdeInitialize(pidInst, pfnCallback, afCmd, 1));
 }
 
 
-UINT InternalDdeInitialize(
-LPDWORD pidInst,
-PFNCALLBACK pfnCallback,
-DWORD afCmd,
-BOOL fUnicode)
+UINT InternalDdeInitialize(LPDWORD pidInst, PFNCALLBACK pfnCallback, DWORD afCmd, BOOL fUnicode)
 {
     UINT uiRet = DMLERR_MEMORY_ERROR;
     register PCL_INSTANCE_INFO pcii;
 
-    if (afCmd & APPCLASS_MONITOR) {
+    if (afCmd & APPCLASS_MONITOR)
+    {
         afCmd |= CBF_MONMASK;
     }
 
-    if (afCmd & APPCMD_CLIENTONLY) {
+    if (afCmd & APPCMD_CLIENTONLY)
+    {
         afCmd |= CBF_FAIL_CONNECTIONS;
     }
 
     EnterDDECrit;
 
-    if (*pidInst != 0) {
-        pcii = ValidateInstance((HANDLE)LongToHandle( *pidInst ));
-        if (pcii == NULL) {
+    if (*pidInst != 0)
+    {
+        pcii = ValidateInstance((HANDLE)LongToHandle(*pidInst));
+        if (pcii == NULL)
+        {
             uiRet = DMLERR_INVALIDPARAMETER;
             goto Exit;
         }
 
         // only allow certain bits to be changed on reinitialize call
 
-        pcii->afCmd = (pcii->afCmd & ~(CBF_MASK | MF_MASK)) |
-                (afCmd & (CBF_MASK | MF_MASK));
+        pcii->afCmd = (pcii->afCmd & ~(CBF_MASK | MF_MASK)) | (afCmd & (CBF_MASK | MF_MASK));
 
         LeaveDDECrit;
         NtUserUpdateInstance(pcii->hInstServer, &pcii->MonitorFlags, afCmd);
@@ -103,13 +97,15 @@ BOOL fUnicode)
     }
 
     pcii = (PCL_INSTANCE_INFO)DDEMLAlloc(sizeof(CL_INSTANCE_INFO));
-    if (pcii == NULL) {
+    if (pcii == NULL)
+    {
         uiRet = DMLERR_MEMORY_ERROR;
         goto Exit;
     }
 
     pcii->plaNameService = (LATOM *)DDEMLAlloc(sizeof(LATOM));
-    if (pcii->plaNameService == NULL) {
+    if (pcii->plaNameService == NULL)
+    {
         uiRet = DMLERR_MEMORY_ERROR;
         goto Backout3;
     }
@@ -122,11 +118,11 @@ BOOL fUnicode)
      * hotkeys don't take it as the first window created in the app and
      * assign it as the hotkey.
      */
-    pcii->hwndMother =  _CreateWindowEx(0, (LPTSTR)(gpsi->atomSysClass[ICLS_DDEMLMOTHER]), L"",
-            WS_POPUP, 0, 0, 0, 0, (HWND)0,
-            (HMENU)0, 0, (LPVOID)NULL, CW_FLAGS_DIFFHMOD);
+    pcii->hwndMother = _CreateWindowEx(0, (LPTSTR)(gpsi->atomSysClass[ICLS_DDEMLMOTHER]), L"", WS_POPUP, 0, 0, 0, 0,
+                                       (HWND)0, (HMENU)0, 0, (LPVOID)NULL, CW_FLAGS_DIFFHMOD);
 
-    if (pcii->hwndMother == 0) {
+    if (pcii->hwndMother == 0)
+    {
         uiRet = DMLERR_SYS_ERROR;
         goto Backout2;
     }
@@ -147,25 +143,23 @@ BOOL fUnicode)
     // flying around may come charging in.
 
     LeaveDDECrit;
-    uiRet = NtUserDdeInitialize(&pcii->hInstServer,
-                            &pcii->hwndEvent,
-                            &pcii->MonitorFlags,
-                            pcii->afCmd,
-                            pcii);
+    uiRet = NtUserDdeInitialize(&pcii->hInstServer, &pcii->hwndEvent, &pcii->MonitorFlags, pcii->afCmd, pcii);
     EnterDDECrit;
 
-    if (uiRet != DMLERR_NO_ERROR) {
-Backout:
+    if (uiRet != DMLERR_NO_ERROR)
+    {
+    Backout:
         NtUserDestroyWindow(pcii->hwndMother);
-Backout2:
+    Backout2:
         DDEMLFree(pcii->plaNameService);
-Backout3:
+    Backout3:
         DDEMLFree(pcii);
         goto Exit;
     }
     pcii->hInstClient = AddInstance(pcii->hInstServer);
     *pidInst = HandleToUlong(pcii->hInstClient);
-    if (pcii->hInstClient == 0) {
+    if (pcii->hInstClient == 0)
+    {
         LeaveDDECrit;
         NtUserCallOneParam((ULONG_PTR)pcii->hInstServer, SFI__CSDDEUNINITIALIZE);
         EnterDDECrit;
@@ -176,7 +170,8 @@ Backout3:
 
     pcii->next = pciiList;
     pciiList = pcii;
-    if (fUnicode) {
+    if (fUnicode)
+    {
         pcii->flags |= IIF_UNICODE;
     }
     uiRet = DMLERR_NO_ERROR;
@@ -185,7 +180,6 @@ Exit:
     LeaveDDECrit;
     return (uiRet);
 }
-
 
 
 /***************************************************************************\
@@ -199,8 +193,7 @@ Exit:
 \***************************************************************************/
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, DdeUninitialize, DWORD, idInst)
-BOOL DdeUninitialize(
-DWORD idInst)
+BOOL DdeUninitialize(DWORD idInst)
 {
     PCL_INSTANCE_INFO pcii, pciiPrev;
     BOOL fRet = FALSE;
@@ -208,8 +201,9 @@ DWORD idInst)
     CheckDDECritOut;
     EnterDDECrit;
 
-    pcii = ValidateInstance((HANDLE)LongToHandle( idInst ));
-    if (pcii == NULL) {
+    pcii = ValidateInstance((HANDLE)LongToHandle(idInst));
+    if (pcii == NULL)
+    {
         BestSetLastDDEMLError(DMLERR_INVALIDPARAMETER);
         goto Exit;
     }
@@ -218,22 +212,20 @@ DWORD idInst)
      * If this thread is in the middle of a synchronous transaction or
      * a callback, we need to back out of those first.
      */
-    if ((pcii->flags & IIF_IN_SYNC_XACT) || pcii->cInDDEMLCallback) {
+    if ((pcii->flags & IIF_IN_SYNC_XACT) || pcii->cInDDEMLCallback)
+    {
         pcii->afCmd |= APPCMD_UNINIT_ASAP;
         fRet = TRUE;
         goto Exit;
     }
 
     ApplyFunctionToObjects(HTYPE_CONVERSATION_LIST, InstFromHandle(pcii->hInstClient),
-            (PFNHANDLEAPPLY)DdeDisconnectList);
-    ApplyFunctionToObjects(HTYPE_CLIENT_CONVERSATION, InstFromHandle(pcii->hInstClient),
-            (PFNHANDLEAPPLY)DdeDisconnect);
-    ApplyFunctionToObjects(HTYPE_SERVER_CONVERSATION, InstFromHandle(pcii->hInstClient),
-            (PFNHANDLEAPPLY)DdeDisconnect);
+                           (PFNHANDLEAPPLY)DdeDisconnectList);
+    ApplyFunctionToObjects(HTYPE_CLIENT_CONVERSATION, InstFromHandle(pcii->hInstClient), (PFNHANDLEAPPLY)DdeDisconnect);
+    ApplyFunctionToObjects(HTYPE_SERVER_CONVERSATION, InstFromHandle(pcii->hInstClient), (PFNHANDLEAPPLY)DdeDisconnect);
     ApplyFunctionToObjects(HTYPE_ZOMBIE_CONVERSATION, InstFromHandle(pcii->hInstClient),
-            (PFNHANDLEAPPLY)WaitForZombieTerminate);
-    ApplyFunctionToObjects(HTYPE_DATA_HANDLE, InstFromHandle(pcii->hInstClient),
-            (PFNHANDLEAPPLY)ApplyFreeDataHandle);
+                           (PFNHANDLEAPPLY)WaitForZombieTerminate);
+    ApplyFunctionToObjects(HTYPE_DATA_HANDLE, InstFromHandle(pcii->hInstClient), (PFNHANDLEAPPLY)ApplyFreeDataHandle);
 
     LeaveDDECrit;
     NtUserCallOneParam((ULONG_PTR)pcii->hInstServer, SFI__CSDDEUNINITIALIZE);
@@ -245,14 +237,18 @@ DWORD idInst)
 
     // unlink pcii from pciiList
 
-    if (pciiList == pcii) {
+    if (pciiList == pcii)
+    {
         pciiList = pciiList->next;
-    } else {
-        for (pciiPrev = pciiList; pciiPrev != NULL && pciiPrev->next != pcii;
-                pciiPrev = pciiPrev->next) {
+    }
+    else
+    {
+        for (pciiPrev = pciiList; pciiPrev != NULL && pciiPrev->next != pcii; pciiPrev = pciiPrev->next)
+        {
             ;
         }
-        if (pciiPrev != NULL) {
+        if (pciiPrev != NULL)
+        {
             pciiPrev->next = pcii->next;
         }
     }
@@ -265,7 +261,6 @@ Exit:
 }
 
 
-
 /***************************************************************************\
 * DdeNameService (DDEML API)
 *
@@ -276,11 +271,10 @@ Exit:
 * History:
 * 11-1-91 sanfords Created.
 \***************************************************************************/
-HDDEDATA DdeNameService(
-DWORD idInst,
-HSZ hsz1, // service name
-HSZ hsz2, // reserved for future enhancements
-UINT afCmd) // DNS_ flags.
+HDDEDATA DdeNameService(DWORD idInst,
+                        HSZ hsz1,   // service name
+                        HSZ hsz2,   // reserved for future enhancements
+                        UINT afCmd) // DNS_ flags.
 {
     BOOL fRet = TRUE;
     LATOM *plaNameService;
@@ -288,39 +282,47 @@ UINT afCmd) // DNS_ flags.
 
     EnterDDECrit;
 
-    pcii = ValidateInstance((HANDLE)LongToHandle( idInst ));
-    if (pcii == NULL) {
+    pcii = ValidateInstance((HANDLE)LongToHandle(idInst));
+    if (pcii == NULL)
+    {
         BestSetLastDDEMLError(DMLERR_INVALIDPARAMETER);
         fRet = FALSE;
         goto Exit;
     }
 
-    if ((hsz1 && ValidateHSZ(hsz1) == HSZT_INVALID) || hsz2 != 0) {
+    if ((hsz1 && ValidateHSZ(hsz1) == HSZT_INVALID) || hsz2 != 0)
+    {
         SetLastDDEMLError(pcii, DMLERR_INVALIDPARAMETER);
         fRet = FALSE;
         goto Exit;
     }
 
-    if (afCmd & DNS_FILTERON && !(pcii->afCmd & APPCMD_FILTERINITS)) {
+    if (afCmd & DNS_FILTERON && !(pcii->afCmd & APPCMD_FILTERINITS))
+    {
         pcii->afCmd |= APPCMD_FILTERINITS;
         NtUserUpdateInstance(pcii->hInstServer, &pcii->MonitorFlags, pcii->afCmd);
     }
-    if (afCmd & DNS_FILTEROFF && (pcii->afCmd & APPCMD_FILTERINITS)) {
+    if (afCmd & DNS_FILTEROFF && (pcii->afCmd & APPCMD_FILTERINITS))
+    {
         pcii->afCmd &= ~APPCMD_FILTERINITS;
         NtUserUpdateInstance(pcii->hInstServer, &pcii->MonitorFlags, pcii->afCmd);
     }
 
-    if (afCmd & (DNS_REGISTER | DNS_UNREGISTER)) {
+    if (afCmd & (DNS_REGISTER | DNS_UNREGISTER))
+    {
         GATOM ga;
 
-        if (pcii->afCmd & APPCMD_CLIENTONLY) {
+        if (pcii->afCmd & APPCMD_CLIENTONLY)
+        {
             SetLastDDEMLError(pcii, DMLERR_DLL_USAGE);
             fRet = FALSE;
             goto Exit;
         }
 
-        if (hsz1 == 0) {
-            if (afCmd & DNS_REGISTER) {
+        if (hsz1 == 0)
+        {
+            if (afCmd & DNS_REGISTER)
+            {
 
                 /*
                  * registering NULL is not allowed!
@@ -339,7 +341,8 @@ UINT afCmd) // DNS_ flags.
              * without us having to keep a copy around forever.
              */
             plaNameService = pcii->plaNameService;
-            while (*plaNameService != 0) {
+            while (*plaNameService != 0)
+            {
                 ga = LocalToGlobalAtom(*plaNameService);
                 DeleteAtom(*plaNameService);
                 LeaveDDECrit;
@@ -353,27 +356,33 @@ UINT afCmd) // DNS_ flags.
             goto Exit;
         }
 
-        if (afCmd & DNS_REGISTER) {
-            plaNameService = (LATOM *)DDEMLReAlloc(pcii->plaNameService,
-                    sizeof(LATOM) * ++pcii->cNameServiceAlloc);
-            if (plaNameService == NULL) {
+        if (afCmd & DNS_REGISTER)
+        {
+            plaNameService = (LATOM *)DDEMLReAlloc(pcii->plaNameService, sizeof(LATOM) * ++pcii->cNameServiceAlloc);
+            if (plaNameService == NULL)
+            {
                 SetLastDDEMLError(pcii, DMLERR_MEMORY_ERROR);
                 pcii->cNameServiceAlloc--;
                 fRet = FALSE;
                 goto Exit;
-            } else {
+            }
+            else
+            {
                 pcii->plaNameService = plaNameService;
             }
             IncLocalAtomCount(LATOM_FROM_HSZ(hsz1)); // NameService copy
             plaNameService[pcii->cNameServiceAlloc - 2] = LATOM_FROM_HSZ(hsz1);
             plaNameService[pcii->cNameServiceAlloc - 1] = 0;
-
-        } else { // DNS_UNREGISTER
+        }
+        else
+        { // DNS_UNREGISTER
             plaNameService = pcii->plaNameService;
-            while (*plaNameService != 0 && *plaNameService != LATOM_FROM_HSZ(hsz1)) {
+            while (*plaNameService != 0 && *plaNameService != LATOM_FROM_HSZ(hsz1))
+            {
                 plaNameService++;
             }
-            if (*plaNameService == 0) {
+            if (*plaNameService == 0)
+            {
                 goto Exit; // not found just exit
             }
             //
@@ -386,17 +395,15 @@ UINT afCmd) // DNS_ flags.
 
         ga = LocalToGlobalAtom(LATOM_FROM_HSZ(hsz1));
         LeaveDDECrit;
-        RegisterService((afCmd & DNS_REGISTER) ? TRUE : FALSE, ga,
-            pcii->hwndMother);
+        RegisterService((afCmd & DNS_REGISTER) ? TRUE : FALSE, ga, pcii->hwndMother);
         EnterDDECrit;
         GlobalDeleteAtom(ga);
     }
 
 Exit:
     LeaveDDECrit;
-    return ((HDDEDATA)IntToPtr( fRet ));
+    return ((HDDEDATA)IntToPtr(fRet));
 }
-
 
 
 /***************************************************************************\
@@ -410,16 +417,16 @@ Exit:
 \***************************************************************************/
 
 FUNCLOG1(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, DdeGetLastError, DWORD, idInst)
-UINT DdeGetLastError(
-DWORD idInst)
+UINT DdeGetLastError(DWORD idInst)
 {
     UINT uiRet = 0;
     PCL_INSTANCE_INFO pcii;
 
     EnterDDECrit;
 
-    pcii = ValidateInstance((HANDLE)LongToHandle( idInst ));
-    if (pcii == NULL) {
+    pcii = ValidateInstance((HANDLE)LongToHandle(idInst));
+    if (pcii == NULL)
+    {
         uiRet = DMLERR_INVALIDPARAMETER;
         goto Exit;
     }
@@ -430,7 +437,6 @@ Exit:
     LeaveDDECrit;
     return (uiRet);
 }
-
 
 
 /***************************************************************************\
@@ -445,8 +451,7 @@ Exit:
 \***************************************************************************/
 
 FUNCLOG1(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, DdeImpersonateClient, HCONV, hConv)
-BOOL DdeImpersonateClient(
-HCONV hConv)
+BOOL DdeImpersonateClient(HCONV hConv)
 {
     PCONV_INFO pcoi;
     PCL_INSTANCE_INFO pcii;
@@ -454,14 +459,15 @@ HCONV hConv)
 
     EnterDDECrit;
 
-    pcoi = (PCONV_INFO)ValidateCHandle((HANDLE)hConv,
-            HTYPE_SERVER_CONVERSATION, HINST_ANY);
-    if (pcoi == NULL) {
+    pcoi = (PCONV_INFO)ValidateCHandle((HANDLE)hConv, HTYPE_SERVER_CONVERSATION, HINST_ANY);
+    if (pcoi == NULL)
+    {
         BestSetLastDDEMLError(DMLERR_INVALIDPARAMETER);
         goto Exit;
     }
     pcii = PciiFromHandle((HANDLE)hConv);
-    if (pcii == NULL) {
+    if (pcii == NULL)
+    {
         BestSetLastDDEMLError(DMLERR_INVALIDPARAMETER);
         goto Exit;
     }

@@ -44,12 +44,12 @@ Revision History:
 // Internal constants
 //
 
-#define DESCRIPTOR_GRAN     0x00800000
-#define DESCRIPTOR_NP       0x00008000
-#define DESCRIPTOR_SYSTEM   0x00001000
-#define DESCRIPTOR_CONFORM  0x00001C00
-#define DESCRIPTOR_DPL      0x00006000
-#define DESCRIPTOR_TYPEDPL  0x00007F00
+#define DESCRIPTOR_GRAN 0x00800000
+#define DESCRIPTOR_NP 0x00008000
+#define DESCRIPTOR_SYSTEM 0x00001000
+#define DESCRIPTOR_CONFORM 0x00001C00
+#define DESCRIPTOR_DPL 0x00006000
+#define DESCRIPTOR_TYPEDPL 0x00007F00
 
 
 KMUTEX LdtMutex;
@@ -59,17 +59,10 @@ KMUTEX LdtMutex;
 //
 
 PLDT_ENTRY
-PspCreateLdt(
-    IN PLDT_ENTRY Ldt,
-    IN ULONG Offset,
-    IN ULONG Size,
-    IN ULONG AllocationSize
-    );
+PspCreateLdt(IN PLDT_ENTRY Ldt, IN ULONG Offset, IN ULONG Size, IN ULONG AllocationSize);
 
 BOOLEAN
-PspIsDescriptorValid(
-    IN PLDT_ENTRY Descriptor
-    );
+PspIsDescriptorValid(IN PLDT_ENTRY Descriptor);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, PspLdtInitialize)
@@ -85,8 +78,7 @@ PspIsDescriptorValid(
 
 
 NTSTATUS
-PspLdtInitialize(
-    )
+PspLdtInitialize()
 
 /*++
 
@@ -103,18 +95,14 @@ Return Value:
     TBS
 --*/
 {
-    KeInitializeMutex( &LdtMutex, MUTEX_LEVEL_PS_LDT );
+    KeInitializeMutex(&LdtMutex, MUTEX_LEVEL_PS_LDT);
     return STATUS_SUCCESS;
 }
 
 
 NTSTATUS
-PspQueryLdtInformation(
-    IN PEPROCESS Process,
-    OUT PPROCESS_LDT_INFORMATION LdtInformation,
-    IN ULONG LdtInformationLength,
-    OUT PULONG ReturnLength
-    )
+PspQueryLdtInformation(IN PEPROCESS Process, OUT PPROCESS_LDT_INFORMATION LdtInformation, IN ULONG LdtInformationLength,
+                       OUT PULONG ReturnLength)
 /*++
 
 Routine Description:
@@ -138,7 +126,7 @@ Return Value:
     ULONG CopyLength, CopyEnd;
     NTSTATUS Status;
     ULONG HeaderLength;
-    ULONG Length=0, Start=0;
+    ULONG Length = 0, Start = 0;
     LONG MutexStatus;
     PLDTINFORMATION ProcessLdtInfo;
 
@@ -148,22 +136,25 @@ Return Value:
     // Verify the parameters
     //
 
-    if (LdtInformationLength < sizeof(PROCESS_LDT_INFORMATION)) {
+    if (LdtInformationLength < sizeof(PROCESS_LDT_INFORMATION))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
     //
     // This portion of the parameters may be in user space
     //
-    try {
+    try
+    {
         //
         // Capture parameters
         //
         Length = LdtInformation->Length;
         Start = LdtInformation->Start;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        return GetExceptionCode ();
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return GetExceptionCode();
     }
 
     //
@@ -171,7 +162,8 @@ Return Value:
     // structure.  We subtract one Ldt entry, because the structure is
     // declared to contain one.
     //
-    if (LdtInformationLength - sizeof(PROCESS_LDT_INFORMATION) + sizeof(LDT_ENTRY) < Length) {
+    if (LdtInformationLength - sizeof(PROCESS_LDT_INFORMATION) + sizeof(LDT_ENTRY) < Length)
+    {
 
         return STATUS_INFO_LENGTH_MISMATCH;
     }
@@ -182,7 +174,8 @@ Return Value:
     //
     // The length of the structure must be an even number of Ldt entries
     //
-    if (Length % sizeof(LDT_ENTRY)) {
+    if (Length % sizeof(LDT_ENTRY))
+    {
         return STATUS_INVALID_LDT_SIZE;
     }
 
@@ -190,7 +183,8 @@ Return Value:
     // The information to get from the Ldt must start on an Ldt entry
     // boundary.
     //
-    if (Start % sizeof(LDT_ENTRY)) {
+    if (Start % sizeof(LDT_ENTRY))
+    {
         return STATUS_INVALID_LDT_OFFSET;
     }
 
@@ -198,14 +192,9 @@ Return Value:
     // Acquire the Ldt mutex
     //
 
-    Status = KeWaitForSingleObject(
-                &LdtMutex,
-                Executive,
-                KernelMode,
-                FALSE,
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = KeWaitForSingleObject(&LdtMutex, Executive, KernelMode, FALSE, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -214,9 +203,10 @@ Return Value:
     //
     // If the process has an Ldt
     //
-    if (( ProcessLdtInfo) && (ProcessLdtInfo->Size )) {
+    if ((ProcessLdtInfo) && (ProcessLdtInfo->Size))
+    {
 
-        ASSERT ((ProcessLdtInfo->Ldt));
+        ASSERT((ProcessLdtInfo->Ldt));
 
         //
         // Set the end of the copy to be the smaller of:
@@ -224,17 +214,23 @@ Return Value:
         //  the end of the information that is actually there
         //
 
-        if (ProcessLdtInfo->Size < Start) {
-           CopyEnd = Start;
-        } else if (ProcessLdtInfo->Size - Start  > Length) {
+        if (ProcessLdtInfo->Size < Start)
+        {
+            CopyEnd = Start;
+        }
+        else if (ProcessLdtInfo->Size - Start > Length)
+        {
             CopyEnd = Length + Start;
-        } else {
+        }
+        else
+        {
             CopyEnd = ProcessLdtInfo->Size;
         }
 
         CopyLength = CopyEnd - Start;
 
-        try {
+        try
+        {
 
             //
             // Set the length field to the actual length of the Ldt
@@ -245,65 +241,64 @@ Return Value:
             // Copy the contents of the Ldt into the user's buffer
             //
 
-            if (CopyLength) {
-                RtlCopyMemory(
-                    &(LdtInformation->LdtEntries),
-                    (PCHAR)ProcessLdtInfo->Ldt + Start,
-                    CopyLength
-                    );
+            if (CopyLength)
+            {
+                RtlCopyMemory(&(LdtInformation->LdtEntries), (PCHAR)ProcessLdtInfo->Ldt + Start, CopyLength);
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            MutexStatus = KeReleaseMutex( &LdtMutex, FALSE );
-            ASSERT(( MutexStatus == 0 ));
-            return GetExceptionCode ();
         }
-
-
-    } else {
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            MutexStatus = KeReleaseMutex(&LdtMutex, FALSE);
+            ASSERT((MutexStatus == 0));
+            return GetExceptionCode();
+        }
+    }
+    else
+    {
 
         //
         // There is no Ldt
         //
 
         CopyLength = 0;
-        try {
+        try
+        {
             LdtInformation->Length = 0;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            MutexStatus = KeReleaseMutex( &LdtMutex, FALSE );
-            ASSERT(( MutexStatus == 0 ));
-            return GetExceptionCode ();
         }
-
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            MutexStatus = KeReleaseMutex(&LdtMutex, FALSE);
+            ASSERT((MutexStatus == 0));
+            return GetExceptionCode();
+        }
     }
 
     //
     // Set the length of the information returned
     //
-    if ( ARGUMENT_PRESENT(ReturnLength) ) {
-        try {
-            HeaderLength = (PCHAR)(&(LdtInformation->LdtEntries)) -
-                (PCHAR)(&(LdtInformation->Start));
+    if (ARGUMENT_PRESENT(ReturnLength))
+    {
+        try
+        {
+            HeaderLength = (PCHAR)(&(LdtInformation->LdtEntries)) - (PCHAR)(&(LdtInformation->Start));
             *ReturnLength = CopyLength + HeaderLength;
-        } except(EXCEPTION_EXECUTE_HANDLER){
-            MutexStatus = KeReleaseMutex( &LdtMutex, FALSE );
-            ASSERT(( MutexStatus == 0 ));
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            MutexStatus = KeReleaseMutex(&LdtMutex, FALSE);
+            ASSERT((MutexStatus == 0));
+            return GetExceptionCode();
         }
     }
 
-    MutexStatus = KeReleaseMutex( &LdtMutex, FALSE );
-    ASSERT(( MutexStatus == 0 ));
+    MutexStatus = KeReleaseMutex(&LdtMutex, FALSE);
+    ASSERT((MutexStatus == 0));
     return STATUS_SUCCESS;
 }
 
 
 NTSTATUS
-PspSetLdtSize(
-    IN PEPROCESS Process,
-    IN PPROCESS_LDT_SIZE LdtSize,
-    IN ULONG LdtSizeLength
-    )
+PspSetLdtSize(IN PEPROCESS Process, IN PPROCESS_LDT_SIZE LdtSize, IN ULONG LdtSizeLength)
 
 /*++
 
@@ -326,7 +321,7 @@ Return Value:
 {
     ULONG OldSize = 0, NewSize;
     LONG MutexState;
-    ULONG Length=0;
+    ULONG Length = 0;
     PLDT_ENTRY OldLdt = NULL;
     NTSTATUS Status;
     PLDTINFORMATION ProcessLdtInfo;
@@ -337,21 +332,24 @@ Return Value:
     //
     // Verify the parameters
     //
-    if (LdtSizeLength != sizeof (PROCESS_LDT_SIZE)){
+    if (LdtSizeLength != sizeof(PROCESS_LDT_SIZE))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
     //
     // The following parameters may be in user space
     //
-    try {
+    try
+    {
         //
         // Capture the new Ldt length
         //
         Length = LdtSize->Length;
-
-    } except(EXCEPTION_EXECUTE_HANDLER){
-        return GetExceptionCode ();
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return GetExceptionCode();
     }
 
 
@@ -360,7 +358,8 @@ Return Value:
     //
     // The Ldt must always be an integral number of LDT_ENTRIES
     //
-    if (Length % sizeof(LDT_ENTRY)) {
+    if (Length % sizeof(LDT_ENTRY))
+    {
         return STATUS_INVALID_LDT_SIZE;
     }
 
@@ -368,14 +367,9 @@ Return Value:
     // Acquire the Ldt Mutex
     //
 
-    Status = KeWaitForSingleObject(
-                &LdtMutex,
-                Executive,
-                KernelMode,
-                FALSE,
-                NULL
-                );
-    if (!NT_SUCCESS (Status)) {
+    Status = KeWaitForSingleObject(&LdtMutex, Executive, KernelMode, FALSE, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -383,8 +377,9 @@ Return Value:
     // If there isn't an Ldt we can't set the size of the LDT
     //
     ProcessLdtInfo = Process->LdtInformation;
-    if ((ProcessLdtInfo == NULL) || (ProcessLdtInfo->Size == 0)) {
-        MutexState = KeReleaseMutex( &LdtMutex, FALSE );
+    if ((ProcessLdtInfo == NULL) || (ProcessLdtInfo->Size == 0))
+    {
+        MutexState = KeReleaseMutex(&LdtMutex, FALSE);
         ASSERT((MutexState == 0));
         return STATUS_NO_LDT;
     }
@@ -392,8 +387,9 @@ Return Value:
     //
     // This function cannot be used to grow the Ldt
     //
-    if (Length > ProcessLdtInfo->Size) {
-        MutexState = KeReleaseMutex( &LdtMutex, FALSE );
+    if (Length > ProcessLdtInfo->Size)
+    {
+        MutexState = KeReleaseMutex(&LdtMutex, FALSE);
         ASSERT((MutexState == 0));
         return STATUS_INVALID_LDT_SIZE;
     }
@@ -415,15 +411,17 @@ Return Value:
     // Free some of the Ldt memory if conditions allow
     //
 
-    if ( Length == 0 ) {
+    if (Length == 0)
+    {
 
         OldSize = ProcessLdtInfo->AllocatedSize;
         OldLdt = ProcessLdtInfo->Ldt;
 
         ProcessLdtInfo->AllocatedSize = 0;
         Ldt = NULL;
-
-    } else if ((ProcessLdtInfo->AllocatedSize - ProcessLdtInfo->Size) >= PAGE_SIZE) {
+    }
+    else if ((ProcessLdtInfo->AllocatedSize - ProcessLdtInfo->Size) >= PAGE_SIZE)
+    {
 
         OldSize = ProcessLdtInfo->AllocatedSize;
         OldLdt = ProcessLdtInfo->Ldt;
@@ -433,20 +431,15 @@ Return Value:
         // large enough)
         //
 
-        ProcessLdtInfo->AllocatedSize = (ProcessLdtInfo->Size + PAGE_SIZE - 1)
-            & ~(PAGE_SIZE - 1);
+        ProcessLdtInfo->AllocatedSize = (ProcessLdtInfo->Size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
         //
         // Reallocate and copy the Ldt
         //
-        Ldt = PspCreateLdt(
-            ProcessLdtInfo->Ldt,
-            0,
-            ProcessLdtInfo->Size,
-            ProcessLdtInfo->AllocatedSize
-            );
+        Ldt = PspCreateLdt(ProcessLdtInfo->Ldt, 0, ProcessLdtInfo->Size, ProcessLdtInfo->AllocatedSize);
 
-        if ( Ldt == NULL ) {
+        if (Ldt == NULL)
+        {
             // We cannot reduce the allocation, but we can reduce the
             // Ldt selector limit (done using Ke386SetLdtProcess)
             Ldt = OldLdt;
@@ -461,15 +454,11 @@ Return Value:
     // Change the limit on the Process Ldt
     //
 
-    Ke386SetLdtProcess(
-        &(Process->Pcb),
-        ProcessLdtInfo->Ldt,
-        ProcessLdtInfo->Size
-        );
+    Ke386SetLdtProcess(&(Process->Pcb), ProcessLdtInfo->Ldt, ProcessLdtInfo->Size);
 
     NewSize = ProcessLdtInfo->AllocatedSize;
 
-    MutexState = KeReleaseMutex( &LdtMutex, FALSE );
+    MutexState = KeReleaseMutex(&LdtMutex, FALSE);
 
     ASSERT((MutexState == 0));
 
@@ -477,11 +466,11 @@ Return Value:
     // If we resized the Ldt, free the old one and reduce the quota charge
     //
 
-    if (OldLdt) {
-        ExFreePool( OldLdt );
+    if (OldLdt)
+    {
+        ExFreePool(OldLdt);
 
-        PsReturnProcessNonPagedPoolQuota (Process,
-                                          OldSize - NewSize);
+        PsReturnProcessNonPagedPoolQuota(Process, OldSize - NewSize);
     }
 
     return STATUS_SUCCESS;
@@ -489,11 +478,7 @@ Return Value:
 
 
 NTSTATUS
-PspSetLdtInformation(
-    IN PEPROCESS Process,
-    IN PPROCESS_LDT_INFORMATION LdtInformation,
-    IN ULONG LdtInformationLength
-    )
+PspSetLdtInformation(IN PEPROCESS Process, IN PPROCESS_LDT_INFORMATION LdtInformation, IN ULONG LdtInformationLength)
 
 /*++
 
@@ -524,52 +509,54 @@ Return Value:
     ULONG MutexState;
     ULONG LdtOffset;
     PLDT_ENTRY CurrentDescriptor;
-    PPROCESS_LDT_INFORMATION LdtInfo=NULL;
+    PPROCESS_LDT_INFORMATION LdtInfo = NULL;
     PLDTINFORMATION ProcessLdtInfo;
     PLDT_ENTRY Ldt;
 
     PAGED_CODE();
 
-    if (LdtInformationLength < sizeof (PROCESS_LDT_INFORMATION)) {
+    if (LdtInformationLength < sizeof(PROCESS_LDT_INFORMATION))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
     Status = STATUS_SUCCESS;
-    LdtInfo = ExAllocatePoolWithTag (NonPagedPool,
-                                     LdtInformationLength,
-                                     'dLsP');
+    LdtInfo = ExAllocatePoolWithTag(NonPagedPool, LdtInformationLength, 'dLsP');
 
-    if (LdtInfo == NULL) {
+    if (LdtInfo == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     //
     // alocate a local buffer to capture the ldt information to
     //
-    try {
+    try
+    {
         //
         // Copy the information the user is supplying
         //
-        RtlCopyMemory (LdtInfo,
-                       LdtInformation,
-                       LdtInformationLength);
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        ExFreePool (LdtInfo);
-        Status = GetExceptionCode ();
+        RtlCopyMemory(LdtInfo, LdtInformation, LdtInformationLength);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        ExFreePool(LdtInfo);
+        Status = GetExceptionCode();
         return Status;
     }
 
     //
     // Verify that the Start and Length are plausible
     //
-    if (LdtInfo->Start & 0xFFFF0000) {
-        ExFreePool (LdtInfo);
+    if (LdtInfo->Start & 0xFFFF0000)
+    {
+        ExFreePool(LdtInfo);
         return STATUS_INVALID_LDT_OFFSET;
     }
 
-    if (LdtInfo->Length & 0xFFFF0000) {
-        ExFreePool (LdtInfo);
+    if (LdtInfo->Length & 0xFFFF0000)
+    {
+        ExFreePool(LdtInfo);
         return STATUS_INVALID_LDT_SIZE;
     }
 
@@ -577,24 +564,27 @@ Return Value:
     // Insure that the buffer it large enough to contain the specified number
     // of selectors.
     //
-    if (LdtInformationLength - sizeof (PROCESS_LDT_INFORMATION) + sizeof (LDT_ENTRY) < LdtInfo->Length) {
-        ExFreePool (LdtInfo);
+    if (LdtInformationLength - sizeof(PROCESS_LDT_INFORMATION) + sizeof(LDT_ENTRY) < LdtInfo->Length)
+    {
+        ExFreePool(LdtInfo);
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
     //
     // The info to set must be an integral number of selectors
     //
-    if (LdtInfo->Length % sizeof (LDT_ENTRY)) {
-        ExFreePool (LdtInfo);
+    if (LdtInfo->Length % sizeof(LDT_ENTRY))
+    {
+        ExFreePool(LdtInfo);
         return STATUS_INVALID_LDT_SIZE;
     }
 
     //
     // The beginning of the info must be on a selector boundary
     //
-    if (LdtInfo->Start % sizeof (LDT_ENTRY)) {
-        ExFreePool (LdtInfo);
+    if (LdtInfo->Start % sizeof(LDT_ENTRY))
+    {
+        ExFreePool(LdtInfo);
         return STATUS_INVALID_LDT_OFFSET;
     }
 
@@ -603,10 +593,11 @@ Return Value:
     //
 
     for (CurrentDescriptor = LdtInfo->LdtEntries;
-         (PCHAR)CurrentDescriptor < (PCHAR)LdtInfo->LdtEntries + LdtInfo->Length;
-          CurrentDescriptor++) {
-        if (!PspIsDescriptorValid (CurrentDescriptor)) {
-            ExFreePool (LdtInfo);
+         (PCHAR)CurrentDescriptor < (PCHAR)LdtInfo->LdtEntries + LdtInfo->Length; CurrentDescriptor++)
+    {
+        if (!PspIsDescriptorValid(CurrentDescriptor))
+        {
+            ExFreePool(LdtInfo);
             return STATUS_INVALID_LDT_DESCRIPTOR;
         }
     }
@@ -615,13 +606,10 @@ Return Value:
     // Acquire the Ldt Mutex
     //
 
-    Status = KeWaitForSingleObject (&LdtMutex,
-                                    Executive,
-                                    KernelMode,
-                                    FALSE,
-                                    NULL);
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (LdtInfo);
+    Status = KeWaitForSingleObject(&LdtMutex, Executive, KernelMode, FALSE, NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(LdtInfo);
         return Status;
     }
 
@@ -631,27 +619,29 @@ Return Value:
     // If the process doen't have an Ldt information structure, allocate
     //  one and attach it to the process
     //
-    if (ProcessLdtInfo == NULL) {
-        ProcessLdtInfo = ExAllocatePoolWithTag (NonPagedPool,
-                                                sizeof(LDTINFORMATION),
-                                                'dLsP');
-        if (ProcessLdtInfo == NULL) {
+    if (ProcessLdtInfo == NULL)
+    {
+        ProcessLdtInfo = ExAllocatePoolWithTag(NonPagedPool, sizeof(LDTINFORMATION), 'dLsP');
+        if (ProcessLdtInfo == NULL)
+        {
             goto SetInfoCleanup;
         }
         Process->LdtInformation = ProcessLdtInfo;
-        RtlZeroMemory (ProcessLdtInfo, sizeof (LDTINFORMATION));
+        RtlZeroMemory(ProcessLdtInfo, sizeof(LDTINFORMATION));
     }
 
     //
     // If we are supposed to remove the LDT
     //
-    if (LdtInfo->Length == 0)  {
+    if (LdtInfo->Length == 0)
+    {
 
         //
         // Remove the process' Ldt
         //
 
-        if (ProcessLdtInfo->Ldt) {
+        if (ProcessLdtInfo->Ldt)
+        {
             OldSize = ProcessLdtInfo->AllocatedSize;
             OldLdt = ProcessLdtInfo->Ldt;
 
@@ -659,15 +649,13 @@ Return Value:
             ProcessLdtInfo->Size = 0;
             ProcessLdtInfo->Ldt = NULL;
 
-            Ke386SetLdtProcess (&Process->Pcb,
-                                NULL,
-                                0);
+            Ke386SetLdtProcess(&Process->Pcb, NULL, 0);
 
-            PsReturnProcessNonPagedPoolQuota (Process, OldSize);
+            PsReturnProcessNonPagedPoolQuota(Process, OldSize);
         }
-
-
-    } else if (ProcessLdtInfo->Ldt == NULL) {
+    }
+    else if (ProcessLdtInfo->Ldt == NULL)
+    {
 
         //
         // Create a new Ldt for the process
@@ -679,26 +667,23 @@ Return Value:
 
         ASSERT(((PAGE_SIZE % 2) == 0));
 
-        AllocatedSize = (LdtInfo->Start + LdtInfo->Length + PAGE_SIZE - 1) &
-                        ~(PAGE_SIZE - 1);
+        AllocatedSize = (LdtInfo->Start + LdtInfo->Length + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
         Size = LdtInfo->Start + LdtInfo->Length;
 
-        Ldt = PspCreateLdt (LdtInfo->LdtEntries,
-                            LdtInfo->Start,
-                            Size,
-                            AllocatedSize);
+        Ldt = PspCreateLdt(LdtInfo->LdtEntries, LdtInfo->Start, Size, AllocatedSize);
 
-        if (Ldt == NULL) {
+        if (Ldt == NULL)
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto SetInfoCleanup;
         }
 
-        Status = PsChargeProcessNonPagedPoolQuota (Process,
-                                                   AllocatedSize);
+        Status = PsChargeProcessNonPagedPoolQuota(Process, AllocatedSize);
 
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Ldt);
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Ldt);
             Ldt = NULL;
             goto SetInfoCleanup;
         }
@@ -706,18 +691,17 @@ Return Value:
         ProcessLdtInfo->Ldt = Ldt;
         ProcessLdtInfo->Size = Size;
         ProcessLdtInfo->AllocatedSize = AllocatedSize;
-        Ke386SetLdtProcess (&Process->Pcb,
-                            ProcessLdtInfo->Ldt,
-                            ProcessLdtInfo->Size);
-
-
-    } else if (LdtInfo->Length + LdtInfo->Start > ProcessLdtInfo->Size) {
+        Ke386SetLdtProcess(&Process->Pcb, ProcessLdtInfo->Ldt, ProcessLdtInfo->Size);
+    }
+    else if (LdtInfo->Length + LdtInfo->Start > ProcessLdtInfo->Size)
+    {
 
         //
         // Grow the process' Ldt
         //
 
-        if (LdtInfo->Length + LdtInfo->Start > ProcessLdtInfo->AllocatedSize) {
+        if (LdtInfo->Length + LdtInfo->Start > ProcessLdtInfo->AllocatedSize)
+        {
 
             //
             // Current Ldt allocation is not large enough, so create a
@@ -729,27 +713,24 @@ Return Value:
             Size = LdtInfo->Start + LdtInfo->Length;
             AllocatedSize = (Size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
-            Ldt = PspCreateLdt (ProcessLdtInfo->Ldt,
-                                0,
-                                OldSize,
-                                AllocatedSize);
+            Ldt = PspCreateLdt(ProcessLdtInfo->Ldt, 0, OldSize, AllocatedSize);
 
-            if (Ldt == NULL) {
+            if (Ldt == NULL)
+            {
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 goto SetInfoCleanup;
             }
-            
 
-            Status = PsChargeProcessNonPagedPoolQuota (Process,
-                                                       AllocatedSize);
 
-            if (!NT_SUCCESS (Status)) {
-                ExFreePool (Ldt);
+            Status = PsChargeProcessNonPagedPoolQuota(Process, AllocatedSize);
+
+            if (!NT_SUCCESS(Status))
+            {
+                ExFreePool(Ldt);
                 Ldt = NULL;
                 goto SetInfoCleanup;
             }
-            PsReturnProcessNonPagedPoolQuota (Process,
-                                              OldSize);
+            PsReturnProcessNonPagedPoolQuota(Process, OldSize);
 
             //
             // Swap Ldt information
@@ -762,16 +743,12 @@ Return Value:
             //
             // Put new selectors into the new ldt
             //
-            RtlCopyMemory ((PCHAR)(ProcessLdtInfo->Ldt) + LdtInfo->Start,
-                           LdtInfo->LdtEntries,
-                           LdtInfo->Length);
+            RtlCopyMemory((PCHAR)(ProcessLdtInfo->Ldt) + LdtInfo->Start, LdtInfo->LdtEntries, LdtInfo->Length);
 
-            Ke386SetLdtProcess (&Process->Pcb,
-                                ProcessLdtInfo->Ldt,
-                                ProcessLdtInfo->Size);
-
-
-        } else {
+            Ke386SetLdtProcess(&Process->Pcb, ProcessLdtInfo->Ldt, ProcessLdtInfo->Size);
+        }
+        else
+        {
 
             //
             // Current Ldt allocation is large enough
@@ -779,35 +756,31 @@ Return Value:
 
             ProcessLdtInfo->Size = LdtInfo->Length + LdtInfo->Start;
 
-            Ke386SetLdtProcess (&Process->Pcb,
-                                ProcessLdtInfo->Ldt,
-                                ProcessLdtInfo->Size);
+            Ke386SetLdtProcess(&Process->Pcb, ProcessLdtInfo->Ldt, ProcessLdtInfo->Size);
 
             //
             // Change the selectors in the table
             //
             for (LdtOffset = LdtInfo->Start, CurrentDescriptor = LdtInfo->LdtEntries;
-                 LdtOffset < LdtInfo->Start + LdtInfo->Length;
-                 LdtOffset += sizeof(LDT_ENTRY), CurrentDescriptor++) {
+                 LdtOffset < LdtInfo->Start + LdtInfo->Length; LdtOffset += sizeof(LDT_ENTRY), CurrentDescriptor++)
+            {
 
-                Ke386SetDescriptorProcess (&Process->Pcb,
-                                           LdtOffset,
-                                           *CurrentDescriptor);
+                Ke386SetDescriptorProcess(&Process->Pcb, LdtOffset, *CurrentDescriptor);
             }
         }
-    } else {
+    }
+    else
+    {
 
         //
         // Simply changing some selectors
         //
 
         for (LdtOffset = LdtInfo->Start, CurrentDescriptor = LdtInfo->LdtEntries;
-             LdtOffset < LdtInfo->Start +  LdtInfo->Length;
-             LdtOffset += sizeof(LDT_ENTRY), CurrentDescriptor++) {
+             LdtOffset < LdtInfo->Start + LdtInfo->Length; LdtOffset += sizeof(LDT_ENTRY), CurrentDescriptor++)
+        {
 
-            Ke386SetDescriptorProcess (&Process->Pcb,
-                                       LdtOffset,
-                                       *CurrentDescriptor);
+            Ke386SetDescriptorProcess(&Process->Pcb, LdtOffset, *CurrentDescriptor);
         }
         Status = STATUS_SUCCESS;
     }
@@ -815,27 +788,24 @@ Return Value:
 
 SetInfoCleanup:
 
-    MutexState = KeReleaseMutex (&LdtMutex, FALSE);
-    ASSERT ((MutexState == 0));
+    MutexState = KeReleaseMutex(&LdtMutex, FALSE);
+    ASSERT((MutexState == 0));
 
-    if (OldLdt != NULL) {
-        ExFreePool (OldLdt);
+    if (OldLdt != NULL)
+    {
+        ExFreePool(OldLdt);
     }
 
-    if (LdtInfo != NULL) {
-        ExFreePool (LdtInfo);
+    if (LdtInfo != NULL)
+    {
+        ExFreePool(LdtInfo);
     }
 
     return Status;
 }
 
 PLDT_ENTRY
-PspCreateLdt (
-    IN PLDT_ENTRY Ldt,
-    IN ULONG Offset,
-    IN ULONG Size,
-    IN ULONG AllocationSize
-    )
+PspCreateLdt(IN PLDT_ENTRY Ldt, IN ULONG Offset, IN ULONG Size, IN ULONG AllocationSize)
 
 /*++
 
@@ -862,24 +832,22 @@ Return Value:
 
     PAGED_CODE();
 
-    ASSERT ((AllocationSize >= Size));
-    ASSERT (((Size % sizeof(LDT_ENTRY)) == 0));
+    ASSERT((AllocationSize >= Size));
+    ASSERT(((Size % sizeof(LDT_ENTRY)) == 0));
 
-    NewLdt = ExAllocatePoolWithTag (NonPagedPool, AllocationSize, 'dLsP');
-    if (NewLdt != NULL) {
-        RtlZeroMemory (NewLdt, AllocationSize);
-        RtlCopyMemory ((PCHAR)NewLdt + Offset, Ldt, Size - Offset);
+    NewLdt = ExAllocatePoolWithTag(NonPagedPool, AllocationSize, 'dLsP');
+    if (NewLdt != NULL)
+    {
+        RtlZeroMemory(NewLdt, AllocationSize);
+        RtlCopyMemory((PCHAR)NewLdt + Offset, Ldt, Size - Offset);
     }
 
     return NewLdt;
 }
 
 
-
 BOOLEAN
-PspIsDescriptorValid(
-    IN PLDT_ENTRY Descriptor
-    )
+PspIsDescriptorValid(IN PLDT_ENTRY Descriptor)
 
 /*++
 
@@ -921,47 +889,56 @@ Return Value:
     // if descriptor is an invalid descriptor
     //
 
-    if ((Descriptor->HighWord.Bits.Type == 0) &&
-        (Descriptor->HighWord.Bits.Dpl == 0)) {
+    if ((Descriptor->HighWord.Bits.Type == 0) && (Descriptor->HighWord.Bits.Dpl == 0))
+    {
 
         return TRUE;
     }
 
-    Base = Descriptor->BaseLow | (Descriptor->HighWord.Bytes.BaseMid << 16) |
-           (Descriptor->HighWord.Bytes.BaseHi << 24);
+    Base = Descriptor->BaseLow | (Descriptor->HighWord.Bytes.BaseMid << 16) | (Descriptor->HighWord.Bytes.BaseHi << 24);
 
     Limit = Descriptor->LimitLow | (Descriptor->HighWord.Bits.LimitHi << 16);
 
     //
     // Only have to check for present selectors
     //
-    if (Descriptor->HighWord.Bits.Pres) {
+    if (Descriptor->HighWord.Bits.Pres)
+    {
         ULONG ActualLimit;
 
-        if ((Descriptor->HighWord.Bits.Type&0x14) == 0x14) {
-            if (Descriptor->HighWord.Bits.Default_Big == 1) {
+        if ((Descriptor->HighWord.Bits.Type & 0x14) == 0x14)
+        {
+            if (Descriptor->HighWord.Bits.Default_Big == 1)
+            {
                 ActualLimit = 0xFFFFFFFF;
-            } else {
+            }
+            else
+            {
                 ActualLimit = 0xFFFF;
             }
-        } else if (Descriptor->HighWord.Bits.Granularity == 0) {
+        }
+        else if (Descriptor->HighWord.Bits.Granularity == 0)
+        {
             ActualLimit = Limit;
-        } else {
-            ActualLimit = (Limit<<12) + 0xFFF;
+        }
+        else
+        {
+            ActualLimit = (Limit << 12) + 0xFFF;
         }
 
         //
         // See if the segment extends into the kernel address space.
         //
-        if (Base > Base + ActualLimit ||
-            ((PVOID)(Base + ActualLimit) > MM_HIGHEST_USER_ADDRESS)) {
+        if (Base > Base + ActualLimit || ((PVOID)(Base + ActualLimit) > MM_HIGHEST_USER_ADDRESS))
+        {
             return FALSE;
         }
 
         //
         // Don't let the reserved field be set.
         //
-        if (Descriptor->HighWord.Bits.Reserved_0 != 0) {
+        if (Descriptor->HighWord.Bits.Reserved_0 != 0)
+        {
             return FALSE;
         }
     }
@@ -972,7 +949,8 @@ Return Value:
     // and we don't like it.
     //
 
-    if (!(Descriptor->HighWord.Bits.Type & 0x10)) {
+    if (!(Descriptor->HighWord.Bits.Type & 0x10))
+    {
         return FALSE;
     }
 
@@ -980,8 +958,8 @@ Return Value:
     // if descriptor is conforming code
     //
 
-    if (((Descriptor->HighWord.Bits.Type & 0x18) == 0x18) &&
-        (Descriptor->HighWord.Bits.Type & 0x4)) {
+    if (((Descriptor->HighWord.Bits.Type & 0x18) == 0x18) && (Descriptor->HighWord.Bits.Type & 0x4))
+    {
 
         return FALSE;
     }
@@ -990,7 +968,8 @@ Return Value:
     // if Dpl is not 3
     //
 
-    if (Descriptor->HighWord.Bits.Dpl != 3) {
+    if (Descriptor->HighWord.Bits.Dpl != 3)
+    {
         return FALSE;
     }
 
@@ -998,12 +977,7 @@ Return Value:
 }
 
 NTSTATUS
-PspQueryDescriptorThread (
-    PETHREAD Thread,
-    PVOID ThreadInformation,
-    ULONG ThreadInformationLength,
-    PULONG ReturnLength
-    )
+PspQueryDescriptorThread(PETHREAD Thread, PVOID ThreadInformation, ULONG ThreadInformationLength, PULONG ReturnLength)
 /*++
 
 Routine Description:
@@ -1024,27 +998,31 @@ Return Value:
     TBS
 --*/
 {
-    DESCRIPTOR_TABLE_ENTRY DescriptorEntry={0};
+    DESCRIPTOR_TABLE_ENTRY DescriptorEntry = { 0 };
     PEPROCESS Process;
     LONG MutexState;
     NTSTATUS Status;
 
     PAGED_CODE();
 
-    ASSERT( sizeof(KGDTENTRY) == sizeof(LDT_ENTRY) );
+    ASSERT(sizeof(KGDTENTRY) == sizeof(LDT_ENTRY));
 
     //
     // Verify parameters
     //
 
-    if ( ThreadInformationLength != sizeof(DESCRIPTOR_TABLE_ENTRY) ) {
+    if (ThreadInformationLength != sizeof(DESCRIPTOR_TABLE_ENTRY))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
-    try {
+    try
+    {
         DescriptorEntry = *(PDESCRIPTOR_TABLE_ENTRY)ThreadInformation;
-    } except(EXCEPTION_EXECUTE_HANDLER){
-        return GetExceptionCode ();
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return GetExceptionCode();
     }
 
 
@@ -1054,82 +1032,88 @@ Return Value:
     // If its a Gdt entry, let the kernel find it for us
     //
 
-    if ( !(DescriptorEntry.Selector & SELECTOR_TABLE_INDEX) ) {
+    if (!(DescriptorEntry.Selector & SELECTOR_TABLE_INDEX))
+    {
 
-        if ( (DescriptorEntry.Selector & 0xFFFFFFF8) >= KGDT_NUMBER * sizeof(KGDTENTRY) ) {
+        if ((DescriptorEntry.Selector & 0xFFFFFFF8) >= KGDT_NUMBER * sizeof(KGDTENTRY))
+        {
 
             return STATUS_ACCESS_VIOLATION;
         }
 
-        try {
-            Ke386GetGdtEntryThread (&Thread->Tcb,
-                                    DescriptorEntry.Selector & 0xFFFFFFF8,
-                                    (PKGDTENTRY) &(((PDESCRIPTOR_TABLE_ENTRY)ThreadInformation)->Descriptor));
-            if (ARGUMENT_PRESENT(ReturnLength) ) {
+        try
+        {
+            Ke386GetGdtEntryThread(&Thread->Tcb, DescriptorEntry.Selector & 0xFFFFFFF8,
+                                   (PKGDTENTRY) & (((PDESCRIPTOR_TABLE_ENTRY)ThreadInformation)->Descriptor));
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(LDT_ENTRY);
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
         }
-    } else {
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
+        }
+    }
+    else
+    {
 
         //
         // it's an Ldt entry, so copy it from the ldt
         //
 
-        Process = THREAD_TO_PROCESS (Thread);
+        Process = THREAD_TO_PROCESS(Thread);
 
         //
         // Acquire the Ldt Mutex
         //
 
-        Status = KeWaitForSingleObject (&LdtMutex,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        NULL);
-        if (!NT_SUCCESS (Status)) {
+        Status = KeWaitForSingleObject(&LdtMutex, Executive, KernelMode, FALSE, NULL);
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
-        if ( Process->LdtInformation == NULL ) {
+        if (Process->LdtInformation == NULL)
+        {
 
             // If there is no Ldt
             Status = STATUS_NO_LDT;
-
-        } else if ( (DescriptorEntry.Selector & 0xFFFFFFF8) >=
-            ((PLDTINFORMATION)(Process->LdtInformation))->Size ) {
+        }
+        else if ((DescriptorEntry.Selector & 0xFFFFFFF8) >= ((PLDTINFORMATION)(Process->LdtInformation))->Size)
+        {
 
             // Else If the selector is outside the table
             Status = STATUS_ACCESS_VIOLATION;
+        }
+        else
+            try
+            {
 
-        } else try {
+                // Else return the contents of the descriptor
+                RtlCopyMemory(&(((PDESCRIPTOR_TABLE_ENTRY)ThreadInformation)->Descriptor),
+                              (PCHAR)(((PLDTINFORMATION)(Process->LdtInformation))->Ldt) +
+                                  (DescriptorEntry.Selector & 0xFFFFFFF8),
+                              sizeof(LDT_ENTRY));
 
-            // Else return the contents of the descriptor
-            RtlCopyMemory (&(((PDESCRIPTOR_TABLE_ENTRY)ThreadInformation)->Descriptor),
-                           (PCHAR)(((PLDTINFORMATION)(Process->LdtInformation))->Ldt) +
-                               (DescriptorEntry.Selector & 0xFFFFFFF8),
-                           sizeof(LDT_ENTRY));
-
-            if (ARGUMENT_PRESENT(ReturnLength)) {
-                *ReturnLength = sizeof(LDT_ENTRY);
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
+                    *ReturnLength = sizeof(LDT_ENTRY);
+                }
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            Status = GetExceptionCode ();
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            Status = GetExceptionCode();
         }
 
-        MutexState = KeReleaseMutex (&LdtMutex, FALSE);
-        ASSERT ((MutexState == 0));
+        MutexState = KeReleaseMutex(&LdtMutex, FALSE);
+        ASSERT((MutexState == 0));
     }
 
     return Status;
 }
 
-VOID
-PspDeleteLdt(
-    IN PEPROCESS Process
-    )
+VOID PspDeleteLdt(IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -1151,24 +1135,20 @@ Return Value:
     PAGED_CODE();
 
     LdtInformation = Process->LdtInformation;
-    if (LdtInformation != NULL) {
-        if (LdtInformation->Ldt != NULL) {
-            PsReturnProcessNonPagedPoolQuota (Process, LdtInformation->AllocatedSize);
-            ExFreePool (LdtInformation->Ldt);
+    if (LdtInformation != NULL)
+    {
+        if (LdtInformation->Ldt != NULL)
+        {
+            PsReturnProcessNonPagedPoolQuota(Process, LdtInformation->AllocatedSize);
+            ExFreePool(LdtInformation->Ldt);
         }
-        ExFreePool( LdtInformation );
+        ExFreePool(LdtInformation);
     }
 }
 
 NTSTATUS
-NtSetLdtEntries(
-    IN ULONG Selector0,
-    IN ULONG Entry0Low,
-    IN ULONG Entry0Hi,
-    IN ULONG Selector1,
-    IN ULONG Entry1Low,
-    IN ULONG Entry1Hi
-    )
+NtSetLdtEntries(IN ULONG Selector0, IN ULONG Entry0Low, IN ULONG Entry0Hi, IN ULONG Selector1, IN ULONG Entry1Low,
+                IN ULONG Entry1Hi)
 /*++
 
 Routine Description:
@@ -1212,7 +1192,8 @@ Return Value:
     //
     // Verify the selectors
     //
-    if ((Selector0 & 0xFFFF0000) || (Selector1 & 0xFFFF0000)) {
+    if ((Selector0 & 0xFFFF0000) || (Selector1 & 0xFFFF0000))
+    {
         return STATUS_INVALID_LDT_DESCRIPTOR;
     }
 
@@ -1227,17 +1208,19 @@ Return Value:
     //
 
     Selector1Index = 0;
-    if (Selector0) {
+    if (Selector0)
+    {
 
         Selector1Index = 1;
 
-        *((PULONG)(&Descriptor[0]))       = Entry0Low;
+        *((PULONG)(&Descriptor[0])) = Entry0Low;
         *(((PULONG)(&Descriptor[0])) + 1) = Entry0Hi;
 
         //
         // Validate the descriptor
         //
-        if (!PspIsDescriptorValid (&Descriptor[0])) {
+        if (!PspIsDescriptorValid(&Descriptor[0]))
+        {
             return STATUS_INVALID_LDT_DESCRIPTOR;
         }
     }
@@ -1246,14 +1229,16 @@ Return Value:
     // Verify descriptor 1
     //
 
-    if (Selector1) {
-        *((PULONG)(&Descriptor[Selector1Index]))       = Entry1Low;
+    if (Selector1)
+    {
+        *((PULONG)(&Descriptor[Selector1Index])) = Entry1Low;
         *(((PULONG)(&Descriptor[Selector1Index])) + 1) = Entry1Hi;
 
         //
         // Validate the descriptor
         //
-        if (!PspIsDescriptorValid (&Descriptor[Selector1Index])) {
+        if (!PspIsDescriptorValid(&Descriptor[Selector1Index]))
+        {
             return STATUS_INVALID_LDT_DESCRIPTOR;
         }
     }
@@ -1262,9 +1247,12 @@ Return Value:
     // Figure out how large the LDT needs to be
     //
 
-    if (Selector0 > Selector1) {
+    if (Selector0 > Selector1)
+    {
         LdtSize = Selector0 + sizeof(LDT_ENTRY);
-    } else {
+    }
+    else
+    {
         LdtSize = Selector1 + sizeof(LDT_ENTRY);
     }
 
@@ -1274,14 +1262,9 @@ Return Value:
     // Acquire the LDT mutex.
     //
 
-    Status = KeWaitForSingleObject(
-                &LdtMutex,
-                Executive,
-                KernelMode,
-                FALSE,
-                NULL
-                );
-    if (!NT_SUCCESS (Status)) {
+    Status = KeWaitForSingleObject(&LdtMutex, Executive, KernelMode, FALSE, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -1293,38 +1276,36 @@ Return Value:
     // return
     //
 
-    if (ProcessLdtInformation) {
+    if (ProcessLdtInformation)
+    {
 
         //
         // If the LDT descriptor does not have to be modified.
         //
-        if (ProcessLdtInformation->Size >= LdtSize) {
-            if (Selector0) {
+        if (ProcessLdtInformation->Size >= LdtSize)
+        {
+            if (Selector0)
+            {
 
-                Ke386SetDescriptorProcess(
-                    &(Process->Pcb),
-                    Selector0,
-                    Descriptor[0]
-                    );
+                Ke386SetDescriptorProcess(&(Process->Pcb), Selector0, Descriptor[0]);
             }
 
-            if (Selector1) {
+            if (Selector1)
+            {
 
-                Ke386SetDescriptorProcess(
-                    &(Process->Pcb),
-                    Selector1,
-                    Descriptor[Selector1Index]
-                    );
+                Ke386SetDescriptorProcess(&(Process->Pcb), Selector1, Descriptor[Selector1Index]);
             }
 
-            MutexState = KeReleaseMutex( &LdtMutex, FALSE );
-            ASSERT(( MutexState == 0 ));
+            MutexState = KeReleaseMutex(&LdtMutex, FALSE);
+            ASSERT((MutexState == 0));
             return STATUS_SUCCESS;
 
-        //
-        // Else if the Ldt will fit in the memory currently allocated
-        //
-        } else if (ProcessLdtInformation->AllocatedSize >= LdtSize) {
+            //
+            // Else if the Ldt will fit in the memory currently allocated
+            //
+        }
+        else if (ProcessLdtInformation->AllocatedSize >= LdtSize)
+        {
 
             //
             // First remove the LDT.  This will allow us to edit the memory.
@@ -1337,21 +1318,19 @@ Return Value:
             // descriptor, and once to change the limit of the LDT).
             //
 
-            Ke386SetLdtProcess(
-                &(Process->Pcb),
-                NULL,
-                0L
-                );
+            Ke386SetLdtProcess(&(Process->Pcb), NULL, 0L);
 
             //
             // Set the Descriptors in the LDT
             //
-            if (Selector0) {
-                *((PLDT_ENTRY) &ProcessLdtInformation->Ldt[Selector0/sizeof(LDT_ENTRY)]) = Descriptor[0];
+            if (Selector0)
+            {
+                *((PLDT_ENTRY)&ProcessLdtInformation->Ldt[Selector0 / sizeof(LDT_ENTRY)]) = Descriptor[0];
             }
 
-            if (Selector1) {
-                *((PLDT_ENTRY) &ProcessLdtInformation->Ldt[Selector1/sizeof(LDT_ENTRY)]) = Descriptor[Selector1Index];
+            if (Selector1)
+            {
+                *((PLDT_ENTRY)&ProcessLdtInformation->Ldt[Selector1 / sizeof(LDT_ENTRY)]) = Descriptor[Selector1Index];
             }
 
             //
@@ -1360,18 +1339,14 @@ Return Value:
 
             ProcessLdtInformation->Size = LdtSize;
 
-            Ke386SetLdtProcess(
-                &(Process->Pcb),
-                ProcessLdtInformation->Ldt,
-                ProcessLdtInformation->Size
-                );
+            Ke386SetLdtProcess(&(Process->Pcb), ProcessLdtInformation->Ldt, ProcessLdtInformation->Size);
 
-            MutexState = KeReleaseMutex (&LdtMutex, FALSE);
-            ASSERT ((MutexState == 0));
+            MutexState = KeReleaseMutex(&LdtMutex, FALSE);
+            ASSERT((MutexState == 0));
             return STATUS_SUCCESS;
-        //
-        // Otherwise, we have to grow the LDT allocation
-        //
+            //
+            // Otherwise, we have to grow the LDT allocation
+            //
         }
     }
 
@@ -1382,11 +1357,11 @@ Return Value:
 
     OldLdt = NULL;
 
-    if (!Process->LdtInformation) {
-        ProcessLdtInformation = ExAllocatePoolWithTag (NonPagedPool,
-                                                       sizeof(LDTINFORMATION),
-                                                       'dLsP');
-        if (ProcessLdtInformation == NULL) {
+    if (!Process->LdtInformation)
+    {
+        ProcessLdtInformation = ExAllocatePoolWithTag(NonPagedPool, sizeof(LDTINFORMATION), 'dLsP');
+        if (ProcessLdtInformation == NULL)
+        {
             goto SetLdtEntriesCleanup;
         }
         Process->LdtInformation = ProcessLdtInformation;
@@ -1402,49 +1377,52 @@ Return Value:
 
     AllocatedSize = (LdtSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
-    Ldt = ExAllocatePoolWithTag (NonPagedPool,
-                                 AllocatedSize,
-                                 'dLsP');
+    Ldt = ExAllocatePoolWithTag(NonPagedPool, AllocatedSize, 'dLsP');
 
-    if (Ldt) {
-        RtlZeroMemory (Ldt,
-                       AllocatedSize);
-    } else {
+    if (Ldt)
+    {
+        RtlZeroMemory(Ldt, AllocatedSize);
+    }
+    else
+    {
         goto SetLdtEntriesCleanup;
     }
 
 
-    if (ProcessLdtInformation->Ldt) {
+    if (ProcessLdtInformation->Ldt)
+    {
         //
         // copy the contents of the old ldt
         //
-        RtlCopyMemory (Ldt,
-                       ProcessLdtInformation->Ldt,
-                       ProcessLdtInformation->Size);
+        RtlCopyMemory(Ldt, ProcessLdtInformation->Ldt, ProcessLdtInformation->Size);
 
-        Status = PsChargeProcessNonPagedPoolQuota (Process,
-                                                   AllocatedSize);
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Ldt);
+        Status = PsChargeProcessNonPagedPoolQuota(Process, AllocatedSize);
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Ldt);
             Ldt = NULL;
-        } else {
-            PsReturnProcessNonPagedPoolQuota (Process,
-                                              ProcessLdtInformation->AllocatedSize);
+        }
+        else
+        {
+            PsReturnProcessNonPagedPoolQuota(Process, ProcessLdtInformation->AllocatedSize);
         }
 
-        if (Ldt == NULL) {
+        if (Ldt == NULL)
+        {
             goto SetLdtEntriesCleanup;
         }
-
-    } else {
-        Status = PsChargeProcessNonPagedPoolQuota (Process,
-                                                   AllocatedSize);
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Ldt);
+    }
+    else
+    {
+        Status = PsChargeProcessNonPagedPoolQuota(Process, AllocatedSize);
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Ldt);
             Ldt = NULL;
         }
 
-        if (Ldt == NULL) {
+        if (Ldt == NULL)
+        {
             goto SetLdtEntriesCleanup;
         }
     }
@@ -1458,21 +1436,21 @@ Return Value:
     // Set the descriptors in the LDT
     //
 
-    if (Selector0) {
-        *((PLDT_ENTRY) &ProcessLdtInformation->Ldt[Selector0/sizeof(LDT_ENTRY)]) = Descriptor[0];
+    if (Selector0)
+    {
+        *((PLDT_ENTRY)&ProcessLdtInformation->Ldt[Selector0 / sizeof(LDT_ENTRY)]) = Descriptor[0];
     }
 
-    if (Selector1) {
-        *((PLDT_ENTRY) &ProcessLdtInformation->Ldt[Selector1/sizeof(LDT_ENTRY)]) = Descriptor[Selector1Index];
+    if (Selector1)
+    {
+        *((PLDT_ENTRY)&ProcessLdtInformation->Ldt[Selector1 / sizeof(LDT_ENTRY)]) = Descriptor[Selector1Index];
     }
 
     //
     // Set the LDT for the process
     //
 
-    Ke386SetLdtProcess (&Process->Pcb,
-                        ProcessLdtInformation->Ldt,
-                        ProcessLdtInformation->Size);
+    Ke386SetLdtProcess(&Process->Pcb, ProcessLdtInformation->Ldt, ProcessLdtInformation->Size);
 
     //
     // Cleanup and exit
@@ -1482,11 +1460,12 @@ Return Value:
 
 SetLdtEntriesCleanup:
 
-    if (OldLdt) {
+    if (OldLdt)
+    {
         ExFreePool(OldLdt);
     }
 
-    MutexState = KeReleaseMutex (&LdtMutex, FALSE);
-    ASSERT (MutexState == 0);
+    MutexState = KeReleaseMutex(&LdtMutex, FALSE);
+    ASSERT(MutexState == 0);
     return Status;
 }

@@ -36,48 +36,48 @@ Revision History:
 //
 #if DBG
 
-#define CMP_NOTIFY_POSTBLOCK_CHECK      // controls the CmpCheckPostBlock macro, used to check
-                                        // validity and consistency of a notify post block
+#define CMP_NOTIFY_POSTBLOCK_CHECK // controls the CmpCheckPostBlock macro, used to check \
+                                   // validity and consistency of a notify post block
 
 
-#define CMP_ENTRYLIST_MANIPULATION      // controls the removal of an element from a LIST_ENTRY
-                                        // by setting the Blink and Flink to NULL;
-                                        // macros affected : IsListEmpty and RemoveEmptyList
-                                        // WARNING : to be defined only when not linking against the loader
+#define CMP_ENTRYLIST_MANIPULATION // controls the removal of an element from a LIST_ENTRY \
+                                   // by setting the Blink and Flink to NULL;              \
+                                   // macros affected : IsListEmpty and RemoveEmptyList    \
+                                   // WARNING : to be defined only when not linking against the loader
 
-#define CMP_KCB_CACHE_VALIDATION        // validates KCB cached members changes by comparing against the knode values.
-                                        // We shall disable this after proven the caching mechanism works OK
+#define CMP_KCB_CACHE_VALIDATION // validates KCB cached members changes by comparing against the knode values. \
+                                 // We shall disable this after proven the caching mechanism works OK
 
 //#define CMP_CMVIEW_VALIDATION           // validates the view mapping mechanism
 
-#define CHECK_REGISTRY_USECOUNT         // Validates the GetCell/ReleaseCell call matching, to ensure mapped views
-                                        // don't get unmapped while in use
+#define CHECK_REGISTRY_USECOUNT // Validates the GetCell/ReleaseCell call matching, to ensure mapped views \
+                                // don't get unmapped while in use
 
 //#define SYNC_HIVE_VALIDATION            // validate the HvpDoWriteHive paged dirty data algorithm
-                                        // We shall disable this after we catch saving alternate problem
+// We shall disable this after we catch saving alternate problem
 
 //#define HIVE_SECURITY_STATS             // collect statistics about security cells
 
 //#define CMP_STATS                       // collect statistics about kcbs
 
 //#define WRITE_PROTECTED_REGISTRY_POOL   // applies only for registry hives stored in paged pool
-                                        // controls access over registry bins
+// controls access over registry bins
 
 //#define WRITE_PROTECTED_VALUE_CACHE     // protects pool allocations used for kcb value cache
 
 //#define DRAGOSS_PRIVATE_DEBUG           // private debug session
 
 //#define CM_CHECK_MAP_NO_READ_SCHEME       // validates the mapping code assumption (i.e. each bin map should start
-                                          // with HMAP_NEW_ALLOC; this is true only for mapped bins
+// with HMAP_NEW_ALLOC; this is true only for mapped bins
 
-#define REGISTRY_LOCK_CHECKING          // on each Nt API level call, checks the thread has released all locks
-                                        // acquired. We may want to remove it, as it can hide bugs in other components
-                                        // bellow registry (Ob, Se, Ps, Mm)
+#define REGISTRY_LOCK_CHECKING // on each Nt API level call, checks the thread has released all locks         \
+                               // acquired. We may want to remove it, as it can hide bugs in other components \
+                               // bellow registry (Ob, Se, Ps, Mm)
 
 //#define CM_PERF_ISSUES                  // keep track of how long CmpInitializeHiveList and CmpConvertHiveToMapped takes
 
 
-#define CM_CHECK_FOR_ORPHANED_KCBS      // check for orphaned kcbs every time we free a hive.
+#define CM_CHECK_FOR_ORPHANED_KCBS // check for orphaned kcbs every time we free a hive.
 
 #endif //DBG
 
@@ -86,8 +86,8 @@ Revision History:
 //#define CM_NOTIFY_CHANGED_KCB_FULLPATH  // return the full qualified path of the changed kcb in the Buffer arg of NtNotifyChangeKey
 
 #if defined(_X86_)
-#define CM_LEAK_STACK_TRACES            // keeps stacks traces for opened handles
-#endif //_X86_
+#define CM_LEAK_STACK_TRACES // keeps stacks traces for opened handles
+#endif                       //_X86_
 
 //
 // 2. these section controls whether or not a certain feature goes into product or not;
@@ -95,23 +95,23 @@ Revision History:
 //
 #ifndef _CM_LDR_
 
-#define NT_RENAME_KEY                   // NtRenameKey API
+#define NT_RENAME_KEY // NtRenameKey API
 
-#define NT_UNLOAD_KEY_EX                // NtUnloadKeyEx API
+#define NT_UNLOAD_KEY_EX // NtUnloadKeyEx API
 
 #endif //_CM_LDR_
 
-#define CM_ENABLE_MAPPED_VIEWS          // controls whether the mapped views feature (using Cc interfaces) is used
-                                        // by commenting this, registry hives are reverted to paged pool
-                                        // WARNING: This should be always on !!!
+#define CM_ENABLE_MAPPED_VIEWS // controls whether the mapped views feature (using Cc interfaces) is used \
+                               // by commenting this, registry hives are reverted to paged pool           \
+                               // WARNING: This should be always on !!!
 
 //#define CM_ENABLE_WRITE_ONLY_BINS           // use MmSetPageProtection to catch writes on data not marked dirty
 
-#define CM_MAP_NO_READ                  // this switch contols whether we map (touch all pages) or just pin_no_read
-                                        // now it makes sense to use this as mm will fault in one page at a time for
-                                        // MNW streams
+#define CM_MAP_NO_READ // this switch contols whether we map (touch all pages) or just pin_no_read  \
+                       // now it makes sense to use this as mm will fault in one page at a time for \
+                       // MNW streams
 
-#define CM_BREAK_ON_KEY_OPEN            // breaks when a key with Flags & KEY_BREAK_ON_OPEN is opened or a subkey is added
+#define CM_BREAK_ON_KEY_OPEN // breaks when a key with Flags & KEY_BREAK_ON_OPEN is opened or a subkey is added
 
 //#define CM_SAVE_KCB_CACHE               // at shutdown, save the kcb cache into a file
 
@@ -123,7 +123,7 @@ Revision History:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef CM_DYN_SYM_LINK
-#define REG_DYN_LINK            21  // this should be moved to the proper place
+#define REG_DYN_LINK 21 // this should be moved to the proper place
 #endif
 
 
@@ -145,33 +145,30 @@ Revision History:
 
 
 #ifdef CMP_STATS
-VOID
-CmpKcbStat(
-    VOID
-    );
+VOID CmpKcbStat(VOID);
 #endif
 
 #ifndef _CM_LDR_
-#define CmKdPrintEx(_x_)  KdPrintEx(_x_)
+#define CmKdPrintEx(_x_) KdPrintEx(_x_)
 #else
 #define CmKdPrintEx(_x_) //nothing
-#endif //_CM_LDR_
+#endif                   //_CM_LDR_
 
 
-#define     _64K    64L*1024L   //64K
-#define     _256K   256L*1024L  //256K
+#define _64K 64L * 1024L   //64K
+#define _256K 256L * 1024L //256K
 
 //
 // this constant defines the size of a Cc view that is mapped -in every time a cell
 // is accessed; It can be any power of 2, no less than 16K and no bigger than 256K
 //
-#define     CM_VIEW_SIZE            16L*1024L  //16K
+#define CM_VIEW_SIZE 16L * 1024L //16K
 
 //
 // control the granularity the primary file grows;
 // Warning: this should be multiple of 4K (HBLOCK_SIZE) !!!
 //
-#define     CM_FILE_GROW_INCREMENT  256L*1024L  //256K
+#define CM_FILE_GROW_INCREMENT 256L * 1024L //256K
 
 //
 // this controls the maximmum adress space allowed per hive. It should be specified in
@@ -182,23 +179,25 @@ CmpKcbStat(
 //  12 means 3   MB
 //  .....
 //
-#define     MAX_MB_PER_HIVE     16          // 4MB
+#define MAX_MB_PER_HIVE 16 // 4MB
 
 
-#define MAX_NAME    128
+#define MAX_NAME 128
 
 #ifdef CMP_ENTRYLIST_MANIPULATION
-#define CmpRemoveEntryList(a) \
-    if(((a)->Flink == NULL) && ((a)->Blink == NULL) ) {\
-        DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpRemoveEntryList: Entry %08lx\n",a);\
-        DbgBreakPoint();\
-    }\
-    RemoveEntryList(a);\
+#define CmpRemoveEntryList(a)                                                                     \
+    if (((a)->Flink == NULL) && ((a)->Blink == NULL))                                             \
+    {                                                                                             \
+        DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpRemoveEntryList: Entry %08lx\n", a); \
+        DbgBreakPoint();                                                                          \
+    }                                                                                             \
+    RemoveEntryList(a);                                                                           \
     (a)->Flink = (a)->Blink = NULL
 
 #define CmpClearListEntry(a) (a)->Flink = (a)->Blink = NULL
 
-#define CmpIsListEmpty(a) ( ( ((a)->Flink == NULL) && ((a)->Blink == NULL) ) || ( ((a)->Flink != NULL) && ((a)->Blink != NULL) && IsListEmpty(a) ) )
+#define CmpIsListEmpty(a) \
+    ((((a)->Flink == NULL) && ((a)->Blink == NULL)) || (((a)->Flink != NULL) && ((a)->Blink != NULL) && IsListEmpty(a)))
 
 #else
 #define CmpRemoveEntryList(a) RemoveEntryList(a)
@@ -209,193 +208,193 @@ CmpKcbStat(
 
 extern PCM_TRACE_NOTIFY_ROUTINE CmpTraceRoutine;
 
-VOID
-CmpWmiDumpKcb(
-    PCM_KEY_CONTROL_BLOCK       kcb
-);
+VOID CmpWmiDumpKcb(PCM_KEY_CONTROL_BLOCK kcb);
 
-#define CmpWmiFireEvent(Status,Kcb,ElapsedTime,Index,KeyName,Type)  \
-try {                                                               \
-    PCM_TRACE_NOTIFY_ROUTINE TraceRoutine = CmpTraceRoutine;        \
-    if( TraceRoutine != NULL ) {                                    \
-        (*TraceRoutine)(Status,Kcb,ElapsedTime,Index,KeyName,Type); \
-    }                                                               \
-} except (EXCEPTION_EXECUTE_HANDLER) { }
+#define CmpWmiFireEvent(Status, Kcb, ElapsedTime, Index, KeyName, Type)      \
+    try                                                                      \
+    {                                                                        \
+        PCM_TRACE_NOTIFY_ROUTINE TraceRoutine = CmpTraceRoutine;             \
+        if (TraceRoutine != NULL)                                            \
+        {                                                                    \
+            (*TraceRoutine)(Status, Kcb, ElapsedTime, Index, KeyName, Type); \
+        }                                                                    \
+    }                                                                        \
+    except(EXCEPTION_EXECUTE_HANDLER)                                        \
+    {                                                                        \
+    }
 
-#define StartWmiCmTrace()\
-    LARGE_INTEGER   StartSystemTime;\
-    LARGE_INTEGER   EndSystemTime;\
-    PVOID           HookKcb = NULL;\
-    if (CmpTraceRoutine) {\
+#define StartWmiCmTrace()               \
+    LARGE_INTEGER StartSystemTime;      \
+    LARGE_INTEGER EndSystemTime;        \
+    PVOID HookKcb = NULL;               \
+    if (CmpTraceRoutine)                \
+    {                                   \
         PerfTimeStamp(StartSystemTime); \
     }
 
 
-#define EndWmiCmTrace(Status,Index,KeyName,Type)\
-    if (CmpTraceRoutine) {\
-        try {\
-            PerfTimeStamp(EndSystemTime); \
-            CmpWmiFireEvent(Status,HookKcb,EndSystemTime.QuadPart - StartSystemTime.QuadPart,Index,KeyName,Type);\
-        } except (EXCEPTION_EXECUTE_HANDLER) {\
-        }\
+#define EndWmiCmTrace(Status, Index, KeyName, Type)                                                                    \
+    if (CmpTraceRoutine)                                                                                               \
+    {                                                                                                                  \
+        try                                                                                                            \
+        {                                                                                                              \
+            PerfTimeStamp(EndSystemTime);                                                                              \
+            CmpWmiFireEvent(Status, HookKcb, EndSystemTime.QuadPart - StartSystemTime.QuadPart, Index, KeyName, Type); \
+        }                                                                                                              \
+        except(EXCEPTION_EXECUTE_HANDLER)                                                                              \
+        {                                                                                                              \
+        }                                                                                                              \
     }
 
-#define HookKcbForWmiCmTrace(KeyBody) \
-    if (CmpTraceRoutine) {\
-        if(KeyBody) {\
-            HookKcb = KeyBody->KeyControlBlock;\
-        }\
+#define HookKcbForWmiCmTrace(KeyBody)           \
+    if (CmpTraceRoutine)                        \
+    {                                           \
+        if (KeyBody)                            \
+        {                                       \
+            HookKcb = KeyBody->KeyControlBlock; \
+        }                                       \
     }
 
-#define HookKcbFromHandleForWmiCmTrace(KeyHandle) \
-    if (CmpTraceRoutine) {\
-        PCM_KEY_BODY KeyBody;\
-        NTSTATUS status;\
-        status = ObReferenceObjectByHandle(\
-                    KeyHandle,\
-                    0,\
-                    CmpKeyObjectType,\
-                    KeGetPreviousMode(),\
-                    (PVOID *)(&KeyBody),\
-                    NULL\
-                    );\
-        if (NT_SUCCESS(status)) {\
-            HookKcb = KeyBody->KeyControlBlock;\
-            ObDereferenceObject((PVOID)KeyBody);\
-        }\
+#define HookKcbFromHandleForWmiCmTrace(KeyHandle)                                                                      \
+    if (CmpTraceRoutine)                                                                                               \
+    {                                                                                                                  \
+        PCM_KEY_BODY KeyBody;                                                                                          \
+        NTSTATUS status;                                                                                               \
+        status =                                                                                                       \
+            ObReferenceObjectByHandle(KeyHandle, 0, CmpKeyObjectType, KeGetPreviousMode(), (PVOID *)(&KeyBody), NULL); \
+        if (NT_SUCCESS(status))                                                                                        \
+        {                                                                                                              \
+            HookKcb = KeyBody->KeyControlBlock;                                                                        \
+            ObDereferenceObject((PVOID)KeyBody);                                                                       \
+        }                                                                                                              \
     }
 
 #define CmpTraceKcbCreate(kcb) \
-    if (CmpTraceRoutine) {\
-        CmpWmiDumpKcb(kcb);\
+    if (CmpTraceRoutine)       \
+    {                          \
+        CmpWmiDumpKcb(kcb);    \
     }
 
 #ifdef WRITE_PROTECTED_VALUE_CACHE
 
-#define CmpMakeSpecialPoolReadOnly(PoolAddress) \
-    { \
-        if( !MmProtectSpecialPool( (PVOID) PoolAddress, PAGE_READONLY) ) \
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"[CmpMakeSpecialPoolReadOnly]: Failed to Mark SpecialPool %p as ReadOnly", PoolAddress )); \
+#define CmpMakeSpecialPoolReadOnly(PoolAddress)                                                                    \
+    {                                                                                                              \
+        if (!MmProtectSpecialPool((PVOID)PoolAddress, PAGE_READONLY))                                              \
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL,                                                               \
+                         "[CmpMakeSpecialPoolReadOnly]: Failed to Mark SpecialPool %p as ReadOnly", PoolAddress)); \
     }
 
-#define CmpMakeSpecialPoolReadWrite(PoolAddress) \
-    { \
-        if( !MmProtectSpecialPool( (PVOID) PoolAddress, PAGE_READWRITE) ) { \
-           CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"[CmpMakeSpecialPoolReadWrite]: Failed to Mark SpecialPool %p as ReadWrite", PoolAddress )); \
-        } \
+#define CmpMakeSpecialPoolReadWrite(PoolAddress)                                                                     \
+    {                                                                                                                \
+        if (!MmProtectSpecialPool((PVOID)PoolAddress, PAGE_READWRITE))                                               \
+        {                                                                                                            \
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL,                                                                 \
+                         "[CmpMakeSpecialPoolReadWrite]: Failed to Mark SpecialPool %p as ReadWrite", PoolAddress)); \
+        }                                                                                                            \
     }
-#define CmpMakeValueCacheReadOnly(ValueCached,PoolAddress) \
-    if(ValueCached) { \
-        CmpMakeSpecialPoolReadOnly( PoolAddress );\
+#define CmpMakeValueCacheReadOnly(ValueCached, PoolAddress) \
+    if (ValueCached)                                        \
+    {                                                       \
+        CmpMakeSpecialPoolReadOnly(PoolAddress);            \
     }
 
-#define CmpMakeValueCacheReadWrite(ValueCached,PoolAddress) \
-    if(ValueCached) { \
-        CmpMakeSpecialPoolReadWrite( PoolAddress );\
+#define CmpMakeValueCacheReadWrite(ValueCached, PoolAddress) \
+    if (ValueCached)                                         \
+    {                                                        \
+        CmpMakeSpecialPoolReadWrite(PoolAddress);            \
     }
 
 #else
-#define CmpMakeSpecialPoolReadOnly(a)  //nothing
-#define CmpMakeSpecialPoolReadWrite(a)  //nothing
-#define CmpMakeValueCacheReadOnly(a,b) //nothing
-#define CmpMakeValueCacheReadWrite(a,b) //nothing
+#define CmpMakeSpecialPoolReadOnly(a)    //nothing
+#define CmpMakeSpecialPoolReadWrite(a)   //nothing
+#define CmpMakeValueCacheReadOnly(a, b)  //nothing
+#define CmpMakeValueCacheReadWrite(a, b) //nothing
 #endif
 
 #ifdef WRITE_PROTECTED_REGISTRY_POOL
 
-VOID
-HvpMarkBinReadWrite(
-    PHHIVE      Hive,
-    HCELL_INDEX Cell
-    );
+VOID HvpMarkBinReadWrite(PHHIVE Hive, HCELL_INDEX Cell);
 
-VOID
-HvpChangeBinAllocation(
-    PHBIN       Bin,
-    BOOLEAN     ReadOnly
-    );
+VOID HvpChangeBinAllocation(PHBIN Bin, BOOLEAN ReadOnly);
 
-VOID
-CmpMarkAllBinsReadOnly(
-    PHHIVE      Hive
-    );
+VOID CmpMarkAllBinsReadOnly(PHHIVE Hive);
 
 #else
-#define HvpChangeBinAllocation(a,b) //nothing
-#define HvpMarkBinReadWrite(a,b) //nothing
-#define CmpMarkAllBinsReadOnly(a) //nothing
+#define HvpChangeBinAllocation(a, b) //nothing
+#define HvpMarkBinReadWrite(a, b)    //nothing
+#define CmpMarkAllBinsReadOnly(a)    //nothing
 #endif
 
 #ifdef POOL_TAGGING
 //
 // Pool Tag
 //
-#define  CM_POOL_TAG        '  MC'
-#define  CM_KCB_TAG         'bkMC'
-#define  CM_POSTBLOCK_TAG   'bpMC'
-#define  CM_NOTIFYBLOCK_TAG 'bnMC'
-#define  CM_POSTEVENT_TAG   'epMC'
-#define  CM_POSTAPC_TAG     'apMC'
-#define  CM_MAPPEDVIEW_TAG  'wVMC'
-#define  CM_SECCACHE_TAG    'cSMC'
-#define  CM_DELAYCLOSE_TAG  'cDMC'
-#define  CM_STASHBUFFER_TAG 'bSMC'
-#define  CM_HVBIN_TAG       'bHMC'
-#define  CM_ALLOCATE_TAG    'lAMC'
+#define CM_POOL_TAG '  MC'
+#define CM_KCB_TAG 'bkMC'
+#define CM_POSTBLOCK_TAG 'bpMC'
+#define CM_NOTIFYBLOCK_TAG 'bnMC'
+#define CM_POSTEVENT_TAG 'epMC'
+#define CM_POSTAPC_TAG 'apMC'
+#define CM_MAPPEDVIEW_TAG 'wVMC'
+#define CM_SECCACHE_TAG 'cSMC'
+#define CM_DELAYCLOSE_TAG 'cDMC'
+#define CM_STASHBUFFER_TAG 'bSMC'
+#define CM_HVBIN_TAG 'bHMC'
+#define CM_ALLOCATE_TAG 'lAMC'
 
 //
 // Find leaks
 //
-#define  CM_FIND_LEAK_TAG1    ' 1MC'
-#define  CM_FIND_LEAK_TAG2    ' 2MC'
-#define  CM_FIND_LEAK_TAG3    ' 3MC'
-#define  CM_FIND_LEAK_TAG4    ' 4MC'
-#define  CM_FIND_LEAK_TAG5    ' 5MC'
-#define  CM_FIND_LEAK_TAG6    ' 6MC'
-#define  CM_FIND_LEAK_TAG7    ' 7MC'
-#define  CM_FIND_LEAK_TAG8    ' 8MC'
-#define  CM_FIND_LEAK_TAG9    ' 9MC'
-#define  CM_FIND_LEAK_TAG10    '01MC'
-#define  CM_FIND_LEAK_TAG11    '11MC'
-#define  CM_FIND_LEAK_TAG12    '21MC'
-#define  CM_FIND_LEAK_TAG13    '31MC'
-#define  CM_FIND_LEAK_TAG14    '41MC'
-#define  CM_FIND_LEAK_TAG15    '51MC'
-#define  CM_FIND_LEAK_TAG16    '61MC'
-#define  CM_FIND_LEAK_TAG17    '71MC'
-#define  CM_FIND_LEAK_TAG18    '81MC'
-#define  CM_FIND_LEAK_TAG19    '91MC'
-#define  CM_FIND_LEAK_TAG20    '02MC'
-#define  CM_FIND_LEAK_TAG21    '12MC'
-#define  CM_FIND_LEAK_TAG22    '22MC'
-#define  CM_FIND_LEAK_TAG23    '32MC'
-#define  CM_FIND_LEAK_TAG24    '42MC'
-#define  CM_FIND_LEAK_TAG25    '52MC'
-#define  CM_FIND_LEAK_TAG26    '62MC'
-#define  CM_FIND_LEAK_TAG27    '72MC'
-#define  CM_FIND_LEAK_TAG28    '82MC'
-#define  CM_FIND_LEAK_TAG29    '92MC'
-#define  CM_FIND_LEAK_TAG30    '03MC'
-#define  CM_FIND_LEAK_TAG31    '13MC'
-#define  CM_FIND_LEAK_TAG32    '23MC'
-#define  CM_FIND_LEAK_TAG33    '33MC'
-#define  CM_FIND_LEAK_TAG34    '43MC'
-#define  CM_FIND_LEAK_TAG35    '53MC'
-#define  CM_FIND_LEAK_TAG36    '63MC'
-#define  CM_FIND_LEAK_TAG37    '73MC'
-#define  CM_FIND_LEAK_TAG38    '83MC'
-#define  CM_FIND_LEAK_TAG39    '93MC'
-#define  CM_FIND_LEAK_TAG40    '04MC'
-#define  CM_FIND_LEAK_TAG41    '14MC'
-#define  CM_FIND_LEAK_TAG42    '24MC'
-#define  CM_FIND_LEAK_TAG43    '34MC'
-#define  CM_FIND_LEAK_TAG44    '44MC'
-#define  CM_FIND_LEAK_TAG45    '54MC'
+#define CM_FIND_LEAK_TAG1 ' 1MC'
+#define CM_FIND_LEAK_TAG2 ' 2MC'
+#define CM_FIND_LEAK_TAG3 ' 3MC'
+#define CM_FIND_LEAK_TAG4 ' 4MC'
+#define CM_FIND_LEAK_TAG5 ' 5MC'
+#define CM_FIND_LEAK_TAG6 ' 6MC'
+#define CM_FIND_LEAK_TAG7 ' 7MC'
+#define CM_FIND_LEAK_TAG8 ' 8MC'
+#define CM_FIND_LEAK_TAG9 ' 9MC'
+#define CM_FIND_LEAK_TAG10 '01MC'
+#define CM_FIND_LEAK_TAG11 '11MC'
+#define CM_FIND_LEAK_TAG12 '21MC'
+#define CM_FIND_LEAK_TAG13 '31MC'
+#define CM_FIND_LEAK_TAG14 '41MC'
+#define CM_FIND_LEAK_TAG15 '51MC'
+#define CM_FIND_LEAK_TAG16 '61MC'
+#define CM_FIND_LEAK_TAG17 '71MC'
+#define CM_FIND_LEAK_TAG18 '81MC'
+#define CM_FIND_LEAK_TAG19 '91MC'
+#define CM_FIND_LEAK_TAG20 '02MC'
+#define CM_FIND_LEAK_TAG21 '12MC'
+#define CM_FIND_LEAK_TAG22 '22MC'
+#define CM_FIND_LEAK_TAG23 '32MC'
+#define CM_FIND_LEAK_TAG24 '42MC'
+#define CM_FIND_LEAK_TAG25 '52MC'
+#define CM_FIND_LEAK_TAG26 '62MC'
+#define CM_FIND_LEAK_TAG27 '72MC'
+#define CM_FIND_LEAK_TAG28 '82MC'
+#define CM_FIND_LEAK_TAG29 '92MC'
+#define CM_FIND_LEAK_TAG30 '03MC'
+#define CM_FIND_LEAK_TAG31 '13MC'
+#define CM_FIND_LEAK_TAG32 '23MC'
+#define CM_FIND_LEAK_TAG33 '33MC'
+#define CM_FIND_LEAK_TAG34 '43MC'
+#define CM_FIND_LEAK_TAG35 '53MC'
+#define CM_FIND_LEAK_TAG36 '63MC'
+#define CM_FIND_LEAK_TAG37 '73MC'
+#define CM_FIND_LEAK_TAG38 '83MC'
+#define CM_FIND_LEAK_TAG39 '93MC'
+#define CM_FIND_LEAK_TAG40 '04MC'
+#define CM_FIND_LEAK_TAG41 '14MC'
+#define CM_FIND_LEAK_TAG42 '24MC'
+#define CM_FIND_LEAK_TAG43 '34MC'
+#define CM_FIND_LEAK_TAG44 '44MC'
+#define CM_FIND_LEAK_TAG45 '54MC'
 
 #ifdef _WANT_MACHINE_IDENTIFICATION
 
 #define CM_PARSEINI_TAG 'ipMC'
-#define CM_GENINST_TAG  'igMC'
+#define CM_GENINST_TAG 'igMC'
 
 #endif
 
@@ -403,24 +402,20 @@ CmpMarkAllBinsReadOnly(
 // Extra Tags for cache.
 // We may want to merge these tags later.
 //
-#define  CM_CACHE_VALUE_INDEX_TAG 'IVMC'
-#define  CM_CACHE_VALUE_TAG       'aVMC'
-#define  CM_CACHE_INDEX_TAG       'nIMC'
-#define  CM_CACHE_VALUE_DATA_TAG  'aDMC'
-#define  CM_NAME_TAG              'bNMC'
+#define CM_CACHE_VALUE_INDEX_TAG 'IVMC'
+#define CM_CACHE_VALUE_TAG 'aVMC'
+#define CM_CACHE_INDEX_TAG 'nIMC'
+#define CM_CACHE_VALUE_DATA_TAG 'aDMC'
+#define CM_NAME_TAG 'bNMC'
 
 
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,CM_POOL_TAG)
-#define ExAllocatePoolWithQuota(a,b) ExAllocatePoolWithQuotaTag(a,b,CM_POOL_TAG)
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, CM_POOL_TAG)
+#define ExAllocatePoolWithQuota(a, b) ExAllocatePoolWithQuotaTag(a, b, CM_POOL_TAG)
 
 PVOID
-CmpAllocateTag(
-    ULONG   Size,
-    BOOLEAN UseForIo,
-    ULONG   Tag
-    );
+CmpAllocateTag(ULONG Size, BOOLEAN UseForIo, ULONG Tag);
 #else
-#define CmpAllocateTag(a,b,c) CmpAllocate(a,b,c)
+#define CmpAllocateTag(a, b, c) CmpAllocate(a, b, c)
 #endif
 
 //
@@ -428,7 +423,7 @@ CmpAllocateTag(
 //
 extern const ULONG CmpCacheOnFlag;
 
-#define CM_CACHE_FAKE_KEY  0x00000001      // Create Fake key KCB
+#define CM_CACHE_FAKE_KEY 0x00000001 // Create Fake key KCB
 
 //
 // This lock protects the KCB cache, including the KCB structures,
@@ -448,34 +443,20 @@ extern HANDLE CmpRegistryRootHandle;
 #define CmpLockKCBTreeExclusive() ExAcquireResourceExclusive(&CmpKcbLock);
 
 #else
-VOID
-CmpLockKCBTreeExclusive(
-    VOID
-    );
-VOID
-CmpLockKCBTree(
-    VOID
-    );
+VOID CmpLockKCBTreeExclusive(VOID);
+VOID CmpLockKCBTree(VOID);
 #endif
 
-VOID
-CmpUnlockKCBTree(
-    );
+VOID CmpUnlockKCBTree();
 
 #if DBG
 BOOLEAN
-CmpTestKCBLock(
-    VOID
-    );
+CmpTestKCBLock(VOID);
 BOOLEAN
-CmpTestKCBLockExclusive(
-    VOID
-    );
-#define ASSERT_KCB_LOCK_OWNED() \
-    ASSERT(CmpTestKCBLock() == TRUE)
+CmpTestKCBLockExclusive(VOID);
+#define ASSERT_KCB_LOCK_OWNED() ASSERT(CmpTestKCBLock() == TRUE)
 
-#define ASSERT_KCB_LOCK_OWNED_EXCLUSIVE() \
-    ASSERT(CmpTestKCBLockExclusive() == TRUE)
+#define ASSERT_KCB_LOCK_OWNED_EXCLUSIVE() ASSERT(CmpTestKCBLockExclusive() == TRUE)
 #else
 #define ASSERT_KCB_LOCK_OWNED()
 #define ASSERT_KCB_LOCK_OWNED_EXCLUSIVE()
@@ -484,24 +465,24 @@ CmpTestKCBLockExclusive(
 //
 // Logging: remember, first 4 levels (0-3) are reserved system-wide
 //
-#define CML_BUGCHECK    4   // fatal errors
-#define CML_EXCEPTION   5   // all exception's
-#define CML_NTAPI       6   // NtApi calls
-#define CML_NTAPI_ARGS  7   // NtApi parameters
-#define CML_CM          8   // Cm level, general
-#define CML_NOTIFY      9   // Notify level, general
-#define CML_HIVE        10  // Hv level, general
-#define CML_IO          11  // IO level
-#define CML_SEC         12  // Security level
-#define CML_INIT        13  // Init level, general
-#define CML_INDEX       14  // Index level, general
-#define CML_BIN_MAP     15  // bin mapping level
-#define CML_FREECELL    16  // Free cell hints
-#define CML_POOL        17  // Pool
-#define CML_LOCKING     18  // Lock/unlock level
-#define CML_FLOW        19  // General flow
-#define CML_PARSE       20  // Parse algorithm
-#define CML_SAVRES      21  // SavRes operations
+#define CML_BUGCHECK 4   // fatal errors
+#define CML_EXCEPTION 5  // all exception's
+#define CML_NTAPI 6      // NtApi calls
+#define CML_NTAPI_ARGS 7 // NtApi parameters
+#define CML_CM 8         // Cm level, general
+#define CML_NOTIFY 9     // Notify level, general
+#define CML_HIVE 10      // Hv level, general
+#define CML_IO 11        // IO level
+#define CML_SEC 12       // Security level
+#define CML_INIT 13      // Init level, general
+#define CML_INDEX 14     // Index level, general
+#define CML_BIN_MAP 15   // bin mapping level
+#define CML_FREECELL 16  // Free cell hints
+#define CML_POOL 17      // Pool
+#define CML_LOCKING 18   // Lock/unlock level
+#define CML_FLOW 19      // General flow
+#define CML_PARSE 20     // Parse algorithm
+#define CML_SAVRES 21    // SavRes operations
 
 
 #define REGCHECKING 1
@@ -509,7 +490,9 @@ CmpTestKCBLockExclusive(
 #if DBG
 
 #if REGCHECKING
-#define DCmCheckRegistry(a) if(HvHiveChecking) ASSERT(CmCheckRegistry(a, CM_CHECK_REGISTRY_HIVE_CHECK) == 0)
+#define DCmCheckRegistry(a) \
+    if (HvHiveChecking)     \
+    ASSERT(CmCheckRegistry(a, CM_CHECK_REGISTRY_HIVE_CHECK) == 0)
 #else
 #define DCmCheckRegistry(a)
 #endif
@@ -519,49 +502,56 @@ CmpTestKCBLockExclusive(
 #endif
 
 #ifdef CHECK_REGISTRY_USECOUNT
-VOID
-CmpCheckRegistryUseCount( );
+VOID CmpCheckRegistryUseCount();
 #endif //CHECK_REGISTRY_USECOUNT
 
-#ifdef  REGISTRY_LOCK_CHECKING
+#ifdef REGISTRY_LOCK_CHECKING
 ULONG
-CmpCheckLockExceptionFilter(
-    IN PEXCEPTION_POINTERS ExceptionPointers
-    );
+CmpCheckLockExceptionFilter(IN PEXCEPTION_POINTERS ExceptionPointers);
 
 //
 // updated to check both registry and kcb
 //
 #define BEGIN_LOCK_CHECKPOINT                                                       \
     {                                                                               \
-        ULONG   RegistryLockCountBefore,RegistryLockCountAfter;                     \
-        ULONG   KCBLockCountBefore,KCBLockCountAfter;                               \
+        ULONG RegistryLockCountBefore, RegistryLockCountAfter;                      \
+        ULONG KCBLockCountBefore, KCBLockCountAfter;                                \
         RegistryLockCountBefore = ExIsResourceAcquiredShared(&CmpRegistryLock);     \
         RegistryLockCountBefore += ExIsResourceAcquiredExclusive(&CmpRegistryLock); \
         KCBLockCountBefore = ExIsResourceAcquiredShared(&CmpKcbLock);               \
         KCBLockCountBefore += ExIsResourceAcquiredExclusive(&CmpKcbLock);           \
-        try {
+        try                                                                         \
+        {
 
-#define END_LOCK_CHECKPOINT                                                                                         \
-        } except(CmpCheckLockExceptionFilter(GetExceptionInformation())) {}                                         \
-        RegistryLockCountAfter = ExIsResourceAcquiredShared(&CmpRegistryLock);                                      \
-        RegistryLockCountAfter += ExIsResourceAcquiredExclusive(&CmpRegistryLock);                                  \
-        KCBLockCountAfter = ExIsResourceAcquiredShared(&CmpKcbLock);                                                \
-        KCBLockCountAfter += ExIsResourceAcquiredExclusive(&CmpKcbLock);                                            \
-        if( RegistryLockCountBefore != RegistryLockCountAfter ) {                                                   \
-            CM_BUGCHECK(REGISTRY_ERROR,REGISTRY_LOCK_CHECKPOINT,0,RegistryLockCountBefore,RegistryLockCountAfter);  \
-        }                                                                                                           \
-        if( KCBLockCountBefore != KCBLockCountAfter ) {                                                             \
-            CM_BUGCHECK(REGISTRY_ERROR,REGISTRY_LOCK_CHECKPOINT,1,KCBLockCountBefore,KCBLockCountAfter);            \
-        }                                                                                                           \
+#define END_LOCK_CHECKPOINT                                                                                        \
+    }                                                                                                              \
+    except(CmpCheckLockExceptionFilter(GetExceptionInformation()))                                                 \
+    {                                                                                                              \
+    }                                                                                                              \
+    RegistryLockCountAfter = ExIsResourceAcquiredShared(&CmpRegistryLock);                                         \
+    RegistryLockCountAfter += ExIsResourceAcquiredExclusive(&CmpRegistryLock);                                     \
+    KCBLockCountAfter = ExIsResourceAcquiredShared(&CmpKcbLock);                                                   \
+    KCBLockCountAfter += ExIsResourceAcquiredExclusive(&CmpKcbLock);                                               \
+    if (RegistryLockCountBefore != RegistryLockCountAfter)                                                         \
+    {                                                                                                              \
+        CM_BUGCHECK(REGISTRY_ERROR, REGISTRY_LOCK_CHECKPOINT, 0, RegistryLockCountBefore, RegistryLockCountAfter); \
+    }                                                                                                              \
+    if (KCBLockCountBefore != KCBLockCountAfter)                                                                   \
+    {                                                                                                              \
+        CM_BUGCHECK(REGISTRY_ERROR, REGISTRY_LOCK_CHECKPOINT, 1, KCBLockCountBefore, KCBLockCountAfter);           \
+    }                                                                                                              \
     }
 
 
-#define BEGIN_KCB_LOCK_GUARD    \
-        try {
+#define BEGIN_KCB_LOCK_GUARD \
+    try                      \
+    {
 
-#define END_KCB_LOCK_GUARD      \
-        } except(CmpCheckLockExceptionFilter(GetExceptionInformation())) {}
+#define END_KCB_LOCK_GUARD                                         \
+    }                                                              \
+    except(CmpCheckLockExceptionFilter(GetExceptionInformation())) \
+    {                                                              \
+    }
 
 #else
 #define BEGIN_LOCK_CHECKPOINT
@@ -573,12 +563,12 @@ CmpCheckLockExceptionFilter(
 extern BOOLEAN CmpSpecialBootCondition;
 
 #if DBG
-#define ASSERT_CM_LOCK_OWNED() \
-    ASSERT( (CmpSpecialBootCondition == TRUE) || (CmpTestRegistryLock() == TRUE) )
+#define ASSERT_CM_LOCK_OWNED() ASSERT((CmpSpecialBootCondition == TRUE) || (CmpTestRegistryLock() == TRUE))
 #define ASSERT_CM_LOCK_OWNED_EXCLUSIVE() \
-    ASSERT((CmpSpecialBootCondition == TRUE) || (CmpTestRegistryLockExclusive() == TRUE) )
-#define ASSERT_CM_EXCLUSIVE_HIVE_ACCESS(Hive) \
-    ASSERT((CmpSpecialBootCondition == TRUE) || (CmpTestRegistryLockExclusive() == TRUE) || (Hive->ReleaseCellRoutine == NULL) )
+    ASSERT((CmpSpecialBootCondition == TRUE) || (CmpTestRegistryLockExclusive() == TRUE))
+#define ASSERT_CM_EXCLUSIVE_HIVE_ACCESS(Hive)                                               \
+    ASSERT((CmpSpecialBootCondition == TRUE) || (CmpTestRegistryLockExclusive() == TRUE) || \
+           (Hive->ReleaseCellRoutine == NULL))
 #else
 #define ASSERT_CM_LOCK_OWNED()
 #define ASSERT_CM_LOCK_OWNED_EXCLUSIVE()
@@ -587,43 +577,41 @@ extern BOOLEAN CmpSpecialBootCondition;
 
 #if DBG
 #ifndef _CM_LDR_
-#define ASSERT_PASSIVE_LEVEL()                                              \
-    {                                                                       \
-        KIRQL   Irql;                                                       \
-        Irql = KeGetCurrentIrql();                                          \
-        if( KeGetCurrentIrql() != PASSIVE_LEVEL ) {                         \
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"ASSERT_PASSIVE_LEVEL failed ... Irql = %lu\n",Irql);  \
-            ASSERT( FALSE );                                                \
-        }                                                                   \
+#define ASSERT_PASSIVE_LEVEL()                                                                                      \
+    {                                                                                                               \
+        KIRQL Irql;                                                                                                 \
+        Irql = KeGetCurrentIrql();                                                                                  \
+        if (KeGetCurrentIrql() != PASSIVE_LEVEL)                                                                    \
+        {                                                                                                           \
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "ASSERT_PASSIVE_LEVEL failed ... Irql = %lu\n", Irql); \
+            ASSERT(FALSE);                                                                                          \
+        }                                                                                                           \
     }
 #endif //_CM_LDR_
 #else
 #define ASSERT_PASSIVE_LEVEL()
 #endif
 
-#define VALIDATE_CELL_MAP(LINE,Map,Hive,Address)                                                    \
-    if( Map == NULL ) {                                                                             \
-            CM_BUGCHECK (REGISTRY_ERROR,BAD_CELL_MAP,(ULONG_PTR)(Hive),(ULONG)(Address),(ULONG)(LINE)) ;      \
+#define VALIDATE_CELL_MAP(LINE, Map, Hive, Address)                                                    \
+    if (Map == NULL)                                                                                   \
+    {                                                                                                  \
+        CM_BUGCHECK(REGISTRY_ERROR, BAD_CELL_MAP, (ULONG_PTR)(Hive), (ULONG)(Address), (ULONG)(LINE)); \
     }
 
 #if DBG
-VOID
-SepDumpSecurityDescriptor(
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PSZ TitleString
-    );
+VOID SepDumpSecurityDescriptor(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN PSZ TitleString);
 
 extern BOOLEAN SepDumpSD;
 
-#define CmpDumpSecurityDescriptor(x,y) \
-        { \
-            SepDumpSD=TRUE;     \
-            SepDumpSecurityDescriptor(x, y);  \
-            SepDumpSD=FALSE;    \
-        }
+#define CmpDumpSecurityDescriptor(x, y)  \
+    {                                    \
+        SepDumpSD = TRUE;                \
+        SepDumpSecurityDescriptor(x, y); \
+        SepDumpSD = FALSE;               \
+    }
 #else
 
-#define CmpDumpSecurityDescriptor(x,y)
+#define CmpDumpSecurityDescriptor(x, y)
 
 #endif
 
@@ -632,7 +620,7 @@ extern BOOLEAN SepDumpSD;
 // misc stuff
 //
 
-extern  UNICODE_STRING  CmRegistrySystemCloneName;
+extern UNICODE_STRING CmRegistrySystemCloneName;
 
 //
 // Determines whether the Current Control Set used during booting
@@ -643,25 +631,27 @@ extern  UNICODE_STRING  CmRegistrySystemCloneName;
 #define CLONE_CONTROL_SET FALSE
 
 #if CLONE_CONTROL_SET
-#define     CM_NUMBER_OF_MACHINE_HIVES  7
+#define CM_NUMBER_OF_MACHINE_HIVES 7
 #else
-#define     CM_NUMBER_OF_MACHINE_HIVES  6
+#define CM_NUMBER_OF_MACHINE_HIVES 6
 #endif
 
 #define NUMBER_TYPES (MaximumType + 1)
 
-#define CM_WRAP_LIMIT               0x7fffffff
+#define CM_WRAP_LIMIT 0x7fffffff
 
 
 //
 // Tuning and control constants
 //
-#define CM_MAX_STASH           1024*1024        // If size of data for a set
-                                                // is bigger than this,
+#define CM_MAX_STASH                         \
+    1024 * 1024 // If size of data for a set \
+                // is bigger than this,
 
-#define CM_MAX_REASONABLE_VALUES    100         // If number of values for a
-                                                // key is greater than this,
-                                                // round up value list size
+#define CM_MAX_REASONABLE_VALUES     \
+    100 // If number of values for a \
+        // key is greater than this, \
+        // round up value list size
 
 
 //
@@ -670,7 +660,7 @@ extern  UNICODE_STRING  CmRegistrySystemCloneName;
 // value is always 2..
 //
 
-#define MAX_HIVE_LAYERS         2
+#define MAX_HIVE_LAYERS 2
 
 
 //
@@ -679,7 +669,8 @@ extern  UNICODE_STRING  CmRegistrySystemCloneName;
 // (Particularly the ErrorControl field)
 //
 
-typedef struct _BOOT_DRIVER_NODE {
+typedef struct _BOOT_DRIVER_NODE
+{
     BOOT_DRIVER_LIST_ENTRY ListEntry;
     UNICODE_STRING Group;
     UNICODE_STRING Name;
@@ -691,8 +682,8 @@ typedef struct _BOOT_DRIVER_NODE {
 // extern for object type pointer
 //
 
-extern  POBJECT_TYPE CmpKeyObjectType;
-extern  POBJECT_TYPE IoFileObjectType;
+extern POBJECT_TYPE CmpKeyObjectType;
+extern POBJECT_TYPE IoFileObjectType;
 
 //
 // indexes in CmpMachineHiveList
@@ -703,8 +694,8 @@ extern  POBJECT_TYPE IoFileObjectType;
 //
 // Miscelaneous Hash routines
 //
-#define RNDM_CONSTANT   314159269    /* default value for "scrambling constant" */
-#define RNDM_PRIME     1000000007    /* prime number, also used for scrambling  */
+#define RNDM_CONSTANT 314159269 /* default value for "scrambling constant" */
+#define RNDM_PRIME 1000000007   /* prime number, also used for scrambling  */
 
 #define HASH_KEY(_convkey_) ((RNDM_CONSTANT * (_convkey_)) % RNDM_PRIME)
 
@@ -720,71 +711,67 @@ extern  POBJECT_TYPE IoFileObjectType;
 //  This object represents an open instance, several of them could refer
 //  to a single key control block.
 //
-#define KEY_BODY_TYPE           0x6b793032      // "ky02"
+#define KEY_BODY_TYPE 0x6b793032 // "ky02"
 
 struct _CM_NOTIFY_BLOCK; //forward
 
-typedef struct _CM_KEY_BODY {
-    ULONG                   Type;
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock;
+typedef struct _CM_KEY_BODY
+{
+    ULONG Type;
+    PCM_KEY_CONTROL_BLOCK KeyControlBlock;
     struct _CM_NOTIFY_BLOCK *NotifyBlock;
-    PEPROCESS               Process;        // the owner process
+    PEPROCESS Process; // the owner process
 
 #ifdef CM_LEAK_STACK_TRACES
-    ULONG                   Callers;
-    PVOID                   CallerAddress[10];
+    ULONG Callers;
+    PVOID CallerAddress[10];
 #endif //CM_LEAK_STACK_TRACES
 
-    LIST_ENTRY              KeyBodyList;    // key_nodes using the same kcb
+    LIST_ENTRY KeyBodyList; // key_nodes using the same kcb
 } CM_KEY_BODY, *PCM_KEY_BODY;
 
 #ifdef CM_LEAK_STACK_TRACES
 // just because we need this #define code inside a macro !
 #define CmpSetNoCallers(KeyBody) KeyBody->Callers = 0
 
-#define CmpAddKeyTracker(KeyHandle,mode)                                                    \
-if(PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_REGISTRY) {                                 \
-    PCM_KEY_BODY    KeyBody;                                                                \
-    NTSTATUS        status;                                                                 \
-    status = ObReferenceObjectByHandle(                                                     \
-            KeyHandle,                                                                      \
-            0,                                                                              \
-            CmpKeyObjectType,                                                               \
-            mode,                                                                           \
-            (PVOID *)(&KeyBody),                                                            \
-            NULL                                                                            \
-            );                                                                              \
-    if( NT_SUCCESS(status) ) {                                                              \
-            KeyBody->Callers = RtlWalkFrameChain(&(KeyBody->CallerAddress[0]), 10, 0);      \
-            ObDereferenceObject((PVOID)KeyBody);                                            \
-    }                                                                                       \
-}
+#define CmpAddKeyTracker(KeyHandle, mode)                                                                    \
+    if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_REGISTRY)                                               \
+    {                                                                                                        \
+        PCM_KEY_BODY KeyBody;                                                                                \
+        NTSTATUS status;                                                                                     \
+        status = ObReferenceObjectByHandle(KeyHandle, 0, CmpKeyObjectType, mode, (PVOID *)(&KeyBody), NULL); \
+        if (NT_SUCCESS(status))                                                                              \
+        {                                                                                                    \
+            KeyBody->Callers = RtlWalkFrameChain(&(KeyBody->CallerAddress[0]), 10, 0);                       \
+            ObDereferenceObject((PVOID)KeyBody);                                                             \
+        }                                                                                                    \
+    }
 #else
-#define CmpSetNoCallers(KeyBody) // nothing
-#define CmpAddKeyTracker(KeyHandle,mode) // nothing yet
-#endif  //CM_LEAK_STACK_TRACES
+#define CmpSetNoCallers(KeyBody)          // nothing
+#define CmpAddKeyTracker(KeyHandle, mode) // nothing yet
+#endif                                    //CM_LEAK_STACK_TRACES
 
 
-#define INIT_KCB_KEYBODY_LIST(kcb)  InitializeListHead(&(kcb->KeyBodyListHead))
+#define INIT_KCB_KEYBODY_LIST(kcb) InitializeListHead(&(kcb->KeyBodyListHead))
 
-#define ASSERT_KEYBODY_LIST_EMPTY(kcb)  ASSERT(IsListEmpty(&(kcb->KeyBodyListHead)) == TRUE)
+#define ASSERT_KEYBODY_LIST_EMPTY(kcb) ASSERT(IsListEmpty(&(kcb->KeyBodyListHead)) == TRUE)
 
-#define ENLIST_KEYBODY_IN_KEYBODY_LIST(KeyBody)                                             \
-    ASSERT( KeyBody->KeyControlBlock != NULL );                                             \
-    BEGIN_KCB_LOCK_GUARD;                                                                   \
-    CmpLockKCBTreeExclusive();                                                              \
-    InsertTailList(&(KeyBody->KeyControlBlock->KeyBodyListHead),&(KeyBody->KeyBodyList));   \
-    CmpSetNoCallers(KeyBody);                                                               \
-    CmpUnlockKCBTree();                                                                     \
+#define ENLIST_KEYBODY_IN_KEYBODY_LIST(KeyBody)                                            \
+    ASSERT(KeyBody->KeyControlBlock != NULL);                                              \
+    BEGIN_KCB_LOCK_GUARD;                                                                  \
+    CmpLockKCBTreeExclusive();                                                             \
+    InsertTailList(&(KeyBody->KeyControlBlock->KeyBodyListHead), &(KeyBody->KeyBodyList)); \
+    CmpSetNoCallers(KeyBody);                                                              \
+    CmpUnlockKCBTree();                                                                    \
     END_KCB_LOCK_GUARD
 
-#define DELIST_KEYBODY_FROM_KEYBODY_LIST(KeyBody)                                           \
-    ASSERT( KeyBody->KeyControlBlock != NULL );                                             \
-    ASSERT(IsListEmpty(&(KeyBody->KeyControlBlock->KeyBodyListHead)) == FALSE);             \
-    BEGIN_KCB_LOCK_GUARD;                                                                   \
-    CmpLockKCBTreeExclusive();                                                              \
-    RemoveEntryList(&(KeyBody->KeyBodyList));                                               \
-    CmpUnlockKCBTree();                                                                     \
+#define DELIST_KEYBODY_FROM_KEYBODY_LIST(KeyBody)                               \
+    ASSERT(KeyBody->KeyControlBlock != NULL);                                   \
+    ASSERT(IsListEmpty(&(KeyBody->KeyControlBlock->KeyBodyListHead)) == FALSE); \
+    BEGIN_KCB_LOCK_GUARD;                                                       \
+    CmpLockKCBTreeExclusive();                                                  \
+    RemoveEntryList(&(KeyBody->KeyBodyList));                                   \
+    CmpUnlockKCBTree();                                                         \
     END_KCB_LOCK_GUARD
 
 
@@ -800,9 +787,10 @@ if(PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_REGISTRY) {                     
 // implementation of keybody "delayed dereferencing". (see CmpPostNotify for comments)
 //
 
-typedef struct _CM_POST_KEY_BODY {
-    LIST_ENTRY                  KeyBodyList;
-    struct _CM_KEY_BODY         *KeyBody;        // this key body object
+typedef struct _CM_POST_KEY_BODY
+{
+    LIST_ENTRY KeyBodyList;
+    struct _CM_KEY_BODY *KeyBody; // this key body object
 } CM_POST_KEY_BODY, *PCM_POST_KEY_BODY;
 
 
@@ -816,17 +804,19 @@ typedef struct _CM_POST_KEY_BODY {
 //  Notify blocks are attached to hives and sorted by length of name.
 //
 
-typedef struct _CM_NOTIFY_BLOCK {
-    LIST_ENTRY                  HiveList;        // sorted list of notifies
-    LIST_ENTRY                  PostList;        // Posts to fill
-    PCM_KEY_CONTROL_BLOCK       KeyControlBlock; // Open instance notify is on
-    struct _CM_KEY_BODY         *KeyBody;        // our owning key handle object
-    struct {
-        ULONG                       Filter          : 30;    // Events of interest
-        ULONG                       WatchTree       : 1;
-        ULONG                       NotifyPending   : 1;
+typedef struct _CM_NOTIFY_BLOCK
+{
+    LIST_ENTRY HiveList;                   // sorted list of notifies
+    LIST_ENTRY PostList;                   // Posts to fill
+    PCM_KEY_CONTROL_BLOCK KeyControlBlock; // Open instance notify is on
+    struct _CM_KEY_BODY *KeyBody;          // our owning key handle object
+    struct
+    {
+        ULONG Filter : 30; // Events of interest
+        ULONG WatchTree : 1;
+        ULONG NotifyPending : 1;
     };
-    SECURITY_SUBJECT_CONTEXT    SubjectContext;  // Security stuff
+    SECURITY_SUBJECT_CONTEXT SubjectContext; // Security stuff
 } CM_NOTIFY_BLOCK, *PCM_NOTIFY_BLOCK;
 
 //
@@ -842,66 +832,72 @@ typedef struct _CM_NOTIFY_BLOCK {
 //  The NotifyType ULONG is a combination of POST_BLOCK_TYPE enum and flags
 //
 
-typedef enum _POST_BLOCK_TYPE {
+typedef enum _POST_BLOCK_TYPE
+{
     PostSynchronous = 1,
     PostAsyncUser = 2,
     PostAsyncKernel = 3
 } POST_BLOCK_TYPE;
 
-typedef struct _CM_SYNC_POST_BLOCK {
-    PKEVENT                 SystemEvent;
-    NTSTATUS                Status;
+typedef struct _CM_SYNC_POST_BLOCK
+{
+    PKEVENT SystemEvent;
+    NTSTATUS Status;
 } CM_SYNC_POST_BLOCK, *PCM_SYNC_POST_BLOCK;
 
-typedef struct _CM_ASYNC_USER_POST_BLOCK {
-    PKEVENT                 UserEvent;
-    PKAPC                   Apc;
-    PIO_STATUS_BLOCK        IoStatusBlock;
+typedef struct _CM_ASYNC_USER_POST_BLOCK
+{
+    PKEVENT UserEvent;
+    PKAPC Apc;
+    PIO_STATUS_BLOCK IoStatusBlock;
 } CM_ASYNC_USER_POST_BLOCK, *PCM_ASYNC_USER_POST_BLOCK;
 
-typedef struct _CM_ASYNC_KERNEL_POST_BLOCK {
-    PKEVENT                 Event;
-    PWORK_QUEUE_ITEM        WorkItem;
-    WORK_QUEUE_TYPE         QueueType;
+typedef struct _CM_ASYNC_KERNEL_POST_BLOCK
+{
+    PKEVENT Event;
+    PWORK_QUEUE_ITEM WorkItem;
+    WORK_QUEUE_TYPE QueueType;
 } CM_ASYNC_KERNEL_POST_BLOCK, *PCM_ASYNC_KERNEL_POST_BLOCK;
 
-typedef union _CM_POST_BLOCK_UNION {
-    CM_SYNC_POST_BLOCK  Sync;
+typedef union _CM_POST_BLOCK_UNION
+{
+    CM_SYNC_POST_BLOCK Sync;
     CM_ASYNC_USER_POST_BLOCK AsyncUser;
     CM_ASYNC_KERNEL_POST_BLOCK AsyncKernel;
 } CM_POST_BLOCK_UNION, *PCM_POST_BLOCK_UNION;
 
-typedef struct _CM_POST_BLOCK {
+typedef struct _CM_POST_BLOCK
+{
 #if DBG
-    BOOLEAN                     TraceIntoDebugger;
+    BOOLEAN TraceIntoDebugger;
 #endif
-    LIST_ENTRY                  NotifyList;
-    LIST_ENTRY                  ThreadList;
-    LIST_ENTRY                  CancelPostList; // slave notifications that are attached to this notification
-    struct _CM_POST_KEY_BODY    *PostKeyBody;
+    LIST_ENTRY NotifyList;
+    LIST_ENTRY ThreadList;
+    LIST_ENTRY CancelPostList; // slave notifications that are attached to this notification
+    struct _CM_POST_KEY_BODY *PostKeyBody;
 
 #ifdef CM_NOTIFY_CHANGED_KCB_FULLPATH
-    PUNICODE_STRING             ChangedKcbFullName; // full qualified name of the kcb that triggered this notification
-    PVOID                       CallerBuffer;       // used to return full qualified name of the changed kcb to the caller
-    ULONG                       CallerBufferSize;   // these are supposed to be filled by CmpAllocatePostBlock
-#endif //CM_NOTIFY_CHANGED_KCB_FULLPATH
+    PUNICODE_STRING ChangedKcbFullName; // full qualified name of the kcb that triggered this notification
+    PVOID CallerBuffer;                 // used to return full qualified name of the changed kcb to the caller
+    ULONG CallerBufferSize;             // these are supposed to be filled by CmpAllocatePostBlock
+#endif                                  //CM_NOTIFY_CHANGED_KCB_FULLPATH
 
-    ULONG                       NotifyType;
-    PCM_POST_BLOCK_UNION        u;
+    ULONG NotifyType;
+    PCM_POST_BLOCK_UNION u;
 } CM_POST_BLOCK, *PCM_POST_BLOCK;
 
-#define REG_NOTIFY_POST_TYPE_MASK (0x0000FFFFL)   // mask for finding out the type of the post block
+#define REG_NOTIFY_POST_TYPE_MASK (0x0000FFFFL) // mask for finding out the type of the post block
 
-#define REG_NOTIFY_MASTER_POST    (0x00010000L)   // The current post block is a master one
+#define REG_NOTIFY_MASTER_POST (0x00010000L) // The current post block is a master one
 
 //
 // Usefull macros to manipulate the NotifyType field in CM_POST_BLOCK
 //
-#define PostBlockType(_post_) ((POST_BLOCK_TYPE)( ((_post_)->NotifyType) & REG_NOTIFY_POST_TYPE_MASK ))
+#define PostBlockType(_post_) ((POST_BLOCK_TYPE)(((_post_)->NotifyType) & REG_NOTIFY_POST_TYPE_MASK))
 
-#define IsMasterPostBlock(_post_)           ( ((_post_)->NotifyType) &   REG_NOTIFY_MASTER_POST )
-#define SetMasterPostBlockFlag(_post_)      ( ((_post_)->NotifyType) |=  REG_NOTIFY_MASTER_POST )
-#define ClearMasterPostBlockFlag(_post_)    ( ((_post_)->NotifyType) &= ~REG_NOTIFY_MASTER_POST )
+#define IsMasterPostBlock(_post_) (((_post_)->NotifyType) & REG_NOTIFY_MASTER_POST)
+#define SetMasterPostBlockFlag(_post_) (((_post_)->NotifyType) |= REG_NOTIFY_MASTER_POST)
+#define ClearMasterPostBlockFlag(_post_) (((_post_)->NotifyType) &= ~REG_NOTIFY_MASTER_POST)
 
 //
 // This lock protects the PostList(s) in Notification objects.
@@ -927,17 +923,18 @@ extern FAST_MUTEX CmpHiveListHeadLock;
 #define LOCK_HIVE_LIST() ExAcquireFastMutexUnsafe(&CmpHiveListHeadLock)
 #define UNLOCK_HIVE_LIST() ExReleaseFastMutexUnsafe(&CmpHiveListHeadLock)
 #else
-#define LOCK_HIVE_LIST()    //nothing
-#define UNLOCK_HIVE_LIST()  //nothing
+#define LOCK_HIVE_LIST()   //nothing
+#define UNLOCK_HIVE_LIST() //nothing
 #endif
 
 //
 // used by CmpFileWrite, so it doesn't take up so much stack.
 //
-typedef struct _CM_WRITE_BLOCK {
-    HANDLE          EventHandles[MAXIMUM_WAIT_OBJECTS];
-    PKEVENT         EventObjects[MAXIMUM_WAIT_OBJECTS];
-    KWAIT_BLOCK     WaitBlockArray[MAXIMUM_WAIT_OBJECTS];
+typedef struct _CM_WRITE_BLOCK
+{
+    HANDLE EventHandles[MAXIMUM_WAIT_OBJECTS];
+    PKEVENT EventObjects[MAXIMUM_WAIT_OBJECTS];
+    KWAIT_BLOCK WaitBlockArray[MAXIMUM_WAIT_OBJECTS];
     IO_STATUS_BLOCK IoStatus[MAXIMUM_WAIT_OBJECTS];
 } CM_WRITE_BLOCK, *PCM_WRITE_BLOCK;
 
@@ -946,110 +943,115 @@ typedef struct _CM_WRITE_BLOCK {
 //
 
 //#define MAPPED_VIEWS_PER_HIVE   12 * (_256K / CM_VIEW_SIZE ) // max 3 MB per hive ; we don't really need this
-#define MAX_VIEWS_PER_HIVE      MAX_MB_PER_HIVE * ( (_256K) / (CM_VIEW_SIZE) )
+#define MAX_VIEWS_PER_HIVE MAX_MB_PER_HIVE *((_256K) / (CM_VIEW_SIZE))
 
-#define ASSERT_VIEW_MAPPED(a)                           \
-    ASSERT((a)->Size != 0);                             \
-    ASSERT((a)->ViewAddress != 0);                      \
-    ASSERT((a)->Bcb != 0);                              \
-    ASSERT( IsListEmpty(&((a)->LRUViewList)) == FALSE); \
-    ASSERT( IsListEmpty(&((a)->PinViewList)) == TRUE)
+#define ASSERT_VIEW_MAPPED(a)                          \
+    ASSERT((a)->Size != 0);                            \
+    ASSERT((a)->ViewAddress != 0);                     \
+    ASSERT((a)->Bcb != 0);                             \
+    ASSERT(IsListEmpty(&((a)->LRUViewList)) == FALSE); \
+    ASSERT(IsListEmpty(&((a)->PinViewList)) == TRUE)
 
-#define ASSERT_VIEW_PINNED(a)                           \
-    ASSERT((a)->Size != 0);                             \
-    ASSERT((a)->ViewAddress != 0);                      \
-    ASSERT((a)->Bcb != 0);                              \
-    ASSERT( IsListEmpty(&((a)->LRUViewList)) == TRUE)
+#define ASSERT_VIEW_PINNED(a)      \
+    ASSERT((a)->Size != 0);        \
+    ASSERT((a)->ViewAddress != 0); \
+    ASSERT((a)->Bcb != 0);         \
+    ASSERT(IsListEmpty(&((a)->LRUViewList)) == TRUE)
 
-typedef struct _CM_VIEW_OF_FILE {
-    LIST_ENTRY      LRUViewList;        // LRU connection ==> when this is empty, the view is pinned
-    LIST_ENTRY      PinViewList;        // list of views pinned into memory ==> when this is empty, the view is in LRU list
-    ULONG           FileOffset;         // file offset at which the mapping starts
-    ULONG           Size;               // size the view maps
-    PULONG_PTR      ViewAddress;        // memory address containing the mapping
-    PVOID           Bcb;                // BCB needed for map/pin/unpin access
-    ULONG           UseCount;           // how many cells are currently in use inside this view
+typedef struct _CM_VIEW_OF_FILE
+{
+    LIST_ENTRY LRUViewList; // LRU connection ==> when this is empty, the view is pinned
+    LIST_ENTRY PinViewList; // list of views pinned into memory ==> when this is empty, the view is in LRU list
+    ULONG FileOffset;       // file offset at which the mapping starts
+    ULONG Size;             // size the view maps
+    PULONG_PTR ViewAddress; // memory address containing the mapping
+    PVOID Bcb;              // BCB needed for map/pin/unpin access
+    ULONG UseCount;         // how many cells are currently in use inside this view
 } CM_VIEW_OF_FILE, *PCM_VIEW_OF_FILE;
 
 
 //
 // security hash manipulation
 //
-#define CmpSecHashTableSize             64      // size of the hash table
+#define CmpSecHashTableSize 64 // size of the hash table
 
-typedef struct _CM_KCB_REMAP_BLOCK {
-    LIST_ENTRY              RemapList;
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock;
-    HCELL_INDEX             OldCellIndex;
-    HCELL_INDEX             NewCellIndex;
-    ULONG                   ValueCount;
-    HCELL_INDEX             ValueList;
+typedef struct _CM_KCB_REMAP_BLOCK
+{
+    LIST_ENTRY RemapList;
+    PCM_KEY_CONTROL_BLOCK KeyControlBlock;
+    HCELL_INDEX OldCellIndex;
+    HCELL_INDEX NewCellIndex;
+    ULONG ValueCount;
+    HCELL_INDEX ValueList;
 } CM_KCB_REMAP_BLOCK, *PCM_KCB_REMAP_BLOCK;
 
-typedef struct _CM_CELL_REMAP_BLOCK {
-    HCELL_INDEX             OldCell;
-    HCELL_INDEX             NewCell;
+typedef struct _CM_CELL_REMAP_BLOCK
+{
+    HCELL_INDEX OldCell;
+    HCELL_INDEX NewCell;
 } CM_CELL_REMAP_BLOCK, *PCM_CELL_REMAP_BLOCK;
 
-typedef struct _CM_KNODE_REMAP_BLOCK {
-    LIST_ENTRY              RemapList;
-    PCM_KEY_NODE            KeyNode;
-    HCELL_INDEX             NewParent;
+typedef struct _CM_KNODE_REMAP_BLOCK
+{
+    LIST_ENTRY RemapList;
+    PCM_KEY_NODE KeyNode;
+    HCELL_INDEX NewParent;
 } CM_KNODE_REMAP_BLOCK, *PCM_KNODE_REMAP_BLOCK;
 
 // ----- Cm version of Hive structure (CMHIVE) -----
 //
-typedef struct _CMHIVE {
-    HHIVE                           Hive;
-    HANDLE                          FileHandles[HFILE_TYPE_MAX];
-    LIST_ENTRY                      NotifyList;
-    LIST_ENTRY                      HiveList;           // Used to find hives at shutdown
-    PFAST_MUTEX                     HiveLock;           // Used to synchronize operations on the hive (NotifyList and Flush)
-    PFAST_MUTEX                     ViewLock;           // Used to control access over the view list, UseCount
-    LIST_ENTRY                      LRUViewListHead;    // Head of the same list as above but ordered (LRU)
-    LIST_ENTRY                      PinViewListHead;    // Head of the List of Views pinned into memory inside the primary hive file
-#if 0 // it didn't work
+typedef struct _CMHIVE
+{
+    HHIVE Hive;
+    HANDLE FileHandles[HFILE_TYPE_MAX];
+    LIST_ENTRY NotifyList;
+    LIST_ENTRY HiveList;        // Used to find hives at shutdown
+    PFAST_MUTEX HiveLock;       // Used to synchronize operations on the hive (NotifyList and Flush)
+    PFAST_MUTEX ViewLock;       // Used to control access over the view list, UseCount
+    LIST_ENTRY LRUViewListHead; // Head of the same list as above but ordered (LRU)
+    LIST_ENTRY PinViewListHead; // Head of the List of Views pinned into memory inside the primary hive file
+#if 0                           // it didn't work
     LIST_ENTRY                      FakeViewListHead;   // Used to optimize boot process (fault all the data in in 256K chunks at once)
 #endif
-    PFILE_OBJECT                    FileObject;         // FileObject needed for Cc operations on the mapped views
-    UNICODE_STRING                  FileFullPath;       // full path of the hive file- needed for CmPrefetchHivePages
-    UNICODE_STRING                  FileUserName;       // file name as passed onto NtLoadKey 
-    USHORT                          MappedViews;        // number of mapped (but not pinned views) i.e. the number of elements in LRUViewList
-    USHORT                          PinnedViews;        // number of pinned views i.e. the number of elements in PinViewList
-    ULONG                           UseCount;           // how many cells are currently in use inside this hive
+    PFILE_OBJECT FileObject;     // FileObject needed for Cc operations on the mapped views
+    UNICODE_STRING FileFullPath; // full path of the hive file- needed for CmPrefetchHivePages
+    UNICODE_STRING FileUserName; // file name as passed onto NtLoadKey
+    USHORT MappedViews;          // number of mapped (but not pinned views) i.e. the number of elements in LRUViewList
+    USHORT PinnedViews;          // number of pinned views i.e. the number of elements in PinViewList
+    ULONG UseCount;              // how many cells are currently in use inside this hive
 #if 0
     ULONG                           FakeViews;          // number of FakeViews (debug-only)
 #endif
-    ULONG                           SecurityCount;      // number of security cells cached
-    ULONG                           SecurityCacheSize;  // number of entries in the cache (to avoid memory fragmentation)
-    LONG                            SecurityHitHint;    // index of the last cell we've searched on
-    PCM_KEY_SECURITY_CACHE_ENTRY    SecurityCache;      // the security cache
+    ULONG SecurityCount;                        // number of security cells cached
+    ULONG SecurityCacheSize;                    // number of entries in the cache (to avoid memory fragmentation)
+    LONG SecurityHitHint;                       // index of the last cell we've searched on
+    PCM_KEY_SECURITY_CACHE_ENTRY SecurityCache; // the security cache
 
-                                                        // hash table (to retrieve the security cells by descriptor)
-    LIST_ENTRY                      SecurityHash[CmpSecHashTableSize];
+    // hash table (to retrieve the security cells by descriptor)
+    LIST_ENTRY SecurityHash[CmpSecHashTableSize];
 
 #ifdef NT_UNLOAD_KEY_EX
-    PKEVENT                         UnloadEvent;        // the event to be signaled when the hive unloads
-                                                        // this may be valid (not NULL) only in conjunction with
-                                                        // a not NULL RootKcb and a TRUE Frozen (bellow)
+    PKEVENT UnloadEvent; // the event to be signaled when the hive unloads
+                         // this may be valid (not NULL) only in conjunction with
+                         // a not NULL RootKcb and a TRUE Frozen (bellow)
 
-    PCM_KEY_CONTROL_BLOCK           RootKcb;            // kcb to the root of the hive. We keep a reference on it, which
-                                                        // will be released at the time the hive unloads (i.e. it is the last
-                                                        // reference somebody has on this kcb); This is should be valid (not NULL)
-                                                        // only when the Frozen flag is set to TRUE
+    PCM_KEY_CONTROL_BLOCK RootKcb; // kcb to the root of the hive. We keep a reference on it, which
+                                   // will be released at the time the hive unloads (i.e. it is the last
+                                   // reference somebody has on this kcb); This is should be valid (not NULL)
+                                   // only when the Frozen flag is set to TRUE
 
-    BOOLEAN                         Frozen;             // set to TRUE when the hive is frozen (no further operations are allowed on
-                                                        // this hive
+    BOOLEAN Frozen; // set to TRUE when the hive is frozen (no further operations are allowed on
+                    // this hive
 
-    PWORK_QUEUE_ITEM                UnloadWorkItem;     // Work Item to actually perform the late unload
-#endif //NT_UNLOAD_KEY_EX
+    PWORK_QUEUE_ITEM UnloadWorkItem; // Work Item to actually perform the late unload
+#endif                               //NT_UNLOAD_KEY_EX
 
-    BOOLEAN                         GrowOnlyMode;       // the hive is in "grow only" mode; new cells are allocated past GrowOffset
-    ULONG                           GrowOffset;
+    BOOLEAN GrowOnlyMode; // the hive is in "grow only" mode; new cells are allocated past GrowOffset
+    ULONG GrowOffset;
 
-    LIST_ENTRY                      KcbConvertListHead; // list of CM_KCB_REMAP_BLOCK storing the associations to the new hive.
-    LIST_ENTRY                      KnodeConvertListHead;
-    PCM_CELL_REMAP_BLOCK            CellRemapArray;     // array of mappings used for security cells
+    LIST_ENTRY KcbConvertListHead; // list of CM_KCB_REMAP_BLOCK storing the associations to the new hive.
+    LIST_ENTRY KnodeConvertListHead;
+    PCM_CELL_REMAP_BLOCK CellRemapArray; // array of mappings used for security cells
 
 } CMHIVE, *PCMHIVE;
 
@@ -1057,15 +1059,17 @@ typedef struct _CMHIVE {
 #define IsHiveFrozen(_CmHive_) (((PCMHIVE)(_CmHive_))->Frozen == TRUE)
 #endif
 
-#define HiveWritesThroughCache(Hive,FileType) ((FileType == HFILE_TYPE_PRIMARY) && (((PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive))->FileObject != NULL))
+#define HiveWritesThroughCache(Hive, FileType) \
+    ((FileType == HFILE_TYPE_PRIMARY) && (((PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive))->FileObject != NULL))
 
 
 //
 // Delayed close kcb list
 //
-typedef struct _CM_DELAYED_CLOSE_ENTRY {
-    LIST_ENTRY              DelayedLRUList;     //  LRU list of entries in the Delayed Close Table
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock;    //  KCB in this entry; NULL if the entry is available
+typedef struct _CM_DELAYED_CLOSE_ENTRY
+{
+    LIST_ENTRY DelayedLRUList;             //  LRU list of entries in the Delayed Close Table
+    PCM_KEY_CONTROL_BLOCK KeyControlBlock; //  KCB in this entry; NULL if the entry is available
 } CM_DELAYED_CLOSE_ENTRY, *PCM_DELAYED_CLOSE_ENTRY;
 
 
@@ -1073,18 +1077,22 @@ typedef struct _CM_DELAYED_CLOSE_ENTRY {
 // Hive locking support
 //
 //
-#define CmLockHive(_hive_)  ASSERT( (_hive_)->HiveLock );\
-                            ExAcquireFastMutexUnsafe((_hive_)->HiveLock)
-#define CmUnlockHive(_hive_) ASSERT( (_hive_)->HiveLock );\
-                             ExReleaseFastMutexUnsafe((_hive_)->HiveLock)
+#define CmLockHive(_hive_)      \
+    ASSERT((_hive_)->HiveLock); \
+    ExAcquireFastMutexUnsafe((_hive_)->HiveLock)
+#define CmUnlockHive(_hive_)    \
+    ASSERT((_hive_)->HiveLock); \
+    ExReleaseFastMutexUnsafe((_hive_)->HiveLock)
 
 //
 // View locking support
 //
-#define CmLockHiveViews(_hive_)     ASSERT( (_hive_)->ViewLock );\
-                                    ExAcquireFastMutexUnsafe((_hive_)->ViewLock)
-#define CmUnlockHiveViews(_hive_)   ASSERT( (_hive_)->ViewLock );\
-                                    ExReleaseFastMutexUnsafe((_hive_)->ViewLock)
+#define CmLockHiveViews(_hive_) \
+    ASSERT((_hive_)->ViewLock); \
+    ExAcquireFastMutexUnsafe((_hive_)->ViewLock)
+#define CmUnlockHiveViews(_hive_) \
+    ASSERT((_hive_)->ViewLock);   \
+    ExReleaseFastMutexUnsafe((_hive_)->ViewLock)
 
 //
 // Macros
@@ -1094,17 +1102,12 @@ typedef struct _CM_DELAYED_CLOSE_ENTRY {
 // ----- CM_KEY_NODE -----
 //
 #define CmpHKeyNameLen(Key) \
-        (((Key)->Flags & KEY_COMP_NAME) ? \
-            CmpCompressedNameSize((Key)->Name,(Key)->NameLength) : \
-            (Key)->NameLength)
+    (((Key)->Flags & KEY_COMP_NAME) ? CmpCompressedNameSize((Key)->Name, (Key)->NameLength) : (Key)->NameLength)
 
 #define CmpNcbNameLen(Ncb) \
-        (((Ncb)->Compressed) ? \
-            CmpCompressedNameSize((Ncb)->Name,(Ncb)->NameLength) : \
-            (Ncb)->NameLength)
+    (((Ncb)->Compressed) ? CmpCompressedNameSize((Ncb)->Name, (Ncb)->NameLength) : (Ncb)->NameLength)
 
-#define CmpHKeyNodeSize(Hive, KeyName) \
-    (FIELD_OFFSET(CM_KEY_NODE, Name) + CmpNameSize(Hive, KeyName))
+#define CmpHKeyNodeSize(Hive, KeyName) (FIELD_OFFSET(CM_KEY_NODE, Name) + CmpNameSize(Hive, KeyName))
 
 
 //
@@ -1112,13 +1115,11 @@ typedef struct _CM_DELAYED_CLOSE_ENTRY {
 //
 
 
-#define CmpValueNameLen(Value)                                       \
-        (((Value)->Flags & VALUE_COMP_NAME) ?                           \
-            CmpCompressedNameSize((Value)->Name,(Value)->NameLength) :  \
-            (Value)->NameLength)
+#define CmpValueNameLen(Value)                                                                      \
+    (((Value)->Flags & VALUE_COMP_NAME) ? CmpCompressedNameSize((Value)->Name, (Value)->NameLength) \
+                                        : (Value)->NameLength)
 
-#define CmpHKeyValueSize(Hive, ValueName) \
-    (FIELD_OFFSET(CM_KEY_VALUE, Name) + CmpNameSize(Hive, ValueName))
+#define CmpHKeyValueSize(Hive, ValueName) (FIELD_OFFSET(CM_KEY_VALUE, Name) + CmpNameSize(Hive, ValueName))
 
 
 //
@@ -1130,188 +1131,90 @@ typedef struct _CM_DELAYED_CLOSE_ENTRY {
 //
 
 #define REG_OPTION_PREDEF_HANDLE (0x01000000L)
-#define REG_PREDEF_HANDLE_MASK   (0x80000000L)
+#define REG_PREDEF_HANDLE_MASK (0x80000000L)
 
-typedef struct _CM_PARSE_CONTEXT {
-    ULONG               TitleIndex;
-    UNICODE_STRING      Class;
-    ULONG               CreateOptions;
-    ULONG               Disposition;
-    BOOLEAN             CreateLink;
-    CM_KEY_REFERENCE    ChildHive;
-    HANDLE              PredefinedHandle;
+typedef struct _CM_PARSE_CONTEXT
+{
+    ULONG TitleIndex;
+    UNICODE_STRING Class;
+    ULONG CreateOptions;
+    ULONG Disposition;
+    BOOLEAN CreateLink;
+    CM_KEY_REFERENCE ChildHive;
+    HANDLE PredefinedHandle;
 } CM_PARSE_CONTEXT, *PCM_PARSE_CONTEXT;
 
 NTSTATUS
-CmpParseKey(
-    IN PVOID ParseObject,
-    IN PVOID ObjectType,
-    IN OUT PACCESS_STATE AccessState,
-    IN KPROCESSOR_MODE AccessMode,
-    IN ULONG Attributes,
-    IN OUT PUNICODE_STRING CompleteName,
-    IN OUT PUNICODE_STRING RemainingName,
-    IN OUT PVOID Context OPTIONAL,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL,
-    OUT PVOID *Object
-    );
+CmpParseKey(IN PVOID ParseObject, IN PVOID ObjectType, IN OUT PACCESS_STATE AccessState, IN KPROCESSOR_MODE AccessMode,
+            IN ULONG Attributes, IN OUT PUNICODE_STRING CompleteName, IN OUT PUNICODE_STRING RemainingName,
+            IN OUT PVOID Context OPTIONAL, IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL, OUT PVOID *Object);
 
 NTSTATUS
-CmpDoCreate(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN PACCESS_STATE AccessState,
-    IN PUNICODE_STRING Name,
-    IN KPROCESSOR_MODE AccessMode,
-    IN PCM_PARSE_CONTEXT Context,
-    IN PCM_KEY_CONTROL_BLOCK ParentKcb,
-    OUT PVOID *Object
-    );
+CmpDoCreate(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN PACCESS_STATE AccessState, IN PUNICODE_STRING Name,
+            IN KPROCESSOR_MODE AccessMode, IN PCM_PARSE_CONTEXT Context, IN PCM_KEY_CONTROL_BLOCK ParentKcb,
+            OUT PVOID *Object);
 
 NTSTATUS
-CmpDoCreateChild(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ParentCell,
-    IN PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
-    IN PACCESS_STATE AccessState,
-    IN PUNICODE_STRING Name,
-    IN KPROCESSOR_MODE AccessMode,
-    IN PCM_PARSE_CONTEXT Context,
-    IN PCM_KEY_CONTROL_BLOCK ParentKcb,
-    IN USHORT Flags,
-    OUT PHCELL_INDEX KeyCell,
-    OUT PVOID *Object
-    );
+CmpDoCreateChild(IN PHHIVE Hive, IN HCELL_INDEX ParentCell, IN PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
+                 IN PACCESS_STATE AccessState, IN PUNICODE_STRING Name, IN KPROCESSOR_MODE AccessMode,
+                 IN PCM_PARSE_CONTEXT Context, IN PCM_KEY_CONTROL_BLOCK ParentKcb, IN USHORT Flags,
+                 OUT PHCELL_INDEX KeyCell, OUT PVOID *Object);
 
 NTSTATUS
-CmpQueryKeyName(
-    IN PVOID Object,
-    IN BOOLEAN HasObjectName,
-    OUT POBJECT_NAME_INFORMATION ObjectNameInfo,
-    IN ULONG Length,
-    OUT PULONG ReturnLength
-    );
+CmpQueryKeyName(IN PVOID Object, IN BOOLEAN HasObjectName, OUT POBJECT_NAME_INFORMATION ObjectNameInfo, IN ULONG Length,
+                OUT PULONG ReturnLength);
 
-VOID
-CmpDeleteKeyObject(
-    IN  PVOID   Object
-    );
+VOID CmpDeleteKeyObject(IN PVOID Object);
 
-VOID
-CmpCloseKeyObject(
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG ProcessHandleCount,
-    IN ULONG SystemHandleCount
-    );
+VOID CmpCloseKeyObject(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN ACCESS_MASK GrantedAccess,
+                       IN ULONG ProcessHandleCount, IN ULONG SystemHandleCount);
 
 NTSTATUS
-CmpSecurityMethod (
-    IN PVOID Object,
-    IN SECURITY_OPERATION_CODE OperationCode,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG CapturedLength,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    );
+CmpSecurityMethod(IN PVOID Object, IN SECURITY_OPERATION_CODE OperationCode,
+                  IN PSECURITY_INFORMATION SecurityInformation, IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
+                  IN OUT PULONG CapturedLength, IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
+                  IN POOL_TYPE PoolType, IN PGENERIC_MAPPING GenericMapping);
 
-#define KCB_WORKER_CONTINUE     0
-#define KCB_WORKER_DONE         1
-#define KCB_WORKER_DELETE       2
-#define KCB_WORKER_ERROR        3
+#define KCB_WORKER_CONTINUE 0
+#define KCB_WORKER_DONE 1
+#define KCB_WORKER_DELETE 2
+#define KCB_WORKER_ERROR 3
 
-typedef
-ULONG
-(*PKCB_WORKER_ROUTINE) (
-    PCM_KEY_CONTROL_BLOCK Current,
-    PVOID                 Context1,
-    PVOID                 Context2
-    );
+typedef ULONG (*PKCB_WORKER_ROUTINE)(PCM_KEY_CONTROL_BLOCK Current, PVOID Context1, PVOID Context2);
 
 
 BOOLEAN
-CmpSearchKeyControlBlockTree(
-    PKCB_WORKER_ROUTINE WorkerRoutine,
-    PVOID               Context1,
-    PVOID               Context2
-    );
+CmpSearchKeyControlBlockTree(PKCB_WORKER_ROUTINE WorkerRoutine, PVOID Context1, PVOID Context2);
 
 //
 // Wrappers
 //
 
 PVOID
-CmpAllocate(
-    ULONG   Size,
-    BOOLEAN UseForIo,
-    ULONG   Tag
-    );
+CmpAllocate(ULONG Size, BOOLEAN UseForIo, ULONG Tag);
 
-VOID
-CmpFree(
-    PVOID   MemoryBlock,
-    ULONG   GlobalQuotaSize
-    );
+VOID CmpFree(PVOID MemoryBlock, ULONG GlobalQuotaSize);
 
 BOOLEAN
-CmpFileSetSize(
-    PHHIVE      Hive,
-    ULONG       FileType,
-    ULONG       FileSize,
-    ULONG       OldFileSize
-    );
+CmpFileSetSize(PHHIVE Hive, ULONG FileType, ULONG FileSize, ULONG OldFileSize);
 
 NTSTATUS
-CmpDoFileSetSize(
-    PHHIVE      Hive,
-    ULONG       FileType,
-    ULONG       FileSize,
-    ULONG       OldFileSize
-    );
+CmpDoFileSetSize(PHHIVE Hive, ULONG FileType, ULONG FileSize, ULONG OldFileSize);
 
 BOOLEAN
-CmpFileWrite(
-    PHHIVE      Hive,
-    ULONG       FileType,
-    PCMP_OFFSET_ARRAY offsetArray,
-    ULONG offsetArrayCount,
-    PULONG      FileOffset
-    );
+CmpFileWrite(PHHIVE Hive, ULONG FileType, PCMP_OFFSET_ARRAY offsetArray, ULONG offsetArrayCount, PULONG FileOffset);
 
 BOOLEAN
-CmpFileWriteThroughCache(
-    PHHIVE              Hive,
-    ULONG               FileType,
-    PCMP_OFFSET_ARRAY   offsetArray,
-    ULONG               offsetArrayCount
-    );
+CmpFileWriteThroughCache(PHHIVE Hive, ULONG FileType, PCMP_OFFSET_ARRAY offsetArray, ULONG offsetArrayCount);
 
 BOOLEAN
-CmpFileRead (
-    PHHIVE      Hive,
-    ULONG       FileType,
-    PULONG      FileOffset,
-    PVOID       DataBuffer,
-    ULONG       DataLength
-    );
+CmpFileRead(PHHIVE Hive, ULONG FileType, PULONG FileOffset, PVOID DataBuffer, ULONG DataLength);
 
 BOOLEAN
-CmpFileFlush (
-    PHHIVE          Hive,
-    ULONG           FileType,
-    PLARGE_INTEGER  FileOffset,
-    ULONG           Length
-    );
+CmpFileFlush(PHHIVE Hive, ULONG FileType, PLARGE_INTEGER FileOffset, ULONG Length);
 
 NTSTATUS
-CmpCreateEvent(
-    IN EVENT_TYPE  eventType,
-    OUT PHANDLE eventHandle,
-    OUT PKEVENT *event
-    );
+CmpCreateEvent(IN EVENT_TYPE eventType, OUT PHANDLE eventHandle, OUT PKEVENT *event);
 
 
 //
@@ -1319,451 +1222,238 @@ CmpCreateEvent(
 //
 
 NTSTATUS
-CmDeleteKey(
-    IN PCM_KEY_BODY KeyBody
-    );
+CmDeleteKey(IN PCM_KEY_BODY KeyBody);
 
 NTSTATUS
-CmDeleteValueKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN UNICODE_STRING ValueName
-    );
+CmDeleteValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN UNICODE_STRING ValueName);
 
 NTSTATUS
-CmEnumerateKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN ULONG Index,
-    IN KEY_INFORMATION_CLASS KeyInformationClass,
-    IN PVOID KeyInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    );
+CmEnumerateKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN ULONG Index, IN KEY_INFORMATION_CLASS KeyInformationClass,
+               IN PVOID KeyInformation, IN ULONG Length, IN PULONG ResultLength);
 
 NTSTATUS
-CmEnumerateValueKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN ULONG Index,
-    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-    IN PVOID KeyValueInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    );
+CmEnumerateValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN ULONG Index,
+                    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass, IN PVOID KeyValueInformation,
+                    IN ULONG Length, IN PULONG ResultLength);
 
 NTSTATUS
-CmFlushKey(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell
-    );
+CmFlushKey(IN PHHIVE Hive, IN HCELL_INDEX Cell);
 
 NTSTATUS
-CmQueryKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN KEY_INFORMATION_CLASS KeyInformationClass,
-    IN PVOID KeyInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    );
+CmQueryKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN KEY_INFORMATION_CLASS KeyInformationClass,
+           IN PVOID KeyInformation, IN ULONG Length, IN PULONG ResultLength);
 
 NTSTATUS
-CmQueryValueKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN UNICODE_STRING ValueName,
-    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-    IN PVOID KeyValueInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    );
+CmQueryValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN UNICODE_STRING ValueName,
+                IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass, IN PVOID KeyValueInformation, IN ULONG Length,
+                IN PULONG ResultLength);
 
 NTSTATUS
-CmQueryMultipleValueKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN PKEY_VALUE_ENTRY ValueEntries,
-    IN ULONG EntryCount,
-    IN PVOID ValueBuffer,
-    IN OUT PULONG BufferLength,
-    IN OPTIONAL PULONG ResultLength
-    );
+CmQueryMultipleValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN PKEY_VALUE_ENTRY ValueEntries, IN ULONG EntryCount,
+                        IN PVOID ValueBuffer, IN OUT PULONG BufferLength, IN OPTIONAL PULONG ResultLength);
 
 NTSTATUS
-CmRenameValueKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN UNICODE_STRING SourceValueName,
-    IN UNICODE_STRING TargetValueName,
-    IN ULONG TargetIndex
-    );
+CmRenameValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN UNICODE_STRING SourceValueName,
+                 IN UNICODE_STRING TargetValueName, IN ULONG TargetIndex);
 
 NTSTATUS
-CmReplaceKey(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN PUNICODE_STRING NewHiveName,
-    IN PUNICODE_STRING OldFileName
-    );
+CmReplaceKey(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN PUNICODE_STRING NewHiveName, IN PUNICODE_STRING OldFileName);
 
 NTSTATUS
-CmRestoreKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN HANDLE  FileHandle,
-    IN ULONG Flags
-    );
+CmRestoreKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN HANDLE FileHandle, IN ULONG Flags);
 
 NTSTATUS
-CmSaveKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN HANDLE                   FileHandle,
-    IN ULONG                    HiveVersion
-    );
+CmSaveKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN HANDLE FileHandle, IN ULONG HiveVersion);
 
 NTSTATUS
-CmDumpKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN HANDLE                   FileHandle
-    );
+CmDumpKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN HANDLE FileHandle);
 
 NTSTATUS
-CmSaveMergedKeys(
-    IN PCM_KEY_CONTROL_BLOCK    HighPrecedenceKcb,
-    IN PCM_KEY_CONTROL_BLOCK    LowPrecedenceKcb,
-    IN HANDLE   FileHandle
-    );
+CmSaveMergedKeys(IN PCM_KEY_CONTROL_BLOCK HighPrecedenceKcb, IN PCM_KEY_CONTROL_BLOCK LowPrecedenceKcb,
+                 IN HANDLE FileHandle);
 
 NTSTATUS
-CmpShiftHiveFreeBins(
-                      PCMHIVE           CmHive,
-                      PCMHIVE           *NewHive
-                      );
+CmpShiftHiveFreeBins(PCMHIVE CmHive, PCMHIVE *NewHive);
 
 NTSTATUS
-CmpOverwriteHive(
-                    PCMHIVE         CmHive,
-                    PCMHIVE         NewHive,
-                    HCELL_INDEX     LinkCell
-                    );
+CmpOverwriteHive(PCMHIVE CmHive, PCMHIVE NewHive, HCELL_INDEX LinkCell);
 
-VOID
-CmpSwitchStorageAndRebuildMappings(PCMHIVE  OldCmHive,
-                                   PCMHIVE  NewHive
-                                   );
+VOID CmpSwitchStorageAndRebuildMappings(PCMHIVE OldCmHive, PCMHIVE NewHive);
 
 NTSTATUS
-CmSetValueKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN PUNICODE_STRING ValueName,
-    IN ULONG Type,
-    IN PVOID Data,
-    IN ULONG DataSize
-    );
+CmSetValueKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN PUNICODE_STRING ValueName, IN ULONG Type, IN PVOID Data,
+              IN ULONG DataSize);
 
 NTSTATUS
-CmSetLastWriteTimeKey(
-    IN PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    IN PLARGE_INTEGER LastWriteTime
-    );
+CmSetLastWriteTimeKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN PLARGE_INTEGER LastWriteTime);
 
 NTSTATUS
-CmSetKeyUserFlags(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN ULONG                    UserFlags
-    );
+CmSetKeyUserFlags(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN ULONG UserFlags);
 
 NTSTATUS
-CmpNotifyChangeKey(
-    IN PCM_KEY_BODY     KeyBody,
-    IN PCM_POST_BLOCK   PostBlock,
-    IN ULONG            CompletionFilter,
-    IN BOOLEAN          WatchTree,
-    IN PVOID            Buffer,
-    IN ULONG            BufferSize,
-    IN PCM_POST_BLOCK   MasterPostBlock
-    );
+CmpNotifyChangeKey(IN PCM_KEY_BODY KeyBody, IN PCM_POST_BLOCK PostBlock, IN ULONG CompletionFilter,
+                   IN BOOLEAN WatchTree, IN PVOID Buffer, IN ULONG BufferSize, IN PCM_POST_BLOCK MasterPostBlock);
 
 NTSTATUS
-CmLoadKey(
-    IN POBJECT_ATTRIBUTES TargetKey,
-    IN POBJECT_ATTRIBUTES SourceFile,
-    IN ULONG Flags
-    );
+CmLoadKey(IN POBJECT_ATTRIBUTES TargetKey, IN POBJECT_ATTRIBUTES SourceFile, IN ULONG Flags);
 
 NTSTATUS
-CmUnloadKey(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN PCM_KEY_CONTROL_BLOCK Kcb
-    );
+CmUnloadKey(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN PCM_KEY_CONTROL_BLOCK Kcb);
 
 NTSTATUS
-CmMoveKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock
-    );
+CmMoveKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
 NTSTATUS
-CmCompressKey(
-    IN PHHIVE Hive
-    );
+CmCompressKey(IN PHHIVE Hive);
 
 //
 // Procedures private to CM
 //
 
 BOOLEAN
-CmpMarkKeyDirty(
-    PHHIVE Hive,
-    HCELL_INDEX Cell
+CmpMarkKeyDirty(PHHIVE Hive, HCELL_INDEX Cell
 #if DBG
-    ,
-    BOOLEAN CheckNoSubkeys
+                ,
+                BOOLEAN CheckNoSubkeys
 #endif
-    );
+);
 
 BOOLEAN
-CmpDoFlushAll(
-    BOOLEAN ForceFlush
-    );
+CmpDoFlushAll(BOOLEAN ForceFlush);
 
-VOID
-CmpFixHiveUsageCount(
-                    IN  PCMHIVE             CmHive
-                    );
+VOID CmpFixHiveUsageCount(IN PCMHIVE CmHive);
 
-VOID
-CmpLazyFlush(
-    VOID
-    );
+VOID CmpLazyFlush(VOID);
 
-VOID
-CmpQuotaWarningWorker(
-    IN PVOID WorkItem
-    );
+VOID CmpQuotaWarningWorker(IN PVOID WorkItem);
 
-VOID
-CmpComputeGlobalQuotaAllowed(
-    VOID
-    );
+VOID CmpComputeGlobalQuotaAllowed(VOID);
 
 BOOLEAN
-CmpClaimGlobalQuota(
-    IN ULONG    Size
-    );
+CmpClaimGlobalQuota(IN ULONG Size);
 
-VOID
-CmpReleaseGlobalQuota(
-    IN ULONG    Size
-    );
+VOID CmpReleaseGlobalQuota(IN ULONG Size);
 
-VOID
-CmpSetGlobalQuotaAllowed(
-    VOID
-    );
+VOID CmpSetGlobalQuotaAllowed(VOID);
 
-VOID
-CmpSystemQuotaWarningWorker(
-    IN PVOID WorkItem
-    );
+VOID CmpSystemQuotaWarningWorker(IN PVOID WorkItem);
 
 BOOLEAN
-CmpCanGrowSystemHive(
-                     IN PHHIVE  Hive,
-                     IN ULONG   NewLength
-                     );
+CmpCanGrowSystemHive(IN PHHIVE Hive, IN ULONG NewLength);
 
 //
 // security functions (cmse.c)
 //
 
 NTSTATUS
-CmpAssignSecurityDescriptor(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN PCM_KEY_NODE Node,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
+CmpAssignSecurityDescriptor(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN PCM_KEY_NODE Node,
+                            IN PSECURITY_DESCRIPTOR SecurityDescriptor);
 
 BOOLEAN
-CmpCheckCreateAccess(
-    IN PUNICODE_STRING RelativeName,
-    IN PSECURITY_DESCRIPTOR Descriptor,
-    IN PACCESS_STATE AccessState,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN ACCESS_MASK AdditionalAccess,
-    OUT PNTSTATUS AccessStatus
-    );
+CmpCheckCreateAccess(IN PUNICODE_STRING RelativeName, IN PSECURITY_DESCRIPTOR Descriptor, IN PACCESS_STATE AccessState,
+                     IN KPROCESSOR_MODE PreviousMode, IN ACCESS_MASK AdditionalAccess, OUT PNTSTATUS AccessStatus);
 
 BOOLEAN
-CmpCheckNotifyAccess(
-    IN PCM_NOTIFY_BLOCK NotifyBlock,
-    IN PHHIVE Hive,
-    IN PCM_KEY_NODE Node
-    );
+CmpCheckNotifyAccess(IN PCM_NOTIFY_BLOCK NotifyBlock, IN PHHIVE Hive, IN PCM_KEY_NODE Node);
 
 PSECURITY_DESCRIPTOR
-CmpHiveRootSecurityDescriptor(
-    VOID
-    );
+CmpHiveRootSecurityDescriptor(VOID);
 
-VOID
-CmpFreeSecurityDescriptor(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell
-    );
+VOID CmpFreeSecurityDescriptor(IN PHHIVE Hive, IN HCELL_INDEX Cell);
 
 
 //
 // Access to the registry is serialized by a shared resource, CmpRegistryLock.
 //
-extern ERESOURCE    CmpRegistryLock;
+extern ERESOURCE CmpRegistryLock;
 
 //
 // Support for "StarveExclusive" mode suring a flush
 //
-extern ULONG        CmpFlushStarveWriters;
+extern ULONG CmpFlushStarveWriters;
 
-#define ENTER_FLUSH_MODE()  InterlockedIncrement (&CmpFlushStarveWriters);
+#define ENTER_FLUSH_MODE() InterlockedIncrement(&CmpFlushStarveWriters);
 
 #if DBG
-#define EXIT_FLUSH_MODE()                                                       \
-{                                                                               \
-    LONG LocalIncrement = (LONG)InterlockedDecrement (&CmpFlushStarveWriters);  \
-    ASSERT( LocalIncrement >= 0 );                                              \
-}
+#define EXIT_FLUSH_MODE()                                                         \
+    {                                                                             \
+        LONG LocalIncrement = (LONG)InterlockedDecrement(&CmpFlushStarveWriters); \
+        ASSERT(LocalIncrement >= 0);                                              \
+    }
 #else
-#define EXIT_FLUSH_MODE() InterlockedDecrement (&CmpFlushStarveWriters)
+#define EXIT_FLUSH_MODE() InterlockedDecrement(&CmpFlushStarveWriters)
 #endif
 
 
 #if 0
-#define CmpLockRegistry() KeEnterCriticalRegion(); \
-                          ExAcquireResourceShared(&CmpRegistryLock, TRUE)
+#define CmpLockRegistry()    \
+    KeEnterCriticalRegion(); \
+    ExAcquireResourceShared(&CmpRegistryLock, TRUE)
 
-#define CmpLockRegistryExclusive() KeEnterCriticalRegion(); \
-                                   ExAcquireResourceExclusive(&CmpRegistryLock,TRUE)
+#define CmpLockRegistryExclusive() \
+    KeEnterCriticalRegion();       \
+    ExAcquireResourceExclusive(&CmpRegistryLock, TRUE)
 
 #else
-VOID
-CmpLockRegistryExclusive(
-    VOID
-    );
-VOID
-CmpLockRegistry(
-    VOID
-    );
+VOID CmpLockRegistryExclusive(VOID);
+VOID CmpLockRegistry(VOID);
 #endif
 
-VOID
-CmpUnlockRegistry(
-    );
+VOID CmpUnlockRegistry();
 
 #if DBG
 BOOLEAN
-CmpTestRegistryLock(
-    VOID
-    );
+CmpTestRegistryLock(VOID);
 BOOLEAN
-CmpTestRegistryLockExclusive(
-    VOID
-    );
+CmpTestRegistryLockExclusive(VOID);
 #endif
 
 NTSTATUS
-CmpQueryKeyData(
-    PHHIVE Hive,
-    PCM_KEY_NODE Node,
-    KEY_INFORMATION_CLASS KeyInformationClass,
-    PVOID KeyInformation,
-    ULONG Length,
-    PULONG ResultLength
+CmpQueryKeyData(PHHIVE Hive, PCM_KEY_NODE Node, KEY_INFORMATION_CLASS KeyInformationClass, PVOID KeyInformation,
+                ULONG Length, PULONG ResultLength
 #if defined(CMP_STATS) || defined(CMP_KCB_CACHE_VALIDATION)
-    ,
-    PCM_KEY_CONTROL_BLOCK   Kcb
+                ,
+                PCM_KEY_CONTROL_BLOCK Kcb
 #endif
-    );
+);
 
 NTSTATUS
-CmpQueryKeyDataFromCache(
-    PCM_KEY_CONTROL_BLOCK   Kcb,
-    KEY_INFORMATION_CLASS   KeyInformationClass,
-    PVOID                   KeyInformation,
-    ULONG                   Length,
-    PULONG                  ResultLength
-    );
+CmpQueryKeyDataFromCache(PCM_KEY_CONTROL_BLOCK Kcb, KEY_INFORMATION_CLASS KeyInformationClass, PVOID KeyInformation,
+                         ULONG Length, PULONG ResultLength);
 
 
 BOOLEAN
-CmpFreeKeyBody(
-    PHHIVE Hive,
-    HCELL_INDEX Cell
-    );
+CmpFreeKeyBody(PHHIVE Hive, HCELL_INDEX Cell);
 
 BOOLEAN
-CmpFreeValue(
-    PHHIVE Hive,
-    HCELL_INDEX Cell
-    );
+CmpFreeValue(PHHIVE Hive, HCELL_INDEX Cell);
 
 HCELL_INDEX
-CmpFindValueByName(
-    PHHIVE Hive,
-    PCM_KEY_NODE KeyNode,
-    PUNICODE_STRING Name
-    );
+CmpFindValueByName(PHHIVE Hive, PCM_KEY_NODE KeyNode, PUNICODE_STRING Name);
 
 NTSTATUS
-CmpDeleteChildByName(
-    PHHIVE  Hive,
-    HCELL_INDEX Cell,
-    UNICODE_STRING  Name,
-    PHCELL_INDEX    ChildCell
-    );
+CmpDeleteChildByName(PHHIVE Hive, HCELL_INDEX Cell, UNICODE_STRING Name, PHCELL_INDEX ChildCell);
 
 NTSTATUS
-CmpFreeKeyByCell(
-    PHHIVE Hive,
-    HCELL_INDEX Cell,
-    BOOLEAN Unlink
-    );
+CmpFreeKeyByCell(PHHIVE Hive, HCELL_INDEX Cell, BOOLEAN Unlink);
 
 BOOLEAN
-CmpFindNameInList(
-    IN PHHIVE  Hive,
-    IN PCHILD_LIST ChildList,
-    IN PUNICODE_STRING Name,
-    IN OPTIONAL PULONG ChildIndex,
-    OUT PHCELL_INDEX    CellIndex
-    );
+CmpFindNameInList(IN PHHIVE Hive, IN PCHILD_LIST ChildList, IN PUNICODE_STRING Name, IN OPTIONAL PULONG ChildIndex,
+                  OUT PHCELL_INDEX CellIndex);
 
 HCELL_INDEX
-CmpCopyCell(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceCell,
-    PHHIVE  TargetHive,
-    HSTORAGE_TYPE   Type
-    );
+CmpCopyCell(PHHIVE SourceHive, HCELL_INDEX SourceCell, PHHIVE TargetHive, HSTORAGE_TYPE Type);
 
 HCELL_INDEX
-CmpCopyValue(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceValueCell,
-    PHHIVE  TargetHive,
-    HSTORAGE_TYPE Type
-    );
+CmpCopyValue(PHHIVE SourceHive, HCELL_INDEX SourceValueCell, PHHIVE TargetHive, HSTORAGE_TYPE Type);
 
 HCELL_INDEX
-CmpCopyKeyPartial(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceKeyCell,
-    PHHIVE  TargetHive,
-    HCELL_INDEX Parent,
-    BOOLEAN CopyValues
-    );
+CmpCopyKeyPartial(PHHIVE SourceHive, HCELL_INDEX SourceKeyCell, PHHIVE TargetHive, HCELL_INDEX Parent,
+                  BOOLEAN CopyValues);
 
 BOOLEAN
-CmpCopySyncTree(
-    PHHIVE                  SourceHive,
-    HCELL_INDEX             SourceCell,
-    PHHIVE                  TargetHive,
-    HCELL_INDEX             TargetCell,
-    BOOLEAN                 CopyVolatile,
-    CMP_COPY_TYPE           CopyType
-    );
+CmpCopySyncTree(PHHIVE SourceHive, HCELL_INDEX SourceCell, PHHIVE TargetHive, HCELL_INDEX TargetCell,
+                BOOLEAN CopyVolatile, CMP_COPY_TYPE CopyType);
 
 //
 // BOOLEAN
@@ -1775,7 +1465,7 @@ CmpCopySyncTree(
 //    );
 //
 
-#define CmpCopyTree(s,c,t,l) CmpCopySyncTree(s,c,t,l,FALSE,Copy)
+#define CmpCopyTree(s, c, t, l) CmpCopySyncTree(s, c, t, l, FALSE, Copy)
 
 //
 // BOOLEAN
@@ -1788,7 +1478,7 @@ CmpCopySyncTree(
 //    );
 //
 
-#define CmpCopyTreeEx(s,c,t,l,f) CmpCopySyncTree(s,c,t,l,f,Copy)
+#define CmpCopyTreeEx(s, c, t, l, f) CmpCopySyncTree(s, c, t, l, f, Copy)
 
 //
 // BOOLEAN
@@ -1800,7 +1490,7 @@ CmpCopySyncTree(
 //   BOOLEAN     CopyVolatile);
 //
 
-#define CmpSyncTrees(s,c,t,l,f) CmpCopySyncTree(s,c,t,l,f,Sync)
+#define CmpSyncTrees(s, c, t, l, f) CmpCopySyncTree(s, c, t, l, f, Sync)
 
 
 //
@@ -1812,125 +1502,59 @@ CmpCopySyncTree(
 //   HCELL_INDEX TargetCell);
 //
 
-#define CmpMergeTrees(s,c,t,l) CmpCopySyncTree(s,c,t,l,FALSE,Merge)
+#define CmpMergeTrees(s, c, t, l) CmpCopySyncTree(s, c, t, l, FALSE, Merge)
 
-VOID
-CmpDeleteTree(
-    PHHIVE      Hive,
-    HCELL_INDEX Cell
-    );
+VOID CmpDeleteTree(PHHIVE Hive, HCELL_INDEX Cell);
 
-VOID
-CmpSetVersionData(
-    VOID
-    );
+VOID CmpSetVersionData(VOID);
 
 NTSTATUS
-CmpInitializeHardwareConfiguration(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+CmpInitializeHardwareConfiguration(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 NTSTATUS
-CmpInitializeMachineDependentConfiguration(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+CmpInitializeMachineDependentConfiguration(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 NTSTATUS
-CmpInitializeRegistryNode(
-    IN PCONFIGURATION_COMPONENT_DATA CurrentEntry,
-    IN HANDLE ParentHandle,
-    OUT PHANDLE NewHandle,
-    IN INTERFACE_TYPE InterfaceType,
-    IN ULONG BusNumber,
-    IN PUSHORT DeviceIndexTable
-    );
+CmpInitializeRegistryNode(IN PCONFIGURATION_COMPONENT_DATA CurrentEntry, IN HANDLE ParentHandle, OUT PHANDLE NewHandle,
+                          IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber, IN PUSHORT DeviceIndexTable);
 
 NTSTATUS
-CmpInitializeHive(
-    PCMHIVE         *CmHive,
-    ULONG           OperationType,
-    ULONG           HiveFlags,
-    ULONG           FileType,
-    PVOID           HiveData OPTIONAL,
-    HANDLE          Primary,
-    HANDLE          Log,
-    HANDLE          External,
-    PUNICODE_STRING FileName OPTIONAL,
-    ULONG           CheckFlags
-    );
+CmpInitializeHive(PCMHIVE *CmHive, ULONG OperationType, ULONG HiveFlags, ULONG FileType, PVOID HiveData OPTIONAL,
+                  HANDLE Primary, HANDLE Log, HANDLE External, PUNICODE_STRING FileName OPTIONAL, ULONG CheckFlags);
 
 BOOLEAN
-CmpDestroyHive(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell
-    );
+CmpDestroyHive(IN PHHIVE Hive, IN HCELL_INDEX Cell);
 
-VOID
-CmpInitializeRegistryNames(
-    VOID
-    );
+VOID CmpInitializeRegistryNames(VOID);
 
-VOID
-CmpInitializeCache(
-    VOID
-    );
+VOID CmpInitializeCache(VOID);
 
 PCM_KEY_CONTROL_BLOCK
-CmpCreateKeyControlBlock(
-    PHHIVE          Hive,
-    HCELL_INDEX     Cell,
-    PCM_KEY_NODE    Node,
-    PCM_KEY_CONTROL_BLOCK ParentKcb,
-    BOOLEAN FakeKey,
-    PUNICODE_STRING KeyName
-    );
+CmpCreateKeyControlBlock(PHHIVE Hive, HCELL_INDEX Cell, PCM_KEY_NODE Node, PCM_KEY_CONTROL_BLOCK ParentKcb,
+                         BOOLEAN FakeKey, PUNICODE_STRING KeyName);
 
 VOID CmpCleanUpKCBCacheTable();
 
 ULONG
-CmpSearchForOpenSubKeys(
-    IN PCM_KEY_CONTROL_BLOCK SearchKey,
-    IN SUBKEY_SEARCH_TYPE SearchType
-    );
+CmpSearchForOpenSubKeys(IN PCM_KEY_CONTROL_BLOCK SearchKey, IN SUBKEY_SEARCH_TYPE SearchType);
 
-VOID
-CmpDereferenceKeyControlBlock(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
+VOID CmpDereferenceKeyControlBlock(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
-VOID
-CmpRemoveKeyControlBlock(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
+VOID CmpRemoveKeyControlBlock(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
-VOID
-CmpReportNotify(
-    PCM_KEY_CONTROL_BLOCK KeyControlBlock,
-    PHHIVE          Hive,
-    HCELL_INDEX     Cell,
-    ULONG           NotifyMask
-    );
+VOID CmpReportNotify(PCM_KEY_CONTROL_BLOCK KeyControlBlock, PHHIVE Hive, HCELL_INDEX Cell, ULONG NotifyMask);
 
-VOID
-CmpPostNotify(
-    PCM_NOTIFY_BLOCK    NotifyBlock,
-    PUNICODE_STRING     Name OPTIONAL,
-    ULONG               Filter,
-    NTSTATUS            Status,
-    PLIST_ENTRY         ExternalKeyDeref OPTIONAL
+VOID CmpPostNotify(PCM_NOTIFY_BLOCK NotifyBlock, PUNICODE_STRING Name OPTIONAL, ULONG Filter, NTSTATUS Status,
+                   PLIST_ENTRY ExternalKeyDeref OPTIONAL
 #ifdef CM_NOTIFY_CHANGED_KCB_FULLPATH
-    ,
-    PUNICODE_STRING     ChangedKcbName OPTIONAL
+                   ,
+                   PUNICODE_STRING ChangedKcbName OPTIONAL
 #endif //CM_NOTIFY_CHANGED_KCB_FULLPATH
-    );
+);
 
 PCM_POST_BLOCK
-CmpAllocatePostBlock(
-    IN POST_BLOCK_TYPE BlockType,
-    IN ULONG           PostFlags,
-    IN PCM_KEY_BODY    KeyBody,
-    IN PCM_POST_BLOCK  MasterBlock
-    );
+CmpAllocatePostBlock(IN POST_BLOCK_TYPE BlockType, IN ULONG PostFlags, IN PCM_KEY_BODY KeyBody,
+                     IN PCM_POST_BLOCK MasterBlock);
 
 //
 //PCM_POST_BLOCK
@@ -1938,7 +1562,7 @@ CmpAllocatePostBlock(
 //    IN POST_BLOCK_TYPE BlockType
 //     );
 //
-#define CmpAllocateMasterPostBlock(b) CmpAllocatePostBlock(b,REG_NOTIFY_MASTER_POST,NULL,NULL)
+#define CmpAllocateMasterPostBlock(b) CmpAllocatePostBlock(b, REG_NOTIFY_MASTER_POST, NULL, NULL)
 
 //
 //PCM_POST_BLOCK
@@ -1948,59 +1572,28 @@ CmpAllocatePostBlock(
 //    IN PCM_POST_BLOCK  MasterBlock
 //     );
 //
-#define CmpAllocateSlavePostBlock(b,k,m) CmpAllocatePostBlock(b,0,k,m)
+#define CmpAllocateSlavePostBlock(b, k, m) CmpAllocatePostBlock(b, 0, k, m)
 
-VOID
-CmpFreePostBlock(
-    IN PCM_POST_BLOCK PostBlock
-    );
+VOID CmpFreePostBlock(IN PCM_POST_BLOCK PostBlock);
 
-VOID
-CmpPostApc(
-    struct _KAPC *Apc,
-    PKNORMAL_ROUTINE *NormalRoutine,
-    PVOID *NormalContext,
-    PVOID *SystemArgument1,
-    PVOID *SystemArgument2
-    );
+VOID CmpPostApc(struct _KAPC *Apc, PKNORMAL_ROUTINE *NormalRoutine, PVOID *NormalContext, PVOID *SystemArgument1,
+                PVOID *SystemArgument2);
 
-VOID
-CmpFlushNotify(
-    PCM_KEY_BODY    KeyBody
-    );
+VOID CmpFlushNotify(PCM_KEY_BODY KeyBody);
 
-VOID
-CmpPostApcRunDown(
-    struct _KAPC *Apc
-    );
+VOID CmpPostApcRunDown(struct _KAPC *Apc);
 
 NTSTATUS
-CmpOpenHiveFiles(
-    PUNICODE_STRING     BaseName,
-    PWSTR               Extension OPTIONAL,
-    PHANDLE             Primary,
-    PHANDLE             Secondary,
-    PULONG              PrimaryDisposition,
-    PULONG              SecondaryDispoition,
-    BOOLEAN             CreateAllowed,
-    BOOLEAN             MarkAsSystemHive,
-    BOOLEAN             NoBuffering,
-    PULONG              ClusterSize
-    );
+CmpOpenHiveFiles(PUNICODE_STRING BaseName, PWSTR Extension OPTIONAL, PHANDLE Primary, PHANDLE Secondary,
+                 PULONG PrimaryDisposition, PULONG SecondaryDispoition, BOOLEAN CreateAllowed, BOOLEAN MarkAsSystemHive,
+                 BOOLEAN NoBuffering, PULONG ClusterSize);
 
 NTSTATUS
-CmpLinkHiveToMaster(
-    PUNICODE_STRING LinkName,
-    HANDLE RootDirectory,
-    PCMHIVE CmHive,
-    BOOLEAN Allocate,
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
+CmpLinkHiveToMaster(PUNICODE_STRING LinkName, HANDLE RootDirectory, PCMHIVE CmHive, BOOLEAN Allocate,
+                    PSECURITY_DESCRIPTOR SecurityDescriptor);
 
 NTSTATUS
-CmpSaveBootControlSet(
-     IN USHORT ControlSetNum
-     );
+CmpSaveBootControlSet(IN USHORT ControlSetNum);
 
 //
 // checkout procedure
@@ -2009,23 +1602,17 @@ CmpSaveBootControlSet(
 //
 // Flags to be passed to CmCheckRegistry
 //
-#define     CM_CHECK_REGISTRY_CHECK_CLEAN       0x00000001
-#define     CM_CHECK_REGISTRY_FORCE_CLEAN       0x00000002
-#define     CM_CHECK_REGISTRY_LOADER_CLEAN      0x00000004
-#define     CM_CHECK_REGISTRY_SYSTEM_CLEAN      0x00000008
-#define     CM_CHECK_REGISTRY_HIVE_CHECK        0x00010000
+#define CM_CHECK_REGISTRY_CHECK_CLEAN 0x00000001
+#define CM_CHECK_REGISTRY_FORCE_CLEAN 0x00000002
+#define CM_CHECK_REGISTRY_LOADER_CLEAN 0x00000004
+#define CM_CHECK_REGISTRY_SYSTEM_CLEAN 0x00000008
+#define CM_CHECK_REGISTRY_HIVE_CHECK 0x00010000
 
 ULONG
-CmCheckRegistry(
-    PCMHIVE CmHive,
-    ULONG   Flags
-    );
+CmCheckRegistry(PCMHIVE CmHive, ULONG Flags);
 
 BOOLEAN
-CmpValidateHiveSecurityDescriptors(
-    IN PHHIVE       Hive,
-    OUT PBOOLEAN    ResetSD
-    );
+CmpValidateHiveSecurityDescriptors(IN PHHIVE Hive, OUT PBOOLEAN ResetSD);
 
 //
 // cmboot - functions for determining driver load lists
@@ -2033,7 +1620,8 @@ CmpValidateHiveSecurityDescriptors(
 
 #define CM_HARDWARE_PROFILE_STR_DATABASE L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\IDConfigDB"
 #define CM_HARDWARE_PROFILE_STR_CCS_HWPROFILE L"\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles"
-#define CM_HARDWARE_PROFILE_STR_CCS_CURRENT L"\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\Current"
+#define CM_HARDWARE_PROFILE_STR_CCS_CURRENT \
+    L"\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\Current"
 //
 // Alias table key names in IDConfigDB
 //
@@ -2071,264 +1659,162 @@ CmpValidateHiveSecurityDescriptors(
 // List structure used in config manager init
 //
 
-typedef struct _HIVE_LIST_ENTRY {
-    PWSTR       Name;
-    PWSTR       BaseName;                       // MACHINE or USER
-    PCMHIVE     CmHive;
-    ULONG       Flags;
-    PCMHIVE     CmHive2;
-    BOOLEAN     ThreadFinished;
-    BOOLEAN     ThreadStarted;
-    BOOLEAN     Allocate;
+typedef struct _HIVE_LIST_ENTRY
+{
+    PWSTR Name;
+    PWSTR BaseName; // MACHINE or USER
+    PCMHIVE CmHive;
+    ULONG Flags;
+    PCMHIVE CmHive2;
+    BOOLEAN ThreadFinished;
+    BOOLEAN ThreadStarted;
+    BOOLEAN Allocate;
 } HIVE_LIST_ENTRY, *PHIVE_LIST_ENTRY;
 
 //
 // structure definitions shared with the boot loader
 // to select the hardware profile.
 //
-typedef struct _CM_HARDWARE_PROFILE {
-    ULONG   NameLength;
-    PWSTR   FriendlyName;
-    ULONG   PreferenceOrder;
-    ULONG   Id;
-    ULONG   Flags;
+typedef struct _CM_HARDWARE_PROFILE
+{
+    ULONG NameLength;
+    PWSTR FriendlyName;
+    ULONG PreferenceOrder;
+    ULONG Id;
+    ULONG Flags;
 } CM_HARDWARE_PROFILE, *PCM_HARDWARE_PROFILE;
 
-#define CM_HP_FLAGS_ALIASABLE  1
+#define CM_HP_FLAGS_ALIASABLE 1
 #define CM_HP_FLAGS_TRUE_MATCH 2
-#define CM_HP_FLAGS_PRISTINE   4
-#define CM_HP_FLAGS_DUPLICATE  8
+#define CM_HP_FLAGS_PRISTINE 4
+#define CM_HP_FLAGS_DUPLICATE 8
 
-typedef struct _CM_HARDWARE_PROFILE_LIST {
+typedef struct _CM_HARDWARE_PROFILE_LIST
+{
     ULONG MaxProfileCount;
     ULONG CurrentProfileCount;
     CM_HARDWARE_PROFILE Profile[1];
 } CM_HARDWARE_PROFILE_LIST, *PCM_HARDWARE_PROFILE_LIST;
 
-typedef struct _CM_HARDWARE_PROFILE_ALIAS {
-    ULONG   ProfileNumber;
-    ULONG   DockState;
-    ULONG   DockID;
-    ULONG   SerialNumber;
+typedef struct _CM_HARDWARE_PROFILE_ALIAS
+{
+    ULONG ProfileNumber;
+    ULONG DockState;
+    ULONG DockID;
+    ULONG SerialNumber;
 } CM_HARDWARE_PROFILE_ALIAS, *PCM_HARDWARE_PROFILE_ALIAS;
 
-typedef struct _CM_HARDWARE_PROFILE_ALIAS_LIST {
+typedef struct _CM_HARDWARE_PROFILE_ALIAS_LIST
+{
     ULONG MaxAliasCount;
     ULONG CurrentAliasCount;
     CM_HARDWARE_PROFILE_ALIAS Alias[1];
 } CM_HARDWARE_PROFILE_ALIAS_LIST, *PCM_HARDWARE_PROFILE_ALIAS_LIST;
 
-typedef struct _CM_HARDWARE_PROFILE_ACPI_ALIAS {
-    ULONG   ProfileNumber;
-    ULONG   DockState;
-    ULONG   SerialLength;
-    PCHAR   SerialNumber;
+typedef struct _CM_HARDWARE_PROFILE_ACPI_ALIAS
+{
+    ULONG ProfileNumber;
+    ULONG DockState;
+    ULONG SerialLength;
+    PCHAR SerialNumber;
 } CM_HARDWARE_PROFILE_ACPI_ALIAS, *PCM_HARDWARE_PROFILE_ACPI_ALIAS;
 
-typedef struct _CM_HARDWARE_PROFILE_ACPI_ALIAS_LIST {
-    ULONG   MaxAliasCount;
-    ULONG   CurrentAliasCount;
+typedef struct _CM_HARDWARE_PROFILE_ACPI_ALIAS_LIST
+{
+    ULONG MaxAliasCount;
+    ULONG CurrentAliasCount;
     CM_HARDWARE_PROFILE_ACPI_ALIAS Alias[1];
 } CM_HARDWARE_PROFILE_ACPI_ALIAS_LIST, *PCM_HARDWARE_PROFILE_ACPI_ALIAS_LIST;
 
 HCELL_INDEX
-CmpFindControlSet(
-     IN PHHIVE SystemHive,
-     IN HCELL_INDEX RootCell,
-     IN PUNICODE_STRING SelectName,
-     OUT PBOOLEAN AutoSelect
-     );
+CmpFindControlSet(IN PHHIVE SystemHive, IN HCELL_INDEX RootCell, IN PUNICODE_STRING SelectName,
+                  OUT PBOOLEAN AutoSelect);
 
 BOOLEAN
-CmpValidateSelect(
-     IN PHHIVE SystemHive,
-     IN HCELL_INDEX RootCell
-     );
+CmpValidateSelect(IN PHHIVE SystemHive, IN HCELL_INDEX RootCell);
 
 BOOLEAN
-CmpFindDrivers(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    IN SERVICE_LOAD_TYPE LoadType,
-    IN PWSTR BootFileSystem OPTIONAL,
-    IN PLIST_ENTRY DriverListHead
-    );
+CmpFindDrivers(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, IN SERVICE_LOAD_TYPE LoadType,
+               IN PWSTR BootFileSystem OPTIONAL, IN PLIST_ENTRY DriverListHead);
 
 BOOLEAN
-CmpFindNLSData(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    OUT PUNICODE_STRING AnsiFilename,
-    OUT PUNICODE_STRING OemFilename,
-    OUT PUNICODE_STRING CaseTableFilename,
-    OUT PUNICODE_STRING OemHalFilename
-    );
+CmpFindNLSData(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, OUT PUNICODE_STRING AnsiFilename,
+               OUT PUNICODE_STRING OemFilename, OUT PUNICODE_STRING CaseTableFilename,
+               OUT PUNICODE_STRING OemHalFilename);
 
 HCELL_INDEX
-CmpFindProfileOption(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    OUT PCM_HARDWARE_PROFILE_LIST *ProfileList,
-    OUT PCM_HARDWARE_PROFILE_ALIAS_LIST *AliasList,
-    OUT PULONG Timeout
-    );
+CmpFindProfileOption(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, OUT PCM_HARDWARE_PROFILE_LIST *ProfileList,
+                     OUT PCM_HARDWARE_PROFILE_ALIAS_LIST *AliasList, OUT PULONG Timeout);
 
-VOID
-CmpSetCurrentProfile(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    IN PCM_HARDWARE_PROFILE Profile
-    );
+VOID CmpSetCurrentProfile(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, IN PCM_HARDWARE_PROFILE Profile);
 
 BOOLEAN
-CmpResolveDriverDependencies(
-    IN PLIST_ENTRY DriverListHead
-    );
+CmpResolveDriverDependencies(IN PLIST_ENTRY DriverListHead);
 
 BOOLEAN
-CmpSortDriverList(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    IN PLIST_ENTRY DriverListHead
-    );
+CmpSortDriverList(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, IN PLIST_ENTRY DriverListHead);
 
 HCELL_INDEX
-CmpFindSubKeyByName(
-    PHHIVE          Hive,
-    PCM_KEY_NODE    Parent,
-    PUNICODE_STRING SearchName
-    );
+CmpFindSubKeyByName(PHHIVE Hive, PCM_KEY_NODE Parent, PUNICODE_STRING SearchName);
 
 HCELL_INDEX
-CmpFindSubKeyByNumber(
-    PHHIVE          Hive,
-    PCM_KEY_NODE    Parent,
-    ULONG           Number
-    );
+CmpFindSubKeyByNumber(PHHIVE Hive, PCM_KEY_NODE Parent, ULONG Number);
 
 BOOLEAN
-CmpAddSubKey(
-    PHHIVE          Hive,
-    HCELL_INDEX     Parent,
-    HCELL_INDEX     Child
-    );
+CmpAddSubKey(PHHIVE Hive, HCELL_INDEX Parent, HCELL_INDEX Child);
 
 BOOLEAN
-CmpMarkIndexDirty(
-    PHHIVE          Hive,
-    HCELL_INDEX     ParentKey,
-    HCELL_INDEX     TargetKey
-    );
+CmpMarkIndexDirty(PHHIVE Hive, HCELL_INDEX ParentKey, HCELL_INDEX TargetKey);
 
 BOOLEAN
-CmpRemoveSubKey(
-    PHHIVE          Hive,
-    HCELL_INDEX     ParentKey,
-    HCELL_INDEX     TargetKey
-    );
+CmpRemoveSubKey(PHHIVE Hive, HCELL_INDEX ParentKey, HCELL_INDEX TargetKey);
 
 BOOLEAN
-CmpGetNextName(
-    IN OUT PUNICODE_STRING  RemainingName,
-    OUT    PUNICODE_STRING  NextName,
-    OUT    PBOOLEAN  Last
-    );
+CmpGetNextName(IN OUT PUNICODE_STRING RemainingName, OUT PUNICODE_STRING NextName, OUT PBOOLEAN Last);
 
 NTSTATUS
-CmpAddToHiveFileList(
-    PCMHIVE CmHive
-    );
+CmpAddToHiveFileList(PCMHIVE CmHive);
 
-VOID
-CmpRemoveFromHiveFileList(
-    );
+VOID CmpRemoveFromHiveFileList();
 
 NTSTATUS
-CmpInitHiveFromFile(
-    IN PUNICODE_STRING FileName,
-    IN ULONG HiveFlags,
-    OUT PCMHIVE *CmHive,
-    IN OUT PBOOLEAN Allocate,
-    IN OUT PBOOLEAN RegistryLocked,
-    IN  ULONG       CheckFlags
-    );
+CmpInitHiveFromFile(IN PUNICODE_STRING FileName, IN ULONG HiveFlags, OUT PCMHIVE *CmHive, IN OUT PBOOLEAN Allocate,
+                    IN OUT PBOOLEAN RegistryLocked, IN ULONG CheckFlags);
 
 NTSTATUS
-CmpCloneHwProfile (
-    IN HANDLE IDConfigDB,
-    IN HANDLE Parent,
-    IN HANDLE OldProfile,
-    IN ULONG  OldProfileNumber,
-    IN USHORT DockingState,
-    OUT PHANDLE NewProfile,
-    OUT PULONG  NewProfileNumber
-    );
+CmpCloneHwProfile(IN HANDLE IDConfigDB, IN HANDLE Parent, IN HANDLE OldProfile, IN ULONG OldProfileNumber,
+                  IN USHORT DockingState, OUT PHANDLE NewProfile, OUT PULONG NewProfileNumber);
 
 NTSTATUS
-CmpCreateHwProfileFriendlyName (
-    IN HANDLE IDConfigDB,
-    IN ULONG  DockingState,
-    IN ULONG  NewProfileNumber,
-    OUT PUNICODE_STRING FriendlyName
-    );
+CmpCreateHwProfileFriendlyName(IN HANDLE IDConfigDB, IN ULONG DockingState, IN ULONG NewProfileNumber,
+                               OUT PUNICODE_STRING FriendlyName);
 
-typedef
-NTSTATUS
-(*PCM_ACPI_SELECTION_ROUTINE) (
-    IN  PCM_HARDWARE_PROFILE_LIST ProfileList,
-    OUT PULONG ProfileIndexToUse, // Set to -1 for none.
-    IN  PVOID Context
-    );
+typedef NTSTATUS (*PCM_ACPI_SELECTION_ROUTINE)(IN PCM_HARDWARE_PROFILE_LIST ProfileList,
+                                               OUT PULONG ProfileIndexToUse, // Set to -1 for none.
+                                               IN PVOID Context);
 
 NTSTATUS
-CmSetAcpiHwProfile (
-    IN  PPROFILE_ACPI_DOCKING_STATE DockState,
-    IN  PCM_ACPI_SELECTION_ROUTINE,
-    IN  PVOID Context,
-    OUT PHANDLE NewProfile,
-    OUT PBOOLEAN ProfileChanged
-    );
+CmSetAcpiHwProfile(IN PPROFILE_ACPI_DOCKING_STATE DockState, IN PCM_ACPI_SELECTION_ROUTINE, IN PVOID Context,
+                   OUT PHANDLE NewProfile, OUT PBOOLEAN ProfileChanged);
 
 NTSTATUS
-CmpAddAcpiAliasEntry (
-    IN HANDLE                       IDConfigDB,
-    IN PPROFILE_ACPI_DOCKING_STATE  NewDockState,
-    IN ULONG                        ProfileNumber,
-    IN PWCHAR                       nameBuffer,
-    IN PVOID                        valueBuffer,
-    IN ULONG                        valueBufferLength,
-    IN BOOLEAN                      PreventDuplication
-    );
+CmpAddAcpiAliasEntry(IN HANDLE IDConfigDB, IN PPROFILE_ACPI_DOCKING_STATE NewDockState, IN ULONG ProfileNumber,
+                     IN PWCHAR nameBuffer, IN PVOID valueBuffer, IN ULONG valueBufferLength,
+                     IN BOOLEAN PreventDuplication);
 
 //
 // Routines for handling registry compressed names
 //
 USHORT
-CmpNameSize(
-    IN PHHIVE Hive,
-    IN PUNICODE_STRING Name
-    );
+CmpNameSize(IN PHHIVE Hive, IN PUNICODE_STRING Name);
 
 USHORT
-CmpCopyName(
-    IN PHHIVE Hive,
-    IN PWCHAR Destination,
-    IN PUNICODE_STRING Source
-    );
+CmpCopyName(IN PHHIVE Hive, IN PWCHAR Destination, IN PUNICODE_STRING Source);
 
-VOID
-CmpCopyCompressedName(
-    IN PWCHAR Destination,
-    IN ULONG DestinationLength,
-    IN PWCHAR Source,
-    IN ULONG SourceLength
-    );
+VOID CmpCopyCompressedName(IN PWCHAR Destination, IN ULONG DestinationLength, IN PWCHAR Source, IN ULONG SourceLength);
 
 USHORT
-CmpCompressedNameSize(
-    IN PWCHAR Name,
-    IN ULONG Length
-    );
+CmpCompressedNameSize(IN PWCHAR Name, IN ULONG Length);
 
 
 //
@@ -2350,31 +1836,16 @@ CmpCompressedNameSize(
 //
 
 PCM_NAME_CONTROL_BLOCK
-CmpGetNameControlBlock(
-    PUNICODE_STRING NodeName
-    );
+CmpGetNameControlBlock(PUNICODE_STRING NodeName);
 
-VOID
-CmpDereferenceKeyControlBlockWithLock(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
+VOID CmpDereferenceKeyControlBlockWithLock(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
-VOID
-CmpCleanUpSubKeyInfo(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
+VOID CmpCleanUpSubKeyInfo(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
-VOID
-CmpCleanUpKcbValueCache(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
+VOID CmpCleanUpKcbValueCache(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
 
-VOID
-CmpRebuildKcbCache(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
-
+VOID CmpRebuildKcbCache(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
 
 /*
@@ -2385,97 +1856,48 @@ CmpSetUpKcbValueCache(
     ULONG_PTR               ValueList
     )
 */
-#define CmpSetUpKcbValueCache(KeyControlBlock,_Count,_List)                 \
-    ASSERT( !(CMP_IS_CELL_CACHED(KeyControlBlock->ValueCache.ValueList)) ); \
-    ASSERT( !(KeyControlBlock->ExtFlags & CM_KCB_SYM_LINK_FOUND) );         \
-    KeyControlBlock->ValueCache.Count = (ULONG)(_Count);                    \
+#define CmpSetUpKcbValueCache(KeyControlBlock, _Count, _List)             \
+    ASSERT(!(CMP_IS_CELL_CACHED(KeyControlBlock->ValueCache.ValueList))); \
+    ASSERT(!(KeyControlBlock->ExtFlags & CM_KCB_SYM_LINK_FOUND));         \
+    KeyControlBlock->ValueCache.Count = (ULONG)(_Count);                  \
     KeyControlBlock->ValueCache.ValueList = (ULONG_PTR)(_List)
 
 
-VOID
-CmpCleanUpKcbCacheWithLock(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
+VOID CmpCleanUpKcbCacheWithLock(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
-VOID
-CmpRemoveFromDelayedClose(
-    IN PCM_KEY_CONTROL_BLOCK kcb
-    );
+VOID CmpRemoveFromDelayedClose(IN PCM_KEY_CONTROL_BLOCK kcb);
 
 PUNICODE_STRING
-CmpConstructName(
-    PCM_KEY_CONTROL_BLOCK kcb
-);
+CmpConstructName(PCM_KEY_CONTROL_BLOCK kcb);
 
 PCELL_DATA
-CmpGetValueListFromCache(
-    IN PHHIVE  Hive,
-    IN PCACHED_CHILD_LIST ChildList,
-    IN OUT BOOLEAN    *IndexCached
-);
+CmpGetValueListFromCache(IN PHHIVE Hive, IN PCACHED_CHILD_LIST ChildList, IN OUT BOOLEAN *IndexCached);
 
 PCM_KEY_VALUE
-CmpGetValueKeyFromCache(
-    IN PHHIVE         Hive,
-    IN PCELL_DATA     List,
-    IN ULONG          Index,
-    OUT PPCM_CACHED_VALUE *ContainingList,
-    IN BOOLEAN        IndexCached,
-    OUT BOOLEAN         *ValueCached,
-    OUT PHCELL_INDEX    CellToRelease
-);
+CmpGetValueKeyFromCache(IN PHHIVE Hive, IN PCELL_DATA List, IN ULONG Index, OUT PPCM_CACHED_VALUE *ContainingList,
+                        IN BOOLEAN IndexCached, OUT BOOLEAN *ValueCached, OUT PHCELL_INDEX CellToRelease);
 
 PCM_KEY_VALUE
-CmpFindValueByNameFromCache(
-    IN PHHIVE  Hive,
-    IN PCACHED_CHILD_LIST ChildList,
-    IN PUNICODE_STRING Name,
-    OUT PPCM_CACHED_VALUE *ContainingList,
-    OUT ULONG *Index,
-    OUT BOOLEAN             *ValueCached,
-    OUT PHCELL_INDEX        CellToRelease
-    );
+CmpFindValueByNameFromCache(IN PHHIVE Hive, IN PCACHED_CHILD_LIST ChildList, IN PUNICODE_STRING Name,
+                            OUT PPCM_CACHED_VALUE *ContainingList, OUT ULONG *Index, OUT BOOLEAN *ValueCached,
+                            OUT PHCELL_INDEX CellToRelease);
 
 NTSTATUS
-CmpQueryKeyValueData(
-    PHHIVE Hive,
-    PCM_CACHED_VALUE *ContainingList,
-    PCM_KEY_VALUE ValueKey,
-    BOOLEAN       ValueCached,
-    KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-    PVOID KeyValueInformation,
-    ULONG Length,
-    PULONG ResultLength
-    );
+CmpQueryKeyValueData(PHHIVE Hive, PCM_CACHED_VALUE *ContainingList, PCM_KEY_VALUE ValueKey, BOOLEAN ValueCached,
+                     KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass, PVOID KeyValueInformation, ULONG Length,
+                     PULONG ResultLength);
 
 BOOLEAN
-CmpReferenceKeyControlBlock(
-    PCM_KEY_CONTROL_BLOCK   KeyControlBlock
-    );
+CmpReferenceKeyControlBlock(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 
-VOID
-CmpInitializeKeyNameString(PCM_KEY_NODE Cell,
-                           PUNICODE_STRING KeyName,
-                           WCHAR *NameBuffer
-                           );
+VOID CmpInitializeKeyNameString(PCM_KEY_NODE Cell, PUNICODE_STRING KeyName, WCHAR *NameBuffer);
 
-VOID
-CmpInitializeValueNameString(PCM_KEY_VALUE Cell,
-                             PUNICODE_STRING ValueName,
-                             WCHAR *NameBuffer
-                             );
+VOID CmpInitializeValueNameString(PCM_KEY_VALUE Cell, PUNICODE_STRING ValueName, WCHAR *NameBuffer);
 
-VOID
-CmpFlushNotifiesOnKeyBodyList(
-    IN PCM_KEY_CONTROL_BLOCK   kcb
-    );
+VOID CmpFlushNotifiesOnKeyBodyList(IN PCM_KEY_CONTROL_BLOCK kcb);
 
 #ifdef CM_NOTIFY_CHANGED_KCB_FULLPATH
-VOID
-CmpFillCallerBuffer(
-                    PCM_POST_BLOCK  PostBlock,
-                    PUNICODE_STRING ChangedKcbName
-                    );
+VOID CmpFillCallerBuffer(PCM_POST_BLOCK PostBlock, PUNICODE_STRING ChangedKcbName);
 #endif //CM_NOTIFY_CHANGED_KCB_FULLPATH
 
 extern ULONG CmpHashTableSize;
@@ -2484,18 +1906,10 @@ extern PCM_KEY_HASH *CmpCacheTable;
 #ifdef _WANT_MACHINE_IDENTIFICATION
 
 BOOLEAN
-CmpGetBiosDateFromRegistry(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    OUT PUNICODE_STRING Date
-    );
+CmpGetBiosDateFromRegistry(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, OUT PUNICODE_STRING Date);
 
 BOOLEAN
-CmpGetBiosinfoFileNameFromRegistry(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX ControlSet,
-    OUT PUNICODE_STRING InfName
-    );
+CmpGetBiosinfoFileNameFromRegistry(IN PHHIVE Hive, IN HCELL_INDEX ControlSet, OUT PUNICODE_STRING InfName);
 
 
 #endif
@@ -2504,84 +1918,49 @@ CmpGetBiosinfoFileNameFromRegistry(
 // will pass in a 32bit Iosb, and 64bit processes will pass in a 64bit Iosb.
 #if defined(_WIN64)
 
-#define CmpSetIoStatus(Iosb, s, i, UseIosb32)                              \
-if ((UseIosb32)) {                                                         \
-    ((PIO_STATUS_BLOCK32)(Iosb))->Status = (NTSTATUS)(s);                  \
-    ((PIO_STATUS_BLOCK32)(Iosb))->Information = (ULONG)(i);                \
-}                                                                          \
-else {                                                                     \
-    (Iosb)->Status = (s);                                                  \
-    (Iosb)->Information = (i);                                             \
-}                                                                          \
+#define CmpSetIoStatus(Iosb, s, i, UseIosb32)                   \
+    if ((UseIosb32))                                            \
+    {                                                           \
+        ((PIO_STATUS_BLOCK32)(Iosb))->Status = (NTSTATUS)(s);   \
+        ((PIO_STATUS_BLOCK32)(Iosb))->Information = (ULONG)(i); \
+    }                                                           \
+    else                                                        \
+    {                                                           \
+        (Iosb)->Status = (s);                                   \
+        (Iosb)->Information = (i);                              \
+    }
 
 #else
 
-#define CmpSetIoStatus(Iosb, s, i, UseIosb32)                              \
-(Iosb)->Status = (s);                                                      \
-(Iosb)->Information = (i);                                                 \
+#define CmpSetIoStatus(Iosb, s, i, UseIosb32) \
+    (Iosb)->Status = (s);                     \
+    (Iosb)->Information = (i);
 
 #endif
-
 
 
 // Dragos: new functions (prototyping)
 
 NTSTATUS
-CmpAquireFileObjectForFile(
-        IN  PCMHIVE         CmHive,
-        IN HANDLE           FileHandle,
-        OUT PFILE_OBJECT    *FileObject
-            );
+CmpAquireFileObjectForFile(IN PCMHIVE CmHive, IN HANDLE FileHandle, OUT PFILE_OBJECT *FileObject);
 
-VOID
-CmpDropFileObjectForHive(
-        IN  PCMHIVE             CmHive
-            );
+VOID CmpDropFileObjectForHive(IN PCMHIVE CmHive);
 
-VOID
-CmpTouchView(
-    IN PCMHIVE              CmHive,
-    IN PCM_VIEW_OF_FILE     CmView,
-    IN ULONG                Cell
-            );
+VOID CmpTouchView(IN PCMHIVE CmHive, IN PCM_VIEW_OF_FILE CmView, IN ULONG Cell);
 
 NTSTATUS
-CmpMapCmView(
-    IN  PCMHIVE             CmHive,
-    IN  ULONG               FileOffset,
-    OUT PCM_VIEW_OF_FILE    *CmView,
-    IN  BOOLEAN             MapInited
-    );
+CmpMapCmView(IN PCMHIVE CmHive, IN ULONG FileOffset, OUT PCM_VIEW_OF_FILE *CmView, IN BOOLEAN MapInited);
 
-VOID
-CmpInitHiveViewList (
-        IN  PCMHIVE             CmHive
-                             );
+VOID CmpInitHiveViewList(IN PCMHIVE CmHive);
 
-VOID
-CmpDestroyHiveViewList (
-        IN  PCMHIVE             CmHive
-                             );
+VOID CmpDestroyHiveViewList(IN PCMHIVE CmHive);
 
 NTSTATUS
-CmpPinCmView (
-        IN  PCMHIVE             CmHive,
-        PCM_VIEW_OF_FILE        CmView
-                             );
-VOID
-CmpUnPinCmView (
-        IN  PCMHIVE             CmHive,
-        IN  PCM_VIEW_OF_FILE    CmView,
-        IN  BOOLEAN             SetClean,
-        IN  BOOLEAN             MapIsValid
-                             );
+CmpPinCmView(IN PCMHIVE CmHive, PCM_VIEW_OF_FILE CmView);
+VOID CmpUnPinCmView(IN PCMHIVE CmHive, IN PCM_VIEW_OF_FILE CmView, IN BOOLEAN SetClean, IN BOOLEAN MapIsValid);
 
 NTSTATUS
-CmpMapThisBin(
-                PCMHIVE         CmHive,
-                HCELL_INDEX     Cell,
-                BOOLEAN         Touch
-              );
+CmpMapThisBin(PCMHIVE CmHive, HCELL_INDEX Cell, BOOLEAN Touch);
 #if 0
 VOID
 CmpUnmapAditionalViews(
@@ -2601,231 +1980,123 @@ CmpMapEntireFileInFakeViews(
 
 #endif
 
-VOID
-CmpInitializeDelayedCloseTable();
+VOID CmpInitializeDelayedCloseTable();
 
-VOID
-CmpAddToDelayedClose(
-    IN PCM_KEY_CONTROL_BLOCK kcb
-    );
+VOID CmpAddToDelayedClose(IN PCM_KEY_CONTROL_BLOCK kcb);
 
 NTSTATUS
-CmpAddValueToList(
-    IN PHHIVE  Hive,
-    IN HCELL_INDEX ValueCell,
-    IN ULONG Index,
-    IN ULONG Type,
-    IN OUT PCHILD_LIST ChildList
-    );
+CmpAddValueToList(IN PHHIVE Hive, IN HCELL_INDEX ValueCell, IN ULONG Index, IN ULONG Type,
+                  IN OUT PCHILD_LIST ChildList);
 
 NTSTATUS
-CmpRemoveValueFromList(
-    IN PHHIVE  Hive,
-    IN ULONG Index,
-    IN OUT PCHILD_LIST ChildList
-    );
+CmpRemoveValueFromList(IN PHHIVE Hive, IN ULONG Index, IN OUT PCHILD_LIST ChildList);
 
 BOOLEAN
-CmpGetValueData(IN PHHIVE Hive,
-                IN PCM_KEY_VALUE Value,
-                OUT PULONG realsize,
-                IN OUT PVOID *Buffer,
-                OUT PBOOLEAN Allocated,
-                OUT PHCELL_INDEX CellToRelease
-               );
+CmpGetValueData(IN PHHIVE Hive, IN PCM_KEY_VALUE Value, OUT PULONG realsize, IN OUT PVOID *Buffer,
+                OUT PBOOLEAN Allocated, OUT PHCELL_INDEX CellToRelease);
 
 PCELL_DATA
-CmpValueToData(IN PHHIVE Hive,
-               IN PCM_KEY_VALUE Value,
-               OUT PULONG realsize
-               );
+CmpValueToData(IN PHHIVE Hive, IN PCM_KEY_VALUE Value, OUT PULONG realsize);
 
 BOOLEAN
-CmpMarkValueDataDirty(  IN PHHIVE Hive,
-                        IN PCM_KEY_VALUE Value
-                      );
+CmpMarkValueDataDirty(IN PHHIVE Hive, IN PCM_KEY_VALUE Value);
 
 NTSTATUS
-CmpSetValueDataNew(
-    IN PHHIVE           Hive,
-    IN PVOID            Data,
-    IN ULONG            DataSize,
-    IN ULONG            StorageType,
-    IN HCELL_INDEX      ValueCell,
-    OUT PHCELL_INDEX    DataCell
-    );
+CmpSetValueDataNew(IN PHHIVE Hive, IN PVOID Data, IN ULONG DataSize, IN ULONG StorageType, IN HCELL_INDEX ValueCell,
+                   OUT PHCELL_INDEX DataCell);
 
 NTSTATUS
-CmpSetValueDataExisting(
-    IN PHHIVE           Hive,
-    IN PVOID            Data,
-    IN ULONG            DataSize,
-    IN ULONG            StorageType,
-    IN HCELL_INDEX      OldDataCell
-    );
+CmpSetValueDataExisting(IN PHHIVE Hive, IN PVOID Data, IN ULONG DataSize, IN ULONG StorageType,
+                        IN HCELL_INDEX OldDataCell);
 
 BOOLEAN
-CmpFreeValueData(
-    PHHIVE      Hive,
-    HCELL_INDEX DataCell,
-    ULONG       DataLength
-    );
+CmpFreeValueData(PHHIVE Hive, HCELL_INDEX DataCell, ULONG DataLength);
 
 
 NTSTATUS
-CmpAddSecurityCellToCache (
-    IN OUT PCMHIVE      CmHive,
-    IN HCELL_INDEX      SecurityCell,
-    IN BOOLEAN          BuildUp
-    );
+CmpAddSecurityCellToCache(IN OUT PCMHIVE CmHive, IN HCELL_INDEX SecurityCell, IN BOOLEAN BuildUp);
 
 BOOLEAN
-CmpFindSecurityCellCacheIndex (
-    IN PCMHIVE      CmHive,
-    IN HCELL_INDEX  SecurityCell,
-    OUT PULONG      Index
-    );
+CmpFindSecurityCellCacheIndex(IN PCMHIVE CmHive, IN HCELL_INDEX SecurityCell, OUT PULONG Index);
 
 BOOLEAN
-CmpAdjustSecurityCacheSize (
-    IN PCMHIVE      CmHive
-    );
+CmpAdjustSecurityCacheSize(IN PCMHIVE CmHive);
 
-VOID
-CmpRemoveFromSecurityCache (
-    IN OUT PCMHIVE      CmHive,
-    IN HCELL_INDEX      SecurityCell
-    );
+VOID CmpRemoveFromSecurityCache(IN OUT PCMHIVE CmHive, IN HCELL_INDEX SecurityCell);
 
-VOID
-CmpDestroySecurityCache (
-    IN OUT PCMHIVE      CmHive
-    );
+VOID CmpDestroySecurityCache(IN OUT PCMHIVE CmHive);
 
 
-VOID
-CmpInitSecurityCache(
-    IN OUT PCMHIVE      CmHive
-    );
+VOID CmpInitSecurityCache(IN OUT PCMHIVE CmHive);
 
 BOOLEAN
-CmpRebuildSecurityCache(
-                        IN OUT PCMHIVE      CmHive
-                        );
+CmpRebuildSecurityCache(IN OUT PCMHIVE CmHive);
 
 ULONG
-CmpSecConvKey(
-              IN ULONG  DescriptorLength,
-              IN PULONG Descriptor
-              );
+CmpSecConvKey(IN ULONG DescriptorLength, IN PULONG Descriptor);
 
-VOID
-CmpAssignSecurityToKcb(
-    IN PCM_KEY_CONTROL_BLOCK    Kcb,
-    IN HCELL_INDEX              SecurityCell
-    );
+VOID CmpAssignSecurityToKcb(IN PCM_KEY_CONTROL_BLOCK Kcb, IN HCELL_INDEX SecurityCell);
 
 BOOLEAN
-CmpBuildSecurityCellMappingArray(
-    IN PCMHIVE CmHive
-    );
+CmpBuildSecurityCellMappingArray(IN PCMHIVE CmHive);
 
 
 //
 // new function replacing CmpWorker
 //
-VOID
-CmpCmdHiveClose(
-                     PCMHIVE    CmHive
-                     );
+VOID CmpCmdHiveClose(PCMHIVE CmHive);
 
-VOID
-CmpCmdInit(
-           BOOLEAN SetupBoot
-            );
+VOID CmpCmdInit(BOOLEAN SetupBoot);
 
 NTSTATUS
-CmpCmdRenameHive(
-            PCMHIVE                     CmHive,
-            POBJECT_NAME_INFORMATION    OldName,
-            PUNICODE_STRING             NewName,
-            ULONG                       NameInfoLength
-            );
+CmpCmdRenameHive(PCMHIVE CmHive, POBJECT_NAME_INFORMATION OldName, PUNICODE_STRING NewName, ULONG NameInfoLength);
 
 NTSTATUS
-CmpCmdHiveOpen(
-            POBJECT_ATTRIBUTES          FileAttributes,
-            PSECURITY_CLIENT_CONTEXT    ImpersonationContext,
-            PBOOLEAN                    Allocate,
-            PBOOLEAN                    RegistryLockAquired,
-            PCMHIVE                     *NewHive,
-            ULONG                       CheckFlags
-            );
+CmpCmdHiveOpen(POBJECT_ATTRIBUTES FileAttributes, PSECURITY_CLIENT_CONTEXT ImpersonationContext, PBOOLEAN Allocate,
+               PBOOLEAN RegistryLockAquired, PCMHIVE *NewHive, ULONG CheckFlags);
 
 #ifdef NT_RENAME_KEY
 HCELL_INDEX
-CmpDuplicateIndex(
-    PHHIVE          Hive,
-    HCELL_INDEX     IndexCell,
-    ULONG           StorageType
-    );
+CmpDuplicateIndex(PHHIVE Hive, HCELL_INDEX IndexCell, ULONG StorageType);
 
 NTSTATUS
-CmRenameKey(
-    IN PCM_KEY_CONTROL_BLOCK    KeyControlBlock,
-    IN UNICODE_STRING           NewKeyName
-    );
+CmRenameKey(IN PCM_KEY_CONTROL_BLOCK KeyControlBlock, IN UNICODE_STRING NewKeyName);
 
 BOOLEAN
-CmpUpdateParentForEachSon(
-    PHHIVE          Hive,
-    HCELL_INDEX     Parent
-    );
+CmpUpdateParentForEachSon(PHHIVE Hive, HCELL_INDEX Parent);
 #endif //NT_RENAME_KEY
 
 #ifdef NT_UNLOAD_KEY_EX
 NTSTATUS
-CmUnloadKeyEx(
-    IN PCM_KEY_CONTROL_BLOCK Kcb,
-    IN PKEVENT UserEvent
-    );
+CmUnloadKeyEx(IN PCM_KEY_CONTROL_BLOCK Kcb, IN PKEVENT UserEvent);
 #endif //NT_UNLOAD_KEY_EX
 
-VOID
-CmpShutdownWorkers(
-    VOID
-    );
+VOID CmpShutdownWorkers(VOID);
 
-VOID
-CmpPrefetchHiveFile(
-                    IN PFILE_OBJECT FileObject,
-                    IN ULONG        Length
-                    );
+VOID CmpPrefetchHiveFile(IN PFILE_OBJECT FileObject, IN ULONG Length);
 
 #ifdef CM_CHECK_FOR_ORPHANED_KCBS
-VOID
-CmpCheckForOrphanedKcbs(
-    PHHIVE          Hive
-    );
+VOID CmpCheckForOrphanedKcbs(PHHIVE Hive);
 #else
 
 #define CmpCheckForOrphanedKcbs(Hive) //nothing
-#endif //CM_CHECK_FOR_ORPHANED_KCBS
+#endif                                //CM_CHECK_FOR_ORPHANED_KCBS
 
-#define CM_HIVE_COMPRESS_LEVEL   (25)
+#define CM_HIVE_COMPRESS_LEVEL (25)
 
 
-#define CMP_MAX_REGISTRY_DEPTH      512        // levels
+#define CMP_MAX_REGISTRY_DEPTH 512 // levels
 
-typedef struct {
+typedef struct
+{
     HCELL_INDEX Cell;
     HCELL_INDEX ParentCell;
-    ULONG       ChildIndex;
-    BOOLEAN     CellChecked;
+    ULONG ChildIndex;
+    BOOLEAN CellChecked;
 } CMP_CHECK_REGISTRY_STACK_ENTRY, *PCMP_CHECK_REGISTRY_STACK_ENTRY;
 
 
-#define CmIsKcbReadOnly(kcb)        ((kcb)->ExtFlags & CM_KCB_READ_ONLY_KEY)
+#define CmIsKcbReadOnly(kcb) ((kcb)->ExtFlags & CM_KCB_READ_ONLY_KEY)
 
 NTSTATUS
 CmLockKcbForWrite(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
@@ -2834,79 +2105,52 @@ CmLockKcbForWrite(PCM_KEY_CONTROL_BLOCK KeyControlBlock);
 // Wrapper to RtlCompareUnicodeString; uses CompareFlags to avoid upcasing names
 //
 
-#define CMP_SOURCE_UP       0x00000001
-#define CMP_DEST_UP         0x00000002
+#define CMP_SOURCE_UP 0x00000001
+#define CMP_DEST_UP 0x00000002
 
-LONG
-CmpCompareUnicodeString(
-    IN PUNICODE_STRING  SourceName,
-    IN PUNICODE_STRING  DestName,
-    IN ULONG            CompareFlags
-    );
+LONG CmpCompareUnicodeString(IN PUNICODE_STRING SourceName, IN PUNICODE_STRING DestName, IN ULONG CompareFlags);
 
-LONG
-CmpCompareCompressedName(
-    IN PUNICODE_STRING  SearchName,
-    IN PWCHAR           CompressedName,
-    IN ULONG            NameLength,
-    IN ULONG            CompareFlags
-    );
+LONG CmpCompareCompressedName(IN PUNICODE_STRING SearchName, IN PWCHAR CompressedName, IN ULONG NameLength,
+                              IN ULONG CompareFlags);
 
 #define INIT_SYSTEMROOT_HIVEPATH L"\\SystemRoot\\System32\\Config\\"
 
 
 ULONG
-CmpComputeHashKey(
-    PUNICODE_STRING Name
-    );
+CmpComputeHashKey(PUNICODE_STRING Name);
 
 
 ULONG
-CmpComputeHashKeyForCompressedName(
-                                    IN PWCHAR Source,
-                                    IN ULONG SourceLength
-                                    );
+CmpComputeHashKeyForCompressedName(IN PWCHAR Source, IN ULONG SourceLength);
 //
 // KCB allocator routines
 //
 VOID CmpInitCmPrivateAlloc();
 VOID CmpDestroyCmPrivateAlloc();
-PCM_KEY_CONTROL_BLOCK CmpAllocateKeyControlBlock( );
-VOID CmpFreeKeyControlBlock( PCM_KEY_CONTROL_BLOCK kcb );
+PCM_KEY_CONTROL_BLOCK CmpAllocateKeyControlBlock();
+VOID CmpFreeKeyControlBlock(PCM_KEY_CONTROL_BLOCK kcb);
 
 
 //
 // make handles protected, so we control handle closure
 //
 
-#define CmpSetHandleProtection(Handle,Protection)                       \
-{                                                                       \
-    OBJECT_HANDLE_FLAG_INFORMATION  Ohfi = {    FALSE,                  \
-                                                FALSE                   \
-                                            };                          \
-    Ohfi.ProtectFromClose = Protection;                                 \
-    ZwSetInformationObject( Handle,                                     \
-                            ObjectHandleFlagInformation,                \
-                            &Ohfi,                                      \
-                            sizeof (OBJECT_HANDLE_FLAG_INFORMATION));   \
-}
+#define CmpSetHandleProtection(Handle, Protection)                                                                  \
+    {                                                                                                               \
+        OBJECT_HANDLE_FLAG_INFORMATION Ohfi = { FALSE, FALSE };                                                     \
+        Ohfi.ProtectFromClose = Protection;                                                                         \
+        ZwSetInformationObject(Handle, ObjectHandleFlagInformation, &Ohfi, sizeof(OBJECT_HANDLE_FLAG_INFORMATION)); \
+    }
 
-#define CmCloseHandle(Handle)               \
-    CmpSetHandleProtection(Handle,FALSE);   \
+#define CmCloseHandle(Handle)              \
+    CmpSetHandleProtection(Handle, FALSE); \
     ZwClose(Handle)
 
 
-VOID
-CmpUpdateSystemHiveHysteresis(  PHHIVE  Hive,
-                                ULONG   NewLength,
-                                ULONG   OldLength
-                                );
+VOID CmpUpdateSystemHiveHysteresis(PHHIVE Hive, ULONG NewLength, ULONG OldLength);
 
 NTSTATUS
-CmpCallCallBacks (
-    IN REG_NOTIFY_CLASS Type,
-    IN PVOID Argument
-    );
+CmpCallCallBacks(IN REG_NOTIFY_CLASS Type, IN PVOID Argument);
 
 extern ULONG CmpCallBackCount;
 
@@ -2914,36 +2158,29 @@ extern ULONG CmpCallBackCount;
 //
 // Self healing hives control switch
 //
-extern BOOLEAN  CmpSelfHeal;
-extern ULONG    CmpBootType;
+extern BOOLEAN CmpSelfHeal;
+extern ULONG CmpBootType;
 
-#define CmDoSelfHeal() (CmpSelfHeal || (CmpBootType & (HBOOT_BACKUP|HBOOT_SELFHEAL)))
+#define CmDoSelfHeal() (CmpSelfHeal || (CmpBootType & (HBOOT_BACKUP | HBOOT_SELFHEAL)))
 
 #ifndef _CM_LDR_
 #if DBG
-#define CmMarkSelfHeal(Hive) ( (Hive)->BaseBlock->BootType |= HBOOT_SELFHEAL ); \
-                             DbgBreakPoint()   
+#define CmMarkSelfHeal(Hive)                         \
+    ((Hive)->BaseBlock->BootType |= HBOOT_SELFHEAL); \
+    DbgBreakPoint()
 #else
-#define CmMarkSelfHeal(Hive) ( (Hive)->BaseBlock->BootType |= HBOOT_SELFHEAL )
+#define CmMarkSelfHeal(Hive) ((Hive)->BaseBlock->BootType |= HBOOT_SELFHEAL)
 #endif
 #else
-#define CmMarkSelfHeal(Hive) ( (Hive)->BaseBlock->BootType |= HBOOT_SELFHEAL )
+#define CmMarkSelfHeal(Hive) ((Hive)->BaseBlock->BootType |= HBOOT_SELFHEAL)
 #endif
 
 BOOLEAN
-CmpRemoveSubKeyCellNoCellRef(
-    PHHIVE          Hive,
-    HCELL_INDEX     Parent,
-    HCELL_INDEX     Child
-    );
+CmpRemoveSubKeyCellNoCellRef(PHHIVE Hive, HCELL_INDEX Parent, HCELL_INDEX Child);
 
-VOID 
-CmpRaiseSelfHealWarning( 
-                        IN PUNICODE_STRING  HiveName
-                        );
+VOID CmpRaiseSelfHealWarning(IN PUNICODE_STRING HiveName);
 
-VOID 
-CmpRaiseSelfHealWarningForSystemHives();
+VOID CmpRaiseSelfHealWarningForSystemHives();
 
 //
 // Mini NT boot indicator

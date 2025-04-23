@@ -39,22 +39,11 @@ Revision History:
 //
 
 PVOID
-ExpDummyAllocate (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    );
+ExpDummyAllocate(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag);
 
-VOID
-ExpScanGeneralLookasideList (
-    IN PLIST_ENTRY ListHead,
-    IN PKSPIN_LOCK SpinLock
-    );
+VOID ExpScanGeneralLookasideList(IN PLIST_ENTRY ListHead, IN PKSPIN_LOCK SpinLock);
 
-VOID
-ExpScanSystemLookasideList (
-    VOID
-    );
+VOID ExpScanSystemLookasideList(VOID);
 
 //
 // Define the global nonpaged and paged lookaside list data.
@@ -74,10 +63,7 @@ LIST_ENTRY ExSystemLookasideListHead;
 ULONG ExpPoolScanCount = 0;
 ULONG ExpScanCount = 0;
 
-VOID
-ExAdjustLookasideDepth (
-    VOID
-    )
+VOID ExAdjustLookasideDepth(VOID)
 
 /*++
 
@@ -102,15 +88,15 @@ Return Value:
     // Switch on the current scan count.
     //
 
-    switch (ExpScanCount) {
+    switch (ExpScanCount)
+    {
 
         //
         // Scan the general nonpaged lookaside lists.
         //
 
     case 0:
-        ExpScanGeneralLookasideList(&ExNPagedLookasideListHead,
-                                    &ExNPagedLookasideLock);
+        ExpScanGeneralLookasideList(&ExNPagedLookasideListHead, &ExNPagedLookasideLock);
 
         break;
 
@@ -119,8 +105,7 @@ Return Value:
         //
 
     case 1:
-        ExpScanGeneralLookasideList(&ExPagedLookasideListHead,
-                                    &ExPagedLookasideLock);
+        ExpScanGeneralLookasideList(&ExPagedLookasideListHead, &ExPagedLookasideLock);
 
         break;
 
@@ -143,7 +128,8 @@ Return Value:
     //
 
     ExpScanCount += 1;
-    if (ExpScanCount == 3) {
+    if (ExpScanCount == 3)
+    {
         ExpScanCount = 0;
     }
 
@@ -151,12 +137,7 @@ Return Value:
 }
 
 FORCEINLINE
-VOID
-ExpComputeLookasideDepth (
-    IN PGENERAL_LOOKASIDE Lookaside,
-    IN ULONG Misses,
-    IN ULONG ScanPeriod
-    )
+VOID ExpComputeLookasideDepth(IN PGENERAL_LOOKASIDE Lookaside, IN ULONG Misses, IN ULONG ScanPeriod)
 
 /*++
 
@@ -205,34 +186,42 @@ Return Value:
     //
 
     Target = Lookaside->Depth;
-    if (Allocates < (ScanPeriod * MINIMUM_ALLOCATION_THRESHOLD)) {
-        if ((Target -= 10) < MINIMUM_LOOKASIDE_DEPTH) {
+    if (Allocates < (ScanPeriod * MINIMUM_ALLOCATION_THRESHOLD))
+    {
+        if ((Target -= 10) < MINIMUM_LOOKASIDE_DEPTH)
+        {
             Target = MINIMUM_LOOKASIDE_DEPTH;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // N.B. The number of allocates is guaranteed to be greater than
-        //      zero because of the above test. 
+        //      zero because of the above test.
         //
         // N.B. It is possible that the number of misses are greater than the
         //      number of allocates, but this won't cause the an incorrect
         //      computation of the depth adjustment.
-        //      
+        //
 
         Ratio = (Misses * 1000) / Allocates;
-        if (Ratio < 5) {
-            if ((Target -= 1) < MINIMUM_LOOKASIDE_DEPTH) {
+        if (Ratio < 5)
+        {
+            if ((Target -= 1) < MINIMUM_LOOKASIDE_DEPTH)
+            {
                 Target = MINIMUM_LOOKASIDE_DEPTH;
             }
-    
-        } else {
-            if ((Delta = ((Ratio * (MaximumDepth - Target)) / (1000 * 2)) + 5) > 30) {
+        }
+        else
+        {
+            if ((Delta = ((Ratio * (MaximumDepth - Target)) / (1000 * 2)) + 5) > 30)
+            {
                 Delta = 30;
             }
-    
-            if ((Target += Delta) > MaximumDepth) {
+
+            if ((Target += Delta) > MaximumDepth)
+            {
                 Target = MaximumDepth;
             }
         }
@@ -242,11 +231,7 @@ Return Value:
     return;
 }
 
-VOID
-ExpScanGeneralLookasideList (
-    IN PLIST_ENTRY ListHead,
-    IN PKSPIN_LOCK SpinLock
-    )
+VOID ExpScanGeneralLookasideList(IN PLIST_ENTRY ListHead, IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -278,7 +263,7 @@ Return Value:
 
 #ifdef NT_UP
 
-    UNREFERENCED_PARAMETER (SpinLock);
+    UNREFERENCED_PARAMETER(SpinLock);
 
 #endif
 
@@ -299,10 +284,9 @@ Return Value:
     //
 
     Entry = ListHead->Flink;
-    while (Entry != ListHead) {
-        Lookaside = CONTAINING_RECORD(Entry,
-                                      PAGED_LOOKASIDE_LIST,
-                                      L.ListEntry);
+    while (Entry != ListHead)
+    {
+        Lookaside = CONTAINING_RECORD(Entry, PAGED_LOOKASIDE_LIST, L.ListEntry);
 
         //
         // Compute target depth of lookaside list.
@@ -322,10 +306,7 @@ Return Value:
     return;
 }
 
-VOID
-ExpScanSystemLookasideList (
-    VOID
-    )
+VOID ExpScanSystemLookasideList(VOID)
 
 /*++
 
@@ -359,7 +340,7 @@ Return Value:
     // depth as necessary. Either a set of per processor small pool lookaside
     // lists or the global small pool lookaside lists are scanned during a
     // scan period.
-    // 
+    //
     // N.B. All lookaside list descriptor are treated as if they were
     //      paged descriptor even though they may be nonpaged descriptors.
     //      This is possible since both structures are identical except
@@ -367,7 +348,8 @@ Return Value:
     //
 
     ScanPeriod = (1 + 1 + 1) * KeNumberProcessors;
-    if (ExpPoolScanCount == (ULONG)KeNumberProcessors) {
+    if (ExpPoolScanCount == (ULONG)KeNumberProcessors)
+    {
 
         //
         // Adjust the maximum depth for the global set of system lookaside
@@ -375,9 +357,11 @@ Return Value:
         //
 
         Prcb = KeGetCurrentPrcb();
-        for (Index = 0; Index < LookasideMaximumList; Index += 1) {
+        for (Index = 0; Index < LookasideMaximumList; Index += 1)
+        {
             Lookaside = Prcb->PPLookasideList[Index].L;
-            if (Lookaside != NULL) {
+            if (Lookaside != NULL)
+            {
                 Misses = Lookaside->AllocateMisses - Lookaside->LastAllocateMisses;
                 Lookaside->LastAllocateMisses = Lookaside->AllocateMisses;
                 ExpComputeLookasideDepth(Lookaside, Misses, ScanPeriod);
@@ -389,34 +373,34 @@ Return Value:
         // descriptors.
         //
 
-        for (Index = 0; Index < POOL_SMALL_LISTS; Index += 1) {
+        for (Index = 0; Index < POOL_SMALL_LISTS; Index += 1)
+        {
 
             //
             // Compute target depth of nonpaged lookaside list.
             //
-    
+
             Lookaside = &ExpSmallNPagedPoolLookasideLists[Index];
             Hits = Lookaside->AllocateHits - Lookaside->LastAllocateHits;
             Lookaside->LastAllocateHits = Lookaside->AllocateHits;
-            Misses =
-                Lookaside->TotalAllocates - Lookaside->LastTotalAllocates - Hits;
+            Misses = Lookaside->TotalAllocates - Lookaside->LastTotalAllocates - Hits;
 
             ExpComputeLookasideDepth(Lookaside, Misses, ScanPeriod);
 
             //
             // Compute target depth of paged lookaside list.
             //
-    
+
             Lookaside = &ExpSmallPagedPoolLookasideLists[Index];
             Hits = Lookaside->AllocateHits - Lookaside->LastAllocateHits;
             Lookaside->LastAllocateHits = Lookaside->AllocateHits;
-            Misses =
-                Lookaside->TotalAllocates - Lookaside->LastTotalAllocates - Hits;
+            Misses = Lookaside->TotalAllocates - Lookaside->LastTotalAllocates - Hits;
 
             ExpComputeLookasideDepth(Lookaside, Misses, ScanPeriod);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Adjust the maximum depth for the global set of per processor
@@ -424,9 +408,11 @@ Return Value:
         //
 
         Prcb = KiProcessorBlock[ExpPoolScanCount];
-        for (Index = 0; Index < LookasideMaximumList; Index += 1) {
+        for (Index = 0; Index < LookasideMaximumList; Index += 1)
+        {
             Lookaside = Prcb->PPLookasideList[Index].P;
-            if (Lookaside != NULL) {
+            if (Lookaside != NULL)
+            {
                 Misses = Lookaside->AllocateMisses - Lookaside->LastAllocateMisses;
                 Lookaside->LastAllocateMisses = Lookaside->AllocateMisses;
                 ExpComputeLookasideDepth(Lookaside, Misses, ScanPeriod);
@@ -438,52 +424,45 @@ Return Value:
         // lookaside descriptors.
         //
 
-        for (Index = 0; Index < POOL_SMALL_LISTS; Index += 1) {
+        for (Index = 0; Index < POOL_SMALL_LISTS; Index += 1)
+        {
 
             //
             // Compute target depth of nonpaged lookaside list.
             //
-    
+
             Lookaside = Prcb->PPNPagedLookasideList[Index].P;
             Hits = Lookaside->AllocateHits - Lookaside->LastAllocateHits;
             Lookaside->LastAllocateHits = Lookaside->AllocateHits;
-            Misses =
-                Lookaside->TotalAllocates - Lookaside->LastTotalAllocates - Hits;
+            Misses = Lookaside->TotalAllocates - Lookaside->LastTotalAllocates - Hits;
 
             ExpComputeLookasideDepth(Lookaside, Misses, ScanPeriod);
 
             //
             // Compute target depth of paged lookaside list.
             //
-    
+
             Lookaside = Prcb->PPPagedLookasideList[Index].P;
             Hits = Lookaside->AllocateHits - Lookaside->LastAllocateHits;
             Lookaside->LastAllocateHits = Lookaside->AllocateHits;
-            Misses =
-                Lookaside->TotalAllocates - Lookaside->LastTotalAllocates - Hits;
+            Misses = Lookaside->TotalAllocates - Lookaside->LastTotalAllocates - Hits;
 
             ExpComputeLookasideDepth(Lookaside, Misses, ScanPeriod);
         }
     }
 
     ExpPoolScanCount += 1;
-    if (ExpPoolScanCount > (ULONG)KeNumberProcessors) {
+    if (ExpPoolScanCount > (ULONG)KeNumberProcessors)
+    {
         ExpPoolScanCount = 0;
     }
 
     return;
 }
 
-VOID
-ExInitializeNPagedLookasideList (
-    IN PNPAGED_LOOKASIDE_LIST Lookaside,
-    IN PALLOCATE_FUNCTION Allocate,
-    IN PFREE_FUNCTION Free,
-    IN ULONG Flags,
-    IN SIZE_T Size,
-    IN ULONG Tag,
-    IN USHORT Depth
-    )
+VOID ExInitializeNPagedLookasideList(IN PNPAGED_LOOKASIDE_LIST Lookaside, IN PALLOCATE_FUNCTION Allocate,
+                                     IN PFREE_FUNCTION Free, IN ULONG Flags, IN SIZE_T Size, IN ULONG Tag,
+                                     IN USHORT Depth)
 
 /*++
 
@@ -523,7 +502,7 @@ Return Value:
 
 #endif
 
-    UNREFERENCED_PARAMETER (Depth);
+    UNREFERENCED_PARAMETER(Depth);
 
     //
     // Initialize the lookaside list structure.
@@ -539,17 +518,21 @@ Return Value:
     Lookaside->L.Type = NonPagedPool | Flags;
     Lookaside->L.Tag = Tag;
     Lookaside->L.Size = (ULONG)Size;
-    if (Allocate == NULL) {
+    if (Allocate == NULL)
+    {
         Lookaside->L.Allocate = ExAllocatePoolWithTag;
-
-    } else {
+    }
+    else
+    {
         Lookaside->L.Allocate = Allocate;
     }
 
-    if (Free == NULL) {
+    if (Free == NULL)
+    {
         Lookaside->L.Free = ExFreePool;
-
-    } else {
+    }
+    else
+    {
         Lookaside->L.Free = Free;
     }
 
@@ -558,17 +541,16 @@ Return Value:
 
     //
     // For IA-64 we have to correctly initialize the region field in the S-list.
-    // This might be in a different region than the head of the S-list.  We get 
+    // This might be in a different region than the head of the S-list.  We get
     // correct one by doing a allocation to getting the region and then saving it.
     //
 
 #ifdef _IA64_
-    
-    Entry = (Lookaside->L.Allocate)(Lookaside->L.Type,
-                                    Lookaside->L.Size,
-                                    Lookaside->L.Tag);
 
-    if (Entry != NULL) {
+    Entry = (Lookaside->L.Allocate)(Lookaside->L.Type, Lookaside->L.Size, Lookaside->L.Tag);
+
+    if (Entry != NULL)
+    {
         Lookaside->L.ListHead.Region = (ULONG_PTR)Entry & VRN_MASK;
 
         //
@@ -585,16 +567,11 @@ Return Value:
     // list.
     //
 
-    ExInterlockedInsertTailList(&ExNPagedLookasideListHead,
-                                &Lookaside->L.ListEntry,
-                                &ExNPagedLookasideLock);
+    ExInterlockedInsertTailList(&ExNPagedLookasideListHead, &Lookaside->L.ListEntry, &ExNPagedLookasideLock);
     return;
 }
 
-VOID
-ExDeleteNPagedLookasideList (
-    IN PNPAGED_LOOKASIDE_LIST Lookaside
-    )
+VOID ExDeleteNPagedLookasideList(IN PNPAGED_LOOKASIDE_LIST Lookaside)
 
 /*++
 
@@ -633,23 +610,17 @@ Return Value:
     //
 
     Lookaside->L.Allocate = ExpDummyAllocate;
-    while ((Entry = ExAllocateFromNPagedLookasideList(Lookaside)) != NULL) {
+    while ((Entry = ExAllocateFromNPagedLookasideList(Lookaside)) != NULL)
+    {
         (Lookaside->L.Free)(Entry);
     }
 
     return;
 }
 
-VOID
-ExInitializePagedLookasideList (
-    IN PPAGED_LOOKASIDE_LIST Lookaside,
-    IN PALLOCATE_FUNCTION Allocate,
-    IN PFREE_FUNCTION Free,
-    IN ULONG Flags,
-    IN SIZE_T Size,
-    IN ULONG Tag,
-    IN USHORT Depth
-    )
+VOID ExInitializePagedLookasideList(IN PPAGED_LOOKASIDE_LIST Lookaside, IN PALLOCATE_FUNCTION Allocate,
+                                    IN PFREE_FUNCTION Free, IN ULONG Flags, IN SIZE_T Size, IN ULONG Tag,
+                                    IN USHORT Depth)
 
 /*++
 
@@ -689,7 +660,7 @@ Return Value:
 
 #endif
 
-    UNREFERENCED_PARAMETER (Depth);
+    UNREFERENCED_PARAMETER(Depth);
 
     PAGED_CODE()
     //
@@ -706,17 +677,21 @@ Return Value:
     Lookaside->L.Type = PagedPool | Flags;
     Lookaside->L.Tag = Tag;
     Lookaside->L.Size = (ULONG)Size;
-    if (Allocate == NULL) {
+    if (Allocate == NULL)
+    {
         Lookaside->L.Allocate = ExAllocatePoolWithTag;
-
-    } else {
+    }
+    else
+    {
         Lookaside->L.Allocate = Allocate;
     }
 
-    if (Free == NULL) {
+    if (Free == NULL)
+    {
         Lookaside->L.Free = ExFreePool;
-
-    } else {
+    }
+    else
+    {
         Lookaside->L.Free = Free;
     }
 
@@ -725,17 +700,16 @@ Return Value:
 
     //
     // For IA-64 we have to correctly initialize the region field in the S-list.
-    // This might be in a different region than the head of the S-list.  We get 
+    // This might be in a different region than the head of the S-list.  We get
     // correct one by doing a allocation to getting the region and then saving it.
     //
 
 #ifdef _IA64_
-    
-    Entry = (Lookaside->L.Allocate)(Lookaside->L.Type,
-                                    Lookaside->L.Size,
-                                    Lookaside->L.Tag);
 
-    if (Entry != NULL) {
+    Entry = (Lookaside->L.Allocate)(Lookaside->L.Type, Lookaside->L.Size, Lookaside->L.Tag);
+
+    if (Entry != NULL)
+    {
         Lookaside->L.ListHead.Region = (ULONG_PTR)Entry & VRN_MASK;
 
         //
@@ -752,16 +726,11 @@ Return Value:
     // list.
     //
 
-    ExInterlockedInsertTailList(&ExPagedLookasideListHead,
-                                &Lookaside->L.ListEntry,
-                                &ExPagedLookasideLock);
+    ExInterlockedInsertTailList(&ExPagedLookasideListHead, &Lookaside->L.ListEntry, &ExPagedLookasideLock);
     return;
 }
 
-VOID
-ExDeletePagedLookasideList (
-    IN PPAGED_LOOKASIDE_LIST Lookaside
-    )
+VOID ExDeletePagedLookasideList(IN PPAGED_LOOKASIDE_LIST Lookaside)
 
 /*++
 
@@ -800,7 +769,8 @@ Return Value:
     //
 
     Lookaside->L.Allocate = ExpDummyAllocate;
-    while ((Entry = ExAllocateFromPagedLookasideList(Lookaside)) != NULL) {
+    while ((Entry = ExAllocateFromPagedLookasideList(Lookaside)) != NULL)
+    {
         (Lookaside->L.Free)(Entry);
     }
 
@@ -808,11 +778,7 @@ Return Value:
 }
 
 PVOID
-ExpDummyAllocate (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    )
+ExpDummyAllocate(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag)
 
 /*++
 
@@ -837,9 +803,8 @@ Return Value:
 
 {
 
-    UNREFERENCED_PARAMETER (PoolType);
-    UNREFERENCED_PARAMETER (NumberOfBytes);
-    UNREFERENCED_PARAMETER (Tag);
+    UNREFERENCED_PARAMETER(PoolType);
+    UNREFERENCED_PARAMETER(NumberOfBytes);
+    UNREFERENCED_PARAMETER(Tag);
     return NULL;
 }
-

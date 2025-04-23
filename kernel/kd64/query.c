@@ -22,13 +22,10 @@ Revision History:
 #include "kdp.h"
 #pragma hdrstop
 
-#pragma alloc_text (PAGE, NtSetDebugFilterState)
+#pragma alloc_text(PAGE, NtSetDebugFilterState)
 
 NTSTATUS
-NtQueryDebugFilterState(
-    IN ULONG ComponentId,
-    IN ULONG Level
-    )
+NtQueryDebugFilterState(IN ULONG ComponentId, IN ULONG Level)
 
 /*++
 
@@ -69,35 +66,36 @@ Return Value:
     //
 
     Value = &Kd_WIN2000_Mask;
-    if (ComponentId < KdComponentTableSize) {
+    if (ComponentId < KdComponentTableSize)
+    {
         Value = KdComponentTable[ComponentId];
-
-    } else if (ComponentId != -1) {
+    }
+    else if (ComponentId != -1)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-    if (Level > 31) {
+    if (Level > 31)
+    {
         Mask = Level;
-
-    } else {
+    }
+    else
+    {
         Mask = 1 << Level;
     }
 
-    if (((Mask & Kd_WIN2000_Mask) == 0) &&
-        ((Mask & *Value) == 0)) {
+    if (((Mask & Kd_WIN2000_Mask) == 0) && ((Mask & *Value) == 0))
+    {
         return FALSE;
-
-    } else {
+    }
+    else
+    {
         return TRUE;
     }
 }
 
 NTSTATUS
-NtSetDebugFilterState(
-    IN ULONG ComponentId,
-    IN ULONG Level,
-    IN BOOLEAN State
-    )
+NtSetDebugFilterState(IN ULONG ComponentId, IN ULONG Level, IN BOOLEAN State)
 
 /*++
 
@@ -140,31 +138,38 @@ Return Value:
     // set for the specified component and a success status is returned.
     //
 
-    if (SeSinglePrivilegeCheck(SeDebugPrivilege, KeGetPreviousMode()) != FALSE) {
+    if (SeSinglePrivilegeCheck(SeDebugPrivilege, KeGetPreviousMode()) != FALSE)
+    {
         Value = &Kd_WIN2000_Mask;
-        if (ComponentId < KdComponentTableSize) {
+        if (ComponentId < KdComponentTableSize)
+        {
             Value = KdComponentTable[ComponentId];
-
-        } else if (ComponentId != - 1) {
+        }
+        else if (ComponentId != -1)
+        {
             return STATUS_INVALID_PARAMETER_1;
         }
 
-        if (Level > 31) {
+        if (Level > 31)
+        {
             Mask = Level;
-
-        } else {
+        }
+        else
+        {
             Mask = 1 << Level;
         }
 
         Enable = Mask;
-        if (State == FALSE) {
+        if (State == FALSE)
+        {
             Enable = 0;
         }
 
         *Value = (*Value & ~Mask) | Enable;
         return STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
         return STATUS_ACCESS_DENIED;
     }
 }

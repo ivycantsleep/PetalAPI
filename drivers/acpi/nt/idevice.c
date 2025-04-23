@@ -28,12 +28,9 @@ Environment:
 #pragma alloc_text(PAGE, ACPIInternalDeviceQueryDeviceRelations)
 #endif
 
-
+
 NTSTATUS
-ACPIInternalDeviceClockIrpStartDevice(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIInternalDeviceClockIrpStartDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -53,37 +50,28 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
+    NTSTATUS status;
 
     PAGED_CODE();
 
     //
     // Start the device
     //
-    status = ACPIInitStartDevice(
-        DeviceObject,
-        NULL,
-        ACPIInternalDeviceClockIrpStartDeviceCompletion,
-        Irp,
-        Irp
-        );
-    if (NT_SUCCESS(status)) {
+    status = ACPIInitStartDevice(DeviceObject, NULL, ACPIInternalDeviceClockIrpStartDeviceCompletion, Irp, Irp);
+    if (NT_SUCCESS(status))
+    {
 
         return STATUS_PENDING;
-
-    } else {
+    }
+    else
+    {
 
         return status;
-
     }
 }
-
-VOID
-ACPIInternalDeviceClockIrpStartDeviceCompletion(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  PVOID               Context,
-    IN  NTSTATUS            Status
-    )
+
+VOID ACPIInternalDeviceClockIrpStartDeviceCompletion(IN PDEVICE_EXTENSION DeviceExtension, IN PVOID Context,
+                                                     IN NTSTATUS Status)
 /*++
 
 Routine Description:
@@ -103,13 +91,14 @@ Return Value:
 
 --*/
 {
-    KIRQL               oldIrql;
-    IO_STATUS_BLOCK     ioStatus;
-    PIRP                irp = (PIRP) Context;
-    POWER_STATE         state;
+    KIRQL oldIrql;
+    IO_STATUS_BLOCK ioStatus;
+    PIRP irp = (PIRP)Context;
+    POWER_STATE state;
 
     irp->IoStatus.Status = Status;
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Remember that the device is started
@@ -120,16 +109,16 @@ Return Value:
         // If the device doesn't support Wakeup, then we don't have to
         // anything else here
         //
-        if ( !(DeviceExtension->Flags & DEV_CAP_WAKE) ) {
+        if (!(DeviceExtension->Flags & DEV_CAP_WAKE))
+        {
 
             goto ACPIInternalDeviceClockIrpStartDeviceCompletionExit;
-
         }
 
         //
         // Make sure that we are holding the power lock
         //
-        KeAcquireSpinLock( &AcpiPowerLock, &oldIrql );
+        KeAcquireSpinLock(&AcpiPowerLock, &oldIrql);
 
         //
         // Remember the maximum state that the clock can wake the system
@@ -139,7 +128,7 @@ Return Value:
         //
         // Done with the lock
         //
-        KeReleaseSpinLock( &AcpiPowerLock, oldIrql );
+        KeReleaseSpinLock(&AcpiPowerLock, oldIrql);
 
         //
         // Initialize the IO_STATUS_BLOCK that we will use to start the wait
@@ -151,34 +140,24 @@ Return Value:
         //
         // Start the wait wake loop
         //
-        Status = ACPIInternalWaitWakeLoop(
-            DeviceExtension->DeviceObject,
-            IRP_MN_WAIT_WAKE,
-            state,
-            NULL,
-            &ioStatus
-            );
-        if (!NT_SUCCESS(Status)) {
+        Status = ACPIInternalWaitWakeLoop(DeviceExtension->DeviceObject, IRP_MN_WAIT_WAKE, state, NULL, &ioStatus);
+        if (!NT_SUCCESS(Status))
+        {
 
             irp->IoStatus.Status = Status;
             goto ACPIInternalDeviceClockIrpStartDeviceCompletionExit;
-
         }
-
     }
 
 ACPIInternalDeviceClockIrpStartDeviceCompletionExit:
     //
     // Complete the irp
     //
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
-
+
 NTSTATUS
-ACPIInternalDeviceQueryCapabilities(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIInternalDeviceQueryCapabilities(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -197,10 +176,10 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                status          = STATUS_SUCCESS;
-    PDEVICE_CAPABILITIES    capabilities;
-    PDEVICE_EXTENSION       deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION      irpStack        = IoGetCurrentIrpStackLocation( Irp );
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_CAPABILITIES capabilities;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
 
     PAGED_CODE();
 
@@ -209,45 +188,35 @@ Return Value:
     //
     capabilities = irpStack->Parameters.DeviceCapabilities.Capabilities;
 #ifndef HANDLE_BOGUS_CAPS
-    if (capabilities->Version < 1) {
+    if (capabilities->Version < 1)
+    {
 
         //
         // do not touch irp!
         //
         status = Irp->IoStatus.Status;
         goto ACPIInternalDeviceQueryCapabilitiesExit;
-
     }
 #endif
 
     //
     // Set the current flags for the capabilities
     //
-    capabilities->UniqueID = (deviceExtension->InstanceID == NULL ?
-        FALSE : TRUE);
+    capabilities->UniqueID = (deviceExtension->InstanceID == NULL ? FALSE : TRUE);
 
-    capabilities->RawDeviceOK = (deviceExtension->Flags & DEV_CAP_RAW) ?
-       TRUE : FALSE;
+    capabilities->RawDeviceOK = (deviceExtension->Flags & DEV_CAP_RAW) ? TRUE : FALSE;
 
     capabilities->SilentInstall = TRUE;
 
     //
     // Do the power capabilities
     //
-    status = ACPISystemPowerQueryDeviceCapabilities(
-        deviceExtension,
-        capabilities
-        );
-    if (!NT_SUCCESS(status)) {
+    status = ACPISystemPowerQueryDeviceCapabilities(deviceExtension, capabilities);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_CRITICAL,
-            deviceExtension,
-            " - Could query device capabilities - %08lx",
-            status
-            ) );
+        ACPIDevPrint((ACPI_PRINT_CRITICAL, deviceExtension, " - Could query device capabilities - %08lx", status));
         goto ACPIInternalDeviceQueryCapabilitiesExit;
-
     }
 
 ACPIInternalDeviceQueryCapabilitiesExit:
@@ -256,15 +225,12 @@ ACPIInternalDeviceQueryCapabilitiesExit:
     // Done...
     //
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
     return status;
 }
-
+
 NTSTATUS
-ACPIInternalDeviceQueryDeviceRelations(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIInternalDeviceQueryDeviceRelations(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -283,92 +249,74 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status ;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_RELATIONS   deviceRelations = NULL;
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpStack->MinorFunction;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_RELATIONS deviceRelations = NULL;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
 
     PAGED_CODE();
 
-    switch(irpStack->Parameters.QueryDeviceRelations.Type) {
+    switch (irpStack->Parameters.QueryDeviceRelations.Type)
+    {
 
-        case TargetDeviceRelation:
+    case TargetDeviceRelation:
 
-            status = ACPIBusIrpQueryTargetRelation(
-                DeviceObject,
-                Irp,
-                &deviceRelations
-                );
-            break ;
+        status = ACPIBusIrpQueryTargetRelation(DeviceObject, Irp, &deviceRelations);
+        break;
 
-        default:
+    default:
 
-            status = STATUS_NOT_SUPPORTED;
+        status = STATUS_NOT_SUPPORTED;
 
-            ACPIDevPrint( (
-                ACPI_PRINT_IRP,
-                deviceExtension,
-                "(0x%08lx): %s - Unhandled Type %d\n",
-                Irp,
-                ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-                irpStack->Parameters.QueryDeviceRelations.Type
-                ) );
-            break ;
+        ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s - Unhandled Type %d\n", Irp,
+                      ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), irpStack->Parameters.QueryDeviceRelations.Type));
+        break;
     }
 
     //
     // If we succeeds, then we can always write to the irp
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         Irp->IoStatus.Status = status;
-        Irp->IoStatus.Information = (ULONG_PTR) deviceRelations;
-
-    } else if (status != STATUS_NOT_SUPPORTED) {
+        Irp->IoStatus.Information = (ULONG_PTR)deviceRelations;
+    }
+    else if (status != STATUS_NOT_SUPPORTED)
+    {
 
         //
         // If we haven't succeed the irp, then we can also fail it
         //
         Irp->IoStatus.Status = status;
-        Irp->IoStatus.Information = (ULONG_PTR) NULL;
-
-    } else {
+        Irp->IoStatus.Information = (ULONG_PTR)NULL;
+    }
+    else
+    {
 
         //
         // Grab our status from what is already present
         //
         status = Irp->IoStatus.Status;
-
     }
 
     //
     // Done with the irp
     //
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     //
     // Done
     //
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(0x%08lx): %s = 0x%08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s = 0x%08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
     return status;
 }
-
+
 NTSTATUS
-ACPIInternalWaitWakeLoop(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  UCHAR               MinorFunction,
-    IN  POWER_STATE         PowerState,
-    IN  PVOID               Context,
-    IN  PIO_STATUS_BLOCK    IoStatus
-    )
+ACPIInternalWaitWakeLoop(IN PDEVICE_OBJECT DeviceObject, IN UCHAR MinorFunction, IN POWER_STATE PowerState,
+                         IN PVOID Context, IN PIO_STATUS_BLOCK IoStatus)
 /*++
 
 Routine Description:
@@ -389,27 +337,19 @@ Return Value:
 
 --*/
 {
-    if (!NT_SUCCESS(IoStatus->Status)) {
+    if (!NT_SUCCESS(IoStatus->Status))
+    {
 
         return IoStatus->Status;
-
     }
 
     //
     // In this case, we just cause the same thing to happen again
     //
-    PoRequestPowerIrp(
-        DeviceObject,
-        MinorFunction,
-        PowerState,
-        ACPIInternalWaitWakeLoop,
-        Context,
-        NULL
-        );
+    PoRequestPowerIrp(DeviceObject, MinorFunction, PowerState, ACPIInternalWaitWakeLoop, Context, NULL);
 
     //
     // Done
     //
     return STATUS_SUCCESS;
 }
-

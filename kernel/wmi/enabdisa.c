@@ -26,94 +26,47 @@ Revision History:
 #include "wmikmp.h"
 
 BOOLEAN
-WmipIsISFlagsSet(
-    PBGUIDENTRY GuidEntry,
-    ULONG Flags
-    );
+WmipIsISFlagsSet(PBGUIDENTRY GuidEntry, ULONG Flags);
 
-NTSTATUS WmipDeliverWnodeToDS(
-    CHAR ActionCode, 
-    PBDATASOURCE DataSource,
-    PWNODE_HEADER Wnode,
-    ULONG BufferSize
-   );
+NTSTATUS WmipDeliverWnodeToDS(CHAR ActionCode, PBDATASOURCE DataSource, PWNODE_HEADER Wnode, ULONG BufferSize);
 
-ULONG WmipSendEnableDisableRequest(
-    UCHAR ActionCode,
-    PBGUIDENTRY GuidEntry,
-    BOOLEAN IsEvent,
-    BOOLEAN IsTraceLog,
-    ULONG64 LoggerContext
-    );
+ULONG WmipSendEnableDisableRequest(UCHAR ActionCode, PBGUIDENTRY GuidEntry, BOOLEAN IsEvent, BOOLEAN IsTraceLog,
+                                   ULONG64 LoggerContext);
 
-void WmipReleaseCollectionEnabled(
-    PBGUIDENTRY GuidEntry
-    );
+void WmipReleaseCollectionEnabled(PBGUIDENTRY GuidEntry);
 
-void WmipWaitForCollectionEnabled(
-    PBGUIDENTRY GuidEntry
-    );
+void WmipWaitForCollectionEnabled(PBGUIDENTRY GuidEntry);
 
-ULONG WmipSendEnableRequest(
-    PBGUIDENTRY GuidEntry,
-    BOOLEAN IsEvent,
-    BOOLEAN IsTraceLog,
-    ULONG64 LoggerContext
-    );
+ULONG WmipSendEnableRequest(PBGUIDENTRY GuidEntry, BOOLEAN IsEvent, BOOLEAN IsTraceLog, ULONG64 LoggerContext);
 
-ULONG WmipDoDisableRequest(
-    PBGUIDENTRY GuidEntry,
-    BOOLEAN IsEvent,
-    BOOLEAN IsTraceLog,
-    ULONG64 LoggerContext,
-    ULONG InProgressFlag
-    );
+ULONG WmipDoDisableRequest(PBGUIDENTRY GuidEntry, BOOLEAN IsEvent, BOOLEAN IsTraceLog, ULONG64 LoggerContext,
+                           ULONG InProgressFlag);
 
-ULONG WmipSendDisableRequest(
-    PBGUIDENTRY GuidEntry,
-    BOOLEAN IsEvent,
-    BOOLEAN IsTraceLog,
-    ULONG64 LoggerContext
-    );
+ULONG WmipSendDisableRequest(PBGUIDENTRY GuidEntry, BOOLEAN IsEvent, BOOLEAN IsTraceLog, ULONG64 LoggerContext);
 
-NTSTATUS WmipEnableCollectOrEvent(
-    PBGUIDENTRY GuidEntry,
-    ULONG Ioctl,
-    BOOLEAN *RequestSent,
-    ULONG64 LoggerContext
-    );
+NTSTATUS WmipEnableCollectOrEvent(PBGUIDENTRY GuidEntry, ULONG Ioctl, BOOLEAN *RequestSent, ULONG64 LoggerContext);
 
-NTSTATUS WmipDisableCollectOrEvent(
-    PBGUIDENTRY GuidEntry,
-    ULONG Ioctl,
-    ULONG64 LoggerContext
-    );
+NTSTATUS WmipDisableCollectOrEvent(PBGUIDENTRY GuidEntry, ULONG Ioctl, ULONG64 LoggerContext);
 
-NTSTATUS WmipEnableDisableTrace(
-    IN ULONG Ioctl,
-    IN PWMITRACEENABLEDISABLEINFO TraceEnableInfo
-    );
+NTSTATUS WmipEnableDisableTrace(IN ULONG Ioctl, IN PWMITRACEENABLEDISABLEINFO TraceEnableInfo);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,WmipIsISFlagsSet)
-#pragma alloc_text(PAGE,WmipDeliverWnodeToDS)
-#pragma alloc_text(PAGE,WmipSendEnableDisableRequest)
-#pragma alloc_text(PAGE,WmipReleaseCollectionEnabled)
-#pragma alloc_text(PAGE,WmipWaitForCollectionEnabled)
-#pragma alloc_text(PAGE,WmipSendEnableRequest)
-#pragma alloc_text(PAGE,WmipDoDisableRequest)
-#pragma alloc_text(PAGE,WmipSendDisableRequest)
-#pragma alloc_text(PAGE,WmipEnableCollectOrEvent)
-#pragma alloc_text(PAGE,WmipDisableCollectOrEvent)
-#pragma alloc_text(PAGE,WmipEnableDisableTrace)
-#pragma alloc_text(PAGE,WmipDisableTraceProviders)
+#pragma alloc_text(PAGE, WmipIsISFlagsSet)
+#pragma alloc_text(PAGE, WmipDeliverWnodeToDS)
+#pragma alloc_text(PAGE, WmipSendEnableDisableRequest)
+#pragma alloc_text(PAGE, WmipReleaseCollectionEnabled)
+#pragma alloc_text(PAGE, WmipWaitForCollectionEnabled)
+#pragma alloc_text(PAGE, WmipSendEnableRequest)
+#pragma alloc_text(PAGE, WmipDoDisableRequest)
+#pragma alloc_text(PAGE, WmipSendDisableRequest)
+#pragma alloc_text(PAGE, WmipEnableCollectOrEvent)
+#pragma alloc_text(PAGE, WmipDisableCollectOrEvent)
+#pragma alloc_text(PAGE, WmipEnableDisableTrace)
+#pragma alloc_text(PAGE, WmipDisableTraceProviders)
 #endif
 
 BOOLEAN
-WmipIsISFlagsSet(
-    PBGUIDENTRY GuidEntry,
-    ULONG Flags
-    )
+WmipIsISFlagsSet(PBGUIDENTRY GuidEntry, ULONG Flags)
 /*++
 
 Routine Description:
@@ -136,17 +89,15 @@ Return Value:
     PBINSTANCESET InstanceSet;
 
     PAGED_CODE();
-    
+
     if (GuidEntry != NULL)
     {
         WmipEnterSMCritSection();
         InstanceSetList = GuidEntry->ISHead.Flink;
         while (InstanceSetList != &GuidEntry->ISHead)
         {
-            InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                            INSTANCESET,
-                                            GuidISList);
-            if ( (InstanceSet->Flags & Flags) == Flags )
+            InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, GuidISList);
+            if ((InstanceSet->Flags & Flags) == Flags)
             {
                 WmipLeaveSMCritSection();
                 return (TRUE);
@@ -158,31 +109,23 @@ Return Value:
     return (FALSE);
 }
 
-NTSTATUS WmipDeliverWnodeToDS(
-    CHAR ActionCode, 
-    PBDATASOURCE DataSource,
-    PWNODE_HEADER Wnode,
-    ULONG BufferSize
-   )
+NTSTATUS WmipDeliverWnodeToDS(CHAR ActionCode, PBDATASOURCE DataSource, PWNODE_HEADER Wnode, ULONG BufferSize)
 {
     NTSTATUS Status;
     IO_STATUS_BLOCK Iosb;
     PWMIGUIDOBJECT GuidObject;
 
     PAGED_CODE();
-    
+
     if (DataSource->Flags & DS_KERNEL_MODE)
-    {    
+    {
         //
         // If KM provider then send an irp
         //
-        Status = WmipSendWmiIrp(ActionCode,
-                                DataSource->ProviderId,
-                                &Wnode->Guid,
-                                BufferSize,
-                                Wnode,
-                                &Iosb);
-    } else if (DataSource->Flags & DS_USER_MODE) {
+        Status = WmipSendWmiIrp(ActionCode, DataSource->ProviderId, &Wnode->Guid, BufferSize, Wnode, &Iosb);
+    }
+    else if (DataSource->Flags & DS_USER_MODE)
+    {
         //
         // If UM provider then send a MB message
         //
@@ -193,28 +136,25 @@ NTSTATUS WmipDeliverWnodeToDS(
             Wnode->ProviderId = ActionCode;
             Wnode->CountLost = GuidObject->Cookie;
             WmipEnterSMCritSection();
-            Status = WmipWriteWnodeToObject(GuidObject,
-                                            Wnode,
-                                            TRUE);
+            Status = WmipWriteWnodeToObject(GuidObject, Wnode, TRUE);
             WmipLeaveSMCritSection();
-        } else {
+        }
+        else
+        {
             Status = STATUS_SUCCESS;
         }
-    } else {
+    }
+    else
+    {
         ASSERT(FALSE);
         Status = STATUS_UNSUCCESSFUL;
     }
-                     
-    return(Status);
+
+    return (Status);
 }
 
-ULONG WmipSendEnableDisableRequest(
-    UCHAR ActionCode,
-    PBGUIDENTRY GuidEntry,
-    BOOLEAN IsEvent,
-    BOOLEAN IsTraceLog,
-    ULONG64 LoggerContext
-    )
+ULONG WmipSendEnableDisableRequest(UCHAR ActionCode, PBGUIDENTRY GuidEntry, BOOLEAN IsEvent, BOOLEAN IsTraceLog,
+                                   ULONG64 LoggerContext)
 /*++
 
 Routine Description:
@@ -266,7 +206,7 @@ Return Value:
     BOOLEAN IsEnable;
     ULONG IsFlags, IsUpdate;
 
-    WMITRACE_NOTIFY_HEADER  TraceNotifyHeader;
+    WMITRACE_NOTIFY_HEADER TraceNotifyHeader;
 
     PAGED_CODE();
 
@@ -275,12 +215,11 @@ Return Value:
         //
         // Guids that have been unregistered and Internally defined guids
         // have no data source to send requests to, so just leave happily
-        return(STATUS_SUCCESS);
+        return (STATUS_SUCCESS);
     }
-            
 
-    IsEnable = ((ActionCode == IRP_MN_ENABLE_EVENTS) ||
-                (ActionCode == IRP_MN_ENABLE_COLLECTION));
+
+    IsEnable = ((ActionCode == IRP_MN_ENABLE_EVENTS) || (ActionCode == IRP_MN_ENABLE_COLLECTION));
     IsFlags = IsEvent ? IS_ENABLE_EVENT : IS_ENABLE_COLLECTION;
 
     //
@@ -302,11 +241,14 @@ Return Value:
         DataSourceList = WmipAlloc(GuidEntry->ISCount * sizeof(PBDATASOURCE));
         if (DataSourceList == NULL)
         {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: alloc failed for DataSource array in WmipSendEnableDisableRequest\n"));
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                              "WMI: alloc failed for DataSource array in WmipSendEnableDisableRequest\n"));
 
-            return(STATUS_INSUFFICIENT_RESOURCES);
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
-    } else {
+    }
+    else
+    {
         DataSourceList = &DataSourceArray[0];
     }
 #if DBG
@@ -314,13 +256,10 @@ Return Value:
 #endif
 
     InstanceSetList = GuidEntry->ISHead.Flink;
-    while ((InstanceSetList != &GuidEntry->ISHead) &&
-           (DSCount < GuidEntry->ISCount))
+    while ((InstanceSetList != &GuidEntry->ISHead) && (DSCount < GuidEntry->ISCount))
     {
         WmipAssert(DSCount < GuidEntry->ISCount);
-        InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                        INSTANCESET,
-                                        GuidISList);
+        InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, GuidISList);
 
 
         //
@@ -328,19 +267,12 @@ Return Value:
         // it is an event being enabled or it is collection being enabled
         // and they are defined to be expensive (collection needs to be
         // enabled)
-        if (
-             ( (IsTraceLog && (InstanceSet->Flags & IS_TRACED)) ||
-               ( ! IsTraceLog && (! (InstanceSet->Flags & IS_TRACED)) &&
-                 (IsEvent || (InstanceSet->Flags & IS_EXPENSIVE))
-               )
-             )
-           )
+        if (((IsTraceLog && (InstanceSet->Flags & IS_TRACED)) ||
+             (!IsTraceLog && (!(InstanceSet->Flags & IS_TRACED)) && (IsEvent || (InstanceSet->Flags & IS_EXPENSIVE)))))
         {
 
-            if ( (! IsEnable && (InstanceSet->Flags & IsFlags)) ||
-                 ((IsEnable && ! (InstanceSet->Flags & IsFlags)) ||
-                 (IsUpdate && IsTraceLog))
-               )
+            if ((!IsEnable && (InstanceSet->Flags & IsFlags)) ||
+                ((IsEnable && !(InstanceSet->Flags & IsFlags)) || (IsUpdate && IsTraceLog)))
             {
                 DataSourceList[DSCount] = InstanceSet->DataSource;
                 WmipReferenceDS(DataSourceList[DSCount]);
@@ -350,7 +282,9 @@ Return Value:
             if (IsEnable)
             {
                 InstanceSet->Flags |= IsFlags;
-            } else {
+            }
+            else
+            {
                 InstanceSet->Flags &= ~IsFlags;
             }
         }
@@ -359,8 +293,8 @@ Return Value:
     }
 
 
-    if (IsUpdate) 
-    { 
+    if (IsUpdate)
+    {
         GuidEntry->Flags &= ~GE_NOTIFICATION_TRACE_UPDATE;
     }
 
@@ -384,13 +318,13 @@ Return Value:
             TraceNotifyHeader.LoggerContext = LoggerContext;
             pWnode->Flags |= WNODE_FLAG_TRACED_GUID;
             //
-            // If this GUID is already enabled then this must 
-            // an update call. So mark it so. 
-            // 
-            if ( IsEnable &&  IsUpdate ) {
+            // If this GUID is already enabled then this must
+            // an update call. So mark it so.
+            //
+            if (IsEnable && IsUpdate)
+            {
                 pWnode->ClientContext = IsUpdate;
             }
-
         }
         pWnode->BufferSize = BufferSize;
 
@@ -398,29 +332,30 @@ Return Value:
         {
             DataSource = DataSourceList[i];
             WmipAssert(DataSource != NULL);
-            if (IsTraceLog) {
-                if (DataSource->Flags & DS_KERNEL_MODE) {
+            if (IsTraceLog)
+            {
+                if (DataSource->Flags & DS_KERNEL_MODE)
+                {
                     pWnode->HistoricalContext = LoggerContext;
                 }
-                else if (DataSource->Flags & DS_USER_MODE) {
+                else if (DataSource->Flags & DS_USER_MODE)
+                {
                     pWnode->HistoricalContext = 0;
                 }
-                else {
+                else
+                {
                     ASSERT(FALSE);
                 }
             }
-                                
-            Status |= WmipDeliverWnodeToDS(ActionCode, 
-                                          DataSource, 
-                                          pWnode,
-                                          BufferSize);
-            
+
+            Status |= WmipDeliverWnodeToDS(ActionCode, DataSource, pWnode, BufferSize);
+
 
             WmipUnreferenceDS(DataSource);
         }
     }
 
-    if( ! IsTraceLog )
+    if (!IsTraceLog)
     {
 
         Status = STATUS_SUCCESS;
@@ -433,86 +368,59 @@ Return Value:
 
     WmipEnterSMCritSection();
 
-    return(Status);
+    return (Status);
 }
 
-void WmipReleaseCollectionEnabled(
-    PBGUIDENTRY GuidEntry
-    )
+void WmipReleaseCollectionEnabled(PBGUIDENTRY GuidEntry)
 {
     PAGED_CODE();
-    
+
     if (GuidEntry->Flags & GE_FLAG_WAIT_ENABLED)
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p enable releasning %p.%p %x event %p\n",
-                                 PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                     GuidEntry,
-                                     GuidEntry->Flags));
-                                 
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p enable releasning %p.%p %x event %p\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
+
         KeSetEvent(GuidEntry->CollectInProgress, 0, FALSE);
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p enable did release %p %x event %p\n",
-                                 PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                     GuidEntry,
-                                     GuidEntry->Flags));
-                                 
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p enable did release %p %x event %p\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
+
         GuidEntry->Flags &= ~GE_FLAG_WAIT_ENABLED;
     }
 }
 
-void WmipWaitForCollectionEnabled(
-    PBGUIDENTRY GuidEntry
-    )
+void WmipWaitForCollectionEnabled(PBGUIDENTRY GuidEntry)
 {
     PAGED_CODE();
-    
-    WmipAssert((GuidEntry->Flags & GE_FLAG_COLLECTION_IN_PROGRESS) ==
-                   GE_FLAG_COLLECTION_IN_PROGRESS);
-    
+
+    WmipAssert((GuidEntry->Flags & GE_FLAG_COLLECTION_IN_PROGRESS) == GE_FLAG_COLLECTION_IN_PROGRESS);
+
     //
     // Collection Enable/Disable is in progress so
-    // we cannot return just yet. Right now there could be a 
+    // we cannot return just yet. Right now there could be a
     // disable request being processed and if we didn't wait, we
     // might get back to this caller before that disable request
-    // got around to realizing that it needs to send and enable 
-    // request (needed by this thread's caller). So we'd have a 
+    // got around to realizing that it needs to send and enable
+    // request (needed by this thread's caller). So we'd have a
     // situation where a thread though that collection was enabled
     // but in reality it wasn't yet enabled.
     if ((GuidEntry->Flags & GE_FLAG_WAIT_ENABLED) == 0)
     {
-        KeInitializeEvent(GuidEntry->CollectInProgress, 
-                          NotificationEvent,
-                          FALSE);
+        KeInitializeEvent(GuidEntry->CollectInProgress, NotificationEvent, FALSE);
         GuidEntry->Flags |= GE_FLAG_WAIT_ENABLED;
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p for %p %x created event\n",
-                                 PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                 GuidEntry,
-                                 GuidEntry->Flags));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p for %p %x created event\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
     }
-            
+
     WmipLeaveSMCritSection();
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p waiting for %p %x on event\n",
-                                 PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                     GuidEntry,
-                                     GuidEntry->Flags));
-    KeWaitForSingleObject(GuidEntry->CollectInProgress, 
-                          Executive,
-                          KernelMode,
-                          FALSE,
-                          NULL);
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p done %p %x waiting on event\n",
-                                 PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                     GuidEntry,
-                                     GuidEntry->Flags));
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p waiting for %p %x on event\n",
+                      PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
+    KeWaitForSingleObject(GuidEntry->CollectInProgress, Executive, KernelMode, FALSE, NULL);
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p done %p %x waiting on event\n",
+                      PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
     WmipEnterSMCritSection();
-    
 }
 
-ULONG WmipSendEnableRequest(
-    PBGUIDENTRY GuidEntry,
-    BOOLEAN IsEvent,
-    BOOLEAN IsTraceLog,
-    ULONG64 LoggerContext
-    )
+ULONG WmipSendEnableRequest(PBGUIDENTRY GuidEntry, BOOLEAN IsEvent, BOOLEAN IsTraceLog, ULONG64 LoggerContext)
 /*++
 Routine Description:
 
@@ -560,17 +468,18 @@ Return Value:
     ULONG Status;
 
     PAGED_CODE();
-    
+
     if (IsEvent)
     {
         InProgressFlag = GE_FLAG_NOTIFICATION_IN_PROGRESS;
         RefCount = GuidEntry->EventRefCount++;
-    } else {
+    }
+    else
+    {
         InProgressFlag = GE_FLAG_COLLECTION_IN_PROGRESS;
         RefCount = GuidEntry->CollectRefCount++;
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p enable collect for %p %x\n",
-                  PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                  GuidEntry, GuidEntry->Flags ));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p enable collect for %p %x\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
     }
 
     //
@@ -581,8 +490,7 @@ Return Value:
     // do another request. Whenever the current request finishes  it
     // will notice the ref count change and send the enable request on
     // our behalf.
-    if ((RefCount == 0) &&
-        ! (GuidEntry->Flags & InProgressFlag)) 
+    if ((RefCount == 0) && !(GuidEntry->Flags & InProgressFlag))
     {
         //
         // Take an extra ref count so that even if this gets disabled
@@ -590,41 +498,26 @@ Return Value:
         // will stay valid.
         WmipReferenceGE(GuidEntry);
         GuidEntry->Flags |= InProgressFlag;
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p NE %p flags -> %x at %d\n",
-                  PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                  GuidEntry,
-                  GuidEntry->Flags,
-                  __LINE__));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p NE %p flags -> %x at %d\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags, __LINE__));
 
-EnableNotification:
-        Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ?
-                                                IRP_MN_ENABLE_EVENTS :
-                                                IRP_MN_ENABLE_COLLECTION),
-                                              GuidEntry,
-                                              IsEvent,
-                                              IsTraceLog,
-                                              LoggerContext);
+    EnableNotification:
+        Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ? IRP_MN_ENABLE_EVENTS : IRP_MN_ENABLE_COLLECTION),
+                                              GuidEntry, IsEvent, IsTraceLog, LoggerContext);
 
-       RefCount = IsEvent ? GuidEntry->EventRefCount :
-                            GuidEntry->CollectRefCount;
+        RefCount = IsEvent ? GuidEntry->EventRefCount : GuidEntry->CollectRefCount;
 
-       if (RefCount == 0)
-       {
-           // This is the bogus situation we were worried about. While
-           // the enable request was being processed the notification
-           // was disabled. So leave the in progress flag set and
-           // send the disable.
+        if (RefCount == 0)
+        {
+            // This is the bogus situation we were worried about. While
+            // the enable request was being processed the notification
+            // was disabled. So leave the in progress flag set and
+            // send the disable.
 
-           Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ?
-                                                    IRP_MN_DISABLE_EVENTS :
-                                                    IRP_MN_DISABLE_COLLECTION),
-                                                 GuidEntry,
-                                                 IsEvent,
-                                                 IsTraceLog,
-                                                 LoggerContext);
+            Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ? IRP_MN_DISABLE_EVENTS : IRP_MN_DISABLE_COLLECTION),
+                                                  GuidEntry, IsEvent, IsTraceLog, LoggerContext);
 
-            RefCount = IsEvent ? GuidEntry->EventRefCount :
-                                 GuidEntry->CollectRefCount;
+            RefCount = IsEvent ? GuidEntry->EventRefCount : GuidEntry->CollectRefCount;
 
             if (RefCount > 0)
             {
@@ -642,19 +535,16 @@ EnableNotification:
             }
         }
         GuidEntry->Flags &= ~InProgressFlag;
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p NE %p flags -> %x at %d\n",
-                  PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                  GuidEntry,
-                  GuidEntry->Flags,
-                  __LINE__));
-        
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p NE %p flags -> %x at %d\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags, __LINE__));
+
         //
-        // If there are any other threads that were waiting until all of 
+        // If there are any other threads that were waiting until all of
         // the enable/disable work completed, we close the event handle
         // to release them from their wait.
         //
-        if (! IsEvent)
-        {            
+        if (!IsEvent)
+        {
             WmipReleaseCollectionEnabled(GuidEntry);
         }
 
@@ -663,81 +553,58 @@ EnableNotification:
         // GuidEntry could be going away here if there was a
         // disable while the enable was in progress.
         WmipUnreferenceGE(GuidEntry);
-
-    } else if (IsTraceLog && (GuidEntry->Flags & GE_NOTIFICATION_TRACE_UPDATE) ) {
+    }
+    else if (IsTraceLog && (GuidEntry->Flags & GE_NOTIFICATION_TRACE_UPDATE))
+    {
         //
-        // If it's a tracelog and we have a trace Update enable call, ignore the 
-        // refcount and send it through. 
+        // If it's a tracelog and we have a trace Update enable call, ignore the
+        // refcount and send it through.
         //
 
         WmipReferenceGE(GuidEntry);
 
-        Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ?
-                                                IRP_MN_ENABLE_EVENTS :
-                                                IRP_MN_ENABLE_COLLECTION),
-                                              GuidEntry,
-                                              IsEvent,
-                                              IsTraceLog,
-                                              LoggerContext);
+        Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ? IRP_MN_ENABLE_EVENTS : IRP_MN_ENABLE_COLLECTION),
+                                              GuidEntry, IsEvent, IsTraceLog, LoggerContext);
         GuidEntry->EventRefCount--;
 
         WmipUnreferenceGE(GuidEntry);
-
-    } else {
-        if ((! IsEvent) && (GuidEntry->Flags & InProgressFlag))
+    }
+    else
+    {
+        if ((!IsEvent) && (GuidEntry->Flags & InProgressFlag))
         {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p going to wait for %p %x at %d\n",
-                                          PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                          GuidEntry,
-                                          GuidEntry->Flags,
-                                          __LINE__));
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p going to wait for %p %x at %d\n",
+                              PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags, __LINE__));
             WmipWaitForCollectionEnabled(GuidEntry);
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p done to wait for %p %x at %d\n",
-                                          PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                          GuidEntry,
-                                          GuidEntry->Flags,
-                                          __LINE__));
-            
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p done to wait for %p %x at %d\n",
+                              PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags, __LINE__));
         }
-        
+
         Status = STATUS_SUCCESS;
     }
 
-    if (! IsEvent)
+    if (!IsEvent)
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p enable collect done for %p %x\n",
-                  PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                  GuidEntry,
-                  GuidEntry->Flags));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p enable collect done for %p %x\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
     }
 
-    return(Status);
+    return (Status);
 }
 
-ULONG WmipDoDisableRequest(
-    PBGUIDENTRY GuidEntry,
-    BOOLEAN IsEvent,
-    BOOLEAN IsTraceLog,
-    ULONG64 LoggerContext,
-    ULONG InProgressFlag
-    )
+ULONG WmipDoDisableRequest(PBGUIDENTRY GuidEntry, BOOLEAN IsEvent, BOOLEAN IsTraceLog, ULONG64 LoggerContext,
+                           ULONG InProgressFlag)
 {
     ULONG RefCount;
     ULONG Status;
 
     PAGED_CODE();
-    
-DisableNotification:
-    Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ?
-                                            IRP_MN_DISABLE_EVENTS :
-                                            IRP_MN_DISABLE_COLLECTION),
-                                          GuidEntry,
-                                          IsEvent,
-                                          IsTraceLog,
-                                          LoggerContext);
 
-    RefCount = IsEvent ? GuidEntry->EventRefCount :
-                         GuidEntry->CollectRefCount;
+DisableNotification:
+    Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ? IRP_MN_DISABLE_EVENTS : IRP_MN_DISABLE_COLLECTION),
+                                          GuidEntry, IsEvent, IsTraceLog, LoggerContext);
+
+    RefCount = IsEvent ? GuidEntry->EventRefCount : GuidEntry->CollectRefCount;
 
     if (RefCount > 0)
     {
@@ -747,16 +614,10 @@ DisableNotification:
         // flag was set the enable request was not sent
         // so now we need to do that.
 
-        Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ?
-                                                 IRP_MN_ENABLE_EVENTS :
-                                                 IRP_MN_ENABLE_COLLECTION),
-                                              GuidEntry,
-                                              IsEvent,
-                                              IsTraceLog,
-                                              LoggerContext);
+        Status = WmipSendEnableDisableRequest((UCHAR)(IsEvent ? IRP_MN_ENABLE_EVENTS : IRP_MN_ENABLE_COLLECTION),
+                                              GuidEntry, IsEvent, IsTraceLog, LoggerContext);
 
-        RefCount = IsEvent ? GuidEntry->EventRefCount:
-                             GuidEntry->CollectRefCount;
+        RefCount = IsEvent ? GuidEntry->EventRefCount : GuidEntry->CollectRefCount;
 
         if (RefCount == 0)
         {
@@ -770,31 +631,23 @@ DisableNotification:
         }
     }
     GuidEntry->Flags &= ~InProgressFlag;
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p NE %p flags -> %x at %d\n",
-                  PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                  GuidEntry,
-                  GuidEntry->Flags,
-                  __LINE__));
-    
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p NE %p flags -> %x at %d\n",
+                      PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags, __LINE__));
+
     //
-    // If there are any other threads that were waiting until all of 
+    // If there are any other threads that were waiting until all of
     // the enable/disable work completed, we close the event handle
     // to release them from their wait.
     //
-    if (! IsEvent)
+    if (!IsEvent)
     {
         WmipReleaseCollectionEnabled(GuidEntry);
     }
-    
-    return(Status);
+
+    return (Status);
 }
 
-ULONG WmipSendDisableRequest(
-    PBGUIDENTRY GuidEntry,
-    BOOLEAN IsEvent,
-    BOOLEAN IsTraceLog,
-    ULONG64 LoggerContext
-    )
+ULONG WmipSendDisableRequest(PBGUIDENTRY GuidEntry, BOOLEAN IsEvent, BOOLEAN IsTraceLog, ULONG64 LoggerContext)
 /*++
 Routine Description:
 
@@ -845,7 +698,7 @@ Return Value:
     ULONG Status;
 
     PAGED_CODE();
-    
+
     if (IsEvent)
     {
         InProgressFlag = GE_FLAG_NOTIFICATION_IN_PROGRESS;
@@ -855,15 +708,15 @@ Return Value:
             //
             // A bad data consumer is disabling his event more
             // than once. Just ignore it
-            return(STATUS_SUCCESS);
+            return (STATUS_SUCCESS);
         }
 
         RefCount = --GuidEntry->EventRefCount;
-    } else {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p Disabling for %p %x\n",
-                                 PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                 GuidEntry,
-                                 GuidEntry->Flags));
+    }
+    else
+    {
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p Disabling for %p %x\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
         InProgressFlag = GE_FLAG_COLLECTION_IN_PROGRESS;
         RefCount = --GuidEntry->CollectRefCount;
         WmipAssert(RefCount != 0xffffffff);
@@ -872,8 +725,7 @@ Return Value:
     //
     // If we have transitioned to a refcount of zero and there is
     // not a request in progress then forward the disable request.
-    if ((RefCount == 0) &&
-        ! (GuidEntry->Flags & InProgressFlag))
+    if ((RefCount == 0) && !(GuidEntry->Flags & InProgressFlag))
     {
 
         //
@@ -881,39 +733,26 @@ Return Value:
         // disabled while the disable request is in progress the
         // GuidEntry will stay valid.
         GuidEntry->Flags |= InProgressFlag;
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p NE %p flags -> %x at %d\n",
-                  PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                  GuidEntry,
-                  GuidEntry->Flags,
-                  __LINE__));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p NE %p flags -> %x at %d\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags, __LINE__));
 
-        Status = WmipDoDisableRequest(GuidEntry,
-                                      IsEvent,
-                                      IsTraceLog,
-                                      LoggerContext,
-                                      InProgressFlag);
-                                  
-    } else {
+        Status = WmipDoDisableRequest(GuidEntry, IsEvent, IsTraceLog, LoggerContext, InProgressFlag);
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
     }
 
-    if (! IsEvent)
+    if (!IsEvent)
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: %p.%p Disable complete for %p %x\n",
-                                 PsGetCurrentProcessId(), PsGetCurrentThreadId(),
-                                 GuidEntry,
-                                 GuidEntry->Flags));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: %p.%p Disable complete for %p %x\n",
+                          PsGetCurrentProcessId(), PsGetCurrentThreadId(), GuidEntry, GuidEntry->Flags));
     }
-    return(Status);
+    return (Status);
 }
 
 
-NTSTATUS WmipEnableCollectOrEvent(
-    PBGUIDENTRY GuidEntry,
-    ULONG Ioctl,
-    BOOLEAN *RequestSent,
-    ULONG64 LoggerContext
-    )
+NTSTATUS WmipEnableCollectOrEvent(PBGUIDENTRY GuidEntry, ULONG Ioctl, BOOLEAN *RequestSent, ULONG64 LoggerContext)
 {
     ULONG EnableFlags;
     BOOLEAN DoEnable, IsEvent, IsTracelog;
@@ -922,155 +761,140 @@ NTSTATUS WmipEnableCollectOrEvent(
     NTSTATUS Status;
 
     PAGED_CODE();
-    
+
     *RequestSent = FALSE;
-    
+
     switch (Ioctl)
     {
-        case IOCTL_WMI_OPEN_GUID_FOR_QUERYSET:
+    case IOCTL_WMI_OPEN_GUID_FOR_QUERYSET:
+    {
+        //
+        // See if the guid requires an enable collection. Loop over all
+        // instance sets that are not for tracelog or events.
+        //
+        DoEnable = FALSE;
+        IsTracelog = FALSE;
+        IsEvent = FALSE;
+        WmipEnterSMCritSection();
+        InstanceSetList = GuidEntry->ISHead.Flink;
+        while (InstanceSetList != &GuidEntry->ISHead)
         {
-            //
-            // See if the guid requires an enable collection. Loop over all
-            // instance sets that are not for tracelog or events.
-            //
-            DoEnable = FALSE;
-            IsTracelog = FALSE;
-            IsEvent = FALSE;
-            WmipEnterSMCritSection();
-            InstanceSetList = GuidEntry->ISHead.Flink;
-            while (InstanceSetList != &GuidEntry->ISHead) 
-            {
-                InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                        INSTANCESET,
-                                        GuidISList);
+            InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, GuidISList);
 
-                if ( ! ((InstanceSet->Flags & IS_TRACED) ||
-                        ((InstanceSet->Flags & IS_EVENT_ONLY) && DoEnable)))
-                {
-                    //
-                    // Only those guids not Traced guids, event only guids
-                    // and unresolved references are not available for queries
-                    DoEnable = (DoEnable || (InstanceSet->Flags & IS_EXPENSIVE));
-                }
-                InstanceSetList = InstanceSetList->Flink;
+            if (!((InstanceSet->Flags & IS_TRACED) || ((InstanceSet->Flags & IS_EVENT_ONLY) && DoEnable)))
+            {
+                //
+                // Only those guids not Traced guids, event only guids
+                // and unresolved references are not available for queries
+                DoEnable = (DoEnable || (InstanceSet->Flags & IS_EXPENSIVE));
             }
-        
-            WmipLeaveSMCritSection();
-            break;
+            InstanceSetList = InstanceSetList->Flink;
         }
-        
-        case IOCTL_WMI_OPEN_GUID_FOR_EVENTS:
-        {
-            //
-            // For events we always send enable request
-            //
-            DoEnable = TRUE;
-            IsEvent = TRUE;
-            IsTracelog = FALSE;
-            //
-            // Note: If this guid has GE_NOTIFICATION_TRACE_FLAG set, 
-            // then it will get enabled for tracelog as well as for 
-            // wmi events. 
-            //
-            break;
-        }
-        
-        case IOCTL_WMI_ENABLE_DISABLE_TRACELOG:
-        {
-            //
-            // Setup for a tracelog enable request
-            //
-            DoEnable = TRUE;
-            IsEvent = TRUE;
-            IsTracelog = TRUE;
-            break;
-        }
-        
-        default:
-        {
-            ASSERT(FALSE);
-            return(STATUS_ILLEGAL_FUNCTION);
-        }
+
+        WmipLeaveSMCritSection();
+        break;
     }
-    
+
+    case IOCTL_WMI_OPEN_GUID_FOR_EVENTS:
+    {
+        //
+        // For events we always send enable request
+        //
+        DoEnable = TRUE;
+        IsEvent = TRUE;
+        IsTracelog = FALSE;
+        //
+        // Note: If this guid has GE_NOTIFICATION_TRACE_FLAG set,
+        // then it will get enabled for tracelog as well as for
+        // wmi events.
+        //
+        break;
+    }
+
+    case IOCTL_WMI_ENABLE_DISABLE_TRACELOG:
+    {
+        //
+        // Setup for a tracelog enable request
+        //
+        DoEnable = TRUE;
+        IsEvent = TRUE;
+        IsTracelog = TRUE;
+        break;
+    }
+
+    default:
+    {
+        ASSERT(FALSE);
+        return (STATUS_ILLEGAL_FUNCTION);
+    }
+    }
+
     if (DoEnable)
     {
         WmipEnterSMCritSection();
-        Status = WmipSendEnableRequest(GuidEntry,
-                              IsEvent,
-                              IsTracelog,
-                              LoggerContext);
+        Status = WmipSendEnableRequest(GuidEntry, IsEvent, IsTracelog, LoggerContext);
         WmipLeaveSMCritSection();
-                          
+
         if (NT_SUCCESS(Status))
         {
             *RequestSent = TRUE;
         }
-    } else {
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
     }
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipDisableCollectOrEvent(
-    PBGUIDENTRY GuidEntry,
-    ULONG Ioctl,
-    ULONG64 LoggerContext
-    )
+NTSTATUS WmipDisableCollectOrEvent(PBGUIDENTRY GuidEntry, ULONG Ioctl, ULONG64 LoggerContext)
 {
     BOOLEAN IsEvent, IsTracelog;
     NTSTATUS Status;
 
     PAGED_CODE();
-    
-    switch(Ioctl)
+
+    switch (Ioctl)
     {
-        case IOCTL_WMI_OPEN_GUID_FOR_QUERYSET:
-        {
-            IsEvent = FALSE;
-            IsTracelog = FALSE;
-            break;
-        }
-        
-        case IOCTL_WMI_OPEN_GUID_FOR_EVENTS:
-        {
-            //
-            // For events we always send enable request
-            //    
-            IsEvent = TRUE;
-            IsTracelog = FALSE;
-            break;
-        }
-            
-        case IOCTL_WMI_ENABLE_DISABLE_TRACELOG:
-        {
-            IsEvent = TRUE;
-            IsTracelog = TRUE;
-            break;
-        }
-        
-        default:
-        {
-            ASSERT(FALSE);
-            return(STATUS_ILLEGAL_FUNCTION);
-        }
-            
+    case IOCTL_WMI_OPEN_GUID_FOR_QUERYSET:
+    {
+        IsEvent = FALSE;
+        IsTracelog = FALSE;
+        break;
     }
-    
+
+    case IOCTL_WMI_OPEN_GUID_FOR_EVENTS:
+    {
+        //
+        // For events we always send enable request
+        //
+        IsEvent = TRUE;
+        IsTracelog = FALSE;
+        break;
+    }
+
+    case IOCTL_WMI_ENABLE_DISABLE_TRACELOG:
+    {
+        IsEvent = TRUE;
+        IsTracelog = TRUE;
+        break;
+    }
+
+    default:
+    {
+        ASSERT(FALSE);
+        return (STATUS_ILLEGAL_FUNCTION);
+    }
+    }
+
     WmipEnterSMCritSection();
-    Status = WmipSendDisableRequest(GuidEntry,
-                              IsEvent,
-                              IsTracelog,
-                              LoggerContext);
+    Status = WmipSendDisableRequest(GuidEntry, IsEvent, IsTracelog, LoggerContext);
     WmipLeaveSMCritSection();
 
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipEnableDisableTrace(
-    IN ULONG Ioctl,
-    IN PWMITRACEENABLEDISABLEINFO TraceEnableInfo
-    )
+NTSTATUS WmipEnableDisableTrace(IN ULONG Ioctl, IN PWMITRACEENABLEDISABLEINFO TraceEnableInfo)
 /*++
 
 Routine Description:
@@ -1094,24 +918,23 @@ Return Value:
     BOOLEAN RequestSent;
     BOOLEAN IsEnable;
     ULONG64 LoggerContext;
-    
-    PAGED_CODE();
-    
-    Guid = &TraceEnableInfo->Guid;
-    
-    Status = WmipCheckGuidAccess(Guid,
-                                 TRACELOG_GUID_ENABLE);
 
-                
+    PAGED_CODE();
+
+    Guid = &TraceEnableInfo->Guid;
+
+    Status = WmipCheckGuidAccess(Guid, TRACELOG_GUID_ENABLE);
+
+
     if (NT_SUCCESS(Status))
     {
 
         //
-        // The following code is serialized for Trace Guids. Only one 
-        // control application can be enabling or disabling Trace Guids at a time. 
+        // The following code is serialized for Trace Guids. Only one
+        // control application can be enabling or disabling Trace Guids at a time.
         // Must be taken before SMCritSection is taken. Otherwise deadlocks will result.
         //
-        
+
         WmipEnterTLCritSection();
 
         IsEnable = TraceEnableInfo->Enable;
@@ -1120,80 +943,89 @@ Return Value:
         //Check for Heap and Crit Sec Tracing Guid.
         //
 
-        if( IsEqualGUID(&HeapGuid,Guid)) {
+        if (IsEqualGUID(&HeapGuid, Guid))
+        {
 
-            if(IsEnable){
+            if (IsEnable)
+            {
 
-	            SharedUserData->TraceLogging |= ENABLEHEAPTRACE;
+                SharedUserData->TraceLogging |= ENABLEHEAPTRACE;
 
                 //
-                // increment counter. The counter  
+                // increment counter. The counter
                 // is composed of first two bytes
                 //
 
-                SharedUserData->TraceLogging += 0x00010000; 
-
-
-            } else {
+                SharedUserData->TraceLogging += 0x00010000;
+            }
+            else
+            {
 
                 SharedUserData->TraceLogging &= DISABLEHEAPTRACE;
             }
 
-			WmipLeaveTLCritSection();
-			return STATUS_SUCCESS;
-        } else if(IsEqualGUID(&CritSecGuid,Guid)){  
+            WmipLeaveTLCritSection();
+            return STATUS_SUCCESS;
+        }
+        else if (IsEqualGUID(&CritSecGuid, Guid))
+        {
 
-            if(IsEnable) {
+            if (IsEnable)
+            {
 
-	            SharedUserData->TraceLogging |= ENABLECRITSECTRACE;
+                SharedUserData->TraceLogging |= ENABLECRITSECTRACE;
 
                 //
-                // increment counter. The counter  
+                // increment counter. The counter
                 // is composed of first two bytes
                 //
 
-                SharedUserData->TraceLogging += 0x00010000; 
-
-            } else {
+                SharedUserData->TraceLogging += 0x00010000;
+            }
+            else
+            {
 
                 SharedUserData->TraceLogging &= DISABLECRITSECTRACE;
             }
 
-			WmipLeaveTLCritSection();
-			return STATUS_SUCCESS;
+            WmipLeaveTLCritSection();
+            return STATUS_SUCCESS;
+        }
+        else if (IsEqualGUID(&NtdllTraceGuid, Guid))
+        {
 
-        } else if(IsEqualGUID(&NtdllTraceGuid,Guid)){  
-
-            if(!IsEnable){
+            if (!IsEnable)
+            {
 
                 SharedUserData->TraceLogging &= DISABLENTDLLTRACE;
-
             }
         }
 
         LoggerContext = TraceEnableInfo->LoggerContext;
-        
+
         WmipEnterSMCritSection();
 
         GuidEntry = WmipFindGEByGuid(Guid, FALSE);
-        
-        if (GuidEntry == NULL )
+
+        if (GuidEntry == NULL)
         {
             //
             // The guid is not yet registered
             //
-            if (IsEnable )
+            if (IsEnable)
             {
                 //
                 // If the NtdllTraceGuid is not in list then we do not want to enable it
                 // the NtdllTraceGuid will make an entry only to call starttrace
                 //
 
-                if(IsEqualGUID(&NtdllTraceGuid,Guid)){
+                if (IsEqualGUID(&NtdllTraceGuid, Guid))
+                {
 
                     Status = STATUS_ILLEGAL_FUNCTION;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // If we are enabling a guid that is not yet registered
@@ -1211,16 +1043,19 @@ Return Value:
                         GuidEntry->Guid = *Guid;
                         GuidEntry->Flags |= GE_NOTIFICATION_TRACE_FLAG;
                         GuidEntry->LoggerContext = LoggerContext;
-                        GuidEntry->EventRefCount = 1; 
+                        GuidEntry->EventRefCount = 1;
                         InsertHeadList(WmipGEHeadPtr, &GuidEntry->MainGEList);
-                        Status = STATUS_SUCCESS;                    
-                    } else {
+                        Status = STATUS_SUCCESS;
+                    }
+                    else
+                    {
                         Status = STATUS_INSUFFICIENT_RESOURCES;
                     }
                 }
-            } 
-
-        } else {
+            }
+        }
+        else
+        {
             //
             // The control guid is already registered so lets go and
             // enabled or disable it
@@ -1237,17 +1072,12 @@ Return Value:
                         // registered
                         //
                         GuidEntry->Flags |= GE_NOTIFICATION_TRACE_UPDATE;
-                        Status = WmipEnableCollectOrEvent(GuidEntry,
-                                             Ioctl,
-                                             &RequestSent,
-                                             LoggerContext);
-
-                    } else {
+                        Status = WmipEnableCollectOrEvent(GuidEntry, Ioctl, &RequestSent, LoggerContext);
+                    }
+                    else
+                    {
                         GuidEntry->Flags |= GE_NOTIFICATION_TRACE_FLAG;
-                        Status = WmipEnableCollectOrEvent(GuidEntry,
-                                             Ioctl,
-                                             &RequestSent,
-                                             LoggerContext);
+                        Status = WmipEnableCollectOrEvent(GuidEntry, Ioctl, &RequestSent, LoggerContext);
                         if (NT_SUCCESS(Status))
                         {
                             //
@@ -1258,8 +1088,9 @@ Return Value:
                             WmipReferenceGE(GuidEntry);
                         }
                     }
-
-                } else {
+                }
+                else
+                {
 
                     if (GuidEntry->Flags & GE_NOTIFICATION_TRACE_FLAG)
                     {
@@ -1267,37 +1098,39 @@ Return Value:
                         // Send the disable collection call and then remove
                         // the refcount that was taken when we enabled
                         //
-                        Status = WmipDisableCollectOrEvent(GuidEntry,
-                                                 Ioctl,
-                                                 LoggerContext);
+                        Status = WmipDisableCollectOrEvent(GuidEntry, Ioctl, LoggerContext);
                         if (NT_SUCCESS(Status))
                         {
                             GuidEntry->Flags &= ~GE_NOTIFICATION_TRACE_FLAG;
                             GuidEntry->LoggerContext = 0;
                             WmipUnreferenceGE(GuidEntry);
                         }
-                    } else {
+                    }
+                    else
+                    {
                         Status = STATUS_WMI_ALREADY_DISABLED;
                     }
                 }
-            } else if ( IsListEmpty(&GuidEntry->ISHead)  && (! IsEnable) ) {
+            }
+            else if (IsListEmpty(&GuidEntry->ISHead) && (!IsEnable))
+            {
                 //
-                // If this GUID is not a control GUID, check to see if 
-                // there are no instance sets for this GUID. If so, 
-                // it is getting disabled before any instances 
-                // registered it. Disable the GUID and clean up the GE. 
+                // If this GUID is not a control GUID, check to see if
+                // there are no instance sets for this GUID. If so,
+                // it is getting disabled before any instances
+                // registered it. Disable the GUID and clean up the GE.
                 //
                 GuidEntry->Flags &= ~GE_NOTIFICATION_TRACE_FLAG;
                 GuidEntry->LoggerContext = 0;
                 WmipUnreferenceGE(GuidEntry);
                 Status = STATUS_SUCCESS;
-
-            } else if(!IsEqualGUID(&NtdllTraceGuid,Guid)){
+            }
+            else if (!IsEqualGUID(&NtdllTraceGuid, Guid))
+            {
 
                 Status = STATUS_ILLEGAL_FUNCTION;
-
             }
-    
+
             WmipUnreferenceGE(GuidEntry);
         }
 
@@ -1305,7 +1138,7 @@ Return Value:
 
         WmipLeaveTLCritSection();
     }
-    return(Status);
+    return (Status);
 }
 
 
@@ -1314,11 +1147,8 @@ Return Value:
 // are notified to stop logging first.
 //
 
-NTSTATUS 
-WmipDisableTraceProviders (
-    ULONG StopLoggerId,
-    PLIST_ENTRY  TraceGMHeadPtr
-    )
+NTSTATUS
+WmipDisableTraceProviders(ULONG StopLoggerId, PLIST_ENTRY TraceGMHeadPtr)
 {
     PWMIGUIDPROPERTIES GuidPtr;
     PBGUIDENTRY GuidEntry;
@@ -1326,11 +1156,11 @@ WmipDisableTraceProviders (
     ULONG64 LoggerContext;
     ULONG LoggerId;
     NTSTATUS Status = STATUS_SUCCESS;
-    PGUIDMAPENTRY  GuidMap;
-    PLIST_ENTRY    GuidMapList;
-    PLIST_ENTRY    InstanceSetList;
+    PGUIDMAPENTRY GuidMap;
+    PLIST_ENTRY GuidMapList;
+    PLIST_ENTRY InstanceSetList;
     PBINSTANCESET InstanceSet;
-    ULONGLONG     SystemTime;
+    ULONGLONG SystemTime;
     PTRACEGUIDMAP TraceGuidMapPtr;
     ULONG i;
 
@@ -1338,10 +1168,10 @@ WmipDisableTraceProviders (
 
     //
     // Before disabling the trace providers for the stopping
-    // logger, pick up their trace guids maps and save. 
+    // logger, pick up their trace guids maps and save.
     //
 
-    if (TraceGMHeadPtr != NULL) 
+    if (TraceGMHeadPtr != NULL)
     {
 
         KeQuerySystemTime((PLARGE_INTEGER)&SystemTime);
@@ -1356,32 +1186,31 @@ WmipDisableTraceProviders (
         GuidEntryList = WmipGEHeadPtr->Flink;
         while (GuidEntryList != WmipGEHeadPtr)
         {
-            GuidEntry = CONTAINING_RECORD(GuidEntryList,
-                                         GUIDENTRY,
-                                         MainGEList);
-            if (GuidEntry->Flags & GE_NOTIFICATION_TRACE_FLAG) 
+            GuidEntry = CONTAINING_RECORD(GuidEntryList, GUIDENTRY, MainGEList);
+            if (GuidEntry->Flags & GE_NOTIFICATION_TRACE_FLAG)
             {
                 // Guid is enabled for Tracing
                 LoggerId = WmiGetLoggerId(GuidEntry->LoggerContext);
-                if (LoggerId == StopLoggerId) {
+                if (LoggerId == StopLoggerId)
+                {
                     // Guid is enabled for the StopLoggerId
                     InstanceSetList = GuidEntry->ISHead.Flink;
                     while (InstanceSetList != &GuidEntry->ISHead)
                     {
-                        InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                                        INSTANCESET,
-                                                        GuidISList);
+                        InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, GuidISList);
                         if ((InstanceSet->Flags & IS_CONTROL_GUID) && (InstanceSet->TraceGuidMap != NULL))
                         {
                             // InstanceSet is the ControlGuid and has a TraceGuidMap
-    
+
                             // Walk through the TraceGuidMap and return them as a list
 
-                            for (i=0, TraceGuidMapPtr = InstanceSet->TraceGuidMap;
-                                ((i < InstanceSet->TransGuidCount) && (InstanceSet->TraceGuidMap != NULL));
-                                i++, TraceGuidMapPtr++) {
-                                GuidMap = (PGUIDMAPENTRY) WmipAllocWithTag(sizeof(GUIDMAPENTRY), WMI_GM_POOLTAG);
-                                if (GuidMap != NULL) {
+                            for (i = 0, TraceGuidMapPtr = InstanceSet->TraceGuidMap;
+                                 ((i < InstanceSet->TransGuidCount) && (InstanceSet->TraceGuidMap != NULL));
+                                 i++, TraceGuidMapPtr++)
+                            {
+                                GuidMap = (PGUIDMAPENTRY)WmipAllocWithTag(sizeof(GUIDMAPENTRY), WMI_GM_POOLTAG);
+                                if (GuidMap != NULL)
+                                {
                                     GuidMap->GuidMap.Guid = InstanceSet->TraceGuidMap->Guid;
                                     GuidMap->GuidMap.GuidMapHandle = (ULONG_PTR)TraceGuidMapPtr;
                                     GuidMap->LoggerContext = GuidEntry->LoggerContext;
@@ -1410,22 +1239,18 @@ CheckAgain:
     GuidEntryList = WmipGEHeadPtr->Flink;
     while (GuidEntryList != WmipGEHeadPtr)
     {
-        GuidEntry = CONTAINING_RECORD(GuidEntryList,
-                                     GUIDENTRY,
-                                     MainGEList);
+        GuidEntry = CONTAINING_RECORD(GuidEntryList, GUIDENTRY, MainGEList);
 
         if (GuidEntry->Flags & GE_NOTIFICATION_TRACE_FLAG)
         {
             LoggerId = WmiGetLoggerId(GuidEntry->LoggerContext);
-            if (LoggerId == StopLoggerId) {
+            if (LoggerId == StopLoggerId)
+            {
                 //
                 // Send Disable Notification
                 //
                 WmipReferenceGE(GuidEntry);
-                Status = WmipSendDisableRequest(GuidEntry,
-                          TRUE,
-                          TRUE,
-                          GuidEntry->LoggerContext);
+                Status = WmipSendDisableRequest(GuidEntry, TRUE, TRUE, GuidEntry->LoggerContext);
 
                 if (NT_SUCCESS(Status))
                 {
@@ -1443,7 +1268,6 @@ CheckAgain:
 
 
                 goto CheckAgain;
-
             }
         }
         GuidEntryList = GuidEntryList->Flink;
@@ -1451,15 +1275,13 @@ CheckAgain:
 
 
     //
-    // Now Walk through the GuidMapEntry list and delete the 
-    // Guids that were logging to this logger. 
+    // Now Walk through the GuidMapEntry list and delete the
+    // Guids that were logging to this logger.
     //
     GuidMapList = WmipGMHeadPtr->Flink;
-    while (GuidMapList != WmipGMHeadPtr) 
+    while (GuidMapList != WmipGMHeadPtr)
     {
-        GuidMap = CONTAINING_RECORD(GuidMapList,
-                                    GUIDMAPENTRY,
-                                    Entry);
+        GuidMap = CONTAINING_RECORD(GuidMapList, GUIDMAPENTRY, Entry);
 
         GuidMapList = GuidMapList->Flink;
 
@@ -1467,22 +1289,19 @@ CheckAgain:
         {
             RemoveEntryList(&GuidMap->Entry);
 
-            if  (TraceGMHeadPtr != NULL) 
+            if (TraceGMHeadPtr != NULL)
             {
                 InsertTailList(TraceGMHeadPtr, &GuidMap->Entry);
             }
-            else 
+            else
             {
                 WmipFree(GuidMap);
             }
         }
-    } 
+    }
 
 
     WmipLeaveSMCritSection();
 
     return Status;
 }
-
-
-

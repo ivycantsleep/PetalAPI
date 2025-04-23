@@ -27,10 +27,10 @@ Revision History:
 #include <wmilib.h>
 
 //
-// Device names for the MCA driver 
+// Device names for the MCA driver
 //
 
-#define MCA_DEVICE_NAME_U       L"\\Device\\mcahct"      // ANSI Name
+#define MCA_DEVICE_NAME_U L"\\Device\\mcahct" // ANSI Name
 
 
 #define GenerateMCEGuid { 0x3001bce4, 0xd9b6, 0x4167, { 0xb5, 0xe1, 0x39, 0xa7, 0x28, 0x59, 0xe2, 0x67 } }
@@ -39,83 +39,45 @@ GUID McaGenerateMCEGuid = GenerateMCEGuid;
 UNICODE_STRING McaRegPath;
 
 NTSTATUS
-DriverEntry(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    );
+DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
 NTSTATUS
-MCACleanup(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+MCACleanup(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-VOID
-MCAUnload(
-    IN PDRIVER_OBJECT DriverObject
-    );
+VOID MCAUnload(IN PDRIVER_OBJECT DriverObject);
 
 NTSTATUS
-MCASystemControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+MCASystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-McaExecuteWmiMethod (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN ULONG OutBufferSize,
-    IN PUCHAR Buffer
-    );
+McaExecuteWmiMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                    IN ULONG MethodId, IN ULONG InBufferSize, IN ULONG OutBufferSize, IN PUCHAR Buffer);
 
 NTSTATUS
-McaInsertMceRecord(
-    HAL_SET_INFORMATION_CLASS InfoClass,
-    ULONG BufferSize,
-    PUCHAR Buffer
-    );
+McaInsertMceRecord(HAL_SET_INFORMATION_CLASS InfoClass, ULONG BufferSize, PUCHAR Buffer);
 
 NTSTATUS
-McaQueryWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG InstanceCount,
-    IN OUT PULONG InstanceLengthArray,
-    IN ULONG BufferAvail,
-    OUT PUCHAR Buffer
-    );
+McaQueryWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                     IN ULONG InstanceCount, IN OUT PULONG InstanceLengthArray, IN ULONG BufferAvail,
+                     OUT PUCHAR Buffer);
 
 NTSTATUS
-McaQueryWmiRegInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT ULONG *RegFlags,
-    OUT PUNICODE_STRING InstanceName,
-    OUT PUNICODE_STRING *RegistryPath,
-    OUT PUNICODE_STRING MofResourceName,
-    OUT PDEVICE_OBJECT *Pdo
-    );
+McaQueryWmiRegInfo(IN PDEVICE_OBJECT DeviceObject, OUT ULONG *RegFlags, OUT PUNICODE_STRING InstanceName,
+                   OUT PUNICODE_STRING *RegistryPath, OUT PUNICODE_STRING MofResourceName, OUT PDEVICE_OBJECT *Pdo);
 
-void McaGenerateMce(
-    ULONG Code
-    );
+void McaGenerateMce(ULONG Code);
 
 
 //
-// This temporary buffer holds the data between the Machine Check error 
-// notification from HAL and the asynchronous IOCTL completion to the 
+// This temporary buffer holds the data between the Machine Check error
+// notification from HAL and the asynchronous IOCTL completion to the
 // application
 //
 
-typedef struct _DEVICE_EXTENSION {
-    PDEVICE_OBJECT  DeviceObject;
-	WMILIB_CONTEXT WmilibContext;
+typedef struct _DEVICE_EXTENSION
+{
+    PDEVICE_OBJECT DeviceObject;
+    WMILIB_CONTEXT WmilibContext;
 } DEVICE_EXTENSION, *PDEVICE_EXTENSION;
 
 #ifdef ALLOC_PRAGMA
@@ -123,13 +85,11 @@ typedef struct _DEVICE_EXTENSION {
 #endif // ALLOC_PRAGMA
 
 
-WMIGUIDREGINFO McaGuidList[] =
-{
-    {
-        &McaGenerateMCEGuid,            // Guid
-        1,                               // # of instances in each device
-        0				            // Flag as expensive to collect
-    }
+WMIGUIDREGINFO McaGuidList[] = { {
+    &McaGenerateMCEGuid, // Guid
+    1,                   // # of instances in each device
+    0                    // Flag as expensive to collect
+}
 
 };
 
@@ -138,10 +98,7 @@ WMIGUIDREGINFO McaGuidList[] =
 #define GenerateMCEGuidIndex 0
 
 NTSTATUS
-DriverEntry(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    )
+DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 /*++
     Routine Description:
@@ -157,17 +114,15 @@ DriverEntry(
 --*/
 
 {
-	UNICODE_STRING          UnicodeString;
-    NTSTATUS                Status = STATUS_SUCCESS;
-    PDEVICE_EXTENSION       Extension;
-    PDEVICE_OBJECT          McaDeviceObject;
-	PWMILIB_CONTEXT         WmilibContext;
+    UNICODE_STRING UnicodeString;
+    NTSTATUS Status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION Extension;
+    PDEVICE_OBJECT McaDeviceObject;
+    PWMILIB_CONTEXT WmilibContext;
 
     McaRegPath.Length = 0;
     McaRegPath.MaximumLength = RegistryPath->Length;
-    McaRegPath.Buffer = ExAllocatePoolWithTag(PagedPool, 
-                                                RegistryPath->Length+2,
-                                                'iMCA');
+    McaRegPath.Buffer = ExAllocatePoolWithTag(PagedPool, RegistryPath->Length + 2, 'iMCA');
     RtlCopyUnicodeString(&McaRegPath, RegistryPath);
     //
     // Create device object for MCA device.
@@ -180,17 +135,11 @@ DriverEntry(
     // I/O requests to this device
     //
 
-    Status = IoCreateDevice(
-                    DriverObject,
-                    sizeof(DEVICE_EXTENSION),
-                    &UnicodeString,
-                    FILE_DEVICE_UNKNOWN,
-                    0,
-                    TRUE,
-                    &McaDeviceObject
-                    );
+    Status = IoCreateDevice(DriverObject, sizeof(DEVICE_EXTENSION), &UnicodeString, FILE_DEVICE_UNKNOWN, 0, TRUE,
+                            &McaDeviceObject);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
         DbgPrint("Mca DriverEntry: IoCreateDevice failed\n");
         return Status;
     }
@@ -210,32 +159,28 @@ DriverEntry(
     DriverObject->MajorFunction[IRP_MJ_CLEANUP] = MCACleanup;
     DriverObject->DriverUnload = MCAUnload;
 
-	//
-	// Register with WMI
-	//
-	WmilibContext = &Extension->WmilibContext;
-	WmilibContext->GuidList = McaGuidList;
-	WmilibContext->GuidCount = McaGuidCount;
-	WmilibContext->QueryWmiRegInfo = McaQueryWmiRegInfo;
-	WmilibContext->QueryWmiDataBlock = McaQueryWmiDataBlock;
-	WmilibContext->ExecuteWmiMethod = McaExecuteWmiMethod;
-	Status = IoWMIRegistrationControl(McaDeviceObject,
-									  WMIREG_ACTION_REGISTER);
-	if (! NT_SUCCESS(Status))
-	{		
+    //
+    // Register with WMI
+    //
+    WmilibContext = &Extension->WmilibContext;
+    WmilibContext->GuidList = McaGuidList;
+    WmilibContext->GuidCount = McaGuidCount;
+    WmilibContext->QueryWmiRegInfo = McaQueryWmiRegInfo;
+    WmilibContext->QueryWmiDataBlock = McaQueryWmiDataBlock;
+    WmilibContext->ExecuteWmiMethod = McaExecuteWmiMethod;
+    Status = IoWMIRegistrationControl(McaDeviceObject, WMIREG_ACTION_REGISTER);
+    if (!NT_SUCCESS(Status))
+    {
         DbgPrint("Mca DriverEntry: IoWmiRegistrationControl failed\n");
-		IoDeleteDevice(McaDeviceObject);
-		return(Status);
-	}
-	
+        IoDeleteDevice(McaDeviceObject);
+        return (Status);
+    }
+
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-MCASystemControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    )
+MCASystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 /*++
     Routine Description:
@@ -253,74 +198,68 @@ MCASystemControl(
 --*/
 
 {
-    SYSCTL_IRP_DISPOSITION  Disposition;
-    NTSTATUS                Status;
-    PDEVICE_EXTENSION       Extension = DeviceObject->DeviceExtension;
-    PWMILIB_CONTEXT         WmilibContext = &Extension->WmilibContext;
+    SYSCTL_IRP_DISPOSITION Disposition;
+    NTSTATUS Status;
+    PDEVICE_EXTENSION Extension = DeviceObject->DeviceExtension;
+    PWMILIB_CONTEXT WmilibContext = &Extension->WmilibContext;
 
     //
     // Call Wmilib helper function to crack the irp. If this is a wmi irp
     // that is targetted for this device then WmiSystemControl will callback
     // at the appropriate callback routine.
     //
-    Status = WmiSystemControl(WmilibContext,
-                              DeviceObject,
-                              Irp,
-                              &Disposition);
+    Status = WmiSystemControl(WmilibContext, DeviceObject, Irp, &Disposition);
 
-    switch(Disposition)
+    switch (Disposition)
     {
-        case IrpProcessed:
-        {
-            //
-            // This irp has been processed and may be completed or
-            // pending.
-			//
-			return(Status);
-            break;
-        }
-
-        case IrpNotCompleted:
-        {
-            //
-            // This irp has not been completed, but has been fully processed.
-            // we will complete it now.
-			//
-            break;
-        }
-
-        case IrpForward:
-        case IrpNotWmi:
-        {
-            //
-            // This irp is either not a WMI irp or is a WMI irp targetted
-            // at a device lower in the stack.
-			//
-			Status = Irp->IoStatus.Status;
-            break;
-        }
-
-        default:
-        {
-            //
-            // We really should never get here, but if we do just
-            // forward.... //
-            ASSERT(FALSE);
-			Status = Irp->IoStatus.Status;
-            break;
-        }
+    case IrpProcessed:
+    {
+        //
+        // This irp has been processed and may be completed or
+        // pending.
+        //
+        return (Status);
+        break;
     }
 
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
-	
+    case IrpNotCompleted:
+    {
+        //
+        // This irp has not been completed, but has been fully processed.
+        // we will complete it now.
+        //
+        break;
+    }
+
+    case IrpForward:
+    case IrpNotWmi:
+    {
+        //
+        // This irp is either not a WMI irp or is a WMI irp targetted
+        // at a device lower in the stack.
+        //
+        Status = Irp->IoStatus.Status;
+        break;
+    }
+
+    default:
+    {
+        //
+        // We really should never get here, but if we do just
+        // forward.... //
+        ASSERT(FALSE);
+        Status = Irp->IoStatus.Status;
+        break;
+    }
+    }
+
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+
     return (Status);
 }
 
 NTSTATUS
-MCACleanup(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    )
+MCACleanup(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 /*++
     Routine Description:
@@ -337,7 +276,7 @@ MCACleanup(
 --*/
 
 {
-    PDEVICE_EXTENSION       Extension = DeviceObject->DeviceExtension;
+    PDEVICE_EXTENSION Extension = DeviceObject->DeviceExtension;
 
 
     //
@@ -347,13 +286,10 @@ MCACleanup(
     Irp->IoStatus.Status = STATUS_SUCCESS;
     Irp->IoStatus.Information = 0;
     IoCompleteRequest(Irp, IO_NO_INCREMENT);
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-VOID
-MCAUnload(
-    IN PDRIVER_OBJECT DriverObject
-    )
+VOID MCAUnload(IN PDRIVER_OBJECT DriverObject)
 
 /*++
     Routine Description:
@@ -368,18 +304,17 @@ MCAUnload(
 --*/
 
 {
-    NTSTATUS        Status;
-    STRING          DosString;
-    UNICODE_STRING  DosUnicodeString;
+    NTSTATUS Status;
+    STRING DosString;
+    UNICODE_STRING DosUnicodeString;
 
-    
-	//
-	// Unregister with WMI
-	//
-	IoWMIRegistrationControl(DriverObject->DeviceObject,
-							 WMIREG_ACTION_DEREGISTER);
-	
-	
+
+    //
+    // Unregister with WMI
+    //
+    IoWMIRegistrationControl(DriverObject->DeviceObject, WMIREG_ACTION_DEREGISTER);
+
+
     //
     // Delete the device object
     //
@@ -390,14 +325,8 @@ MCAUnload(
 }
 
 NTSTATUS
-McaQueryWmiRegInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT ULONG *RegFlags,
-    OUT PUNICODE_STRING InstanceName,
-    OUT PUNICODE_STRING *RegistryPath,
-    OUT PUNICODE_STRING MofResourceName,
-    OUT PDEVICE_OBJECT *Pdo
-    )
+McaQueryWmiRegInfo(IN PDEVICE_OBJECT DeviceObject, OUT ULONG *RegFlags, OUT PUNICODE_STRING InstanceName,
+                   OUT PUNICODE_STRING *RegistryPath, OUT PUNICODE_STRING MofResourceName, OUT PDEVICE_OBJECT *Pdo)
 /*++
 
 Routine Description:
@@ -442,22 +371,14 @@ Return Value:
 
     Status = RtlAnsiStringToUnicodeString(InstanceName, &AnsiString, TRUE);
 
-	*RegistryPath = &McaRegPath;
-	
-    return(Status);
+    *RegistryPath = &McaRegPath;
+
+    return (Status);
 }
 
 NTSTATUS
-McaQueryWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG InstanceCount,
-    IN OUT PULONG InstanceLengthArray,
-    IN ULONG BufferAvail,
-    OUT PUCHAR Buffer
-    )
+McaQueryWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                     IN ULONG InstanceCount, IN OUT PULONG InstanceLengthArray, IN ULONG BufferAvail, OUT PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -500,160 +421,134 @@ Return Value:
 
 --*/
 {
-	NTSTATUS status;
+    NTSTATUS status;
     ULONG sizeNeeded = 0;
 
     PAGED_CODE();
 
     switch (GuidIndex)
     {
-        case GenerateMCEGuidIndex:
+    case GenerateMCEGuidIndex:
+    {
+        sizeNeeded = sizeof(ULONG);
+        if (BufferAvail >= sizeNeeded)
         {
-            sizeNeeded = sizeof(ULONG);
-            if (BufferAvail >= sizeNeeded)
-            {
-                *((PULONG)Buffer) = 0;
-                *InstanceLengthArray = sizeNeeded;
-            } else {
-                status = STATUS_BUFFER_TOO_SMALL;
-            }
-            break;
+            *((PULONG)Buffer) = 0;
+            *InstanceLengthArray = sizeNeeded;
         }
-
-        default:
+        else
         {
-            status = STATUS_WMI_GUID_NOT_FOUND;
-            break;
+            status = STATUS_BUFFER_TOO_SMALL;
         }
+        break;
     }
 
-    status = WmiCompleteRequest( DeviceObject,
-                                 Irp,
-                                 status,
-                                 sizeNeeded,
-                                 IO_NO_INCREMENT);
-    return(status);
+    default:
+    {
+        status = STATUS_WMI_GUID_NOT_FOUND;
+        break;
+    }
+    }
+
+    status = WmiCompleteRequest(DeviceObject, Irp, status, sizeNeeded, IO_NO_INCREMENT);
+    return (status);
 }
 
 NTSTATUS
-McaInsertMceRecord(
-    HAL_SET_INFORMATION_CLASS InfoClass,
-    ULONG BufferSize,
-    PUCHAR Buffer
-    )
+McaInsertMceRecord(HAL_SET_INFORMATION_CLASS InfoClass, ULONG BufferSize, PUCHAR Buffer)
 {
-	NTSTATUS status;
+    NTSTATUS status;
 
-	status = HalSetSystemInformation(InfoClass,
-									 BufferSize,
-									 Buffer);
+    status = HalSetSystemInformation(InfoClass, BufferSize, Buffer);
 #if DBG
-	if (! NT_SUCCESS(status))
-	{
-		DbgPrint("Mcahct: Sending class %d MCE record to Hal failed %x\n",
-				 InfoClass,
-				 status
-				);
-	}
+    if (!NT_SUCCESS(status))
+    {
+        DbgPrint("Mcahct: Sending class %d MCE record to Hal failed %x\n", InfoClass, status);
+    }
 #endif
 
-	return(status);
+    return (status);
 }
 
 NTSTATUS
-McaExecuteWmiMethod (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN ULONG OutBufferSize,
-    IN PUCHAR Buffer
-    )
+McaExecuteWmiMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                    IN ULONG MethodId, IN ULONG InBufferSize, IN ULONG OutBufferSize, IN PUCHAR Buffer)
 {
     NTSTATUS status;
     ULONG sizeNeeded;
-    
+
     PAGED_CODE();
 
     if (GuidIndex == GenerateMCEGuidIndex)
     {
         switch (MethodId)
         {
-            //
-            // MCA insertion by ID
-            //
-            case 1:
+        //
+        // MCA insertion by ID
+        //
+        case 1:
+        {
+            if (InBufferSize == sizeof(ULONG))
             {
-                if (InBufferSize == sizeof(ULONG))
+                sizeNeeded = sizeof(NTSTATUS);
+                if (OutBufferSize >= sizeNeeded)
                 {
-                    sizeNeeded = sizeof(NTSTATUS);
-                    if (OutBufferSize >= sizeNeeded)
-                    {
-                        McaGenerateMce(*((PULONG)Buffer));
-						status = STATUS_SUCCESS;
-                        *((NTSTATUS *)Buffer) = status;
-                        status = STATUS_SUCCESS;
-                    }
-                } else {
-                    status = STATUS_INVALID_PARAMETER;
+                    McaGenerateMce(*((PULONG)Buffer));
+                    status = STATUS_SUCCESS;
+                    *((NTSTATUS *)Buffer) = status;
+                    status = STATUS_SUCCESS;
                 }
-                
-                break;
+            }
+            else
+            {
+                status = STATUS_INVALID_PARAMETER;
             }
 
-            //
-            // Corrected CMC insertion by fully formed MCA exception
-            //
-            case 2:
-            {
-                status = McaInsertMceRecord(HalCmcLog,
-                                       InBufferSize,
-                                       Buffer);
-                sizeNeeded = 0;
-                break;
-            }
-            
-            //
-            // Corrected CPE insertion by fully formed MCA exception
-            //
-            case 3:
-            {
-                status = McaInsertMceRecord(HalCpeLog,
-                                       InBufferSize,
-                                       Buffer);
-                sizeNeeded = 0;
-                break;
-            }
-            
-            //
-            // Fatal MCA insertion by fully formed MCA exception
-            //
-            case 4:
-            {
-                status = McaInsertMceRecord(HalMcaLog,
-                                       InBufferSize,
-                                       Buffer);
-                sizeNeeded = 0;
-                break;
-            }
-            
-            default:
-            {
-                status = STATUS_WMI_ITEMID_NOT_FOUND;
-            }
+            break;
         }
-    } else {
+
+        //
+        // Corrected CMC insertion by fully formed MCA exception
+        //
+        case 2:
+        {
+            status = McaInsertMceRecord(HalCmcLog, InBufferSize, Buffer);
+            sizeNeeded = 0;
+            break;
+        }
+
+        //
+        // Corrected CPE insertion by fully formed MCA exception
+        //
+        case 3:
+        {
+            status = McaInsertMceRecord(HalCpeLog, InBufferSize, Buffer);
+            sizeNeeded = 0;
+            break;
+        }
+
+        //
+        // Fatal MCA insertion by fully formed MCA exception
+        //
+        case 4:
+        {
+            status = McaInsertMceRecord(HalMcaLog, InBufferSize, Buffer);
+            sizeNeeded = 0;
+            break;
+        }
+
+        default:
+        {
+            status = STATUS_WMI_ITEMID_NOT_FOUND;
+        }
+        }
+    }
+    else
+    {
         status = STATUS_WMI_GUID_NOT_FOUND;
     }
 
-    status = WmiCompleteRequest(
-                                 DeviceObject,
-                                 Irp,
-                                 status,
-                                 sizeNeeded,
-                                 IO_NO_INCREMENT);
-    
-    return(status);
+    status = WmiCompleteRequest(DeviceObject, Irp, status, sizeNeeded, IO_NO_INCREMENT);
+
+    return (status);
 }

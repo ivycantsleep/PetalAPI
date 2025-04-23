@@ -33,30 +33,18 @@ Revision History:
 //
 
 BOOLEAN
-RtlpCaptureStackLimits (
-    ULONG_PTR HintAddress,
-    PULONG_PTR StartStack,
-    PULONG_PTR EndStack);
+RtlpCaptureStackLimits(ULONG_PTR HintAddress, PULONG_PTR StartStack, PULONG_PTR EndStack);
 
 BOOLEAN
-RtlpStkIsPointerInDllRange (
-    ULONG_PTR Value
-    );
+RtlpStkIsPointerInDllRange(ULONG_PTR Value);
 
 BOOLEAN
-RtlpStkIsPointerInNtdllRange (
-    ULONG_PTR Value
-    );
+RtlpStkIsPointerInNtdllRange(ULONG_PTR Value);
 
-VOID
-RtlpCaptureContext (
-    OUT PCONTEXT ContextRecord
-    );
+VOID RtlpCaptureContext(OUT PCONTEXT ContextRecord);
 
 BOOLEAN
-NtdllOkayToLockRoutine(
-    IN PVOID Lock
-    );
+NtdllOkayToLockRoutine(IN PVOID Lock);
 
 //
 // Fuzzy stack traces
@@ -68,17 +56,10 @@ ULONG RtlpWalkFrameChainFuzzyCalls;
 #endif
 
 ULONG
-RtlpWalkFrameChainFuzzy (
-    OUT PVOID *Callers,
-    IN ULONG Count
-    );
+RtlpWalkFrameChainFuzzy(OUT PVOID *Callers, IN ULONG Count);
 
 #if !defined(RtlGetCallersAddress) && (!NTOS_KERNEL_RUNTIME)
-VOID
-RtlGetCallersAddress(
-    OUT PVOID *CallersAddress,
-    OUT PVOID *CallersCaller
-    )
+VOID RtlGetCallersAddress(OUT PVOID *CallersAddress, OUT PVOID *CallersCaller)
 /*++
 
 Routine Description:
@@ -105,31 +86,32 @@ Environment:
 --*/
 
 {
-    PVOID BackTrace[ 2 ];
+    PVOID BackTrace[2];
     ULONG Hash;
     USHORT Count;
 
-    Count = RtlCaptureStackBackTrace(
-        2,
-        2,
-        BackTrace,
-        &Hash
-        );
+    Count = RtlCaptureStackBackTrace(2, 2, BackTrace, &Hash);
 
-    if (ARGUMENT_PRESENT( CallersAddress )) {
-        if (Count >= 1) {
-            *CallersAddress = BackTrace[ 0 ];
+    if (ARGUMENT_PRESENT(CallersAddress))
+    {
+        if (Count >= 1)
+        {
+            *CallersAddress = BackTrace[0];
         }
-        else {
+        else
+        {
             *CallersAddress = NULL;
         }
     }
 
-    if (ARGUMENT_PRESENT( CallersCaller )) {
-        if (Count >= 2) {
-            *CallersCaller = BackTrace[ 1 ];
+    if (ARGUMENT_PRESENT(CallersCaller))
+    {
+        if (Count >= 2)
+        {
+            *CallersCaller = BackTrace[1];
         }
-        else {
+        else
+        {
             *CallersCaller = NULL;
         }
     }
@@ -140,18 +122,13 @@ Environment:
 #endif // !defined(RtlGetCallersAddress) && (!NTOS_KERNEL_RUNTIME)
 
 
-
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////// RtlCaptureStackBackTrace
 /////////////////////////////////////////////////////////////////////
 
 USHORT
-RtlCaptureStackBackTrace(
-    IN ULONG FramesToSkip,
-    IN ULONG FramesToCapture,
-    OUT PVOID *BackTrace,
-    OUT PULONG BackTraceHash
-    )
+RtlCaptureStackBackTrace(IN ULONG FramesToSkip, IN ULONG FramesToCapture, OUT PVOID *BackTrace,
+                         OUT PULONG BackTraceHash)
 /*++
 
 Routine Description:
@@ -178,7 +155,7 @@ Return Value:
 
 --*/
 {
-    PVOID Trace [2 * MAX_STACK_DEPTH];
+    PVOID Trace[2 * MAX_STACK_DEPTH];
     ULONG FramesFound;
     ULONG HashValue;
     ULONG Index;
@@ -193,29 +170,28 @@ Return Value:
     // Sanity checks.
     //
 
-    if (FramesToCapture + FramesToSkip >= 2 * MAX_STACK_DEPTH) {
+    if (FramesToCapture + FramesToSkip >= 2 * MAX_STACK_DEPTH)
+    {
         return 0;
     }
 
 #if defined(NTOS_KERNEL_RUNTIME)
-    FramesFound = RtlWalkFrameChain (Trace,
-                                     FramesToCapture + FramesToSkip,
-                                     0);
+    FramesFound = RtlWalkFrameChain(Trace, FramesToCapture + FramesToSkip, 0);
 #else
-    if (RtlpFuzzyStackTracesEnabled) {
-        
-        FramesFound = RtlpWalkFrameChainFuzzy (Trace, 
-                                               FramesToCapture + FramesToSkip);
-    }
-    else {
+    if (RtlpFuzzyStackTracesEnabled)
+    {
 
-        FramesFound = RtlWalkFrameChain (Trace,
-                                         FramesToCapture + FramesToSkip,
-                                         0);
+        FramesFound = RtlpWalkFrameChainFuzzy(Trace, FramesToCapture + FramesToSkip);
+    }
+    else
+    {
+
+        FramesFound = RtlWalkFrameChain(Trace, FramesToCapture + FramesToSkip, 0);
     }
 #endif
 
-    if (FramesFound <= FramesToSkip) {
+    if (FramesFound <= FramesToSkip)
+    {
         return 0;
     }
 
@@ -226,18 +202,22 @@ Return Value:
     // Mark fuzzy stack traces with a FF...FF value.
     //
 
-    if (RtlpFuzzyStackTracesEnabled) {
+    if (RtlpFuzzyStackTracesEnabled)
+    {
         BackTrace[0] = (PVOID)((ULONG_PTR)-1);
         Index = 1;
     }
-    else {
+    else
+    {
         Index = 0;
     }
 #endif
 
-    for (HashValue = 0; Index < FramesToCapture; Index++) {
+    for (HashValue = 0; Index < FramesToCapture; Index++)
+    {
 
-        if (FramesToSkip + Index >= FramesFound) {
+        if (FramesToSkip + Index >= FramesFound)
+        {
             break;
         }
 
@@ -245,7 +225,8 @@ Return Value:
         HashValue += PtrToUlong(BackTrace[Index]);
     }
 
-    if (BackTraceHash != NULL) {
+    if (BackTraceHash != NULL)
+    {
 
         *BackTraceHash = HashValue;
     }
@@ -254,26 +235,21 @@ Return Value:
 }
 
 
-
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////// RtlWalkFrameChain
 /////////////////////////////////////////////////////////////////////
 
-#define SIZE_1_KB  ((ULONG_PTR) 0x400)
-#define SIZE_1_GB  ((ULONG_PTR) 0x40000000)
+#define SIZE_1_KB ((ULONG_PTR)0x400)
+#define SIZE_1_GB ((ULONG_PTR)0x40000000)
 
 #define PAGE_START(address) (((ULONG_PTR)address) & ~((ULONG_PTR)PAGE_SIZE - 1))
 
 #if FPO
-#pragma optimize( "y", off ) // disable FPO
+#pragma optimize("y", off) // disable FPO
 #endif
 
 ULONG
-RtlWalkFrameChain (
-    OUT PVOID *Callers,
-    IN ULONG Count,
-    IN ULONG Flags
-    )
+RtlWalkFrameChain(OUT PVOID *Callers, IN ULONG Count, IN ULONG Flags)
 
 /*++
 
@@ -317,14 +293,17 @@ Return value:
     StackStart = Fp;
     InvalidFpValue = FALSE;
 
-    if (Flags == 0) {
-        if (! RtlpCaptureStackLimits (Fp, &StackStart, &StackEnd)) {
+    if (Flags == 0)
+    {
+        if (!RtlpCaptureStackLimits(Fp, &StackStart, &StackEnd))
+        {
             return 0;
         }
     }
 
 
-    try {
+    try
+    {
 
 #if defined(NTOS_KERNEL_RUNTIME)
 
@@ -333,32 +312,37 @@ Return value:
         // figure out the proper limits.
         //
 
-        if (Flags == 1) {
+        if (Flags == 1)
+        {
 
             PTEB Teb = NtCurrentTeb();
-            PKTHREAD Thread = KeGetCurrentThread ();
+            PKTHREAD Thread = KeGetCurrentThread();
 
             //
             // If this is a system thread, it has no Teb and no kernel mode
             // stack, so check for it so we don't dereference NULL.
             //
-            if (Teb == NULL) {
+            if (Teb == NULL)
+            {
                 return 0;
             }
 
             StackStart = (ULONG_PTR)(Teb->NtTib.StackLimit);
             StackEnd = (ULONG_PTR)(Teb->NtTib.StackBase);
             Fp = (ULONG_PTR)(Thread->TrapFrame->Ebp);
-            if (StackEnd <= StackStart) {
+            if (StackEnd <= StackStart)
+            {
                 return 0;
             }
-            ProbeForRead (StackStart, StackEnd - StackStart, sizeof (UCHAR));
+            ProbeForRead(StackStart, StackEnd - StackStart, sizeof(UCHAR));
         }
 #endif
-        
-        for (Index = 0; Index < Count; Index += 1) {
 
-            if (Fp >= StackEnd || StackEnd - Fp < sizeof(ULONG_PTR) * 2) {
+        for (Index = 0; Index < Count; Index += 1)
+        {
+
+            if (Fp >= StackEnd || StackEnd - Fp < sizeof(ULONG_PTR) * 2)
+            {
                 break;
             }
 
@@ -374,7 +358,8 @@ Return value:
             // keep the frame pointer within stack limits.
             //
 
-            if (! (Fp < NewFp && NewFp < StackEnd)) {
+            if (!(Fp < NewFp && NewFp < StackEnd))
+            {
 
                 InvalidFpValue = TRUE;
             }
@@ -385,15 +370,18 @@ Return value:
             // no reason to return garbage to the caller therefore we stop.
             //
 
-            if (StackStart < ReturnAddress && ReturnAddress < StackEnd) {
+            if (StackStart < ReturnAddress && ReturnAddress < StackEnd)
+            {
                 break;
             }
 
 #if defined(NTOS_KERNEL_RUNTIME)
-            if (Flags == 0 && ReturnAddress < 0x80000000) {
+            if (Flags == 0 && ReturnAddress < 0x80000000)
+            {
 #else
             // if (ReturnAddress < 0x1000000 || ReturnAddress >= 0x80000000) {
-            if (! RtlpStkIsPointerInDllRange(ReturnAddress)) {
+            if (!RtlpStkIsPointerInDllRange(ReturnAddress))
+            {
 #endif
 
                 break;
@@ -405,20 +393,23 @@ Return value:
             // looks ok then we still save the address.
             //
 
-            if (InvalidFpValue) {
+            if (InvalidFpValue)
+            {
 
                 Callers[Index] = (PVOID)ReturnAddress;
                 Index += 1;
                 break;
             }
-            else {
+            else
+            {
 
                 Fp = NewFp;
                 Callers[Index] = (PVOID)ReturnAddress;
             }
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Index = 0;
     }
@@ -428,21 +419,17 @@ Return value:
     //
 
     return Index;
-
 }
 
 
 #if FPO
-#pragma optimize( "y", off ) // disable FPO
+#pragma optimize("y", off) // disable FPO
 #endif
 
 #if !defined(NTOS_KERNEL_RUNTIME)
 
 ULONG
-RtlpWalkFrameChainFuzzy (
-    OUT PVOID *Callers,
-    IN ULONG Count
-    )
+RtlpWalkFrameChainFuzzy(OUT PVOID *Callers, IN ULONG Count)
 /*++
 
 Routine Description:
@@ -473,23 +460,28 @@ Return value:
 
     _asm mov Fp, EBP;
 
-    if (! RtlpCaptureStackLimits (Fp, &StackStart, &StackEnd)) {
+    if (!RtlpCaptureStackLimits(Fp, &StackStart, &StackEnd))
+    {
         return 0;
     }
 
-    try {
+    try
+    {
 
-        for (Index = 0; Index < Count; Index += 1) {
+        for (Index = 0; Index < Count; Index += 1)
+        {
 
             NextPtr = Fp + sizeof(ULONG_PTR);
 
-            if (NextPtr >= StackEnd) {
+            if (NextPtr >= StackEnd)
+            {
                 break;
             }
 
             NewFp = *((PULONG_PTR)Fp);
 
-            if (! (Fp < NewFp && NewFp < StackEnd)) {
+            if (!(Fp < NewFp && NewFp < StackEnd))
+            {
 
                 NewFp = NextPtr;
             }
@@ -503,16 +495,19 @@ Return value:
             // hoping to find a pointer to a real address.
             //
 
-            if (StackStart < ReturnAddress && ReturnAddress < StackEnd) {
+            if (StackStart < ReturnAddress && ReturnAddress < StackEnd)
+            {
 
                 Fp = NewFp;
-				Index -= 1;
-				continue;
+                Index -= 1;
+                continue;
             }
 
-            if (ReturnAddress < 0x80000000) {
+            if (ReturnAddress < 0x80000000)
+            {
 #else
-            if (! RtlpStkIsPointerInDllRange(ReturnAddress)) {
+            if (!RtlpStkIsPointerInDllRange(ReturnAddress))
+            {
 #endif
                 Fp = NewFp;
                 Index -= 1;
@@ -527,16 +522,15 @@ Return value:
 
             Fp = NewFp;
             Callers[Index] = (PVOID)ReturnAddress;
-
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
 #if DBG
-        DbgPrint ("Unexpected exception in RtlpWalkFrameChainFuzzy ...\n");
-        DbgBreakPoint ();
+        DbgPrint("Unexpected exception in RtlpWalkFrameChainFuzzy ...\n");
+        DbgBreakPoint();
 #endif
-
     }
 
     //
@@ -548,21 +542,17 @@ Return value:
 
 #endif // #if !defined(NTOS_KERNEL_RUNTIME)
 
-
+
 /////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////// RtlCaptureStackContext
 /////////////////////////////////////////////////////////////////////
 
 #if FPO
-#pragma optimize( "y", off ) // disable FPO
+#pragma optimize("y", off) // disable FPO
 #endif
 
 ULONG
-RtlCaptureStackContext (
-    OUT PULONG_PTR Callers,
-    OUT PRTL_STACK_CONTEXT Context,
-    IN ULONG Limit
-    )
+RtlCaptureStackContext(OUT PULONG_PTR Callers, OUT PRTL_STACK_CONTEXT Context, IN ULONG Limit)
 /*++
 
 Routine Description:
@@ -609,23 +599,27 @@ Return value:
     // Avoid weird conditions. Doing this in an ISR is never a good idea.
     //
 
-    if (KeGetCurrentIrql() > DISPATCH_LEVEL) {
+    if (KeGetCurrentIrql() > DISPATCH_LEVEL)
+    {
         return 0;
     }
 
 #endif
 
-    if (Limit == 0) {
+    if (Limit == 0)
+    {
         return 0;
     }
 
     Caller = (ULONG_PTR)_ReturnAddress();
 
-    if (Context) {
+    if (Context)
+    {
         Context->Entry[0].Data = Caller;
-        ContextSize = sizeof(RTL_STACK_CONTEXT) + (Limit - 1) * sizeof (RTL_STACK_CONTEXT_ENTRY);
+        ContextSize = sizeof(RTL_STACK_CONTEXT) + (Limit - 1) * sizeof(RTL_STACK_CONTEXT_ENTRY);
     }
-    else {
+    else
+    {
         Callers[0] = Caller;
     }
 
@@ -636,7 +630,8 @@ Return value:
     _asm mov Hint, EBP;
 
 
-    if (! RtlpCaptureStackLimits (Hint, &StackStart, &StackEnd)) {
+    if (!RtlpCaptureStackLimits(Hint, &StackStart, &StackEnd))
+    {
         return 0;
     }
 
@@ -645,14 +640,17 @@ Return value:
     // return address.
     //
 
-    for (Current = StackStart; Current < StackEnd; Current += sizeof(ULONG_PTR)) {
+    for (Current = StackStart; Current < StackEnd; Current += sizeof(ULONG_PTR))
+    {
 
-        if (*((PULONG_PTR)Current) == Caller) {
+        if (*((PULONG_PTR)Current) == Caller)
+        {
             break;
         }
     }
 
-    if (Context) {
+    if (Context)
+    {
         Context->Entry[0].Address = Current;
     }
 
@@ -664,13 +662,15 @@ Return value:
 
     Index = 1;
 
-    for ( ; Current < StackEnd; Current += sizeof(ULONG_PTR)) {
+    for (; Current < StackEnd; Current += sizeof(ULONG_PTR))
+    {
 
         //
         // If potential callers buffer is full then wrap this up.
         //
 
-        if (Index == Limit) {
+        if (Index == Limit)
+        {
             break;
         }
 
@@ -680,16 +680,19 @@ Return value:
         // is allocated somewhere upper in the call chain.
         //
 
-        if (Context) {
+        if (Context)
+        {
 
-            if (Current >= (ULONG_PTR)Context && Current < (ULONG_PTR)Context + ContextSize ) {
+            if (Current >= (ULONG_PTR)Context && Current < (ULONG_PTR)Context + ContextSize)
+            {
                 continue;
             }
-
         }
-        else {
+        else
+        {
 
-            if ((PULONG_PTR)Current >= Callers && (PULONG_PTR)Current < Callers + Limit ) {
+            if ((PULONG_PTR)Current >= Callers && (PULONG_PTR)Current < Callers + Limit)
+            {
                 continue;
             }
         }
@@ -700,7 +703,8 @@ Return value:
         // Skip small numbers.
         //
 
-        if (Value <= 0x10000) {
+        if (Value <= 0x10000)
+        {
             continue;
         }
 
@@ -708,7 +712,8 @@ Return value:
         // Skip stack pointers.
         //
 
-        if (Value >= StackStart && Value <= StackEnd) {
+        if (Value >= StackStart && Value <= StackEnd)
+        {
             continue;
         }
 
@@ -716,24 +721,27 @@ Return value:
         // Check if `Value' points inside one of the loaded modules.
         //
 
-        if (RtlpStkIsPointerInDllRange (Value)) {
+        if (RtlpStkIsPointerInDllRange(Value))
+        {
 
-            if (Context) {
+            if (Context)
+            {
 
                 Context->Entry[Index].Address = Current;
                 Context->Entry[Index].Data = Value;
             }
-            else {
+            else
+            {
 
                 Callers[Index] = Value;
             }
 
             Index += 1;
         }
-
     }
 
-    if (Context) {
+    if (Context)
+    {
         Context->NumberOfEntries = Index;
     }
 
@@ -761,7 +769,7 @@ Return value:
 // capturing function.The reading does not require lock protection.
 //
 
-UCHAR RtlpStkDllRanges [2048 / 8];
+UCHAR RtlpStkDllRanges[2048 / 8];
 
 #if !defined(NTOS_KERNEL_RUNTIME)
 
@@ -769,19 +777,20 @@ ULONG_PTR RtlpStkNtdllStart;
 ULONG_PTR RtlpStkNtdllEnd;
 
 BOOLEAN
-RtlpStkIsPointerInNtdllRange (
-    ULONG_PTR Value
-    )
+RtlpStkIsPointerInNtdllRange(ULONG_PTR Value)
 {
-    if (RtlpStkNtdllStart == 0) {
+    if (RtlpStkNtdllStart == 0)
+    {
         return FALSE;
     }
 
-    if (RtlpStkNtdllStart <= Value && Value < RtlpStkNtdllEnd) {
+    if (RtlpStkNtdllStart <= Value && Value < RtlpStkNtdllEnd)
+    {
 
         return TRUE;
     }
-    else {
+    else
+    {
 
         return FALSE;
     }
@@ -790,29 +799,26 @@ RtlpStkIsPointerInNtdllRange (
 #endif
 
 BOOLEAN
-RtlpStkIsPointerInDllRange (
-    ULONG_PTR Value
-    )
+RtlpStkIsPointerInDllRange(ULONG_PTR Value)
 {
     ULONG Index;
 
     Value &= ~0x80000000;
     Index = (ULONG)(Value >> 20);
 
-    if (RtlpStkDllRanges[Index >> 3] & (UCHAR)(1 << (Index & 7))) {
+    if (RtlpStkDllRanges[Index >> 3] & (UCHAR)(1 << (Index & 7)))
+    {
 
         return TRUE;
     }
-    else {
+    else
+    {
 
         return FALSE;
     }
 }
 
-VOID
-RtlpStkMarkDllRange (
-    PLDR_DATA_TABLE_ENTRY DllEntry
-    )
+VOID RtlpStkMarkDllRange(PLDR_DATA_TABLE_ENTRY DllEntry)
 /*++
 
 Routine description:
@@ -851,13 +857,15 @@ Environment:
 
 #if !defined(NTOS_KERNEL_RUNTIME)
 
-    if (RtlpStkNtdllStart == 0) {
+    if (RtlpStkNtdllStart == 0)
+    {
 
         UNICODE_STRING NtdllName;
 
-        RtlInitUnicodeString (&NtdllName, L"ntdll.dll");
+        RtlInitUnicodeString(&NtdllName, L"ntdll.dll");
 
-        if (RtlEqualUnicodeString (&(DllEntry->BaseDllName), &NtdllName, TRUE)) {
+        if (RtlEqualUnicodeString(&(DllEntry->BaseDllName), &NtdllName, TRUE))
+        {
 
             RtlpStkNtdllStart = (ULONG_PTR)Base;
             RtlpStkNtdllEnd = (ULONG_PTR)Base + Size;
@@ -867,7 +875,8 @@ Environment:
 
     Start = (PCHAR)Base;
 
-    for (Current = Start; Current < Start + Size; Current += 0x100000) {
+    for (Current = Start; Current < Start + Size; Current += 0x100000)
+    {
 
         Value = (ULONG_PTR)Current & ~0x80000000;
 
@@ -876,6 +885,3 @@ Environment:
         RtlpStkDllRanges[Index >> 3] |= (UCHAR)(1 << (Index & 7));
     }
 }
-
-
-

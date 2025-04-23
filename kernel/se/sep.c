@@ -29,16 +29,12 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SepCheckAcl)
+#pragma alloc_text(PAGE, SepCheckAcl)
 #endif
 
 
-
 BOOLEAN
-SepCheckAcl (
-    IN PACL Acl,
-    IN ULONG Length
-    )
+SepCheckAcl(IN PACL Acl, IN ULONG Length)
 
 /*++
 
@@ -59,8 +55,9 @@ Return Value:
 
 --*/
 {
-    if ((Length < sizeof(ACL)) || (Length != Acl->AclSize)) {
+    if ((Length < sizeof(ACL)) || (Length != Acl->AclSize))
+    {
         return FALSE;
     }
-    return RtlValidAcl( Acl );
+    return RtlValidAcl(Acl);
 }

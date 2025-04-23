@@ -31,7 +31,7 @@ Revision History:
 --*/
 
 #include "ntrtlp.h"
-#include "heappage.h"       // external interface (hooks) to debug heap manager
+#include "heappage.h" // external interface (hooks) to debug heap manager
 #include "heappagi.h"
 #include "heappriv.h"
 
@@ -50,105 +50,108 @@ int __cdecl sprintf(char *, const char *, ...);
 //
 
 #if defined(_X86_)
-    #ifndef PAGE_SIZE
-    #define PAGE_SIZE   0x1000
-    #endif
-    #define USER_ALIGNMENT 8
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 0x1000
+#endif
+#define USER_ALIGNMENT 8
 
 #elif defined(_IA64_)
-    #ifndef PAGE_SIZE
-    #define PAGE_SIZE   0x2000
-    #endif
-    #define USER_ALIGNMENT 16
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 0x2000
+#endif
+#define USER_ALIGNMENT 16
 
 #elif defined(_AMD64_)
-    #ifndef PAGE_SIZE
-    #define PAGE_SIZE   0x1000
-    #endif
-    #define USER_ALIGNMENT 16
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 0x1000
+#endif
+#define USER_ALIGNMENT 16
 
 #else
-    #error  // platform not defined
+#error // platform not defined
 #endif
 
 //
 // Few constants
 //
 
-#define DPH_HEAP_SIGNATURE       0xFFEEDDCC
-#define FILL_BYTE                0xEE
-#define HEAD_FILL_SIZE           0x10
-#define RESERVE_SIZE             0x100000
-#define VM_UNIT_SIZE             0x10000
-#define POOL_SIZE                0x4000
-#define INLINE                   __inline
-#define MIN_FREE_LIST_LENGTH     8
+#define DPH_HEAP_SIGNATURE 0xFFEEDDCC
+#define FILL_BYTE 0xEE
+#define HEAD_FILL_SIZE 0x10
+#define RESERVE_SIZE 0x100000
+#define VM_UNIT_SIZE 0x10000
+#define POOL_SIZE 0x4000
+#define INLINE __inline
+#define MIN_FREE_LIST_LENGTH 8
 
 //
 // Few macros
 //
 
-#define ROUNDUP2( x, n ) ((( x ) + (( n ) - 1 )) & ~(( n ) - 1 ))
+#define ROUNDUP2(x, n) (((x) + ((n) - 1)) & ~((n) - 1))
 
 #if INTERNAL_DEBUG
-#define DEBUG_CODE( a ) a
+#define DEBUG_CODE(a) a
 #else
-#define DEBUG_CODE( a )
+#define DEBUG_CODE(a)
 #endif
 
-#define RETAIL_ASSERT( a ) ( (a) ? TRUE : \
-    RtlpDebugPageHeapAssert( "Page heap: assert: (" #a ")\n" ))
+#define RETAIL_ASSERT(a) ((a) ? TRUE : RtlpDebugPageHeapAssert("Page heap: assert: (" #a ")\n"))
 
-#define DEBUG_ASSERT( a ) DEBUG_CODE( RETAIL_ASSERT( a ))
+#define DEBUG_ASSERT(a) DEBUG_CODE(RETAIL_ASSERT(a))
 
-#define HEAP_HANDLE_FROM_ROOT( HeapRoot ) \
-    ((PVOID)(((PCHAR)(HeapRoot)) - PAGE_SIZE ))
+#define HEAP_HANDLE_FROM_ROOT(HeapRoot) ((PVOID)(((PCHAR)(HeapRoot)) - PAGE_SIZE))
 
-#define IF_GENERATE_EXCEPTION( Flags, Status ) {                \
-    if (( Flags ) & HEAP_GENERATE_EXCEPTIONS )                  \
-        RtlpDebugPageHeapException((ULONG)(Status));            \
+#define IF_GENERATE_EXCEPTION(Flags, Status)             \
+    {                                                    \
+        if ((Flags) & HEAP_GENERATE_EXCEPTIONS)          \
+            RtlpDebugPageHeapException((ULONG)(Status)); \
     }
 
-#define OUT_OF_VM_BREAK( Flags, szText ) {                      \
-    if (( Flags ) & HEAP_BREAK_WHEN_OUT_OF_VM )                 \
-        RtlpDebugPageHeapBreak(( szText ));                     \
+#define OUT_OF_VM_BREAK(Flags, szText)           \
+    {                                            \
+        if ((Flags) & HEAP_BREAK_WHEN_OUT_OF_VM) \
+            RtlpDebugPageHeapBreak((szText));    \
     }
 
 //
 // List manipulation macros
 //
 
-#define ENQUEUE_HEAD( Node, Head, Tail ) {          \
-            (Node)->pNextAlloc = (Head);            \
-            if ((Head) == NULL )                    \
-                (Tail) = (Node);                    \
-            (Head) = (Node);                        \
-            }
+#define ENQUEUE_HEAD(Node, Head, Tail) \
+    {                                  \
+        (Node)->pNextAlloc = (Head);   \
+        if ((Head) == NULL)            \
+            (Tail) = (Node);           \
+        (Head) = (Node);               \
+    }
 
-#define ENQUEUE_TAIL( Node, Head, Tail ) {          \
-            if ((Tail) == NULL )                    \
-                (Head) = (Node);                    \
-            else                                    \
-                (Tail)->pNextAlloc = (Node);        \
-            (Tail) = (Node);                        \
-            }
+#define ENQUEUE_TAIL(Node, Head, Tail)   \
+    {                                    \
+        if ((Tail) == NULL)              \
+            (Head) = (Node);             \
+        else                             \
+            (Tail)->pNextAlloc = (Node); \
+        (Tail) = (Node);                 \
+    }
 
-#define DEQUEUE_NODE( Node, Prev, Head, Tail ) {    \
-            PVOID Next = (Node)->pNextAlloc;        \
-            if ((Head) == (Node))                   \
-                (Head) = Next;                      \
-            if ((Tail) == (Node))                   \
-                (Tail) = (Prev);                    \
-            if ((Prev) != (NULL))                   \
-                (Prev)->pNextAlloc = Next;          \
-            }
+#define DEQUEUE_NODE(Node, Prev, Head, Tail) \
+    {                                        \
+        PVOID Next = (Node)->pNextAlloc;     \
+        if ((Head) == (Node))                \
+            (Head) = Next;                   \
+        if ((Tail) == (Node))                \
+            (Tail) = (Prev);                 \
+        if ((Prev) != (NULL))                \
+            (Prev)->pNextAlloc = Next;       \
+    }
 
 //
 // Bias/unbias pointer
 //
 
-#define BIAS_POINTER(p)      ((PVOID)((ULONG_PTR)(p) | (ULONG_PTR)0x01))
-#define UNBIAS_POINTER(p)    ((PVOID)((ULONG_PTR)(p) & ~((ULONG_PTR)0x01)))
+#define BIAS_POINTER(p) ((PVOID)((ULONG_PTR)(p) | (ULONG_PTR)0x01))
+#define UNBIAS_POINTER(p) ((PVOID)((ULONG_PTR)(p) & ~((ULONG_PTR)0x01)))
 #define IS_BIASED_POINTER(p) ((PVOID)((ULONG_PTR)(p) & (ULONG_PTR)0x01))
 
 //
@@ -186,17 +189,21 @@ int __cdecl sprintf(char *, const char *, ...);
 // the heap lock (needs to be always R/W).
 //
 
-#define PROTECT_HEAP_STRUCTURES( HeapRoot ) {                           \
-            if ((HeapRoot)->HeapFlags & HEAP_PROTECTION_ENABLED ) {     \
-                RtlpDebugPageHeapProtectStructures( (HeapRoot) );       \
-            }                                                           \
-        }                                                               \
+#define PROTECT_HEAP_STRUCTURES(HeapRoot)                    \
+    {                                                        \
+        if ((HeapRoot)->HeapFlags & HEAP_PROTECTION_ENABLED) \
+        {                                                    \
+            RtlpDebugPageHeapProtectStructures((HeapRoot));  \
+        }                                                    \
+    }
 
-#define UNPROTECT_HEAP_STRUCTURES( HeapRoot ) {                         \
-            if ((HeapRoot)->HeapFlags & HEAP_PROTECTION_ENABLED ) {     \
-                RtlpDebugPageHeapUnProtectStructures( (HeapRoot) );     \
-            }                                                           \
-        }                                                               \
+#define UNPROTECT_HEAP_STRUCTURES(HeapRoot)                   \
+    {                                                         \
+        if ((HeapRoot)->HeapFlags & HEAP_PROTECTION_ENABLED)  \
+        {                                                     \
+            RtlpDebugPageHeapUnProtectStructures((HeapRoot)); \
+        }                                                     \
+    }
 
 //
 // RtlpDebugPageHeap
@@ -262,7 +269,7 @@ ULONG RtlpDphSizeRangeEnd;
 ULONG RtlpDphDllRangeStart;
 ULONG RtlpDphDllRangeEnd;
 ULONG RtlpDphRandomProbability;
-WCHAR RtlpDphTargetDlls [512];
+WCHAR RtlpDphTargetDlls[512];
 UNICODE_STRING RtlpDphTargetDllsUnicode;
 
 //
@@ -288,12 +295,12 @@ ULONG RtlpDphDisableFaults;
 //
 
 #define DPH_DEBUG_INTERNAL_VALIDATION 0x0001
-#define DPH_DEBUG_RESERVED_2          0x0002
-#define DPH_DEBUG_RESERVED_4          0x0004
-#define DPH_DEBUG_RESERVED_8          0x0008
-#define DPH_DEBUG_DECOMMIT_RANGES     0x0010
-#define DPH_DEBUG_SLOW_CHECKS         0x0080
-#define DPH_DEBUG_SHOW_VM_LIMITS      0x0100
+#define DPH_DEBUG_RESERVED_2 0x0002
+#define DPH_DEBUG_RESERVED_4 0x0004
+#define DPH_DEBUG_RESERVED_8 0x0008
+#define DPH_DEBUG_DECOMMIT_RANGES 0x0010
+#define DPH_DEBUG_SLOW_CHECKS 0x0080
+#define DPH_DEBUG_SHOW_VM_LIMITS 0x0100
 
 ULONG RtlpDphDebugLevel;
 
@@ -329,66 +336,30 @@ PRTL_TRACE_DATABASE RtlpDphTraceDatabase;
 //
 
 PVOID
-RtlpDphNormalHeapAllocate (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags,
-    SIZE_T Size
-    );
+RtlpDphNormalHeapAllocate(PDPH_HEAP_ROOT Heap, ULONG Flags, SIZE_T Size);
 
 BOOLEAN
-RtlpDphNormalHeapFree (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags,
-    PVOID Block
-    );
+RtlpDphNormalHeapFree(PDPH_HEAP_ROOT Heap, ULONG Flags, PVOID Block);
 
 PVOID
-RtlpDphNormalHeapReAllocate (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags,
-    PVOID OldBlock,
-    SIZE_T Size
-    );
+RtlpDphNormalHeapReAllocate(PDPH_HEAP_ROOT Heap, ULONG Flags, PVOID OldBlock, SIZE_T Size);
 
 SIZE_T
-RtlpDphNormalHeapSize (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags,
-    PVOID Block
-    );
+RtlpDphNormalHeapSize(PDPH_HEAP_ROOT Heap, ULONG Flags, PVOID Block);
 
 BOOLEAN
-RtlpDphNormalHeapSetUserFlags(
-    IN PDPH_HEAP_ROOT Heap,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN ULONG UserFlagsReset,
-    IN ULONG UserFlagsSet
-    );
+RtlpDphNormalHeapSetUserFlags(IN PDPH_HEAP_ROOT Heap, IN ULONG Flags, IN PVOID Address, IN ULONG UserFlagsReset,
+                              IN ULONG UserFlagsSet);
 
 BOOLEAN
-RtlpDphNormalHeapSetUserValue(
-    IN PDPH_HEAP_ROOT Heap,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN PVOID UserValue
-    );
+RtlpDphNormalHeapSetUserValue(IN PDPH_HEAP_ROOT Heap, IN ULONG Flags, IN PVOID Address, IN PVOID UserValue);
 
 BOOLEAN
-RtlpDphNormalHeapGetUserInfo(
-    IN PDPH_HEAP_ROOT Heap,
-    IN  ULONG  Flags,
-    IN  PVOID  Address,
-    OUT PVOID* UserValue,
-    OUT PULONG UserFlags
-    );
+RtlpDphNormalHeapGetUserInfo(IN PDPH_HEAP_ROOT Heap, IN ULONG Flags, IN PVOID Address, OUT PVOID *UserValue,
+                             OUT PULONG UserFlags);
 
 BOOLEAN
-RtlpDphNormalHeapValidate(
-    IN PDPH_HEAP_ROOT Heap,
-    IN ULONG Flags,
-    IN PVOID Address
-    );
+RtlpDphNormalHeapValidate(IN PDPH_HEAP_ROOT Heap, IN ULONG Flags, IN PVOID Address);
 
 //
 // Support for DPH_BLOCK_INFORMATION management
@@ -397,211 +368,117 @@ RtlpDphNormalHeapValidate(
 // blocks.
 //
 
-#define DPH_CONTEXT_GENERAL                     0
-#define DPH_CONTEXT_FULL_PAGE_HEAP_FREE         1
-#define DPH_CONTEXT_FULL_PAGE_HEAP_REALLOC      2
-#define DPH_CONTEXT_FULL_PAGE_HEAP_DESTROY      3
-#define DPH_CONTEXT_NORMAL_PAGE_HEAP_FREE       4
-#define DPH_CONTEXT_NORMAL_PAGE_HEAP_REALLOC    5
-#define DPH_CONTEXT_NORMAL_PAGE_HEAP_SETFLAGS   6
-#define DPH_CONTEXT_NORMAL_PAGE_HEAP_SETVALUE   7
-#define DPH_CONTEXT_NORMAL_PAGE_HEAP_GETINFO    8
-#define DPH_CONTEXT_DELAYED_FREE                9
-#define DPH_CONTEXT_DELAYED_DESTROY             10
+#define DPH_CONTEXT_GENERAL 0
+#define DPH_CONTEXT_FULL_PAGE_HEAP_FREE 1
+#define DPH_CONTEXT_FULL_PAGE_HEAP_REALLOC 2
+#define DPH_CONTEXT_FULL_PAGE_HEAP_DESTROY 3
+#define DPH_CONTEXT_NORMAL_PAGE_HEAP_FREE 4
+#define DPH_CONTEXT_NORMAL_PAGE_HEAP_REALLOC 5
+#define DPH_CONTEXT_NORMAL_PAGE_HEAP_SETFLAGS 6
+#define DPH_CONTEXT_NORMAL_PAGE_HEAP_SETVALUE 7
+#define DPH_CONTEXT_NORMAL_PAGE_HEAP_GETINFO 8
+#define DPH_CONTEXT_DELAYED_FREE 9
+#define DPH_CONTEXT_DELAYED_DESTROY 10
 
-VOID
-RtlpDphReportCorruptedBlock (
-    PVOID Heap,
-    ULONG Context,
-    PVOID Block,
-    ULONG Reason
-    );
+VOID RtlpDphReportCorruptedBlock(PVOID Heap, ULONG Context, PVOID Block, ULONG Reason);
 
 BOOLEAN
-RtlpDphIsNormalHeapBlock (
-    PDPH_HEAP_ROOT Heap,
-    PVOID Block,
-    PULONG Reason,
-    BOOLEAN CheckPattern
-    );
+RtlpDphIsNormalHeapBlock(PDPH_HEAP_ROOT Heap, PVOID Block, PULONG Reason, BOOLEAN CheckPattern);
 
 BOOLEAN
-RtlpDphIsNormalFreeHeapBlock (
-    PVOID Block,
-    PULONG Reason,
-    BOOLEAN CheckPattern
-    );
+RtlpDphIsNormalFreeHeapBlock(PVOID Block, PULONG Reason, BOOLEAN CheckPattern);
 
 BOOLEAN
-RtlpDphIsPageHeapBlock (
-    PDPH_HEAP_ROOT Heap,
-    PVOID Block,
-    PULONG Reason,
-    BOOLEAN CheckPattern
-    );
+RtlpDphIsPageHeapBlock(PDPH_HEAP_ROOT Heap, PVOID Block, PULONG Reason, BOOLEAN CheckPattern);
 
 BOOLEAN
-RtlpDphWriteNormalHeapBlockInformation (
-    PDPH_HEAP_ROOT Heap,
-    PVOID Block,
-    SIZE_T RequestedSize,
-    SIZE_T ActualSize
-    );
+RtlpDphWriteNormalHeapBlockInformation(PDPH_HEAP_ROOT Heap, PVOID Block, SIZE_T RequestedSize, SIZE_T ActualSize);
 
 BOOLEAN
-RtlpDphWritePageHeapBlockInformation (
-    PDPH_HEAP_ROOT Heap,
-    PVOID Block,
-    SIZE_T RequestedSize,
-    SIZE_T ActualSize
-    );
+RtlpDphWritePageHeapBlockInformation(PDPH_HEAP_ROOT Heap, PVOID Block, SIZE_T RequestedSize, SIZE_T ActualSize);
 
 BOOLEAN
-RtlpDphGetBlockSizeFromCorruptedBlock (
-    PVOID Block,
-    PSIZE_T Size
-    );
+RtlpDphGetBlockSizeFromCorruptedBlock(PVOID Block, PSIZE_T Size);
 
 //
 // Delayed free queue (of normal heap allocations) management
 //
 
-VOID
-RtlpDphInitializeDelayedFreeQueue (
-    );
+VOID RtlpDphInitializeDelayedFreeQueue();
 
-VOID
-RtlpDphAddToDelayedFreeQueue (
-    PDPH_BLOCK_INFORMATION Info
-    );
+VOID RtlpDphAddToDelayedFreeQueue(PDPH_BLOCK_INFORMATION Info);
 
 BOOLEAN
-RtlpDphNeedToTrimDelayedFreeQueue (
-    PSIZE_T TrimSize
-    );
+RtlpDphNeedToTrimDelayedFreeQueue(PSIZE_T TrimSize);
 
-VOID
-RtlpDphTrimDelayedFreeQueue (
-    SIZE_T TrimSize,
-    ULONG Flags
-    );
+VOID RtlpDphTrimDelayedFreeQueue(SIZE_T TrimSize, ULONG Flags);
 
-VOID
-RtlpDphFreeDelayedBlocksFromHeap (
-    PVOID PageHeap,
-    PVOID NormalHeap
-    );
+VOID RtlpDphFreeDelayedBlocksFromHeap(PVOID PageHeap, PVOID NormalHeap);
 
 //
 // Decision normal heap vs. page heap
 //
 
 BOOLEAN
-RtlpDphShouldAllocateInPageHeap (
-    PDPH_HEAP_ROOT Heap,
-    SIZE_T Size
-    );
+RtlpDphShouldAllocateInPageHeap(PDPH_HEAP_ROOT Heap, SIZE_T Size);
 
 BOOLEAN
-RtlpDphVmLimitCanUsePageHeap (
-    );
+RtlpDphVmLimitCanUsePageHeap();
 
 //
 // Stack trace detection for trace database.
 //
 
 PRTL_TRACE_BLOCK
-RtlpDphLogStackTrace (
-    ULONG FramesToSkip
-    );
+RtlpDphLogStackTrace(ULONG FramesToSkip);
 
 //
 //  Page heap general support functions
 //
 
-VOID
-RtlpDebugPageHeapBreak(
-    IN PCH Text
-    );
+VOID RtlpDebugPageHeapBreak(IN PCH Text);
 
 BOOLEAN
-RtlpDebugPageHeapAssert(
-    IN PCH Text
-    );
+RtlpDebugPageHeapAssert(IN PCH Text);
 
-VOID
-RtlpDebugPageHeapEnterCritSect(
-    IN PDPH_HEAP_ROOT HeapRoot,
-    IN ULONG          Flags
-    );
+VOID RtlpDebugPageHeapEnterCritSect(IN PDPH_HEAP_ROOT HeapRoot, IN ULONG Flags);
 
 INLINE
-VOID
-RtlpDebugPageHeapLeaveCritSect(
-    IN PDPH_HEAP_ROOT HeapRoot
-    );
+VOID RtlpDebugPageHeapLeaveCritSect(IN PDPH_HEAP_ROOT HeapRoot);
 
-VOID
-RtlpDebugPageHeapException(
-    IN ULONG ExceptionCode
-    );
+VOID RtlpDebugPageHeapException(IN ULONG ExceptionCode);
 
 PVOID
-RtlpDebugPageHeapPointerFromHandle(
-    IN PVOID HeapHandle
-    );
+RtlpDebugPageHeapPointerFromHandle(IN PVOID HeapHandle);
 
-PCCH
-RtlpDebugPageHeapProtectionText(
-    IN     ULONG Access,
-    IN OUT PCHAR Buffer
-    );
+PCCH RtlpDebugPageHeapProtectionText(IN ULONG Access, IN OUT PCHAR Buffer);
 
 //
 // Virtual memory manipulation functions
 //
 
 BOOLEAN
-RtlpDebugPageHeapRobustProtectVM(
-    IN PVOID   VirtualBase,
-    IN SIZE_T  VirtualSize,
-    IN ULONG   NewAccess,
-    IN BOOLEAN Recursion
-    );
+RtlpDebugPageHeapRobustProtectVM(IN PVOID VirtualBase, IN SIZE_T VirtualSize, IN ULONG NewAccess, IN BOOLEAN Recursion);
 
 INLINE
 BOOLEAN
-RtlpDebugPageHeapProtectVM(
-    IN PVOID   VirtualBase,
-    IN SIZE_T  VirtualSize,
-    IN ULONG   NewAccess
-    );
+RtlpDebugPageHeapProtectVM(IN PVOID VirtualBase, IN SIZE_T VirtualSize, IN ULONG NewAccess);
 
 INLINE
 PVOID
-RtlpDebugPageHeapAllocateVM(
-    IN SIZE_T nSize
-    );
+RtlpDebugPageHeapAllocateVM(IN SIZE_T nSize);
 
 INLINE
 BOOLEAN
-RtlpDebugPageHeapReleaseVM(
-    IN PVOID pVirtual
-    );
+RtlpDebugPageHeapReleaseVM(IN PVOID pVirtual);
 
 INLINE
 BOOLEAN
-RtlpDebugPageHeapCommitVM(
-    IN PVOID pVirtual,
-    IN SIZE_T nSize
-    );
+RtlpDebugPageHeapCommitVM(IN PVOID pVirtual, IN SIZE_T nSize);
 
 INLINE
 BOOLEAN
-RtlpDebugPageHeapDecommitVM(
-    IN PVOID pVirtual,
-    IN SIZE_T nSize
-    );
+RtlpDebugPageHeapDecommitVM(IN PVOID pVirtual, IN SIZE_T nSize);
 
 //
 // Target dlls logic
@@ -611,103 +488,68 @@ RtlpDebugPageHeapDecommitVM(
 // space.
 //
 
-VOID
-RtlpDphTargetDllsLogicInitialize (
-    );
+VOID RtlpDphTargetDllsLogicInitialize();
 
-VOID
-RtlpDphTargetDllsLoadCallBack (
-    PUNICODE_STRING Name,
-    PVOID Address,
-    ULONG Size
-    );
+VOID RtlpDphTargetDllsLoadCallBack(PUNICODE_STRING Name, PVOID Address, ULONG Size);
 
-const WCHAR *
-RtlpDphIsDllTargeted (
-    const WCHAR * Name
-    );
+const WCHAR *RtlpDphIsDllTargeted(const WCHAR *Name);
 
 //
 // Internal heap validation
 //
 
-VOID
-RtlpDphInternalValidatePageHeap (
-    PDPH_HEAP_ROOT Heap,
-    PUCHAR ExemptAddress,
-    SIZE_T ExemptSize
-    );
+VOID RtlpDphInternalValidatePageHeap(PDPH_HEAP_ROOT Heap, PUCHAR ExemptAddress, SIZE_T ExemptSize);
 
-VOID
-RtlpDphValidateInternalLists (
-    PDPH_HEAP_ROOT Heap
-    );
+VOID RtlpDphValidateInternalLists(PDPH_HEAP_ROOT Heap);
 
 //
 // Fault injection logic
 //
 
 BOOLEAN
-RtlpDphShouldFaultInject (
-    );
+RtlpDphShouldFaultInject();
 
 
 //
 // Free delayed cache internal checking
 //
 
-VOID
-RtlpDphCheckFreeDelayedCache (
-    PVOID CheckBlock,
-    SIZE_T CheckSize
-    );
+VOID RtlpDphCheckFreeDelayedCache(PVOID CheckBlock, SIZE_T CheckSize);
 
 
 //
 // Defined in \base\ntdll\resource.c
 //
 
-VOID
-RtlpCheckForCriticalSectionsInMemoryRange(
-    IN PVOID StartAddress,
-    IN SIZE_T RegionSize,
-    IN PVOID Information
-    );
+VOID RtlpCheckForCriticalSectionsInMemoryRange(IN PVOID StartAddress, IN SIZE_T RegionSize, IN PVOID Information);
 
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////////// Page heap general support functions
 /////////////////////////////////////////////////////////////////////
 
-VOID
-RtlpDebugPageHeapBreak(
-    IN PCH Text
-    )
+VOID RtlpDebugPageHeapBreak(IN PCH Text)
 {
-    DbgPrint( Text );
+    DbgPrint(Text);
     DbgBreakPoint();
 }
 
 BOOLEAN
-RtlpDebugPageHeapAssert(
-    IN PCH Text
-    )
+RtlpDebugPageHeapAssert(IN PCH Text)
 {
-    RtlpDebugPageHeapBreak( Text );
+    RtlpDebugPageHeapBreak(Text);
     return FALSE;
 }
 
-VOID
-RtlpDebugPageHeapEnterCritSect(
-    IN PDPH_HEAP_ROOT HeapRoot,
-    IN ULONG          Flags
-    )
+VOID RtlpDebugPageHeapEnterCritSect(IN PDPH_HEAP_ROOT HeapRoot, IN ULONG Flags)
 {
-    if (HeapRoot->FirstThread == NULL) {
+    if (HeapRoot->FirstThread == NULL)
+    {
         HeapRoot->FirstThread = NtCurrentTeb()->ClientId.UniqueThread;
     }
 
-    if (Flags & HEAP_NO_SERIALIZE) {
+    if (Flags & HEAP_NO_SERIALIZE)
+    {
 
         //
         // If current thread has a different ID than the first thread
@@ -717,27 +559,31 @@ RtlpDebugPageHeapEnterCritSect(
         // NT heap APIs with no_serialize flag set.
         //
         // Note. We avoid this check if we do not have the specific flag
-        // on. This is so because MPheap-like heaps can give false 
+        // on. This is so because MPheap-like heaps can give false
         // positives.
         //
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CHECK_NO_SERIALIZE_ACCESS)) {
-            if (RtlpDebugPageHeapPointerFromHandle(RtlProcessHeap()) != HeapRoot) {
-                if (HeapRoot->FirstThread != NtCurrentTeb()->ClientId.UniqueThread) {
-                    
-                    VERIFIER_STOP (APPLICATION_VERIFIER_UNSYNCHRONIZED_ACCESS,
-                                   "multithreaded access in HEAP_NO_SERIALIZE heap",
-                                   HeapRoot, "Heap handle",
-                                   HeapRoot->FirstThread, "First thread that used the heap",
-                                   NtCurrentTeb()->ClientId.UniqueThread, "Current thread using the heap",
-                                   1, "/no_sync option used");
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CHECK_NO_SERIALIZE_ACCESS))
+        {
+            if (RtlpDebugPageHeapPointerFromHandle(RtlProcessHeap()) != HeapRoot)
+            {
+                if (HeapRoot->FirstThread != NtCurrentTeb()->ClientId.UniqueThread)
+                {
+
+                    VERIFIER_STOP(APPLICATION_VERIFIER_UNSYNCHRONIZED_ACCESS,
+                                  "multithreaded access in HEAP_NO_SERIALIZE heap", HeapRoot, "Heap handle",
+                                  HeapRoot->FirstThread, "First thread that used the heap",
+                                  NtCurrentTeb()->ClientId.UniqueThread, "Current thread using the heap", 1,
+                                  "/no_sync option used");
                 }
             }
         }
 
-        if (! RtlTryEnterCriticalSection( HeapRoot->HeapCritSect )) {
+        if (!RtlTryEnterCriticalSection(HeapRoot->HeapCritSect))
+        {
 
-            if (HeapRoot->nRemoteLockAcquired == 0) {
+            if (HeapRoot->nRemoteLockAcquired == 0)
+            {
 
                 //
                 //  Another thread owns the CritSect.  This is an application
@@ -745,12 +591,10 @@ RtlpDebugPageHeapEnterCritSect(
                 //  the HEAP_NO_SERIALIZE flag specified.
                 //
 
-                VERIFIER_STOP (APPLICATION_VERIFIER_UNSYNCHRONIZED_ACCESS,
-                               "multithreaded access in HEAP_NO_SERIALIZE heap",
-                               HeapRoot, "Heap handle",
-                               HeapRoot->HeapCritSect->OwningThread, "Thread owning heap lock",
-                               NtCurrentTeb()->ClientId.UniqueThread, "Current thread trying to acquire the heap lock",
-                               0, "");
+                VERIFIER_STOP(
+                    APPLICATION_VERIFIER_UNSYNCHRONIZED_ACCESS, "multithreaded access in HEAP_NO_SERIALIZE heap",
+                    HeapRoot, "Heap handle", HeapRoot->HeapCritSect->OwningThread, "Thread owning heap lock",
+                    NtCurrentTeb()->ClientId.UniqueThread, "Current thread trying to acquire the heap lock", 0, "");
 
                 //
                 //  In the interest of allowing the errant app to continue,
@@ -758,86 +602,87 @@ RtlpDebugPageHeapEnterCritSect(
                 //
 
                 HeapRoot->HeapFlags &= ~HEAP_NO_SERIALIZE;
-
             }
 
-            RtlEnterCriticalSection( HeapRoot->HeapCritSect );
-
+            RtlEnterCriticalSection(HeapRoot->HeapCritSect);
         }
     }
-    else {
-        RtlEnterCriticalSection( HeapRoot->HeapCritSect );
+    else
+    {
+        RtlEnterCriticalSection(HeapRoot->HeapCritSect);
     }
 }
 
 INLINE
-VOID
-RtlpDebugPageHeapLeaveCritSect(
-    IN PDPH_HEAP_ROOT HeapRoot
-    )
+VOID RtlpDebugPageHeapLeaveCritSect(IN PDPH_HEAP_ROOT HeapRoot)
 {
-    RtlLeaveCriticalSection( HeapRoot->HeapCritSect );
+    RtlLeaveCriticalSection(HeapRoot->HeapCritSect);
 }
 
-VOID
-RtlpDebugPageHeapException(
-    IN ULONG ExceptionCode
-    )
+VOID RtlpDebugPageHeapException(IN ULONG ExceptionCode)
 {
     EXCEPTION_RECORD ER;
 
-    ER.ExceptionCode    = ExceptionCode;
-    ER.ExceptionFlags   = 0;
-    ER.ExceptionRecord  = NULL;
+    ER.ExceptionCode = ExceptionCode;
+    ER.ExceptionFlags = 0;
+    ER.ExceptionRecord = NULL;
     ER.ExceptionAddress = RtlpDebugPageHeapException;
     ER.NumberParameters = 0;
-    RtlRaiseException( &ER );
+    RtlRaiseException(&ER);
 }
 
 PVOID
-RtlpDebugPageHeapPointerFromHandle(
-    IN PVOID HeapHandle
-    )
+RtlpDebugPageHeapPointerFromHandle(IN PVOID HeapHandle)
 {
-    try {
-        if (((PHEAP)(HeapHandle))->ForceFlags & HEAP_FLAG_PAGE_ALLOCS) {
+    try
+    {
+        if (((PHEAP)(HeapHandle))->ForceFlags & HEAP_FLAG_PAGE_ALLOCS)
+        {
 
-            PDPH_HEAP_ROOT HeapRoot = (PVOID)(((PCHAR)(HeapHandle)) + PAGE_SIZE );
+            PDPH_HEAP_ROOT HeapRoot = (PVOID)(((PCHAR)(HeapHandle)) + PAGE_SIZE);
 
-            if (HeapRoot->Signature == DPH_HEAP_SIGNATURE) {
+            if (HeapRoot->Signature == DPH_HEAP_SIGNATURE)
+            {
                 return HeapRoot;
             }
         }
     }
-    except( EXCEPTION_EXECUTE_HANDLER ) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
     }
 
-    VERIFIER_STOP (APPLICATION_VERIFIER_BAD_HEAP_HANDLE,
-                   "heap handle with incorrect signature",
-                   HeapHandle, "Heap handle", 
-                   0, "", 0, "", 0, "");
+    VERIFIER_STOP(APPLICATION_VERIFIER_BAD_HEAP_HANDLE, "heap handle with incorrect signature", HeapHandle,
+                  "Heap handle", 0, "", 0, "", 0, "");
 
     return NULL;
 }
 
-PCCH
-RtlpDebugPageHeapProtectionText(
-    IN     ULONG Access,
-    IN OUT PCHAR Buffer
-    )
+PCCH RtlpDebugPageHeapProtectionText(IN ULONG Access, IN OUT PCHAR Buffer)
 {
-    switch (Access) {
-    case PAGE_NOACCESS:          return "PAGE_NOACCESS";
-    case PAGE_READONLY:          return "PAGE_READONLY";
-    case PAGE_READWRITE:         return "PAGE_READWRITE";
-    case PAGE_WRITECOPY:         return "PAGE_WRITECOPY";
-    case PAGE_EXECUTE:           return "PAGE_EXECUTE";
-    case PAGE_EXECUTE_READ:      return "PAGE_EXECUTE_READ";
-    case PAGE_EXECUTE_READWRITE: return "PAGE_EXECUTE_READWRITE";
-    case PAGE_EXECUTE_WRITECOPY: return "PAGE_EXECUTE_WRITECOPY";
-    case PAGE_GUARD:             return "PAGE_GUARD";
-    case 0:                      return "UNKNOWN";
-    default:                     sprintf( Buffer, "0x%08X", Access );
+    switch (Access)
+    {
+    case PAGE_NOACCESS:
+        return "PAGE_NOACCESS";
+    case PAGE_READONLY:
+        return "PAGE_READONLY";
+    case PAGE_READWRITE:
+        return "PAGE_READWRITE";
+    case PAGE_WRITECOPY:
+        return "PAGE_WRITECOPY";
+    case PAGE_EXECUTE:
+        return "PAGE_EXECUTE";
+    case PAGE_EXECUTE_READ:
+        return "PAGE_EXECUTE_READ";
+    case PAGE_EXECUTE_READWRITE:
+        return "PAGE_EXECUTE_READWRITE";
+    case PAGE_EXECUTE_WRITECOPY:
+        return "PAGE_EXECUTE_WRITECOPY";
+    case PAGE_GUARD:
+        return "PAGE_GUARD";
+    case 0:
+        return "UNKNOWN";
+    default:
+        sprintf(Buffer, "0x%08X", Access);
         return Buffer;
     }
 }
@@ -847,30 +692,20 @@ RtlpDebugPageHeapProtectionText(
 /////////////////////////////////////////////////////////////////////
 
 BOOLEAN
-RtlpDebugPageHeapRobustProtectVM(
-    IN PVOID   VirtualBase,
-    IN SIZE_T  VirtualSize,
-    IN ULONG   NewAccess,
-    IN BOOLEAN Recursion
-    )
+RtlpDebugPageHeapRobustProtectVM(IN PVOID VirtualBase, IN SIZE_T VirtualSize, IN ULONG NewAccess, IN BOOLEAN Recursion)
 {
-    PVOID  CopyOfVirtualBase = VirtualBase;
+    PVOID CopyOfVirtualBase = VirtualBase;
     SIZE_T CopyOfVirtualSize = VirtualSize;
-    ULONG  OldAccess;
+    ULONG OldAccess;
     NTSTATUS Status;
 
-    Status = ZwProtectVirtualMemory(
-        NtCurrentProcess(),
-        &CopyOfVirtualBase,
-        &CopyOfVirtualSize,
-        NewAccess,
-        &OldAccess
-        );
+    Status = ZwProtectVirtualMemory(NtCurrentProcess(), &CopyOfVirtualBase, &CopyOfVirtualSize, NewAccess, &OldAccess);
 
-    if (NT_SUCCESS( Status ))
+    if (NT_SUCCESS(Status))
         return TRUE;
 
-    if (! Recursion) {
+    if (!Recursion)
+    {
 
         //
         //  We failed to change the protection on a range of memory.
@@ -883,57 +718,42 @@ RtlpDebugPageHeapRobustProtectVM(
         //  This should be rare, so it should not be a performance problem.
         //
 
-        PCHAR VirtualExtent = (PCHAR)ROUNDUP2((ULONG_PTR)((PCHAR)VirtualBase + VirtualSize ), PAGE_SIZE );
-        PCHAR VirtualPage   = (PCHAR)((ULONG_PTR)VirtualBase & ~( PAGE_SIZE - 1 ));
-        BOOLEAN SuccessAll  = TRUE;
+        PCHAR VirtualExtent = (PCHAR)ROUNDUP2((ULONG_PTR)((PCHAR)VirtualBase + VirtualSize), PAGE_SIZE);
+        PCHAR VirtualPage = (PCHAR)((ULONG_PTR)VirtualBase & ~(PAGE_SIZE - 1));
+        BOOLEAN SuccessAll = TRUE;
         BOOLEAN SuccessOne;
 
-        while (VirtualPage < VirtualExtent) {
+        while (VirtualPage < VirtualExtent)
+        {
 
-            SuccessOne = RtlpDebugPageHeapRobustProtectVM(
-                VirtualPage,
-                PAGE_SIZE,
-                NewAccess,
-                TRUE
-                );
+            SuccessOne = RtlpDebugPageHeapRobustProtectVM(VirtualPage, PAGE_SIZE, NewAccess, TRUE);
 
-            if (! SuccessOne) {
+            if (!SuccessOne)
+            {
                 SuccessAll = FALSE;
             }
 
             VirtualPage += PAGE_SIZE;
-
         }
 
-        return SuccessAll;      // TRUE if all succeeded, FALSE if any failed
+        return SuccessAll; // TRUE if all succeeded, FALSE if any failed
     }
 
-    else {
+    else
+    {
 
         MEMORY_BASIC_INFORMATION mbi;
-        CHAR OldProtectionText[ 12 ];     // big enough for "0x12345678"
-        CHAR NewProtectionText[ 12 ];     // big enough for "0x12345678"
+        CHAR OldProtectionText[12]; // big enough for "0x12345678"
+        CHAR NewProtectionText[12]; // big enough for "0x12345678"
 
-        mbi.Protect = 0;    // in case ZwQueryVirtualMemory fails
+        mbi.Protect = 0; // in case ZwQueryVirtualMemory fails
 
-        ZwQueryVirtualMemory(
-            NtCurrentProcess(),
-            VirtualBase,
-            MemoryBasicInformation,
-            &mbi,
-            sizeof( mbi ),
-            NULL
-            );
+        ZwQueryVirtualMemory(NtCurrentProcess(), VirtualBase, MemoryBasicInformation, &mbi, sizeof(mbi), NULL);
 
-        DbgPrint(
-            "Page heap: Failed changing VM at %08X size 0x%X\n"
-            "          from %s to %s (Status %08X)\n",
-            VirtualBase,
-            VirtualSize,
-            RtlpDebugPageHeapProtectionText( mbi.Protect, OldProtectionText ),
-            RtlpDebugPageHeapProtectionText( NewAccess, NewProtectionText ),
-            Status
-            );
+        DbgPrint("Page heap: Failed changing VM at %08X size 0x%X\n"
+                 "          from %s to %s (Status %08X)\n",
+                 VirtualBase, VirtualSize, RtlpDebugPageHeapProtectionText(mbi.Protect, OldProtectionText),
+                 RtlpDebugPageHeapProtectionText(NewAccess, NewProtectionText), Status);
     }
 
     return FALSE;
@@ -941,56 +761,37 @@ RtlpDebugPageHeapRobustProtectVM(
 
 INLINE
 BOOLEAN
-RtlpDebugPageHeapProtectVM(
-    IN PVOID   VirtualBase,
-    IN SIZE_T  VirtualSize,
-    IN ULONG   NewAccess
-    )
+RtlpDebugPageHeapProtectVM(IN PVOID VirtualBase, IN SIZE_T VirtualSize, IN ULONG NewAccess)
 {
-    return RtlpDebugPageHeapRobustProtectVM( VirtualBase, VirtualSize, NewAccess, FALSE );
+    return RtlpDebugPageHeapRobustProtectVM(VirtualBase, VirtualSize, NewAccess, FALSE);
 }
 
 INLINE
 PVOID
-RtlpDebugPageHeapAllocateVM(
-    IN SIZE_T nSize
-    )
+RtlpDebugPageHeapAllocateVM(IN SIZE_T nSize)
 {
     NTSTATUS Status;
     PVOID pVirtual;
 
     pVirtual = NULL;
 
-    Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-        &pVirtual,
-        0,
-        &nSize,
-        MEM_COMMIT,
-        PAGE_NOACCESS );
+    Status = ZwAllocateVirtualMemory(NtCurrentProcess(), &pVirtual, 0, &nSize, MEM_COMMIT, PAGE_NOACCESS);
 
-    return NT_SUCCESS( Status ) ? pVirtual : NULL;
+    return NT_SUCCESS(Status) ? pVirtual : NULL;
 }
 
 INLINE
 BOOLEAN
-RtlpDebugPageHeapReleaseVM(
-    IN PVOID pVirtual
-    )
+RtlpDebugPageHeapReleaseVM(IN PVOID pVirtual)
 {
     SIZE_T nSize = 0;
 
-    return NT_SUCCESS( RtlpHeapFreeVirtualMemory( NtCurrentProcess(),
-        &pVirtual,
-        &nSize,
-        MEM_RELEASE ));
+    return NT_SUCCESS(RtlpHeapFreeVirtualMemory(NtCurrentProcess(), &pVirtual, &nSize, MEM_RELEASE));
 }
 
 INLINE
 BOOLEAN
-RtlpDebugPageHeapCommitVM(
-    IN PVOID pVirtual,
-    IN SIZE_T nSize
-    )
+RtlpDebugPageHeapCommitVM(IN PVOID pVirtual, IN SIZE_T nSize)
 {
     PCHAR pStart, pEnd, pCurrent;
     NTSTATUS Status;
@@ -1000,33 +801,26 @@ RtlpDebugPageHeapCommitVM(
     pStart = (PCHAR)((ULONG_PTR)pVirtual & ~(PAGE_SIZE - 1));
     pEnd = (PCHAR)(((ULONG_PTR)pVirtual + nSize) & ~(PAGE_SIZE - 1));
 
-    for (pCurrent = pStart; pCurrent < pEnd; pCurrent += PAGE_SIZE) {
+    for (pCurrent = pStart; pCurrent < pEnd; pCurrent += PAGE_SIZE)
+    {
 
         CommitSize = PAGE_SIZE;
 
-        Status = ZwAllocateVirtualMemory(
-            NtCurrentProcess(),
-            &pCurrent,
-            0,
-            &CommitSize,
-            MEM_COMMIT,
-            PAGE_NOACCESS);
+        Status = ZwAllocateVirtualMemory(NtCurrentProcess(), &pCurrent, 0, &CommitSize, MEM_COMMIT, PAGE_NOACCESS);
 
-        if (! NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // The call can fail in low memory conditions. In this case we
             // try to recover and will probably fail the original allocation.
             //
 
-            if ((RtlpDphDebugLevel & DPH_DEBUG_DECOMMIT_RANGES)) {
+            if ((RtlpDphDebugLevel & DPH_DEBUG_DECOMMIT_RANGES))
+            {
 
-                VERIFIER_STOP (APPLICATION_VERIFIER_INTERNAL_WARNING,
-                               "page heap failed to commit memory",
-                               pCurrent, "",
-                               CommitSize, "",
-                               Status, "",
-                               0, "");
+                VERIFIER_STOP(APPLICATION_VERIFIER_INTERNAL_WARNING, "page heap failed to commit memory", pCurrent, "",
+                              CommitSize, "", Status, "", 0, "");
             }
 
             Failed = TRUE;
@@ -1035,53 +829,47 @@ RtlpDebugPageHeapCommitVM(
     }
 
 
-    if (Failed) {
+    if (Failed)
+    {
 
         //
         // We need to roll back whatever succeeded.
         //
 
-        for (pCurrent -= PAGE_SIZE; pCurrent >= pStart && pCurrent < pEnd; pCurrent -= PAGE_SIZE) {
+        for (pCurrent -= PAGE_SIZE; pCurrent >= pStart && pCurrent < pEnd; pCurrent -= PAGE_SIZE)
+        {
 
             CommitSize = PAGE_SIZE;
 
-            Status = RtlpHeapFreeVirtualMemory(
-                NtCurrentProcess(),
-                &pCurrent,
-                &CommitSize,
-                MEM_DECOMMIT);
+            Status = RtlpHeapFreeVirtualMemory(NtCurrentProcess(), &pCurrent, &CommitSize, MEM_DECOMMIT);
 
-            if (! NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 //
                 // There is now valid reason known to me for a correct free operation
                 // failure. So, in this case we make a little bit of fuss about it.
                 //
 
-                VERIFIER_STOP (APPLICATION_VERIFIER_INTERNAL_WARNING,
-                               "page heap failed to decommit memory",
-                               pCurrent, "",
-                               CommitSize, "",
-                               Status, "",
-                               0, "");
+                VERIFIER_STOP(APPLICATION_VERIFIER_INTERNAL_WARNING, "page heap failed to decommit memory", pCurrent,
+                              "", CommitSize, "", Status, "", 0, "");
             }
         }
     }
 
-    if (Failed) {
+    if (Failed)
+    {
         return FALSE;
     }
-    else {
+    else
+    {
         return TRUE;
     }
 }
 
 INLINE
 BOOLEAN
-RtlpDebugPageHeapDecommitVM(
-    IN PVOID pVirtual,
-    IN SIZE_T nSize
-    )
+RtlpDebugPageHeapDecommitVM(IN PVOID pVirtual, IN SIZE_T nSize)
 {
     PCHAR pStart, pEnd, pCurrent;
     NTSTATUS Status;
@@ -1091,38 +879,34 @@ RtlpDebugPageHeapDecommitVM(
     pStart = (PCHAR)((ULONG_PTR)pVirtual & ~(PAGE_SIZE - 1));
     pEnd = (PCHAR)(((ULONG_PTR)pVirtual + nSize) & ~(PAGE_SIZE - 1));
 
-    for (pCurrent = pStart; pCurrent < pEnd; pCurrent += PAGE_SIZE) {
+    for (pCurrent = pStart; pCurrent < pEnd; pCurrent += PAGE_SIZE)
+    {
 
         DecommitSize = PAGE_SIZE;
 
-        Status = RtlpHeapFreeVirtualMemory(
-            NtCurrentProcess(),
-            &pCurrent,
-            &DecommitSize,
-            MEM_DECOMMIT);
+        Status = RtlpHeapFreeVirtualMemory(NtCurrentProcess(), &pCurrent, &DecommitSize, MEM_DECOMMIT);
 
-        if (! NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // There is now valid reason known to me for a correct free operation
             // failure. So, in this case we make a little bit of fuss about it.
             //
 
-            VERIFIER_STOP (APPLICATION_VERIFIER_INTERNAL_WARNING,
-                           "page heap failed to commit memory",
-                           pCurrent, "",
-                           DecommitSize, "",
-                           Status, "",
-                           0, "");
+            VERIFIER_STOP(APPLICATION_VERIFIER_INTERNAL_WARNING, "page heap failed to commit memory", pCurrent, "",
+                          DecommitSize, "", Status, "", 0, "");
 
             Failed = TRUE;
         }
     }
 
-    if (Failed) {
+    if (Failed)
+    {
         return FALSE;
     }
-    else {
+    else
+    {
         return TRUE;
     }
 }
@@ -1132,9 +916,7 @@ RtlpDebugPageHeapDecommitVM(
 /////////////////////////////////////////////////////////////////////
 
 PDPH_HEAP_BLOCK
-RtlpDebugPageHeapTakeNodeFromUnusedList(
-    IN PDPH_HEAP_ROOT pHeap
-    )
+RtlpDebugPageHeapTakeNodeFromUnusedList(IN PDPH_HEAP_ROOT pHeap)
 {
     PDPH_HEAP_BLOCK pNode = pHeap->pUnusedNodeListHead;
     PDPH_HEAP_BLOCK pPrev = NULL;
@@ -1143,45 +925,39 @@ RtlpDebugPageHeapTakeNodeFromUnusedList(
     //  UnusedNodeList is LIFO with most recent entry at head of list.
     //
 
-    if (pNode) {
+    if (pNode)
+    {
 
-        DEQUEUE_NODE( pNode, pPrev, pHeap->pUnusedNodeListHead, pHeap->pUnusedNodeListTail );
+        DEQUEUE_NODE(pNode, pPrev, pHeap->pUnusedNodeListHead, pHeap->pUnusedNodeListTail);
 
         pHeap->nUnusedNodes -= 1;
-
     }
 
     return pNode;
 }
 
-VOID
-RtlpDebugPageHeapReturnNodeToUnusedList(
-    IN PDPH_HEAP_ROOT       pHeap,
-    IN PDPH_HEAP_BLOCK pNode
-    )
+VOID RtlpDebugPageHeapReturnNodeToUnusedList(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pNode)
 {
     //
     //  UnusedNodeList is LIFO with most recent entry at head of list.
     //
 
-    ENQUEUE_HEAD( pNode, pHeap->pUnusedNodeListHead, pHeap->pUnusedNodeListTail );
+    ENQUEUE_HEAD(pNode, pHeap->pUnusedNodeListHead, pHeap->pUnusedNodeListTail);
 
     pHeap->nUnusedNodes += 1;
 }
 
 PDPH_HEAP_BLOCK
-RtlpDebugPageHeapFindBusyMem(
-    IN  PDPH_HEAP_ROOT        pHeap,
-    IN  PVOID                 pUserMem,
-    OUT PDPH_HEAP_BLOCK *pPrevAlloc
-    )
+RtlpDebugPageHeapFindBusyMem(IN PDPH_HEAP_ROOT pHeap, IN PVOID pUserMem, OUT PDPH_HEAP_BLOCK *pPrevAlloc)
 {
     PDPH_HEAP_BLOCK pNode = pHeap->pBusyAllocationListHead;
     PDPH_HEAP_BLOCK pPrev = NULL;
 
-    while (pNode != NULL) {
+    while (pNode != NULL)
+    {
 
-        if (pNode->pUserAllocation == pUserMem) {
+        if (pNode->pUserAllocation == pUserMem)
+        {
 
             if (pPrevAlloc)
                 *pPrevAlloc = pPrev;
@@ -1196,24 +972,16 @@ RtlpDebugPageHeapFindBusyMem(
     return NULL;
 }
 
-VOID
-RtlpDebugPageHeapRemoveFromAvailableList(
-    IN PDPH_HEAP_ROOT       pHeap,
-    IN PDPH_HEAP_BLOCK pNode,
-    IN PDPH_HEAP_BLOCK pPrev
-    )
+VOID RtlpDebugPageHeapRemoveFromAvailableList(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pNode,
+                                              IN PDPH_HEAP_BLOCK pPrev)
 {
-    DEQUEUE_NODE( pNode, pPrev, pHeap->pAvailableAllocationListHead, pHeap->pAvailableAllocationListTail );
+    DEQUEUE_NODE(pNode, pPrev, pHeap->pAvailableAllocationListHead, pHeap->pAvailableAllocationListTail);
 
     pHeap->nAvailableAllocations -= 1;
     pHeap->nAvailableAllocationBytesCommitted -= pNode->nVirtualBlockSize;
 }
 
-VOID
-RtlpDebugPageHeapPlaceOnFreeList(
-    IN PDPH_HEAP_ROOT       pHeap,
-    IN PDPH_HEAP_BLOCK pAlloc
-    )
+VOID RtlpDebugPageHeapPlaceOnFreeList(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pAlloc)
 {
     //
     //  FreeAllocationList is stored FIFO to enhance finding
@@ -1223,20 +991,15 @@ RtlpDebugPageHeapPlaceOnFreeList(
 
     pAlloc->pNextAlloc = NULL;
 
-    ENQUEUE_TAIL( pAlloc, pHeap->pFreeAllocationListHead, pHeap->pFreeAllocationListTail );
+    ENQUEUE_TAIL(pAlloc, pHeap->pFreeAllocationListHead, pHeap->pFreeAllocationListTail);
 
     pHeap->nFreeAllocations += 1;
     pHeap->nFreeAllocationBytesCommitted += pAlloc->nVirtualBlockSize;
 }
 
-VOID
-RtlpDebugPageHeapRemoveFromFreeList(
-    IN PDPH_HEAP_ROOT       pHeap,
-    IN PDPH_HEAP_BLOCK pNode,
-    IN PDPH_HEAP_BLOCK pPrev
-    )
+VOID RtlpDebugPageHeapRemoveFromFreeList(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pNode, IN PDPH_HEAP_BLOCK pPrev)
 {
-    DEQUEUE_NODE( pNode, pPrev, pHeap->pFreeAllocationListHead, pHeap->pFreeAllocationListTail );
+    DEQUEUE_NODE(pNode, pPrev, pHeap->pFreeAllocationListHead, pHeap->pFreeAllocationListTail);
 
     pHeap->nFreeAllocations -= 1;
     pHeap->nFreeAllocationBytesCommitted -= pNode->nVirtualBlockSize;
@@ -1244,83 +1007,69 @@ RtlpDebugPageHeapRemoveFromFreeList(
     pNode->StackTrace = NULL;
 }
 
-VOID
-RtlpDebugPageHeapPlaceOnVirtualList(
-    IN PDPH_HEAP_ROOT       pHeap,
-    IN PDPH_HEAP_BLOCK pNode
-    )
+VOID RtlpDebugPageHeapPlaceOnVirtualList(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pNode)
 {
     //
     //  VirtualStorageList is LIFO so that releasing VM blocks will
     //  occur in exact reverse order.
     //
 
-    ENQUEUE_HEAD( pNode, pHeap->pVirtualStorageListHead, pHeap->pVirtualStorageListTail );
+    ENQUEUE_HEAD(pNode, pHeap->pVirtualStorageListHead, pHeap->pVirtualStorageListTail);
 
     pHeap->nVirtualStorageRanges += 1;
     pHeap->nVirtualStorageBytes += pNode->nVirtualBlockSize;
 }
 
-VOID
-RtlpDebugPageHeapPlaceOnBusyList(
-    IN PDPH_HEAP_ROOT       pHeap,
-    IN PDPH_HEAP_BLOCK pNode
-    )
+VOID RtlpDebugPageHeapPlaceOnBusyList(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pNode)
 {
     //
     //  BusyAllocationList is LIFO to achieve better temporal locality
     //  of reference (older allocations are farther down the list).
     //
 
-    ENQUEUE_HEAD( pNode, pHeap->pBusyAllocationListHead, pHeap->pBusyAllocationListTail );
+    ENQUEUE_HEAD(pNode, pHeap->pBusyAllocationListHead, pHeap->pBusyAllocationListTail);
 
     pHeap->nBusyAllocations += 1;
-    pHeap->nBusyAllocationBytesCommitted  += pNode->nVirtualBlockSize;
+    pHeap->nBusyAllocationBytesCommitted += pNode->nVirtualBlockSize;
     pHeap->nBusyAllocationBytesAccessible += pNode->nVirtualAccessSize;
 }
 
-VOID
-RtlpDebugPageHeapRemoveFromBusyList(
-    IN PDPH_HEAP_ROOT       pHeap,
-    IN PDPH_HEAP_BLOCK pNode,
-    IN PDPH_HEAP_BLOCK pPrev
-    )
+VOID RtlpDebugPageHeapRemoveFromBusyList(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pNode, IN PDPH_HEAP_BLOCK pPrev)
 {
-    DEQUEUE_NODE( pNode, pPrev, pHeap->pBusyAllocationListHead, pHeap->pBusyAllocationListTail );
+    DEQUEUE_NODE(pNode, pPrev, pHeap->pBusyAllocationListHead, pHeap->pBusyAllocationListTail);
 
     pHeap->nBusyAllocations -= 1;
-    pHeap->nBusyAllocationBytesCommitted  -= pNode->nVirtualBlockSize;
+    pHeap->nBusyAllocationBytesCommitted -= pNode->nVirtualBlockSize;
     pHeap->nBusyAllocationBytesAccessible -= pNode->nVirtualAccessSize;
 }
 
 PDPH_HEAP_BLOCK
-RtlpDebugPageHeapSearchAvailableMemListForBestFit(
-    IN  PDPH_HEAP_ROOT        pHeap,
-    IN  SIZE_T                nSize,
-    OUT PDPH_HEAP_BLOCK *pPrevAvailNode
-    )
+RtlpDebugPageHeapSearchAvailableMemListForBestFit(IN PDPH_HEAP_ROOT pHeap, IN SIZE_T nSize,
+                                                  OUT PDPH_HEAP_BLOCK *pPrevAvailNode)
 {
     PDPH_HEAP_BLOCK pAvail, pFound, pAvailPrev, pFoundPrev;
     SIZE_T nAvail, nFound;
 
-    nFound     = 0x7FFFFFFF;
-    pFound     = NULL;
+    nFound = 0x7FFFFFFF;
+    pFound = NULL;
     pFoundPrev = NULL;
     pAvailPrev = NULL;
-    pAvail     = pHeap->pAvailableAllocationListHead;
+    pAvail = pHeap->pAvailableAllocationListHead;
 
-    while (( pAvail != NULL ) && ( nFound > nSize )) {
+    while ((pAvail != NULL) && (nFound > nSize))
+    {
 
         nAvail = pAvail->nVirtualBlockSize;
 
-        if (( nAvail >= nSize ) && ( nAvail < nFound )) {
-            nFound     = nAvail;
-            pFound     = pAvail;
+        if ((nAvail >= nSize) && (nAvail < nFound))
+        {
+            nFound = nAvail;
+            pFound = pAvail;
             pFoundPrev = pAvailPrev;
         }
 
         pAvailPrev = pAvail;
-        pAvail     = pAvail->pNextAlloc;
+        pAvail = pAvail->pNextAlloc;
     }
 
     *pPrevAvailNode = pFoundPrev;
@@ -1332,15 +1081,12 @@ RtlpDebugPageHeapSearchAvailableMemListForBestFit(
 // to avoid cross-VAD issues.
 //
 
-LONG RtlpDphCoalesceStatistics [4];
+LONG RtlpDphCoalesceStatistics[4];
 
 #define ALIGN_TO_SIZE(P, Sz) (((ULONG_PTR)(P)) & ~((ULONG_PTR)(Sz) - 1))
 
 BOOLEAN
-RtlpDphSameVirtualRegion (
-    IN PDPH_HEAP_BLOCK Left,
-    IN PDPH_HEAP_BLOCK Right
-    )
+RtlpDphSameVirtualRegion(IN PDPH_HEAP_BLOCK Left, IN PDPH_HEAP_BLOCK Right)
 /*++
 
 Routine description:
@@ -1365,10 +1111,10 @@ Routine description:
     // If blocks are in the same 64K chunk we are okay.
     //
 
-    if (ALIGN_TO_SIZE(Left->pVirtualBlock, VM_UNIT_SIZE) 
-        == ALIGN_TO_SIZE(Right->pVirtualBlock, VM_UNIT_SIZE)) {
+    if (ALIGN_TO_SIZE(Left->pVirtualBlock, VM_UNIT_SIZE) == ALIGN_TO_SIZE(Right->pVirtualBlock, VM_UNIT_SIZE))
+    {
 
-        InterlockedIncrement (&(RtlpDphCoalesceStatistics[2]));
+        InterlockedIncrement(&(RtlpDphCoalesceStatistics[2]));
         return TRUE;
     }
 
@@ -1377,50 +1123,42 @@ Routine description:
     // VAD for each node.
     //
 
-    Status = ZwQueryVirtualMemory (NtCurrentProcess(),
-                                   Left->pVirtualBlock,
-                                   MemoryBasicInformation,
-                                   &MemoryInfo,
-                                   sizeof MemoryInfo,
-                                   &ReturnLength);
-    
-    if (! NT_SUCCESS(Status)) {
-        InterlockedIncrement (&(RtlpDphCoalesceStatistics[3]));
+    Status = ZwQueryVirtualMemory(NtCurrentProcess(), Left->pVirtualBlock, MemoryBasicInformation, &MemoryInfo,
+                                  sizeof MemoryInfo, &ReturnLength);
+
+    if (!NT_SUCCESS(Status))
+    {
+        InterlockedIncrement(&(RtlpDphCoalesceStatistics[3]));
         return FALSE;
     }
 
     LeftRegion = MemoryInfo.AllocationBase;
 
-    Status = ZwQueryVirtualMemory (NtCurrentProcess(),
-                                   Right->pVirtualBlock,
-                                   MemoryBasicInformation,
-                                   &MemoryInfo,
-                                   sizeof MemoryInfo,
-                                   &ReturnLength);
-    
-    if (! NT_SUCCESS(Status)) {
-        InterlockedIncrement (&(RtlpDphCoalesceStatistics[3]));
+    Status = ZwQueryVirtualMemory(NtCurrentProcess(), Right->pVirtualBlock, MemoryBasicInformation, &MemoryInfo,
+                                  sizeof MemoryInfo, &ReturnLength);
+
+    if (!NT_SUCCESS(Status))
+    {
+        InterlockedIncrement(&(RtlpDphCoalesceStatistics[3]));
         return FALSE;
     }
 
-    if (LeftRegion == MemoryInfo.AllocationBase) {
-        
-        InterlockedIncrement (&(RtlpDphCoalesceStatistics[0]));
+    if (LeftRegion == MemoryInfo.AllocationBase)
+    {
+
+        InterlockedIncrement(&(RtlpDphCoalesceStatistics[0]));
         return TRUE;
     }
-    else {
+    else
+    {
 
-        InterlockedIncrement (&(RtlpDphCoalesceStatistics[1]));
+        InterlockedIncrement(&(RtlpDphCoalesceStatistics[1]));
         return FALSE;
     }
 }
 
 
-VOID
-RtlpDebugPageHeapCoalesceNodeIntoAvailable(
-    IN PDPH_HEAP_ROOT pHeap,
-    IN PDPH_HEAP_BLOCK pNode
-    )
+VOID RtlpDebugPageHeapCoalesceNodeIntoAvailable(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pNode)
 {
     PDPH_HEAP_BLOCK pPrev;
     PDPH_HEAP_BLOCK pNext;
@@ -1440,15 +1178,17 @@ RtlpDebugPageHeapCoalesceNodeIntoAvailable(
     //  Walk list to insertion point.
     //
 
-    while (( pNext ) && ( pNext->pVirtualBlock < pVirtual )) {
+    while ((pNext) && (pNext->pVirtualBlock < pVirtual))
+    {
         pPrev = pNext;
         pNext = pNext->pNextAlloc;
     }
 
-    if (pPrev) {
+    if (pPrev)
+    {
 
-        if (((pPrev->pVirtualBlock + pPrev->nVirtualBlockSize) == pVirtual) && 
-             RtlpDphSameVirtualRegion (pPrev, pNode)) {
+        if (((pPrev->pVirtualBlock + pPrev->nVirtualBlockSize) == pVirtual) && RtlpDphSameVirtualRegion(pPrev, pNode))
+        {
 
             //
             //  pPrev and pNode are adjacent, so simply add size of
@@ -1457,17 +1197,17 @@ RtlpDebugPageHeapCoalesceNodeIntoAvailable(
 
             pPrev->nVirtualBlockSize += nVirtual;
 
-            RtlpDebugPageHeapReturnNodeToUnusedList( pHeap, pNode );
+            RtlpDebugPageHeapReturnNodeToUnusedList(pHeap, pNode);
 
             pHeap->nAvailableAllocations--;
 
-            pNode    = pPrev;
+            pNode = pPrev;
             pVirtual = pPrev->pVirtualBlock;
             nVirtual = pPrev->nVirtualBlockSize;
-
         }
 
-        else {
+        else
+        {
 
             //
             //  pPrev and pNode are not adjacent, so insert the pNode
@@ -1476,11 +1216,11 @@ RtlpDebugPageHeapCoalesceNodeIntoAvailable(
 
             pNode->pNextAlloc = pPrev->pNextAlloc;
             pPrev->pNextAlloc = pNode;
-
         }
     }
 
-    else {
+    else
+    {
 
         //
         //  pNode should be inserted at head of list.
@@ -1488,14 +1228,14 @@ RtlpDebugPageHeapCoalesceNodeIntoAvailable(
 
         pNode->pNextAlloc = pHeap->pAvailableAllocationListHead;
         pHeap->pAvailableAllocationListHead = pNode;
-
     }
 
 
-    if (pNext) {
+    if (pNext)
+    {
 
-        if (((pVirtual + nVirtual) == pNext->pVirtualBlock) &&
-             RtlpDphSameVirtualRegion (pNode, pNext)) { 
+        if (((pVirtual + nVirtual) == pNext->pVirtualBlock) && RtlpDphSameVirtualRegion(pNode, pNext))
+        {
 
             //
             //  pNode and pNext are adjacent, so simply add size of
@@ -1507,83 +1247,72 @@ RtlpDebugPageHeapCoalesceNodeIntoAvailable(
 
             pNode->pNextAlloc = pNext->pNextAlloc;
 
-            if (pHeap->pAvailableAllocationListTail == pNext) {
+            if (pHeap->pAvailableAllocationListTail == pNext)
+            {
                 pHeap->pAvailableAllocationListTail = pNode;
             }
 
-            RtlpDebugPageHeapReturnNodeToUnusedList( pHeap, pNext );
+            RtlpDebugPageHeapReturnNodeToUnusedList(pHeap, pNext);
 
             pHeap->nAvailableAllocations--;
-
         }
     }
 
-    else {
+    else
+    {
 
         //
         //  pNode is tail of list.
         //
 
         pHeap->pAvailableAllocationListTail = pNode;
-
     }
 }
 
 
-VOID
-RtlpDebugPageHeapCoalesceFreeIntoAvailable(
-    IN PDPH_HEAP_ROOT pHeap,
-    IN ULONG          nLeaveOnFreeList
-    )
+VOID RtlpDebugPageHeapCoalesceFreeIntoAvailable(IN PDPH_HEAP_ROOT pHeap, IN ULONG nLeaveOnFreeList)
 {
     PDPH_HEAP_BLOCK pNode = pHeap->pFreeAllocationListHead;
-    SIZE_T               nFree = pHeap->nFreeAllocations;
+    SIZE_T nFree = pHeap->nFreeAllocations;
     PDPH_HEAP_BLOCK pNext;
 
-    DEBUG_ASSERT( nFree >= nLeaveOnFreeList );
+    DEBUG_ASSERT(nFree >= nLeaveOnFreeList);
 
-    while (( pNode ) && ( nFree-- > nLeaveOnFreeList )) {
+    while ((pNode) && (nFree-- > nLeaveOnFreeList))
+    {
 
-        pNext = pNode->pNextAlloc;  // preserve next pointer across shuffling
+        pNext = pNode->pNextAlloc; // preserve next pointer across shuffling
 
-        RtlpDebugPageHeapRemoveFromFreeList( pHeap, pNode, NULL );
+        RtlpDebugPageHeapRemoveFromFreeList(pHeap, pNode, NULL);
 
-        RtlpDebugPageHeapCoalesceNodeIntoAvailable( pHeap, pNode );
+        RtlpDebugPageHeapCoalesceNodeIntoAvailable(pHeap, pNode);
 
         pNode = pNext;
-
     }
 
-    DEBUG_ASSERT(( nFree = (volatile SIZE_T)( pHeap->nFreeAllocations )) >= nLeaveOnFreeList );
-    DEBUG_ASSERT(( pNode != NULL ) || ( nFree == 0 ));
-
+    DEBUG_ASSERT((nFree = (volatile SIZE_T)(pHeap->nFreeAllocations)) >= nLeaveOnFreeList);
+    DEBUG_ASSERT((pNode != NULL) || (nFree == 0));
 }
 
 // forward
 BOOLEAN
-RtlpDebugPageHeapGrowVirtual(
-    IN PDPH_HEAP_ROOT pHeap,
-    IN SIZE_T         nSize
-    );
+RtlpDebugPageHeapGrowVirtual(IN PDPH_HEAP_ROOT pHeap, IN SIZE_T nSize);
 
 PDPH_HEAP_BLOCK
-RtlpDebugPageHeapFindAvailableMem(
-    IN  PDPH_HEAP_ROOT        pHeap,
-    IN  SIZE_T                nSize,
-    OUT PDPH_HEAP_BLOCK *pPrevAvailNode,
-    IN  BOOLEAN               bGrowVirtual
-    )
+RtlpDebugPageHeapFindAvailableMem(IN PDPH_HEAP_ROOT pHeap, IN SIZE_T nSize, OUT PDPH_HEAP_BLOCK *pPrevAvailNode,
+                                  IN BOOLEAN bGrowVirtual)
 {
     PDPH_HEAP_BLOCK pAvail;
-    ULONG                nLeaveOnFreeList;
+    ULONG nLeaveOnFreeList;
 
     //
     // If we use uncommitted ranges it is really important to
     // call FindAvailableMemory only with page aligned sizes.
     //
 
-    if ((pHeap->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE)) {
-        DEBUG_ASSERT ((nSize & ~(PAGE_SIZE - 1)) == nSize);
+    if ((pHeap->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE))
+    {
+        DEBUG_ASSERT((nSize & ~(PAGE_SIZE - 1)) == nSize);
     }
 
     //
@@ -1591,13 +1320,10 @@ RtlpDebugPageHeapFindAvailableMem(
     //  (the smallest block that will satisfy the request).
     //
 
-    pAvail = RtlpDebugPageHeapSearchAvailableMemListForBestFit(
-        pHeap,
-        nSize,
-        pPrevAvailNode
-        );
+    pAvail = RtlpDebugPageHeapSearchAvailableMemListForBestFit(pHeap, nSize, pPrevAvailNode);
 
-    while (( pAvail == NULL ) && ( pHeap->nFreeAllocations > MIN_FREE_LIST_LENGTH )) {
+    while ((pAvail == NULL) && (pHeap->nFreeAllocations > MIN_FREE_LIST_LENGTH))
+    {
 
         //
         //  Failed to find sufficient memory on AvailableList.  Coalesce
@@ -1614,18 +1340,14 @@ RtlpDebugPageHeapFindAvailableMem(
         if (nLeaveOnFreeList < MIN_FREE_LIST_LENGTH)
             nLeaveOnFreeList = MIN_FREE_LIST_LENGTH;
 
-        RtlpDebugPageHeapCoalesceFreeIntoAvailable( pHeap, nLeaveOnFreeList );
+        RtlpDebugPageHeapCoalesceFreeIntoAvailable(pHeap, nLeaveOnFreeList);
 
-        pAvail = RtlpDebugPageHeapSearchAvailableMemListForBestFit(
-            pHeap,
-            nSize,
-            pPrevAvailNode
-            );
-
+        pAvail = RtlpDebugPageHeapSearchAvailableMemListForBestFit(pHeap, nSize, pPrevAvailNode);
     }
 
 
-    if (( pAvail == NULL ) && ( bGrowVirtual )) {
+    if ((pAvail == NULL) && (bGrowVirtual))
+    {
 
         //
         //  After coalescing FreeList into AvailableList, still don't have
@@ -1633,15 +1355,13 @@ RtlpDebugPageHeapFindAvailableMem(
         //  need to allocate more VM.
         //
 
-        if (RtlpDebugPageHeapGrowVirtual( pHeap, nSize )) {
+        if (RtlpDebugPageHeapGrowVirtual(pHeap, nSize))
+        {
 
-            pAvail = RtlpDebugPageHeapSearchAvailableMemListForBestFit(
-                pHeap,
-                nSize,
-                pPrevAvailNode
-                );
+            pAvail = RtlpDebugPageHeapSearchAvailableMemListForBestFit(pHeap, nSize, pPrevAvailNode);
 
-            if (pAvail == NULL) {
+            if (pAvail == NULL)
+            {
 
                 //
                 //  Failed to satisfy request with more VM.  If remainder
@@ -1653,16 +1373,12 @@ RtlpDebugPageHeapFindAvailableMem(
                 //  is a rare case, and we'd prefer to satisfy the allocation.
                 //
 
-                if (( pHeap->nFreeAllocationBytesCommitted +
-                    pHeap->nAvailableAllocationBytesCommitted ) >= nSize) {
+                if ((pHeap->nFreeAllocationBytesCommitted + pHeap->nAvailableAllocationBytesCommitted) >= nSize)
+                {
 
-                    RtlpDebugPageHeapCoalesceFreeIntoAvailable( pHeap, 0 );
+                    RtlpDebugPageHeapCoalesceFreeIntoAvailable(pHeap, 0);
 
-                    pAvail = RtlpDebugPageHeapSearchAvailableMemListForBestFit(
-                        pHeap,
-                        nSize,
-                        pPrevAvailNode
-                        );
+                    pAvail = RtlpDebugPageHeapSearchAvailableMemListForBestFit(pHeap, nSize, pPrevAvailNode);
                 }
             }
         }
@@ -1674,7 +1390,8 @@ RtlpDebugPageHeapFindAvailableMem(
     // the protection on it will be N/A.
     //
 
-    if (pAvail && (pHeap->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE)) {
+    if (pAvail && (pHeap->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE))
+    {
 
         BOOLEAN Success;
 
@@ -1686,9 +1403,10 @@ RtlpDebugPageHeapFindAvailableMem(
         // the future. It affects 0x43 flags.
         //
 
-        Success = RtlpDebugPageHeapCommitVM (pAvail->pVirtualBlock, nSize);
+        Success = RtlpDebugPageHeapCommitVM(pAvail->pVirtualBlock, nSize);
 
-        if (!Success) {
+        if (!Success)
+        {
 
             //
             // We did not manage to commit memory for this block. This
@@ -1703,11 +1421,7 @@ RtlpDebugPageHeapFindAvailableMem(
     return pAvail;
 }
 
-VOID
-RtlpDebugPageHeapPlaceOnPoolList(
-    IN PDPH_HEAP_ROOT       pHeap,
-    IN PDPH_HEAP_BLOCK pNode
-    )
+VOID RtlpDebugPageHeapPlaceOnPoolList(IN PDPH_HEAP_ROOT pHeap, IN PDPH_HEAP_BLOCK pNode)
 {
 
     //
@@ -1716,20 +1430,13 @@ RtlpDebugPageHeapPlaceOnPoolList(
 
     pNode->pNextAlloc = NULL;
 
-    ENQUEUE_TAIL( pNode, pHeap->pNodePoolListHead, pHeap->pNodePoolListTail );
+    ENQUEUE_TAIL(pNode, pHeap->pNodePoolListHead, pHeap->pNodePoolListTail);
 
     pHeap->nNodePoolBytes += pNode->nVirtualBlockSize;
-    pHeap->nNodePools     += 1;
-
+    pHeap->nNodePools += 1;
 }
 
-VOID
-RtlpDebugPageHeapAddNewPool(
-    IN PDPH_HEAP_ROOT pHeap,
-    IN PVOID          pVirtual,
-    IN SIZE_T         nSize,
-    IN BOOLEAN        bAddToPoolList
-    )
+VOID RtlpDebugPageHeapAddNewPool(IN PDPH_HEAP_ROOT pHeap, IN PVOID pVirtual, IN SIZE_T nSize, IN BOOLEAN bAddToPoolList)
 {
     PDPH_HEAP_BLOCK pNode, pFirst;
     ULONG n, nCount;
@@ -1739,7 +1446,7 @@ RtlpDebugPageHeapAddNewPool(
     //
 
     pFirst = pVirtual;
-    nCount = (ULONG)(nSize  / sizeof( DPH_HEAP_BLOCK ));
+    nCount = (ULONG)(nSize / sizeof(DPH_HEAP_BLOCK));
 
     for (n = nCount - 1, pNode = pFirst; n > 0; pNode++, n--)
         pNode->pNextAlloc = pNode + 1;
@@ -1750,13 +1457,14 @@ RtlpDebugPageHeapAddNewPool(
     //  Now link this list into the tail of the UnusedNodeList
     //
 
-    ENQUEUE_TAIL( pFirst, pHeap->pUnusedNodeListHead, pHeap->pUnusedNodeListTail );
+    ENQUEUE_TAIL(pFirst, pHeap->pUnusedNodeListHead, pHeap->pUnusedNodeListTail);
 
     pHeap->pUnusedNodeListTail = pNode;
 
     pHeap->nUnusedNodes += nCount;
 
-    if (bAddToPoolList) {
+    if (bAddToPoolList)
+    {
 
         //
         //  Now add an entry on the PoolList by taking a node from the
@@ -1764,34 +1472,32 @@ RtlpDebugPageHeapAddNewPool(
         //  since we just added new nodes to it.
         //
 
-        pNode = RtlpDebugPageHeapTakeNodeFromUnusedList( pHeap );
+        pNode = RtlpDebugPageHeapTakeNodeFromUnusedList(pHeap);
 
-        DEBUG_ASSERT( pNode != NULL );
+        DEBUG_ASSERT(pNode != NULL);
 
-        pNode->pVirtualBlock     = pVirtual;
+        pNode->pVirtualBlock = pVirtual;
         pNode->nVirtualBlockSize = nSize;
 
-        RtlpDebugPageHeapPlaceOnPoolList( pHeap, pNode );
-
+        RtlpDebugPageHeapPlaceOnPoolList(pHeap, pNode);
     }
 }
 
 PDPH_HEAP_BLOCK
-RtlpDebugPageHeapAllocateNode(
-    IN PDPH_HEAP_ROOT pHeap
-    )
+RtlpDebugPageHeapAllocateNode(IN PDPH_HEAP_ROOT pHeap)
 {
     PDPH_HEAP_BLOCK pNode, pPrev, pReturn;
     PUCHAR pVirtual;
     SIZE_T nVirtual;
     SIZE_T nRequest;
 
-    DEBUG_ASSERT( ! pHeap->InsideAllocateNode );
-    DEBUG_CODE( pHeap->InsideAllocateNode = TRUE );
+    DEBUG_ASSERT(!pHeap->InsideAllocateNode);
+    DEBUG_CODE(pHeap->InsideAllocateNode = TRUE);
 
     pReturn = NULL;
 
-    if (pHeap->pUnusedNodeListHead == NULL) {
+    if (pHeap->pUnusedNodeListHead == NULL)
+    {
 
         //
         //  We're out of nodes -- allocate new node pool
@@ -1806,14 +1512,10 @@ RtlpDebugPageHeapAllocateNode(
 
         nRequest = POOL_SIZE;
 
-        pNode = RtlpDebugPageHeapFindAvailableMem(
-            pHeap,
-            nRequest,
-            &pPrev,
-            FALSE
-            );
+        pNode = RtlpDebugPageHeapFindAvailableMem(pHeap, nRequest, &pPrev, FALSE);
 
-        if (( pHeap->pUnusedNodeListHead == NULL ) && ( pNode == NULL )) {
+        if ((pHeap->pUnusedNodeListHead == NULL) && (pNode == NULL))
+        {
 
             //
             //  Reduce request size to PAGE_SIZE and see if
@@ -1823,18 +1525,14 @@ RtlpDebugPageHeapAllocateNode(
 
             nRequest = PAGE_SIZE;
 
-            pNode = RtlpDebugPageHeapFindAvailableMem(
-                pHeap,
-                nRequest,
-                &pPrev,
-                FALSE
-                );
-
+            pNode = RtlpDebugPageHeapFindAvailableMem(pHeap, nRequest, &pPrev, FALSE);
         }
 
-        if (pHeap->pUnusedNodeListHead == NULL) {
+        if (pHeap->pUnusedNodeListHead == NULL)
+        {
 
-            if (pNode == NULL) {
+            if (pNode == NULL)
+            {
 
                 //
                 //  Insufficient memory on Available list.  Try allocating a
@@ -1843,9 +1541,10 @@ RtlpDebugPageHeapAllocateNode(
 
                 nRequest = POOL_SIZE;
                 nVirtual = RESERVE_SIZE;
-                pVirtual = RtlpDebugPageHeapAllocateVM( nVirtual );
+                pVirtual = RtlpDebugPageHeapAllocateVM(nVirtual);
 
-                if (pVirtual == NULL) {
+                if (pVirtual == NULL)
+                {
 
                     //
                     //  Unable to allocate full RESERVE_SIZE block,
@@ -1854,9 +1553,10 @@ RtlpDebugPageHeapAllocateNode(
                     //
 
                     nVirtual = VM_UNIT_SIZE;
-                    pVirtual = RtlpDebugPageHeapAllocateVM( nVirtual );
+                    pVirtual = RtlpDebugPageHeapAllocateVM(nVirtual);
 
-                    if (pVirtual == NULL) {
+                    if (pVirtual == NULL)
+                    {
 
                         //
                         //  Can't allocate any VM.
@@ -1867,13 +1567,13 @@ RtlpDebugPageHeapAllocateNode(
                 }
             }
 
-            else {
+            else
+            {
 
-                RtlpDebugPageHeapRemoveFromAvailableList( pHeap, pNode, pPrev );
+                RtlpDebugPageHeapRemoveFromAvailableList(pHeap, pNode, pPrev);
 
                 pVirtual = pNode->pVirtualBlock;
                 nVirtual = pNode->nVirtualBlockSize;
-
             }
 
             //
@@ -1881,13 +1581,16 @@ RtlpDebugPageHeapAllocateNode(
             //  Make nRequest portion of VM accessible for new node pool.
             //
 
-            if (! RtlpDebugPageHeapProtectVM( pVirtual, nRequest, PAGE_READWRITE )) {
+            if (!RtlpDebugPageHeapProtectVM(pVirtual, nRequest, PAGE_READWRITE))
+            {
 
-                if (pNode == NULL) {
-                    RtlpDebugPageHeapReleaseVM( pVirtual );
+                if (pNode == NULL)
+                {
+                    RtlpDebugPageHeapReleaseVM(pVirtual);
                 }
-                else {
-                    RtlpDebugPageHeapCoalesceNodeIntoAvailable( pHeap, pNode );
+                else
+                {
+                    RtlpDebugPageHeapCoalesceNodeIntoAvailable(pHeap, pNode);
                 }
 
                 goto EXIT;
@@ -1899,125 +1602,126 @@ RtlpDebugPageHeapAllocateNode(
             //  AvailableList versus fresh VM, zero the memory first.
             //
 
-            if (pNode != NULL) {
-                RtlZeroMemory( pVirtual, nRequest );
+            if (pNode != NULL)
+            {
+                RtlZeroMemory(pVirtual, nRequest);
             }
 
-            RtlpDebugPageHeapAddNewPool( pHeap, pVirtual, nRequest, TRUE );
+            RtlpDebugPageHeapAddNewPool(pHeap, pVirtual, nRequest, TRUE);
 
             //
             //  If any memory remaining, put it on available list.
             //
 
-            if (pNode == NULL) {
+            if (pNode == NULL)
+            {
 
                 //
                 //  Memory came from new VM -- add appropriate list entries
                 //  for new VM and add remainder of VM to free list.
                 //
 
-                pNode = RtlpDebugPageHeapTakeNodeFromUnusedList( pHeap );
-                DEBUG_ASSERT( pNode != NULL );
-                pNode->pVirtualBlock     = pVirtual;
+                pNode = RtlpDebugPageHeapTakeNodeFromUnusedList(pHeap);
+                DEBUG_ASSERT(pNode != NULL);
+                pNode->pVirtualBlock = pVirtual;
                 pNode->nVirtualBlockSize = nVirtual;
-                RtlpDebugPageHeapPlaceOnVirtualList( pHeap, pNode );
+                RtlpDebugPageHeapPlaceOnVirtualList(pHeap, pNode);
 
-                pNode = RtlpDebugPageHeapTakeNodeFromUnusedList( pHeap );
-                DEBUG_ASSERT( pNode != NULL );
-                pNode->pVirtualBlock     = pVirtual + nRequest;
+                pNode = RtlpDebugPageHeapTakeNodeFromUnusedList(pHeap);
+                DEBUG_ASSERT(pNode != NULL);
+                pNode->pVirtualBlock = pVirtual + nRequest;
                 pNode->nVirtualBlockSize = nVirtual - nRequest;
 
-                RtlpDebugPageHeapCoalesceNodeIntoAvailable( pHeap, pNode );
-
+                RtlpDebugPageHeapCoalesceNodeIntoAvailable(pHeap, pNode);
             }
 
-            else {
+            else
+            {
 
-                if (pNode->nVirtualBlockSize > nRequest) {
+                if (pNode->nVirtualBlockSize > nRequest)
+                {
 
-                    pNode->pVirtualBlock     += nRequest;
+                    pNode->pVirtualBlock += nRequest;
                     pNode->nVirtualBlockSize -= nRequest;
 
-                    RtlpDebugPageHeapCoalesceNodeIntoAvailable( pHeap, pNode );
+                    RtlpDebugPageHeapCoalesceNodeIntoAvailable(pHeap, pNode);
                 }
 
-                else {
+                else
+                {
 
                     //
                     //  Used up entire available block -- return node to
                     //  unused list.
                     //
 
-                    RtlpDebugPageHeapReturnNodeToUnusedList( pHeap, pNode );
-
+                    RtlpDebugPageHeapReturnNodeToUnusedList(pHeap, pNode);
                 }
             }
         }
     }
 
-    pReturn = RtlpDebugPageHeapTakeNodeFromUnusedList( pHeap );
-    DEBUG_ASSERT( pReturn != NULL );
+    pReturn = RtlpDebugPageHeapTakeNodeFromUnusedList(pHeap);
+    DEBUG_ASSERT(pReturn != NULL);
 
-    EXIT:
+EXIT:
 
-    DEBUG_CODE( pHeap->InsideAllocateNode = FALSE );
+    DEBUG_CODE(pHeap->InsideAllocateNode = FALSE);
     return pReturn;
 }
 
 BOOLEAN
-RtlpDebugPageHeapGrowVirtual(
-    IN PDPH_HEAP_ROOT pHeap,
-    IN SIZE_T         nSize
-    )
+RtlpDebugPageHeapGrowVirtual(IN PDPH_HEAP_ROOT pHeap, IN SIZE_T nSize)
 {
     PDPH_HEAP_BLOCK pVirtualNode;
     PDPH_HEAP_BLOCK pAvailNode;
-    PVOID  pVirtual;
+    PVOID pVirtual;
     SIZE_T nVirtual;
 
-    pVirtualNode = RtlpDebugPageHeapAllocateNode( pHeap );
+    pVirtualNode = RtlpDebugPageHeapAllocateNode(pHeap);
 
-    if (pVirtualNode == NULL) {
+    if (pVirtualNode == NULL)
+    {
         return FALSE;
     }
 
-    pAvailNode = RtlpDebugPageHeapAllocateNode( pHeap );
+    pAvailNode = RtlpDebugPageHeapAllocateNode(pHeap);
 
-    if (pAvailNode == NULL) {
-        RtlpDebugPageHeapReturnNodeToUnusedList( pHeap, pVirtualNode );
+    if (pAvailNode == NULL)
+    {
+        RtlpDebugPageHeapReturnNodeToUnusedList(pHeap, pVirtualNode);
         return FALSE;
     }
 
-    nSize    = ROUNDUP2( nSize, VM_UNIT_SIZE );
-    nVirtual = ( nSize > RESERVE_SIZE ) ? nSize : RESERVE_SIZE;
-    pVirtual = RtlpDebugPageHeapAllocateVM( nVirtual );
+    nSize = ROUNDUP2(nSize, VM_UNIT_SIZE);
+    nVirtual = (nSize > RESERVE_SIZE) ? nSize : RESERVE_SIZE;
+    pVirtual = RtlpDebugPageHeapAllocateVM(nVirtual);
 
-    if (( pVirtual == NULL ) && ( nSize < RESERVE_SIZE )) {
+    if ((pVirtual == NULL) && (nSize < RESERVE_SIZE))
+    {
         nVirtual = nSize;
-        pVirtual = RtlpDebugPageHeapAllocateVM( nVirtual );
+        pVirtual = RtlpDebugPageHeapAllocateVM(nVirtual);
     }
 
-    if (pVirtual == NULL) {
-        RtlpDebugPageHeapReturnNodeToUnusedList( pHeap, pVirtualNode );
-        RtlpDebugPageHeapReturnNodeToUnusedList( pHeap, pAvailNode );
+    if (pVirtual == NULL)
+    {
+        RtlpDebugPageHeapReturnNodeToUnusedList(pHeap, pVirtualNode);
+        RtlpDebugPageHeapReturnNodeToUnusedList(pHeap, pAvailNode);
         return FALSE;
     }
 
-    pVirtualNode->pVirtualBlock     = pVirtual;
+    pVirtualNode->pVirtualBlock = pVirtual;
     pVirtualNode->nVirtualBlockSize = nVirtual;
-    RtlpDebugPageHeapPlaceOnVirtualList( pHeap, pVirtualNode );
+    RtlpDebugPageHeapPlaceOnVirtualList(pHeap, pVirtualNode);
 
-    pAvailNode->pVirtualBlock     = pVirtual;
+    pAvailNode->pVirtualBlock = pVirtual;
     pAvailNode->nVirtualBlockSize = nVirtual;
-    RtlpDebugPageHeapCoalesceNodeIntoAvailable( pHeap, pAvailNode );
+    RtlpDebugPageHeapCoalesceNodeIntoAvailable(pHeap, pAvailNode);
 
     return TRUE;
 }
 
-VOID
-RtlpDebugPageHeapProtectStructures(
-    IN PDPH_HEAP_ROOT pHeap
-    )
+VOID RtlpDebugPageHeapProtectStructures(IN PDPH_HEAP_ROOT pHeap)
 {
 #if 0
     
@@ -2057,10 +1761,7 @@ RtlpDebugPageHeapProtectStructures(
 }
 
 
-VOID
-RtlpDebugPageHeapUnProtectStructures(
-    IN PDPH_HEAP_ROOT pHeap
-    )
+VOID RtlpDebugPageHeapUnProtectStructures(IN PDPH_HEAP_ROOT pHeap)
 {
 #if 0
     
@@ -2097,15 +1798,11 @@ RtlpDebugPageHeapUnProtectStructures(
 }
 
 
-VOID
-RtlpDphPreProcessing (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags
-    )
+VOID RtlpDphPreProcessing(PDPH_HEAP_ROOT Heap, ULONG Flags)
 {
-    RtlpDebugPageHeapEnterCritSect (Heap, Flags);
-    DEBUG_CODE (RtlpDebugPageHeapVerifyIntegrity (Heap));
-    UNPROTECT_HEAP_STRUCTURES (Heap);
+    RtlpDebugPageHeapEnterCritSect(Heap, Flags);
+    DEBUG_CODE(RtlpDebugPageHeapVerifyIntegrity(Heap));
+    UNPROTECT_HEAP_STRUCTURES(Heap);
 
 #if 0
     RtlpDphValidateInternalLists (Heap);
@@ -2113,18 +1810,15 @@ RtlpDphPreProcessing (
 }
 
 
-VOID
-RtlpDphPostProcessing (
-    PDPH_HEAP_ROOT Heap
-    )
+VOID RtlpDphPostProcessing(PDPH_HEAP_ROOT Heap)
 {
 #if 0
     RtlpDphValidateInternalLists (Heap);
 #endif
 
-    PROTECT_HEAP_STRUCTURES (Heap);
-    DEBUG_CODE (RtlpDebugPageHeapVerifyIntegrity (Heap));
-    RtlpDebugPageHeapLeaveCritSect (Heap);
+    PROTECT_HEAP_STRUCTURES(Heap);
+    DEBUG_CODE(RtlpDebugPageHeapVerifyIntegrity(Heap));
+    RtlpDebugPageHeapLeaveCritSect(Heap);
 }
 
 
@@ -2132,22 +1826,18 @@ RtlpDphPostProcessing (
 //////////////////////////////////////////////// Exception management
 /////////////////////////////////////////////////////////////////////
 
-#define EXN_STACK_OVERFLOW   0
-#define EXN_NO_MEMORY        1
+#define EXN_STACK_OVERFLOW 0
+#define EXN_NO_MEMORY 1
 #define EXN_ACCESS_VIOLATION 2
-#define EXN_IGNORE_AV        3
-#define EXN_OTHER            4
+#define EXN_IGNORE_AV 3
+#define EXN_OTHER 4
 
 ULONG RtlpDphException[8];
 
 
 ULONG
-RtlpDphUnexpectedExceptionFilter (
-    ULONG ExceptionCode,
-    PVOID ExceptionRecord,
-    PDPH_HEAP_ROOT Heap,
-    BOOLEAN IgnoreAccessViolations
-    )
+RtlpDphUnexpectedExceptionFilter(ULONG ExceptionCode, PVOID ExceptionRecord, PDPH_HEAP_ROOT Heap,
+                                 BOOLEAN IgnoreAccessViolations)
 /*++
 
 Routine Description:
@@ -2181,52 +1871,55 @@ Environment:
     Called within page heap APIs if an exception is raised. 
 --*/
 {
-    if (ExceptionCode == STATUS_NO_MEMORY) {
+    if (ExceptionCode == STATUS_NO_MEMORY)
+    {
 
         //
         // Underlying NT heap functions can legitimately raise this
-        // exception. 
+        // exception.
         //
 
 
-        InterlockedIncrement (&(RtlpDphException[EXN_NO_MEMORY]));
+        InterlockedIncrement(&(RtlpDphException[EXN_NO_MEMORY]));
     }
-    else if (Heap != NULL && ExceptionCode == STATUS_STACK_OVERFLOW) {
+    else if (Heap != NULL && ExceptionCode == STATUS_STACK_OVERFLOW)
+    {
 
         //
         // We go to the next exception handler for stack overflows.
         //
 
-        InterlockedIncrement (&(RtlpDphException[EXN_STACK_OVERFLOW]));
+        InterlockedIncrement(&(RtlpDphException[EXN_STACK_OVERFLOW]));
     }
-    else if (ExceptionCode == STATUS_ACCESS_VIOLATION) {
+    else if (ExceptionCode == STATUS_ACCESS_VIOLATION)
+    {
 
-        if (IgnoreAccessViolations == FALSE) {
-            
-            VERIFIER_STOP (APPLICATION_VERIFIER_UNEXPECTED_EXCEPTION,
-                           "unexpected exception raised in heap code path",
-                           Heap, "Heap handle involved",
-                           ExceptionCode, "Exception code",
-                           ExceptionRecord, "Exception record (.exr on 1st word, .cxr on 2nd word)",
-                           0, "");
-            
-            InterlockedIncrement (&(RtlpDphException[EXN_ACCESS_VIOLATION]));
+        if (IgnoreAccessViolations == FALSE)
+        {
+
+            VERIFIER_STOP(APPLICATION_VERIFIER_UNEXPECTED_EXCEPTION, "unexpected exception raised in heap code path",
+                          Heap, "Heap handle involved", ExceptionCode, "Exception code", ExceptionRecord,
+                          "Exception record (.exr on 1st word, .cxr on 2nd word)", 0, "");
+
+            InterlockedIncrement(&(RtlpDphException[EXN_ACCESS_VIOLATION]));
         }
-        else {
-            
-            InterlockedIncrement (&(RtlpDphException[EXN_IGNORE_AV]));
+        else
+        {
+
+            InterlockedIncrement(&(RtlpDphException[EXN_IGNORE_AV]));
         }
     }
-    else {
+    else
+    {
 
         //
         // Any other exceptions will go to the next exception handler.
         //
 
-        InterlockedIncrement (&(RtlpDphException[EXN_OTHER]));
+        InterlockedIncrement(&(RtlpDphException[EXN_OTHER]));
     }
 
-    RtlpDphPostProcessing (Heap);
+    RtlpDphPostProcessing(Heap);
 
     return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -2243,114 +1936,80 @@ Environment:
 
 #if INTERNAL_DEBUG
 
-VOID
-RtlpDebugPageHeapVerifyList(
-    IN PDPH_HEAP_BLOCK pListHead,
-    IN PDPH_HEAP_BLOCK pListTail,
-    IN SIZE_T               nExpectedLength,
-    IN SIZE_T               nExpectedVirtual,
-    IN PCCH                 pListName
-    )
+VOID RtlpDebugPageHeapVerifyList(IN PDPH_HEAP_BLOCK pListHead, IN PDPH_HEAP_BLOCK pListTail, IN SIZE_T nExpectedLength,
+                                 IN SIZE_T nExpectedVirtual, IN PCCH pListName)
 {
     PDPH_HEAP_BLOCK pPrev = NULL;
     PDPH_HEAP_BLOCK pNode = pListHead;
     PDPH_HEAP_BLOCK pTest = pListHead ? pListHead->pNextAlloc : NULL;
-    ULONG                nNode = 0;
-    SIZE_T               nSize = 0;
+    ULONG nNode = 0;
+    SIZE_T nSize = 0;
 
-    while (pNode) {
+    while (pNode)
+    {
 
-        if (pNode == pTest) {
-            DbgPrint( "Page heap: Internal %s list is circular\n", pListName );
-            DbgBreakPoint ();
+        if (pNode == pTest)
+        {
+            DbgPrint("Page heap: Internal %s list is circular\n", pListName);
+            DbgBreakPoint();
             return;
         }
 
         nNode += 1;
         nSize += pNode->nVirtualBlockSize;
 
-        if (pTest) {
+        if (pTest)
+        {
             pTest = pTest->pNextAlloc;
-            if (pTest) {
+            if (pTest)
+            {
                 pTest = pTest->pNextAlloc;
             }
         }
 
         pPrev = pNode;
         pNode = pNode->pNextAlloc;
-
     }
 
-    if (pPrev != pListTail) {
-        DbgPrint( "Page heap: Internal %s list has incorrect tail pointer\n", pListName );
-        DbgBreakPoint ();
+    if (pPrev != pListTail)
+    {
+        DbgPrint("Page heap: Internal %s list has incorrect tail pointer\n", pListName);
+        DbgBreakPoint();
     }
 
-    if (( nExpectedLength != 0xFFFFFFFF ) && ( nExpectedLength != nNode )) {
-        DbgPrint( "Page heap: Internal %s list has incorrect length\n", pListName );
-        DbgBreakPoint ();
+    if ((nExpectedLength != 0xFFFFFFFF) && (nExpectedLength != nNode))
+    {
+        DbgPrint("Page heap: Internal %s list has incorrect length\n", pListName);
+        DbgBreakPoint();
     }
 
-    if (( nExpectedVirtual != 0xFFFFFFFF ) && ( nExpectedVirtual != nSize )) {
-        DbgPrint( "Page heap: Internal %s list has incorrect virtual size\n", pListName );
-        DbgBreakPoint ();
+    if ((nExpectedVirtual != 0xFFFFFFFF) && (nExpectedVirtual != nSize))
+    {
+        DbgPrint("Page heap: Internal %s list has incorrect virtual size\n", pListName);
+        DbgBreakPoint();
     }
-
 }
 
-VOID
-RtlpDebugPageHeapVerifyIntegrity(
-    IN PDPH_HEAP_ROOT pHeap
-    )
+VOID RtlpDebugPageHeapVerifyIntegrity(IN PDPH_HEAP_ROOT pHeap)
 {
 
-    RtlpDebugPageHeapVerifyList(
-        pHeap->pVirtualStorageListHead,
-        pHeap->pVirtualStorageListTail,
-        pHeap->nVirtualStorageRanges,
-        pHeap->nVirtualStorageBytes,
-        "VIRTUAL"
-        );
+    RtlpDebugPageHeapVerifyList(pHeap->pVirtualStorageListHead, pHeap->pVirtualStorageListTail,
+                                pHeap->nVirtualStorageRanges, pHeap->nVirtualStorageBytes, "VIRTUAL");
 
-    RtlpDebugPageHeapVerifyList(
-        pHeap->pBusyAllocationListHead,
-        pHeap->pBusyAllocationListTail,
-        pHeap->nBusyAllocations,
-        pHeap->nBusyAllocationBytesCommitted,
-        "BUSY"
-        );
+    RtlpDebugPageHeapVerifyList(pHeap->pBusyAllocationListHead, pHeap->pBusyAllocationListTail, pHeap->nBusyAllocations,
+                                pHeap->nBusyAllocationBytesCommitted, "BUSY");
 
-    RtlpDebugPageHeapVerifyList(
-        pHeap->pFreeAllocationListHead,
-        pHeap->pFreeAllocationListTail,
-        pHeap->nFreeAllocations,
-        pHeap->nFreeAllocationBytesCommitted,
-        "FREE"
-        );
+    RtlpDebugPageHeapVerifyList(pHeap->pFreeAllocationListHead, pHeap->pFreeAllocationListTail, pHeap->nFreeAllocations,
+                                pHeap->nFreeAllocationBytesCommitted, "FREE");
 
-    RtlpDebugPageHeapVerifyList(
-        pHeap->pAvailableAllocationListHead,
-        pHeap->pAvailableAllocationListTail,
-        pHeap->nAvailableAllocations,
-        pHeap->nAvailableAllocationBytesCommitted,
-        "AVAILABLE"
-        );
+    RtlpDebugPageHeapVerifyList(pHeap->pAvailableAllocationListHead, pHeap->pAvailableAllocationListTail,
+                                pHeap->nAvailableAllocations, pHeap->nAvailableAllocationBytesCommitted, "AVAILABLE");
 
-    RtlpDebugPageHeapVerifyList(
-        pHeap->pUnusedNodeListHead,
-        pHeap->pUnusedNodeListTail,
-        pHeap->nUnusedNodes,
-        0xFFFFFFFF,
-        "FREENODE"
-        );
+    RtlpDebugPageHeapVerifyList(pHeap->pUnusedNodeListHead, pHeap->pUnusedNodeListTail, pHeap->nUnusedNodes, 0xFFFFFFFF,
+                                "FREENODE");
 
-    RtlpDebugPageHeapVerifyList(
-        pHeap->pNodePoolListHead,
-        pHeap->pNodePoolListTail,
-        pHeap->nNodePools,
-        pHeap->nNodePoolBytes,
-        "NODEPOOL"
-        );
+    RtlpDebugPageHeapVerifyList(pHeap->pNodePoolListHead, pHeap->pNodePoolListTail, pHeap->nNodePools,
+                                pHeap->nNodePoolBytes, "NODEPOOL");
 }
 
 #endif // #if INTERNAL_DEBUG
@@ -2363,28 +2022,23 @@ RtlpDebugPageHeapVerifyIntegrity(
 //  Here's where the exported interface functions are defined.
 //
 
-#if (( DPH_CAPTURE_STACK_TRACE ) && ( i386 ) && ( FPO ))
-#pragma optimize( "y", off )    // disable FPO for consistent stack traces
+#if ((DPH_CAPTURE_STACK_TRACE) && (i386) && (FPO))
+#pragma optimize("y", off) // disable FPO for consistent stack traces
 #endif
 
 PVOID
-RtlpDebugPageHeapCreate(
-    IN ULONG  Flags,
-    IN PVOID  HeapBase    OPTIONAL,
-    IN SIZE_T ReserveSize OPTIONAL,
-    IN SIZE_T CommitSize  OPTIONAL,
-    IN PVOID  Lock        OPTIONAL,
-    IN PRTL_HEAP_PARAMETERS Parameters OPTIONAL
-    )
+RtlpDebugPageHeapCreate(IN ULONG Flags, IN PVOID HeapBase OPTIONAL, IN SIZE_T ReserveSize OPTIONAL,
+                        IN SIZE_T CommitSize OPTIONAL, IN PVOID Lock OPTIONAL,
+                        IN PRTL_HEAP_PARAMETERS Parameters OPTIONAL)
 {
     SYSTEM_BASIC_INFORMATION SystemInfo;
-    PDPH_HEAP_BLOCK     Node;
-    PDPH_HEAP_ROOT           HeapRoot;
-    PVOID                    HeapHandle;
-    PUCHAR                   pVirtual;
-    SIZE_T                   nVirtual;
-    SIZE_T                   Size;
-    NTSTATUS                 Status;
+    PDPH_HEAP_BLOCK Node;
+    PDPH_HEAP_ROOT HeapRoot;
+    PVOID HeapHandle;
+    PUCHAR pVirtual;
+    SIZE_T nVirtual;
+    SIZE_T Size;
+    NTSTATUS Status;
 
     //
     // If `Parameters' is -1 then this is a recursive call to
@@ -2395,7 +2049,8 @@ RtlpDebugPageHeapCreate(
     // manager.
     //
 
-    if ((SIZE_T)Parameters == (SIZE_T)-1) {
+    if ((SIZE_T)Parameters == (SIZE_T)-1)
+    {
         return NULL;
     }
 
@@ -2404,10 +2059,10 @@ RtlpDebugPageHeapCreate(
     //  from user or where Lock is provided by user.
     //
 
-    DEBUG_ASSERT( HeapBase == NULL );
-    DEBUG_ASSERT( Lock == NULL );
+    DEBUG_ASSERT(HeapBase == NULL);
+    DEBUG_ASSERT(Lock == NULL);
 
-    if (( HeapBase != NULL ) || ( Lock != NULL ))
+    if ((HeapBase != NULL) || (Lock != NULL))
         return NULL;
 
     //
@@ -2416,35 +2071,35 @@ RtlpDebugPageHeapCreate(
     //  own thresholds, etc.
     //
 
-    ZwQuerySystemInformation( SystemBasicInformation,
-        &SystemInfo,
-        sizeof( SystemInfo ),
-        NULL );
+    ZwQuerySystemInformation(SystemBasicInformation, &SystemInfo, sizeof(SystemInfo), NULL);
 
-    RETAIL_ASSERT( SystemInfo.PageSize == PAGE_SIZE );
-    RETAIL_ASSERT( SystemInfo.AllocationGranularity == VM_UNIT_SIZE );
-    DEBUG_ASSERT(( PAGE_SIZE + POOL_SIZE + PAGE_SIZE ) < VM_UNIT_SIZE );
+    RETAIL_ASSERT(SystemInfo.PageSize == PAGE_SIZE);
+    RETAIL_ASSERT(SystemInfo.AllocationGranularity == VM_UNIT_SIZE);
+    DEBUG_ASSERT((PAGE_SIZE + POOL_SIZE + PAGE_SIZE) < VM_UNIT_SIZE);
 
     nVirtual = RESERVE_SIZE;
-    pVirtual = RtlpDebugPageHeapAllocateVM( nVirtual );
+    pVirtual = RtlpDebugPageHeapAllocateVM(nVirtual);
 
-    if (pVirtual == NULL) {
+    if (pVirtual == NULL)
+    {
 
         nVirtual = VM_UNIT_SIZE;
-        pVirtual = RtlpDebugPageHeapAllocateVM( nVirtual );
+        pVirtual = RtlpDebugPageHeapAllocateVM(nVirtual);
 
-        if (pVirtual == NULL) {
+        if (pVirtual == NULL)
+        {
 
-            OUT_OF_VM_BREAK( Flags, "Page heap: Insufficient memory to create heap\n" );
-            IF_GENERATE_EXCEPTION( Flags, STATUS_NO_MEMORY );
+            OUT_OF_VM_BREAK(Flags, "Page heap: Insufficient memory to create heap\n");
+            IF_GENERATE_EXCEPTION(Flags, STATUS_NO_MEMORY);
             return NULL;
         }
     }
 
-    if (! RtlpDebugPageHeapProtectVM( pVirtual, PAGE_SIZE + POOL_SIZE + PAGE_SIZE, PAGE_READWRITE )) {
+    if (!RtlpDebugPageHeapProtectVM(pVirtual, PAGE_SIZE + POOL_SIZE + PAGE_SIZE, PAGE_READWRITE))
+    {
 
-        RtlpDebugPageHeapReleaseVM( pVirtual );
-        IF_GENERATE_EXCEPTION( Flags, STATUS_NO_MEMORY );
+        RtlpDebugPageHeapReleaseVM(pVirtual);
+        IF_GENERATE_EXCEPTION(Flags, STATUS_NO_MEMORY);
         return NULL;
     }
 
@@ -2481,23 +2136,24 @@ RtlpDebugPageHeapCreate(
     //  and then we'll make the whole page read-only.
     //
 
-    RtlFillMemory( pVirtual, PAGE_SIZE, FILL_BYTE );
+    RtlFillMemory(pVirtual, PAGE_SIZE, FILL_BYTE);
 
-    ((PHEAP)pVirtual)->Flags      = Flags | HEAP_FLAG_PAGE_ALLOCS;
+    ((PHEAP)pVirtual)->Flags = Flags | HEAP_FLAG_PAGE_ALLOCS;
     ((PHEAP)pVirtual)->ForceFlags = Flags | HEAP_FLAG_PAGE_ALLOCS;
 
-    if (! RtlpDebugPageHeapProtectVM( pVirtual, PAGE_SIZE, PAGE_READONLY )) {
+    if (!RtlpDebugPageHeapProtectVM(pVirtual, PAGE_SIZE, PAGE_READONLY))
+    {
 
-        RtlpDebugPageHeapReleaseVM( pVirtual );
-        IF_GENERATE_EXCEPTION( Flags, STATUS_NO_MEMORY );
+        RtlpDebugPageHeapReleaseVM(pVirtual);
+        IF_GENERATE_EXCEPTION(Flags, STATUS_NO_MEMORY);
         return NULL;
     }
 
-    HeapRoot = (PDPH_HEAP_ROOT)( pVirtual + PAGE_SIZE );
+    HeapRoot = (PDPH_HEAP_ROOT)(pVirtual + PAGE_SIZE);
 
-    HeapRoot->Signature    = DPH_HEAP_SIGNATURE;
-    HeapRoot->HeapFlags    = Flags;
-    HeapRoot->HeapCritSect = (PVOID)((PCHAR)HeapRoot + POOL_SIZE );
+    HeapRoot->Signature = DPH_HEAP_SIGNATURE;
+    HeapRoot->HeapFlags = Flags;
+    HeapRoot->HeapCritSect = (PVOID)((PCHAR)HeapRoot + POOL_SIZE);
 
     //
     // Copy the page heap global flags into per heap flags.
@@ -2510,7 +2166,8 @@ RtlpDebugPageHeapCreate(
     // the bit into the HeapFlags field.
     //
 
-    if ((HeapRoot->ExtraFlags & PAGE_HEAP_PROTECT_META_DATA)) {
+    if ((HeapRoot->ExtraFlags & PAGE_HEAP_PROTECT_META_DATA))
+    {
         HeapRoot->HeapFlags |= HEAP_PROTECTION_ENABLED;
     }
 
@@ -2523,7 +2180,8 @@ RtlpDebugPageHeapCreate(
     // normal HeapFlags cannot.
     //
 
-    if ((HeapRoot->ExtraFlags & PAGE_HEAP_UNALIGNED_ALLOCATIONS)) {
+    if ((HeapRoot->ExtraFlags & PAGE_HEAP_UNALIGNED_ALLOCATIONS))
+    {
         HeapRoot->HeapFlags |= HEAP_NO_ALIGNMENT;
     }
 
@@ -2538,9 +2196,7 @@ RtlpDebugPageHeapCreate(
 
         PerformanceCounter.LowPart = 0xABCDDCBA;
 
-        NtQueryPerformanceCounter (
-            &PerformanceCounter,
-            NULL);
+        NtQueryPerformanceCounter(&PerformanceCounter, NULL);
 
         HeapRoot->Seed = PerformanceCounter.LowPart;
     }
@@ -2555,18 +2211,14 @@ RtlpDebugPageHeapCreate(
     // threads when the free delayed cache gets trimmed.
     //
 
-    HeapRoot->NormalHeap = RtlCreateHeap (
-        Flags & (~HEAP_NO_SERIALIZE),
-        HeapBase,
-        ReserveSize,
-        CommitSize,
-        Lock,
-        (PRTL_HEAP_PARAMETERS)-1 );
+    HeapRoot->NormalHeap =
+        RtlCreateHeap(Flags & (~HEAP_NO_SERIALIZE), HeapBase, ReserveSize, CommitSize, Lock, (PRTL_HEAP_PARAMETERS)-1);
 
-    if (HeapRoot->NormalHeap == NULL) {
+    if (HeapRoot->NormalHeap == NULL)
+    {
 
-        RtlpDebugPageHeapReleaseVM( pVirtual );
-        IF_GENERATE_EXCEPTION( Flags, STATUS_NO_MEMORY );
+        RtlpDebugPageHeapReleaseVM(pVirtual);
+        IF_GENERATE_EXCEPTION(Flags, STATUS_NO_MEMORY);
         return NULL;
     }
 
@@ -2574,7 +2226,7 @@ RtlpDebugPageHeapCreate(
     // Initialize heap lock.
     //
 
-    RtlInitializeCriticalSection( HeapRoot->HeapCritSect );
+    RtlInitializeCriticalSection(HeapRoot->HeapCritSect);
 
     //
     //  On the page that contains our DPH_HEAP structure, use
@@ -2582,11 +2234,7 @@ RtlpDebugPageHeapCreate(
     //  pool for allocating heap nodes.
     //
 
-    RtlpDebugPageHeapAddNewPool( HeapRoot,
-        HeapRoot + 1,
-        POOL_SIZE - sizeof( DPH_HEAP_ROOT ),
-        FALSE
-        );
+    RtlpDebugPageHeapAddNewPool(HeapRoot, HeapRoot + 1, POOL_SIZE - sizeof(DPH_HEAP_ROOT), FALSE);
 
     //
     //  Make initial PoolList entry by taking a node from the
@@ -2594,32 +2242,32 @@ RtlpDebugPageHeapCreate(
     //  since we just added new nodes to it.
     //
 
-    Node = RtlpDebugPageHeapAllocateNode( HeapRoot );
-    DEBUG_ASSERT( Node != NULL );
-    Node->pVirtualBlock     = (PVOID)HeapRoot;
+    Node = RtlpDebugPageHeapAllocateNode(HeapRoot);
+    DEBUG_ASSERT(Node != NULL);
+    Node->pVirtualBlock = (PVOID)HeapRoot;
     Node->nVirtualBlockSize = POOL_SIZE;
-    RtlpDebugPageHeapPlaceOnPoolList( HeapRoot, Node );
+    RtlpDebugPageHeapPlaceOnPoolList(HeapRoot, Node);
 
     //
     //  Make VirtualStorageList entry for initial VM allocation
     //
 
-    Node = RtlpDebugPageHeapAllocateNode( HeapRoot );
-    DEBUG_ASSERT( Node != NULL );
-    Node->pVirtualBlock     = pVirtual;
+    Node = RtlpDebugPageHeapAllocateNode(HeapRoot);
+    DEBUG_ASSERT(Node != NULL);
+    Node->pVirtualBlock = pVirtual;
     Node->nVirtualBlockSize = nVirtual;
-    RtlpDebugPageHeapPlaceOnVirtualList( HeapRoot, Node );
+    RtlpDebugPageHeapPlaceOnVirtualList(HeapRoot, Node);
 
     //
     //  Make AvailableList entry containing remainder of initial VM
     //  and add to (create) the AvailableList.
     //
 
-    Node = RtlpDebugPageHeapAllocateNode( HeapRoot );
-    DEBUG_ASSERT( Node != NULL );
-    Node->pVirtualBlock     = pVirtual + ( PAGE_SIZE + POOL_SIZE + PAGE_SIZE );
-    Node->nVirtualBlockSize = nVirtual - ( PAGE_SIZE + POOL_SIZE + PAGE_SIZE );
-    RtlpDebugPageHeapCoalesceNodeIntoAvailable( HeapRoot, Node );
+    Node = RtlpDebugPageHeapAllocateNode(HeapRoot);
+    DEBUG_ASSERT(Node != NULL);
+    Node->pVirtualBlock = pVirtual + (PAGE_SIZE + POOL_SIZE + PAGE_SIZE);
+    Node->nVirtualBlockSize = nVirtual - (PAGE_SIZE + POOL_SIZE + PAGE_SIZE);
+    RtlpDebugPageHeapCoalesceNodeIntoAvailable(HeapRoot, Node);
 
     //
     // Get heap creation stack trace.
@@ -2631,7 +2279,7 @@ RtlpDebugPageHeapCreate(
     //  Initialize heap internal structure protection.
     //
 
-    HeapRoot->nUnProtectionReferenceCount = 1;          // initialize
+    HeapRoot->nUnProtectionReferenceCount = 1; // initialize
 
     //
     //  If this is the first heap creation in this process, then we
@@ -2640,12 +2288,13 @@ RtlpDebugPageHeapCreate(
     // trace database.
     //
 
-    if (! RtlpDphHeapListHasBeenInitialized) {
+    if (!RtlpDphHeapListHasBeenInitialized)
+    {
 
         RtlpDphHeapListHasBeenInitialized = TRUE;
 
-        RtlInitializeCriticalSection( &RtlpDphHeapListCriticalSection );
-        RtlpDphInitializeDelayedFreeQueue ();
+        RtlInitializeCriticalSection(&RtlpDphHeapListCriticalSection);
+        RtlpDphInitializeDelayedFreeQueue();
 
         //
         // Do not make fuss if the trace database creation fails.
@@ -2656,17 +2305,12 @@ RtlpDebugPageHeapCreate(
         // values are: 1567, 3089, 6263.
         //
 
-        RtlpDphTraceDatabase = RtlTraceDatabaseCreate (
-            6263,
-            RtlpDphTraceDatabaseMaximumSize,
-            0,
-            0,
-            NULL);
+        RtlpDphTraceDatabase = RtlTraceDatabaseCreate(6263, RtlpDphTraceDatabaseMaximumSize, 0, 0, NULL);
 
 #if DBG
-        if (RtlpDphTraceDatabase == NULL) {
-            DbgPrint ("Page heap: warning: failed to create trace database for %p",
-                HeapRoot);
+        if (RtlpDphTraceDatabase == NULL)
+        {
+            DbgPrint("Page heap: warning: failed to create trace database for %p", HeapRoot);
         }
 #endif
         //
@@ -2675,42 +2319,42 @@ RtlpDebugPageHeapCreate(
         // be initialized with the empty string.
         //
 
-        RtlInitUnicodeString (
-            &RtlpDphTargetDllsUnicode,
-            RtlpDphTargetDlls);
+        RtlInitUnicodeString(&RtlpDphTargetDllsUnicode, RtlpDphTargetDlls);
 
         //
         // Initialize the target dlls logic
         //
 
-        RtlpDphTargetDllsLogicInitialize ();
+        RtlpDphTargetDllsLogicInitialize();
     }
 
     //
     //  Add this heap entry to the process heap linked list.
     //
 
-    RtlEnterCriticalSection( &RtlpDphHeapListCriticalSection );
+    RtlEnterCriticalSection(&RtlpDphHeapListCriticalSection);
 
-    if (RtlpDphHeapListHead == NULL) {
+    if (RtlpDphHeapListHead == NULL)
+    {
         RtlpDphHeapListHead = HeapRoot;
         RtlpDphHeapListTail = HeapRoot;
     }
-    else {
+    else
+    {
         HeapRoot->pPrevHeapRoot = RtlpDphHeapListTail;
         UNPROTECT_HEAP_STRUCTURES(RtlpDphHeapListTail);
         RtlpDphHeapListTail->pNextHeapRoot = HeapRoot;
         PROTECT_HEAP_STRUCTURES(RtlpDphHeapListTail);
-        RtlpDphHeapListTail                = HeapRoot;
+        RtlpDphHeapListTail = HeapRoot;
     }
 
-    PROTECT_HEAP_STRUCTURES( HeapRoot );                // now protected
+    PROTECT_HEAP_STRUCTURES(HeapRoot); // now protected
 
     RtlpDphHeapListCount += 1;
 
-    RtlLeaveCriticalSection( &RtlpDphHeapListCriticalSection );
+    RtlLeaveCriticalSection(&RtlpDphHeapListCriticalSection);
 
-    DEBUG_CODE( RtlpDebugPageHeapVerifyIntegrity( HeapRoot ));
+    DEBUG_CODE(RtlpDebugPageHeapVerifyIntegrity(HeapRoot));
 
 #if 0 // ISSUE: SilviuC: use DbgPrintEx instead.
     DbgPrint( "Page heap: process 0x%X created heap @ %p (%p, flags 0x%X)\n",
@@ -2720,31 +2364,27 @@ RtlpDebugPageHeapCreate(
         HeapRoot->ExtraFlags);
 #endif
 
-    if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION)) {
-        RtlpDphInternalValidatePageHeap (HeapRoot, NULL, 0);
+    if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION))
+    {
+        RtlpDphInternalValidatePageHeap(HeapRoot, NULL, 0);
     }
 
-    return HEAP_HANDLE_FROM_ROOT( HeapRoot );       // same as pVirtual
-
+    return HEAP_HANDLE_FROM_ROOT(HeapRoot); // same as pVirtual
 }
 
 PVOID
-RtlpDebugPageHeapAllocate(
-    IN PVOID  HeapHandle,
-    IN ULONG  Flags,
-    IN SIZE_T Size
-    )
+RtlpDebugPageHeapAllocate(IN PVOID HeapHandle, IN ULONG Flags, IN SIZE_T Size)
 {
-    PDPH_HEAP_ROOT       HeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
     PDPH_HEAP_BLOCK pAvailNode;
     PDPH_HEAP_BLOCK pPrevAvailNode;
     PDPH_HEAP_BLOCK pBusyNode;
-    SIZE_T               nBytesAllocate;
-    SIZE_T               nBytesAccess;
-    SIZE_T               nActual;
-    PVOID                pVirtual;
-    PVOID                pReturn;
-    PUCHAR               pBlockHeader;
+    SIZE_T nBytesAllocate;
+    SIZE_T nBytesAccess;
+    SIZE_T nActual;
+    PVOID pVirtual;
+    PVOID pReturn;
+    PUCHAR pBlockHeader;
     ULONG Reason;
     BOOLEAN ForcePageHeap = FALSE;
 
@@ -2753,17 +2393,15 @@ RtlpDebugPageHeapAllocate(
     //
 
 #if defined(_IA64_)
-    if (Size > 0x8000000000000000) {
+    if (Size > 0x8000000000000000)
+    {
 #else
-    if (Size > 0x80000000) {
+    if (Size > 0x80000000)
+    {
 #endif
 
-        VERIFIER_STOP (APPLICATION_VERIFIER_EXTREME_SIZE_REQUEST,
-                       "extreme size request",
-                       HeapHandle, "Heap handle", 
-                       Size, "Size requested", 
-                       0, "", 
-                       0, "");
+        VERIFIER_STOP(APPLICATION_VERIFIER_EXTREME_SIZE_REQUEST, "extreme size request", HeapHandle, "Heap handle",
+                      Size, "Size requested", 0, "", 0, "");
         return NULL;
     }
 
@@ -2771,7 +2409,8 @@ RtlpDebugPageHeapAllocate(
     // Check if it is time to do fault injection.
     //
 
-    if (RtlpDphShouldFaultInject ()) {
+    if (RtlpDphShouldFaultInject())
+    {
         return NULL;
     }
 
@@ -2780,12 +2419,13 @@ RtlpDebugPageHeapAllocate(
     // a forced page heap allocation (no normal heap).
     //
 
-    if (IS_BIASED_POINTER(HeapHandle)) {
+    if (IS_BIASED_POINTER(HeapHandle))
+    {
         HeapHandle = UNBIAS_POINTER(HeapHandle);
         ForcePageHeap = TRUE;
     }
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
     if (HeapRoot == NULL)
         return NULL;
 
@@ -2793,9 +2433,10 @@ RtlpDebugPageHeapAllocate(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
-    try {
+    try
+    {
 
         //
         // We cannot validate the heap when a forced allocation into page heap
@@ -2804,8 +2445,9 @@ RtlpDebugPageHeapAllocate(
         // and is not accounted in any internal structure.
         //
 
-        if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION) && !ForcePageHeap) {
-            RtlpDphInternalValidatePageHeap (HeapRoot, NULL, 0);
+        if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION) && !ForcePageHeap)
+        {
+            RtlpDphInternalValidatePageHeap(HeapRoot, NULL, 0);
         }
 
         Flags |= HeapRoot->HeapFlags;
@@ -2815,14 +2457,13 @@ RtlpDebugPageHeapAllocate(
         // might trigger an allocation in the normal heap.
         //
 
-        if (! ForcePageHeap) {
+        if (!ForcePageHeap)
+        {
 
-            if (! (RtlpDphShouldAllocateInPageHeap (HeapRoot, Size))) {
+            if (!(RtlpDphShouldAllocateInPageHeap(HeapRoot, Size)))
+            {
 
-                pReturn = RtlpDphNormalHeapAllocate (
-                    HeapRoot,
-                    Flags,
-                    Size);
+                pReturn = RtlpDphNormalHeapAllocate(HeapRoot, Flags, Size);
 
                 goto EXIT;
             }
@@ -2832,7 +2473,7 @@ RtlpDebugPageHeapAllocate(
         // Check the heap a little bit on checked builds.
         //
 
-        DEBUG_CODE( RtlpDebugPageHeapVerifyIntegrity( HeapRoot ));
+        DEBUG_CODE(RtlpDebugPageHeapVerifyIntegrity(HeapRoot));
 
         pReturn = NULL;
 
@@ -2843,8 +2484,9 @@ RtlpDebugPageHeapAllocate(
         //  catch serialization problems.
         //
 
-        if (Size > 0x7FFF0000) {
-            OUT_OF_VM_BREAK( Flags, "Page heap: Invalid allocation size\n" );
+        if (Size > 0x7FFF0000)
+        {
+            OUT_OF_VM_BREAK(Flags, "Page heap: Invalid allocation size\n");
             goto EXIT;
         }
 
@@ -2854,7 +2496,7 @@ RtlpDebugPageHeapAllocate(
         //  memory beyond the READWRITE page(s).
         //
 
-        nBytesAccess  = ROUNDUP2( Size + sizeof(DPH_BLOCK_INFORMATION), PAGE_SIZE );
+        nBytesAccess = ROUNDUP2(Size + sizeof(DPH_BLOCK_INFORMATION), PAGE_SIZE);
         nBytesAllocate = nBytesAccess + PAGE_SIZE;
 
         //
@@ -2866,15 +2508,11 @@ RtlpDebugPageHeapAllocate(
         //  finally give up and return NULL.
         //
 
-        pAvailNode = RtlpDebugPageHeapFindAvailableMem(
-            HeapRoot,
-            nBytesAllocate,
-            &pPrevAvailNode,
-            TRUE
-            );
+        pAvailNode = RtlpDebugPageHeapFindAvailableMem(HeapRoot, nBytesAllocate, &pPrevAvailNode, TRUE);
 
-        if (pAvailNode == NULL) {
-            OUT_OF_VM_BREAK( Flags, "Page heap: Unable to allocate virtual memory\n" );
+        if (pAvailNode == NULL)
+        {
+            OUT_OF_VM_BREAK(Flags, "Page heap: Unable to allocate virtual memory\n");
             goto EXIT;
         }
 
@@ -2886,17 +2524,22 @@ RtlpDebugPageHeapAllocate(
 
         pVirtual = pAvailNode->pVirtualBlock;
 
-        if (nBytesAccess > 0) {
+        if (nBytesAccess > 0)
+        {
 
-            if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+            if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+            {
 
-                if (! RtlpDebugPageHeapProtectVM( (PUCHAR)pVirtual + PAGE_SIZE, nBytesAccess, PAGE_READWRITE )) {
+                if (!RtlpDebugPageHeapProtectVM((PUCHAR)pVirtual + PAGE_SIZE, nBytesAccess, PAGE_READWRITE))
+                {
                     goto EXIT;
                 }
             }
-            else {
+            else
+            {
 
-                if (! RtlpDebugPageHeapProtectVM( pVirtual, nBytesAccess, PAGE_READWRITE )) {
+                if (!RtlpDebugPageHeapProtectVM(pVirtual, nBytesAccess, PAGE_READWRITE))
+                {
                     goto EXIT;
                 }
             }
@@ -2908,18 +2551,18 @@ RtlpDebugPageHeapAllocate(
         // usage flag.
         //
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+        {
 
             // nothing
-
         }
-        else {
+        else
+        {
 
-            if ((HeapRoot->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE)) {
+            if ((HeapRoot->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE))
+            {
 
-                RtlpDebugPageHeapDecommitVM (
-                    (PCHAR)pVirtual + nBytesAccess,
-                    PAGE_SIZE);
+                RtlpDebugPageHeapDecommitVM((PCHAR)pVirtual + nBytesAccess, PAGE_SIZE);
             }
         }
 
@@ -2930,7 +2573,8 @@ RtlpDebugPageHeapAllocate(
         //  avail list.
         //
 
-        if (pAvailNode->nVirtualBlockSize > nBytesAllocate) {
+        if (pAvailNode->nVirtualBlockSize > nBytesAllocate)
+        {
 
             //
             //  Adjust pVirtualBlock and nVirtualBlock size of existing
@@ -2945,29 +2589,28 @@ RtlpDebugPageHeapAllocate(
             //  will not fail.
             //
 
-            pAvailNode->pVirtualBlock                    += nBytesAllocate;
-            pAvailNode->nVirtualBlockSize                -= nBytesAllocate;
+            pAvailNode->pVirtualBlock += nBytesAllocate;
+            pAvailNode->nVirtualBlockSize -= nBytesAllocate;
             HeapRoot->nAvailableAllocationBytesCommitted -= nBytesAllocate;
 
-            pBusyNode = RtlpDebugPageHeapAllocateNode( HeapRoot );
+            pBusyNode = RtlpDebugPageHeapAllocateNode(HeapRoot);
 
-            DEBUG_ASSERT( pBusyNode != NULL );
+            DEBUG_ASSERT(pBusyNode != NULL);
 
-            pBusyNode->pVirtualBlock     = pVirtual;
+            pBusyNode->pVirtualBlock = pVirtual;
             pBusyNode->nVirtualBlockSize = nBytesAllocate;
-
         }
 
-        else {
+        else
+        {
 
             //
             //  Entire avail block is needed, so simply remove it from avail list.
             //
 
-            RtlpDebugPageHeapRemoveFromAvailableList( HeapRoot, pAvailNode, pPrevAvailNode );
+            RtlpDebugPageHeapRemoveFromAvailableList(HeapRoot, pAvailNode, pPrevAvailNode);
 
             pBusyNode = pAvailNode;
-
         }
 
         //
@@ -2977,26 +2620,25 @@ RtlpDebugPageHeapAllocate(
         if (HeapRoot->HeapFlags & HEAP_NO_ALIGNMENT)
             nActual = Size;
         else
-            nActual = ROUNDUP2( Size, USER_ALIGNMENT );
+            nActual = ROUNDUP2(Size, USER_ALIGNMENT);
 
         pBusyNode->nVirtualAccessSize = nBytesAccess;
         pBusyNode->nUserRequestedSize = Size;
-        pBusyNode->nUserActualSize    = nActual;
+        pBusyNode->nUserActualSize = nActual;
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+        {
 
-            pBusyNode->pUserAllocation    = pBusyNode->pVirtualBlock
-                + PAGE_SIZE;
+            pBusyNode->pUserAllocation = pBusyNode->pVirtualBlock + PAGE_SIZE;
         }
-        else {
+        else
+        {
 
-            pBusyNode->pUserAllocation    = pBusyNode->pVirtualBlock
-                + pBusyNode->nVirtualAccessSize
-                - nActual;
+            pBusyNode->pUserAllocation = pBusyNode->pVirtualBlock + pBusyNode->nVirtualAccessSize - nActual;
         }
 
-        pBusyNode->UserValue          = NULL;
-        pBusyNode->UserFlags          = Flags & HEAP_SETTABLE_USER_FLAGS;
+        pBusyNode->UserValue = NULL;
+        pBusyNode->UserFlags = Flags & HEAP_SETTABLE_USER_FLAGS;
 
         //
         //  RtlpDebugPageHeapAllocate gets called from RtlDebugAllocateHeap,
@@ -3006,24 +2648,27 @@ RtlpDebugPageHeapAllocate(
         //  as the first recorded entry.
         //
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES)) {
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES))
+        {
 
             pBusyNode->StackTrace = RtlpDphLogStackTrace(3);
 
-            if (pBusyNode->StackTrace) {
+            if (pBusyNode->StackTrace)
+            {
 
-                RtlTraceDatabaseLock (RtlpDphTraceDatabase);
+                RtlTraceDatabaseLock(RtlpDphTraceDatabase);
                 pBusyNode->StackTrace->UserCount += 1;
                 pBusyNode->StackTrace->UserSize += pBusyNode->nUserRequestedSize;
                 pBusyNode->StackTrace->UserContext = HeapRoot;
-                RtlTraceDatabaseUnlock (RtlpDphTraceDatabase);
+                RtlTraceDatabaseUnlock(RtlpDphTraceDatabase);
             }
         }
-        else {
+        else
+        {
             pBusyNode->StackTrace = NULL;
         }
 
-        RtlpDebugPageHeapPlaceOnBusyList( HeapRoot, pBusyNode );
+        RtlpDebugPageHeapPlaceOnBusyList(HeapRoot, pBusyNode);
 
         pReturn = pBusyNode->pUserAllocation;
 
@@ -3034,52 +2679,50 @@ RtlpDebugPageHeapAllocate(
         //  with DPH_PAGE_BLOCK_INFIX.
         //
 
-        if ((Flags & HEAP_ZERO_MEMORY)) {
+        if ((Flags & HEAP_ZERO_MEMORY))
+        {
 
 
-            RtlZeroMemory( pBusyNode->pUserAllocation, Size );
+            RtlZeroMemory(pBusyNode->pUserAllocation, Size);
         }
-        else {
+        else
+        {
 
-            RtlFillMemory( pBusyNode->pUserAllocation, Size, DPH_PAGE_BLOCK_INFIX);
+            RtlFillMemory(pBusyNode->pUserAllocation, Size, DPH_PAGE_BLOCK_INFIX);
         }
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+        {
 
             // nothing
-
         }
-        else {
+        else
+        {
 
-            RtlpDphWritePageHeapBlockInformation (
-                HeapRoot,
-                pBusyNode->pUserAllocation,
-                Size,
-                nBytesAccess);
+            RtlpDphWritePageHeapBlockInformation(HeapRoot, pBusyNode->pUserAllocation, Size, nBytesAccess);
         }
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              FALSE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, FALSE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
-    EXIT:
+EXIT:
 
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
-    if (pReturn == NULL) {
-        IF_GENERATE_EXCEPTION (Flags, STATUS_NO_MEMORY);
+    if (pReturn == NULL)
+    {
+        IF_GENERATE_EXCEPTION(Flags, STATUS_NO_MEMORY);
     }
 
     return pReturn;
@@ -3087,29 +2730,26 @@ RtlpDebugPageHeapAllocate(
 
 
 BOOLEAN
-RtlpDebugPageHeapFree(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address
-    )
+RtlpDebugPageHeapFree(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address)
 {
 
-    PDPH_HEAP_ROOT       HeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
     PDPH_HEAP_BLOCK Node, Prev;
-    BOOLEAN              Success;
-    PCH                  p;
+    BOOLEAN Success;
+    PCH p;
     ULONG Reason;
 
     //
     // Skip over null frees. These are valid in C++.
     //
 
-    if (Address == NULL) {
+    if (Address == NULL)
+    {
 
         return TRUE;
     }
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
     if (HeapRoot == NULL)
         return FALSE;
 
@@ -3117,22 +2757,25 @@ RtlpDebugPageHeapFree(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
-        if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION)) {
-            RtlpDphInternalValidatePageHeap (HeapRoot, NULL, 0);
+        if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION))
+        {
+            RtlpDphInternalValidatePageHeap(HeapRoot, NULL, 0);
         }
 
         Flags |= HeapRoot->HeapFlags;
 
         Success = FALSE;
 
-        Node = RtlpDebugPageHeapFindBusyMem( HeapRoot, Address, &Prev );
+        Node = RtlpDebugPageHeapFindBusyMem(HeapRoot, Address, &Prev);
 
-        if (Node == NULL) {
+        if (Node == NULL)
+        {
 
             //
             // No wonder we did not find the block in the page heap
@@ -3141,11 +2784,9 @@ RtlpDebugPageHeapFree(
             // If there is a bug NormalHeapFree will break into debugger.
             //
 
-            Success = RtlpDphNormalHeapFree (
+            Success = RtlpDphNormalHeapFree(
 
-                HeapRoot,
-                Flags,
-                Address);
+                HeapRoot, Flags, Address);
 
             goto EXIT;
         }
@@ -3154,33 +2795,31 @@ RtlpDebugPageHeapFree(
         // Check if there are any orphan critical sections in the block to be freed.
         //
 
-        RtlpCheckForCriticalSectionsInMemoryRange (Address, 
-                                                   Node->nUserRequestedSize,
-                                                   NULL);
+        RtlpCheckForCriticalSectionsInMemoryRange(Address, Node->nUserRequestedSize, NULL);
 
         //
         //  If tail was allocated, make sure filler not overwritten
         //
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+        {
 
-            if (Node->nVirtualAccessSize > 0) {
-                RtlpDebugPageHeapProtectVM( Node->pVirtualBlock + PAGE_SIZE,
-                    Node->nVirtualAccessSize,
-                    PAGE_NOACCESS );
+            if (Node->nVirtualAccessSize > 0)
+            {
+                RtlpDebugPageHeapProtectVM(Node->pVirtualBlock + PAGE_SIZE, Node->nVirtualAccessSize, PAGE_NOACCESS);
             }
         }
-        else {
+        else
+        {
 
-            if (! (RtlpDphIsPageHeapBlock (HeapRoot, Address, &Reason, TRUE))) {
+            if (!(RtlpDphIsPageHeapBlock(HeapRoot, Address, &Reason, TRUE)))
+            {
 
-                RtlpDphReportCorruptedBlock (HeapRoot,
-                                             DPH_CONTEXT_FULL_PAGE_HEAP_FREE,
-                                             Address, 
-                                             Reason);
+                RtlpDphReportCorruptedBlock(HeapRoot, DPH_CONTEXT_FULL_PAGE_HEAP_FREE, Address, Reason);
             }
 
-            if (Node->nVirtualAccessSize > 0) {
+            if (Node->nVirtualAccessSize > 0)
+            {
 
                 //
                 // Mark the block as freed. The information is gone if we
@@ -3196,13 +2835,11 @@ RtlpDebugPageHeapFree(
                     Info->EndStamp -= 1;
                 }
 
-                RtlpDebugPageHeapProtectVM( Node->pVirtualBlock,
-                    Node->nVirtualAccessSize,
-                    PAGE_NOACCESS );
+                RtlpDebugPageHeapProtectVM(Node->pVirtualBlock, Node->nVirtualAccessSize, PAGE_NOACCESS);
             }
         }
 
-        RtlpDebugPageHeapRemoveFromBusyList( HeapRoot, Node, Prev );
+        RtlpDebugPageHeapRemoveFromBusyList(HeapRoot, Node, Prev);
 
         //
         // If we use uncommitted ranges we need to decommit the memory
@@ -3210,23 +2847,23 @@ RtlpDebugPageHeapFree(
         // was already decommitted when we allocated the block.
         //
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+        {
 
             // nothing
-
         }
-        else {
+        else
+        {
 
-            if ((HeapRoot->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE)) {
+            if ((HeapRoot->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE))
+            {
 
-                RtlpDebugPageHeapDecommitVM (
-                    Node->pVirtualBlock,
-                    Node->nVirtualAccessSize);
+                RtlpDebugPageHeapDecommitVM(Node->pVirtualBlock, Node->nVirtualAccessSize);
             }
         }
 
 
-        RtlpDebugPageHeapPlaceOnFreeList( HeapRoot, Node );
+        RtlpDebugPageHeapPlaceOnFreeList(HeapRoot, Node);
 
         //
         //  RtlpDebugPageHeapFree gets called from RtlDebugFreeHeap, which
@@ -3236,73 +2873,72 @@ RtlpDebugPageHeapFree(
         //  first recorded entry.
         //
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES)) {
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES))
+        {
 
-            if (Node->StackTrace) {
+            if (Node->StackTrace)
+            {
 
-                RtlTraceDatabaseLock (RtlpDphTraceDatabase);
+                RtlTraceDatabaseLock(RtlpDphTraceDatabase);
 
-                if (Node->StackTrace->UserCount > 0) {
+                if (Node->StackTrace->UserCount > 0)
+                {
                     Node->StackTrace->UserCount -= 1;
                 }
 
-                if (Node->StackTrace->UserSize >= Node->nUserRequestedSize) {
+                if (Node->StackTrace->UserSize >= Node->nUserRequestedSize)
+                {
                     Node->StackTrace->UserSize -= Node->nUserRequestedSize;
                 }
 
-                RtlTraceDatabaseUnlock (RtlpDphTraceDatabase);
+                RtlTraceDatabaseUnlock(RtlpDphTraceDatabase);
             }
 
             Node->StackTrace = RtlpDphLogStackTrace(3);
         }
-        else {
+        else
+        {
             Node->StackTrace = NULL;
         }
 
         Success = TRUE;
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              FALSE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, FALSE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
-    EXIT:
+EXIT:
 
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
 
-    if (! Success) {
-        IF_GENERATE_EXCEPTION( Flags, STATUS_ACCESS_VIOLATION );
+    if (!Success)
+    {
+        IF_GENERATE_EXCEPTION(Flags, STATUS_ACCESS_VIOLATION);
     }
 
     return Success;
 }
 
 PVOID
-RtlpDebugPageHeapReAllocate(
-    IN PVOID  HeapHandle,
-    IN ULONG  Flags,
-    IN PVOID  Address,
-    IN SIZE_T Size
-    )
+RtlpDebugPageHeapReAllocate(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, IN SIZE_T Size)
 {
-    PDPH_HEAP_ROOT       HeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
     PDPH_HEAP_BLOCK OldNode, OldPrev, NewNode;
-    PVOID                NewAddress;
-    PUCHAR               p;
-    SIZE_T               CopyDataSize;
-    ULONG                SaveFlags;
+    PVOID NewAddress;
+    PUCHAR p;
+    SIZE_T CopyDataSize;
+    ULONG SaveFlags;
     BOOLEAN ReallocInNormalHeap = FALSE;
     ULONG Reason;
     BOOLEAN ForcePageHeap = FALSE;
@@ -3313,17 +2949,15 @@ RtlpDebugPageHeapReAllocate(
     //
 
 #if defined(_IA64_)
-    if (Size > 0x8000000000000000) {
+    if (Size > 0x8000000000000000)
+    {
 #else
-    if (Size > 0x80000000) {
+    if (Size > 0x80000000)
+    {
 #endif
 
-        VERIFIER_STOP (APPLICATION_VERIFIER_EXTREME_SIZE_REQUEST,
-                       "extreme size request",
-                       HeapHandle, "Heap handle", 
-                       Size, "Size requested", 
-                       0, "",
-                       0, "");
+        VERIFIER_STOP(APPLICATION_VERIFIER_EXTREME_SIZE_REQUEST, "extreme size request", HeapHandle, "Heap handle",
+                      Size, "Size requested", 0, "", 0, "");
         return NULL;
     }
 
@@ -3331,7 +2965,8 @@ RtlpDebugPageHeapReAllocate(
     // Check if it is time to do fault injection.
     //
 
-    if (RtlpDphShouldFaultInject ()) {
+    if (RtlpDphShouldFaultInject())
+    {
         return NULL;
     }
 
@@ -3340,12 +2975,13 @@ RtlpDebugPageHeapReAllocate(
     // a forced page heap allocation (no normal heap).
     //
 
-    if (IS_BIASED_POINTER(HeapHandle)) {
+    if (IS_BIASED_POINTER(HeapHandle))
+    {
         HeapHandle = UNBIAS_POINTER(HeapHandle);
         ForcePageHeap = TRUE;
     }
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
     if (HeapRoot == NULL)
         return NULL;
 
@@ -3353,13 +2989,15 @@ RtlpDebugPageHeapReAllocate(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
-        if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION)) {
-            RtlpDphInternalValidatePageHeap (HeapRoot, NULL, 0);
+        if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION))
+        {
+            RtlpDphInternalValidatePageHeap(HeapRoot, NULL, 0);
         }
 
         Flags |= HeapRoot->HeapFlags;
@@ -3372,7 +3010,8 @@ RtlpDebugPageHeapReAllocate(
         //  prepared to deal with failure anyway.
         //
 
-        if (Flags & HEAP_REALLOC_IN_PLACE_ONLY) {
+        if (Flags & HEAP_REALLOC_IN_PLACE_ONLY)
+        {
             goto EXIT;
         }
 
@@ -3383,18 +3022,21 @@ RtlpDebugPageHeapReAllocate(
         //  catch serialization problems.
         //
 
-        if (Size > 0x7FFF0000) {
-            OUT_OF_VM_BREAK( Flags, "Page heap: Invalid allocation size\n" );
+        if (Size > 0x7FFF0000)
+        {
+            OUT_OF_VM_BREAK(Flags, "Page heap: Invalid allocation size\n");
             goto EXIT;
         }
 
-        OldNode = RtlpDebugPageHeapFindBusyMem( HeapRoot, Address, &OldPrev );
+        OldNode = RtlpDebugPageHeapFindBusyMem(HeapRoot, Address, &OldPrev);
 
-        if (OldNode) {
+        if (OldNode)
+        {
             OriginalAllocationInPageHeap = TRUE;
         }
 
-        if (OldNode == NULL) {
+        if (OldNode == NULL)
+        {
 
             //
             // No wonder we did not find the block in the page heap
@@ -3403,12 +3045,9 @@ RtlpDebugPageHeapReAllocate(
             // is a bug NormalHeapReAllocate will break into debugger.
             //
 
-            NewAddress = RtlpDphNormalHeapReAllocate (
+            NewAddress = RtlpDphNormalHeapReAllocate(
 
-                HeapRoot,
-                Flags,
-                Address,
-                Size);
+                HeapRoot, Flags, Address, Size);
 
             goto EXIT;
         }
@@ -3417,18 +3056,18 @@ RtlpDebugPageHeapReAllocate(
         //  If tail was allocated, make sure filler not overwritten
         //
 
-        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+        if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+        {
 
             // nothing
         }
-        else {
+        else
+        {
 
-            if (! (RtlpDphIsPageHeapBlock (HeapRoot, Address, &Reason, TRUE))) {
+            if (!(RtlpDphIsPageHeapBlock(HeapRoot, Address, &Reason, TRUE)))
+            {
 
-                RtlpDphReportCorruptedBlock (HeapRoot,
-                                             DPH_CONTEXT_FULL_PAGE_HEAP_REALLOC,
-                                             Address, 
-                                             Reason);
+                RtlpDphReportCorruptedBlock(HeapRoot, DPH_CONTEXT_FULL_PAGE_HEAP_REALLOC, Address, Reason);
             }
         }
 
@@ -3439,25 +3078,25 @@ RtlpDebugPageHeapReAllocate(
         //  Prev pointer invalid.
         //
 
-        RtlpDebugPageHeapRemoveFromBusyList( HeapRoot, OldNode, OldPrev );
+        RtlpDebugPageHeapRemoveFromBusyList(HeapRoot, OldNode, OldPrev);
 
         //
         //  Allocate new memory for new requested size.  Use try/except
         //  to trap exception if Flags caused out-of-memory exception.
         //
 
-        try {
+        try
+        {
 
-            if (!ForcePageHeap && !(RtlpDphShouldAllocateInPageHeap (HeapRoot, Size))) {
+            if (!ForcePageHeap && !(RtlpDphShouldAllocateInPageHeap(HeapRoot, Size)))
+            {
 
-                NewAddress = RtlpDphNormalHeapAllocate (
-                    HeapRoot,
-                    Flags,
-                    Size);
+                NewAddress = RtlpDphNormalHeapAllocate(HeapRoot, Flags, Size);
 
                 ReallocInNormalHeap = TRUE;
             }
-            else {
+            else
+            {
 
                 //
                 // Force the allocation in page heap by biasing
@@ -3465,30 +3104,30 @@ RtlpDebugPageHeapReAllocate(
                 // biased pointers validation inside Allocate is disabled.
                 //
 
-                if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION)) {
-                    RtlpDphInternalValidatePageHeap (HeapRoot, OldNode->pVirtualBlock, OldNode->nVirtualBlockSize);
+                if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION))
+                {
+                    RtlpDphInternalValidatePageHeap(HeapRoot, OldNode->pVirtualBlock, OldNode->nVirtualBlockSize);
                 }
 
-                NewAddress = RtlpDebugPageHeapAllocate(
-                    BIAS_POINTER(HeapHandle),
-                    Flags,
-                    Size);
+                NewAddress = RtlpDebugPageHeapAllocate(BIAS_POINTER(HeapHandle), Flags, Size);
 
                 //
                 // When we get back from the page heap call we will get
                 // back read only meta data that we need to make read write.
                 //
 
-                UNPROTECT_HEAP_STRUCTURES( HeapRoot );
+                UNPROTECT_HEAP_STRUCTURES(HeapRoot);
 
-                if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION)) {
-                    RtlpDphInternalValidatePageHeap (HeapRoot, OldNode->pVirtualBlock, OldNode->nVirtualBlockSize);
+                if ((RtlpDphDebugLevel & DPH_DEBUG_INTERNAL_VALIDATION))
+                {
+                    RtlpDphInternalValidatePageHeap(HeapRoot, OldNode->pVirtualBlock, OldNode->nVirtualBlockSize);
                 }
 
                 ReallocInNormalHeap = FALSE;
             }
         }
-        except( EXCEPTION_EXECUTE_HANDLER ) {
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
 
         //
@@ -3497,7 +3136,8 @@ RtlpDebugPageHeapReAllocate(
         // (contents, user flags/values).
         //
 
-        if (NewAddress) {
+        if (NewAddress)
+        {
 
             //
             // Copy old block contents into the new node.
@@ -3505,17 +3145,15 @@ RtlpDebugPageHeapReAllocate(
 
             CopyDataSize = OldNode->nUserRequestedSize;
 
-            if (CopyDataSize > Size) {
+            if (CopyDataSize > Size)
+            {
                 CopyDataSize = Size;
             }
 
-            if (CopyDataSize > 0) {
+            if (CopyDataSize > 0)
+            {
 
-                RtlCopyMemory(
-                    NewAddress,
-                    Address,
-                    CopyDataSize
-                    );
+                RtlCopyMemory(NewAddress, Address, CopyDataSize);
             }
 
             //
@@ -3523,22 +3161,21 @@ RtlpDebugPageHeapReAllocate(
             // and copy over user flags/values.
             //
 
-            if (! ReallocInNormalHeap) {
+            if (!ReallocInNormalHeap)
+            {
 
-                NewNode = RtlpDebugPageHeapFindBusyMem( HeapRoot, NewAddress, NULL );
+                NewNode = RtlpDebugPageHeapFindBusyMem(HeapRoot, NewAddress, NULL);
 
                 //
                 // This block could not be in normal heap therefore from this
                 // respect the call above should always succeed.
                 //
 
-                DEBUG_ASSERT( NewNode != NULL );
+                DEBUG_ASSERT(NewNode != NULL);
 
                 NewNode->UserValue = OldNode->UserValue;
-                NewNode->UserFlags = ( Flags & HEAP_SETTABLE_USER_FLAGS ) ?
-                    ( Flags & HEAP_SETTABLE_USER_FLAGS ) :
-                OldNode->UserFlags;
-
+                NewNode->UserFlags =
+                    (Flags & HEAP_SETTABLE_USER_FLAGS) ? (Flags & HEAP_SETTABLE_USER_FLAGS) : OldNode->UserFlags;
             }
 
             //
@@ -3550,14 +3187,14 @@ RtlpDebugPageHeapReAllocate(
             //
 
 
-            RETAIL_ASSERT (OriginalAllocationInPageHeap);
+            RETAIL_ASSERT(OriginalAllocationInPageHeap);
 
-            if (OriginalAllocationInPageHeap) {
+            if (OriginalAllocationInPageHeap)
+            {
 
-                if (OldNode->nVirtualAccessSize > 0) {
-                    RtlpDebugPageHeapProtectVM( OldNode->pVirtualBlock,
-                        OldNode->nVirtualAccessSize,
-                        PAGE_NOACCESS );
+                if (OldNode->nVirtualAccessSize > 0)
+                {
+                    RtlpDebugPageHeapProtectVM(OldNode->pVirtualBlock, OldNode->nVirtualAccessSize, PAGE_NOACCESS);
                 }
 
                 //
@@ -3566,22 +3203,22 @@ RtlpDebugPageHeapReAllocate(
                 // when we made the allocation.
                 //
 
-                if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+                if ((HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+                {
 
                     // nothing
-
                 }
-                else {
+                else
+                {
 
-                    if ((HeapRoot->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE)) {
+                    if ((HeapRoot->ExtraFlags & PAGE_HEAP_SMART_MEMORY_USAGE))
+                    {
 
-                        RtlpDebugPageHeapDecommitVM (
-                            OldNode->pVirtualBlock,
-                            OldNode->nVirtualAccessSize);
+                        RtlpDebugPageHeapDecommitVM(OldNode->pVirtualBlock, OldNode->nVirtualAccessSize);
                     }
                 }
 
-                RtlpDebugPageHeapPlaceOnFreeList( HeapRoot, OldNode );
+                RtlpDebugPageHeapPlaceOnFreeList(HeapRoot, OldNode);
 
                 //
                 // RtlpDebugPageHeapReAllocate gets called from RtlDebugReAllocateHeap,
@@ -3595,102 +3232,104 @@ RtlpDebugPageHeapReAllocate(
                 // alloc operation which always happens for page heap reallocs.
                 //
 
-                if ((HeapRoot->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES)) {
+                if ((HeapRoot->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES))
+                {
 
-                    if (OldNode->StackTrace) {
+                    if (OldNode->StackTrace)
+                    {
 
-                        RtlTraceDatabaseLock (RtlpDphTraceDatabase);
+                        RtlTraceDatabaseLock(RtlpDphTraceDatabase);
 
-                        if (OldNode->StackTrace->UserCount > 0) {
+                        if (OldNode->StackTrace->UserCount > 0)
+                        {
                             OldNode->StackTrace->UserCount -= 1;
                         }
 
-                        if (OldNode->StackTrace->UserSize >= OldNode->nUserRequestedSize) {
+                        if (OldNode->StackTrace->UserSize >= OldNode->nUserRequestedSize)
+                        {
                             OldNode->StackTrace->UserSize -= OldNode->nUserRequestedSize;
                         }
 
-                        RtlTraceDatabaseUnlock (RtlpDphTraceDatabase);
+                        RtlTraceDatabaseUnlock(RtlpDphTraceDatabase);
                     }
 
                     OldNode->StackTrace = RtlpDphLogStackTrace(2);
                 }
-                else {
+                else
+                {
                     OldNode->StackTrace = NULL;
                 }
             }
         }
 
-        else {
+        else
+        {
 
             //
             //  Failed to allocate a new block.  Return old block to busy list.
             //
 
-            if (OriginalAllocationInPageHeap) {
+            if (OriginalAllocationInPageHeap)
+            {
 
-                RtlpDebugPageHeapPlaceOnBusyList( HeapRoot, OldNode );
+                RtlpDebugPageHeapPlaceOnBusyList(HeapRoot, OldNode);
             }
-
         }
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              FALSE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, FALSE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
-    EXIT:
+EXIT:
 
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
 
-    if (NewAddress == NULL) {
-        IF_GENERATE_EXCEPTION( Flags, STATUS_NO_MEMORY );
+    if (NewAddress == NULL)
+    {
+        IF_GENERATE_EXCEPTION(Flags, STATUS_NO_MEMORY);
     }
 
     return NewAddress;
 }
 
-#if (( DPH_CAPTURE_STACK_TRACE ) && ( i386 ) && ( FPO ))
-#pragma optimize( "", on )      // restore original optimizations
+#if ((DPH_CAPTURE_STACK_TRACE) && (i386) && (FPO))
+#pragma optimize("", on) // restore original optimizations
 #endif
 
 PVOID
-RtlpDebugPageHeapDestroy(
-    IN PVOID HeapHandle
-    )
+RtlpDebugPageHeapDestroy(IN PVOID HeapHandle)
 {
-    PDPH_HEAP_ROOT       HeapRoot;
-    PDPH_HEAP_ROOT       PrevHeapRoot;
-    PDPH_HEAP_ROOT       NextHeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
+    PDPH_HEAP_ROOT PrevHeapRoot;
+    PDPH_HEAP_ROOT NextHeapRoot;
     PDPH_HEAP_BLOCK Node;
     PDPH_HEAP_BLOCK Next;
-    ULONG                Flags;
-    PUCHAR               p;
+    ULONG Flags;
+    PUCHAR p;
     ULONG Reason;
     PVOID NormalHeap;
 
-    if (HeapHandle == RtlProcessHeap()) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_DESTROY_PROCESS_HEAP,
-                       "attempt to destroy process heap", 
-                       HeapHandle, "Process heap handle", 
-                       0, "", 0, "", 0, "");
-        
+    if (HeapHandle == RtlProcessHeap())
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_DESTROY_PROCESS_HEAP, "attempt to destroy process heap", HeapHandle,
+                      "Process heap handle", 0, "", 0, "", 0, "");
+
         return NULL;
     }
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
     if (HeapRoot == NULL)
         return NULL;
 
@@ -3702,10 +3341,11 @@ RtlpDebugPageHeapDestroy(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
         //
         // Save normal heap pointer for later.
@@ -3720,7 +3360,7 @@ RtlpDebugPageHeapDestroy(
         // we delayed the free operation.
         //
 
-        RtlpDphFreeDelayedBlocksFromHeap (HeapRoot, NormalHeap);
+        RtlpDphFreeDelayedBlocksFromHeap(HeapRoot, NormalHeap);
 
         //
         //  Walk all busy allocations and check for tail fill corruption
@@ -3728,16 +3368,17 @@ RtlpDebugPageHeapDestroy(
 
         Node = HeapRoot->pBusyAllocationListHead;
 
-        while (Node) {
+        while (Node)
+        {
 
-            if (! (HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+            if (!(HeapRoot->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+            {
 
-                if (! (RtlpDphIsPageHeapBlock (HeapRoot, Node->pUserAllocation, &Reason, TRUE))) {
+                if (!(RtlpDphIsPageHeapBlock(HeapRoot, Node->pUserAllocation, &Reason, TRUE)))
+                {
 
-                    RtlpDphReportCorruptedBlock (HeapRoot,
-                                                 DPH_CONTEXT_FULL_PAGE_HEAP_DESTROY,
-                                                 Node->pUserAllocation, 
-                                                 Reason);
+                    RtlpDphReportCorruptedBlock(HeapRoot, DPH_CONTEXT_FULL_PAGE_HEAP_DESTROY, Node->pUserAllocation,
+                                                Reason);
                 }
             }
 
@@ -3749,10 +3390,8 @@ RtlpDebugPageHeapDestroy(
             // this way to avoid compatibility issues).
             //
 
-            RtlpCheckForCriticalSectionsInMemoryRange (Node->pUserAllocation, 
-                                                       Node->nUserRequestedSize,
-                                                       NULL);
-            
+            RtlpCheckForCriticalSectionsInMemoryRange(Node->pUserAllocation, Node->nUserRequestedSize, NULL);
+
             //
             // Move to next node.
             //
@@ -3764,29 +3403,33 @@ RtlpDebugPageHeapDestroy(
         //  Remove this heap entry from the process heap linked list.
         //
 
-        RtlEnterCriticalSection( &RtlpDphHeapListCriticalSection );
+        RtlEnterCriticalSection(&RtlpDphHeapListCriticalSection);
 
-        if (HeapRoot->pPrevHeapRoot) {
-            UNPROTECT_HEAP_STRUCTURES( HeapRoot->pPrevHeapRoot );
+        if (HeapRoot->pPrevHeapRoot)
+        {
+            UNPROTECT_HEAP_STRUCTURES(HeapRoot->pPrevHeapRoot);
             HeapRoot->pPrevHeapRoot->pNextHeapRoot = HeapRoot->pNextHeapRoot;
-            PROTECT_HEAP_STRUCTURES( HeapRoot->pPrevHeapRoot );
+            PROTECT_HEAP_STRUCTURES(HeapRoot->pPrevHeapRoot);
         }
-        else {
+        else
+        {
             RtlpDphHeapListHead = HeapRoot->pNextHeapRoot;
         }
 
-        if (HeapRoot->pNextHeapRoot) {
-            UNPROTECT_HEAP_STRUCTURES( HeapRoot->pNextHeapRoot );
+        if (HeapRoot->pNextHeapRoot)
+        {
+            UNPROTECT_HEAP_STRUCTURES(HeapRoot->pNextHeapRoot);
             HeapRoot->pNextHeapRoot->pPrevHeapRoot = HeapRoot->pPrevHeapRoot;
-            PROTECT_HEAP_STRUCTURES( HeapRoot->pNextHeapRoot );
+            PROTECT_HEAP_STRUCTURES(HeapRoot->pNextHeapRoot);
         }
-        else {
+        else
+        {
             RtlpDphHeapListTail = HeapRoot->pPrevHeapRoot;
         }
 
         RtlpDphHeapListCount -= 1;
 
-        RtlLeaveCriticalSection( &RtlpDphHeapListCriticalSection );
+        RtlLeaveCriticalSection(&RtlpDphHeapListCriticalSection);
 
 
         //
@@ -3794,8 +3437,8 @@ RtlpDebugPageHeapDestroy(
         //  checked build Teb->CountOfOwnedCriticalSections gets out of sync.
         //
 
-        RtlLeaveCriticalSection( HeapRoot->HeapCritSect );
-        RtlDeleteCriticalSection( HeapRoot->HeapCritSect );
+        RtlLeaveCriticalSection(HeapRoot->HeapCritSect);
+        RtlDeleteCriticalSection(HeapRoot->HeapCritSect);
 
         //
         //  This is weird.  A virtual block might contain storage for
@@ -3815,15 +3458,16 @@ RtlpDebugPageHeapDestroy(
 
         Node = HeapRoot->pVirtualStorageListHead;
 
-        while (Node) {
+        while (Node)
+        {
             Next = Node->pNextAlloc;
-            if (! RtlpDebugPageHeapReleaseVM( Node->pVirtualBlock )) {
+            if (!RtlpDebugPageHeapReleaseVM(Node->pVirtualBlock))
+            {
 
-                VERIFIER_STOP (APPLICATION_VERIFIER_INTERNAL_ERROR,
-                               "unable to release virtual memory",
-                               0, "", 0, "", 0, "", 0, "");
+                VERIFIER_STOP(APPLICATION_VERIFIER_INTERNAL_ERROR, "unable to release virtual memory", 0, "", 0, "", 0,
+                              "", 0, "");
             }
-            
+
             Node = Next;
         }
 
@@ -3833,19 +3477,16 @@ RtlpDebugPageHeapDestroy(
         // code in NT heap manager will detect this.
         //
 
-        RtlDestroyHeap (NormalHeap);
-
+        RtlDestroyHeap(NormalHeap);
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              NULL,
-                                              FALSE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), NULL, FALSE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
     //
@@ -3864,20 +3505,17 @@ RtlpDebugPageHeapDestroy(
 }
 
 SIZE_T
-RtlpDebugPageHeapSize(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address
-    )
+RtlpDebugPageHeapSize(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address)
 {
-    PDPH_HEAP_ROOT       HeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
     PDPH_HEAP_BLOCK Node;
-    SIZE_T               Size;
+    SIZE_T Size;
 
     Size = -1;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
-    if (HeapRoot == NULL) {
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
+    if (HeapRoot == NULL)
+    {
         return Size;
     }
 
@@ -3887,14 +3525,16 @@ RtlpDebugPageHeapSize(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
-        Node = RtlpDebugPageHeapFindBusyMem( HeapRoot, Address, NULL );
+        Node = RtlpDebugPageHeapFindBusyMem(HeapRoot, Address, NULL);
 
-        if (Node == NULL) {
+        if (Node == NULL)
+        {
 
             //
             // No wonder we did not find the block in the page heap
@@ -3903,54 +3543,49 @@ RtlpDebugPageHeapSize(
             // is a bug NormalHeapSize will break into debugger.
             //
 
-            Size = RtlpDphNormalHeapSize (
+            Size = RtlpDphNormalHeapSize(
 
-                HeapRoot,
-                Flags,
-                Address);
+                HeapRoot, Flags, Address);
 
             goto EXIT;
         }
-        else {
+        else
+        {
             Size = Node->nUserRequestedSize;
         }
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              TRUE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, TRUE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
-    EXIT:
-        
+EXIT:
+
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
 
-    if (Size == -1) {
-        IF_GENERATE_EXCEPTION( Flags, STATUS_ACCESS_VIOLATION );
+    if (Size == -1)
+    {
+        IF_GENERATE_EXCEPTION(Flags, STATUS_ACCESS_VIOLATION);
     }
 
     return Size;
 }
 
 ULONG
-RtlpDebugPageHeapGetProcessHeaps(
-    ULONG NumberOfHeaps,
-    PVOID *ProcessHeaps
-    )
+RtlpDebugPageHeapGetProcessHeaps(ULONG NumberOfHeaps, PVOID *ProcessHeaps)
 {
     PDPH_HEAP_ROOT HeapRoot;
-    ULONG          Count;
+    ULONG Count;
 
     //
     //  Although we'd expect GetProcessHeaps never to be called
@@ -3959,34 +3594,33 @@ RtlpDebugPageHeapGetProcessHeaps(
     //  necessary.
     //
 
-    if (! RtlpDphHeapListHasBeenInitialized) {
+    if (!RtlpDphHeapListHasBeenInitialized)
+    {
         RtlpDphHeapListHasBeenInitialized = TRUE;
-        RtlInitializeCriticalSection( &RtlpDphHeapListCriticalSection );
+        RtlInitializeCriticalSection(&RtlpDphHeapListCriticalSection);
     }
 
-    RtlEnterCriticalSection( &RtlpDphHeapListCriticalSection );
+    RtlEnterCriticalSection(&RtlpDphHeapListCriticalSection);
 
-    if (RtlpDphHeapListCount <= NumberOfHeaps) {
+    if (RtlpDphHeapListCount <= NumberOfHeaps)
+    {
 
-        for (HeapRoot  = RtlpDphHeapListHead, Count = 0;
-            HeapRoot != NULL;
-            HeapRoot  = HeapRoot->pNextHeapRoot, Count += 1) {
+        for (HeapRoot = RtlpDphHeapListHead, Count = 0; HeapRoot != NULL;
+             HeapRoot = HeapRoot->pNextHeapRoot, Count += 1)
+        {
 
-            *ProcessHeaps++ = HEAP_HANDLE_FROM_ROOT( HeapRoot );
+            *ProcessHeaps++ = HEAP_HANDLE_FROM_ROOT(HeapRoot);
         }
 
-        if (Count != RtlpDphHeapListCount) {
+        if (Count != RtlpDphHeapListCount)
+        {
 
-            VERIFIER_STOP (APPLICATION_VERIFIER_UNKNOWN_ERROR,
-                           "process heap list count is wrong",
-                           Count, "Actual count",
-                           RtlpDphHeapListCount, "Page heap count",
-                           0, "",
-                           0, "");
+            VERIFIER_STOP(APPLICATION_VERIFIER_UNKNOWN_ERROR, "process heap list count is wrong", Count, "Actual count",
+                          RtlpDphHeapListCount, "Page heap count", 0, "", 0, "");
         }
-
     }
-    else {
+    else
+    {
 
         //
         //  User's buffer is too small.  Return number of entries
@@ -3995,29 +3629,25 @@ RtlpDebugPageHeapGetProcessHeaps(
         //
 
         Count = RtlpDphHeapListCount;
-
     }
 
-    RtlLeaveCriticalSection( &RtlpDphHeapListCriticalSection );
+    RtlLeaveCriticalSection(&RtlpDphHeapListCriticalSection);
 
     return Count;
 }
 
 ULONG
-RtlpDebugPageHeapCompact(
-    IN PVOID HeapHandle,
-    IN ULONG Flags
-    )
+RtlpDebugPageHeapCompact(IN PVOID HeapHandle, IN ULONG Flags)
 {
     PDPH_HEAP_ROOT HeapRoot;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
     if (HeapRoot == NULL)
         return 0;
 
     Flags |= HeapRoot->HeapFlags;
 
-    RtlpDebugPageHeapEnterCritSect( HeapRoot, Flags );
+    RtlpDebugPageHeapEnterCritSect(HeapRoot, Flags);
 
     //
     //  Don't do anything, but we did want to acquire the critsect
@@ -4025,23 +3655,19 @@ RtlpDebugPageHeapCompact(
     //  thread is in the heap code.
     //
 
-    RtlpDebugPageHeapLeaveCritSect( HeapRoot );
+    RtlpDebugPageHeapLeaveCritSect(HeapRoot);
 
     return 0;
 }
 
 BOOLEAN
-RtlpDebugPageHeapValidate(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address
-    )
+RtlpDebugPageHeapValidate(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address)
 {
-    PDPH_HEAP_ROOT       HeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
     PDPH_HEAP_BLOCK Node;
     BOOLEAN Result = FALSE;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
     if (HeapRoot == NULL)
         return FALSE;
 
@@ -4051,118 +3677,109 @@ RtlpDebugPageHeapValidate(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
-        Node = Address ? RtlpDebugPageHeapFindBusyMem( HeapRoot, Address, NULL ) : NULL;
+        Node = Address ? RtlpDebugPageHeapFindBusyMem(HeapRoot, Address, NULL) : NULL;
 
-        if (Node == NULL) {
+        if (Node == NULL)
+        {
 
-            Result = RtlpDphNormalHeapValidate (
-                HeapRoot,
-                Flags,
-                Address);
+            Result = RtlpDphNormalHeapValidate(HeapRoot, Flags, Address);
         }
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              TRUE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, TRUE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
 
-    if (Address) {
-        if (Node) {
+    if (Address)
+    {
+        if (Node)
+        {
             return TRUE;
         }
-        else {
+        else
+        {
             return Result;
         }
     }
-    else {
+    else
+    {
         return TRUE;
     }
 }
 
 NTSTATUS
-RtlpDebugPageHeapWalk(
-    IN PVOID HeapHandle,
-    IN OUT PRTL_HEAP_WALK_ENTRY Entry
-    )
+RtlpDebugPageHeapWalk(IN PVOID HeapHandle, IN OUT PRTL_HEAP_WALK_ENTRY Entry)
 {
 #if DBG
-    DbgPrint ("Page heap: warning: failing HeapWalk call with STATUS_NOT_IMPLEMENTED.\n");
+    DbgPrint("Page heap: warning: failing HeapWalk call with STATUS_NOT_IMPLEMENTED.\n");
 #endif
 
     return STATUS_NOT_IMPLEMENTED;
 }
 
 BOOLEAN
-RtlpDebugPageHeapLock(
-    IN PVOID HeapHandle
-    )
+RtlpDebugPageHeapLock(IN PVOID HeapHandle)
 {
     PDPH_HEAP_ROOT HeapRoot;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
 
-    if (HeapRoot == NULL) {
+    if (HeapRoot == NULL)
+    {
         return FALSE;
     }
 
-    RtlpDebugPageHeapEnterCritSect( HeapRoot, HeapRoot->HeapFlags );
+    RtlpDebugPageHeapEnterCritSect(HeapRoot, HeapRoot->HeapFlags);
 
     return TRUE;
 }
 
 BOOLEAN
-RtlpDebugPageHeapUnlock(
-    IN PVOID HeapHandle
-    )
+RtlpDebugPageHeapUnlock(IN PVOID HeapHandle)
 {
     PDPH_HEAP_ROOT HeapRoot;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
 
-    if (HeapRoot == NULL) {
+    if (HeapRoot == NULL)
+    {
         return FALSE;
     }
 
-    RtlpDebugPageHeapLeaveCritSect( HeapRoot );
+    RtlpDebugPageHeapLeaveCritSect(HeapRoot);
 
     return TRUE;
 }
 
 BOOLEAN
-RtlpDebugPageHeapSetUserValue(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN PVOID UserValue
-    )
+RtlpDebugPageHeapSetUserValue(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, IN PVOID UserValue)
 {
-    PDPH_HEAP_ROOT       HeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
     PDPH_HEAP_BLOCK Node;
-    BOOLEAN              Success;
+    BOOLEAN Success;
 
     Success = FALSE;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
-    if ( HeapRoot == NULL )
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
+    if (HeapRoot == NULL)
         return Success;
 
     Flags |= HeapRoot->HeapFlags;
@@ -4171,74 +3788,66 @@ RtlpDebugPageHeapSetUserValue(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
-        Node = RtlpDebugPageHeapFindBusyMem( HeapRoot, Address, NULL );
+        Node = RtlpDebugPageHeapFindBusyMem(HeapRoot, Address, NULL);
 
-        if ( Node == NULL ) {
+        if (Node == NULL)
+        {
 
             //
             // If we cannot find the node in page heap structures it might be
             // because it has been allocated from normal heap.
             //
 
-            Success = RtlpDphNormalHeapSetUserValue (
-                HeapRoot,
-                Flags,
-                Address,
-                UserValue);
+            Success = RtlpDphNormalHeapSetUserValue(HeapRoot, Flags, Address, UserValue);
 
             goto EXIT;
         }
-        else {
+        else
+        {
             Node->UserValue = UserValue;
             Success = TRUE;
         }
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              FALSE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, FALSE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
-    EXIT:
-        
+EXIT:
+
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
 
     return Success;
 }
 
 BOOLEAN
-RtlpDebugPageHeapGetUserInfo(
-    IN  PVOID  HeapHandle,
-    IN  ULONG  Flags,
-    IN  PVOID  Address,
-    OUT PVOID* UserValue,
-    OUT PULONG UserFlags
-    )
+RtlpDebugPageHeapGetUserInfo(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, OUT PVOID *UserValue,
+                             OUT PULONG UserFlags)
 {
-    PDPH_HEAP_ROOT       HeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
     PDPH_HEAP_BLOCK Node;
-    BOOLEAN              Success;
+    BOOLEAN Success;
 
     Success = FALSE;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
-    if ( HeapRoot == NULL )
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
+    if (HeapRoot == NULL)
         return Success;
 
     Flags |= HeapRoot->HeapFlags;
@@ -4247,78 +3856,69 @@ RtlpDebugPageHeapGetUserInfo(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
-        Node = RtlpDebugPageHeapFindBusyMem( HeapRoot, Address, NULL );
+        Node = RtlpDebugPageHeapFindBusyMem(HeapRoot, Address, NULL);
 
-        if ( Node == NULL ) {
+        if (Node == NULL)
+        {
 
             //
             // If we cannot find the node in page heap structures it might be
             // because it has been allocated from normal heap.
             //
 
-            Success = RtlpDphNormalHeapGetUserInfo (
-                HeapRoot,
-                Flags,
-                Address,
-                UserValue,
-                UserFlags);
+            Success = RtlpDphNormalHeapGetUserInfo(HeapRoot, Flags, Address, UserValue, UserFlags);
 
             goto EXIT;
         }
-        else {
-            if ( UserValue != NULL )
+        else
+        {
+            if (UserValue != NULL)
                 *UserValue = Node->UserValue;
-            if ( UserFlags != NULL )
+            if (UserFlags != NULL)
                 *UserFlags = Node->UserFlags;
             Success = TRUE;
         }
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              FALSE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, FALSE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
-    EXIT:
-        
+EXIT:
+
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
 
     return Success;
 }
 
 BOOLEAN
-RtlpDebugPageHeapSetUserFlags(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN ULONG UserFlagsReset,
-    IN ULONG UserFlagsSet
-    )
+RtlpDebugPageHeapSetUserFlags(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, IN ULONG UserFlagsReset,
+                              IN ULONG UserFlagsSet)
 {
-    PDPH_HEAP_ROOT       HeapRoot;
+    PDPH_HEAP_ROOT HeapRoot;
     PDPH_HEAP_BLOCK Node;
-    BOOLEAN              Success;
+    BOOLEAN Success;
 
     Success = FALSE;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
-    if ( HeapRoot == NULL )
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
+    if (HeapRoot == NULL)
         return Success;
 
     Flags |= HeapRoot->HeapFlags;
@@ -4327,75 +3927,69 @@ RtlpDebugPageHeapSetUserFlags(
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
-        Node = RtlpDebugPageHeapFindBusyMem( HeapRoot, Address, NULL );
+        Node = RtlpDebugPageHeapFindBusyMem(HeapRoot, Address, NULL);
 
-        if ( Node == NULL ) {
+        if (Node == NULL)
+        {
 
             //
             // If we cannot find the node in page heap structures it might be
             // because it has been allocated from normal heap.
             //
 
-            Success = RtlpDphNormalHeapSetUserFlags (
-                HeapRoot,
-                Flags,
-                Address,
-                UserFlagsReset,
-                UserFlagsSet);
+            Success = RtlpDphNormalHeapSetUserFlags(HeapRoot, Flags, Address, UserFlagsReset, UserFlagsSet);
 
             goto EXIT;
         }
-        else {
-            Node->UserFlags &= ~( UserFlagsReset );
-            Node->UserFlags |=    UserFlagsSet;
+        else
+        {
+            Node->UserFlags &= ~(UserFlagsReset);
+            Node->UserFlags |= UserFlagsSet;
             Success = TRUE;
         }
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              FALSE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, FALSE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
-    EXIT:
+EXIT:
 
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
 
     return Success;
 }
 
 BOOLEAN
-RtlpDebugPageHeapSerialize(
-    IN PVOID HeapHandle
-    )
+RtlpDebugPageHeapSerialize(IN PVOID HeapHandle)
 {
     PDPH_HEAP_ROOT HeapRoot;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
-    if ( HeapRoot == NULL )
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
+    if (HeapRoot == NULL)
         return FALSE;
 
     //
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, 0);
+    RtlpDphPreProcessing(HeapRoot, 0);
 
 
     HeapRoot->HeapFlags &= ~HEAP_NO_SERIALIZE;
@@ -4404,46 +3998,31 @@ RtlpDebugPageHeapSerialize(
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
     return TRUE;
 }
 
 NTSTATUS
-RtlpDebugPageHeapExtend(
-    IN PVOID  HeapHandle,
-    IN ULONG  Flags,
-    IN PVOID  Base,
-    IN SIZE_T Size
-    )
+RtlpDebugPageHeapExtend(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Base, IN SIZE_T Size)
 {
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-RtlpDebugPageHeapZero(
-    IN PVOID HeapHandle,
-    IN ULONG Flags
-    )
+RtlpDebugPageHeapZero(IN PVOID HeapHandle, IN ULONG Flags)
 {
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-RtlpDebugPageHeapReset(
-    IN PVOID HeapHandle,
-    IN ULONG Flags
-    )
+RtlpDebugPageHeapReset(IN PVOID HeapHandle, IN ULONG Flags)
 {
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-RtlpDebugPageHeapUsage(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN OUT PRTL_HEAP_USAGE Usage
-    )
+RtlpDebugPageHeapUsage(IN PVOID HeapHandle, IN ULONG Flags, IN OUT PRTL_HEAP_USAGE Usage)
 {
     PDPH_HEAP_ROOT HeapRoot;
 
@@ -4451,72 +4030,71 @@ RtlpDebugPageHeapUsage(
     //  Partial implementation since this information is kind of meaningless.
     //
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
-    if ( HeapRoot == NULL )
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
+    if (HeapRoot == NULL)
         return STATUS_INVALID_PARAMETER;
 
-    if ( Usage->Length != sizeof( RTL_HEAP_USAGE ))
+    if (Usage->Length != sizeof(RTL_HEAP_USAGE))
         return STATUS_INFO_LENGTH_MISMATCH;
 
-    memset( Usage, 0, sizeof( RTL_HEAP_USAGE ));
-    Usage->Length = sizeof( RTL_HEAP_USAGE );
+    memset(Usage, 0, sizeof(RTL_HEAP_USAGE));
+    Usage->Length = sizeof(RTL_HEAP_USAGE);
 
     //
     // Get the heap lock, unprotect heap structures, etc.
     //
 
-    RtlpDphPreProcessing (HeapRoot, Flags);
+    RtlpDphPreProcessing(HeapRoot, Flags);
 
 
-    try {
+    try
+    {
 
-        Usage->BytesAllocated       = HeapRoot->nBusyAllocationBytesAccessible;
-        Usage->BytesCommitted       = HeapRoot->nVirtualStorageBytes;
-        Usage->BytesReserved        = HeapRoot->nVirtualStorageBytes;
+        Usage->BytesAllocated = HeapRoot->nBusyAllocationBytesAccessible;
+        Usage->BytesCommitted = HeapRoot->nVirtualStorageBytes;
+        Usage->BytesReserved = HeapRoot->nVirtualStorageBytes;
         Usage->BytesReservedMaximum = HeapRoot->nVirtualStorageBytes;
     }
-    except (RtlpDphUnexpectedExceptionFilter (_exception_code(), 
-                                              _exception_info(),
-                                              HeapRoot,
-                                              FALSE)) {
+    except(RtlpDphUnexpectedExceptionFilter(_exception_code(), _exception_info(), HeapRoot, FALSE))
+    {
 
         //
         // The exception filter always returns EXCEPTION_CONTINUE_SEARCH.
         //
 
-        ASSERT_UNEXPECTED_CODE_PATH ();
+        ASSERT_UNEXPECTED_CODE_PATH();
     }
 
     //
     // Prepare page heap for exit (unlock heap lock, protect structures, etc.).
     //
 
-    RtlpDphPostProcessing (HeapRoot);
+    RtlpDphPostProcessing(HeapRoot);
 
 
     return STATUS_SUCCESS;
 }
 
 BOOLEAN
-RtlpDebugPageHeapIsLocked(
-    IN PVOID HeapHandle
-    )
+RtlpDebugPageHeapIsLocked(IN PVOID HeapHandle)
 {
     PDPH_HEAP_ROOT HeapRoot;
 
-    HeapRoot = RtlpDebugPageHeapPointerFromHandle( HeapHandle );
-    if ( HeapRoot == NULL )
+    HeapRoot = RtlpDebugPageHeapPointerFromHandle(HeapHandle);
+    if (HeapRoot == NULL)
         return FALSE;
 
-    if ( RtlTryEnterCriticalSection( HeapRoot->HeapCritSect )) {
-        RtlLeaveCriticalSection( HeapRoot->HeapCritSect );
+    if (RtlTryEnterCriticalSection(HeapRoot->HeapCritSect))
+    {
+        RtlLeaveCriticalSection(HeapRoot->HeapCritSect);
         return FALSE;
     }
-    else {
+    else
+    {
         return TRUE;
     }
 }
-
+
 /////////////////////////////////////////////////////////////////////
 /////////////////////////// Page heap vs. normal heap decision making
 /////////////////////////////////////////////////////////////////////
@@ -4529,10 +4107,7 @@ RtlpDebugPageHeapIsLocked(
 LONG RtlpDphBlockDistribution[2];
 
 BOOLEAN
-RtlpDphShouldAllocateInPageHeap (
-    PDPH_HEAP_ROOT HeapRoot,
-    SIZE_T Size
-    )
+RtlpDphShouldAllocateInPageHeap(PDPH_HEAP_ROOT HeapRoot, SIZE_T Size)
 /*++
 
 Routine Description:
@@ -4561,8 +4136,9 @@ Return Value:
     // If page heap is not enabled => normal heap.
     //
 
-    if (! (HeapRoot->ExtraFlags & PAGE_HEAP_ENABLE_PAGE_HEAP)) {
-        InterlockedIncrement (&(RtlpDphBlockDistribution[1]));
+    if (!(HeapRoot->ExtraFlags & PAGE_HEAP_ENABLE_PAGE_HEAP))
+    {
+        InterlockedIncrement(&(RtlpDphBlockDistribution[1]));
         return FALSE;
     }
 
@@ -4572,7 +4148,8 @@ Return Value:
     // if VM limits have been hit.
     //
 
-    else if ((HeapRoot->ExtraFlags & PAGE_HEAP_USE_DLL_NAMES)) {
+    else if ((HeapRoot->ExtraFlags & PAGE_HEAP_USE_DLL_NAMES))
+    {
 
         //
         // We return false. The calls generated from target
@@ -4580,8 +4157,8 @@ Return Value:
         // we just return false signalling that we do not want
         // page heap verification for the rest of the world.
         //
-        
-        InterlockedIncrement (&(RtlpDphBlockDistribution[1]));
+
+        InterlockedIncrement(&(RtlpDphBlockDistribution[1]));
         return FALSE;
     }
 
@@ -4590,8 +4167,9 @@ Return Value:
     // or page file then we will go to the normal heap.
     //
 
-    else if (RtlpDphVmLimitCanUsePageHeap() == FALSE) {
-        InterlockedIncrement (&(RtlpDphBlockDistribution[1]));
+    else if (RtlpDphVmLimitCanUsePageHeap() == FALSE)
+    {
+        InterlockedIncrement(&(RtlpDphBlockDistribution[1]));
         return FALSE;
     }
 
@@ -4599,14 +4177,17 @@ Return Value:
     // If in size range => page heap
     //
 
-    else if ((HeapRoot->ExtraFlags & PAGE_HEAP_USE_SIZE_RANGE)) {
+    else if ((HeapRoot->ExtraFlags & PAGE_HEAP_USE_SIZE_RANGE))
+    {
 
-        if (Size >= RtlpDphSizeRangeStart && Size <= RtlpDphSizeRangeEnd) {
-            InterlockedIncrement (&(RtlpDphBlockDistribution[0]));
+        if (Size >= RtlpDphSizeRangeStart && Size <= RtlpDphSizeRangeEnd)
+        {
+            InterlockedIncrement(&(RtlpDphBlockDistribution[0]));
             return TRUE;
         }
-        else {
-            InterlockedIncrement (&(RtlpDphBlockDistribution[1]));
+        else
+        {
+            InterlockedIncrement(&(RtlpDphBlockDistribution[1]));
             return FALSE;
         }
     }
@@ -4615,33 +4196,32 @@ Return Value:
     // If in dll range => page heap
     //
 
-    else if ((HeapRoot->ExtraFlags & PAGE_HEAP_USE_DLL_RANGE)) {
+    else if ((HeapRoot->ExtraFlags & PAGE_HEAP_USE_DLL_RANGE))
+    {
 
         PVOID StackTrace[32];
         ULONG Count;
         ULONG Index;
         ULONG Hash;
 
-        Count = RtlCaptureStackBackTrace (
-            1,
-            32,
-            StackTrace,
-            &Hash);
+        Count = RtlCaptureStackBackTrace(1, 32, StackTrace, &Hash);
 
         //
         // (SilviuC): should read DllRange as PVOIDs
         //
 
-        for (Index = 0; Index < Count; Index += 1) {
-            if (PtrToUlong(StackTrace[Index]) >= RtlpDphDllRangeStart
-                && PtrToUlong(StackTrace[Index]) <= RtlpDphDllRangeEnd) {
+        for (Index = 0; Index < Count; Index += 1)
+        {
+            if (PtrToUlong(StackTrace[Index]) >= RtlpDphDllRangeStart &&
+                PtrToUlong(StackTrace[Index]) <= RtlpDphDllRangeEnd)
+            {
 
-                InterlockedIncrement (&(RtlpDphBlockDistribution[0]));
+                InterlockedIncrement(&(RtlpDphBlockDistribution[0]));
                 return TRUE;
             }
         }
 
-        InterlockedIncrement (&(RtlpDphBlockDistribution[1]));
+        InterlockedIncrement(&(RtlpDphBlockDistribution[1]));
         return FALSE;
     }
 
@@ -4649,16 +4229,19 @@ Return Value:
     // If randomly decided => page heap
     //
 
-    else if ((HeapRoot->ExtraFlags & PAGE_HEAP_USE_RANDOM_DECISION)) {
+    else if ((HeapRoot->ExtraFlags & PAGE_HEAP_USE_RANDOM_DECISION))
+    {
 
-        Random = RtlRandom (& (HeapRoot->Seed));
+        Random = RtlRandom(&(HeapRoot->Seed));
 
-        if ((Random % 100) < RtlpDphRandomProbability) {
-            InterlockedIncrement (&(RtlpDphBlockDistribution[0]));
+        if ((Random % 100) < RtlpDphRandomProbability)
+        {
+            InterlockedIncrement(&(RtlpDphBlockDistribution[0]));
             return TRUE;
         }
-        else {
-            InterlockedIncrement (&(RtlpDphBlockDistribution[1]));
+        else
+        {
+            InterlockedIncrement(&(RtlpDphBlockDistribution[1]));
             return FALSE;
         }
     }
@@ -4667,9 +4250,10 @@ Return Value:
     // For all other cases we will allocate in the page heap.
     //
 
-    else {
+    else
+    {
 
-        InterlockedIncrement (&(RtlpDphBlockDistribution[0]));
+        InterlockedIncrement(&(RtlpDphBlockDistribution[0]));
         return TRUE;
     }
 }
@@ -4683,8 +4267,7 @@ LONG RtlpDphVmLimitHits[2];
 #define SIZE_1_MB 0x100000
 
 BOOLEAN
-RtlpDphVmLimitCanUsePageHeap (
-    )
+RtlpDphVmLimitCanUsePageHeap()
 /*++
 
 Routine Description:
@@ -4723,39 +4306,30 @@ Return Value:
     // Find if full page heap is currently allowed.
     //
 
-    Value = InterlockedCompareExchange (&RtlpDphVmLimitNoPageHeap,
-                                        0,
-                                        0);
+    Value = InterlockedCompareExchange(&RtlpDphVmLimitNoPageHeap, 0, 0);
 
     //
     // Query system for page file availability etc.
     //
 
-    Status = NtQuerySystemInformation (SystemPerformanceInformation,
-                                       &PerfInfo,
-                                       sizeof(PerfInfo),
-                                       NULL);
+    Status = NtQuerySystemInformation(SystemPerformanceInformation, &PerfInfo, sizeof(PerfInfo), NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
-    Status = NtQuerySystemInformation (SystemBasicInformation,
-                                       &MemInfo,
-                                       sizeof(MemInfo),
-                                       NULL);
+    Status = NtQuerySystemInformation(SystemBasicInformation, &MemInfo, sizeof(MemInfo), NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
-    Status = NtQueryInformationProcess (NtCurrentProcess(),
-                                        ProcessVmCounters,
-                                        &VmCounters,
-                                        sizeof(VM_COUNTERS),
-                                        NULL);
+    Status = NtQueryInformationProcess(NtCurrentProcess(), ProcessVmCounters, &VmCounters, sizeof(VM_COUNTERS), NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
@@ -4766,17 +4340,20 @@ Return Value:
 
     Total = (MemInfo.MaximumUserModeAddress - MemInfo.MinimumUserModeAddress);
 
-    if (Total - VmCounters.VirtualSize < 128 * SIZE_1_MB) {
+    if (Total - VmCounters.VirtualSize < 128 * SIZE_1_MB)
+    {
 
-        if (Value == 0) {
-            if ((RtlpDphDebugLevel & DPH_DEBUG_SHOW_VM_LIMITS)) {
-                DbgPrint ("Page heap: pid 0x%X: vm limit: vspace: disabling full page heap \n",
-                          HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
+        if (Value == 0)
+        {
+            if ((RtlpDphDebugLevel & DPH_DEBUG_SHOW_VM_LIMITS))
+            {
+                DbgPrint("Page heap: pid 0x%X: vm limit: vspace: disabling full page heap \n",
+                         HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
             }
         }
 
-        InterlockedIncrement (&(RtlpDphVmLimitHits[0]));
-        InterlockedExchange (&RtlpDphVmLimitNoPageHeap, 1);
+        InterlockedIncrement(&(RtlpDphVmLimitHits[0]));
+        InterlockedExchange(&RtlpDphVmLimitNoPageHeap, 1);
         return FALSE;
     }
 
@@ -4791,59 +4368,61 @@ Return Value:
     Total = PerfInfo.CommitLimit - PerfInfo.CommittedPages;
     Total *= MemInfo.PageSize;
 
-    if (Total - VmCounters.PagefileUsage < 32 * SIZE_1_MB) {
+    if (Total - VmCounters.PagefileUsage < 32 * SIZE_1_MB)
+    {
 
-        if (Value == 0) {
-            if ((RtlpDphDebugLevel & DPH_DEBUG_SHOW_VM_LIMITS)) {
-                DbgPrint ("Page heap: pid 0x%X: vm limit: pfile: disabling full page heap \n",
-                          HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
+        if (Value == 0)
+        {
+            if ((RtlpDphDebugLevel & DPH_DEBUG_SHOW_VM_LIMITS))
+            {
+                DbgPrint("Page heap: pid 0x%X: vm limit: pfile: disabling full page heap \n",
+                         HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
             }
         }
 
-        InterlockedIncrement (&(RtlpDphVmLimitHits[1]));
-        InterlockedExchange (&RtlpDphVmLimitNoPageHeap, 1);
+        InterlockedIncrement(&(RtlpDphVmLimitHits[1]));
+        InterlockedExchange(&RtlpDphVmLimitNoPageHeap, 1);
         return FALSE;
     }
 
-    if (Value == 1) {
-        
-        if ((RtlpDphDebugLevel & DPH_DEBUG_SHOW_VM_LIMITS)) {
-            DbgPrint ("Page heap: pid 0x%X: vm limit: reenabling full page heap \n",
-                      HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
+    if (Value == 1)
+    {
+
+        if ((RtlpDphDebugLevel & DPH_DEBUG_SHOW_VM_LIMITS))
+        {
+            DbgPrint("Page heap: pid 0x%X: vm limit: reenabling full page heap \n",
+                     HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
         }
 
-        InterlockedExchange (&RtlpDphVmLimitNoPageHeap, 0);
+        InterlockedExchange(&RtlpDphVmLimitNoPageHeap, 0);
     }
-    
+
     return TRUE;
 }
 
-
+
 /////////////////////////////////////////////////////////////////////
 //////////////////////////////////// DPH_BLOCK_INFORMATION management
 /////////////////////////////////////////////////////////////////////
 
-VOID
-RtlpDphReportCorruptedBlock (
-    PVOID Heap,
-    ULONG Context,
-    PVOID Block,
-    ULONG Reason
-    )
+VOID RtlpDphReportCorruptedBlock(PVOID Heap, ULONG Context, PVOID Block, ULONG Reason)
 {
     SIZE_T Size;
     DPH_BLOCK_INFORMATION Info;
     BOOLEAN InfoRead = FALSE;
     BOOLEAN SizeRead = FALSE;
 
-    try {
-        RtlCopyMemory (&Info, (PDPH_BLOCK_INFORMATION)Block - 1, sizeof Info);
+    try
+    {
+        RtlCopyMemory(&Info, (PDPH_BLOCK_INFORMATION)Block - 1, sizeof Info);
         InfoRead = TRUE;
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
     }
 
-    if (RtlpDphGetBlockSizeFromCorruptedBlock (Block, &Size)) {
+    if (RtlpDphGetBlockSizeFromCorruptedBlock(Block, &Size))
+    {
         SizeRead = TRUE;
     }
 
@@ -4853,115 +4432,82 @@ RtlpDphReportCorruptedBlock (
     // run through the other messages and only in the end report exception.
     //
 
-    if (!InfoRead && (Reason & DPH_ERROR_RAISED_EXCEPTION)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "exception raised while verifying block header",
-                       Heap, "Heap handle",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       0, "");
+    if (!InfoRead && (Reason & DPH_ERROR_RAISED_EXCEPTION))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "exception raised while verifying block header", Heap,
+                      "Heap handle", Block, "Heap block", (SizeRead ? Size : 0), "Block size", 0, "");
     }
 
-    if ((Reason & DPH_ERROR_DOUBLE_FREE)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "block already freed",
-                       Heap, "Heap handle",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       0, "");
-    }
-    
-    if ((Reason & DPH_ERROR_CORRUPTED_INFIX_PATTERN)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "corrupted infix pattern for freed block",
-                       Heap, "Heap handle",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       0, "");
-    }
-    
-    if ((Reason & DPH_ERROR_CORRUPTED_HEAP_POINTER)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "corrupted heap pointer or using wrong heap",
-                       Heap, "Heap used in the call",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       (InfoRead ? (UNSCRAMBLE_POINTER(Info.Heap)) : 0), "Heap owning the block");
-    }
-    
-    if ((Reason & DPH_ERROR_CORRUPTED_SUFFIX_PATTERN)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "corrupted suffix pattern",
-                       Heap, "Heap handle",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       0, "");
-    }
-    
-    if ((Reason & DPH_ERROR_CORRUPTED_PREFIX_PATTERN)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "corrupted prefix pattern",
-                       Heap, "Heap handle",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       0, "");
-    }
-    
-    if ((Reason & DPH_ERROR_CORRUPTED_START_STAMP)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "corrupted start stamp",
-                       Heap, "Heap handle",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       (InfoRead ? Info.StartStamp : 0), "Corrupted stamp");
-    }
-    
-    if ((Reason & DPH_ERROR_CORRUPTED_END_STAMP)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "corrupted end stamp",
-                       Heap, "Heap handle",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       (InfoRead ? Info.EndStamp : 0), "Corrupted stamp");
+    if ((Reason & DPH_ERROR_DOUBLE_FREE))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "block already freed", Heap, "Heap handle", Block,
+                      "Heap block", (SizeRead ? Size : 0), "Block size", 0, "");
     }
 
-    if ((Reason & DPH_ERROR_RAISED_EXCEPTION)) {
-        
-        VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                       "exception raised while verifying block",
-                       Heap, "Heap handle",
-                       Block, "Heap block", 
-                       (SizeRead ? Size : 0), "Block size",
-                       0, "");
+    if ((Reason & DPH_ERROR_CORRUPTED_INFIX_PATTERN))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "corrupted infix pattern for freed block", Heap,
+                      "Heap handle", Block, "Heap block", (SizeRead ? Size : 0), "Block size", 0, "");
+    }
+
+    if ((Reason & DPH_ERROR_CORRUPTED_HEAP_POINTER))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "corrupted heap pointer or using wrong heap", Heap,
+                      "Heap used in the call", Block, "Heap block", (SizeRead ? Size : 0), "Block size",
+                      (InfoRead ? (UNSCRAMBLE_POINTER(Info.Heap)) : 0), "Heap owning the block");
+    }
+
+    if ((Reason & DPH_ERROR_CORRUPTED_SUFFIX_PATTERN))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "corrupted suffix pattern", Heap, "Heap handle", Block,
+                      "Heap block", (SizeRead ? Size : 0), "Block size", 0, "");
+    }
+
+    if ((Reason & DPH_ERROR_CORRUPTED_PREFIX_PATTERN))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "corrupted prefix pattern", Heap, "Heap handle", Block,
+                      "Heap block", (SizeRead ? Size : 0), "Block size", 0, "");
+    }
+
+    if ((Reason & DPH_ERROR_CORRUPTED_START_STAMP))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "corrupted start stamp", Heap, "Heap handle", Block,
+                      "Heap block", (SizeRead ? Size : 0), "Block size", (InfoRead ? Info.StartStamp : 0),
+                      "Corrupted stamp");
+    }
+
+    if ((Reason & DPH_ERROR_CORRUPTED_END_STAMP))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "corrupted end stamp", Heap, "Heap handle", Block,
+                      "Heap block", (SizeRead ? Size : 0), "Block size", (InfoRead ? Info.EndStamp : 0),
+                      "Corrupted stamp");
+    }
+
+    if ((Reason & DPH_ERROR_RAISED_EXCEPTION))
+    {
+
+        VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "exception raised while verifying block", Heap,
+                      "Heap handle", Block, "Heap block", (SizeRead ? Size : 0), "Block size", 0, "");
     }
 
     //
     // Catch all case.
     //
 
-    VERIFIER_STOP (APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK,
-                   "corrupted heap block",
-                   Heap, "Heap handle",
-                   Block, "Heap block", 
-                   (SizeRead ? Size : 0), "Block size",
-                   0, "");
+    VERIFIER_STOP(APPLICATION_VERIFIER_CORRUPTED_HEAP_BLOCK, "corrupted heap block", Heap, "Heap handle", Block,
+                  "Heap block", (SizeRead ? Size : 0), "Block size", 0, "");
 }
 
 BOOLEAN
-RtlpDphIsPageHeapBlock (
-    PDPH_HEAP_ROOT Heap,
-    PVOID Block,
-    PULONG Reason,
-    BOOLEAN CheckPattern
-    )
+RtlpDphIsPageHeapBlock(PDPH_HEAP_ROOT Heap, PVOID Block, PULONG Reason, BOOLEAN CheckPattern)
 {
     PDPH_BLOCK_INFORMATION Info;
     BOOLEAN Corrupted = FALSE;
@@ -4969,10 +4515,11 @@ RtlpDphIsPageHeapBlock (
     PUCHAR FillStart;
     PUCHAR FillEnd;
 
-    DEBUG_ASSERT (Reason != NULL);
+    DEBUG_ASSERT(Reason != NULL);
     *Reason = 0;
 
-    try {
+    try
+    {
 
         Info = (PDPH_BLOCK_INFORMATION)Block - 1;
 
@@ -4980,21 +4527,25 @@ RtlpDphIsPageHeapBlock (
         // Start checking ...
         //
 
-        if (Info->StartStamp != DPH_PAGE_BLOCK_START_STAMP_ALLOCATED) {
+        if (Info->StartStamp != DPH_PAGE_BLOCK_START_STAMP_ALLOCATED)
+        {
             *Reason |= DPH_ERROR_CORRUPTED_START_STAMP;
             Corrupted = TRUE;
 
-            if (Info->StartStamp == DPH_PAGE_BLOCK_START_STAMP_FREE) {
+            if (Info->StartStamp == DPH_PAGE_BLOCK_START_STAMP_FREE)
+            {
                 *Reason |= DPH_ERROR_DOUBLE_FREE;
             }
         }
 
-        if (Info->EndStamp != DPH_PAGE_BLOCK_END_STAMP_ALLOCATED) {
+        if (Info->EndStamp != DPH_PAGE_BLOCK_END_STAMP_ALLOCATED)
+        {
             *Reason |= DPH_ERROR_CORRUPTED_END_STAMP;
             Corrupted = TRUE;
         }
 
-        if (Info->Heap != Heap) {
+        if (Info->Heap != Heap)
+        {
             *Reason |= DPH_ERROR_CORRUPTED_HEAP_POINTER;
             Corrupted = TRUE;
         }
@@ -5003,14 +4554,17 @@ RtlpDphIsPageHeapBlock (
         // Check the block suffix byte pattern.
         //
 
-        if (CheckPattern) {
+        if (CheckPattern)
+        {
 
             FillStart = (PUCHAR)Block + Info->RequestedSize;
             FillEnd = (PUCHAR)ROUNDUP2((ULONG_PTR)FillStart, PAGE_SIZE);
 
-            for (Current = FillStart; Current < FillEnd; Current++) {
+            for (Current = FillStart; Current < FillEnd; Current++)
+            {
 
-                if (*Current != DPH_PAGE_BLOCK_SUFFIX) {
+                if (*Current != DPH_PAGE_BLOCK_SUFFIX)
+                {
 
                     *Reason |= DPH_ERROR_CORRUPTED_SUFFIX_PATTERN;
                     Corrupted = TRUE;
@@ -5019,27 +4573,25 @@ RtlpDphIsPageHeapBlock (
             }
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         *Reason |= DPH_ERROR_RAISED_EXCEPTION;
         Corrupted = TRUE;
     }
 
-    if (Corrupted) {
+    if (Corrupted)
+    {
         return FALSE;
     }
-    else {
+    else
+    {
         return TRUE;
     }
 }
 
 BOOLEAN
-RtlpDphIsNormalHeapBlock (
-    PDPH_HEAP_ROOT Heap,
-    PVOID Block,
-    PULONG Reason,
-    BOOLEAN CheckPattern
-    )
+RtlpDphIsNormalHeapBlock(PDPH_HEAP_ROOT Heap, PVOID Block, PULONG Reason, BOOLEAN CheckPattern)
 {
     PDPH_BLOCK_INFORMATION Info;
     BOOLEAN Corrupted = FALSE;
@@ -5047,28 +4599,33 @@ RtlpDphIsNormalHeapBlock (
     PUCHAR FillStart;
     PUCHAR FillEnd;
 
-    DEBUG_ASSERT (Reason != NULL);
+    DEBUG_ASSERT(Reason != NULL);
     *Reason = 0;
 
     Info = (PDPH_BLOCK_INFORMATION)Block - 1;
 
-    try {
+    try
+    {
 
-        if (UNSCRAMBLE_POINTER(Info->Heap) != Heap) {
+        if (UNSCRAMBLE_POINTER(Info->Heap) != Heap)
+        {
             *Reason |= DPH_ERROR_CORRUPTED_HEAP_POINTER;
             Corrupted = TRUE;
         }
 
-        if (Info->StartStamp != DPH_NORMAL_BLOCK_START_STAMP_ALLOCATED) {
+        if (Info->StartStamp != DPH_NORMAL_BLOCK_START_STAMP_ALLOCATED)
+        {
             *Reason |= DPH_ERROR_CORRUPTED_START_STAMP;
             Corrupted = TRUE;
-            
-            if (Info->StartStamp == DPH_NORMAL_BLOCK_START_STAMP_FREE) {
+
+            if (Info->StartStamp == DPH_NORMAL_BLOCK_START_STAMP_FREE)
+            {
                 *Reason |= DPH_ERROR_DOUBLE_FREE;
             }
         }
 
-        if (Info->EndStamp != DPH_NORMAL_BLOCK_END_STAMP_ALLOCATED) {
+        if (Info->EndStamp != DPH_NORMAL_BLOCK_END_STAMP_ALLOCATED)
+        {
             *Reason |= DPH_ERROR_CORRUPTED_END_STAMP;
             Corrupted = TRUE;
         }
@@ -5077,14 +4634,17 @@ RtlpDphIsNormalHeapBlock (
         // Check the block suffix byte pattern.
         //
 
-        if (CheckPattern) {
+        if (CheckPattern)
+        {
 
             FillStart = (PUCHAR)Block + Info->RequestedSize;
             FillEnd = FillStart + USER_ALIGNMENT;
 
-            for (Current = FillStart; Current < FillEnd; Current++) {
+            for (Current = FillStart; Current < FillEnd; Current++)
+            {
 
-                if (*Current != DPH_NORMAL_BLOCK_SUFFIX) {
+                if (*Current != DPH_NORMAL_BLOCK_SUFFIX)
+                {
 
                     *Reason |= DPH_ERROR_CORRUPTED_SUFFIX_PATTERN;
                     Corrupted = TRUE;
@@ -5093,26 +4653,25 @@ RtlpDphIsNormalHeapBlock (
             }
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         *Reason |= DPH_ERROR_RAISED_EXCEPTION;
         Corrupted = TRUE;
     }
 
-    if (Corrupted) {
+    if (Corrupted)
+    {
         return FALSE;
     }
-    else {
+    else
+    {
         return TRUE;
     }
 }
 
 BOOLEAN
-RtlpDphIsNormalFreeHeapBlock (
-    PVOID Block,
-    PULONG Reason,
-    BOOLEAN CheckPattern
-    )
+RtlpDphIsNormalFreeHeapBlock(PVOID Block, PULONG Reason, BOOLEAN CheckPattern)
 {
     PDPH_BLOCK_INFORMATION Info;
     BOOLEAN Corrupted = FALSE;
@@ -5120,12 +4679,13 @@ RtlpDphIsNormalFreeHeapBlock (
     PUCHAR FillStart;
     PUCHAR FillEnd;
 
-    DEBUG_ASSERT (Reason != NULL);
+    DEBUG_ASSERT(Reason != NULL);
     *Reason = 0;
 
     Info = (PDPH_BLOCK_INFORMATION)Block - 1;
 
-    try {
+    try
+    {
 
         //
         // If heap pointer is null we will just ignore this field.
@@ -5134,12 +4694,14 @@ RtlpDphIsNormalFreeHeapBlock (
         // alive.
         //
 
-        if (Info->StartStamp != DPH_NORMAL_BLOCK_START_STAMP_FREE) {
+        if (Info->StartStamp != DPH_NORMAL_BLOCK_START_STAMP_FREE)
+        {
             *Reason |= DPH_ERROR_CORRUPTED_START_STAMP;
             Corrupted = TRUE;
         }
 
-        if (Info->EndStamp != DPH_NORMAL_BLOCK_END_STAMP_FREE) {
+        if (Info->EndStamp != DPH_NORMAL_BLOCK_END_STAMP_FREE)
+        {
             *Reason |= DPH_ERROR_CORRUPTED_END_STAMP;
             Corrupted = TRUE;
         }
@@ -5148,14 +4710,17 @@ RtlpDphIsNormalFreeHeapBlock (
         // Check the block suffix byte pattern.
         //
 
-        if (CheckPattern) {
+        if (CheckPattern)
+        {
 
             FillStart = (PUCHAR)Block + Info->RequestedSize;
             FillEnd = FillStart + USER_ALIGNMENT;
 
-            for (Current = FillStart; Current < FillEnd; Current++) {
+            for (Current = FillStart; Current < FillEnd; Current++)
+            {
 
-                if (*Current != DPH_NORMAL_BLOCK_SUFFIX) {
+                if (*Current != DPH_NORMAL_BLOCK_SUFFIX)
+                {
 
                     *Reason |= DPH_ERROR_CORRUPTED_SUFFIX_PATTERN;
                     Corrupted = TRUE;
@@ -5168,15 +4733,17 @@ RtlpDphIsNormalFreeHeapBlock (
         // Check the block infix byte pattern.
         //
 
-        if (CheckPattern) {
+        if (CheckPattern)
+        {
 
             FillStart = (PUCHAR)Block;
-            FillEnd = FillStart
-                + ((Info->RequestedSize > USER_ALIGNMENT) ? USER_ALIGNMENT : Info->RequestedSize);
+            FillEnd = FillStart + ((Info->RequestedSize > USER_ALIGNMENT) ? USER_ALIGNMENT : Info->RequestedSize);
 
-            for (Current = FillStart; Current < FillEnd; Current++) {
+            for (Current = FillStart; Current < FillEnd; Current++)
+            {
 
-                if (*Current != DPH_FREE_BLOCK_INFIX) {
+                if (*Current != DPH_FREE_BLOCK_INFIX)
+                {
 
                     *Reason |= DPH_ERROR_CORRUPTED_INFIX_PATTERN;
                     Corrupted = TRUE;
@@ -5185,28 +4752,26 @@ RtlpDphIsNormalFreeHeapBlock (
             }
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         *Reason |= DPH_ERROR_RAISED_EXCEPTION;
         Corrupted = TRUE;
     }
 
-    if (Corrupted) {
+    if (Corrupted)
+    {
         return FALSE;
     }
-    else {
+    else
+    {
         return TRUE;
     }
 }
 
 
 BOOLEAN
-RtlpDphWritePageHeapBlockInformation (
-    PDPH_HEAP_ROOT Heap,
-    PVOID Block,
-    SIZE_T RequestedSize,
-    SIZE_T ActualSize
-    )
+RtlpDphWritePageHeapBlockInformation(PDPH_HEAP_ROOT Heap, PVOID Block, SIZE_T RequestedSize, SIZE_T ActualSize)
 {
     PDPH_BLOCK_INFORMATION Info;
     PUCHAR FillStart;
@@ -5233,16 +4798,18 @@ RtlpDphWritePageHeapBlockInformation (
     FillStart = (PUCHAR)Block + RequestedSize;
     FillEnd = (PUCHAR)ROUNDUP2((ULONG_PTR)FillStart, PAGE_SIZE);
 
-    RtlFillMemory (FillStart, FillEnd - FillStart, DPH_PAGE_BLOCK_SUFFIX);
+    RtlFillMemory(FillStart, FillEnd - FillStart, DPH_PAGE_BLOCK_SUFFIX);
 
     //
     // Capture stack trace
     //
 
-    if ((Heap->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES)) {
-        Info->StackTrace = RtlpDphLogStackTrace (3);
+    if ((Heap->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES))
+    {
+        Info->StackTrace = RtlpDphLogStackTrace(3);
     }
-    else {
+    else
+    {
         Info->StackTrace = NULL;
     }
 
@@ -5254,18 +4821,13 @@ RtlpDphWritePageHeapBlockInformation (
     // return immediately.
     //
 
-    Info->TraceIndex = RtlLogStackBackTrace ();
+    Info->TraceIndex = RtlLogStackBackTrace();
 
     return TRUE;
 }
 
 BOOLEAN
-RtlpDphWriteNormalHeapBlockInformation (
-    PDPH_HEAP_ROOT Heap,
-    PVOID Block,
-    SIZE_T RequestedSize,
-    SIZE_T ActualSize
-    )
+RtlpDphWriteNormalHeapBlockInformation(PDPH_HEAP_ROOT Heap, PVOID Block, SIZE_T RequestedSize, SIZE_T ActualSize)
 {
     PDPH_BLOCK_INFORMATION Info;
     PUCHAR FillStart;
@@ -5296,27 +4858,29 @@ RtlpDphWriteNormalHeapBlockInformation (
     FillStart = (PUCHAR)Block + RequestedSize;
     FillEnd = FillStart + USER_ALIGNMENT;
 
-    RtlFillMemory (FillStart, FillEnd - FillStart, DPH_NORMAL_BLOCK_SUFFIX);
+    RtlFillMemory(FillStart, FillEnd - FillStart, DPH_NORMAL_BLOCK_SUFFIX);
 
     //
     // Capture stack trace
     //
 
-    if ((Heap->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES)) {
+    if ((Heap->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES))
+    {
 
-        Info->StackTrace = RtlpDphLogStackTrace (4);
+        Info->StackTrace = RtlpDphLogStackTrace(4);
 
-        if (Info->StackTrace) {
+        if (Info->StackTrace)
+        {
 
-            RtlTraceDatabaseLock (RtlpDphTraceDatabase);
+            RtlTraceDatabaseLock(RtlpDphTraceDatabase);
             ((PRTL_TRACE_BLOCK)(Info->StackTrace))->UserCount += 1;
             ((PRTL_TRACE_BLOCK)(Info->StackTrace))->UserSize += RequestedSize;
             ((PRTL_TRACE_BLOCK)(Info->StackTrace))->UserContext = Heap;
-            RtlTraceDatabaseUnlock (RtlpDphTraceDatabase);
+            RtlTraceDatabaseUnlock(RtlpDphTraceDatabase);
         }
-
     }
-    else {
+    else
+    {
         Info->StackTrace = NULL;
     }
 
@@ -5328,16 +4892,13 @@ RtlpDphWriteNormalHeapBlockInformation (
     // return immediately.
     //
 
-    Info->TraceIndex = RtlLogStackBackTrace ();
+    Info->TraceIndex = RtlLogStackBackTrace();
 
     return TRUE;
 }
 
 BOOLEAN
-RtlpDphGetBlockSizeFromCorruptedBlock (
-    PVOID Block,
-    PSIZE_T Size
-    )
+RtlpDphGetBlockSizeFromCorruptedBlock(PVOID Block, PSIZE_T Size)
 //
 // This function gets called from RtlpDphReportCorruptedBlock only.
 // It tries to extract a size for the block when an error is reported.
@@ -5349,22 +4910,26 @@ RtlpDphGetBlockSizeFromCorruptedBlock (
 
     Info = (PDPH_BLOCK_INFORMATION)Block - 1;
 
-    try {
+    try
+    {
 
-        if (Info->StartStamp == DPH_NORMAL_BLOCK_START_STAMP_FREE
-            || Info->StartStamp == DPH_NORMAL_BLOCK_START_STAMP_ALLOCATED
-            || Info->StartStamp == DPH_PAGE_BLOCK_START_STAMP_FREE
-            || Info->StartStamp == DPH_NORMAL_BLOCK_START_STAMP_ALLOCATED) {
+        if (Info->StartStamp == DPH_NORMAL_BLOCK_START_STAMP_FREE ||
+            Info->StartStamp == DPH_NORMAL_BLOCK_START_STAMP_ALLOCATED ||
+            Info->StartStamp == DPH_PAGE_BLOCK_START_STAMP_FREE ||
+            Info->StartStamp == DPH_NORMAL_BLOCK_START_STAMP_ALLOCATED)
+        {
 
             *Size = Info->RequestedSize;
             Success = TRUE;
         }
-        else {
+        else
+        {
 
             Success = FALSE;
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Success = FALSE;
     }
@@ -5372,17 +4937,13 @@ RtlpDphGetBlockSizeFromCorruptedBlock (
     return Success;
 }
 
-
+
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////// Normal heap allocation/free functions
 /////////////////////////////////////////////////////////////////////
 
 PVOID
-RtlpDphNormalHeapAllocate (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags,
-    SIZE_T Size
-    )
+RtlpDphNormalHeapAllocate(PDPH_HEAP_ROOT Heap, ULONG Flags, SIZE_T Size)
 {
     PVOID Block;
     PDPH_BLOCK_INFORMATION Info;
@@ -5396,17 +4957,15 @@ RtlpDphNormalHeapAllocate (
     //
 
 #if defined(_IA64_)
-    if (Size > 0x8000000000000000) {
+    if (Size > 0x8000000000000000)
+    {
 #else
-    if (Size > 0x80000000) {
+    if (Size > 0x80000000)
+    {
 #endif
 
-        VERIFIER_STOP (APPLICATION_VERIFIER_EXTREME_SIZE_REQUEST,
-                       "extreme size request",
-                       Heap, "Heap handle", 
-                       Size, "Size requested", 
-                       0, "",
-                       0, "");
+        VERIFIER_STOP(APPLICATION_VERIFIER_EXTREME_SIZE_REQUEST, "extreme size request", Heap, "Heap handle", Size,
+                      "Size requested", 0, "", 0, "");
         return NULL;
     }
 
@@ -5417,16 +4976,14 @@ RtlpDphNormalHeapAllocate (
     // We need to reset the NO_SERIALIZE flag because a free operation can be
     // active in another thread due to free delayed cache trimming. If the
     // allocation operation will raise an exception (e.g. OUT_OF_MEMORY) we are
-    // safe to let it go here. It will be caught by the exception handler 
+    // safe to let it go here. It will be caught by the exception handler
     // established in the main page heap entry (RtlpDebugPageHeapAlloc).
     //
 
-    Block = RtlAllocateHeap (
-        Heap->NormalHeap,
-        Flags & (~HEAP_NO_SERIALIZE),
-        ActualSize);
+    Block = RtlAllocateHeap(Heap->NormalHeap, Flags & (~HEAP_NO_SERIALIZE), ActualSize);
 
-    if (Block == NULL) {
+    if (Block == NULL)
+    {
 
         //
         // (SilviuC): If we have memory pressure we might want
@@ -5439,17 +4996,12 @@ RtlpDphNormalHeapAllocate (
     }
 
 
-    RtlpDphWriteNormalHeapBlockInformation (
-        Heap,
-        (PDPH_BLOCK_INFORMATION)Block + 1,
-        RequestedSize,
-        ActualSize);
+    RtlpDphWriteNormalHeapBlockInformation(Heap, (PDPH_BLOCK_INFORMATION)Block + 1, RequestedSize, ActualSize);
 
-    if (! (Flags & HEAP_ZERO_MEMORY)) {
+    if (!(Flags & HEAP_ZERO_MEMORY))
+    {
 
-        RtlFillMemory ((PDPH_BLOCK_INFORMATION)Block + 1,
-                       RequestedSize,
-                       DPH_NORMAL_BLOCK_INFIX);
+        RtlFillMemory((PDPH_BLOCK_INFORMATION)Block + 1, RequestedSize, DPH_NORMAL_BLOCK_INFIX);
     }
 
     return (PVOID)((PDPH_BLOCK_INFORMATION)Block + 1);
@@ -5457,11 +5009,7 @@ RtlpDphNormalHeapAllocate (
 
 
 BOOLEAN
-RtlpDphNormalHeapFree (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags,
-    PVOID Block
-    )
+RtlpDphNormalHeapFree(PDPH_HEAP_ROOT Heap, ULONG Flags, PVOID Block)
 {
     PDPH_BLOCK_INFORMATION Info;
     BOOLEAN Success;
@@ -5471,12 +5019,10 @@ RtlpDphNormalHeapFree (
 
     Info = (PDPH_BLOCK_INFORMATION)Block - 1;
 
-    if (! RtlpDphIsNormalHeapBlock(Heap, Block, &Reason, TRUE)) {
+    if (!RtlpDphIsNormalHeapBlock(Heap, Block, &Reason, TRUE))
+    {
 
-        RtlpDphReportCorruptedBlock (Heap,
-                                     DPH_CONTEXT_NORMAL_PAGE_HEAP_FREE,
-                                     Block, 
-                                     Reason);
+        RtlpDphReportCorruptedBlock(Heap, DPH_CONTEXT_NORMAL_PAGE_HEAP_FREE, Block, Reason);
 
         return FALSE;
     }
@@ -5485,27 +5031,28 @@ RtlpDphNormalHeapFree (
     // Check if there are any orphan critical sections in the block to be freed.
     //
 
-    RtlpCheckForCriticalSectionsInMemoryRange (Block, 
-                                               Info->RequestedSize,
-                                               NULL);
+    RtlpCheckForCriticalSectionsInMemoryRange(Block, Info->RequestedSize, NULL);
 
     //
     // Save the free stack trace.
     //
 
-    if ((Heap->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES)) {
+    if ((Heap->ExtraFlags & PAGE_HEAP_COLLECT_STACK_TRACES))
+    {
 
-        if (Info->StackTrace) {
+        if (Info->StackTrace)
+        {
 
-            RtlTraceDatabaseLock (RtlpDphTraceDatabase);
+            RtlTraceDatabaseLock(RtlpDphTraceDatabase);
             ((PRTL_TRACE_BLOCK)(Info->StackTrace))->UserCount -= 1;
             ((PRTL_TRACE_BLOCK)(Info->StackTrace))->UserSize -= Info->RequestedSize;
-            RtlTraceDatabaseUnlock (RtlpDphTraceDatabase);
+            RtlTraceDatabaseUnlock(RtlpDphTraceDatabase);
         }
 
-        Info->StackTrace = RtlpDphLogStackTrace (3);
+        Info->StackTrace = RtlpDphLogStackTrace(3);
     }
-    else {
+    else
+    {
         Info->StackTrace = NULL;
     }
 
@@ -5523,15 +5070,13 @@ RtlpDphNormalHeapFree (
     // from the block as a pointer and instantly access violate.
     //
 
-    RtlFillMemory (Info + 1,
-                   Info->RequestedSize,
-                   DPH_FREE_BLOCK_INFIX);
+    RtlFillMemory(Info + 1, Info->RequestedSize, DPH_FREE_BLOCK_INFIX);
 
     //
     // Add block to the delayed free queue.
     //
 
-    RtlpDphAddToDelayedFreeQueue (Info);
+    RtlpDphAddToDelayedFreeQueue(Info);
 
     //
     // If we are over the threshold we need to really free
@@ -5540,9 +5085,10 @@ RtlpDphNormalHeapFree (
 
     Success = TRUE;
 
-    if (RtlpDphNeedToTrimDelayedFreeQueue(&TrimSize)) {
+    if (RtlpDphNeedToTrimDelayedFreeQueue(&TrimSize))
+    {
 
-        RtlpDphTrimDelayedFreeQueue (TrimSize, Flags);
+        RtlpDphTrimDelayedFreeQueue(TrimSize, Flags);
     }
 
     return Success;
@@ -5550,12 +5096,7 @@ RtlpDphNormalHeapFree (
 
 
 PVOID
-RtlpDphNormalHeapReAllocate (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags,
-    PVOID OldBlock,
-    SIZE_T Size
-    )
+RtlpDphNormalHeapReAllocate(PDPH_HEAP_ROOT Heap, ULONG Flags, PVOID OldBlock, SIZE_T Size)
 {
     PVOID Block;
     PDPH_BLOCK_INFORMATION Info;
@@ -5568,35 +5109,32 @@ RtlpDphNormalHeapReAllocate (
     //
 
 #if defined(_IA64_)
-    if (Size > 0x8000000000000000) {
+    if (Size > 0x8000000000000000)
+    {
 #else
-    if (Size > 0x80000000) {
+    if (Size > 0x80000000)
+    {
 #endif
 
-        VERIFIER_STOP (APPLICATION_VERIFIER_EXTREME_SIZE_REQUEST,
-                       "extreme size request",
-                       Heap, "Heap handle", 
-                       Size, "Size requested", 
-                       0, "",
-                       0, "");
+        VERIFIER_STOP(APPLICATION_VERIFIER_EXTREME_SIZE_REQUEST, "extreme size request", Heap, "Heap handle", Size,
+                      "Size requested", 0, "", 0, "");
         return NULL;
     }
 
     Info = (PDPH_BLOCK_INFORMATION)OldBlock - 1;
 
-    if (! RtlpDphIsNormalHeapBlock(Heap, OldBlock, &Reason, TRUE)) {
+    if (!RtlpDphIsNormalHeapBlock(Heap, OldBlock, &Reason, TRUE))
+    {
 
-        RtlpDphReportCorruptedBlock (Heap,
-                                     DPH_CONTEXT_NORMAL_PAGE_HEAP_REALLOC,
-                                     OldBlock, 
-                                     Reason);
+        RtlpDphReportCorruptedBlock(Heap, DPH_CONTEXT_NORMAL_PAGE_HEAP_REALLOC, OldBlock, Reason);
 
         return NULL;
     }
 
-    Block = RtlpDphNormalHeapAllocate (Heap, Flags, Size);
+    Block = RtlpDphNormalHeapAllocate(Heap, Flags, Size);
 
-    if (Block == NULL) {
+    if (Block == NULL)
+    {
         return NULL;
     }
 
@@ -5605,31 +5143,29 @@ RtlpDphNormalHeapReAllocate (
     // free old block.
     //
 
-    if (Size < Info->RequestedSize) {
+    if (Size < Info->RequestedSize)
+    {
         CopySize = Size;
     }
-    else {
+    else
+    {
         CopySize = Info->RequestedSize;
     }
 
-    RtlCopyMemory (Block, OldBlock, CopySize);
+    RtlCopyMemory(Block, OldBlock, CopySize);
 
     //
     // Free the old guy.
     //
 
-    RtlpDphNormalHeapFree (Heap, Flags, OldBlock);
+    RtlpDphNormalHeapFree(Heap, Flags, OldBlock);
 
     return Block;
 }
 
 
 SIZE_T
-RtlpDphNormalHeapSize (
-    PDPH_HEAP_ROOT Heap,
-    ULONG Flags,
-    PVOID Block
-    )
+RtlpDphNormalHeapSize(PDPH_HEAP_ROOT Heap, ULONG Flags, PVOID Block)
 {
     PDPH_BLOCK_INFORMATION Info;
     SIZE_T Result;
@@ -5637,7 +5173,8 @@ RtlpDphNormalHeapSize (
 
     Info = (PDPH_BLOCK_INFORMATION)Block - 1;
 
-    if (! RtlpDphIsNormalHeapBlock(Heap, Block, &Reason, FALSE)) {
+    if (!RtlpDphIsNormalHeapBlock(Heap, Block, &Reason, FALSE))
+    {
 
         //
         // We cannot stop here for a wrong block.
@@ -5647,152 +5184,114 @@ RtlpDphNormalHeapSize (
         //
 
 #if DBG
-        DbgPrint ("Page heap: warning: HeapSize called with "
-            "invalid block @ %p (reason %0X) \n", Block, Reason);
+        DbgPrint("Page heap: warning: HeapSize called with "
+                 "invalid block @ %p (reason %0X) \n",
+                 Block, Reason);
 #endif
 
         return (SIZE_T)-1;
     }
 
-    Result = RtlSizeHeap (
-        Heap->NormalHeap,
-        Flags,
-        Info);
+    Result = RtlSizeHeap(Heap->NormalHeap, Flags, Info);
 
-    if (Result == (SIZE_T)-1) {
+    if (Result == (SIZE_T)-1)
+    {
         return Result;
     }
-    else {
+    else
+    {
         return Result - sizeof(*Info) - USER_ALIGNMENT;
     }
 }
 
 
 BOOLEAN
-RtlpDphNormalHeapSetUserFlags(
-    IN PDPH_HEAP_ROOT Heap,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN ULONG UserFlagsReset,
-    IN ULONG UserFlagsSet
-    )
+RtlpDphNormalHeapSetUserFlags(IN PDPH_HEAP_ROOT Heap, IN ULONG Flags, IN PVOID Address, IN ULONG UserFlagsReset,
+                              IN ULONG UserFlagsSet)
 {
     BOOLEAN Success;
     ULONG Reason;
 
-    if (! RtlpDphIsNormalHeapBlock(Heap, Address, &Reason, FALSE)) {
+    if (!RtlpDphIsNormalHeapBlock(Heap, Address, &Reason, FALSE))
+    {
 
-        RtlpDphReportCorruptedBlock (Heap,
-                                     DPH_CONTEXT_NORMAL_PAGE_HEAP_SETFLAGS,
-                                     Address, 
-                                     Reason);
+        RtlpDphReportCorruptedBlock(Heap, DPH_CONTEXT_NORMAL_PAGE_HEAP_SETFLAGS, Address, Reason);
 
         return FALSE;
     }
 
-    Success = RtlSetUserFlagsHeap (
-        Heap->NormalHeap,
-        Flags,
-        (PDPH_BLOCK_INFORMATION)Address - 1,
-        UserFlagsReset,
-        UserFlagsSet);
+    Success =
+        RtlSetUserFlagsHeap(Heap->NormalHeap, Flags, (PDPH_BLOCK_INFORMATION)Address - 1, UserFlagsReset, UserFlagsSet);
 
     return Success;
 }
 
 
 BOOLEAN
-RtlpDphNormalHeapSetUserValue(
-    IN PDPH_HEAP_ROOT Heap,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN PVOID UserValue
-    )
+RtlpDphNormalHeapSetUserValue(IN PDPH_HEAP_ROOT Heap, IN ULONG Flags, IN PVOID Address, IN PVOID UserValue)
 {
     BOOLEAN Success;
     ULONG Reason;
 
-    if (! RtlpDphIsNormalHeapBlock(Heap, Address, &Reason, FALSE)) {
+    if (!RtlpDphIsNormalHeapBlock(Heap, Address, &Reason, FALSE))
+    {
 
-        RtlpDphReportCorruptedBlock (Heap,
-                                     DPH_CONTEXT_NORMAL_PAGE_HEAP_SETVALUE,
-                                     Address, 
-                                     Reason);
+        RtlpDphReportCorruptedBlock(Heap, DPH_CONTEXT_NORMAL_PAGE_HEAP_SETVALUE, Address, Reason);
 
         return FALSE;
     }
 
-    Success = RtlSetUserValueHeap (
-        Heap->NormalHeap,
-        Flags,
-        (PDPH_BLOCK_INFORMATION)Address - 1,
-        UserValue);
+    Success = RtlSetUserValueHeap(Heap->NormalHeap, Flags, (PDPH_BLOCK_INFORMATION)Address - 1, UserValue);
 
     return Success;
 }
 
 
 BOOLEAN
-RtlpDphNormalHeapGetUserInfo(
-    IN PDPH_HEAP_ROOT Heap,
-    IN  ULONG  Flags,
-    IN  PVOID  Address,
-    OUT PVOID* UserValue,
-    OUT PULONG UserFlags
-    )
+RtlpDphNormalHeapGetUserInfo(IN PDPH_HEAP_ROOT Heap, IN ULONG Flags, IN PVOID Address, OUT PVOID *UserValue,
+                             OUT PULONG UserFlags)
 {
     BOOLEAN Success;
     ULONG Reason;
 
-    if (! RtlpDphIsNormalHeapBlock(Heap, Address, &Reason, FALSE)) {
+    if (!RtlpDphIsNormalHeapBlock(Heap, Address, &Reason, FALSE))
+    {
 
-        RtlpDphReportCorruptedBlock (Heap,
-                                     DPH_CONTEXT_NORMAL_PAGE_HEAP_GETINFO,
-                                     Address, 
-                                     Reason);
+        RtlpDphReportCorruptedBlock(Heap, DPH_CONTEXT_NORMAL_PAGE_HEAP_GETINFO, Address, Reason);
 
         return FALSE;
     }
 
-    Success = RtlGetUserInfoHeap (
-        Heap->NormalHeap,
-        Flags,
-        (PDPH_BLOCK_INFORMATION)Address - 1,
-        UserValue,
-        UserFlags);
+    Success = RtlGetUserInfoHeap(Heap->NormalHeap, Flags, (PDPH_BLOCK_INFORMATION)Address - 1, UserValue, UserFlags);
 
     return Success;
 }
 
 
 BOOLEAN
-RtlpDphNormalHeapValidate(
-    IN PDPH_HEAP_ROOT Heap,
-    IN ULONG Flags,
-    IN PVOID Address
-    )
+RtlpDphNormalHeapValidate(IN PDPH_HEAP_ROOT Heap, IN ULONG Flags, IN PVOID Address)
 {
     BOOLEAN Success;
     ULONG Reason;
 
-    if (Address == NULL) {
+    if (Address == NULL)
+    {
 
         //
         // Validation for the whole heap.
         //
 
-        Success = RtlValidateHeap (
-            Heap->NormalHeap,
-            Flags,
-            Address);
+        Success = RtlValidateHeap(Heap->NormalHeap, Flags, Address);
     }
-    else {
+    else
+    {
 
         //
         // Validation for a heap block.
         //
 
-        if (! RtlpDphIsNormalHeapBlock(Heap, Address, &Reason, TRUE)) {
+        if (!RtlpDphIsNormalHeapBlock(Heap, Address, &Reason, TRUE))
+        {
 
             //
             // We cannot break in this case because the function might indeed
@@ -5801,17 +5300,15 @@ RtlpDphNormalHeapValidate(
             //
 
 #if DBG
-            DbgPrint ("Page heap: warning: validate called with "
-                      "invalid block @ %p (reason %0X) \n", Address, Reason);
+            DbgPrint("Page heap: warning: validate called with "
+                     "invalid block @ %p (reason %0X) \n",
+                     Address, Reason);
 #endif
 
             return FALSE;
         }
 
-        Success = RtlValidateHeap (
-            Heap->NormalHeap,
-            Flags,
-            (PDPH_BLOCK_INFORMATION)Address - 1);
+        Success = RtlValidateHeap(Heap->NormalHeap, Flags, (PDPH_BLOCK_INFORMATION)Address - 1);
     }
 
     return Success;
@@ -5830,66 +5327,58 @@ SIZE_T RtlpDphNumberOfDelayedFreeBlocks;
 
 LIST_ENTRY RtlpDphDelayedFreeQueue;
 
-VOID
-RtlpDphInitializeDelayedFreeQueue (
-    )
+VOID RtlpDphInitializeDelayedFreeQueue()
 {
-    RtlInitializeCriticalSection (&RtlpDphDelayedFreeQueueLock);
-    InitializeListHead (&RtlpDphDelayedFreeQueue);
+    RtlInitializeCriticalSection(&RtlpDphDelayedFreeQueueLock);
+    InitializeListHead(&RtlpDphDelayedFreeQueue);
 
     RtlpDphMemoryUsedByDelayedFreeBlocks = 0;
     RtlpDphNumberOfDelayedFreeBlocks = 0;
 }
 
 
-VOID
-RtlpDphAddToDelayedFreeQueue (
-    PDPH_BLOCK_INFORMATION Info
-    )
+VOID RtlpDphAddToDelayedFreeQueue(PDPH_BLOCK_INFORMATION Info)
 {
-    RtlEnterCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlEnterCriticalSection(&RtlpDphDelayedFreeQueueLock);
 
-    InsertTailList (&(RtlpDphDelayedFreeQueue), &(Info->FreeQueue));
+    InsertTailList(&(RtlpDphDelayedFreeQueue), &(Info->FreeQueue));
 
     RtlpDphMemoryUsedByDelayedFreeBlocks += Info->ActualSize;
     RtlpDphNumberOfDelayedFreeBlocks += 1;
 
-    RtlLeaveCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlLeaveCriticalSection(&RtlpDphDelayedFreeQueueLock);
 }
 
 BOOLEAN
-RtlpDphNeedToTrimDelayedFreeQueue (
-    PSIZE_T TrimSize
-    )
+RtlpDphNeedToTrimDelayedFreeQueue(PSIZE_T TrimSize)
 {
     BOOLEAN Result;
 
-    RtlEnterCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlEnterCriticalSection(&RtlpDphDelayedFreeQueueLock);
 
-    if (RtlpDphMemoryUsedByDelayedFreeBlocks > RtlpDphDelayedFreeCacheSize) {
+    if (RtlpDphMemoryUsedByDelayedFreeBlocks > RtlpDphDelayedFreeCacheSize)
+    {
 
         *TrimSize = RtlpDphMemoryUsedByDelayedFreeBlocks - RtlpDphDelayedFreeCacheSize;
 
-        if (*TrimSize < PAGE_SIZE) {
+        if (*TrimSize < PAGE_SIZE)
+        {
             *TrimSize = PAGE_SIZE;
         }
 
         Result = TRUE;
     }
-    else {
+    else
+    {
 
         Result = FALSE;
     }
 
-    RtlLeaveCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlLeaveCriticalSection(&RtlpDphDelayedFreeQueueLock);
     return Result;
 }
 
-VOID
-RtlpDphTrimDelayedFreeQueue (
-    SIZE_T TrimSize,
-    ULONG Flags
-    )
+VOID RtlpDphTrimDelayedFreeQueue(SIZE_T TrimSize, ULONG Flags)
 /*++
 
 Routine Description:
@@ -5926,22 +5415,26 @@ Environment:
     PDPH_BLOCK_INFORMATION QueueBlock;
     PLIST_ENTRY ListEntry;
 
-    RtlEnterCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlEnterCriticalSection(&RtlpDphDelayedFreeQueueLock);
 
-    if (TrimSize == 0) {
-        if (RtlpDphMemoryUsedByDelayedFreeBlocks > RtlpDphDelayedFreeCacheSize) {
+    if (TrimSize == 0)
+    {
+        if (RtlpDphMemoryUsedByDelayedFreeBlocks > RtlpDphDelayedFreeCacheSize)
+        {
 
             TrimSize = RtlpDphMemoryUsedByDelayedFreeBlocks - RtlpDphDelayedFreeCacheSize;
         }
     }
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         //
         // Did we achieve our trimming goal?
         //
 
-        if (CurrentTrimmed >= TrimSize) {
+        if (CurrentTrimmed >= TrimSize)
+        {
             break;
         }
 
@@ -5949,19 +5442,18 @@ Environment:
         // The list can get empty since we remove blocks from it.
         //
 
-        if (IsListEmpty(&RtlpDphDelayedFreeQueue)) {
+        if (IsListEmpty(&RtlpDphDelayedFreeQueue))
+        {
             break;
         }
 
-        ListEntry = RemoveHeadList (&RtlpDphDelayedFreeQueue);
-        QueueBlock = CONTAINING_RECORD (ListEntry, DPH_BLOCK_INFORMATION, FreeQueue);
+        ListEntry = RemoveHeadList(&RtlpDphDelayedFreeQueue);
+        QueueBlock = CONTAINING_RECORD(ListEntry, DPH_BLOCK_INFORMATION, FreeQueue);
 
-        if (! RtlpDphIsNormalFreeHeapBlock(QueueBlock + 1, &Reason, TRUE)) {
+        if (!RtlpDphIsNormalFreeHeapBlock(QueueBlock + 1, &Reason, TRUE))
+        {
 
-            RtlpDphReportCorruptedBlock (NULL,
-                                         DPH_CONTEXT_DELAYED_FREE,
-                                         QueueBlock + 1, 
-                                         Reason);
+            RtlpDphReportCorruptedBlock(NULL, DPH_CONTEXT_DELAYED_FREE, QueueBlock + 1, Reason);
         }
 
         RtlpDphMemoryUsedByDelayedFreeBlocks -= QueueBlock->ActualSize;
@@ -5978,42 +5470,38 @@ Environment:
         // anyway.
         //
 
-        try {
+        try
+        {
 
-            RtlFreeHeap (((PDPH_HEAP_ROOT)(UNSCRAMBLE_POINTER(QueueBlock->Heap)))->NormalHeap, 
-                         0, 
-                         QueueBlock);
+            RtlFreeHeap(((PDPH_HEAP_ROOT)(UNSCRAMBLE_POINTER(QueueBlock->Heap)))->NormalHeap, 0, QueueBlock);
         }
-        except (EXCEPTION_EXECUTE_HANDLER) {
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
     }
 
-    RtlLeaveCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlLeaveCriticalSection(&RtlpDphDelayedFreeQueueLock);
 }
 
 
-VOID
-RtlpDphFreeDelayedBlocksFromHeap (
-    PVOID PageHeap,
-    PVOID NormalHeap
-    )
+VOID RtlpDphFreeDelayedBlocksFromHeap(PVOID PageHeap, PVOID NormalHeap)
 {
     ULONG Reason;
     PDPH_BLOCK_INFORMATION Block;
     PLIST_ENTRY Current;
     PLIST_ENTRY Next;
 
-    RtlEnterCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlEnterCriticalSection(&RtlpDphDelayedFreeQueueLock);
 
-    for (Current = RtlpDphDelayedFreeQueue.Flink;
-         Current != &RtlpDphDelayedFreeQueue;
-         Current = Next) {
+    for (Current = RtlpDphDelayedFreeQueue.Flink; Current != &RtlpDphDelayedFreeQueue; Current = Next)
+    {
 
         Next = Current->Flink;
 
-        Block = CONTAINING_RECORD (Current, DPH_BLOCK_INFORMATION, FreeQueue);
+        Block = CONTAINING_RECORD(Current, DPH_BLOCK_INFORMATION, FreeQueue);
 
-        if (UNSCRAMBLE_POINTER(Block->Heap) != PageHeap) {
+        if (UNSCRAMBLE_POINTER(Block->Heap) != PageHeap)
+        {
             continue;
         }
 
@@ -6021,8 +5509,8 @@ RtlpDphFreeDelayedBlocksFromHeap (
         // We need to delete this block;
         //
 
-        RemoveEntryList (Current);
-        Block = CONTAINING_RECORD (Current, DPH_BLOCK_INFORMATION, FreeQueue);
+        RemoveEntryList(Current);
+        Block = CONTAINING_RECORD(Current, DPH_BLOCK_INFORMATION, FreeQueue);
 
         //
         // Prevent probing of this field during RtlpDphIsNormalFreeBlock.
@@ -6034,12 +5522,10 @@ RtlpDphFreeDelayedBlocksFromHeap (
         // Check if the block about to be freed was touched.
         //
 
-        if (! RtlpDphIsNormalFreeHeapBlock(Block + 1, &Reason, TRUE)) {
+        if (!RtlpDphIsNormalFreeHeapBlock(Block + 1, &Reason, TRUE))
+        {
 
-            RtlpDphReportCorruptedBlock (PageHeap,
-                                         DPH_CONTEXT_DELAYED_DESTROY,
-                                         Block + 1, 
-                                         Reason);
+            RtlpDphReportCorruptedBlock(PageHeap, DPH_CONTEXT_DELAYED_DESTROY, Block + 1, Reason);
         }
 
         RtlpDphMemoryUsedByDelayedFreeBlocks -= Block->ActualSize;
@@ -6047,7 +5533,7 @@ RtlpDphFreeDelayedBlocksFromHeap (
 
         //
         // (SilviuC): ISSUE: Not sure what flags to use here because the flags from the original
-        // call have been lost (we do not store them somewhere in the delayed queue). 
+        // call have been lost (we do not store them somewhere in the delayed queue).
         // Zero should work though. The safest fix would be to add a new field in
         // DPH_BLOCK_INFORMATION that stores the flags used during the original free
         // and uses them again here.
@@ -6063,17 +5549,17 @@ RtlpDphFreeDelayedBlocksFromHeap (
         // anyway.
         //
 
-        try {
-            
-            RtlFreeHeap (NormalHeap, 
-                         0, 
-                         Block);
+        try
+        {
+
+            RtlFreeHeap(NormalHeap, 0, Block);
         }
-        except (EXCEPTION_EXECUTE_HANDLER) {
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
     }
 
-    RtlLeaveCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlLeaveCriticalSection(&RtlpDphDelayedFreeQueueLock);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -6081,36 +5567,29 @@ RtlpDphFreeDelayedBlocksFromHeap (
 /////////////////////////////////////////////////////////////////////
 
 PRTL_TRACE_BLOCK
-RtlpDphLogStackTrace (
-    ULONG FramesToSkip
-    )
+RtlpDphLogStackTrace(ULONG FramesToSkip)
 {
-    PVOID Trace [DPH_MAX_STACK_LENGTH];
+    PVOID Trace[DPH_MAX_STACK_LENGTH];
     ULONG Hash;
     ULONG Count;
     PRTL_TRACE_BLOCK Block;
     BOOLEAN Result;
 
-    Count = RtlCaptureStackBackTrace (
-        1 + FramesToSkip,
-        DPH_MAX_STACK_LENGTH,
-        Trace,
-        &Hash);
+    Count = RtlCaptureStackBackTrace(1 + FramesToSkip, DPH_MAX_STACK_LENGTH, Trace, &Hash);
 
-    if (Count == 0 || RtlpDphTraceDatabase == NULL) {
+    if (Count == 0 || RtlpDphTraceDatabase == NULL)
+    {
         return NULL;
     }
 
-    Result = RtlTraceDatabaseAdd (
-        RtlpDphTraceDatabase,
-        Count,
-        Trace,
-        &Block);
+    Result = RtlTraceDatabaseAdd(RtlpDphTraceDatabase, Count, Trace, &Block);
 
-    if (Result == FALSE) {
+    if (Result == FALSE)
+    {
         return NULL;
     }
-    else {
+    else
+    {
         return Block;
     }
 }
@@ -6123,30 +5602,24 @@ RTL_CRITICAL_SECTION RtlpDphTargetDllsLock;
 LIST_ENTRY RtlpDphTargetDllsList;
 BOOLEAN RtlpDphTargetDllsInitialized;
 
-typedef struct _DPH_TARGET_DLL {
+typedef struct _DPH_TARGET_DLL
+{
 
     LIST_ENTRY List;
     UNICODE_STRING Name;
     PVOID StartAddress;
     PVOID EndAddress;
 
-} DPH_TARGET_DLL, * PDPH_TARGET_DLL;
+} DPH_TARGET_DLL, *PDPH_TARGET_DLL;
 
-VOID
-RtlpDphTargetDllsLogicInitialize (
-    )
+VOID RtlpDphTargetDllsLogicInitialize()
 {
-    RtlInitializeCriticalSection (&RtlpDphTargetDllsLock);
-    InitializeListHead (&RtlpDphTargetDllsList);
+    RtlInitializeCriticalSection(&RtlpDphTargetDllsLock);
+    InitializeListHead(&RtlpDphTargetDllsList);
     RtlpDphTargetDllsInitialized = TRUE;
 }
 
-VOID
-RtlpDphTargetDllsLoadCallBack (
-    PUNICODE_STRING Name,
-    PVOID Address,
-    ULONG Size
-    )
+VOID RtlpDphTargetDllsLoadCallBack(PUNICODE_STRING Name, PVOID Address, ULONG Size)
 //
 // This function is not called right now but it will get called
 // from \base\ntdll\ldrapi.c whenever a dll gets loaded. This
@@ -6160,64 +5633,68 @@ RtlpDphTargetDllsLoadCallBack (
     // Get out if we are in some weird condition.
     //
 
-    if (! RtlpDphTargetDllsInitialized) {
+    if (!RtlpDphTargetDllsInitialized)
+    {
         return;
     }
 
-    if (! RtlpDphIsDllTargeted (Name->Buffer)) {
+    if (!RtlpDphIsDllTargeted(Name->Buffer))
+    {
         return;
     }
 
-    Descriptor = RtlAllocateHeap (RtlProcessHeap(), 0, sizeof *Descriptor);
+    Descriptor = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof *Descriptor);
 
-    if (Descriptor == NULL) {
+    if (Descriptor == NULL)
+    {
         return;
     }
 
-    if (! RtlCreateUnicodeString (&(Descriptor->Name), Name->Buffer)) {
-        RtlFreeHeap (RtlProcessHeap(), 0, Descriptor);
+    if (!RtlCreateUnicodeString(&(Descriptor->Name), Name->Buffer))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, Descriptor);
         return;
     }
 
     Descriptor->StartAddress = Address;
     Descriptor->EndAddress = (PUCHAR)Address + Size;
 
-    RtlEnterCriticalSection (&RtlpDphTargetDllsLock);
-    InsertTailList (&(RtlpDphTargetDllsList), &(Descriptor->List));
-    RtlLeaveCriticalSection (&RtlpDphTargetDllsLock);
+    RtlEnterCriticalSection(&RtlpDphTargetDllsLock);
+    InsertTailList(&(RtlpDphTargetDllsList), &(Descriptor->List));
+    RtlLeaveCriticalSection(&RtlpDphTargetDllsLock);
 
     //
     // Print a message if a target dll has been identified.
     //
 
-    DbgPrint("Page heap: loaded target dll %ws [%p - %p]\n",
-             Descriptor->Name.Buffer,
-             Descriptor->StartAddress,
+    DbgPrint("Page heap: loaded target dll %ws [%p - %p]\n", Descriptor->Name.Buffer, Descriptor->StartAddress,
              Descriptor->EndAddress);
 }
 
-const WCHAR *
-RtlpDphIsDllTargeted (
-    const WCHAR * Name
-    )
+const WCHAR *RtlpDphIsDllTargeted(const WCHAR *Name)
 {
-    const WCHAR * All;
+    const WCHAR *All;
     ULONG I, J;
 
     All = RtlpDphTargetDllsUnicode.Buffer;
 
-    for (I = 0; All[I]; I += 1) {
+    for (I = 0; All[I]; I += 1)
+    {
 
-        for (J = 0; All[I+J] && Name[J]; J += 1) {
-            if (RtlUpcaseUnicodeChar(All[I+J]) != RtlUpcaseUnicodeChar(Name[J])) {
+        for (J = 0; All[I + J] && Name[J]; J += 1)
+        {
+            if (RtlUpcaseUnicodeChar(All[I + J]) != RtlUpcaseUnicodeChar(Name[J]))
+            {
                 break;
             }
         }
 
-        if (Name[J]) {
+        if (Name[J])
+        {
             continue;
         }
-        else {
+        else
+        {
             // we got to the end of string
             return &(All[I]);
         }
@@ -6231,15 +5708,14 @@ RtlpDphIsDllTargeted (
 /////////////////////////////////////////////////////////////////////
 
 PDPH_HEAP_BLOCK
-RtlpDphSearchBlockInList (
-    PDPH_HEAP_BLOCK List,
-    PUCHAR Address
-    )
+RtlpDphSearchBlockInList(PDPH_HEAP_BLOCK List, PUCHAR Address)
 {
     PDPH_HEAP_BLOCK Current;
 
-    for (Current = List; Current; Current = Current->pNextAlloc) {
-        if (Current->pVirtualBlock == Address) {
+    for (Current = List; Current; Current = Current->pNextAlloc)
+    {
+        if (Current->pVirtualBlock == Address)
+        {
             return Current;
         }
     }
@@ -6250,12 +5726,7 @@ RtlpDphSearchBlockInList (
 PVOID RtlpDphLastValidationStack;
 PVOID RtlpDphCurrentValidationStack;
 
-VOID
-RtlpDphInternalValidatePageHeap (
-    PDPH_HEAP_ROOT Heap,
-    PUCHAR ExemptAddress,
-    SIZE_T ExemptSize
-    )
+VOID RtlpDphInternalValidatePageHeap(PDPH_HEAP_ROOT Heap, PUCHAR ExemptAddress, SIZE_T ExemptSize)
 {
     PDPH_HEAP_BLOCK Range;
     PDPH_HEAP_BLOCK Node;
@@ -6263,22 +5734,23 @@ RtlpDphInternalValidatePageHeap (
     BOOLEAN FoundLeak;
 
     RtlpDphLastValidationStack = RtlpDphCurrentValidationStack;
-    RtlpDphCurrentValidationStack = RtlpDphLogStackTrace (0);
+    RtlpDphCurrentValidationStack = RtlpDphLogStackTrace(0);
     FoundLeak = FALSE;
 
-    for (Range = Heap->pVirtualStorageListHead;
-         Range != NULL;
-         Range = Range->pNextAlloc) {
+    for (Range = Heap->pVirtualStorageListHead; Range != NULL; Range = Range->pNextAlloc)
+    {
 
         Address = Range->pVirtualBlock;
 
-        while (Address < Range->pVirtualBlock + Range->nVirtualBlockSize) {
+        while (Address < Range->pVirtualBlock + Range->nVirtualBlockSize)
+        {
 
             //
             // Ignore DPH_HEAP_ROOT structures.
             //
 
-            if ((Address >= (PUCHAR)Heap - PAGE_SIZE) && (Address <  (PUCHAR)Heap + 5 * PAGE_SIZE)) {
+            if ((Address >= (PUCHAR)Heap - PAGE_SIZE) && (Address < (PUCHAR)Heap + 5 * PAGE_SIZE))
+            {
                 Address += PAGE_SIZE;
                 continue;
             }
@@ -6287,61 +5759,63 @@ RtlpDphInternalValidatePageHeap (
             // Ignore exempt region (temporarily out of all structures).
             //
 
-            if ((Address >= ExemptAddress) && (Address < ExemptAddress + ExemptSize)) {
+            if ((Address >= ExemptAddress) && (Address < ExemptAddress + ExemptSize))
+            {
                 Address += PAGE_SIZE;
                 continue;
             }
 
-            Node = RtlpDphSearchBlockInList (Heap->pBusyAllocationListHead, Address);
+            Node = RtlpDphSearchBlockInList(Heap->pBusyAllocationListHead, Address);
 
-            if (Node) {
+            if (Node)
+            {
                 Address += Node->nVirtualBlockSize;
                 continue;
             }
 
-            Node = RtlpDphSearchBlockInList (Heap->pFreeAllocationListHead, Address);
+            Node = RtlpDphSearchBlockInList(Heap->pFreeAllocationListHead, Address);
 
-            if (Node) {
+            if (Node)
+            {
                 Address += Node->nVirtualBlockSize;
                 continue;
             }
 
-            Node = RtlpDphSearchBlockInList (Heap->pAvailableAllocationListHead, Address);
+            Node = RtlpDphSearchBlockInList(Heap->pAvailableAllocationListHead, Address);
 
-            if (Node) {
+            if (Node)
+            {
                 Address += Node->nVirtualBlockSize;
                 continue;
             }
 
-            Node = RtlpDphSearchBlockInList (Heap->pNodePoolListHead, Address);
+            Node = RtlpDphSearchBlockInList(Heap->pNodePoolListHead, Address);
 
-            if (Node) {
+            if (Node)
+            {
                 Address += Node->nVirtualBlockSize;
                 continue;
             }
 
-            DbgPrint ("Block @ %p has been leaked \n", Address);
+            DbgPrint("Block @ %p has been leaked \n", Address);
             FoundLeak = TRUE;
 
             Address += PAGE_SIZE;
         }
     }
 
-    if (FoundLeak) {
+    if (FoundLeak)
+    {
 
-        DbgPrint ("Page heap: Last stack @ %p, Current stack @ %p \n",
-            RtlpDphLastValidationStack,
-            RtlpDphCurrentValidationStack);
+        DbgPrint("Page heap: Last stack @ %p, Current stack @ %p \n", RtlpDphLastValidationStack,
+                 RtlpDphCurrentValidationStack);
 
-        DbgBreakPoint ();
+        DbgBreakPoint();
     }
 }
 
 
-VOID
-RtlpDphValidateInternalLists (
-    PDPH_HEAP_ROOT Heap
-    )
+VOID RtlpDphValidateInternalLists(PDPH_HEAP_ROOT Heap)
 /*++
 
 Routine Description:
@@ -6355,7 +5829,7 @@ Routine Description:
 
 --*/
 {
-    
+
     PDPH_HEAP_BLOCK StartNode;
     PDPH_HEAP_BLOCK EndNode;
     PDPH_HEAP_BLOCK Node;
@@ -6366,39 +5840,44 @@ Routine Description:
     // Nothing to do if /protect is not enabled.
     //
 
-    if (! (Heap->ExtraFlags & PAGE_HEAP_PROTECT_META_DATA)) {
+    if (!(Heap->ExtraFlags & PAGE_HEAP_PROTECT_META_DATA))
+    {
         return;
     }
 
     RtlpDphLastValidationStack = RtlpDphCurrentValidationStack;
-    RtlpDphCurrentValidationStack = RtlpDphLogStackTrace (0);
-    
+    RtlpDphCurrentValidationStack = RtlpDphLogStackTrace(0);
+
     StartNode = Heap->pBusyAllocationListHead;
     EndNode = Heap->pBusyAllocationListTail;
 
-    try {
+    try
+    {
 
         //
         // Sanity checks.
         //
 
-        if (Heap->nBusyAllocations == 0) {
-            
+        if (Heap->nBusyAllocations == 0)
+        {
+
             return;
         }
 
-        if (StartNode == NULL || StartNode->pVirtualBlock == NULL) {
+        if (StartNode == NULL || StartNode->pVirtualBlock == NULL)
+        {
 
 
-            DbgPrint ("Page heap: corruption detected: %u: \n", __LINE__);
-            DbgBreakPoint ();
+            DbgPrint("Page heap: corruption detected: %u: \n", __LINE__);
+            DbgBreakPoint();
         }
 
-        if (EndNode == NULL || EndNode->pVirtualBlock == NULL) {
+        if (EndNode == NULL || EndNode->pVirtualBlock == NULL)
+        {
 
 
-            DbgPrint ("Page heap: corruption detected: %u: \n", __LINE__);
-            DbgBreakPoint ();
+            DbgPrint("Page heap: corruption detected: %u: \n", __LINE__);
+            DbgBreakPoint();
         }
 
         //
@@ -6406,10 +5885,11 @@ Routine Description:
         // corruption pattern that I have seen in the past.
         //
 
-        if (RtlpDphSearchBlockInList (Heap->pFreeAllocationListHead, StartNode->pVirtualBlock)) {
-            DbgPrint ("Page heap: corruption detected: %u: \n", __LINE__);
-            DbgPrint ("Corruption detected: %u: \n", __LINE__);
-            DbgBreakPoint ();
+        if (RtlpDphSearchBlockInList(Heap->pFreeAllocationListHead, StartNode->pVirtualBlock))
+        {
+            DbgPrint("Page heap: corruption detected: %u: \n", __LINE__);
+            DbgPrint("Corruption detected: %u: \n", __LINE__);
+            DbgBreakPoint();
         }
 
         //
@@ -6419,15 +5899,17 @@ Routine Description:
 
         NumberOfBlocks = 0;
 
-        for (Node = StartNode; Node != NULL; Node = Node->pNextAlloc) {
+        for (Node = StartNode; Node != NULL; Node = Node->pNextAlloc)
+        {
 
             NumberOfBlocks += 1;
         }
 
-        if (NumberOfBlocks != Heap->nBusyAllocations) {
+        if (NumberOfBlocks != Heap->nBusyAllocations)
+        {
 
-            DbgPrint ("Page heap: corruption detected: %u: \n", __LINE__);
-            DbgBreakPoint ();
+            DbgPrint("Page heap: corruption detected: %u: \n", __LINE__);
+            DbgBreakPoint();
         }
 
         //
@@ -6436,24 +5918,28 @@ Routine Description:
         // enabled since in this case we do not put magic patterns.
         //
 
-        if (! (Heap->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS)) {
+        if (!(Heap->ExtraFlags & PAGE_HEAP_CATCH_BACKWARD_OVERRUNS))
+        {
 
-            for (Node = StartNode; Node != NULL; Node = Node->pNextAlloc) {
+            for (Node = StartNode; Node != NULL; Node = Node->pNextAlloc)
+            {
 
                 Block = (PDPH_BLOCK_INFORMATION)(Node->pUserAllocation) - 1;
 
-                if (Block->StartStamp != DPH_PAGE_BLOCK_START_STAMP_ALLOCATED) {
+                if (Block->StartStamp != DPH_PAGE_BLOCK_START_STAMP_ALLOCATED)
+                {
 
-                    DbgPrint ("Page heap: corruption detected: wrong stamp for node %p \n", Node);
-                    DbgBreakPoint ();
+                    DbgPrint("Page heap: corruption detected: wrong stamp for node %p \n", Node);
+                    DbgBreakPoint();
                 }
             }
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-        DbgPrint ("Page heap: corruption detected: exception raised \n");
-        DbgBreakPoint ();
+        DbgPrint("Page heap: corruption detected: exception raised \n");
+        DbgBreakPoint();
     }
 }
 
@@ -6471,7 +5957,7 @@ ULONG RtlpDphFaultSuccessRate;
 ULONG RtlpDphFaultFailureRate;
 
 #define NO_OF_FAULT_STACKS 128
-PVOID RtlpDphFaultStacks [NO_OF_FAULT_STACKS];
+PVOID RtlpDphFaultStacks[NO_OF_FAULT_STACKS];
 ULONG RtlpDphFaultStacksIndex;
 
 #define ENOUGH_TIME ((DWORDLONG)(5 * 1000 * 1000 * 10)) // 5 secs
@@ -6479,17 +5965,18 @@ LARGE_INTEGER RtlpDphFaultStartTime;
 LARGE_INTEGER RtlpDphFaultCurrentTime;
 
 BOOLEAN
-RtlpDphShouldFaultInject (
-    )
+RtlpDphShouldFaultInject()
 {
     ULONG Index;
     DWORDLONG Delta;
 
-    if (RtlpDphFaultProbability == 0) {
+    if (RtlpDphFaultProbability == 0)
+    {
         return FALSE;
     }
 
-    if (RtlpDphDisableFaults != 0) {
+    if (RtlpDphDisableFaults != 0)
+    {
         return FALSE;
     }
 
@@ -6497,14 +5984,16 @@ RtlpDphShouldFaultInject (
     // Make sure we do not fault inject if at least one guy
     // requested our mercy by calling RtlpDphDisableFaultInjection.
     //
-    if (InterlockedExchangeAdd (&RtlpDphFaultInjectionDisabled, 1) > 0) {
+    if (InterlockedExchangeAdd(&RtlpDphFaultInjectionDisabled, 1) > 0)
+    {
 
-        InterlockedDecrement (&RtlpDphFaultInjectionDisabled);
+        InterlockedDecrement(&RtlpDphFaultInjectionDisabled);
         return FALSE;
     }
-    else {
+    else
+    {
 
-        InterlockedDecrement (&RtlpDphFaultInjectionDisabled);
+        InterlockedDecrement(&RtlpDphFaultInjectionDisabled);
     }
 
     //
@@ -6513,29 +6002,33 @@ RtlpDphShouldFaultInject (
     // also but it is not really a priority right now.
     //
 
-    if (RtlpDphFaultProcessEnoughStarted == FALSE) {
+    if (RtlpDphFaultProcessEnoughStarted == FALSE)
+    {
 
-        if ((DWORDLONG)(RtlpDphFaultStartTime.QuadPart) == 0) {
+        if ((DWORDLONG)(RtlpDphFaultStartTime.QuadPart) == 0)
+        {
 
-                NtQuerySystemTime (&RtlpDphFaultStartTime);
+            NtQuerySystemTime(&RtlpDphFaultStartTime);
+            return FALSE;
+        }
+        else
+        {
+
+            NtQuerySystemTime(&RtlpDphFaultCurrentTime);
+            Delta = (DWORDLONG)(RtlpDphFaultCurrentTime.QuadPart) - (DWORDLONG)(RtlpDphFaultStartTime.QuadPart);
+
+            if (Delta < ENOUGH_TIME)
+            {
                 return FALSE;
             }
-        else {
 
-            NtQuerySystemTime (&RtlpDphFaultCurrentTime);
-            Delta = (DWORDLONG)(RtlpDphFaultCurrentTime.QuadPart)
-                - (DWORDLONG)(RtlpDphFaultStartTime.QuadPart);
-
-            if (Delta < ENOUGH_TIME) {
+            if (Delta <= ((DWORDLONG)RtlpDphFaultTimeOut * 1000 * 1000 * 10))
+            {
                 return FALSE;
             }
 
-            if (Delta <= ((DWORDLONG)RtlpDphFaultTimeOut * 1000 * 1000 * 10)) {
-                return FALSE;
-            }
-
-            DbgPrint( "Page heap: enabling fault injection for process 0x%X \n",
-                      HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
+            DbgPrint("Page heap: enabling fault injection for process 0x%X \n",
+                     HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 
             RtlpDphFaultProcessEnoughStarted = TRUE;
         }
@@ -6545,30 +6038,31 @@ RtlpDphShouldFaultInject (
     // Initialize the seed if we need to.
     //
 
-    if (RtlpDphFaultSeedInitialized == FALSE) {
+    if (RtlpDphFaultSeedInitialized == FALSE)
+    {
 
         LARGE_INTEGER PerformanceCounter;
 
         PerformanceCounter.LowPart = 0xABCDDCBA;
 
-        NtQueryPerformanceCounter (
-            &PerformanceCounter,
-            NULL);
+        NtQueryPerformanceCounter(&PerformanceCounter, NULL);
 
         RtlpDphFaultSeed = PerformanceCounter.LowPart;
         RtlpDphFaultSeedInitialized = TRUE;
     }
 
-    if ((RtlRandom(&RtlpDphFaultSeed) % 10000) < RtlpDphFaultProbability) {
+    if ((RtlRandom(&RtlpDphFaultSeed) % 10000) < RtlpDphFaultProbability)
+    {
 
-        Index = InterlockedExchangeAdd (&RtlpDphFaultStacksIndex, 1);
+        Index = InterlockedExchangeAdd(&RtlpDphFaultStacksIndex, 1);
         Index &= (NO_OF_FAULT_STACKS - 1);
-        RtlpDphFaultStacks[Index] = RtlpDphLogStackTrace (2);
+        RtlpDphFaultStacks[Index] = RtlpDphLogStackTrace(2);
 
         RtlpDphFaultFailureRate += 1;
         return TRUE;
     }
-    else {
+    else
+    {
 
         RtlpDphFaultSuccessRate += 1;
         return FALSE;
@@ -6577,18 +6071,14 @@ RtlpDphShouldFaultInject (
 
 ULONG RtlpDphFaultInjectionDisabled;
 
-VOID
-RtlpDphDisableFaultInjection (
-    )
+VOID RtlpDphDisableFaultInjection()
 {
-    InterlockedIncrement (&RtlpDphFaultInjectionDisabled);
+    InterlockedIncrement(&RtlpDphFaultInjectionDisabled);
 }
 
-VOID
-RtlpDphEnableFaultInjection (
-    )
+VOID RtlpDphEnableFaultInjection()
 {
-    InterlockedDecrement (&RtlpDphFaultInjectionDisabled);
+    InterlockedDecrement(&RtlpDphFaultInjectionDisabled);
 }
 
 
@@ -6598,14 +6088,10 @@ RtlpDphEnableFaultInjection (
 
 #if INTERNAL_DEBUG
 
-PVOID RtlpDphLastCheckTrace [16];
+PVOID RtlpDphLastCheckTrace[16];
 
 
-VOID
-RtlpDphCheckFreeDelayedCache (
-    PVOID CheckBlock,
-    SIZE_T CheckSize
-    )
+VOID RtlpDphCheckFreeDelayedCache(PVOID CheckBlock, SIZE_T CheckSize)
 {
     ULONG Reason;
     PDPH_BLOCK_INFORMATION Block;
@@ -6613,27 +6099,27 @@ RtlpDphCheckFreeDelayedCache (
     PLIST_ENTRY Next;
     ULONG Hash;
 
-    if (RtlpDphDelayedFreeQueue.Flink == NULL) {
+    if (RtlpDphDelayedFreeQueue.Flink == NULL)
+    {
         return;
     }
 
-    RtlEnterCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlEnterCriticalSection(&RtlpDphDelayedFreeQueueLock);
 
-    for (Current = RtlpDphDelayedFreeQueue.Flink;
-         Current != &RtlpDphDelayedFreeQueue;
-         Current = Next) {
+    for (Current = RtlpDphDelayedFreeQueue.Flink; Current != &RtlpDphDelayedFreeQueue; Current = Next)
+    {
 
         Next = Current->Flink;
 
-        if (Current >= (PLIST_ENTRY)CheckBlock &&
-            Current < (PLIST_ENTRY)((SIZE_T)CheckBlock + CheckSize)) {
+        if (Current >= (PLIST_ENTRY)CheckBlock && Current < (PLIST_ENTRY)((SIZE_T)CheckBlock + CheckSize))
+        {
 
-            DbgPrint ("Page heap: block %p contains freed block %p \n", CheckBlock, Current);
-            DbgBreakPoint ();
+            DbgPrint("Page heap: block %p contains freed block %p \n", CheckBlock, Current);
+            DbgBreakPoint();
         }
 
 
-        Block = CONTAINING_RECORD (Current, DPH_BLOCK_INFORMATION, FreeQueue);
+        Block = CONTAINING_RECORD(Current, DPH_BLOCK_INFORMATION, FreeQueue);
 
         Block->Heap = UNSCRAMBLE_POINTER(Block->Heap);
 
@@ -6641,35 +6127,30 @@ RtlpDphCheckFreeDelayedCache (
         // Check if the block about to be freed was touched.
         //
 
-        if (! RtlpDphIsNormalFreeHeapBlock(Block + 1, &Reason, FALSE)) {
+        if (!RtlpDphIsNormalFreeHeapBlock(Block + 1, &Reason, FALSE))
+        {
 
-            RtlpDphReportCorruptedBlock (NULL,
-                                         DPH_CONTEXT_DELAYED_FREE,
-                                         Block + 1, 
-                                         Reason);
+            RtlpDphReportCorruptedBlock(NULL, DPH_CONTEXT_DELAYED_FREE, Block + 1, Reason);
         }
 
         //
         // Check busy bit
         //
 
-        if ((((PHEAP_ENTRY)Block - 1)->Flags & HEAP_ENTRY_BUSY) == 0) {
-            DbgPrint ("Page heap: block %p has busy bit reset \n", Block);
-            DbgBreakPoint ();
+        if ((((PHEAP_ENTRY)Block - 1)->Flags & HEAP_ENTRY_BUSY) == 0)
+        {
+            DbgPrint("Page heap: block %p has busy bit reset \n", Block);
+            DbgBreakPoint();
         }
-        
+
         Block->Heap = SCRAMBLE_POINTER(Block->Heap);
     }
 
-    RtlZeroMemory (RtlpDphLastCheckTrace, 
-                   sizeof RtlpDphLastCheckTrace);
+    RtlZeroMemory(RtlpDphLastCheckTrace, sizeof RtlpDphLastCheckTrace);
 
-    RtlCaptureStackBackTrace (0,
-                              16,
-                              RtlpDphLastCheckTrace,
-                              &Hash);
-    
-    RtlLeaveCriticalSection (&RtlpDphDelayedFreeQueueLock);
+    RtlCaptureStackBackTrace(0, 16, RtlpDphLastCheckTrace, &Hash);
+
+    RtlLeaveCriticalSection(&RtlpDphDelayedFreeQueueLock);
 }
 
 #endif // #if INTERNAL_DEBUG

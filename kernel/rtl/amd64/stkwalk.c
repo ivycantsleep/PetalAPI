@@ -23,12 +23,8 @@ Revision History:
 #include "ntrtlp.h"
 
 USHORT
-RtlCaptureStackBackTrace (
-    IN ULONG FramesToSkip,
-    IN ULONG FramesToCapture,
-    OUT PVOID *BackTrace,
-    OUT PULONG BackTraceHash
-    )
+RtlCaptureStackBackTrace(IN ULONG FramesToSkip, IN ULONG FramesToCapture, OUT PVOID *BackTrace,
+                         OUT PULONG BackTraceHash)
 
 /*++
 
@@ -68,7 +64,8 @@ Return Value:
     //
 
     FramesToSkip += 1;
-    if ((FramesToCapture + FramesToSkip) >= (2 * MAX_STACK_DEPTH)) {
+    if ((FramesToCapture + FramesToSkip) >= (2 * MAX_STACK_DEPTH))
+    {
         return 0;
     }
 
@@ -76,16 +73,15 @@ Return Value:
     // Capture the stack back trace.
     //
 
-    FramesFound = RtlWalkFrameChain(&Trace[0],
-                                    FramesToCapture + FramesToSkip,
-                                    0);
+    FramesFound = RtlWalkFrameChain(&Trace[0], FramesToCapture + FramesToSkip, 0);
 
     //
     // If the number of frames found is less than the number of frames to
     // skip, then return zero.
     //
 
-    if (FramesFound <= FramesToSkip) {
+    if (FramesFound <= FramesToSkip)
+    {
         return 0;
     }
 
@@ -95,8 +91,10 @@ Return Value:
     //
 
     HashValue = 0;
-    for (Index = 0; Index < FramesToCapture; Index += 1) {
-        if (FramesToSkip + Index >= FramesFound) {
+    for (Index = 0; Index < FramesToCapture; Index += 1)
+    {
+        if (FramesToSkip + Index >= FramesFound)
+        {
             break;
         }
 
@@ -110,11 +108,7 @@ Return Value:
 
 #undef RtlGetCallersAddress
 
-VOID
-RtlGetCallersAddress (
-    OUT PVOID *CallersPc,
-    OUT PVOID *CallersCallersPc
-    )
+VOID RtlGetCallersAddress(OUT PVOID *CallersPc, OUT PVOID *CallersCallersPc)
 
 /*++
 
@@ -171,43 +165,28 @@ Note:
 
     RtlpGetStackLimits(&LowLimit, &HighLimit);
     RtlCaptureContext(&ContextRecord);
-    FunctionEntry = RtlLookupFunctionEntry(ContextRecord.Rip,
-                                           &ImageBase,
-                                           NULL);
+    FunctionEntry = RtlLookupFunctionEntry(ContextRecord.Rip, &ImageBase, NULL);
 
     //
     //  Attempt to unwind to the caller of this routine (C).
     //
 
-    if (FunctionEntry != NULL) {
-        RtlVirtualUnwind(UNW_FLAG_NHANDLER,
-                         ImageBase,
-                         ContextRecord.Rip,
-                         FunctionEntry,
-                         &ContextRecord,
-                         &HandlerData,
-                         &EstablisherFrame,
-                         NULL);
+    if (FunctionEntry != NULL)
+    {
+        RtlVirtualUnwind(UNW_FLAG_NHANDLER, ImageBase, ContextRecord.Rip, FunctionEntry, &ContextRecord, &HandlerData,
+                         &EstablisherFrame, NULL);
 
         //
         // Attempt to unwind to the caller of the caller of this routine (B).
         //
 
-        FunctionEntry = RtlLookupFunctionEntry(ContextRecord.Rip,
-                                               &ImageBase,
-                                               NULL);
+        FunctionEntry = RtlLookupFunctionEntry(ContextRecord.Rip, &ImageBase, NULL);
 
-        if ((FunctionEntry != NULL) &&
-            (ContextRecord.Rsp < HighLimit)) {
+        if ((FunctionEntry != NULL) && (ContextRecord.Rsp < HighLimit))
+        {
 
-            RtlVirtualUnwind(UNW_FLAG_NHANDLER,
-                             ImageBase,
-                             ContextRecord.Rip,
-                             FunctionEntry,
-                             &ContextRecord,
-                             &HandlerData,
-                             &EstablisherFrame,
-                             NULL);
+            RtlVirtualUnwind(UNW_FLAG_NHANDLER, ImageBase, ContextRecord.Rip, FunctionEntry, &ContextRecord,
+                             &HandlerData, &EstablisherFrame, NULL);
 
             *CallersPc = (PVOID)ContextRecord.Rip;
 
@@ -216,21 +195,13 @@ Note:
             // of the caller of this routine (A).
             //
 
-            FunctionEntry = RtlLookupFunctionEntry(ContextRecord.Rip,
-                                                   &ImageBase,
-                                                   NULL);
+            FunctionEntry = RtlLookupFunctionEntry(ContextRecord.Rip, &ImageBase, NULL);
 
-            if ((FunctionEntry != NULL) &&
-                (ContextRecord.Rsp < HighLimit)) {
+            if ((FunctionEntry != NULL) && (ContextRecord.Rsp < HighLimit))
+            {
 
-                RtlVirtualUnwind(UNW_FLAG_NHANDLER,
-                                 ImageBase,
-                                 ContextRecord.Rip,
-                                 FunctionEntry,
-                                 &ContextRecord,
-                                 &HandlerData,
-                                 &EstablisherFrame,
-                                 NULL);
+                RtlVirtualUnwind(UNW_FLAG_NHANDLER, ImageBase, ContextRecord.Rip, FunctionEntry, &ContextRecord,
+                                 &HandlerData, &EstablisherFrame, NULL);
 
                 *CallersCallersPc = (PVOID)ContextRecord.Rip;
             }
@@ -241,11 +212,7 @@ Note:
 }
 
 ULONG
-RtlWalkFrameChain (
-    OUT PVOID *Callers,
-    IN ULONG Count,
-    IN ULONG Flags
-    )
+RtlWalkFrameChain(OUT PVOID *Callers, IN ULONG Count, IN ULONG Flags)
 
 /*++
 
@@ -287,24 +254,24 @@ Return value:
     //
 
     RtlpGetStackLimits(&LowLimit, &HighLimit);
-    RtlCaptureContext (&ContextRecord);
+    RtlCaptureContext(&ContextRecord);
 
     //
     // Capture the requested number of return addresses if possible.
     //
 
     Index = 0;
-    try {
-        while ((Index < Count) && (ContextRecord.Rip != 0)) {
+    try
+    {
+        while ((Index < Count) && (ContextRecord.Rip != 0))
+        {
 
             //
             // Lookup the function table entry using the point at which control
             // left the function.
             //
 
-            FunctionEntry = RtlLookupFunctionEntry(ContextRecord.Rip,
-                                                   &ImageBase,
-                                                   NULL);
+            FunctionEntry = RtlLookupFunctionEntry(ContextRecord.Rip, &ImageBase, NULL);
 
             //
             // If there is a function table entry for the routine and the stack is
@@ -312,32 +279,28 @@ Return value:
             // to obtain the return address. Otherwise, discontinue the stack walk.
             //
 
-            if ((FunctionEntry != NULL) &&
-                (ContextRecord.Rsp < HighLimit)) {
+            if ((FunctionEntry != NULL) && (ContextRecord.Rsp < HighLimit))
+            {
 
-                RtlVirtualUnwind(UNW_FLAG_NHANDLER,
-                                 ImageBase,
-                                 ContextRecord.Rip,
-                                 FunctionEntry,
-                                 &ContextRecord,
-                                 &HandlerData,
-                                 &EstablisherFrame,
-                                 NULL);
+                RtlVirtualUnwind(UNW_FLAG_NHANDLER, ImageBase, ContextRecord.Rip, FunctionEntry, &ContextRecord,
+                                 &HandlerData, &EstablisherFrame, NULL);
 
                 Callers[Index] = (PVOID)ContextRecord.Rip;
                 Index += 1;
-
-            } else {
+            }
+            else
+            {
                 break;
             }
         }
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
 #if DBG
 
-        DbgPrint ("Unexpected exception in RtlWalkFrameChain ...\n");
-        DbgBreakPoint ();
+        DbgPrint("Unexpected exception in RtlWalkFrameChain ...\n");
+        DbgBreakPoint();
 
 #endif
 

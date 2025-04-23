@@ -7,19 +7,24 @@ BOOLEAN EndTest = FALSE;
 main()
 {
 
-    while (EndTest == FALSE) {
-        try {
-            try {
+    while (EndTest == FALSE)
+    {
+        try
+        {
+            try
+            {
                 DbgPrint("doing return\n");
                 return;
             }
-            finally {
+            finally
+            {
                 DbgPrint("in inner finally\n");
                 break;
             }
         }
-        finally {
-	    DbgPrint("in last finally\n");
+        finally
+        {
+            DbgPrint("in last finally\n");
             continue;
         }
     }

@@ -21,17 +21,18 @@
 *
 ****************************************************************/
 
-BOOL
-CtxUserGetWinstationInfo(PWINSTATIONINFO pInfo)
+BOOL CtxUserGetWinstationInfo(PWINSTATIONINFO pInfo)
 {
-   NTSTATUS status;
+    NTSTATUS status;
 
-   status = NtUserRemoteGetWinstationInfo((PWSXINFO)pInfo);
+    status = NtUserRemoteGetWinstationInfo((PWSXINFO)pInfo);
 
-   if (NT_SUCCESS(status)) {
-      return TRUE;
-   }
-   else {
-      return FALSE;
-   }
+    if (NT_SUCCESS(status))
+    {
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
 }

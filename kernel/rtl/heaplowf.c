@@ -67,17 +67,17 @@ Author:
 
 //#define _HEAP_DEBUG
 
-#define PrintMsg    DbgPrint
-#define HeapAlloc   RtlAllocateHeap
-#define HeapFree    RtlFreeHeap
+#define PrintMsg DbgPrint
+#define HeapAlloc RtlAllocateHeap
+#define HeapFree RtlFreeHeap
 
 //
 //  The conversion code needs the Lock/Unlock APIs
 //
 
-#define HeapLock    RtlLockHeap
-#define HeapUnlock  RtlUnlockHeap
-#define HeapSize  RtlSizeHeap
+#define HeapLock RtlLockHeap
+#define HeapUnlock RtlUnlockHeap
+#define HeapSize RtlSizeHeap
 
 #ifdef _HEAP_DEBUG
 
@@ -88,27 +88,21 @@ Author:
 
 PSINGLE_LIST_ENTRY
 FASTCALL
-RtlpInterlockedPopEntrySList (
-    IN PSLIST_HEADER ListHead
-    );
+RtlpInterlockedPopEntrySList(IN PSLIST_HEADER ListHead);
 
 PSINGLE_LIST_ENTRY
 FASTCALL
-RtlpInterlockedPushEntrySList (
-    IN PSLIST_HEADER ListHead,
-    IN PSINGLE_LIST_ENTRY ListEntry
-    );
+RtlpInterlockedPushEntrySList(IN PSLIST_HEADER ListHead, IN PSINGLE_LIST_ENTRY ListEntry);
 
 #define RtlpSubSegmentPop RtlpInterlockedPopEntrySList
 
-#define RtlpSubSegmentPush(SList,Block)  \
-        RtlpInterlockedPushEntrySList((SList),(PSINGLE_LIST_ENTRY)(Block))
+#define RtlpSubSegmentPush(SList, Block) RtlpInterlockedPushEntrySList((SList), (PSINGLE_LIST_ENTRY)(Block))
 
 #define TEBDesiredAffinity (NtCurrentTeb()->HeapVirtualAffinity)
 
 //
 //  On x86 is not available the interlockCompareExchange64. We need to implement it localy.
-//  Also the macros below will take care of the inconsistency between definition 
+//  Also the macros below will take care of the inconsistency between definition
 //  of this function on X86 and 64-bit platforms
 //
 
@@ -116,13 +110,9 @@ RtlpInterlockedPushEntrySList (
 
 LONGLONG
 FASTCALL
-RtlInterlockedCompareExchange64 (     
-   IN OUT PLONGLONG Destination,      
-   IN PLONGLONG Exchange,             
-   IN PLONGLONG Comperand             
-   );                     
+RtlInterlockedCompareExchange64(IN OUT PLONGLONG Destination, IN PLONGLONG Exchange, IN PLONGLONG Comperand);
 
-#define LOCKCOMP64(l,n,c) \
+#define LOCKCOMP64(l, n, c) \
     (RtlInterlockedCompareExchange64((PLONGLONG)(l), (PLONGLONG)(&n), (PLONGLONG)(&c)) == (*((PLONGLONG)(&c))))
 
 #else //#if defined(_WIN64)
@@ -131,18 +121,17 @@ RtlInterlockedCompareExchange64 (
 //  64 bit specific definitions
 //
 
-#define LOCKCOMP64(l,n,c) \
+#define LOCKCOMP64(l, n, c) \
     (_InterlockedCompareExchange64((PLONGLONG)(l), *((PLONGLONG)(&n)), *((PLONGLONG)(&c))) == (*((PLONGLONG)(&c))))
 
 #endif // #if defined(_WIN64)
 
 ULONG
 FORCEINLINE
-RtlpGetFirstBitSet64(
-    LONGLONG Mask
-    )
+RtlpGetFirstBitSet64(LONGLONG Mask)
 {
-    if ((ULONG)Mask) {
+    if ((ULONG)Mask)
+    {
 
         return RtlFindFirstSetRightMember((ULONG)Mask);
     }
@@ -150,10 +139,12 @@ RtlpGetFirstBitSet64(
     return 32 + RtlFindFirstSetRightMember((ULONG)(Mask >> 32));
 }
 
-#define HEAP_AFFINITY_LIMIT 64  // N.B.  This cannot be larger than 64 
-                                // (the number of bits in LONGLONG data type)
+#define HEAP_AFFINITY_LIMIT                    \
+    64  // N.B.  This cannot be larger than 64 \
+        // (the number of bits in LONGLONG data type)
 
-typedef struct _AFFINITY_STATE{
+typedef struct _AFFINITY_STATE
+{
 
     LONGLONG FreeEntries;
     LONGLONG UsedEntries;
@@ -161,11 +152,11 @@ typedef struct _AFFINITY_STATE{
     ULONG Limit;
     LONG CrtLimit;
 
-    ULONG_PTR OwnerTID[ HEAP_AFFINITY_LIMIT ];
+    ULONG_PTR OwnerTID[HEAP_AFFINITY_LIMIT];
 
     //
     //  The counters below are not absolutely necessary for the affinity manager.
-    //  But these help understanding the frequence of affinity changes. In general 
+    //  But these help understanding the frequence of affinity changes. In general
     //  accessing of these fields should be rare, even for many threads (like hundreds)
     //  Benchmarks didn't show any visible difference with all these removed
     //
@@ -181,10 +172,7 @@ typedef struct _AFFINITY_STATE{
 
 AFFINITY_STATE RtlpAffinityState;
 
-VOID
-RtlpInitializeAffinityManager(
-    UCHAR Size
-    )
+VOID RtlpInitializeAffinityManager(UCHAR Size)
 
 /*++
 
@@ -208,15 +196,14 @@ Return Value:
 
     //
     //  The size of the affinity bitmap is limited to the number of bits from
-    //  an LONGLONG data type. 
+    //  an LONGLONG data type.
     //
 
-    if (Size > HEAP_AFFINITY_LIMIT) {
+    if (Size > HEAP_AFFINITY_LIMIT)
+    {
 
-        PrintMsg( "HEAP: Invalid size %ld for the affinity mask. Using %ld instead\n", 
-                  Size, 
-                  HEAP_AFFINITY_LIMIT );
-        
+        PrintMsg("HEAP: Invalid size %ld for the affinity mask. Using %ld instead\n", Size, HEAP_AFFINITY_LIMIT);
+
         Size = HEAP_AFFINITY_LIMIT;
     }
 
@@ -233,8 +220,7 @@ Return Value:
 
 ULONG
 FASTCALL
-RtlpAllocateAffinityIndex(
-    )
+RtlpAllocateAffinityIndex()
 
 /*++
 
@@ -262,35 +248,38 @@ RETRY:
     //  Check first whether we have at least a free entry in the affinity mask
     //
 
-    if (CapturedMask = RtlpAffinityState.FreeEntries) {
+    if (CapturedMask = RtlpAffinityState.FreeEntries)
+    {
 
         ULONGLONG AvailableMask;
 
         AvailableMask = CapturedMask & RtlpAffinityState.UsedEntries;
 
-        if (AvailableMask) {
+        if (AvailableMask)
+        {
 
             ULONG Index = RtlpGetFirstBitSet64(AvailableMask);
             LONGLONG NewMask = CapturedMask & ~((LONGLONG)1 << Index);
-            
-            if (!LOCKCOMP64(&RtlpAffinityState.FreeEntries, NewMask, CapturedMask)) {
+
+            if (!LOCKCOMP64(&RtlpAffinityState.FreeEntries, NewMask, CapturedMask))
+            {
 
                 goto RETRY;
             }
 
-            RtlpAffinityState.OwnerTID[ Index ] = GetCrtThreadId();
+            RtlpAffinityState.OwnerTID[Index] = GetCrtThreadId();
 
-            return  Index;
+            return Index;
         }
+    }
 
-    } 
-    
     //
     //  Nothing available. We need to allocate a new entry. We won't do this
     //  unless it's absolutely necessary
     //
 
-    if (RtlpAffinityState.CrtLimit < (LONG)(RtlpAffinityState.Limit - 1)) {
+    if (RtlpAffinityState.CrtLimit < (LONG)(RtlpAffinityState.Limit - 1))
+    {
 
         ULONG NewLimit = InterlockedIncrement(&RtlpAffinityState.CrtLimit);
 
@@ -298,39 +287,42 @@ RETRY:
         //  We already postponed growing the size. We have to do now
         //
 
-        if ( NewLimit < RtlpAffinityState.Limit) {
+        if (NewLimit < RtlpAffinityState.Limit)
+        {
 
             LONGLONG CapturedUsed;
             LONGLONG NewMask;
 
-            do {
+            do
+            {
 
                 CapturedUsed = RtlpAffinityState.UsedEntries;
                 NewMask = CapturedUsed | ((LONGLONG)1 << NewLimit);
 
-            } while ( !LOCKCOMP64(&RtlpAffinityState.UsedEntries, NewMask, CapturedUsed) );
+            } while (!LOCKCOMP64(&RtlpAffinityState.UsedEntries, NewMask, CapturedUsed));
 
             RtlpAffinityState.FreeEntries = ~((LONGLONG)1 << NewLimit);
 
-            RtlpAffinityState.OwnerTID[ NewLimit ] = GetCrtThreadId();
+            RtlpAffinityState.OwnerTID[NewLimit] = GetCrtThreadId();
 
             return NewLimit;
-
-
-        } else {
+        }
+        else
+        {
 
             InterlockedDecrement(&RtlpAffinityState.CrtLimit);
         }
     }
-    
-    if ((RtlpAffinityState.FreeEntries & RtlpAffinityState.UsedEntries) == 0) {
+
+    if ((RtlpAffinityState.FreeEntries & RtlpAffinityState.UsedEntries) == 0)
+    {
 
         RtlpAffinityState.FreeEntries = (LONGLONG)-1;
 
-        InterlockedIncrement( &RtlpAffinityState.AffinityResets );
+        InterlockedIncrement(&RtlpAffinityState.AffinityResets);
     }
 
-    InterlockedIncrement( &RtlpAffinityState.AffinityLoops );
+    InterlockedIncrement(&RtlpAffinityState.AffinityLoops);
 
     goto RETRY;
 
@@ -344,8 +336,7 @@ RETRY:
 
 ULONG
 FORCEINLINE
-RtlpGetThreadAffinity(
-    )
+RtlpGetThreadAffinity()
 
 /*++
 
@@ -370,11 +361,14 @@ Return Value:
     LONG NewAffinity;
     LONG CapturedAffinity = TEBDesiredAffinity - 1;
 
-    if (CapturedAffinity >= 0) {
+    if (CapturedAffinity >= 0)
+    {
 
-        if (RtlpAffinityState.OwnerTID[CapturedAffinity] == GetCrtThreadId()) {
-            
-            if (RtlpAffinityState.FreeEntries & ((LONGLONG)1 << CapturedAffinity)) {
+        if (RtlpAffinityState.OwnerTID[CapturedAffinity] == GetCrtThreadId())
+        {
+
+            if (RtlpAffinityState.FreeEntries & ((LONGLONG)1 << CapturedAffinity))
+            {
 
                 LONGLONG NewMask = RtlpAffinityState.FreeEntries & ~(((LONGLONG)1 << CapturedAffinity));
 
@@ -383,21 +377,23 @@ Return Value:
 
             return CapturedAffinity;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  A new thread came up. Reset the affinity
         //
 
-        RtlpAffinityState.FreeEntries = (LONGLONG) -1;
+        RtlpAffinityState.FreeEntries = (LONGLONG)-1;
     }
 
     NewAffinity = RtlpAllocateAffinityIndex();
 
-    if ((NewAffinity + 1) != TEBDesiredAffinity) {
+    if ((NewAffinity + 1) != TEBDesiredAffinity)
+    {
 
-        InterlockedIncrement( &RtlpAffinityState.AffinitySwaps );
+        InterlockedIncrement(&RtlpAffinityState.AffinitySwaps);
     }
 
     TEBDesiredAffinity = NewAffinity + 1;
@@ -412,13 +408,13 @@ Return Value:
 #define LOCALPROC FORCEINLINE
 
 //
-//  The total number of buckets. The default is 128 which coveres 
+//  The total number of buckets. The default is 128 which coveres
 //  blocks up to 16 K
 //
 //  N.B. HEAP_BUCKETS_COUNT must be > 32 and multiple of 16
 //
 
-#define HEAP_BUCKETS_COUNT      128  
+#define HEAP_BUCKETS_COUNT 128
 
 //
 //  Defining the limits for the number of blocks that can exist in sub-segment
@@ -429,21 +425,20 @@ Return Value:
 //      sub-segment size <= HEAP_MAX_SUBSEGMENT_SIZE
 //
 
-#define HEAP_MIN_BLOCK_CLASS    4
-#define HEAP_MAX_BLOCK_CLASS    10  
-#define HEAP_MAX_SUBSEGMENT_SIZE (0x0000F000 << HEAP_GRANULARITY_SHIFT)  // must be smaller than HEAP_MAXIMUM_BLOCK_SIZE
+#define HEAP_MIN_BLOCK_CLASS 4
+#define HEAP_MAX_BLOCK_CLASS 10
+#define HEAP_MAX_SUBSEGMENT_SIZE (0x0000F000 << HEAP_GRANULARITY_SHIFT) // must be smaller than HEAP_MAXIMUM_BLOCK_SIZE
 
 //
 //  If a size become very popular, LFH increases the number of blocks
 //  that could be placed into the subsegments, with the formula below.
 //
 
-#define RtlpGetDesiredBlockNumber(Aff,T) \
-    ((Aff) ? (((T) >> 4) / (RtlpHeapMaxAffinity)) : ((T) >> 4))
+#define RtlpGetDesiredBlockNumber(Aff, T) ((Aff) ? (((T) >> 4) / (RtlpHeapMaxAffinity)) : ((T) >> 4))
 
 
 //
-//  LFH uses only a few different sizes for subsegments. These have sizes 
+//  LFH uses only a few different sizes for subsegments. These have sizes
 //  of power of two between
 //      2^HEAP_LOWEST_USER_SIZE_INDEX and 2^HEAP_HIGHEST_USER_SIZE_INDEX
 //
@@ -459,23 +454,23 @@ Return Value:
 //  Also it significantly reduces the number of calls to the NT heap
 //
 
-#define HEAP_DEFAULT_ZONE_SIZE  (1024 - sizeof(HEAP_ENTRY))  // allocate 1 K at ones
+#define HEAP_DEFAULT_ZONE_SIZE (1024 - sizeof(HEAP_ENTRY)) // allocate 1 K at ones
 
 //
 //  Each bucket holds a number of subsegments into a cache, in order
-//  to find the emptiest one for reusage. FREE_CACHE_SIZE defines the 
+//  to find the emptiest one for reusage. FREE_CACHE_SIZE defines the
 //  number of sub-segments that will be searched
 //
 
-#define FREE_CACHE_SIZE  16
+#define FREE_CACHE_SIZE 16
 
 //
-//  On low memory, the subsegments that are almost free can be converted to 
+//  On low memory, the subsegments that are almost free can be converted to
 //  the regular NT heap. HEAP_CONVERT_LIMIT gives the maximum space that can be
 //  converted at ones
 //
 
-#define HEAP_CONVERT_LIMIT      0x1000000  // Do not convert more than 16 MBytes at ones
+#define HEAP_CONVERT_LIMIT 0x1000000 // Do not convert more than 16 MBytes at ones
 
 //
 //  Cache tunning constants.
@@ -490,44 +485,46 @@ Return Value:
 //
 //  The heap will free a block to the NT heap only if these conditions are TRUE:
 //      - The number of blocks in cache for that size > HEAP_CACHE_FREE_THRESHOLD
-//      - The number of blocks in cache for that size > 
+//      - The number of blocks in cache for that size >
 //              (Total number of blocks of that size) >> HEAP_CACHE_SHIFT_THRESHOLD
 //
 //
 
-#define HEAP_CACHE_FREE_THRESHOLD   8
-#define HEAP_CACHE_SHIFT_THRESHOLD  2
+#define HEAP_CACHE_FREE_THRESHOLD 8
+#define HEAP_CACHE_SHIFT_THRESHOLD 2
 
 
 //
 //   Other definitions
 //
 
-#define NO_MORE_ENTRIES        0xFFFF
+#define NO_MORE_ENTRIES 0xFFFF
 
 //
 //  Locking constants
 //
 
-#define HEAP_USERDATA_LOCK  1
-#define HEAP_PUBLIC_LOCK    2
-#define HEAP_ACTIVE_LOCK    4
-#define HEAP_CONVERT_LOCK   8
+#define HEAP_USERDATA_LOCK 1
+#define HEAP_PUBLIC_LOCK 2
+#define HEAP_ACTIVE_LOCK 4
+#define HEAP_CONVERT_LOCK 8
 
-#define HEAP_FREE_BLOCK_SUCCESS     1
-#define HEAP_FREE_BLOCK_CONVERTED   2
-#define HEAP_FREE_SEGMENT_EMPTY     3
+#define HEAP_FREE_BLOCK_SUCCESS 1
+#define HEAP_FREE_BLOCK_CONVERTED 2
+#define HEAP_FREE_SEGMENT_EMPTY 3
 
 //
 //  Low fragmentation heap data structures
 //
 
-typedef union _HEAP_BUCKET_COUNTERS{
+typedef union _HEAP_BUCKET_COUNTERS
+{
 
-    struct {
-        
-        volatile ULONG  TotalBlocks;
-        volatile ULONG  SubSegmentCounts;
+    struct
+    {
+
+        volatile ULONG TotalBlocks;
+        volatile ULONG SubSegmentCounts;
     };
 
     volatile LONGLONG Aggregate64;
@@ -535,41 +532,44 @@ typedef union _HEAP_BUCKET_COUNTERS{
 } HEAP_BUCKET_COUNTERS, *PHEAP_BUCKET_COUNTERS;
 
 //
-//  The HEAP_BUCKET structure handles same size allocations 
+//  The HEAP_BUCKET structure handles same size allocations
 //
 
-typedef struct _HEAP_BUCKET {
+typedef struct _HEAP_BUCKET
+{
 
     HEAP_BUCKET_COUNTERS Counters;
 
     USHORT BlockUnits;
     UCHAR SizeIndex;
     UCHAR UseAffinity;
-    
+
     LONG Conversions;
 
 } HEAP_BUCKET, *PHEAP_BUCKET;
 
 //
-//  LFH heap uses zones to allocate sub-segment descriptors. This will preallocate 
-//  a large block and then for each individual sub-segment request will move the 
+//  LFH heap uses zones to allocate sub-segment descriptors. This will preallocate
+//  a large block and then for each individual sub-segment request will move the
 //  water mark pointer with a non-blocking operation
 //
 
-typedef struct _LFH_BLOCK_ZONE {
+typedef struct _LFH_BLOCK_ZONE
+{
 
     LIST_ENTRY ListEntry;
-    PVOID      FreePointer;
-    PVOID      Limit;
+    PVOID FreePointer;
+    PVOID Limit;
 
 } LFH_BLOCK_ZONE, *PLFH_BLOCK_ZONE;
 
-typedef struct _HEAP_LOCAL_SEGMENT_INFO {
+typedef struct _HEAP_LOCAL_SEGMENT_INFO
+{
 
     PHEAP_SUBSEGMENT Hint;
     PHEAP_SUBSEGMENT ActiveSubsegment;
 
-    PHEAP_SUBSEGMENT CachedItems[ FREE_CACHE_SIZE ];
+    PHEAP_SUBSEGMENT CachedItems[FREE_CACHE_SIZE];
     SLIST_HEADER SListHeader;
 
     SIZE_T BusyEntries;
@@ -577,8 +577,9 @@ typedef struct _HEAP_LOCAL_SEGMENT_INFO {
 
 } HEAP_LOCAL_SEGMENT_INFO, *PHEAP_LOCAL_SEGMENT_INFO;
 
-typedef struct _HEAP_LOCAL_DATA {
-    
+typedef struct _HEAP_LOCAL_DATA
+{
+
     //
     //  We reserve the 128 bytes below to avoid sharing memory
     //  into the same cacheline on MP machines
@@ -587,7 +588,7 @@ typedef struct _HEAP_LOCAL_DATA {
     UCHAR Reserved[128];
 
     volatile PLFH_BLOCK_ZONE CrtZone;
-    struct _LFH_HEAP * LowFragHeap;
+    struct _LFH_HEAP *LowFragHeap;
 
     HEAP_LOCAL_SEGMENT_INFO SegmentInfo[HEAP_BUCKETS_COUNT];
     SLIST_HEADER DeletedSubSegments;
@@ -607,20 +608,22 @@ typedef struct _HEAP_LOCAL_DATA {
 
 #define HEAP_USER_ENTRIES (HEAP_HIGHEST_USER_SIZE_INDEX - HEAP_LOWEST_USER_SIZE_INDEX + 1)
 
-typedef struct _USER_MEMORY_CACHE {
+typedef struct _USER_MEMORY_CACHE
+{
 
-    SLIST_HEADER UserBlocks[ HEAP_USER_ENTRIES ];
+    SLIST_HEADER UserBlocks[HEAP_USER_ENTRIES];
 
     ULONG FreeBlocks;
     ULONG Sequence;
 
-    ULONG MinDepth[ HEAP_USER_ENTRIES ];
-    ULONG AvailableBlocks[ HEAP_USER_ENTRIES ];
-    
+    ULONG MinDepth[HEAP_USER_ENTRIES];
+    ULONG AvailableBlocks[HEAP_USER_ENTRIES];
+
 } USER_MEMORY_CACHE, *PUSER_MEMORY_CACHE;
 
-typedef struct _LFH_HEAP {
-    
+typedef struct _LFH_HEAP
+{
+
     RTL_CRITICAL_SECTION Lock;
 
     LIST_ENTRY SubSegmentZones;
@@ -629,10 +632,10 @@ typedef struct _LFH_HEAP {
     LONG Conversions;
     LONG ConvertedSpace;
 
-    ULONG SegmentChange;           //  
-    ULONG SegmentCreate;           //  Various counters (optional)
-    ULONG SegmentInsertInFree;     //   
-    ULONG SegmentDelete;           //     
+    ULONG SegmentChange;       //
+    ULONG SegmentCreate;       //  Various counters (optional)
+    ULONG SegmentInsertInFree; //
+    ULONG SegmentDelete;       //
 
     USER_MEMORY_CACHE UserBlockCache;
 
@@ -653,27 +656,30 @@ typedef struct _LFH_HEAP {
 } LFH_HEAP, *PLFH_HEAP;
 
 //
-//  Debugging macros. 
+//  Debugging macros.
 //
 
 #ifdef _HEAP_DEBUG
 
 LONG RtlpColissionCounter = 0;
 
-#define LFHEAPASSERT(exp) \
-    if (!(exp)) {       \
-        PrintMsg( "\nERROR: %s\n\tSource File: %s, line %ld\n", #exp, __FILE__, __LINE__);\
-        DbgBreakPoint();            \
+#define LFHEAPASSERT(exp)                                                                 \
+    if (!(exp))                                                                           \
+    {                                                                                     \
+        PrintMsg("\nERROR: %s\n\tSource File: %s, line %ld\n", #exp, __FILE__, __LINE__); \
+        DbgBreakPoint();                                                                  \
     }
 
 #define LFHEAPWARN(exp) \
-    if (!(exp)) PrintMsg( "\nWARNING: %s\n\tSource File: %s, line %ld\n", #exp, __FILE__, __LINE__);
+    if (!(exp))         \
+        PrintMsg("\nWARNING: %s\n\tSource File: %s, line %ld\n", #exp, __FILE__, __LINE__);
 
-#define LFH_DECLARE_COUNTER  ULONG __Counter = 0;
+#define LFH_DECLARE_COUNTER ULONG __Counter = 0;
 
-#define LFH_UPDATE_COUNTER                      \
-    if ((++__Counter) > 1) {                        \
-        InterlockedIncrement(&RtlpColissionCounter);   \
+#define LFH_UPDATE_COUNTER                           \
+    if ((++__Counter) > 1)                           \
+    {                                                \
+        InterlockedIncrement(&RtlpColissionCounter); \
     }
 
 #else
@@ -689,37 +695,25 @@ LONG RtlpColissionCounter = 0;
 
 BOOLEAN
 FORCEINLINE
-RtlpLockSubSegment(
-    PHEAP_SUBSEGMENT SubSegment,
-    ULONG LockMask
-    );
+RtlpLockSubSegment(PHEAP_SUBSEGMENT SubSegment, ULONG LockMask);
 
 BOOLEAN
 LOCALPROC
-RtlpUnlockSubSegment(
-    PHEAP_LOCAL_DATA LocalData,
-    PHEAP_SUBSEGMENT SubSegment,
-    ULONG LockMask
-    );
+RtlpUnlockSubSegment(PHEAP_LOCAL_DATA LocalData, PHEAP_SUBSEGMENT SubSegment, ULONG LockMask);
 
 BOOLEAN
 FASTCALL
-RtlpConvertSegmentToHeap (
-    PLFH_HEAP LowFragHeap,
-    PHEAP_SUBSEGMENT SubSegment
-    );
+RtlpConvertSegmentToHeap(PLFH_HEAP LowFragHeap, PHEAP_SUBSEGMENT SubSegment);
 
 ULONG
-RtlpFlushLFHeapCache (
-    PLFH_HEAP LowFragHeap
-    );
+RtlpFlushLFHeapCache(PLFH_HEAP LowFragHeap);
 
 //
 //  Heap manager globals
 //
 
 SIZE_T RtlpBucketBlockSizes[HEAP_BUCKETS_COUNT];
-ULONG  RtlpHeapMaxAffinity = 0;
+ULONG RtlpHeapMaxAffinity = 0;
 
 
 //
@@ -728,9 +722,7 @@ ULONG  RtlpHeapMaxAffinity = 0;
 
 SIZE_T
 FORCEINLINE
-RtlpConvertSizeIndexToSize(
-    UCHAR SizeIndex
-    )
+RtlpConvertSizeIndexToSize(UCHAR SizeIndex)
 
 /*++
 
@@ -752,10 +744,11 @@ Return Value:
 {
     SIZE_T Size = 1 << SizeIndex;
 
-    LFHEAPASSERT( SizeIndex >= HEAP_LOWEST_USER_SIZE_INDEX );
-    LFHEAPASSERT( SizeIndex <= HEAP_HIGHEST_USER_SIZE_INDEX );
+    LFHEAPASSERT(SizeIndex >= HEAP_LOWEST_USER_SIZE_INDEX);
+    LFHEAPASSERT(SizeIndex <= HEAP_HIGHEST_USER_SIZE_INDEX);
 
-    if (Size > HEAP_MAX_SUBSEGMENT_SIZE) {
+    if (Size > HEAP_MAX_SUBSEGMENT_SIZE)
+    {
 
         Size = HEAP_MAX_SUBSEGMENT_SIZE;
     }
@@ -765,10 +758,7 @@ Return Value:
 
 PVOID
 FASTCALL
-RtlpAllocateUserBlock(
-    PLFH_HEAP LowFragHeap,
-    UCHAR     SizeIndex
-    )
+RtlpAllocateUserBlock(PLFH_HEAP LowFragHeap, UCHAR SizeIndex)
 
 /*++
 
@@ -801,14 +791,17 @@ Return Value:
     //
     //  Allocates first from the slist cache
     //
-    __try {
+    __try
+    {
 
         //
         //  Search first into the indicated index
         //
-    
-        if (ListEntry = RtlpSubSegmentPop(&LowFragHeap->UserBlockCache.UserBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX])) {
-            
+
+        if (ListEntry =
+                RtlpSubSegmentPop(&LowFragHeap->UserBlockCache.UserBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX]))
+        {
+
             UserBlock = CONTAINING_RECORD(ListEntry, HEAP_USERDATA_HEADER, SFreeListEntry);
 
             leave;
@@ -817,35 +810,41 @@ Return Value:
         //
         //  Look for a smaller size
         //
-        
-        if (SizeIndex > HEAP_LOWEST_USER_SIZE_INDEX) {
 
-            if (ListEntry = RtlpSubSegmentPop(&LowFragHeap->UserBlockCache.UserBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX - 1])) {
-                
+        if (SizeIndex > HEAP_LOWEST_USER_SIZE_INDEX)
+        {
+
+            if (ListEntry = RtlpSubSegmentPop(
+                    &LowFragHeap->UserBlockCache.UserBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX - 1]))
+            {
+
                 UserBlock = CONTAINING_RECORD(ListEntry, HEAP_USERDATA_HEADER, SFreeListEntry);
 
                 leave;
             }
         }
-        
-    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         //  Nothing to do
         //
     }
 
-    if (UserBlock == NULL) {
+    if (UserBlock == NULL)
+    {
         //
-        //  There is no available blocks into the cache. We need to 
+        //  There is no available blocks into the cache. We need to
         //  allocate the subsegment from the NT heap
         //
 
-        InterlockedIncrement(&LowFragHeap->UserBlockCache.AvailableBlocks[ SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX ]);
+        InterlockedIncrement(&LowFragHeap->UserBlockCache.AvailableBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX]);
 
         UserBlock = HeapAlloc(LowFragHeap->Heap, HEAP_NO_CACHE_BLOCK, RtlpConvertSizeIndexToSize(SizeIndex));
 
-        if (UserBlock) {
+        if (UserBlock)
+        {
 
             UserBlock->SizeIndex = SizeIndex;
         }
@@ -854,12 +853,7 @@ Return Value:
     return UserBlock;
 }
 
-VOID
-FASTCALL
-RtlpFreeUserBlock(
-    PLFH_HEAP LowFragHeap,
-    PHEAP_USERDATA_HEADER UserBlock
-    )
+VOID FASTCALL RtlpFreeUserBlock(PLFH_HEAP LowFragHeap, PHEAP_USERDATA_HEADER UserBlock)
 
 /*++
 
@@ -882,9 +876,11 @@ Return Value:
 {
     ULONG Depth;
     ULONG SizeIndex = (ULONG)UserBlock->SizeIndex;
-    PSLIST_HEADER ListHeader = &LowFragHeap->UserBlockCache.UserBlocks[UserBlock->SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX];
-    
-    if (UserBlock->SizeIndex == 0) {
+    PSLIST_HEADER ListHeader =
+        &LowFragHeap->UserBlockCache.UserBlocks[UserBlock->SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX];
+
+    if (UserBlock->SizeIndex == 0)
+    {
 
         //
         //  This block was converted before to NT heap block
@@ -898,51 +894,50 @@ Return Value:
     LFHEAPASSERT(UserBlock->SizeIndex >= HEAP_LOWEST_USER_SIZE_INDEX);
     LFHEAPASSERT(UserBlock->SizeIndex <= HEAP_HIGHEST_USER_SIZE_INDEX);
 
-    LFHEAPASSERT( RtlpConvertSizeIndexToSize((UCHAR)UserBlock->SizeIndex) == 
-                  HeapSize(LowFragHeap->Heap, 0, UserBlock) );
+    LFHEAPASSERT(RtlpConvertSizeIndexToSize((UCHAR)UserBlock->SizeIndex) == HeapSize(LowFragHeap->Heap, 0, UserBlock));
 
     Depth = QueryDepthSList(&LowFragHeap->UserBlockCache.UserBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX]);
 
-    if ((Depth > HEAP_CACHE_FREE_THRESHOLD)
-            &&
-        (Depth > (LowFragHeap->UserBlockCache.AvailableBlocks[ SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX ] >> HEAP_CACHE_SHIFT_THRESHOLD))) {
-        
+    if ((Depth > HEAP_CACHE_FREE_THRESHOLD) &&
+        (Depth > (LowFragHeap->UserBlockCache.AvailableBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX] >>
+                  HEAP_CACHE_SHIFT_THRESHOLD)))
+    {
+
         PVOID ListEntry;
-        
+
         HeapFree(LowFragHeap->Heap, 0, UserBlock);
 
         ListEntry = NULL;
-        
-        __try {
 
-            ListEntry = RtlpSubSegmentPop(&LowFragHeap->UserBlockCache.UserBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX]);
+        __try
+        {
 
-        } __except (EXCEPTION_EXECUTE_HANDLER) {
-        
+            ListEntry =
+                RtlpSubSegmentPop(&LowFragHeap->UserBlockCache.UserBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX]);
         }
-        
-        if (ListEntry != NULL) {
-            
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+        }
+
+        if (ListEntry != NULL)
+        {
+
             UserBlock = CONTAINING_RECORD(ListEntry, HEAP_USERDATA_HEADER, SFreeListEntry);
             HeapFree(LowFragHeap->Heap, 0, UserBlock);
-            InterlockedDecrement(&LowFragHeap->UserBlockCache.AvailableBlocks[ SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX ]);
+            InterlockedDecrement(&LowFragHeap->UserBlockCache.AvailableBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX]);
         }
 
-        InterlockedDecrement(&LowFragHeap->UserBlockCache.AvailableBlocks[ SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX ]);
+        InterlockedDecrement(&LowFragHeap->UserBlockCache.AvailableBlocks[SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX]);
+    }
+    else
+    {
 
-    } else {
-    
-        RtlpSubSegmentPush( ListHeader, 
-                            &UserBlock->SFreeListEntry);
+        RtlpSubSegmentPush(ListHeader, &UserBlock->SFreeListEntry);
     }
 }
 
 
-VOID
-FORCEINLINE
-RtlpMarkLFHBlockBusy (
-    PHEAP_ENTRY Block
-    )
+VOID FORCEINLINE RtlpMarkLFHBlockBusy(PHEAP_ENTRY Block)
 
 /*++
 
@@ -967,11 +962,7 @@ Return Value:
     Block->SmallTagIndex = 1;
 }
 
-VOID
-FORCEINLINE
-RtlpMarkLFHBlockFree (
-    PHEAP_ENTRY Block
-    )
+VOID FORCEINLINE RtlpMarkLFHBlockFree(PHEAP_ENTRY Block)
 
 /*++
 
@@ -998,9 +989,7 @@ Return Value:
 
 BOOLEAN
 FORCEINLINE
-RtlpIsLFHBlockBusy (
-    PHEAP_ENTRY Block
-    )
+RtlpIsLFHBlockBusy(PHEAP_ENTRY Block)
 
 /*++
 
@@ -1023,12 +1012,7 @@ Return Value:
 }
 
 
-VOID
-FORCEINLINE
-RtlpUpdateLastEntry (
-    PHEAP Heap,
-    PHEAP_ENTRY Block
-    )
+VOID FORCEINLINE RtlpUpdateLastEntry(PHEAP Heap, PHEAP_ENTRY Block)
 
 /*++
 
@@ -1050,7 +1034,8 @@ Return Value:
 --*/
 
 {
-    if (Block->Flags & HEAP_ENTRY_LAST_ENTRY) {
+    if (Block->Flags & HEAP_ENTRY_LAST_ENTRY)
+    {
 
         PHEAP_SEGMENT Segment;
 
@@ -1061,9 +1046,7 @@ Return Value:
 
 BOOLEAN
 FORCEINLINE
-RtlpIsSubSegmentEmpty(
-    PHEAP_SUBSEGMENT SubSegment
-    )
+RtlpIsSubSegmentEmpty(PHEAP_SUBSEGMENT SubSegment)
 
 /*++
 
@@ -1087,12 +1070,7 @@ Return Value:
     return SubSegment->AggregateExchg.OffsetAndDepth == (NO_MORE_ENTRIES << 16);
 }
 
-VOID
-FORCEINLINE
-RtlpUpdateBucketCounters (
-    PHEAP_BUCKET Bucket,
-    LONG TotalBlocks
-    )
+VOID FORCEINLINE RtlpUpdateBucketCounters(PHEAP_BUCKET Bucket, LONG TotalBlocks)
 
 /*++
 
@@ -1121,7 +1099,8 @@ Return Value:
     HEAP_BUCKET_COUNTERS CapturedValue, NewValue;
     LFH_DECLARE_COUNTER;
 
-    do {
+    do
+    {
 
         //
         //  Capture the current value for counters
@@ -1132,26 +1111,28 @@ Return Value:
         //
         //  Calculate the new value depending upon the captured state
         //
-        
+
         NewValue.TotalBlocks = CapturedValue.TotalBlocks + TotalBlocks;
 
-        if (TotalBlocks > 0) {
+        if (TotalBlocks > 0)
+        {
 
             NewValue.SubSegmentCounts = CapturedValue.SubSegmentCounts + 1;
+        }
+        else
+        {
 
-        } else {
-            
             NewValue.SubSegmentCounts = CapturedValue.SubSegmentCounts - 1;
         }
 
         LFH_UPDATE_COUNTER;
 
         //
-        //  try to replace the original value with the current one. If the 
+        //  try to replace the original value with the current one. If the
         //  lockcomp below fails, retry all the ops above
         //
 
-    } while ( !LOCKCOMP64(&Bucket->Counters.Aggregate64, NewValue.Aggregate64, CapturedValue.Aggregate64) );
+    } while (!LOCKCOMP64(&Bucket->Counters.Aggregate64, NewValue.Aggregate64, CapturedValue.Aggregate64));
 
     //
     //  It's invalid to have negative numbers of blocks or sub-segments
@@ -1163,9 +1144,7 @@ Return Value:
 
 ULONG
 FORCEINLINE
-RtlpGetThreadAffinityIndex(
-    PHEAP_BUCKET HeapBucket
-    )
+RtlpGetThreadAffinityIndex(PHEAP_BUCKET HeapBucket)
 
 /*++
 
@@ -1188,20 +1167,18 @@ Return Value:
 --*/
 
 {
-    if (HeapBucket->UseAffinity) {
+    if (HeapBucket->UseAffinity)
+    {
 
         return 1 + RtlpGetThreadAffinity();
-    } 
-    
+    }
+
     return 0;
 }
 
 BOOLEAN
 FORCEINLINE
-RtlpIsSubSegmentLocked(
-    PHEAP_SUBSEGMENT SubSegment,
-    ULONG LockMask
-    )
+RtlpIsSubSegmentLocked(PHEAP_SUBSEGMENT SubSegment, ULONG LockMask)
 
 /*++
 
@@ -1229,38 +1206,41 @@ Return Value:
 
 BOOLEAN
 LOCALPROC
-RtlpAddToSegmentInfo(
-    PHEAP_LOCAL_DATA LocalData,
-    IN PHEAP_LOCAL_SEGMENT_INFO SegmentInfo,
-    IN PHEAP_SUBSEGMENT NewItem
-    )
+RtlpAddToSegmentInfo(PHEAP_LOCAL_DATA LocalData, IN PHEAP_LOCAL_SEGMENT_INFO SegmentInfo, IN PHEAP_SUBSEGMENT NewItem)
 {
 
     ULONG Index;
-    
-    for (Index = 0; Index < FREE_CACHE_SIZE; Index++) {
+
+    for (Index = 0; Index < FREE_CACHE_SIZE; Index++)
+    {
 
         ULONG i = (Index + (ULONG)SegmentInfo->LastUsed) & (FREE_CACHE_SIZE - 1);
 
         PHEAP_SUBSEGMENT CrtSubSegment = SegmentInfo->CachedItems[i];
 
-        if (CrtSubSegment  == NULL ) {
-            
-            if (InterlockedCompareExchangePointer( &SegmentInfo->CachedItems[i], NewItem, NULL) == NULL) {
+        if (CrtSubSegment == NULL)
+        {
+
+            if (InterlockedCompareExchangePointer(&SegmentInfo->CachedItems[i], NewItem, NULL) == NULL)
+            {
 
                 SegmentInfo->BusyEntries += 1;
 
                 return TRUE;
             }
+        }
+        else
+        {
 
-        } else {
+            if (!RtlpIsSubSegmentLocked(CrtSubSegment, HEAP_USERDATA_LOCK))
+            {
 
-            if (!RtlpIsSubSegmentLocked(CrtSubSegment, HEAP_USERDATA_LOCK)) {
-
-                if (InterlockedCompareExchangePointer( &SegmentInfo->CachedItems[i], NewItem, CrtSubSegment) == CrtSubSegment) {
+                if (InterlockedCompareExchangePointer(&SegmentInfo->CachedItems[i], NewItem, CrtSubSegment) ==
+                    CrtSubSegment)
+                {
 
                     RtlpUnlockSubSegment(LocalData, CrtSubSegment, HEAP_PUBLIC_LOCK);
-                    
+
                     return TRUE;
                 }
             }
@@ -1272,28 +1252,25 @@ RtlpAddToSegmentInfo(
 
 PHEAP_SUBSEGMENT
 LOCALPROC
-RtlpRemoveFromSegmentInfo(
-    PHEAP_LOCAL_DATA LocalData,
-    IN PHEAP_LOCAL_SEGMENT_INFO SegmentInfo
-    )
+RtlpRemoveFromSegmentInfo(PHEAP_LOCAL_DATA LocalData, IN PHEAP_LOCAL_SEGMENT_INFO SegmentInfo)
 {
 
     ULONG i;
-    PHEAP_SUBSEGMENT * Location = NULL;
+    PHEAP_SUBSEGMENT *Location = NULL;
     ULONG LargestDepth = 0;
     PHEAP_SUBSEGMENT CapturedSegment;
 
 RETRY:
-    
-    for (i = 0; i < FREE_CACHE_SIZE; i++) {
+
+    for (i = 0; i < FREE_CACHE_SIZE; i++)
+    {
 
         ULONG Depth;
         PHEAP_SUBSEGMENT CrtSubsegment = SegmentInfo->CachedItems[i];
 
 
-        if ( CrtSubsegment
-                &&
-             (Depth = CrtSubsegment->AggregateExchg.Depth) > LargestDepth) {
+        if (CrtSubsegment && (Depth = CrtSubsegment->AggregateExchg.Depth) > LargestDepth)
+        {
 
             CapturedSegment = CrtSubsegment;
             LargestDepth = Depth;
@@ -1301,43 +1278,48 @@ RETRY:
         }
     }
 
-    if (Location) {
+    if (Location)
+    {
 
         PHEAP_SUBSEGMENT NextEntry;
-        
-        while (NextEntry = (PHEAP_SUBSEGMENT)RtlpSubSegmentPop(&SegmentInfo->SListHeader)) {
+
+        while (NextEntry = (PHEAP_SUBSEGMENT)RtlpSubSegmentPop(&SegmentInfo->SListHeader))
+        {
 
             NextEntry = CONTAINING_RECORD(NextEntry, HEAP_SUBSEGMENT, SFreeListEntry);
 
-        #ifdef _HEAP_DEBUG
+#ifdef _HEAP_DEBUG
             NextEntry->SFreeListEntry.Next = NULL;
-        #endif        
-        
-            if (RtlpIsSubSegmentLocked(NextEntry, HEAP_USERDATA_LOCK)) {
+#endif
+
+            if (RtlpIsSubSegmentLocked(NextEntry, HEAP_USERDATA_LOCK))
+            {
 
                 break;
-            } 
+            }
 
             RtlpUnlockSubSegment(LocalData, NextEntry, HEAP_PUBLIC_LOCK);
         }
 
-        if (InterlockedCompareExchangePointer( Location, NextEntry, CapturedSegment) == CapturedSegment) {
+        if (InterlockedCompareExchangePointer(Location, NextEntry, CapturedSegment) == CapturedSegment)
+        {
 
-            if (NextEntry == NULL) {
-            
+            if (NextEntry == NULL)
+            {
+
                 SegmentInfo->BusyEntries -= 1;
-            
+
                 SegmentInfo->LastUsed = Location - &SegmentInfo->CachedItems[0];
 
                 LFHEAPASSERT(SegmentInfo->LastUsed < FREE_CACHE_SIZE);
             }
 
             return CapturedSegment;
+        }
+        else if (NextEntry)
+        {
 
-        } else if (NextEntry){
-
-            RtlpSubSegmentPush( &SegmentInfo->SListHeader,
-                                &NextEntry->SFreeListEntry);
+            RtlpSubSegmentPush(&SegmentInfo->SListHeader, &NextEntry->SFreeListEntry);
         }
 
         Location = NULL;
@@ -1351,10 +1333,7 @@ RETRY:
 
 PHEAP_SUBSEGMENT
 LOCALPROC
-RtlpRemoveFreeSubSegment(
-    PHEAP_LOCAL_DATA LocalData,
-    ULONG SizeIndex
-    )
+RtlpRemoveFreeSubSegment(PHEAP_LOCAL_DATA LocalData, ULONG SizeIndex)
 
 /*++
 
@@ -1384,48 +1363,47 @@ Return Value:
 
     SubSegment = RtlpRemoveFromSegmentInfo(LocalData, &LocalData->SegmentInfo[SizeIndex]);
 
-    if (SubSegment) {
+    if (SubSegment)
+    {
 
-        if ( RtlpUnlockSubSegment(LocalData, SubSegment, HEAP_PUBLIC_LOCK)){
+        if (RtlpUnlockSubSegment(LocalData, SubSegment, HEAP_PUBLIC_LOCK))
+        {
 
             return SubSegment;
         }
     }
-    
-    FreeSList =  &LocalData->SegmentInfo[SizeIndex];
 
-    while (Entry = RtlpSubSegmentPop(&FreeSList->SListHeader) ) {
+    FreeSList = &LocalData->SegmentInfo[SizeIndex];
+
+    while (Entry = RtlpSubSegmentPop(&FreeSList->SListHeader))
+    {
 
         SubSegment = CONTAINING_RECORD(Entry, HEAP_SUBSEGMENT, SFreeListEntry);
 
-    #ifdef _HEAP_DEBUG
+#ifdef _HEAP_DEBUG
         SubSegment->SFreeListEntry.Next = NULL;
-    #endif        
+#endif
 
-        LFHEAPASSERT( RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK) );
-        LFHEAPASSERT( SizeIndex == SubSegment->SizeIndex );
-        
+        LFHEAPASSERT(RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK));
+        LFHEAPASSERT(SizeIndex == SubSegment->SizeIndex);
+
         //
         //  If we have a non-empty subsegments we'll return it
         //
 
-        if ( RtlpUnlockSubSegment(LocalData, SubSegment, HEAP_PUBLIC_LOCK) 
-                 && 
-             (SubSegment->AggregateExchg.Depth != 0)) {
-             
+        if (RtlpUnlockSubSegment(LocalData, SubSegment, HEAP_PUBLIC_LOCK) && (SubSegment->AggregateExchg.Depth != 0))
+        {
+
             return SubSegment;
         }
     }
-    
+
     return NULL;
 }
 
 BOOLEAN
 LOCALPROC
-RtlpInsertFreeSubSegment(
-    PHEAP_LOCAL_DATA LocalData,
-    PHEAP_SUBSEGMENT SubSegment
-    )
+RtlpInsertFreeSubSegment(PHEAP_LOCAL_DATA LocalData, PHEAP_SUBSEGMENT SubSegment)
 
 /*++
 
@@ -1446,26 +1424,27 @@ Return Value:
 --*/
 
 {
-    if ( RtlpLockSubSegment(SubSegment, HEAP_PUBLIC_LOCK) ) {
+    if (RtlpLockSubSegment(SubSegment, HEAP_PUBLIC_LOCK))
+    {
 
         PHEAP_LOCAL_SEGMENT_INFO FreeSList;
-        
-        if (RtlpAddToSegmentInfo(LocalData, &LocalData->SegmentInfo[SubSegment->SizeIndex], SubSegment)) {
+
+        if (RtlpAddToSegmentInfo(LocalData, &LocalData->SegmentInfo[SubSegment->SizeIndex], SubSegment))
+        {
 
             return TRUE;
         }
-        
-        FreeSList =  &LocalData->SegmentInfo[SubSegment->SizeIndex];
+
+        FreeSList = &LocalData->SegmentInfo[SubSegment->SizeIndex];
 
 #ifdef _HEAP_DEBUG
-        
+
         InterlockedIncrement(&LocalData->LowFragHeap->SegmentInsertInFree);
-#endif        
-        LFHEAPASSERT( RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK) );
-        LFHEAPASSERT( SubSegment->SFreeListEntry.Next == NULL );
-        
-        RtlpSubSegmentPush( &FreeSList->SListHeader,
-                            &SubSegment->SFreeListEntry);
+#endif
+        LFHEAPASSERT(RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK));
+        LFHEAPASSERT(SubSegment->SFreeListEntry.Next == NULL);
+
+        RtlpSubSegmentPush(&FreeSList->SListHeader, &SubSegment->SFreeListEntry);
 
         return TRUE;
     }
@@ -1476,11 +1455,7 @@ Return Value:
 
 BOOLEAN
 LOCALPROC
-RtlpTrySetActiveSubSegment (
-    PHEAP_LOCAL_DATA LocalData,
-    PHEAP_BUCKET HeapBucket,
-    PHEAP_SUBSEGMENT SubSegment
-    )
+RtlpTrySetActiveSubSegment(PHEAP_LOCAL_DATA LocalData, PHEAP_BUCKET HeapBucket, PHEAP_SUBSEGMENT SubSegment)
 
 /*++
 
@@ -1513,7 +1488,8 @@ Return Value:
 {
     PHEAP_SUBSEGMENT PreviousSubSegment;
 
-    if (SubSegment) {
+    if (SubSegment)
+    {
 
         //
         //  If we received a sub-segment we need to lock it exclusively in order
@@ -1521,7 +1497,8 @@ Return Value:
         //  at the same time
         //
 
-        if ( !RtlpLockSubSegment(SubSegment, HEAP_ACTIVE_LOCK | HEAP_PUBLIC_LOCK) ) {
+        if (!RtlpLockSubSegment(SubSegment, HEAP_ACTIVE_LOCK | HEAP_PUBLIC_LOCK))
+        {
 
             return FALSE;
         }
@@ -1531,8 +1508,9 @@ Return Value:
         //  We need to test whether this subsegment wasn't freed meanwhile and reused
         //  for other allocations (for a different bucket)
         //
-        
-        if (SubSegment->Bucket != HeapBucket) {
+
+        if (SubSegment->Bucket != HeapBucket)
+        {
 
             //
             //  Someone freed it before and reuse it. We need to back out
@@ -1540,9 +1518,11 @@ Return Value:
             //  since it contains different block sizes
             //
 
-            if (RtlpUnlockSubSegment(LocalData, SubSegment, HEAP_ACTIVE_LOCK | HEAP_PUBLIC_LOCK)) {
-                
-                if (SubSegment->AggregateExchg.Depth) {
+            if (RtlpUnlockSubSegment(LocalData, SubSegment, HEAP_ACTIVE_LOCK | HEAP_PUBLIC_LOCK))
+            {
+
+                if (SubSegment->AggregateExchg.Depth)
+                {
 
                     RtlpInsertFreeSubSegment(LocalData, SubSegment);
                 }
@@ -1551,53 +1531,57 @@ Return Value:
             return FALSE;
         }
 
-        LFHEAPASSERT( SubSegment->SFreeListEntry.Next == NULL );
-        LFHEAPASSERT( HeapBucket == SubSegment->Bucket); 
-        LFHEAPASSERT( RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK));
+        LFHEAPASSERT(SubSegment->SFreeListEntry.Next == NULL);
+        LFHEAPASSERT(HeapBucket == SubSegment->Bucket);
+        LFHEAPASSERT(RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK));
 
 #ifdef _HEAP_DEBUG
         SubSegment->SFreeListEntry.Next = (PSINGLE_LIST_ENTRY)(ULONG_PTR)0xEEEEEEEE;
 
-#endif        
+#endif
 
-        LFHEAPASSERT( SubSegment->AffinityIndex == (UCHAR)LocalData->Affinity );
+        LFHEAPASSERT(SubSegment->AffinityIndex == (UCHAR)LocalData->Affinity);
     }
 
     //
     //  Try to set this sub-segment as active an capture the previous active segment
     //
 
-    do {
+    do
+    {
 
-        PreviousSubSegment = *((PHEAP_SUBSEGMENT volatile *)&LocalData->SegmentInfo[HeapBucket->SizeIndex].ActiveSubsegment);
+        PreviousSubSegment =
+            *((PHEAP_SUBSEGMENT volatile *)&LocalData->SegmentInfo[HeapBucket->SizeIndex].ActiveSubsegment);
 
-    } while ( InterlockedCompareExchangePointer( &LocalData->SegmentInfo[HeapBucket->SizeIndex].ActiveSubsegment,
-                                                 SubSegment,
-                                                 PreviousSubSegment) != PreviousSubSegment );
+    } while (InterlockedCompareExchangePointer(&LocalData->SegmentInfo[HeapBucket->SizeIndex].ActiveSubsegment,
+                                               SubSegment, PreviousSubSegment) != PreviousSubSegment);
 
-    if ( PreviousSubSegment ) {
+    if (PreviousSubSegment)
+    {
 
         //
         //  We had a previous active segment. We need to unlock it, and if it has enough
         //  free space we'll mark it ready for reuse
         //
 
-        LFHEAPASSERT( HeapBucket == PreviousSubSegment->Bucket );
-        LFHEAPASSERT( RtlpIsSubSegmentLocked(PreviousSubSegment, HEAP_PUBLIC_LOCK) );
-        LFHEAPASSERT( PreviousSubSegment->SFreeListEntry.Next == ((PSINGLE_LIST_ENTRY)(ULONG_PTR)0xEEEEEEEE) );
+        LFHEAPASSERT(HeapBucket == PreviousSubSegment->Bucket);
+        LFHEAPASSERT(RtlpIsSubSegmentLocked(PreviousSubSegment, HEAP_PUBLIC_LOCK));
+        LFHEAPASSERT(PreviousSubSegment->SFreeListEntry.Next == ((PSINGLE_LIST_ENTRY)(ULONG_PTR)0xEEEEEEEE));
 
 #ifdef _HEAP_DEBUG
-        
+
         PreviousSubSegment->SFreeListEntry.Next = 0;
-#endif        
-        
-        if (RtlpUnlockSubSegment(LocalData, PreviousSubSegment, HEAP_ACTIVE_LOCK | HEAP_PUBLIC_LOCK)) {
+#endif
+
+        if (RtlpUnlockSubSegment(LocalData, PreviousSubSegment, HEAP_ACTIVE_LOCK | HEAP_PUBLIC_LOCK))
+        {
 
             //
-            //  That was not the last lock reference for that sub-segment. 
+            //  That was not the last lock reference for that sub-segment.
             //
 
-            if (PreviousSubSegment->AggregateExchg.Depth) {
+            if (PreviousSubSegment->AggregateExchg.Depth)
+            {
 
                 RtlpInsertFreeSubSegment(LocalData, PreviousSubSegment);
             }
@@ -1612,16 +1596,9 @@ Return Value:
 }
 
 
-VOID
-FASTCALL
-RtlpSubSegmentInitialize (
-    IN PLFH_HEAP LowFragHeap,
-    IN PHEAP_SUBSEGMENT SubSegment,
-    IN PHEAP_USERDATA_HEADER UserBuffer,
-    IN SIZE_T BlockSize,
-    IN SIZE_T AllocatedSize,
-    IN PVOID Bucket
-    )
+VOID FASTCALL RtlpSubSegmentInitialize(IN PLFH_HEAP LowFragHeap, IN PHEAP_SUBSEGMENT SubSegment,
+                                       IN PHEAP_USERDATA_HEADER UserBuffer, IN SIZE_T BlockSize,
+                                       IN SIZE_T AllocatedSize, IN PVOID Bucket)
 
 /*++
 
@@ -1663,9 +1640,9 @@ Return Value:
     //
     //  Add the block header overhead
     //
-    
+
     BlockSize += sizeof(HEAP_ENTRY);
-    
+
     BlockUnits = (USHORT)(BlockSize >> HEAP_GRANULARITY_SHIFT);
 
     //
@@ -1686,16 +1663,17 @@ Return Value:
 
     UserBuffer->SubSegment = SubSegment;
     UserBuffer->HeapHandle = LowFragHeap->Heap;
-    
+
     NumItems = (ULONG)((AllocatedSize - sizeof(HEAP_USERDATA_HEADER)) / BlockSize);
 
     CrtBlockOffset = sizeof(HEAP_USERDATA_HEADER) >> HEAP_GRANULARITY_SHIFT;
     NewValue.FreeEntryOffset = CrtBlockOffset;
 
-    for (i = 0; i < NumItems; i++) {
+    for (i = 0; i < NumItems; i++)
+    {
 
-        BlockEntry = (PBLOCK_ENTRY) Buffer;
-        
+        BlockEntry = (PBLOCK_ENTRY)Buffer;
+
         //
         //  Initialize the block
         //
@@ -1713,7 +1691,7 @@ Return Value:
         BlockEntry->LinkOffset = CrtBlockOffset;
         BlockEntry->Flags = HEAP_ENTRY_BUSY;
         BlockEntry->UnusedBytes = sizeof(HEAP_ENTRY);
-        RtlpMarkLFHBlockFree( (PHEAP_ENTRY)BlockEntry );
+        RtlpMarkLFHBlockFree((PHEAP_ENTRY)BlockEntry);
 
 
 #if defined(_WIN64)
@@ -1721,7 +1699,7 @@ Return Value:
 #endif
 
 #ifdef _HEAP_DEBUG
-        BlockEntry->Reserved2 = 0xFEFE;        
+        BlockEntry->Reserved2 = 0xFEFE;
 #endif
     }
 
@@ -1730,7 +1708,7 @@ Return Value:
     //
 
     BlockEntry->LinkOffset = NO_MORE_ENTRIES;
-    
+
     SubSegment->BlockSize = BlockUnits;
     SubSegment->BlockCount = (USHORT)NumItems;
     SubSegment->Bucket = Bucket;
@@ -1739,37 +1717,33 @@ Return Value:
     //
     //  Determine the thresholds depending upon the total number of blocks
     //
-    
+
     SubSegment->UserBlocks = UserBuffer;
     RtlpUpdateBucketCounters(Bucket, NumItems);
-    
+
     NewValue.Depth = (USHORT)NumItems;
     NewValue.Sequence = CapturedValue.Sequence + 1;
     SubSegment->Lock = HEAP_USERDATA_LOCK;
-    
+
     //
-    //  At this point everything is set, so we can with an interlocked operation set the 
-    //  entire slist to the segment. 
+    //  At this point everything is set, so we can with an interlocked operation set the
+    //  entire slist to the segment.
     //
 
-    if (!LOCKCOMP64(&SubSegment->AggregateExchg.Exchg, NewValue, CapturedValue)) {
+    if (!LOCKCOMP64(&SubSegment->AggregateExchg.Exchg, NewValue, CapturedValue))
+    {
 
         //
-        //  Someone changed the state for the heap structure, so the 
+        //  Someone changed the state for the heap structure, so the
         //  initialization failed. We make noise in the debug version.
         //  (This should never happen)
         //
 
-        LFHEAPASSERT( FALSE );
+        LFHEAPASSERT(FALSE);
     }
 }
 
-VOID
-LOCALPROC
-RtlpFreeUserBuffer(
-    PLFH_HEAP LowFragHeap,
-    PHEAP_SUBSEGMENT SubSegment
-    )
+VOID LOCALPROC RtlpFreeUserBuffer(PLFH_HEAP LowFragHeap, PHEAP_SUBSEGMENT SubSegment)
 
 /*++
 
@@ -1797,8 +1771,8 @@ Return Value:
     SIZE_T UserBlockSize;
 
     HeapBucket = (PHEAP_BUCKET)SubSegment->Bucket;
-    
-    LFHEAPASSERT( RtlpIsSubSegmentLocked(SubSegment, HEAP_USERDATA_LOCK) );
+
+    LFHEAPASSERT(RtlpIsSubSegmentLocked(SubSegment, HEAP_USERDATA_LOCK));
 
 #ifdef _HEAP_DEBUG
     UserBlockSize = HeapSize(LowFragHeap->Heap, 0, (PVOID)SubSegment->UserBlocks);
@@ -1813,11 +1787,11 @@ Return Value:
     //  Update the counters
     //
 
-    RtlpUpdateBucketCounters (HeapBucket, -SubSegment->BlockCount);
+    RtlpUpdateBucketCounters(HeapBucket, -SubSegment->BlockCount);
 
     SubSegment->UserBlocks = NULL;
 
-    LFHEAPASSERT( RtlpIsSubSegmentLocked(SubSegment, HEAP_USERDATA_LOCK) );
+    LFHEAPASSERT(RtlpIsSubSegmentLocked(SubSegment, HEAP_USERDATA_LOCK));
 
     //
     //  This is a slow path any way. It doesn't harm a rare global interlocked
@@ -1829,10 +1803,7 @@ Return Value:
 
 BOOLEAN
 FORCEINLINE
-RtlpLockSubSegment(
-    PHEAP_SUBSEGMENT SubSegment,
-    ULONG LockMask
-    )
+RtlpLockSubSegment(PHEAP_SUBSEGMENT SubSegment, ULONG LockMask)
 
 /*++
 
@@ -1857,30 +1828,27 @@ Return Value:
 
 {
     ULONG CapturedLock;
-    
-    do {
+
+    do
+    {
 
         CapturedLock = *((ULONG volatile *)&SubSegment->Lock);
 
-        if ((CapturedLock == 0)
-                ||
-            (CapturedLock & LockMask)) {
+        if ((CapturedLock == 0) || (CapturedLock & LockMask))
+        {
 
             return FALSE;
         }
 
-    } while ( InterlockedCompareExchange((PLONG)&SubSegment->Lock, CapturedLock | LockMask, CapturedLock) != CapturedLock );
+    } while (InterlockedCompareExchange((PLONG)&SubSegment->Lock, CapturedLock | LockMask, CapturedLock) !=
+             CapturedLock);
 
     return TRUE;
 }
 
 BOOLEAN
 LOCALPROC
-RtlpUnlockSubSegment(
-    PHEAP_LOCAL_DATA LocalData,
-    PHEAP_SUBSEGMENT SubSegment,
-    ULONG LockMask
-    )
+RtlpUnlockSubSegment(PHEAP_LOCAL_DATA LocalData, PHEAP_SUBSEGMENT SubSegment, ULONG LockMask)
 
 /*++
 
@@ -1910,7 +1878,8 @@ Return Value:
 {
     ULONG CapturedLock;
 
-    do {
+    do
+    {
 
         CapturedLock = *((ULONG volatile *)&SubSegment->Lock);
 
@@ -1922,22 +1891,24 @@ Return Value:
 
         LFHEAPASSERT((CapturedLock & LockMask) == LockMask);
 
-    } while ( InterlockedCompareExchange((PLONG)&SubSegment->Lock, CapturedLock & ~LockMask, CapturedLock) != CapturedLock );
+    } while (InterlockedCompareExchange((PLONG)&SubSegment->Lock, CapturedLock & ~LockMask, CapturedLock) !=
+             CapturedLock);
 
     //
-    //  If That was the last lock released, we go ahead and 
+    //  If That was the last lock released, we go ahead and
     //  free the sub-segment to the SLists
     //
 
-    if (CapturedLock == LockMask) {
+    if (CapturedLock == LockMask)
+    {
 
         SubSegment->Bucket = NULL;
         SubSegment->AggregateExchg.Sequence += 1;
 
-        LFHEAPASSERT( RtlpIsSubSegmentEmpty(SubSegment) );
+        LFHEAPASSERT(RtlpIsSubSegmentEmpty(SubSegment));
         LFHEAPASSERT(SubSegment->Lock == 0);
         LFHEAPASSERT(SubSegment->SFreeListEntry.Next == 0);
-        
+
         RtlpSubSegmentPush(&LocalData->DeletedSubSegments, &SubSegment->SFreeListEntry);
 
         return FALSE;
@@ -1948,10 +1919,7 @@ Return Value:
 
 PVOID
 LOCALPROC
-RtlpSubSegmentAllocate (
-    PHEAP_BUCKET HeapBucket,
-    PHEAP_SUBSEGMENT SubSegment
-    )
+RtlpSubSegmentAllocate(PHEAP_BUCKET HeapBucket, PHEAP_SUBSEGMENT SubSegment)
 
 /*++
 
@@ -1993,78 +1961,62 @@ Return Value:
 RETRY:
 
     CapturedValue = SubSegment->AggregateExchg.Exchg;
-    
+
     //
     //  We need the memory barrier because we are accessing
     //  another shared data below :  UserBlocks
-    //  This has to be fetched in the same order 
+    //  This has to be fetched in the same order
     //  We declared these volatile, and on IA64 (MP) we need the
     //  memory barrier as well
     //
 
     RtlMemoryBarrier();
-    
-    if ((Depth = (USHORT)CapturedValue)
-            &&
-        (UserBlocks = (PHEAP_USERDATA_HEADER)SubSegment->UserBlocks)
-            &&
-        (SubSegment->Bucket == HeapBucket)
-            &&
-        !RtlpIsSubSegmentLocked(SubSegment, HEAP_CONVERT_LOCK)) {
+
+    if ((Depth = (USHORT)CapturedValue) && (UserBlocks = (PHEAP_USERDATA_HEADER)SubSegment->UserBlocks) &&
+        (SubSegment->Bucket == HeapBucket) && !RtlpIsSubSegmentLocked(SubSegment, HEAP_CONVERT_LOCK))
+    {
 
         BlockEntry = (PBLOCK_ENTRY)((PCHAR)UserBlocks + ((((ULONG)CapturedValue) >> 16) << HEAP_GRANULARITY_SHIFT));
 
         //
         //  Accessing BlockEntry->LinkOffset can produce an AV if another thread freed the buffer
-        //  meanwhile and the memory was decommitted. The caller of this function should 
+        //  meanwhile and the memory was decommitted. The caller of this function should
         //  have a try - except around this call. If the memory was used for other blocks
         //  the interlockedcompare should fail because the sequence number was incremented
         //
 
-        LFHEAPASSERT(!(((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)
-                     &&
-                  (BlockEntry->LinkOffset != NO_MORE_ENTRIES)
-                     &&
-                  (BlockEntry->LinkOffset > (SubSegment->BlockCount * SubSegment->BlockSize))
-                     &&
-                  ((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)));
+        LFHEAPASSERT(!(((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence) &&
+                       (BlockEntry->LinkOffset != NO_MORE_ENTRIES) &&
+                       (BlockEntry->LinkOffset > (SubSegment->BlockCount * SubSegment->BlockSize)) &&
+                       ((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)));
 
-        LFHEAPASSERT(!(((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)
-                       &&
-                   (BlockEntry->LinkOffset == NO_MORE_ENTRIES)
-                       &&
-                   (Depth != 0)
-                       &&
-                   ((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)));
+        LFHEAPASSERT(!(((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence) &&
+                       (BlockEntry->LinkOffset == NO_MORE_ENTRIES) && (Depth != 0) &&
+                       ((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)));
 
-        LFHEAPASSERT(!(((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)
-                       &&
-                   (SubSegment->Bucket != HeapBucket)
-                       &&
-                   ((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)));
+        LFHEAPASSERT(!(((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence) &&
+                       (SubSegment->Bucket != HeapBucket) &&
+                       ((CapturedValue >> 16) == SubSegment->AggregateExchg.Sequence)));
 
         NewValue = ((CapturedValue - 1) & (~(ULONGLONG)0xFFFF0000)) | ((ULONG)(BlockEntry->LinkOffset) << 16);
 
-        if (LOCKCOMP64(&SubSegment->AggregateExchg.Exchg, NewValue, CapturedValue)) {
+        if (LOCKCOMP64(&SubSegment->AggregateExchg.Exchg, NewValue, CapturedValue))
+        {
 
             //
-            //  if the segment has been converted, the bucket will be invalid. 
+            //  if the segment has been converted, the bucket will be invalid.
             //
-            //    LFHEAPASSERT(SubSegment->Bucket == HeapBucket);  
+            //    LFHEAPASSERT(SubSegment->Bucket == HeapBucket);
             //    LFHEAPASSERT(RtlpIsSubSegmentLocked(SubSegment, HEAP_USERDATA_LOCK));
 
-            LFHEAPASSERT( !RtlpIsLFHBlockBusy( (PHEAP_ENTRY)BlockEntry ) );
+            LFHEAPASSERT(!RtlpIsLFHBlockBusy((PHEAP_ENTRY)BlockEntry));
 
-            LFHEAPASSERT(((NewValue >> 24) != NO_MORE_ENTRIES) 
-                            ||
-                         ((USHORT)NewValue == 0));
+            LFHEAPASSERT(((NewValue >> 24) != NO_MORE_ENTRIES) || ((USHORT)NewValue == 0));
 
 
-        #ifdef _HEAP_DEBUG
+#ifdef _HEAP_DEBUG
 
-            LFHEAPASSERT((BlockEntry->Reserved2 == 0xFFFC)
-                           ||
-                       (BlockEntry->Reserved2 == 0xFEFE));
+            LFHEAPASSERT((BlockEntry->Reserved2 == 0xFFFC) || (BlockEntry->Reserved2 == 0xFEFE));
 
             //
             //  In the debug version write something there
@@ -2074,29 +2026,31 @@ RETRY:
             BlockEntry->Reserved2 = 0xFFFB;
 
 
-        #endif
+#endif
 
-            RtlpMarkLFHBlockBusy( (PHEAP_ENTRY)BlockEntry );
+            RtlpMarkLFHBlockBusy((PHEAP_ENTRY)BlockEntry);
 
             //
-            //  If we had an interlocked compare failure, we must have another thread playing 
+            //  If we had an interlocked compare failure, we must have another thread playing
             //  with the same subsegment at the same time. If this happens to often
             //  we need to increase the affinity limit on this bucket.
             //
 
             return ((PHEAP_ENTRY)BlockEntry + 1);
         }
-
-    } else {
+    }
+    else
+    {
 
         return NULL;
     }
-    
-    if (!HeapBucket->UseAffinity) {
+
+    if (!HeapBucket->UseAffinity)
+    {
 
         HeapBucket->UseAffinity = 1;
     }
-    
+
     LFH_UPDATE_COUNTER;
 
     goto RETRY;
@@ -2106,11 +2060,7 @@ RETRY:
 
 ULONG
 LOCALPROC
-RtlpSubSegmentFree (
-    PLFH_HEAP LowfHeap,
-    PHEAP_SUBSEGMENT SubSegment,
-    PBLOCK_ENTRY BlockEntry
-    )
+RtlpSubSegmentFree(PLFH_HEAP LowfHeap, PHEAP_SUBSEGMENT SubSegment, PBLOCK_ENTRY BlockEntry)
 
 /*++
 
@@ -2144,14 +2094,15 @@ Return Value:
     ULONG_PTR UserBlocksRef = (ULONG_PTR)SubSegment->UserBlocks;
     LFH_DECLARE_COUNTER;
 
-    LFHEAPASSERT( RtlpIsLFHBlockBusy((PHEAP_ENTRY)BlockEntry) );
+    LFHEAPASSERT(RtlpIsLFHBlockBusy((PHEAP_ENTRY)BlockEntry));
 
     RtlpMarkLFHBlockFree((PHEAP_ENTRY)BlockEntry);
 
-    do {
-        
+    do
+    {
+
         LFH_UPDATE_COUNTER;
-        
+
         //
         //  We need to capture the sequence at the first step
         //  Then we'll capture the other fields from the segment
@@ -2161,16 +2112,14 @@ Return Value:
         //
 
         CapturedValue = SubSegment->AggregateExchg.Exchg;
-        
+
         RtlMemoryBarrier();
 
         NewValue = (CapturedValue + 0x100000001) & (~(ULONGLONG)0xFFFF0000);
-        
-        if (RtlpIsSubSegmentLocked(SubSegment, HEAP_CONVERT_LOCK) 
-                ||
-            !RtlpIsSubSegmentLocked(SubSegment, HEAP_USERDATA_LOCK)
-                ||
-            (BlockEntry->SegmentIndex != HEAP_LFH_INDEX)) {
+
+        if (RtlpIsSubSegmentLocked(SubSegment, HEAP_CONVERT_LOCK) ||
+            !RtlpIsSubSegmentLocked(SubSegment, HEAP_USERDATA_LOCK) || (BlockEntry->SegmentIndex != HEAP_LFH_INDEX))
+        {
 
             return HEAP_FREE_BLOCK_CONVERTED;
         }
@@ -2182,29 +2131,32 @@ Return Value:
 
         LFHEAPASSERT(!(((USHORT)CapturedValue > 1) && (((ULONG)(NewValue >> 16)) == NO_MORE_ENTRIES)));
 
-        if ((((USHORT)NewValue) != SubSegment->BlockCount)) {
-            
+        if ((((USHORT)NewValue) != SubSegment->BlockCount))
+        {
+
             ReturnStatus = HEAP_FREE_BLOCK_SUCCESS;
             BlockEntry->LinkOffset = (USHORT)(CapturedValue >> 16);
             NewValue |= ((((ULONG_PTR)BlockEntry - UserBlocksRef) >> HEAP_GRANULARITY_SHIFT) << 16);
-        
-        } else {
+        }
+        else
+        {
 
             //
             //  This was the last block. Instead pushing it into the list
-            //  we'll take the all blocks from the sub-segment to allow releasing the 
+            //  we'll take the all blocks from the sub-segment to allow releasing the
             //  subsegment
             //
-            
+
             ReturnStatus = HEAP_FREE_SEGMENT_EMPTY;
             NewValue = (NewValue & 0xFFFFFFFF00000000) | 0xFFFF0000;
         }
 
-    } while ( !LOCKCOMP64(&SubSegment->AggregateExchg.Exchg, NewValue, CapturedValue) );
+    } while (!LOCKCOMP64(&SubSegment->AggregateExchg.Exchg, NewValue, CapturedValue));
 
     if (!(USHORT)CapturedValue/*
             &&
-        !RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK)*/) {
+        !RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK)*/)
+    {
 
         RtlpInsertFreeSubSegment(&LowfHeap->LocalData[SubSegment->AffinityIndex], SubSegment);
     }
@@ -2215,10 +2167,7 @@ Return Value:
 
 PHEAP_BUCKET
 FORCEINLINE
-RtlpGetBucket(
-    PLFH_HEAP LowFragHeap, 
-    SIZE_T Index
-    )
+RtlpGetBucket(PLFH_HEAP LowFragHeap, SIZE_T Index)
 
 /*++
 
@@ -2247,9 +2196,7 @@ Return Value:
 
 HANDLE
 FASTCALL
-RtlpCreateLowFragHeap( 
-    HANDLE Heap
-    )
+RtlpCreateLowFragHeap(HANDLE Heap)
 
 /*++
 
@@ -2285,13 +2232,14 @@ Return Value:
 
     LowFragHeap = HeapAlloc(Heap, HEAP_NO_CACHE_BLOCK, TotalSize);
 
-    if (LowFragHeap) {
+    if (LowFragHeap)
+    {
 
         memset(LowFragHeap, 0, TotalSize);
-        RtlInitializeCriticalSection( &LowFragHeap->Lock );
-        
+        RtlInitializeCriticalSection(&LowFragHeap->Lock);
+
         //
-        //  Initialize the heap zones. 
+        //  Initialize the heap zones.
         //
 
         InitializeListHead(&LowFragHeap->SubSegmentZones);
@@ -2303,14 +2251,16 @@ Return Value:
         //  Initialize the heap buckets
         //
 
-        for (i = 0; i < HEAP_BUCKETS_COUNT; i++) {
+        for (i = 0; i < HEAP_BUCKETS_COUNT; i++)
+        {
 
             LowFragHeap->Buckets[i].UseAffinity = 0;
             LowFragHeap->Buckets[i].SizeIndex = (UCHAR)i;
             LowFragHeap->Buckets[i].BlockUnits = (USHORT)(RtlpBucketBlockSizes[i] >> HEAP_GRANULARITY_SHIFT) + 1;
         }
-        
-        for (i = 0; i <= RtlpHeapMaxAffinity; i++) {
+
+        for (i = 0; i <= RtlpHeapMaxAffinity; i++)
+        {
 
             LowFragHeap->LocalData[i].LowFragHeap = LowFragHeap;
             LowFragHeap->LocalData[i].Affinity = i;
@@ -2320,11 +2270,7 @@ Return Value:
     return LowFragHeap;
 }
 
-VOID
-FASTCALL
-RtlpDestroyLowFragHeap( 
-    HANDLE LowFragHeapHandle
-    )
+VOID FASTCALL RtlpDestroyLowFragHeap(HANDLE LowFragHeapHandle)
 
 /*++
 
@@ -2349,19 +2295,16 @@ Return Value:
 {
     //
     //  This cannot be called unless the entire heap will go away
-    //  It only delete the critical section, the all blocks allocated here will 
+    //  It only delete the critical section, the all blocks allocated here will
     //  be deleted by RltDestroyHeap when it destroys the segments.
     //
 
     RtlDeleteCriticalSection(&((PLFH_HEAP)LowFragHeapHandle)->Lock);
 }
 
-PVOID 
+PVOID
 FASTCALL
-RtlpLowFragHeapAllocateFromZone(
-    PLFH_HEAP LowFragHeap,
-    ULONG Affinity
-    )
+RtlpLowFragHeapAllocateFromZone(PLFH_HEAP LowFragHeap, ULONG Affinity)
 
 /*++
 
@@ -2387,8 +2330,9 @@ Return Value:
 RETRY_ALLOC:
 
     CrtZone = LowFragHeap->LocalData[Affinity].CrtZone;
-    
-    if (CrtZone) {
+
+    if (CrtZone)
+    {
 
         PVOID CapturedFreePointer = CrtZone->FreePointer;
         PVOID NextFreePointer = (PCHAR)CapturedFreePointer + LowFragHeap->ZoneBlockSize;
@@ -2397,11 +2341,12 @@ RETRY_ALLOC:
         //  See if we have that sub-segment already preallocated
         //
 
-        if (NextFreePointer < CrtZone->Limit) {
+        if (NextFreePointer < CrtZone->Limit)
+        {
 
-            if ( InterlockedCompareExchangePointer( &CrtZone->FreePointer, 
-                                                    NextFreePointer, 
-                                                    CapturedFreePointer) == CapturedFreePointer) {
+            if (InterlockedCompareExchangePointer(&CrtZone->FreePointer, NextFreePointer, CapturedFreePointer) ==
+                CapturedFreePointer)
+            {
 
                 //
                 //  The allocation succeeded, we can return that pointer
@@ -2413,9 +2358,9 @@ RETRY_ALLOC:
             goto RETRY_ALLOC;
         }
     }
-            
+
     //
-    //  we need to grow the heap zone. We acquire a lock here to avoid more threads doing the 
+    //  we need to grow the heap zone. We acquire a lock here to avoid more threads doing the
     //  same thing
     //
 
@@ -2425,11 +2370,13 @@ RETRY_ALLOC:
     //  Test whether meanwhile another thread already increased the zone
     //
 
-    if (CrtZone == LowFragHeap->LocalData[Affinity].CrtZone) {
+    if (CrtZone == LowFragHeap->LocalData[Affinity].CrtZone)
+    {
 
         CrtZone = HeapAlloc(LowFragHeap->Heap, HEAP_NO_CACHE_BLOCK, HEAP_DEFAULT_ZONE_SIZE);
 
-        if (CrtZone == NULL) {
+        if (CrtZone == NULL)
+        {
 
             RtlpFlushLFHeapCache(LowFragHeap);
             CrtZone = HeapAlloc(LowFragHeap->Heap, HEAP_NO_CACHE_BLOCK, HEAP_DEFAULT_ZONE_SIZE);
@@ -2451,18 +2398,16 @@ RETRY_ALLOC:
 
         LowFragHeap->LocalData[Affinity].CrtZone = CrtZone;
     }
-    
+
     RtlLeaveCriticalSection(&LowFragHeap->Lock);
 
     goto RETRY_ALLOC;
 }
 
 
-SIZE_T 
+SIZE_T
 FORCEINLINE
-RtlpSubSegmentGetIndex(
-    SIZE_T BlockUnits
-    )
+RtlpSubSegmentGetIndex(SIZE_T BlockUnits)
 
 /*++
 
@@ -2484,20 +2429,22 @@ Return Value:
 {
     SIZE_T SizeClass;
     SIZE_T Bucket;
-    
-    if (BlockUnits <= 32) {
+
+    if (BlockUnits <= 32)
+    {
 
         return BlockUnits - 1;
     }
 
-    SizeClass = 5;  //  Add 1 << 5 == 32
+    SizeClass = 5; //  Add 1 << 5 == 32
 
-    while (BlockUnits >> SizeClass) {
-        
+    while (BlockUnits >> SizeClass)
+    {
+
         SizeClass += 1;
     }
 
-    SizeClass -= 5;  
+    SizeClass -= 5;
 
     BlockUnits = ROUND_UP_TO_POWER2(BlockUnits, (1 << SizeClass));
 
@@ -2508,12 +2455,7 @@ Return Value:
 
 SIZE_T
 FORCEINLINE
-RtlpGetSubSegmentSizeIndex(
-    PLFH_HEAP LowFragHeap,
-    SIZE_T BlockSize, 
-    ULONG NumBlocks,
-    CHAR AffinityCorrection
-    )
+RtlpGetSubSegmentSizeIndex(PLFH_HEAP LowFragHeap, SIZE_T BlockSize, ULONG NumBlocks, CHAR AffinityCorrection)
 
 /*++
 
@@ -2542,57 +2484,62 @@ Return Value:
 
     LFHEAPASSERT(AffinityCorrection < HEAP_MIN_BLOCK_CLASS);
 
-    if (BlockSize < 256) {
+    if (BlockSize < 256)
+    {
 
         AffinityCorrection -= 1;
     }
 
-    if (RtlpAffinityState.CrtLimit > (LONG)(RtlpHeapMaxAffinity >> 1)) {
+    if (RtlpAffinityState.CrtLimit > (LONG)(RtlpHeapMaxAffinity >> 1))
+    {
 
         AffinityCorrection += 1;
     }
 
-    if (NumBlocks < ((ULONG)1 << (HEAP_MIN_BLOCK_CLASS - AffinityCorrection))) {
+    if (NumBlocks < ((ULONG)1 << (HEAP_MIN_BLOCK_CLASS - AffinityCorrection)))
+    {
 
         NumBlocks = 1 << (HEAP_MIN_BLOCK_CLASS - AffinityCorrection);
     }
-    
-    if (LowFragHeap->Conversions) {
+
+    if (LowFragHeap->Conversions)
+    {
 
         NumBlocks = HEAP_MIN_BLOCK_CLASS;
     }
-    
-    if (NumBlocks > (1 << HEAP_MAX_BLOCK_CLASS)) {
+
+    if (NumBlocks > (1 << HEAP_MAX_BLOCK_CLASS))
+    {
 
         NumBlocks = 1 << HEAP_MAX_BLOCK_CLASS;
     }
 
-    MinSize = ((BlockSize + sizeof(HEAP_ENTRY) ) * NumBlocks) + sizeof(HEAP_USERDATA_HEADER) + sizeof(HEAP_ENTRY);
+    MinSize = ((BlockSize + sizeof(HEAP_ENTRY)) * NumBlocks) + sizeof(HEAP_USERDATA_HEADER) + sizeof(HEAP_ENTRY);
 
-    if (MinSize > HEAP_MAX_SUBSEGMENT_SIZE) {
+    if (MinSize > HEAP_MAX_SUBSEGMENT_SIZE)
+    {
 
         MinSize = HEAP_MAX_SUBSEGMENT_SIZE;
     }
 
-    while (MinSize >> SizeShift) {
+    while (MinSize >> SizeShift)
+    {
 
         SizeShift += 1;
     }
 
-    if (SizeShift > HEAP_HIGHEST_USER_SIZE_INDEX) {
+    if (SizeShift > HEAP_HIGHEST_USER_SIZE_INDEX)
+    {
 
         SizeShift = HEAP_HIGHEST_USER_SIZE_INDEX;
     }
-    
+
     return SizeShift;
 }
 
 PVOID
 FASTCALL
-RtlpLowFragHeapAlloc(
-    HANDLE LowFragHeapHandle,
-    SIZE_T BlockSize
-    )
+RtlpLowFragHeapAlloc(HANDLE LowFragHeapHandle, SIZE_T BlockSize)
 
 /*++
 
@@ -2628,9 +2575,10 @@ Return Value:
     //
 
     BlockUnits = (BlockSize + HEAP_GRANULARITY - 1) >> HEAP_GRANULARITY_SHIFT;
-    Bucket = RtlpSubSegmentGetIndex( BlockUnits );
+    Bucket = RtlpSubSegmentGetIndex(BlockUnits);
 
-    if (Bucket < HEAP_BUCKETS_COUNT) {
+    if (Bucket < HEAP_BUCKETS_COUNT)
+    {
 
         PHEAP_BUCKET HeapBucket = RtlpGetBucket(LowFragHeap, Bucket);
         SIZE_T SubSegmentSize;
@@ -2639,7 +2587,7 @@ Return Value:
         PHEAP_USERDATA_HEADER UserData;
         PHEAP_LOCAL_SEGMENT_INFO SegmentInfo;
 
-        LocalData = &LowFragHeap->LocalData[ RtlpGetThreadAffinityIndex(HeapBucket) ];
+        LocalData = &LowFragHeap->LocalData[RtlpGetThreadAffinityIndex(HeapBucket)];
         SegmentInfo = &LocalData->SegmentInfo[Bucket];
 
         //
@@ -2653,27 +2601,32 @@ Return Value:
         //  be still in the processor cache
         //
 
-        if (SubSegment = SegmentInfo->Hint) {
+        if (SubSegment = SegmentInfo->Hint)
+        {
 
             //
             //  Accessing the user data can generate an exception if another thread freed
             //  the subsegment meanwhile.
             //
 
-            LFHEAPASSERT( LocalData->Affinity == SubSegment->AffinityIndex );
+            LFHEAPASSERT(LocalData->Affinity == SubSegment->AffinityIndex);
 
-            __try {
+            __try
+            {
 
                 Block = RtlpSubSegmentAllocate(HeapBucket, SubSegment);
-
-            } __except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 Block = NULL;
             }
 
-            if (Block) {
-                
-                RtlpSetUnusedBytes(LowFragHeap->Heap, ((PHEAP_ENTRY)Block - 1), ( ((SIZE_T)HeapBucket->BlockUnits) << HEAP_GRANULARITY_SHIFT) - BlockSize);
+            if (Block)
+            {
+
+                RtlpSetUnusedBytes(LowFragHeap->Heap, ((PHEAP_ENTRY)Block - 1),
+                                   (((SIZE_T)HeapBucket->BlockUnits) << HEAP_GRANULARITY_SHIFT) - BlockSize);
 
                 return Block;
             }
@@ -2681,72 +2634,79 @@ Return Value:
             SegmentInfo->Hint = NULL;
         }
 
-RETRY_ALLOC:
+    RETRY_ALLOC:
 
         //
         //  Try to allocate from the current active sub-segment
         //
 
-        if (SubSegment = SegmentInfo->ActiveSubsegment) {
+        if (SubSegment = SegmentInfo->ActiveSubsegment)
+        {
 
             //
             //  Accessing the user data can generate an exception if another thread freed
             //  the subsegment meanwhile.
             //
 
-            LFHEAPASSERT( LocalData->Affinity == SubSegment->AffinityIndex );
+            LFHEAPASSERT(LocalData->Affinity == SubSegment->AffinityIndex);
 
-            __try {
+            __try
+            {
 
                 Block = RtlpSubSegmentAllocate(HeapBucket, SubSegment);
-
-            } __except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 Block = NULL;
             }
 
-            if (Block) {
+            if (Block)
+            {
 
-                RtlpSetUnusedBytes(LowFragHeap->Heap, ((PHEAP_ENTRY)Block - 1), ( ((SIZE_T)HeapBucket->BlockUnits) << HEAP_GRANULARITY_SHIFT) - BlockSize);
+                RtlpSetUnusedBytes(LowFragHeap->Heap, ((PHEAP_ENTRY)Block - 1),
+                                   (((SIZE_T)HeapBucket->BlockUnits) << HEAP_GRANULARITY_SHIFT) - BlockSize);
 
                 return Block;
             }
         }
 
-        if (NewSubSegment = RtlpRemoveFreeSubSegment(LocalData, (LONG)Bucket)) {
-            
+        if (NewSubSegment = RtlpRemoveFreeSubSegment(LocalData, (LONG)Bucket))
+        {
+
             RtlpTrySetActiveSubSegment(LocalData, HeapBucket, NewSubSegment);
 
             goto RETRY_ALLOC;
         }
-        
-        if (LowFragHeap->ConvertedSpace) {
+
+        if (LowFragHeap->ConvertedSpace)
+        {
 
             InterlockedExchangeAdd((PLONG)&LowFragHeap->ConvertedSpace, -(LONG)(BlockSize >> 1));
 
-            if ((LONG)LowFragHeap->ConvertedSpace < 0) {
+            if ((LONG)LowFragHeap->ConvertedSpace < 0)
+            {
 
                 LowFragHeap->ConvertedSpace = 0;
             }
-            
+
             return NULL;
         }
 
         //
-        //  At this point we don't have any sub-segment we can use to allocate this 
+        //  At this point we don't have any sub-segment we can use to allocate this
         //  size. We need to create a new one.
         //
 
-        SubSegmentSizeIndex = RtlpGetSubSegmentSizeIndex( LowFragHeap, 
-                                                          RtlpBucketBlockSizes[Bucket], 
-                                                          RtlpGetDesiredBlockNumber( HeapBucket->UseAffinity, 
-                                                                                     HeapBucket->Counters.TotalBlocks),
-                                                          HeapBucket->UseAffinity
-                                                        );
+        SubSegmentSizeIndex = RtlpGetSubSegmentSizeIndex(
+            LowFragHeap, RtlpBucketBlockSizes[Bucket],
+            RtlpGetDesiredBlockNumber(HeapBucket->UseAffinity, HeapBucket->Counters.TotalBlocks),
+            HeapBucket->UseAffinity);
 
-        UserData = RtlpAllocateUserBlock( LowFragHeap, (UCHAR)SubSegmentSizeIndex );
+        UserData = RtlpAllocateUserBlock(LowFragHeap, (UCHAR)SubSegmentSizeIndex);
 
-        if (UserData == NULL) {
+        if (UserData == NULL)
+        {
 
             //
             //  Low memory condition. Flush the caches and retry the allocation.
@@ -2754,33 +2714,32 @@ RETRY_ALLOC:
             //
 
             RtlpFlushLFHeapCache(LowFragHeap);
-            
-            SubSegmentSizeIndex = RtlpGetSubSegmentSizeIndex( LowFragHeap, 
-                                                              RtlpBucketBlockSizes[Bucket], 
-                                                              RtlpGetDesiredBlockNumber(HeapBucket->UseAffinity, 
-                                                                                        HeapBucket->Counters.TotalBlocks),
-                                                              HeapBucket->UseAffinity
-                                                            );
 
-            UserData = RtlpAllocateUserBlock( LowFragHeap, (UCHAR)SubSegmentSizeIndex );
+            SubSegmentSizeIndex = RtlpGetSubSegmentSizeIndex(
+                LowFragHeap, RtlpBucketBlockSizes[Bucket],
+                RtlpGetDesiredBlockNumber(HeapBucket->UseAffinity, HeapBucket->Counters.TotalBlocks),
+                HeapBucket->UseAffinity);
+
+            UserData = RtlpAllocateUserBlock(LowFragHeap, (UCHAR)SubSegmentSizeIndex);
         }
 
-        if (UserData) {
+        if (UserData)
+        {
 
             PVOID Entry;
 
             SubSegmentSize = RtlpConvertSizeIndexToSize((UCHAR)UserData->SizeIndex);
 
-            LFHEAPASSERT( SubSegmentSize == HeapSize(LowFragHeap->Heap, 0, UserData) );
+            LFHEAPASSERT(SubSegmentSize == HeapSize(LowFragHeap->Heap, 0, UserData));
 
             //
-            //  This is a slow path any way, and it is exercised just in rare cases, 
-            //  when a bigger sub-segment is allocated. It doesn't hurt if we have an 
+            //  This is a slow path any way, and it is exercised just in rare cases,
+            //  when a bigger sub-segment is allocated. It doesn't hurt if we have an
             //  extra interlocked-increment.
             //
-            
+
             InterlockedIncrement(&LowFragHeap->SegmentCreate);
-            
+
             //
             //  Allocate a sub-segment descriptor structiure. If there isn't any in the
             //  recycle list we allocate one from the zones.
@@ -2788,7 +2747,8 @@ RETRY_ALLOC:
 
             Entry = RtlpSubSegmentPop(&LocalData->DeletedSubSegments);
 
-            if (Entry == NULL) {
+            if (Entry == NULL)
+            {
 
                 NewSubSegment = RtlpLowFragHeapAllocateFromZone(LowFragHeap, LocalData->Affinity);
 
@@ -2804,14 +2764,16 @@ RETRY_ALLOC:
                 NewSubSegment->AggregateExchg.OffsetAndDepth = NO_MORE_ENTRIES << 16;
                 NewSubSegment->UserBlocks = NULL;
 #endif
+            }
+            else
+            {
 
-            } else {
-                
                 NewSubSegment = CONTAINING_RECORD(Entry, HEAP_SUBSEGMENT, SFreeListEntry);
             }
-            
-            if (NewSubSegment) {
-                
+
+            if (NewSubSegment)
+            {
+
                 UserData->Signature = HEAP_LFH_USER_SIGNATURE;
                 NewSubSegment->AffinityIndex = (UCHAR)LocalData->Affinity;
 
@@ -2826,36 +2788,33 @@ RETRY_ALLOC:
                 NewSubSegment->SFreeListEntry.Next = 0;
 #endif
 
-                RtlpSubSegmentInitialize( LowFragHeap,
-                                          NewSubSegment, 
-                                          UserData, 
-                                          RtlpBucketBlockSizes[Bucket], 
-                                          SubSegmentSize, 
-                                          HeapBucket
-                                        );
+                RtlpSubSegmentInitialize(LowFragHeap, NewSubSegment, UserData, RtlpBucketBlockSizes[Bucket],
+                                         SubSegmentSize, HeapBucket);
 
                 //
                 //  When the segment initialization was completed some other threads
                 //  can access this subsegment (because they captured the pointer before
                 //  if the subsegment was recycled).
                 //  This can change the state for this segment, even it can delete.
-                //  This should be very rare cases, so we'll print a message in 
+                //  This should be very rare cases, so we'll print a message in
                 //  debugger. However. If this happens too often it's an indication of
                 //  a possible bug in LFH code, or a corruption.
                 //
 
-                LFHEAPWARN( NewSubSegment->Lock == HEAP_USERDATA_LOCK );
-                LFHEAPWARN( NewSubSegment->UserBlocks );
-                LFHEAPWARN( NewSubSegment->BlockSize == HeapBucket->BlockUnits );
-                
-                if (!RtlpTrySetActiveSubSegment(LocalData, HeapBucket, NewSubSegment)) {
-                    
+                LFHEAPWARN(NewSubSegment->Lock == HEAP_USERDATA_LOCK);
+                LFHEAPWARN(NewSubSegment->UserBlocks);
+                LFHEAPWARN(NewSubSegment->BlockSize == HeapBucket->BlockUnits);
+
+                if (!RtlpTrySetActiveSubSegment(LocalData, HeapBucket, NewSubSegment))
+                {
+
                     RtlpInsertFreeSubSegment(LocalData, NewSubSegment);
                 }
-                
-                goto RETRY_ALLOC;
 
-            } else {
+                goto RETRY_ALLOC;
+            }
+            else
+            {
 
                 HeapFree(LowFragHeap->Heap, 0, UserData);
             }
@@ -2867,10 +2826,7 @@ RETRY_ALLOC:
 
 BOOLEAN
 FASTCALL
-RtlpLowFragHeapFree(
-    HANDLE LowFragHeapHandle, 
-    PVOID p
-    )
+RtlpLowFragHeapFree(HANDLE LowFragHeapHandle, PVOID p)
 
 /*++
 
@@ -2900,7 +2856,7 @@ Return Value:
     PHEAP_SUBSEGMENT SubSegment;
     PHEAP_BUCKET HeapBucket;
     ULONG FreeStatus;
-    
+
     SubSegment = Block->SubSegment;
 
     RtlMemoryBarrier();
@@ -2911,9 +2867,11 @@ RETRY_FREE:
     //  Test whether the block belongs to the LFH
     //
 
-    if (Block->SegmentIndex != HEAP_LFH_INDEX) {
+    if (Block->SegmentIndex != HEAP_LFH_INDEX)
+    {
 
-        if ( Block->SegmentIndex == HEAP_LFH_IN_CONVERSION ) {
+        if (Block->SegmentIndex == HEAP_LFH_IN_CONVERSION)
+        {
 
             //
             //  This should happen rarely, at high memory preasure.
@@ -2921,7 +2879,7 @@ RETRY_FREE:
             //  We need to return FALSE and let the NT heap finish the free
             //
             //  Acquire the heap lock and release it. This way we make sure that
-            //  the conversion completed. 
+            //  the conversion completed.
             //
 
             HeapLock(LowFragHeap->Heap);
@@ -2931,9 +2889,9 @@ RETRY_FREE:
         return FALSE;
     }
 
-    #ifdef _HEAP_DEBUG
-        Block->Reserved2 = 0xFFFC;
-    #endif  // _HEAP_DEBUG
+#ifdef _HEAP_DEBUG
+    Block->Reserved2 = 0xFFFC;
+#endif // _HEAP_DEBUG
 
     //
     //  Free the block to the appropriate sub-segment
@@ -2941,57 +2899,58 @@ RETRY_FREE:
 
     FreeStatus = RtlpSubSegmentFree(LowFragHeap, SubSegment, Block);
 
-    switch (FreeStatus) {
-    
+    switch (FreeStatus)
+    {
+
     case HEAP_FREE_SEGMENT_EMPTY:
-        {
+    {
 
-            PHEAP_LOCAL_DATA LocalData = &LowFragHeap->LocalData[SubSegment->AffinityIndex];
+        PHEAP_LOCAL_DATA LocalData = &LowFragHeap->LocalData[SubSegment->AffinityIndex];
 
-            //
-            //  The free call above returned TRUE, meanning that the sub-segment can be deleted
-            //  Remove it from the active state (to prevent other threads using it)
-            //
+        //
+        //  The free call above returned TRUE, meanning that the sub-segment can be deleted
+        //  Remove it from the active state (to prevent other threads using it)
+        //
 
-            RtlpTrySetActiveSubSegment(LocalData, SubSegment->Bucket, NULL);
+        RtlpTrySetActiveSubSegment(LocalData, SubSegment->Bucket, NULL);
 
-            //
-            //  Free thye user buffer
-            //
+        //
+        //  Free thye user buffer
+        //
 
-            RtlpFreeUserBuffer(LowFragHeap, SubSegment);
+        RtlpFreeUserBuffer(LowFragHeap, SubSegment);
 
-            //
-            //  Unlock the sub-segment structure. This will actually recycle the descriptor
-            //  if that was the last lock.
-            //
+        //
+        //  Unlock the sub-segment structure. This will actually recycle the descriptor
+        //  if that was the last lock.
+        //
 
-            RtlpUnlockSubSegment(LocalData, SubSegment, HEAP_USERDATA_LOCK);
-        }
+        RtlpUnlockSubSegment(LocalData, SubSegment, HEAP_USERDATA_LOCK);
+    }
 
-        break;
+    break;
 
     case HEAP_FREE_BLOCK_SUCCESS:
 
-            {
-                PHEAP_LOCAL_DATA LocalData = &LowFragHeap->LocalData[SubSegment->AffinityIndex];
+    {
+        PHEAP_LOCAL_DATA LocalData = &LowFragHeap->LocalData[SubSegment->AffinityIndex];
 
-                LocalData->SegmentInfo[SubSegment->SizeIndex].Hint = SubSegment;
-            }
+        LocalData->SegmentInfo[SubSegment->SizeIndex].Hint = SubSegment;
+    }
 
-        break;
+    break;
 
     case HEAP_FREE_BLOCK_CONVERTED:
 
         //
-        //  In some rare cases the segment is locked for conversion, but the conversion 
+        //  In some rare cases the segment is locked for conversion, but the conversion
         //  process is abandoned for some reasons. In that case we need to retry
         //  freeing to the LFH
         //
-        
+
         //
         //  Acquire the heap lock and release it. This way we make sure that
-        //  the conversion completed. 
+        //  the conversion completed.
         //
 
         HeapLock(LowFragHeap->Heap);
@@ -3005,10 +2964,7 @@ RETRY_FREE:
 
 BOOLEAN
 FASTCALL
-RtlpConvertSegmentToHeap (
-    PLFH_HEAP LowFragHeap,
-    PHEAP_SUBSEGMENT SubSegment
-    )
+RtlpConvertSegmentToHeap(PLFH_HEAP LowFragHeap, PHEAP_SUBSEGMENT SubSegment)
 
 /*++
 
@@ -3050,28 +3006,31 @@ Return Value:
     //  we need first to lock the heap
     //
 
-    if ( !HeapLock(LowFragHeap->Heap) ) {
+    if (!HeapLock(LowFragHeap->Heap))
+    {
 
         return FALSE;
     }
 
     //
     //  Mark the segment as being converted. This will block other
-    //  threads to allocate/free from this segment further. These threads will 
+    //  threads to allocate/free from this segment further. These threads will
     //  make the NT call, which can succeeds only after the conversions is done
     //  (because the heap lock is held)
     //
 
-    if (!RtlpLockSubSegment(SubSegment, HEAP_CONVERT_LOCK)) {
+    if (!RtlpLockSubSegment(SubSegment, HEAP_CONVERT_LOCK))
+    {
 
         HeapUnlock(LowFragHeap->Heap);
         return FALSE;
     }
-    
-    SegmentUnitsUsed = SubSegment->BlockCount * SubSegment->BlockSize + 
-        ((sizeof( HEAP_ENTRY ) + sizeof(HEAP_USERDATA_HEADER)) >> HEAP_GRANULARITY_SHIFT);
-    
-    do {
+
+    SegmentUnitsUsed = SubSegment->BlockCount * SubSegment->BlockSize +
+                       ((sizeof(HEAP_ENTRY) + sizeof(HEAP_USERDATA_HEADER)) >> HEAP_GRANULARITY_SHIFT);
+
+    do
+    {
 
         //
         //  We need to capture the sequence at the first step
@@ -3083,7 +3042,7 @@ Return Value:
 
         CapturedValue.Sequence = SubSegment->AggregateExchg.Sequence;
         CapturedValue.OffsetAndDepth = SubSegment->AggregateExchg.OffsetAndDepth;
-        
+
         Depth = (SHORT)CapturedValue.OffsetAndDepth;
         UserBlocks = (PHEAP_USERDATA_HEADER)SubSegment->UserBlocks;
 
@@ -3091,11 +3050,8 @@ Return Value:
         //  Test whether the sub-segment was not deleted meanwhile
         //
 
-        if ((Depth == SubSegment->BlockCount) 
-                ||
-            (UserBlocks == NULL)
-                ||
-            RtlpIsSubSegmentEmpty(SubSegment)) {
+        if ((Depth == SubSegment->BlockCount) || (UserBlocks == NULL) || RtlpIsSubSegmentEmpty(SubSegment))
+        {
 
             RtlpUnlockSubSegment(&LowFragHeap->LocalData[SubSegment->AffinityIndex], SubSegment, HEAP_CONVERT_LOCK);
             HeapUnlock(LowFragHeap->Heap);
@@ -3103,13 +3059,14 @@ Return Value:
         }
 
         //
-        //  Do not convert sub-segments which have a trailing block of 
+        //  Do not convert sub-segments which have a trailing block of
         //  one unit size.
-        // 
+        //
 
         UserBlockHeapEntry = (PHEAP_ENTRY)UserBlocks - 1;
 
-        if ( (UserBlockHeapEntry->Size - SegmentUnitsUsed) == 1) {
+        if ((UserBlockHeapEntry->Size - SegmentUnitsUsed) == 1)
+        {
 
             RtlpUnlockSubSegment(&LowFragHeap->LocalData[SubSegment->AffinityIndex], SubSegment, HEAP_CONVERT_LOCK);
             HeapUnlock(LowFragHeap->Heap);
@@ -3125,19 +3082,21 @@ Return Value:
         NewValue.Sequence = CapturedValue.Sequence + 1;
         NewValue.OffsetAndDepth = NO_MORE_ENTRIES << 16;
 
-    } while ( !LOCKCOMP64(&SubSegment->AggregateExchg.Exchg, NewValue, CapturedValue) );
+    } while (!LOCKCOMP64(&SubSegment->AggregateExchg.Exchg, NewValue, CapturedValue));
 
     //
     //  We suceeded to take all blocks from the s-list. From now on
     //  the convert cannot fail
     //
-    
-    InterlockedDecrement(&LowFragHeap->UserBlockCache.AvailableBlocks[ UserBlocks->SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX ]);
-    
+
+    InterlockedDecrement(
+        &LowFragHeap->UserBlockCache.AvailableBlocks[UserBlocks->SizeIndex - HEAP_LOWEST_USER_SIZE_INDEX]);
+
     UserBlocks->SizeIndex = 0;
 
-    if (InterlockedIncrement(&(((PHEAP_BUCKET)SubSegment->Bucket))->Conversions) == 1) {
-        
+    if (InterlockedIncrement(&(((PHEAP_BUCKET)SubSegment->Bucket))->Conversions) == 1)
+    {
+
         InterlockedIncrement(&LowFragHeap->Conversions);
     }
 
@@ -3154,12 +3113,13 @@ Return Value:
         PHEAP_ENTRY BlockEntry;
         PHEAP_ENTRY PreviousBlockEntry = (PHEAP_ENTRY)UserBlocks - 1;
         PHEAP_ENTRY NextBlock = NULL;
-        
+
         TotalSize = PreviousBlockEntry->Size;
 
         InterlockedExchangeAdd(&LowFragHeap->ConvertedSpace, (TotalSize << HEAP_GRANULARITY_SHIFT));
 
-        if (!(PreviousBlockEntry->Flags & HEAP_ENTRY_LAST_ENTRY)) {
+        if (!(PreviousBlockEntry->Flags & HEAP_ENTRY_LAST_ENTRY))
+        {
 
             NextBlock = PreviousBlockEntry + PreviousBlockEntry->Size;
         }
@@ -3174,12 +3134,13 @@ Return Value:
         //  according with the NT heap rules
         //
 
-        for (i = 0; i < SubSegment->BlockCount; i++) {
+        for (i = 0; i < SubSegment->BlockCount; i++)
+        {
 
             HEAP_ENTRY TempEntry;
 
-            BlockEntry = (PHEAP_ENTRY) Buffer;
-            
+            BlockEntry = (PHEAP_ENTRY)Buffer;
+
             //
             //  Initialize the block
             //
@@ -3188,45 +3149,46 @@ Return Value:
 
             BlockEntry->Size = *((volatile USHORT *)&SubSegment->BlockSize);
             BlockEntry->PreviousSize = *((volatile USHORT *)&PreviousBlockEntry->Size);
-            
+
             //
             //  Restore the index since we are done with initialization
             //
 
             BlockEntry->SegmentIndex = SegmentIndex;
-            
+
             TotalSize -= SubSegment->BlockSize;
 
             //
             //  Points to the next free block
             //
-            
+
             Buffer = (PCHAR)Buffer + ((SIZE_T)SubSegment->BlockSize << HEAP_GRANULARITY_SHIFT);
 
             PreviousBlockEntry = BlockEntry;
 
-    #if defined(_WIN64)
+#if defined(_WIN64)
             BlockEntry->SubSegment = NULL;
-    #endif
+#endif
         }
 
         LFHEAPASSERT(TotalSize >= 0);
 
         //
         //  The last block into the segment is a special case. In general it can be smaller than
-        //  other blocks. If the size is less than 2 heap units 
+        //  other blocks. If the size is less than 2 heap units
         //  (a block header + a small minimal block) we attach it to the last block
         //  Otherwise, we create a separate block and initialize it properly
         //
 
-        if (TotalSize >= 2) { // TotalSize in heap units
+        if (TotalSize >= 2)
+        { // TotalSize in heap units
 
             BlockEntry = BlockEntry + BlockEntry->Size;
-            
+
             //
             //  Initialize the block
             //
-            
+
             BlockEntry->SegmentIndex = SegmentIndex;
             BlockEntry->PreviousSize = PreviousBlockEntry->Size;
             BlockEntry->Flags = HEAP_ENTRY_BUSY;
@@ -3240,12 +3202,14 @@ Return Value:
         //  If we have a next block, we need to correct the PreviousSize field
         //
 
-        if (NextBlock) {
+        if (NextBlock)
+        {
 
             NextBlock->PreviousSize = BlockEntry->Size;
+        }
+        else
+        {
 
-        } else {
-            
             //
             //  Transfer the LAST_ENTRY flag, if any,  to the last block
             //
@@ -3264,11 +3228,13 @@ Return Value:
     //  We use HEAP_NO_SERIALIZE flag because we're already holding the lock
     //
 
-    if (Depth){
+    if (Depth)
+    {
 
         ULONG CrtOffset = CapturedValue.FreeEntryOffset;
 
-        while (CrtOffset != NO_MORE_ENTRIES) {
+        while (CrtOffset != NO_MORE_ENTRIES)
+        {
 
             PBLOCK_ENTRY BlockEntry;
             PHEAP_ENTRY PreviousBlockEntry;
@@ -3287,8 +3253,9 @@ Return Value:
     //  Free also the last block, if any.
     //
 
-    if (EndingFreeBlock) {
-        
+    if (EndingFreeBlock)
+    {
+
         HeapFree(LowFragHeap->Heap, 0, EndingFreeBlock);
     }
 
@@ -3296,17 +3263,15 @@ Return Value:
 
     RtlpFreeUserBuffer(LowFragHeap, SubSegment);
 
-    RtlpUnlockSubSegment(&LowFragHeap->LocalData[SubSegment->AffinityIndex], SubSegment, HEAP_CONVERT_LOCK | HEAP_PUBLIC_LOCK | HEAP_USERDATA_LOCK);
-    
+    RtlpUnlockSubSegment(&LowFragHeap->LocalData[SubSegment->AffinityIndex], SubSegment,
+                         HEAP_CONVERT_LOCK | HEAP_PUBLIC_LOCK | HEAP_USERDATA_LOCK);
+
     return TRUE;
 }
 
 
 ULONG
-RtlpConvertHeapBucket (
-    PLFH_HEAP LowFragHeap,
-    ULONG SizeIndex
-    ) 
+RtlpConvertHeapBucket(PLFH_HEAP LowFragHeap, ULONG SizeIndex)
 
 /*++
 
@@ -3334,46 +3299,52 @@ Return Value:
     PHEAP_BUCKET HeapBucket = RtlpGetBucket(LowFragHeap, SizeIndex);
     ULONG Affinity;
     ULONG TotalConverted = 0;
-    SINGLE_LIST_ENTRY Non_ConvertedList; 
+    SINGLE_LIST_ENTRY Non_ConvertedList;
     PVOID Entry;
 
     Non_ConvertedList.Next = NULL;
 
-    for (Affinity = 0; Affinity < RtlpHeapMaxAffinity; Affinity++) {
+    for (Affinity = 0; Affinity < RtlpHeapMaxAffinity; Affinity++)
+    {
 
-        PHEAP_LOCAL_SEGMENT_INFO FreeSList =  &LowFragHeap->LocalData[ Affinity ].SegmentInfo[ SizeIndex ];
+        PHEAP_LOCAL_SEGMENT_INFO FreeSList = &LowFragHeap->LocalData[Affinity].SegmentInfo[SizeIndex];
 
-        while (Entry = RtlpSubSegmentPop(&FreeSList->SListHeader) ) {
+        while (Entry = RtlpSubSegmentPop(&FreeSList->SListHeader))
+        {
 
             PHEAP_SUBSEGMENT SubSegment;
 
             SubSegment = CONTAINING_RECORD(Entry, HEAP_SUBSEGMENT, SFreeListEntry);
 
-        #ifdef _HEAP_DEBUG
+#ifdef _HEAP_DEBUG
             SubSegment->SFreeListEntry.Next = NULL;
-        #endif        
+#endif
 
-            LFHEAPASSERT( RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK) );
-            LFHEAPASSERT( SizeIndex == SubSegment->SizeIndex );
+            LFHEAPASSERT(RtlpIsSubSegmentLocked(SubSegment, HEAP_PUBLIC_LOCK));
+            LFHEAPASSERT(SizeIndex == SubSegment->SizeIndex);
 
             //
-            //  While we still hold the subsegment public lock, we try to convert 
+            //  While we still hold the subsegment public lock, we try to convert
             //  it to regular NT blocks
             //
 
-            if (RtlpConvertSegmentToHeap( LowFragHeap, SubSegment )) {
+            if (RtlpConvertSegmentToHeap(LowFragHeap, SubSegment))
+            {
 
                 TotalConverted += 1;
 
-                if (LowFragHeap->ConvertedSpace > HEAP_CONVERT_LIMIT) {
+                if (LowFragHeap->ConvertedSpace > HEAP_CONVERT_LIMIT)
+                {
 
-                    while (TRUE) {
+                    while (TRUE)
+                    {
 
                         PHEAP_SUBSEGMENT xSubSegment;
 
                         Entry = PopEntryList(&Non_ConvertedList);
 
-                        if (Entry == NULL) {
+                        if (Entry == NULL)
+                        {
 
                             break;
                         }
@@ -3381,25 +3352,27 @@ Return Value:
                         xSubSegment = CONTAINING_RECORD(Entry, HEAP_SUBSEGMENT, SFreeListEntry);
 
                         RtlpSubSegmentPush(&FreeSList->SListHeader, &xSubSegment->SFreeListEntry);
-
                     }
-                    
+
                     return TotalConverted;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 PushEntryList(&Non_ConvertedList, &SubSegment->SFreeListEntry);
             }
         }
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             PHEAP_SUBSEGMENT SubSegment;
 
             Entry = PopEntryList(&Non_ConvertedList);
 
-            if (Entry == NULL) {
+            if (Entry == NULL)
+            {
 
                 break;
             }
@@ -3407,10 +3380,10 @@ Return Value:
             SubSegment = CONTAINING_RECORD(Entry, HEAP_SUBSEGMENT, SFreeListEntry);
 
             RtlpSubSegmentPush(&FreeSList->SListHeader, &SubSegment->SFreeListEntry);
-
         }
 
-        if (!HeapBucket->UseAffinity) {
+        if (!HeapBucket->UseAffinity)
+        {
 
             break;
         }
@@ -3420,9 +3393,7 @@ Return Value:
 }
 
 ULONG
-RtlpFlushLFHeapCache (
-    PLFH_HEAP LowFragHeap
-    ) 
+RtlpFlushLFHeapCache(PLFH_HEAP LowFragHeap)
 
 /*++
 
@@ -3453,12 +3424,14 @@ Return Value:
     //  Convert to regular heap blocks starting with the upper buckets (with large segments)
     //
 
-    for (SizeIndex = HEAP_BUCKETS_COUNT - 1; SizeIndex >= 0; SizeIndex--) {
+    for (SizeIndex = HEAP_BUCKETS_COUNT - 1; SizeIndex >= 0; SizeIndex--)
+    {
 
         TotalSegments += RtlpConvertHeapBucket(LowFragHeap, SizeIndex);
-        
-        if (LowFragHeap->ConvertedSpace > HEAP_CONVERT_LIMIT) {
-            
+
+        if (LowFragHeap->ConvertedSpace > HEAP_CONVERT_LIMIT)
+        {
+
             break;
         }
     }
@@ -3472,13 +3445,9 @@ Return Value:
     return TotalSegments;
 }
 
-SIZE_T 
+SIZE_T
 FASTCALL
-RtlpLowFragHeapGetBlockSize(
-    HANDLE HeapHandle, 
-    ULONG Flags, 
-    PVOID p
-    )
+RtlpLowFragHeapGetBlockSize(HANDLE HeapHandle, ULONG Flags, PVOID p)
 
 /*++
 
@@ -3504,15 +3473,16 @@ Return Value:
 
 {
     PBLOCK_ENTRY Block = (PBLOCK_ENTRY)((PHEAP_ENTRY)p - 1);
-    
+
     PHEAP_SUBSEGMENT SubSegment = (PHEAP_SUBSEGMENT)Block->SubSegment;
 
     //
-    //  Test whether the block belongs to LFH. We need to capture the 
+    //  Test whether the block belongs to LFH. We need to capture the
     //  subsegment before to protect against segment conversions
     //
 
-    if (Block->SegmentIndex == HEAP_LFH_INDEX) {
+    if (Block->SegmentIndex == HEAP_LFH_INDEX)
+    {
 
         return (((SIZE_T)SubSegment->BlockSize) << HEAP_GRANULARITY_SHIFT) - sizeof(HEAP_ENTRY);
     }
@@ -3520,8 +3490,7 @@ Return Value:
     return 0;
 }
 
-VOID
-RtlpInitializeLowFragHeapManager()
+VOID RtlpInitializeLowFragHeapManager()
 
 /*++
 
@@ -3543,12 +3512,13 @@ Return Value:
     ULONG i;
     SIZE_T PreviousSize = 0;
     SYSTEM_BASIC_INFORMATION SystemInformation;
-    
+
     //
     //  prevent the second initialization
     //
 
-    if (RtlpHeapMaxAffinity) {
+    if (RtlpHeapMaxAffinity)
+    {
 
         return;
     }
@@ -3556,28 +3526,33 @@ Return Value:
 #ifdef _HEAP_DEBUG
     PrintMsg("Debug version\n");
 #endif
-    
+
     //
     //  Query the number of processors
     //
 
-    if (NT_SUCCESS(NtQuerySystemInformation (SystemBasicInformation, &SystemInformation, sizeof(SystemInformation), NULL))) {
+    if (NT_SUCCESS(
+            NtQuerySystemInformation(SystemBasicInformation, &SystemInformation, sizeof(SystemInformation), NULL)))
+    {
 
         ULONG Shift = 0;
 
         RtlpHeapMaxAffinity = SystemInformation.NumberOfProcessors;
 
-        if (RtlpHeapMaxAffinity > 1) {
+        if (RtlpHeapMaxAffinity > 1)
+        {
 
             RtlpHeapMaxAffinity = (RtlpHeapMaxAffinity << 1);
         }
 
-        if (RtlpHeapMaxAffinity > HEAP_AFFINITY_LIMIT) {
+        if (RtlpHeapMaxAffinity > HEAP_AFFINITY_LIMIT)
+        {
 
             RtlpHeapMaxAffinity = HEAP_AFFINITY_LIMIT;
         }
-        
-    } else {
+    }
+    else
+    {
 
         PrintMsg("NtQuerySystemInformation failed\n");
 
@@ -3586,27 +3561,31 @@ Return Value:
 
 #ifdef _HEAP_DEBUG
 
-    if (RtlpHeapMaxAffinity > 1) {
+    if (RtlpHeapMaxAffinity > 1)
+    {
 
         PrintMsg("Affinity enabled at %ld\n", RtlpHeapMaxAffinity);
     }
 
 #endif
 
-    RtlpInitializeAffinityManager( (UCHAR)RtlpHeapMaxAffinity );
+    RtlpInitializeAffinityManager((UCHAR)RtlpHeapMaxAffinity);
 
     //
     //  Generate the Bucket size table
     //
 
-    for (i = 0; i < 32; i++) {
+    for (i = 0; i < 32; i++)
+    {
 
         PreviousSize = RtlpBucketBlockSizes[i] = PreviousSize + Granularity;
     }
-    
-    for (i = 32; i < HEAP_BUCKETS_COUNT; i++) {
 
-        if ((i % 16) == 0) {
+    for (i = 32; i < HEAP_BUCKETS_COUNT; i++)
+    {
+
+        if ((i % 16) == 0)
+        {
 
             Granularity <<= 1;
         }
@@ -3614,4 +3593,3 @@ Return Value:
         PreviousSize = RtlpBucketBlockSizes[i] = PreviousSize + Granularity;
     }
 }
-

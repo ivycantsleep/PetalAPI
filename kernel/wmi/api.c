@@ -29,61 +29,46 @@ Revision History:
 #include "tracep.h"
 #endif
 
-BOOLEAN WMIInitialize(
-    ULONG Phase,
-    PVOID LoaderBlock
-);
+BOOLEAN WMIInitialize(ULONG Phase, PVOID LoaderBlock);
 
-NTSTATUS IoWMIRegistrationControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG Action
-);
+NTSTATUS IoWMIRegistrationControl(IN PDEVICE_OBJECT DeviceObject, IN ULONG Action);
 
-NTSTATUS IoWMISuggestInstanceName(
-    IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
-    IN PUNICODE_STRING SymbolicLinkName OPTIONAL,
-    IN BOOLEAN CombineNames,
-    OUT PUNICODE_STRING SuggestedInstanceName
-    );
+NTSTATUS IoWMISuggestInstanceName(IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
+                                  IN PUNICODE_STRING SymbolicLinkName OPTIONAL, IN BOOLEAN CombineNames,
+                                  OUT PUNICODE_STRING SuggestedInstanceName);
 
 
 #ifdef ALLOC_PRAGMA
 #ifndef MEMPHIS
-#pragma alloc_text(INIT,WMIInitialize)
+#pragma alloc_text(INIT, WMIInitialize)
 #endif
-#pragma alloc_text(PAGE,IoWMIRegistrationControl)
-#pragma alloc_text(PAGE,IoWMIAllocateInstanceIds)
-#pragma alloc_text(PAGE,IoWMISuggestInstanceName)
+#pragma alloc_text(PAGE, IoWMIRegistrationControl)
+#pragma alloc_text(PAGE, IoWMIAllocateInstanceIds)
+#pragma alloc_text(PAGE, IoWMISuggestInstanceName)
 
-#pragma alloc_text(PAGE,IoWMIOpenBlock)
-#pragma alloc_text(PAGE,IoWMIQueryAllData)
-#pragma alloc_text(PAGE,IoWMIQueryAllDataMultiple)
-#pragma alloc_text(PAGE,IoWMIQuerySingleInstance)
-#pragma alloc_text(PAGE,IoWMIQuerySingleInstanceMultiple)
-#pragma alloc_text(PAGE,IoWMISetSingleInstance)
-#pragma alloc_text(PAGE,IoWMISetSingleItem)
-#pragma alloc_text(PAGE,IoWMISetNotificationCallback)
-#pragma alloc_text(PAGE,IoWMIExecuteMethod)
+#pragma alloc_text(PAGE, IoWMIOpenBlock)
+#pragma alloc_text(PAGE, IoWMIQueryAllData)
+#pragma alloc_text(PAGE, IoWMIQueryAllDataMultiple)
+#pragma alloc_text(PAGE, IoWMIQuerySingleInstance)
+#pragma alloc_text(PAGE, IoWMIQuerySingleInstanceMultiple)
+#pragma alloc_text(PAGE, IoWMISetSingleInstance)
+#pragma alloc_text(PAGE, IoWMISetSingleItem)
+#pragma alloc_text(PAGE, IoWMISetNotificationCallback)
+#pragma alloc_text(PAGE, IoWMIExecuteMethod)
 #endif
 
 #ifdef MEMPHIS
 BOOLEAN WmipInitialized;
 #endif
 
-    //
-    // Mutex used to ensure single access to InstanceId chunks
+//
+// Mutex used to ensure single access to InstanceId chunks
 PINSTIDCHUNK WmipInstIdChunkHead;
 
 NTSTATUS
-WmipDriverEntry(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    );
+WmipDriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
-BOOLEAN WMIInitialize(
-    ULONG Phase,
-    PVOID LoaderBlockPtr
-)
+BOOLEAN WMIInitialize(ULONG Phase, PVOID LoaderBlockPtr)
 /*++
 
 Routine Description:
@@ -129,13 +114,14 @@ Return Value:
         Status = IoCreateDriver(&DriverName, WmipDriverEntry);
 #endif
 
-#if defined(_IA64_)    // EFI actually
+#if defined(_IA64_) // EFI actually
         WmipGetSMBiosFromLoaderBlock(LoaderBlockPtr);
 #endif
-        
-    } else {
+    }
+    else
+    {
         WmipAssert(LoaderBlockPtr == NULL);
-        
+
         WmipInitializeRegistration(Phase);
 
         Status = STATUS_SUCCESS;
@@ -146,15 +132,12 @@ Return Value:
     // Give MCA a chance to init during phase 0 and 1
     //
     WmipRegisterMcaHandler(Phase);
-#endif      
-    
-    return(NT_SUCCESS(Status));
+#endif
+
+    return (NT_SUCCESS(Status));
 }
 
-NTSTATUS IoWMIRegistrationControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG Action
-)
+NTSTATUS IoWMIRegistrationControl(IN PDEVICE_OBJECT DeviceObject, IN ULONG Action)
 /*++
 
 Routine Description:
@@ -212,25 +195,24 @@ Return Value:
     PAGED_CODE();
 
 #ifdef MEMPHIS
-    if (! WmipInitialized)
+    if (!WmipInitialized)
     {
-         WMIInitialize();
+        WMIInitialize();
     }
-    
+
     //
     // Callbacks are not supported on memphis
     if (IsCallback)
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, 
-                  "WMI: Callback registrations not supported %x\n",
-                         DeviceObject));
-        return(STATUS_NOT_IMPLEMENTED);
+        WmipDebugPrintEx(
+            (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Callback registrations not supported %x\n", DeviceObject));
+        return (STATUS_NOT_IMPLEMENTED);
     }
 #endif
 
     if (WmipIsWmiNotSetupProperly())
     {
-        return(STATUS_UNSUCCESSFUL);
+        return (STATUS_UNSUCCESSFUL);
     }
 
     if (Action & WMIREG_FLAG_CALLBACK)
@@ -250,85 +232,78 @@ Return Value:
     }
 #endif
 
-    switch(Action)
+    switch (Action)
     {
-        case WMIREG_ACTION_REGISTER:
-        {
-            Status = WmipRegisterDevice(
-                        DeviceObject,
-                        RegistrationFlag);
+    case WMIREG_ACTION_REGISTER:
+    {
+        Status = WmipRegisterDevice(DeviceObject, RegistrationFlag);
 
 #ifndef MEMPHIS
-            if (IsTraceProvider)
-            {
-                WmipSetTraceNotify(DeviceObject, TraceClass, TRUE);
-            }
-            break;
+        if (IsTraceProvider)
+        {
+            WmipSetTraceNotify(DeviceObject, TraceClass, TRUE);
+        }
+        break;
 #endif
+    }
 
-        }
+    case WMIREG_ACTION_DEREGISTER:
+    {
+        Status = WmipDeregisterDevice(DeviceObject);
+        break;
+    }
 
-        case WMIREG_ACTION_DEREGISTER:
+    case WMIREG_ACTION_REREGISTER:
+    {
+        Status = WmipDeregisterDevice(DeviceObject);
+        if (NT_SUCCESS(Status))
         {
-            Status = WmipDeregisterDevice(DeviceObject);
-            break;
+            Status = WmipRegisterDevice(DeviceObject, RegistrationFlag);
         }
+        break;
+    }
 
-        case WMIREG_ACTION_REREGISTER:
-        {
-            Status = WmipDeregisterDevice(DeviceObject);
-            if (NT_SUCCESS(Status))
-            {
-                Status = WmipRegisterDevice(
-                            DeviceObject,
-                            RegistrationFlag);
-            }
-            break;
-        }
-
-        case WMIREG_ACTION_UPDATE_GUIDS:
-        {
-            Status = WmipUpdateRegistration(DeviceObject);
-            break;
-        }
+    case WMIREG_ACTION_UPDATE_GUIDS:
+    {
+        Status = WmipUpdateRegistration(DeviceObject);
+        break;
+    }
 
 #ifndef MEMPHIS
-        case WMIREG_ACTION_BLOCK_IRPS:
+    case WMIREG_ACTION_BLOCK_IRPS:
+    {
+        RegEntry = WmipFindRegEntryByDevice(DeviceObject, FALSE);
+        if (RegEntry != NULL)
         {
-            RegEntry = WmipFindRegEntryByDevice(DeviceObject, FALSE);
-            if (RegEntry != NULL)
-            {
-                //
-                // Mark the regentry as invalid so that no more irps
-                // are sent to the device and the event will set when
-                // the last irp completes.
-                WmipEnterSMCritSection();
-                RegEntry->Flags |= REGENTRY_FLAG_NOT_ACCEPTING_IRPS;
-                WmipLeaveSMCritSection();
-                WmipUnreferenceRegEntry(RegEntry);
-                Status = STATUS_SUCCESS;
-            } else {
-                Status = STATUS_INVALID_PARAMETER;
-            }
-
-            break;
+            //
+            // Mark the regentry as invalid so that no more irps
+            // are sent to the device and the event will set when
+            // the last irp completes.
+            WmipEnterSMCritSection();
+            RegEntry->Flags |= REGENTRY_FLAG_NOT_ACCEPTING_IRPS;
+            WmipLeaveSMCritSection();
+            WmipUnreferenceRegEntry(RegEntry);
+            Status = STATUS_SUCCESS;
         }
-#endif
-        default:
+        else
         {
             Status = STATUS_INVALID_PARAMETER;
-            break;
         }
+
+        break;
     }
-    return(Status);
+#endif
+    default:
+    {
+        Status = STATUS_INVALID_PARAMETER;
+        break;
+    }
+    }
+    return (Status);
 }
 
 
-NTSTATUS IoWMIAllocateInstanceIds(
-    IN GUID *Guid,
-    IN ULONG InstanceCount,
-    OUT ULONG *FirstInstanceId
-    )
+NTSTATUS IoWMIAllocateInstanceIds(IN GUID *Guid, IN ULONG InstanceCount, OUT ULONG *FirstInstanceId)
 /*++
 
     Routine Description:
@@ -355,15 +330,15 @@ NTSTATUS IoWMIAllocateInstanceIds(
     PAGED_CODE();
 
 #ifdef MEMPHIS
-    if (! WmipInitialized)
+    if (!WmipInitialized)
     {
-         WMIInitialize();
+        WMIInitialize();
     }
 #endif
 
     if (WmipIsWmiNotSetupProperly())
     {
-        return(STATUS_UNSUCCESSFUL);
+        return (STATUS_UNSUCCESSFUL);
     }
 
     WmipEnterSMCritSection();
@@ -394,7 +369,7 @@ NTSTATUS IoWMIAllocateInstanceIds(
                 *FirstInstanceId = InstId->BaseId;
                 InstId->BaseId += InstanceCount;
                 WmipLeaveSMCritSection();
-                return(STATUS_SUCCESS);
+                return (STATUS_SUCCESS);
             }
         }
         LastInstIdChunk = InstIdChunk;
@@ -403,9 +378,7 @@ NTSTATUS IoWMIAllocateInstanceIds(
 
     //
     // We need to allocate a brand new chunk to accomodate the entry
-    InstIdChunk = ExAllocatePoolWithTag(PagedPool,
-                                        sizeof(INSTIDCHUNK),
-                                        WMIIIPOOLTAG);
+    InstIdChunk = ExAllocatePoolWithTag(PagedPool, sizeof(INSTIDCHUNK), WMIIIPOOLTAG);
     if (InstIdChunk != NULL)
     {
         RtlFillMemory(InstIdChunk, sizeof(INSTIDCHUNK), 0xff);
@@ -413,14 +386,18 @@ NTSTATUS IoWMIAllocateInstanceIds(
         if (LastInstIdChunk == NULL)
         {
             WmipInstIdChunkHead = InstIdChunk;
-        } else {
+        }
+        else
+        {
             LastInstIdChunk->Next = InstIdChunk;
         }
 
         InstId = &InstIdChunk->InstId[0];
-    } else {
+    }
+    else
+    {
         WmipLeaveSMCritSection();
-        return(STATUS_INSUFFICIENT_RESOURCES);
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
 FillInstId:
@@ -429,15 +406,12 @@ FillInstId:
     WmipLeaveSMCritSection();
     *FirstInstanceId = 0;
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-NTSTATUS IoWMISuggestInstanceName(
-    IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
-    IN PUNICODE_STRING SymbolicLinkName OPTIONAL,
-    IN BOOLEAN CombineNames,
-    OUT PUNICODE_STRING SuggestedInstanceName
-    )
+NTSTATUS IoWMISuggestInstanceName(IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
+                                  IN PUNICODE_STRING SymbolicLinkName OPTIONAL, IN BOOLEAN CombineNames,
+                                  OUT PUNICODE_STRING SuggestedInstanceName)
 /*++
 
     Routine Description:
@@ -490,172 +464,151 @@ NTSTATUS IoWMISuggestInstanceName(
     PAGED_CODE();
 
 #ifdef MEMPHIS
-    if (! WmipInitialized)
+    if (!WmipInitialized)
     {
-         WMIInitialize();
+        WMIInitialize();
     }
 #endif
 
     if (WmipIsWmiNotSetupProperly())
     {
-        return(STATUS_UNSUCCESSFUL);
+        return (STATUS_UNSUCCESSFUL);
     }
 
     DeviceDescBuffer = NULL;
     DeviceDescSizeRequired = 0;
     DeviceDescSize = 0;
-    
+
     if (PhysicalDeviceObject != NULL)
     {
-        Status = IoGetDeviceProperty(PhysicalDeviceObject,
-                                     DevicePropertyDeviceDescription,
-                                     DeviceDescSize,
-                                     DeviceDescBuffer,
-                                     &DeviceDescSizeRequired);
+        Status = IoGetDeviceProperty(PhysicalDeviceObject, DevicePropertyDeviceDescription, DeviceDescSize,
+                                     DeviceDescBuffer, &DeviceDescSizeRequired);
 
         if (Status == STATUS_BUFFER_TOO_SMALL)
         {
-            DeviceDescBuffer = ExAllocatePoolWithTag(PagedPool,
-                                                     DeviceDescSizeRequired,
-                                                     WMIPOOLTAG);
+            DeviceDescBuffer = ExAllocatePoolWithTag(PagedPool, DeviceDescSizeRequired, WMIPOOLTAG);
             if (DeviceDescBuffer == NULL)
             {
-                return(STATUS_INSUFFICIENT_RESOURCES);
+                return (STATUS_INSUFFICIENT_RESOURCES);
             }
- 
+
             DeviceDescSize = DeviceDescSizeRequired;
-            Status = IoGetDeviceProperty(PhysicalDeviceObject,
-                                     DevicePropertyDeviceDescription,
-                                     DeviceDescSize,
-                                     DeviceDescBuffer,
-                                     &DeviceDescSizeRequired);
-            if (! NT_SUCCESS(Status))
+            Status = IoGetDeviceProperty(PhysicalDeviceObject, DevicePropertyDeviceDescription, DeviceDescSize,
+                                         DeviceDescBuffer, &DeviceDescSizeRequired);
+            if (!NT_SUCCESS(Status))
             {
                 ExFreePool(DeviceDescBuffer);
-                return(Status);
+                return (Status);
             }
-        } else if (! NT_SUCCESS(Status)) {
-            return(Status);
+        }
+        else if (!NT_SUCCESS(Status))
+        {
+            return (Status);
         }
     }
 
     if (SymbolicLinkName != NULL)
     {
-        Status = IoOpenDeviceInterfaceRegistryKey(SymbolicLinkName,
-                                                  KEY_ALL_ACCESS,
-                                                  &DeviceInstanceKey);
+        Status = IoOpenDeviceInterfaceRegistryKey(SymbolicLinkName, KEY_ALL_ACCESS, &DeviceInstanceKey);
         if (NT_SUCCESS(Status))
         {
             //
             // Figure out how big the data value is so that a buffer of the
             // appropriate size can be allocated.
             DefaultValue.Length = 0;
-            DefaultValue.MaximumLength= 0;
+            DefaultValue.MaximumLength = 0;
             DefaultValue.Buffer = NULL;
-            Status = ZwQueryValueKey( DeviceInstanceKey,
-                              &DefaultValue,
-                              KeyValueFullInformation,
-                              (PVOID) NULL,
-                              0,
-                              &InfoSizeRequired );
-            if (Status == STATUS_BUFFER_OVERFLOW ||
-                Status == STATUS_BUFFER_TOO_SMALL)
+            Status = ZwQueryValueKey(DeviceInstanceKey, &DefaultValue, KeyValueFullInformation, (PVOID)NULL, 0,
+                                     &InfoSizeRequired);
+            if (Status == STATUS_BUFFER_OVERFLOW || Status == STATUS_BUFFER_TOO_SMALL)
             {
-                InfoBuffer = ExAllocatePoolWithTag(PagedPool,
-                                            InfoSizeRequired,
-                                            WMIPOOLTAG);
+                InfoBuffer = ExAllocatePoolWithTag(PagedPool, InfoSizeRequired, WMIPOOLTAG);
                 if (InfoBuffer != NULL)
                 {
-                    Status = ZwQueryValueKey(DeviceInstanceKey,
-                                             &DefaultValue,
-                                             KeyValueFullInformation,
-                                             InfoBuffer,
-                                             InfoSizeRequired,
-                                             &InfoSizeRequired);
+                    Status = ZwQueryValueKey(DeviceInstanceKey, &DefaultValue, KeyValueFullInformation, InfoBuffer,
+                                             InfoSizeRequired, &InfoSizeRequired);
                     if (NT_SUCCESS(Status))
                     {
                         SymLinkDescBuffer = (PWCHAR)((PCHAR)InfoBuffer + InfoBuffer->DataOffset);
                         if (CombineNames)
                         {
-                            ResultDescSize = InfoBuffer->DataLength +
-                                                    DeviceDescSizeRequired +
-                                                    sizeof(WCHAR);
-                            ResultDescBuffer = ExAllocatePoolWithTag(PagedPool,
-                                                              ResultDescSize,
-                                                              WMIPOOLTAG);
+                            ResultDescSize = InfoBuffer->DataLength + DeviceDescSizeRequired + sizeof(WCHAR);
+                            ResultDescBuffer = ExAllocatePoolWithTag(PagedPool, ResultDescSize, WMIPOOLTAG);
                             if (ResultDescBuffer == NULL)
                             {
                                 Status = STATUS_INSUFFICIENT_RESOURCES;
-                            } else {
+                            }
+                            else
+                            {
                                 SuggestedInstanceName->Buffer = ResultDescBuffer;
-                                SuggestedInstanceName->Length =  0;
+                                SuggestedInstanceName->Length = 0;
                                 SuggestedInstanceName->MaximumLength = (USHORT)ResultDescSize;
-                                RtlAppendUnicodeToString(SuggestedInstanceName,
-                                                         DeviceDescBuffer);
-                                RtlAppendUnicodeToString(SuggestedInstanceName,
-                                                         L"_");
-                                RtlAppendUnicodeToString(SuggestedInstanceName,
-                                                         SymLinkDescBuffer);
-
+                                RtlAppendUnicodeToString(SuggestedInstanceName, DeviceDescBuffer);
+                                RtlAppendUnicodeToString(SuggestedInstanceName, L"_");
+                                RtlAppendUnicodeToString(SuggestedInstanceName, SymLinkDescBuffer);
                             }
                             ExFreePool(DeviceDescBuffer);
-                            DeviceDescBuffer= NULL;
-                        } else {
+                            DeviceDescBuffer = NULL;
+                        }
+                        else
+                        {
                             if (DeviceDescBuffer != NULL)
                             {
                                 ExFreePool(DeviceDescBuffer);
                                 DeviceDescBuffer = NULL;
                             }
-                            ResultDescBuffer = ExAllocatePoolWithTag(PagedPool,
-                                                    InfoBuffer->DataLength,
-                                                    WMIPOOLTAG);
+                            ResultDescBuffer = ExAllocatePoolWithTag(PagedPool, InfoBuffer->DataLength, WMIPOOLTAG);
                             if (ResultDescBuffer == NULL)
                             {
                                 Status = STATUS_INSUFFICIENT_RESOURCES;
-                            } else {
-                                SuggestedInstanceName->Buffer = ResultDescBuffer;
-                                SuggestedInstanceName->Length =  0;
-                                SuggestedInstanceName->MaximumLength = (USHORT)InfoBuffer->DataLength;
-                                RtlAppendUnicodeToString(SuggestedInstanceName,
-                                                         SymLinkDescBuffer);
                             }
-
+                            else
+                            {
+                                SuggestedInstanceName->Buffer = ResultDescBuffer;
+                                SuggestedInstanceName->Length = 0;
+                                SuggestedInstanceName->MaximumLength = (USHORT)InfoBuffer->DataLength;
+                                RtlAppendUnicodeToString(SuggestedInstanceName, SymLinkDescBuffer);
+                            }
                         }
                     }
 
                     ExFreePool(InfoBuffer);
-                } else {
+                }
+                else
+                {
                     Status = STATUS_INSUFFICIENT_RESOURCES;
                 }
             }
             ZwClose(DeviceInstanceKey);
         }
 
-        if ((DeviceDescBuffer != NULL) && (! NT_SUCCESS(Status)))
+        if ((DeviceDescBuffer != NULL) && (!NT_SUCCESS(Status)))
         {
             ExFreePool(DeviceDescBuffer);
         }
-    } else {
+    }
+    else
+    {
         if (DeviceDescBuffer != NULL)
         {
             //
             // Only looking for device description from PDO
             SuggestedInstanceName->Buffer = DeviceDescBuffer;
-            SuggestedInstanceName->Length =  (USHORT)DeviceDescSizeRequired - sizeof(WCHAR);
-            SuggestedInstanceName->MaximumLength =  (USHORT)DeviceDescSize;
-        } else {
+            SuggestedInstanceName->Length = (USHORT)DeviceDescSizeRequired - sizeof(WCHAR);
+            SuggestedInstanceName->MaximumLength = (USHORT)DeviceDescSize;
+        }
+        else
+        {
             SuggestedInstanceName->Buffer = NULL;
-            SuggestedInstanceName->Length =  (USHORT)0;
-            SuggestedInstanceName->MaximumLength =  0;
+            SuggestedInstanceName->Length = (USHORT)0;
+            SuggestedInstanceName->MaximumLength = 0;
         }
     }
 
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS IoWMIWriteEvent(
-    IN PVOID WnodeEventItem
-    )
+NTSTATUS IoWMIWriteEvent(IN PVOID WnodeEventItem)
 /*++
 
 Routine Description:
@@ -679,7 +632,7 @@ Return Value:
     NTSTATUS Status;
     PWNODE_HEADER WnodeHeader = (PWNODE_HEADER)WnodeEventItem;
 #ifndef MEMPHIS
-    PULONG TraceMarker = (PULONG) WnodeHeader;
+    PULONG TraceMarker = (PULONG)WnodeHeader;
 #endif
     KIRQL OldIrql;
     PREGENTRY RegEntry;
@@ -687,7 +640,7 @@ Return Value:
 
     if (WmipIsWmiNotSetupProperly())
     {
-        return(STATUS_UNSUCCESSFUL);
+        return (STATUS_UNSUCCESSFUL);
     }
 
 #ifndef MEMPHIS
@@ -704,21 +657,17 @@ Return Value:
                 return WmiTraceFastEvent(WnodeHeader);
         }
 #if DBG
-        DbgPrintEx(DPFLTR_WMILIB_ID,
-                   DPFLTR_INFO_LEVEL,
-                   "IoWMIWriteEvent: Invalid loggerid %d\n",
-                   LoggerId);
+        DbgPrintEx(DPFLTR_WMILIB_ID, DPFLTR_INFO_LEVEL, "IoWMIWriteEvent: Invalid loggerid %d\n", LoggerId);
 #endif
         return STATUS_WMI_INSTANCE_NOT_FOUND;
     }
 
-    if ( (WnodeHeader->Flags & WNODE_FLAG_TRACED_GUID) ||
-         (WnodeHeader->Flags & WNODE_FLAG_LOG_WNODE) )
+    if ((WnodeHeader->Flags & WNODE_FLAG_TRACED_GUID) || (WnodeHeader->Flags & WNODE_FLAG_LOG_WNODE))
     {
         ULONG LoggerId = WmiGetLoggerId(WnodeHeader->HistoricalContext);
         ULONG IsTrace = WnodeHeader->Flags & WNODE_FLAG_TRACED_GUID;
         ULONG SavedSize = WnodeHeader->BufferSize;
-        PULONG TraceMarker = (PULONG) WnodeHeader;
+        PULONG TraceMarker = (PULONG)WnodeHeader;
 
         if (SavedSize < sizeof(WNODE_HEADER))
             return STATUS_BUFFER_TOO_SMALL;
@@ -729,11 +678,10 @@ Return Value:
         //
         if (IsTrace)
         {
-            if (SavedSize > 0XFFFF)    // restrict to USHORT max size
+            if (SavedSize > 0XFFFF) // restrict to USHORT max size
                 return STATUS_BUFFER_OVERFLOW;
 
-            *TraceMarker |= TRACE_HEADER_FLAG | TRACE_HEADER_EVENT_TRACE |
-                            (TRACE_HEADER_TYPE_FULL_HEADER << 16);
+            *TraceMarker |= TRACE_HEADER_FLAG | TRACE_HEADER_EVENT_TRACE | (TRACE_HEADER_TYPE_FULL_HEADER << 16);
         }
         else
         {
@@ -772,21 +720,17 @@ Return Value:
 #if DBG
     if (WnodeHeader->BufferSize > LARGEKMWNODEEVENTSIZE)
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_EVENT_INFO_LEVEL,
-						  "WMI: Large event %p fired by %x via WMI\n",
-                 WnodeEventItem,
-                 ((PWNODE_HEADER)WnodeEventItem)->ProviderId));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_EVENT_INFO_LEVEL, "WMI: Large event %p fired by %x via WMI\n",
+                          WnodeEventItem, ((PWNODE_HEADER)WnodeEventItem)->ProviderId));
     }
 #endif
 
     if (WnodeHeader->BufferSize <= WmipMaxKmWnodeEventSize)
     {
 
-        EventContext = ExAllocatePoolWithTag(NonPagedPool,
-                                             sizeof(EVENTWORKCONTEXT),
-                                             WMINWPOOLTAG);
+        EventContext = ExAllocatePoolWithTag(NonPagedPool, sizeof(EVENTWORKCONTEXT), WMINWPOOLTAG);
         if (EventContext != NULL)
-        {       
+        {
             //
             // Try to take a refcount on the regentry associated with the
             // provider id in the event. If we are successful then we set a
@@ -798,165 +742,136 @@ Return Value:
             // then it will go away peacefully.
             //
 
-            KeAcquireSpinLock(&WmipRegistrationSpinLock,
-                              &OldIrql);
+            KeAcquireSpinLock(&WmipRegistrationSpinLock, &OldIrql);
 
-            RegEntry = WmipDoFindRegEntryByProviderId(WnodeHeader->ProviderId,
-                                                      REGENTRY_FLAG_RUNDOWN);
+            RegEntry = WmipDoFindRegEntryByProviderId(WnodeHeader->ProviderId, REGENTRY_FLAG_RUNDOWN);
             if (RegEntry != NULL)
             {
                 WmipReferenceRegEntry(RegEntry);
             }
 
-            KeReleaseSpinLock(&WmipRegistrationSpinLock,
-                          OldIrql);                 
+            KeReleaseSpinLock(&WmipRegistrationSpinLock, OldIrql);
 
             WnodeHeader->ClientContext = WnodeHeader->Version;
 
             EventContext->RegEntry = RegEntry;
             EventContext->Wnode = WnodeHeader;
-            
-            ExInterlockedInsertTailList(
-                &WmipNPEvent,
-                &EventContext->ListEntry,
-                &WmipNPNotificationSpinlock);
+
+            ExInterlockedInsertTailList(&WmipNPEvent, &EventContext->ListEntry, &WmipNPNotificationSpinlock);
             //
             // If the queue was empty then there was no work item outstanding
             // to move from non paged to paged memory. So fire up a work item
             // to do so.
             if (InterlockedIncrement(&WmipEventWorkItems) == 1)
             {
-                ExQueueWorkItem( &WmipEventWorkQueueItem, DelayedWorkQueue );
+                ExQueueWorkItem(&WmipEventWorkQueueItem, DelayedWorkQueue);
             }
             Status = STATUS_SUCCESS;
-        } else {
+        }
+        else
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
         }
-    } else {
+    }
+    else
+    {
         Status = STATUS_BUFFER_OVERFLOW;
         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_EVENT_INFO_LEVEL,
-						  "WMI: IoWMIWriteEvent detected an event %p fired by %x that exceeds the maximum event size\n",
-							 WnodeEventItem,
-							 ((PWNODE_HEADER)WnodeEventItem)->ProviderId));
+                          "WMI: IoWMIWriteEvent detected an event %p fired by %x that exceeds the maximum event size\n",
+                          WnodeEventItem, ((PWNODE_HEADER)WnodeEventItem)->ProviderId));
     }
 
-    return(Status);
+    return (Status);
 }
 
 // IoWMIDeviceObjectToProviderId is in register.c
 
-NTSTATUS IoWMIOpenBlock(
-    IN GUID *Guid,
-    IN ULONG DesiredAccess,
-    OUT PVOID *DataBlockObject
-    )
+NTSTATUS IoWMIOpenBlock(IN GUID *Guid, IN ULONG DesiredAccess, OUT PVOID *DataBlockObject)
 {
     OBJECT_ATTRIBUTES ObjectAttributes;
-    WCHAR ObjectName[WmiGuidObjectNameLength+1];
+    WCHAR ObjectName[WmiGuidObjectNameLength + 1];
     UNICODE_STRING ObjectString;
     ULONG Ioctl;
     NTSTATUS Status;
     HANDLE DataBlockHandle;
-    
+
     PAGED_CODE();
-    
+
     //
     // Establish the OBJECT_ATTRIBUTES for the guid object
     //
     wcscpy(ObjectName, WmiGuidObjectDirectory);
-    swprintf(&ObjectName[9], 
-             L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-                         Guid->Data1, Guid->Data2, 
-                         Guid->Data3,
-                         Guid->Data4[0], Guid->Data4[1],
-                         Guid->Data4[2], Guid->Data4[3],
-                         Guid->Data4[4], Guid->Data4[5],
-                         Guid->Data4[6], Guid->Data4[7]);
-                     
+    swprintf(&ObjectName[9], L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x", Guid->Data1, Guid->Data2, Guid->Data3,
+             Guid->Data4[0], Guid->Data4[1], Guid->Data4[2], Guid->Data4[3], Guid->Data4[4], Guid->Data4[5],
+             Guid->Data4[6], Guid->Data4[7]);
+
     RtlInitUnicodeString(&ObjectString, ObjectName);
-    
+
     RtlZeroMemory(&ObjectAttributes, sizeof(OBJECT_ATTRIBUTES));
     ObjectAttributes.Length = sizeof(OBJECT_ATTRIBUTES);
     ObjectAttributes.ObjectName = &ObjectString;
     ObjectAttributes.Attributes = OBJ_KERNEL_HANDLE;
-    
+
     if (DesiredAccess & WMIGUID_NOTIFICATION)
     {
         Ioctl = IOCTL_WMI_OPEN_GUID_FOR_EVENTS;
-    } else {
+    }
+    else
+    {
         Ioctl = IOCTL_WMI_OPEN_GUID_FOR_QUERYSET;
     }
-    
-    Status = WmipOpenBlock(Ioctl,
-                           KernelMode,
-                           &ObjectAttributes,
-                           DesiredAccess,
-                           &DataBlockHandle);
+
+    Status = WmipOpenBlock(Ioctl, KernelMode, &ObjectAttributes, DesiredAccess, &DataBlockHandle);
 
     if (NT_SUCCESS(Status))
     {
-        Status = ObReferenceObjectByHandle(DataBlockHandle,
-                                           DesiredAccess,
-                                           WmipGuidObjectType,
-                                           KernelMode,
-                                           DataBlockObject,
-                                           NULL);
+        Status = ObReferenceObjectByHandle(DataBlockHandle, DesiredAccess, WmipGuidObjectType, KernelMode,
+                                           DataBlockObject, NULL);
         ZwClose(DataBlockHandle);
     }
-    
-    return(Status);                           
+
+    return (Status);
 }
 
 
 //
 // Useful macro to establish a WNODE_HEADER quickly
-#define WmipBuildWnodeHeader(Wnode, WnodeSize, FlagsUlong, Handle) { \
-    ((PWNODE_HEADER)(Wnode))->Flags = FlagsUlong;                    \
-    ((PWNODE_HEADER)(Wnode))->KernelHandle = Handle;                 \
-    ((PWNODE_HEADER)(Wnode))->BufferSize = WnodeSize;                \
-    ((PWNODE_HEADER)(Wnode))->Linkage = 0;                           \
-}
+#define WmipBuildWnodeHeader(Wnode, WnodeSize, FlagsUlong, Handle) \
+    {                                                              \
+        ((PWNODE_HEADER)(Wnode))->Flags = FlagsUlong;              \
+        ((PWNODE_HEADER)(Wnode))->KernelHandle = Handle;           \
+        ((PWNODE_HEADER)(Wnode))->BufferSize = WnodeSize;          \
+        ((PWNODE_HEADER)(Wnode))->Linkage = 0;                     \
+    }
 
-NTSTATUS IoWMIQueryAllData(
-    IN PVOID DataBlockObject,
-    IN OUT ULONG *InOutBufferSize,
-    OUT /* non paged */ PVOID OutBuffer
-)
+NTSTATUS IoWMIQueryAllData(IN PVOID DataBlockObject, IN OUT ULONG *InOutBufferSize, OUT /* non paged */ PVOID OutBuffer)
 {
-    NTSTATUS Status;    
+    NTSTATUS Status;
     WNODE_ALL_DATA WnodeAD;
     ULONG WnodeSize;
     ULONG RetSize;
     PWNODE_ALL_DATA Wnode;
-    
+
     PAGED_CODE();
-    
+
     //
     // See if the caller passed a buffer that is large enough
     //
-    WnodeSize = *InOutBufferSize;   
+    WnodeSize = *InOutBufferSize;
     Wnode = (PWNODE_ALL_DATA)OutBuffer;
     if ((Wnode == NULL) || (WnodeSize < sizeof(WNODE_ALL_DATA)))
     {
         Wnode = &WnodeAD;
         WnodeSize = sizeof(WnodeAD);
     }
-    
+
     //
     // Initialize buffer for query
     //
-    WmipBuildWnodeHeader(Wnode,
-                         sizeof(WNODE_HEADER),
-                         WNODE_FLAG_ALL_DATA,
-                         NULL);
-        
-    Status = WmipQueryAllData(DataBlockObject,
-                              NULL,
-                              KernelMode,
-                              Wnode,
-                              WnodeSize,
-                              &RetSize);
-                                  
+    WmipBuildWnodeHeader(Wnode, sizeof(WNODE_HEADER), WNODE_FLAG_ALL_DATA, NULL);
+
+    Status = WmipQueryAllData(DataBlockObject, NULL, KernelMode, Wnode, WnodeSize, &RetSize);
+
     //
     // if this was a successful query then extract the results
     //
@@ -968,18 +883,22 @@ NTSTATUS IoWMIQueryAllData(
             // Internal guids are not supported in KM
             //
             Status = STATUS_NOT_SUPPORTED;
-        } else if (Wnode->WnodeHeader.Flags & WNODE_FLAG_TOO_SMALL) {
+        }
+        else if (Wnode->WnodeHeader.Flags & WNODE_FLAG_TOO_SMALL)
+        {
             //
             // Buffer passed was too small for provier
             //
             *InOutBufferSize = ((PWNODE_TOO_SMALL)Wnode)->SizeNeeded;
             Status = STATUS_BUFFER_TOO_SMALL;
-        } else {
+        }
+        else
+        {
             //
             // Buffer was large enough for provider
             //
             *InOutBufferSize = RetSize;
-            
+
             if (Wnode == &WnodeAD)
             {
                 //
@@ -990,19 +909,15 @@ NTSTATUS IoWMIQueryAllData(
                 Status = STATUS_BUFFER_TOO_SMALL;
             }
         }
-    }   
-    
-    return(Status);
+    }
+
+    return (Status);
 }
 
 
 NTSTATUS
-IoWMIQueryAllDataMultiple(
-    IN PVOID *DataBlockObjectList,
-    IN ULONG ObjectCount,
-    IN OUT ULONG *InOutBufferSize,
-    OUT PVOID OutBuffer
-)
+IoWMIQueryAllDataMultiple(IN PVOID *DataBlockObjectList, IN ULONG ObjectCount, IN OUT ULONG *InOutBufferSize,
+                          OUT PVOID OutBuffer)
 {
     NTSTATUS Status;
     WNODE_ALL_DATA WnodeAD;
@@ -1011,26 +926,20 @@ IoWMIQueryAllDataMultiple(
     ULONG RetSize;
 
     PAGED_CODE();
-                
+
     //
     // Make sure we have an output buffer
     //
-    WnodeSize = *InOutBufferSize;   
+    WnodeSize = *InOutBufferSize;
     Wnode = (PWNODE_HEADER)OutBuffer;
     if ((Wnode == NULL) || (WnodeSize < sizeof(WNODE_ALL_DATA)))
     {
         Wnode = (PWNODE_HEADER)&WnodeAD;
         WnodeSize = sizeof(WnodeAD);
     }
-    
-    Status = WmipQueryAllDataMultiple(ObjectCount,
-                                      (PWMIGUIDOBJECT *)DataBlockObjectList,
-                                      NULL,
-                                      KernelMode,
-                                      (PUCHAR)Wnode,
-                                      WnodeSize,
-                                      NULL,
-                                      &RetSize);
+
+    Status = WmipQueryAllDataMultiple(ObjectCount, (PWMIGUIDOBJECT *)DataBlockObjectList, NULL, KernelMode,
+                                      (PUCHAR)Wnode, WnodeSize, NULL, &RetSize);
     //
     // if this was a successful query then extract the results
     //
@@ -1043,12 +952,14 @@ IoWMIQueryAllDataMultiple(
             //
             *InOutBufferSize = ((PWNODE_TOO_SMALL)Wnode)->SizeNeeded;
             Status = STATUS_BUFFER_TOO_SMALL;
-        } else {
+        }
+        else
+        {
             //
             // Buffer was large enough for provider
             //
             *InOutBufferSize = RetSize;
-            
+
             if (Wnode == (PWNODE_HEADER)&WnodeAD)
             {
                 //
@@ -1060,18 +971,14 @@ IoWMIQueryAllDataMultiple(
             }
         }
     }
-    
-    return(Status);
+
+    return (Status);
 }
 
 
 NTSTATUS
-IoWMIQuerySingleInstance(
-    IN PVOID DataBlockObject,
-    IN PUNICODE_STRING InstanceName,
-    IN OUT ULONG *InOutBufferSize,
-    OUT PVOID OutBuffer
-)
+IoWMIQuerySingleInstance(IN PVOID DataBlockObject, IN PUNICODE_STRING InstanceName, IN OUT ULONG *InOutBufferSize,
+                         OUT PVOID OutBuffer)
 {
     NTSTATUS Status;
     PWNODE_SINGLE_INSTANCE WnodeSI;
@@ -1081,39 +988,31 @@ IoWMIQuerySingleInstance(
     ULONG RetSize;
 
     PAGED_CODE();
-    
+
     //
     // Make sure we have an output buffer
     //
-    SizeNeeded = (FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                 VariableData) +
-                   InstanceName->Length +
-                   sizeof(USHORT) + 7) & ~7;
+    SizeNeeded = (FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) + InstanceName->Length + sizeof(USHORT) + 7) & ~7;
 
 
-    WnodeSize = *InOutBufferSize;   
+    WnodeSize = *InOutBufferSize;
     WnodeSI = (PWNODE_SINGLE_INSTANCE)OutBuffer;
     if ((WnodeSI == NULL) || (WnodeSize < SizeNeeded))
     {
         WnodeSI = (PWNODE_SINGLE_INSTANCE)WmipAllocNP(SizeNeeded);
         WnodeSize = SizeNeeded;
     }
-            
+
     if (WnodeSI != NULL)
     {
         //
         // Build WNODE_SINGLE_INSTANCE appropriately and query
         //
-        RtlZeroMemory(WnodeSI, FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                          VariableData));
-                                      
-        WmipBuildWnodeHeader(WnodeSI,
-                             SizeNeeded,
-                             WNODE_FLAG_SINGLE_INSTANCE,
-                             NULL);
+        RtlZeroMemory(WnodeSI, FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData));
 
-        WnodeSI->OffsetInstanceName = FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                                 VariableData);
+        WmipBuildWnodeHeader(WnodeSI, SizeNeeded, WNODE_FLAG_SINGLE_INSTANCE, NULL);
+
+        WnodeSI->OffsetInstanceName = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData);
         WnodeSI->DataBlockOffset = SizeNeeded;
 
         //
@@ -1122,16 +1021,11 @@ IoWMIQuerySingleInstance(
         WPtr = (PWCHAR)OffsetToPtr(WnodeSI, WnodeSI->OffsetInstanceName);
         *WPtr++ = InstanceName->Length;
         RtlCopyMemory(WPtr, InstanceName->Buffer, InstanceName->Length);
-                    
-        
-        Status = WmipQuerySetExecuteSI((PWMIGUIDOBJECT)DataBlockObject,
-                                       NULL,
-                                       KernelMode,
-                                       IRP_MN_QUERY_SINGLE_INSTANCE,
-                                       (PWNODE_HEADER)WnodeSI,
-                                       WnodeSize,
-                                       &RetSize);
-    
+
+
+        Status = WmipQuerySetExecuteSI((PWMIGUIDOBJECT)DataBlockObject, NULL, KernelMode, IRP_MN_QUERY_SINGLE_INSTANCE,
+                                       (PWNODE_HEADER)WnodeSI, WnodeSize, &RetSize);
+
         //
         // if this was a successful query then extract the results
         //
@@ -1143,18 +1037,22 @@ IoWMIQuerySingleInstance(
                 // Internal guids are not supported in KM
                 //
                 Status = STATUS_NOT_SUPPORTED;
-            } else if (WnodeSI->WnodeHeader.Flags & WNODE_FLAG_TOO_SMALL) {
+            }
+            else if (WnodeSI->WnodeHeader.Flags & WNODE_FLAG_TOO_SMALL)
+            {
                 //
                 // Our buffer was too small
                 //
                 *InOutBufferSize = ((PWNODE_TOO_SMALL)WnodeSI)->SizeNeeded;
                 Status = STATUS_BUFFER_TOO_SMALL;
-            } else {
+            }
+            else
+            {
                 //
                 // Buffer not too small, remember output size
                 //
                 *InOutBufferSize = RetSize;
-                
+
                 if (WnodeSI != OutBuffer)
                 {
                     //
@@ -1165,35 +1063,32 @@ IoWMIQuerySingleInstance(
                     Status = STATUS_BUFFER_TOO_SMALL;
                 }
             }
-        }       
-        
+        }
+
         if (WnodeSI != OutBuffer)
         {
             WmipFree(WnodeSI);
         }
-    } else {
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
-    return(Status);
+    return (Status);
 }
 
 NTSTATUS
-IoWMIQuerySingleInstanceMultiple(
-    IN PVOID *DataBlockObjectList,
-    IN PUNICODE_STRING InstanceNames,
-    IN ULONG ObjectCount,
-    IN OUT ULONG *InOutBufferSize,
-    OUT PVOID OutBuffer
-)
+IoWMIQuerySingleInstanceMultiple(IN PVOID *DataBlockObjectList, IN PUNICODE_STRING InstanceNames, IN ULONG ObjectCount,
+                                 IN OUT ULONG *InOutBufferSize, OUT PVOID OutBuffer)
 {
     NTSTATUS Status;
     ULONG RetSize;
     PWNODE_HEADER Wnode;
     WNODE_TOO_SMALL WnodeTooSmall;
     ULONG WnodeSize;
-    
+
     PAGED_CODE();
-    
+
     WnodeSize = *InOutBufferSize;
     Wnode = (PWNODE_HEADER)OutBuffer;
     if ((Wnode == NULL) || (WnodeSize < sizeof(WNODE_TOO_SMALL)))
@@ -1202,17 +1097,10 @@ IoWMIQuerySingleInstanceMultiple(
         WnodeSize = sizeof(WNODE_TOO_SMALL);
     }
 
-    Status = WmipQuerySingleMultiple(NULL,
-                                     KernelMode,
-                                     (PUCHAR)Wnode,
-                                     WnodeSize,
-                                     NULL,
-                                     ObjectCount,
-                                     (PWMIGUIDOBJECT *)DataBlockObjectList,
-                                     InstanceNames,
-                                     &RetSize);
-                            
-                                 
+    Status = WmipQuerySingleMultiple(NULL, KernelMode, (PUCHAR)Wnode, WnodeSize, NULL, ObjectCount,
+                                     (PWMIGUIDOBJECT *)DataBlockObjectList, InstanceNames, &RetSize);
+
+
     //
     // if this was a successful query then extract the results
     //
@@ -1225,13 +1113,15 @@ IoWMIQuerySingleInstanceMultiple(
             //
             *InOutBufferSize = ((PWNODE_TOO_SMALL)Wnode)->SizeNeeded;
             Status = STATUS_BUFFER_TOO_SMALL;
-        } else {
+        }
+        else
+        {
             //
             // Buffer was large enough for provider
             //
             *InOutBufferSize = RetSize;
-            
-                
+
+
             if (Wnode == (PWNODE_HEADER)&WnodeTooSmall)
             {
                 //
@@ -1242,19 +1132,14 @@ IoWMIQuerySingleInstanceMultiple(
                 Status = STATUS_BUFFER_TOO_SMALL;
             }
         }
-    }       
-    
-    return(Status);
+    }
+
+    return (Status);
 }
 
 NTSTATUS
-IoWMISetSingleInstance(
-    IN PVOID DataBlockObject,
-    IN PUNICODE_STRING InstanceName,
-    IN ULONG Version,
-    IN ULONG ValueBufferSize,
-    IN PVOID ValueBuffer
-    )
+IoWMISetSingleInstance(IN PVOID DataBlockObject, IN PUNICODE_STRING InstanceName, IN ULONG Version,
+                       IN ULONG ValueBufferSize, IN PVOID ValueBuffer)
 {
     NTSTATUS Status;
     PWNODE_SINGLE_INSTANCE WnodeSI;
@@ -1266,30 +1151,24 @@ IoWMISetSingleInstance(
     PUCHAR DPtr;
 
     PAGED_CODE();
-    
-    InstanceOffset = (FIELD_OFFSET(WNODE_SINGLE_INSTANCE, 
-                                   VariableData) + 1) & ~1;
-                               
-    DataOffset = (InstanceOffset + 
-                  InstanceName->Length + sizeof(USHORT) + 7) & ~7;
-                            
+
+    InstanceOffset = (FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) + 1) & ~1;
+
+    DataOffset = (InstanceOffset + InstanceName->Length + sizeof(USHORT) + 7) & ~7;
+
     SizeNeeded = DataOffset + ValueBufferSize;
 
     WnodeSI = (PWNODE_SINGLE_INSTANCE)WmipAllocNP(SizeNeeded);
-            
+
     if (WnodeSI != NULL)
     {
         //
         // Build WNODE_SINGLE_INSTANCE appropriately and query
         //
-        RtlZeroMemory(WnodeSI, FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                            VariableData));
-                                      
-        WmipBuildWnodeHeader(WnodeSI,
-                             SizeNeeded,
-                             WNODE_FLAG_SINGLE_INSTANCE,
-                             NULL);
-                         
+        RtlZeroMemory(WnodeSI, FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData));
+
+        WmipBuildWnodeHeader(WnodeSI, SizeNeeded, WNODE_FLAG_SINGLE_INSTANCE, NULL);
+
         WnodeSI->WnodeHeader.Version = Version;
 
         //
@@ -1299,7 +1178,7 @@ IoWMISetSingleInstance(
         WPtr = (PWCHAR)OffsetToPtr(WnodeSI, WnodeSI->OffsetInstanceName);
         *WPtr++ = InstanceName->Length;
         RtlCopyMemory(WPtr, InstanceName->Buffer, InstanceName->Length);
-                                             
+
         //
         // Copy the new data into the WNODE
         //
@@ -1307,31 +1186,22 @@ IoWMISetSingleInstance(
         WnodeSI->DataBlockOffset = DataOffset;
         DPtr = OffsetToPtr(WnodeSI, WnodeSI->DataBlockOffset);
         RtlCopyMemory(DPtr, ValueBuffer, ValueBufferSize);
-        
-        Status = WmipQuerySetExecuteSI(DataBlockObject,
-                                       NULL,
-                                       KernelMode,
-                                       IRP_MN_CHANGE_SINGLE_INSTANCE,
-                                       (PWNODE_HEADER)WnodeSI,
-                                       SizeNeeded,
-                                       &RetSize);
-    
+
+        Status = WmipQuerySetExecuteSI(DataBlockObject, NULL, KernelMode, IRP_MN_CHANGE_SINGLE_INSTANCE,
+                                       (PWNODE_HEADER)WnodeSI, SizeNeeded, &RetSize);
+
         WmipFree(WnodeSI);
-    } else {
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
-    return(Status); 
+    return (Status);
 }
 
 NTSTATUS
-IoWMISetSingleItem(
-    IN PVOID DataBlockObject,
-    IN PUNICODE_STRING InstanceName,
-    IN ULONG DataItemId,
-    IN ULONG Version,
-    IN ULONG ValueBufferSize,
-    IN PVOID ValueBuffer
-    )
+IoWMISetSingleItem(IN PVOID DataBlockObject, IN PUNICODE_STRING InstanceName, IN ULONG DataItemId, IN ULONG Version,
+                   IN ULONG ValueBufferSize, IN PVOID ValueBuffer)
 {
     NTSTATUS Status;
     PWNODE_SINGLE_ITEM WnodeSI;
@@ -1343,30 +1213,24 @@ IoWMISetSingleItem(
     PUCHAR DPtr;
 
     PAGED_CODE();
-    
-    InstanceOffset = (FIELD_OFFSET(WNODE_SINGLE_ITEM, 
-                                   VariableData) + 1) & ~1;
-                               
-    DataOffset = (InstanceOffset + 
-                  InstanceName->Length + sizeof(USHORT) + 7) & ~7;
-                            
+
+    InstanceOffset = (FIELD_OFFSET(WNODE_SINGLE_ITEM, VariableData) + 1) & ~1;
+
+    DataOffset = (InstanceOffset + InstanceName->Length + sizeof(USHORT) + 7) & ~7;
+
     SizeNeeded = DataOffset + ValueBufferSize;
 
     WnodeSI = (PWNODE_SINGLE_ITEM)WmipAllocNP(SizeNeeded);
-            
+
     if (WnodeSI != NULL)
     {
         //
         // Build WNODE_SINGLE_INSTANCE appropriately and query
         //
-        RtlZeroMemory(WnodeSI, FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                            VariableData));
-                                      
-        WmipBuildWnodeHeader(WnodeSI,
-                             SizeNeeded,
-                             WNODE_FLAG_SINGLE_ITEM,
-                             NULL);
-                         
+        RtlZeroMemory(WnodeSI, FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData));
+
+        WmipBuildWnodeHeader(WnodeSI, SizeNeeded, WNODE_FLAG_SINGLE_ITEM, NULL);
+
         WnodeSI->WnodeHeader.Version = Version;
         WnodeSI->ItemId = DataItemId;
 
@@ -1377,7 +1241,7 @@ IoWMISetSingleItem(
         WPtr = (PWCHAR)OffsetToPtr(WnodeSI, WnodeSI->OffsetInstanceName);
         *WPtr++ = InstanceName->Length;
         RtlCopyMemory(WPtr, InstanceName->Buffer, InstanceName->Length);
-                                             
+
         //
         // Copy the new data into the WNODE
         //
@@ -1385,30 +1249,21 @@ IoWMISetSingleItem(
         WnodeSI->DataBlockOffset = DataOffset;
         DPtr = OffsetToPtr(WnodeSI, WnodeSI->DataBlockOffset);
         RtlCopyMemory(DPtr, ValueBuffer, ValueBufferSize);
-        
-        Status = WmipQuerySetExecuteSI(DataBlockObject,
-                                       NULL,
-                                       KernelMode,
-                                       IRP_MN_CHANGE_SINGLE_ITEM,
-                                       (PWNODE_HEADER)WnodeSI,
-                                       SizeNeeded,
-                                       &RetSize);
-    
+
+        Status = WmipQuerySetExecuteSI(DataBlockObject, NULL, KernelMode, IRP_MN_CHANGE_SINGLE_ITEM,
+                                       (PWNODE_HEADER)WnodeSI, SizeNeeded, &RetSize);
+
         WmipFree(WnodeSI);
-    } else {
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
-    return(Status); 
+    return (Status);
 }
 
-NTSTATUS IoWMIExecuteMethod(
-    IN PVOID DataBlockObject,
-    IN PUNICODE_STRING InstanceName,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN OUT PULONG OutBufferSize,
-    IN OUT PUCHAR InOutBuffer
-    )
+NTSTATUS IoWMIExecuteMethod(IN PVOID DataBlockObject, IN PUNICODE_STRING InstanceName, IN ULONG MethodId,
+                            IN ULONG InBufferSize, IN OUT PULONG OutBufferSize, IN OUT PUCHAR InOutBuffer)
 {
     NTSTATUS Status;
     PWNODE_METHOD_ITEM WnodeMI;
@@ -1419,39 +1274,28 @@ NTSTATUS IoWMIExecuteMethod(
     ULONG DataOffset;
 
     PAGED_CODE();
-    
+
     //
     // Make sure we have an output buffer
     //
-    DataOffset = (FIELD_OFFSET(WNODE_METHOD_ITEM,
-                                 VariableData) +
-                   InstanceName->Length +
-                   sizeof(USHORT) +
-                   7) & ~7;
-    
-    SizeNeeded =  DataOffset +
-                   ((InBufferSize > *OutBufferSize) ? InBufferSize :
-                                                      *OutBufferSize);
-    
+    DataOffset = (FIELD_OFFSET(WNODE_METHOD_ITEM, VariableData) + InstanceName->Length + sizeof(USHORT) + 7) & ~7;
+
+    SizeNeeded = DataOffset + ((InBufferSize > *OutBufferSize) ? InBufferSize : *OutBufferSize);
+
     WnodeMI = (PWNODE_METHOD_ITEM)WmipAllocNP(SizeNeeded);
-            
+
     if (WnodeMI != NULL)
     {
         //
         // Build WNODE_SINGLE_INSTANCE appropriately and query
         //
-        RtlZeroMemory(WnodeMI, FIELD_OFFSET(WNODE_METHOD_ITEM,
-                                          VariableData));
-                                      
-        WmipBuildWnodeHeader(WnodeMI,
-                             SizeNeeded,
-                             WNODE_FLAG_METHOD_ITEM,
-                             NULL);
-        
+        RtlZeroMemory(WnodeMI, FIELD_OFFSET(WNODE_METHOD_ITEM, VariableData));
+
+        WmipBuildWnodeHeader(WnodeMI, SizeNeeded, WNODE_FLAG_METHOD_ITEM, NULL);
+
         WnodeMI->MethodId = MethodId;
 
-        WnodeMI->OffsetInstanceName = FIELD_OFFSET(WNODE_METHOD_ITEM,
-                                                   VariableData);
+        WnodeMI->OffsetInstanceName = FIELD_OFFSET(WNODE_METHOD_ITEM, VariableData);
         WnodeMI->DataBlockOffset = DataOffset;
         WnodeMI->SizeDataBlock = InBufferSize;
 
@@ -1467,14 +1311,10 @@ NTSTATUS IoWMIExecuteMethod(
         //
         DPtr = (PUCHAR)OffsetToPtr(WnodeMI, WnodeMI->DataBlockOffset);
         RtlCopyMemory(DPtr, InOutBuffer, InBufferSize);
-        
-        Status = WmipQuerySetExecuteSI(DataBlockObject,NULL,
-                                       KernelMode,
-                                       IRP_MN_EXECUTE_METHOD,
-                                       (PWNODE_HEADER)WnodeMI,
-                                       SizeNeeded,
-                                       &RetSize);
-    
+
+        Status = WmipQuerySetExecuteSI(DataBlockObject, NULL, KernelMode, IRP_MN_EXECUTE_METHOD, (PWNODE_HEADER)WnodeMI,
+                                       SizeNeeded, &RetSize);
+
         //
         // if this was a successful query then extract the results
         //
@@ -1485,95 +1325,78 @@ NTSTATUS IoWMIExecuteMethod(
                 //
                 // Our buffer was too small
                 //
-                *OutBufferSize = ( (((PWNODE_TOO_SMALL)WnodeMI)->SizeNeeded -
-                                 DataOffset) + 7 ) & ~7;
+                *OutBufferSize = ((((PWNODE_TOO_SMALL)WnodeMI)->SizeNeeded - DataOffset) + 7) & ~7;
                 Status = STATUS_BUFFER_TOO_SMALL;
-            } else {
+            }
+            else
+            {
                 //
                 // Buffer not too small, remember output size
                 //
                 if (*OutBufferSize >= WnodeMI->SizeDataBlock)
                 {
                     *OutBufferSize = WnodeMI->SizeDataBlock;
-                    DPtr = (PUCHAR)OffsetToPtr(WnodeMI,
-                                               WnodeMI->DataBlockOffset);
+                    DPtr = (PUCHAR)OffsetToPtr(WnodeMI, WnodeMI->DataBlockOffset);
                     RtlCopyMemory(InOutBuffer, DPtr, WnodeMI->SizeDataBlock);
-                } else {
+                }
+                else
+                {
                     *OutBufferSize = (WnodeMI->SizeDataBlock + 7) & ~7;
                     Status = STATUS_BUFFER_TOO_SMALL;
                 }
             }
-        }       
-        
+        }
+
         WmipFree(WnodeMI);
-    } else {
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
-    return(Status);
+    return (Status);
 }
 
 NTSTATUS
-IoWMISetNotificationCallback(
-    IN PVOID Object,
-    IN WMI_NOTIFICATION_CALLBACK Callback,
-    IN PVOID Context
-    )
+IoWMISetNotificationCallback(IN PVOID Object, IN WMI_NOTIFICATION_CALLBACK Callback, IN PVOID Context)
 {
     NTSTATUS Status;
     PWMIGUIDOBJECT GuidObject;
-    
+
     PAGED_CODE();
 
     GuidObject = (PWMIGUIDOBJECT)Object;
-    
+
     WmipAssert(GuidObject->Flags & WMIGUID_FLAG_KERNEL_NOTIFICATION);
-    
+
     WmipEnterSMCritSection();
-    
+
     GuidObject->Callback = Callback;
     GuidObject->CallbackContext = Context;
-    
+
     WmipLeaveSMCritSection();
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-NTSTATUS IoWMIHandleToInstanceName(
-    IN PVOID DataBlockObject,
-    IN HANDLE FileHandle,
-    OUT PUNICODE_STRING InstanceName
-    )
+NTSTATUS IoWMIHandleToInstanceName(IN PVOID DataBlockObject, IN HANDLE FileHandle, OUT PUNICODE_STRING InstanceName)
 {
     NTSTATUS Status;
-    
+
     PAGED_CODE();
 
-    Status = WmipTranslateFileHandle(NULL,
-                                     NULL,
-                                     FileHandle,
-                                     NULL,
-                                     DataBlockObject,
-                                     InstanceName);
-    return(Status);
+    Status = WmipTranslateFileHandle(NULL, NULL, FileHandle, NULL, DataBlockObject, InstanceName);
+    return (Status);
 }
 
-NTSTATUS IoWMIDeviceObjectToInstanceName(
-    IN PVOID DataBlockObject,
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT PUNICODE_STRING InstanceName
-    )
+NTSTATUS IoWMIDeviceObjectToInstanceName(IN PVOID DataBlockObject, IN PDEVICE_OBJECT DeviceObject,
+                                         OUT PUNICODE_STRING InstanceName)
 {
     NTSTATUS Status;
-    
+
     PAGED_CODE();
 
-    Status = WmipTranslateFileHandle(NULL,
-                                     NULL,
-                                     NULL,
-                                     DeviceObject,
-                                     DataBlockObject,
-                                     InstanceName);
-    return(Status);
+    Status = WmipTranslateFileHandle(NULL, NULL, NULL, DeviceObject, DataBlockObject, InstanceName);
+    return (Status);
 }
 
 

@@ -19,8 +19,8 @@ LOOKASIDE EditLookaside;
 ICH ECFindTabA(LPSTR lpstr, ICH cch);
 ICH ECFindTabW(LPWSTR lpstr, ICH cch);
 
-#define umin(a, b)  ((unsigned)(a) < (unsigned)(b) ? (unsigned)(a) : (unsigned)(b))
-#define umax(a, b)  ((unsigned)(a) > (unsigned)(b) ? (unsigned)(a) : (unsigned)(b))
+#define umin(a, b) ((unsigned)(a) < (unsigned)(b) ? (unsigned)(a) : (unsigned)(b))
+#define umax(a, b) ((unsigned)(a) > (unsigned)(b) ? (unsigned)(a) : (unsigned)(b))
 
 #define UNICODE_CARRIAGERETURN ((WCHAR)0x0d)
 #define UNICODE_LINEFEED ((WCHAR)0x0a)
@@ -28,11 +28,12 @@ ICH ECFindTabW(LPWSTR lpstr, ICH cch);
 
 
 // IME Menu IDs
-#define ID_IMEOPENCLOSE      10001
-#define ID_SOFTKBDOPENCLOSE  10002
-#define ID_RECONVERTSTRING   10003
+#define ID_IMEOPENCLOSE 10001
+#define ID_SOFTKBDOPENCLOSE 10002
+#define ID_RECONVERTSTRING 10003
 
-typedef struct {
+typedef struct
+{
     DWORD fDisableCut : 1;
     DWORD fDisablePaste : 1;
     DWORD fNeedSeparatorBeforeImeMenu : 1;
@@ -49,8 +50,7 @@ typedef struct {
 * History:
 \***************************************************************************/
 
-PSTR ECLock(
-    PED ped)
+PSTR ECLock(PED ped)
 {
     PSTR ptext = LOCALLOCK(ped->hText, ped->hInstance);
     ped->iLockLevel++;
@@ -60,11 +60,13 @@ PSTR ECLock(
      * decode the text.
      */
     //RIPMSG2(RIP_VERBOSE, "lock  : %d '%10s'\n", ped->iLockLevel, ptext);
-    if (ped->iLockLevel == 1 && ped->fEncoded) {
+    if (ped->iLockLevel == 1 && ped->fEncoded)
+    {
         /*
          * rtlrundecode can't handle zero length strings
          */
-        if (ped->cch != 0) {
+        if (ped->cch != 0)
+        {
             STRING string;
             string.Length = string.MaximumLength = (USHORT)(ped->cch * ped->cbChar);
             string.Buffer = ptext;
@@ -83,15 +85,15 @@ PSTR ECLock(
 * History:
 \***************************************************************************/
 
-void ECUnlock(
-    PED ped)
+void ECUnlock(PED ped)
 {
     /*
      * if we are removing the last lock on the text and the password
      * character is set then encode the text
      */
     //RIPMSG1(RIP_VERBOSE, "unlock: %d '%10s'\n", ped->iLockLevel, ped->ptext);
-    if (ped->charPasswordChar && ped->iLockLevel == 1 && ped->cch != 0) {
+    if (ped->charPasswordChar && ped->iLockLevel == 1 && ped->cch != 0)
+    {
         UNICODE_STRING string;
         string.Length = string.MaximumLength = (USHORT)(ped->cch * ped->cbChar);
         string.Buffer = LOCALLOCK(ped->hText, ped->hInstance);
@@ -114,19 +116,12 @@ void ECUnlock(
 * of this strip that results in this Negative A.
 *
 \***************************************************************************/
-UINT GetActualNegA(
-    HDC hdc,
-    PED ped,
-    int x,
-    LPSTR lpstring,
-    ICH ichString,
-    int nCount,
-    LPSTRIPINFO NegAInfo)
+UINT GetActualNegA(HDC hdc, PED ped, int x, LPSTR lpstring, ICH ichString, int nCount, LPSTRIPINFO NegAInfo)
 {
     int iCharCount, i;
     int iLeftmostPoint = x;
-    PABC  pABCwidthBuff;
-    UINT  wCharIndex;
+    PABC pABCwidthBuff;
+    UINT wCharIndex;
     int xStartPoint = x;
     ABC abc;
 
@@ -135,15 +130,19 @@ UINT GetActualNegA(
 
     NegAInfo->XStartPos = x;
     NegAInfo->lpString = lpstring;
-    NegAInfo->nCount  = 0;
+    NegAInfo->nCount = 0;
     NegAInfo->ichString = ichString;
 
     // If the current font is not a TrueType font, then there can not be any
     // negative A widths.
-    if (!ped->fTrueType) {
-        if(!ped->charOverhang) {
+    if (!ped->fTrueType)
+    {
+        if (!ped->charOverhang)
+        {
             return 0;
-        } else {
+        }
+        else
+        {
             NegAInfo->nCount = min(nCount, (int)ped->wMaxNegAcharPos);
             return ped->charOverhang;
         }
@@ -153,70 +152,86 @@ UINT GetActualNegA(
     iCharCount = min(nCount, (int)ped->wMaxNegAcharPos);
 
     // Do we have the info on individual character's widths?
-    if(!ped->charWidthBuffer) {
+    if (!ped->charWidthBuffer)
+    {
         // No! So, let us tell them to consider all the characters.
         NegAInfo->nCount = iCharCount;
-        return(iCharCount * ped->aveCharWidth);
+        return (iCharCount * ped->aveCharWidth);
     }
 
-    pABCwidthBuff = (PABC) ped->charWidthBuffer;
+    pABCwidthBuff = (PABC)ped->charWidthBuffer;
 
-    if (ped->fAnsi) {
-        for (i = 0; i < iCharCount; i++) {
+    if (ped->fAnsi)
+    {
+        for (i = 0; i < iCharCount; i++)
+        {
             wCharIndex = (UINT)(*((unsigned char *)lpstring));
-            if (*lpstring == VK_TAB) {
+            if (*lpstring == VK_TAB)
+            {
                 // To play it safe, we assume that this tab results in a tab length of
                 // 1 pixel because this is the minimum possible tab length.
                 x++;
-            } else {
-                if ( wCharIndex < CHAR_WIDTH_BUFFER_LENGTH )
-                    x += pABCwidthBuff[wCharIndex].abcA;  // Add the 'A' width.
-                else {
-                    GetCharABCWidthsA(hdc, wCharIndex, wCharIndex, &abc) ;
+            }
+            else
+            {
+                if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH)
+                    x += pABCwidthBuff[wCharIndex].abcA; // Add the 'A' width.
+                else
+                {
+                    GetCharABCWidthsA(hdc, wCharIndex, wCharIndex, &abc);
                     x += abc.abcA;
                 }
 
                 if (x < iLeftmostPoint)
-                    iLeftmostPoint = x;             // Reset the leftmost point.
+                    iLeftmostPoint = x; // Reset the leftmost point.
                 if (x < xStartPoint)
-                    NegAInfo->nCount = i+1;   // 'i' is index; To get the count add 1.
+                    NegAInfo->nCount = i + 1; // 'i' is index; To get the count add 1.
 
-                if ( wCharIndex < CHAR_WIDTH_BUFFER_LENGTH ) {
+                if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH)
+                {
                     x += pABCwidthBuff[wCharIndex].abcB + pABCwidthBuff[wCharIndex].abcC;
-                } else {
+                }
+                else
+                {
                     x += abc.abcB + abc.abcC;
                 }
             }
 
             lpstring++;
         }
-    } else {   // Unicode
-        LPWSTR lpwstring = (LPWSTR) lpstring ;
+    }
+    else
+    { // Unicode
+        LPWSTR lpwstring = (LPWSTR)lpstring;
 
-        for (i = 0; i < iCharCount; i++) {
-            wCharIndex = *lpwstring ;
-            if (*lpwstring == VK_TAB) {
+        for (i = 0; i < iCharCount; i++)
+        {
+            wCharIndex = *lpwstring;
+            if (*lpwstring == VK_TAB)
+            {
                 // To play it safe, we assume that this tab results in a tab length of
                 // 1 pixel because this is the minimum possible tab length.
                 x++;
-            } else {
-                if ( wCharIndex < CHAR_WIDTH_BUFFER_LENGTH )
-                    x += pABCwidthBuff[wCharIndex].abcA;  // Add the 'A' width.
-                else {
-                    GetCharABCWidthsW(hdc, wCharIndex, wCharIndex, &abc) ;
-                    x += abc.abcA ;
+            }
+            else
+            {
+                if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH)
+                    x += pABCwidthBuff[wCharIndex].abcA; // Add the 'A' width.
+                else
+                {
+                    GetCharABCWidthsW(hdc, wCharIndex, wCharIndex, &abc);
+                    x += abc.abcA;
                 }
 
                 if (x < iLeftmostPoint)
-                    iLeftmostPoint = x;             // Reset the leftmost point.
+                    iLeftmostPoint = x; // Reset the leftmost point.
                 if (x < xStartPoint)
-                    NegAInfo->nCount = i+1;   // 'i' is index; To get the count add 1.
+                    NegAInfo->nCount = i + 1; // 'i' is index; To get the count add 1.
 
-                if ( wCharIndex < CHAR_WIDTH_BUFFER_LENGTH )
-                    x += pABCwidthBuff[wCharIndex].abcB +
-                         pABCwidthBuff[wCharIndex].abcC;
+                if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH)
+                    x += pABCwidthBuff[wCharIndex].abcB + pABCwidthBuff[wCharIndex].abcC;
                 else
-                    x += abc.abcB + abc.abcC ;
+                    x += abc.abcB + abc.abcC;
             }
 
             lpwstring++;
@@ -224,7 +239,7 @@ UINT GetActualNegA(
     }
 
     // Let us return the negative A for the whole strip as a positive value.
-    return((UINT)(xStartPoint - iLeftmostPoint));
+    return ((UINT)(xStartPoint - iLeftmostPoint));
 }
 
 
@@ -239,7 +254,7 @@ UINT GetActualNegA(
 *  clicked on, etc.
 *
 \***************************************************************************/
-BOOL   ECIsAncestorActive(HWND hwnd)
+BOOL ECIsAncestorActive(HWND hwnd)
 {
     // We want to return TRUE always for top level windows.  That's because
     // of how WM_MOUSEACTIVATE works.  If we see the click at all, the
@@ -250,8 +265,9 @@ BOOL   ECIsAncestorActive(HWND hwnd)
     // clicks on an edit field in a child window that is flashed off, nothing
     // will happen unless the window stops flashing and ncactivates first.
 
-    while (hwnd) {
-        PWND pwnd = ValidateHwnd( hwnd );
+    while (hwnd)
+    {
+        PWND pwnd = ValidateHwnd(hwnd);
         //
         // Bail out if some parent window isn't 4.0 compatible or we've
         // reached the top.  Fixes compatibility problems with 3.x apps,
@@ -260,12 +276,12 @@ BOOL   ECIsAncestorActive(HWND hwnd)
         if (!TestWF(pwnd, WFWIN40COMPAT) || !TestWF(pwnd, WFCHILD))
             hwnd = NULL; // to break us out of the loop
         else if (TestWF(pwnd, WFCPRESENT))
-            return(TestWF(pwnd, WFFRAMEON) != 0);
+            return (TestWF(pwnd, WFFRAMEON) != 0);
         else
             hwnd = GetParent(hwnd);
     }
 
-    return(TRUE);
+    return (TRUE);
 }
 
 /***************************************************************************\
@@ -275,10 +291,7 @@ BOOL   ECIsAncestorActive(HWND hwnd)
  *
  * Create: 30-Apr-97 Hiroyama : Ported from Memphis
 \***************************************************************************/
-BOOL ECSetIMEMenu(
-    HMENU hMenu,
-    HWND hwnd,
-    EditMenuItemState state)
+BOOL ECSetIMEMenu(HMENU hMenu, HWND hwnd, EditMenuItemState state)
 {
 
     MENUITEMINFO mii;
@@ -296,21 +309,25 @@ BOOL ECSetIMEMenu(
         return TRUE;
 
     hIMC = fpImmGetContext(hwnd);
-    if (hIMC == NULL) {
+    if (hIMC == NULL)
+    {
         // early out
         return FALSE;
     }
 
     hmenuSub = GetSubMenu(hMenu, 0);
 
-    if (hmenuSub == NULL) {
+    if (hmenuSub == NULL)
+    {
         return FALSE;
     }
 
     nPrevLastItem = GetMenuItemCount(hmenuSub);
 
-    if (hIMC) {
-        if (LOWORD(HandleToUlong(hKL)) != 0x412) {
+    if (hIMC)
+    {
+        if (LOWORD(HandleToUlong(hKL)) != 0x412)
+        {
             //
             // If Korean, do not show open/close menus
             //
@@ -328,15 +345,16 @@ BOOL ECSetIMEMenu(
             ++nItemsAdded;
         }
 
-        if (fpImmGetProperty(hKL, IGP_CONVERSION) & IME_CMODE_SOFTKBD) {
+        if (fpImmGetProperty(hKL, IGP_CONVERSION) & IME_CMODE_SOFTKBD)
+        {
             DWORD fdwConversion;
 
             fpImmGetConversionStatus(hIMC, &fdwConversion, NULL);
 
             if (fdwConversion & IME_CMODE_SOFTKBD)
-               LoadString(hmodUser, STR_SOFTKBDCLOSE, szRes, ARRAYSIZE(szRes));
+                LoadString(hmodUser, STR_SOFTKBDCLOSE, szRes, ARRAYSIZE(szRes));
             else
-               LoadString(hmodUser, STR_SOFTKBDOPEN, szRes, ARRAYSIZE(szRes));
+                LoadString(hmodUser, STR_SOFTKBDOPEN, szRes, ARRAYSIZE(szRes));
 
             mii.cbSize = sizeof(MENUITEMINFO);
             mii.fMask = MIIM_STRING | MIIM_ID;
@@ -347,7 +365,8 @@ BOOL ECSetIMEMenu(
             ++nItemsAdded;
         }
 
-        if (LOWORD(HandleToUlong(hKL)) != 0x412) {
+        if (LOWORD(HandleToUlong(hKL)) != 0x412)
+        {
             //
             // If Korean, do not show reconversion menus
             //
@@ -362,9 +381,8 @@ BOOL ECSetIMEMenu(
             mii.cch = 0xffff;
             mii.wID = ID_RECONVERTSTRING;
 
-            if (state.fDisableCut ||
-                    !(dwSCS & SCS_CAP_SETRECONVERTSTRING) ||
-                    !(dwSCS & SCS_CAP_MAKEREAD)) {
+            if (state.fDisableCut || !(dwSCS & SCS_CAP_SETRECONVERTSTRING) || !(dwSCS & SCS_CAP_MAKEREAD))
+            {
                 mii.fState |= MFS_GRAYED;
             }
 
@@ -376,7 +394,8 @@ BOOL ECSetIMEMenu(
     //
     // Add or remove the menu separator
     //
-    if (state.fNeedSeparatorBeforeImeMenu && nItemsAdded != 0) {
+    if (state.fNeedSeparatorBeforeImeMenu && nItemsAdded != 0)
+    {
         //
         // If the menu for Middle East has left a separator,
         // fNeedSeparatorBeforeImeMenu is FALSE.
@@ -387,7 +406,8 @@ BOOL ECSetIMEMenu(
         mii.fType = MFT_SEPARATOR;
         InsertMenuItem(hmenuSub, nPrevLastItem, TRUE, &mii);
     }
-    else if (!state.fNeedSeparatorBeforeImeMenu && nItemsAdded == 0) {
+    else if (!state.fNeedSeparatorBeforeImeMenu && nItemsAdded == 0)
+    {
         //
         // Extra separator is left by ME menus. Remove it.
         //
@@ -402,12 +422,14 @@ BOOL ECSetIMEMenu(
 void ECInOutReconversionMode(PED ped, BOOL fIn)
 {
     UserAssert(fIn == TRUE || fIn == FALSE);
-    if (fIn == ped->fInReconversion) {
+    if (fIn == ped->fInReconversion)
+    {
         return;
     }
     ped->fInReconversion = fIn;
-    if (ped->fFocus) {
-        (fIn ? NtUserHideCaret: NtUserShowCaret)(ped->hwnd);
+    if (ped->fFocus)
+    {
+        (fIn ? NtUserHideCaret : NtUserShowCaret)(ped->hwnd);
     }
 
     return;
@@ -425,7 +447,8 @@ BOOL NEAR ECDoIMEMenuCommand(PED ped, int cmd, HWND hwnd)
     HIMC hIMC;
 
     // early out
-    switch (cmd) {
+    switch (cmd)
+    {
     case ID_IMEOPENCLOSE:
     case ID_SOFTKBDOPENCLOSE:
     case ID_RECONVERTSTRING:
@@ -436,113 +459,118 @@ BOOL NEAR ECDoIMEMenuCommand(PED ped, int cmd, HWND hwnd)
 
     // everybody needs hIMC, so get it here
     hIMC = fpImmGetContext(hwnd);
-    if (hIMC == NULL) {
+    if (hIMC == NULL)
+    {
         // indicate to caller, that no further command processing needed
         return TRUE;
     }
 
-    switch (cmd) {
+    switch (cmd)
+    {
     case ID_IMEOPENCLOSE:
-        {
-            // switch IME Open/Close status
-            BOOL fOpen = fpImmGetOpenStatus(hIMC);
+    {
+        // switch IME Open/Close status
+        BOOL fOpen = fpImmGetOpenStatus(hIMC);
 
-            fpImmSetOpenStatus(hIMC, !fOpen);
-        }
-        break;
+        fpImmSetOpenStatus(hIMC, !fOpen);
+    }
+    break;
 
     case ID_SOFTKBDOPENCLOSE:
-        {
-            DWORD fdwConversion;
+    {
+        DWORD fdwConversion;
 
-            if (fpImmGetConversionStatus(hIMC, &fdwConversion, NULL)) {
-                //
-                // Toggle soft keyboard Open/Close status
-                //
-                fpImmEnumInputContext(0, SyncSoftKbdState,
-                        (fdwConversion & IME_CMODE_SOFTKBD) != IME_CMODE_SOFTKBD);
-            }
+        if (fpImmGetConversionStatus(hIMC, &fdwConversion, NULL))
+        {
+            //
+            // Toggle soft keyboard Open/Close status
+            //
+            fpImmEnumInputContext(0, SyncSoftKbdState, (fdwConversion & IME_CMODE_SOFTKBD) != IME_CMODE_SOFTKBD);
         }
-        break;
+    }
+    break;
 
     case ID_RECONVERTSTRING:
+    {
+        DWORD dwStrLen; // holds TCHAR count of recionversion string
+        DWORD cbLen;    // holds BYTE SIZE of reconversion string
+        DWORD dwSize;
+        LPRECONVERTSTRING lpRCS;
+
+        // pass current selection to IME for reconversion
+        dwStrLen = ped->ichMaxSel - ped->ichMinSel;
+        cbLen = dwStrLen * ped->cbChar;
+        dwSize = cbLen + sizeof(RECONVERTSTRING) + 8;
+
+        lpRCS = (LPRECONVERTSTRING)UserLocalAlloc(0, dwSize);
+
+        if (lpRCS)
         {
-            DWORD dwStrLen; // holds TCHAR count of recionversion string
-            DWORD cbLen;    // holds BYTE SIZE of reconversion string
-            DWORD dwSize;
-            LPRECONVERTSTRING lpRCS;
+            LPBYTE pText;
+            ICH ichSelMinOrg;
 
-            // pass current selection to IME for reconversion
-            dwStrLen = ped->ichMaxSel - ped->ichMinSel;
-            cbLen = dwStrLen * ped->cbChar;
-            dwSize = cbLen + sizeof(RECONVERTSTRING) + 8;
+            ichSelMinOrg = ped->ichMinSel;
 
-            lpRCS = (LPRECONVERTSTRING)UserLocalAlloc(0, dwSize);
+            pText = ECLock(ped);
+            if (pText != NULL)
+            {
+                LPBYTE lpDest;
+                BOOL(WINAPI * fpSetCompositionStringAW)(HIMC, DWORD, LPCVOID, DWORD, LPCVOID, DWORD);
 
-            if (lpRCS) {
-                LPBYTE pText;
-                ICH    ichSelMinOrg;
+                lpRCS->dwSize = dwSize;
+                lpRCS->dwVersion = 0;
 
-                ichSelMinOrg = ped->ichMinSel;
+                lpRCS->dwStrLen = lpRCS->dwCompStrLen = lpRCS->dwTargetStrLen = dwStrLen;
 
-                pText = ECLock(ped);
-                if (pText != NULL) {
-                    LPBYTE lpDest;
-                    BOOL (WINAPI* fpSetCompositionStringAW)(HIMC, DWORD, LPCVOID, DWORD, LPCVOID, DWORD);
+                lpRCS->dwStrOffset = sizeof(RECONVERTSTRING);
+                lpRCS->dwCompStrOffset = lpRCS->dwTargetStrOffset = 0;
 
-                    lpRCS->dwSize = dwSize;
-                    lpRCS->dwVersion = 0;
+                lpDest = (LPBYTE)lpRCS + sizeof(RECONVERTSTRING);
 
-                    lpRCS->dwStrLen =
-                    lpRCS->dwCompStrLen =
-                    lpRCS->dwTargetStrLen = dwStrLen;
+                RtlCopyMemory(lpDest, pText + ped->ichMinSel * ped->cbChar, cbLen);
+                if (ped->fAnsi)
+                {
+                    LPBYTE psz = (LPBYTE)lpDest;
+                    psz[cbLen] = '\0';
+                    fpSetCompositionStringAW = fpImmSetCompositionStringA;
+                }
+                else
+                {
+                    LPWSTR pwsz = (LPWSTR)lpDest;
+                    pwsz[dwStrLen] = L'\0';
+                    fpSetCompositionStringAW = fpImmSetCompositionStringW;
+                }
 
-                    lpRCS->dwStrOffset = sizeof(RECONVERTSTRING);
-                    lpRCS->dwCompStrOffset =
-                    lpRCS->dwTargetStrOffset = 0;
+                ECUnlock(ped);
 
-                    lpDest = (LPBYTE)lpRCS + sizeof(RECONVERTSTRING);
+                UserAssert(fpSetCompositionStringAW != NULL);
 
-                    RtlCopyMemory(lpDest, pText + ped->ichMinSel * ped->cbChar, cbLen);
-                    if (ped->fAnsi) {
-                        LPBYTE psz = (LPBYTE)lpDest;
-                        psz[cbLen] = '\0';
-                        fpSetCompositionStringAW = fpImmSetCompositionStringA;
-                    } else {
-                        LPWSTR pwsz = (LPWSTR)lpDest;
-                        pwsz[dwStrLen] = L'\0';
-                        fpSetCompositionStringAW = fpImmSetCompositionStringW;
-                    }
+                ECInOutReconversionMode(ped, TRUE);
+                ECImmSetCompositionWindow(ped, 0, 0); // x and y will be overriden anyway
 
-                    ECUnlock(ped);
+                // Query the IME for a valid Reconvert string range first.
+                fpSetCompositionStringAW(hIMC, SCS_QUERYRECONVERTSTRING, lpRCS, dwSize, NULL, 0);
 
-                    UserAssert(fpSetCompositionStringAW != NULL);
+                // If current IME updates the original reconvert structure,
+                // it is necessary to update the text selection based on the
+                // new reconvert text range.
+                if ((lpRCS->dwCompStrLen != dwStrLen) || (ichSelMinOrg != ped->ichMinSel))
+                {
+                    ICH ichSelStart;
+                    ICH ichSelEnd;
 
-                    ECInOutReconversionMode(ped, TRUE);
-                    ECImmSetCompositionWindow(ped, 0, 0); // x and y will be overriden anyway
+                    ichSelStart = ichSelMinOrg + (lpRCS->dwCompStrOffset / ped->cbChar);
+                    ichSelEnd = ichSelStart + lpRCS->dwCompStrLen;
 
-                    // Query the IME for a valid Reconvert string range first.
-                    fpSetCompositionStringAW(hIMC, SCS_QUERYRECONVERTSTRING, lpRCS, dwSize, NULL, 0);
+                    (ped->fAnsi ? SendMessageA : SendMessageW)(ped->hwnd, EM_SETSEL, ichSelStart, ichSelEnd);
+                }
 
-                    // If current IME updates the original reconvert structure,
-                    // it is necessary to update the text selection based on the 
-                    // new reconvert text range.
-                    if ((lpRCS->dwCompStrLen != dwStrLen) || (ichSelMinOrg != ped->ichMinSel)) {
-                        ICH ichSelStart;
-                        ICH ichSelEnd;
-
-                        ichSelStart = ichSelMinOrg + (lpRCS->dwCompStrOffset  / ped->cbChar);
-                        ichSelEnd = ichSelStart + lpRCS->dwCompStrLen;
-
-                        (ped->fAnsi ? SendMessageA : SendMessageW)(ped->hwnd, EM_SETSEL, ichSelStart, ichSelEnd);
-                    }
-
-                    fpSetCompositionStringAW(hIMC, SCS_SETRECONVERTSTRING, lpRCS, dwSize, NULL, 0);
-                } // pText
-                UserLocalFree(lpRCS);
-            }
+                fpSetCompositionStringAW(hIMC, SCS_SETRECONVERTSTRING, lpRCS, dwSize, NULL, 0);
+            } // pText
+            UserLocalFree(lpRCS);
         }
-        break;
+    }
+    break;
 
     default:
         // should never reach here.
@@ -565,20 +593,17 @@ BOOL NEAR ECDoIMEMenuCommand(PED ped, int cmd, HWND hwnd)
 *  for speed and convenience.
 *
 \***************************************************************************/
-void  ECMenu(
-    HWND hwnd,
-    PED ped,
-    LPPOINT pt)
+void ECMenu(HWND hwnd, PED ped, LPPOINT pt)
 {
-    HMENU   hMenu;
-    int     cmd = 0;
-    int     x;
-    int     y;
-    UINT    uFlags = TPM_NONOTIFY | TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON;
+    HMENU hMenu;
+    int cmd = 0;
+    int x;
+    int y;
+    UINT uFlags = TPM_NONOTIFY | TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON;
     EditMenuItemState state = {
-        FALSE,              // fDisableCut
-        TRUE,               // fDisablePaste
-        TRUE,               // fNeedSeparatorBeforeImeMenu
+        FALSE,                                        // fDisableCut
+        TRUE,                                         // fDisablePaste
+        TRUE,                                         // fNeedSeparatorBeforeImeMenu
         IS_IME_ENABLED() && fpImmIsIME(THREAD_HKL()), // fIME
     };
 
@@ -587,18 +612,21 @@ void  ECMenu(
         NtUserSetFocus(hwnd);
 
     // Grab the menu from USER's resources...
-    if (!(hMenu = LoadMenu( hmodUser, MAKEINTRESOURCE( ID_EC_PROPERTY_MENU ))))
-        return ;
+    if (!(hMenu = LoadMenu(hmodUser, MAKEINTRESOURCE(ID_EC_PROPERTY_MENU))))
+        return;
 
 
     // Undo -- not allowed if we have no saved undo info
     if (ped->undoType == UNDO_NONE)
         EnableMenuItem(hMenu, WM_UNDO, MF_BYCOMMAND | MFS_GRAYED);
 
-    if (ped->fReadOnly || ped->charPasswordChar) {
+    if (ped->fReadOnly || ped->charPasswordChar)
+    {
         // Cut and Delete -- not allowed if read-only or password
         state.fDisableCut = TRUE;
-    } else {
+    }
+    else
+    {
         // Cut, Delete -- not allowed if there's no selection
         if (ped->ichMinSel == ped->ichMaxSel)
             state.fDisableCut = TRUE;
@@ -610,8 +638,9 @@ void  ECMenu(
     if (NtUserIsClipboardFormatAvailable(CF_TEXT))
         state.fDisablePaste = FALSE;
 
-    if (state.fDisableCut) {
-        EnableMenuItem(hMenu, WM_CUT,   MF_BYCOMMAND | MFS_GRAYED);
+    if (state.fDisableCut)
+    {
+        EnableMenuItem(hMenu, WM_CUT, MF_BYCOMMAND | MFS_GRAYED);
         EnableMenuItem(hMenu, WM_CLEAR, MF_BYCOMMAND | MFS_GRAYED);
     }
 
@@ -627,18 +656,24 @@ void  ECMenu(
     if ((ped->ichMinSel == 0) && (ped->ichMaxSel == ped->cch))
         EnableMenuItem(hMenu, EM_SETSEL, MF_BYCOMMAND | MFS_GRAYED);
 
-    if (ped->pLpkEditCallout) {
+    if (ped->pLpkEditCallout)
+    {
         ped->pLpkEditCallout->EditSetMenu(ped, hMenu);
-    } else {
+    }
+    else
+    {
         NtUserDeleteMenu(hMenu, ID_CNTX_DISPLAYCTRL, MF_BYCOMMAND);
-        NtUserDeleteMenu(hMenu, ID_CNTX_RTL,         MF_BYCOMMAND);
-        NtUserDeleteMenu(hMenu, ID_CNTX_INSERTCTRL,  MF_BYCOMMAND);
+        NtUserDeleteMenu(hMenu, ID_CNTX_RTL, MF_BYCOMMAND);
+        NtUserDeleteMenu(hMenu, ID_CNTX_INSERTCTRL, MF_BYCOMMAND);
 
-        if (state.fIME) {
+        if (state.fIME)
+        {
             // One separator is left in the menu,
             // no need to add the one before IME menus
             state.fNeedSeparatorBeforeImeMenu = FALSE;
-        } else {
+        }
+        else
+        {
             // Extra separator is left. Remove it.
             HMENU hmenuSub = GetSubMenu(hMenu, 0);
             int nItems = GetMenuItemCount(hmenuSub) - 1;
@@ -651,7 +686,8 @@ void  ECMenu(
     }
 
     // IME specific menu
-    if (state.fIME) {
+    if (state.fIME)
+    {
         ECSetIMEMenu(hMenu, hwnd, state);
     }
 
@@ -672,36 +708,42 @@ void  ECMenu(
      *  We use -1 && -1 here not 0xFFFFFFFF like Win95 becuase we
      *  previously converted the lParam to a point with sign extending.
      */
-    if (pt->x == -1 && pt->y == -1) {
+    if (pt->x == -1 && pt->y == -1)
+    {
         RECT rc;
 
         GetWindowRect(hwnd, &rc);
         x = rc.left + (rc.right - rc.left) / 2;
         y = rc.top + (rc.bottom - rc.top) / 2;
-    } else {
+    }
+    else
+    {
         x = pt->x;
         y = pt->y;
     }
 
-    if (RTL_UI()) {
+    if (RTL_UI())
+    {
         uFlags |= TPM_LAYOUTRTL;
     }
-    cmd = NtUserTrackPopupMenuEx(GetSubMenu(hMenu, 0),  uFlags, x, y, hwnd, NULL);
+    cmd = NtUserTrackPopupMenuEx(GetSubMenu(hMenu, 0), uFlags, x, y, hwnd, NULL);
 
     // Free our menu
     NtUserDestroyMenu(hMenu);
 
-    if (cmd && (cmd != -1)) {
-        if (ped->pLpkEditCallout && cmd) {
+    if (cmd && (cmd != -1))
+    {
+        if (ped->pLpkEditCallout && cmd)
+        {
             ped->pLpkEditCallout->EditProcessMenu(ped, cmd);
         }
-        if (!state.fIME || !ECDoIMEMenuCommand(ped, cmd, hwnd)) {
+        if (!state.fIME || !ECDoIMEMenuCommand(ped, cmd, hwnd))
+        {
             // if cmd is not IME specific menu, send it.
-            SendMessage(hwnd, cmd, 0, (cmd == EM_SETSEL) ? 0xFFFFFFFF : 0L );
+            SendMessage(hwnd, cmd, 0, (cmd == EM_SETSEL) ? 0xFFFFFFFF : 0L);
         }
     }
 }
-
 
 
 /***************************************************************************\
@@ -711,15 +753,15 @@ void  ECMenu(
 *  Clears selected text.  Does NOT _send_ a fake char backspace.
 *
 \***************************************************************************/
-void   ECClearText(PED ped) {
-    if (!ped->fReadOnly &&
-        (ped->ichMinSel < ped->ichMaxSel)) {
+void ECClearText(PED ped)
+{
+    if (!ped->fReadOnly && (ped->ichMinSel < ped->ichMaxSel))
+    {
         if (ped->fSingle)
-            SLEditWndProc(ped->hwnd, ped, WM_CHAR, VK_BACK, 0L );
+            SLEditWndProc(ped->hwnd, ped, WM_CHAR, VK_BACK, 0L);
         else
-            MLEditWndProc(ped->hwnd, ped, WM_CHAR, VK_BACK, 0L );
+            MLEditWndProc(ped->hwnd, ped, WM_CHAR, VK_BACK, 0L);
     }
-
 }
 
 
@@ -731,12 +773,12 @@ void   ECClearText(PED ped) {
 *  or if nothing is selected we delete (clear) the left character.
 *
 \***************************************************************************/
-void   ECCutText(PED ped) {
+void ECCutText(PED ped)
+{
     // Cut selection--IE, remove and copy to clipboard, or if no selection,
     // delete (clear) character left.
-    if (!ped->fReadOnly &&
-        (ped->ichMinSel < ped->ichMaxSel) &&
-        SendMessage(ped->hwnd, WM_COPY, 0, 0L)) {
+    if (!ped->fReadOnly && (ped->ichMinSel < ped->ichMaxSel) && SendMessage(ped->hwnd, WM_COPY, 0, 0L))
+    {
         // If copy was successful, delete the copied text by sending a
         // backspace message which will redraw the text and take care of
         // notifying the parent of changes.
@@ -752,17 +794,20 @@ void   ECCutText(PED ped) {
 *  VK_SHIFT.
 *
 \***************************************************************************/
-int   ECGetModKeys(int keyMods) {
+int ECGetModKeys(int keyMods)
+{
     int scState;
 
     scState = 0;
 
-    if (!keyMods) {
+    if (!keyMods)
+    {
         if (GetKeyState(VK_CONTROL) < 0)
             scState |= CTRLDOWN;
         if (GetKeyState(VK_SHIFT) < 0)
             scState |= SHFTDOWN;
-    } else if (keyMods != NOMODIFY)
+    }
+    else if (keyMods != NOMODIFY)
         scState = keyMods;
 
     return scState;
@@ -789,50 +834,39 @@ int   ECGetModKeys(int keyMods) {
 *  glyph reordering.
 *
 \***************************************************************************/
-UINT ECTabTheTextOut(
-    HDC hdc,
-    int xClipStPos,
-    int xClipEndPos,
-    int xStart,
-    int y,
-    LPSTR lpstring,
-    int nCount,
-    ICH ichString,
-    PED ped,
-    int iTabOrigin,
-    BOOL fDraw,
-    LPSTRIPINFO NegCInfoForStrip)
+UINT ECTabTheTextOut(HDC hdc, int xClipStPos, int xClipEndPos, int xStart, int y, LPSTR lpstring, int nCount,
+                     ICH ichString, PED ped, int iTabOrigin, BOOL fDraw, LPSTRIPINFO NegCInfoForStrip)
 {
-    int     nTabPositions;         // Count of tabstops in tabstop array.
-    LPINT   lpintTabStopPositions; // Tab stop positions in pixels.
+    int nTabPositions;           // Count of tabstops in tabstop array.
+    LPINT lpintTabStopPositions; // Tab stop positions in pixels.
 
-    int     cch;
-    UINT    textextent;
-    int     xEnd;
-    int     pixeltabstop = 0;
-    int     i;
-    int     cxCharWidth;
-    RECT    rc;
-    BOOL    fOpaque;
-    BOOL    fFirstPass = TRUE;
-    PINT    charWidthBuff;
+    int cch;
+    UINT textextent;
+    int xEnd;
+    int pixeltabstop = 0;
+    int i;
+    int cxCharWidth;
+    RECT rc;
+    BOOL fOpaque;
+    BOOL fFirstPass = TRUE;
+    PINT charWidthBuff;
 
-    int     iTabLength;
-    int     nConsecutiveTabs;
-    int     xStripStPos;
-    int     xStripEndPos;
-    int     xEndOfStrip;
-    STRIPINFO  RedrawStripInfo;
-    STRIPINFO  NegAInfo;
-    LPSTR    lpTab;
-    LPWSTR   lpwTab;
-    UINT     wNegCwidth, wNegAwidth;
-    int      xRightmostPoint = xClipStPos;
-    int      xTabStartPos;
-    int      iSavedBkMode = 0;
-    WCHAR    wchar;
-    SIZE     size;
-    ABC   abc ;
+    int iTabLength;
+    int nConsecutiveTabs;
+    int xStripStPos;
+    int xStripEndPos;
+    int xEndOfStrip;
+    STRIPINFO RedrawStripInfo;
+    STRIPINFO NegAInfo;
+    LPSTR lpTab;
+    LPWSTR lpwTab;
+    UINT wNegCwidth, wNegAwidth;
+    int xRightmostPoint = xClipStPos;
+    int xTabStartPos;
+    int iSavedBkMode = 0;
+    WCHAR wchar;
+    SIZE size;
+    ABC abc;
 
     // Algorithm: Draw the strip opaquely first. If a tab length is so
     // small that the portions of text on either side of a tab overlap with
@@ -844,7 +878,8 @@ UINT ECTabTheTextOut(
     // then we "merge" all such portions into a single strip and redraw that
     // strip at the end.
 
-    if (fDraw) {
+    if (fDraw)
+    {
         // To begin with, let us assume that there is no Negative C for this
         // strip and initialize the Negative Width Info structure.
         NegCInfoForStrip->nCount = 0;
@@ -856,7 +891,8 @@ UINT ECTabTheTextOut(
         fOpaque = (GetBkMode(hdc) == OPAQUE) || (fDraw == ECT_SELECTED);
     }
 #if DBG
-    else {
+    else
+    {
         //
         // Both MLGetLineWidth() and ECCchInWidth() should be clipping
         // nCount to avoid overflow.
@@ -867,18 +903,17 @@ UINT ECTabTheTextOut(
 #endif
 
     // Let us define the Clip rectangle.
-    rc.left   = xClipStPos;
-    rc.right  = xClipEndPos;
-    rc.top    = y;
+    rc.left = xClipStPos;
+    rc.right = xClipEndPos;
+    rc.top = y;
     rc.bottom = y + ped->lineHeight;
 
     // Check if anything needs to be drawn.
-    if (!lpstring || !nCount) {
+    if (!lpstring || !nCount)
+    {
         if (fDraw)
-            ExtTextOutW(hdc, xClipStPos, y,
-                  (fOpaque ? ETO_OPAQUE | ETO_CLIPPED : ETO_CLIPPED),
-                  &rc, L"", 0, 0L);
-        return(0L);
+            ExtTextOutW(hdc, xClipStPos, y, (fOpaque ? ETO_OPAQUE | ETO_CLIPPED : ETO_CLIPPED), &rc, L"", 0, 0L);
+        return (0L);
     }
 
     //
@@ -886,19 +921,23 @@ UINT ECTabTheTextOut(
     //
     xEnd = xStart;
 
-    cxCharWidth  = ped->aveCharWidth;
+    cxCharWidth = ped->aveCharWidth;
 
     nTabPositions = (ped->pTabStops ? *(ped->pTabStops) : 0);
-    if (ped->pTabStops) {
-        lpintTabStopPositions = (LPINT)(ped->pTabStops+1);
-        if (nTabPositions == 1) {
+    if (ped->pTabStops)
+    {
+        lpintTabStopPositions = (LPINT)(ped->pTabStops + 1);
+        if (nTabPositions == 1)
+        {
             pixeltabstop = lpintTabStopPositions[0];
             if (!pixeltabstop)
                 pixeltabstop = 1;
         }
-    } else {
+    }
+    else
+    {
         lpintTabStopPositions = NULL;
-        pixeltabstop = 8*cxCharWidth;
+        pixeltabstop = 8 * cxCharWidth;
     }
 
     // The first time we will draw the strip Opaquely. If some portions need
@@ -906,7 +945,8 @@ UINT ECTabTheTextOut(
     // jump to this location to redraw those portions.
 
 RedrawStrip:
-    while (nCount) {
+    while (nCount)
+    {
         wNegCwidth = ped->wMaxNegC;
 
         // Search for the first TAB in this strip; also compute the extent
@@ -914,64 +954,77 @@ RedrawStrip:
         //
         // Note - If the langpack is loaded, there will be no charWidthBuffer.
         //
-        if (ped->charWidthBuffer) {     // Do we have a character width buffer?
+        if (ped->charWidthBuffer)
+        { // Do we have a character width buffer?
             textextent = 0;
             cch = nCount;
 
-            if (ped->fTrueType) {     // If so, does it have ABC widths?
+            if (ped->fTrueType)
+            { // If so, does it have ABC widths?
 
                 UINT iRightmostPoint = 0;
                 UINT wCharIndex;
                 PABC pABCwidthBuff;
 
-                pABCwidthBuff = (PABC) ped->charWidthBuffer;
+                pABCwidthBuff = (PABC)ped->charWidthBuffer;
 
-                if ( ped->fAnsi ) {
-                    for (i = 0; i < nCount; i++) {
+                if (ped->fAnsi)
+                {
+                    for (i = 0; i < nCount; i++)
+                    {
 
-                        if (lpstring[i] == VK_TAB) {
+                        if (lpstring[i] == VK_TAB)
+                        {
                             cch = i;
                             break;
                         }
 
-                        wCharIndex = (UINT)(((unsigned char  *)lpstring)[i]);
-                        if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH) {
-                            textextent += (UINT)(pABCwidthBuff[wCharIndex].abcA +
-                                pABCwidthBuff[wCharIndex].abcB);
-                        } else {    // not in cache, will ask driver
+                        wCharIndex = (UINT)(((unsigned char *)lpstring)[i]);
+                        if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH)
+                        {
+                            textextent += (UINT)(pABCwidthBuff[wCharIndex].abcA + pABCwidthBuff[wCharIndex].abcB);
+                        }
+                        else
+                        { // not in cache, will ask driver
                             GetCharABCWidthsA(hdc, wCharIndex, wCharIndex, &abc);
-                            textextent += abc.abcA + abc.abcB ;
+                            textextent += abc.abcA + abc.abcB;
                         }
 
                         if (textextent > iRightmostPoint)
                             iRightmostPoint = textextent;
 
-                        if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH) {
+                        if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH)
+                        {
                             textextent += pABCwidthBuff[wCharIndex].abcC;
-                        } else {    // not in cache
+                        }
+                        else
+                        { // not in cache
                             textextent += abc.abcC;
                         }
 
                         if (textextent > iRightmostPoint)
                             iRightmostPoint = textextent;
                     }
+                }
+                else
+                { // Unicode
+                    for (i = 0; i < nCount; i++)
+                    {
+                        WCHAR UNALIGNED *lpwstring = (WCHAR UNALIGNED *)lpstring;
 
-                } else {   // Unicode
-                    for (i = 0; i < nCount; i++) {
-                        WCHAR UNALIGNED * lpwstring = (WCHAR UNALIGNED *)lpstring;
-
-                        if (lpwstring[i] == VK_TAB) {
+                        if (lpwstring[i] == VK_TAB)
+                        {
                             cch = i;
                             break;
                         }
 
-                        wCharIndex = lpwstring[i] ;
-                        if ( wCharIndex < CHAR_WIDTH_BUFFER_LENGTH )
-                            textextent += pABCwidthBuff[wCharIndex].abcA +
-                                          pABCwidthBuff[wCharIndex].abcB;
-                        else {
-                            GetCharABCWidthsW(hdc, wCharIndex, wCharIndex, &abc) ;
-                            textextent += abc.abcA + abc.abcB ;
+                        wCharIndex = lpwstring[i];
+                        if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH)
+                            textextent += pABCwidthBuff[wCharIndex].abcA + pABCwidthBuff[wCharIndex].abcB;
+                        else
+                        {
+                            GetCharABCWidthsW(hdc, wCharIndex, wCharIndex, &abc);
+                            textextent += abc.abcA + abc.abcB;
                         }
 
                         /*
@@ -981,10 +1034,10 @@ RedrawStrip:
                         if (textextent > iRightmostPoint)
                             iRightmostPoint = textextent;
 
-                        if ( wCharIndex < CHAR_WIDTH_BUFFER_LENGTH )
+                        if (wCharIndex < CHAR_WIDTH_BUFFER_LENGTH)
                             textextent += pABCwidthBuff[wCharIndex].abcC;
                         else
-                            textextent += abc.abcC ;
+                            textextent += abc.abcC;
 
                         if (textextent > iRightmostPoint)
                             iRightmostPoint = textextent;
@@ -992,16 +1045,21 @@ RedrawStrip:
                 }
 
                 wNegCwidth = (int)(iRightmostPoint - textextent);
-            } else {   // !ped->fTrueType
+            }
+            else
+            { // !ped->fTrueType
                 // No! This is not a TrueType font; So, we have only character
                 // width info in this buffer.
 
                 charWidthBuff = ped->charWidthBuffer;
 
-                if ( ped->fAnsi ) {
+                if (ped->fAnsi)
+                {
                     // Initially assume no tabs exist in the text so cch=nCount.
-                    for (i = 0; i < nCount; i++) {
-                        if (lpstring[i] == VK_TAB) {
+                    for (i = 0; i < nCount; i++)
+                    {
+                        if (lpstring[i] == VK_TAB)
+                        {
                             cch = i;
                             break;
                         }
@@ -1009,32 +1067,41 @@ RedrawStrip:
                         //
                         // Call GetTextExtentPoint for dbcs/hankaku characters
                         //
-                        if (ped->fDBCS && (i+1 < nCount)
-                                && ECIsDBCSLeadByte(ped,lpstring[i])) {
+                        if (ped->fDBCS && (i + 1 < nCount) && ECIsDBCSLeadByte(ped, lpstring[i]))
+                        {
                             GetTextExtentPointA(hdc, &lpstring[i], 2, &size);
                             textextent += size.cx;
                             i++;
-                        } else if ((UCHAR)lpstring[i] >= CHAR_WIDTH_BUFFER_LENGTH) {
+                        }
+                        else if ((UCHAR)lpstring[i] >= CHAR_WIDTH_BUFFER_LENGTH)
+                        {
                             // Skip this GetExtentPoint call for non hankaku code points
                             // Or if the character is in the width cache.
                             GetTextExtentPointA(hdc, &lpstring[i], 1, &size);
                             textextent += size.cx;
-                        } else {
-                            textextent += (UINT)(charWidthBuff[(UINT)(((unsigned char  *)lpstring)[i])]);
+                        }
+                        else
+                        {
+                            textextent += (UINT)(charWidthBuff[(UINT)(((unsigned char *)lpstring)[i])]);
                         }
                     }
-                } else {
-                    LPWSTR lpwstring = (LPWSTR) lpstring ;
-                    INT    cchUStart;  // start of unicode character count
+                }
+                else
+                {
+                    LPWSTR lpwstring = (LPWSTR)lpstring;
+                    INT cchUStart; // start of unicode character count
 
-                    for (i = 0; i < nCount; i++) {
-                        if (lpwstring[i] == VK_TAB) {
+                    for (i = 0; i < nCount; i++)
+                    {
+                        if (lpwstring[i] == VK_TAB)
+                        {
                             cch = i;
                             break;
                         }
 
                         wchar = lpwstring[i];
-                        if (wchar >= CHAR_WIDTH_BUFFER_LENGTH) {
+                        if (wchar >= CHAR_WIDTH_BUFFER_LENGTH)
+                        {
 
                             /*
                              * We have a Unicode character that is not in our
@@ -1043,17 +1110,17 @@ RedrawStrip:
                              * string.
                              */
                             cchUStart = i;
-                            while (wchar >= CHAR_WIDTH_BUFFER_LENGTH &&
-                                    wchar != VK_TAB && i < nCount) {
+                            while (wchar >= CHAR_WIDTH_BUFFER_LENGTH && wchar != VK_TAB && i < nCount)
+                            {
                                 wchar = lpwstring[++i];
                             }
 
-                            GetTextExtentPointW(hdc, (LPWSTR)lpwstring + cchUStart,
-                                    i-cchUStart, &size);
+                            GetTextExtentPointW(hdc, (LPWSTR)lpwstring + cchUStart, i - cchUStart, &size);
                             textextent += size.cx;
 
 
-                            if (wchar == VK_TAB || i >= nCount) {
+                            if (wchar == VK_TAB || i >= nCount)
+                            {
                                 cch = i;
                                 break;
                             }
@@ -1070,16 +1137,21 @@ RedrawStrip:
             } // fTrueType else.
 
             nCount -= cch;
-        } else {  // If we don't have a buffer that contains the width info.
+        }
+        else
+        { // If we don't have a buffer that contains the width info.
             /*
              * Gotta call the driver to do our text extent.
              */
 
-            if ( ped->fAnsi ) {
+            if (ped->fAnsi)
+            {
                 cch = (int)ECFindTabA(lpstring, nCount);
-                GetTextExtentPointA(hdc, lpstring, cch, &size) ;
-            } else {
-                cch = (int)ECFindTabW((LPWSTR) lpstring, nCount);
+                GetTextExtentPointA(hdc, lpstring, cch, &size);
+            }
+            else
+            {
+                cch = (int)ECFindTabW((LPWSTR)lpstring, nCount);
                 GetTextExtentPointW(hdc, (LPWSTR)lpstring, cch, &size);
             }
             nCount -= cch;
@@ -1098,113 +1170,124 @@ RedrawStrip:
         xStripEndPos = xEnd;
 
         // We will consider the negative widths only if when we draw opaquely.
-        if (fFirstPass && fDraw) {
+        if (fFirstPass && fDraw)
+        {
             xRightmostPoint = max(xStripEndPos + (int)wNegCwidth, xRightmostPoint);
 
             // Check if this strip peeps beyond the clip region.
-            if (xRightmostPoint > xClipEndPos) {
-                if (!NegCInfoForStrip->nCount) {
+            if (xRightmostPoint > xClipEndPos)
+            {
+                if (!NegCInfoForStrip->nCount)
+                {
                     NegCInfoForStrip->lpString = lpstring;
                     NegCInfoForStrip->ichString = ichString;
-                    NegCInfoForStrip->nCount = nCount+cch;
+                    NegCInfoForStrip->nCount = nCount + cch;
                     NegCInfoForStrip->XStartPos = xStripStPos;
                 }
             }
-        }  /* if (fFirstPass && fDraw) */
+        } /* if (fFirstPass && fDraw) */
 
-        if ( ped->fAnsi )
+        if (ped->fAnsi)
             lpTab = lpstring + cch; // Possibly Points to a tab character.
         else
-            lpwTab = ((LPWSTR)lpstring) + cch ;
+            lpwTab = ((LPWSTR)lpstring) + cch;
 
         // we must consider all the consecutive tabs and calculate the
         // the begining of next strip.
         nConsecutiveTabs = 0;
-        while (nCount &&
-               (ped->fAnsi ? (*lpTab == VK_TAB) : (*lpwTab == VK_TAB))) {
+        while (nCount && (ped->fAnsi ? (*lpTab == VK_TAB) : (*lpwTab == VK_TAB)))
+        {
             // Find the next tab position and update the x value.
             xTabStartPos = xEnd;
             if (pixeltabstop)
-                xEnd = (((xEnd-iTabOrigin)/pixeltabstop)*pixeltabstop) +
-                    pixeltabstop + iTabOrigin;
-            else {
-                for (i = 0; i < nTabPositions; i++) {
-                    if (xEnd < (lpintTabStopPositions[i] + iTabOrigin)) {
+                xEnd = (((xEnd - iTabOrigin) / pixeltabstop) * pixeltabstop) + pixeltabstop + iTabOrigin;
+            else
+            {
+                for (i = 0; i < nTabPositions; i++)
+                {
+                    if (xEnd < (lpintTabStopPositions[i] + iTabOrigin))
+                    {
                         xEnd = (lpintTabStopPositions[i] + iTabOrigin);
                         break;
                     }
-                 }
+                }
 
                 // Check if all the tabstops set are exhausted; Then start using
                 // default tab stop positions.
-                if (i == nTabPositions) {
-                    pixeltabstop = 8*cxCharWidth;
-                    xEnd = ((xEnd - iTabOrigin)/pixeltabstop)*pixeltabstop +
-                        pixeltabstop + iTabOrigin;
+                if (i == nTabPositions)
+                {
+                    pixeltabstop = 8 * cxCharWidth;
+                    xEnd = ((xEnd - iTabOrigin) / pixeltabstop) * pixeltabstop + pixeltabstop + iTabOrigin;
                 }
             }
 
-            if (fFirstPass && fDraw) {
+            if (fFirstPass && fDraw)
+            {
                 xRightmostPoint = max(xEnd, xRightmostPoint);
 
                 /* Check if this strip peeps beyond the clip region */
-                if (xRightmostPoint > xClipEndPos) {
-                    if (!NegCInfoForStrip->nCount) {
+                if (xRightmostPoint > xClipEndPos)
+                {
+                    if (!NegCInfoForStrip->nCount)
+                    {
                         NegCInfoForStrip->ichString = ichString + cch + nConsecutiveTabs;
                         NegCInfoForStrip->nCount = nCount;
-                        NegCInfoForStrip->lpString = (ped->fAnsi ?
-                                                        lpTab : (LPSTR) lpwTab);
+                        NegCInfoForStrip->lpString = (ped->fAnsi ? lpTab : (LPSTR)lpwTab);
                         NegCInfoForStrip->XStartPos = xTabStartPos;
                     }
                 }
-            }   /* if(fFirstPass) */
+            } /* if(fFirstPass) */
 
             nConsecutiveTabs++;
             nCount--;
-            ped->fAnsi ? lpTab++ : (LPSTR) (lpwTab++) ;  // Move to the next character.
-        }  // while(*lpTab == TAB) //
+            ped->fAnsi ? lpTab++ : (LPSTR)(lpwTab++); // Move to the next character.
+        } // while(*lpTab == TAB) //
 
-        if (fDraw) {
-            if (fFirstPass) {
+        if (fDraw)
+        {
+            if (fFirstPass)
+            {
                 // Is anything remaining to be drawn in this strip?
                 if (!nCount)
-                    rc.right = xEnd;      // No! We are done.
-                else {
+                    rc.right = xEnd; // No! We are done.
+                else
+                {
                     // "x" is the effective starting position of next strip.
                     iTabLength = xEnd - xStripEndPos;
 
                     // Check if there is a possibility of this tab length being too small
                     // compared to the negative A and C widths if any.
-                    if ((wNegCwidth + (wNegAwidth = ped->wMaxNegA)) > (UINT)iTabLength) {
+                    if ((wNegCwidth + (wNegAwidth = ped->wMaxNegA)) > (UINT)iTabLength)
+                    {
                         // Unfortunately, there is a possiblity of an overlap.
                         // Let us find out the actual NegA for the next strip.
-                        wNegAwidth = GetActualNegA(
-                              hdc,
-                              ped,
-                              xEnd,
-                              lpstring + (cch + nConsecutiveTabs)*ped->cbChar,
-                              ichString + cch + nConsecutiveTabs,
-                              nCount,
-                              &NegAInfo);
+                        wNegAwidth = GetActualNegA(hdc, ped, xEnd, lpstring + (cch + nConsecutiveTabs) * ped->cbChar,
+                                                   ichString + cch + nConsecutiveTabs, nCount, &NegAInfo);
                     }
 
                     // Check if they actually overlap //
-                    if ((wNegCwidth + wNegAwidth) <= (UINT)iTabLength) {
+                    if ((wNegCwidth + wNegAwidth) <= (UINT)iTabLength)
+                    {
                         // No overlap between the strips. This is the ideal situation.
                         rc.right = xEnd - wNegAwidth;
-                    } else {
+                    }
+                    else
+                    {
                         // Yes! They overlap.
                         rc.right = xEnd;
 
                         // See if negative C width is too large compared to tab length.
-                        if (wNegCwidth > (UINT)iTabLength) {
+                        if (wNegCwidth > (UINT)iTabLength)
+                        {
                             // Must redraw transparently a part of the current strip later.
-                            if (RedrawStripInfo.nCount) {
+                            if (RedrawStripInfo.nCount)
+                            {
                                 // A previous strip also needs to be redrawn; So, merge this
                                 // strip to that strip.
-                                RedrawStripInfo.nCount = (ichString -
-                                    RedrawStripInfo.ichString) + cch;
-                            } else {
+                                RedrawStripInfo.nCount = (ichString - RedrawStripInfo.ichString) + cch;
+                            }
+                            else
+                            {
                                 RedrawStripInfo.nCount = cch;
                                 RedrawStripInfo.lpString = lpstring;
                                 RedrawStripInfo.ichString = ichString;
@@ -1212,22 +1295,27 @@ RedrawStrip:
                             }
                         }
 
-                        if (wNegAwidth) {
+                        if (wNegAwidth)
+                        {
                             // Must redraw transparently the first part of the next strip later.
-                            if (RedrawStripInfo.nCount) {
+                            if (RedrawStripInfo.nCount)
+                            {
                                 // A previous strip also needs to be redrawn; So, merge this
                                 // strip to that strip.
-                                RedrawStripInfo.nCount = (NegAInfo.ichString - RedrawStripInfo.ichString) +
-                                       NegAInfo.nCount;
-                            } else
+                                RedrawStripInfo.nCount =
+                                    (NegAInfo.ichString - RedrawStripInfo.ichString) + NegAInfo.nCount;
+                            }
+                            else
                                 RedrawStripInfo = NegAInfo;
                         }
                     }
                 } // else (!nCount) //
-            }  // if (fFirstPass) //
+            } // if (fFirstPass) //
 
-            if (rc.left < xClipEndPos) {
-                if (fFirstPass) {
+            if (rc.left < xClipEndPos)
+            {
+                if (fFirstPass)
+                {
                     // If this is the end of the strip, then complete the rectangle.
                     if ((!nCount) && (xClipEndPos == MAXCLIPENDPOS))
                         rc.right = max(rc.right, xClipEndPos);
@@ -1237,34 +1325,30 @@ RedrawStrip:
 
                 // Draw the current strip.
                 if (rc.left < rc.right)
-                    if ( ped->fAnsi )
-                        ExtTextOutA(hdc,
-                                    xStripStPos,
-                                    y,
-                                    (fFirstPass && fOpaque ? (ETO_OPAQUE | ETO_CLIPPED) : ETO_CLIPPED),
-                                    (LPRECT)&rc, lpstring, cch, 0L);
+                    if (ped->fAnsi)
+                        ExtTextOutA(hdc, xStripStPos, y,
+                                    (fFirstPass && fOpaque ? (ETO_OPAQUE | ETO_CLIPPED) : ETO_CLIPPED), (LPRECT)&rc,
+                                    lpstring, cch, 0L);
                     else
-                        ExtTextOutW(hdc,
-                                    xStripStPos,
-                                    y,
-                                    (fFirstPass && fOpaque ? (ETO_OPAQUE | ETO_CLIPPED) : ETO_CLIPPED),
-                                    (LPRECT)&rc, (LPWSTR)lpstring, cch, 0L);
-
+                        ExtTextOutW(hdc, xStripStPos, y,
+                                    (fFirstPass && fOpaque ? (ETO_OPAQUE | ETO_CLIPPED) : ETO_CLIPPED), (LPRECT)&rc,
+                                    (LPWSTR)lpstring, cch, 0L);
             }
 
             if (fFirstPass)
                 rc.left = max(rc.right, xClipStPos);
-            ichString += (cch+nConsecutiveTabs);
-        }  // if (fDraw) //
+            ichString += (cch + nConsecutiveTabs);
+        } // if (fDraw) //
 
         // Skip over the tab and the characters we just drew.
         lpstring += (cch + nConsecutiveTabs) * ped->cbChar;
-    }  // while (nCount) //
+    } // while (nCount) //
 
     xEndOfStrip = xEnd;
 
     // check if we need to draw some portions transparently.
-    if (fFirstPass && fDraw && RedrawStripInfo.nCount) {
+    if (fFirstPass && fDraw && RedrawStripInfo.nCount)
+    {
         iSavedBkMode = SetBkMode(hdc, TRANSPARENT);
         fFirstPass = FALSE;
 
@@ -1274,15 +1358,14 @@ RedrawStrip:
         lpstring = RedrawStripInfo.lpString;
         ichString = RedrawStripInfo.ichString;
         xEnd = RedrawStripInfo.XStartPos;
-        goto RedrawStrip;  // Redraw Transparently.
+        goto RedrawStrip; // Redraw Transparently.
     }
 
-    if (iSavedBkMode)             // Did we change the Bk mode?
-        SetBkMode(hdc, iSavedBkMode);  // Then, let us set it back!
+    if (iSavedBkMode)                 // Did we change the Bk mode?
+        SetBkMode(hdc, iSavedBkMode); // Then, let us set it back!
 
-    return((UINT)(xEndOfStrip - xStart));
+    return ((UINT)(xEndOfStrip - xStart));
 }
-
 
 
 /***************************************************************************\
@@ -1300,13 +1383,7 @@ RedrawStrip:
 * NOTE: ECCchInWidth is not called if the language pack is loaded.
 \***************************************************************************/
 
-ICH ECCchInWidth(
-    PED ped,
-    HDC hdc,
-    LPSTR lpText,
-    ICH cch,
-    int width,
-    BOOL fForward)
+ICH ECCchInWidth(PED ped, HDC hdc, LPSTR lpText, ICH cch, int width, BOOL fForward)
 {
     int stringExtent;
     int cchhigh;
@@ -1325,14 +1402,16 @@ ICH ECCchInWidth(
     //
     // Change optimize condition for fixed pitch font
     //
-    if (ped->fNonPropFont && ped->fSingle && !ped->fDBCS) {
-        return (ECAdjustIch( ped, lpText, umin(width/ped->aveCharWidth,(int)cch)));
+    if (ped->fNonPropFont && ped->fSingle && !ped->fDBCS)
+    {
+        return (ECAdjustIch(ped, lpText, umin(width / ped->aveCharWidth, (int)cch)));
     }
 
     /*
      * Check if password hidden chars are being used.
      */
-    if (ped->charPasswordChar) {
+    if (ped->charPasswordChar)
+    {
         return (umin(width / ped->cPasswordCharWidth, (int)cch));
     }
 
@@ -1342,7 +1421,8 @@ ICH ECCchInWidth(
     cch = umin(MAXLINELENGTH, cch);
 
     cchhigh = cch + 1;
-    while (cchlow < cchhigh - 1) {
+    while (cchlow < cchhigh - 1)
+    {
         cchnew = umax((cchhigh - cchlow) / 2, 1) + cchlow;
 
         lpStart = lpText;
@@ -1353,31 +1433,34 @@ ICH ECCchInWidth(
          * string before calculating the text extent.
          */
         if (!fForward)
-            lpStart += (cch - cchnew)*ped->cbChar;
+            lpStart += (cch - cchnew) * ped->cbChar;
 
-        if (ped->fSingle) {
+        if (ped->fSingle)
+        {
             if (ped->fAnsi)
                 GetTextExtentPointA(hdc, (LPSTR)lpStart, cchnew, &size);
             else
                 GetTextExtentPointW(hdc, (LPWSTR)lpStart, cchnew, &size);
             stringExtent = size.cx;
-        } else {
-            stringExtent = ECTabTheTextOut(hdc, 0, 0, 0, 0,
-                lpStart,
-                cchnew, 0,
-                ped, 0, ECT_CALC, NULL );
+        }
+        else
+        {
+            stringExtent = ECTabTheTextOut(hdc, 0, 0, 0, 0, lpStart, cchnew, 0, ped, 0, ECT_CALC, NULL);
         }
 
-        if (stringExtent > width) {
+        if (stringExtent > width)
+        {
             cchhigh = cchnew;
-        } else {
+        }
+        else
+        {
             cchlow = cchnew;
         }
     }
     //
     // Call ECAdjustIch ( generic case )
     //
-    cchlow = ECAdjustIch( ped, lpText, cchlow );
+    cchlow = ECAdjustIch(ped, lpText, cchlow);
     return (cchlow);
 }
 
@@ -1390,16 +1473,15 @@ ICH ECCchInWidth(
 * History:
 \***************************************************************************/
 
-ICH ECFindTabA(
-    LPSTR lpstr,
-    ICH cch)
+ICH ECFindTabA(LPSTR lpstr, ICH cch)
 {
     LPSTR copylpstr = lpstr;
 
     if (!cch)
         return 0;
 
-    while (*lpstr != VK_TAB) {
+    while (*lpstr != VK_TAB)
+    {
         lpstr++;
         if (--cch == 0)
             break;
@@ -1407,16 +1489,15 @@ ICH ECFindTabA(
     return ((ICH)(lpstr - copylpstr));
 }
 
-ICH ECFindTabW(
-    LPWSTR lpstr,
-    ICH cch)
+ICH ECFindTabW(LPWSTR lpstr, ICH cch)
 {
     LPWSTR copylpstr = lpstr;
 
     if (!cch)
         return 0;
 
-    while (*lpstr != VK_TAB) {
+    while (*lpstr != VK_TAB)
+    {
         lpstr++;
         if (--cch == 0)
             break;
@@ -1433,18 +1514,21 @@ ICH ECFindTabW(
 \***************************************************************************/
 HBRUSH ECGetBrush(PED ped, HDC hdc)
 {
-    HBRUSH  hbr;
-    BOOL    f40Compat;
+    HBRUSH hbr;
+    BOOL f40Compat;
 
     f40Compat = (GETAPPVER() >= VER40);
 
     // Get background brush
-    if ((ped->fReadOnly || ped->fDisabled) && f40Compat) {
+    if ((ped->fReadOnly || ped->fDisabled) && f40Compat)
+    {
         hbr = ECGetControlBrush(ped, hdc, WM_CTLCOLORSTATIC);
-    } else
+    }
+    else
         hbr = ECGetControlBrush(ped, hdc, WM_CTLCOLOREDIT);
 
-    if (ped->fDisabled && (ped->fSingle || f40Compat)) {
+    if (ped->fDisabled && (ped->fSingle || f40Compat))
+    {
         DWORD rgb;
 
         // Change text color
@@ -1452,7 +1536,7 @@ HBRUSH ECGetBrush(PED ped, HDC hdc)
         if (rgb != GetBkColor(hdc))
             SetTextColor(hdc, rgb);
     }
-    return(hbr);
+    return (hbr);
 }
 
 
@@ -1465,12 +1549,7 @@ HBRUSH ECGetBrush(PED ped, HDC hdc)
 * 02-19-92 JimA Ported from Win31 sources.
 \***************************************************************************/
 
-void NextWordCallBack(
-    PED ped,
-    ICH ichStart,
-    BOOL fLeft,
-    ICH  *pichMin,
-    ICH  *pichMax )
+void NextWordCallBack(PED ped, ICH ichStart, BOOL fLeft, ICH *pichMin, ICH *pichMax)
 {
     ICH ichMinSel;
     ICH ichMaxSel;
@@ -1478,25 +1557,28 @@ void NextWordCallBack(
 
     pText = ECLock(ped);
 
-    if (fLeft || (!(BOOL)CALLWORDBREAKPROC(ped->lpfnNextWord, (LPSTR)pText,
-            ichStart, ped->cch, WB_ISDELIMITER) &&
-            (ped->fAnsi ? (*(pText + ichStart) != VK_RETURN) : (*((LPWSTR)pText + ichStart) != VK_RETURN))
-        ))
+    if (fLeft || (!(BOOL)CALLWORDBREAKPROC(ped->lpfnNextWord, (LPSTR)pText, ichStart, ped->cch, WB_ISDELIMITER) &&
+                  (ped->fAnsi ? (*(pText + ichStart) != VK_RETURN) : (*((LPWSTR)pText + ichStart) != VK_RETURN))))
         ichMinSel = CALLWORDBREAKPROC(*ped->lpfnNextWord, (LPSTR)pText, ichStart, ped->cch, WB_LEFT);
     else
         ichMinSel = CALLWORDBREAKPROC(*ped->lpfnNextWord, (LPSTR)pText, ichStart, ped->cch, WB_RIGHT);
 
     ichMaxSel = min(ichMinSel + 1, ped->cch);
 
-    if (ped->fAnsi) {
-        if (*(pText + ichMinSel) == VK_RETURN) {
-            if (ichMinSel > 0 && *(pText + ichMinSel - 1) == VK_RETURN) {
+    if (ped->fAnsi)
+    {
+        if (*(pText + ichMinSel) == VK_RETURN)
+        {
+            if (ichMinSel > 0 && *(pText + ichMinSel - 1) == VK_RETURN)
+            {
 
                 /*
                  * So that we can treat CRCRLF as one word also.
                  */
                 ichMinSel--;
-            } else if (*(pText+ichMinSel + 1) == VK_RETURN) {
+            }
+            else if (*(pText + ichMinSel + 1) == VK_RETURN)
+            {
 
                 /*
                  * Move MaxSel on to the LF
@@ -1504,15 +1586,21 @@ void NextWordCallBack(
                 ichMaxSel++;
             }
         }
-    } else {
-        if (*((LPWSTR)pText + ichMinSel) == VK_RETURN) {
-            if (ichMinSel > 0 && *((LPWSTR)pText + ichMinSel - 1) == VK_RETURN) {
+    }
+    else
+    {
+        if (*((LPWSTR)pText + ichMinSel) == VK_RETURN)
+        {
+            if (ichMinSel > 0 && *((LPWSTR)pText + ichMinSel - 1) == VK_RETURN)
+            {
 
                 /*
                  * So that we can treat CRCRLF as one word also.
                  */
                 ichMinSel--;
-            } else if (*((LPWSTR)pText+ichMinSel + 1) == VK_RETURN) {
+            }
+            else if (*((LPWSTR)pText + ichMinSel + 1) == VK_RETURN)
+            {
 
                 /*
                  * Move MaxSel on to the LF
@@ -1524,8 +1612,10 @@ void NextWordCallBack(
     ichMaxSel = CALLWORDBREAKPROC(ped->lpfnNextWord, (LPSTR)pText, ichMaxSel, ped->cch, WB_RIGHT);
     ECUnlock(ped);
 
-    if (pichMin)  *pichMin = ichMinSel;
-    if (pichMax)  *pichMax = ichMaxSel;
+    if (pichMin)
+        *pichMin = ichMinSel;
+    if (pichMax)
+        *pichMax = ichMaxSel;
 }
 
 /***************************************************************************\
@@ -1537,15 +1627,10 @@ void NextWordCallBack(
 * 04-22-97 DBrown
 \***************************************************************************/
 
-void NextWordLpkCallBack(
-    PED  ped,
-    ICH  ichStart,
-    BOOL fLeft,
-    ICH *pichMin,
-    ICH *pichMax)
+void NextWordLpkCallBack(PED ped, ICH ichStart, BOOL fLeft, ICH *pichMin, ICH *pichMax)
 {
     PSTR pText = ECLock(ped);
-    HDC  hdc   = ECGetEditDC(ped, TRUE);
+    HDC hdc = ECGetEditDC(ped, TRUE);
 
     ped->pLpkEditCallout->EditNextWord(ped, hdc, pText, ichStart, fLeft, pichMin, pichMax);
 
@@ -1571,37 +1656,39 @@ void NextWordLpkCallBack(
 * History:
 \***************************************************************************/
 
-void ECWord(
-    PED ped,
-    ICH ichStart,
-    BOOL fLeft,
-    ICH  *pichMin,
-    ICH  *pichMax )
+void ECWord(PED ped, ICH ichStart, BOOL fLeft, ICH *pichMin, ICH *pichMax)
 {
     BOOL charLocated = FALSE;
     BOOL spaceLocated = FALSE;
 
-    if ((!ichStart && fLeft) || (ichStart == ped->cch && !fLeft)) {
+    if ((!ichStart && fLeft) || (ichStart == ped->cch && !fLeft))
+    {
 
         /*
          * We are at the beginning of the text (looking left) or we are at end
          * of text (looking right), no word here
          */
-        if (pichMin) *pichMin=0;
-        if (pichMax) *pichMax=0;
+        if (pichMin)
+            *pichMin = 0;
+        if (pichMax)
+            *pichMax = 0;
         return;
     }
 
     /*
      * Don't give out hints about word breaks if password chars are being used,
      */
-    if (ped->charPasswordChar) {
-        if (pichMin) *pichMin=0;
-        if (pichMax) *pichMax=ped->cch;
+    if (ped->charPasswordChar)
+    {
+        if (pichMin)
+            *pichMin = 0;
+        if (pichMax)
+            *pichMax = ped->cch;
         return;
     }
 
-    if (ped->fAnsi) {
+    if (ped->fAnsi)
+    {
         PSTR pText;
         PSTR pWordMinSel;
         PSTR pWordMaxSel;
@@ -1609,12 +1696,14 @@ void ECWord(
 
         UserAssert(ped->cbChar == sizeof(CHAR));
 
-        if (ped->lpfnNextWord) {
+        if (ped->lpfnNextWord)
+        {
             NextWordCallBack(ped, ichStart, fLeft, pichMin, pichMax);
             return;
         }
 
-        if (ped->pLpkEditCallout) {
+        if (ped->pLpkEditCallout)
+        {
             NextWordLpkCallBack(ped, ichStart, fLeft, pichMin, pichMax);
             return;
         }
@@ -1640,7 +1729,8 @@ void ECWord(
          * end of the word and its trailing spaces.
          */
 
-        if (fLeft || !ISDELIMETERA(*pWordMinSel) && *pWordMinSel != 0x0D) {
+        if (fLeft || !ISDELIMETERA(*pWordMinSel) && *pWordMinSel != 0x0D)
+        {
 
             /*
              * If we are moving left or if we are moving right and we are not on a
@@ -1649,13 +1739,14 @@ void ECWord(
              * looking left till we find a character (or if CR we stop), then we
              * continue looking left till we find a space or LF.
              */
-            while (pWordMinSel > pText && ((!ISDELIMETERA(*(pWordMinSel - 1)) &&
-                    *(pWordMinSel - 1) != 0x0A) || !charLocated)) {
+            while (pWordMinSel > pText &&
+                   ((!ISDELIMETERA(*(pWordMinSel - 1)) && *(pWordMinSel - 1) != 0x0A) || !charLocated))
+            {
 
                 /*
                  * Treat double byte character as a word  ( in ansi pWordMinSel loop )
                  */
-                pPrevChar = ECAnsiPrev( ped, pText, pWordMinSel );
+                pPrevChar = ECAnsiPrev(ped, pText, pWordMinSel);
 
                 /*
                 ** we are looking right ( !fLeft ).
@@ -1663,10 +1754,9 @@ void ECWord(
                 ** previous character is a double byte character, we
                 ** are on the beggining of a word.
                 */
-                if ( !fLeft && ( ISDELIMETERA( *pPrevChar )           ||
-                                 *pPrevChar == 0x0A                   ||
-                                 ECIsDBCSLeadByte(ped, *pWordMinSel)  ||
-                                 pWordMinSel - pPrevChar == 2 ) ) {
+                if (!fLeft && (ISDELIMETERA(*pPrevChar) || *pPrevChar == 0x0A || ECIsDBCSLeadByte(ped, *pWordMinSel) ||
+                               pWordMinSel - pPrevChar == 2))
+                {
                     /*
                      * If we are looking for the start of the word right, then we
                      * stop when we have found it. (needed in case charLocated is
@@ -1675,7 +1765,8 @@ void ECWord(
                     break;
                 }
 
-                if ( pWordMinSel - pPrevChar == 2 ) {
+                if (pWordMinSel - pPrevChar == 2)
+                {
                     /*
                     ** previous character is a double byte character.
                     ** if we are in a word ( charLocated == TRUE )
@@ -1683,14 +1774,16 @@ void ECWord(
                     ** if we are not in a word ( charLocated == FALSE )
                     ** the previous character is what we looking for.
                     */
-                    if ( ! charLocated ) {
+                    if (!charLocated)
+                    {
                         pWordMinSel = pPrevChar;
                     }
                     break;
                 }
                 pWordMinSel = pPrevChar;
 
-                if (!ISDELIMETERA(*pWordMinSel) && *pWordMinSel != 0x0A) {
+                if (!ISDELIMETERA(*pWordMinSel) && *pWordMinSel != 0x0A)
+                {
 
                     /*
                      * We have found the last char in the word. Continue looking
@@ -1705,7 +1798,9 @@ void ECWord(
                         break;
                 }
             }
-        } else {
+        }
+        else
+        {
             while ((ISDELIMETERA(*pWordMinSel) || *pWordMinSel == 0x0A) && pWordMinSel < pText + ped->cch)
                 pWordMinSel++;
         }
@@ -1722,9 +1817,10 @@ void ECWord(
         ** then
         **    pWordMaxSel points the beggining of next word.
         */
-        if ( ( pWordMaxSel - pWordMinSel == 2 ) && ! ISDELIMETERA(*pWordMaxSel) )
+        if ((pWordMaxSel - pWordMinSel == 2) && !ISDELIMETERA(*pWordMaxSel))
             goto FastReturnA;
-        if (*pWordMinSel == 0x0D) {
+        if (*pWordMinSel == 0x0D)
+        {
             if (pWordMinSel > pText && *(pWordMinSel - 1) == 0x0D)
                 /* So that we can treat CRCRLF as one word also. */
                 pWordMinSel--;
@@ -1732,7 +1828,6 @@ void ECWord(
                 /* Move MaxSel on to the LF */
                 pWordMaxSel++;
         }
-
 
 
         /*
@@ -1747,7 +1842,8 @@ void ECWord(
          * word. Thus, we break either at a CR or at the first nonspace char after
          * a run of spaces or LFs.
          */
-        while ((pWordMaxSel < pText + ped->cch) && (!spaceLocated || (ISDELIMETERA(*pWordMaxSel)))) {
+        while ((pWordMaxSel < pText + ped->cch) && (!spaceLocated || (ISDELIMETERA(*pWordMaxSel))))
+        {
             if (*pWordMaxSel == 0x0D)
                 break;
 
@@ -1759,7 +1855,7 @@ void ECWord(
             ** we are at the beginning of next word
             ** which is a double byte character.
             */
-            if (ECIsDBCSLeadByte( ped, *pWordMaxSel))
+            if (ECIsDBCSLeadByte(ped, *pWordMaxSel))
                 break;
 
             pWordMaxSel++;
@@ -1774,14 +1870,17 @@ void ECWord(
         /*
          * label for fast return ( for Ansi )
          */
-FastReturnA:
+    FastReturnA:
         ECUnlock(ped);
 
-        if (pichMin)   *pichMin = (ICH)(pWordMinSel - pText);
-        if (pichMax)   *pichMax = (ICH)(pWordMaxSel - pText);
+        if (pichMin)
+            *pichMin = (ICH)(pWordMinSel - pText);
+        if (pichMax)
+            *pichMax = (ICH)(pWordMaxSel - pText);
         return;
-
-    } else {  // !fAnsi
+    }
+    else
+    { // !fAnsi
         LPWSTR pwText;
         LPWSTR pwWordMinSel;
         LPWSTR pwWordMaxSel;
@@ -1791,12 +1890,14 @@ FastReturnA:
 
         UserAssert(ped->cbChar == sizeof(WCHAR));
 
-        if (ped->lpfnNextWord) {
+        if (ped->lpfnNextWord)
+        {
             NextWordCallBack(ped, ichStart, fLeft, pichMin, pichMax);
             return;
         }
 
-        if (ped->pLpkEditCallout) {
+        if (ped->pLpkEditCallout)
+        {
             NextWordLpkCallBack(ped, ichStart, fLeft, pichMin, pichMax);
             return;
         }
@@ -1824,13 +1925,16 @@ FastReturnA:
 
 
         if (fLeft || (!ISDELIMETERW(*pwWordMinSel) && *pwWordMinSel != 0x0D))
-         /* If we are moving left or if we are moving right and we are not on a
+        /* If we are moving left or if we are moving right and we are not on a
           * space or a CR (the start of a word), then we was look left for the
           * start of a word which is either a CR or a character. We do this by
           * looking left till we find a character (or if CR we stop), then we
           * continue looking left till we find a space or LF.
-          */ {
-            while (pwWordMinSel > pwText && ((!ISDELIMETERW(*(pwWordMinSel - 1)) && *(pwWordMinSel - 1) != 0x0A) || !charLocated)) {
+          */
+        {
+            while (pwWordMinSel > pwText &&
+                   ((!ISDELIMETERW(*(pwWordMinSel - 1)) && *(pwWordMinSel - 1) != 0x0A) || !charLocated))
+            {
                 /*
                  * Treat double byte character as a word  ( in unicode pwWordMinSel loop )
                  */
@@ -1842,10 +1946,9 @@ FastReturnA:
                 ** or previous character is a double width character,
                 ** we are on the beggining of a word.
                 */
-                if (!fLeft && (ISDELIMETERW( *pwPrevChar)  ||
-                               *pwPrevChar == 0x0A         ||
-                               UserIsFullWidth(CP_ACP,*pwWordMinSel) ||
-                               UserIsFullWidth(CP_ACP,*pwPrevChar)))    {
+                if (!fLeft && (ISDELIMETERW(*pwPrevChar) || *pwPrevChar == 0x0A ||
+                               UserIsFullWidth(CP_ACP, *pwWordMinSel) || UserIsFullWidth(CP_ACP, *pwPrevChar)))
+                {
                     /*
                      * If we are looking for the start of the word right, then we
                      * stop when we have found it. (needed in case charLocated is
@@ -1854,7 +1957,8 @@ FastReturnA:
                     break;
                 }
 
-                if (UserIsFullWidth(CP_ACP,*pwPrevChar)) {
+                if (UserIsFullWidth(CP_ACP, *pwPrevChar))
+                {
                     /*
                     ** Previous character is a double width character.
                     **
@@ -1863,7 +1967,8 @@ FastReturnA:
                     ** if we are not in a word ( charLocated == FALSE )
                     ** the previous character is what we looking for.
                     */
-                    if ( ! charLocated ) {
+                    if (!charLocated)
+                    {
                         pwWordMinSel = pwPrevChar;
                     }
                     break;
@@ -1871,10 +1976,11 @@ FastReturnA:
                 pwWordMinSel = pwPrevChar;
 
                 if (!ISDELIMETERW(*pwWordMinSel) && *pwWordMinSel != 0x0A)
-                 /*
+                /*
                   * We have found the last char in the word. Continue looking
                   * backwards till we find the first char of the word
-                  */ {
+                  */
+                {
                     charLocated = TRUE;
 
                     /*
@@ -1884,7 +1990,9 @@ FastReturnA:
                         break;
                 }
             }
-        } else {
+        }
+        else
+        {
 
             /*
              * We are moving right and we are in between words so we need to move
@@ -1902,9 +2010,10 @@ FastReturnA:
         ** then
         **    pwWordMaxSel points the beggining of next word.
         */
-        if (UserIsFullWidth(CP_ACP,*pwWordMinSel) && ! ISDELIMETERW(*pwWordMaxSel))
+        if (UserIsFullWidth(CP_ACP, *pwWordMinSel) && !ISDELIMETERW(*pwWordMaxSel))
             goto FastReturnW;
-        if (*pwWordMinSel == 0x0D) {
+        if (*pwWordMinSel == 0x0D)
+        {
             if (pwWordMinSel > pwText && *(pwWordMinSel - 1) == 0x0D)
                 /* So that we can treat CRCRLF as one word also. */
                 pwWordMinSel--;
@@ -1912,7 +2021,6 @@ FastReturnA:
                 /* Move MaxSel on to the LF */
                 pwWordMaxSel++;
         }
-
 
 
         /*
@@ -1927,7 +2035,8 @@ FastReturnA:
          * word. Thus, we break either at a CR or at the first nonspace char after
          * a run of spaces or LFs.
          */
-        while ((pwWordMaxSel < pwText + ped->cch) && (!spaceLocated || (ISDELIMETERW(*pwWordMaxSel)))) {
+        while ((pwWordMaxSel < pwText + ped->cch) && (!spaceLocated || (ISDELIMETERW(*pwWordMaxSel))))
+        {
             if (*pwWordMaxSel == 0x0D)
                 break;
 
@@ -1940,7 +2049,7 @@ FastReturnA:
             ** the next word which is a double
             ** width character.
             */
-            if (UserIsFullWidth(CP_ACP,*pwWordMaxSel))
+            if (UserIsFullWidth(CP_ACP, *pwWordMaxSel))
                 break;
 
             pwWordMaxSel++;
@@ -1956,11 +2065,13 @@ FastReturnA:
         /*
          * label for fast return ( for Unicode )
          */
-FastReturnW:
+    FastReturnW:
         ECUnlock(ped);
 
-        if (pichMin)   *pichMin = (ICH)(pwWordMinSel - pwText);
-        if (pichMax)   *pichMax = (ICH)(pwWordMaxSel - pwText);
+        if (pichMin)
+            *pichMin = (ICH)(pwWordMinSel - pwText);
+        if (pichMax)
+            *pichMax = (ICH)(pwWordMaxSel - pwText);
         return;
     }
 }
@@ -1985,7 +2096,7 @@ void ECSaveUndo(PUNDO pundoFrom, PUNDO pundoTo, BOOL fClear)
      *  Clear passed in undo buffer
      */
     if (fClear)
-        RtlZeroMemory(pundoFrom, sizeof(UNDO) );
+        RtlZeroMemory(pundoFrom, sizeof(UNDO));
 }
 
 /***************************************************************************\
@@ -1996,13 +2107,12 @@ void ECSaveUndo(PUNDO pundoFrom, PUNDO pundoTo, BOOL fClear)
 * History:
 \***************************************************************************/
 
-void ECEmptyUndo(
-    PUNDO pundo )
+void ECEmptyUndo(PUNDO pundo)
 {
     if (pundo->hDeletedText)
         UserGlobalFree(pundo->hDeletedText);
 
-    RtlZeroMemory(pundo, sizeof(UNDO) );
+    RtlZeroMemory(pundo, sizeof(UNDO));
 }
 
 /***************************************************************************\
@@ -2015,31 +2125,36 @@ void ECEmptyUndo(
 *  with it.
 *
 \***************************************************************************/
-void   ECMergeUndoInsertInfo(PUNDO pundo, ICH ichInsert, ICH cchInsert) \
+void ECMergeUndoInsertInfo(PUNDO pundo, ICH ichInsert, ICH cchInsert)
 {
     //
     // If undo buffer is empty, just insert the new info as UNDO_INSERT
     //
-    if (pundo->undoType == UNDO_NONE) {
-        pundo->undoType    = UNDO_INSERT;
+    if (pundo->undoType == UNDO_NONE)
+    {
+        pundo->undoType = UNDO_INSERT;
         pundo->ichInsStart = ichInsert;
-        pundo->ichInsEnd   = ichInsert+cchInsert;
-    } else if (pundo->undoType & UNDO_INSERT) {
+        pundo->ichInsEnd = ichInsert + cchInsert;
+    }
+    else if (pundo->undoType & UNDO_INSERT)
+    {
         //
         // If there's already some undo insert info,
         // try to merge the two.
         //
         if (pundo->ichInsEnd == ichInsert) // Check they are adjacent.
             pundo->ichInsEnd += cchInsert; // if so, just concatenate.
-        else {
-                // The new insert is not contiguous with the old one.
-UNDOINSERT:
+        else
+        {
+            // The new insert is not contiguous with the old one.
+        UNDOINSERT:
             //
             // If there is some UNDO_DELETE info already here, check to see
             // if the new insert takes place at a point different from where
             // that deletion occurred.
             //
-            if ((pundo->undoType & UNDO_DELETE) && (pundo->ichDeleted != ichInsert)) {
+            if ((pundo->undoType & UNDO_DELETE) && (pundo->ichDeleted != ichInsert))
+            {
                 //
                 // User is inserting into a different point; So, let us
                 // forget any UNDO_DELETE info;
@@ -2056,10 +2171,12 @@ UNDOINSERT:
             // forget everything about the old insert and keep just the new
             // insert info as the UNDO_INSERT.
             pundo->ichInsStart = ichInsert;
-            pundo->ichInsEnd   = ichInsert + cchInsert;
+            pundo->ichInsEnd = ichInsert + cchInsert;
             pundo->undoType |= UNDO_INSERT;
         }
-    } else if (pundo->undoType == UNDO_DELETE) {
+    }
+    else if (pundo->undoType == UNDO_DELETE)
+    {
         // If there is some Delete Info already present go and handle it.
         goto UNDOINSERT;
     }
@@ -2078,10 +2195,7 @@ UNDOINSERT:
 * History:
 \***************************************************************************/
 
-BOOL ECInsertText(
-    PED ped,
-    LPSTR lpText,
-    ICH* pcchInsert)
+BOOL ECInsertText(PED ped, LPSTR lpText, ICH *pcchInsert)
 {
     PSTR pedText;
     PSTR pTextBuff;
@@ -2101,7 +2215,8 @@ BOOL ECInsertText(
     /*
      * Do we already have enough memory??
      */
-    if (*pcchInsert >= (ped->cchAlloc - ped->cch)) {
+    if (*pcchInsert >= (ped->cchAlloc - ped->cch))
+    {
 
         /*
          * Allocate what we need plus a little extra. Return FALSE if we are
@@ -2110,17 +2225,20 @@ BOOL ECInsertText(
         allocamt = (ped->cch + *pcchInsert) * ped->cbChar;
         allocamt += CCHALLOCEXTRA;
 
-// if (!ped->fSingle) {
-              hTextCopy = LOCALREALLOC(ped->hText, allocamt, LHND, ped->hInstance, &lpText);
-              if (hTextCopy) {
-                  ped->hText = hTextCopy;
-              } else {
-                  return FALSE;
-              }
-// } else {
-// if (!LocalReallocSafe(ped->hText, allocamt, LHND, pped))
-//                return FALSE;
-// }
+        // if (!ped->fSingle) {
+        hTextCopy = LOCALREALLOC(ped->hText, allocamt, LHND, ped->hInstance, &lpText);
+        if (hTextCopy)
+        {
+            ped->hText = hTextCopy;
+        }
+        else
+        {
+            return FALSE;
+        }
+        // } else {
+        // if (!LocalReallocSafe(ped->hText, allocamt, LHND, pped))
+        //                return FALSE;
+        // }
 
         ped->cchAlloc = LOCALSIZE(ped->hText, ped->hInstance) / ped->cbChar;
     }
@@ -2131,16 +2249,18 @@ BOOL ECInsertText(
      */
     pedText = ECLock(ped);
 
-    if (ped->pLpkEditCallout) {
-        HDC     hdc;
-        INT     iResult;
+    if (ped->pLpkEditCallout)
+    {
+        HDC hdc;
+        INT iResult;
 
-        hdc = ECGetEditDC (ped, TRUE);
-        iResult = ped->pLpkEditCallout->EditVerifyText (ped, hdc, pedText, ped->ichCaret, lpText, *pcchInsert);
-        ECReleaseEditDC (ped, hdc, TRUE);
+        hdc = ECGetEditDC(ped, TRUE);
+        iResult = ped->pLpkEditCallout->EditVerifyText(ped, hdc, pedText, ped->ichCaret, lpText, *pcchInsert);
+        ECReleaseEditDC(ped, hdc, TRUE);
 
-        if (iResult == 0) {
-            ECUnlock (ped);
+        if (iResult == 0)
+        {
+            ECUnlock(ped);
             return TRUE;
         }
     }
@@ -2150,13 +2270,14 @@ BOOL ECInsertText(
      */
     pTextBuff = pedText + ped->ichCaret * ped->cbChar;
 
-    if (ped->ichCaret != ped->cch) {
+    if (ped->ichCaret != ped->cch)
+    {
 
         /*
          * We are inserting text into the middle. We have to shift text to the
          * right before inserting new text.
          */
-         memmove(pTextBuff + *pcchInsert * ped->cbChar, pTextBuff, (ped->cch-ped->ichCaret) * ped->cbChar);
+        memmove(pTextBuff + *pcchInsert * ped->cbChar, pTextBuff, (ped->cch - ped->ichCaret) * ped->cbChar);
     }
 
     /*
@@ -2175,16 +2296,23 @@ BOOL ECInsertText(
     /*
      * Do the Upper/Lower conversion
      */
-    if (style & ES_LOWERCASE) {
+    if (style & ES_LOWERCASE)
+    {
         if (ped->fAnsi)
             CharLowerBuffA((LPSTR)pTextBuff, *pcchInsert);
         else
             CharLowerBuffW((LPWSTR)pTextBuff, *pcchInsert);
-    } else {
-        if (style & ES_UPPERCASE) {
-            if (ped->fAnsi) {
+    }
+    else
+    {
+        if (style & ES_UPPERCASE)
+        {
+            if (ped->fAnsi)
+            {
                 CharUpperBuffA(pTextBuff, *pcchInsert);
-            } else {
+            }
+            else
+            {
                 CharUpperBuffW((LPWSTR)pTextBuff, *pcchInsert);
             }
         }
@@ -2194,22 +2322,26 @@ BOOL ECInsertText(
      * Do the OEM conversion
      */
     if ((style & ES_OEMCONVERT) &&
-            // For backward compatibility with NT4, we don't perform OEM conversion
-            // for older apps if the system locale is FarEast.
-            //
-            (!IS_DBCS_ENABLED() || GETAPPVER() >= VER50 || GetOEMCP() != GetACP())) {
+        // For backward compatibility with NT4, we don't perform OEM conversion
+        // for older apps if the system locale is FarEast.
+        //
+        (!IS_DBCS_ENABLED() || GETAPPVER() >= VER50 || GetOEMCP() != GetACP()))
+    {
 
         ICH i;
 
-        if (ped->fAnsi) {
-            for (i = 0; i < *pcchInsert; i++) {
+        if (ped->fAnsi)
+        {
+            for (i = 0; i < *pcchInsert; i++)
+            {
                 //
                 // We don't need to call CharToOemBuff etc. if the character
                 // is a double byte character.  And, calling ECIsDBCSLeadByte is
                 // faster and less complicated because we don't have to deal
                 // with the 2 byte dbcs cases.
                 //
-                if (IS_DBCS_ENABLED() && ECIsDBCSLeadByte(ped, *(lpText+i))) {
+                if (IS_DBCS_ENABLED() && ECIsDBCSLeadByte(ped, *(lpText + i)))
+                {
                     i++;
                     continue;
                 }
@@ -2220,27 +2352,33 @@ BOOL ECInsertText(
                 // for nashville we should be doing something more appropriate
                 // but for now, leave as Win95 golden
                 //
-                if (ped->charSet != GREEK_CHARSET && IsCharLowerA(*(pTextBuff + i))) {
+                if (ped->charSet != GREEK_CHARSET && IsCharLowerA(*(pTextBuff + i)))
+                {
                     CharUpperBuffA(pTextBuff + i, 1);
                     CharToOemBuffA(pTextBuff + i, pTextBuff + i, 1);
                     OemToCharBuffA(pTextBuff + i, pTextBuff + i, 1);
                     CharLowerBuffA(pTextBuff + i, 1);
-                } else {
+                }
+                else
+                {
                     CharToOemBuffA(pTextBuff + i, pTextBuff + i, 1);
                     OemToCharBuffA(pTextBuff + i, pTextBuff + i, 1);
                 }
             }
-        } else {
+        }
+        else
+        {
             //
             // Because 'ch' may become DBCS, and have a space for NULL.
             //
             UCHAR ch[4];
             LPWSTR lpTextW = (LPWSTR)pTextBuff;
 
-            for (i = 0; i < *pcchInsert; i++) {
-                if (*(lpTextW + i) == UNICODE_CARRIAGERETURN ||
-                    *(lpTextW + i) == UNICODE_LINEFEED ||
-                    *(lpTextW + i) == UNICODE_TAB) {
+            for (i = 0; i < *pcchInsert; i++)
+            {
+                if (*(lpTextW + i) == UNICODE_CARRIAGERETURN || *(lpTextW + i) == UNICODE_LINEFEED ||
+                    *(lpTextW + i) == UNICODE_TAB)
+                {
                     continue;
                 }
                 //
@@ -2249,7 +2387,8 @@ BOOL ECInsertText(
                 // for nashville we should be doing something more appropriate
                 // but for now, leave as Win95 golden
                 //
-                if (ped->charSet != GREEK_CHARSET && IsCharLowerW(*(lpTextW + i))) {
+                if (ped->charSet != GREEK_CHARSET && IsCharLowerW(*(lpTextW + i)))
+                {
                     CharUpperBuffW(lpTextW + i, 1);
                     *(LPDWORD)ch = 0; // make sure the null-terminate.
                     CharToOemBuffW(lpTextW + i, ch, 1);
@@ -2260,7 +2399,9 @@ BOOL ECInsertText(
                     //
                     OemToCharBuffW(ch, lpTextW + i, strlen(ch));
                     CharLowerBuffW(lpTextW + i, 1);
-                } else {
+                }
+                else
+                {
                     *(LPDWORD)ch = 0; // make sure the null-terminate.
                     CharToOemBuffW(lpTextW + i, ch, 1);
                     //
@@ -2279,12 +2420,13 @@ BOOL ECInsertText(
 
     ped->ichCaret += *pcchInsert;
 
-    if (ped->pLpkEditCallout) {
-        HDC     hdc;
+    if (ped->pLpkEditCallout)
+    {
+        HDC hdc;
 
-        hdc = ECGetEditDC (ped, TRUE);
-        ped->ichCaret = ped->pLpkEditCallout->EditAdjustCaret (ped, hdc, pedText, ped->ichCaret);
-        ECReleaseEditDC (ped, hdc, TRUE);
+        hdc = ECGetEditDC(ped, TRUE);
+        ped->ichCaret = ped->pLpkEditCallout->EditAdjustCaret(ped, hdc, pedText, ped->ichCaret);
+        ECReleaseEditDC(ped, hdc, TRUE);
     }
 
     ped->ichMinSel = ped->ichMaxSel = ped->ichCaret;
@@ -2312,8 +2454,7 @@ BOOL ECInsertText(
 * History:
 \***************************************************************************/
 
-ICH ECDeleteText(
-    PED ped)
+ICH ECDeleteText(PED ped)
 {
     PSTR pedText;
     ICH cchDelete;
@@ -2334,45 +2475,58 @@ ICH ECDeleteText(
     /*
      * Adjust UNDO fields so that we can undo this delete...
      */
-    if (ped->undoType == UNDO_NONE) {
-UNDODELETEFROMSCRATCH:
-        if (ped->hDeletedText = UserGlobalAlloc(GPTR, (LONG)((cchDelete+1)*ped->cbChar))) {
+    if (ped->undoType == UNDO_NONE)
+    {
+    UNDODELETEFROMSCRATCH:
+        if (ped->hDeletedText = UserGlobalAlloc(GPTR, (LONG)((cchDelete + 1) * ped->cbChar)))
+        {
             ped->undoType = UNDO_DELETE;
             ped->ichDeleted = ped->ichMinSel;
             ped->cchDeleted = cchDelete;
             lpDeleteSaveBuffer = ped->hDeletedText;
-            RtlCopyMemory(lpDeleteSaveBuffer, pedText + ped->ichMinSel*ped->cbChar, cchDelete*ped->cbChar);
-            lpDeleteSaveBuffer[cchDelete*ped->cbChar] = 0;
+            RtlCopyMemory(lpDeleteSaveBuffer, pedText + ped->ichMinSel * ped->cbChar, cchDelete * ped->cbChar);
+            lpDeleteSaveBuffer[cchDelete * ped->cbChar] = 0;
         }
-    } else if (ped->undoType & UNDO_INSERT) {
-UNDODELETE:
+    }
+    else if (ped->undoType & UNDO_INSERT)
+    {
+    UNDODELETE:
         ECEmptyUndo(Pundo(ped));
 
         ped->ichInsStart = ped->ichInsEnd = 0xFFFFFFFF;
         ped->ichDeleted = 0xFFFFFFFF;
         ped->cchDeleted = 0;
         goto UNDODELETEFROMSCRATCH;
-    } else if (ped->undoType == UNDO_DELETE) {
-        if (ped->ichDeleted == ped->ichMaxSel) {
+    }
+    else if (ped->undoType == UNDO_DELETE)
+    {
+        if (ped->ichDeleted == ped->ichMaxSel)
+        {
 
             /*
              * Copy deleted text to front of undo buffer
              */
-            hDeletedText = UserGlobalReAlloc(ped->hDeletedText, (LONG)(cchDelete + ped->cchDeleted + 1)*ped->cbChar, GHND);
+            hDeletedText =
+                UserGlobalReAlloc(ped->hDeletedText, (LONG)(cchDelete + ped->cchDeleted + 1) * ped->cbChar, GHND);
             if (!hDeletedText)
                 goto UNDODELETE;
             bufferOffset = 0;
             ped->ichDeleted = ped->ichMinSel;
-        } else if (ped->ichDeleted == ped->ichMinSel) {
+        }
+        else if (ped->ichDeleted == ped->ichMinSel)
+        {
 
             /*
              * Copy deleted text to end of undo buffer
              */
-            hDeletedText = UserGlobalReAlloc(ped->hDeletedText, (LONG)(cchDelete + ped->cchDeleted + 1)*ped->cbChar, GHND);
+            hDeletedText =
+                UserGlobalReAlloc(ped->hDeletedText, (LONG)(cchDelete + ped->cchDeleted + 1) * ped->cbChar, GHND);
             if (!hDeletedText)
                 goto UNDODELETE;
-            bufferOffset = ped->cchDeleted*ped->cbChar;
-        } else {
+            bufferOffset = ped->cchDeleted * ped->cbChar;
+        }
+        else
+        {
 
             /*
              * Clear the current UNDO delete and add the new one since
@@ -2383,49 +2537,53 @@ UNDODELETE:
 
         ped->hDeletedText = hDeletedText;
         lpDeleteSaveBuffer = (LPSTR)hDeletedText;
-        if (!bufferOffset) {
+        if (!bufferOffset)
+        {
 
             /*
              * Move text in delete buffer up so that we can insert the next
              * text at the head of the buffer.
              */
-            RtlMoveMemory(lpDeleteSaveBuffer + cchDelete*ped->cbChar, lpDeleteSaveBuffer,
-                    ped->cchDeleted*ped->cbChar);
+            RtlMoveMemory(lpDeleteSaveBuffer + cchDelete * ped->cbChar, lpDeleteSaveBuffer,
+                          ped->cchDeleted * ped->cbChar);
         }
-        RtlCopyMemory(lpDeleteSaveBuffer + bufferOffset, pedText + ped->ichMinSel*ped->cbChar,
-                cchDelete*ped->cbChar);
+        RtlCopyMemory(lpDeleteSaveBuffer + bufferOffset, pedText + ped->ichMinSel * ped->cbChar,
+                      cchDelete * ped->cbChar);
 
-        lpDeleteSaveBuffer[(ped->cchDeleted + cchDelete)*ped->cbChar] = 0;
+        lpDeleteSaveBuffer[(ped->cchDeleted + cchDelete) * ped->cbChar] = 0;
         ped->cchDeleted += cchDelete;
     }
 
-    if (ped->ichMaxSel != ped->cch) {
+    if (ped->ichMaxSel != ped->cch)
+    {
 
         /*
          * We are deleting text from the middle of the buffer so we have to
            shift text to the left.
          */
-        RtlMoveMemory(pedText + ped->ichMinSel*ped->cbChar, pedText + ped->ichMaxSel*ped->cbChar,
-                (ped->cch - ped->ichMaxSel)*ped->cbChar);
+        RtlMoveMemory(pedText + ped->ichMinSel * ped->cbChar, pedText + ped->ichMaxSel * ped->cbChar,
+                      (ped->cch - ped->ichMaxSel) * ped->cbChar);
     }
 
-    if (ped->cchAlloc - ped->cch > CCHALLOCEXTRA) {
+    if (ped->cchAlloc - ped->cch > CCHALLOCEXTRA)
+    {
 
         /*
          * Free some memory since we deleted a lot
          */
-        LOCALREALLOC(ped->hText, (DWORD)(ped->cch + (CCHALLOCEXTRA / 2))*ped->cbChar, LHND, ped->hInstance, NULL);
+        LOCALREALLOC(ped->hText, (DWORD)(ped->cch + (CCHALLOCEXTRA / 2)) * ped->cbChar, LHND, ped->hInstance, NULL);
         ped->cchAlloc = LOCALSIZE(ped->hText, ped->hInstance) / ped->cbChar;
     }
 
     ped->cch -= cchDelete;
 
-    if (ped->pLpkEditCallout) {
-        HDC     hdc;
+    if (ped->pLpkEditCallout)
+    {
+        HDC hdc;
 
-        hdc = ECGetEditDC (ped, TRUE);
-        ped->ichMinSel = ped->pLpkEditCallout->EditAdjustCaret (ped, hdc, pedText, ped->ichMinSel);
-        ECReleaseEditDC (ped, hdc, TRUE);
+        hdc = ECGetEditDC(ped, TRUE);
+        ped->ichMinSel = ped->pLpkEditCallout->EditAdjustCaret(ped, hdc, pedText, ped->ichMinSel);
+        ECReleaseEditDC(ped, hdc, TRUE);
     }
 
     ped->ichCaret = ped->ichMaxSel = ped->ichMinSel;
@@ -2448,9 +2606,7 @@ UNDODELETE:
 * History:
 \***************************************************************************/
 
-void ECNotifyParent(
-    PED ped,
-    int notificationCode)
+void ECNotifyParent(PED ped, int notificationCode)
 {
     /*
      * wParam is NotificationCode (hiword) and WindowID (loword)
@@ -2458,9 +2614,8 @@ void ECNotifyParent(
      * Windows 95 checks for hwndParent != NULL before sending the message, but
      * this is surely rare, and SendMessage NULL hwnd does nowt anyway (IanJa)
      */
-    SendMessage(ped->hwndParent, WM_COMMAND,
-            (DWORD)MAKELONG(PTR_TO_ID(ped->pwnd->spmenu), notificationCode),
-            (LPARAM)ped->hwnd);
+    SendMessage(ped->hwndParent, WM_COMMAND, (DWORD)MAKELONG(PTR_TO_ID(ped->pwnd->spmenu), notificationCode),
+                (LPARAM)ped->hwnd);
 }
 
 /***************************************************************************\
@@ -2471,21 +2626,24 @@ void ECNotifyParent(
 *  with the client area.
 *
 \***************************************************************************/
-void   ECSetEditClip(PED ped, HDC hdc, BOOL fLeftMargin)
+void ECSetEditClip(PED ped, HDC hdc, BOOL fLeftMargin)
 {
     RECT rcClient;
     RECT rcClip;
 
     CopyRect(&rcClip, &ped->rcFmt);
 
-    if (ped->pLpkEditCallout) {
+    if (ped->pLpkEditCallout)
+    {
         // Complex script handling chooses whether to write margins later
-        rcClip.left  -= ped->wLeftMargin;
+        rcClip.left -= ped->wLeftMargin;
         rcClip.right += ped->wRightMargin;
-    } else {
-        if (fLeftMargin)  /* Should we consider the left margin?   */
-            rcClip.left  -= ped->wLeftMargin;
-        if (ped->fWrap)        /* Should we consider the right margin? */
+    }
+    else
+    {
+        if (fLeftMargin) /* Should we consider the left margin?   */
+            rcClip.left -= ped->wLeftMargin;
+        if (ped->fWrap) /* Should we consider the right margin? */
             rcClip.right += ped->wRightMargin;
     }
 
@@ -2496,8 +2654,7 @@ void   ECSetEditClip(PED ped, HDC hdc, BOOL fLeftMargin)
         InflateRect(&rcClient, -SYSMET(CXBORDER), -SYSMET(CYBORDER));
 
     IntersectRect(&rcClient, &rcClient, &rcClip);
-    IntersectClipRect(hdc,rcClient.left, rcClient.top,
-            rcClient.right, rcClient.bottom);
+    IntersectClipRect(hdc, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
 }
 
 /***************************************************************************\
@@ -2511,16 +2668,15 @@ void   ECSetEditClip(PED ped, HDC hdc, BOOL fLeftMargin)
 * History:
 \***************************************************************************/
 
-HDC ECGetEditDC(
-    PED ped,
-    BOOL fFastDC )
+HDC ECGetEditDC(PED ped, BOOL fFastDC)
 {
     HDC hdc;
 
     if (!fFastDC)
         NtUserHideCaret(ped->hwnd);
 
-    if ( hdc = NtUserGetDC(ped->hwnd) ) {
+    if (hdc = NtUserGetDC(ped->hwnd))
+    {
         ECSetEditClip(ped, hdc, (BOOL)(ped->xOffset == 0));
 
         /*
@@ -2543,10 +2699,7 @@ HDC ECGetEditDC(
 * History:
 \***************************************************************************/
 
-void ECReleaseEditDC(
-    PED ped,
-    HDC hdc,
-    BOOL fFastDC)
+void ECReleaseEditDC(PED ped, HDC hdc, BOOL fFastDC)
 {
     /*
      * Restoring font not necessary
@@ -2566,7 +2719,7 @@ void ECReleaseEditDC(
 *  the undo buffer, and rebuilding the lines
 *
 \***************************************************************************/
-void   ECResetTextInfo(PED ped)
+void ECResetTextInfo(PED ped)
 {
     //
     // Reset caret, selections, scrolling, and dirty information.
@@ -2578,10 +2731,13 @@ void   ECResetTextInfo(PED ped)
 
     ECEmptyUndo(Pundo(ped));
 
-    if (ped->fSingle) {
+    if (ped->fSingle)
+    {
         if (!ped->listboxHwnd)
             ECNotifyParent(ped, EN_UPDATE);
-    } else {
+    }
+    else
+    {
 #ifdef BOGUS
         // B#14640
         // We don't want to strip soft breaks or anything else from text
@@ -2591,7 +2747,8 @@ void   ECResetTextInfo(PED ped)
         MLBuildchLines(ped, 0, 0, FALSE, NULL, NULL);
     }
 
-    if (_IsWindowVisible(ped->pwnd)) {
+    if (_IsWindowVisible(ped->pwnd))
+    {
         BOOL fErase;
 
         if (ped->fSingle)
@@ -2611,7 +2768,8 @@ void   ECResetTextInfo(PED ped)
             UpdateWindow(ped->hwnd);
     }
 
-    if (ped->fSingle && !ped->listboxHwnd) {
+    if (ped->fSingle && !ped->listboxHwnd)
+    {
         ECNotifyParent(ped, EN_CHANGE);
     }
 
@@ -2629,44 +2787,50 @@ void   ECResetTextInfo(PED ped)
 * History:
 \***************************************************************************/
 
-BOOL ECSetText(
-    PED ped,
-    LPSTR lpstr)
+BOOL ECSetText(PED ped, LPSTR lpstr)
 {
     ICH cchLength;
     ICH cchSave = ped->cch;
     ICH ichCaretSave = ped->ichCaret;
-    HWND hwndSave    = ped->hwnd;
+    HWND hwndSave = ped->hwnd;
     HANDLE hText;
 
     ped->cch = ped->ichCaret = 0;
 
     ped->cchAlloc = LOCALSIZE(ped->hText, ped->hInstance) / ped->cbChar;
-    if (!lpstr) {
-        hText = LOCALREALLOC(ped->hText, CCHALLOCEXTRA*ped->cbChar, LHND, ped->hInstance, &lpstr);
-        if (hText != NULL) {
+    if (!lpstr)
+    {
+        hText = LOCALREALLOC(ped->hText, CCHALLOCEXTRA * ped->cbChar, LHND, ped->hInstance, &lpstr);
+        if (hText != NULL)
+        {
             ped->hText = hText;
-        } else {
+        }
+        else
+        {
             return FALSE;
         }
-    } else {
+    }
+    else
+    {
         cchLength = StringLength(lpstr, ped->fAnsi);
 
 #ifdef NEVER
-// win3.1 does limit single line edit controls to 32K (minus 3) but NT doesn't
+        // win3.1 does limit single line edit controls to 32K (minus 3) but NT doesn't
 
-        if (ped->fSingle) {
+        if (ped->fSingle)
+        {
             /*
              * Limit single line edit controls to 32K
              */
-            cchLength = min(cchLength, (ICH)(0x7FFD/ped->cbChar));
+            cchLength = min(cchLength, (ICH)(0x7FFD / ped->cbChar));
         }
 #endif
 
         /*
          * Add the text
          */
-        if (cchLength && !ECInsertText(ped, lpstr, &cchLength)) {
+        if (cchLength && !ECInsertText(ped, lpstr, &cchLength))
+        {
 
             /*
              * Restore original state and notify parent we ran out of memory.
@@ -2698,14 +2862,16 @@ BOOL ECSetText(
 
 void ECInvalidateClient(PED ped, BOOL fErase)
 {
-    if (ped->fFlatBorder) {
-        RECT    rcT;
+    if (ped->fFlatBorder)
+    {
+        RECT rcT;
 
         _GetClientRect(ped->pwnd, &rcT);
-        InflateRect(&rcT, -SYSMET(CXBORDER),
-            -SYSMET(CYBORDER));
+        InflateRect(&rcT, -SYSMET(CXBORDER), -SYSMET(CYBORDER));
         NtUserInvalidateRect(ped->hwnd, &rcT, fErase);
-    } else {
+    }
+    else
+    {
         NtUserInvalidateRect(ped->hwnd, NULL, fErase);
     }
 }
@@ -2720,8 +2886,7 @@ void ECInvalidateClient(PED ped, BOOL fErase)
 * History:
 \***************************************************************************/
 
-ICH ECCopy(
-    PED ped)
+ICH ECCopy(PED ped)
 {
     HANDLE hData;
     char *pchSel;
@@ -2731,7 +2896,8 @@ ICH ECCopy(
     /*
      * Don't allow copies from password style controls
      */
-    if (ped->charPasswordChar) {
+    if (ped->charPasswordChar)
+    {
         NtUserMessageBeep(0);
         return 0;
     }
@@ -2758,7 +2924,8 @@ ICH ECCopy(
      * we might want to move this into EmptyClipboard and have two
      * versions.
      */
-    if (GetClientInfo()->CI_flags & CI_16BIT) {
+    if (GetClientInfo()->CI_flags & CI_16BIT)
+    {
         pfnWowEmptyClipBoard();
     }
 
@@ -2766,7 +2933,8 @@ ICH ECCopy(
     /*
      * +1 for the terminating NULL
      */
-    if (!(hData = UserGlobalAlloc(LHND, (LONG)(cbData + ped->cbChar)))) {
+    if (!(hData = UserGlobalAlloc(LHND, (LONG)(cbData + ped->cbChar))))
+    {
         NtUserCloseClipboard();
         return (0);
     }
@@ -2786,13 +2954,12 @@ ICH ECCopy(
     ECUnlock(ped);
     USERGLOBALUNLOCK(hData);
 
-    SetClipboardData( ped->fAnsi ? CF_TEXT : CF_UNICODETEXT, hData);
+    SetClipboardData(ped->fAnsi ? CF_TEXT : CF_UNICODETEXT, hData);
 
     NtUserCloseClipboard();
 
     return (cbData);
 }
-
 
 
 /***************************************************************************\
@@ -2804,11 +2971,7 @@ ICH ECCopy(
 *
 \***************************************************************************/
 
-LRESULT EditWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT EditWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
@@ -2825,11 +2988,7 @@ LRESULT EditWndProcA(
     return EditWndProcWorker(pwnd, message, wParam, lParam, TRUE);
 }
 
-LRESULT EditWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT EditWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
@@ -2840,7 +2999,8 @@ LRESULT EditWndProcW(
      * If the control is not interested in this message,
      * pass it to DefWindowProc.
      */
-    if (!FWINDOWMSG(message, FNID_EDIT)) {
+    if (!FWINDOWMSG(message, FNID_EDIT))
+    {
         return DefWindowProcWorker(pwnd, message, wParam, lParam, FALSE);
     }
 
@@ -2848,12 +3008,7 @@ LRESULT EditWndProcW(
 }
 
 
-LRESULT EditWndProcWorker(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    DWORD fAnsi)
+LRESULT EditWndProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi)
 {
     PED ped;
     HWND hwnd = HWq(pwnd);
@@ -2872,7 +3027,8 @@ LRESULT EditWndProcWorker(
     /*
      * Make sure the ANSI flag is set correctly.
      */
-    if (!ped->fInitialized) {
+    if (!ped->fInitialized)
+    {
         ped->fInitialized = TRUE;
         ped->fAnsi = TestWF(pwnd, WFANSICREATOR) ? TRUE : FALSE;
     }
@@ -2882,14 +3038,12 @@ LRESULT EditWndProcWorker(
      * incoming message type already matches the PED type or the message
      * does not need any translation.
      */
-    if (ped->fAnsi == fAnsi ||
-            (message >= WM_USER) ||
-            !MessageTable[message].bThunkMessage) {
+    if (ped->fAnsi == fAnsi || (message >= WM_USER) || !MessageTable[message].bThunkMessage)
+    {
         return EditWndProc(pwnd, message, wParam, lParam);
     }
 
-    return CsSendMessage(hwnd, message, wParam, lParam,
-                         fAnsi ? (ULONG_PTR)EditWndProcW : (ULONG_PTR)EditWndProcA,
+    return CsSendMessage(hwnd, message, wParam, lParam, fAnsi ? (ULONG_PTR)EditWndProcW : (ULONG_PTR)EditWndProcA,
                          FNID_CALLWINDOWPROC, fAnsi);
 }
 
@@ -2921,15 +3075,11 @@ LRESULT EditWndProcWorker(
 * History:
 \***************************************************************************/
 
-LRESULT EditWndProc(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT EditWndProc(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwnd = HWq(pwnd);
     LRESULT lreturn;
-    PED  ped;
+    PED ped;
 
     /*
      * Get the ped for the given window now since we will use it a lot in
@@ -2942,52 +3092,62 @@ LRESULT EditWndProc(
      * Dispatch the various messages we can receive
      */
     lreturn = 1L;
-    switch (message) {
+    switch (message)
+    {
 
     /*
      * Messages which are handled the same way for both single and multi line
      * edit controls.
      */
     case WM_KEYDOWN:
-         // LPK handling of Ctrl/LShift, Ctrl/RShift
-         if (ped && ped->pLpkEditCallout && ped->fAllowRTL) {
+        // LPK handling of Ctrl/LShift, Ctrl/RShift
+        if (ped && ped->pLpkEditCallout && ped->fAllowRTL)
+        {
 
-             ped->fSwapRoOnUp = FALSE; // Any keydown cancels a ctrl/shift reading order change
+            ped->fSwapRoOnUp = FALSE; // Any keydown cancels a ctrl/shift reading order change
 
-             switch (wParam) {
-                 case VK_SHIFT:
-                     if ((GetKeyState(VK_CONTROL) & 0x8000) && !(GetKeyState(VK_MENU) & 0x8000)) {
-                         // Left shift or right shift pressed while control held down
-                         // Check that alt (VK_MENU) isn't down to avoid false firing on AltGr which equals Ctrl+Alt.
-                         if (MapVirtualKey((LONG)lParam>>16&0xff, 3) == VK_LSHIFT) {
-                             // User wants left to right reading order
-                             ped->fSwapRoOnUp = (ped->fRtoLReading)  || (ped->format & ES_RIGHT) ;
-                             ped->fLShift = TRUE;
-                         } else {
-                             // User wants right to left reading order
-                             ped->fSwapRoOnUp = (!ped->fRtoLReading) || (ped->format & ES_RIGHT);
-                             ped->fLShift = FALSE;
-                         }
-                     }
-                     break;
+            switch (wParam)
+            {
+            case VK_SHIFT:
+                if ((GetKeyState(VK_CONTROL) & 0x8000) && !(GetKeyState(VK_MENU) & 0x8000))
+                {
+                    // Left shift or right shift pressed while control held down
+                    // Check that alt (VK_MENU) isn't down to avoid false firing on AltGr which equals Ctrl+Alt.
+                    if (MapVirtualKey((LONG)lParam >> 16 & 0xff, 3) == VK_LSHIFT)
+                    {
+                        // User wants left to right reading order
+                        ped->fSwapRoOnUp = (ped->fRtoLReading) || (ped->format & ES_RIGHT);
+                        ped->fLShift = TRUE;
+                    }
+                    else
+                    {
+                        // User wants right to left reading order
+                        ped->fSwapRoOnUp = (!ped->fRtoLReading) || (ped->format & ES_RIGHT);
+                        ped->fLShift = FALSE;
+                    }
+                }
+                break;
 
-                 case VK_LEFT:
-                     if (ped->fRtoLReading) {
-                        wParam = VK_RIGHT;
-                     }
-                     break;
+            case VK_LEFT:
+                if (ped->fRtoLReading)
+                {
+                    wParam = VK_RIGHT;
+                }
+                break;
 
-                 case VK_RIGHT:
-                     if (ped->fRtoLReading) {
-                         wParam = VK_LEFT;
-                     }
-                     break;
-             }
-         }
-         goto HandleEditMsg;
+            case VK_RIGHT:
+                if (ped->fRtoLReading)
+                {
+                    wParam = VK_LEFT;
+                }
+                break;
+            }
+        }
+        goto HandleEditMsg;
 
     case WM_KEYUP:
-        if (ped && ped->pLpkEditCallout && ped->fAllowRTL && ped->fSwapRoOnUp) {
+        if (ped && ped->pLpkEditCallout && ped->fAllowRTL && ped->fSwapRoOnUp)
+        {
 
             BOOL fReadingOrder;
             // Complete reading order change detected earlier during keydown
@@ -2998,18 +3158,22 @@ LRESULT EditWndProc(
             // Remove any overriding ES_CENTRE or ES_RIGHT format from dwStyle
             SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~ES_FMTMASK);
 
-            if (ped->fLShift) {
+            if (ped->fLShift)
+            {
                 // Set Left to Right reading order and right scrollbar in EX_STYLE
-                SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE)
-                              & ~(WS_EX_RTLREADING | WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR));
+                SetWindowLong(hwnd, GWL_EXSTYLE,
+                              GetWindowLong(hwnd, GWL_EXSTYLE) &
+                                  ~(WS_EX_RTLREADING | WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR));
 
                 // Edit control is LTR now, then notify the parent.
                 ECNotifyParent(ped, EN_ALIGN_LTR_EC);
                 // ? Select a keyboard layout appropriate to LTR operation
-            } else {
+            }
+            else
+            {
                 // Set Right to Left reading order, right alignment and left scrollbar
-                SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE)
-                              | WS_EX_RTLREADING | WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR);
+                SetWindowLong(hwnd, GWL_EXSTYLE,
+                              GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_RTLREADING | WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR);
 
                 // Edit control is RTL now, then notify the parent.
                 ECNotifyParent(ped, EN_ALIGN_RTL_EC);
@@ -3017,20 +3181,23 @@ LRESULT EditWndProc(
             }
 
             // If reading order didn't change, so we are sure the alignment changed and the edit window didn't invalidate yet.
-            if (fReadingOrder == (BOOL) ped->fRtoLReading) {
-              ECInvalidateClient(ped, TRUE);
+            if (fReadingOrder == (BOOL)ped->fRtoLReading)
+            {
+                ECInvalidateClient(ped, TRUE);
             }
         }
         goto HandleEditMsg;
 
     case WM_INPUTLANGCHANGE:
-        if (ped) {
+        if (ped)
+        {
             // EC_INSERT_COMPOSITION_CHAR : WM_INPUTLANGCHANGE - call ECInitInsert()
             HKL hkl = THREAD_HKL();
 
             ECInitInsert(ped, hkl);
 
-            if (ped->fInReconversion) {
+            if (ped->fInReconversion)
+            {
                 ECInOutReconversionMode(ped, FALSE);
             }
 
@@ -3039,7 +3206,8 @@ LRESULT EditWndProc(
             // another keyboard layout is active. Set those
             // if the edit control has the focus.
             //
-            if (ped->fFocus && fpImmIsIME(hkl)) {
+            if (ped->fFocus && fpImmIsIME(hkl))
+            {
                 POINT pt;
 
                 ECImmSetCompositionFont(ped);
@@ -3098,7 +3266,8 @@ LRESULT EditWndProc(
         //
         if ((lParam & SYS_ALTERNATE) && ((WORD)wParam == VK_BACK))
             return TRUE;
-        else {
+        else
+        {
             return DefWindowProcWorker(pwnd, message, wParam, lParam, ped->fAnsi);
         }
         break;
@@ -3205,7 +3374,7 @@ LRESULT EditWndProc(
         ECNcDestroyHandler(pwnd, ped);
         return 0;
 
-    /*
+        /*
      * Most apps (i.e. everyone but Quicken) don't pass on the rbutton
      * messages when they do something with 'em inside of subclassed
      * edit fields.  As such, we keep track of whether we saw the
@@ -3223,25 +3392,29 @@ LRESULT EditWndProc(
         goto HandleEditMsg;
 
     case WM_RBUTTONUP:
-        if (ped->fSawRButtonDown) {
+        if (ped->fSawRButtonDown)
+        {
             ped->fSawRButtonDown = FALSE;
-            if (!ped->fInReconversion) {
+            if (!ped->fInReconversion)
+            {
                 goto HandleEditMsg;
             }
         }
         // Don't pass this on to DWP so WM_CONTEXTMENU isn't generated.
         return 0;
 
-    case WM_CONTEXTMENU: {
-            POINT pt ;
-            int nHit = FindNCHit(pwnd, (LONG)lParam);
-            if ((nHit == HTVSCROLL) || (nHit == HTHSCROLL)) {
-                return DefWindowProcWorker(pwnd, message, wParam, lParam, ped->fAnsi);
-            }
-            POINTSTOPOINT(pt, lParam);
-            if (!TestWF(pwnd, WFOLDUI) && ECIsAncestorActive(hwnd))
-                ECMenu(hwnd, ped, &pt);
+    case WM_CONTEXTMENU:
+    {
+        POINT pt;
+        int nHit = FindNCHit(pwnd, (LONG)lParam);
+        if ((nHit == HTVSCROLL) || (nHit == HTHSCROLL))
+        {
+            return DefWindowProcWorker(pwnd, message, wParam, lParam, ped->fAnsi);
         }
+        POINTSTOPOINT(pt, lParam);
+        if (!TestWF(pwnd, WFOLDUI) && ECIsAncestorActive(hwnd))
+            ECMenu(hwnd, ped, &pt);
+    }
         return 0;
 
     case EM_CANUNDO:
@@ -3267,7 +3440,7 @@ LRESULT EditWndProc(
         // wParam --    unused
         // lParam --    unused
         //
-        return(MAKELONG(ped->wLeftMargin, ped->wRightMargin));
+        return (MAKELONG(ped->wLeftMargin, ped->wRightMargin));
 
     case EM_SETMARGINS:
         //
@@ -3285,13 +3458,15 @@ LRESULT EditWndProc(
          * of the first nonselected character after the end of the selection in
          * the high order word.
          */
-        if ((PDWORD)wParam != NULL) {
-           *((PDWORD)wParam) = ped->ichMinSel;
+        if ((PDWORD)wParam != NULL)
+        {
+            *((PDWORD)wParam) = ped->ichMinSel;
         }
-        if ((PDWORD)lParam != NULL) {
-           *((PDWORD)lParam) = ped->ichMaxSel;
+        if ((PDWORD)lParam != NULL)
+        {
+            *((PDWORD)lParam) = ped->ichMaxSel;
         }
-        lreturn = MAKELONG(ped->ichMinSel,ped->ichMaxSel);
+        lreturn = MAKELONG(ped->ichMinSel, ped->ichMaxSel);
         break;
 
     case EM_GETLIMITTEXT:
@@ -3299,9 +3474,9 @@ LRESULT EditWndProc(
         // wParamLo --    unused
         // lParam --    unused
         //
-        return(ped->cchTextMax);
+        return (ped->cchTextMax);
 
-    case EM_SETLIMITTEXT:        /* Renamed from EM_LIMITTEXT in Chicago */
+    case EM_SETLIMITTEXT: /* Renamed from EM_LIMITTEXT in Chicago */
         /*
          * wParam - max number of CHARACTERS that can be entered
          * lParam - not used
@@ -3311,17 +3486,24 @@ LRESULT EditWndProc(
          * Specifies the maximum number of characters of text the user may
          * enter. If maxLength is 0, we may enter MAXINT number of CHARACTERS.
          */
-        if (ped->fSingle) {
-            if (wParam) {
+        if (ped->fSingle)
+        {
+            if (wParam)
+            {
                 wParam = min(0x7FFFFFFEu, wParam);
-            } else {
+            }
+            else
+            {
                 wParam = 0x7FFFFFFEu;
             }
         }
 
-        if (wParam) {
+        if (wParam)
+        {
             ped->cchTextMax = (ICH)wParam;
-        } else {
+        }
+        else
+        {
             ped->cchTextMax = 0xFFFFFFFFu;
         }
         break;
@@ -3330,20 +3512,23 @@ LRESULT EditWndProc(
         //
         // Validate that char index is within text range
         //
-        if (wParam >= ped->cch) {
-            return(-1L);
+        if (wParam >= ped->cch)
+        {
+            return (-1L);
         }
         goto HandleEditMsg;
 
-    case EM_CHARFROMPOS: {
+    case EM_CHARFROMPOS:
+    {
         // Validate that point is within client of edit field
-        RECT    rc;
-        POINT   pt;
+        RECT rc;
+        POINT pt;
 
         POINTSTOPOINT(pt, lParam);
         _GetClientRect(pwnd, &rc);
-        if (!PtInRect(&rc, pt)) {
-            return(-1L);
+        if (!PtInRect(&rc, pt))
+        {
+            return (-1L);
         }
         goto HandleEditMsg;
     }
@@ -3373,7 +3558,7 @@ LRESULT EditWndProc(
             ClearWindowState(pwnd, EFREADONLY);
         lreturn = 1L;
 
-        ECEnableDisableIME( ped );
+        ECEnableDisableIME(ped);
         // We need to redraw the edit field so that the background color
         // changes.  Read-only edits are drawn in CTLCOLOR_STATIC while
         // others are drawn with CTLCOLOR_EDIT.
@@ -3396,10 +3581,11 @@ LRESULT EditWndProc(
     // IME
     case EM_GETIMESTATUS:
         // wParam == sub command
-        switch (wParam) {
-        case  EMSIS_COMPOSITIONSTRING:
+        switch (wParam)
+        {
+        case EMSIS_COMPOSITIONSTRING:
             return ped->wImeStatus;
-#if 0   // memphis
+#if 0 // memphis
         case  EMSIS_GETLBBIT:
             return (DWORD)ped->bLBBit;
 #endif
@@ -3408,7 +3594,8 @@ LRESULT EditWndProc(
 
     case EM_SETIMESTATUS:
         // wParam == sub command
-        switch (wParam) {
+        switch (wParam)
+        {
         case EMSIS_COMPOSITIONSTRING:
             ped->wImeStatus = (WORD)lParam;
         }
@@ -3427,12 +3614,14 @@ LRESULT EditWndProc(
         // We might want to version switch this...  I haven't found
         // any problems by not, but you never know...
         //
-        if (ECIsAncestorActive(hwnd)) {
+        if (ECIsAncestorActive(hwnd))
+        {
             /*
              * Reconversion support: quit reconversion if left button is clicked.
              * Otherwise, if the current KL is Korean, finailize the composition string.
              */
-            if (ped->fInReconversion || ped->fKorea) {
+            if (ped->fInReconversion || ped->fKorea)
+            {
                 BOOLEAN fReconversion = (BOOLEAN)ped->fInReconversion;
                 DWORD dwIndex = fReconversion ? CPS_CANCEL : CPS_COMPLETE;
                 HIMC hImc;
@@ -3440,12 +3629,14 @@ LRESULT EditWndProc(
                 ped->fReplaceCompChr = FALSE;
 
                 hImc = fpImmGetContext(ped->hwnd);
-                if (hImc) {
+                if (hImc)
+                {
                     fpImmNotifyIME(hImc, NI_COMPOSITIONSTR, dwIndex, 0);
                     fpImmReleaseContext(ped->hwnd, hImc);
                 }
 
-                if (fReconversion) {
+                if (fReconversion)
+                {
                     ECInOutReconversionMode(ped, FALSE);
                 }
 
@@ -3469,31 +3660,36 @@ LRESULT EditWndProc(
         // If ped->fInsertCompChr is TRUE, that means we will do
         // all the composition character drawing by ourself.
         //
-        if ( ped->fInsertCompChr ) {
+        if (ped->fInsertCompChr)
+        {
             lParam &= ~ISC_SHOWUICOMPOSITIONWINDOW;
         }
 
-        if ( wParam ) {
+        if (wParam)
+        {
 
             PINPUTCONTEXT pInputContext;
             HIMC hImc;
 
-            hImc = fpImmGetContext( hwnd );
-            if ( (pInputContext = fpImmLockIMC( hImc )) != NULL ) {
+            hImc = fpImmGetContext(hwnd);
+            if ((pInputContext = fpImmLockIMC(hImc)) != NULL)
+            {
                 pInputContext->fdw31Compat &= ~F31COMPAT_ECSETCFS;
-                fpImmUnlockIMC( hImc );
+                fpImmUnlockIMC(hImc);
             }
-            if (GetClientInfo()->CI_flags & CI_16BIT) {
+            if (GetClientInfo()->CI_flags & CI_16BIT)
+            {
                 fpImmNotifyIME(hImc, NI_COMPOSITIONSTR, CPS_CANCEL, 0L);
             }
-            fpImmReleaseContext( hwnd, hImc );
+            fpImmReleaseContext(hwnd, hImc);
         }
         return DefWindowProcWorker(pwnd, message, wParam, lParam, ped->fAnsi);
 
     case WM_IME_ENDCOMPOSITION:
         ECInOutReconversionMode(ped, FALSE);
 
-        if (ped->fReplaceCompChr) {
+        if (ped->fReplaceCompChr)
+        {
             ICH ich;
             HDC hdc;
             //
@@ -3504,8 +3700,10 @@ LRESULT EditWndProc(
             ped->fReplaceCompChr = FALSE;
             ped->ichMaxSel = min(ped->ichCaret + ich, ped->cch);
             ped->ichMinSel = ped->ichCaret;
-            if (ped->fSingle) {
-                if (ECDeleteText( ped ) > 0) {
+            if (ped->fSingle)
+            {
+                if (ECDeleteText(ped) > 0)
+                {
                     //
                     // Update the display
                     //
@@ -3519,16 +3717,18 @@ LRESULT EditWndProc(
                     ECNotifyParent(ped, EN_CHANGE);
                 }
             }
-            else {
+            else
+            {
                 MLDeleteText(ped);
             }
 
-            ECSetCaretHandler( ped );
+            ECSetCaretHandler(ped);
         }
         return DefWindowProcWorker(pwnd, message, wParam, lParam, ped->fAnsi);
 
     case WM_IME_STARTCOMPOSITION:
-        if ( ped->fInsertCompChr ) {
+        if (ped->fInsertCompChr)
+        {
             //
             // NOTE:
             // sending WM_IME_xxxCOMPOSITION will let
@@ -3540,8 +3740,9 @@ LRESULT EditWndProc(
             // Korean IME should be fixed in the future.
             //
             break;
-
-        } else {
+        }
+        else
+        {
             return DefWindowProcWorker(pwnd, message, wParam, lParam, ped->fAnsi);
         }
 
@@ -3554,22 +3755,28 @@ LRESULT EditWndProc(
         // when focus is removed from the window,
         // composition character should be finalized
         //
-        if (ped && fpImmIsIME(THREAD_HKL())) {
+        if (ped && fpImmIsIME(THREAD_HKL()))
+        {
             HIMC hImc = fpImmGetContext(hwnd);
 
-            if (hImc != NULL_HIMC) {
-                if (ped->fReplaceCompChr || (ped->wImeStatus & EIMES_COMPLETECOMPSTRKILLFOCUS)) {
+            if (hImc != NULL_HIMC)
+            {
+                if (ped->fReplaceCompChr || (ped->wImeStatus & EIMES_COMPLETECOMPSTRKILLFOCUS))
+                {
                     // If the composition string to be determined upon kill focus,
                     // do it now.
                     fpImmNotifyIME(hImc, NI_COMPOSITIONSTR, CPS_COMPLETE, 0);
-                } else if (ped->fInReconversion) {
+                }
+                else if (ped->fInReconversion)
+                {
                     // If the composition string it not to be determined,
                     // and if we're in reconversion mode, cancel reconversion now.
                     fpImmNotifyIME(hImc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
                 }
 
                 // Get out from reconversion mode
-                if (ped->fInReconversion) {
+                if (ped->fInReconversion)
+                {
                     ECInOutReconversionMode(ped, FALSE);
                 }
 
@@ -3580,24 +3787,29 @@ LRESULT EditWndProc(
         break;
 
     case WM_SETFOCUS:
-        if (ped && !ped->fFocus) {
+        if (ped && !ped->fFocus)
+        {
             HKL hkl = THREAD_HKL();
 
-            if (fpImmIsIME(hkl)) {
+            if (fpImmIsIME(hkl))
+            {
                 HIMC hImc;
 
                 hImc = fpImmGetContext(hwnd);
-                if (hImc) {
+                if (hImc)
+                {
                     LPINPUTCONTEXT lpImc;
 
-                    if (ped->wImeStatus & EIMES_CANCELCOMPSTRINFOCUS) {
+                    if (ped->wImeStatus & EIMES_CANCELCOMPSTRINFOCUS)
+                    {
                         // cancel when in-focus
                         fpImmNotifyIME(hImc, NI_COMPOSITIONSTR, CPS_CANCEL, 0);
                     }
 
                     ECImmSetCompositionFont(ped);
 
-                    if ((lpImc = fpImmLockIMC(hImc)) != NULL) {
+                    if ((lpImc = fpImmLockIMC(hImc)) != NULL)
+                    {
 
                         // We presume the CompForm will reset to CFS_DEFAULT,
                         // when the edit control loses Focus.
@@ -3624,7 +3836,8 @@ LRESULT EditWndProc(
              * *before* it sets the focus to the edit control. They rely on the flags not being set
              * at WM_SETFOCUS. Raid #411686
              */
-            if ((GetAppCompatFlags2(VER40) & GACF2_NO_INIT_ECFLAGS_ON_SETFOCUS) == 0) {
+            if ((GetAppCompatFlags2(VER40) & GACF2_NO_INIT_ECFLAGS_ON_SETFOCUS) == 0)
+            {
                 ECInitInsert(ped, hkl);
             }
         }
@@ -3642,16 +3855,20 @@ LRESULT EditWndProc(
         break;
 
     default:
-HandleEditMsg:
+    HandleEditMsg:
         /* (picked up from NT40FE SP3)
          * HACK ALERT: We may receive messages before the PED has been
          * allocated (eg: WM_GETMINMAXINFO is sent before WM_NCCREATE)
          * so we must test ped before dreferencing.
          */
-        if (ped != NULL) {
-            if (ped->fSingle) {
+        if (ped != NULL)
+        {
+            if (ped->fSingle)
+            {
                 lreturn = SLEditWndProc(hwnd, ped, message, wParam, lParam);
-            } else {
+            }
+            else
+            {
                 lreturn = MLEditWndProc(hwnd, ped, message, wParam, lParam);
             }
         }
@@ -3677,24 +3894,26 @@ HandleEditMsg:
 * History:
 \***************************************************************************/
 
-void ECFindXORblks(
-    LPBLOCK lpOldBlk,
-    LPBLOCK lpNewBlk,
-    LPBLOCK lpBlk1,
-    LPBLOCK lpBlk2)
+void ECFindXORblks(LPBLOCK lpOldBlk, LPBLOCK lpNewBlk, LPBLOCK lpBlk1, LPBLOCK lpBlk2)
 {
-    if (lpOldBlk->StPos >= lpNewBlk->StPos) {
+    if (lpOldBlk->StPos >= lpNewBlk->StPos)
+    {
         lpBlk1->StPos = lpNewBlk->StPos;
         lpBlk1->EndPos = min(lpOldBlk->StPos, lpNewBlk->EndPos);
-    } else {
+    }
+    else
+    {
         lpBlk1->StPos = lpOldBlk->StPos;
         lpBlk1->EndPos = min(lpNewBlk->StPos, lpOldBlk->EndPos);
     }
 
-    if (lpOldBlk->EndPos <= lpNewBlk->EndPos) {
+    if (lpOldBlk->EndPos <= lpNewBlk->EndPos)
+    {
         lpBlk2->StPos = max(lpOldBlk->EndPos, lpNewBlk->StPos);
         lpBlk2->EndPos = lpNewBlk->EndPos;
-    } else {
+    }
+    else
+    {
         lpBlk2->StPos = max(lpNewBlk->EndPos, lpOldBlk->StPos);
         lpBlk2->EndPos = lpOldBlk->EndPos;
     }
@@ -3717,12 +3936,7 @@ void ECFindXORblks(
 * History:
 \***************************************************************************/
 
-BOOL ECCalcChangeSelection(
-    PED ped,
-    ICH ichOldMinSel,
-    ICH ichOldMaxSel,
-    LPBLOCK OldBlk,
-    LPBLOCK NewBlk)
+BOOL ECCalcChangeSelection(PED ped, ICH ichOldMinSel, ICH ichOldMaxSel, LPBLOCK OldBlk, LPBLOCK NewBlk)
 {
     BLOCK Blk[2];
     int iBlkCount = 0;
@@ -3732,7 +3946,8 @@ BOOL ECCalcChangeSelection(
     /*
      * Check if the Old selection block existed
      */
-    if (ichOldMinSel != ichOldMaxSel) {
+    if (ichOldMinSel != ichOldMaxSel)
+    {
 
         /*
          * Yes! Old block existed.
@@ -3745,7 +3960,8 @@ BOOL ECCalcChangeSelection(
     /*
      * Check if the new Selection block exists
      */
-    if (ped->ichMinSel != ped->ichMaxSel) {
+    if (ped->ichMinSel != ped->ichMaxSel)
+    {
 
         /*
          * Yes! New block exists
@@ -3758,12 +3974,14 @@ BOOL ECCalcChangeSelection(
     /*
      * If both the blocks exist find the XOR of them
      */
-    if (iBlkCount == 2) {
+    if (iBlkCount == 2)
+    {
 
         /*
          * Check if both blocks start at the same character position
          */
-        if (ichOldMinSel == ped->ichMinSel) {
+        if (ichOldMinSel == ped->ichMinSel)
+        {
 
             /*
              * Check if they end at the same character position
@@ -3771,15 +3989,20 @@ BOOL ECCalcChangeSelection(
             if (ichOldMaxSel == ped->ichMaxSel)
                 return FALSE; /* Nothing changes */
 
-            Blk[0].StPos = min(NewBlk -> EndPos, OldBlk -> EndPos);
-            Blk[0].EndPos = max(NewBlk -> EndPos, OldBlk -> EndPos);
+            Blk[0].StPos = min(NewBlk->EndPos, OldBlk->EndPos);
+            Blk[0].EndPos = max(NewBlk->EndPos, OldBlk->EndPos);
             Blk[1].StPos = 0xFFFFFFFF;
-        } else {
-            if (ichOldMaxSel == ped->ichMaxSel) {
+        }
+        else
+        {
+            if (ichOldMaxSel == ped->ichMaxSel)
+            {
                 Blk[0].StPos = min(NewBlk->StPos, OldBlk->StPos);
                 Blk[0].EndPos = max(NewBlk->StPos, OldBlk->StPos);
                 Blk[1].StPos = 0xFFFFFFFF;
-            } else {
+            }
+            else
+            {
                 ECFindXORblks(OldBlk, NewBlk, &Blk[0], &Blk[1]);
             }
         }
@@ -3801,10 +4024,7 @@ BOOL ECCalcChangeSelection(
 *
 \***************************************************************************/
 
-HBRUSH ECGetControlBrush(
-    PED  ped,
-    HDC  hdc,
-    LONG message)
+HBRUSH ECGetControlBrush(PED ped, HDC hdc, LONG message)
 {
     PWND pwndSend;
     PWND pwndEdit;
@@ -3821,17 +4041,16 @@ HBRUSH ECGetControlBrush(
 
     UserAssert(pwndSend);
 
-    if (PtiCurrent() != GETPTI(pwndSend)) {
-        return (HBRUSH)DefWindowProcWorker(pwndSend, message,
-                (WPARAM)hdc, (LPARAM)pwndEdit, ped->fAnsi);
+    if (PtiCurrent() != GETPTI(pwndSend))
+    {
+        return (HBRUSH)DefWindowProcWorker(pwndSend, message, (WPARAM)hdc, (LPARAM)pwndEdit, ped->fAnsi);
     }
 
     /*
      * By using the correct A/W call we avoid a c/s transition
      * on this SendMessage().
      */
-    return (HBRUSH)SendMessageWorker(pwndSend, message, (WPARAM)hdc,
-            (LPARAM)ped->hwnd, ped->fAnsi);
+    return (HBRUSH)SendMessageWorker(pwndSend, message, (WPARAM)hdc, (LPARAM)ped->hwnd, ped->fAnsi);
 }
 
 UINT WINAPI QueryFontAssocStatus(void);
@@ -3851,19 +4070,22 @@ int ECGetDBCSVector(PED ped, HDC hdc, BYTE CharSet)
     /*
      * if DEFAUT_CHARSET was passed, we will convert that to Shell charset..
      */
-    if (CharSet == DEFAULT_CHARSET) {
+    if (CharSet == DEFAULT_CHARSET)
+    {
         CharSet = (BYTE)GetTextCharset(hdc);
 
         /*
          * if CharSet is still DEFAULT_CHARSET, it means gdi has some problem..
          * then just return default.. we get charset from CP_ACP..
          */
-        if (CharSet == DEFAULT_CHARSET) {
+        if (CharSet == DEFAULT_CHARSET)
+        {
             CharSet = (BYTE)GetACPCharSet();
         }
     }
 
-    switch (CharSet) {
+    switch (CharSet)
+    {
     case SHIFTJIS_CHARSET:
     case HANGEUL_CHARSET:
     case CHINESEBIG5_CHARSET:
@@ -3871,20 +4093,23 @@ int ECGetDBCSVector(PED ped, HDC hdc, BYTE CharSet)
         bDBCSCodePage = TRUE;
         break;
 
-    case ANSI_CHARSET:            // 0
-    case SYMBOL_CHARSET:          // 2
-    case OEM_CHARSET:             // 255
+    case ANSI_CHARSET:   // 0
+    case SYMBOL_CHARSET: // 2
+    case OEM_CHARSET:    // 255
         if (fFontAssocStatus == 0xffff)
             fFontAssocStatus = QueryFontAssocStatus();
 
-        if ((((CharSet + 2) & 0xf) & fFontAssocStatus)) {
+        if ((((CharSet + 2) & 0xf) & fFontAssocStatus))
+        {
             bDBCSCodePage = TRUE;
             /*
              * Bug 117558, etc.
              * Try to get a meaningful character set for associated font.
              */
             CharSet = (BYTE)GetACPCharSet();
-        } else {
+        }
+        else
+        {
             bDBCSCodePage = FALSE;
         }
         break;
@@ -3893,26 +4118,33 @@ int ECGetDBCSVector(PED ped, HDC hdc, BYTE CharSet)
         bDBCSCodePage = FALSE;
     }
 
-    if (bDBCSCodePage) {
+    if (bDBCSCodePage)
+    {
         CHARSETINFO CharsetInfo;
         DWORD CodePage;
         CPINFO CPInfo;
         int lbIX;
 
-        if (TranslateCharsetInfo((DWORD *)CharSet, &CharsetInfo, TCI_SRCCHARSET)) {
+        if (TranslateCharsetInfo((DWORD *)CharSet, &CharsetInfo, TCI_SRCCHARSET))
+        {
             CodePage = CharsetInfo.ciACP;
-        } else {
+        }
+        else
+        {
             CodePage = CP_ACP;
         }
 
         GetCPInfo(CodePage, &CPInfo);
-        for (lbIX=0 ; CPInfo.LeadByte[lbIX] != 0 ; lbIX+=2) {
-            ped->DBCSVector[lbIX  ] = CPInfo.LeadByte[lbIX];
-            ped->DBCSVector[lbIX+1] = CPInfo.LeadByte[lbIX+1];
+        for (lbIX = 0; CPInfo.LeadByte[lbIX] != 0; lbIX += 2)
+        {
+            ped->DBCSVector[lbIX] = CPInfo.LeadByte[lbIX];
+            ped->DBCSVector[lbIX + 1] = CPInfo.LeadByte[lbIX + 1];
         }
-        ped->DBCSVector[lbIX  ] = 0x0;
-        ped->DBCSVector[lbIX+1] = 0x0;
-    } else {
+        ped->DBCSVector[lbIX] = 0x0;
+        ped->DBCSVector[lbIX + 1] = 0x0;
+    }
+    else
+    {
         ped->DBCSVector[0] = 0x0;
         ped->DBCSVector[1] = 0x0;
     }
@@ -3931,11 +4163,13 @@ int ECGetDBCSVector(PED ped, HDC hdc, BYTE CharSet)
     //  c) ANSI Edit control requires DBCSVector, which cannot be
     //     initialized without a FE code page.
     //
-    if (!ped->fAnsi) {
+    if (!ped->fAnsi)
+    {
         FONTSIGNATURE fontSig;
 
         GetTextCharsetInfo(hdc, &fontSig, 0);
-        if (fontSig.fsCsb[0] & FAREAST_CHARSET_BITS) {
+        if (fontSig.fsCsb[0] & FAREAST_CHARSET_BITS)
+        {
             bDBCSCodePage = TRUE;
             // Since this is UNICODE, we're not
         }
@@ -3953,7 +4187,7 @@ int ECGetDBCSVector(PED ped, HDC hdc, BYTE CharSet)
 \***************************************************************************/
 LPSTR ECAnsiNext(PED ped, LPSTR lpCurrent)
 {
-    return lpCurrent+((ECIsDBCSLeadByte(ped,*lpCurrent)==TRUE) ? 2 : 1);
+    return lpCurrent + ((ECIsDBCSLeadByte(ped, *lpCurrent) == TRUE) ? 2 : 1);
 }
 
 /***************************************************************************\
@@ -3963,26 +4197,28 @@ LPSTR ECAnsiNext(PED ped, LPSTR lpCurrent)
 *
 * History:
 \***************************************************************************/
-LPSTR ECAnsiPrev(PED ped, LPSTR lpBase, LPSTR lpStr )
+LPSTR ECAnsiPrev(PED ped, LPSTR lpBase, LPSTR lpStr)
 {
-    LPSTR lpCurrent = lpStr -1;
+    LPSTR lpCurrent = lpStr - 1;
 
     if (!ped->fDBCS)
-        return lpCurrent;                        // just return ( lpStr - 1 )
+        return lpCurrent; // just return ( lpStr - 1 )
 
     if (lpBase >= lpCurrent)
         return lpBase;
 
-    if (ECIsDBCSLeadByte(ped, *lpCurrent))     // this check makes things faster
-        return (lpCurrent - 1);                  // 92/04/04 takaok
+    if (ECIsDBCSLeadByte(ped, *lpCurrent)) // this check makes things faster
+        return (lpCurrent - 1);            // 92/04/04 takaok
 
-    do {
+    do
+    {
         lpCurrent--;
-        if (!ECIsDBCSLeadByte(ped, *lpCurrent)) {
+        if (!ECIsDBCSLeadByte(ped, *lpCurrent))
+        {
             lpCurrent++;
             break;
         }
-    } while(lpCurrent != lpBase);
+    } while (lpCurrent != lpBase);
 
     return lpStr - (((lpStr - lpCurrent) & 1) ? 1 : 2);
 }
@@ -3994,13 +4230,15 @@ LPSTR ECAnsiPrev(PED ped, LPSTR lpBase, LPSTR lpStr )
 *
 * History:
 \***************************************************************************/
-ICH ECNextIch( PED ped, LPSTR pStart, ICH ichCurrent )
+ICH ECNextIch(PED ped, LPSTR pStart, ICH ichCurrent)
 {
-    if (!ped->fDBCS || !ped->fAnsi) {
+    if (!ped->fDBCS || !ped->fAnsi)
+    {
 
         return (ichCurrent + 1);
-
-    } else {
+    }
+    else
+    {
 
         ICH ichRet;
         LPSTR pText;
@@ -4010,7 +4248,7 @@ ICH ECNextIch( PED ped, LPSTR pStart, ICH ichCurrent )
         else
             pText = (LPSTR)ECLock(ped) + ichCurrent;
 
-        ichRet = ichCurrent + ( ECIsDBCSLeadByte(ped, *pText) ? 2 : 1 );
+        ichRet = ichCurrent + (ECIsDBCSLeadByte(ped, *pText) ? 2 : 1);
 
         if (!pStart)
             ECUnlock(ped);
@@ -4026,7 +4264,7 @@ ICH ECNextIch( PED ped, LPSTR pStart, ICH ichCurrent )
 *
 * History:
 \***************************************************************************/
-ICH ECPrevIch( PED ped, LPSTR pStart, ICH ichCurrent )
+ICH ECPrevIch(PED ped, LPSTR pStart, ICH ichCurrent)
 {
     LPSTR lpCurrent;
     LPSTR lpStr;
@@ -4034,10 +4272,10 @@ ICH ECPrevIch( PED ped, LPSTR pStart, ICH ichCurrent )
 
 #ifdef SURROGATE
     // Handle Unicode surrogates pairs when CSLPK is loaded
-    if (ped->fAnsi || !ped->pLpkEditCallout)  // if no surrogate processing required
+    if (ped->fAnsi || !ped->pLpkEditCallout) // if no surrogate processing required
 #endif
         if (!ped->fDBCS || !ped->fAnsi)
-            if ( ichCurrent )
+            if (ichCurrent)
                 return (ichCurrent - 1);
             else
                 return (ichCurrent);
@@ -4054,41 +4292,47 @@ ICH ECPrevIch( PED ped, LPSTR pStart, ICH ichCurrent )
 
     // Handle characters represented by multiple codepoints
 
-    if (ped->fAnsi) {
+    if (ped->fAnsi)
+    {
 
         // ANSI PrevIch with DBCS support
 #endif
 
         lpStr = lpBase + ichCurrent;
         lpCurrent = lpStr - 1;
-        if (ECIsDBCSLeadByte(ped,*lpCurrent)) {
+        if (ECIsDBCSLeadByte(ped, *lpCurrent))
+        {
             if (!pStart)
                 ECUnlock(ped);
             return (ichCurrent - 2);
         }
 
-        do {
+        do
+        {
             lpCurrent--;
-            if (!ECIsDBCSLeadByte(ped, *lpCurrent)) {
+            if (!ECIsDBCSLeadByte(ped, *lpCurrent))
+            {
                 lpCurrent++;
                 break;
             }
-        } while(lpCurrent != lpBase);
+        } while (lpCurrent != lpBase);
 
         if (!pStart)
             ECUnlock(ped);
         return (ichCurrent - (((lpStr - lpCurrent) & 1) ? 1 : 2));
 
 #ifdef SURROGATE
-
-    } else {
+    }
+    else
+    {
 
         // Unicode PrevIch with surrogate pair support
 
         ichCurrent--;
 
-        if (    (((WCHAR*)lpBase)[ichCurrent]   & 0xFC00) == 0xDC00
-            &&  (((WCHAR*)lpBase)[ichCurrent-1] & 0xFC00) == 0xD800) {
+        if ((((WCHAR *)lpBase)[ichCurrent] & 0xFC00) == 0xDC00 &&
+            (((WCHAR *)lpBase)[ichCurrent - 1] & 0xFC00) == 0xD800)
+        {
 
             ichCurrent--;
         }
@@ -4115,8 +4359,9 @@ BOOL ECIsDBCSLeadByte(PED ped, BYTE cch)
     if (!ped->fDBCS || !ped->fAnsi)
         return (FALSE);
 
-    for (i = 0; ped->DBCSVector[i]; i += 2) {
-        if ((ped->DBCSVector[i] <= cch) && (ped->DBCSVector[i+1] >= cch))
+    for (i = 0; ped->DBCSVector[i]; i += 2)
+    {
+        if ((ped->DBCSVector[i] <= cch) && (ped->DBCSVector[i + 1] >= cch))
             return (TRUE);
     }
 
@@ -4139,7 +4384,8 @@ WORD DbcsCombine(HWND hwnd, WORD ch)
     MSG msg;
     int i = 10; /* loop counter to avoid the infinite loop */
 
-    while (!PeekMessageA(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)) {
+    while (!PeekMessageA(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE))
+    {
         if (--i == 0)
             return 0;
         Sleep(1);
@@ -4158,17 +4404,19 @@ WORD DbcsCombine(HWND hwnd, WORD ch)
 *
 * History:
 \***************************************************************************/
-ICH ECAdjustIch( PED ped, LPSTR lpstr, ICH ch )
+ICH ECAdjustIch(PED ped, LPSTR lpstr, ICH ch)
 {
     ICH newch = ch;
 
     if (!ped->fAnsi || !ped->fDBCS || newch == 0)
-        return ( ch );
+        return (ch);
 
-    if (!ECIsDBCSLeadByte(ped,lpstr[--newch]))
-        return ( ch );  // previous char is SBCS
-    while(1) {
-        if (!ECIsDBCSLeadByte(ped,lpstr[newch])) {
+    if (!ECIsDBCSLeadByte(ped, lpstr[--newch]))
+        return (ch); // previous char is SBCS
+    while (1)
+    {
+        if (!ECIsDBCSLeadByte(ped, lpstr[newch]))
+        {
             newch++;
             break;
         }
@@ -4177,7 +4425,7 @@ ICH ECAdjustIch( PED ped, LPSTR lpstr, ICH ch )
         else
             break;
     }
-    return ((ch - newch) & 1) ? ch-1 : ch;
+    return ((ch - newch) & 1) ? ch - 1 : ch;
 }
 
 /***************************************************************************\
@@ -4189,14 +4437,14 @@ ICH ECAdjustIch( PED ped, LPSTR lpstr, ICH ch )
 
 ICH FAR PASCAL ECAdjustIchNext(PED ped, LPSTR lpstr, ICH ch)
 {
-    ICH ichNew = ECAdjustIch(ped,lpstr,ch);
-    LPSTR lpnew = lpstr+ichNew;
+    ICH ichNew = ECAdjustIch(ped, lpstr, ch);
+    LPSTR lpnew = lpstr + ichNew;
 
     // if ch > ichNew then ECAdjustIch adjusted ich.
     if (ch > ichNew)
-       lpnew = ECAnsiNext(ped, lpnew);
+        lpnew = ECAnsiNext(ped, lpnew);
 
-    return (ICH)(lpnew-lpstr);
+    return (ICH)(lpnew - lpstr);
 }
 
 /***************************************************************************\
@@ -4210,10 +4458,7 @@ ICH FAR PASCAL ECAdjustIchNext(PED ped, LPSTR lpstr, ICH ch)
 *    May 12, 1997   [dbrown]     rewrote it
 \***************************************************************************/
 
-void ECUpdateFormat(
-    PED   ped,
-    DWORD dwStyle,
-    DWORD dwExStyle)
+void ECUpdateFormat(PED ped, DWORD dwStyle, DWORD dwExStyle)
 {
     UINT fNewRtoLReading;
     UINT uiNewFormat;
@@ -4221,12 +4466,13 @@ void ECUpdateFormat(
     // Extract new format and reading order from style
 
     fNewRtoLReading = dwExStyle & WS_EX_RTLREADING ? 1 : 0;
-    uiNewFormat     = dwStyle & ES_FMTMASK;
+    uiNewFormat = dwStyle & ES_FMTMASK;
 
 
     // WS_EX_RIGHT is ignored unless dwStyle is ES_LEFT
 
-    if (uiNewFormat == ES_LEFT && dwExStyle & WS_EX_RIGHT) {
+    if (uiNewFormat == ES_LEFT && dwExStyle & WS_EX_RIGHT)
+    {
         uiNewFormat = ES_RIGHT;
     }
 
@@ -4234,10 +4480,16 @@ void ECUpdateFormat(
     // Internally ES_LEFT and ES_RIGHT are swapped for RtoLReading order
     // (Think of them as ES_LEADING and ES_TRAILING)
 
-    if (fNewRtoLReading) {
-        switch (uiNewFormat) {
-            case ES_LEFT:  uiNewFormat = ES_RIGHT; break;
-            case ES_RIGHT: uiNewFormat = ES_LEFT;  break;
+    if (fNewRtoLReading)
+    {
+        switch (uiNewFormat)
+        {
+        case ES_LEFT:
+            uiNewFormat = ES_RIGHT;
+            break;
+        case ES_RIGHT:
+            uiNewFormat = ES_LEFT;
+            break;
         }
     }
 
@@ -4249,15 +4501,19 @@ void ECUpdateFormat(
 
     // Refresh display on change of reading order
 
-    if (fNewRtoLReading != ped->fRtoLReading) {
+    if (fNewRtoLReading != ped->fRtoLReading)
+    {
 
         ped->fRtoLReading = fNewRtoLReading;
 
-        if (ped->fWrap) {
+        if (ped->fWrap)
+        {
             // Redo wordwrap
             MLBuildchLines(ped, 0, 0, FALSE, NULL, NULL);
             MLUpdateiCaretLine(ped);
-        } else {
+        }
+        else
+        {
             // Refresh horizontal scrollbar display
             MLScroll(ped, FALSE, 0xffffffff, 0, TRUE);
         }

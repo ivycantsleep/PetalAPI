@@ -16,7 +16,6 @@
 //
 
 
-
 //
 // Takes a pointer to an already allocated DMO_MEDIA_TYPE structure, allocates
 // a format block of cbFormat bytes, and sets appropriate members of
@@ -41,7 +40,6 @@ STDAPI MoFreeMediaType(DMO_MEDIA_TYPE *pmt);
 // structures.  Target structure must be later freed using MoFreeMediaType().
 //
 STDAPI MoCopyMediaType(DMO_MEDIA_TYPE *pmtDest, const DMO_MEDIA_TYPE *pmtSrc);
-
 
 
 //
@@ -69,7 +67,6 @@ STDAPI MoDeleteMediaType(DMO_MEDIA_TYPE *pmt);
 // must later be freed using MoDeleteMediaType().
 //
 STDAPI MoDuplicateMediaType(DMO_MEDIA_TYPE **ppmtDest, const DMO_MEDIA_TYPE *pmtSrc);
-
 
 
 #endif //__DMORT_H__

@@ -23,11 +23,8 @@ Revision History:
 --*/
 
 #include "exp.h"
-
-VOID
-ExInitializeCallData (
-    IN PCALL_PERFORMANCE_DATA CallData
-    )
+
+VOID ExInitializeCallData(IN PCALL_PERFORMANCE_DATA CallData)
 
 /*++
 
@@ -56,17 +53,13 @@ Return Value:
     //
 
     KeInitializeSpinLock(&CallData->SpinLock);
-    for (Index = 0; Index < CALL_HASH_TABLE_SIZE; Index += 1) {
+    for (Index = 0; Index < CALL_HASH_TABLE_SIZE; Index += 1)
+    {
         InitializeListHead(&CallData->HashTable[Index]);
     }
 }
-
-VOID
-ExRecordCallerInHashTable (
-    IN PCALL_PERFORMANCE_DATA CallData,
-    IN PVOID CallersAddress,
-    IN PVOID CallersCaller
-    )
+
+VOID ExRecordCallerInHashTable(IN PCALL_PERFORMANCE_DATA CallData, IN PVOID CallersAddress, IN PVOID CallersCaller)
 
 /*++
 
@@ -104,7 +97,8 @@ Return Value:
     // data.
     //
 
-    if (InitializationPhase != 0) {
+    if (InitializationPhase != 0)
+    {
 
         //
         // Acquire the call performance data structure spinlock.
@@ -121,13 +115,12 @@ Return Value:
         Hash = ((Hash >> 24) ^ (Hash >> 16) ^ (Hash >> 8) ^ (Hash)) & (CALL_HASH_TABLE_SIZE - 1);
         MatchEntry = NULL;
         NextEntry = CallData->HashTable[Hash].Flink;
-        while (NextEntry != &CallData->HashTable[Hash]) {
-            HashEntry = CONTAINING_RECORD(NextEntry,
-                                          CALL_HASH_ENTRY,
-                                          ListEntry);
+        while (NextEntry != &CallData->HashTable[Hash])
+        {
+            HashEntry = CONTAINING_RECORD(NextEntry, CALL_HASH_ENTRY, ListEntry);
 
-            if ((HashEntry->CallersAddress == CallersAddress) &&
-                (HashEntry->CallersCaller == CallersCaller)) {
+            if ((HashEntry->CallersAddress == CallersAddress) && (HashEntry->CallersCaller == CallersCaller))
+            {
                 MatchEntry = HashEntry;
                 break;
             }
@@ -141,20 +134,20 @@ Return Value:
         // call site statistics.
         //
 
-        if (MatchEntry != NULL) {
+        if (MatchEntry != NULL)
+        {
             MatchEntry->CallCount += 1;
+        }
+        else
+        {
+            MatchEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(CALL_HASH_ENTRY), 'CdHe');
 
-        } else {
-            MatchEntry = ExAllocatePoolWithTag(NonPagedPool,
-                                              sizeof(CALL_HASH_ENTRY),
-                                              'CdHe');
-
-            if (MatchEntry != NULL) {
+            if (MatchEntry != NULL)
+            {
                 MatchEntry->CallersAddress = CallersAddress;
                 MatchEntry->CallersCaller = CallersCaller;
                 MatchEntry->CallCount = 1;
-                InsertTailList(&CallData->HashTable[Hash],
-                               &MatchEntry->ListEntry);
+                InsertTailList(&CallData->HashTable[Hash], &MatchEntry->ListEntry);
             }
         }
 

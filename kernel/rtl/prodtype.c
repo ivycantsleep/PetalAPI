@@ -22,14 +22,12 @@ Revision History:
 #include "ntrtlp.h"
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,RtlGetNtProductType)
+#pragma alloc_text(PAGE, RtlGetNtProductType)
 #endif
 
-
+
 BOOLEAN
-RtlGetNtProductType(
-    OUT PNT_PRODUCT_TYPE    NtProductType
-    )
+RtlGetNtProductType(OUT PNT_PRODUCT_TYPE NtProductType)
 
 /*++
 
@@ -73,10 +71,11 @@ Return Value:
     // All other times, the "captured at boot" version of product type is used
     //
 
-    if ( USER_SHARED_DATA->ProductTypeIsValid ) {
+    if (USER_SHARED_DATA->ProductTypeIsValid)
+    {
         *NtProductType = USER_SHARED_DATA->NtProductType;
         return TRUE;
-        }
+    }
 
     //
     // Prepare default value for failure case
@@ -85,75 +84,76 @@ Return Value:
     *NtProductType = NtProductWinNt;
     Result = FALSE;
 
-    RtlInitUnicodeString( &KeyPath, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ProductOptions" );
-    RtlInitUnicodeString( &ValueName, L"ProductType" );
+    RtlInitUnicodeString(&KeyPath, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\ProductOptions");
+    RtlInitUnicodeString(&ValueName, L"ProductType");
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &KeyPath,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                              );
-    Status = ZwOpenKey( &KeyHandle,
-                        MAXIMUM_ALLOWED,
-                        &ObjectAttributes
-                      );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyPath, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = ZwOpenKey(&KeyHandle, MAXIMUM_ALLOWED, &ObjectAttributes);
     KeyValueInformation = NULL;
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
         KeyValueInfoLength = 256;
 #if defined(NTOS_KERNEL_RUNTIME)
-        KeyValueInformation = ExAllocatePool( PagedPool, KeyValueInfoLength);
+        KeyValueInformation = ExAllocatePool(PagedPool, KeyValueInfoLength);
 #else
-        KeyValueInformation = RtlAllocateHeap( RtlProcessHeap(), 0,
-                                               KeyValueInfoLength
-                                             );
+        KeyValueInformation = RtlAllocateHeap(RtlProcessHeap(), 0, KeyValueInfoLength);
 #endif
 
-        if (KeyValueInformation == NULL) {
+        if (KeyValueInformation == NULL)
+        {
             Status = STATUS_NO_MEMORY;
-        } else {
-            Status = ZwQueryValueKey( KeyHandle,
-                                      &ValueName,
-                                      KeyValueFullInformation,
-                                      KeyValueInformation,
-                                      KeyValueInfoLength,
-                                      &ResultLength
-                                    );
         }
-    } else {
+        else
+        {
+            Status = ZwQueryValueKey(KeyHandle, &ValueName, KeyValueFullInformation, KeyValueInformation,
+                                     KeyValueInfoLength, &ResultLength);
+        }
+    }
+    else
+    {
         KeyHandle = NULL;
     }
 
-    if (NT_SUCCESS( Status ) && KeyValueInformation->Type == REG_SZ) {
+    if (NT_SUCCESS(Status) && KeyValueInformation->Type == REG_SZ)
+    {
 
         //
         // Decide which product we are installed as
         //
 
         Value.Buffer = (PWSTR)((PCHAR)KeyValueInformation + KeyValueInformation->DataOffset);
-        Value.Length = (USHORT)(KeyValueInformation->DataLength - sizeof( UNICODE_NULL ));
+        Value.Length = (USHORT)(KeyValueInformation->DataLength - sizeof(UNICODE_NULL));
         Value.MaximumLength = (USHORT)(KeyValueInformation->DataLength);
         RtlInitUnicodeString(&WinNtValue, L"WinNt");
         RtlInitUnicodeString(&LanmanNtValue, L"LanmanNt");
         RtlInitUnicodeString(&ServerNtValue, L"ServerNt");
 
-        if (RtlEqualUnicodeString(&Value, &WinNtValue, TRUE)) {
+        if (RtlEqualUnicodeString(&Value, &WinNtValue, TRUE))
+        {
             *NtProductType = NtProductWinNt;
             Result = TRUE;
-        } else if (RtlEqualUnicodeString(&Value, &LanmanNtValue, TRUE)) {
+        }
+        else if (RtlEqualUnicodeString(&Value, &LanmanNtValue, TRUE))
+        {
             *NtProductType = NtProductLanManNt;
             Result = TRUE;
-        } else if (RtlEqualUnicodeString(&Value, &ServerNtValue, TRUE)) {
+        }
+        else if (RtlEqualUnicodeString(&Value, &ServerNtValue, TRUE))
+        {
             *NtProductType = NtProductServer;
             Result = TRUE;
-        } else {
+        }
+        else
+        {
 #if DBG
             DbgPrint("RtlGetNtProductType: Product type unrecognised <%wZ>\n", &Value);
 #endif // DBG
         }
-    } else {
+    }
+    else
+    {
 #if DBG
-        DbgPrint("RtlGetNtProductType: %wZ\\%wZ not found or invalid type\n", &KeyPath, &ValueName );
+        DbgPrint("RtlGetNtProductType: %wZ\\%wZ not found or invalid type\n", &KeyPath, &ValueName);
 #endif // DBG
     }
 
@@ -161,21 +161,23 @@ Return Value:
     // Clean up our resources.
     //
 
-    if (KeyValueInformation != NULL) {
+    if (KeyValueInformation != NULL)
+    {
 #if defined(NTOS_KERNEL_RUNTIME)
         ExFreePool(KeyValueInformation);
 #else
-        RtlFreeHeap( RtlProcessHeap(), 0, KeyValueInformation );
+        RtlFreeHeap(RtlProcessHeap(), 0, KeyValueInformation);
 #endif
     }
 
-    if (KeyHandle != NULL) {
-        ZwClose( KeyHandle );
+    if (KeyHandle != NULL)
+    {
+        ZwClose(KeyHandle);
     }
 
     //
     // Return result.
     //
 
-    return(Result);
+    return (Result);
 }

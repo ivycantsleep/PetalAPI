@@ -21,60 +21,60 @@ Revision History:
 --*/
 
 
-
 //
 // Structure element definitions.
 //
 
-#define MAX_ELEMENT_NAME_LEN 127    // big enough for comments too
-typedef struct _STRUC_ELEMENT {
+#define MAX_ELEMENT_NAME_LEN 127 // big enough for comments too
+typedef struct _STRUC_ELEMENT
+{
 
-//
-// Flags is one or more SEF_xxx, defined below.
-//
+    //
+    // Flags is one or more SEF_xxx, defined below.
+    //
 
     UINT64 Flags;
 
-//
-// Note that Equate is used to store a pointer in the case of bitfield
-// processing.
-//
+    //
+    // Note that Equate is used to store a pointer in the case of bitfield
+    // processing.
+    //
 
     UINT64 Equate;
 
-//
-// Name should be quite long, as it is used to hold comments as well.
-//
+    //
+    // Name should be quite long, as it is used to hold comments as well.
+    //
 
-    CHAR Name[ MAX_ELEMENT_NAME_LEN + 1 ];
+    CHAR Name[MAX_ELEMENT_NAME_LEN + 1];
 } STRUC_ELEMENT, *PSTRUC_ELEMENT;
 
-#define SEF_ENABLE_MASK     0x0000FF00
-#define SEF_HAL             0x00000100
-#define SEF_KERNEL          0x00000200
+#define SEF_ENABLE_MASK 0x0000FF00
+#define SEF_HAL 0x00000100
+#define SEF_KERNEL 0x00000200
 
 #define SEF_INC_FORMAT_MASK 0x00010000
-#define SEF_H_FORMAT        0x00000000
-#define SEF_INC_FORMAT      0x00010000
+#define SEF_H_FORMAT 0x00000000
+#define SEF_INC_FORMAT 0x00010000
 
 //
 // Types.  Note that SETMASK, CLRMASK has no effect on te BITFLD types.  BITFLD
 // types have SEF_HAL | SEF_KERNEL set in the type.
 //
 
-#define SEF_TYPE_MASK       0x000000FF
-#define SEF_EQUATE          0x00000000
-#define SEF_EQUATE64        0x00000001
-#define SEF_COMMENT         0x00000002
-#define SEF_STRING          0x00000003      // Equate is vararg to printf
-#define SEF_BITFLD          0x00000004
-#define SEF_BITALIAS        0x00000005
-#define SEF_STRUCTURE       0x00000006
-#define SEF_SETMASK         0x00000010      // Equate is the mask
-#define SEF_CLRMASK         0x00000011      // Equate is the mask
-#define SEF_END             0x00000012
-#define SEF_START           0x00000013
-#define SEF_PATH            0x00000014
+#define SEF_TYPE_MASK 0x000000FF
+#define SEF_EQUATE 0x00000000
+#define SEF_EQUATE64 0x00000001
+#define SEF_COMMENT 0x00000002
+#define SEF_STRING 0x00000003 // Equate is vararg to printf
+#define SEF_BITFLD 0x00000004
+#define SEF_BITALIAS 0x00000005
+#define SEF_STRUCTURE 0x00000006
+#define SEF_SETMASK 0x00000010 // Equate is the mask
+#define SEF_CLRMASK 0x00000011 // Equate is the mask
+#define SEF_END 0x00000012
+#define SEF_START 0x00000013
+#define SEF_PATH 0x00000014
 
 //
 // Note that BITFLD entries have per-entry hal|kernel flags
@@ -114,8 +114,7 @@ typedef struct _STRUC_ELEMENT {
 // -> #define PcMinorVersion 0x0
 //
 
-#define genDef(Prefix, Type, Member) \
-    { SEF_EQUATE, OFFSET(Type, Member), #Prefix #Member },
+#define genDef(Prefix, Type, Member) { SEF_EQUATE, OFFSET(Type, Member), #Prefix #Member },
 
 //
 // genOff(Pc, KPCR, MinorVersion, 128)
@@ -123,8 +122,7 @@ typedef struct _STRUC_ELEMENT {
 // -> #define PcMinorVersion 0xffffff80
 //
 
-#define genOff(Prefix, Type, Member, Offset) \
-    { SEF_EQUATE, OFFSET(Type, Member) - Offset, #Prefix #Member },
+#define genOff(Prefix, Type, Member, Offset) { SEF_EQUATE, OFFSET(Type, Member) - Offset, #Prefix #Member },
 
 //
 // genAlt( PbAlignmentFixupCount, KPRCB, KeAlignmentFixupCount )
@@ -132,8 +130,7 @@ typedef struct _STRUC_ELEMENT {
 // -> #define PbAlignmentFixupCount 0x2f4
 //
 
-#define genAlt(Name, Type, Member) \
-    { SEF_EQUATE, OFFSET(Type, Member), #Name },
+#define genAlt(Name, Type, Member) { SEF_EQUATE, OFFSET(Type, Member), #Name },
 
 //
 // genCom("This is a comment")
@@ -143,8 +140,7 @@ typedef struct _STRUC_ELEMENT {
 //    //
 //
 
-#define genCom(Comment) \
-    { SEF_COMMENT, 0, Comment },
+#define genCom(Comment) { SEF_COMMENT, 0, Comment },
 
 //
 // genNam(PCR_MINOR_VERSION)
@@ -152,8 +148,7 @@ typedef struct _STRUC_ELEMENT {
 // -> #define PCR_MINOR_VERSION 0x1
 //
 
-#define genNam(Name) \
-    { SEF_EQUATE, (ULONG)(Name), #Name },
+#define genNam(Name) { SEF_EQUATE, (ULONG)(Name), #Name },
 
 //
 // genNamUint(KSEG0_BASE)
@@ -161,8 +156,7 @@ typedef struct _STRUC_ELEMENT {
 // -> #define KSE0_BASE 0xffffffff80000000
 //
 
-#define genNamUint(Name) \
-    { SEF_UINT, (UINT64)(Name), #Name },
+#define genNamUint(Name) { SEF_UINT, (UINT64)(Name), #Name },
 
 //
 // genVal(FirmwareFrameLength, FIRMWARE_FRAME_LENGTH)
@@ -172,8 +166,7 @@ typedef struct _STRUC_ELEMENT {
 // Note: if the value is 64-bit when _WIN64_ is enabled, use genValUint()
 //
 
-#define genVal(Name, Value) \
-    { SEF_EQUATE, (ULONG)(Value), #Name },
+#define genVal(Name, Value) { SEF_EQUATE, (ULONG)(Value), #Name },
 
 //
 // genValUint(KiPcr, KIPCR)
@@ -181,8 +174,7 @@ typedef struct _STRUC_ELEMENT {
 // -> #define KiPcr 0xe0000000ffffe000
 //
 
-#define genValUint(Name, Value) \
-    { SEF_UINT, (UINT64)(Value), #Name },
+#define genValUint(Name, Value) { SEF_UINT, (UINT64)(Value), #Name },
 
 //
 // genSpc()
@@ -190,8 +182,7 @@ typedef struct _STRUC_ELEMENT {
 // ->
 //
 
-#define genSpc() \
-    { SEF_STRING, 0, "\n" },
+#define genSpc() { SEF_STRING, 0, "\n" },
 
 //
 // genStr("    PCR equ ds:[0%lXH]\n", KIP0PCRADDRESS)
@@ -199,8 +190,7 @@ typedef struct _STRUC_ELEMENT {
 // ->     PCR equ ds:[0FFDFF000H]
 //
 
-#define genStr(String, Value) \
-    { SEF_STRING, (ULONG_PTR)(Value), String },
+#define genStr(String, Value) { SEF_STRING, (ULONG_PTR)(Value), String },
 
 //
 // genTxt("ifdef NT_UP\n")
@@ -208,14 +198,11 @@ typedef struct _STRUC_ELEMENT {
 // -> ifdef NT_UP
 //
 
-#define genTxt(String) \
-    { SEF_STRING, 0, String },
+#define genTxt(String) { SEF_STRING, 0, String },
 
-#define DisableInc( x ) \
-    { SEF_CLRMASK, x, "" },
+#define DisableInc(x) { SEF_CLRMASK, x, "" },
 
-#define EnableInc( x ) \
-    { SEF_SETMASK, x, "" },
+#define EnableInc(x) { SEF_SETMASK, x, "" },
 
 #define MARKER_STRING "This is the genxx marker string."
 
@@ -229,8 +216,7 @@ typedef struct _STRUC_ELEMENT {
 // format.
 //
 
-#define setPath( p, f ) \
-    { SEF_PATH | f, 0, p },
+#define setPath(p, f) { SEF_PATH | f, 0, p },
 
 //
 // START_LIST defines the first element in ElementList.  This element contains
@@ -238,26 +224,23 @@ typedef struct _STRUC_ELEMENT {
 // determine the fixup RA bias.
 //
 
-#define START_LIST \
-    { SEF_START, (ULONG_PTR)ElementList, MARKER_STRING },
+#define START_LIST { SEF_START, (ULONG_PTR)ElementList, MARKER_STRING },
 
-#define END_LIST \
-    { SEF_END, 0, "" }
+#define END_LIST { SEF_END, 0, "" }
 
 //
 // Preprocessor assertion.  Do something here to make the compiler generate
 // an error if x != y.
 //
 
-#define ASSERT_SAME( x, y )
+#define ASSERT_SAME(x, y)
 
 //
 // Macro to round Val up to the next Bnd boundary.  Bnd must be an integral
 // power of two.
 //
 
-#define ROUND_UP( Val, Bnd ) \
-    (((Val) + ((Bnd) - 1)) & ~((Bnd) - 1))
+#define ROUND_UP(Val, Bnd) (((Val) + ((Bnd) - 1)) & ~((Bnd) - 1))
 
 #ifndef OFFSET
 
@@ -478,5 +461,4 @@ define(`genBitAlias', `define(`BITFIELD_STRUCS',
 
 define(`DUMP_BITFIELDS',`define(`cma',`,') BITFIELD_STRUCS')
 
-#endif  // SKIP_M4
-
+#endif // SKIP_M4

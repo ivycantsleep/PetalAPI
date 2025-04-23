@@ -22,44 +22,43 @@
 * 12-12-94 JerrySh  Copied from server - make sure to keep in sync
 \***************************************************************************/
 
-BOOL PaintRect(
-    HWND hwndBrush,
-    HWND hwndPaint,
-    HDC hdc,
-    HBRUSH hbr,
-    LPRECT lprc)
+BOOL PaintRect(HWND hwndBrush, HWND hwndPaint, HDC hdc, HBRUSH hbr, LPRECT lprc)
 {
     POINT ptOrg;
     PWND pwndBrush;
     PWND pwndPaint;
-    HWND    hwndDesktop;
+    HWND hwndDesktop;
 
     hwndDesktop = GetDesktopWindow();
-    if (hwndBrush == NULL) {
+    if (hwndBrush == NULL)
+    {
         hwndBrush = hwndDesktop;
     }
 
-    if (hwndBrush != hwndPaint) {
+    if (hwndBrush != hwndPaint)
+    {
         pwndBrush = ValidateHwnd(hwndBrush);
-        if (pwndBrush == NULL) {
+        if (pwndBrush == NULL)
+        {
             RIPMSG1(RIP_WARNING, "PaintRect: invalid Brush window %lX", hwndBrush);
             return FALSE;
         }
 
         pwndPaint = ValidateHwnd(hwndPaint);
-        if (pwndPaint == NULL) {
+        if (pwndPaint == NULL)
+        {
             RIPMSG1(RIP_WARNING, "PaintRect: invalid Paint window %lX", hwndBrush);
             return FALSE;
         }
 
 
-        if (hwndBrush != hwndDesktop) {
-            SetBrushOrgEx(
-                    hdc,
-                    pwndBrush->rcClient.left - pwndPaint->rcClient.left,
-                    pwndBrush->rcClient.top - pwndPaint->rcClient.top,
-                    &ptOrg);
-        } else {
+        if (hwndBrush != hwndDesktop)
+        {
+            SetBrushOrgEx(hdc, pwndBrush->rcClient.left - pwndPaint->rcClient.left,
+                          pwndBrush->rcClient.top - pwndPaint->rcClient.top, &ptOrg);
+        }
+        else
+        {
             SetBrushOrgEx(hdc, 0, 0, &ptOrg);
         }
     }
@@ -70,14 +69,15 @@ BOOL PaintRect(
      * message and send it off to get back a real brush.  The translation
      * process assumes the CTLCOLOR*** and WM_CTLCOLOR*** values map directly.
      */
-    if (hbr < (HBRUSH)CTLCOLOR_MAX) {
-        hbr = GetControlColor(hwndBrush, hwndPaint, hdc,
-                HandleToUlong(hbr) + WM_CTLCOLORMSGBOX);
+    if (hbr < (HBRUSH)CTLCOLOR_MAX)
+    {
+        hbr = GetControlColor(hwndBrush, hwndPaint, hdc, HandleToUlong(hbr) + WM_CTLCOLORMSGBOX);
     }
 
     FillRect(hdc, lprc, hbr);
 
-    if (hwndBrush != hwndPaint) {
+    if (hwndBrush != hwndPaint)
+    {
         SetBrushOrgEx(hdc, ptOrg.x, ptOrg.y, NULL);
     }
 

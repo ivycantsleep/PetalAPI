@@ -26,34 +26,15 @@ Revision History:
 //#define FIRSTDBG 1
 //#define AGGREGATE_DBG FIRSTDBG
 
-static
-ULONG
-MaximumAlignment(
-    ULONG Offset
-    );
+static ULONG MaximumAlignment(ULONG Offset);
 
-static
-ULONG
-AggregatePages(
-    PMMPTE,
-    PFN_NUMBER,
-    ULONG,
-    PULONG
-    );
-
+static ULONG AggregatePages(PMMPTE, PFN_NUMBER, ULONG, PULONG);
+
 NTSTATUS
-MiMapViewOfPhysicalSection (
-    IN PCONTROL_AREA ControlArea,
-    IN PEPROCESS Process,
-    IN PVOID *CapturedBase,
-    IN PLARGE_INTEGER SectionOffset,
-    IN PSIZE_T CapturedViewSize,
-    IN ULONG ProtectionMask,
-    IN ULONG_PTR ZeroBits,
-    IN ULONG AllocationType,
-    IN BOOLEAN WriteCombined,
-    OUT PBOOLEAN ReleasedWsMutex
-    )
+MiMapViewOfPhysicalSection(IN PCONTROL_AREA ControlArea, IN PEPROCESS Process, IN PVOID *CapturedBase,
+                           IN PLARGE_INTEGER SectionOffset, IN PSIZE_T CapturedViewSize, IN ULONG ProtectionMask,
+                           IN ULONG_PTR ZeroBits, IN ULONG AllocationType, IN BOOLEAN WriteCombined,
+                           OUT PBOOLEAN ReleasedWsMutex)
 
 /*++
 
@@ -110,10 +91,8 @@ Environment:
 
 #ifdef FIRSTDBG
 
-    DbgPrint( "MM: Physsect CaptureBase = %x  SectionOffset = %x\n",
-              CapturedBase, SectionOffset->LowPart );
-    DbgPrint( "MM: Physsect Allocation Type = %x, MEM_LARGE_PAGES = %x\n",
-              AllocationType, MEM_LARGE_PAGES );
+    DbgPrint("MM: Physsect CaptureBase = %x  SectionOffset = %x\n", CapturedBase, SectionOffset->LowPart);
+    DbgPrint("MM: Physsect Allocation Type = %x, MEM_LARGE_PAGES = %x\n", AllocationType, MEM_LARGE_PAGES);
 
 #endif //FIRSTDBG
 
@@ -129,7 +108,8 @@ Environment:
 
     Alignment = X64K;
 
-    if( AllocationType & MEM_LARGE_PAGES ){
+    if (AllocationType & MEM_LARGE_PAGES)
+    {
 
         //
         // MaxAlignment is the maximum boundary alignment of the
@@ -137,78 +117,77 @@ Environment:
         //                granularity hints boundaries)
         //
 
-        ULONG MaxAlignment = MaximumAlignment( SectionOffset->LowPart );
+        ULONG MaxAlignment = MaximumAlignment(SectionOffset->LowPart);
 
         Alignment = (MaxAlignment > Alignment) ? MaxAlignment : Alignment;
 
 #ifdef FIRSTDBG
 
-        DbgPrint( "MM: Alignment = %x, SectionOffset = %x\n",
-                       Alignment, SectionOffset->LowPart );
+        DbgPrint("MM: Alignment = %x, SectionOffset = %x\n", Alignment, SectionOffset->LowPart);
 
 #endif //FIRSTDBG
-
     }
 
 
-    LOCK_WS (Process);
+    LOCK_WS(Process);
 
-    if (*CapturedBase == NULL) {
+    if (*CapturedBase == NULL)
+    {
 
         //
         // Attempt to locate address space.  This could raise an
         // exception.
         //
 
-        try {
+        try
+        {
 
             //
             // Find a starting address on an alignment boundary.
             //
 
 
-            PhysicalViewSize = (SectionOffset->LowPart + *CapturedViewSize) -
-                               (ULONG_PTR)MI_64K_ALIGN(SectionOffset->LowPart);
+            PhysicalViewSize =
+                (SectionOffset->LowPart + *CapturedViewSize) - (ULONG_PTR)MI_64K_ALIGN(SectionOffset->LowPart);
 
-            StartingAddress = MiFindEmptyAddressRange (PhysicalViewSize,
-                                                       Alignment,
-                                                       (ULONG)ZeroBits);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+            StartingAddress = MiFindEmptyAddressRange(PhysicalViewSize, Alignment, (ULONG)ZeroBits);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             return GetExceptionCode();
         }
 
-        EndingAddress = (PVOID)(((ULONG_PTR)StartingAddress +
-                                PhysicalViewSize - 1L) | (PAGE_SIZE - 1L));
+        EndingAddress = (PVOID)(((ULONG_PTR)StartingAddress + PhysicalViewSize - 1L) | (PAGE_SIZE - 1L));
 
-        StartingAddress = (PVOID)((ULONG_PTR)StartingAddress +
-                                     (SectionOffset->LowPart & (X64K - 1)));
+        StartingAddress = (PVOID)((ULONG_PTR)StartingAddress + (SectionOffset->LowPart & (X64K - 1)));
 
-        if (ZeroBits > 0) {
-            if (EndingAddress > (PVOID)((LONG_PTR)0xFFFFFFFF >> ZeroBits)) {
+        if (ZeroBits > 0)
+        {
+            if (EndingAddress > (PVOID)((LONG_PTR)0xFFFFFFFF >> ZeroBits))
+            {
                 return STATUS_NO_MEMORY;
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Check to make sure the specified base address to ending address
         // is currently unused.
         //
 
-        PhysicalViewSize = (SectionOffset->LowPart + *CapturedViewSize) -
-                                (ULONG_PTR)MI_64K_ALIGN(SectionOffset->LowPart);
+        PhysicalViewSize =
+            (SectionOffset->LowPart + *CapturedViewSize) - (ULONG_PTR)MI_64K_ALIGN(SectionOffset->LowPart);
 
-        StartingAddress = (PVOID)((ULONG_PTR)MI_64K_ALIGN(*CapturedBase) +
-                                    (SectionOffset->LowPart & (X64K - 1)));
+        StartingAddress = (PVOID)((ULONG_PTR)MI_64K_ALIGN(*CapturedBase) + (SectionOffset->LowPart & (X64K - 1)));
 
-        EndingAddress = (PVOID)(((ULONG_PTR)StartingAddress +
-                                *CapturedViewSize - 1L) | (PAGE_SIZE - 1L));
+        EndingAddress = (PVOID)(((ULONG_PTR)StartingAddress + *CapturedViewSize - 1L) | (PAGE_SIZE - 1L));
 
-        Vad = MiCheckForConflictingVad (StartingAddress, EndingAddress);
-        if (Vad != (PMMVAD)NULL) {
+        Vad = MiCheckForConflictingVad(StartingAddress, EndingAddress);
+        if (Vad != (PMMVAD)NULL)
+        {
 #if 0
             MiDumpConflictingVad (StartingAddress, EndingAddress, Vad);
 #endif
@@ -228,26 +207,28 @@ Environment:
     // will also charge quota which could raise an exception.
     //
 
-    try  {
+    try
+    {
 
-        PhysicalView = (PMI_PHYSICAL_VIEW)ExAllocatePoolWithTag (NonPagedPool,
-                                                                 sizeof(MI_PHYSICAL_VIEW),
-                                                                 MI_PHYSICAL_VIEW_KEY);
-        if (PhysicalView == NULL) {
-            ExRaiseStatus (STATUS_INSUFFICIENT_RESOURCES);
+        PhysicalView =
+            (PMI_PHYSICAL_VIEW)ExAllocatePoolWithTag(NonPagedPool, sizeof(MI_PHYSICAL_VIEW), MI_PHYSICAL_VIEW_KEY);
+        if (PhysicalView == NULL)
+        {
+            ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
         }
 
-        Vad = (PMMVAD)ExAllocatePoolWithTag (NonPagedPool, sizeof(MMVAD), ' daV');
-        if (Vad == NULL) {
-            ExRaiseStatus (STATUS_INSUFFICIENT_RESOURCES);
+        Vad = (PMMVAD)ExAllocatePoolWithTag(NonPagedPool, sizeof(MMVAD), ' daV');
+        if (Vad == NULL)
+        {
+            ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
         }
 
         PhysicalView->Vad = Vad;
         PhysicalView->StartVa = StartingAddress;
         PhysicalView->EndVa = EndingAddress;
 
-        Vad->StartingVpn = MI_VA_TO_VPN (StartingAddress);
-        Vad->EndingVpn = MI_VA_TO_VPN (EndingAddress);
+        Vad->StartingVpn = MI_VA_TO_VPN(StartingAddress);
+        Vad->EndingVpn = MI_VA_TO_VPN(EndingAddress);
         Vad->ControlArea = ControlArea;
         Vad->u.LongFlags = 0;
         Vad->u2.VadFlags2.Inherit = ViewUnmap;
@@ -257,29 +238,30 @@ Environment:
         Vad->u.VadFlags.Protection = ProtectionMask;
         Vad->u2.VadFlags2.CopyOnWrite = 0;
         // Vad->u.VadFlags.LargePages = 0;
-        Vad->FirstPrototypePte =
-                       (PMMPTE)(MI_CONVERT_PHYSICAL_BUS_TO_PFN(*SectionOffset));
+        Vad->FirstPrototypePte = (PMMPTE)(MI_CONVERT_PHYSICAL_BUS_TO_PFN(*SectionOffset));
 
         //
         // Set the first prototype PTE field in the Vad.
         //
 
-        Vad->LastContiguousPte =
-                       (PMMPTE)(MI_CONVERT_PHYSICAL_BUS_TO_PFN(*SectionOffset));
+        Vad->LastContiguousPte = (PMMPTE)(MI_CONVERT_PHYSICAL_BUS_TO_PFN(*SectionOffset));
 
         //
         // Insert the VAD.  This could get an exception.
         //
 
-        MiInsertVad (Vad);
+        MiInsertVad(Vad);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-
-        if (PhysicalView != NULL) {
-            ExFreePool (PhysicalView);
+        if (PhysicalView != NULL)
+        {
+            ExFreePool(PhysicalView);
         }
 
-        if (Vad != (PMMVAD)NULL) {
+        if (Vad != (PMMVAD)NULL)
+        {
 
             //
             // The pool allocation suceeded, but the quota charge
@@ -287,7 +269,7 @@ Environment:
             // and error.
             //
 
-            ExFreePool (Vad);
+            ExFreePool(Vad);
             return GetExceptionCode();
         }
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -297,37 +279,39 @@ Environment:
     // section object.  This requires the PFN mutex to be held.
     //
 
-    LOCK_AWE (Process, OldIrql);
-    LOCK_PFN_AT_DPC ();
+    LOCK_AWE(Process, OldIrql);
+    LOCK_PFN_AT_DPC();
 
-    if (PhysicalView->Vad->u.VadFlags.PhysicalMapping == 1) {
+    if (PhysicalView->Vad->u.VadFlags.PhysicalMapping == 1)
+    {
         Process->HasPhysicalVad = 1;
     }
 
-    InsertHeadList (&Process->PhysicalVadList, &PhysicalView->ListEntry);
+    InsertHeadList(&Process->PhysicalVadList, &PhysicalView->ListEntry);
 
     ControlArea->NumberOfMappedViews += 1;
     ControlArea->NumberOfUserReferences += 1;
-    ASSERT (ControlArea->NumberOfSectionReferences != 0);
+    ASSERT(ControlArea->NumberOfSectionReferences != 0);
 
-    UNLOCK_PFN_FROM_DPC ();
-    UNLOCK_AWE (Process, OldIrql);
+    UNLOCK_PFN_FROM_DPC();
+    UNLOCK_AWE(Process, OldIrql);
 
     //
     // Build the PTEs in the address space.
     //
 
-    PointerPpe = MiGetPpeAddress (StartingAddress);
-    PointerPde = MiGetPdeAddress (StartingAddress);
-    PointerPte = MiGetPteAddress (StartingAddress);
-    LastPte = MiGetPteAddress (EndingAddress);
+    PointerPpe = MiGetPpeAddress(StartingAddress);
+    PointerPde = MiGetPdeAddress(StartingAddress);
+    PointerPte = MiGetPteAddress(StartingAddress);
+    LastPte = MiGetPteAddress(EndingAddress);
 
-#if defined (_WIN64)
-    MiMakePpeExistAndMakeValid (PointerPpe, Process, FALSE);
-    if (PointerPde->u.Long == 0) {
-        UsedPageDirectoryHandle = MI_GET_USED_PTES_HANDLE (PointerPte);
-        ASSERT (MI_GET_USED_PTES_FROM_HANDLE (UsedPageDirectoryHandle) == 0); 
-        MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageDirectoryHandle);
+#if defined(_WIN64)
+    MiMakePpeExistAndMakeValid(PointerPpe, Process, FALSE);
+    if (PointerPde->u.Long == 0)
+    {
+        UsedPageDirectoryHandle = MI_GET_USED_PTES_HANDLE(PointerPte);
+        ASSERT(MI_GET_USED_PTES_FROM_HANDLE(UsedPageDirectoryHandle) == 0);
+        MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageDirectoryHandle);
     }
 #endif
 
@@ -335,32 +319,30 @@ Environment:
 
     Pfn2 = MI_PFN_ELEMENT(PointerPde->u.Hard.PageFrameNumber);
 
-    PagesToMap = (ULONG)((((ULONG_PTR)EndingAddress - (ULONG_PTR)StartingAddress))
-                   + (PAGE_SIZE-1) ) >> PAGE_SHIFT;
+    PagesToMap = (ULONG)((((ULONG_PTR)EndingAddress - (ULONG_PTR)StartingAddress)) + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
 
     NextPfn = MI_CONVERT_PHYSICAL_BUS_TO_PFN(*SectionOffset);
 
 #ifdef FIRSTDBG
 
-    DbgPrint( "MM: Physsect, PagesToMap = %x  NextPfn = %x\n",
-                   PagesToMap, NextPfn );
+    DbgPrint("MM: Physsect, PagesToMap = %x  NextPfn = %x\n", PagesToMap, NextPfn);
 
 #endif //FIRSTDBG
 
-    MI_MAKE_VALID_PTE (TempPte,
-                       NextPfn,
-                       ProtectionMask,
-                       PointerPte);
+    MI_MAKE_VALID_PTE(TempPte, NextPfn, ProtectionMask, PointerPte);
 
-    if (WriteCombined == TRUE) {
-        MI_SET_PTE_WRITE_COMBINE (TempPte);
+    if (WriteCombined == TRUE)
+    {
+        MI_SET_PTE_WRITE_COMBINE(TempPte);
     }
 
-    if (TempPte.u.Hard.Write) {
-            TempPte.u.Hard.FaultOnWrite = 1;
+    if (TempPte.u.Hard.Write)
+    {
+        TempPte.u.Hard.FaultOnWrite = 1;
     }
 
-    while (PointerPte <= LastPte) {
+    while (PointerPte <= LastPte)
+    {
 
         ULONG PagesTogether;
         ULONG GranularityHint;
@@ -369,26 +351,23 @@ Environment:
         // Compute the number of pages that can be mapped together
         //
 
-        if( AllocationType & MEM_LARGE_PAGES ){
-            PagesTogether = AggregatePages( PointerPte,
-                                            NextPfn,
-                                            PagesToMap,
-                                            &GranularityHint );
-        } else {
+        if (AllocationType & MEM_LARGE_PAGES)
+        {
+            PagesTogether = AggregatePages(PointerPte, NextPfn, PagesToMap, &GranularityHint);
+        }
+        else
+        {
             PagesTogether = 1;
             GranularityHint = 0;
         }
 
 #ifdef FIRSTDBG
 
-        DbgPrint( "MM: Physsect  PointerPte = %x, NextPfn = %x\n",
-                       PointerPte, NextPfn );
-        DbgPrint( "MM: Va = %x  TempPte.Pfn = %x\n",
-                       MiGetVirtualAddressMappedByPte( PointerPte ),
-                       TempPte.u.Hard.PageFrameNumber );
-        DbgPrint( "MM: PagesToMap = %x\n", PagesToMap );
-        DbgPrint( "MM: PagesTogether = %x, GH = %x\n",
-                       PagesTogether, GranularityHint );
+        DbgPrint("MM: Physsect  PointerPte = %x, NextPfn = %x\n", PointerPte, NextPfn);
+        DbgPrint("MM: Va = %x  TempPte.Pfn = %x\n", MiGetVirtualAddressMappedByPte(PointerPte),
+                 TempPte.u.Hard.PageFrameNumber);
+        DbgPrint("MM: PagesToMap = %x\n", PagesToMap);
+        DbgPrint("MM: PagesTogether = %x, GH = %x\n", PagesTogether, GranularityHint);
 
 #endif //FIRSTDBG
 
@@ -397,39 +376,43 @@ Environment:
         NextPfn += PagesTogether;
         PagesToMap -= PagesTogether;
 
-        UsedPageTableHandle = MI_GET_USED_PTES_HANDLE (MiGetVirtualAddressMappedByPte (PointerPte));
+        UsedPageTableHandle = MI_GET_USED_PTES_HANDLE(MiGetVirtualAddressMappedByPte(PointerPte));
 
-        while( PagesTogether-- ){
+        while (PagesTogether--)
+        {
 
-            if (MiIsPteOnPdeBoundary (PointerPte)) {
+            if (MiIsPteOnPdeBoundary(PointerPte))
+            {
 
-                PointerPde = MiGetPteAddress (PointerPte);
+                PointerPde = MiGetPteAddress(PointerPte);
 
-                if (MiIsPteOnPpeBoundary (PointerPte)) {
-                    PointerPpe = MiGetPteAddress (PointerPde);
-                    MiMakePpeExistAndMakeValid (PointerPpe, Process, FALSE);
-                    if (PointerPde->u.Long == 0) {
-                        UsedPageDirectoryHandle = MI_GET_USED_PTES_HANDLE (PointerPte);
-                        ASSERT (MI_GET_USED_PTES_FROM_HANDLE (UsedPageDirectoryHandle) == 0); 
-                
-                        MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageDirectoryHandle);
+                if (MiIsPteOnPpeBoundary(PointerPte))
+                {
+                    PointerPpe = MiGetPteAddress(PointerPde);
+                    MiMakePpeExistAndMakeValid(PointerPpe, Process, FALSE);
+                    if (PointerPde->u.Long == 0)
+                    {
+                        UsedPageDirectoryHandle = MI_GET_USED_PTES_HANDLE(PointerPte);
+                        ASSERT(MI_GET_USED_PTES_FROM_HANDLE(UsedPageDirectoryHandle) == 0);
+
+                        MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageDirectoryHandle);
                     }
                 }
 
-                MiMakePdeExistAndMakeValid (PointerPde, Process, FALSE);
-                Pfn2 = MI_PFN_ELEMENT (PointerPde->u.Hard.PageFrameNumber);
-                UsedPageTableHandle = MI_GET_USED_PTES_HANDLE (MiGetVirtualAddressMappedByPte (PointerPte));
+                MiMakePdeExistAndMakeValid(PointerPde, Process, FALSE);
+                Pfn2 = MI_PFN_ELEMENT(PointerPde->u.Hard.PageFrameNumber);
+                UsedPageTableHandle = MI_GET_USED_PTES_HANDLE(MiGetVirtualAddressMappedByPte(PointerPte));
             }
 
-            ASSERT( PointerPte->u.Long == 0 );
+            ASSERT(PointerPte->u.Long == 0);
 
             *PointerPte = TempPte;
 #if PFN_CONSISTENCY
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
 #endif
             Pfn2->u2.ShareCount += 1;
 #if PFN_CONSISTENCY
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 #endif
 
             //
@@ -437,7 +420,7 @@ Environment:
             // page table and the number of private pages for the process.
             //
 
-            MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageTableHandle);
+            MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageTableHandle);
 
             PointerPte += 1;
 
@@ -445,9 +428,9 @@ Environment:
 
         } // while (PagesTogether-- )
 
-    }  // while (PointerPte <= LastPte)
+    } // while (PointerPte <= LastPte)
 
-    UNLOCK_WS (Process);
+    UNLOCK_WS(Process);
     *ReleasedWsMutex = TRUE;
 
     //
@@ -457,7 +440,8 @@ Environment:
     *CapturedViewSize = (ULONG)((ULONG_PTR)EndingAddress - (ULONG_PTR)StartingAddress + 1L);
     Process->VirtualSize += *CapturedViewSize;
 
-    if (Process->VirtualSize > Process->PeakVirtualSize) {
+    if (Process->VirtualSize > Process->PeakVirtualSize)
+    {
         Process->PeakVirtualSize = Process->VirtualSize;
     }
 
@@ -471,16 +455,14 @@ Environment:
     // system memory and extend through i/o space.
     //
 
-    *CapturedBase = HalCreateQva( *SectionOffset, StartingAddress );
+    *CapturedBase = HalCreateQva(*SectionOffset, StartingAddress);
 
     return STATUS_SUCCESS;
 }
 
 
 ULONG
-MaximumAlignment(
-    IN ULONG Offset
-    )
+MaximumAlignment(IN ULONG Offset)
 /*++
 
 Routine Description:
@@ -501,19 +483,23 @@ Environment:
 --*/
 {
 
-    if( (Offset & (GH3_PAGE_SIZE - 1)) == 0 ){
+    if ((Offset & (GH3_PAGE_SIZE - 1)) == 0)
+    {
         return GH3_PAGE_SIZE;
     }
 
-    if( (Offset & (GH2_PAGE_SIZE - 1)) == 0 ){
+    if ((Offset & (GH2_PAGE_SIZE - 1)) == 0)
+    {
         return GH2_PAGE_SIZE;
     }
 
-    if( (Offset & (GH1_PAGE_SIZE - 1)) == 0 ){
+    if ((Offset & (GH1_PAGE_SIZE - 1)) == 0)
+    {
         return GH1_PAGE_SIZE;
     }
 
-    if( (Offset & (PAGE_SIZE - 1)) == 0 ){
+    if ((Offset & (PAGE_SIZE - 1)) == 0)
+    {
         return PAGE_SIZE;
     }
 
@@ -522,12 +508,7 @@ Environment:
 
 
 ULONG
-AggregatePages(
-    IN PMMPTE  PointerPte,
-    IN PFN_NUMBER Pfn,
-    IN ULONG   Pages,
-    OUT PULONG GranularityHint
-    )
+AggregatePages(IN PMMPTE PointerPte, IN PFN_NUMBER Pfn, IN ULONG Pages, OUT PULONG GranularityHint)
 /*++
 
 Routine Description:
@@ -570,56 +551,58 @@ Environment:
     // largest page size possible via the granularity hints.
     //
 
-    MaxVirtualAlignment =
-        MaximumAlignment((ULONG)((ULONG_PTR)MiGetVirtualAddressMappedByPte(PointerPte)));
+    MaxVirtualAlignment = MaximumAlignment((ULONG)((ULONG_PTR)MiGetVirtualAddressMappedByPte(PointerPte)));
 
-    MaxPhysicalAlignment = MaximumAlignment( (ULONG)(Pfn << PAGE_SHIFT) );
+    MaxPhysicalAlignment = MaximumAlignment((ULONG)(Pfn << PAGE_SHIFT));
 
     MaxPageAlignment = (ULONG)(Pages << PAGE_SHIFT);
 
 #ifdef AGGREGATE_DBG
 
-    DbgPrint( "MM: Aggregate MaxVirtualAlign = %x\n", MaxVirtualAlignment );
-    DbgPrint( "MM: Aggregate MaxPhysicalAlign = %x\n", MaxPhysicalAlignment );
-    DbgPrint( "MM: Aggregate MaxPageAlign = %x\n", MaxPageAlignment );
+    DbgPrint("MM: Aggregate MaxVirtualAlign = %x\n", MaxVirtualAlignment);
+    DbgPrint("MM: Aggregate MaxPhysicalAlign = %x\n", MaxPhysicalAlignment);
+    DbgPrint("MM: Aggregate MaxPageAlign = %x\n", MaxPageAlignment);
 
 #endif //AGGREGATE_DBG
     //
     // Maximum alignment is the minimum of the virtual and physical alignments.
     //
 
-    MaxAlignment =  (MaxVirtualAlignment > MaxPhysicalAlignment) ?
-                        MaxPhysicalAlignment : MaxVirtualAlignment;
-    MaxAlignment = (MaxAlignment > MaxPageAlignment) ?
-                        MaxPageAlignment : MaxAlignment;
+    MaxAlignment = (MaxVirtualAlignment > MaxPhysicalAlignment) ? MaxPhysicalAlignment : MaxVirtualAlignment;
+    MaxAlignment = (MaxAlignment > MaxPageAlignment) ? MaxPageAlignment : MaxAlignment;
 
     //
     // Convert MaxAlignment to granularity hint value
     //
 
-    if( (MaxAlignment & (GH3_PAGE_SIZE - 1)) == 0 ){
+    if ((MaxAlignment & (GH3_PAGE_SIZE - 1)) == 0)
+    {
 
         *GranularityHint = GH3;
-
-    } else if( (MaxAlignment & (GH2_PAGE_SIZE - 1)) == 0 ){
+    }
+    else if ((MaxAlignment & (GH2_PAGE_SIZE - 1)) == 0)
+    {
 
         *GranularityHint = GH2;
-
-    } else if( (MaxAlignment & (GH1_PAGE_SIZE - 1)) == 0 ){
+    }
+    else if ((MaxAlignment & (GH1_PAGE_SIZE - 1)) == 0)
+    {
 
         *GranularityHint = GH1;
-
-    } else if( (MaxAlignment & (PAGE_SIZE - 1)) == 0 ){
+    }
+    else if ((MaxAlignment & (PAGE_SIZE - 1)) == 0)
+    {
 
         *GranularityHint = GH0;
-
-    } else {
+    }
+    else
+    {
 
         *GranularityHint = GH0;
 
 #if DBG
 
-        DbgPrint( "MM: Aggregate Physical pages - not page aligned\n" );
+        DbgPrint("MM: Aggregate Physical pages - not page aligned\n");
 
 #endif //DBG
 
@@ -629,6 +612,5 @@ Environment:
     // Return number of pages aggregated.
     //
 
-    return( MaxAlignment >> PAGE_SHIFT );
-
+    return (MaxAlignment >> PAGE_SHIFT);
 }

@@ -21,18 +21,14 @@ Revision History:
 #include "lpcp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtReplyWaitReceivePort)
-#pragma alloc_text(PAGE,NtReplyWaitReceivePortEx)
+#pragma alloc_text(PAGE, NtReplyWaitReceivePort)
+#pragma alloc_text(PAGE, NtReplyWaitReceivePortEx)
 #endif
 
-
+
 NTSTATUS
-NtReplyWaitReceivePort (
-    IN HANDLE PortHandle,
-    OUT PVOID *PortContext OPTIONAL,
-    IN PPORT_MESSAGE ReplyMessage OPTIONAL,
-    OUT PPORT_MESSAGE ReceiveMessage
-    )
+NtReplyWaitReceivePort(IN HANDLE PortHandle, OUT PVOID *PortContext OPTIONAL, IN PPORT_MESSAGE ReplyMessage OPTIONAL,
+                       OUT PPORT_MESSAGE ReceiveMessage)
 
 /*++
 
@@ -92,21 +88,12 @@ Return Value:
 {
     PAGED_CODE();
 
-    return NtReplyWaitReceivePortEx (PortHandle,
-                                     PortContext,
-                                     ReplyMessage,
-                                     ReceiveMessage,
-                                     NULL);
+    return NtReplyWaitReceivePortEx(PortHandle, PortContext, ReplyMessage, ReceiveMessage, NULL);
 }
 
 NTSTATUS
-NtReplyWaitReceivePortEx(
-    IN HANDLE PortHandle,
-    OUT PVOID *PortContext OPTIONAL,
-    IN PPORT_MESSAGE ReplyMessage OPTIONAL,
-    OUT PPORT_MESSAGE ReceiveMessage,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+NtReplyWaitReceivePortEx(IN HANDLE PortHandle, OUT PVOID *PortContext OPTIONAL, IN PPORT_MESSAGE ReplyMessage OPTIONAL,
+                         OUT PPORT_MESSAGE ReceiveMessage, IN PLARGE_INTEGER Timeout OPTIONAL)
 
 /*++
 
@@ -137,14 +124,14 @@ Return Value:
     PLPCP_MESSAGE Msg;
     PETHREAD CurrentThread;
     PETHREAD WakeupThread;
-    LARGE_INTEGER TimeoutValue ;
+    LARGE_INTEGER TimeoutValue;
     PLPCP_PORT_OBJECT ConnectionPort = NULL;
 
     PAGED_CODE();
 
     CurrentThread = PsGetCurrentThread();
 
-    TimeoutValue.QuadPart = 0 ;
+    TimeoutValue.QuadPart = 0;
 
     //
     //  Get previous processor mode
@@ -153,41 +140,44 @@ Return Value:
     PreviousMode = KeGetPreviousMode();
     WaitMode = PreviousMode;
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            if (ARGUMENT_PRESENT( PortContext )) {
+            if (ARGUMENT_PRESENT(PortContext))
+            {
 
-                ProbeForWriteUlong( (PULONG)PortContext );
+                ProbeForWriteUlong((PULONG)PortContext);
             }
 
-            if (ARGUMENT_PRESENT( ReplyMessage)) {
+            if (ARGUMENT_PRESENT(ReplyMessage))
+            {
 
-                ProbeForReadSmallStructure( ReplyMessage,
-                                            sizeof( *ReplyMessage ),
-                                            sizeof( ULONG ));
+                ProbeForReadSmallStructure(ReplyMessage, sizeof(*ReplyMessage), sizeof(ULONG));
 
                 CapturedReplyMessage = *ReplyMessage;
             }
 
-            if (ARGUMENT_PRESENT( Timeout )) {
+            if (ARGUMENT_PRESENT(Timeout))
+            {
 
-                TimeoutValue = ProbeAndReadLargeInteger( Timeout );
+                TimeoutValue = ProbeAndReadLargeInteger(Timeout);
 
-                Timeout = &TimeoutValue ;
+                Timeout = &TimeoutValue;
             }
 
-            ProbeForWriteSmallStructure( ReceiveMessage,
-                                         sizeof( *ReceiveMessage ),
-                                         sizeof( ULONG ));
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+            ProbeForWriteSmallStructure(ReceiveMessage, sizeof(*ReceiveMessage), sizeof(ULONG));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             return GetExceptionCode();
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Kernel mode threads call with wait mode of user so that their
@@ -195,26 +185,30 @@ Return Value:
         //  SepRmCommandThread
         //
 
-        if ( IS_SYSTEM_THREAD(CurrentThread) ) {
+        if (IS_SYSTEM_THREAD(CurrentThread))
+        {
 
             WaitMode = UserMode;
         }
 
-        if (ARGUMENT_PRESENT( ReplyMessage)) {
+        if (ARGUMENT_PRESENT(ReplyMessage))
+        {
 
             CapturedReplyMessage = *ReplyMessage;
         }
     }
 
-    if (ARGUMENT_PRESENT( ReplyMessage)) {
+    if (ARGUMENT_PRESENT(ReplyMessage))
+    {
 
         //
         //  Make sure DataLength is valid with respect to header size and total
         //  length
         //
 
-        if ((((CLONG)CapturedReplyMessage.u1.s1.DataLength) + sizeof( PORT_MESSAGE )) >
-            ((CLONG)CapturedReplyMessage.u1.s1.TotalLength)) {
+        if ((((CLONG)CapturedReplyMessage.u1.s1.DataLength) + sizeof(PORT_MESSAGE)) >
+            ((CLONG)CapturedReplyMessage.u1.s1.TotalLength))
+        {
 
             return STATUS_INVALID_PARAMETER;
         }
@@ -223,7 +217,8 @@ Return Value:
         //  Make sure the user didn't give us a bogus reply message id
         //
 
-        if (CapturedReplyMessage.MessageId == 0) {
+        if (CapturedReplyMessage.MessageId == 0)
+        {
 
             return STATUS_INVALID_PARAMETER;
         }
@@ -234,21 +229,15 @@ Return Value:
     //  a waitable port object type
     //
 
-    Status = LpcpReferencePortObject( PortHandle,
-                                      0,
-                                      PreviousMode,
-                                      &PortObject );
+    Status = LpcpReferencePortObject(PortHandle, 0, PreviousMode, &PortObject);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        Status = ObReferenceObjectByHandle( PortHandle,
-                                            0,
-                                            LpcWaitablePortObjectType,
-                                            PreviousMode,
-                                            &PortObject,
-                                            NULL );
+        Status = ObReferenceObjectByHandle(PortHandle, 0, LpcWaitablePortObjectType, PreviousMode, &PortObject, NULL);
 
-        if ( !NT_SUCCESS( Status ) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return Status;
         }
@@ -258,12 +247,14 @@ Return Value:
     //  Validate the message length
     //
 
-    if (ARGUMENT_PRESENT( ReplyMessage )) {
+    if (ARGUMENT_PRESENT(ReplyMessage))
+    {
 
         if (((ULONG)CapturedReplyMessage.u1.s1.TotalLength > PortObject->MaxMessageLength) ||
-            ((ULONG)CapturedReplyMessage.u1.s1.TotalLength <= (ULONG)CapturedReplyMessage.u1.s1.DataLength)) {
+            ((ULONG)CapturedReplyMessage.u1.s1.TotalLength <= (ULONG)CapturedReplyMessage.u1.s1.DataLength))
+        {
 
-            ObDereferenceObject( PortObject );
+            ObDereferenceObject(PortObject);
 
             return STATUS_PORT_MESSAGE_TOO_LONG;
         }
@@ -275,24 +266,27 @@ Return Value:
     //  we expect to receive the reply on the communication port itself.
     //
 
-    if ((PortObject->Flags & PORT_TYPE) != CLIENT_COMMUNICATION_PORT) {
+    if ((PortObject->Flags & PORT_TYPE) != CLIENT_COMMUNICATION_PORT)
+    {
 
         LpcpAcquireLpcpLockByThread(CurrentThread);
-        
+
         ConnectionPort = ReceivePort = PortObject->ConnectionPort;
-        
-        if (ConnectionPort == NULL) {
-            
+
+        if (ConnectionPort == NULL)
+        {
+
             LpcpReleaseLpcpLock();
-            ObDereferenceObject( PortObject );
+            ObDereferenceObject(PortObject);
 
             return STATUS_PORT_DISCONNECTED;
         }
 
-        ObReferenceObject( ConnectionPort );
+        ObReferenceObject(ConnectionPort);
         LpcpReleaseLpcpLock();
-        
-    } else {
+    }
+    else
+    {
 
         ReceivePort = PortObject;
     }
@@ -301,7 +295,8 @@ Return Value:
     //  If ReplyMessage argument present, then send reply
     //
 
-    if (ARGUMENT_PRESENT( ReplyMessage )) {
+    if (ARGUMENT_PRESENT(ReplyMessage))
+    {
 
         //
         //  Translate the ClientId from the connection request into a
@@ -309,15 +304,15 @@ Return Value:
         //  from evaporating out from under us.
         //
 
-        Status = PsLookupProcessThreadByCid( &CapturedReplyMessage.ClientId,
-                                             NULL,
-                                             &WakeupThread );
+        Status = PsLookupProcessThreadByCid(&CapturedReplyMessage.ClientId, NULL, &WakeupThread);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ObDereferenceObject( PortObject );
+            ObDereferenceObject(PortObject);
 
-            if (ConnectionPort) {
+            if (ConnectionPort)
+            {
 
                 ObDereferenceObject(ConnectionPort);
             }
@@ -332,17 +327,19 @@ Return Value:
         //
 
 
-        Msg = (PLPCP_MESSAGE)LpcpAllocateFromPortZone( CapturedReplyMessage.u1.s1.TotalLength );
+        Msg = (PLPCP_MESSAGE)LpcpAllocateFromPortZone(CapturedReplyMessage.u1.s1.TotalLength);
 
-        if (Msg == NULL) {
-            
-            if (ConnectionPort) {
+        if (Msg == NULL)
+        {
+
+            if (ConnectionPort)
+            {
 
                 ObDereferenceObject(ConnectionPort);
             }
 
-            ObDereferenceObject( WakeupThread );
-            ObDereferenceObject( PortObject );
+            ObDereferenceObject(WakeupThread);
+            ObDereferenceObject(PortObject);
 
             return STATUS_NO_MEMORY;
         }
@@ -361,46 +358,43 @@ Return Value:
 
         if ((WakeupThread->LpcReplyMessageId != CapturedReplyMessage.MessageId)
 
-                ||
+            ||
 
             ((LpcpGetThreadMessage(WakeupThread) != NULL) &&
              (LpcpGetThreadMessage(WakeupThread)->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) != LPC_REQUEST)
-                
-                ||
-            
-            (!LpcpValidateClientPort(WakeupThread, PortObject, LPCP_VALIDATE_REASON_REPLY))) {
 
-            LpcpPrint(( "%s Attempted ReplyWaitReceive to Thread %lx (%s)\n",
-                        PsGetCurrentProcess()->ImageFileName,
-                        WakeupThread,
-                        THREAD_TO_PROCESS( WakeupThread )->ImageFileName ));
+            ||
 
-            LpcpPrint(( "failed.  MessageId == %u  Client Id: %x.%x\n",
-                        CapturedReplyMessage.MessageId,
-                        CapturedReplyMessage.ClientId.UniqueProcess,
-                        CapturedReplyMessage.ClientId.UniqueThread ));
+            (!LpcpValidateClientPort(WakeupThread, PortObject, LPCP_VALIDATE_REASON_REPLY)))
+        {
 
-            LpcpPrint(( "         Thread MessageId == %u  Client Id: %x.%x\n",
-                        WakeupThread->LpcReplyMessageId,
-                        WakeupThread->Cid.UniqueProcess,
-                        WakeupThread->Cid.UniqueThread ));
+            LpcpPrint(("%s Attempted ReplyWaitReceive to Thread %lx (%s)\n", PsGetCurrentProcess()->ImageFileName,
+                       WakeupThread, THREAD_TO_PROCESS(WakeupThread)->ImageFileName));
+
+            LpcpPrint(("failed.  MessageId == %u  Client Id: %x.%x\n", CapturedReplyMessage.MessageId,
+                       CapturedReplyMessage.ClientId.UniqueProcess, CapturedReplyMessage.ClientId.UniqueThread));
+
+            LpcpPrint(("         Thread MessageId == %u  Client Id: %x.%x\n", WakeupThread->LpcReplyMessageId,
+                       WakeupThread->Cid.UniqueProcess, WakeupThread->Cid.UniqueThread));
 
 #if DBG
-            if (LpcpStopOnReplyMismatch) {
+            if (LpcpStopOnReplyMismatch)
+            {
 
                 DbgBreakPoint();
             }
 #endif
 
-            LpcpFreeToPortZone( Msg, LPCP_MUTEX_OWNED | LPCP_MUTEX_RELEASE_ON_RETURN );
+            LpcpFreeToPortZone(Msg, LPCP_MUTEX_OWNED | LPCP_MUTEX_RELEASE_ON_RETURN);
 
-            if (ConnectionPort) {
+            if (ConnectionPort)
+            {
 
                 ObDereferenceObject(ConnectionPort);
             }
 
-            ObDereferenceObject( WakeupThread );
-            ObDereferenceObject( PortObject );
+            ObDereferenceObject(WakeupThread);
+            ObDereferenceObject(PortObject);
 
             return STATUS_REPLY_MESSAGE_MISMATCH;
         }
@@ -411,41 +405,33 @@ Return Value:
         //  could mess up its state
         //
 
-        try {
+        try
+        {
 
-            LpcpMoveMessage( &Msg->Request,
-                             &CapturedReplyMessage,
-                             (ReplyMessage + 1),
-                             LPC_REPLY,
-                             NULL );
+            LpcpMoveMessage(&Msg->Request, &CapturedReplyMessage, (ReplyMessage + 1), LPC_REPLY, NULL);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+            LpcpFreeToPortZone(Msg, LPCP_MUTEX_OWNED | LPCP_MUTEX_RELEASE_ON_RETURN);
 
-            LpcpFreeToPortZone( Msg, LPCP_MUTEX_OWNED | LPCP_MUTEX_RELEASE_ON_RETURN );
-
-            if (ConnectionPort) {
+            if (ConnectionPort)
+            {
 
                 ObDereferenceObject(ConnectionPort);
             }
 
-            ObDereferenceObject( WakeupThread );
-            ObDereferenceObject( PortObject );
+            ObDereferenceObject(WakeupThread);
+            ObDereferenceObject(PortObject);
 
             return (Status = GetExceptionCode());
         }
 
-        LpcpTrace(( "%s Sending Reply Msg %lx (%u.%u, %x) [%08x %08x %08x %08x] to Thread %lx (%s)\n",
-                    PsGetCurrentProcess()->ImageFileName,
-                    Msg,
-                    CapturedReplyMessage.MessageId,
-                    CapturedReplyMessage.CallbackId,
-                    CapturedReplyMessage.u2.s2.DataInfoOffset,
-                    *((PULONG)(Msg+1)+0),
-                    *((PULONG)(Msg+1)+1),
-                    *((PULONG)(Msg+1)+2),
-                    *((PULONG)(Msg+1)+3),
-                    WakeupThread,
-                    THREAD_TO_PROCESS( WakeupThread )->ImageFileName ));
+        LpcpTrace(("%s Sending Reply Msg %lx (%u.%u, %x) [%08x %08x %08x %08x] to Thread %lx (%s)\n",
+                   PsGetCurrentProcess()->ImageFileName, Msg, CapturedReplyMessage.MessageId,
+                   CapturedReplyMessage.CallbackId, CapturedReplyMessage.u2.s2.DataInfoOffset, *((PULONG)(Msg + 1) + 0),
+                   *((PULONG)(Msg + 1) + 1), *((PULONG)(Msg + 1) + 2), *((PULONG)(Msg + 1) + 3), WakeupThread,
+                   THREAD_TO_PROCESS(WakeupThread)->ImageFileName));
 
         //
         //  Locate and free the messsage from the port.  This call use to
@@ -453,16 +439,14 @@ Return Value:
         //  prerequisite for doing the call.
         //
 
-        LpcpFreeDataInfoMessage( PortObject,
-                                 CapturedReplyMessage.MessageId,
-                                 CapturedReplyMessage.CallbackId );
+        LpcpFreeDataInfoMessage(PortObject, CapturedReplyMessage.MessageId, CapturedReplyMessage.CallbackId);
 
         //
         //  Add an extra reference so LpcExitThread does not evaporate
         //  the pointer before we get to the wait below
         //
 
-        ObReferenceObject( WakeupThread );
+        ObReferenceObject(WakeupThread);
 
         //
         //  Release the mutex that guards the LpcReplyMessage field
@@ -478,15 +462,17 @@ Return Value:
         //  Remove the thread from the reply rundown list as we are sending the reply.
         //
 
-        if ((!WakeupThread->LpcExitThreadCalled) && (!IsListEmpty( &WakeupThread->LpcReplyChain ))) {
+        if ((!WakeupThread->LpcExitThreadCalled) && (!IsListEmpty(&WakeupThread->LpcReplyChain)))
+        {
 
-            RemoveEntryList( &WakeupThread->LpcReplyChain );
+            RemoveEntryList(&WakeupThread->LpcReplyChain);
 
-            InitializeListHead( &WakeupThread->LpcReplyChain );
+            InitializeListHead(&WakeupThread->LpcReplyChain);
         }
 
         if ((CurrentThread->LpcReceivedMsgIdValid) &&
-            (CurrentThread->LpcReceivedMessageId == CapturedReplyMessage.MessageId)) {
+            (CurrentThread->LpcReceivedMessageId == CapturedReplyMessage.MessageId))
+        {
 
             CurrentThread->LpcReceivedMessageId = 0;
 
@@ -500,41 +486,32 @@ Return Value:
         //  inside of NtRequestWaitReplyPort or NtReplyWaitReplyPort
         //
 
-        KeReleaseSemaphore( &WakeupThread->LpcReplySemaphore,
-                            1,
-                            1,
-                            FALSE );
+        KeReleaseSemaphore(&WakeupThread->LpcReplySemaphore, 1, 1, FALSE);
 
-        ObDereferenceObject( WakeupThread );
-
+        ObDereferenceObject(WakeupThread);
     }
 
-    LpcpTrace(( "%s Waiting for message to Port %x (%s)\n",
-                PsGetCurrentProcess()->ImageFileName,
-                ReceivePort,
-                LpcpGetCreatorName( ReceivePort )));
+    LpcpTrace(("%s Waiting for message to Port %x (%s)\n", PsGetCurrentProcess()->ImageFileName, ReceivePort,
+               LpcpGetCreatorName(ReceivePort)));
 
     //
     //  The timeout on this wait and the next wait appear to be the
     //  only substantial difference between NtReplyWaitReceivePort
     //  and NtReplyWaitReceivePortEx
 
-    Status = KeWaitForSingleObject( ReceivePort->MsgQueue.Semaphore,
-                                    WrLpcReceive,
-                                    WaitMode,
-                                    FALSE,
-                                    Timeout );
+    Status = KeWaitForSingleObject(ReceivePort->MsgQueue.Semaphore, WrLpcReceive, WaitMode, FALSE, Timeout);
 
     //
     //  Fall into receive code.  Client thread reference will be
     //  returned by the client when it wakes up.
     //
-    
+
     //
     //  At this point we've awoke from our wait for a receive
     //
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
         LpcpAcquireLpcpLockByThread(CurrentThread);
 
@@ -542,21 +519,24 @@ Return Value:
         //  See if we awoke without a message in our receive port
         //
 
-        if (IsListEmpty( &ReceivePort->MsgQueue.ReceiveHead )) {
+        if (IsListEmpty(&ReceivePort->MsgQueue.ReceiveHead))
+        {
 
-            if ( ReceivePort->Flags & PORT_WAITABLE ) {
+            if (ReceivePort->Flags & PORT_WAITABLE)
+            {
 
-                KeResetEvent( &ReceivePort->WaitEvent );
+                KeResetEvent(&ReceivePort->WaitEvent);
             }
 
             LpcpReleaseLpcpLock();
 
-            if (ConnectionPort) {
+            if (ConnectionPort)
+            {
 
                 ObDereferenceObject(ConnectionPort);
             }
 
-            ObDereferenceObject( PortObject );
+            ObDereferenceObject(PortObject);
 
             return STATUS_UNSUCCESSFUL;
         }
@@ -565,24 +545,22 @@ Return Value:
         //  We have a message in our receive port.  So let's pull it out
         //
 
-        Msg = (PLPCP_MESSAGE)RemoveHeadList( &ReceivePort->MsgQueue.ReceiveHead );
+        Msg = (PLPCP_MESSAGE)RemoveHeadList(&ReceivePort->MsgQueue.ReceiveHead);
 
-        if ( IsListEmpty( &ReceivePort->MsgQueue.ReceiveHead ) ) {
+        if (IsListEmpty(&ReceivePort->MsgQueue.ReceiveHead))
+        {
 
-            if ( ReceivePort->Flags & PORT_WAITABLE ) {
+            if (ReceivePort->Flags & PORT_WAITABLE)
+            {
 
-                KeResetEvent( &ReceivePort->WaitEvent );
+                KeResetEvent(&ReceivePort->WaitEvent);
             }
         }
 
-        InitializeListHead( &Msg->Entry );
+        InitializeListHead(&Msg->Entry);
 
-        LpcpTrace(( "%s Receive Msg %lx (%u) from Port %lx (%s)\n",
-                    PsGetCurrentProcess()->ImageFileName,
-                    Msg,
-                    Msg->Request.MessageId,
-                    ReceivePort,
-                    LpcpGetCreatorName( ReceivePort )));
+        LpcpTrace(("%s Receive Msg %lx (%u) from Port %lx (%s)\n", PsGetCurrentProcess()->ImageFileName, Msg,
+                   Msg->Request.MessageId, ReceivePort, LpcpGetCreatorName(ReceivePort)));
 
         //
         //  Now make the thread state to be the message we're currently
@@ -606,13 +584,15 @@ Return Value:
         CurrentThread->LpcReceivedMsgIdValid = TRUE;
         CurrentThread->LpcReceivedMessageId = Msg->Request.MessageId;
 
-        try {
+        try
+        {
 
             //
             //  Check if the message is a connection request
             //
 
-            if ((Msg->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) == LPC_CONNECTION_REQUEST) {
+            if ((Msg->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) == LPC_CONNECTION_REQUEST)
+            {
 
                 PLPCP_CONNECTION_MESSAGE ConnectMsg;
                 ULONG ConnectionInfoLength;
@@ -620,7 +600,7 @@ Return Value:
 
                 ConnectMsg = (PLPCP_CONNECTION_MESSAGE)(Msg + 1);
 
-                ConnectionInfoLength = Msg->Request.u1.s1.DataLength - sizeof( *ConnectMsg );
+                ConnectionInfoLength = Msg->Request.u1.s1.DataLength - sizeof(*ConnectMsg);
 
                 //
                 //  Don't free message until NtAcceptConnectPort called, and if it's never called
@@ -632,31 +612,28 @@ Return Value:
 
                 *ReceiveMessage = TempMsg->Request;
 
-                ReceiveMessage->u1.s1.TotalLength = (CSHORT)(sizeof( *ReceiveMessage ) + ConnectionInfoLength);
+                ReceiveMessage->u1.s1.TotalLength = (CSHORT)(sizeof(*ReceiveMessage) + ConnectionInfoLength);
                 ReceiveMessage->u1.s1.DataLength = (CSHORT)ConnectionInfoLength;
 
-                RtlCopyMemory( ReceiveMessage+1,
-                               ConnectMsg + 1,
-                               ConnectionInfoLength );
+                RtlCopyMemory(ReceiveMessage + 1, ConnectMsg + 1, ConnectionInfoLength);
 
-                if (ARGUMENT_PRESENT( PortContext )) {
+                if (ARGUMENT_PRESENT(PortContext))
+                {
 
                     *PortContext = NULL;
                 }
 
-            //
-            //  Check if the message is not a reply
-            //
+                //
+                //  Check if the message is not a reply
+                //
+            }
+            else if ((Msg->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) != LPC_REPLY)
+            {
 
-            } else if ((Msg->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) != LPC_REPLY) {
+                LpcpMoveMessage(ReceiveMessage, &Msg->Request, (&Msg->Request) + 1, 0, NULL);
 
-                LpcpMoveMessage( ReceiveMessage,
-                                 &Msg->Request,
-                                 (&Msg->Request) + 1,
-                                 0,
-                                 NULL );
-
-                if (ARGUMENT_PRESENT( PortContext )) {
+                if (ARGUMENT_PRESENT(PortContext))
+                {
 
                     *PortContext = Msg->PortContext;
                 }
@@ -667,27 +644,30 @@ Return Value:
                 //  free it.  It will be freed when the server replies to the message.
                 //
 
-                if (Msg->Request.u2.s2.DataInfoOffset != 0) {
+                if (Msg->Request.u2.s2.DataInfoOffset != 0)
+                {
 
-                    LpcpSaveDataInfoMessage( PortObject, Msg, LPCP_MUTEX_OWNED );
+                    LpcpSaveDataInfoMessage(PortObject, Msg, LPCP_MUTEX_OWNED);
                     Msg = NULL;
                 }
 
-            //
-            //  Otherwise this is a reply message we just received
-            //
+                //
+                //  Otherwise this is a reply message we just received
+                //
+            }
+            else
+            {
 
-            } else {
-
-                LpcpPrint(( "LPC: Bogus reply message (%08x) in receive queue of connection port %08x\n",
-                            Msg, ReceivePort ));
+                LpcpPrint(
+                    ("LPC: Bogus reply message (%08x) in receive queue of connection port %08x\n", Msg, ReceivePort));
 
                 KdBreakPoint();
             }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            Status = GetExceptionCode();    
+            Status = GetExceptionCode();
         }
 
         //
@@ -696,22 +676,25 @@ Return Value:
         //  deleted.
         //
 
-        if (Msg != NULL) {
+        if (Msg != NULL)
+        {
 
-            LpcpFreeToPortZone( Msg, LPCP_MUTEX_OWNED | LPCP_MUTEX_RELEASE_ON_RETURN );
+            LpcpFreeToPortZone(Msg, LPCP_MUTEX_OWNED | LPCP_MUTEX_RELEASE_ON_RETURN);
         }
-        else {
-        
+        else
+        {
+
             LpcpReleaseLpcpLock();
         }
     }
 
-    if (ConnectionPort) {
+    if (ConnectionPort)
+    {
 
         ObDereferenceObject(ConnectionPort);
     }
 
-    ObDereferenceObject( PortObject );
+    ObDereferenceObject(PortObject);
 
     //
     //  And return to our caller

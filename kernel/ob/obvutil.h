@@ -24,15 +24,6 @@ Revision History:
 
 --*/
 
-LONG
-ObvUtilStartObRefMonitoring(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+LONG ObvUtilStartObRefMonitoring(IN PDEVICE_OBJECT DeviceObject);
 
-LONG
-ObvUtilStopObRefMonitoring(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN LONG StartSkew
-    );
-
-
+LONG ObvUtilStopObRefMonitoring(IN PDEVICE_OBJECT DeviceObject, IN LONG StartSkew);

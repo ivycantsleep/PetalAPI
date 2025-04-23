@@ -18,8 +18,7 @@ Revision History:
 
 --*/
 
-#define COMPUTERNAME_ROOT \
-    L"\\Registry\\Machine\\System\\Current_Control_Set\\Services\\ComputerName"
+#define COMPUTERNAME_ROOT L"\\Registry\\Machine\\System\\Current_Control_Set\\Services\\ComputerName"
 
 #define NON_VOLATILE_COMPUTERNAME_NODE \
     L"\\Registry\\Machine\\System\\Current_Control_Set\\Services\\ComputerName\\ComputerName"
@@ -28,5 +27,3 @@ Revision History:
 #define NON_VOLATILE_COMPUTERNAME L"ComputerName"
 #define COMPUTERNAME_VALUE_NAME L"ComputerName"
 #define CLASS_STRING L"Network ComputerName"
-
-

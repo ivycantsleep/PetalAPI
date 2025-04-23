@@ -25,20 +25,20 @@ Revision History:
 #include "wmikmp.h"
 #include "tracep.h"
 
-#define MAX_REGKEYS         10
-#define MAX_ENABLE_FLAGS    10
-#define TRACE_VERSION_MAJOR             1
-#define TRACE_VERSION_MINOR             0
-#define DOSDEVICES                      L"\\DosDevices\\"
-#define UNCDEVICES                      L"\\??\\UNC"
-#define DEFAULT_GLOBAL_LOGFILE_ROOT     L"%SystemRoot%"
-#define DEFAULT_GLOBAL_DIRECTORY        L"\\System32\\LogFiles\\WMI"
-#define DEFAULT_GLOBAL_LOGFILE          L"trace.log"
+#define MAX_REGKEYS 10
+#define MAX_ENABLE_FLAGS 10
+#define TRACE_VERSION_MAJOR 1
+#define TRACE_VERSION_MINOR 0
+#define DOSDEVICES L"\\DosDevices\\"
+#define UNCDEVICES L"\\??\\UNC"
+#define DEFAULT_GLOBAL_LOGFILE_ROOT L"%SystemRoot%"
+#define DEFAULT_GLOBAL_DIRECTORY L"\\System32\\LogFiles\\WMI"
+#define DEFAULT_GLOBAL_LOGFILE L"trace.log"
 
-    //
-    // NOTE: Need a trailing NULL entry so that RtlQueryRegistryValues()
-    // knows when to stop
-    //
+//
+// NOTE: Need a trailing NULL entry so that RtlQueryRegistryValues()
+// knows when to stop
+//
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, WmipStartGlobalLogger)
@@ -56,9 +56,7 @@ extern HANDLE WmipPageLockHandle;
 // boot path and being pagable
 //
 
-VOID
-WmipStartGlobalLogger(
-    )
+VOID WmipStartGlobalLogger()
 /*++
 
 Routine Description:
@@ -75,7 +73,8 @@ Return Value:
 
 --*/
 {
-    struct _LOGGER_INFO {
+    struct _LOGGER_INFO
+    {
         WMI_LOGGER_INFORMATION LoggerInfo;
         ULONG EnableFlags[MAX_ENABLE_FLAGS];
     } GLog;
@@ -84,32 +83,30 @@ Return Value:
     ULONG StartRequested = 0;
     WCHAR NullString = UNICODE_NULL;
 
-    WmipPageLockHandle
-        = MmLockPagableCodeSection((PVOID)WmipReserveTraceBuffer);
+    WmipPageLockHandle = MmLockPagableCodeSection((PVOID)WmipReserveTraceBuffer);
     MmUnlockPagableImageSection(WmipPageLockHandle);
     ExInitializeFastMutex(&WmipTraceFastMutex);
 
     RtlZeroMemory(&GLog, sizeof(GLog));
 
     GLog.LoggerInfo.Wnode.Flags = WNODE_FLAG_TRACED_GUID;
-    GLog.LoggerInfo.MinimumBuffers = (ULONG) KeNumberProcessors + 1;
+    GLog.LoggerInfo.MinimumBuffers = (ULONG)KeNumberProcessors + 1;
     GLog.LoggerInfo.MaximumBuffers = GLog.LoggerInfo.MinimumBuffers + 25;
-    GLog.LoggerInfo.BufferSize     = PAGE_SIZE / 1024;
+    GLog.LoggerInfo.BufferSize = PAGE_SIZE / 1024;
     GLog.LoggerInfo.Wnode.BufferSize = sizeof(WMI_LOGGER_INFORMATION);
     GLog.LoggerInfo.Wnode.Guid = GlobalLoggerGuid;
     GLog.LoggerInfo.LogFileMode = EVENT_TRACE_DELAY_OPEN_FILE_MODE;
     RtlInitUnicodeString(&GLog.LoggerInfo.LoggerName, L"GlobalLogger");
 
-    RtlZeroMemory(QueryRegistryTable,
-                  sizeof(RTL_QUERY_REGISTRY_TABLE) * MAX_REGKEYS);
+    RtlZeroMemory(QueryRegistryTable, sizeof(RTL_QUERY_REGISTRY_TABLE) * MAX_REGKEYS);
 
     QueryRegistryTable[0].QueryRoutine = WmipQueryGLRegistryRoutine;
-    QueryRegistryTable[0].EntryContext = (PVOID) &StartRequested;
+    QueryRegistryTable[0].EntryContext = (PVOID)&StartRequested;
     QueryRegistryTable[0].Name = L"Start";
     QueryRegistryTable[0].DefaultType = REG_DWORD;
 
     QueryRegistryTable[1].QueryRoutine = WmipQueryGLRegistryRoutine;
-    QueryRegistryTable[1].EntryContext = (PVOID) &GLog.LoggerInfo.BufferSize;
+    QueryRegistryTable[1].EntryContext = (PVOID)&GLog.LoggerInfo.BufferSize;
     QueryRegistryTable[1].Name = L"BufferSize";
     QueryRegistryTable[1].DefaultType = REG_DWORD;
 
@@ -119,7 +116,7 @@ Return Value:
     QueryRegistryTable[2].DefaultType = REG_DWORD;
 
     QueryRegistryTable[3].QueryRoutine = WmipQueryGLRegistryRoutine;
-    QueryRegistryTable[3].EntryContext = (PVOID) &GLog.LoggerInfo.FlushTimer;
+    QueryRegistryTable[3].EntryContext = (PVOID)&GLog.LoggerInfo.FlushTimer;
     QueryRegistryTable[3].Name = L"FlushTimer";
     QueryRegistryTable[3].DefaultType = REG_DWORD;
 
@@ -129,13 +126,13 @@ Return Value:
     QueryRegistryTable[4].DefaultType = REG_DWORD;
 
     QueryRegistryTable[5].QueryRoutine = WmipQueryGLRegistryRoutine;
-    QueryRegistryTable[5].EntryContext = (PVOID) &GLog.LoggerInfo.LogFileName;
+    QueryRegistryTable[5].EntryContext = (PVOID)&GLog.LoggerInfo.LogFileName;
     QueryRegistryTable[5].Name = L"FileName";
     QueryRegistryTable[5].DefaultType = REG_SZ;
     QueryRegistryTable[5].DefaultData = &NullString;
 
     QueryRegistryTable[6].QueryRoutine = WmipQueryGLRegistryRoutine;
-    QueryRegistryTable[6].EntryContext = (PVOID) &GLog.EnableFlags[0];
+    QueryRegistryTable[6].EntryContext = (PVOID)&GLog.EnableFlags[0];
     QueryRegistryTable[6].Name = L"EnableKernelFlags";
     QueryRegistryTable[6].DefaultType = REG_BINARY;
 
@@ -144,59 +141,52 @@ Return Value:
     QueryRegistryTable[7].Name = L"ClockType";
     QueryRegistryTable[7].DefaultType = REG_DWORD;
 
-    status = RtlQueryRegistryValues(
-                RTL_REGISTRY_CONTROL,
-                L"WMI\\GlobalLogger",
-                QueryRegistryTable,
-                NULL,
-                NULL);
+    status = RtlQueryRegistryValues(RTL_REGISTRY_CONTROL, L"WMI\\GlobalLogger", QueryRegistryTable, NULL, NULL);
 
-    if (NT_SUCCESS(status) && (StartRequested != 0)) {
-        if (GLog.EnableFlags[0] != 0) {
+    if (NT_SUCCESS(status) && (StartRequested != 0))
+    {
+        if (GLog.EnableFlags[0] != 0)
+        {
             SHORT Length;
-            for (Length=MAX_ENABLE_FLAGS-1; Length>=0; Length--) {
+            for (Length = MAX_ENABLE_FLAGS - 1; Length >= 0; Length--)
+            {
                 if (GLog.EnableFlags[Length] != 0)
                     break;
             }
-            if (Length >= 0) {
+            if (Length >= 0)
+            {
                 PTRACE_ENABLE_FLAG_EXTENSION FlagExt;
-                Length++;       // Index is 1 less!
-                FlagExt = (PTRACE_ENABLE_FLAG_EXTENSION)
-                          &GLog.LoggerInfo.EnableFlags;
+                Length++; // Index is 1 less!
+                FlagExt = (PTRACE_ENABLE_FLAG_EXTENSION)&GLog.LoggerInfo.EnableFlags;
                 GLog.LoggerInfo.EnableFlags = EVENT_TRACE_FLAG_EXTENSION;
-                FlagExt->Length = (UCHAR) Length;
-                FlagExt->Offset = (UCHAR) GLog.LoggerInfo.Wnode.BufferSize;
-                GLog.LoggerInfo.Wnode.BufferSize
-                    += (ULONG) (Length * sizeof(ULONG));
+                FlagExt->Length = (UCHAR)Length;
+                FlagExt->Offset = (UCHAR)GLog.LoggerInfo.Wnode.BufferSize;
+                GLog.LoggerInfo.Wnode.BufferSize += (ULONG)(Length * sizeof(ULONG));
             }
         }
-        if (GLog.LoggerInfo.LogFileName.Buffer == NULL) {
-            RtlCreateUnicodeString(
-                &GLog.LoggerInfo.LogFileName,
-                DEFAULT_GLOBAL_LOGFILE_ROOT); // Use ROOT as indicator
+        if (GLog.LoggerInfo.LogFileName.Buffer == NULL)
+        {
+            RtlCreateUnicodeString(&GLog.LoggerInfo.LogFileName,
+                                   DEFAULT_GLOBAL_LOGFILE_ROOT); // Use ROOT as indicator
             if (GLog.LoggerInfo.LogFileName.Buffer == NULL)
                 status = STATUS_NO_MEMORY;
             else
                 status = STATUS_SUCCESS;
         }
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             status = WmipStartLogger(&GLog.LoggerInfo);
         }
     }
-    if (GLog.LoggerInfo.LogFileName.Buffer) {
+    if (GLog.LoggerInfo.LogFileName.Buffer)
+    {
         RtlFreeUnicodeString(&GLog.LoggerInfo.LogFileName);
     }
 }
 
 NTSTATUS
-WmipQueryGLRegistryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    )
+WmipQueryGLRegistryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                           IN PVOID Context, IN PVOID EntryContext)
 /*++
 
 Routine Description:
@@ -230,21 +220,26 @@ Return Value:
     UNREFERENCED_PARAMETER(ValueName);
     UNREFERENCED_PARAMETER(Context);
 
-    if ( (ValueData != NULL) && (ValueLength > 0) && (EntryContext != NULL) ){
-        if (ValueType == REG_DWORD) {
-            if ((ValueLength >= sizeof(ULONG)) && (ValueData != NULL)) {
+    if ((ValueData != NULL) && (ValueLength > 0) && (EntryContext != NULL))
+    {
+        if (ValueType == REG_DWORD)
+        {
+            if ((ValueLength >= sizeof(ULONG)) && (ValueData != NULL))
+            {
                 *((PULONG)EntryContext) = *((PULONG)ValueData);
             }
         }
-        else if (ValueType == REG_SZ) {
-            if (ValueLength > sizeof(UNICODE_NULL)) {
-                status = RtlCreateUnicodeString(
-                            (PUNICODE_STRING) EntryContext,
-                            (PCWSTR) ValueData);
+        else if (ValueType == REG_SZ)
+        {
+            if (ValueLength > sizeof(UNICODE_NULL))
+            {
+                status = RtlCreateUnicodeString((PUNICODE_STRING)EntryContext, (PCWSTR)ValueData);
             }
         }
-        else if (ValueType == REG_BINARY) {
-            if ((ValueLength >= sizeof(ULONG)) && (ValueData != NULL)) {
+        else if (ValueType == REG_BINARY)
+        {
+            if ((ValueLength >= sizeof(ULONG)) && (ValueData != NULL))
+            {
                 RtlMoveMemory(EntryContext, ValueData, ValueLength);
             }
         }
@@ -253,10 +248,7 @@ Return Value:
 }
 
 NTSTATUS
-WmipAddLogHeader(
-    IN PWMI_LOGGER_CONTEXT LoggerContext,
-    IN OUT PWMI_BUFFER_HEADER Buffer
-    )
+WmipAddLogHeader(IN PWMI_LOGGER_CONTEXT LoggerContext, IN OUT PWMI_BUFFER_HEADER Buffer)
 /*++
 
 Routine Description:
@@ -285,14 +277,15 @@ Return Value:
     ULONG BufferProvided = (Buffer != NULL);
     ULONG LocalBuffer = FALSE;
 
-    if (LoggerContext == NULL) {
+    if (LoggerContext == NULL)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    HeaderSize = sizeof(TRACE_LOGFILE_HEADER)
-                 + LoggerContext->LoggerName.Length + sizeof(UNICODE_NULL)
-                 + LoggerContext->LogFileName.Length + sizeof(UNICODE_NULL);
-    if (LoggerContext->BufferSize < (HeaderSize - sizeof(WMI_BUFFER_HEADER))) {
+    HeaderSize = sizeof(TRACE_LOGFILE_HEADER) + LoggerContext->LoggerName.Length + sizeof(UNICODE_NULL) +
+                 LoggerContext->LogFileName.Length + sizeof(UNICODE_NULL);
+    if (LoggerContext->BufferSize < (HeaderSize - sizeof(WMI_BUFFER_HEADER)))
+    {
         return STATUS_NO_MEMORY;
     }
 
@@ -300,17 +293,19 @@ Return Value:
     // Pop a buffer from Free List
     //
 
-    if (!BufferProvided) {
+    if (!BufferProvided)
+    {
         Buffer = WmipGetFreeBuffer(LoggerContext);
 
-        if (Buffer == NULL) {
-            Buffer = ExAllocatePoolWithTag(PagedPool,
-                        LoggerContext->BufferSize, TRACEPOOLTAG);
-            if (Buffer == NULL) {
+        if (Buffer == NULL)
+        {
+            Buffer = ExAllocatePoolWithTag(PagedPool, LoggerContext->BufferSize, TRACEPOOLTAG);
+            if (Buffer == NULL)
+            {
 
-            //
-            // No buffer available.
-            //
+                //
+                // No buffer available.
+                //
                 return STATUS_NO_MEMORY;
             }
             LocalBuffer = TRUE;
@@ -331,32 +326,31 @@ Return Value:
     // Fill in the Header Info.
     //
     Thread = PsGetCurrentThread();
-    EventTrace = (PSYSTEM_TRACE_HEADER) (Buffer+1);
-    EventTrace->Packet.Group = (UCHAR) EVENT_TRACE_GROUP_HEADER >> 8;
-    EventTrace->Packet.Type  = EVENT_TRACE_TYPE_INFO;
-    EventTrace->Packet.Size  = HeaderSize + sizeof(SYSTEM_TRACE_HEADER);
-    EventTrace->Marker       = SYSTEM_TRACE_MARKER;
-    EventTrace->ThreadId     = HandleToUlong(Thread->Cid.UniqueThread);
-    EventTrace->KernelTime   = Thread->Tcb.KernelTime;
-    EventTrace->UserTime     = Thread->Tcb.UserTime;
+    EventTrace = (PSYSTEM_TRACE_HEADER)(Buffer + 1);
+    EventTrace->Packet.Group = (UCHAR)EVENT_TRACE_GROUP_HEADER >> 8;
+    EventTrace->Packet.Type = EVENT_TRACE_TYPE_INFO;
+    EventTrace->Packet.Size = HeaderSize + sizeof(SYSTEM_TRACE_HEADER);
+    EventTrace->Marker = SYSTEM_TRACE_MARKER;
+    EventTrace->ThreadId = HandleToUlong(Thread->Cid.UniqueThread);
+    EventTrace->KernelTime = Thread->Tcb.KernelTime;
+    EventTrace->UserTime = Thread->Tcb.UserTime;
     EventTrace->SystemTime = LoggerContext->ReferenceTimeStamp;
 
 
-    LogfileHeader = (PTRACE_LOGFILE_HEADER) (EventTrace+1);
+    LogfileHeader = (PTRACE_LOGFILE_HEADER)(EventTrace + 1);
     RtlZeroMemory(LogfileHeader, HeaderSize);
     LogfileHeader->StartTime = LoggerContext->ReferenceSystemTime;
 
     LogfileHeader->BufferSize = LoggerContext->BufferSize;
-    LogfileHeader->VersionDetail.MajorVersion = (UCHAR) NtMajorVersion;
-    LogfileHeader->VersionDetail.MinorVersion = (UCHAR) NtMinorVersion;
+    LogfileHeader->VersionDetail.MajorVersion = (UCHAR)NtMajorVersion;
+    LogfileHeader->VersionDetail.MinorVersion = (UCHAR)NtMinorVersion;
     LogfileHeader->VersionDetail.SubVersion = TRACE_VERSION_MAJOR;
     LogfileHeader->VersionDetail.SubMinorVersion = TRACE_VERSION_MINOR;
     LogfileHeader->ProviderVersion = NtBuildNumber;
 
     LogfileHeader->StartBuffers = 1;
     LogfileHeader->BootTime = KeBootTime;
-    LogfileHeader->LogFileMode =
-        LoggerContext->LoggerMode & (~(EVENT_TRACE_REAL_TIME_MODE));
+    LogfileHeader->LogFileMode = LoggerContext->LoggerMode & (~(EVENT_TRACE_REAL_TIME_MODE));
     LogfileHeader->NumberOfProcessors = KeNumberProcessors;
     LogfileHeader->MaximumFileSize = LoggerContext->MaximumFileSize;
     KeQueryPerformanceCounter(&LogfileHeader->PerfFreq);
@@ -368,26 +362,21 @@ Return Value:
 
     LogfileHeader->TimerResolution = KeMaximumIncrement;
 
-    LogfileHeader->LoggerName = (PWCHAR) ( (PUCHAR) LogfileHeader
-                                            + sizeof(TRACE_LOGFILE_HEADER) );
-    LogfileHeader->LogFileName = (PWCHAR) ( (PUCHAR)LogfileHeader->LoggerName
-                                    + LoggerContext->LoggerName.Length
-                                    + sizeof(UNICODE_NULL));
+    LogfileHeader->LoggerName = (PWCHAR)((PUCHAR)LogfileHeader + sizeof(TRACE_LOGFILE_HEADER));
+    LogfileHeader->LogFileName =
+        (PWCHAR)((PUCHAR)LogfileHeader->LoggerName + LoggerContext->LoggerName.Length + sizeof(UNICODE_NULL));
 
-    RtlCopyMemory(LogfileHeader->LoggerName,
-                        LoggerContext->LoggerName.Buffer,
-                        LoggerContext->LoggerName.Length + sizeof(UNICODE_NULL));
-    RtlCopyMemory(LogfileHeader->LogFileName,
-                        LoggerContext->LogFileName.Buffer,
-                        LoggerContext->LogFileName.Length + sizeof(UNICODE_NULL));
+    RtlCopyMemory(LogfileHeader->LoggerName, LoggerContext->LoggerName.Buffer,
+                  LoggerContext->LoggerName.Length + sizeof(UNICODE_NULL));
+    RtlCopyMemory(LogfileHeader->LogFileName, LoggerContext->LogFileName.Buffer,
+                  LoggerContext->LogFileName.Length + sizeof(UNICODE_NULL));
     RtlQueryTimeZoneInformation(&LogfileHeader->TimeZone);
     LogfileHeader->PointerSize = sizeof(PVOID);
 
     //
     // Adjust the Offset;
     //
-    Buffer->CurrentOffset += ALIGN_TO_POWER2(sizeof(SYSTEM_TRACE_HEADER) + HeaderSize, 
-                                              WmiTraceAlignment);
+    Buffer->CurrentOffset += ALIGN_TO_POWER2(sizeof(SYSTEM_TRACE_HEADER) + HeaderSize, WmiTraceAlignment);
 
     if (BufferProvided)
         return Status;
@@ -396,30 +385,24 @@ Return Value:
     //
     Status = WmipFlushBuffer(LoggerContext, Buffer);
 
-    if (LocalBuffer && (Buffer != NULL)) {
+    if (LocalBuffer && (Buffer != NULL))
+    {
         ExFreePool(Buffer);
         return Status;
     }
 
-    InterlockedPushEntrySList(&LoggerContext->FreeList,
-                              (PSINGLE_LIST_ENTRY) &Buffer->SlistEntry);
+    InterlockedPushEntrySList(&LoggerContext->FreeList, (PSINGLE_LIST_ENTRY)&Buffer->SlistEntry);
     InterlockedIncrement(&LoggerContext->BuffersAvailable);
     InterlockedDecrement(&LoggerContext->BuffersInUse);
-    
-    TraceDebug((2,
-        "WmipAddLogHeader: Boot %I64u Current %I64u Difference %I64u\n",
-             KeBootTime, EventTrace->SystemTime,
-             EventTrace->SystemTime.QuadPart - KeBootTime.QuadPart));
+
+    TraceDebug((2, "WmipAddLogHeader: Boot %I64u Current %I64u Difference %I64u\n", KeBootTime, EventTrace->SystemTime,
+                EventTrace->SystemTime.QuadPart - KeBootTime.QuadPart));
 
     return Status;
 }
 
 NTSTATUS
-WmipDelayCreate(
-    OUT PHANDLE FileHandle,
-    IN OUT PUNICODE_STRING FileName,
-    IN ULONG Append
-    )
+WmipDelayCreate(OUT PHANDLE FileHandle, IN OUT PUNICODE_STRING FileName, IN ULONG Append)
 /*++
 
 Routine Description:
@@ -441,7 +424,7 @@ Return Value:
 {
     PWCHAR Buffer;
     PWCHAR strBuffer = NULL;
-    ULONG  DefaultFile, Length;
+    ULONG DefaultFile, Length;
     UNICODE_STRING LogFileName;
     NTSTATUS Status;
 
@@ -451,83 +434,81 @@ Return Value:
     RtlInitUnicodeString(&LogFileName, DEFAULT_GLOBAL_LOGFILE_ROOT);
     DefaultFile = (RtlCompareUnicodeString(FileName, &LogFileName, TRUE) == 0);
 
-    if (DefaultFile) {
+    if (DefaultFile)
+    {
         //
         // Try creating the file first
         //
-        Length = (ULONG) (  NtSystemRoot.Length
-                          + sizeof(WCHAR) * (wcslen(DEFAULT_GLOBAL_DIRECTORY) +
-                                             wcslen(DEFAULT_GLOBAL_LOGFILE) + 1)
-                          + sizeof(UNICODE_NULL));
-        strBuffer = (PWCHAR) ExAllocatePoolWithTag(
-                                        PagedPool, Length, TRACEPOOLTAG);
+        Length = (ULONG)(NtSystemRoot.Length +
+                         sizeof(WCHAR) * (wcslen(DEFAULT_GLOBAL_DIRECTORY) + wcslen(DEFAULT_GLOBAL_LOGFILE) + 1) +
+                         sizeof(UNICODE_NULL));
+        strBuffer = (PWCHAR)ExAllocatePoolWithTag(PagedPool, Length, TRACEPOOLTAG);
         if (strBuffer == NULL)
             return STATUS_NO_MEMORY;
 
-        swprintf(strBuffer,
-                 L"%ws%ws\\%ws",
-                 NtSystemRoot.Buffer,
-                 DEFAULT_GLOBAL_DIRECTORY,
-                 DEFAULT_GLOBAL_LOGFILE);
+        swprintf(strBuffer, L"%ws%ws\\%ws", NtSystemRoot.Buffer, DEFAULT_GLOBAL_DIRECTORY, DEFAULT_GLOBAL_LOGFILE);
 
-        Status = WmipCreateNtFileName(strBuffer, & Buffer);
-        if (!NT_SUCCESS(Status)) {
+        Status = WmipCreateNtFileName(strBuffer, &Buffer);
+        if (!NT_SUCCESS(Status))
+        {
             ExFreePool(strBuffer);
             return Status;
         }
 
         Status = WmipCreateDirectoryFile(Buffer, FALSE, FileHandle, Append);
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             ULONG DirLen;
             //
             // Probably directory does not exist, so try and create it
             //
-            DirLen = (ULONG)
-                     (wcslen(Buffer)-wcslen(DEFAULT_GLOBAL_LOGFILE)) - 5;
+            DirLen = (ULONG)(wcslen(Buffer) - wcslen(DEFAULT_GLOBAL_LOGFILE)) - 5;
             Buffer[DirLen] = UNICODE_NULL;
             Status = WmipCreateDirectoryFile(Buffer, TRUE, NULL, Append);
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
                 Buffer[DirLen] = L'\\';
                 DirLen += 4;
                 Buffer[DirLen] = UNICODE_NULL;
                 Status = WmipCreateDirectoryFile(Buffer, TRUE, NULL, Append);
                 Buffer[DirLen] = L'\\';
             }
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
                 Status = WmipCreateDirectoryFile(Buffer, FALSE, FileHandle, Append);
             }
         }
         // Make sure that directory is there first
 
-        if (NT_SUCCESS(Status)) {
-            if (FileName->Buffer != NULL) {
+        if (NT_SUCCESS(Status))
+        {
+            if (FileName->Buffer != NULL)
+            {
                 RtlFreeUnicodeString(FileName);
             }
             RtlInitUnicodeString(FileName, strBuffer);
             if (FileName->MaximumLength < Length)
-                FileName->MaximumLength = (USHORT) Length;
+                FileName->MaximumLength = (USHORT)Length;
         }
     }
-    else {
-        Status = WmipCreateNtFileName(FileName->Buffer, & Buffer);
-        if (NT_SUCCESS(Status)) {
+    else
+    {
+        Status = WmipCreateNtFileName(FileName->Buffer, &Buffer);
+        if (NT_SUCCESS(Status))
+        {
             Status = WmipCreateDirectoryFile(Buffer, FALSE, FileHandle, Append);
         }
     }
 
-    if (Buffer != NULL) {
+    if (Buffer != NULL)
+    {
         ExFreePool(Buffer);
     }
     return Status;
 }
 
 NTSTATUS
-WmipCreateDirectoryFile(
-    IN PWCHAR DirFileName,
-    IN ULONG IsDirectory,
-    OUT PHANDLE FileHandle,
-    IN ULONG Append
-    )
+WmipCreateDirectoryFile(IN PWCHAR DirFileName, IN ULONG IsDirectory, OUT PHANDLE FileHandle, IN ULONG Append)
 {
     OBJECT_ATTRIBUTES ObjectAttributes;
     IO_STATUS_BLOCK IoStatus;
@@ -537,46 +518,36 @@ WmipCreateDirectoryFile(
     ULONG CreateDisposition;
 
     RtlInitUnicodeString(&LogDirName, DirFileName);
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &LogDirName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &LogDirName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    if (IsDirectory) {
+    if (IsDirectory)
+    {
         CreateDisposition = FILE_OPEN_IF;
-    } else if (Append) {
+    }
+    else if (Append)
+    {
         CreateDisposition = FILE_OPEN_IF;
-    } else {
+    }
+    else
+    {
         CreateDisposition = FILE_OVERWRITE_IF;
     }
 
     Status = ZwCreateFile(
-                &DirHandle,
-                FILE_GENERIC_READ | SYNCHRONIZE
-                    | (IsDirectory ? FILE_GENERIC_WRITE : FILE_WRITE_DATA),
-                &ObjectAttributes,
-                &IoStatus,
-                NULL,
-                FILE_ATTRIBUTE_NORMAL,
-                FILE_SHARE_READ,
-                CreateDisposition,
-                FILE_SYNCHRONOUS_IO_NONALERT
-                    | (IsDirectory ? FILE_DIRECTORY_FILE
-                                   : FILE_NO_INTERMEDIATE_BUFFERING),
-                NULL,
-                0);
+        &DirHandle, FILE_GENERIC_READ | SYNCHRONIZE | (IsDirectory ? FILE_GENERIC_WRITE : FILE_WRITE_DATA),
+        &ObjectAttributes, &IoStatus, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, CreateDisposition,
+        FILE_SYNCHRONOUS_IO_NONALERT | (IsDirectory ? FILE_DIRECTORY_FILE : FILE_NO_INTERMEDIATE_BUFFERING), NULL, 0);
 
-    TraceDebug((2, "WmipCreateDirectoryFile: Create %ws Mode: %x status: %x\n",
-                DirFileName, Append, Status));
+    TraceDebug((2, "WmipCreateDirectoryFile: Create %ws Mode: %x status: %x\n", DirFileName, Append, Status));
 
-    if (NT_SUCCESS(Status) && IsDirectory && (DirHandle != NULL)) {
+    if (NT_SUCCESS(Status) && IsDirectory && (DirHandle != NULL))
+    {
         ZwClose(DirHandle);
         if (FileHandle)
             *FileHandle = NULL;
     }
-    else {
+    else
+    {
         if (FileHandle)
             *FileHandle = DirHandle;
     }
@@ -585,41 +556,42 @@ WmipCreateDirectoryFile(
 }
 
 NTSTATUS
-WmipCreateNtFileName(
-    IN  PWCHAR   strFileName,
-    OUT PWCHAR * strNtFileName
-)
+WmipCreateNtFileName(IN PWCHAR strFileName, OUT PWCHAR *strNtFileName)
 {
-    PWCHAR   NtFileName;
-    ULONG    lenFileName;
+    PWCHAR NtFileName;
+    ULONG lenFileName;
 
-    if (strFileName == NULL) {
-        * strNtFileName = NULL;
+    if (strFileName == NULL)
+    {
+        *strNtFileName = NULL;
         return STATUS_INVALID_PARAMETER;
     }
 
-    lenFileName = sizeof(UNICODE_NULL)
-                + (ULONG) (sizeof(WCHAR) * wcslen(strFileName));
-    if ((strFileName[0] == L'\\') && (strFileName[1] == L'\\')) {
-        lenFileName += (ULONG) (wcslen(UNCDEVICES) * sizeof(WCHAR));
+    lenFileName = sizeof(UNICODE_NULL) + (ULONG)(sizeof(WCHAR) * wcslen(strFileName));
+    if ((strFileName[0] == L'\\') && (strFileName[1] == L'\\'))
+    {
+        lenFileName += (ULONG)(wcslen(UNCDEVICES) * sizeof(WCHAR));
     }
-    else {
-        lenFileName += (ULONG) (wcslen(DOSDEVICES) * sizeof(WCHAR));
+    else
+    {
+        lenFileName += (ULONG)(wcslen(DOSDEVICES) * sizeof(WCHAR));
     }
-    NtFileName = (PWCHAR) ExAllocatePoolWithTag(
-                            PagedPool, lenFileName, TRACEPOOLTAG);
-    if (NtFileName == NULL) {
-        * strNtFileName = NULL;
+    NtFileName = (PWCHAR)ExAllocatePoolWithTag(PagedPool, lenFileName, TRACEPOOLTAG);
+    if (NtFileName == NULL)
+    {
+        *strNtFileName = NULL;
         return STATUS_NO_MEMORY;
     }
 
-    if ((strFileName[0] == L'\\') && (strFileName[1] == L'\\')) {
-        swprintf(NtFileName, L"%ws%ws", UNCDEVICES, & (strFileName[1]));
+    if ((strFileName[0] == L'\\') && (strFileName[1] == L'\\'))
+    {
+        swprintf(NtFileName, L"%ws%ws", UNCDEVICES, &(strFileName[1]));
     }
-    else {
+    else
+    {
         swprintf(NtFileName, L"%ws%ws", DOSDEVICES, strFileName);
     }
-    * strNtFileName = NtFileName;
+    *strNtFileName = NtFileName;
 
     return STATUS_SUCCESS;
 }

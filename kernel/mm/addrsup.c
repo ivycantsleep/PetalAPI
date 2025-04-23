@@ -32,33 +32,25 @@ Revision History:
 #include "mi.h"
 
 #if (_MSC_VER >= 800)
-#pragma warning(disable:4010)        // Allow pretty pictures without the noise
+#pragma warning(disable : 4010) // Allow pretty pictures without the noise
 #endif
 
-VOID
-MiReorderTree (
-    IN PMMADDRESS_NODE Node,
-    IN OUT PMMADDRESS_NODE *Root
-    );
+VOID MiReorderTree(IN PMMADDRESS_NODE Node, IN OUT PMMADDRESS_NODE *Root);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,MiGetFirstNode)
-#pragma alloc_text(PAGE,MiInsertNode)
-#pragma alloc_text(PAGE,MiGetNextNode)
-#pragma alloc_text(PAGE,MiGetPreviousNode)
-#pragma alloc_text(PAGE,MiCheckForConflictingNode)
-#pragma alloc_text(PAGE,MiFindEmptyAddressRangeInTree)
-#pragma alloc_text(PAGE,MiFindEmptyAddressRangeDownTree)
-#pragma alloc_text(PAGE,MiReorderTree)
-#pragma alloc_text(PAGE,NodeTreeWalk)
+#pragma alloc_text(PAGE, MiGetFirstNode)
+#pragma alloc_text(PAGE, MiInsertNode)
+#pragma alloc_text(PAGE, MiGetNextNode)
+#pragma alloc_text(PAGE, MiGetPreviousNode)
+#pragma alloc_text(PAGE, MiCheckForConflictingNode)
+#pragma alloc_text(PAGE, MiFindEmptyAddressRangeInTree)
+#pragma alloc_text(PAGE, MiFindEmptyAddressRangeDownTree)
+#pragma alloc_text(PAGE, MiReorderTree)
+#pragma alloc_text(PAGE, NodeTreeWalk)
 #endif
 
-
-VOID
-MiReorderTree (
-    IN PMMADDRESS_NODE Node,
-    IN OUT PMMADDRESS_NODE *Root
-    )
+
+VOID MiReorderTree(IN PMMADDRESS_NODE Node, IN OUT PMMADDRESS_NODE *Root)
 
 /*++
 
@@ -90,10 +82,12 @@ Return Value:
 
     SplayNode = Node;
 
-    while (SplayNode != *Root) {
+    while (SplayNode != *Root)
+    {
 
         Parent = SplayNode->Parent;
-        if (Parent == *Root) {
+        if (Parent == *Root)
+        {
 
             //
             // Splay node's parent is the root of the tree. Rotate the tree
@@ -114,7 +108,8 @@ Return Value:
             *Root = SplayNode;
             SplayNode->Parent = (PMMADDRESS_NODE)NULL;
             Parent->Parent = SplayNode;
-            if (SplayNode == Parent->LeftChild) {
+            if (SplayNode == Parent->LeftChild)
+            {
 
                 //
                 // Splay node is the left child of its parent. Rotate tree
@@ -122,11 +117,14 @@ Return Value:
                 //
 
                 Parent->LeftChild = SplayNode->RightChild;
-                if (SplayNode->RightChild) {
+                if (SplayNode->RightChild)
+                {
                     SplayNode->RightChild->Parent = Parent;
                 }
                 SplayNode->RightChild = Parent;
-            } else {
+            }
+            else
+            {
 
                 //
                 // Splay node is the right child of its parent. Rotate tree
@@ -134,16 +132,19 @@ Return Value:
                 //
 
                 Parent->RightChild = SplayNode->LeftChild;
-                if (SplayNode->LeftChild) {
+                if (SplayNode->LeftChild)
+                {
                     SplayNode->LeftChild->Parent = Parent;
                 }
                 SplayNode->LeftChild = Parent;
             }
             break;
-        } else {
+        }
+        else
+        {
             GrandParent = Parent->Parent;
-            if ((SplayNode == Parent->LeftChild) &&
-               (Parent == GrandParent->LeftChild)) {
+            if ((SplayNode == Parent->LeftChild) && (Parent == GrandParent->LeftChild))
+            {
 
                 //
                 // Both the splay node and the parent node are left children
@@ -161,26 +162,34 @@ Return Value:
                 //  A   B
                 //
 
-                if (GrandParent == *Root) {
+                if (GrandParent == *Root)
+                {
                     *Root = Parent;
                     Parent->Parent = (PMMADDRESS_NODE)NULL;
-                } else {
+                }
+                else
+                {
                     Parent->Parent = GrandParent->Parent;
-                    if (GrandParent == GrandParent->Parent->LeftChild) {
+                    if (GrandParent == GrandParent->Parent->LeftChild)
+                    {
                         GrandParent->Parent->LeftChild = Parent;
-                    } else {
+                    }
+                    else
+                    {
                         GrandParent->Parent->RightChild = Parent;
                     }
                 }
                 GrandParent->LeftChild = Parent->RightChild;
-                if (Parent->RightChild) {
+                if (Parent->RightChild)
+                {
                     Parent->RightChild->Parent = GrandParent;
                 }
                 GrandParent->Parent = Parent;
                 Parent->RightChild = GrandParent;
                 SplayNode = Parent;
-            } else if ((SplayNode == Parent->RightChild) &&
-                      (Parent == GrandParent->RightChild)) {
+            }
+            else if ((SplayNode == Parent->RightChild) && (Parent == GrandParent->RightChild))
+            {
 
                 //
                 // Both the splay node and the parent node are right children
@@ -198,26 +207,34 @@ Return Value:
                 //          A   B
                 //
 
-                if (GrandParent == *Root) {
+                if (GrandParent == *Root)
+                {
                     *Root = Parent;
                     Parent->Parent = (PMMADDRESS_NODE)NULL;
-                } else {
+                }
+                else
+                {
                     Parent->Parent = GrandParent->Parent;
-                    if (GrandParent == GrandParent->Parent->LeftChild) {
+                    if (GrandParent == GrandParent->Parent->LeftChild)
+                    {
                         GrandParent->Parent->LeftChild = Parent;
-                    } else {
+                    }
+                    else
+                    {
                         GrandParent->Parent->RightChild = Parent;
                     }
                 }
                 GrandParent->RightChild = Parent->LeftChild;
-                if (Parent->LeftChild) {
+                if (Parent->LeftChild)
+                {
                     Parent->LeftChild->Parent = GrandParent;
                 }
                 GrandParent->Parent = Parent;
                 Parent->LeftChild = GrandParent;
                 SplayNode = Parent;
-            } else if ((SplayNode == Parent->LeftChild) &&
-                      (Parent == GrandParent->RightChild)) {
+            }
+            else if ((SplayNode == Parent->LeftChild) && (Parent == GrandParent->RightChild))
+            {
 
                 //
                 // Splay node is the left child of its parent and parent is
@@ -235,30 +252,40 @@ Return Value:
                 //    B   C
                 //
 
-                if (GrandParent == *Root) {
+                if (GrandParent == *Root)
+                {
                     *Root = SplayNode;
                     SplayNode->Parent = (PMMADDRESS_NODE)NULL;
-                } else {
+                }
+                else
+                {
                     SplayNode->Parent = GrandParent->Parent;
-                    if (GrandParent == GrandParent->Parent->LeftChild) {
+                    if (GrandParent == GrandParent->Parent->LeftChild)
+                    {
                         GrandParent->Parent->LeftChild = SplayNode;
-                    } else {
+                    }
+                    else
+                    {
                         GrandParent->Parent->RightChild = SplayNode;
                     }
                 }
                 Parent->LeftChild = SplayNode->RightChild;
-                if (SplayNode->RightChild) {
+                if (SplayNode->RightChild)
+                {
                     SplayNode->RightChild->Parent = Parent;
                 }
                 GrandParent->RightChild = SplayNode->LeftChild;
-                if (SplayNode->LeftChild) {
+                if (SplayNode->LeftChild)
+                {
                     SplayNode->LeftChild->Parent = GrandParent;
                 }
                 Parent->Parent = SplayNode;
                 GrandParent->Parent = SplayNode;
                 SplayNode->LeftChild = GrandParent;
                 SplayNode->RightChild = Parent;
-            } else {
+            }
+            else
+            {
 
                 //
                 // Splay node is the right child of its parent and parent is
@@ -276,23 +303,31 @@ Return Value:
                 //     C   B
                 //
 
-                if (GrandParent == *Root) {
+                if (GrandParent == *Root)
+                {
                     *Root = SplayNode;
                     SplayNode->Parent = (PMMADDRESS_NODE)NULL;
-                } else {
+                }
+                else
+                {
                     SplayNode->Parent = GrandParent->Parent;
-                    if (GrandParent == GrandParent->Parent->LeftChild) {
+                    if (GrandParent == GrandParent->Parent->LeftChild)
+                    {
                         GrandParent->Parent->LeftChild = SplayNode;
-                    } else {
+                    }
+                    else
+                    {
                         GrandParent->Parent->RightChild = SplayNode;
                     }
                 }
                 Parent->RightChild = SplayNode->LeftChild;
-                if (SplayNode->LeftChild) {
+                if (SplayNode->LeftChild)
+                {
                     SplayNode->LeftChild->Parent = Parent;
                 }
                 GrandParent->LeftChild = SplayNode->RightChild;
-                if (SplayNode->RightChild) {
+                if (SplayNode->RightChild)
+                {
                     SplayNode->RightChild->Parent = GrandParent;
                 }
                 Parent->Parent = SplayNode;
@@ -304,12 +339,10 @@ Return Value:
     }
     return;
 }
-
+
 PMMADDRESS_NODE
 FASTCALL
-MiGetNextNode (
-    IN PMMADDRESS_NODE Node
-    )
+MiGetNextNode(IN PMMADDRESS_NODE Node)
 
 /*++
 
@@ -336,9 +369,11 @@ Return Value:
 
     Next = Node;
 
-    if (Next->RightChild == (PMMADDRESS_NODE)NULL) {
+    if (Next->RightChild == (PMMADDRESS_NODE)NULL)
+    {
 
-        while ((Parent = Next->Parent) != (PMMADDRESS_NODE)NULL) {
+        while ((Parent = Next->Parent) != (PMMADDRESS_NODE)NULL)
+        {
 
             //
             // Locate the first ancestor of this node of which this
@@ -346,12 +381,12 @@ Return Value:
             // next element.
             //
 
-            if (Parent->LeftChild == Next) {
+            if (Parent->LeftChild == Next)
+            {
                 return Parent;
             }
 
             Next = Parent;
-
         }
 
         return (PMMADDRESS_NODE)NULL;
@@ -363,18 +398,16 @@ Return Value:
 
     Next = Next->RightChild;
 
-    while ((Left = Next->LeftChild) != (PMMADDRESS_NODE)NULL) {
+    while ((Left = Next->LeftChild) != (PMMADDRESS_NODE)NULL)
+    {
         Next = Left;
     }
     return Next;
-
 }
-
+
 PMMADDRESS_NODE
 FASTCALL
-MiGetPreviousNode (
-    IN PMMADDRESS_NODE Node
-    )
+MiGetPreviousNode(IN PMMADDRESS_NODE Node)
 
 /*++
 
@@ -400,10 +433,12 @@ Return Value:
 
     Previous = Node;
 
-    if (Previous->LeftChild == (PMMADDRESS_NODE)NULL) {
+    if (Previous->LeftChild == (PMMADDRESS_NODE)NULL)
+    {
 
 
-        while (Previous->Parent != (PMMADDRESS_NODE)NULL) {
+        while (Previous->Parent != (PMMADDRESS_NODE)NULL)
+        {
 
             //
             // Locate the first ancestor of this node of which this
@@ -411,12 +446,12 @@ Return Value:
             // Previous element.
             //
 
-            if (Previous->Parent->RightChild == Previous) {
+            if (Previous->Parent->RightChild == Previous)
+            {
                 return Previous->Parent;
             }
 
             Previous = Previous->Parent;
-
         }
         return (PMMADDRESS_NODE)NULL;
     }
@@ -426,17 +461,16 @@ Return Value:
     //
 
     Previous = Previous->LeftChild;
-    while (Previous->RightChild != (PMMADDRESS_NODE)NULL) {
+    while (Previous->RightChild != (PMMADDRESS_NODE)NULL)
+    {
         Previous = Previous->RightChild;
     }
     return Previous;
 }
-
+
 PMMADDRESS_NODE
 FASTCALL
-MiGetFirstNode (
-    IN PMMADDRESS_NODE Root
-    )
+MiGetFirstNode(IN PMMADDRESS_NODE Root)
 
 /*++
 
@@ -461,23 +495,20 @@ Return Value:
 
     First = Root;
 
-    if (First == (PMMADDRESS_NODE)NULL) {
+    if (First == (PMMADDRESS_NODE)NULL)
+    {
         return (PMMADDRESS_NODE)NULL;
     }
 
-    while (First->LeftChild != (PMMADDRESS_NODE)NULL) {
+    while (First->LeftChild != (PMMADDRESS_NODE)NULL)
+    {
         First = First->LeftChild;
     }
 
     return First;
 }
-
-VOID
-FASTCALL
-MiInsertNode (
-    IN PMMADDRESS_NODE Node,
-    IN OUT PMMADDRESS_NODE *Root
-    )
+
+VOID FASTCALL MiInsertNode(IN PMMADDRESS_NODE Node, IN OUT PMMADDRESS_NODE *Root)
 
 /*++
 
@@ -516,15 +547,20 @@ Return Value:
     //
 
     Parent = *Root;
-    if (!Parent) {
+    if (!Parent)
+    {
         *Root = Node;
         Node->Parent = (PMMADDRESS_NODE)NULL;
-    } else {
+    }
+    else
+    {
 
-        for (;;) {
+        for (;;)
+        {
 
             Level += 1;
-            if (Level == 15) {
+            if (Level == 15)
+            {
                 MiReorderTree(Parent, Root);
             }
 
@@ -534,7 +570,8 @@ Return Value:
             // follow the left child link. Else follow the right child link.
             //
 
-            if (Node->StartingVpn < Parent->StartingVpn) {
+            if (Node->StartingVpn < Parent->StartingVpn)
+            {
 
                 //
                 // Starting address of the virtual address descriptor is less
@@ -544,15 +581,20 @@ Return Value:
                 // reorder the tree.
                 //
 
-                if (Parent->LeftChild) {
+                if (Parent->LeftChild)
+                {
                     Parent = Parent->LeftChild;
-                } else {
+                }
+                else
+                {
                     Parent->LeftChild = Node;
                     Node->Parent = Parent;
                     // MiReorderTree(Node, Root);
                     break;
                 }
-            } else {
+            }
+            else
+            {
 
                 //
                 // Starting address of the virtual address descriptor is greater
@@ -562,9 +604,12 @@ Return Value:
                 // reorder the tree.
                 //
 
-                if (Parent->RightChild) {
+                if (Parent->RightChild)
+                {
                     Parent = Parent->RightChild;
-                } else {
+                }
+                else
+                {
                     Parent->RightChild = Node;
                     Node->Parent = Parent;
                     // MiReorderTree(Node, Root);
@@ -575,13 +620,8 @@ Return Value:
     }
     return;
 }
-
-VOID
-FASTCALL
-MiRemoveNode (
-    IN PMMADDRESS_NODE Node,
-    IN OUT PMMADDRESS_NODE *Root
-    )
+
+VOID FASTCALL MiRemoveNode(IN PMMADDRESS_NODE Node, IN OUT PMMADDRESS_NODE *Root)
 
 /*++
 
@@ -616,7 +656,8 @@ Return Value:
     // isolate splay case and perform splay tree transformation.
     //
 
-    if (Node == *Root) {
+    if (Node == *Root)
+    {
 
         //
         // This Node is the root of the tree. There are four cases to
@@ -628,14 +669,17 @@ Return Value:
         //  4. the descriptor has both a right child and a left child
         //
 
-        if (LeftChild) {
-            if (RightChild) {
+        if (LeftChild)
+        {
+            if (RightChild)
+            {
 
                 //
                 // The descriptor has both a left child and a right child.
                 //
 
-                if (LeftChild->RightChild) {
+                if (LeftChild->RightChild)
+                {
 
                     //
                     // The left child has a right child. Make the right most
@@ -656,12 +700,14 @@ Return Value:
                     //
 
                     SplayNode = LeftChild->RightChild;
-                    while (SplayNode->RightChild) {
+                    while (SplayNode->RightChild)
+                    {
                         SplayNode = SplayNode->RightChild;
                     }
                     *Root = SplayNode;
                     SplayNode->Parent->RightChild = SplayNode->LeftChild;
-                    if (SplayNode->LeftChild) {
+                    if (SplayNode->LeftChild)
+                    {
                         SplayNode->LeftChild->Parent = SplayNode->Parent;
                     }
                     SplayNode->Parent = (PMMADDRESS_NODE)NULL;
@@ -669,7 +715,9 @@ Return Value:
                     RightChild->Parent = SplayNode;
                     SplayNode->LeftChild = LeftChild;
                     SplayNode->RightChild = RightChild;
-                } else if (RightChild->LeftChild) {
+                }
+                else if (RightChild->LeftChild)
+                {
 
                     //
                     // The right child has a left child. Make the left most
@@ -690,12 +738,14 @@ Return Value:
                     //
 
                     SplayNode = RightChild->LeftChild;
-                    while (SplayNode->LeftChild) {
+                    while (SplayNode->LeftChild)
+                    {
                         SplayNode = SplayNode->LeftChild;
                     }
                     *Root = SplayNode;
                     SplayNode->Parent->LeftChild = SplayNode->RightChild;
-                    if (SplayNode->RightChild) {
+                    if (SplayNode->RightChild)
+                    {
                         SplayNode->RightChild->Parent = SplayNode->Parent;
                     }
                     SplayNode->Parent = (PMMADDRESS_NODE)NULL;
@@ -703,7 +753,9 @@ Return Value:
                     RightChild->Parent = SplayNode;
                     SplayNode->LeftChild = LeftChild;
                     SplayNode->RightChild = RightChild;
-                } else {
+                }
+                else
+                {
 
                     //
                     // The left child of the descriptor does not have a right child,
@@ -727,7 +779,9 @@ Return Value:
                     LeftChild->RightChild = RightChild;
                     LeftChild->RightChild->Parent = LeftChild;
                 }
-            } else {
+            }
+            else
+            {
 
                 //
                 // The descriptor has a left child, but does not have a right child.
@@ -745,7 +799,9 @@ Return Value:
                 *Root = LeftChild;
                 LeftChild->Parent = (PMMADDRESS_NODE)NULL;
             }
-        } else if (RightChild) {
+        }
+        else if (RightChild)
+        {
 
             //
             // The descriptor has a right child, but does not have a left child.
@@ -762,10 +818,13 @@ Return Value:
 
             *Root = RightChild;
             RightChild->Parent = (PMMADDRESS_NODE)NULL;
-            while (RightChild->LeftChild) {
+            while (RightChild->LeftChild)
+            {
                 RightChild = RightChild->LeftChild;
             }
-        } else {
+        }
+        else
+        {
 
             //
             // The descriptor has neither a left child nor a right child. The
@@ -780,14 +839,18 @@ Return Value:
 
             *Root = NULL;
         }
-    } else if (LeftChild) {
-        if (RightChild) {
+    }
+    else if (LeftChild)
+    {
+        if (RightChild)
+        {
 
             //
             // The descriptor has both a left child and a right child.
             //
 
-            if (LeftChild->RightChild) {
+            if (LeftChild->RightChild)
+            {
 
                 //
                 // The left child has a right child. Make the right most
@@ -819,24 +882,31 @@ Return Value:
                 //
 
                 SplayNode = LeftChild->RightChild;
-                while (SplayNode->RightChild) {
+                while (SplayNode->RightChild)
+                {
                     SplayNode = SplayNode->RightChild;
                 }
                 SplayNode->Parent->RightChild = SplayNode->LeftChild;
-                if (SplayNode->LeftChild) {
+                if (SplayNode->LeftChild)
+                {
                     SplayNode->LeftChild->Parent = SplayNode->Parent;
                 }
                 SplayNode->Parent = Node->Parent;
-                if (Node == Node->Parent->LeftChild) {
+                if (Node == Node->Parent->LeftChild)
+                {
                     Node->Parent->LeftChild = SplayNode;
-                } else {
+                }
+                else
+                {
                     Node->Parent->RightChild = SplayNode;
                 }
                 LeftChild->Parent = SplayNode;
                 RightChild->Parent = SplayNode;
                 SplayNode->LeftChild = LeftChild;
                 SplayNode->RightChild = RightChild;
-            } else if (RightChild->LeftChild) {
+            }
+            else if (RightChild->LeftChild)
+            {
 
                 //
                 // The right child has a left child. Make the left most
@@ -868,24 +938,31 @@ Return Value:
                 //
 
                 SplayNode = RightChild->LeftChild;
-                while (SplayNode->LeftChild) {
+                while (SplayNode->LeftChild)
+                {
                     SplayNode = SplayNode->LeftChild;
                 }
                 SplayNode->Parent->LeftChild = SplayNode->RightChild;
-                if (SplayNode->RightChild) {
+                if (SplayNode->RightChild)
+                {
                     SplayNode->RightChild->Parent = SplayNode->Parent;
                 }
                 SplayNode->Parent = Node->Parent;
-                if (Node == Node->Parent->LeftChild) {
+                if (Node == Node->Parent->LeftChild)
+                {
                     Node->Parent->LeftChild = SplayNode;
-                } else {
+                }
+                else
+                {
                     Node->Parent->RightChild = SplayNode;
                 }
                 LeftChild->Parent = SplayNode;
                 RightChild->Parent = SplayNode;
                 SplayNode->LeftChild = LeftChild;
                 SplayNode->RightChild = RightChild;
-            } else {
+            }
+            else
+            {
 
                 //
                 // The left child of the descriptor does not have a right child,
@@ -916,15 +993,20 @@ Return Value:
 
                 SplayNode = LeftChild;
                 SplayNode->Parent = Node->Parent;
-                if (Node == Node->Parent->LeftChild) {
+                if (Node == Node->Parent->LeftChild)
+                {
                     Node->Parent->LeftChild = SplayNode;
-                } else {
+                }
+                else
+                {
                     Node->Parent->RightChild = SplayNode;
                 }
                 SplayNode->RightChild = RightChild;
                 RightChild->Parent = SplayNode;
             }
-        } else {
+        }
+        else
+        {
 
             //
             // The descriptor has a left child, but does not have a right child.
@@ -947,13 +1029,18 @@ Return Value:
             //
 
             LeftChild->Parent = Node->Parent;
-            if (Node == Node->Parent->LeftChild) {
+            if (Node == Node->Parent->LeftChild)
+            {
                 Node->Parent->LeftChild = LeftChild;
-            } else {
+            }
+            else
+            {
                 Node->Parent->RightChild = LeftChild;
             }
         }
-    } else if (RightChild) {
+    }
+    else if (RightChild)
+    {
 
         //
         // descriptor has a right child, but does not have a left child. Make
@@ -976,12 +1063,17 @@ Return Value:
         //
 
         RightChild->Parent = Node->Parent;
-        if (Node == Node->Parent->LeftChild) {
+        if (Node == Node->Parent->LeftChild)
+        {
             Node->Parent->LeftChild = RightChild;
-        } else {
+        }
+        else
+        {
             Node->Parent->RightChild = RightChild;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // The descriptor has neither a left child nor a right child. Delete
@@ -1000,21 +1092,21 @@ Return Value:
         //        P   P
         //
 
-        if (Node == Node->Parent->LeftChild) {
+        if (Node == Node->Parent->LeftChild)
+        {
             Node->Parent->LeftChild = (PMMADDRESS_NODE)NULL;
-        } else {
+        }
+        else
+        {
             Node->Parent->RightChild = (PMMADDRESS_NODE)NULL;
         }
     }
     return;
 }
-
+
 PMMADDRESS_NODE
 FASTCALL
-MiLocateAddressInTree (
-    IN ULONG_PTR Vpn,
-    IN PMMADDRESS_NODE *Root
-    )
+MiLocateAddressInTree(IN ULONG_PTR Vpn, IN PMMADDRESS_NODE *Root)
 
 /*++
 
@@ -1041,13 +1133,16 @@ Return Value:
 
     Parent = *Root;
 
-    for (;;) {
+    for (;;)
+    {
 
-        if (Parent == (PMMADDRESS_NODE)NULL) {
+        if (Parent == (PMMADDRESS_NODE)NULL)
+        {
             return (PMMADDRESS_NODE)NULL;
         }
 
-        if (Level == 20) {
+        if (Level == 20)
+        {
 
             //
             // There are 20 nodes above this point, reorder the
@@ -1059,15 +1154,18 @@ Return Value:
 #endif
         }
 
-        if (Vpn < Parent->StartingVpn) {
+        if (Vpn < Parent->StartingVpn)
+        {
             Parent = Parent->LeftChild;
             Level += 1;
-
-        } else if (Vpn > Parent->EndingVpn) {
+        }
+        else if (Vpn > Parent->EndingVpn)
+        {
             Parent = Parent->RightChild;
             Level += 1;
-
-        } else {
+        }
+        else
+        {
 
             //
             // The address is within the start and end range.
@@ -1077,13 +1175,9 @@ Return Value:
         }
     }
 }
-
+
 PMMADDRESS_NODE
-MiCheckForConflictingNode (
-    IN ULONG_PTR StartVpn,
-    IN ULONG_PTR EndVpn,
-    IN PMMADDRESS_NODE Root
-    )
+MiCheckForConflictingNode(IN ULONG_PTR StartVpn, IN ULONG_PTR EndVpn, IN PMMADDRESS_NODE Root)
 
 /*++
 
@@ -1112,19 +1206,24 @@ Return Value:
 
     Node = Root;
 
-    for (;;) {
+    for (;;)
+    {
 
-        if (Node == (PMMADDRESS_NODE)NULL) {
+        if (Node == (PMMADDRESS_NODE)NULL)
+        {
             return (PMMADDRESS_NODE)NULL;
         }
 
-        if (StartVpn > Node->EndingVpn) {
+        if (StartVpn > Node->EndingVpn)
+        {
             Node = Node->RightChild;
-
-        } else if (EndVpn < Node->StartingVpn) {
+        }
+        else if (EndVpn < Node->StartingVpn)
+        {
             Node = Node->LeftChild;
-
-        } else {
+        }
+        else
+        {
 
             //
             // The starting address is less than or equal to the end VA
@@ -1136,15 +1235,10 @@ Return Value:
         }
     }
 }
-
+
 NTSTATUS
-MiFindEmptyAddressRangeInTree (
-    IN SIZE_T SizeOfRange,
-    IN ULONG_PTR Alignment,
-    IN PMMADDRESS_NODE Root,
-    OUT PMMADDRESS_NODE *PreviousVad,
-    OUT PVOID *Base
-    )
+MiFindEmptyAddressRangeInTree(IN SIZE_T SizeOfRange, IN ULONG_PTR Alignment, IN PMMADDRESS_NODE Root,
+                              OUT PMMADDRESS_NODE *PreviousVad, OUT PVOID *Base)
 
 /*++
 
@@ -1186,17 +1280,19 @@ Return Value:
     // Locate the Node with the lowest starting address.
     //
 
-    ASSERT (SizeOfRange != 0);
+    ASSERT(SizeOfRange != 0);
     SizeOfRangeVpn = (SizeOfRange + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
-    ASSERT (SizeOfRangeVpn != 0);
+    ASSERT(SizeOfRangeVpn != 0);
 
     Node = Root;
 
-    if (Node == (PMMADDRESS_NODE)NULL) {
+    if (Node == (PMMADDRESS_NODE)NULL)
+    {
         *Base = MM_LOWEST_USER_ADDRESS;
         return STATUS_SUCCESS;
     }
-    while (Node->LeftChild != (PMMADDRESS_NODE)NULL) {
+    while (Node->LeftChild != (PMMADDRESS_NODE)NULL)
+    {
         Node = Node->LeftChild;
     }
 
@@ -1205,9 +1301,10 @@ Return Value:
     // and lowest user address.
     //
 
-    if (Node->StartingVpn > MI_VA_TO_VPN (MM_LOWEST_USER_ADDRESS)) {
-        if ( SizeOfRangeVpn <
-            (Node->StartingVpn - MI_VA_TO_VPN (MM_LOWEST_USER_ADDRESS))) {
+    if (Node->StartingVpn > MI_VA_TO_VPN(MM_LOWEST_USER_ADDRESS))
+    {
+        if (SizeOfRangeVpn < (Node->StartingVpn - MI_VA_TO_VPN(MM_LOWEST_USER_ADDRESS)))
+        {
 
             *PreviousVad = NULL;
             *Base = MM_LOWEST_USER_ADDRESS;
@@ -1215,53 +1312,47 @@ Return Value:
         }
     }
 
-    for (;;) {
+    for (;;)
+    {
 
-        NextNode = MiGetNextNode (Node);
+        NextNode = MiGetNextNode(Node);
 
-        if (NextNode != (PMMADDRESS_NODE)NULL) {
+        if (NextNode != (PMMADDRESS_NODE)NULL)
+        {
 
             if (SizeOfRangeVpn <=
-                ((ULONG_PTR)NextNode->StartingVpn -
-                                MI_ROUND_TO_SIZE(1 + Node->EndingVpn,
-                                                 AlignmentVpn))) {
+                ((ULONG_PTR)NextNode->StartingVpn - MI_ROUND_TO_SIZE(1 + Node->EndingVpn, AlignmentVpn)))
+            {
 
                 //
                 // Check to ensure that the ending address aligned upwards
                 // is not greater than the starting address.
                 //
 
-                if ((ULONG_PTR)NextNode->StartingVpn >
-                        MI_ROUND_TO_SIZE(1 + Node->EndingVpn,
-                                         AlignmentVpn)) {
+                if ((ULONG_PTR)NextNode->StartingVpn > MI_ROUND_TO_SIZE(1 + Node->EndingVpn, AlignmentVpn))
+                {
 
                     *PreviousVad = Node;
-                    *Base = (PVOID) MI_ROUND_TO_SIZE(
-                                (ULONG_PTR)MI_VPN_TO_VA_ENDING(Node->EndingVpn),
-                                    Alignment);
+                    *Base = (PVOID)MI_ROUND_TO_SIZE((ULONG_PTR)MI_VPN_TO_VA_ENDING(Node->EndingVpn), Alignment);
                     return STATUS_SUCCESS;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // No more descriptors, check to see if this fits into the remainder
             // of the address space.
             //
 
-            if ((((ULONG_PTR)Node->EndingVpn + MI_VA_TO_VPN(X64K)) <
-                    MI_VA_TO_VPN (MM_HIGHEST_VAD_ADDRESS))
-                        &&
-                (SizeOfRange <=
-                    ((ULONG_PTR)MM_HIGHEST_VAD_ADDRESS -
-                         (ULONG_PTR)MI_ROUND_TO_SIZE(
-                         (ULONG_PTR)MI_VPN_TO_VA(Node->EndingVpn), Alignment)))) {
+            if ((((ULONG_PTR)Node->EndingVpn + MI_VA_TO_VPN(X64K)) < MI_VA_TO_VPN(MM_HIGHEST_VAD_ADDRESS)) &&
+                (SizeOfRange <= ((ULONG_PTR)MM_HIGHEST_VAD_ADDRESS -
+                                 (ULONG_PTR)MI_ROUND_TO_SIZE((ULONG_PTR)MI_VPN_TO_VA(Node->EndingVpn), Alignment))))
+            {
 
                 *PreviousVad = Node;
-                *Base = (PVOID) MI_ROUND_TO_SIZE(
-                            (ULONG_PTR)MI_VPN_TO_VA_ENDING(Node->EndingVpn),
-                                Alignment);
+                *Base = (PVOID)MI_ROUND_TO_SIZE((ULONG_PTR)MI_VPN_TO_VA_ENDING(Node->EndingVpn), Alignment);
                 return STATUS_SUCCESS;
             }
             return STATUS_NO_MEMORY;
@@ -1269,15 +1360,10 @@ Return Value:
         Node = NextNode;
     }
 }
-
+
 NTSTATUS
-MiFindEmptyAddressRangeDownTree (
-    IN SIZE_T SizeOfRange,
-    IN PVOID HighestAddressToEndAt,
-    IN ULONG_PTR Alignment,
-    IN PMMADDRESS_NODE Root,
-    OUT PVOID *Base
-    )
+MiFindEmptyAddressRangeDownTree(IN SIZE_T SizeOfRange, IN PVOID HighestAddressToEndAt, IN ULONG_PTR Alignment,
+                                IN PMMADDRESS_NODE Root, OUT PVOID *Base)
 
 /*++
 
@@ -1320,27 +1406,27 @@ Return Value:
     ULONG_PTR HighestVpn;
     ULONG_PTR AlignmentVpn;
 
-    SizeOfRange = MI_ROUND_TO_SIZE (SizeOfRange, PAGE_SIZE);
+    SizeOfRange = MI_ROUND_TO_SIZE(SizeOfRange, PAGE_SIZE);
 
-    if (((ULONG_PTR)HighestAddressToEndAt + 1) < SizeOfRange) {
+    if (((ULONG_PTR)HighestAddressToEndAt + 1) < SizeOfRange)
+    {
         return STATUS_NO_MEMORY;
     }
 
-    ASSERT (HighestAddressToEndAt != NULL);
-    ASSERT (HighestAddressToEndAt <= (PVOID)((ULONG_PTR)MM_HIGHEST_VAD_ADDRESS + 1));
+    ASSERT(HighestAddressToEndAt != NULL);
+    ASSERT(HighestAddressToEndAt <= (PVOID)((ULONG_PTR)MM_HIGHEST_VAD_ADDRESS + 1));
 
-    HighestVpn = MI_VA_TO_VPN (HighestAddressToEndAt);
+    HighestVpn = MI_VA_TO_VPN(HighestAddressToEndAt);
 
     //
     // Locate the Node with the highest starting address.
     //
 
-    OptimalStart = (PVOID)(MI_ALIGN_TO_SIZE(
-                           (((ULONG_PTR)HighestAddressToEndAt + 1) - SizeOfRange),
-                           Alignment));
+    OptimalStart = (PVOID)(MI_ALIGN_TO_SIZE((((ULONG_PTR)HighestAddressToEndAt + 1) - SizeOfRange), Alignment));
     Node = Root;
 
-    if (Node == (PMMADDRESS_NODE)NULL) {
+    if (Node == (PMMADDRESS_NODE)NULL)
+    {
 
         //
         // The tree is empty, any range is okay.
@@ -1355,7 +1441,8 @@ Return Value:
     // element in the tree.
     //
 
-    while (Node->RightChild != (PMMADDRESS_NODE)NULL) {
+    while (Node->RightChild != (PMMADDRESS_NODE)NULL)
+    {
         Node = Node->RightChild;
     }
 
@@ -1364,16 +1451,15 @@ Return Value:
     // and the highest address to end at.
     //
 
-    AlignedEndingVa = (ULONG_PTR)MI_ROUND_TO_SIZE ((ULONG_PTR)MI_VPN_TO_VA_ENDING (Node->EndingVpn),
-                                               Alignment);
+    AlignedEndingVa = (ULONG_PTR)MI_ROUND_TO_SIZE((ULONG_PTR)MI_VPN_TO_VA_ENDING(Node->EndingVpn), Alignment);
 
-    if (AlignedEndingVa < (ULONG_PTR)HighestAddressToEndAt) {
+    if (AlignedEndingVa < (ULONG_PTR)HighestAddressToEndAt)
+    {
 
-        if ( SizeOfRange < ((ULONG_PTR)HighestAddressToEndAt - AlignedEndingVa)) {
+        if (SizeOfRange < ((ULONG_PTR)HighestAddressToEndAt - AlignedEndingVa))
+        {
 
-            *Base = MI_ALIGN_TO_SIZE(
-                                  ((ULONG_PTR)HighestAddressToEndAt - SizeOfRange),
-                                  Alignment);
+            *Base = MI_ALIGN_TO_SIZE(((ULONG_PTR)HighestAddressToEndAt - SizeOfRange), Alignment);
             return STATUS_SUCCESS;
         }
     }
@@ -1382,32 +1468,35 @@ Return Value:
     // Walk the tree backwards looking for a fit.
     //
 
-    OptimalStartVpn = MI_VA_TO_VPN (OptimalStart);
-    AlignmentVpn = MI_VA_TO_VPN (Alignment);
+    OptimalStartVpn = MI_VA_TO_VPN(OptimalStart);
+    AlignmentVpn = MI_VA_TO_VPN(Alignment);
 
-    for (;;) {
+    for (;;)
+    {
 
-        PreviousNode = MiGetPreviousNode (Node);
+        PreviousNode = MiGetPreviousNode(Node);
 
-        if (PreviousNode != (PMMADDRESS_NODE)NULL) {
+        if (PreviousNode != (PMMADDRESS_NODE)NULL)
+        {
 
             //
             // Is the ending Va below the top of the address to end at.
             //
 
-            if (PreviousNode->EndingVpn < OptimalStartVpn) {
+            if (PreviousNode->EndingVpn < OptimalStartVpn)
+            {
                 if ((SizeOfRange >> PAGE_SHIFT) <=
                     ((ULONG_PTR)Node->StartingVpn -
-                    (ULONG_PTR)MI_ROUND_TO_SIZE(1 + PreviousNode->EndingVpn,
-                                            AlignmentVpn))) {
+                     (ULONG_PTR)MI_ROUND_TO_SIZE(1 + PreviousNode->EndingVpn, AlignmentVpn)))
+                {
 
                     //
                     // See if the optimal start will fit between these
                     // two VADs.
                     //
 
-                    if ((OptimalStartVpn > PreviousNode->EndingVpn) &&
-                        (HighestVpn < Node->StartingVpn)) {
+                    if ((OptimalStartVpn > PreviousNode->EndingVpn) && (HighestVpn < Node->StartingVpn))
+                    {
                         *Base = OptimalStart;
                         return STATUS_SUCCESS;
                     }
@@ -1418,40 +1507,41 @@ Return Value:
                     //
 
                     if ((ULONG_PTR)Node->StartingVpn >
-                            (ULONG_PTR)MI_ROUND_TO_SIZE(1 + PreviousNode->EndingVpn,
-                                                    AlignmentVpn)) {
+                        (ULONG_PTR)MI_ROUND_TO_SIZE(1 + PreviousNode->EndingVpn, AlignmentVpn))
+                    {
 
-                        *Base = MI_ALIGN_TO_SIZE(
-                                            (ULONG_PTR)MI_VPN_TO_VA (Node->StartingVpn) - SizeOfRange,
-                                            Alignment);
+                        *Base = MI_ALIGN_TO_SIZE((ULONG_PTR)MI_VPN_TO_VA(Node->StartingVpn) - SizeOfRange, Alignment);
                         return STATUS_SUCCESS;
                     }
                 }
             }
-        } else {
+        }
+        else
+        {
 
             //
             // No more descriptors, check to see if this fits into the remainder
             // of the address space.
             //
 
-            if (Node->StartingVpn > MI_VA_TO_VPN (MM_LOWEST_USER_ADDRESS)) {
+            if (Node->StartingVpn > MI_VA_TO_VPN(MM_LOWEST_USER_ADDRESS))
+            {
                 if ((SizeOfRange >> PAGE_SHIFT) <=
-                    ((ULONG_PTR)Node->StartingVpn - MI_VA_TO_VPN (MM_LOWEST_USER_ADDRESS))) {
+                    ((ULONG_PTR)Node->StartingVpn - MI_VA_TO_VPN(MM_LOWEST_USER_ADDRESS)))
+                {
 
                     //
                     // See if the optimal start will fit between these
                     // two VADs.
                     //
 
-                    if (HighestVpn < Node->StartingVpn) {
+                    if (HighestVpn < Node->StartingVpn)
+                    {
                         *Base = OptimalStart;
                         return STATUS_SUCCESS;
                     }
 
-                    *Base = MI_ALIGN_TO_SIZE(
-                                  (ULONG_PTR)MI_VPN_TO_VA (Node->StartingVpn) - SizeOfRange,
-                                  Alignment);
+                    *Base = MI_ALIGN_TO_SIZE((ULONG_PTR)MI_VPN_TO_VA(Node->StartingVpn) - SizeOfRange, Alignment);
                     return STATUS_SUCCESS;
                 }
             }
@@ -1461,22 +1551,18 @@ Return Value:
     }
 }
 #if DBG
-VOID
-NodeTreeWalk (
-    PMMADDRESS_NODE Start
-    )
+VOID NodeTreeWalk(PMMADDRESS_NODE Start)
 
 {
-    if (Start == (PMMADDRESS_NODE)NULL) {
+    if (Start == (PMMADDRESS_NODE)NULL)
+    {
         return;
     }
 
     NodeTreeWalk(Start->LeftChild);
 
-    DbgPrint("Node at 0x%p start 0x%p  end 0x%p \n",
-                    (ULONG_PTR)Start,
-                    MI_VPN_TO_VA(Start->StartingVpn),
-                    (ULONG_PTR)MI_VPN_TO_VA (Start->EndingVpn) | (PAGE_SIZE - 1));
+    DbgPrint("Node at 0x%p start 0x%p  end 0x%p \n", (ULONG_PTR)Start, MI_VPN_TO_VA(Start->StartingVpn),
+             (ULONG_PTR)MI_VPN_TO_VA(Start->EndingVpn) | (PAGE_SIZE - 1));
 
 
     NodeTreeWalk(Start->RightChild);

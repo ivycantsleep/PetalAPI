@@ -46,15 +46,11 @@ extern PVOID NtDllBase;
 // for exception dispatch followed by unwind.
 //
 
-UNWIND_HISTORY_TABLE RtlpUnwindHistoryTable = {
-    0, UNWIND_HISTORY_TABLE_NONE, - 1, 0};
+UNWIND_HISTORY_TABLE RtlpUnwindHistoryTable = { 0, UNWIND_HISTORY_TABLE_NONE, -1, 0 };
 
 #if defined(_AMD64_) // ****** temp ******
 
-VOID
-RtlInitializeHistoryTable (
-    VOID
-    )
+VOID RtlInitializeHistoryTable(VOID)
 
 /*++
 
@@ -89,13 +85,11 @@ Return Value:
 
     FunctionAddressTable = &RtlpFunctionAddressTable[0];
     Index = 0;
-    while ((Index < UNWIND_HISTORY_TABLE_SIZE) &&
-           (*FunctionAddressTable != NULL)) {
+    while ((Index < UNWIND_HISTORY_TABLE_SIZE) && (*FunctionAddressTable != NULL))
+    {
 
         ControlPc = (ULONG64)*FunctionAddressTable++;
-        FunctionEntry = RtlLookupFunctionEntry(ControlPc,
-                                               &ImageBase,
-                                               NULL);
+        FunctionEntry = RtlLookupFunctionEntry(ControlPc, &ImageBase, NULL);
 
         ASSERT(FunctionEntry != NULL);
 
@@ -103,11 +97,13 @@ Return Value:
         EndAddress = FunctionEntry->EndAddress + ImageBase;
         RtlpUnwindHistoryTable.Entry[Index].ImageBase = ImageBase;
         RtlpUnwindHistoryTable.Entry[Index].FunctionEntry = FunctionEntry;
-        if (BeginAddress < RtlpUnwindHistoryTable.LowAddress) {
+        if (BeginAddress < RtlpUnwindHistoryTable.LowAddress)
+        {
             RtlpUnwindHistoryTable.LowAddress = BeginAddress;
         }
 
-        if (EndAddress > RtlpUnwindHistoryTable.HighAddress) {
+        if (EndAddress > RtlpUnwindHistoryTable.HighAddress)
+        {
             RtlpUnwindHistoryTable.HighAddress = EndAddress;
         }
 
@@ -121,18 +117,14 @@ Return Value:
 #endif // ****** temp ******
 
 PRUNTIME_FUNCTION
-RtlpSearchInvertedFunctionTable (
-    PINVERTED_FUNCTION_TABLE InvertedTable,
-    PVOID ControlPc,
-    OUT PVOID *ImageBase,
+RtlpSearchInvertedFunctionTable(PINVERTED_FUNCTION_TABLE InvertedTable, PVOID ControlPc, OUT PVOID *ImageBase,
 
 #if defined(_IA64_)
 
-    OUT PULONG64 Gp,
+                                OUT PULONG64 Gp,
 #endif
 
-    OUT PULONG SizeOfTable
-    )
+                                OUT PULONG SizeOfTable)
 
 /*++
 
@@ -179,10 +171,12 @@ Return Value:
     // then search the table for a matching entry.
     //
 
-    if (InvertedTable->CurrentSize != 0) {
+    if (InvertedTable->CurrentSize != 0)
+    {
         Low = 0;
         High = InvertedTable->CurrentSize - 1;
-        while (High >= Low) {
+        while (High >= Low)
+        {
 
             //
             // Compute next probe index and test entry. If the specified
@@ -195,13 +189,16 @@ Return Value:
             Middle = (Low + High) >> 1;
             InvertedEntry = &InvertedTable->TableEntry[Middle];
             Bound = (PVOID)((ULONG_PTR)InvertedEntry->ImageBase + InvertedEntry->SizeOfImage);
-            if (ControlPc < InvertedEntry->ImageBase) {
+            if (ControlPc < InvertedEntry->ImageBase)
+            {
                 High = Middle - 1;
-
-            } else if (ControlPc >= Bound) {
+            }
+            else if (ControlPc >= Bound)
+            {
                 Low = Middle + 1;
-
-            } else {
+            }
+            else
+            {
                 *ImageBase = InvertedEntry->ImageBase;
 
 #if defined(_IA64_)
@@ -220,18 +217,15 @@ Return Value:
 }
 
 PRUNTIME_FUNCTION
-RtlpLookupFunctionTable (
-    IN PVOID ControlPc,
-    OUT PVOID *ImageBase,
+RtlpLookupFunctionTable(IN PVOID ControlPc, OUT PVOID *ImageBase,
 
 #if defined(_IA64_)
 
-    OUT PULONG64 Gp,
+                        OUT PULONG64 Gp,
 
 #endif
 
-    OUT PULONG SizeOfTable
-    )
+                        OUT PULONG SizeOfTable)
 
 /*++
 
@@ -277,14 +271,13 @@ Return Value:
     //
 
     OldIrql = KeGetCurrentIrql();
-    if (OldIrql < DISPATCH_LEVEL) {
+    if (OldIrql < DISPATCH_LEVEL)
+    {
         KeRaiseIrqlToDpcLevel();
     }
 
     ExAcquireSpinLockAtDpcLevel(&PsLoadedModuleSpinLock);
-    FunctionTable = RtlpSearchInvertedFunctionTable(&PsInvertedFunctionTable,
-                                                    ControlPc,
-                                                    &Base,
+    FunctionTable = RtlpSearchInvertedFunctionTable(&PsInvertedFunctionTable, ControlPc, &Base,
 
 #if defined(_IA64_)
 
@@ -294,39 +287,35 @@ Return Value:
 
                                                     SizeOfTable);
 
-    if ((FunctionTable == NULL) &&
-        (PsInvertedFunctionTable.Overflow != FALSE)) {
+    if ((FunctionTable == NULL) && (PsInvertedFunctionTable.Overflow != FALSE))
+    {
 
         Next = PsLoadedModuleList.Flink;
-        if (Next != NULL) {
-            while (Next != &PsLoadedModuleList) {
-                Entry = CONTAINING_RECORD(Next,
-                                          LDR_DATA_TABLE_ENTRY,
-                                          InLoadOrderLinks);
-    
+        if (Next != NULL)
+        {
+            while (Next != &PsLoadedModuleList)
+            {
+                Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+
                 Next = Next->Flink;
                 Base = Entry->DllBase;
                 Bound = (ULONG_PTR)Base + Entry->SizeOfImage;
-                if (((ULONG_PTR)ControlPc >= (ULONG_PTR)Base) &&
-                    ((ULONG_PTR)ControlPc < Bound)) {
-    
+                if (((ULONG_PTR)ControlPc >= (ULONG_PTR)Base) && ((ULONG_PTR)ControlPc < Bound))
+                {
+
                     //
                     // Lookup function table address and size.
                     //
-    
+
 #if defined(_IA64_)
-                    
-                    *Gp = (ULONG64)(RtlImageDirectoryEntryToData(Base,
-                                                                 TRUE,
-                                                                 IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
+
+                    *Gp = (ULONG64)(RtlImageDirectoryEntryToData(Base, TRUE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
                                                                  SizeOfTable));
 
 #endif
 
-                    FunctionTable = RtlImageDirectoryEntryToData(Base,
-                                                                 TRUE,
-                                                                 IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                                                                 SizeOfTable);
+                    FunctionTable =
+                        RtlImageDirectoryEntryToData(Base, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, SizeOfTable);
 
                     break;
                 }
@@ -358,23 +347,19 @@ Return Value:
 
     FunctionTable = NULL;
     InLdrInit = LdrpInLdrInit;
-    if ((InLdrInit == FALSE) &&
-        (RtlTryEnterCriticalSection(&LdrpLoaderLock) == FALSE)) {
+    if ((InLdrInit == FALSE) && (RtlTryEnterCriticalSection(&LdrpLoaderLock) == FALSE))
+    {
 
         //
         // The loader lock could not be acquired. Call the system to find the
         // image that contains the control PC.
         //
 
-        Status = NtQueryVirtualMemory(NtCurrentProcess(),
-                                      ControlPc,
-                                      MemoryBasicInformation,
-                                      &MemoryInformation,
-                                      sizeof(MEMORY_BASIC_INFORMATION),
-                                      NULL);
+        Status = NtQueryVirtualMemory(NtCurrentProcess(), ControlPc, MemoryBasicInformation, &MemoryInformation,
+                                      sizeof(MEMORY_BASIC_INFORMATION), NULL);
 
-        if (NT_SUCCESS(Status) &&
-            (MemoryInformation.Type == MEM_IMAGE)) {
+        if (NT_SUCCESS(Status) && (MemoryInformation.Type == MEM_IMAGE))
+        {
 
             //
             // Lookup function table address and size.
@@ -383,21 +368,16 @@ Return Value:
             Base = MemoryInformation.AllocationBase;
 
 #if defined(_IA64_)
-            
-            *Gp = (ULONG64)(RtlImageDirectoryEntryToData(Base,
-                                                         TRUE,
-                                                         IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                                                         SizeOfTable));
+
+            *Gp = (ULONG64)(RtlImageDirectoryEntryToData(Base, TRUE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR, SizeOfTable));
 
 #endif
 
-            FunctionTable = RtlImageDirectoryEntryToData(Base,
-                                                         TRUE,
-                                                         IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                                                         SizeOfTable);
+            FunctionTable = RtlImageDirectoryEntryToData(Base, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, SizeOfTable);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The loader lock was acquired or the loader is being initialized.
@@ -406,14 +386,14 @@ Return Value:
         //
 
         Teb = NtCurrentTeb();
-        if (Teb != NULL) {
+        if (Teb != NULL)
+        {
             Peb = Teb->ProcessEnvironmentBlock;
-            if (Peb->Ldr != NULL) {
+            if (Peb->Ldr != NULL)
+            {
 
-                FunctionTable = RtlpSearchInvertedFunctionTable(&LdrpInvertedFunctionTable,
-                                                                ControlPc,
-                                                                &Base,
-        
+                FunctionTable = RtlpSearchInvertedFunctionTable(&LdrpInvertedFunctionTable, ControlPc, &Base,
+
 #if defined(_IA64_)
 
                                                                 Gp,
@@ -422,74 +402,68 @@ Return Value:
 
                                                                 SizeOfTable);
 
-                if ((FunctionTable == NULL) &&
-                    ((InLdrInit != FALSE) ||
-                     (LdrpInvertedFunctionTable.Overflow != FALSE))) {
+                if ((FunctionTable == NULL) && ((InLdrInit != FALSE) || (LdrpInvertedFunctionTable.Overflow != FALSE)))
+                {
 
                     ModuleListHead = &Peb->Ldr->InLoadOrderModuleList;
                     Next = ModuleListHead->Flink;
-                    if (Next != NULL) {
-                        while (Next != ModuleListHead) {
-                            Entry = CONTAINING_RECORD(Next,
-                                                      LDR_DATA_TABLE_ENTRY,
-                                                      InLoadOrderLinks);
-    
+                    if (Next != NULL)
+                    {
+                        while (Next != ModuleListHead)
+                        {
+                            Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+
                             Next = Next->Flink;
                             Base = Entry->DllBase;
                             Bound = (ULONG_PTR)Base + Entry->SizeOfImage;
-                            if (((ULONG_PTR)ControlPc >= (ULONG_PTR)Base) &&
-                                ((ULONG_PTR)ControlPc < Bound)) {
-                        
+                            if (((ULONG_PTR)ControlPc >= (ULONG_PTR)Base) && ((ULONG_PTR)ControlPc < Bound))
+                            {
+
 #if defined(_IA64_)
-            
-                                *Gp = (ULONG64)(RtlImageDirectoryEntryToData(Base,
-                                                                             TRUE,
-                                                                             IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                                                                             SizeOfTable));
+
+                                *Gp = (ULONG64)(RtlImageDirectoryEntryToData(
+                                    Base, TRUE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR, SizeOfTable));
 
 #endif
 
-                                FunctionTable = RtlImageDirectoryEntryToData(Base,
-                                                                             TRUE,
-                                                                             IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                                                                             SizeOfTable);
-                
+                                FunctionTable = RtlImageDirectoryEntryToData(
+                                    Base, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, SizeOfTable);
+
                                 break;
                             }
                         }
                     }
                 }
-        
-            } else {
-        
+            }
+            else
+            {
+
                 //
                 // The loaded module list has not been initialized. Therefore,
                 // the current executing code must be in ntdll. If ntddl base
                 // is not NULL and the control PC is within the ntdll range,
                 // then return the information for ntdll.
                 //
-    
-                if (NtDllBase != NULL) {
+
+                if (NtDllBase != NULL)
+                {
                     Base = NtDllBase;
                     NtHeaders = RtlImageNtHeader(Base);
-                    if (NtHeaders != NULL) {
+                    if (NtHeaders != NULL)
+                    {
                         Bound = (ULONG_PTR)Base + NtHeaders->OptionalHeader.SizeOfImage;
-                        if (((ULONG_PTR)ControlPc >= (ULONG_PTR)Base) &&
-                            ((ULONG_PTR)ControlPc < Bound)) { 
-    
+                        if (((ULONG_PTR)ControlPc >= (ULONG_PTR)Base) && ((ULONG_PTR)ControlPc < Bound))
+                        {
+
 #if defined(_IA64_)
-            
-                            *Gp = (ULONG64)(RtlImageDirectoryEntryToData(Base,
-                                                                             TRUE,
-                                                                             IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                                                                             SizeOfTable));
+
+                            *Gp = (ULONG64)(RtlImageDirectoryEntryToData(Base, TRUE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
+                                                                         SizeOfTable));
 
 #endif
 
-                            FunctionTable = RtlImageDirectoryEntryToData(Base,
-                                                                         TRUE,
-                                                                         IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                                                                         SizeOfTable);
+                            FunctionTable =
+                                RtlImageDirectoryEntryToData(Base, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, SizeOfTable);
                         }
                     }
                 }
@@ -500,7 +474,8 @@ Return Value:
         // Release the loader lock if it was acquired.
         //
 
-        if (InLdrInit == FALSE) {
+        if (InLdrInit == FALSE)
+        {
             RtlLeaveCriticalSection(&LdrpLoaderLock);
         }
     }
@@ -515,12 +490,7 @@ Return Value:
     return FunctionTable;
 }
 
-VOID
-RtlInsertInvertedFunctionTable (
-    PINVERTED_FUNCTION_TABLE InvertedTable,
-    PVOID ImageBase,
-    ULONG SizeOfImage
-    )
+VOID RtlInsertInvertedFunctionTable(PINVERTED_FUNCTION_TABLE InvertedTable, PVOID ImageBase, ULONG SizeOfImage)
 
 /*++
 
@@ -570,18 +540,22 @@ Return Value:
     //
 
     CurrentSize = InvertedTable->CurrentSize;
-    if (CurrentSize != InvertedTable->MaximumSize) {
+    if (CurrentSize != InvertedTable->MaximumSize)
+    {
 
         //
         // If the inverted table has no entries, then insert the new entry as
         // the first entry. Otherwise, search the inverted table for the proper
         // insert position, shuffle the table, and insert the new entry.
         //
-    
+
         Index = 0;
-        if (CurrentSize != 0) {
-            for (Index = 0; Index < CurrentSize; Index += 1) {
-                if (ImageBase < InvertedTable->TableEntry[Index].ImageBase) {
+        if (CurrentSize != 0)
+        {
+            for (Index = 0; Index < CurrentSize; Index += 1)
+            {
+                if (ImageBase < InvertedTable->TableEntry[Index].ImageBase)
+                {
                     break;
                 }
             }
@@ -591,52 +565,43 @@ Return Value:
             // then shuffle the table down to make room for the new entry.
             //
 
-            if (Index != CurrentSize) {
-                RtlMoveMemory(&InvertedTable->TableEntry[Index + 1],
-                              &InvertedTable->TableEntry[Index],
+            if (Index != CurrentSize)
+            {
+                RtlMoveMemory(&InvertedTable->TableEntry[Index + 1], &InvertedTable->TableEntry[Index],
                               (CurrentSize - Index) * sizeof(INVERTED_FUNCTION_TABLE_ENTRY));
             }
         }
-    
+
         //
         // Insert the specified entry in the specified inverted function table.
         //
-    
-        FunctionTable = RtlImageDirectoryEntryToData (ImageBase,
-                                                      TRUE,
-                                                      IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                                                      &SizeOfTable);
+
+        FunctionTable = RtlImageDirectoryEntryToData(ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &SizeOfTable);
 
         InvertedTable->TableEntry[Index].FunctionTable = FunctionTable;
         InvertedTable->TableEntry[Index].ImageBase = ImageBase;
         InvertedTable->TableEntry[Index].SizeOfImage = SizeOfImage;
         InvertedTable->TableEntry[Index].SizeOfTable = SizeOfTable;
-    
+
 #if defined(_IA64_)
-    
-        Gp = (ULONG64)RtlImageDirectoryEntryToData (ImageBase,
-                                                    TRUE,
-                                                    IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                                                    &SizeOfTable);
+
+        Gp = (ULONG64)RtlImageDirectoryEntryToData(ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &SizeOfTable);
 
         InvertedTable->TableEntry[Index].Gp = Gp;
-    
-#endif
-    
-        InvertedTable->CurrentSize += 1;
 
-    } else {
+#endif
+
+        InvertedTable->CurrentSize += 1;
+    }
+    else
+    {
         InvertedTable->Overflow = TRUE;
     }
 
     return;
 }
 
-VOID
-RtlRemoveInvertedFunctionTable (
-    PINVERTED_FUNCTION_TABLE InvertedTable,
-    PVOID ImageBase
-    )
+VOID RtlRemoveInvertedFunctionTable(PINVERTED_FUNCTION_TABLE InvertedTable, PVOID ImageBase)
 
 /*++
 
@@ -675,8 +640,10 @@ Return Value:
     //
 
     CurrentSize = InvertedTable->CurrentSize;
-    for (Index = 0; Index < CurrentSize; Index += 1) {
-        if (ImageBase == InvertedTable->TableEntry[Index].ImageBase) {
+    for (Index = 0; Index < CurrentSize; Index += 1)
+    {
+        if (ImageBase == InvertedTable->TableEntry[Index].ImageBase)
+        {
             break;
         }
     }
@@ -686,23 +653,24 @@ Return Value:
     // and reduce the size of the table.
     //
 
-    if (Index != CurrentSize) {
+    if (Index != CurrentSize)
+    {
 
         //
         // If the size of the table is not one, then shuffle the table and
         // remove the specified entry.
         //
-    
-        if (CurrentSize != 1) {
-            RtlCopyMemory(&InvertedTable->TableEntry[Index],
-                          &InvertedTable->TableEntry[Index + 1],
+
+        if (CurrentSize != 1)
+        {
+            RtlCopyMemory(&InvertedTable->TableEntry[Index], &InvertedTable->TableEntry[Index + 1],
                           (CurrentSize - Index - 1) * sizeof(INVERTED_FUNCTION_TABLE_ENTRY));
         }
-    
+
         //
         // Reduce the size of the inverted table.
         //
-    
+
         InvertedTable->CurrentSize -= 1;
     }
 

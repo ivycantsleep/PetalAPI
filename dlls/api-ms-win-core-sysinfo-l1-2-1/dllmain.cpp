@@ -4,7 +4,7 @@
 // >>>>>>>>>> FLAG (debug options) <<<<<<<<<<<
 //#define DEBUG_OUT 1
 //#define COMPATIBLE10_7_MODE 1
-#define   EXPORT __declspec(dllexport)
+#define EXPORT __declspec(dllexport)
 #define EXPORT_END _exported
 
 const TCHAR WIDE_KERNEL32DLL[] = L"kernel32.dll";
@@ -15,42 +15,35 @@ const char A_SCNEX2W[] = "SetComputerNameEx2W";
 const char A_NTSSI[] = "NtSetSystemInformation";
 
 
-// ------ globals ------ 
+// ------ globals ------
 BOOL isdp = false;
 
-typedef BOOL(WINAPI api_DnsHostnameToComputerNameExW)(const WCHAR* hostname, WCHAR* computername,
-    DWORD* size
-    );
+typedef BOOL(WINAPI api_DnsHostnameToComputerNameExW)(const WCHAR *hostname, WCHAR *computername, DWORD *size);
 
 typedef BOOL(WINAPI api_InstallELAMCertificateInfo)(HANDLE ELAMFile);
 
-typedef BOOL(WINAPI api_SetComputerNameEx2W)(COMPUTER_NAME_FORMAT NameType,
-    DWORD Flags,
-    LPCWSTR lpBuffer);
+typedef BOOL(WINAPI api_SetComputerNameEx2W)(COMPUTER_NAME_FORMAT NameType, DWORD Flags, LPCWSTR lpBuffer);
 
 typedef HRESULT(WINAPI api_NtSetSystemInformation)(SYSTEM_INFORMATION_CLASS SystemInformationClass,
-    PVOID SystemInformation,
-    ULONG SystemInformationLength);
+                                                   PVOID SystemInformation, ULONG SystemInformationLength);
 
-api_DnsHostnameToComputerNameExW* farproc_DnsHostnameToComputerNameExW = 0;
-api_InstallELAMCertificateInfo* farproc_InstallELAMCertificateInfo = 0;
-api_SetComputerNameEx2W* farproc_SetComputerNameEx2W = 0;
-api_NtSetSystemInformation* farproc_NtSetSystemInformation = 0;
+api_DnsHostnameToComputerNameExW *farproc_DnsHostnameToComputerNameExW = 0;
+api_InstallELAMCertificateInfo *farproc_InstallELAMCertificateInfo = 0;
+api_SetComputerNameEx2W *farproc_SetComputerNameEx2W = 0;
+api_NtSetSystemInformation *farproc_NtSetSystemInformation = 0;
 
 // ----- ABSENT AP -----
 HMODULE pKernel32;
 HMODULE pNtdll;
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-  
+
 
     switch (ul_reason_for_call)
     {
-    case DLL_PROCESS_ATTACH: {
+    case DLL_PROCESS_ATTACH:
+    {
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
         isdp = ::IsDebuggerPresent();
@@ -61,19 +54,22 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             pKernel32 = ::GetModuleHandle(WIDE_KERNEL32DLL);
             pNtdll = ::GetModuleHandle(WIDE_NTDLLDLL);
 
-            if(pKernel32)
+            if (pKernel32)
             {
-                farproc_DnsHostnameToComputerNameExW = (api_DnsHostnameToComputerNameExW*)::GetProcAddress(pKernel32, A_DHTCNEXW);
-                farproc_InstallELAMCertificateInfo = (api_InstallELAMCertificateInfo*)::GetProcAddress(pKernel32, A_IEALM);
-                farproc_SetComputerNameEx2W = (api_SetComputerNameEx2W*)::GetProcAddress(pKernel32, A_SCNEX2W);
+                farproc_DnsHostnameToComputerNameExW =
+                    (api_DnsHostnameToComputerNameExW *)::GetProcAddress(pKernel32, A_DHTCNEXW);
+                farproc_InstallELAMCertificateInfo =
+                    (api_InstallELAMCertificateInfo *)::GetProcAddress(pKernel32, A_IEALM);
+                farproc_SetComputerNameEx2W = (api_SetComputerNameEx2W *)::GetProcAddress(pKernel32, A_SCNEX2W);
 
                 if (pNtdll)
                 {
-                    farproc_NtSetSystemInformation = (api_NtSetSystemInformation*)::GetProcAddress(pNtdll, A_NTSSI);
-                }//end  if (pNtdll)
-            }//end     if(pKernel32)
-        }//end  if (!pKernel32)
-        break;}
+                    farproc_NtSetSystemInformation = (api_NtSetSystemInformation *)::GetProcAddress(pNtdll, A_NTSSI);
+                } //end  if (pNtdll)
+            } //end     if(pKernel32)
+        } //end  if (!pKernel32)
+        break;
+    }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
@@ -86,8 +82,8 @@ extern "C"
 {
 
     //https://fossies.org/dox/wine-9.16/dlls_2kernelbase_2registry_8c_source.html
-    EXPORT BOOL WINAPI _DnsHostnameToComputerNameExW(const WCHAR* hostname, WCHAR* computername,
-        DWORD* size) {
+    EXPORT BOOL WINAPI _DnsHostnameToComputerNameExW(const WCHAR *hostname, WCHAR *computername, DWORD *size)
+    {
         static const WCHAR allowed[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&')(-_{}";
         WCHAR buffer[MAX_COMPUTERNAME_LENGTH + 1];
         DWORD len = 0;
@@ -96,9 +92,10 @@ extern "C"
         if (isdp)
         {
             WCHAR Buffer[1024];
-            wsprintf(Buffer, L"[%i] - DnsHostnameToComputerNameExW(%s, %s)", ::GetCurrentThreadId(), hostname, computername);
+            wsprintf(Buffer, L"[%i] - DnsHostnameToComputerNameExW(%s, %s)", ::GetCurrentThreadId(), hostname,
+                     computername);
             ::OutputDebugString(Buffer);
-        }//end if (isdp)
+        } //end if (isdp)
 #endif // DEBUG_OUT
 
         if (!farproc_DnsHostnameToComputerNameExW)
@@ -119,11 +116,14 @@ extern "C"
             }
             *size = len;
             DWORD i = 0;
-            if (!computername) return FALSE;
+            if (!computername)
+                return FALSE;
             for (i = 0; i < len; i++)
             {
-                if (buffer[i] >= 'a' && buffer[i] <= 'z') computername[i] = buffer[i] + 'A' - 'a';
-                else computername[i] = wcschr1(allowed, buffer[i]) ? buffer[i] : '_';
+                if (buffer[i] >= 'a' && buffer[i] <= 'z')
+                    computername[i] = buffer[i] + 'A' - 'a';
+                else
+                    computername[i] = wcschr1(allowed, buffer[i]) ? buffer[i] : '_';
             }
             computername[len] = 0;
             return TRUE;
@@ -132,7 +132,8 @@ extern "C"
             return farproc_DnsHostnameToComputerNameExW(hostname, computername, size);
     }
 
-    EXPORT BOOL WINAPI _InstallELAMCertificateInfo(HANDLE ELAMFile) {
+    EXPORT BOOL WINAPI _InstallELAMCertificateInfo(HANDLE ELAMFile)
+    {
 
 #ifdef DEBUG_OUT
         if (isdp)
@@ -140,7 +141,7 @@ extern "C"
             WCHAR Buffer[1024];
             wsprintf(Buffer, L"[%i] - InstallELAMCertificateInfo(%x)", ::GetCurrentThreadId(), ELAMFile);
             ::OutputDebugString(Buffer);
-        }//end if (isdp)
+        } //end if (isdp)
 #endif // DEBUG_OUT
 
         if (!farproc_InstallELAMCertificateInfo)
@@ -150,13 +151,13 @@ extern "C"
             if (farproc_NtSetSystemInformation)
             {
                 HANDLE prohandle = ELAMFile;
-               
-                HRESULT hr = farproc_NtSetSystemInformation(SecSetEALMInfoHandle,(void*) &prohandle, sizeof(HANDLE));
+
+                HRESULT hr = farproc_NtSetSystemInformation(SecSetEALMInfoHandle, (void *)&prohandle, sizeof(HANDLE));
 
                 if (hr == ERROR_SUCCESS)
                     return TRUE;
                 return FALSE;
-            }//end if (farproc_NtSetSystemInformation)
+            } //end if (farproc_NtSetSystemInformation)
             return FALSE;
         }
         else
@@ -165,18 +166,17 @@ extern "C"
         return FALSE;
     }
 
-    EXPORT BOOL WINAPI _SetComputerNameEx2W(COMPUTER_NAME_FORMAT NameType,
-        DWORD Flags,
-        LPCWSTR lpBuffer)
+    EXPORT BOOL WINAPI _SetComputerNameEx2W(COMPUTER_NAME_FORMAT NameType, DWORD Flags, LPCWSTR lpBuffer)
     {
 
 #ifdef DEBUG_OUT
         if (isdp)
         {
             WCHAR Buffer[1024];
-            wsprintf(Buffer, L"[%i] - SetComputerNameEx2W(%x, %x, %p)", ::GetCurrentThreadId(), NameType, Flags, lpBuffer);
+            wsprintf(Buffer, L"[%i] - SetComputerNameEx2W(%x, %x, %p)", ::GetCurrentThreadId(), NameType, Flags,
+                     lpBuffer);
             ::OutputDebugString(Buffer);
-        }//end if (isdp)
+        } //end if (isdp)
 #endif // DEBUG_OUT
 
         if (!farproc_SetComputerNameEx2W)

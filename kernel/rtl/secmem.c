@@ -20,13 +20,11 @@ Revision History:
 
 #include "ntrtlp.h"
 
-ULONG_PTR   RtlSecureMemorySystemRangeStart;
-PRTL_SECURE_MEMORY_CACHE_CALLBACK       RtlSecureMemoryCacheCallback = NULL;
+ULONG_PTR RtlSecureMemorySystemRangeStart;
+PRTL_SECURE_MEMORY_CACHE_CALLBACK RtlSecureMemoryCacheCallback = NULL;
 
 NTSTATUS
-RtlRegisterSecureMemoryCacheCallback(
-    IN PRTL_SECURE_MEMORY_CACHE_CALLBACK Callback
-    )
+RtlRegisterSecureMemoryCacheCallback(IN PRTL_SECURE_MEMORY_CACHE_CALLBACK Callback)
 /*++
 
 Routine Description:
@@ -48,27 +46,26 @@ Return Value:
 {
     NTSTATUS status;
 
-    status = NtQuerySystemInformation(SystemRangeStartInformation,
-                                      &RtlSecureMemorySystemRangeStart,
-                                      sizeof(RtlSecureMemorySystemRangeStart),
-                                      NULL);
-    if (!NT_SUCCESS(status)) {
+    status = NtQuerySystemInformation(SystemRangeStartInformation, &RtlSecureMemorySystemRangeStart,
+                                      sizeof(RtlSecureMemorySystemRangeStart), NULL);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    if (!RtlSecureMemoryCacheCallback) {
+    if (!RtlSecureMemoryCacheCallback)
+    {
         RtlSecureMemoryCacheCallback = Callback;
         return STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         return STATUS_NO_MORE_ENTRIES;
     }
 }
 
 BOOLEAN
-RtlFlushSecureMemoryCache(
-    IN PVOID   lpAddr,
-    IN SIZE_T  size
-    )
+RtlFlushSecureMemoryCache(IN PVOID lpAddr, IN SIZE_T size)
 /*++
 
 Routine Description:
@@ -92,62 +89,59 @@ Return Value:
     
 --*/
 {
-    ULONG_PTR   addr; 
-    SIZE_T  regionSize;
-    ULONG   regType;
-    ULONG   regState;
-    MEMORY_BASIC_INFORMATION    memInfo;
-    NTSTATUS   status;
+    ULONG_PTR addr;
+    SIZE_T regionSize;
+    ULONG regType;
+    ULONG regState;
+    MEMORY_BASIC_INFORMATION memInfo;
+    NTSTATUS status;
     PRTL_SECURE_MEMORY_CACHE_CALLBACK Callback;
 
 
     Callback = RtlSecureMemoryCacheCallback;
-    if (Callback) {
+    if (Callback)
+    {
 
-        if (!size) {
+        if (!size)
+        {
             //
             // Compute the real size of the region
             //
 
             addr = (ULONG_PTR)lpAddr;
-            status = NtQueryVirtualMemory( NtCurrentProcess(),
-                                           (PVOID)addr,
-                                           MemoryBasicInformation,
-                                           (PMEMORY_BASIC_INFORMATION)&memInfo,
-                                           sizeof(memInfo),
-                                           NULL
-                                         );
-            if (!NT_SUCCESS(status)) {
+            status = NtQueryVirtualMemory(NtCurrentProcess(), (PVOID)addr, MemoryBasicInformation,
+                                          (PMEMORY_BASIC_INFORMATION)&memInfo, sizeof(memInfo), NULL);
+            if (!NT_SUCCESS(status))
+            {
                 return FALSE;
             }
-            if (memInfo.State == MEM_FREE) {
+            if (memInfo.State == MEM_FREE)
+            {
                 return FALSE;
             }
-            while (1) {
+            while (1)
+            {
                 size += memInfo.RegionSize;
                 regState = memInfo.State;
                 addr = addr + memInfo.RegionSize;
 
-                if (addr > RtlSecureMemorySystemRangeStart) {
+                if (addr > RtlSecureMemorySystemRangeStart)
+                {
                     break;
                 }
 
-                status = NtQueryVirtualMemory( NtCurrentProcess(),
-                                               (PVOID)addr,
-                                               MemoryBasicInformation,
-                                               (PMEMORY_BASIC_INFORMATION)&memInfo,
-                                               sizeof(memInfo),
-                                               NULL
-                                             );
+                status = NtQueryVirtualMemory(NtCurrentProcess(), (PVOID)addr, MemoryBasicInformation,
+                                              (PMEMORY_BASIC_INFORMATION)&memInfo, sizeof(memInfo), NULL);
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     return FALSE;
                 }
 
-                if (memInfo.State == MEM_FREE) {
+                if (memInfo.State == MEM_FREE)
+                {
                     break;
                 }
-
             }
         }
 
@@ -159,12 +153,8 @@ Return Value:
 }
 
 NTSTATUS
-RtlpSecMemFreeVirtualMemory(
-    IN HANDLE ProcessHandle,
-    IN OUT PVOID *BaseAddress,
-    IN OUT PSIZE_T RegionSize,
-    IN ULONG FreeType
-     )
+RtlpSecMemFreeVirtualMemory(IN HANDLE ProcessHandle, IN OUT PVOID *BaseAddress, IN OUT PSIZE_T RegionSize,
+                            IN ULONG FreeType)
 /*++
 
 Routine Description:
@@ -181,22 +171,16 @@ Return Value:
     
 --*/
 {
-    NTSTATUS    status;
+    NTSTATUS status;
 
-    status = NtFreeVirtualMemory( ProcessHandle, 
-                                  BaseAddress,
-                                  RegionSize,
-                                  FreeType
-                                  );
-    
-    if (status == STATUS_INVALID_PAGE_PROTECTION) {
+    status = NtFreeVirtualMemory(ProcessHandle, BaseAddress, RegionSize, FreeType);
 
-        if ((ProcessHandle == NtCurrentProcess()) && RtlFlushSecureMemoryCache(*BaseAddress, *RegionSize)) {
-            status = NtFreeVirtualMemory( ProcessHandle, 
-                                          BaseAddress,
-                                          RegionSize,
-                                          FreeType
-                                          );
+    if (status == STATUS_INVALID_PAGE_PROTECTION)
+    {
+
+        if ((ProcessHandle == NtCurrentProcess()) && RtlFlushSecureMemoryCache(*BaseAddress, *RegionSize))
+        {
+            status = NtFreeVirtualMemory(ProcessHandle, BaseAddress, RegionSize, FreeType);
             return status;
         }
     }

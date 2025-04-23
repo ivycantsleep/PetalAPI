@@ -26,10 +26,10 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
-#include    "arc.h"
+#include "cmp.h"
+#include "arc.h"
 #pragma hdrstop
-#include    "arccodes.h"
+#include "arccodes.h"
 
 typedef struct _VERSION_DATA_KEY
 {
@@ -39,48 +39,45 @@ typedef struct _VERSION_DATA_KEY
 
 } VERSION_DATA_KEY, *PVERSION_DATA_KEY;
 
-VERSION_DATA_KEY VersionDataKeys[] =
-{
-    { L"\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft", NULL },
+VERSION_DATA_KEY VersionDataKeys[] = { { L"\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft", NULL },
 #if defined(_WIN64)
-    { L"\\REGISTRY\\MACHINE\\SOFTWARE\\Wow6432Node", L"Microsoft" },
+                                       { L"\\REGISTRY\\MACHINE\\SOFTWARE\\Wow6432Node", L"Microsoft" },
 #endif
-    { NULL, NULL }
-} ;
+                                       { NULL, NULL } };
 
 //
 // paths
 //
 
-#define INIT_REGISTRY_MASTERPATH   L"\\REGISTRY\\"
+#define INIT_REGISTRY_MASTERPATH L"\\REGISTRY\\"
 
-extern  PKPROCESS   CmpSystemProcess;
-extern  ERESOURCE   CmpRegistryLock;
-extern  ERESOURCE   CmpKcbLock;
-extern  FAST_MUTEX  CmpPostLock;
-extern  FAST_MUTEX  CmpWriteLock;
+extern PKPROCESS CmpSystemProcess;
+extern ERESOURCE CmpRegistryLock;
+extern ERESOURCE CmpKcbLock;
+extern FAST_MUTEX CmpPostLock;
+extern FAST_MUTEX CmpWriteLock;
 
-extern  BOOLEAN     CmFirstTime;
-extern  BOOLEAN HvShutdownComplete;
+extern BOOLEAN CmFirstTime;
+extern BOOLEAN HvShutdownComplete;
 
 //
 // List of MACHINE hives to load.
 //
-extern  HIVE_LIST_ENTRY CmpMachineHiveList[];
-extern  UCHAR           SystemHiveFullPathBuffer[];
-extern  UNICODE_STRING  SystemHiveFullPathName;
+extern HIVE_LIST_ENTRY CmpMachineHiveList[];
+extern UCHAR SystemHiveFullPathBuffer[];
+extern UNICODE_STRING SystemHiveFullPathName;
 
 #define SYSTEM_PATH L"\\registry\\machine\\system"
 
 //
 // special keys for backwards compatibility with 1.0
 //
-#define HKEY_PERFORMANCE_TEXT       (( HANDLE ) (ULONG_PTR)((LONG)0x80000050) )
-#define HKEY_PERFORMANCE_NLSTEXT    (( HANDLE ) (ULONG_PTR)((LONG)0x80000060) )
+#define HKEY_PERFORMANCE_TEXT ((HANDLE)(ULONG_PTR)((LONG)0x80000050))
+#define HKEY_PERFORMANCE_NLSTEXT ((HANDLE)(ULONG_PTR)((LONG)0x80000060))
 
-extern UNICODE_STRING  CmpSystemFileName;
-extern UNICODE_STRING  CmSymbolicLinkValueName;
-extern UNICODE_STRING  CmpLoadOptions;         // sys options from FW or boot.ini
+extern UNICODE_STRING CmpSystemFileName;
+extern UNICODE_STRING CmSymbolicLinkValueName;
+extern UNICODE_STRING CmpLoadOptions; // sys options from FW or boot.ini
 extern PWCHAR CmpProcessorControl;
 extern PWCHAR CmpControlSessionManager;
 
@@ -100,27 +97,26 @@ extern PWCHAR CmpControlSessionManager;
 //  are stored in a small memory only hive called the Master Hive.
 //  All other hives have link nodes in this hive which point to them.
 //
-extern   PCMHIVE CmpMasterHive;
-extern   BOOLEAN CmpNoMasterCreates;    // Init False, Set TRUE after we're done to
-                                        // prevent random creates in the
-                                        // master hive, which is not backed
-                                        // by a file.
+extern PCMHIVE CmpMasterHive;
+extern BOOLEAN CmpNoMasterCreates; // Init False, Set TRUE after we're done to
+                                   // prevent random creates in the
+                                   // master hive, which is not backed
+                                   // by a file.
 
-extern   LIST_ENTRY  CmpHiveListHead;   // List of CMHIVEs
+extern LIST_ENTRY CmpHiveListHead; // List of CMHIVEs
 
 
 //
 // Addresses of object type descriptors:
 //
 
-extern   POBJECT_TYPE CmpKeyObjectType;
+extern POBJECT_TYPE CmpKeyObjectType;
 
 //
 // Define attributes that Key objects are not allowed to have.
 //
 
-#define CMP_KEY_INVALID_ATTRIBUTES  (OBJ_EXCLUSIVE  |\
-                                     OBJ_PERMANENT)
+#define CMP_KEY_INVALID_ATTRIBUTES (OBJ_EXCLUSIVE | OBJ_PERMANENT)
 
 
 //
@@ -140,8 +136,8 @@ extern BOOLEAN CmpNoWrite;
 //
 // Buffer used for quick-stash transfers in CmSetValueKey
 //
-extern PUCHAR  CmpStashBuffer;
-extern ULONG   CmpStashBufferSize;
+extern PUCHAR CmpStashBuffer;
+extern ULONG CmpStashBufferSize;
 
 
 //
@@ -152,185 +148,113 @@ extern BOOLEAN CmpCannotWriteConfiguration;
 // Global "constants"
 //
 
-extern   const UNICODE_STRING nullclass;
+extern const UNICODE_STRING nullclass;
 extern BOOLEAN CmpTrackHiveClose;
 
 //
 // Private prototypes
 //
-VOID
-CmpCreatePredefined(
-    IN HANDLE Root,
-    IN PWSTR KeyName,
-    IN HANDLE PredefinedHandle
-    );
+VOID CmpCreatePredefined(IN HANDLE Root, IN PWSTR KeyName, IN HANDLE PredefinedHandle);
 
-VOID
-CmpCreatePerfKeys(
-    VOID
-    );
+VOID CmpCreatePerfKeys(VOID);
 
 BOOLEAN
-CmpLinkKeyToHive(
-    PWSTR   KeyPath,
-    PWSTR   HivePath
-    );
+CmpLinkKeyToHive(PWSTR KeyPath, PWSTR HivePath);
 
 NTSTATUS
-CmpCreateControlSet(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+CmpCreateControlSet(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 NTSTATUS
-CmpCloneControlSet(
-    VOID
-    );
+CmpCloneControlSet(VOID);
 
 NTSTATUS
-CmpCreateObjectTypes(
-    VOID
-    );
+CmpCreateObjectTypes(VOID);
 
 BOOLEAN
-CmpCreateRegistryRoot(
-    VOID
-    );
+CmpCreateRegistryRoot(VOID);
 
 BOOLEAN
-CmpCreateRootNode(
-    IN PHHIVE   Hive,
-    IN PWSTR    Name,
-    OUT PHCELL_INDEX RootCellIndex
-    );
+CmpCreateRootNode(IN PHHIVE Hive, IN PWSTR Name, OUT PHCELL_INDEX RootCellIndex);
 
-VOID
-CmpFreeDriverList(
-    IN PHHIVE Hive,
-    IN PLIST_ENTRY DriverList
-    );
+VOID CmpFreeDriverList(IN PHHIVE Hive, IN PLIST_ENTRY DriverList);
 
-VOID
-CmpInitializeHiveList(
-    VOID
-    );
+VOID CmpInitializeHiveList(VOID);
 
 BOOLEAN
-CmpInitializeSystemHive(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+CmpInitializeSystemHive(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 NTSTATUS
-CmpInterlockedFunction (
-    PWCHAR RegistryValueKey,
-    VOID (*InterlockedFunction)(VOID)
-    );
+CmpInterlockedFunction(PWCHAR RegistryValueKey, VOID (*InterlockedFunction)(VOID));
 
-VOID
-CmpConfigureProcessors (
-    VOID
-    );
+VOID CmpConfigureProcessors(VOID);
 
 #if i386
-VOID
-KeOptimizeProcessorControlState (
-    VOID
-    );
+VOID KeOptimizeProcessorControlState(VOID);
 #endif
 
 NTSTATUS
-CmpAddDockingInfo (
-    IN HANDLE Key,
-    IN PROFILE_PARAMETER_BLOCK * ProfileBlock
-    );
+CmpAddDockingInfo(IN HANDLE Key, IN PROFILE_PARAMETER_BLOCK *ProfileBlock);
 
 NTSTATUS
-CmpAddAliasEntry (
-    IN HANDLE IDConfigDB,
-    IN PROFILE_PARAMETER_BLOCK * ProfileBlock,
-    IN ULONG  ProfileNumber
-    );
+CmpAddAliasEntry(IN HANDLE IDConfigDB, IN PROFILE_PARAMETER_BLOCK *ProfileBlock, IN ULONG ProfileNumber);
 
 NTSTATUS CmpDeleteCloneTree(VOID);
 
-VOID
-CmpDiskFullWarning(
-    VOID
-    );
+VOID CmpDiskFullWarning(VOID);
 
-VOID
-CmpLoadHiveThread(
-    IN PVOID StartContext
-    );
+VOID CmpLoadHiveThread(IN PVOID StartContext);
 
 NTSTATUS
-CmpSetupPrivateWrite(
-    PCMHIVE             CmHive
-    );
+CmpSetupPrivateWrite(PCMHIVE CmHive);
 
 NTSTATUS
-CmpSetSystemValues(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+CmpSetSystemValues(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 NTSTATUS
-CmpSetNetworkValue(
-    IN PNETWORK_LOADER_BLOCK NetworkLoaderBlock
-    );
+CmpSetNetworkValue(IN PNETWORK_LOADER_BLOCK NetworkLoaderBlock);
 
-VOID
-CmpInitCallback(VOID);
+VOID CmpInitCallback(VOID);
 
-VOID
-CmpMarkCurrentValueDirty(
-                         IN PHHIVE SystemHive,
-                         IN HCELL_INDEX RootCell
-                         );
+VOID CmpMarkCurrentValueDirty(IN PHHIVE SystemHive, IN HCELL_INDEX RootCell);
 
 #ifdef ALLOC_PRAGMA
 NTSTATUS
-CmpHwprofileDefaultSelect (
-    IN  PCM_HARDWARE_PROFILE_LIST ProfileList,
-    OUT PULONG ProfileIndexToUse,
-    IN  PVOID Context
-    );
-#pragma alloc_text(INIT,CmInitSystem1)
-#pragma alloc_text(INIT,CmIsLastKnownGoodBoot)
-#pragma alloc_text(INIT,CmpHwprofileDefaultSelect)
-#pragma alloc_text(INIT,CmpCreateControlSet)
-#pragma alloc_text(INIT,CmpCloneControlSet)
-#pragma alloc_text(INIT,CmpCreateObjectTypes)
-#pragma alloc_text(INIT,CmpCreateRegistryRoot)
-#pragma alloc_text(INIT,CmpCreateRootNode)
-#pragma alloc_text(INIT,CmpInitializeSystemHive)
-#pragma alloc_text(INIT,CmGetSystemDriverList)
-#pragma alloc_text(INIT,CmpFreeDriverList)
-#pragma alloc_text(INIT,CmpSetSystemValues)
-#pragma alloc_text(INIT,CmpSetNetworkValue)
-#pragma alloc_text(PAGE,CmpInitializeHiveList)
-#pragma alloc_text(PAGE,CmpLinkHiveToMaster)
-#pragma alloc_text(PAGE,CmpSetVersionData)
-#pragma alloc_text(PAGE,CmBootLastKnownGood)
-#pragma alloc_text(PAGE,CmpSaveBootControlSet)
-#pragma alloc_text(PAGE,CmpInitHiveFromFile)
-#pragma alloc_text(PAGE,CmpLinkKeyToHive)
-#pragma alloc_text(PAGE,CmpCreatePredefined)
-#pragma alloc_text(PAGE,CmpCreatePerfKeys)
-#pragma alloc_text(PAGE,CmpInterlockedFunction)
-#pragma alloc_text(PAGE,CmpConfigureProcessors)
-#pragma alloc_text(INIT,CmpAddDockingInfo)
-#pragma alloc_text(INIT,CmpAddAliasEntry)
-#pragma alloc_text(PAGE,CmpDeleteCloneTree)
-#pragma alloc_text(PAGE,CmpSetupPrivateWrite)
-#pragma alloc_text(PAGE,CmpLoadHiveThread)
-#pragma alloc_text(PAGE,CmpMarkCurrentValueDirty)
+CmpHwprofileDefaultSelect(IN PCM_HARDWARE_PROFILE_LIST ProfileList, OUT PULONG ProfileIndexToUse, IN PVOID Context);
+#pragma alloc_text(INIT, CmInitSystem1)
+#pragma alloc_text(INIT, CmIsLastKnownGoodBoot)
+#pragma alloc_text(INIT, CmpHwprofileDefaultSelect)
+#pragma alloc_text(INIT, CmpCreateControlSet)
+#pragma alloc_text(INIT, CmpCloneControlSet)
+#pragma alloc_text(INIT, CmpCreateObjectTypes)
+#pragma alloc_text(INIT, CmpCreateRegistryRoot)
+#pragma alloc_text(INIT, CmpCreateRootNode)
+#pragma alloc_text(INIT, CmpInitializeSystemHive)
+#pragma alloc_text(INIT, CmGetSystemDriverList)
+#pragma alloc_text(INIT, CmpFreeDriverList)
+#pragma alloc_text(INIT, CmpSetSystemValues)
+#pragma alloc_text(INIT, CmpSetNetworkValue)
+#pragma alloc_text(PAGE, CmpInitializeHiveList)
+#pragma alloc_text(PAGE, CmpLinkHiveToMaster)
+#pragma alloc_text(PAGE, CmpSetVersionData)
+#pragma alloc_text(PAGE, CmBootLastKnownGood)
+#pragma alloc_text(PAGE, CmpSaveBootControlSet)
+#pragma alloc_text(PAGE, CmpInitHiveFromFile)
+#pragma alloc_text(PAGE, CmpLinkKeyToHive)
+#pragma alloc_text(PAGE, CmpCreatePredefined)
+#pragma alloc_text(PAGE, CmpCreatePerfKeys)
+#pragma alloc_text(PAGE, CmpInterlockedFunction)
+#pragma alloc_text(PAGE, CmpConfigureProcessors)
+#pragma alloc_text(INIT, CmpAddDockingInfo)
+#pragma alloc_text(INIT, CmpAddAliasEntry)
+#pragma alloc_text(PAGE, CmpDeleteCloneTree)
+#pragma alloc_text(PAGE, CmpSetupPrivateWrite)
+#pragma alloc_text(PAGE, CmpLoadHiveThread)
+#pragma alloc_text(PAGE, CmpMarkCurrentValueDirty)
 #endif
 
 
-
 BOOLEAN
-CmInitSystem1(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+CmInitSystem1(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -380,9 +304,9 @@ Return Value:
 
 --*/
 {
-    HANDLE  key1;
+    HANDLE key1;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    NTSTATUS    status;
+    NTSTATUS status;
     PSECURITY_DESCRIPTOR SecurityDescriptor;
     PCMHIVE HardwareHive;
     PCMHIVE CloneHive;
@@ -391,7 +315,8 @@ Return Value:
     // Set the mini NT flag if we are booting into Mini NT
     // environment
     //
-    if (InitIsWinPEMode) {
+    if (InitIsWinPEMode)
+    {
         CmpMiniNTBoot = InitIsWinPEMode;
 
         //
@@ -406,7 +331,7 @@ Return Value:
     }
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"CmInitSystem1\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "CmInitSystem1\n"));
 
     //
     // Initialize Names of all registry paths.
@@ -454,7 +379,7 @@ Return Value:
     //
     // Initialize the cache
     //
-    CmpInitializeCache ();
+    CmpInitializeCache();
 
     //
     // Initialize private allocator
@@ -477,9 +402,11 @@ Return Value:
     // Create the Key object type.
     //
     status = CmpCreateObjectTypes();
-    if (!NT_SUCCESS(status) ) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmInitSystem1: CmpCreateObjectTypes failed\n"));
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,1,status,0); // could not registrate with object manager
+    if (!NT_SUCCESS(status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmInitSystem1: CmpCreateObjectTypes failed\n"));
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 1, status,
+                    0); // could not registrate with object manager
         return FALSE;
     }
 
@@ -487,21 +414,15 @@ Return Value:
     //
     // Create the master hive and initialize it.
     //
-    status = CmpInitializeHive(&CmpMasterHive,
-                HINIT_CREATE,
-                HIVE_VOLATILE,
-                HFILE_TYPE_PRIMARY,     // i.e. no logging, no alterate
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                0);
-    if (!NT_SUCCESS(status)) {
+    status = CmpInitializeHive(&CmpMasterHive, HINIT_CREATE, HIVE_VOLATILE,
+                               HFILE_TYPE_PRIMARY, // i.e. no logging, no alterate
+                               NULL, NULL, NULL, NULL, NULL, 0);
+    if (!NT_SUCCESS(status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmInitSystem1: CmpInitializeHive(master) failed\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmInitSystem1: CmpInitializeHive(master) failed\n"));
 
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,2,status,0); // could not initialize master hive
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 2, status, 0); // could not initialize master hive
 
         return (FALSE);
     }
@@ -510,9 +431,10 @@ Return Value:
     // try to allocate a stash buffer.  if we can't get 1 page this
     // early on, we're in deep trouble, so punt.
     //
-    CmpStashBuffer = ExAllocatePoolWithTag(PagedPool, PAGE_SIZE,CM_STASHBUFFER_TAG);
-    if (CmpStashBuffer == NULL) {
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,3,0,0); // odds against this are huge
+    CmpStashBuffer = ExAllocatePoolWithTag(PagedPool, PAGE_SIZE, CM_STASHBUFFER_TAG);
+    if (CmpStashBuffer == NULL)
+    {
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 3, 0, 0); // odds against this are huge
         return FALSE;
     }
     CmpStashBufferSize = PAGE_SIZE;
@@ -520,9 +442,10 @@ Return Value:
     //
     // Create the \REGISTRY node
     //
-    if (!CmpCreateRegistryRoot()) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmInitSystem1: CmpCreateRegistryRoot failed\n"));
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,4,0,0); // could not create root of the registry
+    if (!CmpCreateRegistryRoot())
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmInitSystem1: CmpCreateRegistryRoot failed\n"));
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 4, 0, 0); // could not create root of the registry
         return FALSE;
     }
 
@@ -535,53 +458,29 @@ Return Value:
     //
     SecurityDescriptor = CmpHiveRootSecurityDescriptor();
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &CmRegistryMachineName,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        SecurityDescriptor
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
+                               SecurityDescriptor);
 
-    if (!NT_SUCCESS(status = NtCreateKey(
-                        &key1,
-                        KEY_READ | KEY_WRITE,
-                        &ObjectAttributes,
-                        0,
-                        (PUNICODE_STRING)&nullclass,
-                        0,
-                        NULL
-        )))
+    if (!NT_SUCCESS(status = NtCreateKey(&key1, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, (PUNICODE_STRING)&nullclass,
+                                         0, NULL)))
     {
         ExFreePool(SecurityDescriptor);
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmInitSystem1: NtCreateKey(MACHINE) failed\n"));
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,5,status,0); // could not create HKLM
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmInitSystem1: NtCreateKey(MACHINE) failed\n"));
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 5, status, 0); // could not create HKLM
         return FALSE;
     }
 
     NtClose(key1);
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &CmRegistryUserName,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        SecurityDescriptor
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryUserName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
+                               SecurityDescriptor);
 
-    if (!NT_SUCCESS(status = NtCreateKey(
-                        &key1,
-                        KEY_READ | KEY_WRITE,
-                        &ObjectAttributes,
-                        0,
-                        (PUNICODE_STRING)&nullclass,
-                        0,
-                        NULL
-        )))
+    if (!NT_SUCCESS(status = NtCreateKey(&key1, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, (PUNICODE_STRING)&nullclass,
+                                         0, NULL)))
     {
         ExFreePool(SecurityDescriptor);
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmInitSystem1: NtCreateKey(USER) failed\n"));
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,6,status,0); // could not create HKUSER
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmInitSystem1: NtCreateKey(USER) failed\n"));
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 6, status, 0); // could not create HKUSER
         return FALSE;
     }
 
@@ -591,23 +490,25 @@ Return Value:
     //
     // --- 7. Create the SYSTEM hive, fill in with data from loader ---
     //
-    if (!CmpInitializeSystemHive(LoaderBlock)) {
+    if (!CmpInitializeSystemHive(LoaderBlock))
+    {
         ExFreePool(SecurityDescriptor);
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpInitSystem1: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"Hive allocation failure for SYSTEM\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpInitSystem1: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "Hive allocation failure for SYSTEM\n"));
 
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,7,0,0); // could not create SystemHive
-        return(FALSE);
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 7, 0, 0); // could not create SystemHive
+        return (FALSE);
     }
 
     //
     // Create the symbolic link \Registry\Machine\System\CurrentControlSet
     //
     status = CmpCreateControlSet(LoaderBlock);
-    if (!NT_SUCCESS(status)) {
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,8,status,0); // could not create CurrentControlSet
-        return(FALSE);
+    if (!NT_SUCCESS(status))
+    {
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 8, status, 0); // could not create CurrentControlSet
+        return (FALSE);
     }
 
     //
@@ -621,48 +522,33 @@ Return Value:
     // Create the Clone temporary hive, link it into the master hive,
     // and make a symbolic link to it.
     //
-    status = CmpInitializeHive(&CloneHive,
-                HINIT_CREATE,
-                HIVE_VOLATILE,
-                HFILE_TYPE_PRIMARY,
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                0);
-    if (!NT_SUCCESS(status)) {
-
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpInitSystem1: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"Could not initialize CLONE hive\n"));
-
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,9,status,0); // could not initialize clone hive
-        return(FALSE);
-    }
-
-    status = CmpLinkHiveToMaster(
-            &CmRegistrySystemCloneName,
-            NULL,
-            CloneHive,
-            TRUE,
-            SecurityDescriptor
-            );
-
-    if ( status != STATUS_SUCCESS)
+    status =
+        CmpInitializeHive(&CloneHive, HINIT_CREATE, HIVE_VOLATILE, HFILE_TYPE_PRIMARY, NULL, NULL, NULL, NULL, NULL, 0);
+    if (!NT_SUCCESS(status))
     {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmInitSystem1: CmpLinkHiveToMaster(Clone) failed\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpInitSystem1: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "Could not initialize CLONE hive\n"));
 
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,10,status,0); // could not link clone hive to master hive
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 9, status, 0); // could not initialize clone hive
+        return (FALSE);
+    }
+
+    status = CmpLinkHiveToMaster(&CmRegistrySystemCloneName, NULL, CloneHive, TRUE, SecurityDescriptor);
+
+    if (status != STATUS_SUCCESS)
+    {
+
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmInitSystem1: CmpLinkHiveToMaster(Clone) failed\n"));
+
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 10, status,
+                    0); // could not link clone hive to master hive
         return FALSE;
     }
     CmpAddToHiveFileList(CloneHive);
     CmpMachineHiveList[CLONE_HIVE_INDEX].CmHive = CloneHive;
 
-    CmpLinkKeyToHive(
-        L"\\Registry\\Machine\\System\\Clone",
-        L"\\Registry\\Machine\\CLONE\\CLONE"
-        );
+    CmpLinkKeyToHive(L"\\Registry\\Machine\\System\\Clone", L"\\Registry\\Machine\\CLONE\\CLONE");
 
 
     //
@@ -680,40 +566,29 @@ Return Value:
     //
     // --- 8. Create the HARDWARE hive, fill in with data from loader ---
     //
-    status = CmpInitializeHive(&HardwareHive,
-                HINIT_CREATE,
-                HIVE_VOLATILE,
-                HFILE_TYPE_PRIMARY,     // i.e. no log, no alternate
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                0);
-    if (!NT_SUCCESS(status)) {
+    status = CmpInitializeHive(&HardwareHive, HINIT_CREATE, HIVE_VOLATILE,
+                               HFILE_TYPE_PRIMARY, // i.e. no log, no alternate
+                               NULL, NULL, NULL, NULL, NULL, 0);
+    if (!NT_SUCCESS(status))
+    {
         ExFreePool(SecurityDescriptor);
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpInitSystem1: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"Could not initialize HARDWARE hive\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpInitSystem1: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "Could not initialize HARDWARE hive\n"));
 
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,11,status,0); // could not initialize hardware hive
-        return(FALSE);
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 11, status, 0); // could not initialize hardware hive
+        return (FALSE);
     }
 
     //
     // Allocate the root node
     //
-    status = CmpLinkHiveToMaster(
-            &CmRegistryMachineHardwareName,
-            NULL,
-            HardwareHive,
-            TRUE,
-            SecurityDescriptor
-            );
-    if ( status != STATUS_SUCCESS )
+    status = CmpLinkHiveToMaster(&CmRegistryMachineHardwareName, NULL, HardwareHive, TRUE, SecurityDescriptor);
+    if (status != STATUS_SUCCESS)
     {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmInitSystem1: CmpLinkHiveToMaster(Hardware) failed\n"));
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,12,status,0); // could not link hardware hive to master hive
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmInitSystem1: CmpLinkHiveToMaster(Hardware) failed\n"));
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 12, status,
+                    0); // could not link hardware hive to master hive
         return FALSE;
     }
     CmpAddToHiveFileList(HardwareHive);
@@ -727,9 +602,11 @@ Return Value:
     //
     status = CmpInitializeHardwareConfiguration(LoaderBlock);
 
-    if (!NT_SUCCESS(status)) {
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,13,status,0); // could not initialize hardware configuration
-        return(FALSE);
+    if (!NT_SUCCESS(status))
+    {
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 13, status,
+                    0); // could not initialize hardware configuration
+        return (FALSE);
     }
 
     CmpNoMasterCreates = TRUE;
@@ -739,10 +616,12 @@ Return Value:
     // put machine dependant configuration data to our hardware registry.
     //
     status = CmpInitializeMachineDependentConfiguration(LoaderBlock);
-    if (!NT_SUCCESS(status)) {
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,14,status,0); // could not open CurrentControlSet\\Control
+    if (!NT_SUCCESS(status))
+    {
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 14, status,
+                    0); // could not open CurrentControlSet\\Control
 #if defined(_CM_LDR_)
-        return(FALSE);
+        return (FALSE);
 #endif
     }
 
@@ -750,10 +629,11 @@ Return Value:
     // Write system start options to registry
     //
     status = CmpSetSystemValues(LoaderBlock);
-    if (!NT_SUCCESS(status)) {
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,15,status,0);
+    if (!NT_SUCCESS(status))
+    {
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 15, status, 0);
 #if defined(_CM_LDR_)
-        return(FALSE);
+        return (FALSE);
 #endif
     }
 
@@ -774,14 +654,15 @@ Return Value:
     //
     // Write Network LoaderBlock values to registry
     //
-    if ( (LoaderBlock->Extension->Size >=
-            RTL_SIZEOF_THROUGH_FIELD(LOADER_PARAMETER_EXTENSION, NetworkLoaderBlock)) &&
-         (LoaderBlock->Extension->NetworkLoaderBlock != NULL) ) {
+    if ((LoaderBlock->Extension->Size >= RTL_SIZEOF_THROUGH_FIELD(LOADER_PARAMETER_EXTENSION, NetworkLoaderBlock)) &&
+        (LoaderBlock->Extension->NetworkLoaderBlock != NULL))
+    {
         status = CmpSetNetworkValue(LoaderBlock->Extension->NetworkLoaderBlock);
-        if (!NT_SUCCESS(status)) {
-            CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM1,16,status,0);
+        if (!NT_SUCCESS(status))
+        {
+            CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM1, 16, status, 0);
 #if defined(_CM_LDR_)
-            return(FALSE);
+            return (FALSE);
 #endif
         }
     }
@@ -793,14 +674,11 @@ Return Value:
 //
 // All paralel threads will get this shared, and CmpInitializeHiveList will wait for it exclusive
 //
-KEVENT  CmpLoadWorkerEvent;
-ULONG   CmpLoadWorkerIncrement = 0;
-KEVENT  CmpLoadWorkerDebugEvent;
+KEVENT CmpLoadWorkerEvent;
+ULONG CmpLoadWorkerIncrement = 0;
+KEVENT CmpLoadWorkerDebugEvent;
 
-VOID
-CmpInitializeHiveList(
-    VOID
-    )
+VOID CmpInitializeHiveList(VOID)
 /*++
 
 Routine Description:
@@ -823,31 +701,31 @@ Return Value:
 
 --*/
 {
-    #define MAX_NAME    128
-    HANDLE  Thread;
+#define MAX_NAME 128
+    HANDLE Thread;
     NTSTATUS Status;
 
-    UCHAR   FileBuffer[MAX_NAME];
-    UCHAR   RegBuffer[MAX_NAME];
+    UCHAR FileBuffer[MAX_NAME];
+    UCHAR RegBuffer[MAX_NAME];
 
     UNICODE_STRING TempName;
     UNICODE_STRING FileName;
     UNICODE_STRING RegName;
 
-    USHORT  FileStart;
-    USHORT  RegStart;
-    ULONG   i;
+    USHORT FileStart;
+    USHORT RegStart;
+    ULONG i;
     PSECURITY_DESCRIPTOR SecurityDescriptor;
 
 
 #ifdef CM_PERF_ISSUES
-    LARGE_INTEGER   StartSystemTime;
-    LARGE_INTEGER   EndSystemTime;
-    LARGE_INTEGER   deltaTime;
+    LARGE_INTEGER StartSystemTime;
+    LARGE_INTEGER EndSystemTime;
+    LARGE_INTEGER deltaTime;
 #endif //CM_PERF_ISSUES
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"CmpInitializeHiveList\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "CmpInitializeHiveList\n"));
 
 #ifdef CM_PERF_ISSUES
     KeQuerySystemTime(&StartSystemTime);
@@ -859,88 +737,80 @@ Return Value:
 
     FileName.MaximumLength = MAX_NAME;
     FileName.Length = 0;
-    FileName.Buffer = (PWSTR)&(FileBuffer[0]);
+    FileName.Buffer = (PWSTR) & (FileBuffer[0]);
 
     RegName.MaximumLength = MAX_NAME;
     RegName.Length = 0;
-    RegName.Buffer = (PWSTR)&(RegBuffer[0]);
+    RegName.Buffer = (PWSTR) & (RegBuffer[0]);
 
-    RtlInitUnicodeString(
-        &TempName,
-        INIT_SYSTEMROOT_HIVEPATH
-        );
+    RtlInitUnicodeString(&TempName, INIT_SYSTEMROOT_HIVEPATH);
     RtlAppendStringToString((PSTRING)&FileName, (PSTRING)&TempName);
     FileStart = FileName.Length;
 
-    RtlInitUnicodeString(
-        &TempName,
-        INIT_REGISTRY_MASTERPATH
-        );
+    RtlInitUnicodeString(&TempName, INIT_REGISTRY_MASTERPATH);
     RtlAppendStringToString((PSTRING)&RegName, (PSTRING)&TempName);
     RegStart = RegName.Length;
 
     //
     // Initialize the syncronization event
     //
-    KeInitializeEvent (&CmpLoadWorkerEvent, SynchronizationEvent, FALSE);
-    KeInitializeEvent (&CmpLoadWorkerDebugEvent, SynchronizationEvent, FALSE);
+    KeInitializeEvent(&CmpLoadWorkerEvent, SynchronizationEvent, FALSE);
+    KeInitializeEvent(&CmpLoadWorkerDebugEvent, SynchronizationEvent, FALSE);
 
     CmpSpecialBootCondition = TRUE;
 
     SecurityDescriptor = CmpHiveRootSecurityDescriptor();
 
-    if (CmpShareSystemHives) {
-        for (i = 0; i < CM_NUMBER_OF_MACHINE_HIVES; i++) {
-            if (CmpMachineHiveList[i].Name) {
+    if (CmpShareSystemHives)
+    {
+        for (i = 0; i < CM_NUMBER_OF_MACHINE_HIVES; i++)
+        {
+            if (CmpMachineHiveList[i].Name)
+            {
                 CmpMachineHiveList[i].Flags |= HIVE_VOLATILE;
             }
         }
     }
 
-    for (i = 0; i < CM_NUMBER_OF_MACHINE_HIVES; i++) {
-        ASSERT( CmpMachineHiveList[i].Name != NULL );
+    for (i = 0; i < CM_NUMBER_OF_MACHINE_HIVES; i++)
+    {
+        ASSERT(CmpMachineHiveList[i].Name != NULL);
         //
         // just spawn the Threads to load the hives in paralel
         //
-        Status = PsCreateSystemThread(
-            &Thread,
-            THREAD_ALL_ACCESS,
-            NULL,
-            0,
-            NULL,
-            CmpLoadHiveThread,
-            (PVOID)(ULONG_PTR)(ULONG)i
-            );
+        Status = PsCreateSystemThread(&Thread, THREAD_ALL_ACCESS, NULL, 0, NULL, CmpLoadHiveThread,
+                                      (PVOID)(ULONG_PTR)(ULONG)i);
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             ZwClose(Thread);
-        } else {
+        }
+        else
+        {
             //
             // cannot spawn thread; Fatal error
             //
-            CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO,BAD_HIVE_LIST,3,i,Status);
+            CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO, BAD_HIVE_LIST, 3, i, Status);
         }
     }
-    ASSERT( CmpMachineHiveList[i].Name == NULL );
+    ASSERT(CmpMachineHiveList[i].Name == NULL);
 
-    KeWaitForSingleObject( &CmpLoadWorkerEvent,
-                           Executive,
-                           KernelMode,
-                           FALSE,
-                           NULL );
+    KeWaitForSingleObject(&CmpLoadWorkerEvent, Executive, KernelMode, FALSE, NULL);
 
     CmpSpecialBootCondition = FALSE;
-    ASSERT( CmpLoadWorkerIncrement == CM_NUMBER_OF_MACHINE_HIVES );
+    ASSERT(CmpLoadWorkerIncrement == CM_NUMBER_OF_MACHINE_HIVES);
     //
     // Now add all hives to the hivelist
     //
-    for (i = 0; i < CM_NUMBER_OF_MACHINE_HIVES; i++) {
-        ASSERT( CmpMachineHiveList[i].ThreadFinished == TRUE );
-        ASSERT( CmpMachineHiveList[i].ThreadStarted == TRUE );
+    for (i = 0; i < CM_NUMBER_OF_MACHINE_HIVES; i++)
+    {
+        ASSERT(CmpMachineHiveList[i].ThreadFinished == TRUE);
+        ASSERT(CmpMachineHiveList[i].ThreadStarted == TRUE);
 
-        if (CmpMachineHiveList[i].CmHive == NULL) {
+        if (CmpMachineHiveList[i].CmHive == NULL)
+        {
 
-            ASSERT( CmpMachineHiveList[i].CmHive2 != NULL );
+            ASSERT(CmpMachineHiveList[i].CmHive2 != NULL);
 
             //
             // Compute the name of the file, and the name to link to in
@@ -950,19 +820,14 @@ Return Value:
             // REGISTRY
 
             RegName.Length = RegStart;
-            RtlInitUnicodeString(
-                &TempName,
-                CmpMachineHiveList[i].BaseName
-                );
+            RtlInitUnicodeString(&TempName, CmpMachineHiveList[i].BaseName);
             RtlAppendStringToString((PSTRING)&RegName, (PSTRING)&TempName);
 
             // REGISTRY\MACHINE or REGISTRY\USER
 
-            if (RegName.Buffer[ (RegName.Length / sizeof( WCHAR )) - 1 ] == '\\') {
-                RtlInitUnicodeString(
-                    &TempName,
-                    CmpMachineHiveList[i].Name
-                    );
+            if (RegName.Buffer[(RegName.Length / sizeof(WCHAR)) - 1] == '\\')
+            {
+                RtlInitUnicodeString(&TempName, CmpMachineHiveList[i].Name);
                 RtlAppendStringToString((PSTRING)&RegName, (PSTRING)&TempName);
             }
 
@@ -974,57 +839,49 @@ Return Value:
             //
             // Link hive into master hive
             //
-            Status = CmpLinkHiveToMaster(
-                    &RegName,
-                    NULL,
-                    CmpMachineHiveList[i].CmHive2,
-                    CmpMachineHiveList[i].Allocate,
-                    SecurityDescriptor
-                    );
-            if ( Status != STATUS_SUCCESS)
+            Status = CmpLinkHiveToMaster(&RegName, NULL, CmpMachineHiveList[i].CmHive2, CmpMachineHiveList[i].Allocate,
+                                         SecurityDescriptor);
+            if (Status != STATUS_SUCCESS)
             {
 
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpInitializeHiveList: "));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpLinkHiveToMaster failed\n"));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"\ti=%d s='%ws'\n", i, CmpMachineHiveList[i]));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpInitializeHiveList: "));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpLinkHiveToMaster failed\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "\ti=%d s='%ws'\n", i, CmpMachineHiveList[i]));
 
-                CM_BUGCHECK(CONFIG_LIST_FAILED,BAD_CORE_HIVE,Status,i,&RegName);
+                CM_BUGCHECK(CONFIG_LIST_FAILED, BAD_CORE_HIVE, Status, i, &RegName);
             }
 
-            if( CmpMachineHiveList[i].Allocate == TRUE ) {
+            if (CmpMachineHiveList[i].Allocate == TRUE)
+            {
                 HvSyncHive((PHHIVE)(CmpMachineHiveList[i].CmHive2));
             }
-
-        } else {
+        }
+        else
+        {
             //
             // do nothing here as all of it has been done in separate thread.
             //
         }
 
-        if( CmpMachineHiveList[i].CmHive2 != NULL ) {
+        if (CmpMachineHiveList[i].CmHive2 != NULL)
+        {
             CmpAddToHiveFileList(CmpMachineHiveList[i].CmHive2);
         }
 
-    }   // for
+    } // for
 
     ExFreePool(SecurityDescriptor);
 
     //
     // Create symbolic link from SECURITY hive into SAM hive.
     //
-    CmpLinkKeyToHive(
-        L"\\Registry\\Machine\\Security\\SAM",
-        L"\\Registry\\Machine\\SAM\\SAM"
-        );
+    CmpLinkKeyToHive(L"\\Registry\\Machine\\Security\\SAM", L"\\Registry\\Machine\\SAM\\SAM");
 
     //
     // Create symbolic link from S-1-5-18 to .Default
     //
     CmpNoMasterCreates = FALSE;
-    CmpLinkKeyToHive(
-        L"\\Registry\\User\\S-1-5-18",
-        L"\\Registry\\User\\.Default"
-        );
+    CmpLinkKeyToHive(L"\\Registry\\User\\S-1-5-18", L"\\Registry\\User\\.Default");
     CmpNoMasterCreates = TRUE;
 
     //
@@ -1041,9 +898,11 @@ Return Value:
 #ifdef CM_PERF_ISSUES
     KeQuerySystemTime(&EndSystemTime);
     deltaTime.QuadPart = EndSystemTime.QuadPart - StartSystemTime.QuadPart;
-    DbgPrint("\nCmpInitializeHiveList took %lu.%lu ms\n",(ULONG)(deltaTime.LowPart/10000),(ULONG)(deltaTime.LowPart%10000));
-    if( deltaTime.HighPart != 0 ) {
-        DbgPrint("deltaTime.HighPart = %lu\n",(ULONG)deltaTime.HighPart);
+    DbgPrint("\nCmpInitializeHiveList took %lu.%lu ms\n", (ULONG)(deltaTime.LowPart / 10000),
+             (ULONG)(deltaTime.LowPart % 10000));
+    if (deltaTime.HighPart != 0)
+    {
+        DbgPrint("deltaTime.HighPart = %lu\n", (ULONG)deltaTime.HighPart);
     }
 #endif //CM_PERF_ISSUES
 
@@ -1051,9 +910,7 @@ Return Value:
 }
 
 NTSTATUS
-CmpCreateObjectTypes(
-    VOID
-    )
+CmpCreateObjectTypes(VOID)
 /*++
 
 Routine Description:
@@ -1070,21 +927,16 @@ Return Value:
 
 --*/
 {
-   NTSTATUS Status;
-   OBJECT_TYPE_INITIALIZER ObjectTypeInitializer;
-   UNICODE_STRING TypeName;
+    NTSTATUS Status;
+    OBJECT_TYPE_INITIALIZER ObjectTypeInitializer;
+    UNICODE_STRING TypeName;
 
-   //
-   // Structure that describes the mapping of generic access rights to object
-   // specific access rights for registry key objects.
-   //
+    //
+    // Structure that describes the mapping of generic access rights to object
+    // specific access rights for registry key objects.
+    //
 
-   GENERIC_MAPPING CmpKeyMapping = {
-      KEY_READ,
-      KEY_WRITE,
-      KEY_EXECUTE,
-      KEY_ALL_ACCESS
-   };
+    GENERIC_MAPPING CmpKeyMapping = { KEY_READ, KEY_WRITE, KEY_EXECUTE, KEY_ALL_ACCESS };
 
     PAGED_CODE();
     //
@@ -1120,28 +972,21 @@ Return Value:
     ObjectTypeInitializer.SecurityProcedure = CmpSecurityMethod;
     ObjectTypeInitializer.QueryNameProcedure = CmpQueryKeyName;
 
-    Status = ObCreateObjectType(
-                &TypeName,
-                &ObjectTypeInitializer,
-                (PSECURITY_DESCRIPTOR)NULL,
-                &CmpKeyObjectType
-                );
+    Status = ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &CmpKeyObjectType);
 
 
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpCreateObjectTypes: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"ObCreateObjectType(Key) failed %08lx\n", Status));
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpCreateObjectTypes: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "ObCreateObjectType(Key) failed %08lx\n", Status));
     }
 
     return Status;
 }
 
 
-
 BOOLEAN
-CmpCreateRegistryRoot(
-    VOID
-    )
+CmpCreateRegistryRoot(VOID)
 /*++
 
 Routine Description:
@@ -1160,23 +1005,22 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                Status;
-    UNICODE_STRING          NullString = { 0, 0, NULL };
-    PVOID                   ObjectPointer;
-    PCM_KEY_BODY            Object;
-    OBJECT_ATTRIBUTES       ObjectAttributes;
-    PCM_KEY_CONTROL_BLOCK   kcb;
-    HCELL_INDEX             RootCellIndex;
-    PSECURITY_DESCRIPTOR    SecurityDescriptor;
-    PCM_KEY_NODE            TempNode;
+    NTSTATUS Status;
+    UNICODE_STRING NullString = { 0, 0, NULL };
+    PVOID ObjectPointer;
+    PCM_KEY_BODY Object;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    PCM_KEY_CONTROL_BLOCK kcb;
+    HCELL_INDEX RootCellIndex;
+    PSECURITY_DESCRIPTOR SecurityDescriptor;
+    PCM_KEY_NODE TempNode;
 
     PAGED_CODE();
     //
     // --- Create hive entry for \REGISTRY ---
     //
 
-    if (!CmpCreateRootNode(
-            &(CmpMasterHive->Hive), L"REGISTRY", &RootCellIndex))
+    if (!CmpCreateRootNode(&(CmpMasterHive->Hive), L"REGISTRY", &RootCellIndex))
     {
         return FALSE;
     }
@@ -1199,38 +1043,27 @@ Return Value:
 
     SecurityDescriptor = CmpHiveRootSecurityDescriptor();
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &CmRegistryRootName,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        SecurityDescriptor
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryRootName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
+                               SecurityDescriptor);
 
 
-    Status = ObCreateObject(
-        KernelMode,
-        CmpKeyObjectType,
-        &ObjectAttributes,
-        UserMode,
-        NULL,                   // Parse context
-        sizeof(CM_KEY_BODY),
-        0,
-        0,
-        (PVOID *)&Object
-        );
+    Status = ObCreateObject(KernelMode, CmpKeyObjectType, &ObjectAttributes, UserMode,
+                            NULL, // Parse context
+                            sizeof(CM_KEY_BODY), 0, 0, (PVOID *)&Object);
 
     ExFreePool(SecurityDescriptor);
 
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpCreateRegistryRoot: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"ObCreateObject(\\REGISTRY) failed %08lx\n", Status));
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpCreateRegistryRoot: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "ObCreateObject(\\REGISTRY) failed %08lx\n", Status));
         return FALSE;
     }
 
-    ASSERT( (&CmpMasterHive->Hive)->ReleaseCellRoutine == NULL );
-    TempNode = (PCM_KEY_NODE)HvGetCell(&CmpMasterHive->Hive,RootCellIndex);
-    if( TempNode == NULL ) {
+    ASSERT((&CmpMasterHive->Hive)->ReleaseCellRoutine == NULL);
+    TempNode = (PCM_KEY_NODE)HvGetCell(&CmpMasterHive->Hive, RootCellIndex);
+    if (TempNode == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -1239,17 +1072,11 @@ Return Value:
     //
     // Create the key control block
     //
-    kcb = CmpCreateKeyControlBlock(
-            &(CmpMasterHive->Hive),
-            RootCellIndex,
-            TempNode,
-            NULL,
-            FALSE,
-            &CmRegistryRootName
-            );
+    kcb = CmpCreateKeyControlBlock(&(CmpMasterHive->Hive), RootCellIndex, TempNode, NULL, FALSE, &CmRegistryRootName);
 
-    if (kcb==NULL) {
-        return(FALSE);
+    if (kcb == NULL)
+    {
+        return (FALSE);
     }
 
     //
@@ -1264,18 +1091,12 @@ Return Value:
     //
     // Put the object in the root directory
     //
-    Status = ObInsertObject(
-                Object,
-                NULL,
-                (ACCESS_MASK)0,
-                0,
-                NULL,
-                &CmpRegistryRootHandle
-                );
+    Status = ObInsertObject(Object, NULL, (ACCESS_MASK)0, 0, NULL, &CmpRegistryRootHandle);
 
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpCreateRegistryRoot: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"ObInsertObject(\\REGISTRY) failed %08lx\n", Status));
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpCreateRegistryRoot: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "ObInsertObject(\\REGISTRY) failed %08lx\n", Status));
         return FALSE;
     }
 
@@ -1285,30 +1106,20 @@ Return Value:
     // stored in the registry, not the object manager.)  But we never
     // ever want the root to go away.  So reference it.
     //
-    if (! NT_SUCCESS(Status = ObReferenceObjectByHandle(
-                        CmpRegistryRootHandle,
-                        KEY_READ,
-                        NULL,
-                        KernelMode,
-                        &ObjectPointer,
-                        NULL
-                        )))
+    if (!NT_SUCCESS(Status = ObReferenceObjectByHandle(CmpRegistryRootHandle, KEY_READ, NULL, KernelMode,
+                                                       &ObjectPointer, NULL)))
     {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpCreateRegistryRoot: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"ObReferenceObjectByHandle failed %08lx\n", Status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpCreateRegistryRoot: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "ObReferenceObjectByHandle failed %08lx\n", Status));
         return FALSE;
     }
 
     return TRUE;
 }
 
-
+
 BOOLEAN
-CmpCreateRootNode(
-    IN PHHIVE   Hive,
-    IN PWSTR    Name,
-    OUT PHCELL_INDEX RootCellIndex
-    )
+CmpCreateRootNode(IN PHHIVE Hive, IN PWSTR Name, OUT PHCELL_INDEX RootCellIndex)
 /*++
 
 Routine Description:
@@ -1340,21 +1151,18 @@ Return Value:
     // Allocate the node.
     //
     RtlInitUnicodeString(&temp, Name);
-    *RootCellIndex = HvAllocateCell(
-                Hive,
-                CmpHKeyNodeSize(Hive, &temp),
-                Stable,
-                HCELL_NIL
-                );
-    if (*RootCellIndex == HCELL_NIL) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpCreateRootNode: HvAllocateCell failed\n"));
+    *RootCellIndex = HvAllocateCell(Hive, CmpHKeyNodeSize(Hive, &temp), Stable, HCELL_NIL);
+    if (*RootCellIndex == HCELL_NIL)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpCreateRootNode: HvAllocateCell failed\n"));
         return FALSE;
     }
 
     Hive->BaseBlock->RootCell = *RootCellIndex;
 
     CellData = HvGetCell(Hive, *RootCellIndex);
-    if( CellData == NULL ) {
+    if (CellData == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -1368,7 +1176,7 @@ Return Value:
     CellData->u.KeyNode.Flags = KEY_HIVE_ENTRY | KEY_NO_DELETE;
     KeQuerySystemTime(&systemtime);
     CellData->u.KeyNode.LastWriteTime = systemtime;
-//    CellData->u.KeyNode.TitleIndex = 0;
+    //    CellData->u.KeyNode.TitleIndex = 0;
     CellData->u.KeyNode.Parent = HCELL_NIL;
 
     CellData->u.KeyNode.SubKeyCounts[Stable] = 0;
@@ -1387,10 +1195,9 @@ Return Value:
     CellData->u.KeyNode.MaxValueNameLen = 0;
     CellData->u.KeyNode.MaxClassLen = 0;
 
-    CellData->u.KeyNode.NameLength = CmpCopyName(Hive,
-                                                 CellData->u.KeyNode.Name,
-                                                 &temp);
-    if (CellData->u.KeyNode.NameLength < temp.Length) {
+    CellData->u.KeyNode.NameLength = CmpCopyName(Hive, CellData->u.KeyNode.Name, &temp);
+    if (CellData->u.KeyNode.NameLength < temp.Length)
+    {
         CellData->u.KeyNode.Flags |= KEY_COMP_NAME;
     }
 
@@ -1402,15 +1209,10 @@ Return Value:
     return TRUE;
 }
 
-
+
 NTSTATUS
-CmpLinkHiveToMaster(
-    PUNICODE_STRING LinkName,
-    HANDLE RootDirectory,
-    PCMHIVE CmHive,
-    BOOLEAN Allocate,
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+CmpLinkHiveToMaster(PUNICODE_STRING LinkName, HANDLE RootDirectory, PCMHIVE CmHive, BOOLEAN Allocate,
+                    PSECURITY_DESCRIPTOR SecurityDescriptor)
 /*++
 
 Routine Description:
@@ -1441,11 +1243,11 @@ Return Value:
 
 --*/
 {
-    OBJECT_ATTRIBUTES   ObjectAttributes;
-    HANDLE              KeyHandle;
-    CM_PARSE_CONTEXT    ParseContext;
-    NTSTATUS            Status;
-    PCM_KEY_BODY        KeyBody;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    HANDLE KeyHandle;
+    CM_PARSE_CONTEXT ParseContext;
+    NTSTATUS Status;
+    PCM_KEY_BODY KeyBody;
 
     PAGED_CODE();
     //
@@ -1459,14 +1261,17 @@ Return Value:
     ParseContext.CreateOptions = 0;
     ParseContext.CreateLink = TRUE;
     ParseContext.ChildHive.KeyHive = &CmHive->Hive;
-    if (Allocate) {
+    if (Allocate)
+    {
 
         //
         // Creating a new root node
         //
 
         ParseContext.ChildHive.KeyCell = HCELL_NIL;
-    } else {
+    }
+    else
+    {
 
         //
         // Opening an existing root node
@@ -1478,28 +1283,20 @@ Return Value:
     //
     // Create a path to the hive
     //
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        LinkName,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        (HANDLE)RootDirectory,
-        SecurityDescriptor
-        );
+    InitializeObjectAttributes(&ObjectAttributes, LinkName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+                               (HANDLE)RootDirectory, SecurityDescriptor);
 
-    Status = ObOpenObjectByName( &ObjectAttributes,
-                                 CmpKeyObjectType,
-                                 KernelMode,
-                                 NULL,
-                                 KEY_READ | KEY_WRITE,
-                                 (PVOID)&ParseContext,
-                                 &KeyHandle );
+    Status = ObOpenObjectByName(&ObjectAttributes, CmpKeyObjectType, KernelMode, NULL, KEY_READ | KEY_WRITE,
+                                (PVOID)&ParseContext, &KeyHandle);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 #ifdef CM_CHECK_FOR_ORPHANED_KCBS
-        DbgPrint("CmpLinkHiveToMaster: ObOpenObjectByName for CmHive = %p , LinkName = %.*S failed with status %lx\n",CmHive,LinkName->Length/2,LinkName->Buffer,Status);
+        DbgPrint("CmpLinkHiveToMaster: ObOpenObjectByName for CmHive = %p , LinkName = %.*S failed with status %lx\n",
+                 CmHive, LinkName->Length / 2, LinkName->Buffer, Status);
 #endif //CM_CHECK_FOR_ORPHANED_KCBS
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpLinkHiveToMaster: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"ObOpenObjectByName() failed %08lx\n", Status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpLinkHiveToMaster: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "ObOpenObjectByName() failed %08lx\n", Status));
         //CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"\tLinkName='%ws'\n", LinkName->Buffer));
         return Status;
     }
@@ -1507,17 +1304,11 @@ Return Value:
     //
     // Report the notification event
     //
-    Status = ObReferenceObjectByHandle(KeyHandle,
-                                       0,
-                                       CmpKeyObjectType,
-                                       KernelMode,
-                                       (PVOID *)&KeyBody,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(KeyHandle, 0, CmpKeyObjectType, KernelMode, (PVOID *)&KeyBody, NULL);
     ASSERT(NT_SUCCESS(Status));
-    if (NT_SUCCESS(Status)) {
-        CmpReportNotify(KeyBody->KeyControlBlock,
-                        KeyBody->KeyControlBlock->KeyHive,
-                        KeyBody->KeyControlBlock->KeyCell,
+    if (NT_SUCCESS(Status))
+    {
+        CmpReportNotify(KeyBody->KeyControlBlock, KeyBody->KeyControlBlock->KeyHive, KeyBody->KeyControlBlock->KeyCell,
                         REG_NOTIFY_CHANGE_NAME);
 
         ObDereferenceObject((PVOID)KeyBody);
@@ -1527,11 +1318,8 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
-VOID
-CmpSetVersionData(
-    VOID
-    )
+
+VOID CmpSetVersionData(VOID)
 /*++
 
 Routine Description:
@@ -1554,17 +1342,17 @@ Return Value:
 
 --*/
 {
-    ANSI_STRING     AnsiString;
-    UNICODE_STRING  NameString;
-    UNICODE_STRING  ValueString;
-    HANDLE          key1, key2;
-    UCHAR           WorkString[128];
-    WCHAR           ValueBuffer[128];
-    OBJECT_ATTRIBUTES   ObjectAttributes;
-    NTSTATUS            status;
-    PUCHAR              proctype;
-    PUCHAR              buildtype;
-    PVERSION_DATA_KEY   VersionDataKey;
+    ANSI_STRING AnsiString;
+    UNICODE_STRING NameString;
+    UNICODE_STRING ValueString;
+    HANDLE key1, key2;
+    UCHAR WorkString[128];
+    WCHAR ValueBuffer[128];
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    NTSTATUS status;
+    PUCHAR proctype;
+    PUCHAR buildtype;
+    PVERSION_DATA_KEY VersionDataKey;
     PSECURITY_DESCRIPTOR SecurityDescriptor;
 
     PAGED_CODE();
@@ -1573,38 +1361,24 @@ Return Value:
     //
     SecurityDescriptor = CmpHiveRootSecurityDescriptor();
 
-    for (VersionDataKey = VersionDataKeys; VersionDataKey->InitialKeyPath != NULL ; VersionDataKey++) {
+    for (VersionDataKey = VersionDataKeys; VersionDataKey->InitialKeyPath != NULL; VersionDataKey++)
+    {
 
         //
         // Create the key
         //
-        RtlInitUnicodeString(
-            &NameString,
-            VersionDataKey->InitialKeyPath
-            );
+        RtlInitUnicodeString(&NameString, VersionDataKey->InitialKeyPath);
 
-        InitializeObjectAttributes(
-            &ObjectAttributes,
-            &NameString,
-            OBJ_CASE_INSENSITIVE,
-            (HANDLE)NULL,
-            SecurityDescriptor
-            );
+        InitializeObjectAttributes(&ObjectAttributes, &NameString, OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
+                                   SecurityDescriptor);
 
-        status = NtCreateKey(
-                    &key1,
-                    KEY_CREATE_SUB_KEY,
-                    &ObjectAttributes,
-                    0,
-                    (PUNICODE_STRING)&nullclass,
-                    0,
-                    NULL
-                    );
+        status = NtCreateKey(&key1, KEY_CREATE_SUB_KEY, &ObjectAttributes, 0, (PUNICODE_STRING)&nullclass, 0, NULL);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 #if DBG
 #ifndef _CM_LDR_
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_WARNING_LEVEL,"CMINIT: CreateKey of %wZ failed - Status == %lx\n",
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_WARNING_LEVEL, "CMINIT: CreateKey of %wZ failed - Status == %lx\n",
                        &NameString, status);
 #endif //_CM_LDR_
 #endif
@@ -1613,86 +1387,37 @@ Return Value:
         }
 
 #if defined(_WIN64)
-        if (VersionDataKey->AdditionalKeyPath != NULL) {
+        if (VersionDataKey->AdditionalKeyPath != NULL)
+        {
 
-            RtlInitUnicodeString(
-                &NameString,
-                VersionDataKey->AdditionalKeyPath
-                );
+            RtlInitUnicodeString(&NameString, VersionDataKey->AdditionalKeyPath);
 
-            InitializeObjectAttributes(
-                &ObjectAttributes,
-                &NameString,
-                OBJ_CASE_INSENSITIVE,
-                key1,
-                SecurityDescriptor
-                );
+            InitializeObjectAttributes(&ObjectAttributes, &NameString, OBJ_CASE_INSENSITIVE, key1, SecurityDescriptor);
 
-            status = NtCreateKey(
-                        &key2,
-                        KEY_SET_VALUE,
-                        &ObjectAttributes,
-                        0,
-                        (PUNICODE_STRING)&nullclass,
-                        0,
-                        NULL
-                        );
+            status = NtCreateKey(&key2, KEY_SET_VALUE, &ObjectAttributes, 0, (PUNICODE_STRING)&nullclass, 0, NULL);
 
             NtClose(key1);
             key1 = key2;
         }
 #endif
-        RtlInitUnicodeString(
-            &NameString,
-            L"Windows NT"
-            );
+        RtlInitUnicodeString(&NameString, L"Windows NT");
 
-        InitializeObjectAttributes(
-            &ObjectAttributes,
-            &NameString,
-            OBJ_CASE_INSENSITIVE,
-            key1,
-            SecurityDescriptor
-            );
+        InitializeObjectAttributes(&ObjectAttributes, &NameString, OBJ_CASE_INSENSITIVE, key1, SecurityDescriptor);
 
-        status = NtCreateKey(
-                    &key2,
-                    KEY_SET_VALUE,
-                    &ObjectAttributes,
-                    0,
-                    (PUNICODE_STRING)&nullclass,
-                    0,
-                    NULL
-                    );
+        status = NtCreateKey(&key2, KEY_SET_VALUE, &ObjectAttributes, 0, (PUNICODE_STRING)&nullclass, 0, NULL);
         NtClose(key1);
-        RtlInitUnicodeString(
-            &NameString,
-            L"CurrentVersion"
-            );
+        RtlInitUnicodeString(&NameString, L"CurrentVersion");
 
-        InitializeObjectAttributes(
-            &ObjectAttributes,
-            &NameString,
-            OBJ_CASE_INSENSITIVE,
-            key2,
-            SecurityDescriptor
-            );
+        InitializeObjectAttributes(&ObjectAttributes, &NameString, OBJ_CASE_INSENSITIVE, key2, SecurityDescriptor);
 
-        status = NtCreateKey(
-                    &key1,
-                    KEY_SET_VALUE,
-                    &ObjectAttributes,
-                    0,
-                    (PUNICODE_STRING)&nullclass,
-                    0,
-                    NULL
-                    );
+        status = NtCreateKey(&key1, KEY_SET_VALUE, &ObjectAttributes, 0, (PUNICODE_STRING)&nullclass, 0, NULL);
         NtClose(key2);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 #if DBG
 #ifndef _CM_LDR_
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_WARNING_LEVEL,"CMINIT: CreateKey of %wZ failed - Status == %lx\n",
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_WARNING_LEVEL, "CMINIT: CreateKey of %wZ failed - Status == %lx\n",
                        &NameString, status);
 #endif //_CM_LDR_
 #endif
@@ -1704,99 +1429,73 @@ Return Value:
         //
         // Set the value entries for the key
         //
-        RtlInitUnicodeString(
-            &NameString,
-            L"CurrentVersion"
-            );
+        RtlInitUnicodeString(&NameString, L"CurrentVersion");
 
-        status = NtSetValueKey(
-            key1,
-            &NameString,
-            0,              // TitleIndex
-            REG_SZ,
-            CmVersionString.Buffer,
-            CmVersionString.Length + sizeof( UNICODE_NULL )
-            );
+        status = NtSetValueKey(key1, &NameString,
+                               0, // TitleIndex
+                               REG_SZ, CmVersionString.Buffer, CmVersionString.Length + sizeof(UNICODE_NULL));
 #if DBG
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 #ifndef _CM_LDR_
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CMINIT: SetValueKey of %wZ failed - Status == %lx\n",&NameString, status);
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CMINIT: SetValueKey of %wZ failed - Status == %lx\n",
+                       &NameString, status);
 #endif //_CM_LDR_
         }
 #endif
 
-        RtlInitUnicodeString(
-            &NameString,
-            L"CurrentBuildNumber"
-            );
+        RtlInitUnicodeString(&NameString, L"CurrentBuildNumber");
 
-        sprintf(
-            WorkString,
-            "%u",
-            NtBuildNumber & 0xFFFF
-            );
-        RtlInitAnsiString( &AnsiString, WorkString );
+        sprintf(WorkString, "%u", NtBuildNumber & 0xFFFF);
+        RtlInitAnsiString(&AnsiString, WorkString);
 
         ValueString.Buffer = ValueBuffer;
         ValueString.Length = 0;
-        ValueString.MaximumLength = sizeof( ValueBuffer );
+        ValueString.MaximumLength = sizeof(ValueBuffer);
 
-        RtlAnsiStringToUnicodeString( &ValueString, &AnsiString, FALSE );
+        RtlAnsiStringToUnicodeString(&ValueString, &AnsiString, FALSE);
 
-        status = NtSetValueKey(
-            key1,
-            &NameString,
-            0,              // TitleIndex
-            REG_SZ,
-            ValueString.Buffer,
-            ValueString.Length + sizeof( UNICODE_NULL )
-            );
+        status = NtSetValueKey(key1, &NameString,
+                               0, // TitleIndex
+                               REG_SZ, ValueString.Buffer, ValueString.Length + sizeof(UNICODE_NULL));
 #if DBG
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 #ifndef _CM_LDR_
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CMINIT: SetValueKey of %wZ failed - Status == %lx\n",&NameString, status);
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CMINIT: SetValueKey of %wZ failed - Status == %lx\n",
+                       &NameString, status);
 #endif //_CM_LDR_
         }
 #endif
 
-        RtlInitUnicodeString(
-            &NameString,
-            L"BuildLab"
-            );
+        RtlInitUnicodeString(&NameString, L"BuildLab");
 
-        RtlInitAnsiString( &AnsiString, NtBuildLab );
+        RtlInitAnsiString(&AnsiString, NtBuildLab);
 
         ValueString.Buffer = ValueBuffer;
         ValueString.Length = 0;
-        ValueString.MaximumLength = sizeof( ValueBuffer );
+        ValueString.MaximumLength = sizeof(ValueBuffer);
 
-        status = RtlAnsiStringToUnicodeString( &ValueString, &AnsiString, FALSE );
+        status = RtlAnsiStringToUnicodeString(&ValueString, &AnsiString, FALSE);
 
-        if (NT_SUCCESS(status)) {
-            status = NtSetValueKey(
-                key1,
-                &NameString,
-                0,
-                REG_SZ,
-                ValueString.Buffer,
-                ValueString.Length + sizeof( UNICODE_NULL )
-                );
+        if (NT_SUCCESS(status))
+        {
+            status = NtSetValueKey(key1, &NameString, 0, REG_SZ, ValueString.Buffer,
+                                   ValueString.Length + sizeof(UNICODE_NULL));
 #if DBG
-            if (!NT_SUCCESS(status)) {
-                DbgPrint("CMINIT: SetValueKey of %wZ failed - Status == %lx\n",
-                         &NameString, status);
+            if (!NT_SUCCESS(status))
+            {
+                DbgPrint("CMINIT: SetValueKey of %wZ failed - Status == %lx\n", &NameString, status);
             }
-        } else {
-            DbgPrint("CMINIT: RtlAnsiStringToUnicodeString of %wZ failed - Status == %lx\n",
-                     &NameString, status);
+        }
+        else
+        {
+            DbgPrint("CMINIT: RtlAnsiStringToUnicodeString of %wZ failed - Status == %lx\n", &NameString, status);
 #endif
         }
 
 
-        RtlInitUnicodeString(
-            &NameString,
-            L"CurrentType"
-            );
+        RtlInitUnicodeString(&NameString, L"CurrentType");
 
 #if defined(NT_UP)
         proctype = "Uniprocessor";
@@ -1815,62 +1514,48 @@ Return Value:
 
 #endif
 
-        sprintf(
-            WorkString,
-            "%s %s",
-            proctype,
-            buildtype
-            );
-        RtlInitAnsiString( &AnsiString, WorkString );
+        sprintf(WorkString, "%s %s", proctype, buildtype);
+        RtlInitAnsiString(&AnsiString, WorkString);
 
         ValueString.Buffer = ValueBuffer;
         ValueString.Length = 0;
-        ValueString.MaximumLength = sizeof( ValueBuffer );
+        ValueString.MaximumLength = sizeof(ValueBuffer);
 
-        RtlAnsiStringToUnicodeString( &ValueString, &AnsiString, FALSE );
+        RtlAnsiStringToUnicodeString(&ValueString, &AnsiString, FALSE);
 
-        status = NtSetValueKey(
-            key1,
-            &NameString,
-            0,              // TitleIndex
-            REG_SZ,
-            ValueString.Buffer,
-            ValueString.Length + sizeof( UNICODE_NULL )
-            );
+        status = NtSetValueKey(key1, &NameString,
+                               0, // TitleIndex
+                               REG_SZ, ValueString.Buffer, ValueString.Length + sizeof(UNICODE_NULL));
 
-        RtlInitUnicodeString(
-            &NameString,
-            L"CSDVersion"
-            );
+        RtlInitUnicodeString(&NameString, L"CSDVersion");
 
 
-        if (CmCSDVersionString.Length != 0) {
-            status = NtSetValueKey(
-                key1,
-                &NameString,
-                0,              // TitleIndex
-                REG_SZ,
-                CmCSDVersionString.Buffer,
-                CmCSDVersionString.Length + sizeof( UNICODE_NULL )
-                );
+        if (CmCSDVersionString.Length != 0)
+        {
+            status = NtSetValueKey(key1, &NameString,
+                                   0, // TitleIndex
+                                   REG_SZ, CmCSDVersionString.Buffer, CmCSDVersionString.Length + sizeof(UNICODE_NULL));
 #if DBG
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 #ifndef _CM_LDR_
-                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CMINIT: SetValueKey of %wZ failed - Status == %lx\n",&NameString, status);
+                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CMINIT: SetValueKey of %wZ failed - Status == %lx\n",
+                           &NameString, status);
 #endif //_CM_LDR_
             }
 #endif
-            (RtlFreeStringRoutine)( CmCSDVersionString.Buffer );
-            RtlInitUnicodeString( &CmCSDVersionString, NULL );
-        } else {
-            status = NtDeleteValueKey(
-                key1,
-                &NameString
-                );
+            (RtlFreeStringRoutine)(CmCSDVersionString.Buffer);
+            RtlInitUnicodeString(&CmCSDVersionString, NULL);
+        }
+        else
+        {
+            status = NtDeleteValueKey(key1, &NameString);
 #if DBG
-            if (!NT_SUCCESS(status) && status != STATUS_OBJECT_NAME_NOT_FOUND) {
+            if (!NT_SUCCESS(status) && status != STATUS_OBJECT_NAME_NOT_FOUND)
+            {
 #ifndef _CM_LDR_
-                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CMINIT: DeleteValueKey of %wZ failed - Status == %lx\n",&NameString, status);
+                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                           "CMINIT: DeleteValueKey of %wZ failed - Status == %lx\n", &NameString, status);
 #endif //_CM_LDR_
             }
 #endif
@@ -1880,81 +1565,68 @@ Return Value:
         // High-order 16-bits of CSDVersion contain RC number or build number.  If non-zero
         // display it after the Service Pack number.
         //
-        RtlInitUnicodeString(
-                &NameString,
-                L"CSDBuildNumber"
-                );
+        RtlInitUnicodeString(&NameString, L"CSDBuildNumber");
 
-        if (CmNtCSDVersion & 0xFFFF0000) {
+        if (CmNtCSDVersion & 0xFFFF0000)
+        {
 
-            ULONG  Value = (CmNtCSDVersion & 0xFFFF0000) >> 16;
+            ULONG Value = (CmNtCSDVersion & 0xFFFF0000) >> 16;
 
-            sprintf(
-               WorkString,
-               "%u",
-               Value
-               );
+            sprintf(WorkString, "%u", Value);
 
-            RtlInitAnsiString( &AnsiString, WorkString );
+            RtlInitAnsiString(&AnsiString, WorkString);
 
             ValueString.Buffer = ValueBuffer;
             ValueString.Length = 0;
-            ValueString.MaximumLength = sizeof( ValueBuffer );
+            ValueString.MaximumLength = sizeof(ValueBuffer);
 
-            RtlAnsiStringToUnicodeString( &ValueString, &AnsiString, FALSE );
+            RtlAnsiStringToUnicodeString(&ValueString, &AnsiString, FALSE);
 
-            status = NtSetValueKey(
-               key1,
-               &NameString,
-               0,
-               REG_SZ,
-               ValueString.Buffer,
-               ValueString.Length + sizeof( UNICODE_NULL )
-               );
+            status = NtSetValueKey(key1, &NameString, 0, REG_SZ, ValueString.Buffer,
+                                   ValueString.Length + sizeof(UNICODE_NULL));
 
 #if DBG
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 #ifndef _CM_LDR_
-                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CMINIT: SetValueKey of %wZ failed - Status == %lx\n",&NameString, status);
+                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CMINIT: SetValueKey of %wZ failed - Status == %lx\n",
+                           &NameString, status);
 #endif //_CM_LDR_
             }
 #endif
-        } else {
-            status = NtDeleteValueKey(
-                key1,
-                &NameString
-                );
+        }
+        else
+        {
+            status = NtDeleteValueKey(key1, &NameString);
 #if DBG
-            if (!NT_SUCCESS(status) && status != STATUS_OBJECT_NAME_NOT_FOUND) {
+            if (!NT_SUCCESS(status) && status != STATUS_OBJECT_NAME_NOT_FOUND)
+            {
 #ifndef _CM_LDR_
-                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CMINIT: DeleteValueKey of %wZ failed - Status == %lx\n",&NameString, status);
+                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                           "CMINIT: DeleteValueKey of %wZ failed - Status == %lx\n", &NameString, status);
 #endif //_CM_LDR_
             }
 #endif
         }
 
 
-
-        RtlInitUnicodeString(&NameString,
-                             L"SystemRoot");
-        status = NtSetValueKey(key1,
-                               &NameString,
-                               0,
-                               REG_SZ,
-                               NtSystemRoot.Buffer,
+        RtlInitUnicodeString(&NameString, L"SystemRoot");
+        status = NtSetValueKey(key1, &NameString, 0, REG_SZ, NtSystemRoot.Buffer,
                                NtSystemRoot.Length + sizeof(UNICODE_NULL));
 #if DBG
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 #ifndef _CM_LDR_
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CMINIT: SetValueKey of %wZ failed - Status == %lx\n",&NameString,status);
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CMINIT: SetValueKey of %wZ failed - Status == %lx\n",
+                       &NameString, status);
 #endif //_CM_LDR_
         }
 #endif
         NtClose(key1);
     }
 
-    (RtlFreeStringRoutine)( CmVersionString.Buffer );
-    RtlInitUnicodeString( &CmVersionString, NULL );
+    (RtlFreeStringRoutine)(CmVersionString.Buffer);
+    RtlInitUnicodeString(&CmVersionString, NULL);
 
     ExFreePool(SecurityDescriptor);
 
@@ -1969,12 +1641,9 @@ Return Value:
 
     return;
 }
-
+
 NTSTATUS
-CmpInterlockedFunction (
-    PWCHAR RegistryValueKey,
-    VOID (*InterlockedFunction)(VOID)
-    )
+CmpInterlockedFunction(PWCHAR RegistryValueKey, VOID (*InterlockedFunction)(VOID))
 /*++
 
 Routine Description:
@@ -2000,12 +1669,12 @@ Return Value:
 
 --*/
 {
-    OBJECT_ATTRIBUTES   objectAttributes;
-    HANDLE              hControl, hSession;
-    UNICODE_STRING      Name;
-    UCHAR               Buffer [sizeof(KEY_VALUE_PARTIAL_INFORMATION)+sizeof(ULONG)];
-    ULONG               length, Value;
-    NTSTATUS            status;
+    OBJECT_ATTRIBUTES objectAttributes;
+    HANDLE hControl, hSession;
+    UNICODE_STRING Name;
+    UCHAR Buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
+    ULONG length, Value;
+    NTSTATUS status;
 
     PAGED_CODE();
 
@@ -2013,16 +1682,12 @@ Return Value:
     // Open CurrentControlSet
     //
 
-    InitializeObjectAttributes (
-        &objectAttributes,
-        &CmRegistryMachineSystemCurrentControlSet,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &CmRegistryMachineSystemCurrentControlSet, OBJ_CASE_INSENSITIVE, NULL,
+                               NULL);
 
-    status = NtOpenKey (&hControl, KEY_READ | KEY_WRITE, &objectAttributes);
-    if (!NT_SUCCESS(status)) {
+    status = NtOpenKey(&hControl, KEY_READ | KEY_WRITE, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -2030,18 +1695,13 @@ Return Value:
     // Open Control\Session Manager
     //
 
-    RtlInitUnicodeString (&Name, CmpControlSessionManager);
-    InitializeObjectAttributes (
-        &objectAttributes,
-        &Name,
-        OBJ_CASE_INSENSITIVE,
-        hControl,
-        NULL
-        );
+    RtlInitUnicodeString(&Name, CmpControlSessionManager);
+    InitializeObjectAttributes(&objectAttributes, &Name, OBJ_CASE_INSENSITIVE, hControl, NULL);
 
-    status = NtOpenKey (&hSession, KEY_READ | KEY_WRITE, &objectAttributes );
-    NtClose (hControl);
-    if (!NT_SUCCESS(status)) {
+    status = NtOpenKey(&hSession, KEY_READ | KEY_WRITE, &objectAttributes);
+    NtClose(hControl);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -2049,16 +1709,12 @@ Return Value:
     // Read ValueKey to interlock operation with
     //
 
-    RtlInitUnicodeString (&Name, RegistryValueKey);
-    status = NtQueryValueKey (hSession,
-                              &Name,
-                              KeyValuePartialInformation,
-                              Buffer,
-                              sizeof (Buffer),
-                              &length );
+    RtlInitUnicodeString(&Name, RegistryValueKey);
+    status = NtQueryValueKey(hSession, &Name, KeyValuePartialInformation, Buffer, sizeof(Buffer), &length);
 
     Value = 0;
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         Value = ((PKEY_VALUE_PARTIAL_INFORMATION)Buffer)->Data[0];
     }
 
@@ -2077,9 +1733,11 @@ Return Value:
     // before and it worked.  Call it again this time.
     //
 
-    if (Value != 1) {
+    if (Value != 1)
+    {
 
-        if (Value != 2) {
+        if (Value != 2)
+        {
             //
             // This interlocked function is not known to work.  Write
             // a 1 to this value so we can detect if we crash durning
@@ -2087,34 +1745,33 @@ Return Value:
             //
 
             Value = 1;
-            NtSetValueKey (hSession, &Name, 0L, REG_DWORD, &Value, sizeof (Value));
-            NtFlushKey    (hSession);   // wait until it's on the disk
+            NtSetValueKey(hSession, &Name, 0L, REG_DWORD, &Value, sizeof(Value));
+            NtFlushKey(hSession); // wait until it's on the disk
         }
 
         InterlockedFunction();
 
-        if (Value != 2) {
+        if (Value != 2)
+        {
             //
             // The worker function didn't crash - update the value for
             // this interlocked function to 2.
             //
 
             Value = 2;
-            NtSetValueKey (hSession, &Name, 0L, REG_DWORD, &Value, sizeof (Value));
+            NtSetValueKey(hSession, &Name, 0L, REG_DWORD, &Value, sizeof(Value));
         }
-
-    } else {
+    }
+    else
+    {
         status = STATUS_UNSUCCESSFUL;
     }
 
-    NtClose (hSession);
+    NtClose(hSession);
     return status;
 }
-
-VOID
-CmpConfigureProcessors (
-    VOID
-    )
+
+VOID CmpConfigureProcessors(VOID)
 /*++
 
 Routine Description:
@@ -2123,7 +1780,7 @@ Routine Description:
 
 --*/
 {
-    ULONG   i;
+    ULONG i;
 
     PAGED_CODE();
 
@@ -2131,12 +1788,13 @@ Routine Description:
     // Set each processor into its best NT configuration
     //
 
-    for (i=0; i < (ULONG)KeNumberProcessors; i++) {
+    for (i = 0; i < (ULONG)KeNumberProcessors; i++)
+    {
         KeSetSystemAffinityThread(AFFINITY_MASK(i));
 
 #if i386
         // for now x86 only
-        KeOptimizeProcessorControlState ();
+        KeOptimizeProcessorControlState();
 #endif
     }
 
@@ -2146,11 +1804,9 @@ Routine Description:
 
     KeRevertToUserAffinityThread();
 }
-
+
 BOOLEAN
-CmpInitializeSystemHive(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+CmpInitializeSystemHive(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -2174,10 +1830,10 @@ Return Value:
 {
     PCMHIVE SystemHive;
     PVOID HiveImageBase;
-    BOOLEAN Allocate=FALSE;
+    BOOLEAN Allocate = FALSE;
     PSECURITY_DESCRIPTOR SecurityDescriptor;
     NTSTATUS Status;
-    STRING  TempString;
+    STRING TempString;
 
 
     PAGED_CODE();
@@ -2185,24 +1841,17 @@ Return Value:
     //
     // capture tail of boot.ini line (load options, portable)
     //
-    RtlInitAnsiString(
-        &TempString,
-        LoaderBlock->LoadOptions
-        );
+    RtlInitAnsiString(&TempString, LoaderBlock->LoadOptions);
 
     CmpLoadOptions.Length = 0;
-    CmpLoadOptions.MaximumLength = (TempString.Length+1)*sizeof(WCHAR);
-    CmpLoadOptions.Buffer = ExAllocatePool(
-                                PagedPool, (TempString.Length+1)*sizeof(WCHAR));
+    CmpLoadOptions.MaximumLength = (TempString.Length + 1) * sizeof(WCHAR);
+    CmpLoadOptions.Buffer = ExAllocatePool(PagedPool, (TempString.Length + 1) * sizeof(WCHAR));
 
-    if (CmpLoadOptions.Buffer == NULL) {
-        CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO,BAD_SYSTEM_HIVE,1,LoaderBlock,0);
+    if (CmpLoadOptions.Buffer == NULL)
+    {
+        CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO, BAD_SYSTEM_HIVE, 1, LoaderBlock, 0);
     }
-    RtlAnsiStringToUnicodeString(
-        &CmpLoadOptions,
-        &TempString,
-        FALSE
-        );
+    RtlAnsiStringToUnicodeString(&CmpLoadOptions, &TempString, FALSE);
     CmpLoadOptions.Buffer[TempString.Length] = UNICODE_NULL;
     CmpLoadOptions.Length += sizeof(WCHAR);
 
@@ -2224,50 +1873,38 @@ Return Value:
     // LazyFlush reported the hive as saved and the moment we actually open the
     // file and save it again
     //
-    if (HiveImageBase == NULL) {
+    if (HiveImageBase == NULL)
+    {
         //
         // No memory descriptor for the hive, so we must recreate it.
         //
-        Status = CmpInitializeHive(&SystemHive,
-                    HINIT_CREATE,
-                    HIVE_NOLAZYFLUSH,
-                    HFILE_TYPE_LOG,
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &CmpSystemFileName,
-                    0);
-        if (!NT_SUCCESS(Status)) {
+        Status = CmpInitializeHive(&SystemHive, HINIT_CREATE, HIVE_NOLAZYFLUSH, HFILE_TYPE_LOG, NULL, NULL, NULL, NULL,
+                                   &CmpSystemFileName, 0);
+        if (!NT_SUCCESS(Status))
+        {
 
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpInitializeSystemHive: "));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"Couldn't initialize newly allocated SYSTEM hive\n"));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpInitializeSystemHive: "));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "Couldn't initialize newly allocated SYSTEM hive\n"));
 
-            return(FALSE);
+            return (FALSE);
         }
         Allocate = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // There is a memory image for the hive, copy it and make it active
         //
-        Status = CmpInitializeHive(&SystemHive,
-                    HINIT_MEMORY,
-                    HIVE_NOLAZYFLUSH,
-                    HFILE_TYPE_LOG,
-                    HiveImageBase,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &CmpSystemFileName,
-                    CM_CHECK_REGISTRY_SYSTEM_CLEAN);
-        if (!NT_SUCCESS(Status)) {
+        Status = CmpInitializeHive(&SystemHive, HINIT_MEMORY, HIVE_NOLAZYFLUSH, HFILE_TYPE_LOG, HiveImageBase, NULL,
+                                   NULL, NULL, &CmpSystemFileName, CM_CHECK_REGISTRY_SYSTEM_CLEAN);
+        if (!NT_SUCCESS(Status))
+        {
 
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpInitializeSystemHive: "));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"Couldn't initialize OS Loader-loaded SYSTEM hive\n"));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpInitializeSystemHive: "));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "Couldn't initialize OS Loader-loaded SYSTEM hive\n"));
 
-            CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO,BAD_SYSTEM_HIVE,2,SystemHive,Status);
+            CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO, BAD_SYSTEM_HIVE, 2, SystemHive, Status);
         }
 
         Allocate = FALSE;
@@ -2276,7 +1913,8 @@ Return Value:
         // Mark the system hive as volatile, while in MiniNT boot
         // case
         //
-        if (CmpShareSystemHives) {
+        if (CmpShareSystemHives)
+        {
             SystemHive->Hive.HiveFlags = HIVE_VOLATILE;
         }
     }
@@ -2287,30 +1925,25 @@ Return Value:
     //
     SecurityDescriptor = CmpHiveRootSecurityDescriptor();
 
-    Status = CmpLinkHiveToMaster(&CmRegistryMachineSystemName,
-                                 NULL,
-                                 SystemHive,
-                                 Allocate,
-                                 SecurityDescriptor);
+    Status = CmpLinkHiveToMaster(&CmRegistryMachineSystemName, NULL, SystemHive, Allocate, SecurityDescriptor);
     ExFreePool(SecurityDescriptor);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmInitSystem1: CmpLinkHiveToMaster(Hardware) failed\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmInitSystem1: CmpLinkHiveToMaster(Hardware) failed\n"));
 
-        return(FALSE);
+        return (FALSE);
     }
 
     CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive = SystemHive;
 
-    return(TRUE);
+    return (TRUE);
 }
 
-
+
 PHANDLE
-CmGetSystemDriverList(
-    VOID
-    )
+CmGetSystemDriverList(VOID)
 
 /*++
 
@@ -2353,40 +1986,32 @@ Return Value:
 
     PAGED_CODE();
     InitializeListHead(&DriverList);
-    RtlInitUnicodeString(&Name,
-                         L"\\Registry\\Machine\\System");
+    RtlInitUnicodeString(&Name, L"\\Registry\\Machine\\System");
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &Name,
-                               OBJ_CASE_INSENSITIVE,
-                               (HANDLE)NULL,
-                               NULL);
-    Status = NtOpenKey(&SystemHandle,
-                       KEY_READ,
-                       &ObjectAttributes);
+    InitializeObjectAttributes(&ObjectAttributes, &Name, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
+    Status = NtOpenKey(&SystemHandle, KEY_READ, &ObjectAttributes);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmGetSystemDriverList couldn't open registry key %wZ\n",&Name));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM:     status %08lx\n", Status));
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmGetSystemDriverList couldn't open registry key %wZ\n", &Name));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM:     status %08lx\n", Status));
 
-        return(NULL);
+        return (NULL);
     }
 
 
-    Status = ObReferenceObjectByHandle( SystemHandle,
-                                        KEY_QUERY_VALUE,
-                                        CmpKeyObjectType,
-                                        KernelMode,
-                                        (PVOID *)(&KeyBody),
-                                        NULL );
-    if (!NT_SUCCESS(Status)) {
+    Status = ObReferenceObjectByHandle(SystemHandle, KEY_QUERY_VALUE, CmpKeyObjectType, KernelMode, (PVOID *)(&KeyBody),
+                                       NULL);
+    if (!NT_SUCCESS(Status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmGetSystemDriverList couldn't dereference System handle\n"));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM:     status %08lx\n", Status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmGetSystemDriverList couldn't dereference System handle\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM:     status %08lx\n", Status));
 
         NtClose(SystemHandle);
-        return(NULL);
+        return (NULL);
     }
 
     CmpLockRegistryExclusive();
@@ -2400,60 +2025,56 @@ Return Value:
     //
 
     RtlInitUnicodeString(&Name, L"Current");
-    ControlCell = CmpFindControlSet(Hive,
-                                    RootCell,
-                                    &Name,
-                                    &AutoSelect);
-    if (ControlCell == HCELL_NIL) {
+    ControlCell = CmpFindControlSet(Hive, RootCell, &Name, &AutoSelect);
+    if (ControlCell == HCELL_NIL)
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmGetSystemDriverList couldn't find control set\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmGetSystemDriverList couldn't find control set\n"));
 
         CmpUnlockRegistry();
         ObDereferenceObject((PVOID)KeyBody);
         NtClose(SystemHandle);
-        return(NULL);
+        return (NULL);
     }
 
-    Success = CmpFindDrivers(Hive,
-                             ControlCell,
-                             SystemLoad,
-                             NULL,
-                             &DriverList);
+    Success = CmpFindDrivers(Hive, ControlCell, SystemLoad, NULL, &DriverList);
 
 
-    if (!Success) {
+    if (!Success)
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmGetSystemDriverList couldn't find any valid drivers\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmGetSystemDriverList couldn't find any valid drivers\n"));
 
         CmpFreeDriverList(Hive, &DriverList);
         CmpUnlockRegistry();
         ObDereferenceObject((PVOID)KeyBody);
         NtClose(SystemHandle);
-        return(NULL);
+        return (NULL);
     }
 
-    if (!CmpSortDriverList(Hive,
-                           ControlCell,
-                           &DriverList)) {
+    if (!CmpSortDriverList(Hive, ControlCell, &DriverList))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmGetSystemDriverList couldn't sort driver list\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmGetSystemDriverList couldn't sort driver list\n"));
 
         CmpFreeDriverList(Hive, &DriverList);
         CmpUnlockRegistry();
         ObDereferenceObject((PVOID)KeyBody);
         NtClose(SystemHandle);
-        return(NULL);
+        return (NULL);
     }
 
-    if (!CmpResolveDriverDependencies(&DriverList)) {
+    if (!CmpResolveDriverDependencies(&DriverList))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmGetSystemDriverList couldn't resolve driver dependencies\n"));
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmGetSystemDriverList couldn't resolve driver dependencies\n"));
 
         CmpFreeDriverList(Hive, &DriverList);
         CmpUnlockRegistry();
         ObDereferenceObject((PVOID)KeyBody);
         NtClose(SystemHandle);
-        return(NULL);
+        return (NULL);
     }
     CmpUnlockRegistry();
     ObDereferenceObject((PVOID)KeyBody);
@@ -2469,16 +2090,17 @@ Return Value:
     //
     Current = DriverList.Flink;
     DriverCount = 0;
-    while (Current != &DriverList) {
+    while (Current != &DriverList)
+    {
         ++DriverCount;
         Current = Current->Flink;
     }
 
-    Handle = (PHANDLE)ExAllocatePool(NonPagedPool,
-                                     (DriverCount+1) * sizeof(HANDLE));
+    Handle = (PHANDLE)ExAllocatePool(NonPagedPool, (DriverCount + 1) * sizeof(HANDLE));
 
-    if (Handle == NULL) {
-        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED,INIT_SYSTEM_DRIVER_LIST,1,0,0); // odds against this are huge
+    if (Handle == NULL)
+    {
+        CM_BUGCHECK(CONFIG_INITIALIZATION_FAILED, INIT_SYSTEM_DRIVER_LIST, 1, 0, 0); // odds against this are huge
     }
 
     //
@@ -2487,25 +2109,22 @@ Return Value:
     //
     Current = DriverList.Flink;
     DriverCount = 0;
-    while (Current != &DriverList) {
-        DriverEntry = CONTAINING_RECORD(Current,
-                                        BOOT_DRIVER_LIST_ENTRY,
-                                        Link);
+    while (Current != &DriverList)
+    {
+        DriverEntry = CONTAINING_RECORD(Current, BOOT_DRIVER_LIST_ENTRY, Link);
 
-        InitializeObjectAttributes(&ObjectAttributes,
-                                   &DriverEntry->RegistryPath,
-                                   OBJ_CASE_INSENSITIVE,
-                                   (HANDLE)NULL,
+        InitializeObjectAttributes(&ObjectAttributes, &DriverEntry->RegistryPath, OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
                                    NULL);
 
-        Status = NtOpenKey(Handle+DriverCount,
-                           KEY_READ | KEY_WRITE,
-                           &ObjectAttributes);
-        if (!NT_SUCCESS(Status)) {
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmGetSystemDriverList couldn't open driver "));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"key %wZ\n", &DriverEntry->RegistryPath));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"    status %08lx\n",Status));
-        } else {
+        Status = NtOpenKey(Handle + DriverCount, KEY_READ | KEY_WRITE, &ObjectAttributes);
+        if (!NT_SUCCESS(Status))
+        {
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmGetSystemDriverList couldn't open driver "));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "key %wZ\n", &DriverEntry->RegistryPath));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "    status %08lx\n", Status));
+        }
+        else
+        {
             ++DriverCount;
         }
         Current = Current->Flink;
@@ -2514,15 +2133,11 @@ Return Value:
 
     CmpFreeDriverList(Hive, &DriverList);
 
-    return(Handle);
+    return (Handle);
 }
 
-
-VOID
-CmpFreeDriverList(
-    IN PHHIVE Hive,
-    IN PLIST_ENTRY DriverList
-    )
+
+VOID CmpFreeDriverList(IN PHHIVE Hive, IN PLIST_ENTRY DriverList)
 
 /*++
 
@@ -2547,39 +2162,37 @@ Return Value:
 --*/
 
 {
-    PLIST_ENTRY         Next;
-    PLIST_ENTRY         Current;
-    PBOOT_DRIVER_NODE   DriverNode;
+    PLIST_ENTRY Next;
+    PLIST_ENTRY Current;
+    PBOOT_DRIVER_NODE DriverNode;
 
     PAGED_CODE();
     Current = DriverList->Flink;
-    while (Current != DriverList) {
+    while (Current != DriverList)
+    {
         Next = Current->Flink;
         DriverNode = (PBOOT_DRIVER_NODE)Current;
-        if( DriverNode->Name.Buffer != NULL ){
-            (Hive->Free)(DriverNode->Name.Buffer,DriverNode->Name.Length);
+        if (DriverNode->Name.Buffer != NULL)
+        {
+            (Hive->Free)(DriverNode->Name.Buffer, DriverNode->Name.Length);
         }
-        if( DriverNode->ListEntry.RegistryPath.Buffer != NULL ){
-            (Hive->Free)(DriverNode->ListEntry.RegistryPath.Buffer,DriverNode->ListEntry.RegistryPath.MaximumLength);
+        if (DriverNode->ListEntry.RegistryPath.Buffer != NULL)
+        {
+            (Hive->Free)(DriverNode->ListEntry.RegistryPath.Buffer, DriverNode->ListEntry.RegistryPath.MaximumLength);
         }
-        if( DriverNode->ListEntry.FilePath.Buffer != NULL ){
-            (Hive->Free)(DriverNode->ListEntry.FilePath.Buffer,DriverNode->ListEntry.FilePath.MaximumLength);
+        if (DriverNode->ListEntry.FilePath.Buffer != NULL)
+        {
+            (Hive->Free)(DriverNode->ListEntry.FilePath.Buffer, DriverNode->ListEntry.FilePath.MaximumLength);
         }
         (Hive->Free)((PVOID)Current, sizeof(BOOT_DRIVER_NODE));
         Current = Next;
     }
 }
 
-
+
 NTSTATUS
-CmpInitHiveFromFile(
-    IN PUNICODE_STRING FileName,
-    IN ULONG HiveFlags,
-    OUT PCMHIVE *CmHive,
-    IN OUT PBOOLEAN Allocate,
-    IN OUT PBOOLEAN RegistryLocked,
-    IN  ULONG       CheckFlags
-    )
+CmpInitHiveFromFile(IN PUNICODE_STRING FileName, IN ULONG HiveFlags, OUT PCMHIVE *CmHive, IN OUT PBOOLEAN Allocate,
+                    IN OUT PBOOLEAN RegistryLocked, IN ULONG CheckFlags)
 
 /*++
 
@@ -2607,21 +2220,21 @@ Return Value:
 --*/
 
 {
-    PCMHIVE         NewHive;
-    ULONG           Disposition;
-    ULONG           SecondaryDisposition;
-    HANDLE          PrimaryHandle;
-    HANDLE          LogHandle;
-    NTSTATUS        Status;
-    ULONG           FileType;
-    ULONG           Operation;
-    PULONG_PTR      HiveSection;
-    PVOID           HiveData = NULL;
-    BOOLEAN         Success;
-    PEPROCESS       Process;
-    LARGE_INTEGER   liOffset;
-    BOOLEAN         NoBuffering = FALSE;
-    BOOLEAN         LockedHeldOnCall;
+    PCMHIVE NewHive;
+    ULONG Disposition;
+    ULONG SecondaryDisposition;
+    HANDLE PrimaryHandle;
+    HANDLE LogHandle;
+    NTSTATUS Status;
+    ULONG FileType;
+    ULONG Operation;
+    PULONG_PTR HiveSection;
+    PVOID HiveData = NULL;
+    BOOLEAN Success;
+    PEPROCESS Process;
+    LARGE_INTEGER liOffset;
+    BOOLEAN NoBuffering = FALSE;
+    BOOLEAN LockedHeldOnCall;
 
     PAGED_CODE();
 
@@ -2634,49 +2247,54 @@ RetryNoBuffering:
     *CmHive = NULL;
     LockedHeldOnCall = *RegistryLocked;
 
-    Status = CmpOpenHiveFiles(FileName,
-                              L".LOG",
-                              &PrimaryHandle,
-                              &LogHandle,
-                              &Disposition,
-                              &SecondaryDisposition,
-                              *Allocate,
-                              FALSE,
-                              NoBuffering,
-                              NULL);
+    Status = CmpOpenHiveFiles(FileName, L".LOG", &PrimaryHandle, &LogHandle, &Disposition, &SecondaryDisposition,
+                              *Allocate, FALSE, NoBuffering, NULL);
 
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
-    if (LogHandle == NULL) {
+    if (LogHandle == NULL)
+    {
         FileType = HFILE_TYPE_PRIMARY;
-    } else {
+    }
+    else
+    {
         FileType = HFILE_TYPE_LOG;
     }
 
-    if (Disposition == FILE_CREATED) {
+    if (Disposition == FILE_CREATED)
+    {
         Operation = HINIT_CREATE;
         *Allocate = TRUE;
-    } else {
-        if( NoBuffering == TRUE ) {
+    }
+    else
+    {
+        if (NoBuffering == TRUE)
+        {
             Operation = HINIT_FILE;
-        } else {
+        }
+        else
+        {
             Operation = HINIT_MAPFILE;
         }
         *Allocate = FALSE;
     }
 
-    if (CmpShareSystemHives) {
+    if (CmpShareSystemHives)
+    {
         FileType = HFILE_TYPE_PRIMARY;
 
-        if (LogHandle) {
+        if (LogHandle)
+        {
             ZwClose(LogHandle);
             LogHandle = NULL;
         }
     }
 
-    if( !(*RegistryLocked) ) {
+    if (!(*RegistryLocked))
+    {
         //
         // Registry should be locked exclusive
         // if not, lock it now and signal this to the caller
@@ -2685,89 +2303,85 @@ RetryNoBuffering:
         *RegistryLocked = TRUE;
     }
 
-    if( HvShutdownComplete == TRUE ) {
+    if (HvShutdownComplete == TRUE)
+    {
         ZwClose(PrimaryHandle);
-        if (LogHandle != NULL) {
+        if (LogHandle != NULL)
+        {
             ZwClose(LogHandle);
         }
         return STATUS_TOO_LATE;
     }
 
-    Status = CmpInitializeHive(&NewHive,
-                                Operation,
-                                HiveFlags,
-                                FileType,
-                                HiveData,
-                                PrimaryHandle,
-                                LogHandle,
-                                NULL,
-                                FileName,
-                                CheckFlags
-                                );
+    Status = CmpInitializeHive(&NewHive, Operation, HiveFlags, FileType, HiveData, PrimaryHandle, LogHandle, NULL,
+                               FileName, CheckFlags);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         CmpTrackHiveClose = TRUE;
         ZwClose(PrimaryHandle);
         CmpTrackHiveClose = FALSE;
-        if (LogHandle != NULL) {
+        if (LogHandle != NULL)
+        {
             ZwClose(LogHandle);
         }
 
-        if( Status == STATUS_RETRY ) {
-            if( NoBuffering == FALSE ) {
+        if (Status == STATUS_RETRY)
+        {
+            if (NoBuffering == FALSE)
+            {
                 NoBuffering = TRUE;
-                if( !LockedHeldOnCall ) {
+                if (!LockedHeldOnCall)
+                {
                     *RegistryLocked = FALSE;
                     CmpUnlockRegistry();
                 }
                 goto RetryNoBuffering;
             }
         }
-        return(Status);
-    } else {
+        return (Status);
+    }
+    else
+    {
         *CmHive = NewHive;
 
         //
         // mark handles as protected. If other kernel component tries to close them ==> bugcheck.
         //
-        CmpSetHandleProtection(PrimaryHandle,TRUE);
-        if (LogHandle != NULL) {
-            CmpSetHandleProtection(LogHandle,TRUE);
+        CmpSetHandleProtection(PrimaryHandle, TRUE);
+        if (LogHandle != NULL)
+        {
+            CmpSetHandleProtection(LogHandle, TRUE);
         }
 
         //
         // Capture the file name; in case we need it later for double load check
         //
-        (*CmHive)->FileUserName.Buffer = ExAllocatePoolWithTag(PagedPool,
-                                                            FileName->Length,
-                                                            CM_NAME_TAG | PROTECTED_POOL);
+        (*CmHive)->FileUserName.Buffer =
+            ExAllocatePoolWithTag(PagedPool, FileName->Length, CM_NAME_TAG | PROTECTED_POOL);
 
-        if ((*CmHive)->FileUserName.Buffer) {
+        if ((*CmHive)->FileUserName.Buffer)
+        {
 
-            RtlCopyMemory((*CmHive)->FileUserName.Buffer,
-                          FileName->Buffer,
-                          FileName->Length);
+            RtlCopyMemory((*CmHive)->FileUserName.Buffer, FileName->Buffer, FileName->Length);
 
             (*CmHive)->FileUserName.Length = FileName->Length;
             (*CmHive)->FileUserName.MaximumLength = FileName->Length;
-
         }
-        if(((PHHIVE)(*CmHive))->BaseBlock->BootType & HBOOT_SELFHEAL) {
+        if (((PHHIVE)(*CmHive))->BaseBlock->BootType & HBOOT_SELFHEAL)
+        {
             //
             // Warn the user;
             //
             CmpRaiseSelfHealWarning(&((*CmHive)->FileUserName));
         }
-        return(STATUS_SUCCESS);
+        return (STATUS_SUCCESS);
     }
 }
 
-
+
 NTSTATUS
-CmpAddDockingInfo (
-    IN HANDLE Key,
-    IN PROFILE_PARAMETER_BLOCK * ProfileBlock
-    )
+CmpAddDockingInfo(IN HANDLE Key, IN PROFILE_PARAMETER_BLOCK *ProfileBlock)
 /*++
 Routine Description:
     Write DockID SerialNumber DockState and Capabilities intot the given
@@ -2779,70 +2393,50 @@ Routine Description:
     UNICODE_STRING name;
     ULONG value;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     value = ProfileBlock->DockingState;
-    RtlInitUnicodeString (&name, CM_HARDWARE_PROFILE_STR_DOCKING_STATE);
-    status = NtSetValueKey (Key,
-                            &name,
-                            0,
-                            REG_DWORD,
-                            &value,
-                            sizeof (value));
+    RtlInitUnicodeString(&name, CM_HARDWARE_PROFILE_STR_DOCKING_STATE);
+    status = NtSetValueKey(Key, &name, 0, REG_DWORD, &value, sizeof(value));
 
-    if (!NT_SUCCESS (status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     value = ProfileBlock->Capabilities;
-    RtlInitUnicodeString (&name, CM_HARDWARE_PROFILE_STR_CAPABILITIES);
-    status = NtSetValueKey (Key,
-                            &name,
-                            0,
-                            REG_DWORD,
-                            &value,
-                            sizeof (value));
+    RtlInitUnicodeString(&name, CM_HARDWARE_PROFILE_STR_CAPABILITIES);
+    status = NtSetValueKey(Key, &name, 0, REG_DWORD, &value, sizeof(value));
 
-    if (!NT_SUCCESS (status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     value = ProfileBlock->DockID;
-    RtlInitUnicodeString (&name, CM_HARDWARE_PROFILE_STR_DOCKID);
-    status = NtSetValueKey (Key,
-                            &name,
-                            0,
-                            REG_DWORD,
-                            &value,
-                            sizeof (value));
+    RtlInitUnicodeString(&name, CM_HARDWARE_PROFILE_STR_DOCKID);
+    status = NtSetValueKey(Key, &name, 0, REG_DWORD, &value, sizeof(value));
 
-    if (!NT_SUCCESS (status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     value = ProfileBlock->SerialNumber;
-    RtlInitUnicodeString (&name, CM_HARDWARE_PROFILE_STR_SERIAL_NUMBER);
-    status = NtSetValueKey (Key,
-                            &name,
-                            0,
-                            REG_DWORD,
-                            &value,
-                            sizeof (value));
+    RtlInitUnicodeString(&name, CM_HARDWARE_PROFILE_STR_SERIAL_NUMBER);
+    status = NtSetValueKey(Key, &name, 0, REG_DWORD, &value, sizeof(value));
 
-    if (!NT_SUCCESS (status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     return status;
 }
 
-
+
 NTSTATUS
-CmpAddAliasEntry (
-    IN HANDLE IDConfigDB,
-    IN PROFILE_PARAMETER_BLOCK * ProfileBlock,
-    IN ULONG  ProfileNumber
-    )
+CmpAddAliasEntry(IN HANDLE IDConfigDB, IN PROFILE_PARAMETER_BLOCK *ProfileBlock, IN ULONG ProfileNumber)
 /*++
 Routine Description:
     Create an alias entry in the IDConfigDB database for the given
@@ -2861,45 +2455,39 @@ Parameters:
 --*/
 {
     OBJECT_ATTRIBUTES attributes;
-    NTSTATUS        status = STATUS_SUCCESS;
-    CHAR            asciiBuffer [128];
-    WCHAR           unicodeBuffer [128];
-    ANSI_STRING     ansiString;
-    UNICODE_STRING  name;
-    HANDLE          aliasKey = NULL;
-    HANDLE          aliasEntry = NULL;
-    ULONG           value;
-    ULONG           disposition;
-    ULONG           aliasNumber = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+    CHAR asciiBuffer[128];
+    WCHAR unicodeBuffer[128];
+    ANSI_STRING ansiString;
+    UNICODE_STRING name;
+    HANDLE aliasKey = NULL;
+    HANDLE aliasEntry = NULL;
+    ULONG value;
+    ULONG disposition;
+    ULONG aliasNumber = 0;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     //
     // Find the Alias Key or Create it if it does not already exist.
     //
-    RtlInitUnicodeString (&name,CM_HARDWARE_PROFILE_STR_ALIAS);
+    RtlInitUnicodeString(&name, CM_HARDWARE_PROFILE_STR_ALIAS);
 
-    InitializeObjectAttributes (&attributes,
-                                &name,
-                                OBJ_CASE_INSENSITIVE,
-                                IDConfigDB,
-                                NULL);
+    InitializeObjectAttributes(&attributes, &name, OBJ_CASE_INSENSITIVE, IDConfigDB, NULL);
 
-    status = NtOpenKey (&aliasKey,
-                        KEY_READ | KEY_WRITE,
-                        &attributes);
+    status = NtOpenKey(&aliasKey, KEY_READ | KEY_WRITE, &attributes);
 
-    if (STATUS_OBJECT_NAME_NOT_FOUND == status) {
-        status = NtCreateKey (&aliasKey,
-                              KEY_READ | KEY_WRITE,
-                              &attributes,
-                              0, // no title
-                              NULL, // no class
-                              0, // no options
-                              &disposition);
+    if (STATUS_OBJECT_NAME_NOT_FOUND == status)
+    {
+        status = NtCreateKey(&aliasKey, KEY_READ | KEY_WRITE, &attributes,
+                             0,    // no title
+                             NULL, // no class
+                             0,    // no options
+                             &disposition);
     }
 
-    if (!NT_SUCCESS (status)) {
+    if (!NT_SUCCESS(status))
+    {
         aliasKey = NULL;
         goto Exit;
     }
@@ -2908,7 +2496,8 @@ Parameters:
     // Create an entry key
     //
 
-    while (aliasNumber < 200) {
+    while (aliasNumber < 200)
+    {
         aliasNumber++;
 
         sprintf(asciiBuffer, "%04d", aliasNumber);
@@ -2916,52 +2505,42 @@ Parameters:
         RtlInitAnsiString(&ansiString, asciiBuffer);
         name.MaximumLength = sizeof(unicodeBuffer);
         name.Buffer = unicodeBuffer;
-        status = RtlAnsiStringToUnicodeString(&name,
-                                              &ansiString,
-                                              FALSE);
-        ASSERT (STATUS_SUCCESS == status);
+        status = RtlAnsiStringToUnicodeString(&name, &ansiString, FALSE);
+        ASSERT(STATUS_SUCCESS == status);
 
-        InitializeObjectAttributes(&attributes,
-                                   &name,
-                                   OBJ_CASE_INSENSITIVE,
-                                   aliasKey,
-                                   NULL);
+        InitializeObjectAttributes(&attributes, &name, OBJ_CASE_INSENSITIVE, aliasKey, NULL);
 
-        status = NtOpenKey (&aliasEntry,
-                            KEY_READ | KEY_WRITE,
-                            &attributes);
+        status = NtOpenKey(&aliasEntry, KEY_READ | KEY_WRITE, &attributes);
 
-        if (NT_SUCCESS (status)) {
-            NtClose (aliasEntry);
-
-        } else if (STATUS_OBJECT_NAME_NOT_FOUND == status) {
+        if (NT_SUCCESS(status))
+        {
+            NtClose(aliasEntry);
+        }
+        else if (STATUS_OBJECT_NAME_NOT_FOUND == status)
+        {
             status = STATUS_SUCCESS;
             break;
-
-        } else {
+        }
+        else
+        {
             break;
         }
-
     }
-    if (!NT_SUCCESS (status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: cmpCreateAliasEntry error finding new set %08lx\n",status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: cmpCreateAliasEntry error finding new set %08lx\n", status));
 
         aliasEntry = 0;
         goto Exit;
     }
 
-    status = NtCreateKey (&aliasEntry,
-                          KEY_READ | KEY_WRITE,
-                          &attributes,
-                          0,
-                          NULL,
-                          0,
-                          &disposition);
+    status = NtCreateKey(&aliasEntry, KEY_READ | KEY_WRITE, &attributes, 0, NULL, 0, &disposition);
 
-    if (!NT_SUCCESS (status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: cmpCreateAliasEntry error creating new set %08lx\n",status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: cmpCreateAliasEntry error creating new set %08lx\n", status));
 
         aliasEntry = 0;
         goto Exit;
@@ -2970,28 +2549,25 @@ Parameters:
     //
     // Write the standard goo
     //
-    CmpAddDockingInfo (aliasEntry, ProfileBlock);
+    CmpAddDockingInfo(aliasEntry, ProfileBlock);
 
     //
     // Write the Profile Number
     //
     value = ProfileNumber;
-    RtlInitUnicodeString (&name, CM_HARDWARE_PROFILE_STR_PROFILE_NUMBER);
-    status = NtSetValueKey (aliasEntry,
-                            &name,
-                            0,
-                            REG_DWORD,
-                            &value,
-                            sizeof (value));
+    RtlInitUnicodeString(&name, CM_HARDWARE_PROFILE_STR_PROFILE_NUMBER);
+    status = NtSetValueKey(aliasEntry, &name, 0, REG_DWORD, &value, sizeof(value));
 
 Exit:
 
-    if (aliasKey) {
-        NtClose (aliasKey);
+    if (aliasKey)
+    {
+        NtClose(aliasKey);
     }
 
-    if (aliasEntry) {
-        NtClose (aliasEntry);
+    if (aliasEntry)
+    {
+        NtClose(aliasEntry);
     }
 
     return status;
@@ -2999,26 +2575,18 @@ Exit:
 
 
 NTSTATUS
-CmpHwprofileDefaultSelect (
-    IN  PCM_HARDWARE_PROFILE_LIST ProfileList,
-    OUT PULONG ProfileIndexToUse,
-    IN  PVOID Context
-    )
+CmpHwprofileDefaultSelect(IN PCM_HARDWARE_PROFILE_LIST ProfileList, OUT PULONG ProfileIndexToUse, IN PVOID Context)
 {
-    UNREFERENCED_PARAMETER (Context);
+    UNREFERENCED_PARAMETER(Context);
 
-    * ProfileIndexToUse = 0;
+    *ProfileIndexToUse = 0;
 
     return STATUS_SUCCESS;
 }
 
 
-
-
 NTSTATUS
-CmpCreateControlSet(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+CmpCreateControlSet(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -3070,56 +2638,43 @@ Return Value:
     PAGED_CODE();
 
     RtlInitUnicodeString(&SelectName, L"\\Registry\\Machine\\System\\Select");
-    InitializeObjectAttributes(&Attributes,
-                               &SelectName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtOpenKey(&SelectHandle,
-                       KEY_READ,
-                       &Attributes);
-    if (!NT_SUCCESS(Status)) {
+    InitializeObjectAttributes(&Attributes, &SelectName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtOpenKey(&SelectHandle, KEY_READ, &Attributes);
+    if (!NT_SUCCESS(Status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCreateControlSet: Couldn't open Select node %08lx\n",Status));
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCreateControlSet: Couldn't open Select node %08lx\n", Status));
 
-        return(Status);
+        return (Status);
     }
 
     RtlInitUnicodeString(&CurrentName, L"Current");
-    Status = NtQueryValueKey(SelectHandle,
-                             &CurrentName,
-                             KeyValueFullInformation,
-                             ValueBuffer,
-                             sizeof(ValueBuffer),
+    Status = NtQueryValueKey(SelectHandle, &CurrentName, KeyValueFullInformation, ValueBuffer, sizeof(ValueBuffer),
                              &ResultLength);
     NtClose(SelectHandle);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCreateControlSet: Couldn't query Select value %08lx\n",Status));
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCreateControlSet: Couldn't query Select value %08lx\n", Status));
 
-        return(Status);
+        return (Status);
     }
     Value = (PKEY_VALUE_FULL_INFORMATION)ValueBuffer;
     ControlSet = *(PULONG)((PUCHAR)Value + Value->DataOffset);
 
     RtlInitUnicodeString(&CurrentName, L"\\Registry\\Machine\\System\\CurrentControlSet");
-    InitializeObjectAttributes(&Attributes,
-                               &CurrentName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtCreateKey(&CurrentHandle,
-                         KEY_CREATE_LINK,
-                         &Attributes,
-                         0,
-                         NULL,
-                         REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK,
-                         &Disposition);
-    if (!NT_SUCCESS(Status)) {
+    InitializeObjectAttributes(&Attributes, &CurrentName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtCreateKey(&CurrentHandle, KEY_CREATE_LINK, &Attributes, 0, NULL,
+                         REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, &Disposition);
+    if (!NT_SUCCESS(Status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCreateControlSet: couldn't create CurrentControlSet %08lx\n",Status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK,
+                     "CM: CmpCreateControlSet: couldn't create CurrentControlSet %08lx\n", Status));
 
-        return(Status);
+        return (Status);
     }
 
     //
@@ -3137,56 +2692,42 @@ Return Value:
 
     CurrentName.MaximumLength = sizeof(UnicodeBuffer);
     CurrentName.Buffer = UnicodeBuffer;
-    Status = RtlAnsiStringToUnicodeString(&CurrentName,
-                                          &AnsiString,
-                                          FALSE);
-    Status = NtSetValueKey(CurrentHandle,
-                           &CmSymbolicLinkValueName,
-                           0,
-                           REG_LINK,
-                           CurrentName.Buffer,
-                           CurrentName.Length);
+    Status = RtlAnsiStringToUnicodeString(&CurrentName, &AnsiString, FALSE);
+    Status =
+        NtSetValueKey(CurrentHandle, &CmSymbolicLinkValueName, 0, REG_LINK, CurrentName.Buffer, CurrentName.Length);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCreateControlSet: couldn't create symbolic link "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"to %wZ\n",&CurrentName));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"    Status=%08lx\n",Status));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCreateControlSet: couldn't create symbolic link "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "to %wZ\n", &CurrentName));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "    Status=%08lx\n", Status));
 
         NtClose(CurrentHandle);
 
-        return(Status);
+        return (Status);
     }
 
     //
     // Determine the Current Hardware Profile Number
     //
     RtlInitUnicodeString(&IDConfigDBName, L"Control\\IDConfigDB");
-    InitializeObjectAttributes(&Attributes,
-                               &IDConfigDBName,
-                               OBJ_CASE_INSENSITIVE,
-                               CurrentHandle,
-                               NULL);
-    Status = NtOpenKey(&IDConfigDB,
-                       KEY_READ,
-                       &Attributes);
+    InitializeObjectAttributes(&Attributes, &IDConfigDBName, OBJ_CASE_INSENSITIVE, CurrentHandle, NULL);
+    Status = NtOpenKey(&IDConfigDB, KEY_READ, &Attributes);
     NtClose(CurrentHandle);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         IDConfigDB = 0;
         goto Cleanup;
     }
 
     RtlInitUnicodeString(&CurrentName, L"CurrentConfig");
-    Status = NtQueryValueKey(IDConfigDB,
-                             &CurrentName,
-                             KeyValueFullInformation,
-                             ValueBuffer,
-                             sizeof(ValueBuffer),
+    Status = NtQueryValueKey(IDConfigDB, &CurrentName, KeyValueFullInformation, ValueBuffer, sizeof(ValueBuffer),
                              &ResultLength);
 
-    if (!NT_SUCCESS(Status) ||
-        (((PKEY_VALUE_FULL_INFORMATION)ValueBuffer)->Type != REG_DWORD)) {
+    if (!NT_SUCCESS(Status) || (((PKEY_VALUE_FULL_INFORMATION)ValueBuffer)->Type != REG_DWORD))
+    {
 
         goto Cleanup;
     }
@@ -3198,43 +2739,29 @@ Return Value:
     // namely: HWProfile.
     //
 
-    RtlInitUnicodeString(
-              &CurrentName,
-              L"\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles");
-    InitializeObjectAttributes(&Attributes,
-                               &CurrentName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtOpenKey(&ParentOfProfile,
-                       KEY_READ,
-                       &Attributes);
+    RtlInitUnicodeString(&CurrentName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles");
+    InitializeObjectAttributes(&Attributes, &CurrentName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtOpenKey(&ParentOfProfile, KEY_READ, &Attributes);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         ParentOfProfile = 0;
         goto Cleanup;
     }
 
-    sprintf(AsciiBuffer, "%04d",HWProfile);
+    sprintf(AsciiBuffer, "%04d", HWProfile);
     RtlInitAnsiString(&AnsiString, AsciiBuffer);
     CurrentName.MaximumLength = sizeof(UnicodeBuffer);
     CurrentName.Buffer = UnicodeBuffer;
-    Status = RtlAnsiStringToUnicodeString(&CurrentName,
-                                          &AnsiString,
-                                          FALSE);
-    ASSERT (STATUS_SUCCESS == Status);
+    Status = RtlAnsiStringToUnicodeString(&CurrentName, &AnsiString, FALSE);
+    ASSERT(STATUS_SUCCESS == Status);
 
-    InitializeObjectAttributes(&Attributes,
-                               &CurrentName,
-                               OBJ_CASE_INSENSITIVE,
-                               ParentOfProfile,
-                               NULL);
+    InitializeObjectAttributes(&Attributes, &CurrentName, OBJ_CASE_INSENSITIVE, ParentOfProfile, NULL);
 
-    Status = NtOpenKey (&CurrentProfile,
-                        KEY_READ | KEY_WRITE,
-                        &Attributes);
+    Status = NtOpenKey(&CurrentProfile, KEY_READ | KEY_WRITE, &Attributes);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         CurrentProfile = 0;
         goto Cleanup;
     }
@@ -3251,34 +2778,28 @@ Return Value:
     // (DockID, SerialNumber, DockState, and Capabilities)
     //
 
-    if (NULL != LoaderBlock->Extension) {
+    if (NULL != LoaderBlock->Extension)
+    {
         PLOADER_PARAMETER_EXTENSION extension;
         extension = LoaderBlock->Extension;
-        switch (extension->Profile.Status) {
+        switch (extension->Profile.Status)
+        {
         case HW_PROFILE_STATUS_PRISTINE_MATCH:
             //
             // If the selected profile is pristine then we need to clone.
             //
-            Status = CmpCloneHwProfile (IDConfigDB,
-                                        ParentOfProfile,
-                                        CurrentProfile,
-                                        HWProfile,
-                                        extension->Profile.DockingState,
-                                        &CurrentProfile,
-                                        &HWProfile);
-            if (!NT_SUCCESS (Status)) {
+            Status = CmpCloneHwProfile(IDConfigDB, ParentOfProfile, CurrentProfile, HWProfile,
+                                       extension->Profile.DockingState, &CurrentProfile, &HWProfile);
+            if (!NT_SUCCESS(Status))
+            {
                 CurrentProfile = 0;
                 goto Cleanup;
             }
 
             RtlInitUnicodeString(&CurrentName, L"CurrentConfig");
-            Status = NtSetValueKey (IDConfigDB,
-                                    &CurrentName,
-                                    0,
-                                    REG_DWORD,
-                                    &HWProfile,
-                                    sizeof (HWProfile));
-            if (!NT_SUCCESS (Status)) {
+            Status = NtSetValueKey(IDConfigDB, &CurrentName, 0, REG_DWORD, &HWProfile, sizeof(HWProfile));
+            if (!NT_SUCCESS(Status))
+            {
                 goto Cleanup;
             }
 
@@ -3290,9 +2811,7 @@ Return Value:
             // Create the alias entry for this profile.
             //
 
-            Status = CmpAddAliasEntry (IDConfigDB,
-                                       &extension->Profile,
-                                       HWProfile);
+            Status = CmpAddAliasEntry(IDConfigDB, &extension->Profile, HWProfile);
 
             //
             // Fall through
@@ -3303,30 +2822,21 @@ Return Value:
             // Hardware profile.
             //
 
-            RtlInitUnicodeString (&CurrentName,
-                                  CM_HARDWARE_PROFILE_STR_CURRENT_DOCK_INFO);
+            RtlInitUnicodeString(&CurrentName, CM_HARDWARE_PROFILE_STR_CURRENT_DOCK_INFO);
 
-            InitializeObjectAttributes (&Attributes,
-                                        &CurrentName,
-                                        OBJ_CASE_INSENSITIVE,
-                                        IDConfigDB,
-                                        NULL);
+            InitializeObjectAttributes(&Attributes, &CurrentName, OBJ_CASE_INSENSITIVE, IDConfigDB, NULL);
 
-            Status = NtCreateKey (&CurrentHandle,
-                                  KEY_READ | KEY_WRITE,
-                                  &Attributes,
-                                  0,
-                                  NULL,
-                                  REG_OPTION_VOLATILE,
-                                  &Disposition);
+            Status = NtCreateKey(&CurrentHandle, KEY_READ | KEY_WRITE, &Attributes, 0, NULL, REG_OPTION_VOLATILE,
+                                 &Disposition);
 
-            ASSERT (STATUS_SUCCESS == Status);
+            ASSERT(STATUS_SUCCESS == Status);
 
-            Status = CmpAddDockingInfo (CurrentHandle, &extension->Profile);
+            Status = CmpAddDockingInfo(CurrentHandle, &extension->Profile);
 
             NtClose(CurrentHandle);
 
-            if (HW_PROFILE_DOCKSTATE_UNDOCKED == extension->Profile.DockingState) {
+            if (HW_PROFILE_DOCKSTATE_UNDOCKED == extension->Profile.DockingState)
+            {
                 signalAcpiEvent = TRUE;
             }
 
@@ -3338,7 +2848,7 @@ Return Value:
             break;
 
         default:
-            ASSERTMSG ("Invalid Profile status state", FALSE);
+            ASSERTMSG("Invalid Profile status state", FALSE);
         }
     }
 
@@ -3346,51 +2856,41 @@ Return Value:
     // Create the symbolic link.
     //
     RtlInitUnicodeString(&CurrentName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\Current");
-    InitializeObjectAttributes(&Attributes,
-                               &CurrentName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtCreateKey(&CurrentHandle,
-                         KEY_CREATE_LINK,
-                         &Attributes,
-                         0,
-                         NULL,
-                         REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK,
-                         &Disposition);
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCreateControlSet: couldn't create Hardware Profile\\Current %08lx\n",Status));
-    } else {
+    InitializeObjectAttributes(&Attributes, &CurrentName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtCreateKey(&CurrentHandle, KEY_CREATE_LINK, &Attributes, 0, NULL,
+                         REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, &Disposition);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK,
+                     "CM: CmpCreateControlSet: couldn't create Hardware Profile\\Current %08lx\n", Status));
+    }
+    else
+    {
         ASSERT(Disposition == REG_CREATED_NEW_KEY);
 
-        sprintf(AsciiBuffer, "\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\%04d",HWProfile);
+        sprintf(AsciiBuffer, "\\Registry\\Machine\\System\\CurrentControlSet\\Hardware Profiles\\%04d", HWProfile);
         RtlInitAnsiString(&AnsiString, AsciiBuffer);
         CurrentName.MaximumLength = sizeof(UnicodeBuffer);
         CurrentName.Buffer = UnicodeBuffer;
-        Status = RtlAnsiStringToUnicodeString(&CurrentName,
-                                              &AnsiString,
-                                              FALSE);
-        ASSERT (STATUS_SUCCESS == Status);
+        Status = RtlAnsiStringToUnicodeString(&CurrentName, &AnsiString, FALSE);
+        ASSERT(STATUS_SUCCESS == Status);
 
-        Status = NtSetValueKey(CurrentHandle,
-                               &CmSymbolicLinkValueName,
-                               0,
-                               REG_LINK,
-                               CurrentName.Buffer,
-                               CurrentName.Length);
+        Status =
+            NtSetValueKey(CurrentHandle, &CmSymbolicLinkValueName, 0, REG_LINK, CurrentName.Buffer, CurrentName.Length);
 
         NtClose(CurrentHandle);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCreateControlSet: couldn't create symbolic link "));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"to %wZ\n",&CurrentName));
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"    Status=%08lx\n",Status));
-
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCreateControlSet: couldn't create symbolic link "));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "to %wZ\n", &CurrentName));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "    Status=%08lx\n", Status));
         }
     }
 
-    if (signalAcpiEvent) {
+    if (signalAcpiEvent)
+    {
         //
         // We are booting in the undocked state.
         // This is interesting because our buddies in PnP cannot tell
@@ -3409,36 +2909,33 @@ Return Value:
         newDockState.SerialLength = 2;
         newDockState.SerialNumber[0] = L'\0';
 
-        Status = CmSetAcpiHwProfile (&newDockState,
-                                     CmpHwprofileDefaultSelect,
-                                     NULL,
-                                     &profile,
-                                     &changed);
+        Status = CmSetAcpiHwProfile(&newDockState, CmpHwprofileDefaultSelect, NULL, &profile, &changed);
 
-        ASSERT (NT_SUCCESS (Status));
-        NtClose (profile);
+        ASSERT(NT_SUCCESS(Status));
+        NtClose(profile);
     }
 
 
 Cleanup:
-    if (IDConfigDB) {
-        NtClose (IDConfigDB);
+    if (IDConfigDB)
+    {
+        NtClose(IDConfigDB);
     }
-    if (CurrentProfile) {
-        NtClose (CurrentProfile);
+    if (CurrentProfile)
+    {
+        NtClose(CurrentProfile);
     }
-    if (ParentOfProfile) {
-        NtClose (ParentOfProfile);
+    if (ParentOfProfile)
+    {
+        NtClose(ParentOfProfile);
     }
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-
+
 NTSTATUS
-CmpCloneControlSet(
-    VOID
-    )
+CmpCloneControlSet(VOID)
 
 /*++
 
@@ -3480,81 +2977,68 @@ Return Value:
 
     PAGED_CODE();
 
-    RtlInitUnicodeString(&Current,
-                         L"\\Registry\\Machine\\System\\CurrentControlSet");
-    RtlInitUnicodeString(&Clone,
-                         L"\\Registry\\Machine\\System\\Clone");
+    RtlInitUnicodeString(&Current, L"\\Registry\\Machine\\System\\CurrentControlSet");
+    RtlInitUnicodeString(&Clone, L"\\Registry\\Machine\\System\\Clone");
 
-    InitializeObjectAttributes(&Attributes,
-                               &Current,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtOpenKey(&CurrentHandle,
-                       KEY_READ,
-                       &Attributes);
-    if (!NT_SUCCESS(Status)) {
+    InitializeObjectAttributes(&Attributes, &Current, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtOpenKey(&CurrentHandle, KEY_READ, &Attributes);
+    if (!NT_SUCCESS(Status))
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCloneControlSet couldn't open CurrentControlSet %08lx\n",Status));
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCloneControlSet couldn't open CurrentControlSet %08lx\n", Status));
 
-        return(Status);
+        return (Status);
     }
 
     //
     // Get the security descriptor from the key so we can create the clone
     // tree with the correct ACL.
     //
-    Status = NtQuerySecurityObject(CurrentHandle,
-                                   DACL_SECURITY_INFORMATION,
-                                   NULL,
-                                   0,
-                                   &SecurityLength);
-    if (Status==STATUS_BUFFER_TOO_SMALL) {
-        Security=ExAllocatePool(PagedPool,SecurityLength);
-        if (Security!=NULL) {
-            Status = NtQuerySecurityObject(CurrentHandle,
-                                           DACL_SECURITY_INFORMATION,
-                                           Security,
-                                           SecurityLength,
+    Status = NtQuerySecurityObject(CurrentHandle, DACL_SECURITY_INFORMATION, NULL, 0, &SecurityLength);
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
+        Security = ExAllocatePool(PagedPool, SecurityLength);
+        if (Security != NULL)
+        {
+            Status = NtQuerySecurityObject(CurrentHandle, DACL_SECURITY_INFORMATION, Security, SecurityLength,
                                            &SecurityLength);
-            if (!NT_SUCCESS(Status)) {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCloneControlSet - NtQuerySecurityObject failed %08lx\n",Status));
+            if (!NT_SUCCESS(Status))
+            {
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK,
+                             "CM: CmpCloneControlSet - NtQuerySecurityObject failed %08lx\n", Status));
                 ExFreePool(Security);
-                Security=NULL;
+                Security = NULL;
             }
         }
-    } else {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCloneControlSet - NtQuerySecurityObject returned %08lx\n",Status));
-        Security=NULL;
+    }
+    else
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCloneControlSet - NtQuerySecurityObject returned %08lx\n",
+                     Status));
+        Security = NULL;
     }
 
-    InitializeObjectAttributes(&Attributes,
-                               &Clone,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               Security);
-    Status = NtCreateKey(&CloneHandle,
-                         KEY_READ | KEY_WRITE,
-                         &Attributes,
-                         0,
-                         NULL,
-                         REG_OPTION_VOLATILE,
-                         &Disposition);
-    if (Security!=NULL) {
+    InitializeObjectAttributes(&Attributes, &Clone, OBJ_CASE_INSENSITIVE, NULL, Security);
+    Status = NtCreateKey(&CloneHandle, KEY_READ | KEY_WRITE, &Attributes, 0, NULL, REG_OPTION_VOLATILE, &Disposition);
+    if (Security != NULL)
+    {
         ExFreePool(Security);
     }
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCloneControlSet couldn't create Clone %08lx\n",Status));
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCloneControlSet couldn't create Clone %08lx\n", Status));
         NtClose(CurrentHandle);
-        return(Status);
+        return (Status);
     }
 
     //
     // Check to make sure the key was created.  If it already exists,
     // something is wrong.
     //
-    if (Disposition != REG_CREATED_NEW_KEY) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCloneControlSet: Clone tree already exists!\n"));
+    if (Disposition != REG_CREATED_NEW_KEY)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCloneControlSet: Clone tree already exists!\n"));
 
         //
         // WARNNOTE:
@@ -3566,42 +3050,39 @@ Return Value:
         goto Exit;
     }
 
-    Status = ObReferenceObjectByHandle(CurrentHandle,
-                                       KEY_READ,
-                                       CmpKeyObjectType,
-                                       KernelMode,
-                                       (PVOID *)(&CurrentKey),
-                                       NULL);
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCloneControlSet: couldn't reference CurrentHandle %08lx\n",Status));
+    Status =
+        ObReferenceObjectByHandle(CurrentHandle, KEY_READ, CmpKeyObjectType, KernelMode, (PVOID *)(&CurrentKey), NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCloneControlSet: couldn't reference CurrentHandle %08lx\n",
+                     Status));
         goto Exit;
     }
 
-    Status = ObReferenceObjectByHandle(CloneHandle,
-                                       KEY_WRITE,
-                                       CmpKeyObjectType,
-                                       KernelMode,
-                                       (PVOID *)(&CloneKey),
-                                       NULL);
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCloneControlSet: couldn't reference CurrentHandle %08lx\n",Status));
+    Status =
+        ObReferenceObjectByHandle(CloneHandle, KEY_WRITE, CmpKeyObjectType, KernelMode, (PVOID *)(&CloneKey), NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCloneControlSet: couldn't reference CurrentHandle %08lx\n",
+                     Status));
         ObDereferenceObject((PVOID)CurrentKey);
         goto Exit;
     }
 
     CmpLockRegistryExclusive();
 
-    if (CmpCopyTree(CurrentKey->KeyControlBlock->KeyHive,
-                    CurrentKey->KeyControlBlock->KeyCell,
-                    CloneKey->KeyControlBlock->KeyHive,
-                    CloneKey->KeyControlBlock->KeyCell)) {
+    if (CmpCopyTree(CurrentKey->KeyControlBlock->KeyHive, CurrentKey->KeyControlBlock->KeyCell,
+                    CloneKey->KeyControlBlock->KeyHive, CloneKey->KeyControlBlock->KeyCell))
+    {
         //
         // Set the max subkey name property for the new target key.
         //
         CmpRebuildKcbCache(CloneKey->KeyControlBlock);
         Status = STATUS_SUCCESS;
-    } else {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpCloneControlSet: tree copy failed.\n"));
+    }
+    else
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpCloneControlSet: tree copy failed.\n"));
         Status = STATUS_REGISTRY_CORRUPT;
     }
 
@@ -3613,8 +3094,7 @@ Return Value:
 Exit:
     NtClose(CurrentHandle);
     NtClose(CloneHandle);
-    return(Status);
-
+    return (Status);
 }
 
 NTSTATUS
@@ -3648,263 +3128,237 @@ Return Value:
                                 set was not saved.
 --*/
 {
-   UNICODE_STRING SavedBoot, Boot;
-   HANDLE BootHandle, SavedBootHandle;
-   OBJECT_ATTRIBUTES Attributes;
-   NTSTATUS Status;
-   PCM_KEY_BODY BootKey, SavedBootKey;
-   ULONG Disposition;
-   PSECURITY_DESCRIPTOR Security;
-   ULONG SecurityLength;
-   BOOLEAN CopyRet;
-   WCHAR Buffer[128];
+    UNICODE_STRING SavedBoot, Boot;
+    HANDLE BootHandle, SavedBootHandle;
+    OBJECT_ATTRIBUTES Attributes;
+    NTSTATUS Status;
+    PCM_KEY_BODY BootKey, SavedBootKey;
+    ULONG Disposition;
+    PSECURITY_DESCRIPTOR Security;
+    ULONG SecurityLength;
+    BOOLEAN CopyRet;
+    WCHAR Buffer[128];
 
-   //
-   // Figure out where the boot control set is
-   //
+    //
+    // Figure out where the boot control set is
+    //
 
 #if CLONE_CONTROL_SET
 
-   //
-   // If we have cloned the control set, then use the clone
-   // since it is guaranteed to have an untouched copy of the
-   // boot control set
-   //
+    //
+    // If we have cloned the control set, then use the clone
+    // since it is guaranteed to have an untouched copy of the
+    // boot control set
+    //
 
-   RtlInitUnicodeString(&Boot,
-                        L"\\Registry\\Machine\\System\\Clone");
+    RtlInitUnicodeString(&Boot, L"\\Registry\\Machine\\System\\Clone");
 
-   InitializeObjectAttributes(&Attributes,
-                              &Boot,
-                              OBJ_CASE_INSENSITIVE,
-                              NULL,
-                              NULL);
+    InitializeObjectAttributes(&Attributes, &Boot, OBJ_CASE_INSENSITIVE, NULL, NULL);
 #else
 
-   //
-   // If we are not using the clone, then just use the
-   // current control set.
-   //
+    //
+    // If we are not using the clone, then just use the
+    // current control set.
+    //
 
-   InitializeObjectAttributes(&Attributes,
-                              &CmRegistryMachineSystemCurrentControlSet,
-                              OBJ_CASE_INSENSITIVE,
-                              NULL,
-                              NULL);
+    InitializeObjectAttributes(&Attributes, &CmRegistryMachineSystemCurrentControlSet, OBJ_CASE_INSENSITIVE, NULL,
+                               NULL);
 #endif
 
-   //
-   // Open the boot control set
-   //
+    //
+    // Open the boot control set
+    //
 
-   Status = NtOpenKey(&BootHandle,
-                      KEY_READ,
-                      &Attributes);
+    Status = NtOpenKey(&BootHandle, KEY_READ, &Attributes);
 
 
-   if (!NT_SUCCESS(Status)) return(Status);
+    if (!NT_SUCCESS(Status))
+        return (Status);
 
-   //
-   // We may be saving the boot control set into a brand new
-   // tree that we will create. If this is true, then we will
-   // need to create the root node of this tree below
-   // and give it the right security descriptor. So, we fish
-   // the security descriptor out of the root node of the
-   // boot control set tree.
-   //
+    //
+    // We may be saving the boot control set into a brand new
+    // tree that we will create. If this is true, then we will
+    // need to create the root node of this tree below
+    // and give it the right security descriptor. So, we fish
+    // the security descriptor out of the root node of the
+    // boot control set tree.
+    //
 
-   Status = NtQuerySecurityObject(BootHandle,
-                                  DACL_SECURITY_INFORMATION,
-                                  NULL,
-                                  0,
-                                  &SecurityLength);
+    Status = NtQuerySecurityObject(BootHandle, DACL_SECURITY_INFORMATION, NULL, 0, &SecurityLength);
 
 
-   if (Status==STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
 
-      Security=ExAllocatePool(PagedPool,SecurityLength);
+        Security = ExAllocatePool(PagedPool, SecurityLength);
 
-      if (Security!=NULL) {
+        if (Security != NULL)
+        {
 
-         Status = NtQuerySecurityObject(BootHandle,
-                                        DACL_SECURITY_INFORMATION,
-                                        Security,
-                                        SecurityLength,
-                                        &SecurityLength);
-
-
-         if (!NT_SUCCESS(Status)) {
-            ExFreePool(Security);
-            Security=NULL;
-         }
-      }
-
-   } else {
-      Security=NULL;
-   }
-
-   //
-   // Now, create the path of the control set we will be saving to
-   //
-
-   swprintf(Buffer, L"\\Registry\\Machine\\System\\ControlSet%03d", ControlSetNum);
-
-   RtlInitUnicodeString(&SavedBoot,
-                        Buffer);
-
-   //
-   // Open/Create the control set to which we are saving
-   //
-
-   InitializeObjectAttributes(&Attributes,
-                              &SavedBoot,
-                              OBJ_CASE_INSENSITIVE,
-                              NULL,
-                              Security);
-
-   Status = NtCreateKey(&SavedBootHandle,
-                        KEY_READ | KEY_WRITE,
-                        &Attributes,
-                        0,
-                        NULL,
-                        REG_OPTION_NON_VOLATILE,
-                        &Disposition);
+            Status =
+                NtQuerySecurityObject(BootHandle, DACL_SECURITY_INFORMATION, Security, SecurityLength, &SecurityLength);
 
 
-   if (Security) ExFreePool(Security);
+            if (!NT_SUCCESS(Status))
+            {
+                ExFreePool(Security);
+                Security = NULL;
+            }
+        }
+    }
+    else
+    {
+        Security = NULL;
+    }
 
-   if (!NT_SUCCESS(Status)) {
-      NtClose(BootHandle);
-      return(Status);
-   }
+    //
+    // Now, create the path of the control set we will be saving to
+    //
 
-   //
-   // Get the key objects for out two controls
-   //
+    swprintf(Buffer, L"\\Registry\\Machine\\System\\ControlSet%03d", ControlSetNum);
 
-   Status = ObReferenceObjectByHandle(BootHandle,
-                                      KEY_READ,
-                                      CmpKeyObjectType,
-                                      KernelMode,
-                                      (PVOID *)(&BootKey),
-                                      NULL);
+    RtlInitUnicodeString(&SavedBoot, Buffer);
 
-   if (!NT_SUCCESS(Status)) goto Exit;
+    //
+    // Open/Create the control set to which we are saving
+    //
 
-   Status = ObReferenceObjectByHandle(SavedBootHandle,
-                                      KEY_WRITE,
-                                      CmpKeyObjectType,
-                                      KernelMode,
-                                      (PVOID *)(&SavedBootKey),
-                                      NULL);
+    InitializeObjectAttributes(&Attributes, &SavedBoot, OBJ_CASE_INSENSITIVE, NULL, Security);
+
+    Status = NtCreateKey(&SavedBootHandle, KEY_READ | KEY_WRITE, &Attributes, 0, NULL, REG_OPTION_NON_VOLATILE,
+                         &Disposition);
 
 
-   if (!NT_SUCCESS(Status)) {
-      ObDereferenceObject((PVOID)BootKey);
-      goto Exit;
-   }
+    if (Security)
+        ExFreePool(Security);
 
-   //
-   // Lock the registry and do the actual saving
-   //
+    if (!NT_SUCCESS(Status))
+    {
+        NtClose(BootHandle);
+        return (Status);
+    }
 
-   CmpLockRegistryExclusive();
+    //
+    // Get the key objects for out two controls
+    //
 
-   if (Disposition == REG_CREATED_NEW_KEY) {
+    Status = ObReferenceObjectByHandle(BootHandle, KEY_READ, CmpKeyObjectType, KernelMode, (PVOID *)(&BootKey), NULL);
 
-      //
-      // If we are saving to a control set that we have just
-      // created, it is most efficient to just copy
-      // the boot control set tree into the new control set.
-      //
+    if (!NT_SUCCESS(Status))
+        goto Exit;
 
-      //
-      // N.B. We copy the volatile keys only if we are using
-      //      a clone and thus our boot control set tree is
-      //      composed only of volatile keys.
-      //
+    Status = ObReferenceObjectByHandle(SavedBootHandle, KEY_WRITE, CmpKeyObjectType, KernelMode,
+                                       (PVOID *)(&SavedBootKey), NULL);
 
-      CopyRet = CmpCopyTreeEx(BootKey->KeyControlBlock->KeyHive,
-                              BootKey->KeyControlBlock->KeyCell,
-                              SavedBootKey->KeyControlBlock->KeyHive,
-                              SavedBootKey->KeyControlBlock->KeyCell,
-                              CLONE_CONTROL_SET);
+
+    if (!NT_SUCCESS(Status))
+    {
+        ObDereferenceObject((PVOID)BootKey);
+        goto Exit;
+    }
+
+    //
+    // Lock the registry and do the actual saving
+    //
+
+    CmpLockRegistryExclusive();
+
+    if (Disposition == REG_CREATED_NEW_KEY)
+    {
+
+        //
+        // If we are saving to a control set that we have just
+        // created, it is most efficient to just copy
+        // the boot control set tree into the new control set.
+        //
+
+        //
+        // N.B. We copy the volatile keys only if we are using
+        //      a clone and thus our boot control set tree is
+        //      composed only of volatile keys.
+        //
+
+        CopyRet = CmpCopyTreeEx(BootKey->KeyControlBlock->KeyHive, BootKey->KeyControlBlock->KeyCell,
+                                SavedBootKey->KeyControlBlock->KeyHive, SavedBootKey->KeyControlBlock->KeyCell,
+                                CLONE_CONTROL_SET);
 
         //
         // Set the max subkey name property for the new target key.
         //
         CmpRebuildKcbCache(SavedBootKey->KeyControlBlock);
-   } else {
+    }
+    else
+    {
 
-      //
-      // If we are saving to a control set that already exists
-      // then its likely that this control set is nearly identical
-      // to the boot control set (control sets don't change much
-      // between boots).
-      //
-      // Furthermore, the control set we are saving to must be old
-      // and hence has not been modified at all since it ceased
-      // being a current control set.
-      //
-      // Thus, it is most efficient for us to simply synchronize
-      // the target control set with the boot control set.
-      //
+        //
+        // If we are saving to a control set that already exists
+        // then its likely that this control set is nearly identical
+        // to the boot control set (control sets don't change much
+        // between boots).
+        //
+        // Furthermore, the control set we are saving to must be old
+        // and hence has not been modified at all since it ceased
+        // being a current control set.
+        //
+        // Thus, it is most efficient for us to simply synchronize
+        // the target control set with the boot control set.
+        //
 
-      //
-      // N.B. We sync the volatile keys only if we are using
-      //      a clone for the same reasons as stated above.
-      //
+        //
+        // N.B. We sync the volatile keys only if we are using
+        //      a clone for the same reasons as stated above.
+        //
 
-      CopyRet = CmpSyncTrees(BootKey->KeyControlBlock->KeyHive,
-                             BootKey->KeyControlBlock->KeyCell,
-                             SavedBootKey->KeyControlBlock->KeyHive,
-                             SavedBootKey->KeyControlBlock->KeyCell,
-                             CLONE_CONTROL_SET);
-      CmpRebuildKcbCache(SavedBootKey->KeyControlBlock);
-   }
+        CopyRet = CmpSyncTrees(BootKey->KeyControlBlock->KeyHive, BootKey->KeyControlBlock->KeyCell,
+                               SavedBootKey->KeyControlBlock->KeyHive, SavedBootKey->KeyControlBlock->KeyCell,
+                               CLONE_CONTROL_SET);
+        CmpRebuildKcbCache(SavedBootKey->KeyControlBlock);
+    }
 
-   //
-   // Check if the Copy/Sync succeeded and adjust our return code
-   // accordingly.
-   //
+    //
+    // Check if the Copy/Sync succeeded and adjust our return code
+    // accordingly.
+    //
 
-   if (CopyRet) {
-      Status = STATUS_SUCCESS;
-   } else {
-      Status = STATUS_REGISTRY_CORRUPT;
-   }
+    if (CopyRet)
+    {
+        Status = STATUS_SUCCESS;
+    }
+    else
+    {
+        Status = STATUS_REGISTRY_CORRUPT;
+    }
 
-   //
-   // All done. Clean up.
-   //
+    //
+    // All done. Clean up.
+    //
 
-   CmpUnlockRegistry();
+    CmpUnlockRegistry();
 
-   ObDereferenceObject((PVOID)BootKey);
-   ObDereferenceObject((PVOID)SavedBootKey);
+    ObDereferenceObject((PVOID)BootKey);
+    ObDereferenceObject((PVOID)SavedBootKey);
 
 Exit:
 
-   NtClose(BootHandle);
-   NtClose(SavedBootHandle);
+    NtClose(BootHandle);
+    NtClose(SavedBootHandle);
 
 #if CLONE_CONTROL_SET
 
-   //
-   // If we have been using a clone, then the clone is no longer
-   // needed since we have saved its contents into a non-volatile
-   // control set. Thus, we can just erase it.
-   //
+    //
+    // If we have been using a clone, then the clone is no longer
+    // needed since we have saved its contents into a non-volatile
+    // control set. Thus, we can just erase it.
+    //
 
-   if(NT_SUCCESS(Status))
-   {
-      CmpDeleteCloneTree();
-   }
+    if (NT_SUCCESS(Status))
+    {
+        CmpDeleteCloneTree();
+    }
 
 #endif
 
-   return(Status);
-
+    return (Status);
 }
 
 NTSTATUS
@@ -3925,23 +3379,15 @@ Return Value:
 
 --*/
 {
-   OBJECT_ATTRIBUTES   Obja;
+    OBJECT_ATTRIBUTES Obja;
 
-   InitializeObjectAttributes(
-       &Obja,
-       &CmRegistrySystemCloneName,
-       OBJ_CASE_INSENSITIVE,
-       (HANDLE)NULL,
-       NULL);
+    InitializeObjectAttributes(&Obja, &CmRegistrySystemCloneName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
-   return NtUnloadKey(&Obja);
+    return NtUnloadKey(&Obja);
 }
 
-
-VOID
-CmBootLastKnownGood(
-    ULONG ErrorLevel
-    )
+
+VOID CmBootLastKnownGood(ULONG ErrorLevel)
 
 /*++
 
@@ -3980,7 +3426,8 @@ Return Value:
 
     PAGED_CODE();
 
-    if (CmFirstTime != TRUE) {
+    if (CmFirstTime != TRUE)
+    {
 
         //
         // NtInitializeRegistry has been called, so handling
@@ -3990,43 +3437,52 @@ Return Value:
         return;
     }
 
-    switch (ErrorLevel) {
-        case NormalError:
-        case IgnoreError:
-            break;
+    switch (ErrorLevel)
+    {
+    case NormalError:
+    case IgnoreError:
+        break;
 
-        case SevereError:
-            if (CmIsLastKnownGoodBoot()) {
-                break;
-            } else {
-                Status = HalSetEnvironmentVariable("LastKnownGood", "TRUE");
-                if (Status == ESUCCESS) {
-                    HalReturnToFirmware(HalRebootRoutine);
-                }
-            }
+    case SevereError:
+        if (CmIsLastKnownGoodBoot())
+        {
             break;
+        }
+        else
+        {
+            Status = HalSetEnvironmentVariable("LastKnownGood", "TRUE");
+            if (Status == ESUCCESS)
+            {
+                HalReturnToFirmware(HalRebootRoutine);
+            }
+        }
+        break;
 
-        case CriticalError:
-            if (CmIsLastKnownGoodBoot()) {
-                CM_BUGCHECK( CRITICAL_SERVICE_FAILED, BAD_LAST_KNOWN_GOOD, 1, 0, 0 );
-            } else {
-                Status = HalSetEnvironmentVariable("LastKnownGood", "TRUE");
-                if (Status == ESUCCESS) {
-                    HalReturnToFirmware(HalRebootRoutine);
-                } else {
-                    CM_BUGCHECK( SET_ENV_VAR_FAILED, BAD_LAST_KNOWN_GOOD, 2, 0, 0 );
-                }
+    case CriticalError:
+        if (CmIsLastKnownGoodBoot())
+        {
+            CM_BUGCHECK(CRITICAL_SERVICE_FAILED, BAD_LAST_KNOWN_GOOD, 1, 0, 0);
+        }
+        else
+        {
+            Status = HalSetEnvironmentVariable("LastKnownGood", "TRUE");
+            if (Status == ESUCCESS)
+            {
+                HalReturnToFirmware(HalRebootRoutine);
             }
-            break;
+            else
+            {
+                CM_BUGCHECK(SET_ENV_VAR_FAILED, BAD_LAST_KNOWN_GOOD, 2, 0, 0);
+            }
+        }
+        break;
     }
     return;
 }
 
-
+
 BOOLEAN
-CmIsLastKnownGoodBoot(
-    VOID
-    )
+CmIsLastKnownGoodBoot(VOID)
 
 /*++
 
@@ -4062,50 +3518,40 @@ Return Value:
     ULONG Current;
     ULONG LKG;
     RTL_QUERY_REGISTRY_TABLE QueryTable[] = {
-        {NULL,      RTL_QUERY_REGISTRY_DIRECT,
-         L"Current", &Current,
-         REG_DWORD, (PVOID)&Current, 0 },
-        {NULL,      RTL_QUERY_REGISTRY_DIRECT,
-         L"LastKnownGood", &LKG,
-         REG_DWORD, (PVOID)&LKG, 0 },
-        {NULL,      RTL_QUERY_REGISTRY_DIRECT,
-         L"Default", &Default,
-         REG_DWORD, (PVOID)&Default, 0 },
-        {NULL,      0,
-         NULL, NULL,
-         REG_NONE, NULL, 0 }
+        { NULL, RTL_QUERY_REGISTRY_DIRECT, L"Current", &Current, REG_DWORD, (PVOID)&Current, 0 },
+        { NULL, RTL_QUERY_REGISTRY_DIRECT, L"LastKnownGood", &LKG, REG_DWORD, (PVOID)&LKG, 0 },
+        { NULL, RTL_QUERY_REGISTRY_DIRECT, L"Default", &Default, REG_DWORD, (PVOID)&Default, 0 },
+        { NULL, 0, NULL, NULL, REG_NONE, NULL, 0 }
     };
 
     PAGED_CODE();
 
-    Status = RtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE,
-                                    L"\\Registry\\Machine\\System\\Select",
-                                    QueryTable,
-                                    NULL,
-                                    NULL);
+    Status =
+        RtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, L"\\Registry\\Machine\\System\\Select", QueryTable, NULL, NULL);
     //
     // If this failed, something is severely wrong.
     //
 
     ASSERT(NT_SUCCESS(Status));
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"CmIsLastKnownGoodBoot: RtlQueryRegistryValues "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"failed, Status %08lx\n", Status));
-        return(FALSE);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "CmIsLastKnownGoodBoot: RtlQueryRegistryValues "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "failed, Status %08lx\n", Status));
+        return (FALSE);
     }
 
-    if ((LKG == Current) && (Current != Default)){
-        return(TRUE);
-    } else {
-        return(FALSE);
+    if ((LKG == Current) && (Current != Default))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        return (FALSE);
     }
 }
 
 BOOLEAN
-CmpLinkKeyToHive(
-    PWSTR   KeyPath,
-    PWSTR   HivePath
-    )
+CmpLinkKeyToHive(PWSTR KeyPath, PWSTR HivePath)
 
 /*++
 
@@ -4142,22 +3588,14 @@ Return Value:
     //
 
     RtlInitUnicodeString(&KeyName, KeyPath);
-    InitializeObjectAttributes(&Attributes,
-                               &KeyName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtCreateKey(&LinkHandle,
-                         KEY_CREATE_LINK,
-                         &Attributes,
-                         0,
-                         NULL,
-                         REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK,
-                         &Disposition);
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpLinkKeyToHive: couldn't create %S\n", &KeyName));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"    Status = %08lx\n",Status));
-        return(FALSE);
+    InitializeObjectAttributes(&Attributes, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtCreateKey(&LinkHandle, KEY_CREATE_LINK, &Attributes, 0, NULL,
+                         REG_OPTION_VOLATILE | REG_OPTION_CREATE_LINK, &Disposition);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpLinkKeyToHive: couldn't create %S\n", &KeyName));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "    Status = %08lx\n", Status));
+        return (FALSE);
     }
 
     //
@@ -4165,32 +3603,27 @@ Return Value:
     // this key is always created volatile, it should never be present in
     // the hive when we boot.
     //
-    if (Disposition != REG_CREATED_NEW_KEY) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpLinkKeyToHive: %S already exists!\n", &KeyName));
+    if (Disposition != REG_CREATED_NEW_KEY)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpLinkKeyToHive: %S already exists!\n", &KeyName));
         NtClose(LinkHandle);
-        return(FALSE);
+        return (FALSE);
     }
 
     RtlInitUnicodeString(&LinkName, HivePath);
-    Status = NtSetValueKey(LinkHandle,
-                           &CmSymbolicLinkValueName,
-                           0,
-                           REG_LINK,
-                           LinkName.Buffer,
-                           LinkName.Length);
+    Status = NtSetValueKey(LinkHandle, &CmSymbolicLinkValueName, 0, REG_LINK, LinkName.Buffer, LinkName.Length);
     NtClose(LinkHandle);
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CM: CmpLinkKeyToHive: couldn't create symbolic link for %S\n", HivePath));
-        return(FALSE);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, CML_BUGCHECK, "CM: CmpLinkKeyToHive: couldn't create symbolic link for %S\n", HivePath));
+        return (FALSE);
     }
 
-    return(TRUE);
+    return (TRUE);
 }
 
-VOID
-CmpCreatePerfKeys(
-    VOID
-    )
+VOID CmpCreatePerfKeys(VOID)
 
 /*++
 
@@ -4221,15 +3654,10 @@ Return Value:
 
     RtlInitUnicodeString(&String, CmpRegistryPerflibString);
 
-    InitializeObjectAttributes(&Attributes,
-                               &String,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
-    Status = NtOpenKey(&Perflib,
-                       KEY_WRITE,
-                       &Attributes);
-    if (!NT_SUCCESS(Status)) {
+    InitializeObjectAttributes(&Attributes, &String, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    Status = NtOpenKey(&Perflib, KEY_WRITE, &Attributes);
+    if (!NT_SUCCESS(Status))
+    {
         return;
     }
 
@@ -4237,41 +3665,35 @@ Return Value:
     //
     // Always create the predefined keys for the english language
     //
-    CmpCreatePredefined(Perflib,
-                        L"009",
-                        HKEY_PERFORMANCE_TEXT);
+    CmpCreatePredefined(Perflib, L"009", HKEY_PERFORMANCE_TEXT);
 
     //
     // If the default language is not english, create a predefined key for
     // that, too.
     //
-    if (PsDefaultSystemLocaleId != 0x00000409) {
+    if (PsDefaultSystemLocaleId != 0x00000409)
+    {
         Language = LANGIDFROMLCID(PsDefaultSystemLocaleId) & 0xff;
         LanguageId[3] = L'\0';
-        for (i=2;i>=0;i--) {
+        for (i = 2; i >= 0; i--)
+        {
             c = Language % 16;
-            if (c>9) {
-                LanguageId[i]= c+L'A'-10;
-            } else {
-                LanguageId[i]= c+L'0';
+            if (c > 9)
+            {
+                LanguageId[i] = c + L'A' - 10;
+            }
+            else
+            {
+                LanguageId[i] = c + L'0';
             }
             Language = Language >> 4;
         }
-        CmpCreatePredefined(Perflib,
-                            LanguageId,
-                            HKEY_PERFORMANCE_NLSTEXT);
+        CmpCreatePredefined(Perflib, LanguageId, HKEY_PERFORMANCE_NLSTEXT);
     }
-
-
 }
 
-
-VOID
-CmpCreatePredefined(
-    IN HANDLE Root,
-    IN PWSTR KeyName,
-    IN HANDLE PredefinedHandle
-    )
+
+VOID CmpCreatePredefined(IN HANDLE Root, IN PWSTR KeyName, IN HANDLE PredefinedHandle)
 
 /*++
 
@@ -4312,18 +3734,9 @@ Return Value:
     ParseContext.PredefinedHandle = PredefinedHandle;
 
     RtlInitUnicodeString(&Name, KeyName);
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &Name,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               Root,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &Name, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, Root, NULL);
 
-    Status = ObOpenObjectByName(&ObjectAttributes,
-                                CmpKeyObjectType,
-                                KernelMode,
-                                NULL,
-                                KEY_READ,
-                                (PVOID)&ParseContext,
+    Status = ObOpenObjectByName(&ObjectAttributes, CmpKeyObjectType, KernelMode, NULL, KEY_READ, (PVOID)&ParseContext,
                                 &Handle);
 
     ASSERT(CmpMiniNTBoot || NT_SUCCESS(Status));
@@ -4332,12 +3745,10 @@ Return Value:
         ZwClose(Handle);
 }
 
-BOOLEAN   CmpSystemHiveConversionFailed = FALSE;
+BOOLEAN CmpSystemHiveConversionFailed = FALSE;
 
 NTSTATUS
-CmpSetupPrivateWrite(
-    PCMHIVE             CmHive
-    )
+CmpSetupPrivateWrite(PCMHIVE CmHive)
 /*++
 
 Routine Description:
@@ -4354,9 +3765,9 @@ Return Value:
 
 --*/
 {
-    ULONG       FileOffset;
-    ULONG       Data;
-    NTSTATUS    Status;
+    ULONG FileOffset;
+    ULONG Data;
+    NTSTATUS Status;
 
     PAGED_CODE()
 
@@ -4364,14 +3775,7 @@ Return Value:
     //  We need to issue a read from the file, to trigger the cache initialization
     //
     FileOffset = 0;
-    if ( ! (((PHHIVE)CmHive)->FileRead)(
-                    (PHHIVE)CmHive,
-                    HFILE_TYPE_PRIMARY,
-                    &FileOffset,
-                    (PVOID)&Data,
-                    sizeof(ULONG)
-                    )
-       )
+    if (!(((PHHIVE)CmHive)->FileRead)((PHHIVE)CmHive, HFILE_TYPE_PRIMARY, &FileOffset, (PVOID)&Data, sizeof(ULONG)))
     {
         return STATUS_REGISTRY_IO_FAILED;
     }
@@ -4380,8 +3784,9 @@ Return Value:
     // Aquire the file object for the primary; This should be called AFTER the
     // cache has been initialized.
     //
-    Status = CmpAquireFileObjectForFile(CmHive,CmHive->FileHandles[HFILE_TYPE_PRIMARY],&(CmHive->FileObject));
-    if( !NT_SUCCESS(Status) ) {
+    Status = CmpAquireFileObjectForFile(CmHive, CmHive->FileHandles[HFILE_TYPE_PRIMARY], &(CmHive->FileObject));
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -4397,12 +3802,9 @@ Return Value:
 //
 // This thread is used to load the machine hives in paralel
 //
-extern  ULONG   CmpCheckHiveIndex;
+extern ULONG CmpCheckHiveIndex;
 
-VOID
-CmpLoadHiveThread(
-    IN PVOID StartContext
-    )
+VOID CmpLoadHiveThread(IN PVOID StartContext)
 /*++
 
 Routine Description:
@@ -4417,49 +3819,46 @@ Return Value:
 
 --*/
 {
-    UCHAR   FileBuffer[MAX_NAME];
-    UCHAR   RegBuffer[MAX_NAME];
+    UCHAR FileBuffer[MAX_NAME];
+    UCHAR RegBuffer[MAX_NAME];
 
     UNICODE_STRING TempName;
     UNICODE_STRING FileName;
     UNICODE_STRING RegName;
 
-    USHORT  FileStart;
-    USHORT  RegStart;
-    ULONG   i;
+    USHORT FileStart;
+    USHORT RegStart;
+    ULONG i;
     PCMHIVE CmHive;
-    HANDLE  PrimaryHandle;
-    HANDLE  LogHandle;
-    ULONG   PrimaryDisposition;
-    ULONG   SecondaryDisposition;
-    ULONG   Length;
+    HANDLE PrimaryHandle;
+    HANDLE LogHandle;
+    ULONG PrimaryDisposition;
+    ULONG SecondaryDisposition;
+    ULONG Length;
     NTSTATUS Status;
     BOOLEAN RegistryLocked = TRUE;
 
-    PVOID   ErrorParameters;
-    ULONG   ErrorResponse;
-    ULONG   ClusterSize;
-    ULONG   LocalWorkerIncrement;
+    PVOID ErrorParameters;
+    ULONG ErrorResponse;
+    ULONG ClusterSize;
+    ULONG LocalWorkerIncrement;
 
     PAGED_CODE();
 
     i = (ULONG)(ULONG_PTR)StartContext;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"CmpLoadHiveThread %i ... starting\n",i));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "CmpLoadHiveThread %i ... starting\n", i));
 
-    ASSERT( CmpMachineHiveList[i].Name != NULL );
+    ASSERT(CmpMachineHiveList[i].Name != NULL);
 
-    if( i == CmpCheckHiveIndex ) {
+    if (i == CmpCheckHiveIndex)
+    {
         //
         // we want to hold this thread until all the others finish, so we have a chance to debug it.
         // last one that finishes will wake us
         //
-        KeWaitForSingleObject( &CmpLoadWorkerDebugEvent,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               NULL );
-        ASSERT( CmpLoadWorkerIncrement == (CM_NUMBER_OF_MACHINE_HIVES - 1) );
+        KeWaitForSingleObject(&CmpLoadWorkerDebugEvent, Executive, KernelMode, FALSE, NULL);
+        ASSERT(CmpLoadWorkerIncrement == (CM_NUMBER_OF_MACHINE_HIVES - 1));
         DbgBreakPoint();
     }
     //
@@ -4469,23 +3868,17 @@ Return Value:
 
     FileName.MaximumLength = MAX_NAME;
     FileName.Length = 0;
-    FileName.Buffer = (PWSTR)&(FileBuffer[0]);
+    FileName.Buffer = (PWSTR) & (FileBuffer[0]);
 
     RegName.MaximumLength = MAX_NAME;
     RegName.Length = 0;
-    RegName.Buffer = (PWSTR)&(RegBuffer[0]);
+    RegName.Buffer = (PWSTR) & (RegBuffer[0]);
 
-    RtlInitUnicodeString(
-        &TempName,
-        INIT_SYSTEMROOT_HIVEPATH
-        );
+    RtlInitUnicodeString(&TempName, INIT_SYSTEMROOT_HIVEPATH);
     RtlAppendStringToString((PSTRING)&FileName, (PSTRING)&TempName);
     FileStart = FileName.Length;
 
-    RtlInitUnicodeString(
-        &TempName,
-        INIT_REGISTRY_MASTERPATH
-        );
+    RtlInitUnicodeString(&TempName, INIT_REGISTRY_MASTERPATH);
     RtlAppendStringToString((PSTRING)&RegName, (PSTRING)&TempName);
     RegStart = RegName.Length;
 
@@ -4497,19 +3890,14 @@ Return Value:
     // REGISTRY
 
     RegName.Length = RegStart;
-    RtlInitUnicodeString(
-        &TempName,
-        CmpMachineHiveList[i].BaseName
-        );
+    RtlInitUnicodeString(&TempName, CmpMachineHiveList[i].BaseName);
     RtlAppendStringToString((PSTRING)&RegName, (PSTRING)&TempName);
 
     // REGISTRY\MACHINE or REGISTRY\USER
 
-    if (RegName.Buffer[ (RegName.Length / sizeof( WCHAR )) - 1 ] == '\\') {
-        RtlInitUnicodeString(
-            &TempName,
-            CmpMachineHiveList[i].Name
-            );
+    if (RegName.Buffer[(RegName.Length / sizeof(WCHAR)) - 1] == '\\')
+    {
+        RtlInitUnicodeString(&TempName, CmpMachineHiveList[i].Name);
         RtlAppendStringToString((PSTRING)&RegName, (PSTRING)&TempName);
     }
 
@@ -4517,52 +3905,37 @@ Return Value:
 
     // <sysroot>\config
 
-    RtlInitUnicodeString(
-        &TempName,
-        CmpMachineHiveList[i].Name
-        );
+    RtlInitUnicodeString(&TempName, CmpMachineHiveList[i].Name);
     FileName.Length = FileStart;
     RtlAppendStringToString((PSTRING)&FileName, (PSTRING)&TempName);
 
     // <sysroot>\config\hive
 
 
-    if (CmpMachineHiveList[i].CmHive == NULL) {
+    if (CmpMachineHiveList[i].CmHive == NULL)
+    {
 
         //
         // Hive has not been inited in any way.
         //
 
         CmpMachineHiveList[i].Allocate = TRUE;
-        Status = CmpInitHiveFromFile(&FileName,
-                                     CmpMachineHiveList[i].Flags,
-                                     &CmHive,
-                                     &(CmpMachineHiveList[i].Allocate),
-                                     &RegistryLocked,
-                                     CM_CHECK_REGISTRY_CHECK_CLEAN
-                                     );
+        Status = CmpInitHiveFromFile(&FileName, CmpMachineHiveList[i].Flags, &CmHive, &(CmpMachineHiveList[i].Allocate),
+                                     &RegistryLocked, CM_CHECK_REGISTRY_CHECK_CLEAN);
 
-        if ( (!NT_SUCCESS(Status)) ||
-             (!CmpShareSystemHives && (CmHive->FileHandles[HFILE_TYPE_LOG] == NULL)) )
+        if ((!NT_SUCCESS(Status)) || (!CmpShareSystemHives && (CmHive->FileHandles[HFILE_TYPE_LOG] == NULL)))
         {
             ErrorParameters = &FileName;
-            ExRaiseHardError(
-                STATUS_CANNOT_LOAD_REGISTRY_FILE,
-                1,
-                1,
-                (PULONG_PTR)&ErrorParameters,
-                OptionOk,
-                &ErrorResponse
-                );
-
+            ExRaiseHardError(STATUS_CANNOT_LOAD_REGISTRY_FILE, 1, 1, (PULONG_PTR)&ErrorParameters, OptionOk,
+                             &ErrorResponse);
         }
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"CmpInitializeHiveList:\n"));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"\tCmHive for '%ws' @", CmpMachineHiveList[i]));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"%08lx", CmHive));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "CmpInitializeHiveList:\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "\tCmHive for '%ws' @", CmpMachineHiveList[i]));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "%08lx", CmHive));
 
         CmpMachineHiveList[i].CmHive2 = CmHive;
-/*
+        /*
 //
 // Dragos: This cannot be done here; we need to do it one step at the time back in CmpInitializeHiveList
 //
@@ -4595,12 +3968,14 @@ Return Value:
             //
         }
 */
-
-    } else {
+    }
+    else
+    {
 
         CmHive = CmpMachineHiveList[i].CmHive;
 
-        if (!(CmHive->Hive.HiveFlags & HIVE_VOLATILE)) {
+        if (!(CmHive->Hive.HiveFlags & HIVE_VOLATILE))
+        {
 
             //
             // CmHive already exists.  It is not an entirely volatile
@@ -4614,32 +3989,17 @@ Return Value:
             //
             BOOLEAN NoBufering = FALSE; // first try to open it cached;
 
-retryNoBufering:
+        retryNoBufering:
 
-            Status = CmpOpenHiveFiles(&FileName,
-                                      L".LOG",
-                                      &PrimaryHandle,
-                                      &LogHandle,
-                                      &PrimaryDisposition,
-                                      &SecondaryDisposition,
-                                      TRUE,
-                                      TRUE,
-                                      NoBufering,
-                                      &ClusterSize);
+            Status = CmpOpenHiveFiles(&FileName, L".LOG", &PrimaryHandle, &LogHandle, &PrimaryDisposition,
+                                      &SecondaryDisposition, TRUE, TRUE, NoBufering, &ClusterSize);
 
-            if ( ( ! NT_SUCCESS(Status)) ||
-                 (LogHandle == NULL) )
+            if ((!NT_SUCCESS(Status)) || (LogHandle == NULL))
             {
-fatal:
+            fatal:
                 ErrorParameters = &FileName;
-                ExRaiseHardError(
-                    STATUS_CANNOT_LOAD_REGISTRY_FILE,
-                    1,
-                    1,
-                    (PULONG_PTR)&ErrorParameters,
-                    OptionOk,
-                    &ErrorResponse
-                    );
+                ExRaiseHardError(STATUS_CANNOT_LOAD_REGISTRY_FILE, 1, 1, (PULONG_PTR)&ErrorParameters, OptionOk,
+                                 &ErrorResponse);
 
                 //
                 // WARNNOTE
@@ -4647,13 +4007,14 @@ fatal:
                 // like the SYSTEM hive, is hosed.  Don't try to run,
                 // we just risk destroying user data.  Punt.
                 //
-                CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO,BAD_HIVE_LIST,0,i,Status);
+                CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO, BAD_HIVE_LIST, 0, i, Status);
             }
 
             CmHive->FileHandles[HFILE_TYPE_LOG] = LogHandle;
             CmHive->FileHandles[HFILE_TYPE_PRIMARY] = PrimaryHandle;
 
-            if( NoBufering == FALSE ) {
+            if (NoBufering == FALSE)
+            {
                 //
                 // intitialize cache and mark the stream as PRIVATE_WRITE;
                 // next flush will do the actual conversion
@@ -4661,8 +4022,10 @@ fatal:
                 Status = CmpSetupPrivateWrite(CmHive);
             }
 
-            if( !NT_SUCCESS(Status) ) {
-                if( (NoBufering == TRUE) || (Status != STATUS_RETRY) ) {
+            if (!NT_SUCCESS(Status))
+            {
+                if ((NoBufering == TRUE) || (Status != STATUS_RETRY))
+                {
                     //
                     // we have tried both ways and it didn't work; bad luck
                     //
@@ -4670,11 +4033,12 @@ fatal:
                 }
 
 #ifndef _CM_LDR_
-                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Failed to convert SYSTEM hive to mapped (0x%lx) ... loading it in paged pool\n",Status);
-#endif //_CM_LDR_
-                //
-                // close handle and make another attempt to open them without buffering
-                //
+                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                           "Failed to convert SYSTEM hive to mapped (0x%lx) ... loading it in paged pool\n", Status);
+#endif //_CM_LDR_                                                           \
+    //                                                                      \
+    // close handle and make another attempt to open them without buffering \
+    //
                 CmpTrackHiveClose = TRUE;
                 ZwClose(PrimaryHandle);
                 CmpTrackHiveClose = FALSE;
@@ -4687,7 +4051,7 @@ fatal:
             //
             // now that we successfully opened the hive files, clear off the lazy flush flag
             //
-            ASSERT( CmHive->Hive.HiveFlags & HIVE_NOLAZYFLUSH );
+            ASSERT(CmHive->Hive.HiveFlags & HIVE_NOLAZYFLUSH);
             CmHive->Hive.HiveFlags &= (~HIVE_NOLAZYFLUSH);
 
             Length = CmHive->Hive.Storage[Stable].Length + HBLOCK_SIZE;
@@ -4699,7 +4063,8 @@ fatal:
             // to update this field in the hive if we are
             // booting from media where the cluster size > 1
             //
-            if (CmHive->Hive.Cluster != ClusterSize) {
+            if (CmHive->Hive.Cluster != ClusterSize)
+            {
                 //
                 // The cluster size is different than previous assumed.
                 // Since a cluster in the dirty vector must be either
@@ -4707,16 +4072,15 @@ fatal:
                 // dirty vector and mark all clusters that contain a dirty
                 // logical sector as completely dirty.
                 //
-                PRTL_BITMAP  BitMap;
-                ULONG        Index;
+                PRTL_BITMAP BitMap;
+                ULONG Index;
 
                 BitMap = &(CmHive->Hive.DirtyVector);
-                for (Index = 0;
-                     Index < CmHive->Hive.DirtyVector.SizeOfBitMap;
-                     Index += ClusterSize)
+                for (Index = 0; Index < CmHive->Hive.DirtyVector.SizeOfBitMap; Index += ClusterSize)
                 {
-                    if (!RtlAreBitsClear (BitMap, Index, ClusterSize)) {
-                        RtlSetBits (BitMap, Index, ClusterSize);
+                    if (!RtlAreBitsClear(BitMap, Index, ClusterSize))
+                    {
+                        RtlSetBits(BitMap, Index, ClusterSize);
                     }
                 }
                 //
@@ -4726,9 +4090,7 @@ fatal:
                 CmHive->Hive.Cluster = ClusterSize;
             }
 
-            if (!CmpFileSetSize(
-                    (PHHIVE)CmHive, HFILE_TYPE_PRIMARY, Length,Length)
-               )
+            if (!CmpFileSetSize((PHHIVE)CmHive, HFILE_TYPE_PRIMARY, Length, Length))
             {
                 //
                 // WARNNOTE
@@ -4740,12 +4102,13 @@ fatal:
 
             ASSERT(FIELD_OFFSET(CMHIVE, Hive) == 0);
 
-            if( CmHive->Hive.BaseBlock->BootRecover != 0 ) {
+            if (CmHive->Hive.BaseBlock->BootRecover != 0)
+            {
                 //
                 // boot loader recovered the hive; we need to flush it all to the disk
                 // mark everything dirty; the next flush will do take care of the rest
                 //
-                PRTL_BITMAP  BitMap;
+                PRTL_BITMAP BitMap;
                 BitMap = &(CmHive->Hive.DirtyVector);
                 RtlSetAllBits(BitMap);
                 CmHive->Hive.DirtyCount = BitMap->SizeOfBitMap;
@@ -4753,18 +4116,18 @@ fatal:
                 // we only need to flush the hive when the loader has recovered it
                 //
                 HvSyncHive((PHHIVE)CmHive);
-
             }
 
             CmpMachineHiveList[i].CmHive2 = CmHive;
 
-            ASSERT( CmpMachineHiveList[i].CmHive == CmpMachineHiveList[i].CmHive2 );
-/*
+            ASSERT(CmpMachineHiveList[i].CmHive == CmpMachineHiveList[i].CmHive2);
+            /*
 Cannot do that here as it requires the registry lock
             CmpAddToHiveFileList(CmpMachineHiveList[i].CmHive);
 */
 
-            if( CmpCannotWriteConfiguration ) {
+            if (CmpCannotWriteConfiguration)
+            {
                 //
                 // The system disk is full; Give user a chance to log-on and make room
                 //
@@ -4776,53 +4139,56 @@ Cannot do that here as it requires the registry lock
             //
             SystemHiveFullPathName.MaximumLength = MAX_NAME;
             SystemHiveFullPathName.Length = 0;
-            SystemHiveFullPathName.Buffer = (PWSTR)&(SystemHiveFullPathBuffer[0]);
+            SystemHiveFullPathName.Buffer = (PWSTR) & (SystemHiveFullPathBuffer[0]);
             RtlAppendStringToString((PSTRING)&SystemHiveFullPathName, (PSTRING)&FileName);
-        } else if (CmpMiniNTBoot) {
+        }
+        else if (CmpMiniNTBoot)
+        {
             //
             // copy the full file name for the conversion worker thread
             //
             SystemHiveFullPathName.MaximumLength = MAX_NAME;
             SystemHiveFullPathName.Length = 0;
-            SystemHiveFullPathName.Buffer = (PWSTR)&(SystemHiveFullPathBuffer[0]);
+            SystemHiveFullPathName.Buffer = (PWSTR) & (SystemHiveFullPathBuffer[0]);
             RtlAppendStringToString((PSTRING)&SystemHiveFullPathName, (PSTRING)&FileName);
         }
-        if(i == SYSTEM_HIVE_INDEX) {
+        if (i == SYSTEM_HIVE_INDEX)
+        {
             //
             // marks the System\Select!Current value dirty so we preserve what was set by the loader.
             //
-            CmpMarkCurrentValueDirty((PHHIVE)CmHive,CmHive->Hive.BaseBlock->RootCell);
+            CmpMarkCurrentValueDirty((PHHIVE)CmHive, CmHive->Hive.BaseBlock->RootCell);
         }
     }
 
     CmpMachineHiveList[i].ThreadFinished = TRUE;
 
-    LocalWorkerIncrement = InterlockedIncrement (&CmpLoadWorkerIncrement);
-    if ( LocalWorkerIncrement == CM_NUMBER_OF_MACHINE_HIVES ) {
+    LocalWorkerIncrement = InterlockedIncrement(&CmpLoadWorkerIncrement);
+    if (LocalWorkerIncrement == CM_NUMBER_OF_MACHINE_HIVES)
+    {
         //
         // this was the last thread (the lazyest); signal the main thread
         //
-        KeSetEvent (&CmpLoadWorkerEvent, 0, FALSE);
+        KeSetEvent(&CmpLoadWorkerEvent, 0, FALSE);
     }
 
-    if ( (LocalWorkerIncrement == (CM_NUMBER_OF_MACHINE_HIVES -1)) && // there is one more thread
-         (CmpCheckHiveIndex < CM_NUMBER_OF_MACHINE_HIVES ) // which is waiting to be debugged
-        ) {
+    if ((LocalWorkerIncrement == (CM_NUMBER_OF_MACHINE_HIVES - 1)) && // there is one more thread
+        (CmpCheckHiveIndex < CM_NUMBER_OF_MACHINE_HIVES)              // which is waiting to be debugged
+    )
+    {
         //
         // wake up the thread to be debugged
         //
-        KeSetEvent (&CmpLoadWorkerDebugEvent, 0, FALSE);
+        KeSetEvent(&CmpLoadWorkerDebugEvent, 0, FALSE);
     }
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"CmpLoadHiveThread %i ... terminating\n",i));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "CmpLoadHiveThread %i ... terminating\n", i));
     PsTerminateSystemThread(Status);
 }
 
-
+
 NTSTATUS
-CmpSetNetworkValue(
-    IN PNETWORK_LOADER_BLOCK NetworkLoaderBlock
-    )
+CmpSetNetworkValue(IN PNETWORK_LOADER_BLOCK NetworkLoaderBlock)
 /*++
 
 Routine Description:
@@ -4847,65 +4213,47 @@ Return Value:
     ULONG disposition;
 
 
-    ASSERT( NetworkLoaderBlock != NULL );
-    ASSERT( NetworkLoaderBlock->DHCPServerACKLength > 0 );
+    ASSERT(NetworkLoaderBlock != NULL);
+    ASSERT(NetworkLoaderBlock->DHCPServerACKLength > 0);
 
 
-    RtlInitUnicodeString( &string, L"\\REGISTRY\\MACHINE\\SYSTEM\\CurrentControlSet\\Control\\PXE" );
+    RtlInitUnicodeString(&string, L"\\REGISTRY\\MACHINE\\SYSTEM\\CurrentControlSet\\Control\\PXE");
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &string,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtCreateKey(&handle,
-                         KEY_ALL_ACCESS,
-                         &objectAttributes,
-                         0,
-                         (PUNICODE_STRING)NULL,
-                         0,
-                         &disposition
-                         );
-    if ( !NT_SUCCESS(status) ) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL, "CmpSetNetworkValue: Unable to open PXE key: %x\n", status ));
+    status = NtCreateKey(&handle, KEY_ALL_ACCESS, &objectAttributes, 0, (PUNICODE_STRING)NULL, 0, &disposition);
+    if (!NT_SUCCESS(status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpSetNetworkValue: Unable to open PXE key: %x\n", status));
         goto Error;
     }
 
-    RtlInitUnicodeString( &string, L"DHCPServerACK" );
+    RtlInitUnicodeString(&string, L"DHCPServerACK");
 
-    status = NtSetValueKey(handle,
-                           &string,
-                           0,
-                           REG_BINARY,
-                           NetworkLoaderBlock->DHCPServerACK,
-                           NetworkLoaderBlock->DHCPServerACKLength
-                           );
-    if ( !NT_SUCCESS(status) ) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL, "CmpSetNetworkValue: Unable to set DHCPServerACK key: %x\n", status ));
+    status = NtSetValueKey(handle, &string, 0, REG_BINARY, NetworkLoaderBlock->DHCPServerACK,
+                           NetworkLoaderBlock->DHCPServerACKLength);
+    if (!NT_SUCCESS(status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpSetNetworkValue: Unable to set DHCPServerACK key: %x\n",
+                     status));
         goto Error;
     }
 
-    RtlInitUnicodeString( &string, L"BootServerReply" );
+    RtlInitUnicodeString(&string, L"BootServerReply");
 
-    status = NtSetValueKey(handle,
-                           &string,
-                           0,
-                           REG_BINARY,
-                           NetworkLoaderBlock->BootServerReplyPacket,
-                           NetworkLoaderBlock->BootServerReplyPacketLength
-                           );
-    if ( !NT_SUCCESS(status) ) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL, "CmpSetNetworkValue: Unable to set BootServerReplyPacket key: %x\n", status ));
+    status = NtSetValueKey(handle, &string, 0, REG_BINARY, NetworkLoaderBlock->BootServerReplyPacket,
+                           NetworkLoaderBlock->BootServerReplyPacketLength);
+    if (!NT_SUCCESS(status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                     "CmpSetNetworkValue: Unable to set BootServerReplyPacket key: %x\n", status));
         goto Error;
     }
 
     status = STATUS_SUCCESS;
 
 Cleanup:
-    NtClose( handle );
+    NtClose(handle);
 
     return status;
 
@@ -4914,11 +4262,8 @@ Error:
 }
 
 
-
 NTSTATUS
-CmpSetSystemValues(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+CmpSetSystemValues(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -4942,7 +4287,7 @@ Return Value:
     HANDLE handle;
 
 
-    ASSERT( LoaderBlock != NULL );
+    ASSERT(LoaderBlock != NULL);
 
 
     value.Buffer = NULL;
@@ -4951,23 +4296,15 @@ Return Value:
     // Open the control key
     //
 
-    RtlInitUnicodeString( &string, L"\\REGISTRY\\MACHINE\\SYSTEM\\CurrentControlSet\\Control" );
+    RtlInitUnicodeString(&string, L"\\REGISTRY\\MACHINE\\SYSTEM\\CurrentControlSet\\Control");
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &string,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenKey(
-                       &handle,
-                       KEY_ALL_ACCESS,
-                       &objectAttributes
-                      );
-    if ( !NT_SUCCESS(status) ) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpSetSystemValues: Unable to Open Control Key: %x\n", status ));
+    status = NtOpenKey(&handle, KEY_ALL_ACCESS, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CmpSetSystemValues: Unable to Open Control Key: %x\n", status));
         goto Error;
     }
 
@@ -4975,18 +4312,13 @@ Return Value:
     // Set the System start options key
     //
 
-    RtlInitUnicodeString( &string, L"SystemStartOptions" );
+    RtlInitUnicodeString(&string, L"SystemStartOptions");
 
-    status = NtSetValueKey  (
-                            handle,
-                            &string,
-                            0,
-                            REG_SZ,
-                            CmpLoadOptions.Buffer,
-                            CmpLoadOptions.Length
-                            );
-    if ( !NT_SUCCESS(status) ) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpSetSystemValue: Unable to set SystemStartOptions key: %x\n", status ));
+    status = NtSetValueKey(handle, &string, 0, REG_SZ, CmpLoadOptions.Buffer, CmpLoadOptions.Length);
+    if (!NT_SUCCESS(status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                     "CmpSetSystemValue: Unable to set SystemStartOptions key: %x\n", status));
         goto Error;
     }
 
@@ -4994,29 +4326,26 @@ Return Value:
     // Set the System Boot Device
     //
 
-    RtlInitUnicodeString( &string, L"SystemBootDevice" );
-    RtlCreateUnicodeStringFromAsciiz( &value, LoaderBlock->ArcBootDeviceName );
+    RtlInitUnicodeString(&string, L"SystemBootDevice");
+    RtlCreateUnicodeStringFromAsciiz(&value, LoaderBlock->ArcBootDeviceName);
 
-    status = NtSetValueKey(handle,
-                           &string,
-                           0,
-                           REG_SZ,
-                           value.Buffer,
-                           value.Length + sizeof(WCHAR)
-                           );
-    if ( !NT_SUCCESS(status) ) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpSetSystemValue: Unable to set SystemBootDevice key: %x\n", status ));
+    status = NtSetValueKey(handle, &string, 0, REG_SZ, value.Buffer, value.Length + sizeof(WCHAR));
+    if (!NT_SUCCESS(status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                     "CmpSetSystemValue: Unable to set SystemBootDevice key: %x\n", status));
         goto Error;
     }
 
     status = STATUS_SUCCESS;
 
 Cleanup:
-    if ( value.Buffer ) {
+    if (value.Buffer)
+    {
         RtlFreeUnicodeString(&value);
     }
 
-    NtClose( handle );
+    NtClose(handle);
 
     return status;
 
@@ -5024,16 +4353,12 @@ Error:
     goto Cleanup;
 }
 
-VOID
-CmpMarkCurrentValueDirty(
-                         IN PHHIVE SystemHive,
-                         IN HCELL_INDEX RootCell
-                         )
+VOID CmpMarkCurrentValueDirty(IN PHHIVE SystemHive, IN HCELL_INDEX RootCell)
 {
-    PCM_KEY_NODE    Node;
-    HCELL_INDEX     Select;
-    UNICODE_STRING  Name;
-    HCELL_INDEX     ValueCell;
+    PCM_KEY_NODE Node;
+    HCELL_INDEX Select;
+    UNICODE_STRING Name;
+    HCELL_INDEX ValueCell;
 
     PAGED_CODE();
 
@@ -5041,39 +4366,37 @@ CmpMarkCurrentValueDirty(
     //
     // Find \SYSTEM\SELECT node.
     //
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,RootCell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, RootCell);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return;
     }
-    HvReleaseCell(SystemHive,RootCell);
+    HvReleaseCell(SystemHive, RootCell);
     RtlInitUnicodeString(&Name, L"select");
-    Select = CmpFindSubKeyByName(SystemHive,
-                                Node,
-                                &Name);
-    if (Select == HCELL_NIL) {
+    Select = CmpFindSubKeyByName(SystemHive, Node, &Name);
+    if (Select == HCELL_NIL)
+    {
         return;
     }
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,Select);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, Select);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
 
         return;
     }
-    HvReleaseCell(SystemHive,Select);
+    HvReleaseCell(SystemHive, Select);
 
     RtlInitUnicodeString(&Name, L"Current");
-    ValueCell = CmpFindValueByName(SystemHive,
-                                   Node,
-                                   &Name);
-    if (ValueCell != HCELL_NIL) {
+    ValueCell = CmpFindValueByName(SystemHive, Node, &Name);
+    if (ValueCell != HCELL_NIL)
+    {
         HvMarkCellDirty(SystemHive, ValueCell);
     }
-
 }
-

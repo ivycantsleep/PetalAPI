@@ -23,43 +23,41 @@ Revision History:
 
 #if DBG_SCOPE
 
-#define PnpIrpStatusTracking(Status, IrpCode, Device)                    \
-    if (PnpIrpMask & (1 << IrpCode)) {                                   \
-        if (!NT_SUCCESS(Status) || Status == STATUS_PENDING) {           \
-            DbgPrint(" ++ %s Driver ( %wZ ) return status %08lx\n",      \
-                     IrpName[IrpCode],                                   \
-                     &Device->DriverObject->DriverName,                  \
-                     Status);                                            \
-        }                                                                \
+#define PnpIrpStatusTracking(Status, IrpCode, Device)                                 \
+    if (PnpIrpMask & (1 << IrpCode))                                                  \
+    {                                                                                 \
+        if (!NT_SUCCESS(Status) || Status == STATUS_PENDING)                          \
+        {                                                                             \
+            DbgPrint(" ++ %s Driver ( %wZ ) return status %08lx\n", IrpName[IrpCode], \
+                     &Device->DriverObject->DriverName, Status);                      \
+        }                                                                             \
     }
 
 ULONG PnpIrpMask;
-PCHAR IrpName[] = {
-    "IRP_MN_START_DEVICE - ",                 // 0x00
-    "IRP_MN_QUERY_REMOVE_DEVICE - ",          // 0x01
-    "IRP_MN_REMOVE_DEVICE - ",                // 0x02
-    "IRP_MN_CANCEL_REMOVE_DEVICE - ",         // 0x03
-    "IRP_MN_STOP_DEVICE - ",                  // 0x04
-    "IRP_MN_QUERY_STOP_DEVICE - ",            // 0x05
-    "IRP_MN_CANCEL_STOP_DEVICE - ",           // 0x06
-    "IRP_MN_QUERY_DEVICE_RELATIONS - ",       // 0x07
-    "IRP_MN_QUERY_INTERFACE - ",              // 0x08
-    "IRP_MN_QUERY_CAPABILITIES - ",           // 0x09
-    "IRP_MN_QUERY_RESOURCES - ",              // 0x0A
-    "IRP_MN_QUERY_RESOURCE_REQUIREMENTS - ",  // 0x0B
-    "IRP_MN_QUERY_DEVICE_TEXT - ",            // 0x0C
-    "IRP_MN_FILTER_RESOURCE_REQUIREMENTS - ", // 0x0D
-    "INVALID_IRP_CODE - ",                    //
-    "IRP_MN_READ_CONFIG - ",                  // 0x0F
-    "IRP_MN_WRITE_CONFIG - ",                 // 0x10
-    "IRP_MN_EJECT - ",                        // 0x11
-    "IRP_MN_SET_LOCK - ",                     // 0x12
-    "IRP_MN_QUERY_ID - ",                     // 0x13
-    "IRP_MN_QUERY_PNP_DEVICE_STATE - ",       // 0x14
-    "IRP_MN_QUERY_BUS_INFORMATION - ",        // 0x15
-    "IRP_MN_DEVICE_USAGE_NOTIFICATION - ",    // 0x16
-    NULL
-};
+PCHAR IrpName[] = { "IRP_MN_START_DEVICE - ",                 // 0x00
+                    "IRP_MN_QUERY_REMOVE_DEVICE - ",          // 0x01
+                    "IRP_MN_REMOVE_DEVICE - ",                // 0x02
+                    "IRP_MN_CANCEL_REMOVE_DEVICE - ",         // 0x03
+                    "IRP_MN_STOP_DEVICE - ",                  // 0x04
+                    "IRP_MN_QUERY_STOP_DEVICE - ",            // 0x05
+                    "IRP_MN_CANCEL_STOP_DEVICE - ",           // 0x06
+                    "IRP_MN_QUERY_DEVICE_RELATIONS - ",       // 0x07
+                    "IRP_MN_QUERY_INTERFACE - ",              // 0x08
+                    "IRP_MN_QUERY_CAPABILITIES - ",           // 0x09
+                    "IRP_MN_QUERY_RESOURCES - ",              // 0x0A
+                    "IRP_MN_QUERY_RESOURCE_REQUIREMENTS - ",  // 0x0B
+                    "IRP_MN_QUERY_DEVICE_TEXT - ",            // 0x0C
+                    "IRP_MN_FILTER_RESOURCE_REQUIREMENTS - ", // 0x0D
+                    "INVALID_IRP_CODE - ",                    //
+                    "IRP_MN_READ_CONFIG - ",                  // 0x0F
+                    "IRP_MN_WRITE_CONFIG - ",                 // 0x10
+                    "IRP_MN_EJECT - ",                        // 0x11
+                    "IRP_MN_SET_LOCK - ",                     // 0x12
+                    "IRP_MN_QUERY_ID - ",                     // 0x13
+                    "IRP_MN_QUERY_PNP_DEVICE_STATE - ",       // 0x14
+                    "IRP_MN_QUERY_BUS_INFORMATION - ",        // 0x15
+                    "IRP_MN_DEVICE_USAGE_NOTIFICATION - ",    // 0x16
+                    NULL };
 #else
 #define PnpIrpStatusTracking(Status, IrpCode, Device)
 #endif
@@ -68,7 +66,8 @@ PCHAR IrpName[] = {
 // Internal definitions
 //
 
-typedef struct _DEVICE_COMPLETION_CONTEXT {
+typedef struct _DEVICE_COMPLETION_CONTEXT
+{
     PDEVICE_NODE DeviceNode;
     ERESOURCE_THREAD Thread;
     ULONG IrpMinorCode;
@@ -77,7 +76,8 @@ typedef struct _DEVICE_COMPLETION_CONTEXT {
 #endif
 } DEVICE_COMPLETION_CONTEXT, *PDEVICE_COMPLETION_CONTEXT;
 
-typedef struct _LOCK_MOUNTABLE_DEVICE_CONTEXT{
+typedef struct _LOCK_MOUNTABLE_DEVICE_CONTEXT
+{
     PDEVICE_OBJECT MountedDevice;
     PDEVICE_OBJECT FsDevice;
 } LOCK_MOUNTABLE_DEVICE_CONTEXT, *PLOCK_MOUNTABLE_DEVICE_CONTEXT;
@@ -87,52 +87,29 @@ typedef struct _LOCK_MOUNTABLE_DEVICE_CONTEXT{
 //
 
 NTSTATUS
-IopAsynchronousCall(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIO_STACK_LOCATION TopStackLocation,
-    IN PDEVICE_COMPLETION_CONTEXT CompletionContext,
-    IN NTSTATUS (*CompletionRoutine)(PDEVICE_OBJECT, PIRP, PVOID)
-    );
+IopAsynchronousCall(IN PDEVICE_OBJECT DeviceObject, IN PIO_STACK_LOCATION TopStackLocation,
+                    IN PDEVICE_COMPLETION_CONTEXT CompletionContext,
+                    IN NTSTATUS (*CompletionRoutine)(PDEVICE_OBJECT, PIRP, PVOID));
 
 NTSTATUS
-IopDeviceEjectComplete (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    );
+IopDeviceEjectComplete(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 NTSTATUS
-IopDeviceStartComplete (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    );
+IopDeviceStartComplete(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 PDEVICE_OBJECT
-IopFindMountableDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IopFindMountableDevice(IN PDEVICE_OBJECT DeviceObject);
 
 PDEVICE_OBJECT
-IopLockMountedDeviceForRemove(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG IrpMinorCode,
-    OUT PLOCK_MOUNTABLE_DEVICE_CONTEXT Context
-    );
+IopLockMountedDeviceForRemove(IN PDEVICE_OBJECT DeviceObject, IN ULONG IrpMinorCode,
+                              OUT PLOCK_MOUNTABLE_DEVICE_CONTEXT Context);
 
-VOID
-IopUnlockMountedDeviceForRemove(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG IrpMinorCode,
-    IN PLOCK_MOUNTABLE_DEVICE_CONTEXT Context
-    );
+VOID IopUnlockMountedDeviceForRemove(IN PDEVICE_OBJECT DeviceObject, IN ULONG IrpMinorCode,
+                                     IN PLOCK_MOUNTABLE_DEVICE_CONTEXT Context);
 
 NTSTATUS
-IopFilterResourceRequirementsCall(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIO_RESOURCE_REQUIREMENTS_LIST ResReqList,
-    OUT PVOID *Information
-    );
+IopFilterResourceRequirementsCall(IN PDEVICE_OBJECT DeviceObject, IN PIO_RESOURCE_REQUIREMENTS_LIST ResReqList,
+                                  OUT PVOID *Information);
 
 //
 // External reference
@@ -158,8 +135,8 @@ IopFilterResourceRequirementsCall(
 #pragma alloc_text(PAGE, IopDecDisableableDepends)
 #pragma alloc_text(PAGE, PpIrpQueryResourceRequirements)
 #pragma alloc_text(PAGE, PpIrpQueryID)
-#endif  // ALLOC_PRAGMA
-
+#endif // ALLOC_PRAGMA
+
 #if 0
 NTSTATUS
 IopAsynchronousCall(
@@ -260,13 +237,9 @@ Return Value:
     return IoCallDriver( deviceObject, irp );
 }
 #endif
-
+
 NTSTATUS
-IopSynchronousCall(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIO_STACK_LOCATION TopStackLocation,
-    OUT PULONG_PTR Information
-    )
+IopSynchronousCall(IN PDEVICE_OBJECT DeviceObject, IN PIO_STACK_LOCATION TopStackLocation, OUT PULONG_PTR Information)
 
 /*++
 
@@ -313,7 +286,8 @@ Return Value:
     //
 
     irp = IoAllocateIrp(deviceObject->StackSize, FALSE);
-    if (irp == NULL){
+    if (irp == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -331,9 +305,7 @@ Return Value:
     // Set the pointer to the status block and initialized event.
     //
 
-    KeInitializeEvent( &event,
-                       SynchronizationEvent,
-                       FALSE );
+    KeInitializeEvent(&event, SynchronizationEvent, FALSE);
 
     irp->UserIosb = &statusBlock;
     irp->UserEvent = &event;
@@ -375,26 +347,22 @@ Return Value:
     // If a driver returns STATUS_PENDING, we will wait for it to complete
     //
 
-    if (status == STATUS_PENDING) {
-        (VOID) KeWaitForSingleObject( &event,
-                                      Executive,
-                                      KernelMode,
-                                      FALSE,
-                                      (PLARGE_INTEGER) NULL );
+    if (status == STATUS_PENDING)
+    {
+        (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = statusBlock.Status;
     }
 
-    if (Information != NULL) {
+    if (Information != NULL)
+    {
         *Information = statusBlock.Information;
     }
 
     return status;
 }
-
+
 NTSTATUS
-IopStartDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+IopStartDevice(IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -446,12 +414,9 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-IopEjectDevice(
-    IN      PDEVICE_OBJECT                  DeviceObject,
-    IN OUT  PPENDING_RELATIONS_LIST_ENTRY   PendingEntry
-    )
+IopEjectDevice(IN PDEVICE_OBJECT DeviceObject, IN OUT PPENDING_RELATIONS_LIST_ENTRY PendingEntry)
 
 /*++
 
@@ -479,48 +444,44 @@ Return Value:
 
     PAGED_CODE();
 
-    if (PendingEntry->LightestSleepState != PowerSystemWorking) {
+    if (PendingEntry->LightestSleepState != PowerSystemWorking)
+    {
 
         //
         // We have to warm eject.
         //
-        if (PendingEntry->DockInterface) {
+        if (PendingEntry->DockInterface)
+        {
 
-            PendingEntry->DockInterface->ProfileDepartureSetMode(
-                PendingEntry->DockInterface->Context,
-                PDS_UPDATE_ON_EJECT
-                );
+            PendingEntry->DockInterface->ProfileDepartureSetMode(PendingEntry->DockInterface->Context,
+                                                                 PDS_UPDATE_ON_EJECT);
         }
 
         PendingEntry->EjectIrp = NULL;
 
-        InitializeListHead( &PendingEntry->Link );
+        InitializeListHead(&PendingEntry->Link);
 
         IopQueuePendingEject(PendingEntry);
 
-        ExInitializeWorkItem( &PendingEntry->WorkItem,
-                              IopProcessCompletedEject,
-                              PendingEntry);
+        ExInitializeWorkItem(&PendingEntry->WorkItem, IopProcessCompletedEject, PendingEntry);
 
-        ExQueueWorkItem( &PendingEntry->WorkItem, DelayedWorkQueue );
+        ExQueueWorkItem(&PendingEntry->WorkItem, DelayedWorkQueue);
         return STATUS_SUCCESS;
     }
 
-    if (PendingEntry->DockInterface) {
+    if (PendingEntry->DockInterface)
+    {
 
         //
         // Notify dock that now is a good time to update it's hardware profile.
         //
-        PendingEntry->DockInterface->ProfileDepartureSetMode(
-            PendingEntry->DockInterface->Context,
-            PDS_UPDATE_ON_INTERFACE
-            );
+        PendingEntry->DockInterface->ProfileDepartureSetMode(PendingEntry->DockInterface->Context,
+                                                             PDS_UPDATE_ON_INTERFACE);
 
-        PendingEntry->DockInterface->ProfileDepartureUpdate(
-            PendingEntry->DockInterface->Context
-            );
+        PendingEntry->DockInterface->ProfileDepartureUpdate(PendingEntry->DockInterface->Context);
 
-        if (PendingEntry->DisplaySafeRemovalDialog) {
+        if (PendingEntry->DisplaySafeRemovalDialog)
+        {
 
             PpNotifyUserModeRemovalSafe(DeviceObject);
             PendingEntry->DisplaySafeRemovalDialog = FALSE;
@@ -538,20 +499,19 @@ Return Value:
     // Allocate an I/O Request Packet (IRP) for this device removal operation.
     //
 
-    irp = IoAllocateIrp( (CCHAR) (deviceObject->StackSize), FALSE );
-    if (!irp) {
+    irp = IoAllocateIrp((CCHAR)(deviceObject->StackSize), FALSE);
+    if (!irp)
+    {
 
         PendingEntry->EjectIrp = NULL;
 
-        InitializeListHead( &PendingEntry->Link );
+        InitializeListHead(&PendingEntry->Link);
 
         IopQueuePendingEject(PendingEntry);
 
-        ExInitializeWorkItem( &PendingEntry->WorkItem,
-                              IopProcessCompletedEject,
-                              PendingEntry);
+        ExInitializeWorkItem(&PendingEntry->WorkItem, IopProcessCompletedEject, PendingEntry);
 
-        ExQueueWorkItem( &PendingEntry->WorkItem, DelayedWorkQueue );
+        ExQueueWorkItem(&PendingEntry->WorkItem, DelayedWorkQueue);
 
         ObDereferenceObject(deviceObject);
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -600,31 +560,25 @@ Return Value:
 
     IopQueuePendingEject(PendingEntry);
 
-    IoSetCompletionRoutine(irp,
-                           IopDeviceEjectComplete,
-                           PendingEntry,       /* Completion context */
-                           TRUE,               /* Invoke on success  */
-                           TRUE,               /* Invoke on error    */
-                           TRUE                /* Invoke on cancel   */
-                           );
+    IoSetCompletionRoutine(irp, IopDeviceEjectComplete, PendingEntry, /* Completion context */
+                           TRUE,                                      /* Invoke on success  */
+                           TRUE,                                      /* Invoke on error    */
+                           TRUE                                       /* Invoke on cancel   */
+    );
 
-    status = IoCallDriver( deviceObject, irp );
+    status = IoCallDriver(deviceObject, irp);
 
     ObDereferenceObject(deviceObject);
     return status;
 }
 
 NTSTATUS
-IopDeviceEjectComplete (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    )
+IopDeviceEjectComplete(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 {
     PPENDING_RELATIONS_LIST_ENTRY entry = (PPENDING_RELATIONS_LIST_ENTRY)Context;
     PIRP ejectIrp;
 
-    UNREFERENCED_PARAMETER( DeviceObject );
+    UNREFERENCED_PARAMETER(DeviceObject);
 
     ejectIrp = InterlockedExchangePointer(&entry->EjectIrp, NULL);
 
@@ -635,23 +589,17 @@ IopDeviceEjectComplete (
     // we are probably running at dispatch level in some random context.
     //
 
-    ExInitializeWorkItem( &entry->WorkItem,
-                          IopProcessCompletedEject,
-                          entry);
+    ExInitializeWorkItem(&entry->WorkItem, IopProcessCompletedEject, entry);
 
-    ExQueueWorkItem( &entry->WorkItem, DelayedWorkQueue );
+    ExQueueWorkItem(&entry->WorkItem, DelayedWorkQueue);
 
-    IoFreeIrp( Irp );
+    IoFreeIrp(Irp);
 
     return STATUS_MORE_PROCESSING_REQUIRED;
-
 }
-
+
 NTSTATUS
-IopRemoveDevice (
-    IN PDEVICE_OBJECT TargetDevice,
-    IN ULONG IrpMinorCode
-    )
+IopRemoveDevice(IN PDEVICE_OBJECT TargetDevice, IN ULONG IrpMinorCode)
 
 /*++
 
@@ -690,14 +638,12 @@ Return Value:
 
     PAGED_CODE();
 
-    ASSERT(IrpMinorCode == IRP_MN_QUERY_REMOVE_DEVICE ||
-           IrpMinorCode == IRP_MN_CANCEL_REMOVE_DEVICE ||
-           IrpMinorCode == IRP_MN_REMOVE_DEVICE ||
-           IrpMinorCode == IRP_MN_SURPRISE_REMOVAL ||
+    ASSERT(IrpMinorCode == IRP_MN_QUERY_REMOVE_DEVICE || IrpMinorCode == IRP_MN_CANCEL_REMOVE_DEVICE ||
+           IrpMinorCode == IRP_MN_REMOVE_DEVICE || IrpMinorCode == IRP_MN_SURPRISE_REMOVAL ||
            IrpMinorCode == IRP_MN_EJECT);
 
-    if (IrpMinorCode == IRP_MN_REMOVE_DEVICE ||
-        IrpMinorCode == IRP_MN_QUERY_REMOVE_DEVICE) {
+    if (IrpMinorCode == IRP_MN_REMOVE_DEVICE || IrpMinorCode == IRP_MN_QUERY_REMOVE_DEVICE)
+    {
         IopUncacheInterfaceInformation(TargetDevice);
     }
 
@@ -719,25 +665,23 @@ Return Value:
 
     mountedDevice = IopFindMountableDevice(TargetDevice);
 
-    if (mountedDevice != NULL) {
+    if (mountedDevice != NULL)
+    {
 
         //
         // This routine will cause any mount operations on the VPB to fail.
         // It will also release the VPB spinlock.
         //
 
-        mountedDevice = IopLockMountedDeviceForRemove(TargetDevice,
-                                                      IrpMinorCode,
-                                                      &lockContext);
+        mountedDevice = IopLockMountedDeviceForRemove(TargetDevice, IrpMinorCode, &lockContext);
 
         isMountable = TRUE;
-
-    } else {
+    }
+    else
+    {
         ASSERTMSG("Mass storage device does not have VPB - this is odd",
-                  !((TargetDevice->Type == FILE_DEVICE_DISK) ||
-                    (TargetDevice->Type == FILE_DEVICE_CD_ROM) ||
-                    (TargetDevice->Type == FILE_DEVICE_TAPE) ||
-                    (TargetDevice->Type == FILE_DEVICE_VIRTUAL_DISK)));
+                  !((TargetDevice->Type == FILE_DEVICE_DISK) || (TargetDevice->Type == FILE_DEVICE_CD_ROM) ||
+                    (TargetDevice->Type == FILE_DEVICE_TAPE) || (TargetDevice->Type == FILE_DEVICE_VIRTUAL_DISK)));
 
         mountedDevice = TargetDevice;
     }
@@ -746,14 +690,16 @@ Return Value:
     // Make the call and return.
     //
 
-    if (IrpMinorCode == IRP_MN_SURPRISE_REMOVAL || IrpMinorCode == IRP_MN_REMOVE_DEVICE) {
+    if (IrpMinorCode == IRP_MN_SURPRISE_REMOVAL || IrpMinorCode == IRP_MN_REMOVE_DEVICE)
+    {
         //
         // if device was not disableable, we cleanup the tree
         // and debug-trace that we surprise-removed a non-disableable device
         //
         PDEVICE_NODE deviceNode = TargetDevice->DeviceObjectExtension->DeviceNode;
 
-        if (deviceNode->UserFlags & DNUF_NOT_DISABLEABLE) {
+        if (deviceNode->UserFlags & DNUF_NOT_DISABLEABLE)
+        {
             //
             // this device was marked as disableable, update the depends
             // before this device disappears
@@ -766,26 +712,26 @@ Return Value:
 
     status = IopSynchronousCall(mountedDevice, &irpSp, NULL);
 
-    if (isMountable) {
+    if (isMountable)
+    {
 
-        IopUnlockMountedDeviceForRemove(TargetDevice,
-                                        IrpMinorCode,
-                                        &lockContext);
+        IopUnlockMountedDeviceForRemove(TargetDevice, IrpMinorCode, &lockContext);
 
         //
         // Successful query should follow up with invalidation of all volumes
         // which have been on this device but which are not currently mounted.
         //
 
-        if ((IrpMinorCode == IRP_MN_QUERY_REMOVE_DEVICE || 
-                IrpMinorCode == IRP_MN_SURPRISE_REMOVAL) && 
-            NT_SUCCESS(status)) {
+        if ((IrpMinorCode == IRP_MN_QUERY_REMOVE_DEVICE || IrpMinorCode == IRP_MN_SURPRISE_REMOVAL) &&
+            NT_SUCCESS(status))
+        {
 
             status = IopInvalidateVolumesForDevice(TargetDevice);
         }
     }
 
-    if (IrpMinorCode == IRP_MN_REMOVE_DEVICE) {
+    if (IrpMinorCode == IRP_MN_REMOVE_DEVICE)
+    {
         ((PDEVICE_NODE)TargetDevice->DeviceObjectExtension->DeviceNode)->Flags &=
             ~(DNF_LEGACY_DRIVER | DNF_REENUMERATE);
     }
@@ -793,13 +739,10 @@ Return Value:
     return status;
 }
 
-
+
 PDEVICE_OBJECT
-IopLockMountedDeviceForRemove(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG IrpMinorCode,
-    OUT PLOCK_MOUNTABLE_DEVICE_CONTEXT Context
-    )
+IopLockMountedDeviceForRemove(IN PDEVICE_OBJECT DeviceObject, IN ULONG IrpMinorCode,
+                              OUT PLOCK_MOUNTABLE_DEVICE_CONTEXT Context)
 
 /*++
 
@@ -842,7 +785,8 @@ Return Value:
     RtlZeroMemory(Context, sizeof(LOCK_MOUNTABLE_DEVICE_CONTEXT));
     Context->MountedDevice = DeviceObject;
 
-    do {
+    do
+    {
 
         //
         // Walk up each device object in the stack.  For each one, if a VPB
@@ -856,18 +800,15 @@ Return Value:
         // the device specific lock first followed by the global lock.
         //
 
-        if(device->Vpb != NULL) {
+        if (device->Vpb != NULL)
+        {
 
             //
             // Grab the device lock.  This will ensure that there are no mount
             // or verify operations in progress.
             //
 
-            KeWaitForSingleObject(&(device->DeviceLock),
-                                  Executive,
-                                  KernelMode,
-                                  FALSE,
-                                  NULL);
+            KeWaitForSingleObject(&(device->DeviceLock), Executive, KernelMode, FALSE, NULL);
 
             //
             // Now set the remove pending flag, which will prevent new mounts
@@ -882,24 +823,27 @@ Return Value:
 
             ASSERT(vpb != NULL);
 
-            switch(IrpMinorCode) {
+            switch (IrpMinorCode)
+            {
 
-                case IRP_MN_QUERY_REMOVE_DEVICE:
-                case IRP_MN_SURPRISE_REMOVAL:
-                case IRP_MN_REMOVE_DEVICE: {
+            case IRP_MN_QUERY_REMOVE_DEVICE:
+            case IRP_MN_SURPRISE_REMOVAL:
+            case IRP_MN_REMOVE_DEVICE:
+            {
 
-                    vpb->Flags |= VPB_REMOVE_PENDING;
-                    break;
-                }
+                vpb->Flags |= VPB_REMOVE_PENDING;
+                break;
+            }
 
-                case IRP_MN_CANCEL_REMOVE_DEVICE: {
+            case IRP_MN_CANCEL_REMOVE_DEVICE:
+            {
 
-                    vpb->Flags &= ~VPB_REMOVE_PENDING;
-                    break;
-                }
+                vpb->Flags &= ~VPB_REMOVE_PENDING;
+                break;
+            }
 
-                default:
-                    break;
+            default:
+                break;
             }
 
             //
@@ -909,7 +853,8 @@ Return Value:
             // operation.
             //
 
-            if(vpb->Flags & VPB_MOUNTED) {
+            if (vpb->Flags & VPB_MOUNTED)
+            {
 
                 Context->MountedDevice = device;
                 fsDevice = vpb->DeviceObject;
@@ -920,11 +865,12 @@ Return Value:
             IoReleaseVpbSpinLock(oldIrql);
 
             //
-            // Bump the fs device handle count. This prevent the filesystem filter stack 
+            // Bump the fs device handle count. This prevent the filesystem filter stack
             // from being torn down while a PNP IRP is in progress.
             //
 
-            if (fsDevice) {
+            if (fsDevice)
+            {
                 IopIncrementDeviceObjectHandleCount(fsDevice);
             }
 
@@ -934,7 +880,8 @@ Return Value:
             // Stop if we hit a device with a mounted filesystem.
             //
 
-            if (NULL != fsDevice) {
+            if (NULL != fsDevice)
+            {
 
                 //
                 // We found and setup a mounted device.  Time to return.
@@ -944,13 +891,14 @@ Return Value:
             }
         }
 
-        oldIrql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+        oldIrql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
         device = device->AttachedDevice;
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, oldIrql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, oldIrql);
 
     } while (device != NULL);
 
-    if(fsDevice != NULL) {
+    if (fsDevice != NULL)
+    {
 
         return fsDevice;
     }
@@ -958,16 +906,13 @@ Return Value:
     return Context->MountedDevice;
 }
 
-VOID
-IopUnlockMountedDeviceForRemove(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG IrpMinorCode,
-    IN PLOCK_MOUNTABLE_DEVICE_CONTEXT Context
-    )
+VOID IopUnlockMountedDeviceForRemove(IN PDEVICE_OBJECT DeviceObject, IN ULONG IrpMinorCode,
+                                     IN PLOCK_MOUNTABLE_DEVICE_CONTEXT Context)
 {
     PDEVICE_OBJECT device = DeviceObject;
 
-    do {
+    do
+    {
 
         KIRQL oldIrql;
 
@@ -983,7 +928,8 @@ IopUnlockMountedDeviceForRemove(
         // the device specific lock first followed by the global lock.
         //
 
-        if (device->Vpb != NULL) {
+        if (device->Vpb != NULL)
+        {
 
             //
             // Grab the device lock.  This will ensure that there are no mount
@@ -991,11 +937,7 @@ IopUnlockMountedDeviceForRemove(
             // that any mounted file system won't go away.
             //
 
-            KeWaitForSingleObject(&(device->DeviceLock),
-                                  Executive,
-                                  KernelMode,
-                                  FALSE,
-                                  NULL);
+            KeWaitForSingleObject(&(device->DeviceLock), Executive, KernelMode, FALSE, NULL);
 
             //
             // Now decrement the reference count in the VPB.  If the remove
@@ -1006,7 +948,8 @@ IopUnlockMountedDeviceForRemove(
 
             IoAcquireVpbSpinLock(&oldIrql);
 
-            if (IrpMinorCode == IRP_MN_REMOVE_DEVICE) {
+            if (IrpMinorCode == IRP_MN_REMOVE_DEVICE)
+            {
 
                 device->Vpb->Flags &= ~VPB_REMOVE_PENDING;
             }
@@ -1021,23 +964,26 @@ IopUnlockMountedDeviceForRemove(
         // mounted on, if any.
         //
 
-        if (Context->MountedDevice == device) {
+        if (Context->MountedDevice == device)
+        {
 
             //
-            // Decrement the fs device handle count. This prevented the filesystem filter stack 
-            // from being torn down while a PNP IRP is in progress. 
+            // Decrement the fs device handle count. This prevented the filesystem filter stack
+            // from being torn down while a PNP IRP is in progress.
             //
 
-            if (Context->FsDevice) {
+            if (Context->FsDevice)
+            {
                 IopDecrementDeviceObjectHandleCount(Context->FsDevice);
             }
             break;
+        }
+        else
+        {
 
-        } else {
-
-            oldIrql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+            oldIrql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
             device = device->AttachedDevice;
-            KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, oldIrql );
+            KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, oldIrql);
         }
 
     } while (device != NULL);
@@ -1045,11 +991,9 @@ IopUnlockMountedDeviceForRemove(
     return;
 }
 
-
+
 PDEVICE_OBJECT
-IopFindMountableDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+IopFindMountableDevice(IN PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -1083,10 +1027,11 @@ Return Value:
 {
     PDEVICE_OBJECT mountableDevice = DeviceObject;
 
-    while (mountableDevice != NULL) {
+    while (mountableDevice != NULL)
+    {
 
-        if ((mountableDevice->Flags & DO_DEVICE_HAS_NAME) &&
-           (mountableDevice->Vpb != NULL)) {
+        if ((mountableDevice->Flags & DO_DEVICE_HAS_NAME) && (mountableDevice->Vpb != NULL))
+        {
 
             return mountableDevice;
         }
@@ -1097,13 +1042,9 @@ Return Value:
     return NULL;
 }
 
-
+
 NTSTATUS
-IopDeviceStartComplete (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    )
+IopDeviceStartComplete(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 
 /*++
 
@@ -1130,16 +1071,17 @@ Return Value:
     ULONG oldFlags;
     KIRQL oldIrql;
 
-    UNREFERENCED_PARAMETER( DeviceObject );
+    UNREFERENCED_PARAMETER(DeviceObject);
 
     //
     // Read state from Irp.
     //
 
 #if DBG
-    if (((PDEVICE_COMPLETION_CONTEXT)Context)->Id != (PVOID)Irp) {
+    if (((PDEVICE_COMPLETION_CONTEXT)Context)->Id != (PVOID)Irp)
+    {
         ASSERT(0);
-        IoFreeIrp (Irp);
+        IoFreeIrp(Irp);
         ExFreePool(Context);
 
         return STATUS_MORE_PROCESSING_REQUIRED;
@@ -1210,18 +1152,14 @@ Return Value:
     // stop "completing" this irp any future.
     //
 
-    IoFreeIrp (Irp);
+    IoFreeIrp(Irp);
     ExFreePool(Context);
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
-
+
 NTSTATUS
-IopQueryDeviceRelations(
-    IN DEVICE_RELATION_TYPE Relations,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN Synchronous,
-    OUT PDEVICE_RELATIONS *DeviceRelations
-    )
+IopQueryDeviceRelations(IN DEVICE_RELATION_TYPE Relations, IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN Synchronous,
+                        OUT PDEVICE_RELATIONS *DeviceRelations)
 
 /*++
 
@@ -1278,25 +1216,21 @@ Return Value:
     //
     status = IopSynchronousCall(DeviceObject, &irpSp, (PULONG_PTR)DeviceRelations);
 
-    if (Relations == BusRelations) {
+    if (Relations == BusRelations)
+    {
 
         deviceNode->CompletionStatus = status;
 
-        PipSetDevNodeState( deviceNode, DeviceNodeEnumerateCompletion, NULL );
+        PipSetDevNodeState(deviceNode, DeviceNodeEnumerateCompletion, NULL);
 
         status = STATUS_SUCCESS;
     }
 
     return status;
 }
-
+
 NTSTATUS
-IopQueryDeviceResources (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG ResourceType,
-    OUT PVOID *Resource,
-    OUT ULONG *Length
-    )
+IopQueryDeviceResources(IN PDEVICE_OBJECT DeviceObject, IN ULONG ResourceType, OUT PVOID *Resource, OUT ULONG *Length)
 
 /*++
 
@@ -1338,8 +1272,8 @@ Return Value:
 
 #if DBG
 
-    if ((ResourceType != QUERY_RESOURCE_LIST) &&
-        (ResourceType != QUERY_RESOURCE_REQUIREMENTS)) {
+    if ((ResourceType != QUERY_RESOURCE_LIST) && (ResourceType != QUERY_RESOURCE_REQUIREMENTS))
+    {
 
         ASSERT(0);
         return STATUS_INVALID_PARAMETER_2;
@@ -1355,32 +1289,35 @@ Return Value:
 
     RtlZeroMemory(&irpSp, sizeof(IO_STACK_LOCATION));
 
-    deviceNode = (PDEVICE_NODE) DeviceObject->DeviceObjectExtension->DeviceNode;
+    deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
 
-    if (ResourceType == QUERY_RESOURCE_LIST) {
+    if (ResourceType == QUERY_RESOURCE_LIST)
+    {
 
         //
         // caller is asked for RESOURCE_LIST.  If this is a madeup device, we will
         // read it from registry.  Otherwise, we ask drivers.
         //
 
-        if (deviceNode->Flags & DNF_MADEUP) {
+        if (deviceNode->Flags & DNF_MADEUP)
+        {
 
             status = IopGetDeviceResourcesFromRegistry(
-                             DeviceObject,
-                             ResourceType,
-                             REGISTRY_ALLOC_CONFIG + REGISTRY_FORCED_CONFIG + REGISTRY_BOOT_CONFIG,
-                             Resource,
-                             Length);
-            if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+                DeviceObject, ResourceType, REGISTRY_ALLOC_CONFIG + REGISTRY_FORCED_CONFIG + REGISTRY_BOOT_CONFIG,
+                Resource, Length);
+            if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+            {
                 status = STATUS_SUCCESS;
             }
             return status;
-        } else {
+        }
+        else
+        {
             irpSp.MinorFunction = IRP_MN_QUERY_RESOURCES;
             irpSp.MajorFunction = IRP_MJ_PNP;
             status = IopSynchronousCall(DeviceObject, &irpSp, (PULONG_PTR)Resource);
-            if (status == STATUS_NOT_SUPPORTED) {
+            if (status == STATUS_NOT_SUPPORTED)
+            {
 
                 //
                 // If driver doesn't implement this request, it
@@ -1390,12 +1327,15 @@ Return Value:
                 *Resource = NULL;
                 status = STATUS_SUCCESS;
             }
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 *Length = IopDetermineResourceListSize((PCM_RESOURCE_LIST)*Resource);
             }
             return status;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // Caller is asked for resource requirements list.  We will check:
@@ -1408,53 +1348,52 @@ Return Value:
         //     filter the requirements.
         //
 
-        status = IopGetDeviceResourcesFromRegistry(
-                         DeviceObject,
-                         QUERY_RESOURCE_LIST,
-                         REGISTRY_FORCED_CONFIG,
-                         Resource,
-                         &junk);
-        if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
-            status = IopGetDeviceResourcesFromRegistry(
-                             DeviceObject,
-                             QUERY_RESOURCE_REQUIREMENTS,
-                             REGISTRY_OVERRIDE_CONFIGVECTOR,
-                             &resReqList,
-                             &junk);
-            if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
-                if (deviceNode->Flags & DNF_MADEUP) {
-                    status = IopGetDeviceResourcesFromRegistry(
-                                     DeviceObject,
-                                     QUERY_RESOURCE_REQUIREMENTS,
-                                     REGISTRY_BASIC_CONFIGVECTOR,
-                                     &resReqList,
-                                     &junk);
-                    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+        status = IopGetDeviceResourcesFromRegistry(DeviceObject, QUERY_RESOURCE_LIST, REGISTRY_FORCED_CONFIG, Resource,
+                                                   &junk);
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
+            status = IopGetDeviceResourcesFromRegistry(DeviceObject, QUERY_RESOURCE_REQUIREMENTS,
+                                                       REGISTRY_OVERRIDE_CONFIGVECTOR, &resReqList, &junk);
+            if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+            {
+                if (deviceNode->Flags & DNF_MADEUP)
+                {
+                    status = IopGetDeviceResourcesFromRegistry(DeviceObject, QUERY_RESOURCE_REQUIREMENTS,
+                                                               REGISTRY_BASIC_CONFIGVECTOR, &resReqList, &junk);
+                    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+                    {
                         status = STATUS_SUCCESS;
                         resReqList = NULL;
                     }
-                } else {
+                }
+                else
+                {
 
                     //
                     // We are going to ask the bus driver ...
                     //
 
-                    if (deviceNode->ResourceRequirements) {
+                    if (deviceNode->ResourceRequirements)
+                    {
                         ASSERT(deviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED);
                         resReqList = ExAllocatePool(PagedPool, deviceNode->ResourceRequirements->ListSize);
-                        if (resReqList) {
-                            RtlCopyMemory(resReqList,
-                                         deviceNode->ResourceRequirements,
-                                         deviceNode->ResourceRequirements->ListSize
-                                         );
+                        if (resReqList)
+                        {
+                            RtlCopyMemory(resReqList, deviceNode->ResourceRequirements,
+                                          deviceNode->ResourceRequirements->ListSize);
                             status = STATUS_SUCCESS;
-                        } else {
+                        }
+                        else
+                        {
                             return STATUS_NO_MEMORY;
                         }
-                    } else {
+                    }
+                    else
+                    {
 
                         status = PpIrpQueryResourceRequirements(DeviceObject, &resReqList);
-                        if (status == STATUS_NOT_SUPPORTED) {
+                        if (status == STATUS_NOT_SUPPORTED)
+                        {
                             //
                             // If driver doesn't implement this request, it
                             // doesn't require any resources.
@@ -1464,7 +1403,8 @@ Return Value:
                         }
                     }
                 }
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     return status;
                 }
             }
@@ -1474,28 +1414,25 @@ Return Value:
             // list against boot config.
             //
 
-            status = IopGetDeviceResourcesFromRegistry(
-                             DeviceObject,
-                             QUERY_RESOURCE_LIST,
-                             REGISTRY_BOOT_CONFIG,
-                             &cmList,
-                             &junk);
-            if (NT_SUCCESS(status) &&
-                (!cmList || cmList->Count == 0 || cmList->List[0].InterfaceType != PCIBus)) {
-                status = IopFilterResourceRequirementsList (
-                             resReqList,
-                             cmList,
-                             &filteredList,
-                             &exactMatch);
-                if (cmList) {
+            status = IopGetDeviceResourcesFromRegistry(DeviceObject, QUERY_RESOURCE_LIST, REGISTRY_BOOT_CONFIG, &cmList,
+                                                       &junk);
+            if (NT_SUCCESS(status) && (!cmList || cmList->Count == 0 || cmList->List[0].InterfaceType != PCIBus))
+            {
+                status = IopFilterResourceRequirementsList(resReqList, cmList, &filteredList, &exactMatch);
+                if (cmList)
+                {
                     ExFreePool(cmList);
                 }
-                if (!NT_SUCCESS(status)) {
-                    if (resReqList) {
+                if (!NT_SUCCESS(status))
+                {
+                    if (resReqList)
+                    {
                         ExFreePool(resReqList);
                     }
                     return status;
-                } else {
+                }
+                else
+                {
 
                     //
                     // For non-root-enumerated devices, we merge filtered config with basic config
@@ -1503,53 +1440,64 @@ Return Value:
                     // consider Basic config vector.
                     //
 
-                    if (!(deviceNode->Flags & DNF_MADEUP) &&
-                        (exactMatch == FALSE || resReqList->AlternativeLists > 1)) {
-                        status = IopMergeFilteredResourceRequirementsList (
-                                 filteredList,
-                                 resReqList,
-                                 &mergedList
-                                 );
-                        if (resReqList) {
+                    if (!(deviceNode->Flags & DNF_MADEUP) && (exactMatch == FALSE || resReqList->AlternativeLists > 1))
+                    {
+                        status = IopMergeFilteredResourceRequirementsList(filteredList, resReqList, &mergedList);
+                        if (resReqList)
+                        {
                             ExFreePool(resReqList);
                         }
-                        if (filteredList) {
+                        if (filteredList)
+                        {
                             ExFreePool(filteredList);
                         }
-                        if (NT_SUCCESS(status)) {
+                        if (NT_SUCCESS(status))
+                        {
                             resReqList = mergedList;
-                        } else {
+                        }
+                        else
+                        {
                             return status;
                         }
-                    } else {
-                        if (resReqList) {
+                    }
+                    else
+                    {
+                        if (resReqList)
+                        {
                             ExFreePool(resReqList);
                         }
                         resReqList = filteredList;
                     }
                 }
             }
-
-        } else {
+        }
+        else
+        {
             ASSERT(NT_SUCCESS(status));
 
             //
             // We have Forced Config.  Convert it to resource requirements and return it.
             //
 
-            if (*Resource) {
-                resReqList = IopCmResourcesToIoResources (0, (PCM_RESOURCE_LIST)*Resource, LCPRI_FORCECONFIG);
+            if (*Resource)
+            {
+                resReqList = IopCmResourcesToIoResources(0, (PCM_RESOURCE_LIST)*Resource, LCPRI_FORCECONFIG);
                 ExFreePool(*Resource);
-                if (resReqList) {
+                if (resReqList)
+                {
                     *Resource = (PVOID)resReqList;
                     *Length = resReqList->ListSize;
-                } else {
+                }
+                else
+                {
                     *Resource = NULL;
                     *Length = 0;
                     status = STATUS_INSUFFICIENT_RESOURCES;
                     return status;
                 }
-            } else {
+            }
+            else
+            {
                 resReqList = NULL;
             }
         }
@@ -1559,22 +1507,21 @@ Return Value:
         // NOTE: Per Lonny's request, we let drivers filter ForcedConfig
         //
 
-        status = IopFilterResourceRequirementsCall(
-            DeviceObject,
-            resReqList,
-            &newResources
-            );
+        status = IopFilterResourceRequirementsCall(DeviceObject, resReqList, &newResources);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             UNICODE_STRING unicodeName;
             HANDLE handle, handlex;
 
 #if DBG
-            if (newResources == NULL && resReqList) {
+            if (newResources == NULL && resReqList)
+            {
                 DbgPrint("PnpMgr: Non-NULL resource requirements list filtered to NULL\n");
             }
 #endif
-            if (newResources) {
+            if (newResources)
+            {
 
                 *Length = newResources->ListSize;
                 ASSERT(*Length);
@@ -1585,8 +1532,9 @@ Return Value:
                 // unloaded.
                 //
 
-                *Resource = (PVOID) ExAllocatePool(PagedPool, *Length);
-                if (*Resource == NULL) {
+                *Resource = (PVOID)ExAllocatePool(PagedPool, *Length);
+                if (*Resource == NULL)
+                {
 
                     ExFreePool(newResources);
                     return STATUS_INSUFFICIENT_RESOURCES;
@@ -1594,8 +1542,9 @@ Return Value:
 
                 RtlCopyMemory(*Resource, newResources, *Length);
                 ExFreePool(newResources);
-
-            } else {
+            }
+            else
+            {
                 *Length = 0;
                 *Resource = NULL;
             }
@@ -1605,28 +1554,22 @@ Return Value:
             //
 
             status = IopDeviceObjectToDeviceInstance(DeviceObject, &handlex, KEY_ALL_ACCESS);
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_CONTROL);
-                status = IopOpenRegistryKeyEx( &handle,
-                                               handlex,
-                                               &unicodeName,
-                                               KEY_READ
-                                               );
-                if (NT_SUCCESS(status)) {
+                status = IopOpenRegistryKeyEx(&handle, handlex, &unicodeName, KEY_READ);
+                if (NT_SUCCESS(status))
+                {
                     PiWstrToUnicodeString(&unicodeName, REGSTR_VALUE_FILTERED_CONFIG_VECTOR);
-                    ZwSetValueKey(handle,
-                                  &unicodeName,
-                                  TITLE_INDEX_VALUE,
-                                  REG_RESOURCE_REQUIREMENTS_LIST,
-                                  *Resource,
-                                  *Length
-                                  );
+                    ZwSetValueKey(handle, &unicodeName, TITLE_INDEX_VALUE, REG_RESOURCE_REQUIREMENTS_LIST, *Resource,
+                                  *Length);
                     ZwClose(handle);
                     ZwClose(handlex);
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // NTRAID #61058-2001/01/05 - ADRIAO
@@ -1636,23 +1579,22 @@ Return Value:
             //
             ASSERT(status == STATUS_NOT_SUPPORTED);
             *Resource = resReqList;
-            if (resReqList) {
+            if (resReqList)
+            {
                 *Length = resReqList->ListSize;
-            } else {
+            }
+            else
+            {
                 *Length = 0;
             }
         }
         return STATUS_SUCCESS;
     }
 }
-
+
 NTSTATUS
-IopQueryResourceHandlerInterface(
-    IN RESOURCE_HANDLER_TYPE HandlerType,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN UCHAR ResourceType,
-    IN OUT PVOID *Interface
-    )
+IopQueryResourceHandlerInterface(IN RESOURCE_HANDLER_TYPE HandlerType, IN PDEVICE_OBJECT DeviceObject,
+                                 IN UCHAR ResourceType, IN OUT PVOID *Interface)
 
 /*++
 
@@ -1691,14 +1633,16 @@ Return Value:
     // skip it.
     //
 
-    if ((deviceNode->DuplicatePDO == (PDEVICE_OBJECT) DeviceObject->DriverObject) ||
-        !(DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE)) {
+    if ((deviceNode->DuplicatePDO == (PDEVICE_OBJECT)DeviceObject->DriverObject) ||
+        !(DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE))
+    {
         return STATUS_NOT_SUPPORTED;
     }
 
-    switch (HandlerType) {
+    switch (HandlerType)
+    {
     case ResourceTranslator:
-        size = sizeof(TRANSLATOR_INTERFACE) + 4;  // Pnptest
+        size = sizeof(TRANSLATOR_INTERFACE) + 4; // Pnptest
         //size = sizeof(TRANSLATOR_INTERFACE);
         interfaceType = GUID_TRANSLATOR_INTERFACE_STANDARD;
         break;
@@ -1717,8 +1661,9 @@ Return Value:
         return STATUS_INVALID_PARAMETER;
     }
 
-    interface = (PINTERFACE) ExAllocatePool(PagedPool, size);
-    if (interface == NULL) {
+    interface = (PINTERFACE)ExAllocatePool(PagedPool, size);
+    if (interface == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1746,23 +1691,27 @@ Return Value:
     irpSp.Parameters.QueryInterface.Size = interface->Size;
     irpSp.Parameters.QueryInterface.Version = interface->Version = 0;
     irpSp.Parameters.QueryInterface.Interface = interface;
-    irpSp.Parameters.QueryInterface.InterfaceSpecificData = (PVOID) (ULONG_PTR) ResourceType;
+    irpSp.Parameters.QueryInterface.InterfaceSpecificData = (PVOID)(ULONG_PTR)ResourceType;
 
     //
     // Make the call and return.
     //
 
     status = IopSynchronousCall(DeviceObject, &irpSp, NULL);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        switch (HandlerType) {
-         
+        switch (HandlerType)
+        {
+
         case ResourceTranslator:
-            if (    ((PTRANSLATOR_INTERFACE)interface)->TranslateResources == NULL ||
-                    ((PTRANSLATOR_INTERFACE)interface)->TranslateResourceRequirements == NULL) {
+            if (((PTRANSLATOR_INTERFACE)interface)->TranslateResources == NULL ||
+                ((PTRANSLATOR_INTERFACE)interface)->TranslateResourceRequirements == NULL)
+            {
 
-                IopDbgPrint((IOP_ERROR_LEVEL, 
-                             "!devstack %p returned success for IRP_MN_QUERY_INTERFACE (GUID_TRANSLATOR_INTERFACE_STANDARD) but did not fill in the required data\n",
+                IopDbgPrint((IOP_ERROR_LEVEL,
+                             "!devstack %p returned success for IRP_MN_QUERY_INTERFACE "
+                             "(GUID_TRANSLATOR_INTERFACE_STANDARD) but did not fill in the required data\n",
                              DeviceObject));
                 ASSERT(!NT_SUCCESS(status));
                 status = STATUS_UNSUCCESSFUL;
@@ -1770,10 +1719,12 @@ Return Value:
             break;
 
         case ResourceArbiter:
-            if (((PARBITER_INTERFACE)interface)->ArbiterHandler == NULL) {
+            if (((PARBITER_INTERFACE)interface)->ArbiterHandler == NULL)
+            {
 
-                IopDbgPrint((IOP_ERROR_LEVEL, 
-                             "!devstack %p returned success for IRP_MN_QUERY_INTERFACE (GUID_ARBITER_INTERFACE_STANDARD) but did not fill in the required data\n",
+                IopDbgPrint((IOP_ERROR_LEVEL,
+                             "!devstack %p returned success for IRP_MN_QUERY_INTERFACE "
+                             "(GUID_ARBITER_INTERFACE_STANDARD) but did not fill in the required data\n",
                              DeviceObject));
                 ASSERT(!NT_SUCCESS(status));
                 status = STATUS_UNSUCCESSFUL;
@@ -1781,10 +1732,12 @@ Return Value:
             break;
 
         case ResourceLegacyDeviceDetection:
-            if (((PLEGACY_DEVICE_DETECTION_INTERFACE)interface)->LegacyDeviceDetection == NULL) {
+            if (((PLEGACY_DEVICE_DETECTION_INTERFACE)interface)->LegacyDeviceDetection == NULL)
+            {
 
-                IopDbgPrint((IOP_ERROR_LEVEL, 
-                             "!devstack %p returned success for IRP_MN_QUERY_INTERFACE (GUID_LEGACY_DEVICE_DETECTION_STANDARD) but did not fill in the required data\n",
+                IopDbgPrint((IOP_ERROR_LEVEL,
+                             "!devstack %p returned success for IRP_MN_QUERY_INTERFACE "
+                             "(GUID_LEGACY_DEVICE_DETECTION_STANDARD) but did not fill in the required data\n",
                              DeviceObject));
                 ASSERT(!NT_SUCCESS(status));
                 status = STATUS_UNSUCCESSFUL;
@@ -1795,30 +1748,29 @@ Return Value:
             //
             // This should never happen.
             //
-            IopDbgPrint((IOP_ERROR_LEVEL, 
-                         "IopQueryResourceHandlerInterface: Possible stack corruption\n"));
+            IopDbgPrint((IOP_ERROR_LEVEL, "IopQueryResourceHandlerInterface: Possible stack corruption\n"));
             ASSERT(0);
             status = STATUS_INVALID_PARAMETER;
             break;
         }
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         *Interface = interface;
-     } else {
+    }
+    else
+    {
 
-         ExFreePool(interface);
-     }
+        ExFreePool(interface);
+    }
 
     return status;
 }
-
+
 NTSTATUS
-IopQueryReconfiguration(
-    IN UCHAR Request,
-    IN PDEVICE_OBJECT DeviceObject
-    )
+IopQueryReconfiguration(IN UCHAR Request, IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -1849,14 +1801,16 @@ Return Value:
 
     PAGED_CODE();
 
-    switch (Request) {
+    switch (Request)
+    {
     case IRP_MN_QUERY_STOP_DEVICE:
 
-        if (deviceNode->State != DeviceNodeStarted) {
+        if (deviceNode->State != DeviceNodeStarted)
+        {
 
-            IopDbgPrint((   IOP_RESOURCE_ERROR_LEVEL,
-                            "An attempt made to send IRP_MN_QUERY_STOP_DEVICE to an unstarted device %wZ!\n",
-                            &deviceNode->InstancePath));
+            IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL,
+                         "An attempt made to send IRP_MN_QUERY_STOP_DEVICE to an unstarted device %wZ!\n",
+                         &deviceNode->InstancePath));
             ASSERT(0);
             return STATUS_UNSUCCESSFUL;
         }
@@ -1866,11 +1820,12 @@ Return Value:
         //
         // Fall through
         //
-        if (deviceNode->State != DeviceNodeQueryStopped) {
+        if (deviceNode->State != DeviceNodeQueryStopped)
+        {
 
-            IopDbgPrint((   IOP_RESOURCE_ERROR_LEVEL,
-                            "An attempt made to send IRP_MN_STOP_DEVICE to an unqueried device %wZ!\n",
-                            &deviceNode->InstancePath));
+            IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL,
+                         "An attempt made to send IRP_MN_STOP_DEVICE to an unqueried device %wZ!\n",
+                         &deviceNode->InstancePath));
             ASSERT(0);
             return STATUS_UNSUCCESSFUL;
         }
@@ -1878,12 +1833,12 @@ Return Value:
 
     case IRP_MN_CANCEL_STOP_DEVICE:
 
-        if (    deviceNode->State != DeviceNodeQueryStopped &&
-                deviceNode->State != DeviceNodeStarted) {
+        if (deviceNode->State != DeviceNodeQueryStopped && deviceNode->State != DeviceNodeStarted)
+        {
 
-            IopDbgPrint((   IOP_RESOURCE_ERROR_LEVEL,
-                            "An attempt made to send IRP_MN_CANCEL_STOP_DEVICE to an unqueried\\unstarted device %wZ!\n",
-                            &deviceNode->InstancePath));
+            IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL,
+                         "An attempt made to send IRP_MN_CANCEL_STOP_DEVICE to an unqueried\\unstarted device %wZ!\n",
+                         &deviceNode->InstancePath));
             ASSERT(0);
             return STATUS_UNSUCCESSFUL;
         }
@@ -1914,14 +1869,10 @@ Return Value:
     status = IopSynchronousCall(DeviceObject, &irpSp, NULL);
     return status;
 }
-
+
 NTSTATUS
-IopQueryLegacyBusInformation (
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT LPGUID InterfaceGuid,          OPTIONAL
-    OUT INTERFACE_TYPE *InterfaceType, OPTIONAL
-    OUT ULONG *BusNumber               OPTIONAL
-    )
+IopQueryLegacyBusInformation(IN PDEVICE_OBJECT DeviceObject, OUT LPGUID InterfaceGuid,
+                             OPTIONAL OUT INTERFACE_TYPE *InterfaceType, OPTIONAL OUT ULONG *BusNumber OPTIONAL)
 
 /*++
 
@@ -1971,9 +1922,11 @@ Return Value:
     //
 
     status = IopSynchronousCall(DeviceObject, &irpSp, (PULONG_PTR)&busInfo);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if (busInfo == NULL) {
+        if (busInfo == NULL)
+        {
 
             //
             // The device driver LIED to us.  Bad, bad, bad device driver.
@@ -1983,22 +1936,28 @@ Return Value:
 
             deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode;
 
-            if (deviceNode && deviceNode->ServiceName.Buffer) {
+            if (deviceNode && deviceNode->ServiceName.Buffer)
+            {
 
-                DbgPrint("*** IopQueryLegacyBusInformation - Driver %wZ returned STATUS_SUCCESS\n", &deviceNode->ServiceName);
+                DbgPrint("*** IopQueryLegacyBusInformation - Driver %wZ returned STATUS_SUCCESS\n",
+                         &deviceNode->ServiceName);
                 DbgPrint("    for IRP_MN_QUERY_LEGACY_BUS_INFORMATION, and a NULL POINTER.\n");
             }
 
             ASSERT(busInfo != NULL);
-
-        } else {
-            if (ARGUMENT_PRESENT(InterfaceGuid)) {
+        }
+        else
+        {
+            if (ARGUMENT_PRESENT(InterfaceGuid))
+            {
                 *InterfaceGuid = busInfo->BusTypeGuid;
             }
-            if (ARGUMENT_PRESENT(InterfaceType)) {
+            if (ARGUMENT_PRESENT(InterfaceType))
+            {
                 *InterfaceType = busInfo->LegacyBusType;
             }
-            if (ARGUMENT_PRESENT(BusNumber)) {
+            if (ARGUMENT_PRESENT(BusNumber))
+            {
                 *BusNumber = busInfo->BusNumber;
             }
             ExFreePool(busInfo);
@@ -2006,14 +1965,10 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-IopQueryPnpBusInformation (
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT LPGUID InterfaceGuid,         OPTIONAL
-    OUT INTERFACE_TYPE *InterfaceType, OPTIONAL
-    OUT ULONG *BusNumber               OPTIONAL
-    )
+IopQueryPnpBusInformation(IN PDEVICE_OBJECT DeviceObject, OUT LPGUID InterfaceGuid,
+                          OPTIONAL OUT INTERFACE_TYPE *InterfaceType, OPTIONAL OUT ULONG *BusNumber OPTIONAL)
 
 /*++
 
@@ -2062,9 +2017,11 @@ Return Value:
     //
 
     status = IopSynchronousCall(DeviceObject, &irpSp, (PULONG_PTR)&busInfo);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if (busInfo == NULL) {
+        if (busInfo == NULL)
+        {
 
             //
             // The device driver LIED to us.  Bad, bad, bad device driver.
@@ -2074,22 +2031,28 @@ Return Value:
 
             deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode;
 
-            if (deviceNode && deviceNode->ServiceName.Buffer) {
+            if (deviceNode && deviceNode->ServiceName.Buffer)
+            {
 
-                DbgPrint("*** IopQueryPnpBusInformation - Driver %wZ returned STATUS_SUCCESS\n", &deviceNode->ServiceName);
+                DbgPrint("*** IopQueryPnpBusInformation - Driver %wZ returned STATUS_SUCCESS\n",
+                         &deviceNode->ServiceName);
                 DbgPrint("    for IRP_MN_QUERY_BUS_INFORMATION, and a NULL POINTER.\n");
             }
 
             ASSERT(busInfo != NULL);
-
-        } else {
-            if (ARGUMENT_PRESENT(InterfaceGuid)) {
+        }
+        else
+        {
+            if (ARGUMENT_PRESENT(InterfaceGuid))
+            {
                 *InterfaceGuid = busInfo->BusTypeGuid;
             }
-            if (ARGUMENT_PRESENT(InterfaceType)) {
+            if (ARGUMENT_PRESENT(InterfaceType))
+            {
                 *InterfaceType = busInfo->LegacyBusType;
             }
-            if (ARGUMENT_PRESENT(BusNumber)) {
+            if (ARGUMENT_PRESENT(BusNumber))
+            {
                 *BusNumber = busInfo->BusNumber;
             }
             ExFreePool(busInfo);
@@ -2097,12 +2060,9 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-IopQueryDeviceState(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT PPNP_DEVICE_STATE DeviceState
-    )
+IopQueryDeviceState(IN PDEVICE_OBJECT DeviceObject, OUT PPNP_DEVICE_STATE DeviceState)
 
 /*++
 
@@ -2151,7 +2111,8 @@ Return Value:
     // Now perform the appropriate action based on the returned state
     //
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         *DeviceState = (PNP_DEVICE_STATE)stateValue;
     }
@@ -2159,11 +2120,8 @@ Return Value:
     return status;
 }
 
-
-VOID
-IopIncDisableableDepends(
-    IN OUT PDEVICE_NODE DeviceNode
-    )
+
+VOID IopIncDisableableDepends(IN OUT PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -2184,29 +2142,26 @@ Return Value:
 --*/
 {
 
-    while (DeviceNode != NULL) {
+    while (DeviceNode != NULL)
+    {
 
         LONG newval;
 
         newval = InterlockedIncrement((PLONG)&DeviceNode->DisableableDepends);
-        if (newval != 1) {
+        if (newval != 1)
+        {
             //
             // we were already non-disableable, so we don't have to bother parent
             //
             break;
         }
 
-        DeviceNode = DeviceNode ->Parent;
-
+        DeviceNode = DeviceNode->Parent;
     }
-
 }
 
-
-VOID
-IopDecDisableableDepends(
-    IN OUT PDEVICE_NODE DeviceNode
-    )
+
+VOID IopDecDisableableDepends(IN OUT PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -2227,30 +2182,27 @@ Return Value:
 --*/
 {
 
-    while (DeviceNode != NULL) {
+    while (DeviceNode != NULL)
+    {
 
         LONG newval;
 
         newval = InterlockedDecrement((PLONG)&DeviceNode->DisableableDepends);
-        if (newval != 0) {
+        if (newval != 0)
+        {
             //
             // we are still non-disableable, so we don't have to bother parent
             //
             break;
         }
 
-        DeviceNode = DeviceNode ->Parent;
-
+        DeviceNode = DeviceNode->Parent;
     }
-
 }
-
+
 NTSTATUS
-IopFilterResourceRequirementsCall(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIO_RESOURCE_REQUIREMENTS_LIST ResReqList OPTIONAL,
-    OUT PVOID *Information
-    )
+IopFilterResourceRequirementsCall(IN PDEVICE_OBJECT DeviceObject, IN PIO_RESOURCE_REQUIREMENTS_LIST ResReqList OPTIONAL,
+                                  OUT PVOID *Information)
 
 /*++
 
@@ -2299,7 +2251,8 @@ Return Value:
     //
 
     irp = IoAllocateIrp(deviceObject->StackSize, FALSE);
-    if (irp == NULL){
+    if (irp == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -2311,12 +2264,14 @@ Return Value:
     // compatibility. The driver verifier is in on this one.
     //
 
-    if (ResReqList) {
+    if (ResReqList)
+    {
 
         irp->IoStatus.Status = statusBlock.Status = STATUS_SUCCESS;
-        irp->IoStatus.Information = statusBlock.Information = (ULONG_PTR) ResReqList;
-
-    } else {
+        irp->IoStatus.Information = statusBlock.Information = (ULONG_PTR)ResReqList;
+    }
+    else
+    {
 
         irp->IoStatus.Status = statusBlock.Status = STATUS_NOT_SUPPORTED;
     }
@@ -2325,9 +2280,7 @@ Return Value:
     // Set the pointer to the status block and initialized event.
     //
 
-    KeInitializeEvent( &event,
-                       SynchronizationEvent,
-                       FALSE );
+    KeInitializeEvent(&event, SynchronizationEvent, FALSE);
 
     irp->UserIosb = &statusBlock;
     irp->UserEvent = &event;
@@ -2371,25 +2324,19 @@ Return Value:
     // If a driver returns STATUS_PENDING, we will wait for it to complete
     //
 
-    if (status == STATUS_PENDING) {
-        (VOID) KeWaitForSingleObject( &event,
-                                      Executive,
-                                      KernelMode,
-                                      FALSE,
-                                      (PLARGE_INTEGER) NULL );
+    if (status == STATUS_PENDING)
+    {
+        (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = statusBlock.Status;
     }
 
-    *returnInfo = (ULONG_PTR) statusBlock.Information;
+    *returnInfo = (ULONG_PTR)statusBlock.Information;
 
     return status;
 }
-
+
 NTSTATUS
-IopQueryDockRemovalInterface(
-    IN      PDEVICE_OBJECT  DeviceObject,
-    IN OUT  PDOCK_INTERFACE *DockInterface
-    )
+IopQueryDockRemovalInterface(IN PDEVICE_OBJECT DeviceObject, IN OUT PDOCK_INTERFACE *DockInterface)
 
 /*++
 
@@ -2421,8 +2368,9 @@ Return Value:
 
     size = sizeof(DOCK_INTERFACE);
     interfaceType = GUID_DOCK_INTERFACE;
-    interface = (PINTERFACE) ExAllocatePool(PagedPool, size);
-    if (interface == NULL) {
+    interface = (PINTERFACE)ExAllocatePool(PagedPool, size);
+    if (interface == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2457,19 +2405,19 @@ Return Value:
     //
 
     status = IopSynchronousCall(DeviceObject, &irpSp, NULL);
-    if (NT_SUCCESS(status)) {
-        *DockInterface = (PDOCK_INTERFACE) interface;
-    } else {
+    if (NT_SUCCESS(status))
+    {
+        *DockInterface = (PDOCK_INTERFACE)interface;
+    }
+    else
+    {
         ExFreePool(interface);
     }
     return status;
 }
 
 NTSTATUS
-PpIrpQueryResourceRequirements(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT PIO_RESOURCE_REQUIREMENTS_LIST *Requirements
-   )
+PpIrpQueryResourceRequirements(IN PDEVICE_OBJECT DeviceObject, OUT PIO_RESOURCE_REQUIREMENTS_LIST *Requirements)
 
 /*++
 
@@ -2509,13 +2457,17 @@ Return Value:
 
     ASSERT(NT_SUCCESS(status) || (*Requirements == NULL));
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if(*Requirements == NULL) {
+        if (*Requirements == NULL)
+        {
 
             status = STATUS_NOT_SUPPORTED;
         }
-    } else {
+    }
+    else
+    {
 
         *Requirements = NULL;
     }
@@ -2526,16 +2478,12 @@ Return Value:
 #if FAULT_INJECT_INVALID_ID
 //
 // Fault injection for invalid IDs
-// 
+//
 ULONG PiFailQueryID = 0;
 #endif
 
 NTSTATUS
-PpIrpQueryID(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BUS_QUERY_ID_TYPE IDType,
-    OUT PWCHAR *ID
-    )
+PpIrpQueryID(IN PDEVICE_OBJECT DeviceObject, IN BUS_QUERY_ID_TYPE IDType, OUT PWCHAR *ID)
 
 /*++
 
@@ -2566,9 +2514,8 @@ Return Value:
 
     PAGED_CODE();
 
-    ASSERT(IDType == BusQueryDeviceID || IDType == BusQueryInstanceID || 
-           IDType == BusQueryHardwareIDs || IDType == BusQueryCompatibleIDs || 
-           IDType == BusQueryDeviceSerialNumber);
+    ASSERT(IDType == BusQueryDeviceID || IDType == BusQueryInstanceID || IDType == BusQueryHardwareIDs ||
+           IDType == BusQueryCompatibleIDs || IDType == BusQueryDeviceSerialNumber);
 
     *ID = NULL;
 
@@ -2583,13 +2530,17 @@ Return Value:
 
     ASSERT(NT_SUCCESS(status) || (*ID == NULL));
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if(*ID == NULL) {
+        if (*ID == NULL)
+        {
 
             status = STATUS_NOT_SUPPORTED;
         }
-    } else {
+    }
+    else
+    {
 
         *ID = NULL;
     }
@@ -2597,18 +2548,21 @@ Return Value:
 #if FAULT_INJECT_INVALID_ID
     //
     // Fault injection for invalid IDs
-    // 
-    if (*ID){
+    //
+    if (*ID)
+    {
 
-        static LARGE_INTEGER seed = {0};
+        static LARGE_INTEGER seed = { 0 };
 
-        if(seed.LowPart == 0) {
+        if (seed.LowPart == 0)
+        {
 
             KeQuerySystemTime(&seed);
         }
 
-        if(PnPBootDriversInitialized && PiFailQueryID && RtlRandom(&seed.LowPart) % 10 > 7) {
-                    
+        if (PnPBootDriversInitialized && PiFailQueryID && RtlRandom(&seed.LowPart) % 10 > 7)
+        {
+
             **ID = L',';
         }
     }

@@ -30,11 +30,9 @@ Revision History:
 --*/
 
 #include "pch.h"
-
+
 NTSTATUS
-ACPITableLoad(
-    VOID
-    )
+ACPITableLoad(VOID)
 /*++
 
 Routine Description:
@@ -52,58 +50,53 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             runRootIni = FALSE;
-    KIRQL               oldIrql;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   fixedButtonExtension = NULL;
-    PNSOBJ              iniObject;
-    PNSOBJ              nsObject;
+    BOOLEAN runRootIni = FALSE;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    PDEVICE_EXTENSION fixedButtonExtension = NULL;
+    PNSOBJ iniObject;
+    PNSOBJ nsObject;
 
     //
     // At this point, we should do everything that we need to do once the
     // name space has been loaded. Note that we need to make sure that we
     // only do those things once...
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     //
     // We need the ACPI object for the _SB tree
     //
-    status = AMLIGetNameSpaceObject( "\\_SB", NULL, &nsObject, 0 );
-    if (!NT_SUCCESS(status)) {
+    status = AMLIGetNameSpaceObject("\\_SB", NULL, &nsObject, 0);
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // Ooops. Failure
         //
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "ACPICallBackLoadUnloadDDB: No SB Object!\n"
-            ) );
-        ACPIInternalError( ACPI_CALLBACK );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPICallBackLoadUnloadDDB: No SB Object!\n"));
+        ACPIInternalError(ACPI_CALLBACK);
         return STATUS_SUCCESS;
-
     }
 
     //
     // Make sure that the root device extension's object points to the correct
     // thing. We only want to run through this code path once...
     //
-    if (RootDeviceExtension->AcpiObject == NULL) {
+    if (RootDeviceExtension->AcpiObject == NULL)
+    {
 
         runRootIni = TRUE;
-        InterlockedIncrement( &(RootDeviceExtension->ReferenceCount) );
+        InterlockedIncrement(&(RootDeviceExtension->ReferenceCount));
         RootDeviceExtension->AcpiObject = nsObject;
         nsObject->Context = RootDeviceExtension;
 
         //
         // Now, enumerate the fixed button
         //
-        status = ACPIBuildFixedButtonExtension(
-            RootDeviceExtension,
-            &fixedButtonExtension
-            );
-        if (NT_SUCCESS(status) &&
-            fixedButtonExtension != NULL) {
+        status = ACPIBuildFixedButtonExtension(RootDeviceExtension, &fixedButtonExtension);
+        if (NT_SUCCESS(status) && fixedButtonExtension != NULL)
+        {
 
             //
             // Incremement the reference count on the node. We do this because
@@ -112,51 +105,37 @@ Return Value:
             // entire time. If we incr the reference count, then we guarantee that
             // no one can come along and kick the feet out from underneath us
             //
-            InterlockedIncrement( &(fixedButtonExtension->ReferenceCount) );
-
+            InterlockedIncrement(&(fixedButtonExtension->ReferenceCount));
         }
-
     }
 
     //
     // We now want to run the _INI through the entire tree, starting at
     // the _SB
     //
-    status = ACPIBuildRunMethodRequest(
-        RootDeviceExtension,
-        NULL,
-        NULL,
-        PACKED_INI,
-        (RUN_REQUEST_CHECK_STATUS | RUN_REQUEST_RECURSIVE | RUN_REQUEST_MARK_INI),
-        FALSE
-        );
-    if (!NT_SUCCESS(status)) {
+    status =
+        ACPIBuildRunMethodRequest(RootDeviceExtension, NULL, NULL, PACKED_INI,
+                                  (RUN_REQUEST_CHECK_STATUS | RUN_REQUEST_RECURSIVE | RUN_REQUEST_MARK_INI), FALSE);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIInternalError( ACPI_CALLBACK );
-
+        ACPIInternalError(ACPI_CALLBACK);
     }
 
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     //
     // We also need to run the _INI method off of the root name space entry
     //
-    if (runRootIni) {
+    if (runRootIni)
+    {
 
-        iniObject = ACPIAmliGetNamedChild( nsObject->pnsParent, PACKED_INI );
-        if (iniObject) {
+        iniObject = ACPIAmliGetNamedChild(nsObject->pnsParent, PACKED_INI);
+        if (iniObject)
+        {
 
-            AMLINestAsyncEvalObject(
-                iniObject,
-                NULL,
-                0,
-                NULL,
-                NULL,
-                NULL
-                );
-
+            AMLINestAsyncEvalObject(iniObject, NULL, 0, NULL, NULL, NULL);
         }
-
     }
 
     //
@@ -164,50 +143,40 @@ Return Value:
     // DPC engine. We want to be able to move anything in the Delayed
     // Power Queue over to the Power DPC engine
     //
-    status = ACPIBuildSynchronizationRequest(
-        RootDeviceExtension,
-        ACPITableLoadCallBack,
-        NULL,
-        &AcpiBuildDeviceList,
-        FALSE
-        );
-    if (!NT_SUCCESS(status)) {
+    status =
+        ACPIBuildSynchronizationRequest(RootDeviceExtension, ACPITableLoadCallBack, NULL, &AcpiBuildDeviceList, FALSE);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIInternalError( ACPI_CALLBACK );
-
+        ACPIInternalError(ACPI_CALLBACK);
     }
 
     //
     // We need to hold this spinlock
     //
-    KeAcquireSpinLock( &AcpiBuildQueueLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiBuildQueueLock, &oldIrql);
 
     //
     // Do we need to run the DPC?
     //
-    if (!AcpiBuildDpcRunning) {
+    if (!AcpiBuildDpcRunning)
+    {
 
-        KeInsertQueueDpc( &AcpiBuildDpc, 0, 0);
-
+        KeInsertQueueDpc(&AcpiBuildDpc, 0, 0);
     }
 
     //
     // Done with the lock
     //
-    KeReleaseSpinLock( &AcpiBuildQueueLock, oldIrql );
+    KeReleaseSpinLock(&AcpiBuildQueueLock, oldIrql);
 
     //
     // Done
     //
     return STATUS_SUCCESS;
 }
-
-VOID
-ACPITableLoadCallBack(
-    IN  PVOID       BuildContext,
-    IN  PVOID       Context,
-    IN  NTSTATUS    Status
-    )
+
+VOID ACPITableLoadCallBack(IN PVOID BuildContext, IN PVOID Context, IN NTSTATUS Status)
 /*++
 
 Routine Description:
@@ -228,18 +197,18 @@ Return Value:
 
 --*/
 {
-    UNREFERENCED_PARAMETER( BuildContext );
-    UNREFERENCED_PARAMETER( Context );
-    UNREFERENCED_PARAMETER( Status );
+    UNREFERENCED_PARAMETER(BuildContext);
+    UNREFERENCED_PARAMETER(Context);
+    UNREFERENCED_PARAMETER(Status);
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
 
     //
     // We want to rebuilt the device based GPE mask here, so
     // we need the following locks
     //
-    KeAcquireSpinLockAtDpcLevel( &AcpiDeviceTreeLock );
-    KeAcquireSpinLockAtDpcLevel( &GpeTableLock );
+    KeAcquireSpinLockAtDpcLevel(&AcpiDeviceTreeLock);
+    KeAcquireSpinLockAtDpcLevel(&GpeTableLock);
 
     //
     // Now, we need to walk the device namespace and find which events
@@ -253,52 +222,45 @@ Return Value:
     //
     // We don't need these particular spin locks anymore
     //
-    KeReleaseSpinLockFromDpcLevel( &GpeTableLock );
-    KeReleaseSpinLockFromDpcLevel( &AcpiDeviceTreeLock );
+    KeReleaseSpinLockFromDpcLevel(&GpeTableLock);
+    KeReleaseSpinLockFromDpcLevel(&AcpiDeviceTreeLock);
 
     //
     // We need the power lock to touch these Power Queues
     //
-    KeAcquireSpinLockAtDpcLevel( &AcpiPowerQueueLock );
+    KeAcquireSpinLockAtDpcLevel(&AcpiPowerQueueLock);
 
     //
     // If we there are items on the delayed list, we need to put them
     // on the main list
     //
-    if (!IsListEmpty( &AcpiPowerDelayedQueueList ) ) {
+    if (!IsListEmpty(&AcpiPowerDelayedQueueList))
+    {
 
         //
         // Move the list
         //
-        ACPIInternalMoveList(
-            &AcpiPowerDelayedQueueList,
-            &AcpiPowerQueueList
-            );
+        ACPIInternalMoveList(&AcpiPowerDelayedQueueList, &AcpiPowerQueueList);
 
         //
         // Schedule the DPC, if necessary
         ///
-        if (!AcpiPowerDpcRunning) {
+        if (!AcpiPowerDpcRunning)
+        {
 
-            KeInsertQueueDpc( &AcpiPowerDpc, 0, 0 );
-
+            KeInsertQueueDpc(&AcpiPowerDpc, 0, 0);
         }
     }
 
     //
     // Done with the lock
     //
-    KeReleaseSpinLockFromDpcLevel( &AcpiPowerQueueLock );
-
+    KeReleaseSpinLockFromDpcLevel(&AcpiPowerQueueLock);
 }
-
+
 NTSTATUS
 EXPORT
-ACPITableNotifyFreeObject(
-    ULONG   Event,
-    PVOID   Context,
-    ULONG   ObjectType
-    )
+ACPITableNotifyFreeObject(ULONG Event, PVOID Context, ULONG ObjectType)
 /*++
 
 Routine Description:
@@ -314,36 +276,31 @@ Arguments:
 
 --*/
 {
-    LONG                oldReferenceCount;
-    PDEVICE_EXTENSION   deviceExtension;
-    PDEVICE_EXTENSION   parentExtension;
-    PKIRQL              oldIrql;
-    PNSOBJ              object;
+    LONG oldReferenceCount;
+    PDEVICE_EXTENSION deviceExtension;
+    PDEVICE_EXTENSION parentExtension;
+    PKIRQL oldIrql;
+    PNSOBJ object;
 
     //
     // Start case
     //
-    if (Event == DESTROYOBJ_START) {
+    if (Event == DESTROYOBJ_START)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "Unloading: Start\n"
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "Unloading: Start\n"));
 
-        oldIrql = (PKIRQL) Context;
-        KeAcquireSpinLock( &AcpiDeviceTreeLock, oldIrql );
+        oldIrql = (PKIRQL)Context;
+        KeAcquireSpinLock(&AcpiDeviceTreeLock, oldIrql);
         return STATUS_SUCCESS;
-
     }
-    if (Event == DESTROYOBJ_END) {
+    if (Event == DESTROYOBJ_END)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_CRITICAL,
-            "Unloading: End\n"
-            ) );
+        ACPIPrint((ACPI_PRINT_CRITICAL, "Unloading: End\n"));
 
-        oldIrql = (PKIRQL) Context;
-        KeReleaseSpinLock( &AcpiDeviceTreeLock, *oldIrql );
+        oldIrql = (PKIRQL)Context;
+        KeReleaseSpinLock(&AcpiDeviceTreeLock, *oldIrql);
         return STATUS_SUCCESS;
     }
 
@@ -351,110 +308,82 @@ Arguments:
     // At this point, we have a either a valid unload request or
     // a bugcheck request
     //
-    object = (PNSOBJ) Context;
+    object = (PNSOBJ)Context;
 
     //
     // Let the world Know...
     //
-    ACPIPrint( (
-        ACPI_PRINT_CRITICAL,
-        "%x: Unloading: %x %x %x\n",
-        (object ? object->Context : 0),
-        object,
-        ObjectType,
-        Event
-        ) );
+    ACPIPrint(
+        (ACPI_PRINT_CRITICAL, "%x: Unloading: %x %x %x\n", (object ? object->Context : 0), object, ObjectType, Event));
 
     //
     // Handle the bugcheck cases
     //
-    if (Event == DESTROYOBJ_CHILD_NOT_FREED) {
+    if (Event == DESTROYOBJ_CHILD_NOT_FREED)
+    {
 
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_TABLE_UNLOAD,
-            (ULONG_PTR) object,
-            0,
-            0
-            );
-
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_TABLE_UNLOAD, (ULONG_PTR)object, 0, 0);
     }
-    if (Event == DESTROYOBJ_BOGUS_PARENT) {
+    if (Event == DESTROYOBJ_BOGUS_PARENT)
+    {
 
-        KeBugCheckEx(
-            ACPI_BIOS_ERROR,
-            ACPI_TABLE_UNLOAD,
-            (ULONG_PTR) object,
-            1,
-            0
-            );
-
+        KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_TABLE_UNLOAD, (ULONG_PTR)object, 1, 0);
     }
 
     //
     // We only understand processors, thermal zones, and devices for right
     // now, we will have to add power resources at a later point
     //
-    if (ObjectType == OBJTYPE_POWERRES) {
+    if (ObjectType == OBJTYPE_POWERRES)
+    {
 
         return STATUS_SUCCESS;
-
     }
 
     //
     // Grab the device extension, and make sure that one exists
     //
     deviceExtension = object->Context;
-    if (deviceExtension == NULL) {
+    if (deviceExtension == NULL)
+    {
 
         //
         // No device extension, so we can free this thing *now*
         //
-        AMLIDestroyFreedObjs( object );
+        AMLIDestroyFreedObjs(object);
         return STATUS_SUCCESS;
-
     }
 
     //
     // Mark the extension as no longer existing
     //
-    ACPIInternalUpdateFlags(
-        &(deviceExtension->Flags),
-        DEV_PROP_UNLOADING,
-        FALSE
-        );
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_PROP_UNLOADING, FALSE);
 
     //
     // Does this device have a parent extension? It might not
     // have an extension if the parent has been marked for removal
     //
     parentExtension = deviceExtension->ParentExtension;
-    if (parentExtension != NULL) {
+    if (parentExtension != NULL)
+    {
 
         //
         // Mark the parent's relations as invalid
         //
-        ACPIInternalUpdateFlags(
-            &(parentExtension->Flags),
-            DEV_PROP_INVALID_RELATIONS,
-            FALSE
-            );
-
+        ACPIInternalUpdateFlags(&(parentExtension->Flags), DEV_PROP_INVALID_RELATIONS, FALSE);
     }
 
     //
     // Finally, decrement the reference count on the device...
     //
-    oldReferenceCount = InterlockedDecrement(
-        &(deviceExtension->ReferenceCount)
-        );
-    if (oldReferenceCount == 0) {
+    oldReferenceCount = InterlockedDecrement(&(deviceExtension->ReferenceCount));
+    if (oldReferenceCount == 0)
+    {
 
         //
         // Free this extension
         //
-        ACPIInitDeleteDeviceExtension( deviceExtension );
-
+        ACPIInitDeleteDeviceExtension(deviceExtension);
     }
 
     //
@@ -462,11 +391,9 @@ Arguments:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPITableUnload(
-    VOID
-    )
+ACPITableUnload(VOID)
 /*++
 
 Routine Description:
@@ -487,58 +414,50 @@ Return value:
 
 --*/
 {
-    KIRQL               oldIrql;
-    PDEVICE_EXTENSION   deviceExtension;
+    KIRQL oldIrql;
+    PDEVICE_EXTENSION deviceExtension;
 
     //
     // We will need to hold the device tree lock for the following
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     //
     // Check to see if we have to invalid the root's device extension?
     //
     deviceExtension = RootDeviceExtension;
-    if (deviceExtension && !(deviceExtension->Flags & DEV_TYPE_NOT_FOUND) ) {
+    if (deviceExtension && !(deviceExtension->Flags & DEV_TYPE_NOT_FOUND))
+    {
 
-        if (deviceExtension->Flags & DEV_PROP_INVALID_RELATIONS) {
+        if (deviceExtension->Flags & DEV_PROP_INVALID_RELATIONS)
+        {
 
-            ACPIInternalUpdateFlags(
-                &(deviceExtension->Flags),
-                DEV_PROP_INVALID_RELATIONS,
-                TRUE
-                );
-            IoInvalidateDeviceRelations(
-                deviceExtension->PhysicalDeviceObject,
-                BusRelations
-                );
-
-        } else {
+            ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_PROP_INVALID_RELATIONS, TRUE);
+            IoInvalidateDeviceRelations(deviceExtension->PhysicalDeviceObject, BusRelations);
+        }
+        else
+        {
 
             //
             // Walk the namespace looking for bogus relations
             //
-            ACPITableUnloadInvalidateRelations( deviceExtension );
-
+            ACPITableUnloadInvalidateRelations(deviceExtension);
         }
-
     }
 
     //
     // Done with the lock
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     //
     // And with the function
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPITableUnloadInvalidateRelations(
-    IN  PDEVICE_EXTENSION   DeviceExtension
-    )
+ACPITableUnloadInvalidateRelations(IN PDEVICE_EXTENSION DeviceExtension)
 /*++
 
 Routine Description:
@@ -558,58 +477,46 @@ Return Value:
 
 --*/
 {
-    EXTENSIONLIST_ENUMDATA  eled;
-    PDEVICE_EXTENSION       childExtension;
+    EXTENSIONLIST_ENUMDATA eled;
+    PDEVICE_EXTENSION childExtension;
 
     //
     // Setup the data structures that we will use to walk the
     // device extension tree
     //
-    ACPIExtListSetupEnum(
-        &eled,
-        &(DeviceExtension->ChildDeviceList),
-        NULL,
-        SiblingDeviceList,
-        WALKSCHEME_NO_PROTECTION
-        );
+    ACPIExtListSetupEnum(&eled, &(DeviceExtension->ChildDeviceList), NULL, SiblingDeviceList, WALKSCHEME_NO_PROTECTION);
 
     //
     // Look at all the children of the current device extension
     //
-    for (childExtension = ACPIExtListStartEnum( &eled) ;
-         ACPIExtListTestElement( &eled, TRUE);
-         childExtension = ACPIExtListEnumNext( &eled) ) {
+    for (childExtension = ACPIExtListStartEnum(&eled); ACPIExtListTestElement(&eled, TRUE);
+         childExtension = ACPIExtListEnumNext(&eled))
+    {
 
         //
         // Does this object have any device objects?
         //
-        if (!(childExtension->Flags & DEV_TYPE_NOT_FOUND) ) {
+        if (!(childExtension->Flags & DEV_TYPE_NOT_FOUND))
+        {
 
             continue;
-
         }
 
         //
         // Do we have to invalidate this object's relations?
         //
-        if (childExtension->Flags & DEV_PROP_INVALID_RELATIONS) {
+        if (childExtension->Flags & DEV_PROP_INVALID_RELATIONS)
+        {
 
-            ACPIInternalUpdateFlags(
-                &(childExtension->Flags),
-                DEV_PROP_INVALID_RELATIONS,
-                TRUE
-                );
-            IoInvalidateDeviceRelations(
-                childExtension->PhysicalDeviceObject,
-                BusRelations
-                );
+            ACPIInternalUpdateFlags(&(childExtension->Flags), DEV_PROP_INVALID_RELATIONS, TRUE);
+            IoInvalidateDeviceRelations(childExtension->PhysicalDeviceObject, BusRelations);
             continue;
         }
 
         //
         // Recurse
         //
-        ACPITableUnloadInvalidateRelations( childExtension );
+        ACPITableUnloadInvalidateRelations(childExtension);
 
     } // for ( ... )
 
@@ -618,4 +525,3 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-

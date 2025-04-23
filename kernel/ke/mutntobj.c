@@ -32,15 +32,12 @@ Revision History:
 // really a kmutant and not something else, like deallocated pool.
 //
 
-#define ASSERT_MUTANT(E) {                    \
-    ASSERT((E)->Header.Type == MutantObject); \
-}
-
-VOID
-KeInitializeMutant (
-    IN PRKMUTANT Mutant,
-    IN BOOLEAN InitialOwner
-    )
+#define ASSERT_MUTANT(E)                          \
+    {                                             \
+        ASSERT((E)->Header.Type == MutantObject); \
+    }
+
+VOID KeInitializeMutant(IN PRKMUTANT Mutant, IN BOOLEAN InitialOwner)
 
 /*++
 
@@ -75,7 +72,8 @@ Return Value:
 
     Mutant->Header.Type = MutantObject;
     Mutant->Header.Size = sizeof(KMUTANT) / sizeof(LONG);
-    if (InitialOwner == TRUE) {
+    if (InitialOwner == TRUE)
+    {
         Thread = KeGetCurrentThread();
         Mutant->Header.SignalState = 0;
         Mutant->OwnerThread = Thread;
@@ -83,8 +81,9 @@ Return Value:
         ListEntry = Thread->MutantListHead.Blink;
         InsertHeadList(ListEntry, &Mutant->MutantListEntry);
         KiUnlockDispatcherDatabase(OldIrql);
-
-    } else {
+    }
+    else
+    {
         Mutant->Header.SignalState = 1;
         Mutant->OwnerThread = (PKTHREAD)NULL;
     }
@@ -94,12 +93,8 @@ Return Value:
     Mutant->ApcDisable = 0;
     return;
 }
-
-VOID
-KeInitializeMutex (
-    IN PRKMUTANT Mutant,
-    IN ULONG Level
-    )
+
+VOID KeInitializeMutex(IN PRKMUTANT Mutant, IN ULONG Level)
 
 /*++
 
@@ -141,11 +136,8 @@ Return Value:
     Mutant->ApcDisable = 1;
     return;
 }
-
-LONG
-KeReadStateMutant (
-    IN PRKMUTANT Mutant
-    )
+
+LONG KeReadStateMutant(IN PRKMUTANT Mutant)
 
 /*++
 
@@ -173,14 +165,8 @@ Return Value:
 
     return Mutant->Header.SignalState;
 }
-
-LONG
-KeReleaseMutant (
-    IN PRKMUTANT Mutant,
-    IN KPRIORITY Increment,
-    IN BOOLEAN Abandoned,
-    IN BOOLEAN Wait
-    )
+
+LONG KeReleaseMutant(IN PRKMUTANT Mutant, IN KPRIORITY Increment, IN BOOLEAN Abandoned, IN BOOLEAN Wait)
 
 /*++
 
@@ -246,11 +232,13 @@ Return Value:
     //
 
     Thread = KeGetCurrentThread();
-    if (Abandoned != FALSE) {
+    if (Abandoned != FALSE)
+    {
         Mutant->Header.SignalState = 1;
         Mutant->Abandoned = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // If the Mutant object is not owned by the current thread, then
@@ -258,28 +246,31 @@ Return Value:
         // increment the ownership count.
         //
 
-        if (Mutant->OwnerThread != Thread) {
+        if (Mutant->OwnerThread != Thread)
+        {
             KiUnlockDispatcherDatabase(OldIrql);
-            ExRaiseStatus(Mutant->Abandoned ?
-                          STATUS_ABANDONED : STATUS_MUTANT_NOT_OWNED);
+            ExRaiseStatus(Mutant->Abandoned ? STATUS_ABANDONED : STATUS_MUTANT_NOT_OWNED);
         }
 
         Mutant->Header.SignalState += 1;
     }
 
-    if (Mutant->Header.SignalState == 1) {
-        if (OldState <= 0) {
+    if (Mutant->Header.SignalState == 1)
+    {
+        if (OldState <= 0)
+        {
             RemoveEntryList(&Mutant->MutantListEntry);
             Thread->KernelApcDisable += Mutant->ApcDisable;
-            if ((Thread->KernelApcDisable == 0) &&
-                (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE)) {
+            if ((Thread->KernelApcDisable == 0) && (IsListEmpty(&Thread->ApcState.ApcListHead[KernelMode]) == FALSE))
+            {
                 Thread->ApcState.KernelApcPending = TRUE;
                 KiRequestSoftwareInterrupt(APC_LEVEL);
             }
         }
 
         Mutant->OwnerThread = (PKTHREAD)NULL;
-        if (IsListEmpty(&Mutant->Header.WaitListHead) == FALSE) {
+        if (IsListEmpty(&Mutant->Header.WaitListHead) == FALSE)
+        {
             KiWaitTest(Mutant, Increment);
         }
     }
@@ -291,11 +282,13 @@ Return Value:
     // its previous value.
     //
 
-    if (Wait != FALSE) {
+    if (Wait != FALSE)
+    {
         Thread->WaitNext = Wait;
         Thread->WaitIrql = OldIrql;
-
-    } else {
+    }
+    else
+    {
         KiUnlockDispatcherDatabase(OldIrql);
     }
 
@@ -305,12 +298,8 @@ Return Value:
 
     return OldState;
 }
-
-LONG
-KeReleaseMutex (
-    IN PRKMUTANT Mutex,
-    IN BOOLEAN Wait
-    )
+
+LONG KeReleaseMutex(IN PRKMUTANT Mutex, IN BOOLEAN Wait)
 
 /*++
 

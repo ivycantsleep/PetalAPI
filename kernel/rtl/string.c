@@ -32,39 +32,34 @@ Revision History:
 #include "string.h"
 #include "nt.h"
 #include "ntrtlp.h"
-
+
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
 //#pragma alloc_text(NONPAGE,RtlInitString)
 //#pragma alloc_text(NONPAGE,RtlInitAnsiString)
 //#pragma alloc_text(NONPAGE,RtlInitUnicodeString)
-#pragma alloc_text(PAGE,RtlUpperChar)
-#pragma alloc_text(PAGE,RtlCompareString)
-#pragma alloc_text(PAGE,RtlPrefixString)
-#pragma alloc_text(PAGE,RtlCreateUnicodeStringFromAsciiz)
-#pragma alloc_text(PAGE,RtlUpperString)
-#pragma alloc_text(PAGE,RtlAppendAsciizToString)
-#pragma alloc_text(PAGE,RtlAppendStringToString)
+#pragma alloc_text(PAGE, RtlUpperChar)
+#pragma alloc_text(PAGE, RtlCompareString)
+#pragma alloc_text(PAGE, RtlPrefixString)
+#pragma alloc_text(PAGE, RtlCreateUnicodeStringFromAsciiz)
+#pragma alloc_text(PAGE, RtlUpperString)
+#pragma alloc_text(PAGE, RtlAppendAsciizToString)
+#pragma alloc_text(PAGE, RtlAppendStringToString)
 #endif
 
 //
 // Global data used for translations.
 //
-extern PUSHORT  NlsAnsiToUnicodeData;    // Ansi CP to Unicode translation table
-extern PCH      NlsUnicodeToAnsiData;    // Unicode to Ansi CP translation table
-extern const PUSHORT  NlsLeadByteInfo;         // Lead byte info for ACP
-extern PUSHORT  NlsUnicodeToMbAnsiData;  // Unicode to Multibyte Ansi CP translation table
-extern BOOLEAN  NlsMbCodePageTag;        // TRUE -> Multibyte ACP, FALSE -> Singlebyte ACP
+extern PUSHORT NlsAnsiToUnicodeData;   // Ansi CP to Unicode translation table
+extern PCH NlsUnicodeToAnsiData;       // Unicode to Ansi CP translation table
+extern const PUSHORT NlsLeadByteInfo;  // Lead byte info for ACP
+extern PUSHORT NlsUnicodeToMbAnsiData; // Unicode to Multibyte Ansi CP translation table
+extern BOOLEAN NlsMbCodePageTag;       // TRUE -> Multibyte ACP, FALSE -> Singlebyte ACP
 
 
-
 #if !defined(_M_IX86)
 
-VOID
-RtlInitString(
-    OUT PSTRING DestinationString,
-    IN PCSZ SourceString OPTIONAL
-    )
+VOID RtlInitString(OUT PSTRING DestinationString, IN PCSZ SourceString OPTIONAL)
 
 /*++
 
@@ -94,23 +89,21 @@ Return Value:
     ULONG Length;
 
     DestinationString->Buffer = (PCHAR)SourceString;
-    if (ARGUMENT_PRESENT( SourceString )) {
+    if (ARGUMENT_PRESENT(SourceString))
+    {
         Length = strlen(SourceString);
         DestinationString->Length = (USHORT)Length;
-        DestinationString->MaximumLength = (USHORT)(Length+1);
-        }
-    else {
+        DestinationString->MaximumLength = (USHORT)(Length + 1);
+    }
+    else
+    {
         DestinationString->Length = 0;
         DestinationString->MaximumLength = 0;
-        }
+    }
 }
 
-
-VOID
-RtlInitAnsiString(
-    OUT PANSI_STRING DestinationString,
-    IN PCSZ SourceString OPTIONAL
-    )
+
+VOID RtlInitAnsiString(OUT PANSI_STRING DestinationString, IN PCSZ SourceString OPTIONAL)
 
 /*++
 
@@ -140,23 +133,21 @@ Return Value:
     ULONG Length;
 
     DestinationString->Buffer = (PCHAR)SourceString;
-    if (ARGUMENT_PRESENT( SourceString )) {
+    if (ARGUMENT_PRESENT(SourceString))
+    {
         Length = strlen(SourceString);
         DestinationString->Length = (USHORT)Length;
-        DestinationString->MaximumLength = (USHORT)(Length+1);
-        }
-    else {
+        DestinationString->MaximumLength = (USHORT)(Length + 1);
+    }
+    else
+    {
         DestinationString->Length = 0;
         DestinationString->MaximumLength = 0;
-        }
+    }
 }
 
-
-VOID
-RtlInitUnicodeString(
-    OUT PUNICODE_STRING DestinationString,
-    IN PCWSTR SourceString OPTIONAL
-    )
+
+VOID RtlInitUnicodeString(OUT PUNICODE_STRING DestinationString, IN PCWSTR SourceString OPTIONAL)
 
 /*++
 
@@ -186,40 +177,43 @@ Return Value:
     ULONG Length;
 
     DestinationString->Buffer = (PWSTR)SourceString;
-    if (ARGUMENT_PRESENT( SourceString )) {
-        Length = wcslen( SourceString ) * sizeof( WCHAR );
+    if (ARGUMENT_PRESENT(SourceString))
+    {
+        Length = wcslen(SourceString) * sizeof(WCHAR);
         DestinationString->Length = (USHORT)Length;
         DestinationString->MaximumLength = (USHORT)(Length + sizeof(UNICODE_NULL));
-        }
-    else {
+    }
+    else
+    {
         DestinationString->MaximumLength = 0;
         DestinationString->Length = 0;
-        }
+    }
 }
 
 #endif // !defined(_M_IX86)
 
 NTSTATUS
-RtlInitUnicodeStringEx(
-    OUT PUNICODE_STRING DestinationString,
-    IN PCWSTR SourceString OPTIONAL
-    )
+RtlInitUnicodeStringEx(OUT PUNICODE_STRING DestinationString, IN PCWSTR SourceString OPTIONAL)
 {
-    if (SourceString != NULL) {
+    if (SourceString != NULL)
+    {
         SIZE_T Length = wcslen(SourceString);
 
         // We are actually limited to 32765 characters since we want to store a meaningful
         // MaximumLength also.
-        if (Length > (UNICODE_STRING_MAX_CHARS - 1)) {
+        if (Length > (UNICODE_STRING_MAX_CHARS - 1))
+        {
             return STATUS_NAME_TOO_LONG;
         }
 
         Length *= sizeof(WCHAR);
 
-        DestinationString->Length = (USHORT) Length;
-        DestinationString->MaximumLength = (USHORT) (Length + sizeof(WCHAR));
-        DestinationString->Buffer = (PWSTR) SourceString;
-    } else {
+        DestinationString->Length = (USHORT)Length;
+        DestinationString->MaximumLength = (USHORT)(Length + sizeof(WCHAR));
+        DestinationString->Buffer = (PWSTR)SourceString;
+    }
+    else
+    {
         DestinationString->Length = 0;
         DestinationString->MaximumLength = 0;
         DestinationString->Buffer = NULL;
@@ -228,12 +222,8 @@ RtlInitUnicodeStringEx(
     return STATUS_SUCCESS;
 }
 
-
-VOID
-RtlCopyString(
-    OUT PSTRING DestinationString,
-    IN const STRING *SourceString OPTIONAL
-    )
+
+VOID RtlCopyString(OUT PSTRING DestinationString, IN const STRING *SourceString OPTIONAL)
 
 /*++
 
@@ -265,28 +255,29 @@ Return Value:
     PSZ src, dst;
     ULONG n;
 
-    if (ARGUMENT_PRESENT( SourceString )) {
+    if (ARGUMENT_PRESENT(SourceString))
+    {
         dst = DestinationString->Buffer;
         src = SourceString->Buffer;
         n = SourceString->Length;
-        if ((USHORT)n > DestinationString->MaximumLength) {
+        if ((USHORT)n > DestinationString->MaximumLength)
+        {
             n = DestinationString->MaximumLength;
-            }
+        }
         DestinationString->Length = (USHORT)n;
-        while (n) {
+        while (n)
+        {
             *dst++ = *src++;
             n--;
-            }
         }
-    else {
+    }
+    else
+    {
         DestinationString->Length = 0;
-        }
+    }
 }
-
-CHAR
-RtlUpperChar (
-    register IN CHAR Character
-    )
+
+CHAR RtlUpperChar(register IN CHAR Character)
 
 /*++
 
@@ -316,54 +307,57 @@ ter
     //
     //  Handle a - z separately.
     //
-    if (Character <= 'z') {
-        if (Character >= 'a') {
+    if (Character <= 'z')
+    {
+        if (Character >= 'a')
+        {
             return Character ^ 0x20;
-            }
-        else {
-            return Character;
-            }
         }
-    else {
+        else
+        {
+            return Character;
+        }
+    }
+    else
+    {
         WCHAR wCh;
 
         /*
          *  Handle extended characters.
          */
-        if (!NlsMbCodePageTag) {
+        if (!NlsMbCodePageTag)
+        {
             //
             //  Single byte code page.
             //
             wCh = NlsAnsiToUnicodeData[(UCHAR)Character];
             wCh = NLS_UPCASE(wCh);
             return NlsUnicodeToAnsiData[(USHORT)wCh];
-            }
-        else {
+        }
+        else
+        {
             //
             //  Multi byte code page.  Do nothing to the character
             //  if it's a lead byte or if the translation of the
             //  upper case Unicode character is a DBCS character.
             //
-            if (!NlsLeadByteInfo[Character]) {
+            if (!NlsLeadByteInfo[Character])
+            {
                 wCh = NlsAnsiToUnicodeData[(UCHAR)Character];
                 wCh = NLS_UPCASE(wCh);
                 wCh = NlsUnicodeToMbAnsiData[(USHORT)wCh];
-                if (!HIBYTE(wCh)) {
+                if (!HIBYTE(wCh))
+                {
                     return LOBYTE(wCh);
-                    }
                 }
             }
         }
+    }
 
     return Character;
 }
-
-LONG
-RtlCompareString(
-    IN const STRING *String1,
-    IN const STRING *String2,
-    IN BOOLEAN CaseInSensitive
-    )
+
+LONG RtlCompareString(IN const STRING *String1, IN const STRING *String2, IN BOOLEAN CaseInSensitive)
 
 /*++
 
@@ -411,24 +405,31 @@ Return Value:
     n1 = String1->Length;
     n2 = String2->Length;
     Limit = s1 + (n1 <= n2 ? n1 : n2);
-    if (CaseInSensitive) {
-        while (s1 < Limit) {
+    if (CaseInSensitive)
+    {
+        while (s1 < Limit)
+        {
             c1 = *s1++;
             c2 = *s2++;
-            if (c1 !=c2) {
+            if (c1 != c2)
+            {
                 c1 = RtlUpperChar(c1);
                 c2 = RtlUpperChar(c2);
-                if (c1 != c2) {
+                if (c1 != c2)
+                {
                     return (LONG)c1 - (LONG)c2;
                 }
             }
         }
-
-    } else {
-        while (s1 < Limit) {
+    }
+    else
+    {
+        while (s1 < Limit)
+        {
             c1 = *s1++;
             c2 = *s2++;
-            if (c1 != c2) {
+            if (c1 != c2)
+            {
                 return (LONG)c1 - (LONG)c2;
             }
         }
@@ -436,13 +437,9 @@ Return Value:
 
     return n1 - n2;
 }
-
+
 BOOLEAN
-RtlEqualString(
-    IN const STRING *String1,
-    IN const STRING *String2,
-    IN BOOLEAN CaseInSensitive
-    )
+RtlEqualString(IN const STRING *String1, IN const STRING *String2, IN BOOLEAN CaseInSensitive)
 
 /*++
 
@@ -476,48 +473,53 @@ Return Value:
 
     n1 = String1->Length;
     n2 = String2->Length;
-    if (n1 == n2) {
+    if (n1 == n2)
+    {
         s1 = String1->Buffer;
         s2 = String2->Buffer;
         Limit = s1 + n1;
-        if (CaseInSensitive) {
-            while (s1 < Limit) {
+        if (CaseInSensitive)
+        {
+            while (s1 < Limit)
+            {
                 c1 = *s1++;
                 c2 = *s2++;
-                if (c1 != c2) {
+                if (c1 != c2)
+                {
                     c1 = RtlUpperChar(c1);
                     c2 = RtlUpperChar(c2);
-                    if (c1 != c2) {
+                    if (c1 != c2)
+                    {
                         return FALSE;
                     }
                 }
             }
 
             return TRUE;
-
-        } else {
-            while (s1 < Limit) {
+        }
+        else
+        {
+            while (s1 < Limit)
+            {
                 c1 = *s1++;
                 c2 = *s2++;
-                if (c1 != c2) {
+                if (c1 != c2)
+                {
                     return FALSE;
                 }
             }
 
             return TRUE;
         }
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
-
+
 BOOLEAN
-RtlPrefixString(
-    IN PSTRING String1,
-    IN PSTRING String2,
-    IN BOOLEAN CaseInSensitive
-    )
+RtlPrefixString(IN PSTRING String1, IN PSTRING String2, IN BOOLEAN CaseInSensitive)
 
 /*++
 
@@ -555,62 +557,64 @@ Return Value:
     s1 = String1->Buffer;
     s2 = String2->Buffer;
     n = String1->Length;
-    if (String2->Length < n) {
-        return( FALSE );
-        }
+    if (String2->Length < n)
+    {
+        return (FALSE);
+    }
 
-    if (CaseInSensitive) {
-        while (n) {
+    if (CaseInSensitive)
+    {
+        while (n)
+        {
             c1 = *s1++;
             c2 = *s2++;
 
-            if (c1 != c2 && RtlUpperChar(c1) != RtlUpperChar(c2)) {
-                return( FALSE );
-                }
+            if (c1 != c2 && RtlUpperChar(c1) != RtlUpperChar(c2))
+            {
+                return (FALSE);
+            }
 
             n--;
-            }
         }
-    else {
-        while (n) {
-            if (*s1++ != *s2++) {
-                return( FALSE );
-                }
+    }
+    else
+    {
+        while (n)
+        {
+            if (*s1++ != *s2++)
+            {
+                return (FALSE);
+            }
 
             n--;
-            }
         }
+    }
 
     return TRUE;
 }
 
 BOOLEAN
-RtlCreateUnicodeStringFromAsciiz(
-    OUT PUNICODE_STRING DestinationString,
-    IN PCSZ SourceString
-    )
+RtlCreateUnicodeStringFromAsciiz(OUT PUNICODE_STRING DestinationString, IN PCSZ SourceString)
 {
     ANSI_STRING AnsiString;
     NTSTATUS Status;
 
     RTL_PAGED_CODE();
 
-    RtlInitAnsiString( &AnsiString, SourceString );
-    Status = RtlAnsiStringToUnicodeString( DestinationString, &AnsiString, TRUE );
-    if (NT_SUCCESS( Status )) {
-        return( TRUE );
-        }
-    else {
-        return( FALSE );
-        }
+    RtlInitAnsiString(&AnsiString, SourceString);
+    Status = RtlAnsiStringToUnicodeString(DestinationString, &AnsiString, TRUE);
+    if (NT_SUCCESS(Status))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        return (FALSE);
+    }
 }
 
-
-VOID
-RtlUpperString(
-    IN PSTRING DestinationString,
-    IN const STRING *SourceString
-    )
+
+VOID RtlUpperString(IN PSTRING DestinationString, IN const STRING *SourceString)
 
 /*++
 
@@ -646,22 +650,21 @@ Return Value:
     dst = DestinationString->Buffer;
     src = SourceString->Buffer;
     n = SourceString->Length;
-    if ((USHORT)n > DestinationString->MaximumLength) {
+    if ((USHORT)n > DestinationString->MaximumLength)
+    {
         n = DestinationString->MaximumLength;
-        }
+    }
     DestinationString->Length = (USHORT)n;
-    while (n) {
+    while (n)
+    {
         *dst++ = RtlUpperChar(*src++);
         n--;
-        }
+    }
 }
 
-
+
 NTSTATUS
-RtlAppendAsciizToString (
-    IN PSTRING Destination,
-    IN PCSZ Source OPTIONAL
-    )
+RtlAppendAsciizToString(IN PSTRING Destination, IN PCSZ Source OPTIONAL)
 
 /*++
 
@@ -693,27 +696,25 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    if (ARGUMENT_PRESENT( Source )) {
-        n = (USHORT)strlen( Source );
+    if (ARGUMENT_PRESENT(Source))
+    {
+        n = (USHORT)strlen(Source);
 
-        if ((n + Destination->Length) > Destination->MaximumLength) {
-            return( STATUS_BUFFER_TOO_SMALL );
-            }
-
-        RtlMoveMemory( &Destination->Buffer[ Destination->Length ], Source, n );
-        Destination->Length += n;
+        if ((n + Destination->Length) > Destination->MaximumLength)
+        {
+            return (STATUS_BUFFER_TOO_SMALL);
         }
 
-    return( STATUS_SUCCESS );
+        RtlMoveMemory(&Destination->Buffer[Destination->Length], Source, n);
+        Destination->Length += n;
+    }
+
+    return (STATUS_SUCCESS);
 }
 
 
-
 NTSTATUS
-RtlAppendStringToString (
-    IN PSTRING Destination,
-    IN const STRING *Source
-    )
+RtlAppendStringToString(IN PSTRING Destination, IN const STRING *Source)
 
 /*++
 
@@ -743,30 +744,25 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    if (n) {
-        if ((n + Destination->Length) > Destination->MaximumLength) {
-            return( STATUS_BUFFER_TOO_SMALL );
-            }
-
-        RtlMoveMemory( &Destination->Buffer[ Destination->Length ],
-                       Source->Buffer,
-                       n
-                     );
-        Destination->Length += n;
+    if (n)
+    {
+        if ((n + Destination->Length) > Destination->MaximumLength)
+        {
+            return (STATUS_BUFFER_TOO_SMALL);
         }
 
-    return( STATUS_SUCCESS );
+        RtlMoveMemory(&Destination->Buffer[Destination->Length], Source->Buffer, n);
+        Destination->Length += n;
+    }
+
+    return (STATUS_SUCCESS);
 }
 
 #if !defined(_X86_) && !defined(_AMD64_)
 
 SIZE_T
 NTAPI
-RtlCompareMemoryUlong(
-    PVOID Source,
-    SIZE_T Length,
-    ULONG Pattern
-    )
+RtlCompareMemoryUlong(PVOID Source, SIZE_T Length, ULONG Pattern)
 
 /*++
 
@@ -803,29 +799,32 @@ Return Value:
     PULONG p = (PULONG)Source;
     PCHAR p1, p2;
 
-    if (((ULONG_PTR)p & (sizeof( ULONG )-1)) ||
-        (Length & (sizeof( ULONG )-1))
-       ) {
-        return( 0 );
-        }
+    if (((ULONG_PTR)p & (sizeof(ULONG) - 1)) || (Length & (sizeof(ULONG) - 1)))
+    {
+        return (0);
+    }
 
-    CountLongs = Length / sizeof( ULONG );
-    while (CountLongs--) {
-        if (*p++ != Pattern) {
+    CountLongs = Length / sizeof(ULONG);
+    while (CountLongs--)
+    {
+        if (*p++ != Pattern)
+        {
             p1 = (PCHAR)(p - 1);
             p2 = (PCHAR)&Pattern;
             Length = p1 - (PCHAR)Source;
-            while (*p1++ == *p2++) {
-                if (p1 > (PCHAR)p) {
+            while (*p1++ == *p2++)
+            {
+                if (p1 > (PCHAR)p)
+                {
                     break;
-                    }
+                }
 
                 Length++;
-                }
             }
         }
+    }
 
-    return( Length );
+    return (Length);
 }
 
 #endif // !defined(_X86_) && !defined(_AMD64_)

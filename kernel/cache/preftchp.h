@@ -30,30 +30,29 @@ Revision History:
 // Define tags used in prefetcher routines.
 //
 
-#define CCPF_PREFETCHER_TAG         'fPcC'
+#define CCPF_PREFETCHER_TAG 'fPcC'
 
-#define CCPF_ALLOC_SCENARIO_TAG     'SPcC'
-#define CCPF_ALLOC_TRACE_TAG        'TPcC'
-#define CCPF_ALLOC_TRCBUF_TAG       'BPcC'
-#define CCPF_ALLOC_SECTTBL_TAG      'sPcC'
-#define CCPF_ALLOC_TRCDMP_TAG       'DPcC'
-#define CCPF_ALLOC_QUERY_TAG        'qPcC'
-#define CCPF_ALLOC_FILENAME_TAG     'FPcC'
-#define CCPF_ALLOC_CONTEXT_TAG      'CPcC'
-#define CCPF_ALLOC_INTRTABL_TAG     'IPcC'
-#define CCPF_ALLOC_PREFSCEN_TAG     'pPcC'
-#define CCPF_ALLOC_BOOTWRKR_TAG     'wPcC'
-#define CCPF_ALLOC_VOLUME_TAG       'vPcC'
-#define CCPF_ALLOC_READLIST_TAG     'LPcC'
-#define CCPF_ALLOC_METADATA_TAG     'MPcC'
+#define CCPF_ALLOC_SCENARIO_TAG 'SPcC'
+#define CCPF_ALLOC_TRACE_TAG 'TPcC'
+#define CCPF_ALLOC_TRCBUF_TAG 'BPcC'
+#define CCPF_ALLOC_SECTTBL_TAG 'sPcC'
+#define CCPF_ALLOC_TRCDMP_TAG 'DPcC'
+#define CCPF_ALLOC_QUERY_TAG 'qPcC'
+#define CCPF_ALLOC_FILENAME_TAG 'FPcC'
+#define CCPF_ALLOC_CONTEXT_TAG 'CPcC'
+#define CCPF_ALLOC_INTRTABL_TAG 'IPcC'
+#define CCPF_ALLOC_PREFSCEN_TAG 'pPcC'
+#define CCPF_ALLOC_BOOTWRKR_TAG 'wPcC'
+#define CCPF_ALLOC_VOLUME_TAG 'vPcC'
+#define CCPF_ALLOC_READLIST_TAG 'LPcC'
+#define CCPF_ALLOC_METADATA_TAG 'MPcC'
 
 //
-// Whether the scenario type is for a system-wide scenario, meaning that 
+// Whether the scenario type is for a system-wide scenario, meaning that
 // only it can be active while running.
 //
 
-#define CCPF_IS_SYSTEM_WIDE_SCENARIO_TYPE(ScenarioType) \
-    ((ScenarioType) == PfSystemBootScenarioType)
+#define CCPF_IS_SYSTEM_WIDE_SCENARIO_TYPE(ScenarioType) ((ScenarioType) == PfSystemBootScenarioType)
 
 //
 // In the kernel, we have to look for named objects under this
@@ -66,7 +65,7 @@ Revision History:
 // This is the invalid index value used with section tables.
 //
 
-#define CCPF_INVALID_TABLE_INDEX     (-1)
+#define CCPF_INVALID_TABLE_INDEX (-1)
 
 //
 // This is the max number of file metadata that NTFS can prefetch
@@ -79,7 +78,8 @@ Revision History:
 // Define structure to hold prefetcher parameters state.
 //
 
-typedef struct _CCPF_PREFETCHER_PARAMETERS {
+typedef struct _CCPF_PREFETCHER_PARAMETERS
+{
 
     //
     // This is the named event that is used to signal the service that
@@ -91,7 +91,7 @@ typedef struct _CCPF_PREFETCHER_PARAMETERS {
     //
     // This is the registry key containing prefetch parameters.
     //
-    
+
     HANDLE ParametersKey;
 
     //
@@ -124,7 +124,7 @@ typedef struct _CCPF_PREFETCHER_PARAMETERS {
     //
     // This is set to InitSafeBootMode during initialization.
     //
-    
+
     ULONG SafeBootMode;
 
 } CCPF_PREFETCHER_PARAMETERS, *PCCPF_PREFETCHER_PARAMETERS;
@@ -133,7 +133,8 @@ typedef struct _CCPF_PREFETCHER_PARAMETERS {
 // Define structure to hold prefetcher's global state.
 //
 
-typedef struct _CCPF_PREFETCHER_GLOBALS {
+typedef struct _CCPF_PREFETCHER_GLOBALS
+{
 
     //
     // List of active traces and the lock to protect it. The number
@@ -157,7 +158,7 @@ typedef struct _CCPF_PREFETCHER_GLOBALS {
     // protect it.
     //
 
-    LIST_ENTRY CompletedTraces; 
+    LIST_ENTRY CompletedTraces;
     FAST_MUTEX CompletedTracesLock;
     LONG NumCompletedTraces;
 
@@ -180,7 +181,8 @@ typedef struct _CCPF_PREFETCHER_GLOBALS {
 // Reference count structure.
 //
 
-typedef struct _CCPF_REFCOUNT {
+typedef struct _CCPF_REFCOUNT
+{
 
     //
     // When initialized or reset, this reference count starts from
@@ -195,7 +197,7 @@ typedef struct _CCPF_REFCOUNT {
     // protected structure.
     //
 
-    LONG Exclusive;   
+    LONG Exclusive;
 
 } CCPF_REFCOUNT, *PCCPF_REFCOUNT;
 
@@ -207,12 +209,13 @@ typedef struct _CCPF_REFCOUNT {
 // One of these is logged for every page fault.
 //
 
-typedef struct _CCPF_LOG_ENTRY {
+typedef struct _CCPF_LOG_ENTRY
+{
 
     //
     // File offset of the page that was faulted.
     //
-    
+
     ULONG FileOffset;
 
     //
@@ -245,7 +248,8 @@ typedef struct _CCPF_LOG_ENTRY {
 // to be added without acquiring a spin lock.
 //
 
-typedef struct _CCPF_LOG_ENTRIES {
+typedef struct _CCPF_LOG_ENTRIES
+{
 
     //
     // Link used to put this buffer in the traces's buffer list.
@@ -282,7 +286,8 @@ typedef struct _CCPF_LOG_ENTRIES {
 // a trace buffer of size CCPF_TRACE_BUFFER_SIZE.
 //
 
-#define CCPF_TRACE_BUFFER_MAX_ENTRIES (((CCPF_TRACE_BUFFER_SIZE - sizeof(CCPF_LOG_ENTRIES)) / sizeof(CCPF_LOG_ENTRY)) + 1)
+#define CCPF_TRACE_BUFFER_MAX_ENTRIES \
+    (((CCPF_TRACE_BUFFER_SIZE - sizeof(CCPF_LOG_ENTRIES)) / sizeof(CCPF_LOG_ENTRY)) + 1)
 
 //
 // This structure associates a SectionObjectPointer with a file name
@@ -291,7 +296,8 @@ typedef struct _CCPF_LOG_ENTRIES {
 // which file it is to.
 //
 
-typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _CCPF_SECTION_INFO {
+typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _CCPF_SECTION_INFO
+{
 
     //
     // Section info entries are kept in a hash. This field is
@@ -304,8 +310,8 @@ typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _CCPF_SECTION_INFO {
     // Whether this section is used for file systems to map metafile.
     //
 
-    ULONG Metafile:1;
-    ULONG Unused:31;
+    ULONG Metafile : 1;
+    ULONG Unused : 31;
 
     //
     // SectionObjectPointer used as a unique identifier to a file
@@ -370,8 +376,9 @@ typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _CCPF_SECTION_INFO {
 // in the trace are located on.
 //
 
-typedef struct _CCPF_VOLUME_INFO {
-    
+typedef struct _CCPF_VOLUME_INFO
+{
+
     //
     // Link in the trace's volume list.
     //
@@ -401,7 +408,8 @@ typedef struct _CCPF_VOLUME_INFO {
 // This is the runtime trace header for a scenario.
 //
 
-typedef struct _CCPF_TRACE_HEADER {
+typedef struct _CCPF_TRACE_HEADER
+{
 
     //
     // Magic number identifying this structure as a trace.
@@ -428,9 +436,9 @@ typedef struct _CCPF_TRACE_HEADER {
     PF_SCENARIO_TYPE ScenarioType;
 
     //
-    // CurrentTraceBuffer is the active trace buffer. 
+    // CurrentTraceBuffer is the active trace buffer.
     //
-    
+
     PCCPF_LOG_ENTRIES CurrentTraceBuffer;
 
     //
@@ -446,7 +454,7 @@ typedef struct _CCPF_TRACE_HEADER {
     //
     // This is the table for section info.
     //
-    
+
     PCCPF_SECTION_INFO SectionInfoTable;
     LONG NumSections;
     LONG MaxSections;
@@ -462,7 +470,7 @@ typedef struct _CCPF_TRACE_HEADER {
     LARGE_INTEGER TraceTimerPeriod;
     KDPC TraceTimerDpc;
     KSPIN_LOCK TraceTimerSpinLock;
-    
+
     //
     // This array contains the number of page faults logged per trace
     // period.
@@ -471,7 +479,7 @@ typedef struct _CCPF_TRACE_HEADER {
     ULONG FaultsPerPeriod[PF_MAX_NUM_TRACE_PERIODS];
     LONG LastNumFaults;
     LONG CurPeriod;
-    
+
     //
     // NumFaults is the number of faults that have been logged so far, in all
     // trace buffers. MaxFaults is the maximum number of page faults we will
@@ -551,14 +559,14 @@ typedef struct _CCPF_TRACE_HEADER {
     // trace structure and the status with which dumping failed if it
     // did.
     //
-    
+
     struct _CCPF_TRACE_DUMP *TraceDump;
     NTSTATUS TraceDumpStatus;
 
     //
     // System time when we started tracing.
     //
-    
+
     LARGE_INTEGER LaunchTime;
 
 } CCPF_TRACE_HEADER, *PCCPF_TRACE_HEADER;
@@ -568,14 +576,15 @@ typedef struct _CCPF_TRACE_HEADER {
 // trace extends beyond this structure as necessary.
 //
 
-typedef struct _CCPF_TRACE_DUMP {
-    
+typedef struct _CCPF_TRACE_DUMP
+{
+
     //
     // Link in the completed traces list.
     //
 
     LIST_ENTRY CompletedTracesLink;
-    
+
     //
     // Completed trace.
     //
@@ -588,7 +597,8 @@ typedef struct _CCPF_TRACE_DUMP {
 // This structure contains information for a volume used during prefetching.
 //
 
-typedef struct _CCPF_PREFETCH_VOLUME_INFO {
+typedef struct _CCPF_PREFETCH_VOLUME_INFO
+{
 
     //
     // Link in the lists this volume gets put on.
@@ -620,7 +630,8 @@ typedef struct _CCPF_PREFETCH_VOLUME_INFO {
 // etc, without changing that.
 //
 
-typedef struct _CCPF_PREFETCH_HEADER {
+typedef struct _CCPF_PREFETCH_HEADER
+{
 
     //
     // Pointer to prefetch instructions. The instructions should not
@@ -643,7 +654,7 @@ typedef struct _CCPF_PREFETCH_HEADER {
     LIST_ENTRY BadVolumeList;
 
     //
-    // List of volumes we have opened. They are opened with the following 
+    // List of volumes we have opened. They are opened with the following
     // flags: FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE
     //
 
@@ -656,7 +667,8 @@ typedef struct _CCPF_PREFETCH_HEADER {
 // perform.
 //
 
-typedef enum _CCPF_PREFETCH_TYPE {
+typedef enum _CCPF_PREFETCH_TYPE
+{
     CcPfPrefetchAllDataPages,
     CcPfPrefetchAllImagePages,
     CcPfPrefetchPartOfDataPages,
@@ -670,15 +682,16 @@ typedef enum _CCPF_PREFETCH_TYPE {
 // prefetching parts of a scenario at a time.
 //
 
-typedef struct _CCPF_PREFETCH_CURSOR {
-    
+typedef struct _CCPF_PREFETCH_CURSOR
+{
+
     //
     // Index of the current section and the page in that section.
     //
 
     ULONG SectionIdx;
     ULONG PageIdx;
-    
+
 } CCPF_PREFETCH_CURSOR, *PCCPF_PREFETCH_CURSOR;
 
 //
@@ -692,7 +705,8 @@ typedef struct _SECTION *PSECTION;
 // asked to return.
 //
 
-typedef enum _CCPF_SCENARIO_INFORMATION_TYPE {
+typedef enum _CCPF_SCENARIO_INFORMATION_TYPE
+{
     CcPfBasicScenarioInformation,
     CcPfBootScenarioInformation,
     CcPfMaxScenarioInformationType
@@ -702,12 +716,13 @@ typedef enum _CCPF_SCENARIO_INFORMATION_TYPE {
 // This structure contains basic scenario information.
 //
 
-typedef struct _CCPF_BASIC_SCENARIO_INFORMATION {
-    
+typedef struct _CCPF_BASIC_SCENARIO_INFORMATION
+{
+
     //
     // Number of pages that will be prefetched as data pages.
     //
-    
+
     ULONG NumDataPages;
 
     //
@@ -733,7 +748,7 @@ typedef struct _CCPF_BASIC_SCENARIO_INFORMATION {
     //
     // Number of ignored pages.
     //
-    
+
     ULONG NumIgnoredPages;
 
     //
@@ -753,266 +768,140 @@ typedef struct _CCPF_BASIC_SCENARIO_INFORMATION {
 //
 
 NTSTATUS
-CcPfBeginTrace(
-    IN PF_SCENARIO_ID *ScenarioId,
-    IN PF_SCENARIO_TYPE ScenarioType,
-    IN HANDLE ProcessHandle
-    );
+CcPfBeginTrace(IN PF_SCENARIO_ID *ScenarioId, IN PF_SCENARIO_TYPE ScenarioType, IN HANDLE ProcessHandle);
 
 NTSTATUS
-CcPfActivateTrace(
-    IN PCCPF_TRACE_HEADER Scenario
-    );
+CcPfActivateTrace(IN PCCPF_TRACE_HEADER Scenario);
 
 NTSTATUS
-CcPfDeactivateTrace(
-    IN PCCPF_TRACE_HEADER Scenario
-    );
+CcPfDeactivateTrace(IN PCCPF_TRACE_HEADER Scenario);
 
 NTSTATUS
-CcPfEndTrace(
-    IN PCCPF_TRACE_HEADER Trace
-    );
+CcPfEndTrace(IN PCCPF_TRACE_HEADER Trace);
 
 NTSTATUS
-CcPfBuildDumpFromTrace(
-    OUT PCCPF_TRACE_DUMP *TraceDump, 
-    IN PCCPF_TRACE_HEADER RuntimeTrace
-    );
+CcPfBuildDumpFromTrace(OUT PCCPF_TRACE_DUMP *TraceDump, IN PCCPF_TRACE_HEADER RuntimeTrace);
 
-VOID
-CcPfCleanupTrace(
-    IN PCCPF_TRACE_HEADER Trace
-    );
+VOID CcPfCleanupTrace(IN PCCPF_TRACE_HEADER Trace);
 
-VOID
-CcPfTraceTimerRoutine(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID CcPfTraceTimerRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
 NTSTATUS
-CcPfCancelTraceTimer(
-    IN PCCPF_TRACE_HEADER Trace
-    );
+CcPfCancelTraceTimer(IN PCCPF_TRACE_HEADER Trace);
 
-VOID
-CcPfEndTraceWorkerThreadRoutine(
-    PVOID Parameter
-    );
+VOID CcPfEndTraceWorkerThreadRoutine(PVOID Parameter);
 
-VOID
-CcPfGetFileNamesWorkerRoutine(
-    PVOID Parameter
-    );
+VOID CcPfGetFileNamesWorkerRoutine(PVOID Parameter);
 
-LONG
-CcPfLookUpSection(
-    PCCPF_SECTION_INFO Table,
-    ULONG TableSize,
-    PSECTION_OBJECT_POINTERS SectionObjectPointer,
-    PLONG AvailablePosition
-    );
+LONG CcPfLookUpSection(PCCPF_SECTION_INFO Table, ULONG TableSize, PSECTION_OBJECT_POINTERS SectionObjectPointer,
+                       PLONG AvailablePosition);
 
 NTSTATUS
-CcPfGetCompletedTrace (
-    PVOID Buffer,
-    ULONG BufferSize,
-    PULONG ReturnSize
-    );               
+CcPfGetCompletedTrace(PVOID Buffer, ULONG BufferSize, PULONG ReturnSize);
 
 NTSTATUS
-CcPfUpdateVolumeList(
-    PCCPF_TRACE_HEADER Trace,
-    WCHAR *VolumePath,
-    ULONG VolumePathLength
-    );
-    
+CcPfUpdateVolumeList(PCCPF_TRACE_HEADER Trace, WCHAR *VolumePath, ULONG VolumePathLength);
+
 //
 // Routines used for prefetching and dealing with prefetch instructions.
 //
 
 NTSTATUS
-CcPfPrefetchScenario (
-    PPF_SCENARIO_HEADER Scenario
-    );
+CcPfPrefetchScenario(PPF_SCENARIO_HEADER Scenario);
 
 NTSTATUS
-CcPfPrefetchSections(
-    IN PCCPF_PREFETCH_HEADER PrefetchHeader,
-    IN CCPF_PREFETCH_TYPE PrefetchType,
-    OPTIONAL IN PCCPF_PREFETCH_CURSOR StartCursor,
-    OPTIONAL ULONG TotalPagesToPrefetch,
-    OPTIONAL OUT PULONG NumPagesPrefetched,
-    OPTIONAL OUT PCCPF_PREFETCH_CURSOR EndCursor
-    );
+CcPfPrefetchSections(IN PCCPF_PREFETCH_HEADER PrefetchHeader, IN CCPF_PREFETCH_TYPE PrefetchType,
+                     OPTIONAL IN PCCPF_PREFETCH_CURSOR StartCursor, OPTIONAL ULONG TotalPagesToPrefetch,
+                     OPTIONAL OUT PULONG NumPagesPrefetched, OPTIONAL OUT PCCPF_PREFETCH_CURSOR EndCursor);
 
 NTSTATUS
-CcPfPrefetchMetadata(
-    IN PCCPF_PREFETCH_HEADER PrefetchHeader
-    );
+CcPfPrefetchMetadata(IN PCCPF_PREFETCH_HEADER PrefetchHeader);
 
 NTSTATUS
-CcPfPrefetchDirectoryContents(
-    WCHAR *DirectoryPath,
-    WCHAR DirectoryPathlength
-    );
+CcPfPrefetchDirectoryContents(WCHAR *DirectoryPath, WCHAR DirectoryPathlength);
 
 NTSTATUS
-CcPfPrefetchFileMetadata(
-    HANDLE VolumeHandle,
-    PFILE_PREFETCH FilePrefetch
-    );
+CcPfPrefetchFileMetadata(HANDLE VolumeHandle, PFILE_PREFETCH FilePrefetch);
 
-VOID
-CcPfInitializePrefetchHeader (
-    OUT PCCPF_PREFETCH_HEADER PrefetchHeader
-);
+VOID CcPfInitializePrefetchHeader(OUT PCCPF_PREFETCH_HEADER PrefetchHeader);
 
-VOID
-CcPfCleanupPrefetchHeader (
-    IN PCCPF_PREFETCH_HEADER PrefetchHeader
-    );
+VOID CcPfCleanupPrefetchHeader(IN PCCPF_PREFETCH_HEADER PrefetchHeader);
 
 NTSTATUS
-CcPfGetPrefetchInstructions(
-    IN PPF_SCENARIO_ID ScenarioId,
-    IN PF_SCENARIO_TYPE ScenarioType,
-    OUT PPF_SCENARIO_HEADER *Scenario
-    );
+CcPfGetPrefetchInstructions(IN PPF_SCENARIO_ID ScenarioId, IN PF_SCENARIO_TYPE ScenarioType,
+                            OUT PPF_SCENARIO_HEADER *Scenario);
 
 NTSTATUS
-CcPfQueryScenarioInformation(
-    IN PPF_SCENARIO_HEADER Scenario,
-    IN CCPF_SCENARIO_INFORMATION_TYPE InformationType,
-    OUT PVOID Buffer,
-    IN ULONG BufferSize,
-    OUT PULONG RequiredSize
-    );
+CcPfQueryScenarioInformation(IN PPF_SCENARIO_HEADER Scenario, IN CCPF_SCENARIO_INFORMATION_TYPE InformationType,
+                             OUT PVOID Buffer, IN ULONG BufferSize, OUT PULONG RequiredSize);
 
 NTSTATUS
-CcPfOpenVolumesForPrefetch (
-    IN PCCPF_PREFETCH_HEADER PrefetchHeader
-    );
+CcPfOpenVolumesForPrefetch(IN PCCPF_PREFETCH_HEADER PrefetchHeader);
 
-PCCPF_PREFETCH_VOLUME_INFO 
-CcPfFindPrefetchVolumeInfoInList(
-    WCHAR *Path,
-    PLIST_ENTRY List
-    );
-    
+PCCPF_PREFETCH_VOLUME_INFO
+CcPfFindPrefetchVolumeInfoInList(WCHAR *Path, PLIST_ENTRY List);
+
 NTSTATUS
-CcPfGetSectionObject(
-    IN PUNICODE_STRING FileName,
-    IN LOGICAL ImageSection,
-    OUT PVOID* SectionObject,
-    OUT PFILE_OBJECT* FileObject,
-    OUT HANDLE* FileHandle
-    );
+CcPfGetSectionObject(IN PUNICODE_STRING FileName, IN LOGICAL ImageSection, OUT PVOID *SectionObject,
+                     OUT PFILE_OBJECT *FileObject, OUT HANDLE *FileHandle);
 
 //
 // Routines used for application launch prefetching.
 //
 
 BOOLEAN
-CcPfIsHostingApplication(
-    IN PWCHAR ExecutableName
-    );
+CcPfIsHostingApplication(IN PWCHAR ExecutableName);
 
 NTSTATUS
-CcPfScanCommandLine(
-    OUT PULONG PrefetchHint,
-    OPTIONAL OUT PULONG HashId
-    );
+CcPfScanCommandLine(OUT PULONG PrefetchHint, OPTIONAL OUT PULONG HashId);
 
 //
 // Reference count functions:
 //
 
-VOID
-CcPfInitializeRefCount(
-    PCCPF_REFCOUNT RefCount
-    );
+VOID CcPfInitializeRefCount(PCCPF_REFCOUNT RefCount);
 
 NTSTATUS
 FASTCALL
-CcPfAddRef(
-    PCCPF_REFCOUNT RefCount
-    );
+CcPfAddRef(PCCPF_REFCOUNT RefCount);
 
-VOID
-FASTCALL
-CcPfDecRef(
-    PCCPF_REFCOUNT RefCount
-    );
+VOID FASTCALL CcPfDecRef(PCCPF_REFCOUNT RefCount);
 
 NTSTATUS
 FASTCALL
-CcPfAddRefEx(
-    PCCPF_REFCOUNT RefCount,
-    ULONG Count
-    );
+CcPfAddRefEx(PCCPF_REFCOUNT RefCount, ULONG Count);
 
-VOID
-FASTCALL
-CcPfDecRefEx(
-    PCCPF_REFCOUNT RefCount,
-    ULONG Count
-    );
+VOID FASTCALL CcPfDecRefEx(PCCPF_REFCOUNT RefCount, ULONG Count);
 
 NTSTATUS
-CcPfAcquireExclusiveRef(
-    PCCPF_REFCOUNT RefCount
-    );
+CcPfAcquireExclusiveRef(PCCPF_REFCOUNT RefCount);
 
 PCCPF_TRACE_HEADER
-CcPfReferenceProcessTrace(
-    PEPROCESS Process
-    );
+CcPfReferenceProcessTrace(PEPROCESS Process);
 
 PCCPF_TRACE_HEADER
-CcPfRemoveProcessTrace(
-    PEPROCESS Process
-    );
+CcPfRemoveProcessTrace(PEPROCESS Process);
 
 NTSTATUS
-CcPfAddProcessTrace(
-    PEPROCESS Process,
-    PCCPF_TRACE_HEADER Trace
-    );
+CcPfAddProcessTrace(PEPROCESS Process, PCCPF_TRACE_HEADER Trace);
 
 //
 // Utility routines.
 //
 
 PWCHAR
-CcPfFindString (
-    PUNICODE_STRING SearchIn,
-    PUNICODE_STRING SearchFor
-    );
-    
-ULONG
-CcPfHashValue(
-    PVOID Key,
-    ULONG Len
-    );
+CcPfFindString(PUNICODE_STRING SearchIn, PUNICODE_STRING SearchFor);
 
-NTSTATUS 
-CcPfIsVolumeMounted (
-    IN WCHAR *VolumePath,
-    OUT BOOLEAN *VolumeMounted
-    );
-    
+ULONG
+CcPfHashValue(PVOID Key, ULONG Len);
+
 NTSTATUS
-CcPfQueryVolumeInfo (
-    IN WCHAR *VolumePath,
-    OPTIONAL OUT HANDLE *VolumeHandleOut,
-    OUT PLARGE_INTEGER CreationTime,
-    OUT PULONG SerialNumber
-    );
-    
+CcPfIsVolumeMounted(IN WCHAR *VolumePath, OUT BOOLEAN *VolumeMounted);
+
+NTSTATUS
+CcPfQueryVolumeInfo(IN WCHAR *VolumePath, OPTIONAL OUT HANDLE *VolumeHandleOut, OUT PLARGE_INTEGER CreationTime,
+                    OUT PULONG SerialNumber);
+
 //
 // Declarations and definitions for prefetcher parameters.
 //
@@ -1021,13 +910,14 @@ CcPfQueryVolumeInfo (
 // Define location of registry key for prefetch parameters.
 //
 
-#define CCPF_PARAMETERS_KEY L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager\\Memory Management\\PrefetchParameters"
+#define CCPF_PARAMETERS_KEY \
+    L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager\\Memory Management\\PrefetchParameters"
 
 //
 // Maximum characters in registry value names for prefetch parameters.
 //
 
-#define CCPF_MAX_PARAMETER_NAME_LENGTH  80
+#define CCPF_MAX_PARAMETER_NAME_LENGTH 80
 
 //
 // Maximum bytes needed to query a prefetch parameter from the
@@ -1035,65 +925,36 @@ CcPfQueryVolumeInfo (
 // application list.
 //
 
-#define CCPF_MAX_PARAMETER_VALUE_BUFFER ((PF_HOSTING_APP_LIST_MAX_CHARS * sizeof(WCHAR)) + sizeof(KEY_VALUE_PARTIAL_INFORMATION))
+#define CCPF_MAX_PARAMETER_VALUE_BUFFER \
+    ((PF_HOSTING_APP_LIST_MAX_CHARS * sizeof(WCHAR)) + sizeof(KEY_VALUE_PARTIAL_INFORMATION))
 
 NTSTATUS
-CcPfParametersInitialize (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    );
-    
-VOID
-CcPfParametersSetDefaults (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    );
-    
-NTSTATUS
-CcPfParametersRead (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    );
- 
-NTSTATUS
-CcPfParametersSave (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    );
+CcPfParametersInitialize(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters);
+
+VOID CcPfParametersSetDefaults(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters);
 
 NTSTATUS
-CcPfParametersVerify (
-    PPF_SYSTEM_PREFETCH_PARAMETERS Parameters
-    );
-
-VOID
-CcPfParametersWatcher (
-    IN PVOID Context
-    );
+CcPfParametersRead(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters);
 
 NTSTATUS
-CcPfParametersSetChangedEvent (
-    PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters
-    );
+CcPfParametersSave(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters);
 
 NTSTATUS
-CcPfGetParameter (
-    HANDLE ParametersKey,
-    WCHAR *ValueNameBuffer,
-    ULONG ValueType,
-    PVOID Value,
-    ULONG *ValueSize
-    );
+CcPfParametersVerify(PPF_SYSTEM_PREFETCH_PARAMETERS Parameters);
+
+VOID CcPfParametersWatcher(IN PVOID Context);
 
 NTSTATUS
-CcPfSetParameter (
-    HANDLE ParametersKey,
-    WCHAR *ValueNameBuffer,
-    ULONG ValueType,
-    PVOID Value,
-    ULONG ValueSize
-    );
+CcPfParametersSetChangedEvent(PCCPF_PREFETCHER_PARAMETERS PrefetcherParameters);
+
+NTSTATUS
+CcPfGetParameter(HANDLE ParametersKey, WCHAR *ValueNameBuffer, ULONG ValueType, PVOID Value, ULONG *ValueSize);
+
+NTSTATUS
+CcPfSetParameter(HANDLE ParametersKey, WCHAR *ValueNameBuffer, ULONG ValueType, PVOID Value, ULONG ValueSize);
 
 LOGICAL
-CcPfDetermineEnablePrefetcher(
-    VOID
-    );
+CcPfDetermineEnablePrefetcher(VOID);
 
 //
 // Declarations and definitions for boot prefetching.
@@ -1104,14 +965,14 @@ CcPfDetermineEnablePrefetcher(
 // video initialization took during boot.
 //
 
-#define CCPF_VIDEO_INIT_TIME_VALUE_NAME      L"VideoInitTime"
+#define CCPF_VIDEO_INIT_TIME_VALUE_NAME L"VideoInitTime"
 
 //
-// How long (in milliseconds) video initialization could take max. This value 
+// How long (in milliseconds) video initialization could take max. This value
 // is used to sanity check the value read from the registry.
 //
 
-#define CCPF_MAX_VIDEO_INIT_TIME             (10 * 1000) // 10 seconds
+#define CCPF_MAX_VIDEO_INIT_TIME (10 * 1000) // 10 seconds
 
 //
 // Value name under prefetcher parameters key where we store how many
@@ -1124,27 +985,28 @@ CcPfDetermineEnablePrefetcher(
 // Sanity check maximum value for video init pages per second.
 //
 
-#define CCPF_VIDEO_INIT_MAX_PAGES_PER_SECOND        128000
+#define CCPF_VIDEO_INIT_MAX_PAGES_PER_SECOND 128000
 
 //
 // How many pages will we try to prefetch in parallel to video initialization
 // per second of it.
 //
 
-#define CCPF_VIDEO_INIT_DEFAULT_PAGES_PER_SECOND    1500
+#define CCPF_VIDEO_INIT_DEFAULT_PAGES_PER_SECOND 1500
 
 //
 // Maximum number of chunks in which we will prefetch for boot.
 //
 
-#define CCPF_MAX_BOOT_PREFETCH_PHASES        16
+#define CCPF_MAX_BOOT_PREFETCH_PHASES 16
 
 //
 // Different phases of boot we return page counts for in
 // CCPF_BOOT_SCENARIO_INFORMATION.
 //
 
-typedef enum _CCPF_BOOT_SCENARIO_PHASE {
+typedef enum _CCPF_BOOT_SCENARIO_PHASE
+{
 
     CcPfBootScenDriverInitPhase,
     CcPfBootScenSubsystemInitPhase,
@@ -1159,11 +1021,12 @@ typedef enum _CCPF_BOOT_SCENARIO_PHASE {
 // Define structure to hold boot prefetching state.
 //
 
-typedef struct _CCPF_BOOT_PREFETCHER {
+typedef struct _CCPF_BOOT_PREFETCHER
+{
 
     //
-    // These events are signaled by the boot prefetch worker when 
-    // it has completed prefetching for the specified phase. 
+    // These events are signaled by the boot prefetch worker when
+    // it has completed prefetching for the specified phase.
     //
 
     KEVENT SystemDriversPrefetchingDone;
@@ -1175,7 +1038,7 @@ typedef struct _CCPF_BOOT_PREFETCHER {
     // on the console. Boot prefetcher waits on this event to perform
     // prefetching parallel to video initialization.
     //
-    
+
     KEVENT VideoInitStarted;
 
 } CCPF_BOOT_PREFETCHER, *PCCPF_BOOT_PREFETCHER;
@@ -1184,7 +1047,8 @@ typedef struct _CCPF_BOOT_PREFETCHER {
 // This structure contains boot scenario information.
 //
 
-typedef struct _CCPF_BOOT_SCENARIO_INFORMATION {
+typedef struct _CCPF_BOOT_SCENARIO_INFORMATION
+{
 
     //
     // These are the number of data/image pages to prefetch for the
@@ -1193,17 +1057,18 @@ typedef struct _CCPF_BOOT_SCENARIO_INFORMATION {
 
     ULONG NumDataPages[CcPfBootScenMaxPhase];
     ULONG NumImagePages[CcPfBootScenMaxPhase];
-    
+
 } CCPF_BOOT_SCENARIO_INFORMATION, *PCCPF_BOOT_SCENARIO_INFORMATION;
 
 //
 // We will be prefetching data and image pages for boot in parts. Since the
 // code is mostly same to prefetch the data and image pages, we keep track
-// of where we left off and what to prefetch next in a common boot prefetch 
+// of where we left off and what to prefetch next in a common boot prefetch
 // cursor structure and make two passes (first for data, then for image).
 //
 
-typedef struct _CCPF_BOOT_PREFETCH_CURSOR {
+typedef struct _CCPF_BOOT_PREFETCH_CURSOR
+{
 
     //
     // Start & end cursors passed to prefetch sections function.
@@ -1216,37 +1081,27 @@ typedef struct _CCPF_BOOT_PREFETCH_CURSOR {
     // How to prefetch (e.g. part of data pages or part of image pages).
     //
 
-    CCPF_PREFETCH_TYPE PrefetchType; 
+    CCPF_PREFETCH_TYPE PrefetchType;
 
     //
     // How many pages to prefetch per phase.
     //
 
     ULONG NumPagesForPhase[CCPF_MAX_BOOT_PREFETCH_PHASES];
-   
+
 } CCPF_BOOT_PREFETCH_CURSOR, *PCCPF_BOOT_PREFETCH_CURSOR;
 
 //
 // Boot prefetching routines.
 //
 
-VOID
-CcPfBootWorker(
-    PCCPF_BOOT_PREFETCHER BootPrefetcher
-    );
+VOID CcPfBootWorker(PCCPF_BOOT_PREFETCHER BootPrefetcher);
 
 NTSTATUS
-CcPfBootQueueEndTraceTimer (
-    PLARGE_INTEGER Timeout
-    );    
+CcPfBootQueueEndTraceTimer(PLARGE_INTEGER Timeout);
 
-VOID
-CcPfEndBootTimerRoutine(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID CcPfEndBootTimerRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                             IN PVOID SystemArgument2);
 
 //
 // Debug routines.
@@ -1255,11 +1110,7 @@ CcPfEndBootTimerRoutine(
 #if CCPF_DBG
 
 NTSTATUS
-CcPfWriteToFile(
-    IN PVOID pData,
-    IN ULONG Size,
-    IN WCHAR *pFileName
-    );
+CcPfWriteToFile(IN PVOID pData, IN ULONG Size, IN WCHAR *pFileName);
 
 #endif // CCPF_DBG
 
@@ -1268,9 +1119,9 @@ CcPfWriteToFile(
 // parameter reevalation. Don't use expressions as macro parameters.
 //
 
-#define CCPF_MAX(A,B) (((A) >= (B)) ? (A) : (B))
-#define CCPF_MIN(A,B) (((A) <= (B)) ? (A) : (B))
-        
+#define CCPF_MAX(A, B) (((A) >= (B)) ? (A) : (B))
+#define CCPF_MIN(A, B) (((A) <= (B)) ? (A) : (B))
+
 //
 // Define debugging macros:
 //
@@ -1279,26 +1130,26 @@ CcPfWriteToFile(
 // Define the component ID we use.
 //
 
-#define CCPFID     DPFLTR_PREFETCHER_ID
+#define CCPFID DPFLTR_PREFETCHER_ID
 
 //
 // Define DbgPrintEx levels.
 //
 
-#define PFERR      DPFLTR_ERROR_LEVEL
-#define PFWARN     DPFLTR_WARNING_LEVEL
-#define PFTRC      DPFLTR_TRACE_LEVEL
-#define PFINFO     DPFLTR_INFO_LEVEL
-#define PFPREF     4
-#define PFPRFD     5
-#define PFPRFF     6
-#define PFPRFZ     7
-#define PFTRAC     8
-#define PFTMR      9
-#define PFNAME     10
-#define PFNAMS     11
-#define PFLKUP     12
-#define PFBOOT     13
+#define PFERR DPFLTR_ERROR_LEVEL
+#define PFWARN DPFLTR_WARNING_LEVEL
+#define PFTRC DPFLTR_TRACE_LEVEL
+#define PFINFO DPFLTR_INFO_LEVEL
+#define PFPREF 4
+#define PFPRFD 5
+#define PFPRFF 6
+#define PFPRFZ 7
+#define PFTRAC 8
+#define PFTMR 9
+#define PFNAME 10
+#define PFNAMS 11
+#define PFLKUP 12
+#define PFBOOT 13
 
 //
 // DbgPrintEx levels 20 - 31 are reserved for the service.
@@ -1321,19 +1172,14 @@ CcPfWriteToFile(
 #if CCPF_DBG
 
 NTSYSAPI
-VOID
-NTAPI
-RtlAssert(
-    PVOID FailedAssertion,
-    PVOID FileName,
-    ULONG LineNumber,
-    PCHAR Message
-    );
+VOID NTAPI RtlAssert(PVOID FailedAssertion, PVOID FileName, ULONG LineNumber, PCHAR Message);
 
 #define DBGPR(x) DbgPrintEx x
-#define CCPF_ASSERT(x) if (!(x)) RtlAssert(#x, __FILE__, __LINE__, NULL )
+#define CCPF_ASSERT(x) \
+    if (!(x))          \
+    RtlAssert(#x, __FILE__, __LINE__, NULL)
 
-#else  // CCPF_DBG
+#else // CCPF_DBG
 
 //
 // If CCPF_DBG is not defined, build with debug prints and asserts

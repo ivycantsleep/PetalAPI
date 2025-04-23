@@ -26,9 +26,9 @@ Revision History:
 #ifndef _MEMPRINT_
 #define _MEMPRINT_
 
-#define MEM_PRINT_FLAG_CONSOLE     0x01
-#define MEM_PRINT_FLAG_FILE        0x02
-#define MEM_PRINT_FLAG_HEADER      0x04
+#define MEM_PRINT_FLAG_CONSOLE 0x01
+#define MEM_PRINT_FLAG_FILE 0x02
+#define MEM_PRINT_FLAG_HEADER 0x04
 
 extern ULONG MemPrintFlags;
 
@@ -61,20 +61,11 @@ extern ULONG MemPrintFlags;
 // whether or not it is full.
 //
 
-VOID
-MemPrintInitialize (
-    VOID
-    );
+VOID MemPrintInitialize(VOID);
 
-VOID
-MemPrint (
-    CHAR *Format, ...
-    );
+VOID MemPrint(CHAR *Format, ...);
 
-VOID
-MemPrintFlush (
-    VOID
-    );
+VOID MemPrintFlush(VOID);
 
 #define DbgPrint MemPrint
 

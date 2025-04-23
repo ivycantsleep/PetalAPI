@@ -22,10 +22,10 @@ Revision History:
 #ifndef _CCh_
 #define _CCh_
 
-#pragma warning(disable:4214)   // bit field types other than int
-#pragma warning(disable:4201)   // nameless struct/union
-#pragma warning(disable:4127)   // condition expression is constant
-#pragma warning(disable:4115)   // named type definition in parentheses
+#pragma warning(disable : 4214) // bit field types other than int
+#pragma warning(disable : 4201) // nameless struct/union
+#pragma warning(disable : 4127) // condition expression is constant
+#pragma warning(disable : 4115) // named type definition in parentheses
 
 #include <ntos.h>
 #include <NtIoLogc.h>
@@ -38,41 +38,35 @@ Revision History:
 // Define macros to acquire and release cache manager locks.
 //
 
-#define CcAcquireMasterLock( OldIrql ) \
-    *( OldIrql ) = KeAcquireQueuedSpinLock( LockQueueMasterLock )
+#define CcAcquireMasterLock(OldIrql) *(OldIrql) = KeAcquireQueuedSpinLock(LockQueueMasterLock)
 
-#define CcReleaseMasterLock( OldIrql ) \
-    KeReleaseQueuedSpinLock( LockQueueMasterLock, OldIrql )
+#define CcReleaseMasterLock(OldIrql) KeReleaseQueuedSpinLock(LockQueueMasterLock, OldIrql)
 
 #define CcAcquireMasterLockAtDpcLevel() \
-    KeAcquireQueuedSpinLockAtDpcLevel( &KeGetCurrentPrcb()->LockQueue[LockQueueMasterLock] )
+    KeAcquireQueuedSpinLockAtDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueMasterLock])
 
 #define CcReleaseMasterLockFromDpcLevel() \
-    KeReleaseQueuedSpinLockFromDpcLevel( &KeGetCurrentPrcb()->LockQueue[LockQueueMasterLock] )
+    KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueMasterLock])
 
-#define CcAcquireVacbLock( OldIrql ) \
-    *( OldIrql ) = KeAcquireQueuedSpinLock( LockQueueVacbLock )
+#define CcAcquireVacbLock(OldIrql) *(OldIrql) = KeAcquireQueuedSpinLock(LockQueueVacbLock)
 
-#define CcReleaseVacbLock( OldIrql ) \
-    KeReleaseQueuedSpinLock( LockQueueVacbLock, OldIrql )
+#define CcReleaseVacbLock(OldIrql) KeReleaseQueuedSpinLock(LockQueueVacbLock, OldIrql)
 
 #define CcAcquireVacbLockAtDpcLevel() \
-    KeAcquireQueuedSpinLockAtDpcLevel( &KeGetCurrentPrcb()->LockQueue[LockQueueVacbLock] )
+    KeAcquireQueuedSpinLockAtDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueVacbLock])
 
 #define CcReleaseVacbLockFromDpcLevel() \
-    KeReleaseQueuedSpinLockFromDpcLevel( &KeGetCurrentPrcb()->LockQueue[LockQueueVacbLock] )
+    KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueVacbLock])
 
-#define CcAcquireWorkQueueLock( OldIrql ) \
-    *( OldIrql ) = KeAcquireQueuedSpinLock( LockQueueWorkQueueLock )
+#define CcAcquireWorkQueueLock(OldIrql) *(OldIrql) = KeAcquireQueuedSpinLock(LockQueueWorkQueueLock)
 
-#define CcReleaseWorkQueueLock( OldIrql ) \
-    KeReleaseQueuedSpinLock( LockQueueWorkQueueLock, OldIrql )
+#define CcReleaseWorkQueueLock(OldIrql) KeReleaseQueuedSpinLock(LockQueueWorkQueueLock, OldIrql)
 
 #define CcAcquireWorkQueueLockAtDpcLevel() \
-    KeAcquireQueuedSpinLockAtDpcLevel( &KeGetCurrentPrcb()->LockQueue[LockQueueWorkQueueLock] )
+    KeAcquireQueuedSpinLockAtDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueWorkQueueLock])
 
 #define CcReleaseWorkQueueLockFromDpcLevel() \
-    KeReleaseQueuedSpinLockFromDpcLevel( &KeGetCurrentPrcb()->LockQueue[LockQueueWorkQueueLock] )
+    KeReleaseQueuedSpinLockFromDpcLevel(&KeGetCurrentPrcb()->LockQueue[LockQueueWorkQueueLock])
 
 //
 //  This turns on the Bcb list debugging in a debug system.  Set value
@@ -102,13 +96,13 @@ extern PFN_COUNT MmAvailablePages;
 //  Define our node type codes.
 //
 
-#define CACHE_NTC_SHARED_CACHE_MAP       (0x2FF)
-#define CACHE_NTC_PRIVATE_CACHE_MAP      (0x2FE)
-#define CACHE_NTC_BCB                    (0x2FD)
-#define CACHE_NTC_DEFERRED_WRITE         (0x2FC)
-#define CACHE_NTC_MBCB                   (0x2FB)
-#define CACHE_NTC_OBCB                   (0x2FA)
-#define CACHE_NTC_MBCB_GRANDE            (0x2F9)
+#define CACHE_NTC_SHARED_CACHE_MAP (0x2FF)
+#define CACHE_NTC_PRIVATE_CACHE_MAP (0x2FE)
+#define CACHE_NTC_BCB (0x2FD)
+#define CACHE_NTC_DEFERRED_WRITE (0x2FC)
+#define CACHE_NTC_MBCB (0x2FB)
+#define CACHE_NTC_OBCB (0x2FA)
+#define CACHE_NTC_MBCB_GRANDE (0x2F9)
 
 //
 //  The following definitions are used to generate meaningful blue bugcheck
@@ -124,32 +118,35 @@ extern PFN_COUNT MmAvailablePages;
 //  the system.
 //
 
-#define CACHE_BUG_CHECK_CACHEDAT           (0x00010000)
-#define CACHE_BUG_CHECK_CACHESUB           (0x00020000)
-#define CACHE_BUG_CHECK_COPYSUP            (0x00030000)
-#define CACHE_BUG_CHECK_FSSUP              (0x00040000)
-#define CACHE_BUG_CHECK_LAZYRITE           (0x00050000)
-#define CACHE_BUG_CHECK_LOGSUP             (0x00060000)
-#define CACHE_BUG_CHECK_MDLSUP             (0x00070000)
-#define CACHE_BUG_CHECK_PINSUP             (0x00080000)
-#define CACHE_BUG_CHECK_VACBSUP            (0x00090000)
+#define CACHE_BUG_CHECK_CACHEDAT (0x00010000)
+#define CACHE_BUG_CHECK_CACHESUB (0x00020000)
+#define CACHE_BUG_CHECK_COPYSUP (0x00030000)
+#define CACHE_BUG_CHECK_FSSUP (0x00040000)
+#define CACHE_BUG_CHECK_LAZYRITE (0x00050000)
+#define CACHE_BUG_CHECK_LOGSUP (0x00060000)
+#define CACHE_BUG_CHECK_MDLSUP (0x00070000)
+#define CACHE_BUG_CHECK_PINSUP (0x00080000)
+#define CACHE_BUG_CHECK_VACBSUP (0x00090000)
 
-#define CcBugCheck(A,B,C) { KeBugCheckEx(CACHE_MANAGER, BugCheckFileId | __LINE__, A, B, C ); }
+#define CcBugCheck(A, B, C)                                              \
+    {                                                                    \
+        KeBugCheckEx(CACHE_MANAGER, BugCheckFileId | __LINE__, A, B, C); \
+    }
 
 //
 //  Define maximum View Size (These constants are currently so chosen so
 //  as to be exactly a page worth of PTEs.
 //
 
-#define DEFAULT_CREATE_MODULO            ((ULONG)(0x00100000))
-#define DEFAULT_EXTEND_MODULO            ((ULONG)(0x00100000))
+#define DEFAULT_CREATE_MODULO ((ULONG)(0x00100000))
+#define DEFAULT_EXTEND_MODULO ((ULONG)(0x00100000))
 
 //
 //  For non FO_RANDOM_ACCESS files, define how far we go before umapping
 //  views.
 //
 
-#define SEQUENTIAL_MAP_LIMIT        ((ULONG)(0x00080000))
+#define SEQUENTIAL_MAP_LIMIT ((ULONG)(0x00080000))
 
 //
 //  Define some constants to drive read ahead and write behind
@@ -166,13 +163,13 @@ extern PFN_COUNT MmAvailablePages;
 //  by a factor of 3-4.
 //
 
-#define MAX_READ_AHEAD                   (8 * 1024 * 1024)
+#define MAX_READ_AHEAD (8 * 1024 * 1024)
 
 //
 //  Set maximum write behind / lazy write (most drivers break up transfers >= 64kb)
 //
 
-#define MAX_WRITE_BEHIND                 (MM_MAXIMUM_DISK_IO_SIZE)
+#define MAX_WRITE_BEHIND (MM_MAXIMUM_DISK_IO_SIZE)
 
 //
 //  Set a throttle for charging a given write against the total number of dirty
@@ -229,7 +226,7 @@ extern PFN_COUNT MmAvailablePages;
 //  oddcase with a little more throttle/release.
 //
 
-#define WRITE_CHARGE_THRESHOLD          (64 * PAGE_SIZE)
+#define WRITE_CHARGE_THRESHOLD (64 * PAGE_SIZE)
 
 //
 //  Define constants to control zeroing of file data: one constant to control
@@ -237,9 +234,9 @@ extern PFN_COUNT MmAvailablePages;
 //  control what the maximum transfer size is that we will use to write zeros.
 //
 
-#define MAX_ZERO_TRANSFER               (PAGE_SIZE * 128)
-#define MIN_ZERO_TRANSFER               (0x10000)
-#define MAX_ZEROS_IN_CACHE              (0x10000)
+#define MAX_ZERO_TRANSFER (PAGE_SIZE * 128)
+#define MIN_ZERO_TRANSFER (0x10000)
+#define MAX_ZEROS_IN_CACHE (0x10000)
 
 //
 //  Definitions for multi-level Vacb structure.  The primary definition is the
@@ -256,7 +253,7 @@ extern PFN_COUNT MmAvailablePages;
 //  we need a real fixed reference count.
 //
 
-#define VACB_LEVEL_SHIFT                  (7)
+#define VACB_LEVEL_SHIFT (7)
 
 //
 //  This is how many bytes of pointers are at each level.  This is the size for both
@@ -264,32 +261,33 @@ extern PFN_COUNT MmAvailablePages;
 //  block.
 //
 
-#define VACB_LEVEL_BLOCK_SIZE             ((1 << VACB_LEVEL_SHIFT) * sizeof(PVOID))
+#define VACB_LEVEL_BLOCK_SIZE ((1 << VACB_LEVEL_SHIFT) * sizeof(PVOID))
 
 //
 //  This is the last index for a level.
 //
 
-#define VACB_LAST_INDEX_FOR_LEVEL         ((1 << VACB_LEVEL_SHIFT) - 1)
+#define VACB_LAST_INDEX_FOR_LEVEL ((1 << VACB_LEVEL_SHIFT) - 1)
 
 //
 //  This is the size of file which can be handled in a single level.
 //
 
-#define VACB_SIZE_OF_FIRST_LEVEL         (1 << (VACB_OFFSET_SHIFT + VACB_LEVEL_SHIFT))
+#define VACB_SIZE_OF_FIRST_LEVEL (1 << (VACB_OFFSET_SHIFT + VACB_LEVEL_SHIFT))
 
 //
 //  This is the maximum number of levels it takes to support 63-bits.  It is
 //  used for routines that must remember a path.
 //
 
-#define VACB_NUMBER_OF_LEVELS            (((63 - VACB_OFFSET_SHIFT)/VACB_LEVEL_SHIFT) + 1)
+#define VACB_NUMBER_OF_LEVELS (((63 - VACB_OFFSET_SHIFT) / VACB_LEVEL_SHIFT) + 1)
 
 //
 //  Define the reference structure for multilevel Vacb trees.
 //
 
-typedef struct _VACB_LEVEL_REFERENCE {
+typedef struct _VACB_LEVEL_REFERENCE
+{
 
     LONG Reference;
     LONG SpecialReference;
@@ -300,20 +298,20 @@ typedef struct _VACB_LEVEL_REFERENCE {
 //  Define the size of a bitmap allocated for a bitmap range, in bytes.
 //
 
-#define MBCB_BITMAP_BLOCK_SIZE           (VACB_LEVEL_BLOCK_SIZE)
+#define MBCB_BITMAP_BLOCK_SIZE (VACB_LEVEL_BLOCK_SIZE)
 
 //
 //  Define how many bytes of a file are covered by an Mbcb bitmap range,
 //  at a bit for each page.
 //
 
-#define MBCB_BITMAP_RANGE                (MBCB_BITMAP_BLOCK_SIZE * 8 * PAGE_SIZE)
+#define MBCB_BITMAP_RANGE (MBCB_BITMAP_BLOCK_SIZE * 8 * PAGE_SIZE)
 
 //
 //  Define the initial size of the Mbcb bitmap that is self-contained in the Mbcb.
 //
 
-#define MBCB_BITMAP_INITIAL_SIZE         (2 * sizeof(BITMAP_RANGE))
+#define MBCB_BITMAP_INITIAL_SIZE (2 * sizeof(BITMAP_RANGE))
 
 //
 //  Define constants controlling when the Bcb list is broken into a
@@ -334,35 +332,40 @@ typedef struct _VACB_LEVEL_REFERENCE {
 //
 
 
-#define BEGIN_BCB_LIST_ARRAY             (0x200000)
-#define SIZE_PER_BCB_LIST                (VACB_MAPPING_GRANULARITY * 2)
-#define BCB_LIST_SHIFT                   (VACB_OFFSET_SHIFT + 1)
+#define BEGIN_BCB_LIST_ARRAY (0x200000)
+#define SIZE_PER_BCB_LIST (VACB_MAPPING_GRANULARITY * 2)
+#define BCB_LIST_SHIFT (VACB_OFFSET_SHIFT + 1)
 
-#define GetBcbListHead(SCM,OFF,FAILSUCC) (                                                         \
-  (((SCM)->SectionSize.QuadPart > BEGIN_BCB_LIST_ARRAY) &&                                         \
-   FlagOn((SCM)->Flags, MODIFIED_WRITE_DISABLED)) ?                                                \
-   (((SCM)->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) ?                                     \
-    CcGetBcbListHeadLargeOffset((SCM),(OFF),(FAILSUCC)) :                                          \
-    (((OFF) >= (SCM)->SectionSize.QuadPart) ? &(SCM)->BcbList :                                    \
-     ((PLIST_ENTRY)((SCM)->Vacbs) + (((SCM)->SectionSize.QuadPart + (OFF)) >> BCB_LIST_SHIFT)))) : \
-   &(SCM)->BcbList                                                                                 \
-)
+#define GetBcbListHead(SCM, OFF, FAILSUCC)                                                                           \
+    ((((SCM)->SectionSize.QuadPart > BEGIN_BCB_LIST_ARRAY) && FlagOn((SCM)->Flags, MODIFIED_WRITE_DISABLED))         \
+         ? (((SCM)->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL)                                                 \
+                ? CcGetBcbListHeadLargeOffset((SCM), (OFF), (FAILSUCC))                                              \
+                : (((OFF) >= (SCM)->SectionSize.QuadPart)                                                            \
+                       ? &(SCM)->BcbList                                                                             \
+                       : ((PLIST_ENTRY)((SCM)->Vacbs) + (((SCM)->SectionSize.QuadPart + (OFF)) >> BCB_LIST_SHIFT)))) \
+         : &(SCM)->BcbList)
 
 //
 //  Macros to lock/unlock a Vacb level as Bcbs are inserted/deleted
 //
 
-#define CcLockVacbLevel(SCM,OFF) {                                                               \
-    if (((SCM)->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) &&                              \
-        FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {                                \
-    CcAdjustVacbLevelLockCount((SCM),(OFF), +1);}                                                \
-}
+#define CcLockVacbLevel(SCM, OFF)                                       \
+    {                                                                   \
+        if (((SCM)->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) && \
+            FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))     \
+        {                                                               \
+            CcAdjustVacbLevelLockCount((SCM), (OFF), +1);               \
+        }                                                               \
+    }
 
-#define CcUnlockVacbLevel(SCM,OFF) {                                                             \
-    if (((SCM)->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) &&                              \
-        FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {                                \
-    CcAdjustVacbLevelLockCount((SCM),(OFF), -1);}                                                \
-}
+#define CcUnlockVacbLevel(SCM, OFF)                                     \
+    {                                                                   \
+        if (((SCM)->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) && \
+            FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))     \
+        {                                                               \
+            CcAdjustVacbLevelLockCount((SCM), (OFF), -1);               \
+        }                                                               \
+    }
 
 //
 //  NOISE_BITS defines how many bits are masked off when testing for
@@ -372,26 +375,26 @@ typedef struct _VACB_LEVEL_REFERENCE {
 //  before comparison.
 //
 
-#define NOISE_BITS                       (0x7)
+#define NOISE_BITS (0x7)
 
 //
 //  Define some constants to drive the Lazy Writer
 //
 
-#define LAZY_WRITER_IDLE_DELAY           ((LONG)(10000000))
-#define LAZY_WRITER_COLLISION_DELAY      ((LONG)(1000000))
+#define LAZY_WRITER_IDLE_DELAY ((LONG)(10000000))
+#define LAZY_WRITER_COLLISION_DELAY ((LONG)(1000000))
 
 //
 //  The following target should best be a power of 2
 //
 
-#define LAZY_WRITER_MAX_AGE_TARGET       ((ULONG)(8))
+#define LAZY_WRITER_MAX_AGE_TARGET ((ULONG)(8))
 
 //
 //  Requeue information hint for the lazy writer.
 //
 
-#define CC_REQUEUE                       35422
+#define CC_REQUEUE 35422
 
 //
 //  The global Cache Manager debug level variable, its values are:
@@ -446,46 +449,35 @@ typedef struct _VACB_LEVEL_REFERENCE {
 //          );
 //
 
-#define FlagOn(F,SF) ( \
-    (((F) & (SF)))     \
-)
+#define FlagOn(F, SF) ((((F) & (SF))))
 
-#define BooleanFlagOn(F,SF) (    \
-    (BOOLEAN)(((F) & (SF)) != 0) \
-)
+#define BooleanFlagOn(F, SF) ((BOOLEAN)(((F) & (SF)) != 0))
 
-#define SetFlag(F,SF) { \
-    (F) |= (SF);        \
-}
+#define SetFlag(F, SF) \
+    {                  \
+        (F) |= (SF);   \
+    }
 
-#define ClearFlag(F,SF) { \
-    (F) &= ~(SF);         \
-}
+#define ClearFlag(F, SF) \
+    {                    \
+        (F) &= ~(SF);    \
+    }
 
-#define QuadAlign(P) (             \
-    ((((P)) + 7) & (-8)) \
-)
+#define QuadAlign(P) (((((P)) + 7) & (-8)))
 
 //
 //  Turn on pseudo-asserts if CC_FREE_ASSERTS is defined.
 //
 
-#if (!DBG && defined( CC_FREE_ASSERTS ))
+#if (!DBG && defined(CC_FREE_ASSERTS))
 #undef ASSERT
 #undef ASSERTMSG
-#define ASSERT(exp)                                             \
-    ((exp) ? TRUE :                                             \
-             (DbgPrint( "%s:%d %s\n",__FILE__,__LINE__,#exp ),  \
-              DbgBreakPoint(),                                  \
-              TRUE))
-#define ASSERTMSG(msg,exp)                                              \
-    ((exp) ? TRUE :                                                     \
-             (DbgPrint( "%s:%d %s %s\n",__FILE__,__LINE__,msg,#exp ),   \
-              DbgBreakPoint(),                                          \
-              TRUE))
+#define ASSERT(exp) ((exp) ? TRUE : (DbgPrint("%s:%d %s\n", __FILE__, __LINE__, #exp), DbgBreakPoint(), TRUE))
+#define ASSERTMSG(msg, exp) \
+    ((exp) ? TRUE : (DbgPrint("%s:%d %s %s\n", __FILE__, __LINE__, msg, #exp), DbgBreakPoint(), TRUE))
 #endif
 
-
+
 //
 //  Define the Virtual Address Control Block, which controls all mapping
 //  performed by the Cache Manager.
@@ -495,13 +487,14 @@ typedef struct _VACB_LEVEL_REFERENCE {
 //  First some constants
 //
 
-#define PREALLOCATED_VACBS               (4)
+#define PREALLOCATED_VACBS (4)
 
 //
 //  Virtual Address Control Block
 //
 
-typedef struct _VACB {
+typedef struct _VACB
+{
 
     //
     //  Base Address for this control block.
@@ -520,7 +513,8 @@ typedef struct _VACB {
     //  and the count of the number of times this Vacb is in use.
     //
 
-    union {
+    union
+    {
 
         //
         //  File Offset within Shared Cache Map
@@ -552,18 +546,18 @@ typedef struct _VACB {
 //  certain special behavior, currently only in the case of multilevel structures.
 //
 
-#define VACB_SPECIAL_REFERENCE           ((PVACB) ~0)
-#define VACB_SPECIAL_DEREFERENCE         ((PVACB) ~1)
+#define VACB_SPECIAL_REFERENCE ((PVACB)~0)
+#define VACB_SPECIAL_DEREFERENCE ((PVACB)~1)
 
-#define VACB_SPECIAL_FIRST_VALID         VACB_SPECIAL_DEREFERENCE
+#define VACB_SPECIAL_FIRST_VALID VACB_SPECIAL_DEREFERENCE
 
-
 
-#define PRIVATE_CACHE_MAP_READ_AHEAD_ACTIVE     0x10000
-#define PRIVATE_CACHE_MAP_READ_AHEAD_ENABLED    0x20000
+#define PRIVATE_CACHE_MAP_READ_AHEAD_ACTIVE 0x10000
+#define PRIVATE_CACHE_MAP_READ_AHEAD_ENABLED 0x20000
 
-typedef struct _PRIVATE_CACHE_MAP_FLAGS {
-    ULONG DontUse : 16;                     // Overlaid with NodeTypeCode
+typedef struct _PRIVATE_CACHE_MAP_FLAGS
+{
+    ULONG DontUse : 16; // Overlaid with NodeTypeCode
 
     //
     //  This flag says read ahead is currently active, which means either
@@ -586,23 +580,25 @@ typedef struct _PRIVATE_CACHE_MAP_FLAGS {
 } PRIVATE_CACHE_MAP_FLAGS;
 
 #define CC_SET_PRIVATE_CACHE_MAP(PrivateCacheMap, Flags) \
-    RtlInterlockedSetBitsDiscardReturn (&PrivateCacheMap->UlongFlags, Flags);
+    RtlInterlockedSetBitsDiscardReturn(&PrivateCacheMap->UlongFlags, Flags);
 
 #define CC_CLEAR_PRIVATE_CACHE_MAP(PrivateCacheMap, Feature) \
-    RtlInterlockedAndBitsDiscardReturn (&PrivateCacheMap->UlongFlags, (ULONG)~Feature);
+    RtlInterlockedAndBitsDiscardReturn(&PrivateCacheMap->UlongFlags, (ULONG)~Feature);
 
 //
 //  The Private Cache Map is a structure pointed to by the File Object, whenever
 //  a file is opened with caching enabled (default).
 //
 
-typedef struct _PRIVATE_CACHE_MAP {
+typedef struct _PRIVATE_CACHE_MAP
+{
 
     //
     //  Type and size of this record
     //
 
-    union {
+    union
+    {
         CSHORT NodeTypeCode;
         PRIVATE_CACHE_MAP_FLAGS Flags;
         ULONG UlongFlags;
@@ -663,7 +659,7 @@ typedef struct _PRIVATE_CACHE_MAP {
 
 typedef PRIVATE_CACHE_MAP *PPRIVATE_CACHE_MAP;
 
-
+
 //
 //  The Shared Cache Map is a per-file structure pointed to indirectly by
 //  each File Object.  The File Object points to a pointer in a single
@@ -676,44 +672,53 @@ typedef PRIVATE_CACHE_MAP *PPRIVATE_CACHE_MAP;
 //
 
 #if OPEN_COUNT_LOG
-typedef struct _CC_OPEN_COUNT_LOG_ENTRY {
+typedef struct _CC_OPEN_COUNT_LOG_ENTRY
+{
     ULONG Action;
     ULONG Reason;
 } CC_OPEN_COUNT_LOG_ENTRY;
 
-typedef struct _CC_OPEN_COUNT_LOG {
+typedef struct _CC_OPEN_COUNT_LOG
+{
     USHORT Next;
     USHORT Size;
     CC_OPEN_COUNT_LOG_ENTRY Log[48];
 } CC_OPEN_COUNT_LOG;
 
-#define CcAddOpenToLog( LOG, ACTION, REASON ) {             \
-    (LOG)->Log[(LOG)->Next].Action = (ACTION);              \
-    (LOG)->Log[(LOG)->Next].Reason = (REASON);              \
-    (LOG)->Next += 1;                                       \
-    if ((LOG)->Next == (LOG)->Size) {                       \
-        (LOG)->Next = 0;                                    \
-    }                                                       \
-}
-#else  // OPEN_COUNT_LOG
-#define CcAddOpenToLog( LOG, ACTION, REASON )
+#define CcAddOpenToLog(LOG, ACTION, REASON)        \
+    {                                              \
+        (LOG)->Log[(LOG)->Next].Action = (ACTION); \
+        (LOG)->Log[(LOG)->Next].Reason = (REASON); \
+        (LOG)->Next += 1;                          \
+        if ((LOG)->Next == (LOG)->Size)            \
+        {                                          \
+            (LOG)->Next = 0;                       \
+        }                                          \
+    }
+#else // OPEN_COUNT_LOG
+#define CcAddOpenToLog(LOG, ACTION, REASON)
 #endif // OPEN_COUNT_LOG
 
-#define CcIncrementOpenCount( SCM, REASON ) {               \
-    (SCM)->OpenCount += 1;                                  \
-    if (REASON != 0) {                                      \
-        CcAddOpenToLog( &(SCM)->OpenCountLog, REASON, 1 );  \
-    }                                                       \
-}
+#define CcIncrementOpenCount(SCM, REASON)                    \
+    {                                                        \
+        (SCM)->OpenCount += 1;                               \
+        if (REASON != 0)                                     \
+        {                                                    \
+            CcAddOpenToLog(&(SCM)->OpenCountLog, REASON, 1); \
+        }                                                    \
+    }
 
-#define CcDecrementOpenCount( SCM, REASON ) {               \
-    (SCM)->OpenCount -= 1;                                  \
-    if (REASON != 0) {                                      \
-        CcAddOpenToLog( &(SCM)->OpenCountLog, REASON, -1 ); \
-    }                                                       \
-}
+#define CcDecrementOpenCount(SCM, REASON)                     \
+    {                                                         \
+        (SCM)->OpenCount -= 1;                                \
+        if (REASON != 0)                                      \
+        {                                                     \
+            CcAddOpenToLog(&(SCM)->OpenCountLog, REASON, -1); \
+        }                                                     \
+    }
 
-typedef struct _SHARED_CACHE_MAP {
+typedef struct _SHARED_CACHE_MAP
+{
 
     //
     //  Type and size of this record
@@ -775,7 +780,7 @@ typedef struct _SHARED_CACHE_MAP {
     //
 
     PVACB InitialVacbs[PREALLOCATED_VACBS];
-    PVACB * Vacbs;
+    PVACB *Vacbs;
 
     //
     //  Referenced pointer to original File Object on which the SharedCacheMap
@@ -956,7 +961,7 @@ typedef struct _SHARED_CACHE_MAP {
     KEVENT Event;
 
     EX_PUSH_LOCK VacbPushLock;
-    
+
     //
     //  Preallocate one PrivateCacheMap to reduce pool allocations.
     //
@@ -985,33 +990,33 @@ typedef SHARED_CACHE_MAP *PSHARED_CACHE_MAP;
 //  Read ahead has been disabled on this file.
 //
 
-#define DISABLE_READ_AHEAD               0x0001
+#define DISABLE_READ_AHEAD 0x0001
 
 //
 //  Write behind has been disabled on this file.
 //
 
-#define DISABLE_WRITE_BEHIND             0x0002
+#define DISABLE_WRITE_BEHIND 0x0002
 
 //
 //  This flag indicates whether CcInitializeCacheMap was called with
 //  PinAccess = TRUE.
 //
 
-#define PIN_ACCESS                       0x0004
+#define PIN_ACCESS 0x0004
 
 //
 //  This flag indicates that a truncate is required when OpenCount
 //  goes to 0.
 //
 
-#define TRUNCATE_REQUIRED                0x0010
+#define TRUNCATE_REQUIRED 0x0010
 
 //
 //  This flag indicates that a LazyWrite request is queued.
 //
 
-#define WRITE_QUEUED                     0x0020
+#define WRITE_QUEUED 0x0020
 
 //
 //  This flag indicates that we have never seen anyone cache
@@ -1019,38 +1024,38 @@ typedef SHARED_CACHE_MAP *PSHARED_CACHE_MAP;
 //  tell MM to quickly dump pages when we unmap.
 //
 
-#define ONLY_SEQUENTIAL_ONLY_SEEN        0x0040
+#define ONLY_SEQUENTIAL_ONLY_SEEN 0x0040
 
 //
 //  Active Page is locked
 //
 
-#define ACTIVE_PAGE_IS_DIRTY             0x0080
+#define ACTIVE_PAGE_IS_DIRTY 0x0080
 
 //
 //  Flag to say that a create is in progress.
 //
 
-#define BEING_CREATED                    0x0100
+#define BEING_CREATED 0x0100
 
 //
 //  Flag to say that modified write was disabled on the section.
 //
 
-#define MODIFIED_WRITE_DISABLED          0x0200
+#define MODIFIED_WRITE_DISABLED 0x0200
 
 //
 //  Flag that indicates if a lazy write ever occurred on this file.
 //
 
-#define LAZY_WRITE_OCCURRED              0x0400
+#define LAZY_WRITE_OCCURRED 0x0400
 
 //
 //  Flag that indicates this structure is only a cursor, only the
 //  SharedCacheMapLinks and Flags are valid!
 //
 
-#define IS_CURSOR                        0x0800
+#define IS_CURSOR 0x0800
 
 //
 //  Flag that indicates that we have seen someone cache this file
@@ -1058,14 +1063,14 @@ typedef SHARED_CACHE_MAP *PSHARED_CACHE_MAP;
 //  working set trim assist.
 //
 
-#define RANDOM_ACCESS_SEEN               0x1000
+#define RANDOM_ACCESS_SEEN 0x1000
 
 //
 //  Flag indicating that the stream is private write.  This disables
 //  non-aware flush/purge.
 //
 
-#define PRIVATE_WRITE                    0x2000
+#define PRIVATE_WRITE 0x2000
 
 //
 //  Cursor structure for traversing the SharedCacheMap lists.  Anyone
@@ -1074,7 +1079,8 @@ typedef SHARED_CACHE_MAP *PSHARED_CACHE_MAP;
 //
 
 
-typedef struct _SHARED_CACHE_MAP_LIST_CURSOR {
+typedef struct _SHARED_CACHE_MAP_LIST_CURSOR
+{
 
     //
     //  Links for Global SharedCacheMap List
@@ -1091,14 +1097,14 @@ typedef struct _SHARED_CACHE_MAP_LIST_CURSOR {
 } SHARED_CACHE_MAP_LIST_CURSOR, *PSHARED_CACHE_MAP_LIST_CURSOR;
 
 
-
 #ifndef KDEXT
 //
 //  Bitmap Range structure.  For small files there is just one embedded in the
 //  Mbcb.  For large files there may be many of these linked to the Mbcb.
 //
 
-typedef struct _BITMAP_RANGE {
+typedef struct _BITMAP_RANGE
+{
 
     //
     //  Links for the list of bitmap ranges off the Mbcb.
@@ -1141,7 +1147,8 @@ typedef struct _BITMAP_RANGE {
 //  where the dirty data is.
 //
 
-typedef struct _MBCB {
+typedef struct _MBCB
+{
 
     //
     //  Type and size of this record
@@ -1197,7 +1204,7 @@ typedef struct _MBCB {
 
 typedef MBCB *PMBCB;
 
-
+
 //
 //  This is the Buffer Control Block structure for representing data which
 //  is "pinned" in memory by one or more active requests and/or dirty.  This
@@ -1208,9 +1215,11 @@ typedef MBCB *PMBCB;
 //  NOTE: The first four fields must be the same as the PUBLIC_BCB.
 //
 
-typedef struct _BCB {
+typedef struct _BCB
+{
 
-    union {
+    union
+    {
 
         //
         // To ensure QuadAlign (sizeof (BCB)) >= QuadAlign (sizeof (MBCB))
@@ -1219,7 +1228,8 @@ typedef struct _BCB {
 
         MBCB Dummy;
 
-        struct {
+        struct
+        {
 
             //
             //  Type and size of this record
@@ -1238,7 +1248,7 @@ typedef struct _BCB {
             //  Byte FileOffset and and length of entire buffer
             //
 
-            ULONG  ByteLength;
+            ULONG ByteLength;
             LARGE_INTEGER FileOffset;
 
             //
@@ -1330,7 +1340,8 @@ typedef BCB *PBCB;
 //  NOTE: The first four fields must be the same as the PUBLIC_BCB.
 //
 
-typedef struct _OBCB {
+typedef struct _OBCB
+{
 
     //
     //  Type and size of this record
@@ -1343,7 +1354,7 @@ typedef struct _OBCB {
     //  Byte FileOffset and and length of entire buffer
     //
 
-    ULONG  ByteLength;
+    ULONG ByteLength;
     LARGE_INTEGER FileOffset;
 
     //
@@ -1356,12 +1367,13 @@ typedef struct _OBCB {
 
 typedef OBCB *POBCB;
 
-
+
 //
 //  Struct for remembering deferred writes for later posting.
 //
 
-typedef struct _DEFERRED_WRITE {
+typedef struct _DEFERRED_WRITE
+{
 
     //
     //  Type and size of this record
@@ -1408,12 +1420,13 @@ typedef struct _DEFERRED_WRITE {
 
 } DEFERRED_WRITE, *PDEFERRED_WRITE;
 
-
+
 //
 //  Struct controlling the Lazy Writer algorithms
 //
 
-typedef struct _LAZY_WRITER {
+typedef struct _LAZY_WRITER
+{
 
     //
     //  Work queue.
@@ -1443,14 +1456,15 @@ typedef struct _LAZY_WRITER {
 
 } LAZY_WRITER;
 
-
+
 #ifndef KDEXT
 //
 //  Work queue entry for the worker threads, with an enumerated
 //  function code.
 //
 
-typedef enum _WORKER_FUNCTION {
+typedef enum _WORKER_FUNCTION
+{
     Noop = 0,
     ReadAhead,
     WriteBehind,
@@ -1459,7 +1473,8 @@ typedef enum _WORKER_FUNCTION {
 } WORKER_FUNCTION;
 #endif
 
-typedef struct _WORK_QUEUE_ENTRY {
+typedef struct _WORK_QUEUE_ENTRY
+{
 
     //
     //  List entry for our work queues.
@@ -1471,13 +1486,15 @@ typedef struct _WORK_QUEUE_ENTRY {
     //  Define a union to contain function-specific parameters.
     //
 
-    union {
+    union
+    {
 
         //
         //  Read parameters (for read ahead)
         //
 
-        struct {
+        struct
+        {
             PFILE_OBJECT FileObject;
         } Read;
 
@@ -1485,7 +1502,8 @@ typedef struct _WORK_QUEUE_ENTRY {
         //  Write parameters (for write behind)
         //
 
-        struct {
+        struct
+        {
             PSHARED_CACHE_MAP SharedCacheMap;
         } Write;
 
@@ -1493,7 +1511,8 @@ typedef struct _WORK_QUEUE_ENTRY {
         //  Set event parameters (for queue checks)
         //
 
-        struct {
+        struct
+        {
             PKEVENT Event;
         } Event;
 
@@ -1511,7 +1530,8 @@ typedef struct _WORK_QUEUE_ENTRY {
 //  This is a structure apended to the end of an MDL
 //
 
-typedef struct _MDL_WRITE {
+typedef struct _MDL_WRITE
+{
 
     //
     //  This field is for the use of the Server to stash anything interesting
@@ -1540,45 +1560,35 @@ typedef struct _MDL_WRITE {
 
 } MDL_WRITE, *PMDL_WRITE;
 
-
+
 //
 //  Common Private routine definitions for the Cache Manager
 //
 
-VOID
-CcGetActiveVacb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    OUT PVACB *Vacb,
-    OUT PULONG Page,
-    OUT PULONG Dirty
-    );
+VOID CcGetActiveVacb(IN PSHARED_CACHE_MAP SharedCacheMap, OUT PVACB *Vacb, OUT PULONG Page, OUT PULONG Dirty);
 
-VOID
-CcSetActiveVacb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN OUT PVACB *Vacb,
-    IN ULONG Page,
-    IN ULONG Dirty
-    );
+VOID CcSetActiveVacb(IN PSHARED_CACHE_MAP SharedCacheMap, IN OUT PVACB *Vacb, IN ULONG Page, IN ULONG Dirty);
 
 //
 //  We trim out the previous macro-forms of Get/Set (nondpc) so that we can page
 //  more cache manager code that otherwise does not acquire spinlocks.
 //
 
-#define GetActiveVacb(SCM,IRQ,V,P,D)     CcGetActiveVacb((SCM),&(V),&(P),&(D))
-#define SetActiveVacb(SCM,IRQ,V,P,D)     CcSetActiveVacb((SCM),&(V),(P),(D))
+#define GetActiveVacb(SCM, IRQ, V, P, D) CcGetActiveVacb((SCM), &(V), &(P), &(D))
+#define SetActiveVacb(SCM, IRQ, V, P, D) CcSetActiveVacb((SCM), &(V), (P), (D))
 
-#define GetActiveVacbAtDpcLevel(SCM,V,P,D) {                            \
-    ExAcquireSpinLockAtDpcLevel(&(SCM)->ActiveVacbSpinLock);            \
-    (V) = (SCM)->ActiveVacb;                                            \
-    if ((V) != NULL) {                                                  \
-        (P) = (SCM)->ActivePage;                                        \
-        (SCM)->ActiveVacb = NULL;                                       \
-        (D) = (SCM)->Flags & ACTIVE_PAGE_IS_DIRTY;                      \
-    }                                                                   \
-    ExReleaseSpinLockFromDpcLevel(&(SCM)->ActiveVacbSpinLock);          \
-}
+#define GetActiveVacbAtDpcLevel(SCM, V, P, D)                      \
+    {                                                              \
+        ExAcquireSpinLockAtDpcLevel(&(SCM)->ActiveVacbSpinLock);   \
+        (V) = (SCM)->ActiveVacb;                                   \
+        if ((V) != NULL)                                           \
+        {                                                          \
+            (P) = (SCM)->ActivePage;                               \
+            (SCM)->ActiveVacb = NULL;                              \
+            (D) = (SCM)->Flags & ACTIVE_PAGE_IS_DIRTY;             \
+        }                                                          \
+        ExReleaseSpinLockFromDpcLevel(&(SCM)->ActiveVacbSpinLock); \
+    }
 
 //
 //  Gather the common work of charging and deducting dirty page counts.  When
@@ -1586,272 +1596,133 @@ CcSetActiveVacb (
 //  gather up the activation of that throttle.
 //
 
-#define CcDeductDirtyPages( S, P )                                      \
-        CcTotalDirtyPages -= (P);                                       \
-        (S)->DirtyPages -= (P);
-        
-#define CcChargeMaskDirtyPages( S, M, B, P )                            \
-        CcTotalDirtyPages += (P);                                       \
-        (M)->DirtyPages += (P);                                         \
-        (B)->DirtyPages += (P);                                         \
-        (S)->DirtyPages += (P);
+#define CcDeductDirtyPages(S, P) \
+    CcTotalDirtyPages -= (P);    \
+    (S)->DirtyPages -= (P);
 
-#define CcChargePinDirtyPages( S, P )                                   \
-        CcTotalDirtyPages += (P);                                       \
-        (S)->DirtyPages += (P);
+#define CcChargeMaskDirtyPages(S, M, B, P) \
+    CcTotalDirtyPages += (P);              \
+    (M)->DirtyPages += (P);                \
+    (B)->DirtyPages += (P);                \
+    (S)->DirtyPages += (P);
 
-VOID
-CcPostDeferredWrites (
-    );
+#define CcChargePinDirtyPages(S, P) \
+    CcTotalDirtyPages += (P);       \
+    (S)->DirtyPages += (P);
+
+VOID CcPostDeferredWrites();
 
 BOOLEAN
-CcPinFileData (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN ReadOnly,
-    IN BOOLEAN WriteOnly,
-    IN ULONG Flags,
-    OUT PBCB *Bcb,
-    OUT PVOID *BaseAddress,
-    OUT PLARGE_INTEGER BeyondLastByte
-    );
+CcPinFileData(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN BOOLEAN ReadOnly,
+              IN BOOLEAN WriteOnly, IN ULONG Flags, OUT PBCB *Bcb, OUT PVOID *BaseAddress,
+              OUT PLARGE_INTEGER BeyondLastByte);
 
-typedef enum {
+typedef enum
+{
     UNPIN,
     UNREF,
     SET_CLEAN
 } UNMAP_ACTIONS;
 
-VOID
-FASTCALL
-CcUnpinFileData (
-    IN OUT PBCB Bcb,
-    IN BOOLEAN ReadOnly,
-    IN UNMAP_ACTIONS UnmapAction
-    );
+VOID FASTCALL CcUnpinFileData(IN OUT PBCB Bcb, IN BOOLEAN ReadOnly, IN UNMAP_ACTIONS UnmapAction);
 
-VOID
-FASTCALL
-CcDeallocateBcb (
-    IN PBCB Bcb
-    );
+VOID FASTCALL CcDeallocateBcb(IN PBCB Bcb);
 
-VOID
-FASTCALL
-CcPerformReadAhead (
-    IN PFILE_OBJECT FileObject
-    );
+VOID FASTCALL CcPerformReadAhead(IN PFILE_OBJECT FileObject);
 
-VOID
-CcSetDirtyInMask (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length
-    );
+VOID CcSetDirtyInMask(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset, IN ULONG Length);
 
-VOID
-FASTCALL
-CcWriteBehind (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PIO_STATUS_BLOCK IoStatus
-    );
+VOID FASTCALL CcWriteBehind(IN PSHARED_CACHE_MAP SharedCacheMap, IN PIO_STATUS_BLOCK IoStatus);
 
-#define ZERO_FIRST_PAGE                  1
-#define ZERO_MIDDLE_PAGES                2
-#define ZERO_LAST_PAGE                   4
+#define ZERO_FIRST_PAGE 1
+#define ZERO_MIDDLE_PAGES 2
+#define ZERO_LAST_PAGE 4
 
 BOOLEAN
-CcMapAndRead(
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG ZeroFlags,
-    IN BOOLEAN Wait,
-    IN PVOID BaseAddress
-    );
+CcMapAndRead(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG ZeroFlags,
+             IN BOOLEAN Wait, IN PVOID BaseAddress);
 
-VOID
-CcFreeActiveVacb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVACB ActiveVacb OPTIONAL,
-    IN ULONG ActivePage,
-    IN ULONG PageIsDirty
-    );
+VOID CcFreeActiveVacb(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVACB ActiveVacb OPTIONAL, IN ULONG ActivePage,
+                      IN ULONG PageIsDirty);
 
-VOID
-CcMapAndCopy(
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVOID UserBuffer,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG ZeroFlags,
-    IN PFILE_OBJECT FileObject
-    );
+VOID CcMapAndCopy(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVOID UserBuffer, IN PLARGE_INTEGER FileOffset,
+                  IN ULONG Length, IN ULONG ZeroFlags, IN PFILE_OBJECT FileObject);
 
-VOID
-CcScanDpc (
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID CcScanDpc(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
-VOID
-CcScheduleLazyWriteScan (
-    IN BOOLEAN FastScan
-    );
+VOID CcScheduleLazyWriteScan(IN BOOLEAN FastScan);
 
-VOID
-CcStartLazyWriter (
-    IN PVOID NotUsed
-    );
+VOID CcStartLazyWriter(IN PVOID NotUsed);
 
-#define CcAllocateWorkQueueEntry() \
-    (PWORK_QUEUE_ENTRY)ExAllocateFromPPLookasideList(LookasideTwilightList)
+#define CcAllocateWorkQueueEntry() (PWORK_QUEUE_ENTRY) ExAllocateFromPPLookasideList(LookasideTwilightList)
 
-#define CcFreeWorkQueueEntry(_entry_)         \
-    ExFreeToPPLookasideList(LookasideTwilightList, (_entry_))
+#define CcFreeWorkQueueEntry(_entry_) ExFreeToPPLookasideList(LookasideTwilightList, (_entry_))
 
-VOID
-FASTCALL
-CcPostWorkQueue (
-    IN PWORK_QUEUE_ENTRY WorkQueueEntry,
-    IN PLIST_ENTRY WorkQueue
-    );
+VOID FASTCALL CcPostWorkQueue(IN PWORK_QUEUE_ENTRY WorkQueueEntry, IN PLIST_ENTRY WorkQueue);
 
-VOID
-CcWorkerThread (
-    PVOID ExWorkQueueItem
-    );
+VOID CcWorkerThread(PVOID ExWorkQueueItem);
 
-VOID
-FASTCALL
-CcDeleteSharedCacheMap (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN KIRQL ListIrql,
-    IN ULONG ReleaseFile
-    );
+VOID FASTCALL CcDeleteSharedCacheMap(IN PSHARED_CACHE_MAP SharedCacheMap, IN KIRQL ListIrql, IN ULONG ReleaseFile);
 
 //
 //  This exception filter handles STATUS_IN_PAGE_ERROR correctly
 //
 
-LONG
-CcCopyReadExceptionFilter(
-    IN PEXCEPTION_POINTERS ExceptionPointer,
-    IN PNTSTATUS ExceptionCode
-    );
+LONG CcCopyReadExceptionFilter(IN PEXCEPTION_POINTERS ExceptionPointer, IN PNTSTATUS ExceptionCode);
 
 //
 //  Exception filter for Worker Threads in lazyrite.c
 //
 
-LONG
-CcExceptionFilter (
-    IN NTSTATUS ExceptionCode
-    );
+LONG CcExceptionFilter(IN NTSTATUS ExceptionCode);
 
 #ifdef CCDBG
-VOID
-CcDump (
-    IN PVOID Ptr
-    );
+VOID CcDump(IN PVOID Ptr);
 #endif
 
 //
 //  Vacb routines
 //
 
-VOID
-CcInitializeVacbs(
-    );
+VOID CcInitializeVacbs();
 
 PVOID
-CcGetVirtualAddressIfMapped (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset,
-    OUT PVACB *Vacb,
-    OUT PULONG ReceivedLength
-    );
+CcGetVirtualAddressIfMapped(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset, OUT PVACB *Vacb,
+                            OUT PULONG ReceivedLength);
 
 PVOID
-CcGetVirtualAddress (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER FileOffset,
-    OUT PVACB *Vacb,
-    OUT PULONG ReceivedLength
-    );
+CcGetVirtualAddress(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER FileOffset, OUT PVACB *Vacb,
+                    OUT PULONG ReceivedLength);
 
-VOID
-FASTCALL
-CcFreeVirtualAddress (
-    IN PVACB Vacb
-    );
+VOID FASTCALL CcFreeVirtualAddress(IN PVACB Vacb);
 
-VOID
-CcReferenceFileOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER FileOffset
-    );
+VOID CcReferenceFileOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER FileOffset);
 
-VOID
-CcDereferenceFileOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER FileOffset
-    );
+VOID CcDereferenceFileOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER FileOffset);
 
-VOID
-CcWaitOnActiveCount (
-    IN PSHARED_CACHE_MAP SharedCacheMap
-    );
+VOID CcWaitOnActiveCount(IN PSHARED_CACHE_MAP SharedCacheMap);
 
 NTSTATUS
 FASTCALL
-CcCreateVacbArray (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER NewSectionSize
-    );
+CcCreateVacbArray(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER NewSectionSize);
 
 NTSTATUS
-CcExtendVacbArray (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER NewSectionSize
-    );
+CcExtendVacbArray(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER NewSectionSize);
 
 BOOLEAN
 FASTCALL
-CcUnmapVacbArray (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset OPTIONAL,
-    IN ULONG Length,
-    IN BOOLEAN UnmapBehind
-    );
+CcUnmapVacbArray(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset OPTIONAL, IN ULONG Length,
+                 IN BOOLEAN UnmapBehind);
 
-VOID
-CcAdjustVacbLevelLockCount (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset,
-    IN LONG Adjustment
-    );
+VOID CcAdjustVacbLevelLockCount(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset, IN LONG Adjustment);
 
 PLIST_ENTRY
-CcGetBcbListHeadLargeOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset,
-    IN BOOLEAN FailToSuccessor
-    );
+CcGetBcbListHeadLargeOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset, IN BOOLEAN FailToSuccessor);
 
 ULONG
-CcPrefillVacbLevelZone (
-    IN ULONG NumberNeeded,
-    OUT PKIRQL OldIrql,
-    IN ULONG NeedBcbListHeads
-    );
+CcPrefillVacbLevelZone(IN ULONG NumberNeeded, OUT PKIRQL OldIrql, IN ULONG NeedBcbListHeads);
 
-VOID
-CcDrainVacbLevelZone (
-    );
+VOID CcDrainVacbLevelZone();
 
 //
 //  Define references to global data
@@ -1909,39 +1780,40 @@ extern PVACB *CcVacbLevelWithBcbsFreeList;
 //  be acquired.
 //
 
-_inline PVACB *CcAllocateVacbLevel (
-    IN LOGICAL AllocatingBcbListHeads
-    )
+_inline PVACB *CcAllocateVacbLevel(IN LOGICAL AllocatingBcbListHeads)
 
 {
     PVACB *ReturnEntry;
 
-    if (AllocatingBcbListHeads) {
+    if (AllocatingBcbListHeads)
+    {
         ReturnEntry = CcVacbLevelWithBcbsFreeList;
         CcVacbLevelWithBcbsFreeList = (PVACB *)*ReturnEntry;
         CcVacbLevelWithBcbsEntries -= 1;
-    } else {
+    }
+    else
+    {
         ReturnEntry = CcVacbLevelFreeList;
         CcVacbLevelFreeList = (PVACB *)*ReturnEntry;
         CcVacbLevelEntries -= 1;
     }
     *ReturnEntry = NULL;
     ASSERT(RtlCompareMemory(ReturnEntry, ReturnEntry + 1, VACB_LEVEL_BLOCK_SIZE - sizeof(PVACB)) ==
-                                                          (VACB_LEVEL_BLOCK_SIZE - sizeof(PVACB)));
+           (VACB_LEVEL_BLOCK_SIZE - sizeof(PVACB)));
     return ReturnEntry;
 }
 
-_inline VOID CcDeallocateVacbLevel (
-    IN PVACB *Entry,
-    IN LOGICAL DeallocatingBcbListHeads
-    )
+_inline VOID CcDeallocateVacbLevel(IN PVACB *Entry, IN LOGICAL DeallocatingBcbListHeads)
 
 {
-    if (DeallocatingBcbListHeads) {
+    if (DeallocatingBcbListHeads)
+    {
         *Entry = (PVACB)CcVacbLevelWithBcbsFreeList;
         CcVacbLevelWithBcbsFreeList = Entry;
         CcVacbLevelWithBcbsEntries += 1;
-    } else {
+    }
+    else
+    {
         *Entry = (PVACB)CcVacbLevelFreeList;
         CcVacbLevelFreeList = Entry;
         CcVacbLevelEntries += 1;
@@ -1953,36 +1825,24 @@ _inline VOID CcDeallocateVacbLevel (
 //  the multilevel Vacb array.
 //
 
-_inline
-PVACB_LEVEL_REFERENCE
-VacbLevelReference (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVACB *VacbArray,
-    IN ULONG Level
-    )
+_inline PVACB_LEVEL_REFERENCE VacbLevelReference(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVACB *VacbArray,
+                                                 IN ULONG Level)
 {
-    return (PVACB_LEVEL_REFERENCE)
-           ((PCHAR)VacbArray +
-            VACB_LEVEL_BLOCK_SIZE +
-            (Level != 0?
-             0 : (FlagOn( SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED )?
-                  VACB_LEVEL_BLOCK_SIZE : 0)));
+    return (PVACB_LEVEL_REFERENCE)((PCHAR)VacbArray + VACB_LEVEL_BLOCK_SIZE +
+                                   (Level != 0 ? 0
+                                               : (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)
+                                                      ? VACB_LEVEL_BLOCK_SIZE
+                                                      : 0)));
 }
 
-_inline
-ULONG
-IsVacbLevelReferenced (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVACB *VacbArray,
-    IN ULONG Level
-    )
+_inline ULONG IsVacbLevelReferenced(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVACB *VacbArray, IN ULONG Level)
 {
-    PVACB_LEVEL_REFERENCE VacbReference = VacbLevelReference( SharedCacheMap, VacbArray, Level );
+    PVACB_LEVEL_REFERENCE VacbReference = VacbLevelReference(SharedCacheMap, VacbArray, Level);
 
     return VacbReference->Reference | VacbReference->SpecialReference;
 }
 
-
+
 //
 //  Here is a page of macros stolen directly from Pinball...
 //
@@ -2015,7 +1875,11 @@ IsVacbLevelReferenced (
 //      #define try_return(S)  { S; goto try_exit; }
 //
 
-#define try_return(S) { S; goto try_exit; }
+#define try_return(S)  \
+    {                  \
+        S;             \
+        goto try_exit; \
+    }
 
 #ifdef CCDBG
 
@@ -2024,126 +1888,160 @@ extern LONG CcDebugTraceIndent;
 
 #ifndef CCDBG_LOCK
 
-#define DebugTrace(INDENT,LEVEL,X,Y) {                     \
-    LONG _i;                                               \
-    if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) { \
-        _i = (ULONG)PsGetCurrentThread();                  \
-        DbgPrint("%08lx:",_i);                             \
-        if ((INDENT) < 0) {                                \
-            CcDebugTraceIndent += (INDENT);                \
-        }                                                  \
-        if (CcDebugTraceIndent < 0) {                      \
-            CcDebugTraceIndent = 0;                        \
-        }                                                  \
-        for (_i=0; _i<CcDebugTraceIndent; _i+=1) {         \
-            DbgPrint(" ");                                 \
-        }                                                  \
-        DbgPrint(X,Y);                                     \
-        if ((INDENT) > 0) {                                \
-            CcDebugTraceIndent += (INDENT);                \
-        }                                                  \
-    }                                                      \
-}
+#define DebugTrace(INDENT, LEVEL, X, Y)                      \
+    {                                                        \
+        LONG _i;                                             \
+        if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) \
+        {                                                    \
+            _i = (ULONG)PsGetCurrentThread();                \
+            DbgPrint("%08lx:", _i);                          \
+            if ((INDENT) < 0)                                \
+            {                                                \
+                CcDebugTraceIndent += (INDENT);              \
+            }                                                \
+            if (CcDebugTraceIndent < 0)                      \
+            {                                                \
+                CcDebugTraceIndent = 0;                      \
+            }                                                \
+            for (_i = 0; _i < CcDebugTraceIndent; _i += 1)   \
+            {                                                \
+                DbgPrint(" ");                               \
+            }                                                \
+            DbgPrint(X, Y);                                  \
+            if ((INDENT) > 0)                                \
+            {                                                \
+                CcDebugTraceIndent += (INDENT);              \
+            }                                                \
+        }                                                    \
+    }
 
-#define DebugTrace2(INDENT,LEVEL,X,Y,Z) {                  \
-    LONG _i;                                               \
-    if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) { \
-        _i = (ULONG)PsGetCurrentThread();                  \
-        DbgPrint("%08lx:",_i);                             \
-        if ((INDENT) < 0) {                                \
-            CcDebugTraceIndent += (INDENT);                \
-        }                                                  \
-        if (CcDebugTraceIndent < 0) {                      \
-            CcDebugTraceIndent = 0;                        \
-        }                                                  \
-        for (_i=0; _i<CcDebugTraceIndent; _i+=1) {         \
-            DbgPrint(" ");                                 \
-        }                                                  \
-        DbgPrint(X,Y,Z);                                   \
-        if ((INDENT) > 0) {                                \
-            CcDebugTraceIndent += (INDENT);                \
-        }                                                  \
-    }                                                      \
-}
+#define DebugTrace2(INDENT, LEVEL, X, Y, Z)                  \
+    {                                                        \
+        LONG _i;                                             \
+        if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) \
+        {                                                    \
+            _i = (ULONG)PsGetCurrentThread();                \
+            DbgPrint("%08lx:", _i);                          \
+            if ((INDENT) < 0)                                \
+            {                                                \
+                CcDebugTraceIndent += (INDENT);              \
+            }                                                \
+            if (CcDebugTraceIndent < 0)                      \
+            {                                                \
+                CcDebugTraceIndent = 0;                      \
+            }                                                \
+            for (_i = 0; _i < CcDebugTraceIndent; _i += 1)   \
+            {                                                \
+                DbgPrint(" ");                               \
+            }                                                \
+            DbgPrint(X, Y, Z);                               \
+            if ((INDENT) > 0)                                \
+            {                                                \
+                CcDebugTraceIndent += (INDENT);              \
+            }                                                \
+        }                                                    \
+    }
 
-#define DebugDump(STR,LEVEL,PTR) {                         \
-    LONG _i;                                               \
-    VOID CcDump();                                         \
-    if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) { \
-        _i = (ULONG)PsGetCurrentThread();                  \
-        DbgPrint("%08lx:",_i);                             \
-        DbgPrint(STR);                                     \
-        if (PTR != NULL) {CcDump(PTR);}                    \
-        DbgBreakPoint();                                   \
-    }                                                      \
-}
+#define DebugDump(STR, LEVEL, PTR)                           \
+    {                                                        \
+        LONG _i;                                             \
+        VOID CcDump();                                       \
+        if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) \
+        {                                                    \
+            _i = (ULONG)PsGetCurrentThread();                \
+            DbgPrint("%08lx:", _i);                          \
+            DbgPrint(STR);                                   \
+            if (PTR != NULL)                                 \
+            {                                                \
+                CcDump(PTR);                                 \
+            }                                                \
+            DbgBreakPoint();                                 \
+        }                                                    \
+    }
 
 #else //  ndef CCDBG_LOCK
 
 extern KSPIN_LOCK CcDebugTraceLock;
 
-#define DebugTrace(INDENT,LEVEL,X,Y) {                     \
-    LONG _i;                                               \
-    KIRQL _oldIrql;                                        \
-    if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) { \
-        _i = (ULONG)PsGetCurrentThread();                  \
-        ExAcquireSpinLock( &CcDebugTraceLock, &_oldIrql ); \
-        DbgPrint("%08lx:",_i);                             \
-        if ((INDENT) < 0) {                                \
-            CcDebugTraceIndent += (INDENT);                \
-        }                                                  \
-        if (CcDebugTraceIndent < 0) {                      \
-            CcDebugTraceIndent = 0;                        \
-        }                                                  \
-        for (_i=0; _i<CcDebugTraceIndent; _i+=1) {         \
-            DbgPrint(" ");                                 \
-        }                                                  \
-        DbgPrint(X,Y);                                     \
-        if ((INDENT) > 0) {                                \
-            CcDebugTraceIndent += (INDENT);                \
-        }                                                  \
-        ExReleaseSpinLock( &CcDebugTraceLock, _oldIrql );  \
-    }                                                      \
-}
+#define DebugTrace(INDENT, LEVEL, X, Y)                      \
+    {                                                        \
+        LONG _i;                                             \
+        KIRQL _oldIrql;                                      \
+        if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) \
+        {                                                    \
+            _i = (ULONG)PsGetCurrentThread();                \
+            ExAcquireSpinLock(&CcDebugTraceLock, &_oldIrql); \
+            DbgPrint("%08lx:", _i);                          \
+            if ((INDENT) < 0)                                \
+            {                                                \
+                CcDebugTraceIndent += (INDENT);              \
+            }                                                \
+            if (CcDebugTraceIndent < 0)                      \
+            {                                                \
+                CcDebugTraceIndent = 0;                      \
+            }                                                \
+            for (_i = 0; _i < CcDebugTraceIndent; _i += 1)   \
+            {                                                \
+                DbgPrint(" ");                               \
+            }                                                \
+            DbgPrint(X, Y);                                  \
+            if ((INDENT) > 0)                                \
+            {                                                \
+                CcDebugTraceIndent += (INDENT);              \
+            }                                                \
+            ExReleaseSpinLock(&CcDebugTraceLock, _oldIrql);  \
+        }                                                    \
+    }
 
-#define DebugTrace2(INDENT,LEVEL,X,Y,Z) {                  \
-    LONG _i;                                               \
-    KIRQL _oldIrql;                                        \
-    if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) { \
-        _i = (ULONG)PsGetCurrentThread();                  \
-        ExAcquireSpinLock( &CcDebugTraceLock, &_oldIrql ); \
-        DbgPrint("%08lx:",_i);                             \
-        if ((INDENT) < 0) {                                \
-            CcDebugTraceIndent += (INDENT);                \
-        }                                                  \
-        if (CcDebugTraceIndent < 0) {                      \
-            CcDebugTraceIndent = 0;                        \
-        }                                                  \
-        for (_i=0; _i<CcDebugTraceIndent; _i+=1) {         \
-            DbgPrint(" ");                                 \
-        }                                                  \
-        DbgPrint(X,Y,Z);                                   \
-        if ((INDENT) > 0) {                                \
-            CcDebugTraceIndent += (INDENT);                \
-        }                                                  \
-      ExReleaseSpinLock( &CcDebugTraceLock, _oldIrql );  \
-    }                                                      \
-}
+#define DebugTrace2(INDENT, LEVEL, X, Y, Z)                  \
+    {                                                        \
+        LONG _i;                                             \
+        KIRQL _oldIrql;                                      \
+        if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) \
+        {                                                    \
+            _i = (ULONG)PsGetCurrentThread();                \
+            ExAcquireSpinLock(&CcDebugTraceLock, &_oldIrql); \
+            DbgPrint("%08lx:", _i);                          \
+            if ((INDENT) < 0)                                \
+            {                                                \
+                CcDebugTraceIndent += (INDENT);              \
+            }                                                \
+            if (CcDebugTraceIndent < 0)                      \
+            {                                                \
+                CcDebugTraceIndent = 0;                      \
+            }                                                \
+            for (_i = 0; _i < CcDebugTraceIndent; _i += 1)   \
+            {                                                \
+                DbgPrint(" ");                               \
+            }                                                \
+            DbgPrint(X, Y, Z);                               \
+            if ((INDENT) > 0)                                \
+            {                                                \
+                CcDebugTraceIndent += (INDENT);              \
+            }                                                \
+            ExReleaseSpinLock(&CcDebugTraceLock, _oldIrql);  \
+        }                                                    \
+    }
 
-#define DebugDump(STR,LEVEL,PTR) {                         \
-    LONG _i;                                               \
-    KIRQL _oldIrql;                                        \
-    VOID CcDump();                                         \
-    if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) { \
-        _i = (ULONG)PsGetCurrentThread();                  \
-      ExAcquireSpinLock( &CcDebugTraceLock, &_oldIrql ); \
-        DbgPrint("%08lx:",_i);                             \
-        DbgPrint(STR);                                     \
-        if (PTR != NULL) {CcDump(PTR);}                    \
-        DbgBreakPoint();                                   \
-      ExReleaseSpinLock( &CcDebugTraceLock, _oldIrql );  \
-    }                                                      \
-}
+#define DebugDump(STR, LEVEL, PTR)                           \
+    {                                                        \
+        LONG _i;                                             \
+        KIRQL _oldIrql;                                      \
+        VOID CcDump();                                       \
+        if (((LEVEL) == 0) || (CcDebugTraceLevel & (LEVEL))) \
+        {                                                    \
+            _i = (ULONG)PsGetCurrentThread();                \
+            ExAcquireSpinLock(&CcDebugTraceLock, &_oldIrql); \
+            DbgPrint("%08lx:", _i);                          \
+            DbgPrint(STR);                                   \
+            if (PTR != NULL)                                 \
+            {                                                \
+                CcDump(PTR);                                 \
+            }                                                \
+            DbgBreakPoint();                                 \
+            ExReleaseSpinLock(&CcDebugTraceLock, _oldIrql);  \
+        }                                                    \
+    }
 
 #endif //  else ndef CCDBG_LOCK
 
@@ -2151,11 +2049,20 @@ extern KSPIN_LOCK CcDebugTraceLock;
 
 #undef CCDBG_LOCK
 
-#define DebugTrace(INDENT,LEVEL,X,Y) {NOTHING;}
+#define DebugTrace(INDENT, LEVEL, X, Y) \
+    {                                   \
+        NOTHING;                        \
+    }
 
-#define DebugTrace2(INDENT,LEVEL,X,Y,Z) {NOTHING;}
+#define DebugTrace2(INDENT, LEVEL, X, Y, Z) \
+    {                                       \
+        NOTHING;                            \
+    }
 
-#define DebugDump(STR,LEVEL,PTR) {NOTHING;}
+#define DebugDump(STR, LEVEL, PTR) \
+    {                              \
+        NOTHING;                   \
+    }
 
 #endif //  CCDBG
 
@@ -2170,4 +2077,4 @@ extern LIST_ENTRY CcBcbList;
 
 #endif
 
-#endif  //  _CCh_
+#endif //  _CCh_

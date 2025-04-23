@@ -52,40 +52,32 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-#define WORK_SIZE   1024
+#define WORK_SIZE 1024
 
 void main();
 void processargs();
 
 ULONG CallCount = 0L;
 
-VOID
-ApcTest(
-    PVOID ApcContext,
-    PIO_STATUS_BLOCK IoStatusBlock
-    );
+VOID ApcTest(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock);
 
-UNICODE_STRING  KeyName;
-WCHAR           workbuffer[WORK_SIZE];
-BOOLEAN         WatchTree;
-BOOLEAN         UseEvent;
-BOOLEAN         UseApc;
-BOOLEAN         ApcSeen;
-BOOLEAN         Hold;
-BOOLEAN         Filter;
+UNICODE_STRING KeyName;
+WCHAR workbuffer[WORK_SIZE];
+BOOLEAN WatchTree;
+BOOLEAN UseEvent;
+BOOLEAN UseApc;
+BOOLEAN ApcSeen;
+BOOLEAN Hold;
+BOOLEAN Filter;
 IO_STATUS_BLOCK RtIoStatusBlock;
 
 
-void
-main(
-    int argc,
-    char *argv[]
-    )
+void main(int argc, char *argv[])
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    HANDLE          BaseHandle;
-    HANDLE          EventHandle;
+    HANDLE BaseHandle;
+    HANDLE EventHandle;
     PIO_APC_ROUTINE ApcRoutine;
 
     //
@@ -104,42 +96,31 @@ main(
 
     printf("rtnotify: starting\n");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &KeyName,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyName, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    status = NtOpenKey(
-                &BaseHandle,
-                KEY_NOTIFY,
-                &ObjectAttributes
-                );
-    if (!NT_SUCCESS(status)) {
+    status = NtOpenKey(&BaseHandle, KEY_NOTIFY, &ObjectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         printf("rtnotify: t0: %08lx\n", status);
         exit(1);
     }
 
     EventHandle = (HANDLE)NULL;
-    if (UseEvent == TRUE) {
-        status = NtCreateEvent(
-                    &EventHandle,
-                    GENERIC_READ | GENERIC_WRITE  | SYNCHRONIZE,
-                    NULL,
-                    NotificationEvent,
-                    FALSE
-                    );
-        if (!NT_SUCCESS(status)) {
+    if (UseEvent == TRUE)
+    {
+        status =
+            NtCreateEvent(&EventHandle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, NULL, NotificationEvent, FALSE);
+        if (!NT_SUCCESS(status))
+        {
             printf("rtnotify: t1: %08lx\n", status);
             exit(1);
         }
     }
 
     ApcRoutine = NULL;
-    if (UseApc) {
+    if (UseApc)
+    {
         ApcRoutine = ApcTest;
     }
 
@@ -150,49 +131,43 @@ main(
     printf("\tFilter = %08lx\n", Filter);
     printf("\tWatchTree = %08lx\n", WatchTree);
 
-    while (TRUE) {
+    while (TRUE)
+    {
         ApcSeen = FALSE;
         printf("\nCallCount = %dt\n", CallCount);
         CallCount++;
-        status = NtNotifyChangeKey(
-                    BaseHandle,
-                    EventHandle,
-                    ApcRoutine,
-                    (PVOID)1992,           // arbitrary context value
-                    &RtIoStatusBlock,
-                    Filter,
-                    WatchTree,
-                    NULL,
-                    0,
-                    ! Hold
-                    );
+        status = NtNotifyChangeKey(BaseHandle, EventHandle, ApcRoutine,
+                                   (PVOID)1992, // arbitrary context value
+                                   &RtIoStatusBlock, Filter, WatchTree, NULL, 0, !Hold);
 
         exit(0);
 
-        if ( ! NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             printf("rtnotify: t2: %08lx\n", status);
             exit(1);
         }
 
-        if (Hold) {
+        if (Hold)
+        {
             printf("rtnotify: Synchronous Status = %08lx\n", RtIoStatusBlock.Status);
         }
 
-        if (UseEvent) {
-            status = NtWaitForSingleObject(
-                        EventHandle,
-                        TRUE,
-                        NULL
-                        );
-            if (!NT_SUCCESS(status)) {
+        if (UseEvent)
+        {
+            status = NtWaitForSingleObject(EventHandle, TRUE, NULL);
+            if (!NT_SUCCESS(status))
+            {
                 printf("rtnotify: t3: status = %08lx\n", status);
                 exit(1);
             }
             printf("rtnotify: Event Status = %08lx\n", RtIoStatusBlock.Status);
         }
 
-        if (UseApc) {
-            while ((volatile)ApcSeen == FALSE) {
+        if (UseApc)
+        {
+            while ((volatile)ApcSeen == FALSE)
+            {
                 NtTestAlert();
             }
         }
@@ -202,20 +177,18 @@ main(
     exit(0);
 }
 
-
-VOID
-ApcTest(
-    PVOID ApcContext,
-    PIO_STATUS_BLOCK IoStatusBlock
-    )
+
+VOID ApcTest(PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock)
 {
     ApcSeen = TRUE;
 
-    if (ApcContext != (PVOID)1992) {
+    if (ApcContext != (PVOID)1992)
+    {
         printf("rtnotify: Apc: Apccontext is wrong %08lx\n", ApcContext);
         exit(1);
     }
-    if (IoStatusBlock != &RtIoStatusBlock) {
+    if (IoStatusBlock != &RtIoStatusBlock)
+    {
         printf("rtnotify: Apc: IoStatusBlock is wrong %08ln", IoStatusBlock);
         exit(1);
     }
@@ -225,33 +198,23 @@ ApcTest(
     return;
 }
 
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
-    ULONG   i;
+    ULONG i;
 
-    if (argc < 2) {
+    if (argc < 2)
+    {
         goto Usage;
     }
 
     //
     // name
     //
-    RtlInitAnsiString(
-        &temp,
-        argv[1]
-        );
+    RtlInitAnsiString(&temp, argv[1]);
 
-    RtlAnsiStringToUnicodeString(
-        &KeyName,
-        &temp,
-        FALSE
-        );
+    RtlAnsiStringToUnicodeString(&KeyName, &temp, FALSE);
 
     WatchTree = FALSE;
     UseEvent = FALSE;
@@ -262,29 +225,31 @@ processargs(
     //
     // switches
     //
-    for (i = 2; i < (ULONG)argc; i++) {
-        switch (*argv[i]) {
+    for (i = 2; i < (ULONG)argc; i++)
+    {
+        switch (*argv[i])
+        {
 
-        case 'a':   // Apc
+        case 'a': // Apc
         case 'A':
             Hold = FALSE;
             UseApc = TRUE;
             break;
 
-        case 'e':   // event
+        case 'e': // event
         case 'E':
             Hold = FALSE;
             UseEvent = TRUE;
             break;
 
-        case 'h':   // hold
+        case 'h': // hold
         case 'H':
             UseApc = FALSE;
             UseEvent = FALSE;
             Hold = TRUE;
             break;
 
-        case 'k':   // key only
+        case 'k': // key only
         case 'K':
             WatchTree = FALSE;
             break;
@@ -304,7 +269,7 @@ processargs(
             Filter |= REG_NOTIFY_CHANGE_SECURITY;
             break;
 
-        case 't':   // subtree
+        case 't': // subtree
         case 'T':
             WatchTree = TRUE;
             break;
@@ -323,14 +288,14 @@ processargs(
             break;
         }
     }
-    if (Filter == 0) {
+    if (Filter == 0)
+    {
         Filter = REG_LEGAL_CHANGE_FILTER;
     }
     return;
 
 Usage:
-    printf("Usage: %s <KeyPath> {key|tree|event|Apc|sync|name|write|security|attribute|*}\n",
-            argv[0]);
+    printf("Usage: %s <KeyPath> {key|tree|event|Apc|sync|name|write|security|attribute|*}\n", argv[0]);
     exit(1);
 }
 

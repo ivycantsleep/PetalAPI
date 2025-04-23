@@ -27,14 +27,15 @@ Revision History:
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'nepP')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'nepP')
 #endif
 
-#define MAX_REENUMERATION_ATTEMPTS  32
+#define MAX_REENUMERATION_ATTEMPTS 32
 
 typedef struct _DRIVER_LIST_ENTRY DRIVER_LIST_ENTRY, *PDRIVER_LIST_ENTRY;
 
-typedef struct _PI_DEVICE_REQUEST {
+typedef struct _PI_DEVICE_REQUEST
+{
     LIST_ENTRY ListEntry;
     PDEVICE_OBJECT DeviceObject;
     DEVICE_REQUEST_TYPE RequestType;
@@ -44,12 +45,14 @@ typedef struct _PI_DEVICE_REQUEST {
     PNTSTATUS CompletionStatus;
 } PI_DEVICE_REQUEST, *PPI_DEVICE_REQUEST;
 
-struct _DRIVER_LIST_ENTRY {
+struct _DRIVER_LIST_ENTRY
+{
     PDRIVER_OBJECT DriverObject;
     PDRIVER_LIST_ENTRY NextEntry;
 };
 
-typedef enum _ADD_DRIVER_STAGE {
+typedef enum _ADD_DRIVER_STAGE
+{
     LowerDeviceFilters = 0,
     LowerClassFilters,
     DeviceService,
@@ -58,16 +61,17 @@ typedef enum _ADD_DRIVER_STAGE {
     MaximumAddStage
 } ADD_DRIVER_STAGE;
 
-typedef enum _ENUM_TYPE {
+typedef enum _ENUM_TYPE
+{
     EnumTypeNone,
     EnumTypeShallow,
     EnumTypeDeep
 } ENUM_TYPE;
 
-#define VerifierTypeFromServiceType(service) \
-    (VF_DEVOBJ_TYPE) (service + 2)
+#define VerifierTypeFromServiceType(service) (VF_DEVOBJ_TYPE)(service + 2)
 
-typedef struct {
+typedef struct
+{
     PDEVICE_NODE DeviceNode;
 
     BOOLEAN LoadDriver;
@@ -82,297 +86,181 @@ typedef struct {
 // (used here in the construction of unique ids)
 //
 
-#define HASH_UNICODE_STRING( _pustr, _phash ) {                             \
-    PWCHAR _p = (_pustr)->Buffer;                                           \
-    PWCHAR _ep = _p + ((_pustr)->Length/sizeof(WCHAR));                     \
-    ULONG _chHolder =0;                                                     \
-                                                                            \
-    while( _p < _ep ) {                                                     \
-        _chHolder = 37 * _chHolder + (unsigned int) (*_p++);                \
-    }                                                                       \
-                                                                            \
-    *(_phash) = abs(314159269 * _chHolder) % 1000000007;                    \
-}
+#define HASH_UNICODE_STRING(_pustr, _phash)                     \
+    {                                                           \
+        PWCHAR _p = (_pustr)->Buffer;                           \
+        PWCHAR _ep = _p + ((_pustr)->Length / sizeof(WCHAR));   \
+        ULONG _chHolder = 0;                                    \
+                                                                \
+        while (_p < _ep)                                        \
+        {                                                       \
+            _chHolder = 37 * _chHolder + (unsigned int)(*_p++); \
+        }                                                       \
+                                                                \
+        *(_phash) = abs(314159269 * _chHolder) % 1000000007;    \
+    }
 
 // Parent prefixes are of the form %x&%x&%x
 #define MAX_PARENT_PREFIX (8 + 8 + 8 + 2)
 
 #if 0
 #define ASSERT_INITED(x) \
-        ASSERTMSG("DO_DEVICE_INITIALIZING not cleared on device object",       \
-                  ((((x)->Flags) & DO_DEVICE_INITIALIZING) == 0))
+    ASSERTMSG("DO_DEVICE_INITIALIZING not cleared on device object", ((((x)->Flags) & DO_DEVICE_INITIALIZING) == 0))
 #else
 #if DBG
-#define ASSERT_INITED(x) \
-        if (((x)->Flags & DO_DEVICE_INITIALIZING) != 0)    \
-            DbgPrint("DO_DEVICE_INITIALIZING flag not cleared on DO %#08lx\n", x);
+#define ASSERT_INITED(x)                            \
+    if (((x)->Flags & DO_DEVICE_INITIALIZING) != 0) \
+        DbgPrint("DO_DEVICE_INITIALIZING flag not cleared on DO %#08lx\n", x);
 #else
 #define ASSERT_INITED(x) /* nothing */
 #endif
 #endif
 
-#define PiSetDeviceInstanceSzValue(k, n, v) {               \
-    if (k && *(v)) {                                        \
-        UNICODE_STRING u;                                   \
-        PiWstrToUnicodeString(&u, n);                       \
-        ZwSetValueKey(                                      \
-            k,                                              \
-            &u,                                             \
-            TITLE_INDEX_VALUE,                              \
-            REG_SZ,                                         \
-            *(v),                                           \
-            (ULONG)((wcslen(*(v))+1) * sizeof(WCHAR)));     \
-    }                                                       \
-    if (*v) {                                               \
-        ExFreePool(*v);                                     \
-        *(v) = NULL;                                        \
-    }                                                       \
-}
+#define PiSetDeviceInstanceSzValue(k, n, v)                                                                     \
+    {                                                                                                           \
+        if (k && *(v))                                                                                          \
+        {                                                                                                       \
+            UNICODE_STRING u;                                                                                   \
+            PiWstrToUnicodeString(&u, n);                                                                       \
+            ZwSetValueKey(k, &u, TITLE_INDEX_VALUE, REG_SZ, *(v), (ULONG)((wcslen(*(v)) + 1) * sizeof(WCHAR))); \
+        }                                                                                                       \
+        if (*v)                                                                                                 \
+        {                                                                                                       \
+            ExFreePool(*v);                                                                                     \
+            *(v) = NULL;                                                                                        \
+        }                                                                                                       \
+    }
 
-#define PiSetDeviceInstanceMultiSzValue(k, n, v, s) {       \
-    if (k && *(v)) {                                        \
-        UNICODE_STRING u;                                   \
-        PiWstrToUnicodeString(&u, n);                       \
-        ZwSetValueKey(                                      \
-            k,                                              \
-            &u,                                             \
-            TITLE_INDEX_VALUE,                              \
-            REG_MULTI_SZ,                                   \
-            *(v),                                           \
-            s);                                             \
-    }                                                       \
-    if (*(v)) {                                             \
-        ExFreePool(*v);                                     \
-        *(v) = NULL;                                        \
-    }                                                       \
-}
+#define PiSetDeviceInstanceMultiSzValue(k, n, v, s)                         \
+    {                                                                       \
+        if (k && *(v))                                                      \
+        {                                                                   \
+            UNICODE_STRING u;                                               \
+            PiWstrToUnicodeString(&u, n);                                   \
+            ZwSetValueKey(k, &u, TITLE_INDEX_VALUE, REG_MULTI_SZ, *(v), s); \
+        }                                                                   \
+        if (*(v))                                                           \
+        {                                                                   \
+            ExFreePool(*v);                                                 \
+            *(v) = NULL;                                                    \
+        }                                                                   \
+    }
 
 #if DBG
-VOID
-PipAssertDevnodesInConsistentState(
-    VOID
-    );
+VOID PipAssertDevnodesInConsistentState(VOID);
 #else
 #define PipAssertDevnodesInConsistentState()
 #endif
 
 NTSTATUS
-PipCallDriverAddDevice(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN LoadDriver,
-    IN PADD_CONTEXT AddContext
-    );
+PipCallDriverAddDevice(IN PDEVICE_NODE DeviceNode, IN BOOLEAN LoadDriver, IN PADD_CONTEXT AddContext);
 
 NTSTATUS
-PipCallDriverAddDeviceQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PWCHAR ValueData,
-    IN ULONG ValueLength,
-    IN PQUERY_CONTEXT Context,
-    IN ULONG ServiceType
-    );
+PipCallDriverAddDeviceQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PWCHAR ValueData, IN ULONG ValueLength,
+                                   IN PQUERY_CONTEXT Context, IN ULONG ServiceType);
 
 NTSTATUS
-PipChangeDeviceObjectFromRegistryProperties(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN HANDLE DeviceClassPropKey,
-    IN HANDLE DevicePropKey,
-    IN BOOLEAN UsePdoCharacteristics
-    );
+PipChangeDeviceObjectFromRegistryProperties(IN PDEVICE_OBJECT PhysicalDeviceObject, IN HANDLE DeviceClassPropKey,
+                                            IN HANDLE DevicePropKey, IN BOOLEAN UsePdoCharacteristics);
 
-VOID
-PipDeviceActionWorker(
-    IN  PVOID   Context
-    );
+VOID PipDeviceActionWorker(IN PVOID Context);
 
 NTSTATUS
-PipEnumerateDevice(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN Synchronous
-    );
+PipEnumerateDevice(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Synchronous);
 
 BOOLEAN
-PipGetRegistryDwordWithFallback(
-    IN     PUNICODE_STRING valueName,
-    IN     HANDLE PrimaryKey,
-    IN     HANDLE SecondaryKey,
-    IN OUT PULONG Value
-    );
+PipGetRegistryDwordWithFallback(IN PUNICODE_STRING valueName, IN HANDLE PrimaryKey, IN HANDLE SecondaryKey,
+                                IN OUT PULONG Value);
 
 PSECURITY_DESCRIPTOR
-PipGetRegistrySecurityWithFallback(
-    IN     PUNICODE_STRING valueName,
-    IN     HANDLE PrimaryKey,
-    IN     HANDLE SecondaryKey
-    );
+PipGetRegistrySecurityWithFallback(IN PUNICODE_STRING valueName, IN HANDLE PrimaryKey, IN HANDLE SecondaryKey);
 
 NTSTATUS
-PipMakeGloballyUniqueId(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PWCHAR         UniqueId,
-    OUT PWCHAR       *GloballyUniqueId
-    );
+PipMakeGloballyUniqueId(IN PDEVICE_OBJECT DeviceObject, IN PWCHAR UniqueId, OUT PWCHAR *GloballyUniqueId);
 
 NTSTATUS
-PipProcessCriticalDeviceRoutine(
-    IN HANDLE hDevInstance,
-    IN PBOOLEAN FoundMatch,
-    IN PUNICODE_STRING ServiceName,
-    IN PUNICODE_STRING ClassGuid,
-    IN PUNICODE_STRING Driver,
-    IN PUNICODE_STRING LowerFilters,
-    IN PUNICODE_STRING UpperFilters
-    );
+PipProcessCriticalDeviceRoutine(IN HANDLE hDevInstance, IN PBOOLEAN FoundMatch, IN PUNICODE_STRING ServiceName,
+                                IN PUNICODE_STRING ClassGuid, IN PUNICODE_STRING Driver,
+                                IN PUNICODE_STRING LowerFilters, IN PUNICODE_STRING UpperFilters);
 
 NTSTATUS
-PipProcessDevNodeTree(
-    IN  PDEVICE_NODE        SubtreeRootDeviceNode,
-    IN  BOOLEAN             LoadDriver,
-    IN  BOOLEAN             ReallocateResources,
-    IN  ENUM_TYPE           EnumType,
-    IN  BOOLEAN             Synchronous,
-    IN  BOOLEAN             ProcessOnlyIntermediateStates,
-    IN  PADD_CONTEXT        AddContext,
-    IN PPI_DEVICE_REQUEST   Request
-    );
+PipProcessDevNodeTree(IN PDEVICE_NODE SubtreeRootDeviceNode, IN BOOLEAN LoadDriver, IN BOOLEAN ReallocateResources,
+                      IN ENUM_TYPE EnumType, IN BOOLEAN Synchronous, IN BOOLEAN ProcessOnlyIntermediateStates,
+                      IN PADD_CONTEXT AddContext, IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PipProcessNewDeviceNode(
-    IN OUT PDEVICE_NODE DeviceNode
-    );
+PipProcessNewDeviceNode(IN OUT PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-PiProcessQueryDeviceState(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+PiProcessQueryDeviceState(IN PDEVICE_OBJECT DeviceObject);
 
 NTSTATUS
-PipProcessRestartPhase1(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN Synchronous
-    );
+PipProcessRestartPhase1(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Synchronous);
 
 NTSTATUS
-PipProcessRestartPhase2(
-    IN PDEVICE_NODE     DeviceNode
-    );
+PipProcessRestartPhase2(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-PipProcessStartPhase1(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN Synchronous
-    );
+PipProcessStartPhase1(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Synchronous);
 
 NTSTATUS
-PipProcessStartPhase2(
-    IN PDEVICE_NODE DeviceNode
-    );
+PipProcessStartPhase2(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-PipProcessStartPhase3(
-    IN PDEVICE_NODE DeviceNode
-    );
+PipProcessStartPhase3(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-PiRestartDevice(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiRestartDevice(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiProcessHaltDevice(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiProcessHaltDevice(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiResetProblemDevicesWorker(
-    IN  PDEVICE_NODE    DeviceNode,
-    IN  PVOID           Context
-    );
+PiResetProblemDevicesWorker(IN PDEVICE_NODE DeviceNode, IN PVOID Context);
 
-VOID
-PiMarkDeviceTreeForReenumeration(
-    IN  PDEVICE_NODE DeviceNode,
-    IN  BOOLEAN Subtree
-    );
+VOID PiMarkDeviceTreeForReenumeration(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Subtree);
 
 NTSTATUS
-PiMarkDeviceTreeForReenumerationWorker(
-    IN  PDEVICE_NODE    DeviceNode,
-    IN  PVOID           Context
-    );
+PiMarkDeviceTreeForReenumerationWorker(IN PDEVICE_NODE DeviceNode, IN PVOID Context);
 
 BOOLEAN
-PiCollapseEnumRequests(
-    PLIST_ENTRY ListHead
-    );
+PiCollapseEnumRequests(PLIST_ENTRY ListHead);
 
 NTSTATUS
-PiProcessAddBootDevices(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiProcessAddBootDevices(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiProcessClearDeviceProblem(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiProcessClearDeviceProblem(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiProcessRequeryDeviceState(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiProcessRequeryDeviceState(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiProcessResourceRequirementsChanged(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiProcessResourceRequirementsChanged(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiProcessReenumeration(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiProcessReenumeration(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiProcessSetDeviceProblem(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiProcessSetDeviceProblem(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiProcessShutdownPnpDevices(
-    IN PDEVICE_NODE        DeviceNode
-    );
+PiProcessShutdownPnpDevices(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-PiProcessStartSystemDevices(
-    IN PPI_DEVICE_REQUEST  Request
-    );
+PiProcessStartSystemDevices(IN PPI_DEVICE_REQUEST Request);
 
 NTSTATUS
-PiBuildDeviceNodeInstancePath(
-    IN PDEVICE_NODE DeviceNode,
-    IN PWCHAR BusID,
-    IN PWCHAR DeviceID,
-    IN PWCHAR InstanceID
-    );
+PiBuildDeviceNodeInstancePath(IN PDEVICE_NODE DeviceNode, IN PWCHAR BusID, IN PWCHAR DeviceID, IN PWCHAR InstanceID);
 
 NTSTATUS
-PiCreateDeviceInstanceKey(
-    IN PDEVICE_NODE DeviceNode,
-    OUT PHANDLE InstanceHandle,
-    OUT PULONG Disposition
-    );
+PiCreateDeviceInstanceKey(IN PDEVICE_NODE DeviceNode, OUT PHANDLE InstanceHandle, OUT PULONG Disposition);
 
 NTSTATUS
-PiQueryAndAllocateBootResources(
-    IN PDEVICE_NODE DeviceNode,
-    IN HANDLE LogConfKey
-    );
+PiQueryAndAllocateBootResources(IN PDEVICE_NODE DeviceNode, IN HANDLE LogConfKey);
 
 NTSTATUS
-PiQueryResourceRequirements(
-    IN PDEVICE_NODE DeviceNode,
-    IN HANDLE LogConfKey
-    );
+PiQueryResourceRequirements(IN PDEVICE_NODE DeviceNode, IN HANDLE LogConfKey);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, IoShutdownPnpDevices)
@@ -429,17 +317,15 @@ WORK_QUEUE_ITEM PipDeviceEnumerationWorkItem;
 // Internal constant strings
 //
 
-#define DEVICE_PREFIX_STRING                TEXT("\\Device\\")
-#define DOSDEVICES_PREFIX_STRING            TEXT("\\DosDevices\\")
+#define DEVICE_PREFIX_STRING TEXT("\\Device\\")
+#define DOSDEVICES_PREFIX_STRING TEXT("\\DosDevices\\")
 
-VOID
-PiLockDeviceActionQueue(
-    VOID
-    )
+VOID PiLockDeviceActionQueue(VOID)
 {
     KIRQL oldIrql;
 
-    for (;;) {
+    for (;;)
+    {
         //
         // Lock the device tree so that power operations dont overlap PnP
         // operations like rebalance.
@@ -448,7 +334,8 @@ PiLockDeviceActionQueue(
 
         ExAcquireSpinLock(&IopPnPSpinLock, &oldIrql);
 
-        if (!PipEnumerationInProgress) {
+        if (!PipEnumerationInProgress)
+        {
             //
             // Device action worker queue is empty. Make it so that new requests
             // get queued but new device action worker item does not get kicked
@@ -468,19 +355,11 @@ PiLockDeviceActionQueue(
         //
         // Wait for current device action worker item to complete.
         //
-        KeWaitForSingleObject(
-            &PiEnumerationLock,
-            Executive,
-            KernelMode,
-            FALSE,
-            NULL );
+        KeWaitForSingleObject(&PiEnumerationLock, Executive, KernelMode, FALSE, NULL);
     }
 }
 
-VOID
-PiUnlockDeviceActionQueue(
-    VOID
-    )
+VOID PiUnlockDeviceActionQueue(VOID)
 {
     KIRQL oldIrql;
     //
@@ -488,11 +367,14 @@ PiUnlockDeviceActionQueue(
     //
     ExAcquireSpinLock(&IopPnPSpinLock, &oldIrql);
 
-    if (!IsListEmpty(&IopPnpEnumerationRequestList)) {
+    if (!IsListEmpty(&IopPnpEnumerationRequestList))
+    {
 
         ExInitializeWorkItem(&PipDeviceEnumerationWorkItem, PipDeviceActionWorker, NULL);
         ExQueueWorkItem(&PipDeviceEnumerationWorkItem, DelayedWorkQueue);
-    } else {
+    }
+    else
+    {
 
         PipEnumerationInProgress = FALSE;
         KeSetEvent(&PiEnumerationLock, 0, FALSE);
@@ -504,14 +386,9 @@ PiUnlockDeviceActionQueue(
 }
 
 NTSTATUS
-PipRequestDeviceAction(
-    IN PDEVICE_OBJECT       DeviceObject        OPTIONAL,
-    IN DEVICE_REQUEST_TYPE  RequestType,
-    IN BOOLEAN              ReorderingBarrier,
-    IN ULONG_PTR            RequestArgument,
-    IN PKEVENT              CompletionEvent     OPTIONAL,
-    IN PNTSTATUS            CompletionStatus    OPTIONAL
-    )
+PipRequestDeviceAction(IN PDEVICE_OBJECT DeviceObject OPTIONAL, IN DEVICE_REQUEST_TYPE RequestType,
+                       IN BOOLEAN ReorderingBarrier, IN ULONG_PTR RequestArgument, IN PKEVENT CompletionEvent OPTIONAL,
+                       IN PNTSTATUS CompletionStatus OPTIONAL)
 
 /*++
 
@@ -535,10 +412,11 @@ Return Value:
 --*/
 
 {
-    PPI_DEVICE_REQUEST  request;
-    KIRQL               oldIrql;
+    PPI_DEVICE_REQUEST request;
+    KIRQL oldIrql;
 
-    if (PpPnpShuttingDown) {
+    if (PpPnpShuttingDown)
+    {
         return STATUS_TOO_LATE;
     }
 
@@ -548,12 +426,14 @@ Return Value:
 
     request = ExAllocatePool(NonPagedPool, sizeof(PI_DEVICE_REQUEST));
 
-    if (request) {
+    if (request)
+    {
         //
         // Put this request onto the pending list
         //
 
-        if (DeviceObject == NULL) {
+        if (DeviceObject == NULL)
+        {
 
             DeviceObject = IopRootDeviceNode->PhysicalDeviceObject;
         }
@@ -578,9 +458,9 @@ Return Value:
 
         InsertTailList(&IopPnpEnumerationRequestList, &request->ListEntry);
 
-        if (RequestType == AddBootDevices ||
-            RequestType == ReenumerateBootDevices ||
-            RequestType == ReenumerateRootDevices) {
+        if (RequestType == AddBootDevices || RequestType == ReenumerateBootDevices ||
+            RequestType == ReenumerateRootDevices)
+        {
 
             ASSERT(!PipEnumerationInProgress);
             //
@@ -593,8 +473,9 @@ Return Value:
             ExReleaseSpinLock(&IopPnPSpinLock, oldIrql);
 
             PipDeviceActionWorker(NULL);
-
-        } else if (PnPBootDriversLoaded && !PipEnumerationInProgress) {
+        }
+        else if (PnPBootDriversLoaded && !PipEnumerationInProgress)
+        {
             PipEnumerationInProgress = TRUE;
             KeClearEvent(&PiEnumerationLock);
             ExReleaseSpinLock(&IopPnPSpinLock, oldIrql);
@@ -605,20 +486,21 @@ Return Value:
 
             ExInitializeWorkItem(&PipDeviceEnumerationWorkItem, PipDeviceActionWorker, NULL);
             ExQueueWorkItem(&PipDeviceEnumerationWorkItem, DelayedWorkQueue);
-        } else {
+        }
+        else
+        {
             ExReleaseSpinLock(&IopPnPSpinLock, oldIrql);
         }
-    } else {
+    }
+    else
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     return STATUS_SUCCESS;
 }
-
-VOID
-PipDeviceActionWorker(
-    IN  PVOID   Context
-    )
+
+VOID PipDeviceActionWorker(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -636,16 +518,16 @@ ReturnValue:
 
 --*/
 {
-    PPI_DEVICE_REQUEST  request;
-    PPI_DEVICE_REQUEST  collapsedRequest;
-    PLIST_ENTRY         entry;
-    BOOLEAN             assignResources;
-    BOOLEAN             bootProcess;
-    BOOLEAN             newDevice;
-    ADD_CONTEXT         addContext;
-    KIRQL               oldIrql;
-    NTSTATUS            status;
-    BOOLEAN             dereferenceDevice;
+    PPI_DEVICE_REQUEST request;
+    PPI_DEVICE_REQUEST collapsedRequest;
+    PLIST_ENTRY entry;
+    BOOLEAN assignResources;
+    BOOLEAN bootProcess;
+    BOOLEAN newDevice;
+    ADD_CONTEXT addContext;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    BOOLEAN dereferenceDevice;
 
     UNREFERENCED_PARAMETER(Context);
 
@@ -653,7 +535,8 @@ ReturnValue:
     bootProcess = FALSE;
     PpDevNodeLockTree(PPL_TREEOP_ALLOW_READS);
 
-    for ( ; ; ) {
+    for (;;)
+    {
 
         status = STATUS_SUCCESS;
         //
@@ -666,9 +549,11 @@ ReturnValue:
         ExAcquireSpinLock(&IopPnPSpinLock, &oldIrql);
 
         entry = RemoveHeadList(&IopPnpEnumerationRequestList);
-        if (entry == &IopPnpEnumerationRequestList) {
+        if (entry == &IopPnpEnumerationRequestList)
+        {
 
-            if (assignResources == FALSE && bootProcess == FALSE) {
+            if (assignResources == FALSE && bootProcess == FALSE)
+            {
                 //
                 // No more processing.
                 //
@@ -679,24 +564,23 @@ ReturnValue:
 
         ExReleaseSpinLock(&IopPnPSpinLock, oldIrql);
 
-        if (entry == NULL) {
+        if (entry == NULL)
+        {
 
             ASSERT(assignResources || bootProcess);
 
-            if (assignResources || bootProcess) {
+            if (assignResources || bootProcess)
+            {
 
                 addContext.DriverStartType = SERVICE_DEMAND_START;
 
                 ObReferenceObject(IopRootDeviceNode->PhysicalDeviceObject);
-                status = PipProcessDevNodeTree( IopRootDeviceNode,
-                                                PnPBootDriversInitialized, // LoadDriver
-                                                assignResources,            // ReallocateResources
-                                                EnumTypeNone,
-                                                FALSE,
-                                                FALSE,
-                                                &addContext,
-                                                NULL);
-                if (!NT_SUCCESS(status)) {
+                status = PipProcessDevNodeTree(IopRootDeviceNode,
+                                               PnPBootDriversInitialized, // LoadDriver
+                                               assignResources,           // ReallocateResources
+                                               EnumTypeNone, FALSE, FALSE, &addContext, NULL);
+                if (!NT_SUCCESS(status))
+                {
 
                     status = STATUS_SUCCESS;
                 }
@@ -714,12 +598,16 @@ ReturnValue:
         request = CONTAINING_RECORD(entry, PI_DEVICE_REQUEST, ListEntry);
         InitializeListHead(&request->ListEntry);
 
-        if (PP_DO_TO_DN(request->DeviceObject)->State == DeviceNodeDeleted) {
+        if (PP_DO_TO_DN(request->DeviceObject)->State == DeviceNodeDeleted)
+        {
 
             status = STATUS_UNSUCCESSFUL;
-        } else {
+        }
+        else
+        {
 
-            switch (request->RequestType) {
+            switch (request->RequestType)
+            {
 
             case AddBootDevices:
                 //
@@ -760,7 +648,8 @@ ReturnValue:
             case ResourceRequirementsChanged:
 
                 status = PiProcessResourceRequirementsChanged(request);
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     //
                     // The device wasn't started when IopResourceRequirementsChanged
                     // was called.
@@ -778,7 +667,7 @@ ReturnValue:
                 bootProcess = TRUE;
                 break;
 
-            case RestartEnumeration:        // Used after completion of async I/O
+            case RestartEnumeration: // Used after completion of async I/O
             case ReenumerateRootDevices:
             case ReenumerateDeviceTree:
                 //
@@ -815,18 +704,21 @@ ReturnValue:
         //
         // Free the list.
         //
-        do {
+        do
+        {
 
             entry = RemoveHeadList(&request->ListEntry);
             collapsedRequest = CONTAINING_RECORD(entry, PI_DEVICE_REQUEST, ListEntry);
             //
             // Done with this enumeration request
             //
-            if (collapsedRequest->CompletionStatus) {
+            if (collapsedRequest->CompletionStatus)
+            {
 
                 *collapsedRequest->CompletionStatus = status;
             }
-            if (collapsedRequest->CompletionEvent) {
+            if (collapsedRequest->CompletionEvent)
+            {
 
                 KeSetEvent(collapsedRequest->CompletionEvent, 0, FALSE);
             }
@@ -834,7 +726,8 @@ ReturnValue:
             // Only dereference the original request, the rest get dereferenced
             // when we collapse.
             //
-            if ((collapsedRequest == request && dereferenceDevice)) {
+            if ((collapsedRequest == request && dereferenceDevice))
+            {
 
                 ObDereferenceObject(collapsedRequest->DeviceObject);
             }
@@ -850,11 +743,9 @@ ReturnValue:
 
     PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
 }
-
+
 NTSTATUS
-IoShutdownPnpDevices(
-    VOID
-    )
+IoShutdownPnpDevices(VOID)
 
 /*++
 
@@ -883,22 +774,18 @@ Return Value:
 --*/
 
 {
-    KEVENT          actionEvent;
-    NTSTATUS        actionStatus;
-    NTSTATUS        status;
+    KEVENT actionEvent;
+    NTSTATUS actionStatus;
+    NTSTATUS status;
 
     PAGED_CODE();
 
     KeInitializeEvent(&actionEvent, NotificationEvent, FALSE);
 
-    status = PipRequestDeviceAction( NULL,
-                                     ShutdownPnpDevices,
-                                     FALSE,
-                                     0,
-                                     &actionEvent,
-                                     &actionStatus);
+    status = PipRequestDeviceAction(NULL, ShutdownPnpDevices, FALSE, 0, &actionEvent, &actionStatus);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Wait for the event we just queued to finish since synchronous
@@ -907,26 +794,19 @@ Return Value:
         // FUTURE ITEM - Use a timeout here?
         //
 
-        status = KeWaitForSingleObject( &actionEvent,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        NULL);
+        status = KeWaitForSingleObject(&actionEvent, Executive, KernelMode, FALSE, NULL);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             status = actionStatus;
         }
     }
 
     return status;
-
 }
-
+
 NTSTATUS
-PipEnumerateDevice(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN Synchronous
-    )
+PipEnumerateDevice(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Synchronous)
 
 /*++
 
@@ -963,26 +843,23 @@ Return Value:
 
     deviceObject = DeviceNode->PhysicalDeviceObject;
 
-    status = IopQueryDeviceRelations( BusRelations,
-                                      deviceObject,
-                                      Synchronous,
-                                      &DeviceNode->OverUsed1.PendingDeviceRelations);
+    status =
+        IopQueryDeviceRelations(BusRelations, deviceObject, Synchronous, &DeviceNode->OverUsed1.PendingDeviceRelations);
 
     return status;
 }
 
 NTSTATUS
-PipEnumerateCompleted(
-    IN PDEVICE_NODE DeviceNode
-    )
+PipEnumerateCompleted(IN PDEVICE_NODE DeviceNode)
 {
-    PDEVICE_NODE    childDeviceNode, nextChildDeviceNode;
-    PDEVICE_OBJECT  childDeviceObject;
-    BOOLEAN         childRemoved;
-    NTSTATUS        status, allocationStatus;
-    ULONG           i;
+    PDEVICE_NODE childDeviceNode, nextChildDeviceNode;
+    PDEVICE_OBJECT childDeviceObject;
+    BOOLEAN childRemoved;
+    NTSTATUS status, allocationStatus;
+    ULONG i;
 
-    if (DeviceNode->OverUsed1.PendingDeviceRelations == NULL) {
+    if (DeviceNode->OverUsed1.PendingDeviceRelations == NULL)
+    {
 
         PipSetDevNodeState(DeviceNode, DeviceNodeStarted, NULL);
 
@@ -994,7 +871,8 @@ PipEnumerateCompleted(
     //
 
     childDeviceNode = DeviceNode->Child;
-    while (childDeviceNode) {
+    while (childDeviceNode)
+    {
         childDeviceNode->Flags &= ~DNF_ENUMERATED;
         childDeviceNode = childDeviceNode->Sibling;
     }
@@ -1003,20 +881,19 @@ PipEnumerateCompleted(
     // Check all the PDOs returned see if any new one or any one disappeared.
     //
 
-    for (i = 0; i < DeviceNode->OverUsed1.PendingDeviceRelations->Count; i++) {
+    for (i = 0; i < DeviceNode->OverUsed1.PendingDeviceRelations->Count; i++)
+    {
 
         childDeviceObject = DeviceNode->OverUsed1.PendingDeviceRelations->Objects[i];
 
         ASSERT_INITED(childDeviceObject);
 
-        if (childDeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_DELETE_PENDING) {
+        if (childDeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_DELETE_PENDING)
+        {
 
             PP_SAVE_DEVICEOBJECT_TO_TRIAGE_DUMP(childDeviceObject);
-            KeBugCheckEx( PNP_DETECTED_FATAL_ERROR,
-                          PNP_ERR_PDO_ENUMERATED_AFTER_DELETION,
-                          (ULONG_PTR)childDeviceObject,
-                          0,
-                          0);
+            KeBugCheckEx(PNP_DETECTED_FATAL_ERROR, PNP_ERR_PDO_ENUMERATED_AFTER_DELETION, (ULONG_PTR)childDeviceObject,
+                         0, 0);
         }
 
         //
@@ -1025,17 +902,17 @@ PipEnumerateCompleted(
         //
 
         childDeviceNode = (PDEVICE_NODE)childDeviceObject->DeviceObjectExtension->DeviceNode;
-        if (childDeviceNode == NULL) {
+        if (childDeviceNode == NULL)
+        {
 
             //
             // Device node doesn't exist, create one.
             //
 
-            allocationStatus = PipAllocateDeviceNode(
-                childDeviceObject,
-                &childDeviceNode);
+            allocationStatus = PipAllocateDeviceNode(childDeviceObject, &childDeviceNode);
 
-            if (childDeviceNode) {
+            if (childDeviceNode)
+            {
 
                 //
                 // We've found or created a devnode for the PDO that the
@@ -1053,23 +930,26 @@ PipEnumerateCompleted(
                 // of children.
                 //
                 PpDevNodeInsertIntoTree(DeviceNode, childDeviceNode);
-                if (allocationStatus == STATUS_SYSTEM_HIVE_TOO_LARGE) {
+                if (allocationStatus == STATUS_SYSTEM_HIVE_TOO_LARGE)
+                {
 
                     PipSetDevNodeProblem(childDeviceNode, CM_PROB_REGISTRY_TOO_LARGE);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Had a problem creating a devnode.  Pretend we've never
                 // seen it.
                 //
-                IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                             "PipEnumerateDevice: Failed to allocate device node\n"));
+                IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "PipEnumerateDevice: Failed to allocate device node\n"));
 
                 ObDereferenceObject(childDeviceObject);
             }
-        } else {
+        }
+        else
+        {
 
             //
             // The device is alreay enumerated.  Remark it and release the
@@ -1077,7 +957,8 @@ PipEnumerateCompleted(
             //
             childDeviceNode->Flags |= DNF_ENUMERATED;
 
-            if (childDeviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED) {
+            if (childDeviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED)
+            {
 
                 //
                 // A dock that was listed as departing in an eject relation
@@ -1103,9 +984,8 @@ PipEnumerateCompleted(
 
     childRemoved = FALSE;
 
-    for (childDeviceNode = DeviceNode->Child;
-         childDeviceNode != NULL;
-         childDeviceNode = nextChildDeviceNode) {
+    for (childDeviceNode = DeviceNode->Child; childDeviceNode != NULL; childDeviceNode = nextChildDeviceNode)
+    {
 
         //
         // First, we need to remember the 'next child' because the 'child' will be
@@ -1114,17 +994,15 @@ PipEnumerateCompleted(
 
         nextChildDeviceNode = childDeviceNode->Sibling;
 
-        if (!(childDeviceNode->Flags & DNF_ENUMERATED)) {
+        if (!(childDeviceNode->Flags & DNF_ENUMERATED))
+        {
 
-            if (!(childDeviceNode->Flags & DNF_DEVICE_GONE)) {
+            if (!(childDeviceNode->Flags & DNF_DEVICE_GONE))
+            {
 
                 childDeviceNode->Flags |= DNF_DEVICE_GONE;
 
-                PipRequestDeviceRemoval(
-                    childDeviceNode,
-                    TRUE,
-                    CM_PROB_DEVICE_NOT_THERE
-                    );
+                PipRequestDeviceRemoval(childDeviceNode, TRUE, CM_PROB_DEVICE_NOT_THERE);
 
                 childRemoved = TRUE;
             }
@@ -1141,23 +1019,21 @@ PipEnumerateCompleted(
     // processing the new devnodes.
     //
 
-    if (childRemoved && DeviceNode != IopRootDeviceNode) {
+    if (childRemoved && DeviceNode != IopRootDeviceNode)
+    {
 
         status = STATUS_PNP_RESTART_ENUMERATION;
-
-    } else {
+    }
+    else
+    {
 
         status = STATUS_SUCCESS;
     }
 
     return status;
 }
-
-VOID
-PiMarkDeviceStackStartPending(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN BOOLEAN          Set
-    )
+
+VOID PiMarkDeviceStackStartPending(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN Set)
 
 /*++
 
@@ -1179,16 +1055,18 @@ Return Value:
     PDEVICE_OBJECT attachedDevice;
     KIRQL irql;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-    for (attachedDevice = DeviceObject;
-         attachedDevice != NULL;
-         attachedDevice = attachedDevice->AttachedDevice) {
+    for (attachedDevice = DeviceObject; attachedDevice != NULL; attachedDevice = attachedDevice->AttachedDevice)
+    {
 
-        if (Set) {
+        if (Set)
+        {
 
             attachedDevice->DeviceObjectExtension->ExtensionFlags |= DOE_START_PENDING;
-        } else {
+        }
+        else
+        {
 
             attachedDevice->DeviceObjectExtension->ExtensionFlags &= ~DOE_START_PENDING;
         }
@@ -1198,12 +1076,7 @@ Return Value:
 }
 
 NTSTATUS
-PiBuildDeviceNodeInstancePath(
-    IN PDEVICE_NODE DeviceNode,
-    IN PWCHAR BusID,
-    IN PWCHAR DeviceID,
-    IN PWCHAR InstanceID
-    )
+PiBuildDeviceNodeInstancePath(IN PDEVICE_NODE DeviceNode, IN PWCHAR BusID, IN PWCHAR DeviceID, IN PWCHAR InstanceID)
 
 /*++
 
@@ -1235,30 +1108,34 @@ Return Value:
 
     PAGED_CODE();
 
-    if (BusID == NULL || DeviceID == NULL || InstanceID == NULL) {
+    if (BusID == NULL || DeviceID == NULL || InstanceID == NULL)
+    {
 
-        ASSERT( PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) ||
-                PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) ||
-                PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY));
+        ASSERT(PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) ||
+               PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) ||
+               PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY));
 
         return STATUS_UNSUCCESSFUL;
     }
 
-    length = (ULONG)((wcslen(BusID) + wcslen(DeviceID) + wcslen(InstanceID) + 2) * sizeof(WCHAR) + sizeof(UNICODE_NULL));
+    length =
+        (ULONG)((wcslen(BusID) + wcslen(DeviceID) + wcslen(InstanceID) + 2) * sizeof(WCHAR) + sizeof(UNICODE_NULL));
     instancePath = (PWCHAR)ExAllocatePool(PagedPool | POOL_COLD_ALLOCATION, length);
-    if (!instancePath) {
+    if (!instancePath)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     //
-    // Construct the instance path as <BUS>\<DEVICE>\<INSTANCE>. This should always be NULL terminated 
+    // Construct the instance path as <BUS>\<DEVICE>\<INSTANCE>. This should always be NULL terminated
     // since we have precomputed the length that we pass into this counted routine.
     //
     _snwprintf(instancePath, length / sizeof(WCHAR), L"%s\\%s\\%s", BusID, DeviceID, InstanceID);
     //
     // Free old instance path.
     //
-    if (DeviceNode->InstancePath.Buffer != NULL) {
+    if (DeviceNode->InstancePath.Buffer != NULL)
+    {
 
         IopCleanupDeviceRegistryValues(&DeviceNode->InstancePath);
         ExFreePool(DeviceNode->InstancePath.Buffer);
@@ -1270,11 +1147,7 @@ Return Value:
 }
 
 NTSTATUS
-PiCreateDeviceInstanceKey(
-    IN PDEVICE_NODE DeviceNode,
-    OUT PHANDLE InstanceKey,
-    OUT PULONG Disposition
-    )
+PiCreateDeviceInstanceKey(IN PDEVICE_NODE DeviceNode, OUT PHANDLE InstanceKey, OUT PULONG Disposition)
 
 /*++
 
@@ -1309,40 +1182,30 @@ Return Value:
 
     PiLockPnpRegistry(FALSE);
 
-    status = IopOpenRegistryKeyEx( 
-                &enumHandle,
-                NULL,
-                &CmRegistryMachineSystemCurrentControlSetEnumName,
-                KEY_ALL_ACCESS
-                );
-    if (NT_SUCCESS(status)) {
+    status = IopOpenRegistryKeyEx(&enumHandle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_ALL_ACCESS);
+    if (NT_SUCCESS(status))
+    {
 
-        status = IopCreateRegistryKeyEx( 
-                    InstanceKey,
-                    enumHandle,
-                    &DeviceNode->InstancePath,
-                    KEY_ALL_ACCESS,
-                    REG_OPTION_NON_VOLATILE,
-                    Disposition
-                    );
-        if (NT_SUCCESS(status)) {
+        status = IopCreateRegistryKeyEx(InstanceKey, enumHandle, &DeviceNode->InstancePath, KEY_ALL_ACCESS,
+                                        REG_OPTION_NON_VOLATILE, Disposition);
+        if (NT_SUCCESS(status))
+        {
             //
             // Keys migrated by textmode setup should be treated as "new".
-            // Migrated keys are identified by the presence of non-zero 
+            // Migrated keys are identified by the presence of non-zero
             // REG_DWORD value "Migrated" under the device instance key.
             //
-            if (*Disposition != REG_CREATED_NEW_KEY) {
+            if (*Disposition != REG_CREATED_NEW_KEY)
+            {
 
                 keyValueInformation = NULL;
-                IopGetRegistryValue(
-                    *InstanceKey,
-                    REGSTR_VALUE_MIGRATED,
-                    &keyValueInformation);
-                if (keyValueInformation) {
+                IopGetRegistryValue(*InstanceKey, REGSTR_VALUE_MIGRATED, &keyValueInformation);
+                if (keyValueInformation)
+                {
 
-                    if (    keyValueInformation->Type == REG_DWORD &&
-                            keyValueInformation->DataLength == sizeof(ULONG) &&
-                            *(PULONG)KEY_VALUE_DATA(keyValueInformation) != 0) {
+                    if (keyValueInformation->Type == REG_DWORD && keyValueInformation->DataLength == sizeof(ULONG) &&
+                        *(PULONG)KEY_VALUE_DATA(keyValueInformation) != 0)
+                    {
 
                         *Disposition = REG_CREATED_NEW_KEY;
                     }
@@ -1353,22 +1216,23 @@ Return Value:
                     ExFreePool(keyValueInformation);
                 }
             }
+        }
+        else
+        {
 
-        } else {
-
-            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                         "PpCreateDeviceInstanceKey: Unable to create %wZ\n", 
+            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "PpCreateDeviceInstanceKey: Unable to create %wZ\n",
                          &DeviceNode->InstancePath));
             ASSERT(*InstanceKey != NULL);
         }
 
         ZwClose(enumHandle);
-    } else {
+    }
+    else
+    {
         //
         // This would be very bad.
         //
-        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                     "PpCreateDeviceInstanceKey: Unable to open %wZ\n", 
+        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "PpCreateDeviceInstanceKey: Unable to open %wZ\n",
                      &CmRegistryMachineSystemCurrentControlSetEnumName));
         ASSERT(enumHandle != NULL);
     }
@@ -1379,10 +1243,7 @@ Return Value:
 }
 
 NTSTATUS
-PiQueryAndAllocateBootResources(
-    IN PDEVICE_NODE DeviceNode,
-    IN HANDLE LogConfKey
-    )
+PiQueryAndAllocateBootResources(IN PDEVICE_NODE DeviceNode, IN HANDLE LogConfKey)
 
 /*++
 
@@ -1413,65 +1274,64 @@ Return Value:
     status = STATUS_SUCCESS;
     cmResource = NULL;
     cmLength = 0;
-    if (DeviceNode->BootResources == NULL) {
+    if (DeviceNode->BootResources == NULL)
+    {
 
-        status = IopQueryDeviceResources( 
-                    DeviceNode->PhysicalDeviceObject,
-                    QUERY_RESOURCE_LIST,
-                    &cmResource,
-                    &cmLength);
-        if (!NT_SUCCESS(status)) {
+        status = IopQueryDeviceResources(DeviceNode->PhysicalDeviceObject, QUERY_RESOURCE_LIST, &cmResource, &cmLength);
+        if (!NT_SUCCESS(status))
+        {
 
             ASSERT(cmResource == NULL && cmLength == 0);
             cmResource = NULL;
             cmLength = 0;
         }
-    } else {
+    }
+    else
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                        "PNPENUM: %ws already has BOOT config in PiQueryAndAllocateBootResources!\n",
-                        DeviceNode->InstancePath.Buffer));
+        IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                     "PNPENUM: %ws already has BOOT config in PiQueryAndAllocateBootResources!\n",
+                     DeviceNode->InstancePath.Buffer));
     }
     //
     // Write boot resources to registry
     //
-    if (LogConfKey && DeviceNode->BootResources == NULL) {
+    if (LogConfKey && DeviceNode->BootResources == NULL)
+    {
 
         PiWstrToUnicodeString(&unicodeString, REGSTR_VAL_BOOTCONFIG);
 
         PiLockPnpRegistry(FALSE);
 
-        if (cmResource) {
+        if (cmResource)
+        {
 
-            ZwSetValueKey(
-                LogConfKey,
-                &unicodeString,
-                TITLE_INDEX_VALUE,
-                REG_RESOURCE_LIST,
-                cmResource,
-                cmLength);
-        } else {
+            ZwSetValueKey(LogConfKey, &unicodeString, TITLE_INDEX_VALUE, REG_RESOURCE_LIST, cmResource, cmLength);
+        }
+        else
+        {
 
             ZwDeleteValueKey(LogConfKey, &unicodeString);
         }
 
         PiUnlockPnpRegistry();
 
-        if (cmResource) {
+        if (cmResource)
+        {
             //
             // This device consumes BOOT resources.  Reserve its boot resources
             //
-            status = (*IopAllocateBootResourcesRoutine)(    
-                        ArbiterRequestPnpEnumerated,
-                        DeviceNode->PhysicalDeviceObject,
-                        cmResource);
-            if (NT_SUCCESS(status)) {
+            status = (*IopAllocateBootResourcesRoutine)(ArbiterRequestPnpEnumerated, DeviceNode->PhysicalDeviceObject,
+                                                        cmResource);
+            if (NT_SUCCESS(status))
+            {
 
                 DeviceNode->Flags |= DNF_HAS_BOOT_CONFIG;
             }
         }
     }
-    if (cmResource) {
+    if (cmResource)
+    {
 
         ExFreePool(cmResource);
     }
@@ -1480,10 +1340,7 @@ Return Value:
 }
 
 NTSTATUS
-PiQueryResourceRequirements(
-    IN PDEVICE_NODE DeviceNode,
-    IN HANDLE LogConfKey
-    )
+PiQueryResourceRequirements(IN PDEVICE_NODE DeviceNode, IN HANDLE LogConfKey)
 
 /*++
 
@@ -1512,52 +1369,54 @@ Return Value:
     PAGED_CODE();
 
     //
-    // Query the device's basic config vector. 
+    // Query the device's basic config vector.
     //
-    status = PpIrpQueryResourceRequirements(
-                DeviceNode->PhysicalDeviceObject, 
-                &ioResource);
-    if (!NT_SUCCESS(status)) {
+    status = PpIrpQueryResourceRequirements(DeviceNode->PhysicalDeviceObject, &ioResource);
+    if (!NT_SUCCESS(status))
+    {
 
         ASSERT(ioResource == NULL);
         ioResource = NULL;
     }
-    if (ioResource) {
+    if (ioResource)
+    {
 
         ioLength = ioResource->ListSize;
-    } else {
+    }
+    else
+    {
 
         ioLength = 0;
     }
     //
     // Write resource requirements to registry
     //
-    if (LogConfKey) {
+    if (LogConfKey)
+    {
 
         PiWstrToUnicodeString(&unicodeString, REGSTR_VALUE_BASIC_CONFIG_VECTOR);
 
         PiLockPnpRegistry(FALSE);
 
-        if (ioResource) {
+        if (ioResource)
+        {
 
-            ZwSetValueKey(
-                LogConfKey,
-                &unicodeString,
-                TITLE_INDEX_VALUE,
-                REG_RESOURCE_REQUIREMENTS_LIST,
-                ioResource,
-                ioLength);
+            ZwSetValueKey(LogConfKey, &unicodeString, TITLE_INDEX_VALUE, REG_RESOURCE_REQUIREMENTS_LIST, ioResource,
+                          ioLength);
 
             DeviceNode->Flags |= DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED;
             DeviceNode->ResourceRequirements = ioResource;
             ioResource = NULL;
-        } else {
+        }
+        else
+        {
 
             ZwDeleteValueKey(LogConfKey, &unicodeString);
         }
         PiUnlockPnpRegistry();
     }
-    if (ioResource) {
+    if (ioResource)
+    {
 
         ExFreePool(ioResource);
     }
@@ -1566,10 +1425,9 @@ Return Value:
 }
 
 NTSTATUS
-PipProcessNewDeviceNode(
-    IN PDEVICE_NODE DeviceNode
+PipProcessNewDeviceNode(IN PDEVICE_NODE DeviceNode
 
-/*++
+                        /*++
 
 Routine Description:
 
@@ -1585,7 +1443,7 @@ Return Value:
 
 --*/
 
-    )
+)
 {
     NTSTATUS status, finalStatus;
     PDEVICE_OBJECT deviceObject, dupeDeviceObject;
@@ -1613,12 +1471,16 @@ Return Value:
     deviceObject = DeviceNode->PhysicalDeviceObject;
 
     status = PpQueryDeviceID(DeviceNode, &busID, &deviceID);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        if (status == STATUS_PNP_INVALID_ID) {
+        if (status == STATUS_PNP_INVALID_ID)
+        {
 
             finalStatus = STATUS_UNSUCCESSFUL;
-        } else {
+        }
+        else
+        {
 
             finalStatus = status;
         }
@@ -1632,13 +1494,16 @@ Return Value:
     //
     DeviceNode->UserFlags &= ~DNUF_DONT_SHOW_IN_UI;
     globallyUnique = FALSE;
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if (capabilities.NoDisplayInUI) {
+        if (capabilities.NoDisplayInUI)
+        {
 
             DeviceNode->UserFlags |= DNUF_DONT_SHOW_IN_UI;
         }
-        if (capabilities.UniqueID) {
+        if (capabilities.UniqueID)
+        {
 
             globallyUnique = TRUE;
         }
@@ -1647,15 +1512,19 @@ Return Value:
     // Record, is this a dock?
     //
 
-    if (capabilities.DockDevice) {
+    if (capabilities.DockDevice)
+    {
 
-        if (DeviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED) {
+        if (DeviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED)
+        {
 
             ASSERT(DeviceNode->DockInfo.DockStatus != DOCK_EJECTIRP_COMPLETED);
             PpProfileCancelTransitioningDock(DeviceNode, DOCK_DEPARTING);
         }
         DeviceNode->DockInfo.DockStatus = DOCK_QUIESCENT;
-    } else {
+    }
+    else
+    {
 
         DeviceNode->DockInfo.DockStatus = DOCK_NOTDOCKDEVICE;
     }
@@ -1676,7 +1545,8 @@ Return Value:
     irpSp.Parameters.QueryDeviceText.LocaleId = PsDefaultSystemLocaleId;
     status = IopSynchronousCall(deviceObject, &irpSp, (PULONG_PTR)&description);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         description = NULL;
     }
 
@@ -1696,59 +1566,71 @@ Return Value:
     irpSp.Parameters.QueryDeviceText.LocaleId = PsDefaultSystemLocaleId;
     status = IopSynchronousCall(deviceObject, &irpSp, (PULONG_PTR)&location);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         location = NULL;
     }
     //
     // Query the instance ID for the new devnode.
     //
     status = PpQueryInstanceID(DeviceNode, &instanceID, &instanceIDLength);
-    if (!globallyUnique) {
+    if (!globallyUnique)
+    {
 
-        if (    !PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) && 
-                DeviceNode->Parent != IopRootDeviceNode) {
+        if (!PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) && DeviceNode->Parent != IopRootDeviceNode)
+        {
 
             uniqueInstanceID = NULL;
 
             status = PipMakeGloballyUniqueId(deviceObject, instanceID, &uniqueInstanceID);
 
-            if (instanceID != NULL) {
+            if (instanceID != NULL)
+            {
 
                 ExFreePool(instanceID);
             }
             instanceID = uniqueInstanceID;
-            if (instanceID) {
+            if (instanceID)
+            {
 
                 instanceIDLength = ((ULONG)wcslen(instanceID) + 1) * sizeof(WCHAR);
-            } else {
-                
+            }
+            else
+            {
+
                 instanceIDLength = 0;
                 ASSERT(!NT_SUCCESS(status));
             }
         }
-    } else if (status == STATUS_NOT_SUPPORTED) {
+    }
+    else if (status == STATUS_NOT_SUPPORTED)
+    {
 
         PipSetDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA);
         DeviceNode->Parent->Flags |= DNF_CHILD_WITH_INVALID_ID;
         PpSetInvalidIDEvent(&DeviceNode->Parent->InstancePath);
 
-        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                     "PpQueryID: Bogus ID returned by %wZ\n",
-                     &DeviceNode->Parent->ServiceName));
+        IopDbgPrint(
+            (IOP_ENUMERATION_ERROR_LEVEL, "PpQueryID: Bogus ID returned by %wZ\n", &DeviceNode->Parent->ServiceName));
         ASSERT(status != STATUS_NOT_SUPPORTED || !globallyUnique);
     }
 
 RetryDuplicateId:
 
-    if (!NT_SUCCESS(status)) {
-         
-        finalStatus = status;
-        if (!PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA)) {
+    if (!NT_SUCCESS(status))
+    {
 
-            if (status == STATUS_INSUFFICIENT_RESOURCES) {
-    
+        finalStatus = status;
+        if (!PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA))
+        {
+
+            if (status == STATUS_INSUFFICIENT_RESOURCES)
+            {
+
                 PipSetDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY);
-            } else {
+            }
+            else
+            {
                 //
                 // Perhaps some other problem code?
                 //
@@ -1760,12 +1642,14 @@ RetryDuplicateId:
     // Build the device instance path and create the instance key.
     //
     status = PiBuildDeviceNodeInstancePath(DeviceNode, busID, deviceID, instanceID);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         status = PiCreateDeviceInstanceKey(DeviceNode, &instanceKey, &disposition);
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         finalStatus = status;
     }
@@ -1779,15 +1663,16 @@ RetryDuplicateId:
     //
     PipSetDevNodeState(DeviceNode, DeviceNodeInitialized, NULL);
 
-    if (    !PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY)) {
+    if (!PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
+        !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) && !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY))
+    {
         //
         // Check if we are encountering this device for the very first time.
         //
-        if (disposition == REG_CREATED_NEW_KEY) {
+        if (disposition == REG_CREATED_NEW_KEY)
+        {
             //
-            // Save the description only for new devices so we dont clobber 
+            // Save the description only for new devices so we dont clobber
             // the inf written description for already installed devices.
             //
             PiLockPnpRegistry(FALSE);
@@ -1795,16 +1680,21 @@ RetryDuplicateId:
             PiSetDeviceInstanceSzValue(instanceKey, REGSTR_VAL_DEVDESC, &description);
 
             PiUnlockPnpRegistry();
-        } else {
+        }
+        else
+        {
             //
             // Check if there is another device with the same name.
             //
             dupeDeviceObject = IopDeviceObjectFromDeviceInstance(&DeviceNode->InstancePath);
-            if (dupeDeviceObject) {
+            if (dupeDeviceObject)
+            {
 
-                if (dupeDeviceObject != deviceObject) {
+                if (dupeDeviceObject != deviceObject)
+                {
 
-                    if (globallyUnique) {
+                    if (globallyUnique)
+                    {
 
                         globallyUnique = FALSE;
                         PipSetDevNodeProblem(DeviceNode, CM_PROB_DUPLICATE_DEVICE);
@@ -1812,33 +1702,36 @@ RetryDuplicateId:
                         dupeDeviceNode = dupeDeviceObject->DeviceObjectExtension->DeviceNode;
                         ASSERT(dupeDeviceNode);
 
-                        if (dupeDeviceNode->Parent == DeviceNode->Parent) {
+                        if (dupeDeviceNode->Parent == DeviceNode->Parent)
+                        {
                             //
                             // Definite driver screw up. If the verifier is enabled
                             // we will fail the driver. Otherwise, we will attempt
                             // to uniquify the second device to keep the system
                             // alive.
                             //
-                            PpvUtilFailDriver(
-                                PPVERROR_DUPLICATE_PDO_ENUMERATED,
-                                (PVOID) deviceObject->DriverObject->MajorFunction[IRP_MJ_PNP],
-                                deviceObject,
-                                (PVOID)dupeDeviceObject);
+                            PpvUtilFailDriver(PPVERROR_DUPLICATE_PDO_ENUMERATED,
+                                              (PVOID)deviceObject->DriverObject->MajorFunction[IRP_MJ_PNP],
+                                              deviceObject, (PVOID)dupeDeviceObject);
                         }
 
                         ObDereferenceObject(dupeDeviceObject);
 
                         status = PipMakeGloballyUniqueId(deviceObject, instanceID, &uniqueInstanceID);
 
-                        if (instanceID != NULL) {
+                        if (instanceID != NULL)
+                        {
 
                             ExFreePool(instanceID);
                         }
                         instanceID = uniqueInstanceID;
-                        if (instanceID) {
+                        if (instanceID)
+                        {
 
                             instanceIDLength = ((ULONG)wcslen(instanceID) + 1) * sizeof(WCHAR);
-                        } else {
+                        }
+                        else
+                        {
 
                             instanceIDLength = 0;
                             ASSERT(!NT_SUCCESS(status));
@@ -1854,29 +1747,23 @@ RetryDuplicateId:
                     //
                     //ObDereferenceObject(dupCheckDeviceObject);
 
-                    PpvUtilFailDriver(
-                        PPVERROR_DUPLICATE_PDO_ENUMERATED,
-                        (PVOID) deviceObject->DriverObject->MajorFunction[IRP_MJ_PNP],
-                        deviceObject,
-                        (PVOID)dupeDeviceObject);
+                    PpvUtilFailDriver(PPVERROR_DUPLICATE_PDO_ENUMERATED,
+                                      (PVOID)deviceObject->DriverObject->MajorFunction[IRP_MJ_PNP], deviceObject,
+                                      (PVOID)dupeDeviceObject);
 
                     PP_SAVE_DEVICEOBJECT_TO_TRIAGE_DUMP(deviceObject);
                     PP_SAVE_DEVICEOBJECT_TO_TRIAGE_DUMP(dupeDeviceObject);
-                    KeBugCheckEx( 
-                        PNP_DETECTED_FATAL_ERROR,
-                        PNP_ERR_DUPLICATE_PDO,
-                        (ULONG_PTR)deviceObject,
-                        (ULONG_PTR)dupeDeviceObject,
-                        0);
+                    KeBugCheckEx(PNP_DETECTED_FATAL_ERROR, PNP_ERR_DUPLICATE_PDO, (ULONG_PTR)deviceObject,
+                                 (ULONG_PTR)dupeDeviceObject, 0);
                 }
                 ObDereferenceObject(dupeDeviceObject);
             }
         }
     }
 
-    if (    !PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY)) {
+    if (!PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
+        !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) && !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY))
+    {
 
         PiLockPnpRegistry(FALSE);
         //
@@ -1895,49 +1782,55 @@ RetryDuplicateId:
         // definite 7B.
         //
         problem = 0;
-        criticalDevice = (disposition == REG_CREATED_NEW_KEY)? TRUE : FALSE;
+        criticalDevice = (disposition == REG_CREATED_NEW_KEY) ? TRUE : FALSE;
         status = IopGetRegistryValue(instanceKey, REGSTR_VALUE_CONFIG_FLAGS, &keyValueInformation);
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             configFlags = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
-            if (configFlags & CONFIGFLAG_REINSTALL) {
+            if (configFlags & CONFIGFLAG_REINSTALL)
+            {
 
                 problem = CM_PROB_REINSTALL;
                 criticalDevice = TRUE;
-            } else if (configFlags & CONFIGFLAG_FAILEDINSTALL) {
+            }
+            else if (configFlags & CONFIGFLAG_FAILEDINSTALL)
+            {
 
                 problem = CM_PROB_FAILED_INSTALL;
                 criticalDevice = TRUE;
             }
 
             ExFreePool(keyValueInformation);
-        } else {
+        }
+        else
+        {
 
             configFlags = 0;
             problem = CM_PROB_NOT_CONFIGURED;
             criticalDevice = TRUE;
         }
-        if (problem) {
+        if (problem)
+        {
 
-            if (capabilities.RawDeviceOK) {
+            if (capabilities.RawDeviceOK)
+            {
 
                 configFlags |= CONFIGFLAG_FINISH_INSTALL;
                 PiWstrToUnicodeString(&unicodeString, REGSTR_VALUE_CONFIG_FLAGS);
-                ZwSetValueKey(
-                    instanceKey,
-                    &unicodeString,
-                    TITLE_INDEX_VALUE,
-                    REG_DWORD,
-                    &configFlags,
-                    sizeof(configFlags));
-            } else {
+                ZwSetValueKey(instanceKey, &unicodeString, TITLE_INDEX_VALUE, REG_DWORD, &configFlags,
+                              sizeof(configFlags));
+            }
+            else
+            {
 
                 PipSetDevNodeProblem(DeviceNode, problem);
             }
         }
         status = IopMapDeviceObjectToDeviceInstance(DeviceNode->PhysicalDeviceObject, &DeviceNode->InstancePath);
         ASSERT(NT_SUCCESS(status));
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             finalStatus = status;
         }
@@ -1945,32 +1838,20 @@ RetryDuplicateId:
         PiUnlockPnpRegistry();
     }
 
-    PpQueryHardwareIDs( 
-        DeviceNode,
-        &hwIDs,
-        &hwIDLength);
+    PpQueryHardwareIDs(DeviceNode, &hwIDs, &hwIDLength);
 
-    PpQueryCompatibleIDs(  
-        DeviceNode,
-        &compatibleIDs,
-        &compatibleIDLength);
+    PpQueryCompatibleIDs(DeviceNode, &compatibleIDs, &compatibleIDLength);
 
     PiLockPnpRegistry(FALSE);
 
     DeviceNode->Flags |= DNF_IDS_QUERIED;
 
-    if (    !PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY)) {
+    if (!PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
+        !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) && !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY))
+    {
 
         PiWstrToUnicodeString(&unicodeString, REGSTR_KEY_LOG_CONF);
-        IopCreateRegistryKeyEx( 
-            &logConfKey,
-            instanceKey,
-            &unicodeString,
-            KEY_ALL_ACCESS,
-            REG_OPTION_NON_VOLATILE,
-            NULL);
+        IopCreateRegistryKeyEx(&logConfKey, instanceKey, &unicodeString, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE, NULL);
     }
 
     PiUnlockPnpRegistry();
@@ -1979,25 +1860,25 @@ RetryDuplicateId:
 
     PiLockPnpRegistry(FALSE);
 
-    if (IoRemoteBootClient && (IopLoaderBlock != NULL)) {
+    if (IoRemoteBootClient && (IopLoaderBlock != NULL))
+    {
 
-        if (    !PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
-                !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) &&
-                !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY)) {
-        
-            if (hwIDs) {
-    
-                isRemoteBootCard = IopIsRemoteBootCard(
-                                        DeviceNode->ResourceRequirements,
-                                        (PLOADER_PARAMETER_BLOCK)IopLoaderBlock,
-                                        hwIDs);
+        if (!PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
+            !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) &&
+            !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY))
+        {
+
+            if (hwIDs)
+            {
+
+                isRemoteBootCard = IopIsRemoteBootCard(DeviceNode->ResourceRequirements,
+                                                       (PLOADER_PARAMETER_BLOCK)IopLoaderBlock, hwIDs);
             }
-            if (!isRemoteBootCard && compatibleIDs) {
-    
-                isRemoteBootCard = IopIsRemoteBootCard(
-                                        DeviceNode->ResourceRequirements,
-                                        (PLOADER_PARAMETER_BLOCK)IopLoaderBlock,
-                                        compatibleIDs);
+            if (!isRemoteBootCard && compatibleIDs)
+            {
+
+                isRemoteBootCard = IopIsRemoteBootCard(DeviceNode->ResourceRequirements,
+                                                       (PLOADER_PARAMETER_BLOCK)IopLoaderBlock, compatibleIDs);
             }
         }
     }
@@ -2007,13 +1888,13 @@ RetryDuplicateId:
     PiSetDeviceInstanceMultiSzValue(instanceKey, REGSTR_VALUE_COMPATIBLEIDS, &compatibleIDs, compatibleIDLength);
 
     status = STATUS_SUCCESS;
-    if (isRemoteBootCard) {
+    if (isRemoteBootCard)
+    {
 
-        status = IopSetupRemoteBootCard(
-                        (PLOADER_PARAMETER_BLOCK)IopLoaderBlock,
-                        instanceKey,
-                        &DeviceNode->InstancePath);
-        if (!NT_SUCCESS(status)) {
+        status =
+            IopSetupRemoteBootCard((PLOADER_PARAMETER_BLOCK)IopLoaderBlock, instanceKey, &DeviceNode->InstancePath);
+        if (!NT_SUCCESS(status))
+        {
 
             finalStatus = status;
         }
@@ -2026,24 +1907,25 @@ RetryDuplicateId:
     // get that now, because class-installer may want it
     //
 
-    if (NT_SUCCESS(IopQueryPnpBusInformation(
-                     deviceObject,
-                     &busTypeGuid,
-                     &DeviceNode->ChildInterfaceType,
-                     &DeviceNode->ChildBusNumber))) {
+    if (NT_SUCCESS(IopQueryPnpBusInformation(deviceObject, &busTypeGuid, &DeviceNode->ChildInterfaceType,
+                                             &DeviceNode->ChildBusNumber)))
+    {
 
         DeviceNode->ChildBusTypeIndex = PpBusTypeGuidGetIndex(&busTypeGuid);
-
-    } else {
+    }
+    else
+    {
 
         DeviceNode->ChildBusTypeIndex = 0xffff;
         DeviceNode->ChildInterfaceType = InterfaceTypeUndefined;
         DeviceNode->ChildBusNumber = 0xfffffff0;
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if (criticalDevice) {
+        if (criticalDevice)
+        {
             //
             // Process the device as a critical device.
             //
@@ -2057,14 +1939,14 @@ RetryDuplicateId:
             // critical device database entry, this routine will also pre-install
             // the new device with those settings.
             //
-            if (!capabilities.HardwareDisabled && !PipIsDevNodeProblem(DeviceNode, CM_PROB_NEED_RESTART)) {
+            if (!capabilities.HardwareDisabled && !PipIsDevNodeProblem(DeviceNode, CM_PROB_NEED_RESTART))
+            {
 
                 PipProcessCriticalDevice(DeviceNode);
             }
         }
 
-        ASSERT(!PipDoesDevNodeHaveProblem(DeviceNode) ||
-               PipIsDevNodeProblem(DeviceNode, CM_PROB_NOT_CONFIGURED) ||
+        ASSERT(!PipDoesDevNodeHaveProblem(DeviceNode) || PipIsDevNodeProblem(DeviceNode, CM_PROB_NOT_CONFIGURED) ||
                PipIsDevNodeProblem(DeviceNode, CM_PROB_REINSTALL) ||
                PipIsDevNodeProblem(DeviceNode, CM_PROB_FAILED_INSTALL) ||
                PipIsDevNodeProblem(DeviceNode, CM_PROB_PARTIAL_LOG_CONF) ||
@@ -2080,7 +1962,8 @@ RetryDuplicateId:
             !PipIsDevNodeProblem(DeviceNode, CM_PROB_NEED_RESTART) &&
             !PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
             !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY)) {
+            !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY))
+        {
 
             IopIsDeviceInstanceEnabled(instanceKey, &DeviceNode->InstancePath, TRUE);
         }
@@ -2088,9 +1971,9 @@ RetryDuplicateId:
 
     PiQueryAndAllocateBootResources(DeviceNode, logConfKey);
 
-    if (    !PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) &&
-            !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY)) {
+    if (!PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA) &&
+        !PipIsDevNodeProblem(DeviceNode, CM_PROB_OUT_OF_MEMORY) && !PipIsDevNodeProblem(DeviceNode, CM_PROB_REGISTRY))
+    {
 
         PiLockPnpRegistry(FALSE);
 
@@ -2103,21 +1986,16 @@ RetryDuplicateId:
         // Create new value entry under ServiceKeyName\Enum to reflect the newly
         // added made-up device instance node.
         //
-        status = IopNotifySetupDeviceArrival( deviceObject,
-                                              instanceKey,
-                                              TRUE);
+        status = IopNotifySetupDeviceArrival(deviceObject, instanceKey, TRUE);
 
         configuredBySetup = NT_SUCCESS(status) ? TRUE : FALSE;
 
-        status = PpDeviceRegistration(
-                     &DeviceNode->InstancePath,
-                     TRUE,
-                     &DeviceNode->ServiceName
-                     );
-        if (NT_SUCCESS(status)) {
+        status = PpDeviceRegistration(&DeviceNode->InstancePath, TRUE, &DeviceNode->ServiceName);
+        if (NT_SUCCESS(status))
+        {
 
-            if (    (configuredBySetup || isRemoteBootCard) &&
-                    PipIsDevNodeProblem(DeviceNode, CM_PROB_NOT_CONFIGURED)) {
+            if ((configuredBySetup || isRemoteBootCard) && PipIsDevNodeProblem(DeviceNode, CM_PROB_NOT_CONFIGURED))
+            {
 
                 PipClearDevNodeProblem(DeviceNode);
             }
@@ -2130,48 +2008,52 @@ RetryDuplicateId:
     //
     // Cleanup.
     //
-    if (hwIDs) {
+    if (hwIDs)
+    {
 
-        ExFreePool(hwIDs);        
+        ExFreePool(hwIDs);
     }
-    if (compatibleIDs) {
+    if (compatibleIDs)
+    {
 
         ExFreePool(compatibleIDs);
     }
-    if (logConfKey) {
+    if (logConfKey)
+    {
 
         ZwClose(logConfKey);
     }
-    if (instanceKey) {
+    if (instanceKey)
+    {
 
         ZwClose(instanceKey);
     }
-    if (instanceID) {
+    if (instanceID)
+    {
 
         ExFreePool(instanceID);
     }
-    if (location) {
+    if (location)
+    {
 
         ExFreePool(location);
     }
-    if (description) {
+    if (description)
+    {
 
         ExFreePool(description);
     }
-    if (busID) {
+    if (busID)
+    {
 
         ExFreePool(busID);
     }
 
     return finalStatus;
 }
-
+
 NTSTATUS
-PipCallDriverAddDevice(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN LoadDriver,
-    IN PADD_CONTEXT Context
-    )
+PipCallDriverAddDevice(IN PDEVICE_NODE DeviceNode, IN BOOLEAN LoadDriver, IN PADD_CONTEXT Context)
 
 /*++
 
@@ -2208,12 +2090,9 @@ Return Value:
     BOOLEAN deviceObjectHasBeenAttached = FALSE;
     UNICODE_STRING unicodeClassGuid;
 
-    IopDbgPrint((   IOP_ENUMERATION_TRACE_LEVEL,
-                    "PipCallDriverAddDevice: Processing devnode %#08lx\n",
-                   DeviceNode));
-    IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                    "PipCallDriverAddDevice: DevNode flags going in = %#08lx\n",
-                   DeviceNode->Flags));
+    IopDbgPrint((IOP_ENUMERATION_TRACE_LEVEL, "PipCallDriverAddDevice: Processing devnode %#08lx\n", DeviceNode));
+    IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL, "PipCallDriverAddDevice: DevNode flags going in = %#08lx\n",
+                 DeviceNode->Flags));
 
     //
     // The device node may have been started at this point.  This is because
@@ -2223,27 +2102,22 @@ Return Value:
 
     ASSERT_INITED(DeviceNode->PhysicalDeviceObject);
 
-    IopDbgPrint((   IOP_ENUMERATION_TRACE_LEVEL,
-                    "PipCallDriverAddDevice:\t%s load driver\n",
-                    LoadDriver? "Will" : "Won't"));
+    IopDbgPrint(
+        (IOP_ENUMERATION_TRACE_LEVEL, "PipCallDriverAddDevice:\t%s load driver\n", LoadDriver ? "Will" : "Won't"));
 
-    IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                    "PipCallDriverAddDevice:\tOpening registry key %wZ\n",
-                    &DeviceNode->InstancePath));
+    IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL, "PipCallDriverAddDevice:\tOpening registry key %wZ\n",
+                 &DeviceNode->InstancePath));
 
     //
     // Open the HKLM\System\CCS\Enum key.
     //
 
-    status = IopOpenRegistryKeyEx( &enumKey,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&enumKey, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ);
 
-    if (!NT_SUCCESS(status)) {
-        IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                        "PipCallDriverAddDevice:\tUnable to open HKLM\\SYSTEM\\CCS\\ENUM\n"));
+    if (!NT_SUCCESS(status))
+    {
+        IopDbgPrint(
+            (IOP_ENUMERATION_WARNING_LEVEL, "PipCallDriverAddDevice:\tUnable to open HKLM\\SYSTEM\\CCS\\ENUM\n"));
         return status;
     }
 
@@ -2251,61 +2125,56 @@ Return Value:
     // Open the instance key for this devnode
     //
 
-    status = IopOpenRegistryKeyEx( &instanceKey,
-                                   enumKey,
-                                   &DeviceNode->InstancePath,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&instanceKey, enumKey, &DeviceNode->InstancePath, KEY_READ);
 
     ZwClose(enumKey);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                        "PipCallDriverAddDevice:\t\tError %#08lx opening %wZ enum key\n",
-                        status, &DeviceNode->InstancePath));
+        IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL, "PipCallDriverAddDevice:\t\tError %#08lx opening %wZ enum key\n",
+                     status, &DeviceNode->InstancePath));
         return status;
     }
     //
     // Get the class value to locate the class key for this devnode
     //
-    status = IopGetRegistryValue(instanceKey,
-                                 REGSTR_VALUE_CLASSGUID,
-                                 &keyValueInformation);
-    if(NT_SUCCESS(status)) {
+    status = IopGetRegistryValue(instanceKey, REGSTR_VALUE_CLASSGUID, &keyValueInformation);
+    if (NT_SUCCESS(status))
+    {
 
-        if (    keyValueInformation->Type == REG_SZ &&
-                keyValueInformation->DataLength) {
+        if (keyValueInformation->Type == REG_SZ && keyValueInformation->DataLength)
+        {
 
-            IopRegistryDataToUnicodeString(
-                &unicodeClassGuid,
-                (PWSTR) KEY_VALUE_DATA(keyValueInformation),
-                keyValueInformation->DataLength);
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipCallDriverAddDevice:\t\tClass GUID is %wZ\n",
-                            &unicodeClassGuid));
-            if (InitSafeBootMode) {
+            IopRegistryDataToUnicodeString(&unicodeClassGuid, (PWSTR)KEY_VALUE_DATA(keyValueInformation),
+                                           keyValueInformation->DataLength);
+            IopDbgPrint(
+                (IOP_ENUMERATION_INFO_LEVEL, "PipCallDriverAddDevice:\t\tClass GUID is %wZ\n", &unicodeClassGuid));
+            if (InitSafeBootMode)
+            {
 
-                if (!IopSafebootDriverLoad(&unicodeClassGuid)) {
+                if (!IopSafebootDriverLoad(&unicodeClassGuid))
+                {
 
                     PKEY_VALUE_FULL_INFORMATION ClassValueInformation = NULL;
                     NTSTATUS s;
                     //
                     // don't load the driver
                     //
-                    IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
-                                 "SAFEBOOT: skipping device = %wZ\n", &unicodeClassGuid));
+                    IopDbgPrint(
+                        (IOP_ENUMERATION_WARNING_LEVEL, "SAFEBOOT: skipping device = %wZ\n", &unicodeClassGuid));
 
-                    s = IopGetRegistryValue(instanceKey,
-                                            REGSTR_VAL_DEVDESC,
-                                            &ClassValueInformation);
-                    if (NT_SUCCESS(s)) {
+                    s = IopGetRegistryValue(instanceKey, REGSTR_VAL_DEVDESC, &ClassValueInformation);
+                    if (NT_SUCCESS(s))
+                    {
 
                         UNICODE_STRING ClassString;
 
-                        RtlInitUnicodeString(&ClassString, (PCWSTR) KEY_VALUE_DATA(ClassValueInformation));
+                        RtlInitUnicodeString(&ClassString, (PCWSTR)KEY_VALUE_DATA(ClassValueInformation));
                         IopBootLog(&ClassString, FALSE);
-                    } else {
+                    }
+                    else
+                    {
 
                         IopBootLog(&unicodeClassGuid, FALSE);
                     }
@@ -2316,49 +2185,44 @@ Return Value:
             //
             // Open the class key
             //
-            status = IopOpenRegistryKeyEx( &controlKey,
-                                           NULL,
-                                           &CmRegistryMachineSystemCurrentControlSetControlClass,
-                                           KEY_READ
-                                           );
-            if (NT_SUCCESS(status)) {
+            status = IopOpenRegistryKeyEx(&controlKey, NULL, &CmRegistryMachineSystemCurrentControlSetControlClass,
+                                          KEY_READ);
+            if (NT_SUCCESS(status))
+            {
 
-                status = IopOpenRegistryKeyEx( &classKey,
-                                               controlKey,
-                                               &unicodeClassGuid,
-                                               KEY_READ
-                                               );
-                if (!NT_SUCCESS(status)) {
+                status = IopOpenRegistryKeyEx(&classKey, controlKey, &unicodeClassGuid, KEY_READ);
+                if (!NT_SUCCESS(status))
+                {
 
-                    IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                    "PipCallDriverAddDevice:\tUnable to open GUID key "
-                                    "%wZ - %#08lx\n",
-                                    &unicodeClassGuid,status));
+                    IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                                 "PipCallDriverAddDevice:\tUnable to open GUID key "
+                                 "%wZ - %#08lx\n",
+                                 &unicodeClassGuid, status));
                 }
                 ZwClose(controlKey);
-            } else {
-
-                IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                "PipCallDriverAddDevice:\tUnable to open "
-                                "HKLM\\SYSTEM\\CCS\\CONTROL\\CLASS - %#08lx\n",
-                                status));
             }
-            if (classKey != NULL) {
+            else
+            {
+
+                IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                             "PipCallDriverAddDevice:\tUnable to open "
+                             "HKLM\\SYSTEM\\CCS\\CONTROL\\CLASS - %#08lx\n",
+                             status));
+            }
+            if (classKey != NULL)
+            {
 
                 UNICODE_STRING unicodeProperties;
 
-                PiWstrToUnicodeString(&unicodeProperties, REGSTR_KEY_DEVICE_PROPERTIES );
-                status = IopOpenRegistryKeyEx( &classPropsKey,
-                                               classKey,
-                                               &unicodeProperties,
-                                               KEY_READ
-                                               );
-                if (!NT_SUCCESS(status)) {
+                PiWstrToUnicodeString(&unicodeProperties, REGSTR_KEY_DEVICE_PROPERTIES);
+                status = IopOpenRegistryKeyEx(&classPropsKey, classKey, &unicodeProperties, KEY_READ);
+                if (!NT_SUCCESS(status))
+                {
 
-                    IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                    "PipCallDriverAddDevice:\tUnable to open GUID\\Properties key "
-                                    "%wZ - %#08lx\n",
-                                    &unicodeClassGuid,status));
+                    IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                                 "PipCallDriverAddDevice:\tUnable to open GUID\\Properties key "
+                                 "%wZ - %#08lx\n",
+                                 &unicodeClassGuid, status));
                 }
             }
         }
@@ -2378,65 +2242,60 @@ Return Value:
 
     RtlZeroMemory(queryTable, sizeof(queryTable));
 
-    queryTable[0].QueryRoutine =
-        (PRTL_QUERY_REGISTRY_ROUTINE) PipCallDriverAddDeviceQueryRoutine;
+    queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PipCallDriverAddDeviceQueryRoutine;
     queryTable[0].Name = REGSTR_VAL_LOWERFILTERS;
-    queryTable[0].EntryContext = (PVOID) UIntToPtr(LowerDeviceFilters);
+    queryTable[0].EntryContext = (PVOID)UIntToPtr(LowerDeviceFilters);
 
-    status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE,
-                                    (PWSTR) instanceKey,
-                                    queryTable,
-                                    &queryContext,
-                                    NULL);
-    if (NT_SUCCESS(status)) {
+    status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, (PWSTR)instanceKey, queryTable, &queryContext, NULL);
+    if (NT_SUCCESS(status))
+    {
 
-        if (classKey != NULL) {
+        if (classKey != NULL)
+        {
 
-            queryTable[0].QueryRoutine =
-                (PRTL_QUERY_REGISTRY_ROUTINE) PipCallDriverAddDeviceQueryRoutine;
+            queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PipCallDriverAddDeviceQueryRoutine;
             queryTable[0].Name = REGSTR_VAL_LOWERFILTERS;
-            queryTable[0].EntryContext = (PVOID) UIntToPtr(LowerClassFilters);
-            status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE,
-                                            (PWSTR) classKey,
-                                            queryTable,
-                                            &queryContext,
-                                            NULL);
-            if (!NT_SUCCESS(status)) {
+            queryTable[0].EntryContext = (PVOID)UIntToPtr(LowerClassFilters);
+            status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, (PWSTR)classKey, queryTable, &queryContext, NULL);
+            if (!NT_SUCCESS(status))
+            {
 
-                IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                "PipCallDriverAddDevice\t\tError %#08lx reading LowerClassFilters "
-                                "value for %wZ\n", status, &DeviceNode->InstancePath));
-
+                IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                             "PipCallDriverAddDevice\t\tError %#08lx reading LowerClassFilters "
+                             "value for %wZ\n",
+                             status, &DeviceNode->InstancePath));
             }
         }
 
-        if (NT_SUCCESS(status)) {
-            queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE) PipCallDriverAddDeviceQueryRoutine;
+        if (NT_SUCCESS(status))
+        {
+            queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PipCallDriverAddDeviceQueryRoutine;
             queryTable[0].Name = REGSTR_VALUE_SERVICE;
-            queryTable[0].EntryContext = (PVOID) UIntToPtr(DeviceService);
+            queryTable[0].EntryContext = (PVOID)UIntToPtr(DeviceService);
             queryTable[0].Flags = RTL_QUERY_REGISTRY_REQUIRED;
 
-            status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE,
-                                            (PWSTR) instanceKey,
-                                            queryTable,
-                                            &queryContext,
-                                            NULL);
-            if (!NT_SUCCESS(status)) {
+            status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, (PWSTR)instanceKey, queryTable, &queryContext, NULL);
+            if (!NT_SUCCESS(status))
+            {
 
-                IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                "PipCallDriverAddDevice\t\tError %#08lx reading service "
-                                "value for %wZ\n", status, &DeviceNode->InstancePath));
-
+                IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                             "PipCallDriverAddDevice\t\tError %#08lx reading service "
+                             "value for %wZ\n",
+                             status, &DeviceNode->InstancePath));
             }
         }
-    } else {
+    }
+    else
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                        "PipCallDriverAddDevice\t\tError %#08lx reading LowerDeviceFilters "
-                        "value for %wZ\n", status, &DeviceNode->InstancePath));
+        IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                     "PipCallDriverAddDevice\t\tError %#08lx reading LowerDeviceFilters "
+                     "value for %wZ\n",
+                     status, &DeviceNode->InstancePath));
     }
 
-    if (DeviceNode->Flags & DNF_LEGACY_DRIVER) {
+    if (DeviceNode->Flags & DNF_LEGACY_DRIVER)
+    {
 
         //
         // One of the services for this device is a legacy driver.  Don't try
@@ -2445,8 +2304,9 @@ Return Value:
 
         status = STATUS_SUCCESS;
         goto Cleanup;
-
-    } else if (NT_SUCCESS(status)) {
+    }
+    else if (NT_SUCCESS(status))
+    {
 
         //
         // Call was successful so we must have been able to reference the
@@ -2455,14 +2315,14 @@ Return Value:
 
         ASSERT(queryContext.DriverLists[DeviceService] != NULL);
 
-        if (queryContext.DriverLists[DeviceService]->NextEntry != NULL) {
+        if (queryContext.DriverLists[DeviceService]->NextEntry != NULL)
+        {
 
             //
             // There's more than one service assigned to this device.  Configuration
             // error
-            IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                            "PipCallDriverAddDevice: Configuration Error - more "
-                            "than one service in driver list\n"));
+            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "PipCallDriverAddDevice: Configuration Error - more "
+                                                      "than one service in driver list\n"));
 
             PipSetDevNodeProblem(DeviceNode, CM_PROB_REGISTRY);
 
@@ -2474,10 +2334,12 @@ Return Value:
         // this is the only case (FDO specified) where we can ignore PDO's characteristics
         //
         usePdoCharacteristics = FALSE;
+    }
+    else if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
 
-    } else if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
-
-        if (!IopDeviceNodeFlagsToCapabilities(DeviceNode)->RawDeviceOK) {
+        if (!IopDeviceNodeFlagsToCapabilities(DeviceNode)->RawDeviceOK)
+        {
 
             //
             // The device cannot be used raw.  Bail out now.
@@ -2485,8 +2347,9 @@ Return Value:
 
             status = STATUS_UNSUCCESSFUL;
             goto Cleanup;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Raw device access is okay.
@@ -2497,10 +2360,10 @@ Return Value:
             usePdoCharacteristics = TRUE; // shouldn't need to do this, but better be safe than sorry
             deviceRaw = TRUE;
             status = STATUS_SUCCESS;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // something else went wrong while parsing the service key.  The
@@ -2509,7 +2372,6 @@ Return Value:
         //
 
         goto Cleanup;
-
     }
 
     //
@@ -2518,37 +2380,29 @@ Return Value:
     // and deal with error conditions afterwards.
     //
 
-     //
-     // First get all the information we have to out of the instance key and
-     // the device node.
-     //
+    //
+    // First get all the information we have to out of the instance key and
+    // the device node.
+    //
 
-     RtlZeroMemory(queryTable, sizeof(queryTable));
+    RtlZeroMemory(queryTable, sizeof(queryTable));
 
-     queryTable[0].QueryRoutine =
-         (PRTL_QUERY_REGISTRY_ROUTINE) PipCallDriverAddDeviceQueryRoutine;
-     queryTable[0].Name = REGSTR_VAL_UPPERFILTERS;
-     queryTable[0].EntryContext = (PVOID) UIntToPtr(UpperDeviceFilters);
-     status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE,
-                                     (PWSTR) instanceKey,
-                                     queryTable,
-                                     &queryContext,
-                                     NULL);
+    queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PipCallDriverAddDeviceQueryRoutine;
+    queryTable[0].Name = REGSTR_VAL_UPPERFILTERS;
+    queryTable[0].EntryContext = (PVOID)UIntToPtr(UpperDeviceFilters);
+    status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, (PWSTR)instanceKey, queryTable, &queryContext, NULL);
 
-     if (NT_SUCCESS(status) && classKey) {
-         queryTable[0].QueryRoutine =
-             (PRTL_QUERY_REGISTRY_ROUTINE) PipCallDriverAddDeviceQueryRoutine;
-         queryTable[0].Name = REGSTR_VAL_UPPERFILTERS;
-         queryTable[0].EntryContext = (PVOID) UIntToPtr(UpperClassFilters);
+    if (NT_SUCCESS(status) && classKey)
+    {
+        queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PipCallDriverAddDeviceQueryRoutine;
+        queryTable[0].Name = REGSTR_VAL_UPPERFILTERS;
+        queryTable[0].EntryContext = (PVOID)UIntToPtr(UpperClassFilters);
 
-         status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE,
-                                         (PWSTR) classKey,
-                                         queryTable,
-                                         &queryContext,
-                                         NULL);
+        status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, (PWSTR)classKey, queryTable, &queryContext, NULL);
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         UCHAR serviceType = 0;
         PDRIVER_LIST_ENTRY listEntry = queryContext.DriverLists[serviceType];
@@ -2560,9 +2414,8 @@ Return Value:
 
         ASSERT(!(DeviceNode->Flags & DNF_LEGACY_DRIVER));
 
-        ASSERTMSG(
-            "Error - Device has no service but cannot be run RAW\n",
-            ((queryContext.DriverLists[DeviceService] != NULL) || (deviceRaw)));
+        ASSERTMSG("Error - Device has no service but cannot be run RAW\n",
+                  ((queryContext.DriverLists[DeviceService] != NULL) || (deviceRaw)));
 
         //
         // Do preinit work.
@@ -2574,17 +2427,19 @@ Return Value:
         //
         // It's okay to try adding all the drivers.
         //
-        for (serviceType = 0; serviceType < MaximumAddStage; serviceType++) {
+        for (serviceType = 0; serviceType < MaximumAddStage; serviceType++)
+        {
 
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipCallDriverAddDevice: Adding Services (type %d)\n",
-                            serviceType));
+            IopDbgPrint(
+                (IOP_ENUMERATION_INFO_LEVEL, "PipCallDriverAddDevice: Adding Services (type %d)\n", serviceType));
 
-            if (serviceType == DeviceService) {
+            if (serviceType == DeviceService)
+            {
 
                 topOfLowerFilterStack = IoGetAttachedDevice(DeviceNode->PhysicalDeviceObject);
 
-                if (deviceRaw && (queryContext.DriverLists[serviceType] == NULL)) {
+                if (deviceRaw && (queryContext.DriverLists[serviceType] == NULL))
+                {
 
                     //
                     // Mark the devnode as added, as it has no service.
@@ -2592,8 +2447,9 @@ Return Value:
 
                     ASSERT(queryContext.DriverLists[serviceType] == NULL);
                     PipSetDevNodeState(DeviceNode, DeviceNodeDriversAdded, NULL);
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Since we are going to see a service, grab a pointer to
@@ -2605,15 +2461,13 @@ Return Value:
                 }
             }
 
-            for (listEntry = queryContext.DriverLists[serviceType];
-                listEntry != NULL;
-                listEntry = listEntry->NextEntry) {
+            for (listEntry = queryContext.DriverLists[serviceType]; listEntry != NULL; listEntry = listEntry->NextEntry)
+            {
 
                 PDRIVER_ADD_DEVICE addDeviceRoutine;
 
-                IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                                "PipCallDriverAddDevice:\tAdding driver %#08lx\n",
-                                listEntry->DriverObject));
+                IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipCallDriverAddDevice:\tAdding driver %#08lx\n",
+                             listEntry->DriverObject));
 
                 ASSERT(listEntry->DriverObject);
                 ASSERT(listEntry->DriverObject->DriverExtension);
@@ -2622,45 +2476,40 @@ Return Value:
                 //
                 // Invoke the driver's AddDevice() entry point.
                 //
-                addDeviceRoutine =
-                    listEntry->DriverObject->DriverExtension->AddDevice;
+                addDeviceRoutine = listEntry->DriverObject->DriverExtension->AddDevice;
 
-                status = PpvUtilCallAddDevice(
-                    DeviceNode->PhysicalDeviceObject,
-                    listEntry->DriverObject,
-                    addDeviceRoutine,
-                    VerifierTypeFromServiceType(serviceType)
-                    );
+                status = PpvUtilCallAddDevice(DeviceNode->PhysicalDeviceObject, listEntry->DriverObject,
+                                              addDeviceRoutine, VerifierTypeFromServiceType(serviceType));
 
-                IopDbgPrint((   IOP_ENUMERATION_TRACE_LEVEL,
-                                "PipCallDriverAddDevice:\t\tRoutine returned "
-                                "%#08lx\n", status));
+                IopDbgPrint((IOP_ENUMERATION_TRACE_LEVEL,
+                             "PipCallDriverAddDevice:\t\tRoutine returned "
+                             "%#08lx\n",
+                             status));
 
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
 
-                   //
-                   // If this is a service, mark the  it is legal for a filter to succeed AddDevice
-                   // but fail to attach anything to the top of the stack.
-                   //
-                   if (serviceType == DeviceService) {
+                    //
+                    // If this is a service, mark the  it is legal for a filter to succeed AddDevice
+                    // but fail to attach anything to the top of the stack.
+                    //
+                    if (serviceType == DeviceService)
+                    {
 
-                       fdoDeviceObject = topOfLowerFilterStack->AttachedDevice;
-                       ASSERT(fdoDeviceObject);
-                   }
+                        fdoDeviceObject = topOfLowerFilterStack->AttachedDevice;
+                        ASSERT(fdoDeviceObject);
+                    }
 
-                   PipSetDevNodeState(DeviceNode, DeviceNodeDriversAdded, NULL);
-
-                } else if (serviceType == DeviceService) {
+                    PipSetDevNodeState(DeviceNode, DeviceNodeDriversAdded, NULL);
+                }
+                else if (serviceType == DeviceService)
+                {
 
                     //
                     // Mark the stack appropriately.
                     //
-                    IovUtilMarkStack(
-                        DeviceNode->PhysicalDeviceObject,
-                        topOfPdoStack->AttachedDevice,
-                        fdoDeviceObject,
-                        FALSE
-                        );
+                    IovUtilMarkStack(DeviceNode->PhysicalDeviceObject, topOfPdoStack->AttachedDevice, fdoDeviceObject,
+                                     FALSE);
 
                     //
                     // If service fails, then add failed. (Alternately, if
@@ -2670,10 +2519,11 @@ Return Value:
                     goto Cleanup;
                 }
 
-                if (IoGetAttachedDevice(DeviceNode->PhysicalDeviceObject)->Flags & DO_DEVICE_INITIALIZING) {
-                    IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                    "***************** DO_DEVICE_INITIALIZING not cleared on %#08lx\n",
-                                    IoGetAttachedDevice(DeviceNode->PhysicalDeviceObject)));
+                if (IoGetAttachedDevice(DeviceNode->PhysicalDeviceObject)->Flags & DO_DEVICE_INITIALIZING)
+                {
+                    IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                                 "***************** DO_DEVICE_INITIALIZING not cleared on %#08lx\n",
+                                 IoGetAttachedDevice(DeviceNode->PhysicalDeviceObject)));
                 }
 
                 ASSERT_INITED(IoGetAttachedDevice(DeviceNode->PhysicalDeviceObject));
@@ -2684,47 +2534,43 @@ Return Value:
         // Mark the stack appropriately. We tell the verifier the stack is raw
         // if the fdo is NULL and we made it this far.
         //
-        IovUtilMarkStack(
-            DeviceNode->PhysicalDeviceObject,
-            topOfPdoStack->AttachedDevice,
-            fdoDeviceObject,
-            ((fdoDeviceObject == NULL) || deviceRaw)
-            );
+        IovUtilMarkStack(DeviceNode->PhysicalDeviceObject, topOfPdoStack->AttachedDevice, fdoDeviceObject,
+                         ((fdoDeviceObject == NULL) || deviceRaw));
 
         //
         // change PDO and all attached objects
         // to have properties specified in the registry
         //
 
-        PipChangeDeviceObjectFromRegistryProperties(DeviceNode->PhysicalDeviceObject, classPropsKey, instanceKey, usePdoCharacteristics);
+        PipChangeDeviceObjectFromRegistryProperties(DeviceNode->PhysicalDeviceObject, classPropsKey, instanceKey,
+                                                    usePdoCharacteristics);
 
         //
         // CapabilityFlags are refreshed with call to IopSaveDeviceCapabilities after device is started
         //
+    }
+    else
+    {
 
-    } else {
-
-        IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                        "PipCallDriverAddDevice: Error %#08lx while building "
-                        "driver load list\n", status));
+        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                     "PipCallDriverAddDevice: Error %#08lx while building "
+                     "driver load list\n",
+                     status));
 
         goto Cleanup;
     }
 
     deviceObject = DeviceNode->PhysicalDeviceObject;
 
-    status = IopQueryLegacyBusInformation(
-                 deviceObject,
-                 NULL,
-                 &DeviceNode->InterfaceType,
-                 &DeviceNode->BusNumber
-             );
+    status = IopQueryLegacyBusInformation(deviceObject, NULL, &DeviceNode->InterfaceType, &DeviceNode->BusNumber);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         IopInsertLegacyBusDeviceNode(DeviceNode, DeviceNode->InterfaceType, DeviceNode->BusNumber);
-
-    } else {
+    }
+    else
+    {
 
         DeviceNode->InterfaceType = InterfaceTypeUndefined;
         DeviceNode->BusNumber = 0xfffffff0;
@@ -2735,78 +2581,74 @@ Return Value:
     ASSERT(DeviceNode->State == DeviceNodeDriversAdded);
 
 Cleanup:
+{
+
+    UCHAR i;
+
+    IopDbgPrint(
+        (IOP_ENUMERATION_VERBOSE_LEVEL, "PipCallDriverAddDevice: DevNode flags leaving = %#08lx\n", DeviceNode->Flags));
+
+    IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL, "PipCallDriverAddDevice: Cleaning up\n"));
+
+    //
+    // Free the entries in the driver load list & release the references on
+    // their driver objects.
+    //
+
+    for (i = 0; i < MaximumAddStage; i++)
     {
 
-        UCHAR i;
+        PDRIVER_LIST_ENTRY listHead = queryContext.DriverLists[i];
 
-        IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                        "PipCallDriverAddDevice: DevNode flags leaving = %#08lx\n",
-                        DeviceNode->Flags));
+        while (listHead != NULL)
+        {
 
-        IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                        "PipCallDriverAddDevice: Cleaning up\n"));
+            PDRIVER_LIST_ENTRY tmp = listHead;
 
-        //
-        // Free the entries in the driver load list & release the references on
-        // their driver objects.
-        //
+            listHead = listHead->NextEntry;
 
-        for (i = 0; i < MaximumAddStage; i++) {
+            ASSERT(tmp->DriverObject != NULL);
 
-            PDRIVER_LIST_ENTRY listHead = queryContext.DriverLists[i];
+            //
+            // Let the driver unload if it hasn't created any device
+            // objects. We only do this if the paging stack is already
+            // online (the same filter may be needed by more than one card).
+            // IopInitializeBootDrivers will take care of cleaning up any
+            // leftover drivers after boot.
+            //
+            if (PnPBootDriversInitialized)
+            {
 
-            while(listHead != NULL) {
-
-                PDRIVER_LIST_ENTRY tmp = listHead;
-
-                listHead = listHead->NextEntry;
-
-                ASSERT(tmp->DriverObject != NULL);
-
-                //
-                // Let the driver unload if it hasn't created any device
-                // objects. We only do this if the paging stack is already
-                // online (the same filter may be needed by more than one card).
-                // IopInitializeBootDrivers will take care of cleaning up any
-                // leftover drivers after boot.
-                //
-                if (PnPBootDriversInitialized) {
-
-                    IopUnloadAttachedDriver(tmp->DriverObject);
-                }
-
-                ObDereferenceObject(tmp->DriverObject);
-
-                ExFreePool(tmp);
+                IopUnloadAttachedDriver(tmp->DriverObject);
             }
+
+            ObDereferenceObject(tmp->DriverObject);
+
+            ExFreePool(tmp);
         }
     }
+}
 
     ZwClose(instanceKey);
 
-    if (classKey != NULL) {
+    if (classKey != NULL)
+    {
         ZwClose(classKey);
     }
 
-    if (classPropsKey != NULL) {
+    if (classPropsKey != NULL)
+    {
         ZwClose(classPropsKey);
     }
 
-    IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                    "PipCallDriverAddDevice: Returning status %#08lx\n", status));
+    IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipCallDriverAddDevice: Returning status %#08lx\n", status));
 
     return status;
 }
 
 NTSTATUS
-PipCallDriverAddDeviceQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PWCHAR ValueData,
-    IN ULONG ValueLength,
-    IN PQUERY_CONTEXT Context,
-    IN ULONG ServiceType
-    )
+PipCallDriverAddDeviceQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PWCHAR ValueData, IN ULONG ValueLength,
+                                   IN PQUERY_CONTEXT Context, IN ULONG ServiceType)
 
 /*++
 
@@ -2871,22 +2713,23 @@ Return Value:
     //
     serviceKey = NULL;
 
-    IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                    "PipCallDriverAddDevice:\t\tValue %ws [Type %d, Len %d] @ "
-                    "%#08lx\n",
-                    ValueName, ValueType, ValueLength, ValueData));
+    IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                 "PipCallDriverAddDevice:\t\tValue %ws [Type %d, Len %d] @ "
+                 "%#08lx\n",
+                 ValueName, ValueType, ValueLength, ValueData));
 
     //
     // First check and make sure that the value type is okay.  An invalid type
     // is not a fatal error.
     //
 
-    if (ValueType != REG_SZ) {
+    if (ValueType != REG_SZ)
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                        "PipCallDriverAddDevice:\t\tValueType %d invalid for "
-                        "ServiceType %d\n",
-                        ValueType,ServiceType));
+        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                     "PipCallDriverAddDevice:\t\tValueType %d invalid for "
+                     "ServiceType %d\n",
+                     ValueType, ServiceType));
 
         return STATUS_SUCCESS;
     }
@@ -2895,20 +2738,18 @@ Return Value:
     // Make sure the string is a reasonable length.
     //
 
-    if (ValueLength <= sizeof(WCHAR)) {
+    if (ValueLength <= sizeof(WCHAR))
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                        "PipCallDriverAddDevice:\t\tValueLength %d is too short\n",
-                        ValueLength));
+        IopDbgPrint(
+            (IOP_ENUMERATION_ERROR_LEVEL, "PipCallDriverAddDevice:\t\tValueLength %d is too short\n", ValueLength));
 
         return STATUS_SUCCESS;
     }
 
     RtlInitUnicodeString(&unicodeServiceName, ValueData);
 
-    IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                    "PipCallDriverAddDevice:\t\t\tService Name %wZ\n",
-                    &unicodeServiceName));
+    IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipCallDriverAddDevice:\t\t\tService Name %wZ\n", &unicodeServiceName));
 
     //
     // Check the service name to see if it should be used directly to reference
@@ -2919,9 +2760,11 @@ Return Value:
     madeupService = TRUE;
     i = 0;
 
-    while(*prefixString != L'\0') {
+    while (*prefixString != L'\0')
+    {
 
-        if (unicodeServiceName.Buffer[i] != *prefixString) {
+        if (unicodeServiceName.Buffer[i] != *prefixString)
+        {
 
             madeupService = FALSE;
             break;
@@ -2935,11 +2778,13 @@ Return Value:
     // Get the driver name from the service key. We need this to figure out
     // if the driver is already in memory.
     //
-    if (madeupService) {
+    if (madeupService)
+    {
 
         RtlInitUnicodeString(&unicodeDriverName, unicodeServiceName.Buffer);
-
-    } else {
+    }
+    else
+    {
 
         //
         // BUGBUG - (RBN) Hack to set the service name in the devnode if it
@@ -2950,21 +2795,23 @@ Return Value:
         //      call IopGetDriverLoadType below.
         //
 
-        if (Context->DeviceNode->ServiceName.Length == 0) {
+        if (Context->DeviceNode->ServiceName.Length == 0)
+        {
 
             Context->DeviceNode->ServiceName = unicodeServiceName;
-            Context->DeviceNode->ServiceName.Buffer = ExAllocatePool( NonPagedPool,
-                                                                      unicodeServiceName.MaximumLength );
+            Context->DeviceNode->ServiceName.Buffer = ExAllocatePool(NonPagedPool, unicodeServiceName.MaximumLength);
 
-            if (Context->DeviceNode->ServiceName.Buffer != NULL) {
-                RtlCopyMemory( Context->DeviceNode->ServiceName.Buffer,
-                               unicodeServiceName.Buffer,
-                               unicodeServiceName.MaximumLength );
-            } else {
-                PiWstrToUnicodeString( &Context->DeviceNode->ServiceName, NULL );
+            if (Context->DeviceNode->ServiceName.Buffer != NULL)
+            {
+                RtlCopyMemory(Context->DeviceNode->ServiceName.Buffer, unicodeServiceName.Buffer,
+                              unicodeServiceName.MaximumLength);
+            }
+            else
+            {
+                PiWstrToUnicodeString(&Context->DeviceNode->ServiceName, NULL);
 
-                IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                                "PipCallDriverAddDevice:\t\t\tCannot allocate memory for service name in devnode\n"));
+                IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                             "PipCallDriverAddDevice:\t\t\tCannot allocate memory for service name in devnode\n"));
 
                 status = STATUS_UNSUCCESSFUL;
 
@@ -2976,23 +2823,20 @@ Return Value:
         // Check in the registry to find the name of the driver object
         // for this device.
         //
-        status = PipOpenServiceEnumKeys(&unicodeServiceName,
-                                        KEY_READ,
-                                        &serviceKey,
-                                        NULL,
-                                        FALSE);
+        status = PipOpenServiceEnumKeys(&unicodeServiceName, KEY_READ, &serviceKey, NULL, FALSE);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // Cannot open the service key for this driver.  This is a
             // fatal error.
             //
 
-            IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                            "PipCallDriverAddDevice:\t\t\tStatus %#08lx "
-                            "opening service key\n",
-                            status));
+            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                         "PipCallDriverAddDevice:\t\t\tStatus %#08lx "
+                         "opening service key\n",
+                         status));
 
             PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_REGISTRY);
 
@@ -3001,22 +2845,24 @@ Return Value:
 
         status = IopGetDriverNameFromKeyNode(serviceKey, &unicodeDriverName);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // Can't get the driver name from the service key.  This is a
             // fatal error.
             //
 
-            IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                            "PipCallDriverAddDevice:\t\t\tStatus %#08lx "
-                            "getting driver name\n",
-                            status));
+            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                         "PipCallDriverAddDevice:\t\t\tStatus %#08lx "
+                         "getting driver name\n",
+                         status));
 
             PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_REGISTRY);
             goto Cleanup;
-
-        } else {
+        }
+        else
+        {
 
             freeDriverName = TRUE;
         }
@@ -3026,29 +2872,28 @@ Return Value:
         //
     }
 
-    IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                    "PipCallDriverAddDevice:\t\t\tDriverName is %wZ\n",
-                    &unicodeDriverName));
+    IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipCallDriverAddDevice:\t\t\tDriverName is %wZ\n", &unicodeDriverName));
 
     driverObject = IopReferenceDriverObjectByName(&unicodeDriverName);
 
-    if (driverObject == NULL) {
+    if (driverObject == NULL)
+    {
 
         //
         // We couldn't find a driver object.  It's possible the driver isn't
         // loaded & initialized so check to see if we can try to load it
         // now.
         //
-        if (madeupService) {
+        if (madeupService)
+        {
 
             //
             // The madeup service's driver doesn't seem to exist yet.
             // We will fail the request without setting a problem code so
             // we will try it again later.  (Root Enumerated devices...)
             //
-            IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                            "PipCallDriverAddDevice:\t\t\tCannot find driver "
-                            "object for madeup service\n"));
+            IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL, "PipCallDriverAddDevice:\t\t\tCannot find driver "
+                                                        "object for madeup service\n"));
 
             status = STATUS_UNSUCCESSFUL;
 
@@ -3063,16 +2908,20 @@ Return Value:
         loadType = SERVICE_DISABLED;
 
         status = IopGetRegistryValue(serviceKey, L"Start", &keyValueInformation);
-        if (NT_SUCCESS(status)) {
-            if (keyValueInformation->Type == REG_DWORD) {
-                if (keyValueInformation->DataLength == sizeof(ULONG)) {
+        if (NT_SUCCESS(status))
+        {
+            if (keyValueInformation->Type == REG_DWORD)
+            {
+                if (keyValueInformation->DataLength == sizeof(ULONG))
+                {
                     loadType = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
                 }
             }
             ExFreePool(keyValueInformation);
         }
 
-        if (ServiceType != DeviceService && !PnPBootDriversInitialized) {
+        if (ServiceType != DeviceService && !PnPBootDriversInitialized)
+        {
 
             //
             // Get the group index. We need this because PipLoadBootFilterDriver
@@ -3085,13 +2934,10 @@ Return Value:
             // If we are in BootDriverInitialization phase and trying to load a
             // filter driver
             //
-            status = PipLoadBootFilterDriver(
-                &unicodeDriverName,
-                groupIndex,
-                &driverObject
-                );
+            status = PipLoadBootFilterDriver(&unicodeDriverName, groupIndex, &driverObject);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 ASSERT(driverObject);
 #if DBG
@@ -3100,15 +2946,18 @@ Return Value:
 #else
                 ObReferenceObject(driverObject);
 #endif
-            } else if (status != STATUS_DRIVER_BLOCKED &&
-                       status != STATUS_DRIVER_BLOCKED_CRITICAL) {
+            }
+            else if (status != STATUS_DRIVER_BLOCKED && status != STATUS_DRIVER_BLOCKED_CRITICAL)
+            {
 
                 goto Cleanup;
             }
+        }
+        else
+        {
 
-        } else {
-
-            if (!Context->LoadDriver) {
+            if (!Context->LoadDriver)
+            {
 
                 //
                 // We're not supposed to try and load a driver - most likely our
@@ -3117,18 +2966,18 @@ Return Value:
                 // be called again when we can load the drivers.
                 //
 
-                IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                                "PipCallDriverAddDevice:\t\t\tNot allowed to load "
-                                "drivers yet\n"));
+                IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL, "PipCallDriverAddDevice:\t\t\tNot allowed to load "
+                                                            "drivers yet\n"));
 
                 status = STATUS_UNSUCCESSFUL;
                 goto Cleanup;
             }
 
-            if (loadType > Context->AddContext->DriverStartType) {
+            if (loadType > Context->AddContext->DriverStartType)
+            {
 
-                if (loadType == SERVICE_DISABLED &&
-                    !PipDoesDevNodeHaveProblem(Context->DeviceNode)) {
+                if (loadType == SERVICE_DISABLED && !PipDoesDevNodeHaveProblem(Context->DeviceNode))
+                {
                     PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DISABLED_SERVICE);
                 }
 
@@ -3139,8 +2988,8 @@ Return Value:
                 // always load it.
                 //
 
-                IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                                "PipCallDriverAddDevice:\t\t\tService is disabled or not at right time to load it\n"));
+                IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                             "PipCallDriverAddDevice:\t\t\tService is disabled or not at right time to load it\n"));
                 status = STATUS_UNSUCCESSFUL;
                 goto Cleanup;
             }
@@ -3149,64 +2998,62 @@ Return Value:
             // Check in the registry to find the name of the driver object
             // for this device.
             //
-            status = PipOpenServiceEnumKeys(&unicodeServiceName,
-                                            KEY_READ,
-                                            &handle,
-                                            NULL,
-                                            FALSE);
+            status = PipOpenServiceEnumKeys(&unicodeServiceName, KEY_READ, &handle, NULL, FALSE);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 //
                 // Cannot open the service key for this driver.  This is a
                 // fatal error.
                 //
-                IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                                "PipCallDriverAddDevice:\t\t\tStatus %#08lx "
-                                "opening service key\n",
-                                status));
+                IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                             "PipCallDriverAddDevice:\t\t\tStatus %#08lx "
+                             "opening service key\n",
+                             status));
 
                 //
                 // Convert the status values into something more definite.
                 //
-                if (status != STATUS_INSUFFICIENT_RESOURCES) {
+                if (status != STATUS_INSUFFICIENT_RESOURCES)
+                {
 
                     status = STATUS_ILL_FORMED_SERVICE_ENTRY;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // The handle we pass in here will be closed by IopLoadDriver.
                 // Note that IopLoadDriver return success without actually
                 // loading the driver. This happens in the safe mode boot case.
                 //
-                status = IopLoadDriver(
-                    handle,
-                    FALSE,
-                    (ServiceType != DeviceService)? TRUE : FALSE,
-                    &driverEntryStatus);
+                status =
+                    IopLoadDriver(handle, FALSE, (ServiceType != DeviceService) ? TRUE : FALSE, &driverEntryStatus);
 
                 //
                 // Convert the status values into something more definite.
                 //
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
 
-                    if (status == STATUS_FAILED_DRIVER_ENTRY) {
+                    if (status == STATUS_FAILED_DRIVER_ENTRY)
+                    {
 
                         //
                         // Preserve insufficient resources return by the driver
                         //
-                        if (driverEntryStatus == STATUS_INSUFFICIENT_RESOURCES) {
+                        if (driverEntryStatus == STATUS_INSUFFICIENT_RESOURCES)
+                        {
 
                             status = STATUS_INSUFFICIENT_RESOURCES;
                         }
-
-                    } else if ((status != STATUS_INSUFFICIENT_RESOURCES) &&
-                               (status != STATUS_PLUGPLAY_NO_DEVICE) &&
-                               (status != STATUS_DRIVER_FAILED_PRIOR_UNLOAD) &&
-                               (status != STATUS_DRIVER_BLOCKED) &&
-                               (status != STATUS_DRIVER_BLOCKED_CRITICAL)) {
+                    }
+                    else if ((status != STATUS_INSUFFICIENT_RESOURCES) && (status != STATUS_PLUGPLAY_NO_DEVICE) &&
+                             (status != STATUS_DRIVER_FAILED_PRIOR_UNLOAD) && (status != STATUS_DRIVER_BLOCKED) &&
+                             (status != STATUS_DRIVER_BLOCKED_CRITICAL))
+                    {
 
                         //
                         // Assume this happened because the driver could not be
@@ -3216,7 +3063,8 @@ Return Value:
                     }
                 }
 
-                if (PnPInitialized) {
+                if (PnPInitialized)
+                {
 
                     IopCallDriverReinitializationRoutines();
                 }
@@ -3225,9 +3073,11 @@ Return Value:
             // Try and get a pointer to the driver object for the service.
             //
             driverObject = IopReferenceDriverObjectByName(&unicodeDriverName);
-            if (driverObject) {
+            if (driverObject)
+            {
 
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     //
                     // The driver should not be in memory upon failure.
                     //
@@ -3235,9 +3085,12 @@ Return Value:
                     ObDereferenceObject(driverObject);
                     driverObject = NULL;
                 }
-            } else {
+            }
+            else
+            {
 
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     //
                     // Driver was probably not loaded because of safe mode.
                     //
@@ -3250,62 +3103,67 @@ Return Value:
     //
     // If we still dont have a driver object, then something failed.
     //
-    if (driverObject == NULL) {
+    if (driverObject == NULL)
+    {
         //
         // Apparently the load didn't work out very well.
         //
         ASSERT(!NT_SUCCESS(status));
         IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
                      "PipCallDriverAddDevice:\t\t\tUnable to reference "
-                     "driver %wZ (%x)\n", &unicodeDriverName, status));
-        if (!PipDoesDevNodeHaveProblem(Context->DeviceNode)) {
+                     "driver %wZ (%x)\n",
+                     &unicodeDriverName, status));
+        if (!PipDoesDevNodeHaveProblem(Context->DeviceNode))
+        {
 
-            switch(status) {
+            switch (status)
+            {
 
-                case STATUS_ILL_FORMED_SERVICE_ENTRY:
-                    PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DRIVER_SERVICE_KEY_INVALID);
-                    break;
+            case STATUS_ILL_FORMED_SERVICE_ENTRY:
+                PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DRIVER_SERVICE_KEY_INVALID);
+                break;
 
-                case STATUS_INSUFFICIENT_RESOURCES:
-                    PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_OUT_OF_MEMORY);
-                    break;
+            case STATUS_INSUFFICIENT_RESOURCES:
+                PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_OUT_OF_MEMORY);
+                break;
 
-                case STATUS_PLUGPLAY_NO_DEVICE:
-                    PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_LEGACY_SERVICE_NO_DEVICES);
-                    break;
+            case STATUS_PLUGPLAY_NO_DEVICE:
+                PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_LEGACY_SERVICE_NO_DEVICES);
+                break;
 
-                case STATUS_DRIVER_FAILED_PRIOR_UNLOAD:
-                    PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DRIVER_FAILED_PRIOR_UNLOAD);
-                    break;
+            case STATUS_DRIVER_FAILED_PRIOR_UNLOAD:
+                PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DRIVER_FAILED_PRIOR_UNLOAD);
+                break;
 
-                case STATUS_DRIVER_UNABLE_TO_LOAD:
-                    PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DRIVER_FAILED_LOAD);
-                    break;
+            case STATUS_DRIVER_UNABLE_TO_LOAD:
+                PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DRIVER_FAILED_LOAD);
+                break;
 
-                case STATUS_FAILED_DRIVER_ENTRY:
-                    PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_FAILED_DRIVER_ENTRY);
-                    break;
+            case STATUS_FAILED_DRIVER_ENTRY:
+                PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_FAILED_DRIVER_ENTRY);
+                break;
 
-                case STATUS_DRIVER_BLOCKED_CRITICAL:
-                    PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DRIVER_BLOCKED);
-                    Context->DeviceNode->Flags |= DNF_DRIVER_BLOCKED;
-                    break;
+            case STATUS_DRIVER_BLOCKED_CRITICAL:
+                PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_DRIVER_BLOCKED);
+                Context->DeviceNode->Flags |= DNF_DRIVER_BLOCKED;
+                break;
 
-                case STATUS_DRIVER_BLOCKED:
-                    Context->DeviceNode->Flags |= DNF_DRIVER_BLOCKED;
-                    status = STATUS_SUCCESS;
-                    break;
+            case STATUS_DRIVER_BLOCKED:
+                Context->DeviceNode->Flags |= DNF_DRIVER_BLOCKED;
+                status = STATUS_SUCCESS;
+                break;
 
-                default:
-                case STATUS_NOT_SAFE_MODE_DRIVER:
-                    ASSERT(0);
-                    PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_FAILED_ADD);
-                    break;
+            default:
+            case STATUS_NOT_SAFE_MODE_DRIVER:
+                ASSERT(0);
+                PipSetDevNodeProblem(Context->DeviceNode, CM_PROB_FAILED_ADD);
+                break;
             }
 
             SAVE_FAILURE_INFO(Context->DeviceNode, status);
-
-        } else {
+        }
+        else
+        {
 
             //
             // We're very curious - when does this happen?
@@ -3315,20 +3173,21 @@ Return Value:
         goto Cleanup;
     }
 
-    if (!(driverObject->Flags & DRVO_INITIALIZED)) {
+    if (!(driverObject->Flags & DRVO_INITIALIZED))
+    {
         ObDereferenceObject(driverObject);
         status = STATUS_UNSUCCESSFUL;
         goto Cleanup;
     }
 
-    IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                    "PipCallDriverAddDevice:\t\t\tDriver Reference %#08lx\n",
-                    driverObject));
+    IopDbgPrint(
+        (IOP_ENUMERATION_VERBOSE_LEVEL, "PipCallDriverAddDevice:\t\t\tDriver Reference %#08lx\n", driverObject));
 
     //
     // Check to see if the driver is a legacy driver rather than a Pnp one.
     //
-    if (IopIsLegacyDriver(driverObject)) {
+    if (IopIsLegacyDriver(driverObject))
+    {
 
         //
         // It is.  Since the legacy driver may have already obtained a
@@ -3336,17 +3195,19 @@ Return Value:
         // has been added and started.
         //
 
-        IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                        "PipCallDriverAddDevice:\t\t\tDriver is a legacy "
-                        "driver\n"));
+        IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL, "PipCallDriverAddDevice:\t\t\tDriver is a legacy "
+                                                    "driver\n"));
 
-        if (ServiceType == DeviceService) {
+        if (ServiceType == DeviceService)
+        {
             Context->DeviceNode->Flags |= DNF_LEGACY_DRIVER;
 
             PipSetDevNodeState(Context->DeviceNode, DeviceNodeStarted, NULL);
 
             status = STATUS_UNSUCCESSFUL;
-        } else {
+        }
+        else
+        {
 
             //
             // We allow someone to plug in a legacy driver as a filter driver.
@@ -3363,12 +3224,11 @@ Return Value:
     // There's a chance the driver detected this PDO during it's driver entry
     // routine.  If it did then just bail out.
     //
-    if (Context->DeviceNode->State != DeviceNodeInitialized &&
-        Context->DeviceNode->State != DeviceNodeDriversAdded) {
+    if (Context->DeviceNode->State != DeviceNodeInitialized && Context->DeviceNode->State != DeviceNodeDriversAdded)
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                        "PipCallDriverAddDevice\t\t\tDevNode was reported "
-                        "as detected during driver entry\n"));
+        IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL, "PipCallDriverAddDevice\t\t\tDevNode was reported "
+                                                    "as detected during driver entry\n"));
         status = STATUS_UNSUCCESSFUL;
         goto Cleanup;
     }
@@ -3389,11 +3249,11 @@ Return Value:
 
         listEntry = ExAllocatePool(PagedPool, sizeof(DRIVER_LIST_ENTRY));
 
-        if (listEntry == NULL) {
+        if (listEntry == NULL)
+        {
 
-            IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                            "PipCallDriverAddDevice:\t\t\tUnable to allocate list "
-                            "entry\n"));
+            IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL, "PipCallDriverAddDevice:\t\t\tUnable to allocate list "
+                                                        "entry\n"));
 
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto Cleanup;
@@ -3402,7 +3262,8 @@ Return Value:
         listEntry->DriverObject = driverObject;
         listEntry->NextEntry = NULL;
 
-        while(*runner != NULL) {
+        while (*runner != NULL)
+        {
             runner = &((*runner)->NextEntry);
         }
 
@@ -3411,21 +3272,21 @@ Return Value:
 
 Cleanup:
 
-    if (serviceKey) {
+    if (serviceKey)
+    {
 
         ZwClose(serviceKey);
     }
 
-    if (freeDriverName) {
+    if (freeDriverName)
+    {
         RtlFreeUnicodeString(&unicodeDriverName);
     }
     return status;
 }
-
+
 NTSTATUS
-PiRestartDevice(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiRestartDevice(IN PPI_DEVICE_REQUEST Request)
 {
     ADD_CONTEXT addContext;
     NTSTATUS status;
@@ -3435,102 +3296,100 @@ PiRestartDevice(
 
     ASSERT(Request->DeviceObject != NULL);
     deviceNode = (PDEVICE_NODE)Request->DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (PipIsDevNodeDeleted(deviceNode)) {
+    if (PipIsDevNodeDeleted(deviceNode))
+    {
 
         return STATUS_DELETE_PENDING;
-
-    } else if (PipDoesDevNodeHaveProblem(deviceNode)) {
+    }
+    else if (PipDoesDevNodeHaveProblem(deviceNode))
+    {
 
         return STATUS_UNSUCCESSFUL;
     }
 
-    switch(deviceNode->State) {
+    switch (deviceNode->State)
+    {
 
-        case DeviceNodeStartPending:
-            //
-            // Not wired up today, but if the device is starting then we should
-            // in theory defer completing this request until the IRP is
-            // completed.
-            //
-            ASSERT(0);
+    case DeviceNodeStartPending:
+        //
+        // Not wired up today, but if the device is starting then we should
+        // in theory defer completing this request until the IRP is
+        // completed.
+        //
+        ASSERT(0);
 
-            //
-            // Fall through
-            //
+        //
+        // Fall through
+        //
 
-        case DeviceNodeStarted:
-        case DeviceNodeQueryStopped:
-        case DeviceNodeStopped:
-        case DeviceNodeRestartCompletion:
-        case DeviceNodeEnumeratePending:
-            return STATUS_SUCCESS;
+    case DeviceNodeStarted:
+    case DeviceNodeQueryStopped:
+    case DeviceNodeStopped:
+    case DeviceNodeRestartCompletion:
+    case DeviceNodeEnumeratePending:
+        return STATUS_SUCCESS;
 
-        case DeviceNodeInitialized:
+    case DeviceNodeInitialized:
 
-            //
-            // ISSUE - 2000/08/23 - AdriaO: Question,
-            //     When this happens, isn't it a bug in user mode?
-            //
-            // Anyway, fall on through...
-            //
-            //ASSERT(0);
+        //
+        // ISSUE - 2000/08/23 - AdriaO: Question,
+        //     When this happens, isn't it a bug in user mode?
+        //
+        // Anyway, fall on through...
+        //
+        //ASSERT(0);
 
-        case DeviceNodeRemoved:
-            ASSERT(!(deviceNode->UserFlags & DNUF_WILL_BE_REMOVED));
-            IopRestartDeviceNode(deviceNode);
-            break;
+    case DeviceNodeRemoved:
+        ASSERT(!(deviceNode->UserFlags & DNUF_WILL_BE_REMOVED));
+        IopRestartDeviceNode(deviceNode);
+        break;
 
-        case DeviceNodeUninitialized:
-        case DeviceNodeDriversAdded:
-        case DeviceNodeResourcesAssigned:
-        case DeviceNodeEnumerateCompletion:
-        case DeviceNodeStartCompletion:
-        case DeviceNodeStartPostWork:
-            //
-            // ISSUE - 2000/08/23 - AdriaO: Question,
-            //     When this happens, isn't it a bug in user mode?
-            //
-            //ASSERT(0);
-            break;
+    case DeviceNodeUninitialized:
+    case DeviceNodeDriversAdded:
+    case DeviceNodeResourcesAssigned:
+    case DeviceNodeEnumerateCompletion:
+    case DeviceNodeStartCompletion:
+    case DeviceNodeStartPostWork:
+        //
+        // ISSUE - 2000/08/23 - AdriaO: Question,
+        //     When this happens, isn't it a bug in user mode?
+        //
+        //ASSERT(0);
+        break;
 
-        case DeviceNodeAwaitingQueuedDeletion:
-        case DeviceNodeAwaitingQueuedRemoval:
-        case DeviceNodeQueryRemoved:
-        case DeviceNodeRemovePendingCloses:
-        case DeviceNodeDeletePendingCloses:
-            return STATUS_UNSUCCESSFUL;
+    case DeviceNodeAwaitingQueuedDeletion:
+    case DeviceNodeAwaitingQueuedRemoval:
+    case DeviceNodeQueryRemoved:
+    case DeviceNodeRemovePendingCloses:
+    case DeviceNodeDeletePendingCloses:
+        return STATUS_UNSUCCESSFUL;
 
-        case DeviceNodeDeleted:
-        case DeviceNodeUnspecified:
-        default:
-            ASSERT(0);
-            return STATUS_UNSUCCESSFUL;
+    case DeviceNodeDeleted:
+    case DeviceNodeUnspecified:
+    default:
+        ASSERT(0);
+        return STATUS_UNSUCCESSFUL;
     }
 
-    if (Request->RequestType == StartDevice) {
+    if (Request->RequestType == StartDevice)
+    {
 
         addContext.DriverStartType = SERVICE_DEMAND_START;
 
         ObReferenceObject(deviceNode->PhysicalDeviceObject);
-        status = PipProcessDevNodeTree(
-            deviceNode,
-            PnPBootDriversInitialized,          // LoadDriver
-            FALSE,                              // ReallocateResources
-            EnumTypeNone,
-            Request->CompletionEvent != NULL,   // Synchronous
-            FALSE,
-            &addContext,
-            Request);
+        status = PipProcessDevNodeTree(deviceNode,
+                                       PnPBootDriversInitialized, // LoadDriver
+                                       FALSE,                     // ReallocateResources
+                                       EnumTypeNone,
+                                       Request->CompletionEvent != NULL, // Synchronous
+                                       FALSE, &addContext, Request);
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PipQueryDeviceCapabilities(
-    IN PDEVICE_NODE DeviceNode,
-    OUT PDEVICE_CAPABILITIES Capabilities
-    )
+PipQueryDeviceCapabilities(IN PDEVICE_NODE DeviceNode, OUT PDEVICE_CAPABILITIES Capabilities)
 
 /*++
 
@@ -3584,21 +3443,15 @@ Return Value:
     irpStack.MinorFunction = IRP_MN_QUERY_CAPABILITIES;
     irpStack.Parameters.DeviceCapabilities.Capabilities = Capabilities;
 
-    status = IopSynchronousCall(DeviceNode->PhysicalDeviceObject,
-                                &irpStack,
-                                NULL);
+    status = IopSynchronousCall(DeviceNode->PhysicalDeviceObject, &irpStack, NULL);
 
     ASSERT(status != STATUS_PENDING);
 
     return status;
 }
-
+
 NTSTATUS
-PipMakeGloballyUniqueId(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PWCHAR           UniqueId,
-    OUT PWCHAR         *GloballyUniqueId
-    )
+PipMakeGloballyUniqueId(IN PDEVICE_OBJECT DeviceObject, IN PWCHAR UniqueId, OUT PWCHAR *GloballyUniqueId)
 {
     NTSTATUS status;
     ULONG length;
@@ -3633,34 +3486,27 @@ PipMakeGloballyUniqueId(
 
     parentNode = ((PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode)->Parent;
 
-    status = IopOpenRegistryKeyEx( &enumKey,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                   KEY_READ | KEY_WRITE
-                                   );
+    status =
+        IopOpenRegistryKeyEx(&enumKey, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ | KEY_WRITE);
 
-    if (!NT_SUCCESS(status)) {
-        IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                        "PipMakeGloballyUniqueId:\tUnable to open HKLM\\SYSTEM\\CCS\\ENUM (status %08lx)\n",
-                        status));
+    if (!NT_SUCCESS(status))
+    {
+        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                     "PipMakeGloballyUniqueId:\tUnable to open HKLM\\SYSTEM\\CCS\\ENUM (status %08lx)\n", status));
         goto clean0;
     }
 
     //
     // Open the instance key for this devnode
     //
-    status = IopOpenRegistryKeyEx( &instanceKey,
-                                   enumKey,
-                                   &parentNode->InstancePath,
-                                   KEY_READ | KEY_WRITE
-                                   );
+    status = IopOpenRegistryKeyEx(&instanceKey, enumKey, &parentNode->InstancePath, KEY_READ | KEY_WRITE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                        "PipMakeGloballyUniqueId:\tUnable to open registry key for %wZ (status %08lx)\n",
-                        &parentNode->InstancePath,
-                        status));
+        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                     "PipMakeGloballyUniqueId:\tUnable to open registry key for %wZ (status %08lx)\n",
+                     &parentNode->InstancePath, status));
         goto clean1;
     }
 
@@ -3671,19 +3517,14 @@ PipMakeGloballyUniqueId(
     keyValue = (PKEY_VALUE_PARTIAL_INFORMATION)keyBuffer;
     PiWstrToUnicodeString(&valueName, REGSTR_VALUE_UNIQUE_PARENT_ID);
 
-    status = ZwQueryValueKey(instanceKey,
-                             &valueName,
-                             KeyValuePartialInformation,
-                             keyValue,
-                             sizeof(keyBuffer),
-                             &length
-                             );
+    status = ZwQueryValueKey(instanceKey, &valueName, KeyValuePartialInformation, keyValue, sizeof(keyBuffer), &length);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         ASSERT(keyValue->Type == REG_DWORD);
         ASSERT(keyValue->DataLength == sizeof(ULONG));
-        if ((keyValue->Type != REG_DWORD) ||
-            (keyValue->DataLength != sizeof(ULONG))) {
+        if ((keyValue->Type != REG_DWORD) || (keyValue->DataLength != sizeof(ULONG)))
+        {
             status = STATUS_INVALID_PARAMETER;
             goto clean2;
         }
@@ -3694,12 +3535,15 @@ PipMakeGloballyUniqueId(
         // OK, we have a unique parent ID number to prefix to the
         // instance ID.
         Prefix = (PWSTR)ExAllocatePool(PagedPool, 9 * sizeof(WCHAR));
-        if (!Prefix) {
+        if (!Prefix)
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto clean2;
         }
         swprintf(Prefix, L"%x", uniqueIdValue);
-    } else {
+    }
+    else
+    {
 
         //
         // This is the current mechanism for finding existing
@@ -3713,27 +3557,25 @@ PipMakeGloballyUniqueId(
         //
 
         PiWstrToUnicodeString(&valueName, REGSTR_VALUE_PARENT_ID_PREFIX);
-        length = (MAX_PARENT_PREFIX + 1) * sizeof(WCHAR) +
-            FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
-        stringValueBuffer = ExAllocatePool(PagedPool,
-                                           length);
-        if (stringValueBuffer) {
-            status = ZwQueryValueKey(instanceKey,
-                                     &valueName,
-                                     KeyValuePartialInformation,
-                                     stringValueBuffer,
-                                     length,
+        length = (MAX_PARENT_PREFIX + 1) * sizeof(WCHAR) + FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
+        stringValueBuffer = ExAllocatePool(PagedPool, length);
+        if (stringValueBuffer)
+        {
+            status = ZwQueryValueKey(instanceKey, &valueName, KeyValuePartialInformation, stringValueBuffer, length,
                                      &length);
         }
-        else {
+        else
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto clean2;
         }
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             ASSERT(stringValueBuffer->Type == REG_SZ);
-            if (stringValueBuffer->Type != REG_SZ) {
+            if (stringValueBuffer->Type != REG_SZ)
+            {
                 status = STATUS_INVALID_PARAMETER;
                 goto clean2;
             }
@@ -3742,14 +3584,13 @@ PipMakeGloballyUniqueId(
             // Parent has already been assigned a "ParentIdPrefix".
             //
 
-            Prefix = (PWSTR) ExAllocatePool(PagedPool,
-                                            stringValueBuffer->DataLength);
+            Prefix = (PWSTR)ExAllocatePool(PagedPool, stringValueBuffer->DataLength);
             if (!Prefix)
             {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto clean2;
             }
-            wcscpy(Prefix, (PWSTR) stringValueBuffer->Data);
+            wcscpy(Prefix, (PWSTR)stringValueBuffer->Data);
         }
         else
         {
@@ -3767,14 +3608,11 @@ PipMakeGloballyUniqueId(
 
             // Allocate a buffer once for the NextParentId... value
             // and for the prefix.
-            length = (ULONG)(max(wcslen(REGSTR_VALUE_NEXT_PARENT_ID) + 2 + 8 + 8,
-                         MAX_PARENT_PREFIX) + 1);
+            length = (ULONG)(max(wcslen(REGSTR_VALUE_NEXT_PARENT_ID) + 2 + 8 + 8, MAX_PARENT_PREFIX) + 1);
 
             // Device instances are case in-sensitive.  Upcase before
             // performing hash to ensure that the hash is case-insensitve.
-            status = RtlUpcaseUnicodeString(&valueName,
-                                            &parentNode->InstancePath,
-                                            TRUE);
+            status = RtlUpcaseUnicodeString(&valueName, &parentNode->InstancePath, TRUE);
             if (!NT_SUCCESS(status))
             {
                 goto clean2;
@@ -3782,44 +3620,35 @@ PipMakeGloballyUniqueId(
             HASH_UNICODE_STRING(&valueName, &Hash);
             RtlFreeUnicodeString(&valueName);
 
-            Prefix = (PWSTR) ExAllocatePool(PagedPool,
-                                            length * sizeof(WCHAR));
-            if (!Prefix) {
+            Prefix = (PWSTR)ExAllocatePool(PagedPool, length * sizeof(WCHAR));
+            if (!Prefix)
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto clean2;
             }
 
             // Check for existence of "NextParentId...." value and update.
-            swprintf(Prefix, L"%s.%x.%x", REGSTR_VALUE_NEXT_PARENT_ID,
-                     Hash, parentNode->Level);
+            swprintf(Prefix, L"%s.%x.%x", REGSTR_VALUE_NEXT_PARENT_ID, Hash, parentNode->Level);
             RtlInitUnicodeString(&valueName, Prefix);
             keyValue = (PKEY_VALUE_PARTIAL_INFORMATION)keyBuffer;
-            status = ZwQueryValueKey(enumKey,
-                                     &valueName,
-                                     KeyValuePartialInformation,
-                                     keyValue,
-                                     sizeof(keyBuffer),
-                                     &length
-                                     );
-            if (NT_SUCCESS(status) && (keyValue->Type == REG_DWORD) &&
-                (keyValue->DataLength == sizeof(ULONG))) {
+            status =
+                ZwQueryValueKey(enumKey, &valueName, KeyValuePartialInformation, keyValue, sizeof(keyBuffer), &length);
+            if (NT_SUCCESS(status) && (keyValue->Type == REG_DWORD) && (keyValue->DataLength == sizeof(ULONG)))
+            {
                 hashInstance = *(PULONG)(keyValue->Data);
             }
-            else {
+            else
+            {
                 hashInstance = 0;
             }
 
             hashInstance++;
 
-            status = ZwSetValueKey(enumKey,
-                                   &valueName,
-                                   TITLE_INDEX_VALUE,
-                                   REG_DWORD,
-                                   &hashInstance,
-                                   sizeof(hashInstance)
-                                   );
+            status =
+                ZwSetValueKey(enumKey, &valueName, TITLE_INDEX_VALUE, REG_DWORD, &hashInstance, sizeof(hashInstance));
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto clean2;
             }
 
@@ -3827,15 +3656,8 @@ PipMakeGloballyUniqueId(
 
             // Create actual ParentIdPrefix string
             PiWstrToUnicodeString(&valueName, REGSTR_VALUE_PARENT_ID_PREFIX);
-            length = swprintf(Prefix, L"%x&%x&%x", parentNode->Level,
-                     Hash, hashInstance) + 1;
-            status = ZwSetValueKey(instanceKey,
-                                   &valueName,
-                                   TITLE_INDEX_VALUE,
-                                   REG_SZ,
-                                   Prefix,
-                                   length * sizeof(WCHAR)
-                                   );
+            length = swprintf(Prefix, L"%x&%x&%x", parentNode->Level, Hash, hashInstance) + 1;
+            status = ZwSetValueKey(instanceKey, &valueName, TITLE_INDEX_VALUE, REG_SZ, Prefix, length * sizeof(WCHAR));
             if (!NT_SUCCESS(status))
             {
                 goto clean2;
@@ -3847,11 +3669,16 @@ PipMakeGloballyUniqueId(
     // provided by the child and the prefix we've constructed.
     length = (ULONG)(wcslen(Prefix) + (UniqueId ? wcslen(UniqueId) : 0) + 2);
     id = (PWSTR)ExAllocatePool(PagedPool, length * sizeof(WCHAR));
-    if (!id) {
+    if (!id)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
-    } else if (UniqueId) {
+    }
+    else if (UniqueId)
+    {
         swprintf(id, L"%s&%s", Prefix, UniqueId);
-    } else {
+    }
+    else
+    {
         wcscpy(id, Prefix);
     }
 
@@ -3864,22 +3691,22 @@ clean1:
 clean0:
     PiUnlockPnpRegistry();
 
-    if (stringValueBuffer) {
+    if (stringValueBuffer)
+    {
         ExFreePool(stringValueBuffer);
     }
 
-    if (Prefix) {
+    if (Prefix)
+    {
         ExFreePool(Prefix);
     }
 
     *GloballyUniqueId = id;
     return status;
 }
-
+
 BOOLEAN
-PipProcessCriticalDevice(
-    IN PDEVICE_NODE DeviceNode
-    )
+PipProcessCriticalDevice(IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -3916,37 +3743,29 @@ Return Value:
     ULONG length;
 #endif
 
-    IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                    "PipIsCriticalPnpDevice called for devnode %#08lx\n", DeviceNode));
+    IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipIsCriticalPnpDevice called for devnode %#08lx\n", DeviceNode));
 
     //
     // Open the HKLM\System\CCS\Enum key.
     //
-    status = IopOpenRegistryKeyEx( &enumKey,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                   KEY_READ
-                                   );
-    if (!NT_SUCCESS(status)) {
-        IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                        "PipIsCriticalPnpDevice: couldn't open enum key %#08lx\n", status));
+    status = IopOpenRegistryKeyEx(&enumKey, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ);
+    if (!NT_SUCCESS(status))
+    {
+        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "PipIsCriticalPnpDevice: couldn't open enum key %#08lx\n", status));
         return FALSE;
     }
 
     //
     // Open the instance key for this devnode
     //
-    status = IopOpenRegistryKeyEx( &instanceKey,
-                                   enumKey,
-                                   &DeviceNode->InstancePath,
-                                   KEY_ALL_ACCESS
-                                   );
+    status = IopOpenRegistryKeyEx(&instanceKey, enumKey, &DeviceNode->InstancePath, KEY_ALL_ACCESS);
     ZwClose(enumKey);
 
-    if (!NT_SUCCESS(status)) {
-        IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                        "PipIsCriticalPnpDevice: couldn't open instance path key %wZ [%#08lx]\n",
-                        &(DeviceNode->InstancePath), status));
+    if (!NT_SUCCESS(status))
+    {
+        IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                     "PipIsCriticalPnpDevice: couldn't open instance path key %wZ [%#08lx]\n",
+                     &(DeviceNode->InstancePath), status));
         return FALSE;
     }
 
@@ -3961,17 +3780,13 @@ Return Value:
     PiWstrToUnicodeString(&driver, NULL);
     PiWstrToUnicodeString(&lowerFilters, NULL);
     PiWstrToUnicodeString(&upperFilters, NULL);
-    status = PipProcessCriticalDeviceRoutine(instanceKey,
-                                             &foundMatch,
-                                             &service,
-                                             &classGuid,
-                                             &driver,
-                                             &lowerFilters,
+    status = PipProcessCriticalDeviceRoutine(instanceKey, &foundMatch, &service, &classGuid, &driver, &lowerFilters,
                                              &upperFilters);
-    if (!NT_SUCCESS(status) || !foundMatch) {
-        IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                        "PipProcessCriticalDevice: No match found for devnode %wZ [%#08lx]\n",
-                        &DeviceNode->InstancePath, status));
+    if (!NT_SUCCESS(status) || !foundMatch)
+    {
+        IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL,
+                     "PipProcessCriticalDevice: No match found for devnode %wZ [%#08lx]\n", &DeviceNode->InstancePath,
+                     status));
         ZwClose(instanceKey);
         return FALSE;
     }
@@ -3981,8 +3796,7 @@ Return Value:
     // to setup for it.  Set the service value in the registry.
     //
 
-    IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                    "PipProcessCriticalDevice: Setting up critical service\n"));
+    IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL, "PipProcessCriticalDevice: Setting up critical service\n"));
 
     PiWstrToUnicodeString(&serviceValue, REGSTR_VALUE_SERVICE);
     PiWstrToUnicodeString(&guidValue, REGSTR_VALUE_CLASSGUID);
@@ -3990,78 +3804,54 @@ Return Value:
     PiWstrToUnicodeString(&lowerFiltersValue, REGSTR_VALUE_LOWERFILTERS);
     PiWstrToUnicodeString(&upperFiltersValue, REGSTR_VALUE_UPPERFILTERS);
 
-    if (classGuid.Buffer) {
+    if (classGuid.Buffer)
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                        "PipProcessCriticalDevice: classGuid is %wZ\n",
-                        &classGuid));
+        IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipProcessCriticalDevice: classGuid is %wZ\n", &classGuid));
 
-        status = ZwSetValueKey(instanceKey,
-                               &guidValue,
-                               0L,
-                               REG_SZ,
-                               classGuid.Buffer,
+        status = ZwSetValueKey(instanceKey, &guidValue, 0L, REG_SZ, classGuid.Buffer,
                                classGuid.Length + sizeof(UNICODE_NULL));
     }
 
-    if (driver.Buffer) {
-        IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                        "PipProcessCriticalDevice: driver is %wZ\n",
-                        &driver));
+    if (driver.Buffer)
+    {
+        IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipProcessCriticalDevice: driver is %wZ\n", &driver));
 
-        status = ZwSetValueKey(instanceKey,
-                               &driverValue,
-                               0L,
-                               REG_SZ,
-                               driver.Buffer,
-                               driver.Length + sizeof(UNICODE_NULL));
+        status =
+            ZwSetValueKey(instanceKey, &driverValue, 0L, REG_SZ, driver.Buffer, driver.Length + sizeof(UNICODE_NULL));
     }
 
-    if (lowerFilters.Buffer) {
+    if (lowerFilters.Buffer)
+    {
 #if DBG_SCOPE
         str = lowerFilters.Buffer;
-        while ((length = (ULONG)wcslen(str)) != 0) {
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipProcessCriticalDevice: lower filter is %ws\n",
-                            str));
+        while ((length = (ULONG)wcslen(str)) != 0)
+        {
+            IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipProcessCriticalDevice: lower filter is %ws\n", str));
             str += (length + 1);
         }
 #endif
-        status = ZwSetValueKey(instanceKey,
-                               &lowerFiltersValue,
-                               0L,
-                               REG_MULTI_SZ,
-                               lowerFilters.Buffer,
+        status = ZwSetValueKey(instanceKey, &lowerFiltersValue, 0L, REG_MULTI_SZ, lowerFilters.Buffer,
                                lowerFilters.Length); // + sizeof(UNICODE_NULL));
     }
 
-    if (upperFilters.Buffer) {
+    if (upperFilters.Buffer)
+    {
 #if DBG_SCOPE
         str = upperFilters.Buffer;
-        while ((length = (ULONG)wcslen(str)) != 0) {
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipProcessCriticalDevice: upper filter is %ws\n",
-                            str));
+        while ((length = (ULONG)wcslen(str)) != 0)
+        {
+            IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipProcessCriticalDevice: upper filter is %ws\n", str));
             str += (length + 1);
         }
 #endif
-        status = ZwSetValueKey(instanceKey,
-                               &upperFiltersValue,
-                               0L,
-                               REG_MULTI_SZ,
-                               upperFilters.Buffer,
+        status = ZwSetValueKey(instanceKey, &upperFiltersValue, 0L, REG_MULTI_SZ, upperFilters.Buffer,
                                upperFilters.Length); // + sizeof(UNICODE_NULL));
     }
 
-    IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                    "PipProcessCriticalDevice: service is %wZ\n",
-                    &service));
-    status = ZwSetValueKey(instanceKey,
-                           &serviceValue,
-                           0L,
-                           REG_SZ,
-                           service.Buffer,
-                           service.Length + sizeof(UNICODE_NULL));
+    IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipProcessCriticalDevice: service is %wZ\n", &service));
+    status =
+        ZwSetValueKey(instanceKey, &serviceValue, 0L, REG_SZ, service.Buffer, service.Length + sizeof(UNICODE_NULL));
 
     //
     // If the service was set properly set the CONFIGFLAG_FINISH_INSTALL so
@@ -4069,12 +3859,12 @@ Return Value:
     // installer.
     //
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         UCHAR buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
         UNICODE_STRING valueName;
-        PKEY_VALUE_PARTIAL_INFORMATION keyInfo =
-            (PKEY_VALUE_PARTIAL_INFORMATION) buffer;
+        PKEY_VALUE_PARTIAL_INFORMATION keyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)buffer;
         ULONG flags = 0;
 
         ULONG valueLength;
@@ -4083,14 +3873,11 @@ Return Value:
 
         PiWstrToUnicodeString(&valueName, REGSTR_VALUE_CONFIG_FLAGS);
 
-        tmpStatus = ZwQueryValueKey(instanceKey,
-                                    &valueName,
-                                    KeyValuePartialInformation,
-                                    keyInfo,
-                                    sizeof(buffer),
-                                    &valueLength);
+        tmpStatus =
+            ZwQueryValueKey(instanceKey, &valueName, KeyValuePartialInformation, keyInfo, sizeof(buffer), &valueLength);
 
-        if (NT_SUCCESS(tmpStatus) && (keyInfo->Type == REG_DWORD)) {
+        if (NT_SUCCESS(tmpStatus) && (keyInfo->Type == REG_DWORD))
+        {
 
             flags = *(PULONG)keyInfo->Data;
         }
@@ -4098,15 +3885,9 @@ Return Value:
         flags &= ~(CONFIGFLAG_REINSTALL | CONFIGFLAG_FAILEDINSTALL);
         flags |= CONFIGFLAG_FINISH_INSTALL;
 
-        ZwSetValueKey(instanceKey,
-                      &valueName,
-                      0L,
-                      REG_DWORD,
-                      &flags,
-                      sizeof(ULONG));
+        ZwSetValueKey(instanceKey, &valueName, 0L, REG_DWORD, &flags, sizeof(ULONG));
 
-        ASSERT(!PipDoesDevNodeHaveProblem(DeviceNode) ||
-               PipIsDevNodeProblem(DeviceNode, CM_PROB_NOT_CONFIGURED) ||
+        ASSERT(!PipDoesDevNodeHaveProblem(DeviceNode) || PipIsDevNodeProblem(DeviceNode, CM_PROB_NOT_CONFIGURED) ||
                PipIsDevNodeProblem(DeviceNode, CM_PROB_FAILED_INSTALL) ||
                PipIsDevNodeProblem(DeviceNode, CM_PROB_REINSTALL));
 
@@ -4123,17 +3904,11 @@ Return Value:
     return (BOOLEAN)NT_SUCCESS(status);
 }
 
-
+
 NTSTATUS
-PipProcessCriticalDeviceRoutine(
-    IN  HANDLE HDevInstance,
-    IN  PBOOLEAN FoundMatch,
-    IN  PUNICODE_STRING ServiceName,
-    IN  PUNICODE_STRING ClassGuid,
-    IN  PUNICODE_STRING Driver,
-    IN  PUNICODE_STRING LowerFilters,
-    IN  PUNICODE_STRING UpperFilters
-    )
+PipProcessCriticalDeviceRoutine(IN HANDLE HDevInstance, IN PBOOLEAN FoundMatch, IN PUNICODE_STRING ServiceName,
+                                IN PUNICODE_STRING ClassGuid, IN PUNICODE_STRING Driver,
+                                IN PUNICODE_STRING LowerFilters, IN PUNICODE_STRING UpperFilters)
 
 /*++
 
@@ -4173,19 +3948,17 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                    status;
-    HANDLE                      hRegistryMachine, hCriticalDeviceKey,
-                                hCriticalEntry;
-    PWSTR                       keyValueInfoTag[2];
+    NTSTATUS status;
+    HANDLE hRegistryMachine, hCriticalDeviceKey, hCriticalEntry;
+    PWSTR keyValueInfoTag[2];
     PKEY_VALUE_FULL_INFORMATION keyValueInfo[2];
-    BUFFER_INFO                 infoBuffer;
-    ULONG                       enumIndex, idIndex, resultSize, stringLength;
-    UNICODE_STRING              tmpUnicodeString, unicodeCriticalEntry,
-                                unicodeCriticalDeviceKeyName;
-    PWCHAR                      stringStart, bufferEnd, ptr, ids;
-    PRTL_QUERY_REGISTRY_TABLE   parameters = NULL;
+    BUFFER_INFO infoBuffer;
+    ULONG enumIndex, idIndex, resultSize, stringLength;
+    UNICODE_STRING tmpUnicodeString, unicodeCriticalEntry, unicodeCriticalDeviceKeyName;
+    PWCHAR stringStart, bufferEnd, ptr, ids;
+    PRTL_QUERY_REGISTRY_TABLE parameters = NULL;
 
-#define INITIAL_INFOBUFFER_SIZE sizeof(KEY_VALUE_FULL_INFORMATION) + 8*sizeof(WCHAR) + 255*sizeof(WCHAR)
+#define INITIAL_INFOBUFFER_SIZE sizeof(KEY_VALUE_FULL_INFORMATION) + 8 * sizeof(WCHAR) + 255 * sizeof(WCHAR)
 
     infoBuffer.Buffer = NULL;
     keyValueInfo[0] = NULL;
@@ -4195,12 +3968,9 @@ Return Value:
     //
     // Get handle to \REGISTRY\MACHINE registry key.
     //
-    status = IopOpenRegistryKeyEx( &hRegistryMachine,
-                                   NULL,
-                                   &CmRegistryMachineName,
-                                   KEY_READ
-                                   );
-    if (!NT_SUCCESS(status)) {
+    status = IopOpenRegistryKeyEx(&hRegistryMachine, NULL, &CmRegistryMachineName, KEY_READ);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -4214,11 +3984,7 @@ Return Value:
     // config manager can be run (disks, keyboards, video, etc...)
     //
     PiWstrToUnicodeString(&unicodeCriticalDeviceKeyName, REGSTR_PATH_CRITICALDEVICEDATABASE);
-    status = IopOpenRegistryKeyEx( &hCriticalDeviceKey,
-                                   hRegistryMachine,
-                                   &unicodeCriticalDeviceKeyName,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&hCriticalDeviceKey, hRegistryMachine, &unicodeCriticalDeviceKeyName, KEY_READ);
     //
     // Close handle to \REGISTRY\MACHINE.
     //
@@ -4227,10 +3993,11 @@ Return Value:
     //
     // Check success in opening CriticalDeviceDatabase key.
     //
-    if (!NT_SUCCESS(status)) {
-        IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                        "PipProcessCriticalDeviceRoutine: Unable to open %wZ key, status = %#08lx\n",
-                        &unicodeCriticalDeviceKeyName, status));
+    if (!NT_SUCCESS(status))
+    {
+        IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                     "PipProcessCriticalDeviceRoutine: Unable to open %wZ key, status = %#08lx\n",
+                     &unicodeCriticalDeviceKeyName, status));
         return status;
     }
 
@@ -4238,11 +4005,11 @@ Return Value:
     // Allocate a buffer to store KeyValueFullInformation
     // of values from CriticalDeviceDatabase key.
     //
-    status = IopAllocateBuffer( &infoBuffer,
-                                INITIAL_INFOBUFFER_SIZE );
-    if (!NT_SUCCESS(status)) {
-        IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                        "PipProcessCriticalDeviceRoutine: Unable to allocate buffer to hold key values, status = %\n"));
+    status = IopAllocateBuffer(&infoBuffer, INITIAL_INFOBUFFER_SIZE);
+    if (!NT_SUCCESS(status))
+    {
+        IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                     "PipProcessCriticalDeviceRoutine: Unable to allocate buffer to hold key values, status = %\n"));
         goto cleanup;
     }
 
@@ -4253,43 +4020,43 @@ Return Value:
     keyValueInfoTag[0] = REGSTR_VALUE_HARDWAREID;
     keyValueInfoTag[1] = REGSTR_VALUE_COMPATIBLEIDS;
 
-    for (idIndex=0; idIndex < 2; idIndex++) {
+    for (idIndex = 0; idIndex < 2; idIndex++)
+    {
 
-        IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                        "PipProcessCriticalDeviceRoutine: Processing %ws entries\n",
-                        keyValueInfoTag[idIndex]));
+        IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL, "PipProcessCriticalDeviceRoutine: Processing %ws entries\n",
+                     keyValueInfoTag[idIndex]));
 
         //
         //  Read Key Value Information from HardwareId and CompatibleIds
         //
-        status = IopGetRegistryValue(HDevInstance,
-                                     keyValueInfoTag[idIndex],
-                                     &keyValueInfo[idIndex]);
-        if (!NT_SUCCESS(status)) {
+        status = IopGetRegistryValue(HDevInstance, keyValueInfoTag[idIndex], &keyValueInfo[idIndex]);
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // Error retrieving the registry value, skip it and move on.
             //
-            IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                            "PipProcessCriticalDeviceRoutine: Error retrieving %ws value, status = %#08lx\n",
-                            keyValueInfoTag[idIndex], status));
+            IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                         "PipProcessCriticalDeviceRoutine: Error retrieving %ws value, status = %#08lx\n",
+                         keyValueInfoTag[idIndex], status));
             status = STATUS_SUCCESS;
             continue;
-
-        } else if ((keyValueInfo[idIndex]->Type != REG_MULTI_SZ) ||
-                   (keyValueInfo[idIndex]->DataLength == 0)) {
+        }
+        else if ((keyValueInfo[idIndex]->Type != REG_MULTI_SZ) || (keyValueInfo[idIndex]->DataLength == 0))
+        {
 
             //
             // The registry value is not valid, skip it and move on.
             //
             ExFreePool(keyValueInfo[idIndex]);
             keyValueInfo[idIndex] = NULL;
-            IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                            "PipProcessCriticalDeviceRoutine: Invalid %ws registry value, skipping.\n",
-                            keyValueInfoTag[idIndex]));
+            IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                         "PipProcessCriticalDeviceRoutine: Invalid %ws registry value, skipping.\n",
+                         keyValueInfoTag[idIndex]));
             continue;
-
-        } else {
+        }
+        else
+        {
 
             ASSERT(keyValueInfo[idIndex]);
 
@@ -4301,8 +4068,7 @@ Return Value:
             tmpUnicodeString.Length = (USHORT)keyValueInfo[idIndex]->DataLength;
             tmpUnicodeString.MaximumLength = tmpUnicodeString.Length;
 
-            IopReplaceSeperatorWithPound(&tmpUnicodeString,
-                                         &tmpUnicodeString);
+            IopReplaceSeperatorWithPound(&tmpUnicodeString, &tmpUnicodeString);
             //
             // Find start and end of this REG_MULTI_SZ
             //
@@ -4310,9 +4076,11 @@ Return Value:
             stringStart = ptr;
             bufferEnd = (PWCHAR)((PUCHAR)ptr + keyValueInfo[idIndex]->DataLength);
 
-            while(ptr != bufferEnd) {
+            while (ptr != bufferEnd)
+            {
 
-                if (!*ptr) {
+                if (!*ptr)
+                {
 
                     //
                     // Found null-terminated end of a single SZ within the MULTI_SZ.
@@ -4320,11 +4088,11 @@ Return Value:
                     stringLength = (ULONG)((PUCHAR)ptr - (PUCHAR)stringStart);
                     tmpUnicodeString.Buffer = stringStart;
                     tmpUnicodeString.Length = (USHORT)stringLength;
-                    tmpUnicodeString.MaximumLength = (USHORT)stringLength  + sizeof(UNICODE_NULL);
+                    tmpUnicodeString.MaximumLength = (USHORT)stringLength + sizeof(UNICODE_NULL);
 
-                    IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                                    "PipProcessCriticalDeviceRoutine: Searching for %ws entry: %wZ\n",
-                                    keyValueInfoTag[idIndex], &tmpUnicodeString));
+                    IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL,
+                                 "PipProcessCriticalDeviceRoutine: Searching for %ws entry: %wZ\n",
+                                 keyValueInfoTag[idIndex], &tmpUnicodeString));
 
                     //
                     // Enumerate through Critical Device entries.
@@ -4333,42 +4101,43 @@ Return Value:
                     // and CompatibleIds REG_MULTI_SZ for a match
                     //
                     enumIndex = 0;
-                    while (((status = ZwEnumerateKey( hCriticalDeviceKey,
-                                                      enumIndex,
-                                                      KeyBasicInformation,
-                                                      (PVOID) infoBuffer.Buffer,
-                                                      infoBuffer.MaxSize,
-                                                      &resultSize)) != STATUS_NO_MORE_ENTRIES)) {
-                        if (status == STATUS_BUFFER_OVERFLOW) {
+                    while (((status = ZwEnumerateKey(hCriticalDeviceKey, enumIndex, KeyBasicInformation,
+                                                     (PVOID)infoBuffer.Buffer, infoBuffer.MaxSize, &resultSize)) !=
+                            STATUS_NO_MORE_ENTRIES))
+                    {
+                        if (status == STATUS_BUFFER_OVERFLOW)
+                        {
                             //
                             // Buffer allocated to hold value was too small;
                             // resize to specified length, and try again.
                             //
-                            IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                                            "PipProcessCriticalDeviceRoutine: Resizing buffer...\n"));
-                            status = IopResizeBuffer( &infoBuffer,
-                                                      resultSize,
-                                                      FALSE );
-                            if (!NT_SUCCESS(status)) {
+                            IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL,
+                                         "PipProcessCriticalDeviceRoutine: Resizing buffer...\n"));
+                            status = IopResizeBuffer(&infoBuffer, resultSize, FALSE);
+                            if (!NT_SUCCESS(status))
+                            {
                                 //
                                 // If we can't resize the buffer to the required
                                 // size, we can't do much more.
                                 //
-                                IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                                "PipProcessCriticalDeviceRoutine: Error resizing buffer, status = %#08lx\n",
-                                                status));
+                                IopDbgPrint(
+                                    (IOP_ENUMERATION_WARNING_LEVEL,
+                                     "PipProcessCriticalDeviceRoutine: Error resizing buffer, status = %#08lx\n",
+                                     status));
                                 goto cleanup;
                             }
                             continue;
-
-                        } else if (!NT_SUCCESS(status)) {
+                        }
+                        else if (!NT_SUCCESS(status))
+                        {
                             //
                             // ZwEnumerateKey returned failure status other than
                             // STATUS_NO_MORE_ENTRIES or STATUS_BUFFER_OVERFLOW.
                             //
-                            IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                            "PipProcessCriticalDeviceRoutine: Failed to enumerate critical device, status = %#08lx\n",
-                                            status));
+                            IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                                         "PipProcessCriticalDeviceRoutine: Failed to enumerate critical device, status "
+                                         "= %#08lx\n",
+                                         status));
                             goto cleanup;
                         }
 
@@ -4379,45 +4148,41 @@ Return Value:
                         //
 
                         unicodeCriticalEntry.Buffer = ((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->Name;
-                        unicodeCriticalEntry.Length = (USHORT) ((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->NameLength;
+                        unicodeCriticalEntry.Length = (USHORT)((PKEY_BASIC_INFORMATION)(infoBuffer.Buffer))->NameLength;
                         unicodeCriticalEntry.MaximumLength = unicodeCriticalEntry.Length;
 
-                        IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                                        "PipProcessCriticalDeviceRoutine: \t key (%u) enumerated: %wZ\n",
-                                        enumIndex,
-                                        &unicodeCriticalEntry));
+                        IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL,
+                                     "PipProcessCriticalDeviceRoutine: \t key (%u) enumerated: %wZ\n", enumIndex,
+                                     &unicodeCriticalEntry));
 
                         //
                         // Check for a case-insenitive unicode string match.
                         //
-                        if (RtlEqualUnicodeString(&tmpUnicodeString,
-                                                  &unicodeCriticalEntry,
-                                                  TRUE)) {
+                        if (RtlEqualUnicodeString(&tmpUnicodeString, &unicodeCriticalEntry, TRUE))
+                        {
 
-                            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                                            "PipProcessCriticalDeviceRoutine: ***** Critical Device %wZ: Matched to Device %wZ.\n",
-                                            &tmpUnicodeString,
-                                            &unicodeCriticalEntry));
+                            IopDbgPrint(
+                                (IOP_ENUMERATION_INFO_LEVEL,
+                                 "PipProcessCriticalDeviceRoutine: ***** Critical Device %wZ: Matched to Device %wZ.\n",
+                                 &tmpUnicodeString, &unicodeCriticalEntry));
 
-                            //
-                            // Query registry values of the critical device match.
-                            //
-                            #define NUM_QUERIES 5
-                            status = IopOpenRegistryKeyEx( &hCriticalEntry,
-                                                           hCriticalDeviceKey,
-                                                           &unicodeCriticalEntry,
-                                                           KEY_READ
-                                                           );
+//
+// Query registry values of the critical device match.
+//
+#define NUM_QUERIES 5
+                            status = IopOpenRegistryKeyEx(&hCriticalEntry, hCriticalDeviceKey, &unicodeCriticalEntry,
+                                                          KEY_READ);
 
-                            if (!NT_SUCCESS(status)) {
+                            if (!NT_SUCCESS(status))
+                            {
                                 goto cleanup;
                             }
 
-                            parameters = (PRTL_QUERY_REGISTRY_TABLE)
-                                ExAllocatePool(NonPagedPool,
-                                               sizeof(RTL_QUERY_REGISTRY_TABLE)*(NUM_QUERIES+1));
+                            parameters = (PRTL_QUERY_REGISTRY_TABLE)ExAllocatePool(
+                                NonPagedPool, sizeof(RTL_QUERY_REGISTRY_TABLE) * (NUM_QUERIES + 1));
 
-                            if (!parameters) {
+                            if (!parameters)
+                            {
                                 ZwClose(hCriticalEntry);
                                 status = STATUS_INSUFFICIENT_RESOURCES;
                                 goto cleanup;
@@ -4427,8 +4192,7 @@ Return Value:
                             // RTL_QUERY_REGISTRY_DIRECT uses system provided QueryRoutine.
                             // Look at the DDK documentation for more details on this flag.
                             //
-                            RtlZeroMemory(parameters,
-                                          sizeof(RTL_QUERY_REGISTRY_TABLE) * (NUM_QUERIES + 1));
+                            RtlZeroMemory(parameters, sizeof(RTL_QUERY_REGISTRY_TABLE) * (NUM_QUERIES + 1));
 
                             parameters[0].Flags = RTL_QUERY_REGISTRY_DIRECT;
                             parameters[0].Name = REGSTR_VALUE_SERVICE;
@@ -4465,60 +4229,62 @@ Return Value:
                             parameters[4].DefaultData = L"";
                             parameters[4].DefaultLength = 0;
 
-                            status = RtlQueryRegistryValues(
-                                         RTL_REGISTRY_HANDLE | RTL_REGISTRY_OPTIONAL,
-                                         (PWSTR) hCriticalEntry,
-                                         parameters,
-                                         NULL,
-                                         NULL
-                                         );
+                            status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE | RTL_REGISTRY_OPTIONAL,
+                                                            (PWSTR)hCriticalEntry, parameters, NULL, NULL);
 
                             ExFreePool(parameters);
                             ZwClose(hCriticalEntry);
 
-                            if (NT_SUCCESS(status)) {
+                            if (NT_SUCCESS(status))
+                            {
                                 //
                                 // Sanity check all of the values...
                                 // 1)  There is a service name
                                 // 2)  If there is a class guid, it is of the proper length
                                 //
-                                if (ServiceName->Buffer &&
-                                    ServiceName->Length &&
-                                    ((ClassGuid->Length == 0) || (ClassGuid->Length >= 38*sizeof(WCHAR))) &&
-                                    ((Driver->Length == 0) || (Driver->Length >= 38*sizeof(WCHAR)))) {
+                                if (ServiceName->Buffer && ServiceName->Length &&
+                                    ((ClassGuid->Length == 0) || (ClassGuid->Length >= 38 * sizeof(WCHAR))) &&
+                                    ((Driver->Length == 0) || (Driver->Length >= 38 * sizeof(WCHAR))))
+                                {
 
                                     //
                                     // Caller expects XxxFilters->Buffer == NULL, so make
                                     // the default case look like that
                                     //
-                                    if (UpperFilters->Length <= 2 && UpperFilters->Buffer) {
+                                    if (UpperFilters->Length <= 2 && UpperFilters->Buffer)
+                                    {
                                         RtlFreeUnicodeString(UpperFilters);
                                     }
-                                    if (LowerFilters->Length <= 2 && LowerFilters->Buffer) {
+                                    if (LowerFilters->Length <= 2 && LowerFilters->Buffer)
+                                    {
                                         RtlFreeUnicodeString(LowerFilters);
                                     }
-                                    if (ClassGuid->Length == 0 && ClassGuid->Buffer) {
+                                    if (ClassGuid->Length == 0 && ClassGuid->Buffer)
+                                    {
                                         RtlFreeUnicodeString(ClassGuid);
                                     }
 
-                                    if (Driver->Length == 0 && Driver->Buffer) {
+                                    if (Driver->Length == 0 && Driver->Buffer)
+                                    {
                                         RtlFreeUnicodeString(Driver);
                                     }
 
-                                    IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                                                    "PipProcessCriticalDeviceRoutine: ***** Using ServiceName %wZ.\n",
-                                                    ServiceName));
+                                    IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                                                 "PipProcessCriticalDeviceRoutine: ***** Using ServiceName %wZ.\n",
+                                                 ServiceName));
 
-                                    if (ClassGuid->Buffer) {
-                                        IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                                                        "PipProcessCriticalDeviceRoutine: ***** Using ClassGuid %wZ.\n",
-                                                        ClassGuid));
+                                    if (ClassGuid->Buffer)
+                                    {
+                                        IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                                                     "PipProcessCriticalDeviceRoutine: ***** Using ClassGuid %wZ.\n",
+                                                     ClassGuid));
                                     }
 
-                                    if (Driver->Buffer) {
-                                        IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                                                        "PipProcessCriticalDeviceRoutine: ***** Using Driver %wZ.\n",
-                                                        Driver));
+                                    if (Driver->Buffer)
+                                    {
+                                        IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                                                     "PipProcessCriticalDeviceRoutine: ***** Using Driver %wZ.\n",
+                                                     Driver));
                                     }
 
                                     //
@@ -4528,8 +4294,9 @@ Return Value:
                                     *FoundMatch = TRUE;
                                     goto cleanup;
                                 }
-
-                            } else {
+                            }
+                            else
+                            {
                                 //
                                 // Just continue searching the database.
                                 //
@@ -4545,9 +4312,9 @@ Return Value:
                             RtlFreeUnicodeString(Driver);
                             RtlFreeUnicodeString(LowerFilters);
                             RtlFreeUnicodeString(UpperFilters);
-                            IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                                            "PipProcessCriticalDeviceRoutine: Found no ServiceName for %wZ\n",
-                                            &unicodeCriticalEntry));
+                            IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL,
+                                         "PipProcessCriticalDeviceRoutine: Found no ServiceName for %wZ\n",
+                                         &unicodeCriticalEntry));
                         }
 
                         //
@@ -4559,12 +4326,14 @@ Return Value:
                     //
                     // See if we're at the end of the MULTI_SZ
                     //
-                    if (((ptr + 1) == bufferEnd) || !*(ptr + 1)) {
+                    if (((ptr + 1) == bufferEnd) || !*(ptr + 1))
+                    {
                         break;
-                    } else {
+                    }
+                    else
+                    {
                         stringStart = ptr + 1;
                     }
-
                 }
                 //
                 // advance to next character.
@@ -4578,34 +4347,33 @@ Return Value:
     //
     // No match with a ServiceName was found.
     //
-    IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                    "PipProcessCriticalDeviceRoutine: No match found for this device.\n"));
+    IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipProcessCriticalDeviceRoutine: No match found for this device.\n"));
     *FoundMatch = FALSE;
     status = STATUS_SUCCESS;
 
 cleanup:
-    if (infoBuffer.Buffer) {
+    if (infoBuffer.Buffer)
+    {
         IopFreeBuffer(&infoBuffer);
     }
-    if (hCriticalDeviceKey) {
+    if (hCriticalDeviceKey)
+    {
         ZwClose(hCriticalDeviceKey);
     }
-    if (keyValueInfo[0]) {
+    if (keyValueInfo[0])
+    {
         ExFreePool(keyValueInfo[0]);
     }
-    if (keyValueInfo[1]) {
+    if (keyValueInfo[1])
+    {
         ExFreePool(keyValueInfo[1]);
     }
     return status;
 }
-
+
 BOOLEAN
-PipGetRegistryDwordWithFallback(
-    IN     PUNICODE_STRING valueName,
-    IN     HANDLE PrimaryKey,
-    IN     HANDLE SecondaryKey,
-    IN OUT PULONG Value
-    )
+PipGetRegistryDwordWithFallback(IN PUNICODE_STRING valueName, IN HANDLE PrimaryKey, IN HANDLE SecondaryKey,
+                                IN OUT PULONG Value)
 /*++
 
 Routine Description:
@@ -4638,31 +4406,37 @@ Return Value:
     int index;
     BOOLEAN set = FALSE;
 
-    if (PrimaryKey != NULL) {
+    if (PrimaryKey != NULL)
+    {
         Keys[count++] = PrimaryKey;
     }
-    if (SecondaryKey != NULL) {
+    if (SecondaryKey != NULL)
+    {
         Keys[count++] = SecondaryKey;
     }
     Keys[count] = NULL;
 
-    for (index = 0; index < count && !set; index ++) {
+    for (index = 0; index < count && !set; index++)
+    {
         info = NULL;
-        try {
-            status = IopGetRegistryValue(Keys[index],
-                                         valueName->Buffer,
-                                         &info);
-            if (NT_SUCCESS(status) && info->Type == REG_DWORD) {
-                data = ((PUCHAR) info) + info->DataOffset;
-                *Value = *((PULONG) data);
+        try
+        {
+            status = IopGetRegistryValue(Keys[index], valueName->Buffer, &info);
+            if (NT_SUCCESS(status) && info->Type == REG_DWORD)
+            {
+                data = ((PUCHAR)info) + info->DataOffset;
+                *Value = *((PULONG)data);
                 set = TRUE;
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             //
             // do nothing
             //
         }
-        if (info) {
+        if (info)
+        {
             ExFreePool(info);
         }
     }
@@ -4670,11 +4444,7 @@ Return Value:
 }
 
 PSECURITY_DESCRIPTOR
-PipGetRegistrySecurityWithFallback(
-    IN     PUNICODE_STRING valueName,
-    IN     HANDLE PrimaryKey,
-    IN     HANDLE SecondaryKey
-    )
+PipGetRegistrySecurityWithFallback(IN PUNICODE_STRING valueName, IN HANDLE PrimaryKey, IN HANDLE SecondaryKey)
 /*++
 
 Routine Description:
@@ -4709,33 +4479,33 @@ Return Value:
     PSECURITY_DESCRIPTOR secDesc = NULL;
     PSECURITY_DESCRIPTOR allocDesc = NULL;
 
-    if (PrimaryKey != NULL) {
+    if (PrimaryKey != NULL)
+    {
         Keys[count++] = PrimaryKey;
     }
-    if (SecondaryKey != NULL) {
+    if (SecondaryKey != NULL)
+    {
         Keys[count++] = SecondaryKey;
     }
     Keys[count] = NULL;
 
-    for (index = 0; index < count && !set; index ++) {
+    for (index = 0; index < count && !set; index++)
+    {
         info = NULL;
-        try {
-            status = IopGetRegistryValue(Keys[index],
-                                         valueName->Buffer,
-                                         &info);
-            if (NT_SUCCESS(status) && info->Type == REG_BINARY) {
-                data = ((PUCHAR) info) + info->DataOffset;
+        try
+        {
+            status = IopGetRegistryValue(Keys[index], valueName->Buffer, &info);
+            if (NT_SUCCESS(status) && info->Type == REG_BINARY)
+            {
+                data = ((PUCHAR)info) + info->DataOffset;
                 secDesc = (PSECURITY_DESCRIPTOR)data;
                 /*if (SeValidSecurityDescriptor( SECURITY_DESCRIPTOR_MIN_LENGTH,
                                                secDesc)) {*/
-                    status = SeCaptureSecurityDescriptor(secDesc,
-                                                 KernelMode,
-                                                 PagedPool,
-                                                 TRUE,
-                                                 &allocDesc);
-                    if (NT_SUCCESS(status)) {
-                        set = TRUE;
-                    }
+                status = SeCaptureSecurityDescriptor(secDesc, KernelMode, PagedPool, TRUE, &allocDesc);
+                if (NT_SUCCESS(status))
+                {
+                    set = TRUE;
+                }
                 /*} else {
                     //
                     // Perhaps this happened due to a corrupted registry entry?
@@ -4745,28 +4515,28 @@ Return Value:
                     ASSERT(0);
                 }*/
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             //
             // do nothing
             //
         }
-        if (info) {
+        if (info)
+        {
             ExFreePool(info);
         }
     }
-    if (set) {
+    if (set)
+    {
         return allocDesc;
     }
     return NULL;
 }
 
 NTSTATUS
-PipChangeDeviceObjectFromRegistryProperties(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN HANDLE DeviceClassPropKey,
-    IN HANDLE DevicePropKey,
-    IN BOOLEAN UsePdoCharacteristics
-    )
+PipChangeDeviceObjectFromRegistryProperties(IN PDEVICE_OBJECT PhysicalDeviceObject, IN HANDLE DeviceClassPropKey,
+                                            IN HANDLE DevicePropKey, IN BOOLEAN UsePdoCharacteristics)
 /*++
 
 Routine Description:
@@ -4824,8 +4594,9 @@ Return Value:
     deviceNode = PhysicalDeviceObject->DeviceObjectExtension->DeviceNode;
     ASSERT(deviceNode);
 
-    IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                    "PipChangeDeviceObjectFromRegistryProperties: Modifying device stack for PDO: %08x\n",PhysicalDeviceObject));
+    IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL,
+                 "PipChangeDeviceObjectFromRegistryProperties: Modifying device stack for PDO: %08x\n",
+                 PhysicalDeviceObject));
 
     //
     // Iterate through all device objects to get our starting settings (OR everyone together)
@@ -4834,19 +4605,23 @@ Return Value:
     // we detect this by absense of service name, or it's the only Device Object.
     //
     StackIterator = PhysicalDeviceObject;
-    if (UsePdoCharacteristics || StackIterator->AttachedDevice == NULL) {
-        IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                        "PipChangeDeviceObjectFromRegistryProperties: Assuming PDO is being used RAW\n"));
-    } else {
+    if (UsePdoCharacteristics || StackIterator->AttachedDevice == NULL)
+    {
+        IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                     "PipChangeDeviceObjectFromRegistryProperties: Assuming PDO is being used RAW\n"));
+    }
+    else
+    {
         StackIterator = StackIterator->AttachedDevice;
-        IopDbgPrint((   IOP_ENUMERATION_VERBOSE_LEVEL,
-                        "PipChangeDeviceObjectFromRegistryProperties: Ignoring PDO's settings\n"));
+        IopDbgPrint(
+            (IOP_ENUMERATION_VERBOSE_LEVEL, "PipChangeDeviceObjectFromRegistryProperties: Ignoring PDO's settings\n"));
     }
     //
     // we can't propagate DO_EXCLUSIVE, since it happens to break some devices (eg, Serial)
     // but we do propagage certain characteristics flags
     //
-    for ( ; StackIterator != NULL; StackIterator = StackIterator->AttachedDevice) {
+    for (; StackIterator != NULL; StackIterator = StackIterator->AttachedDevice)
+    {
         prevCharacteristics |= StackIterator->Characteristics;
     }
 
@@ -4854,43 +4629,48 @@ Return Value:
     // 1) Get Device type, DevicePropKey preferred over DeviceClassPropKey
     //
     PiWstrToUnicodeString(&valueName, REGSTR_VAL_DEVICE_TYPE);
-    deviceTypeSpec = PipGetRegistryDwordWithFallback(&valueName,DevicePropKey,DeviceClassPropKey,&deviceType);
+    deviceTypeSpec = PipGetRegistryDwordWithFallback(&valueName, DevicePropKey, DeviceClassPropKey, &deviceType);
     PiWstrToUnicodeString(&valueName, REGSTR_VAL_DEVICE_CHARACTERISTICS);
-    characteristicsSpec = PipGetRegistryDwordWithFallback(&valueName,DevicePropKey,DeviceClassPropKey,&characteristics);
+    characteristicsSpec =
+        PipGetRegistryDwordWithFallback(&valueName, DevicePropKey, DeviceClassPropKey, &characteristics);
     PiWstrToUnicodeString(&valueName, REGSTR_VAL_DEVICE_EXCLUSIVE);
-    exclusiveSpec = PipGetRegistryDwordWithFallback(&valueName,DevicePropKey,DeviceClassPropKey,&exclusive);
+    exclusiveSpec = PipGetRegistryDwordWithFallback(&valueName, DevicePropKey, DeviceClassPropKey, &exclusive);
 
-    if (!characteristicsSpec) {
+    if (!characteristicsSpec)
+    {
         characteristics = 0;
     }
-    characteristics = (characteristics | prevCharacteristics) & FILE_CHARACTERISTICS_PROPAGATED; // mask only applicable characteristics
+    characteristics = (characteristics | prevCharacteristics) &
+                      FILE_CHARACTERISTICS_PROPAGATED; // mask only applicable characteristics
 
     PiWstrToUnicodeString(&valueName, REGSTR_VAL_DEVICE_SECURITY_DESCRIPTOR);
-    securityDescriptor = PipGetRegistrySecurityWithFallback(&valueName,DevicePropKey,DeviceClassPropKey);
+    securityDescriptor = PipGetRegistrySecurityWithFallback(&valueName, DevicePropKey, DeviceClassPropKey);
 
-    if (securityDescriptor == NULL) {
+    if (securityDescriptor == NULL)
+    {
         //
         // determine if we should create internal default
         //
-        if (deviceTypeSpec) {
+        if (deviceTypeSpec)
+        {
             BOOLEAN hasName = (PhysicalDeviceObject->Flags & DO_DEVICE_HAS_NAME) ? TRUE : FALSE;
 
             securityDescriptor = IopCreateDefaultDeviceSecurityDescriptor(
-                                    (DEVICE_TYPE)deviceType,
-                                    characteristics,
-                                    hasName,
-                                    &buffer[0],
-                                    &allocatedAcl,
-                                    &securityInformation
-                                    );
-            if (securityDescriptor) {
+                (DEVICE_TYPE)deviceType, characteristics, hasName, &buffer[0], &allocatedAcl, &securityInformation);
+            if (securityDescriptor)
+            {
                 securityForce = TRUE; // forced default security descriptor
-            } else {
-                IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                "PipChangeDeviceObjectFromRegistryProperties: Was not able to get default security descriptor\n"));
+            }
+            else
+            {
+                IopDbgPrint(
+                    (IOP_ENUMERATION_WARNING_LEVEL,
+                     "PipChangeDeviceObjectFromRegistryProperties: Was not able to get default security descriptor\n"));
             }
         }
-    } else {
+    }
+    else
+    {
         //
         // further process the security information we're given to set "securityInformation"
         //
@@ -4907,62 +4687,65 @@ Return Value:
 
         status = RtlGetOwnerSecurityDescriptor(securityDescriptor, &sid, &tmp);
 
-        if (NT_SUCCESS(status) && (sid != NULL)) {
+        if (NT_SUCCESS(status) && (sid != NULL))
+        {
             securityInformation |= OWNER_SECURITY_INFORMATION;
         }
 
         status = RtlGetGroupSecurityDescriptor(securityDescriptor, &sid, &tmp);
 
-        if (NT_SUCCESS(status) && (sid != NULL)) {
+        if (NT_SUCCESS(status) && (sid != NULL))
+        {
             securityInformation |= GROUP_SECURITY_INFORMATION;
         }
 
-        status = RtlGetSaclSecurityDescriptor(securityDescriptor,
-                                              &present,
-                                              &acl,
-                                              &tmp);
+        status = RtlGetSaclSecurityDescriptor(securityDescriptor, &present, &acl, &tmp);
 
-        if (NT_SUCCESS(status) && (present)) {
+        if (NT_SUCCESS(status) && (present))
+        {
             securityInformation |= SACL_SECURITY_INFORMATION;
         }
 
-        status = RtlGetDaclSecurityDescriptor(securityDescriptor,
-                                              &present,
-                                              &acl,
-                                              &tmp);
+        status = RtlGetDaclSecurityDescriptor(securityDescriptor, &present, &acl, &tmp);
 
-        if (NT_SUCCESS(status) && (present)) {
+        if (NT_SUCCESS(status) && (present))
+        {
             securityInformation |= DACL_SECURITY_INFORMATION;
         }
-
     }
 
 #if DBG
-    if (deviceTypeSpec == FALSE && characteristicsSpec == FALSE && exclusiveSpec == FALSE && securityDescriptor == NULL) {
-        IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                        "PipChangeDeviceObjectFromRegistryProperties: No property changes\n"));
-    } else {
-        if (deviceTypeSpec) {
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipChangeDeviceObjectFromRegistryProperties: Overide DeviceType=%08x\n",
-                            deviceType));
+    if (deviceTypeSpec == FALSE && characteristicsSpec == FALSE && exclusiveSpec == FALSE && securityDescriptor == NULL)
+    {
+        IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipChangeDeviceObjectFromRegistryProperties: No property changes\n"));
+    }
+    else
+    {
+        if (deviceTypeSpec)
+        {
+            IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                         "PipChangeDeviceObjectFromRegistryProperties: Overide DeviceType=%08x\n", deviceType));
         }
-        if (characteristicsSpec) {
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipChangeDeviceObjectFromRegistryProperties: Overide DeviceCharacteristics=%08x\n",
-                            characteristics));
+        if (characteristicsSpec)
+        {
+            IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                         "PipChangeDeviceObjectFromRegistryProperties: Overide DeviceCharacteristics=%08x\n",
+                         characteristics));
         }
-        if (exclusiveSpec) {
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipChangeDeviceObjectFromRegistryProperties: Overide Exclusive=%d\n",(exclusive?1:0)));
+        if (exclusiveSpec)
+        {
+            IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
+                         "PipChangeDeviceObjectFromRegistryProperties: Overide Exclusive=%d\n", (exclusive ? 1 : 0)));
         }
-        if (securityForce) {
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipChangeDeviceObjectFromRegistryProperties: Overide Security based on DeviceType & DeviceCharacteristics\n"));
+        if (securityForce)
+        {
+            IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL, "PipChangeDeviceObjectFromRegistryProperties: Overide Security "
+                                                     "based on DeviceType & DeviceCharacteristics\n"));
         }
-        if (securityDescriptor == NULL) {
-            IopDbgPrint((   IOP_ENUMERATION_INFO_LEVEL,
-                            "PipChangeDeviceObjectFromRegistryProperties: Overide Security\n"));
+        if (securityDescriptor == NULL)
+        {
+            IopDbgPrint(
+                (IOP_ENUMERATION_INFO_LEVEL, "PipChangeDeviceObjectFromRegistryProperties: Overide Security\n"));
         }
     }
 #endif
@@ -4970,14 +4753,17 @@ Return Value:
     // modify apropriate characteristics of PDO to be the same as those of rest of stack
     // eg, PDO may be initialized as Raw-Capable Secure Open, but then be modified to be more lax
     //
-    PhysicalDeviceObject->Characteristics = (PhysicalDeviceObject->Characteristics & ~FILE_CHARACTERISTICS_PROPAGATED) | characteristics;
-    ASSERT((PhysicalDeviceObject->Characteristics & FILE_CHARACTERISTICS_PROPAGATED) == characteristics); // sanity (checks bit bounds)
+    PhysicalDeviceObject->Characteristics =
+        (PhysicalDeviceObject->Characteristics & ~FILE_CHARACTERISTICS_PROPAGATED) | characteristics;
+    ASSERT((PhysicalDeviceObject->Characteristics & FILE_CHARACTERISTICS_PROPAGATED) ==
+           characteristics); // sanity (checks bit bounds)
     //
     // exclusivity flag applies only to PDO
     // if someone is relying on this flag, they better not name the FDO or any filter DO's
     // otherwise the device can be opened via two handles.
     //
-    if (exclusiveSpec && exclusive) {
+    if (exclusiveSpec && exclusive)
+    {
         PhysicalDeviceObject->Flags |= DO_EXCLUSIVE;
     }
 
@@ -4986,63 +4772,60 @@ Return Value:
     // these flags were used to create characteristics & deviceType, so
     // we will only end up setting flags, not clearing them
     //
-    for (StackIterator = PhysicalDeviceObject->AttachedDevice;
-         StackIterator != NULL;
-         StackIterator = StackIterator->AttachedDevice) {
+    for (StackIterator = PhysicalDeviceObject->AttachedDevice; StackIterator != NULL;
+         StackIterator = StackIterator->AttachedDevice)
+    {
 
         //
         // modify characteristics (set only)
         //
         StackIterator->Characteristics |= characteristics;
-        ASSERT((StackIterator->Characteristics & FILE_CHARACTERISTICS_PROPAGATED) == characteristics); // sanity (checks we only needed to set)
+        ASSERT((StackIterator->Characteristics & FILE_CHARACTERISTICS_PROPAGATED) ==
+               characteristics); // sanity (checks we only needed to set)
     }
 
-    if (deviceTypeSpec) {
+    if (deviceTypeSpec)
+    {
         //
         // modify device type - PDO only
         //
         PhysicalDeviceObject->DeviceType = deviceType;
     }
 
-    if (securityDescriptor != NULL) {
+    if (securityDescriptor != NULL)
+    {
 
         //
         // modify security (applied to whole stack)
         //
-        status = ObSetSecurityObjectByPointer(PhysicalDeviceObject,
-                                              securityInformation,
-                                              securityDescriptor);
-        if (NT_SUCCESS(status) == FALSE) {
-            IopDbgPrint((   IOP_ENUMERATION_ERROR_LEVEL,
-                            "PipChangeDeviceObjectFromRegistryProperties: Set security failed (%08x)\n",status));
+        status = ObSetSecurityObjectByPointer(PhysicalDeviceObject, securityInformation, securityDescriptor);
+        if (NT_SUCCESS(status) == FALSE)
+        {
+            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
+                         "PipChangeDeviceObjectFromRegistryProperties: Set security failed (%08x)\n", status));
         }
     }
 
     //
     // cleanup
     //
-    if ((securityDescriptor != NULL) && !securityForce) {
+    if ((securityDescriptor != NULL) && !securityForce)
+    {
         ExFreePool(securityDescriptor);
     }
 
-    if (allocatedAcl) {
+    if (allocatedAcl)
+    {
         ExFreePool(allocatedAcl);
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PipProcessDevNodeTree(
-    IN  PDEVICE_NODE        SubtreeRootDeviceNode,
-    IN  BOOLEAN             LoadDriver,
-    IN  BOOLEAN             ReallocateResources,
-    IN  ENUM_TYPE           EnumType,
-    IN  BOOLEAN             Synchronous,
-    IN  BOOLEAN             ProcessOnlyIntermediateStates,
-    IN  PADD_CONTEXT        AddContext,
-    IN PPI_DEVICE_REQUEST   Request
-    )
+PipProcessDevNodeTree(IN PDEVICE_NODE SubtreeRootDeviceNode, IN BOOLEAN LoadDriver, IN BOOLEAN ReallocateResources,
+                      IN ENUM_TYPE EnumType, IN BOOLEAN Synchronous, IN BOOLEAN ProcessOnlyIntermediateStates,
+                      IN PADD_CONTEXT AddContext, IN PPI_DEVICE_REQUEST Request)
 /*--
 
 Routine Description:
@@ -5151,17 +4934,18 @@ Return Value:
 
 ++*/
 {
-    PDEVICE_NODE    currentNode;
-    PDEVICE_NODE    startRoot;
-    PDEVICE_NODE    enumeratedBus;
-    PDEVICE_NODE    originalSubtree;
-    BOOLEAN         processComplete;
-    BOOLEAN         newDevice;
-    BOOLEAN         rebalancePerformed;
-    NTSTATUS        status;
-    ULONG           reenumAttempts;
+    PDEVICE_NODE currentNode;
+    PDEVICE_NODE startRoot;
+    PDEVICE_NODE enumeratedBus;
+    PDEVICE_NODE originalSubtree;
+    BOOLEAN processComplete;
+    BOOLEAN newDevice;
+    BOOLEAN rebalancePerformed;
+    NTSTATUS status;
+    ULONG reenumAttempts;
 
-    enum {
+    enum
+    {
         SameNode,
         SiblingNode,
         ChildNode
@@ -5169,29 +4953,32 @@ Return Value:
 
     PAGED_CODE();
 
-    originalSubtree     = SubtreeRootDeviceNode;
+    originalSubtree = SubtreeRootDeviceNode;
     //
     // Collapse enum requests if appropriate.
     //
-    if (Request && !Request->ReorderingBarrier &&
-        EnumType != EnumTypeShallow && !ProcessOnlyIntermediateStates) {
+    if (Request && !Request->ReorderingBarrier && EnumType != EnumTypeShallow && !ProcessOnlyIntermediateStates)
+    {
 
-        if (PiCollapseEnumRequests(&Request->ListEntry)) {
+        if (PiCollapseEnumRequests(&Request->ListEntry))
+        {
 
             SubtreeRootDeviceNode = IopRootDeviceNode;
         }
     }
 
-    reenumAttempts      = 0;
-    startRoot           = NULL;
-    enumeratedBus       = NULL;
-    processComplete     = FALSE;
-    newDevice           = TRUE;
+    reenumAttempts = 0;
+    startRoot = NULL;
+    enumeratedBus = NULL;
+    processComplete = FALSE;
+    newDevice = TRUE;
 
-    while (newDevice) {
+    while (newDevice)
+    {
 
         newDevice = FALSE;
-        if (!ProcessOnlyIntermediateStates) {
+        if (!ProcessOnlyIntermediateStates)
+        {
 
             //
             // Process the whole device tree to assign resources to those devices
@@ -5199,30 +4986,24 @@ Return Value:
             //
 
             rebalancePerformed = FALSE;
-            newDevice = IopProcessAssignResources( SubtreeRootDeviceNode,
-                                                   ReallocateResources,
-                                                   &rebalancePerformed);
-            if (rebalancePerformed == TRUE) {
+            newDevice = IopProcessAssignResources(SubtreeRootDeviceNode, ReallocateResources, &rebalancePerformed);
+            if (rebalancePerformed == TRUE)
+            {
 
                 //
                 // Before we do any other processing, we need to restart
                 // all rebalance participants.
                 //
 
-                status = PipProcessDevNodeTree(  IopRootDeviceNode,
-                                                 LoadDriver,
-                                                 FALSE,
-                                                 EnumType,
-                                                 Synchronous,
-                                                 TRUE,
-                                                 AddContext,
-                                                 Request);
+                status = PipProcessDevNodeTree(IopRootDeviceNode, LoadDriver, FALSE, EnumType, Synchronous, TRUE,
+                                               AddContext, Request);
 
                 ASSERT(NT_SUCCESS(status));
             }
         }
 
-        if (processComplete && !newDevice) {
+        if (processComplete && !newDevice)
+        {
 
             break;
         }
@@ -5233,30 +5014,37 @@ Return Value:
 
         currentNode = SubtreeRootDeviceNode;
         processComplete = FALSE;
-        while (!processComplete) {
+        while (!processComplete)
+        {
 
             //
             // Dont process devnodes with problem.
             //
 
-            status      = STATUS_SUCCESS;
-            nextNode    = SiblingNode;
-            if (!PipDoesDevNodeHaveProblem(currentNode)) {
+            status = STATUS_SUCCESS;
+            nextNode = SiblingNode;
+            if (!PipDoesDevNodeHaveProblem(currentNode))
+            {
 
-                switch (currentNode->State) {
+                switch (currentNode->State)
+                {
 
                 case DeviceNodeUninitialized:
 
-                    if (!ProcessOnlyIntermediateStates) {
+                    if (!ProcessOnlyIntermediateStates)
+                    {
 
-                        if (currentNode->Parent == enumeratedBus && startRoot == NULL) {
+                        if (currentNode->Parent == enumeratedBus && startRoot == NULL)
+                        {
 
                             startRoot = currentNode;
                         }
-                        if((!ReallocateResources && EnumType == EnumTypeNone) || startRoot) {
+                        if ((!ReallocateResources && EnumType == EnumTypeNone) || startRoot)
+                        {
 
                             status = PipProcessNewDeviceNode(currentNode);
-                            if (NT_SUCCESS(status)) {
+                            if (NT_SUCCESS(status))
+                            {
 
                                 nextNode = SameNode;
                             }
@@ -5266,18 +5054,21 @@ Return Value:
 
                 case DeviceNodeInitialized:
 
-                    if (!ProcessOnlyIntermediateStates) {
+                    if (!ProcessOnlyIntermediateStates)
+                    {
 
-                        if (!ReallocateResources || startRoot) {
+                        if (!ReallocateResources || startRoot)
+                        {
 
-                            status = PipCallDriverAddDevice( currentNode,
-                                                             LoadDriver,
-                                                             AddContext);
-                            if (NT_SUCCESS(status)) {
+                            status = PipCallDriverAddDevice(currentNode, LoadDriver, AddContext);
+                            if (NT_SUCCESS(status))
+                            {
 
                                 nextNode = SameNode;
                                 newDevice = TRUE;
-                            } else {
+                            }
+                            else
+                            {
 
                                 //
                                 // ISSUE - 2000/08/31 - ADRIAO: Not draining
@@ -5295,9 +5086,11 @@ Return Value:
 
                 case DeviceNodeResourcesAssigned:
 
-                    if (!ProcessOnlyIntermediateStates) {
+                    if (!ProcessOnlyIntermediateStates)
+                    {
 
-                        if (ReallocateResources && startRoot == NULL) {
+                        if (ReallocateResources && startRoot == NULL)
+                        {
 
                             //
                             // If we assigned resources to this previously
@@ -5310,9 +5103,12 @@ Return Value:
 
                         status = PipProcessStartPhase1(currentNode, Synchronous);
 
-                        if (NT_SUCCESS(status)) {
+                        if (NT_SUCCESS(status))
+                        {
                             nextNode = SameNode;
-                        } else {
+                        }
+                        else
+                        {
 
                             //
                             // Cleanup is currently handled in the
@@ -5322,8 +5118,9 @@ Return Value:
                             ASSERT(0);
                             nextNode = SiblingNode;
                         }
-
-                    } else {
+                    }
+                    else
+                    {
                         nextNode = SiblingNode;
                     }
                     break;
@@ -5332,9 +5129,12 @@ Return Value:
 
                     status = PipProcessStartPhase2(currentNode);
 
-                    if (NT_SUCCESS(status)) {
+                    if (NT_SUCCESS(status))
+                    {
                         nextNode = SameNode;
-                    } else {
+                    }
+                    else
+                    {
                         status = STATUS_PNP_RESTART_ENUMERATION;
                         ASSERT(currentNode->State != DeviceNodeStartCompletion);
                     }
@@ -5344,9 +5144,12 @@ Return Value:
 
                     status = PipProcessStartPhase3(currentNode);
 
-                    if (NT_SUCCESS(status)) {
+                    if (NT_SUCCESS(status))
+                    {
                         nextNode = SameNode;
-                    } else {
+                    }
+                    else
+                    {
                         status = STATUS_PNP_RESTART_ENUMERATION;
                         ASSERT(!ProcessOnlyIntermediateStates);
                     }
@@ -5355,12 +5158,15 @@ Return Value:
                 case DeviceNodeStarted:
 
                     nextNode = ChildNode;
-                    if (!ProcessOnlyIntermediateStates) {
+                    if (!ProcessOnlyIntermediateStates)
+                    {
 
-                        if ((currentNode->Flags & DNF_REENUMERATE)) {
+                        if ((currentNode->Flags & DNF_REENUMERATE))
+                        {
 
                             status = PipEnumerateDevice(currentNode, Synchronous);
-                            if (NT_SUCCESS(status)) {
+                            if (NT_SUCCESS(status))
+                            {
 
                                 //
                                 // Remember the bus we just enumerated.
@@ -5368,8 +5174,9 @@ Return Value:
 
                                 enumeratedBus = currentNode;
                                 nextNode = SameNode;
-
-                            } else if (status == STATUS_PENDING) {
+                            }
+                            else if (status == STATUS_PENDING)
+                            {
 
                                 nextNode = SiblingNode;
                             }
@@ -5385,9 +5192,12 @@ Return Value:
 
                 case DeviceNodeStopped:
                     status = PipProcessRestartPhase1(currentNode, Synchronous);
-                    if (NT_SUCCESS(status)) {
+                    if (NT_SUCCESS(status))
+                    {
                         nextNode = SameNode;
-                    } else {
+                    }
+                    else
+                    {
                         //
                         // Cleanup is currently handled in the
                         // DeviceNodeStartCompletion phase, thus
@@ -5401,9 +5211,12 @@ Return Value:
                 case DeviceNodeRestartCompletion:
 
                     status = PipProcessRestartPhase2(currentNode);
-                    if (NT_SUCCESS(status)) {
+                    if (NT_SUCCESS(status))
+                    {
                         nextNode = SameNode;
-                    } else {
+                    }
+                    else
+                    {
                         status = STATUS_PNP_RESTART_ENUMERATION;
                         ASSERT(currentNode->State != DeviceNodeRestartCompletion);
                     }
@@ -5444,65 +5257,64 @@ Return Value:
             // 6. resume processing
             //
 
-            if (status == STATUS_PNP_RESTART_ENUMERATION &&
-                !ProcessOnlyIntermediateStates) {
+            if (status == STATUS_PNP_RESTART_ENUMERATION && !ProcessOnlyIntermediateStates)
+            {
 
-                PDEVICE_OBJECT  entryDeviceObject;
-                UNICODE_STRING  unicodeName;
-                PWCHAR          devnodeList;
-                PWCHAR          currentEntry;
-                PWCHAR          rootEntry;
-                WCHAR           buffer[MAX_INSTANCE_PATH_LENGTH];
+                PDEVICE_OBJECT entryDeviceObject;
+                UNICODE_STRING unicodeName;
+                PWCHAR devnodeList;
+                PWCHAR currentEntry;
+                PWCHAR rootEntry;
+                WCHAR buffer[MAX_INSTANCE_PATH_LENGTH];
 
-                status = PipProcessDevNodeTree( IopRootDeviceNode,
-                                                LoadDriver,
-                                                ReallocateResources,
-                                                EnumType,
-                                                Synchronous,
-                                                TRUE,
-                                                AddContext,
-                                                Request);
+                status = PipProcessDevNodeTree(IopRootDeviceNode, LoadDriver, ReallocateResources, EnumType,
+                                               Synchronous, TRUE, AddContext, Request);
 
                 ASSERT(NT_SUCCESS(status));
 
                 PipAssertDevnodesInConsistentState();
 
-                if (++reenumAttempts < MAX_REENUMERATION_ATTEMPTS) {
+                if (++reenumAttempts < MAX_REENUMERATION_ATTEMPTS)
+                {
 
-                    devnodeList = ExAllocatePool( PagedPool,
-                                                  (currentNode->Level + 1) * MAX_INSTANCE_PATH_LENGTH * sizeof(WCHAR));
-                    if (devnodeList) {
+                    devnodeList =
+                        ExAllocatePool(PagedPool, (currentNode->Level + 1) * MAX_INSTANCE_PATH_LENGTH * sizeof(WCHAR));
+                    if (devnodeList)
+                    {
 
                         currentEntry = devnodeList;
 
-                        for ( ; ; ) {
+                        for (;;)
+                        {
 
                             rootEntry = currentEntry;
 
                             ASSERT(currentNode->InstancePath.Length < MAX_INSTANCE_PATH_LENGTH);
 
-                            memcpy( currentEntry,
-                                    currentNode->InstancePath.Buffer,
-                                    currentNode->InstancePath.Length );
+                            memcpy(currentEntry, currentNode->InstancePath.Buffer, currentNode->InstancePath.Length);
 
                             currentEntry += currentNode->InstancePath.Length / sizeof(WCHAR);
                             *currentEntry++ = UNICODE_NULL;
 
-                            if (currentNode == SubtreeRootDeviceNode) {
+                            if (currentNode == SubtreeRootDeviceNode)
+                            {
                                 break;
                             }
 
                             currentNode = currentNode->Parent;
                         }
-                    } else {
+                    }
+                    else
+                    {
 
                         ASSERT(SubtreeRootDeviceNode->InstancePath.Length < MAX_INSTANCE_PATH_LENGTH);
-                        memcpy( buffer,
-                                SubtreeRootDeviceNode->InstancePath.Buffer,
-                                SubtreeRootDeviceNode->InstancePath.Length );
+                        memcpy(buffer, SubtreeRootDeviceNode->InstancePath.Buffer,
+                               SubtreeRootDeviceNode->InstancePath.Length);
                         rootEntry = buffer;
                     }
-                } else {
+                }
+                else
+                {
 
                     rootEntry = NULL;
                     devnodeList = NULL;
@@ -5513,18 +5325,21 @@ Return Value:
                 PpSynchronizeDeviceEventQueue();
                 PpDevNodeLockTree(PPL_TREEOP_ALLOW_READS);
 
-                if (reenumAttempts >= MAX_REENUMERATION_ATTEMPTS) {
+                if (reenumAttempts >= MAX_REENUMERATION_ATTEMPTS)
+                {
 
-                    IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                                 "Restarted reenumeration %d times, giving up!\n", reenumAttempts));
+                    IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "Restarted reenumeration %d times, giving up!\n",
+                                 reenumAttempts));
                     ASSERT(reenumAttempts < MAX_REENUMERATION_ATTEMPTS);
                     return STATUS_UNSUCCESSFUL;
                 }
                 RtlInitUnicodeString(&unicodeName, rootEntry);
                 entryDeviceObject = IopDeviceObjectFromDeviceInstance(&unicodeName);
-                if (entryDeviceObject == NULL) {
+                if (entryDeviceObject == NULL)
+                {
 
-                    if (devnodeList) {
+                    if (devnodeList)
+                    {
 
                         ExFreePool(devnodeList);
                     }
@@ -5537,17 +5352,19 @@ Return Value:
                 //
                 // Try to start processing where we left off.
                 //
-                if (devnodeList) {
+                if (devnodeList)
+                {
 
-                    for(currentEntry = devnodeList;
-                        currentEntry != rootEntry;
-                        currentEntry += ((unicodeName.Length / sizeof(WCHAR))+1)) {
+                    for (currentEntry = devnodeList; currentEntry != rootEntry;
+                         currentEntry += ((unicodeName.Length / sizeof(WCHAR)) + 1))
+                    {
 
                         RtlInitUnicodeString(&unicodeName, currentEntry);
 
                         entryDeviceObject = IopDeviceObjectFromDeviceInstance(&unicodeName);
 
-                        if (entryDeviceObject != NULL) {
+                        if (entryDeviceObject != NULL)
+                        {
 
                             currentNode = entryDeviceObject->DeviceObjectExtension->DeviceNode;
                             ObDereferenceObject(entryDeviceObject);
@@ -5556,7 +5373,6 @@ Return Value:
                     }
 
                     ExFreePool(devnodeList);
-
                 }
                 nextNode = SameNode;
             }
@@ -5565,13 +5381,15 @@ Return Value:
             // This code advances the current node based on nextNode.
             //
 
-            switch (nextNode) {
+            switch (nextNode)
+            {
             case SameNode:
                 break;
 
             case ChildNode:
 
-                if (currentNode->Child != NULL) {
+                if (currentNode->Child != NULL)
+                {
 
                     currentNode = currentNode->Child;
                     break;
@@ -5580,35 +5398,43 @@ Return Value:
 
             case SiblingNode:
 
-                while (currentNode != SubtreeRootDeviceNode) {
+                while (currentNode != SubtreeRootDeviceNode)
+                {
 
-                    if (currentNode == startRoot) {
+                    if (currentNode == startRoot)
+                    {
 
                         //
                         // We completed processing of the new subtree.
                         //
 
-                        if (EnumType != EnumTypeNone) {
+                        if (EnumType != EnumTypeNone)
+                        {
 
-                            enumeratedBus   = startRoot->Parent;
+                            enumeratedBus = startRoot->Parent;
                         }
-                        startRoot       = NULL;
-                    } else if (currentNode == enumeratedBus) {
+                        startRoot = NULL;
+                    }
+                    else if (currentNode == enumeratedBus)
+                    {
 
-                        enumeratedBus   = enumeratedBus->Parent;
+                        enumeratedBus = enumeratedBus->Parent;
                     }
 
-                    if (currentNode->Sibling != NULL) {
+                    if (currentNode->Sibling != NULL)
+                    {
                         currentNode = currentNode->Sibling;
                         break;
                     }
 
-                    if (currentNode->Parent != NULL) {
+                    if (currentNode->Parent != NULL)
+                    {
                         currentNode = currentNode->Parent;
                     }
                 }
 
-                if (currentNode == SubtreeRootDeviceNode) {
+                if (currentNode == SubtreeRootDeviceNode)
+                {
 
                     processComplete = TRUE;
                 }
@@ -5617,24 +5443,22 @@ Return Value:
         }
     }
 
-    if (!ProcessOnlyIntermediateStates) {
+    if (!ProcessOnlyIntermediateStates)
+    {
 
-         PipAssertDevnodesInConsistentState();
-         ObDereferenceObject(originalSubtree->PhysicalDeviceObject);
+        PipAssertDevnodesInConsistentState();
+        ObDereferenceObject(originalSubtree->PhysicalDeviceObject);
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PipProcessStartPhase1(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN      Synchronous
-    )
+PipProcessStartPhase1(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Synchronous)
 {
-    PDEVICE_OBJECT  deviceObject;
-    NTSTATUS        status = STATUS_SUCCESS;
-    PNP_VETO_TYPE   vetoType;
+    PDEVICE_OBJECT deviceObject;
+    NTSTATUS status = STATUS_SUCCESS;
+    PNP_VETO_TYPE vetoType;
 
     PAGED_CODE();
 
@@ -5644,7 +5468,8 @@ PipProcessStartPhase1(
 
     IopUncacheInterfaceInformation(deviceObject);
 
-    if (DeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE) {
+    if (DeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE)
+    {
 
         //
         // This is a dock so we a little bit of work before starting it.
@@ -5662,15 +5487,11 @@ PipProcessStartPhase1(
         //
         // Ask everyone if this is really a good idea right now.
         //
-        status = PpProfileQueryHardwareProfileChange(
-            FALSE,
-            PROFILE_PERHAPS_IN_PNPEVENT,
-            &vetoType,
-            NULL
-            );
+        status = PpProfileQueryHardwareProfileChange(FALSE, PROFILE_PERHAPS_IN_PNPEVENT, &vetoType, NULL);
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         status = IopStartDevice(deviceObject);
     }
@@ -5683,75 +5504,81 @@ PipProcessStartPhase1(
     DeviceNode->CompletionStatus = status;
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PipProcessStartPhase2(
-    IN PDEVICE_NODE     DeviceNode
-    )
+PipProcessStartPhase2(IN PDEVICE_NODE DeviceNode)
 {
-    ULONG       problem = CM_PROB_FAILED_START;
-    NTSTATUS    status;
+    ULONG problem = CM_PROB_FAILED_START;
+    NTSTATUS status;
 
     PAGED_CODE();
 
     status = DeviceNode->CompletionStatus;
-    if (DeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE) {
+    if (DeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE)
+    {
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Commit the current Hardware Profile as necessary.
             //
             PpProfileCommitTransitioningDock(DeviceNode, DOCK_ARRIVING);
-
-        } else {
+        }
+        else
+        {
 
             PpProfileCancelHardwareProfileTransition();
         }
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         SAVE_FAILURE_INFO(DeviceNode, DeviceNode->CompletionStatus);
 
         //
         // Handle certain problems determined by the status code
         //
-        switch(status) {
+        switch (status)
+        {
 
-            case STATUS_PNP_REBOOT_REQUIRED:
-                problem = CM_PROB_NEED_RESTART;
-                break;
+        case STATUS_PNP_REBOOT_REQUIRED:
+            problem = CM_PROB_NEED_RESTART;
+            break;
 
-            default:
-                problem = CM_PROB_FAILED_START;
-                break;
+        default:
+            problem = CM_PROB_FAILED_START;
+            break;
         }
 
         PipRequestDeviceRemoval(DeviceNode, FALSE, problem);
 
-        if (DeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE) {
+        if (DeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE)
+        {
 
             ASSERT(DeviceNode->DockInfo.DockStatus == DOCK_QUIESCENT);
             IoRequestDeviceEject(DeviceNode->PhysicalDeviceObject);
         }
-
-    } else {
+    }
+    else
+    {
 
         IopDoDeferredSetInterfaceState(DeviceNode);
 
         //
         // Reserve legacy resources for the legacy interface and bus number.
         //
-        if (!IopBootConfigsReserved && DeviceNode->InterfaceType != InterfaceTypeUndefined) {
+        if (!IopBootConfigsReserved && DeviceNode->InterfaceType != InterfaceTypeUndefined)
+        {
 
             //
             // ISA = EISA.
             //
-            if (DeviceNode->InterfaceType == Isa) {
+            if (DeviceNode->InterfaceType == Isa)
+            {
 
                 IopAllocateLegacyBootResources(Eisa, DeviceNode->BusNumber);
-
             }
 
             IopAllocateLegacyBootResources(DeviceNode->InterfaceType, DeviceNode->BusNumber);
@@ -5769,23 +5596,22 @@ PipProcessStartPhase2(
 
     return status;
 }
-
+
 NTSTATUS
-PipProcessStartPhase3(
-    IN PDEVICE_NODE     DeviceNode
-    )
+PipProcessStartPhase3(IN PDEVICE_NODE DeviceNode)
 {
-    NTSTATUS        status;
-    PDEVICE_OBJECT  deviceObject;
-    HANDLE          handle;
-    PWCHAR          ids;
-    UNICODE_STRING  unicodeName;
+    NTSTATUS status;
+    PDEVICE_OBJECT deviceObject;
+    HANDLE handle;
+    PWCHAR ids;
+    UNICODE_STRING unicodeName;
 
     PAGED_CODE();
 
     deviceObject = DeviceNode->PhysicalDeviceObject;
 
-    if (!(DeviceNode->Flags & DNF_IDS_QUERIED)) {
+    if (!(DeviceNode->Flags & DNF_IDS_QUERIED))
+    {
 
         PWCHAR compatibleIds, hwIds;
         ULONG hwIdLength, compatibleIdLength;
@@ -5796,30 +5622,22 @@ PipProcessStartPhase3(
         // the HardwareId and the Compatible ids of the detected device.
         //
 
-        status = IopDeviceObjectToDeviceInstance (deviceObject,
-                                                  &handle,
-                                                  KEY_READ
-                                                  );
-        if (NT_SUCCESS(status)) {
+        status = IopDeviceObjectToDeviceInstance(deviceObject, &handle, KEY_READ);
+        if (NT_SUCCESS(status))
+        {
 
-            PpQueryHardwareIDs( 
-                DeviceNode,
-                &hwIds,
-                &hwIdLength);
+            PpQueryHardwareIDs(DeviceNode, &hwIds, &hwIdLength);
 
-            PpQueryCompatibleIDs(   
-                DeviceNode,
-                &compatibleIds,
-                &compatibleIdLength);
+            PpQueryCompatibleIDs(DeviceNode, &compatibleIds, &compatibleIdLength);
 
-            if (hwIds || compatibleIds) {
+            if (hwIds || compatibleIds)
+            {
 
                 UCHAR buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
-                PKEY_VALUE_PARTIAL_INFORMATION keyInfo =
-                    (PKEY_VALUE_PARTIAL_INFORMATION)buffer;
+                PKEY_VALUE_PARTIAL_INFORMATION keyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)buffer;
                 PKEY_VALUE_FULL_INFORMATION keyValueInformation;
                 ULONG flags, length;
-                PWCHAR  oldID, newID;
+                PWCHAR oldID, newID;
 
                 PiLockPnpRegistry(FALSE);
 
@@ -5827,48 +5645,51 @@ PipProcessStartPhase3(
                 // Read the current config flags.
                 //
 
-                PiWstrToUnicodeString (&unicodeName, REGSTR_VALUE_CONFIG_FLAGS);
-                status = ZwQueryValueKey(handle,
-                                         &unicodeName,
-                                         KeyValuePartialInformation,
-                                         keyInfo,
-                                         sizeof(buffer),
-                                         &length
-                                         );
-                if (NT_SUCCESS(status) && (keyInfo->Type == REG_DWORD)) {
+                PiWstrToUnicodeString(&unicodeName, REGSTR_VALUE_CONFIG_FLAGS);
+                status =
+                    ZwQueryValueKey(handle, &unicodeName, KeyValuePartialInformation, keyInfo, sizeof(buffer), &length);
+                if (NT_SUCCESS(status) && (keyInfo->Type == REG_DWORD))
+                {
 
                     flags = *(PULONG)keyInfo->Data;
-                } else {
+                }
+                else
+                {
 
                     flags = 0;
                 }
-                if (hwIds) {
+                if (hwIds)
+                {
 
-                    if (!(flags & CONFIGFLAG_FINISH_INSTALL)) {
+                    if (!(flags & CONFIGFLAG_FINISH_INSTALL))
+                    {
 
-                        status = IopGetRegistryValue (handle,
-                                                      REGSTR_VALUE_HARDWAREID,
-                                                      &keyValueInformation);
-                        if (NT_SUCCESS(status)) {
+                        status = IopGetRegistryValue(handle, REGSTR_VALUE_HARDWAREID, &keyValueInformation);
+                        if (NT_SUCCESS(status))
+                        {
 
-                            if (keyValueInformation->Type == REG_MULTI_SZ) {
+                            if (keyValueInformation->Type == REG_MULTI_SZ)
+                            {
 
                                 ids = (PWCHAR)KEY_VALUE_DATA(keyValueInformation);
                                 //
                                 // Check if the old and new IDs are identical.
                                 //
-                                for (oldID = ids, newID = hwIds;
-                                    *oldID && *newID;
-                                    oldID += wcslen(oldID) + 1, newID += wcslen(newID) + 1) {
-                                    if (_wcsicmp(oldID, newID)) {
+                                for (oldID = ids, newID = hwIds; *oldID && *newID;
+                                     oldID += wcslen(oldID) + 1, newID += wcslen(newID) + 1)
+                                {
+                                    if (_wcsicmp(oldID, newID))
+                                    {
 
                                         break;
                                     }
                                 }
-                                if (*oldID || *newID) {
+                                if (*oldID || *newID)
+                                {
 
-                                    IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                                    "IopStartAndEnumerateDevice: Hardware ID has changed for %wZ\n", &DeviceNode->InstancePath));
+                                    IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                                                 "IopStartAndEnumerateDevice: Hardware ID has changed for %wZ\n",
+                                                 &DeviceNode->InstancePath));
                                     flags |= CONFIGFLAG_FINISH_INSTALL;
                                 }
                             }
@@ -5876,43 +5697,43 @@ PipProcessStartPhase3(
                         }
                     }
                     PiWstrToUnicodeString(&unicodeName, REGSTR_VALUE_HARDWAREID);
-                    ZwSetValueKey(handle,
-                                  &unicodeName,
-                                  TITLE_INDEX_VALUE,
-                                  REG_MULTI_SZ,
-                                  hwIds,
-                                  hwIdLength);
+                    ZwSetValueKey(handle, &unicodeName, TITLE_INDEX_VALUE, REG_MULTI_SZ, hwIds, hwIdLength);
                     ExFreePool(hwIds);
                 }
                 //
                 // create CompatibleId value name.  It is a MULTI_SZ,
                 //
-                if (compatibleIds) {
+                if (compatibleIds)
+                {
 
-                    if (!(flags & CONFIGFLAG_FINISH_INSTALL)) {
-                        status = IopGetRegistryValue (handle,
-                                                      REGSTR_VALUE_COMPATIBLEIDS,
-                                                      &keyValueInformation);
-                        if (NT_SUCCESS(status)) {
+                    if (!(flags & CONFIGFLAG_FINISH_INSTALL))
+                    {
+                        status = IopGetRegistryValue(handle, REGSTR_VALUE_COMPATIBLEIDS, &keyValueInformation);
+                        if (NT_SUCCESS(status))
+                        {
 
-                            if (keyValueInformation->Type == REG_MULTI_SZ) {
+                            if (keyValueInformation->Type == REG_MULTI_SZ)
+                            {
 
                                 ids = (PWCHAR)KEY_VALUE_DATA(keyValueInformation);
                                 //
                                 // Check if the old and new IDs are identical.
                                 //
-                                for (oldID = ids, newID = compatibleIds;
-                                     *oldID && *newID;
-                                     oldID += wcslen(oldID) + 1, newID += wcslen(newID) + 1) {
-                                    if (_wcsicmp(oldID, newID)) {
+                                for (oldID = ids, newID = compatibleIds; *oldID && *newID;
+                                     oldID += wcslen(oldID) + 1, newID += wcslen(newID) + 1)
+                                {
+                                    if (_wcsicmp(oldID, newID))
+                                    {
 
                                         break;
                                     }
                                 }
-                                if (*oldID || *newID) {
+                                if (*oldID || *newID)
+                                {
 
-                                    IopDbgPrint((   IOP_ENUMERATION_WARNING_LEVEL,
-                                                    "IopStartAndEnumerateDevice: Compatible ID has changed for %wZ\n", &DeviceNode->InstancePath));
+                                    IopDbgPrint((IOP_ENUMERATION_WARNING_LEVEL,
+                                                 "IopStartAndEnumerateDevice: Compatible ID has changed for %wZ\n",
+                                                 &DeviceNode->InstancePath));
                                     flags |= CONFIGFLAG_FINISH_INSTALL;
                                 }
                             }
@@ -5920,11 +5741,7 @@ PipProcessStartPhase3(
                         }
                     }
                     PiWstrToUnicodeString(&unicodeName, REGSTR_VALUE_COMPATIBLEIDS);
-                    ZwSetValueKey(handle,
-                                  &unicodeName,
-                                  TITLE_INDEX_VALUE,
-                                  REG_MULTI_SZ,
-                                  compatibleIds,
+                    ZwSetValueKey(handle, &unicodeName, TITLE_INDEX_VALUE, REG_MULTI_SZ, compatibleIds,
                                   compatibleIdLength);
                     ExFreePool(compatibleIds);
                 }
@@ -5933,16 +5750,11 @@ PipProcessStartPhase3(
                 // If we set the finish install flag, then write out the flags.
                 //
 
-                if (flags & CONFIGFLAG_FINISH_INSTALL) {
+                if (flags & CONFIGFLAG_FINISH_INSTALL)
+                {
 
-                    PiWstrToUnicodeString (&unicodeName, REGSTR_VALUE_CONFIG_FLAGS);
-                    ZwSetValueKey(handle,
-                                  &unicodeName,
-                                  TITLE_INDEX_VALUE,
-                                  REG_DWORD,
-                                  &flags,
-                                  sizeof(flags)
-                                  );
+                    PiWstrToUnicodeString(&unicodeName, REGSTR_VALUE_CONFIG_FLAGS);
+                    ZwSetValueKey(handle, &unicodeName, TITLE_INDEX_VALUE, REG_DWORD, &flags, sizeof(flags));
                 }
 
                 PiUnlockPnpRegistry();
@@ -5953,7 +5765,8 @@ PipProcessStartPhase3(
         }
     }
 
-    if (PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA)) {
+    if (PipIsDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA))
+    {
 
         return STATUS_UNSUCCESSFUL;
     }
@@ -5966,24 +5779,22 @@ PipProcessStartPhase3(
     //
     // The device has been started, attempt to enumerate the device.
     //
-    PpSetPlugPlayEvent( &GUID_DEVICE_ARRIVAL,
-                        DeviceNode->PhysicalDeviceObject);
+    PpSetPlugPlayEvent(&GUID_DEVICE_ARRIVAL, DeviceNode->PhysicalDeviceObject);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
 
     PpvUtilTestStartedPdoStack(deviceObject);
-    PipSetDevNodeState( DeviceNode, DeviceNodeStarted, NULL );
+    PipSetDevNodeState(DeviceNode, DeviceNodeStarted, NULL);
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PiProcessQueryDeviceState(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+PiProcessQueryDeviceState(IN PDEVICE_OBJECT DeviceObject)
 {
     PDEVICE_NODE deviceNode;
     PNP_DEVICE_STATE deviceState;
@@ -6001,25 +5812,30 @@ PiProcessQueryDeviceState(
     //
     // Now perform the appropriate action based on the returned state
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return STATUS_SUCCESS;
     }
 
     deviceNode = DeviceObject->DeviceObjectExtension->DeviceNode;
 
-    if (deviceState & PNP_DEVICE_DONT_DISPLAY_IN_UI) {
+    if (deviceState & PNP_DEVICE_DONT_DISPLAY_IN_UI)
+    {
 
         deviceNode->UserFlags |= DNUF_DONT_SHOW_IN_UI;
-
-    } else {
+    }
+    else
+    {
 
         deviceNode->UserFlags &= ~DNUF_DONT_SHOW_IN_UI;
     }
 
-    if (deviceState & PNP_DEVICE_NOT_DISABLEABLE) {
+    if (deviceState & PNP_DEVICE_NOT_DISABLEABLE)
+    {
 
-        if ((deviceNode->UserFlags & DNUF_NOT_DISABLEABLE)==0) {
+        if ((deviceNode->UserFlags & DNUF_NOT_DISABLEABLE) == 0)
+        {
 
             //
             // this node itself is not disableable
@@ -6031,10 +5847,12 @@ PiProcessQueryDeviceState(
             //
             IopIncDisableableDepends(deviceNode);
         }
+    }
+    else
+    {
 
-    } else {
-
-        if (deviceNode->UserFlags & DNUF_NOT_DISABLEABLE) {
+        if (deviceNode->UserFlags & DNUF_NOT_DISABLEABLE)
+        {
 
             //
             // this node itself is now disableable
@@ -6051,27 +5869,31 @@ PiProcessQueryDeviceState(
     //
     // everything here can only be turned on (state set)
     //
-    if (deviceState & (PNP_DEVICE_DISABLED | PNP_DEVICE_REMOVED)) {
+    if (deviceState & (PNP_DEVICE_DISABLED | PNP_DEVICE_REMOVED))
+    {
 
-        problem = (deviceState & PNP_DEVICE_DISABLED) ?
-            CM_PROB_HARDWARE_DISABLED : CM_PROB_DEVICE_NOT_THERE;
+        problem = (deviceState & PNP_DEVICE_DISABLED) ? CM_PROB_HARDWARE_DISABLED : CM_PROB_DEVICE_NOT_THERE;
 
         PipRequestDeviceRemoval(deviceNode, FALSE, problem);
 
         status = STATUS_UNSUCCESSFUL;
+    }
+    else if (deviceState & PNP_DEVICE_RESOURCE_REQUIREMENTS_CHANGED)
+    {
 
-    } else if (deviceState & PNP_DEVICE_RESOURCE_REQUIREMENTS_CHANGED) {
-
-        if (deviceState & PNP_DEVICE_FAILED) {
+        if (deviceState & PNP_DEVICE_FAILED)
+        {
 
             IopResourceRequirementsChanged(DeviceObject, TRUE);
-
-        } else {
+        }
+        else
+        {
 
             IopResourceRequirementsChanged(DeviceObject, FALSE);
         }
-
-    } else if (deviceState & PNP_DEVICE_FAILED) {
+    }
+    else if (deviceState & PNP_DEVICE_FAILED)
+    {
 
         PipRequestDeviceRemoval(deviceNode, FALSE, CM_PROB_FAILED_POST_START);
         status = STATUS_UNSUCCESSFUL;
@@ -6079,12 +5901,9 @@ PiProcessQueryDeviceState(
 
     return status;
 }
-
+
 NTSTATUS
-PipProcessRestartPhase1(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN Synchronous
-    )
+PipProcessRestartPhase1(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Synchronous)
 {
     NTSTATUS status;
     PAGED_CODE();
@@ -6101,46 +5920,48 @@ PipProcessRestartPhase1(
     PipSetDevNodeState(DeviceNode, DeviceNodeRestartCompletion, NULL);
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PipProcessRestartPhase2(
-    IN PDEVICE_NODE     DeviceNode
-    )
+PipProcessRestartPhase2(IN PDEVICE_NODE DeviceNode)
 {
-    ULONG       problem;
-    NTSTATUS    status;
+    ULONG problem;
+    NTSTATUS status;
 
     PAGED_CODE();
 
     status = DeviceNode->CompletionStatus;
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         SAVE_FAILURE_INFO(DeviceNode, status);
 
         //
         // Handle certain problems determined by the status code
         //
-        switch (status) {
+        switch (status)
+        {
 
-            case STATUS_PNP_REBOOT_REQUIRED:
-                problem = CM_PROB_NEED_RESTART;
-                break;
+        case STATUS_PNP_REBOOT_REQUIRED:
+            problem = CM_PROB_NEED_RESTART;
+            break;
 
-            default:
-                problem = CM_PROB_FAILED_START;
-                break;
+        default:
+            problem = CM_PROB_FAILED_START;
+            break;
         }
 
         PipRequestDeviceRemoval(DeviceNode, FALSE, problem);
 
-        if (DeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE) {
+        if (DeviceNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE)
+        {
 
             ASSERT(DeviceNode->DockInfo.DockStatus == DOCK_QUIESCENT);
             IoRequestDeviceEject(DeviceNode->PhysicalDeviceObject);
         }
-
-    } else {
+    }
+    else
+    {
 
         PipSetDevNodeState(DeviceNode, DeviceNodeStarted, NULL);
     }
@@ -6150,9 +5971,7 @@ PipProcessRestartPhase2(
 
 
 NTSTATUS
-PiProcessHaltDevice(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiProcessHaltDevice(IN PPI_DEVICE_REQUEST Request)
 /*++
 
 Routine Description:
@@ -6180,17 +5999,20 @@ Return Value:
 
     ASSERT(Request->DeviceObject != NULL);
     deviceNode = (PDEVICE_NODE)Request->DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (PipIsDevNodeDeleted(deviceNode)) {
+    if (PipIsDevNodeDeleted(deviceNode))
+    {
 
         return STATUS_DELETE_PENDING;
     }
 
-    if (flags & (~PNP_HALT_ALLOW_NONDISABLEABLE_DEVICES)) {
+    if (flags & (~PNP_HALT_ALLOW_NONDISABLEABLE_DEVICES))
+    {
 
         return STATUS_INVALID_PARAMETER_2;
     }
 
-    if (deviceNode->Flags & (DNF_MADEUP | DNF_LEGACY_DRIVER)) {
+    if (deviceNode->Flags & (DNF_MADEUP | DNF_LEGACY_DRIVER))
+    {
 
         //
         // Sending surprise removes to legacy devnodes would be a bad idea.
@@ -6200,13 +6022,14 @@ Return Value:
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    if ((!(deviceNode->Flags & PNP_HALT_ALLOW_NONDISABLEABLE_DEVICES)) &&
-        deviceNode->DisableableDepends) {
+    if ((!(deviceNode->Flags & PNP_HALT_ALLOW_NONDISABLEABLE_DEVICES)) && deviceNode->DisableableDepends)
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    if (deviceNode->State != DeviceNodeStarted) {
+    if (deviceNode->State != DeviceNodeStarted)
+    {
 
         return STATUS_INVALID_DEVICE_STATE;
     }
@@ -6217,11 +6040,7 @@ Return Value:
 }
 
 
-VOID
-PpResetProblemDevices(
-    IN  PDEVICE_NODE    DeviceNode,
-    IN  ULONG           Problem
-    )
+VOID PpResetProblemDevices(IN PDEVICE_NODE DeviceNode, IN ULONG Problem)
 /*++
 
 Routine Description:
@@ -6244,21 +6063,14 @@ Return Value:
 
     PpDevNodeLockTree(PPL_TREEOP_ALLOW_READS);
 
-    PipForDeviceNodeSubtree(
-        DeviceNode,
-        PiResetProblemDevicesWorker,
-        (PVOID)(ULONG_PTR)Problem
-        );
+    PipForDeviceNodeSubtree(DeviceNode, PiResetProblemDevicesWorker, (PVOID)(ULONG_PTR)Problem);
 
     PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
 }
 
 
 NTSTATUS
-PiResetProblemDevicesWorker(
-    IN  PDEVICE_NODE    DeviceNode,
-    IN  PVOID           Context
-    )
+PiResetProblemDevicesWorker(IN PDEVICE_NODE DeviceNode, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -6281,30 +6093,20 @@ Return Value:
 {
     PAGED_CODE();
 
-    if (PipIsDevNodeProblem(DeviceNode, (ULONG)(ULONG_PTR)Context)) {
+    if (PipIsDevNodeProblem(DeviceNode, (ULONG)(ULONG_PTR)Context))
+    {
 
         //
         // We only need to queue it as an enumeration will drop behind it soon
         // afterwards...
         //
-        PipRequestDeviceAction(
-            DeviceNode->PhysicalDeviceObject,
-            ClearDeviceProblem,
-            TRUE,
-            0,
-            NULL,
-            NULL
-            );
+        PipRequestDeviceAction(DeviceNode->PhysicalDeviceObject, ClearDeviceProblem, TRUE, 0, NULL, NULL);
     }
 
     return STATUS_SUCCESS;
 }
 
-VOID
-PiMarkDeviceTreeForReenumeration(
-    IN  PDEVICE_NODE DeviceNode,
-    IN  BOOLEAN Subtree
-    )
+VOID PiMarkDeviceTreeForReenumeration(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Subtree)
 /*++
 
 Routine Description:
@@ -6329,21 +6131,15 @@ Return Value:
 
     PiMarkDeviceTreeForReenumerationWorker(DeviceNode, NULL);
 
-    if (Subtree) {
+    if (Subtree)
+    {
 
-        PipForDeviceNodeSubtree(
-            DeviceNode,
-            PiMarkDeviceTreeForReenumerationWorker,
-            NULL
-            );
+        PipForDeviceNodeSubtree(DeviceNode, PiMarkDeviceTreeForReenumerationWorker, NULL);
     }
 }
 
 NTSTATUS
-PiMarkDeviceTreeForReenumerationWorker(
-    IN  PDEVICE_NODE    DeviceNode,
-    IN  PVOID           Context
-    )
+PiMarkDeviceTreeForReenumerationWorker(IN PDEVICE_NODE DeviceNode, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -6368,16 +6164,21 @@ Return Value:
 
     UNREFERENCED_PARAMETER(Context);
 
-    if (DeviceNode->State == DeviceNodeStarted) {
+    if (DeviceNode->State == DeviceNodeStarted)
+    {
 
-        if (DeviceNode->Flags & DNF_REENUMERATE) {
+        if (DeviceNode->Flags & DNF_REENUMERATE)
+        {
 
             IopDbgPrint((IOP_ENUMERATION_INFO_LEVEL,
-                         "PiMarkDeviceTreeForReenumerationWorker: Collapsed enum request on %wZ\n", &DeviceNode->InstancePath));
-        } else {
+                         "PiMarkDeviceTreeForReenumerationWorker: Collapsed enum request on %wZ\n",
+                         &DeviceNode->InstancePath));
+        }
+        else
+        {
 
-            IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL,
-                         "PiMarkDeviceTreeForReenumerationWorker: Reenumerating %wZ\n", &DeviceNode->InstancePath));
+            IopDbgPrint((IOP_ENUMERATION_VERBOSE_LEVEL, "PiMarkDeviceTreeForReenumerationWorker: Reenumerating %wZ\n",
+                         &DeviceNode->InstancePath));
         }
         DeviceNode->Flags |= DNF_REENUMERATE;
     }
@@ -6386,9 +6187,7 @@ Return Value:
 }
 
 BOOLEAN
-PiCollapseEnumRequests(
-    PLIST_ENTRY ListHead
-    )
+PiCollapseEnumRequests(PLIST_ENTRY ListHead)
 /*++
 
 Routine Description:
@@ -6406,7 +6205,7 @@ ReturnValue:
 --*/
 {
     KIRQL oldIrql;
-    PPI_DEVICE_REQUEST  request;
+    PPI_DEVICE_REQUEST request;
     PLIST_ENTRY entry, next, last;
     PDEVICE_NODE deviceNode;
 
@@ -6415,16 +6214,17 @@ ReturnValue:
     //
     // Walk the list and build the list of collapsed requests.
     //
-    for (entry = IopPnpEnumerationRequestList.Flink;
-         entry != &IopPnpEnumerationRequestList;
-         entry = next) {
+    for (entry = IopPnpEnumerationRequestList.Flink; entry != &IopPnpEnumerationRequestList; entry = next)
+    {
 
         next = entry->Flink;
         request = CONTAINING_RECORD(entry, PI_DEVICE_REQUEST, ListEntry);
-        if (request->ReorderingBarrier) {
+        if (request->ReorderingBarrier)
+        {
             break;
         }
-        switch(request->RequestType) {
+        switch (request->RequestType)
+        {
         case ReenumerateRootDevices:
         case ReenumerateDeviceTree:
         case RestartEnumeration:
@@ -6440,14 +6240,18 @@ ReturnValue:
         }
     }
     ExReleaseSpinLock(&IopPnPSpinLock, oldIrql);
-    if (last == ListHead) {
+    if (last == ListHead)
+    {
 
         entry = ListHead->Flink;
-    } else {
+    }
+    else
+    {
 
         entry = last;
     }
-    while (entry != ListHead) {
+    while (entry != ListHead)
+    {
 
         request = CONTAINING_RECORD(entry, PI_DEVICE_REQUEST, ListEntry);
         deviceNode = (PDEVICE_NODE)request->DeviceObject->DeviceObjectExtension->DeviceNode;
@@ -6457,13 +6261,11 @@ ReturnValue:
         entry = entry->Flink;
     }
 
-    return (last != ListHead->Blink)? TRUE : FALSE;
+    return (last != ListHead->Blink) ? TRUE : FALSE;
 }
 
 NTSTATUS
-PiProcessAddBootDevices(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiProcessAddBootDevices(IN PPI_DEVICE_REQUEST Request)
 /*++
 
 Routine Description:
@@ -6495,10 +6297,9 @@ ReturnValue:
     // If we know the device is a duplicate of another device which
     // has been enumerated at this point. we will skip this device.
     //
-    if (deviceNode->State == DeviceNodeInitialized &&
-        !PipDoesDevNodeHaveProblem(deviceNode) &&
-        !(deviceNode->Flags & DNF_DUPLICATE) &&
-        deviceNode->DuplicatePDO == NULL) {
+    if (deviceNode->State == DeviceNodeInitialized && !PipDoesDevNodeHaveProblem(deviceNode) &&
+        !(deviceNode->Flags & DNF_DUPLICATE) && deviceNode->DuplicatePDO == NULL)
+    {
 
         //
         // Invoke driver's AddDevice Entry for the device.
@@ -6512,9 +6313,7 @@ ReturnValue:
 }
 
 NTSTATUS
-PiProcessClearDeviceProblem(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiProcessClearDeviceProblem(IN PPI_DEVICE_REQUEST Request)
 /*++
 
 Routine Description:
@@ -6541,35 +6340,39 @@ ReturnValue:
     status = STATUS_SUCCESS;
     ASSERT(Request->DeviceObject != NULL);
     deviceNode = (PDEVICE_NODE)Request->DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (deviceNode->State == DeviceNodeUninitialized ||
-        deviceNode->State == DeviceNodeInitialized ||
-        deviceNode->State == DeviceNodeRemoved) {
+    if (deviceNode->State == DeviceNodeUninitialized || deviceNode->State == DeviceNodeInitialized ||
+        deviceNode->State == DeviceNodeRemoved)
+    {
 
-        if (PipDoesDevNodeHaveProblem(deviceNode)) {
+        if (PipDoesDevNodeHaveProblem(deviceNode))
+        {
 
-            if ((Request->RequestType == ClearDeviceProblem) &&
-                (PipIsProblemReadonly(deviceNode->Problem))) {
+            if ((Request->RequestType == ClearDeviceProblem) && (PipIsProblemReadonly(deviceNode->Problem)))
+            {
 
                 //
                 // ClearDeviceProblem is a user mode request, and we don't let
                 // user mode clear readonly problems!
                 //
                 status = STATUS_INVALID_PARAMETER_2;
-
-            } else if ((Request->RequestType == ClearEjectProblem) &&
-                       (!PipIsDevNodeProblem(deviceNode, CM_PROB_HELD_FOR_EJECT))) {
+            }
+            else if ((Request->RequestType == ClearEjectProblem) &&
+                     (!PipIsDevNodeProblem(deviceNode, CM_PROB_HELD_FOR_EJECT)))
+            {
 
                 //
                 // Clear eject problem means clear CM_PROB_HELD_FOR_EJECT. If
                 // it received another problem, we leave it alone.
                 //
                 status = STATUS_INVALID_DEVICE_REQUEST;
-
-            } else {
+            }
+            else
+            {
 
                 deviceNode->Flags &= ~(DNF_HAS_PROBLEM | DNF_HAS_PRIVATE_PROBLEM);
                 deviceNode->Problem = 0;
-                if (deviceNode->State != DeviceNodeUninitialized) {
+                if (deviceNode->State != DeviceNodeUninitialized)
+                {
 
                     IopRestartDeviceNode(deviceNode);
                 }
@@ -6577,7 +6380,9 @@ ReturnValue:
                 ASSERT(status == STATUS_SUCCESS);
             }
         }
-    } else if (PipIsDevNodeDeleted(deviceNode)) {
+    }
+    else if (PipIsDevNodeDeleted(deviceNode))
+    {
 
         status = STATUS_DELETE_PENDING;
     }
@@ -6586,9 +6391,7 @@ ReturnValue:
 }
 
 NTSTATUS
-PiProcessRequeryDeviceState(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiProcessRequeryDeviceState(IN PPI_DEVICE_REQUEST Request)
 /*++
 
 Routine Description:
@@ -6615,15 +6418,17 @@ ReturnValue:
     status = STATUS_SUCCESS;
     ASSERT(Request->DeviceObject != NULL);
     deviceNode = (PDEVICE_NODE)Request->DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (deviceNode->State == DeviceNodeStarted) {
+    if (deviceNode->State == DeviceNodeStarted)
+    {
 
         PiProcessQueryDeviceState(Request->DeviceObject);
         //
         // PCMCIA driver uses this when switching between Cardbus and R2 cards.
         //
         IopUncacheInterfaceInformation(Request->DeviceObject);
-
-    } else if (PipIsDevNodeDeleted(deviceNode)) {
+    }
+    else if (PipIsDevNodeDeleted(deviceNode))
+    {
 
         status = STATUS_DELETE_PENDING;
     }
@@ -6632,9 +6437,7 @@ ReturnValue:
 }
 
 NTSTATUS
-PiProcessResourceRequirementsChanged(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiProcessResourceRequirementsChanged(IN PPI_DEVICE_REQUEST Request)
 /*++
 
 Routine Description:
@@ -6661,7 +6464,8 @@ ReturnValue:
 
     ASSERT(Request->DeviceObject != NULL);
     deviceNode = (PDEVICE_NODE)Request->DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (PipIsDevNodeDeleted(deviceNode)) {
+    if (PipIsDevNodeDeleted(deviceNode))
+    {
 
         return STATUS_DELETE_PENDING;
     }
@@ -6681,13 +6485,16 @@ ReturnValue:
     // If the device is already started, we call IopRequestDeviceEnumeration with
     // the device object.
     //
-    if (deviceNode->State == DeviceNodeStarted) {
+    if (deviceNode->State == DeviceNodeStarted)
+    {
 
-        if (Request->RequestArgument == FALSE) {
+        if (Request->RequestArgument == FALSE)
+        {
 
             deviceNode->Flags |= DNF_NON_STOPPED_REBALANCE;
-
-        } else {
+        }
+        else
+        {
             //
             // Explicitly clear it.
             //
@@ -6700,20 +6507,22 @@ ReturnValue:
 
         addContext.DriverStartType = SERVICE_DEMAND_START;
 
-        status = PipProcessDevNodeTree( IopRootDeviceNode,
-                                        PnPBootDriversInitialized,          // LoadDriver
-                                        FALSE,                              // ReallocateResources
-                                        EnumTypeNone,                       // ShallowReenumeration
-                                        Request->CompletionEvent != NULL,   // Synchronous
-                                        TRUE,                               // ProcessOnlyIntermediateStates
-                                        &addContext,
-                                        Request);
+        status = PipProcessDevNodeTree(IopRootDeviceNode,
+                                       PnPBootDriversInitialized,        // LoadDriver
+                                       FALSE,                            // ReallocateResources
+                                       EnumTypeNone,                     // ShallowReenumeration
+                                       Request->CompletionEvent != NULL, // Synchronous
+                                       TRUE,                             // ProcessOnlyIntermediateStates
+                                       &addContext, Request);
         ASSERT(NT_SUCCESS(status));
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             status = STATUS_SUCCESS;
         }
-    } else {
+    }
+    else
+    {
 
         status = STATUS_UNSUCCESSFUL;
     }
@@ -6722,9 +6531,7 @@ ReturnValue:
 }
 
 NTSTATUS
-PiProcessReenumeration(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiProcessReenumeration(IN PPI_DEVICE_REQUEST Request)
 /*++
 
 Routine Description:
@@ -6750,34 +6557,28 @@ ReturnValue:
 
     ASSERT(Request->DeviceObject != NULL);
     deviceNode = (PDEVICE_NODE)Request->DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (PipIsDevNodeDeleted(deviceNode)) {
+    if (PipIsDevNodeDeleted(deviceNode))
+    {
 
         return STATUS_DELETE_PENDING;
     }
-    enumType = (Request->RequestType == ReenumerateDeviceOnly)? EnumTypeShallow : EnumTypeDeep;
-    PiMarkDeviceTreeForReenumeration(
-        deviceNode,
-        enumType != EnumTypeShallow);
+    enumType = (Request->RequestType == ReenumerateDeviceOnly) ? EnumTypeShallow : EnumTypeDeep;
+    PiMarkDeviceTreeForReenumeration(deviceNode, enumType != EnumTypeShallow);
 
     addContext.DriverStartType = SERVICE_DEMAND_START;
 
-    PipProcessDevNodeTree(
-        deviceNode,
-        PnPBootDriversInitialized,  // LoadDriver
-        FALSE,                      // ReallocateResources
-        enumType,
-        TRUE,                       // Synchronous
-        FALSE,
-        &addContext,
-        Request);
+    PipProcessDevNodeTree(deviceNode,
+                          PnPBootDriversInitialized, // LoadDriver
+                          FALSE,                     // ReallocateResources
+                          enumType,
+                          TRUE, // Synchronous
+                          FALSE, &addContext, Request);
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-PiProcessSetDeviceProblem(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiProcessSetDeviceProblem(IN PPI_DEVICE_REQUEST Request)
 /*++
 
 Routine Description:
@@ -6797,7 +6598,7 @@ ReturnValue:
 --*/
 {
     PPLUGPLAY_CONTROL_STATUS_DATA statusData;
-    ULONG   flags, userFlags;
+    ULONG flags, userFlags;
     NTSTATUS status;
     PDEVICE_NODE deviceNode;
 
@@ -6805,7 +6606,8 @@ ReturnValue:
 
     ASSERT(Request->DeviceObject != NULL);
     deviceNode = (PDEVICE_NODE)Request->DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (PipIsDevNodeDeleted(deviceNode)) {
+    if (PipIsDevNodeDeleted(deviceNode))
+    {
 
         return STATUS_DELETE_PENDING;
     }
@@ -6813,28 +6615,34 @@ ReturnValue:
     statusData = (PPLUGPLAY_CONTROL_STATUS_DATA)Request->RequestArgument;
     userFlags = 0;
     flags = 0;
-    if (statusData->DeviceStatus & DN_WILL_BE_REMOVED) {
+    if (statusData->DeviceStatus & DN_WILL_BE_REMOVED)
+    {
 
         userFlags |= DNUF_WILL_BE_REMOVED;
     }
-    if (statusData->DeviceStatus & DN_NEED_RESTART) {
+    if (statusData->DeviceStatus & DN_NEED_RESTART)
+    {
 
         userFlags |= DNUF_NEED_RESTART;
     }
-    if (statusData->DeviceStatus & DN_PRIVATE_PROBLEM) {
+    if (statusData->DeviceStatus & DN_PRIVATE_PROBLEM)
+    {
 
         flags |= DNF_HAS_PRIVATE_PROBLEM;
     }
-    if (statusData->DeviceStatus & DN_HAS_PROBLEM) {
+    if (statusData->DeviceStatus & DN_HAS_PROBLEM)
+    {
 
         flags |= DNF_HAS_PROBLEM;
     }
-    if (statusData->DeviceProblem == CM_PROB_NEED_RESTART) {
+    if (statusData->DeviceProblem == CM_PROB_NEED_RESTART)
+    {
 
-        flags       &= ~DNF_HAS_PROBLEM;
-        userFlags   |= DNUF_NEED_RESTART;
+        flags &= ~DNF_HAS_PROBLEM;
+        userFlags |= DNUF_NEED_RESTART;
     }
-    if (flags & (DNF_HAS_PROBLEM | DNF_HAS_PRIVATE_PROBLEM)) {
+    if (flags & (DNF_HAS_PROBLEM | DNF_HAS_PRIVATE_PROBLEM))
+    {
 
         ASSERT(!PipIsDevNodeDNStarted(deviceNode));
         //
@@ -6843,19 +6651,22 @@ ReturnValue:
         // problems by first changing it to a resetable problem,
         // then clearing. This is not intentional.
         //
-        if ( ((deviceNode->State == DeviceNodeInitialized) ||
-              (deviceNode->State == DeviceNodeRemoved)) &&
-                !PipIsProblemReadonly(statusData->DeviceProblem)) {
+        if (((deviceNode->State == DeviceNodeInitialized) || (deviceNode->State == DeviceNodeRemoved)) &&
+            !PipIsProblemReadonly(statusData->DeviceProblem))
+        {
 
-            deviceNode->Problem     = statusData->DeviceProblem;
-            deviceNode->Flags       |= flags;
-            deviceNode->UserFlags   |= userFlags;
-
-        } else {
+            deviceNode->Problem = statusData->DeviceProblem;
+            deviceNode->Flags |= flags;
+            deviceNode->UserFlags |= userFlags;
+        }
+        else
+        {
 
             status = STATUS_INVALID_PARAMETER_2;
         }
-    } else {
+    }
+    else
+    {
 
         deviceNode->Flags |= flags;
         deviceNode->UserFlags |= userFlags;
@@ -6865,9 +6676,7 @@ ReturnValue:
 }
 
 NTSTATUS
-PiProcessShutdownPnpDevices(
-    IN OUT PDEVICE_NODE        DeviceNode
-    )
+PiProcessShutdownPnpDevices(IN OUT PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -6885,23 +6694,24 @@ ReturnValue:
 
 --*/
 {
-    KEVENT          userEvent;
-    ULONG           eventResult;
-    WCHAR           vetoName[80];
-    UNICODE_STRING  vetoNameString = { 0, sizeof(vetoName), vetoName };
-    PNP_VETO_TYPE   vetoType;
-    NTSTATUS        status;
+    KEVENT userEvent;
+    ULONG eventResult;
+    WCHAR vetoName[80];
+    UNICODE_STRING vetoNameString = { 0, sizeof(vetoName), vetoName };
+    PNP_VETO_TYPE vetoType;
+    NTSTATUS status;
 
     PAGED_CODE();
 
     ASSERT(DeviceNode == IopRootDeviceNode);
     status = STATUS_SUCCESS;
-    if (PipTearDownPnpStacksOnShutdown ||
-        (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_PNP)) {
+    if (PipTearDownPnpStacksOnShutdown || (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_PNP))
+    {
 
         DeviceNode->UserFlags |= DNUF_SHUTDOWN_QUERIED;
 
-        for ( ; ; ) {
+        for (;;)
+        {
 
             //
             // Acquire the registry lock to prevent in process removals causing
@@ -6915,10 +6725,13 @@ ReturnValue:
             //
 
             DeviceNode = DeviceNode->Child;
-            while (DeviceNode != NULL) {
+            while (DeviceNode != NULL)
+            {
 
-                if (DeviceNode->UserFlags & DNUF_SHUTDOWN_SUBTREE_DONE) {
-                    if (DeviceNode == IopRootDeviceNode) {
+                if (DeviceNode->UserFlags & DNUF_SHUTDOWN_SUBTREE_DONE)
+                {
+                    if (DeviceNode == IopRootDeviceNode)
+                    {
                         //
                         // We've processed the entire devnode tree - we're done
                         //
@@ -6926,13 +6739,15 @@ ReturnValue:
                         break;
                     }
 
-                    if (DeviceNode->Sibling == NULL) {
+                    if (DeviceNode->Sibling == NULL)
+                    {
 
                         DeviceNode = DeviceNode->Parent;
 
                         DeviceNode->UserFlags |= DNUF_SHUTDOWN_SUBTREE_DONE;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         DeviceNode = DeviceNode->Sibling;
                     }
@@ -6940,23 +6755,29 @@ ReturnValue:
                     continue;
                 }
 
-                if (DeviceNode->UserFlags & DNUF_SHUTDOWN_QUERIED) {
+                if (DeviceNode->UserFlags & DNUF_SHUTDOWN_QUERIED)
+                {
 
-                    if (DeviceNode->Child == NULL) {
+                    if (DeviceNode->Child == NULL)
+                    {
 
                         DeviceNode->UserFlags |= DNUF_SHUTDOWN_SUBTREE_DONE;
 
-                        if (DeviceNode->Sibling == NULL) {
+                        if (DeviceNode->Sibling == NULL)
+                        {
 
                             DeviceNode = DeviceNode->Parent;
 
                             DeviceNode->UserFlags |= DNUF_SHUTDOWN_SUBTREE_DONE;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             DeviceNode = DeviceNode->Sibling;
                         }
-                    } else {
+                    }
+                    else
+                    {
 
                         DeviceNode = DeviceNode->Child;
                     }
@@ -6966,7 +6787,8 @@ ReturnValue:
                 break;
             }
 
-            if (DeviceNode != NULL) {
+            if (DeviceNode != NULL)
+            {
 
                 DeviceNode->UserFlags |= DNUF_SHUTDOWN_QUERIED;
 
@@ -6984,22 +6806,22 @@ ReturnValue:
                 //
 
                 status = PpSetTargetDeviceRemove(DeviceNode->PhysicalDeviceObject,
-                                                 FALSE,         // KernelInitiated
-                                                 TRUE,          // NoRestart
-                                                 FALSE,         // DoEject
-                                                 CM_PROB_SYSTEM_SHUTDOWN,
-                                                 &userEvent,
-                                                 &eventResult,
-                                                 &vetoType,
+                                                 FALSE, // KernelInitiated
+                                                 TRUE,  // NoRestart
+                                                 FALSE, // DoEject
+                                                 CM_PROB_SYSTEM_SHUTDOWN, &userEvent, &eventResult, &vetoType,
                                                  &vetoNameString);
-            } else {
+            }
+            else
+            {
 
                 status = STATUS_UNSUCCESSFUL;
             }
 
             PiUnlockPnpRegistry();
 
-            if (DeviceNode == NULL) {
+            if (DeviceNode == NULL)
+            {
                 //
                 // We've processed the entire tree.
                 //
@@ -7011,7 +6833,8 @@ ReturnValue:
             //
             PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 //
                 // Wait for the event we just queued to finish since synchronous
@@ -7020,13 +6843,10 @@ ReturnValue:
                 // FUTURE ITEM - Use a timeout here?
                 //
 
-                status = KeWaitForSingleObject( &userEvent,
-                                                Executive,
-                                                KernelMode,
-                                                FALSE,
-                                                NULL);
+                status = KeWaitForSingleObject(&userEvent, Executive, KernelMode, FALSE, NULL);
 
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     status = eventResult;
                 }
             }
@@ -7054,9 +6874,7 @@ ReturnValue:
 }
 
 NTSTATUS
-PiProcessStartSystemDevices(
-    IN PPI_DEVICE_REQUEST  Request
-    )
+PiProcessStartSystemDevices(IN PPI_DEVICE_REQUEST Request)
 /*++
 
 Routine Description:
@@ -7082,23 +6900,17 @@ ReturnValue:
 
     addContext.DriverStartType = SERVICE_DEMAND_START;
 
-    PipProcessDevNodeTree(
-        deviceNode,
-        PnPBootDriversInitialized,          // LoadDriver
-        FALSE,                              // ReallocateResources
-        EnumTypeNone,
-        Request->CompletionEvent != NULL,   // Synchronous
-        FALSE,
-        &addContext,
-        Request);
+    PipProcessDevNodeTree(deviceNode,
+                          PnPBootDriversInitialized, // LoadDriver
+                          FALSE,                     // ReallocateResources
+                          EnumTypeNone,
+                          Request->CompletionEvent != NULL, // Synchronous
+                          FALSE, &addContext, Request);
 
     return STATUS_SUCCESS;
 }
 
-VOID
-PpRemoveDeviceActionRequests(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+VOID PpRemoveDeviceActionRequests(IN PDEVICE_OBJECT DeviceObject)
 {
     KIRQL oldIrql;
     PPI_DEVICE_REQUEST request;
@@ -7108,20 +6920,22 @@ PpRemoveDeviceActionRequests(
     //
     // Walk the list and build the list of collapsed requests.
     //
-    for (entry = IopPnpEnumerationRequestList.Flink;
-         entry != &IopPnpEnumerationRequestList;
-         entry = next) {
+    for (entry = IopPnpEnumerationRequestList.Flink; entry != &IopPnpEnumerationRequestList; entry = next)
+    {
 
         next = entry->Flink;
         request = CONTAINING_RECORD(entry, PI_DEVICE_REQUEST, ListEntry);
-        if (request->DeviceObject == DeviceObject) {
+        if (request->DeviceObject == DeviceObject)
+        {
 
             RemoveEntryList(entry);
-            if (request->CompletionStatus) {
+            if (request->CompletionStatus)
+            {
 
                 *request->CompletionStatus = STATUS_NO_SUCH_DEVICE;
             }
-            if (request->CompletionEvent) {
+            if (request->CompletionEvent)
+            {
 
                 KeSetEvent(request->CompletionEvent, 0, FALSE);
             }
@@ -7133,44 +6947,45 @@ PpRemoveDeviceActionRequests(
 }
 
 #if DBG
-VOID
-PipAssertDevnodesInConsistentState(
-    VOID
-    )
+VOID PipAssertDevnodesInConsistentState(VOID)
 {
     PDEVICE_NODE deviceNode;
 
     deviceNode = IopRootDeviceNode;
 
-    do {
+    do
+    {
 
-        ASSERT(deviceNode->State == DeviceNodeUninitialized ||
-               deviceNode->State == DeviceNodeInitialized ||
-               deviceNode->State == DeviceNodeDriversAdded ||
-               deviceNode->State == DeviceNodeResourcesAssigned ||
-               deviceNode->State == DeviceNodeStarted ||
-               deviceNode->State == DeviceNodeStartPostWork ||
+        ASSERT(deviceNode->State == DeviceNodeUninitialized || deviceNode->State == DeviceNodeInitialized ||
+               deviceNode->State == DeviceNodeDriversAdded || deviceNode->State == DeviceNodeResourcesAssigned ||
+               deviceNode->State == DeviceNodeStarted || deviceNode->State == DeviceNodeStartPostWork ||
                deviceNode->State == DeviceNodeAwaitingQueuedDeletion ||
                deviceNode->State == DeviceNodeAwaitingQueuedRemoval ||
-               deviceNode->State == DeviceNodeRemovePendingCloses ||
-               deviceNode->State == DeviceNodeRemoved);
+               deviceNode->State == DeviceNodeRemovePendingCloses || deviceNode->State == DeviceNodeRemoved);
 
-        if (deviceNode->Child != NULL) {
+        if (deviceNode->Child != NULL)
+        {
 
             deviceNode = deviceNode->Child;
+        }
+        else
+        {
 
-        } else {
+            while (deviceNode->Sibling == NULL)
+            {
 
-            while (deviceNode->Sibling == NULL) {
-
-                if (deviceNode->Parent != NULL) {
+                if (deviceNode->Parent != NULL)
+                {
                     deviceNode = deviceNode->Parent;
-                } else {
+                }
+                else
+                {
                     break;
                 }
             }
 
-            if (deviceNode->Sibling != NULL) {
+            if (deviceNode->Sibling != NULL)
+            {
                 deviceNode = deviceNode->Sibling;
             }
         }

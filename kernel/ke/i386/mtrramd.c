@@ -2,10 +2,10 @@
 
 #define STATIC
 
-#define IDBG    0
+#define IDBG 0
 
 #if DBG
-#define DBGMSG(a)   DbgPrint(a)
+#define DBGMSG(a) DbgPrint(a)
 #else
 #define DBGMSG(a)
 #endif
@@ -15,9 +15,7 @@
 //
 
 NTSTATUS
-KiLoadMTRR (
-    PVOID Context
-    );
+KiLoadMTRR(PVOID Context);
 
 // --- AMD Structure definitions ---
 
@@ -25,34 +23,38 @@ KiLoadMTRR (
 
 // Single MTRR control register.
 
-typedef struct _AMDK6_MTRR {
-    ULONG       type:2;
-    ULONG       mask:15;
-    ULONG       base:15;
+typedef struct _AMDK6_MTRR
+{
+    ULONG type : 2;
+    ULONG mask : 15;
+    ULONG base : 15;
 } AMDK6_MTRR, *PAMDK6_MTRR;
 
 // MSR image, contains two control regs.
 
-typedef struct _AMDK6_MTRR_MSR_IMAGE {
-    union {
-        struct {
-            AMDK6_MTRR    mtrr0;
-            AMDK6_MTRR    mtrr1;
+typedef struct _AMDK6_MTRR_MSR_IMAGE
+{
+    union
+    {
+        struct
+        {
+            AMDK6_MTRR mtrr0;
+            AMDK6_MTRR mtrr1;
         } hw;
-        ULONGLONG   QuadPart;
+        ULONGLONG QuadPart;
     } u;
 } AMDK6_MTRR_MSR_IMAGE, *PAMDK6_MTRR_MSR_IMAGE;
 
 // MTRR reg type field values.
 
-#define AMDK6_MTRR_TYPE_DISABLED    0
-#define AMDK6_MTRR_TYPE_UC          1
-#define AMDK6_MTRR_TYPE_WC          2
-#define AMDK6_MTRR_TYPE_MASK        3
+#define AMDK6_MTRR_TYPE_DISABLED 0
+#define AMDK6_MTRR_TYPE_UC 1
+#define AMDK6_MTRR_TYPE_WC 2
+#define AMDK6_MTRR_TYPE_MASK 3
 
 // AMD K6 MTRR MSR Index number
 
-#define AMDK6_MTRR_MSR                0xC0000085
+#define AMDK6_MTRR_MSR 0xC0000085
 
 //
 // Region table entry - used to track all write combined regions.
@@ -60,23 +62,24 @@ typedef struct _AMDK6_MTRR_MSR_IMAGE {
 // Set BaseAddress to AMDK6_REGION_UNUSED for unused entries.
 //
 
-typedef struct _AMDK6_MTRR_REGION {
-    ULONG                BaseAddress;
-    ULONG                Size;
-    MEMORY_CACHING_TYPE  RegionType;
-    ULONG                RegionFlags;
+typedef struct _AMDK6_MTRR_REGION
+{
+    ULONG BaseAddress;
+    ULONG Size;
+    MEMORY_CACHING_TYPE RegionType;
+    ULONG RegionFlags;
 } AMDK6_MTRR_REGION, *PAMDK6_MTRR_REGION;
 
-#define MAX_K6_REGIONS          2		// Limit the write combined regions to 2 since that's how many MTRRs we have available.
+#define MAX_K6_REGIONS 2 // Limit the write combined regions to 2 since that's how many MTRRs we have available.
 
 //
 // Value to set base address to for unused indication.
 //
 
-#define AMDK6_REGION_UNUSED     0xFFFFFFFF
+#define AMDK6_REGION_UNUSED 0xFFFFFFFF
 
 //
-// Flag to indicate that this region was set up by the BIOS.    
+// Flag to indicate that this region was set up by the BIOS.
 //
 
 #define AMDK6_REGION_FLAGS_BIOS 0x00000001
@@ -85,65 +88,42 @@ typedef struct _AMDK6_MTRR_REGION {
 // Usage count for hardware MTRR registers.
 //
 
-#define AMDK6_MAX_MTRR        2
+#define AMDK6_MAX_MTRR 2
 
 //
 // AMD Function Prototypes.
 //
 
-VOID
-KiAmdK6InitializeMTRR (
-    VOID
-    );
+VOID KiAmdK6InitializeMTRR(VOID);
 
 NTSTATUS
-KiAmdK6RestoreMTRR (
-    );
+KiAmdK6RestoreMTRR();
 
 NTSTATUS
-KiAmdK6MtrrSetMemoryType (
-    ULONG BaseAddress,
-    ULONG Size,
-    MEMORY_CACHING_TYPE Type
-    );
+KiAmdK6MtrrSetMemoryType(ULONG BaseAddress, ULONG Size, MEMORY_CACHING_TYPE Type);
 
 BOOLEAN
-KiAmdK6AddRegion (
-    ULONG BaseAddress,
-    ULONG Size,
-    MEMORY_CACHING_TYPE Type,
-    ULONG Flags
-    );
+KiAmdK6AddRegion(ULONG BaseAddress, ULONG Size, MEMORY_CACHING_TYPE Type, ULONG Flags);
 
 NTSTATUS
-KiAmdK6MtrrCommitChanges (
-    VOID
-    );
+KiAmdK6MtrrCommitChanges(VOID);
 
 NTSTATUS
-KiAmdK6HandleWcRegionRequest (
-    ULONG BaseAddress,
-    ULONG Size
-    );
+KiAmdK6HandleWcRegionRequest(ULONG BaseAddress, ULONG Size);
 
-VOID
-KiAmdK6MTRRAddRegionFromHW (
-    AMDK6_MTRR RegImage
-    );
+VOID KiAmdK6MTRRAddRegionFromHW(AMDK6_MTRR RegImage);
 
 PAMDK6_MTRR_REGION
-KiAmdK6FindFreeRegion (
-MEMORY_CACHING_TYPE Type
-    );
+KiAmdK6FindFreeRegion(MEMORY_CACHING_TYPE Type);
 
-#pragma alloc_text(INIT,KiAmdK6InitializeMTRR)
-#pragma alloc_text(PAGELK,KiAmdK6RestoreMTRR)
-#pragma alloc_text(PAGELK,KiAmdK6MtrrSetMemoryType)
-#pragma alloc_text(PAGELK,KiAmdK6AddRegion)
-#pragma alloc_text(PAGELK,KiAmdK6MtrrCommitChanges)
-#pragma alloc_text(PAGELK,KiAmdK6HandleWcRegionRequest)
-#pragma alloc_text(PAGELK,KiAmdK6MTRRAddRegionFromHW)
-#pragma alloc_text(PAGELK,KiAmdK6FindFreeRegion)
+#pragma alloc_text(INIT, KiAmdK6InitializeMTRR)
+#pragma alloc_text(PAGELK, KiAmdK6RestoreMTRR)
+#pragma alloc_text(PAGELK, KiAmdK6MtrrSetMemoryType)
+#pragma alloc_text(PAGELK, KiAmdK6AddRegion)
+#pragma alloc_text(PAGELK, KiAmdK6MtrrCommitChanges)
+#pragma alloc_text(PAGELK, KiAmdK6HandleWcRegionRequest)
+#pragma alloc_text(PAGELK, KiAmdK6MTRRAddRegionFromHW)
+#pragma alloc_text(PAGELK, KiAmdK6FindFreeRegion)
 
 // --- AMD Global Variables ---
 
@@ -160,17 +140,14 @@ ULONG AmdMtrrHwUsageCount;
 
 // Global variable image of MTRR MSR.
 
-AMDK6_MTRR_MSR_IMAGE    KiAmdK6Mtrr;
+AMDK6_MTRR_MSR_IMAGE KiAmdK6Mtrr;
 
 // --- AMD Start of code ---
 
-VOID
-KiAmdK6InitializeMTRR (
-    VOID
-    )
+VOID KiAmdK6InitializeMTRR(VOID)
 {
-    ULONG    i;
-    KIRQL    OldIrql;
+    ULONG i;
+    KIRQL OldIrql;
 
     DBGMSG("KiAmdK6InitializeMTRR: Initializing K6 MTRR support\n");
 
@@ -183,7 +160,8 @@ KiAmdK6InitializeMTRR (
     // Set all regions to free.
     //
 
-    for (i = 0; i < AmdK6RegionCount; i++) {
+    for (i = 0; i < AmdK6RegionCount; i++)
+    {
         AmdK6Regions[i].BaseAddress = AMDK6_REGION_UNUSED;
         AmdK6Regions[i].RegionFlags = 0;
     }
@@ -195,7 +173,7 @@ KiAmdK6InitializeMTRR (
     // routine is not called in the AMD K6 case.
     //
 
-    KeInitializeSpinLock (&KiRangeLock);
+    KeInitializeSpinLock(&KiRangeLock);
 
     //
     // Read the MTRR registers to see if the BIOS has set them up.
@@ -203,9 +181,9 @@ KiAmdK6InitializeMTRR (
     // count.  Serialize the region table.
     //
 
-    KeAcquireSpinLock (&KiRangeLock, &OldIrql);
-                
-    KiAmdK6Mtrr.u.QuadPart = RDMSR (AMDK6_MTRR_MSR);
+    KeAcquireSpinLock(&KiRangeLock, &OldIrql);
+
+    KiAmdK6Mtrr.u.QuadPart = RDMSR(AMDK6_MTRR_MSR);
 
     //
     // Check MTRR0 first.
@@ -223,28 +201,27 @@ KiAmdK6InitializeMTRR (
     // Release the locks.
     //
 
-    KeReleaseSpinLock (&KiRangeLock, OldIrql);
+    KeReleaseSpinLock(&KiRangeLock, OldIrql);
 }
 
-VOID
-KiAmdK6MTRRAddRegionFromHW (
-    AMDK6_MTRR RegImage
-    )
+VOID KiAmdK6MTRRAddRegionFromHW(AMDK6_MTRR RegImage)
 {
     ULONG BaseAddress, Size, TempMask;
 
     //
     // Check to see if this MTRR is enabled.
     //
-        
-    if (RegImage.type != AMDK6_MTRR_TYPE_DISABLED) {
+
+    if (RegImage.type != AMDK6_MTRR_TYPE_DISABLED)
+    {
 
         //
         // If this is a write combined region then add an entry to
         // the region table.
         //
 
-        if ((RegImage.type & AMDK6_MTRR_TYPE_UC) == 0) {
+        if ((RegImage.type & AMDK6_MTRR_TYPE_UC) == 0)
+        {
 
             //
             // Create a new resion table entry.
@@ -257,12 +234,12 @@ KiAmdK6MTRRAddRegionFromHW (
             //
 
             TempMask = RegImage.mask;
-            
+
             //
             // There should never be 4GB WC region!
             //
 
-            ASSERT (TempMask != 0);
+            ASSERT(TempMask != 0);
 
             //
             // Start with 128 size and search upward.
@@ -270,7 +247,8 @@ KiAmdK6MTRRAddRegionFromHW (
 
             Size = 0x00020000;
 
-            while ((TempMask & 0x00000001) == 0) {
+            while ((TempMask & 0x00000001) == 0)
+            {
                 TempMask >>= 1;
                 Size <<= 1;
             }
@@ -278,11 +256,8 @@ KiAmdK6MTRRAddRegionFromHW (
             //
             // Add the region to the table.
             //
-            
-            KiAmdK6AddRegion(BaseAddress,
-                             Size,
-                             MmWriteCombined,
-                             AMDK6_REGION_FLAGS_BIOS);
+
+            KiAmdK6AddRegion(BaseAddress, Size, MmWriteCombined, AMDK6_REGION_FLAGS_BIOS);
 
             AmdMtrrHwUsageCount++;
         }
@@ -291,16 +266,13 @@ KiAmdK6MTRRAddRegionFromHW (
 
 
 NTSTATUS
-KiAmdK6MtrrSetMemoryType (
-    ULONG BaseAddress,
-    ULONG Size,
-    MEMORY_CACHING_TYPE Type
-    )
+KiAmdK6MtrrSetMemoryType(ULONG BaseAddress, ULONG Size, MEMORY_CACHING_TYPE Type)
 {
-    NTSTATUS    Status = STATUS_SUCCESS;
-    KIRQL       OldIrql;
+    NTSTATUS Status = STATUS_SUCCESS;
+    KIRQL OldIrql;
 
-    switch(Type) {
+    switch (Type)
+    {
     case MmWriteCombined:
 
         //
@@ -308,14 +280,15 @@ KiAmdK6MtrrSetMemoryType (
         // the change.
         //
 
-        if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
+        if (KeGetCurrentIrql() >= DISPATCH_LEVEL)
+        {
 
             //
             // Code can not be locked down.   Supplying a new range type
             // requires that the caller calls at irql < dispatch_level.
             //
 
-            DBGMSG ("KeAmdK6SetPhysicalCacheTypeRange failed due to calling IRQL == DISPATCH_LEVEL\n");
+            DBGMSG("KeAmdK6SetPhysicalCacheTypeRange failed due to calling IRQL == DISPATCH_LEVEL\n");
             return STATUS_UNSUCCESSFUL;
         }
 
@@ -324,23 +297,23 @@ KiAmdK6MtrrSetMemoryType (
         //
 
         MmLockPagableSectionByHandle(ExPageLockHandle);
-        
+
         //
         // Serialize the region table.
         //
 
-        KeAcquireSpinLock (&KiRangeLock, &OldIrql);
+        KeAcquireSpinLock(&KiRangeLock, &OldIrql);
 
         Status = KiAmdK6HandleWcRegionRequest(BaseAddress, Size);
-        
+
         //
         // Release the locks.
         //
 
-        KeReleaseSpinLock (&KiRangeLock, OldIrql);
+        KeReleaseSpinLock(&KiRangeLock, OldIrql);
         MmUnlockPagableImageSection(ExPageLockHandle);
-        
-        break;  // End of WriteCombined case.
+
+        break; // End of WriteCombined case.
 
     case MmNonCached:
 
@@ -348,8 +321,8 @@ KiAmdK6MtrrSetMemoryType (
         // Add an entry to the region table.
         //
 
-	// Don't need to add these to the region table.  Non-cached regions are 
-	// accessed using a non-caching virtual pointer set up in the page tables.
+        // Don't need to add these to the region table.  Non-cached regions are
+        // accessed using a non-caching virtual pointer set up in the page tables.
 
         break;
 
@@ -364,7 +337,7 @@ KiAmdK6MtrrSetMemoryType (
         break;
 
     default:
-        DBGMSG ("KeAmdK6SetPhysicalCacheTypeRange: no such cache type\n");
+        DBGMSG("KeAmdK6SetPhysicalCacheTypeRange: no such cache type\n");
         Status = STATUS_INVALID_PARAMETER;
         break;
     }
@@ -372,36 +345,33 @@ KiAmdK6MtrrSetMemoryType (
 }
 
 NTSTATUS
-KiAmdK6HandleWcRegionRequest (
-    ULONG BaseAddress,
-    ULONG Size
-    )
+KiAmdK6HandleWcRegionRequest(ULONG BaseAddress, ULONG Size)
 {
-    ULONG               i;
-    ULONG               AdjustedSize, AdjustedEndAddress, AlignmentMask;
-    ULONG               CombinedBase, CombinedSize, CombinedAdjustedSize;
-    PAMDK6_MTRR_REGION  pRegion;
-    BOOLEAN             bCanCombine, bValidRange;
+    ULONG i;
+    ULONG AdjustedSize, AdjustedEndAddress, AlignmentMask;
+    ULONG CombinedBase, CombinedSize, CombinedAdjustedSize;
+    PAMDK6_MTRR_REGION pRegion;
+    BOOLEAN bCanCombine, bValidRange;
 
     //
     // Try and find a region that overlaps or is adjacent to the new one and
     // check to see if the combined region would be a legal mapping.
     //
 
-    for (i = 0; i < AmdK6RegionCount; i++) {
+    for (i = 0; i < AmdK6RegionCount; i++)
+    {
         pRegion = &AmdK6Regions[i];
-        if ((pRegion->BaseAddress != AMDK6_REGION_UNUSED) &&
-            (pRegion->RegionType == MmWriteCombined)) {
+        if ((pRegion->BaseAddress != AMDK6_REGION_UNUSED) && (pRegion->RegionType == MmWriteCombined))
+        {
 
             //
             // Does the new start address overlap or adjoin an
             // existing WC region?
             //
 
-            if (((pRegion->BaseAddress >= BaseAddress) &&
-                 (pRegion->BaseAddress <= (BaseAddress + Size))) ||
-                 ((BaseAddress <= (pRegion->BaseAddress + pRegion->Size)) &&
-                  (BaseAddress >= pRegion->BaseAddress))) {
+            if (((pRegion->BaseAddress >= BaseAddress) && (pRegion->BaseAddress <= (BaseAddress + Size))) ||
+                ((BaseAddress <= (pRegion->BaseAddress + pRegion->Size)) && (BaseAddress >= pRegion->BaseAddress)))
+            {
 
                 //
                 // Combine the two regions into one.
@@ -409,17 +379,21 @@ KiAmdK6HandleWcRegionRequest (
 
                 AdjustedEndAddress = BaseAddress + Size;
 
-                if (pRegion->BaseAddress < BaseAddress) {
+                if (pRegion->BaseAddress < BaseAddress)
+                {
                     CombinedBase = pRegion->BaseAddress;
-                } else {
+                }
+                else
+                {
                     CombinedBase = BaseAddress;
                 }
 
-                if ((pRegion->BaseAddress + pRegion->Size) >
-                    AdjustedEndAddress) {
-                    CombinedSize = (pRegion->BaseAddress + pRegion->Size) -
-                           CombinedBase;
-                } else {
+                if ((pRegion->BaseAddress + pRegion->Size) > AdjustedEndAddress)
+                {
+                    CombinedSize = (pRegion->BaseAddress + pRegion->Size) - CombinedBase;
+                }
+                else
+                {
                     CombinedSize = AdjustedEndAddress - CombinedBase;
                 }
 
@@ -430,31 +404,35 @@ KiAmdK6HandleWcRegionRequest (
                 // Find the smallest legal size that is equal to the requested range.  Scan
                 // all ranges from 128k - 2G. (Start at 2G and work down).
                 //
-        
+
                 CombinedAdjustedSize = 0x80000000;
                 AlignmentMask = 0x7fffffff;
                 bCanCombine = FALSE;
-                
-                while (CombinedAdjustedSize > 0x00010000) {
+
+                while (CombinedAdjustedSize > 0x00010000)
+                {
 
                     //
                     // Check the size to see if it matches the requested limit.
                     //
 
-                    if (CombinedAdjustedSize == CombinedSize) {
+                    if (CombinedAdjustedSize == CombinedSize)
+                    {
 
                         //
                         // This one works.
                         // Check to see if the base address conforms to the MTRR restrictions.
                         //
 
-                        if ((CombinedBase & AlignmentMask) == 0) {
+                        if ((CombinedBase & AlignmentMask) == 0)
+                        {
                             bCanCombine = TRUE;
                         }
 
                         break;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // Bump it down to the next range size and try again.
@@ -465,19 +443,20 @@ KiAmdK6HandleWcRegionRequest (
                     }
                 }
 
-                if (bCanCombine) {
+                if (bCanCombine)
+                {
                     //
                     // If the resized range is OK, record the change in the region
                     // table and commit the changes to hardware.
                     //
-                    
+
                     pRegion->BaseAddress = CombinedBase;
                     pRegion->Size = CombinedAdjustedSize;
-                
+
                     //
                     // Reset the BIOS flag since we now "own" this region (if we didn't already).
                     //
-                
+
                     pRegion->RegionFlags &= ~AMDK6_REGION_FLAGS_BIOS;
 
                     return KiAmdK6MtrrCommitChanges();
@@ -486,23 +465,25 @@ KiAmdK6HandleWcRegionRequest (
         }
     }
 
-	// A valid combination could not be found, so try to create a new range for this request.
+    // A valid combination could not be found, so try to create a new range for this request.
     //
     // Find the smallest legal size that is less than or equal to the requested range.  Scan
     // all ranges from 128k - 2G. (Start at 2G and work down).
     //
-        
+
     AdjustedSize = 0x80000000;
     AlignmentMask = 0x7fffffff;
     bValidRange = FALSE;
 
-    while (AdjustedSize > 0x00010000) {
+    while (AdjustedSize > 0x00010000)
+    {
 
         //
         // Check the size to see if it matches the requested limit.
         //
 
-        if (AdjustedSize == Size) {
+        if (AdjustedSize == Size)
+        {
 
             //
             // This one works.
@@ -510,17 +491,19 @@ KiAmdK6HandleWcRegionRequest (
             // Check to see if the base address conforms to the MTRR restrictions.
             //
 
-            if ((BaseAddress & AlignmentMask) == 0) {
+            if ((BaseAddress & AlignmentMask) == 0)
+            {
                 bValidRange = TRUE;
             }
-            
+
             //
             // Stop looking.
             //
-            
-            break;
 
-        } else {
+            break;
+        }
+        else
+        {
 
             //
             // Bump it down to the next range size and try again.
@@ -534,71 +517,71 @@ KiAmdK6HandleWcRegionRequest (
     //
     // Couldn't find a legal region that fit.
     //
-    
-    if (!bValidRange) {
+
+    if (!bValidRange)
+    {
         return STATUS_NOT_SUPPORTED;
     }
-    
-    
+
+
     //
     // If we got this far then this is a new WC region.
     // Create a new region entry for this request.
     //
 
-    if (!KiAmdK6AddRegion(BaseAddress, AdjustedSize, MmWriteCombined, 0)) {
+    if (!KiAmdK6AddRegion(BaseAddress, AdjustedSize, MmWriteCombined, 0))
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
     //
     // Commit the changes to hardware.
     //
-        
+
     return KiAmdK6MtrrCommitChanges();
 }
 
 BOOLEAN
-KiAmdK6AddRegion (
-    ULONG BaseAddress,
-    ULONG Size,
-    MEMORY_CACHING_TYPE Type,
-    ULONG Flags
-    )
+KiAmdK6AddRegion(ULONG BaseAddress, ULONG Size, MEMORY_CACHING_TYPE Type, ULONG Flags)
 {
     PAMDK6_MTRR_REGION pRegion;
 
-    if ((pRegion = KiAmdK6FindFreeRegion(Type)) == NULL) {
+    if ((pRegion = KiAmdK6FindFreeRegion(Type)) == NULL)
+    {
         return FALSE;
     }
     pRegion->BaseAddress = BaseAddress;
     pRegion->Size = Size;
     pRegion->RegionType = Type;
     pRegion->RegionFlags = Flags;
-    
+
     return TRUE;
 }
 
 PAMDK6_MTRR_REGION
-KiAmdK6FindFreeRegion (
-    MEMORY_CACHING_TYPE Type
-    )
+KiAmdK6FindFreeRegion(MEMORY_CACHING_TYPE Type)
 {
-    ULONG    i;
+    ULONG i;
 
     //
     // If this is a MmWriteCombined request, limit the number of
     // regions to match the actual hardware support.
     //
 
-    if (Type == MmWriteCombined) {
-        if (AmdMtrrHwUsageCount >= AMDK6_MAX_MTRR) {
+    if (Type == MmWriteCombined)
+    {
+        if (AmdMtrrHwUsageCount >= AMDK6_MAX_MTRR)
+        {
 
             //
             // Search the table to see if there are any BIOS entries
             // we can replace.
             //
 
-            for (i = 0; i < AmdK6RegionCount; i++) {
-                if (AmdK6Regions[i].RegionFlags & AMDK6_REGION_FLAGS_BIOS) {
+            for (i = 0; i < AmdK6RegionCount; i++)
+            {
+                if (AmdK6Regions[i].RegionFlags & AMDK6_REGION_FLAGS_BIOS)
+                {
                     return &AmdK6Regions[i];
                 }
             }
@@ -615,10 +598,13 @@ KiAmdK6FindFreeRegion (
     // Find the next free region in the table.
     //
 
-    for (i = 0; i < AmdK6RegionCount; i++) {
-        if (AmdK6Regions[i].BaseAddress == AMDK6_REGION_UNUSED) {
+    for (i = 0; i < AmdK6RegionCount; i++)
+    {
+        if (AmdK6Regions[i].BaseAddress == AMDK6_REGION_UNUSED)
+        {
 
-            if (Type == MmWriteCombined) {
+            if (Type == MmWriteCombined)
+            {
                 AmdMtrrHwUsageCount++;
             }
             return &AmdK6Regions[i];
@@ -632,9 +618,7 @@ KiAmdK6FindFreeRegion (
 }
 
 NTSTATUS
-KiAmdK6MtrrCommitChanges (
-    VOID
-    )
+KiAmdK6MtrrCommitChanges(VOID)
 
 /*++
 
@@ -656,8 +640,8 @@ Return Value:
 --*/
 
 {
-    ULONG    i, dwWcRangeCount = 0;
-    ULONG    RangeTemp, RangeMask;
+    ULONG i, dwWcRangeCount = 0;
+    ULONG RangeTemp, RangeMask;
 
     //
     // Reset the MTRR image for both MTRRs disabled.
@@ -670,15 +654,16 @@ Return Value:
     // Find the Write Combining Regions, if any and set up the MTRR register.
     //
 
-    for (i = 0; i < AmdK6RegionCount; i++) {
+    for (i = 0; i < AmdK6RegionCount; i++)
+    {
 
         //
         // Is this a valid region, and is it a write combined type?
         //
 
-        if ((AmdK6Regions[i].BaseAddress != AMDK6_REGION_UNUSED) &&
-            (AmdK6Regions[i].RegionType == MmWriteCombined)) {
-            
+        if ((AmdK6Regions[i].BaseAddress != AMDK6_REGION_UNUSED) && (AmdK6Regions[i].RegionType == MmWriteCombined))
+        {
+
             //
             // Calculate the correct mask for this range size.  The
             // BaseAddress and size were validated and adjusted in
@@ -689,22 +674,25 @@ Return Value:
             //
 
             RangeTemp = 0x00020000;
-            RangeMask = 0xfffe0000;            
+            RangeMask = 0xfffe0000;
 
-            while (RangeTemp != 0) {
-                if (RangeTemp == AmdK6Regions[i].Size) {
+            while (RangeTemp != 0)
+            {
+                if (RangeTemp == AmdK6Regions[i].Size)
+                {
                     break;
                 }
                 RangeTemp <<= 1;
                 RangeMask <<= 1;
             }
-            if (RangeTemp == 0) {
+            if (RangeTemp == 0)
+            {
 
                 //
                 // Not a valid range size.  This can never happen!!
                 //
 
-                DBGMSG ("AmdK6MtrrCommitChanges: Bad WC range in region table!\n");
+                DBGMSG("AmdK6MtrrCommitChanges: Bad WC range in region table!\n");
 
                 return STATUS_NOT_SUPPORTED;
             }
@@ -713,28 +701,31 @@ Return Value:
             // Add the region to the next available register.
             //
 
-            if (dwWcRangeCount == 0)  {
+            if (dwWcRangeCount == 0)
+            {
 
                 KiAmdK6Mtrr.u.hw.mtrr0.base = AmdK6Regions[i].BaseAddress >> 17;
                 KiAmdK6Mtrr.u.hw.mtrr0.mask = RangeMask >> 17;
                 KiAmdK6Mtrr.u.hw.mtrr0.type = AMDK6_MTRR_TYPE_WC;
                 dwWcRangeCount++;
-
-            }  else if (dwWcRangeCount == 1) {
+            }
+            else if (dwWcRangeCount == 1)
+            {
 
                 KiAmdK6Mtrr.u.hw.mtrr1.base = AmdK6Regions[i].BaseAddress >> 17;
                 KiAmdK6Mtrr.u.hw.mtrr1.mask = RangeMask >> 17;
                 KiAmdK6Mtrr.u.hw.mtrr1.type = AMDK6_MTRR_TYPE_WC;
                 dwWcRangeCount++;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Should never happen!  This should have been caught in
                 // the calling routine.
                 //
 
-                DBGMSG ("AmdK6MtrrCommitChanges: Not enough MTRR registers to satisfy region table!\n");
+                DBGMSG("AmdK6MtrrCommitChanges: Not enough MTRR registers to satisfy region table!\n");
 
                 return STATUS_NOT_SUPPORTED;
             }
@@ -750,10 +741,7 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-VOID
-KiAmdK6MtrrWRMSR (
-    VOID
-    )
+VOID KiAmdK6MtrrWRMSR(VOID)
 
 /*++
 
@@ -779,7 +767,5 @@ Return Value:
     // Write the MTRRs
     //
 
-    WRMSR (AMDK6_MTRR_MSR, KiAmdK6Mtrr.u.QuadPart);
+    WRMSR(AMDK6_MTRR_MSR, KiAmdK6Mtrr.u.QuadPart);
 }
-
-

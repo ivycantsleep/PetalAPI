@@ -13,7 +13,7 @@
 #include "precomp.h"
 #pragma hdrstop
 
-INT xxxLBBinarySearchString(PLBIV plb,LPWSTR lpstr);
+INT xxxLBBinarySearchString(PLBIV plb, LPWSTR lpstr);
 
 /***************************************************************************\
 *
@@ -25,16 +25,17 @@ INT xxxLBBinarySearchString(PLBIV plb,LPWSTR lpstr);
 
 int xxxSetLBScrollParms(PLBIV plb, int nCtl)
 {
-    int         iPos;
-    int         cItems;
-    UINT        iPage;
-    SCROLLINFO  si;
-    BOOL        fNoScroll = FALSE;
-    PSCROLLPOS  psp;
-    BOOL        fCacheInitialized;
-    int         iReturn;
+    int iPos;
+    int cItems;
+    UINT iPage;
+    SCROLLINFO si;
+    BOOL fNoScroll = FALSE;
+    PSCROLLPOS psp;
+    BOOL fCacheInitialized;
+    int iReturn;
 
-    if (nCtl == SB_VERT) {
+    if (nCtl == SB_VERT)
+    {
         iPos = plb->iTop;
         cItems = plb->cMac;
         iPage = plb->cItemFullMax;
@@ -42,14 +43,19 @@ int xxxSetLBScrollParms(PLBIV plb, int nCtl)
             fNoScroll = TRUE;
         psp = &plb->VPos;
         fCacheInitialized = plb->fVertInitialized;
-    } else {
-        if (plb->fMultiColumn) {
-            iPos   = plb->iTop / plb->itemsPerColumn;
+    }
+    else
+    {
+        if (plb->fMultiColumn)
+        {
+            iPos = plb->iTop / plb->itemsPerColumn;
             cItems = plb->cMac ? ((plb->cMac - 1) / plb->itemsPerColumn) + 1 : 0;
             iPage = plb->numberOfColumns;
             if (plb->fRightAlign && cItems)
                 iPos = cItems - iPos - 1;
-        } else {
+        }
+        else
+        {
             iPos = plb->xOrigin;
             cItems = plb->maxWidth;
             iPage = plb->spwnd->rcClient.right - plb->spwnd->rcClient.left;
@@ -64,38 +70,44 @@ int xxxSetLBScrollParms(PLBIV plb, int nCtl)
     if (cItems)
         cItems--;
 
-    if (fNoScroll) {
+    if (fNoScroll)
+    {
         // Limit page to 0, posMax + 1
         iPage = max(min((int)iPage, cItems + 1), 0);
 
         // Limit pos to 0, posMax - (page - 1).
-        return(max(min(iPos, cItems - ((iPage) ? (int)(iPage - 1) : 0)), 0));
-    } else {
-        si.fMask    = SIF_ALL;
+        return (max(min(iPos, cItems - ((iPage) ? (int)(iPage - 1) : 0)), 0));
+    }
+    else
+    {
+        si.fMask = SIF_ALL;
         if (plb->fDisableNoScroll)
             si.fMask |= SIF_DISABLENOSCROLL;
 
         /*
          * If the scrollbar is already where we want it, do nothing.
          */
-        if (fCacheInitialized) {
-            if (psp->fMask == si.fMask &&
-                    psp->cItems == cItems && psp->iPage == iPage &&
-                    psp->iPos == iPos)
+        if (fCacheInitialized)
+        {
+            if (psp->fMask == si.fMask && psp->cItems == cItems && psp->iPage == iPage && psp->iPos == iPos)
                 return psp->iReturn;
-        } else if (nCtl == SB_VERT) {
+        }
+        else if (nCtl == SB_VERT)
+        {
             plb->fVertInitialized = TRUE;
-        } else {
+        }
+        else
+        {
             plb->fHorzInitialized = TRUE;
         }
 
-        si.cbSize   = sizeof(SCROLLINFO);
-        si.nMin     = 0;
-        si.nMax     = cItems;
-        si.nPage    = iPage;
+        si.cbSize = sizeof(SCROLLINFO);
+        si.nMin = 0;
+        si.nMax = cItems;
+        si.nPage = iPage;
 
         if (plb->fMultiColumn && plb->fRightAlign)
-            si.nPos =  (iPos+1) > (int)iPage ? iPos - iPage + 1 : 0;
+            si.nPos = (iPos + 1) > (int)iPage ? iPos - iPage + 1 : 0;
         else
             si.nPos = iPos;
 
@@ -122,8 +134,7 @@ int xxxSetLBScrollParms(PLBIV plb, int nCtl)
 * History:
 \***************************************************************************/
 
-void xxxLBShowHideScrollBars(
-    PLBIV plb)
+void xxxLBShowHideScrollBars(PLBIV plb)
 {
     BOOL fVertDone = FALSE;
     BOOL fHorzDone = FALSE;
@@ -146,13 +157,16 @@ void xxxLBShowHideScrollBars(
     // redraw isn't off.
     //
 
-    if (!plb->fFromInsert) {
+    if (!plb->fFromInsert)
+    {
         xxxNewITop(plb, plb->iTop);
         fVertDone = TRUE;
     }
 
-    if (!plb->fMultiColumn) {
-        if (!plb->fFromInsert) {
+    if (!plb->fMultiColumn)
+    {
+        if (!plb->fFromInsert)
+        {
             fHorzDone = TRUE;
             xxxLBoxCtlHScroll(plb, SB_THUMBPOSITION, plb->xOrigin);
         }
@@ -173,26 +187,25 @@ void xxxLBShowHideScrollBars(
 * 16-Apr-1992 beng      The NODATA listbox case
 \***************************************************************************/
 
-LONG_PTR LBGetItemData(
-    PLBIV plb,
-    INT sItem)
+LONG_PTR LBGetItemData(PLBIV plb, INT sItem)
 {
     LONG_PTR buffer;
     LPBYTE lpItem;
 
-    if (sItem < 0 || sItem >= plb->cMac) {
+    if (sItem < 0 || sItem >= plb->cMac)
+    {
         RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
         return LB_ERR;
     }
 
     // No-data listboxes always return 0L
     //
-    if (!plb->fHasData) {
+    if (!plb->fHasData)
+    {
         return 0L;
     }
 
-    lpItem = (plb->rgpch +
-            (sItem * (plb->fHasStrings ? sizeof(LBItem) : sizeof(LBODItem))));
+    lpItem = (plb->rgpch + (sItem * (plb->fHasStrings ? sizeof(LBItem) : sizeof(LBODItem))));
     buffer = (plb->fHasStrings ? ((lpLBItem)lpItem)->itemData : ((lpLBODItem)lpItem)->itemData);
     return buffer;
 }
@@ -211,22 +224,19 @@ LONG_PTR LBGetItemData(
 * History:
 \***************************************************************************/
 
-INT LBGetText(
-    PLBIV plb,
-    BOOL fLengthOnly,
-    BOOL fAnsi,
-    INT index,
-    LPWSTR lpbuffer)
+INT LBGetText(PLBIV plb, BOOL fLengthOnly, BOOL fAnsi, INT index, LPWSTR lpbuffer)
 {
     LPWSTR lpItemText;
     INT cchText;
 
-    if (index < 0 || index >= plb->cMac) {
+    if (index < 0 || index >= plb->cMac)
+    {
         RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
         return LB_ERR;
     }
 
-    if (!plb->fHasStrings && plb->OwnerDraw) {
+    if (!plb->fHasStrings && plb->OwnerDraw)
+    {
 
         /*
          * Owner draw without strings so we must copy the app supplied DWORD
@@ -234,11 +244,14 @@ INT LBGetText(
          */
         cchText = sizeof(ULONG_PTR);
 
-        if (!fLengthOnly) {
+        if (!fLengthOnly)
+        {
             LONG_PTR UNALIGNED *p = (LONG_PTR UNALIGNED *)lpbuffer;
             *p = LBGetItemData(plb, index);
         }
-    } else {
+    }
+    else
+    {
         lpItemText = GetLpszItem(plb, index);
         if (!lpItemText)
             return LB_ERR;
@@ -249,26 +262,31 @@ INT LBGetText(
          */
         cchText = wcslen(lpItemText);
 
-        if (fLengthOnly) {
+        if (fLengthOnly)
+        {
             if (fAnsi)
-                RtlUnicodeToMultiByteSize(&cchText, lpItemText, cchText*sizeof(WCHAR));
-        } else {
-            if (fAnsi) {
+                RtlUnicodeToMultiByteSize(&cchText, lpItemText, cchText * sizeof(WCHAR));
+        }
+        else
+        {
+            if (fAnsi)
+            {
 #ifdef FE_SB // LBGetText()
-                cchText = WCSToMB(lpItemText, cchText+1, &((LPSTR)lpbuffer), (cchText+1)*sizeof(WORD), FALSE);
+                cchText = WCSToMB(lpItemText, cchText + 1, &((LPSTR)lpbuffer), (cchText + 1) * sizeof(WORD), FALSE);
                 /*
                  * Here.. cchText contains null-terminate char, subtract it... Because, we pass cchText+1 to
                  * above Unicode->Ansi convertsion to make sure the string is terminated with null.
                  */
                 cchText--;
 #else
-                WCSToMB(lpItemText, cchText+1, &((LPSTR)lpbuffer), cchText+1, FALSE);
+                WCSToMB(lpItemText, cchText + 1, &((LPSTR)lpbuffer), cchText + 1, FALSE);
 #endif // FE_SB
-            } else {
-                RtlCopyMemory(lpbuffer, lpItemText, (cchText+1)*sizeof(WCHAR));
+            }
+            else
+            {
+                RtlCopyMemory(lpbuffer, lpItemText, (cchText + 1) * sizeof(WCHAR));
             }
         }
-
     }
 
     return cchText;
@@ -282,9 +300,7 @@ INT LBGetText(
 * 23-Jul-1996 jparsons  Added numItems parameter for LB_INITSTORAGE support
 \***************************************************************************/
 
-BOOL GrowMem(
-    PLBIV plb,
-    INT   numItems)
+BOOL GrowMem(PLBIV plb, INT numItems)
 
 {
     LONG cb;
@@ -293,23 +309,22 @@ BOOL GrowMem(
     /*
      * Allocate memory for pointers to the strings.
      */
-    cb = (plb->cMax + numItems) *
-            (plb->fHasStrings ? sizeof(LBItem)
-                              : (plb->fHasData ? sizeof(LBODItem)
-                                              : 0));
+    cb = (plb->cMax + numItems) * (plb->fHasStrings ? sizeof(LBItem) : (plb->fHasData ? sizeof(LBODItem) : 0));
 
     /*
      * If multiple selection list box (MULTIPLESEL or EXTENDEDSEL), then
      * allocate an extra byte per item to keep track of it's selection state.
      */
-    if (plb->wMultiple != SINGLESEL) {
+    if (plb->wMultiple != SINGLESEL)
+    {
         cb += (plb->cMax + numItems);
     }
 
     /*
      * Extra bytes for each item so that we can store its height.
      */
-    if (plb->OwnerDraw == OWNERDRAWVAR) {
+    if (plb->OwnerDraw == OWNERDRAWVAR)
+    {
         cb += (plb->cMax + numItems);
     }
 
@@ -319,10 +334,13 @@ BOOL GrowMem(
     if (cb > MAXLONG)
         return FALSE;
 
-    if (plb->rgpch == NULL) {
+    if (plb->rgpch == NULL)
+    {
         if ((plb->rgpch = UserLocalAlloc(HEAP_ZERO_MEMORY, (LONG)cb)) == NULL)
             return FALSE;
-    } else {
+    }
+    else
+    {
         if ((hMem = UserLocalReAlloc(plb->rgpch, (LONG)cb, HEAP_ZERO_MEMORY)) == NULL)
             return FALSE;
         plb->rgpch = hMem;
@@ -342,20 +360,22 @@ BOOL GrowMem(
 LONG xxxLBInitStorage(PLBIV plb, BOOL fAnsi, INT cItems, INT cb)
 {
     HANDLE hMem;
-    INT    cbChunk;
+    INT cbChunk;
 
     /*
      * if the app is talking ANSI, then adjust for the worst case in unicode
      * where each single ansi byte translates to one 16 bit unicode value
      */
-    if (fAnsi) {
-        cb *= sizeof(WCHAR) ;
+    if (fAnsi)
+    {
+        cb *= sizeof(WCHAR);
     } /* if */
 
     /*
      * Fail if either of the parameters look bad.
      */
-    if ((cItems < 0) || (cb < 0)) {
+    if ((cItems < 0) || (cb < 0))
+    {
         xxxNotifyOwner(plb, LBN_ERRSPACE);
         return LB_ERRSPACE;
     } /* if */
@@ -364,8 +384,9 @@ LONG xxxLBInitStorage(PLBIV plb, BOOL fAnsi, INT cItems, INT cb)
      * try to grow the pointer array (if necessary) accounting for the free space
      * already available.
      */
-    cItems -= plb->cMax - plb->cMac ;
-    if ((cItems > 0) && !GrowMem(plb, cItems)) {
+    cItems -= plb->cMax - plb->cMac;
+    if ((cItems > 0) && !GrowMem(plb, cItems))
+    {
         xxxNotifyOwner(plb, LBN_ERRSPACE);
         return LB_ERRSPACE;
     } /* if */
@@ -373,14 +394,17 @@ LONG xxxLBInitStorage(PLBIV plb, BOOL fAnsi, INT cItems, INT cb)
     /*
      * now grow the string space if necessary
      */
-    if (plb->fHasStrings) {
-        if ((cbChunk = (plb->ichAlloc + cb)) > plb->cchStrings) {
+    if (plb->fHasStrings)
+    {
+        if ((cbChunk = (plb->ichAlloc + cb)) > plb->cchStrings)
+        {
 
             /*
              * Round up to the nearest 256 byte chunk.
              */
             cbChunk = (cbChunk & ~0xff) + 0x100;
-            if (!(hMem = UserLocalReAlloc(plb->hStrings, (LONG)cbChunk, 0))) {
+            if (!(hMem = UserLocalReAlloc(plb->hStrings, (LONG)cbChunk, 0)))
+            {
                 xxxNotifyOwner(plb, LBN_ERRSPACE);
                 return LB_ERRSPACE;
             }
@@ -392,7 +416,7 @@ LONG xxxLBInitStorage(PLBIV plb, BOOL fAnsi, INT cItems, INT cb)
     /*
      * return the number of items that can be stored
      */
-    return plb->cMax ;
+    return plb->cMax;
 }
 
 /***************************************************************************\
@@ -404,16 +428,13 @@ LONG xxxLBInitStorage(PLBIV plb, BOOL fAnsi, INT cItems, INT cb)
 * 16-Apr-1992 beng      NODATA listboxes
 \***************************************************************************/
 
-INT xxxLBInsertItem(
-    PLBIV plb,
+INT xxxLBInsertItem(PLBIV plb,
 
-    /*
+                    /*
      * For owner draw listboxes without LBS_HASSTRINGS style, this is not a
      * string but rather a 4 byte value we will store for the app.
      */
-    LPWSTR lpsz,
-    INT index,
-    UINT wFlags)
+                    LPWSTR lpsz, INT index, UINT wFlags)
 {
     MEASUREITEMSTRUCT measureItemStruct;
     INT cbString = 0;
@@ -421,7 +442,7 @@ INT xxxLBInsertItem(
     PBYTE lp;
     PBYTE lpT;
     PBYTE lpHeightStart;
-    LONG cbItem;     /* sizeof the Item in rgpch */
+    LONG cbItem; /* sizeof the Item in rgpch */
     HANDLE hMem;
     TL tlpwndParent;
 
@@ -430,8 +451,10 @@ INT xxxLBInsertItem(
     if (wFlags & LBI_ADD)
         index = (plb->fSort) ? xxxLBBinarySearchString(plb, lpsz) : -1;
 
-    if (!plb->rgpch) {
-        if (index != 0 && index != -1) {
+    if (!plb->rgpch)
+    {
+        if (index != 0 && index != -1)
+        {
             RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
             return LB_ERR;
         }
@@ -446,30 +469,34 @@ INT xxxLBInsertItem(
             return LB_ERR;
     }
 
-    if (index == -1) {
+    if (index == -1)
+    {
         index = plb->cMac;
     }
 
-    if (index > plb->cMac || plb->cMac >= MAXLONG) {
+    if (index > plb->cMac || plb->cMac >= MAXLONG)
+    {
         RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
         return LB_ERR;
     }
 
-    if (plb->fHasStrings) {
+    if (plb->fHasStrings)
+    {
 
         /*
          * we must store the string in the hStrings memory block.
          */
-        cbString = (wcslen(lpsz) + 1)*sizeof(WCHAR);  /* include 0 terminator */
+        cbString = (wcslen(lpsz) + 1) * sizeof(WCHAR); /* include 0 terminator */
 
-        if ((cbChunk = (plb->ichAlloc + cbString)) > plb->cchStrings) {
+        if ((cbChunk = (plb->ichAlloc + cbString)) > plb->cchStrings)
+        {
 
             /*
              * Round up to the nearest 256 byte chunk.
              */
             cbChunk = (cbChunk & ~0xff) + 0x100;
-            if (!(hMem = UserLocalReAlloc(plb->hStrings, (LONG)cbChunk,
-                    0))) {
+            if (!(hMem = UserLocalReAlloc(plb->hStrings, (LONG)cbChunk, 0)))
+            {
                 xxxNotifyOwner(plb, LBN_ERRSPACE);
                 return LB_ERRSPACE;
             }
@@ -493,8 +520,10 @@ INT xxxLBInsertItem(
     /*
      * Now expand the pointer array.
      */
-    if (plb->cMac >= plb->cMax) {
-        if (!GrowMem(plb, CITEMSALLOC)) {
+    if (plb->cMac >= plb->cMax)
+    {
+        if (!GrowMem(plb, CITEMSALLOC))
+        {
             xxxNotifyOwner(plb, LBN_ERRSPACE);
             return LB_ERRSPACE;
         }
@@ -508,11 +537,11 @@ INT xxxLBInsertItem(
      * (LBODItem.itemData) stored for each item, but if we have strings with
      * each item then a LONG string offset (LBItem.offsz) is also stored.
      */
-    cbItem = (plb->fHasStrings ? sizeof(LBItem)
-                               : (plb->fHasData ? sizeof(LBODItem):0));
+    cbItem = (plb->fHasStrings ? sizeof(LBItem) : (plb->fHasData ? sizeof(LBODItem) : 0));
     cbChunk = (plb->cMac - index) * cbItem;
 
-    if (plb->wMultiple != SINGLESEL) {
+    if (plb->wMultiple != SINGLESEL)
+    {
 
         /*
          * Extra bytes were allocated for selection flag for each item
@@ -520,7 +549,8 @@ INT xxxLBInsertItem(
         cbChunk += plb->cMac;
     }
 
-    if (plb->OwnerDraw == OWNERDRAWVAR) {
+    if (plb->OwnerDraw == OWNERDRAWVAR)
+    {
 
         /*
          * Extra bytes were allocated for each item's height
@@ -534,15 +564,19 @@ INT xxxLBInsertItem(
      */
     lpT += (index * cbItem);
     RtlMoveMemory(lpT + cbItem, lpT, cbChunk);
-    if (!plb->fHasStrings && plb->OwnerDraw) {
-        if (plb->fHasData) {
+    if (!plb->fHasStrings && plb->OwnerDraw)
+    {
+        if (plb->fHasData)
+        {
             /*
              * Ownerdraw so just save the DWORD value
              */
             lpLBODItem p = (lpLBODItem)lpT;
             p->itemData = (ULONG_PTR)lpsz;
         }
-    } else {
+    }
+    else
+    {
         lpLBItem p = ((lpLBItem)lpT);
 
         /*
@@ -558,11 +592,11 @@ INT xxxLBInsertItem(
      * byte.  If var height ownerdraw, then we also have to move up the height
      * bytes.
      */
-    if (plb->wMultiple != SINGLESEL) {
+    if (plb->wMultiple != SINGLESEL)
+    {
         lpT = lp + ((plb->cMac + 1) * cbItem) + index;
-        RtlMoveMemory(lpT + 1, lpT, plb->cMac - index +
-                (plb->OwnerDraw == OWNERDRAWVAR ? plb->cMac : 0));
-        *lpT = 0;  /* fSelected = FALSE */
+        RtlMoveMemory(lpT + 1, lpT, plb->cMac - index + (plb->OwnerDraw == OWNERDRAWVAR ? plb->cMac : 0));
+        *lpT = 0; /* fSelected = FALSE */
     }
 
     /*
@@ -575,13 +609,13 @@ INT xxxLBInsertItem(
      * If varheight ownerdraw, we much insert an extra byte for the item's
      * height.
      */
-    if (plb->OwnerDraw == OWNERDRAWVAR) {
+    if (plb->OwnerDraw == OWNERDRAWVAR)
+    {
 
         /*
          * Variable height owner draw so we need to get the height of each item.
          */
-        lpHeightStart += (plb->cMac * cbItem) + index +
-                (plb->wMultiple ? plb->cMac : 0);
+        lpHeightStart += (plb->cMac * cbItem) + index + (plb->wMultiple ? plb->cMac : 0);
 
         RtlMoveMemory(lpHeightStart + 1, lpHeightStart, plb->cMac - 1 - index);
 
@@ -607,15 +641,13 @@ INT xxxLBInsertItem(
          * WOW needs to know about this situation as well so we mark the
          * previously uninitialized itemWidth as FLAT.
          */
-        if (plb->fHasStrings || (wFlags & MSGFLAG_SPECIAL_THUNK)) {
+        if (plb->fHasStrings || (wFlags & MSGFLAG_SPECIAL_THUNK))
+        {
             measureItemStruct.itemWidth = MIFLAG_FLAT;
         }
 
         ThreadLock(plb->spwndParent, &tlpwndParent);
-        SendMessage(HW(plb->spwndParent),
-                WM_MEASUREITEM,
-                measureItemStruct.CtlID,
-                (LPARAM)&measureItemStruct);
+        SendMessage(HW(plb->spwndParent), WM_MEASUREITEM, measureItemStruct.CtlID, (LPARAM)&measureItemStruct);
         ThreadUnlock(&tlpwndParent);
         *lpHeightStart = (BYTE)measureItemStruct.itemHeight;
     }
@@ -636,7 +668,8 @@ INT xxxLBInsertItem(
      */
     plb->fFromInsert = TRUE;
     xxxLBShowHideScrollBars(plb);
-    if (plb->fHorzBar && plb->fRightAlign && !(plb->fMultiColumn || plb->OwnerDraw)) {
+    if (plb->fHorzBar && plb->fRightAlign && !(plb->fMultiColumn || plb->OwnerDraw))
+    {
         /*
          * origin to right
          */
@@ -666,10 +699,7 @@ INT xxxLBInsertItem(
 * History:
 \***************************************************************************/
 
-INT LBlstrcmpi(
-    LPWSTR lpStr1,
-    LPWSTR lpStr2,
-    DWORD dwLocaleId)
+INT LBlstrcmpi(LPWSTR lpStr1, LPWSTR lpStr2, DWORD dwLocaleId)
 {
 
     /*
@@ -679,29 +709,32 @@ INT LBlstrcmpi(
      * like both strings starting with '[' or both strings NOT starting with '['
      * first and only in abosolutely necessary cases calls IsCharAlphaNumeric();
      */
-    if (*lpStr1 == TEXT('[')) {
-        if (*lpStr2 == TEXT('[')) {
+    if (*lpStr1 == TEXT('['))
+    {
+        if (*lpStr2 == TEXT('['))
+        {
             goto LBL_End;
         }
-        if (IsCharAlphaNumeric(*lpStr2)) {
+        if (IsCharAlphaNumeric(*lpStr2))
+        {
             return 1;
         }
     }
 
-    if ((*lpStr2 == TEXT('[')) && IsCharAlphaNumeric(*lpStr1)) {
+    if ((*lpStr2 == TEXT('[')) && IsCharAlphaNumeric(*lpStr1))
+    {
         return -1;
     }
 
 LBL_End:
-    if ((GetClientInfo()->dwTIFlags & TIF_16BIT) &&
-        dwLocaleId == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US)) {
+    if ((GetClientInfo()->dwTIFlags & TIF_16BIT) && dwLocaleId == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US))
+    {
         /*
          * This is how Windows95 does, bug #4199
          */
         return (*pfnWowIlstrcmp)(lpStr1, lpStr2);
     }
-    return (INT)CompareStringW((LCID)dwLocaleId, NORM_IGNORECASE,
-            lpStr1, -1, lpStr2, -1 ) - 2;
+    return (INT)CompareStringW((LCID)dwLocaleId, NORM_IGNORECASE, lpStr1, -1, lpStr2, -1) - 2;
 }
 
 
@@ -717,9 +750,7 @@ LBL_End:
 *          Modified to support sorting based on current list box locale.
 \***************************************************************************/
 
-INT xxxLBBinarySearchString(
-    PLBIV plb,
-    LPWSTR lpstr)
+INT xxxLBBinarySearchString(PLBIV plb, LPWSTR lpstr)
 {
     BYTE *FAR *lprgpch;
     INT sortResult;
@@ -736,23 +767,28 @@ INT xxxLBBinarySearchString(
     if (!plb->cMac)
         return 0;
 
-    lprgpch = (BYTE *FAR *)(plb->rgpch);
-    if (plb->fHasStrings) {
+    lprgpch = (BYTE * FAR *)(plb->rgpch);
+    if (plb->fHasStrings)
+    {
         pszLBBase = plb->hStrings;
     }
 
     itemhigh = plb->cMac - 1;
-    while (itemlow <= itemhigh) {
+    while (itemlow <= itemhigh)
+    {
         itemnew = (itemhigh + itemlow) / 2;
 
-        if (plb->fHasStrings) {
+        if (plb->fHasStrings)
+        {
 
             /*
              * Searching for string matches.
              */
             pszLB = (LPWSTR)((LPSTR)pszLBBase + ((lpLBItem)lprgpch)[itemnew].offsz);
             sortResult = LBlstrcmpi(pszLB, lpstr, plb->dwLocaleId);
-        } else {
+        }
+        else
+        {
 
             /*
              * Send compare item messages to the parent for sorting
@@ -766,16 +802,20 @@ INT xxxLBBinarySearchString(
             cis.itemData2 = (ULONG_PTR)lpstr;
             cis.dwLocaleId = plb->dwLocaleId;
             ThreadLock(plb->spwndParent, &tlpwndParent);
-            sortResult = (INT)SendMessage(HW(plb->spwndParent), WM_COMPAREITEM,
-                    cis.CtlID, (LPARAM)&cis);
+            sortResult = (INT)SendMessage(HW(plb->spwndParent), WM_COMPAREITEM, cis.CtlID, (LPARAM)&cis);
             ThreadUnlock(&tlpwndParent);
         }
 
-        if (sortResult < 0) {
+        if (sortResult < 0)
+        {
             itemlow = itemnew + 1;
-        } else if (sortResult > 0) {
+        }
+        else if (sortResult > 0)
+        {
             itemhigh = itemnew - 1;
-        } else {
+        }
+        else
+        {
             itemlow = itemnew;
             goto FoundIt;
         }
@@ -792,20 +832,21 @@ FoundIt:
 * History:
 \***************************************************************************/
 
-BOOL xxxLBResetContent(
-    PLBIV plb)
+BOOL xxxLBResetContent(PLBIV plb)
 {
     if (!plb->cMac)
         return TRUE;
 
     xxxLBoxDoDeleteItems(plb);
 
-    if (plb->rgpch != NULL) {
+    if (plb->rgpch != NULL)
+    {
         UserLocalFree(plb->rgpch);
         plb->rgpch = NULL;
     }
 
-    if (plb->hStrings != NULL) {
+    if (plb->hStrings != NULL)
+    {
         UserLocalFree(plb->hStrings);
         plb->hStrings = NULL;
     }
@@ -817,12 +858,12 @@ BOOL xxxLBResetContent(
     else if (IsVisible(plb->spwnd))
         NtUserInvalidateRect(HWq(plb->spwnd), NULL, TRUE);
 
-    plb->iSelBase =  0;
-    plb->iTop =  0;
-    plb->cMac =  0;
-    plb->cMax =  0;
-    plb->xOrigin =  0;
-    plb->iLastSelection =  0;
+    plb->iSelBase = 0;
+    plb->iTop = 0;
+    plb->cMac = 0;
+    plb->cMax = 0;
+    plb->xOrigin = 0;
+    plb->iLastSelection = 0;
     plb->iSel = -1;
 
     xxxLBShowHideScrollBars(plb);
@@ -837,15 +878,13 @@ BOOL xxxLBResetContent(
 * 16-Apr-1992 beng      NODATA listboxes
 \***************************************************************************/
 
-INT xxxLBoxCtlDelete(
-    PLBIV plb,
-    INT sItem)  /* Item number to delete */
+INT xxxLBoxCtlDelete(PLBIV plb, INT sItem) /* Item number to delete */
 {
     LONG cb;
     LPBYTE lp;
     LPBYTE lpT;
     RECT rc;
-    int cbItem;    /* size of Item in rgpch */
+    int cbItem; /* size of Item in rgpch */
     LPWSTR lpString;
     PBYTE pbStrings;
     INT cbStringLen;
@@ -855,14 +894,16 @@ INT xxxLBoxCtlDelete(
 
     CheckLock(plb->spwnd);
 
-    if (sItem < 0 || sItem >= plb->cMac) {
+    if (sItem < 0 || sItem >= plb->cMac)
+    {
         RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
         return LB_ERR;
     }
 
     LBEvent(plb, EVENT_OBJECT_DESTROY, sItem);
 
-    if (plb->cMac == 1) {
+    if (plb->cMac == 1)
+    {
 
         /*
          * When the item count is 0, we send a resetcontent message so that we
@@ -878,31 +919,34 @@ INT xxxLBoxCtlDelete(
      * scrolls up to replace the item deleted so we must make sure we erase the
      * old image of the last item in the listbox.
      */
-    if (LBGetItemRect(plb, (INT)(plb->cMac - 1), &rc)) {
+    if (LBGetItemRect(plb, (INT)(plb->cMac - 1), &rc))
+    {
         xxxLBInvalidateRect(plb, &rc, TRUE);
     }
 
     // 3.1 and earlier used to only send WM_DELETEITEMs if it was an ownerdraw
     // listbox.  4.0 and above will send WM_DELETEITEMs for every item that has
     // nonzero item data.
-    if (TestWF(plb->spwnd, WFWIN40COMPAT) || (plb->OwnerDraw && plb->fHasData)) {
+    if (TestWF(plb->spwnd, WFWIN40COMPAT) || (plb->OwnerDraw && plb->fHasData))
+    {
         xxxLBoxDeleteItem(plb, sItem);
     }
 
     plb->cMac--;
 
-    cbItem = (plb->fHasStrings ? sizeof(LBItem)
-                               : (plb->fHasData ? sizeof(LBODItem): 0));
+    cbItem = (plb->fHasStrings ? sizeof(LBItem) : (plb->fHasData ? sizeof(LBODItem) : 0));
     cb = ((plb->cMac - sItem) * cbItem);
 
     /*
      * Byte for the selection status of the item.
      */
-    if (plb->wMultiple != SINGLESEL) {
+    if (plb->wMultiple != SINGLESEL)
+    {
         cb += (plb->cMac + 1);
     }
 
-    if (plb->OwnerDraw == OWNERDRAWVAR) {
+    if (plb->OwnerDraw == OWNERDRAWVAR)
+    {
 
         /*
          * One byte for the height of the item.
@@ -914,12 +958,14 @@ INT xxxLBoxCtlDelete(
      * Might be nodata and singlesel, for instance.
      * but what out for the case where cItem == cMac (and cb == 0).
      */
-    if ((cb != 0) || plb->fHasStrings) {
+    if ((cb != 0) || plb->fHasStrings)
+    {
         lp = plb->rgpch;
 
         lpT = (lp + (sItem * cbItem));
 
-        if (plb->fHasStrings) {
+        if (plb->fHasStrings)
+        {
             /*
              * If we has strings with each item, then we want to compact the string
              * heap so that we can recover the space occupied by the string of the
@@ -930,15 +976,14 @@ INT xxxLBoxCtlDelete(
              */
             pbStrings = (PBYTE)(plb->hStrings);
             lpString = (LPTSTR)(pbStrings + ((lpLBItem)lpT)->offsz);
-            cbStringLen = (wcslen(lpString) + 1) * sizeof(WCHAR);  /* include null terminator */
+            cbStringLen = (wcslen(lpString) + 1) * sizeof(WCHAR); /* include null terminator */
 
             /*
              * Now compact the string array
              */
             plb->ichAlloc = plb->ichAlloc - cbStringLen;
 
-            RtlMoveMemory(lpString, (PBYTE)lpString + cbStringLen,
-                    plb->ichAlloc + (pbStrings - (LPBYTE)lpString));
+            RtlMoveMemory(lpString, (PBYTE)lpString + cbStringLen, plb->ichAlloc + (pbStrings - (LPBYTE)lpString));
 
             /*
              * We have to update the string pointers in plb->rgpch since all the
@@ -949,13 +994,15 @@ INT xxxLBoxCtlDelete(
              * at the end of the string heap for example.
              */
             itemNumbers = lp;
-            for (sTmp = 0; sTmp <= plb->cMac; sTmp++) {
-                lpLBItem p =(lpLBItem)itemNumbers;
-                if ( (LPTSTR)(p->offsz + pbStrings) > lpString ) {
+            for (sTmp = 0; sTmp <= plb->cMac; sTmp++)
+            {
+                lpLBItem p = (lpLBItem)itemNumbers;
+                if ((LPTSTR)(p->offsz + pbStrings) > lpString)
+                {
                     p->offsz -= cbStringLen;
                 }
                 p++;
-                itemNumbers=(LPBYTE)p;
+                itemNumbers = (LPBYTE)p;
             }
         }
 
@@ -968,33 +1015,36 @@ INT xxxLBoxCtlDelete(
         /*
          * Compress the multiselection bytes
          */
-        if (plb->wMultiple != SINGLESEL) {
+        if (plb->wMultiple != SINGLESEL)
+        {
             lpT = (lp + (plb->cMac * cbItem) + sItem);
-            RtlMoveMemory(lpT, lpT + 1, plb->cMac - sItem +
-                    (plb->OwnerDraw == OWNERDRAWVAR ? plb->cMac + 1 : 0));
+            RtlMoveMemory(lpT, lpT + 1, plb->cMac - sItem + (plb->OwnerDraw == OWNERDRAWVAR ? plb->cMac + 1 : 0));
         }
 
-        if (plb->OwnerDraw == OWNERDRAWVAR) {
+        if (plb->OwnerDraw == OWNERDRAWVAR)
+        {
             /*
              * Compress the height bytes
              */
-            lpT = (lp + (plb->cMac * cbItem) + (plb->wMultiple ? plb->cMac : 0)
-                    + sItem);
+            lpT = (lp + (plb->cMac * cbItem) + (plb->wMultiple ? plb->cMac : 0) + sItem);
             RtlMoveMemory(lpT, lpT + 1, plb->cMac - sItem);
         }
-
     }
 
-    if (plb->wMultiple == SINGLESEL) {
-        if (plb->iSel == sItem) {
+    if (plb->wMultiple == SINGLESEL)
+    {
+        if (plb->iSel == sItem)
+        {
             plb->iSel = -1;
 
-            if (plb->pcbox != NULL) {
+            if (plb->pcbox != NULL)
+            {
                 ThreadLock(plb->pcbox->spwnd, &tlpwnd);
                 xxxCBInternalUpdateEditWindow(plb->pcbox, NULL);
                 ThreadUnlock(&tlpwnd);
             }
-        } else if (plb->iSel > sItem)
+        }
+        else if (plb->iSel > sItem)
             plb->iSel--;
     }
 
@@ -1004,9 +1054,12 @@ INT xxxLBoxCtlDelete(
     if (plb->iSelBase && sItem == plb->iSelBase)
         plb->iSelBase--;
 
-    if (plb->cMac) {
+    if (plb->cMac)
+    {
         plb->iSelBase = min(plb->iSelBase, plb->cMac - 1);
-    } else {
+    }
+    else
+    {
         plb->iSelBase = 0;
     }
 
@@ -1046,9 +1099,7 @@ FinishUpDelete:
 * History:
 \***************************************************************************/
 
-void xxxLBoxDeleteItem(
-    PLBIV plb,
-    INT sItem)
+void xxxLBoxDeleteItem(PLBIV plb, INT sItem)
 {
     DELETEITEMSTRUCT dis;
     TL tlpwndParent;
@@ -1061,7 +1112,8 @@ void xxxLBoxDeleteItem(
      * Bug 262122 - joejo
      * No need to send message if no data!
      */
-    if (!plb->fHasData) {
+    if (!plb->fHasData)
+    {
         return;
     }
 
@@ -1080,10 +1132,10 @@ void xxxLBoxDeleteItem(
      */
     dis.itemData = LBGetItemData(plb, sItem);
 
-    if (plb->spwndParent != NULL) {
+    if (plb->spwndParent != NULL)
+    {
         ThreadLock(plb->spwndParent, &tlpwndParent);
-        SendMessage(HWq(plb->spwndParent), WM_DELETEITEM, dis.CtlID,
-                (LPARAM)&dis);
+        SendMessage(HWq(plb->spwndParent), WM_DELETEITEM, dis.CtlID, (LPARAM)&dis);
         ThreadUnlock(&tlpwndParent);
     }
 }
@@ -1100,12 +1152,10 @@ void xxxLBoxDeleteItem(
 * 16-Apr-1992 beng      Created
 \**************************************************************************/
 
-INT xxxLBSetCount(
-    PLBIV plb,
-    INT cItems)
+INT xxxLBSetCount(PLBIV plb, INT cItems)
 {
-    UINT  cbRequired;
-    BOOL    fRedraw;
+    UINT cbRequired;
+    BOOL fRedraw;
 
     CheckLock(plb->spwnd);
 
@@ -1114,12 +1164,14 @@ INT xxxLBSetCount(
      * All other lboxen must add their items one at a time, although
      * they may SetCount(0) via RESETCONTENT.
      */
-    if (plb->fHasStrings || plb->fHasData) {
+    if (plb->fHasStrings || plb->fHasData)
+    {
         RIPERR0(ERROR_SETCOUNT_ON_BAD_LB, RIP_VERBOSE, "");
         return LB_ERR;
     }
 
-    if (cItems == 0) {
+    if (cItems == 0)
+    {
         SendMessageWorker(plb->spwnd, LB_RESETCONTENT, 0, 0, FALSE);
         return 0;
     }
@@ -1140,17 +1192,20 @@ INT xxxLBSetCount(
     plb->iLastSelection = 0;
     plb->iSel = -1;
 
-    if (cbRequired != 0) { // Only if record instance data required
+    if (cbRequired != 0)
+    { // Only if record instance data required
 
         /*
          * If listbox was previously empty, prepare for the
          * realloc-based alloc strategy ahead.
          */
-        if (plb->rgpch == NULL) {
+        if (plb->rgpch == NULL)
+        {
             plb->rgpch = UserLocalAlloc(HEAP_ZERO_MEMORY, 0L);
             plb->cMax = 0;
 
-            if (plb->rgpch == NULL) {
+            if (plb->rgpch == NULL)
+            {
                 xxxNotifyOwner(plb, LBN_ERRSPACE);
                 return LB_ERRSPACE;
             }
@@ -1160,20 +1215,22 @@ INT xxxLBSetCount(
          * rgpch might not have enough room for the new record instance
          * data, so check and realloc as necessary.
          */
-        if (cItems >= plb->cMax) {
-            INT    cMaxNew;
-            UINT   cbNew;
+        if (cItems >= plb->cMax)
+        {
+            INT cMaxNew;
+            UINT cbNew;
             HANDLE hmemNew;
 
             /*
              * Since GrowMem presumes a one-item-at-a-time add schema,
              * SetCount can't use it.  Too bad.
              */
-            cMaxNew = cItems+CITEMSALLOC;
+            cMaxNew = cItems + CITEMSALLOC;
             cbNew = LBCalcAllocNeeded(plb, cMaxNew);
             hmemNew = UserLocalReAlloc(plb->rgpch, cbNew, HEAP_ZERO_MEMORY);
 
-            if (hmemNew == NULL) {
+            if (hmemNew == NULL)
+            {
                 xxxNotifyOwner(plb, LBN_ERRSPACE);
                 return LB_ERRSPACE;
             }
@@ -1195,9 +1252,9 @@ INT xxxLBSetCount(
         xxxLBSetRedraw(plb, TRUE);
 
     xxxLBInvalidateRect(plb, NULL, TRUE);
-// Not In Chicago -- FritzS
-//    NtUserSetScrollPos(plb->spwnd, SB_HORZ, 0, plb->fRedraw);
-//    NtUserSetScrollPos(plb->spwnd, SB_VERT, 0, plb->fRedraw);
+    // Not In Chicago -- FritzS
+    //    NtUserSetScrollPos(plb->spwnd, SB_HORZ, 0, plb->fRedraw);
+    //    NtUserSetScrollPos(plb->spwnd, SB_VERT, 0, plb->fRedraw);
     xxxLBShowHideScrollBars(plb); // takes care of fRedraw
 
     return 0;
@@ -1213,31 +1270,29 @@ INT xxxLBSetCount(
 * 16-Apr-1992 beng      Created
 \**************************************************************************/
 
-UINT LBCalcAllocNeeded(
-    PLBIV plb,
-    INT cItems)
+UINT LBCalcAllocNeeded(PLBIV plb, INT cItems)
 {
     UINT cb;
 
     /*
      * Allocate memory for pointers to the strings.
      */
-    cb = cItems * (plb->fHasStrings ? sizeof(LBItem)
-                                    : (plb->fHasData ? sizeof(LBODItem)
-                                                    : 0));
+    cb = cItems * (plb->fHasStrings ? sizeof(LBItem) : (plb->fHasData ? sizeof(LBODItem) : 0));
 
     /*
      * If multiple selection list box (MULTIPLESEL or EXTENDEDSEL), then
      * allocate an extra byte per item to keep track of it's selection state.
      */
-    if (plb->wMultiple != SINGLESEL) {
+    if (plb->wMultiple != SINGLESEL)
+    {
         cb += cItems;
     }
 
     /*
      * Extra bytes for each item so that we can store its height.
      */
-    if (plb->OwnerDraw == OWNERDRAWVAR) {
+    if (plb->OwnerDraw == OWNERDRAWVAR)
+    {
         cb += cItems;
     }
 

@@ -9,7 +9,7 @@
 
 #include "pch.h"
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
@@ -35,8 +35,7 @@ NTSTATUS LOCAL NewHeap(ULONG dwLen, PHEAP *ppheap)
 
     if ((*ppheap = NEWHPOBJ(dwLen)) == NULL)
     {
-        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                         ("NewHeap: failed to allocate new heap block"));
+        rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("NewHeap: failed to allocate new heap block"));
     }
     else
     {
@@ -45,7 +44,7 @@ NTSTATUS LOCAL NewHeap(ULONG dwLen, PHEAP *ppheap)
 
     EXIT(3, ("NewHeap=%x (pheap=%x)\n", rc, *ppheap));
     return rc;
-}       //NewHeap
+} //NewHeap
 
 /***LP  FreeHeap - free the heap block
  *
@@ -64,7 +63,7 @@ VOID LOCAL FreeHeap(PHEAP pheap)
     FREEHPOBJ(pheap);
 
     EXIT(2, ("FreeHeap!\n"));
-}       //FreeHeap
+} //FreeHeap
 
 /***LP  InitHeap - initialize a given heap block
  *
@@ -88,7 +87,7 @@ VOID LOCAL InitHeap(PHEAP pheap, ULONG dwLen)
     pheap->pbHeapTop = (PUCHAR)&pheap->Heap;
 
     EXIT(3, ("InitHeap!\n"));
-}       //InitHeap
+} //InitHeap
 
 /***LP  HeapAlloc - allocate a memory block from a given heap
  *
@@ -109,8 +108,7 @@ PVOID LOCAL HeapAlloc(PHEAP pheapHead, ULONG dwSig, ULONG dwLen)
     PHEAPOBJHDR phobj = NULL;
     PHEAP pheapPrev = NULL, pheap = NULL;
 
-    ENTER(3, ("HeapAlloc(pheapHead=%x,Sig=%s,Len=%d)\n",
-              pheapHead, NameSegString(dwSig), dwLen));
+    ENTER(3, ("HeapAlloc(pheapHead=%x,Sig=%s,Len=%d)\n", pheapHead, NameSegString(dwSig), dwLen));
 
     ASSERT(pheapHead != NULL);
     ASSERT(pheapHead->dwSig == SIG_HEAP);
@@ -169,8 +167,7 @@ PVOID LOCAL HeapAlloc(PHEAP pheapHead, ULONG dwSig, ULONG dwLen)
         // If we are running out of Global Heap space, we will dynamically
         // extend it.
         //
-        if ((phobj == NULL) && (pheapHead == gpheapGlobal) &&
-            (NewHeap(gdwGlobalHeapBlkSize, &pheap) == STATUS_SUCCESS))
+        if ((phobj == NULL) && (pheapHead == gpheapGlobal) && (NewHeap(gdwGlobalHeapBlkSize, &pheap) == STATUS_SUCCESS))
         {
             pheap->pheapHead = pheapHead;
             pheapPrev->pheapNext = pheap;
@@ -183,14 +180,14 @@ PVOID LOCAL HeapAlloc(PHEAP pheapHead, ULONG dwSig, ULONG dwLen)
 
         if (phobj != NULL)
         {
-          #ifdef DEBUG
+#ifdef DEBUG
             if (pheapHead == gpheapGlobal)
             {
-                KIRQL   oldIrql;
+                KIRQL oldIrql;
 
-                KeAcquireSpinLock( &gdwGHeapSpinLock, &oldIrql );
+                KeAcquireSpinLock(&gdwGHeapSpinLock, &oldIrql);
                 gdwGlobalHeapSize += phobj->dwLen;
-                KeReleaseSpinLock( &gdwGHeapSpinLock, oldIrql );
+                KeReleaseSpinLock(&gdwGHeapSpinLock, oldIrql);
             }
             else
             {
@@ -199,8 +196,7 @@ PVOID LOCAL HeapAlloc(PHEAP pheapHead, ULONG dwSig, ULONG dwLen)
 
                 for (ph = pheapHead; ph != NULL; ph = ph->pheapNext)
                 {
-                    dwTotalHeap += (ULONG)((ULONG_PTR)ph->pbHeapTop -
-                                           (ULONG_PTR)&ph->Heap);
+                    dwTotalHeap += (ULONG)((ULONG_PTR)ph->pbHeapTop - (ULONG_PTR)&ph->Heap);
                 }
 
                 if (dwTotalHeap > gdwLocalHeapMax)
@@ -208,7 +204,7 @@ PVOID LOCAL HeapAlloc(PHEAP pheapHead, ULONG dwSig, ULONG dwLen)
                     gdwLocalHeapMax = dwTotalHeap;
                 }
             }
-          #endif
+#endif
 
             phobj->dwSig = dwSig;
             phobj->pheap = pheap;
@@ -217,9 +213,9 @@ PVOID LOCAL HeapAlloc(PHEAP pheapHead, ULONG dwSig, ULONG dwLen)
     }
     ReleaseMutex(&gmutHeap);
 
-    EXIT(3, ("HeapAlloc=%x (pheap=%x)\n", phobj? &phobj->list: NULL, pheap));
-    return phobj? &phobj->list: NULL;
-}       //HeapAlloc
+    EXIT(3, ("HeapAlloc=%x (pheap=%x)\n", phobj ? &phobj->list : NULL, pheap));
+    return phobj ? &phobj->list : NULL;
+} //HeapAlloc
 
 /***LP  HeapFree - free a memory block
  *
@@ -238,25 +234,23 @@ VOID LOCAL HeapFree(PVOID pb)
     ASSERT(pb != NULL);
     phobj = CONTAINING_RECORD(pb, HEAPOBJHDR, list);
 
-    ENTER(3, ("HeapFree(pheap=%x,pb=%x,Sig=%s,Len=%d)\n",
-              phobj->pheap, pb, NameSegString(phobj->dwSig), phobj->dwLen));
+    ENTER(3, ("HeapFree(pheap=%x,pb=%x,Sig=%s,Len=%d)\n", phobj->pheap, pb, NameSegString(phobj->dwSig), phobj->dwLen));
 
-    ASSERT((phobj >= &phobj->pheap->Heap) &&
-           ((PUCHAR)phobj + phobj->dwLen <= phobj->pheap->pbHeapEnd));
+    ASSERT((phobj >= &phobj->pheap->Heap) && ((PUCHAR)phobj + phobj->dwLen <= phobj->pheap->pbHeapEnd));
     ASSERT(phobj->dwSig != 0);
 
     if ((pb != NULL) && (phobj->dwSig != 0))
     {
-      #ifdef DEBUG
+#ifdef DEBUG
         if (phobj->pheap->pheapHead == gpheapGlobal)
         {
-            KIRQL   oldIrql;
+            KIRQL oldIrql;
 
-            KeAcquireSpinLock( &gdwGHeapSpinLock, &oldIrql );
+            KeAcquireSpinLock(&gdwGHeapSpinLock, &oldIrql);
             gdwGlobalHeapSize -= phobj->dwLen;
-            KeReleaseSpinLock( &gdwGHeapSpinLock, oldIrql );
+            KeReleaseSpinLock(&gdwGHeapSpinLock, oldIrql);
         }
-      #endif
+#endif
 
         phobj->dwSig = 0;
         AcquireMutex(&gmutHeap);
@@ -265,7 +259,7 @@ VOID LOCAL HeapFree(PVOID pb)
     }
 
     EXIT(3, ("HeapFree!\n"));
-}       //HeapFree
+} //HeapFree
 
 /***LP  HeapFindFirstFit - find first fit free object
  *
@@ -310,9 +304,9 @@ PHEAPOBJHDR LOCAL HeapFindFirstFit(PHEAP pheap, ULONG dwLen)
         }
     }
 
-    EXIT(3, ("HeapFindFirstFit=%x (Len=%d)\n", phobj, phobj? phobj->dwLen: 0));
+    EXIT(3, ("HeapFindFirstFit=%x (Len=%d)\n", phobj, phobj ? phobj->dwLen : 0));
     return phobj;
-}       //HeapFindFirstFit
+} //HeapFindFirstFit
 
 /***LP  HeapInsertFreeList - insert heap object into free list
  *
@@ -399,4 +393,4 @@ VOID LOCAL HeapInsertFreeList(PHEAP pheap, PHEAPOBJHDR phobj)
     }
 
     EXIT(3, ("HeapInsertFreeList!\n"));
-}       //HeapInsertFreeList
+} //HeapInsertFreeList

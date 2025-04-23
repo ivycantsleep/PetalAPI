@@ -46,7 +46,8 @@ Revision History:
 //  Local procedures and types used only in this package
 //
 
-typedef enum _COMPARISON {
+typedef enum _COMPARISON
+{
     IsLessThan,
     IsPrefix,
     IsEqual,
@@ -54,58 +55,44 @@ typedef enum _COMPARISON {
 } COMPARISON;
 
 CLONG
-ComputeNameLength(
-    IN PSTRING Name
-    );
+ComputeNameLength(IN PSTRING Name);
 
 COMPARISON
-CompareNamesCaseSensitive (
-    IN PSTRING Prefix,
-    IN PSTRING Name
-    );
+CompareNamesCaseSensitive(IN PSTRING Prefix, IN PSTRING Name);
 
 CLONG
-ComputeUnicodeNameLength(
-    IN PUNICODE_STRING Name
-    );
+ComputeUnicodeNameLength(IN PUNICODE_STRING Name);
 
 COMPARISON
-CompareUnicodeStrings (
-    IN PUNICODE_STRING Prefix,
-    IN PUNICODE_STRING Name,
-    IN ULONG CaseInsensitiveIndex
-    );
+CompareUnicodeStrings(IN PUNICODE_STRING Prefix, IN PUNICODE_STRING Name, IN ULONG CaseInsensitiveIndex);
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,ComputeNameLength)
-#pragma alloc_text(PAGE,CompareNamesCaseSensitive)
-#pragma alloc_text(PAGE,PfxInitialize)
-#pragma alloc_text(PAGE,PfxInsertPrefix)
-#pragma alloc_text(PAGE,PfxRemovePrefix)
-#pragma alloc_text(PAGE,PfxFindPrefix)
-#pragma alloc_text(PAGE,ComputeUnicodeNameLength)
-#pragma alloc_text(PAGE,CompareUnicodeStrings)
-#pragma alloc_text(PAGE,RtlInitializeUnicodePrefix)
-#pragma alloc_text(PAGE,RtlInsertUnicodePrefix)
-#pragma alloc_text(PAGE,RtlRemoveUnicodePrefix)
-#pragma alloc_text(PAGE,RtlFindUnicodePrefix)
-#pragma alloc_text(PAGE,RtlNextUnicodePrefix)
+#pragma alloc_text(PAGE, ComputeNameLength)
+#pragma alloc_text(PAGE, CompareNamesCaseSensitive)
+#pragma alloc_text(PAGE, PfxInitialize)
+#pragma alloc_text(PAGE, PfxInsertPrefix)
+#pragma alloc_text(PAGE, PfxRemovePrefix)
+#pragma alloc_text(PAGE, PfxFindPrefix)
+#pragma alloc_text(PAGE, ComputeUnicodeNameLength)
+#pragma alloc_text(PAGE, CompareUnicodeStrings)
+#pragma alloc_text(PAGE, RtlInitializeUnicodePrefix)
+#pragma alloc_text(PAGE, RtlInsertUnicodePrefix)
+#pragma alloc_text(PAGE, RtlRemoveUnicodePrefix)
+#pragma alloc_text(PAGE, RtlFindUnicodePrefix)
+#pragma alloc_text(PAGE, RtlNextUnicodePrefix)
 #endif
 
-
+
 //
 //  The node type codes for the prefix data structures
 //
 
-#define RTL_NTC_PREFIX_TABLE             ((CSHORT)0x0200)
-#define RTL_NTC_ROOT                     ((CSHORT)0x0201)
-#define RTL_NTC_INTERNAL                 ((CSHORT)0x0202)
+#define RTL_NTC_PREFIX_TABLE ((CSHORT)0x0200)
+#define RTL_NTC_ROOT ((CSHORT)0x0201)
+#define RTL_NTC_INTERNAL ((CSHORT)0x0202)
 
-
-VOID
-PfxInitialize (
-    IN PPREFIX_TABLE PrefixTable
-    )
+
+VOID PfxInitialize(IN PPREFIX_TABLE PrefixTable)
 
 /*++
 
@@ -139,13 +126,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-PfxInsertPrefix (
-    IN PPREFIX_TABLE PrefixTable,
-    IN PSTRING Prefix,
-    IN PPREFIX_TABLE_ENTRY PrefixTableEntry
-    )
+PfxInsertPrefix(IN PPREFIX_TABLE PrefixTable, IN PSTRING Prefix, IN PPREFIX_TABLE_ENTRY PrefixTableEntry)
 
 /*++
 
@@ -203,11 +186,11 @@ Return Value:
     PreviousTree = (PPREFIX_TABLE_ENTRY)PrefixTable;
     CurrentTree = PreviousTree->NextPrefixTree;
 
-    while (CurrentTree->NameLength > (CSHORT)PrefixNameLength) {
+    while (CurrentTree->NameLength > (CSHORT)PrefixNameLength)
+    {
 
         PreviousTree = CurrentTree;
         CurrentTree = CurrentTree->NextPrefixTree;
-
     }
 
     //
@@ -216,7 +199,8 @@ Return Value:
     //  to make a new tree node.
     //
 
-    if (CurrentTree->NameLength != (CSHORT)PrefixNameLength) {
+    if (CurrentTree->NameLength != (CSHORT)PrefixNameLength)
+    {
 
         //
         //  Insert the new prefix entry to the list between
@@ -237,7 +221,6 @@ Return Value:
         //
 
         return TRUE;
-
     }
 
     //
@@ -249,7 +232,8 @@ Return Value:
 
     Node = CurrentTree;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         //
         //  Compare the prefix in the tree with the prefix we want
@@ -264,7 +248,8 @@ Return Value:
         //  only condition where we return false
         //
 
-        if (Comparison == IsEqual) {
+        if (Comparison == IsEqual)
+        {
 
             return FALSE;
         }
@@ -274,14 +259,16 @@ Return Value:
         //  we go down the left subtree
         //
 
-        if (Comparison == IsGreaterThan) {
+        if (Comparison == IsGreaterThan)
+        {
 
             //
             //  We want to go down the left subtree, first check to see
             //  if we have a left subtree
             //
 
-            if (RtlLeftChild(&Node->Links) == NULL) {
+            if (RtlLeftChild(&Node->Links) == NULL)
+            {
 
                 //
                 //  there isn't a left child so we insert ourselves as the
@@ -298,21 +285,20 @@ Return Value:
                 //
 
                 break;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  there is a left child so simply go down that path, and
                 //  go back to the top of the loop
                 //
 
-                Node = CONTAINING_RECORD( RtlLeftChild(&Node->Links),
-                                          PREFIX_TABLE_ENTRY,
-                                          Links );
-
+                Node = CONTAINING_RECORD(RtlLeftChild(&Node->Links), PREFIX_TABLE_ENTRY, Links);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  The tree prefix is either less than or a proper prefix
@@ -321,7 +307,8 @@ Return Value:
             //  first check to see if we have a right subtree
             //
 
-            if (RtlRightChild(&Node->Links) == NULL) {
+            if (RtlRightChild(&Node->Links) == NULL)
+            {
 
                 //
                 //  These isn't a right child so we insert ourselves as the
@@ -338,21 +325,18 @@ Return Value:
                 //
 
                 break;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  there is a right child so simply go down that path, and
                 //  go back to the top of the loop
                 //
 
-                Node = CONTAINING_RECORD( RtlRightChild(&Node->Links),
-                                          PREFIX_TABLE_ENTRY,
-                                          Links );
+                Node = CONTAINING_RECORD(RtlRightChild(&Node->Links), PREFIX_TABLE_ENTRY, Links);
             }
-
         }
-
     }
 
     //
@@ -401,12 +385,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-PfxRemovePrefix (
-    IN PPREFIX_TABLE PrefixTable,
-    IN PPREFIX_TABLE_ENTRY PrefixTableEntry
-    )
+
+VOID PfxRemovePrefix(IN PPREFIX_TABLE PrefixTable, IN PPREFIX_TABLE_ENTRY PrefixTableEntry)
 
 /*++
 
@@ -441,7 +421,8 @@ Return Value:
     //  case on the type of node that we are trying to delete
     //
 
-    switch (PrefixTableEntry->NodeTypeCode) {
+    switch (PrefixTableEntry->NodeTypeCode)
+    {
 
     case RTL_NTC_INTERNAL:
     case RTL_NTC_ROOT:
@@ -453,12 +434,13 @@ Return Value:
 
         Links = &PrefixTableEntry->Links;
 
-        while (!RtlIsRoot(Links)) {
+        while (!RtlIsRoot(Links))
+        {
 
             Links = RtlParent(Links);
         }
 
-        Root = CONTAINING_RECORD( Links, PREFIX_TABLE_ENTRY, Links );
+        Root = CONTAINING_RECORD(Links, PREFIX_TABLE_ENTRY, Links);
 
         //
         //  Now delete the node
@@ -470,7 +452,8 @@ Return Value:
         //  Now see if the tree is deleted
         //
 
-        if (Links == NULL) {
+        if (Links == NULL)
+        {
 
             //
             //  The tree is now empty so remove this tree from
@@ -480,7 +463,8 @@ Return Value:
 
             PreviousTree = Root->NextPrefixTree;
 
-            while ( PreviousTree->NextPrefixTree != Root ) {
+            while (PreviousTree->NextPrefixTree != Root)
+            {
 
                 PreviousTree = PreviousTree->NextPrefixTree;
             }
@@ -503,7 +487,8 @@ Return Value:
         //  The tree is not deleted but see if we changed roots
         //
 
-        if (&Root->Links != Links) {
+        if (&Root->Links != Links)
+        {
 
             //
             //  Get a pointer to the new root
@@ -520,7 +505,8 @@ Return Value:
 
             PreviousTree = Root->NextPrefixTree;
 
-            while ( PreviousTree->NextPrefixTree != Root ) {
+            while (PreviousTree->NextPrefixTree != Root)
+            {
 
                 PreviousTree = PreviousTree->NextPrefixTree;
             }
@@ -567,12 +553,9 @@ Return Value:
     }
 }
 
-
+
 PPREFIX_TABLE_ENTRY
-PfxFindPrefix (
-    IN PPREFIX_TABLE PrefixTable,
-    IN PSTRING FullName
-    )
+PfxFindPrefix(IN PPREFIX_TABLE PrefixTable, IN PSTRING FullName)
 
 /*++
 
@@ -622,7 +605,8 @@ Return Value:
     PreviousTree = (PPREFIX_TABLE_ENTRY)PrefixTable;
     CurrentTree = PreviousTree->NextPrefixTree;
 
-    while (CurrentTree->NameLength > (CSHORT)NameLength) {
+    while (CurrentTree->NameLength > (CSHORT)NameLength)
+    {
 
         PreviousTree = CurrentTree;
         CurrentTree = CurrentTree->NextPrefixTree;
@@ -633,11 +617,13 @@ Return Value:
     //  the prefix trees
     //
 
-    while (CurrentTree->NameLength > 0) {
+    while (CurrentTree->NameLength > 0)
+    {
 
         Links = &CurrentTree->Links;
 
-        while (Links != NULL) {
+        while (Links != NULL)
+        {
 
             Node = CONTAINING_RECORD(Links, PREFIX_TABLE_ENTRY, Links);
 
@@ -651,7 +637,8 @@ Return Value:
             //  See if they don't match
             //
 
-            if (Comparison == IsGreaterThan) {
+            if (Comparison == IsGreaterThan)
+            {
 
                 //
                 //  The prefix is greater than the full name
@@ -663,8 +650,9 @@ Return Value:
                 //
                 //  And continue searching down this tree
                 //
-
-            } else if (Comparison == IsLessThan) {
+            }
+            else if (Comparison == IsLessThan)
+            {
 
                 //
                 //  The prefix is less than the full name
@@ -676,8 +664,9 @@ Return Value:
                 //
                 //  And continue searching down this tree
                 //
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  We found it.
@@ -688,7 +677,8 @@ Return Value:
                 //  then setup the new root node.
                 //
 
-                if (Node->NodeTypeCode == RTL_NTC_INTERNAL) {
+                if (Node->NodeTypeCode == RTL_NTC_INTERNAL)
+                {
 
                     //DbgPrint("PrefixTable  = %08lx\n", PrefixTable);
                     //DbgPrint("Node         = %08lx\n", Node);
@@ -745,11 +735,9 @@ Return Value:
     return NULL;
 }
 
-
+
 CLONG
-ComputeNameLength(
-    IN PSTRING Name
-    )
+ComputeNameLength(IN PSTRING Name)
 
 /*++
 
@@ -775,7 +763,7 @@ Returns Value:
     ULONG i;
     ULONG Count;
 
-    extern const PUSHORT NlsLeadByteInfo;  // Lead byte info. for ACP ( nlsxlat.c )
+    extern const PUSHORT NlsLeadByteInfo; // Lead byte info. for ACP ( nlsxlat.c )
     extern BOOLEAN NlsMbCodePageTag;
 
     RTL_PAGED_CODE();
@@ -791,21 +779,26 @@ Returns Value:
     //  Now loop through the input string counting back slashes
     //
 
-    if (NlsMbCodePageTag) {
+    if (NlsMbCodePageTag)
+    {
 
         //
         // ComputeNameLength() skip DBCS character when counting '\'
         //
 
-        for (i = 0, Count = 1; i < NameLength; ) {
+        for (i = 0, Count = 1; i < NameLength;)
+        {
 
-            if (NlsLeadByteInfo[(UCHAR)Name->Buffer[i]]) {
+            if (NlsLeadByteInfo[(UCHAR)Name->Buffer[i]])
+            {
 
                 i += 2;
+            }
+            else
+            {
 
-            } else {
-
-                if (Name->Buffer[i] == '\\') {
+                if (Name->Buffer[i] == '\\')
+                {
 
                     Count += 1;
                 }
@@ -813,16 +806,19 @@ Returns Value:
                 i += 1;
             }
         }
+    }
+    else
+    {
 
-    } else {
-
-        for (i = 0, Count = 1; i < NameLength; i += 1) {
+        for (i = 0, Count = 1; i < NameLength; i += 1)
+        {
 
             //
             //  check for a back slash
             //
 
-            if (Name->Buffer[i] == '\\') {
+            if (Name->Buffer[i] == '\\')
+            {
 
                 Count += 1;
             }
@@ -838,12 +834,9 @@ Returns Value:
     return Count;
 }
 
-
+
 COMPARISON
-CompareNamesCaseSensitive (
-    IN PSTRING Prefix,
-    IN PSTRING Name
-    )
+CompareNamesCaseSensitive(IN PSTRING Prefix, IN PSTRING Name)
 
 /*++
 
@@ -878,7 +871,7 @@ Return Value:
     UCHAR PrefixChar;
     UCHAR NameChar;
 
-    extern const PUSHORT NlsLeadByteInfo;  // Lead byte info. for ACP ( nlsxlat.c )
+    extern const PUSHORT NlsLeadByteInfo; // Lead byte info. for ACP ( nlsxlat.c )
     extern BOOLEAN NlsMbCodePageTag;
 
     RTL_PAGED_CODE();
@@ -899,8 +892,8 @@ Return Value:
     //  the name starts with an "\"
     //
 
-    if ((Prefix->Length == 1) && (Prefix->Buffer[0] == '\\') &&
-        (Name->Length > 1) && (Name->Buffer[0] == '\\')) {
+    if ((Prefix->Length == 1) && (Prefix->Buffer[0] == '\\') && (Name->Length > 1) && (Name->Buffer[0] == '\\'))
+    {
         //DbgPrint("IsPrefix\n");
         return IsPrefix;
     }
@@ -916,9 +909,10 @@ Return Value:
     //  testing for equalilty, less than, and greater than
     //
 
-    i = (ULONG) RtlCompareMemory( &Prefix->Buffer[0], &Name->Buffer[0], MinLength );
+    i = (ULONG)RtlCompareMemory(&Prefix->Buffer[0], &Name->Buffer[0], MinLength);
 
-    if (i < MinLength) {
+    if (i < MinLength)
+    {
 
         UCHAR c;
 
@@ -927,46 +921,53 @@ Return Value:
         //
 
         PrefixChar = ((c = Prefix->Buffer[i]) == '\\' ? (CHAR)0 : c);
-        NameChar   = ((c = Name->Buffer[i])   == '\\' ? (CHAR)0 : c);
+        NameChar = ((c = Name->Buffer[i]) == '\\' ? (CHAR)0 : c);
 
         //
         //  Unfortunately life is not so easy in DBCS land.
         //
 
-        if (NlsMbCodePageTag) {
+        if (NlsMbCodePageTag)
+        {
 
             //
             // CompareNamesCaseSensitive(): check backslash in trailing bytes
             //
 
-            if (Prefix->Buffer[i] == '\\') {
+            if (Prefix->Buffer[i] == '\\')
+            {
 
                 ULONG j;
-                extern const PUSHORT   NlsLeadByteInfo;  // Lead byte info. for ACP ( nlsxlat.c )
+                extern const PUSHORT NlsLeadByteInfo; // Lead byte info. for ACP ( nlsxlat.c )
 
-                for (j = 0; j < i;) {
+                for (j = 0; j < i;)
+                {
 
                     j += NlsLeadByteInfo[(UCHAR)Prefix->Buffer[j]] ? 2 : 1;
                 }
 
-                if (j != i) {
+                if (j != i)
+                {
 
                     PrefixChar = '\\';
                     //DbgPrint("RTL:CompareNamesCaseSensitive encountered a fake backslash!\n");
                 }
             }
 
-            if (Name->Buffer[i] == '\\') {
+            if (Name->Buffer[i] == '\\')
+            {
 
                 ULONG j;
-                extern const PUSHORT   NlsLeadByteInfo;  // Lead byte info. for ACP ( nlsxlat.c )
+                extern const PUSHORT NlsLeadByteInfo; // Lead byte info. for ACP ( nlsxlat.c )
 
-                for (j = 0; j < i;) {
+                for (j = 0; j < i;)
+                {
 
                     j += NlsLeadByteInfo[(UCHAR)Name->Buffer[j]] ? 2 : 1;
                 }
 
-                if (j != i) {
+                if (j != i)
+                {
 
                     NameChar = '\\';
                     //DbgPrint("RTL:CompareNamesCaseSensitive encountered a fake backslash!\n");
@@ -978,11 +979,13 @@ Return Value:
         //  Now compare the characters
         //
 
-        if (PrefixChar < NameChar) {
+        if (PrefixChar < NameChar)
+        {
 
             return IsLessThan;
-
-        } else if (PrefixChar > NameChar) {
+        }
+        else if (PrefixChar > NameChar)
+        {
 
             return IsGreaterThan;
         }
@@ -993,23 +996,27 @@ Return Value:
     //  and see if one is a proper prefix of the other
     //
 
-    if (PrefixLength < NameLength) {
+    if (PrefixLength < NameLength)
+    {
 
         //
         //  The prefix string is shorter so if it is a proper prefix we
         //  return prefix otherwise we return less than (e.g., "\a" < "\ab")
         //
 
-        if (Name->Buffer[PrefixLength] == '\\') {
+        if (Name->Buffer[PrefixLength] == '\\')
+        {
 
             return IsPrefix;
-
-        } else {
+        }
+        else
+        {
 
             return IsLessThan;
         }
-
-    } else if (PrefixLength > NameLength) {
+    }
+    else if (PrefixLength > NameLength)
+    {
 
         //
         //  The Prefix string is longer so we say that the prefix is
@@ -1017,8 +1024,9 @@ Return Value:
         //
 
         return IsGreaterThan;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  They lengths are equal so the strings are equal
@@ -1028,21 +1036,18 @@ Return Value:
     }
 }
 
-
+
 //
 //  The node type codes for the prefix data structures
 //
 
-#define RTL_NTC_UNICODE_PREFIX_TABLE     ((CSHORT)0x0800)
-#define RTL_NTC_UNICODE_ROOT             ((CSHORT)0x0801)
-#define RTL_NTC_UNICODE_INTERNAL         ((CSHORT)0x0802)
-#define RTL_NTC_UNICODE_CASE_MATCH       ((CSHORT)0x0803)
+#define RTL_NTC_UNICODE_PREFIX_TABLE ((CSHORT)0x0800)
+#define RTL_NTC_UNICODE_ROOT ((CSHORT)0x0801)
+#define RTL_NTC_UNICODE_INTERNAL ((CSHORT)0x0802)
+#define RTL_NTC_UNICODE_CASE_MATCH ((CSHORT)0x0803)
 
-
-VOID
-RtlInitializeUnicodePrefix (
-    IN PUNICODE_PREFIX_TABLE PrefixTable
-    )
+
+VOID RtlInitializeUnicodePrefix(IN PUNICODE_PREFIX_TABLE PrefixTable)
 
 /*++
 
@@ -1075,13 +1080,10 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-RtlInsertUnicodePrefix (
-    IN PUNICODE_PREFIX_TABLE PrefixTable,
-    IN PUNICODE_STRING Prefix,
-    IN PUNICODE_PREFIX_TABLE_ENTRY PrefixTableEntry
-    )
+RtlInsertUnicodePrefix(IN PUNICODE_PREFIX_TABLE PrefixTable, IN PUNICODE_STRING Prefix,
+                       IN PUNICODE_PREFIX_TABLE_ENTRY PrefixTableEntry)
 
 /*++
 
@@ -1139,7 +1141,8 @@ Return Value:
     PreviousTree = (PUNICODE_PREFIX_TABLE_ENTRY)PrefixTable;
     CurrentTree = PreviousTree->NextPrefixTree;
 
-    while (CurrentTree->NameLength > (CSHORT)PrefixNameLength) {
+    while (CurrentTree->NameLength > (CSHORT)PrefixNameLength)
+    {
 
         PreviousTree = CurrentTree;
         CurrentTree = CurrentTree->NextPrefixTree;
@@ -1151,7 +1154,8 @@ Return Value:
     //  to make a new tree node.
     //
 
-    if (CurrentTree->NameLength != (CSHORT)PrefixNameLength) {
+    if (CurrentTree->NameLength != (CSHORT)PrefixNameLength)
+    {
 
         //
         //  Insert the new prefix entry to the list between
@@ -1184,7 +1188,8 @@ Return Value:
 
     Node = CurrentTree;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         //
         //  Compare the prefix in the tree with the prefix we want
@@ -1198,7 +1203,8 @@ Return Value:
         //  match, provided it doesn't case sensitive match anyone
         //
 
-        if (Comparison == IsEqual) {
+        if (Comparison == IsEqual)
+        {
 
             PUNICODE_PREFIX_TABLE_ENTRY Next;
 
@@ -1214,7 +1220,8 @@ Return Value:
             //  we started
             //
 
-            do {
+            do
+            {
 
                 //
                 //  If we do match case sensitive then we cannot add
@@ -1222,7 +1229,8 @@ Return Value:
                 //  only condition where we return false
                 //
 
-                if (CompareUnicodeStrings(Next->Prefix, Prefix, MAXULONG) == IsEqual) {
+                if (CompareUnicodeStrings(Next->Prefix, Prefix, MAXULONG) == IsEqual)
+                {
 
                     return FALSE;
                 }
@@ -1237,7 +1245,7 @@ Return Value:
                 //  And continue looping until we're back where we started
                 //
 
-            } while ( Next != Node );
+            } while (Next != Node);
 
             //
             //  We've searched the case match and didn't find an exact match
@@ -1262,14 +1270,16 @@ Return Value:
         //  we go down the left subtree
         //
 
-        if (Comparison == IsGreaterThan) {
+        if (Comparison == IsGreaterThan)
+        {
 
             //
             //  We want to go down the left subtree, first check to see
             //  if we have a left subtree
             //
 
-            if (RtlLeftChild(&Node->Links) == NULL) {
+            if (RtlLeftChild(&Node->Links) == NULL)
+            {
 
                 //
                 //  there isn't a left child so we insert ourselves as the
@@ -1287,20 +1297,20 @@ Return Value:
                 //
 
                 break;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  there is a left child so simply go down that path, and
                 //  go back to the top of the loop
                 //
 
-                Node = CONTAINING_RECORD( RtlLeftChild(&Node->Links),
-                                          UNICODE_PREFIX_TABLE_ENTRY,
-                                          Links );
+                Node = CONTAINING_RECORD(RtlLeftChild(&Node->Links), UNICODE_PREFIX_TABLE_ENTRY, Links);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  The tree prefix is either less than or a proper prefix
@@ -1309,7 +1319,8 @@ Return Value:
             //  first check to see if we have a right subtree
             //
 
-            if (RtlRightChild(&Node->Links) == NULL) {
+            if (RtlRightChild(&Node->Links) == NULL)
+            {
 
                 //
                 //  These isn't a right child so we insert ourselves as the
@@ -1327,17 +1338,16 @@ Return Value:
                 //
 
                 break;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  there is a right child so simply go down that path, and
                 //  go back to the top of the loop
                 //
 
-                Node = CONTAINING_RECORD( RtlRightChild(&Node->Links),
-                                          UNICODE_PREFIX_TABLE_ENTRY,
-                                          Links );
+                Node = CONTAINING_RECORD(RtlRightChild(&Node->Links), UNICODE_PREFIX_TABLE_ENTRY, Links);
             }
         }
     }
@@ -1388,12 +1398,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-RtlRemoveUnicodePrefix (
-    IN PUNICODE_PREFIX_TABLE PrefixTable,
-    IN PUNICODE_PREFIX_TABLE_ENTRY PrefixTableEntry
-    )
+
+VOID RtlRemoveUnicodePrefix(IN PUNICODE_PREFIX_TABLE PrefixTable, IN PUNICODE_PREFIX_TABLE_ENTRY PrefixTableEntry)
 
 /*++
 
@@ -1436,7 +1442,8 @@ Return Value:
     //  case on the type of node that we are trying to delete
     //
 
-    switch (PrefixTableEntry->NodeTypeCode) {
+    switch (PrefixTableEntry->NodeTypeCode)
+    {
 
     case RTL_NTC_UNICODE_CASE_MATCH:
 
@@ -1449,9 +1456,10 @@ Return Value:
 
         PreviousCaseMatch = PrefixTableEntry->CaseMatch;
 
-        while ( PreviousCaseMatch->CaseMatch != PrefixTableEntry ) {
+        while (PreviousCaseMatch->CaseMatch != PrefixTableEntry)
+        {
 
-             PreviousCaseMatch = PreviousCaseMatch->CaseMatch;
+            PreviousCaseMatch = PreviousCaseMatch->CaseMatch;
         }
 
         //
@@ -1475,7 +1483,8 @@ Return Value:
         //  has any case match nodes with it
         //
 
-        if (PrefixTableEntry->CaseMatch != PrefixTableEntry) {
+        if (PrefixTableEntry->CaseMatch != PrefixTableEntry)
+        {
 
             //
             //  There is at least one case match that goes with this
@@ -1487,7 +1496,8 @@ Return Value:
 
             PreviousCaseMatch = PrefixTableEntry->CaseMatch;
 
-            while ( PreviousCaseMatch->CaseMatch != PrefixTableEntry ) {
+            while (PreviousCaseMatch->CaseMatch != PrefixTableEntry)
+            {
 
                 PreviousCaseMatch = PreviousCaseMatch->CaseMatch;
             }
@@ -1512,7 +1522,8 @@ Return Value:
             //  node in the splay tree, first do the parent's pointer to us.
             //
 
-            if (RtlIsRoot(&PrefixTableEntry->Links)) {
+            if (RtlIsRoot(&PrefixTableEntry->Links))
+            {
 
                 //
                 //  This is the root so make this new node the root
@@ -1526,7 +1537,8 @@ Return Value:
 
                 PreviousTree = PrefixTableEntry->NextPrefixTree;
 
-                while ( PreviousTree->NextPrefixTree != PrefixTableEntry ) {
+                while (PreviousTree->NextPrefixTree != PrefixTableEntry)
+                {
 
                     PreviousTree = PreviousTree->NextPrefixTree;
                 }
@@ -1537,8 +1549,9 @@ Return Value:
                 //
 
                 PreviousTree->NextPrefixTree = PreviousCaseMatch;
-
-            } else if (RtlIsLeftChild(&PrefixTableEntry->Links)) {
+            }
+            else if (RtlIsLeftChild(&PrefixTableEntry->Links))
+            {
 
                 //
                 //  The node was the left child so make the new node the
@@ -1546,8 +1559,9 @@ Return Value:
                 //
 
                 RtlParent(&PrefixTableEntry->Links)->LeftChild = &PreviousCaseMatch->Links;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  The node was the right child so make the new node the
@@ -1561,12 +1575,14 @@ Return Value:
             //  Now update the parent pointer for our new children
             //
 
-            if (RtlLeftChild(&PreviousCaseMatch->Links) != NULL) {
+            if (RtlLeftChild(&PreviousCaseMatch->Links) != NULL)
+            {
 
                 RtlLeftChild(&PreviousCaseMatch->Links)->Parent = &PreviousCaseMatch->Links;
             }
 
-            if (RtlRightChild(&PreviousCaseMatch->Links) != NULL) {
+            if (RtlRightChild(&PreviousCaseMatch->Links) != NULL)
+            {
 
                 RtlRightChild(&PreviousCaseMatch->Links)->Parent = &PreviousCaseMatch->Links;
             }
@@ -1586,12 +1602,13 @@ Return Value:
 
         Links = &PrefixTableEntry->Links;
 
-        while (!RtlIsRoot(Links)) {
+        while (!RtlIsRoot(Links))
+        {
 
             Links = RtlParent(Links);
         }
 
-        Root = CONTAINING_RECORD( Links, UNICODE_PREFIX_TABLE_ENTRY, Links );
+        Root = CONTAINING_RECORD(Links, UNICODE_PREFIX_TABLE_ENTRY, Links);
 
         //
         //  Now delete the node
@@ -1603,7 +1620,8 @@ Return Value:
         //  Now see if the tree is deleted
         //
 
-        if (Links == NULL) {
+        if (Links == NULL)
+        {
 
             //
             //  The tree is now empty so remove this tree from
@@ -1613,7 +1631,8 @@ Return Value:
 
             PreviousTree = Root->NextPrefixTree;
 
-            while ( PreviousTree->NextPrefixTree != Root ) {
+            while (PreviousTree->NextPrefixTree != Root)
+            {
 
                 PreviousTree = PreviousTree->NextPrefixTree;
             }
@@ -1636,7 +1655,8 @@ Return Value:
         //  The tree is not deleted but see if we changed roots
         //
 
-        if (&Root->Links != Links) {
+        if (&Root->Links != Links)
+        {
 
             //
             //  Get a pointer to the new root
@@ -1653,7 +1673,8 @@ Return Value:
 
             PreviousTree = Root->NextPrefixTree;
 
-            while ( PreviousTree->NextPrefixTree != Root ) {
+            while (PreviousTree->NextPrefixTree != Root)
+            {
 
                 PreviousTree = PreviousTree->NextPrefixTree;
             }
@@ -1700,13 +1721,9 @@ Return Value:
     }
 }
 
-
+
 PUNICODE_PREFIX_TABLE_ENTRY
-RtlFindUnicodePrefix (
-    IN PUNICODE_PREFIX_TABLE PrefixTable,
-    IN PUNICODE_STRING FullName,
-    IN ULONG CaseInsensitiveIndex
-    )
+RtlFindUnicodePrefix(IN PUNICODE_PREFIX_TABLE PrefixTable, IN PUNICODE_STRING FullName, IN ULONG CaseInsensitiveIndex)
 
 /*++
 
@@ -1762,7 +1779,8 @@ Return Value:
     PreviousTree = (PUNICODE_PREFIX_TABLE_ENTRY)PrefixTable;
     CurrentTree = PreviousTree->NextPrefixTree;
 
-    while (CurrentTree->NameLength > (CSHORT)NameLength) {
+    while (CurrentTree->NameLength > (CSHORT)NameLength)
+    {
 
         PreviousTree = CurrentTree;
         CurrentTree = CurrentTree->NextPrefixTree;
@@ -1773,11 +1791,13 @@ Return Value:
     //  the prefix trees
     //
 
-    while (CurrentTree->NameLength > 0) {
+    while (CurrentTree->NameLength > 0)
+    {
 
         Links = &CurrentTree->Links;
 
-        while (Links != NULL) {
+        while (Links != NULL)
+        {
 
             Node = CONTAINING_RECORD(Links, UNICODE_PREFIX_TABLE_ENTRY, Links);
 
@@ -1792,7 +1812,8 @@ Return Value:
             //  See if they don't match
             //
 
-            if (Comparison == IsGreaterThan) {
+            if (Comparison == IsGreaterThan)
+            {
 
                 //
                 //  The prefix is greater than the full name
@@ -1804,8 +1825,9 @@ Return Value:
                 //
                 //  And continue searching down this tree
                 //
-
-            } else if (Comparison == IsLessThan) {
+            }
+            else if (Comparison == IsLessThan)
+            {
 
                 //
                 //  The prefix is less than the full name
@@ -1817,8 +1839,9 @@ Return Value:
                 //
                 //  And continue searching down this tree
                 //
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  We have either a prefix or a match either way
@@ -1826,7 +1849,8 @@ Return Value:
                 //  seearches
                 //
 
-                if (CaseInsensitiveIndex == 0) {
+                if (CaseInsensitiveIndex == 0)
+                {
 
                     //
                     //  The caller wants case insensitive so we'll
@@ -1838,7 +1862,8 @@ Return Value:
                     //  then setup the new root node.
                     //
 
-                    if (Node->NodeTypeCode == RTL_NTC_UNICODE_INTERNAL) {
+                    if (Node->NodeTypeCode == RTL_NTC_UNICODE_INTERNAL)
+                    {
 
                         //DbgPrint("PrefixTable  = %08lx\n", PrefixTable);
                         //DbgPrint("Node         = %08lx\n", Node);
@@ -1894,18 +1919,18 @@ Return Value:
                 //  match case sensitive with anyone.
                 //
 
-                do {
+                do
+                {
 
                     //
                     //  If we do match case sensitive then we found one
                     //  and we return it to our caller
                     //
 
-                    Comparison = CompareUnicodeStrings( Next->Prefix,
-                                                        FullName,
-                                                        CaseInsensitiveIndex );
+                    Comparison = CompareUnicodeStrings(Next->Prefix, FullName, CaseInsensitiveIndex);
 
-                    if ((Comparison == IsEqual) || (Comparison == IsPrefix)) {
+                    if ((Comparison == IsEqual) || (Comparison == IsPrefix))
+                    {
 
                         //
                         //  We found a good one, so return it to our caller
@@ -1925,7 +1950,7 @@ Return Value:
                     //  node again
                     //
 
-                } while ( Next != Node );
+                } while (Next != Node);
 
                 //
                 //  We found a case blind prefix but the caller wants
@@ -1954,12 +1979,9 @@ Return Value:
     return NULL;
 }
 
-
+
 PUNICODE_PREFIX_TABLE_ENTRY
-RtlNextUnicodePrefix (
-    IN PUNICODE_PREFIX_TABLE PrefixTable,
-    IN BOOLEAN Restart
-    )
+RtlNextUnicodePrefix(IN PUNICODE_PREFIX_TABLE PrefixTable, IN BOOLEAN Restart)
 
 /*++
 
@@ -1991,7 +2013,8 @@ Return Value:
     //  See if we are restarting the sequence
     //
 
-    if (Restart || (PrefixTable->LastNextEntry == NULL)) {
+    if (Restart || (PrefixTable->LastNextEntry == NULL))
+    {
 
         //
         //  we are restarting the sequence so locate the first entry
@@ -2004,7 +2027,8 @@ Return Value:
         //  Make sure we've pointing at a prefix tree
         //
 
-        if (Node->NodeTypeCode == RTL_NTC_UNICODE_PREFIX_TABLE) {
+        if (Node->NodeTypeCode == RTL_NTC_UNICODE_PREFIX_TABLE)
+        {
 
             //
             //  No we aren't so the table must be empty
@@ -2019,7 +2043,8 @@ Return Value:
 
         Links = &Node->Links;
 
-        while (RtlLeftChild(Links) != NULL) {
+        while (RtlLeftChild(Links) != NULL)
+        {
 
             Links = RtlLeftChild(Links);
         }
@@ -2028,9 +2053,10 @@ Return Value:
         //  Set it as our the node we're returning
         //
 
-        Node = CONTAINING_RECORD( Links, UNICODE_PREFIX_TABLE_ENTRY, Links);
-
-    } else if (PrefixTable->LastNextEntry->CaseMatch->NodeTypeCode == RTL_NTC_UNICODE_CASE_MATCH) {
+        Node = CONTAINING_RECORD(Links, UNICODE_PREFIX_TABLE_ENTRY, Links);
+    }
+    else if (PrefixTable->LastNextEntry->CaseMatch->NodeTypeCode == RTL_NTC_UNICODE_CASE_MATCH)
+    {
 
         //
         //  The last node has a case match that we should be returning
@@ -2038,8 +2064,9 @@ Return Value:
         //
 
         Node = PrefixTable->LastNextEntry->CaseMatch;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Move over the last node returned by the case match link, this
@@ -2061,11 +2088,13 @@ Return Value:
         //  the the next tree to use
         //
 
-        if (Links == NULL) {
+        if (Links == NULL)
+        {
 
             Links = &PrefixTable->LastNextEntry->Links;
 
-            while (!RtlIsRoot(Links)) {
+            while (!RtlIsRoot(Links))
+            {
 
                 Links = RtlParent(Links);
             }
@@ -2079,7 +2108,8 @@ Return Value:
 
             Node = Node->NextPrefixTree;
 
-            if (Node->NameLength <= 0) {
+            if (Node->NameLength <= 0)
+            {
 
                 //
                 //  We've run out of tree so tell our caller there
@@ -2095,7 +2125,8 @@ Return Value:
 
             Links = &Node->Links;
 
-            while (RtlLeftChild(Links) != NULL) {
+            while (RtlLeftChild(Links) != NULL)
+            {
 
                 Links = RtlLeftChild(Links);
             }
@@ -2105,7 +2136,7 @@ Return Value:
         //  Set it as our the node we're returning
         //
 
-        Node = CONTAINING_RECORD( Links, UNICODE_PREFIX_TABLE_ENTRY, Links);
+        Node = CONTAINING_RECORD(Links, UNICODE_PREFIX_TABLE_ENTRY, Links);
     }
 
     //
@@ -2121,11 +2152,9 @@ Return Value:
     return Node;
 }
 
-
+
 CLONG
-ComputeUnicodeNameLength(
-    IN PUNICODE_STRING Name
-    )
+ComputeUnicodeNameLength(IN PUNICODE_STRING Name)
 
 /*++
 
@@ -2159,19 +2188,21 @@ Returns Value:
     //  optimize not having to reload the length each time
     //
 
-    NameLength = (ULONG)Name->Length/2;
+    NameLength = (ULONG)Name->Length / 2;
 
     //
     //  Now loop through the input string counting back slashes
     //
 
-    for (i = 0, Count = 1; i < (ULONG)NameLength - 1; i += 1) {
+    for (i = 0, Count = 1; i < (ULONG)NameLength - 1; i += 1)
+    {
 
         //
         //  check for a back slash
         //
 
-        if (Name->Buffer[i] == UnicodeBackSlash) {
+        if (Name->Buffer[i] == UnicodeBackSlash)
+        {
 
             Count += 1;
         }
@@ -2186,13 +2217,9 @@ Returns Value:
     return Count;
 }
 
-
+
 COMPARISON
-CompareUnicodeStrings (
-    IN PUNICODE_STRING Prefix,
-    IN PUNICODE_STRING Name,
-    IN ULONG CaseInsensitiveIndex
-    )
+CompareUnicodeStrings(IN PUNICODE_STRING Prefix, IN PUNICODE_STRING Name, IN ULONG CaseInsensitiveIndex)
 
 /*++
 
@@ -2242,16 +2269,17 @@ Return Value:
     //  time we need their values
     //
 
-    PrefixLength = (ULONG)Prefix->Length/2;
-    NameLength = (ULONG)Name->Length/2;
+    PrefixLength = (ULONG)Prefix->Length / 2;
+    NameLength = (ULONG)Name->Length / 2;
 
     //
     //  Special case the situation where the prefix string is simply "\" and
     //  the name starts with an "\"
     //
 
-    if ((PrefixLength == 1) && (Prefix->Buffer[0] == UnicodeBackSlash) &&
-        (NameLength > 1) && (Name->Buffer[0] == UnicodeBackSlash)) {
+    if ((PrefixLength == 1) && (Prefix->Buffer[0] == UnicodeBackSlash) && (NameLength > 1) &&
+        (Name->Buffer[0] == UnicodeBackSlash))
+    {
         //DbgPrint("IsPrefix\n");
         return IsPrefix;
     }
@@ -2268,7 +2296,8 @@ Return Value:
     //  CaseInsensitive part.
     //
 
-    if (CaseInsensitiveIndex > MinLength) {
+    if (CaseInsensitiveIndex > MinLength)
+    {
 
         CaseInsensitiveIndex = MinLength;
     }
@@ -2277,12 +2306,14 @@ Return Value:
     //  CaseSensitive compare
     //
 
-    for (i = 0; i < CaseInsensitiveIndex; i += 1) {
+    for (i = 0; i < CaseInsensitiveIndex; i += 1)
+    {
 
         PrefixChar = Prefix->Buffer[i];
-        NameChar   = Name->Buffer[i];
+        NameChar = Name->Buffer[i];
 
-        if (PrefixChar != NameChar) {
+        if (PrefixChar != NameChar)
+        {
 
             break;
         }
@@ -2293,22 +2324,26 @@ Return Value:
     //  CaseInsensitive compare.
     //
 
-    if (i == CaseInsensitiveIndex) {
+    if (i == CaseInsensitiveIndex)
+    {
 
         WCHAR *s1 = &Prefix->Buffer[i];
         WCHAR *s2 = &Name->Buffer[i];
 
-        for (; i < MinLength; i += 1) {
+        for (; i < MinLength; i += 1)
+        {
 
             PrefixChar = *s1++;
             NameChar = *s2++;
 
-            if (PrefixChar != NameChar) {
+            if (PrefixChar != NameChar)
+            {
 
                 PrefixChar = NLS_UPCASE(PrefixChar);
-                NameChar   = NLS_UPCASE(NameChar);
+                NameChar = NLS_UPCASE(NameChar);
 
-                if (PrefixChar != NameChar) {
+                if (PrefixChar != NameChar)
+                {
                     break;
                 }
             }
@@ -2320,19 +2355,22 @@ Return Value:
     //  the result of the comparison.
     //
 
-    if (i < MinLength) {
+    if (i < MinLength)
+    {
 
         //
         //  We also need to treat "\" as less than all other characters, so
         //  if the char is a "\" we'll drop it down to a value of zero.
         //
 
-        if (PrefixChar == UnicodeBackSlash) {
+        if (PrefixChar == UnicodeBackSlash)
+        {
 
             return IsLessThan;
         }
 
-        if (NameChar == UnicodeBackSlash) {
+        if (NameChar == UnicodeBackSlash)
+        {
 
             return IsGreaterThan;
         }
@@ -2341,11 +2379,13 @@ Return Value:
         //  Now compare the characters
         //
 
-        if (PrefixChar < NameChar) {
+        if (PrefixChar < NameChar)
+        {
 
             return IsLessThan;
-
-        } else if (PrefixChar > NameChar) {
+        }
+        else if (PrefixChar > NameChar)
+        {
 
             return IsGreaterThan;
         }
@@ -2356,27 +2396,31 @@ Return Value:
     //  and see if one is a proper prefix of the other
     //
 
-    if (PrefixLength < NameLength) {
+    if (PrefixLength < NameLength)
+    {
 
         //
         //  The prefix string is shorter so if it is a proper prefix we
         //  return prefix otherwise we return less than (e.g., "\a" < "\ab")
         //
 
-        if (Name->Buffer[PrefixLength] == UnicodeBackSlash) {
+        if (Name->Buffer[PrefixLength] == UnicodeBackSlash)
+        {
 
             //DbgPrint("IsPrefix\n");
 
             return IsPrefix;
-
-        } else {
+        }
+        else
+        {
 
             //DbgPrint("IsLessThan\n");
 
             return IsLessThan;
         }
-
-    } else if (PrefixLength > NameLength) {
+    }
+    else if (PrefixLength > NameLength)
+    {
 
         //
         //  The Prefix string is longer so we say that the prefix is
@@ -2386,8 +2430,9 @@ Return Value:
         //DbgPrint("IsGreaterThan\n");
 
         return IsGreaterThan;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  They lengths are equal so the strings are equal
@@ -2398,4 +2443,3 @@ Return Value:
         return IsEqual;
     }
 }
-

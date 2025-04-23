@@ -25,30 +25,27 @@ Environment:
 //
 // Global tables for GPE handling (Both GP0 and GP1)
 //
-PUCHAR  GpeEnable           = NULL;
-PUCHAR  GpeCurEnable        = NULL;
-PUCHAR  GpeWakeEnable       = NULL;
-PUCHAR  GpeIsLevel          = NULL;
-PUCHAR  GpeHandlerType      = NULL;
-PUCHAR  GpeWakeHandler      = NULL;
-PUCHAR  GpeSpecialHandler   = NULL;
-PUCHAR  GpePending          = NULL;
-PUCHAR  GpeRunMethod        = NULL;
-PUCHAR  GpeComplete         = NULL;
-PUCHAR  GpeSavedWakeMask    = NULL;
-PUCHAR  GpeSavedWakeStatus  = NULL;
-PUCHAR  GpeMap              = NULL;
+PUCHAR GpeEnable = NULL;
+PUCHAR GpeCurEnable = NULL;
+PUCHAR GpeWakeEnable = NULL;
+PUCHAR GpeIsLevel = NULL;
+PUCHAR GpeHandlerType = NULL;
+PUCHAR GpeWakeHandler = NULL;
+PUCHAR GpeSpecialHandler = NULL;
+PUCHAR GpePending = NULL;
+PUCHAR GpeRunMethod = NULL;
+PUCHAR GpeComplete = NULL;
+PUCHAR GpeSavedWakeMask = NULL;
+PUCHAR GpeSavedWakeStatus = NULL;
+PUCHAR GpeMap = NULL;
 
 //
 // Lock to protect all GPE related information
 //
-KSPIN_LOCK          GpeTableLock;
+KSPIN_LOCK GpeTableLock;
 
-
-VOID
-ACPIGpeBuildEventMasks(
-    VOID
-    )
+
+VOID ACPIGpeBuildEventMasks(VOID)
 /*++
 
 Routine Description:
@@ -67,35 +64,31 @@ Return Value:
 
 --*/
 {
-    BOOLEAN     convertedToNumber;
-    KIRQL       oldIrql;
-    NTSTATUS    status;
-    PNSOBJ      gpeObject;
-    PNSOBJ      gpeMethod;
-    ULONG       nameSeg;
-    ULONG       gpeIndex;
+    BOOLEAN convertedToNumber;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    PNSOBJ gpeObject;
+    PNSOBJ gpeMethod;
+    ULONG nameSeg;
+    ULONG gpeIndex;
 
     //
     // NOTENOTE --- Check to make sure sure that the following sequence
     // of acquiring locks is correct
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
-    KeAcquireSpinLockAtDpcLevel( &GpeTableLock );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
+    KeAcquireSpinLockAtDpcLevel(&GpeTableLock);
 
     //
     // First things first, we need to look at the \_GPE branch of the
     // tree to see which control methods, exist, if any
     //
     status = AMLIGetNameSpaceObject("\\_GPE", NULL, &gpeObject, 0);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_WARNING,
-            "ACPIGpeBuildEventMasks - Could not find \\_GPE object %x\n",
-            status
-            ) );
+        ACPIPrint((ACPI_PRINT_WARNING, "ACPIGpeBuildEventMasks - Could not find \\_GPE object %x\n", status));
         goto ACPIGpeBuildEventMasksExit;
-
     }
 
     //
@@ -108,15 +101,16 @@ Return Value:
     // Use a for loop instead of a while loop to keep down the
     // number of nested statements
     //
-    for (;gpeMethod; gpeMethod = NSGETNEXTSIBLING(gpeMethod) ) {
+    for (; gpeMethod; gpeMethod = NSGETNEXTSIBLING(gpeMethod))
+    {
 
         //
         // Make sure that we are dealing with a method
         //
-        if (NSGETOBJTYPE(gpeMethod) != OBJTYPE_METHOD) {
+        if (NSGETOBJTYPE(gpeMethod) != OBJTYPE_METHOD)
+        {
 
             continue;
-
         }
 
         //
@@ -131,19 +125,16 @@ Return Value:
         //     gpeIndex += (nameSeg >> 24) & 0xFF [the y]
         //
         nameSeg = gpeMethod->dwNameSeg;
-        gpeIndex = ( (nameSeg & 0x00FF0000) >> 8);
-        gpeIndex |= ( (nameSeg & 0xFF000000) >> 24);
-        nameSeg = ( (nameSeg & 0x0000FF00) >> 8);
+        gpeIndex = ((nameSeg & 0x00FF0000) >> 8);
+        gpeIndex |= ((nameSeg & 0xFF000000) >> 24);
+        nameSeg = ((nameSeg & 0x0000FF00) >> 8);
 
-        convertedToNumber = ACPIInternalConvertToNumber(
-            (UCHAR) ( (gpeIndex & 0x00FF) ),
-            (UCHAR) ( (gpeIndex & 0xFF00) >> 8),
-            &gpeIndex
-            );
-        if (!convertedToNumber) {
+        convertedToNumber =
+            ACPIInternalConvertToNumber((UCHAR)((gpeIndex & 0x00FF)), (UCHAR)((gpeIndex & 0xFF00) >> 8), &gpeIndex);
+        if (!convertedToNumber)
+        {
 
             continue;
-
         }
 
         //
@@ -151,30 +142,21 @@ Return Value:
         // Note: we pass convertedToNumber as the argument
         // since we don't particularly care what it returns
         //
-        if ( (UCHAR) nameSeg == 'L') {
+        if ((UCHAR)nameSeg == 'L')
+        {
 
             //
             // Install the event as level triggered
             //
-            ACPIGpeInstallRemoveIndex(
-                gpeIndex,
-                ACPI_GPE_LEVEL_INSTALL,
-                ACPI_GPE_CONTROL_METHOD,
-                &convertedToNumber
-                );
-
-        } else if ( (UCHAR) nameSeg == 'E') {
+            ACPIGpeInstallRemoveIndex(gpeIndex, ACPI_GPE_LEVEL_INSTALL, ACPI_GPE_CONTROL_METHOD, &convertedToNumber);
+        }
+        else if ((UCHAR)nameSeg == 'E')
+        {
 
             //
             // Install the Edge triggered GPE
             //
-            ACPIGpeInstallRemoveIndex(
-                gpeIndex,
-                ACPI_GPE_EDGE_INSTALL,
-                ACPI_GPE_CONTROL_METHOD,
-                &convertedToNumber
-                );
-
+            ACPIGpeInstallRemoveIndex(gpeIndex, ACPI_GPE_EDGE_INSTALL, ACPI_GPE_CONTROL_METHOD, &convertedToNumber);
         }
 
     } // for (...)
@@ -190,19 +172,16 @@ ACPIGpeBuildEventMasksExit:
     // At this point, we should re-enable the registers that should be
     // enabled
     //
-    ACPIGpeEnableDisableEvents( TRUE );
+    ACPIGpeEnableDisableEvents(TRUE);
 
     //
     // Done
     //
-    KeReleaseSpinLockFromDpcLevel( &GpeTableLock );
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLockFromDpcLevel(&GpeTableLock);
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 }
-
-VOID
-ACPIGpeBuildWakeMasks(
-    IN  PDEVICE_EXTENSION   DeviceExtension
-    )
+
+VOID ACPIGpeBuildWakeMasks(IN PDEVICE_EXTENSION DeviceExtension)
 /*++
 
 Routine Description:
@@ -223,57 +202,50 @@ Return Value:
 
 --*/
 {
-    EXTENSIONLIST_ENUMDATA  eled;
-    PDEVICE_EXTENSION       childExtension;
-    ULONG                   gpeRegister;
-    ULONG                   gpeMask;
+    EXTENSIONLIST_ENUMDATA eled;
+    PDEVICE_EXTENSION childExtension;
+    ULONG gpeRegister;
+    ULONG gpeMask;
 
     //
     // Setup the data structures that we will use to walk the device
     // extension tree
     //
-    ACPIExtListSetupEnum(
-        &eled,
-        &(DeviceExtension->ChildDeviceList),
-        NULL,
-        SiblingDeviceList,
-        WALKSCHEME_NO_PROTECTION
-        );
+    ACPIExtListSetupEnum(&eled, &(DeviceExtension->ChildDeviceList), NULL, SiblingDeviceList, WALKSCHEME_NO_PROTECTION);
 
     //
     // Look at all children of the current device extension
     //
-    for (childExtension = ACPIExtListStartEnum( &eled );
-         ACPIExtListTestElement( &eled, TRUE);
-         childExtension = ACPIExtListEnumNext( &eled) ) {
+    for (childExtension = ACPIExtListStartEnum(&eled); ACPIExtListTestElement(&eled, TRUE);
+         childExtension = ACPIExtListEnumNext(&eled))
+    {
 
         //
         // Recurse first
         //
-        ACPIGpeBuildWakeMasks( childExtension );
+        ACPIGpeBuildWakeMasks(childExtension);
 
         //
         // Is there a _PRW on this extension?
         //
-        if (!(childExtension->Flags & DEV_CAP_WAKE) ) {
+        if (!(childExtension->Flags & DEV_CAP_WAKE))
+        {
 
             continue;
-
         }
 
         //
         // Remember which register and mask are used by this
         // gpe bit
         //
-        gpeRegister = ACPIGpeIndexToGpeRegister(
-            childExtension->PowerInfo.WakeBit
-            );
-        gpeMask     = 1 << ( (UCHAR) childExtension->PowerInfo.WakeBit % 8);
+        gpeRegister = ACPIGpeIndexToGpeRegister(childExtension->PowerInfo.WakeBit);
+        gpeMask = 1 << ((UCHAR)childExtension->PowerInfo.WakeBit % 8);
 
         //
         // Does this vector have a GPE?
         //
-        if ( (GpeEnable[gpeRegister] & gpeMask) ) {
+        if ((GpeEnable[gpeRegister] & gpeMask))
+        {
 
             //
             // If we got here, and we aren't marked as DEV_CAP_NO_DISABLE_WAKE,
@@ -281,20 +253,22 @@ Return Value:
             // The easiest way to do this is to make sure that GpeWakeHandler
             // is masked with the appropriate bit
             //
-            if (!(childExtension->Flags & DEV_CAP_NO_DISABLE_WAKE) ) {
+            if (!(childExtension->Flags & DEV_CAP_NO_DISABLE_WAKE))
+            {
 
                 //
                 // It has a GPE mask, so remember that there is a wake handler
                 // for it. This should prevent us from arming the GPE without
                 // a request for it.
                 //
-                if (!(GpeSpecialHandler[gpeRegister] & gpeMask) ) {
+                if (!(GpeSpecialHandler[gpeRegister] & gpeMask))
+                {
 
                     GpeWakeHandler[gpeRegister] |= gpeMask;
-
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // If we got here, then we should remember that we can
@@ -306,19 +280,13 @@ Return Value:
                 // Make sure that the pin isn't set as a wake handler
                 //
                 GpeWakeHandler[gpeRegister] &= ~gpeMask;
-
-
             }
-
         }
 
     } // for ( ... )
-
 }
-
-VOID
-ACPIGpeClearEventMasks(
-    )
+
+VOID ACPIGpeClearEventMasks()
 /*++
 
 Routine Description:
@@ -341,18 +309,18 @@ Return Value:
 
 --*/
 {
-    KIRQL   oldIrql;
+    KIRQL oldIrql;
 
     //
     // Need to hold the previous IRQL before we can touch these
     // registers
     //
-    KeAcquireSpinLock( &GpeTableLock, &oldIrql );
+    KeAcquireSpinLock(&GpeTableLock, &oldIrql);
 
     //
     // Disable all of the events
     //
-    ACPIGpeEnableDisableEvents( FALSE );
+    ACPIGpeEnableDisableEvents(FALSE);
 
     //
     // Clear all the events
@@ -362,27 +330,24 @@ Return Value:
     //
     // Zero out all of these fields, since we will recalc them later
     //
-    RtlZeroMemory( GpeCurEnable,      AcpiInformation->GpeSize );
-    RtlZeroMemory( GpeEnable,         AcpiInformation->GpeSize );
-    RtlZeroMemory( GpeWakeEnable,     AcpiInformation->GpeSize );
-    RtlZeroMemory( GpeWakeHandler,    AcpiInformation->GpeSize );
-    RtlZeroMemory( GpeSpecialHandler, AcpiInformation->GpeSize );
-    RtlZeroMemory( GpeRunMethod,      AcpiInformation->GpeSize );
-    RtlZeroMemory( GpePending,        AcpiInformation->GpeSize );
-    RtlZeroMemory( GpeComplete,       AcpiInformation->GpeSize );
-    RtlZeroMemory( GpeIsLevel,        AcpiInformation->GpeSize );
-    RtlZeroMemory( GpeHandlerType,    AcpiInformation->GpeSize );
+    RtlZeroMemory(GpeCurEnable, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpeEnable, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpeWakeEnable, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpeWakeHandler, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpeSpecialHandler, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpeRunMethod, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpePending, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpeComplete, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpeIsLevel, AcpiInformation->GpeSize);
+    RtlZeroMemory(GpeHandlerType, AcpiInformation->GpeSize);
 
     //
     // Done with the spinlock
     //
-    KeReleaseSpinLock( &GpeTableLock, oldIrql );
+    KeReleaseSpinLock(&GpeTableLock, oldIrql);
 }
-
-VOID
-ACPIGpeClearRegisters(
-    VOID
-    )
+
+VOID ACPIGpeClearRegisters(VOID)
 /*++
 
 Routine Description:
@@ -399,32 +364,29 @@ Return Value:
 
 --*/
 {
-    UCHAR   scratch;
-    ULONG   i;
+    UCHAR scratch;
+    ULONG i;
 
     //
     // Clear all GPE status registers
     //
-    for (i = 0; i < AcpiInformation->GpeSize; i++) {
+    for (i = 0; i < AcpiInformation->GpeSize; i++)
+    {
 
         //
         // Read the register and mask off uninteresting GPE levels
         //
-        scratch = ACPIReadGpeStatusRegister (i);
+        scratch = ACPIReadGpeStatusRegister(i);
         scratch &= GpeEnable[i] | GpeWakeEnable[i];
 
         //
         // Write back out to clear the status bits
         //
-        ACPIWriteGpeStatusRegister (i, scratch);
-
+        ACPIWriteGpeStatusRegister(i, scratch);
     }
 }
-
-VOID
-ACPIGpeEnableDisableEvents (
-    BOOLEAN Enable
-    )
+
+VOID ACPIGpeEnableDisableEvents(BOOLEAN Enable)
 /*++
 
 Routine Description:
@@ -443,25 +405,21 @@ Return Value
 
 --*/
 {
-    UCHAR           Mask;
-    ULONG           i;
+    UCHAR Mask;
+    ULONG i;
 
     //
     // Transfer the current enable masks to their corresponding GPE registers
     //
-    Mask = Enable ? (UCHAR) -1 : 0;
-    for (i = 0; i < AcpiInformation->GpeSize; i++) {
+    Mask = Enable ? (UCHAR)-1 : 0;
+    for (i = 0; i < AcpiInformation->GpeSize; i++)
+    {
 
-        ACPIWriteGpeEnableRegister( i, (UCHAR) (GpeCurEnable[i] & Mask) );
-
+        ACPIWriteGpeEnableRegister(i, (UCHAR)(GpeCurEnable[i] & Mask));
     }
-
 }
-
-VOID
-ACPIGpeHalEnableDisableEvents(
-    BOOLEAN Enable
-    )
+
+VOID ACPIGpeHalEnableDisableEvents(BOOLEAN Enable)
 /*++
 
 Routine Description:
@@ -482,42 +440,40 @@ Return Value:
 
 --*/
 {
-    ULONG   i;
+    ULONG i;
 
-    if (Enable) {
+    if (Enable)
+    {
 
         //
         // We have presumably woken up, so remember the PM1 Status register
         // and the GPE Status Register
         //
-        for (i = 0; i < AcpiInformation->GpeSize; i++) {
+        for (i = 0; i < AcpiInformation->GpeSize; i++)
+        {
 
             GpeSavedWakeStatus[i] = ACPIReadGpeStatusRegister(i);
-
         }
         AcpiInformation->pm1_wake_status = READ_PM1_STATUS();
-
-    } else {
+    }
+    else
+    {
 
         //
         // We are going to standby without enabling any events. Make
         // sure to clear all the masks
         //
         AcpiInformation->pm1_wake_mask = 0;
-        RtlZeroMemory( GpeSavedWakeMask, AcpiInformation->GpeSize );
-
+        RtlZeroMemory(GpeSavedWakeMask, AcpiInformation->GpeSize);
     }
 
     //
     // Make sure to still enable/disable the registers
     //
-    ACPIGpeEnableDisableEvents( Enable );
+    ACPIGpeEnableDisableEvents(Enable);
 }
-
-VOID
-ACPIGpeEnableWakeEvents(
-    VOID
-    )
+
+VOID ACPIGpeEnableWakeEvents(VOID)
 /*++
 
 Routine Description:
@@ -538,21 +494,19 @@ Return Value:
 
 --*/
 {
-    ULONG   i;
+    ULONG i;
 
-    for (i = 0; i < AcpiInformation->GpeSize; i++) {
+    for (i = 0; i < AcpiInformation->GpeSize; i++)
+    {
 
-        ACPIWriteGpeEnableRegister (i, GpeWakeEnable[i]);
+        ACPIWriteGpeEnableRegister(i, GpeWakeEnable[i]);
         GpeSavedWakeMask[i] = GpeWakeEnable[i];
-
     }
     AcpiInformation->pm1_wake_mask = READ_PM1_ENABLE();
 }
-
+
 ULONG
-ACPIGpeIndexToByteIndex (
-    ULONG           Index
-    )
+ACPIGpeIndexToByteIndex(ULONG Index)
 /*++
 
 Routine Description:
@@ -571,30 +525,28 @@ Return Value:
 
 --*/
 {
-    if (Index < AcpiInformation->GP1_Base_Index) {
+    if (Index < AcpiInformation->GP1_Base_Index)
+    {
 
         //
         // GP0 case is very simple
         //
         return (Index);
-
-    } else {
+    }
+    else
+    {
 
         //
         // GP1 case must take into account:
         //   1) The base index of the GPE1 block
         //   2) The number of (logical) GPE0 registers preceeding the GPE1 registers
         //
-        return ((Index - AcpiInformation->GP1_Base_Index) +
-                    AcpiInformation->Gpe0Size);
-
+        return ((Index - AcpiInformation->GP1_Base_Index) + AcpiInformation->Gpe0Size);
     }
 }
-
+
 ULONG
-ACPIGpeIndexToGpeRegister (
-    ULONG           Index
-    )
+ACPIGpeIndexToGpeRegister(ULONG Index)
 /*++
 
 Routine Description:
@@ -613,33 +565,30 @@ Return Value:
 
 --*/
 {
-    if (Index < AcpiInformation->GP1_Base_Index) {
+    if (Index < AcpiInformation->GP1_Base_Index)
+    {
 
         //
         // GP0 case is very simple
         //
         return (Index / 8);
-
-    } else {
+    }
+    else
+    {
 
         //
         // GP1 case must take into account:
         //   1) The base index of the GPE1 block
         //   2) The number of (logical) GPE0 registers preceeding the GPE1 registers
         //
-        return (((Index - AcpiInformation->GP1_Base_Index) / 8) +
-                    AcpiInformation->Gpe0Size);
-
+        return (((Index - AcpiInformation->GP1_Base_Index) / 8) + AcpiInformation->Gpe0Size);
     }
 }
-
+
 BOOLEAN
-ACPIGpeInstallRemoveIndex (
-    ULONG       GpeIndex,
-    ULONG       Action,         // Edge = 0, Level = 1, Remove = 2
-    ULONG       Type,
-    PBOOLEAN    HasControlMethod
-    )
+ACPIGpeInstallRemoveIndex(ULONG GpeIndex,
+                          ULONG Action, // Edge = 0, Level = 1, Remove = 2
+                          ULONG Type, PBOOLEAN HasControlMethod)
 /*++
 
 Routine Description:
@@ -664,181 +613,160 @@ Return Value:
 
 --*/
 {
-    ULONG               bitOffset;
-    ULONG               i;
-    ULONG               bit;
+    ULONG bitOffset;
+    ULONG i;
+    ULONG bit;
 
     //
     // Validate the GPE index (GPE number)
     //
-    if (AcpiInformation->GP0_LEN == 0) {
+    if (AcpiInformation->GP0_LEN == 0)
+    {
 
         PACPI_GPE_ERROR_CONTEXT errContext;
 
-        errContext = ExAllocatePoolWithTag(
-            NonPagedPool,
-            sizeof(ACPI_GPE_ERROR_CONTEXT),
-            ACPI_MISC_POOLTAG
-            );
-        if (errContext) {
+        errContext = ExAllocatePoolWithTag(NonPagedPool, sizeof(ACPI_GPE_ERROR_CONTEXT), ACPI_MISC_POOLTAG);
+        if (errContext)
+        {
 
             errContext->GpeIndex = GpeIndex;
-            ExInitializeWorkItem(
-                &(errContext->Item),
-                ACPIGpeInstallRemoveIndexErrorWorker,
-                (PVOID) errContext
-                );
-            ExQueueWorkItem( &(errContext->Item), DelayedWorkQueue );
-
+            ExInitializeWorkItem(&(errContext->Item), ACPIGpeInstallRemoveIndexErrorWorker, (PVOID)errContext);
+            ExQueueWorkItem(&(errContext->Item), DelayedWorkQueue);
         }
 
         return FALSE;
-
     }
-    if (!(ACPIGpeValidIndex (GpeIndex))) {
+    if (!(ACPIGpeValidIndex(GpeIndex)))
+    {
 
         return FALSE;
-
     }
 
     bitOffset = GpeIndex % 8;
     bit = (1 << bitOffset);
-    i = ACPIGpeIndexToGpeRegister (GpeIndex);
+    i = ACPIGpeIndexToGpeRegister(GpeIndex);
 
-    ASSERT( (i < (ULONG) AcpiInformation->GpeSize) );
-    if (i >= (ULONG) AcpiInformation->GpeSize) {
+    ASSERT((i < (ULONG)AcpiInformation->GpeSize));
+    if (i >= (ULONG)AcpiInformation->GpeSize)
+    {
 
         return FALSE;
-
     }
 
     //
     // Handler removal
     //
-    if (Action == ACPI_GPE_REMOVE) {
+    if (Action == ACPI_GPE_REMOVE)
+    {
 
         //
         // Fall back to using control method if there is one.
         // Otherwise, disable the event.
         //
-        if (*HasControlMethod) {
+        if (*HasControlMethod)
+        {
 
-            GpeEnable [i]      |= bit;
-            GpeCurEnable [i]   |= bit;
-            GpeHandlerType [i] |= bit;
+            GpeEnable[i] |= bit;
+            GpeCurEnable[i] |= bit;
+            GpeHandlerType[i] |= bit;
+        }
+        else
+        {
 
-        } else {
-
-            GpeEnable [i]      &= ~bit;
-            GpeCurEnable [i]   &= ~bit;
-            GpeHandlerType [i] &= ~bit;
-            ASSERT (!(GpeWakeEnable[i] & bit));
-
+            GpeEnable[i] &= ~bit;
+            GpeCurEnable[i] &= ~bit;
+            GpeHandlerType[i] &= ~bit;
+            ASSERT(!(GpeWakeEnable[i] & bit));
         }
 
-        ACPIPrint ( (
-            ACPI_PRINT_DPC,
-            "ACPIGpeInstallRemoveIndex: Removing GPE #%d: Byte 0x%x bit %u\n",
-            GpeIndex, i, bitOffset
-            ) );
+        ACPIPrint((ACPI_PRINT_DPC, "ACPIGpeInstallRemoveIndex: Removing GPE #%d: Byte 0x%x bit %u\n", GpeIndex, i,
+                   bitOffset));
         return TRUE;
-
     }
     //
     // Handler installation
     //
-    if ( (GpeEnable [i] & bit) ) {
+    if ((GpeEnable[i] & bit))
+    {
 
-        if ( !(GpeHandlerType[i] & bit) ) {
+        if (!(GpeHandlerType[i] & bit))
+        {
 
             //
             // a handler is already installed
             //
             return FALSE;
-
         }
 
         //
         // there is a control method (to be restored if handler removed)
         //
         *HasControlMethod = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         *HasControlMethod = FALSE;
-
     }
 
     //
     // Install this event
     //
-    GpeEnable[i]    |= bit;
+    GpeEnable[i] |= bit;
     GpeCurEnable[i] |= bit;
-    if (Action == ACPI_GPE_LEVEL_INSTALL) {
+    if (Action == ACPI_GPE_LEVEL_INSTALL)
+    {
 
         //
         // Level event
         //
         GpeIsLevel[i] |= bit;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Edge event
         //
         GpeIsLevel[i] &= ~bit;
-
     }
 
-    if (Type == ACPI_GPE_CONTROL_METHOD) {
+    if (Type == ACPI_GPE_CONTROL_METHOD)
+    {
 
-        GpeHandlerType [i] |= bit;
+        GpeHandlerType[i] |= bit;
+    }
+    else
+    {
 
-    } else {
-
-        GpeHandlerType [i] &= ~bit;
-
+        GpeHandlerType[i] &= ~bit;
     }
 
-    ACPIPrint ( (
-        ACPI_PRINT_DPC,
-        "ACPIGpeInstallRemoveIndex: Setting GPE #%d: Byte 0x%x bit %u\n",
-        GpeIndex, i, bitOffset
-        ) );
+    ACPIPrint(
+        (ACPI_PRINT_DPC, "ACPIGpeInstallRemoveIndex: Setting GPE #%d: Byte 0x%x bit %u\n", GpeIndex, i, bitOffset));
     return TRUE;
 }
-
-VOID
-ACPIGpeInstallRemoveIndexErrorWorker(
-    IN  PVOID   Context
-    )
+
+VOID ACPIGpeInstallRemoveIndexErrorWorker(IN PVOID Context)
 {
-    PACPI_GPE_ERROR_CONTEXT errContext = (PACPI_GPE_ERROR_CONTEXT) Context;
-    PWCHAR                  prtEntry[1];
-    UNICODE_STRING          indexName;
-    WCHAR                   index[20];
+    PACPI_GPE_ERROR_CONTEXT errContext = (PACPI_GPE_ERROR_CONTEXT)Context;
+    PWCHAR prtEntry[1];
+    UNICODE_STRING indexName;
+    WCHAR index[20];
 
     RtlInitUnicodeString(&indexName, index);
-    if (NT_SUCCESS(RtlIntegerToUnicodeString( errContext->GpeIndex,0,&indexName))) {
+    if (NT_SUCCESS(RtlIntegerToUnicodeString(errContext->GpeIndex, 0, &indexName)))
+    {
 
         prtEntry[0] = index;
-        ACPIWriteEventLogEntry(
-            ACPI_ERR_NO_GPE_BLOCK,
-            &prtEntry,
-            1,
-            NULL,
-            0
-            );
-
+        ACPIWriteEventLogEntry(ACPI_ERR_NO_GPE_BLOCK, &prtEntry, 1, NULL, 0);
     }
-    ExFreePool( errContext );
+    ExFreePool(errContext);
 }
 
-
+
 BOOLEAN
-ACPIGpeIsEvent(
-    VOID
-    )
+ACPIGpeIsEvent(VOID)
 /*++
 
 Routine Description:
@@ -858,22 +786,22 @@ Return Value:
     FALSE   - No, it was not
 --*/
 {
-    UCHAR       sts;
-    ULONG       i;
+    UCHAR sts;
+    ULONG i;
 
     //
     // Check all GPE registers to see if any of the status bits are set.
     //
-    for (i = 0; i < AcpiInformation->GpeSize; i++) {
+    for (i = 0; i < AcpiInformation->GpeSize; i++)
+    {
 
-        sts = ACPIReadGpeStatusRegister (i);
+        sts = ACPIReadGpeStatusRegister(i);
 
-        if (sts & GpeCurEnable[i]) {
+        if (sts & GpeCurEnable[i])
+        {
 
             return TRUE;
-
         }
-
     }
 
     //
@@ -881,12 +809,9 @@ Return Value:
     //
     return (FALSE);
 }
-
+
 ULONG
-ACPIGpeRegisterToGpeIndex(
-    ULONG           Register,
-    ULONG           BitPosition
-    )
+ACPIGpeRegisterToGpeIndex(ULONG Register, ULONG BitPosition)
 /*++
 
 Routine Description:
@@ -906,32 +831,27 @@ Return Value:
 
 --*/
 {
-    if (Register < AcpiInformation->Gpe0Size) {
+    if (Register < AcpiInformation->Gpe0Size)
+    {
 
         //
         // GP0 case is simple
         //
-        return (Register * 8) +
-                BitPosition;
-
-    } else {
+        return (Register * 8) + BitPosition;
+    }
+    else
+    {
 
         //
         // GP1 case must adjust for:
         //   1) The number of (logical) GPE0 registers preceeding the GPE1 registers
         //   2) The base index of the GPE1 block.
         //
-        return ((Register - AcpiInformation->Gpe0Size) * 8) +
-                AcpiInformation->GP1_Base_Index +
-                BitPosition;
+        return ((Register - AcpiInformation->Gpe0Size) * 8) + AcpiInformation->GP1_Base_Index + BitPosition;
     }
 }
-
-VOID
-ACPIGpeUpdateCurrentEnable(
-    IN  ULONG   GpeRegister,
-    IN  UCHAR   Completed
-    )
+
+VOID ACPIGpeUpdateCurrentEnable(IN ULONG GpeRegister, IN UCHAR Completed)
 /*++
 
 Routine Description:
@@ -972,11 +892,9 @@ Return Value:
     //
     GpeCurEnable[GpeRegister] |= Completed;
 }
-
+
 BOOLEAN
-ACPIGpeValidIndex (
-    ULONG           Index
-    )
+ACPIGpeValidIndex(ULONG Index)
 /*++
 
 Routine Description:
@@ -997,35 +915,38 @@ Return Value:
 
 --*/
 {
-    if (Index < AcpiInformation->GP1_Base_Index) {
+    if (Index < AcpiInformation->GP1_Base_Index)
+    {
 
         //
         // GP0 case: Gpe index must fall within the range 0 to the end of GPE0
         //
-        if (Index < (ULONG) (AcpiInformation->Gpe0Size * 8)) {
+        if (Index < (ULONG)(AcpiInformation->Gpe0Size * 8))
+        {
 
             return TRUE;
-
-        } else {
+        }
+        else
+        {
 
             return FALSE;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // GP1 case: Gpe index must fall within the range GP1_Base_Index to the end of GPE1
         //
-        if (Index < (ULONG) (AcpiInformation->GP1_Base_Index + (AcpiInformation->Gpe1Size * 8))) {
+        if (Index < (ULONG)(AcpiInformation->GP1_Base_Index + (AcpiInformation->Gpe1Size * 8)))
+        {
 
             return TRUE;
-
-        } else {
+        }
+        else
+        {
 
             return FALSE;
         }
-
     }
-
 }
-

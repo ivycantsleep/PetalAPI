@@ -34,10 +34,7 @@ Revision History:
 NTKERNELAPI
 ULONG
 FASTCALL
-RtlInterlockedSetBits (
-    IN OUT PULONG Flags,
-    IN ULONG Flag
-    )
+RtlInterlockedSetBits(IN OUT PULONG Flags, IN ULONG Flag)
 /*++
 
 Routine Description:
@@ -60,9 +57,11 @@ Return Value:
 
     OldFlags = *Flags;
     NewFlags = OldFlags | Flag;
-    while (NewFlags != OldFlags) {
-        NewFlags = InterlockedCompareExchange ((PLONG) Flags, (LONG) NewFlags, (LONG) OldFlags);
-        if (NewFlags == OldFlags) {
+    while (NewFlags != OldFlags)
+    {
+        NewFlags = InterlockedCompareExchange((PLONG)Flags, (LONG)NewFlags, (LONG)OldFlags);
+        if (NewFlags == OldFlags)
+        {
             break;
         }
         OldFlags = NewFlags;
@@ -76,10 +75,7 @@ Return Value:
 NTKERNELAPI
 ULONG
 FASTCALL
-RtlInterlockedClearBits (
-    IN OUT PULONG Flags,
-    IN ULONG Flag
-    )
+RtlInterlockedClearBits(IN OUT PULONG Flags, IN ULONG Flag)
 /*++
 
 Routine Description:
@@ -102,9 +98,11 @@ Return Value:
 
     OldFlags = *Flags;
     NewFlags = OldFlags & ~Flag;
-    while (NewFlags != OldFlags) {
-        NewFlags = InterlockedCompareExchange ((PLONG) Flags, (LONG) NewFlags, (LONG) OldFlags);
-        if (NewFlags == OldFlags) {
+    while (NewFlags != OldFlags)
+    {
+        NewFlags = InterlockedCompareExchange((PLONG)Flags, (LONG)NewFlags, (LONG)OldFlags);
+        if (NewFlags == OldFlags)
+        {
             break;
         }
         OldFlags = NewFlags;
@@ -118,11 +116,7 @@ Return Value:
 NTKERNELAPI
 ULONG
 FASTCALL
-RtlInterlockedSetClearBits (
-    IN OUT PULONG Flags,
-    IN ULONG sFlag,
-    IN ULONG cFlag
-    )
+RtlInterlockedSetClearBits(IN OUT PULONG Flags, IN ULONG sFlag, IN ULONG cFlag)
 /*++
 
 Routine Description:
@@ -147,9 +141,11 @@ Return Value:
 
     OldFlags = *Flags;
     NewFlags = (OldFlags | sFlag) & ~cFlag;
-    while (NewFlags != OldFlags) {
-        NewFlags = InterlockedCompareExchange ((PLONG) Flags, (LONG) NewFlags, (LONG) OldFlags);
-        if (NewFlags == OldFlags) {
+    while (NewFlags != OldFlags)
+    {
+        NewFlags = InterlockedCompareExchange((PLONG)Flags, (LONG)NewFlags, (LONG)OldFlags);
+        if (NewFlags == OldFlags)
+        {
             break;
         }
         OldFlags = NewFlags;

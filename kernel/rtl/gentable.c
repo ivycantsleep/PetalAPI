@@ -48,7 +48,8 @@ Revision History:
 // data is correctly aligned.
 //
 
-typedef struct _TABLE_ENTRY_HEADER {
+typedef struct _TABLE_ENTRY_HEADER
+{
 
     RTL_SPLAY_LINKS SplayLinks;
     LIST_ENTRY ListEntry;
@@ -58,14 +59,9 @@ typedef struct _TABLE_ENTRY_HEADER {
 
 #pragma pack()
 
-
-static
-TABLE_SEARCH_RESULT
-FindNodeOrParent(
-    IN PRTL_GENERIC_TABLE Table,
-    IN PVOID Buffer,
-    OUT PRTL_SPLAY_LINKS *NodeOrParent
-    )
+
+static TABLE_SEARCH_RESULT FindNodeOrParent(IN PRTL_GENERIC_TABLE Table, IN PVOID Buffer,
+                                            OUT PRTL_SPLAY_LINKS *NodeOrParent)
 
 /*++
 
@@ -112,14 +108,15 @@ Return Value:
 --*/
 
 
-
 {
 
-    if (RtlIsGenericTableEmpty(Table)) {
+    if (RtlIsGenericTableEmpty(Table))
+    {
 
         return TableEmptyTree;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Used as the iteration variable while stepping through
@@ -138,25 +135,25 @@ Return Value:
         //
         RTL_GENERIC_COMPARE_RESULTS Result;
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             //
             // Compare the buffer with the key in the tree element.
             //
 
-            Result = Table->CompareRoutine(
-                         Table,
-                         Buffer,
-                         &((PTABLE_ENTRY_HEADER) NodeToExamine)->UserData
-                         );
+            Result = Table->CompareRoutine(Table, Buffer, &((PTABLE_ENTRY_HEADER)NodeToExamine)->UserData);
 
-            if (Result == GenericLessThan) {
+            if (Result == GenericLessThan)
+            {
 
-                if (Child = RtlLeftChild(NodeToExamine)) {
+                if (Child = RtlLeftChild(NodeToExamine))
+                {
 
                     NodeToExamine = Child;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Node is not in the tree.  Set the output
@@ -166,16 +163,18 @@ Return Value:
 
                     *NodeOrParent = NodeToExamine;
                     return TableInsertAsLeft;
-
                 }
+            }
+            else if (Result == GenericGreaterThan)
+            {
 
-            } else if (Result == GenericGreaterThan) {
-
-                if (Child = RtlRightChild(NodeToExamine)) {
+                if (Child = RtlRightChild(NodeToExamine))
+                {
 
                     NodeToExamine = Child;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Node is not in the tree.  Set the output
@@ -185,11 +184,10 @@ Return Value:
 
                     *NodeOrParent = NodeToExamine;
                     return TableInsertAsRight;
-
                 }
-
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Node is in the tree (or it better be because of the
@@ -200,23 +198,14 @@ Return Value:
                 ASSERT(Result == GenericEqual);
                 *NodeOrParent = NodeToExamine;
                 return TableFoundNode;
-
             }
-
         }
-
     }
-
 }
-
-VOID
-RtlInitializeGenericTable (
-    IN PRTL_GENERIC_TABLE Table,
-    IN PRTL_GENERIC_COMPARE_ROUTINE CompareRoutine,
-    IN PRTL_GENERIC_ALLOCATE_ROUTINE AllocateRoutine,
-    IN PRTL_GENERIC_FREE_ROUTINE FreeRoutine,
-    IN PVOID TableContext
-    )
+
+VOID RtlInitializeGenericTable(IN PRTL_GENERIC_TABLE Table, IN PRTL_GENERIC_COMPARE_ROUTINE CompareRoutine,
+                               IN PRTL_GENERIC_ALLOCATE_ROUTINE AllocateRoutine,
+                               IN PRTL_GENERIC_FREE_ROUTINE FreeRoutine, IN PVOID TableContext)
 
 /*++
 
@@ -263,17 +252,12 @@ Return Value:
     Table->AllocateRoutine = AllocateRoutine;
     Table->FreeRoutine = FreeRoutine;
     Table->TableContext = TableContext;
-
 }
 
-
+
 PVOID
-RtlInsertElementGenericTable (
-    IN PRTL_GENERIC_TABLE Table,
-    IN PVOID Buffer,
-    IN CLONG BufferSize,
-    OUT PBOOLEAN NewElement OPTIONAL
-    )
+RtlInsertElementGenericTable(IN PRTL_GENERIC_TABLE Table, IN PVOID Buffer, IN CLONG BufferSize,
+                             OUT PBOOLEAN NewElement OPTIONAL)
 
 /*++
 
@@ -332,36 +316,19 @@ Return Value:
     //
     TABLE_SEARCH_RESULT Lookup;
 
-    Lookup = FindNodeOrParent(
-                 Table,
-                 Buffer,
-                 &NodeOrParent
-                 );
+    Lookup = FindNodeOrParent(Table, Buffer, &NodeOrParent);
 
     //
     //  Call the full routine to do the real work.
     //
 
-    return RtlInsertElementGenericTableFull(
-                Table,
-                Buffer,
-                BufferSize,
-                NewElement,
-                NodeOrParent,
-                Lookup
-                );
+    return RtlInsertElementGenericTableFull(Table, Buffer, BufferSize, NewElement, NodeOrParent, Lookup);
 }
 
-
+
 PVOID
-RtlInsertElementGenericTableFull (
-    IN PRTL_GENERIC_TABLE Table,
-    IN PVOID Buffer,
-    IN CLONG BufferSize,
-    OUT PBOOLEAN NewElement OPTIONAL,
-    PVOID NodeOrParent,
-    TABLE_SEARCH_RESULT SearchResult
-    )
+RtlInsertElementGenericTableFull(IN PRTL_GENERIC_TABLE Table, IN PVOID Buffer, IN CLONG BufferSize,
+                                 OUT PBOOLEAN NewElement OPTIONAL, PVOID NodeOrParent, TABLE_SEARCH_RESULT SearchResult)
 
 /*++
 
@@ -420,14 +387,15 @@ Return Value:
 
     PRTL_SPLAY_LINKS NodeToReturn;
 
-    if (SearchResult != TableFoundNode) {
+    if (SearchResult != TableFoundNode)
+    {
 
         //
         // We just check that the table isn't getting
         // too big.
         //
 
-        ASSERT(Table->NumberGenericTableElements != (MAXULONG-1));
+        ASSERT(Table->NumberGenericTableElements != (MAXULONG - 1));
 
         //
         // The node wasn't in the (possibly empty) tree.
@@ -435,24 +403,23 @@ Return Value:
         // for the new node.
         //
 
-        NodeToReturn = Table->AllocateRoutine(
-                           Table,
-                           BufferSize+FIELD_OFFSET( TABLE_ENTRY_HEADER, UserData )
-                           );
+        NodeToReturn = Table->AllocateRoutine(Table, BufferSize + FIELD_OFFSET(TABLE_ENTRY_HEADER, UserData));
 
         //
         // If the return is NULL, return NULL from here to indicate that
         // the entry could not be added.
         //
 
-        if (NodeToReturn == NULL) {
+        if (NodeToReturn == NULL)
+        {
 
-            if (ARGUMENT_PRESENT(NewElement)) {
+            if (ARGUMENT_PRESENT(NewElement))
+            {
 
                 *NewElement = FALSE;
             }
 
-            return(NULL);
+            return (NULL);
         }
 
         RtlInitializeSplayLinks(NodeToReturn);
@@ -461,10 +428,7 @@ Return Value:
         // Insert the new node at the end of the ordered linked list.
         //
 
-        InsertTailList(
-            &Table->InsertOrderList,
-            &((PTABLE_ENTRY_HEADER) NodeToReturn)->ListEntry
-            );
+        InsertTailList(&Table->InsertOrderList, &((PTABLE_ENTRY_HEADER)NodeToReturn)->ListEntry);
 
         Table->NumberGenericTableElements++;
 
@@ -472,25 +436,23 @@ Return Value:
         // Insert the new node in the tree.
         //
 
-        if (SearchResult == TableEmptyTree) {
+        if (SearchResult == TableEmptyTree)
+        {
 
             Table->TableRoot = NodeToReturn;
+        }
+        else
+        {
 
-        } else {
+            if (SearchResult == TableInsertAsLeft)
+            {
 
-            if (SearchResult == TableInsertAsLeft) {
+                RtlInsertAsLeftChild(NodeOrParent, NodeToReturn);
+            }
+            else
+            {
 
-                RtlInsertAsLeftChild(
-                    NodeOrParent,
-                    NodeToReturn
-                    );
-
-            } else {
-
-                RtlInsertAsRightChild(
-                    NodeOrParent,
-                    NodeToReturn
-                    );
+                RtlInsertAsRightChild(NodeOrParent, NodeToReturn);
             }
         }
 
@@ -498,13 +460,10 @@ Return Value:
         // Copy the users buffer into the user data area of the table.
         //
 
-        RtlCopyMemory(
-            &((PTABLE_ENTRY_HEADER) NodeToReturn)->UserData,
-            Buffer,
-            BufferSize
-            );
-
-    } else {
+        RtlCopyMemory(&((PTABLE_ENTRY_HEADER)NodeToReturn)->UserData, Buffer, BufferSize);
+    }
+    else
+    {
 
         NodeToReturn = NodeOrParent;
     }
@@ -515,24 +474,22 @@ Return Value:
 
     Table->TableRoot = RtlSplay(NodeToReturn);
 
-    if (ARGUMENT_PRESENT(NewElement)) {
+    if (ARGUMENT_PRESENT(NewElement))
+    {
 
-        *NewElement = ((SearchResult == TableFoundNode)?(FALSE):(TRUE));
+        *NewElement = ((SearchResult == TableFoundNode) ? (FALSE) : (TRUE));
     }
 
     //
     // Insert the element on the ordered list;
     //
 
-    return &((PTABLE_ENTRY_HEADER) NodeToReturn)->UserData;
+    return &((PTABLE_ENTRY_HEADER)NodeToReturn)->UserData;
 }
 
-
+
 BOOLEAN
-RtlDeleteElementGenericTable (
-    IN PRTL_GENERIC_TABLE Table,
-    IN PVOID Buffer
-    )
+RtlDeleteElementGenericTable(IN PRTL_GENERIC_TABLE Table, IN PVOID Buffer)
 
 /*++
 
@@ -572,17 +529,15 @@ Return Value:
     //
     TABLE_SEARCH_RESULT Lookup;
 
-    Lookup = FindNodeOrParent(
-                 Table,
-                 Buffer,
-                 &NodeOrParent
-                 );
+    Lookup = FindNodeOrParent(Table, Buffer, &NodeOrParent);
 
-    if ((Lookup == TableEmptyTree) || (Lookup != TableFoundNode)) {
+    if ((Lookup == TableEmptyTree) || (Lookup != TableFoundNode))
+    {
 
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Delete the node from the splay tree.
@@ -594,7 +549,7 @@ Return Value:
         // Delete the element from the linked list.
         //
 
-        RemoveEntryList(&((PTABLE_ENTRY_HEADER) NodeOrParent)->ListEntry);
+        RemoveEntryList(&((PTABLE_ENTRY_HEADER)NodeOrParent)->ListEntry);
         Table->NumberGenericTableElements--;
         Table->WhichOrderedElement = 0;
         Table->OrderedPointer = &Table->InsertOrderList;
@@ -607,19 +562,14 @@ Return Value:
         // is assumed that the deallocation is rather bad.
         //
 
-        Table->FreeRoutine(Table,NodeOrParent);
+        Table->FreeRoutine(Table, NodeOrParent);
         return TRUE;
-
     }
-
 }
 
-
+
 PVOID
-RtlLookupElementGenericTable (
-    IN PRTL_GENERIC_TABLE Table,
-    IN PVOID Buffer
-    )
+RtlLookupElementGenericTable(IN PRTL_GENERIC_TABLE Table, IN PVOID Buffer)
 
 /*++
 
@@ -655,23 +605,14 @@ Return Value:
     //
     TABLE_SEARCH_RESULT Lookup;
 
-    return RtlLookupElementGenericTableFull(
-                Table,
-                Buffer,
-                &NodeOrParent,
-                &Lookup
-                );
+    return RtlLookupElementGenericTableFull(Table, Buffer, &NodeOrParent, &Lookup);
 }
 
-
+
 PVOID
 NTAPI
-RtlLookupElementGenericTableFull (
-    PRTL_GENERIC_TABLE Table,
-    PVOID Buffer,
-    OUT PVOID *NodeOrParent,
-    OUT TABLE_SEARCH_RESULT *SearchResult
-    )
+RtlLookupElementGenericTableFull(PRTL_GENERIC_TABLE Table, PVOID Buffer, OUT PVOID *NodeOrParent,
+                                 OUT TABLE_SEARCH_RESULT *SearchResult)
 
 /*++
 
@@ -707,17 +648,15 @@ Return Value:
     //  Lookup the element and save the result.
     //
 
-    *SearchResult = FindNodeOrParent(
-                        Table,
-                        Buffer,
-                        (PRTL_SPLAY_LINKS *)NodeOrParent
-                        );
+    *SearchResult = FindNodeOrParent(Table, Buffer, (PRTL_SPLAY_LINKS *)NodeOrParent);
 
-    if ((*SearchResult == TableEmptyTree) || (*SearchResult != TableFoundNode)) {
+    if ((*SearchResult == TableEmptyTree) || (*SearchResult != TableFoundNode))
+    {
 
         return NULL;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Splay the tree with this node.
@@ -733,12 +672,9 @@ Return Value:
     }
 }
 
-
+
 PVOID
-RtlEnumerateGenericTable (
-    IN PRTL_GENERIC_TABLE Table,
-    IN BOOLEAN Restart
-    )
+RtlEnumerateGenericTable(IN PRTL_GENERIC_TABLE Table, IN BOOLEAN Restart)
 
 /*++
 
@@ -775,15 +711,17 @@ Return Value:
 
 {
 
-    if (RtlIsGenericTableEmpty(Table)) {
+    if (RtlIsGenericTableEmpty(Table))
+    {
 
         //
         // Nothing to do if the table is empty.
         //
 
         return NULL;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Will be used as the "iteration" through the tree.
@@ -795,23 +733,22 @@ Return Value:
         // in the tree.
         //
 
-        if (Restart) {
+        if (Restart)
+        {
 
             //
             // We just loop until we find the leftmost child of the root.
             //
 
-            for (
-                NodeToReturn = Table->TableRoot;
-                RtlLeftChild(NodeToReturn);
-                NodeToReturn = RtlLeftChild(NodeToReturn)
-                ) {
+            for (NodeToReturn = Table->TableRoot; RtlLeftChild(NodeToReturn); NodeToReturn = RtlLeftChild(NodeToReturn))
+            {
                 ;
             }
 
             Table->TableRoot = RtlSplay(NodeToReturn);
-
-        } else {
+        }
+        else
+        {
 
             //
             // The assumption here is that the root of the
@@ -825,12 +762,11 @@ Return Value:
 
             NodeToReturn = RtlRealSuccessor(Table->TableRoot);
 
-            if (NodeToReturn) {
+            if (NodeToReturn)
+            {
 
                 Table->TableRoot = RtlSplay(NodeToReturn);
-
             }
-
         }
 
         //
@@ -838,19 +774,13 @@ Return Value:
         // then the pointer to return is right after the list links.
         //
 
-        return ((NodeToReturn)?
-                   ((PVOID)&((PTABLE_ENTRY_HEADER)NodeToReturn)->UserData)
-                  :((PVOID)(NULL)));
-
+        return ((NodeToReturn) ? ((PVOID) & ((PTABLE_ENTRY_HEADER)NodeToReturn)->UserData) : ((PVOID)(NULL)));
     }
-
 }
 
-
+
 BOOLEAN
-RtlIsGenericTableEmpty (
-    IN PRTL_GENERIC_TABLE Table
-    )
+RtlIsGenericTableEmpty(IN PRTL_GENERIC_TABLE Table)
 
 /*++
 
@@ -876,15 +806,11 @@ Return Value:
     // Table is empty if the root pointer is null.
     //
 
-    return ((Table->TableRoot)?(FALSE):(TRUE));
-
+    return ((Table->TableRoot) ? (FALSE) : (TRUE));
 }
-
+
 PVOID
-RtlGetElementGenericTable (
-    IN PRTL_GENERIC_TABLE Table,
-    IN ULONG I
-    )
+RtlGetElementGenericTable(IN PRTL_GENERIC_TABLE Table, IN ULONG I)
 
 /*++
 
@@ -935,7 +861,7 @@ Return Value:
     //
     // Will hold distances to travel to the desired node;
     //
-    ULONG ForwardDistance,BackwardDistance;
+    ULONG ForwardDistance, BackwardDistance;
 
     //
     // Will point to the current element in the linked list.
@@ -947,22 +873,25 @@ Return Value:
     // If it's out of bounds get out quick.
     //
 
-    if ((I == MAXULONG) || (NormalizedI > NumberInTable)) return NULL;
+    if ((I == MAXULONG) || (NormalizedI > NumberInTable))
+        return NULL;
 
     //
     // If we're already at the node then return it.
     //
 
-    if (NormalizedI == CurrentLocation) {
+    if (NormalizedI == CurrentLocation)
+    {
 
-        return &((PTABLE_ENTRY_HEADER) CONTAINING_RECORD(CurrentNode, TABLE_ENTRY_HEADER, ListEntry))->UserData;
+        return &((PTABLE_ENTRY_HEADER)CONTAINING_RECORD(CurrentNode, TABLE_ENTRY_HEADER, ListEntry))->UserData;
     }
 
     //
     // Calculate the forward and backward distance to the node.
     //
 
-    if (CurrentLocation > NormalizedI) {
+    if (CurrentLocation > NormalizedI)
+    {
 
         //
         // When CurrentLocation is greater than where we want to go,
@@ -978,42 +907,37 @@ Return Value:
         // currently are.
         //
 
-        if (NormalizedI > (CurrentLocation/2)) {
+        if (NormalizedI > (CurrentLocation / 2))
+        {
 
             //
             // Where we want to go is more than half way from the listhead
             // We can traval backwards from our current location.
             //
 
-            for (
-                BackwardDistance = CurrentLocation - NormalizedI;
-                BackwardDistance;
-                BackwardDistance--
-                ) {
+            for (BackwardDistance = CurrentLocation - NormalizedI; BackwardDistance; BackwardDistance--)
+            {
 
                 CurrentNode = CurrentNode->Blink;
-
             }
-        } else {
+        }
+        else
+        {
 
             //
             // Where we want to go is less than halfway between the start
             // and where we currently are.  Start from the listhead.
             //
 
-            for (
-                CurrentNode = &Table->InsertOrderList;
-                NormalizedI;
-                NormalizedI--
-                ) {
+            for (CurrentNode = &Table->InsertOrderList; NormalizedI; NormalizedI--)
+            {
 
                 CurrentNode = CurrentNode->Flink;
-
             }
-
         }
-
-    } else {
+    }
+    else
+    {
 
 
         //
@@ -1033,33 +957,24 @@ Return Value:
 
         BackwardDistance = (NumberInTable - NormalizedI) + 1;
 
-        if (ForwardDistance <= BackwardDistance) {
+        if (ForwardDistance <= BackwardDistance)
+        {
 
-            for (
-                ;
-                ForwardDistance;
-                ForwardDistance--
-                ) {
+            for (; ForwardDistance; ForwardDistance--)
+            {
 
                 CurrentNode = CurrentNode->Flink;
-
             }
+        }
+        else
+        {
 
-
-        } else {
-
-            for (
-                CurrentNode = &Table->InsertOrderList;
-                BackwardDistance;
-                BackwardDistance--
-                ) {
+            for (CurrentNode = &Table->InsertOrderList; BackwardDistance; BackwardDistance--)
+            {
 
                 CurrentNode = CurrentNode->Blink;
-
             }
-
         }
-
     }
 
     //
@@ -1068,17 +983,14 @@ Return Value:
     //
 
     Table->OrderedPointer = CurrentNode;
-    Table->WhichOrderedElement = I+1;
+    Table->WhichOrderedElement = I + 1;
 
-    return &((PTABLE_ENTRY_HEADER) CONTAINING_RECORD(CurrentNode, TABLE_ENTRY_HEADER, ListEntry))->UserData;
-
+    return &((PTABLE_ENTRY_HEADER)CONTAINING_RECORD(CurrentNode, TABLE_ENTRY_HEADER, ListEntry))->UserData;
 }
 
-
+
 ULONG
-RtlNumberGenericTableElements(
-    IN PRTL_GENERIC_TABLE Table
-    )
+RtlNumberGenericTableElements(IN PRTL_GENERIC_TABLE Table)
 
 /*++
 
@@ -1102,15 +1014,11 @@ Return Value:
 {
 
     return Table->NumberGenericTableElements;
-
 }
 
-
+
 PVOID
-RtlEnumerateGenericTableWithoutSplaying (
-    IN PRTL_GENERIC_TABLE Table,
-    IN PVOID *RestartKey
-    )
+RtlEnumerateGenericTableWithoutSplaying(IN PRTL_GENERIC_TABLE Table, IN PVOID *RestartKey)
 
 /*++
 
@@ -1149,15 +1057,17 @@ Return Value:
 
 {
 
-    if (RtlIsGenericTableEmpty(Table)) {
+    if (RtlIsGenericTableEmpty(Table))
+    {
 
         //
         // Nothing to do if the table is empty.
         //
 
         return NULL;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Will be used as the "iteration" through the tree.
@@ -1169,23 +1079,22 @@ Return Value:
         // in the tree.
         //
 
-        if (*RestartKey == NULL) {
+        if (*RestartKey == NULL)
+        {
 
             //
             // We just loop until we find the leftmost child of the root.
             //
 
-            for (
-                NodeToReturn = Table->TableRoot;
-                RtlLeftChild(NodeToReturn);
-                NodeToReturn = RtlLeftChild(NodeToReturn)
-                ) {
+            for (NodeToReturn = Table->TableRoot; RtlLeftChild(NodeToReturn); NodeToReturn = RtlLeftChild(NodeToReturn))
+            {
                 ;
             }
 
             *RestartKey = NodeToReturn;
-
-        } else {
+        }
+        else
+        {
 
             //
             // The caller has passed in the previous entry found
@@ -1195,12 +1104,11 @@ Return Value:
 
             NodeToReturn = RtlRealSuccessor(*RestartKey);
 
-            if (NodeToReturn) {
+            if (NodeToReturn)
+            {
 
                 *RestartKey = NodeToReturn;
-
             }
-
         }
 
         //
@@ -1208,12 +1116,6 @@ Return Value:
         // then the pointer to return is right after the list links.
         //
 
-        return ((NodeToReturn)?
-                   ((PVOID)&((PTABLE_ENTRY_HEADER)NodeToReturn)->UserData)
-                  :((PVOID)(NULL)));
-
+        return ((NodeToReturn) ? ((PVOID) & ((PTABLE_ENTRY_HEADER)NodeToReturn)->UserData) : ((PVOID)(NULL)));
     }
-
 }
-
-

@@ -24,12 +24,8 @@ Revision History:
 #pragma alloc_text(PAGE, PspGetSetContextSpecialApc)
 #pragma alloc_text(PAGE, PspSetContext)
 
-VOID
-PspGetContext (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
-    IN OUT PCONTEXT ContextRecord
-    )
+VOID PspGetContext(IN PKTRAP_FRAME TrapFrame, IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+                   IN OUT PCONTEXT ContextRecord)
 
 /*++
 
@@ -64,7 +60,8 @@ Return Value:
     //
 
     ContextFlags = ContextRecord->ContextFlags;
-    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Set registers RIP, CS, RSP, SS, and EFlags.
@@ -81,7 +78,8 @@ Return Value:
     // Get segment register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_SEGMENTS) == CONTEXT_SEGMENTS) {
+    if ((ContextFlags & CONTEXT_SEGMENTS) == CONTEXT_SEGMENTS)
+    {
 
         //
         // Set segment registers GS, FS, ES, DS.
@@ -97,7 +95,8 @@ Return Value:
     //  Get integer register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set integer registers RAX, RCX, RDX, RSI, RDI, R8, R9, R10, RBX,
@@ -127,15 +126,14 @@ Return Value:
     //
 
 
-    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT)
+    {
 
         //
         // Set XMM registers Xmm0-Xmm15 and the XMM CSR contents.
         //
 
-        RtlCopyMemory(&ContextRecord->Xmm0,
-                      &TrapFrame->Xmm0,
-                      sizeof(M128) * 6);
+        RtlCopyMemory(&ContextRecord->Xmm0, &TrapFrame->Xmm0, sizeof(M128) * 6);
 
         ContextRecord->Xmm6 = *ContextPointers->Xmm6;
         ContextRecord->Xmm7 = *ContextPointers->Xmm7;
@@ -155,11 +153,10 @@ Return Value:
         // point state.
         //
 
-        if ((TrapFrame->SegCs & MODE_MASK) == UserMode) {
+        if ((TrapFrame->SegCs & MODE_MASK) == UserMode)
+        {
             NpxFrame = (PLEGACY_SAVE_AREA)(TrapFrame + 1);
-            RtlCopyMemory(&ContextRecord->FltSave,
-                          &NpxFrame,
-                          sizeof(LEGACY_SAVE_AREA));
+            RtlCopyMemory(&ContextRecord->FltSave, &NpxFrame, sizeof(LEGACY_SAVE_AREA));
         }
     }
 
@@ -168,7 +165,8 @@ Return Value:
     // Get debug register contents if requested.
     //
 
-    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS) {
+    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS)
+    {
 
         //
         // Set the debug registers DR0, DR1, DR2, DR3, DR6, and DR7.
@@ -185,13 +183,8 @@ Return Value:
     return;
 }
 
-VOID
-PspSetContext (
-    OUT PKTRAP_FRAME TrapFrame,
-    OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
-    IN PCONTEXT ContextRecord,
-    KPROCESSOR_MODE PreviousMode
-    )
+VOID PspSetContext(OUT PKTRAP_FRAME TrapFrame, OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+                   IN PCONTEXT ContextRecord, KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -229,7 +222,8 @@ Return Value:
     //
 
     ContextFlags = ContextRecord->ContextFlags;
-    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Set registers RIP, RSP, and EFlags.
@@ -246,16 +240,20 @@ Return Value:
     // that these segment registers have the proper values.
     //
 
-    if (PreviousMode == UserMode) {
+    if (PreviousMode == UserMode)
+    {
         TrapFrame->SegSs = KGDT64_R3_DATA | RPL_MASK;
-        if (ContextRecord->SegCs != (KGDT64_R3_CODE | RPL_MASK)) {
+        if (ContextRecord->SegCs != (KGDT64_R3_CODE | RPL_MASK))
+        {
             TrapFrame->SegCs = KGDT64_R3_CMCODE | RPL_MASK;
-
-        } else {
+        }
+        else
+        {
             TrapFrame->SegCs = KGDT64_R3_CODE | RPL_MASK;
         }
-
-    } else {
+    }
+    else
+    {
         TrapFrame->SegCs = KGDT64_R0_CODE;
         TrapFrame->SegSs = KGDT64_NULL;
     }
@@ -264,7 +262,8 @@ Return Value:
     // Set integer registers contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set integer registers RAX, RCX, RDX, RSI, RDI, R8, R9, R10, RBX,
@@ -293,15 +292,14 @@ Return Value:
     // Set floating register contents if requested.
     //
 
-    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT)
+    {
 
         //
         // Set XMM registers Xmm0-Xmm15 and the XMM CSR contents.
         //
 
-        RtlCopyMemory(&TrapFrame->Xmm0,
-                      &ContextRecord->Xmm0,
-                      sizeof(M128) * 6);
+        RtlCopyMemory(&TrapFrame->Xmm0, &ContextRecord->Xmm0, sizeof(M128) * 6);
 
         *ContextPointers->Xmm6 = ContextRecord->Xmm6;
         *ContextPointers->Xmm7 = ContextRecord->Xmm7;
@@ -325,16 +323,15 @@ Return Value:
         // point state.
         //
 
-        if (PreviousMode == UserMode) {
+        if (PreviousMode == UserMode)
+        {
 
             //
             // Set the floating state MM0/ST0 - MM7/ST7 and the control state.
             //
 
             NpxFrame = (PLEGACY_SAVE_AREA)(TrapFrame + 1);
-            RtlCopyMemory(&NpxFrame,
-                          &ContextRecord->FltSave,
-                          sizeof(LEGACY_SAVE_AREA));
+            RtlCopyMemory(&NpxFrame, &ContextRecord->FltSave, sizeof(LEGACY_SAVE_AREA));
         }
     }
 
@@ -342,7 +339,8 @@ Return Value:
     // Set debug register state if specified.
     //
 
-    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS) {
+    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS)
+    {
 
         //
         // Set the debug registers DR0, DR1, DR2, DR3, DR6, and DR7.
@@ -359,14 +357,8 @@ Return Value:
     return;
 }
 
-VOID
-PspGetSetContextSpecialApc (
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+VOID PspGetSetContextSpecialApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                                IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -426,12 +418,14 @@ Return Value:
 
     TrapFrame = 0;
 
-    if (ContextBlock->Mode == KernelMode) {
-	TrapFrame = (ULONG64)Thread->Tcb.TrapFrame;
+    if (ContextBlock->Mode == KernelMode)
+    {
+        TrapFrame = (ULONG64)Thread->Tcb.TrapFrame;
     }
 
-    if (TrapFrame == 0) {
-	TrapFrame = (ULONG64)Thread->Tcb.InitialStack - KTRAP_FRAME_LENGTH;
+    if (TrapFrame == 0)
+    {
+        TrapFrame = (ULONG64)Thread->Tcb.InitialStack - KTRAP_FRAME_LENGTH;
     }
 
     //
@@ -478,7 +472,8 @@ Return Value:
     // unwind call frames until the system entry trap frame is encountered.
     //
 
-    do {
+    do
+    {
 
         //
         // Lookup the function table entry using the point at which control
@@ -496,17 +491,13 @@ Return Value:
         //  where control left the caller.
         //
 
-        if (FunctionEntry != NULL) {
-            RtlVirtualUnwind(UNW_FLAG_EHANDLER,
-                             ImageBase,
-                             ControlPc,
-                             FunctionEntry,
-                             &ContextRecord,
-                             &HandlerData,
-                             &EstablisherFrame,
-                             &ContextPointers);
-
-        } else {
+        if (FunctionEntry != NULL)
+        {
+            RtlVirtualUnwind(UNW_FLAG_EHANDLER, ImageBase, ControlPc, FunctionEntry, &ContextRecord, &HandlerData,
+                             &EstablisherFrame, &ContextPointers);
+        }
+        else
+        {
             ContextRecord.Rip = *(PULONG64)(ContextRecord.Rsp);
             ContextRecord.Rsp += 8;
         }
@@ -518,18 +509,17 @@ Return Value:
     // thread. Otherwise, get the context of the current thread.
     //
 
-    if (*SystemArgument1 != NULL) {
+    if (*SystemArgument1 != NULL)
+    {
 
         //
         // Set Context
         //
 
-        PspSetContext((PKTRAP_FRAME)TrapFrame,
-                      NULL,
-                      &ContextBlock->Context,
-                      ContextBlock->Mode);
-
-    } else {
+        PspSetContext((PKTRAP_FRAME)TrapFrame, NULL, &ContextBlock->Context, ContextBlock->Mode);
+    }
+    else
+    {
 
         //
         // Get Context

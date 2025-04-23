@@ -27,7 +27,7 @@ Revision History:
 #include <ntlsa.h>
 #include "sep.h"
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //  Reference Monitor Private defines                                        //
@@ -44,9 +44,6 @@ Revision History:
 #define SEP_LOGON_TRACK_ARRAY_SIZE (0x00000010L)
 
 
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //  Reference Monitor Private Macros                                         //
@@ -57,32 +54,37 @@ Revision History:
 //  acquire exclusive access to a token
 //
 
-#define SepRmAcquireDbReadLock()  KeEnterCriticalRegion();         \
-                                  ExAcquireResourceSharedLite(&SepRmDbLock, TRUE)
+#define SepRmAcquireDbReadLock() \
+    KeEnterCriticalRegion();     \
+    ExAcquireResourceSharedLite(&SepRmDbLock, TRUE)
 
-#define SepRmAcquireDbWriteLock() KeEnterCriticalRegion();         \
-                                  ExAcquireResourceExclusiveLite(&SepRmDbLock, TRUE)
+#define SepRmAcquireDbWriteLock() \
+    KeEnterCriticalRegion();      \
+    ExAcquireResourceExclusiveLite(&SepRmDbLock, TRUE)
 
-#define SepRmReleaseDbReadLock()  ExReleaseResourceLite(&SepRmDbLock); \
-                                  KeLeaveCriticalRegion()
+#define SepRmReleaseDbReadLock()         \
+    ExReleaseResourceLite(&SepRmDbLock); \
+    KeLeaveCriticalRegion()
 
-#define SepRmReleaseDbWriteLock() ExReleaseResourceLite(&SepRmDbLock); \
-                                  KeLeaveCriticalRegion()
+#define SepRmReleaseDbWriteLock()        \
+    ExReleaseResourceLite(&SepRmDbLock); \
+    KeLeaveCriticalRegion()
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //  Reference Monitor Private Data Types                                     //
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-#define SEP_RM_LSA_SHARED_MEMORY_SIZE ((ULONG) PAGE_SIZE)
+#define SEP_RM_LSA_SHARED_MEMORY_SIZE ((ULONG)PAGE_SIZE)
 
 //
 // Reference Monitor Private Global State Data Structure
 //
 
-typedef struct _SEP_RM_STATE {
+typedef struct _SEP_RM_STATE
+{
 
     HANDLE LsaInitEventHandle;
     HANDLE LsaCommandPortHandle;
@@ -96,9 +98,9 @@ typedef struct _SEP_RM_STATE {
     PVOID LsaViewPortMemory;
     PVOID RmViewPortMemory;
     LONG LsaCommandPortMemoryDelta;
-//    BOOLEAN LsaCommandPortResourceInitialized;
+    //    BOOLEAN LsaCommandPortResourceInitialized;
     BOOLEAN LsaCommandPortActive;
-//    ERESOURCE LsaCommandPortResource;
+    //    ERESOURCE LsaCommandPortResource;
 
 } SEP_RM_STATE, *PSEP_RM_STATE;
 
@@ -106,7 +108,8 @@ typedef struct _SEP_RM_STATE {
 // Reference Monitor Command Port Connection Info
 //
 
-typedef struct _SEP_RM_CONNECT_INFO {
+typedef struct _SEP_RM_CONNECT_INFO
+{
     ULONG ConnectInfo;
 } SEP_RM_CONNECT_INFO;
 
@@ -119,9 +122,10 @@ typedef struct SEP_RM_CONNECT_INFO *PSEP_RM_CONNECT_INFO;
 
 #define SEP_RM_COMMAND_MAX 4
 
-typedef VOID (*SEP_RM_COMMAND_WORKER)( PRM_COMMAND_MESSAGE, PRM_REPLY_MESSAGE );
+typedef VOID (*SEP_RM_COMMAND_WORKER)(PRM_COMMAND_MESSAGE, PRM_REPLY_MESSAGE);
 
-typedef struct _SEP_LOGON_SESSION_TOKEN {
+typedef struct _SEP_LOGON_SESSION_TOKEN
+{
     LIST_ENTRY ListEntry;
     PTOKEN Token;
 } SEP_LOGON_SESSION_TOKEN, *PSEP_LOGON_SESSION_TOKEN;
@@ -131,7 +135,8 @@ typedef struct _SEP_LOGON_SESSION_TOKEN {
 // the following type...
 //
 
-typedef struct _SEP_LOGON_SESSION_REFERENCES {
+typedef struct _SEP_LOGON_SESSION_REFERENCES
+{
     struct _SEP_LOGON_SESSION_REFERENCES *Next;
     LUID LogonId;
     ULONG ReferenceCount;
@@ -142,7 +147,7 @@ typedef struct _SEP_LOGON_SESSION_REFERENCES {
 #endif
 } SEP_LOGON_SESSION_REFERENCES, *PSEP_LOGON_SESSION_REFERENCES;
 
-#define SEP_TERMINATION_NOTIFY  0x1
+#define SEP_TERMINATION_NOTIFY 0x1
 
 //
 // File systems interested in being notified when a logon session is being
@@ -153,15 +158,15 @@ typedef struct _SEP_LOGON_SESSION_REFERENCES {
 // This list is protected by the RM database lock.
 //
 
-typedef struct _SEP_LOGON_SESSION_TERMINATED_NOTIFICATION {
+typedef struct _SEP_LOGON_SESSION_TERMINATED_NOTIFICATION
+{
     struct _SEP_LOGON_SESSION_TERMINATED_NOTIFICATION *Next;
     PSE_LOGON_SESSION_TERMINATED_ROUTINE CallbackRoutine;
 } SEP_LOGON_SESSION_TERMINATED_NOTIFICATION, *PSEP_LOGON_SESSION_TERMINATED_NOTIFICATION;
 
-extern SEP_LOGON_SESSION_TERMINATED_NOTIFICATION
-SeFileSystemNotifyRoutinesHead;
+extern SEP_LOGON_SESSION_TERMINATED_NOTIFICATION SeFileSystemNotifyRoutinesHead;
 
-
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 //  Reference Monitor Private Function Prototypes                            //
@@ -169,61 +174,30 @@ SeFileSystemNotifyRoutinesHead;
 ///////////////////////////////////////////////////////////////////////////////
 
 BOOLEAN
-SepRmDbInitialization(
-    VOID
-    );
+SepRmDbInitialization(VOID);
 
-VOID
-SepRmCommandServerThread(
-    IN PVOID StartContext
-    );
+VOID SepRmCommandServerThread(IN PVOID StartContext);
 
-BOOLEAN SepRmCommandServerThreadInit(
-    );
+BOOLEAN SepRmCommandServerThreadInit();
 
-VOID
-SepRmComponentTestCommandWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    );
+VOID SepRmComponentTestCommandWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage);
 
-VOID
-SepRmSetAuditEventWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    );
+VOID SepRmSetAuditEventWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage);
 
-VOID
-SepRmSendCommandToLsaWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    );
+VOID SepRmSendCommandToLsaWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage);
 
-VOID
-SepRmCreateLogonSessionWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    );
+VOID SepRmCreateLogonSessionWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage);
 
-VOID
-SepRmDeleteLogonSessionWrkr(
-    IN PRM_COMMAND_MESSAGE CommandMessage,
-    OUT PRM_REPLY_MESSAGE ReplyMessage
-    ) ;
+VOID SepRmDeleteLogonSessionWrkr(IN PRM_COMMAND_MESSAGE CommandMessage, OUT PRM_REPLY_MESSAGE ReplyMessage);
 
 
 NTSTATUS
-SepCreateLogonSessionTrack(
-    IN PLUID LogonId
-    );
+SepCreateLogonSessionTrack(IN PLUID LogonId);
 
 NTSTATUS
-SepDeleteLogonSessionTrack(
-    IN PLUID LogonId
-    );
+SepDeleteLogonSessionTrack(IN PLUID LogonId);
 
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 // Reference Monitor Private Variables Declarations                          //

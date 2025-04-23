@@ -34,7 +34,8 @@ Revision History:
 //
 // Define the keyed event object type
 //
-typedef struct _KEYED_EVENT_OBJECT {
+typedef struct _KEYED_EVENT_OBJECT
+{
     EX_PUSH_LOCK Lock;
     LIST_ENTRY WaitQueue;
 } KEYED_EVENT_OBJECT, *PKEYED_EVENT_OBJECT;
@@ -47,24 +48,25 @@ POBJECT_TYPE ExpKeyedEventObjectType;
 //
 #define KEYVALUE_RELEASE 1
 
-#define LOCK_KEYED_EVENT_EXCLUSIVE(xxxKeyedEventObject,xxxCurrentThread) { \
-    KeEnterCriticalRegionThread (&(xxxCurrentThread)->Tcb);                \
-    ExAcquirePushLockExclusive (&(xxxKeyedEventObject)->Lock);             \
-}
+#define LOCK_KEYED_EVENT_EXCLUSIVE(xxxKeyedEventObject, xxxCurrentThread) \
+    {                                                                     \
+        KeEnterCriticalRegionThread(&(xxxCurrentThread)->Tcb);            \
+        ExAcquirePushLockExclusive(&(xxxKeyedEventObject)->Lock);         \
+    }
 
-#define UNLOCK_KEYED_EVENT_EXCLUSIVE(xxxKeyedEventObject,xxxCurrentThread) { \
-    ExReleasePushLockExclusive (&(xxxKeyedEventObject)->Lock);               \
-    KeLeaveCriticalRegionThread (&(xxxCurrentThread)->Tcb);                  \
-}
+#define UNLOCK_KEYED_EVENT_EXCLUSIVE(xxxKeyedEventObject, xxxCurrentThread) \
+    {                                                                       \
+        ExReleasePushLockExclusive(&(xxxKeyedEventObject)->Lock);           \
+        KeLeaveCriticalRegionThread(&(xxxCurrentThread)->Tcb);              \
+    }
 
-#define UNLOCK_KEYED_EVENT_EXCLUSIVE_UNSAFE(xxxKeyedEventObject) { \
-    ExReleasePushLockExclusive (&(xxxKeyedEventObject)->Lock);     \
-}
+#define UNLOCK_KEYED_EVENT_EXCLUSIVE_UNSAFE(xxxKeyedEventObject)  \
+    {                                                             \
+        ExReleasePushLockExclusive(&(xxxKeyedEventObject)->Lock); \
+    }
 
 NTSTATUS
-ExpKeyedEventInitialization (
-    VOID
-    )
+ExpKeyedEventInitialization(VOID)
 
 /*++
 
@@ -85,33 +87,32 @@ Return Value:
 {
     NTSTATUS Status;
     UNICODE_STRING Name;
-    OBJECT_TYPE_INITIALIZER oti = {0};
+    OBJECT_TYPE_INITIALIZER oti = { 0 };
     OBJECT_ATTRIBUTES oa;
     SECURITY_DESCRIPTOR SecurityDescriptor;
     PACL Dacl;
     ULONG DaclLength;
     HANDLE KeyedEventHandle;
-    GENERIC_MAPPING GenericMapping = {STANDARD_RIGHTS_READ | KEYEDEVENT_WAIT,
-                                      STANDARD_RIGHTS_WRITE | KEYEDEVENT_WAKE,
-                                      STANDARD_RIGHTS_EXECUTE,
-                                      KEYEDEVENT_ALL_ACCESS};
+    GENERIC_MAPPING GenericMapping = { STANDARD_RIGHTS_READ | KEYEDEVENT_WAIT, STANDARD_RIGHTS_WRITE | KEYEDEVENT_WAKE,
+                                       STANDARD_RIGHTS_EXECUTE, KEYEDEVENT_ALL_ACCESS };
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    RtlInitUnicodeString (&Name, L"KeyedEvent");
+    RtlInitUnicodeString(&Name, L"KeyedEvent");
 
-    oti.Length                    = sizeof (oti);
-    oti.InvalidAttributes         = 0;
-    oti.PoolType                  = PagedPool;
-    oti.ValidAccessMask           = KEYEDEVENT_ALL_ACCESS;
-    oti.GenericMapping            = GenericMapping;
-    oti.DefaultPagedPoolCharge    = 0;
+    oti.Length = sizeof(oti);
+    oti.InvalidAttributes = 0;
+    oti.PoolType = PagedPool;
+    oti.ValidAccessMask = KEYEDEVENT_ALL_ACCESS;
+    oti.GenericMapping = GenericMapping;
+    oti.DefaultPagedPoolCharge = 0;
     oti.DefaultNonPagedPoolCharge = 0;
-    oti.UseDefaultObject          = TRUE;
+    oti.UseDefaultObject = TRUE;
 
-    Status = ObCreateObjectType (&Name, &oti, NULL, &ExpKeyedEventObjectType);
-    if (!NT_SUCCESS (Status)) {
+    Status = ObCreateObjectType(&Name, &oti, NULL, &ExpKeyedEventObjectType);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -119,92 +120,78 @@ Return Value:
     // Create a global object for processes that are out of memory
     //
 
-    Status = RtlCreateSecurityDescriptor (&SecurityDescriptor,
-                                          SECURITY_DESCRIPTOR_REVISION);
+    Status = RtlCreateSecurityDescriptor(&SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    DaclLength = sizeof (ACL) + sizeof (ACCESS_ALLOWED_ACE) * 3 +
-                 RtlLengthSid (SeLocalSystemSid) +
-                 RtlLengthSid (SeAliasAdminsSid) +
-                 RtlLengthSid (SeWorldSid);
+    DaclLength = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) * 3 + RtlLengthSid(SeLocalSystemSid) +
+                 RtlLengthSid(SeAliasAdminsSid) + RtlLengthSid(SeWorldSid);
 
-    Dacl = ExAllocatePoolWithTag (PagedPool, DaclLength, 'lcaD');
+    Dacl = ExAllocatePoolWithTag(PagedPool, DaclLength, 'lcaD');
 
-    if (Dacl == NULL) {
+    if (Dacl == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Status = RtlCreateAcl (Dacl, DaclLength, ACL_REVISION);
+    Status = RtlCreateAcl(Dacl, DaclLength, ACL_REVISION);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
 
-    Status = RtlAddAccessAllowedAce (Dacl,
-                                     ACL_REVISION,
-                                     KEYEDEVENT_ALL_ACCESS,
-                                     SeAliasAdminsSid);
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, KEYEDEVENT_ALL_ACCESS, SeAliasAdminsSid);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
 
-    Status = RtlAddAccessAllowedAce (Dacl,
-                                     ACL_REVISION,
-                                     KEYEDEVENT_ALL_ACCESS,
-                                     SeLocalSystemSid);
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, KEYEDEVENT_ALL_ACCESS, SeLocalSystemSid);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
 
-    Status = RtlAddAccessAllowedAce (Dacl,
-                                     ACL_REVISION,
-                                     KEYEDEVENT_WAIT|KEYEDEVENT_WAKE|READ_CONTROL,
-                                     SeWorldSid);
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, KEYEDEVENT_WAIT | KEYEDEVENT_WAKE | READ_CONTROL, SeWorldSid);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
-        return Status;
-    }
-  
-    Status = RtlSetDaclSecurityDescriptor (&SecurityDescriptor,
-                                           TRUE,
-                                           Dacl,
-                                           FALSE);
-
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
 
-    RtlInitUnicodeString (&Name, L"\\KernelObjects\\CritSecOutOfMemoryEvent");
-    InitializeObjectAttributes (&oa, &Name, OBJ_PERMANENT, NULL, &SecurityDescriptor);
-    Status = ZwCreateKeyedEvent (&KeyedEventHandle,
-                                 KEYEDEVENT_ALL_ACCESS,
-                                 &oa,
-                                 0);
-    ExFreePool (Dacl);
-    if (NT_SUCCESS (Status)) {
-        Status = ZwClose (KeyedEventHandle);
+    Status = RtlSetDaclSecurityDescriptor(&SecurityDescriptor, TRUE, Dacl, FALSE);
+
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
+        return Status;
+    }
+
+    RtlInitUnicodeString(&Name, L"\\KernelObjects\\CritSecOutOfMemoryEvent");
+    InitializeObjectAttributes(&oa, &Name, OBJ_PERMANENT, NULL, &SecurityDescriptor);
+    Status = ZwCreateKeyedEvent(&KeyedEventHandle, KEYEDEVENT_ALL_ACCESS, &oa, 0);
+    ExFreePool(Dacl);
+    if (NT_SUCCESS(Status))
+    {
+        Status = ZwClose(KeyedEventHandle);
     }
 
     return Status;
 }
 
 NTSTATUS
-NtCreateKeyedEvent (
-    OUT PHANDLE KeyedEventHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN ULONG Flags
-    )
+NtCreateKeyedEvent(OUT PHANDLE KeyedEventHandle, IN ACCESS_MASK DesiredAccess,
+                   IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL, IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -238,19 +225,21 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    try {
-        if (PreviousMode != KernelMode) {
-            ProbeForReadSmallStructure (KeyedEventHandle,
-                                        sizeof (*KeyedEventHandle),
-                                        sizeof (*KeyedEventHandle));
+    try
+    {
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForReadSmallStructure(KeyedEventHandle, sizeof(*KeyedEventHandle), sizeof(*KeyedEventHandle));
         }
         *KeyedEventHandle = NULL;
-
-    } except (ExSystemExceptionFilter ()) {
-        return GetExceptionCode ();
+    }
+    except(ExSystemExceptionFilter())
+    {
+        return GetExceptionCode();
     }
 
-    if (Flags != 0) {
+    if (Flags != 0)
+    {
         return STATUS_INVALID_PARAMETER_4;
     }
 
@@ -258,61 +247,50 @@ Return Value:
     // Create a new keyed event object and initialize it.
     //
 
-    Status = ObCreateObject (PreviousMode,
-                             ExpKeyedEventObjectType,
-                             ObjectAttributes,
-                             PreviousMode,
-                             NULL,
-                             sizeof (KEYED_EVENT_OBJECT),
-                             0,
-                             0,
-                             &KeyedEventObject);
+    Status = ObCreateObject(PreviousMode, ExpKeyedEventObjectType, ObjectAttributes, PreviousMode, NULL,
+                            sizeof(KEYED_EVENT_OBJECT), 0, 0, &KeyedEventObject);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
     //
     // Initialize the lock and wait queue
     //
-    ExInitializePushLock (&KeyedEventObject->Lock);
-    InitializeListHead (&KeyedEventObject->WaitQueue);
+    ExInitializePushLock(&KeyedEventObject->Lock);
+    InitializeListHead(&KeyedEventObject->WaitQueue);
 
     //
     // Insert the object into the handle table
     //
-    Status = ObInsertObject (KeyedEventObject,
-                             NULL,
-                             DesiredAccess,
-                             0,
-                             NULL,
-                             &Handle);
+    Status = ObInsertObject(KeyedEventObject, NULL, DesiredAccess, 0, NULL, &Handle);
 
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    try {
+    try
+    {
         *KeyedEventHandle = Handle;
-    } except (ExSystemExceptionFilter ()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
         //
         // The caller changed the page protection or deleted the momory for the handle.
         // No point closing the handle as process rundown will do that and we don't
         // know its still the same handle
         //
-        Status = GetExceptionCode ();
+        Status = GetExceptionCode();
     }
 
     return Status;
 }
 
 NTSTATUS
-NtOpenKeyedEvent (
-    OUT PHANDLE KeyedEventHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenKeyedEvent(OUT PHANDLE KeyedEventHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes)
 /*++
 
 Routine Description:
@@ -345,34 +323,35 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    try {
-        if (PreviousMode != KernelMode) {
-            ProbeForReadSmallStructure (KeyedEventHandle,
-                                        sizeof (*KeyedEventHandle),
-                                        sizeof (*KeyedEventHandle));
+    try
+    {
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForReadSmallStructure(KeyedEventHandle, sizeof(*KeyedEventHandle), sizeof(*KeyedEventHandle));
         }
         *KeyedEventHandle = NULL;
-    } except (ExSystemExceptionFilter ()) {
-        return GetExceptionCode ();
+    }
+    except(ExSystemExceptionFilter())
+    {
+        return GetExceptionCode();
     }
 
     //
     // Open handle to the keyed event object with the specified desired access.
     //
 
-    Status = ObOpenObjectByName (ObjectAttributes,
-                                 ExpKeyedEventObjectType,
-                                 PreviousMode,
-                                 NULL,
-                                 DesiredAccess,
-                                 NULL,
-                                 &Handle);
+    Status =
+        ObOpenObjectByName(ObjectAttributes, ExpKeyedEventObjectType, PreviousMode, NULL, DesiredAccess, NULL, &Handle);
 
-    if (NT_SUCCESS (Status)) {
-        try {
+    if (NT_SUCCESS(Status))
+    {
+        try
+        {
             *KeyedEventHandle = Handle;
-        } except (ExSystemExceptionFilter ()) {
-            Status = GetExceptionCode ();
+        }
+        except(ExSystemExceptionFilter())
+        {
+            Status = GetExceptionCode();
         }
     }
 
@@ -380,12 +359,8 @@ Return Value:
 }
 
 NTSTATUS
-NtReleaseKeyedEvent (
-    IN HANDLE KeyedEventHandle,
-    IN PVOID KeyValue,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+NtReleaseKeyedEvent(IN HANDLE KeyedEventHandle, IN PVOID KeyValue, IN BOOLEAN Alertable,
+                    IN PLARGE_INTEGER Timeout OPTIONAL)
 /*++
 
 Routine Description:
@@ -417,45 +392,50 @@ Return Value:
     LARGE_INTEGER TimeoutValue;
     PVOID OldKeyValue = NULL;
 
-    if ((((ULONG_PTR)KeyValue) & KEYVALUE_RELEASE) != 0) {
+    if ((((ULONG_PTR)KeyValue) & KEYVALUE_RELEASE) != 0)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-    CurrentThread = PsGetCurrentThread ();
-    PreviousMode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
+    CurrentThread = PsGetCurrentThread();
+    PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (Timeout != NULL) {
-        try {
-            if (PreviousMode != KernelMode) {
-                ProbeForRead (Timeout, sizeof (*Timeout), sizeof (UCHAR));
+    if (Timeout != NULL)
+    {
+        try
+        {
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForRead(Timeout, sizeof(*Timeout), sizeof(UCHAR));
             }
             TimeoutValue = *Timeout;
             Timeout = &TimeoutValue;
-        } except(ExSystemExceptionFilter ()) {
-            return GetExceptionCode ();
+        }
+        except(ExSystemExceptionFilter())
+        {
+            return GetExceptionCode();
         }
     }
 
-    Status = ObReferenceObjectByHandle (KeyedEventHandle,
-                                        KEYEDEVENT_WAKE,
-                                        ExpKeyedEventObjectType,
-                                        PreviousMode,
-                                        &KeyedEventObject,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(KeyedEventHandle, KEYEDEVENT_WAKE, ExpKeyedEventObjectType, PreviousMode,
+                                       &KeyedEventObject, NULL);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    CurrentProcess = PsGetCurrentProcessByThread (CurrentThread);
+    CurrentProcess = PsGetCurrentProcessByThread(CurrentThread);
 
     ListHead = &KeyedEventObject->WaitQueue;
 
-    LOCK_KEYED_EVENT_EXCLUSIVE (KeyedEventObject, CurrentThread);
+    LOCK_KEYED_EVENT_EXCLUSIVE(KeyedEventObject, CurrentThread);
 
     ListEntry = ListHead->Flink;
-    while (1) {
-        if (ListEntry == ListHead) {
+    while (1)
+    {
+        if (ListEntry == ListHead)
+        {
             //
             // We could not find a key matching ours in the list.
             // Either somebody called us with wrong values or the waiter
@@ -463,22 +443,24 @@ Return Value:
             // to be released by the waiter.
             //
             OldKeyValue = CurrentThread->KeyedWaitValue;
-            CurrentThread->KeyedWaitValue = (PVOID) (((ULONG_PTR)KeyValue)|KEYVALUE_RELEASE);
+            CurrentThread->KeyedWaitValue = (PVOID)(((ULONG_PTR)KeyValue) | KEYVALUE_RELEASE);
             //
             // Insert the thread at the head of the list. We establish an invariant
             // were release waiters are always at the front of the queue to improve
             // the wait code since it only has to search as far as the first non-release
             // waiter.
             //
-            InsertHeadList (ListHead, &CurrentThread->KeyedWaitChain);
+            InsertHeadList(ListHead, &CurrentThread->KeyedWaitChain);
             TargetThread = NULL;
             break;
-        } else {
-            TargetThread = CONTAINING_RECORD (ListEntry, ETHREAD, KeyedWaitChain);
-            if (TargetThread->KeyedWaitValue == KeyValue &&
-                THREAD_TO_PROCESS (TargetThread) == CurrentProcess) {
-                RemoveEntryList (ListEntry);
-                InitializeListHead (ListEntry);
+        }
+        else
+        {
+            TargetThread = CONTAINING_RECORD(ListEntry, ETHREAD, KeyedWaitChain);
+            if (TargetThread->KeyedWaitValue == KeyValue && THREAD_TO_PROCESS(TargetThread) == CurrentProcess)
+            {
+                RemoveEntryList(ListEntry);
+                InitializeListHead(ListEntry);
                 break;
             }
         }
@@ -489,63 +471,54 @@ Return Value:
     // Release the lock but leave APC's disabled.
     // This prevents us from being suspended and holding up the target.
     //
-    UNLOCK_KEYED_EVENT_EXCLUSIVE_UNSAFE (KeyedEventObject);
+    UNLOCK_KEYED_EVENT_EXCLUSIVE_UNSAFE(KeyedEventObject);
 
-    if (TargetThread != NULL) {
-        KeReleaseSemaphore (&TargetThread->KeyedWaitSemaphore,
-                            SEMAPHORE_INCREMENT,
-                            1,
-                            FALSE);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
-    } else {
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
-        Status = KeWaitForSingleObject (&CurrentThread->KeyedWaitSemaphore,
-                                        Executive,
-                                        PreviousMode,
-                                        Alertable,
-                                        Timeout);
+    if (TargetThread != NULL)
+    {
+        KeReleaseSemaphore(&TargetThread->KeyedWaitSemaphore, SEMAPHORE_INCREMENT, 1, FALSE);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
+    }
+    else
+    {
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
+        Status = KeWaitForSingleObject(&CurrentThread->KeyedWaitSemaphore, Executive, PreviousMode, Alertable, Timeout);
 
         //
         // If we were woken by termination then we must manualy remove
         // ourselves from the queue
         //
-        if (Status != STATUS_SUCCESS) {
+        if (Status != STATUS_SUCCESS)
+        {
             BOOLEAN Wait = TRUE;
 
-            LOCK_KEYED_EVENT_EXCLUSIVE (KeyedEventObject, CurrentThread);
-            if (!IsListEmpty (&CurrentThread->KeyedWaitChain)) {
-                RemoveEntryList (&CurrentThread->KeyedWaitChain);
-                InitializeListHead (&CurrentThread->KeyedWaitChain);
+            LOCK_KEYED_EVENT_EXCLUSIVE(KeyedEventObject, CurrentThread);
+            if (!IsListEmpty(&CurrentThread->KeyedWaitChain))
+            {
+                RemoveEntryList(&CurrentThread->KeyedWaitChain);
+                InitializeListHead(&CurrentThread->KeyedWaitChain);
                 Wait = FALSE;
             }
-            UNLOCK_KEYED_EVENT_EXCLUSIVE (KeyedEventObject, CurrentThread);
+            UNLOCK_KEYED_EVENT_EXCLUSIVE(KeyedEventObject, CurrentThread);
             //
             // If this thread was no longer in the queue then another thread
             // must be about to wake us up. Wait for that wake.
             //
-            if (Wait) {
-                KeWaitForSingleObject (&CurrentThread->KeyedWaitSemaphore,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
+            if (Wait)
+            {
+                KeWaitForSingleObject(&CurrentThread->KeyedWaitSemaphore, Executive, KernelMode, FALSE, NULL);
             }
         }
         CurrentThread->KeyedWaitValue = OldKeyValue;
     }
 
-    ObDereferenceObject (KeyedEventObject);
+    ObDereferenceObject(KeyedEventObject);
 
     return Status;
 }
 
 NTSTATUS
-NtWaitForKeyedEvent (
-    IN HANDLE KeyedEventHandle,
-    IN PVOID KeyValue,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+NtWaitForKeyedEvent(IN HANDLE KeyedEventHandle, IN PVOID KeyValue, IN BOOLEAN Alertable,
+                    IN PLARGE_INTEGER Timeout OPTIONAL)
 /*++
 
 Routine Description:
@@ -575,49 +548,53 @@ Return Value:
     PEPROCESS CurrentProcess;
     PLIST_ENTRY ListHead, ListEntry;
     LARGE_INTEGER TimeoutValue;
-    PVOID OldKeyValue=NULL;
+    PVOID OldKeyValue = NULL;
 
-    if ((((ULONG_PTR)KeyValue) & KEYVALUE_RELEASE) != 0) {
+    if ((((ULONG_PTR)KeyValue) & KEYVALUE_RELEASE) != 0)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-    CurrentThread = PsGetCurrentThread ();
-    PreviousMode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
+    CurrentThread = PsGetCurrentThread();
+    PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (Timeout != NULL) {
-        try {
-            if (PreviousMode != KernelMode) {
-                ProbeForRead (Timeout, sizeof (*Timeout), sizeof (UCHAR));
+    if (Timeout != NULL)
+    {
+        try
+        {
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForRead(Timeout, sizeof(*Timeout), sizeof(UCHAR));
             }
             TimeoutValue = *Timeout;
             Timeout = &TimeoutValue;
-        } except(ExSystemExceptionFilter ()) {
-            return GetExceptionCode ();
+        }
+        except(ExSystemExceptionFilter())
+        {
+            return GetExceptionCode();
         }
     }
 
-    Status = ObReferenceObjectByHandle (KeyedEventHandle,
-                                        KEYEDEVENT_WAIT,
-                                        ExpKeyedEventObjectType,
-                                        PreviousMode,
-                                        &KeyedEventObject,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(KeyedEventHandle, KEYEDEVENT_WAIT, ExpKeyedEventObjectType, PreviousMode,
+                                       &KeyedEventObject, NULL);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    CurrentProcess = PsGetCurrentProcessByThread (CurrentThread);
+    CurrentProcess = PsGetCurrentProcessByThread(CurrentThread);
 
     ListHead = &KeyedEventObject->WaitQueue;
 
-    LOCK_KEYED_EVENT_EXCLUSIVE (KeyedEventObject, CurrentThread);
+    LOCK_KEYED_EVENT_EXCLUSIVE(KeyedEventObject, CurrentThread);
 
     ListEntry = ListHead->Flink;
-    while (1) {
-        TargetThread = CONTAINING_RECORD (ListEntry, ETHREAD, KeyedWaitChain);
-        if (ListEntry == ListHead ||
-            (((ULONG_PTR)(TargetThread->KeyedWaitValue))&KEYVALUE_RELEASE) == 0) {
+    while (1)
+    {
+        TargetThread = CONTAINING_RECORD(ListEntry, ETHREAD, KeyedWaitChain);
+        if (ListEntry == ListHead || (((ULONG_PTR)(TargetThread->KeyedWaitValue)) & KEYVALUE_RELEASE) == 0)
+        {
             //
             // We could not find a key matching ours in the list so we must wait
             //
@@ -630,14 +607,17 @@ Return Value:
             // the wait code since it only has to search as far as the first non-release
             // waiter.
             //
-            InsertTailList (ListHead, &CurrentThread->KeyedWaitChain);
+            InsertTailList(ListHead, &CurrentThread->KeyedWaitChain);
             TargetThread = NULL;
             break;
-        } else {
-            if (TargetThread->KeyedWaitValue == (PVOID)(((ULONG_PTR)KeyValue)|KEYVALUE_RELEASE) &&
-                THREAD_TO_PROCESS (TargetThread) == CurrentProcess) {
-                RemoveEntryList (ListEntry);
-                InitializeListHead (ListEntry);
+        }
+        else
+        {
+            if (TargetThread->KeyedWaitValue == (PVOID)(((ULONG_PTR)KeyValue) | KEYVALUE_RELEASE) &&
+                THREAD_TO_PROCESS(TargetThread) == CurrentProcess)
+            {
+                RemoveEntryList(ListEntry);
+                InitializeListHead(ListEntry);
                 break;
             }
         }
@@ -647,51 +627,46 @@ Return Value:
     // Release the lock but leave APC's disabled.
     // This prevents us from being suspended and holding up the target.
     //
-    UNLOCK_KEYED_EVENT_EXCLUSIVE_UNSAFE (KeyedEventObject);
+    UNLOCK_KEYED_EVENT_EXCLUSIVE_UNSAFE(KeyedEventObject);
 
-    if (TargetThread == NULL) {
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
-        Status = KeWaitForSingleObject (&CurrentThread->KeyedWaitSemaphore,
-                                        Executive,
-                                        PreviousMode,
-                                        Alertable,
-                                        Timeout);
+    if (TargetThread == NULL)
+    {
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
+        Status = KeWaitForSingleObject(&CurrentThread->KeyedWaitSemaphore, Executive, PreviousMode, Alertable, Timeout);
         //
         // If we were woken by termination then we must manualy remove
         // ourselves from the queue
         //
-        if (Status != STATUS_SUCCESS) {
+        if (Status != STATUS_SUCCESS)
+        {
             BOOLEAN Wait = TRUE;
 
-            LOCK_KEYED_EVENT_EXCLUSIVE (KeyedEventObject, CurrentThread);
-            if (!IsListEmpty (&CurrentThread->KeyedWaitChain)) {
-                RemoveEntryList (&CurrentThread->KeyedWaitChain);
-                InitializeListHead (&CurrentThread->KeyedWaitChain);
+            LOCK_KEYED_EVENT_EXCLUSIVE(KeyedEventObject, CurrentThread);
+            if (!IsListEmpty(&CurrentThread->KeyedWaitChain))
+            {
+                RemoveEntryList(&CurrentThread->KeyedWaitChain);
+                InitializeListHead(&CurrentThread->KeyedWaitChain);
                 Wait = FALSE;
             }
-            UNLOCK_KEYED_EVENT_EXCLUSIVE (KeyedEventObject, CurrentThread);
+            UNLOCK_KEYED_EVENT_EXCLUSIVE(KeyedEventObject, CurrentThread);
             //
             // If this thread was no longer in the queue then another thread
             // must be about to wake us up. Wait for that wake.
             //
-            if (Wait) {
-                KeWaitForSingleObject (&CurrentThread->KeyedWaitSemaphore,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
+            if (Wait)
+            {
+                KeWaitForSingleObject(&CurrentThread->KeyedWaitSemaphore, Executive, KernelMode, FALSE, NULL);
             }
         }
         CurrentThread->KeyedWaitValue = OldKeyValue;
-    } else {
-        KeReleaseSemaphore (&TargetThread->KeyedWaitSemaphore,
-                            SEMAPHORE_INCREMENT,
-                            1,
-                            FALSE);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    }
+    else
+    {
+        KeReleaseSemaphore(&TargetThread->KeyedWaitSemaphore, SEMAPHORE_INCREMENT, 1, FALSE);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
     }
 
-    ObDereferenceObject (KeyedEventObject);
+    ObDereferenceObject(KeyedEventObject);
 
     return Status;
 }

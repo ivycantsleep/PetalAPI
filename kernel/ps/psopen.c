@@ -27,12 +27,8 @@ Revision History:
 #endif
 
 NTSTATUS
-NtOpenProcess (
-    OUT PHANDLE ProcessHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN PCLIENT_ID ClientId OPTIONAL
-    )
+NtOpenProcess(OUT PHANDLE ProcessHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+              IN PCLIENT_ID ClientId OPTIONAL)
 
 /*++
 
@@ -75,7 +71,7 @@ Return Value:
     NTSTATUS Status;
     PEPROCESS Process;
     PETHREAD Thread;
-    CLIENT_ID CapturedCid={0};
+    CLIENT_ID CapturedCid = { 0 };
     BOOLEAN ObjectNamePresent;
     BOOLEAN ClientIdPresent;
     ACCESS_STATE AccessState;
@@ -90,45 +86,56 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Since we need to look at the ObjectName field, probe
         // ObjectAttributes and capture object name present indicator.
         //
 
-        try {
+        try
+        {
 
-            ProbeForWriteHandle (ProcessHandle);
+            ProbeForWriteHandle(ProcessHandle);
 
-            ProbeForReadSmallStructure (ObjectAttributes,
-                                        sizeof(OBJECT_ATTRIBUTES),
-                                        sizeof(ULONG));
-            ObjectNamePresent = (BOOLEAN)ARGUMENT_PRESENT (ObjectAttributes->ObjectName);
+            ProbeForReadSmallStructure(ObjectAttributes, sizeof(OBJECT_ATTRIBUTES), sizeof(ULONG));
+            ObjectNamePresent = (BOOLEAN)ARGUMENT_PRESENT(ObjectAttributes->ObjectName);
             Attributes = ObjectAttributes->Attributes;
 
-            if (ARGUMENT_PRESENT (ClientId)) {
-                ProbeForReadSmallStructure (ClientId, sizeof (CLIENT_ID), sizeof (ULONG));
+            if (ARGUMENT_PRESENT(ClientId))
+            {
+                ProbeForReadSmallStructure(ClientId, sizeof(CLIENT_ID), sizeof(ULONG));
                 CapturedCid = *ClientId;
                 ClientIdPresent = TRUE;
-            } else {
+            }
+            else
+            {
                 ClientIdPresent = FALSE;
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
-    } else {
-        ObjectNamePresent = (BOOLEAN)ARGUMENT_PRESENT (ObjectAttributes->ObjectName);
+    }
+    else
+    {
+        ObjectNamePresent = (BOOLEAN)ARGUMENT_PRESENT(ObjectAttributes->ObjectName);
         Attributes = ObjectAttributes->Attributes;
-        if (ARGUMENT_PRESENT (ClientId)) {
+        if (ARGUMENT_PRESENT(ClientId))
+        {
             CapturedCid = *ClientId;
             ClientIdPresent = TRUE;
-        } else {
+        }
+        else
+        {
             ClientIdPresent = FALSE;
         }
     }
 
-    if (ObjectNamePresent && ClientIdPresent) {
+    if (ObjectNamePresent && ClientIdPresent)
+    {
         return STATUS_INVALID_PARAMETER_MIX;
     }
 
@@ -140,14 +147,10 @@ Return Value:
     // we desire.
     //
 
-    Status = SeCreateAccessState(
-                 &AccessState,
-                 &AuxData,
-                 DesiredAccess,
-                 &PsProcessType->TypeInfo.GenericMapping
-                 );
+    Status = SeCreateAccessState(&AccessState, &AuxData, DesiredAccess, &PsProcessType->TypeInfo.GenericMapping);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
     }
@@ -162,72 +165,70 @@ Return Value:
     // Note that this routine performs auditing as appropriate.
     //
 
-    if (SeSinglePrivilegeCheck( SeDebugPrivilege, PreviousMode )) {
+    if (SeSinglePrivilegeCheck(SeDebugPrivilege, PreviousMode))
+    {
 
-        if ( AccessState.RemainingDesiredAccess & MAXIMUM_ALLOWED ) {
+        if (AccessState.RemainingDesiredAccess & MAXIMUM_ALLOWED)
+        {
             AccessState.PreviouslyGrantedAccess |= PROCESS_ALL_ACCESS;
+        }
+        else
+        {
 
-        } else {
-
-            AccessState.PreviouslyGrantedAccess |= ( AccessState.RemainingDesiredAccess );
+            AccessState.PreviouslyGrantedAccess |= (AccessState.RemainingDesiredAccess);
         }
 
         AccessState.RemainingDesiredAccess = 0;
-
     }
 
-    if (ObjectNamePresent) {
+    if (ObjectNamePresent)
+    {
 
         //
         // Open handle to the process object with the specified desired access,
         // set process handle value, and return service completion status.
         //
 
-        Status = ObOpenObjectByName(
-                    ObjectAttributes,
-                    PsProcessType,
-                    PreviousMode,
-                    &AccessState,
-                    0,
-                    NULL,
-                    &Handle
-                    );
+        Status = ObOpenObjectByName(ObjectAttributes, PsProcessType, PreviousMode, &AccessState, 0, NULL, &Handle);
 
-        SeDeleteAccessState( &AccessState );
+        SeDeleteAccessState(&AccessState);
 
-        if ( NT_SUCCESS(Status) ) {
-            try {
+        if (NT_SUCCESS(Status))
+        {
+            try
+            {
                 *ProcessHandle = Handle;
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                return GetExceptionCode ();
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                return GetExceptionCode();
             }
         }
 
         return Status;
     }
 
-    if ( ClientIdPresent ) {
+    if (ClientIdPresent)
+    {
 
         Thread = NULL;
-        if (CapturedCid.UniqueThread) {
-            Status = PsLookupProcessThreadByCid(
-                        &CapturedCid,
-                        &Process,
-                        &Thread
-                        );
+        if (CapturedCid.UniqueThread)
+        {
+            Status = PsLookupProcessThreadByCid(&CapturedCid, &Process, &Thread);
 
-            if (!NT_SUCCESS(Status)) {
-                SeDeleteAccessState( &AccessState );
+            if (!NT_SUCCESS(Status))
+            {
+                SeDeleteAccessState(&AccessState);
                 return Status;
             }
-        } else {
-            Status = PsLookupProcessByProcessId(
-                        CapturedCid.UniqueProcess,
-                        &Process
-                        );
+        }
+        else
+        {
+            Status = PsLookupProcessByProcessId(CapturedCid.UniqueProcess, &Process);
 
-            if ( !NT_SUCCESS(Status) ) {
-                SeDeleteAccessState( &AccessState );
+            if (!NT_SUCCESS(Status))
+            {
+                SeDeleteAccessState(&AccessState);
                 return Status;
             }
         }
@@ -236,47 +237,39 @@ Return Value:
         // OpenObjectByAddress
         //
 
-        Status = ObOpenObjectByPointer(
-                    Process,
-                    Attributes,
-                    &AccessState,
-                    0,
-                    PsProcessType,
-                    PreviousMode,
-                    &Handle
-                    );
+        Status = ObOpenObjectByPointer(Process, Attributes, &AccessState, 0, PsProcessType, PreviousMode, &Handle);
 
-        SeDeleteAccessState( &AccessState );
+        SeDeleteAccessState(&AccessState);
 
-        if (Thread) {
+        if (Thread)
+        {
             ObDereferenceObject(Thread);
         }
 
         ObDereferenceObject(Process);
 
-        if (NT_SUCCESS (Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
-            try {
+            try
+            {
                 *ProcessHandle = Handle;
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                return GetExceptionCode ();
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                return GetExceptionCode();
             }
         }
 
         return Status;
-
     }
 
     return STATUS_INVALID_PARAMETER_MIX;
 }
 
 NTSTATUS
-NtOpenThread (
-    OUT PHANDLE ThreadHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN PCLIENT_ID ClientId OPTIONAL
-    )
+NtOpenThread(OUT PHANDLE ThreadHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+             IN PCLIENT_ID ClientId OPTIONAL)
 
 /*++
 
@@ -317,7 +310,7 @@ Return Value:
     KPROCESSOR_MODE PreviousMode;
     NTSTATUS Status;
     PETHREAD Thread;
-    CLIENT_ID CapturedCid={0};
+    CLIENT_ID CapturedCid = { 0 };
     BOOLEAN ObjectNamePresent;
     BOOLEAN ClientIdPresent;
     ACCESS_STATE AccessState;
@@ -332,56 +325,63 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Since we need to look at the ObjectName field, probe
         // ObjectAttributes and capture object name present indicator.
         //
 
-        try {
+        try
+        {
 
             ProbeForWriteHandle(ThreadHandle);
 
-            ProbeForReadSmallStructure (ObjectAttributes,
-                                        sizeof(OBJECT_ATTRIBUTES),
-                                        sizeof(ULONG));
+            ProbeForReadSmallStructure(ObjectAttributes, sizeof(OBJECT_ATTRIBUTES), sizeof(ULONG));
             ObjectNamePresent = (BOOLEAN)ARGUMENT_PRESENT(ObjectAttributes->ObjectName);
             HandleAttributes = ObjectAttributes->Attributes;
 
-            if (ARGUMENT_PRESENT(ClientId)) {
-                ProbeForReadSmallStructure (ClientId, sizeof(CLIENT_ID), sizeof(ULONG));
+            if (ARGUMENT_PRESENT(ClientId))
+            {
+                ProbeForReadSmallStructure(ClientId, sizeof(CLIENT_ID), sizeof(ULONG));
                 CapturedCid = *ClientId;
                 ClientIdPresent = TRUE;
-            } else {
+            }
+            else
+            {
                 ClientIdPresent = FALSE;
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
-    } else {
-        ObjectNamePresent = (BOOLEAN) ARGUMENT_PRESENT(ObjectAttributes->ObjectName);
+    }
+    else
+    {
+        ObjectNamePresent = (BOOLEAN)ARGUMENT_PRESENT(ObjectAttributes->ObjectName);
         HandleAttributes = ObjectAttributes->Attributes;
-        if (ARGUMENT_PRESENT(ClientId)) {
+        if (ARGUMENT_PRESENT(ClientId))
+        {
             CapturedCid = *ClientId;
             ClientIdPresent = TRUE;
-        } else {
+        }
+        else
+        {
             ClientIdPresent = FALSE;
         }
     }
 
-    if (ObjectNamePresent && ClientIdPresent) {
+    if (ObjectNamePresent && ClientIdPresent)
+    {
         return STATUS_INVALID_PARAMETER_MIX;
     }
 
-    Status = SeCreateAccessState(
-                 &AccessState,
-                 &AuxData,
-                 DesiredAccess,
-                 &PsProcessType->TypeInfo.GenericMapping
-                 );
+    Status = SeCreateAccessState(&AccessState, &AuxData, DesiredAccess, &PsProcessType->TypeInfo.GenericMapping);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
     }
@@ -393,99 +393,91 @@ Return Value:
     // and recording what we want him to have in the PreviouslyGrantedAccess
     // field.
 
-    if (SeSinglePrivilegeCheck( SeDebugPrivilege, PreviousMode )) {
+    if (SeSinglePrivilegeCheck(SeDebugPrivilege, PreviousMode))
+    {
 
-        if ( AccessState.RemainingDesiredAccess & MAXIMUM_ALLOWED ) {
+        if (AccessState.RemainingDesiredAccess & MAXIMUM_ALLOWED)
+        {
             AccessState.PreviouslyGrantedAccess |= THREAD_ALL_ACCESS;
+        }
+        else
+        {
 
-        } else {
- 
-            AccessState.PreviouslyGrantedAccess |= ( AccessState.RemainingDesiredAccess );
+            AccessState.PreviouslyGrantedAccess |= (AccessState.RemainingDesiredAccess);
         }
 
         AccessState.RemainingDesiredAccess = 0;
-
     }
 
-    if ( ObjectNamePresent ) {
+    if (ObjectNamePresent)
+    {
 
         //
         // Open handle to the Thread object with the specified desired access,
         // set Thread handle value, and return service completion status.
         //
 
-        Status = ObOpenObjectByName(
-                    ObjectAttributes,
-                    PsThreadType,
-                    PreviousMode,
-                    &AccessState,
-                    0,
-                    NULL,
-                    &Handle
-                    );
+        Status = ObOpenObjectByName(ObjectAttributes, PsThreadType, PreviousMode, &AccessState, 0, NULL, &Handle);
 
-        SeDeleteAccessState( &AccessState );
+        SeDeleteAccessState(&AccessState);
 
-        if ( NT_SUCCESS(Status) ) {
-            try {
+        if (NT_SUCCESS(Status))
+        {
+            try
+            {
                 *ThreadHandle = Handle;
-            } except(EXCEPTION_EXECUTE_HANDLER) {
-                return GetExceptionCode ();
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                return GetExceptionCode();
             }
         }
         return Status;
     }
 
-    if ( ClientIdPresent ) {
+    if (ClientIdPresent)
+    {
 
-        if ( CapturedCid.UniqueProcess ) {
-            Status = PsLookupProcessThreadByCid(
-                        &CapturedCid,
-                        NULL,
-                        &Thread
-                        );
+        if (CapturedCid.UniqueProcess)
+        {
+            Status = PsLookupProcessThreadByCid(&CapturedCid, NULL, &Thread);
 
-            if ( !NT_SUCCESS(Status) ) {
-                SeDeleteAccessState( &AccessState );
+            if (!NT_SUCCESS(Status))
+            {
+                SeDeleteAccessState(&AccessState);
                 return Status;
             }
-        } else {
-            Status = PsLookupThreadByThreadId(
-                        CapturedCid.UniqueThread,
-                        &Thread
-                        );
+        }
+        else
+        {
+            Status = PsLookupThreadByThreadId(CapturedCid.UniqueThread, &Thread);
 
-            if ( !NT_SUCCESS(Status) ) {
-                SeDeleteAccessState( &AccessState );
+            if (!NT_SUCCESS(Status))
+            {
+                SeDeleteAccessState(&AccessState);
                 return Status;
             }
-
         }
 
-        Status = ObOpenObjectByPointer(
-                    Thread,
-                    HandleAttributes,
-                    &AccessState,
-                    0,
-                    PsThreadType,
-                    PreviousMode,
-                    &Handle
-                    );
+        Status = ObOpenObjectByPointer(Thread, HandleAttributes, &AccessState, 0, PsThreadType, PreviousMode, &Handle);
 
-        SeDeleteAccessState( &AccessState );
+        SeDeleteAccessState(&AccessState);
         ObDereferenceObject(Thread);
 
-        if ( NT_SUCCESS(Status) ) {
+        if (NT_SUCCESS(Status))
+        {
 
-            try {
+            try
+            {
                 *ThreadHandle = Handle;
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                return GetExceptionCode ();
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                return GetExceptionCode();
             }
         }
 
         return Status;
-
     }
 
     return STATUS_INVALID_PARAMETER_MIX;

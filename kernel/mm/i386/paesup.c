@@ -21,16 +21,16 @@ Revision History:
 
 #include "mi.h"
 
-#if defined (_X86PAE_)
+#if defined(_X86PAE_)
 
-#define PAES_PER_PAGE  (PAGE_SIZE / sizeof(PAE_ENTRY))
+#define PAES_PER_PAGE (PAGE_SIZE / sizeof(PAE_ENTRY))
 
 #define MINIMUM_PAE_SLIST_THRESHOLD (PAES_PER_PAGE * 1)
-#define MINIMUM_PAE_THRESHOLD       (PAES_PER_PAGE * 4)
-#define REPLENISH_PAE_SIZE          (PAES_PER_PAGE * 16)
-#define EXCESS_PAE_THRESHOLD        (PAES_PER_PAGE * 20)
+#define MINIMUM_PAE_THRESHOLD (PAES_PER_PAGE * 4)
+#define REPLENISH_PAE_SIZE (PAES_PER_PAGE * 16)
+#define EXCESS_PAE_THRESHOLD (PAES_PER_PAGE * 20)
 
-#define MM_HIGHEST_PAE_PAGE      0xFFFFF
+#define MM_HIGHEST_PAE_PAGE 0xFFFFF
 
 ULONG MiFreePaeEntries;
 PAE_ENTRY MiFirstFreePae;
@@ -42,40 +42,24 @@ SLIST_HEADER MiPaeEntrySList;
 
 PAE_ENTRY MiSystemPaeVa;
 
-LONG
-MiPaeAllocatePages (
-    VOID
-    );
+LONG MiPaeAllocatePages(VOID);
 
-VOID
-MiPaeFreePages (
-    PVOID VirtualAddress
-    );
+VOID MiPaeFreePages(PVOID VirtualAddress);
 
-#pragma alloc_text(INIT,MiPaeInitialize)
-#pragma alloc_text(PAGE,MiPaeFreePages)
+#pragma alloc_text(INIT, MiPaeInitialize)
+#pragma alloc_text(PAGE, MiPaeFreePages)
 
-VOID
-MiMarkMdlPageAttributes (
-    IN PMDL Mdl,
-    IN PFN_NUMBER NumberOfPages,
-    IN MI_PFN_CACHE_ATTRIBUTE CacheAttribute
-    );
+VOID MiMarkMdlPageAttributes(IN PMDL Mdl, IN PFN_NUMBER NumberOfPages, IN MI_PFN_CACHE_ATTRIBUTE CacheAttribute);
 
-VOID
-MiPaeInitialize (
-    VOID
-    )
+VOID MiPaeInitialize(VOID)
 {
-    InitializeSListHead (&MiPaeEntrySList);
-    KeInitializeSpinLock (&MiPaeLock);
-    InitializeListHead (&MiFirstFreePae.PaeEntry.ListHead);
+    InitializeSListHead(&MiPaeEntrySList);
+    KeInitializeSpinLock(&MiPaeLock);
+    InitializeListHead(&MiFirstFreePae.PaeEntry.ListHead);
 }
 
 ULONG
-MiPaeAllocate (
-    OUT PPAE_ENTRY *Va
-    )
+MiPaeAllocate(OUT PPAE_ENTRY *Va)
 
 /*++
 
@@ -121,49 +105,50 @@ Environment:
 
     FlushedOnce = FALSE;
 
-    ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
-    do {
+    do
+    {
 
         //
         // Pop an entry from the freelist.
         //
 
-        SingleListEntry = InterlockedPopEntrySList (&MiPaeEntrySList);
+        SingleListEntry = InterlockedPopEntrySList(&MiPaeEntrySList);
 
-        if (SingleListEntry != NULL) {
-            Pae = CONTAINING_RECORD (SingleListEntry,
-                                    PAE_ENTRY,
-                                    NextPae);
+        if (SingleListEntry != NULL)
+        {
+            Pae = CONTAINING_RECORD(SingleListEntry, PAE_ENTRY, NextPae);
 
             PaeBase = (PPAE_ENTRY)PAGE_ALIGN(Pae);
 
             *Va = Pae;
 
             PageFrameIndex = PaeBase->PaeEntry.PageFrameNumber;
-            ASSERT (PageFrameIndex <= MM_HIGHEST_PAE_PAGE);
+            ASSERT(PageFrameIndex <= MM_HIGHEST_PAE_PAGE);
 
-            return (PageFrameIndex << PAGE_SHIFT) + BYTE_OFFSET (Pae);
+            return (PageFrameIndex << PAGE_SHIFT) + BYTE_OFFSET(Pae);
         }
 
-        KeAcquireInStackQueuedSpinLock (&MiPaeLock, &LockHandle);
+        KeAcquireInStackQueuedSpinLock(&MiPaeLock, &LockHandle);
 
-        if (MiFreePaeEntries != 0) {
+        if (MiFreePaeEntries != 0)
+        {
 
-            ASSERT (IsListEmpty (&MiFirstFreePae.PaeEntry.ListHead) == 0);
+            ASSERT(IsListEmpty(&MiFirstFreePae.PaeEntry.ListHead) == 0);
 
-            Pae = (PPAE_ENTRY) RemoveHeadList (&MiFirstFreePae.PaeEntry.ListHead);
+            Pae = (PPAE_ENTRY)RemoveHeadList(&MiFirstFreePae.PaeEntry.ListHead);
 
             PaeBase = (PPAE_ENTRY)PAGE_ALIGN(Pae);
             PaeBase->PaeEntry.EntriesInUse += 1;
 #if DBG
-            RtlZeroMemory ((PVOID)Pae, sizeof(PAE_ENTRY));
+            RtlZeroMemory((PVOID)Pae, sizeof(PAE_ENTRY));
 
-            Pfn1 = MI_PFN_ELEMENT (PaeBase->PaeEntry.PageFrameNumber);
-            ASSERT (Pfn1->u2.ShareCount == 1);
-            ASSERT (Pfn1->u3.e2.ReferenceCount == 1);
-            ASSERT (Pfn1->u3.e1.PageLocation == ActiveAndValid);
-            ASSERT (Pfn1->u3.e1.CacheAttribute == MiCached);
+            Pfn1 = MI_PFN_ELEMENT(PaeBase->PaeEntry.PageFrameNumber);
+            ASSERT(Pfn1->u2.ShareCount == 1);
+            ASSERT(Pfn1->u3.e2.ReferenceCount == 1);
+            ASSERT(Pfn1->u3.e1.PageLocation == ActiveAndValid);
+            ASSERT(Pfn1->u3.e1.CacheAttribute == MiCached);
 #endif
 
             MiFreePaeEntries -= 1;
@@ -175,56 +160,58 @@ Environment:
 
             Entries = MiFreePaeEntries;
 
-            if (Entries != 0) {
-                if (Entries > MINIMUM_PAE_SLIST_THRESHOLD) {
+            if (Entries != 0)
+            {
+                if (Entries > MINIMUM_PAE_SLIST_THRESHOLD)
+                {
                     Entries = MINIMUM_PAE_SLIST_THRESHOLD;
                 }
 
-                ASSERT (IsListEmpty (&MiFirstFreePae.PaeEntry.ListHead) == 0);
+                ASSERT(IsListEmpty(&MiFirstFreePae.PaeEntry.ListHead) == 0);
 
-                Pae2 = (PPAE_ENTRY) RemoveHeadList (&MiFirstFreePae.PaeEntry.ListHead);
+                Pae2 = (PPAE_ENTRY)RemoveHeadList(&MiFirstFreePae.PaeEntry.ListHead);
                 Pae2->NextPae.Next = NULL;
                 Pae3 = Pae2;
                 Pae3Base = (PPAE_ENTRY)PAGE_ALIGN(Pae3);
                 Pae3Base->PaeEntry.EntriesInUse += 1;
 
-                for (j = 1; j < Entries; j += 1) {
-                    ASSERT (IsListEmpty (&MiFirstFreePae.PaeEntry.ListHead) == 0);
+                for (j = 1; j < Entries; j += 1)
+                {
+                    ASSERT(IsListEmpty(&MiFirstFreePae.PaeEntry.ListHead) == 0);
 
-                    Pae3->NextPae.Next = (PSINGLE_LIST_ENTRY) RemoveHeadList (&MiFirstFreePae.PaeEntry.ListHead);
+                    Pae3->NextPae.Next = (PSINGLE_LIST_ENTRY)RemoveHeadList(&MiFirstFreePae.PaeEntry.ListHead);
 
-                    Pae3 = (PPAE_ENTRY) Pae3->NextPae.Next;
+                    Pae3 = (PPAE_ENTRY)Pae3->NextPae.Next;
                     Pae3Base = (PPAE_ENTRY)PAGE_ALIGN(Pae3);
                     Pae3Base->PaeEntry.EntriesInUse += 1;
                 }
 
                 MiFreePaeEntries -= Entries;
 
-                KeReleaseInStackQueuedSpinLock (&LockHandle);
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
 
                 Pae3->NextPae.Next = NULL;
 
-                InterlockedPushListSList (&MiPaeEntrySList,
-                                          (PSINGLE_LIST_ENTRY) Pae2,
-                                          (PSINGLE_LIST_ENTRY) Pae3,
-                                          Entries);
+                InterlockedPushListSList(&MiPaeEntrySList, (PSINGLE_LIST_ENTRY)Pae2, (PSINGLE_LIST_ENTRY)Pae3, Entries);
             }
-            else {
-                KeReleaseInStackQueuedSpinLock (&LockHandle);
+            else
+            {
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
             }
 
-            ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+            ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
             *Va = Pae;
 
             PageFrameIndex = PaeBase->PaeEntry.PageFrameNumber;
-            ASSERT (PageFrameIndex <= MM_HIGHEST_PAE_PAGE);
+            ASSERT(PageFrameIndex <= MM_HIGHEST_PAE_PAGE);
 
-            return (PageFrameIndex << PAGE_SHIFT) + BYTE_OFFSET (Pae);
+            return (PageFrameIndex << PAGE_SHIFT) + BYTE_OFFSET(Pae);
         }
 
-        KeReleaseInStackQueuedSpinLock (&LockHandle);
+        KeReleaseInStackQueuedSpinLock(&LockHandle);
 
-        if (FlushedOnce == TRUE) {
+        if (FlushedOnce == TRUE)
+        {
             break;
         }
 
@@ -232,22 +219,21 @@ Environment:
         // No free pages in the cachelist, replenish the list now.
         //
 
-        if (MiPaeAllocatePages () == 0) {
+        if (MiPaeAllocatePages() == 0)
+        {
 
-            InterlockedIncrement (&MiDelayPageFaults);
+            InterlockedIncrement(&MiDelayPageFaults);
 
             //
             // Attempt to move pages to the standby list.
             //
 
-            MmEmptyAllWorkingSets ();
+            MmEmptyAllWorkingSets();
             MiFlushAllPages();
 
-            KeDelayExecutionThread (KernelMode,
-                                    FALSE,
-                                    (PLARGE_INTEGER)&MmHalfSecond);
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
 
-            InterlockedDecrement (&MiDelayPageFaults);
+            InterlockedDecrement(&MiDelayPageFaults);
 
             FlushedOnce = TRUE;
 
@@ -257,22 +243,20 @@ Environment:
             // to do so since the working set pain has already been absorbed.
             //
 
-            if (MiFreePaeEntries < MINIMUM_PAE_THRESHOLD) {
-                MiPaeAllocatePages ();
+            if (MiFreePaeEntries < MINIMUM_PAE_THRESHOLD)
+            {
+                MiPaeAllocatePages();
             }
         }
 
     } while (TRUE);
 
-    ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
     return 0;
 }
 
-VOID
-MiPaeFree (
-    PPAE_ENTRY Pae
-    )
+VOID MiPaeFree(PPAE_ENTRY Pae)
 
 /*++
 
@@ -305,36 +289,37 @@ Environment:
     PFN_NUMBER PageFrameIndex;
     PMMPFN Pfn1;
 
-    PointerPte = MiGetPteAddress (Pae);
-    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+    PointerPte = MiGetPteAddress(Pae);
+    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
 
     //
     // This page must be in the first 4GB of RAM.
     //
 
-    ASSERT (PageFrameIndex <= MM_HIGHEST_PAE_PAGE);
+    ASSERT(PageFrameIndex <= MM_HIGHEST_PAE_PAGE);
 
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    ASSERT (Pfn1->u2.ShareCount == 1);
-    ASSERT (Pfn1->u3.e2.ReferenceCount == 1);
-    ASSERT (Pfn1->u3.e1.PageLocation == ActiveAndValid);
-    ASSERT (Pfn1->u3.e1.CacheAttribute == MiCached);
+    ASSERT(Pfn1->u2.ShareCount == 1);
+    ASSERT(Pfn1->u3.e2.ReferenceCount == 1);
+    ASSERT(Pfn1->u3.e1.PageLocation == ActiveAndValid);
+    ASSERT(Pfn1->u3.e1.CacheAttribute == MiCached);
 #endif
 
-    if (ExQueryDepthSList (&MiPaeEntrySList) < MINIMUM_PAE_SLIST_THRESHOLD) {
-        InterlockedPushEntrySList (&MiPaeEntrySList, &Pae->NextPae);
+    if (ExQueryDepthSList(&MiPaeEntrySList) < MINIMUM_PAE_SLIST_THRESHOLD)
+    {
+        InterlockedPushEntrySList(&MiPaeEntrySList, &Pae->NextPae);
         return;
     }
 
     PaeBase = (PPAE_ENTRY)PAGE_ALIGN(Pae);
 
-    KeAcquireInStackQueuedSpinLock (&MiPaeLock, &LockHandle);
+    KeAcquireInStackQueuedSpinLock(&MiPaeLock, &LockHandle);
 
     PaeBase->PaeEntry.EntriesInUse -= 1;
 
-    if ((PaeBase->PaeEntry.EntriesInUse == 0) &&
-        (MiFreePaeEntries > EXCESS_PAE_THRESHOLD)) {
+    if ((PaeBase->PaeEntry.EntriesInUse == 0) && (MiFreePaeEntries > EXCESS_PAE_THRESHOLD))
+    {
 
         //
         // Free the entire page.
@@ -342,39 +327,36 @@ Environment:
 
         i = 1;
         NextEntry = MiFirstFreePae.PaeEntry.ListHead.Flink;
-        while (NextEntry != &MiFirstFreePae.PaeEntry.ListHead) {
+        while (NextEntry != &MiFirstFreePae.PaeEntry.ListHead)
+        {
 
-            Pae = CONTAINING_RECORD (NextEntry,
-                                     PAE_ENTRY,
-                                     PaeEntry.ListHead);
+            Pae = CONTAINING_RECORD(NextEntry, PAE_ENTRY, PaeEntry.ListHead);
 
-            if (PAGE_ALIGN(Pae) == PaeBase) {
-                RemoveEntryList (NextEntry);
+            if (PAGE_ALIGN(Pae) == PaeBase)
+            {
+                RemoveEntryList(NextEntry);
                 i += 1;
             }
             NextEntry = Pae->PaeEntry.ListHead.Flink;
         }
-        ASSERT (i == PAES_PER_PAGE - 1);
+        ASSERT(i == PAES_PER_PAGE - 1);
         MiFreePaeEntries -= (PAES_PER_PAGE - 1);
-        KeReleaseInStackQueuedSpinLock (&LockHandle);
+        KeReleaseInStackQueuedSpinLock(&LockHandle);
 
-        MiPaeFreePages (PaeBase);
+        MiPaeFreePages(PaeBase);
     }
-    else {
+    else
+    {
 
-        InsertTailList (&MiFirstFreePae.PaeEntry.ListHead,
-                        &Pae->PaeEntry.ListHead);
+        InsertTailList(&MiFirstFreePae.PaeEntry.ListHead, &Pae->PaeEntry.ListHead);
         MiFreePaeEntries += 1;
-        KeReleaseInStackQueuedSpinLock (&LockHandle);
+        KeReleaseInStackQueuedSpinLock(&LockHandle);
     }
 
     return;
 }
 
-LONG
-MiPaeAllocatePages (
-    VOID
-    )
+LONG MiPaeAllocatePages(VOID)
 
 /*++
 
@@ -414,38 +396,34 @@ Environment:
     PHYSICAL_ADDRESS SkipBytes;
     KLOCK_QUEUE_HANDLE LockHandle;
 
-#if defined (_MI_MORE_THAN_4GB_)
-    if (MiNoLowMemory != 0) {
-        BaseAddress = MiAllocateLowMemory (PAGE_SIZE,
-                                           0,
-                                           MiNoLowMemory - 1,
-                                           0,
-                                           (PVOID)0x123,
-                                           MmCached,
-                                           'DeaP');
-        if (BaseAddress == NULL) {
+#if defined(_MI_MORE_THAN_4GB_)
+    if (MiNoLowMemory != 0)
+    {
+        BaseAddress = MiAllocateLowMemory(PAGE_SIZE, 0, MiNoLowMemory - 1, 0, (PVOID)0x123, MmCached, 'DeaP');
+        if (BaseAddress == NULL)
+        {
             return 0;
         }
 
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (MiGetPteAddress(BaseAddress));
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPteAddress(BaseAddress));
 
-        Pae = (PPAE_ENTRY) BaseAddress;
+        Pae = (PPAE_ENTRY)BaseAddress;
         Pae->PaeEntry.EntriesInUse = 0;
         Pae->PaeEntry.PageFrameNumber = PageFrameIndex;
         Pae += 1;
 
-        KeAcquireInStackQueuedSpinLock (&MiPaeLock, &LockHandle);
+        KeAcquireInStackQueuedSpinLock(&MiPaeLock, &LockHandle);
 
-        for (i = 1; i < PAES_PER_PAGE; i += 1) {
-            InsertTailList (&MiFirstFreePae.PaeEntry.ListHead,
-                            &Pae->PaeEntry.ListHead);
+        for (i = 1; i < PAES_PER_PAGE; i += 1)
+        {
+            InsertTailList(&MiFirstFreePae.PaeEntry.ListHead, &Pae->PaeEntry.ListHead);
             Pae += 1;
         }
         MiFreePaeEntries += (PAES_PER_PAGE - 1);
 
-        KeReleaseInStackQueuedSpinLock (&LockHandle);
+        KeReleaseInStackQueuedSpinLock(&LockHandle);
 
-        InterlockedIncrement (&MmAllocatedPaePages);
+        InterlockedIncrement(&MmAllocatedPaePages);
         return 1;
     }
 #endif
@@ -462,18 +440,16 @@ Environment:
     // at once to amortize the cost.
     //
 
-    MemoryDescriptorList = MmAllocatePagesForMdl (LowAddress,
-                                                  HighAddress,
-                                                  SkipBytes,
-                                                  NumberOfPages << PAGE_SHIFT);
+    MemoryDescriptorList = MmAllocatePagesForMdl(LowAddress, HighAddress, SkipBytes, NumberOfPages << PAGE_SHIFT);
 
-    if (MemoryDescriptorList == NULL) {
+    if (MemoryDescriptorList == NULL)
+    {
         return 0;
     }
 
     ActualPages = MemoryDescriptorList->ByteCount >> PAGE_SHIFT;
 
-    MiMarkMdlPageAttributes (MemoryDescriptorList, ActualPages, MiCached);
+    MiMarkMdlPageAttributes(MemoryDescriptorList, ActualPages, MiCached);
 
     TempPte = ValidKernelPte;
     Page = (PPFN_NUMBER)(MemoryDescriptorList + 1);
@@ -483,42 +459,43 @@ Environment:
     // later.
     //
 
-    for (i = 0; i < ActualPages; i += 1) {
+    for (i = 0; i < ActualPages; i += 1)
+    {
         PageFrameIndex = *Page;
 
-        PointerPte = MiReserveSystemPtes (1, SystemPteSpace);
+        PointerPte = MiReserveSystemPtes(1, SystemPteSpace);
 
-        if (PointerPte == NULL) {
+        if (PointerPte == NULL)
+        {
 
             //
             // Free any remaining pages in the MDL as they are not mapped.
             // Slide the MDL pages forward so the mapped ones are kept.
             //
 
-            MmInitializeMdl (MemoryDescriptorList,
-                             0,
-                             (ActualPages - i) << PAGE_SHIFT);
+            MmInitializeMdl(MemoryDescriptorList, 0, (ActualPages - i) << PAGE_SHIFT);
 
             SlidePage = (PPFN_NUMBER)(MemoryDescriptorList + 1);
 
-            while (i < ActualPages) {
+            while (i < ActualPages)
+            {
                 i += 1;
                 *SlidePage = *Page;
                 SlidePage += 1;
                 Page += 1;
             }
 
-            MmFreePagesFromMdl (MemoryDescriptorList);
+            MmFreePagesFromMdl(MemoryDescriptorList);
 
             break;
         }
 
         TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-        MI_WRITE_VALID_PTE (PointerPte, TempPte);
+        MI_WRITE_VALID_PTE(PointerPte, TempPte);
 
-        BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+        BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
 
-        Pae = (PPAE_ENTRY) BaseAddress;
+        Pae = (PPAE_ENTRY)BaseAddress;
 
         Pae->PaeEntry.EntriesInUse = 0;
         Pae->PaeEntry.PageFrameNumber = PageFrameIndex;
@@ -529,36 +506,36 @@ Environment:
         // enqueue all the other entries normally.
         //
 
-        if ((i == 0) &&
-            (ExQueryDepthSList (&MiPaeEntrySList) < MINIMUM_PAE_SLIST_THRESHOLD)) {
+        if ((i == 0) && (ExQueryDepthSList(&MiPaeEntrySList) < MINIMUM_PAE_SLIST_THRESHOLD))
+        {
 
             (Pae - 1)->PaeEntry.EntriesInUse = PAES_PER_PAGE - 1;
 
-            for (j = 1; j < PAES_PER_PAGE - 1; j += 1) {
-                Pae->NextPae.Next = (PSINGLE_LIST_ENTRY) (Pae + 1);
+            for (j = 1; j < PAES_PER_PAGE - 1; j += 1)
+            {
+                Pae->NextPae.Next = (PSINGLE_LIST_ENTRY)(Pae + 1);
                 Pae += 1;
             }
 
             Pae->NextPae.Next = NULL;
 
-            InterlockedPushListSList (&MiPaeEntrySList,
-                                      (PSINGLE_LIST_ENTRY)((PPAE_ENTRY) BaseAddress + 1),
-                                      (PSINGLE_LIST_ENTRY) Pae,
-                                      PAES_PER_PAGE - 1);
+            InterlockedPushListSList(&MiPaeEntrySList, (PSINGLE_LIST_ENTRY)((PPAE_ENTRY)BaseAddress + 1),
+                                     (PSINGLE_LIST_ENTRY)Pae, PAES_PER_PAGE - 1);
         }
-        else {
+        else
+        {
 
-            KeAcquireInStackQueuedSpinLock (&MiPaeLock, &LockHandle);
+            KeAcquireInStackQueuedSpinLock(&MiPaeLock, &LockHandle);
 
-            for (j = 1; j < PAES_PER_PAGE; j += 1) {
-                InsertTailList (&MiFirstFreePae.PaeEntry.ListHead,
-                                &Pae->PaeEntry.ListHead);
+            for (j = 1; j < PAES_PER_PAGE; j += 1)
+            {
+                InsertTailList(&MiFirstFreePae.PaeEntry.ListHead, &Pae->PaeEntry.ListHead);
                 Pae += 1;
             }
 
             MiFreePaeEntries += (PAES_PER_PAGE - 1);
 
-            KeReleaseInStackQueuedSpinLock (&LockHandle);
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
         }
 
         AllocatedPaePages += 1;
@@ -566,17 +543,14 @@ Environment:
         Page += 1;
     }
 
-    ExFreePool (MemoryDescriptorList);
+    ExFreePool(MemoryDescriptorList);
 
-    InterlockedExchangeAdd (&MmAllocatedPaePages, AllocatedPaePages);
+    InterlockedExchangeAdd(&MmAllocatedPaePages, AllocatedPaePages);
 
     return AllocatedPaePages;
 }
 
-VOID
-MiPaeFreePages (
-    PVOID VirtualAddress
-    )
+VOID MiPaeFreePages(PVOID VirtualAddress)
 
 /*++
 
@@ -608,10 +582,12 @@ Environment:
     PPFN_NUMBER MdlPage;
     PMDL MemoryDescriptorList;
 
-#if defined (_MI_MORE_THAN_4GB_)
-    if (MiNoLowMemory != 0) {
-        if (MiFreeLowMemory (VirtualAddress, 'DeaP') == TRUE) {
-            InterlockedDecrement (&MmAllocatedPaePages);
+#if defined(_MI_MORE_THAN_4GB_)
+    if (MiNoLowMemory != 0)
+    {
+        if (MiFreeLowMemory(VirtualAddress, 'DeaP') == TRUE)
+        {
+            InterlockedDecrement(&MmAllocatedPaePages);
             return;
         }
     }
@@ -619,21 +595,21 @@ Environment:
 
     MemoryDescriptorList = (PMDL)&MdlHack[0];
     MdlPages = 1;
-    MmInitializeMdl (MemoryDescriptorList, 0, MdlPages << PAGE_SHIFT);
+    MmInitializeMdl(MemoryDescriptorList, 0, MdlPages << PAGE_SHIFT);
 
     MdlPage = (PPFN_NUMBER)(MemoryDescriptorList + 1);
 
-    PointerPte = MiGetPteAddress (VirtualAddress);
-    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+    PointerPte = MiGetPteAddress(VirtualAddress);
+    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
     *MdlPage = PageFrameIndex;
 
-    ASSERT ((MI_PFN_ELEMENT(PageFrameIndex))->u3.e1.CacheAttribute == MiCached);
+    ASSERT((MI_PFN_ELEMENT(PageFrameIndex))->u3.e1.CacheAttribute == MiCached);
 
-    MiReleaseSystemPtes (PointerPte, 1, SystemPteSpace);
+    MiReleaseSystemPtes(PointerPte, 1, SystemPteSpace);
 
-    MmFreePagesFromMdl (MemoryDescriptorList);
+    MmFreePagesFromMdl(MemoryDescriptorList);
 
-    InterlockedDecrement (&MmAllocatedPaePages);
+    InterlockedDecrement(&MmAllocatedPaePages);
 }
 
 #endif

@@ -30,19 +30,14 @@ Revision History:
 
 #if _WIN64
 #if DBGXX
-VOID
-MiCheckPageTableTrim(
-    IN PMMPTE PointerPte
-);
+VOID MiCheckPageTableTrim(IN PMMPTE PointerPte);
 #endif
 #endif
 
-
+
 ULONG
 FASTCALL
-MiIsPteDecommittedPage (
-    IN PMMPTE PointerPte
-    )
+MiIsPteDecommittedPage(IN PMMPTE PointerPte)
 
 /*++
 
@@ -78,7 +73,8 @@ Environment:
     // If the protection in the PTE is not decommitted, return FALSE.
     //
 
-    if (PteContents.u.Soft.Protection != MM_DECOMMIT) {
+    if (PteContents.u.Soft.Protection != MM_DECOMMIT)
+    {
         return FALSE;
     }
 
@@ -87,7 +83,8 @@ Environment:
     // correctly.
     //
 
-    if (PteContents.u.Hard.Valid == 1) {
+    if (PteContents.u.Hard.Valid == 1)
+    {
 
         //
         // The PTE is valid and therefore cannot be decommitted.
@@ -96,8 +93,8 @@ Environment:
         return FALSE;
     }
 
-    if ((PteContents.u.Soft.Prototype == 1) &&
-         (PteContents.u.Soft.PageFileHigh != MI_PTE_LOOKUP_NEEDED)) {
+    if ((PteContents.u.Soft.Prototype == 1) && (PteContents.u.Soft.PageFileHigh != MI_PTE_LOOKUP_NEEDED))
+    {
 
         //
         // The PTE's protection is not known as it is in
@@ -113,34 +110,27 @@ Environment:
 
     return TRUE;
 }
-
+
 //
 // Data for is protection compatible.
 //
 
 ULONG MmCompatibleProtectionMask[8] = {
-            PAGE_NOACCESS,
-            PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY,
-            PAGE_NOACCESS | PAGE_EXECUTE,
-            PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY | PAGE_EXECUTE |
-                PAGE_EXECUTE_READ,
-            PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY | PAGE_READWRITE,
-            PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY,
-            PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY | PAGE_READWRITE |
-                PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE |
-                PAGE_EXECUTE_WRITECOPY,
-            PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY | PAGE_EXECUTE |
-                PAGE_EXECUTE_READ | PAGE_EXECUTE_WRITECOPY
-            };
+    PAGE_NOACCESS,
+    PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY,
+    PAGE_NOACCESS | PAGE_EXECUTE,
+    PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY | PAGE_EXECUTE | PAGE_EXECUTE_READ,
+    PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY | PAGE_READWRITE,
+    PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY,
+    PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY | PAGE_READWRITE | PAGE_EXECUTE | PAGE_EXECUTE_READ |
+        PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY,
+    PAGE_NOACCESS | PAGE_READONLY | PAGE_WRITECOPY | PAGE_EXECUTE | PAGE_EXECUTE_READ | PAGE_EXECUTE_WRITECOPY
+};
 
 
-
 ULONG
 FASTCALL
-MiIsProtectionCompatible (
-    IN ULONG OldProtect,
-    IN ULONG NewProtect
-    )
+MiIsProtectionCompatible(IN ULONG OldProtect, IN ULONG NewProtect)
 
 /*++
 
@@ -184,9 +174,10 @@ Environment:
     ULONG ProtectMask;
     ULONG PteProtection;
 
-    PteProtection = MiMakeProtectionMask (OldProtect);
+    PteProtection = MiMakeProtectionMask(OldProtect);
 
-    if (PteProtection == MM_INVALID_PROTECTION) {
+    if (PteProtection == MM_INVALID_PROTECTION)
+    {
         return FALSE;
     }
 
@@ -194,19 +185,17 @@ Environment:
 
     ProtectMask = MmCompatibleProtectionMask[Mask] | PAGE_GUARD | PAGE_NOCACHE;
 
-    if ((ProtectMask | NewProtect) != ProtectMask) {
+    if ((ProtectMask | NewProtect) != ProtectMask)
+    {
         return FALSE;
     }
     return TRUE;
 }
 
-
+
 ULONG
 FASTCALL
-MiIsPteProtectionCompatible (
-    IN ULONG PteProtection,
-    IN ULONG NewProtect
-    )
+MiIsPteProtectionCompatible(IN ULONG PteProtection, IN ULONG NewProtect)
 {
     ULONG Mask;
     ULONG ProtectMask;
@@ -215,59 +204,30 @@ MiIsPteProtectionCompatible (
 
     ProtectMask = MmCompatibleProtectionMask[Mask] | PAGE_GUARD | PAGE_NOCACHE;
 
-    if ((ProtectMask | NewProtect) != ProtectMask) {
+    if ((ProtectMask | NewProtect) != ProtectMask)
+    {
         return FALSE;
     }
     return TRUE;
 }
 
-
+
 //
 // Protection data for MiMakeProtectionMask
 //
 
-CCHAR MmUserProtectionToMask1[16] = {
-                                 0,
-                                 MM_NOACCESS,
-                                 MM_READONLY,
-                                 -1,
-                                 MM_READWRITE,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 MM_WRITECOPY,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 -1 };
+CCHAR MmUserProtectionToMask1[16] = { 0,  MM_NOACCESS, MM_READONLY, -1, MM_READWRITE, -1, -1, -1, MM_WRITECOPY,
+                                      -1, -1,          -1,          -1, -1,           -1, -1 };
 
 CCHAR MmUserProtectionToMask2[16] = {
-                                 0,
-                                 MM_EXECUTE,
-                                 MM_EXECUTE_READ,
-                                 -1,
-                                 MM_EXECUTE_READWRITE,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 MM_EXECUTE_WRITECOPY,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 -1,
-                                 -1 };
+    0,  MM_EXECUTE, MM_EXECUTE_READ, -1, MM_EXECUTE_READWRITE, -1, -1, -1, MM_EXECUTE_WRITECOPY, -1, -1, -1, -1, -1,
+    -1, -1
+};
 
-
+
 ULONG
 FASTCALL
-MiMakeProtectionMask (
-    IN ULONG Protect
-    )
+MiMakeProtectionMask(IN ULONG Protect)
 
 /*++
 
@@ -298,7 +258,8 @@ Environment:
     ULONG Field2;
     ULONG ProtectCode;
 
-    if (Protect >= (PAGE_NOCACHE * 2)) {
+    if (Protect >= (PAGE_NOCACHE * 2))
+    {
         return MM_INVALID_PROTECTION;
     }
 
@@ -309,8 +270,10 @@ Environment:
     // Make sure at least one field is set.
     //
 
-    if (Field1 == 0) {
-        if (Field2 == 0) {
+    if (Field1 == 0)
+    {
+        if (Field2 == 0)
+        {
 
             //
             // Both fields are zero, return failure.
@@ -319,8 +282,11 @@ Environment:
             return MM_INVALID_PROTECTION;
         }
         ProtectCode = MmUserProtectionToMask2[Field2];
-    } else {
-        if (Field2 != 0) {
+    }
+    else
+    {
+        if (Field2 != 0)
+        {
             //
             //  Both fields are non-zero, raise failure.
             //
@@ -330,12 +296,15 @@ Environment:
         ProtectCode = MmUserProtectionToMask1[Field1];
     }
 
-    if (ProtectCode == -1) {
+    if (ProtectCode == -1)
+    {
         return MM_INVALID_PROTECTION;
     }
 
-    if (Protect & PAGE_GUARD) {
-        if (ProtectCode == MM_NOACCESS) {
+    if (Protect & PAGE_GUARD)
+    {
+        if (ProtectCode == MM_NOACCESS)
+        {
 
             //
             // Invalid protection, no access and no_cache.
@@ -347,9 +316,11 @@ Environment:
         ProtectCode |= MM_GUARD_PAGE;
     }
 
-    if (Protect & PAGE_NOCACHE) {
+    if (Protect & PAGE_NOCACHE)
+    {
 
-        if (ProtectCode == MM_NOACCESS) {
+        if (ProtectCode == MM_NOACCESS)
+        {
 
             //
             // Invalid protection, no access and no cache.
@@ -364,14 +335,9 @@ Environment:
     return ProtectCode;
 }
 
-
+
 ULONG
-MiDoesPdeExistAndMakeValid (
-    IN PMMPTE PointerPde,
-    IN PEPROCESS TargetProcess,
-    IN LOGICAL PfnLockHeld,
-    OUT PULONG Waited
-    )
+MiDoesPdeExistAndMakeValid(IN PMMPTE PointerPde, IN PEPROCESS TargetProcess, IN LOGICAL PfnLockHeld, OUT PULONG Waited)
 
 /*++
 
@@ -416,7 +382,8 @@ Environment:
 
     OldIrql = APC_LEVEL;
 
-    if (PointerPde->u.Long == 0) {
+    if (PointerPde->u.Long == 0)
+    {
 
         //
         // This page directory entry doesn't exist, return FALSE.
@@ -425,7 +392,8 @@ Environment:
         return FALSE;
     }
 
-    if (PointerPde->u.Hard.Valid == 1) {
+    if (PointerPde->u.Hard.Valid == 1)
+    {
 
         //
         // Already valid.
@@ -439,29 +407,26 @@ Environment:
     // or in the paging file.  Fault it in.
     //
 
-    if (PfnLockHeld) {
-        UNLOCK_PFN (OldIrql);
+    if (PfnLockHeld)
+    {
+        UNLOCK_PFN(OldIrql);
         *Waited += 1;
     }
 
-    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
-    *Waited += MiMakeSystemAddressValid (PointerPte, TargetProcess);
+    *Waited += MiMakeSystemAddressValid(PointerPte, TargetProcess);
 
-    if (PfnLockHeld) {
-        LOCK_PFN (OldIrql);
+    if (PfnLockHeld)
+    {
+        LOCK_PFN(OldIrql);
     }
     return TRUE;
 }
 
 #if (_MI_PAGING_LEVELS >= 4)
-
-VOID
-MiMakePxeExistAndMakeValid (
-    IN PMMPTE PointerPxe,
-    IN PEPROCESS TargetProcess,
-    IN LOGICAL PfnLockHeld
-    )
+
+VOID MiMakePxeExistAndMakeValid(IN PMMPTE PointerPxe, IN PEPROCESS TargetProcess, IN LOGICAL PfnLockHeld)
 
 /*++
 
@@ -502,7 +467,8 @@ Environment:
     PMMPTE PointerPpe;
     KIRQL OldIrql;
 
-    if (PointerPxe->u.Hard.Valid == 1) {
+    if (PointerPxe->u.Hard.Valid == 1)
+    {
 
         //
         // Already valid.
@@ -515,22 +481,24 @@ Environment:
     // Deal with the page directory page first.
     //
 
-    if (PfnLockHeld) {
+    if (PfnLockHeld)
+    {
         OldIrql = APC_LEVEL;
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
     }
 
     //
     // Fault it in.
     //
 
-    PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-    MiMakeSystemAddressValid (PointerPpe, TargetProcess);
+    PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+    MiMakeSystemAddressValid(PointerPpe, TargetProcess);
 
-    ASSERT (PointerPxe->u.Hard.Valid == 1);
+    ASSERT(PointerPxe->u.Hard.Valid == 1);
 
-    if (PfnLockHeld) {
-        LOCK_PFN (OldIrql);
+    if (PfnLockHeld)
+    {
+        LOCK_PFN(OldIrql);
     }
 
     return;
@@ -538,13 +506,8 @@ Environment:
 #endif
 
 #if (_MI_PAGING_LEVELS >= 3)
-
-VOID
-MiMakePpeExistAndMakeValid (
-    IN PMMPTE PointerPpe,
-    IN PEPROCESS TargetProcess,
-    IN LOGICAL PfnLockHeld
-    )
+
+VOID MiMakePpeExistAndMakeValid(IN PMMPTE PointerPpe, IN PEPROCESS TargetProcess, IN LOGICAL PfnLockHeld)
 
 /*++
 
@@ -586,10 +549,10 @@ Environment:
     PMMPTE PointerPxe;
     KIRQL OldIrql;
 
-    PointerPxe = MiGetPteAddress (PointerPpe);
+    PointerPxe = MiGetPteAddress(PointerPpe);
 
-    if ((PointerPxe->u.Hard.Valid == 1) &&
-        (PointerPpe->u.Hard.Valid == 1)) {
+    if ((PointerPxe->u.Hard.Valid == 1) && (PointerPpe->u.Hard.Valid == 1))
+    {
 
         //
         // Already valid.
@@ -602,35 +565,32 @@ Environment:
     // Deal with the page directory and parent pages first.
     //
 
-    if (PfnLockHeld) {
+    if (PfnLockHeld)
+    {
         OldIrql = APC_LEVEL;
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
     }
 
     //
     // Fault it in.
     //
 
-    PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-    MiMakeSystemAddressValid (PointerPde, TargetProcess);
+    PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+    MiMakeSystemAddressValid(PointerPde, TargetProcess);
 
-    ASSERT (PointerPxe->u.Hard.Valid == 1);
-    ASSERT (PointerPpe->u.Hard.Valid == 1);
+    ASSERT(PointerPxe->u.Hard.Valid == 1);
+    ASSERT(PointerPpe->u.Hard.Valid == 1);
 
-    if (PfnLockHeld) {
-        LOCK_PFN (OldIrql);
+    if (PfnLockHeld)
+    {
+        LOCK_PFN(OldIrql);
     }
 
     return;
 }
 #endif
-
-VOID
-MiMakePdeExistAndMakeValid (
-    IN PMMPTE PointerPde,
-    IN PEPROCESS TargetProcess,
-    IN LOGICAL PfnLockHeld
-    )
+
+VOID MiMakePdeExistAndMakeValid(IN PMMPTE PointerPde, IN PEPROCESS TargetProcess, IN LOGICAL PfnLockHeld)
 
 /*++
 
@@ -675,12 +635,11 @@ Environment:
     PMMPTE PointerPxe;
     KIRQL OldIrql;
 
-    PointerPpe = MiGetPteAddress (PointerPde);
-    PointerPxe = MiGetPdeAddress (PointerPde);
+    PointerPpe = MiGetPteAddress(PointerPde);
+    PointerPxe = MiGetPdeAddress(PointerPde);
 
-    if ((PointerPxe->u.Hard.Valid == 1) &&
-        (PointerPpe->u.Hard.Valid == 1) &&
-        (PointerPde->u.Hard.Valid == 1)) {
+    if ((PointerPxe->u.Hard.Valid == 1) && (PointerPpe->u.Hard.Valid == 1) && (PointerPde->u.Hard.Valid == 1))
+    {
 
         //
         // Already valid.
@@ -696,64 +655,62 @@ Environment:
 
     OldIrql = APC_LEVEL;
 
-    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
-    do {
+    do
+    {
 
-        if (PfnLockHeld) {
-            UNLOCK_PFN (OldIrql);
+        if (PfnLockHeld)
+        {
+            UNLOCK_PFN(OldIrql);
         }
 
         //
         // Fault it in.
         //
 
-        MiMakeSystemAddressValid (PointerPpe, TargetProcess);
+        MiMakeSystemAddressValid(PointerPpe, TargetProcess);
 
-        ASSERT (PointerPxe->u.Hard.Valid == 1);
+        ASSERT(PointerPxe->u.Hard.Valid == 1);
 
         //
         // Now deal with the page directory page.
         //
 
-        MiMakeSystemAddressValid (PointerPde, TargetProcess);
+        MiMakeSystemAddressValid(PointerPde, TargetProcess);
 
-        ASSERT (PointerPxe->u.Hard.Valid == 1);
-        ASSERT (PointerPpe->u.Hard.Valid == 1);
+        ASSERT(PointerPxe->u.Hard.Valid == 1);
+        ASSERT(PointerPpe->u.Hard.Valid == 1);
 
         //
         // Now deal with the page table page.
         //
 
-        ASSERT (OldIrql == APC_LEVEL);
+        ASSERT(OldIrql == APC_LEVEL);
 
         //
         // Fault it in.
         //
 
-        MiMakeSystemAddressValid (PointerPte, TargetProcess);
+        MiMakeSystemAddressValid(PointerPte, TargetProcess);
 
-        ASSERT (PointerPxe->u.Hard.Valid == 1);
-        ASSERT (PointerPpe->u.Hard.Valid == 1);
-        ASSERT (PointerPde->u.Hard.Valid == 1);
+        ASSERT(PointerPxe->u.Hard.Valid == 1);
+        ASSERT(PointerPpe->u.Hard.Valid == 1);
+        ASSERT(PointerPde->u.Hard.Valid == 1);
 
-        if (PfnLockHeld) {
-            LOCK_PFN (OldIrql);
+        if (PfnLockHeld)
+        {
+            LOCK_PFN(OldIrql);
         }
 
-    } while ((PointerPxe->u.Hard.Valid == 0) ||
-             (PointerPpe->u.Hard.Valid == 0) ||
-             (PointerPde->u.Hard.Valid == 0));
+    } while ((PointerPxe->u.Hard.Valid == 0) || (PointerPpe->u.Hard.Valid == 0) || (PointerPde->u.Hard.Valid == 0));
 
     return;
 }
-
+
 ULONG
 FASTCALL
-MiMakeSystemAddressValid (
-    IN PVOID VirtualAddress,
-    IN PEPROCESS CurrentProcess
-    )
+MiMakeSystemAddressValid(IN PVOID VirtualAddress, IN PEPROCESS CurrentProcess)
 
 /*++
 
@@ -785,12 +742,12 @@ Environment:
 
     Waited = FALSE;
 
-    ASSERT (VirtualAddress > MM_HIGHEST_USER_ADDRESS);
+    ASSERT(VirtualAddress > MM_HIGHEST_USER_ADDRESS);
 
-    ASSERT ((VirtualAddress < MM_PAGED_POOL_START) ||
-        (VirtualAddress > MmPagedPoolEnd));
+    ASSERT((VirtualAddress < MM_PAGED_POOL_START) || (VirtualAddress > MmPagedPoolEnd));
 
-    while (!MmIsAddressValid(VirtualAddress)) {
+    while (!MmIsAddressValid(VirtualAddress))
+    {
 
         //
         // The virtual address is not present.  Release
@@ -802,13 +759,11 @@ Environment:
 
         UNLOCK_WS_REGARDLESS(CurrentProcess, WsHeldSafe);
 
-        status = MmAccessFault (FALSE, VirtualAddress, KernelMode, (PVOID)0);
-        if (!NT_SUCCESS(status)) {
-            KeBugCheckEx (KERNEL_DATA_INPAGE_ERROR,
-                          1,
-                          (ULONG)status,
-                          (ULONG_PTR)CurrentProcess,
-                          (ULONG_PTR)VirtualAddress);
+        status = MmAccessFault(FALSE, VirtualAddress, KernelMode, (PVOID)0);
+        if (!NT_SUCCESS(status))
+        {
+            KeBugCheckEx(KERNEL_DATA_INPAGE_ERROR, 1, (ULONG)status, (ULONG_PTR)CurrentProcess,
+                         (ULONG_PTR)VirtualAddress);
         }
 
         LOCK_WS_REGARDLESS(CurrentProcess, WsHeldSafe);
@@ -819,13 +774,10 @@ Environment:
     return Waited;
 }
 
-
+
 ULONG
 FASTCALL
-MiMakeSystemAddressValidPfnWs (
-    IN PVOID VirtualAddress,
-    IN PEPROCESS CurrentProcess OPTIONAL
-    )
+MiMakeSystemAddressValidPfnWs(IN PVOID VirtualAddress, IN PEPROCESS CurrentProcess OPTIONAL)
 
 /*++
 
@@ -869,17 +821,19 @@ Environment:
 
     WsHeldSafe = FALSE;
 
-    ASSERT (VirtualAddress > MM_HIGHEST_USER_ADDRESS);
+    ASSERT(VirtualAddress > MM_HIGHEST_USER_ADDRESS);
 
-    while (!MmIsAddressValid(VirtualAddress)) {
+    while (!MmIsAddressValid(VirtualAddress))
+    {
 
         //
         // The virtual address is not present.  Release
         // the working set mutex and fault it in.
         //
 
-        UNLOCK_PFN (OldIrql);
-        if (CurrentProcess != NULL) {
+        UNLOCK_PFN(OldIrql);
+        if (CurrentProcess != NULL)
+        {
 
             //
             // The working set lock may have been acquired safely or unsafely
@@ -888,29 +842,26 @@ Environment:
 
             UNLOCK_WS_REGARDLESS(CurrentProcess, WsHeldSafe);
         }
-        status = MmAccessFault (FALSE, VirtualAddress, KernelMode, (PVOID)0);
-        if (!NT_SUCCESS(status)) {
-            KeBugCheckEx (KERNEL_DATA_INPAGE_ERROR,
-                          2,
-                          (ULONG)status,
-                          (ULONG_PTR)CurrentProcess,
-                          (ULONG_PTR)VirtualAddress);
+        status = MmAccessFault(FALSE, VirtualAddress, KernelMode, (PVOID)0);
+        if (!NT_SUCCESS(status))
+        {
+            KeBugCheckEx(KERNEL_DATA_INPAGE_ERROR, 2, (ULONG)status, (ULONG_PTR)CurrentProcess,
+                         (ULONG_PTR)VirtualAddress);
         }
-        if (CurrentProcess != NULL) {
+        if (CurrentProcess != NULL)
+        {
             LOCK_WS_REGARDLESS(CurrentProcess, WsHeldSafe);
         }
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
         Waited = TRUE;
     }
     return Waited;
 }
-
+
 ULONG
 FASTCALL
-MiMakeSystemAddressValidPfnSystemWs (
-    IN PVOID VirtualAddress
-    )
+MiMakeSystemAddressValidPfnSystemWs(IN PVOID VirtualAddress)
 
 /*++
 
@@ -944,52 +895,52 @@ Environment:
     OldIrql = APC_LEVEL;
     OldIrqlWs = APC_LEVEL;
 
-    ASSERT (VirtualAddress > MM_HIGHEST_USER_ADDRESS);
+    ASSERT(VirtualAddress > MM_HIGHEST_USER_ADDRESS);
 
-    SessionSpace = MI_IS_SESSION_IMAGE_ADDRESS (VirtualAddress);
+    SessionSpace = MI_IS_SESSION_IMAGE_ADDRESS(VirtualAddress);
 
-    while (!MmIsAddressValid(VirtualAddress)) {
+    while (!MmIsAddressValid(VirtualAddress))
+    {
 
         //
         // The virtual address is not present.  Release
         // the working set mutex and fault it in.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
-        if (SessionSpace == TRUE) {
-            UNLOCK_SESSION_SPACE_WS (OldIrqlWs);
+        if (SessionSpace == TRUE)
+        {
+            UNLOCK_SESSION_SPACE_WS(OldIrqlWs);
         }
-        else {
-            UNLOCK_SYSTEM_WS (OldIrqlWs);
+        else
+        {
+            UNLOCK_SYSTEM_WS(OldIrqlWs);
         }
 
-        status = MmAccessFault (FALSE, VirtualAddress, KernelMode, (PVOID)0);
-        if (!NT_SUCCESS(status)) {
-            KeBugCheckEx (KERNEL_DATA_INPAGE_ERROR,
-                          2,
-                          (ULONG)status,
-                          (ULONG_PTR)0,
-                          (ULONG_PTR)VirtualAddress);
+        status = MmAccessFault(FALSE, VirtualAddress, KernelMode, (PVOID)0);
+        if (!NT_SUCCESS(status))
+        {
+            KeBugCheckEx(KERNEL_DATA_INPAGE_ERROR, 2, (ULONG)status, (ULONG_PTR)0, (ULONG_PTR)VirtualAddress);
         }
-        if (SessionSpace == TRUE) {
-            LOCK_SESSION_SPACE_WS (OldIrqlWs, PsGetCurrentThread ());
+        if (SessionSpace == TRUE)
+        {
+            LOCK_SESSION_SPACE_WS(OldIrqlWs, PsGetCurrentThread());
         }
-        else {
-            LOCK_SYSTEM_WS (OldIrqlWs, PsGetCurrentThread ());
+        else
+        {
+            LOCK_SYSTEM_WS(OldIrqlWs, PsGetCurrentThread());
         }
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
         Waited = TRUE;
     }
     return Waited;
 }
-
+
 ULONG
 FASTCALL
-MiMakeSystemAddressValidPfn (
-    IN PVOID VirtualAddress
-    )
+MiMakeSystemAddressValidPfn(IN PVOID VirtualAddress)
 
 /*++
 
@@ -1018,40 +969,35 @@ Environment:
 
     ULONG Waited = FALSE;
 
-    ASSERT (VirtualAddress > MM_HIGHEST_USER_ADDRESS);
+    ASSERT(VirtualAddress > MM_HIGHEST_USER_ADDRESS);
 
-    while (!MmIsAddressValid(VirtualAddress)) {
+    while (!MmIsAddressValid(VirtualAddress))
+    {
 
         //
         // The virtual address is not present.  Release
         // the working set mutex and fault it in.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
-        status = MmAccessFault (FALSE, VirtualAddress, KernelMode, (PVOID)0);
-        if (!NT_SUCCESS(status)) {
-            KeBugCheckEx (KERNEL_DATA_INPAGE_ERROR,
-                          3,
-                          (ULONG)status,
-                          (ULONG_PTR)VirtualAddress,
-                          0);
+        status = MmAccessFault(FALSE, VirtualAddress, KernelMode, (PVOID)0);
+        if (!NT_SUCCESS(status))
+        {
+            KeBugCheckEx(KERNEL_DATA_INPAGE_ERROR, 3, (ULONG)status, (ULONG_PTR)VirtualAddress, 0);
         }
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
         Waited = TRUE;
     }
 
     return Waited;
 }
-
+
 ULONG
 FASTCALL
-MiLockPagedAddress (
-    IN PVOID VirtualAddress,
-    IN ULONG PfnLockHeld
-    )
+MiLockPagedAddress(IN PVOID VirtualAddress, IN ULONG PfnLockHeld)
 
 /*++
 
@@ -1099,34 +1045,30 @@ Environment:
     // The address must be within paged pool.
     //
 
-    if (PfnLockHeld == FALSE) {
-        LOCK_PFN2 (OldIrql);
+    if (PfnLockHeld == FALSE)
+    {
+        LOCK_PFN2(OldIrql);
     }
 
-    if (PointerPte->u.Hard.Valid == 0) {
+    if (PointerPte->u.Hard.Valid == 0)
+    {
 
-        Waited = MiMakeSystemAddressValidPfn (
-                                MiGetVirtualAddressMappedByPte(PointerPte));
-
+        Waited = MiMakeSystemAddressValidPfn(MiGetVirtualAddressMappedByPte(PointerPte));
     }
 
-    Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+    Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
     MI_ADD_LOCKED_PAGE_CHARGE(Pfn1, 6);
     Pfn1->u3.e2.ReferenceCount += 1;
 
-    if (PfnLockHeld == FALSE) {
-        UNLOCK_PFN2 (OldIrql);
+    if (PfnLockHeld == FALSE)
+    {
+        UNLOCK_PFN2(OldIrql);
     }
     return Waited;
 }
 
-
-VOID
-FASTCALL
-MiUnlockPagedAddress (
-    IN PVOID VirtualAddress,
-    IN ULONG PfnLockHeld
-    )
+
+VOID FASTCALL MiUnlockPagedAddress(IN PVOID VirtualAddress, IN ULONG PfnLockHeld)
 
 /*++
 
@@ -1170,30 +1112,27 @@ Environment:
     // Address must be within paged pool.
     //
 
-    if (PfnLockHeld == FALSE) {
-        LOCK_PFN2 (OldIrql);
+    if (PfnLockHeld == FALSE)
+    {
+        LOCK_PFN2(OldIrql);
     }
 
-    ASSERT (PointerPte->u.Hard.Valid == 1);
-    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    ASSERT(PointerPte->u.Hard.Valid == 1);
+    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    ASSERT (Pfn1->u3.e2.ReferenceCount > 1);
+    ASSERT(Pfn1->u3.e2.ReferenceCount > 1);
 
     MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn1, 7);
 
-    if (PfnLockHeld == FALSE) {
-        UNLOCK_PFN2 (OldIrql);
+    if (PfnLockHeld == FALSE)
+    {
+        UNLOCK_PFN2(OldIrql);
     }
     return;
 }
-
-VOID
-FASTCALL
-MiZeroPhysicalPage (
-    IN PFN_NUMBER PageFrameIndex,
-    IN ULONG PageColor
-    )
+
+VOID FASTCALL MiZeroPhysicalPage(IN PFN_NUMBER PageFrameIndex, IN ULONG PageColor)
 
 /*++
 
@@ -1221,22 +1160,18 @@ Environment:
     PVOID VirtualAddress;
     PEPROCESS Process;
 
-    UNREFERENCED_PARAMETER (PageColor);
+    UNREFERENCED_PARAMETER(PageColor);
 
-    Process = PsGetCurrentProcess ();
+    Process = PsGetCurrentProcess();
 
-    VirtualAddress = MiMapPageInHyperSpace (Process, PageFrameIndex, &OldIrql);
-    KeZeroPage (VirtualAddress);
-    MiUnmapPageInHyperSpace (Process, VirtualAddress, OldIrql);
+    VirtualAddress = MiMapPageInHyperSpace(Process, PageFrameIndex, &OldIrql);
+    KeZeroPage(VirtualAddress);
+    MiUnmapPageInHyperSpace(Process, VirtualAddress, OldIrql);
 
     return;
 }
-
-VOID
-FASTCALL
-MiRestoreTransitionPte (
-    IN PFN_NUMBER PageFrameIndex
-    )
+
+VOID FASTCALL MiRestoreTransitionPte(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -1275,30 +1210,33 @@ Environment:
     PFN_NUMBER PageTableFrameIndex;
 
     Process = NULL;
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    ASSERT (Pfn1->u3.e1.PageLocation == StandbyPageList);
-    ASSERT (Pfn1->u3.e1.CacheAttribute == MiCached);
+    ASSERT(Pfn1->u3.e1.PageLocation == StandbyPageList);
+    ASSERT(Pfn1->u3.e1.CacheAttribute == MiCached);
 
-    if (Pfn1->u3.e1.PrototypePte) {
+    if (Pfn1->u3.e1.PrototypePte)
+    {
 
-        if (MmIsAddressValid (Pfn1->PteAddress)) {
+        if (MmIsAddressValid(Pfn1->PteAddress))
+        {
             PointerPte = Pfn1->PteAddress;
-        } else {
+        }
+        else
+        {
 
             //
             // The page containing the prototype PTE is not valid,
             // map the page into hyperspace and reference it that way.
             //
 
-            Process = PsGetCurrentProcess ();
-            PointerPte = MiMapPageInHyperSpaceAtDpc (Process, Pfn1->u4.PteFrame);
-            PointerPte = (PMMPTE)((PCHAR)PointerPte +
-                                    MiGetByteOffset(Pfn1->PteAddress));
+            Process = PsGetCurrentProcess();
+            PointerPte = MiMapPageInHyperSpaceAtDpc(Process, Pfn1->u4.PteFrame);
+            PointerPte = (PMMPTE)((PCHAR)PointerPte + MiGetByteOffset(Pfn1->PteAddress));
         }
 
-        ASSERT ((MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (PointerPte) == PageFrameIndex) &&
-                 (PointerPte->u.Hard.Valid == 0));
+        ASSERT((MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(PointerPte) == PageFrameIndex) &&
+               (PointerPte->u.Hard.Valid == 0));
 
         //
         // This page is referenced by a prototype PTE.  The
@@ -1306,7 +1244,8 @@ Environment:
         // is removed from the transition state.
         //
 
-        if (Pfn1->OriginalPte.u.Soft.Prototype) {
+        if (Pfn1->OriginalPte.u.Soft.Prototype)
+        {
 
             //
             // The prototype PTE is in subsection format, calculate the
@@ -1316,15 +1255,16 @@ Environment:
             // Calculate address of subsection for this prototype PTE.
             //
 
-            Subsection = MiGetSubsectionAddress (&Pfn1->OriginalPte);
+            Subsection = MiGetSubsectionAddress(&Pfn1->OriginalPte);
             ControlArea = Subsection->ControlArea;
             ControlArea->NumberOfPfnReferences -= 1;
-            ASSERT ((LONG)ControlArea->NumberOfPfnReferences >= 0);
+            ASSERT((LONG)ControlArea->NumberOfPfnReferences >= 0);
 
-            MiCheckForControlAreaDeletion (ControlArea);
+            MiCheckForControlAreaDeletion(ControlArea);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The page points to a page or page table page which may not be
@@ -1338,18 +1278,17 @@ Environment:
 
         PointerPte = Pfn1->PteAddress;
 
-        if (PointerPte < MiGetPteAddress ((PVOID)MM_SYSTEM_SPACE_START) ||
-	       MI_IS_SESSION_PTE (PointerPte)) {
+        if (PointerPte < MiGetPteAddress((PVOID)MM_SYSTEM_SPACE_START) || MI_IS_SESSION_PTE(PointerPte))
+        {
 
-            Process = PsGetCurrentProcess ();
-            PointerPte = MiMapPageInHyperSpaceAtDpc (Process, Pfn1->u4.PteFrame);
-            PointerPte = (PMMPTE)((PCHAR)PointerPte +
-                                       MiGetByteOffset(Pfn1->PteAddress));
+            Process = PsGetCurrentProcess();
+            PointerPte = MiMapPageInHyperSpaceAtDpc(Process, Pfn1->u4.PteFrame);
+            PointerPte = (PMMPTE)((PCHAR)PointerPte + MiGetByteOffset(Pfn1->PteAddress));
         }
-        ASSERT ((MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (PointerPte) == PageFrameIndex) &&
-                 (PointerPte->u.Hard.Valid == 0));
+        ASSERT((MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(PointerPte) == PageFrameIndex) &&
+               (PointerPte->u.Hard.Valid == 0));
 
-        MI_CAPTURE_USED_PAGETABLE_ENTRIES (Pfn1);
+        MI_CAPTURE_USED_PAGETABLE_ENTRIES(Pfn1);
 
 #if _WIN64
 #if DBGXX
@@ -1358,14 +1297,14 @@ Environment:
 #endif
     }
 
-    ASSERT (Pfn1->OriginalPte.u.Hard.Valid == 0);
-    ASSERT (!((Pfn1->OriginalPte.u.Soft.Prototype == 0) &&
-             (Pfn1->OriginalPte.u.Soft.Transition == 1)));
+    ASSERT(Pfn1->OriginalPte.u.Hard.Valid == 0);
+    ASSERT(!((Pfn1->OriginalPte.u.Soft.Prototype == 0) && (Pfn1->OriginalPte.u.Soft.Transition == 1)));
 
-    MI_WRITE_INVALID_PTE (PointerPte, Pfn1->OriginalPte);
+    MI_WRITE_INVALID_PTE(PointerPte, Pfn1->OriginalPte);
 
-    if (Process != NULL) {
-        MiUnmapPageInHyperSpaceFromDpc (Process, PointerPte);
+    if (Process != NULL)
+    {
+        MiUnmapPageInHyperSpaceFromDpc(Process, PointerPte);
     }
 
     Pfn1->u3.e1.CacheAttribute = MiNotMapped;
@@ -1377,17 +1316,14 @@ Environment:
     //
 
     PageTableFrameIndex = Pfn1->u4.PteFrame;
-    Pfn2 = MI_PFN_ELEMENT (PageTableFrameIndex);
-    MiDecrementShareCountInline (Pfn2, PageTableFrameIndex);
+    Pfn2 = MI_PFN_ELEMENT(PageTableFrameIndex);
+    MiDecrementShareCountInline(Pfn2, PageTableFrameIndex);
 
     return;
 }
-
+
 PSUBSECTION
-MiGetSubsectionAndProtoFromPte (
-    IN PMMPTE PointerPte,
-    OUT PMMPTE *ProtoPte
-    )
+MiGetSubsectionAndProtoFromPte(IN PMMPTE PointerPte, OUT PMMPTE *ProtoPte)
 
 /*++
 
@@ -1420,45 +1356,45 @@ Environment:
     PMMPTE PointerProto;
     PMMPFN Pfn1;
 
-    if (PointerPte->u.Hard.Valid == 1) {
-        Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+    if (PointerPte->u.Hard.Valid == 1)
+    {
+        Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
         *ProtoPte = Pfn1->PteAddress;
-        return MiGetSubsectionAddress (&Pfn1->OriginalPte);
+        return MiGetSubsectionAddress(&Pfn1->OriginalPte);
     }
 
-    PointerProto = MiPteToProto (PointerPte);
+    PointerProto = MiPteToProto(PointerPte);
     *ProtoPte = PointerProto;
 
-    MiMakeSystemAddressValidPfn (PointerProto);
+    MiMakeSystemAddressValidPfn(PointerProto);
 
-    if (PointerProto->u.Hard.Valid == 1) {
+    if (PointerProto->u.Hard.Valid == 1)
+    {
         //
         // Prototype Pte is valid.
         //
 
-        Pfn1 = MI_PFN_ELEMENT (PointerProto->u.Hard.PageFrameNumber);
-        return MiGetSubsectionAddress (&Pfn1->OriginalPte);
+        Pfn1 = MI_PFN_ELEMENT(PointerProto->u.Hard.PageFrameNumber);
+        return MiGetSubsectionAddress(&Pfn1->OriginalPte);
     }
 
-    if ((PointerProto->u.Soft.Transition == 1) &&
-         (PointerProto->u.Soft.Prototype == 0)) {
+    if ((PointerProto->u.Soft.Transition == 1) && (PointerProto->u.Soft.Prototype == 0))
+    {
 
         //
         // Prototype Pte is in transition.
         //
 
-        Pfn1 = MI_PFN_ELEMENT (PointerProto->u.Trans.PageFrameNumber);
-        return MiGetSubsectionAddress (&Pfn1->OriginalPte);
+        Pfn1 = MI_PFN_ELEMENT(PointerProto->u.Trans.PageFrameNumber);
+        return MiGetSubsectionAddress(&Pfn1->OriginalPte);
     }
 
-    ASSERT (PointerProto->u.Soft.Prototype == 1);
-    return MiGetSubsectionAddress (PointerProto);
+    ASSERT(PointerProto->u.Soft.Prototype == 1);
+    return MiGetSubsectionAddress(PointerProto);
 }
-
+
 BOOLEAN
-MmIsNonPagedSystemAddressValid (
-    IN PVOID VirtualAddress
-    )
+MmIsNonPagedSystemAddressValid(IN PVOID VirtualAddress)
 
 /*++
 
@@ -1490,8 +1426,8 @@ Environment:
     // those limits, return TRUE.
     //
 
-    if ((VirtualAddress >= MmPagedPoolStart) &&
-        (VirtualAddress <= MmPagedPoolEnd)) {
+    if ((VirtualAddress >= MmPagedPoolStart) && (VirtualAddress <= MmPagedPoolEnd))
+    {
         return FALSE;
     }
 
@@ -1501,33 +1437,30 @@ Environment:
     // session requests are satisfied from systemwide nonpaged pool instead).
     //
 
-    if (MmIsSpecialPoolAddress (VirtualAddress)) {
-        if (MiIsSpecialPoolAddressNonPaged (VirtualAddress)) {
+    if (MmIsSpecialPoolAddress(VirtualAddress))
+    {
+        if (MiIsSpecialPoolAddressNonPaged(VirtualAddress))
+        {
             return TRUE;
         }
         return FALSE;
     }
 
-    if ((VirtualAddress >= (PVOID) MmSessionBase) &&
-        (VirtualAddress < (PVOID) MiSessionSpaceEnd)) {
+    if ((VirtualAddress >= (PVOID)MmSessionBase) && (VirtualAddress < (PVOID)MiSessionSpaceEnd))
+    {
         return FALSE;
     }
 
     return TRUE;
 }
-
-VOID
-MmHibernateInformation (
-    IN PVOID    MemoryMap,
-    OUT PULONG_PTR  HiberVa,
-    OUT PPHYSICAL_ADDRESS HiberPte
-    )
+
+VOID MmHibernateInformation(IN PVOID MemoryMap, OUT PULONG_PTR HiberVa, OUT PPHYSICAL_ADDRESS HiberPte)
 {
     //
     // Mark PTE page where the 16 dump PTEs reside as needing cloning.
     //
 
-    PoSetHiberRange (MemoryMap, PO_MEM_CLONE, MmCrashDumpPte, 1, ' etP');
+    PoSetHiberRange(MemoryMap, PO_MEM_CLONE, MmCrashDumpPte, 1, ' etP');
 
     //
     // Return the dump PTEs to the loader (as it needs to use them
@@ -1535,7 +1468,7 @@ MmHibernateInformation (
     // final bit of restoring memory).
     //
 
-    *HiberVa = (ULONG_PTR) MiGetVirtualAddressMappedByPte(MmCrashDumpPte);
+    *HiberVa = (ULONG_PTR)MiGetVirtualAddressMappedByPte(MmCrashDumpPte);
     *HiberPte = MmGetPhysicalAddress(MmCrashDumpPte);
 }
 
@@ -1544,10 +1477,7 @@ MmHibernateInformation (
 
 ULONG zok[16];
 
-VOID
-MiCheckPageTableTrim(
-    IN PMMPTE PointerPte
-)
+VOID MiCheckPageTableTrim(IN PMMPTE PointerPte)
 {
     ULONG i;
     PFN_NUMBER Frame;
@@ -1557,40 +1487,40 @@ MiCheckPageTableTrim(
     ULONG count;
 
     Frame = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
-    Pfn = MI_PFN_ELEMENT (Frame);
+    Pfn = MI_PFN_ELEMENT(Frame);
 
-    if (Pfn->UsedPageTableEntries) {
+    if (Pfn->UsedPageTableEntries)
+    {
 
         count = 0;
 
-        p = FrameData = (PMMPTE)KSEG_ADDRESS (Frame);
+        p = FrameData = (PMMPTE)KSEG_ADDRESS(Frame);
 
-        for (i = 0; i < PTE_PER_PAGE; i += 1, p += 1) {
-            if (p->u.Long != 0) {
+        for (i = 0; i < PTE_PER_PAGE; i += 1, p += 1)
+        {
+            if (p->u.Long != 0)
+            {
                 count += 1;
             }
         }
 
-        DbgPrint ("MiCheckPageTableTrim: %I64X %I64X %I64X\n",
-            PointerPte, Pfn, Pfn->UsedPageTableEntries);
+        DbgPrint("MiCheckPageTableTrim: %I64X %I64X %I64X\n", PointerPte, Pfn, Pfn->UsedPageTableEntries);
 
-        if (count != Pfn->UsedPageTableEntries) {
-            DbgPrint ("MiCheckPageTableTrim1: %I64X %I64X %I64X %I64X\n",
-                PointerPte, Pfn, Pfn->UsedPageTableEntries, count);
+        if (count != Pfn->UsedPageTableEntries)
+        {
+            DbgPrint("MiCheckPageTableTrim1: %I64X %I64X %I64X %I64X\n", PointerPte, Pfn, Pfn->UsedPageTableEntries,
+                     count);
             DbgBreakPoint();
         }
         zok[0] += 1;
     }
-    else {
+    else
+    {
         zok[1] += 1;
     }
 }
 
-VOID
-MiCheckPageTableInPage(
-    IN PMMPFN Pfn,
-    IN PMMINPAGE_SUPPORT Support
-)
+VOID MiCheckPageTableInPage(IN PMMPFN Pfn, IN PMMINPAGE_SUPPORT Support)
 {
     ULONG i;
     PFN_NUMBER Frame;
@@ -1598,31 +1528,35 @@ MiCheckPageTableInPage(
     PMMPTE p;
     ULONG count;
 
-    if (Support->UsedPageTableEntries) {
+    if (Support->UsedPageTableEntries)
+    {
 
         Frame = (PFN_NUMBER)((PMMPFN)Pfn - (PMMPFN)MmPfnDatabase);
 
         count = 0;
 
-        p = FrameData = (PMMPTE)KSEG_ADDRESS (Frame);
+        p = FrameData = (PMMPTE)KSEG_ADDRESS(Frame);
 
-        for (i = 0; i < PTE_PER_PAGE; i += 1, p += 1) {
-            if (p->u.Long != 0) {
+        for (i = 0; i < PTE_PER_PAGE; i += 1, p += 1)
+        {
+            if (p->u.Long != 0)
+            {
                 count += 1;
             }
         }
 
-        DbgPrint ("MiCheckPageTableIn: %I64X %I64X %I64X\n",
-            FrameData, Pfn, Support->UsedPageTableEntries);
+        DbgPrint("MiCheckPageTableIn: %I64X %I64X %I64X\n", FrameData, Pfn, Support->UsedPageTableEntries);
 
-        if (count != Support->UsedPageTableEntries) {
-            DbgPrint ("MiCheckPageTableIn1: %I64X %I64X %I64X %I64X\n",
-                FrameData, Pfn, Support->UsedPageTableEntries, count);
+        if (count != Support->UsedPageTableEntries)
+        {
+            DbgPrint("MiCheckPageTableIn1: %I64X %I64X %I64X %I64X\n", FrameData, Pfn, Support->UsedPageTableEntries,
+                     count);
             DbgBreakPoint();
         }
         zok[2] += 1;
     }
-    else {
+    else
+    {
         zok[3] += 1;
     }
 }

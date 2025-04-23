@@ -26,11 +26,11 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,SeRmInitPhase1)
-#pragma alloc_text(PAGE,SepRmCommandServerThread)
-#pragma alloc_text(PAGE,SepRmCommandServerThreadInit)
-#pragma alloc_text(PAGE,SepRmCallLsa)
-#pragma alloc_text(INIT,SepRmInitPhase0)
+#pragma alloc_text(INIT, SeRmInitPhase1)
+#pragma alloc_text(PAGE, SepRmCommandServerThread)
+#pragma alloc_text(PAGE, SepRmCommandServerThreadInit)
+#pragma alloc_text(PAGE, SepRmCallLsa)
+#pragma alloc_text(INIT, SepRmInitPhase0)
 #endif
 
 //
@@ -45,17 +45,12 @@ Revision History:
 #pragma const_seg("PAGECONST")
 #endif
 
-const SEP_RM_COMMAND_WORKER SepRmCommandDispatch[] = {
-                          NULL,
-                          SepRmSetAuditEventWrkr,
-                          SepRmCreateLogonSessionWrkr,
-                          SepRmDeleteLogonSessionWrkr
-                          };
+const SEP_RM_COMMAND_WORKER SepRmCommandDispatch[] = { NULL, SepRmSetAuditEventWrkr, SepRmCreateLogonSessionWrkr,
+                                                       SepRmDeleteLogonSessionWrkr };
 
 
 BOOLEAN
-SeRmInitPhase1(
-    )
+SeRmInitPhase1()
 
 /*++
 
@@ -116,30 +111,17 @@ Return Value:
     // Monitor to update its state data.
     //
 
-    RtlInitString( &RmCommandPortName, "\\SeRmCommandPort" );
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeRmCommandPortName,
-                 &RmCommandPortName,
-                 TRUE );
-    ASSERT( NT_SUCCESS(Status) );
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &UnicodeRmCommandPortName,
-        0,
-        NULL,
-        NULL
-        );
+    RtlInitString(&RmCommandPortName, "\\SeRmCommandPort");
+    Status = RtlAnsiStringToUnicodeString(&UnicodeRmCommandPortName, &RmCommandPortName, TRUE);
+    ASSERT(NT_SUCCESS(Status));
+    InitializeObjectAttributes(&ObjectAttributes, &UnicodeRmCommandPortName, 0, NULL, NULL);
 
-    Status = ZwCreatePort(
-                 &SepRmState.RmCommandServerPortHandle,
-                 &ObjectAttributes,
-                 sizeof(SEP_RM_CONNECT_INFO),
-                 sizeof(RM_COMMAND_MESSAGE),
-                 sizeof(RM_COMMAND_MESSAGE) * 32
-                 );
-    RtlFreeUnicodeString( &UnicodeRmCommandPortName );
+    Status = ZwCreatePort(&SepRmState.RmCommandServerPortHandle, &ObjectAttributes, sizeof(SEP_RM_CONNECT_INFO),
+                          sizeof(RM_COMMAND_MESSAGE), sizeof(RM_COMMAND_MESSAGE) * 32);
+    RtlFreeUnicodeString(&UnicodeRmCommandPortName);
 
-    if( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         KdPrint(("Security: Rm Create Command Port failed 0x%lx\n", Status));
         return FALSE;
@@ -150,15 +132,12 @@ Return Value:
     // First, build the Security Descriptor for the Init Event Object
     //
 
-    Status = RtlCreateSecurityDescriptor(
-                 &LsaInitEventSecurityDescriptor,
-                 SECURITY_DESCRIPTOR_REVISION
-                 );
+    Status = RtlCreateSecurityDescriptor(&LsaInitEventSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        KdPrint(("Security:  Creating Lsa Init Event Desc failed 0x%lx\n",
-                  Status));
+        KdPrint(("Security:  Creating Lsa Init Event Desc failed 0x%lx\n", Status));
         return FALSE;
     }
 
@@ -168,13 +147,11 @@ Return Value:
     // enabled.
     //
 
-    AclSize = sizeof(ACL) +
-              sizeof(ACCESS_ALLOWED_ACE) +
-              SeLengthSid(SeLocalSystemSid);
-    LsaInitEventSecurityDescriptor.Dacl =
-        ExAllocatePoolWithTag(PagedPool, AclSize, 'cAeS');
+    AclSize = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) + SeLengthSid(SeLocalSystemSid);
+    LsaInitEventSecurityDescriptor.Dacl = ExAllocatePoolWithTag(PagedPool, AclSize, 'cAeS');
 
-    if (LsaInitEventSecurityDescriptor.Dacl == NULL) {
+    if (LsaInitEventSecurityDescriptor.Dacl == NULL)
+    {
 
         KdPrint(("Security LSA:  Insufficient resources to initialize\n"));
         return FALSE;
@@ -184,16 +161,12 @@ Return Value:
     // Now create the Discretionary ACL within the Security Descriptor
     //
 
-    Status = RtlCreateAcl(
-                 LsaInitEventSecurityDescriptor.Dacl,
-                 AclSize,
-                 ACL_REVISION2
-                 );
+    Status = RtlCreateAcl(LsaInitEventSecurityDescriptor.Dacl, AclSize, ACL_REVISION2);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        KdPrint(("Security:  Creating Lsa Init Event Dacl failed 0x%lx\n",
-                  Status));
+        KdPrint(("Security:  Creating Lsa Init Event Dacl failed 0x%lx\n", Status));
         return FALSE;
     }
 
@@ -201,17 +174,12 @@ Return Value:
     // Now add an ACE giving GENERIC_ALL access to the User ID
     //
 
-    Status = RtlAddAccessAllowedAce(
-                 LsaInitEventSecurityDescriptor.Dacl,
-                 ACL_REVISION2,
-                 GENERIC_ALL,
-                 SeLocalSystemSid
-                 );
+    Status = RtlAddAccessAllowedAce(LsaInitEventSecurityDescriptor.Dacl, ACL_REVISION2, GENERIC_ALL, SeLocalSystemSid);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        KdPrint(("Security:  Adding Lsa Init Event ACE failed 0x%lx\n",
-                  Status));
+        KdPrint(("Security:  Adding Lsa Init Event ACE failed 0x%lx\n", Status));
         return FALSE;
     }
 
@@ -219,18 +187,11 @@ Return Value:
     // Set up the Object Attributes for the Lsa Initialization Event
     //
 
-    RtlInitString( &LsaInitEventName, "\\SeLsaInitEvent" );
-    Status = RtlAnsiStringToUnicodeString(
-                 &UnicodeLsaInitEventName,
-                 &LsaInitEventName,
-                 TRUE );  ASSERT( NT_SUCCESS(Status) );
-    InitializeObjectAttributes(
-        &LsaInitEventObjectAttributes,
-        &UnicodeLsaInitEventName,
-        0,
-        NULL,
-        &LsaInitEventSecurityDescriptor
-        );
+    RtlInitString(&LsaInitEventName, "\\SeLsaInitEvent");
+    Status = RtlAnsiStringToUnicodeString(&UnicodeLsaInitEventName, &LsaInitEventName, TRUE);
+    ASSERT(NT_SUCCESS(Status));
+    InitializeObjectAttributes(&LsaInitEventObjectAttributes, &UnicodeLsaInitEventName, 0, NULL,
+                               &LsaInitEventSecurityDescriptor);
 
     //
     // Create an event for use in synchronizing with the LSA.  The LSA will
@@ -238,19 +199,15 @@ Return Value:
     // where the LSA's Reference Monitor Server Port has been created.
     //
 
-    Status = ZwCreateEvent(
-                 &(SepRmState.LsaInitEventHandle),
-                 EVENT_MODIFY_STATE,
-                 &LsaInitEventObjectAttributes,
-                 NotificationEvent,
-                 FALSE);
+    Status = ZwCreateEvent(&(SepRmState.LsaInitEventHandle), EVENT_MODIFY_STATE, &LsaInitEventObjectAttributes,
+                           NotificationEvent, FALSE);
 
-    RtlFreeUnicodeString( &UnicodeLsaInitEventName );
+    RtlFreeUnicodeString(&UnicodeLsaInitEventName);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        KdPrint(("Security: LSA init event creation failed.0x%xl\n",
-            Status));
+        KdPrint(("Security: LSA init event creation failed.0x%xl\n", Status));
         return FALSE;
     }
 
@@ -258,7 +215,7 @@ Return Value:
     // Deallocate the pool memory used for the Init Event DACL
     //
 
-    ExFreePool( LsaInitEventSecurityDescriptor.Dacl );
+    ExFreePool(LsaInitEventSecurityDescriptor.Dacl);
 
     //
     // Create a permanent thread of the Sysinit Process, called the
@@ -266,19 +223,12 @@ Return Value:
     // receiving Reference Monitor commands and dispatching them.
     //
 
-    Status = PsCreateSystemThread(
-                 &SepRmState.SepRmThreadHandle,
-                 THREAD_GET_CONTEXT |
-                 THREAD_SET_CONTEXT |
-                 THREAD_SET_INFORMATION,
-                 NULL,
-                 NULL,
-                 NULL,
-                 SepRmCommandServerThread,
-                 NULL
-                 );
+    Status = PsCreateSystemThread(&SepRmState.SepRmThreadHandle,
+                                  THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SET_INFORMATION, NULL, NULL, NULL,
+                                  SepRmCommandServerThread, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         KdPrint(("Security: Rm Server Thread creation failed 0x%lx\n", Status));
         return FALSE;
@@ -292,21 +242,18 @@ Return Value:
     SepAdtInitializeCrashOnFail();
     SepAdtInitializePrivilegeAuditing();
     SepAdtInitializeAuditingOptions();
-    
+
     //
     // Reference Monitor initialization is successful if we get to here.
     //
 
-    ZwClose( SepRmState.SepRmThreadHandle );
+    ZwClose(SepRmState.SepRmThreadHandle);
     SepRmState.SepRmThreadHandle = NULL;
     return TRUE;
 }
 
-
-VOID
-SepRmCommandServerThread(
-    IN PVOID StartContext
-)
+
+VOID SepRmCommandServerThread(IN PVOID StartContext)
 
 /*++
 
@@ -348,18 +295,20 @@ Return Value:
     // synchronization with the LSA or dependency on the LSA having run.
     //
 
-    if (!SepRmCommandServerThreadInit()) {
+    if (!SepRmCommandServerThreadInit())
+    {
 
         KdPrint(("Security: Terminating Rm Command Server Thread\n"));
         return;
     }
 
-    Status = PoRequestShutdownEvent (NULL);
-    if (!NT_SUCCESS (Status)) {
-        ZwClose (SepRmState.RmCommandPortHandle);
-        ZwClose (SepRmState.RmCommandServerPortHandle);
-        ZwClose (SepRmState.LsaCommandPortHandle);
-        ZwClose (SepLsaHandle);
+    Status = PoRequestShutdownEvent(NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(SepRmState.RmCommandPortHandle);
+        ZwClose(SepRmState.RmCommandServerPortHandle);
+        ZwClose(SepRmState.LsaCommandPortHandle);
+        ZwClose(SepLsaHandle);
         SepRmState.RmCommandPortHandle = NULL;
         SepRmState.RmCommandServerPortHandle = NULL;
         SepRmState.LsaCommandPortHandle = NULL;
@@ -373,11 +322,9 @@ Return Value:
     //
 
     CommandMessage.MessageHeader.u2.ZeroInit = 0;
-    CommandMessage.MessageHeader.u1.s1.TotalLength =
-        (CSHORT) sizeof(RM_COMMAND_MESSAGE);
+    CommandMessage.MessageHeader.u1.s1.TotalLength = (CSHORT)sizeof(RM_COMMAND_MESSAGE);
     CommandMessage.MessageHeader.u1.s1.DataLength =
-    CommandMessage.MessageHeader.u1.s1.TotalLength -
-        (CSHORT) sizeof(PORT_MESSAGE);
+        CommandMessage.MessageHeader.u1.s1.TotalLength - (CSHORT)sizeof(PORT_MESSAGE);
 
     //
     // Initialize the LPC port message header type and data sizes for
@@ -385,11 +332,9 @@ Return Value:
     //
 
     ReplyMessage.MessageHeader.u2.ZeroInit = 0;
-    ReplyMessage.MessageHeader.u1.s1.TotalLength =
-        (CSHORT) sizeof(RM_COMMAND_MESSAGE);
+    ReplyMessage.MessageHeader.u1.s1.TotalLength = (CSHORT)sizeof(RM_COMMAND_MESSAGE);
     ReplyMessage.MessageHeader.u1.s1.DataLength =
-    ReplyMessage.MessageHeader.u1.s1.TotalLength -
-        (CSHORT) sizeof(PORT_MESSAGE);
+        ReplyMessage.MessageHeader.u1.s1.TotalLength - (CSHORT)sizeof(PORT_MESSAGE);
 
     //
     // First time through, there is no reply.
@@ -401,20 +346,18 @@ Return Value:
     // Now loop indefinitely, processing incoming Rm commands from the LSA.
     //
 
-    for(;;) {
+    for (;;)
+    {
 
         //
         // Wait for Command, send reply to previous command (if any)
         //
 
-        Status = ZwReplyWaitReceivePort(
-                    SepRmState.RmCommandPortHandle,
-                    NULL,
-                    (PPORT_MESSAGE) Reply,
-                    (PPORT_MESSAGE) &CommandMessage
-                    );
+        Status = ZwReplyWaitReceivePort(SepRmState.RmCommandPortHandle, NULL, (PPORT_MESSAGE)Reply,
+                                        (PPORT_MESSAGE)&CommandMessage);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // malicious user apps can try to connect to this port.  We will
@@ -422,19 +365,17 @@ Return Value:
             // here.  Ignore it:
             //
 
-            if ( Status == STATUS_UNSUCCESSFUL )
+            if (Status == STATUS_UNSUCCESSFUL)
             {
                 //
                 // skip it:
                 //
 
-                Reply = NULL ;
+                Reply = NULL;
                 continue;
             }
 
-            KdPrint(("Security: RM message receive from Lsa failed %lx\n",
-                Status));
-
+            KdPrint(("Security: RM message receive from Lsa failed %lx\n", Status));
         }
 
         //
@@ -444,93 +385,87 @@ Return Value:
 
         CommandMessage.MessageHeader.u2.s2.Type &= ~LPC_KERNELMODE_MESSAGE;
 
-        if ( CommandMessage.MessageHeader.u2.s2.Type == LPC_REQUEST ) {
+        if (CommandMessage.MessageHeader.u2.s2.Type == LPC_REQUEST)
+        {
 
-            if ( (CommandMessage.CommandNumber >= RmAuditSetCommand) &&
-                 (CommandMessage.CommandNumber <= RmDeleteLogonSession) ) {
+            if ((CommandMessage.CommandNumber >= RmAuditSetCommand) &&
+                (CommandMessage.CommandNumber <= RmDeleteLogonSession))
+            {
 
-                (*(SepRmCommandDispatch[CommandMessage.CommandNumber]))
-                    (&CommandMessage, &ReplyMessage);
-                
+                (*(SepRmCommandDispatch[CommandMessage.CommandNumber]))(&CommandMessage, &ReplyMessage);
+
                 //
                 // Initialize the client thread info and message id for the
                 // reply message.  First time through, the reply message structure
                 // is not used.
                 //
 
-                ReplyMessage.MessageHeader.ClientId =
-                    CommandMessage.MessageHeader.ClientId;
-                ReplyMessage.MessageHeader.MessageId =
-                    CommandMessage.MessageHeader.MessageId;
+                ReplyMessage.MessageHeader.ClientId = CommandMessage.MessageHeader.ClientId;
+                ReplyMessage.MessageHeader.MessageId = CommandMessage.MessageHeader.MessageId;
 
                 Reply = &ReplyMessage;
-                
-            } else {
+            }
+            else
+            {
 
-                ASSERT( (CommandMessage.CommandNumber >= RmAuditSetCommand) &&
-                        (CommandMessage.CommandNumber <= RmDeleteLogonSession) );
+                ASSERT((CommandMessage.CommandNumber >= RmAuditSetCommand) &&
+                       (CommandMessage.CommandNumber <= RmDeleteLogonSession));
                 Reply = NULL;
             }
-
-        } else if (CommandMessage.MessageHeader.u2.s2.Type == LPC_PORT_CLOSED ) {
+        }
+        else if (CommandMessage.MessageHeader.u2.s2.Type == LPC_PORT_CLOSED)
+        {
             KEVENT Event;
             BOOLEAN Wait;
 
-            KeInitializeEvent (&Event, NotificationEvent, FALSE);
+            KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
             SepLockLsaQueue();
 
             SepAdtLsaDeadEvent = &Event;
-            
-            Wait = !SepWorkListEmpty ();
+
+            Wait = !SepWorkListEmpty();
 
             SepUnlockLsaQueue();
 
-            if (Wait) {
-                KeWaitForSingleObject (&Event,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
+            if (Wait)
+            {
+                KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
             }
             //
             // Our only client closed its handle. Tidy up and exit.
             //
-            ZwClose (SepRmState.LsaCommandPortHandle);
-            ZwClose (SepRmState.RmCommandPortHandle);
-            ZwClose (SepRmState.RmCommandServerPortHandle);
-            ZwClose (SepLsaHandle);
+            ZwClose(SepRmState.LsaCommandPortHandle);
+            ZwClose(SepRmState.RmCommandPortHandle);
+            ZwClose(SepRmState.RmCommandServerPortHandle);
+            ZwClose(SepLsaHandle);
             SepRmState.LsaCommandPortHandle = NULL;
             SepRmState.RmCommandPortHandle = NULL;
             SepRmState.RmCommandServerPortHandle = NULL;
             SepLsaHandle = NULL;
             break;
-        } else if (CommandMessage.MessageHeader.u2.s2.Type == LPC_CONNECTION_REQUEST) {
+        }
+        else if (CommandMessage.MessageHeader.u2.s2.Type == LPC_CONNECTION_REQUEST)
+        {
             HANDLE tmp;
             //
             // Reject extra connection attempts
             //
-            Status = ZwAcceptConnectPort(&tmp,
-                                         NULL,
-                                         (PPORT_MESSAGE) &CommandMessage,
-                                         FALSE,
-                                         NULL,
-                                         NULL);
-        } else {
+            Status = ZwAcceptConnectPort(&tmp, NULL, (PPORT_MESSAGE)&CommandMessage, FALSE, NULL, NULL);
+        }
+        else
+        {
 
             Reply = NULL;
         }
-    }  // end_for
+    } // end_for
 
-    UNREFERENCED_PARAMETER( StartContext );
-
+    UNREFERENCED_PARAMETER(StartContext);
 }
 
-
+
 BOOLEAN
-SepRmCommandServerThreadInit(
-    VOID
-    )
+SepRmCommandServerThreadInit(VOID)
 
 /*++
 
@@ -582,12 +517,10 @@ Return Value:
     // complete.
     //
 
-    Status = ZwWaitForSingleObject(
-                 SepRmState.LsaInitEventHandle,
-                 FALSE,
-                 NULL);
+    Status = ZwWaitForSingleObject(SepRmState.LsaInitEventHandle, FALSE, NULL);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         KdPrint(("Security Rm Init: Waiting for LSA Init Event failed 0x%lx\n", Status));
         goto RmCommandServerThreadInitError;
@@ -606,15 +539,12 @@ Return Value:
 
     ConnectionRequest.u1.s1.TotalLength = sizeof(ConnectionRequest);
     ConnectionRequest.u1.s1.DataLength = (CSHORT)0;
-    Status = ZwListenPort(
-                 SepRmState.RmCommandServerPortHandle,
-                 &ConnectionRequest
-                 );
+    Status = ZwListenPort(SepRmState.RmCommandServerPortHandle, &ConnectionRequest);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        KdPrint(("Security Rm Init: Listen to Command Port failed 0x%lx\n",
-            Status));
+        KdPrint(("Security Rm Init: Listen to Command Port failed 0x%lx\n", Status));
         goto RmCommandServerThreadInitError;
     }
 
@@ -622,19 +552,15 @@ Return Value:
     // Obtain a handle to the LSA process for use when auditing.
     //
 
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL, NULL );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-    Status = ZwOpenProcess(
-                 &SepLsaHandle,
-                 PROCESS_VM_OPERATION | PROCESS_VM_WRITE,
-                 &ObjectAttributes,
-                 &ConnectionRequest.ClientId
-                 );
+    Status = ZwOpenProcess(&SepLsaHandle, PROCESS_VM_OPERATION | PROCESS_VM_WRITE, &ObjectAttributes,
+                           &ConnectionRequest.ClientId);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        KdPrint(("Security Rm Init: Open Listen to Command Port failed 0x%lx\n",
-            Status));
+        KdPrint(("Security Rm Init: Open Listen to Command Port failed 0x%lx\n", Status));
         goto RmCommandServerThreadInitError;
     }
 
@@ -645,19 +571,12 @@ Return Value:
     LsaClientView.Length = sizeof(LsaClientView);
 
 
-    Status = ZwAcceptConnectPort(
-                 &SepRmState.RmCommandPortHandle,
-                 NULL,
-                 &ConnectionRequest,
-                 TRUE,
-                 NULL,
-                 &LsaClientView
-                 );
+    Status = ZwAcceptConnectPort(&SepRmState.RmCommandPortHandle, NULL, &ConnectionRequest, TRUE, NULL, &LsaClientView);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        KdPrint(("Security Rm Init: Accept Connect to Command Port failed 0x%lx\n",
-                Status));
+        KdPrint(("Security Rm Init: Accept Connect to Command Port failed 0x%lx\n", Status));
 
         goto RmCommandServerThreadInitError;
     }
@@ -668,10 +587,10 @@ Return Value:
 
     Status = ZwCompleteConnectPort(SepRmState.RmCommandPortHandle);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        KdPrint(("Security Rm Init: Complete Connect to Command Port failed 0x%lx\n",
-                Status));
+        KdPrint(("Security Rm Init: Complete Connect to Command Port failed 0x%lx\n", Status));
         goto RmCommandServerThreadInitError;
     }
 
@@ -693,17 +612,14 @@ Return Value:
     SepRmState.LsaCommandPortSectionSize.LowPart = PAGE_SIZE;
     SepRmState.LsaCommandPortSectionSize.HighPart = 0;
 
-    Status = ZwCreateSection(
-                 &SepRmState.LsaCommandPortSectionHandle,
-                 SECTION_ALL_ACCESS,
-                 NULL,                           // ObjectAttributes
-                 &SepRmState.LsaCommandPortSectionSize,
-                 PAGE_READWRITE,
-                 SEC_COMMIT,
-                 NULL                            // FileHandle
-                 );
+    Status = ZwCreateSection(&SepRmState.LsaCommandPortSectionHandle, SECTION_ALL_ACCESS,
+                             NULL, // ObjectAttributes
+                             &SepRmState.LsaCommandPortSectionSize, PAGE_READWRITE, SEC_COMMIT,
+                             NULL // FileHandle
+    );
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         KdPrint(("Security Rm Init: Create Memory Section for LSA port failed: %X\n", Status));
         goto RmCommandServerThreadInitError;
@@ -740,20 +656,17 @@ Return Value:
     // commands from the RM to the LSA.
     //
 
-    RtlInitUnicodeString( &LsaCommandPortName, L"\\SeLsaCommandPort" );
+    RtlInitUnicodeString(&LsaCommandPortName, L"\\SeLsaCommandPort");
 
-    Status = ZwConnectPort(
-                 &SepRmState.LsaCommandPortHandle,
-                 &LsaCommandPortName,
-                 &DynamicQos,
-                 &ClientView,
-                 NULL,                           // ServerView
-                 NULL,                           // MaxMessageLength
-                 NULL,                           // ConnectionInformation
-                 NULL                            // ConnectionInformationLength
-                 );
+    Status = ZwConnectPort(&SepRmState.LsaCommandPortHandle, &LsaCommandPortName, &DynamicQos, &ClientView,
+                           NULL, // ServerView
+                           NULL, // MaxMessageLength
+                           NULL, // ConnectionInformation
+                           NULL  // ConnectionInformationLength
+    );
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         KdPrint(("Security Rm Init: Connect to LSA Port failed 0x%lx\n", Status));
         goto RmCommandServerThreadInitError;
@@ -766,7 +679,7 @@ Return Value:
 
     SepRmState.RmViewPortMemory = ClientView.ViewBase;
     SepRmState.LsaCommandPortMemoryDelta =
-        (LONG)((ULONG_PTR)ClientView.ViewRemoteBase - (ULONG_PTR) ClientView.ViewBase );
+        (LONG)((ULONG_PTR)ClientView.ViewRemoteBase - (ULONG_PTR)ClientView.ViewBase);
     SepRmState.LsaViewPortMemory = ClientView.ViewRemoteBase;
 
 
@@ -777,10 +690,11 @@ RmCommandServerThreadInitFinish:
     // success.
     //
 
-    if ( SepRmState.LsaCommandPortSectionHandle != NULL ) {
+    if (SepRmState.LsaCommandPortSectionHandle != NULL)
+    {
 
-       NtClose( SepRmState.LsaCommandPortSectionHandle );
-       SepRmState.LsaCommandPortSectionHandle = NULL;
+        NtClose(SepRmState.LsaCommandPortSectionHandle);
+        SepRmState.LsaCommandPortSectionHandle = NULL;
     }
 
     //
@@ -791,10 +705,11 @@ RmCommandServerThreadInitFinish:
 
 RmCommandServerThreadInitError:
 
-    if ( SepRmState.LsaCommandPortHandle != NULL ) {
+    if (SepRmState.LsaCommandPortHandle != NULL)
+    {
 
-       NtClose( SepRmState.LsaCommandPortHandle );
-       SepRmState.LsaCommandPortHandle = NULL;
+        NtClose(SepRmState.LsaCommandPortHandle);
+        SepRmState.LsaCommandPortHandle = NULL;
     }
 
     BooleanStatus = FALSE;
@@ -802,12 +717,8 @@ RmCommandServerThreadInitError:
 }
 
 
-
-
 NTSTATUS
-SepRmCallLsa(
-    PSEP_WORK_ITEM SepWorkItem
-    )
+SepRmCallLsa(PSEP_WORK_ITEM SepWorkItem)
 /*++
 
 Routine Description:
@@ -882,17 +793,18 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( SepWorkItem );
-    
+    UNREFERENCED_PARAMETER(SepWorkItem);
+
 #if 0
   DbgPrint("Entering SepRmCallLsa\n");
 #endif
 
     WorkQueueItem = SepWorkListHead();
 
-    KeAttachProcess( &SepRmLsaCallProcess->Pcb );
+    KeAttachProcess(&SepRmLsaCallProcess->Pcb);
 
-    while ( WorkQueueItem ) {
+    while (WorkQueueItem)
+    {
 
 #if 0
       DbgPrint("Got a work item from head of queue, processing\n");
@@ -906,17 +818,14 @@ Return Value:
 
         CommandMessage.MessageHeader.u2.ZeroInit = 0;
         CommandMessage.MessageHeader.u1.s1.TotalLength =
-            ((CSHORT) RM_COMMAND_MESSAGE_HEADER_SIZE +
-            (CSHORT) WorkQueueItem->CommandParamsLength);
+            ((CSHORT)RM_COMMAND_MESSAGE_HEADER_SIZE + (CSHORT)WorkQueueItem->CommandParamsLength);
         CommandMessage.MessageHeader.u1.s1.DataLength =
-            CommandMessage.MessageHeader.u1.s1.TotalLength -
-            (CSHORT) sizeof(PORT_MESSAGE);
+            CommandMessage.MessageHeader.u1.s1.TotalLength - (CSHORT)sizeof(PORT_MESSAGE);
 
         ReplyMessage.MessageHeader.u2.ZeroInit = 0;
-        ReplyMessage.MessageHeader.u1.s1.DataLength = (CSHORT) WorkQueueItem->ReplyBufferLength;
+        ReplyMessage.MessageHeader.u1.s1.DataLength = (CSHORT)WorkQueueItem->ReplyBufferLength;
         ReplyMessage.MessageHeader.u1.s1.TotalLength =
-            ReplyMessage.MessageHeader.u1.s1.DataLength +
-            (CSHORT) sizeof(PORT_MESSAGE);
+            ReplyMessage.MessageHeader.u1.s1.DataLength + (CSHORT)sizeof(PORT_MESSAGE);
 
         //
         // Next, fill in the header info needed by the LSA.
@@ -933,7 +842,8 @@ Return Value:
         // pointed to by the address in the WorkQueueItem.
         //
 
-        switch (WorkQueueItem->CommandParamsMemoryType) {
+        switch (WorkQueueItem->CommandParamsMemoryType)
+        {
 
         case SepRmImmediateMemory:
 
@@ -945,11 +855,8 @@ Return Value:
 
             CommandMessage.CommandParamsMemoryType = SepRmImmediateMemory;
 
-            RtlCopyMemory(
-                CommandMessage.CommandParams,
-                &WorkQueueItem->CommandParams,
-                WorkQueueItem->CommandParamsLength
-                );
+            RtlCopyMemory(CommandMessage.CommandParams, &WorkQueueItem->CommandParams,
+                          WorkQueueItem->CommandParamsLength);
 
             break;
 
@@ -963,7 +870,8 @@ Return Value:
             // into LSA shared memory.
             //
 
-            if (WorkQueueItem->CommandParamsLength <= LSA_MAXIMUM_COMMAND_PARAM_SIZE) {
+            if (WorkQueueItem->CommandParamsLength <= LSA_MAXIMUM_COMMAND_PARAM_SIZE)
+            {
 
                 //
                 // Parameters will fit into the LPC Command Message block.
@@ -971,15 +879,13 @@ Return Value:
 
                 CopiedCommandParams = CommandMessage.CommandParams;
 
-                RtlCopyMemory(
-                    CopiedCommandParams,
-                    WorkQueueItem->CommandParams.BaseAddress,
-                    WorkQueueItem->CommandParamsLength
-                    );
+                RtlCopyMemory(CopiedCommandParams, WorkQueueItem->CommandParams.BaseAddress,
+                              WorkQueueItem->CommandParamsLength);
 
                 CommandMessage.CommandParamsMemoryType = SepRmImmediateMemory;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Parameters too large for LPC Command Message block.
@@ -989,27 +895,24 @@ Return Value:
                 // Memory.
                 //
 
-                if (WorkQueueItem->CommandParamsLength <= SEP_RM_LSA_SHARED_MEMORY_SIZE) {
+                if (WorkQueueItem->CommandParamsLength <= SEP_RM_LSA_SHARED_MEMORY_SIZE)
+                {
 
-                    RtlCopyMemory(
-                        SepRmState.RmViewPortMemory,
-                        WorkQueueItem->CommandParams.BaseAddress,
-                        WorkQueueItem->CommandParamsLength
-                        );
+                    RtlCopyMemory(SepRmState.RmViewPortMemory, WorkQueueItem->CommandParams.BaseAddress,
+                                  WorkQueueItem->CommandParamsLength);
 
                     LsaViewCopiedCommandParams = SepRmState.LsaViewPortMemory;
                     CommandMessage.CommandParamsMemoryType = SepRmLsaCommandPortSharedMemory;
+                }
+                else
+                {
 
-                } else {
+                    Status =
+                        SepAdtCopyToLsaSharedMemory(SepLsaHandle, WorkQueueItem->CommandParams.BaseAddress,
+                                                    WorkQueueItem->CommandParamsLength, &LsaViewCopiedCommandParams);
 
-                    Status = SepAdtCopyToLsaSharedMemory(
-                                 SepLsaHandle,
-                                 WorkQueueItem->CommandParams.BaseAddress,
-                                 WorkQueueItem->CommandParamsLength,
-                                 &LsaViewCopiedCommandParams
-                                 );
-
-                    if (!NT_SUCCESS(Status)) {
+                    if (!NT_SUCCESS(Status))
+                    {
 
                         //
                         // An error occurred, most likely in allocating
@@ -1020,7 +923,6 @@ Return Value:
                         //
 
                         break;
-
                     }
 
                     CommandMessage.CommandParamsMemoryType = SepRmLsaCustomSharedMemory;
@@ -1032,24 +934,22 @@ Return Value:
                 // the LSA's process context in the Command Message.
                 //
 
-                *((PVOID *) CommandMessage.CommandParams) =
-                    LsaViewCopiedCommandParams;
+                *((PVOID *)CommandMessage.CommandParams) = LsaViewCopiedCommandParams;
 
                 CommandMessage.MessageHeader.u1.s1.TotalLength =
-                    ((CSHORT) RM_COMMAND_MESSAGE_HEADER_SIZE +
-                    (CSHORT) sizeof( LsaViewCopiedCommandParams ));
+                    ((CSHORT)RM_COMMAND_MESSAGE_HEADER_SIZE + (CSHORT)sizeof(LsaViewCopiedCommandParams));
                 CommandMessage.MessageHeader.u1.s1.DataLength =
-                    CommandMessage.MessageHeader.u1.s1.TotalLength -
-                    (CSHORT) sizeof(PORT_MESSAGE);
+                    CommandMessage.MessageHeader.u1.s1.TotalLength - (CSHORT)sizeof(PORT_MESSAGE);
             }
 
             //
             // Free input command params buffer if Paged Pool.
             //
 
-            if (WorkQueueItem->CommandParamsMemoryType == SepRmPagedPoolMemory) {
+            if (WorkQueueItem->CommandParamsMemoryType == SepRmPagedPoolMemory)
+            {
 
-                ExFreePool( WorkQueueItem->CommandParams.BaseAddress );
+                ExFreePool(WorkQueueItem->CommandParams.BaseAddress);
             }
 
             break;
@@ -1060,25 +960,24 @@ Return Value:
             break;
         }
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
             //
             // Send Message to the LSA via the LSA Server Command LPC Port.
             // This must be done in the process in which the handle was created.
             //
 
-            Status = ZwRequestWaitReplyPort(
-                         SepRmState.LsaCommandPortHandle,
-                         (PPORT_MESSAGE) &CommandMessage,
-                         (PPORT_MESSAGE) &ReplyMessage
-                         );
+            Status = ZwRequestWaitReplyPort(SepRmState.LsaCommandPortHandle, (PPORT_MESSAGE)&CommandMessage,
+                                            (PPORT_MESSAGE)&ReplyMessage);
 
             //
             // If the command was successful, copy the data back to the output
             // buffer.
             //
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
                 //
                 // Move output from command (if any) to buffer.  Note that this
@@ -1086,13 +985,11 @@ Return Value:
                 // values are not errors.
                 //
 
-                if (ARGUMENT_PRESENT(WorkQueueItem->ReplyBuffer)) {
+                if (ARGUMENT_PRESENT(WorkQueueItem->ReplyBuffer))
+                {
 
-                    RtlCopyMemory(
-                        WorkQueueItem->ReplyBuffer,
-                        ReplyMessage.ReplyBuffer,
-                        WorkQueueItem->ReplyBufferLength
-                        );
+                    RtlCopyMemory(WorkQueueItem->ReplyBuffer, ReplyMessage.ReplyBuffer,
+                                  WorkQueueItem->ReplyBufferLength);
                 }
 
                 //
@@ -1101,12 +998,13 @@ Return Value:
 
                 Status = ReplyMessage.ReturnedStatus;
 
-                if (!NT_SUCCESS(Status)) {
-                    KdPrint(("Security: Command sent from RM to LSA returned 0x%lx\n",
-                        Status));
+                if (!NT_SUCCESS(Status))
+                {
+                    KdPrint(("Security: Command sent from RM to LSA returned 0x%lx\n", Status));
                 }
-
-            } else {
+            }
+            else
+            {
 
                 KdPrint(("Security: Sending Command RM to LSA failed 0x%lx\n", Status));
             }
@@ -1118,20 +1016,16 @@ Return Value:
             // free it now.
             //
 
-            if (CommandMessage.CommandParamsMemoryType == SepRmLsaCustomSharedMemory) {
+            if (CommandMessage.CommandParamsMemoryType == SepRmLsaCustomSharedMemory)
+            {
 
                 RegionSize = 0;
 
-                Status = ZwFreeVirtualMemory(
-                             SepLsaHandle,
-                             (PVOID *) &CommandMessage.CommandParams,
-                             &RegionSize,
-                             MEM_RELEASE
-                             );
+                Status =
+                    ZwFreeVirtualMemory(SepLsaHandle, (PVOID *)&CommandMessage.CommandParams, &RegionSize, MEM_RELEASE);
 
                 ASSERT(NT_SUCCESS(Status));
             }
-
         }
 
 
@@ -1140,7 +1034,8 @@ Return Value:
         // and then free the used WorkQueueItem itself.
         //
 
-        if ( ARGUMENT_PRESENT( WorkQueueItem->CleanupFunction)) {
+        if (ARGUMENT_PRESENT(WorkQueueItem->CleanupFunction))
+        {
 
             (WorkQueueItem->CleanupFunction)(WorkQueueItem->CleanupParameter);
         }
@@ -1157,13 +1052,12 @@ Return Value:
           DbgPrint("List is empty, leaving\n");
       }
 #endif
-
-
     }
 
     KeDetachProcess();
 
-    if ( LocalListLength > SepLsaQueueLength ) {
+    if (LocalListLength > SepLsaQueueLength)
+    {
         SepLsaQueueLength = LocalListLength;
     }
 
@@ -1171,12 +1065,8 @@ Return Value:
 }
 
 
-
-
-
 BOOLEAN
-SepRmInitPhase0(
-    )
+SepRmInitPhase0()
 
 /*++
 

@@ -30,8 +30,10 @@ Revision History:
 
 #if defined(_AMD64_)
 
-typedef union _NBQUEUE_POINTER {
-    struct {
+typedef union _NBQUEUE_POINTER
+{
+    struct
+    {
         LONG64 Node : 48;
         LONG64 Count : 16;
     };
@@ -41,8 +43,10 @@ typedef union _NBQUEUE_POINTER {
 
 #elif defined(_X86_)
 
-typedef union _NBQUEUE_POINTER {
-    struct {
+typedef union _NBQUEUE_POINTER
+{
+    struct
+    {
         LONG Count;
         LONG Node;
     };
@@ -52,8 +56,10 @@ typedef union _NBQUEUE_POINTER {
 
 #elif defined(_IA64_)
 
-typedef union _NBQUEUE_POINTER {
-    struct {
+typedef union _NBQUEUE_POINTER
+{
+    struct
+    {
         LONG64 Node : 45;
         LONG64 Region : 3;
         LONG64 Count : 16;
@@ -73,7 +79,8 @@ typedef union _NBQUEUE_POINTER {
 // Define queue node struture.
 //
 
-typedef struct _NBQUEUE_NODE {
+typedef struct _NBQUEUE_NODE
+{
     NBQUEUE_POINTER Next;
     ULONG64 Value;
 } NBQUEUE_NODE, *PNBQUEUE_NODE;
@@ -85,12 +92,7 @@ typedef struct _NBQUEUE_NODE {
 
 #if defined(_AMD64_)
 
-__inline
-VOID
-PackNBQPointer (
-    IN PNBQUEUE_POINTER Entry,
-    IN PNBQUEUE_NODE Node
-    )
+__inline VOID PackNBQPointer(IN PNBQUEUE_POINTER Entry, IN PNBQUEUE_NODE Node)
 
 {
 
@@ -98,11 +100,7 @@ PackNBQPointer (
     return;
 }
 
-__inline
-PNBQUEUE_NODE
-UnpackNBQPointer (
-    IN PNBQUEUE_POINTER Entry
-    )
+__inline PNBQUEUE_NODE UnpackNBQPointer(IN PNBQUEUE_POINTER Entry)
 
 {
     return (PVOID)((LONG64)(Entry->Node));
@@ -110,12 +108,7 @@ UnpackNBQPointer (
 
 #elif defined(_X86_)
 
-__inline
-VOID
-PackNBQPointer (
-    IN PNBQUEUE_POINTER Entry,
-    IN PNBQUEUE_NODE Node
-    )
+__inline VOID PackNBQPointer(IN PNBQUEUE_POINTER Entry, IN PNBQUEUE_NODE Node)
 
 {
 
@@ -123,11 +116,7 @@ PackNBQPointer (
     return;
 }
 
-__inline
-PNBQUEUE_NODE
-UnpackNBQPointer (
-    IN PNBQUEUE_POINTER Entry
-    )
+__inline PNBQUEUE_NODE UnpackNBQPointer(IN PNBQUEUE_POINTER Entry)
 
 {
     return (PVOID)(Entry->Node);
@@ -135,12 +124,7 @@ UnpackNBQPointer (
 
 #elif defined(_IA64_)
 
-__inline
-VOID
-PackNBQPointer (
-    IN PNBQUEUE_POINTER Entry,
-    IN PNBQUEUE_NODE Node
-    )
+__inline VOID PackNBQPointer(IN PNBQUEUE_POINTER Entry, IN PNBQUEUE_NODE Node)
 
 {
 
@@ -149,11 +133,7 @@ PackNBQPointer (
     return;
 }
 
-__inline
-PNBQUEUE_NODE
-UnpackNBQPointer (
-    IN PNBQUEUE_POINTER Entry
-    )
+__inline PNBQUEUE_NODE UnpackNBQPointer(IN PNBQUEUE_POINTER Entry)
 
 {
 
@@ -174,7 +154,8 @@ UnpackNBQPointer (
 // Define queue descriptor structure.
 //
 
-typedef struct _NBQUEUE_HEADER {
+typedef struct _NBQUEUE_HEADER
+{
     NBQUEUE_POINTER Head;
     NBQUEUE_POINTER Tail;
     PSLIST_HEADER SlistHead;
@@ -183,9 +164,7 @@ typedef struct _NBQUEUE_HEADER {
 #pragma alloc_text(PAGE, ExInitializeNBQueueHead)
 
 PVOID
-ExInitializeNBQueueHead (
-    IN PSLIST_HEADER SlistHead
-    )
+ExInitializeNBQueueHead(IN PSLIST_HEADER SlistHead)
 
 /*++
 
@@ -218,11 +197,10 @@ Return Value:
     // return NULL.
     //
 
-    QueueHead = (PNBQUEUE_HEADER)ExAllocatePoolWithTag(NonPagedPool,
-                                                       sizeof(NBQUEUE_HEADER),
-                                                       'hqBN');
+    QueueHead = (PNBQUEUE_HEADER)ExAllocatePoolWithTag(NonPagedPool, sizeof(NBQUEUE_HEADER), 'hqBN');
 
-    if (QueueHead == NULL) {
+    if (QueueHead == NULL)
+    {
         return NULL;
     }
 
@@ -236,7 +214,8 @@ Return Value:
     QueueHead->SlistHead = SlistHead;
     QueueNode = (PNBQUEUE_NODE)InterlockedPopEntrySList(QueueHead->SlistHead);
 
-    if (QueueNode != NULL) {
+    if (QueueNode != NULL)
+    {
 
         //
         // Initialize the queue node next pointer and value.
@@ -254,18 +233,16 @@ Return Value:
         PackNBQPointer(&QueueHead->Tail, QueueNode);
         QueueHead->Tail.Count = 0;
         return QueueHead;
-
-    } else {
+    }
+    else
+    {
         ExFreePool(QueueHead);
         return NULL;
     }
 }
 
 BOOLEAN
-ExInsertTailNBQueue (
-    IN PVOID Header,
-    IN ULONG64 Value
-    )
+ExInsertTailNBQueue(IN PVOID Header, IN ULONG64 Value)
 
 /*++
 
@@ -312,7 +289,8 @@ Return Value:
     QueueHead = (PNBQUEUE_HEADER)Header;
     QueueNode = (PNBQUEUE_NODE)InterlockedPopEntrySList(QueueHead->SlistHead);
 
-    if (QueueNode != NULL) {
+    if (QueueNode != NULL)
+    {
 
         //
         //  Initialize the queue node next pointer and value.
@@ -327,7 +305,8 @@ Return Value:
         // queue.
         //
 
-        do {
+        do
+        {
 
             //
             // Read the tail queue pointer and the next queue pointer of
@@ -339,7 +318,8 @@ Return Value:
             TailNode = UnpackNBQPointer(&Tail);
             Next.Data = *((volatile LONG64 *)(&TailNode->Next.Data));
             QueueNode->Next.Count = Tail.Count + 1;
-            if (Tail.Data == *((volatile LONG64 *)(&QueueHead->Tail.Data))) {
+            if (Tail.Data == *((volatile LONG64 *)(&QueueHead->Tail.Data)))
+            {
 
                 //
                 // If the tail is pointing to the last node in the list,
@@ -350,21 +330,20 @@ Return Value:
                 //
 
                 NextNode = UnpackNBQPointer(&Next);
-                if (NextNode == NULL) {
+                if (NextNode == NULL)
+                {
                     PackNBQPointer(&Insert, QueueNode);
                     Insert.Count = Next.Count + 1;
-                    if (InterlockedCompareExchange64(&TailNode->Next.Data,
-                                                     Insert.Data,
-                                                     Next.Data) == Next.Data) {
+                    if (InterlockedCompareExchange64(&TailNode->Next.Data, Insert.Data, Next.Data) == Next.Data)
+                    {
                         break;
                     }
-
-                } else {
+                }
+                else
+                {
                     PackNBQPointer(&Insert, NextNode);
                     Insert.Count = Tail.Count + 1;
-                    InterlockedCompareExchange64(&QueueHead->Tail.Data,
-                                                 Insert.Data,
-                                                 Tail.Data);
+                    InterlockedCompareExchange64(&QueueHead->Tail.Data, Insert.Data, Tail.Data);
                 }
             }
 
@@ -376,22 +355,18 @@ Return Value:
 
         PackNBQPointer(&Insert, QueueNode);
         Insert.Count = Tail.Count + 1;
-        InterlockedCompareExchange64(&QueueHead->Tail.Data,
-                                     Insert.Data,
-                                     Tail.Data);
+        InterlockedCompareExchange64(&QueueHead->Tail.Data, Insert.Data, Tail.Data);
 
         return TRUE;
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 BOOLEAN
-ExRemoveHeadNBQueue (
-    IN PVOID Header,
-    OUT PULONG64 Value
-    )
+ExRemoveHeadNBQueue(IN PVOID Header, OUT PULONG64 Value)
 
 /*++
 
@@ -432,7 +407,8 @@ Return Value:
     //
 
     QueueHead = (PNBQUEUE_HEADER)Header;
-    do {
+    do
+    {
 
         //
         // Read the head queue pointer, the tail queue pointer, and the
@@ -444,7 +420,8 @@ Return Value:
         Tail.Data = *((volatile LONG64 *)(&QueueHead->Tail.Data));
         HeadNode = UnpackNBQPointer(&Head);
         Next.Data = *((volatile LONG64 *)(&HeadNode->Next.Data));
-        if (Head.Data == *((volatile LONG64 *)(&QueueHead->Head.Data))) {
+        if (Head.Data == *((volatile LONG64 *)(&QueueHead->Head.Data)))
+        {
 
             //
             // If the queue header node is equal to the queue tail node,
@@ -455,25 +432,27 @@ Return Value:
 
             NextNode = UnpackNBQPointer(&Next);
             TailNode = UnpackNBQPointer(&Tail);
-            if (HeadNode == TailNode) {
+            if (HeadNode == TailNode)
+            {
 
                 //
                 // If the next node of head pointer is NULL, then the queue
                 // is empty. Otherwise, attempt to move the tail forward.
                 //
 
-                if (NextNode == NULL) {
+                if (NextNode == NULL)
+                {
                     return FALSE;
-
-                } else {
+                }
+                else
+                {
                     PackNBQPointer(&Insert, NextNode);
                     Insert.Count = Tail.Count + 1;
-                    InterlockedCompareExchange64(&QueueHead->Tail.Data,
-                                                 Insert.Data,
-                                                 Tail.Data);
+                    InterlockedCompareExchange64(&QueueHead->Tail.Data, Insert.Data, Tail.Data);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // There is an entry in the queue that can be removed.
@@ -482,9 +461,8 @@ Return Value:
                 *Value = NextNode->Value;
                 PackNBQPointer(&Insert, NextNode);
                 Insert.Count = Head.Count + 1;
-                if (InterlockedCompareExchange64(&QueueHead->Head.Data,
-                                                 Insert.Data,
-                                                 Head.Data) == Head.Data) {
+                if (InterlockedCompareExchange64(&QueueHead->Head.Data, Insert.Data, Head.Data) == Head.Data)
+                {
 
                     break;
                 }
@@ -498,8 +476,7 @@ Return Value:
     // in the associated SLIST.
     //
 
-    InterlockedPushEntrySList(QueueHead->SlistHead,
-                              (PSINGLE_LIST_ENTRY)HeadNode);
+    InterlockedPushEntrySList(QueueHead->SlistHead, (PSINGLE_LIST_ENTRY)HeadNode);
 
     return TRUE;
 }

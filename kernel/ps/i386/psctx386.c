@@ -31,23 +31,19 @@ Revision History:
 
 #include "psp.h"
 
-#define PSPALIGN_DOWN(address,amt) ((ULONG)(address) & ~(( amt ) - 1))
+#define PSPALIGN_DOWN(address, amt) ((ULONG)(address) & ~((amt) - 1))
 
-#define PSPALIGN_UP(address,amt) (PSPALIGN_DOWN( (address + (amt) - 1), (amt) ))
+#define PSPALIGN_UP(address, amt) (PSPALIGN_DOWN((address + (amt) - 1), (amt)))
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,PspGetContext )
-#pragma alloc_text(PAGE,PspGetSetContextSpecialApc )
-#pragma alloc_text(PAGE,PspSetContext)
+#pragma alloc_text(PAGE, PspGetContext)
+#pragma alloc_text(PAGE, PspGetSetContextSpecialApc)
+#pragma alloc_text(PAGE, PspSetContext)
 #endif
 
-
-VOID
-PspGetContext(
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKNONVOLATILE_CONTEXT_POINTERS NonVolatileContext,
-    IN OUT PCONTEXT Context
-    )
+
+VOID PspGetContext(IN PKTRAP_FRAME TrapFrame, IN PKNONVOLATILE_CONTEXT_POINTERS NonVolatileContext,
+                   IN OUT PCONTEXT Context)
 
 /*++
 
@@ -74,20 +70,15 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER( NonVolatileContext );
+    UNREFERENCED_PARAMETER(NonVolatileContext);
 
     PAGED_CODE();
 
     KeContextFromKframes(TrapFrame, NULL, Context);
 }
-
-VOID
-PspSetContext(
-    OUT PKTRAP_FRAME TrapFrame,
-    OUT PKNONVOLATILE_CONTEXT_POINTERS NonVolatileContext,
-    IN PCONTEXT Context,
-    KPROCESSOR_MODE Mode
-    )
+
+VOID PspSetContext(OUT PKTRAP_FRAME TrapFrame, OUT PKNONVOLATILE_CONTEXT_POINTERS NonVolatileContext,
+                   IN PCONTEXT Context, KPROCESSOR_MODE Mode)
 
 /*++
 
@@ -115,21 +106,15 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER( NonVolatileContext );
+    UNREFERENCED_PARAMETER(NonVolatileContext);
 
     PAGED_CODE();
 
     KeContextToKframes(TrapFrame, NULL, Context, Context->ContextFlags, Mode);
 }
-
-VOID
-PspGetSetContextSpecialApc(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+
+VOID PspGetSetContextSpecialApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                                IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -168,43 +153,45 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( NormalRoutine );
-    UNREFERENCED_PARAMETER( NormalContext );
-    UNREFERENCED_PARAMETER( SystemArgument1 );
-    UNREFERENCED_PARAMETER( SystemArgument2 );
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
-    Ctx = CONTAINING_RECORD(Apc,GETSETCONTEXT,Apc);
+    Ctx = CONTAINING_RECORD(Apc, GETSETCONTEXT, Apc);
     Thread = Apc->SystemArgument2;
 
     TrapFrame = 0;
 
-    if (Ctx->Mode == KernelMode) {
-	TrapFrame = Thread->Tcb.TrapFrame;
+    if (Ctx->Mode == KernelMode)
+    {
+        TrapFrame = Thread->Tcb.TrapFrame;
     }
 
-    if (TrapFrame == NULL) {
-	TrapFrame = (PKTRAP_FRAME)((PUCHAR)Thread->Tcb.InitialStack -
-		    PSPALIGN_UP(sizeof(KTRAP_FRAME),KTRAP_FRAME_ALIGN) -
-		    sizeof(FX_SAVE_AREA));
+    if (TrapFrame == NULL)
+    {
+        TrapFrame = (PKTRAP_FRAME)((PUCHAR)Thread->Tcb.InitialStack -
+                                   PSPALIGN_UP(sizeof(KTRAP_FRAME), KTRAP_FRAME_ALIGN) - sizeof(FX_SAVE_AREA));
     }
 
-    if ( Apc->SystemArgument1 ) {
+    if (Apc->SystemArgument1)
+    {
 
         //
         // Set Context
         //
 
-        PspSetContext(TrapFrame,NULL,&Ctx->Context,Ctx->Mode);
-
-    } else {
+        PspSetContext(TrapFrame, NULL, &Ctx->Context, Ctx->Mode);
+    }
+    else
+    {
 
         //
         // Get Context
         //
 
-        PspGetContext(TrapFrame,NULL,&Ctx->Context);
+        PspGetContext(TrapFrame, NULL, &Ctx->Context);
     }
 
-    KeSetEvent(&Ctx->OperationComplete,0,FALSE);
-
+    KeSetEvent(&Ctx->OperationComplete, 0, FALSE);
 }

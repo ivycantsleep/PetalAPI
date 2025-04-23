@@ -16,12 +16,15 @@
 //  in the debugger.
 //
 
-typedef union _TRI_SPLAY_LINKS {
-    struct {
+typedef union _TRI_SPLAY_LINKS
+{
+    struct
+    {
         ULONG ParSib;
         ULONG Child;
     } Refs;
-    struct {
+    struct
+    {
         union _TRI_SPLAY_LINKS *ParSibPtr;
         union _TRI_SPLAY_LINKS *ChildPtr;
     } Ptrs;
@@ -40,9 +43,10 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriInitializeSplayLinks(Links) { \
-    (Links)->Refs.ParSib = MakeIntoParentRef(Links); \
-    (Links)->Refs.Child = 0; \
+#define TriInitializeSplayLinks(Links)                   \
+    {                                                    \
+        (Links)->Refs.ParSib = MakeIntoParentRef(Links); \
+        (Links)->Refs.Child = 0;                         \
     }
 
 //
@@ -57,12 +61,9 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriParent(Links) ( \
-    (IsParentRef((Links)->Refs.ParSib)) ? \
-        MakeIntoPointer((Links)->Refs.ParSib) \
-    : \
-        MakeIntoPointer(MakeIntoPointer((Links)->Refs.ParSib)->Refs.ParSib) \
-    )
+#define TriParent(Links)                                                         \
+    ((IsParentRef((Links)->Refs.ParSib)) ? MakeIntoPointer((Links)->Refs.ParSib) \
+                                         : MakeIntoPointer(MakeIntoPointer((Links)->Refs.ParSib)->Refs.ParSib))
 
 //
 //  The macro function LeftChild takes as input a pointer to a splay link in
@@ -75,12 +76,7 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriLeftChild(Links) ( \
-    (IsLeftChildRef((Links)->Refs.Child)) ? \
-        MakeIntoPointer((Links)->Refs.Child) \
-    : \
-        0 \
-    )
+#define TriLeftChild(Links) ((IsLeftChildRef((Links)->Refs.Child)) ? MakeIntoPointer((Links)->Refs.Child) : 0)
 
 //
 //  The macro function RightChild takes as input a pointer to a splay link
@@ -94,17 +90,12 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriRightChild(Links) ( \
-    (IsRightChildRef((Links)->Refs.Child)) ? \
-        MakeIntoPointer((Links)->Refs.Child) \
-    : ( \
-        (IsLeftChildRef((Links)->Refs.Child) && \
-         IsSiblingRef(MakeIntoPointer((Links)->Refs.Child)->Refs.ParSib)) ? \
-            MakeIntoPointer(MakeIntoPointer((Links)->Refs.Child)->Refs.ParSib) \
-        : \
-            0 \
-        ) \
-    )
+#define TriRightChild(Links)                                                                                         \
+    ((IsRightChildRef((Links)->Refs.Child))                                                                          \
+         ? MakeIntoPointer((Links)->Refs.Child)                                                                      \
+         : ((IsLeftChildRef((Links)->Refs.Child) && IsSiblingRef(MakeIntoPointer((Links)->Refs.Child)->Refs.ParSib)) \
+                ? MakeIntoPointer(MakeIntoPointer((Links)->Refs.Child)->Refs.ParSib)                                 \
+                : 0))
 
 //
 //  The macro function IsRoot takes as input a pointer to a splay link
@@ -117,12 +108,8 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriIsRoot(Links) ( \
-    (IsParentRef((Links)->Refs.ParSib) && MakeIntoPointer((Links)->Refs.ParSib) == (Links)) ? \
-        TRUE \
-    : \
-        FALSE \
-    )
+#define TriIsRoot(Links) \
+    ((IsParentRef((Links)->Refs.ParSib) && MakeIntoPointer((Links)->Refs.ParSib) == (Links)) ? TRUE : FALSE)
 
 //
 //  The macro function IsLeftChild takes as input a pointer to a splay link
@@ -136,12 +123,7 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriIsLeftChild(Links) ( \
-    (TriLeftChild(TriParent(Links)) == (Links)) ? \
-        TRUE \
-    : \
-        FALSE \
-    )
+#define TriIsLeftChild(Links) ((TriLeftChild(TriParent(Links)) == (Links)) ? TRUE : FALSE)
 
 //
 //  The macro function IsRightChild takes as input a pointer to a splay link
@@ -155,12 +137,7 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriIsRightChild(Links) ( \
-    (TriRightChild(TriParent(Links)) == (Links)) ? \
-        TRUE \
-    : \
-        FALSE \
-    )
+#define TriIsRightChild(Links) ((TriRightChild(TriParent(Links)) == (Links)) ? TRUE : FALSE)
 
 //
 //  The macro procedure InsertAsLeftChild takes as input a pointer to a splay
@@ -176,17 +153,21 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriInsertAsLeftChild(ParentLinks,ChildLinks) { \
-    PTRI_SPLAY_LINKS RightChild; \
-    if ((ParentLinks)->Refs.Child == 0) { \
-        (ParentLinks)->Refs.Child = MakeIntoLeftChildRef(ChildLinks); \
-        (ChildLinks)->Refs.ParSib = MakeIntoParentRef(ParentLinks); \
-    } else { \
-        RightChild = TriRightChild(ParentLinks); \
-        (ParentLinks)->Refs.Child = MakeIntoLeftChildRef(ChildLinks); \
-        (ChildLinks)->Refs.ParSib = MakeIntoSiblingRef(RightChild); \
-    } \
-}
+#define TriInsertAsLeftChild(ParentLinks, ChildLinks)                     \
+    {                                                                     \
+        PTRI_SPLAY_LINKS RightChild;                                      \
+        if ((ParentLinks)->Refs.Child == 0)                               \
+        {                                                                 \
+            (ParentLinks)->Refs.Child = MakeIntoLeftChildRef(ChildLinks); \
+            (ChildLinks)->Refs.ParSib = MakeIntoParentRef(ParentLinks);   \
+        }                                                                 \
+        else                                                              \
+        {                                                                 \
+            RightChild = TriRightChild(ParentLinks);                      \
+            (ParentLinks)->Refs.Child = MakeIntoLeftChildRef(ChildLinks); \
+            (ChildLinks)->Refs.ParSib = MakeIntoSiblingRef(RightChild);   \
+        }                                                                 \
+    }
 
 //
 //  The macro procedure InsertAsRightChild takes as input a pointer to a splay
@@ -202,17 +183,21 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //     );
 //
 
-#define TriInsertAsRightChild(ParentLinks,ChildLinks) { \
-    PTRI_SPLAY_LINKS LeftChild; \
-    if ((ParentLinks)->Refs.Child == 0) { \
-        (ParentLinks)->Refs.Child = MakeIntoRightChildRef(ChildLinks); \
-        (ChildLinks)->Refs.ParSib = MakeIntoParentRef(ParentLinks); \
-    } else { \
-        LeftChild = TriLeftChild(ParentLinks); \
-        LeftChild->Refs.ParSib = MakeIntoSiblingRef(ChildLinks); \
-        (ChildLinks)->Refs.ParSib = MakeIntoParentRef(ParentLinks); \
-    } \
-}
+#define TriInsertAsRightChild(ParentLinks, ChildLinks)                     \
+    {                                                                      \
+        PTRI_SPLAY_LINKS LeftChild;                                        \
+        if ((ParentLinks)->Refs.Child == 0)                                \
+        {                                                                  \
+            (ParentLinks)->Refs.Child = MakeIntoRightChildRef(ChildLinks); \
+            (ChildLinks)->Refs.ParSib = MakeIntoParentRef(ParentLinks);    \
+        }                                                                  \
+        else                                                               \
+        {                                                                  \
+            LeftChild = TriLeftChild(ParentLinks);                         \
+            LeftChild->Refs.ParSib = MakeIntoSiblingRef(ChildLinks);       \
+            (ChildLinks)->Refs.ParSib = MakeIntoParentRef(ParentLinks);    \
+        }                                                                  \
+    }
 
 //
 //  The Splay function takes as input a pointer to a splay link in a tree
@@ -221,9 +206,7 @@ typedef TRI_SPLAY_LINKS *PTRI_SPLAY_LINKS;
 //
 
 PTRI_SPLAY_LINKS
-TriSplay (
-    IN PTRI_SPLAY_LINKS Links
-    );
+TriSplay(IN PTRI_SPLAY_LINKS Links);
 
 //
 //  The Delete function takes as input a pointer to a splay link in a tree
@@ -233,9 +216,7 @@ TriSplay (
 //
 
 PTRI_SPLAY_LINKS
-TriDelete (
-    IN PTRI_SPLAY_LINKS Links
-    );
+TriDelete(IN PTRI_SPLAY_LINKS Links);
 
 //
 //  The SubtreeSuccessor function takes as input a pointer to a splay link
@@ -245,9 +226,7 @@ TriDelete (
 //
 
 PTRI_SPLAY_LINKS
-TriSubtreeSuccessor (
-    IN PTRI_SPLAY_LINKS Links
-    );
+TriSubtreeSuccessor(IN PTRI_SPLAY_LINKS Links);
 
 //
 //  The SubtreePredecessor function takes as input a pointer to a splay link
@@ -257,9 +236,7 @@ TriSubtreeSuccessor (
 //
 
 PTRI_SPLAY_LINKS
-TriSubtreePredecessor (
-    IN PTRI_SPLAY_LINKS Links
-    );
+TriSubtreePredecessor(IN PTRI_SPLAY_LINKS Links);
 
 //
 //  The RealSuccessor function takes as input a pointer to a splay link
@@ -268,9 +245,7 @@ TriSubtreePredecessor (
 //
 
 PTRI_SPLAY_LINKS
-TriRealSuccessor (
-    IN PTRI_SPLAY_LINKS Links
-    );
+TriRealSuccessor(IN PTRI_SPLAY_LINKS Links);
 
 //
 //  The RealPredecessor function takes as input a pointer to a splay link
@@ -280,11 +255,9 @@ TriRealSuccessor (
 //
 
 PTRI_SPLAY_LINKS
-TriRealPredecessor (
-    IN PTRI_SPLAY_LINKS Links
-    );
+TriRealPredecessor(IN PTRI_SPLAY_LINKS Links);
 
-
+
 //
 //  The remainder of this module really belong in triangle.c  None of
 //  the macros or routines are (logically) exported for use by the programmer
@@ -308,18 +281,16 @@ TriRealPredecessor (
 //  also a macro (MakeIntoPointer) that takes a ref and returns a pointer.
 //
 
-#define IsParentRef(Ulong)           (((((ULONG)Ulong) & 1) == 0) && ((Ulong) != 0) ? TRUE : FALSE)
-#define MakeIntoParentRef(Ulong)     (((ULONG)Ulong) & 0xfffffffc)
+#define IsParentRef(Ulong) (((((ULONG)Ulong) & 1) == 0) && ((Ulong) != 0) ? TRUE : FALSE)
+#define MakeIntoParentRef(Ulong) (((ULONG)Ulong) & 0xfffffffc)
 
-#define IsSiblingRef(Ulong)          ((((ULONG)Ulong) & 1) == 1 ? TRUE : FALSE)
-#define MakeIntoSiblingRef(Ulong)    (((ULONG)Ulong) | 1)
+#define IsSiblingRef(Ulong) ((((ULONG)Ulong) & 1) == 1 ? TRUE : FALSE)
+#define MakeIntoSiblingRef(Ulong) (((ULONG)Ulong) | 1)
 
-#define IsLeftChildRef(Ulong)        (((((ULONG)Ulong) & 1) == 0) && ((Ulong) != 0) ? TRUE : FALSE)
-#define MakeIntoLeftChildRef(Ulong)  (((ULONG)Ulong) & 0xfffffffc)
+#define IsLeftChildRef(Ulong) (((((ULONG)Ulong) & 1) == 0) && ((Ulong) != 0) ? TRUE : FALSE)
+#define MakeIntoLeftChildRef(Ulong) (((ULONG)Ulong) & 0xfffffffc)
 
-#define IsRightChildRef(Ulong)       ((((ULONG)Ulong) & 1) == 1 ? TRUE : FALSE)
+#define IsRightChildRef(Ulong) ((((ULONG)Ulong) & 1) == 1 ? TRUE : FALSE)
 #define MakeIntoRightChildRef(Ulong) (((ULONG)Ulong) | 1)
 
-#define MakeIntoPointer(Ulong)       ((PTRI_SPLAY_LINKS)((Ulong) & 0xfffffffc))
-
-
+#define MakeIntoPointer(Ulong) ((PTRI_SPLAY_LINKS)((Ulong) & 0xfffffffc))

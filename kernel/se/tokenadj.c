@@ -29,13 +29,13 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtAdjustPrivilegesToken)
-#pragma alloc_text(PAGE,NtAdjustGroupsToken)
-#pragma alloc_text(PAGE,SepAdjustPrivileges)
-#pragma alloc_text(PAGE,SepAdjustGroups)
+#pragma alloc_text(PAGE, NtAdjustPrivilegesToken)
+#pragma alloc_text(PAGE, NtAdjustGroupsToken)
+#pragma alloc_text(PAGE, SepAdjustPrivileges)
+#pragma alloc_text(PAGE, SepAdjustGroups)
 #endif
 
-
+
 ////////////////////////////////////////////////////////////////////////
 //                                                                    //
 //           Token Object Routines & Methods                          //
@@ -44,14 +44,9 @@ Revision History:
 
 
 NTSTATUS
-NtAdjustPrivilegesToken (
-    IN HANDLE TokenHandle,
-    IN BOOLEAN DisableAllPrivileges,
-    IN PTOKEN_PRIVILEGES NewState OPTIONAL,
-    IN ULONG BufferLength OPTIONAL,
-    OUT PTOKEN_PRIVILEGES PreviousState OPTIONAL,
-    OUT PULONG ReturnLength
-    )
+NtAdjustPrivilegesToken(IN HANDLE TokenHandle, IN BOOLEAN DisableAllPrivileges, IN PTOKEN_PRIVILEGES NewState OPTIONAL,
+                        IN ULONG BufferLength OPTIONAL, OUT PTOKEN_PRIVILEGES PreviousState OPTIONAL,
+                        OUT PULONG ReturnLength)
 
 
 /*++
@@ -132,7 +127,7 @@ Return Value:
         provided.
 
 --*/
-
+
 {
     KPROCESSOR_MODE PreviousMode;
     NTSTATUS Status;
@@ -164,7 +159,8 @@ Return Value:
     //
     //
 
-    if (!DisableAllPrivileges && !ARGUMENT_PRESENT(NewState)) {
+    if (!DisableAllPrivileges && !ARGUMENT_PRESENT(NewState))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -173,32 +169,25 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
             //
             // Make sure we can see all of the new state
             //
 
-            if (!DisableAllPrivileges) {
+            if (!DisableAllPrivileges)
+            {
 
-                ProbeForReadSmallStructure(
-                    NewState,
-                    sizeof(TOKEN_PRIVILEGES),
-                    sizeof(ULONG)
-                    );
+                ProbeForReadSmallStructure(NewState, sizeof(TOKEN_PRIVILEGES), sizeof(ULONG));
 
                 CapturedPrivilegeCount = NewState->PrivilegeCount;
                 ParameterLength = (ULONG)sizeof(TOKEN_PRIVILEGES) +
-                                  ( (CapturedPrivilegeCount - ANYSIZE_ARRAY) *
-                                  (ULONG)sizeof(LUID_AND_ATTRIBUTES)  );
+                                  ((CapturedPrivilegeCount - ANYSIZE_ARRAY) * (ULONG)sizeof(LUID_AND_ATTRIBUTES));
 
-                ProbeForRead(
-                    NewState,
-                    ParameterLength,
-                    sizeof(ULONG)
-                    );
-
+                ProbeForRead(NewState, ParameterLength, sizeof(ULONG));
             }
 
 
@@ -206,64 +195,56 @@ Return Value:
             // Check the PreviousState buffer for writeability
             //
 
-            if (ARGUMENT_PRESENT(PreviousState)) {
+            if (ARGUMENT_PRESENT(PreviousState))
+            {
 
-                ProbeForWrite(
-                    PreviousState,
-                    BufferLength,
-                    sizeof(ULONG)
-                    );
+                ProbeForWrite(PreviousState, BufferLength, sizeof(ULONG));
 
                 ProbeForWriteUlong(ReturnLength);
             }
-
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
+    }
+    else
+    {
 
-    } else {
-
-        if (!DisableAllPrivileges) {
+        if (!DisableAllPrivileges)
+        {
 
             CapturedPrivilegeCount = NewState->PrivilegeCount;
         }
     }
 
 
-
     //
     // Capture NewState if passed.
     //
 
-    if (!DisableAllPrivileges) {
+    if (!DisableAllPrivileges)
+    {
 
-        try {
+        try
+        {
 
 
-            Status = SeCaptureLuidAndAttributesArray(
-                         (NewState->Privileges),
-                         CapturedPrivilegeCount,
-                         PreviousMode,
-                         NULL, 0,
-                         PagedPool,
-                         TRUE,
-                         &CapturedPrivileges,
-                         &CapturedPrivilegesLength
-                         );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            Status =
+                SeCaptureLuidAndAttributesArray((NewState->Privileges), CapturedPrivilegeCount, PreviousMode, NULL, 0,
+                                                PagedPool, TRUE, &CapturedPrivileges, &CapturedPrivilegesLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             return GetExceptionCode();
-
         }
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return Status;
-
         }
-
     }
 
 
@@ -272,29 +253,29 @@ Return Value:
     // to adjust the privileges.
     //
 
-    if (ARGUMENT_PRESENT(PreviousState)) {
+    if (ARGUMENT_PRESENT(PreviousState))
+    {
         DesiredAccess = (TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY);
-    } else {
+    }
+    else
+    {
         DesiredAccess = TOKEN_ADJUST_PRIVILEGES;
     }
 
-    Status = ObReferenceObjectByHandle(
-             TokenHandle,             // Handle
-             DesiredAccess,           // DesiredAccess
-             SeTokenObjectType,      // ObjectType
-             PreviousMode,            // AccessMode
-             (PVOID *)&Token,         // Object
-             NULL                     // GrantedAccess
-             );
+    Status = ObReferenceObjectByHandle(TokenHandle,       // Handle
+                                       DesiredAccess,     // DesiredAccess
+                                       SeTokenObjectType, // ObjectType
+                                       PreviousMode,      // AccessMode
+                                       (PVOID *)&Token,   // Object
+                                       NULL               // GrantedAccess
+    );
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (CapturedPrivileges != NULL) {
-            SeReleaseLuidAndAttributesArray(
-                CapturedPrivileges,
-                PreviousMode,
-                TRUE
-                );
+        if (CapturedPrivileges != NULL)
+        {
+            SeReleaseLuidAndAttributesArray(CapturedPrivileges, PreviousMode, TRUE);
         }
 
         return Status;
@@ -304,47 +285,39 @@ Return Value:
     //  Gain exclusive access to the token.
     //
 
-    SepAcquireTokenWriteLock( Token );
+    SepAcquireTokenWriteLock(Token);
 
     //
     // First pass through the privileges list - just count the changes
     //
 
 
-    Status = SepAdjustPrivileges(
-                Token,
-                FALSE,                // Don't make changes this pass
-                DisableAllPrivileges,
-                CapturedPrivilegeCount,
-                CapturedPrivileges,
-                PreviousState,
-                &LocalReturnLength,
-                &ChangeCount,
-                &ChangesMade
-                );
+    Status = SepAdjustPrivileges(Token,
+                                 FALSE, // Don't make changes this pass
+                                 DisableAllPrivileges, CapturedPrivilegeCount, CapturedPrivileges, PreviousState,
+                                 &LocalReturnLength, &ChangeCount, &ChangesMade);
 
-    if (ARGUMENT_PRESENT(PreviousState)) {
+    if (ARGUMENT_PRESENT(PreviousState))
+    {
 
-        try {
+        try
+        {
 
             (*ReturnLength) = LocalReturnLength;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            SepReleaseTokenWriteLock(Token, FALSE);
+            ObDereferenceObject(Token);
 
-            SepReleaseTokenWriteLock( Token, FALSE );
-            ObDereferenceObject( Token );
-
-            if (CapturedPrivileges != NULL) {
-                SeReleaseLuidAndAttributesArray(
-                    CapturedPrivileges,
-                    PreviousMode,
-                    TRUE
-                    );
+            if (CapturedPrivileges != NULL)
+            {
+                SeReleaseLuidAndAttributesArray(CapturedPrivileges, PreviousMode, TRUE);
             }
 
             return GetExceptionCode();
         }
-
     }
 
 
@@ -353,18 +326,17 @@ Return Value:
     // information.
     //
 
-    if (ARGUMENT_PRESENT(PreviousState)) {
-        if (LocalReturnLength > BufferLength) {
+    if (ARGUMENT_PRESENT(PreviousState))
+    {
+        if (LocalReturnLength > BufferLength)
+        {
 
-            SepReleaseTokenWriteLock( Token, FALSE );
-            ObDereferenceObject( Token );
+            SepReleaseTokenWriteLock(Token, FALSE);
+            ObDereferenceObject(Token);
 
-            if (CapturedPrivileges != NULL) {
-                SeReleaseLuidAndAttributesArray(
-                    CapturedPrivileges,
-                    PreviousMode,
-                    TRUE
-                    );
+            if (CapturedPrivileges != NULL)
+            {
+                SeReleaseLuidAndAttributesArray(CapturedPrivileges, PreviousMode, TRUE);
             }
 
             return STATUS_BUFFER_TOO_SMALL;
@@ -378,66 +350,48 @@ Return Value:
     // state directly to the caller's buffer - and so may get an exception.
     //
 
-    try {
+    try
+    {
 
-        Status = SepAdjustPrivileges(
-                    Token,
-                    TRUE,                 // Make the changes this pass
-                    DisableAllPrivileges,
-                    CapturedPrivilegeCount,
-                    CapturedPrivileges,
-                    PreviousState,
-                    &LocalReturnLength,
-                    &ChangeCount,
-                    &ChangesMade
-                    );
+        Status = SepAdjustPrivileges(Token,
+                                     TRUE, // Make the changes this pass
+                                     DisableAllPrivileges, CapturedPrivilegeCount, CapturedPrivileges, PreviousState,
+                                     &LocalReturnLength, &ChangeCount, &ChangesMade);
 
 
-        if (ARGUMENT_PRESENT(PreviousState)) {
+        if (ARGUMENT_PRESENT(PreviousState))
+        {
 
             PreviousState->PrivilegeCount = ChangeCount;
         }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-
-        SepReleaseTokenWriteLock( Token, TRUE );
-        ObDereferenceObject( Token );
-        if (CapturedPrivileges != NULL) {
-            SeReleaseLuidAndAttributesArray(
-                CapturedPrivileges,
-                PreviousMode,
-                TRUE
-                );
+        SepReleaseTokenWriteLock(Token, TRUE);
+        ObDereferenceObject(Token);
+        if (CapturedPrivileges != NULL)
+        {
+            SeReleaseLuidAndAttributesArray(CapturedPrivileges, PreviousMode, TRUE);
         }
         return GetExceptionCode();
-
     }
 
 
-    SepReleaseTokenWriteLock( Token, ChangesMade );
-    ObDereferenceObject( Token );
-    if (CapturedPrivileges != NULL) {
-        SeReleaseLuidAndAttributesArray(
-            CapturedPrivileges,
-            PreviousMode,
-            TRUE
-            );
+    SepReleaseTokenWriteLock(Token, ChangesMade);
+    ObDereferenceObject(Token);
+    if (CapturedPrivileges != NULL)
+    {
+        SeReleaseLuidAndAttributesArray(CapturedPrivileges, PreviousMode, TRUE);
     }
 
     return Status;
-
 }
 
-
+
 NTSTATUS
-NtAdjustGroupsToken (
-    IN HANDLE TokenHandle,
-    IN BOOLEAN ResetToDefault,
-    IN PTOKEN_GROUPS NewState OPTIONAL,
-    IN ULONG BufferLength OPTIONAL,
-    OUT PTOKEN_GROUPS PreviousState OPTIONAL,
-    OUT PULONG ReturnLength
-    )
+NtAdjustGroupsToken(IN HANDLE TokenHandle, IN BOOLEAN ResetToDefault, IN PTOKEN_GROUPS NewState OPTIONAL,
+                    IN ULONG BufferLength OPTIONAL, OUT PTOKEN_GROUPS PreviousState OPTIONAL, OUT PULONG ReturnLength)
 
 /*++
 
@@ -556,7 +510,8 @@ Return Value:
     //  pass is made to actually make the changes.
     //
 
-    if (!ResetToDefault && !ARGUMENT_PRESENT(NewState)) {
+    if (!ResetToDefault && !ARGUMENT_PRESENT(NewState))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -565,24 +520,20 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
-            if (!ResetToDefault) {
-                ProbeForReadSmallStructure(
-                    NewState,
-                    sizeof(TOKEN_GROUPS),
-                    sizeof(ULONG)
-                    );
+            if (!ResetToDefault)
+            {
+                ProbeForReadSmallStructure(NewState, sizeof(TOKEN_GROUPS), sizeof(ULONG));
             }
 
-            if (ARGUMENT_PRESENT(PreviousState)) {
+            if (ARGUMENT_PRESENT(PreviousState))
+            {
 
-                ProbeForWrite(
-                    PreviousState,
-                    BufferLength,
-                    sizeof(ULONG)
-                    );
+                ProbeForWrite(PreviousState, BufferLength, sizeof(ULONG));
 
                 //
                 // This parameter is only used if PreviousState
@@ -590,11 +541,10 @@ Return Value:
                 //
 
                 ProbeForWriteUlong(ReturnLength);
-
             }
-
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
@@ -603,29 +553,24 @@ Return Value:
     // Capture NewState.
     //
 
-    if (!ResetToDefault) {
+    if (!ResetToDefault)
+    {
 
-        try {
+        try
+        {
 
             CapturedGroupCount = NewState->GroupCount;
-            Status = SeCaptureSidAndAttributesArray(
-                         &(NewState->Groups[0]),
-                         CapturedGroupCount,
-                         PreviousMode,
-                         NULL, 0,
-                         PagedPool,
-                         TRUE,
-                         &CapturedGroups,
-                         &CapturedGroupsLength
-                         );
+            Status = SeCaptureSidAndAttributesArray(&(NewState->Groups[0]), CapturedGroupCount, PreviousMode, NULL, 0,
+                                                    PagedPool, TRUE, &CapturedGroups, &CapturedGroupsLength);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 return Status;
-
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             return GetExceptionCode();
 
@@ -638,25 +583,29 @@ Return Value:
     // to adjust the groups.
     //
 
-    if (ARGUMENT_PRESENT(PreviousState)) {
+    if (ARGUMENT_PRESENT(PreviousState))
+    {
         DesiredAccess = (TOKEN_ADJUST_GROUPS | TOKEN_QUERY);
-    } else {
+    }
+    else
+    {
         DesiredAccess = TOKEN_ADJUST_GROUPS;
     }
 
-    Status = ObReferenceObjectByHandle(
-             TokenHandle,             // Handle
-             DesiredAccess,           // DesiredAccess
-             SeTokenObjectType,      // ObjectType
-             PreviousMode,            // AccessMode
-             (PVOID *)&Token,         // Object
-             NULL                     // GrantedAccess
-             );
+    Status = ObReferenceObjectByHandle(TokenHandle,       // Handle
+                                       DesiredAccess,     // DesiredAccess
+                                       SeTokenObjectType, // ObjectType
+                                       PreviousMode,      // AccessMode
+                                       (PVOID *)&Token,   // Object
+                                       NULL               // GrantedAccess
+    );
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (ARGUMENT_PRESENT(CapturedGroups)) {
-            SeReleaseSidAndAttributesArray( CapturedGroups, PreviousMode, TRUE );
+        if (ARGUMENT_PRESENT(CapturedGroups))
+        {
+            SeReleaseSidAndAttributesArray(CapturedGroups, PreviousMode, TRUE);
         }
 
         return Status;
@@ -666,7 +615,7 @@ Return Value:
     //  Gain exclusive access to the token.
     //
 
-    SepAcquireTokenWriteLock( Token );
+    SepAcquireTokenWriteLock(Token);
 
     //
     // First pass through the groups list.
@@ -675,36 +624,29 @@ Return Value:
     // isn't trying to do anything illegal to mandatory groups.
     //
 
-    Status = SepAdjustGroups(
-                 Token,
-                 FALSE,                // Don't make changes this pass
-                 ResetToDefault,
-                 CapturedGroupCount,
-                 CapturedGroups,
-                 PreviousState,
-                 NULL,                // Not returning SIDs this call
-                 &LocalReturnLength,
-                 &ChangeCount,
-                 &ChangesMade
-                 );
+    Status = SepAdjustGroups(Token,
+                             FALSE, // Don't make changes this pass
+                             ResetToDefault, CapturedGroupCount, CapturedGroups, PreviousState,
+                             NULL, // Not returning SIDs this call
+                             &LocalReturnLength, &ChangeCount, &ChangesMade);
 
-    if (ARGUMENT_PRESENT(PreviousState)) {
+    if (ARGUMENT_PRESENT(PreviousState))
+    {
 
-        try {
+        try
+        {
 
             (*ReturnLength) = LocalReturnLength;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            SepReleaseTokenWriteLock(Token, FALSE);
+            ObDereferenceObject(Token);
 
-            SepReleaseTokenWriteLock( Token, FALSE );
-            ObDereferenceObject( Token );
-
-            if (ARGUMENT_PRESENT(CapturedGroups)) {
-                SeReleaseSidAndAttributesArray(
-                    CapturedGroups,
-                    PreviousMode,
-                    TRUE
-                    );
+            if (ARGUMENT_PRESENT(CapturedGroups))
+            {
+                SeReleaseSidAndAttributesArray(CapturedGroups, PreviousMode, TRUE);
             }
 
             return GetExceptionCode();
@@ -715,21 +657,18 @@ Return Value:
     // Make sure we didn't encounter an error
     //
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        SepReleaseTokenWriteLock( Token, FALSE );
-        ObDereferenceObject( Token );
+        SepReleaseTokenWriteLock(Token, FALSE);
+        ObDereferenceObject(Token);
 
-        if (ARGUMENT_PRESENT(CapturedGroups)) {
-            SeReleaseSidAndAttributesArray(
-                CapturedGroups,
-                PreviousMode,
-                TRUE
-                );
+        if (ARGUMENT_PRESENT(CapturedGroups))
+        {
+            SeReleaseSidAndAttributesArray(CapturedGroups, PreviousMode, TRUE);
         }
 
         return Status;
-
     }
 
     //
@@ -737,18 +676,17 @@ Return Value:
     // Also go on to calculate where the SID values go.
     //
 
-    if (ARGUMENT_PRESENT(PreviousState)) {
-        if (LocalReturnLength > BufferLength) {
+    if (ARGUMENT_PRESENT(PreviousState))
+    {
+        if (LocalReturnLength > BufferLength)
+        {
 
-            SepReleaseTokenWriteLock( Token, FALSE );
-            ObDereferenceObject( Token );
+            SepReleaseTokenWriteLock(Token, FALSE);
+            ObDereferenceObject(Token);
 
-            if (ARGUMENT_PRESENT(CapturedGroups)) {
-                SeReleaseSidAndAttributesArray(
-                    CapturedGroups,
-                    PreviousMode,
-                    TRUE
-                    );
+            if (ARGUMENT_PRESENT(CapturedGroups))
+            {
+                SeReleaseSidAndAttributesArray(CapturedGroups, PreviousMode, TRUE);
             }
 
 
@@ -760,74 +698,59 @@ Return Value:
         // buffer.
         //
 
-        SidBuffer = (PSID)(LongAlignPtr(
-                            (PCHAR)PreviousState + (ULONG)sizeof(TOKEN_GROUPS) +
-                            (ChangeCount * (ULONG)sizeof(SID_AND_ATTRIBUTES)) -
-                            (ANYSIZE_ARRAY * (ULONG)sizeof(SID_AND_ATTRIBUTES))
-                            ) );
-
+        SidBuffer = (PSID)(LongAlignPtr((PCHAR)PreviousState + (ULONG)sizeof(TOKEN_GROUPS) +
+                                        (ChangeCount * (ULONG)sizeof(SID_AND_ATTRIBUTES)) -
+                                        (ANYSIZE_ARRAY * (ULONG)sizeof(SID_AND_ATTRIBUTES))));
     }
 
     //
     // Second pass through the groups list.
     //
 
-    try {
+    try
+    {
 
-        Status = SepAdjustGroups(
-                     Token,
-                     TRUE,                 // Make changes in this pass
-                     ResetToDefault,
-                     CapturedGroupCount,
-                     CapturedGroups,
-                     PreviousState,
-                     SidBuffer,
-                     &LocalReturnLength,
-                     &ChangeCount,
-                     &ChangesMade
-                     );
+        Status = SepAdjustGroups(Token,
+                                 TRUE, // Make changes in this pass
+                                 ResetToDefault, CapturedGroupCount, CapturedGroups, PreviousState, SidBuffer,
+                                 &LocalReturnLength, &ChangeCount, &ChangesMade);
 
-        if (ARGUMENT_PRESENT(PreviousState)) {
+        if (ARGUMENT_PRESENT(PreviousState))
+        {
 
             PreviousState->GroupCount = ChangeCount;
         }
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //SepFreeToken( Token, TRUE );
-        SepReleaseTokenWriteLock( Token, TRUE );
-        ObDereferenceObject( Token );
-        if (ARGUMENT_PRESENT(CapturedGroups)) {
-            SeReleaseSidAndAttributesArray( CapturedGroups, PreviousMode, TRUE );
+        SepReleaseTokenWriteLock(Token, TRUE);
+        ObDereferenceObject(Token);
+        if (ARGUMENT_PRESENT(CapturedGroups))
+        {
+            SeReleaseSidAndAttributesArray(CapturedGroups, PreviousMode, TRUE);
         }
         return GetExceptionCode();
-
     }
 
     //SepFreeToken( Token, ChangesMade );
-    SepReleaseTokenWriteLock( Token, ChangesMade );
-    ObDereferenceObject( Token );
+    SepReleaseTokenWriteLock(Token, ChangesMade);
+    ObDereferenceObject(Token);
 
-    if (ARGUMENT_PRESENT(CapturedGroups)) {
-        SeReleaseSidAndAttributesArray( CapturedGroups, PreviousMode, TRUE );
+    if (ARGUMENT_PRESENT(CapturedGroups))
+    {
+        SeReleaseSidAndAttributesArray(CapturedGroups, PreviousMode, TRUE);
     }
 
     return Status;
-
 }
-
+
 NTSTATUS
-SepAdjustPrivileges(
-    IN PTOKEN Token,
-    IN BOOLEAN MakeChanges,
-    IN BOOLEAN DisableAllPrivileges,
-    IN ULONG PrivilegeCount OPTIONAL,
-    IN PLUID_AND_ATTRIBUTES NewState OPTIONAL,
-    OUT PTOKEN_PRIVILEGES PreviousState OPTIONAL,
-    OUT PULONG ReturnLength,
-    OUT PULONG ChangeCount,
-    OUT PBOOLEAN ChangesMade
-    )
+SepAdjustPrivileges(IN PTOKEN Token, IN BOOLEAN MakeChanges, IN BOOLEAN DisableAllPrivileges,
+                    IN ULONG PrivilegeCount OPTIONAL, IN PLUID_AND_ATTRIBUTES NewState OPTIONAL,
+                    OUT PTOKEN_PRIVILEGES PreviousState OPTIONAL, OUT PULONG ReturnLength, OUT PULONG ChangeCount,
+                    OUT PBOOLEAN ChangesMade)
 
 /*++
 
@@ -930,31 +853,32 @@ Return Value:
     OldIndex = 0;
     (*ChangeCount) = 0;
 
-    while (OldIndex < Token->PrivilegeCount) {
+    while (OldIndex < Token->PrivilegeCount)
+    {
 
         CurrentPrivilege = (Token->Privileges)[OldIndex];
 
-        if (DisableAllPrivileges) {
+        if (DisableAllPrivileges)
+        {
 
-            if (SepTokenPrivilegeAttributes(Token,OldIndex) &
-               SE_PRIVILEGE_ENABLED ) {
+            if (SepTokenPrivilegeAttributes(Token, OldIndex) & SE_PRIVILEGE_ENABLED)
+            {
 
                 //
                 // Change, if necessary (saving previous state if
                 // appropriate).
                 //
 
-                if (MakeChanges) {
+                if (MakeChanges)
+                {
 
-                    if (ARGUMENT_PRESENT(PreviousState)) {
+                    if (ARGUMENT_PRESENT(PreviousState))
+                    {
 
-                        PreviousState->Privileges[(*ChangeCount)] =
-                            CurrentPrivilege;
+                        PreviousState->Privileges[(*ChangeCount)] = CurrentPrivilege;
                     }
 
-                    SepTokenPrivilegeAttributes(Token,OldIndex) &=
-                        ~SE_PRIVILEGE_ENABLED;
-
+                    SepTokenPrivilegeAttributes(Token, OldIndex) &= ~SE_PRIVILEGE_ENABLED;
 
 
                 } //endif make changes
@@ -966,8 +890,9 @@ Return Value:
                 (*ChangeCount) += 1;
 
             } // endif privilege enabled
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Selective adjustments - this is a little trickier
@@ -979,53 +904,51 @@ Return Value:
             NewIndex = 0;
             Found = FALSE;
 
-            while ( (NewIndex < PrivilegeCount) && !Found)  {
+            while ((NewIndex < PrivilegeCount) && !Found)
+            {
 
                 //
                 // Look for a comparison
                 //
 
-                if (RtlEqualLuid(&CurrentPrivilege.Luid,&NewState[NewIndex].Luid)) {
+                if (RtlEqualLuid(&CurrentPrivilege.Luid, &NewState[NewIndex].Luid))
+                {
 
                     Found = TRUE;
                     MatchCount += 1;
 
-                    if ( (SepArrayPrivilegeAttributes( NewState, NewIndex ) &
-                          SE_PRIVILEGE_ENABLED)
-                        !=
-                         (SepTokenPrivilegeAttributes(Token,OldIndex) &
-                          SE_PRIVILEGE_ENABLED)  ) {
+                    if ((SepArrayPrivilegeAttributes(NewState, NewIndex) & SE_PRIVILEGE_ENABLED) !=
+                        (SepTokenPrivilegeAttributes(Token, OldIndex) & SE_PRIVILEGE_ENABLED))
+                    {
 
                         //
                         // Change, if necessary (saving previous state if
                         // appropriate).
                         //
 
-                        if (MakeChanges) {
+                        if (MakeChanges)
+                        {
 
-                            if (ARGUMENT_PRESENT(PreviousState)) {
+                            if (ARGUMENT_PRESENT(PreviousState))
+                            {
 
-                                PreviousState->Privileges[(*ChangeCount)] =
-                                    CurrentPrivilege;
+                                PreviousState->Privileges[(*ChangeCount)] = CurrentPrivilege;
                             }
 
-                            SepTokenPrivilegeAttributes(Token,OldIndex) &=
-                                ~(SepTokenPrivilegeAttributes(Token,OldIndex)
-                                  & SE_PRIVILEGE_ENABLED);
-                            SepTokenPrivilegeAttributes(Token,OldIndex) |=
-                                 (SepArrayPrivilegeAttributes(NewState,NewIndex)
-                                  & SE_PRIVILEGE_ENABLED);
+                            SepTokenPrivilegeAttributes(Token, OldIndex) &=
+                                ~(SepTokenPrivilegeAttributes(Token, OldIndex) & SE_PRIVILEGE_ENABLED);
+                            SepTokenPrivilegeAttributes(Token, OldIndex) |=
+                                (SepArrayPrivilegeAttributes(NewState, NewIndex) & SE_PRIVILEGE_ENABLED);
 
                             //
                             // if this is SeChangeNotifyPrivilege, then
                             // change its corresponding bit in TokenFlags
                             //
 
-                            if (RtlEqualLuid(&CurrentPrivilege.Luid,
-                                              &SeChangeNotifyPrivilege)) {
+                            if (RtlEqualLuid(&CurrentPrivilege.Luid, &SeChangeNotifyPrivilege))
+                            {
                                 Token->TokenFlags ^= TOKEN_HAS_TRAVERSE_PRIVILEGE;
                             }
-
 
 
                         } //endif make changes
@@ -1057,7 +980,8 @@ Return Value:
     //
 
 
-    if (DisableAllPrivileges) {
+    if (DisableAllPrivileges)
+    {
         Token->TokenFlags &= ~TOKEN_HAS_TRAVERSE_PRIVILEGE;
     }
 
@@ -1065,9 +989,11 @@ Return Value:
     // Set completion status appropriately if some not assigned
     //
 
-    if (!DisableAllPrivileges) {
+    if (!DisableAllPrivileges)
+    {
 
-        if (MatchCount < PrivilegeCount) {
+        if (MatchCount < PrivilegeCount)
+        {
             CompletionStatus = STATUS_NOT_ALL_ASSIGNED;
         }
     }
@@ -1076,9 +1002,12 @@ Return Value:
     //  Indicate whether changes were made
     //
 
-    if ((*ChangeCount) > 0  &&  MakeChanges) {
+    if ((*ChangeCount) > 0 && MakeChanges)
+    {
         (*ChangesMade) = TRUE;
-    } else {
+    }
+    else
+    {
         (*ChangesMade) = FALSE;
     }
 
@@ -1086,29 +1015,20 @@ Return Value:
     // Calculate the space needed to return previous state information
     //
 
-    if (ARGUMENT_PRESENT(PreviousState)) {
+    if (ARGUMENT_PRESENT(PreviousState))
+    {
 
-        (*ReturnLength) = (ULONG)sizeof(TOKEN_PRIVILEGES) +
-                          ((*ChangeCount) *  (ULONG)sizeof(LUID_AND_ATTRIBUTES)) -
+        (*ReturnLength) = (ULONG)sizeof(TOKEN_PRIVILEGES) + ((*ChangeCount) * (ULONG)sizeof(LUID_AND_ATTRIBUTES)) -
                           (ANYSIZE_ARRAY * (ULONG)sizeof(LUID_AND_ATTRIBUTES));
     }
 
-   return CompletionStatus;
+    return CompletionStatus;
 }
-
+
 NTSTATUS
-SepAdjustGroups(
-    IN PTOKEN Token,
-    IN BOOLEAN MakeChanges,
-    IN BOOLEAN ResetToDefault,
-    IN ULONG GroupCount,
-    IN PSID_AND_ATTRIBUTES NewState OPTIONAL,
-    OUT PTOKEN_GROUPS PreviousState OPTIONAL,
-    OUT PSID SidBuffer OPTIONAL,
-    OUT PULONG ReturnLength,
-    OUT PULONG ChangeCount,
-    OUT PBOOLEAN ChangesMade
-    )
+SepAdjustGroups(IN PTOKEN Token, IN BOOLEAN MakeChanges, IN BOOLEAN ResetToDefault, IN ULONG GroupCount,
+                IN PSID_AND_ATTRIBUTES NewState OPTIONAL, OUT PTOKEN_GROUPS PreviousState OPTIONAL,
+                OUT PSID SidBuffer OPTIONAL, OUT PULONG ReturnLength, OUT PULONG ChangeCount, OUT PBOOLEAN ChangesMade)
 
 /*++
 
@@ -1233,32 +1153,34 @@ Return Value:
     //  adjusted.
     //
 
-    OldIndex = 1;             // Don't evaluate the 0th entry (user ID)
+    OldIndex = 1; // Don't evaluate the 0th entry (user ID)
     (*ChangeCount) = 0;
 
-    while (OldIndex < Token->UserAndGroupCount) {
+    while (OldIndex < Token->UserAndGroupCount)
+    {
 
         CurrentGroup = Token->UserAndGroups[OldIndex];
 
-        if (ResetToDefault) {
+        if (ResetToDefault)
+        {
 
-            TokenGroupAttributes = SepTokenGroupAttributes(Token,OldIndex);
+            TokenGroupAttributes = SepTokenGroupAttributes(Token, OldIndex);
 
             //
             // If the group is enabled by default and currently disabled,
             // then we must enable it.
             //
 
-            EnableGroup = (BOOLEAN)( (TokenGroupAttributes & SE_GROUP_ENABLED_BY_DEFAULT)
-                && !(TokenGroupAttributes & SE_GROUP_ENABLED));
+            EnableGroup = (BOOLEAN)((TokenGroupAttributes & SE_GROUP_ENABLED_BY_DEFAULT) &&
+                                    !(TokenGroupAttributes & SE_GROUP_ENABLED));
 
             //
             // If the group is disabled by default and currently enabled,
             // then we must disable it.
             //
 
-            DisableGroup = (BOOLEAN)( !(TokenGroupAttributes & SE_GROUP_ENABLED_BY_DEFAULT)
-                && (TokenGroupAttributes & SE_GROUP_ENABLED));
+            DisableGroup = (BOOLEAN)(!(TokenGroupAttributes & SE_GROUP_ENABLED_BY_DEFAULT) &&
+                                     (TokenGroupAttributes & SE_GROUP_ENABLED));
 
             //
             // Blow up if it's a mandatory group that is not both
@@ -1266,13 +1188,14 @@ Return Value:
             // make sure that this never happens).
             //
 
-            ASSERT(!(TokenGroupAttributes & SE_GROUP_MANDATORY)
-                   || ((TokenGroupAttributes & (SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED))
-                       == (SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED)));
+            ASSERT(!(TokenGroupAttributes & SE_GROUP_MANDATORY) ||
+                   ((TokenGroupAttributes & (SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED)) ==
+                    (SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED)));
 
-            if ( EnableGroup || DisableGroup ) {
+            if (EnableGroup || DisableGroup)
+            {
 
-                SidLength = SeLengthSid( CurrentGroup.Sid );
+                SidLength = SeLengthSid(CurrentGroup.Sid);
                 SidLength = (ULONG)LongAlignSize(SidLength);
                 LocalReturnLength += SidLength;
 
@@ -1281,26 +1204,28 @@ Return Value:
                 // appropriate).
                 //
 
-                if (MakeChanges) {
+                if (MakeChanges)
+                {
 
-                    if (ARGUMENT_PRESENT(PreviousState)) {
+                    if (ARGUMENT_PRESENT(PreviousState))
+                    {
 
-                        (*(PreviousState)).Groups[(*ChangeCount)].Attributes =
-                            CurrentGroup.Attributes;
+                        (*(PreviousState)).Groups[(*ChangeCount)].Attributes = CurrentGroup.Attributes;
 
-                        (*(PreviousState)).Groups[(*ChangeCount)].Sid =
-                            NextSid;
+                        (*(PreviousState)).Groups[(*ChangeCount)].Sid = NextSid;
 
-                        RtlCopySid( SidLength, NextSid, CurrentGroup.Sid );
+                        RtlCopySid(SidLength, NextSid, CurrentGroup.Sid);
                         NextSid = (PSID)((ULONG_PTR)NextSid + SidLength);
                     }
 
-                    if (EnableGroup) {
-                        SepTokenGroupAttributes(Token,OldIndex) |= SE_GROUP_ENABLED;
-                    } else {
-                        SepTokenGroupAttributes(Token,OldIndex) &= ~SE_GROUP_ENABLED;
+                    if (EnableGroup)
+                    {
+                        SepTokenGroupAttributes(Token, OldIndex) |= SE_GROUP_ENABLED;
                     }
-
+                    else
+                    {
+                        SepTokenGroupAttributes(Token, OldIndex) &= ~SE_GROUP_ENABLED;
+                    }
 
 
                 } //endif make changes
@@ -1312,8 +1237,9 @@ Return Value:
                 (*ChangeCount) += 1;
 
             } // endif group enabled
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Selective adjustments - this is a little trickier
@@ -1325,16 +1251,15 @@ Return Value:
             NewIndex = 0;
             Found = FALSE;
 
-            while ( (NewIndex < GroupCount) && !Found)  {
+            while ((NewIndex < GroupCount) && !Found)
+            {
 
                 //
                 // Look for a comparison
                 //
 
-                if (RtlEqualSid(
-                        CurrentGroup.Sid,
-                        NewState[NewIndex].Sid
-                        ) ) {
+                if (RtlEqualSid(CurrentGroup.Sid, NewState[NewIndex].Sid))
+                {
 
                     Found = TRUE;
                     MatchCount += 1;
@@ -1344,17 +1269,16 @@ Return Value:
                     // See if it needs to be changed
                     //
 
-                    if ( (SepArrayGroupAttributes( NewState, NewIndex ) &
-                            SE_GROUP_ENABLED ) !=
-                         (SepTokenGroupAttributes(Token,OldIndex) &
-                            SE_GROUP_ENABLED ) ) {
+                    if ((SepArrayGroupAttributes(NewState, NewIndex) & SE_GROUP_ENABLED) !=
+                        (SepTokenGroupAttributes(Token, OldIndex) & SE_GROUP_ENABLED))
+                    {
 
                         //
                         // Make sure group is not mandatory
                         //
 
-                        if (SepTokenGroupAttributes(Token,OldIndex) &
-                              SE_GROUP_MANDATORY ) {
+                        if (SepTokenGroupAttributes(Token, OldIndex) & SE_GROUP_MANDATORY)
+                        {
                             return STATUS_CANT_DISABLE_MANDATORY;
                         }
 
@@ -1363,12 +1287,12 @@ Return Value:
                         //
 
 
-                        if (SepTokenGroupAttributes(Token,OldIndex) &
-                              SE_GROUP_USE_FOR_DENY_ONLY ) {
+                        if (SepTokenGroupAttributes(Token, OldIndex) & SE_GROUP_USE_FOR_DENY_ONLY)
+                        {
                             return STATUS_CANT_ENABLE_DENY_ONLY;
                         }
 
-                        SidLength = SeLengthSid( CurrentGroup.Sid );
+                        SidLength = SeLengthSid(CurrentGroup.Sid);
                         SidLength = (ULONG)LongAlignSize(SidLength);
                         LocalReturnLength += SidLength;
 
@@ -1377,28 +1301,25 @@ Return Value:
                         // appropriate).
                         //
 
-                        if (MakeChanges) {
+                        if (MakeChanges)
+                        {
 
-                            if (ARGUMENT_PRESENT(PreviousState)) {
+                            if (ARGUMENT_PRESENT(PreviousState))
+                            {
 
-                                PreviousState->Groups[(*ChangeCount)].Attributes =
-                                    CurrentGroup.Attributes;
+                                PreviousState->Groups[(*ChangeCount)].Attributes = CurrentGroup.Attributes;
 
-                                PreviousState->Groups[(*ChangeCount)].Sid =
-                                    NextSid;
+                                PreviousState->Groups[(*ChangeCount)].Sid = NextSid;
 
-                                RtlCopySid( SidLength, NextSid, CurrentGroup.Sid );
+                                RtlCopySid(SidLength, NextSid, CurrentGroup.Sid);
 
                                 NextSid = (PSID)((ULONG_PTR)NextSid + SidLength);
                             }
 
-                            SepTokenGroupAttributes(Token,OldIndex) &=
-                                ~(SepTokenGroupAttributes(Token,OldIndex)
-                                  & SE_GROUP_ENABLED);
-                            SepTokenGroupAttributes(Token,OldIndex) |=
-                                 (SepArrayGroupAttributes(NewState,NewIndex)
-                                  & SE_GROUP_ENABLED);
-
+                            SepTokenGroupAttributes(Token, OldIndex) &=
+                                ~(SepTokenGroupAttributes(Token, OldIndex) & SE_GROUP_ENABLED);
+                            SepTokenGroupAttributes(Token, OldIndex) |=
+                                (SepArrayGroupAttributes(NewState, NewIndex) & SE_GROUP_ENABLED);
 
 
                         } //endif make changes
@@ -1428,9 +1349,11 @@ Return Value:
     // Set completion status appropriately if some not assigned
     //
 
-    if (!ResetToDefault) {
+    if (!ResetToDefault)
+    {
 
-        if (MatchCount < GroupCount) {
+        if (MatchCount < GroupCount)
+        {
             CompletionStatus = STATUS_NOT_ALL_ASSIGNED;
         }
     }
@@ -1439,9 +1362,12 @@ Return Value:
     //  Indicate whether changes were made
     //
 
-    if ((*ChangeCount) > 0  &&  MakeChanges) {
+    if ((*ChangeCount) > 0 && MakeChanges)
+    {
         (*ChangesMade) = TRUE;
-    } else {
+    }
+    else
+    {
         (*ChangesMade) = FALSE;
     }
 
@@ -1450,13 +1376,13 @@ Return Value:
     // (The SID lengths have already been added up in LocalReturnLength).
     //
 
-    if (ARGUMENT_PRESENT(PreviousState)) {
+    if (ARGUMENT_PRESENT(PreviousState))
+    {
 
-        (*ReturnLength) = LocalReturnLength +
-                          (ULONG)sizeof(TOKEN_GROUPS) +
-                          ((*ChangeCount) *  (ULONG)sizeof(SID_AND_ATTRIBUTES)) -
+        (*ReturnLength) = LocalReturnLength + (ULONG)sizeof(TOKEN_GROUPS) +
+                          ((*ChangeCount) * (ULONG)sizeof(SID_AND_ATTRIBUTES)) -
                           (ANYSIZE_ARRAY * (ULONG)sizeof(SID_AND_ATTRIBUTES));
     }
 
-   return CompletionStatus;
+    return CompletionStatus;
 }

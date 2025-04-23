@@ -43,12 +43,14 @@ Revision History:
 // Define the CC_CTL.
 //
 
-typedef union _CC_CTL_21264{
-    struct {
+typedef union _CC_CTL_21264
+{
+    struct
+    {
         ULONGLONG Count : 32;
         ULONGLONG CcEna : 1;
         ULONGLONG Ignore : 31;
-    } ;
+    };
     ULONGLONG all;
 } CC_CTL_21264, *PCC_CTL_21264;
 
@@ -56,8 +58,10 @@ typedef union _CC_CTL_21264{
 //  Define VA_CTL.
 //
 
-typedef union _VA_CTL_21264{
-    struct {
+typedef union _VA_CTL_21264
+{
+    struct
+    {
         ULONGLONG BigEndian : 1;
         ULONGLONG Va48 : 1;
         ULONGLONG VaForm32 : 1;
@@ -75,8 +79,10 @@ typedef union _VA_CTL_21264{
 //  Define ITB_PTE.
 //
 
-typedef union _ITB_PTE_21264{
-    struct {
+typedef union _ITB_PTE_21264
+{
+    struct
+    {
         ULONGLONG Ignore1 : 4;
         ULONGLONG Asm : 1;
         ULONGLONG Gh : 2;
@@ -96,15 +102,16 @@ typedef union _ITB_PTE_21264{
 // Define EXC_ADDR
 //
 
-typedef union _EXC_ADDR_21264{
-	  struct{
-		  ULONGLONG Pal : 1;
-		  ULONGLONG Raz : 1;
-		  ULONGLONG Pc  : 62;
-	  };
-	  ULONGLONG all;
-}  EXC_ADDR_21264, *PEXC_ADDR_21264;
-
+typedef union _EXC_ADDR_21264
+{
+    struct
+    {
+        ULONGLONG Pal : 1;
+        ULONGLONG Raz : 1;
+        ULONGLONG Pc : 62;
+    };
+    ULONGLONG all;
+} EXC_ADDR_21264, *PEXC_ADDR_21264;
 
 
 //
@@ -112,8 +119,10 @@ typedef union _EXC_ADDR_21264{
 //  Note that this can be also be written as two independant registers.
 //
 
-typedef union _IER_CM_21264{
-    struct {
+typedef union _IER_CM_21264
+{
+    struct
+    {
         ULONGLONG Raz1 : 3;
         ULONGLONG Cm : 2;
         ULONGLONG Raz2 : 8;
@@ -132,8 +141,10 @@ typedef union _IER_CM_21264{
 //  Define SIRR - Software Interrupt Request Register
 //
 
-typedef union _SIRR_21264{
-    struct{
+typedef union _SIRR_21264
+{
+    struct
+    {
         ULONGLONG Raz1 : 14;
         ULONGLONG Sir : 15;
         ULONGLONG Raz2 : 35;
@@ -145,8 +156,10 @@ typedef union _SIRR_21264{
 //  Define ISUM - Interrupt Summary register
 //
 
-typedef union _ISUM_21264{
-    struct{
+typedef union _ISUM_21264
+{
+    struct
+    {
         ULONGLONG Raz1 : 3;
         ULONGLONG AstK : 1;
         ULONGLONG AstE : 1;
@@ -168,8 +181,10 @@ typedef union _ISUM_21264{
 //  Define HW_INT_CLR - Hardware Interrupt Clear Register
 //
 
-typedef union _HW_INT_CLR_21264{
-    struct{
+typedef union _HW_INT_CLR_21264
+{
+    struct
+    {
         ULONGLONG Ign1 : 26;
         ULONGLONG Fbtp : 1;
         ULONGLONG Fbdp : 1;
@@ -186,8 +201,10 @@ typedef union _HW_INT_CLR_21264{
 //  Define EXC_SUM - Exception Summary Register
 //
 
-typedef union _EXC_SUM_21264{
-    struct{
+typedef union _EXC_SUM_21264
+{
+    struct
+    {
         ULONGLONG Swc : 1;
         ULONGLONG Inv : 1;
         ULONGLONG Dze : 1;
@@ -199,7 +216,7 @@ typedef union _EXC_SUM_21264{
         ULONGLONG Reg : 5;
         ULONGLONG BadIva : 1;
         ULONGLONG Ignore1 : 27;
-        ULONGLONG PcOvf	 : 1;
+        ULONGLONG PcOvf : 1;
         ULONGLONG SetInv : 1;
         ULONGLONG SetDze : 1;
         ULONGLONG SetOvf : 1;
@@ -215,8 +232,10 @@ typedef union _EXC_SUM_21264{
 //  Define I_CTL - Ibox Control Register
 //
 
-typedef union _I_CTL_21264{
-    struct{
+typedef union _I_CTL_21264
+{
+    struct
+    {
         ULONGLONG PcEn : 1;
         ULONGLONG IcEnable : 2;
         ULONGLONG Sp32 : 1;
@@ -249,8 +268,10 @@ typedef union _I_CTL_21264{
 //  Define I_STAT - Ibox Status Register
 //
 
-typedef union _I_STAT_21264{
-    struct{
+typedef union _I_STAT_21264
+{
+    struct
+    {
         ULONGLONG Raz1 : 29;
         ULONGLONG Tpe : 1;
         ULONGLONG Dpe : 1;
@@ -265,8 +286,10 @@ typedef union _I_STAT_21264{
 //  (ASN, ASTER, ASTRR, PPCE, FPE)
 //
 
-typedef union _PCTX_21264{
-    struct{
+typedef union _PCTX_21264
+{
+    struct
+    {
         ULONGLONG Raz1 : 1;
         ULONGLONG Ppce : 1;
         ULONGLONG Fpe : 1;
@@ -284,8 +307,10 @@ typedef union _PCTX_21264{
 //  Define PCTR_CTL - Performance Counter Control Register
 //
 
-typedef union _PCTR_CTL_21264{
-    struct{
+typedef union _PCTR_CTL_21264
+{
+    struct
+    {
         ULONGLONG Sel1 : 4;
         ULONGLONG Sel0 : 1;
         ULONGLONG Raz1 : 1;
@@ -306,8 +331,10 @@ typedef union _PCTR_CTL_21264{
 //  Define DTB_PTE
 //
 
-typedef union _DTB_PTE_21264{
-    struct{
+typedef union _DTB_PTE_21264
+{
+    struct
+    {
         ULONGLONG Ignore1 : 1;
         ULONGLONG For : 1;
         ULONGLONG Fow : 1;
@@ -334,8 +361,10 @@ typedef union _DTB_PTE_21264{
 //  Define DTB_ASN
 //
 
-typedef union _DTB_ASN_21264{
-    struct{
+typedef union _DTB_ASN_21264
+{
+    struct
+    {
         ULONGLONG Ignore1 : 56;
         ULONGLONG Asn : 8;
     };
@@ -346,8 +375,10 @@ typedef union _DTB_ASN_21264{
 //  Define MM_STAT - MBOX Status Register
 //
 
-typedef union _MM_STAT_21264{
-    struct{
+typedef union _MM_STAT_21264
+{
+    struct
+    {
         ULONGLONG Wr : 1;
         ULONGLONG Acv : 1;
         ULONGLONG For : 1;
@@ -363,13 +394,15 @@ typedef union _MM_STAT_21264{
 //  Define M_CTL - MBOX Control Register
 //
 
-typedef union _M_CTL_21264{
-    struct{
-        ULONGLONG Mbz1	: 1;
-        ULONGLONG sp32	: 1;
-		ULONGLONG sp43	: 1;
-		ULONGLONG sp48	: 1;
-        ULONGLONG Mbz2	: 60;
+typedef union _M_CTL_21264
+{
+    struct
+    {
+        ULONGLONG Mbz1 : 1;
+        ULONGLONG sp32 : 1;
+        ULONGLONG sp43 : 1;
+        ULONGLONG sp48 : 1;
+        ULONGLONG Mbz2 : 60;
     };
     ULONGLONG all;
 } M_CTL_21264, *PM_CTL_21264;
@@ -378,8 +411,10 @@ typedef union _M_CTL_21264{
 //  Define DC_CTL - Dcache Control Register
 //
 
-typedef union _DC_CTL_21264{
-    struct{
+typedef union _DC_CTL_21264
+{
+    struct
+    {
         ULONGLONG SetEn : 2;
         ULONGLONG Fhit : 1;
         ULONGLONG Flush : 1;
@@ -396,8 +431,10 @@ typedef union _DC_CTL_21264{
 //  Define DC_STAT - Dcache Status Register
 //
 
-typedef union _DC_STAT_21264{
-    struct{
+typedef union _DC_STAT_21264
+{
+    struct
+    {
         ULONGLONG TPerrP0 : 1;
         ULONGLONG TPerrP1 : 1;
         ULONGLONG EccErrSt : 1;
@@ -408,7 +445,7 @@ typedef union _DC_STAT_21264{
     ULONGLONG all;
 } DC_STAT_21264, *PDC_STAT_21264;
 
-        
+
 //
 // Define Cbox Internal Processor Registers.
 //
@@ -417,12 +454,14 @@ typedef union _DC_STAT_21264{
 // Define CSTAT field in CBOX read IPR
 //
 
-typedef union _C_STAT_21264 {
-    struct {
-        ULONGLONG       ErrorQualifier  :3;
-        ULONGLONG       IstreamError    :1;
-        ULONGLONG       DoubleBitError  :1;
-        ULONGLONG       Reserved        :59;
+typedef union _C_STAT_21264
+{
+    struct
+    {
+        ULONGLONG ErrorQualifier : 3;
+        ULONGLONG IstreamError : 1;
+        ULONGLONG DoubleBitError : 1;
+        ULONGLONG Reserved : 59;
     };
     ULONGLONG all;
 } C_STAT_21264, *PC_STAT_21264;
@@ -431,28 +470,28 @@ typedef union _C_STAT_21264 {
 // SjBfix. CBOX Register chain not defined yet.
 
 
-
 //
-// Define the Interrupt Mask structure communicated between the 
+// Define the Interrupt Mask structure communicated between the
 // HAL and PALcode.
 //
 // This is the bit defintion for the IRQL fields that are stored
 // in the PCR IrqlTable. Keep it the same as on EV4.
 //
 
-typedef struct _IETEntry_21264{
-    ULONG ApcEnable: 1;
-    ULONG DispatchEnable: 1;
-    ULONG PerformanceCounter0Enable: 1;
-    ULONG PerformanceCounter1Enable: 1;
-    ULONG CorrectableReadEnable: 1;
-    ULONG Irq0Enable: 1;
-    ULONG Irq1Enable: 1;
-    ULONG Irq2Enable: 1;
-    ULONG Irq3Enable: 1;
-    ULONG Irq4Enable: 1;
-    ULONG Irq5Enable: 1;
-    ULONG Reserved: 21;
+typedef struct _IETEntry_21264
+{
+    ULONG ApcEnable : 1;
+    ULONG DispatchEnable : 1;
+    ULONG PerformanceCounter0Enable : 1;
+    ULONG PerformanceCounter1Enable : 1;
+    ULONG CorrectableReadEnable : 1;
+    ULONG Irq0Enable : 1;
+    ULONG Irq1Enable : 1;
+    ULONG Irq2Enable : 1;
+    ULONG Irq3Enable : 1;
+    ULONG Irq4Enable : 1;
+    ULONG Irq5Enable : 1;
+    ULONG Reserved : 21;
 } IETEntry_21264, *PIETEntry_21264;
 
 //
@@ -466,7 +505,7 @@ typedef struct _IETEntry_21264{
 #define IRQLMASK_SFW_SUBTABLE_21264 (0)
 #define IRQLMASK_SFW_SUBTABLE_21264_ENTRIES (4)
 
-#define IRQLMASK_PC_SUBTABLE_21264  (4)
+#define IRQLMASK_PC_SUBTABLE_21264 (4)
 #define IRQLMASK_PC_SUBTABLE_21264_ENTRIES (4)
 
 //
@@ -479,7 +518,8 @@ typedef struct _IETEntry_21264{
 // This is the structure of the data returned by the rdcounters call pal.
 //
 
-typedef struct _COUNTERS_21264{
+typedef struct _COUNTERS_21264
+{
     ULONGLONG MachineCheckCount;
     ULONGLONG ArithmeticExceptionCount;
     ULONGLONG InterruptCount;
@@ -569,16 +609,18 @@ typedef struct _COUNTERS_21264{
 // Types of performance counters.
 //
 
-typedef enum _AXP21264_PCCOUNTER{
-	Ev6PerformanceCounter0 = 0,
-	Ev6PerformanceCounter1 = 1,
+typedef enum _AXP21264_PCCOUNTER
+{
+    Ev6PerformanceCounter0 = 0,
+    Ev6PerformanceCounter1 = 1,
 } AXP21264_PCCOUNTER, *PAXP21264_PCCOUNTER;
 
 //
 // Mux control values
 //
 
-typedef enum _AXP21264_PCMUXCONTROL{
+typedef enum _AXP21264_PCMUXCONTROL
+{
     //
     //  Mux values for PCTR1:
     //
@@ -596,8 +638,8 @@ typedef enum _AXP21264_PCMUXCONTROL{
     Ev6BcacheWrites = 0x0b,
     Ev6SysPortReads = 0x0c,
     Ev6SysPortWrites = 0x0d,
-    Ev6MBStalls = 0x0e,             // SjBfix. Not documented
-    Ev6StcStalls = 0x0f,            // SjBfix. Not documented
+    Ev6MBStalls = 0x0e,  // SjBfix. Not documented
+    Ev6StcStalls = 0x0f, // SjBfix. Not documented
 
     //
     //  Mux values for PCTR0:
@@ -613,7 +655,8 @@ typedef enum _AXP21264_PCMUXCONTROL{
 // This is the structure of the data returned by the rdstate call pal.
 //
 
-typedef struct _PROCESSOR_STATE_21264{
+typedef struct _PROCESSOR_STATE_21264
+{
     IER_CM_21264 IerCm;
     SIRR_21264 Sirr;
     ISUM_21264 Isum;
@@ -632,58 +675,60 @@ typedef struct _PROCESSOR_STATE_21264{
 // Machine-check logout frame.
 //
 
-typedef struct _LOGOUT_FRAME_21264{
-    ULONG               FrameSize;
-    ULONG               RSDC;
-    ULONG               CpuAreaOffset;
-    ULONG               SystemAreaOffset;
-    ULONG               MchkCode;
-    ULONG               MchkFrameRev;
-    I_STAT_21264        IStat;
-    DC_STAT_21264       DcStat;
-    ULONGLONG           CAddr;
-    ULONGLONG           Dc1Syndrome;
-    ULONGLONG           Dc0Syndrome;
-    ULONGLONG           CStat;
-    ULONGLONG           CSts;
-    ULONGLONG           Va;
-    ULONGLONG           ExcAddr;
-    IER_CM_21264        IerCm;
-    ISUM_21264          ISum;
-    MM_STAT_21264       MmStat;
-    ULONGLONG           PalBase;
-    I_CTL_21264         ICtl;
-    PCTX_21264          PCtx;
-    VA_CTL_21264        VaCtl;
-    ULONGLONG           Ps;
+typedef struct _LOGOUT_FRAME_21264
+{
+    ULONG FrameSize;
+    ULONG RSDC;
+    ULONG CpuAreaOffset;
+    ULONG SystemAreaOffset;
+    ULONG MchkCode;
+    ULONG MchkFrameRev;
+    I_STAT_21264 IStat;
+    DC_STAT_21264 DcStat;
+    ULONGLONG CAddr;
+    ULONGLONG Dc1Syndrome;
+    ULONGLONG Dc0Syndrome;
+    ULONGLONG CStat;
+    ULONGLONG CSts;
+    ULONGLONG Va;
+    ULONGLONG ExcAddr;
+    IER_CM_21264 IerCm;
+    ISUM_21264 ISum;
+    MM_STAT_21264 MmStat;
+    ULONGLONG PalBase;
+    I_CTL_21264 ICtl;
+    PCTX_21264 PCtx;
+    VA_CTL_21264 VaCtl;
+    ULONGLONG Ps;
 } LOGOUT_FRAME_21264, *PLOGOUT_FRAME_21264;
 
 //
 // Correctable logout frame
 //
 
-typedef struct _CORRECTABLE_FRAME_21264 {
-    ULONG               FrameSize;
-    ULONG               RSDC;
-    ULONG               CpuAreaOffset;
-    ULONG               SystemAreaOffset;
-    ULONG               MchkCode;
-    ULONG               MchkFrameRev;
-    I_STAT_21264        IStat;
-    DC_STAT_21264       DCStat;
-    ULONGLONG           CAddr;
-    ULONGLONG           Dc1Syndrome;
-    ULONGLONG           Dc0Syndrome;
-    ULONGLONG           CStat;
-    ULONGLONG           CSts;
-    ULONGLONG           MmStat;
+typedef struct _CORRECTABLE_FRAME_21264
+{
+    ULONG FrameSize;
+    ULONG RSDC;
+    ULONG CpuAreaOffset;
+    ULONG SystemAreaOffset;
+    ULONG MchkCode;
+    ULONG MchkFrameRev;
+    I_STAT_21264 IStat;
+    DC_STAT_21264 DCStat;
+    ULONGLONG CAddr;
+    ULONGLONG Dc1Syndrome;
+    ULONGLONG Dc0Syndrome;
+    ULONGLONG CStat;
+    ULONGLONG CSts;
+    ULONGLONG MmStat;
 } CORRECTABLE_FRAME_21264, *PCORRECTABLE_FRAME_21264;
 
 //
 // Define the number of physical and virtual address bits
 //
 
-#define EV6_PHYSICAL_ADDRESS_BITS       44
-#define EV6_VIRTUAL_ADDRESS_BITS        43
+#define EV6_PHYSICAL_ADDRESS_BITS 44
+#define EV6_VIRTUAL_ADDRESS_BITS 43
 
-#endif //!_AXP21264_  
+#endif //!_AXP21264_

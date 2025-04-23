@@ -26,11 +26,9 @@ Revision History:
 #pragma alloc_text(PAGE, FsRtlSyncVolumes)
 #endif
 
-
+
 NTSTATUS
-FsRtlBalanceReads (
-    IN PDEVICE_OBJECT TargetDevice
-    )
+FsRtlBalanceReads(IN PDEVICE_OBJECT TargetDevice)
 
 /*++
 
@@ -57,47 +55,33 @@ Return Value:
     IO_STATUS_BLOCK Iosb;
     NTSTATUS Status;
 
-    KeInitializeEvent( &Event, NotificationEvent, FALSE );
+    KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
-    Irp = IoBuildDeviceIoControlRequest( FT_BALANCED_READ_MODE,
-                                         TargetDevice,
-                                         NULL,
-                                         0,
-                                         NULL,
-                                         0,
-                                         FALSE,
-                                         &Event,
-                                         &Iosb );
+    Irp = IoBuildDeviceIoControlRequest(FT_BALANCED_READ_MODE, TargetDevice, NULL, 0, NULL, 0, FALSE, &Event, &Iosb);
 
-    if ( Irp == NULL ) {
+    if (Irp == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Status = IoCallDriver( TargetDevice, Irp );
+    Status = IoCallDriver(TargetDevice, Irp);
 
 
-    if (Status == STATUS_PENDING) {
-        Status = KeWaitForSingleObject( &Event,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        NULL );
+    if (Status == STATUS_PENDING)
+    {
+        Status = KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
 
-        ASSERT( Status == STATUS_SUCCESS );
+        ASSERT(Status == STATUS_SUCCESS);
 
         Status = Iosb.Status;
     }
 
     return Status;
 }
-
+
 NTSTATUS
-FsRtlSyncVolumes (
-    IN PDEVICE_OBJECT TargetDevice,
-    IN PLARGE_INTEGER ByteOffset OPTIONAL,
-    IN PLARGE_INTEGER ByteCount
-    )
+FsRtlSyncVolumes(IN PDEVICE_OBJECT TargetDevice, IN PLARGE_INTEGER ByteOffset OPTIONAL, IN PLARGE_INTEGER ByteCount)
 
 /*++
 
@@ -125,7 +109,7 @@ Return Value:
 
 {
 
-#if 0  // Mike Glass says we no longer need to do this.  3/3/94
+#if 0 // Mike Glass says we no longer need to do this.  3/3/94
 
     PIRP Irp;
     KEVENT Event;
@@ -189,5 +173,3 @@ Return Value:
 
 #endif //0
 }
-
-

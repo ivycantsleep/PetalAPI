@@ -31,21 +31,21 @@ Revision History:
 // (NtPulseEvent and NtSetEvent)
 //
 
-#define EVENT_INCREMENT                 1
+#define EVENT_INCREMENT 1
 
 // end_ntddk end_wdm end_ntifs end_ntosp
 //
 // Priority increment used when satisfying a wait on an executive event pair
 //
 
-#define EVENT_PAIR_INCREMENT            1
+#define EVENT_PAIR_INCREMENT 1
 
 //
 // Priority increment used when satisfying a wait on a semaphore used for
 // LPC communication.
 //
 
-#define LPC_RELEASE_WAIT_INCREMENT      1
+#define LPC_RELEASE_WAIT_INCREMENT 1
 
 // begin_ntddk begin_wdm begin_ntifs begin_ntosp
 //
@@ -53,7 +53,7 @@ Revision History:
 // and file system drivers when completing an IRP (IoCompleteRequest).
 //
 
-#define IO_NO_INCREMENT                 0
+#define IO_NO_INCREMENT 0
 
 
 //
@@ -61,14 +61,14 @@ Revision History:
 // and file system drivers when completing an IRP (IoCompleteRequest)
 //
 
-#define IO_CD_ROM_INCREMENT             1
+#define IO_CD_ROM_INCREMENT 1
 
 //
 // Priority increment for completing disk I/O.  This is used by disk device
 // and file system drivers when completing an IRP (IoCompleteRequest)
 //
 
-#define IO_DISK_INCREMENT               1
+#define IO_DISK_INCREMENT 1
 
 // end_ntifs
 
@@ -77,7 +77,7 @@ Revision History:
 // device drivers when completing an IRP (IoCompleteRequest)
 //
 
-#define IO_KEYBOARD_INCREMENT           6
+#define IO_KEYBOARD_INCREMENT 6
 
 // begin_ntifs
 //
@@ -85,7 +85,7 @@ Revision History:
 // slot file system driver when completing an IRP (IoCompleteRequest).
 //
 
-#define IO_MAILSLOT_INCREMENT           2
+#define IO_MAILSLOT_INCREMENT 2
 
 // end_ntifs
 //
@@ -93,7 +93,7 @@ Revision History:
 // drivers when completing an IRP (IoCompleteRequest)
 //
 
-#define IO_MOUSE_INCREMENT              6
+#define IO_MOUSE_INCREMENT 6
 
 // begin_ntifs
 //
@@ -101,7 +101,7 @@ Revision History:
 // named pipe file system driver when completing an IRP (IoCompleteRequest).
 //
 
-#define IO_NAMED_PIPE_INCREMENT         2
+#define IO_NAMED_PIPE_INCREMENT 2
 
 //
 // Priority increment for completing network I/O.  This is used by network
@@ -109,7 +109,7 @@ Revision History:
 // (IoCompleteRequest).
 //
 
-#define IO_NETWORK_INCREMENT            2
+#define IO_NETWORK_INCREMENT 2
 
 // end_ntifs
 //
@@ -117,28 +117,28 @@ Revision History:
 // device drivers when completing an IRP (IoCompleteRequest)
 //
 
-#define IO_PARALLEL_INCREMENT           1
+#define IO_PARALLEL_INCREMENT 1
 
 //
 // Priority increment for completing serial I/O.  This is used by serial device
 // drivers when completing an IRP (IoCompleteRequest)
 //
 
-#define IO_SERIAL_INCREMENT             2
+#define IO_SERIAL_INCREMENT 2
 
 //
 // Priority increment for completing sound I/O.  This is used by sound device
 // drivers when completing an IRP (IoCompleteRequest)
 //
 
-#define IO_SOUND_INCREMENT              8
+#define IO_SOUND_INCREMENT 8
 
 //
 // Priority increment for completing video I/O.  This is used by video device
 // drivers when completing an IRP (IoCompleteRequest)
 //
 
-#define IO_VIDEO_INCREMENT              1
+#define IO_VIDEO_INCREMENT 1
 
 // end_ntddk end_wdm
 //
@@ -146,7 +146,7 @@ Revision History:
 // (NtReleaseMutant)
 //
 
-#define MUTANT_INCREMENT                1
+#define MUTANT_INCREMENT 1
 
 // begin_ntddk begin_wdm begin_ntifs
 //
@@ -154,19 +154,18 @@ Revision History:
 // (NtReleaseSemaphore)
 //
 
-#define SEMAPHORE_INCREMENT             1
+#define SEMAPHORE_INCREMENT 1
 
 // end_ntddk end_wdm end_ntifs end_ntosp
 //
 // Priority increment used when queuing an APC for an executive timer.
 //
 
-#define TIMER_APC_INCREMENT             0
+#define TIMER_APC_INCREMENT 0
 
 //
 // Priority increment used to get slow exclusive eresource holders
 // moving again.
 //
 
-#define ERESOURCE_INCREMENT             4
-
+#define ERESOURCE_INCREMENT 4

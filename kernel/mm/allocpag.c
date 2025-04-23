@@ -23,13 +23,8 @@ Revision History:
 #include "mi.h"
 
 PVOID
-MiFindContiguousMemoryInPool (
-    IN PFN_NUMBER LowestPfn,
-    IN PFN_NUMBER HighestPfn,
-    IN PFN_NUMBER BoundaryPfn,
-    IN PFN_NUMBER SizeInPages,
-    IN PVOID CallingAddress
-    );
+MiFindContiguousMemoryInPool(IN PFN_NUMBER LowestPfn, IN PFN_NUMBER HighestPfn, IN PFN_NUMBER BoundaryPfn,
+                             IN PFN_NUMBER SizeInPages, IN PVOID CallingAddress);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, MiInitializeNonPagedPool)
@@ -52,7 +47,7 @@ MiFindContiguousMemoryInPool (
 #endif // DBG || (i386 && !FPO)
 #endif
 
-ULONG MmPagedPoolCommit;        // used by the debugger
+ULONG MmPagedPoolCommit; // used by the debugger
 
 PFN_NUMBER MmAllocatedNonPagedPool;
 PFN_NUMBER MiStartOfInitialPoolFrame;
@@ -97,21 +92,24 @@ extern ULONG MmUnusedSegmentForceFree;
 // For debugging purposes.
 //
 
-typedef enum _MM_POOL_TYPES {
+typedef enum _MM_POOL_TYPES
+{
     MmNonPagedPool,
     MmPagedPool,
     MmSessionPagedPool,
     MmMaximumPoolType
 } MM_POOL_TYPES;
 
-typedef enum _MM_POOL_PRIORITIES {
+typedef enum _MM_POOL_PRIORITIES
+{
     MmHighPriority,
     MmNormalPriority,
     MmLowPriority,
     MmMaximumPoolPriority
 } MM_POOL_PRIORITIES;
 
-typedef enum _MM_POOL_FAILURE_REASONS {
+typedef enum _MM_POOL_FAILURE_REASONS
+{
     MmNonPagedNoPtes,
     MmPriorityTooLow,
     MmNonPagedNoPagesAvailable,
@@ -129,7 +127,8 @@ typedef enum _MM_POOL_FAILURE_REASONS {
 ULONG MmPoolFailures[MmMaximumPoolType][MmMaximumPoolPriority];
 ULONG MmPoolFailureReasons[MmMaximumFailureReason];
 
-typedef enum _MM_PREEMPTIVE_TRIMS {
+typedef enum _MM_PREEMPTIVE_TRIMS
+{
     MmPreemptForNonPaged,
     MmPreemptForPaged,
     MmPreemptForNonPagedPriority,
@@ -139,12 +138,8 @@ typedef enum _MM_PREEMPTIVE_TRIMS {
 
 ULONG MmPreemptiveTrims[MmMaximumPreempt];
 
-
-VOID
-MiProtectFreeNonPagedPool (
-    IN PVOID VirtualAddress,
-    IN ULONG SizeInPages
-    )
+
+VOID MiProtectFreeNonPagedPool(IN PVOID VirtualAddress, IN ULONG SizeInPages)
 
 /*++
 
@@ -177,33 +172,28 @@ Environment:
     // Prevent anyone from touching the free non paged pool
     //
 
-    if (MI_IS_PHYSICAL_ADDRESS(VirtualAddress) == 0) {
-        PointerPte = MiGetPteAddress (VirtualAddress);
+    if (MI_IS_PHYSICAL_ADDRESS(VirtualAddress) == 0)
+    {
+        PointerPte = MiGetPteAddress(VirtualAddress);
 
-        for (i = 0; i < SizeInPages; i += 1) {
+        for (i = 0; i < SizeInPages; i += 1)
+        {
 
             PteContents = *PointerPte;
 
             PteContents.u.Hard.Valid = 0;
             PteContents.u.Soft.Prototype = 1;
-    
-            KeFlushSingleTb (VirtualAddress,
-                             TRUE,
-                             TRUE,
-                             (PHARDWARE_PTE)PointerPte,
-                             PteContents.u.Flush);
+
+            KeFlushSingleTb(VirtualAddress, TRUE, TRUE, (PHARDWARE_PTE)PointerPte, PteContents.u.Flush);
             VirtualAddress = (PVOID)((PCHAR)VirtualAddress + PAGE_SIZE);
             PointerPte += 1;
         }
     }
 }
 
-
+
 LOGICAL
-MiUnProtectFreeNonPagedPool (
-    IN PVOID VirtualAddress,
-    IN ULONG SizeInPages
-    )
+MiUnProtectFreeNonPagedPool(IN PVOID VirtualAddress, IN ULONG SizeInPages)
 
 /*++
 
@@ -240,22 +230,25 @@ Environment:
     // Unprotect the previously freed pool so it can be manipulated
     //
 
-    if (MI_IS_PHYSICAL_ADDRESS(VirtualAddress) == 0) {
+    if (MI_IS_PHYSICAL_ADDRESS(VirtualAddress) == 0)
+    {
 
         PointerPte = MiGetPteAddress((PVOID)VirtualAddress);
 
         PteContents = *PointerPte;
 
-        while (PteContents.u.Hard.Valid == 0 && PteContents.u.Soft.Prototype == 1) {
+        while (PteContents.u.Hard.Valid == 0 && PteContents.u.Soft.Prototype == 1)
+        {
 
             PteContents.u.Hard.Valid = 1;
             PteContents.u.Soft.Prototype = 0;
-    
-            MI_WRITE_VALID_PTE (PointerPte, PteContents);
+
+            MI_WRITE_VALID_PTE(PointerPte, PteContents);
 
             PagesDone += 1;
 
-            if (PagesDone == SizeInPages) {
+            if (PagesDone == SizeInPages)
+            {
                 break;
             }
 
@@ -264,20 +257,16 @@ Environment:
         }
     }
 
-    if (PagesDone == 0) {
+    if (PagesDone == 0)
+    {
         return FALSE;
     }
 
     return TRUE;
 }
 
-
-VOID
-MiProtectedPoolInsertList (
-    IN PLIST_ENTRY ListHead,
-    IN PLIST_ENTRY Entry,
-    IN LOGICAL InsertHead
-    )
+
+VOID MiProtectedPoolInsertList(IN PLIST_ENTRY ListHead, IN PLIST_ENTRY Entry, IN LOGICAL InsertHead)
 
 /*++
 
@@ -315,50 +304,55 @@ Environment:
     FreeFlink = (PVOID)0;
     FreeBlink = (PVOID)0;
 
-    if (IsListEmpty(ListHead) == 0) {
+    if (IsListEmpty(ListHead) == 0)
+    {
 
         VirtualAddress = (PVOID)ListHead->Flink;
-        if (MiUnProtectFreeNonPagedPool (VirtualAddress, 1) == TRUE) {
+        if (MiUnProtectFreeNonPagedPool(VirtualAddress, 1) == TRUE)
+        {
             FreeFlink = VirtualAddress;
         }
     }
 
-    if (((PVOID)Entry == ListHead->Blink) == 0) {
+    if (((PVOID)Entry == ListHead->Blink) == 0)
+    {
         VirtualAddress = (PVOID)ListHead->Blink;
-        if (MiUnProtectFreeNonPagedPool (VirtualAddress, 1) == TRUE) {
+        if (MiUnProtectFreeNonPagedPool(VirtualAddress, 1) == TRUE)
+        {
             FreeBlink = VirtualAddress;
         }
     }
 
-    if (InsertHead == TRUE) {
-        InsertHeadList (ListHead, Entry);
+    if (InsertHead == TRUE)
+    {
+        InsertHeadList(ListHead, Entry);
     }
-    else {
-        InsertTailList (ListHead, Entry);
+    else
+    {
+        InsertTailList(ListHead, Entry);
     }
 
-    if (FreeFlink) {
+    if (FreeFlink)
+    {
         //
         // Reprotect the flink.
         //
 
-        MiProtectFreeNonPagedPool (FreeFlink, 1);
+        MiProtectFreeNonPagedPool(FreeFlink, 1);
     }
 
-    if (FreeBlink) {
+    if (FreeBlink)
+    {
         //
         // Reprotect the blink.
         //
 
-        MiProtectFreeNonPagedPool (FreeBlink, 1);
+        MiProtectFreeNonPagedPool(FreeBlink, 1);
     }
 }
 
-
-VOID
-MiProtectedPoolRemoveEntryList (
-    IN PLIST_ENTRY Entry
-    )
+
+VOID MiProtectedPoolRemoveEntryList(IN PLIST_ENTRY Entry)
 
 /*++
 
@@ -392,45 +386,48 @@ Environment:
     FreeFlink = (PVOID)0;
     FreeBlink = (PVOID)0;
 
-    if (IsListEmpty(Entry) == 0) {
+    if (IsListEmpty(Entry) == 0)
+    {
 
         VirtualAddress = (PVOID)Entry->Flink;
-        if (MiUnProtectFreeNonPagedPool (VirtualAddress, 1) == TRUE) {
+        if (MiUnProtectFreeNonPagedPool(VirtualAddress, 1) == TRUE)
+        {
             FreeFlink = VirtualAddress;
         }
     }
 
-    if (((PVOID)Entry == Entry->Blink) == 0) {
+    if (((PVOID)Entry == Entry->Blink) == 0)
+    {
         VirtualAddress = (PVOID)Entry->Blink;
-        if (MiUnProtectFreeNonPagedPool (VirtualAddress, 1) == TRUE) {
+        if (MiUnProtectFreeNonPagedPool(VirtualAddress, 1) == TRUE)
+        {
             FreeBlink = VirtualAddress;
         }
     }
 
-    RemoveEntryList (Entry);
+    RemoveEntryList(Entry);
 
-    if (FreeFlink) {
+    if (FreeFlink)
+    {
         //
         // Reprotect the flink.
         //
 
-        MiProtectFreeNonPagedPool (FreeFlink, 1);
+        MiProtectFreeNonPagedPool(FreeFlink, 1);
     }
 
-    if (FreeBlink) {
+    if (FreeBlink)
+    {
         //
         // Reprotect the blink.
         //
 
-        MiProtectFreeNonPagedPool (FreeBlink, 1);
+        MiProtectFreeNonPagedPool(FreeBlink, 1);
     }
 }
 
-
-VOID
-MiTrimSegmentCache (
-    VOID
-    )
+
+VOID MiTrimSegmentCache(VOID)
 
 /*++
 
@@ -460,59 +457,67 @@ Environment:
     SignalDereferenceThread = FALSE;
     SignalSystemCache = FALSE;
 
-    LOCK_PFN2 (OldIrql);
+    LOCK_PFN2(OldIrql);
 
-    if (MmUnusedSegmentForceFree == 0) {
+    if (MmUnusedSegmentForceFree == 0)
+    {
 
-        if (!IsListEmpty(&MmUnusedSegmentList)) {
+        if (!IsListEmpty(&MmUnusedSegmentList))
+        {
 
             SignalDereferenceThread = TRUE;
             MmUnusedSegmentForceFree = MmUnusedSegmentForceFreeDefault;
         }
-        else {
-            if (!IsListEmpty(&MmUnusedSubsectionList)) {
+        else
+        {
+            if (!IsListEmpty(&MmUnusedSubsectionList))
+            {
                 SignalDereferenceThread = TRUE;
                 MmUnusedSegmentForceFree = MmUnusedSegmentForceFreeDefault;
             }
 
-            if (MiUnusedSubsectionPagedPool < 4 * PAGE_SIZE) {
+            if (MiUnusedSubsectionPagedPool < 4 * PAGE_SIZE)
+            {
 
                 //
                 // No unused segments and tossable subsection usage is low as
                 // well.  Start unmapping system cache views in an attempt
                 // to get back the paged pool containing its prototype PTEs.
                 //
-    
+
                 SignalSystemCache = TRUE;
             }
         }
     }
 
-    UNLOCK_PFN2 (OldIrql);
+    UNLOCK_PFN2(OldIrql);
 
-    if (SignalSystemCache == TRUE) {
-        if (CcHasInactiveViews() == TRUE) {
-            if (SignalDereferenceThread == FALSE) {
-                LOCK_PFN2 (OldIrql);
-                if (MmUnusedSegmentForceFree == 0) {
+    if (SignalSystemCache == TRUE)
+    {
+        if (CcHasInactiveViews() == TRUE)
+        {
+            if (SignalDereferenceThread == FALSE)
+            {
+                LOCK_PFN2(OldIrql);
+                if (MmUnusedSegmentForceFree == 0)
+                {
                     SignalDereferenceThread = TRUE;
                     MmUnusedSegmentForceFree = MmUnusedSegmentForceFreeDefault;
                 }
-                UNLOCK_PFN2 (OldIrql);
+                UNLOCK_PFN2(OldIrql);
             }
         }
     }
 
-    if (SignalDereferenceThread == TRUE) {
-        KeSetEvent (&MmUnusedSegmentCleanup, 0, FALSE);
+    if (SignalDereferenceThread == TRUE)
+    {
+        KeSetEvent(&MmUnusedSegmentCleanup, 0, FALSE);
     }
 }
 
-
+
 POOL_TYPE
-MmDeterminePoolType (
-    IN PVOID VirtualAddress
-    )
+MmDeterminePoolType(IN PVOID VirtualAddress)
 
 /*++
 
@@ -537,23 +542,22 @@ Environment:
 --*/
 
 {
-    if ((VirtualAddress >= MmPagedPoolStart) &&
-        (VirtualAddress <= MmPagedPoolEnd)) {
+    if ((VirtualAddress >= MmPagedPoolStart) && (VirtualAddress <= MmPagedPoolEnd))
+    {
         return PagedPool;
     }
 
-    if (MI_IS_SESSION_POOL_ADDRESS (VirtualAddress) == TRUE) {
+    if (MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == TRUE)
+    {
         return PagedPoolSession;
     }
 
     return NonPagedPool;
 }
 
-
+
 PVOID
-MiSessionPoolVector (
-    VOID
-    )
+MiSessionPoolVector(VOID)
 
 /*++
 
@@ -572,17 +576,12 @@ Return Value:
 --*/
 
 {
-    PAGED_CODE ();
+    PAGED_CODE();
 
     return (PVOID)&MmSessionSpace->PagedPool;
 }
-
-VOID
-MiSessionPoolAllocated (
-    IN PVOID VirtualAddress,
-    IN SIZE_T NumberOfBytes,
-    IN POOL_TYPE PoolType
-    )
+
+VOID MiSessionPoolAllocated(IN PVOID VirtualAddress, IN SIZE_T NumberOfBytes, IN POOL_TYPE PoolType)
 
 /*++
 
@@ -618,36 +617,31 @@ Environment:
 
 {
 #if !DBG
-    UNREFERENCED_PARAMETER (VirtualAddress);
+    UNREFERENCED_PARAMETER(VirtualAddress);
 #endif
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool) {
-        ASSERT (KeGetCurrentIrql () <= DISPATCH_LEVEL);
-        ASSERT (MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == FALSE);
+    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool)
+    {
+        ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
+        ASSERT(MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == FALSE);
 
-        InterlockedExchangeAddSizeT (&MmSessionSpace->NonPagedPoolBytes,
-                                     NumberOfBytes);
+        InterlockedExchangeAddSizeT(&MmSessionSpace->NonPagedPoolBytes, NumberOfBytes);
 
-        InterlockedIncrement ((PLONG)&MmSessionSpace->NonPagedPoolAllocations);
+        InterlockedIncrement((PLONG)&MmSessionSpace->NonPagedPoolAllocations);
     }
-    else {
-        ASSERT (KeGetCurrentIrql () <= APC_LEVEL);
-        ASSERT (MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == TRUE);
+    else
+    {
+        ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
+        ASSERT(MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == TRUE);
 
-        InterlockedExchangeAddSizeT (&MmSessionSpace->PagedPoolBytes,
-                                     NumberOfBytes);
+        InterlockedExchangeAddSizeT(&MmSessionSpace->PagedPoolBytes, NumberOfBytes);
 
-        InterlockedIncrement ((PLONG)&MmSessionSpace->PagedPoolAllocations);
+        InterlockedIncrement((PLONG)&MmSessionSpace->PagedPoolAllocations);
     }
 }
 
-
-VOID
-MiSessionPoolFreed (
-    IN PVOID VirtualAddress,
-    IN SIZE_T NumberOfBytes,
-    IN POOL_TYPE PoolType
-    )
+
+VOID MiSessionPoolFreed(IN PVOID VirtualAddress, IN SIZE_T NumberOfBytes, IN POOL_TYPE PoolType)
 
 /*++
 
@@ -677,34 +671,32 @@ Environment:
 
 {
 #if !DBG
-    UNREFERENCED_PARAMETER (VirtualAddress);
+    UNREFERENCED_PARAMETER(VirtualAddress);
 #endif
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool) {
-        ASSERT (KeGetCurrentIrql () <= DISPATCH_LEVEL);
-        ASSERT (MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == FALSE);
+    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool)
+    {
+        ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
+        ASSERT(MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == FALSE);
 
-        InterlockedExchangeAddSizeT (&MmSessionSpace->NonPagedPoolBytes,
-                                     0-NumberOfBytes);
+        InterlockedExchangeAddSizeT(&MmSessionSpace->NonPagedPoolBytes, 0 - NumberOfBytes);
 
-        InterlockedDecrement ((PLONG)&MmSessionSpace->NonPagedPoolAllocations);
+        InterlockedDecrement((PLONG)&MmSessionSpace->NonPagedPoolAllocations);
     }
-    else {
-        ASSERT (KeGetCurrentIrql () <= APC_LEVEL);
-        ASSERT (MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == TRUE);
+    else
+    {
+        ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
+        ASSERT(MI_IS_SESSION_POOL_ADDRESS(VirtualAddress) == TRUE);
 
-        InterlockedExchangeAddSizeT (&MmSessionSpace->PagedPoolBytes,
-                                     0-NumberOfBytes);
+        InterlockedExchangeAddSizeT(&MmSessionSpace->PagedPoolBytes, 0 - NumberOfBytes);
 
-        InterlockedDecrement ((PLONG)&MmSessionSpace->PagedPoolAllocations);
+        InterlockedDecrement((PLONG)&MmSessionSpace->PagedPoolAllocations);
     }
 }
 
-
+
 SIZE_T
-MmAvailablePoolInPages (
-    IN POOL_TYPE PoolType
-    )
+MmAvailablePoolInPages(IN POOL_TYPE PoolType)
 
 /*++
 
@@ -732,31 +724,28 @@ Environment:
     SIZE_T FreeCommitInPages;
 
 #if !DBG
-    UNREFERENCED_PARAMETER (PoolType);
+    UNREFERENCED_PARAMETER(PoolType);
 #endif
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    ASSERT (PoolType == PagedPool);
+    ASSERT(PoolType == PagedPool);
 
     FreePoolInPages = (MmSizeOfPagedPoolInBytes >> PAGE_SHIFT) - MmPagedPoolInfo.AllocatedPagedPool;
 
     FreeCommitInPages = MmTotalCommitLimitMaximum - MmTotalCommittedPages;
 
-    if (FreePoolInPages > FreeCommitInPages) {
+    if (FreePoolInPages > FreeCommitInPages)
+    {
         FreePoolInPages = FreeCommitInPages;
     }
 
     return FreePoolInPages;
 }
 
-
+
 LOGICAL
-MmResourcesAvailable (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN EX_POOL_PRIORITY Priority
-    )
+MmResourcesAvailable(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN EX_POOL_PRIORITY Priority)
 
 /*++
 
@@ -785,18 +774,21 @@ Return Value:
     LOGICAL Status;
     MM_POOL_PRIORITIES Index;
 
-    ASSERT (Priority != HighPoolPriority);
-    ASSERT ((PoolType & MUST_SUCCEED_POOL_TYPE_MASK) == 0);
+    ASSERT(Priority != HighPoolPriority);
+    ASSERT((PoolType & MUST_SUCCEED_POOL_TYPE_MASK) == 0);
 
-    NumberOfPages = BYTES_TO_PAGES (NumberOfBytes);
+    NumberOfPages = BYTES_TO_PAGES(NumberOfBytes);
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool) {
+    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool)
+    {
         FreePoolInBytes = MmMaximumNonPagedPoolInBytes - (MmAllocatedNonPagedPool << PAGE_SHIFT);
     }
-    else if (PoolType & SESSION_POOL_MASK) {
+    else if (PoolType & SESSION_POOL_MASK)
+    {
         FreePoolInBytes = MmSessionPoolSize - MmSessionSpace->PagedPoolBytes;
     }
-    else {
+    else
+    {
         FreePoolInBytes = MmSizeOfPagedPoolInBytes - (MmPagedPoolInfo.AllocatedPagedPool << PAGE_SHIFT);
     }
 
@@ -806,16 +798,22 @@ Return Value:
     // Check available VA space.
     //
 
-    if (Priority == NormalPoolPriority) {
-        if ((SIZE_T)NumberOfBytes + 512*1024 > FreePoolInBytes) {
-            if (PsGetCurrentThread()->MemoryMaker == 0) {
+    if (Priority == NormalPoolPriority)
+    {
+        if ((SIZE_T)NumberOfBytes + 512 * 1024 > FreePoolInBytes)
+        {
+            if (PsGetCurrentThread()->MemoryMaker == 0)
+            {
                 goto nopool;
             }
         }
     }
-    else {
-        if ((SIZE_T)NumberOfBytes + 2*1024*1024 > FreePoolInBytes) {
-            if (PsGetCurrentThread()->MemoryMaker == 0) {
+    else
+    {
+        if ((SIZE_T)NumberOfBytes + 2 * 1024 * 1024 > FreePoolInBytes)
+        {
+            if (PsGetCurrentThread()->MemoryMaker == 0)
+            {
                 goto nopool;
             }
         }
@@ -825,10 +823,13 @@ Return Value:
     // Paged allocations (session and normal) can also fail for lack of commit.
     //
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool) {
-        if (MmTotalCommittedPages + NumberOfPages > MmTotalCommitLimitMaximum) {
-            if (PsGetCurrentThread()->MemoryMaker == 0) {
-                MiIssuePageExtendRequestNoWait (NumberOfPages);
+    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool)
+    {
+        if (MmTotalCommittedPages + NumberOfPages > MmTotalCommitLimitMaximum)
+        {
+            if (PsGetCurrentThread()->MemoryMaker == 0)
+            {
+                MiIssuePageExtendRequestNoWait(NumberOfPages);
                 goto nopool;
             }
         }
@@ -838,8 +839,8 @@ Return Value:
     // If a substantial amount of free pool is still available, return TRUE now.
     //
 
-    if (((SIZE_T)NumberOfBytes + 10*1024*1024 < FreePoolInBytes) ||
-        (MmNumberOfPhysicalPages < 256 * 1024)) {
+    if (((SIZE_T)NumberOfBytes + 10 * 1024 * 1024 < FreePoolInBytes) || (MmNumberOfPhysicalPages < 256 * 1024))
+    {
         return TRUE;
     }
 
@@ -860,44 +861,55 @@ nopool:
     // force unused segment trimming when appropriate.
     //
 
-    if ((PoolType & SESSION_POOL_MASK) == 0) {
+    if ((PoolType & SESSION_POOL_MASK) == 0)
+    {
 
-        if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool) {
+        if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool)
+        {
             MmPreemptiveTrims[MmPreemptForNonPagedPriority] += 1;
         }
-        else {
+        else
+        {
             MmPreemptiveTrims[MmPreemptForPagedPriority] += 1;
         }
 
-        if (MI_UNUSED_SEGMENTS_SURPLUS()) {
-            KeSetEvent (&MmUnusedSegmentCleanup, 0, FALSE);
+        if (MI_UNUSED_SEGMENTS_SURPLUS())
+        {
+            KeSetEvent(&MmUnusedSegmentCleanup, 0, FALSE);
         }
-        else {
-            MiTrimSegmentCache ();
+        else
+        {
+            MiTrimSegmentCache();
         }
     }
 
-    if (Status == FALSE) {
+    if (Status == FALSE)
+    {
 
         //
         // Log this failure for debugging purposes.
         //
 
-        if (Priority == NormalPoolPriority) {
+        if (Priority == NormalPoolPriority)
+        {
             Index = MmNormalPriority;
         }
-        else {
+        else
+        {
             Index = MmLowPriority;
         }
 
-        if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool) {
+        if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool)
+        {
             MmPoolFailures[MmNonPagedPool][Index] += 1;
         }
-        else if (PoolType & SESSION_POOL_MASK) {
+        else if (PoolType & SESSION_POOL_MASK)
+        {
             MmPoolFailures[MmSessionPagedPool][Index] += 1;
             MmSessionSpace->SessionPoolAllocationFailures[0] += 1;
         }
-        else {
+        else
+        {
             MmPoolFailures[MmPagedPool][Index] += 1;
         }
 
@@ -907,12 +919,8 @@ nopool:
     return Status;
 }
 
-
-VOID
-MiFreeNonPagedPool (
-    IN PVOID StartingAddress,
-    IN PFN_NUMBER NumberOfPages
-    )
+
+VOID MiFreeNonPagedPool(IN PVOID StartingAddress, IN PFN_NUMBER NumberOfPages)
 
 /*++
 
@@ -949,53 +957,55 @@ Environment:
     ULONG Count;
     PVOID FlushVa[MM_MAXIMUM_FLUSH_COUNT];
 
-    MI_MAKING_MULTIPLE_PTES_INVALID (TRUE);
+    MI_MAKING_MULTIPLE_PTES_INVALID(TRUE);
 
     Count = 0;
-    PointerPte = MiGetPteAddress (StartingAddress);
+    PointerPte = MiGetPteAddress(StartingAddress);
 
     //
     // Return commitment.
     //
 
-    MiReturnCommitment (NumberOfPages);
+    MiReturnCommitment(NumberOfPages);
 
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_NONPAGED_POOL_EXPANSION,
-                     NumberOfPages);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_NONPAGED_POOL_EXPANSION, NumberOfPages);
 
     ResAvailToReturn = 0;
 
-    LOCK_PFN_AT_DPC ();
+    LOCK_PFN_AT_DPC();
 
-    if (MiExpansionPoolPagesInUse > MiExpansionPoolPagesInitialCharge) {
+    if (MiExpansionPoolPagesInUse > MiExpansionPoolPagesInitialCharge)
+    {
         ResAvailToReturn = MiExpansionPoolPagesInUse - MiExpansionPoolPagesInitialCharge;
     }
     MiExpansionPoolPagesInUse -= NumberOfPages;
 
-    for (i = 0; i < NumberOfPages; i += 1) {
+    for (i = 0; i < NumberOfPages; i += 1)
+    {
 
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
 
         //
         // Set the pointer to the PTE as empty so the page
         // is deleted when the reference count goes to zero.
         //
 
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-        ASSERT (Pfn1->u2.ShareCount == 1);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+        ASSERT(Pfn1->u2.ShareCount == 1);
         Pfn1->u2.ShareCount = 0;
-        MI_SET_PFN_DELETED (Pfn1);
+        MI_SET_PFN_DELETED(Pfn1);
 #if DBG
         Pfn1->u3.e1.PageLocation = StandbyPageList;
 #endif //DBG
-        MiDecrementReferenceCount (PageFrameIndex);
+        MiDecrementReferenceCount(PageFrameIndex);
 
-        if (Count != MM_MAXIMUM_FLUSH_COUNT) {
+        if (Count != MM_MAXIMUM_FLUSH_COUNT)
+        {
             FlushVa[Count] = StartingAddress;
             Count += 1;
         }
 
-        MI_WRITE_INVALID_PTE (PointerPte, ZeroKernelPte);
+        MI_WRITE_INVALID_PTE(PointerPte, ZeroKernelPte);
 
         StartingAddress = (PVOID)((PCHAR)StartingAddress + PAGE_SIZE);
         PointerPte += 1;
@@ -1008,11 +1018,13 @@ Environment:
     // calculate how much (if any) resident available page charge to return.
     //
 
-    if (ResAvailToReturn > NumberOfPages) {
+    if (ResAvailToReturn > NumberOfPages)
+    {
         ResAvailToReturn = NumberOfPages;
     }
 
-    if (ResAvailToReturn != 0) {
+    if (ResAvailToReturn != 0)
+    {
         MmResidentAvailablePages += ResAvailToReturn;
         MM_BUMP_COUNTER(23, ResAvailToReturn);
     }
@@ -1023,33 +1035,26 @@ Environment:
     // cannot be reused until the PTEs are released below.
     //
 
-    UNLOCK_PFN_FROM_DPC ();
+    UNLOCK_PFN_FROM_DPC();
 
-    if (Count < MM_MAXIMUM_FLUSH_COUNT) {
-        KeFlushMultipleTb (Count,
-                           &FlushVa[0],
-                           TRUE,
-                           TRUE,
-                           NULL,
-                           *(PHARDWARE_PTE)&ZeroPte.u.Flush);
+    if (Count < MM_MAXIMUM_FLUSH_COUNT)
+    {
+        KeFlushMultipleTb(Count, &FlushVa[0], TRUE, TRUE, NULL, *(PHARDWARE_PTE)&ZeroPte.u.Flush);
     }
-    else {
-        KeFlushEntireTb (TRUE, TRUE);
+    else
+    {
+        KeFlushEntireTb(TRUE, TRUE);
     }
 
-    KeLowerIrql (DISPATCH_LEVEL);
+    KeLowerIrql(DISPATCH_LEVEL);
 
     PointerPte -= NumberOfPages;
 
-    MiReleaseSystemPtes (PointerPte,
-                         (ULONG)NumberOfPages,
-                         NonPagedPoolExpansion);
+    MiReleaseSystemPtes(PointerPte, (ULONG)NumberOfPages, NonPagedPoolExpansion);
 }
-
+
 LOGICAL
-MiFreeAllExpansionNonPagedPool (
-    IN LOGICAL PoolLockHeld
-    )
+MiFreeAllExpansionNonPagedPool(IN LOGICAL PoolLockHeld)
 
 /*++
 
@@ -1081,10 +1086,12 @@ Environment:
 
     FreedPool = FALSE;
 
-    if (PoolLockHeld == FALSE) {
-        OldIrql = ExLockPool (NonPagedPool);
+    if (PoolLockHeld == FALSE)
+    {
+        OldIrql = ExLockPool(NonPagedPool);
     }
-    else {
+    else
+    {
 
         //
         // Initializing OldIrql is not needed for correctness, but without it
@@ -1095,14 +1102,17 @@ Environment:
         OldIrql = PASSIVE_LEVEL;
     }
 
-    for (Index = 0; Index < MI_MAX_FREE_LIST_HEADS; Index += 1) {
+    for (Index = 0; Index < MI_MAX_FREE_LIST_HEADS; Index += 1)
+    {
 
         Entry = MmNonPagedPoolFreeListHead[Index].Flink;
 
-        while (Entry != &MmNonPagedPoolFreeListHead[Index]) {
+        while (Entry != &MmNonPagedPoolFreeListHead[Index])
+        {
 
-            if (MmProtectFreedNonPagedPool == TRUE) {
-                MiUnProtectFreeNonPagedPool ((PVOID)Entry, 0);
+            if (MmProtectFreedNonPagedPool == TRUE)
+            {
+                MiUnProtectFreeNonPagedPool((PVOID)Entry, 0);
             }
 
             //
@@ -1110,27 +1120,26 @@ Environment:
             // mapped.
             //
 
-            FreePageInfo = CONTAINING_RECORD(Entry,
-                                             MMFREE_POOL_ENTRY,
-                                             List);
+            FreePageInfo = CONTAINING_RECORD(Entry, MMFREE_POOL_ENTRY, List);
 
-            if ((!MI_IS_PHYSICAL_ADDRESS(FreePageInfo)) &&
-                ((PVOID)FreePageInfo >= MmNonPagedPoolExpansionStart)) {
+            if ((!MI_IS_PHYSICAL_ADDRESS(FreePageInfo)) && ((PVOID)FreePageInfo >= MmNonPagedPoolExpansionStart))
+            {
 
-                if (MmProtectFreedNonPagedPool == FALSE) {
-                    RemoveEntryList (&FreePageInfo->List);
+                if (MmProtectFreedNonPagedPool == FALSE)
+                {
+                    RemoveEntryList(&FreePageInfo->List);
                 }
-                else {
-                    MiProtectedPoolRemoveEntryList (&FreePageInfo->List);
+                else
+                {
+                    MiProtectedPoolRemoveEntryList(&FreePageInfo->List);
                 }
 
                 MmNumberOfFreeNonPagedPool -= FreePageInfo->Size;
-                ASSERT ((LONG)MmNumberOfFreeNonPagedPool >= 0);
+                ASSERT((LONG)MmNumberOfFreeNonPagedPool >= 0);
 
                 FreedPool = TRUE;
 
-                MiFreeNonPagedPool ((PVOID)FreePageInfo,
-                                    FreePageInfo->Size);
+                MiFreeNonPagedPool((PVOID)FreePageInfo, FreePageInfo->Size);
 
                 Index = (ULONG)-1;
                 break;
@@ -1138,26 +1147,23 @@ Environment:
 
             Entry = FreePageInfo->List.Flink;
 
-            if (MmProtectFreedNonPagedPool == TRUE) {
-                MiProtectFreeNonPagedPool ((PVOID)FreePageInfo,
-                                           (ULONG)FreePageInfo->Size);
+            if (MmProtectFreedNonPagedPool == TRUE)
+            {
+                MiProtectFreeNonPagedPool((PVOID)FreePageInfo, (ULONG)FreePageInfo->Size);
             }
         }
     }
 
-    if (PoolLockHeld == FALSE) {
-        ExUnlockPool (NonPagedPool, OldIrql);
+    if (PoolLockHeld == FALSE)
+    {
+        ExUnlockPool(NonPagedPool, OldIrql);
     }
 
     return FreedPool;
 }
-
+
 PVOID
-MiAllocatePoolPages (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T SizeInBytes,
-    IN ULONG IsLargeSessionAllocation
-    )
+MiAllocatePoolPages(IN POOL_TYPE PoolType, IN SIZE_T SizeInBytes, IN ULONG IsLargeSessionAllocation)
 
 /*++
 
@@ -1223,19 +1229,22 @@ Environment:
     ULONG PageTableCount;
     LOGICAL AddressIsPhysical;
 
-    SizeInPages = BYTES_TO_PAGES (SizeInBytes);
+    SizeInPages = BYTES_TO_PAGES(SizeInBytes);
 
 #if DBG
-    if (MmCheckRequestInPages != 0) {
-        ASSERT (SizeInPages < MmCheckRequestInPages);
+    if (MmCheckRequestInPages != 0)
+    {
+        ASSERT(SizeInPages < MmCheckRequestInPages);
     }
 #endif
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool) {
+    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool)
+    {
 
         Index = (ULONG)(SizeInPages - 1);
 
-        if (Index >= MI_MAX_FREE_LIST_HEADS) {
+        if (Index >= MI_MAX_FREE_LIST_HEADS)
+        {
             Index = MI_MAX_FREE_LIST_HEADS - 1;
         }
 
@@ -1246,89 +1255,93 @@ Environment:
         ListHead = &MmNonPagedPoolFreeListHead[Index];
         LastListHead = &MmNonPagedPoolFreeListHead[MI_MAX_FREE_LIST_HEADS];
 
-        do {
+        do
+        {
 
             Entry = ListHead->Flink;
 
-            while (Entry != ListHead) {
+            while (Entry != ListHead)
+            {
 
-                if (MmProtectFreedNonPagedPool == TRUE) {
-                    MiUnProtectFreeNonPagedPool ((PVOID)Entry, 0);
+                if (MmProtectFreedNonPagedPool == TRUE)
+                {
+                    MiUnProtectFreeNonPagedPool((PVOID)Entry, 0);
                 }
-    
+
                 //
                 // The list is not empty, see if this one has enough space.
                 //
-    
-                FreePageInfo = CONTAINING_RECORD(Entry,
-                                                 MMFREE_POOL_ENTRY,
-                                                 List);
-    
-                ASSERT (FreePageInfo->Signature == MM_FREE_POOL_SIGNATURE);
-                if (FreePageInfo->Size >= SizeInPages) {
-    
+
+                FreePageInfo = CONTAINING_RECORD(Entry, MMFREE_POOL_ENTRY, List);
+
+                ASSERT(FreePageInfo->Signature == MM_FREE_POOL_SIGNATURE);
+                if (FreePageInfo->Size >= SizeInPages)
+                {
+
                     //
                     // This entry has sufficient space, remove
                     // the pages from the end of the allocation.
                     //
-    
+
                     FreePageInfo->Size -= SizeInPages;
-    
-                    BaseVa = (PVOID)((PCHAR)FreePageInfo +
-                                            (FreePageInfo->Size  << PAGE_SHIFT));
-    
-                    if (MmProtectFreedNonPagedPool == FALSE) {
-                        RemoveEntryList (&FreePageInfo->List);
+
+                    BaseVa = (PVOID)((PCHAR)FreePageInfo + (FreePageInfo->Size << PAGE_SHIFT));
+
+                    if (MmProtectFreedNonPagedPool == FALSE)
+                    {
+                        RemoveEntryList(&FreePageInfo->List);
                     }
-                    else {
-                        MiProtectedPoolRemoveEntryList (&FreePageInfo->List);
+                    else
+                    {
+                        MiProtectedPoolRemoveEntryList(&FreePageInfo->List);
                     }
 
-                    if (FreePageInfo->Size != 0) {
-    
+                    if (FreePageInfo->Size != 0)
+                    {
+
                         //
                         // Insert any remainder into the correct list.
                         //
-    
+
                         Index = (ULONG)(FreePageInfo->Size - 1);
-                        if (Index >= MI_MAX_FREE_LIST_HEADS) {
+                        if (Index >= MI_MAX_FREE_LIST_HEADS)
+                        {
                             Index = MI_MAX_FREE_LIST_HEADS - 1;
                         }
 
-                        if (MmProtectFreedNonPagedPool == FALSE) {
-                            InsertTailList (&MmNonPagedPoolFreeListHead[Index],
-                                            &FreePageInfo->List);
+                        if (MmProtectFreedNonPagedPool == FALSE)
+                        {
+                            InsertTailList(&MmNonPagedPoolFreeListHead[Index], &FreePageInfo->List);
                         }
-                        else {
-                            MiProtectedPoolInsertList (&MmNonPagedPoolFreeListHead[Index],
-                                                       &FreePageInfo->List,
-                                                       FALSE);
+                        else
+                        {
+                            MiProtectedPoolInsertList(&MmNonPagedPoolFreeListHead[Index], &FreePageInfo->List, FALSE);
 
-                            MiProtectFreeNonPagedPool ((PVOID)FreePageInfo,
-                                                       (ULONG)FreePageInfo->Size);
+                            MiProtectFreeNonPagedPool((PVOID)FreePageInfo, (ULONG)FreePageInfo->Size);
                         }
                     }
-    
+
                     //
                     // Adjust the number of free pages remaining in the pool.
                     //
-    
+
                     MmNumberOfFreeNonPagedPool -= SizeInPages;
-                    ASSERT ((LONG)MmNumberOfFreeNonPagedPool >= 0);
-    
+                    ASSERT((LONG)MmNumberOfFreeNonPagedPool >= 0);
+
                     //
                     // Mark start and end of allocation in the PFN database.
                     //
-    
-                    if (MI_IS_PHYSICAL_ADDRESS(BaseVa)) {
-    
+
+                    if (MI_IS_PHYSICAL_ADDRESS(BaseVa))
+                    {
+
                         //
                         // On certain architectures, virtual addresses
                         // may be physical and hence have no corresponding PTE.
                         //
-    
+
                         AddressIsPhysical = TRUE;
-                        PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN (BaseVa);
+                        PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN(BaseVa);
 
                         //
                         // Initializing PointerPte is not needed for correctness
@@ -1338,65 +1351,69 @@ Environment:
 
                         PointerPte = NULL;
                     }
-                    else {
+                    else
+                    {
                         AddressIsPhysical = FALSE;
                         PointerPte = MiGetPteAddress(BaseVa);
-                        ASSERT (PointerPte->u.Hard.Valid == 1);
-                        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+                        ASSERT(PointerPte->u.Hard.Valid == 1);
+                        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
                     }
-                    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-    
-                    ASSERT (Pfn1->u3.e1.StartOfAllocation == 0);
-                    ASSERT (Pfn1->u4.VerifierAllocation == 0);
-    
+                    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+
+                    ASSERT(Pfn1->u3.e1.StartOfAllocation == 0);
+                    ASSERT(Pfn1->u4.VerifierAllocation == 0);
+
                     Pfn1->u3.e1.StartOfAllocation = 1;
-    
-                    if (PoolType & POOL_VERIFIER_MASK) {
+
+                    if (PoolType & POOL_VERIFIER_MASK)
+                    {
                         Pfn1->u4.VerifierAllocation = 1;
                     }
 
                     //
                     // Mark this as a large session allocation in the PFN database.
                     //
-    
-                    if (IsLargeSessionAllocation != 0) {
-                        ASSERT (Pfn1->u3.e1.LargeSessionAllocation == 0);
-    
+
+                    if (IsLargeSessionAllocation != 0)
+                    {
+                        ASSERT(Pfn1->u3.e1.LargeSessionAllocation == 0);
+
                         Pfn1->u3.e1.LargeSessionAllocation = 1;
-    
-                        MiSessionPoolAllocated (BaseVa,
-                                                SizeInPages << PAGE_SHIFT,
-                                                NonPagedPool);
+
+                        MiSessionPoolAllocated(BaseVa, SizeInPages << PAGE_SHIFT, NonPagedPool);
                     }
-    
+
                     //
                     // Calculate the ending PTE's address.
                     //
-    
-                    if (SizeInPages != 1) {
-                        if (AddressIsPhysical == TRUE) {
+
+                    if (SizeInPages != 1)
+                    {
+                        if (AddressIsPhysical == TRUE)
+                        {
                             Pfn1 += SizeInPages - 1;
                         }
-                        else {
+                        else
+                        {
                             PointerPte += SizeInPages - 1;
-                            ASSERT (PointerPte->u.Hard.Valid == 1);
-                            Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+                            ASSERT(PointerPte->u.Hard.Valid == 1);
+                            Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
                         }
                     }
-    
-                    ASSERT (Pfn1->u3.e1.EndOfAllocation == 0);
-    
+
+                    ASSERT(Pfn1->u3.e1.EndOfAllocation == 0);
+
                     Pfn1->u3.e1.EndOfAllocation = 1;
-    
+
                     MmAllocatedNonPagedPool += SizeInPages;
                     return BaseVa;
                 }
-    
+
                 Entry = FreePageInfo->List.Flink;
-    
-                if (MmProtectFreedNonPagedPool == TRUE) {
-                    MiProtectFreeNonPagedPool ((PVOID)FreePageInfo,
-                                               (ULONG)FreePageInfo->Size);
+
+                if (MmProtectFreedNonPagedPool == TRUE)
+                {
+                    MiProtectFreeNonPagedPool((PVOID)FreePageInfo, (ULONG)FreePageInfo->Size);
                 }
             }
 
@@ -1415,13 +1432,15 @@ Environment:
         // give drivers a better chance to always see success.
         //
 
-        if (MmMaximumNonPagedPoolInBytes - (MmAllocatedNonPagedPool << PAGE_SHIFT) < 3 * 1024 * 1024) {
+        if (MmMaximumNonPagedPoolInBytes - (MmAllocatedNonPagedPool << PAGE_SHIFT) < 3 * 1024 * 1024)
+        {
             MmPreemptiveTrims[MmPreemptForNonPaged] += 1;
-            MiTrimSegmentCache ();
+            MiTrimSegmentCache();
         }
 
-#if defined (_WIN64)
-        if (SizeInPages >= _4gb) {
+#if defined(_WIN64)
+        if (SizeInPages >= _4gb)
+        {
             return NULL;
         }
 #endif
@@ -1430,10 +1449,10 @@ Environment:
         // Try to find system PTEs to expand the pool into.
         //
 
-        StartingPte = MiReserveSystemPtes ((ULONG)SizeInPages,
-                                           NonPagedPoolExpansion);
+        StartingPte = MiReserveSystemPtes((ULONG)SizeInPages, NonPagedPoolExpansion);
 
-        if (StartingPte == NULL) {
+        if (StartingPte == NULL)
+        {
 
             //
             // There are no free physical PTEs to expand nonpaged pool.
@@ -1442,8 +1461,9 @@ Environment:
             // around.  If so, set an event so they get deleted.
             //
 
-            if (MI_UNUSED_SEGMENTS_SURPLUS()) {
-                KeSetEvent (&MmUnusedSegmentCleanup, 0, FALSE);
+            if (MI_UNUSED_SEGMENTS_SURPLUS())
+            {
+                KeSetEvent(&MmUnusedSegmentCleanup, 0, FALSE);
             }
 
             //
@@ -1451,16 +1471,18 @@ Environment:
             // an attempt to get enough contiguous VA for our caller.
             //
 
-            if ((SizeInPages > 1) && (MmNumberOfFreeNonPagedPool != 0)) {
+            if ((SizeInPages > 1) && (MmNumberOfFreeNonPagedPool != 0))
+            {
 
-                if (MiFreeAllExpansionNonPagedPool (TRUE) == TRUE) {
+                if (MiFreeAllExpansionNonPagedPool(TRUE) == TRUE)
+                {
 
-                    StartingPte = MiReserveSystemPtes ((ULONG)SizeInPages,
-                                                       NonPagedPoolExpansion);
+                    StartingPte = MiReserveSystemPtes((ULONG)SizeInPages, NonPagedPoolExpansion);
                 }
             }
 
-            if (StartingPte == NULL) {
+            if (StartingPte == NULL)
+            {
 
                 MmPoolFailures[MmNonPagedPool][MmHighPriority] += 1;
                 MmPoolFailureReasons[MmNonPagedNoPtes] += 1;
@@ -1468,8 +1490,8 @@ Environment:
                 //
                 // Running low on pool - force unused segment trimming.
                 //
-            
-                MiTrimSegmentCache ();
+
+                MiTrimSegmentCache();
 
                 return NULL;
             }
@@ -1479,18 +1501,19 @@ Environment:
         // Charge commitment as nonpaged pool uses physical memory.
         //
 
-        if (MiChargeCommitmentCantExpand (SizeInPages, FALSE) == FALSE) {
-            if (PsGetCurrentThread()->MemoryMaker == 1) {
-                MiChargeCommitmentCantExpand (SizeInPages, TRUE);
+        if (MiChargeCommitmentCantExpand(SizeInPages, FALSE) == FALSE)
+        {
+            if (PsGetCurrentThread()->MemoryMaker == 1)
+            {
+                MiChargeCommitmentCantExpand(SizeInPages, TRUE);
             }
-            else {
-                MiReleaseSystemPtes (StartingPte,
-                                     (ULONG)SizeInPages,
-                                     NonPagedPoolExpansion);
+            else
+            {
+                MiReleaseSystemPtes(StartingPte, (ULONG)SizeInPages, NonPagedPoolExpansion);
 
                 MmPoolFailures[MmNonPagedPool][MmHighPriority] += 1;
                 MmPoolFailureReasons[MmNonPagedNoCommit] += 1;
-                MiTrimSegmentCache ();
+                MiTrimSegmentCache();
                 return NULL;
             }
         }
@@ -1501,16 +1524,17 @@ Environment:
 
         MmAllocatedNonPagedPool += SizeInPages;
 
-        LOCK_PFN_AT_DPC ();
+        LOCK_PFN_AT_DPC();
 
         //
         // Make sure we have 1 more than the number of pages
         // requested available.
         //
 
-        if (MmAvailablePages <= SizeInPages) {
+        if (MmAvailablePages <= SizeInPages)
+        {
 
-            UNLOCK_PFN_FROM_DPC ();
+            UNLOCK_PFN_FROM_DPC();
 
             //
             // There are no free physical pages to expand nonpaged pool.
@@ -1522,13 +1546,11 @@ Environment:
 
             MmAllocatedNonPagedPool -= SizeInPages;
 
-            MiReturnCommitment (SizeInPages);
+            MiReturnCommitment(SizeInPages);
 
-            MiReleaseSystemPtes (StartingPte,
-                                 (ULONG)SizeInPages,
-                                 NonPagedPoolExpansion);
+            MiReleaseSystemPtes(StartingPte, (ULONG)SizeInPages, NonPagedPoolExpansion);
 
-            MiTrimSegmentCache ();
+            MiTrimSegmentCache();
 
             return NULL;
         }
@@ -1538,53 +1560,55 @@ Environment:
         //
 
         MiExpansionPoolPagesInUse += SizeInPages;
-        if (MiExpansionPoolPagesInUse > MiExpansionPoolPagesInitialCharge) {
+        if (MiExpansionPoolPagesInUse > MiExpansionPoolPagesInitialCharge)
+        {
             j = MiExpansionPoolPagesInUse - MiExpansionPoolPagesInitialCharge;
-            if (j > SizeInPages) {
+            if (j > SizeInPages)
+            {
                 j = SizeInPages;
             }
-            if (MI_NONPAGABLE_MEMORY_AVAILABLE() >= (SPFN_NUMBER)j) {
+            if (MI_NONPAGABLE_MEMORY_AVAILABLE() >= (SPFN_NUMBER)j)
+            {
                 MmResidentAvailablePages -= j;
                 MM_BUMP_COUNTER(24, j);
             }
-            else {
+            else
+            {
                 MiExpansionPoolPagesInUse -= SizeInPages;
-                UNLOCK_PFN_FROM_DPC ();
+                UNLOCK_PFN_FROM_DPC();
                 MmPoolFailureReasons[MmNonPagedNoResidentAvailable] += 1;
 
                 MmPoolFailures[MmNonPagedPool][MmHighPriority] += 1;
 
                 MmAllocatedNonPagedPool -= SizeInPages;
 
-                MiReturnCommitment (SizeInPages);
+                MiReturnCommitment(SizeInPages);
 
-                MiReleaseSystemPtes (StartingPte,
-                                    (ULONG)SizeInPages,
-                                    NonPagedPoolExpansion);
+                MiReleaseSystemPtes(StartingPte, (ULONG)SizeInPages, NonPagedPoolExpansion);
 
-                MiTrimSegmentCache ();
+                MiTrimSegmentCache();
 
                 return NULL;
             }
         }
-    
-        MM_TRACK_COMMIT (MM_DBG_COMMIT_NONPAGED_POOL_EXPANSION, SizeInPages);
+
+        MM_TRACK_COMMIT(MM_DBG_COMMIT_NONPAGED_POOL_EXPANSION, SizeInPages);
 
         //
         // Expand the pool.
         //
 
-        do {
-            PageFrameIndex = MiRemoveAnyPage (
-                                MI_GET_PAGE_COLOR_FROM_PTE (PointerPte));
+        do
+        {
+            PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPte));
 
-            Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+            Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
             Pfn1->u3.e2.ReferenceCount = 1;
             Pfn1->u2.ShareCount = 1;
             Pfn1->PteAddress = PointerPte;
             Pfn1->OriginalPte.u.Long = MM_DEMAND_ZERO_WRITE_PTE;
-            Pfn1->u4.PteFrame = MI_GET_PAGE_FRAME_FROM_PTE (MiGetPteAddress(PointerPte));
+            Pfn1->u4.PteFrame = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPteAddress(PointerPte));
 
             Pfn1->u3.e1.PageLocation = ActiveAndValid;
             Pfn1->u3.e1.CacheAttribute = MiCached;
@@ -1592,19 +1616,20 @@ Environment:
             Pfn1->u4.VerifierAllocation = 0;
 
             TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-            MI_WRITE_VALID_PTE (PointerPte, TempPte);
+            MI_WRITE_VALID_PTE(PointerPte, TempPte);
             PointerPte += 1;
             SizeInPages -= 1;
         } while (SizeInPages > 0);
 
         Pfn1->u3.e1.EndOfAllocation = 1;
 
-        Pfn1 = MI_PFN_ELEMENT (StartingPte->u.Hard.PageFrameNumber);
+        Pfn1 = MI_PFN_ELEMENT(StartingPte->u.Hard.PageFrameNumber);
         Pfn1->u3.e1.StartOfAllocation = 1;
 
-        ASSERT (Pfn1->u4.VerifierAllocation == 0);
+        ASSERT(Pfn1->u4.VerifierAllocation == 0);
 
-        if (PoolType & POOL_VERIFIER_MASK) {
+        if (PoolType & POOL_VERIFIER_MASK)
+        {
             Pfn1->u4.VerifierAllocation = 1;
         }
 
@@ -1612,20 +1637,20 @@ Environment:
         // Mark this as a large session allocation in the PFN database.
         //
 
-        ASSERT (Pfn1->u3.e1.LargeSessionAllocation == 0);
+        ASSERT(Pfn1->u3.e1.LargeSessionAllocation == 0);
 
-        if (IsLargeSessionAllocation != 0) {
+        if (IsLargeSessionAllocation != 0)
+        {
             Pfn1->u3.e1.LargeSessionAllocation = 1;
         }
 
-        UNLOCK_PFN_FROM_DPC ();
+        UNLOCK_PFN_FROM_DPC();
 
-        BaseVa = MiGetVirtualAddressMappedByPte (StartingPte);
+        BaseVa = MiGetVirtualAddressMappedByPte(StartingPte);
 
-        if (IsLargeSessionAllocation != 0) {
-            MiSessionPoolAllocated(MiGetVirtualAddressMappedByPte (StartingPte),
-                                   i << PAGE_SHIFT,
-                                   NonPagedPool);
+        if (IsLargeSessionAllocation != 0)
+        {
+            MiSessionPoolAllocated(MiGetVirtualAddressMappedByPte(StartingPte), i << PAGE_SHIFT, NonPagedPool);
         }
 
         return BaseVa;
@@ -1635,7 +1660,8 @@ Environment:
     // Paged Pool.
     //
 
-    if ((PoolType & SESSION_POOL_MASK) == 0) {
+    if ((PoolType & SESSION_POOL_MASK) == 0)
+    {
         SessionSpace = NULL;
         PagedPoolInfo = &MmPagedPoolInfo;
 
@@ -1645,46 +1671,44 @@ Environment:
         // give drivers a better chance to always see success.
         //
 
-        if (MmSizeOfPagedPoolInBytes - (MmPagedPoolInfo.AllocatedPagedPool << PAGE_SHIFT) < 5 * 1024 * 1024) {
+        if (MmSizeOfPagedPoolInBytes - (MmPagedPoolInfo.AllocatedPagedPool << PAGE_SHIFT) < 5 * 1024 * 1024)
+        {
             MmPreemptiveTrims[MmPreemptForPaged] += 1;
-            MiTrimSegmentCache ();
+            MiTrimSegmentCache();
         }
 #if DBG
-        if (MiClearCache != 0) {
+        if (MiClearCache != 0)
+        {
             MmPreemptiveTrims[MmPreemptForPaged] += 1;
-            MiTrimSegmentCache ();
+            MiTrimSegmentCache();
         }
 #endif
     }
-    else {
+    else
+    {
         SessionSpace = MmSessionSpace;
         PagedPoolInfo = &SessionSpace->PagedPoolInfo;
     }
 
-    StartPosition = RtlFindClearBitsAndSet (
-                               PagedPoolInfo->PagedPoolAllocationMap,
-                               (ULONG)SizeInPages,
-                               PagedPoolInfo->PagedPoolHint
-                               );
+    StartPosition =
+        RtlFindClearBitsAndSet(PagedPoolInfo->PagedPoolAllocationMap, (ULONG)SizeInPages, PagedPoolInfo->PagedPoolHint);
 
-    if ((StartPosition == NO_BITS_FOUND) &&
-        (PagedPoolInfo->PagedPoolHint != 0)) {
+    if ((StartPosition == NO_BITS_FOUND) && (PagedPoolInfo->PagedPoolHint != 0))
+    {
 
-        if (MI_UNUSED_SEGMENTS_SURPLUS()) {
-            KeSetEvent (&MmUnusedSegmentCleanup, 0, FALSE);
+        if (MI_UNUSED_SEGMENTS_SURPLUS())
+        {
+            KeSetEvent(&MmUnusedSegmentCleanup, 0, FALSE);
         }
 
         //
         // No free bits were found, check from the start of the bit map.
 
-        StartPosition = RtlFindClearBitsAndSet (
-                                   PagedPoolInfo->PagedPoolAllocationMap,
-                                   (ULONG)SizeInPages,
-                                   0
-                                   );
+        StartPosition = RtlFindClearBitsAndSet(PagedPoolInfo->PagedPoolAllocationMap, (ULONG)SizeInPages, 0);
     }
 
-    if (StartPosition == NO_BITS_FOUND) {
+    if (StartPosition == NO_BITS_FOUND)
+    {
 
         //
         // No room in pool - attempt to expand the paged pool.
@@ -1697,14 +1721,16 @@ Environment:
         //
 
         if (((StartPosition - 1) + PagedPoolInfo->NextPdeForPagedPoolExpansion) >
-            MiGetPteAddress (PagedPoolInfo->LastPteForPagedPool)) {
+            MiGetPteAddress(PagedPoolInfo->LastPteForPagedPool))
+        {
 
             //
             // Can't expand pool any more.  If this request is not for session
             // pool, force unused segment trimming when appropriate.
             //
 
-            if (SessionSpace == NULL) {
+            if (SessionSpace == NULL)
+            {
 
                 MmPoolFailures[MmPagedPool][MmHighPriority] += 1;
                 MmPoolFailureReasons[MmPagedNoPtes] += 1;
@@ -1712,8 +1738,8 @@ Environment:
                 //
                 // Running low on pool - force unused segment trimming.
                 //
-            
-                MiTrimSegmentCache ();
+
+                MiTrimSegmentCache();
 
                 return NULL;
             }
@@ -1728,10 +1754,12 @@ Environment:
 
         PageTableCount = StartPosition;
 
-        if (SessionSpace) {
+        if (SessionSpace)
+        {
             TempPte = ValidKernelPdeLocal;
         }
-        else {
+        else
+        {
             TempPte = ValidKernelPde;
         }
 
@@ -1739,64 +1767,66 @@ Environment:
         // Charge commitment for the pagetable pages for paged pool expansion.
         //
 
-        if (MiChargeCommitmentCantExpand (StartPosition, FALSE) == FALSE) {
-            if (PsGetCurrentThread()->MemoryMaker == 1) {
-                MiChargeCommitmentCantExpand (StartPosition, TRUE);
+        if (MiChargeCommitmentCantExpand(StartPosition, FALSE) == FALSE)
+        {
+            if (PsGetCurrentThread()->MemoryMaker == 1)
+            {
+                MiChargeCommitmentCantExpand(StartPosition, TRUE);
             }
-            else {
+            else
+            {
                 MmPoolFailures[MmPagedPool][MmHighPriority] += 1;
                 MmPoolFailureReasons[MmPagedNoCommit] += 1;
-                MiTrimSegmentCache ();
+                MiTrimSegmentCache();
 
                 return NULL;
             }
         }
 
         EndPosition = (ULONG)((PagedPoolInfo->NextPdeForPagedPoolExpansion -
-                          MiGetPteAddress(PagedPoolInfo->FirstPteForPagedPool)) *
-                          PTE_PER_PAGE);
+                               MiGetPteAddress(PagedPoolInfo->FirstPteForPagedPool)) *
+                              PTE_PER_PAGE);
 
         //
         // Expand the pool.
         //
 
-        RtlClearBits (PagedPoolInfo->PagedPoolAllocationMap,
-                      EndPosition,
-                      (ULONG) StartPosition * PTE_PER_PAGE);
+        RtlClearBits(PagedPoolInfo->PagedPoolAllocationMap, EndPosition, (ULONG)StartPosition * PTE_PER_PAGE);
 
         PointerPte = PagedPoolInfo->NextPdeForPagedPoolExpansion;
-        VirtualAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+        VirtualAddress = MiGetVirtualAddressMappedByPte(PointerPte);
         VirtualAddressSave = VirtualAddress;
         PagedPoolInfo->NextPdeForPagedPoolExpansion += StartPosition;
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
         //
         // Make sure we have 1 more than the number of pages
         // requested available.
         //
 
-        if (MmAvailablePages <= StartPosition) {
+        if (MmAvailablePages <= StartPosition)
+        {
 
             //
             // There are no free physical pages to expand paged pool.
             //
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
             PagedPoolInfo->NextPdeForPagedPoolExpansion -= StartPosition;
 
-            RtlSetBits (PagedPoolInfo->PagedPoolAllocationMap,
-                        EndPosition,
-                        (ULONG) StartPosition * PTE_PER_PAGE);
+            RtlSetBits(PagedPoolInfo->PagedPoolAllocationMap, EndPosition, (ULONG)StartPosition * PTE_PER_PAGE);
 
-            MiReturnCommitment (StartPosition);
+            MiReturnCommitment(StartPosition);
 
-            if (SessionSpace == NULL) {
+            if (SessionSpace == NULL)
+            {
                 MmPoolFailures[MmPagedPool][MmHighPriority] += 1;
                 MmPoolFailureReasons[MmPagedNoPagesAvailable] += 1;
             }
-            else {
+            else
+            {
                 MmPoolFailures[MmSessionPagedPool][MmHighPriority] += 1;
                 MmPoolFailureReasons[MmSessionPagedNoPagesAvailable] += 1;
                 MmSessionSpace->SessionPoolAllocationFailures[2] += 1;
@@ -1805,7 +1835,7 @@ Environment:
             return NULL;
         }
 
-        MM_TRACK_COMMIT (MM_DBG_COMMIT_PAGED_POOL_PAGETABLE, StartPosition);
+        MM_TRACK_COMMIT(MM_DBG_COMMIT_PAGED_POOL_PAGETABLE, StartPosition);
 
         //
         // Update the count of available resident pages.
@@ -1818,14 +1848,14 @@ Environment:
         // Allocate the page table pages for the pool expansion.
         //
 
-        do {
-            ASSERT (PointerPte->u.Hard.Valid == 0);
+        do
+        {
+            ASSERT(PointerPte->u.Hard.Valid == 0);
 
-            PageFrameIndex = MiRemoveAnyPage (
-                                MI_GET_PAGE_COLOR_FROM_PTE (PointerPte));
+            PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPte));
 
             TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-            MI_WRITE_VALID_PTE (PointerPte, TempPte);
+            MI_WRITE_VALID_PTE(PointerPte, TempPte);
 
             //
             // Map valid PDE into system (or session) address space.
@@ -1833,32 +1863,31 @@ Environment:
 
 #if (_MI_PAGING_LEVELS >= 3)
 
-            MiInitializePfn (PageFrameIndex, PointerPte, 1);
+            MiInitializePfn(PageFrameIndex, PointerPte, 1);
 
 #else
 
-            if (SessionSpace) {
+            if (SessionSpace)
+            {
 
-                Index = (ULONG)(PointerPte - MiGetPdeAddress (MmSessionBase));
-                ASSERT (MmSessionSpace->PageTables[Index].u.Long == 0);
+                Index = (ULONG)(PointerPte - MiGetPdeAddress(MmSessionBase));
+                ASSERT(MmSessionSpace->PageTables[Index].u.Long == 0);
                 MmSessionSpace->PageTables[Index] = TempPte;
 
-                MiInitializePfnForOtherProcess (PageFrameIndex,
-                                                PointerPte,
-                                                MmSessionSpace->SessionPageDirectoryIndex);
+                MiInitializePfnForOtherProcess(PageFrameIndex, PointerPte, MmSessionSpace->SessionPageDirectoryIndex);
 
                 MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC1, 1);
             }
-            else {
-                MmSystemPagePtes [((ULONG_PTR)PointerPte &
-                    (PD_PER_SYSTEM * (sizeof(MMPTE) * PDE_PER_PAGE) - 1)) / sizeof(MMPTE)] = TempPte;
-                MiInitializePfnForOtherProcess (PageFrameIndex,
-                                                PointerPte,
-                                                MmSystemPageDirectory[(PointerPte - MiGetPdeAddress(0)) / PDE_PER_PAGE]);
+            else
+            {
+                MmSystemPagePtes[((ULONG_PTR)PointerPte & (PD_PER_SYSTEM * (sizeof(MMPTE) * PDE_PER_PAGE) - 1)) /
+                                 sizeof(MMPTE)] = TempPte;
+                MiInitializePfnForOtherProcess(PageFrameIndex, PointerPte,
+                                               MmSystemPageDirectory[(PointerPte - MiGetPdeAddress(0)) / PDE_PER_PAGE]);
             }
 #endif
 
-            KeFillEntryTb ((PHARDWARE_PTE) PointerPte, VirtualAddress, FALSE);
+            KeFillEntryTb((PHARDWARE_PTE)PointerPte, VirtualAddress, FALSE);
 
             PointerPte += 1;
             VirtualAddress = (PVOID)((PCHAR)VirtualAddress + PAGE_SIZE);
@@ -1866,81 +1895,74 @@ Environment:
 
         } while (StartPosition > 0);
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
-        MiFillMemoryPte (VirtualAddressSave,
-                         PageTableCount * PAGE_SIZE,
-                         MM_KERNEL_NOACCESS_PTE);
+        MiFillMemoryPte(VirtualAddressSave, PageTableCount * PAGE_SIZE, MM_KERNEL_NOACCESS_PTE);
 
-        if (SessionSpace) {
+        if (SessionSpace)
+        {
 
             PointerPte -= PageTableCount;
 
-            InterlockedExchangeAddSizeT (&MmSessionSpace->CommittedPages,
-                                         PageTableCount);
+            InterlockedExchangeAddSizeT(&MmSessionSpace->CommittedPages, PageTableCount);
 
-            MM_BUMP_SESS_COUNTER (MM_DBG_SESSION_NP_PAGETABLE_ALLOC, PageTableCount);
-            Thread = PsGetCurrentThread ();
+            MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_NP_PAGETABLE_ALLOC, PageTableCount);
+            Thread = PsGetCurrentThread();
 
-            LOCK_SESSION_SPACE_WS (SessionIrql, Thread);
+            LOCK_SESSION_SPACE_WS(SessionIrql, Thread);
 
             MmSessionSpace->NonPagablePages += PageTableCount;
 
-            do {
-                Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
-    
-                ASSERT (Pfn1->u1.Event == 0);
-                Pfn1->u1.Event = (PVOID) Thread;
-    
-                SessionPte = MiGetVirtualAddressMappedByPte (PointerPte);
-    
-                MiAddValidPageToWorkingSet (SessionPte,
-                                            PointerPte,
-                                            Pfn1,
-                                            0);
-    
-                WsEntry = MiLocateWsle (SessionPte,
-                                        MmSessionSpace->Vm.VmWorkingSetList,
-                                        Pfn1->u1.WsIndex);
-    
-                if (WsEntry >= MmSessionSpace->Vm.VmWorkingSetList->FirstDynamic) {
-        
+            do
+            {
+                Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
+
+                ASSERT(Pfn1->u1.Event == 0);
+                Pfn1->u1.Event = (PVOID)Thread;
+
+                SessionPte = MiGetVirtualAddressMappedByPte(PointerPte);
+
+                MiAddValidPageToWorkingSet(SessionPte, PointerPte, Pfn1, 0);
+
+                WsEntry = MiLocateWsle(SessionPte, MmSessionSpace->Vm.VmWorkingSetList, Pfn1->u1.WsIndex);
+
+                if (WsEntry >= MmSessionSpace->Vm.VmWorkingSetList->FirstDynamic)
+                {
+
                     WsSwapEntry = MmSessionSpace->Vm.VmWorkingSetList->FirstDynamic;
-        
-                    if (WsEntry != MmSessionSpace->Vm.VmWorkingSetList->FirstDynamic) {
-        
+
+                    if (WsEntry != MmSessionSpace->Vm.VmWorkingSetList->FirstDynamic)
+                    {
+
                         //
                         // Swap this entry with the one at first dynamic.
                         //
-        
-                        MiSwapWslEntries (WsEntry, WsSwapEntry, &MmSessionSpace->Vm);
+
+                        MiSwapWslEntries(WsEntry, WsSwapEntry, &MmSessionSpace->Vm);
                     }
-        
+
                     MmSessionSpace->Vm.VmWorkingSetList->FirstDynamic += 1;
                 }
-                else {
+                else
+                {
                     WsSwapEntry = WsEntry;
                 }
-        
+
                 //
                 // Indicate that the page is locked.
                 //
-        
+
                 MmSessionSpace->Wsle[WsSwapEntry].u1.e1.LockedInWs = 1;
-    
+
                 PointerPte += 1;
                 PageTableCount -= 1;
             } while (PageTableCount > 0);
-            UNLOCK_SESSION_SPACE_WS (SessionIrql);
+            UNLOCK_SESSION_SPACE_WS(SessionIrql);
         }
 
-        StartPosition = RtlFindClearBitsAndSet (
-                                   PagedPoolInfo->PagedPoolAllocationMap,
-                                   (ULONG)SizeInPages,
-                                   EndPosition
-                                   );
+        StartPosition = RtlFindClearBitsAndSet(PagedPoolInfo->PagedPoolAllocationMap, (ULONG)SizeInPages, EndPosition);
 
-        ASSERT (StartPosition != NO_BITS_FOUND);
+        ASSERT(StartPosition != NO_BITS_FOUND);
     }
 
     //
@@ -1964,7 +1986,8 @@ Environment:
     // be issued.
     //
 
-    if (SizeInPages == 1) {
+    if (SizeInPages == 1)
+    {
         PagedPoolInfo->PagedPoolHint = StartPosition + (ULONG)SizeInPages;
     }
 
@@ -1973,57 +1996,61 @@ Environment:
     // already been charged so just set the length and return the address.
     //
 
-    if ((MmDisablePagingExecutive & MM_PAGED_POOL_LOCKED_DOWN) &&
-        (SessionSpace == NULL)) {
+    if ((MmDisablePagingExecutive & MM_PAGED_POOL_LOCKED_DOWN) && (SessionSpace == NULL))
+    {
 
-        BaseVa = (PVOID)((PUCHAR)MmPageAlignedPoolBase[PagedPool] +
-                                ((ULONG_PTR)StartPosition << PAGE_SHIFT));
+        BaseVa = (PVOID)((PUCHAR)MmPageAlignedPoolBase[PagedPool] + ((ULONG_PTR)StartPosition << PAGE_SHIFT));
 
 #if DBG
-        PointerPte = MiGetPteAddress (BaseVa);
-        for (i = 0; i < SizeInPages; i += 1) {
-            ASSERT (PointerPte->u.Hard.Valid == 1);
+        PointerPte = MiGetPteAddress(BaseVa);
+        for (i = 0; i < SizeInPages; i += 1)
+        {
+            ASSERT(PointerPte->u.Hard.Valid == 1);
             PointerPte += 1;
         }
 #endif
-    
+
         EndPosition = StartPosition + (ULONG)SizeInPages - 1;
-        RtlSetBit (PagedPoolInfo->EndOfPagedPoolBitmap, EndPosition);
-    
-        if (PoolType & POOL_VERIFIER_MASK) {
-            RtlSetBit (VerifierLargePagedPoolMap, StartPosition);
+        RtlSetBit(PagedPoolInfo->EndOfPagedPoolBitmap, EndPosition);
+
+        if (PoolType & POOL_VERIFIER_MASK)
+        {
+            RtlSetBit(VerifierLargePagedPoolMap, StartPosition);
         }
-    
+
         PagedPoolInfo->AllocatedPagedPool += SizeInPages;
-    
+
         return BaseVa;
     }
 
-    if (MiChargeCommitmentCantExpand (SizeInPages, FALSE) == FALSE) {
-        if (PsGetCurrentThread()->MemoryMaker == 1) {
-            MiChargeCommitmentCantExpand (SizeInPages, TRUE);
+    if (MiChargeCommitmentCantExpand(SizeInPages, FALSE) == FALSE)
+    {
+        if (PsGetCurrentThread()->MemoryMaker == 1)
+        {
+            MiChargeCommitmentCantExpand(SizeInPages, TRUE);
         }
-        else {
-            RtlClearBits (PagedPoolInfo->PagedPoolAllocationMap,
-                          StartPosition,
-                          (ULONG)SizeInPages);
-    
+        else
+        {
+            RtlClearBits(PagedPoolInfo->PagedPoolAllocationMap, StartPosition, (ULONG)SizeInPages);
+
             //
             // Could not commit the page(s), return NULL indicating
             // no pool was allocated.  Note that the lack of commit may be due
             // to unused segments and the MmSharedCommit, prototype PTEs, etc
             // associated with them.  So force a reduction now.
             //
-    
-            MiIssuePageExtendRequestNoWait (SizeInPages);
 
-            MiTrimSegmentCache ();
+            MiIssuePageExtendRequestNoWait(SizeInPages);
 
-            if (SessionSpace == NULL) {
+            MiTrimSegmentCache();
+
+            if (SessionSpace == NULL)
+            {
                 MmPoolFailures[MmPagedPool][MmHighPriority] += 1;
                 MmPoolFailureReasons[MmPagedNoCommit] += 1;
             }
-            else {
+            else
+            {
                 MmPoolFailures[MmSessionPagedPool][MmHighPriority] += 1;
                 MmPoolFailureReasons[MmSessionPagedNoCommit] += 1;
                 MmSessionSpace->SessionPoolAllocationFailures[3] += 1;
@@ -2033,66 +2060,61 @@ Environment:
         }
     }
 
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_PAGED_POOL_PAGES, SizeInPages);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_PAGED_POOL_PAGES, SizeInPages);
 
-    if (SessionSpace) {
-        InterlockedExchangeAddSizeT (&SessionSpace->CommittedPages,
-                                     SizeInPages);
+    if (SessionSpace)
+    {
+        InterlockedExchangeAddSizeT(&SessionSpace->CommittedPages, SizeInPages);
         MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_COMMIT_PAGEDPOOL_PAGES, (ULONG)SizeInPages);
-        BaseVa = (PVOID)((PCHAR)SessionSpace->PagedPoolStart +
-                                ((ULONG_PTR)StartPosition << PAGE_SHIFT));
+        BaseVa = (PVOID)((PCHAR)SessionSpace->PagedPoolStart + ((ULONG_PTR)StartPosition << PAGE_SHIFT));
     }
-    else {
+    else
+    {
         MmPagedPoolCommit += (ULONG)SizeInPages;
-        BaseVa = (PVOID)((PUCHAR)MmPageAlignedPoolBase[PagedPool] +
-                                ((ULONG_PTR)StartPosition << PAGE_SHIFT));
+        BaseVa = (PVOID)((PUCHAR)MmPageAlignedPoolBase[PagedPool] + ((ULONG_PTR)StartPosition << PAGE_SHIFT));
     }
 
 #if DBG
-    PointerPte = MiGetPteAddress (BaseVa);
-    for (i = 0; i < SizeInPages; i += 1) {
-        if (*(ULONG *)PointerPte != MM_KERNEL_NOACCESS_PTE) {
-            DbgPrint("MiAllocatePoolPages: PP not zero PTE (%p %p %p)\n",
-                BaseVa, PointerPte, *PointerPte);
+    PointerPte = MiGetPteAddress(BaseVa);
+    for (i = 0; i < SizeInPages; i += 1)
+    {
+        if (*(ULONG *)PointerPte != MM_KERNEL_NOACCESS_PTE)
+        {
+            DbgPrint("MiAllocatePoolPages: PP not zero PTE (%p %p %p)\n", BaseVa, PointerPte, *PointerPte);
             DbgBreakPoint();
         }
         PointerPte += 1;
     }
 #endif
-    PointerPte = MiGetPteAddress (BaseVa);
-    MiFillMemoryPte (PointerPte,
-                     SizeInPages * sizeof(MMPTE),
-                     MM_KERNEL_DEMAND_ZERO_PTE);
+    PointerPte = MiGetPteAddress(BaseVa);
+    MiFillMemoryPte(PointerPte, SizeInPages * sizeof(MMPTE), MM_KERNEL_DEMAND_ZERO_PTE);
 
     PagedPoolInfo->PagedPoolCommit += SizeInPages;
     EndPosition = StartPosition + (ULONG)SizeInPages - 1;
-    RtlSetBit (PagedPoolInfo->EndOfPagedPoolBitmap, EndPosition);
+    RtlSetBit(PagedPoolInfo->EndOfPagedPoolBitmap, EndPosition);
 
     //
     // Mark this as a large session allocation in the PFN database.
     //
 
-    if (IsLargeSessionAllocation != 0) {
-        RtlSetBit (PagedPoolInfo->PagedPoolLargeSessionAllocationMap,
-                   StartPosition);
+    if (IsLargeSessionAllocation != 0)
+    {
+        RtlSetBit(PagedPoolInfo->PagedPoolLargeSessionAllocationMap, StartPosition);
 
-        MiSessionPoolAllocated (BaseVa,
-                                SizeInPages << PAGE_SHIFT,
-                                PagedPool);
+        MiSessionPoolAllocated(BaseVa, SizeInPages << PAGE_SHIFT, PagedPool);
     }
-    else if (PoolType & POOL_VERIFIER_MASK) {
-        RtlSetBit (VerifierLargePagedPoolMap, StartPosition);
+    else if (PoolType & POOL_VERIFIER_MASK)
+    {
+        RtlSetBit(VerifierLargePagedPoolMap, StartPosition);
     }
 
     PagedPoolInfo->AllocatedPagedPool += SizeInPages;
 
     return BaseVa;
 }
-
+
 ULONG
-MiFreePoolPages (
-    IN PVOID StartingAddress
-    )
+MiFreePoolPages(IN PVOID StartingAddress)
 
 /*++
 
@@ -2159,44 +2181,41 @@ Environment:
     // then PagedPool.
     //
 
-    if ((StartingAddress >= MmPagedPoolStart) &&
-        (StartingAddress <= MmPagedPoolEnd)) {
+    if ((StartingAddress >= MmPagedPoolStart) && (StartingAddress <= MmPagedPoolEnd))
+    {
         PoolType = PagedPool;
         SessionSpace = NULL;
         PagedPoolInfo = &MmPagedPoolInfo;
-        StartPosition = (ULONG)(((PCHAR)StartingAddress -
-                          (PCHAR)MmPageAlignedPoolBase[PoolType]) >> PAGE_SHIFT);
+        StartPosition = (ULONG)(((PCHAR)StartingAddress - (PCHAR)MmPageAlignedPoolBase[PoolType]) >> PAGE_SHIFT);
     }
-    else if (MI_IS_SESSION_POOL_ADDRESS (StartingAddress) == TRUE) {
+    else if (MI_IS_SESSION_POOL_ADDRESS(StartingAddress) == TRUE)
+    {
         PoolType = PagedPool;
         SessionSpace = MmSessionSpace;
-        ASSERT (SessionSpace);
+        ASSERT(SessionSpace);
         PagedPoolInfo = &SessionSpace->PagedPoolInfo;
-        StartPosition = (ULONG)(((PCHAR)StartingAddress -
-                          (PCHAR)SessionSpace->PagedPoolStart) >> PAGE_SHIFT);
+        StartPosition = (ULONG)(((PCHAR)StartingAddress - (PCHAR)SessionSpace->PagedPoolStart) >> PAGE_SHIFT);
     }
-    else {
+    else
+    {
 
-        if (StartingAddress < MM_SYSTEM_RANGE_START) {
-            KeBugCheckEx (BAD_POOL_CALLER,
-                          0x40,
-                          (ULONG_PTR)StartingAddress,
-                          (ULONG_PTR)MM_SYSTEM_RANGE_START,
-                          0);
+        if (StartingAddress < MM_SYSTEM_RANGE_START)
+        {
+            KeBugCheckEx(BAD_POOL_CALLER, 0x40, (ULONG_PTR)StartingAddress, (ULONG_PTR)MM_SYSTEM_RANGE_START, 0);
         }
 
         PoolType = NonPagedPool;
         SessionSpace = NULL;
         PagedPoolInfo = &MmPagedPoolInfo;
-        StartPosition = (ULONG)(((PCHAR)StartingAddress -
-                          (PCHAR)MmPageAlignedPoolBase[PoolType]) >> PAGE_SHIFT);
+        StartPosition = (ULONG)(((PCHAR)StartingAddress - (PCHAR)MmPageAlignedPoolBase[PoolType]) >> PAGE_SHIFT);
     }
 
     //
     // Check to ensure this page is really the start of an allocation.
     //
 
-    if (PoolType == NonPagedPool) {
+    if (PoolType == NonPagedPool)
+    {
 
         //
         // The nonpaged pool being freed may be the target of a delayed unlock.
@@ -2205,8 +2224,9 @@ Environment:
         //
 
 #if !defined(MI_MULTINODE)
-        if (MmPfnDeferredList != NULL) {
-            MiDeferredUnlockPages (0);
+        if (MmPfnDeferredList != NULL)
+        {
+            MiDeferredUnlockPages(0);
         }
 #else
         //
@@ -2214,18 +2234,19 @@ Environment:
         // we might as well go the long way and just call.
         //
 
-        MiDeferredUnlockPages (0);
+        MiDeferredUnlockPages(0);
 #endif
 
-        if (MI_IS_PHYSICAL_ADDRESS (StartingAddress)) {
+        if (MI_IS_PHYSICAL_ADDRESS(StartingAddress))
+        {
 
             //
             // On certain architectures, virtual addresses
             // may be physical and hence have no corresponding PTE.
             //
 
-            Pfn1 = MI_PFN_ELEMENT (MI_CONVERT_PHYSICAL_TO_PFN (StartingAddress));
-            ASSERT (StartPosition < MmExpandedPoolBitPosition);
+            Pfn1 = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN(StartingAddress));
+            ASSERT(StartPosition < MmExpandedPoolBitPosition);
             AddressIsPhysical = TRUE;
 
             //
@@ -2237,47 +2258,38 @@ Environment:
             PointerPte = NULL;
             StartPte = NULL;
 
-            if ((StartingAddress < MmNonPagedPoolStart) ||
-                (StartingAddress >= MmNonPagedPoolEnd0)) {
-                KeBugCheckEx (BAD_POOL_CALLER,
-                              0x42,
-                              (ULONG_PTR)StartingAddress,
-                              0,
-                              0);
+            if ((StartingAddress < MmNonPagedPoolStart) || (StartingAddress >= MmNonPagedPoolEnd0))
+            {
+                KeBugCheckEx(BAD_POOL_CALLER, 0x42, (ULONG_PTR)StartingAddress, 0, 0);
             }
         }
-        else {
-            PointerPte = MiGetPteAddress (StartingAddress);
-            Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+        else
+        {
+            PointerPte = MiGetPteAddress(StartingAddress);
+            Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
             AddressIsPhysical = FALSE;
             StartPte = PointerPte;
 
-            if (((StartingAddress >= MmNonPagedPoolExpansionStart) &&
-                (StartingAddress < MmNonPagedPoolEnd)) ||
-                ((StartingAddress >= MmNonPagedPoolStart) &&
-                (StartingAddress < MmNonPagedPoolEnd0))) {
-                    NOTHING;
+            if (((StartingAddress >= MmNonPagedPoolExpansionStart) && (StartingAddress < MmNonPagedPoolEnd)) ||
+                ((StartingAddress >= MmNonPagedPoolStart) && (StartingAddress < MmNonPagedPoolEnd0)))
+            {
+                NOTHING;
             }
-            else {
-                KeBugCheckEx (BAD_POOL_CALLER,
-                              0x43,
-                              (ULONG_PTR)StartingAddress,
-                              0,
-                              0);
+            else
+            {
+                KeBugCheckEx(BAD_POOL_CALLER, 0x43, (ULONG_PTR)StartingAddress, 0, 0);
             }
         }
 
-        if (Pfn1->u3.e1.StartOfAllocation == 0) {
-            KeBugCheckEx (BAD_POOL_CALLER,
-                          0x41,
-                          (ULONG_PTR)StartingAddress,
-                          (ULONG_PTR)(Pfn1 - MmPfnDatabase),
-                          MmHighestPhysicalPage);
+        if (Pfn1->u3.e1.StartOfAllocation == 0)
+        {
+            KeBugCheckEx(BAD_POOL_CALLER, 0x41, (ULONG_PTR)StartingAddress, (ULONG_PTR)(Pfn1 - MmPfnDatabase),
+                         MmHighestPhysicalPage);
         }
 
         StartPfn = Pfn1;
 
-        ASSERT (Pfn1->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
+        ASSERT(Pfn1->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
 
         OriginalPfnFlags = Pfn1->u3.e1;
         VerifierAllocation = Pfn1->u4.VerifierAllocation;
@@ -2287,11 +2299,10 @@ Environment:
         Pfn1->u4.VerifierAllocation = 0;
 
 #if DBG
-        if ((Pfn1->u3.e2.ReferenceCount > 1) &&
-            (Pfn1->u3.e1.WriteInProgress == 0)) {
-            DbgPrint ("MM: MiFreePoolPages - deleting pool locked for I/O %p\n",
-                 Pfn1);
-            ASSERT (Pfn1->u3.e2.ReferenceCount == 1);
+        if ((Pfn1->u3.e2.ReferenceCount > 1) && (Pfn1->u3.e1.WriteInProgress == 0))
+        {
+            DbgPrint("MM: MiFreePoolPages - deleting pool locked for I/O %p\n", Pfn1);
+            ASSERT(Pfn1->u3.e2.ReferenceCount == 1);
         }
 #endif
 
@@ -2299,28 +2310,32 @@ Environment:
         // Find end of allocation and release the pages.
         //
 
-        if (AddressIsPhysical == TRUE) {
-            while (Pfn1->u3.e1.EndOfAllocation == 0) {
+        if (AddressIsPhysical == TRUE)
+        {
+            while (Pfn1->u3.e1.EndOfAllocation == 0)
+            {
                 Pfn1 += 1;
 #if DBG
-                if ((Pfn1->u3.e2.ReferenceCount > 1) &&
-                    (Pfn1->u3.e1.WriteInProgress == 0)) {
-                        DbgPrint ("MM:MiFreePoolPages - deleting pool locked for I/O %p\n", Pfn1);
-                    ASSERT (Pfn1->u3.e2.ReferenceCount == 1);
+                if ((Pfn1->u3.e2.ReferenceCount > 1) && (Pfn1->u3.e1.WriteInProgress == 0))
+                {
+                    DbgPrint("MM:MiFreePoolPages - deleting pool locked for I/O %p\n", Pfn1);
+                    ASSERT(Pfn1->u3.e2.ReferenceCount == 1);
                 }
 #endif
             }
             NumberOfPages = Pfn1 - StartPfn + 1;
         }
-        else {
-            while (Pfn1->u3.e1.EndOfAllocation == 0) {
+        else
+        {
+            while (Pfn1->u3.e1.EndOfAllocation == 0)
+            {
                 PointerPte += 1;
-                Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+                Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
 #if DBG
-                if ((Pfn1->u3.e2.ReferenceCount > 1) &&
-                    (Pfn1->u3.e1.WriteInProgress == 0)) {
-                        DbgPrint ("MM:MiFreePoolPages - deleting pool locked for I/O %p\n", Pfn1);
-                    ASSERT (Pfn1->u3.e2.ReferenceCount == 1);
+                if ((Pfn1->u3.e2.ReferenceCount > 1) && (Pfn1->u3.e1.WriteInProgress == 0))
+                {
+                    DbgPrint("MM:MiFreePoolPages - deleting pool locked for I/O %p\n", Pfn1);
+                    ASSERT(Pfn1->u3.e2.ReferenceCount == 1);
                 }
 #endif
             }
@@ -2329,30 +2344,27 @@ Environment:
 
         MmAllocatedNonPagedPool -= NumberOfPages;
 
-        if (VerifierAllocation != 0) {
-            VerifierFreeTrackedPool (StartingAddress,
-                                     NumberOfPages << PAGE_SHIFT,
-                                     NonPagedPool,
-                                     FALSE);
+        if (VerifierAllocation != 0)
+        {
+            VerifierFreeTrackedPool(StartingAddress, NumberOfPages << PAGE_SHIFT, NonPagedPool, FALSE);
         }
 
-        if (OriginalPfnFlags.LargeSessionAllocation != 0) {
-            MiSessionPoolFreed (StartingAddress,
-                                NumberOfPages << PAGE_SHIFT,
-                                NonPagedPool);
+        if (OriginalPfnFlags.LargeSessionAllocation != 0)
+        {
+            MiSessionPoolFreed(StartingAddress, NumberOfPages << PAGE_SHIFT, NonPagedPool);
         }
 
         Pfn1->u3.e1.EndOfAllocation = 0;
 
 #if DBG
-        if (MiFillFreedPool != 0) {
-            RtlFillMemoryUlong (StartingAddress,
-                                PAGE_SIZE * NumberOfPages,
-                                MiFillFreedPool);
+        if (MiFillFreedPool != 0)
+        {
+            RtlFillMemoryUlong(StartingAddress, PAGE_SIZE * NumberOfPages, MiFillFreedPool);
         }
 #endif
 
-        if (StartingAddress > MmNonPagedPoolExpansionStart) {
+        if (StartingAddress > MmNonPagedPoolExpansionStart)
+        {
 
             //
             // This page was from the expanded pool, should
@@ -2362,16 +2374,15 @@ Environment:
             // so no physical address checks need to be performed.
             //
 
-            if ((NumberOfPages > 3) ||
-                (MmNumberOfFreeNonPagedPool > 5) ||
-                ((MmResidentAvailablePages < 200) &&
-                 (MiExpansionPoolPagesInUse > MiExpansionPoolPagesInitialCharge))) {
+            if ((NumberOfPages > 3) || (MmNumberOfFreeNonPagedPool > 5) ||
+                ((MmResidentAvailablePages < 200) && (MiExpansionPoolPagesInUse > MiExpansionPoolPagesInitialCharge)))
+            {
 
                 //
                 // Free these pages back to the free page list.
                 //
 
-                MiFreeNonPagedPool (StartingAddress, NumberOfPages);
+                MiFreeNonPagedPool(StartingAddress, NumberOfPages);
 
                 return (ULONG)NumberOfPages;
             }
@@ -2392,39 +2403,44 @@ Environment:
 
         i = NumberOfPages;
 
-        ASSERT (MiEndOfInitialPoolFrame != 0);
+        ASSERT(MiEndOfInitialPoolFrame != 0);
 
-        if ((PFN_NUMBER)(Pfn1 - MmPfnDatabase) == MiEndOfInitialPoolFrame) {
+        if ((PFN_NUMBER)(Pfn1 - MmPfnDatabase) == MiEndOfInitialPoolFrame)
+        {
             PointerPte += 1;
             Pfn1 = NULL;
         }
-        else if (AddressIsPhysical == TRUE) {
+        else if (AddressIsPhysical == TRUE)
+        {
             Pfn1 += 1;
-            ASSERT ((PCHAR)StartingAddress + NumberOfPages < (PCHAR)MmNonPagedPoolStart + MmSizeOfNonPagedPoolInBytes);
+            ASSERT((PCHAR)StartingAddress + NumberOfPages < (PCHAR)MmNonPagedPoolStart + MmSizeOfNonPagedPoolInBytes);
         }
-        else {
+        else
+        {
             PointerPte += 1;
-            ASSERT ((PCHAR)StartingAddress + NumberOfPages <= (PCHAR)MmNonPagedPoolEnd);
+            ASSERT((PCHAR)StartingAddress + NumberOfPages <= (PCHAR)MmNonPagedPoolEnd);
 
             //
             // Unprotect the previously freed pool so it can be merged.
             //
 
-            if (MmProtectFreedNonPagedPool == TRUE) {
-                MiUnProtectFreeNonPagedPool (
-                    (PVOID)MiGetVirtualAddressMappedByPte(PointerPte),
-                    0);
+            if (MmProtectFreedNonPagedPool == TRUE)
+            {
+                MiUnProtectFreeNonPagedPool((PVOID)MiGetVirtualAddressMappedByPte(PointerPte), 0);
             }
 
-            if (PointerPte->u.Hard.Valid == 1) {
-                Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+            if (PointerPte->u.Hard.Valid == 1)
+            {
+                Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
             }
-            else {
+            else
+            {
                 Pfn1 = NULL;
             }
         }
 
-        if ((Pfn1 != NULL) && (Pfn1->u3.e1.StartOfAllocation == 0)) {
+        if ((Pfn1 != NULL) && (Pfn1->u3.e1.StartOfAllocation == 0))
+        {
 
             //
             // This range of pages is free.  Remove this entry
@@ -2432,48 +2448,54 @@ Environment:
             // range being freed.
             //
 
-            Entry = (PMMFREE_POOL_ENTRY)((PCHAR)StartingAddress
-                                        + (NumberOfPages << PAGE_SHIFT));
-            ASSERT (Entry->Signature == MM_FREE_POOL_SIGNATURE);
-            ASSERT (Entry->Owner == Entry);
+            Entry = (PMMFREE_POOL_ENTRY)((PCHAR)StartingAddress + (NumberOfPages << PAGE_SHIFT));
+            ASSERT(Entry->Signature == MM_FREE_POOL_SIGNATURE);
+            ASSERT(Entry->Owner == Entry);
 
 #if DBG
-            if (AddressIsPhysical == TRUE) {
+            if (AddressIsPhysical == TRUE)
+            {
 
-                ASSERT (MI_IS_PHYSICAL_ADDRESS(StartingAddress));
+                ASSERT(MI_IS_PHYSICAL_ADDRESS(StartingAddress));
 
                 //
                 // On certain architectures, virtual addresses
                 // may be physical and hence have no corresponding PTE.
                 //
 
-                DebugPfn = MI_PFN_ELEMENT (MI_CONVERT_PHYSICAL_TO_PFN (Entry));
+                DebugPfn = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN(Entry));
                 DebugPfn += Entry->Size;
-                if ((PFN_NUMBER)((DebugPfn - 1) - MmPfnDatabase) != MiEndOfInitialPoolFrame) {
-                    ASSERT (DebugPfn->u3.e1.StartOfAllocation == 1);
+                if ((PFN_NUMBER)((DebugPfn - 1) - MmPfnDatabase) != MiEndOfInitialPoolFrame)
+                {
+                    ASSERT(DebugPfn->u3.e1.StartOfAllocation == 1);
                 }
             }
-            else {
+            else
+            {
                 DebugPte = PointerPte + Entry->Size;
-                if ((DebugPte-1)->u.Hard.Valid == 1) {
-                    DebugPfn = MI_PFN_ELEMENT ((DebugPte-1)->u.Hard.PageFrameNumber);
-                    if ((PFN_NUMBER)(DebugPfn - MmPfnDatabase) != MiEndOfInitialPoolFrame) {
-                        if (DebugPte->u.Hard.Valid == 1) {
-                            DebugPfn = MI_PFN_ELEMENT (DebugPte->u.Hard.PageFrameNumber);
-                            ASSERT (DebugPfn->u3.e1.StartOfAllocation == 1);
+                if ((DebugPte - 1)->u.Hard.Valid == 1)
+                {
+                    DebugPfn = MI_PFN_ELEMENT((DebugPte - 1)->u.Hard.PageFrameNumber);
+                    if ((PFN_NUMBER)(DebugPfn - MmPfnDatabase) != MiEndOfInitialPoolFrame)
+                    {
+                        if (DebugPte->u.Hard.Valid == 1)
+                        {
+                            DebugPfn = MI_PFN_ELEMENT(DebugPte->u.Hard.PageFrameNumber);
+                            ASSERT(DebugPfn->u3.e1.StartOfAllocation == 1);
                         }
                     }
-
                 }
             }
 #endif
 
             i += Entry->Size;
-            if (MmProtectFreedNonPagedPool == FALSE) {
-                RemoveEntryList (&Entry->List);
+            if (MmProtectFreedNonPagedPool == FALSE)
+            {
+                RemoveEntryList(&Entry->List);
             }
-            else {
-                MiProtectedPoolRemoveEntryList (&Entry->List);
+            else
+            {
+                MiProtectedPoolRemoveEntryList(&Entry->List);
             }
         }
 
@@ -2490,41 +2512,45 @@ Environment:
 
         Entry = (PMMFREE_POOL_ENTRY)StartingAddress;
 
-        ASSERT (MiStartOfInitialPoolFrame != 0);
+        ASSERT(MiStartOfInitialPoolFrame != 0);
 
-        if ((PFN_NUMBER)(StartPfn - MmPfnDatabase) == MiStartOfInitialPoolFrame) {
+        if ((PFN_NUMBER)(StartPfn - MmPfnDatabase) == MiStartOfInitialPoolFrame)
+        {
             Pfn1 = NULL;
         }
-        else if (AddressIsPhysical == TRUE) {
-            ASSERT (MI_IS_PHYSICAL_ADDRESS(StartingAddress));
-            ASSERT (StartingAddress != MmNonPagedPoolStart);
+        else if (AddressIsPhysical == TRUE)
+        {
+            ASSERT(MI_IS_PHYSICAL_ADDRESS(StartingAddress));
+            ASSERT(StartingAddress != MmNonPagedPoolStart);
 
-            Pfn1 = MI_PFN_ELEMENT (MI_CONVERT_PHYSICAL_TO_PFN (
-                                    (PVOID)((PCHAR)Entry - PAGE_SIZE)));
-
+            Pfn1 = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN((PVOID)((PCHAR)Entry - PAGE_SIZE)));
         }
-        else {
+        else
+        {
             PointerPte -= NumberOfPages + 1;
 
             //
             // Unprotect the previously freed pool so it can be merged.
             //
 
-            if (MmProtectFreedNonPagedPool == TRUE) {
-                MiUnProtectFreeNonPagedPool (
-                    (PVOID)MiGetVirtualAddressMappedByPte(PointerPte),
-                    0);
+            if (MmProtectFreedNonPagedPool == TRUE)
+            {
+                MiUnProtectFreeNonPagedPool((PVOID)MiGetVirtualAddressMappedByPte(PointerPte), 0);
             }
 
-            if (PointerPte->u.Hard.Valid == 1) {
-                Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+            if (PointerPte->u.Hard.Valid == 1)
+            {
+                Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
             }
-            else {
+            else
+            {
                 Pfn1 = NULL;
             }
         }
-        if (Pfn1 != NULL) {
-            if (Pfn1->u3.e1.EndOfAllocation == 0) {
+        if (Pfn1 != NULL)
+        {
+            if (Pfn1->u3.e1.EndOfAllocation == 0)
+            {
 
                 //
                 // This range of pages is free, add these pages to
@@ -2534,15 +2560,16 @@ Environment:
                 //
 
                 Entry = (PMMFREE_POOL_ENTRY)((PCHAR)StartingAddress - PAGE_SIZE);
-                ASSERT (Entry->Signature == MM_FREE_POOL_SIGNATURE);
+                ASSERT(Entry->Signature == MM_FREE_POOL_SIGNATURE);
                 Entry = Entry->Owner;
 
                 //
                 // Unprotect the previously freed pool so we can merge it
                 //
 
-                if (MmProtectFreedNonPagedPool == TRUE) {
-                    MiUnProtectFreeNonPagedPool ((PVOID)Entry, 0);
+                if (MmProtectFreedNonPagedPool == TRUE)
+                {
+                    MiUnProtectFreeNonPagedPool((PVOID)Entry, 0);
                 }
 
                 //
@@ -2551,50 +2578,55 @@ Environment:
                 // small allocations at the front of the list.
                 //
 
-                if (Entry->Size < MI_MAX_FREE_LIST_HEADS - 1) {
+                if (Entry->Size < MI_MAX_FREE_LIST_HEADS - 1)
+                {
 
-                    if (MmProtectFreedNonPagedPool == FALSE) {
-                        RemoveEntryList (&Entry->List);
+                    if (MmProtectFreedNonPagedPool == FALSE)
+                    {
+                        RemoveEntryList(&Entry->List);
                     }
-                    else {
-                        MiProtectedPoolRemoveEntryList (&Entry->List);
+                    else
+                    {
+                        MiProtectedPoolRemoveEntryList(&Entry->List);
                     }
 
                     //
                     // Add these pages to the previous entry.
                     //
-    
+
                     Entry->Size += i;
 
                     Index = (ULONG)(Entry->Size - 1);
-            
-                    if (Index >= MI_MAX_FREE_LIST_HEADS) {
+
+                    if (Index >= MI_MAX_FREE_LIST_HEADS)
+                    {
                         Index = MI_MAX_FREE_LIST_HEADS - 1;
                     }
 
-                    if (MmProtectFreedNonPagedPool == FALSE) {
-                        InsertTailList (&MmNonPagedPoolFreeListHead[Index],
-                                        &Entry->List);
+                    if (MmProtectFreedNonPagedPool == FALSE)
+                    {
+                        InsertTailList(&MmNonPagedPoolFreeListHead[Index], &Entry->List);
                     }
-                    else {
-                        MiProtectedPoolInsertList (&MmNonPagedPoolFreeListHead[Index],
-                                          &Entry->List,
-                                          Entry->Size < MM_SMALL_ALLOCATIONS ?
-                                              TRUE : FALSE);
+                    else
+                    {
+                        MiProtectedPoolInsertList(&MmNonPagedPoolFreeListHead[Index], &Entry->List,
+                                                  Entry->Size < MM_SMALL_ALLOCATIONS ? TRUE : FALSE);
                     }
                 }
-                else {
+                else
+                {
 
                     //
                     // Add these pages to the previous entry.
                     //
-    
+
                     Entry->Size += i;
                 }
             }
         }
 
-        if (Entry == (PMMFREE_POOL_ENTRY)StartingAddress) {
+        if (Entry == (PMMFREE_POOL_ENTRY)StartingAddress)
+        {
 
             //
             // This entry was not combined with the previous, insert it
@@ -2604,20 +2636,20 @@ Environment:
             Entry->Size = i;
 
             Index = (ULONG)(Entry->Size - 1);
-    
-            if (Index >= MI_MAX_FREE_LIST_HEADS) {
+
+            if (Index >= MI_MAX_FREE_LIST_HEADS)
+            {
                 Index = MI_MAX_FREE_LIST_HEADS - 1;
             }
 
-            if (MmProtectFreedNonPagedPool == FALSE) {
-                InsertTailList (&MmNonPagedPoolFreeListHead[Index],
-                                &Entry->List);
+            if (MmProtectFreedNonPagedPool == FALSE)
+            {
+                InsertTailList(&MmNonPagedPoolFreeListHead[Index], &Entry->List);
             }
-            else {
-                MiProtectedPoolInsertList (&MmNonPagedPoolFreeListHead[Index],
-                                      &Entry->List,
-                                      Entry->Size < MM_SMALL_ALLOCATIONS ?
-                                          TRUE : FALSE);
+            else
+            {
+                MiProtectedPoolInsertList(&MmNonPagedPoolFreeListHead[Index], &Entry->List,
+                                          Entry->Size < MM_SMALL_ALLOCATIONS ? TRUE : FALSE);
             }
         }
 
@@ -2625,11 +2657,12 @@ Environment:
         // Set the owner field in all these pages.
         //
 
-        ASSERT (i != 0);
+        ASSERT(i != 0);
         NextEntry = (PMMFREE_POOL_ENTRY)StartingAddress;
         LastEntry = (PMMFREE_POOL_ENTRY)((PCHAR)NextEntry + (i << PAGE_SHIFT));
 
-        do {
+        do
+        {
             NextEntry->Owner = Entry;
 #if DBG
             NextEntry->Signature = MM_FREE_POOL_SIGNATURE;
@@ -2641,27 +2674,29 @@ Environment:
 #if DBG
         NextEntry = Entry;
 
-        if (AddressIsPhysical == TRUE) {
-            ASSERT (MI_IS_PHYSICAL_ADDRESS(StartingAddress));
-            DebugPfn = MI_PFN_ELEMENT (MI_CONVERT_PHYSICAL_TO_PFN (NextEntry));
+        if (AddressIsPhysical == TRUE)
+        {
+            ASSERT(MI_IS_PHYSICAL_ADDRESS(StartingAddress));
+            DebugPfn = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN(NextEntry));
             LastDebugPfn = DebugPfn + Entry->Size;
 
-            for ( ; DebugPfn < LastDebugPfn; DebugPfn += 1) {
-                ASSERT ((DebugPfn->u3.e1.StartOfAllocation == 0) &&
-                        (DebugPfn->u3.e1.EndOfAllocation == 0));
-                ASSERT (NextEntry->Owner == Entry);
+            for (; DebugPfn < LastDebugPfn; DebugPfn += 1)
+            {
+                ASSERT((DebugPfn->u3.e1.StartOfAllocation == 0) && (DebugPfn->u3.e1.EndOfAllocation == 0));
+                ASSERT(NextEntry->Owner == Entry);
                 NextEntry = (PMMFREE_POOL_ENTRY)((PCHAR)NextEntry + PAGE_SIZE);
             }
         }
-        else {
+        else
+        {
 
-            for (i = 0; i < Entry->Size; i += 1) {
+            for (i = 0; i < Entry->Size; i += 1)
+            {
 
-                DebugPte = MiGetPteAddress (NextEntry);
-                DebugPfn = MI_PFN_ELEMENT (DebugPte->u.Hard.PageFrameNumber);
-                ASSERT ((DebugPfn->u3.e1.StartOfAllocation == 0) &&
-                        (DebugPfn->u3.e1.EndOfAllocation == 0));
-                ASSERT (NextEntry->Owner == Entry);
+                DebugPte = MiGetPteAddress(NextEntry);
+                DebugPfn = MI_PFN_ELEMENT(DebugPte->u.Hard.PageFrameNumber);
+                ASSERT((DebugPfn->u3.e1.StartOfAllocation == 0) && (DebugPfn->u3.e1.EndOfAllocation == 0));
+                ASSERT(NextEntry->Owner == Entry);
                 NextEntry = (PMMFREE_POOL_ENTRY)((PCHAR)NextEntry + PAGE_SIZE);
             }
         }
@@ -2671,8 +2706,9 @@ Environment:
         // Prevent anyone from touching non paged pool after freeing it.
         //
 
-        if (MmProtectFreedNonPagedPool == TRUE) {
-            MiProtectFreeNonPagedPool ((PVOID)Entry, (ULONG)Entry->Size);
+        if (MmProtectFreedNonPagedPool == TRUE)
+        {
+            MiProtectFreeNonPagedPool((PVOID)Entry, (ULONG)Entry->Size);
         }
 
         return (ULONG)NumberOfPages;
@@ -2683,29 +2719,27 @@ Environment:
     // end of allocation bitmap.
     //
 
-    if (!RtlCheckBit (PagedPoolInfo->PagedPoolAllocationMap, StartPosition)) {
-        KeBugCheckEx (BAD_POOL_CALLER,
-                      0x50,
-                      (ULONG_PTR)StartingAddress,
-                      (ULONG_PTR)StartPosition,
-                      MmSizeOfPagedPoolInBytes);
+    if (!RtlCheckBit(PagedPoolInfo->PagedPoolAllocationMap, StartPosition))
+    {
+        KeBugCheckEx(BAD_POOL_CALLER, 0x50, (ULONG_PTR)StartingAddress, (ULONG_PTR)StartPosition,
+                     MmSizeOfPagedPoolInBytes);
     }
 
 #if DBG
-    if (StartPosition > 0) {
-        if (RtlCheckBit (PagedPoolInfo->PagedPoolAllocationMap, StartPosition - 1)) {
-            if (!RtlCheckBit (PagedPoolInfo->EndOfPagedPoolBitmap, StartPosition - 1)) {
+    if (StartPosition > 0)
+    {
+        if (RtlCheckBit(PagedPoolInfo->PagedPoolAllocationMap, StartPosition - 1))
+        {
+            if (!RtlCheckBit(PagedPoolInfo->EndOfPagedPoolBitmap, StartPosition - 1))
+            {
 
                 //
                 // In the middle of an allocation... bugcheck.
                 //
 
                 DbgPrint("paged pool in middle of allocation\n");
-                KeBugCheckEx (MEMORY_MANAGEMENT,
-                              0x41286,
-                              (ULONG_PTR)PagedPoolInfo->PagedPoolAllocationMap,
-                              (ULONG_PTR)PagedPoolInfo->EndOfPagedPoolBitmap,
-                              StartPosition);
+                KeBugCheckEx(MEMORY_MANAGEMENT, 0x41286, (ULONG_PTR)PagedPoolInfo->PagedPoolAllocationMap,
+                             (ULONG_PTR)PagedPoolInfo->EndOfPagedPoolBitmap, StartPosition);
             }
         }
     }
@@ -2721,13 +2755,15 @@ Environment:
 
     BitMap = PagedPoolInfo->EndOfPagedPoolBitmap->Buffer;
 
-    while (!MI_CHECK_BIT (BitMap, i)) {
+    while (!MI_CHECK_BIT(BitMap, i))
+    {
         i += 1;
     }
 
     NumberOfPages = i - StartPosition + 1;
 
-    if (SessionSpace) {
+    if (SessionSpace)
+    {
 
         //
         // This is needed purely to verify no one leaks pool.  This
@@ -2736,32 +2772,32 @@ Environment:
 
         BitMap = PagedPoolInfo->PagedPoolLargeSessionAllocationMap->Buffer;
 
-        if (MI_CHECK_BIT (BitMap, StartPosition)) {
+        if (MI_CHECK_BIT(BitMap, StartPosition))
+        {
 
-            MI_CLEAR_BIT (BitMap, StartPosition);
+            MI_CLEAR_BIT(BitMap, StartPosition);
 
-            MiSessionPoolFreed (MiGetVirtualAddressMappedByPte (PointerPte),
-                                NumberOfPages << PAGE_SHIFT,
-                                PagedPool);
+            MiSessionPoolFreed(MiGetVirtualAddressMappedByPte(PointerPte), NumberOfPages << PAGE_SHIFT, PagedPool);
         }
 
         SessionAllocation = TRUE;
     }
-    else {
+    else
+    {
         SessionAllocation = FALSE;
 
-        if (VerifierLargePagedPoolMap) {
+        if (VerifierLargePagedPoolMap)
+        {
 
             BitMap = VerifierLargePagedPoolMap->Buffer;
 
-            if (MI_CHECK_BIT (BitMap, StartPosition)) {
+            if (MI_CHECK_BIT(BitMap, StartPosition))
+            {
 
-                MI_CLEAR_BIT (BitMap, StartPosition);
+                MI_CLEAR_BIT(BitMap, StartPosition);
 
-                VerifierFreeTrackedPool (MiGetVirtualAddressMappedByPte (PointerPte),
-                                         NumberOfPages << PAGE_SHIFT,
-                                         PagedPool,
-                                         FALSE);
+                VerifierFreeTrackedPool(MiGetVirtualAddressMappedByPte(PointerPte), NumberOfPages << PAGE_SHIFT,
+                                        PagedPool, FALSE);
             }
         }
 
@@ -2769,64 +2805,60 @@ Environment:
         // If paged pool has been configured as nonpagable, only
         // virtual address space is released.
         //
-        
-        if (MmDisablePagingExecutive & MM_PAGED_POOL_LOCKED_DOWN) {
+
+        if (MmDisablePagingExecutive & MM_PAGED_POOL_LOCKED_DOWN)
+        {
 
             //
             // Clear the end of allocation bit in the bit map.
             //
-    
-            RtlClearBit (PagedPoolInfo->EndOfPagedPoolBitmap, (ULONG)i);
-    
+
+            RtlClearBit(PagedPoolInfo->EndOfPagedPoolBitmap, (ULONG)i);
+
             PagedPoolInfo->AllocatedPagedPool -= NumberOfPages;
-        
+
             //
             // Clear the allocation bits in the bit map.
             //
-        
-            RtlClearBits (PagedPoolInfo->PagedPoolAllocationMap,
-                          StartPosition,
-                          (ULONG)NumberOfPages);
-        
-            if (StartPosition < PagedPoolInfo->PagedPoolHint) {
+
+            RtlClearBits(PagedPoolInfo->PagedPoolAllocationMap, StartPosition, (ULONG)NumberOfPages);
+
+            if (StartPosition < PagedPoolInfo->PagedPoolHint)
+            {
                 PagedPoolInfo->PagedPoolHint = StartPosition;
             }
-        
+
             return (ULONG)NumberOfPages;
         }
     }
 
     LocalNoAccessPte.u.Long = MM_KERNEL_NOACCESS_PTE;
 
-    PagesFreed = MiDeleteSystemPagableVm (PointerPte,
-                                          NumberOfPages,
-                                          LocalNoAccessPte,
-                                          SessionAllocation,
-                                          NULL);
+    PagesFreed = MiDeleteSystemPagableVm(PointerPte, NumberOfPages, LocalNoAccessPte, SessionAllocation, NULL);
 
-    ASSERT (PagesFreed == NumberOfPages);
+    ASSERT(PagesFreed == NumberOfPages);
 
-    if (SessionSpace) {
-        InterlockedExchangeAddSizeT (&MmSessionSpace->CommittedPages,
-                                     0 - NumberOfPages);
-   
-        MM_BUMP_SESS_COUNTER (MM_DBG_SESSION_COMMIT_POOL_FREED,
-                              (ULONG)NumberOfPages);
+    if (SessionSpace)
+    {
+        InterlockedExchangeAddSizeT(&MmSessionSpace->CommittedPages, 0 - NumberOfPages);
+
+        MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_COMMIT_POOL_FREED, (ULONG)NumberOfPages);
     }
-    else {
+    else
+    {
         MmPagedPoolCommit -= (ULONG)NumberOfPages;
     }
 
-    MiReturnCommitment (NumberOfPages);
+    MiReturnCommitment(NumberOfPages);
 
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_PAGED_POOL_PAGES, NumberOfPages);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_PAGED_POOL_PAGES, NumberOfPages);
 
     //
     // Clear the end of allocation bit in the bit map.
     //
 
     BitMap = PagedPoolInfo->EndOfPagedPoolBitmap->Buffer;
-    MI_CLEAR_BIT (BitMap, i);
+    MI_CLEAR_BIT(BitMap, i);
 
     PagedPoolInfo->PagedPoolCommit -= NumberOfPages;
     PagedPoolInfo->AllocatedPagedPool -= NumberOfPages;
@@ -2835,21 +2867,17 @@ Environment:
     // Clear the allocation bits in the bit map.
     //
 
-    RtlClearBits (PagedPoolInfo->PagedPoolAllocationMap,
-                  StartPosition,
-                  (ULONG)NumberOfPages);
+    RtlClearBits(PagedPoolInfo->PagedPoolAllocationMap, StartPosition, (ULONG)NumberOfPages);
 
-    if (StartPosition < PagedPoolInfo->PagedPoolHint) {
+    if (StartPosition < PagedPoolInfo->PagedPoolHint)
+    {
         PagedPoolInfo->PagedPoolHint = StartPosition;
     }
 
     return (ULONG)NumberOfPages;
 }
-
-VOID
-MiInitializeNonPagedPool (
-    VOID
-    )
+
+VOID MiInitializeNonPagedPool(VOID)
 
 /*++
 
@@ -2889,33 +2917,35 @@ Environment:
     // Initialize the list heads for free pages.
     //
 
-    for (Index = 0; Index < MI_MAX_FREE_LIST_HEADS; Index += 1) {
-        InitializeListHead (&MmNonPagedPoolFreeListHead[Index]);
+    for (Index = 0; Index < MI_MAX_FREE_LIST_HEADS; Index += 1)
+    {
+        InitializeListHead(&MmNonPagedPoolFreeListHead[Index]);
     }
 
     //
     // Set up the non paged pool pages.
     //
 
-    FreeEntry = (PMMFREE_POOL_ENTRY) MmNonPagedPoolStart;
+    FreeEntry = (PMMFREE_POOL_ENTRY)MmNonPagedPoolStart;
     FirstEntry = FreeEntry;
 
-    PagesInPool = BYTES_TO_PAGES (MmSizeOfNonPagedPoolInBytes);
+    PagesInPool = BYTES_TO_PAGES(MmSizeOfNonPagedPoolInBytes);
 
     //
     // Set the location of expanded pool.
     //
 
-    MmExpandedPoolBitPosition = BYTES_TO_PAGES (MmSizeOfNonPagedPoolInBytes);
+    MmExpandedPoolBitPosition = BYTES_TO_PAGES(MmSizeOfNonPagedPoolInBytes);
 
     MmNumberOfFreeNonPagedPool = PagesInPool;
 
     Index = (ULONG)(MmNumberOfFreeNonPagedPool - 1);
-    if (Index >= MI_MAX_FREE_LIST_HEADS) {
+    if (Index >= MI_MAX_FREE_LIST_HEADS)
+    {
         Index = MI_MAX_FREE_LIST_HEADS - 1;
     }
 
-    InsertHeadList (&MmNonPagedPoolFreeListHead[Index], &FreeEntry->List);
+    InsertHeadList(&MmNonPagedPoolFreeListHead[Index], &FreeEntry->List);
 
     FreeEntry->Size = PagesInPool;
 #if DBG
@@ -2923,7 +2953,8 @@ Environment:
 #endif
     FreeEntry->Owner = FirstEntry;
 
-    while (PagesInPool > 1) {
+    while (PagesInPool > 1)
+    {
         FreeEntry = (PMMFREE_POOL_ENTRY)((PCHAR)FreeEntry + PAGE_SIZE);
 #if DBG
         FreeEntry->Signature = MM_FREE_POOL_SIGNATURE;
@@ -2936,13 +2967,15 @@ Environment:
     // Initialize the first nonpaged pool PFN.
     //
 
-    if (MI_IS_PHYSICAL_ADDRESS(MmNonPagedPoolStart)) {
-        PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN (MmNonPagedPoolStart);
+    if (MI_IS_PHYSICAL_ADDRESS(MmNonPagedPoolStart))
+    {
+        PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN(MmNonPagedPoolStart);
     }
-    else {
+    else
+    {
         PointerPte = MiGetPteAddress(MmNonPagedPoolStart);
-        ASSERT (PointerPte->u.Hard.Valid == 1);
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+        ASSERT(PointerPte->u.Hard.Valid == 1);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
     }
     MiStartOfInitialPoolFrame = PageFrameIndex;
 
@@ -2955,13 +2988,15 @@ Environment:
     MmNonPagedPoolEnd0 = (PVOID)((ULONG_PTR)MmNonPagedPoolStart + MmSizeOfNonPagedPoolInBytes);
     EndOfInitialPool = (PVOID)((ULONG_PTR)MmNonPagedPoolStart + MmSizeOfNonPagedPoolInBytes - 1);
 
-    if (MI_IS_PHYSICAL_ADDRESS(EndOfInitialPool)) {
-        PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN (EndOfInitialPool);
+    if (MI_IS_PHYSICAL_ADDRESS(EndOfInitialPool))
+    {
+        PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN(EndOfInitialPool);
     }
-    else {
+    else
+    {
         PointerPte = MiGetPteAddress(EndOfInitialPool);
-        ASSERT (PointerPte->u.Hard.Valid == 1);
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+        ASSERT(PointerPte->u.Hard.Valid == 1);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
     }
     MiEndOfInitialPoolFrame = PageFrameIndex;
 
@@ -2969,11 +3004,10 @@ Environment:
     // Set up the system PTEs for nonpaged pool expansion.
     //
 
-    PointerPte = MiGetPteAddress (MmNonPagedPoolExpansionStart);
-    ASSERT (PointerPte->u.Hard.Valid == 0);
+    PointerPte = MiGetPteAddress(MmNonPagedPoolExpansionStart);
+    ASSERT(PointerPte->u.Hard.Valid == 0);
 
-    Size = BYTES_TO_PAGES(MmMaximumNonPagedPoolInBytes -
-                            MmSizeOfNonPagedPoolInBytes);
+    Size = BYTES_TO_PAGES(MmMaximumNonPagedPoolInBytes - MmSizeOfNonPagedPoolInBytes);
 
     //
     // Insert a guard PTE at the bottom of expanded nonpaged pool.
@@ -2982,7 +3016,7 @@ Environment:
     Size -= 1;
     PointerPte += 1;
 
-    ASSERT (MiExpansionPoolPagesInUse == 0);
+    ASSERT(MiExpansionPoolPagesInUse == 0);
 
     //
     // Initialize the nonpaged pool expansion resident available initial charge.
@@ -2992,11 +3026,12 @@ Environment:
     //
 
     MiExpansionPoolPagesInitialCharge = Size;
-    if (Size > MmNumberOfPhysicalPages / 6) {
+    if (Size > MmNumberOfPhysicalPages / 6)
+    {
         MiExpansionPoolPagesInitialCharge = MmNumberOfPhysicalPages / 6;
     }
 
-    MiInitializeSystemPtes (PointerPte, Size, NonPagedPoolExpansion);
+    MiInitializeSystemPtes(PointerPte, Size, NonPagedPoolExpansion);
 
     //
     // A guard PTE is built at the top by our caller.  This allows us to
@@ -3004,7 +3039,7 @@ Environment:
     // for a blank PTE.
     //
 }
-
+
 #if DBG || (i386 && !FPO)
 
 //
@@ -3018,13 +3053,8 @@ Environment:
 //
 
 NTSTATUS
-MmSnapShotPool(
-    IN POOL_TYPE PoolType,
-    IN PMM_SNAPSHOT_POOL_PAGE SnapShotPoolPage,
-    IN PSYSTEM_POOL_INFORMATION PoolInformation,
-    IN ULONG Length,
-    IN OUT PULONG RequiredLength
-    )
+MmSnapShotPool(IN POOL_TYPE PoolType, IN PMM_SNAPSHOT_POOL_PAGE SnapShotPoolPage,
+               IN PSYSTEM_POOL_INFORMATION PoolInformation, IN ULONG Length, IN OUT PULONG RequiredLength)
 {
     ULONG Index;
     NTSTATUS Status;
@@ -3044,48 +3074,51 @@ MmSnapShotPool(
     Status = STATUS_SUCCESS;
     PoolEntryInfo = &PoolInformation->Entries[0];
 
-    if (PoolType == PagedPool) {
-        PoolInformation->TotalSize = (PCHAR)MmPagedPoolEnd -
-                                     (PCHAR)MmPagedPoolStart;
+    if (PoolType == PagedPool)
+    {
+        PoolInformation->TotalSize = (PCHAR)MmPagedPoolEnd - (PCHAR)MmPagedPoolStart;
         PoolInformation->FirstEntry = MmPagedPoolStart;
         p = MmPagedPoolStart;
         CurrentPage = 0;
-        while (p < (PCHAR)MmPagedPoolEnd) {
+        while (p < (PCHAR)MmPagedPoolEnd)
+        {
             pStart = p;
-            BusyFlag = RtlCheckBit (MmPagedPoolInfo.PagedPoolAllocationMap, CurrentPage);
-            while (~(BusyFlag ^ RtlCheckBit (MmPagedPoolInfo.PagedPoolAllocationMap, CurrentPage))) {
+            BusyFlag = RtlCheckBit(MmPagedPoolInfo.PagedPoolAllocationMap, CurrentPage);
+            while (~(BusyFlag ^ RtlCheckBit(MmPagedPoolInfo.PagedPoolAllocationMap, CurrentPage)))
+            {
                 p += PAGE_SIZE;
-                if (RtlCheckBit (MmPagedPoolInfo.EndOfPagedPoolBitmap, CurrentPage)) {
+                if (RtlCheckBit(MmPagedPoolInfo.EndOfPagedPoolBitmap, CurrentPage))
+                {
                     CurrentPage += 1;
                     break;
                 }
 
                 CurrentPage += 1;
-                if (p > (PCHAR)MmPagedPoolEnd) {
+                if (p > (PCHAR)MmPagedPoolEnd)
+                {
                     break;
-               }
+                }
             }
 
             Size = (ULONG)(p - pStart);
-            if (BusyFlag) {
-                xStatus = (*SnapShotPoolPage)(pStart,
-                                              Size,
-                                              PoolInformation,
-                                              &PoolEntryInfo,
-                                              Length,
-                                              RequiredLength
-                                              );
-                if (xStatus != STATUS_COMMITMENT_LIMIT) {
+            if (BusyFlag)
+            {
+                xStatus = (*SnapShotPoolPage)(pStart, Size, PoolInformation, &PoolEntryInfo, Length, RequiredLength);
+                if (xStatus != STATUS_COMMITMENT_LIMIT)
+                {
                     Status = xStatus;
                 }
             }
-            else {
+            else
+            {
                 PoolInformation->NumberOfEntries += 1;
-                *RequiredLength += sizeof (SYSTEM_POOL_ENTRY);
-                if (Length < *RequiredLength) {
+                *RequiredLength += sizeof(SYSTEM_POOL_ENTRY);
+                if (Length < *RequiredLength)
+                {
                     Status = STATUS_INFO_LENGTH_MISMATCH;
                 }
-                else {
+                else
+                {
                     PoolEntryInfo->Allocated = FALSE;
                     PoolEntryInfo->Size = Size;
                     PoolEntryInfo->AllocatorBackTraceIndex = 0;
@@ -3096,12 +3129,14 @@ MmSnapShotPool(
             }
         }
     }
-    else if (PoolType == NonPagedPool) {
+    else if (PoolType == NonPagedPool)
+    {
         PoolInformation->TotalSize = MmSizeOfNonPagedPoolInBytes;
         PoolInformation->FirstEntry = MmNonPagedPoolStart;
 
         p = MmNonPagedPoolStart;
-        while (p < (PCHAR)MmNonPagedPoolEnd) {
+        while (p < (PCHAR)MmNonPagedPoolEnd)
+        {
 
             //
             // NonPaged pool is linked together through the pages themselves.
@@ -3110,32 +3145,36 @@ MmSnapShotPool(
             NeedsReprotect = FALSE;
             FreePageInfo = NULL;
 
-            for (Index = 0; Index < MI_MAX_FREE_LIST_HEADS; Index += 1) {
+            for (Index = 0; Index < MI_MAX_FREE_LIST_HEADS; Index += 1)
+            {
 
                 Entry = MmNonPagedPoolFreeListHead[Index].Flink;
-    
-                while (Entry != &MmNonPagedPoolFreeListHead[Index]) {
-    
-                    if (MmProtectFreedNonPagedPool == TRUE) {
-                        MiUnProtectFreeNonPagedPool ((PVOID)Entry, 0);
+
+                while (Entry != &MmNonPagedPoolFreeListHead[Index])
+                {
+
+                    if (MmProtectFreedNonPagedPool == TRUE)
+                    {
+                        MiUnProtectFreeNonPagedPool((PVOID)Entry, 0);
                         NeedsReprotect = TRUE;
                     }
 
-                    FreePageInfo = CONTAINING_RECORD (Entry,
-                                                      MMFREE_POOL_ENTRY,
-                                                      List);
-    
-                    ASSERT (FreePageInfo->Signature == MM_FREE_POOL_SIGNATURE);
-    
-                    if (p == (PCHAR)FreePageInfo) {
-    
+                    FreePageInfo = CONTAINING_RECORD(Entry, MMFREE_POOL_ENTRY, List);
+
+                    ASSERT(FreePageInfo->Signature == MM_FREE_POOL_SIGNATURE);
+
+                    if (p == (PCHAR)FreePageInfo)
+                    {
+
                         Size = (ULONG)(FreePageInfo->Size << PAGE_SHIFT);
                         PoolInformation->NumberOfEntries += 1;
-                        *RequiredLength += sizeof( SYSTEM_POOL_ENTRY );
-                        if (Length < *RequiredLength) {
+                        *RequiredLength += sizeof(SYSTEM_POOL_ENTRY);
+                        if (Length < *RequiredLength)
+                        {
                             Status = STATUS_INFO_LENGTH_MISMATCH;
                         }
-                        else {
+                        else
+                        {
                             PoolEntryInfo->Allocated = FALSE;
                             PoolEntryInfo->Size = Size;
                             PoolEntryInfo->AllocatorBackTraceIndex = 0;
@@ -3143,84 +3182,86 @@ MmSnapShotPool(
                             PoolEntryInfo += 1;
                             Status = STATUS_SUCCESS;
                         }
-    
+
                         p += Size;
                         Index = MI_MAX_FREE_LIST_HEADS;
                         break;
                     }
-    
+
                     Entry = FreePageInfo->List.Flink;
-    
-                    if (NeedsReprotect == TRUE) {
-                        MiProtectFreeNonPagedPool ((PVOID)FreePageInfo,
-                                                   (ULONG)FreePageInfo->Size);
+
+                    if (NeedsReprotect == TRUE)
+                    {
+                        MiProtectFreeNonPagedPool((PVOID)FreePageInfo, (ULONG)FreePageInfo->Size);
                         NeedsReprotect = FALSE;
                     }
                 }
             }
 
-            StartPosition = BYTES_TO_PAGES((PCHAR)p -
-                  (PCHAR)MmPageAlignedPoolBase[NonPagedPool]);
-            if (StartPosition >= MmExpandedPoolBitPosition) {
-                if (NeedsReprotect == TRUE) {
-                    MiProtectFreeNonPagedPool ((PVOID)FreePageInfo,
-                                               (ULONG)FreePageInfo->Size);
+            StartPosition = BYTES_TO_PAGES((PCHAR)p - (PCHAR)MmPageAlignedPoolBase[NonPagedPool]);
+            if (StartPosition >= MmExpandedPoolBitPosition)
+            {
+                if (NeedsReprotect == TRUE)
+                {
+                    MiProtectFreeNonPagedPool((PVOID)FreePageInfo, (ULONG)FreePageInfo->Size);
                 }
                 break;
             }
 
-            if (MI_IS_PHYSICAL_ADDRESS(p)) {
+            if (MI_IS_PHYSICAL_ADDRESS(p))
+            {
                 //
                 // On certain architectures, virtual addresses
                 // may be physical and hence have no corresponding PTE.
                 //
                 PointerPte = NULL;
-                Pfn1 = MI_PFN_ELEMENT (MI_CONVERT_PHYSICAL_TO_PFN (p));
+                Pfn1 = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN(p));
             }
-            else {
-                PointerPte = MiGetPteAddress (p);
-                Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+            else
+            {
+                PointerPte = MiGetPteAddress(p);
+                Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
             }
-            ASSERT (Pfn1->u3.e1.StartOfAllocation != 0);
+            ASSERT(Pfn1->u3.e1.StartOfAllocation != 0);
 
             //
             // Find end of allocation and determine size.
             //
 
             NumberOfPages = 1;
-            while (Pfn1->u3.e1.EndOfAllocation == 0) {
+            while (Pfn1->u3.e1.EndOfAllocation == 0)
+            {
                 NumberOfPages += 1;
-                if (PointerPte == NULL) {
+                if (PointerPte == NULL)
+                {
                     Pfn1 += 1;
                 }
-                else {
+                else
+                {
                     PointerPte += 1;
-                    Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+                    Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
                 }
             }
 
             Size = NumberOfPages << PAGE_SHIFT;
 
-            xStatus = (*SnapShotPoolPage) (p,
-                                           Size,
-                                           PoolInformation,
-                                           &PoolEntryInfo,
-                                           Length,
-                                           RequiredLength);
+            xStatus = (*SnapShotPoolPage)(p, Size, PoolInformation, &PoolEntryInfo, Length, RequiredLength);
 
-            if (NeedsReprotect == TRUE) {
-                MiProtectFreeNonPagedPool ((PVOID)FreePageInfo,
-                                           (ULONG)FreePageInfo->Size);
+            if (NeedsReprotect == TRUE)
+            {
+                MiProtectFreeNonPagedPool((PVOID)FreePageInfo, (ULONG)FreePageInfo->Size);
             }
 
-            if (xStatus != STATUS_COMMITMENT_LIMIT) {
+            if (xStatus != STATUS_COMMITMENT_LIMIT)
+            {
                 Status = xStatus;
             }
 
             p += Size;
         }
     }
-    else {
+    else
+    {
         Status = STATUS_NOT_IMPLEMENTED;
     }
 
@@ -3229,11 +3270,8 @@ MmSnapShotPool(
 
 #endif // DBG || (i386 && !FPO)
 
-
-VOID
-MiCheckSessionPoolAllocations (
-    VOID
-    )
+
+VOID MiCheckSessionPoolAllocations(VOID)
 
 /*++
 
@@ -3265,7 +3303,8 @@ Environment:
 
     PAGED_CODE();
 
-    if (MmSessionSpace->NonPagedPoolBytes || MmSessionSpace->PagedPoolBytes) {
+    if (MmSessionSpace->NonPagedPoolBytes || MmSessionSpace->PagedPoolBytes)
+    {
 
         //
         // All page tables for this session's paged pool must be freed by now.
@@ -3273,75 +3312,68 @@ Environment:
         // pages so that a debugger can show who the guilty party is.
         //
 
-        StartPde = MiGetPdeAddress (MmSessionSpace->PagedPoolStart);
-        EndPde = MiGetPdeAddress (MmSessionSpace->PagedPoolEnd);
+        StartPde = MiGetPdeAddress(MmSessionSpace->PagedPoolStart);
+        EndPde = MiGetPdeAddress(MmSessionSpace->PagedPoolEnd);
 
-        while (StartPde <= EndPde) {
+        while (StartPde <= EndPde)
+        {
 
-            if (StartPde->u.Long != 0 && StartPde->u.Long != MM_KERNEL_NOACCESS_PTE) {
+            if (StartPde->u.Long != 0 && StartPde->u.Long != MM_KERNEL_NOACCESS_PTE)
+            {
                 //
                 // Hunt through the page table page for valid pages and force
                 // them in.  Note this also forces in the page table page if
                 // it is not already.
                 //
 
-                PointerPte = MiGetVirtualAddressMappedByPte (StartPde);
+                PointerPte = MiGetVirtualAddressMappedByPte(StartPde);
 
-                for (i = 0; i < PTE_PER_PAGE; i += 1) {
-                    if (PointerPte->u.Long != 0 && PointerPte->u.Long != MM_KERNEL_NOACCESS_PTE) {
-                        VirtualAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+                for (i = 0; i < PTE_PER_PAGE; i += 1)
+                {
+                    if (PointerPte->u.Long != 0 && PointerPte->u.Long != MM_KERNEL_NOACCESS_PTE)
+                    {
+                        VirtualAddress = MiGetVirtualAddressMappedByPte(PointerPte);
                         *(volatile UCHAR *)VirtualAddress = *(volatile UCHAR *)VirtualAddress;
 
 #if DBG
-                        DbgPrint("MiCheckSessionPoolAllocations: Address %p still valid\n",
-                            VirtualAddress);
+                        DbgPrint("MiCheckSessionPoolAllocations: Address %p still valid\n", VirtualAddress);
 #endif
                     }
                     PointerPte += 1;
                 }
-
             }
 
             StartPde += 1;
         }
 
 #if DBG
-        DbgPrint ("MiCheckSessionPoolAllocations: This exiting session (ID %d) is leaking pool !\n",  MmSessionSpace->SessionId);
+        DbgPrint("MiCheckSessionPoolAllocations: This exiting session (ID %d) is leaking pool !\n",
+                 MmSessionSpace->SessionId);
 
-        DbgPrint ("This means win32k.sys, rdpdd.sys, atmfd.sys or a video/font driver is broken\n");
+        DbgPrint("This means win32k.sys, rdpdd.sys, atmfd.sys or a video/font driver is broken\n");
 
-        DbgPrint ("%d nonpaged allocation leaks for %d bytes and %d paged allocation leaks for %d bytes\n",
-            MmSessionSpace->NonPagedPoolAllocations,
-            MmSessionSpace->NonPagedPoolBytes,
-            MmSessionSpace->PagedPoolAllocations,
-            MmSessionSpace->PagedPoolBytes);
+        DbgPrint("%d nonpaged allocation leaks for %d bytes and %d paged allocation leaks for %d bytes\n",
+                 MmSessionSpace->NonPagedPoolAllocations, MmSessionSpace->NonPagedPoolBytes,
+                 MmSessionSpace->PagedPoolAllocations, MmSessionSpace->PagedPoolBytes);
 #endif
 
-        KeBugCheckEx (SESSION_HAS_VALID_POOL_ON_EXIT,
-                      (ULONG_PTR)MmSessionSpace->SessionId,
-                      MmSessionSpace->PagedPoolBytes,
-                      MmSessionSpace->NonPagedPoolBytes,
-#if defined (_WIN64)
-                      (MmSessionSpace->NonPagedPoolAllocations << 32) |
-                        (MmSessionSpace->PagedPoolAllocations)
+        KeBugCheckEx(SESSION_HAS_VALID_POOL_ON_EXIT, (ULONG_PTR)MmSessionSpace->SessionId,
+                     MmSessionSpace->PagedPoolBytes, MmSessionSpace->NonPagedPoolBytes,
+#if defined(_WIN64)
+                     (MmSessionSpace->NonPagedPoolAllocations << 32) | (MmSessionSpace->PagedPoolAllocations)
 #else
-                      (MmSessionSpace->NonPagedPoolAllocations << 16) |
-                        (MmSessionSpace->PagedPoolAllocations)
+                     (MmSessionSpace->NonPagedPoolAllocations << 16) | (MmSessionSpace->PagedPoolAllocations)
 #endif
-                    );
+        );
     }
 
-    ASSERT (MmSessionSpace->NonPagedPoolAllocations == 0);
-    ASSERT (MmSessionSpace->PagedPoolAllocations == 0);
+    ASSERT(MmSessionSpace->NonPagedPoolAllocations == 0);
+    ASSERT(MmSessionSpace->PagedPoolAllocations == 0);
 }
-
+
 NTSTATUS
-MiInitializeAndChargePfn (
-    OUT PPFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPde,
-    IN PFN_NUMBER ContainingPageFrame,
-    IN LOGICAL SessionAllocation
-    )
+MiInitializeAndChargePfn(OUT PPFN_NUMBER PageFrameIndex, IN PMMPTE PointerPde, IN PFN_NUMBER ContainingPageFrame,
+                         IN LOGICAL SessionAllocation)
 
 /*++
 
@@ -3371,32 +3403,36 @@ Return Value:
     MMPTE TempPte;
     KIRQL OldIrql;
 
-    if (SessionAllocation == TRUE) {
+    if (SessionAllocation == TRUE)
+    {
         TempPte = ValidKernelPdeLocal;
     }
-    else {
+    else
+    {
         TempPte = ValidKernelPde;
     }
 
-    LOCK_PFN2 (OldIrql);
+    LOCK_PFN2(OldIrql);
 
-    if ((MmAvailablePages <= MM_MEDIUM_LIMIT) || (MI_NONPAGABLE_MEMORY_AVAILABLE() <= 1)) {
-        UNLOCK_PFN2 (OldIrql);
+    if ((MmAvailablePages <= MM_MEDIUM_LIMIT) || (MI_NONPAGABLE_MEMORY_AVAILABLE() <= 1))
+    {
+        UNLOCK_PFN2(OldIrql);
         return STATUS_NO_MEMORY;
     }
 
     MmResidentAvailablePages -= 1;
 
-    MiEnsureAvailablePageOrWait (NULL, NULL);
+    MiEnsureAvailablePageOrWait(NULL, NULL);
 
     //
     // Ensure no other thread handled this while this one waited.  If one has,
     // then return STATUS_RETRY so the caller knows to try again.
     //
 
-    if (PointerPde->u.Hard.Valid == 1) {
+    if (PointerPde->u.Hard.Valid == 1)
+    {
         MmResidentAvailablePages += 1;
-        UNLOCK_PFN2 (OldIrql);
+        UNLOCK_PFN2(OldIrql);
         return STATUS_RETRY;
     }
 
@@ -3404,31 +3440,26 @@ Return Value:
     // Allocate and map in the page at the requested address.
     //
 
-    *PageFrameIndex = MiRemoveAnyPage (MI_GET_PAGE_COLOR_FROM_PTE (PointerPde));
+    *PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPde));
     TempPte.u.Hard.PageFrameNumber = *PageFrameIndex;
-    MI_WRITE_VALID_PTE (PointerPde, TempPte);
+    MI_WRITE_VALID_PTE(PointerPde, TempPte);
 
-    MiInitializePfnForOtherProcess (*PageFrameIndex,
-                                    PointerPde,
-                                    ContainingPageFrame);
+    MiInitializePfnForOtherProcess(*PageFrameIndex, PointerPde, ContainingPageFrame);
 
     //
     // This page will be locked into working set and assigned an index when
     // the working set is set up on return.
     //
 
-    ASSERT (MI_PFN_ELEMENT(*PageFrameIndex)->u1.WsIndex == 0);
+    ASSERT(MI_PFN_ELEMENT(*PageFrameIndex)->u1.WsIndex == 0);
 
-    UNLOCK_PFN2 (OldIrql);
+    UNLOCK_PFN2(OldIrql);
 
     return STATUS_SUCCESS;
 }
 
-
-VOID
-MiSessionPageTableRelease (
-    IN PFN_NUMBER PageFrameIndex
-    )
+
+VOID MiSessionPageTableRelease(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -3450,28 +3481,26 @@ Return Value:
     KIRQL OldIrql;
     PMMPFN Pfn1;
 
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    ASSERT (MmSessionSpace->SessionPageDirectoryIndex == Pfn1->u4.PteFrame);
-    ASSERT (Pfn1->u2.ShareCount == 1);
+    ASSERT(MmSessionSpace->SessionPageDirectoryIndex == Pfn1->u4.PteFrame);
+    ASSERT(Pfn1->u2.ShareCount == 1);
 
-    MiDecrementShareAndValidCount (Pfn1->u4.PteFrame);
-    MI_SET_PFN_DELETED (Pfn1);
-    MiDecrementShareCountOnly (PageFrameIndex);
+    MiDecrementShareAndValidCount(Pfn1->u4.PteFrame);
+    MI_SET_PFN_DELETED(Pfn1);
+    MiDecrementShareCountOnly(PageFrameIndex);
 
     MmResidentAvailablePages += 1;
     MM_BUMP_COUNTER(51, 1);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 }
 
-
+
 NTSTATUS
-MiInitializeSessionPool (
-    VOID
-    )
+MiInitializeSessionPool(VOID)
 
 /*++
 
@@ -3509,22 +3538,18 @@ Environment:
     PMMPTE EndPde;
 #endif
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     SessionGlobal = SESSION_GLOBAL(MmSessionSpace);
 
-    ExInitializeFastMutex (&SessionGlobal->PagedPoolMutex);
+    ExInitializeFastMutex(&SessionGlobal->PagedPoolMutex);
 
     PoolDescriptor = &MmSessionSpace->PagedPool;
 
-    ExInitializePoolDescriptor (PoolDescriptor,
-                                PagedPoolSession,
-                                0,
-                                0,
-                                &SessionGlobal->PagedPoolMutex);
+    ExInitializePoolDescriptor(PoolDescriptor, PagedPoolSession, 0, 0, &SessionGlobal->PagedPoolMutex);
 
     MmSessionSpace->PagedPoolStart = (PVOID)MiSessionPoolStart;
-    MmSessionSpace->PagedPoolEnd = (PVOID)(MiSessionPoolEnd -1);
+    MmSessionSpace->PagedPoolEnd = (PVOID)(MiSessionPoolEnd - 1);
 
     PagedPoolInfo = &MmSessionSpace->PagedPoolInfo;
     PagedPoolInfo->PagedPoolCommit = 0;
@@ -3535,24 +3560,25 @@ Environment:
     // Build the page table page for paged pool.
     //
 
-    PointerPde = MiGetPdeAddress (MmSessionSpace->PagedPoolStart);
+    PointerPde = MiGetPdeAddress(MmSessionSpace->PagedPoolStart);
     MmSessionSpace->PagedPoolBasePde = PointerPde;
 
-    PointerPte = MiGetPteAddress (MmSessionSpace->PagedPoolStart);
+    PointerPte = MiGetPteAddress(MmSessionSpace->PagedPoolStart);
 
     PagedPoolInfo->FirstPteForPagedPool = PointerPte;
-    PagedPoolInfo->LastPteForPagedPool = MiGetPteAddress (MmSessionSpace->PagedPoolEnd);
+    PagedPoolInfo->LastPteForPagedPool = MiGetPteAddress(MmSessionSpace->PagedPoolEnd);
 
 #if DBG
     //
     // Session pool better be unused.
     //
 
-    StartPde = MiGetPdeAddress (MmSessionSpace->PagedPoolStart);
-    EndPde = MiGetPdeAddress (MmSessionSpace->PagedPoolEnd);
+    StartPde = MiGetPdeAddress(MmSessionSpace->PagedPoolStart);
+    EndPde = MiGetPdeAddress(MmSessionSpace->PagedPoolEnd);
 
-    while (StartPde <= EndPde) {
-        ASSERT (StartPde->u.Long == 0);
+    while (StartPde <= EndPde)
+    {
+        ASSERT(StartPde->u.Long == 0);
         StartPde += 1;
     }
 #endif
@@ -3561,49 +3587,46 @@ Environment:
     // Mark all PDEs as empty.
     //
 
-    MiFillMemoryPte (PointerPde,
-                     sizeof(MMPTE) *
-                         (1 + MiGetPdeAddress (MmSessionSpace->PagedPoolEnd) - PointerPde),
-                     ZeroKernelPte.u.Long);
+    MiFillMemoryPte(PointerPde, sizeof(MMPTE) * (1 + MiGetPdeAddress(MmSessionSpace->PagedPoolEnd) - PointerPde),
+                    ZeroKernelPte.u.Long);
 
-    if (MiChargeCommitment (1, NULL) == FALSE) {
-        MM_BUMP_SESSION_FAILURES (MM_SESSION_FAILURE_NO_COMMIT);
+    if (MiChargeCommitment(1, NULL) == FALSE)
+    {
+        MM_BUMP_SESSION_FAILURES(MM_SESSION_FAILURE_NO_COMMIT);
         return STATUS_NO_MEMORY;
     }
 
-    Status = MiInitializeAndChargePfn (&PageFrameIndex,
-                                       PointerPde,
-                                       MmSessionSpace->SessionPageDirectoryIndex,
-                                       TRUE);
+    Status = MiInitializeAndChargePfn(&PageFrameIndex, PointerPde, MmSessionSpace->SessionPageDirectoryIndex, TRUE);
 
-    if (!NT_SUCCESS(Status)) {
-        MiReturnCommitment (1);
-        MM_BUMP_SESSION_FAILURES (MM_SESSION_FAILURE_NO_RESIDENT);
+    if (!NT_SUCCESS(Status))
+    {
+        MiReturnCommitment(1);
+        MM_BUMP_SESSION_FAILURES(MM_SESSION_FAILURE_NO_RESIDENT);
         return Status;
     }
 
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES, 1);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES, 1);
 
     MM_BUMP_COUNTER(42, 1);
     MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC, 1);
 
-    KeFillEntryTb ((PHARDWARE_PTE) PointerPde, PointerPte, FALSE);
+    KeFillEntryTb((PHARDWARE_PTE)PointerPde, PointerPte, FALSE);
 
 #if (_MI_PAGING_LEVELS < 3)
 
-    Index = MiGetPdeSessionIndex (MmSessionSpace->PagedPoolStart);
+    Index = MiGetPdeSessionIndex(MmSessionSpace->PagedPoolStart);
 
-    ASSERT (MmSessionSpace->PageTables[Index].u.Long == 0);
+    ASSERT(MmSessionSpace->PageTables[Index].u.Long == 0);
     MmSessionSpace->PageTables[Index] = *PointerPde;
 
 #endif
 
-    MM_BUMP_SESS_COUNTER (MM_DBG_SESSION_NP_POOL_CREATE, 1);
+    MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_NP_POOL_CREATE, 1);
     MmSessionSpace->NonPagablePages += 1;
 
-    InterlockedExchangeAddSizeT (&MmSessionSpace->CommittedPages, 1);
+    InterlockedExchangeAddSizeT(&MmSessionSpace->CommittedPages, 1);
 
-    MiFillMemoryPte (PointerPte, PAGE_SIZE, MM_KERNEL_NOACCESS_PTE);
+    MiFillMemoryPte(PointerPte, PAGE_SIZE, MM_KERNEL_NOACCESS_PTE);
 
     PagedPoolInfo->NextPdeForPagedPoolExpansion = PointerPde + 1;
 
@@ -3611,12 +3634,11 @@ Environment:
     // Initialize the bitmaps.
     //
 
-    MiCreateBitMap (&PagedPoolInfo->PagedPoolAllocationMap,
-                    MmSessionPoolSize >> PAGE_SHIFT,
-                    NonPagedPool);
+    MiCreateBitMap(&PagedPoolInfo->PagedPoolAllocationMap, MmSessionPoolSize >> PAGE_SHIFT, NonPagedPool);
 
-    if (PagedPoolInfo->PagedPoolAllocationMap == NULL) {
-        MM_BUMP_SESSION_FAILURES (MM_SESSION_FAILURE_NO_NONPAGED_POOL);
+    if (PagedPoolInfo->PagedPoolAllocationMap == NULL)
+    {
+        MM_BUMP_SESSION_FAILURES(MM_SESSION_FAILURE_NO_NONPAGED_POOL);
         goto Failure;
     }
 
@@ -3625,78 +3647,69 @@ Environment:
     // clear bits to make pages available as we dynamically expand the pool.
     //
 
-    RtlSetAllBits( PagedPoolInfo->PagedPoolAllocationMap );
+    RtlSetAllBits(PagedPoolInfo->PagedPoolAllocationMap);
 
     //
     // Indicate first page worth of PTEs are available.
     //
 
-    RtlClearBits (PagedPoolInfo->PagedPoolAllocationMap, 0, PTE_PER_PAGE);
+    RtlClearBits(PagedPoolInfo->PagedPoolAllocationMap, 0, PTE_PER_PAGE);
 
     //
     // Create the end of allocation range bitmap.
     //
 
-    MiCreateBitMap (&PagedPoolInfo->EndOfPagedPoolBitmap,
-                    MmSessionPoolSize >> PAGE_SHIFT,
-                    NonPagedPool);
+    MiCreateBitMap(&PagedPoolInfo->EndOfPagedPoolBitmap, MmSessionPoolSize >> PAGE_SHIFT, NonPagedPool);
 
-    if (PagedPoolInfo->EndOfPagedPoolBitmap == NULL) {
-        MM_BUMP_SESSION_FAILURES (MM_SESSION_FAILURE_NO_NONPAGED_POOL);
+    if (PagedPoolInfo->EndOfPagedPoolBitmap == NULL)
+    {
+        MM_BUMP_SESSION_FAILURES(MM_SESSION_FAILURE_NO_NONPAGED_POOL);
         goto Failure;
     }
 
-    RtlClearAllBits (PagedPoolInfo->EndOfPagedPoolBitmap);
+    RtlClearAllBits(PagedPoolInfo->EndOfPagedPoolBitmap);
 
     //
     // Create the large session allocation bitmap.
     //
 
-    MiCreateBitMap (&PagedPoolInfo->PagedPoolLargeSessionAllocationMap,
-                    MmSessionPoolSize >> PAGE_SHIFT,
-                    NonPagedPool);
+    MiCreateBitMap(&PagedPoolInfo->PagedPoolLargeSessionAllocationMap, MmSessionPoolSize >> PAGE_SHIFT, NonPagedPool);
 
-    if (PagedPoolInfo->PagedPoolLargeSessionAllocationMap == NULL) {
-        MM_BUMP_SESSION_FAILURES (MM_SESSION_FAILURE_NO_NONPAGED_POOL);
+    if (PagedPoolInfo->PagedPoolLargeSessionAllocationMap == NULL)
+    {
+        MM_BUMP_SESSION_FAILURES(MM_SESSION_FAILURE_NO_NONPAGED_POOL);
         goto Failure;
     }
 
-    RtlClearAllBits (PagedPoolInfo->PagedPoolLargeSessionAllocationMap);
+    RtlClearAllBits(PagedPoolInfo->PagedPoolLargeSessionAllocationMap);
 
     return STATUS_SUCCESS;
 
 Failure:
 
-    MiFreeSessionPoolBitMaps ();
+    MiFreeSessionPoolBitMaps();
 
-    MiSessionPageTableRelease (PageFrameIndex);
+    MiSessionPageTableRelease(PageFrameIndex);
 
-    MI_FLUSH_SINGLE_SESSION_TB (MiGetPteAddress(PointerPde),
-                                TRUE,
-                                TRUE,
-                                (PHARDWARE_PTE)PointerPde,
-                                ZeroKernelPte.u.Flush,
-                                PreviousPte);
+    MI_FLUSH_SINGLE_SESSION_TB(MiGetPteAddress(PointerPde), TRUE, TRUE, (PHARDWARE_PTE)PointerPde,
+                               ZeroKernelPte.u.Flush, PreviousPte);
 
-    MM_BUMP_SESS_COUNTER (MM_DBG_SESSION_NP_POOL_CREATE_FAILED, 1);
+    MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_NP_POOL_CREATE_FAILED, 1);
     MmSessionSpace->NonPagablePages -= 1;
 
-    InterlockedExchangeAddSizeT (&MmSessionSpace->CommittedPages, -1);
+    InterlockedExchangeAddSizeT(&MmSessionSpace->CommittedPages, -1);
 
     MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_FREE_FAIL1, 1);
 
-    MiReturnCommitment (1);
+    MiReturnCommitment(1);
 
-    MM_TRACK_COMMIT_REDUCTION (MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES, 1);
+    MM_TRACK_COMMIT_REDUCTION(MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES, 1);
 
     return STATUS_NO_MEMORY;
 }
 
-
-VOID
-MiFreeSessionPoolBitMaps (
-    VOID
-    )
+
+VOID MiFreeSessionPoolBitMaps(VOID)
 
 /*++
 
@@ -3721,27 +3734,31 @@ Environment:
 {
     PAGED_CODE();
 
-    if (MmSessionSpace->PagedPoolInfo.PagedPoolAllocationMap ) {
-        ExFreePool (MmSessionSpace->PagedPoolInfo.PagedPoolAllocationMap);
+    if (MmSessionSpace->PagedPoolInfo.PagedPoolAllocationMap)
+    {
+        ExFreePool(MmSessionSpace->PagedPoolInfo.PagedPoolAllocationMap);
         MmSessionSpace->PagedPoolInfo.PagedPoolAllocationMap = NULL;
     }
 
-    if (MmSessionSpace->PagedPoolInfo.EndOfPagedPoolBitmap ) {
-        ExFreePool (MmSessionSpace->PagedPoolInfo.EndOfPagedPoolBitmap);
+    if (MmSessionSpace->PagedPoolInfo.EndOfPagedPoolBitmap)
+    {
+        ExFreePool(MmSessionSpace->PagedPoolInfo.EndOfPagedPoolBitmap);
         MmSessionSpace->PagedPoolInfo.EndOfPagedPoolBitmap = NULL;
     }
 
-    if (MmSessionSpace->PagedPoolInfo.PagedPoolLargeSessionAllocationMap) {
-        ExFreePool (MmSessionSpace->PagedPoolInfo.PagedPoolLargeSessionAllocationMap);
+    if (MmSessionSpace->PagedPoolInfo.PagedPoolLargeSessionAllocationMap)
+    {
+        ExFreePool(MmSessionSpace->PagedPoolInfo.PagedPoolLargeSessionAllocationMap);
         MmSessionSpace->PagedPoolInfo.PagedPoolLargeSessionAllocationMap = NULL;
     }
 }
 
 #if DBG
 
-#define MI_LOG_CONTIGUOUS  100
+#define MI_LOG_CONTIGUOUS 100
 
-typedef struct _MI_CONTIGUOUS_ALLOCATORS {
+typedef struct _MI_CONTIGUOUS_ALLOCATORS
+{
     PVOID BaseAddress;
     SIZE_T NumberOfBytes;
     PVOID CallingAddress;
@@ -3750,24 +3767,21 @@ typedef struct _MI_CONTIGUOUS_ALLOCATORS {
 ULONG MiContiguousIndex;
 MI_CONTIGUOUS_ALLOCATORS MiContiguousAllocators[MI_LOG_CONTIGUOUS];
 
-VOID
-MiInsertContiguousTag (
-    IN PVOID BaseAddress,
-    IN SIZE_T NumberOfBytes,
-    IN PVOID CallingAddress
-    )
+VOID MiInsertContiguousTag(IN PVOID BaseAddress, IN SIZE_T NumberOfBytes, IN PVOID CallingAddress)
 {
     KIRQL OldIrql;
 
 #if !DBG
-    if ((NtGlobalFlag & FLG_POOL_ENABLE_TAGGING) == 0) {
+    if ((NtGlobalFlag & FLG_POOL_ENABLE_TAGGING) == 0)
+    {
         return;
     }
 #endif
 
-    OldIrql = ExLockPool (NonPagedPool);
+    OldIrql = ExLockPool(NonPagedPool);
 
-    if (MiContiguousIndex >= MI_LOG_CONTIGUOUS) {
+    if (MiContiguousIndex >= MI_LOG_CONTIGUOUS)
+    {
         MiContiguousIndex = 0;
     }
 
@@ -3777,21 +3791,16 @@ MiInsertContiguousTag (
 
     MiContiguousIndex += 1;
 
-    ExUnlockPool (NonPagedPool, OldIrql);
+    ExUnlockPool(NonPagedPool, OldIrql);
 }
 #else
 #define MiInsertContiguousTag(a, b, c) (c) = (c)
 #endif
 
-
+
 PVOID
-MiFindContiguousMemoryInPool (
-    IN PFN_NUMBER LowestPfn,
-    IN PFN_NUMBER HighestPfn,
-    IN PFN_NUMBER BoundaryPfn,
-    IN PFN_NUMBER SizeInPages,
-    IN PVOID CallingAddress
-    )
+MiFindContiguousMemoryInPool(IN PFN_NUMBER LowestPfn, IN PFN_NUMBER HighestPfn, IN PFN_NUMBER BoundaryPfn,
+                             IN PFN_NUMBER SizeInPages, IN PVOID CallingAddress)
 
 /*++
 
@@ -3842,7 +3851,7 @@ Environment:
     PFN_NUMBER SpanInPages;
     PFN_NUMBER SpanInPages2;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     //
     // Initializing SpanInPages* is not needed for correctness
@@ -3863,9 +3872,9 @@ Environment:
     // the requirements.
     //
 
-    MmLockPagableSectionByHandle (ExPageLockHandle);
+    MmLockPagableSectionByHandle(ExPageLockHandle);
 
-    OldIrql = ExLockPool (NonPagedPool);
+    OldIrql = ExLockPool(NonPagedPool);
 
     //
     // Trace through the page allocator's pool headers for a page which
@@ -3876,46 +3885,45 @@ Environment:
 
     Index = (ULONG)(SizeInPages - 1);
 
-    if (Index >= MI_MAX_FREE_LIST_HEADS) {
+    if (Index >= MI_MAX_FREE_LIST_HEADS)
+    {
         Index = MI_MAX_FREE_LIST_HEADS - 1;
     }
 
-    while (Index < MI_MAX_FREE_LIST_HEADS) {
+    while (Index < MI_MAX_FREE_LIST_HEADS)
+    {
 
         Entry = MmNonPagedPoolFreeListHead[Index].Flink;
-    
-        while (Entry != &MmNonPagedPoolFreeListHead[Index]) {
-    
-            if (MmProtectFreedNonPagedPool == TRUE) {
-                MiUnProtectFreeNonPagedPool ((PVOID)Entry, 0);
+
+        while (Entry != &MmNonPagedPoolFreeListHead[Index])
+        {
+
+            if (MmProtectFreedNonPagedPool == TRUE)
+            {
+                MiUnProtectFreeNonPagedPool((PVOID)Entry, 0);
             }
-    
+
             //
             // The list is not empty, see if this one meets the physical
             // requirements.
             //
-    
-            FreePageInfo = CONTAINING_RECORD(Entry,
-                                             MMFREE_POOL_ENTRY,
-                                             List);
-    
-            ASSERT (FreePageInfo->Signature == MM_FREE_POOL_SIGNATURE);
-            if (FreePageInfo->Size >= SizeInPages) {
-    
+
+            FreePageInfo = CONTAINING_RECORD(Entry, MMFREE_POOL_ENTRY, List);
+
+            ASSERT(FreePageInfo->Signature == MM_FREE_POOL_SIGNATURE);
+            if (FreePageInfo->Size >= SizeInPages)
+            {
+
                 //
                 // This entry has sufficient space, check to see if the
                 // pages meet the physical requirements.
                 //
-    
-                Va = MiCheckForContiguousMemory (PAGE_ALIGN(Entry),
-                                                 FreePageInfo->Size,
-                                                 SizeInPages,
-                                                 LowestPfn,
-                                                 HighestPfn,
-                                                 BoundaryPfn,
-                                                 MiCached);
-     
-                if (Va != NULL) {
+
+                Va = MiCheckForContiguousMemory(PAGE_ALIGN(Entry), FreePageInfo->Size, SizeInPages, LowestPfn,
+                                                HighestPfn, BoundaryPfn, MiCached);
+
+                if (Va != NULL)
+                {
 
                     //
                     // These pages meet the requirements.  The returned
@@ -3925,13 +3933,15 @@ Environment:
                     //
 
                     Entry = PAGE_ALIGN(Entry);
-                    if (MmProtectFreedNonPagedPool == FALSE) {
-                        RemoveEntryList (&FreePageInfo->List);
+                    if (MmProtectFreedNonPagedPool == FALSE)
+                    {
+                        RemoveEntryList(&FreePageInfo->List);
                     }
-                    else {
-                        MiProtectedPoolRemoveEntryList (&FreePageInfo->List);
+                    else
+                    {
+                        MiProtectedPoolRemoveEntryList(&FreePageInfo->List);
                     }
-    
+
                     //
                     // Adjust the number of free pages remaining in the pool.
                     // The TotalBigPages calculation appears incorrect for the
@@ -3941,14 +3951,15 @@ Environment:
                     // MmAllocatedNonPagedPool and MmNumberOfFreeNonPagedPool
                     // which is corrected by MiFreePoolPages for the fragment.
                     //
-    
+
                     NonPagedPoolDescriptor.TotalBigPages += (ULONG)FreePageInfo->Size;
                     MmAllocatedNonPagedPool += FreePageInfo->Size;
                     MmNumberOfFreeNonPagedPool -= FreePageInfo->Size;
-    
-                    ASSERT ((LONG)MmNumberOfFreeNonPagedPool >= 0);
-    
-                    if (Va == Entry) {
+
+                    ASSERT((LONG)MmNumberOfFreeNonPagedPool >= 0);
+
+                    if (Va == Entry)
+                    {
 
                         //
                         // Butted against the front.
@@ -3956,7 +3967,9 @@ Environment:
 
                         AllocationPosition = 0;
                     }
-                    else if (((PCHAR)Va + (SizeInPages << PAGE_SHIFT)) == ((PCHAR)Entry + (FreePageInfo->Size << PAGE_SHIFT))) {
+                    else if (((PCHAR)Va + (SizeInPages << PAGE_SHIFT)) ==
+                             ((PCHAR)Entry + (FreePageInfo->Size << PAGE_SHIFT)))
+                    {
 
                         //
                         // Butted against the end.
@@ -3964,7 +3977,8 @@ Environment:
 
                         AllocationPosition = 2;
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // Somewhere in the middle.
@@ -3978,21 +3992,22 @@ Environment:
                     // the list entry and the whole list entry
                     // will be removed and then the remainder inserted.
                     //
-    
+
                     //
                     // Mark start and end for the block at the top of the
                     // list.
                     //
-    
-                    if (MI_IS_PHYSICAL_ADDRESS(Va)) {
-    
+
+                    if (MI_IS_PHYSICAL_ADDRESS(Va))
+                    {
+
                         //
                         // On certain architectures, virtual addresses
                         // may be physical and hence have no corresponding PTE.
                         //
-    
+
                         AddressIsPhysical = TRUE;
-                        Pfn1 = MI_PFN_ELEMENT (MI_CONVERT_PHYSICAL_TO_PFN (Va));
+                        Pfn1 = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN(Va));
 
                         //
                         // Initializing PointerPte is not needed for correctness
@@ -4002,42 +4017,45 @@ Environment:
 
                         PointerPte = NULL;
                     }
-                    else {
+                    else
+                    {
                         AddressIsPhysical = FALSE;
                         PointerPte = MiGetPteAddress(Va);
-                        ASSERT (PointerPte->u.Hard.Valid == 1);
-                        Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+                        ASSERT(PointerPte->u.Hard.Valid == 1);
+                        Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
                     }
-    
-                    ASSERT (Pfn1->u4.VerifierAllocation == 0);
-                    ASSERT (Pfn1->u3.e1.LargeSessionAllocation == 0);
-                    ASSERT (Pfn1->u3.e1.StartOfAllocation == 0);
+
+                    ASSERT(Pfn1->u4.VerifierAllocation == 0);
+                    ASSERT(Pfn1->u3.e1.LargeSessionAllocation == 0);
+                    ASSERT(Pfn1->u3.e1.StartOfAllocation == 0);
                     Pfn1->u3.e1.StartOfAllocation = 1;
-    
+
                     //
                     // Calculate the ending PFN address, note that since
                     // these pages are contiguous, just add to the PFN.
                     //
-    
+
                     Pfn1 += SizeInPages - 1;
-                    ASSERT (Pfn1->u4.VerifierAllocation == 0);
-                    ASSERT (Pfn1->u3.e1.LargeSessionAllocation == 0);
-                    ASSERT (Pfn1->u3.e1.EndOfAllocation == 0);
+                    ASSERT(Pfn1->u4.VerifierAllocation == 0);
+                    ASSERT(Pfn1->u3.e1.LargeSessionAllocation == 0);
+                    ASSERT(Pfn1->u3.e1.EndOfAllocation == 0);
                     Pfn1->u3.e1.EndOfAllocation = 1;
-    
-                    if (SizeInPages == FreePageInfo->Size) {
-    
+
+                    if (SizeInPages == FreePageInfo->Size)
+                    {
+
                         //
                         // Unlock the pool and return.
                         //
                         BaseAddress = (PVOID)Va;
-                        ExUnlockPool (NonPagedPool, OldIrql);
+                        ExUnlockPool(NonPagedPool, OldIrql);
                         goto Done;
                     }
-    
+
                     BaseAddress = NULL;
 
-                    if (AllocationPosition != 2) {
+                    if (AllocationPosition != 2)
+                    {
 
                         //
                         // The end piece needs to be freed as the removal
@@ -4045,58 +4063,63 @@ Environment:
                         //
 
                         BaseAddress = (PVOID)((PCHAR)Va + (SizeInPages << PAGE_SHIFT));
-                        SpanInPages = FreePageInfo->Size - SizeInPages -
-                            (((ULONG_PTR)Va - (ULONG_PTR)Entry) >> PAGE_SHIFT);
-    
+                        SpanInPages =
+                            FreePageInfo->Size - SizeInPages - (((ULONG_PTR)Va - (ULONG_PTR)Entry) >> PAGE_SHIFT);
+
                         //
                         // Mark start and end of the allocation in the PFN database.
                         //
-        
-                        if (AddressIsPhysical == TRUE) {
-        
+
+                        if (AddressIsPhysical == TRUE)
+                        {
+
                             //
                             // On certain architectures, virtual addresses
                             // may be physical and hence have no corresponding PTE.
                             //
-        
-                            Pfn1 = MI_PFN_ELEMENT (MI_CONVERT_PHYSICAL_TO_PFN (BaseAddress));
+
+                            Pfn1 = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN(BaseAddress));
                         }
-                        else {
+                        else
+                        {
                             PointerPte = MiGetPteAddress(BaseAddress);
-                            ASSERT (PointerPte->u.Hard.Valid == 1);
-                            Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+                            ASSERT(PointerPte->u.Hard.Valid == 1);
+                            Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
                         }
-        
-                        ASSERT (Pfn1->u4.VerifierAllocation == 0);
-                        ASSERT (Pfn1->u3.e1.LargeSessionAllocation == 0);
-                        ASSERT (Pfn1->u3.e1.StartOfAllocation == 0);
+
+                        ASSERT(Pfn1->u4.VerifierAllocation == 0);
+                        ASSERT(Pfn1->u3.e1.LargeSessionAllocation == 0);
+                        ASSERT(Pfn1->u3.e1.StartOfAllocation == 0);
                         Pfn1->u3.e1.StartOfAllocation = 1;
-        
+
                         //
                         // Calculate the ending PTE's address, can't depend on
                         // these pages being physically contiguous.
                         //
-        
-                        if (AddressIsPhysical == TRUE) {
+
+                        if (AddressIsPhysical == TRUE)
+                        {
                             Pfn1 += (SpanInPages - 1);
                         }
-                        else {
+                        else
+                        {
                             PointerPte += (SpanInPages - 1);
-                            ASSERT (PointerPte->u.Hard.Valid == 1);
-                            Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+                            ASSERT(PointerPte->u.Hard.Valid == 1);
+                            Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
                         }
-                        ASSERT (Pfn1->u3.e1.EndOfAllocation == 0);
+                        ASSERT(Pfn1->u3.e1.EndOfAllocation == 0);
                         Pfn1->u3.e1.EndOfAllocation = 1;
-        
-                        ASSERT (((ULONG_PTR)BaseAddress & (PAGE_SIZE -1)) == 0);
-        
+
+                        ASSERT(((ULONG_PTR)BaseAddress & (PAGE_SIZE - 1)) == 0);
+
                         SpanInPages2 = SpanInPages;
                     }
-        
+
                     BaseAddress2 = BaseAddress;
                     BaseAddress = NULL;
 
-                    if (AllocationPosition != 0) {
+                    if (AllocationPosition != 0)
+                    {
 
                         //
                         // The front piece needs to be freed as the removal
@@ -4106,56 +4129,60 @@ Environment:
                         BaseAddress = (PVOID)Entry;
 
                         SpanInPages = ((ULONG_PTR)Va - (ULONG_PTR)Entry) >> PAGE_SHIFT;
-    
+
                         //
                         // Mark start and end of the allocation in the PFN database.
                         //
-        
-                        if (AddressIsPhysical == TRUE) {
-        
+
+                        if (AddressIsPhysical == TRUE)
+                        {
+
                             //
                             // On certain architectures, virtual addresses
                             // may be physical and hence have no corresponding PTE.
                             //
-        
-                            Pfn1 = MI_PFN_ELEMENT (MI_CONVERT_PHYSICAL_TO_PFN (BaseAddress));
+
+                            Pfn1 = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN(BaseAddress));
                         }
-                        else {
+                        else
+                        {
                             PointerPte = MiGetPteAddress(BaseAddress);
-                            ASSERT (PointerPte->u.Hard.Valid == 1);
-                            Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+                            ASSERT(PointerPte->u.Hard.Valid == 1);
+                            Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
                         }
-        
-                        ASSERT (Pfn1->u4.VerifierAllocation == 0);
-                        ASSERT (Pfn1->u3.e1.LargeSessionAllocation == 0);
-                        ASSERT (Pfn1->u3.e1.StartOfAllocation == 0);
+
+                        ASSERT(Pfn1->u4.VerifierAllocation == 0);
+                        ASSERT(Pfn1->u3.e1.LargeSessionAllocation == 0);
+                        ASSERT(Pfn1->u3.e1.StartOfAllocation == 0);
                         Pfn1->u3.e1.StartOfAllocation = 1;
-        
+
                         //
                         // Calculate the ending PTE's address, can't depend on
                         // these pages being physically contiguous.
                         //
-        
-                        if (AddressIsPhysical == TRUE) {
+
+                        if (AddressIsPhysical == TRUE)
+                        {
                             Pfn1 += (SpanInPages - 1);
                         }
-                        else {
+                        else
+                        {
                             PointerPte += (SpanInPages - 1);
-                            ASSERT (PointerPte->u.Hard.Valid == 1);
-                            Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+                            ASSERT(PointerPte->u.Hard.Valid == 1);
+                            Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
                         }
-                        ASSERT (Pfn1->u3.e1.EndOfAllocation == 0);
+                        ASSERT(Pfn1->u3.e1.EndOfAllocation == 0);
                         Pfn1->u3.e1.EndOfAllocation = 1;
-        
-                        ASSERT (((ULONG_PTR)BaseAddress & (PAGE_SIZE -1)) == 0);
+
+                        ASSERT(((ULONG_PTR)BaseAddress & (PAGE_SIZE - 1)) == 0);
                     }
-        
+
                     //
                     // Unlock the pool.
                     //
-    
-                    ExUnlockPool (NonPagedPool, OldIrql);
-    
+
+                    ExUnlockPool(NonPagedPool, OldIrql);
+
                     //
                     // Free the split entry at BaseAddress back into the pool.
                     // Note that we have overcharged the pool - the entire free
@@ -4166,29 +4193,25 @@ Environment:
                     // which we just set up enable ExFreePool and his callees
                     // to correctly adjust the billing.
                     //
-    
-                    if (BaseAddress) {
-                        ExInsertPoolTag ('tnoC',
-                                         BaseAddress,
-                                         SpanInPages << PAGE_SHIFT,
-                                         NonPagedPool);
-                        ExFreePool (BaseAddress);
+
+                    if (BaseAddress)
+                    {
+                        ExInsertPoolTag('tnoC', BaseAddress, SpanInPages << PAGE_SHIFT, NonPagedPool);
+                        ExFreePool(BaseAddress);
                     }
-                    if (BaseAddress2) {
-                        ExInsertPoolTag ('tnoC',
-                                         BaseAddress2,
-                                         SpanInPages2 << PAGE_SHIFT,
-                                         NonPagedPool);
-                        ExFreePool (BaseAddress2);
+                    if (BaseAddress2)
+                    {
+                        ExInsertPoolTag('tnoC', BaseAddress2, SpanInPages2 << PAGE_SHIFT, NonPagedPool);
+                        ExFreePool(BaseAddress2);
                     }
                     BaseAddress = Va;
                     goto Done;
                 }
             }
             Entry = FreePageInfo->List.Flink;
-            if (MmProtectFreedNonPagedPool == TRUE) {
-                MiProtectFreeNonPagedPool ((PVOID)FreePageInfo,
-                                           (ULONG)FreePageInfo->Size);
+            if (MmProtectFreedNonPagedPool == TRUE)
+            {
+                MiProtectFreeNonPagedPool((PVOID)FreePageInfo, (ULONG)FreePageInfo->Size);
             }
         }
         Index += 1;
@@ -4198,36 +4221,26 @@ Environment:
     // No entry was found in free nonpaged pool that meets the requirements.
     //
 
-    ExUnlockPool (NonPagedPool, OldIrql);
+    ExUnlockPool(NonPagedPool, OldIrql);
 
 Done:
 
-    MmUnlockPagableImageSection (ExPageLockHandle);
+    MmUnlockPagableImageSection(ExPageLockHandle);
 
-    if (BaseAddress) {
+    if (BaseAddress)
+    {
 
-        MiInsertContiguousTag (BaseAddress,
-                               SizeInPages << PAGE_SHIFT,
-                               CallingAddress);
+        MiInsertContiguousTag(BaseAddress, SizeInPages << PAGE_SHIFT, CallingAddress);
 
-        ExInsertPoolTag ('tnoC',
-                         BaseAddress,
-                         SizeInPages << PAGE_SHIFT,
-                         NonPagedPool);
+        ExInsertPoolTag('tnoC', BaseAddress, SizeInPages << PAGE_SHIFT, NonPagedPool);
     }
 
     return BaseAddress;
 }
-
+
 PVOID
-MiFindContiguousMemory (
-    IN PFN_NUMBER LowestPfn,
-    IN PFN_NUMBER HighestPfn,
-    IN PFN_NUMBER BoundaryPfn,
-    IN PFN_NUMBER SizeInPages,
-    IN MEMORY_CACHING_TYPE CacheType,
-    IN PVOID CallingAddress
-    )
+MiFindContiguousMemory(IN PFN_NUMBER LowestPfn, IN PFN_NUMBER HighestPfn, IN PFN_NUMBER BoundaryPfn,
+                       IN PFN_NUMBER SizeInPages, IN MEMORY_CACHING_TYPE CacheType, IN PVOID CallingAddress)
 
 /*++
 
@@ -4284,23 +4297,21 @@ Environment:
     PHYSICAL_ADDRESS PhysicalAddress;
     MI_PFN_CACHE_ATTRIBUTE CacheAttribute;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    CacheAttribute = MI_TRANSLATE_CACHETYPE (CacheType, 0);
+    CacheAttribute = MI_TRANSLATE_CACHETYPE(CacheType, 0);
 
-    if (CacheAttribute == MiCached) {
+    if (CacheAttribute == MiCached)
+    {
 
-        BaseAddress = MiFindContiguousMemoryInPool (LowestPfn,
-                                                    HighestPfn,
-                                                    BoundaryPfn,
-                                                    SizeInPages,
-                                                    CallingAddress);
+        BaseAddress = MiFindContiguousMemoryInPool(LowestPfn, HighestPfn, BoundaryPfn, SizeInPages, CallingAddress);
         //
         // An existing range of nonpaged pool satisfies the requirements
         // so return it now.
         //
 
-        if (BaseAddress != NULL) {
+        if (BaseAddress != NULL)
+        {
             return BaseAddress;
         }
     }
@@ -4315,9 +4326,9 @@ Environment:
     // the requirements.
     //
 
-    MmLockPagableSectionByHandle (ExPageLockHandle);
+    MmLockPagableSectionByHandle(ExPageLockHandle);
 
-    ExAcquireFastMutex (&MmDynamicMemoryMutex);
+    ExAcquireFastMutex(&MmDynamicMemoryMutex);
 
     //
     // Charge commitment.
@@ -4325,7 +4336,8 @@ Environment:
     // Then search the PFN database for pages that meet the requirements.
     //
 
-    if (MiChargeCommitmentCantExpand (SizeInPages, FALSE) == FALSE) {
+    if (MiChargeCommitmentCantExpand(SizeInPages, FALSE) == FALSE)
+    {
         goto Done;
     }
 
@@ -4335,12 +4347,13 @@ Environment:
     // Charge resident available pages.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    MiDeferredUnlockPages (MI_DEFER_PFN_HELD);
+    MiDeferredUnlockPages(MI_DEFER_PFN_HELD);
 
-    if ((SPFN_NUMBER)SizeInPages > MI_NONPAGABLE_MEMORY_AVAILABLE()) {
-        UNLOCK_PFN (OldIrql);
+    if ((SPFN_NUMBER)SizeInPages > MI_NONPAGABLE_MEMORY_AVAILABLE())
+    {
+        UNLOCK_PFN(OldIrql);
         goto Done1;
     }
 
@@ -4352,17 +4365,19 @@ Environment:
     // and reacquired).
     //
 
-    if (SizeInPages > MmAvailablePages) {
-        UNLOCK_PFN (OldIrql);
+    if (SizeInPages > MmAvailablePages)
+    {
+        UNLOCK_PFN(OldIrql);
         goto Done1;
     }
 
     MmResidentAvailablePages -= SizeInPages;
     MM_BUMP_COUNTER(3, SizeInPages);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    do {
+    do
+    {
 
         count = MmPhysicalMemoryBlock->Run[start].PageCount;
         Page = MmPhysicalMemoryBlock->Run[start].BasePage;
@@ -4371,18 +4386,21 @@ Environment:
         // Close the gaps, then examine the range for a fit.
         //
 
-        LastPage = Page + count; 
+        LastPage = Page + count;
 
-        if (LastPage - 1 > HighestPfn) {
+        if (LastPage - 1 > HighestPfn)
+        {
             LastPage = HighestPfn + 1;
         }
-    
-        if (Page < LowestPfn) {
+
+        if (Page < LowestPfn)
+        {
             Page = LowestPfn;
         }
 
-        if ((count != 0) && (Page + SizeInPages <= LastPage)) {
-    
+        if ((count != 0) && (Page + SizeInPages <= LastPage))
+        {
+
             //
             // A fit may be possible in this run, check whether the pages
             // are on the right list.
@@ -4391,23 +4409,25 @@ Environment:
             found = 0;
 
             i = 0;
-            Pfn1 = MI_PFN_ELEMENT (Page);
-            LOCK_PFN (OldIrql);
-            do {
+            Pfn1 = MI_PFN_ELEMENT(Page);
+            LOCK_PFN(OldIrql);
+            do
+            {
 
-                if ((Pfn1->u3.e1.PageLocation <= StandbyPageList) &&
-                    (Pfn1->u1.Flink != 0) &&
-                    (Pfn1->u2.Blink != 0) &&
+                if ((Pfn1->u3.e1.PageLocation <= StandbyPageList) && (Pfn1->u1.Flink != 0) && (Pfn1->u2.Blink != 0) &&
                     (Pfn1->u3.e2.ReferenceCount == 0) &&
-                    ((CacheAttribute == MiCached) || (!MI_PAGE_FRAME_INDEX_MUST_BE_CACHED (Page)))) {
+                    ((CacheAttribute == MiCached) || (!MI_PAGE_FRAME_INDEX_MUST_BE_CACHED(Page))))
+                {
 
                     //
                     // Before starting a new run, ensure that it
                     // can satisfy the boundary requirements (if any).
                     //
-                    
-                    if ((found == 0) && (BoundaryPfn != 0)) {
-                        if (((Page ^ (Page + SizeInPages - 1)) & BoundaryMask) != 0) {
+
+                    if ((found == 0) && (BoundaryPfn != 0))
+                    {
+                        if (((Page ^ (Page + SizeInPages - 1)) & BoundaryMask) != 0)
+                        {
                             //
                             // This run's physical address does not meet the
                             // requirements.
@@ -4418,7 +4438,8 @@ Environment:
                     }
 
                     found += 1;
-                    if (found == SizeInPages) {
+                    if (found == SizeInPages)
+                    {
 
                         //
                         // A match has been found, remove these pages,
@@ -4433,26 +4454,30 @@ Environment:
                         // released and reacquired).
                         //
 
-                        if (MmAvailablePages < SizeInPages) {
+                        if (MmAvailablePages < SizeInPages)
+                        {
                             goto Failed;
                         }
 
                         Page = 1 + Page - found;
                         StartPage = Page;
 
-                        MM_TRACK_COMMIT (MM_DBG_COMMIT_CONTIGUOUS_PAGES, SizeInPages);
-                        StartPfn = MI_PFN_ELEMENT (Page);
+                        MM_TRACK_COMMIT(MM_DBG_COMMIT_CONTIGUOUS_PAGES, SizeInPages);
+                        StartPfn = MI_PFN_ELEMENT(Page);
                         Pfn1 = StartPfn - 1;
 
-                        DummyPte = MiGetPteAddress (MmNonPagedPoolExpansionStart);
-                        do {
+                        DummyPte = MiGetPteAddress(MmNonPagedPoolExpansionStart);
+                        do
+                        {
                             Pfn1 += 1;
-                            if (Pfn1->u3.e1.PageLocation == StandbyPageList) {
-                                MiUnlinkPageFromList (Pfn1);
-                                MiRestoreTransitionPte (Page);
+                            if (Pfn1->u3.e1.PageLocation == StandbyPageList)
+                            {
+                                MiUnlinkPageFromList(Pfn1);
+                                MiRestoreTransitionPte(Page);
                             }
-                            else {
-                                MiUnlinkFreeOrZeroedPage (Page);
+                            else
+                            {
+                                MiUnlinkFreeOrZeroedPage(Page);
                             }
 
                             Pfn1->u3.e2.ReferenceCount = 1;
@@ -4481,43 +4506,44 @@ Environment:
                         StartPfn->u3.e1.StartOfAllocation = 1;
                         Pfn1->u3.e1.EndOfAllocation = 1;
 
-                        UNLOCK_PFN (OldIrql);
+                        UNLOCK_PFN(OldIrql);
 
                         LastPage = StartPage + SizeInPages;
 
                         PhysicalAddress.QuadPart = StartPage;
                         PhysicalAddress.QuadPart = PhysicalAddress.QuadPart << PAGE_SHIFT;
 
-                        BaseAddress = MmMapIoSpace (PhysicalAddress,
-                                                    SizeInPages << PAGE_SHIFT,
-                                                    CacheType);
+                        BaseAddress = MmMapIoSpace(PhysicalAddress, SizeInPages << PAGE_SHIFT, CacheType);
 
-                        if (BaseAddress == NULL) {
+                        if (BaseAddress == NULL)
+                        {
 
                             //
                             // Release the actual pages.
                             //
 
-                            LOCK_PFN2 (OldIrql);
+                            LOCK_PFN2(OldIrql);
 
                             StartPfn->u3.e1.StartOfAllocation = 0;
                             Pfn1->u3.e1.EndOfAllocation = 0;
 
-                            do {
-                                MI_SET_PFN_DELETED (StartPfn);
-                                MiDecrementShareCount (StartPage);
+                            do
+                            {
+                                MI_SET_PFN_DELETED(StartPfn);
+                                MiDecrementShareCount(StartPage);
                                 StartPage += 1;
                                 StartPfn += 1;
                             } while (StartPage < LastPage);
 
-                            UNLOCK_PFN2 (OldIrql);
+                            UNLOCK_PFN2(OldIrql);
                             goto Failed;
                         }
 
-                        PointerPte = MiGetPteAddress (BaseAddress);
-                        do {
+                        PointerPte = MiGetPteAddress(BaseAddress);
+                        do
+                        {
                             StartPfn->PteAddress = PointerPte;
-                            StartPfn->u4.PteFrame = MI_GET_PAGE_FRAME_FROM_PTE (MiGetPteAddress(PointerPte));
+                            StartPfn->u4.PteFrame = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPteAddress(PointerPte));
                             StartPfn += 1;
                             PointerPte += 1;
                         } while (StartPfn <= Pfn1);
@@ -4525,29 +4551,32 @@ Environment:
                         goto Done;
                     }
                 }
-                else {
+                else
+                {
 
                     //
                     // Nothing magic about the divisor here - just releasing
                     // the PFN lock periodically to give other processors
                     // and DPCs a chance to execute.
                     //
-            
+
                     i += 1;
-                    if ((i & 0xFFFF) == 0) {
-                        UNLOCK_PFN (OldIrql);
+                    if ((i & 0xFFFF) == 0)
+                    {
+                        UNLOCK_PFN(OldIrql);
                         found = 0;
-                        LOCK_PFN (OldIrql);
+                        LOCK_PFN(OldIrql);
                     }
-                    else {
+                    else
+                    {
                         found = 0;
                     }
                 }
-NextPage:
+            NextPage:
                 Page += 1;
                 Pfn1 += 1;
             } while (Page < LastPage);
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
         }
         start += 1;
     } while (start != MmPhysicalMemoryBlock->NumberOfRuns);
@@ -4558,37 +4587,34 @@ NextPage:
 
 Failed:
 
-    ASSERT (BaseAddress == NULL);
+    ASSERT(BaseAddress == NULL);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
     MmResidentAvailablePages += SizeInPages;
     MM_BUMP_COUNTER(32, SizeInPages);
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
 Done1:
 
-    MiReturnCommitment (SizeInPages);
+    MiReturnCommitment(SizeInPages);
 
 Done:
 
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
-    MmUnlockPagableImageSection (ExPageLockHandle);
+    MmUnlockPagableImageSection(ExPageLockHandle);
 
-    if (BaseAddress != NULL) {
+    if (BaseAddress != NULL)
+    {
 
-        MiInsertContiguousTag (BaseAddress,
-                               SizeInPages << PAGE_SHIFT,
-                               CallingAddress);
+        MiInsertContiguousTag(BaseAddress, SizeInPages << PAGE_SHIFT, CallingAddress);
     }
 
     return BaseAddress;
 }
 
 LOGICAL
-MmIsSessionAddress (
-    IN PVOID VirtualAddress
-    )
+MmIsSessionAddress(IN PVOID VirtualAddress)
 
 /*++
 
@@ -4612,5 +4638,5 @@ Environment:
 --*/
 
 {
-    return MI_IS_SESSION_ADDRESS (VirtualAddress);
+    return MI_IS_SESSION_ADDRESS(VirtualAddress);
 }

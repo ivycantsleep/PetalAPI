@@ -59,15 +59,15 @@ Revision History:
 //
 // Define the facility codes
 //
-#define FACILITY_WINDOWS                 8
-#define FACILITY_STORAGE                 3
-#define FACILITY_RPC                     1
-#define FACILITY_SSPI                    9
-#define FACILITY_WIN32                   7
-#define FACILITY_CONTROL                 10
-#define FACILITY_NULL                    0
-#define FACILITY_ITF                     4
-#define FACILITY_DISPATCH                2
+#define FACILITY_WINDOWS 8
+#define FACILITY_STORAGE 3
+#define FACILITY_RPC 1
+#define FACILITY_SSPI 9
+#define FACILITY_WIN32 7
+#define FACILITY_CONTROL 10
+#define FACILITY_NULL 0
+#define FACILITY_ITF 4
+#define FACILITY_DISPATCH 2
 
 
 //
@@ -82,7 +82,7 @@ Revision History:
 //
 //  An invalid directory pathname was passed
 //
-#define E_ADS_BAD_PATHNAME               _HRESULT_TYPEDEF_(0x80005000L)
+#define E_ADS_BAD_PATHNAME _HRESULT_TYPEDEF_(0x80005000L)
 
 //
 // MessageId: E_ADS_INVALID_DOMAIN_OBJECT
@@ -91,7 +91,7 @@ Revision History:
 //
 //  An unknown directory domain object was requested
 //
-#define E_ADS_INVALID_DOMAIN_OBJECT      _HRESULT_TYPEDEF_(0x80005001L)
+#define E_ADS_INVALID_DOMAIN_OBJECT _HRESULT_TYPEDEF_(0x80005001L)
 
 //
 // MessageId: E_ADS_INVALID_USER_OBJECT
@@ -100,7 +100,7 @@ Revision History:
 //
 //  An unknown directory user object was requested
 //
-#define E_ADS_INVALID_USER_OBJECT        _HRESULT_TYPEDEF_(0x80005002L)
+#define E_ADS_INVALID_USER_OBJECT _HRESULT_TYPEDEF_(0x80005002L)
 
 //
 // MessageId: E_ADS_INVALID_COMPUTER_OBJECT
@@ -109,7 +109,7 @@ Revision History:
 //
 //  An unknown directory computer object was requested
 //
-#define E_ADS_INVALID_COMPUTER_OBJECT    _HRESULT_TYPEDEF_(0x80005003L)
+#define E_ADS_INVALID_COMPUTER_OBJECT _HRESULT_TYPEDEF_(0x80005003L)
 
 //
 // MessageId: E_ADS_UNKNOWN_OBJECT
@@ -118,7 +118,7 @@ Revision History:
 //
 //  An unknown directory object was requested
 //
-#define E_ADS_UNKNOWN_OBJECT             _HRESULT_TYPEDEF_(0x80005004L)
+#define E_ADS_UNKNOWN_OBJECT _HRESULT_TYPEDEF_(0x80005004L)
 
 //
 // MessageId: E_ADS_PROPERTY_NOT_SET
@@ -127,7 +127,7 @@ Revision History:
 //
 //  The specified directory property was not set
 //
-#define E_ADS_PROPERTY_NOT_SET           _HRESULT_TYPEDEF_(0x80005005L)
+#define E_ADS_PROPERTY_NOT_SET _HRESULT_TYPEDEF_(0x80005005L)
 
 //
 // MessageId: E_ADS_PROPERTY_NOT_SUPPORTED
@@ -136,7 +136,7 @@ Revision History:
 //
 //  The specified directory property is not supported
 //
-#define E_ADS_PROPERTY_NOT_SUPPORTED     _HRESULT_TYPEDEF_(0x80005006L)
+#define E_ADS_PROPERTY_NOT_SUPPORTED _HRESULT_TYPEDEF_(0x80005006L)
 
 //
 // MessageId: E_ADS_PROPERTY_INVALID
@@ -145,7 +145,7 @@ Revision History:
 //
 //  The specified directory property is invalid
 //
-#define E_ADS_PROPERTY_INVALID           _HRESULT_TYPEDEF_(0x80005007L)
+#define E_ADS_PROPERTY_INVALID _HRESULT_TYPEDEF_(0x80005007L)
 
 //
 // MessageId: E_ADS_BAD_PARAMETER
@@ -154,7 +154,7 @@ Revision History:
 //
 //  One or more input parameters are invalid
 //
-#define E_ADS_BAD_PARAMETER              _HRESULT_TYPEDEF_(0x80005008L)
+#define E_ADS_BAD_PARAMETER _HRESULT_TYPEDEF_(0x80005008L)
 
 //
 // MessageId: E_ADS_OBJECT_UNBOUND
@@ -163,7 +163,7 @@ Revision History:
 //
 //  The specified directory object is not bound to a remote resource
 //
-#define E_ADS_OBJECT_UNBOUND             _HRESULT_TYPEDEF_(0x80005009L)
+#define E_ADS_OBJECT_UNBOUND _HRESULT_TYPEDEF_(0x80005009L)
 
 //
 // MessageId: E_ADS_PROPERTY_NOT_MODIFIED
@@ -172,7 +172,7 @@ Revision History:
 //
 //  The specified directory object has not been modified
 //
-#define E_ADS_PROPERTY_NOT_MODIFIED      _HRESULT_TYPEDEF_(0x8000500AL)
+#define E_ADS_PROPERTY_NOT_MODIFIED _HRESULT_TYPEDEF_(0x8000500AL)
 
 //
 // MessageId: E_ADS_PROPERTY_MODIFIED
@@ -181,7 +181,7 @@ Revision History:
 //
 //  The specified directory object has been modified
 //
-#define E_ADS_PROPERTY_MODIFIED          _HRESULT_TYPEDEF_(0x8000500BL)
+#define E_ADS_PROPERTY_MODIFIED _HRESULT_TYPEDEF_(0x8000500BL)
 
 //
 // MessageId: E_ADS_CANT_CONVERT_DATATYPE
@@ -190,7 +190,7 @@ Revision History:
 //
 //  The directory datatype cannot be converted to/from a native DS datatype
 //
-#define E_ADS_CANT_CONVERT_DATATYPE      _HRESULT_TYPEDEF_(0x8000500CL)
+#define E_ADS_CANT_CONVERT_DATATYPE _HRESULT_TYPEDEF_(0x8000500CL)
 
 //
 // MessageId: E_ADS_PROPERTY_NOT_FOUND
@@ -199,7 +199,7 @@ Revision History:
 //
 //  The directory property cannot be found in the cache.
 //
-#define E_ADS_PROPERTY_NOT_FOUND         _HRESULT_TYPEDEF_(0x8000500DL)
+#define E_ADS_PROPERTY_NOT_FOUND _HRESULT_TYPEDEF_(0x8000500DL)
 
 //
 // MessageId: E_ADS_OBJECT_EXISTS
@@ -208,7 +208,7 @@ Revision History:
 //
 //  The directory object exists.
 //
-#define E_ADS_OBJECT_EXISTS              _HRESULT_TYPEDEF_(0x8000500EL)
+#define E_ADS_OBJECT_EXISTS _HRESULT_TYPEDEF_(0x8000500EL)
 
 //
 // MessageId: E_ADS_SCHEMA_VIOLATION
@@ -217,7 +217,7 @@ Revision History:
 //
 //  The attempted action violates the DS schema rules.
 //
-#define E_ADS_SCHEMA_VIOLATION           _HRESULT_TYPEDEF_(0x8000500FL)
+#define E_ADS_SCHEMA_VIOLATION _HRESULT_TYPEDEF_(0x8000500FL)
 
 //
 // MessageId: E_ADS_COLUMN_NOT_SET
@@ -226,7 +226,7 @@ Revision History:
 //
 //  The specified column in the directory was not set.
 //
-#define E_ADS_COLUMN_NOT_SET             _HRESULT_TYPEDEF_(0x80005010L)
+#define E_ADS_COLUMN_NOT_SET _HRESULT_TYPEDEF_(0x80005010L)
 
 //
 // MessageId: S_ADS_ERRORSOCCURRED
@@ -235,7 +235,7 @@ Revision History:
 //
 //  One or more errors occurred
 //
-#define S_ADS_ERRORSOCCURRED             _HRESULT_TYPEDEF_(0x00005011L)
+#define S_ADS_ERRORSOCCURRED _HRESULT_TYPEDEF_(0x00005011L)
 
 //
 // MessageId: S_ADS_NOMORE_ROWS
@@ -244,7 +244,7 @@ Revision History:
 //
 //  No more rows to be obatained by the search result.
 //
-#define S_ADS_NOMORE_ROWS                _HRESULT_TYPEDEF_(0x00005012L)
+#define S_ADS_NOMORE_ROWS _HRESULT_TYPEDEF_(0x00005012L)
 
 //
 // MessageId: S_ADS_NOMORE_COLUMNS
@@ -253,7 +253,7 @@ Revision History:
 //
 //  No more columns to be obatained for the current row.
 //
-#define S_ADS_NOMORE_COLUMNS             _HRESULT_TYPEDEF_(0x00005013L)
+#define S_ADS_NOMORE_COLUMNS _HRESULT_TYPEDEF_(0x00005013L)
 
 //
 // MessageId: E_ADS_INVALID_FILTER
@@ -262,5 +262,4 @@ Revision History:
 //
 //  The search filter specified is invalid
 //
-#define E_ADS_INVALID_FILTER             _HRESULT_TYPEDEF_(0x80005014L)
-
+#define E_ADS_INVALID_FILTER _HRESULT_TYPEDEF_(0x80005014L)

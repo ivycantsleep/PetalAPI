@@ -30,7 +30,7 @@ Revision History:
 --*/
 
 #include "exp.h"
-
+
 //
 // Define function sections.
 //
@@ -39,11 +39,8 @@ Revision History:
 #pragma alloc_text(PAGE, ExRaiseAccessViolation)
 #pragma alloc_text(PAGE, ExRaiseDatatypeMisalignment)
 #endif
-
-VOID
-ExRaiseAccessViolation (
-    VOID
-    )
+
+VOID ExRaiseAccessViolation(VOID)
 
 /*++
 
@@ -66,11 +63,8 @@ Return Value:
     ExRaiseStatus(STATUS_ACCESS_VIOLATION);
     return;
 }
-
-VOID
-ExRaiseDatatypeMisalignment (
-    VOID
-    )
+
+VOID ExRaiseDatatypeMisalignment(VOID)
 
 /*++
 

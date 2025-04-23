@@ -23,33 +23,20 @@ Environment:
 #ifndef _PROCESSOR_H_
 #define _PROCESSOR_H_
 
-extern KSPIN_LOCK     AcpiProcessorLock;
-extern LIST_ENTRY     AcpiProcessorList;
+extern KSPIN_LOCK AcpiProcessorLock;
+extern LIST_ENTRY AcpiProcessorList;
 //extern PDEVICE_OBJECT FixedProcessorDeviceObject;
 
-VOID
-ACPIProcessorCancelRequest(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    );
+VOID ACPIProcessorCancelRequest(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 BOOLEAN
-ACPIProcessorCompletePendingIrps(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  ULONG           ProcessorEvent
-    );
+ACPIProcessorCompletePendingIrps(IN PDEVICE_OBJECT DeviceObject, IN ULONG ProcessorEvent);
 
 
 NTSTATUS
-ACPIProcessorDeviceControl (
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    );
+ACPIProcessorDeviceControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-ACPIProcessorStartDevice (
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    );
+ACPIProcessorStartDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 #endif

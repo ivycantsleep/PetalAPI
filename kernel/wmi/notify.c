@@ -26,44 +26,33 @@ Revision History:
 #include "wmikmp.h"
 
 
-void WmipInitializeNotifications(
-    void
-    );
+void WmipInitializeNotifications(void);
 
-void WmipEventNotification(
-    IN PVOID Context
-    );
+void WmipEventNotification(IN PVOID Context);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,WmipInitializeNotifications)
-#pragma alloc_text(PAGE,WmipEventNotification)
+#pragma alloc_text(INIT, WmipInitializeNotifications)
+#pragma alloc_text(PAGE, WmipEventNotification)
 #endif
 
 WORK_QUEUE_ITEM WmipEventWorkQueueItem;
-LIST_ENTRY WmipNPEvent = {&WmipNPEvent, &WmipNPEvent};
+LIST_ENTRY WmipNPEvent = { &WmipNPEvent, &WmipNPEvent };
 KSPIN_LOCK WmipNPNotificationSpinlock;
 LONG WmipEventWorkItems;
 #if DBG
 ULONG WmipNPAllocFail;
 #endif
 
-void WmipInitializeNotifications(
-    void
-    )
+void WmipInitializeNotifications(void)
 {
     PAGED_CODE();
-    
-    ExInitializeWorkItem( &WmipEventWorkQueueItem,
-                          WmipEventNotification,
-                          NULL );
+
+    ExInitializeWorkItem(&WmipEventWorkQueueItem, WmipEventNotification, NULL);
 
     KeInitializeSpinLock(&WmipNPNotificationSpinlock);
-
 }
 
-void WmipEventNotification(
-    IN PVOID Context
-    )
+void WmipEventNotification(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -83,23 +72,18 @@ Return Value:
     PWNODE_HEADER WnodeEventItem;
     PLIST_ENTRY NotificationPacketList;
     PREGENTRY RegEntry;
-	PEVENTWORKCONTEXT EventContext;
+    PEVENTWORKCONTEXT EventContext;
 
     PAGED_CODE();
-    
+
     do
     {
-        NotificationPacketList = ExInterlockedRemoveHeadList(
-            &WmipNPEvent,
-            &WmipNPNotificationSpinlock);
+        NotificationPacketList = ExInterlockedRemoveHeadList(&WmipNPEvent, &WmipNPNotificationSpinlock);
 
         WmipAssert(NotificationPacketList != NULL);
 
-		EventContext = (PEVENTWORKCONTEXT)
-                         CONTAINING_RECORD(NotificationPacketList,
-                         EVENTWORKCONTEXT,
-                         ListEntry);
-		
+        EventContext = (PEVENTWORKCONTEXT)CONTAINING_RECORD(NotificationPacketList, EVENTWORKCONTEXT, ListEntry);
+
         WnodeEventItem = EventContext->Wnode;
 
         //
@@ -109,9 +93,7 @@ Return Value:
         WnodeEventItem->ClientContext = 0;
         WnodeEventItem->Linkage = 0;
 
-        WmipProcessEvent(WnodeEventItem,
-                         FALSE,
-                         TRUE);
+        WmipProcessEvent(WnodeEventItem, FALSE, TRUE);
 
         if (EventContext->RegEntry != NULL)
         {
@@ -121,8 +103,6 @@ Return Value:
             WmipUnreferenceRegEntry(EventContext->RegEntry);
         }
 
-		ExFreePool(EventContext);
+        ExFreePool(EventContext);
     } while (InterlockedDecrement(&WmipEventWorkItems));
-
 }
-

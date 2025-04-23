@@ -21,23 +21,16 @@ Environment:
 --*/
 
 #ifndef _ERRLOG_H_
-    #define _ERRLOG_H_
+#define _ERRLOG_H_
 
-    extern  PDRIVER_OBJECT  AcpiDriverObject;
+extern PDRIVER_OBJECT AcpiDriverObject;
 
-    
-    NTSTATUS
-    ACPIWriteEventLogEntry (
-    IN  ULONG     ErrorCode,
-    IN  PVOID     InsertionStrings, OPTIONAL
-    IN  ULONG     StringCount,      OPTIONAL
-    IN  PVOID     DumpData, OPTIONAL
-    IN  ULONG     DataSize  OPTIONAL
-    );
 
-    PDEVICE_OBJECT 
-    ACPIGetRootDeviceObject(
-    VOID
-    );
+NTSTATUS
+ACPIWriteEventLogEntry(IN ULONG ErrorCode, IN PVOID InsertionStrings, OPTIONAL IN ULONG StringCount,
+                       OPTIONAL IN PVOID DumpData, OPTIONAL IN ULONG DataSize OPTIONAL);
+
+PDEVICE_OBJECT
+ACPIGetRootDeviceObject(VOID);
 
 #endif

@@ -29,7 +29,8 @@ Revision History:
 // Executive profile object.
 //
 
-typedef struct _EPROFILE {
+typedef struct _EPROFILE
+{
     PKPROCESS Process;
     PVOID RangeBase;
     SIZE_T RangeSize;
@@ -61,12 +62,9 @@ const ULONG ExpCurrentProfileUsage = 0;
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const GENERIC_MAPPING ExpProfileMapping = {
-    STANDARD_RIGHTS_READ | PROFILE_CONTROL,
-    STANDARD_RIGHTS_WRITE | PROFILE_CONTROL,
-    STANDARD_RIGHTS_EXECUTE | PROFILE_CONTROL,
-    PROFILE_ALL_ACCESS
-};
+const GENERIC_MAPPING ExpProfileMapping = { STANDARD_RIGHTS_READ | PROFILE_CONTROL,
+                                            STANDARD_RIGHTS_WRITE | PROFILE_CONTROL,
+                                            STANDARD_RIGHTS_EXECUTE | PROFILE_CONTROL, PROFILE_ALL_ACCESS };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
@@ -84,10 +82,9 @@ const GENERIC_MAPPING ExpProfileMapping = {
 #pragma alloc_text(PAGE, NtQueryPerformanceCounter)
 #endif
 
-
+
 BOOLEAN
-ExpProfileInitialization (
-    )
+ExpProfileInitialization()
 
 /*++
 
@@ -118,7 +115,7 @@ Return Value:
     // Initialize mutex for synchronizing start and stop operations.
     //
 
-    KeInitializeMutex (&ExpProfileStateMutex, MUTEX_LEVEL_EX_PROFILE);
+    KeInitializeMutex(&ExpProfileStateMutex, MUTEX_LEVEL_EX_PROFILE);
 
     //
     // Initialize string descriptor.
@@ -130,7 +127,7 @@ Return Value:
     // Create event object type descriptor.
     //
 
-    RtlZeroMemory(&ObjectTypeInitializer,sizeof(ObjectTypeInitializer));
+    RtlZeroMemory(&ObjectTypeInitializer, sizeof(ObjectTypeInitializer));
     ObjectTypeInitializer.Length = sizeof(ObjectTypeInitializer);
     ObjectTypeInitializer.InvalidAttributes = OBJ_OPENLINK;
     ObjectTypeInitializer.PoolType = NonPagedPool;
@@ -139,10 +136,7 @@ Return Value:
     ObjectTypeInitializer.DeleteProcedure = ExpProfileDelete;
     ObjectTypeInitializer.GenericMapping = ExpProfileMapping;
 
-    Status = ObCreateObjectType(&TypeName,
-                                &ObjectTypeInitializer,
-                                (PSECURITY_DESCRIPTOR)NULL,
-                                &ExProfileObjectType);
+    Status = ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &ExProfileObjectType);
 
     //
     // If the event object type descriptor was successfully created, then
@@ -152,10 +146,7 @@ Return Value:
     return (BOOLEAN)(NT_SUCCESS(Status));
 }
 
-VOID
-ExpProfileDelete (
-    IN PVOID    Object
-    )
+VOID ExpProfileDelete(IN PVOID Object)
 
 /*++
 
@@ -179,45 +170,39 @@ Return Value:
 
 {
     PEPROFILE Profile;
-    BOOLEAN   State;
+    BOOLEAN State;
     PEPROCESS ProcessAddress;
 
     Profile = (PEPROFILE)Object;
 
-    if (Profile->LockedBufferAddress != NULL) {
+    if (Profile->LockedBufferAddress != NULL)
+    {
 
         //
         // Stop profiling and unlock the buffers and deallocate pool.
         //
 
-        State = KeStopProfile (Profile->ProfileObject);
-        ASSERT (State != FALSE);
+        State = KeStopProfile(Profile->ProfileObject);
+        ASSERT(State != FALSE);
 
-        MmUnmapLockedPages (Profile->LockedBufferAddress, Profile->Mdl);
-        MmUnlockPages (Profile->Mdl);
-        ExFreePool (Profile->ProfileObject);
+        MmUnmapLockedPages(Profile->LockedBufferAddress, Profile->Mdl);
+        MmUnlockPages(Profile->Mdl);
+        ExFreePool(Profile->ProfileObject);
     }
 
-    if (Profile->Process != NULL) {
+    if (Profile->Process != NULL)
+    {
         ProcessAddress = CONTAINING_RECORD(Profile->Process, EPROCESS, Pcb);
-        ObDereferenceObject ((PVOID)ProcessAddress);
+        ObDereferenceObject((PVOID)ProcessAddress);
     }
 
     return;
 }
-
+
 NTSTATUS
-NtCreateProfile (
-    OUT PHANDLE ProfileHandle,
-    IN HANDLE Process OPTIONAL,
-    IN PVOID RangeBase,
-    IN SIZE_T RangeSize,
-    IN ULONG BucketSize,
-    IN PULONG Buffer,
-    IN ULONG BufferSize,
-    IN KPROFILE_SOURCE ProfileSource,
-    IN KAFFINITY Affinity
-    )
+NtCreateProfile(OUT PHANDLE ProfileHandle, IN HANDLE Process OPTIONAL, IN PVOID RangeBase, IN SIZE_T RangeSize,
+                IN ULONG BucketSize, IN PULONG Buffer, IN ULONG BufferSize, IN KPROFILE_SOURCE ProfileSource,
+                IN KAFFINITY Affinity)
 
 /*++
 
@@ -285,7 +270,8 @@ Return Value:
     // Verify that the base and size arguments are reasonable.
     //
 
-    if (BufferSize == 0) {
+    if (BufferSize == 0)
+    {
         return STATUS_INVALID_PARAMETER_7;
     }
 
@@ -297,9 +283,11 @@ Return Value:
     //        the non-flat CS for this profile object.
     //
 
-    if ((BucketSize == 0) && (RangeBase < (PVOID)(64 * 1024))) {
+    if ((BucketSize == 0) && (RangeBase < (PVOID)(64 * 1024)))
+    {
 
-        if (BufferSize < sizeof(ULONG)) {
+        if (BufferSize < sizeof(ULONG))
+        {
             return STATUS_INVALID_PARAMETER_7;
         }
 
@@ -312,27 +300,32 @@ Return Value:
         //
         PowerOf2 = 0;
         BucketSize = BucketSize - 1;
-        while (BucketSize >>= 1) {
+        while (BucketSize >>= 1)
+        {
             PowerOf2++;
         }
 
         BucketSize = PowerOf2 + 1;
 
-        if (BucketSize < 2) {
+        if (BucketSize < 2)
+        {
             BucketSize = 2;
         }
     }
 #endif
 
-    if ((BucketSize > 31) || (BucketSize < 2)) {
+    if ((BucketSize > 31) || (BucketSize < 2))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if ((RangeSize >> (BucketSize - 2)) > BufferSize) {
+    if ((RangeSize >> (BucketSize - 2)) > BufferSize)
+    {
         return STATUS_BUFFER_TOO_SMALL;
     }
 
-    if (((ULONG_PTR)RangeBase + RangeSize) < RangeSize) {
+    if (((ULONG_PTR)RangeBase + RangeSize) < RangeSize)
+    {
         return STATUS_BUFFER_OVERFLOW;
     }
 
@@ -343,61 +336,64 @@ Return Value:
     // returned by the object insertion routine.
     //
 
-    try {
+    try
+    {
         //
         // Get previous processor mode and probe output handle address if
         // necessary.
         //
 
-        PreviousMode = KeGetPreviousMode ();
+        PreviousMode = KeGetPreviousMode();
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForWriteHandle(ProfileHandle);
 
-            ProbeForWrite(Buffer,
-                          BufferSize,
-                          sizeof(ULONG));
+            ProbeForWrite(Buffer, BufferSize, sizeof(ULONG));
         }
 
-    //
-    // If an exception occurs during the probe of the output handle address,
-    // then always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the output handle address,
+        // then always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
-//
-// TODO post NT5:
-//
-// Currently, if a process isn't specified, there is no privilege check if
-//   RangeBase > MM_HIGHEST_USER_ADDRESS.
-// The check for user-space addresses is SeSystemProfilePrivilege.
-// Querying a specific process requires only PROCESS_QUERY_INFORMATION.
-//
-// The spec says:
-//
-//     Process - If specified, a handle to a process which describes the address space to profile.
-//     If not present, then all address spaces are included in the profile.
-//     Profiling a process requires PROCESS_QUERY_INFORMATION access to that process and
-//     SeProfileSingleProcessPrivilege privilege.
-//     Profiling all processes requires SeSystemProfilePrivilege privilege.
-//
-// So two changes appear needed.
-//   A check on SeProfileSingleProcessPrivilege needs to be added to the single process case,
-//   and SeSystemProfilePrivilege privilege should be required for both user and system address profiling.
-//
+    //
+    // TODO post NT5:
+    //
+    // Currently, if a process isn't specified, there is no privilege check if
+    //   RangeBase > MM_HIGHEST_USER_ADDRESS.
+    // The check for user-space addresses is SeSystemProfilePrivilege.
+    // Querying a specific process requires only PROCESS_QUERY_INFORMATION.
+    //
+    // The spec says:
+    //
+    //     Process - If specified, a handle to a process which describes the address space to profile.
+    //     If not present, then all address spaces are included in the profile.
+    //     Profiling a process requires PROCESS_QUERY_INFORMATION access to that process and
+    //     SeProfileSingleProcessPrivilege privilege.
+    //     Profiling all processes requires SeSystemProfilePrivilege privilege.
+    //
+    // So two changes appear needed.
+    //   A check on SeProfileSingleProcessPrivilege needs to be added to the single process case,
+    //   and SeSystemProfilePrivilege privilege should be required for both user and system address profiling.
+    //
 
 
-    if (!ARGUMENT_PRESENT(Process)) {
+    if (!ARGUMENT_PRESENT(Process))
+    {
 
         //
         // Don't attach segmented profile objects to all processes
         //
 
-        if (Segment) {
+        if (Segment)
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
@@ -406,76 +402,65 @@ Return Value:
         // address range is in system space, unless SeSystemProfilePrivilege.
         //
 
-        if (RangeBase <= MM_HIGHEST_USER_ADDRESS) {
+        if (RangeBase <= MM_HIGHEST_USER_ADDRESS)
+        {
 
             //
             // Check for privilege before allowing a user to profile
             // all processes and USER addresses.
             //
 
-            if (PreviousMode != KernelMode) {
-                HasPrivilege =  SeSinglePrivilegeCheck(
-                                    SeSystemProfilePrivilege,
-                                    PreviousMode
-                                    );
+            if (PreviousMode != KernelMode)
+            {
+                HasPrivilege = SeSinglePrivilegeCheck(SeSystemProfilePrivilege, PreviousMode);
 
-                if (!HasPrivilege) {
+                if (!HasPrivilege)
+                {
 #if DBG
                     DbgPrint("SeSystemProfilePrivilege needed to profile all USER addresses.\n");
 #endif //DBG
-                    return( STATUS_PRIVILEGE_NOT_HELD );
+                    return (STATUS_PRIVILEGE_NOT_HELD);
                 }
-
             }
         }
 
         ProcessAddress = NULL;
-
-
-    } else {
+    }
+    else
+    {
 
         //
         // Reference the specified process.
         //
 
-        Status = ObReferenceObjectByHandle ( Process,
-                                             PROCESS_QUERY_INFORMATION,
-                                             PsProcessType,
-                                             PreviousMode,
-                                             (PVOID *)&ProcessAddress,
-                                             NULL );
+        Status = ObReferenceObjectByHandle(Process, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                           (PVOID *)&ProcessAddress, NULL);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                NULL,
-                                OBJ_EXCLUSIVE,
-                                NULL,
-                                NULL );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, OBJ_EXCLUSIVE, NULL, NULL);
 
-    Status = ObCreateObject( KernelMode,
-                             ExProfileObjectType,
-                             &ObjectAttributes,
-                             PreviousMode,
-                             NULL,
-                             sizeof(EPROFILE),
-                             0,
-                             sizeof(EPROFILE) + sizeof(KPROFILE),
-                             (PVOID *)&Profile);
+    Status = ObCreateObject(KernelMode, ExProfileObjectType, &ObjectAttributes, PreviousMode, NULL, sizeof(EPROFILE), 0,
+                            sizeof(EPROFILE) + sizeof(KPROFILE), (PVOID *)&Profile);
 
     //
     // If the profile object was successfully allocated, initialize
     // the profile object.
     //
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
 
-        if (ProcessAddress != NULL) {
+        if (ProcessAddress != NULL)
+        {
             Profile->Process = &ProcessAddress->Pcb;
-        } else {
+        }
+        else
+        {
             Profile->Process = NULL;
         }
 
@@ -489,12 +474,7 @@ Return Value:
         Profile->ProfileSource = ProfileSource;
         Profile->Affinity = Affinity;
 
-        Status = ObInsertObject(Profile,
-                                NULL,
-                                PROFILE_CONTROL,
-                                0,
-                                (PVOID *)NULL,
-                                &Handle);
+        Status = ObInsertObject(Profile, NULL, PROFILE_CONTROL, 0, (PVOID *)NULL, &Handle);
         //
         // If the profile object was successfully inserted in the current
         // process' handle table, then attempt to write the profile object
@@ -502,10 +482,14 @@ Return Value:
         // an error. When the caller attempts to access the handle value,
         // an access violation will occur.
         //
-        if (NT_SUCCESS(Status)) {
-            try {
+        if (NT_SUCCESS(Status))
+        {
+            try
+            {
                 *ProfileHandle = Handle;
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
             }
         }
     }
@@ -513,9 +497,11 @@ Return Value:
     //
     // If we failed, remove our reference to the process object.
     //
-    if (!NT_SUCCESS(Status)) {
-        if (ProcessAddress != NULL) {
-            ObDereferenceObject ((PVOID)ProcessAddress);
+    if (!NT_SUCCESS(Status))
+    {
+        if (ProcessAddress != NULL)
+        {
+            ObDereferenceObject((PVOID)ProcessAddress);
         }
     }
 
@@ -525,11 +511,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtStartProfile (
-    IN HANDLE ProfileHandle
-    )
+NtStartProfile(IN HANDLE ProfileHandle)
 
 /*++
 
@@ -561,13 +545,10 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    Status = ObReferenceObjectByHandle( ProfileHandle,
-                                        PROFILE_CONTROL,
-                                        ExProfileObjectType,
-                                        PreviousMode,
-                                        (PVOID *)&Profile,
-                                        NULL);
-    if (!NT_SUCCESS(Status)) {
+    Status = ObReferenceObjectByHandle(ProfileHandle, PROFILE_CONTROL, ExProfileObjectType, PreviousMode,
+                                       (PVOID *)&Profile, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -576,37 +557,33 @@ Return Value:
     // operate on the same profile object simultaneously.
     //
 
-    KeWaitForSingleObject( &ExpProfileStateMutex,
-                           Executive,
-                           KernelMode,
-                           FALSE,
-                           (PLARGE_INTEGER)NULL);
+    KeWaitForSingleObject(&ExpProfileStateMutex, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
     //
     // Make sure profiling is not already enabled.
     //
 
-    if (Profile->LockedBufferAddress != NULL) {
-        KeReleaseMutex (&ExpProfileStateMutex, FALSE);
-        ObDereferenceObject ((PVOID)Profile);
+    if (Profile->LockedBufferAddress != NULL)
+    {
+        KeReleaseMutex(&ExpProfileStateMutex, FALSE);
+        ObDereferenceObject((PVOID)Profile);
         return STATUS_PROFILING_NOT_STOPPED;
     }
 
-    if (ExpCurrentProfileUsage == ACTIVE_PROFILE_LIMIT) {
-        KeReleaseMutex (&ExpProfileStateMutex, FALSE);
-        ObDereferenceObject ((PVOID)Profile);
+    if (ExpCurrentProfileUsage == ACTIVE_PROFILE_LIMIT)
+    {
+        KeReleaseMutex(&ExpProfileStateMutex, FALSE);
+        ObDereferenceObject((PVOID)Profile);
         return STATUS_PROFILING_AT_LIMIT;
     }
 
-    ProfileObject = ExAllocatePoolWithTag (NonPagedPool,
-                                    MmSizeOfMdl(Profile->Buffer,
-                                                Profile->BufferSize) +
-                                        sizeof(KPROFILE),
-                                        'forP');
+    ProfileObject = ExAllocatePoolWithTag(NonPagedPool,
+                                          MmSizeOfMdl(Profile->Buffer, Profile->BufferSize) + sizeof(KPROFILE), 'forP');
 
-    if (ProfileObject == NULL) {
-        KeReleaseMutex (&ExpProfileStateMutex, FALSE);
-        ObDereferenceObject ((PVOID)Profile);
+    if (ProfileObject == NULL)
+    {
+        KeReleaseMutex(&ExpProfileStateMutex, FALSE);
+        ObDereferenceObject((PVOID)Profile);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -621,17 +598,17 @@ Return Value:
 
     LockedVa = NULL;
 
-    try {
+    try
+    {
 
-        MmProbeAndLockPages (Profile->Mdl,
-                             PreviousMode,
-                             IoWriteAccess );
+        MmProbeAndLockPages(Profile->Mdl, PreviousMode, IoWriteAccess);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-
-        ExFreePool (ProfileObject);
-        KeReleaseMutex (&ExpProfileStateMutex, FALSE);
-        ObDereferenceObject ((PVOID)Profile);
+        ExFreePool(ProfileObject);
+        KeReleaseMutex(&ExpProfileStateMutex, FALSE);
+        ObDereferenceObject((PVOID)Profile);
         return GetExceptionCode();
     }
 
@@ -640,18 +617,14 @@ Return Value:
     // an exception.
     //
 
-    LockedVa = MmMapLockedPagesSpecifyCache (Profile->Mdl,
-                                             KernelMode,
-                                             MmCached,
-                                             NULL,
-                                             FALSE,
-                                             NormalPagePriority);
+    LockedVa = MmMapLockedPagesSpecifyCache(Profile->Mdl, KernelMode, MmCached, NULL, FALSE, NormalPagePriority);
 
-    if (LockedVa == NULL) {
-        MmUnlockPages (Profile->Mdl);
-        ExFreePool (ProfileObject);
-        KeReleaseMutex (&ExpProfileStateMutex, FALSE);
-        ObDereferenceObject ((PVOID)Profile);
+    if (LockedVa == NULL)
+    {
+        MmUnlockPages(Profile->Mdl);
+        ExFreePool(ProfileObject);
+        KeReleaseMutex(&ExpProfileStateMutex, FALSE);
+        ObDereferenceObject((PVOID)Profile);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -659,30 +632,22 @@ Return Value:
     // Initialize the profile object.
     //
 
-    KeInitializeProfile (ProfileObject,
-                         Profile->Process,
-                         Profile->RangeBase,
-                         Profile->RangeSize,
-                         Profile->BucketSize,
-                         Profile->Segment,
-                         Profile->ProfileSource,
-                         Profile->Affinity);
+    KeInitializeProfile(ProfileObject, Profile->Process, Profile->RangeBase, Profile->RangeSize, Profile->BucketSize,
+                        Profile->Segment, Profile->ProfileSource, Profile->Affinity);
 
-    State = KeStartProfile (ProfileObject, LockedVa);
-    ASSERT (State != FALSE);
+    State = KeStartProfile(ProfileObject, LockedVa);
+    ASSERT(State != FALSE);
 
     Profile->LockedBufferAddress = LockedVa;
 
-    KeReleaseMutex (&ExpProfileStateMutex, FALSE);
-    ObDereferenceObject ((PVOID)Profile);
+    KeReleaseMutex(&ExpProfileStateMutex, FALSE);
+    ObDereferenceObject((PVOID)Profile);
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-NtStopProfile (
-    IN HANDLE ProfileHandle
-    )
+NtStopProfile(IN HANDLE ProfileHandle)
 
 /*++
 
@@ -712,30 +677,24 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    Status = ObReferenceObjectByHandle( ProfileHandle,
-                                        PROFILE_CONTROL,
-                                        ExProfileObjectType,
-                                        PreviousMode,
-                                        (PVOID *)&Profile,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(ProfileHandle, PROFILE_CONTROL, ExProfileObjectType, PreviousMode,
+                                       (PVOID *)&Profile, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    KeWaitForSingleObject( &ExpProfileStateMutex,
-                           Executive,
-                           KernelMode,
-                           FALSE,
-                           (PLARGE_INTEGER)NULL);
+    KeWaitForSingleObject(&ExpProfileStateMutex, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
     //
     // Check to see if profiling is not active.
     //
 
-    if (Profile->LockedBufferAddress == NULL) {
-        KeReleaseMutex (&ExpProfileStateMutex, FALSE);
-        ObDereferenceObject ((PVOID)Profile);
+    if (Profile->LockedBufferAddress == NULL)
+    {
+        KeReleaseMutex(&ExpProfileStateMutex, FALSE);
+        ObDereferenceObject((PVOID)Profile);
         return STATUS_PROFILING_NOT_STARTED;
     }
 
@@ -743,24 +702,21 @@ Return Value:
     // Stop profiling and unlock the buffer.
     //
 
-    State = KeStopProfile (Profile->ProfileObject);
-    ASSERT (State != FALSE);
+    State = KeStopProfile(Profile->ProfileObject);
+    ASSERT(State != FALSE);
 
-    MmUnmapLockedPages (Profile->LockedBufferAddress, Profile->Mdl);
-    MmUnlockPages (Profile->Mdl);
-    ExFreePool (Profile->ProfileObject);
+    MmUnmapLockedPages(Profile->LockedBufferAddress, Profile->Mdl);
+    MmUnlockPages(Profile->Mdl);
+    ExFreePool(Profile->ProfileObject);
     Profile->LockedBufferAddress = NULL;
-    KeReleaseMutex (&ExpProfileStateMutex, FALSE);
+    KeReleaseMutex(&ExpProfileStateMutex, FALSE);
 
-    ObDereferenceObject ((PVOID)Profile);
+    ObDereferenceObject((PVOID)Profile);
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-NtSetIntervalProfile (
-    IN ULONG Interval,
-    IN KPROFILE_SOURCE Source
-    )
+NtSetIntervalProfile(IN ULONG Interval, IN KPROFILE_SOURCE Source)
 
 /*++
 
@@ -783,15 +739,12 @@ Return Value:
 
 {
 
-    KeSetIntervalProfile (Interval, Source);
+    KeSetIntervalProfile(Interval, Source);
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-NtQueryIntervalProfile (
-    IN KPROFILE_SOURCE ProfileSource,
-    OUT PULONG Interval
-    )
+NtQueryIntervalProfile(IN KPROFILE_SOURCE ProfileSource, OUT PULONG Interval)
 
 /*++
 
@@ -816,17 +769,20 @@ Return Value:
     ULONG CapturedInterval;
     KPROCESSOR_MODE PreviousMode;
 
-    PreviousMode = KeGetPreviousMode ();
-    if (PreviousMode != KernelMode) {
+    PreviousMode = KeGetPreviousMode();
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Probe accessibility of user's buffer.
         //
 
-        try {
-            ProbeForWriteUlong (Interval);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            ProbeForWriteUlong(Interval);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -838,28 +794,29 @@ Return Value:
         }
     }
 
-    CapturedInterval = KeQueryIntervalProfile (ProfileSource);
+    CapturedInterval = KeQueryIntervalProfile(ProfileSource);
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             *Interval = CapturedInterval;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             NOTHING;
         }
     }
-    else {
+    else
+    {
         *Interval = CapturedInterval;
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-NtQueryPerformanceCounter (
-    OUT PLARGE_INTEGER PerformanceCounter,
-    OUT PLARGE_INTEGER PerformanceFrequency OPTIONAL
-    )
+NtQueryPerformanceCounter(OUT PLARGE_INTEGER PerformanceCounter, OUT PLARGE_INTEGER PerformanceFrequency OPTIONAL)
 
 /*++
 
@@ -892,30 +849,31 @@ Return Value:
     LARGE_INTEGER KernelPerformanceFrequency;
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Probe accessibility of user's buffer.
         //
 
-        try {
-            ProbeForWriteSmallStructure (PerformanceCounter,
-                                         sizeof (LARGE_INTEGER),
-                                         sizeof (ULONG));
+        try
+        {
+            ProbeForWriteSmallStructure(PerformanceCounter, sizeof(LARGE_INTEGER), sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT(PerformanceFrequency)) {
-                ProbeForWriteSmallStructure (PerformanceFrequency,
-                                             sizeof (LARGE_INTEGER),
-                                             sizeof (ULONG));
+            if (ARGUMENT_PRESENT(PerformanceFrequency))
+            {
+                ProbeForWriteSmallStructure(PerformanceFrequency, sizeof(LARGE_INTEGER), sizeof(ULONG));
             }
 
-            *PerformanceCounter = KeQueryPerformanceCounter (&KernelPerformanceFrequency);
+            *PerformanceCounter = KeQueryPerformanceCounter(&KernelPerformanceFrequency);
 
-            if (ARGUMENT_PRESENT(PerformanceFrequency)) {
+            if (ARGUMENT_PRESENT(PerformanceFrequency))
+            {
                 *PerformanceFrequency = KernelPerformanceFrequency;
             }
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -926,9 +884,11 @@ Return Value:
             return GetExceptionCode();
         }
     }
-    else {
-        *PerformanceCounter = KeQueryPerformanceCounter (&KernelPerformanceFrequency);
-        if (ARGUMENT_PRESENT(PerformanceFrequency)) {
+    else
+    {
+        *PerformanceCounter = KeQueryPerformanceCounter(&KernelPerformanceFrequency);
+        if (ARGUMENT_PRESENT(PerformanceFrequency))
+        {
             *PerformanceFrequency = KernelPerformanceFrequency;
         }
     }

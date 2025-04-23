@@ -22,35 +22,28 @@ Revision History:
 
 #if DBG
 
-typedef struct {
+typedef struct
+{
 
-    PDEVICE_OBJECT                  DeviceObject;
-    PEPROCESS                       Process;
-    PHANDLE_ENUMERATION_CALLBACK    CallBack;
-    PVOID                           Context;
+    PDEVICE_OBJECT DeviceObject;
+    PEPROCESS Process;
+    PHANDLE_ENUMERATION_CALLBACK CallBack;
+    PVOID Context;
 
 } HANDLE_ENUM_CONTEXT, *PHANDLE_ENUM_CONTEXT;
 
 BOOLEAN
-PiHandleEnumerateHandlesAgainstDeviceObject(
-    IN  PDEVICE_OBJECT                  DeviceObject,
-    IN  PHANDLE_ENUMERATION_CALLBACK    HandleEnumCallBack,
-    IN  PVOID                           Context
-    );
+PiHandleEnumerateHandlesAgainstDeviceObject(IN PDEVICE_OBJECT DeviceObject,
+                                            IN PHANDLE_ENUMERATION_CALLBACK HandleEnumCallBack, IN PVOID Context);
 
 BOOLEAN
-PiHandleProcessWalkWorker(
-    IN  PHANDLE_TABLE_ENTRY     ObjectTableEntry,
-    IN  HANDLE                  HandleId,
-    IN  PHANDLE_ENUM_CONTEXT    EnumContext
-    );
+PiHandleProcessWalkWorker(IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE HandleId,
+                          IN PHANDLE_ENUM_CONTEXT EnumContext);
 
 //
 // This macro uses private information from the ntos\ex module. It should be
 // replaced with an inter-module define or function
 //
-#define OBJECT_FROM_EX_TABLE_ENTRY(x) \
-    (POBJECT_HEADER)((ULONG_PTR)(x)->Object & ~7)
+#define OBJECT_FROM_EX_TABLE_ENTRY(x) (POBJECT_HEADER)((ULONG_PTR)(x)->Object & ~7)
 
 #endif // DBG
-

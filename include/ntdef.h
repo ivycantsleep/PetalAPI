@@ -25,7 +25,7 @@ Revision History:
 #pragma once
 #endif
 
-#include <ctype.h>  // winnt ntndis
+#include <ctype.h> // winnt ntndis
 
 // begin_ntminiport begin_ntndis begin_ntminitape
 
@@ -50,7 +50,7 @@ Revision History:
 #endif
 
 #ifndef ANYSIZE_ARRAY
-#define ANYSIZE_ARRAY 1       // winnt
+#define ANYSIZE_ARRAY 1 // winnt
 #endif
 
 // begin_winnt
@@ -89,23 +89,27 @@ Revision History:
 
 #ifdef __cplusplus
 #if _MSC_VER >= 1300
-#define TYPE_ALIGNMENT( t ) __alignof(t)
+#define TYPE_ALIGNMENT(t) __alignof(t)
 #endif
 #else
-#define TYPE_ALIGNMENT( t ) \
-    FIELD_OFFSET( struct { char x; t test; }, test )
+#define TYPE_ALIGNMENT(t) \
+    FIELD_OFFSET(         \
+        struct {          \
+            char x;       \
+            t test;       \
+        },                \
+        test)
 #endif
 
 #if defined(_WIN64)
 
-#define PROBE_ALIGNMENT( _s ) (TYPE_ALIGNMENT( _s ) > TYPE_ALIGNMENT( ULONG ) ? \
-                               TYPE_ALIGNMENT( _s ) : TYPE_ALIGNMENT( ULONG ))
+#define PROBE_ALIGNMENT(_s) (TYPE_ALIGNMENT(_s) > TYPE_ALIGNMENT(ULONG) ? TYPE_ALIGNMENT(_s) : TYPE_ALIGNMENT(ULONG))
 
-#define PROBE_ALIGNMENT32( _s ) TYPE_ALIGNMENT( ULONG )
+#define PROBE_ALIGNMENT32(_s) TYPE_ALIGNMENT(ULONG)
 
 #else
 
-#define PROBE_ALIGNMENT( _s ) TYPE_ALIGNMENT( ULONG )
+#define PROBE_ALIGNMENT(_s) TYPE_ALIGNMENT(ULONG)
 
 #endif
 
@@ -116,9 +120,10 @@ Revision History:
 // An assertion failure results in error C2118: negative subscript.
 //
 
-#define C_ASSERT(e) typedef char __C_ASSERT__[(e)?1:-1]
+#define C_ASSERT(e) typedef char __C_ASSERT__[(e) ? 1 : -1]
 
-#if !defined(_MAC) && (defined(_M_MRX000) || defined(_M_AMD64) || defined(_M_IA64)) && (_MSC_VER >= 1100) && !(defined(MIDL_PASS) || defined(RC_INVOKED))
+#if !defined(_MAC) && (defined(_M_MRX000) || defined(_M_AMD64) || defined(_M_IA64)) && (_MSC_VER >= 1100) && \
+    !(defined(MIDL_PASS) || defined(RC_INVOKED))
 #define POINTER_64 __ptr64
 typedef unsigned __int64 POINTER_64_INT;
 #if defined(_WIN64)
@@ -148,7 +153,7 @@ typedef unsigned long POINTER_64_INT;
 // end_winnt
 
 #ifndef CONST
-#define CONST               const
+#define CONST const
 #endif
 
 // begin_winnt
@@ -161,7 +166,7 @@ typedef unsigned long POINTER_64_INT;
 
 #ifndef DECLSPEC_NORETURN
 #if (_MSC_VER >= 1200) && !defined(MIDL_PASS)
-#define DECLSPEC_NORETURN   __declspec(noreturn)
+#define DECLSPEC_NORETURN __declspec(noreturn)
 #else
 #define DECLSPEC_NORETURN
 #endif
@@ -169,7 +174,7 @@ typedef unsigned long POINTER_64_INT;
 
 #ifndef DECLSPEC_ALIGN
 #if (_MSC_VER >= 1300) && !defined(MIDL_PASS)
-#define DECLSPEC_ALIGN(x)   __declspec(align(x))
+#define DECLSPEC_ALIGN(x) __declspec(align(x))
 #else
 #define DECLSPEC_ALIGN(x)
 #endif
@@ -180,8 +185,8 @@ typedef unsigned long POINTER_64_INT;
 #endif
 
 #ifndef DECLSPEC_UUID
-#if (_MSC_VER >= 1100) && defined (__cplusplus)
-#define DECLSPEC_UUID(x)    __declspec(uuid(x))
+#if (_MSC_VER >= 1100) && defined(__cplusplus)
+#define DECLSPEC_UUID(x) __declspec(uuid(x))
 #else
 #define DECLSPEC_UUID(x)
 #endif
@@ -189,7 +194,7 @@ typedef unsigned long POINTER_64_INT;
 
 #ifndef DECLSPEC_NOVTABLE
 #if (_MSC_VER >= 1100) && defined(__cplusplus)
-#define DECLSPEC_NOVTABLE   __declspec(novtable)
+#define DECLSPEC_NOVTABLE __declspec(novtable)
 #else
 #define DECLSPEC_NOVTABLE
 #endif
@@ -197,7 +202,7 @@ typedef unsigned long POINTER_64_INT;
 
 #ifndef DECLSPEC_SELECTANY
 #if (_MSC_VER >= 1100)
-#define DECLSPEC_SELECTANY  __declspec(selectany)
+#define DECLSPEC_SELECTANY __declspec(selectany)
 #else
 #define DECLSPEC_SELECTANY
 #endif
@@ -213,7 +218,7 @@ typedef unsigned long POINTER_64_INT;
 
 #ifndef DECLSPEC_ADDRSAFE
 #if (_MSC_VER >= 1200) && (defined(_M_ALPHA) || defined(_M_AXP64))
-#define DECLSPEC_ADDRSAFE  __declspec(address_safe)
+#define DECLSPEC_ADDRSAFE __declspec(address_safe)
 #else
 #define DECLSPEC_ADDRSAFE
 #endif
@@ -229,11 +234,11 @@ typedef unsigned long POINTER_64_INT;
 
 #ifndef DECLSPEC_DEPRECATED
 #if (_MSC_VER >= 1300) && !defined(MIDL_PASS)
-#define DECLSPEC_DEPRECATED   __declspec(deprecated)
+#define DECLSPEC_DEPRECATED __declspec(deprecated)
 #define DEPRECATE_SUPPORTED
 #else
 #define DECLSPEC_DEPRECATED
-#undef  DEPRECATE_SUPPORTED
+#undef DEPRECATE_SUPPORTED
 #endif
 #endif
 
@@ -260,7 +265,7 @@ typedef unsigned long POINTER_64_INT;
 // begin_winnt
 
 typedef void *PVOID;
-typedef void * POINTER_64 PVOID64;
+typedef void *POINTER_64 PVOID64;
 
 // end_winnt
 
@@ -286,7 +291,7 @@ typedef void * POINTER_64 PVOID64;
 //
 
 #if !defined(_NTSYSTEM_)
-#define NTSYSAPI     DECLSPEC_IMPORT
+#define NTSYSAPI DECLSPEC_IMPORT
 #define NTSYSCALLAPI DECLSPEC_IMPORT
 #else
 #define NTSYSAPI
@@ -318,10 +323,10 @@ typedef long LONG;
 //
 
 #ifndef _MAC
-typedef wchar_t WCHAR;    // wc,   16-bit UNICODE character
+typedef wchar_t WCHAR; // wc,   16-bit UNICODE character
 #else
 // some Macintosh compilers don't define wchar_t in a convenient location, or define it as a char
-typedef unsigned short WCHAR;    // wc,   16-bit UNICODE character
+typedef unsigned short WCHAR; // wc,   16-bit UNICODE character
 #endif
 
 typedef WCHAR *PWCHAR;
@@ -348,7 +353,7 @@ typedef CONST CHAR *LPCSTR, *PCSTR;
 //
 // Neutral ANSI/UNICODE types and macros
 //
-#ifdef  UNICODE                     // r_winnt
+#ifdef UNICODE // r_winnt
 
 #ifndef _TCHAR_DEFINED
 typedef WCHAR TCHAR, *PTCHAR;
@@ -362,41 +367,42 @@ typedef LPCWSTR PCTSTR, LPCTSTR;
 typedef LPUWSTR PUTSTR, LPUTSTR;
 typedef LPCUWSTR PCUTSTR, LPCUTSTR;
 typedef LPWSTR LP;
-#define __TEXT(quote) L##quote      // r_winnt
+#define __TEXT(quote) L##quote // r_winnt
 
-#else   /* UNICODE */               // r_winnt
+#else /* UNICODE */ // r_winnt
 
 #ifndef _TCHAR_DEFINED
 typedef char TCHAR, *PTCHAR;
 typedef unsigned char TUCHAR, *PTUCHAR;
 #define _TCHAR_DEFINED
-#endif /* !_TCHAR_DEFINED */
+#endif                      /* !_TCHAR_DEFINED */
 
 typedef LPSTR LPTCH, PTCH;
 typedef LPSTR PTSTR, LPTSTR, PUTSTR, LPUTSTR;
 typedef LPCSTR PCTSTR, LPCTSTR, PCUTSTR, LPCUTSTR;
-#define __TEXT(quote) quote         // r_winnt
+#define __TEXT(quote) quote // r_winnt
 
-#endif /* UNICODE */                // r_winnt
-#define TEXT(quote) __TEXT(quote)   // r_winnt
+#endif /* UNICODE */              // r_winnt
+#define TEXT(quote) __TEXT(quote) // r_winnt
 
 
 // end_winnt
 
 typedef double DOUBLE;
 
-typedef struct _QUAD {              // QUAD is for those times we want
-    double  DoNotUseThisField;      // an 8 byte aligned 8 byte long structure
-} QUAD;                             // which is NOT really a floating point
-                                    // number.  Use DOUBLE if you want an FP
-                                    // number.
+typedef struct _QUAD
+{                             // QUAD is for those times we want
+    double DoNotUseThisField; // an 8 byte aligned 8 byte long structure
+} QUAD;                       // which is NOT really a floating point
+                              // number.  Use DOUBLE if you want an FP
+                              // number.
 
 //
 // Pointer to Basics
 //
 
-typedef SHORT *PSHORT;  // winnt
-typedef LONG *PLONG;    // winnt
+typedef SHORT *PSHORT; // winnt
+typedef LONG *PLONG;   // winnt
 typedef QUAD *PQUAD;
 
 //
@@ -441,7 +447,12 @@ typedef SCHAR *PSCHAR;
 
 #ifdef STRICT
 typedef void *HANDLE;
-#define DECLARE_HANDLE(name) struct name##__ { int unused; }; typedef struct name##__ *name
+#define DECLARE_HANDLE(name) \
+    struct name##__          \
+    {                        \
+        int unused;          \
+    };                       \
+    typedef struct name##__ *name
 #else
 typedef PVOID HANDLE;
 #define DECLARE_HANDLE(name) typedef HANDLE name
@@ -452,9 +463,9 @@ typedef HANDLE *PHANDLE;
 // Flag (bit) fields
 //
 
-typedef UCHAR  FCHAR;
+typedef UCHAR FCHAR;
 typedef USHORT FSHORT;
-typedef ULONG  FLONG;
+typedef ULONG FLONG;
 
 // Component Object Model defines, and macros
 
@@ -465,9 +476,9 @@ typedef LONG HRESULT;
 #endif // !_HRESULT_DEFINED
 
 #ifdef __cplusplus
-    #define EXTERN_C    extern "C"
+#define EXTERN_C extern "C"
 #else
-    #define EXTERN_C    extern
+#define EXTERN_C extern
 #endif
 
 #if defined(_WIN32) || defined(_MPPC_)
@@ -475,39 +486,39 @@ typedef LONG HRESULT;
 // Win32 doesn't support __export
 
 #ifdef _68K_
-#define STDMETHODCALLTYPE       __cdecl
+#define STDMETHODCALLTYPE __cdecl
 #else
-#define STDMETHODCALLTYPE       __stdcall
+#define STDMETHODCALLTYPE __stdcall
 #endif
-#define STDMETHODVCALLTYPE      __cdecl
+#define STDMETHODVCALLTYPE __cdecl
 
-#define STDAPICALLTYPE          __stdcall
-#define STDAPIVCALLTYPE         __cdecl
+#define STDAPICALLTYPE __stdcall
+#define STDAPIVCALLTYPE __cdecl
 
 #else
 
-#define STDMETHODCALLTYPE       __export __stdcall
-#define STDMETHODVCALLTYPE      __export __cdecl
+#define STDMETHODCALLTYPE __export __stdcall
+#define STDMETHODVCALLTYPE __export __cdecl
 
-#define STDAPICALLTYPE          __export __stdcall
-#define STDAPIVCALLTYPE         __export __cdecl
+#define STDAPICALLTYPE __export __stdcall
+#define STDAPIVCALLTYPE __export __cdecl
 
 #endif
 
 
-#define STDAPI                  EXTERN_C HRESULT STDAPICALLTYPE
-#define STDAPI_(type)           EXTERN_C type STDAPICALLTYPE
+#define STDAPI EXTERN_C HRESULT STDAPICALLTYPE
+#define STDAPI_(type) EXTERN_C type STDAPICALLTYPE
 
-#define STDMETHODIMP            HRESULT STDMETHODCALLTYPE
-#define STDMETHODIMP_(type)     type STDMETHODCALLTYPE
+#define STDMETHODIMP HRESULT STDMETHODCALLTYPE
+#define STDMETHODIMP_(type) type STDMETHODCALLTYPE
 
 // The 'V' versions allow Variable Argument lists.
 
-#define STDAPIV                 EXTERN_C HRESULT STDAPIVCALLTYPE
-#define STDAPIV_(type)          EXTERN_C type STDAPIVCALLTYPE
+#define STDAPIV EXTERN_C HRESULT STDAPIVCALLTYPE
+#define STDAPIV_(type) EXTERN_C type STDAPIVCALLTYPE
 
-#define STDMETHODIMPV           HRESULT STDMETHODVCALLTYPE
-#define STDMETHODIMPV_(type)    type STDMETHODVCALLTYPE
+#define STDMETHODIMPV HRESULT STDMETHODVCALLTYPE
+#define STDMETHODIMPV_(type) type STDMETHODVCALLTYPE
 
 // end_winnt
 
@@ -518,13 +529,13 @@ typedef LONG HRESULT;
 // and used to store a serial number and table index.
 //
 
-#define OBJ_HANDLE_TAGBITS  0x00000003L
+#define OBJ_HANDLE_TAGBITS 0x00000003L
 
 //
 // Cardinal Data Types [0 - 2**N-2)
 //
 
-typedef char CCHAR;          // winnt
+typedef char CCHAR; // winnt
 typedef short CSHORT;
 typedef ULONG CLONG;
 
@@ -538,9 +549,9 @@ typedef CLONG *PCLONG;
 // NLS basics (Locale and Language Ids)
 //
 
-typedef ULONG LCID;         // winnt
-typedef PULONG PLCID;       // winnt
-typedef USHORT LANGID;      // winnt
+typedef ULONG LCID;    // winnt
+typedef PULONG PLCID;  // winnt
+typedef USHORT LANGID; // winnt
 
 //
 // Logical Data Type - These are 32-bit logical values.
@@ -555,9 +566,9 @@ typedef ULONG *PLOGICAL;
 //
 
 typedef LONG NTSTATUS;
-/*lint -save -e624 */  // Don't complain about different typedefs.
+/*lint -save -e624 */ // Don't complain about different typedefs.
 typedef NTSTATUS *PNTSTATUS;
-/*lint -restore */  // Resume checking for different typedefs.
+/*lint -restore */ // Resume checking for different typedefs.
 
 //
 //  Status values are 32 bit values layed out as follows:
@@ -611,11 +622,11 @@ typedef NTSTATUS *PNTSTATUS;
 
 // end_windbgkd
 // begin_winnt
-#define APPLICATION_ERROR_MASK       0x20000000
-#define ERROR_SEVERITY_SUCCESS       0x00000000
+#define APPLICATION_ERROR_MASK 0x20000000
+#define ERROR_SEVERITY_SUCCESS 0x00000000
 #define ERROR_SEVERITY_INFORMATIONAL 0x40000000
-#define ERROR_SEVERITY_WARNING       0x80000000
-#define ERROR_SEVERITY_ERROR         0xC0000000
+#define ERROR_SEVERITY_WARNING 0x80000000
+#define ERROR_SEVERITY_ERROR 0xC0000000
 // end_winnt
 
 #ifndef __SECSTATUS_DEFINED__
@@ -654,7 +665,8 @@ typedef long SECURITY_STATUS;
 #if defined(_M_IA64) && !defined(MIDL_PASS)
 __declspec(align(16))
 #endif
-typedef struct _FLOAT128 {
+typedef struct _FLOAT128
+{
     __int64 LowPart;
     __int64 HighPart;
 } FLOAT128;
@@ -672,18 +684,19 @@ typedef FLOAT128 *PFLOAT128;
 //
 
 #define _ULONGLONG_
-#if (!defined (_MAC) && (!defined(MIDL_PASS) || defined(__midl)) && (!defined(_M_IX86) || (defined(_INTEGRAL_MAX_BITS) && _INTEGRAL_MAX_BITS >= 64)))
+#if (!defined(_MAC) && (!defined(MIDL_PASS) || defined(__midl)) && \
+     (!defined(_M_IX86) || (defined(_INTEGRAL_MAX_BITS) && _INTEGRAL_MAX_BITS >= 64)))
 typedef __int64 LONGLONG;
 typedef unsigned __int64 ULONGLONG;
 
-#define MAXLONGLONG                      (0x7fffffffffffffff)
+#define MAXLONGLONG (0x7fffffffffffffff)
 #else
 
 #if defined(_MAC) && defined(_MAC_INT_64)
 typedef __int64 LONGLONG;
 typedef unsigned __int64 ULONGLONG;
 
-#define MAXLONGLONG                      (0x7fffffffffffffff)
+#define MAXLONGLONG (0x7fffffffffffffff)
 #else
 typedef double LONGLONG;
 typedef double ULONGLONG;
@@ -699,14 +712,18 @@ typedef ULONGLONG *PULONGLONG;
 typedef LONGLONG USN;
 
 #if defined(MIDL_PASS)
-typedef struct _LARGE_INTEGER {
-#else // MIDL_PASS
-typedef union _LARGE_INTEGER {
-    struct {
+typedef struct _LARGE_INTEGER
+{
+#else  // MIDL_PASS
+typedef union _LARGE_INTEGER
+{
+    struct
+    {
         ULONG LowPart;
         LONG HighPart;
     };
-    struct {
+    struct
+    {
         ULONG LowPart;
         LONG HighPart;
     } u;
@@ -717,14 +734,18 @@ typedef union _LARGE_INTEGER {
 typedef LARGE_INTEGER *PLARGE_INTEGER;
 
 #if defined(MIDL_PASS)
-typedef struct _ULARGE_INTEGER {
-#else // MIDL_PASS
-typedef union _ULARGE_INTEGER {
-    struct {
+typedef struct _ULARGE_INTEGER
+{
+#else  // MIDL_PASS
+typedef union _ULARGE_INTEGER
+{
+    struct
+    {
         ULONG LowPart;
         ULONG HighPart;
     };
-    struct {
+    struct
+    {
         ULONG LowPart;
         ULONG HighPart;
     } u;
@@ -741,13 +762,14 @@ typedef ULARGE_INTEGER *PULARGE_INTEGER;
 // Locally Unique Identifier
 //
 
-typedef struct _LUID {
+typedef struct _LUID
+{
     ULONG LowPart;
     LONG HighPart;
 } LUID, *PLUID;
 
 #define _DWORDLONG_
-typedef ULONGLONG  DWORDLONG;
+typedef ULONGLONG DWORDLONG;
 typedef DWORDLONG *PDWORDLONG;
 
 // end_winnt
@@ -798,46 +820,32 @@ typedef LARGE_INTEGER PHYSICAL_ADDRESS, *PPHYSICAL_ADDRESS;
 #define Int64ShraMod32 __ll_rshift
 #define Int64ShrlMod32 __ull_rshift
 
-#if defined (__cplusplus)
-extern "C" {
+#if defined(__cplusplus)
+extern "C"
+{
 #endif
 
-LONGLONG
-NTAPI
-Int32x32To64 (
-    LONG Multiplier,
-    LONG Multiplicand
-    );
+    LONGLONG
+    NTAPI
+    Int32x32To64(LONG Multiplier, LONG Multiplicand);
 
-ULONGLONG
-NTAPI
-UInt32x32To64 (
-    ULONG Multiplier,
-    ULONG Multiplicand
-    );
+    ULONGLONG
+    NTAPI
+    UInt32x32To64(ULONG Multiplier, ULONG Multiplicand);
 
-ULONGLONG
-NTAPI
-Int64ShllMod32 (
-    ULONGLONG Value,
-    ULONG ShiftCount
-    );
+    ULONGLONG
+    NTAPI
+    Int64ShllMod32(ULONGLONG Value, ULONG ShiftCount);
 
-LONGLONG
-NTAPI
-Int64ShraMod32 (
-    LONGLONG Value,
-    ULONG ShiftCount
-    );
+    LONGLONG
+    NTAPI
+    Int64ShraMod32(LONGLONG Value, ULONG ShiftCount);
 
-ULONGLONG
-NTAPI
-Int64ShrlMod32 (
-    ULONGLONG Value,
-    ULONG ShiftCount
-    );
+    ULONGLONG
+    NTAPI
+    Int64ShrlMod32(ULONGLONG Value, ULONG ShiftCount);
 
-#if defined (__cplusplus)
+#if defined(__cplusplus)
 };
 #endif
 
@@ -857,43 +865,29 @@ Int64ShrlMod32 (
 // generate the optimal code inline.
 //
 
-#define Int32x32To64( a, b ) (LONGLONG)((LONGLONG)(LONG)(a) * (LONG)(b))
-#define UInt32x32To64( a, b ) (ULONGLONG)((ULONGLONG)(ULONG)(a) * (ULONG)(b))
+#define Int32x32To64(a, b) (LONGLONG)((LONGLONG)(LONG)(a) * (LONG)(b))
+#define UInt32x32To64(a, b) (ULONGLONG)((ULONGLONG)(ULONG)(a) * (ULONG)(b))
 
 ULONGLONG
 NTAPI
-Int64ShllMod32 (
-    ULONGLONG Value,
-    ULONG ShiftCount
-    );
+Int64ShllMod32(ULONGLONG Value, ULONG ShiftCount);
 
 LONGLONG
 NTAPI
-Int64ShraMod32 (
-    LONGLONG Value,
-    ULONG ShiftCount
-    );
+Int64ShraMod32(LONGLONG Value, ULONG ShiftCount);
 
 ULONGLONG
 NTAPI
-Int64ShrlMod32 (
-    ULONGLONG Value,
-    ULONG ShiftCount
-    );
+Int64ShrlMod32(ULONGLONG Value, ULONG ShiftCount);
 
 #if _MSC_VER >= 1200
 #pragma warning(push)
 #endif
-#pragma warning(disable:4035)               // re-enable below
+#pragma warning(disable : 4035) // re-enable below
 
-__inline ULONGLONG
-NTAPI
-Int64ShllMod32 (
-    ULONGLONG Value,
-    ULONG ShiftCount
-    )
+__inline ULONGLONG NTAPI Int64ShllMod32(ULONGLONG Value, ULONG ShiftCount)
 {
-    __asm    {
+    __asm {
         mov     ecx, ShiftCount
         mov     eax, dword ptr [Value]
         mov     edx, dword ptr [Value+4]
@@ -902,12 +896,7 @@ Int64ShllMod32 (
     }
 }
 
-__inline LONGLONG
-NTAPI
-Int64ShraMod32 (
-    LONGLONG Value,
-    ULONG ShiftCount
-    )
+__inline LONGLONG NTAPI Int64ShraMod32(LONGLONG Value, ULONG ShiftCount)
 {
     __asm {
         mov     ecx, ShiftCount
@@ -918,14 +907,9 @@ Int64ShraMod32 (
     }
 }
 
-__inline ULONGLONG
-NTAPI
-Int64ShrlMod32 (
-    ULONGLONG Value,
-    ULONG ShiftCount
-    )
+__inline ULONGLONG NTAPI Int64ShrlMod32(ULONGLONG Value, ULONG ShiftCount)
 {
-    __asm    {
+    __asm {
         mov     ecx, ShiftCount
         mov     eax, dword ptr [Value]
         mov     edx, dword ptr [Value+4]
@@ -937,7 +921,7 @@ Int64ShrlMod32 (
 #if _MSC_VER >= 1200
 #pragma warning(pop)
 #else
-#pragma warning(default:4035)
+#pragma warning(default : 4035)
 #endif
 
 #elif defined(_M_ALPHA)
@@ -1007,28 +991,31 @@ Int64ShrlMod32 (
 // Event type
 //
 
-typedef enum _EVENT_TYPE {
+typedef enum _EVENT_TYPE
+{
     NotificationEvent,
     SynchronizationEvent
-    } EVENT_TYPE;
+} EVENT_TYPE;
 
 //
 // Timer type
 //
 
-typedef enum _TIMER_TYPE {
+typedef enum _TIMER_TYPE
+{
     NotificationTimer,
     SynchronizationTimer
-    } TIMER_TYPE;
+} TIMER_TYPE;
 
 //
 // Wait type
 //
 
-typedef enum _WAIT_TYPE {
+typedef enum _WAIT_TYPE
+{
     WaitAll,
     WaitAny
-    } WAIT_TYPE;
+} WAIT_TYPE;
 
 //
 // Pointer to an Asciiz string
@@ -1044,13 +1031,14 @@ typedef CONST char *PCSZ;
 
 typedef USHORT RTL_STRING_LENGTH_TYPE;
 
-typedef struct _STRING {
+typedef struct _STRING
+{
     USHORT Length;
     USHORT MaximumLength;
 #ifdef MIDL_PASS
-    [size_is(MaximumLength), length_is(Length) ]
+    [size_is(MaximumLength), length_is(Length)]
 #endif // MIDL_PASS
-    PCHAR Buffer;
+        PCHAR Buffer;
 } STRING;
 typedef STRING *PSTRING;
 
@@ -1059,19 +1047,20 @@ typedef PSTRING PANSI_STRING;
 
 typedef STRING OEM_STRING;
 typedef PSTRING POEM_STRING;
-typedef CONST STRING* PCOEM_STRING;
+typedef CONST STRING *PCOEM_STRING;
 
 //
 // CONSTCounted String
 //
 
-typedef struct _CSTRING {
+typedef struct _CSTRING
+{
     USHORT Length;
     USHORT MaximumLength;
     CONST char *Buffer;
 } CSTRING;
 typedef CSTRING *PCSTRING;
-#define ANSI_NULL ((CHAR)0)     // winnt
+#define ANSI_NULL ((CHAR)0) // winnt
 
 typedef STRING CANSI_STRING;
 typedef PSTRING PCANSI_STRING;
@@ -1081,13 +1070,14 @@ typedef PSTRING PCANSI_STRING;
 // NULL terminated, Length does not include trailing NULL.
 //
 
-typedef struct _UNICODE_STRING {
+typedef struct _UNICODE_STRING
+{
     USHORT Length;
     USHORT MaximumLength;
 #ifdef MIDL_PASS
-    [size_is(MaximumLength / 2), length_is((Length) / 2) ] USHORT * Buffer;
-#else // MIDL_PASS
-    PWSTR  Buffer;
+    [size_is(MaximumLength / 2), length_is((Length) / 2)] USHORT *Buffer;
+#else  // MIDL_PASS
+    PWSTR Buffer;
 #endif // MIDL_PASS
 } UNICODE_STRING;
 typedef UNICODE_STRING *PUNICODE_STRING;
@@ -1096,12 +1086,13 @@ typedef const UNICODE_STRING *PCUNICODE_STRING;
 
 #if _WIN32_WINNT >= 0x0501
 
-#define UNICODE_STRING_MAX_BYTES ((USHORT) 65534) // winnt
-#define UNICODE_STRING_MAX_CHARS (32767) // winnt
+#define UNICODE_STRING_MAX_BYTES ((USHORT)65534) // winnt
+#define UNICODE_STRING_MAX_CHARS (32767)         // winnt
 
-#define DECLARE_CONST_UNICODE_STRING(_variablename, _string) \
-const WCHAR _variablename ## _buffer[] = _string; \
-const UNICODE_STRING _variablename = { sizeof(_string) - sizeof(WCHAR), sizeof(_string), (PWSTR) _variablename ## _buffer };
+#define DECLARE_CONST_UNICODE_STRING(_variablename, _string)                                 \
+    const WCHAR _variablename##_buffer[] = _string;                                          \
+    const UNICODE_STRING _variablename = { sizeof(_string) - sizeof(WCHAR), sizeof(_string), \
+                                           (PWSTR)_variablename##_buffer };
 
 #endif // _WIN32_WINNT >= 0x0501
 
@@ -1111,8 +1102,8 @@ const UNICODE_STRING _variablename = { sizeof(_string) - sizeof(WCHAR), sizeof(_
 // Boolean
 //
 
-typedef UCHAR BOOLEAN;           // winnt
-typedef BOOLEAN *PBOOLEAN;       // winnt
+typedef UCHAR BOOLEAN;     // winnt
+typedef BOOLEAN *PBOOLEAN; // winnt
 
 // end_ntminiport end_ntminitape
 
@@ -1122,9 +1113,10 @@ typedef BOOLEAN *PBOOLEAN;       // winnt
 //  as link words.
 //
 
-typedef struct _LIST_ENTRY {
-   struct _LIST_ENTRY *Flink;
-   struct _LIST_ENTRY *Blink;
+typedef struct _LIST_ENTRY
+{
+    struct _LIST_ENTRY *Flink;
+    struct _LIST_ENTRY *Blink;
 } LIST_ENTRY, *PLIST_ENTRY, *RESTRICTED_POINTER PRLIST_ENTRY;
 
 //
@@ -1132,7 +1124,8 @@ typedef struct _LIST_ENTRY {
 //  as link words.
 //
 
-typedef struct _SINGLE_LIST_ENTRY {
+typedef struct _SINGLE_LIST_ENTRY
+{
     struct _SINGLE_LIST_ENTRY *Next;
 } SINGLE_LIST_ENTRY, *PSINGLE_LIST_ENTRY;
 // end_winnt end_ntndis
@@ -1143,13 +1136,15 @@ typedef struct _SINGLE_LIST_ENTRY {
 // These are needed for portable debugger support.
 //
 
-typedef struct LIST_ENTRY32 {
+typedef struct LIST_ENTRY32
+{
     ULONG Flink;
     ULONG Blink;
 } LIST_ENTRY32;
 typedef LIST_ENTRY32 *PLIST_ENTRY32;
 
-typedef struct LIST_ENTRY64 {
+typedef struct LIST_ENTRY64
+{
     ULONGLONG Flink;
     ULONGLONG Blink;
 } LIST_ENTRY64;
@@ -1159,33 +1154,24 @@ typedef LIST_ENTRY64 *PLIST_ENTRY64;
 
 
 #if !defined(MIDL_PASS)
-__inline
-void
-ListEntry32To64(
-    IN PLIST_ENTRY32 l32,
-    OUT PLIST_ENTRY64 l64
-    )
+__inline void ListEntry32To64(IN PLIST_ENTRY32 l32, OUT PLIST_ENTRY64 l64)
 {
     l64->Flink = (ULONGLONG)(LONGLONG)(LONG)l32->Flink;
     l64->Blink = (ULONGLONG)(LONGLONG)(LONG)l32->Blink;
 }
 
-__inline
-void
-ListEntry64To32(
-    IN PLIST_ENTRY64 l64,
-    OUT PLIST_ENTRY32 l32
-    )
+__inline void ListEntry64To32(IN PLIST_ENTRY64 l64, OUT PLIST_ENTRY32 l32)
 {
     l32->Flink = (ULONG)l64->Flink;
     l32->Blink = (ULONG)l64->Blink;
 }
 #endif
 
-typedef struct _STRING32 {
-    USHORT   Length;
-    USHORT   MaximumLength;
-    ULONG  Buffer;
+typedef struct _STRING32
+{
+    USHORT Length;
+    USHORT MaximumLength;
+    ULONG Buffer;
 } STRING32;
 typedef STRING32 *PSTRING32;
 
@@ -1196,10 +1182,11 @@ typedef STRING32 ANSI_STRING32;
 typedef ANSI_STRING32 *PANSI_STRING32;
 
 
-typedef struct _STRING64 {
-    USHORT   Length;
-    USHORT   MaximumLength;
-    ULONGLONG  Buffer;
+typedef struct _STRING64
+{
+    USHORT Length;
+    USHORT MaximumLength;
+    ULONGLONG Buffer;
 } STRING64;
 typedef STRING64 *PSTRING64;
 
@@ -1210,26 +1197,26 @@ typedef STRING64 ANSI_STRING64;
 typedef ANSI_STRING64 *PANSI_STRING64;
 
 
-
 //
 // Valid values for the Attributes field
 //
 
-#define OBJ_INHERIT             0x00000002L
-#define OBJ_PERMANENT           0x00000010L
-#define OBJ_EXCLUSIVE           0x00000020L
-#define OBJ_CASE_INSENSITIVE    0x00000040L
-#define OBJ_OPENIF              0x00000080L
-#define OBJ_OPENLINK            0x00000100L
-#define OBJ_KERNEL_HANDLE       0x00000200L
-#define OBJ_FORCE_ACCESS_CHECK  0x00000400L
-#define OBJ_VALID_ATTRIBUTES    0x000007F2L
+#define OBJ_INHERIT 0x00000002L
+#define OBJ_PERMANENT 0x00000010L
+#define OBJ_EXCLUSIVE 0x00000020L
+#define OBJ_CASE_INSENSITIVE 0x00000040L
+#define OBJ_OPENIF 0x00000080L
+#define OBJ_OPENLINK 0x00000100L
+#define OBJ_KERNEL_HANDLE 0x00000200L
+#define OBJ_FORCE_ACCESS_CHECK 0x00000400L
+#define OBJ_VALID_ATTRIBUTES 0x000007F2L
 
 //
 // Object Attributes structure
 //
 
-typedef struct _OBJECT_ATTRIBUTES64 {
+typedef struct _OBJECT_ATTRIBUTES64
+{
     ULONG Length;
     ULONG64 RootDirectory;
     ULONG64 ObjectName;
@@ -1240,7 +1227,8 @@ typedef struct _OBJECT_ATTRIBUTES64 {
 typedef OBJECT_ATTRIBUTES64 *POBJECT_ATTRIBUTES64;
 typedef CONST OBJECT_ATTRIBUTES64 *PCOBJECT_ATTRIBUTES64;
 
-typedef struct _OBJECT_ATTRIBUTES32 {
+typedef struct _OBJECT_ATTRIBUTES32
+{
     ULONG Length;
     ULONG RootDirectory;
     ULONG ObjectName;
@@ -1251,13 +1239,14 @@ typedef struct _OBJECT_ATTRIBUTES32 {
 typedef OBJECT_ATTRIBUTES32 *POBJECT_ATTRIBUTES32;
 typedef CONST OBJECT_ATTRIBUTES32 *PCOBJECT_ATTRIBUTES32;
 
-typedef struct _OBJECT_ATTRIBUTES {
+typedef struct _OBJECT_ATTRIBUTES
+{
     ULONG Length;
     HANDLE RootDirectory;
     PUNICODE_STRING ObjectName;
     ULONG Attributes;
-    PVOID SecurityDescriptor;        // Points to type SECURITY_DESCRIPTOR
-    PVOID SecurityQualityOfService;  // Points to type SECURITY_QUALITY_OF_SERVICE
+    PVOID SecurityDescriptor;       // Points to type SECURITY_DESCRIPTOR
+    PVOID SecurityQualityOfService; // Points to type SECURITY_QUALITY_OF_SERVICE
 } OBJECT_ATTRIBUTES;
 typedef OBJECT_ATTRIBUTES *POBJECT_ATTRIBUTES;
 typedef CONST OBJECT_ATTRIBUTES *PCOBJECT_ATTRIBUTES;
@@ -1275,13 +1264,14 @@ typedef CONST OBJECT_ATTRIBUTES *PCOBJECT_ATTRIBUTES;
 //
 //--
 
-#define InitializeObjectAttributes( p, n, a, r, s ) { \
-    (p)->Length = sizeof( OBJECT_ATTRIBUTES );          \
-    (p)->RootDirectory = r;                             \
-    (p)->Attributes = a;                                \
-    (p)->ObjectName = n;                                \
-    (p)->SecurityDescriptor = s;                        \
-    (p)->SecurityQualityOfService = NULL;               \
+#define InitializeObjectAttributes(p, n, a, r, s) \
+    {                                             \
+        (p)->Length = sizeof(OBJECT_ATTRIBUTES);  \
+        (p)->RootDirectory = r;                   \
+        (p)->Attributes = a;                      \
+        (p)->ObjectName = n;                      \
+        (p)->SecurityDescriptor = s;              \
+        (p)->SecurityQualityOfService = NULL;     \
     }
 
 // RTL_ to avoid collisions in the global namespace.
@@ -1300,16 +1290,16 @@ typedef CONST OBJECT_ATTRIBUTES *PCOBJECT_ATTRIBUTES;
 // Constants
 //
 
-#define FALSE   0
-#define TRUE    1
+#define FALSE 0
+#define TRUE 1
 
 #ifndef NULL
 #ifdef __cplusplus
-#define NULL    0
-#define NULL64  0
+#define NULL 0
+#define NULL64 0
 #else
-#define NULL    ((void *)0)
-#define NULL64  ((void * POINTER_64)0)
+#define NULL ((void *)0)
+#define NULL64 ((void *POINTER_64)0)
 #endif
 #endif // NULL
 
@@ -1322,7 +1312,8 @@ typedef CONST OBJECT_ATTRIBUTES *PCOBJECT_ATTRIBUTES;
 #ifndef __OBJECTID_DEFINED
 #define __OBJECTID_DEFINED
 
-typedef struct  _OBJECTID {     // size is 20
+typedef struct _OBJECTID
+{ // size is 20
     GUID Lineage;
     ULONG Uniquifier;
 } OBJECTID;
@@ -1331,15 +1322,15 @@ typedef struct  _OBJECTID {     // size is 20
 // end_winnt end_ntndis
 
 
-#define MINCHAR     0x80        // winnt
-#define MAXCHAR     0x7f        // winnt
-#define MINSHORT    0x8000      // winnt
-#define MAXSHORT    0x7fff      // winnt
-#define MINLONG     0x80000000  // winnt
-#define MAXLONG     0x7fffffff  // winnt
-#define MAXUCHAR    0xff        // winnt
-#define MAXUSHORT   0xffff      // winnt
-#define MAXULONG    0xffffffff  // winnt
+#define MINCHAR 0x80        // winnt
+#define MAXCHAR 0x7f        // winnt
+#define MINSHORT 0x8000     // winnt
+#define MAXSHORT 0x7fff     // winnt
+#define MINLONG 0x80000000  // winnt
+#define MAXLONG 0x7fffffff  // winnt
+#define MAXUCHAR 0xff       // winnt
+#define MAXUSHORT 0xffff    // winnt
+#define MAXULONG 0xffffffff // winnt
 
 //
 // Useful Helper Macros
@@ -1351,17 +1342,16 @@ typedef struct  _OBJECTID {     // size is 20
 // to the argument value.
 //
 
-#define ARGUMENT_PRESENT(ArgumentPointer)    (\
-    (CHAR *)(ArgumentPointer) != (CHAR *)(NULL) )
+#define ARGUMENT_PRESENT(ArgumentPointer) ((CHAR *)(ArgumentPointer) != (CHAR *)(NULL))
 
 // begin_winnt begin_ntminiport
 //
 // Calculate the byte offset of a field in a structure of type type.
 //
 
-#define FIELD_OFFSET(type, field)    ((LONG)(LONG_PTR)&(((type *)0)->field))
+#define FIELD_OFFSET(type, field) ((LONG)(LONG_PTR) & (((type *)0)->field))
 
-#if(_WIN32_WINNT > 0x0500)
+#if (_WIN32_WINNT > 0x0500)
 
 //
 // Calculate the size of a field in a structure of type type, without
@@ -1373,8 +1363,7 @@ typedef struct  _OBJECTID {     // size is 20
 // Calculate the size of a structure of type type up through and
 // including a field.
 //
-#define RTL_SIZEOF_THROUGH_FIELD(type, field) \
-    (FIELD_OFFSET(type, field) + RTL_FIELD_SIZE(type, field))
+#define RTL_SIZEOF_THROUGH_FIELD(type, field) (FIELD_OFFSET(type, field) + RTL_FIELD_SIZE(type, field))
 
 //
 //  RTL_CONTAINS_FIELD usage:
@@ -1382,7 +1371,7 @@ typedef struct  _OBJECTID {     // size is 20
 //      if (RTL_CONTAINS_FIELD(pBlock, pBlock->cbSize, dwMumble)) { // safe to use pBlock->dwMumble
 //
 #define RTL_CONTAINS_FIELD(Struct, Size, Field) \
-    ( (((PCHAR)(&(Struct)->Field)) + sizeof((Struct)->Field)) <= (((PCHAR)(Struct))+(Size)) )
+    ((((PCHAR)(&(Struct)->Field)) + sizeof((Struct)->Field)) <= (((PCHAR)(Struct)) + (Size)))
 
 //
 // Return the number of elements in a statically sized array.
@@ -1390,12 +1379,12 @@ typedef struct  _OBJECTID {     // size is 20
 //   RTL_NUMBER_OF(Buffer) == 100
 // This is also popularly known as: NUMBER_OF, ARRSIZE, _countof, NELEM, etc.
 //
-#define RTL_NUMBER_OF(A) (sizeof(A)/sizeof((A)[0]))
+#define RTL_NUMBER_OF(A) (sizeof(A) / sizeof((A)[0]))
 
 //
 // An expression that yields the type of a field in a struct.
 //
-#define RTL_FIELD_TYPE(type, field) (((type*)0)->field)
+#define RTL_FIELD_TYPE(type, field) (((type *)0)->field)
 
 // RTL_ to avoid collisions in the global namespace.
 //
@@ -1413,10 +1402,10 @@ typedef struct  _OBJECTID {     // size is 20
 //
 // RTL_PADDING_BETWEEN_FIELDS(FOO, Integer, Pointer) == 0 for Win32, 4 for Win64
 //
-#define RTL_PADDING_BETWEEN_FIELDS(T, F1, F2) \
-    ((FIELD_OFFSET(T, F2) > FIELD_OFFSET(T, F1)) \
-        ? (FIELD_OFFSET(T, F2) - FIELD_OFFSET(T, F1) - RTL_FIELD_SIZE(T, F1)) \
-        : (FIELD_OFFSET(T, F1) - FIELD_OFFSET(T, F2) - RTL_FIELD_SIZE(T, F2)))
+#define RTL_PADDING_BETWEEN_FIELDS(T, F1, F2)                                  \
+    ((FIELD_OFFSET(T, F2) > FIELD_OFFSET(T, F1))                               \
+         ? (FIELD_OFFSET(T, F2) - FIELD_OFFSET(T, F1) - RTL_FIELD_SIZE(T, F1)) \
+         : (FIELD_OFFSET(T, F1) - FIELD_OFFSET(T, F2) - RTL_FIELD_SIZE(T, F2)))
 
 // RTL_ to avoid collisions in the global namespace.
 #if defined(__cplusplus)
@@ -1437,7 +1426,7 @@ typedef struct  _OBJECTID {     // size is 20
 //   RtlInitUnicodeString(&FooU, L"Foo");
 //          RtlInitString(&Foo ,  "Foo");
 //
-#define RTL_CONSTANT_STRING(s) { sizeof( s ) - sizeof( (s)[0] ), sizeof( s ), s }
+#define RTL_CONSTANT_STRING(s) { sizeof(s) - sizeof((s)[0]), sizeof(s), s }
 // begin_winnt
 
 // like sizeof
@@ -1453,9 +1442,7 @@ typedef struct  _OBJECTID {     // size is 20
 // address of a field within the structure.
 //
 
-#define CONTAINING_RECORD(address, type, field) ((type *)( \
-                                                  (PCHAR)(address) - \
-                                                  (ULONG_PTR)(&((type *)0)->field)))
+#define CONTAINING_RECORD(address, type, field) ((type *)((PCHAR)(address) - (ULONG_PTR)(&((type *)0)->field)))
 
 // end_winnt end_ntminiport end_ntndis
 
@@ -1466,14 +1453,9 @@ typedef struct  _OBJECTID {     // size is 20
 struct _CONTEXT;
 struct _EXCEPTION_RECORD;
 
-typedef
-EXCEPTION_DISPOSITION
-(*PEXCEPTION_ROUTINE) (
-    IN struct _EXCEPTION_RECORD *ExceptionRecord,
-    IN PVOID EstablisherFrame,
-    IN OUT struct _CONTEXT *ContextRecord,
-    IN OUT PVOID DispatcherContext
-    );
+typedef EXCEPTION_DISPOSITION (*PEXCEPTION_ROUTINE)(IN struct _EXCEPTION_RECORD *ExceptionRecord,
+                                                    IN PVOID EstablisherFrame, IN OUT struct _CONTEXT *ContextRecord,
+                                                    IN OUT PVOID DispatcherContext);
 
 // begin_ntminiport begin_ntndis
 
@@ -1491,7 +1473,8 @@ typedef KIRQL *PKIRQL;
 // Product types
 //
 
-typedef enum _NT_PRODUCT_TYPE {
+typedef enum _NT_PRODUCT_TYPE
+{
     NtProductWinNt = 1,
     NtProductLanManNt,
     NtProductServer
@@ -1504,7 +1487,8 @@ typedef enum _NT_PRODUCT_TYPE {
 // in this enum.
 //
 
-typedef enum _SUITE_TYPE {
+typedef enum _SUITE_TYPE
+{
     SmallBusiness,
     Enterprise,
     BackOffice,
@@ -1521,19 +1505,19 @@ typedef enum _SUITE_TYPE {
 
 // begin_winnt
 
-#define VER_SERVER_NT                       0x80000000
-#define VER_WORKSTATION_NT                  0x40000000
-#define VER_SUITE_SMALLBUSINESS             0x00000001
-#define VER_SUITE_ENTERPRISE                0x00000002
-#define VER_SUITE_BACKOFFICE                0x00000004
-#define VER_SUITE_COMMUNICATIONS            0x00000008
-#define VER_SUITE_TERMINAL                  0x00000010
-#define VER_SUITE_SMALLBUSINESS_RESTRICTED  0x00000020
-#define VER_SUITE_EMBEDDEDNT                0x00000040
-#define VER_SUITE_DATACENTER                0x00000080
-#define VER_SUITE_SINGLEUSERTS              0x00000100
-#define VER_SUITE_PERSONAL                  0x00000200
-#define VER_SUITE_BLADE                     0x00000400
+#define VER_SERVER_NT 0x80000000
+#define VER_WORKSTATION_NT 0x40000000
+#define VER_SUITE_SMALLBUSINESS 0x00000001
+#define VER_SUITE_ENTERPRISE 0x00000002
+#define VER_SUITE_BACKOFFICE 0x00000004
+#define VER_SUITE_COMMUNICATIONS 0x00000008
+#define VER_SUITE_TERMINAL 0x00000010
+#define VER_SUITE_SMALLBUSINESS_RESTRICTED 0x00000020
+#define VER_SUITE_EMBEDDEDNT 0x00000040
+#define VER_SUITE_DATACENTER 0x00000080
+#define VER_SUITE_SINGLEUSERTS 0x00000100
+#define VER_SUITE_PERSONAL 0x00000200
+#define VER_SUITE_BLADE 0x00000400
 
 // end_winnt
 
@@ -1557,84 +1541,84 @@ typedef enum _SUITE_TYPE {
 //  Primary language IDs.
 //
 
-#define LANG_NEUTRAL                     0x00
-#define LANG_INVARIANT                   0x7f
+#define LANG_NEUTRAL 0x00
+#define LANG_INVARIANT 0x7f
 
-#define LANG_AFRIKAANS                   0x36
-#define LANG_ALBANIAN                    0x1c
-#define LANG_ARABIC                      0x01
-#define LANG_ARMENIAN                    0x2b
-#define LANG_ASSAMESE                    0x4d
-#define LANG_AZERI                       0x2c
-#define LANG_BASQUE                      0x2d
-#define LANG_BELARUSIAN                  0x23
-#define LANG_BENGALI                     0x45
-#define LANG_BULGARIAN                   0x02
-#define LANG_CATALAN                     0x03
-#define LANG_CHINESE                     0x04
-#define LANG_CROATIAN                    0x1a
-#define LANG_CZECH                       0x05
-#define LANG_DANISH                      0x06
-#define LANG_DIVEHI                      0x65
-#define LANG_DUTCH                       0x13
-#define LANG_ENGLISH                     0x09
-#define LANG_ESTONIAN                    0x25
-#define LANG_FAEROESE                    0x38
-#define LANG_FARSI                       0x29
-#define LANG_FINNISH                     0x0b
-#define LANG_FRENCH                      0x0c
-#define LANG_GALICIAN                    0x56
-#define LANG_GEORGIAN                    0x37
-#define LANG_GERMAN                      0x07
-#define LANG_GREEK                       0x08
-#define LANG_GUJARATI                    0x47
-#define LANG_HEBREW                      0x0d
-#define LANG_HINDI                       0x39
-#define LANG_HUNGARIAN                   0x0e
-#define LANG_ICELANDIC                   0x0f
-#define LANG_INDONESIAN                  0x21
-#define LANG_ITALIAN                     0x10
-#define LANG_JAPANESE                    0x11
-#define LANG_KANNADA                     0x4b
-#define LANG_KASHMIRI                    0x60
-#define LANG_KAZAK                       0x3f
-#define LANG_KONKANI                     0x57
-#define LANG_KOREAN                      0x12
-#define LANG_KYRGYZ                      0x40
-#define LANG_LATVIAN                     0x26
-#define LANG_LITHUANIAN                  0x27
-#define LANG_MACEDONIAN                  0x2f   // the Former Yugoslav Republic of Macedonia
-#define LANG_MALAY                       0x3e
-#define LANG_MALAYALAM                   0x4c
-#define LANG_MANIPURI                    0x58
-#define LANG_MARATHI                     0x4e
-#define LANG_MONGOLIAN                   0x50
-#define LANG_NEPALI                      0x61
-#define LANG_NORWEGIAN                   0x14
-#define LANG_ORIYA                       0x48
-#define LANG_POLISH                      0x15
-#define LANG_PORTUGUESE                  0x16
-#define LANG_PUNJABI                     0x46
-#define LANG_ROMANIAN                    0x18
-#define LANG_RUSSIAN                     0x19
-#define LANG_SANSKRIT                    0x4f
-#define LANG_SERBIAN                     0x1a
-#define LANG_SINDHI                      0x59
-#define LANG_SLOVAK                      0x1b
-#define LANG_SLOVENIAN                   0x24
-#define LANG_SPANISH                     0x0a
-#define LANG_SWAHILI                     0x41
-#define LANG_SWEDISH                     0x1d
-#define LANG_SYRIAC                      0x5a
-#define LANG_TAMIL                       0x49
-#define LANG_TATAR                       0x44
-#define LANG_TELUGU                      0x4a
-#define LANG_THAI                        0x1e
-#define LANG_TURKISH                     0x1f
-#define LANG_UKRAINIAN                   0x22
-#define LANG_URDU                        0x20
-#define LANG_UZBEK                       0x43
-#define LANG_VIETNAMESE                  0x2a
+#define LANG_AFRIKAANS 0x36
+#define LANG_ALBANIAN 0x1c
+#define LANG_ARABIC 0x01
+#define LANG_ARMENIAN 0x2b
+#define LANG_ASSAMESE 0x4d
+#define LANG_AZERI 0x2c
+#define LANG_BASQUE 0x2d
+#define LANG_BELARUSIAN 0x23
+#define LANG_BENGALI 0x45
+#define LANG_BULGARIAN 0x02
+#define LANG_CATALAN 0x03
+#define LANG_CHINESE 0x04
+#define LANG_CROATIAN 0x1a
+#define LANG_CZECH 0x05
+#define LANG_DANISH 0x06
+#define LANG_DIVEHI 0x65
+#define LANG_DUTCH 0x13
+#define LANG_ENGLISH 0x09
+#define LANG_ESTONIAN 0x25
+#define LANG_FAEROESE 0x38
+#define LANG_FARSI 0x29
+#define LANG_FINNISH 0x0b
+#define LANG_FRENCH 0x0c
+#define LANG_GALICIAN 0x56
+#define LANG_GEORGIAN 0x37
+#define LANG_GERMAN 0x07
+#define LANG_GREEK 0x08
+#define LANG_GUJARATI 0x47
+#define LANG_HEBREW 0x0d
+#define LANG_HINDI 0x39
+#define LANG_HUNGARIAN 0x0e
+#define LANG_ICELANDIC 0x0f
+#define LANG_INDONESIAN 0x21
+#define LANG_ITALIAN 0x10
+#define LANG_JAPANESE 0x11
+#define LANG_KANNADA 0x4b
+#define LANG_KASHMIRI 0x60
+#define LANG_KAZAK 0x3f
+#define LANG_KONKANI 0x57
+#define LANG_KOREAN 0x12
+#define LANG_KYRGYZ 0x40
+#define LANG_LATVIAN 0x26
+#define LANG_LITHUANIAN 0x27
+#define LANG_MACEDONIAN 0x2f // the Former Yugoslav Republic of Macedonia
+#define LANG_MALAY 0x3e
+#define LANG_MALAYALAM 0x4c
+#define LANG_MANIPURI 0x58
+#define LANG_MARATHI 0x4e
+#define LANG_MONGOLIAN 0x50
+#define LANG_NEPALI 0x61
+#define LANG_NORWEGIAN 0x14
+#define LANG_ORIYA 0x48
+#define LANG_POLISH 0x15
+#define LANG_PORTUGUESE 0x16
+#define LANG_PUNJABI 0x46
+#define LANG_ROMANIAN 0x18
+#define LANG_RUSSIAN 0x19
+#define LANG_SANSKRIT 0x4f
+#define LANG_SERBIAN 0x1a
+#define LANG_SINDHI 0x59
+#define LANG_SLOVAK 0x1b
+#define LANG_SLOVENIAN 0x24
+#define LANG_SPANISH 0x0a
+#define LANG_SWAHILI 0x41
+#define LANG_SWEDISH 0x1d
+#define LANG_SYRIAC 0x5a
+#define LANG_TAMIL 0x49
+#define LANG_TATAR 0x44
+#define LANG_TELUGU 0x4a
+#define LANG_THAI 0x1e
+#define LANG_TURKISH 0x1f
+#define LANG_UKRAINIAN 0x22
+#define LANG_URDU 0x20
+#define LANG_UZBEK 0x43
+#define LANG_VIETNAMESE 0x2a
 
 //
 //  Sublanguage IDs.
@@ -1644,128 +1628,128 @@ typedef enum _SUITE_TYPE {
 //  valid language ID.
 //
 
-#define SUBLANG_NEUTRAL                  0x00    // language neutral
-#define SUBLANG_DEFAULT                  0x01    // user default
-#define SUBLANG_SYS_DEFAULT              0x02    // system default
+#define SUBLANG_NEUTRAL 0x00     // language neutral
+#define SUBLANG_DEFAULT 0x01     // user default
+#define SUBLANG_SYS_DEFAULT 0x02 // system default
 
-#define SUBLANG_ARABIC_SAUDI_ARABIA      0x01    // Arabic (Saudi Arabia)
-#define SUBLANG_ARABIC_IRAQ              0x02    // Arabic (Iraq)
-#define SUBLANG_ARABIC_EGYPT             0x03    // Arabic (Egypt)
-#define SUBLANG_ARABIC_LIBYA             0x04    // Arabic (Libya)
-#define SUBLANG_ARABIC_ALGERIA           0x05    // Arabic (Algeria)
-#define SUBLANG_ARABIC_MOROCCO           0x06    // Arabic (Morocco)
-#define SUBLANG_ARABIC_TUNISIA           0x07    // Arabic (Tunisia)
-#define SUBLANG_ARABIC_OMAN              0x08    // Arabic (Oman)
-#define SUBLANG_ARABIC_YEMEN             0x09    // Arabic (Yemen)
-#define SUBLANG_ARABIC_SYRIA             0x0a    // Arabic (Syria)
-#define SUBLANG_ARABIC_JORDAN            0x0b    // Arabic (Jordan)
-#define SUBLANG_ARABIC_LEBANON           0x0c    // Arabic (Lebanon)
-#define SUBLANG_ARABIC_KUWAIT            0x0d    // Arabic (Kuwait)
-#define SUBLANG_ARABIC_UAE               0x0e    // Arabic (U.A.E)
-#define SUBLANG_ARABIC_BAHRAIN           0x0f    // Arabic (Bahrain)
-#define SUBLANG_ARABIC_QATAR             0x10    // Arabic (Qatar)
-#define SUBLANG_AZERI_LATIN              0x01    // Azeri (Latin)
-#define SUBLANG_AZERI_CYRILLIC           0x02    // Azeri (Cyrillic)
-#define SUBLANG_CHINESE_TRADITIONAL      0x01    // Chinese (Taiwan)
-#define SUBLANG_CHINESE_SIMPLIFIED       0x02    // Chinese (PR China)
-#define SUBLANG_CHINESE_HONGKONG         0x03    // Chinese (Hong Kong S.A.R., P.R.C.)
-#define SUBLANG_CHINESE_SINGAPORE        0x04    // Chinese (Singapore)
-#define SUBLANG_CHINESE_MACAU            0x05    // Chinese (Macau S.A.R.)
-#define SUBLANG_DUTCH                    0x01    // Dutch
-#define SUBLANG_DUTCH_BELGIAN            0x02    // Dutch (Belgian)
-#define SUBLANG_ENGLISH_US               0x01    // English (USA)
-#define SUBLANG_ENGLISH_UK               0x02    // English (UK)
-#define SUBLANG_ENGLISH_AUS              0x03    // English (Australian)
-#define SUBLANG_ENGLISH_CAN              0x04    // English (Canadian)
-#define SUBLANG_ENGLISH_NZ               0x05    // English (New Zealand)
-#define SUBLANG_ENGLISH_EIRE             0x06    // English (Irish)
-#define SUBLANG_ENGLISH_SOUTH_AFRICA     0x07    // English (South Africa)
-#define SUBLANG_ENGLISH_JAMAICA          0x08    // English (Jamaica)
-#define SUBLANG_ENGLISH_CARIBBEAN        0x09    // English (Caribbean)
-#define SUBLANG_ENGLISH_BELIZE           0x0a    // English (Belize)
-#define SUBLANG_ENGLISH_TRINIDAD         0x0b    // English (Trinidad)
-#define SUBLANG_ENGLISH_ZIMBABWE         0x0c    // English (Zimbabwe)
-#define SUBLANG_ENGLISH_PHILIPPINES      0x0d    // English (Philippines)
-#define SUBLANG_FRENCH                   0x01    // French
-#define SUBLANG_FRENCH_BELGIAN           0x02    // French (Belgian)
-#define SUBLANG_FRENCH_CANADIAN          0x03    // French (Canadian)
-#define SUBLANG_FRENCH_SWISS             0x04    // French (Swiss)
-#define SUBLANG_FRENCH_LUXEMBOURG        0x05    // French (Luxembourg)
-#define SUBLANG_FRENCH_MONACO            0x06    // French (Monaco)
-#define SUBLANG_GERMAN                   0x01    // German
-#define SUBLANG_GERMAN_SWISS             0x02    // German (Swiss)
-#define SUBLANG_GERMAN_AUSTRIAN          0x03    // German (Austrian)
-#define SUBLANG_GERMAN_LUXEMBOURG        0x04    // German (Luxembourg)
-#define SUBLANG_GERMAN_LIECHTENSTEIN     0x05    // German (Liechtenstein)
-#define SUBLANG_ITALIAN                  0x01    // Italian
-#define SUBLANG_ITALIAN_SWISS            0x02    // Italian (Swiss)
+#define SUBLANG_ARABIC_SAUDI_ARABIA 0x01  // Arabic (Saudi Arabia)
+#define SUBLANG_ARABIC_IRAQ 0x02          // Arabic (Iraq)
+#define SUBLANG_ARABIC_EGYPT 0x03         // Arabic (Egypt)
+#define SUBLANG_ARABIC_LIBYA 0x04         // Arabic (Libya)
+#define SUBLANG_ARABIC_ALGERIA 0x05       // Arabic (Algeria)
+#define SUBLANG_ARABIC_MOROCCO 0x06       // Arabic (Morocco)
+#define SUBLANG_ARABIC_TUNISIA 0x07       // Arabic (Tunisia)
+#define SUBLANG_ARABIC_OMAN 0x08          // Arabic (Oman)
+#define SUBLANG_ARABIC_YEMEN 0x09         // Arabic (Yemen)
+#define SUBLANG_ARABIC_SYRIA 0x0a         // Arabic (Syria)
+#define SUBLANG_ARABIC_JORDAN 0x0b        // Arabic (Jordan)
+#define SUBLANG_ARABIC_LEBANON 0x0c       // Arabic (Lebanon)
+#define SUBLANG_ARABIC_KUWAIT 0x0d        // Arabic (Kuwait)
+#define SUBLANG_ARABIC_UAE 0x0e           // Arabic (U.A.E)
+#define SUBLANG_ARABIC_BAHRAIN 0x0f       // Arabic (Bahrain)
+#define SUBLANG_ARABIC_QATAR 0x10         // Arabic (Qatar)
+#define SUBLANG_AZERI_LATIN 0x01          // Azeri (Latin)
+#define SUBLANG_AZERI_CYRILLIC 0x02       // Azeri (Cyrillic)
+#define SUBLANG_CHINESE_TRADITIONAL 0x01  // Chinese (Taiwan)
+#define SUBLANG_CHINESE_SIMPLIFIED 0x02   // Chinese (PR China)
+#define SUBLANG_CHINESE_HONGKONG 0x03     // Chinese (Hong Kong S.A.R., P.R.C.)
+#define SUBLANG_CHINESE_SINGAPORE 0x04    // Chinese (Singapore)
+#define SUBLANG_CHINESE_MACAU 0x05        // Chinese (Macau S.A.R.)
+#define SUBLANG_DUTCH 0x01                // Dutch
+#define SUBLANG_DUTCH_BELGIAN 0x02        // Dutch (Belgian)
+#define SUBLANG_ENGLISH_US 0x01           // English (USA)
+#define SUBLANG_ENGLISH_UK 0x02           // English (UK)
+#define SUBLANG_ENGLISH_AUS 0x03          // English (Australian)
+#define SUBLANG_ENGLISH_CAN 0x04          // English (Canadian)
+#define SUBLANG_ENGLISH_NZ 0x05           // English (New Zealand)
+#define SUBLANG_ENGLISH_EIRE 0x06         // English (Irish)
+#define SUBLANG_ENGLISH_SOUTH_AFRICA 0x07 // English (South Africa)
+#define SUBLANG_ENGLISH_JAMAICA 0x08      // English (Jamaica)
+#define SUBLANG_ENGLISH_CARIBBEAN 0x09    // English (Caribbean)
+#define SUBLANG_ENGLISH_BELIZE 0x0a       // English (Belize)
+#define SUBLANG_ENGLISH_TRINIDAD 0x0b     // English (Trinidad)
+#define SUBLANG_ENGLISH_ZIMBABWE 0x0c     // English (Zimbabwe)
+#define SUBLANG_ENGLISH_PHILIPPINES 0x0d  // English (Philippines)
+#define SUBLANG_FRENCH 0x01               // French
+#define SUBLANG_FRENCH_BELGIAN 0x02       // French (Belgian)
+#define SUBLANG_FRENCH_CANADIAN 0x03      // French (Canadian)
+#define SUBLANG_FRENCH_SWISS 0x04         // French (Swiss)
+#define SUBLANG_FRENCH_LUXEMBOURG 0x05    // French (Luxembourg)
+#define SUBLANG_FRENCH_MONACO 0x06        // French (Monaco)
+#define SUBLANG_GERMAN 0x01               // German
+#define SUBLANG_GERMAN_SWISS 0x02         // German (Swiss)
+#define SUBLANG_GERMAN_AUSTRIAN 0x03      // German (Austrian)
+#define SUBLANG_GERMAN_LUXEMBOURG 0x04    // German (Luxembourg)
+#define SUBLANG_GERMAN_LIECHTENSTEIN 0x05 // German (Liechtenstein)
+#define SUBLANG_ITALIAN 0x01              // Italian
+#define SUBLANG_ITALIAN_SWISS 0x02        // Italian (Swiss)
 #if _WIN32_WINNT >= 0x0501
-#define SUBLANG_KASHMIRI_SASIA           0x02    // Kashmiri (South Asia)
+#define SUBLANG_KASHMIRI_SASIA 0x02 // Kashmiri (South Asia)
 #endif
-#define SUBLANG_KASHMIRI_INDIA           0x02    // For app compatibility only
-#define SUBLANG_KOREAN                   0x01    // Korean (Extended Wansung)
-#define SUBLANG_LITHUANIAN               0x01    // Lithuanian
-#define SUBLANG_MALAY_MALAYSIA           0x01    // Malay (Malaysia)
-#define SUBLANG_MALAY_BRUNEI_DARUSSALAM  0x02    // Malay (Brunei Darussalam)
-#define SUBLANG_NEPALI_INDIA             0x02    // Nepali (India)
-#define SUBLANG_NORWEGIAN_BOKMAL         0x01    // Norwegian (Bokmal)
-#define SUBLANG_NORWEGIAN_NYNORSK        0x02    // Norwegian (Nynorsk)
-#define SUBLANG_PORTUGUESE               0x02    // Portuguese
-#define SUBLANG_PORTUGUESE_BRAZILIAN     0x01    // Portuguese (Brazilian)
-#define SUBLANG_SERBIAN_LATIN            0x02    // Serbian (Latin)
-#define SUBLANG_SERBIAN_CYRILLIC         0x03    // Serbian (Cyrillic)
-#define SUBLANG_SPANISH                  0x01    // Spanish (Castilian)
-#define SUBLANG_SPANISH_MEXICAN          0x02    // Spanish (Mexican)
-#define SUBLANG_SPANISH_MODERN           0x03    // Spanish (Modern)
-#define SUBLANG_SPANISH_GUATEMALA        0x04    // Spanish (Guatemala)
-#define SUBLANG_SPANISH_COSTA_RICA       0x05    // Spanish (Costa Rica)
-#define SUBLANG_SPANISH_PANAMA           0x06    // Spanish (Panama)
-#define SUBLANG_SPANISH_DOMINICAN_REPUBLIC 0x07  // Spanish (Dominican Republic)
-#define SUBLANG_SPANISH_VENEZUELA        0x08    // Spanish (Venezuela)
-#define SUBLANG_SPANISH_COLOMBIA         0x09    // Spanish (Colombia)
-#define SUBLANG_SPANISH_PERU             0x0a    // Spanish (Peru)
-#define SUBLANG_SPANISH_ARGENTINA        0x0b    // Spanish (Argentina)
-#define SUBLANG_SPANISH_ECUADOR          0x0c    // Spanish (Ecuador)
-#define SUBLANG_SPANISH_CHILE            0x0d    // Spanish (Chile)
-#define SUBLANG_SPANISH_URUGUAY          0x0e    // Spanish (Uruguay)
-#define SUBLANG_SPANISH_PARAGUAY         0x0f    // Spanish (Paraguay)
-#define SUBLANG_SPANISH_BOLIVIA          0x10    // Spanish (Bolivia)
-#define SUBLANG_SPANISH_EL_SALVADOR      0x11    // Spanish (El Salvador)
-#define SUBLANG_SPANISH_HONDURAS         0x12    // Spanish (Honduras)
-#define SUBLANG_SPANISH_NICARAGUA        0x13    // Spanish (Nicaragua)
-#define SUBLANG_SPANISH_PUERTO_RICO      0x14    // Spanish (Puerto Rico)
-#define SUBLANG_SWEDISH                  0x01    // Swedish
-#define SUBLANG_SWEDISH_FINLAND          0x02    // Swedish (Finland)
-#define SUBLANG_URDU_PAKISTAN            0x01    // Urdu (Pakistan)
-#define SUBLANG_URDU_INDIA               0x02    // Urdu (India)
-#define SUBLANG_UZBEK_LATIN              0x01    // Uzbek (Latin)
-#define SUBLANG_UZBEK_CYRILLIC           0x02    // Uzbek (Cyrillic)
+#define SUBLANG_KASHMIRI_INDIA 0x02             // For app compatibility only
+#define SUBLANG_KOREAN 0x01                     // Korean (Extended Wansung)
+#define SUBLANG_LITHUANIAN 0x01                 // Lithuanian
+#define SUBLANG_MALAY_MALAYSIA 0x01             // Malay (Malaysia)
+#define SUBLANG_MALAY_BRUNEI_DARUSSALAM 0x02    // Malay (Brunei Darussalam)
+#define SUBLANG_NEPALI_INDIA 0x02               // Nepali (India)
+#define SUBLANG_NORWEGIAN_BOKMAL 0x01           // Norwegian (Bokmal)
+#define SUBLANG_NORWEGIAN_NYNORSK 0x02          // Norwegian (Nynorsk)
+#define SUBLANG_PORTUGUESE 0x02                 // Portuguese
+#define SUBLANG_PORTUGUESE_BRAZILIAN 0x01       // Portuguese (Brazilian)
+#define SUBLANG_SERBIAN_LATIN 0x02              // Serbian (Latin)
+#define SUBLANG_SERBIAN_CYRILLIC 0x03           // Serbian (Cyrillic)
+#define SUBLANG_SPANISH 0x01                    // Spanish (Castilian)
+#define SUBLANG_SPANISH_MEXICAN 0x02            // Spanish (Mexican)
+#define SUBLANG_SPANISH_MODERN 0x03             // Spanish (Modern)
+#define SUBLANG_SPANISH_GUATEMALA 0x04          // Spanish (Guatemala)
+#define SUBLANG_SPANISH_COSTA_RICA 0x05         // Spanish (Costa Rica)
+#define SUBLANG_SPANISH_PANAMA 0x06             // Spanish (Panama)
+#define SUBLANG_SPANISH_DOMINICAN_REPUBLIC 0x07 // Spanish (Dominican Republic)
+#define SUBLANG_SPANISH_VENEZUELA 0x08          // Spanish (Venezuela)
+#define SUBLANG_SPANISH_COLOMBIA 0x09           // Spanish (Colombia)
+#define SUBLANG_SPANISH_PERU 0x0a               // Spanish (Peru)
+#define SUBLANG_SPANISH_ARGENTINA 0x0b          // Spanish (Argentina)
+#define SUBLANG_SPANISH_ECUADOR 0x0c            // Spanish (Ecuador)
+#define SUBLANG_SPANISH_CHILE 0x0d              // Spanish (Chile)
+#define SUBLANG_SPANISH_URUGUAY 0x0e            // Spanish (Uruguay)
+#define SUBLANG_SPANISH_PARAGUAY 0x0f           // Spanish (Paraguay)
+#define SUBLANG_SPANISH_BOLIVIA 0x10            // Spanish (Bolivia)
+#define SUBLANG_SPANISH_EL_SALVADOR 0x11        // Spanish (El Salvador)
+#define SUBLANG_SPANISH_HONDURAS 0x12           // Spanish (Honduras)
+#define SUBLANG_SPANISH_NICARAGUA 0x13          // Spanish (Nicaragua)
+#define SUBLANG_SPANISH_PUERTO_RICO 0x14        // Spanish (Puerto Rico)
+#define SUBLANG_SWEDISH 0x01                    // Swedish
+#define SUBLANG_SWEDISH_FINLAND 0x02            // Swedish (Finland)
+#define SUBLANG_URDU_PAKISTAN 0x01              // Urdu (Pakistan)
+#define SUBLANG_URDU_INDIA 0x02                 // Urdu (India)
+#define SUBLANG_UZBEK_LATIN 0x01                // Uzbek (Latin)
+#define SUBLANG_UZBEK_CYRILLIC 0x02             // Uzbek (Cyrillic)
 
 //
 //  Sorting IDs.
 //
 
-#define SORT_DEFAULT                     0x0     // sorting default
+#define SORT_DEFAULT 0x0 // sorting default
 
-#define SORT_JAPANESE_XJIS               0x0     // Japanese XJIS order
-#define SORT_JAPANESE_UNICODE            0x1     // Japanese Unicode order
+#define SORT_JAPANESE_XJIS 0x0    // Japanese XJIS order
+#define SORT_JAPANESE_UNICODE 0x1 // Japanese Unicode order
 
-#define SORT_CHINESE_BIG5                0x0     // Chinese BIG5 order
-#define SORT_CHINESE_PRCP                0x0     // PRC Chinese Phonetic order
-#define SORT_CHINESE_UNICODE             0x1     // Chinese Unicode order
-#define SORT_CHINESE_PRC                 0x2     // PRC Chinese Stroke Count order
-#define SORT_CHINESE_BOPOMOFO            0x3     // Traditional Chinese Bopomofo order
+#define SORT_CHINESE_BIG5 0x0     // Chinese BIG5 order
+#define SORT_CHINESE_PRCP 0x0     // PRC Chinese Phonetic order
+#define SORT_CHINESE_UNICODE 0x1  // Chinese Unicode order
+#define SORT_CHINESE_PRC 0x2      // PRC Chinese Stroke Count order
+#define SORT_CHINESE_BOPOMOFO 0x3 // Traditional Chinese Bopomofo order
 
-#define SORT_KOREAN_KSC                  0x0     // Korean KSC order
-#define SORT_KOREAN_UNICODE              0x1     // Korean Unicode order
+#define SORT_KOREAN_KSC 0x0     // Korean KSC order
+#define SORT_KOREAN_UNICODE 0x1 // Korean Unicode order
 
-#define SORT_GERMAN_PHONE_BOOK           0x1     // German Phone Book order
+#define SORT_GERMAN_PHONE_BOOK 0x1 // German Phone Book order
 
-#define SORT_HUNGARIAN_DEFAULT           0x0     // Hungarian Default order
-#define SORT_HUNGARIAN_TECHNICAL         0x1     // Hungarian Technical order
+#define SORT_HUNGARIAN_DEFAULT 0x0   // Hungarian Default order
+#define SORT_HUNGARIAN_TECHNICAL 0x1 // Hungarian Technical order
 
-#define SORT_GEORGIAN_TRADITIONAL        0x0     // Georgian Traditional order
-#define SORT_GEORGIAN_MODERN             0x1     // Georgian Modern order
+#define SORT_GEORGIAN_TRADITIONAL 0x0 // Georgian Traditional order
+#define SORT_GEORGIAN_MODERN 0x1      // Georgian Modern order
 
 // end_r_winnt
 
@@ -1788,9 +1772,9 @@ typedef enum _SUITE_TYPE {
 //    SUBLANGID     - extract sublanguage id from a language id.
 //
 
-#define MAKELANGID(p, s)       ((((USHORT)(s)) << 10) | (USHORT)(p))
-#define PRIMARYLANGID(lgid)    ((USHORT)(lgid) & 0x3ff)
-#define SUBLANGID(lgid)        ((USHORT)(lgid) >> 10)
+#define MAKELANGID(p, s) ((((USHORT)(s)) << 10) | (USHORT)(p))
+#define PRIMARYLANGID(lgid) ((USHORT)(lgid) & 0x3ff)
+#define SUBLANGID(lgid) ((USHORT)(lgid) >> 10)
 
 
 //
@@ -1813,33 +1797,28 @@ typedef enum _SUITE_TYPE {
 //    SORTVERSIONFROMLCID - extract the sort version from a locale id.
 //
 
-#define NLS_VALID_LOCALE_MASK  0x000fffff
+#define NLS_VALID_LOCALE_MASK 0x000fffff
 
-#define MAKELCID(lgid, srtid)  ((ULONG)((((ULONG)((USHORT)(srtid))) << 16) |  \
-                                         ((ULONG)((USHORT)(lgid)))))
-#define MAKESORTLCID(lgid, srtid, ver)                                            \
-                               ((ULONG)((MAKELCID(lgid, srtid)) |             \
-                                    (((ULONG)((USHORT)(ver))) << 20)))
-#define LANGIDFROMLCID(lcid)   ((USHORT)(lcid))
-#define SORTIDFROMLCID(lcid)   ((USHORT)((((ULONG)(lcid)) >> 16) & 0xf))
-#define SORTVERSIONFROMLCID(lcid)  ((USHORT)((((ULONG)(lcid)) >> 20) & 0xf))
+#define MAKELCID(lgid, srtid) ((ULONG)((((ULONG)((USHORT)(srtid))) << 16) | ((ULONG)((USHORT)(lgid)))))
+#define MAKESORTLCID(lgid, srtid, ver) ((ULONG)((MAKELCID(lgid, srtid)) | (((ULONG)((USHORT)(ver))) << 20)))
+#define LANGIDFROMLCID(lcid) ((USHORT)(lcid))
+#define SORTIDFROMLCID(lcid) ((USHORT)((((ULONG)(lcid)) >> 16) & 0xf))
+#define SORTVERSIONFROMLCID(lcid) ((USHORT)((((ULONG)(lcid)) >> 20) & 0xf))
 
 
 //
 //  Default System and User IDs for language and locale.
 //
 
-#define LANG_SYSTEM_DEFAULT    (MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT))
-#define LANG_USER_DEFAULT      (MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT))
+#define LANG_SYSTEM_DEFAULT (MAKELANGID(LANG_NEUTRAL, SUBLANG_SYS_DEFAULT))
+#define LANG_USER_DEFAULT (MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT))
 
-#define LOCALE_SYSTEM_DEFAULT  (MAKELCID(LANG_SYSTEM_DEFAULT, SORT_DEFAULT))
-#define LOCALE_USER_DEFAULT    (MAKELCID(LANG_USER_DEFAULT, SORT_DEFAULT))
+#define LOCALE_SYSTEM_DEFAULT (MAKELCID(LANG_SYSTEM_DEFAULT, SORT_DEFAULT))
+#define LOCALE_USER_DEFAULT (MAKELCID(LANG_USER_DEFAULT, SORT_DEFAULT))
 
-#define LOCALE_NEUTRAL                                                        \
-          (MAKELCID(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), SORT_DEFAULT))
+#define LOCALE_NEUTRAL (MAKELCID(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL), SORT_DEFAULT))
 
-#define LOCALE_INVARIANT                                                      \
-          (MAKELCID(MAKELANGID(LANG_INVARIANT, SUBLANG_NEUTRAL), SORT_DEFAULT))
+#define LOCALE_INVARIANT (MAKELCID(MAKELANGID(LANG_INVARIANT, SUBLANG_NEUTRAL), SORT_DEFAULT))
 
 // begin_ntminiport begin_ntndis begin_ntminitape
 
@@ -1860,9 +1839,9 @@ typedef enum _SUITE_TYPE {
 // is unfinished work.
 //
 
-#if ! defined(lint)
-#define UNREFERENCED_PARAMETER(P)          (P)
-#define DBG_UNREFERENCED_PARAMETER(P)      (P)
+#if !defined(lint)
+#define UNREFERENCED_PARAMETER(P) (P)
+#define DBG_UNREFERENCED_PARAMETER(P) (P)
 #define DBG_UNREFERENCED_LOCAL_VARIABLE(V) (V)
 
 #else // lint
@@ -1871,23 +1850,23 @@ typedef enum _SUITE_TYPE {
 // this varible.  Error 527 has to do with unreachable code.
 // -restore restores checking to the -save state
 
-#define UNREFERENCED_PARAMETER(P)          \
-    /*lint -save -e527 -e530 */ \
-    { \
-        (P) = (P); \
-    } \
+#define UNREFERENCED_PARAMETER(P) \
+    /*lint -save -e527 -e530 */   \
+    {                             \
+        (P) = (P);                \
+    }                             \
     /*lint -restore */
-#define DBG_UNREFERENCED_PARAMETER(P)      \
-    /*lint -save -e527 -e530 */ \
-    { \
-        (P) = (P); \
-    } \
+#define DBG_UNREFERENCED_PARAMETER(P) \
+    /*lint -save -e527 -e530 */       \
+    {                                 \
+        (P) = (P);                    \
+    }                                 \
     /*lint -restore */
 #define DBG_UNREFERENCED_LOCAL_VARIABLE(V) \
-    /*lint -save -e527 -e530 */ \
-    { \
-        (V) = (V); \
-    } \
+    /*lint -save -e527 -e530 */            \
+    {                                      \
+        (V) = (V);                         \
+    }                                      \
     /*lint -restore */
 
 #endif // lint
@@ -1905,7 +1884,9 @@ typedef enum _SUITE_TYPE {
 //
 
 #if (_MSC_VER > 1200)
-#define DEFAULT_UNREACHABLE default: __assume(0)
+#define DEFAULT_UNREACHABLE \
+    default:                \
+        __assume(0)
 #else
 
 //
@@ -1926,14 +1907,14 @@ typedef enum _SUITE_TYPE {
 #ifndef NOMINMAX
 
 #ifndef min
-#define min(a,b) (((a) < (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
 #ifndef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
-#endif  // NOMINMAX
+#endif // NOMINMAX
 
 // end_ntminiport end_ntndis end_ntminitape
 

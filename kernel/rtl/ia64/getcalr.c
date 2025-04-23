@@ -24,7 +24,7 @@ Revision History:
 
 --*/
 #include "ntrtlp.h"
-
+
 //
 // Undefine get callers address since it is defined as a macro.
 //
@@ -32,18 +32,11 @@ Revision History:
 #undef RtlGetCallersAddress
 
 ULONG
-RtlpWalkFrameChainExceptionFilter (
-    ULONG ExceptionCode,
-    PVOID ExceptionRecord
-    );
+RtlpWalkFrameChainExceptionFilter(ULONG ExceptionCode, PVOID ExceptionRecord);
 
 
 PRUNTIME_FUNCTION
-RtlpLookupFunctionEntryForStackWalks (
-    IN ULONGLONG ControlPc,
-    OUT PULONGLONG ImageBase,
-    OUT PULONGLONG TargetGp
-    )
+RtlpLookupFunctionEntryForStackWalks(IN ULONGLONG ControlPc, OUT PULONGLONG ImageBase, OUT PULONGLONG TargetGp)
 
 /*++
 
@@ -87,8 +80,7 @@ Return Value:
     // Search for the image that includes the specified swizzled PC value.
     //
 
-    *ImageBase = (ULONG_PTR)RtlPcToFileHeader((PVOID)ControlPc,
-                                              (PVOID *)ImageBase);
+    *ImageBase = (ULONG_PTR)RtlPcToFileHeader((PVOID)ControlPc, (PVOID *)ImageBase);
 
 
     //
@@ -96,27 +88,22 @@ Return Value:
     // function table for the image.
     //
 
-    if ((PVOID)*ImageBase != NULL) {
+    if ((PVOID)*ImageBase != NULL)
+    {
 
-        *TargetGp = (ULONG_PTR)(RtlImageDirectoryEntryToData(
-                               (PVOID)*ImageBase,
-                               TRUE,
-                               IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                               &Size
-                               ));
+        *TargetGp =
+            (ULONG_PTR)(RtlImageDirectoryEntryToData((PVOID)*ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &Size));
 
         FunctionTable = (PRUNTIME_FUNCTION)RtlImageDirectoryEntryToData(
-                         (PVOID)*ImageBase,
-                         TRUE,
-                         IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                         &SizeOfExceptionTable);
+            (PVOID)*ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &SizeOfExceptionTable);
 
         //
         // If a function table is located, then search the table for a
         // function table entry for the specified PC.
         //
 
-        if (FunctionTable != NULL) {
+        if (FunctionTable != NULL)
+        {
 
             //
             // Initialize search indices.
@@ -131,7 +118,8 @@ Return Value:
             // entry that subsumes the specified PC.
             //
 
-            while (High >= Low) {
+            while (High >= Low)
+            {
 
                 //
                 // Compute next probe index and test entry. If the specified PC
@@ -144,15 +132,17 @@ Return Value:
                 Middle = (Low + High) >> 1;
                 FunctionEntry = &FunctionTable[Middle];
 
-                if (ControlPc < FunctionEntry->BeginAddress) {
+                if (ControlPc < FunctionEntry->BeginAddress)
+                {
                     High = Middle - 1;
-
-                } else if (ControlPc >= FunctionEntry->EndAddress) {
+                }
+                else if (ControlPc >= FunctionEntry->EndAddress)
+                {
                     Low = Middle + 1;
-
-                } else {
+                }
+                else
+                {
                     return FunctionEntry;
-
                 }
             }
         }
@@ -162,12 +152,7 @@ Return Value:
 }
 
 
-
-VOID
-RtlGetCallersAddress (
-    OUT PVOID *CallersPc,
-    OUT PVOID *CallersCallersPc
-    )
+VOID RtlGetCallersAddress(OUT PVOID *CallersPc, OUT PVOID *CallersCallersPc)
 
 /*++
 
@@ -237,26 +222,24 @@ Note:
     //
 
     FunctionEntry = RtlpLookupFunctionEntryForStackWalks(NextPc, &ImageBase, &TargetGp);
-    if (FunctionEntry != NULL) {
+    if (FunctionEntry != NULL)
+    {
 
         //
         // A function entry was found for this routine. Virtually unwind
         // to the caller of this routine (C).
         //
 
-        NextPc = RtlVirtualUnwind(NextPc,
-                                  FunctionEntry,
-                                  &ContextRecord,
-                                  &InFunction,
-                                  &EstablisherFrame,
-                                  NULL);
+        NextPc = RtlVirtualUnwind(NextPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame, NULL);
 
         //
         // Attempt to unwind to the caller of the caller of this routine (B).
         //
 
         FunctionEntry = RtlpLookupFunctionEntryForStackWalks(NextPc);
-        if ((FunctionEntry != NULL) && (((ULONG_PTR)ContextRecord.IntSp < HighStackLimit) && ((ULONG_PTR)ContextRecord.RsBSP > LowBStoreLimit))) {
+        if ((FunctionEntry != NULL) &&
+            (((ULONG_PTR)ContextRecord.IntSp < HighStackLimit) && ((ULONG_PTR)ContextRecord.RsBSP > LowBStoreLimit)))
+        {
 
             //
             // A function table entry was found for the caller of the caller
@@ -264,12 +247,7 @@ Note:
             // caller of this routine (B).
             //
 
-            NextPc = RtlVirtualUnwind(NextPc,
-                                      FunctionEntry,
-                                      &ContextRecord,
-                                      &InFunction,
-                                      &EstablisherFrame,
-                                      NULL);
+            NextPc = RtlVirtualUnwind(NextPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame, NULL);
 
             *CallersPc = (PVOID)NextPc;
 
@@ -279,7 +257,9 @@ Note:
             //
 
             FunctionEntry = RtlpLookupFunctionEntryForStackWalks(NextPc);
-            if ((FunctionEntry != NULL) && (((ULONG_PTR)ContextRecord.IntSp < HighStackLimit) && ((ULONG_PTR)ContextRecord.RsBSP > LowBStoreLimit))) {
+            if ((FunctionEntry != NULL) && (((ULONG_PTR)ContextRecord.IntSp < HighStackLimit) &&
+                                            ((ULONG_PTR)ContextRecord.RsBSP > LowBStoreLimit)))
+            {
 
                 //
                 // A function table entry was found for the caller of the
@@ -288,12 +268,7 @@ Note:
                 // (A).
                 //
 
-                NextPc = RtlVirtualUnwind(NextPc,
-                                          FunctionEntry,
-                                          &ContextRecord,
-                                          &InFunction,
-                                          &EstablisherFrame,
-                                          NULL);
+                NextPc = RtlVirtualUnwind(NextPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame, NULL);
 
                 *CallersCallersPc = (PVOID)NextPc;
             }
@@ -307,11 +282,7 @@ Note:
 }
 
 ULONG
-RtlWalkFrameChain (
-    OUT PVOID *Callers,
-    IN ULONG Count,
-    IN ULONG Flags
-    )
+RtlWalkFrameChain(OUT PVOID *Callers, IN ULONG Count, IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -358,7 +329,8 @@ Return value:
 
 #ifdef NTOS_KERNEL_RUNTIME
 
-    if (KeGetCurrentIrql() > PASSIVE_LEVEL) {
+    if (KeGetCurrentIrql() > PASSIVE_LEVEL)
+    {
         return 0;
     }
 
@@ -370,28 +342,30 @@ Return value:
     //
 
     CallersFound = 0;
-    RtlZeroMemory (Callers, Count * sizeof(PVOID));
+    RtlZeroMemory(Callers, Count * sizeof(PVOID));
 
     //
     // Capture the current context.
     //
 
-    RtlCaptureContext (&ContextRecord);
+    RtlCaptureContext(&ContextRecord);
     NextPc = (ULONG_PTR)ContextRecord.BrRp;
 
     //
     // Get the high and low limits of the current thread's stack.
     //
 
-    Rtlp64GetStackLimits (&LowStackLimit, &HighStackLimit);
-    Rtlp64GetBStoreLimits (&LowBStoreLimit, &HighBStoreLimit);
+    Rtlp64GetStackLimits(&LowStackLimit, &HighStackLimit);
+    Rtlp64GetBStoreLimits(&LowBStoreLimit, &HighBStoreLimit);
 
     //
     // Loop to get requested number of callers.
     //
 
-    try {
-        while (CallersFound < Count) {
+    try
+    {
+        while (CallersFound < Count)
+        {
 
 #ifdef NTOS_KERNEL_RUNTIME
 
@@ -399,18 +373,16 @@ Return value:
             // We need to check the NextPc value that we have got from
             // CaptureContext() or VirtualUnwind(). It can happen that
             // we pick up a bogus value from a session driver but in the
-            // current process no session space is mapped. 
+            // current process no session space is mapped.
             //
 
-            if ((MmIsSessionAddress ((PVOID)NextPc) == TRUE) &&
-                (MmGetSessionId (PsGetCurrentProcess()) == 0)) {
+            if ((MmIsSessionAddress((PVOID)NextPc) == TRUE) && (MmGetSessionId(PsGetCurrentProcess()) == 0))
+            {
                 break;
             }
 #endif
 
-            FunctionEntry = RtlpLookupFunctionEntryForStackWalks (NextPc,
-                                                    &ImageBase,
-                                                    &TargetGp);
+            FunctionEntry = RtlpLookupFunctionEntryForStackWalks(NextPc, &ImageBase, &TargetGp);
 
             //
             // If we cannot find a function table entry or we are not
@@ -418,18 +390,20 @@ Return value:
             // we are done.
             //
 
-            if (FunctionEntry == NULL) {
+            if (FunctionEntry == NULL)
+            {
                 break;
             }
 
-            if ((ULONG_PTR)(ContextRecord.IntSp) >= HighStackLimit ||
-                (ULONG_PTR)(ContextRecord.IntSp) <= LowStackLimit) {
+            if ((ULONG_PTR)(ContextRecord.IntSp) >= HighStackLimit || (ULONG_PTR)(ContextRecord.IntSp) <= LowStackLimit)
+            {
 
                 break;
             }
 
             if ((ULONG_PTR)(ContextRecord.RsBSP) <= LowBStoreLimit ||
-                (ULONG_PTR)(ContextRecord.RsBSP) >= HighBStoreLimit) {
+                (ULONG_PTR)(ContextRecord.RsBSP) >= HighBStoreLimit)
+            {
 
                 break;
             }
@@ -439,21 +413,17 @@ Return value:
             // Virtually unwind to the caller of this routine.
             //
 
-            NextPc = RtlVirtualUnwind (ImageBase,
-                                       NextPc,
-                                       FunctionEntry,
-                                       &ContextRecord,
-                                       &InFunction,
-                                       &EstablisherFrame,
-                                       NULL);
+            NextPc = RtlVirtualUnwind(ImageBase, NextPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame,
+                                      NULL);
 
             Callers[CallersFound] = (PVOID)NextPc;
             CallersFound += 1;
         }
+    }
+    except(RtlpWalkFrameChainExceptionFilter(_exception_code(), _exception_info()))
+    {
 
-    } except (RtlpWalkFrameChainExceptionFilter (_exception_code(), _exception_info())) {
-        
-          CallersFound = 0;
+        CallersFound = 0;
     }
 
     return CallersFound;
@@ -461,12 +431,8 @@ Return value:
 
 
 USHORT
-RtlCaptureStackBackTrace(
-    IN ULONG FramesToSkip,
-    IN ULONG FramesToCapture,
-    OUT PVOID *BackTrace,
-    OUT PULONG BackTraceHash
-    )
+RtlCaptureStackBackTrace(IN ULONG FramesToSkip, IN ULONG FramesToCapture, OUT PVOID *BackTrace,
+                         OUT PULONG BackTraceHash)
 /*++
 
 Routine Description:
@@ -493,7 +459,7 @@ Return Value:
 
 --*/
 {
-    PVOID Trace [2 * MAX_STACK_DEPTH];
+    PVOID Trace[2 * MAX_STACK_DEPTH];
     ULONG FramesFound;
     ULONG HashValue;
     ULONG Index;
@@ -508,21 +474,23 @@ Return Value:
     // Sanity checks.
     //
 
-    if (FramesToCapture + FramesToSkip >= 2 * MAX_STACK_DEPTH) {
+    if (FramesToCapture + FramesToSkip >= 2 * MAX_STACK_DEPTH)
+    {
         return 0;
     }
 
-    FramesFound = RtlWalkFrameChain (Trace,
-                                     FramesToCapture + FramesToSkip,
-                                     0);
+    FramesFound = RtlWalkFrameChain(Trace, FramesToCapture + FramesToSkip, 0);
 
-    if (FramesFound <= FramesToSkip) {
+    if (FramesFound <= FramesToSkip)
+    {
         return 0;
     }
 
-    for (Index = 0, HashValue = 0; Index < FramesToCapture; Index += 1) {
+    for (Index = 0, HashValue = 0; Index < FramesToCapture; Index += 1)
+    {
 
-        if (FramesToSkip + Index >= FramesFound) {
+        if (FramesToSkip + Index >= FramesFound)
+        {
             break;
         }
 
@@ -530,7 +498,8 @@ Return Value:
         HashValue += PtrToUlong(BackTrace[Index]);
     }
 
-    if (BackTraceHash != NULL) {
+    if (BackTraceHash != NULL)
+    {
 
         *BackTraceHash = HashValue;
     }
@@ -540,10 +509,7 @@ Return Value:
 
 
 ULONG
-RtlpWalkFrameChainExceptionFilter (
-    ULONG ExceptionCode,
-    PVOID ExceptionRecord
-    )
+RtlpWalkFrameChainExceptionFilter(ULONG ExceptionCode, PVOID ExceptionRecord)
 /*++
 
 Routine Description:
@@ -563,12 +529,10 @@ Return Value:
 {
 
 #if DBG
-        DbgPrint ("Unexpected exception (info %p) in RtlWalkFrameChain ...\n",
-                  ExceptionRecord);
+    DbgPrint("Unexpected exception (info %p) in RtlWalkFrameChain ...\n", ExceptionRecord);
 
-        DbgBreakPoint ();
+    DbgBreakPoint();
 #endif
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
-

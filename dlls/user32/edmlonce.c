@@ -20,9 +20,7 @@
 * History:
 \***************************************************************************/
 
-LONG MLCreate(
-    PED ped,
-    LPCREATESTRUCT lpCreateStruct)
+LONG MLCreate(PED ped, LPCREATESTRUCT lpCreateStruct)
 {
     LONG windowStyle;
     LPWSTR lpszName;
@@ -36,7 +34,8 @@ LONG MLCreate(
     /*
      * Do the standard creation stuff
      */
-    if (!ECCreate(ped, windowStyle)) {
+    if (!ECCreate(ped, windowStyle))
+    {
         return (-1);
     }
 
@@ -44,7 +43,8 @@ LONG MLCreate(
      * Allocate line start array in local heap and lock it down
      */
     ped->chLines = (LPICH)LocalAlloc(LPTR, 2 * sizeof(int));
-    if (ped->chLines == NULL) {
+    if (ped->chLines == NULL)
+    {
         return (-1);
     }
 
@@ -57,7 +57,8 @@ LONG MLCreate(
      * If app wants WS_VSCROLL or WS_HSCROLL, it automatically gets AutoVScroll
      * or AutoHScroll.
      */
-    if ((windowStyle & ES_AUTOVSCROLL) || (windowStyle & WS_VSCROLL)) {
+    if ((windowStyle & ES_AUTOVSCROLL) || (windowStyle & WS_VSCROLL))
+    {
         ped->fAutoVScroll = 1;
     }
 
@@ -72,7 +73,8 @@ LONG MLCreate(
         ClearWindowState(ped->pwnd, WFHSCROLL);
         ped->fAutoHScroll = FALSE;
     }
-    else if (windowStyle & WS_HSCROLL) {
+    else if (windowStyle & WS_HSCROLL)
+    {
         ped->fAutoHScroll = TRUE;
     }
 
@@ -86,7 +88,7 @@ LONG MLCreate(
     /*
      * Set the default font to be the system font.
      */
-    ECSetFont(ped, NULL, FALSE) ;
+    ECSetFont(ped, NULL, FALSE);
 
     /*
      * Set the window text if needed and notify parent if not enough memory to

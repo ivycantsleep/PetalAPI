@@ -25,21 +25,11 @@ Revision History:
 --*/
 
 #include "ki.h"
-
-VOID
-KeInitializeInterrupt (
-    IN PKINTERRUPT Interrupt,
-    IN PKSERVICE_ROUTINE ServiceRoutine,
-    IN PVOID ServiceContext,
-    IN PKSPIN_LOCK SpinLock OPTIONAL,
-    IN ULONG Vector,
-    IN KIRQL Irql,
-    IN KIRQL SynchronizeIrql,
-    IN KINTERRUPT_MODE InterruptMode,
-    IN BOOLEAN ShareVector,
-    IN CCHAR ProcessorNumber,
-    IN BOOLEAN FloatingSave
-    )
+
+VOID KeInitializeInterrupt(IN PKINTERRUPT Interrupt, IN PKSERVICE_ROUTINE ServiceRoutine, IN PVOID ServiceContext,
+                           IN PKSPIN_LOCK SpinLock OPTIONAL, IN ULONG Vector, IN KIRQL Irql, IN KIRQL SynchronizeIrql,
+                           IN KINTERRUPT_MODE InterruptMode, IN BOOLEAN ShareVector, IN CCHAR ProcessorNumber,
+                           IN BOOLEAN FloatingSave)
 
 /*++
 
@@ -113,10 +103,12 @@ Return Value:
     Interrupt->ServiceRoutine = ServiceRoutine; // function pointer
     Interrupt->ServiceContext = ServiceContext;
 
-    if (ARGUMENT_PRESENT(SpinLock)) {
+    if (ARGUMENT_PRESENT(SpinLock))
+    {
         Interrupt->ActualLock = SpinLock;
-
-    } else {
+    }
+    else
+    {
         Interrupt->SpinLock = 0;
         Interrupt->ActualLock = &Interrupt->SpinLock;
     }
@@ -136,11 +128,9 @@ Return Value:
     Interrupt->Connected = FALSE;
     return;
 }
-
+
 BOOLEAN
-KeConnectInterrupt (
-    IN PKINTERRUPT Interrupt
-    )
+KeConnectInterrupt(IN PKINTERRUPT Interrupt)
 
 /*++
 
@@ -193,9 +183,9 @@ Return Value:
     IDTEntry = HalVectorToIDTEntry(Vector);
 
     if ((((IDTEntry >= MAXIMUM_VECTOR) || (Irql > HIGH_LEVEL) ||
-       ((IDTEntry <= HIGH_LEVEL) &&
-       ((((1 << IDTEntry) & PCR->ReservedVectors) != 0) || (IDTEntry != Irql))) ||
-       (Number >= KeNumberProcessors))) == FALSE) {
+          ((IDTEntry <= HIGH_LEVEL) && ((((1 << IDTEntry) & PCR->ReservedVectors) != 0) || (IDTEntry != Irql))) ||
+          (Number >= KeNumberProcessors))) == FALSE)
+    {
 
         //
         // Set system affinity to the specified processor.
@@ -221,61 +211,59 @@ Return Value:
         // a chain must be the same.
         //
 
-        if (Interrupt->Connected == FALSE) {
-            if (PCR->InterruptRoutine[IDTEntry] ==
-                (PKINTERRUPT_ROUTINE)(&KxUnexpectedInterrupt.DispatchCode)) {
+        if (Interrupt->Connected == FALSE)
+        {
+            if (PCR->InterruptRoutine[IDTEntry] == (PKINTERRUPT_ROUTINE)(&KxUnexpectedInterrupt.DispatchCode))
+            {
                 Connected = TRUE;
                 Interrupt->Connected = TRUE;
-                if (Interrupt->FloatingSave != FALSE) {
+                if (Interrupt->FloatingSave != FALSE)
+                {
                     Interrupt->DispatchAddress = KiFloatingDispatch;
-
-                } else {
-                    if (Interrupt->Irql == Interrupt->SynchronizeIrql) {
-                        Interrupt->DispatchAddress =
-                                    (PKINTERRUPT_ROUTINE)KiInterruptDispatchSame;
-
-                    } else {
-                        Interrupt->DispatchAddress =
-                                    (PKINTERRUPT_ROUTINE)KiInterruptDispatchRaise;
+                }
+                else
+                {
+                    if (Interrupt->Irql == Interrupt->SynchronizeIrql)
+                    {
+                        Interrupt->DispatchAddress = (PKINTERRUPT_ROUTINE)KiInterruptDispatchSame;
+                    }
+                    else
+                    {
+                        Interrupt->DispatchAddress = (PKINTERRUPT_ROUTINE)KiInterruptDispatchRaise;
                     }
                 }
 
                 //
-                // Copy the plabel for the Dispatch routine into DispatchCode.  
-                // This will be used by KiExternalInterruptHandler to 
+                // Copy the plabel for the Dispatch routine into DispatchCode.
+                // This will be used by KiExternalInterruptHandler to
                 // dispatch the interrupt.
                 //
 
 
-                RtlMoveMemory(Interrupt->DispatchCode, 
-                              Interrupt->DispatchAddress, 
-                              DISPATCH_LENGTH*4);
+                RtlMoveMemory(Interrupt->DispatchCode, Interrupt->DispatchAddress, DISPATCH_LENGTH * 4);
 
-                PCR->InterruptRoutine[IDTEntry] =
-                            (PKINTERRUPT_ROUTINE)(&Interrupt->DispatchCode);
+                PCR->InterruptRoutine[IDTEntry] = (PKINTERRUPT_ROUTINE)(&Interrupt->DispatchCode);
 
                 HalEnableSystemInterrupt(Vector, Irql, Interrupt->Mode);
+            }
+            else
+            {
+                Interruptx = CONTAINING_RECORD(PCR->InterruptRoutine[IDTEntry], KINTERRUPT, DispatchCode[0]);
 
-            } else {
-                Interruptx = CONTAINING_RECORD(PCR->InterruptRoutine[IDTEntry],
-                                               KINTERRUPT,
-                                               DispatchCode[0]);
-
-                if (Interrupt->Mode == Interruptx->Mode) {
+                if (Interrupt->Mode == Interruptx->Mode)
+                {
                     Connected = TRUE;
                     Interrupt->Connected = TRUE;
-                    ASSERT (Irql <= KiSynchIrql);
-                    if (Interruptx->DispatchAddress != KiChainedDispatch) {
+                    ASSERT(Irql <= KiSynchIrql);
+                    if (Interruptx->DispatchAddress != KiChainedDispatch)
+                    {
                         InitializeListHead(&Interruptx->InterruptListEntry);
                         Interruptx->DispatchAddress = KiChainedDispatch;
-        
-                        RtlMoveMemory(Interruptx->DispatchCode, 
-                                      Interruptx->DispatchAddress,
-                                      DISPATCH_LENGTH*4);
+
+                        RtlMoveMemory(Interruptx->DispatchCode, Interruptx->DispatchAddress, DISPATCH_LENGTH * 4);
                     }
 
-                    InsertTailList(&Interruptx->InterruptListEntry,
-                                   &Interrupt->InterruptListEntry);
+                    InsertTailList(&Interruptx->InterruptListEntry, &Interrupt->InterruptListEntry);
                 }
             }
         }
@@ -299,11 +287,9 @@ Return Value:
 
     return Connected;
 }
-
+
 BOOLEAN
-KeDisconnectInterrupt (
-    IN PKINTERRUPT Interrupt
-    )
+KeDisconnectInterrupt(IN PKINTERRUPT Interrupt)
 
 /*++
 
@@ -354,7 +340,8 @@ Return Value:
     //
 
     Connected = Interrupt->Connected;
-    if (Connected != FALSE) {
+    if (Connected != FALSE)
+    {
         Irql = Interrupt->Irql;
         Vector = Interrupt->Vector;
         IDTEntry = HalVectorToIDTEntry(Vector);
@@ -368,65 +355,57 @@ Return Value:
         // address.
         //
 
-        Interruptx = CONTAINING_RECORD(PCR->InterruptRoutine[IDTEntry],
-                                       KINTERRUPT,
-                                       DispatchCode[0]);
+        Interruptx = CONTAINING_RECORD(PCR->InterruptRoutine[IDTEntry], KINTERRUPT, DispatchCode[0]);
 
-        if (Interruptx->DispatchAddress ==
-                                (PKINTERRUPT_ROUTINE)KiChainedDispatch) {
-            ASSERT (Irql <= KiSynchIrql);
-            if (Interrupt == Interruptx) {
-                Interruptx = CONTAINING_RECORD(Interruptx->InterruptListEntry.Flink,
-                                               KINTERRUPT, InterruptListEntry);
-                Interruptx->DispatchAddress =
-                                (PKINTERRUPT_ROUTINE)KiChainedDispatch;
+        if (Interruptx->DispatchAddress == (PKINTERRUPT_ROUTINE)KiChainedDispatch)
+        {
+            ASSERT(Irql <= KiSynchIrql);
+            if (Interrupt == Interruptx)
+            {
+                Interruptx = CONTAINING_RECORD(Interruptx->InterruptListEntry.Flink, KINTERRUPT, InterruptListEntry);
+                Interruptx->DispatchAddress = (PKINTERRUPT_ROUTINE)KiChainedDispatch;
 
-                RtlMoveMemory(Interruptx->DispatchCode, 
-                              Interruptx->DispatchAddress,
-                              DISPATCH_LENGTH*4);
+                RtlMoveMemory(Interruptx->DispatchCode, Interruptx->DispatchAddress, DISPATCH_LENGTH * 4);
 
-                PCR->InterruptRoutine[IDTEntry] =
-                                (PKINTERRUPT_ROUTINE)(&Interruptx->DispatchCode);
+                PCR->InterruptRoutine[IDTEntry] = (PKINTERRUPT_ROUTINE)(&Interruptx->DispatchCode);
             }
 
             RemoveEntryList(&Interrupt->InterruptListEntry);
-            Interrupty = CONTAINING_RECORD(Interruptx->InterruptListEntry.Flink,
-                                           KINTERRUPT,
-                                           InterruptListEntry);
+            Interrupty = CONTAINING_RECORD(Interruptx->InterruptListEntry.Flink, KINTERRUPT, InterruptListEntry);
 
-            if (Interruptx == Interrupty) {
-                if (Interrupty->FloatingSave != FALSE) {
+            if (Interruptx == Interrupty)
+            {
+                if (Interrupty->FloatingSave != FALSE)
+                {
                     Interrupty->DispatchAddress = KiFloatingDispatch;
-
-                } else {
-                    if (Interrupty->Irql == Interrupty->SynchronizeIrql) {
-                        Interrupty->DispatchAddress =
-                                    (PKINTERRUPT_ROUTINE)KiInterruptDispatchSame;
-
-                    } else {
-                        Interrupty->DispatchAddress =
-                                    (PKINTERRUPT_ROUTINE)KiInterruptDispatchRaise;
+                }
+                else
+                {
+                    if (Interrupty->Irql == Interrupty->SynchronizeIrql)
+                    {
+                        Interrupty->DispatchAddress = (PKINTERRUPT_ROUTINE)KiInterruptDispatchSame;
+                    }
+                    else
+                    {
+                        Interrupty->DispatchAddress = (PKINTERRUPT_ROUTINE)KiInterruptDispatchRaise;
                     }
                 }
 
                 //
                 // Copy the plabel for the Dispatch routine into DispatchCode.
-                // This will be used by KiExternalInterruptHandler to 
+                // This will be used by KiExternalInterruptHandler to
                 // dispatch the interrupt.
                 //
 
-                RtlMoveMemory(Interrupty->DispatchCode, 
-                              Interrupty->DispatchAddress,
-                              DISPATCH_LENGTH*4);
+                RtlMoveMemory(Interrupty->DispatchCode, Interrupty->DispatchAddress, DISPATCH_LENGTH * 4);
 
-                PCR->InterruptRoutine[IDTEntry] =
-                               (PKINTERRUPT_ROUTINE)(&Interrupty->DispatchCode);
-                }
-
-        } else {
+                PCR->InterruptRoutine[IDTEntry] = (PKINTERRUPT_ROUTINE)(&Interrupty->DispatchCode);
+            }
+        }
+        else
+        {
             HalDisableSystemInterrupt(Vector, Irql);
-            PCR->InterruptRoutine[IDTEntry] =
-                    (PKINTERRUPT_ROUTINE)(&KxUnexpectedInterrupt.DispatchCode);
+            PCR->InterruptRoutine[IDTEntry] = (PKINTERRUPT_ROUTINE)(&KxUnexpectedInterrupt.DispatchCode);
         }
 
         Interrupt->Connected = FALSE;
@@ -443,7 +422,7 @@ Return Value:
     //
 
     KeRevertToUserAffinityThread();
-    
+
     //
     // Return whether interrupt was disconnected from the specified vector.
     //

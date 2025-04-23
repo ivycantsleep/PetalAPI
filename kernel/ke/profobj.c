@@ -26,58 +26,41 @@ Revision History:
 
 #include "ki.h"
 
-#pragma alloc_text (PAGE, KeQueryIntervalProfile)
+#pragma alloc_text(PAGE, KeQueryIntervalProfile)
 
 //
 // The following assert macro is used to check that an input profile object is
 // really a kprofile and not something else, like deallocated pool.
 //
 
-#define ASSERT_PROFILE(E) {             \
-    ASSERT((E)->Type == ProfileObject); \
-}
+#define ASSERT_PROFILE(E)                   \
+    {                                       \
+        ASSERT((E)->Type == ProfileObject); \
+    }
 
 //
 // Structure representing an active profile source
 //
-typedef struct _KACTIVE_PROFILE_SOURCE {
+typedef struct _KACTIVE_PROFILE_SOURCE
+{
     LIST_ENTRY ListEntry;
     KPROFILE_SOURCE Source;
     KAFFINITY Affinity;
-    ULONG ProcessorCount[1];            // variable-sized, one per processor
+    ULONG ProcessorCount[1]; // variable-sized, one per processor
 } KACTIVE_PROFILE_SOURCE, *PKACTIVE_PROFILE_SOURCE;
 
 //
 // Prototypes for IPI target functions
 //
-VOID
-KiStartProfileInterrupt (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiStartProfileInterrupt(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                             IN PVOID Parameter3);
 
-VOID
-KiStopProfileInterrupt (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiStopProfileInterrupt(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3);
 
-
-VOID
-KeInitializeProfile (
-    IN PKPROFILE Profile,
-    IN PKPROCESS Process OPTIONAL,
-    IN PVOID RangeBase,
-    IN SIZE_T RangeSize,
-    IN ULONG BucketSize,
-    IN ULONG Segment,
-    IN KPROFILE_SOURCE ProfileSource,
-    IN KAFFINITY ProfileAffinity
-    )
+
+VOID KeInitializeProfile(IN PKPROFILE Profile, IN PKPROCESS Process OPTIONAL, IN PVOID RangeBase, IN SIZE_T RangeSize,
+                         IN ULONG BucketSize, IN ULONG Segment, IN KPROFILE_SOURCE ProfileSource,
+                         IN KAFFINITY ProfileAffinity)
 
 /*++
 
@@ -141,10 +124,12 @@ Return Value:
     // bucket shift count, and set started FALSE.
     //
 
-    if (ARGUMENT_PRESENT(Process)) {
+    if (ARGUMENT_PRESENT(Process))
+    {
         Profile->Process = Process;
-
-    } else {
+    }
+    else
+    {
         Profile->Process = NULL;
     }
 
@@ -155,16 +140,15 @@ Return Value:
     Profile->Segment = Segment;
     Profile->Source = (CSHORT)ProfileSource;
     Profile->Affinity = ProfileAffinity & KeActiveProcessors;
-    if (Profile->Affinity == 0) {
+    if (Profile->Affinity == 0)
+    {
         Profile->Affinity = KeActiveProcessors;
     }
     return;
 }
-
+
 ULONG
-KeQueryIntervalProfile (
-    IN KPROFILE_SOURCE ProfileSource
-    )
+KeQueryIntervalProfile(IN KPROFILE_SOURCE ProfileSource)
 
 /*++
 
@@ -190,45 +174,44 @@ Return Value:
     NTSTATUS Status;
 
 #if !defined(_IA64_)
-    if (ProfileSource == ProfileTime) {
+    if (ProfileSource == ProfileTime)
+    {
 
         //
         // Return the current sampling interval in 100ns units.
         //
 
         return KiProfileInterval;
-
-    } 
-    else 
-#endif // !_IA64_
-    if (ProfileSource == ProfileAlignmentFixup) {
-        return KiProfileAlignmentFixupInterval;
-    } else {
-
-        //
-        // The HAL is responsible for tracking this profile interval.
-        //
-
-        ProfileSourceInfo.Source = ProfileSource;
-        Status = HalQuerySystemInformation(HalProfileSourceInformation,
-                                           sizeof(HAL_PROFILE_SOURCE_INFORMATION),
-                                           &ProfileSourceInfo,
-                                           &ReturnedLength);
-
-        if (NT_SUCCESS(Status) && ProfileSourceInfo.Supported) {
-            return ProfileSourceInfo.Interval;
-
-        } else {
-            return 0;
-        }
     }
+    else
+#endif // !_IA64_
+        if (ProfileSource == ProfileAlignmentFixup)
+        {
+            return KiProfileAlignmentFixupInterval;
+        }
+        else
+        {
+
+            //
+            // The HAL is responsible for tracking this profile interval.
+            //
+
+            ProfileSourceInfo.Source = ProfileSource;
+            Status = HalQuerySystemInformation(HalProfileSourceInformation, sizeof(HAL_PROFILE_SOURCE_INFORMATION),
+                                               &ProfileSourceInfo, &ReturnedLength);
+
+            if (NT_SUCCESS(Status) && ProfileSourceInfo.Supported)
+            {
+                return ProfileSourceInfo.Interval;
+            }
+            else
+            {
+                return 0;
+            }
+        }
 }
-
-VOID
-KeSetIntervalProfile (
-    IN ULONG Interval,
-    IN KPROFILE_SOURCE Source
-    )
+
+VOID KeSetIntervalProfile(IN ULONG Interval, IN KPROFILE_SOURCE Source)
 
 /*++
 
@@ -254,7 +237,8 @@ Return Value:
     HAL_PROFILE_SOURCE_INTERVAL ProfileSourceInterval;
 
 #if !defined(_IA64_)
-    if (Source == ProfileTime) {
+    if (Source == ProfileTime)
+    {
 
         //
         // If the specified sampling interval is less than the minimum
@@ -262,7 +246,8 @@ Return Value:
         // sampling interval.
         //
 
-        if (Interval < MINIMUM_PROFILE_INTERVAL) {
+        if (Interval < MINIMUM_PROFILE_INTERVAL)
+        {
             Interval = MINIMUM_PROFILE_INTERVAL;
         }
 
@@ -271,33 +256,31 @@ Return Value:
         //
 
         KiProfileInterval = (ULONG)KiIpiGenericCall(HalSetProfileInterval, Interval);
-
-    } 
-    else 
-#endif // !_IA64_
-    if (Source == ProfileAlignmentFixup) {
-        KiProfileAlignmentFixupInterval = Interval;
-    } else {
-
-        //
-        // The HAL is responsible for setting this profile interval.
-        //
-
-        ProfileSourceInterval.Source = Source;
-        ProfileSourceInterval.Interval = Interval;
-        HalSetSystemInformation(HalProfileSourceInterval,
-                                sizeof(HAL_PROFILE_SOURCE_INTERVAL),
-                                &ProfileSourceInterval);
     }
+    else
+#endif // !_IA64_
+        if (Source == ProfileAlignmentFixup)
+        {
+            KiProfileAlignmentFixupInterval = Interval;
+        }
+        else
+        {
+
+            //
+            // The HAL is responsible for setting this profile interval.
+            //
+
+            ProfileSourceInterval.Source = Source;
+            ProfileSourceInterval.Interval = Interval;
+            HalSetSystemInformation(HalProfileSourceInterval, sizeof(HAL_PROFILE_SOURCE_INTERVAL),
+                                    &ProfileSourceInterval);
+        }
 
     return;
 }
-
+
 BOOLEAN
-KeStartProfile (
-    IN PKPROFILE Profile,
-    IN PULONG Buffer
-    )
+KeStartProfile(IN PKPROFILE Profile, IN PULONG Buffer)
 
 /*++
 
@@ -351,18 +334,18 @@ Return Value:
     // Allocate pool that may be required before raising to PROFILE_LEVEL.
     //
 
-    SourceSize = sizeof(KACTIVE_PROFILE_SOURCE) + sizeof(ULONG) *
-                 (KeNumberProcessors - 1);
+    SourceSize = sizeof(KACTIVE_PROFILE_SOURCE) + sizeof(ULONG) * (KeNumberProcessors - 1);
     AllocatedPool = ExAllocatePoolWithTag(NonPagedPool, SourceSize, 'forP');
-    if (AllocatedPool == NULL) {
-        return(TRUE);
+    if (AllocatedPool == NULL)
+    {
+        return (TRUE);
     }
 
     //
     // Raise to dispatch level
     //
 
-    KeRaiseIrql (DISPATCH_LEVEL, &OldIrql);
+    KeRaiseIrql(DISPATCH_LEVEL, &OldIrql);
     Prcb = KeGetCurrentPrcb();
 
     //
@@ -387,22 +370,28 @@ Return Value:
     // profile interrupts if the number of active profile objects was previously zero.
     //
 
-    if (Profile->Started == FALSE) {
+    if (Profile->Started == FALSE)
+    {
 
         Started = TRUE;
         Profile->Buffer = Buffer;
         Profile->Started = TRUE;
         Process = Profile->Process;
 
-        if (Profile->Buffer) {
-            
-            if (Process != NULL) {
-                InsertTailList(&Process->ProfileListHead, &Profile->ProfileListEntry);
+        if (Profile->Buffer)
+        {
 
-            } else {
+            if (Process != NULL)
+            {
+                InsertTailList(&Process->ProfileListHead, &Profile->ProfileListEntry);
+            }
+            else
+            {
                 InsertTailList(&KiProfileListHead, &Profile->ProfileListEntry);
             }
-        } else {
+        }
+        else
+        {
 
             //
             //  If we don't have a buffer passed, we'll use only the
@@ -420,19 +409,20 @@ Return Value:
         //
 
         ListEntry = KiProfileSourceListHead.Flink;
-        while (ListEntry != &KiProfileSourceListHead) {
-            CurrentActiveSource = CONTAINING_RECORD(ListEntry,
-                                                    KACTIVE_PROFILE_SOURCE,
-                                                    ListEntry);
+        while (ListEntry != &KiProfileSourceListHead)
+        {
+            CurrentActiveSource = CONTAINING_RECORD(ListEntry, KACTIVE_PROFILE_SOURCE, ListEntry);
 
-            if (CurrentActiveSource->Source == Profile->Source) {
+            if (CurrentActiveSource->Source == Profile->Source)
+            {
                 ActiveSource = CurrentActiveSource;
                 break;
             }
             ListEntry = ListEntry->Flink;
         }
 
-        if (ActiveSource == NULL) {
+        if (ActiveSource == NULL)
+        {
 
             //
             // This source was not found, allocate and initialize a new entry and add
@@ -444,7 +434,8 @@ Return Value:
             RtlZeroMemory(ActiveSource, SourceSize);
             ActiveSource->Source = Profile->Source;
             InsertHeadList(&KiProfileSourceListHead, &ActiveSource->ListEntry);
-            if (Profile->Source == ProfileAlignmentFixup) {
+            if (Profile->Source == ProfileAlignmentFixup)
+            {
                 KiProfileAlignmentFixup = TRUE;
             }
         }
@@ -456,8 +447,10 @@ Return Value:
 
         AffinitySet = Profile->Affinity;
         Reference = &ActiveSource->ProcessorCount[0];
-        while (AffinitySet != 0) {
-            if (AffinitySet & 1) {
+        while (AffinitySet != 0)
+        {
+            if (AffinitySet & 1)
+            {
                 *Reference = *Reference + 1;
             }
 
@@ -494,18 +487,17 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiStartProfileInterrupt,
-                        (PVOID)Profile->Source,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiStartProfileInterrupt, (PVOID)Profile->Source, NULL, NULL);
     }
 
 #endif
 
-    if (AffinitySet & Prcb->SetMember) {
-        if (Profile->Source == ProfileAlignmentFixup) {
+    if (AffinitySet & Prcb->SetMember)
+    {
+        if (Profile->Source == ProfileAlignmentFixup)
+        {
             KiEnableAlignmentExceptions();
         }
         HalStartProfileInterrupt(Profile->Source);
@@ -513,7 +505,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -529,17 +522,16 @@ Return Value:
     // If the allocated pool was not used, free it now.
     //
 
-    if (AllocatedPool != NULL) {
+    if (AllocatedPool != NULL)
+    {
         ExFreePool(AllocatedPool);
     }
 
     return Started;
 }
-
+
 BOOLEAN
-KeStopProfile (
-    IN PKPROFILE Profile
-    )
+KeStopProfile(IN PKPROFILE Profile)
 
 /*++
 
@@ -572,7 +564,7 @@ Return Value:
     BOOLEAN StopInterrupt = TRUE;
     PLIST_ENTRY ListEntry;
     PKACTIVE_PROFILE_SOURCE ActiveSource;
-    PKACTIVE_PROFILE_SOURCE PoolToFree=NULL;
+    PKACTIVE_PROFILE_SOURCE PoolToFree = NULL;
     KAFFINITY AffinitySet = 0;
     KAFFINITY CurrentProcessor;
     PULONG Reference;
@@ -584,7 +576,7 @@ Return Value:
     // Raise to disaptch level
     //
 
-    KeRaiseIrql (DISPATCH_LEVEL, &OldIrql);
+    KeRaiseIrql(DISPATCH_LEVEL, &OldIrql);
     Prcb = KeGetCurrentPrcb();
 
     //
@@ -609,12 +601,14 @@ Return Value:
     // active profile objects is zero.
     //
 
-    if (Profile->Started != FALSE) {
+    if (Profile->Started != FALSE)
+    {
 
         Stopped = TRUE;
         Profile->Started = FALSE;
-        
-        if (!IsListEmpty(&Profile->ProfileListEntry)) {
+
+        if (!IsListEmpty(&Profile->ProfileListEntry))
+        {
 
             RemoveEntryList(&Profile->ProfileListEntry);
         }
@@ -625,13 +619,12 @@ Return Value:
         //
 
         ListEntry = KiProfileSourceListHead.Flink;
-        do {
+        do
+        {
             ASSERT(ListEntry != &KiProfileSourceListHead);
-            ActiveSource = CONTAINING_RECORD(ListEntry,
-                                             KACTIVE_PROFILE_SOURCE,
-                                             ListEntry);
+            ActiveSource = CONTAINING_RECORD(ListEntry, KACTIVE_PROFILE_SOURCE, ListEntry);
             ListEntry = ListEntry->Flink;
-        } while ( ActiveSource->Source != Profile->Source );
+        } while (ActiveSource->Source != Profile->Source);
 
         //
         // Decrement the reference counts for each processor in the
@@ -643,10 +636,13 @@ Return Value:
         TargetProcessors = 0;
         AffinitySet = Profile->Affinity;
         Reference = &ActiveSource->ProcessorCount[0];
-        while (AffinitySet != 0) {
-            if (AffinitySet & 1) {
+        while (AffinitySet != 0)
+        {
+            if (AffinitySet & 1)
+            {
                 *Reference = *Reference - 1;
-                if (*Reference == 0) {
+                if (*Reference == 0)
+                {
                     TargetProcessors = TargetProcessors | CurrentProcessor;
                 }
             }
@@ -675,10 +671,12 @@ Return Value:
         // processors. If so, remove it from the list and free it.
         //
 
-        if (ActiveSource->Affinity == 0) {
+        if (ActiveSource->Affinity == 0)
+        {
             RemoveEntryList(&ActiveSource->ListEntry);
             PoolToFree = ActiveSource;
-            if (Profile->Source == ProfileAlignmentFixup) {
+            if (Profile->Source == ProfileAlignmentFixup)
+            {
                 KiProfileAlignmentFixup = FALSE;
             }
         }
@@ -698,18 +696,17 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiStopProfileInterrupt,
-                        (PVOID)Profile->Source,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiStopProfileInterrupt, (PVOID)Profile->Source, NULL, NULL);
     }
 
 #endif
 
-    if (AffinitySet & Prcb->SetMember) {
-        if (Profile->Source == ProfileAlignmentFixup) {
+    if (AffinitySet & Prcb->SetMember)
+    {
+        if (Profile->Source == ProfileAlignmentFixup)
+        {
             KiDisableAlignmentExceptions();
         }
         HalStopProfileInterrupt(Profile->Source);
@@ -717,7 +714,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -727,14 +725,15 @@ Return Value:
     // Lower to original IRQL
     //
 
-    KeLowerIrql (OldIrql);
+    KeLowerIrql(OldIrql);
 
     //
     // Now that IRQL has been lowered, free the profile source if
     // necessary.
     //
 
-    if (PoolToFree != NULL) {
+    if (PoolToFree != NULL)
+    {
         ExFreePool(PoolToFree);
     }
 
@@ -743,14 +742,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-
-VOID
-KiStopProfileInterrupt (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiStopProfileInterrupt(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -783,22 +776,17 @@ Return Value:
     // data cache packet address to signal the source to continue.
     //
 
-    ProfileSource = (KPROFILE_SOURCE) PtrToUlong(Parameter1);
-    if (ProfileSource == ProfileAlignmentFixup) {
+    ProfileSource = (KPROFILE_SOURCE)PtrToUlong(Parameter1);
+    if (ProfileSource == ProfileAlignmentFixup)
+    {
         KiDisableAlignmentExceptions();
     }
     HalStopProfileInterrupt(ProfileSource);
     KiIpiSignalPacketDone(SignalDone);
     return;
 }
-
-VOID
-KiStartProfileInterrupt (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiStartProfileInterrupt(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -832,7 +820,8 @@ Return Value:
     //
 
     ProfileSource = (KPROFILE_SOURCE)PtrToUlong(Parameter1);
-    if (ProfileSource == ProfileAlignmentFixup) {
+    if (ProfileSource == ProfileAlignmentFixup)
+    {
         KiEnableAlignmentExceptions();
     }
     HalStartProfileInterrupt(ProfileSource);

@@ -21,19 +21,13 @@ Revision History:
 #include "obp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,ObInsertObject)
+#pragma alloc_text(PAGE, ObInsertObject)
 #endif
 
-
+
 NTSTATUS
-ObInsertObject (
-    IN PVOID Object,
-    IN PACCESS_STATE AccessState OPTIONAL,
-    IN ACCESS_MASK DesiredAccess OPTIONAL,
-    IN ULONG ObjectPointerBias,
-    OUT PVOID *NewObject OPTIONAL,
-    OUT PHANDLE Handle OPTIONAL
-    )
+ObInsertObject(IN PVOID Object, IN PACCESS_STATE AccessState OPTIONAL, IN ACCESS_MASK DesiredAccess OPTIONAL,
+               IN ULONG ObjectPointerBias, OUT PVOID *NewObject OPTIONAL, OUT PHANDLE Handle OPTIONAL)
 
 /*++
 
@@ -105,7 +99,8 @@ Return Value:
 
 #if DBG
 
-    if ((ObjectHeader->Flags & OB_FLAG_NEW_OBJECT) == 0) {
+    if ((ObjectHeader->Flags & OB_FLAG_NEW_OBJECT) == 0)
+    {
 
         KdPrint(("OB: Attempting to insert existing object %08x\n", Object));
         KdBreakPoint();
@@ -121,17 +116,18 @@ Return Value:
 
     ObjectType = ObjectHeader->Type;
 
-    NameInfo = ObpReferenceNameInfo( ObjectHeader );
+    NameInfo = ObpReferenceNameInfo(ObjectHeader);
 
     ObjectName = NULL;
 
-    if ((NameInfo != NULL) && (NameInfo->Name.Buffer != NULL)) {
+    if ((NameInfo != NULL) && (NameInfo->Name.Buffer != NULL))
+    {
 
         ObjectName = &NameInfo->Name;
     }
 
-    ASSERT (ARGUMENT_PRESENT (Handle) || (ObjectPointerBias == 0 && ObjectName == NULL &&
-                                          ObjectType->TypeInfo.SecurityRequired && NewObject == NULL));
+    ASSERT(ARGUMENT_PRESENT(Handle) || (ObjectPointerBias == 0 && ObjectName == NULL &&
+                                        ObjectType->TypeInfo.SecurityRequired && NewObject == NULL));
 
     //
     //  If security checks are not required and an object name is not
@@ -141,26 +137,22 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (!ObjectType->TypeInfo.SecurityRequired && (ObjectName == NULL)) {
+    if (!ObjectType->TypeInfo.SecurityRequired && (ObjectName == NULL))
+    {
 
         ObjectHeader->ObjectCreateInfo = NULL;
 
         *Handle = NULL;
 
-        Status = ObpCreateUnnamedHandle( Object,
-                                         DesiredAccess,
-                                         1 + ObjectPointerBias,
-                                         ObjectCreateInfo->Attributes,
-                                         PreviousMode,
-                                         NewObject,
-                                         Handle );
+        Status = ObpCreateUnnamedHandle(Object, DesiredAccess, 1 + ObjectPointerBias, ObjectCreateInfo->Attributes,
+                                        PreviousMode, NewObject, Handle);
         //
         //  Free the object creation information and dereference the object.
         //
 
         ObpFreeObjectCreateInformation(ObjectCreateInfo);
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
         ObDereferenceObject(Object);
 
         return Status;
@@ -172,18 +164,17 @@ Return Value:
     //  using the requested desired access
     //
 
-    if (!ARGUMENT_PRESENT(AccessState)) {
+    if (!ARGUMENT_PRESENT(AccessState))
+    {
 
         AccessState = &LocalAccessState;
 
-        Status = SeCreateAccessState( &LocalAccessState,
-                                      &AuxData,
-                                      DesiredAccess,
-                                      &ObjectType->TypeInfo.GenericMapping );
+        Status = SeCreateAccessState(&LocalAccessState, &AuxData, DesiredAccess, &ObjectType->TypeInfo.GenericMapping);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ObpDereferenceNameInfo( NameInfo );
+            ObpDereferenceNameInfo(NameInfo);
             ObDereferenceObject(Object);
 
             return Status;
@@ -196,14 +187,15 @@ Return Value:
     //  Check the desired access mask against the security descriptor
     //
 
-    Status = ObpValidateAccessMask( AccessState );
+    Status = ObpValidateAccessMask(AccessState);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
         ObDereferenceObject(Object);
 
-        return( Status );
+        return (Status);
     }
 
     //
@@ -220,20 +212,14 @@ Return Value:
     //  lookup the name
     //
 
-    if (ObjectName != NULL) {
+    if (ObjectName != NULL)
+    {
 
-        Status = ObpLookupObjectName( ObjectCreateInfo->RootDirectory,
-                                      ObjectName,
-                                      ObjectCreateInfo->Attributes,
-                                      ObjectType,
-                                      (KPROCESSOR_MODE)(ObjectHeader->Flags & OB_FLAG_KERNEL_OBJECT
-                                                            ? KernelMode : UserMode),
-                                      ObjectCreateInfo->ParseContext,
-                                      ObjectCreateInfo->SecurityQos,
-                                      Object,
-                                      AccessState,
-                                      &LookupContext,
-                                      &InsertObject );
+        Status =
+            ObpLookupObjectName(ObjectCreateInfo->RootDirectory, ObjectName, ObjectCreateInfo->Attributes, ObjectType,
+                                (KPROCESSOR_MODE)(ObjectHeader->Flags & OB_FLAG_KERNEL_OBJECT ? KernelMode : UserMode),
+                                ObjectCreateInfo->ParseContext, ObjectCreateInfo->SecurityQos, Object, AccessState,
+                                &LookupContext, &InsertObject);
 
         //
         //  We found the name and it is not the object we have as our input.
@@ -241,24 +227,27 @@ Return Value:
         //  appropriate status
         //
 
-        if (NT_SUCCESS(Status) &&
-            (InsertObject != NULL) &&
-            (InsertObject != Object)) {
+        if (NT_SUCCESS(Status) && (InsertObject != NULL) && (InsertObject != Object))
+        {
 
             OpenReason = ObOpenHandle;
 
-            if (ObjectCreateInfo->Attributes & OBJ_OPENIF) {
+            if (ObjectCreateInfo->Attributes & OBJ_OPENIF)
+            {
 
-                if (ObjectType != OBJECT_TO_OBJECT_HEADER(InsertObject)->Type) {
+                if (ObjectType != OBJECT_TO_OBJECT_HEADER(InsertObject)->Type)
+                {
 
                     Status = STATUS_OBJECT_TYPE_MISMATCH;
-
-                } else {
-
-                    Status = STATUS_OBJECT_NAME_EXISTS;     // Warning only
                 }
+                else
+                {
 
-            } else {
+                    Status = STATUS_OBJECT_NAME_EXISTS; // Warning only
+                }
+            }
+            else
+            {
 
                 Status = STATUS_OBJECT_NAME_COLLISION;
             }
@@ -269,25 +258,28 @@ Return Value:
         //  and return to our caller
         //
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ObpReleaseLookupContext( &LookupContext );
+            ObpReleaseLookupContext(&LookupContext);
 
-            ObpDereferenceNameInfo( NameInfo );
-            ObDereferenceObject( Object );
+            ObpDereferenceNameInfo(NameInfo);
+            ObDereferenceObject(Object);
 
             //
             //  Free security information if we allocated it
             //
 
-            if (AccessState == &LocalAccessState) {
+            if (AccessState == &LocalAccessState)
+            {
 
-                SeDeleteAccessState( AccessState );
+                SeDeleteAccessState(AccessState);
             }
 
-            return( Status );
-
-        } else {
+            return (Status);
+        }
+        else
+        {
 
             //
             //  Otherwise we did locate the object name
@@ -296,9 +288,10 @@ Return Value:
             //  handle any Dos Device name semanatics.
             //
 
-            if (ObjectType == ObpSymbolicLinkObjectType) {
+            if (ObjectType == ObpSymbolicLinkObjectType)
+            {
 
-                ObpCreateSymbolicLinkName( (POBJECT_SYMBOLIC_LINK)InsertObject );
+                ObpCreateSymbolicLinkName((POBJECT_SYMBOLIC_LINK)InsertObject);
             }
         }
     }
@@ -312,7 +305,8 @@ Return Value:
     //  to be assigned to the object.
     //
 
-    if (InsertObject == Object) {
+    if (InsertObject == Object)
+    {
 
         //
         //  Only the following objects have security descriptors:
@@ -322,13 +316,15 @@ Return Value:
         //         indicates a security descriptor is required.
         //
 
-        if ((ObjectName != NULL) || ObjectType->TypeInfo.SecurityRequired) {
+        if ((ObjectName != NULL) || ObjectType->TypeInfo.SecurityRequired)
+        {
 
             //
             //  Get the parent's descriptor, if there is one...
             //
 
-            if ((NameInfo != NULL) && (NameInfo->Directory != NULL)) {
+            if ((NameInfo != NULL) && (NameInfo->Directory != NULL))
+            {
 
                 //
                 //  This will allocate a block of memory and copy
@@ -339,9 +335,7 @@ Return Value:
                 //  memory.
                 //
 
-                ObGetObjectSecurity( NameInfo->Directory,
-                                     &ParentDescriptor,
-                                     &SecurityDescriptorAllocated );
+                ObGetObjectSecurity(NameInfo->Directory, &ParentDescriptor, &SecurityDescriptorAllocated);
             }
 
             //
@@ -351,51 +345,49 @@ Return Value:
             //  the new object.
             //
 
-            Status = ObAssignSecurity( AccessState,
-                                       ParentDescriptor,
-                                       Object,
-                                       ObjectType );
+            Status = ObAssignSecurity(AccessState, ParentDescriptor, Object, ObjectType);
 
-            if (ParentDescriptor != NULL) {
+            if (ParentDescriptor != NULL)
+            {
 
-                ObReleaseObjectSecurity( ParentDescriptor,
-                                         SecurityDescriptorAllocated );
+                ObReleaseObjectSecurity(ParentDescriptor, SecurityDescriptorAllocated);
+            }
+            else if (NT_SUCCESS(Status))
+            {
 
-            } else if (NT_SUCCESS( Status )) {
-
-                SeReleaseSecurityDescriptor( ObjectCreateInfo->SecurityDescriptor,
-                                             ObjectCreateInfo->ProbeMode,
-                                             TRUE );
+                SeReleaseSecurityDescriptor(ObjectCreateInfo->SecurityDescriptor, ObjectCreateInfo->ProbeMode, TRUE);
 
                 ObjectCreateInfo->SecurityDescriptor = NULL;
                 AccessState->SecurityDescriptor = NULL;
             }
         }
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             //  The attempt to assign the security descriptor to
             //  the object failed.
             //
-            
-            if (LookupContext.DirectoryLocked) {
-                
+
+            if (LookupContext.DirectoryLocked)
+            {
+
                 //
-                //  If ObpLookupObjectName already inserted the 
+                //  If ObpLookupObjectName already inserted the
                 //  object into the directory we have to backup this
                 //
 
                 //
-                //  Capture the object Directory 
+                //  Capture the object Directory
                 //
 
                 DirObject = NameInfo->Directory;
 
-                ObpDeleteDirectoryEntry( &LookupContext ); 
+                ObpDeleteDirectoryEntry(&LookupContext);
             }
 
-            ObpReleaseLookupContext( &LookupContext );
+            ObpReleaseLookupContext(&LookupContext);
 
             //
             //  If ObpLookupObjectName inserted the object into the directory
@@ -403,33 +395,35 @@ Return Value:
             //  object. We should remove the extra-references
             //
 
-            if (DirObject) {
+            if (DirObject)
+            {
 
-                ObDereferenceObject( Object );
-                ObDereferenceObject( DirObject );
+                ObDereferenceObject(Object);
+                ObDereferenceObject(DirObject);
             }
 
             //
             //  The first backout logic used ObpDeleteNameCheck
             //  which is wrong because the security descriptor for
             //  the object is not initialized. Actually  ObpDeleteNameCheck
-            //  had no effect because the object was removed before from 
+            //  had no effect because the object was removed before from
             //  the directory
             //
 
-            ObpDereferenceNameInfo( NameInfo );
-            ObDereferenceObject( Object );
+            ObpDereferenceNameInfo(NameInfo);
+            ObDereferenceObject(Object);
 
             //
             //  Free security information if we allocated it
             //
 
-            if (AccessState == &LocalAccessState) {
+            if (AccessState == &LocalAccessState)
+            {
 
-                SeDeleteAccessState( AccessState );
+                SeDeleteAccessState(AccessState);
             }
 
-            return( Status );
+            return (Status);
         }
     }
 
@@ -443,49 +437,45 @@ Return Value:
     //  on return
     //
 
-    if (ARGUMENT_PRESENT (Handle)) {
+    if (ARGUMENT_PRESENT(Handle))
+    {
 
-        Status = ObpCreateHandle( OpenReason,
-                                  InsertObject,
-                                  NULL,
-                                  AccessState,
-                                  1 + ObjectPointerBias,
-                                  ObjectCreateInfo->Attributes,
-                                  &LookupContext,
-                                  PreviousMode,
-                                  NewObject,
-                                  &NewHandle );
+        Status = ObpCreateHandle(OpenReason, InsertObject, NULL, AccessState, 1 + ObjectPointerBias,
+                                 ObjectCreateInfo->Attributes, &LookupContext, PreviousMode, NewObject, &NewHandle);
 
         //
         //  If the insertion failed, the following dereference will cause
         //  the newly created object to be deallocated.
         //
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             //  Make the name reference go away if an error.
             //
 
-            if (ObjectName != NULL) {
+            if (ObjectName != NULL)
+            {
 
-                ObpDeleteNameCheck( Object );
+                ObpDeleteNameCheck(Object);
             }
 
             *Handle = NULL;
 
             ReturnStatus = Status;
-
-        } else {
+        }
+        else
+        {
             *Handle = NewHandle;
         }
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
 
-        ObDereferenceObject( Object );
-
-
-    } else {
+        ObDereferenceObject(Object);
+    }
+    else
+    {
 
         BOOLEAN IsNewObject;
 
@@ -493,27 +483,29 @@ Return Value:
         //  Charge the user quota for the object.
         //
 
-        ObpLockObject( ObjectHeader );
+        ObpLockObject(ObjectHeader);
 
-        ReturnStatus = ObpChargeQuotaForObject( ObjectHeader, ObjectType, &IsNewObject );
+        ReturnStatus = ObpChargeQuotaForObject(ObjectHeader, ObjectType, &IsNewObject);
 
-        ObpUnlockObject( ObjectHeader );
+        ObpUnlockObject(ObjectHeader);
 
-        if (!NT_SUCCESS (ReturnStatus)) {
-            ObDereferenceObject( Object );
+        if (!NT_SUCCESS(ReturnStatus))
+        {
+            ObDereferenceObject(Object);
         }
     }
 
-    ObpFreeObjectCreateInformation( ObjectCreateInfo );
+    ObpFreeObjectCreateInformation(ObjectCreateInfo);
 
     //
     //  Free security information if we allocated it
     //
 
-    if (AccessState == &LocalAccessState) {
+    if (AccessState == &LocalAccessState)
+    {
 
-        SeDeleteAccessState( AccessState );
+        SeDeleteAccessState(AccessState);
     }
 
-    return( ReturnStatus );
+    return (ReturnStatus);
 }

@@ -29,36 +29,26 @@ Revision History:
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'iepP')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'iepP')
 #endif
 
 #define EISA_DEVICE_NODE_NAME L"EisaResources"
 #define BUFFER_LENGTH 50
 
 NTSTATUS
-EisaGetEisaDevicesResources (
-    OUT PCM_RESOURCE_LIST *ResourceList,
-    OUT PULONG ResourceLength
-    );
+EisaGetEisaDevicesResources(OUT PCM_RESOURCE_LIST *ResourceList, OUT PULONG ResourceLength);
 
 NTSTATUS
-EisaBuildSlotsResources (
-    IN ULONG SlotMasks,
-    IN ULONG NumberMasks,
-    OUT PCM_RESOURCE_LIST *Resource,
-    OUT ULONG *Length
-    );
+EisaBuildSlotsResources(IN ULONG SlotMasks, IN ULONG NumberMasks, OUT PCM_RESOURCE_LIST *Resource, OUT ULONG *Length);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, EisaBuildEisaDeviceNode)
 #pragma alloc_text(INIT, EisaGetEisaDevicesResources)
 #pragma alloc_text(INIT, EisaBuildSlotsResources)
 #endif
-
+
 NTSTATUS
-EisaBuildEisaDeviceNode (
-    VOID
-    )
+EisaBuildEisaDeviceNode(VOID)
 
 /*++
 
@@ -77,77 +67,70 @@ Return Value:
 --*/
 
 {
-    NTSTATUS            status;
-    ULONG               disposition, tmpValue;
-    WCHAR               buffer[BUFFER_LENGTH];
+    NTSTATUS status;
+    ULONG disposition, tmpValue;
+    WCHAR buffer[BUFFER_LENGTH];
 
-    UNICODE_STRING      unicodeString;
-    HANDLE              rootHandle, deviceHandle, instanceHandle, logConfHandle;
+    UNICODE_STRING unicodeString;
+    HANDLE rootHandle, deviceHandle, instanceHandle, logConfHandle;
 
-    PCM_RESOURCE_LIST   resourceList;
-    ULONG               resourceLength;
+    PCM_RESOURCE_LIST resourceList;
+    ULONG resourceLength;
 
     status = EisaGetEisaDevicesResources(&resourceList, &resourceLength);
-    if (!NT_SUCCESS(status) || resourceList == NULL) {
+    if (!NT_SUCCESS(status) || resourceList == NULL)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
     PiWstrToUnicodeString(&unicodeString, L"\\Registry\\Machine\\System\\CurrentControlSet\\Enum\\Root");
-    status = IopOpenRegistryKeyEx( &rootHandle,
-                                   NULL,
-                                   &unicodeString,
-                                   KEY_ALL_ACCESS
-                                   );
+    status = IopOpenRegistryKeyEx(&rootHandle, NULL, &unicodeString, KEY_ALL_ACCESS);
 
-    if (!NT_SUCCESS(status)) {
-        if (resourceList) {
-            ExFreePool (resourceList);
+    if (!NT_SUCCESS(status))
+    {
+        if (resourceList)
+        {
+            ExFreePool(resourceList);
         }
         return status;
     }
 
     PiWstrToUnicodeString(&unicodeString, EISA_DEVICE_NODE_NAME);
-    status = IopCreateRegistryKeyEx( &deviceHandle,
-                                     rootHandle,
-                                     &unicodeString,
-                                     KEY_ALL_ACCESS,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status = IopCreateRegistryKeyEx(&deviceHandle, rootHandle, &unicodeString, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE,
+                                    NULL);
 
     ZwClose(rootHandle);
-    if (!NT_SUCCESS(status)) {
-        if (resourceList) {
-            ExFreePool (resourceList);
+    if (!NT_SUCCESS(status))
+    {
+        if (resourceList)
+        {
+            ExFreePool(resourceList);
         }
         return status;
     }
 
-    PiWstrToUnicodeString( &unicodeString, L"0000" );
-    status = IopCreateRegistryKeyEx( &instanceHandle,
-                                     deviceHandle,
-                                     &unicodeString,
-                                     KEY_ALL_ACCESS,
-                                     REG_OPTION_NON_VOLATILE,
-                                     &disposition );
+    PiWstrToUnicodeString(&unicodeString, L"0000");
+    status = IopCreateRegistryKeyEx(&instanceHandle, deviceHandle, &unicodeString, KEY_ALL_ACCESS,
+                                    REG_OPTION_NON_VOLATILE, &disposition);
     ZwClose(deviceHandle);
-    if (NT_SUCCESS(status))  {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // If the key already exists because it was explicitly migrated
         // during textmode setup, we should still consider it a "new key".
         //
-        if (disposition != REG_CREATED_NEW_KEY) {
+        if (disposition != REG_CREATED_NEW_KEY)
+        {
             PKEY_VALUE_FULL_INFORMATION keyValueInformation;
 
-            status = IopGetRegistryValue(instanceHandle,
-                                         REGSTR_VALUE_MIGRATED,
-                                         &keyValueInformation);
-            if (NT_SUCCESS(status)) {
+            status = IopGetRegistryValue(instanceHandle, REGSTR_VALUE_MIGRATED, &keyValueInformation);
+            if (NT_SUCCESS(status))
+            {
 
-                if ((keyValueInformation->Type == REG_DWORD) &&
-                    (keyValueInformation->DataLength == sizeof(ULONG)) &&
-                    ((*(PULONG)KEY_VALUE_DATA(keyValueInformation)) != 0)) {
+                if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength == sizeof(ULONG)) &&
+                    ((*(PULONG)KEY_VALUE_DATA(keyValueInformation)) != 0))
+                {
                     disposition = REG_CREATED_NEW_KEY;
                 }
 
@@ -158,78 +141,50 @@ Return Value:
             }
         }
 
-        if (disposition == REG_CREATED_NEW_KEY) {
+        if (disposition == REG_CREATED_NEW_KEY)
+        {
 
-            PiWstrToUnicodeString( &unicodeString, L"DeviceDesc" );
+            PiWstrToUnicodeString(&unicodeString, L"DeviceDesc");
             wcsncpy(buffer, L"Device to report Eisa Slot Resources", sizeof(buffer) / sizeof(WCHAR));
             buffer[(sizeof(buffer) / sizeof(WCHAR)) - 1] = UNICODE_NULL;
 
-            ZwSetValueKey(instanceHandle,
-                          &unicodeString,
-                          0,
-                          REG_SZ,
-                          buffer,
-                          (ULONG)((wcslen(buffer) + 1) * sizeof(WCHAR))
-                          );
+            ZwSetValueKey(instanceHandle, &unicodeString, 0, REG_SZ, buffer,
+                          (ULONG)((wcslen(buffer) + 1) * sizeof(WCHAR)));
 
-            PiWstrToUnicodeString( &unicodeString, L"HardwareID" );
+            PiWstrToUnicodeString(&unicodeString, L"HardwareID");
             RtlZeroMemory(buffer, BUFFER_LENGTH * sizeof(WCHAR));
             wcsncpy(buffer, L"*Eisa_Resource_Device", sizeof(buffer) / sizeof(WCHAR));
             buffer[(sizeof(buffer) / sizeof(WCHAR)) - 1] = UNICODE_NULL;
 
-            ZwSetValueKey(instanceHandle,
-                          &unicodeString,
-                          0,
-                          REG_MULTI_SZ,
-                          buffer,
-                          (ULONG)((wcslen(buffer) + 2) * sizeof(WCHAR))
-                          );
+            ZwSetValueKey(instanceHandle, &unicodeString, 0, REG_MULTI_SZ, buffer,
+                          (ULONG)((wcslen(buffer) + 2) * sizeof(WCHAR)));
 
             PiWstrToUnicodeString(&unicodeString, REGSTR_VALUE_CONFIG_FLAGS);
             tmpValue = 0;
-            ZwSetValueKey(instanceHandle,
-                         &unicodeString,
-                         TITLE_INDEX_VALUE,
-                         REG_DWORD,
-                         &tmpValue,
-                         sizeof(tmpValue)
-                         );
-
+            ZwSetValueKey(instanceHandle, &unicodeString, TITLE_INDEX_VALUE, REG_DWORD, &tmpValue, sizeof(tmpValue));
         }
 
-        PiWstrToUnicodeString( &unicodeString, REGSTR_KEY_LOGCONF );
-        status = IopCreateRegistryKeyEx( &logConfHandle,
-                                         instanceHandle,
-                                         &unicodeString,
-                                         KEY_ALL_ACCESS,
-                                         REG_OPTION_NON_VOLATILE,
-                                         NULL
-                                         );
+        PiWstrToUnicodeString(&unicodeString, REGSTR_KEY_LOGCONF);
+        status = IopCreateRegistryKeyEx(&logConfHandle, instanceHandle, &unicodeString, KEY_ALL_ACCESS,
+                                        REG_OPTION_NON_VOLATILE, NULL);
         ZwClose(instanceHandle);
-        if (NT_SUCCESS(status))  {
-            PiWstrToUnicodeString( &unicodeString, REGSTR_VAL_BOOTCONFIG );
+        if (NT_SUCCESS(status))
+        {
+            PiWstrToUnicodeString(&unicodeString, REGSTR_VAL_BOOTCONFIG);
 
-            status = ZwSetValueKey(logConfHandle,
-                                   &unicodeString,
-                                   0,
-                                   REG_RESOURCE_LIST,
-                                   resourceList,
-                                   resourceLength
-                                   );
+            status = ZwSetValueKey(logConfHandle, &unicodeString, 0, REG_RESOURCE_LIST, resourceList, resourceLength);
             ZwClose(logConfHandle);
         }
     }
-    if (resourceList) {
-        ExFreePool (resourceList);
+    if (resourceList)
+    {
+        ExFreePool(resourceList);
     }
     return status;
 }
-
+
 NTSTATUS
-EisaGetEisaDevicesResources (
-    OUT PCM_RESOURCE_LIST *ResourceList,
-    OUT PULONG ResourceLength
-    )
+EisaGetEisaDevicesResources(OUT PCM_RESOURCE_LIST *ResourceList, OUT PULONG ResourceLength)
 
 /*++
 
@@ -263,62 +218,67 @@ Return Value:
 
     //PiWstrToUnicodeString(&unicodeString, L"\\REGISTRY\\MACHINE\\HARDWARE\\DESCRIPTION\\SYSTEM\\EisaAdapter\\0");
     PiWstrToUnicodeString(&unicodeString, L"\\REGISTRY\\MACHINE\\SYSTEM\\CurrentControlSet\\EisaAdapter");
-    status = IopOpenRegistryKeyEx( &handle,
-                                   NULL,
-                                   &unicodeString,
-                                   KEY_READ
-                                   );
-    if (NT_SUCCESS(status)) {
-        status = IopGetRegistryValue(handle,
-                                     L"Configuration Data",
-                                     &keyValueInformation
-                                     );
-        if (NT_SUCCESS(status)) {
+    status = IopOpenRegistryKeyEx(&handle, NULL, &unicodeString, KEY_READ);
+    if (NT_SUCCESS(status))
+    {
+        status = IopGetRegistryValue(handle, L"Configuration Data", &keyValueInformation);
+        if (NT_SUCCESS(status))
+        {
             PCM_FULL_RESOURCE_DESCRIPTOR resourceDescriptor;
             PCM_PARTIAL_RESOURCE_DESCRIPTOR partialResourceDescriptor;
 
-            resourceDescriptor = (PCM_FULL_RESOURCE_DESCRIPTOR)
-                ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset);
+            resourceDescriptor =
+                (PCM_FULL_RESOURCE_DESCRIPTOR)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
 
             if ((keyValueInformation->DataLength >= sizeof(CM_FULL_RESOURCE_DESCRIPTOR)) &&
-                (resourceDescriptor->PartialResourceList.Count > 0) ) {
+                (resourceDescriptor->PartialResourceList.Count > 0))
+            {
                 LONG eisaInfoLength;
                 PCM_EISA_SLOT_INFORMATION eisaInfo;
 
                 partialResourceDescriptor = resourceDescriptor->PartialResourceList.PartialDescriptors;
-                if (partialResourceDescriptor->Type == CmResourceTypeDeviceSpecific) {
-                    eisaInfo = (PCM_EISA_SLOT_INFORMATION)
-                        ((PUCHAR)partialResourceDescriptor + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR));
+                if (partialResourceDescriptor->Type == CmResourceTypeDeviceSpecific)
+                {
+                    eisaInfo = (PCM_EISA_SLOT_INFORMATION)((PUCHAR)partialResourceDescriptor +
+                                                           sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR));
                     eisaInfoLength = (LONG)partialResourceDescriptor->u.DeviceSpecificData.DataSize;
 
                     //
                     // Parse the eisa slot info to find the eisa slots with device installed.
                     //
 
-                    for (i = 0; i < 0x10 && eisaInfoLength > 0; i++) {
-                        if (eisaInfo->ReturnCode == EISA_INVALID_SLOT) {
+                    for (i = 0; i < 0x10 && eisaInfoLength > 0; i++)
+                    {
+                        if (eisaInfo->ReturnCode == EISA_INVALID_SLOT)
+                        {
                             break;
                         }
-                        if (eisaInfo->ReturnCode != EISA_EMPTY_SLOT && (i != 0)) {
+                        if (eisaInfo->ReturnCode != EISA_EMPTY_SLOT && (i != 0))
+                        {
                             slotMasks |= (1 << i);
                             numberMasks++;
                         }
-                        if (eisaInfo->ReturnCode == EISA_EMPTY_SLOT) {
+                        if (eisaInfo->ReturnCode == EISA_EMPTY_SLOT)
+                        {
                             eisaInfoLength -= sizeof(CM_EISA_SLOT_INFORMATION);
                             eisaInfo++;
-                        } else {
-                            eisaInfoLength -= sizeof(CM_EISA_SLOT_INFORMATION) + eisaInfo->NumberFunctions * sizeof(CM_EISA_FUNCTION_INFORMATION);
-                            eisaInfo = (PCM_EISA_SLOT_INFORMATION)
-                                       ((PUCHAR)eisaInfo + eisaInfo->NumberFunctions * sizeof(CM_EISA_FUNCTION_INFORMATION) +
-                                           sizeof(CM_EISA_SLOT_INFORMATION));
+                        }
+                        else
+                        {
+                            eisaInfoLength -= sizeof(CM_EISA_SLOT_INFORMATION) +
+                                              eisaInfo->NumberFunctions * sizeof(CM_EISA_FUNCTION_INFORMATION);
+                            eisaInfo = (PCM_EISA_SLOT_INFORMATION)((PUCHAR)eisaInfo +
+                                                                   eisaInfo->NumberFunctions *
+                                                                       sizeof(CM_EISA_FUNCTION_INFORMATION) +
+                                                                   sizeof(CM_EISA_SLOT_INFORMATION));
                         }
                     }
 
-                    if (slotMasks) {
+                    if (slotMasks)
+                    {
                         status = EisaBuildSlotsResources(slotMasks, numberMasks, ResourceList, ResourceLength);
                     }
                 }
-
             }
             ExFreePool(keyValueInformation);
         }
@@ -326,14 +286,9 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-EisaBuildSlotsResources (
-    IN ULONG SlotMasks,
-    IN ULONG NumberMasks,
-    OUT PCM_RESOURCE_LIST *Resources,
-    OUT ULONG *Length
-    )
+EisaBuildSlotsResources(IN ULONG SlotMasks, IN ULONG NumberMasks, OUT PCM_RESOURCE_LIST *Resources, OUT ULONG *Length)
 
 /*++
 
@@ -359,7 +314,8 @@ Return Value:
 
     *Length = sizeof(CM_RESOURCE_LIST) + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR) * (NumberMasks - 1);
     resources = ExAllocatePool(PagedPool, *Length);
-    if (resources) {
+    if (resources)
+    {
         resources->Count = 1;
         resources->List[0].InterfaceType = Eisa;
         resources->List[0].BusNumber = 0;
@@ -368,10 +324,12 @@ Return Value:
         resources->List[0].PartialResourceList.Count = NumberMasks;
         partialDesc = resources->List[0].PartialResourceList.PartialDescriptors;
         slot = 0; // ignore slot 0
-        while (SlotMasks) {
+        while (SlotMasks)
+        {
             SlotMasks >>= 1;
             slot++;
-            if (SlotMasks & 1) {
+            if (SlotMasks & 1)
+            {
                 partialDesc->Type = CmResourceTypePort;
                 partialDesc->ShareDisposition = CmResourceShareDeviceExclusive;
                 partialDesc->Flags = CM_RESOURCE_PORT_16_BIT_DECODE + CM_RESOURCE_PORT_IO;
@@ -383,7 +341,9 @@ Return Value:
         }
         *Resources = resources;
         return STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         return STATUS_NO_MEMORY;
     }
 }

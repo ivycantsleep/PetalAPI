@@ -25,12 +25,7 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-KeContextFromKframes (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN OUT PCONTEXT ContextRecord
-    )
+VOID KeContextFromKframes(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN OUT PCONTEXT ContextRecord)
 
 /*++
 
@@ -67,7 +62,8 @@ Return Value:
     //
 
     ContextFlags = ContextRecord->ContextFlags;
-    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Set registers RIP, CS, RSP, SS, and EFlags.
@@ -84,7 +80,8 @@ Return Value:
     // Set segment register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_SEGMENTS) == CONTEXT_SEGMENTS) {
+    if ((ContextFlags & CONTEXT_SEGMENTS) == CONTEXT_SEGMENTS)
+    {
 
         //
         // Set segment registers GS, FS, ES, DS.
@@ -100,7 +97,8 @@ Return Value:
     // Set integer register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set integer registers RAX, RCX, RDX, RSI, RDI, R8, R9, R10, RBX,
@@ -130,19 +128,16 @@ Return Value:
     //
     //
 
-    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT)
+    {
 
         //
         // Set XMM registers Xmm0-Xmm15 and the XMM CSR contents.
         //
 
-        RtlCopyMemory(&ContextRecord->Xmm0,
-                      &TrapFrame->Xmm0,
-                      sizeof(M128) * 6);
+        RtlCopyMemory(&ContextRecord->Xmm0, &TrapFrame->Xmm0, sizeof(M128) * 6);
 
-        RtlCopyMemory(&ContextRecord->Xmm6,
-                      &ExceptionFrame->Xmm6,
-                      sizeof(M128) * 10);
+        RtlCopyMemory(&ContextRecord->Xmm6, &ExceptionFrame->Xmm6, sizeof(M128) * 10);
 
         ContextRecord->MxCsr = TrapFrame->MxCsr;
 
@@ -151,16 +146,15 @@ Return Value:
         // point state.
         //
 
-        if ((TrapFrame->SegCs & MODE_MASK) == UserMode) {
+        if ((TrapFrame->SegCs & MODE_MASK) == UserMode)
+        {
 
             //
             // Set the floating registers MM0/ST0 - MM7/ST7 and control state.
             //
 
             NpxFrame = (PLEGACY_SAVE_AREA)(TrapFrame + 1);
-            RtlCopyMemory(&ContextRecord->FltSave,
-                          NpxFrame,
-                          sizeof(LEGACY_SAVE_AREA));
+            RtlCopyMemory(&ContextRecord->FltSave, NpxFrame, sizeof(LEGACY_SAVE_AREA));
         }
     }
 
@@ -169,7 +163,8 @@ Return Value:
     // Set debug register contents if requested.
     //
 
-    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS) {
+    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS)
+    {
 
         //
         // Set the debug registers DR0, DR1, DR2, DR3, DR6, and DR7.
@@ -186,14 +181,8 @@ Return Value:
     return;
 }
 
-VOID
-KeContextToKframes (
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN PCONTEXT ContextRecord,
-    IN ULONG ContextFlags,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+VOID KeContextToKframes(IN OUT PKTRAP_FRAME TrapFrame, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                        IN PCONTEXT ContextRecord, IN ULONG ContextFlags, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -234,7 +223,8 @@ Return Value:
     // Set control information if specified.
     //
 
-    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Set registers RIP, RSP, and EFlags.
@@ -251,16 +241,20 @@ Return Value:
     // that these segment registers have the proper values.
     //
 
-    if (PreviousMode == UserMode) {
+    if (PreviousMode == UserMode)
+    {
         TrapFrame->SegSs = KGDT64_R3_DATA | RPL_MASK;
-        if (ContextRecord->SegCs != (KGDT64_R3_CODE | RPL_MASK)) {
+        if (ContextRecord->SegCs != (KGDT64_R3_CODE | RPL_MASK))
+        {
             TrapFrame->SegCs = KGDT64_R3_CMCODE | RPL_MASK;
-
-        } else {
+        }
+        else
+        {
             TrapFrame->SegCs = KGDT64_R3_CODE | RPL_MASK;
         }
-
-    } else {
+    }
+    else
+    {
         TrapFrame->SegCs = KGDT64_R0_CODE;
         TrapFrame->SegSs = KGDT64_NULL;
     }
@@ -269,7 +263,8 @@ Return Value:
     // Set integer registers contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set integer registers RAX, RCX, RDX, RSI, RDI, R8, R9, R10, RBX,
@@ -298,19 +293,16 @@ Return Value:
     // Set floating register contents if requested.
     //
 
-    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT)
+    {
 
         //
         // Set XMM registers Xmm0-Xmm15 and the XMM CSR contents.
         //
 
-        RtlCopyMemory(&TrapFrame->Xmm0,
-                      &ContextRecord->Xmm0,
-                      sizeof(M128) * 6);
+        RtlCopyMemory(&TrapFrame->Xmm0, &ContextRecord->Xmm0, sizeof(M128) * 6);
 
-        RtlCopyMemory(&ExceptionFrame->Xmm6,
-                      &ContextRecord->Xmm6,
-                      sizeof(M128) * 10);
+        RtlCopyMemory(&ExceptionFrame->Xmm6, &ContextRecord->Xmm6, sizeof(M128) * 10);
 
         //
         // Clear all reserved bits in MXCSR.
@@ -323,16 +315,15 @@ Return Value:
         // point state.
         //
 
-        if ((TrapFrame->SegCs & MODE_MASK) == UserMode) {
+        if ((TrapFrame->SegCs & MODE_MASK) == UserMode)
+        {
 
             //
             // Set the floating state MM0/ST0 - MM7/ST7 and the control state.
             //
 
             NpxFrame = (PLEGACY_SAVE_AREA)(TrapFrame + 1);
-            RtlCopyMemory(NpxFrame,
-                          &ContextRecord->FltSave,
-                          sizeof(LEGACY_SAVE_AREA));
+            RtlCopyMemory(NpxFrame, &ContextRecord->FltSave, sizeof(LEGACY_SAVE_AREA));
 
             NpxFrame->ControlWord = SANITIZE_FCW(NpxFrame->ControlWord);
         }
@@ -342,7 +333,8 @@ Return Value:
     // Set debug register state if specified.
     //
 
-    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS) {
+    if ((ContextFlags & CONTEXT_DEBUG_REGISTERS) == CONTEXT_DEBUG_REGISTERS)
+    {
 
         //
         // Set the debug registers DR0, DR1, DR2, DR3, DR6, and DR7.
@@ -359,14 +351,8 @@ Return Value:
     return;
 }
 
-VOID
-KiDispatchException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN FirstChance
-    )
+VOID KiDispatchException(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                         IN PKTRAP_FRAME TrapFrame, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN FirstChance)
 
 /*++
 
@@ -419,13 +405,11 @@ Return Value:
     // the unaligned reference.
     //
 
-    if (ExceptionRecord->ExceptionCode == STATUS_DATATYPE_MISALIGNMENT) {
-        if (KiHandleAlignmentFault(ExceptionRecord,
-                                   ExceptionFrame,
-                                   TrapFrame,
-                                   PreviousMode,
-                                   FirstChance,
-                                   &ExceptionWasForwarded) != FALSE ) {
+    if (ExceptionRecord->ExceptionCode == STATUS_DATATYPE_MISALIGNMENT)
+    {
+        if (KiHandleAlignmentFault(ExceptionRecord, ExceptionFrame, TrapFrame, PreviousMode, FirstChance,
+                                   &ExceptionWasForwarded) != FALSE)
+        {
 
             goto Handled2;
         }
@@ -445,7 +429,8 @@ Return Value:
     // fault.
     //
 
-    if (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) {
+    if (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT)
+    {
         ContextRecord.Rip -= 1;
     }
 
@@ -453,7 +438,8 @@ Return Value:
     // Select the method of handling the exception based on the previous mode.
     //
 
-    if (PreviousMode == KernelMode) {
+    if (PreviousMode == KernelMode)
+    {
 
         //
         // Previous mode was kernel.
@@ -470,14 +456,11 @@ Return Value:
         // If the exception is still unhandled call bugcheck.
         //
 
-        if (FirstChance != FALSE) {
-            if ((KiDebugRoutine != NULL) &&
-               (((KiDebugRoutine)(TrapFrame,
-                                  ExceptionFrame,
-                                  ExceptionRecord,
-                                  &ContextRecord,
-                                  PreviousMode,
-                                  FALSE)) != FALSE)) {
+        if (FirstChance != FALSE)
+        {
+            if ((KiDebugRoutine != NULL) && (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord,
+                                                               &ContextRecord, PreviousMode, FALSE)) != FALSE))
+            {
 
                 goto Handled1;
             }
@@ -491,7 +474,8 @@ Return Value:
             //
             // ******fix
 
-            if (RtlDispatchException(ExceptionRecord, &ContextRecord) != FALSE) {
+            if (RtlDispatchException(ExceptionRecord, &ContextRecord) != FALSE)
+            {
                 goto Handled1;
             }
         }
@@ -500,24 +484,19 @@ Return Value:
         // This is the second chance to handle the exception.
         //
 
-        if ((KiDebugRoutine != NULL) &&
-            (((KiDebugRoutine)(TrapFrame,
-                               ExceptionFrame,
-                               ExceptionRecord,
-                               &ContextRecord,
-                               PreviousMode,
-                               TRUE)) != FALSE)) {
+        if ((KiDebugRoutine != NULL) && (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextRecord,
+                                                           PreviousMode, TRUE)) != FALSE))
+        {
 
             goto Handled1;
         }
 
-        KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED,
-                     ExceptionRecord->ExceptionCode,
-                     (ULONG64)ExceptionRecord->ExceptionAddress,
-                     ExceptionRecord->ExceptionInformation[0],
+        KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED, ExceptionRecord->ExceptionCode,
+                     (ULONG64)ExceptionRecord->ExceptionAddress, ExceptionRecord->ExceptionInformation[0],
                      ExceptionRecord->ExceptionInformation[1]);
-
-    } else {
+    }
+    else
+    {
 
         //
         // Previous mode was user.
@@ -540,41 +519,37 @@ Return Value:
         // exception, then continue execution. Else terminate the thread.
         //
 
-        if (FirstChance == TRUE) {
+        if (FirstChance == TRUE)
+        {
 
             //
             // This is the first chance to handle the exception.
             //
 
-            if (PsGetCurrentProcess()->DebugPort != NULL) {
-                if ((KiDebugRoutine != NULL) &&
-                    (KdIsThisAKdTrap(ExceptionRecord, &ContextRecord, UserMode) != FALSE)) {
-                    if ((((KiDebugRoutine)(TrapFrame,
-                                           ExceptionFrame,
-                                           ExceptionRecord,
-                                           &ContextRecord,
-                                           PreviousMode,
-                                           FALSE)) != FALSE)) {
+            if (PsGetCurrentProcess()->DebugPort != NULL)
+            {
+                if ((KiDebugRoutine != NULL) && (KdIsThisAKdTrap(ExceptionRecord, &ContextRecord, UserMode) != FALSE))
+                {
+                    if ((((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextRecord, PreviousMode,
+                                           FALSE)) != FALSE))
+                    {
 
                         goto Handled1;
                     }
                 }
-
-            } else {
-                if ((KiDebugRoutine != NULL) &&
-                    (((KiDebugRoutine)(TrapFrame,
-                                       ExceptionFrame,
-                                       ExceptionRecord,
-                                       &ContextRecord,
-                                       PreviousMode,
-                                       FALSE)) != FALSE)) {
+            }
+            else
+            {
+                if ((KiDebugRoutine != NULL) && (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord,
+                                                                   &ContextRecord, PreviousMode, FALSE)) != FALSE))
+                {
 
                     goto Handled1;
                 }
             }
 
-            if ((ExceptionWasForwarded == FALSE) &&
-                (DbgkForwardException(ExceptionRecord, TRUE, FALSE))) {
+            if ((ExceptionWasForwarded == FALSE) && (DbgkForwardException(ExceptionRecord, TRUE, FALSE)))
+            {
 
                 goto Handled2;
             }
@@ -585,7 +560,8 @@ Return Value:
             // may contain garbage.
             //
 
-            if ((ContextRecord.SegCs & 0xfff8) == KGDT64_R3_CMCODE) {
+            if ((ContextRecord.SegCs & 0xfff8) == KGDT64_R3_CMCODE)
+            {
                 ContextRecord.Rsp &= 0xffffffff;
             }
 
@@ -596,7 +572,8 @@ Return Value:
             //
 
         repeat:
-            try {
+            try
+            {
 
                 //
                 // Compute address of aligned machine frame, compute address
@@ -604,14 +581,12 @@ Return Value:
                 // and probe user stack for writeability.
                 //
 
-                MachineFrame =
-                    (PMACHINE_FRAME)((ContextRecord.Rsp - sizeof(MACHINE_FRAME)) & ~STACK_ROUND);
+                MachineFrame = (PMACHINE_FRAME)((ContextRecord.Rsp - sizeof(MACHINE_FRAME)) & ~STACK_ROUND);
 
                 UserStack1 = (ULONG64)MachineFrame - EXCEPTION_RECORD_LENGTH;
                 UserStack2 = UserStack1 - CONTEXT_LENGTH;
-                ProbeForWriteSmallStructure((PVOID)UserStack2,
-                                            sizeof(MACHINE_FRAME) + EXCEPTION_RECORD_LENGTH + CONTEXT_LENGTH,
-                                            STACK_ALIGN);
+                ProbeForWriteSmallStructure(
+                    (PVOID)UserStack2, sizeof(MACHINE_FRAME) + EXCEPTION_RECORD_LENGTH + CONTEXT_LENGTH, STACK_ALIGN);
 
                 //
                 // Fill in machine frame information.
@@ -624,17 +599,13 @@ Return Value:
                 // Copy exception record to the user stack.
                 //
 
-                RtlCopyMemory((PVOID)UserStack1,
-                              ExceptionRecord,
-                              sizeof(EXCEPTION_RECORD));
+                RtlCopyMemory((PVOID)UserStack1, ExceptionRecord, sizeof(EXCEPTION_RECORD));
 
                 //
                 // Copy context record to the user stack.
                 //
 
-                RtlCopyMemory((PVOID)UserStack2,
-                              &ContextRecord,
-                              sizeof(CONTEXT));
+                RtlCopyMemory((PVOID)UserStack2, &ContextRecord, sizeof(CONTEXT));
 
                 //
                 // Set address of exception record, context record, and the
@@ -661,9 +632,9 @@ Return Value:
 
                 TrapFrame->Rip = (ULONG64)KeUserExceptionDispatcher;
                 return;
-
-            } except (KiCopyInformation(&ExceptionRecord1,
-                        (GetExceptionInformation())->ExceptionRecord)) {
+            }
+            except(KiCopyInformation(&ExceptionRecord1, (GetExceptionInformation())->ExceptionRecord))
+            {
 
                 //
                 // If the exception is a stack overflow, then attempt to
@@ -672,11 +643,10 @@ Return Value:
                 // chance processing is performed.
                 //
 
-                if (ExceptionRecord1.ExceptionCode == STATUS_STACK_OVERFLOW) {
+                if (ExceptionRecord1.ExceptionCode == STATUS_STACK_OVERFLOW)
+                {
                     ExceptionRecord1.ExceptionAddress = ExceptionRecord->ExceptionAddress;
-                    RtlCopyMemory((PVOID)ExceptionRecord,
-                                  &ExceptionRecord1,
-                                  sizeof(EXCEPTION_RECORD));
+                    RtlCopyMemory((PVOID)ExceptionRecord, &ExceptionRecord1, sizeof(EXCEPTION_RECORD));
 
                     goto repeat;
                 }
@@ -687,18 +657,19 @@ Return Value:
         // This is the second chance to handle the exception.
         //
 
-        if (DbgkForwardException(ExceptionRecord, TRUE, TRUE)) {
+        if (DbgkForwardException(ExceptionRecord, TRUE, TRUE))
+        {
             goto Handled2;
-
-        } else if (DbgkForwardException(ExceptionRecord, FALSE, TRUE)) {
+        }
+        else if (DbgkForwardException(ExceptionRecord, FALSE, TRUE))
+        {
             goto Handled2;
-
-        } else {
+        }
+        else
+        {
             ZwTerminateThread(NtCurrentThread(), ExceptionRecord->ExceptionCode);
-            KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED,
-                         ExceptionRecord->ExceptionCode,
-                         (ULONG64)ExceptionRecord->ExceptionAddress,
-                         ExceptionRecord->ExceptionInformation[0],
+            KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED, ExceptionRecord->ExceptionCode,
+                         (ULONG64)ExceptionRecord->ExceptionAddress, ExceptionRecord->ExceptionInformation[0],
                          ExceptionRecord->ExceptionInformation[1]);
         }
     }
@@ -709,11 +680,7 @@ Return Value:
     //
 
 Handled1:
-    KeContextToKframes(TrapFrame,
-                       ExceptionFrame,
-                       &ContextRecord,
-                       ContextRecord.ContextFlags,
-                       PreviousMode);
+    KeContextToKframes(TrapFrame, ExceptionFrame, &ContextRecord, ContextRecord.ContextFlags, PreviousMode);
 
     //
     // Exception was handled by the debugger or the associated subsystem
@@ -727,10 +694,7 @@ Handled2:
 }
 
 ULONG
-KiCopyInformation (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord1,
-    IN PEXCEPTION_RECORD ExceptionRecord2
-    )
+KiCopyInformation(IN OUT PEXCEPTION_RECORD ExceptionRecord1, IN PEXCEPTION_RECORD ExceptionRecord2)
 
 /*++
 
@@ -758,17 +722,13 @@ Return Value:
     // an exception handler to be executed.
     //
 
-    RtlCopyMemory((PVOID)ExceptionRecord1,
-                  (PVOID)ExceptionRecord2,
-                  sizeof(EXCEPTION_RECORD));
+    RtlCopyMemory((PVOID)ExceptionRecord1, (PVOID)ExceptionRecord2, sizeof(EXCEPTION_RECORD));
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
 NTSTATUS
-KeRaiseUserException (
-    IN NTSTATUS ExceptionCode
-    )
+KeRaiseUserException(IN NTSTATUS ExceptionCode)
 
 /*++
 
@@ -805,12 +765,15 @@ Return Value:
 
     Thread = KeGetCurrentThread();
     TrapFrame = Thread->TrapFrame;
-    if (TrapFrame != NULL) {
+    if (TrapFrame != NULL)
+    {
         Teb = (PTEB)Thread->Teb;
-        try {
+        try
+        {
             Teb->ExceptionCode = ExceptionCode;
-    
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return ExceptionCode;
         }
 

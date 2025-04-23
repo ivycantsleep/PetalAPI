@@ -24,13 +24,14 @@ Environment:
 #ifndef _EXTLIST_H_
 #define _EXTLIST_H_
 
-typedef enum {
-   
-   WALKSCHEME_NO_PROTECTION,
-   WALKSCHEME_REFERENCE_ENTRIES,
-   WALKSCHEME_HOLD_SPINLOCK
+typedef enum
+{
 
-} WALKSCHEME ;
+    WALKSCHEME_NO_PROTECTION,
+    WALKSCHEME_REFERENCE_ENTRIES,
+    WALKSCHEME_HOLD_SPINLOCK
+
+} WALKSCHEME;
 
 //
 // The following structures and functions are used to simiplify (ok, abstract)
@@ -38,68 +39,52 @@ typedef enum {
 // extensions (eg Children, Ejectee's, etc)
 //
 
-typedef struct {
+typedef struct
+{
 
-    PLIST_ENTRY       pListHead ;
-    PKSPIN_LOCK       pSpinLock ;
-    KIRQL             oldIrql;
-    PDEVICE_EXTENSION pDevExtCurrent ;
-    ULONG_PTR         ExtOffset ;
-    WALKSCHEME        WalkScheme ;
+    PLIST_ENTRY pListHead;
+    PKSPIN_LOCK pSpinLock;
+    KIRQL oldIrql;
+    PDEVICE_EXTENSION pDevExtCurrent;
+    ULONG_PTR ExtOffset;
+    WALKSCHEME WalkScheme;
 
-} EXTENSIONLIST_ENUMDATA, *PEXTENSIONLIST_ENUMDATA ;
+} EXTENSIONLIST_ENUMDATA, *PEXTENSIONLIST_ENUMDATA;
 
 //
 // This is like CONTAINING_RECORD, only it's hardcoded for DEVICE_EXTENSION
 // type and it uses precalculated field offsets instead of record names
 //
 
-#define CONTAINING_EXTENSION(address, fieldoffset) \
-  ((PDEVICE_EXTENSION) ((PCHAR)(address) - (ULONG_PTR)(fieldoffset)))
+#define CONTAINING_EXTENSION(address, fieldoffset) ((PDEVICE_EXTENSION)((PCHAR)(address) - (ULONG_PTR)(fieldoffset)))
 
-#define CONTAINING_LIST(address, fieldoffset) \
-  ((PLIST_ENTRY) ((PCHAR)(address)+(ULONG_PTR)(fieldoffset)))
+#define CONTAINING_LIST(address, fieldoffset) ((PLIST_ENTRY)((PCHAR)(address) + (ULONG_PTR)(fieldoffset)))
 
 #define ACPIExtListSetupEnum(PExtList_EnumData, pListHeadArg, pSpinLockArg, OffsetField, WalkSchemeArg) \
-  { \
-   PEXTENSIONLIST_ENUMDATA peled = (PExtList_EnumData) ; \
-    peled->pListHead  = (pListHeadArg) ; \
-    peled->pSpinLock  = (pSpinLockArg) ; \
-    peled->ExtOffset = FIELD_OFFSET(DEVICE_EXTENSION, OffsetField) ; \
-    peled->WalkScheme = (WalkSchemeArg) ; \
-  }
+    {                                                                                                   \
+        PEXTENSIONLIST_ENUMDATA peled = (PExtList_EnumData);                                            \
+        peled->pListHead = (pListHeadArg);                                                              \
+        peled->pSpinLock = (pSpinLockArg);                                                              \
+        peled->ExtOffset = FIELD_OFFSET(DEVICE_EXTENSION, OffsetField);                                 \
+        peled->WalkScheme = (WalkSchemeArg);                                                            \
+    }
 
-    PDEVICE_EXTENSION
-    EXPORT
-    ACPIExtListStartEnum(
-        IN OUT PEXTENSIONLIST_ENUMDATA PExtList_EnumData
-        ) ;
+PDEVICE_EXTENSION
+EXPORT
+ACPIExtListStartEnum(IN OUT PEXTENSIONLIST_ENUMDATA PExtList_EnumData);
 
-    BOOLEAN
-    EXPORT
-    ACPIExtListTestElement(
-        IN OUT PEXTENSIONLIST_ENUMDATA PExtList_EnumData,
-        IN     BOOLEAN ContinueEnumeration
-        ) ;
+BOOLEAN
+EXPORT
+ACPIExtListTestElement(IN OUT PEXTENSIONLIST_ENUMDATA PExtList_EnumData, IN BOOLEAN ContinueEnumeration);
 
-    PDEVICE_EXTENSION
-    EXPORT
-    ACPIExtListEnumNext(
-        IN OUT PEXTENSIONLIST_ENUMDATA PExtList_EnumData
-        ) ;
+PDEVICE_EXTENSION
+EXPORT
+ACPIExtListEnumNext(IN OUT PEXTENSIONLIST_ENUMDATA PExtList_EnumData);
 
-    VOID
-    EXPORT
-    ACPIExtListExitEnumEarly(
-        IN OUT PEXTENSIONLIST_ENUMDATA PExtList_EnumData
-        );
+VOID EXPORT ACPIExtListExitEnumEarly(IN OUT PEXTENSIONLIST_ENUMDATA PExtList_EnumData);
 
-    BOOLEAN
-    EXPORT
-    ACPIExtListIsMemberOfRelation(
-        IN  PDEVICE_OBJECT      DeviceObject,
-        IN  PDEVICE_RELATIONS   DeviceRelations
-        );
+BOOLEAN
+EXPORT
+ACPIExtListIsMemberOfRelation(IN PDEVICE_OBJECT DeviceObject, IN PDEVICE_RELATIONS DeviceRelations);
 
 #endif // _EXTLIST_H_
-
